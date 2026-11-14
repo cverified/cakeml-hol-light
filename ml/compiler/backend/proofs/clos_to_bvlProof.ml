@@ -818,7 +818,7 @@ let clos_to_bvlProof_state_rel_def = new_definition
        (bvlSem_state_globals t)) /\
      get_global 0 (bvlSem_state_globals t) = SOME (SOME (global_table
        (closSem_state_max_app s))) /\
-     INJ ((FAPPLY) f) (FDOM f) (FRANGE f) /\
+     INJ (FAPPLY f) (FDOM f) (FRANGE f) /\
      (!x y bs. FLOOKUP f x = SOME y ==> ~(FLOOKUP (bvlSem_state_refs
        t) y = SOME (ByteArray T bs))) /\
      (FDOM f = FDOM (closSem_state_refs s)) /\
@@ -989,7 +989,7 @@ let clos_to_bvlProof_v_to_list = prove
 
 (* [local] *)
 let do_eq = prove
- (`INJ ((FAPPLY) f) (FDOM f) (FRANGE f) /\
+ (`INJ (FAPPLY f) (FDOM f) (FRANGE f) /\
     (!x y bs. FLOOKUP f x = SOME y ==> ~(FLOOKUP r y = SOME
       (ByteArray T bs))) ==>
      (!x y x1 y1.

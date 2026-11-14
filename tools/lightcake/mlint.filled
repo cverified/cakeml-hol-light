@@ -2,4 +2,6 @@ add_lt_divisible_iff
 fromChars_range_unsafe_0_substring_thm
 fromChars_range_unsafe_split
 fromString_toString
+num_to_str_imp_cons
 num_to_str_thm
+toString_thm

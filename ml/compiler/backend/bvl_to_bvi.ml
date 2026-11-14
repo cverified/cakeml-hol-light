@@ -351,7 +351,7 @@ let compile_op_def = new_definition
                      []] NONE]] NONE) | closLang_MemOp
                      (closLang_CopyByte T) ->
        // TODO: this should eventually be implemented in data_to_word instead for efficiency
-       Let (if LENGTH c1 < 3 then ((SmartAppend) c1 (REPLICATE 3 (Op
+       Let (if LENGTH c1 < 3 then (APPEND c1 (REPLICATE 3 (Op
          (closLang_IntOp (closLang_Const (&0))) []))) else c1)
          (Let [Op (closLang_MemOp (closLang_RefByte T)) [Op
            (closLang_IntOp (closLang_Const (&0))) []; Var 0]]
@@ -376,7 +376,8 @@ hol4_overload "compile_op" "bvl_to_bvi_compile_op";;
 (* HOL4 bvl_to_bviScript.sml:313-321: a theorem that HOL4 states as
    the value of an ML expression: compile_op_pmatch *)
 
-hol4_overload "++" "SmartAppend";;
+(* HOL4 bvl_to_bviScript.sml:323: the overload ++, which the port
+   writes as an application of SmartAppend *)
 (* HOL4 bvl_to_bviScript.sml:324: the overload nss, which the port
    expands *)
 
@@ -387,20 +388,20 @@ let compile_aux_def = new_definition
 
 let _ = size_thms "bvl_exp";;
 let compile_exps_def,compile_exps_ind = assume_definition_rec
-  "termination (CHEAT_TAC)"
+  "the port cannot make this definition"
   [`(bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)) /\
    (bvl_to_bvi_compile_exps n (CONS (x:bvl_exp) (CONS y xs)) =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
       let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (CONS y xs) in
-        (APPEND c1 c2,(SmartAppend) aux1 aux2,n2))) /\
+        (APPEND c1 c2,SmartAppend aux1 aux2,n2))) /\
    (bvl_to_bvi_compile_exps n [Var v] = ([(Var
      v):bvi_exp],misc_Nil,n)) /\
    (bvl_to_bvi_compile_exps n [If x1 x2 x3] =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
       let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
       let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x3] in
-        ([If (HD c1) (HD c2) (HD c3)],(SmartAppend) ((SmartAppend)
-          aux1 aux2) aux3,n3))) /\
+        ([If (HD c1) (HD c2) (HD c3)],SmartAppend (SmartAppend aux1
+          aux2) aux3,n3))) /\
    (bvl_to_bvi_compile_exps n [Let xs x2] =
       (if NULL xs then
         // i.e. a marker
@@ -409,11 +410,11 @@ let compile_exps_def,compile_exps_ind = assume_definition_rec
         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
         let n3 = n2 + 1 in
           ([Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces * n2
-            + 1)) c1 NONE],(SmartAppend) ((SmartAppend) aux1 aux2)
+            + 1)) c1 NONE],SmartAppend (SmartAppend aux1 aux2)
             (compile_aux (n2,LENGTH args,HD c2)),n3) else
         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
-          ([Let c1 (HD c2)],(SmartAppend) aux1 aux2,n2))) /\
+          ([Let c1 (HD c2)],SmartAppend aux1 aux2,n2))) /\
    (bvl_to_bvi_compile_exps n [Raise x1] =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
         ([Raise (HD c1)],aux1,n1))) /\
@@ -434,8 +435,8 @@ let compile_exps_def,compile_exps_ind = assume_definition_rec
       let aux4 = compile_aux (n3,LENGTH args,HD c2) in
       let n4 = n3 + 1 in
         ([Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces * n3 +
-          1)) c1 (SOME (HD c3))],(SmartAppend) ((SmartAppend)
-          ((SmartAppend) aux1 aux2) aux3) aux4,n4))) /\
+          1)) c1 (SOME (HD c3))],SmartAppend (SmartAppend (SmartAppend
+          aux1 aux2) aux3) aux4,n4))) /\
    (bvl_to_bvi_compile_exps n [Call ticks dest xs] =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
         ([Call ticks
@@ -446,15 +447,15 @@ hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let _ = size_thms "bvl_exp";;
 let compile_exps_sing_def,compile_exps_sing_ind = assume_definition_rec
-  "termination (CHEAT_TAC)"
+  "the port cannot make this definition"
   [`(compile_exps_sing n (Var v:bvl_exp) = (((Var
   v):bvi_exp),misc_Nil,n)) /\
    (compile_exps_sing n (If x1 x2 x3) =
       (let (c1,aux1,n1) = compile_exps_sing n x1 in
       let (c2,aux2,n2) = compile_exps_sing n1 x2 in
       let (c3,aux3,n3) = compile_exps_sing n2 x3 in
-        (If c1 c2 c3,(SmartAppend) ((SmartAppend) aux1 aux2)
-          aux3,n3))) /\
+        (If c1 c2 c3,SmartAppend (SmartAppend aux1 aux2) aux3,n3)))
+          /\
    (compile_exps_sing n (Let xs x2) =
       (if NULL xs then
         // i.e. a marker
@@ -463,11 +464,11 @@ let compile_exps_sing_def,compile_exps_sing_ind = assume_definition_rec
         let (c2,aux2,n2) = compile_exps_sing n1 x0 in
         let n3 = n2 + 1 in
           ((Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces * n2
-            + 1)) c1 NONE),(SmartAppend) ((SmartAppend) aux1 aux2)
+            + 1)) c1 NONE),SmartAppend (SmartAppend aux1 aux2)
             (compile_aux (n2,LENGTH args,c2)),n3) else
         let (c1,aux1,n1) = compile_exps_list n xs in
         let (c2,aux2,n2) = compile_exps_sing n1 x2 in
-          ((Let c1 (c2)),(SmartAppend) aux1 aux2,n2))) /\
+          ((Let c1 (c2)),SmartAppend aux1 aux2,n2))) /\
    (compile_exps_sing n (Raise x1) =
       (let (c1,aux1,n1) = compile_exps_sing n x1 in
         (Raise c1,aux1,n1))) /\
@@ -488,8 +489,8 @@ let compile_exps_sing_def,compile_exps_sing_ind = assume_definition_rec
       let aux4 = compile_aux (n3,LENGTH args,c2) in
       let n4 = n3 + 1 in
         ((Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces * n3 +
-          1)) c1 (SOME c3)),(SmartAppend) ((SmartAppend) ((SmartAppend)
-          aux1 aux2) aux3) aux4,n4))) /\
+          1)) c1 (SOME c3)),SmartAppend (SmartAppend (SmartAppend aux1
+          aux2) aux3) aux4,n4))) /\
    (compile_exps_sing n (Call ticks dest xs) =
       (let (c1,aux1,n1) = compile_exps_list n xs in
         ((Call ticks
@@ -500,7 +501,7 @@ let compile_exps_sing_def,compile_exps_sing_ind = assume_definition_rec
    (compile_exps_list n (CONS (x:bvl_exp) xs) =
       (let (c1,aux1,n1) = compile_exps_sing n x in
       let (c2,aux2,n2) = compile_exps_list n1 xs in
-        (CONS c1 c2,(SmartAppend) aux1 aux2,n2)))`];;
+        (CONS c1 c2,SmartAppend aux1 aux2,n2)))`];;
 
 let compile_exps_sing = prove
  (`(!n e. bvl_to_bvi_compile_exps n [e] =
@@ -523,24 +524,26 @@ let compile_exps_LENGTH = prove
 
 let compile_exps_SING = prove
  (`(bvl_to_bvi_compile_exps n [x] = (c,aux,n1)) ==> (?y. c = [y])`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM(MP_TAC o MATCH_MP compile_exps_LENGTH) THEN
+   CASES_ON_TAC `c:bvi_exp list` THEN REWRITE_TAC[LENGTH; NOT_SUC;
+     SUC_INJ] THEN
+   REWRITE_TAC[LENGTH_EQ_NIL; CONS_11] THEN MESON_TAC[]));;
 
 let compile_single_def = new_definition
   `bvl_to_bvi_compile_single n (name,arg_count,exp) =
      (let (c,aux,n1) = bvl_to_bvi_compile_exps n [exp] in
        (
-         (SmartAppend) (List [(bvl_num_stubs +
-           bvl_to_bvi_namespaces * name,arg_count,bvi_let_compile_exp
-           (HD c))]) aux,n1))`;;
+         SmartAppend (List [(bvl_num_stubs + bvl_to_bvi_namespaces
+           * name,arg_count,bvi_let_compile_exp (HD c))]) aux,n1))`;;
 hol4_overload "compile_single" "bvl_to_bvi_compile_single";;
 
 let compile_single_eq = prove
  (`bvl_to_bvi_compile_single n (name,arg_count,exp) =
      (let (c,aux,n1) = compile_exps_sing n exp in
        (
-         (SmartAppend) (List [(bvl_num_stubs +
-           bvl_to_bvi_namespaces * name,arg_count,bvi_let_compile_exp
-           c)]) aux,n1))`,
+         SmartAppend (List [(bvl_num_stubs + bvl_to_bvi_namespaces
+           * name,arg_count,bvi_let_compile_exp c)]) aux,n1))`,
   CHEAT_TAC);;
 
 let compile_list_def,compile_list_ind = define_rec
@@ -548,7 +551,7 @@ let compile_list_def,compile_list_ind = define_rec
    `bvl_to_bvi_compile_list n (CONS p progs) =
          (let (code1,n1) = bvl_to_bvi_compile_single n p in
          let (code2,n2) = bvl_to_bvi_compile_list n1 progs in
-           ((SmartAppend) code1 code2,n2))`];;
+           (SmartAppend code1 code2,n2))`];;
 hol4_overload "compile_list" "bvl_to_bvi_compile_list";;
 
 let bvl_to_bvi_compile_inc_def = new_definition
@@ -562,7 +565,7 @@ let bvl_to_bvi_compile_prog_def = new_definition
   `bvl_to_bvi_compile_prog start' n prog =
      (let k = alloc_glob_count (MAP (\(_14,_15,p). p) prog) in
      let (code,n1) = compile_list n prog in
-       (InitGlobals_location,(SmartAppend) (bvl_to_bvi_stubs
+       (InitGlobals_location,SmartAppend (bvl_to_bvi_stubs
          (bvl_num_stubs + bvl_to_bvi_namespaces * start') k) (append
          code),n1))`;;
 hol4_overload "compile_prog" "bvl_to_bvi_compile_prog";;
@@ -653,8 +656,6 @@ let bvl_to_bvi_compile_inc_all_def = new_definition
        (bvl_to_bvi_config_bvi_inlines c) p in
      let c = bvl_to_bvi_config_bvi_inlines_fupd (K bvi_inlines) c in
        (c,p))`;;
-
-hol4_only "++" "APPEND";;
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant

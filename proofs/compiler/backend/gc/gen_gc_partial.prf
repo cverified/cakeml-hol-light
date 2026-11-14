@@ -56,9 +56,6 @@
                            THEN
    ASM_REWRITE_TAC[])
 
-### gc_move_ref_list_heap_length
-  (MATCH_ACCEPT_TAC gc_move_ref_list_heap_length)
-
 ### has_old_ptr_APPEND
   (REWRITE_TAC[EXTENSION; IN_UNION] THEN REWRITE_TAC[IN;
     has_old_ptr_def; MEM_APPEND] THEN
@@ -119,3 +116,114 @@
 
 ### to_gen_heap_list_NIL
   (REWRITE_TAC[to_gen_heap_list_def; MAP])
+
+### MEM_heap_old
+  (REPEAT GEN_TAC THEN STRIP_TAC THEN
+   FIRST_X_ASSUM(MP_TAC o MATCH_MP heap_segment_IMP) THEN STRIP_TAC
+     THEN
+   MATCH_MP_TAC heap_lookup_IMP_MEM THEN EXISTS_TAC `i:num` THEN
+   UNDISCH_TAC `heap_lookup i heap = SOME (x:(A,B)heap_element)` THEN
+   EXPAND_TAC "heap" THEN REWRITE_TAC[GSYM APPEND_ASSOC] THEN
+   SUBGOAL_THEN `i < heap_length (heap_old:((A,B)heap_element)list)`
+     ASSUME_TAC THENL
+    [ASM_REWRITE_TAC[]; ALL_TAC] THEN
+   ASM_SIMP_TAC[LESS_IMP_heap_lookup])
+
+### gc_forward_ptr_APPEND_APPEND
+  (REPEAT GEN_TAC THEN STRIP_TAC THEN
+   SUBGOAL_THEN `~(n < heap_length (x0:((A,B)heap_element)list))`
+     ASSUME_TAC THENL
+    [ASM_ARITH_TAC; ALL_TAC] THEN
+   FIRST_X_ASSUM(MP_TAC o MATCH_MP gc_forward_ptr_APPEND) THEN
+   ASM_REWRITE_TAC[] THEN
+   DISCH_THEN(X_CHOOSE_THEN `y0:((A,B)heap_element)list`
+     (CONJUNCTS_THEN2 MP_TAC SUBST1_TAC)) THEN
+   DISCH_THEN(MP_TAC o MATCH_MP gc_forward_ptr_APPEND) THEN
+   ASM_REWRITE_TAC[] THEN
+   DISCH_THEN(X_CHOOSE_THEN `y1:((A,B)heap_element)list`
+     (CONJUNCTS_THEN2 ASSUME_TAC SUBST1_TAC)) THEN
+   EXISTS_TAC `y1:((A,B)heap_element)list` THEN REWRITE_TAC[] THEN
+   FIRST_X_ASSUM(MP_TAC o MATCH_MP gc_forward_ptr_heap_length) THEN
+   MESON_TAC[])
+
+### gc_move_list_IMP
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
+    PAIR_EQ] THENL
+    [MESON_TAC[]; ALL_TAC] THEN
+   REPEAT GEN_TAC THEN PAIRARG_TAC THEN PAIRARG_TAC THEN
+   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN
+     REWRITE_TAC[LENGTH; SUC_INJ] THEN
+   FIRST_ASSUM(MP_TAC o MATCH_MP gen_gc_partial_gc_move_IMP) THEN
+   FIRST_ASSUM(fun th -> FIRST_ASSUM(MP_TAC o MATCH_MP th)) THEN
+   SIMP_TAC[])
+
+### gc_move_list_heap_length
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
+    PAIR_EQ] THENL
+    [REPEAT STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN REWRITE_TAC[];
+      ALL_TAC] THEN
+   REPEAT GEN_TAC THEN PAIRARG_TAC THEN PAIRARG_TAC THEN
+     REWRITE_TAC[PAIR_EQ] THEN
+   STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN
+   FIRST_ASSUM(SUBST1_TAC o MATCH_MP gc_move_heap_length) THEN
+   FIRST_X_ASSUM(fun ih -> FIRST_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP
+     ih)))
+
+### gc_move_list_ok'
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
+    PAIR_EQ] THENL
+    [REPEAT STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN
+      ASM_REWRITE_TAC[]; ALL_TAC] THEN
+   REPEAT GEN_TAC THEN PAIRARG_TAC THEN PAIRARG_TAC THEN
+     REWRITE_TAC[PAIR_EQ] THEN
+   STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN MATCH_MP_TAC gc_move_ok'
+     THEN
+   MAP_EVERY EXISTS_TAC [`conf:B gen_gc_partial_conf`; `h:A
+     heap_address`; `x':A heap_address`;
+                         `state'':(A,B)gc_state`] THEN
+   ASM_REWRITE_TAC[] THEN
+   FIRST_X_ASSUM(fun ih -> FIRST_ASSUM(fun mv -> MATCH_MP_TAC
+     (MATCH_MP
+     (REWRITE_RULE[IMP_CONJ] ih) mv))) THEN
+   ASM_REWRITE_TAC[])
+
+### gc_move_ref_list_heap_length'
+  (MESON_TAC[gc_move_ref_list_IMP])
+
+### heap_lookup_old_IMP
+  (REPEAT GEN_TAC THEN REWRITE_TAC[gen_inv_def] THEN
+   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "pg") (CONJUNCTS_THEN2
+     (CONJUNCTS_THEN2 (K ALL_TAC) (CONJUNCTS_THEN2 (K ALL_TAC)
+       (X_CHOOSE_THEN `ho:((A,B)heap_element)list` (X_CHOOSE_THEN
+         `hc:((A,B)heap_element)list`
+         (X_CHOOSE_THEN `hr:((A,B)heap_element)list`
+           (CONJUNCTS_THEN2 (LABEL_TAC "seg") (K ALL_TAC)))))))
+     (CONJUNCTS_THEN2 (LABEL_TAC "lk") (LABEL_TAC "lt")))) THEN
+   USE_THEN "pg" (fun pg -> USE_THEN "seg" (fun sg ->
+     REWRITE_TAC[CONJUNCT1 (MATCH_MP gen_gc_partial_partial_gc_IMP
+       (CONJ pg sg))])) THEN
+   USE_THEN "seg" (fun th -> let cs = CONJUNCTS (MATCH_MP
+     heap_segment_IMP th) in
+     LABEL_TAC "happ" (el 0 cs) THEN LABEL_TAC "hlo" (el 1 cs)) THEN
+   SUBGOAL_THEN `i < heap_length (ho:((A,B)heap_element)list)`
+     ASSUME_TAC THENL
+    [USE_THEN "hlo" (fun th -> REWRITE_TAC[th]) THEN USE_THEN "lt"
+      ACCEPT_TAC; ALL_TAC] THEN
+   ASM_SIMP_TAC[LESS_IMP_heap_lookup] THEN
+   USE_THEN "lk" MP_TAC THEN
+   USE_THEN "happ" (fun th -> REWRITE_TAC[GSYM th; GSYM
+     APPEND_ASSOC]) THEN
+   ASM_SIMP_TAC[LESS_IMP_heap_lookup])
+
+### isSomeData_to_gen_heap_IMP_isSomeData
+  (REPEAT GEN_TAC THEN REWRITE_TAC[heap_lookup_APPEND;
+    heap_length_to_gen_heap_list] THEN
+   COND_CASES_TAC THEN
+   REWRITE_TAC[isSomeDataElement_to_gen_heap_list;
+     isSomeDataElement_heap_lookup_heap_expand])
+
+### roots_ok_CONS
+  (REWRITE_TAC[roots_ok_def; MEM] THEN MESON_TAC[])
+
+### gc_move_ref_list_heap_length
+  (MATCH_ACCEPT_TAC gen_gc_partial_gc_move_ref_list_heap_length)

@@ -6,3 +6,7 @@
    LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ;
      LENGTH_EQ_NIL] THEN
    MESON_TAC[])
+
+### compile_nil
+  (GEN_TAC THEN CASES_ON_TAC `do_mti:bool` THEN
+   REWRITE_TAC[clos_mti_compile_def; intro_multi_def])

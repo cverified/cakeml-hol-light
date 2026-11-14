@@ -55,6 +55,7 @@ needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
+needs "lib/binary_ieee.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
@@ -220,7 +221,10 @@ let build_aux_def,build_aux_ind = define_rec
 let build_aux_LENGTH = prove
  (`!l n aux n1 t.
       (build_aux n l aux = (n1,t)) ==> (n1 = n + 2 * LENGTH l)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[build_aux_def; PAIR_EQ; LENGTH]
+    THENL
+    [ARITH_TAC; ALL_TAC] THEN
+   REPEAT STRIP_TAC THEN RES_TAC THEN ASM_ARITH_TAC));;
 
 let build_aux_MOVE = prove
  (`!xs n aux n1 aux1.
@@ -237,7 +241,26 @@ let build_aux_MEM = prove
  (`!c n aux n7 aux7.
        (build_aux n c aux = (n7,aux7)) ==>
        (!k. k < LENGTH c ==> (?d. MEM (n + 2 * k,d) aux7))`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[build_aux_def; LENGTH; CONJUNCT1
+    LT] THEN
+   REPEAT GEN_TAC THEN DISCH_TAC THEN INDUCT_TAC THENL
+    [DISCH_THEN(K ALL_TAC) THEN
+     MP_TAC(ISPECL [`t:(num#bvl_exp)list`; `n + 2`;
+                    `CONS (n:num,h:num#bvl_exp)
+                      (aux:(num#num#bvl_exp)list)`]
+                   build_aux_acc) THEN
+     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+     EXISTS_TAC `h:num#bvl_exp` THEN
+     REWRITE_TAC[MEM_APPEND; MEM; ARITH_RULE `n + 2 * 0 = n`];
+     REWRITE_TAC[LT_SUC] THEN DISCH_TAC THEN
+     FIRST_X_ASSUM(MP_TAC o SPECL [`n + 2`;
+                    `CONS (n:num,h:num#bvl_exp)
+                      (aux:(num#num#bvl_exp)list)`;
+                                   `n7:num`;
+                                     `aux7:(num#num#bvl_exp)list`])
+                                     THEN
+     ASM_REWRITE_TAC[] THEN DISCH_THEN(MP_TAC o SPEC `k:num`) THEN
+     ASM_REWRITE_TAC[ARITH_RULE `n + 2 * SUC k = (n + 2) + 2 * k`]]));;
 
 let build_aux_APPEND1 = prove
  (`!xs x n aux.
@@ -783,13 +806,22 @@ let code_split_NULL = prove
  (`!ts1 ts2 ts3 xs ys.
       (xs,ys) = code_split ts1 ts2 ts3 /\ ~(ts2 = []) /\ ~(ts3 =
         []) ==> ~(xs = []) /\ ~(ys = [])`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[code_split_def; PAIR_EQ] THENL
+    [MESON_TAC[]; ALL_TAC] THEN
+   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPECL
+     [`CONS (h:A) ts3`; `ts2:A list`; `xs:A list`; `ys:A list`]) THEN
+   ASM_REWRITE_TAC[NOT_CONS_NIL]));;
 
 let code_split_LENGTH = prove
  (`!ts1 ts2 ts3 xs ys.
       (xs,ys) = code_split ts1 ts2 ts3 ==>
       LENGTH xs + LENGTH ys = LENGTH ts1 + LENGTH ts2 + LENGTH ts3`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[code_split_def; PAIR_EQ; LENGTH]
+    THENL
+    [MESON_TAC[ADD_CLAUSES]; ALL_TAC] THEN
+   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPECL
+     [`CONS (h:A) ts3`; `ts2:A list`; `xs:A list`; `ys:A list`]) THEN
+   ASM_REWRITE_TAC[LENGTH] THEN ARITH_TAC));;
 
 let code_sort_def,code_sort_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -916,7 +948,12 @@ let get_src_names_sing_def,get_src_names_sing_ind =
 let get_src_names_sing_eq = prove
  (`(!e l. get_src_names [e] l = get_src_names_sing e l) /\
    (!es l. get_src_names es l = get_src_names_list es l)`,
-  CHEAT_TAC);;
+  (MATCH_MP_TAC get_src_names_sing_ind THEN REPEAT CONJ_TAC THEN
+   REPEAT STRIP_TAC THEN
+   REWRITE_TAC[get_src_names_sing_def; get_src_names_def] THEN
+   ASM_REWRITE_TAC[] THEN
+   CASES_ON_TAC `xs:closLang_exp list` THEN
+   ASM_REWRITE_TAC[get_src_names_def; get_src_names_sing_def]));;
 
 let make_name_alist_def = new_definition
   `make_name_alist nums prog nstubs dec_start (dec_length:num) =

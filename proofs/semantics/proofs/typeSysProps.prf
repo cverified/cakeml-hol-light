@@ -21,3 +21,6 @@
 
 ### type_es_length
   (REWRITE_TAC[type_es_list_rel] THEN MESON_TAC[LIST_REL_LENGTH])
+
+### type_pes_cons
+  (REWRITE_TAC[type_pes_def; MEM; PAIR_EQ] THEN MESON_TAC[])

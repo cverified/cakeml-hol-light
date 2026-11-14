@@ -297,19 +297,19 @@ let NOT_IN_heap_addresses_gt = prove
 (* [local] *)
 let heap_length_CONS = prove
  (`!x xs. heap_length (CONS x xs) = el_length x + heap_length xs`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[heap_length_def; MAP; SUM_DEF]));;
 
 let heap_lookup_LENGTH = prove
  (`!xs x ys l. (heap_length xs = l) ==> (heap_lookup l (APPEND xs
   (CONS x ys)) = SOME x)`,
-  CHEAT_TAC);;
+  (MESON_TAC[heap_lookup_PREFIX]));;
 
 let heap_lookup_APPEND = prove
  (`!j xs ys.
     heap_lookup j (APPEND xs ys) =
       (if j < heap_length xs then heap_lookup j xs else heap_lookup
         (j - heap_length xs) ys)`,
-  CHEAT_TAC);;
+  (MESON_TAC[gen_gc_LESS_IMP_heap_lookup; NOT_LESS_IMP_heap_lookup]));;
 
 (* [local] *)
 let IMP_if_equal = prove
@@ -631,7 +631,7 @@ let heap_lookup_AND_APPEND_IMP = prove
  (`!xs n ys d d1.
      (heap_lookup n xs = SOME d) /\
      (heap_lookup n (APPEND xs ys) = SOME d1) ==> (d1 = d)`,
-  CHEAT_TAC);;
+  (MESON_TAC[gen_gc_heap_lookup_EXTEND; option_INJ]));;
 
 (* [local] *)
 let heap_lookup_AND_PREPEND_IMP = prove

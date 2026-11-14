@@ -2083,7 +2083,13 @@ let cake_as_vars f =
    means: an overload stays in the interface until it is
    overridden, and the ++ of two variables that nothing says the
    type of would then be the choice of a monad that another file
-   enabled (semantics' prelude ++ prog) *)
+   enabled (semantics' prelude ++ prog).
+
+   No file of the port needs this any more: HOL Light has no ++
+   and the port writes none, so a source that gives ++ another
+   meaning has that constant written out instead (ISSUES.md).
+   What is left here is the machinery, and the comments below
+   are the history of why it is the shape it is. *)
 
 let hol4_only name cname =
   (try make_overloadable name `:A` with Failure _ -> ());

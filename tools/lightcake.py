@@ -5,6 +5,7 @@
      python3 -I tools/lightcake.py deps <theory>
      python3 -I tools/lightcake.py import <theory>
      python3 -I tools/lightcake.py fill <theory>
+     python3 -I tools/lightcake.py fillall
      python3 -I tools/lightcake.py drop [-q] <theory> <name>...
      python3 -I tools/lightcake.py redo <theory>
      python3 -I tools/lightcake.py where <theory>
@@ -42,9 +43,11 @@ store out again, under either name it goes by, and writes why
 into `<theory>.nofill`, which the next fill reads.  `redo` takes
 out every proof a fill took, and no other, so that a fill can be
 run again when the import has got better -- a proof this port
-wrote by hand is not in the list and is never touched.  `tools/bin/lightcake-take`
-and `tools/bin/lightcake-fill` are the two loops that do it with
-the check in them, and nothing of either reaches `ml/` until
+wrote by hand is not in the list and is never touched; `fillall`
+is a fill of every theory in one process.  `tools/bin/
+lightcake-take` and `tools/bin/lightcake-fill` are the two loops
+that do it with the check in them, and nothing of either reaches
+`ml/` until
 every block of it has been run.
 
 `names` prints the map of a theory (or the count for every
@@ -1056,6 +1059,34 @@ def redo(argv):
   return 0
 
 
+def all_theories():
+  """every theory both ports have a file of"""
+  out = set()
+  for f in lc_files():
+    nm = os.path.basename(f)[:-3]
+    if ours_of(nm): out.add(nm)
+  return sorted(out)
+
+
+def fillall(argv):
+  """a fill of every theory both ports have, in one process: the
+     files of the two ports are read once instead of once per
+     theory, which is the difference between minutes and an hour"""
+  tot = 0
+  for nm in all_theories():
+    try:
+      n0 = sum(1 for _ in open(T + 'lightcake/' + nm + '.filled')) \
+           if os.path.exists(T + 'lightcake/' + nm + '.filled') else 0
+      fill([nm])
+      n1 = sum(1 for _ in open(T + 'lightcake/' + nm + '.filled')) \
+           if os.path.exists(T + 'lightcake/' + nm + '.filled') else 0
+      tot += n1 - n0
+    except Exception as e:
+      print('%s: %s' % (nm, e))
+  print('%d proofs taken in all' % tot)
+  return 0
+
+
 def drop(argv):
   """the sections of a proof store that a check says do not go
      through, taken out again.  With -q in front, without the
@@ -1120,6 +1151,7 @@ def main(argv):
   if argv[0] == 'report': return report(argv[1:])
   if argv[0] == 'deps': return deps(argv[1:])
   if argv[0] == 'fill': return fill(argv[1:])
+  if argv[0] == 'fillall': return fillall(argv[1:])
   if argv[0] == 'drop': return drop(argv[1:])
   if argv[0] == 'redo': return redo(argv[1:])
   print(__doc__); return 1

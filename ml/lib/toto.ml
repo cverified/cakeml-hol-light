@@ -2,7 +2,7 @@
 (*  toto: ported from HOL4's
     src/finite_maps/totoScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs, and 7 theorems of it from LightCake.  Needed
+    that CakeML needs, and 9 theorems of it from LightCake.  Needed
     by 11 files of the port.  *)
 (* ======================================================== *)
 
@@ -34,6 +34,10 @@ let TotOrd = new_definition
 (*  gives them.  What it could not take, and why, is at the end.  *)
 (* ================================================================ *)
 
+
+let trichotomous_ALT = prove
+ (`!R:A->A->bool. trichotomous R <=> !x y. ~R x y /\ ~R y x ==> x = y`,
+  REWRITE_TAC[trichotomous] THEN MESON_TAC[]);;
 
 let SPLIT_PAIRS = prove
  (`!x y:A#B. x = y <=> FST x = FST y /\ SND x = SND y`,
@@ -68,6 +72,13 @@ let StrongOrder_ALT = prove
  (`!Z:A->A->bool. StrongOrder Z <=> irreflexive Z /\ transitive Z`,
   REWRITE_TAC[StrongOrder]);;
 
+let StrongLinearOrder_LESS = prove
+ (`StrongLinearOrder ((<):num->num->bool)`,
+  REWRITE_TAC[StrongLinearOrder; StrongOrder; irreflexive_def;
+    transitive_def;
+              trichotomous] THEN
+  ARITH_TAC);;
+
 (* What this port cannot take from LightCake's toto
    yet, with the names of its own that each proof
    uses:
@@ -75,10 +86,7 @@ let StrongOrder_ALT = prove
      cpn_distinct                     ordering_distinct
      cpn_case_def                     ordering_case_def
      cpn_nchotomy                     ordering_nchotomy
-     trichotomous_ALT                 trichotomous_DEF
      TotOrd_TO_of_LO                  TO_of_LinearOrder
-                                      antisymmetric_DEF transitive_DEF
-                                      trichotomous_DEF
      TotOrd_inv                       TO_inv
      TO_inv_TO_inv                    TO_inv
      LEX_ALT                          LEX_DEF
@@ -89,12 +97,10 @@ let StrongOrder_ALT = prove
                                       ordering_nchotomy
      lexTO_ALT                        CASE_TERM lexTO lexTO_thm
      TO_lexTO                         lexTO lexTO_thm ordering_case_eq
-     TO_numOrd                        TotOrd_TO_of_LO antisymmetric_DEF
-                                      numOrd transitive_DEF
-                                      trichotomous_DEF
+     TO_numOrd                        TotOrd_TO_of_LO numOrd
      TO_injection                     imageOrd
      StrongLinearOrder_of_TO_TO_of_LinearOrder StrongLinearOrder_of_TO
-                                       TO_of_LinearOrder irreflexive_DEF
+                                       TO_of_LinearOrder
                                        ordering_case_def
      TO_of_LinearOrder_LEX
                                       StrongLinearOrder_of_TO_TO_of_LinearOrder
@@ -105,19 +111,11 @@ let StrongOrder_ALT = prove
      Strong_Strong_of_TO
                                       LCMPAUX_StrongLinearOrder_of_TO_LESS
                                       StrongLinearOrder_of_TO
-                                      irreflexive_DEF ordering_nchotomy
-                                      transitive_DEF trichotomous_DEF
+                                      ordering_nchotomy
      TotOrd_TO_of_Strong              TO_of_LinearOrder TotOrd_TO_of_LO
-                                      antisymmetric_DEF irreflexive_DEF
-                                      transitive_DEF
-     TO_of_less_rel                   TO_of_LinearOrder irreflexive_DEF
-     TO_of_greater_ler                TO_of_LinearOrder irreflexive_DEF
-                                      transitive_DEF trichotomous_DEF
-     SLO_LEX                          LEX_THM irreflexive_DEF
-                                      transitive_DEF trichotomous_DEF
-     StrongLinearOrder_LESS           irreflexive_DEF transitive_DEF
-                                      trichotomous_DEF
-     SLO_listorder                    irreflexive_DEF listorder
-                                      transitive_DEF trichotomous_DEF
+     TO_of_less_rel                   TO_of_LinearOrder
+     TO_of_greater_ler                TO_of_LinearOrder
+     SLO_LEX                          LEX_THM
+     SLO_listorder                    listorder
 
 *)

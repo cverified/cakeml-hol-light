@@ -69,7 +69,7 @@ let pure_exps_cons = prove
      pure_exps n [h] /\
      pure_exps n t <=>
      pure_exps n (CONS h t)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[pure_exp_def]));;
 
 (* The equations below express pure_exps without the auxiliary pure_exp.  This
    is the shape the ml_translator prefers (cf. bvi_let$compile_def), whereas the
@@ -135,7 +135,12 @@ let bind_size = prove
  (`!args n vs n'.
      bvi_tmc_bind n args = (vs,n') ==>
      LENGTH args = LENGTH vs`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[bind_def; PAIR_EQ] THENL
+    [MESON_TAC[LENGTH]; ALL_TAC] THEN
+   REPEAT GEN_TAC THEN PAIRARG_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
+   STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN REWRITE_TAC[LENGTH;
+     SUC_INJ] THEN
+   ASM_MESON_TAC[]));;
 
 let shift_vars_def,shift_vars_ind = define_rec
   [`shift_vars (n:num) [] = []`;
@@ -279,13 +284,20 @@ let wf_vars_cons = prove
      v < n /\
      wf_vars n vs ==>
      wf_vars n (CONS v vs)`,
-  CHEAT_TAC);;
+  (SIMP_TAC[wf_vars_def; ALL]));;
 
 let wf_vars_bind = prove
  (`!bs vs n n'.
      bvi_tmc_bind n bs = (vs,n') ==>
      wf_vars (n + LENGTH bs) vs`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[bind_def; PAIR_EQ] THENL
+    [MESON_TAC[wf_vars_empty]; ALL_TAC] THEN
+   REPEAT GEN_TAC THEN PAIRARG_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
+   STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN MATCH_MP_TAC wf_vars_cons
+     THEN
+   CONJ_TAC THENL [REWRITE_TAC[LENGTH] THEN ARITH_TAC; ALL_TAC] THEN
+   FIRST_X_ASSUM(fun th -> FIRST_X_ASSUM(MP_TAC o MATCH_MP th)) THEN
+   REWRITE_TAC[LENGTH; ARITH_RULE `(n + 1) + l = n + SUC l`]));;
 
 let wf_cb_def,wf_cb_ind = define_rec
   [`wf_cb n (RCall ts args) =

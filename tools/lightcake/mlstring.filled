@@ -1,8 +1,11 @@
 LENGTH_explode
 StrongLinearOrder_fast_lt
 StrongLinearOrder_mlstring_lt
+antisymmetric_fast_le
+collate_thm
 compare_aux_equal
 compare_thm
+concat_cons
 concat_nil
 concat_sing
 exists_mlstring
@@ -23,7 +26,10 @@ fields_length
 implode_BIJ
 implode_STRCAT
 implode_explode
+irreflexive_fast_lt
+irreflexive_mlstring_lt
 isSubstring_aux_lemma
+mlstring_common_char_prefix
 mlstring_common_prefix
 mlstring_common_suffix
 mlstring_ge_thm
@@ -33,6 +39,7 @@ mlstring_lt_antisym
 mlstring_lt_cases
 mlstring_lt_nonrefl
 mlstring_lt_trans
+splitl_SPLITL
 str_findi_range
 strcat_assoc
 strcat_nil
@@ -44,4 +51,10 @@ strlen_toString
 strlit_STRCAT
 tokens_alt
 tokens_filter
+total_fast_le
+total_mlstring_le
+transitive_fast_le
+transitive_fast_lt
 translate_thm
+trichotomous_fast_lt
+trichotomous_mlstring_lt

@@ -1,4 +1,6 @@
 eqenv_sym
+not_use_temp_before_assign_append
+not_use_temp_before_assign_thm
 parsem_nil
 sem_final
 sem_init

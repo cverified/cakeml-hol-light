@@ -32,3 +32,30 @@
   (REWRITE_TAC[heaps_similar_def] THEN LIST_INDUCT_TAC THEN
    REWRITE_TAC[FILTER; ALL2] THEN COND_CASES_TAC THEN
    ASM_REWRITE_TAC[NOT_CONS_NIL])
+
+### ADDR_MAP_APPEND
+  (LIST_INDUCT_TAC THEN TRY (CASES_ON_TAC `h:A heap_address`) THEN
+   ASM_REWRITE_TAC[ADDR_MAP_def; APPEND])
+
+### ADDR_MAP_LENGTH
+  (LIST_INDUCT_TAC THEN TRY (CASES_ON_TAC `h:A heap_address`) THEN
+   REWRITE_TAC[ADDR_MAP_def; LENGTH; SUC_INJ] THEN ASM_MESON_TAC[])
+
+### MEM_ADDR_MAP
+  (LIST_INDUCT_TAC THEN TRY (CASES_ON_TAC `h:A heap_address`) THEN
+   REWRITE_TAC[ADDR_MAP_def; MEM; injectivity "heap_address";
+               distinctness "heap_address"] THEN
+   ASM_MESON_TAC[])
+
+### heap_addresses_LESS
+  (LIST_INDUCT_TAC THEN
+   REWRITE_TAC[heap_addresses_def; NOT_IN_EMPTY; IN_INSERT] THEN
+   REPEAT STRIP_TAC THEN RES_TAC THEN ASM_ARITH_TAC)
+
+### heap_split_0
+  (GEN_TAC THEN CASES_ON_TAC `h:((A,B)heap_element)list` THEN
+   REWRITE_TAC[heap_split_def])
+
+### isSome_heap_looukp_IMP_APPEND
+  (REWRITE_TAC[isSomeDataElement_def] THEN
+   MESON_TAC[heap_lookup_EXTEND])

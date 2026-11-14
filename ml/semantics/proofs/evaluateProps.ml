@@ -155,7 +155,7 @@ let evaluate_io_events_mono_imp = prove
      evaluate_evaluate_decs s e p = (s',r) ==>
      io_events_mono (semanticPrimitives_state_ffi s)
        (semanticPrimitives_state_ffi s'))`,
-  (MESON_TAC[PAIR; FST; evaluate_io_events_mono]));;
+  (MESON_TAC[PAIR; FST; evaluateProps_evaluate_io_events_mono]));;
 
 let is_clock_io_mono_def = new_definition
   `is_clock_io_mono f s = (match f s with (s',r) ->
@@ -334,23 +334,36 @@ let evaluate_match_add_to_clock = prove
 (* [simp] *)
 let list_result_eq_Rval = prove
  (`list_result r = Rval r' <=> (?v. r' = [v] /\ r = Rval v)`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
+   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
+     "result"] THEN
+   MESON_TAC[]));;
 
 (* [simp] *)
 let list_result_eq_Rerr = prove
  (`list_result r = Rerr e <=> r = Rerr e`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
+   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
+     "result"]));;
 
 (* [simp] *)
 let result_rel_list_result = prove
  (`semanticPrimitivesProps_result_rel (ALL2 R) Q (list_result r1)
   (list_result r2) <=>
    semanticPrimitivesProps_result_rel R Q r1 r2`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN CASES_ON_TAC
+    `r1:(A,C)semanticPrimitives_result` THEN CASES_ON_TAC
+    `r2:(B,D)semanticPrimitives_result` THEN
+   REWRITE_TAC[list_result_def; result_rel_def; ALL2]));;
 
 let list_result_inj = prove
  (`list_result x = list_result y ==> x = y`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN GEN_TAC THEN CASES_ON_TAC
+    `x:(A,B)semanticPrimitives_result` THEN CASES_ON_TAC
+    `y:(A,B)semanticPrimitives_result` THEN
+   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
+     "result"; CONS_11] THEN
+   MESON_TAC[]));;
 
 let evaluate_length = prove
  (`(!(s:'ffi semanticPrimitives_state) e p s' r. evaluate s e p =
@@ -423,7 +436,17 @@ let evaluate_decs_append = prove
 let evaluate_match_list_result = prove
  (`evaluate_evaluate_match s e v p er = (s',r) ==>
    (?r'. r = list_result r')`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `r:(v
+    list,v)semanticPrimitives_result` THEN STRIP_TAC THENL
+    [FIRST_X_ASSUM(MP_TAC o MATCH_MP (CONJUNCT1(CONJUNCT2
+      evaluate_length))) THEN
+     STRUCT_CASES_TAC(ISPEC `a:v list` list_CASES) THEN
+     REWRITE_TAC[LENGTH; ARITH_RULE `~(0 = 1) /\ (SUC n = 1 <=> n =
+       0)`; LENGTH_EQ_NIL] THEN
+     DISCH_THEN SUBST1_TAC THEN EXISTS_TAC `Rval
+       h:(v,v)semanticPrimitives_result`;
+     EXISTS_TAC `Rerr a:(v,v)semanticPrimitives_result`] THEN
+   REWRITE_TAC[list_result_def]));;
 
 (* HOL4 evaluatePropsScript.sml:586-588: ML code, not ported *)
 
@@ -712,7 +735,10 @@ let can_pmatch_all_EVERY = prove
 
 let same_type_trans = prove
  (`same_type t1 t2 /\ same_type t1 t3 ==> same_type t2 t3`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `t1:stamp` THEN CASES_ON_TAC
+    `t2:stamp` THEN
+   CASES_ON_TAC `t3:stamp` THEN REWRITE_TAC[same_type_def] THEN
+     MESON_TAC[]));;
 
 let evaluate_refs_length_mono = prove
  (`(!(s:'ffi semanticPrimitives_state) env es s' r.
@@ -782,7 +808,9 @@ let evaluate_ffi_etc_intro = prove
 
 let same_type_sym = prove
  (`same_type t1 t2 ==> same_type t2 t1`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `t1:stamp` THEN CASES_ON_TAC
+    `t2:stamp` THEN
+   REWRITE_TAC[same_type_def] THEN MESON_TAC[]));;
 
 let pmatch_not_type_error_EQ = prove
  (`(~(semanticPrimitives_pmatch envC refs ast_Pany v acc =

@@ -23,8 +23,6 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 let _ = hol4_ancestors "linear_scan"
   ["ml_monadBase"; "mllist"; "reg_alloc"];;
 
-hol4_overload "++" "otherwise";;
-
 let live_tree_INDUCT,live_tree_RECURSION = define_datatype
   "live_tree = linear_scan_Writes (num list) | linear_scan_Reads (num \
    list) | linear_scan_Branch (live_tree) (live_tree) | \
@@ -1176,8 +1174,6 @@ let linear_scan_reg_alloc_def = new_definition
 
 (* HOL4 linear_scanScript.sml:1148-1328: code that the source has in
    a comment *)
-
-hol4_only "++" "APPEND";;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

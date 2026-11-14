@@ -29,8 +29,6 @@ let _ = hol4_ancestors "reg_allocProof"
 let _ = hide_overloads
   ["return","errorMonad_return"];;
 
-hol4_overload "++" "otherwise";;
-
 (* Edge from node x to node y, in terms of an adjacency list *)
 let has_edge_def = new_definition
   `has_edge adjls x y <=>
@@ -690,7 +688,27 @@ let colouring_satisfactory_cliques = prove
    ALL (\x. x < LENGTH g) ls /\
    colouring_satisfactory f g /\ is_clique ls g ==>
    ALL_DISTINCT (MAP f ls)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[ALL_DISTINCT; MAP; ALL] THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN CONJ_TAC THENL
+    [REWRITE_TAC[MEM_MAP] THEN DISCH_THEN(X_CHOOSE_THEN `y:num`
+      STRIP_ASSUME_TAC) THEN
+     SUBGOAL_THEN `has_edge g h y` MP_TAC THENL
+      [UNDISCH_TAC `is_clique (CONS h t) g` THEN
+        REWRITE_TAC[is_clique_def; MEM] THEN
+       ASM_MESON_TAC[];
+       ALL_TAC] THEN
+     REWRITE_TAC[has_edge_def] THEN STRIP_TAC THEN
+     UNDISCH_TAC `colouring_satisfactory (f:num->num) g` THEN
+     REWRITE_TAC[colouring_satisfactory_def] THEN
+     DISCH_THEN(MP_TAC o SPEC `h:num`) THEN ASM_REWRITE_TAC[] THEN
+     DISCH_THEN(MP_TAC o SPEC `y:num`) THEN ASM_REWRITE_TAC[] THEN
+     ASM_MESON_TAC[];
+     FIRST_X_ASSUM MATCH_MP_TAC THEN EXISTS_TAC `g:(num list)list`
+       THEN
+     ASM_REWRITE_TAC[] THEN
+     UNDISCH_TAC `is_clique (CONS h t) g` THEN
+       REWRITE_TAC[is_clique_def; MEM] THEN
+     MESON_TAC[]]));;
 
 (* [local] *)
 let domain_eq_IMAGE = prove
@@ -751,7 +769,18 @@ let ALL_DISTINCT_set_INJ = prove
  (`!ls col.
    ALL_DISTINCT (MAP col ls) ==>
    INJ col (set_of_list ls) UNIV`,
-  CHEAT_TAC);;
+  (* a list of distinct images has no two elements with one image,
+     which is what INJ says of the set the list stands for *)
+  (let adcons = prove
+    (`!(h:A) t.
+        ALL_DISTINCT (CONS h t) <=> ~(MEM h t) /\ ALL_DISTINCT t`,
+     REWRITE_TAC[ALL_DISTINCT; PAIRWISE; GSYM ALL_MEM] THEN
+     MESON_TAC[]) in
+   REWRITE_TAC[INJ; IN_UNIV; IN_SET_OF_LIST] THEN
+   ONCE_REWRITE_TAC[SWAP_FORALL_THM] THEN
+   GEN_TAC THEN LIST_INDUCT_TAC THEN
+   REWRITE_TAC[MAP; MEM; adcons; MEM_MAP] THEN
+   ASM_MESON_TAC[]));;
 
 (* [local] *)
 let IMAGE_DIFF = prove
@@ -1345,13 +1374,23 @@ let check_clash_tree_same_dom = prove
 (* [local] *)
 let opt_split = prove
  (`~(a = NONE) <=> a = SOME one`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN CASES_ON_TAC `a:1 option` THEN
+    REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+   ONCE_REWRITE_TAC[one] THEN REWRITE_TAC[]));;
 
 let INJ_IMG_lookup = prove
  (`!x. INJ g UNIV UNIV /\
    domain (gt:1 spt) = IMAGE g (domain ft) ==>
    sptree_lookup (g x) gt = sptree_lookup x ft`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN REWRITE_TAC[INJ; IN_UNIV] THEN STRIP_TAC THEN
+   SUBGOAL_THEN `(g:num->num) x IN domain (gt:1 spt) <=> x IN domain
+     (ft:1 spt)` MP_TAC THENL
+    [ASM_REWRITE_TAC[IN_IMAGE] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+   REWRITE_TAC[domain_lookup] THEN
+   CASES_ON_TAC `lookup ((g:num->num) x) (gt:1 spt)` THEN
+   CASES_ON_TAC `lookup (x:num) (ft:1 spt)` THEN
+   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+   ONCE_REWRITE_TAC[one] THEN MESON_TAC[]));;
 
 let check_partial_col_INJ = prove
  (`!ls t ft gt.
@@ -1453,8 +1492,6 @@ let reg_alloc_correct = prove
        = y) forced)`,
   CHEAT_TAC);;
 (* --- --- *)
-
-hol4_only "++" "APPEND";;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

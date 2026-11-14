@@ -92,8 +92,6 @@ let otherwise_def = new_definition
              (M_success y,s) -> (M_success y,s) | (M_failure e,s)
                -> (y:'a->('b,'c)exc#'a) s)`;;
 
-hol4_overload "++" "otherwise";;
-
 let can_def = new_definition
   `can f x = (
               otherwise (st_ex_ignore_bind (f x) (st_ex_return T))
@@ -236,11 +234,15 @@ let ref_assign_def = new_definition
 
 let dref_cons_state = prove
  (`n < LENGTH state ==> (dref n (CONS x state) = dref n state)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[dref_def; LENGTH] THEN REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `SUC (LENGTH (state:A list)) - n - 1 = SUC (LENGTH
+     state - n - 1)`
+     SUBST1_TAC THENL [ASM_ARITH_TAC; REWRITE_TAC[EL; TL]]));;
 
 let dref_first = prove
  (`dref (LENGTH s) (CONS r s) = r`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[dref_def; LENGTH; ARITH_RULE `SUC n - n - 1 = 0`; EL;
+    HD]));;
 
 (* Mdref_eq *)
 let mdref_eq = prove
@@ -399,8 +401,6 @@ let marray_alloc_success = prove
 (* Run *)
 let run_def = new_definition
   `run (x:'a->('b,'c)exc#'a) state = FST (x state)`;;
-
-hol4_only "++" "APPEND";;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

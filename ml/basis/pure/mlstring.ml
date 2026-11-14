@@ -165,7 +165,8 @@ let strcat_def = new_definition
 
 let concat_cons = prove
  (`mlstring_concat (CONS h t) = strcat h (mlstring_concat t)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[strcat_def; concat_thm; MAP; FLAT; explode_thm;
+    APPEND_NIL]));;
 
 let strcat_thm = prove
  (`strcat s1 s2 = implode (APPEND (explode s1) (explode s2))`,
@@ -198,7 +199,8 @@ let mlstring_common_char_prefix = prove
  (`!c1 s1 s2 t2 t2. (strcat (implode (CONS c1 s1)) t1) = (strcat
   (implode (CONS c2 s2)) t2) <=>
      c1 = c2 /\ strcat (implode s1) t1 = strcat (implode s2) t2`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[strcat_thm; injectivity "mlstring"; explode_thm;
+    APPEND; CONS_11]));;
 
 (* [simp] *)
 let mlstring_common_suffix = prove
@@ -289,7 +291,10 @@ let splitl_aux_SPLITP = prove
 
 let splitl_SPLITL = prove
  (`splitl P s = (implode ## implode) (SPLITL P (explode s))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[splitl_def; splitl_aux_SPLITP; SPLITL; TAKE_0; DROP_0]
+    THEN
+   AP_THM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+   REWRITE_TAC[FUN_EQ_THM; o_THM; APPEND]));;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -817,7 +822,8 @@ let string_lt_total = prove
 
 let total_mlstring_le = prove
  (`total mlstring_le`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[total_def; mlstring_le_thm] THEN
+    MESON_TAC[mlstring_lt_cases]));;
 
 (* [local] *)
 let transitive_mlstring_lt = prove
@@ -831,12 +837,12 @@ let strlit_le_strlit = prove
 (* [local] *)
 let irreflexive_mlstring_lt = prove
  (`irreflexive mlstring_lt`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[irreflexive_def; mlstring_lt_nonrefl]));;
 
 (* [local] *)
 let trichotomous_mlstring_lt = prove
  (`trichotomous mlstring_lt`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[trichotomous] THEN MESON_TAC[mlstring_lt_cases]));;
 
 let StrongLinearOrder_mlstring_lt = prove
  (`StrongLinearOrder mlstring_lt`,
@@ -882,27 +888,35 @@ let fast_ge_thm = prove
 
 let transitive_fast_le = prove
  (`transitive fast_le`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[transitive_def; fast_le_thm] THEN
+    MESON_TAC[fast_lt_trans]));;
 
 let antisymmetric_fast_le = prove
  (`antisymmetric fast_le`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[antisymmetric_def; fast_le_thm] THEN
+   MESON_TAC[fast_lt_trans; fast_lt_nonrefl]));;
 
 let total_fast_le = prove
  (`total fast_le`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[total_def; fast_le_def] THEN REPEAT GEN_TAC THEN
+   ASM_CASES_TAC `strlen x = strlen y` THEN ASM_REWRITE_TAC[] THENL
+    [MP_TAC total_mlstring_le THEN REWRITE_TAC[total_def] THEN
+      MESON_TAC[];
+     ASM_ARITH_TAC]));;
 
 let transitive_fast_lt = prove
  (`transitive fast_lt`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[transitive_def] THEN MESON_TAC[fast_lt_trans]));;
 
 let irreflexive_fast_lt = prove
  (`irreflexive fast_lt`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[irreflexive_def; fast_lt_nonrefl]));;
 
 let trichotomous_fast_lt = prove
  (`trichotomous fast_lt`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[trichotomous; fast_lt_def] THEN REPEAT GEN_TAC THEN
+   ASM_CASES_TAC `strlen a = strlen b` THEN ASM_REWRITE_TAC[] THENL
+    [MESON_TAC[mlstring_lt_cases]; ASM_ARITH_TAC]));;
 
 let StrongLinearOrder_fast_lt = prove
  (`StrongLinearOrder fast_lt`,
@@ -956,7 +970,15 @@ let collate_aux_greater_thm = prove
 let collate_thm = prove
  (`!f s1 s2. collate f s1 s2 = mllist_collate f (explode s1) (explode
   s2)`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN REWRITE_TAC[mlstring_collate_def] THEN
+   REPEAT COND_CASES_TAC THEN
+   ASM_SIMP_TAC[collate_aux_greater_thm; collate_aux_equal_thm;
+                collate_aux_less_thm; ADD_CLAUSES; DROP_0] THEN
+   MP_TAC(SPECL [`f:char->char->ordering`; `s1:mlstring`;
+     `s2:mlstring`; `0`;
+                 `strlen s2`] collate_aux_equal_thm) THEN
+   REWRITE_TAC[DROP_0; ADD_CLAUSES] THEN DISCH_THEN MATCH_MP_TAC THEN
+   ASM_ARITH_TAC));;
 
 let char_escape_seq_def = new_definition
   `char_escape_seq c =

@@ -1,4 +1,10 @@
+evaluate_dec_add_to_clock_io_events_mono
+evaluate_dec_io_events_mono
+evaluate_decs_add_to_clock
+evaluate_decs_add_to_clock_io_events_mono
+evaluate_decs_add_to_clock_io_events_mono_alt
 evaluate_decs_io_events_mono
+evaluate_sing
 pmatch_length
 pmatch_rows_ignore_clock
 simple_val_rel_isClosure

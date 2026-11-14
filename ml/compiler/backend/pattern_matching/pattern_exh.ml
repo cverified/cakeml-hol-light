@@ -527,7 +527,7 @@ let pmatch_list_nil = prove
  (`pmatch_list refs [] [] = PMatchSuccess /\
    pmatch_list refs [] (CONS v vs) = PTypeFailure /\
    pmatch_list refs (CONS p ps) [] = PTypeFailure`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[pattern_semantics_pmatch_def]));;
 
 (* [local,simp] *)
 let pmatch_list_cons = prove
@@ -597,13 +597,16 @@ let MEM_spec_mats = prove
 let MEM_add_head = prove
  (`!yss x ys. MEM ys (add_head x yss) <=> (?zs. MEM zs yss /\ ys =
   CONS x zs)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[add_head_def; MEM] THEN
+    MESON_TAC[]));;
 
 (* [local,simp] *)
 let MEM_mk_prods = prove
  (`!xs yss zs. MEM zs (mk_prods xs yss) <=>
                (?x ys. MEM x xs /\ MEM ys yss /\ zs = CONS x ys)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_prods_def; MEM;
+    MEM_APPEND; MEM_add_head] THEN
+   MESON_TAC[]));;
 
 (* [local,simp] *)
 let MEM_mk_refs = prove
@@ -637,7 +640,10 @@ let MEM_mk_rows = prove
 (* [local] *)
 let LENGTH_expand_list = prove
  (`!ps qs. MEM qs (expand_list ps) ==> LENGTH qs = LENGTH ps`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[expand_def; MEM; MEM_mk_prods]
+    THEN
+   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[LENGTH] THEN RES_TAC THEN
+   ASM_REWRITE_TAC[]));;
 
 (* [local] *)
 let expand_thm = prove
@@ -752,7 +758,18 @@ let default_mat_MEM = prove
      MEM row (default_mat M) ==>
      (?r. MEM r M /\ pmatch_list refs row vs = pmatch_list refs r
        (CONS v vs))`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[default_mat_def; MEM; MEM_APPEND]
+    THEN
+   REPEAT STRIP_TAC THENL
+    [EXISTS_TAC `h:(pattern_semantics_pat)list` THEN REWRITE_TAC[]
+      THEN
+     MATCH_MP_TAC default_row_thm THEN ASM_REWRITE_TAC[];
+     FIRST_X_ASSUM (MP_TAC o SPECL
+       [`refs:(num,pattern_semantics_term)fmap`;
+       `v:pattern_semantics_term`;
+       `vs:pattern_semantics_term list`;
+       `row:(pattern_semantics_pat)list`]) THEN
+     ASM_REWRITE_TAC[] THEN MESON_TAC[]]));;
 
 
 (* ---------------------------------------------------------------------- *

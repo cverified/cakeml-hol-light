@@ -1,0 +1,5 @@
+### isWord_exists
+  (CASES_ON_TAC `x:(A)word_loc` THEN
+   REWRITE_TAC[isWord_def; injectivity "word_loc"; distinctness
+     "word_loc"] THEN
+   MESON_TAC[])

@@ -184,12 +184,16 @@ let mapPartial_thm = prove
 let index_find_thm = prove
  (`!x y. OPTION_MAP SND (INDEX_FIND x f l) = OPTION_MAP SND
   (INDEX_FIND y f l)`,
-  CHEAT_TAC);;
+  (SPEC_TAC(`l:A list`,`l:A list`) THEN LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[INDEX_FIND] THEN REPEAT GEN_TAC THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[OPTION_MAP]));;
 
 let FIND_thm = prove
  (`(FIND f [] = NONE) /\
    (!h t. FIND f (CONS h t) = (if f h then SOME h else FIND f t))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FIND; INDEX_FIND; OPTION_MAP] THEN REPEAT GEN_TAC THEN
+   COND_CASES_TAC THEN REWRITE_TAC[OPTION_MAP; index_find_thm] THEN
+   MATCH_ACCEPT_TAC index_find_thm));;
 
 let partition_aux_def,partition_aux_ind = define_rec
   [`partition_aux f [] pos neg =
@@ -247,7 +251,7 @@ let foldl_intro = prove
 let foldli_thm = prove
  (`!f e l. mllist_foldli f e l = FOLDRi (\n. f (LENGTH l - (SUC n))) e
   (REVERSE l)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[foldli_def; foldli_aux_thm; ADD_CLAUSES]));;
 
 (* these definitions are in A normal form in
    order to be able to prove CF specs about them
@@ -341,11 +345,25 @@ let map_rev_def = new_definition
 (* [local] *)
 let map_rev'_lemma = prove
  (`!acc. map_rev' f xs acc = APPEND (map_rev' f xs []) acc`,
-  CHEAT_TAC);;
+  (* map_rev' builds the reverse of the map in front of its
+     accumulator, which says what it is without recursing *)
+  (let gen = prove
+    (`!xs f acc. map_rev' f xs acc = APPEND (REVERSE (MAP f xs)) acc`,
+     LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[map_rev'_def; MAP; REVERSE; APPEND;
+                     GSYM APPEND_ASSOC]) in
+   REWRITE_TAC[ gen; APPEND_NIL]));;
 
 let map_rev_thm = prove
  (`map_rev f xs = REVERSE (MAP f xs)`,
-  CHEAT_TAC);;
+  (* map_rev' builds the reverse of the map in front of its
+     accumulator, which says what it is without recursing *)
+  (let gen = prove
+    (`!xs f acc. map_rev' f xs acc = APPEND (REVERSE (MAP f xs)) acc`,
+     LIST_INDUCT_TAC THEN
+     ASM_REWRITE_TAC[map_rev'_def; MAP; REVERSE; APPEND;
+                     GSYM APPEND_ASSOC]) in
+   REWRITE_TAC[map_rev_def; gen; APPEND_NIL]));;
 
 (* tail-recursive FILTER *)
 
@@ -360,11 +378,29 @@ let filter_rev_def = new_definition
 (* [local] *)
 let filter_rev'_lemma = prove
  (`!acc. filter_rev' P xs acc = APPEND (filter_rev' P xs []) acc`,
-  CHEAT_TAC);;
+  (* filter_rev' builds the reverse of the filter in front of its
+     accumulator, which says what it is without recursing *)
+  (let gen = prove
+    (`!xs P acc.
+        filter_rev' P xs acc = APPEND (REVERSE (FILTER P xs)) acc`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[filter_rev'_def; FILTER; REVERSE; APPEND] THEN
+     REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[REVERSE; APPEND; GSYM APPEND_ASSOC]) in
+   REWRITE_TAC[ gen; APPEND_NIL]));;
 
 let filter_rev_thm = prove
  (`filter_rev f xs = REVERSE (FILTER f xs)`,
-  CHEAT_TAC);;
+  (* filter_rev' builds the reverse of the filter in front of its
+     accumulator, which says what it is without recursing *)
+  (let gen = prove
+    (`!xs P acc.
+        filter_rev' P xs acc = APPEND (REVERSE (FILTER P xs)) acc`,
+     LIST_INDUCT_TAC THEN
+     REWRITE_TAC[filter_rev'_def; FILTER; REVERSE; APPEND] THEN
+     REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+     ASM_REWRITE_TAC[REVERSE; APPEND; GSYM APPEND_ASSOC]) in
+   REWRITE_TAC[filter_rev_def; gen; APPEND_NIL]));;
 
 (* tail-recursive FLAT *)
 

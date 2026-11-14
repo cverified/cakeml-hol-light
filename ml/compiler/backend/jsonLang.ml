@@ -37,7 +37,8 @@ hol4_overload "Int" "jsonLang_Int";;
 hol4_overload "Bool" "jsonLang_Bool";;
 hol4_overload "Null" "jsonLang_Null";;
 
-hol4_overload "++" "misc_Append";;
+(* HOL4 jsonLangScript.sml:24: the overload ++, which the port writes
+   as an application of misc_Append *)
 
 let _ = size_thms "app_list";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -48,7 +49,7 @@ let concat_with_def,concat_with_ind = define_wf
         match x1 with
           [] -> misc_List []
         | [s] -> s
-        | (CONS s ss) -> (misc_Append) s ((misc_Append) c
+        | (CONS s ss) -> misc_Append s (misc_Append c
           (concat_with ss c))`];;
 
 let printable_def = new_definition
@@ -82,13 +83,13 @@ let _ = size_thms "obj";;
 let json_to_mlstring_def,json_to_mlstring_ind = define_mutual_wf
   `MEASURE (sum_measure (\x0. obj_size x0) (\x0. obj_size3 x0))`
   [`json_to_mlstring obj =
-        (match obj with jsonLang_Object mems -> (misc_Append)
-          ((misc_Append) (misc_List [(implode "{")])
+        (match obj with jsonLang_Object mems -> misc_Append
+          (misc_Append (misc_List [(implode "{")])
                     (concat_with (MAP mem_to_string mems) (misc_List
                       [(implode ",")])))
                     (misc_List [(implode "}")]) | jsonLang_Array obs
-                      -> (misc_Append) ((misc_Append) (misc_List
-                      [(implode "[")])
+                      -> misc_Append (misc_Append (misc_List [(implode
+                      "[")])
                     (concat_with (MAP json_to_mlstring obs)
                       (misc_List [(implode ",")])))
                     (misc_List [(implode "]")]) | jsonLang_String
@@ -98,11 +99,9 @@ let json_to_mlstring_def,json_to_mlstring_ind = define_mutual_wf
                       misc_List [(implode "true")] else misc_List
                       [(implode "false")]) | jsonLang_Null ->
                       misc_List [(implode "null")])`;
-   `mem_to_string n_obj = (let (n,obj) = n_obj in (misc_Append)
+   `mem_to_string n_obj = (let (n,obj) = n_obj in misc_Append
   (misc_List [implode "\""; n; implode "\":"]) (json_to_mlstring
   obj))`];;
-
-hol4_only "++" "APPEND";;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

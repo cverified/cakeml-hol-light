@@ -98,8 +98,6 @@ let mpop_namedscope_def = new_definition
     We'll be using the option monad quite a bit in what follows
    ---------------------------------------------------------------------- *)
 
-hol4_overload "++" "OPTION_CHOICE";;
-
 (* HOL4 cmlPtreeConversionScript.sml:94: the overload lift, which the
    port expands *)
 
@@ -131,8 +129,8 @@ let ptree_UQTyop_def = define_cases
             [pt] ->
             OPTION_BIND (destLf pt) (\
               lf. OPTION_BIND (destTOK lf) (\
-              tk. APPEND (destSymbolT tk) (destAlphaT tk))) |
-                _5 -> NONE)`];;
+              tk. OPTION_CHOICE (destSymbolT tk) (destAlphaT
+                tk))) | _5 -> NONE)`];;
 
 let ptree_TyvarN_def = define_cases
   [`ptree_TyvarN (Lf _7) = NONE`;
@@ -153,9 +151,9 @@ let ptree_Tyop_def = define_cases
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTyOp) then NONE
         else
         match args with
-            [pt] -> APPEND (OPTION_BIND ((\f a. OPTION_BIND a f)
-              destLongidT ((\f a. OPTION_BIND a f) destTOK (destLf pt)))
-              (\
+            [pt] -> OPTION_CHOICE (OPTION_BIND ((\f a. OPTION_BIND a
+              f) destLongidT ((\f a. OPTION_BIND a f) destTOK (destLf
+              pt))) (\
               (xs,s).
               SOME (Long_Short xs s)))
             (OPTION_BIND (ptree_UQTyop pt) (\
@@ -239,7 +237,8 @@ let ptree_Type_def,ptree_Type_ind = define_mutual_wf
                               SOME (Atapp [dty] opname))) | _17 ->
                                 NONE else if nm = nTbase then
            match args with
-               [pt] -> APPEND (OPTION_MAP Atvar (destTyvarPT pt))
+               [pt] -> OPTION_CHOICE (OPTION_MAP Atvar (destTyvarPT
+                 pt))
                     (OPTION_MAP (Atapp []) (ptree_Tyop pt)) |
                       [lpart; t; rpart] ->
                   OPTION_IGNORE_BIND
@@ -335,8 +334,8 @@ let ptree_ConstructorName_def = new_definition
          (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nConstructorName)
            then NONE else
            match args with
-               [pt] -> APPEND (OPTION_BIND (ptree_UQConstructorName
-                 pt) (\
+               [pt] -> OPTION_CHOICE (OPTION_BIND
+                 (ptree_UQConstructorName pt) (\
                  s.
                  SOME (Short s)))
                (OPTION_BIND ((\f a. OPTION_BIND a f) destLongidT ((\f
@@ -363,7 +362,8 @@ let ptree_PTbase_def = new_definition
          Lf _32 -> NONE | Nd nt' args ->
          (if FST nt' = (INL:MMLnonT->MMLnonT+num) nPTbase then
            match args with
-               [pt] -> APPEND (OPTION_MAP Atvar (destTyvarPT pt))
+               [pt] -> OPTION_CHOICE (OPTION_MAP Atvar (destTyvarPT
+                 pt))
                  (OPTION_MAP (Atapp []) (ptree_Tyop pt)) | [lpart; t;
                    rpart] ->
                OPTION_IGNORE_BIND
@@ -472,8 +472,8 @@ let ptree_Op_def = define_general
           (validAddSym o explode) subs else if FST nt' =
           (INL:MMLnonT->MMLnonT+num) nListOps then singleSymP
           (validListSym o explode) subs else if FST nt' =
-          (INL:MMLnonT->MMLnonT+num) nRelOps then APPEND (singleSymP
-          (validRelSym o explode) subs)
+          (INL:MMLnonT->MMLnonT+num) nRelOps then OPTION_CHOICE
+          (singleSymP (validRelSym o explode) subs)
         (OPTION_IGNORE_BIND (OPTION_GUARD (tokcheckl subs
           [tokens_EqualsT])) (SOME (Short (implode "=")))) else if FST
           nt' = (INL:MMLnonT->MMLnonT+num) nCompOps then
@@ -490,8 +490,8 @@ let ptree_V_def = define_cases
              (
            match subs with
               [pt] -> OPTION_BIND ((\f a. OPTION_BIND a f)
-                destTOK (destLf pt)) (\t. APPEND (destAlphaT t)
-                (destSymbolT t)) | _47 -> NONE)`];;
+                destTOK (destLf pt)) (\t. OPTION_CHOICE (destAlphaT
+                t) (destSymbolT t)) | _47 -> NONE)`];;
 
 let ptree_FQV_def = define_cases
   [`ptree_FQV (Lf _49) = NONE`;
@@ -499,7 +499,7 @@ let ptree_FQV_def = define_cases
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nFQV) then NONE
         else
         match args with
-            [pt] -> APPEND (OPTION_MAP Short (ptree_V pt))
+            [pt] -> OPTION_CHOICE (OPTION_MAP Short (ptree_V pt))
                     (OPTION_BIND ((\f a. OPTION_BIND a f)
                       destLongidT ((\f a. OPTION_BIND a f) destTOK
                       (destLf pt))) (\
@@ -539,8 +539,9 @@ let ptree_OpID_def = define_cases
         match subs with
             [Lf
               ((grammar_TOK:tokens_token->(tokens_token
-              ,MMLnonT)grammar_symbol) tk,_55)] -> APPEND (APPEND
-              (APPEND (OPTION_BIND (destAlphaT tk) (\
+              ,MMLnonT)grammar_symbol) tk,_55)] -> OPTION_CHOICE
+              (OPTION_CHOICE (OPTION_CHOICE (OPTION_BIND (destAlphaT tk)
+              (\
                 s.
                 ifM (isConstructor (explode s))
                     (SOME (ast_Con (SOME (Short s)) []))
@@ -590,8 +591,8 @@ let ptree_Pattern_def,ptree_Pattern_ind = define_mutual_wf
         (if ~((INL:MMLnonT->MMLnonT+num) nt' = FST nm) then NONE
           else if FST nm = (INL:MMLnonT->MMLnonT+num) nPbase then
           match args with
-              [vic] -> APPEND (APPEND (APPEND (APPEND (ptree_Pattern
-                nPtuple vic)
+              [vic] -> OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+                (OPTION_CHOICE (ptree_Pattern nPtuple vic)
               (OPTION_BIND (ptree_ConstructorName vic) (\
                  cname.
                  SOME (ast_Pcon (SOME cname) []))))
@@ -600,8 +601,8 @@ let ptree_Pattern_def,ptree_Pattern_ind = define_mutual_wf
               (OPTION_BIND (destLf vic) (\
                 lf. OPTION_BIND (destTOK lf) (\
                 t.
-                (APPEND (APPEND (OPTION_BIND (destIntT t) (\i. SOME
-                  (ast_Plit (ast_IntLit i))))
+                (OPTION_CHOICE (OPTION_CHOICE (OPTION_BIND (destIntT
+                  t) (\i. SOME (ast_Plit (ast_IntLit i))))
                  (OPTION_BIND (destStringT t) (\s. SOME (ast_Plit
                    (ast_StrLit s)))))
                  (OPTION_BIND (destCharT t) (\c. SOME (ast_Plit
@@ -813,8 +814,8 @@ let ptree_Eliteral_def = define_cases
           (HD subs)) (\
         lf. OPTION_BIND (destTOK lf) (\
         t.
-        (APPEND (APPEND (APPEND (APPEND (OPTION_BIND (destIntT t)
-          (\i. SOME (ast_Lit (ast_IntLit i))))
+        (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+          (OPTION_BIND (destIntT t) (\i. SOME (ast_Lit (ast_IntLit i))))
          (OPTION_BIND (destCharT t) (\c. SOME (ast_Lit (ast_Char
            c)))))
          (OPTION_BIND (destStringT t) (\s. SOME (ast_Lit (ast_StrLit
@@ -837,7 +838,7 @@ let letFromPat_def = new_definition
          (SOME v) rhs body | _79 -> ast_Mat rhs [(p,body)])`;;
 
 let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
-  "termination (CHEAT_TAC)"
+  "the port cannot make this definition"
   [`ptree_Expr ent (Lf _80) = NONE`;
    `ptree_Expr ent (Nd (nt',loc) subs) =
     OPTION_BIND (if (INL:MMLnonT->MMLnonT+num) ent = nt' then
@@ -859,13 +860,13 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
                       (implode "::"))) [e; acc])
                            elist
                               (ast_Con (SOME (Short (implode "[]")))
-                                []))))) | [single] -> APPEND (APPEND
-                                (APPEND (ptree_Eliteral single)
-                (OPTION_BIND (ptree_FQV single) (\
-                  s.
-                  SOME (ast_Var s))))
-                (OPTION_BIND (ptree_ConstructorName single) (\cname.
-                   SOME (ast_Con (SOME cname) []))))
+                                []))))) | [single] -> OPTION_CHOICE
+                                (OPTION_CHOICE (OPTION_CHOICE
+                                (ptree_Eliteral single) (OPTION_BIND
+                                (ptree_FQV single) (\s. SOME (ast_Var
+                                s)))) (OPTION_BIND
+                                (ptree_ConstructorName single) (\cname.
+                                SOME (ast_Con (SOME cname) []))))
                 (ptree_Expr nEtuple single) | [lp; rp] -> (if
                   tokcheckl [lp; rp] [tokens_LparT; tokens_RparT] then
                            SOME (ast_Con NONE []) else if tokcheckl
@@ -1002,13 +1003,11 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
                   (OPTION_BIND (ptree_Expr nE ept) (\
                 e.
                 SOME (ast_Raise e))) | [fnt; pnt'; arrowt; ent] ->
-                  APPEND (OPTION_IGNORE_BIND
-                (OPTION_GUARD (tokcheckl [fnt; arrowt] [tokens_FnT;
+                  OPTION_CHOICE (OPTION_IGNORE_BIND (OPTION_GUARD
+                  (tokcheckl [fnt; arrowt] [tokens_FnT;
                   tokens_DarrowT])) (OPTION_BIND (ptree_Pattern nPattern
-                  pnt') (\
-                p. OPTION_BIND (ptree_Expr nE ent) (\
-                e.
-                SOME (mkFun p e))))) (OPTION_IGNORE_BIND
+                  pnt') (\p. OPTION_BIND (ptree_Expr nE ent) (\e. SOME
+                  (mkFun p e))))) (OPTION_IGNORE_BIND
                 (OPTION_GUARD (tokcheckl [fnt; arrowt]
                   [tokens_CaseT; tokens_OfT])) (OPTION_BIND (ptree_Expr
                   nE pnt') (\
@@ -1129,23 +1128,21 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
    `ptree_PE (Nd (nt',_115) args) =
          (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nPE) then NONE else
            match args with
-               [eorraise_pt; pesfx_pt] -> APPEND (OPTION_IGNORE_BIND
-                 (OPTION_GUARD (tokcheck eorraise_pt tokens_RaiseT))
-                   (OPTION_BIND (ptree_PE pesfx_pt) (\
-                 (e,pes).
-                 SOME (ast_Raise e,pes))))
+               [eorraise_pt; pesfx_pt] -> OPTION_CHOICE
+                 (OPTION_IGNORE_BIND (OPTION_GUARD (tokcheck eorraise_pt
+                 tokens_RaiseT)) (OPTION_BIND (ptree_PE pesfx_pt)
+                 (\(e,pes). SOME (ast_Raise e,pes))))
                (OPTION_BIND (ptree_Expr nElogicOR eorraise_pt) (\
                  e. OPTION_BIND (ptree_PEsfx pesfx_pt) (\
                  (handlep,pes).
                  SOME (if handlep then (ast_Handle e pes,[]) else
                    (e,pes))))) | [fncase_tok; epat_pt; arrowof_tok;
-                   last_pt] -> APPEND (OPTION_IGNORE_BIND
-                 (OPTION_GUARD (tokcheckl [fncase_tok; arrowof_tok]
+                   last_pt] -> OPTION_CHOICE (OPTION_IGNORE_BIND
+                   (OPTION_GUARD (tokcheckl [fncase_tok; arrowof_tok]
                    [tokens_FnT; tokens_DarrowT])) (OPTION_BIND
-                   (ptree_Pattern nPattern epat_pt) (\
-                 pat. OPTION_BIND (ptree_Expr nE last_pt) (\
-                 e.
-                 SOME (mkFun pat e,[])))))
+                   (ptree_Pattern nPattern epat_pt) (\pat. OPTION_BIND
+                   (ptree_Expr nE last_pt) (\e. SOME (mkFun pat
+                   e,[])))))
                (OPTION_IGNORE_BIND
                  (OPTION_GUARD (tokcheckl [fncase_tok; arrowof_tok]
                    [tokens_CaseT; tokens_OfT])) (OPTION_BIND (ptree_Expr
@@ -1168,12 +1165,10 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
          (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nPEsfx) then NONE
            else
            match args with
-               [] -> SOME (F,[]) | [handlebar_tok; pes_pt] -> APPEND
-                 (OPTION_IGNORE_BIND
-                 (OPTION_GUARD (tokcheck handlebar_tok
-                   tokens_HandleT)) (OPTION_BIND (ptree_PEs pes_pt) (\
-                 pes.
-                 SOME (T,pes))))
+               [] -> SOME (F,[]) | [handlebar_tok; pes_pt] ->
+                 OPTION_CHOICE (OPTION_IGNORE_BIND (OPTION_GUARD
+                 (tokcheck handlebar_tok tokens_HandleT)) (OPTION_BIND
+                 (ptree_PEs pes_pt) (\pes. SOME (T,pes))))
                (OPTION_IGNORE_BIND
                  (OPTION_GUARD (tokcheck handlebar_tok tokens_BarT))
                    (OPTION_BIND (ptree_PEs pes_pt) (\
@@ -1201,7 +1196,8 @@ let dumb1 = prove
 (* [local] *)
 let dumb2 = prove
  (`COND gd t NONE = OPTION_IGNORE_BIND (OPTION_GUARD gd) t`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN BOOL_CASES_TAC `gd:bool` THEN
+   REWRITE_TAC[OPTION_IGNORE_BIND; OPTION_GUARD; OPTION_BIND]));;
 (* HOL4 cmlPtreeConversionScript.sml:1259-1262: a theorem that HOL4
    states as the value of an ML expression: ptree_Expr_def' *)
 
@@ -1323,12 +1319,12 @@ let ptree_Decl_def,ptree_Decl_ind = define_mutual_wf
            (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nDecl) then NONE
              else
              match args with
-                 [dt] -> APPEND (APPEND (OPTION_BIND (ptree_TypeDec
-                   dt) (\
+                 [dt] -> OPTION_CHOICE (OPTION_CHOICE (OPTION_BIND
+                   (ptree_TypeDec dt) (\
                    tydec.
                    SOME (Dtype (locs) tydec))) (ptree_TypeAbbrevDec
                      dt)) (ptree_Structure dt) | [funtok; fdecls] ->
-                     APPEND (OPTION_IGNORE_BIND
+                     OPTION_CHOICE (OPTION_IGNORE_BIND
                    (OPTION_GUARD (tokcheck funtok tokens_FunT))
                      (OPTION_BIND (ptree_AndFDecls fdecls) (\
                    fdecs.
@@ -1445,8 +1441,6 @@ let ptree_TopLevelDecs_def,ptree_TopLevelDecs_ind = define_mutual_wf
                  td. OPTION_BIND (ptree_NonETopLevelDecs pt2) (\
                  tds.
                  SOME (CONS td tds)))) | _150 -> NONE)`];;
-
-hol4_only "++" "APPEND";;
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant

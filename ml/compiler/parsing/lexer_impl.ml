@@ -223,7 +223,11 @@ let next_sym_alt_def,next_sym_alt_ind = define_guess
 let EVERY_isDigit_imp = prove
  (`ALL isDigit x ==>
    MAP UNHEX x = MAP unhex_alt x`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; MAP; CONS_11] THEN STRIP_TAC
+    THEN
+   ASM_SIMP_TAC[unhex_alt_def] THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[isDigit]) THEN
+   ASM_REWRITE_TAC[isHexDigit]));;
 
 (* [local] *)
 let toNum_rw = prove
@@ -247,7 +251,7 @@ let num_from_hex_string_rw = prove
 let EVERY_IMPLODE = prove
  (`!ls P.
      ALL P (IMPLODE ls) <=> ALL P ls`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[IMPLODE; ALL]));;
 
 (* [local] *)
 let read_while_P_lem = prove

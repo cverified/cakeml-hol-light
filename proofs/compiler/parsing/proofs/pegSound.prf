@@ -15,3 +15,7 @@
 
 ### pair_EQ_components
   (MESON_TAC[PAIR; FST; SND])
+
+### pmap_EQ_pair
+  (REWRITE_TAC[FORALL_PAIR_THM; PAIR_MAP_THM; PAIR_EQ] THEN
+    MESON_TAC[])

@@ -13,8 +13,6 @@ needs "lib/peg.ml";;
 let _ = hol4_lib ();;
 (* HOL4 ancestors outside the port: string *)
 
-hol4_overload "++" "OPTION_CHOICE";;
-
 let simpleSexp_sexp_INDUCT,simpleSexp_sexp_RECURSION = define_datatype
   "simpleSexp_sexp = SX_CONS (simpleSexp_sexp) (simpleSexp_sexp) | \
    SX_SYM (string) | SX_NUM (num) | SX_STR (string)";;
@@ -134,5 +132,3 @@ let sexpG_def = new_definition
   (INL sxnt_symchars,({[grammar_NT (INL sxnt_symchar); grammar_NT
   (INL sxnt_symchars)]} UNION {[]})) |+ (INL
   sxnt_symchar,{[grammar_TOK (c)] | valid_symchar c}))`;;
-
-hol4_only "++" "APPEND";;

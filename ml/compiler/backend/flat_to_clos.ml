@@ -536,12 +536,16 @@ let inc_compile_decs_def = new_definition
 
 let LENGTH_compile = prove
  (`!m xs. LENGTH (flat_to_clos_compile m xs) = LENGTH xs`,
-  CHEAT_TAC);;
+  (MATCH_MP_TAC flat_to_clos_compile_ind THEN
+   REWRITE_TAC[flat_to_clos_compile_def; LENGTH; LENGTH_APPEND] THEN
+   CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[LENGTH] THEN
+   REPEAT STRIP_TAC THEN TRY (POP_ASSUM MP_TAC) THEN
+   EVERY_CASE_TAC THEN ASM_SIMP_TAC[LENGTH] THEN ARITH_TAC));;
 
 (* [simp] *)
 let compile_NOT_NIL = prove
  (`~(flat_to_clos_compile m (CONS x xs) = [])`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[GSYM LENGTH_EQ_NIL; LENGTH_compile; LENGTH; NOT_SUC]));;
 
 (* [simp] *)
 let HD_compile = prove

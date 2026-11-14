@@ -1,0 +1,30 @@
+#!/bin/sh
+# lightcake-cycle : the whole fill loop over the port.  It fills
+# every theory both ports have, writes the files, loads the whole
+# port with every theorem in a try, takes out again what did not
+# go through, and writes the files once more.
+#
+# This is a _run_ and takes some hours; nothing may write into
+# ml/ while it goes.  The two halves are worth having on their
+# own: tools/bin/lightcake-fill <theory> does one file with its
+# own check in a few minutes, and this does all of them with one
+# check.
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+cd $C
+. tools/holenv.sh > /dev/null 2>&1
+echo "--- the fills ---"
+python3 -I tools/lightcake.py fillall | tail -1
+python3 -I tools/portall.py | tail -1
+python3 -I tools/lines.py | tail -1
+echo "--- the check ---"
+date +%H:%M
+TIMEOUT=${TIMEOUT:-1800} harvestall
+date +%H:%M
+grep -c 'Exception\|Error:' tmp/cs.out
+echo "--- what did not go through ---"
+python3 -I tools/dropfails.py
+python3 -I tools/portall.py | tail -1
+python3 -I tools/lines.py | tail -1
+find proofs -name '*.prf' -exec grep -c '^### ' {} + |
+  awk -F: '{s+=$2} END {print s" proofs in the store"}'

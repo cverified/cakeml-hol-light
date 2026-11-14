@@ -3238,8 +3238,8 @@ let soundness_size_of = prove
        no_thunks_in_refs refs /\
        ALL2 (\v x. v_inv c v refs (x,f,tf,heap)) root_vars vars' /\
        PERM roots root_vars /\ good_dimindex (:'a) /\
-       IMAGE ((FAPPLY) tf) (domain s1) SUBSET set_of_list p1 /\
-       IMAGE ((FAPPLY) f) (domain refs DIFF domain r1) SUBSET
+       IMAGE (FAPPLY tf) (domain s1) SUBSET set_of_list p1 /\
+       IMAGE (FAPPLY f) (domain refs DIFF domain r1) SUBSET
          set_of_list p1 /\
        FDOM f SUBSET domain refs /\ subspt r1 refs /\
        (limits_arch_64_bit lims <=> dimindex (:'a) = 64) /\
@@ -3247,10 +3247,9 @@ let soundness_size_of = prove
        (?p2. SUM (MAP (lookup_len heap) p2) <= n2 + SUM (MAP
          (lookup_len heap) p1) /\
             traverse_heap heap p1 vars' p2 /\ subspt r2 refs /\
-            IMAGE ((FAPPLY) tf) (domain s2) SUBSET set_of_list p2
-              /\
-            IMAGE ((FAPPLY) f) (domain refs DIFF domain r2)
-              SUBSET set_of_list p2)`),
+            IMAGE (FAPPLY tf) (domain s2) SUBSET set_of_list p2 /\
+            IMAGE (FAPPLY f) (domain refs DIFF domain r2) SUBSET
+              set_of_list p2)`),
   CHEAT_TAC);;
 
 let traverse_heap_reachable_set_mono = prove

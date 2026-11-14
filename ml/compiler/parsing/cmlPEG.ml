@@ -683,7 +683,8 @@ let cmlPEG_def = new_definition
 (* [local] *)
 let frange_image = prove
  (`FRANGE fm = IMAGE (FAPPLY fm) (FDOM fm)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FRANGE; EXTENSION; IN_ELIM_THM; IN_IMAGE] THEN
+    MESON_TAC[]));;
 
 (* HOL4 cmlPEGScript.sml:594-597: ML code, not ported *)
 

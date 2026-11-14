@@ -34,8 +34,6 @@ let _ = hol4_ancestors "unify"
   ["infer_t"];;
 (* HOL4 ancestors outside the port: unifProps transfer cps *)
 
-hol4_overload "++" "OPTION_CHOICE";;
-
 (* HOL4 unifyScript.sml:20-21: ML code, not ported *)
 
 (* I_o_f[local,simp] *)
@@ -1208,7 +1206,9 @@ let t_walk_eqn = prove
  (`(!s v. t_walk s (Infer_Tuvar v) = t_vwalk s v) /\
    (!s ts tc. t_walk s (Infer_Tapp ts tc) = Infer_Tapp ts tc) /\
    (!s n. t_walk s (Infer_Tvar_db n) = Infer_Tvar_db n)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[t_walk_def; walk_thm; t_vwalk_def; encode_infer_t_def]
+    THEN
+   REWRITE_TAC[GSYM encode_infer_t_def; decode_left_inverse]));;
 
 let t_oc_def = new_definition
   `t_oc s t v = oc (encode_infer_t o_f s) (encode_infer_t t) v`;;
@@ -1273,7 +1273,9 @@ let encode_walk = prove
  (`!s. t_wfs s ==>
        (!t. walk (encode_infer_t o_f s) (encode_infer_t t) =
          encode_infer_t (t_walk s t))`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN CASES_ON_TAC `t:infer_t` THEN
+   ASM_SIMP_TAC[encode_infer_t_def; walk_thm; t_walk_eqn;
+     encode_vwalk]));;
 
 (* [local] *)
 let encode_pair_cases = prove
@@ -1462,7 +1464,28 @@ let t_unify_strongind' = prove
         P1 s ts1 ts2) ==>
      (!s t1 t2. t_wfs s ==> (t_wfs s ==> P0 s t1 t2)) /\
      (!s ts1 ts2. t_wfs s ==> (t_wfs s ==> P1 s ts1 ts2))`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN
+   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "H0") (LABEL_TAC "H1")) THEN
+   MATCH_MP_TAC t_unify_ind THEN CONJ_TAC THEN REPEAT GEN_TAC THEN
+   DISCH_THEN(LABEL_TAC "ih") THEN DISCH_TAC THENL
+    [USE_THEN "H0" MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
+     REPEAT STRIP_TAC THEN
+     USE_THEN "ih" (MATCH_MP_TAC o REWRITE_RULE[IMP_IMP] o SPEC_ALL)
+       THEN
+     ASM_MESON_TAC[];
+     USE_THEN "H1" MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN CONJ_TAC
+       THEN
+     REPEAT STRIP_TAC THENL
+      [USE_THEN "ih" (MATCH_MP_TAC o CONJUNCT1 o
+        REWRITE_RULE[IMP_IMP; FORALL_AND_THM;
+                                         TAUT `a ==> b /\ c <=> (a
+                                           ==> b) /\ (a ==> c)`]);
+       USE_THEN "ih" (MATCH_MP_TAC o CONJUNCT2 o
+         REWRITE_RULE[IMP_IMP; FORALL_AND_THM;
+                                         TAUT `a ==> b /\ c <=> (a
+                                           ==> b) /\ (a ==> c)`])]
+                                           THEN
+     ASM_MESON_TAC[t_unify_unifier]]));;
 
 (* HOL4 unifyScript.sml:2778-2779: a theorem that HOL4 states as the
    value of an ML expression: t_unify_strongind *)
@@ -1620,7 +1643,8 @@ let t_walk_vwalk_id = prove
 let t_walk_walk_id = prove
  (`t_wfs s ==>
     t_walk s (t_walk s h) = t_walk s h`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN CASES_ON_TAC `h:infer_t` THEN
+   ASM_SIMP_TAC[t_walk_eqn; t_walk_vwalk_id]));;
 
 let eqs_t_unify = prove
  (`t_wfs s /\ t_wfs s2 /\
@@ -1673,8 +1697,6 @@ let t_compat_eqs_t_unify = prove
       t_compat s sx /\ (t_walkstar sx t1 = t_walkstar sx t2) ==>
       (?si. (t_unify s t1 t2 = SOME si) /\ t_compat si sx)`,
   CHEAT_TAC);;
-
-hol4_only "++" "APPEND";;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

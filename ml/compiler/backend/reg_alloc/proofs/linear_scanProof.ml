@@ -35,8 +35,6 @@ let _ = hide_overloads
 
 (* HOL4 linear_scanProofScript.sml:12-13: ML code, not ported *)
 
-hol4_overload "++" "otherwise";;
-
 (* TODO: clean up this file: e.g., move things upstream *)
 
 let set_MAP_FST_toAList_eq_domain = prove
@@ -2238,8 +2236,6 @@ let linear_scan_reg_alloc_correct = prove
      ALL (\(r1,r2). (sp_default col) r1 = (sp_default col) r2 ==>
        r1 = r2) forced)`,
   CHEAT_TAC);;
-
-hol4_only "++" "APPEND";;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

@@ -1,7 +1,10 @@
+FLAT_EQ_CONS
 disjImpI
 elim_det
 elim_disjineq
 leftLoc_merge_locs
+merge_list_locs_HDLAST
 merge_locs_LR
+pmap_EQ
 ptree_loc_mkNd
 rightLoc_merge_locs

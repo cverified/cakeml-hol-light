@@ -312,10 +312,10 @@ let SUBMAP_mono_FUPDATE_LIST = prove
   CHEAT_TAC);;
 
 let INJ_FAPPLY_FUPDATE = prove
- (`INJ ((FAPPLY) f) (FDOM f) (FRANGE f) /\
+ (`INJ (FAPPLY f) (FDOM f) (FRANGE f) /\
    s = k INSERT FDOM f /\ ~(v IN FRANGE f) /\
    t = v INSERT FRANGE f ==>
-   INJ ((FAPPLY) (f |+ (k,v))) s t`,
+   INJ (FAPPLY (f |+ (k,v))) s t`,
   CHEAT_TAC);;
 
 (* used in only one place: stack_to_labProof *)
@@ -1260,11 +1260,11 @@ let EXP2_EVEN = prove
   CHEAT_TAC);;
 
 let FST_UNZIP_MAPi = prove
- (`!l f. FST (UNZIP (MAPi f l)) = MAPi ((o) ((o) FST) f) l`,
+ (`!l f. FST (UNZIP (MAPi f l)) = MAPi (o (o FST) f) l`,
   CHEAT_TAC);;
 
 let SND_UNZIP_MAPi = prove
- (`!l f. SND (UNZIP (MAPi f l)) = MAPi ((o) ((o) SND) f) l`,
+ (`!l f. SND (UNZIP (MAPi f l)) = MAPi (o (o SND) f) l`,
   CHEAT_TAC);;
 
 let ALL_DISTINCT_FLAT = prove

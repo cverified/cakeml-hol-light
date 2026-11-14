@@ -275,13 +275,15 @@ let ADDR_MAP_EQ = prove
 
 let ADDR_MAP_LENGTH = prove
  (`!xs f. LENGTH xs = LENGTH (ADDR_MAP f xs)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN TRY (CASES_ON_TAC `h:A heap_address`) THEN
+   REWRITE_TAC[ADDR_MAP_def; LENGTH; SUC_INJ] THEN ASM_MESON_TAC[]));;
 
 let ADDR_MAP_APPEND = prove
  (`!h1 h2 f.
     ADDR_MAP f (APPEND h1 h2) = APPEND (ADDR_MAP f h1) (ADDR_MAP f
       h2)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN TRY (CASES_ON_TAC `h:A heap_address`) THEN
+   ASM_REWRITE_TAC[ADDR_MAP_def; APPEND]));;
 
 let ADDR_APPLY_def = define_cases
   [`ADDR_APPLY f (gc_shared_Pointer x d) = gc_shared_Pointer (f x) d`;
@@ -400,7 +402,10 @@ let MEM_ADDR_MAP = prove
  (`!xs f ptr u. MEM (gc_shared_Pointer ptr u) (ADDR_MAP f xs) ==>
                  (?y. MEM (gc_shared_Pointer y u) xs /\ (f y =
                    ptr))`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN TRY (CASES_ON_TAC `h:A heap_address`) THEN
+   REWRITE_TAC[ADDR_MAP_def; MEM; injectivity "heap_address";
+               distinctness "heap_address"] THEN
+   ASM_MESON_TAC[]));;
 
 let heap_length_heap_expand = prove
  (`!n. heap_length (heap_expand n) = n`,
@@ -417,7 +422,8 @@ let EVERY_isDataElement_IMP_LEMMA = prove
 let isSome_heap_looukp_IMP_APPEND = prove
  (`!xs ptr. isSomeDataElement (heap_lookup ptr xs) ==>
              isSomeDataElement (heap_lookup ptr (APPEND xs ys))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[isSomeDataElement_def] THEN
+   MESON_TAC[heap_lookup_EXTEND]));;
 
 let heap_split_APPEND_if = prove
  (`!h1 n h2. heap_split n (APPEND h1 h2) =
@@ -432,7 +438,8 @@ let heap_split_APPEND_if = prove
 (* [simp] *)
 let heap_split_0 = prove
  (`heap_split 0 h = SOME ([],h)`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN CASES_ON_TAC `h:((A,B)heap_element)list` THEN
+   REWRITE_TAC[heap_split_def]));;
 
 (* --- *)
 
@@ -467,7 +474,9 @@ let heap_addresses_LESS_heap_length = prove
 
 let heap_addresses_LESS = prove
  (`!heap n k. k IN heap_addresses n heap ==> n <= k`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN
+   REWRITE_TAC[heap_addresses_def; NOT_IN_EMPTY; IN_INSERT] THEN
+   REPEAT STRIP_TAC THEN RES_TAC THEN ASM_ARITH_TAC));;
 
 let FINITE_heap_addresses = prove
  (`!xs n. FINITE (heap_addresses n xs)`,

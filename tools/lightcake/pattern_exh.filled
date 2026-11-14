@@ -1,11 +1,15 @@
 LENGTH_anys
 LENGTH_dest_val
+LENGTH_expand_list
+MEM_add_head
 MEM_ctor_keep
 MEM_ctor_nub
 MEM_mk_conses
+MEM_mk_prods
 MEM_mk_refs
 MEM_mk_rows
 MEM_spec_mats
+default_mat_MEM
 exh_mats_append
 exh_rows_eq
 exh_steps_list_append
@@ -14,3 +18,4 @@ mat_weight_append
 pats_weight_anys
 pats_weight_append
 pmatch_Any
+pmatch_list_nil

@@ -18,3 +18,31 @@
 
 ### simple_val_rel_isClosure
   (REWRITE_TAC[flatProps_simple_val_rel_def] THEN MESON_TAC[])
+
+### evaluate_dec_add_to_clock_io_events_mono
+  (REWRITE_TAC[flatProps_evaluate_add_to_clock_io_events_mono])
+
+### evaluate_dec_io_events_mono
+  (REWRITE_TAC[flatProps_evaluate_io_events_mono])
+
+### evaluate_decs_add_to_clock
+  (REPEAT STRIP_TAC THEN
+   MATCH_MP_TAC (CONJUNCT2 (CONJUNCT2
+     flatProps_evaluate_add_to_clock)) THEN
+   ASM_REWRITE_TAC[])
+
+### evaluate_decs_add_to_clock_io_events_mono
+  (REWRITE_TAC[flatProps_evaluate_add_to_clock_io_events_mono])
+
+### evaluate_decs_add_to_clock_io_events_mono_alt
+  (REPEAT STRIP_TAC THEN
+   MP_TAC(ISPECL [`ds:flatLang_exp list`;
+     `s:(C,ast_FFI)flatSem_state`; `extra:num`]
+            flatProps_evaluate_decs_add_to_clock_io_events_mono) THEN
+   ASM_REWRITE_TAC[FST])
+
+### evaluate_sing
+  (REPEAT STRIP_TAC THEN FIRST_ASSUM(MP_TAC o MATCH_MP
+    flatProps_evaluate_length) THEN
+   REWRITE_TAC[LENGTH; LENGTH_EQ_CONS; LENGTH_EQ_NIL] THEN
+     MESON_TAC[])

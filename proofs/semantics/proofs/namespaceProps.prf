@@ -1,2 +1,11 @@
 ### lemma
   (MESON_TAC[cases "option"; distinctness "option"])
+
+### alistSub_cong
+  (REPEAT GEN_TAC THEN
+   DISCH_THEN(CONJUNCTS_THEN2 SUBST1_TAC
+               (CONJUNCTS_THEN2 SUBST1_TAC ASSUME_TAC)) THEN
+   REWRITE_TAC[alistSub_def] THEN
+   SPEC_TAC(`MAP FST (l1':(A#B)list)`,`keys:A list`) THEN
+   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[alist_rel_restr_def] THEN
+   EVERY_CASE_TAC THEN ASM_MESON_TAC[])

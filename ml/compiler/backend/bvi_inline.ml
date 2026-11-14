@@ -198,7 +198,7 @@ let final_tick_cleanup_example = prove
          0])))):bvi_exp) =
      Call 0 (SOME 10) [Var 0]
        (SOME (bvi_LetCall 1 0 11 [Var 1] (bvi_Return [Var 0])))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[remove_ticks_exp_def; OPTION_MAP]));;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

@@ -42,3 +42,6 @@
 
 ### not_v_has_Eval_EVERY_EL
   (REWRITE_TAC[GSYM ALL_EL; o_THM] THEN MESON_TAC[])
+
+### find_v_globals_Unitv
+  (REWRITE_TAC[unitv_def; find_v_globals_def])

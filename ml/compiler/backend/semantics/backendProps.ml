@@ -63,20 +63,25 @@ let pure_co_def = new_definition
 (* [simp] *)
 let SND_pure_co = prove
  (`SND (pure_co co x) = co (SND x)`,
-  CHEAT_TAC);;
+  (CASES_ON_TAC `x:C#P` THEN REWRITE_TAC[pure_co_def; PAIR_MAP_THM;
+    SND]));;
 
 (* [simp] *)
 let FST_pure_co = prove
  (`FST (pure_co co x) = FST x`,
-  CHEAT_TAC);;
+  (CASES_ON_TAC `x:C#P` THEN REWRITE_TAC[pure_co_def; PAIR_MAP_THM;
+    FST; I_THM]));;
 
 let pure_co_comb_pure_co = prove
  (`pure_co f o pure_co g o co = pure_co (f o g) o co`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FUN_EQ_THM; o_THM; pure_co_def] THEN GEN_TAC THEN
+   CASES_ON_TAC `(co:A->C#P) x` THEN REWRITE_TAC[PAIR_MAP_THM; I_THM;
+     o_THM]));;
 
 let pure_co_I = prove
  (`pure_co I = I`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM; pure_co_def;
+    PAIR_MAP_THM; I_THM]));;
 
 let pure_cc_I = prove
  (`pure_cc I = I`,
@@ -118,7 +123,25 @@ let oracle_monotonic_shift_subset = prove
      (!n. f' (co' n) SUBSET (IMAGE ((+) i) (f (co n))))) ==>
    oracle_monotonic f (<) St co ==>
    oracle_monotonic f' (<) St' co'`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[oracle_monotonic_def; SUBSET; IN_UNION; IN_IMAGE;
+    count_def;
+               IN_ELIM_THM] THEN
+   REPEAT STRIP_TAC THENL
+    [SUBGOAL_THEN `?x0. x = i + x0 /\ x0 IN (f:A->num->bool)
+      ((co:num->A) i')`
+     STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+     SUBGOAL_THEN `?y0. y = i + y0 /\ y0 IN (f:A->num->bool)
+       ((co:num->A) j)`
+     STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+     ASM_REWRITE_TAC[LT_ADD_LCANCEL] THEN ASM_MESON_TAC[];
+     SUBGOAL_THEN `?y0. y = i + y0 /\ y0 IN (f:A->num->bool)
+       ((co:num->A) i')`
+     STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+     SUBGOAL_THEN `(?x0. x = i + x0 /\ x0 IN St) \/ x < i`
+       STRIP_ASSUME_TAC THENL
+      [ASM_MESON_TAC[];
+       ASM_REWRITE_TAC[LT_ADD_LCANCEL] THEN ASM_MESON_TAC[];
+       ASM_ARITH_TAC]]));;
 
 let oracle_monotonic_shift_seq = prove
  (`!i. (oracle_monotonic f R St co /\ i > 0 /\
@@ -252,7 +275,14 @@ let oracle_monotonic_state_with_inv_init = prove
      (!cfg x. x IN f (cfg,prog') ==> n_f st <= x /\ x < n_f st')) /\
    is_state_oracle f_inc orac ==>
    oracle_monotonic f (<) (St:num->bool) (state_co f_inc orac)`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN STRIP_TAC THEN
+   MATCH_MP_TAC oracle_monotonic_state_with_inv THEN
+   MAP_EVERY EXISTS_TAC [`P:S->bool`; `n_f:S->num`] THEN
+   FIRST_ASSUM(MP_TAC o SPECL [`st0:S`; `prog0:Q`; `st:S`; `prog:R`]
+     o
+     check (is_forall o concl)) THEN
+   ANTS_TAC THENL [ASM_REWRITE_TAC[]; STRIP_TAC] THEN
+   ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[SUBSET]));;
 
 (* HOL4 backendPropsScript.sml:348-349: a theorem that HOL4 states as
    the value of an ML expression: oracle_monotonic_state *)

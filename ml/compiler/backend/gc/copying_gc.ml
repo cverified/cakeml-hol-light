@@ -141,7 +141,11 @@ let heap_addresses_SNOC = prove
  (`!xs n x.
        heap_addresses n (APPEND xs [x]) =
        heap_addresses n xs UNION {heap_length xs + n}`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[heap_addresses_APPEND; heap_addresses_def] THEN
+   REPEAT GEN_TAC THEN
+   SUBGOAL_THEN `heap_length (xs:((A,B)heap_element)list) + n = n +
+     heap_length xs`
+     SUBST1_TAC THENL [ARITH_TAC; REWRITE_TAC[]]));;
 
 (* HOL4 copying_gcScript.sml:126-132: a theorem that HOL4 states as
    the value of an ML expression: NOT_IN_heap_addresses *)
@@ -256,7 +260,11 @@ let full_gc_LENGTH = prove
     (?roots2 heap2 a2.
       (full_gc ((roots:('a heap_address) list),heap,limit) =
       (roots2,heap2,heap_length heap2,T)))`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN
+   MP_TAC(ISPECL [`roots:(A heap_address)list`;
+     `heap:((A,B)heap_element)list`;
+                  `limit:num`] full_gc_thm) THEN
+   ASM_REWRITE_TAC[gc_inv_def; APPEND_NIL] THEN MESON_TAC[]));;
 
 let full_gc_ok = prove
  (`roots_ok roots heap /\ heap_ok (heap:(('a,'b)heap_element) list)

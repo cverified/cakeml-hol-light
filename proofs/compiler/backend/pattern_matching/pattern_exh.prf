@@ -60,3 +60,35 @@
 
 ### pmatch_Any
   (REWRITE_TAC[pattern_semantics_pmatch_def])
+
+### LENGTH_expand_list
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[expand_def; MEM; MEM_mk_prods]
+    THEN
+   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[LENGTH] THEN RES_TAC THEN
+   ASM_REWRITE_TAC[])
+
+### MEM_add_head
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[add_head_def; MEM] THEN
+    MESON_TAC[])
+
+### MEM_mk_prods
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_prods_def; MEM;
+    MEM_APPEND; MEM_add_head] THEN
+   MESON_TAC[])
+
+### default_mat_MEM
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[default_mat_def; MEM; MEM_APPEND]
+    THEN
+   REPEAT STRIP_TAC THENL
+    [EXISTS_TAC `h:(pattern_semantics_pat)list` THEN REWRITE_TAC[]
+      THEN
+     MATCH_MP_TAC default_row_thm THEN ASM_REWRITE_TAC[];
+     FIRST_X_ASSUM (MP_TAC o SPECL
+       [`refs:(num,pattern_semantics_term)fmap`;
+       `v:pattern_semantics_term`;
+       `vs:pattern_semantics_term list`;
+       `row:(pattern_semantics_pat)list`]) THEN
+     ASM_REWRITE_TAC[] THEN MESON_TAC[]])
+
+### pmatch_list_nil
+  (REWRITE_TAC[pattern_semantics_pmatch_def])

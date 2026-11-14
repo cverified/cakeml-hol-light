@@ -48,3 +48,65 @@
 
 ### sexptype_alt_intro1
   (REWRITE_TAC[FUN_EQ_THM; sexptype_alt_intro])
+
+### UNHEX_lt16
+  (REWRITE_TAC[isHexDigit; UNHEX] THEN
+   REPEAT COND_CASES_TAC THEN ASM_ARITH_TAC)
+
+### arithsexp_11
+  (SUBGOAL_THEN `!x. sexparith (arithsexp x) = SOME x` MP_TAC THENL
+   [GEN_TAC THEN CASES_ON_TAC `x:ast_arith` THEN
+    REWRITE_TAC[arithsexp_def; sexparith_def] THEN
+    CONV_TAC(DEPTH_CONV STRING_EQ_CONV) THEN REWRITE_TAC[];
+    MESON_TAC[option_INJ]])
+
+### arithsexp_sexparith
+  (GEN_TAC THEN CASES_ON_TAC `x:ast_arith` THEN
+   REWRITE_TAC[arithsexp_def; sexparith_def] THEN
+   CONV_TAC(DEPTH_CONV STRING_EQ_CONV) THEN REWRITE_TAC[])
+
+### decode_prim_type_prim_typesexp
+  (CASES_ON_TAC `s0:simpleSexp_sexp` THEN
+    REWRITE_TAC[decode_prim_type_def] THEN
+   REPEAT COND_CASES_TAC THEN
+   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN
+     ASM_REWRITE_TAC[prim_typesexp_def])
+
+### decode_test_testsexp
+  (CASES_ON_TAC `s:simpleSexp_sexp` THEN
+    REWRITE_TAC[fromSexp_decode_test_def] THEN
+   REPEAT COND_CASES_TAC THEN
+   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_REWRITE_TAC[testsexp_def])
+
+### isAlpha_isUpper_isLower
+  (REWRITE_TAC[isAlpha; isUpper; isLower] THEN ARITH_TAC)
+
+### isLower_isAlpha
+  (SIMP_TAC[isLower; isAlpha])
+
+### listsexp_thm
+  (REWRITE_TAC[listsexp_def; ITLIST])
+
+### logsexp_sexplog
+  (MATCH_MP_TAC(TAUT `(a <=> c) /\ (b <=> a) ==> (a <=> c) /\ (b <=>
+    c)`) THEN
+   CONJ_TAC THENL [ALL_TAC; MESON_TAC[]] THEN
+   EQ_TAC THENL [ALL_TAC; DISCH_THEN(SUBST1_TAC o SYM) THEN
+                 REWRITE_TAC[sexplog_logsexp]] THEN
+   CASES_ON_TAC `s:simpleSexp_sexp` THEN REWRITE_TAC[sexplog_def]
+     THEN
+   REPEAT COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT;
+     option_INJ] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_REWRITE_TAC[logsexp_def])
+
+### sexparith_arithsexp
+  (CASES_ON_TAC `s:simpleSexp_sexp` THEN REWRITE_TAC[sexparith_def]
+    THEN
+   REPEAT COND_CASES_TAC THEN
+   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_REWRITE_TAC[arithsexp_def])
+
+### strip_sxcons_thm
+  (REWRITE_TAC[strip_sxcons_thm])

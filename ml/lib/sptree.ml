@@ -2,7 +2,7 @@
 (*  sptree: ported from HOL4's
     src/finite_maps/sptreeScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs, and 83 theorems of it from LightCake.  Needed
+    that CakeML needs, and 88 theorems of it from LightCake.  Needed
     by 106 files of the port.  *)
 (* ======================================================== *)
 
@@ -878,6 +878,13 @@ let lookup_fromList = prove
   REWRITE_TAC[fromList_def; SPTAUX_lookup_fromList_gen; ADD_CLAUSES; LT;
               SUB_0; lookup_rwts]);;
 
+let domain_fromList = prove
+ (`domain (sptree_fromList l) = count (LENGTH (l:A list))`,
+  REWRITE_TAC[EXTENSION; domain_lookup; lookup_fromList; count_def;
+              IN_ELIM_THM] THEN
+  GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN
+  MESON_TAC[]);;
+
 let SPTAUX_card_images = prove
  (`!s t. FINITE s /\ FINITE t
          ==> CARD (IMAGE (\n. 2 * n + 2) s UNION IMAGE (\n. 2 * n + 1)
@@ -1031,6 +1038,14 @@ let SPTAUX_ACC_RW = prove
    (!c i m. c * (2 * m + 1) + i = (2 * c) * m + (i + c)) /\
    (!c i m. c * (2 * m + 2) + i = (2 * c) * m + (i + 2 * c))`,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN CONV_TAC NUM_RING);;
+
+let SPTAUX_ALOOKUP_FAILS = prove
+ (`!l:(A#B)list x. ALOOKUP l x = NONE <=> !y. ~MEM (x,y) l`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[ALOOKUP; MEM] THEN
+  REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+    ASM_REWRITE_TAC[option_DISTINCT] THENL
+   [ASM_MESON_TAC[PAIR]; ALL_TAC] THEN
+  EQ_TAC THEN REPEAT STRIP_TAC THEN ASM_MESON_TAC[FST]);;
 
 let domain_empty = prove
  (`!t:A spt. sptree_wf t ==> ((t = LN) <=> (domain t = EMPTY))`,
@@ -1269,6 +1284,13 @@ let wf_mapi = prove
     SPTAUX_wf_mk_BN;
                   SPTAUX_wf_mk_BS]);;
 
+let SPTAUX_ALOOKUP_MAP_lemma = prove
+ (`ALOOKUP (MAP (\kv. (FST kv, (f:num->A->B) (FST kv) (SND kv))) al) n =
+   OPTION_MAP (\v. f n v) (ALOOKUP (al:(num#A)list) n)`,
+  SPEC_TAC(`al:(num#A)list`,`al:(num#A)list`) THEN
+  LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ALOOKUP; OPTION_MAP] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[OPTION_MAP]);;
+
 let lookup_fromList_outside = prove
  (`!k. LENGTH args <= k ==> (sptree_lookup k (sptree_fromList (args:A
    list)) = NONE)`,
@@ -1306,6 +1328,10 @@ let SPTAUX_EL_MAPi = prove
   REWRITE_TAC[MAPi_DEF; EL; HD; TL; LT_SUC] THEN
   ASM_SIMP_TAC[o_THM]);;
 
+let SPTAUX_DROP_0 = prove
+ (`!l:A list. DROP 0 l = l`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[DROP]);;
+
 let SPTAUX_delete_mk_BN = prove
  (`(!t1 t2:A spt. sptree_delete 0 (mk_BN t1 t2) = mk_BN t1 t2) /\
    (!m t1 t2:A spt. sptree_delete (2 * m + 1) (mk_BN t1 t2) = mk_BN t1
@@ -1332,6 +1358,15 @@ let SPTAUX_BIT_LT = prove
  (`(!p q. 2 * p + 1 < 2 * q + 1 <=> p < q) /\
    (!p q. 2 * p + 2 < 2 * q + 2 <=> p < q)`,
   ARITH_TAC);;
+
+let SPTAUX_ALOOKUP_ZIP_MAP_SUC = prove
+ (`!c (t:A list). LENGTH c = LENGTH t ==>
+     ALOOKUP (ZIP (MAP SUC c) t) 0 = NONE /\
+     !n. ALOOKUP (ZIP (MAP SUC c) t) (SUC n) = ALOOKUP (ZIP c t) n`,
+  LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ; MAP; ZIP; ALOOKUP; NOT_SUC] THEN
+  DISCH_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `t':A list`) THEN
+  ASM_SIMP_TAC[FST; SND; SUC_INJ]);;
 
 let SPTAUX_EXISTS_lookup_P = prove
  (`(!P. (?k v. sptree_lookup k (LN:A spt) = SOME v /\ P v) <=> F) /\
@@ -1380,7 +1415,7 @@ let SPTAUX_FORALL_lookup_P = prove
      spt_size_def                     size_def
      SPTAUX_TC_TAC                    WF_REL_THMS
      SPTAUX_BITS_TAC                  term
-     SPTAUX_CASES_TAC                 CASES_ON term
+     SPTAUX_CASES_TAC                 term
      wf_insert                        -- Exception: Failure "TAC_PROOF:
                                       Unsolved goals".
      isEmpty_union                    spt_CASE
@@ -1405,21 +1440,17 @@ let SPTAUX_FORALL_lookup_P = prove
      domain_insert                    v
      domain_difference                lookup_difference
      domain_sing                      domain_insert v
-     domain_fromList                  count_DEF
-     size_domain                      -- Exception:
+     size_domain                      -- Exception: Failure
      spt_acc_thm                      spt_acc_def
      spt_acc_eqn                      spt_acc_def spt_acc_thm
      spt_acc_0                        spt_acc_eqn
      lookup_mapi0                     SPTAUX_BITS_TAC option_CASE
                                       spt_acc_eqn
-     lookup_mapi                      OPTION_MAP_DEF lookup_mapi0
-                                      option_CASE spt_acc_0
+     lookup_mapi                      lookup_mapi0 option_CASE spt_acc_0
      SPTAUX_MEM_foldi                 CONS
      MEM_toAList                      SPTAUX_MEM_foldi v
-     SPTAUX_ALOOKUP_MEM               ALOOKUP_DEF v
-     SPTAUX_ALOOKUP_FAILS             ALOOKUP_DEF
-     ALOOKUP_toAList                  MEM_toAList SPTAUX_ALOOKUP_FAILS
-                                      SPTAUX_ALOOKUP_MEM
+     SPTAUX_ALOOKUP_MEM               v
+     ALOOKUP_toAList                  MEM_toAList SPTAUX_ALOOKUP_MEM
      insert_union                     spt_CASE
      SPTAUX_LENGTH_foldi              CONS
      LENGTH_toAList                   SPTAUX_LENGTH_foldi
@@ -1448,7 +1479,7 @@ let SPTAUX_FORALL_lookup_P = prove
      inter_LN                         spt_CASE
      union_assoc                      spt_CASE
      inter_assoc                      inter_eq lookup_inter option_CASE
-     lookup_fromAList                 ALOOKUP_DEF ALOOKUP_THM
+     lookup_fromAList                 ALOOKUP_THM
      domain_fromAList                 domain_insert
      lookup_fromAList_toAList         ALOOKUP_toAList lookup_fromAList
      wf_fromAList                     -- Error: Unbound value wf_insert
@@ -1457,22 +1488,20 @@ let SPTAUX_FORALL_lookup_P = prove
      union_insert_LN                  insert_union
      fromAList_append                 insert_union union_LN union_assoc
                                       union_insert_LN
-     lookup_map                       OPTION_MAP_DEF SPTAUX_BITS_TAC
+     lookup_map                       SPTAUX_BITS_TAC
      map_fromAList                    map_insert
      insert_insert                    SPTAUX_BITS_TAC
      insert_shadow                    insert_insert
      subspt_union                     option_CASE
      subspt_FOLDL_union               subspt_union
-     domain_mapi                      OPTION_MAP_DEF lookup_mapi
-     lookup_FOLDL_union               OPTION_CHOICE_DEF option_CASE
+     domain_mapi                      lookup_mapi
+     lookup_FOLDL_union               option_CASE
      map_union                        spt_CASE
      lookup_filter_v                  SPTAUX_BITS_TAC option_CASE
-     SPTAUX_ALOOKUP_MAP_lemma         ALOOKUP_DEF OPTION_MAP_DEF
      MAP_foldi                        CONS
-     mapi_Alist                       ALOOKUP_toAList
-                                      SPTAUX_ALOOKUP_MAP_lemma
-                                      lookup_fromAList lookup_mapi
-                                      spt_eq_thm wf_fromAList
+     mapi_Alist                       ALOOKUP_toAList lookup_fromAList
+                                      lookup_mapi spt_eq_thm
+                                      wf_fromAList
      num_set_domain_eq                -- Error: Unbound value spt_eq_thm
      union_num_set_sym                spt_CASE
      union_disjoint_sym               option_CASE spt_eq_thm wf_union
@@ -1492,17 +1521,15 @@ let SPTAUX_FORALL_lookup_P = prove
      list_to_num_set_append           insert_union union_LN union_assoc
                                       union_insert_LN
      map_map_K                        K_THM
-     lookup_map_K                     K_THM OPTION_MAP_DEF lookup_map
-     lookup_alist_insert              ALOOKUP_DEF option_CASE
+     lookup_map_K                     K_THM lookup_map
+     lookup_alist_insert              option_CASE
      domain_alist_insert              domain_insert
      alist_insert_append              -- no answer
      wf_fromList                      -- Error: Unbound value wf_insert
      wf_list_to_num_set               -- Error: Unbound value wf_insert
-     size_list_to_num_set             domain_list_to_num_set nub_DEF
-     mapi_fromList                    OPTION_MAP_DEF lookup_mapi
-                                      spt_eq_thm wf_fromList
-     SPTAUX_DROP_0                    DROP_DEF
-     SPTAUX_TAKE_DROP_UPDATE          DROP_DEF SPTAUX_DROP_0 TAKE_DEF v
+     size_list_to_num_set             domain_list_to_num_set
+     mapi_fromList                    lookup_mapi spt_eq_thm wf_fromList
+     SPTAUX_TAKE_DROP_UPDATE          v
      insert_fromList_IN_domain        SPTAUX_TAKE_DROP_UPDATE spt_eq_thm
                                       wf_fromList wf_insert
      insert_swap                      insert_insert
@@ -1518,27 +1545,28 @@ let SPTAUX_FORALL_lookup_P = prove
      size_map                         -- Error: Unbound value
                                       size_domain
      size_mapi                        domain_mapi size_domain
-     SUM_MAP_same_LE                  SUM
-     SUM_MAP_same_LESS                SUM SUM_MAP_same_LE
-     size_fromList                    count_DEF domain_fromList
+     SUM_MAP_same_LE                  -- Exception: Failure
+                                      "MATCH_MP_TAC: No match".
+     SUM_MAP_same_LESS                -- Error: Unbound value
+                                      SUM_MAP_same_LE
+     size_fromList                    -- Error: Unbound value
                                       size_domain
      SPTAUX_spts_to_alist_aux_thm     CONS list_CASE option_CASE
                                       pair_CASE
-     SPTAUX_SUM_add_pause             SUM list_CASE pair_CASE
-                                      spt_size_def
-     SPTAUX_SUM_MAP_APPEND            SUM
-     SPTAUX_SUM_MAP_REVERSE           SPTAUX_SUM_MAP_APPEND SUM
+     SPTAUX_SUM_add_pause             list_CASE pair_CASE spt_size_def
+     SPTAUX_SUM_MAP_APPEND            -- Exception: Failure
+     SPTAUX_SUM_MAP_REVERSE           -- Error: Unbound value
+                                      SPTAUX_SUM_MAP_APPEND
      SPTAUX_spt_size_left_right       K_THM spt_size_def
-     spts_to_alist_aux_size           RVEQ_TAC SPTAUX_SUM_MAP_APPEND
+     spts_to_alist_aux_size           SPTAUX_SUM_MAP_APPEND
                                       SPTAUX_SUM_MAP_REVERSE
                                       SPTAUX_SUM_add_pause
                                       SPTAUX_spt_size_left_right
-                                      SPTAUX_spts_to_alist_aux_thm SUM
+                                      SPTAUX_spts_to_alist_aux_thm
                                       spt_size_def
-     SPTAUX_LENGTH_COUNT_LIST         COUNT_LIST_DEF
-     SPTAUX_ALOOKUP_ZIP_MAP_SUC       ALOOKUP_DEF
-     SPTAUX_ALOOKUP_ZIP_COUNT_LIST    ALOOKUP_DEF COUNT_LIST_DEF
-                                      SPTAUX_ALOOKUP_ZIP_MAP_SUC
+     SPTAUX_LENGTH_COUNT_LIST         -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
+     SPTAUX_ALOOKUP_ZIP_COUNT_LIST    -- Error: Unbound value
                                       SPTAUX_LENGTH_COUNT_LIST
      fromList_fromAList               SPTAUX_ALOOKUP_ZIP_COUNT_LIST
                                       lookup_fromAList spt_eq_thm
@@ -1546,7 +1574,7 @@ let SPTAUX_FORALL_lookup_P = prove
      domain_spt_fold_union            domain_union
      SPTAUX_closure_spt_size          domain_spt_fold_union domain_union
                                       lookup_inter_EQ size_diff_less
-     closure_spt_ind                  RVEQ_TAC SPTAUX_closure_spt_size
+     closure_spt_ind                  SPTAUX_closure_spt_size
      num_set_tree_union_empty         num_set_tree_union_def spt_CASE
      wf_num_set_tree_union            num_set_tree_union_def
                                       num_set_tree_union_empty spt_CASE
@@ -1566,8 +1594,7 @@ let SPTAUX_FORALL_lookup_P = prove
                                       is_reachable_def
      reachable_LHS_NOTIN              RTC_CASES_R adjacent_domain
                                       is_reachable_def
-     rtc_is_adjacent                  -- Error: Unbound value
-                                      RTC_INDUCT_L
+     rtc_is_adjacent                  RTC_INDUCT_L
      is_adjacent_num_set_tree_union   is_adjacent_def
                                       lookup_num_set_tree_union
                                       option_CASE

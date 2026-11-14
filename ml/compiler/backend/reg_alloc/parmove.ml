@@ -13,6 +13,7 @@
   http://gallium.inria.fr/~xleroy/publi/parallel-move.pdf
 *)
 
+needs "lib/binary_ieee.ml";;
 needs "lib/sorting.ml";;
 needs "misc/misc.ml";;
 
@@ -128,11 +129,11 @@ let wf_init = prove
 (* The invariant is preserved *)
 
 let wf_step = prove
- (`!s1 s2. (step) s1 s2 ==> (wf) s1 ==> (wf) s2`,
+ (`!s1 s2. step s1 s2 ==> (wf) s1 ==> (wf) s2`,
   CHEAT_TAC);;
 
 let wf_steps = prove
- (`!s1 s2. (wf) s1 /\ (RTC (step)) s1 s2 ==> (wf) s2`,
+ (`!s1 s2. (wf) s1 /\ RTC (step) s1 s2 ==> (wf) s2`,
   CHEAT_TAC);;
 
 (* semantics of moves *)
@@ -232,20 +233,19 @@ let eqenv_sym = prove
 
 (* [local] *)
 let step_sem = prove
- (`!s1 s2. (step) s1 s2 ==> (wf) s1 ==> (!rho. eqenv (sem s1 rho) (sem
+ (`!s1 s2. step s1 s2 ==> (wf) s1 ==> (!rho. eqenv (sem s1 rho) (sem
   s2 rho))`,
   CHEAT_TAC);;
 
 let steps_sem = prove
- (`!s1 s2. (RTC (step)) s1 s2 /\ (wf) s1 ==> (!rho. eqenv (sem s1 rho)
+ (`!s1 s2. RTC (step) s1 s2 /\ (wf) s1 ==> (!rho. eqenv (sem s1 rho)
   (sem s2 rho))`,
   CHEAT_TAC);;
 
 let steps_correct = prove
  (`windmill mu /\
    ALL IS_SOME (MAP FST mu) /\
-   ALL IS_SOME (MAP SND mu) /\ (RTC (step)) (mu,[],[]) ([],[],tau)
-     ==>
+   ALL IS_SOME (MAP SND mu) /\ RTC (step) (mu,[],[]) ([],[],tau) ==>
    (!rho. eqenv (parsem mu rho) (seqsem (REVERSE tau) rho))`,
   CHEAT_TAC);;
 
@@ -281,11 +281,11 @@ let dstep_rules = cake_inductive
    their proof to work *)
 (* [local] *)
 let dstep_step = prove
- (`!s1 s2. (dstep) s1 s2 ==> (wf) s1 ==> (RTC (step)) s1 s2`,
+ (`!s1 s2. dstep s1 s2 ==> (wf) s1 ==> RTC (step) s1 s2`,
   CHEAT_TAC);;
 
 let dsteps_steps = prove
- (`!s1 s2. (RTC (dstep)) s1 s2 ==> (wf) s1 ==> (RTC (step)) s1 s2`,
+ (`!s1 s2. RTC (dstep) s1 s2 ==> (wf) s1 ==> RTC (step) s1 s2`,
   CHEAT_TAC);;
 
 (* functional algorithm *)
@@ -308,7 +308,7 @@ let fstep_def = new_definition
    below antiquote *)
 
 let fstep_dstep = prove
- (`(!tau. ~(s = ([],[],tau))) ==> (dstep) s (fstep s)`,
+ (`(!tau. ~(s = ([],[],tau))) ==> dstep s (fstep s)`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
@@ -323,7 +323,7 @@ let pmov_def,pmov_ind = define_guess
 (* HOL4 parmoveScript.sml:640: ML code, not ported *)
 
 let pmov_dsteps = prove
- (`!s. (RTC (dstep)) s (pmov s)`,
+ (`!s. RTC (dstep) s (pmov s)`,
   CHEAT_TAC);;
 
 let pmov_final = prove
@@ -387,7 +387,9 @@ let not_use_temp_before_assign_append = prove
    (not_use_temp_before_assign (APPEND l1 l2) <=>
     not_use_temp_before_assign l1 /\
     (ALL IS_SOME (MAP FST l1) ==> not_use_temp_before_assign l2))`,
-  CHEAT_TAC);;
+  (MATCH_MP_TAC not_use_temp_before_assign_ind THEN
+   ASM_REWRITE_TAC[not_use_temp_before_assign_def; APPEND; MAP; ALL;
+     IS_SOME; FST]));;
 
 let not_use_temp_before_assign_insert = prove
  (`!l1 l2.
@@ -400,10 +402,32 @@ let not_use_temp_before_assign_thm = prove
  (`!ls. not_use_temp_before_assign ls =
     (!i. find_index NONE (MAP SND ls) 0 = SOME i ==>
       (?j. find_index NONE (MAP FST ls) 0 = SOME j /\ j < i))`,
-  CHEAT_TAC);;
+  (MATCH_MP_TAC not_use_temp_before_assign_ind THEN
+   REWRITE_TAC[not_use_temp_before_assign_def; MAP; find_index_def;
+     FST; SND;
+               distinctness "option"; option_INJ; ARITH] THEN
+   REPEAT CONJ_TAC THENL
+    [REWRITE_TAC[FORALL_UNWIND_THM1; LT];
+     REPEAT STRIP_TAC THEN EXISTS_TAC `0` THEN
+     FIRST_ASSUM(MP_TAC o MATCH_MP find_index_LESS_LENGTH) THEN
+       ARITH_TAC;
+     GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN
+     REWRITE_TAC[GEN_ALL(INST [`1`,`k:num`] (SPEC_ALL
+       find_index_shift_0))] THEN
+     SPEC_TAC(`find_index NONE (MAP SND (ls:(A option#B option)
+       list)) 0`, `o1:num option`) THEN
+     SPEC_TAC(`find_index NONE (MAP FST (ls:(A option#B option)
+       list)) 0`, `o2:num option`) THEN
+     MATCH_MP_TAC option_INDUCT THEN CONJ_TAC THENL [ALL_TAC;
+       GEN_TAC] THEN
+     MATCH_MP_TAC option_INDUCT THEN
+     REWRITE_TAC[OPTION_MAP; option_DISTINCT; option_INJ;
+       FORALL_UNWIND_THM1;
+                 UNWIND_THM1] THEN
+     (ARITH_TAC ORELSE MESON_TAC[])]));;
 
 let step_not_use_temp_before_assign = prove
- (`!s1 s2. (step) s1 s2 ==>
+ (`!s1 s2. step s1 s2 ==>
      (wf) s1 /\
     not_use_temp_before_assign (REVERSE (APPEND (FST (SND s1)) (SND
       (SND s1)))) ==>
@@ -414,7 +438,7 @@ let step_not_use_temp_before_assign = prove
 let steps_not_use_temp_before_assign = prove
  (`!s1 s2.
     (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (APPEND (FST
-      (SND s1)) (SND (SND s1))))) s1 /\ (RTC (step)) s1 s2 ==>
+      (SND s1)) (SND (SND s1))))) s1 /\ RTC (step) s1 s2 ==>
     (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (APPEND
       (FST (SND s1)) (SND (SND s1))))) s2`,
   CHEAT_TAC);;
@@ -437,7 +461,7 @@ let parmove_not_use_temp_before_assign = prove
 (* the compiler preserves all-distinct variables *)
 
 let ALL_DISTINCT_step = prove
- (`!s1 s2. (step) s1 s2 ==>
+ (`!s1 s2. step s1 s2 ==>
     ALL_DISTINCT (FILTER IS_SOME (MAP FST (APPEND (APPEND (FST s1)
       (FST (SND s1))) (SND (SND s1))))) ==>
     ALL_DISTINCT (FILTER IS_SOME (MAP FST (APPEND (APPEND (FST s2)
@@ -447,8 +471,7 @@ let ALL_DISTINCT_step = prove
 let ALL_DISTINCT_steps = prove
  (`!s1 s2.
     (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (APPEND (APPEND (FST
-      s1) (FST (SND s1))) (SND (SND s1)))))) s1 /\ (RTC (step)) s1 s2
-      ==>
+      s1) (FST (SND s1))) (SND (SND s1)))))) s1 /\ RTC (step) s1 s2 ==>
     (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (APPEND (APPEND
       (FST s1) (FST (SND s1))) (SND (SND s1)))))) s2`,
   CHEAT_TAC);;
@@ -472,15 +495,15 @@ let state_to_list_def = new_definition
   p))`;;
 
 let step_preserves_moves = prove
- (`!s1 s2. (step) s1 s2 ==>
+ (`!s1 s2. step s1 s2 ==>
     (!x. (?y. MEM (x,y) (state_to_list s1) /\ ~(x = y)) ==>
         (?y. MEM (x,y) (state_to_list s2) /\ ~(x = y)))`,
   CHEAT_TAC);;
 
 let steps_preserves_moves = prove
  (`!s1 s2.
-    (\s1. (?y. MEM (x,y) (state_to_list s1) /\ ~(x = y))) s1 /\ (RTC
-      (step)) s1 s2 ==>
+    (\s1. (?y. MEM (x,y) (state_to_list s1) /\ ~(x = y))) s1 /\ RTC
+      (step) s1 s2 ==>
     (\s1. (?y. MEM (x,y) (state_to_list s1) /\ ~(x = y))) s2`,
   CHEAT_TAC);;
 
@@ -507,24 +530,23 @@ let inj_on_state_def = new_definition
       (!x. f x = NONE <=> x = NONE))`;;
 
 let step_inj_on_state = prove
- (`!s1 s2. (step) s1 s2 ==> inj_on_state f s1 ==> inj_on_state f s2`,
+ (`!s1 s2. step s1 s2 ==> inj_on_state f s1 ==> inj_on_state f s2`,
   CHEAT_TAC);;
 
 let steps_inj_on_state = prove
- (`!s1 s2. inj_on_state f s1 /\ (RTC (step)) s1 s2 ==> inj_on_state f
-  s2`,
+ (`!s1 s2. inj_on_state f s1 /\ RTC (step) s1 s2 ==> inj_on_state f s2`,
   CHEAT_TAC);;
 
 let step_MAP_INJ = prove
- (`!s1 s2. (step) s1 s2 ==> inj_on_state f s1 ==> (step) (map_state f
-  s1) (map_state f s2)`,
+ (`!s1 s2. step s1 s2 ==> inj_on_state f s1 ==> step (map_state f s1)
+  (map_state f s2)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let steps_MAP_INJ = prove
- (`!s1 s2. (RTC (step)) s1 s2 ==>
-     inj_on_state f s1 ==> (RTC (step)) (map_state f s1) (map_state
-       f s2)`,
+ (`!s1 s2. RTC (step) s1 s2 ==>
+     inj_on_state f s1 ==> RTC (step) (map_state f s1) (map_state f
+       s2)`,
   CHEAT_TAC);;
 
 let fstep_MAP_INJ = prove

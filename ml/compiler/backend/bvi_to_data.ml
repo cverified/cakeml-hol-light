@@ -330,7 +330,9 @@ let compile_LENGTH = prove
 
 let compile_SING_IMP = prove
  (`(compile n env tail live [x] = (c,vs,new_var)) ==> (?t. vs = [t])`,
-  CHEAT_TAC);;
+  (DISCH_THEN (MP_TAC o MATCH_MP compile_LENGTH) THEN
+   REWRITE_TAC[LENGTH; LENGTH_EQ_CONS; LENGTH_EQ_NIL] THEN
+     MESON_TAC[]));;
 
 (* combine dataLang optimisations *)
 
@@ -361,7 +363,13 @@ let compile_exp_eq = prove
  (`bvi_to_data_compile_exp arg_count exp =
      bvi_to_data_optimise (FST (bvi_to_data_compile_sing arg_count
        (COUNT_LIST arg_count) T [] exp))`,
-  CHEAT_TAC);;
+  (SUBGOAL_THEN `?c v k. bvi_to_data_compile_sing arg_count
+    (COUNT_LIST arg_count) T [] ast_exp =
+                         (c,v,k)` STRIP_ASSUME_TAC THENL
+    [MESON_TAC[PAIR_SURJECTIVE]; ALL_TAC] THEN
+   FIRST_ASSUM (MP_TAC o MATCH_MP (CONJUNCT1 compile_sing_eq)) THEN
+   ASM_REWRITE_TAC[compile_exp_def] THEN DISCH_THEN SUBST1_TAC THEN
+   REWRITE_TAC[]));;
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant

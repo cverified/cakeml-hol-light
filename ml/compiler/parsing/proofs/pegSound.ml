@@ -385,7 +385,8 @@ let ptPapply_lemma = prove
 (* [simp,local] *)
 let pmap_EQ_pair = prove
  (`(f ## g) p = (a,b) <=> (?c d. p = (c,d) /\ f c = a /\ g d = b)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FORALL_PAIR_THM; PAIR_MAP_THM; PAIR_EQ] THEN
+    MESON_TAC[]));;
 
 (* [simp,local] *)
 let pair_EQ_components = prove
@@ -393,7 +394,7 @@ let pair_EQ_components = prove
    ((x,SND p) = p <=> FST p = x) /\
    (p = (FST p,y) <=> SND p = y) /\
    ((FST p,y) = p <=> SND p = y)`,
-  CHEAT_TAC);;
+  (MESON_TAC[PAIR; FST; SND]));;
 
 let peg_sound = prove
  (`!N i0 i pts eo.

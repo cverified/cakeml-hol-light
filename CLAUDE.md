@@ -64,6 +64,19 @@ The work has three phases:
    is read, understood and then written as a HOL Light proof.
    Do not build a tactic translator.
 
+   The one proof that is not written here is one **taken from
+   LightCake**, the other HOL Light port of CakeML (`README.md`
+   says how).  That is not a translation of a HOL4 tactic: it is
+   a HOL Light proof already, written against a statement that
+   HOL4 gave both ports, and what the import does is write this
+   port's names into it.  Whether the two fit is not a matter of
+   reading -- the statement is this port's and the proof is
+   LightCake's -- so every one of them is **run** before it is
+   kept, and the ones that do not go through are taken out again
+   with the reason (`tools/lightcake/<theory>.nofill`).  A proof
+   of LightCake's that rests on HOL4's tactic style is one this
+   port does not take.
+
 **In phases one and two proofs are irrelevant.**  Not "kept
 short", irrelevant: no time goes on one.  HOL Light will not
 make a recursive definition without a termination proof, so when

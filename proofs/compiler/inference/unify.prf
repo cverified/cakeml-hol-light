@@ -31,3 +31,41 @@
 
 ### t_wfs_eqn
   (REWRITE_TAC[t_wfs_def; wfs_def; t_vR_def])
+
+### encode_walk
+  (REPEAT STRIP_TAC THEN CASES_ON_TAC `t:infer_t` THEN
+   ASM_SIMP_TAC[encode_infer_t_def; walk_thm; t_walk_eqn;
+     encode_vwalk])
+
+### t_unify_strongind'
+  (REPEAT GEN_TAC THEN
+   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "H0") (LABEL_TAC "H1")) THEN
+   MATCH_MP_TAC t_unify_ind THEN CONJ_TAC THEN REPEAT GEN_TAC THEN
+   DISCH_THEN(LABEL_TAC "ih") THEN DISCH_TAC THENL
+    [USE_THEN "H0" MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
+     REPEAT STRIP_TAC THEN
+     USE_THEN "ih" (MATCH_MP_TAC o REWRITE_RULE[IMP_IMP] o SPEC_ALL)
+       THEN
+     ASM_MESON_TAC[];
+     USE_THEN "H1" MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN CONJ_TAC
+       THEN
+     REPEAT STRIP_TAC THENL
+      [USE_THEN "ih" (MATCH_MP_TAC o CONJUNCT1 o
+        REWRITE_RULE[IMP_IMP; FORALL_AND_THM;
+                                         TAUT `a ==> b /\ c <=> (a
+                                           ==> b) /\ (a ==> c)`]);
+       USE_THEN "ih" (MATCH_MP_TAC o CONJUNCT2 o
+         REWRITE_RULE[IMP_IMP; FORALL_AND_THM;
+                                         TAUT `a ==> b /\ c <=> (a
+                                           ==> b) /\ (a ==> c)`])]
+                                           THEN
+     ASM_MESON_TAC[t_unify_unifier]])
+
+### t_walk_eqn
+  (REWRITE_TAC[t_walk_def; walk_thm; t_vwalk_def; encode_infer_t_def]
+    THEN
+   REWRITE_TAC[GSYM encode_infer_t_def; decode_left_inverse])
+
+### t_walk_walk_id
+  (REPEAT STRIP_TAC THEN CASES_ON_TAC `h:infer_t` THEN
+   ASM_SIMP_TAC[t_walk_eqn; t_walk_vwalk_id])

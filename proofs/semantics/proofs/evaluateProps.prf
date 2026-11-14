@@ -24,9 +24,6 @@
 ### evaluate_io_events_mono
   (MESON_TAC[evaluate_call_FFI_rel; call_FFI_rel_io_events_mono])
 
-### evaluate_io_events_mono_imp
-  (MESON_TAC[PAIR; FST; evaluate_io_events_mono])
-
 ### evaluate_nil
   (REWRITE_TAC[evaluate_def])
 
@@ -43,3 +40,58 @@
 
 ### is_clock_io_mono_evaluate_decs
   (REWRITE_TAC[is_clock_io_mono_evaluate])
+
+### Apps_append
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; apps_def])
+
+### evaluate_match_list_result
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `r:(v
+    list,v)semanticPrimitives_result` THEN STRIP_TAC THENL
+    [FIRST_X_ASSUM(MP_TAC o MATCH_MP (CONJUNCT1(CONJUNCT2
+      evaluate_length))) THEN
+     STRUCT_CASES_TAC(ISPEC `a:v list` list_CASES) THEN
+     REWRITE_TAC[LENGTH; ARITH_RULE `~(0 = 1) /\ (SUC n = 1 <=> n =
+       0)`; LENGTH_EQ_NIL] THEN
+     DISCH_THEN SUBST1_TAC THEN EXISTS_TAC `Rval
+       h:(v,v)semanticPrimitives_result`;
+     EXISTS_TAC `Rerr a:(v,v)semanticPrimitives_result`] THEN
+   REWRITE_TAC[list_result_def])
+
+### list_result_eq_Rerr
+  (GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
+   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
+     "result"])
+
+### list_result_eq_Rval
+  (GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
+   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
+     "result"] THEN
+   MESON_TAC[])
+
+### list_result_inj
+  (GEN_TAC THEN GEN_TAC THEN CASES_ON_TAC
+    `x:(A,B)semanticPrimitives_result` THEN CASES_ON_TAC
+    `y:(A,B)semanticPrimitives_result` THEN
+   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
+     "result"; CONS_11] THEN
+   MESON_TAC[])
+
+### result_rel_list_result
+  (REPEAT GEN_TAC THEN CASES_ON_TAC
+    `r1:(A,C)semanticPrimitives_result` THEN CASES_ON_TAC
+    `r2:(B,D)semanticPrimitives_result` THEN
+   REWRITE_TAC[list_result_def; result_rel_def; ALL2])
+
+### same_type_sym
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `t1:stamp` THEN CASES_ON_TAC
+    `t2:stamp` THEN
+   REWRITE_TAC[same_type_def] THEN MESON_TAC[])
+
+### same_type_trans
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `t1:stamp` THEN CASES_ON_TAC
+    `t2:stamp` THEN
+   CASES_ON_TAC `t3:stamp` THEN REWRITE_TAC[same_type_def] THEN
+     MESON_TAC[])
+
+### evaluate_io_events_mono_imp
+  (MESON_TAC[PAIR; FST; evaluateProps_evaluate_io_events_mono])

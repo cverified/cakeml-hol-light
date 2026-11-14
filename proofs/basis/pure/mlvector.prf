@@ -13,3 +13,26 @@
 
 ### foldl_thm
   (SIMP_TAC[foldl_aux_thm; mlvector_foldl_def; ADD_CLAUSES; DROP_0])
+
+### all_thm
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `vec:A vector` THEN
+   SIMP_TAC[all_def; all_aux_thm; ADD_CLAUSES; DROP_0])
+
+### exists_thm
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `vec:A vector` THEN
+   SIMP_TAC[mlvector_exists_def; exists_aux_thm; ADD_CLAUSES;
+     DROP_0])
+
+### foldli_thm
+  (SIMP_TAC[mlvector_foldli_def; foldli_def; mlvector_foldli_aux_thm;
+   ADD_CLAUSES; DROP_0])
+
+### less_than_length_thm
+  (REPEAT STRIP_TAC THEN EXISTS_TAC `TAKE n (xs:A list)` THEN
+   ASM_SIMP_TAC[LENGTH_TAKE; LT_IMP_LE] THEN
+   EXISTS_TAC `HD (DROP n (xs:A list))` THEN
+   EXISTS_TAC `TL (DROP n (xs:A list))` THEN
+   CASES_ON_TAC `DROP n (xs:A list)` THENL
+    [FIRST_X_ASSUM(MP_TAC o AP_TERM `LENGTH:A list->num`) THEN
+     REWRITE_TAC[LENGTH_DROP; LENGTH] THEN ASM_ARITH_TAC;
+     REWRITE_TAC[HD; TL] THEN ASM_MESON_TAC[TAKE_DROP]])

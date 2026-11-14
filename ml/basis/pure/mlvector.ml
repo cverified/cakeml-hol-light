@@ -110,7 +110,14 @@ hol4_overload "mapi" "mlvector_mapi";;
 let less_than_length_thm = prove
  (`!xs n. (n < LENGTH xs) ==> (?ys z zs. (xs = APPEND ys (CONS z zs))
   /\ (LENGTH ys = n))`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN EXISTS_TAC `TAKE n (xs:A list)` THEN
+   ASM_SIMP_TAC[LENGTH_TAKE; LT_IMP_LE] THEN
+   EXISTS_TAC `HD (DROP n (xs:A list))` THEN
+   EXISTS_TAC `TL (DROP n (xs:A list))` THEN
+   CASES_ON_TAC `DROP n (xs:A list)` THENL
+    [FIRST_X_ASSUM(MP_TAC o AP_TERM `LENGTH:A list->num`) THEN
+     REWRITE_TAC[LENGTH_DROP; LENGTH] THEN ASM_ARITH_TAC;
+     REWRITE_TAC[HD; TL] THEN ASM_MESON_TAC[TAKE_DROP]]));;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -263,7 +270,9 @@ let exists_aux_thm = prove
 
 let exists_thm = prove
  (`!f vec. mlvector_exists f vec = EX f (toList vec)`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `vec:A vector` THEN
+   SIMP_TAC[mlvector_exists_def; exists_aux_thm; ADD_CLAUSES;
+     DROP_0]));;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -286,7 +295,8 @@ let all_aux_thm = prove
 
 let all_thm = prove
  (`!f vec. all f vec = ALL f (toList vec)`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `vec:A vector` THEN
+   SIMP_TAC[all_def; all_aux_thm; ADD_CLAUSES; DROP_0]));;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)

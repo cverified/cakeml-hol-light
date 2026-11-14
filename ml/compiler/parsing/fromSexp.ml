@@ -41,8 +41,6 @@ let _ = hide_overloads
   ["return","errorMonad_return"];;
 (* HOL4 ancestors outside the port: quantHeuristics *)
 
-hol4_overload "++" "OPTION_CHOICE";;
-
 (* TODO: this is duplicated in parserProgTheory *)
 (* [local] *)
 let monad_unitbind_assert = prove
@@ -158,15 +156,16 @@ let isHexDigit_alt = prove
 (* [local] *)
 let UNHEX_lt16 = prove
  (`isHexDigit c ==> UNHEX c < 16`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[isHexDigit; UNHEX] THEN
+   REPEAT COND_CASES_TAC THEN ASM_ARITH_TAC));;
 
 let isAlpha_isUpper_isLower = prove
  (`isAlpha c ==> (~(isUpper c = isLower c))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[isAlpha; isUpper; isLower] THEN ARITH_TAC));;
 
 let isLower_isAlpha = prove
  (`isLower c ==> isAlpha c`,
-  CHEAT_TAC);;
+  (SIMP_TAC[isLower; isAlpha]));;
 
 let encode_decode_control = prove
  (`!ls r. decode_control ls = SOME r ==> ls = encode_control r`,
@@ -229,7 +228,7 @@ let odestSXNUM_SEXSTR = prove
   CHEAT_TAC);;
 
 let sexpopt_def = new_definition
-  `sexpopt p s = APPEND (OPTION_BIND (odestSXSYM s) (\
+  `sexpopt p s = OPTION_CHOICE (OPTION_BIND (odestSXSYM s) (\
         nm. OPTION_IGNORE_BIND
         (OPTION_GUARD (nm = (implode "NONE"))) (
         SOME NONE)))
@@ -297,7 +296,7 @@ let strip_sxcons_thm = prove
    strip_sxcons (&n) = NONE /\
    strip_sxcons (SX_STR str) = NONE /\
    strip_sxcons (SX_SYM s) = (if s = "nil" then SOME [] else NONE)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[strip_sxcons_thm]));;
 
 (* [defncong] *)
 let sexplist_CONG = prove
@@ -321,8 +320,8 @@ let sexpid_def,sexpid_ind = define_guess_cheat
   [`sexpid p s =
      OPTION_BIND (dstrip_sexp s) (\
         (nm,args).
-        (APPEND ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm =
-          "Short" /\ LENGTH args = 1)
+        (OPTION_CHOICE ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b)
+          m) (nm = "Short" /\ LENGTH args = 1)
                (OPTION_MAP Short (p (EL 0 args))))
          ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Long"
            /\ LENGTH args = 2)
@@ -341,8 +340,9 @@ let sexptype_def,sexptype_ind = define_guess_cheat
   [`sexptype s =
      OPTION_BIND (dstrip_sexp s) (\
         (s,args).
-        (APPEND (APPEND (APPEND ((\b m. OPTION_IGNORE_BIND
-          (OPTION_GUARD b) m) (s = "Atvar" /\ LENGTH args = 1)
+        (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE ((\b m.
+          OPTION_IGNORE_BIND (OPTION_GUARD b) m) (s = "Atvar" /\ LENGTH
+          args = 1)
                (OPTION_MAP Atvar (odestSEXSTR (EL 0 args))))
          ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (s = "Atfun"
            /\ LENGTH args = 2)
@@ -396,14 +396,14 @@ let sexptype_alt_intro1 = prove
   (REWRITE_TAC[FUN_EQ_THM; sexptype_alt_intro]));;
 
 let sexplit_def = new_definition
-  `sexplit s = APPEND (APPEND (OPTION_MAP (ast_IntLit o (&)) (odestSXNUM
-  s))
+  `sexplit s = OPTION_CHOICE (OPTION_CHOICE (OPTION_MAP (ast_IntLit o
+  (&)) (odestSXNUM s))
      (OPTION_MAP ast_StrLit (odestSEXSTR s)))
      (OPTION_BIND (dstrip_sexp s) (\
        (nm,args). OPTION_IGNORE_BIND
-       (OPTION_GUARD (LENGTH args = 1)) (APPEND (APPEND (APPEND
-         (APPEND ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm =
-         "-")
+       (OPTION_GUARD (LENGTH args = 1)) (OPTION_CHOICE (OPTION_CHOICE
+         (OPTION_CHOICE (OPTION_CHOICE ((\b m. OPTION_IGNORE_BIND
+         (OPTION_GUARD b) m) (nm = "-")
              (OPTION_BIND (odestSXNUM (HD args))
                           (\n. if n = 0 then NONE else SOME
                             (ast_IntLit (--(&n))))))
@@ -440,11 +440,11 @@ let sexplit_def = new_definition
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sexppat_def,sexppat_ind = define_guess_cheat
-  [`sexppat s = APPEND (OPTION_MAP ast_Pvar (odestSEXSTR s))
+  [`sexppat s = OPTION_CHOICE (OPTION_MAP ast_Pvar (odestSEXSTR s))
      (OPTION_BIND (dstrip_sexp s) (\
-       (nm,args). APPEND (APPEND (APPEND (APPEND (APPEND ((\b m.
-         OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Pany" /\ LENGTH
-         args = 0)
+       (nm,args). OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+         (OPTION_CHOICE (OPTION_CHOICE ((\b m. OPTION_IGNORE_BIND
+         (OPTION_GUARD b) m) (nm = "Pany" /\ LENGTH args = 0)
              (SOME ast_Pany))
        ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Plit"
          /\ LENGTH args = 1)
@@ -477,7 +477,7 @@ let sexppat_def,sexppat_ind = define_guess_cheat
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sexppat_alt_def,sexppat_alt_ind = define_mutual_guess_cheat
-  [`sexppat_alt s = APPEND (OPTION_MAP ast_Pvar (odestSEXSTR s))
+  [`sexppat_alt s = OPTION_CHOICE (OPTION_MAP ast_Pvar (odestSEXSTR s))
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Pany" /\ LENGTH args = 0 then
             SOME ast_Pany else if nm = "Plit" /\ LENGTH args = 1
@@ -687,10 +687,11 @@ let sexplocn_def = new_definition
 let sexpexp_def,sexpexp_ind = define_guess_cheat
   [`sexpexp s =
      OPTION_BIND (dstrip_sexp s) (\
-       (nm,args). APPEND (APPEND (APPEND (APPEND (APPEND (APPEND
-         (APPEND (APPEND (APPEND (APPEND (APPEND (APPEND (APPEND ((\b
-         m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Raise" /\
-         LENGTH args = 1)
+       (nm,args). OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+         (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+         (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+         (OPTION_CHOICE (OPTION_CHOICE ((\b m. OPTION_IGNORE_BIND
+         (OPTION_GUARD b) m) (nm = "Raise" /\ LENGTH args = 1)
              (OPTION_MAP ast_Raise (sexpexp (EL 0 args))))
        ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Handle"
          /\ LENGTH args = 2)
@@ -759,7 +760,7 @@ let sexpexp_def,sexpexp_ind = define_guess_cheat
 
 (* translator friendly version for bootstrapping *)
 let sexpexp_alt_def,sexpexp_alt_ind = assume_definition_rec
-  "termination (CHEAT_TAC)"
+  "the port cannot make this definition"
   [`sexpexp_alt s =
          (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
               (if nm = "Raise" /\ LENGTH args = 1 then
@@ -872,9 +873,10 @@ let sexptype_def_def = new_definition
 let sexpdec_def,sexpdec_ind = define_guess_cheat
   [`sexpdec s =
      OPTION_BIND (dstrip_sexp s) (\
-       (nm,args). APPEND (APPEND (APPEND (APPEND (APPEND (APPEND
-         (APPEND ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm =
-         "Dlet" /\ LENGTH args = 3)
+       (nm,args). OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+         (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+         ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dlet" /\
+         LENGTH args = 3)
              (OPTION_APPLY (OPTION_APPLY (OPTION_MAP Dlet (sexplocn
                (HD args)))
                         (sexppat (EL 1 args)))
@@ -986,7 +988,7 @@ let listsexp_def = new_definition
 let listsexp_thm = prove
  (`listsexp [] = (SX_SYM "nil") /\ listsexp (CONS h t) = SX_CONS h
   (listsexp t)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[listsexp_def; ITLIST]));;
 
 (* [simp] *)
 let listsexp_11 = prove
@@ -1118,12 +1120,18 @@ let arithsexp_def = define_cases
 (* [simp] *)
 let arithsexp_11 = prove
  (`!l1 l2. arithsexp l1 = arithsexp l2 <=> l1 = l2`,
-  CHEAT_TAC);;
+  (SUBGOAL_THEN `!x. sexparith (arithsexp x) = SOME x` MP_TAC THENL
+   [GEN_TAC THEN CASES_ON_TAC `x:ast_arith` THEN
+    REWRITE_TAC[arithsexp_def; sexparith_def] THEN
+    CONV_TAC(DEPTH_CONV STRING_EQ_CONV) THEN REWRITE_TAC[];
+    MESON_TAC[option_INJ]]));;
 
 (* [simp] *)
 let arithsexp_sexparith = prove
  (`!x. sexparith (arithsexp x) = SOME x`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN CASES_ON_TAC `x:ast_arith` THEN
+   REWRITE_TAC[arithsexp_def; sexparith_def] THEN
+   CONV_TAC(DEPTH_CONV STRING_EQ_CONV) THEN REWRITE_TAC[]));;
 
 let prim_typesexp_def = new_definition
   `prim_typesexp x1 =
@@ -1601,16 +1609,29 @@ let patsexp_sexppat = prove
 
 let decode_test_testsexp = prove
  (`fromSexp_decode_test s = SOME test ==> testsexp test = s`,
-  CHEAT_TAC);;
+  (CASES_ON_TAC `s:simpleSexp_sexp` THEN
+    REWRITE_TAC[fromSexp_decode_test_def] THEN
+   REPEAT COND_CASES_TAC THEN
+   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_REWRITE_TAC[testsexp_def]));;
 
 let sexparith_arithsexp = prove
  (`sexparith s = SOME arith ==> arithsexp arith = s`,
-  CHEAT_TAC);;
+  (CASES_ON_TAC `s:simpleSexp_sexp` THEN REWRITE_TAC[sexparith_def]
+    THEN
+   REPEAT COND_CASES_TAC THEN
+   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_REWRITE_TAC[arithsexp_def]));;
 
 let decode_prim_type_prim_typesexp = prove
  (`decode_prim_type s0 = SOME prim_type ==>
    prim_typesexp prim_type = s0`,
-  CHEAT_TAC);;
+  (CASES_ON_TAC `s0:simpleSexp_sexp` THEN
+    REWRITE_TAC[decode_prim_type_def] THEN
+   REPEAT COND_CASES_TAC THEN
+   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN
+     ASM_REWRITE_TAC[prim_typesexp_def]));;
 
 let opsexp_sexpop = prove
  (`sexpop s = SOME p ==> opsexp p = s`,
@@ -1634,7 +1655,16 @@ let locnsexp_sexplocn = prove
 let logsexp_sexplog = prove
  (`(sexplog s = SOME z <=> logsexp z = s) /\
    (SOME z = sexplog s <=> logsexp z = s)`,
-  CHEAT_TAC);;
+  (MATCH_MP_TAC(TAUT `(a <=> c) /\ (b <=> a) ==> (a <=> c) /\ (b <=>
+    c)`) THEN
+   CONJ_TAC THENL [ALL_TAC; MESON_TAC[]] THEN
+   EQ_TAC THENL [ALL_TAC; DISCH_THEN(SUBST1_TAC o SYM) THEN
+                 REWRITE_TAC[sexplog_logsexp]] THEN
+   CASES_ON_TAC `s:simpleSexp_sexp` THEN REWRITE_TAC[sexplog_def]
+     THEN
+   REPEAT COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT;
+     option_INJ] THEN
+   DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_REWRITE_TAC[logsexp_def]));;
 
 let expsexp_sexpexp = prove
  (`(sexpexp s = SOME e <=> expsexp e = s) /\
@@ -1731,8 +1761,6 @@ let expsexp_valid = prove
 let decsexp_valid = prove
  (`!d. valid_sexp (decsexp d)`,
   CHEAT_TAC);;
-
-hol4_only "++" "APPEND";;
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant

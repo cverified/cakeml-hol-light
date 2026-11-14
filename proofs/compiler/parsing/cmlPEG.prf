@@ -1,2 +1,6 @@
 ### subexprs_pnt
   (REWRITE_TAC[subexprs_def; cmlPEG_pnt_def])
+
+### frange_image
+  (REWRITE_TAC[FRANGE; EXTENSION; IN_ELIM_THM; IN_IMAGE] THEN
+    MESON_TAC[])

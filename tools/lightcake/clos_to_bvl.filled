@@ -1,4 +1,9 @@
+build_aux_LENGTH
+build_aux_MEM
 build_aux_acc
 clos_tag_shift_inj
+code_split_LENGTH
+code_split_NULL
 compile_exps_SING
+get_src_names_sing_eq
 pair_lem2

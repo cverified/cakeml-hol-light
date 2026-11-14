@@ -346,6 +346,15 @@ their own (`lightcake.py fill`, `TOLERANT=1 tools/bin/tryfile
 <file>`, `lightcake.py drop <theory> <name>...`), and `drop`
 takes either name a theorem goes by.
 
+Over the whole port it is `tools/bin/lightcake-cycle`, which
+fills every theory both ports have, writes the files, loads the
+lot with every theorem in a try, and takes out again what did not
+go through.  That tool reads two things, because a proof fails in
+two ways: a proof that **raises** is logged by the tolerant load,
+and a proof that names a value this port has not got does not
+compile at all, so the try round it never runs and the phrase
+marker of the report is all there is to go by.
+
 Whether a name exists is read off the sources: this port's
 files that load before the one being written, LightCake's own
 blocks that have been taken, and HOL Light's own bindings and
@@ -380,6 +389,10 @@ The `tools/*.py` scripts are standalone and need only Python:
     python3 -I tools/comments.py     # the comments of the sources
     python3 -I tools/lines.py        # line lengths
     python3 -I tools/nohol4.py       # no HOL4 code, pointers resolve
+
+`tools/dropfails.py` is the one that reads a run's report rather
+than the sources: it takes the proofs a run says do not go
+through out of the store again.
 
 They are what keeps the port faithful, and they read `cakeml-src/`.
 

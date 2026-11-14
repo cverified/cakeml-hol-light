@@ -105,7 +105,16 @@ let MEM_EL_APPEND_MID = prove
      MEM (EL n (APPEND (APPEND l [c]) r)) l \/ EL n (APPEND (APPEND l
        [c]) r) = c \/
      MEM (EL n (APPEND (APPEND l [c]) r)) r`,
-  CHEAT_TAC);;
+  (* where the n-th element sits is settled by EL_APPEND twice:
+     inside l, the one element [c], or inside r *)
+  (REPEAT GEN_TAC THEN DISCH_TAC THEN
+   REWRITE_TAC[EL_APPEND; LENGTH_APPEND; LENGTH; ARITH] THEN
+   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
+   [ASM_SIMP_TAC[MEM_EL];
+    ASM_SIMP_TAC[ARITH_RULE `~(n < m) /\ n < m + 1 ==> n - m = 0`;
+                 EL; HD];
+    DISJ2_TAC THEN DISJ2_TAC THEN MATCH_MP_TAC MEM_EL THEN
+    ASM_ARITH_TAC]));;
 
 let MAX_LIST_sum_bound = prove
  (`SUM ls <= MAX_LIST ls * LENGTH ls`,
@@ -1072,7 +1081,7 @@ let EVERY2_MAP_FST_SND = prove
    REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC aux));;
 
 let fapply_fupdate_update = prove
- (`(FAPPLY) (f |+ p) = (FST p =+ SND p) ((FAPPLY) f)`,
+ (`FAPPLY (f |+ p) = (FST p =+ SND p) (FAPPLY f)`,
   (let aux = prove
     (`!(f:(A,B)fmap) p. FAPPLY (f |+ p) = (FST p =+ SND p) (FAPPLY f)`,
      REPEAT GEN_TAC THEN
@@ -2078,7 +2087,7 @@ let gc_inline_def = new_definition
 let gc_related_roots_heap_def = new_definition
   `gc_related_roots_heap f (r1,h1) (r2,h2) <=>
      gc_related f h1 h2 /\
-     r2 = ADDR_MAP ((FAPPLY) f) r1 /\
+     r2 = ADDR_MAP (FAPPLY f) r1 /\
      (!ptr u. MEM (gc_shared_Pointer ptr u) r1 ==> ptr IN FDOM f)`;;
 
 let gc_inline_related_def = new_definition
@@ -3091,7 +3100,8 @@ let bc_stack_ref_inv_gc_related_roots_heap = prove
    (* the roots of the new heap are the old ones mapped, and
       v_inv_related says the relation survives the map *)
    TRY (SOLVED
-         (REWRITE_TAC[LIST_REL_EL_EQN; LENGTH_ADDR_MAP] THEN
+         (REWRITE_TAC[LIST_REL_EL_EQN;
+                      data_to_word_memoryProof_LENGTH_ADDR_MAP] THEN
           RULE_ASSUM_TRY (REWRITE_RULE[LIST_REL_EL_EQN]) THEN
           SPLIT_ASM_TAC THEN
           CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
@@ -3169,7 +3179,7 @@ let all_reachable_from_roots_def = new_definition
 let reachable_addresses_related = prove
  (`k IN reachable_addresses roots heap /\ gc_related f heap heap2 /\
    reachable_addresses roots heap SUBSET FDOM f ==> FAPPLY
-   f k IN reachable_addresses (ADDR_MAP ((FAPPLY) f) roots) heap2`,
+   f k IN reachable_addresses (ADDR_MAP (FAPPLY f) roots) heap2`,
   (* the root that reaches k reaches it over a path of the heap, and
      the map takes that path to one of the new heap: the first
      address is a key of the map because it is reachable itself (the
@@ -3271,7 +3281,7 @@ let IMP_all_reachable_from_roots = prove
  (`FDOM f = reachable_addresses roots heap /\
    FRANGE f = {a | isSomeDataElement (heap_lookup a heap2)} /\
    gc_related f heap heap2 ==>
-   all_reachable_from_roots (ADDR_MAP ((FAPPLY) f) roots) heap2`,
+   all_reachable_from_roots (ADDR_MAP (FAPPLY f) roots) heap2`,
   (* an address of the second heap is in the range of f, so it is the
      image of an address of the first, which is reachable *)
   (REWRITE_TAC[all_reachable_from_roots_def] THEN

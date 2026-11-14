@@ -77,14 +77,22 @@ let NT_rank_def = new_definition
 (* [local] *)
 let paireq = prove
  (`(x,y) = z <=> x = FST z /\ y = SND z`,
-  CHEAT_TAC);;
+  (MESON_TAC[PAIR; FST; SND]));;
 
 (* [local] *)
 let GSPEC_INTER = prove
  (`hol4_GSPEC f INTER Q =
      hol4_GSPEC (hol4_S ((,) o FST o f) (hol4_S ((/\) o SND o f) (Q
        o FST o f)))`,
-  CHEAT_TAC);;
+  (* the n-th pair of f is split by paireq, and then the two sides
+     say the same of it: Q of x, and Q of the FST that x is *)
+  (REWRITE_TAC[hol4_GSPEC; hol4_S; o_THM] THEN
+   GEN_REWRITE_TAC I [EXTENSION] THEN
+   REWRITE_TAC[IN_INTER; IN_ELIM_THM; IN; paireq] THEN
+   GEN_TAC THEN REWRITE_TAC[LEFT_AND_EXISTS_THM] THEN
+   EQ_TAC THEN MATCH_MP_TAC MONO_EXISTS THEN GEN_TAC THEN
+   STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
+   ASM_REWRITE_TAC[]));;
 
 (* [local] *)
 let RIGHT_INTER_OVER_UNION = prove

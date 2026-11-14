@@ -103,7 +103,10 @@ let int_to_string_thm = prove
 let toString_thm = prove
  (`toString i = implode (APPEND (if i < (&0:int) then "~" else "")
   (num_to_dec_string (num_of_int (abs i))))`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN REWRITE_TAC[toString_def1; int_to_string_thm] THEN
+   COND_CASES_TAC THEN REWRITE_TAC[] THEN
+   AP_TERM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+   REWRITE_TAC[CONS_11; CHR] THEN CONV_TAC NUM_REDUCE_CONV));;
 
 let num_to_str_def = new_definition
   `num_to_str (n:num) = toString (&n)`;;
@@ -418,7 +421,12 @@ let num_to_str_imp_cons = prove
  (`toString (i:num) = implode s ==>
    (?x xs. s = CONS x xs /\ 48 <= ORD x /\ ORD x <= 57 /\ ALL (\x.
      48 <= ORD x /\ ORD x <= 57) xs)`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN
+   FIRST_ASSUM(ASSUME_TAC o MATCH_MP num_to_str_every) THEN
+   FIRST_ASSUM(ASSUME_TAC o MATCH_MP num_to_str_not_nil) THEN
+   POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN
+   STRUCT_CASES_TAC(ISPEC `s:string` list_CASES) THEN
+   REWRITE_TAC[ALL; NOT_CONS_NIL; CONS_11] THEN MESON_TAC[]));;
 
 let num_to_str_APPEND_11 = prove
  (`APPEND s1 (CONS x1 xs1) = APPEND s2 (CONS x2 xs2) /\

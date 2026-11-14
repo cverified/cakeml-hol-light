@@ -1,3 +1,6 @@
 ### canonical_four_result_wrapper
   (REWRITE_TAC[wrapper_ok_def; canonical_wrapper_def] THEN
    CONV_TAC NUM_REDUCE_CONV)
+
+### final_tick_cleanup_example
+  (REWRITE_TAC[remove_ticks_exp_def; OPTION_MAP])

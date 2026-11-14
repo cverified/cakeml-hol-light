@@ -88,7 +88,7 @@ let type_pes_cons = prove
          type_p tvs tenv p t1 bindings /\
          type_e tenv (bind_var_list tvs' bindings tenvE) e t2) /\
      type_pes tvs tvs' tenv tenvE pes t1 t2)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[type_pes_def; MEM; PAIR_EQ] THEN MESON_TAC[]));;
 
 (* ---------- check_freevars ---------- *)
 

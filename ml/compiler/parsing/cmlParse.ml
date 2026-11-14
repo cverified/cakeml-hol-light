@@ -75,8 +75,6 @@ let pegresult_guard_def = new_definition
    (\toks. if b then peg_Success toks one NONE else peg_Failure
      (toks_to_loc toks) "Assert failure")`;;
 
-hol4_overload "++" "pegresult_choice";;
-
 let optlift_def = define_general
   [`(optlift NONE:(tokens_token#locs) list->((tokens_token#locs)
   list,'a,string)pegresult) = (\toks. peg_Failure (toks_to_loc toks)
@@ -98,8 +96,6 @@ let parse_prog_def = new_definition
        pts. pegresult_bind (optlift (oHD pts)) (\
        pt.
        optlift (ptree_TopLevelDecs pt)))`;;
-
-hol4_only "++" "APPEND";;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

@@ -1,3 +1,7 @@
+all_thm
 collate_thm
+exists_thm
 find_thm
 foldl_thm
+foldli_thm
+less_than_length_thm

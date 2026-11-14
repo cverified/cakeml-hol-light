@@ -81,7 +81,10 @@ let isWord_def = new_definition
 
 let isWord_exists = prove
  (`isWord x <=> (?w. x = wordLang_Word w)`,
-  CHEAT_TAC);;
+  (CASES_ON_TAC `x:(A)word_loc` THEN
+   REWRITE_TAC[isWord_def; injectivity "word_loc"; distinctness
+     "word_loc"] THEN
+   MESON_TAC[]));;
 
 let wordSem_word_cmp_def = new_definition
   `wordSem_word_cmp x1 x2 x3 =

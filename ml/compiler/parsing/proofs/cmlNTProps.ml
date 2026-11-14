@@ -114,12 +114,16 @@ let firstSet_nDecls = prove
 let IMAGE_GSPEC1 = prove
  (`IMAGE f (hol4_GSPEC (\a. (g a,P a))) = hol4_GSPEC (\a. (f (g a),P
   a))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[hol4_GSPEC] THEN GEN_REWRITE_TAC I [EXTENSION] THEN
+   REWRITE_TAC[IN_IMAGE; IN_ELIM_THM; PAIR_EQ] THEN
+   MESON_TAC[]));;
 
 (* [local,simp] *)
 let BIGUNION_singletons = prove
  (`UNIONS (hol4_GSPEC (\a. {f a},P a)) = hol4_GSPEC (\a. f a,P a)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[hol4_GSPEC] THEN GEN_REWRITE_TAC I [EXTENSION] THEN
+   REWRITE_TAC[IN_UNIONS; IN_ELIM_THM; PAIR_EQ] THEN
+   MESON_TAC[IN_SING]));;
 
 (* [simp] *)
 let firstSet_nMultOps = prove

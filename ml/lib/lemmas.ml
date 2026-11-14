@@ -1176,3 +1176,43 @@ let extract64_full = prove
   CONV_TAC NUM_REDUCE_CONV THEN
   REWRITE_TAC[TAUT
      `(p ==> (p /\ a <=> p /\ b)) <=> (p ==> (a <=> b))`]);;
+
+(* HOL4's combinTheory.K_THM and K_o_THM: HOL Light's K_DEF says
+   the same as the first with its two variables the other way
+   round, and LightCake's proofs name these *)
+
+let K_THM = prove
+ (`!(x:A) (y:B). K x y = x`,
+  REWRITE_TAC[K_DEF]);;
+
+let K_o_THM = prove
+ (`(!(f:C->B) (v:A). K v o f = K v) /\
+   (!(f:A->B) (v:A). f o K v = K (f v):C->B)`,
+  REWRITE_TAC[FUN_EQ_THM; o_THM; K_THM]);;
+
+(* HOL4's listTheory.EVERY_MEM and EVERY_MAP, which are HOL
+   Light's ALL_MEM and ALL_MAP the other way round and with the
+   composition written as a lambda *)
+
+let EVERY_MEM = prove
+ (`!P l:A list. ALL P l <=> (!e. MEM e l ==> P e)`,
+  REWRITE_TAC[ALL_MEM]);;
+
+let EVERY_MAP = prove
+ (`!P (f:A->B) l. ALL P (MAP f l) <=> ALL (\x. P (f x)) l`,
+  REWRITE_TAC[ALL_MAP; o_DEF]);;
+
+(* and HOL4's pairTheory.PAIR_MAP_THM, which is PAIR_MAP of a
+   pair that is written out *)
+
+let PAIR_MAP_THM = prove
+ (`!(f:A->C) (g:B->D) x y. (f ## g) (x,y) = (f x,g y)`,
+  REWRITE_TAC[PAIR_MAP]);;
+
+(* HOL4's listTheory.CONS, which says that a list that is not
+   empty is its head on its tail; 229 of LightCake's proofs name
+   it and HOL Light has no theorem of that shape *)
+
+let CONS = prove
+ (`!l:A list. ~NULL l ==> CONS (HD l) (TL l) = l`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[NULL; HD; TL]);;

@@ -1,8 +1,12 @@
 SUBMAP_t_compat
 encode_unify
+encode_walk
 t_compat_refl
 t_compat_trans
 t_unify_apply
 t_unify_apply2
+t_unify_strongind'
 t_unify_wfs
+t_walk_eqn
+t_walk_walk_id
 t_wfs_eqn

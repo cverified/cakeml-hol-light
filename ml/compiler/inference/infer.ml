@@ -38,8 +38,6 @@ let _ = hol4_ancestors "infer"
 let _ = do_list hide_constant ["not"];;
 (* HOL4 ancestors outside the port: string *)
 
-hol4_overload "++" "otherwise";;
-
 
 new_type_abbrev("err_var",`: (mlstring,mlstring,mlstring
    list#t)namespace`);;
@@ -1279,9 +1277,9 @@ let ns_nub_def,ns_nub_ind = define_mutual_shaped_rec
    replacing the CHEAT_TAC is all that is left *)
 let ns_to_alist_def,ns_to_alist_ind = define_guess_cheat
   [`ns_to_alist (Bind [] []) = []`;
-   `ns_to_alist (Bind [] (CONS (n,x) ms)) = APPEND (MAP (\(x,y). ((\x y.
-  strcat x y) ((\x y. strcat x y) n (implode ".")) x,y)) (ns_to_alist
-  x))
+   `ns_to_alist (Bind [] (CONS (n,x) ms)) = APPEND
+        (MAP (\(x,y). ((\x y. strcat x y) ((\x y. strcat x y) n
+          (implode ".")) x,y)) (ns_to_alist x))
         (ns_to_alist (Bind [] ms))`;
    `ns_to_alist (Bind (CONS (s,x) xs) m) = CONS (s,x) (ns_to_alist
   (Bind xs m))`];;
@@ -1294,8 +1292,6 @@ let inf_env_to_types_string_def = new_definition
                               (implode "\n")]) l in
         // sort mlstring_le
         REVERSE xs)`;;
-
-hol4_only "++" "APPEND";;
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant

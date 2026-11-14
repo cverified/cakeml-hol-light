@@ -341,7 +341,7 @@ let evaluate_dec_io_events_mono = prove
  (`!z y. ffi_state_io_events (state_ffi
       y) <<= ffi_state_io_events (state_ffi (FST (evaluate_dec y
         z)))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[flatProps_evaluate_io_events_mono]));;
 
 let evaluate_dec_add_to_clock_io_events_mono = prove
  (`!prog (s:('c,'ffi)flatSem_state) extra. ffi_state_io_events
@@ -349,7 +349,7 @@ let evaluate_dec_add_to_clock_io_events_mono = prove
     (FST (evaluate_dec s prog))) <<= ffi_state_io_events (state_ffi
     (FST (evaluate_dec (flatSem_state_clock_fupd (K
       (flatSem_state_clock s + extra)) s) prog)))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[flatProps_evaluate_add_to_clock_io_events_mono]));;
 
 let evaluate_decs_io_events_mono = prove
  (`!ds (s:('c,'ffi)flatSem_state) s' y. evaluate_decs s ds = (s',y) ==>
@@ -420,7 +420,7 @@ let flatProps_initial_state_with_clock = prove
 (* [local] *)
 let SND_SND_lemma = prove
  (`(SND x) = y <=> (?y1. x = (y1,y))`,
-  CHEAT_TAC);;
+  (MESON_TAC[PAIR; FST; SND]));;
 
 let flatProps_eval_sim_def = new_definition
   `flatProps_eval_sim ffi ds1 ds2 ec ec2 rel allow_fail =
@@ -560,7 +560,11 @@ let evaluate_decs_add_to_clock_io_events_mono_alt = prove
    evaluate_decs (flatSem_state_clock_fupd (K (flatSem_state_clock s
      + extra)) s) ds = (s2,res2) ==> ffi_state_io_events (state_ffi
    s1) <<= ffi_state_io_events (state_ffi s2)`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN
+   MP_TAC(ISPECL [`ds:flatLang_exp list`;
+     `s:(C,ast_FFI)flatSem_state`; `extra:num`]
+            flatProps_evaluate_decs_add_to_clock_io_events_mono) THEN
+   ASM_REWRITE_TAC[FST]));;
 
 (* generic proof support for most val_rel/state_rel examples *)
 

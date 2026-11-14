@@ -81,3 +81,52 @@
 
 ### TWOxDIV2
   (GEN_TAC THEN MATCH_MP_TAC DIV_MULT THEN ARITH_TAC)
+
+### INJ_IMG_lookup
+  (REPEAT GEN_TAC THEN REWRITE_TAC[INJ; IN_UNIV] THEN STRIP_TAC THEN
+   SUBGOAL_THEN `(g:num->num) x IN domain (gt:1 spt) <=> x IN domain
+     (ft:1 spt)` MP_TAC THENL
+    [ASM_REWRITE_TAC[IN_IMAGE] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+   REWRITE_TAC[domain_lookup] THEN
+   CASES_ON_TAC `lookup ((g:num->num) x) (gt:1 spt)` THEN
+   CASES_ON_TAC `lookup (x:num) (ft:1 spt)` THEN
+   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+   ONCE_REWRITE_TAC[one] THEN MESON_TAC[])
+
+### Msub_eqn
+  (REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+   ASM_SIMP_TAC[msub_eq] THEN
+   MATCH_MP_TAC msub_exn_eq THEN ASM_ARITH_TAC)
+
+### Mupdate_eqn
+  (REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+   ASM_SIMP_TAC[mupdate_eq] THEN
+   MATCH_MP_TAC mupdate_exn_eq THEN ASM_ARITH_TAC)
+
+### colouring_satisfactory_cliques
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[ALL_DISTINCT; MAP; ALL] THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN CONJ_TAC THENL
+    [REWRITE_TAC[MEM_MAP] THEN DISCH_THEN(X_CHOOSE_THEN `y:num`
+      STRIP_ASSUME_TAC) THEN
+     SUBGOAL_THEN `has_edge g h y` MP_TAC THENL
+      [UNDISCH_TAC `is_clique (CONS h t) g` THEN
+        REWRITE_TAC[is_clique_def; MEM] THEN
+       ASM_MESON_TAC[];
+       ALL_TAC] THEN
+     REWRITE_TAC[has_edge_def] THEN STRIP_TAC THEN
+     UNDISCH_TAC `colouring_satisfactory (f:num->num) g` THEN
+     REWRITE_TAC[colouring_satisfactory_def] THEN
+     DISCH_THEN(MP_TAC o SPEC `h:num`) THEN ASM_REWRITE_TAC[] THEN
+     DISCH_THEN(MP_TAC o SPEC `y:num`) THEN ASM_REWRITE_TAC[] THEN
+     ASM_MESON_TAC[];
+     FIRST_X_ASSUM MATCH_MP_TAC THEN EXISTS_TAC `g:(num list)list`
+       THEN
+     ASM_REWRITE_TAC[] THEN
+     UNDISCH_TAC `is_clique (CONS h t) g` THEN
+       REWRITE_TAC[is_clique_def; MEM] THEN
+     MESON_TAC[]])
+
+### opt_split
+  (GEN_TAC THEN CASES_ON_TAC `a:1 option` THEN
+    REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+   ONCE_REWRITE_TAC[one] THEN REWRITE_TAC[])

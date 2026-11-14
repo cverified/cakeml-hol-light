@@ -365,7 +365,7 @@ let find_v_globals_list_to_v_APPEND = prove
 (* [simp] *)
 let find_v_globals_Unitv = prove
  (`find_v_globals Unitv = LN`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[unitv_def; find_v_globals_def]));;
 
 let EVERY_EL_IMP = prove
  (`ALL P xs /\ n < LENGTH xs ==> P (EL n xs)`,

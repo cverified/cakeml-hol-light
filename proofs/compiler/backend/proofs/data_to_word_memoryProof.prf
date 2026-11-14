@@ -16602,7 +16602,8 @@
    (* the roots of the new heap are the old ones mapped, and
       v_inv_related says the relation survives the map *)
    TRY (SOLVED
-         (REWRITE_TAC[LIST_REL_EL_EQN; LENGTH_ADDR_MAP] THEN
+         (REWRITE_TAC[LIST_REL_EL_EQN;
+                      data_to_word_memoryProof_LENGTH_ADDR_MAP] THEN
           RULE_ASSUM_TRY (REWRITE_RULE[LIST_REL_EL_EQN]) THEN
           SPLIT_ASM_TAC THEN
           CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN

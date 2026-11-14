@@ -162,7 +162,41 @@ let FLAT_EQ_CONS = prove
       FLAT ll = CONS h t <=>
       (?p t0 s. ll = APPEND (APPEND p [CONS h t0]) s /\
                ALL ((=) []) p /\ FLAT (CONS t0 s) = t)`,
-  CHEAT_TAC);;
+  (MATCH_MP_TAC list_INDUCT THEN CONJ_TAC THENL
+    [REWRITE_TAC[FLAT; NOT_CONS_NIL] THEN MESON_TAC[APPEND_EQ_NIL;
+      NOT_CONS_NIL];
+     ALL_TAC] THEN
+   X_GEN_TAC `a:A list` THEN X_GEN_TAC `ll:(A list)list` THEN
+     DISCH_TAC THEN
+   X_GEN_TAC `h:A` THEN X_GEN_TAC `t:A list` THEN REWRITE_TAC[FLAT]
+     THEN
+   EQ_TAC THENL
+    [STRUCT_CASES_TAC(ISPEC `a:A list` list_CASES) THEN
+     REWRITE_TAC[APPEND; CONS_11] THENL
+      [ASM_REWRITE_TAC[] THEN
+       DISCH_THEN(X_CHOOSE_THEN `p:(A list)list` (X_CHOOSE_THEN `t0:A
+         list`
+         (X_CHOOSE_THEN `s:(A list)list` STRIP_ASSUME_TAC))) THEN
+       MAP_EVERY EXISTS_TAC [`CONS ([]:A list) p`; `t0:A list`; `s:(A
+         list)list`] THEN
+       RULE_ASSUM_TAC(REWRITE_RULE[FLAT]) THEN ASM_REWRITE_TAC[ALL;
+         APPEND];
+       STRIP_TAC THEN
+       MAP_EVERY EXISTS_TAC [`[]:(A list)list`; `t':A list`; `ll:(A
+         list)list`] THEN
+       ASM_REWRITE_TAC[ALL; FLAT; APPEND]];
+     DISCH_THEN(X_CHOOSE_THEN `p:(A list)list` (X_CHOOSE_THEN `t0:A
+       list`
+       (X_CHOOSE_THEN `s:(A list)list` STRIP_ASSUME_TAC))) THEN
+     POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC
+       THEN
+     STRUCT_CASES_TAC(ISPEC `p:(A list)list` list_CASES) THEN
+     REWRITE_TAC[APPEND; CONS_11; ALL; FLAT] THEN REPEAT STRIP_TAC
+       THEN
+     (REPEAT VAR_EQ_TAC) THEN ASM_REWRITE_TAC[APPEND] THEN
+     MAP_EVERY EXISTS_TAC [`t':(A list)list`; `t0:A list`; `s:(A
+       list)list`] THEN
+     ASM_REWRITE_TAC[FLAT]]));;
 
 let rfirstSet_nonempty_fringe = prove
  (`!pt t l rest.
@@ -248,7 +282,16 @@ let ptree_loc_mkNd = prove
 
 let merge_list_locs_HDLAST = prove
  (`!h. merge_list_locs (CONS h t) = merge_locs h (LAST (CONS h t))`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THENL
+    [GEN_TAC THEN REWRITE_TAC[merge_list_locs_def; LAST] THEN
+     STRUCT_CASES_TAC(ISPEC `h:locs` (cases "locs")) THEN
+     REWRITE_TAC[merge_locs_def];
+     ALL_TAC] THEN
+   GEN_TAC THEN MP_TAC(ISPEC `t:locs list` list_CASES) THEN
+   DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC
+     (X_CHOOSE_THEN `h2:locs` (X_CHOOSE_THEN `t2:locs list`
+       SUBST_ALL_TAC))) THEN
+   ASM_REWRITE_TAC[merge_list_locs_def; LAST; NOT_CONS_NIL]));;
 
 let ptree_loc_left_insert1 = prove
  (`!subpt pt.
@@ -1265,7 +1308,8 @@ let peg_linfix_complete = prove
 let pmap_EQ = prove
  (`(x,y) = (f ## g) p <=> (?x0 y0. p = (x0,y0) /\ x = f x0 /\ y = g
   y0)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FORALL_PAIR_THM; PAIR_MAP_THM; PAIR_EQ] THEN
+    MESON_TAC[]));;
 
 let ptPapply0_FOLDL = prove
  (`!l a pt.
@@ -1278,25 +1322,25 @@ let ptPapply0_FOLDL = prove
 (* [simp] *)
 let FST_EQ = prove
  (`FST p = x <=> (?y. p = (x,y))`,
-  CHEAT_TAC);;
+  (MESON_TAC[PAIR; FST; SND]));;
 
 (* [simp] *)
 let FST_NEQ = prove
  (`~(FST p = x) <=> (?x0 y. p = (x0,y) /\ ~(x0 = x))`,
-  CHEAT_TAC);;
+  (MESON_TAC[PAIR; FST; SND]));;
 
 (* [simp] *)
 let ALL_FST_NEQ = prove
  (`(!y. ~(p = (x,y))) <=> (?x0 y. p = (x0,y) /\ ~(x0 = x))`,
-  CHEAT_TAC);;
+  (MESON_TAC[PAIR; FST; SND]));;
 
 let FST_IN = prove
  (`FST p IN s <=> (?tk l. p = (tk,l) /\ tk IN s)`,
-  CHEAT_TAC);;
+  (MESON_TAC[PAIR; FST; SND]));;
 
 let FST_NOTIN = prove
  (`~(FST p IN s) <=> (?tk l. p = (tk,l) /\ ~(tk IN s))`,
-  CHEAT_TAC);;
+  (MESON_TAC[PAIR; FST; SND]));;
 
 (* HOL4 pegCompleteScript.sml:2087: the ML values that the
    definitions below antiquote *)
