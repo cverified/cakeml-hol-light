@@ -12013,7 +12013,7 @@ CON_FILE = {
   'clos_known': {'Int': 'clos_known'},
   # the instructions that stack_alloc builds are asm's, which is
   # what the Inst of a stackLang program takes
-  'stack_alloc': {'Load': 'asm', 'Store': 'asm',
+  'stack_alloc': {'Const': 'asm', 'Load': 'asm', 'Store': 'asm',
                   'Load8': 'asm', 'Store8': 'asm',
                   'Add': 'asm', 'Sub': 'asm', 'And': 'asm',
                   'Or': 'asm', 'Xor': 'asm'},
@@ -12059,6 +12059,7 @@ DEF_NAMES = {
   ('word_cse', 'register_read_def'): {'insert': 'sptree_insert'},
   ('displayLang', 'trace_to_json_def'): {'toString': 'num_to_str'},
   ('presLang', 'attach_name_def'): {'toString': 'num_to_str'},
+  ('presLang', 'num_set_to_display_def'): {'toString': 'num_to_str'},
   # the toString of the length of a list is num_to_str, which the
   # port writes as toString of the injection in some places and
   # left without one in two
