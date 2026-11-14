@@ -18,8 +18,8 @@ let _ = cake_theory "lab_filter"
   ["labLang"];;
 
 let not_skip_def = new_definition
-  `not_skip l = (match l with labLang_Asm (Asmi (asm_Inst asm_Skip))
-  _1 _2 -> F | _3 -> T)`;;
+  `not_skip l = match l with labLang_Asm (Asmi (asm_Inst asm_Skip)) _1 _2 ->
+  F | _ -> T`;;
 
 let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -27,12 +27,12 @@ let _ = size_thms "sec";;
 let filter_skip_def,filter_skip_ind = define_wf
   `MEASURE (\x0. list_size (sec_size (\x. 0)) x0)`
   [`filter_skip [] = []`;
-   `filter_skip (CONS (Section n xs) rest) = CONS (Section n
-    (FILTER not_skip xs)) (filter_skip rest)`];;
+   `filter_skip (CONS (Section n xs) rest) = CONS (Section n (FILTER
+    not_skip xs)) (filter_skip rest)`];;
 
 let filter_skip_MAP = prove
- (`!ls. filter_skip ls = MAP (\x. match x with Section n xs -> Section
-  n (FILTER not_skip xs)) ls`,
+ (`!ls. filter_skip ls = MAP (\x. match x with Section n xs -> Section n
+  (FILTER not_skip xs)) ls`,
   CHEAT_TAC);;
 
 (* and the interface *)

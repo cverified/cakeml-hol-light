@@ -66,14 +66,11 @@ let bvi_exp_INDUCT,bvi_exp_RECURSION = define_datatype
      // return-multi-value: returns values of given expressions
    | bvi_Return (bvi_exp list)";;
 
-(* HOL4 bviScript.sml:59: the overload mk_unit, which the port
-   expands *)
+(* HOL4 bviScript.sml:59: the overload mk_unit, which the port expands *)
 
-(* HOL4 bviScript.sml:61: the overload mk_elem_at, which the port
-   expands *)
+(* HOL4 bviScript.sml:61: the overload mk_elem_at, which the port expands *)
 
-(* HOL4 bviScript.sml:63-64: the overload TailCall, which the port
-   expands *)
+(* HOL4 bviScript.sml:63-64: the overload TailCall, which the port expands *)
 
 (* and the interface *)
 let _ = unhide_overloads ();;

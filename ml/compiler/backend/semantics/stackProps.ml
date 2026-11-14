@@ -30,8 +30,8 @@ let _ = hide_overloads
    "data_buffer","data_buffer"];;
 
 
-(* HOL4 stackPropsScript.sml:11-18: a theorem that HOL4 states as the
-   value of an ML expression: case_eq_thms *)
+(* HOL4 stackPropsScript.sml:11-18: a theorem that HOL4 states as the value
+   of an ML expression: case_eq_thms *)
 
 (* set_store_const *)
 let stackProps_set_store_const = prove
@@ -94,8 +94,7 @@ let stackProps_set_var_const = prove
         /\ stackSem_state_use_stack
       (stackSem_set_var x y z) = stackSem_state_use_stack z
         /\ stackSem_state_code
-      (stackSem_set_var x y z) = stackSem_state_code z
-        /\ stackSem_state_be
+      (stackSem_set_var x y z) = stackSem_state_code z /\ stackSem_state_be
       (stackSem_set_var x y z) = stackSem_state_be z
         /\ stackSem_state_fp_regs
       (stackSem_set_var x y z) = stackSem_state_fp_regs z
@@ -136,9 +135,8 @@ let stackProps_set_var_with_const = prove
      stackSem_state_ffi_fupd (K ffi) (stackSem_set_var x y z) /\
    stackSem_set_var x y (stackSem_state_stack_fupd (K stk) z) =
      stackSem_state_stack_fupd (K stk) (stackSem_set_var x y z) /\
-   stackSem_set_var x y (stackSem_state_stack_space_fupd (K
-     stk_space) z) = stackSem_state_stack_space_fupd (K stk_space)
-     (stackSem_set_var x y z)`,
+   stackSem_set_var x y (stackSem_state_stack_space_fupd (K stk_space) z)
+     = stackSem_state_stack_space_fupd (K stk_space) (stackSem_set_var x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_set_var_with_const;;
 
@@ -195,8 +193,7 @@ add_simp stackProps_get_fp_var_with_const;;
 let stackProps_get_var_with_const = prove
  (`stackSem_get_var r (stackSem_state_clock_fupd (K clk) t) =
    (stackSem_get_var r t) /\
-   stackSem_get_var r (stackSem_state_stack_space_fupd (K stk_space)
-     t) =
+   stackSem_get_var r (stackSem_state_stack_space_fupd (K stk_space) t) =
    (stackSem_get_var r t)`,
   CHEAT_TAC);;
 add_simp stackProps_get_var_with_const;;
@@ -229,8 +226,7 @@ add_simp stackProps_set_fp_var_const;;
 
 let empty_env_const = prove
  (`stackSem_state_ffi
-      (stackSem_empty_env x) = stackSem_state_ffi x
-        /\ stackSem_state_clock
+      (stackSem_empty_env x) = stackSem_state_ffi x /\ stackSem_state_clock
       (stackSem_empty_env x) = stackSem_state_clock x
         /\ stackSem_state_use_alloc
       (stackSem_empty_env z) = stackSem_state_use_alloc z
@@ -239,10 +235,8 @@ let empty_env_const = prove
         /\ stackSem_state_use_stack
       (stackSem_empty_env z) = stackSem_state_use_stack z
         /\ stackSem_state_code
-      (stackSem_empty_env z) = stackSem_state_code z
-        /\ stackSem_state_be
-      (stackSem_empty_env z) = stackSem_state_be z
-        /\ stackSem_state_gc_fun
+      (stackSem_empty_env z) = stackSem_state_code z /\ stackSem_state_be
+      (stackSem_empty_env z) = stackSem_state_be z /\ stackSem_state_gc_fun
       (stackSem_empty_env z) = stackSem_state_gc_fun z
         /\ stackSem_state_mdomain
       (stackSem_empty_env z) = stackSem_state_mdomain z
@@ -269,8 +263,8 @@ add_simp empty_env_with_const;;
 
 (* alloc_const *)
 let stackProps_alloc_const = prove
- (`stackSem_alloc w s = (r,t) ==> stackSem_state_ffi t =
-  stackSem_state_ffi s /\ stackSem_state_clock
+ (`stackSem_alloc w s = (r,t) ==> stackSem_state_ffi t = stackSem_state_ffi s
+  /\ stackSem_state_clock
     t = stackSem_state_clock s /\ stackSem_state_use_alloc
     t = stackSem_state_use_alloc s /\ stackSem_state_use_store
     t = stackSem_state_use_store s /\ stackSem_state_use_stack
@@ -326,80 +320,73 @@ add_simp stackProps_alloc_with_const;;
 
 let store_const_sem_with_const = prove
  (`store_const_sem t1 t2 (stackSem_state_clock_fupd (K z) y) =
-   (I ## (\s. stackSem_state_clock_fupd (K z) s)) (store_const_sem
-     t1 t2 y)`,
+   (I ## (\s. stackSem_state_clock_fupd (K z) s)) (store_const_sem t1 t2
+     y)`,
   CHEAT_TAC);;
 add_simp store_const_sem_with_const;;
 
 (* mem_load_with_const *)
 let stackProps_mem_load_with_const = prove
- (`stackSem_mem_store x y (stackSem_state_clock_fupd (K k) z) =
-  OPTION_MAP (\s. stackSem_state_clock_fupd (K k) s)
-  (stackSem_mem_store x y z)`,
+ (`stackSem_mem_store x y (stackSem_state_clock_fupd (K k) z) = OPTION_MAP
+  (\s. stackSem_state_clock_fupd (K k) s) (stackSem_mem_store x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_mem_load_with_const;;
 
 (* sh_mem_load_with_const *)
 let stackProps_sh_mem_load_with_const = prove
- (`(stackSem_sh_mem_load r x (stackSem_state_clock_fupd (K k) y)) = (I
-  ## (\s. stackSem_state_clock_fupd (K k) s)) (stackSem_sh_mem_load r
-  x y)`,
+ (`(stackSem_sh_mem_load r x (stackSem_state_clock_fupd (K k) y)) = (I ##
+  (\s. stackSem_state_clock_fupd (K k) s)) (stackSem_sh_mem_load r x y)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_load_with_const;;
 
 (* sh_mem_store_with_const *)
 let stackProps_sh_mem_store_with_const = prove
- (`(stackSem_sh_mem_store x y (stackSem_state_clock_fupd (K k) z)) =
-  (I ## (\s. stackSem_state_clock_fupd (K k) s))
-  (stackSem_sh_mem_store x y z)`,
+ (`(stackSem_sh_mem_store x y (stackSem_state_clock_fupd (K k) z)) = (I ##
+  (\s. stackSem_state_clock_fupd (K k) s)) (stackSem_sh_mem_store x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_store_with_const;;
 
 (* sh_mem_load32_with_const *)
 let stackProps_sh_mem_load32_with_const = prove
- (`(stackSem_sh_mem_load32 r x (stackSem_state_clock_fupd (K k) y)) =
-  (I ## (\s. stackSem_state_clock_fupd (K k) s))
-  (stackSem_sh_mem_load32 r x y)`,
+ (`(stackSem_sh_mem_load32 r x (stackSem_state_clock_fupd (K k) y)) = (I ##
+  (\s. stackSem_state_clock_fupd (K k) s)) (stackSem_sh_mem_load32 r x y)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_load32_with_const;;
 
 (* sh_mem_store32_with_const *)
 let stackProps_sh_mem_store32_with_const = prove
- (`(stackSem_sh_mem_store32 x y (stackSem_state_clock_fupd (K k) z)) =
-  (I ## (\s. stackSem_state_clock_fupd (K k) s))
-  (stackSem_sh_mem_store32 x y z)`,
+ (`(stackSem_sh_mem_store32 x y (stackSem_state_clock_fupd (K k) z)) = (I ##
+  (\s. stackSem_state_clock_fupd (K k) s)) (stackSem_sh_mem_store32 x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_store32_with_const;;
 
 (* sh_mem_load16_with_const *)
 let stackProps_sh_mem_load16_with_const = prove
- (`(stackSem_sh_mem_load16 r x (stackSem_state_clock_fupd (K k) y)) =
-  (I ## (\s. stackSem_state_clock_fupd (K k) s))
-  (stackSem_sh_mem_load16 r x y)`,
+ (`(stackSem_sh_mem_load16 r x (stackSem_state_clock_fupd (K k) y)) = (I ##
+  (\s. stackSem_state_clock_fupd (K k) s)) (stackSem_sh_mem_load16 r x y)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_load16_with_const;;
 
 (* sh_mem_store16_with_const *)
 let stackProps_sh_mem_store16_with_const = prove
- (`(stackSem_sh_mem_store16 x y (stackSem_state_clock_fupd (K k) z)) =
-  (I ## (\s. stackSem_state_clock_fupd (K k) s))
-  (stackSem_sh_mem_store16 x y z)`,
+ (`(stackSem_sh_mem_store16 x y (stackSem_state_clock_fupd (K k) z)) = (I ##
+  (\s. stackSem_state_clock_fupd (K k) s)) (stackSem_sh_mem_store16 x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_store16_with_const;;
 
 (* sh_mem_load_byte_with_const *)
 let stackProps_sh_mem_load_byte_with_const = prove
- (`(stackSem_sh_mem_load_byte r x (stackSem_state_clock_fupd (K k) y))
-  = (I ## (\s. stackSem_state_clock_fupd (K k) s))
-  (stackSem_sh_mem_load_byte r x y)`,
+ (`(stackSem_sh_mem_load_byte r x (stackSem_state_clock_fupd (K k) y)) = (I
+  ## (\s. stackSem_state_clock_fupd (K k) s)) (stackSem_sh_mem_load_byte r x
+  y)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_load_byte_with_const;;
 
 (* sh_mem_store_byte_with_const *)
 let stackProps_sh_mem_store_byte_with_const = prove
- (`(stackSem_sh_mem_store_byte x y (stackSem_state_clock_fupd (K k)
-  z)) = (I ## (\s. stackSem_state_clock_fupd (K k) s))
-  (stackSem_sh_mem_store_byte x y z)`,
+ (`(stackSem_sh_mem_store_byte x y (stackSem_state_clock_fupd (K k) z)) = (I
+  ## (\s. stackSem_state_clock_fupd (K k) s)) (stackSem_sh_mem_store_byte x y
+  z)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_store_byte_with_const;;
 
@@ -419,9 +406,8 @@ add_simp stackProps_word_exp_with_const;;
 
 (* assign_with_const *)
 let stackProps_assign_with_const = prove
- (`stackSem_assign x y (stackSem_state_clock_fupd (K k) s) =
-  OPTION_MAP (\s. stackSem_state_clock_fupd (K k) s) (stackSem_assign
-  x y s)`,
+ (`stackSem_assign x y (stackSem_state_clock_fupd (K k) s) = OPTION_MAP (\s.
+  stackSem_state_clock_fupd (K k) s) (stackSem_assign x y s)`,
   CHEAT_TAC);;
 add_simp stackProps_assign_with_const;;
 
@@ -446,8 +432,8 @@ let stackProps_inst_const = prove
 
 (* inst_with_const *)
 let stackProps_inst_with_const = prove
- (`stackSem_inst i (stackSem_state_clock_fupd (K k) s) = OPTION_MAP
-  (\s. stackSem_state_clock_fupd (K k) s) (stackSem_inst i s)`,
+ (`stackSem_inst i (stackSem_state_clock_fupd (K k) s) = OPTION_MAP (\s.
+  stackSem_state_clock_fupd (K k) s) (stackSem_inst i s)`,
   CHEAT_TAC);;
 add_simp stackProps_inst_with_const;;
 
@@ -464,18 +450,15 @@ let stackProps_dec_clock_const = prove
         /\ stackSem_state_stack
       (stackSem_dec_clock z) = stackSem_state_stack z
         /\ stackSem_state_store
-      (stackSem_dec_clock z) = stackSem_state_store z
-        /\ stackSem_state_code
+      (stackSem_dec_clock z) = stackSem_state_store z /\ stackSem_state_code
       (stackSem_dec_clock z) = stackSem_state_code z
         /\ stackSem_state_data_buffer
       (stackSem_dec_clock z) = stackSem_state_data_buffer z
         /\ stackSem_state_code_buffer
       (stackSem_dec_clock z) = stackSem_state_code_buffer z
         /\ stackSem_state_fp_regs
-      (stackSem_dec_clock z) = stackSem_state_fp_regs z
-        /\ stackSem_state_be
-      (stackSem_dec_clock z) = stackSem_state_be z
-        /\ stackSem_state_gc_fun
+      (stackSem_dec_clock z) = stackSem_state_fp_regs z /\ stackSem_state_be
+      (stackSem_dec_clock z) = stackSem_state_be z /\ stackSem_state_gc_fun
       (stackSem_dec_clock z) = stackSem_state_gc_fun z
         /\ stackSem_state_memory
       (stackSem_dec_clock z) = stackSem_state_memory z
@@ -532,8 +515,8 @@ let evaluate_code_bitmaps = prove
    (?n. stackSem_state_compile_oracle
     s1 = misc_shift_seq n (stackSem_state_compile_oracle s)
       /\ stackSem_state_code
-    s1 = FOLDL sptree_union (stackSem_state_code s) (MAP (fromAList o
-      FST o SND) (list_of_seq (stackSem_state_compile_oracle s) n))
+    s1 = FOLDL sptree_union (stackSem_state_code s) (MAP (fromAList o FST o
+      SND) (list_of_seq (stackSem_state_compile_oracle s) n))
       /\ stackSem_state_bitmaps
     s1 = APPEND (stackSem_state_bitmaps s) (FLAT (MAP (SND o SND)
       (list_of_seq (stackSem_state_compile_oracle s) n))))`,
@@ -565,19 +548,16 @@ let bad_fun_return_IMP = prove
   CHEAT_TAC);;
 
 let cont_loop_IMP = prove
- (`stackSem_cont_loop res ==> res = NONE \/ res = SOME
-  (stackLang_Continue 0)`,
+ (`stackSem_cont_loop res ==> res = NONE \/ res = SOME (stackLang_Continue 0)`,
   CHEAT_TAC);;
 
 (* evaluate_add_clock *)
 let stackProps_evaluate_add_clock = prove
  (`!p s r s'.
-    stackSem_evaluate (p,s) = (r,s') /\ ~(r = SOME stackSem_TimeOut)
-      ==>
+    stackSem_evaluate (p,s) = (r,s') /\ ~(r = SOME stackSem_TimeOut) ==>
     stackSem_evaluate (p,stackSem_state_clock_fupd (K
-      (stackSem_state_clock s + extra)) s) =
-      (r,stackSem_state_clock_fupd (K (stackSem_state_clock s' +
-      extra)) s')`,
+      (stackSem_state_clock s + extra)) s) = (r,stackSem_state_clock_fupd (K
+      (stackSem_state_clock s' + extra)) s')`,
   CHEAT_TAC);;
 
 (* with_clock_ffi *)
@@ -598,31 +578,27 @@ let stackProps_evaluate_add_clock_io_events_mono = prove
 let clock_neutral_def,clock_neutral_ind = define_shaped_rec
   "match"
   [`clock_neutral r =
-        match r with
-          stackLang_Seq p1 p2 -> clock_neutral p1 /\ clock_neutral
-            p2
-        | (stackLang_LocValue _1 _2 _3) -> T
-        | (stackLang_Halt _4) -> T
-        | (stackLang_Inst _5) -> T
-        | (stackLang_Skip) -> T
-        | (stackLang_If _6 _7 _8 p1 p2) -> clock_neutral p1
-          /\ clock_neutral p2
-        | r -> F`];;
+     match r with
+       stackLang_Seq p1 p2 -> clock_neutral p1 /\ clock_neutral p2
+     | stackLang_LocValue _1 _2 _3 -> T
+     | stackLang_Halt _ -> T
+     | stackLang_Inst _ -> T
+     | stackLang_Skip -> T
+     | stackLang_If _4 _5 _6 p1 p2 -> clock_neutral p1 /\ clock_neutral p2
+     | r -> F`];;
 
 (* [local] *)
 let inst_clock_neutral = prove
- (`(stackSem_inst i s = SOME t ==> stackSem_inst i
-  (stackSem_state_clock_fupd (K k) s) = SOME (stackSem_state_clock_fupd
-  (K k) t)) /\
+ (`(stackSem_inst i s = SOME t ==> stackSem_inst i (stackSem_state_clock_fupd
+  (K k) s) = SOME (stackSem_state_clock_fupd (K k) t)) /\
      (stackSem_inst i s = NONE ==> stackSem_inst i
        (stackSem_state_clock_fupd (K k) s) = NONE)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let inst_clock_neutral_ffi = prove
- (`(stackSem_inst i s = SOME t ==> stackSem_inst i
-  (stackSem_state_ffi_fupd (K k) s) = SOME (stackSem_state_ffi_fupd (K
-  k) t)) /\
+ (`(stackSem_inst i s = SOME t ==> stackSem_inst i (stackSem_state_ffi_fupd (K
+  k) s) = SOME (stackSem_state_ffi_fupd (K k) t)) /\
      (stackSem_inst i s = NONE ==> stackSem_inst i
        (stackSem_state_ffi_fupd (K k) s) = NONE)`,
   CHEAT_TAC);;
@@ -673,26 +649,27 @@ let dec_stack_length = prove
 let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let stackProps_extract_labels_def,stackProps_extract_labels_ind =
-  define_wf
+let stackProps_extract_labels_def,stackProps_extract_labels_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
   [`stackProps_extract_labels x1 =
-        match x1 with
-          stackLang_Call ret dest h ->
+     match x1 with
+       stackLang_Call ret dest h ->
        (match ret with
-         NONE -> [] | SOME (ret_handler,_9,l1,l2) ->
-         (let ret_rest = stackProps_extract_labels ret_handler in
+         NONE -> []
+       | SOME (ret_handler,_,l1,l2) ->
+         let ret_rest = stackProps_extract_labels ret_handler in
        (match h with
-         NONE -> APPEND [(l1,l2)] ret_rest | SOME (prog,l1',l2') ->
-         (let h_rest = stackProps_extract_labels prog in APPEND
-           (APPEND [(l1,l2); (l1',l2')] ret_rest) h_rest))))
-        | (stackLang_Loop s1) -> stackProps_extract_labels s1
-        | (stackLang_Seq s1 s2) -> APPEND (stackProps_extract_labels
-          s1) (stackProps_extract_labels s2)
-        | (stackLang_If cmp r1 ri e2 e3) ->
-       (APPEND (stackProps_extract_labels e2)
-         (stackProps_extract_labels e3))
-        | _10 -> []`];;
+         NONE -> APPEND [(l1,l2)] ret_rest
+       | SOME (prog,l1',l2') ->
+         let h_rest = stackProps_extract_labels prog in APPEND (APPEND
+           [(l1,l2); (l1',l2')] ret_rest) h_rest))
+     | stackLang_Loop s1 -> stackProps_extract_labels s1
+     | stackLang_Seq s1 s2 -> APPEND (stackProps_extract_labels s1)
+       (stackProps_extract_labels s2)
+     | stackLang_If cmp r1 ri e2 e3 ->
+       (APPEND (stackProps_extract_labels e2) (stackProps_extract_labels
+         e3))
+     | _ -> []`];;
 
 let find_code_IMP_get_labels = prove
  (`stackSem_find_code d r code = SOME e ==>
@@ -702,12 +679,11 @@ let find_code_IMP_get_labels = prove
 let addr_ok_def = define_general
   [`addr_ok op (Addr a w) c <=>
    (reg_ok a c /\
-    (if op IN
-      {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32} then
-      (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w else if
-      op IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
-      (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32)
-      else (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w))`];;
+    (if op IN {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32} then
+      (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
+    else if op IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
+      (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32) else
+      (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w))`];;
 
 (* TODO: This is not updated for Install, CBW and DBW *)
 (* asm_ok out of stack_names *)
@@ -716,31 +692,28 @@ let addr_ok_def = define_general
 let stack_asm_ok_def,stack_asm_ok_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
   [`stack_asm_ok c x2 =
-        match x2 with
-          ((stackLang_Inst i):'a stackLang_prog) -> inst_ok i c
-        | (stackLang_ShMemOp op r ad) -> reg_ok r c /\ addr_ok op ad
-          c
-        | (stackLang_CodeBufferWrite r1 r2) -> r1 <
-          asm_config_reg_count c /\ r2 < asm_config_reg_count c
-          /\ ~(MEM r1 (asm_config_avoid_regs c)) /\ ~(MEM r2
-          (asm_config_avoid_regs c))
-        | (stackLang_Seq p1 p2) -> stack_asm_ok c p1 /\ stack_asm_ok
-          c p2
-        | (stackLang_If cmp n r p p') -> stack_asm_ok c p
-          /\ stack_asm_ok c p'
-        | (stackLang_Loop p) -> stack_asm_ok c p
-        | (stackLang_Raise n) -> n < asm_config_reg_count c /\ ~(MEM
-          n (asm_config_avoid_regs c))
-        | (stackLang_Return n) -> n < asm_config_reg_count c
-          /\ ~(MEM n (asm_config_avoid_regs c))
-        | (stackLang_Call r tar h) ->
-       (match tar with INR r -> r < asm_config_reg_count c /\ ~(MEM
-         r (asm_config_avoid_regs c)) | _11 -> T) /\
-       (match r with SOME (p,_12,_13,_14) -> stack_asm_ok c p /\
+     match x2 with
+       ((stackLang_Inst i):'a stackLang_prog) -> inst_ok i c
+     | stackLang_ShMemOp op r ad -> reg_ok r c /\ addr_ok op ad c
+     | stackLang_CodeBufferWrite r1 r2 -> r1 < asm_config_reg_count c /\ r2
+       < asm_config_reg_count c /\ ~(MEM r1 (asm_config_avoid_regs c))
+       /\ ~(MEM r2 (asm_config_avoid_regs c))
+     | stackLang_Seq p1 p2 -> stack_asm_ok c p1 /\ stack_asm_ok c p2
+     | stackLang_If cmp n r p p' -> stack_asm_ok c p /\ stack_asm_ok c p'
+     | stackLang_Loop p -> stack_asm_ok c p
+     | stackLang_Raise n -> n < asm_config_reg_count c /\ ~(MEM n
+       (asm_config_avoid_regs c))
+     | stackLang_Return n -> n < asm_config_reg_count c /\ ~(MEM n
+       (asm_config_avoid_regs c))
+     | stackLang_Call r tar h ->
+       (match tar with INR r -> r < asm_config_reg_count c /\ ~(MEM r
+         (asm_config_avoid_regs c)) | _ -> T) /\
+       (match r with SOME (p,_7,_8,_9) -> stack_asm_ok c p /\
          (match h with
-         SOME (p',_15,_16) -> stack_asm_ok c p' | _17 -> T) | _18 ->
-           T)
-        | _19 -> T`];;
+         SOME (p',_10,_11) -> stack_asm_ok c p'
+         | _ -> T)
+       | _ -> T)
+     | _ -> T`];;
 
 let reg_name_def = new_definition
   `reg_name r c <=>
@@ -754,51 +727,48 @@ let reg_imm_name_def = define_cases
 
 let arith_name_def = new_definition
   `arith_name x1 c =
-        match (x1,c) with
-          (asm_Binop b r1 r2 ri,(c:'a asm_config)) ->
-       (asm_config_two_reg_arith c ==> r1 = r2 \/ b = asm_Or /\ ri =
-         Reg r2) /\ reg_name r1 c /\
+     match (x1,c) with
+       (asm_Binop b r1 r2 ri,(c:'a asm_config)) ->
+       (asm_config_two_reg_arith c ==> r1 = r2 \/ b = asm_Or /\ ri = Reg r2)
+         /\ reg_name r1 c /\
        reg_name r2 c /\ reg_imm_name (INL b) ri c
-        | ((asm_Shift l r1 r2 (Imm i)),c) ->
-       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c
-         /\ reg_name r2 c /\
+     | (asm_Shift l r1 r2 (Imm i),c) ->
+       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\ reg_name
+         r2 c /\
        (i = (n2w 0) ==> l = Lsl) /\ w2n i < dimindex (:'a)
-        | ((asm_Shift l r1 r2 (Reg r3)),c) ->
+     | (asm_Shift l r1 r2 (Reg r3),c) ->
        (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\
-        reg_name r2 c /\ reg_name r3 c /\ (asm_config_ISA c = x86_64
-          ==> r3 = 4)
-        | ((asm_Div r1 r2 r3),c) ->
-       (reg_name r1 c /\ reg_name r2 c /\ reg_name r3 c
-         /\ asm_config_ISA
+        reg_name r2 c /\ reg_name r3 c /\ (asm_config_ISA c = x86_64 ==> r3
+          = 4)
+     | (asm_Div r1 r2 r3,c) ->
+       (reg_name r1 c /\ reg_name r2 c /\ reg_name r3 c /\ asm_config_ISA
        c IN {ARMv8,MIPS,RISC_V})
-        | ((asm_LongMul r1 r2 r3 r4),c) ->
-       reg_name r1 c /\ reg_name r2 c /\ reg_name r3 c /\ reg_name r4
-         c /\
+     | (asm_LongMul r1 r2 r3 r4,c) ->
+       reg_name r1 c /\ reg_name r2 c /\ reg_name r3 c /\ reg_name r4 c /\
        (asm_config_ISA c = x86_64 ==> r1 = 3 /\ r2 = 0 /\ r3 = 0) /\
        (asm_config_ISA c = ARMv7 ==> ~(r1 = r2)) /\
        (asm_config_ISA c = ARMv8 \/ asm_config_ISA c = RISC_V \/
          asm_config_ISA c = Ag32 ==> ~(r1 = r3) /\ ~(r1 = r4))
-        | ((asm_LongDiv r1 r2 r3 r4 r5),c) -> asm_config_ISA
+     | (asm_LongDiv r1 r2 r3 r4 r5,c) -> asm_config_ISA
        c = x86_64 /\ r1 = 0 /\ r2 = 3 /\ r3 = 3 /\ r4 = 0 /\
        reg_name r5 c
-        | ((asm_AddCarry r1 r2 r3 r4),c) ->
-       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c
-         /\ reg_name r2 c /\
+     | (asm_AddCarry r1 r2 r3 r4,c) ->
+       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\ reg_name
+         r2 c /\
        reg_name r3 c /\ reg_name r4 c /\
-       (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V ==> ~(r1
-         = r3) /\ ~(r1 = r4))
-        | ((asm_AddOverflow r1 r2 r3 r4),c) ->
-       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c
-         /\ reg_name r2 c /\
+       (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V ==> ~(r1 = r3)
+         /\ ~(r1 = r4))
+     | (asm_AddOverflow r1 r2 r3 r4,c) ->
+       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\ reg_name
+         r2 c /\
        reg_name r3 c /\ reg_name r4 c /\
-       (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V ==> ~(r1
-         = r3))
-        | ((asm_SubOverflow r1 r2 r3 r4),c) ->
-       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c
-         /\ reg_name r2 c /\
+       (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V ==> ~(r1 = r3))
+     | (asm_SubOverflow r1 r2 r3 r4,c) ->
+       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\ reg_name
+         r2 c /\
        reg_name r3 c /\ reg_name r4 c /\
-       (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V ==>
-         ~(r1 = r3))`;;
+       (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V ==> ~(r1 =
+         r3))`;;
 
 (* We could actually almost use fp_ok, except this needs to check reg_ok for
    some registers as well *)
@@ -810,13 +780,13 @@ let fp_name_def = define_cases
    `fp_name (FPEqual r d1 d2) (c:'a asm_config) <=>
           reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
    `fp_name (FPAbs d1 d2) (c:'a asm_config) <=>
-          (asm_config_two_reg_arith c ==> (~(d1 = d2)))
-              /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+          (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
+              c /\ fp_reg_ok d2 c`;
    `fp_name (FPNeg d1 d2) (c:'a asm_config) <=>
-          (asm_config_two_reg_arith c ==> (~(d1 = d2)))
-              /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPSqrt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
-    /\ fp_reg_ok d2 c`;
+          (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
+              c /\ fp_reg_ok d2 c`;
+   `fp_name (FPSqrt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\ fp_reg_ok
+    d2 c`;
    `fp_name (FPAdd d1 d2 d3) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
@@ -833,8 +803,8 @@ let fp_name_def = define_cases
           (asm_config_ISA c = ARMv7) /\
           2 < asm_config_fp_reg_count c /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPMov d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
-    /\ fp_reg_ok d2 c`;
+   `fp_name (FPMov d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\ fp_reg_ok
+    d2 c`;
    `fp_name (FPMovToReg r1 r2 d) (c:'a asm_config) <=>
           reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2)
               /\ reg_name r2 c) /\
@@ -851,93 +821,86 @@ let fp_name_def = define_cases
 let addr_name_def = define_general
   [`addr_name m (Addr r w) c <=>
    reg_name r c /\
-   (if m IN
-     {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32} then
-     (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w else if m
-     IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
-     (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32)
-     else (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w)`];;
+   (if m IN {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32} then (\c.
+     asm_offset_ok 0 (asm_config_addr_offset c)) c w
+    else if m IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
+      (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32)
+    else (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w)`];;
 
 let inst_name_def = new_definition
   `inst_name c x2 =
-        match x2 with
-          asm_Const r w -> reg_name r c
-        | (asm_Mem m r a) -> reg_name r c /\ addr_name m a c
-        | (asm_Arith x) -> arith_name x c
-        | (asm_FP f) -> fp_name f c
-        | _20 -> T`;;
+     match x2 with
+       asm_Const r w -> reg_name r c
+     | asm_Mem m r a -> reg_name r c /\ addr_name m a c
+     | asm_Arith x -> arith_name x c
+     | asm_FP f -> fp_name f c
+     | _ -> T`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_asm_name_def,stack_asm_name_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
   [`stack_asm_name c x2 =
-        match x2 with
-          ((stackLang_Inst i):'a stackLang_prog) -> inst_name c i
-        | (stackLang_OpCurrHeap b r1 r2) ->
+     match x2 with
+       ((stackLang_Inst i):'a stackLang_prog) -> inst_name c i
+     | stackLang_OpCurrHeap b r1 r2 ->
        (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c
          /\ reg_name r2 c
-        | (stackLang_ShMemOp op r a) -> reg_name r c /\ addr_name op
-          a c
-        | (stackLang_CodeBufferWrite r1 r2) -> reg_name r1 c
-          /\ reg_name r2 c
-        | (stackLang_DataBufferWrite r1 r2) -> reg_name r1 c
-          /\ reg_name r2 c
-        | (stackLang_Seq p1 p2) -> stack_asm_name c p1
-          /\ stack_asm_name c p2
-        | (stackLang_If cmp n r p p') -> stack_asm_name c p
-          /\ stack_asm_name c p'
-        | (stackLang_Loop p) -> stack_asm_name c p
-        | (stackLang_Raise n) -> reg_name n c
-        | (stackLang_Return n) -> reg_name n c
-        | (stackLang_Call r tar h) ->
-       (match tar with INR r -> reg_name r c | _21 -> T) /\
-       (match r with SOME (p,_22,_23,_24) -> stack_asm_name c p /\
+     | stackLang_ShMemOp op r a -> reg_name r c /\ addr_name op a c
+     | stackLang_CodeBufferWrite r1 r2 -> reg_name r1 c /\ reg_name r2 c
+     | stackLang_DataBufferWrite r1 r2 -> reg_name r1 c /\ reg_name r2 c
+     | stackLang_Seq p1 p2 -> stack_asm_name c p1 /\ stack_asm_name c p2
+     | stackLang_If cmp n r p p' -> stack_asm_name c p /\ stack_asm_name c
+       p'
+     | stackLang_Loop p -> stack_asm_name c p
+     | stackLang_Raise n -> reg_name n c
+     | stackLang_Return n -> reg_name n c
+     | stackLang_Call r tar h ->
+       (match tar with INR r -> reg_name r c | _ -> T) /\
+       (match r with SOME (p,_12,_13,_14) -> stack_asm_name c p /\
          (match h with
-         SOME (p',_25,_26) -> stack_asm_name c p' | _27 -> T) | _28
-           -> T)
-        | _29 -> T`];;
+         SOME (p',_15,_16) -> stack_asm_name c p'
+         | _ -> T)
+       | _ -> T)
+     | _ -> T`];;
 
 let fixed_names_def = new_definition
   `fixed_names names c =
-   (if asm_config_ISA c = x86_64 then
+   if asm_config_ISA c = x86_64 then
      tlookup names 3 = 2 /\
      tlookup names 4 = 1 /\
-     tlookup names 0 = 0 else T)`;;
+     tlookup names 0 = 0
+   else T`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_asm_remove_def,stack_asm_remove_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
   [`stack_asm_remove c x2 =
-        match x2 with
-          ((stackLang_Get n s):'a stackLang_prog) -> reg_name n c
-        | (stackLang_OpCurrHeap binop v src) -> reg_name v c
-          /\ reg_name src c
-        | (stackLang_Set s n) -> reg_name n c
-        | (stackLang_StackStore n n0) -> reg_name n c
-        | (stackLang_StackStoreAny n n0) -> reg_name n c /\ reg_name
-          n0 c
-        | (stackLang_StackLoad n n0) -> reg_name n c
-        | (stackLang_StackLoadAny n n0) -> reg_name n c /\ reg_name
-          n0 c
-        | (stackLang_StackGetSize n) -> reg_name n c
-        | (stackLang_StackSetSize n) -> reg_name n c
-        | (stackLang_BitmapLoad n n0) -> reg_name n c /\ reg_name n0
-          c
-        | (stackLang_StoreConsts n n0 _30) -> reg_name n c
-          /\ reg_name n0 c
-        | (stackLang_Seq p1 p2) -> stack_asm_remove c p1
-          /\ stack_asm_remove c p2
-        | (stackLang_If cmp n r p p') -> stack_asm_remove c p
-          /\ stack_asm_remove c p'
-        | (stackLang_Loop p) -> stack_asm_remove c p
-        | (stackLang_Call r tar h) ->
-       (match r with SOME (p,_31,_32,_33) -> stack_asm_remove c p /\
+     match x2 with
+       ((stackLang_Get n s):'a stackLang_prog) -> reg_name n c
+     | stackLang_OpCurrHeap binop v src -> reg_name v c /\ reg_name src c
+     | stackLang_Set s n -> reg_name n c
+     | stackLang_StackStore n n0 -> reg_name n c
+     | stackLang_StackStoreAny n n0 -> reg_name n c /\ reg_name n0 c
+     | stackLang_StackLoad n n0 -> reg_name n c
+     | stackLang_StackLoadAny n n0 -> reg_name n c /\ reg_name n0 c
+     | stackLang_StackGetSize n -> reg_name n c
+     | stackLang_StackSetSize n -> reg_name n c
+     | stackLang_BitmapLoad n n0 -> reg_name n c /\ reg_name n0 c
+     | stackLang_StoreConsts n n0 _ -> reg_name n c /\ reg_name n0 c
+     | stackLang_Seq p1 p2 -> stack_asm_remove c p1 /\ stack_asm_remove c
+       p2
+     | stackLang_If cmp n r p p' -> stack_asm_remove c p
+       /\ stack_asm_remove c p'
+     | stackLang_Loop p -> stack_asm_remove c p
+     | stackLang_Call r tar h ->
+       (match r with SOME (p,_17,_18,_19) -> stack_asm_remove c p /\
          (match h with
-         SOME (p',_34,_35) -> stack_asm_remove c p' | _36 -> T) |
-           _37 -> T)
-        | _38 -> T`];;
+         SOME (p',_20,_21) -> stack_asm_remove c p'
+         | _ -> T)
+       | _ -> T)
+     | _ -> T`];;
 
 (* Various syntactic properties required for correctness of the stackLang passes
   All of these are trivially preserved from word_to_stack until the pass that
@@ -953,19 +916,18 @@ let stack_asm_remove_def,stack_asm_remove_ind = define_wf
 let alloc_arg_def,alloc_arg_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
   [`alloc_arg x1 =
-        match x1 with
-          stackLang_Alloc v -> (v = 1)
-        | ((stackLang_Seq p1 p2):'a stackLang_prog) ->
+     match x1 with
+       stackLang_Alloc v -> (v = 1)
+     | ((stackLang_Seq p1 p2):'a stackLang_prog) ->
         alloc_arg p1 /\ alloc_arg p2
-        | ((stackLang_If c r ri p1 p2):'a stackLang_prog) ->
+     | ((stackLang_If c r ri p1 p2):'a stackLang_prog) ->
         alloc_arg p1 /\ alloc_arg p2
-        | (stackLang_Loop p1) ->
+     | stackLang_Loop p1 ->
         alloc_arg p1
-        | (stackLang_Call x1 _39 x2) ->
-        (match x1 with SOME (y,r,_40,_41) -> alloc_arg y | NONE ->
-          T) /\
-        (match x2 with SOME (y,_42,_43) -> alloc_arg y | NONE -> T)
-        | _44 -> T`];;
+     | stackLang_Call x1 _ x2 ->
+        (match x1 with SOME (y,r,_22,_23) -> alloc_arg y | NONE -> T) /\
+        (match x2 with SOME (y,_24,_25) -> alloc_arg y | NONE -> T)
+     | _ -> T`];;
 
 (* stack_remove requires that all register arguments are bounded by k *)
 
@@ -978,43 +940,41 @@ let alloc_arg_def,alloc_arg_ind = define_wf
 let reg_bound_exp_def,reg_bound_exp_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x0)`
   [`reg_bound_exp x1 k =
-        match x1 with
-          wordLang_Var n -> n < k
-        | (wordLang_Load e) -> reg_bound_exp e k
-        | (wordLang_Shift _45 e1 e2) -> reg_bound_exp e1 k
-          /\ reg_bound_exp e2 k
-        | (wordLang_Lookup _46) -> F
-        | (wordLang_Op _47 es) -> ALL (\e. reg_bound_exp e k) es
-        | _48 -> T`];;
+     match x1 with
+       wordLang_Var n -> n < k
+     | wordLang_Load e -> reg_bound_exp e k
+     | wordLang_Shift _ e1 e2 -> reg_bound_exp e1 k /\ reg_bound_exp e2 k
+     | wordLang_Lookup _ -> F
+     | wordLang_Op _ es -> ALL (\e. reg_bound_exp e k) es
+     | _ -> T`];;
 add_simp reg_bound_exp_def;;
 
 let reg_bound_inst_def = new_definition
   `reg_bound_inst x1 k =
-        match x1 with
-          asm_Mem _49 n (Addr a _50) -> n < k /\ a < k
-        | (asm_Const n _51) -> n < k
-        | (asm_Arith (asm_Shift _52 n r2 ri)) -> r2 < k /\ n < k
-          /\ (match ri with Reg r -> r < k | _53 -> T)
-        | (asm_Arith (asm_Binop _54 n r2 ri)) -> r2 < k /\ n < k
-          /\ (match ri with Reg r1 -> r1 < k | _55 -> T)
-        | (asm_Arith (asm_Div r1 r2 r3)) -> r1 < k /\ r2 < k /\ r3 <
-          k
-        | (asm_Arith (asm_AddCarry r1 r2 r3 r4)) -> r1 < k /\ r2 < k
-          /\ r3 < k /\ r4 < k
-        | (asm_Arith (asm_AddOverflow r1 r2 r3 r4)) -> r1 < k /\ r2 <
-          k /\ r3 < k /\ r4 < k
-        | (asm_Arith (asm_SubOverflow r1 r2 r3 r4)) -> r1 < k /\ r2 <
-          k /\ r3 < k /\ r4 < k
-        | (asm_Arith (asm_LongMul r1 r2 r3 r4)) -> r1 < k /\ r2 < k
-          /\ r3 < k /\ r4 < k
-        | (asm_Arith (asm_LongDiv r1 r2 r3 r4 r5)) -> r1 < k /\ r2 <
-          k /\ r3 < k /\ r4 < k /\ r5 < k
-        | (asm_FP (FPLess r f1 f2)) -> r < k
-        | (asm_FP (FPLessEqual r f1 f2)) -> r < k
-        | (asm_FP (FPEqual r f1 f2)) -> r < k
-        | (asm_FP (FPMovToReg r1 r2 d)) -> r1 < k /\ r2 < k
-        | (asm_FP (FPMovFromReg d r1 r2)) -> r1 < k /\ r2 < k
-        | _56 -> T`;;
+     match x1 with
+       asm_Mem _26 n (Addr a _27) -> n < k /\ a < k
+     | asm_Const n _ -> n < k
+     | asm_Arith (asm_Shift _ n r2 ri) -> r2 < k /\ n < k /\ (match ri with
+       Reg r -> r < k | _ -> T)
+     | asm_Arith (asm_Binop _ n r2 ri) -> r2 < k /\ n < k /\ (match ri with
+       Reg r1 -> r1 < k | _ -> T)
+     | asm_Arith (asm_Div r1 r2 r3) -> r1 < k /\ r2 < k /\ r3 < k
+     | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> r1 < k /\ r2 < k /\ r3 < k
+       /\ r4 < k
+     | asm_Arith (asm_AddOverflow r1 r2 r3 r4) -> r1 < k /\ r2 < k /\ r3 < k
+       /\ r4 < k
+     | asm_Arith (asm_SubOverflow r1 r2 r3 r4) -> r1 < k /\ r2 < k /\ r3 < k
+       /\ r4 < k
+     | asm_Arith (asm_LongMul r1 r2 r3 r4) -> r1 < k /\ r2 < k /\ r3 < k
+       /\ r4 < k
+     | asm_Arith (asm_LongDiv r1 r2 r3 r4 r5) -> r1 < k /\ r2 < k /\ r3 < k
+       /\ r4 < k /\ r5 < k
+     | asm_FP (FPLess r f1 f2) -> r < k
+     | asm_FP (FPLessEqual r f1 f2) -> r < k
+     | asm_FP (FPEqual r f1 f2) -> r < k
+     | asm_FP (FPMovToReg r1 r2 d) -> r1 < k /\ r2 < k
+     | asm_FP (FPMovFromReg d r1 r2) -> r1 < k /\ r2 < k
+     | _ -> T`;;
 add_simp reg_bound_inst_def;;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -1022,153 +982,148 @@ add_simp reg_bound_inst_def;;
 let reg_bound_def,reg_bound_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x0)`
   [`reg_bound x1 k =
-        match x1 with
-          stackLang_Halt v1 ->
+     match x1 with
+       stackLang_Halt v1 ->
         v1 < k
-        | (stackLang_Raise v1) ->
+     | stackLang_Raise v1 ->
         v1 < k
-        | (stackLang_Get v1 n) ->
+     | stackLang_Get v1 n ->
         v1 < k
-        | (stackLang_OpCurrHeap op v1 v2) ->
+     | stackLang_OpCurrHeap op v1 v2 ->
         v1 < k /\ v2 < k
-        | (stackLang_Set n v1) ->
+     | stackLang_Set n v1 ->
         v1 < k /\ ~(n = BitmapBase)
-        | (stackLang_LocValue v1 l1 l2) ->
+     | stackLang_LocValue v1 l1 l2 ->
         v1 < k
-        | (stackLang_StoreConsts t1 t2 _57) ->
+     | stackLang_StoreConsts t1 t2 _ ->
         3 < k /\ t1 < k /\ t2 < k
-        | (stackLang_Return v1) ->
+     | stackLang_Return v1 ->
         v1 < k
-        | (stackLang_JumpLower v1 v2 dest) ->
+     | stackLang_JumpLower v1 v2 dest ->
         v1 < k /\ v2 < k
-        | ((stackLang_Seq p1 p2):'a stackLang_prog) ->
+     | ((stackLang_Seq p1 p2):'a stackLang_prog) ->
         reg_bound p1 k /\ reg_bound p2 k
-        | ((stackLang_If c r ri p1 p2):'a stackLang_prog) ->
-        r < k /\ (match ri with Reg n -> n < k | _58 -> T) /\
+     | ((stackLang_If c r ri p1 p2):'a stackLang_prog) ->
+        r < k /\ (match ri with Reg n -> n < k | _ -> T) /\
         reg_bound p1 k /\ reg_bound p2 k
-        | (stackLang_Loop p1) ->
+     | stackLang_Loop p1 ->
         reg_bound p1 k
-        | (stackLang_Halt n) -> n < k
-        | (stackLang_FFI ffi_index ptr' len' ptr2' len2' ret') ->
+     | stackLang_Halt n -> n < k
+     | stackLang_FFI ffi_index ptr' len' ptr2' len2' ret' ->
         ptr' < k /\ len' < k /\ ptr2' < k /\ len2' < k /\ ret' < k
-        | (stackLang_Call x1 dest x2) ->
-        (match dest with INR i -> i < k | _59 -> T) /\
-        (match x1 with NONE -> T | SOME (y,r,_60,_61) -> reg_bound y
-          k /\ r < k /\
-                             (match x2 with SOME (y,_62,_63) ->
-                               reg_bound y k | NONE -> T))
-        | (stackLang_Install ptr len dptr dlen ret) ->
+     | stackLang_Call x1 dest x2 ->
+        (match dest with INR i -> i < k | _ -> T) /\
+        (match x1 with NONE -> T
+         | SOME (y,r,_28,_29) -> reg_bound y k /\ r < k /\
+                             (match x2 with SOME (y,_30,_31) -> reg_bound y
+                               k | NONE -> T))
+     | stackLang_Install ptr len dptr dlen ret ->
        ptr < k /\ len < k /\ dptr < k /\ dlen < k /\ ret < k
-        | (stackLang_ShMemOp op r (Addr a _64)) -> r < k /\ a < k
-        | (stackLang_CodeBufferWrite r1 r2) ->
+     | stackLang_ShMemOp op r (Addr a _) -> r < k /\ a < k
+     | stackLang_CodeBufferWrite r1 r2 ->
        r1 < k /\ r2 < k
-        | (stackLang_DataBufferWrite r1 r2) ->
+     | stackLang_DataBufferWrite r1 r2 ->
        r1 < k /\ r2 < k
-        | (stackLang_BitmapLoad r v) -> r < k /\ v < k
-        | (stackLang_Inst i) -> reg_bound_inst i k
-        | (stackLang_StackStore r _65) -> r < k
-        | (stackLang_StackSetSize r) -> r < k
-        | (stackLang_StackGetSize r) -> r < k
-        | (stackLang_StackLoad r n) -> r < k
-        | (stackLang_StackLoadAny r r2) -> r < k /\ r2 < k
-        | (stackLang_StackStore r n) -> r < k
-        | (stackLang_StackStoreAny r r2) -> r < k /\ r2 < k
-        | _66 -> T`];;
+     | stackLang_BitmapLoad r v -> r < k /\ v < k
+     | stackLang_Inst i -> reg_bound_inst i k
+     | stackLang_StackStore r _ -> r < k
+     | stackLang_StackSetSize r -> r < k
+     | stackLang_StackGetSize r -> r < k
+     | stackLang_StackLoad r n -> r < k
+     | stackLang_StackLoadAny r r2 -> r < k /\ r2 < k
+     | stackLang_StackStore r n -> r < k
+     | stackLang_StackStoreAny r r2 -> r < k /\ r2 < k
+     | _ -> T`];;
 
 (* Finally, stack_to_lab requires correct arguments for Call/FFI/Install calls *)
 let call_args_def,call_args_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`call_args x1 ptr len ptr2 len2 ret =
-        match x1 with
-          ((stackLang_Seq p1 p2):'a stackLang_prog) ->
+     match x1 with
+       ((stackLang_Seq p1 p2):'a stackLang_prog) ->
         call_args p1 ptr len ptr2 len2 ret /\
         call_args p2 ptr len ptr2 len2 ret
-        | ((stackLang_If c r ri p1 p2):'a stackLang_prog) ->
+     | ((stackLang_If c r ri p1 p2):'a stackLang_prog) ->
         call_args p1 ptr len ptr2 len2 ret /\
         call_args p2 ptr len ptr2 len2 ret
-        | (stackLang_Loop p1) ->
+     | stackLang_Loop p1 ->
         call_args p1 ptr len ptr2 len2 ret
-        | (stackLang_Halt n) -> (n = ptr)
-        | (stackLang_FFI ffi_index ptr' len' ptr2' len2' ret') ->
-        ptr' = ptr /\ len' = len /\ ptr2' = ptr2 /\ len2' = len2
-          /\ ret' = ret
-        | (stackLang_Call x1 _67 x2) ->
-        (match x1 with NONE -> T | SOME (y,r,_68,_69) ->
+     | stackLang_Halt n -> (n = ptr)
+     | stackLang_FFI ffi_index ptr' len' ptr2' len2' ret' ->
+        ptr' = ptr /\ len' = len /\ ptr2' = ptr2 /\ len2' = len2 /\ ret' =
+          ret
+     | stackLang_Call x1 _ x2 ->
+        (match x1 with NONE -> T
+         | SOME (y,r,_32,_33) ->
              call_args y ptr len ptr2 len2 ret /\ r = ret /\
-             (match x2 with SOME (y,_70,_71) -> call_args y ptr len
-               ptr2 len2 ret | NONE -> T))
-        | (stackLang_Install ptr' len' _72 _73 ret') ->
+             (match x2 with SOME (y,_34,_35) -> call_args y ptr len ptr2
+               len2 ret | NONE -> T))
+     | stackLang_Install ptr' len' _36 _37 ret' ->
         ptr' = ptr /\ len' = len /\ ret' = ret
-        | _74 -> T`];;
+     | _ -> T`];;
 
 (* TODO: remove "stack_" prefix from these functions *)
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let stack_get_handler_labels_def,stack_get_handler_labels_ind =
-  define_wf
+let stack_get_handler_labels_def,stack_get_handler_labels_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
   [`stack_get_handler_labels n x2 =
-        match x2 with
-          stackLang_Call r d h ->
-       (match r with SOME (x,_75,_76) -> stack_get_handler_labels n
-         x UNION
-         (match h with SOME (x,l1,l2) -> (if l1 = n then {(l1,l2)}
-           else {}) UNION (stack_get_handler_labels n x) | _77 -> {}) |
-           _78 -> {})
-        | (stackLang_Seq p1 p2) -> stack_get_handler_labels n p1
-          UNION stack_get_handler_labels n p2
-        | (stackLang_If _79 _80 _81 p1 p2) ->
-          stack_get_handler_labels n p1 UNION stack_get_handler_labels
-          n p2
-        | (stackLang_Loop p) -> stack_get_handler_labels n p
-        | _82 -> {}`];;
+     match x2 with
+       stackLang_Call r d h ->
+       (match r with SOME (x,_38,_39) -> stack_get_handler_labels n x UNION
+         (match h with SOME (x,l1,l2) -> (if l1 = n then {(l1,l2)} else {})
+           UNION (stack_get_handler_labels n x) | _ -> {})
+       | _ -> {})
+     | stackLang_Seq p1 p2 -> stack_get_handler_labels n p1 UNION
+       stack_get_handler_labels n p2
+     | stackLang_If _40 _41 _42 p1 p2 -> stack_get_handler_labels n p1
+       UNION stack_get_handler_labels n p2
+     | stackLang_Loop p -> stack_get_handler_labels n p
+     | _ -> {}`];;
 add_simp stack_get_handler_labels_def;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let stackProps_get_code_labels_def,stackProps_get_code_labels_ind =
-  define_wf
+let stackProps_get_code_labels_def,stackProps_get_code_labels_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
   [`stackProps_get_code_labels x1 =
-        match x1 with
-          stackLang_Call r d h ->
-       (match d with INL x -> {(x,0)} | _83 -> {}) UNION
-       (match r with SOME (x,_84,_85) -> stackProps_get_code_labels
-         x | _86 -> {}) UNION
-       (match h with SOME (x,_87,_88) -> stackProps_get_code_labels
-         x | _89 -> {})
-        | (stackLang_Seq p1 p2) -> stackProps_get_code_labels p1
-          UNION stackProps_get_code_labels p2
-        | (stackLang_If _90 _91 _92 p1 p2) ->
-          stackProps_get_code_labels p1 UNION
-          stackProps_get_code_labels p2
-        | (stackLang_Loop p) -> stackProps_get_code_labels p
-        | (stackLang_JumpLower _93 _94 t) -> {(t,0)}
-        | (stackLang_RawCall t) -> {(t,1)}
-        | (stackLang_LocValue _95 l1 l2) -> {(l1,l2)}
-        | (stackLang_StoreConsts _96 _97 (SOME l)) -> {(l,0)}
-        | _98 -> {}`];;
+     match x1 with
+       stackLang_Call r d h ->
+       (match d with INL x -> {(x,0)} | _ -> {}) UNION
+       (match r with SOME (x,_43,_44) -> stackProps_get_code_labels x | _
+         -> {}) UNION
+       (match h with SOME (x,_45,_46) -> stackProps_get_code_labels x | _
+         -> {})
+     | stackLang_Seq p1 p2 -> stackProps_get_code_labels p1 UNION
+       stackProps_get_code_labels p2
+     | stackLang_If _47 _48 _49 p1 p2 -> stackProps_get_code_labels p1
+       UNION stackProps_get_code_labels p2
+     | stackLang_Loop p -> stackProps_get_code_labels p
+     | stackLang_JumpLower _50 _51 t -> {(t,0)}
+     | stackLang_RawCall t -> {(t,1)}
+     | stackLang_LocValue _ l1 l2 -> {(l1,l2)}
+     | stackLang_StoreConsts _52 _53 (SOME l) -> {(l,0)}
+     | _ -> {}`];;
 add_simp stackProps_get_code_labels_def;;
 
 (* elabs gives a set of existing code labels *)
 let stack_good_code_labels_def = new_definition
   `stack_good_code_labels p elabs <=>
-   UNIONS (IMAGE stackProps_get_code_labels (set_of_list (MAP SND
-     p))) SUBSET
-   UNIONS (set_of_list (MAP (\(n,pp). stack_get_handler_labels n pp)
-     p)) UNION
-   IMAGE (\n. n,0) (set_of_list (MAP FST p)) UNION IMAGE (\n. n,0)
-     elabs UNION
-   IMAGE (\n. n,1) (set_of_list (MAP FST p)) UNION IMAGE (\n. n,1)
-     elabs`;;
+   UNIONS (IMAGE stackProps_get_code_labels (set_of_list (MAP SND p)))
+     SUBSET
+   UNIONS (set_of_list (MAP (\(n,pp). stack_get_handler_labels n pp) p))
+     UNION
+   IMAGE (\n. n,0) (set_of_list (MAP FST p)) UNION IMAGE (\n. n,0) elabs
+     UNION
+   IMAGE (\n. n,1) (set_of_list (MAP FST p)) UNION IMAGE (\n. n,1) elabs`;;
 
 let stack_good_handler_labels_def = new_definition
   `stack_good_handler_labels p <=>
-   restrict_nonzero (UNIONS (IMAGE stackProps_get_code_labels
-     (set_of_list (MAP SND p)))) SUBSET
-   UNIONS (set_of_list (MAP (\(n,pp). stack_get_handler_labels n pp)
-     p)) UNION
+   restrict_nonzero (UNIONS (IMAGE stackProps_get_code_labels (set_of_list
+     (MAP SND p)))) SUBSET
+   UNIONS (set_of_list (MAP (\(n,pp). stack_get_handler_labels n pp) p))
+     UNION
    IMAGE (\n. n,1) (set_of_list (MAP FST p))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -1176,37 +1131,34 @@ let stack_good_handler_labels_def = new_definition
 let stackProps_no_install_def,stackProps_no_install_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
   [`stackProps_no_install x1 =
-        match x1 with
-          stackLang_Call r d h ->
-       ((match r with SOME (x,_99,_100) -> stackProps_no_install x |
-         _101 -> T) /\
-        (match h with SOME (x,_102,_103) -> stackProps_no_install x
-          | _104 -> T))
-        | (stackLang_Seq p1 p2) -> (stackProps_no_install p1
-          /\ stackProps_no_install p2)
-        | (stackLang_If _105 _106 _107 p1 p2) ->
-          (stackProps_no_install p1 /\ stackProps_no_install p2)
-        | (stackLang_Loop p) -> stackProps_no_install p
-        | (stackLang_Install _108 _109 _110 _111 _112) -> F
-        | _113 -> T`];;
+     match x1 with
+       stackLang_Call r d h ->
+       ((match r with SOME (x,_54,_55) -> stackProps_no_install x | _ -> T)
+         /\
+        (match h with SOME (x,_56,_57) -> stackProps_no_install x | _ ->
+          T))
+     | stackLang_Seq p1 p2 -> (stackProps_no_install p1
+       /\ stackProps_no_install p2)
+     | stackLang_If _58 _59 _60 p1 p2 -> (stackProps_no_install p1
+       /\ stackProps_no_install p2)
+     | stackLang_Loop p -> stackProps_no_install p
+     | stackLang_Install _61 _62 _63 _64 _65 -> F
+     | _ -> T`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let no_shmemop_def,no_shmemop_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
   [`no_shmemop x1 =
-        match x1 with
-          stackLang_Call r d h ->
-       ((match r with SOME (x,_114,_115) -> no_shmemop x | _116 ->
-         T) /\
-        (match h with SOME (x,_117,_118) -> no_shmemop x | _119 ->
-          T))
-        | (stackLang_Seq p1 p2) -> (no_shmemop p1 /\ no_shmemop p2)
-        | (stackLang_If _120 _121 _122 p1 p2) -> (no_shmemop p1
-          /\ no_shmemop p2)
-        | (stackLang_Loop p) -> no_shmemop p
-        | (stackLang_ShMemOp _123 _124 _125) -> F
-        | _126 -> T`];;
+     match x1 with
+       stackLang_Call r d h ->
+       ((match r with SOME (x,_66,_67) -> no_shmemop x | _ -> T) /\
+        (match h with SOME (x,_68,_69) -> no_shmemop x | _ -> T))
+     | stackLang_Seq p1 p2 -> (no_shmemop p1 /\ no_shmemop p2)
+     | stackLang_If _70 _71 _72 p1 p2 -> (no_shmemop p1 /\ no_shmemop p2)
+     | stackLang_Loop p -> no_shmemop p
+     | stackLang_ShMemOp _73 _74 _75 -> F
+     | _ -> T`];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

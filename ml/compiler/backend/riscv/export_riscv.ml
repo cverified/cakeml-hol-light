@@ -49,8 +49,7 @@ let export_riscv_startup_def = new_definition
         (implode "     .type   cml_main, function\n");
         (implode "cdecl(cml_main):\n");
         (implode (APPEND
-          "     la      a0,cake_main           # arg1: entry "
-          "address\n"));
+          "     la      a0,cake_main           # arg1: entry " "address\n"));
         (implode (APPEND
           "     ld      a1,cdecl(cml_heap)     # arg2: first "
           "address of heap\n"))])
@@ -58,8 +57,8 @@ let export_riscv_startup_def = new_definition
        (if ~pk then
          [(implode "     la      t3,cake_bitmaps\n");
          (implode (APPEND
-           "     sd      t3, 0(a1)              # store bitmap"
-           " pointer\n"))] else []))
+           "     sd      t3, 0(a1)              # store bitmap" " pointer\n"))]
+       else []))
      (SmartAppend (misc_List
        [(implode (APPEND
          "     ld      a2,cdecl(cml_stack)    # arg3: first "
@@ -69,8 +68,8 @@ let export_riscv_startup_def = new_definition
           "address past the stack\n"))])
      (SmartAppend (misc_List
        (if ret then
-         [(implode "     j       cml_enter\n")] else
-         [(implode "     j       cake_main\n")]))
+         [(implode "     j       cml_enter\n")]
+       else [(implode "     j       cake_main\n")]))
      (misc_List
        [(implode "\n")]))))`;;
 
@@ -83,17 +82,17 @@ let export_riscv_ffi_asm_def,export_riscv_ffi_asm_ind = define_rec
            (implode "     .p2align 4\n");
            (implode "\n")]) (export_riscv_ffi_asm ffis)`];;
 
-(* HOL4 export_riscvScript.sml:65-89: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_riscvScript.sml:65-89: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_riscvScript.sml:91-93: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_riscvScript.sml:91-93: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_riscvScript.sml:95-96: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_riscvScript.sml:95-96: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_riscvScript.sml:98-181: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_riscvScript.sml:98-181: the ML values that the definitions
+   below antiquote *)
 
 let export_riscv_export_func_def = new_definition
   `export_riscv_export_func appl (name,label,start',len) =
@@ -108,12 +107,12 @@ let export_riscv_export_func_def = new_definition
 
 let export_riscv_export_funcs_def = new_definition
   `export_riscv_export_funcs lsyms exp =
-     FOLDL export_riscv_export_func misc_Nil (FILTER ((C MEM exp)
-       o FST) lsyms)`;;
+     FOLDL export_riscv_export_func misc_Nil (FILTER ((C MEM exp) o FST)
+       lsyms)`;;
 
 let riscv_export_def = new_definition
   `riscv_export ffi_names' bytes (data:word64 list) syms exp ret pk =
-     (let lsyms = get_sym_labels syms in
+     let lsyms = get_sym_labels syms in
      SmartAppend
        (SmartAppend (misc_List preamble)
        (SmartAppend (misc_List (data_section ".quad" ret))
@@ -135,24 +134,24 @@ let riscv_export_def = new_definition
         "";
         "cake_exit:"]
         (if ret then
-          ["     j    cml_return"] else
-          ["     tail cdecl(cml_exit)"]))
+          ["     j    cml_return"]
+        else ["     tail cdecl(cml_exit)"]))
         ["     .p2align 4";
         "";
         "cake_main:";
         "";
         "#### Generated machine code follows";
-        ""]))))) T) else ((\ret. SmartAppend (misc_List (MAP (\n.
-          implode (APPEND n "\n")) [(APPEND
-          "#### CakeML FFI interface (each block is 16 bytes " "long)");
-          ""; "     .p2align 4"; ""])) (SmartAppend
-          (export_riscv_ffi_asm (REVERSE ffi_names')) (misc_List (MAP
-          (\n. implode (APPEND n "\n")) (APPEND (APPEND ["cake_clear:";
-          "     tail cdecl(cml_exit)"; "     .p2align 4"; "";
-          "cake_exit:"] (if ret then ["     j    cml_return"] else
-          ["     tail cdecl(cml_exit)"])) ["     .p2align 4"; "";
-          "cake_main:"; ""; "#### Generated machine code follows";
-          ""]))))) F)) ret))))))
+        ""]))))) T) else ((\ret. SmartAppend (misc_List (MAP (\n. implode
+          (APPEND n "\n")) [(APPEND
+          "#### CakeML FFI interface (each block is 16 bytes " "long)"); "";
+          "     .p2align 4"; ""])) (SmartAppend (export_riscv_ffi_asm (REVERSE
+          ffi_names')) (misc_List (MAP (\n. implode (APPEND n "\n")) (APPEND
+          (APPEND ["cake_clear:"; "     tail cdecl(cml_exit)";
+          "     .p2align 4"; ""; "cake_exit:"] (if ret then
+          ["     j    cml_return"]
+        else ["     tail cdecl(cml_exit)"])) ["     .p2align 4"; "";
+          "cake_main:"; ""; "#### Generated machine code follows"; ""]))))) F))
+          ret))))))
        (SmartAppend (split16 (words_line (implode "\t.byte ")
          byte_to_string) bytes) (SmartAppend (misc_List code_buffer)
        (SmartAppend (emit_symbols lsyms) (if ret then (SmartAppend
@@ -236,8 +235,8 @@ let riscv_export_def = new_definition
       "     li      a0, 3";
       "     j       cdecl(cml_err)";
       "     .p2align 4";
-      ""]))) (export_riscv_export_funcs lsyms exp)) else misc_List
-        [])))))`;;
+      ""]))) (export_riscv_export_funcs lsyms exp))
+       else misc_List []))))`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

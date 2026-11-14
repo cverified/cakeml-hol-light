@@ -44,43 +44,42 @@ let _ = cake_theory "dataLang"
 (* --- Syntax of dataLang --- *)
 let op_space_reset_def = new_definition
   `op_space_reset x1 =
-        match x1 with
-          closLang_IntOp closLang_Add -> T
-        | (closLang_IntOp closLang_Sub) -> T
-        | (closLang_IntOp closLang_Mult) -> T
-        | (closLang_IntOp closLang_Div) -> T
-        | (closLang_IntOp closLang_Mod) -> T
-        | (closLang_IntOp closLang_Less) -> T
-        | (closLang_IntOp closLang_LessEq) -> T
-        | (closLang_IntOp closLang_Greater) -> T
-        | (closLang_IntOp closLang_GreaterEq) -> T
-        | (closLang_BlockOp closLang_Equal) -> T
-        | (closLang_BlockOp closLang_ListAppend) -> T
-        | (closLang_BlockOp (closLang_FromList _1)) -> T
-        | (closLang_MemOp closLang_RefArray) -> T
-        | (closLang_MemOp (closLang_RefByte _2)) -> T
-        | (closLang_BlockOp (closLang_ConsExtend _3)) -> T
-        | (closLang_MemOp (closLang_CopyByte new_flag)) -> new_flag
-        | (closLang_MemOp closLang_ConfigGC) -> T
-        | (closLang_FFI _4) -> T
-        | _5 -> F`;;
+     match x1 with
+       closLang_IntOp closLang_Add -> T
+     | closLang_IntOp closLang_Sub -> T
+     | closLang_IntOp closLang_Mult -> T
+     | closLang_IntOp closLang_Div -> T
+     | closLang_IntOp closLang_Mod -> T
+     | closLang_IntOp closLang_Less -> T
+     | closLang_IntOp closLang_LessEq -> T
+     | closLang_IntOp closLang_Greater -> T
+     | closLang_IntOp closLang_GreaterEq -> T
+     | closLang_BlockOp closLang_Equal -> T
+     | closLang_BlockOp closLang_ListAppend -> T
+     | closLang_BlockOp (closLang_FromList _) -> T
+     | closLang_MemOp closLang_RefArray -> T
+     | closLang_MemOp (closLang_RefByte _) -> T
+     | closLang_BlockOp (closLang_ConsExtend _) -> T
+     | closLang_MemOp (closLang_CopyByte new_flag) -> new_flag
+     | closLang_MemOp closLang_ConfigGC -> T
+     | closLang_FFI _ -> T
+     | _ -> F`;;
 
 let op_requires_names_def = new_definition
-  `op_requires_names op = (op_space_reset op \/ (?n. op = closLang_FFI
-  n) \/
+  `op_requires_names op = (op_space_reset op \/ (?n. op = closLang_FFI n) \/
                           (?new_flag. op = (closLang_MemOp
                             (closLang_CopyByte new_flag))) \/
                           (op = closLang_MemOp closLang_XorByte) \/
-                          (?b cmp. op = closLang_MemOp
-                            (closLang_StringCmp b cmp)) \/
+                          (?b cmp. op = closLang_MemOp (closLang_StringCmp b
+                            cmp)) \/
                           (op = closLang_Install))`;;
 
 let dataLang_prog_INDUCT,dataLang_prog_RECURSION = define_datatype
   "dataLang_prog =
      dataLang_Skip
    | dataLang_Move num num
-   | dataLang_Call ((num list#misc_num_set) option) (num option) (num
-       list) ((num#dataLang_prog) option)
+   | dataLang_Call ((num list#misc_num_set) option) (num option) (num list)
+       ((num#dataLang_prog) option)
      // return var, cut-set
      // target of call
      // arguments

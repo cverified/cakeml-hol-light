@@ -33,35 +33,34 @@ let _ = size_thms "wordLang_prog";;
 let find_word_ref_def,find_word_ref_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
   [`find_word_ref x1 =
-        match x1 with
-          wordLang_MustTerminate p -> find_word_ref p
-        | (wordLang_Call ret target _3 handler) -> sptree_union
-           (match target with NONE -> LN | SOME n -> (sptree_insert
-             n one LN))
+     match x1 with
+       wordLang_MustTerminate p -> find_word_ref p
+     | wordLang_Call ret target _ handler -> sptree_union
+           (match target with NONE -> LN | SOME n -> (sptree_insert n one
+             LN))
                (sptree_union
-                   (match ret with NONE -> LN | SOME
-                     (_4,_5,ret_handler,l1,_6) ->
+                   (match ret with NONE -> LN
+                       | SOME (_3,_4,ret_handler,l1,_5) ->
                            sptree_insert l1 one (find_word_ref
                              (ret_handler)))
-                   (match handler with NONE -> LN | SOME
-                     (_7,ex_handler,_8,_9) -> find_word_ref
-                     (ex_handler)))
-        | (wordLang_Seq p1 p2) -> sptree_union (find_word_ref p1)
-          (find_word_ref p2)
-        | (wordLang_If _10 _11 _12 p1 p2) ->
+                   (match handler with NONE -> LN
+                       | SOME (_6,ex_handler,_7,_8) -> find_word_ref
+                         (ex_handler)))
+     | wordLang_Seq p1 p2 -> sptree_union (find_word_ref p1) (find_word_ref
+       p2)
+     | wordLang_If _9 _10 _11 p1 p2 ->
            sptree_union (find_word_ref p1) (find_word_ref p2)
-        | (wordLang_LocValue _13 n) -> sptree_insert n one LN
-        | (wordLang_Loop names body exit_names) -> find_word_ref
-          body
-        | _14 -> LN`];;
+     | wordLang_LocValue _ n -> sptree_insert n one LN
+     | wordLang_Loop names body exit_names -> find_word_ref body
+     | _ -> LN`];;
 
 (* HOL4 word_elimScript.sml:41: ML code, not ported *)
 
 let analyse_word_code_def,analyse_word_code_ind = define_rec
   [`analyse_word_code [] = (LN:(1 spt) spt)`;
    `analyse_word_code (CONS (n,args,prog) t) =
-            ((sptree_insert n (find_word_ref prog)
-                (analyse_word_code t)):(1 spt) spt)`];;
+            ((sptree_insert n (find_word_ref prog) (analyse_word_code
+                t)):(1 spt) spt)`];;
 
 let remove_word_code_def = new_definition
   `remove_word_code reachable l =
@@ -69,10 +68,9 @@ let remove_word_code_def = new_definition
 
 let remove_word_prog_def = new_definition
   `remove_word_prog (n:num) code =
-       (let t = analyse_word_code code in
-       let reachable = closure_spt (sptree_insert n one (LN:1 spt)) t
-         in
-       remove_word_code reachable code)`;;
+       let t = analyse_word_code code in
+       let reachable = closure_spt (sptree_insert n one (LN:1 spt)) t in
+       remove_word_code reachable code`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

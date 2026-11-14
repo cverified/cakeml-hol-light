@@ -66,14 +66,14 @@ let _ = cake_theory "clos_to_bvl"
 
 let _ = do_list hide_constant ["pmatch"];;
 
-(* HOL4 clos_to_bvlScript.sml:50-51: a theorem that HOL4 states as
-   the value of an ML expression: partial_app_tag_neq_closure_tag *)
+(* HOL4 clos_to_bvlScript.sml:50-51: a theorem that HOL4 states as the value
+   of an ML expression: partial_app_tag_neq_closure_tag *)
 
-(* HOL4 clos_to_bvlScript.sml:53-54: a theorem that HOL4 states as
-   the value of an ML expression: clos_tag_shift_nil_tag *)
+(* HOL4 clos_to_bvlScript.sml:53-54: a theorem that HOL4 states as the value
+   of an ML expression: clos_tag_shift_nil_tag *)
 
-(* HOL4 clos_to_bvlScript.sml:56-57: a theorem that HOL4 states as
-   the value of an ML expression: clos_tag_shift_cons_tag *)
+(* HOL4 clos_to_bvlScript.sml:56-57: a theorem that HOL4 states as the value
+   of an ML expression: clos_tag_shift_cons_tag *)
 
 let clos_tag_shift_inj = prove
  (`clos_tag_shift n1 = clos_tag_shift n2 ==> n1 = n2`,
@@ -81,43 +81,39 @@ let clos_tag_shift_inj = prove
 
 (* Constant flattening *)
 
-(* HOL4 clos_to_bvlScript.sml:67: the overload PRIME, which the port
-   expands *)
+(* HOL4 clos_to_bvlScript.sml:67: the overload PRIME, which the port expands *)
 
 let part_hash_def = define_cases
-  [`part_hash (closLang_Int i:const_part) = num_of_int (abs i) MOD
-    (999983:num)`;
-   `part_hash (closLang_Str s:const_part) =
+  [`part_hash (closLang_Int i) = num_of_int (abs i) MOD (999983:num)`;
+   `part_hash (closLang_Str s) =
       (strlen s + 3 * SUM (MAP ORD (explode s))) MOD (999983:num)`;
-   `part_hash (closLang_W64 w:const_part) = (17 + w2n w) MOD
-    (999983:num)`;
-   `part_hash (closLang_Con t ns:const_part) = (18 + 5 * t + 7 *
-    SUM ns) MOD (999983:num)`];;
+   `part_hash (closLang_W64 w) = (17 + w2n w) MOD (999983:num)`;
+   `part_hash (closLang_Con t ns) = (18 + 5 * t + 7 * SUM ns) MOD
+    (999983:num)`];;
 
 let add_part_def = new_definition
   `add_part n p aux acc =
-     (let h = part_hash p in
-       match sptree_lookup h aux with NONE -> (n + 1,n,sptree_insert
-         h [(p,n)] aux,CONS p acc) | SOME bucket ->
-           (match ALOOKUP bucket p with NONE -> (n +
-             1,n,sptree_insert h (CONS (p,n) bucket) aux,CONS p acc)
-             | SOME k -> (n,k,aux,acc)))`;;
+     let h = part_hash p in
+       match sptree_lookup h aux with NONE -> (n + 1,n,sptree_insert h
+         [(p,n)] aux,CONS p acc)
+       | SOME bucket ->
+           (match ALOOKUP bucket p with NONE -> (n + 1,n,sptree_insert h
+             (CONS (p,n) bucket) aux,CONS p acc)
+           | SOME k -> (n,k,aux,acc))`;;
 
 let add_parts_def,add_parts_ind = define_rec
-  [`add_parts (ConstInt i) n aux acc = add_part n (closLang_Int i)
-    aux acc`;
-   `add_parts (ConstStr s) n aux acc = add_part n (closLang_Str s)
-    aux acc`;
-   `add_parts (ConstWord64 w) n aux acc = add_part n (closLang_W64 w)
-    aux acc`;
+  [`add_parts (ConstInt i) n aux acc = add_part n (closLang_Int i) aux acc`;
+   `add_parts (ConstStr s) n aux acc = add_part n (closLang_Str s) aux acc`;
+   `add_parts (ConstWord64 w) n aux acc = add_part n (closLang_W64 w) aux
+    acc`;
    `add_parts (ConstCons t cs) n aux acc =
       (let (n,rs,aux,acc) = add_parts_list cs n aux acc in
          add_part n (closLang_Con (clos_tag_shift t) rs) aux acc)`;
    `add_parts_list [] n aux acc = (n,[],aux,acc)`;
    `add_parts_list (CONS c cs) n aux acc =
-      (let (n,r,aux,acc) = add_parts c n aux acc in
+      let (n,r,aux,acc) = add_parts c n aux acc in
       let (n,rs,aux,acc) = add_parts_list cs n aux acc in
-        (n,CONS r rs,aux,acc))`];;
+        (n,CONS r rs,aux,acc)`];;
 
 let compile_const_def = define_cases
   [`compile_const (ConstInt i) = closLang_IntOp (closLang_Const i)`;
@@ -126,11 +122,10 @@ let compile_const_def = define_cases
    `compile_const (ConstWord64 w) = closLang_BlockOp (closLang_Build
     [closLang_W64 w])`;
    `compile_const (ConstCons t cs) =
-      (if NULL cs then closLang_BlockOp (closLang_Cons
-          (clos_tag_shift t)) else
-        let (n,rs,aux,acc) = add_parts_list cs 0 LN [] in
+      if NULL cs then closLang_BlockOp (closLang_Cons (clos_tag_shift t))
+          else let (n,rs,aux,acc) = add_parts_list cs 0 LN [] in
           closLang_BlockOp (closLang_Build (REVERSE (CONS
-              (closLang_Con (clos_tag_shift t) rs) acc))))`];;
+              (closLang_Con (clos_tag_shift t) rs) acc)))`];;
 
 (* / Constant flattening *)
 
@@ -142,57 +137,57 @@ let partial_app_label_table_loc_def = new_definition
 
 let clos_to_bvl_compile_op_def = new_definition
   `clos_to_bvl_compile_op x =
-      match x with
-        closLang_BlockOp (closLang_Cons tag) -> closLang_BlockOp
-          (closLang_Cons (clos_tag_shift tag))
-      | (closLang_BlockOp (closLang_ConsExtend tag)) ->
-        closLang_BlockOp (closLang_ConsExtend (clos_tag_shift tag))
-      | (closLang_BlockOp (closLang_TagEq tag)) -> closLang_BlockOp
-        (closLang_TagEq (clos_tag_shift tag))
-      | (closLang_BlockOp (closLang_TagLenEq tag a)) ->
-        closLang_BlockOp (closLang_TagLenEq (clos_tag_shift tag) a)
-      | (closLang_BlockOp (closLang_FromList tag)) ->
-        closLang_BlockOp (closLang_FromList (clos_tag_shift tag))
-      | (closLang_MemOp closLang_LengthByteVec) -> closLang_MemOp
-        closLang_LengthByte
-      | (closLang_MemOp closLang_DerefByteVec) -> closLang_MemOp
-        closLang_DerefByte
-      | (closLang_GlobOp (closLang_SetGlobal n)) -> closLang_GlobOp
-        (closLang_SetGlobal (n + num_added_globals))
-      | (closLang_GlobOp (closLang_Global n)) -> closLang_GlobOp
-        (closLang_Global (n + num_added_globals))
-      | (closLang_BlockOp (closLang_Constant c)) -> compile_const c
-      | x -> x`;;
+   match x with
+     closLang_BlockOp (closLang_Cons tag) -> closLang_BlockOp (closLang_Cons
+       (clos_tag_shift tag))
+   | closLang_BlockOp (closLang_ConsExtend tag) -> closLang_BlockOp
+     (closLang_ConsExtend (clos_tag_shift tag))
+   | closLang_BlockOp (closLang_TagEq tag) -> closLang_BlockOp
+     (closLang_TagEq (clos_tag_shift tag))
+   | closLang_BlockOp (closLang_TagLenEq tag a) -> closLang_BlockOp
+     (closLang_TagLenEq (clos_tag_shift tag) a)
+   | closLang_BlockOp (closLang_FromList tag) -> closLang_BlockOp
+     (closLang_FromList (clos_tag_shift tag))
+   | closLang_MemOp closLang_LengthByteVec -> closLang_MemOp
+     closLang_LengthByte
+   | closLang_MemOp closLang_DerefByteVec -> closLang_MemOp
+     closLang_DerefByte
+   | closLang_GlobOp (closLang_SetGlobal n) -> closLang_GlobOp
+     (closLang_SetGlobal (n + num_added_globals))
+   | closLang_GlobOp (closLang_Global n) -> closLang_GlobOp (closLang_Global
+     (n + num_added_globals))
+   | closLang_BlockOp (closLang_Constant c) -> compile_const c
+   | x -> x`;;
 add_simp clos_to_bvl_compile_op_def;;
 
 let compile_op_pmatch = prove
  (`!op.
    clos_to_bvl_compile_op op =
-     (match op with
+     match op with
          closLang_BlockOp (closLang_Cons tag) -> closLang_BlockOp
-           (closLang_Cons (clos_tag_shift tag)) | closLang_BlockOp
-           (closLang_ConsExtend tag) -> closLang_BlockOp
-           (closLang_ConsExtend (clos_tag_shift tag)) |
-           closLang_BlockOp (closLang_TagEq tag) -> closLang_BlockOp
-           (closLang_TagEq (clos_tag_shift tag)) | closLang_BlockOp
-           (closLang_TagLenEq tag a) -> closLang_BlockOp
-           (closLang_TagLenEq (clos_tag_shift tag) a) |
-           closLang_BlockOp (closLang_FromList tag) ->
-           closLang_BlockOp (closLang_FromList (clos_tag_shift tag)) |
-           closLang_MemOp closLang_LengthByteVec -> closLang_MemOp
-           closLang_LengthByte | closLang_MemOp closLang_DerefByteVec
-           -> closLang_MemOp closLang_DerefByte | closLang_GlobOp
-           (closLang_SetGlobal n) -> closLang_GlobOp
-           (closLang_SetGlobal (n + num_added_globals)) |
-           closLang_GlobOp (closLang_Global n) -> closLang_GlobOp
-           (closLang_Global (n + num_added_globals)) |
-           closLang_BlockOp (closLang_Constant c) -> compile_const c |
-           x -> x)`,
+           (closLang_Cons (clos_tag_shift tag))
+       | closLang_BlockOp (closLang_ConsExtend tag) -> closLang_BlockOp
+         (closLang_ConsExtend (clos_tag_shift tag))
+       | closLang_BlockOp (closLang_TagEq tag) -> closLang_BlockOp
+         (closLang_TagEq (clos_tag_shift tag))
+       | closLang_BlockOp (closLang_TagLenEq tag a) -> closLang_BlockOp
+         (closLang_TagLenEq (clos_tag_shift tag) a)
+       | closLang_BlockOp (closLang_FromList tag) -> closLang_BlockOp
+         (closLang_FromList (clos_tag_shift tag))
+       | closLang_MemOp closLang_LengthByteVec -> closLang_MemOp
+         closLang_LengthByte
+       | closLang_MemOp closLang_DerefByteVec -> closLang_MemOp
+         closLang_DerefByte
+       | closLang_GlobOp (closLang_SetGlobal n) -> closLang_GlobOp
+         (closLang_SetGlobal (n + num_added_globals))
+       | closLang_GlobOp (closLang_Global n) -> closLang_GlobOp
+         (closLang_Global (n + num_added_globals))
+       | closLang_BlockOp (closLang_Constant c) -> compile_const c
+       | x -> x`,
   CHEAT_TAC);;
 
 let mk_const_def = new_definition
-  `(mk_const n:bvl_exp) = bvl_Op (closLang_IntOp (closLang_Const
-  (&n))) []`;;
+  `(mk_const n:bvl_exp) = bvl_Op (closLang_IntOp (closLang_Const (&n))) []`;;
 add_simp mk_const_def;;
 
 let mk_label_def = new_definition
@@ -210,16 +205,16 @@ let free_let_def = new_definition
 let code_for_recc_case_def = new_definition
   `code_for_recc_case n num_args (c:bvl_exp) =
      (num_args + 1,
-      bvl_Let [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
-        [b]) (bvl_Var num_args) 2]
-       (bvl_Let (APPEND (list_of_seq (\a. bvl_Var (a + 1))
-         num_args) (list_of_seq (\i. (\b i. bvl_Op (closLang_BlockOp
-         (closLang_ElemAt i)) [b]) (bvl_Var 0) i) n)) c))`;;
+      bvl_Let [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
+        (bvl_Var num_args) 2]
+       (bvl_Let (APPEND (list_of_seq (\a. bvl_Var (a + 1)) num_args)
+         (list_of_seq (\i. (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt
+         i)) [b]) (bvl_Var 0) i) n)) c))`;;
 
 let build_aux_def,build_aux_ind = define_rec
   [`build_aux (i:num) [] aux = ((i:num),aux)`;
-   `build_aux (i:num) (CONS (x:num#bvl_exp) xs) aux = build_aux (i
-    + 2) xs (CONS (i,x) aux)`];;
+   `build_aux (i:num) (CONS (x:num#bvl_exp) xs) aux = build_aux (i + 2) xs
+    (CONS (i,x) aux)`];;
 
 let build_aux_LENGTH = prove
  (`!l n aux n1 t.
@@ -232,8 +227,7 @@ let build_aux_LENGTH = prove
 let build_aux_MOVE = prove
  (`!xs n aux n1 aux1.
       (build_aux n xs aux = (n1,aux1)) <=>
-      (?aux2. (build_aux n xs [] = (n1,aux2)) /\ (aux1 = APPEND
-        aux2 aux))`,
+      (?aux2. (build_aux n xs [] = (n1,aux2)) /\ (aux1 = APPEND aux2 aux))`,
   CHEAT_TAC);;
 
 let build_aux_acc = prove
@@ -268,14 +262,14 @@ let build_aux_MEM = prove
 let build_aux_APPEND1 = prove
  (`!xs x n aux.
       build_aux n (APPEND xs [x]) aux =
-        (let (n1,aux1) = build_aux n xs aux in
-          (n1 + 2,CONS (n1,x) aux1))`,
+        let (n1,aux1) = build_aux n xs aux in
+          (n1 + 2,CONS (n1,x) aux1)`,
   CHEAT_TAC);;
 
 let recc_Let_def = new_definition
   `recc_Let n num_args i =
-     bvl_Let [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
-       [b]) (bvl_Var 0) 2]
+     bvl_Let [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
+       (bvl_Var 0) 2]
       (bvl_Let [bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
         [bvl_Var 0; mk_const (num_args - 1); mk_label n]]
         (bvl_Let [bvl_Op (closLang_MemOp closLang_Update) [bvl_Var 0;
@@ -287,24 +281,23 @@ let recc_Let_def = new_definition
 let recc_Lets_def,recc_Lets_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x2)`
   [`recc_Lets n nargs k rest =
-     (if k = (0:num) then rest else
-       let k = k - 1 in
-         bvl_Let [recc_Let (n + 2 * k) (HD nargs) k] (recc_Lets
-           n (TL nargs) k rest))`];;
+     if k = (0:num) then rest else let k = k - 1 in
+         bvl_Let [recc_Let (n + 2 * k) (HD nargs) k] (recc_Lets n (TL
+           nargs) k rest)`];;
 
 let recc_Let0_def = new_definition
   `recc_Let0 n num_args i =
-     bvl_Let [bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
-       [bvl_Var 0; mk_const (num_args - 1); mk_label n]]
-       (bvl_Let [bvl_Op (closLang_MemOp closLang_Update) [bvl_Var
-         0; mk_const i; bvl_Var 1]] (bvl_Var 1:bvl_exp))`;;
+     bvl_Let [bvl_Op (closLang_BlockOp (closLang_Cons closure_tag)) [bvl_Var
+       0; mk_const (num_args - 1); mk_label n]]
+       (bvl_Let [bvl_Op (closLang_MemOp closLang_Update) [bvl_Var 0;
+         mk_const i; bvl_Var 1]] (bvl_Var 1:bvl_exp))`;;
 
 let build_recc_lets_def = new_definition
   `build_recc_lets (nargs:num list) vs n1 fns_l (c3:bvl_exp) =
-     bvl_Let [bvl_Let [bvl_Op (closLang_MemOp closLang_Ref) (REVERSE
-       (APPEND (MAP (K (mk_const 0)) nargs) (MAP bvl_Var vs)))]
-            (recc_Let0 (n1 + (2 * (fns_l - 1))) (HD (REVERSE nargs))
-              (fns_l - 1))]
+     bvl_Let [bvl_Let [bvl_Op (closLang_MemOp closLang_Ref) (REVERSE (APPEND
+       (MAP (K (mk_const 0)) nargs) (MAP bvl_Var vs)))]
+            (recc_Let0 (n1 + (2 * (fns_l - 1))) (HD (REVERSE nargs)) (fns_l
+              - 1))]
        (recc_Lets n1 (TL (REVERSE nargs)) (fns_l - 1) c3)`;;
 
 let num_stubs_def = new_definition
@@ -329,31 +322,28 @@ let partial_app_fn_location_code_def = new_definition
      bvl_Let [tot_exp]
       (bvl_Op (closLang_IntOp closLang_Add) [prev_exp;
          bvl_Op (closLang_IntOp closLang_Div) [mk_const 2;
-           bvl_Op (closLang_IntOp closLang_Mult) [bvl_Var 0;
-             bvl_Op (closLang_IntOp closLang_Sub) [mk_const 1;
-             bvl_Var 0]]]])`;;
+           bvl_Op (closLang_IntOp closLang_Mult) [bvl_Var 0; bvl_Op
+             (closLang_IntOp closLang_Sub) [mk_const 1; bvl_Var 0]]]])`;;
 
 let mk_cl_call_def = new_definition
   `mk_cl_call cl args =
-     bvl_If (bvl_Op (closLang_BlockOp (closLang_EqualConst
-       (closLang_Int (&(LENGTH args - 1))))) [(\b i. bvl_Op
-       (closLang_BlockOp (closLang_ElemAt i)) [b]) cl 1])
-        (bvl_Call (LENGTH args - 1) NONE (APPEND (APPEND args [cl])
-          [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b]) cl
-          0]))
-        (bvl_Call 0 (SOME (generic_app_fn_location (LENGTH args -
-          1))) (APPEND args [cl]))`;;
+     bvl_If (bvl_Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
+       (&(LENGTH args - 1))))) [(\b i. bvl_Op (closLang_BlockOp
+       (closLang_ElemAt i)) [b]) cl 1])
+        (bvl_Call (LENGTH args - 1) NONE (APPEND (APPEND args [cl]) [(\b i.
+          bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b]) cl 0]))
+        (bvl_Call 0 (SOME (generic_app_fn_location (LENGTH args - 1)))
+          (APPEND args [cl]))`;;
 
 (* Generic application of a function to n+1 arguments *)
 let generate_generic_app_def = new_definition
   `generate_generic_app max_app n =
-     bvl_Let [bvl_Op (closLang_IntOp closLang_Sub) [mk_const (n + 1);
-       (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
-       (bvl_Var (n + 1)) 1]]
+     bvl_Let [bvl_Op (closLang_IntOp closLang_Sub) [mk_const (n + 1); (\b i.
+       bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b]) (bvl_Var (n + 1)) 1]]
          (
           // The number of arguments remaining - 1
-          bvl_If (bvl_Op (closLang_IntOp closLang_Less) [mk_const 0;
-            bvl_Var 0])
+          bvl_If (bvl_Op (closLang_IntOp closLang_Less) [mk_const 0; bvl_Var
+            0])
              (
               // Over application
               bvl_jump_Jump ((\b i. bvl_Op (closLang_BlockOp
@@ -361,66 +351,59 @@ let generate_generic_app_def = new_definition
                (list_of_seq (\num_args.
                   bvl_Let [bvl_Call num_args
                             NONE
-                            (APPEND (APPEND (list_of_seq (\arg.
-                              bvl_Var ((arg + 2 + n) - num_args))
-                              (num_args + 1))
+                            (APPEND (APPEND (list_of_seq (\arg. bvl_Var
+                              ((arg + 2 + n) - num_args)) (num_args + 1))
                              [bvl_Var (n + 3)])
                              [(\b i. bvl_Op (closLang_BlockOp
-                               (closLang_ElemAt i)) [b]) (bvl_Var (n +
-                               3)) 0])]
-                    (mk_cl_call (bvl_Var 0) (list_of_seq (\n. bvl_Var
-                      (n + 3)) (n - num_args))))
+                               (closLang_ElemAt i)) [b]) (bvl_Var (n + 3)) 0])]
+                    (mk_cl_call (bvl_Var 0) (list_of_seq (\n. bvl_Var (n +
+                      3)) (n - num_args))))
                 max_app))
              (
               // Partial application
               mk_tick n
-             (bvl_If (bvl_Op (closLang_BlockOp (closLang_TagEq
-               closure_tag)) [bvl_Var (n + 2)])
+             (bvl_If (bvl_Op (closLang_BlockOp (closLang_TagEq closure_tag))
+               [bvl_Var (n + 2)])
                  (
                   // Partial application of a normal closure
-                  bvl_Op (closLang_BlockOp (closLang_Cons
-                    partial_app_tag))
+                  bvl_Op (closLang_BlockOp (closLang_Cons partial_app_tag))
                      (REVERSE
                        (CONS (mk_el (bvl_Op (closLang_GlobOp
                          (closLang_Global 0)) [])
                          (partial_app_fn_location_code max_app
-                           ((\b i. bvl_Op (closLang_BlockOp
-                             (closLang_ElemAt i)) [b]) (bvl_Var (n + 2))
-                             1)
-                           (mk_const n))) (CONS (bvl_Var 0) (CONS
-                             (bvl_Var (n + 2))
-                        (list_of_seq (\n. bvl_Var (n + 1)) (n +
-                          1)))))))
+                           ((\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt
+                             i)) [b]) (bvl_Var (n + 2)) 1)
+                           (mk_const n))) (CONS (bvl_Var 0) (CONS (bvl_Var
+                             (n + 2))
+                        (list_of_seq (\n. bvl_Var (n + 1)) (n + 1)))))))
                  (
                   // Partial application of a partially applied closure
-                  bvl_Let [bvl_Op (closLang_IntOp closLang_Sub)
-                    [mk_const 3; bvl_Op (closLang_BlockOp
-                    closLang_LengthBlock) [bvl_Var (n + 2)]]]
+                  bvl_Let [bvl_Op (closLang_IntOp closLang_Sub) [mk_const 3;
+                    bvl_Op (closLang_BlockOp closLang_LengthBlock) [bvl_Var (n
+                    + 2)]]]
                    (
                     // The number of previous args
                     bvl_Op (closLang_BlockOp (closLang_ConsExtend
                       partial_app_tag))
                      (REVERSE
-                       (CONS (bvl_Var (n + 3)) (CONS (mk_const 3)
-                         (CONS (bvl_Var 0) (CONS (bvl_Op (closLang_IntOp
-                         closLang_Add) [bvl_Var 0; mk_const (n + 4)])
-                         (CONS (mk_el (bvl_Op (closLang_GlobOp
-                         (closLang_Global 0)) [])
+                       (CONS (bvl_Var (n + 3)) (CONS (mk_const 3) (CONS
+                         (bvl_Var 0) (CONS (bvl_Op (closLang_IntOp
+                         closLang_Add) [bvl_Var 0; mk_const (n + 4)]) (CONS
+                         (mk_el (bvl_Op (closLang_GlobOp (closLang_Global 0))
+                         [])
                           (partial_app_fn_location_code max_app
-                            (bvl_Op (closLang_IntOp closLang_Add)
-                              [bvl_Var 0; bvl_Op (closLang_IntOp
-                              closLang_Add) [mk_const (n + 1); bvl_Var
-                              1]])
+                            (bvl_Op (closLang_IntOp closLang_Add) [bvl_Var
+                              0; bvl_Op (closLang_IntOp closLang_Add) [mk_const
+                              (n + 1); bvl_Var 1]])
                             (
                              // Shift from Var0 to Var1 because of Let in
                              // * partial_app_fn_location_code
-                             bvl_Op (closLang_IntOp closLang_Add)
-                               [bvl_Var 1; mk_const n]))) (CONS (bvl_Var
-                               1) (CONS ((\b i. bvl_Op (closLang_BlockOp
-                               (closLang_ElemAt i)) [b]) (bvl_Var (n +
-                               3)) 2)
-                        (list_of_seq (\this_arg. bvl_Var (this_arg
-                          + 2)) (n + 1)))))))))))))))`;;
+                             bvl_Op (closLang_IntOp closLang_Add) [bvl_Var
+                               1; mk_const n]))) (CONS (bvl_Var 1) (CONS ((\b
+                               i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
+                               [b]) (bvl_Var (n + 3)) 2)
+                        (list_of_seq (\this_arg. bvl_Var (this_arg + 2))
+                          (n + 1)))))))))))))))`;;
 
 (* The functions to complete the application of a partial closure.
  * We expect prev_args < total_args, also the function should take one more
@@ -429,38 +412,38 @@ let generate_generic_app_def = new_definition
  * has seen no arguments yet. *)
 let generate_partial_app_closure_fn_def = new_definition
   `generate_partial_app_closure_fn total_args prev_args =
-     bvl_Let [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
-       [b]) (bvl_Var (total_args - prev_args)) 2]
+     bvl_Let [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
+       (bvl_Var (total_args - prev_args)) 2]
        (bvl_Call 0
          NONE
-         (APPEND (APPEND (APPEND (list_of_seq (\this_arg. bvl_Var
-           (this_arg + 1)) (total_args - prev_args))
+         (APPEND (APPEND (APPEND (list_of_seq (\this_arg. bvl_Var (this_arg
+           + 1)) (total_args - prev_args))
           (list_of_seq (\prev_arg.
             (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
-              (bvl_Var (total_args - prev_args + 1)) (prev_arg + 3))
-              (prev_args + 1)))
+              (bvl_Var (total_args - prev_args + 1)) (prev_arg + 3)) (prev_args
+              + 1)))
           [bvl_Var 0])
-          [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
-            [b]) (bvl_Var 0) 0]))`;;
+          [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
+            (bvl_Var 0) 0]))`;;
 
 let check_closure_def = new_definition
   `check_closure v e =
-     bvl_If (bvl_Op (closLang_BlockOp (closLang_TagEq closure_tag))
-       [bvl_Var v]) (bvl_Bool T)
+     bvl_If (bvl_Op (closLang_BlockOp (closLang_TagEq closure_tag)) [bvl_Var
+       v]) (bvl_Bool T)
        (bvl_If (bvl_Op (closLang_BlockOp (closLang_TagEq
          partial_app_tag)) [bvl_Var v]) (bvl_Bool T) e)`;;
 
 let init_code_def = new_definition
   `clos_to_bvl_init_code max_app =
      sptree_fromList
-       (APPEND (list_of_seq (\n. (n + 2,generate_generic_app max_app
-         n)) max_app)
+       (APPEND (list_of_seq (\n. (n + 2,generate_generic_app max_app n))
+         max_app)
         (FLAT
           (list_of_seq
             (\tot.
               list_of_seq
-                (\prev. (tot - prev +
-                  1,generate_partial_app_closure_fn tot prev))
+                (\prev. (tot - prev + 1,generate_partial_app_closure_fn tot
+                  prev))
                 tot)
             max_app)))`;;
 
@@ -476,8 +459,8 @@ let init_globals_def = new_definition
              (list_of_seq
                (\tot.
                  list_of_seq
-                   (\prev. mk_label (partial_app_fn_location max_app
-                     tot prev))
+                   (\prev. mk_label (partial_app_fn_location max_app tot
+                     prev))
                    tot)
                max_app)))]]
        (
@@ -486,257 +469,222 @@ let init_globals_def = new_definition
 
 let force_thunk_code_def = new_definition
   `force_thunk_code =
-     (bvl_If (bvl_Op (closLang_BlockOp (closLang_EqualConst
-       (closLang_Int (&0)))) [(\b i. bvl_Op (closLang_BlockOp
-       (closLang_ElemAt i)) [b]) (bvl_Var 1) 1])
-       (bvl_Let [bvl_Call 0 NONE [(bvl_Op (closLang_BlockOp
-         (closLang_Cons 0)) []); bvl_Var 1; (\b i. bvl_Op
-         (closLang_BlockOp (closLang_ElemAt i)) [b]) (bvl_Var 1) 0]]
+     (bvl_If (bvl_Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
+       (&0)))) [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
+       (bvl_Var 1) 1])
+       (bvl_Let [bvl_Call 0 NONE [(bvl_Op (closLang_BlockOp (closLang_Cons
+         0)) []); bvl_Var 1; (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt
+         i)) [b]) (bvl_Var 1) 0]]
          (bvl_Let [bvl_Op (closLang_ThunkOp (UpdateThunk Evaluated))
            [bvl_Var 0; bvl_Var 1]] (bvl_Var 1)))
        (bvl_Let [bvl_Call 0 (SOME 0) [(bvl_Op (closLang_BlockOp
          (closLang_Cons 0)) []); bvl_Var 1]]
-         (bvl_Let [bvl_Op (closLang_ThunkOp (UpdateThunk
-           Evaluated)) [bvl_Var 0; bvl_Var 1]] (bvl_Var 1))):bvl_exp)`;;
+         (bvl_Let [bvl_Op (closLang_ThunkOp (UpdateThunk Evaluated))
+           [bvl_Var 0; bvl_Var 1]] (bvl_Var 1))):bvl_exp)`;;
 
 let _ = size_thms "closLang_exp";;
 let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
   [`clos_to_bvl_compile_exps max_app [] aux = ([],aux)`;
-   `clos_to_bvl_compile_exps max_app (CONS (x:closLang_exp) (CONS y xs))
-    aux =
-         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux
+   `clos_to_bvl_compile_exps max_app (CONS (x:closLang_exp) (CONS y xs)) aux =
+         let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app (CONS y xs) aux1
              in
-         let (c2,aux2) = clos_to_bvl_compile_exps max_app (CONS y
-             xs) aux1 in
-           (APPEND c1 c2,aux2))`;
-   `clos_to_bvl_compile_exps max_app [(closLang_Var t
-    v:closLang_exp)] aux = ([(bvl_Var v):bvl_exp],aux)`;
-   `clos_to_bvl_compile_exps max_app [(closLang_If t x1 x2
-    x3:closLang_exp)] aux =
-         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
-             in
-         let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1
-             in
-         let (c3,aux3) = clos_to_bvl_compile_exps max_app [x3] aux2
-             in
-           ([bvl_If (HD c1) (HD c2) (HD c3)],aux3))`;
-   `clos_to_bvl_compile_exps max_app [(closLang_Let t xs
-    x2:closLang_exp)] aux =
-         (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
-         let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1
-             in
-           ([bvl_Let c1 (HD c2)],aux2))`;
-   `clos_to_bvl_compile_exps max_app [(closLang_Raise t
-    x1:closLang_exp)] aux =
-         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
-             in
-           ([bvl_Raise (HD c1)],aux1))`;
-   `clos_to_bvl_compile_exps max_app [(closLang_Tick t x1:closLang_exp)]
-    aux =
-         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
-             in
-           ([bvl_Tick (HD c1)],aux1))`;
-   `clos_to_bvl_compile_exps max_app [(closLang_Op t op
-    xs:closLang_exp)] aux =
-         (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+           (APPEND c1 c2,aux2)`;
+   `clos_to_bvl_compile_exps max_app [closLang_Var t v] aux = ([(bvl_Var
+    v):bvl_exp],aux)`;
+   `clos_to_bvl_compile_exps max_app [closLang_If t x1 x2 x3] aux =
+         let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
+         let (c3,aux3) = clos_to_bvl_compile_exps max_app [x3] aux2 in
+           ([bvl_If (HD c1) (HD c2) (HD c3)],aux3)`;
+   `clos_to_bvl_compile_exps max_app [closLang_Let t xs x2] aux =
+         let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
+           ([bvl_Let c1 (HD c2)],aux2)`;
+   `clos_to_bvl_compile_exps max_app [closLang_Raise t x1] aux =
+         let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+           ([bvl_Raise (HD c1)],aux1)`;
+   `clos_to_bvl_compile_exps max_app [closLang_Tick t x1] aux =
+         let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+           ([bvl_Tick (HD c1)],aux1)`;
+   `clos_to_bvl_compile_exps max_app [closLang_Op t op xs] aux =
+         let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
          (
          [if op = closLang_Install then
-             bvl_Call 0 NONE [bvl_Op closLang_Install c1] else if op
-                 = closLang_ThunkOp ForceThunk then
-             bvl_Let c1 (bvl_Force (num_stubs max_app - 2) 0) else
-             bvl_Op (clos_to_bvl_compile_op op) c1],aux1))`;
-   `clos_to_bvl_compile_exps max_app [(closLang_App t loc_opt x1
-    xs2:closLang_exp)] aux =
-         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
-             in
-         let (c2,aux2) = clos_to_bvl_compile_exps max_app xs2 aux1
-             in
+             bvl_Call 0 NONE [bvl_Op closLang_Install c1]
+           else if op = closLang_ThunkOp ForceThunk then
+             bvl_Let c1 (bvl_Force (num_stubs max_app - 2) 0)
+           else bvl_Op (clos_to_bvl_compile_op op) c1],aux1)`;
+   `clos_to_bvl_compile_exps max_app [closLang_App t loc_opt x1 xs2] aux =
+         let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app xs2 aux1 in
            ([match loc_opt with NONE ->
-                 bvl_Let (APPEND c2 c1) (mk_cl_call (bvl_Var (LENGTH
-                     c2)) (list_of_seq bvl_Var (LENGTH c2))) | SOME loc
-                     ->
+                 bvl_Let (APPEND c2 c1) (mk_cl_call (bvl_Var (LENGTH c2))
+                     (list_of_seq bvl_Var (LENGTH c2)))
+             | SOME loc ->
                  (bvl_Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
                      max_app))) (APPEND c2 c1))],
-            aux2))`;
-   `clos_to_bvl_compile_exps max_app [closLang_Fn t loc_opt vs_opt
-    num_args x1] aux =
-         (let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
+            aux2)`;
+   `clos_to_bvl_compile_exps max_app [closLang_Fn t loc_opt vs_opt num_args x1]
+    aux =
+         let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
          let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
-         let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
-             in
+         let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
          let c2 =
            bvl_Let (APPEND (list_of_seq bvl_Var num_args) (free_let
                (bvl_Var num_args) (LENGTH vs)))
                (HD c1) in
            ([bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
-                (REVERSE (CONS (mk_label (loc + num_stubs
-                    max_app)) (CONS (mk_const (num_args - 1)) (MAP
-                    bvl_Var vs))))],CONS (loc + (num_stubs
-                    max_app),num_args + 1,c2) aux1))`;
-   `clos_to_bvl_compile_exps max_app [(closLang_Letrec t loc_opt vsopt
-    fns x1:closLang_exp)] aux =
-         (let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
+                (REVERSE (CONS (mk_label (loc + num_stubs max_app))
+                    (CONS (mk_const (num_args - 1)) (MAP bvl_Var
+                    vs))))],CONS (loc + (num_stubs max_app),num_args + 1,c2)
+                    aux1)`;
+   `clos_to_bvl_compile_exps max_app [closLang_Letrec t loc_opt vsopt fns x1]
+    aux =
+         let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
          let vs = (match vsopt with NONE -> [] | SOME x -> x) in
-         match fns with [] -> clos_to_bvl_compile_exps max_app [x1]
-             aux | [(num_args,exp)] ->
-             (let (c1,aux1) = clos_to_bvl_compile_exps max_app [exp]
-                 aux in
+         match fns with [] -> clos_to_bvl_compile_exps max_app [x1] aux
+         | [(num_args,exp)] ->
+             let (c1,aux1) = clos_to_bvl_compile_exps max_app [exp] aux in
              let c3 = bvl_Let (APPEND (APPEND (list_of_seq bvl_Var
-                 num_args) [bvl_Var num_args]) (free_let (bvl_Var
-                 num_args) (LENGTH vs))) (HD c1) in
-             let (c2,aux2) = clos_to_bvl_compile_exps max_app [x1]
-                 (CONS (loc + (num_stubs max_app),num_args + 1,c3) aux1)
-                 in
+                 num_args) [bvl_Var num_args]) (free_let (bvl_Var num_args)
+                 (LENGTH vs))) (HD c1) in
+             let (c2,aux2) = clos_to_bvl_compile_exps max_app [x1] (CONS
+                 (loc + (num_stubs max_app),num_args + 1,c3) aux1) in
              let c4 =
                bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
-                  (REVERSE (CONS (mk_label (loc + (num_stubs
-                      max_app))) (CONS (mk_const (num_args - 1)) (MAP
-                      bvl_Var vs)))) in
-               ([bvl_Let [c4] (HD c2)],aux2)) | _3 ->
-             (let fns_l = LENGTH fns in
+                  (REVERSE (CONS (mk_label (loc + (num_stubs max_app)))
+                      (CONS (mk_const (num_args - 1)) (MAP bvl_Var vs)))) in
+               ([bvl_Let [c4] (HD c2)],aux2)
+         | _ ->
+             let fns_l = LENGTH fns in
              let l = fns_l + LENGTH vs in
-             let (cs,aux1) = clos_to_bvl_compile_exps max_app (MAP
-                 SND fns) aux in
-             let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs
+             let (cs,aux1) = clos_to_bvl_compile_exps max_app (MAP SND fns)
+                 aux in
+             let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs in
+             let (n2,aux2) = build_aux (loc + (num_stubs max_app)) cs1 aux1
                  in
-             let (n2,aux2) = build_aux (loc + (num_stubs max_app))
-                 cs1 aux1 in
-             let (c3,aux3) = clos_to_bvl_compile_exps max_app [x1]
-                 aux2 in
-             let c4 = build_recc_lets (MAP FST fns) vs (loc +
-                 (num_stubs max_app)) fns_l (HD c3) in
-               ([c4],aux3)))`;
-   `clos_to_bvl_compile_exps max_app [(closLang_Handle t x1
-    x2:closLang_exp)] aux =
-         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
-             in
-         let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1
-             in
-           ([bvl_Handle (HD c1) (HD c2)],aux2))`;
-   `clos_to_bvl_compile_exps max_app [(closLang_Call t ticks dest
-    xs:closLang_exp)] aux =
-         (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+             let (c3,aux3) = clos_to_bvl_compile_exps max_app [x1] aux2 in
+             let c4 = build_recc_lets (MAP FST fns) vs (loc + (num_stubs
+                 max_app)) fns_l (HD c3) in
+               ([c4],aux3)`;
+   `clos_to_bvl_compile_exps max_app [closLang_Handle t x1 x2] aux =
+         let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
+           ([bvl_Handle (HD c1) (HD c2)],aux2)`;
+   `clos_to_bvl_compile_exps max_app [closLang_Call t ticks dest xs] aux =
+         let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
            ([bvl_Call ticks (SOME (dest + (num_stubs max_app)))
-               c1],aux1))`];;
+               c1],aux1)`];;
 
 (* HOL4 clos_to_bvlScript.sml:495: ML code, not ported *)
 
 let _ = size_thms "bvl_exp";;
 let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`compile_exp_sing max_app (closLang_Var t v:closLang_exp) aux =
-    (((bvl_Var v):bvl_exp),aux)`;
-   `compile_exp_sing max_app (closLang_If t x1 x2 x3:closLang_exp) aux =
-         (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+  [`compile_exp_sing max_app (closLang_Var t v) aux = (((bvl_Var
+    v):bvl_exp),aux)`;
+   `compile_exp_sing max_app (closLang_If t x1 x2 x3) aux =
+         let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
          let (c3,aux3) = compile_exp_sing max_app x3 aux2 in
-           (bvl_If c1 c2 c3,aux3))`;
-   `compile_exp_sing max_app (closLang_Let t xs x2:closLang_exp) aux =
-         (let (c1,aux1) = compile_exp_list max_app xs aux in
+           (bvl_If c1 c2 c3,aux3)`;
+   `compile_exp_sing max_app (closLang_Let t xs x2) aux =
+         let (c1,aux1) = compile_exp_list max_app xs aux in
          let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
-           (bvl_Let c1 c2,aux2))`;
-   `compile_exp_sing max_app (closLang_Raise t x1:closLang_exp) aux =
-         (let (c1,aux1) = compile_exp_sing max_app x1 aux in
-           (bvl_Raise c1,aux1))`;
-   `compile_exp_sing max_app (closLang_Tick t x1:closLang_exp) aux =
-         (let (c1,aux1) = compile_exp_sing max_app x1 aux in
-           (bvl_Tick c1,aux1))`;
-   `compile_exp_sing max_app (closLang_Op t op xs:closLang_exp) aux =
-         (let (c1,aux1) = compile_exp_list max_app xs aux in
+           (bvl_Let c1 c2,aux2)`;
+   `compile_exp_sing max_app (closLang_Raise t x1) aux =
+         let (c1,aux1) = compile_exp_sing max_app x1 aux in
+           (bvl_Raise c1,aux1)`;
+   `compile_exp_sing max_app (closLang_Tick t x1) aux =
+         let (c1,aux1) = compile_exp_sing max_app x1 aux in
+           (bvl_Tick c1,aux1)`;
+   `compile_exp_sing max_app (closLang_Op t op xs) aux =
+         let (c1,aux1) = compile_exp_list max_app xs aux in
          (
          (if op = closLang_Install then bvl_Call 0 NONE [bvl_Op
-             closLang_Install c1] else if op = closLang_ThunkOp
-             ForceThunk then bvl_Let c1 (bvl_Force (num_stubs max_app
-             - 2) 0) else bvl_Op (clos_to_bvl_compile_op op)
-             c1),aux1))`;
-   `compile_exp_sing max_app (closLang_App t loc_opt x1
-    xs2:closLang_exp) aux =
-         (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+             closLang_Install c1]
+          else if op = closLang_ThunkOp ForceThunk then bvl_Let c1
+              (bvl_Force (num_stubs max_app - 2) 0)
+          else bvl_Op (clos_to_bvl_compile_op op) c1),aux1)`;
+   `compile_exp_sing max_app (closLang_App t loc_opt x1 xs2) aux =
+         let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let (c2,aux2) = compile_exp_list max_app xs2 aux1 in
            ((match loc_opt with NONE ->
-                 bvl_Let (APPEND c2 [c1]) (mk_cl_call (bvl_Var
-                     (LENGTH c2)) (list_of_seq bvl_Var (LENGTH c2))) |
-                     SOME loc ->
+                 bvl_Let (APPEND c2 [c1]) (mk_cl_call (bvl_Var (LENGTH c2))
+                     (list_of_seq bvl_Var (LENGTH c2)))
+             | SOME loc ->
                  (bvl_Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
                      max_app))) (APPEND c2 [c1]))),
-            aux2))`;
-   `compile_exp_sing max_app (closLang_Fn t loc_opt vs_opt num_args x1)
-    aux =
-         (let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
+            aux2)`;
+   `compile_exp_sing max_app (closLang_Fn t loc_opt vs_opt num_args x1) aux =
+         let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
          let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let c2 =
            bvl_Let (APPEND (list_of_seq bvl_Var num_args) (free_let
                (bvl_Var num_args) (LENGTH vs))) c1 in
            (bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
-               (REVERSE (CONS (mk_label (loc + num_stubs
-                   max_app)) (CONS (mk_const (num_args - 1)) (MAP
-                   bvl_Var vs)))),CONS (loc + (num_stubs
-                   max_app),num_args + 1,c2) aux1))`;
-   `compile_exp_sing max_app (closLang_Letrec t loc_opt vsopt fns
-    x1:closLang_exp) aux =
-         (let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
+               (REVERSE (CONS (mk_label (loc + num_stubs max_app)) (CONS
+                   (mk_const (num_args - 1)) (MAP bvl_Var vs)))),CONS (loc +
+                   (num_stubs max_app),num_args + 1,c2) aux1)`;
+   `compile_exp_sing max_app (closLang_Letrec t loc_opt vsopt fns x1) aux =
+         let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
          let vs = (match vsopt with NONE -> [] | SOME x -> x) in
-         match fns with [] -> compile_exp_sing max_app x1 aux |
-             [(num_args,exp)] ->
-             (let (c1,aux1) = compile_exp_sing max_app exp aux in
+         match fns with [] -> compile_exp_sing max_app x1 aux
+         | [(num_args,exp)] ->
+             let (c1,aux1) = compile_exp_sing max_app exp aux in
              let c3 = bvl_Let (APPEND (APPEND (list_of_seq bvl_Var
-                 num_args) [bvl_Var num_args]) (free_let (bvl_Var
-                 num_args) (LENGTH vs))) c1 in
-             let (c2,aux2) = compile_exp_sing max_app x1 (CONS (loc
-                 + (num_stubs max_app),num_args + 1,c3) aux1) in
+                 num_args) [bvl_Var num_args]) (free_let (bvl_Var num_args)
+                 (LENGTH vs))) c1 in
+             let (c2,aux2) = compile_exp_sing max_app x1 (CONS (loc +
+                 (num_stubs max_app),num_args + 1,c3) aux1) in
              let c4 =
                bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
-                  (REVERSE (CONS (mk_label (loc + (num_stubs
-                      max_app))) (CONS (mk_const (num_args - 1)) (MAP
-                      bvl_Var vs)))) in
-               (bvl_Let [c4] c2,aux2)) | _6 ->
-             (let fns_l = LENGTH fns in
+                  (REVERSE (CONS (mk_label (loc + (num_stubs max_app)))
+                      (CONS (mk_const (num_args - 1)) (MAP bvl_Var vs)))) in
+               (bvl_Let [c4] c2,aux2)
+         | _ ->
+             let fns_l = LENGTH fns in
              let l = fns_l + LENGTH vs in
-             let (cs,aux1) = compile_exp_list max_app (MAP SND fns)
-                 aux in
-             let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs
+             let (cs,aux1) = compile_exp_list max_app (MAP SND fns) aux in
+             let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs in
+             let (n2,aux2) = build_aux (loc + (num_stubs max_app)) cs1 aux1
                  in
-             let (n2,aux2) = build_aux (loc + (num_stubs max_app))
-                 cs1 aux1 in
              let (c3,aux3) = compile_exp_sing max_app x1 aux2 in
-             let c4 = build_recc_lets (MAP FST fns) vs (loc +
-                 (num_stubs max_app)) fns_l c3 in
-               (c4,aux3)))`;
-   `compile_exp_sing max_app (closLang_Handle t x1 x2:closLang_exp) aux
-    =
-         (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+             let c4 = build_recc_lets (MAP FST fns) vs (loc + (num_stubs
+                 max_app)) fns_l c3 in
+               (c4,aux3)`;
+   `compile_exp_sing max_app (closLang_Handle t x1 x2) aux =
+         let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
-           (bvl_Handle c1 c2,aux2))`;
-   `compile_exp_sing max_app (closLang_Call t ticks dest
-    xs:closLang_exp) aux =
-         (let (c1,aux1) = compile_exp_list max_app xs aux in
-           (bvl_Call ticks (SOME (dest + (num_stubs max_app)))
-               c1,aux1))`;
+           (bvl_Handle c1 c2,aux2)`;
+   `compile_exp_sing max_app (closLang_Call t ticks dest xs) aux =
+         let (c1,aux1) = compile_exp_list max_app xs aux in
+           (bvl_Call ticks (SOME (dest + (num_stubs max_app))) c1,aux1)`;
    `compile_exp_list max_app [] aux = ([],aux)`;
    `compile_exp_list max_app (CONS (x:closLang_exp) xs) aux =
-         (let (c1,aux1) = compile_exp_sing max_app x aux in
+         let (c1,aux1) = compile_exp_sing max_app x aux in
          let (c2,aux2) = compile_exp_list max_app xs aux1 in
-           (CONS c1 c2,aux2))`];;
+           (CONS c1 c2,aux2)`];;
 
 let compile_exp_sing_eq = prove
  (`(!n e l. clos_to_bvl_compile_exps n [e] l = (\(a,b). ([a],b))
   (compile_exp_sing n e l)) /\
-   (!n es l. clos_to_bvl_compile_exps n es l = compile_exp_list n
-     es l)`,
+   (!n es l. clos_to_bvl_compile_exps n es l = compile_exp_list n es l)`,
   CHEAT_TAC);;
 
 let clos_to_bvl_compile_prog_def = new_definition
   `clos_to_bvl_compile_prog max_app prog =
-     (let (new_exps,aux) = clos_to_bvl_compile_exps max_app (MAP (SND
-       o SND) prog) [] in APPEND (MAP2 (\(loc,args,_7) exp. (loc +
-       num_stubs max_app,args,exp))
-         prog new_exps) aux)`;;
+     let (new_exps,aux) = clos_to_bvl_compile_exps max_app (MAP (SND o SND)
+       prog) [] in APPEND (MAP2 (\(loc,args,_) exp. (loc + num_stubs
+       max_app,args,exp))
+         prog new_exps) aux`;;
 
-(* HOL4 clos_to_bvlScript.sml:610: a theorem that HOL4 states as the
-   value of an ML expression: compile_prog_eq *)
+(* HOL4 clos_to_bvlScript.sml:610: a theorem that HOL4 states as the value
+   of an ML expression: compile_prog_eq *)
 
 (* [local] *)
 let pair_lem1 = prove
@@ -756,14 +704,13 @@ let compile_exps_acc = prove
 
 (* compile_exps_LENGTH *)
 let clos_to_bvl_compile_exps_LENGTH = prove
- (`(clos_to_bvl_compile_exps max_app xs aux = (c,aux1)) ==> (LENGTH c
-  = LENGTH xs)`,
+ (`(clos_to_bvl_compile_exps max_app xs aux = (c,aux1)) ==> (LENGTH c =
+  LENGTH xs)`,
   CHEAT_TAC);;
 
 (* compile_exps_SING *)
 let clos_to_bvl_compile_exps_SING = prove
- (`(clos_to_bvl_compile_exps max_app [x] aux = (c,aux1)) ==> (?d. c =
-  [d])`,
+ (`(clos_to_bvl_compile_exps max_app [x] aux = (c,aux1)) ==> (?d. c = [d])`,
   CHEAT_TAC);;
 
 let compile_exps_CONS = prove
@@ -807,17 +754,19 @@ let code_split_def,code_split_ind = define_rec
    termination *)
 let code_merge_def,code_merge_ind = define_wf
   `MEASURE (\(x0,x1).      list_size (pair_size (\n. n) (\x. 0)) x0 +
-     list_size (pair_size (\n. n) (\x. 0)) x1)`
+  list_size (pair_size (\n. n) (\x. 0)) x1)`
   [`code_merge xs ys =
-     (match (xs,ys) with ([],[]) -> [] | ([],_8) -> ys | (_9,[]) ->
-       xs | (CONS x1 xs1,CONS y1 ys1) ->
-         (if FST x1 < ((FST y1):num) then CONS x1 (code_merge
-           xs1 ys) else CONS y1 (code_merge xs ys1)))`];;
+     match (xs,ys) with ([],[]) -> []
+     | ([],_) -> ys
+     | (_,[]) -> xs
+     | (CONS x1 xs1,CONS y1 ys1) ->
+         if FST x1 < ((FST y1):num) then CONS x1 (code_merge xs1 ys)
+         else CONS y1 (code_merge xs ys1)`];;
 
 let code_split_NULL = prove
  (`!ts1 ts2 ts3 xs ys.
-      (xs,ys) = code_split ts1 ts2 ts3 /\ ~(ts2 = []) /\ ~(ts3 =
-        []) ==> ~(xs = []) /\ ~(ys = [])`,
+      (xs,ys) = code_split ts1 ts2 ts3 /\ ~(ts2 = []) /\ ~(ts3 = []) ==>
+        ~(xs = []) /\ ~(ys = [])`,
   CHEAT_TAC);;
 
 let code_split_LENGTH = prove
@@ -831,118 +780,103 @@ let code_sort_def,code_sort_ind = assume_definition_rec
   [`code_sort [] = []`;
    `code_sort [x] = [x]`;
    `code_sort (CONS x (CONS y xs)) =
-         (let (xs,ys) = code_split xs [x] [y] in
-           code_merge (code_sort xs) (code_sort ys))`];;
+         let (xs,ys) = code_split xs [x] [y] in
+           code_merge (code_sort xs) (code_sort ys)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let chain_exps_def,chain_exps_ind = define_wf
   `MEASURE (\(x0,x1). closLang_exp_size1 x1)`
   [`chain_exps i x2 =
-        match x2 with
-          [] -> [(i,0,closLang_Op backend_common_None
-            (closLang_IntOp (closLang_Const (&0))) [])]
-        | [e] -> [(i,0,e)]
-        | (CONS e es) -> CONS (i,0,
+     match x2 with
+       [] -> [(i,0,closLang_Op backend_common_None (closLang_IntOp
+         (closLang_Const (&0))) [])]
+     | [e] -> [(i,0,e)]
+     | CONS e es -> CONS (i,0,
         closLang_Let backend_common_None [e] (closLang_Call
-          backend_common_None 0 (i + 1) [])) (chain_exps (i + 1)
-          es)`];;
+          backend_common_None 0 (i + 1) [])) (chain_exps (i + 1) es)`];;
 
 (* c.max_app must be the same each time this is called *)
 let compile_common_def = new_definition
   `compile_common c es =
-     (let es = clos_mti_compile (clos_to_bvl_config_do_mti c)
+     let es = clos_mti_compile (clos_to_bvl_config_do_mti c)
        (clos_to_bvl_config_max_app c) es in
      // Add space for functions to call the expressions
      let loc = clos_to_bvl_config_next_loc c + MAX 1 (LENGTH es) in
      // Alignment padding
      let loc = (if loc MOD 2 = 0 then loc else loc + 1) in
      let (n,es) = renumber_code_locs_list loc es in
-     let (kc,es) = clos_known_compile (clos_to_bvl_config_known_conf
-       c) es in
-     let (es,g,aux) = clos_call_compile (clos_to_bvl_config_do_call
-       c) es in
-     let prog = APPEND (chain_exps (clos_to_bvl_config_next_loc c)
-       es) aux in
+     let (kc,es) = clos_known_compile (clos_to_bvl_config_known_conf c) es
+       in
+     let (es,g,aux) = clos_call_compile (clos_to_bvl_config_do_call c) es in
+     let prog = APPEND (chain_exps (clos_to_bvl_config_next_loc c) es) aux
+       in
      let prog = clos_annotate_compile prog in
        (clos_to_bvl_config_call_state_fupd (K (g,aux))
          (clos_to_bvl_config_known_conf_fupd (K kc)
-         (clos_to_bvl_config_next_loc_fupd (K n)
-         (clos_to_bvl_config_start_fupd (K (clos_to_bvl_config_next_loc
-         c)) c))),
-        prog))`;;
+         (clos_to_bvl_config_next_loc_fupd (K n) (clos_to_bvl_config_start_fupd
+         (K (clos_to_bvl_config_next_loc c)) c))),
+        prog)`;;
 
 let add_src_names_def,add_src_names_ind = define_rec
   [`add_src_names n [] l = l`;
    `add_src_names n (CONS x xs) l =
-      add_src_names (n + 2) xs (sptree_insert n
-          (mlstring_concat [x; implode "_clos"]) (sptree_insert (n
-          + 1) x l))`];;
+      add_src_names (n + 2) xs (sptree_insert n (mlstring_concat [x;
+          implode "_clos"]) (sptree_insert (n + 1) x l))`];;
 
 let get_src_names_def,get_src_names_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`get_src_names [] l = l`;
    `get_src_names (CONS x (CONS y xs)) l = get_src_names (CONS y xs)
     (get_src_names [x] l)`;
-   `get_src_names [closLang_If _10 x y z] l =
+   `get_src_names [closLang_If _ x y z] l =
       get_src_names [x] (get_src_names [y] (get_src_names [z] l))`;
-   `get_src_names [closLang_Var _11 _12] l = l`;
-   `get_src_names [closLang_Let _13 xs x] l = get_src_names (CONS x
-    xs) l`;
-   `get_src_names [(closLang_Raise _15 x:closLang_exp)] l =
-    get_src_names [x] l`;
-   `get_src_names [(closLang_Handle _17 x y:closLang_exp)] l =
-    get_src_names [x] (get_src_names [y] l)`;
-   `get_src_names [(closLang_Tick _19 x:closLang_exp)] l =
-    get_src_names [x] l`;
-   `get_src_names [(closLang_Call _23 _24 _25 xs:closLang_exp)] l =
-    get_src_names xs l`;
-   `get_src_names [(closLang_Op _28 _29 xs:closLang_exp)] l =
-    get_src_names xs l`;
-   `get_src_names [(closLang_App _32 _33 x xs:closLang_exp)] l =
-    get_src_names (CONS x xs) l`;
-   `get_src_names [closLang_Fn name loc_opt _34 _35 x] l =
+   `get_src_names [closLang_Var _1 _2] l = l`;
+   `get_src_names [closLang_Let _ xs x] l = get_src_names (CONS x xs) l`;
+   `get_src_names [closLang_Raise _ x] l = get_src_names [x] l`;
+   `get_src_names [closLang_Handle _ x y] l = get_src_names [x]
+    (get_src_names [y] l)`;
+   `get_src_names [closLang_Tick _ x] l = get_src_names [x] l`;
+   `get_src_names [closLang_Call _6 _7 _8 xs] l = get_src_names xs l`;
+   `get_src_names [closLang_Op _11 _12 xs] l = get_src_names xs l`;
+   `get_src_names [closLang_App _15 _16 x xs] l = get_src_names (CONS x xs)
+    l`;
+   `get_src_names [closLang_Fn name loc_opt _17 _18 x] l =
       (let l1 = get_src_names [x] l in
-         match loc_opt with NONE -> l1 | SOME n -> add_src_names
-             n [name] l1)`;
-   `get_src_names [(closLang_Letrec names loc_opt _37 funs
-    x:closLang_exp)] l =
+         match loc_opt with NONE -> l1
+                         | SOME n -> add_src_names n [name] l1)`;
+   `get_src_names [closLang_Letrec names loc_opt _ funs x] l =
       (let l0 = get_src_names (MAP SND funs) l in
        let l1 = get_src_names [x] l0 in
-         match loc_opt with NONE -> l1 | SOME n ->
-             add_src_names n names l1)`];;
+         match loc_opt with NONE -> l1
+                         | SOME n -> add_src_names n names l1)`];;
 
-let get_src_names_sing_def,get_src_names_sing_ind =
-  assume_definition_rec
+let get_src_names_sing_def,get_src_names_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`get_src_names_sing (closLang_If _38 x y z) l =
-      get_src_names_sing x (get_src_names_sing y
-          (get_src_names_sing z l))`;
-   `get_src_names_sing (closLang_Var _39 _40) l = l`;
-   `get_src_names_sing (closLang_Let _41 xs x) l =
+  [`get_src_names_sing (closLang_If _ x y z) l =
+      get_src_names_sing x (get_src_names_sing y (get_src_names_sing z
+          l))`;
+   `get_src_names_sing (closLang_Var _19 _20) l = l`;
+   `get_src_names_sing (closLang_Let _ xs x) l =
       get_src_names_list xs (get_src_names_sing x l)`;
-   `get_src_names_sing (closLang_Raise _43 x:closLang_exp) l =
-    get_src_names_sing x l`;
-   `get_src_names_sing (closLang_Handle _45 x y:closLang_exp) l =
-    get_src_names_sing x (get_src_names_sing y l)`;
-   `get_src_names_sing (closLang_Tick _47 x:closLang_exp) l =
-    get_src_names_sing x l`;
-   `get_src_names_sing (closLang_Call _51 _52 _53 xs:closLang_exp) l
-    = get_src_names_list xs l`;
-   `get_src_names_sing (closLang_Op _56 _57 xs:closLang_exp) l =
-    get_src_names_list xs l`;
-   `get_src_names_sing (closLang_App _60 _61 x xs:closLang_exp) l =
+   `get_src_names_sing (closLang_Raise _ x) l = get_src_names_sing x l`;
+   `get_src_names_sing (closLang_Handle _ x y) l = get_src_names_sing x
+    (get_src_names_sing y l)`;
+   `get_src_names_sing (closLang_Tick _ x) l = get_src_names_sing x l`;
+   `get_src_names_sing (closLang_Call _24 _25 _26 xs) l = get_src_names_list
+    xs l`;
+   `get_src_names_sing (closLang_Op _29 _30 xs) l = get_src_names_list xs l`;
+   `get_src_names_sing (closLang_App _33 _34 x xs) l =
       get_src_names_list xs (get_src_names_sing x l)`;
-   `get_src_names_sing (closLang_Fn name loc_opt _62 _63 x) l =
+   `get_src_names_sing (closLang_Fn name loc_opt _35 _36 x) l =
       (let l1 = get_src_names_sing x l in
-         match loc_opt with NONE -> l1 | SOME n -> add_src_names
-             n [name] l1)`;
-   `get_src_names_sing (closLang_Letrec names loc_opt _65 funs
-    x:closLang_exp) l =
+         match loc_opt with NONE -> l1
+                         | SOME n -> add_src_names n [name] l1)`;
+   `get_src_names_sing (closLang_Letrec names loc_opt _ funs x) l =
       (let l0 = get_src_names_list (MAP SND funs) l in
        let l1 = get_src_names_sing x l0 in
-         match loc_opt with NONE -> l1 | SOME n -> add_src_names
-             n names l1)`;
+         match loc_opt with NONE -> l1
+                         | SOME n -> add_src_names n names l1)`;
    `get_src_names_list [] l = l`;
    `get_src_names_list (CONS x xs) l = get_src_names_list xs
     (get_src_names_sing x l)`];;
@@ -954,89 +888,82 @@ let get_src_names_sing_eq = prove
 
 let make_name_alist_def = new_definition
   `make_name_alist nums prog nstubs dec_start (dec_length:num) =
-     (let src_names = get_src_names (MAP (SND o SND) prog) LN in
+     let src_names = get_src_names (MAP (SND o SND) prog) LN in
        fromAList (MAP (\n. (n,(if n < nstubs then
-                              if n = nstubs - 1 then implode
-                                "bvl_init" else
-                              if n = nstubs - 2 then implode
-                                "bvl_force" else
-                              implode "bvl_stub" else let clos_name =
-                                n - nstubs in
-                              if dec_start <= clos_name /\ clos_name
-                                < dec_start + dec_length then implode
-                                "dec" else
-                              match sptree_lookup clos_name
-                                src_names with NONE -> implode
-                                "unknown_clos_fun" | SOME s -> s)))
-                                nums):mlstring spt)`;;
+                              if n = nstubs - 1 then implode "bvl_init" else
+                                if n = nstubs - 2 then implode "bvl_force" else
+                                implode "bvl_stub"
+                            else let clos_name = n - nstubs in
+                              if dec_start <= clos_name /\ clos_name <
+                                dec_start + dec_length then implode "dec" else
+                                match sptree_lookup clos_name src_names with
+                                NONE -> implode "unknown_clos_fun"
+                              | SOME s -> s))) nums):mlstring spt`;;
 
-(* HOL4 clos_to_bvlScript.sml:878-879: a theorem that HOL4 states as
-   the value of an ML expression: make_name_alist_eq *)
+(* HOL4 clos_to_bvlScript.sml:878-879: a theorem that HOL4 states as the
+   value of an ML expression: make_name_alist_eq *)
 
 let clos_to_bvl_compile_def = new_definition
   `clos_to_bvl_compile c0 es =
-     (let (c,prog) = compile_common c0 es in
+     let (c,prog) = compile_common c0 es in
      let n = num_stubs (clos_to_bvl_config_max_app c) in
      let init_stubs' = toAList (clos_to_bvl_init_code
        (clos_to_bvl_config_max_app c)) in
-     let init_globs = [(n - 1,0,init_globals
-       (clos_to_bvl_config_max_app c) (n + clos_to_bvl_config_start c))]
-       in
+     let init_globs = [(n - 1,0,init_globals (clos_to_bvl_config_max_app c)
+       (n + clos_to_bvl_config_start c))] in
      let force_stub = [(n - 2,2,force_thunk_code)] in
-     let comp_progs = clos_to_bvl_compile_prog
-       (clos_to_bvl_config_max_app c) prog in
-     let prog' = APPEND (APPEND (APPEND init_stubs' force_stub)
-       init_globs) comp_progs in
+     let comp_progs = clos_to_bvl_compile_prog (clos_to_bvl_config_max_app
+       c) prog in
+     let prog' = APPEND (APPEND (APPEND init_stubs' force_stub) init_globs)
+       comp_progs in
      let func_names = make_name_alist (MAP FST prog') prog n
        (clos_to_bvl_config_next_loc
                         c0) (LENGTH es) in
      let c = clos_to_bvl_config_start_fupd (K (n - 1)) c in
-       (c,code_sort prog',func_names))`;;
+       (c,code_sort prog',func_names)`;;
 
 let extract_name_def = define_cases
   [`extract_name [] = (0,[])`;
    `extract_name (CONS x xs) =
-      (match (some (\n. ?t. x = closLang_Op t (closLang_IntOp
-          (closLang_Const (&n))) [])) with NONE -> (0,CONS x xs) |
-          SOME n -> (n,(if xs = [] then [x] else xs)))`];;
+      match (some (\n. ?t. x = closLang_Op t (closLang_IntOp
+          (closLang_Const (&n))) [])) with NONE -> (0,CONS x xs)
+      | SOME n -> (n,(if xs = [] then [x] else xs))`];;
 
 let extract_name_pmatch = prove
  (`extract_name xs =
-     (match xs with [] -> (0,xs) | (CONS x xs) ->
+     match xs with [] -> (0,xs)
+     | (CONS x xs) ->
        (match x with
          (closLang_Op t (closLang_IntOp (closLang_Const i)) []) ->
-           (if i < (&0) then (0,CONS x xs) else
-             (num_of_int (abs i),(if xs = [] then [x] else xs))) |
-               _66 -> (0,CONS x xs)))`,
+           (if i < (&0) then (0,CONS x xs) else (num_of_int (abs i),(if xs =
+             [] then [x] else xs)))
+       | _ -> (0,CONS x xs))`,
   CHEAT_TAC);;
 
 let clos_to_bvl_compile_inc_def = new_definition
   `clos_to_bvl_compile_inc max_app (es,prog) =
-     (let (n,real_es) = extract_name es in
+     let (n,real_es) = extract_name es in
          clos_to_bvl_compile_prog max_app
-           (APPEND (chain_exps n real_es) prog):(num#num#bvl_exp)
-             list)`;;
+           (APPEND (chain_exps n real_es) prog):(num#num#bvl_exp) list`;;
 
 let clos_to_bvl_clos_to_bvl_compile_inc_def = new_definition
   `clos_to_bvl_clos_to_bvl_compile_inc c p =
-     (let p = cond_mti_compile_inc (clos_to_bvl_config_do_mti c)
+     let p = cond_mti_compile_inc (clos_to_bvl_config_do_mti c)
        (clos_to_bvl_config_max_app c) p in
      let (n,p) = ignore_table clos_number_compile_inc
        (clos_to_bvl_config_next_loc c) p in
      let c = clos_to_bvl_config_next_loc_fupd (K n) c in
-     let spt = option_val_approx_spt (clos_to_bvl_config_known_conf
-       c) in
+     let spt = option_val_approx_spt (clos_to_bvl_config_known_conf c) in
      let (spt,p) = known_compile_inc (known_static_conf
        (clos_to_bvl_config_known_conf c)) spt p in
-     let c = clos_to_bvl_config_known_conf_fupd (K
-       (option_upd_val_spt spt (clos_to_bvl_config_known_conf c))) c in
-     let (c',p) = cond_call_compile_inc (clos_to_bvl_config_do_call
-       c) (FST (clos_to_bvl_config_call_state c)) p in
+     let c = clos_to_bvl_config_known_conf_fupd (K (option_upd_val_spt spt
+       (clos_to_bvl_config_known_conf c))) c in
+     let (c',p) = cond_call_compile_inc (clos_to_bvl_config_do_call c) (FST
+       (clos_to_bvl_config_call_state c)) p in
      let c = clos_to_bvl_config_call_state_fupd (K (c',[])) c in
      let p = clos_annotate_compile_inc p in
-     let p = clos_to_bvl_compile_inc (clos_to_bvl_config_max_app c) p
-       in
-       (c,p))`;;
+     let p = clos_to_bvl_compile_inc (clos_to_bvl_config_max_app c) p in
+       (c,p)`;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

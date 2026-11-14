@@ -75,29 +75,26 @@ let startup_def = new_definition
             "     movq    %rax, 0(%rsi)                   # sto"
             "re bitmap pointer\n"));
           (implode (APPEND
-            "     leaq    cdecl(cake_bitmaps_buffer_begin)(%rip"
-            "), %rax\n"));
+            "     leaq    cdecl(cake_bitmaps_buffer_begin)(%rip" "), %rax\n"));
           (implode (APPEND
             "     movq    %rax, 8(%rsi)                   # sto"
             "re bitmap mutable start pointer\n"));
           (implode (APPEND
-            "     leaq    cdecl(cake_bitmaps_buffer_end)(%rip),"
-            " %rax\n"));
+            "     leaq    cdecl(cake_bitmaps_buffer_end)(%rip)," " %rax\n"));
           (implode (APPEND
             "     movq    %rax, 16(%rsi)                  # sto"
             "re bitmap mutable end pointer\n"));
           (implode (APPEND
-            "     leaq    cdecl(cake_codebuffer_begin)(%rip), %"
-            "rax\n"));
+            "     leaq    cdecl(cake_codebuffer_begin)(%rip), %" "rax\n"));
           (implode (APPEND
             "     movq    %rax, 24(%rsi)                  # sto"
             "re code mutable start pointer\n"));
           (implode (APPEND
-            "     leaq    cdecl(cake_codebuffer_end)(%rip), %ra"
-            "x\n"));
+            "     leaq    cdecl(cake_codebuffer_end)(%rip), %ra" "x\n"));
           (implode (APPEND
             "     movq    %rax, 32(%rsi)                  # sto"
-            "re code mutable end pointer\n"))] else []))
+            "re code mutable end pointer\n"))]
+       else []))
      (SmartAppend (misc_List
        [(implode (APPEND
          "     movq    cdecl(cml_stack)(%rip), %rdx    # arg"
@@ -107,8 +104,8 @@ let startup_def = new_definition
           "4: first address past the stack\n"))])
      (SmartAppend (misc_List
        (if ret then
-         [(implode "     jmp     cml_enter\n")] else
-         [(implode "     jmp     cake_main\n")]))
+         [(implode "     jmp     cml_enter\n")]
+       else [(implode "     jmp     cake_main\n")]))
      (misc_List
        [(implode "\n");
         (implode "#if defined(__WIN32)\n");
@@ -121,19 +118,18 @@ let ffi_asm_def,ffi_asm_ind = define_rec
           SmartAppend (misc_List [
            (implode "cake_ffi"); ffi; (implode ":\n");
            (implode "     pushq   %rax\n");
-           (implode "     jmp     wcdecl(ffi"); ffi; (implode
-               ")\n");
+           (implode "     jmp     wcdecl(ffi"); ffi; (implode ")\n");
            (implode "     .p2align 4\n");
            (implode "\n")]) (export_x64_ffi_asm ffis)`];;
 
-(* HOL4 export_x64Script.sml:87-115: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_x64Script.sml:87-115: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_x64Script.sml:117-119: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_x64Script.sml:117-119: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_x64Script.sml:121-122: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_x64Script.sml:121-122: the ML values that the definitions
+   below antiquote *)
 
 let windows_ffi_asm_def,windows_ffi_asm_ind = define_rec
   [`windows_ffi_asm [] = misc_Nil`;
@@ -147,17 +143,17 @@ let windows_ffi_asm_def,windows_ffi_asm_ind = define_rec
            (implode "     jmp     cdecl(ffi"); ffi; (implode ")\n");
            (implode "\n")]) (windows_ffi_asm ffis)`];;
 
-(* HOL4 export_x64Script.sml:137-160: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_x64Script.sml:137-160: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_x64Script.sml:162-164: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_x64Script.sml:162-164: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_x64Script.sml:166-167: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_x64Script.sml:166-167: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_x64Script.sml:169-235: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_x64Script.sml:169-235: the ML values that the definitions
+   below antiquote *)
 
 let export_func_def = new_definition
   `export_x64_export_func appl (name,label,start',len) =
@@ -168,12 +164,10 @@ let export_func_def = new_definition
       (implode "#elif defined(__WIN32)\n");
       (implode "     .func   cdecl("); name; (implode ")\n");
       (implode "#else\n");
-      (implode "     .type   cdecl("); name; (implode
-        "), function\n");
+      (implode "     .type   cdecl("); name; (implode "), function\n");
       (implode "#endif\n");
       (implode "cdecl("); name; (implode "):\n");
-      (implode "     lea     "); name; (implode
-        "_jmp(%rip), %r10\n");
+      (implode "     lea     "); name; (implode "_jmp(%rip), %r10\n");
       (implode "     jmp     wcml(cake_enter)\n");
              name; (implode "_jmp:\n");
       (implode "     jmp     "); label; (implode "\n");
@@ -183,12 +177,12 @@ let export_func_def = new_definition
 
 let export_funcs_def = new_definition
   `export_x64_export_funcs lsyms exp =
-     FOLDL export_x64_export_func misc_Nil (FILTER ((C MEM exp) o
-       FST) lsyms)`;;
+     FOLDL export_x64_export_func misc_Nil (FILTER ((C MEM exp) o FST)
+       lsyms)`;;
 
 let x64_export_def = new_definition
   `x64_export ffi_names' bytes (data:word64 list) syms exp ret pk =
-     (let lsyms = get_sym_labels syms in
+     let lsyms = get_sym_labels syms in
      SmartAppend
        (SmartAppend
        (SmartAppend (misc_List preamble)
@@ -196,8 +190,8 @@ let x64_export_def = new_definition
        (SmartAppend (split16 (words_line (implode "\t.quad ")
          word_to_string) data)
        (SmartAppend (misc_List data_buffer)
-       (SmartAppend (export_x64_startup ret pk) ((\ret. if ret then
-         ((\ret. SmartAppend
+       (SmartAppend (export_x64_startup ret pk) ((\ret. if ret then ((\ret.
+         SmartAppend
      (misc_List (MAP (\n. implode (APPEND n "\n")) [(APPEND
        "/* CakeML FFI interface (each block is 16 bytes lo" "ng) */");
         "";
@@ -215,33 +209,31 @@ let x64_export_def = new_definition
         "";
         "cake_exit:"]
         (if ret then
-          ["     jmp     cml_return"] else
-          ["     callq   cdecl(cml_exit)"]))
+          ["     jmp     cml_return"]
+        else ["     callq   cdecl(cml_exit)"]))
         ["     .p2align 4";
         "";
         "cake_main:";
         "";
         "/* Generated machine code follows */";
-        ""]))))) T) else ((\ret. SmartAppend (misc_List (MAP (\n.
-          implode (APPEND n "\n")) [(APPEND
-          "/* CakeML FFI interface (each block is 16 bytes lo"
-          "ng) */"); ""; "     .p2align 4"; ""])) (SmartAppend
-          (export_x64_ffi_asm (REVERSE ffi_names')) (misc_List (MAP (\n.
-          implode (APPEND n "\n")) (APPEND (APPEND ["cake_clear:";
-          "     pushq   %rax"; "     pushq   %rdi";
-          "     callq   wcdecl(cml_clear)"; "     popq    %rdi";
-          "     ret"; "     .p2align 4"; ""; "cake_exit:"] (if ret then
-          ["     jmp     cml_return"] else
-          ["     callq   cdecl(cml_exit)"])) ["     .p2align 4"; "";
-          "cake_main:"; ""; "/* Generated machine code follows */";
-          ""]))))) F)) ret))))))
+        ""]))))) T) else ((\ret. SmartAppend (misc_List (MAP (\n. implode
+          (APPEND n "\n")) [(APPEND
+          "/* CakeML FFI interface (each block is 16 bytes lo" "ng) */"); "";
+          "     .p2align 4"; ""])) (SmartAppend (export_x64_ffi_asm (REVERSE
+          ffi_names')) (misc_List (MAP (\n. implode (APPEND n "\n")) (APPEND
+          (APPEND ["cake_clear:"; "     pushq   %rax"; "     pushq   %rdi";
+          "     callq   wcdecl(cml_clear)"; "     popq    %rdi"; "     ret";
+          "     .p2align 4"; ""; "cake_exit:"] (if ret then
+          ["     jmp     cml_return"]
+        else ["     callq   cdecl(cml_exit)"])) ["     .p2align 4"; "";
+          "cake_main:"; ""; "/* Generated machine code follows */"; ""])))))
+          F)) ret))))))
        (SmartAppend (split16 (words_line (implode "\t.byte ")
          byte_to_string) bytes)
        (SmartAppend (misc_List code_buffer)
        (emit_symbols lsyms))))
-       (SmartAppend ((\ret. if ret then ((\ret. SmartAppend
-         (misc_List [(implode (APPEND
-         "\n/* Windows Compatibility for CakeML FFI interfac"
+       (SmartAppend ((\ret. if ret then ((\ret. SmartAppend (misc_List
+         [(implode (APPEND "\n/* Windows Compatibility for CakeML FFI interfac"
          "e */\n\n"))])
      (
      SmartAppend (windows_ffi_asm (REVERSE ffi_names'))
@@ -252,31 +244,31 @@ let x64_export_def = new_definition
          "     movq    %rdi, %rcx";
          "     jmp     cdecl(cml_clear)"]
         (if ret then
-          [] else [
+          []
+        else [
            // don't need to treat cake_exit as a function
            "windows_cml_exit:";
           "     movq    %rcx, %r9";
           "     movq    %rdx, %r8";
           "     movq    %rsi, %rdx";
           "     movq    %rdi, %rcx";
-          "     callq   cdecl(cml_exit)"])))))) T) else ((\ret.
-            SmartAppend (misc_List [(implode (APPEND
-            "\n/* Windows Compatibility for CakeML FFI interfac"
-            "e */\n\n"))]) (SmartAppend (windows_ffi_asm (REVERSE
-            ffi_names')) (misc_List (MAP (\n. implode (APPEND n "\n"))
-            (APPEND ["windows_cml_clear:"; "     movq    %rcx, %r9";
-            "     movq    %rdx, %r8"; "     movq    %rsi, %rdx";
-            "     movq    %rdi, %rcx"; "     jmp     cdecl(cml_clear)"]
-            (if ret then [] else ["windows_cml_exit:";
+          "     callq   cdecl(cml_exit)"])))))) T) else ((\ret. SmartAppend
+            (misc_List [(implode (APPEND
+            "\n/* Windows Compatibility for CakeML FFI interfac" "e */\n\n"))])
+            (SmartAppend (windows_ffi_asm (REVERSE ffi_names')) (misc_List (MAP
+            (\n. implode (APPEND n "\n")) (APPEND ["windows_cml_clear:";
             "     movq    %rcx, %r9"; "     movq    %rdx, %r8";
             "     movq    %rsi, %rdx"; "     movq    %rdi, %rcx";
-            "     callq   cdecl(cml_exit)"])))))) F)) ret)
+            "     jmp     cdecl(cml_clear)"] (if ret then []
+        else ["windows_cml_exit:"; "     movq    %rcx, %r9";
+          "     movq    %rdx, %r8"; "     movq    %rsi, %rdx";
+          "     movq    %rdi, %rcx"; "     callq   cdecl(cml_exit)"])))))) F))
+          ret)
        (if ret then
          (SmartAppend ((misc_List (MAP (\n. implode (APPEND n "\n"))
      ["cml_enter:";
       "     sub     $0x30, %rsp";
-      "     movq    %r12, -0x8(%rbp)";
-        "     movq    %r13, -0x10(%rbp)";
+      "     movq    %r12, -0x8(%rbp)"; "     movq    %r13, -0x10(%rbp)";
       "     movq    %r14, -0x18(%rbp)";
       "     movq    %r15, -0x20(%rbp)";
       "     movq    %rbx, -0x28(%rbp)";
@@ -337,8 +329,8 @@ let x64_export_def = new_definition
       "     movq    %rsi, %rdx";
       "     movq    %rdi, %rcx";
       "     jmp     cdecl(cml_err)";
-      ""]))) (export_x64_export_funcs lsyms exp)) else misc_List
-        [])))`;;
+      ""]))) (export_x64_export_funcs lsyms exp))
+       else misc_List []))`;;
 
 (*
   EVAL``append(split16 (words_line «\t.quad » word_to_string) [100w:word64;393w;392w])``

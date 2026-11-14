@@ -2,10 +2,10 @@
 
   python3 -I tools/lines.py
 
-A line of the port is at most 72 characters -- except inside a
+A line of the port is at most 79 characters -- except inside a
 comment that a HOL4 source has, which the port keeps unaltered
 (`CLAUDE.md`), whatever the length of its lines.  So the lines
-over 72 characters outside a comment are the ones to put right,
+over 79 characters outside a comment are the ones to put right,
 and the ones inside a comment are counted and are the sources'.
 """
 import sys, os, re
@@ -36,7 +36,7 @@ def main():
       text = open(p).read()
       bare = nohol4.code_free(text).split('\n')
       for i, l in enumerate(text.split('\n')):
-        if len(l) <= 72: continue
+        if len(l) <= 79: continue
         # a comment of a source inside a term or a datatype
         # specification, which the port writes as the comment of
         # HOL Light (// and to the end of the line) and keeps
@@ -49,7 +49,7 @@ def main():
             print('%s:%d: %d characters' % (rel, i + 1, len(l)))
         else:
           incomment += 1
-  print('%d lines over 72 characters outside a comment, %d inside '
+  print('%d lines over 79 characters outside a comment, %d inside '
         'one (the sources’)' % (bad, incomment))
   return bad
 

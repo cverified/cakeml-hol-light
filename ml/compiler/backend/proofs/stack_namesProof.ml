@@ -27,21 +27,19 @@ let _ = hide_overloads
   ["code_buffer","code_buffer";
    "memory","memory"];;
 
-(* HOL4 stack_namesProofScript.sml:10-11: an overload that the source
-   brings to the front: prog_comp, written out as
-   stack_names_prog_comp *)
-(* HOL4 stack_namesProofScript.sml:10-11: an overload that the source
-   brings to the front: comp, written out as stack_names_comp *)
+(* HOL4 stack_namesProofScript.sml:10-11: an overload that the source brings
+   to the front: prog_comp, written out as stack_names_prog_comp *)
+(* HOL4 stack_namesProofScript.sml:10-11: an overload that the source brings
+   to the front: comp, written out as stack_names_comp *)
 
 let rename_state_def = new_definition
-  `rename_state compile_rest f s = stackSem_state_ffi_save_regs_fupd (K
-  (IMAGE (tlookup f) (stackSem_state_ffi_save_regs s)))
-  (stackSem_state_compile_oracle_fupd (K ((I ## stack_names_compile f ##
-  I) o stackSem_state_compile_oracle s)) (stackSem_state_compile_fupd (K
-  compile_rest) (stackSem_state_code_fupd (K (fromAList
-  (stack_names_compile f (toAList (stackSem_state_code s)))))
-  (stackSem_state_regs_fupd (K (MAP_KEYS (tlookup f)
-  (stackSem_state_regs s)))
+  `rename_state compile_rest f s = stackSem_state_ffi_save_regs_fupd (K (IMAGE
+  (tlookup f) (stackSem_state_ffi_save_regs s)))
+  (stackSem_state_compile_oracle_fupd (K ((I ## stack_names_compile f ## I) o
+  stackSem_state_compile_oracle s)) (stackSem_state_compile_fupd (K
+  compile_rest) (stackSem_state_code_fupd (K (fromAList (stack_names_compile f
+  (toAList (stackSem_state_code s))))) (stackSem_state_regs_fupd (K (MAP_KEYS
+  (tlookup f) (stackSem_state_regs s)))
     s))))`;;
 
 let rename_state_with_clock = prove
@@ -51,10 +49,8 @@ let rename_state_with_clock = prove
 
 let rename_state_const = prove
  (`stackSem_state_memory
-      (rename_state c f s) = stackSem_state_memory s
-        /\ stackSem_state_be
-      (rename_state c f s) = stackSem_state_be s
-        /\ stackSem_state_mdomain
+      (rename_state c f s) = stackSem_state_memory s /\ stackSem_state_be
+      (rename_state c f s) = stackSem_state_be s /\ stackSem_state_mdomain
       (rename_state c f s) = stackSem_state_mdomain s
         /\ stackSem_state_sh_mdomain
       (rename_state c f s) = stackSem_state_sh_mdomain s
@@ -86,15 +82,15 @@ let mem_load_rename_state = prove
 add_simp mem_load_rename_state;;
 
 let mem_store_rename_state = prove
- (`stackSem_mem_store x y (rename_state c f s) = OPTION_MAP
-  (rename_state c f) (stackSem_mem_store x y s)`,
+ (`stackSem_mem_store x y (rename_state c f s) = OPTION_MAP (rename_state c
+  f) (stackSem_mem_store x y s)`,
   CHEAT_TAC);;
 add_simp mem_store_rename_state;;
 
 let get_var_find_name = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
-    stackSem_get_var (tlookup f v) (rename_state c f s) =
-      stackSem_get_var v s`,
+    stackSem_get_var (tlookup f v) (rename_state c f s) = stackSem_get_var
+      v s`,
   CHEAT_TAC);;
 add_simp get_var_find_name;;
 
@@ -107,8 +103,8 @@ add_simp get_var_imm_find_name;;
 
 let FLOOKUP_rename_state_find_name = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
-   FLOOKUP (stackSem_state_regs (rename_state c f s)) (tlookup f k)
-     = FLOOKUP (stackSem_state_regs s) k`,
+   FLOOKUP (stackSem_state_regs (rename_state c f s)) (tlookup f k) =
+     FLOOKUP (stackSem_state_regs s) k`,
   CHEAT_TAC);;
 add_simp FLOOKUP_rename_state_find_name;;
 
@@ -179,8 +175,8 @@ add_simp sh_mem_store32_rename_state;;
 let sh_mem_op_rename_store = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    sh_mem_op op (tlookup f r) a (rename_state c f s) =
-   (FST (sh_mem_op op r a s),(rename_state c f) (SND (sh_mem_op op
-     r a s)))`,
+   (FST (sh_mem_op op r a s),(rename_state c f) (SND (sh_mem_op op r a
+     s)))`,
   CHEAT_TAC);;
 add_simp sh_mem_op_rename_store;;
 
@@ -235,8 +231,7 @@ let comp_STOP_Loop = prove
 
 (* get_labels_comp[local] *)
 let stack_namesProof_get_labels_comp = prove
- (`!f p. stackSem_get_labels (stack_names_comp f p) =
-  stackSem_get_labels p`,
+ (`!f p. stackSem_get_labels (stack_names_comp f p) = stackSem_get_labels p`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -262,11 +257,11 @@ let stack_namesProof_comp_correct = prove
 let stack_namesProof_compile_semantics = prove
  (cake_as_vars (fun () ->
     `BIJ (tlookup f) UNIV UNIV /\
-      ~(stackSem_state_use_alloc s) /\ ~(stackSem_state_use_store
-        s) /\ ~(stackSem_state_use_stack s) /\ stackSem_state_compile
+      ~(stackSem_state_use_alloc s) /\ ~(stackSem_state_use_store s)
+        /\ ~(stackSem_state_use_stack s) /\ stackSem_state_compile
       s = (\cfg. c cfg o (stack_names_compile f)) ==>
-      stackSem_semantics start (rename_state c f s) =
-        stackSem_semantics start s`),
+      stackSem_semantics start (rename_state c f s) = stackSem_semantics
+        start s`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -277,23 +272,20 @@ let compile_semantics_alt = prove
     `!s t.
          BIJ (tlookup f) UNIV UNIV /\ (rename_state
            (stackSem_state_compile t) f s = t) /\ stackSem_state_compile
-         s = (\c. stackSem_state_compile t c o (stack_names_compile
-           f)) /\
-         ~(stackSem_state_use_alloc s)
-           /\ ~(stackSem_state_use_store s)
+         s = (\c. stackSem_state_compile t c o (stack_names_compile f)) /\
+         ~(stackSem_state_use_alloc s) /\ ~(stackSem_state_use_store s)
            /\ ~(stackSem_state_use_stack s) ==>
          stackSem_semantics start t = stackSem_semantics start s`),
   CHEAT_TAC);;
 
 let stack_namesProof_make_init_def = new_definition
-  `stack_namesProof_make_init f code oracle'
-  (s:('a,'c,'ffi)stackSem_state) = stackSem_state_ffi_save_regs_fupd (K
-  (IMAGE (LINV (tlookup f) UNIV) (stackSem_state_ffi_save_regs s)))
-  (stackSem_state_compile_oracle_fupd (K oracle')
-  (stackSem_state_compile_fupd (K (\cfg. stackSem_state_compile s cfg o
-  (stack_names_compile f))) (stackSem_state_regs_fupd (K (MAP_KEYS (LINV
-  (tlookup f) UNIV) (stackSem_state_regs s))) (stackSem_state_code_fupd
-  (K code)
+  `stack_namesProof_make_init f code oracle' (s:('a,'c,'ffi)stackSem_state) =
+  stackSem_state_ffi_save_regs_fupd (K (IMAGE (LINV (tlookup f) UNIV)
+  (stackSem_state_ffi_save_regs s))) (stackSem_state_compile_oracle_fupd (K
+  oracle') (stackSem_state_compile_fupd (K (\cfg. stackSem_state_compile s cfg
+  o (stack_names_compile f))) (stackSem_state_regs_fupd (K (MAP_KEYS (LINV
+  (tlookup f) UNIV) (stackSem_state_regs s))) (stackSem_state_code_fupd (K
+  code)
      s))))
    // code_buffer := <| position := 0w; buffer := []; space_left := 0 |>;
    // data_buffer := <| position := 0w; buffer := []; space_left := 0 |>;`;;
@@ -322,32 +314,32 @@ let stack_names_lab_pres = prove
 
 (* [local] *)
 let names_ok_imp = prove
- (`stack_names_names_ok f (asm_config_reg_count c)
-  (asm_config_avoid_regs c) ==>
+ (`stack_names_names_ok f (asm_config_reg_count c) (asm_config_avoid_regs c)
+  ==>
    (!n. reg_name n c ==>
    reg_ok (tlookup f n) c)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let names_ok_imp2 = prove
- (`stack_names_names_ok f (asm_config_reg_count c)
-  (asm_config_avoid_regs c) /\ ~(n = n') /\
+ (`stack_names_names_ok f (asm_config_reg_count c) (asm_config_avoid_regs c)
+  /\ ~(n = n') /\
    reg_name n c /\ reg_name n' c ==> ~(tlookup f n = tlookup f n')`,
   CHEAT_TAC);;
 
 (* [local] *)
 let stack_names_comp_stack_asm_ok = prove
  (`!f p.
-   stack_asm_name c p /\ stack_names_names_ok f (asm_config_reg_count
-     c) (asm_config_avoid_regs c) /\
+   stack_asm_name c p /\ stack_names_names_ok f (asm_config_reg_count c)
+     (asm_config_avoid_regs c) /\
    fixed_names f c ==>
    stack_asm_ok c (stack_names_comp f p)`,
   CHEAT_TAC);;
 
 let stack_names_stack_asm_ok = prove
  (`ALL (\(n,p). stack_asm_name c p) prog /\
-   stack_names_names_ok f (asm_config_reg_count c)
-     (asm_config_avoid_regs c) /\
+   stack_names_names_ok f (asm_config_reg_count c) (asm_config_avoid_regs c)
+     /\
    fixed_names f c ==>
    ALL (\(n,p). stack_asm_ok c p) (stack_names_compile f prog)`,
   CHEAT_TAC);;

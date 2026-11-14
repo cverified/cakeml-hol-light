@@ -18,5 +18,5 @@ let _ = cake_library ();;
 (* HOL4 ancestors outside the port: pair While cps relation pred_set
    finite_map option *)
 
-(* HOL4 tcallUnifScript.sml:270: the overload BAG_OF_LIST, which the
-   port expands *)
+(* HOL4 tcallUnifScript.sml:270: the overload BAG_OF_LIST, which the port
+   expands *)

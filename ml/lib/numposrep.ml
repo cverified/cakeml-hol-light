@@ -10,8 +10,7 @@
 
 (* of no theory of the port: what it registers is in the scope of every file *)
 let _ = cake_library ();;
-(* HOL4 ancestors outside the port: list rich_list logroot arithmetic
-   bit *)
+(* HOL4 ancestors outside the port: list rich_list logroot arithmetic bit *)
 
 let l2n_def,l2n_ind = define_rec
   [`l2n b [] = 0`;
@@ -21,8 +20,8 @@ let l2n_def,l2n_ind = define_rec
    what the port found for it *)
 let n2l_def,n2l_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`n2l b n = (if n < b \/ b < 2 then [n MOD b] else CONS (n MOD b)
-  (n2l b (n DIV b)))`];;
+  [`n2l b n = if n < b \/ b < 2 then [n MOD b] else CONS (n MOD b) (n2l b
+  (n DIV b))`];;
 
 let num_from_bin_list_def = new_definition
   `num_from_bin_list = l2n 2 o REVERSE`;;

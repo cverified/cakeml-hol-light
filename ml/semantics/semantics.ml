@@ -13,7 +13,6 @@ needs "lib/grammar.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
-needs "semantics/ffi/ffi.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/primTypes.ml";;
@@ -26,11 +25,11 @@ let _ = cake_theory "semantics"
 
 let semantics_parse_def = new_definition
   `semantics_parse toks =
-     (match some (\pt. valid_lptree cmlG pt /\ ptree_head pt =
-       grammar_NT ((INL:MMLnonT->MMLnonT+num) nTopLevelDecs) /\
-                   real_fringe pt = MAP (grammar_TOK ## I) toks)
-                     with NONE -> NONE | SOME p -> ptree_TopLevelDecs
-                     p)`;;
+     match some (\pt. valid_lptree cmlG pt /\ ptree_head pt = grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nTopLevelDecs) /\
+                   real_fringe pt = MAP (grammar_TOK ## I) toks) with NONE
+                     -> NONE
+      | SOME p -> ptree_TopLevelDecs p`;;
 
 let semantics_state_FIELDS = define_record "semantics_state"
   [(* Type system state *)
@@ -44,14 +43,13 @@ let can_type_prog_def = new_definition
   `can_type_prog state prog <=>
      (?new_tids new_tenv.
        DISJOINT (semantics_state_type_ids state) new_tids /\
-       type_ds T (semantics_state_tenv state) prog new_tids
-         new_tenv)`;;
+       type_ds T (semantics_state_tenv state) prog new_tids new_tenv)`;;
 
 let evaluate_prog_with_clock_def = new_definition
   `evaluate_prog_with_clock st env k prog =
-     (let (st',r) =
-       evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd
-         (K k) st) env prog in (semanticPrimitives_state_ffi st',r))`;;
+     let (st',r) =
+       evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K k)
+         st) env prog in (semanticPrimitives_state_ffi st',r)`;;
 
 let semantics_prog_def = define_cases
   [`semantics_prog st env prog (ffi_Terminate outcome io_list) <=>
@@ -61,8 +59,9 @@ let semantics_prog_def = define_cases
          ?k ffi r.
           evaluate_prog_with_clock st env k prog = (ffi,r) /\
           (match r with Rerr (Rabort (Rffi_error outcome')) ->
-             outcome = ffi_FFI_outcome (outcome') | r -> ~(r = Rerr
-                 (Rabort Rtimeout_error)) /\ outcome = ffi_Success) /\
+             outcome = ffi_FFI_outcome (outcome')
+           | r -> ~(r = Rerr (Rabort Rtimeout_error)) /\ outcome =
+               ffi_Success) /\
           (io_list = ffi_state_io_events ffi) /\
           (~(r = Rerr (Rabort Rtype_error))))`;
    `semantics_prog st env prog (ffi_Diverge io_trace) <=>
@@ -79,11 +78,11 @@ let semantics_prog_def = define_cases
                  (evaluate_prog_with_clock st env k prog))))
              UNIV)
            io_trace`;
-   `semantics_prog st env prog (ffi_Fail:behaviour) <=>
+   `semantics_prog st env prog ffi_Fail <=>
         // there is a clock for which evaluation produces a runtime type error
         (?k.
-          SND (evaluate_prog_with_clock st env k prog) = Rerr
-              (Rabort Rtype_error))`];;
+          SND (evaluate_prog_with_clock st env k prog) = Rerr (Rabort
+              Rtype_error))`];;
 
 let semantics_INDUCT,semantics_RECURSION = define_datatype
   "semantics =
@@ -93,18 +92,17 @@ let semantics_INDUCT,semantics_RECURSION = define_datatype
 
 let semantics_semantics_def = new_definition
   `semantics_semantics state prelude input =
-     (match semantics_parse (lexer_fun input) with NONE ->
-       CannotParse | SOME prog ->
-       (if can_type_prog state (APPEND prelude prog) then Execute
+     match semantics_parse (lexer_fun input) with NONE -> CannotParse
+     | SOME prog ->
+       if can_type_prog state (APPEND prelude prog) then Execute
          (semantics_prog (semantics_state_sem_st state)
-         (semantics_state_sem_env state) (APPEND prelude prog)) else
-         IllTyped))`;;
+         (semantics_state_sem_env state) (APPEND prelude prog))
+       else IllTyped`;;
 
 let semantics_init_def = new_definition
   `semantics_init ffi =
-     semantics_semantics (mk_semantics_state prim_tenv
-       prim_type_ids (FST (THE (prim_sem_env ffi))) (SND (THE
-       (prim_sem_env ffi))))`;;
+     semantics_semantics (mk_semantics_state prim_tenv prim_type_ids (FST
+       (THE (prim_sem_env ffi))) (SND (THE (prim_sem_env ffi))))`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

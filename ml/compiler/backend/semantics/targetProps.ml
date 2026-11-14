@@ -31,8 +31,8 @@ let _ = hide_overloads
   ["state_ok","bvl_to_bviProof_state_ok"];;
 
 let shift_interfer_def = new_definition
-  `shift_interfer k s = machine_config_next_interfer_fupd (K
-  (misc_shift_seq k (machine_config_next_interfer s)))
+  `shift_interfer k s = machine_config_next_interfer_fupd (K (misc_shift_seq k
+  (machine_config_next_interfer s)))
      s`;;
 
 (* [local] *)
@@ -83,34 +83,33 @@ add_simp app_post_def;;
    what the port found for it *)
 let find_next_interference_def,find_next_interference_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x2)`
-  [`find_next_interference (mc:('b,'a,'c)machine_config) (ffi:'ffi
-  ffi_state) k (ms:'a) =
-     (if k = 0 then NONE else
-       if (target_get_pc (machine_config_target mc) ms) IN
-         (machine_config_prog_addresses mc DIFF (set_of_list
-         (machine_config_ffi_entry_pcs mc))) then
-         if encoded_bytes_in_mem (target_config
-           (machine_config_target
+  [`find_next_interference (mc:('b,'a,'c)machine_config) (ffi:'ffi ffi_state) k
+  (ms:'a) =
+     if k = 0 then NONE
+     else if (target_get_pc (machine_config_target mc) ms) IN
+       (machine_config_prog_addresses mc DIFF (set_of_list
+       (machine_config_ffi_entry_pcs mc))) then
+         if encoded_bytes_in_mem (target_config (machine_config_target
              mc)) (target_get_pc (machine_config_target mc) ms)
              (target_get_byte (machine_config_target mc) ms)
                (machine_config_prog_addresses mc) then
            let ms1 = target_next (machine_config_target mc) ms in
            let (ms2,new_oracle) = apply_oracle
              (machine_config_next_interfer mc) ms1 in
-           let mc = machine_config_next_interfer_fupd (K new_oracle)
-             mc in
-             if ALL (target_state_ok (machine_config_target mc))
-               [ms; ms1; ms2] /\
+           let mc = machine_config_next_interfer_fupd (K new_oracle) mc in
+             if ALL (target_state_ok (machine_config_target mc)) [ms; ms1;
+               ms2] /\
                 (!x. ~(x IN machine_config_prog_addresses mc) ==>
                   target_get_byte (machine_config_target
-                    mc) ms1 x = target_get_byte
-                      (machine_config_target
+                    mc) ms1 x = target_get_byte (machine_config_target
                     mc) ms x) then
-               find_next_interference mc ffi (k - 1) ms2 else NONE
-                 else NONE else if target_get_pc (machine_config_target
-                 mc) ms = machine_config_halt_pc mc then NONE else if
-                 target_get_pc (machine_config_target mc) ms =
-                 machine_config_ccache_pc mc then
+               find_next_interference mc ffi (k - 1) ms2
+             else NONE
+         else NONE
+       else if target_get_pc (machine_config_target mc) ms =
+         machine_config_halt_pc mc then NONE
+       else if target_get_pc (machine_config_target mc) ms =
+         machine_config_ccache_pc mc then
          let (ms1,new_oracle) =
            apply_oracle (machine_config_ccache_interfer mc)
              (target_get_reg (machine_config_target mc) ms
@@ -124,97 +123,96 @@ let find_next_interference_def,find_next_interference_ind = define_wf
                          (machine_config_len_reg mc)) ms
                          ms1,machine_config_ccache_interfer_fupd (K
                          new_oracle)
-                 mc,ffi) else
-         match find_index (target_get_pc (machine_config_target mc)
-           ms) (machine_config_ffi_entry_pcs mc) 0 with NONE -> NONE |
-           SOME ffi_index ->
+                 mc,ffi)
+       else match find_index (target_get_pc (machine_config_target mc) ms)
+         (machine_config_ffi_entry_pcs mc) 0 with NONE -> NONE
+         | SOME ffi_index ->
              (match EL ffi_index (machine_config_ffi_names mc) with
                ffi_SharedMem op ->
-                  (match ALOOKUP (machine_config_mmio_info mc)
-                    ffi_index with NONE -> NONE | SOME (nb,a,reg,pc')
-                    ->
+                  (match ALOOKUP (machine_config_mmio_info mc) ffi_index
+                    with NONE -> NONE
+                   | SOME (nb,a,reg,pc') ->
                        (match op with MappedRead ->
                               (match a with Addr r off ->
-                              (let ad = target_get_reg
-                                (machine_config_target mc) ms r + off
-                                in
+                              let ad = target_get_reg
+                                (machine_config_target mc) ms r + off in
                               (if (if nb = (n2w 0) then (w2n ad MOD
                                 (dimindex (:'b) DIV 8)) = 0 else T) /\
-                              (ad IN machine_config_shared_addresses
-                                mc) /\
+                              (ad IN machine_config_shared_addresses mc) /\
                               is_valid_mapped_read (target_get_pc
-                                (machine_config_target mc) ms) nb a reg
-                                pc' (machine_config_target
-                              mc) ms (machine_config_prog_addresses
-                                mc) then
+                                (machine_config_target mc) ms) nb a reg pc'
+                                (machine_config_target
+                              mc) ms (machine_config_prog_addresses mc)
+                                then
                               (match call_FFI ffi (EL ffi_index
                                 (machine_config_ffi_names mc)) [nb]
-                              (word_to_bytes ad F) with FFI_final
-                                outcome -> NONE | FFI_return new_ffi
-                                new_bytes ->
-                              (let (ms1,new_oracle) = apply_oracle
+                              (word_to_bytes ad F) with FFI_final outcome
+                                -> NONE
+                              | FFI_return new_ffi new_bytes ->
+                              let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
                               SOME (FfiApp ffi_index new_bytes ms
                                 ms1,machine_config_ffi_interfer_fupd (K
                                 new_oracle)
                               mc,
-                              new_ffi))) else NONE))) | MappedWrite
-                                ->
+                              new_ffi))
+                              else NONE))
+                          | MappedWrite ->
                               (match a with Addr r off ->
-                              (let ad = (target_get_reg
-                                (machine_config_target mc) ms r) + off
-                                in
+                              let ad = (target_get_reg
+                                (machine_config_target mc) ms r) + off in
                               (if (if nb = (n2w 0) then (w2n ad MOD
                                 (dimindex (:'b) DIV 8)) = 0 else T) /\
-                              (ad IN machine_config_shared_addresses
-                                mc) /\
+                              (ad IN machine_config_shared_addresses mc) /\
                               is_valid_mapped_write (target_get_pc
-                                (machine_config_target mc) ms) nb a reg
-                                pc' (machine_config_target
-                              mc) ms (machine_config_prog_addresses
-                                mc) then
+                                (machine_config_target mc) ms) nb a reg pc'
+                                (machine_config_target
+                              mc) ms (machine_config_prog_addresses mc)
+                                then
                               (match call_FFI ffi (EL ffi_index
                                 (machine_config_ffi_names mc)) [nb]
                               (
                               APPEND (let w = target_get_reg
                                 (machine_config_target mc) ms reg in
                               if nb = (n2w 0) then word_to_bytes w F
-                                else word_to_bytes_aux (w2n nb) w F)
-                                (word_to_bytes ad F)) with FFI_final
-                                outcome -> NONE | FFI_return new_ffi
-                                new_bytes ->
-                              (let (ms1,new_oracle) = apply_oracle
+                              else word_to_bytes_aux (w2n nb) w F)
+                                (word_to_bytes ad F)) with FFI_final outcome
+                                -> NONE
+                              | FFI_return new_ffi new_bytes ->
+                              let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
                               SOME (FfiApp ffi_index new_bytes ms
                                 ms1,machine_config_ffi_interfer_fupd (K
                                 new_oracle)
                               mc,
-                              new_ffi))) else NONE))))) |
-                                ffi_ExtCall _1 ->
-                  (match ALOOKUP (machine_config_mmio_info mc)
-                    ffi_index with SOME _2 -> NONE | NONE ->
+                              new_ffi))
+                              else NONE))))
+              | ffi_ExtCall _ ->
+                  (match ALOOKUP (machine_config_mmio_info mc) ffi_index
+                    with SOME _ -> NONE
+                   | NONE ->
                        (match read_ffi_bytearrays mc ms with (SOME
                          bytes,SOME bytes2) ->
                             (match call_FFI ffi (EL ffi_index
-                              (machine_config_ffi_names mc)) bytes
-                              bytes2 with FFI_final outcome -> NONE |
-                              FFI_return new_ffi new_bytes ->
-                              (let (ms1,new_oracle) = apply_oracle
+                              (machine_config_ffi_names mc)) bytes bytes2 with
+                              FFI_final outcome -> NONE
+                             | FFI_return new_ffi new_bytes ->
+                              let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
                               SOME (FfiApp ffi_index new_bytes ms
                                 ms1,machine_config_ffi_interfer_fupd (K
                                 new_oracle)
                               mc,
-                              new_ffi))) | _3 -> NONE))))`];;
+                              new_ffi))
+                        | _ -> NONE)))`];;
 
 (* the limit of find_next_interference over all clocks *)
 let next_interference_def = new_definition
   `next_interference mc ffi ms =
-     some (\res. ?k. find_next_interference mc ffi k ms = SOME
-       res)`;;
+     some (\res. ?k. find_next_interference mc ffi k ms = SOME res)`;;
 
 (* the sequence of interference applications of a run *)
 (* the termination relation is not in the HOL4 source; this one is
@@ -223,9 +221,9 @@ let interference_app_seq_def,interference_app_seq_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`interference_app_seq mc ffi ms 0 = next_interference mc ffi ms`;
    `interference_app_seq mc ffi ms (SUC n) =
-         (match next_interference mc ffi ms with NONE -> NONE |
-             SOME (app,mc',ffi') -> interference_app_seq mc' ffi'
-             (app_post app) n)`];;
+         match next_interference mc ffi ms with NONE -> NONE
+         | SOME (app,mc',ffi') -> interference_app_seq mc' ffi'
+             (app_post app) n`];;
 
 (* number of applications satisfying P among the first n applications *)
 (* the termination relation is not in the HOL4 source; this one is
@@ -235,9 +233,9 @@ let interference_count_def,interference_count_ind = define_wf
   [`interference_count P mc ffi ms 0 = 0`;
    `interference_count P mc ffi ms (SUC n) =
          interference_count P mc ffi ms n +
-         (match interference_app_seq mc ffi ms n with SOME
-             (app,mc',ffi') -> (if P app then 1 else 0) | NONE ->
-             0)`];;
+         (match interference_app_seq mc ffi ms n with SOME (app,mc',ffi')
+             -> if P app then 1 else 0
+         | NONE -> 0)`];;
 
 (* position in the application sequence of the k-th application
    satisfying P *)
@@ -245,8 +243,7 @@ let interference_pos_def = new_definition
   `interference_pos P mc ffi ms k =
      some (\n. interference_count P mc ffi ms n = k /\
              (?app mc' ffi'.
-               interference_app_seq mc ffi ms n = SOME (app,mc',ffi')
-                 /\
+               interference_app_seq mc ffi ms n = SOME (app,mc',ffi') /\
                P app))`;;
 
 (* the lab-level oracle sequences, constructed from the machine run:
@@ -255,50 +252,56 @@ let interference_pos_def = new_definition
    registers are marked NONE, i.e. preserved *)
 let target_io_regs_def = new_definition
   `target_io_regs mc ffi ms k (name:ffiname) r =
-     (match interference_pos is_ffi_app mc ffi ms k with NONE -> NONE
-       | SOME n ->
-       (match interference_app_seq mc ffi ms n with SOME (FfiApp
-         index new_bytes ms_pre ms_post,mc',ffi') ->
+     match interference_pos is_ffi_app mc ffi ms k with NONE -> NONE
+     | SOME n ->
+       (match interference_app_seq mc ffi ms n with SOME (FfiApp index
+         new_bytes ms_pre ms_post,mc',ffi') ->
             (if MEM r (machine_config_callee_saved_regs mc) \/
                 ~(r < asm_config_reg_count (target_config
                   (machine_config_target mc))) \/
                 MEM r (asm_config_avoid_regs (target_config
-                  (machine_config_target mc))) then NONE else SOME
-                  (target_get_reg (machine_config_target mc) ms_post
-                  r)) | _4 -> NONE))`;;
+                  (machine_config_target mc))) then NONE
+             else SOME (target_get_reg (machine_config_target mc) ms_post
+               r))
+        | _ -> NONE)`;;
 
 let target_io_fp_regs_def = new_definition
   `target_io_fp_regs mc ffi ms k (i:num) =
-     (match interference_pos is_ffi_app mc ffi ms k with NONE ->
-       ((n2w 0):word64) | SOME n ->
-       (match interference_app_seq mc ffi ms n with SOME (FfiApp
-         index new_bytes ms_pre ms_post,mc',ffi') -> target_get_fp_reg
+     match interference_pos is_ffi_app mc ffi ms k with NONE -> ((n2w
+       0):word64)
+     | SOME n ->
+       (match interference_app_seq mc ffi ms n with SOME (FfiApp index
+         new_bytes ms_pre ms_post,mc',ffi') -> target_get_fp_reg
          (machine_config_target
-            mc) ms_post i | _5 -> (n2w 0)))`;;
+            mc) ms_post i
+        | _ -> (n2w 0))`;;
 
 let target_cc_regs_def = new_definition
   `target_cc_regs mc ffi ms k r =
-     (match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k
-       with NONE -> NONE | SOME n ->
-       (match interference_app_seq mc ffi ms n with SOME (CcApp a1 a2
-         ms_pre ms_post,mc',ffi') ->
+     match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k with NONE
+       -> NONE
+     | SOME n ->
+       (match interference_app_seq mc ffi ms n with SOME (CcApp a1 a2 ms_pre
+         ms_post,mc',ffi') ->
             (if MEM r (machine_config_callee_saved_regs mc) \/ r =
               machine_config_ptr_reg mc \/
                 ~(r < asm_config_reg_count (target_config
                   (machine_config_target mc))) \/
                 MEM r (asm_config_avoid_regs (target_config
-                  (machine_config_target mc))) then NONE else SOME
-                  (target_get_reg (machine_config_target mc) ms_post
-                  r)) | _6 -> NONE))`;;
+                  (machine_config_target mc))) then NONE
+             else SOME (target_get_reg (machine_config_target mc) ms_post
+               r))
+        | _ -> NONE)`;;
 
 let target_cc_fp_regs_def = new_definition
   `target_cc_fp_regs mc ffi ms k (i:num) =
-     (match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k
-       with NONE -> ((n2w 0):word64) | SOME n ->
-       (match interference_app_seq mc ffi ms n with SOME (CcApp a1 a2
-         ms_pre ms_post,mc',ffi') -> target_get_fp_reg
-         (machine_config_target
-            mc) ms_post i | _7 -> (n2w 0)))`;;
+     match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k with NONE
+       -> ((n2w 0):word64)
+     | SOME n ->
+       (match interference_app_seq mc ffi ms n with SOME (CcApp a1 a2 ms_pre
+         ms_post,mc',ffi') -> target_get_fp_reg (machine_config_target
+            mc) ms_post i
+        | _ -> (n2w 0))`;;
 
 let find_next_interference_mono = prove
  (`!k mc ffi ms res i.
@@ -327,19 +330,15 @@ let find_next_interference_const = prove
  (`!k mc ffi ms app mc' ffi'.
      find_next_interference mc ffi k ms = SOME (app,mc',ffi') ==>
        machine_config_target
-     mc' = machine_config_target mc
-       /\ machine_config_callee_saved_regs
-     mc' = machine_config_callee_saved_regs mc
-       /\ machine_config_ptr_reg
+     mc' = machine_config_target mc /\ machine_config_callee_saved_regs
+     mc' = machine_config_callee_saved_regs mc /\ machine_config_ptr_reg
      mc' = machine_config_ptr_reg mc`,
   CHEAT_TAC);;
 
 let next_interference_const = prove
- (`next_interference mc ffi ms = SOME (app,mc',ffi') ==>
-  machine_config_target
+ (`next_interference mc ffi ms = SOME (app,mc',ffi') ==> machine_config_target
    mc' = machine_config_target mc /\ machine_config_callee_saved_regs
-   mc' = machine_config_callee_saved_regs mc
-     /\ machine_config_ptr_reg
+   mc' = machine_config_callee_saved_regs mc /\ machine_config_ptr_reg
    mc' = machine_config_ptr_reg mc`,
   CHEAT_TAC);;
 
@@ -361,19 +360,15 @@ let interference_count_mono = prove
   CHEAT_TAC);;
 
 let interference_count_lt = prove
- (`interference_app_seq mc ffi ms n = SOME (app,mc',ffi') /\ P app /\ n
-  < n2 ==>
-   interference_count P mc ffi ms n < interference_count P mc ffi
-     ms n2`,
+ (`interference_app_seq mc ffi ms n = SOME (app,mc',ffi') /\ P app /\ n < n2
+  ==>
+   interference_count P mc ffi ms n < interference_count P mc ffi ms n2`,
   CHEAT_TAC);;
 
 let interference_pos_unique = prove
- (`interference_app_seq mc ffi ms n1 = SOME (app1,mc1',ffi1') /\ P app1
-  /\
-   interference_app_seq mc ffi ms n2 = SOME (app2,mc2',ffi2') /\ P
-     app2 /\
-   interference_count P mc ffi ms n1 = interference_count P mc ffi ms
-     n2 ==>
+ (`interference_app_seq mc ffi ms n1 = SOME (app1,mc1',ffi1') /\ P app1 /\
+   interference_app_seq mc ffi ms n2 = SOME (app2,mc2',ffi2') /\ P app2 /\
+   interference_count P mc ffi ms n1 = interference_count P mc ffi ms n2 ==>
    n1 = n2`,
   CHEAT_TAC);;
 
@@ -406,21 +401,20 @@ let constructed_oracles_ffi_step = prove
      SOME (FfiApp index new_bytes ms_pre ms_post,mc',ffi') ==>
    target_io_regs mc ffi ms 0 name r =
      (if MEM r (machine_config_callee_saved_regs mc) \/
-         ~(r < asm_config_reg_count (target_config
-           (machine_config_target mc))) \/
-         MEM r (asm_config_avoid_regs (target_config
-           (machine_config_target mc))) then NONE else SOME
-           (target_get_reg (machine_config_target mc) ms_post r)) /\
+         ~(r < asm_config_reg_count (target_config (machine_config_target
+           mc))) \/
+         MEM r (asm_config_avoid_regs (target_config (machine_config_target
+           mc))) then NONE else SOME (target_get_reg (machine_config_target mc)
+           ms_post r)) /\
    target_io_fp_regs mc ffi ms 0 i = target_get_fp_reg
      (machine_config_target mc) ms_post i /\
    target_io_regs mc ffi ms (SUC k) name r =
      target_io_regs mc' ffi' ms_post k name r /\
    target_io_fp_regs mc ffi ms (SUC k) i =
      target_io_fp_regs mc' ffi' ms_post k i /\
-   target_cc_regs mc ffi ms k r = target_cc_regs mc' ffi' ms_post k r
-     /\
-   target_cc_fp_regs mc ffi ms k i = target_cc_fp_regs mc' ffi'
-     ms_post k i`,
+   target_cc_regs mc ffi ms k r = target_cc_regs mc' ffi' ms_post k r /\
+   target_cc_fp_regs mc ffi ms k i = target_cc_fp_regs mc' ffi' ms_post k
+     i`,
   CHEAT_TAC);;
 
 let constructed_oracles_cc_step = prove
@@ -429,21 +423,21 @@ let constructed_oracles_cc_step = prove
    target_cc_regs mc ffi ms 0 r =
      (if MEM r (machine_config_callee_saved_regs mc) \/ r =
        machine_config_ptr_reg mc \/
-         ~(r < asm_config_reg_count (target_config
-           (machine_config_target mc))) \/
-         MEM r (asm_config_avoid_regs (target_config
-           (machine_config_target mc))) then NONE else SOME
-           (target_get_reg (machine_config_target mc) ms_post r)) /\
+         ~(r < asm_config_reg_count (target_config (machine_config_target
+           mc))) \/
+         MEM r (asm_config_avoid_regs (target_config (machine_config_target
+           mc))) then NONE else SOME (target_get_reg (machine_config_target mc)
+           ms_post r)) /\
    target_cc_fp_regs mc ffi ms 0 i = target_get_fp_reg
      (machine_config_target mc) ms_post i /\
-   target_cc_regs mc ffi ms (SUC k) r = target_cc_regs mc' ffi'
-     ms_post k r /\
+   target_cc_regs mc ffi ms (SUC k) r = target_cc_regs mc' ffi' ms_post k r
+     /\
    target_cc_fp_regs mc ffi ms (SUC k) i =
      target_cc_fp_regs mc' ffi' ms_post k i /\
    target_io_regs mc ffi ms k name r =
      target_io_regs mc' ffi' ms_post k name r /\
-   target_io_fp_regs mc ffi ms k i = target_io_fp_regs mc' ffi'
-     ms_post k i`,
+   target_io_fp_regs mc ffi ms k i = target_io_fp_regs mc' ffi' ms_post k
+     i`,
   CHEAT_TAC);;
 
 let interference_count_EQ = prove
@@ -455,10 +449,8 @@ let interference_count_EQ = prove
 let constructed_oracles_EQ = prove
  (`next_interference mc1 ffi1 ms1 = next_interference mc2 ffi2 ms2
   /\ machine_config_target
-   mc1 = machine_config_target mc2
-     /\ machine_config_callee_saved_regs
-   mc1 = machine_config_callee_saved_regs mc2
-     /\ machine_config_ptr_reg
+   mc1 = machine_config_target mc2 /\ machine_config_callee_saved_regs
+   mc1 = machine_config_callee_saved_regs mc2 /\ machine_config_ptr_reg
    mc1 = machine_config_ptr_reg mc2 ==>
    target_io_regs mc1 ffi1 ms1 = target_io_regs mc2 ffi2 ms2 /\
    target_io_fp_regs mc1 ffi1 ms1 = target_io_fp_regs mc2 ffi2 ms2 /\
@@ -467,13 +459,13 @@ let constructed_oracles_EQ = prove
   CHEAT_TAC);;
 
 let target_io_regs_callee_saved = prove
- (`MEM r (machine_config_callee_saved_regs mc) ==> target_io_regs mc
-  ffi ms k name r = NONE`,
+ (`MEM r (machine_config_callee_saved_regs mc) ==> target_io_regs mc ffi ms k
+  name r = NONE`,
   CHEAT_TAC);;
 
 let target_cc_regs_callee_saved = prove
- (`MEM r (machine_config_callee_saved_regs mc) ==> target_cc_regs mc
-  ffi ms k r = NONE`,
+ (`MEM r (machine_config_callee_saved_regs mc) ==> target_cc_regs mc ffi ms k
+  r = NONE`,
   CHEAT_TAC);;
 
 let next_interference_ExtCall = prove
@@ -489,11 +481,11 @@ let next_interference_ExtCall = prove
      EL index (machine_config_ffi_names mc) = ffi_ExtCall name /\
      ALOOKUP (machine_config_mmio_info mc) index = NONE /\
      read_ffi_bytearrays mc ms = (SOME bytes,SOME bytes2) /\
-     call_FFI ffi (ffi_ExtCall name) bytes bytes2 = FFI_return
-       new_ffi new_bytes ==>
+     call_FFI ffi (ffi_ExtCall name) bytes bytes2 = FFI_return new_ffi
+       new_bytes ==>
      next_interference mc ffi ms =
-       SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer
-         mc 0 (index,new_bytes,ms)),machine_config_ffi_interfer_fupd (K
+       SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer mc 0
+         (index,new_bytes,ms)),machine_config_ffi_interfer_fupd (K
          (misc_shift_seq 1 (machine_config_ffi_interfer mc)))
              mc,
              new_ffi)`,
@@ -518,8 +510,8 @@ let next_interference_ccache = prove
                         (machine_config_target
                        mc) ms (machine_config_len_reg
                          mc),ms)),machine_config_ccache_interfer_fupd (K
-                         (misc_shift_seq 1
-                         (machine_config_ccache_interfer mc)))
+                         (misc_shift_seq 1 (machine_config_ccache_interfer
+                         mc)))
              mc,
              ffi)`,
   CHEAT_TAC);;
@@ -534,25 +526,23 @@ let next_interference_MappedRead = prove
      mc) ms = machine_config_ccache_pc mc) /\
      find_index (target_get_pc (machine_config_target mc) ms)
        (machine_config_ffi_entry_pcs mc) 0 = SOME index /\
-     EL index (machine_config_ffi_names mc) = ffi_SharedMem
-       MappedRead /\
+     EL index (machine_config_ffi_names mc) = ffi_SharedMem MappedRead /\
      ALOOKUP (machine_config_mmio_info mc) index = SOME (nb,Addr r
        off,reg,pc') /\
      (nb = (n2w 0) ==>
       w2n (target_get_reg (machine_config_target mc) ms r + off) MOD
-        (dimindex (:'b) DIV 8) = 0) /\ target_get_reg
-        (machine_config_target
+        (dimindex (:'b) DIV 8) = 0) /\ target_get_reg (machine_config_target
      mc) ms r + off IN machine_config_shared_addresses mc /\
-     is_valid_mapped_read (target_get_pc (machine_config_target mc)
-       ms) nb (Addr r off) reg pc' (machine_config_target
+     is_valid_mapped_read (target_get_pc (machine_config_target mc) ms) nb
+       (Addr r off) reg pc' (machine_config_target
        mc) ms (machine_config_prog_addresses mc) /\
      call_FFI ffi (EL index (machine_config_ffi_names mc)) [nb]
-       (word_to_bytes (target_get_reg (machine_config_target mc) ms r
-         + off) F) =
+       (word_to_bytes (target_get_reg (machine_config_target mc) ms r + off)
+         F) =
        FFI_return new_ffi new_bytes ==>
      next_interference (mc:('b,'a,'c)machine_config) ffi ms =
-       SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer
-         mc 0 (index,new_bytes,ms)),machine_config_ffi_interfer_fupd (K
+       SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer mc 0
+         (index,new_bytes,ms)),machine_config_ffi_interfer_fupd (K
          (misc_shift_seq 1 (machine_config_ffi_interfer mc)))
              mc,
              new_ffi)`,
@@ -568,29 +558,26 @@ let next_interference_MappedWrite = prove
      mc) ms = machine_config_ccache_pc mc) /\
      find_index (target_get_pc (machine_config_target mc) ms)
        (machine_config_ffi_entry_pcs mc) 0 = SOME index /\
-     EL index (machine_config_ffi_names mc) = ffi_SharedMem
-       MappedWrite /\
+     EL index (machine_config_ffi_names mc) = ffi_SharedMem MappedWrite /\
      ALOOKUP (machine_config_mmio_info mc) index = SOME (nb,Addr r
        off,reg,pc') /\
      (nb = (n2w 0) ==>
       w2n (target_get_reg (machine_config_target mc) ms r + off) MOD
-        (dimindex (:'b) DIV 8) = 0) /\ target_get_reg
-        (machine_config_target
+        (dimindex (:'b) DIV 8) = 0) /\ target_get_reg (machine_config_target
      mc) ms r + off IN machine_config_shared_addresses mc /\
-     is_valid_mapped_write (target_get_pc (machine_config_target mc)
-       ms) nb (Addr r off) reg pc' (machine_config_target
+     is_valid_mapped_write (target_get_pc (machine_config_target mc) ms) nb
+       (Addr r off) reg pc' (machine_config_target
        mc) ms (machine_config_prog_addresses mc) /\
      call_FFI ffi (EL index (machine_config_ffi_names mc)) [nb]
-       (APPEND (let w = target_get_reg (machine_config_target mc) ms
-         reg in
-           if nb = (n2w 0) then word_to_bytes w F else
-             word_to_bytes_aux (w2n nb) w F)
-        (word_to_bytes (target_get_reg (machine_config_target mc) ms
-          r + off) F)) =
+       (APPEND (let w = target_get_reg (machine_config_target mc) ms reg in
+           if nb = (n2w 0) then word_to_bytes w F
+           else word_to_bytes_aux (w2n nb) w F)
+        (word_to_bytes (target_get_reg (machine_config_target mc) ms r +
+          off) F)) =
        FFI_return new_ffi new_bytes ==>
      next_interference (mc:('b,'a,'c)machine_config) ffi ms =
-       SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer
-         mc 0 (index,new_bytes,ms)),machine_config_ffi_interfer_fupd (K
+       SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer mc 0
+         (index,new_bytes,ms)),machine_config_ffi_interfer_fupd (K
          (misc_shift_seq 1 (machine_config_ffi_interfer mc)))
              mc,
              new_ffi)`,
@@ -611,32 +598,31 @@ let next_interference_SharedMem = prove
        off,reg,pc') /\
      (nb = (n2w 0) ==>
       w2n (target_get_reg (machine_config_target mc) ms r + off) MOD
-        (dimindex (:'b) DIV 8) = 0) /\ target_get_reg
-        (machine_config_target
+        (dimindex (:'b) DIV 8) = 0) /\ target_get_reg (machine_config_target
      mc) ms r + off IN machine_config_shared_addresses mc /\
      (op = MappedRead ==>
-        is_valid_mapped_read (target_get_pc (machine_config_target
-          mc) ms) nb (Addr r off) reg pc' (machine_config_target
+        is_valid_mapped_read (target_get_pc (machine_config_target mc) ms)
+          nb (Addr r off) reg pc' (machine_config_target
           mc) ms (machine_config_prog_addresses mc) /\
         call_FFI ffi (EL index (machine_config_ffi_names mc)) [nb]
-          (word_to_bytes (target_get_reg (machine_config_target mc)
-            ms r + off) F) =
+          (word_to_bytes (target_get_reg (machine_config_target mc) ms r +
+            off) F) =
           FFI_return new_ffi new_bytes) /\
      (op = MappedWrite ==>
-        is_valid_mapped_write (target_get_pc (machine_config_target
-          mc) ms) nb (Addr r off) reg pc' (machine_config_target
+        is_valid_mapped_write (target_get_pc (machine_config_target mc) ms)
+          nb (Addr r off) reg pc' (machine_config_target
           mc) ms (machine_config_prog_addresses mc) /\
         call_FFI ffi (EL index (machine_config_ffi_names mc)) [nb]
-          (APPEND (let w = target_get_reg (machine_config_target mc)
-            ms reg in
-              if nb = (n2w 0) then word_to_bytes w F else
-                word_to_bytes_aux (w2n nb) w F)
-           (word_to_bytes (target_get_reg (machine_config_target mc)
-             ms r + off) F)) =
+          (APPEND (let w = target_get_reg (machine_config_target mc) ms reg
+            in
+              if nb = (n2w 0) then word_to_bytes w F
+              else word_to_bytes_aux (w2n nb) w F)
+           (word_to_bytes (target_get_reg (machine_config_target mc) ms r +
+             off) F)) =
           FFI_return new_ffi new_bytes) ==>
      next_interference (mc:('b,'a,'c)machine_config) ffi ms =
-       SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer
-         mc 0 (index,new_bytes,ms)),machine_config_ffi_interfer_fupd (K
+       SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer mc 0
+         (index,new_bytes,ms)),machine_config_ffi_interfer_fupd (K
          (misc_shift_seq 1 (machine_config_ffi_interfer mc)))
              mc,
              new_ffi)`,
@@ -655,35 +641,30 @@ let evaluate_EQ_evaluate_lemma = prove
          target_state_ok (machine_config_target c) ms) /\
        (!ms1 ms2. (target_proj (machine_config_target c) dm ms1 =
          target_proj (machine_config_target c) dm ms2) ==>
-            (target_state_ok (machine_config_target c) ms1 =
-              target_state_ok (machine_config_target c) ms2) /\
-            (target_get_pc (machine_config_target c) ms1 =
-              target_get_pc (machine_config_target c) ms2) /\
-            (!a. a IN dm ==> target_get_byte (machine_config_target
-              c) ms1 a = target_get_byte (machine_config_target c) ms2
-              a)) /\
+            (target_state_ok (machine_config_target c) ms1 = target_state_ok
+              (machine_config_target c) ms2) /\
+            (target_get_pc (machine_config_target c) ms1 = target_get_pc
+              (machine_config_target c) ms2) /\
+            (!a. a IN dm ==> target_get_byte (machine_config_target c) ms1 a
+              = target_get_byte (machine_config_target c) ms2 a)) /\
        (!env.
-          interference_ok env (target_proj (machine_config_target c)
-            dm) ==>
-          asserts n (\k s. env k (target_next (machine_config_target
-            c) s)) ms1
+          interference_ok env (target_proj (machine_config_target c) dm) ==>
+          asserts n (\k s. env k (target_next (machine_config_target c) s))
+            ms1
             (\ms'. target_state_ok (machine_config_target c) ms' /\
                    (!pc'. pc' IN all_pcs (LENGTH (asm_config_encode
-                     (target_config (machine_config_target c)) i))
-                     init_pc 0 ==> target_get_byte
-                     (machine_config_target
-                    c) ms' pc' = target_get_byte
-                      (machine_config_target c) ms1 pc')
-                      /\ target_get_pc (machine_config_target
+                     (target_config (machine_config_target c)) i)) init_pc 0
+                     ==> target_get_byte (machine_config_target
+                    c) ms' pc' = target_get_byte (machine_config_target c)
+                      ms1 pc') /\ target_get_pc (machine_config_target
                    c) ms' IN
-                     all_pcs (LENGTH (asm_config_encode
-                       (target_config (machine_config_target c)) i))
-                       init_pc (asm_config_code_alignment (target_config
+                     all_pcs (LENGTH (asm_config_encode (target_config
+                       (machine_config_target c)) i)) init_pc
+                       (asm_config_code_alignment (target_config
                        (machine_config_target c))))
-            (\ms'. target_state_rel (machine_config_target c) s2
-              ms')) /\
-       (asserts2 (n + 1) (\k. machine_config_next_interfer c ((n + 1)
-         - k)) (target_next (machine_config_target c)) ms1
+            (\ms'. target_state_rel (machine_config_target c) s2 ms')) /\
+       (asserts2 (n + 1) (\k. machine_config_next_interfer c ((n + 1) - k))
+         (target_next (machine_config_target c)) ms1
          (\ms1 ms2. !x. ~(x IN dm) ==> target_get_byte
            (machine_config_target c) ms1 x = target_get_byte
            (machine_config_target c) ms2 x)) /\
@@ -700,11 +681,9 @@ let evaluate_EQ_evaluate_lemma = prove
              (machine_config_ffi_entry_pcs c))) ==>
        (?ms2.
          !k. (targetSem_evaluate c io (k + (n + 1)) ms1 =
-              targetSem_evaluate (shift_interfer (n + 1) c) io k ms2)
-                /\
+              targetSem_evaluate (shift_interfer (n + 1) c) io k ms2) /\
              (find_next_interference c io (k + (n + 1)) ms1 =
-              find_next_interference (shift_interfer (n + 1) c) io k
-                ms2) /\
+              find_next_interference (shift_interfer (n + 1) c) io k ms2) /\
              target_state_rel (machine_config_target c) s2 ms2)`,
   CHEAT_TAC);;
 
@@ -717,26 +696,23 @@ let asm_step_IMP_evaluate_step_find_next = prove
  (`!c s1 ms1 io i.
        encoder_correct (machine_config_target c) /\
        (machine_config_prog_addresses c = asm_state_mem_domain s1) /\
-       ffi_entry_pcs_disjoint c s1 (LENGTH (asm_config_encode
-         (target_config (machine_config_target c)) i)) /\
+       ffi_entry_pcs_disjoint c s1 (LENGTH (asm_config_encode (target_config
+         (machine_config_target c)) i)) /\
        interference_ok (machine_config_next_interfer c) (target_proj
          (machine_config_target c) (asm_state_mem_domain s1)) /\
        asm_step (target_config (machine_config_target c)) s1 i
-         (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH
-           (asm_config_encode (target_config (machine_config_target c))
-           i))) s1) /\
+         (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH (asm_config_encode
+           (target_config (machine_config_target c)) i))) s1) /\
        target_state_rel (machine_config_target c) (s1:'a asm_state)
          (ms1:'state) ==>
        (?l ms2. !k. (targetSem_evaluate c io (k + l) ms1 =
-                    targetSem_evaluate (shift_interfer l c) io k ms2)
-                      /\
+                    targetSem_evaluate (shift_interfer l c) io k ms2) /\
                    (find_next_interference c io (k + l) ms1 =
-                    find_next_interference (shift_interfer l c) io k
-                      ms2) /\
+                    find_next_interference (shift_interfer l c) io k ms2) /\
                    target_state_rel (machine_config_target c)
                      (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH
-                       (asm_config_encode (target_config
-                       (machine_config_target c)) i))) s1)
+                       (asm_config_encode (target_config (machine_config_target
+                       c)) i))) s1)
                      ms2 /\ ~(l = 0))`,
   CHEAT_TAC);;
 
@@ -744,23 +720,22 @@ let asm_step_IMP_evaluate_step = prove
  (`!c s1 ms1 io i.
        encoder_correct (machine_config_target c) /\
        (machine_config_prog_addresses c = asm_state_mem_domain s1) /\
-       ffi_entry_pcs_disjoint c s1 (LENGTH (asm_config_encode
-         (target_config (machine_config_target c)) i)) /\
+       ffi_entry_pcs_disjoint c s1 (LENGTH (asm_config_encode (target_config
+         (machine_config_target c)) i)) /\
        interference_ok (machine_config_next_interfer c) (target_proj
          (machine_config_target c) (asm_state_mem_domain s1)) /\
        asm_step (target_config (machine_config_target c)) s1 i
-         (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH
-           (asm_config_encode (target_config (machine_config_target c))
-           i))) s1) /\
+         (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH (asm_config_encode
+           (target_config (machine_config_target c)) i))) s1) /\
        target_state_rel (machine_config_target c) (s1:'a asm_state)
          (ms1:'state) ==>
        (?l ms2.
          (!k. targetSem_evaluate c io (k + l) ms1 =
               targetSem_evaluate (shift_interfer l c) io k ms2) /\
          target_state_rel (machine_config_target c)
-           (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH
-             (asm_config_encode (target_config (machine_config_target
-             c)) i))) s1) ms2 /\ ~(l = 0))`,
+           (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH (asm_config_encode
+             (target_config (machine_config_target c)) i))) s1) ms2 /\ ~(l =
+             0))`,
   CHEAT_TAC);;
 
 (* basic properties *)
@@ -776,16 +751,15 @@ let targetProps_evaluate_add_clock = prove
 (* evaluate_io_events_mono *)
 let targetProps_evaluate_io_events_mono = prove
  (`!mc_conf ffi k ms. ffi_state_io_events
-     ffi <<= ffi_state_io_events (SND (SND (targetSem_evaluate
-       mc_conf ffi k ms)))`,
+     ffi <<= ffi_state_io_events (SND (SND (targetSem_evaluate mc_conf ffi
+       k ms)))`,
   CHEAT_TAC);;
 
 (* evaluate_add_clock_io_events_mono *)
 let targetProps_evaluate_add_clock_io_events_mono = prove
  (`!mc_conf ffi k ms k'.
    k <= k' ==> ffi_state_io_events
-   (SND (SND (targetSem_evaluate mc_conf ffi k ms))) <<=
-     ffi_state_io_events
+   (SND (SND (targetSem_evaluate mc_conf ffi k ms))) <<= ffi_state_io_events
    (SND (SND (targetSem_evaluate mc_conf ffi k' ms)))`,
   CHEAT_TAC);;
 
@@ -799,8 +773,8 @@ let machine_sem_unique = prove
 
 let read_ffi_bytearray_IMP_SUBSET_prog_addresses = prove
  (`(read_ffi_bytearray mc a l ms = SOME bytes) ==>
-    all_words (target_get_reg (machine_config_target mc) ms a)
-      (LENGTH bytes) SUBSET machine_config_prog_addresses
+    all_words (target_get_reg (machine_config_target mc) ms a) (LENGTH
+      bytes) SUBSET machine_config_prog_addresses
       mc`,
   CHEAT_TAC);;
 
@@ -811,18 +785,16 @@ let encoder_correct_asm_step_target_state_rel = prove
    (?n.
    target_state_rel t s2 (ITER n (target_next t) ms) /\
    (!j. j < n ==>
-     (!pc'. pc' IN all_pcs (LENGTH (asm_config_encode (target_config
-       t) i)) (asm_state_pc s1) 0 ==>
+     (!pc'. pc' IN all_pcs (LENGTH (asm_config_encode (target_config t) i))
+       (asm_state_pc s1) 0 ==>
              (target_get_byte t (ITER j (target_next t) ms) pc' =
                target_get_byte t ms pc')) /\
      (target_get_pc t (ITER j (target_next t) ms) IN
        all_pcs (LENGTH (asm_config_encode (target_config t) i))
-         (asm_state_pc s1) (asm_config_code_alignment (target_config
-         t))) /\
+         (asm_state_pc s1) (asm_config_code_alignment (target_config t))) /\
      (target_state_ok t (ITER j (target_next t) ms))) /\
-   (!j x. j <= n /\ ~(x IN asm_state_mem_domain s1) ==>
-     (target_get_byte t (ITER j (target_next t) ms) x =
-     target_get_byte t ms x)))`,
+   (!j x. j <= n /\ ~(x IN asm_state_mem_domain s1) ==> (target_get_byte t
+     (ITER j (target_next t) ms) x = target_get_byte t ms x)))`,
   CHEAT_TAC);;
 
 let encoder_correct_RTC_asm_step_target_state_rel = prove
@@ -840,28 +812,24 @@ let ffi_interfer_ok_post_ffi_asm = prove
  (cake_as_vars (fun () ->
     `ffi_interfer_ok pc mc_conf /\
      index < LENGTH (machine_config_ffi_names mc_conf) /\
-     mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i
-       /\
+     mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i /\
      index < i /\ machine_config_prog_addresses
      mc_conf = asm_state_mem_domain t1 /\
      read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME bytes2) /\
      LENGTH new_bytes = LENGTH bytes2 /\
-     (EL index (machine_config_ffi_names mc_conf) = ffi_ExtCall
-       (implode "") ==> new_bytes = bytes2) /\
+     (EL index (machine_config_ffi_names mc_conf) = ffi_ExtCall (implode
+       "") ==> new_bytes = bytes2) /\
      target_state_rel (machine_config_target mc_conf)
-       (asm_state_pc_fupd (K (--(n2w ((3 + index) * ffi_offset)) +
-         pc)) t1) ms2 /\
+       (asm_state_pc_fupd (K (--(n2w ((3 + index) * ffi_offset)) + pc))
+         t1) ms2 /\
      alignment_aligned (asm_config_code_alignment (target_config
        (machine_config_target mc_conf)))
        (asm_state_regs t1 (match asm_config_link_reg (target_config
-         (machine_config_target mc_conf)) with NONE -> 0 | SOME n -> n))
-         ==>
+         (machine_config_target mc_conf)) with NONE -> 0 | SOME n -> n)) ==>
      target_state_rel (machine_config_target mc_conf)
        (post_ffi_asm mc_conf t1 new_bytes
-          (machine_config_ffi_interfer mc_conf k
-            (index,new_bytes,ms2)))
-       (machine_config_ffi_interfer mc_conf k
-         (index,new_bytes,ms2))`),
+          (machine_config_ffi_interfer mc_conf k (index,new_bytes,ms2)))
+       (machine_config_ffi_interfer mc_conf k (index,new_bytes,ms2))`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -870,16 +838,14 @@ let ccache_interfer_ok_post_ccache_asm = prove
  (cake_as_vars (fun () ->
     `ccache_interfer_ok pc mc_conf /\
      target_state_rel (machine_config_target mc_conf)
-       (asm_state_pc_fupd (K (--(n2w (2 * ffi_offset)) + pc)) t1)
-         ms2 /\
+       (asm_state_pc_fupd (K (--(n2w (2 * ffi_offset)) + pc)) t1) ms2 /\
      alignment_aligned (asm_config_code_alignment (target_config
        (machine_config_target mc_conf)))
        (asm_state_regs t1 (match asm_config_link_reg (target_config
-         (machine_config_target mc_conf)) with NONE -> 0 | SOME n -> n))
-         ==>
+         (machine_config_target mc_conf)) with NONE -> 0 | SOME n -> n)) ==>
      target_state_rel (machine_config_target mc_conf)
-       (post_ccache_asm mc_conf t1 (machine_config_ccache_interfer
-         mc_conf k (a1,a2,ms2)))
+       (post_ccache_asm mc_conf t1 (machine_config_ccache_interfer mc_conf
+         k (a1,a2,ms2)))
        (machine_config_ccache_interfer mc_conf k (a1,a2,ms2))`),
   CHEAT_TAC);;
 

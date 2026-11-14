@@ -140,12 +140,12 @@ def main():
                   hol4.parse(path), rev.get(db.mlpath_of(thy), []))
     if len(new) > 8:
       print('%s: a preface of %d lines' % (base(p), len(new)))
-    long += sum(1 for l in new if len(l) > 72)
+    long += sum(1 for l in new if len(l) > 79)
     out = '\n'.join(new + lines[end + 1:])
     if out != '\n'.join(lines):
       open(p, 'w').write(out)
       n += 1
-  print('%d prefaces written, %d lines over 72 characters' % (n, long))
+  print('%d prefaces written, %d lines over 79 characters' % (n, long))
 
 
 if __name__ == '__main__':

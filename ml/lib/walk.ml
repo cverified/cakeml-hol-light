@@ -11,8 +11,8 @@ needs "lib/term.ml";;
 
 (* of no theory of the port: what it registers is in the scope of every file *)
 let _ = cake_library ();;
-(* HOL4 ancestors outside the port: finite_map relation alist
-   arithmetic pred_set rich_list list *)
+(* HOL4 ancestors outside the port: finite_map relation alist arithmetic
+   pred_set rich_list list *)
 
 let VWALKR_RULES,VWALKR_INDUCT,VWALKR_CASES =
   new_inductive_definition
@@ -26,4 +26,4 @@ let vwalk_def = new_definition
   `vwalk s v = @r. VWALKR s v r`;;
 
 let walk_def = new_definition
-  `walk s t = (match t with term_Var v -> vwalk s v | t -> t)`;;
+  `walk s t = match t with term_Var v -> vwalk s v | t -> t`;;

@@ -62,16 +62,16 @@ let sec_INDUCT,sec_RECURSION = define_datatype
      Section num (('a line) list)";;
 
 let section_num_def = define_general
-  [`Section_num (Section k _1) = k`];;
+  [`Section_num (Section k _) = k`];;
 add_simp section_num_def;;
 let section_lines_def = define_general
-  [`Section_lines (Section _2 lines) = lines`];;
+  [`Section_lines (Section _ lines) = lines`];;
 add_simp section_lines_def;;
 
 (* A full assembly program consists of a list of sections. *)
 
-(* HOL4 labLangScript.sml:61: the type abbreviation prog, which the
-   port expands *)
+(* HOL4 labLangScript.sml:61: the type abbreviation prog, which the port
+   expands *)
 
 (* and the interface *)
 let _ = unhide_overloads ();;

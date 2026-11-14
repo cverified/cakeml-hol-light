@@ -26,21 +26,20 @@ let bvi_mk_tick_def = new_definition
 
 (* First-order form for cv_compute, which has no [FUNPOW]. *)
 let bvi_mk_tick_eq = prove
- (`bvi_mk_tick n e = (if n = 0 then e else bvi_Tick (bvi_mk_tick (n -
-  1) e))`,
+ (`bvi_mk_tick n e = if n = 0 then e else bvi_Tick (bvi_mk_tick (n - 1) e)`,
   CHEAT_TAC);;
 
 (* [Op] reverses its argument list, so a wrapper that boxes the worker's
    [rets] results in order lists them reversed under the [Cons]. *)
 let canonical_wrapper_def = new_definition
   `canonical_wrapper name arity x3 =
-        match x3 with
-          bvi_LetCall rets ticks worker args
-           (bvi_Op (closLang_BlockOp (closLang_Cons tag)) rvs) ->
-             ~(worker = name) /\
+     match x3 with
+       bvi_LetCall rets ticks worker args
+           (bvi_Op (closLang_BlockOp (closLang_Cons tag)) rvs) -> ~(worker =
+             name) /\
         args = list_of_seq bvi_Var arity /\
         rvs = REVERSE (list_of_seq bvi_Var rets)
-        | _1 -> F`;;
+     | _ -> F`;;
 
 let wrapper_ok_def = new_definition
   `wrapper_ok name arity body <=> canonical_wrapper name arity body`;;
@@ -53,51 +52,50 @@ let inline_exp_def,inline_exp_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`inline_exp cs (bvi_Var n) = bvi_Var n`;
    `inline_exp cs (bvi_If x y z) =
-         bvi_If (inline_exp cs x) (inline_exp cs y) (inline_exp
-             cs z)`;
+         bvi_If (inline_exp cs x) (inline_exp cs y) (inline_exp cs z)`;
    `inline_exp cs (bvi_Let xs y) =
          bvi_Let (inline_exps cs xs) (inline_exp cs y)`;
    `inline_exp cs (bvi_Raise x) = bvi_Raise (inline_exp cs x)`;
    `inline_exp cs (bvi_Tick x) = bvi_Tick (inline_exp cs x)`;
    `inline_exp cs (bvi_Call ticks dest xs handler) =
-         (let xs = inline_exps cs xs in
+         let xs = inline_exps cs xs in
            match handler with SOME h -> bvi_Call ticks dest xs (SOME
-               (inline_exp cs h)) | NONE ->
+               (inline_exp cs h))
+           | NONE ->
                (match dest with NONE -> bvi_Call ticks NONE xs NONE
-                   | SOME name ->
-                   (match sptree_lookup name cs with NONE ->
-                       bvi_Call ticks (SOME name) xs NONE | SOME
-                       (arity,body) ->
-                       (if LENGTH xs = arity then
-                         bvi_Let xs (bvi_mk_tick (SUC ticks)
-                             body) else bvi_Call ticks (SOME name) xs
-                             NONE))))`;
+               | SOME name ->
+                   (match sptree_lookup name cs with NONE -> bvi_Call ticks
+                       (SOME name) xs NONE
+                   | SOME (arity,body) ->
+                       if LENGTH xs = arity then
+                         bvi_Let xs (bvi_mk_tick (SUC ticks) body)
+                       else bvi_Call ticks (SOME name) xs NONE))`;
    `inline_exp cs (bvi_Force loc n) = bvi_Force loc n`;
    `inline_exp cs (bvi_Op op xs) = bvi_Op op (inline_exps cs xs)`;
    `inline_exp cs (bvi_LetCall rets ticks dest xs y) =
-         bvi_LetCall rets ticks dest (inline_exps cs xs)
-             (inline_exp cs y)`;
+         bvi_LetCall rets ticks dest (inline_exps cs xs) (inline_exp cs
+             y)`;
    `inline_exp cs (bvi_Return xs) = bvi_Return (inline_exps cs xs)`;
    `inline_exps cs [] = []`;
-   `inline_exps cs (CONS x xs) = CONS (inline_exp cs x)
-    (inline_exps cs xs)`];;
+   `inline_exps cs (CONS x xs) = CONS (inline_exp cs x) (inline_exps cs
+    xs)`];;
 
 let inline_all_def,inline_all_ind = define_rec
   [`inline_all cs [] = (cs,[])`;
    `inline_all cs (CONS (name,arity,body) prog) =
-         (let body = inline_exp cs body in
+         let body = inline_exp cs body in
          let cs1 = (if wrapper_ok name arity body then
-                     sptree_insert name (arity,body) cs else cs) in
+                     sptree_insert name (arity,body) cs
+                   else cs) in
          let (cs2,prog2) = inline_all cs1 prog in
-           (cs2,CONS (name,arity,body) prog2))`];;
+           (cs2,CONS (name,arity,body) prog2)`];;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (\x. match x with INL e -> bvi_exp_size e | INR es ->
-       list_size bvi_exp_size es)
+     MEASURE (\x. match x with INL e -> bvi_exp_size e | INR es -> list_size
+       bvi_exp_size es)
    which is not one that HOL Light takes here; the one
    below is what the port found for it *)
-(* HOL4 bvi_inlineScript.sml:115-120: the tactic that proves the
-   termination *)
+(* HOL4 bvi_inlineScript.sml:115-120: the tactic that proves the termination *)
 let remove_ticks_exp_def,remove_ticks_exp_ind = define_shaped_wf
   "maplist>measure"
   `MEASURE (\x0. bvi_exp_size x0)`
@@ -113,8 +111,7 @@ let remove_ticks_exp_def,remove_ticks_exp_ind = define_shaped_wf
          bvi_Call 0 dest (remove_ticks_exps xs)
            (OPTION_MAP remove_ticks_exp handler)`;
    `remove_ticks_exp (bvi_Force loc n) = bvi_Force loc n`;
-   `remove_ticks_exp (bvi_Op op xs) = bvi_Op op (remove_ticks_exps
-    xs)`;
+   `remove_ticks_exp (bvi_Op op xs) = bvi_Op op (remove_ticks_exps xs)`;
    `remove_ticks_exp (bvi_LetCall rets ticks dest xs y) =
          bvi_LetCall rets 0 dest (remove_ticks_exps xs)
            (remove_ticks_exp y)`;
@@ -126,9 +123,9 @@ let remove_ticks_exp_def,remove_ticks_exp_ind = define_shaped_wf
 
 let compile_inc_def = new_definition
   `bvi_inline_compile_inc cs prog =
-     (let (cs1,prog1) = inline_all cs prog in
+     let (cs1,prog1) = inline_all cs prog in
        (cs1,MAP (\(name,arity,body).
-                   (name,arity,remove_ticks_exp body)) prog1))`;;
+                   (name,arity,remove_ticks_exp body)) prog1)`;;
 
 let bvi_inline_compile_prog_def = new_definition
   `bvi_inline_compile_prog prog = bvi_inline_compile_inc LN prog`;;
@@ -136,64 +133,62 @@ let bvi_inline_compile_prog_def = new_definition
 let canonical_four_result_wrapper = prove
  (`wrapper_ok 10 3
      (bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-       (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (REVERSE
-         (list_of_seq bvi_Var 4))))`,
+       (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (REVERSE (list_of_seq
+         bvi_Var 4))))`,
   (REWRITE_TAC[wrapper_ok_def; canonical_wrapper_def] THEN
    CONV_TAC NUM_REDUCE_CONV));;
 
 let malformed_wrappers_rejected = prove
  (`~(wrapper_ok 10 3
        (bvi_LetCall 4 0 10 (list_of_seq bvi_Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
-           bvi_Var 4)))) /\
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq bvi_Var
+           4)))) /\
    ~(wrapper_ok 10 3
        (bvi_LetCall 4 0 11 [bvi_Var 0; bvi_Var 2; bvi_Var 1]
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
-           bvi_Var 4)))) /\
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq bvi_Var
+           4)))) /\
    ~(wrapper_ok 10 3
        (bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) [bvi_Var 0;
-           bvi_Var 1; bvi_Var 2]))) /\
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) [bvi_Var 0; bvi_Var 1;
+           bvi_Var 2]))) /\
    ~(wrapper_ok 10 3 (bvi_Return (list_of_seq bvi_Var 3)))`,
   CHEAT_TAC);;
 
 let inline_boundary_examples = prove
  (`inline_exp (sptree_insert 10 (3,
        bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
-           bvi_Var 4))) LN) (bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5;
-           bvi_Var 6] NONE:bvi_exp) =
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq bvi_Var
+           4))) LN) (bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5; bvi_Var 6]
+           NONE) =
        bvi_Let [bvi_Var 4; bvi_Var 5; bvi_Var 6]
          (bvi_mk_tick 3
            (bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-             (bvi_Op (closLang_BlockOp (closLang_Cons 7))
-               (list_of_seq bvi_Var 4)))) /\
+             (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
+               bvi_Var 4)))) /\
    inline_exp (sptree_insert 10 (3,
        bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
-           bvi_Var 4))) LN)
-     (bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5; bvi_Var 6] (SOME
-       (bvi_Var 0))) =
-       bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5; bvi_Var 6] (SOME
-         (bvi_Var 0)) /\
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq bvi_Var
+           4))) LN)
+     (bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5; bvi_Var 6] (SOME (bvi_Var
+       0))) =
+       bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5; bvi_Var 6] (SOME (bvi_Var
+         0)) /\
    inline_exp (sptree_insert 10 (3,
        bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
-           bvi_Var 4))) LN)
-     (bvi_LetCall 1 2 10 [bvi_Var 4; bvi_Var 5; bvi_Var 6]
-       (bvi_Return [bvi_Var 0])) =
-       bvi_LetCall 1 2 10 [bvi_Var 4; bvi_Var 5; bvi_Var 6]
-         (bvi_Return [bvi_Var 0])`,
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq bvi_Var
+           4))) LN)
+     (bvi_LetCall 1 2 10 [bvi_Var 4; bvi_Var 5; bvi_Var 6] (bvi_Return
+       [bvi_Var 0])) =
+       bvi_LetCall 1 2 10 [bvi_Var 4; bvi_Var 5; bvi_Var 6] (bvi_Return
+         [bvi_Var 0])`,
   CHEAT_TAC);;
 
 let final_tick_cleanup_example = prove
- (`remove_ticks_exp (bvi_Tick (bvi_Call 2 (SOME 10) [bvi_Tick (bvi_Var
-  0)]
-       (SOME (bvi_LetCall 1 3 11 [bvi_Tick (bvi_Var 1)] (bvi_Return
-         [bvi_Var 0])))):bvi_exp) =
+ (`remove_ticks_exp (bvi_Tick (bvi_Call 2 (SOME 10) [bvi_Tick (bvi_Var 0)]
+       (SOME (bvi_LetCall 1 3 11 [bvi_Tick (bvi_Var 1)] (bvi_Return [bvi_Var
+         0]))))) =
      bvi_Call 0 (SOME 10) [bvi_Var 0]
-       (SOME (bvi_LetCall 1 0 11 [bvi_Var 1] (bvi_Return [bvi_Var
-         0])))`,
+       (SOME (bvi_LetCall 1 0 11 [bvi_Var 1] (bvi_Return [bvi_Var 0])))`,
   (REWRITE_TAC[remove_ticks_exp_def; OPTION_MAP]));;
 
 (* and the interface *)

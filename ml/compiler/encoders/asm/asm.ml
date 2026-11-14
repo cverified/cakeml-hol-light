@@ -2,7 +2,7 @@
 (*  asm: ported from HOL4's
     compiler/encoders/asm/asmScript.sml
     A definition theory, with 11 definitions, 11 datatypes and no
-    theorems.  Needed by 55 files of the port.  *)
+    theorems.  Needed by 54 files of the port.  *)
 (* ======================================================== *)
 
 (* -------------------------------------------------------------------------
@@ -81,8 +81,7 @@ let _ = cake_theory "asm"
 
 new_type_abbrev("asm_reg",`:num`);;
 new_type_abbrev("fp_reg",`:num`);;
-(* HOL4 asmScript.sml:72: the type abbreviation imm, which the port
-   expands *)
+(* HOL4 asmScript.sml:72: the type abbreviation imm, which the port expands *)
 
 let asm_reg_imm_INDUCT,asm_reg_imm_RECURSION = define_datatype
   "asm_reg_imm =
@@ -219,8 +218,8 @@ let reg_imm_ok_def = define_cases
    `reg_imm_ok b (Imm w) c =
          ((
            // Always permit Xor by -1 in order to provide 1's complement
-           b = INL asm_Xor) /\ (w = --(n2w 1)) \/
-               asm_config_valid_imm c b w)`];;
+           b = INL asm_Xor) /\ (w = --(n2w 1)) \/ asm_config_valid_imm
+               c b w)`];;
 
 
 (* Requires register inequality for some architectures *)
@@ -234,8 +233,9 @@ let arith_ok_def = define_cases
    `arith_ok (asm_Shift l r1 r2 ri) (c:'a asm_config) <=>
          (asm_config_two_reg_arith c ==> (r1 = r2)) /\
          reg_ok r1 c /\ reg_ok r2 c /\
-         (match ri with Imm i -> (((i = (n2w 0)) ==> (l = Lsl))
-             /\ w2n i < dimindex (:'a)) | Reg r ->
+         (match ri with Imm i -> (((i = (n2w 0)) ==> (l = Lsl)) /\ w2n i <
+             dimindex (:'a))
+          | Reg r ->
             reg_ok r c /\
             (asm_config_ISA c = x86_64 ==> r = 1))`;
    `arith_ok (asm_Div r1 r2 r3) (c:'a asm_config) <=>
@@ -243,30 +243,30 @@ let arith_ok_def = define_cases
          c IN {ARMv8,MIPS,RISC_V}`;
    `arith_ok (asm_LongMul r1 r2 r3 r4) (c:'a asm_config) <=>
          reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
-         ((asm_config_ISA c = x86_64) ==> (r1 = 2) /\ (r2 = 0)
-             /\ (r3 = 0)) /\
+         ((asm_config_ISA c = x86_64) ==> (r1 = 2) /\ (r2 = 0) /\ (r3 = 0))
+             /\
          ((asm_config_ISA c = ARMv7) ==> ~(r1 = r2)) /\
-         (asm_config_ISA c IN {ARMv8,RISC_V,Ag32} ==> ~(r1 = r3)
-             /\ ~(r1 = r4))`;
+         (asm_config_ISA c IN {ARMv8,RISC_V,Ag32} ==> ~(r1 = r3) /\ ~(r1
+             = r4))`;
    `arith_ok (asm_LongDiv r1 r2 r3 r4 r5) (c:'a asm_config) <=>
-         (asm_config_ISA c = x86_64) /\ (r1 = 0) /\ (r2 = 2) /\ (r3
-             = 2) /\ (r4 = 0) /\
+         (asm_config_ISA c = x86_64) /\ (r1 = 0) /\ (r2 = 2) /\ (r3 = 2)
+             /\ (r4 = 0) /\
          reg_ok r5 c`;
    `arith_ok (asm_AddCarry r1 r2 r3 r4) (c:'a asm_config) <=>
          (asm_config_two_reg_arith c ==> (r1 = r2)) /\
          reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
-         (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c =
-             RISC_V)) ==> ~(r1 = r3) /\ ~(r1 = r4))`;
+         (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V)) ==>
+             ~(r1 = r3) /\ ~(r1 = r4))`;
    `arith_ok (asm_AddOverflow r1 r2 r3 r4) (c:'a asm_config) <=>
          (asm_config_two_reg_arith c ==> (r1 = r2)) /\
          reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
-         (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c =
-             RISC_V)) ==> ~(r1 = r3))`;
+         (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V)) ==>
+             ~(r1 = r3))`;
    `arith_ok (asm_SubOverflow r1 r2 r3 r4) (c:'a asm_config) <=>
          (asm_config_two_reg_arith c ==> (r1 = r2)) /\
          reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
-         (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c =
-             RISC_V)) ==> ~(r1 = r3))`];;
+         (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V))
+             ==> ~(r1 = r3))`];;
 
 let fp_ok_def = define_cases
   [`fp_ok (FPLess r d1 d2) (c:'a asm_config) <=>
@@ -276,13 +276,13 @@ let fp_ok_def = define_cases
    `fp_ok (FPEqual r d1 d2) (c:'a asm_config) <=>
           reg_ok r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
    `fp_ok (FPAbs d1 d2) (c:'a asm_config) <=>
-          (asm_config_two_reg_arith c ==> (~(d1 = d2)))
-              /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+          (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
+              c /\ fp_reg_ok d2 c`;
    `fp_ok (FPNeg d1 d2) (c:'a asm_config) <=>
-          (asm_config_two_reg_arith c ==> (~(d1 = d2)))
-              /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_ok (FPSqrt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
-    /\ fp_reg_ok d2 c`;
+          (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
+              c /\ fp_reg_ok d2 c`;
+   `fp_ok (FPSqrt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\ fp_reg_ok
+    d2 c`;
    `fp_ok (FPAdd d1 d2 d3) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
@@ -299,69 +299,66 @@ let fp_ok_def = define_cases
           (asm_config_ISA c = ARMv7) /\
           2 < asm_config_fp_reg_count c /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_ok (FPMov d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
-    /\ fp_reg_ok d2 c`;
+   `fp_ok (FPMov d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\ fp_reg_ok d2
+    c`;
    `fp_ok (FPMovToReg r1 r2 d) (c:'a asm_config) <=>
-          reg_ok r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2)
-              /\ reg_ok r2 c) /\
+          reg_ok r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\ reg_ok r2
+              c) /\
           fp_reg_ok d c`;
    `fp_ok (FPMovFromReg d r1 r2) (c:'a asm_config) <=>
-          reg_ok r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2)
-              /\ reg_ok r2 c) /\
+          reg_ok r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\ reg_ok r2
+              c) /\
           fp_reg_ok d c`;
-   `fp_ok (FPToInt r d) (c:'a asm_config) <=> fp_reg_ok r c
-    /\ fp_reg_ok d c`;
-   `fp_ok (FPFromInt d r) (c:'a asm_config) <=> fp_reg_ok r c
-    /\ fp_reg_ok d c`];;
+   `fp_ok (FPToInt r d) (c:'a asm_config) <=> fp_reg_ok r c /\ fp_reg_ok d c`;
+   `fp_ok (FPFromInt d r) (c:'a asm_config) <=> fp_reg_ok r c /\ fp_reg_ok
+    d c`];;
 
 let cmp_ok_def = new_definition
-  `cmp_ok (cmp:cmp) r ri c <=> reg_ok r c /\ reg_imm_ok (INR cmp) ri
-  c`;;
+  `cmp_ok (cmp:cmp) r ri c <=> reg_ok r c /\ reg_imm_ok (INR cmp) ri c`;;
 
 let offset_ok_def = new_definition
   `asm_offset_ok a offset w =
-   (let (min',max') = offset in min' <= w /\ w <= max'
-     /\ alignment_aligned a w)`;;
+   let (min',max') = offset in min' <= w /\ w <= max'
+     /\ alignment_aligned a w`;;
 
-(* HOL4 asmScript.sml:279: the overload addr_offset_ok, which the
-   port expands *)
-(* HOL4 asmScript.sml:280: the overload hw_offset_ok, which the port
+(* HOL4 asmScript.sml:279: the overload addr_offset_ok, which the port
    expands *)
-(* HOL4 asmScript.sml:281: the overload byte_offset_ok, which the
-   port expands *)
-(* HOL4 asmScript.sml:282: the overload jump_offset_ok, which the
-   port expands *)
-(* HOL4 asmScript.sml:283: the overload cjump_offset_ok, which the
-   port expands *)
+(* HOL4 asmScript.sml:280: the overload hw_offset_ok, which the port expands *)
+(* HOL4 asmScript.sml:281: the overload byte_offset_ok, which the port
+   expands *)
+(* HOL4 asmScript.sml:282: the overload jump_offset_ok, which the port
+   expands *)
+(* HOL4 asmScript.sml:283: the overload cjump_offset_ok, which the port
+   expands *)
 (* HOL4 asmScript.sml:284: the overload loc_offset_ok, which the port
    expands *)
 
 let inst_ok_def = new_definition
   `inst_ok x1 c =
-        match x1 with
-          asm_Skip -> T
-        | (asm_Const r w) -> reg_ok r c
-        | (asm_Arith x) -> arith_ok x c
-        | (asm_FP x) -> fp_ok x c
-        | (asm_Mem m r1 (Addr r2 w):'a asm_inst) ->
+     match x1 with
+       asm_Skip -> T
+     | asm_Const r w -> reg_ok r c
+     | asm_Arith x -> arith_ok x c
+     | asm_FP x -> fp_ok x c
+     | (asm_Mem m r1 (Addr r2 w):'a asm_inst) ->
         reg_ok r1 c /\ reg_ok r2 c /\
         (if m IN {asm_Load,asm_Store,asm_Load32,asm_Store32} then
-           (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w else
-             if m IN {asm_Load16,asm_Store16} then
+           (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
+         else if m IN {asm_Load16,asm_Store16} then
            (\c. asm_offset_ok 0 (asm_config_hw_offset c)) c w
-             /\ ~(asm_config_ISA c = Ag32) else
-           (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w)`;;
+             /\ ~(asm_config_ISA c = Ag32)
+         else (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w)`;;
 
 let asm_ok_def = define_cases
   [`asm_ok (asm_Inst i) c <=> inst_ok i c`;
-   `asm_ok (asm_Jump w) c <=> (\c. asm_offset_ok
-    (asm_config_code_alignment c) (asm_config_jump_offset c)) c w`;
+   `asm_ok (asm_Jump w) c <=> (\c. asm_offset_ok (asm_config_code_alignment
+    c) (asm_config_jump_offset c)) c w`;
    `asm_ok (asm_JumpCmp cmp r ri w) c <=>
          (\c. asm_offset_ok (asm_config_code_alignment c)
              (asm_config_cjump_offset c)) c w /\ cmp_ok cmp r ri c`;
    `asm_ok (asm_Call w) c <=>
-         (match asm_config_link_reg c with SOME r -> reg_ok r c |
-             NONE -> F) /\
+         (match asm_config_link_reg c with SOME r -> reg_ok r c | NONE ->
+             F) /\
          (\c. asm_offset_ok (asm_config_code_alignment c)
              (asm_config_jump_offset c)) c w`;
    `asm_ok (asm_JumpReg r) c <=> reg_ok r c`;
@@ -369,7 +366,7 @@ let asm_ok_def = define_cases
     (asm_config_code_alignment c) (asm_config_loc_offset c)) c w`];;
 
 let word_cmp_def = define_cases
-  [`(asm_word_cmp (asm_Equal:cmp) w1 w2 = (w1 = w2)) /\
+  [`(asm_word_cmp asm_Equal w1 w2 = (w1 = w2)) /\
    (asm_word_cmp asm_Less w1 w2 = (w1 < w2)) /\
    (asm_word_cmp asm_Lower w1 w2 = (w1 <+ w2)) /\
    (asm_word_cmp asm_Test w1 w2 = ((w1 && w2) = (n2w 0))) /\
@@ -380,12 +377,12 @@ let word_cmp_def = define_cases
 
 let is_load_def = new_definition
   `is_load x1 =
-        match x1 with
-          (asm_Load:memop) -> T
-        | asm_Load8 -> T
-        | asm_Load16 -> T
-        | asm_Load32 -> T
-        | _1 -> F`;;
+     match x1 with
+       asm_Load -> T
+     | asm_Load8 -> T
+     | asm_Load16 -> T
+     | asm_Load32 -> T
+     | _ -> F`;;
 add_simp is_load_def;;
 
 (* and the interface *)

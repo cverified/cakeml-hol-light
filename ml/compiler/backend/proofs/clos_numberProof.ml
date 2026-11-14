@@ -24,24 +24,23 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "clos_numberProof"
   ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_number"];;
 
-(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source
-   brings to the front: lookup, written out as sptree_lookup *)
-(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source
-   brings to the front: insert, written out as sptree_insert *)
-(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source
-   brings to the front: delete, written out as sptree_delete *)
-(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source
-   brings to the front: map, written out as sptree_map *)
-(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source
-   brings to the front: wf, written out as sptree_wf *)
+(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source brings
+   to the front: lookup, written out as sptree_lookup *)
+(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source brings
+   to the front: insert, written out as sptree_insert *)
+(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source brings
+   to the front: delete, written out as sptree_delete *)
+(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source brings
+   to the front: map, written out as sptree_map *)
+(* HOL4 clos_numberProofScript.sml:12-16: an overload that the source brings
+   to the front: wf, written out as sptree_wf *)
 
 (* properties of renumber_code_locs *)
 
 (* HOL4 clos_numberProofScript.sml:20-36: a proof *)
 
 let renumber_code_locs_list_IMP_LENGTH = prove
- (`renumber_code_locs_list loc es = (l1,es2) ==> LENGTH es2 = LENGTH
-  es`,
+ (`renumber_code_locs_list loc es = (l1,es2) ==> LENGTH es2 = LENGTH es`,
   CHEAT_TAC);;
 
 let renumber_code_locs_inc = prove
@@ -55,23 +54,19 @@ let renumber_code_locs_imp_inc = prove
   CHEAT_TAC);;
 
 let renumber_code_locs_list_length = prove
- (`!ls n x y. renumber_code_locs_list n ls = (x,y) ==> LENGTH y =
-  LENGTH ls`,
+ (`!ls n x y. renumber_code_locs_list n ls = (x,y) ==> LENGTH y = LENGTH ls`,
   CHEAT_TAC);;
 
 (* [local] *)
 let renumber_code_locs_distinct_lemma = prove
- (`(!n es. SORTED (<) (code_locs (SND (renumber_code_locs_list n es)))
-  /\
-            ALL ((<=) n) (code_locs (SND (renumber_code_locs_list n
-              es))) /\
-            ALL ((>) (FST (renumber_code_locs_list n es))) (code_locs
-              (SND (renumber_code_locs_list n es)))) /\
+ (`(!n es. SORTED (<) (code_locs (SND (renumber_code_locs_list n es))) /\
+            ALL ((<=) n) (code_locs (SND (renumber_code_locs_list n es))) /\
+            ALL ((>) (FST (renumber_code_locs_list n es))) (code_locs (SND
+              (renumber_code_locs_list n es)))) /\
     (!n e. SORTED (<) (code_locs [SND (renumber_code_locs n e)]) /\
-            ALL ((<=) n) (code_locs [SND (renumber_code_locs n e)])
-              /\
-            ALL ((>) (FST (renumber_code_locs n e))) (code_locs
-              [SND (renumber_code_locs n e)]))`,
+            ALL ((<=) n) (code_locs [SND (renumber_code_locs n e)]) /\
+            ALL ((>) (FST (renumber_code_locs n e))) (code_locs [SND
+              (renumber_code_locs n e)]))`,
   CHEAT_TAC);;
 
 let renumber_code_locs_distinct = prove
@@ -99,47 +94,44 @@ let renumber_code_locs_list_els = prove
 (* value relation *)
 
 let clos_numberProof_v_rel = cake_inductive
-  `(clos_numberProof_v_rel max_app (closSem_Number j) (closSem_Number
-  j)) /\
-   (clos_numberProof_v_rel max_app (closSem_Word64 w) (closSem_Word64
-     w)) /\
-   (ALL2 (clos_numberProof_v_rel max_app) (xs:closSem_v list)
-     (ys:closSem_v list) ==>
-    clos_numberProof_v_rel max_app (closSem_Block t xs)
-      (closSem_Block t ys)) /\
+  `(clos_numberProof_v_rel max_app (closSem_Number j) (closSem_Number j)) /\
+   (clos_numberProof_v_rel max_app (closSem_Word64 w) (closSem_Word64 w)) /\
+   (ALL2 (clos_numberProof_v_rel max_app) (xs:closSem_v list) (ys:closSem_v
+     list) ==>
+    clos_numberProof_v_rel max_app (closSem_Block t xs) (closSem_Block t
+      ys)) /\
    (clos_numberProof_v_rel max_app (closSem_ByteVector ws)
      (closSem_ByteVector ws)) /\
-   (clos_numberProof_v_rel max_app (closSem_RefPtr b r1)
-     (closSem_RefPtr b r1)) /\
+   (clos_numberProof_v_rel max_app (closSem_RefPtr b r1) (closSem_RefPtr b
+     r1)) /\
    (ALL2 (clos_numberProof_v_rel max_app) env env' /\
     ALL2 (clos_numberProof_v_rel max_app) argenv argenv' /\
     ~(contains_App_SOME max_app [c]) /\
     c' = SND (renumber_code_locs n c) ==>
-    clos_numberProof_v_rel max_app (closSem_Closure p argenv env
-      num_args c) (closSem_Closure p' argenv' env' num_args c')) /\
+    clos_numberProof_v_rel max_app (closSem_Closure p argenv env num_args c)
+      (closSem_Closure p' argenv' env' num_args c')) /\
    (
     ALL2 (clos_numberProof_v_rel max_app) env env' /\
     ALL2 (clos_numberProof_v_rel max_app) argenv argenv' /\
     ~(contains_App_SOME max_app (MAP SND es)) /\
-    es' = ZIP (MAP FST es) (SND (renumber_code_locs_list n (MAP SND
-      es))) ==>
-    clos_numberProof_v_rel max_app (closSem_Recclosure p argenv
-      env es k) (closSem_Recclosure p' argenv' env' es' k))`;;
+    es' = ZIP (MAP FST es) (SND (renumber_code_locs_list n (MAP SND es)))
+      ==>
+    clos_numberProof_v_rel max_app (closSem_Recclosure p argenv env es k)
+      (closSem_Recclosure p' argenv' env' es' k))`;;
 
 let clos_numberProof_state_rel_def = new_definition
   `clos_numberProof_state_rel (s:(num#'c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
-     (closSem_state_clock s = closSem_state_clock t)
-       /\ (closSem_state_ffi s = closSem_state_ffi t)
-       /\ (closSem_state_max_app t = closSem_state_max_app s)
-       /\ closSem_state_compile
+     (closSem_state_clock s = closSem_state_clock t) /\ (closSem_state_ffi s
+       = closSem_state_ffi t) /\ (closSem_state_max_app t =
+       closSem_state_max_app s) /\ closSem_state_compile
      s = state_cc (ignore_table clos_number_compile_inc)
        (closSem_state_compile t) /\ closSem_state_compile_oracle
      t = state_co (ignore_table clos_number_compile_inc)
        (closSem_state_compile_oracle s) /\
      fmap_rel (closProps_ref_rel (clos_numberProof_v_rel
-       (closSem_state_max_app s))) (closSem_state_refs s)
-       (closSem_state_refs t) /\
+       (closSem_state_max_app s))) (closSem_state_refs s) (closSem_state_refs
+       t) /\
      ALL2 (OPTREL (clos_numberProof_v_rel (closSem_state_max_app s)))
        (closSem_state_globals s) (closSem_state_globals t) /\
      (!n. SND (SND (closSem_state_compile_oracle s n)) = [] /\
@@ -156,8 +148,7 @@ let clos_numberProof_state_rel_max_app = prove
 (* state_rel_with_clock[local] *)
 let clos_numberProof_state_rel_with_clock = prove
  (`!s t. clos_numberProof_state_rel s t ==> clos_numberProof_state_rel
-  (closSem_state_clock_fupd (K x) s) (closSem_state_clock_fupd (K x)
-  t)`,
+  (closSem_state_clock_fupd (K x) s) (closSem_state_clock_fupd (K x) t)`,
   CHEAT_TAC);;
 
 (* state_rel_clock[local] *)
@@ -169,16 +160,16 @@ let clos_numberProof_state_rel_clock = prove
 (* [local] *)
 let state_rel_globals = prove
  (`clos_numberProof_state_rel s t ==>
-     ALL2 (OPTREL (clos_numberProof_v_rel (closSem_state_max_app
-       s))) (closSem_state_globals s) (closSem_state_globals t)`,
+     ALL2 (OPTREL (clos_numberProof_v_rel (closSem_state_max_app s)))
+       (closSem_state_globals s) (closSem_state_globals t)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let state_rel_refs = prove
  (`clos_numberProof_state_rel s t ==>
      fmap_rel (closProps_ref_rel (clos_numberProof_v_rel
-       (closSem_state_max_app t))) (closSem_state_refs s)
-       (closSem_state_refs t)`,
+       (closSem_state_max_app t))) (closSem_state_refs s) (closSem_state_refs
+       t)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -187,13 +178,13 @@ let state_rel_code = prove
   /\ closSem_state_code t = FEMPTY`,
   CHEAT_TAC);;
 
-(* HOL4 clos_numberProofScript.sml:246-262: a theorem that HOL4
-   states as the value of an ML expression: v_rel_simp *)
+(* HOL4 clos_numberProofScript.sml:246-262: a theorem that HOL4 states as
+   the value of an ML expression: v_rel_simp *)
 
 (* v_rel_Boolv *)
 let clos_numberProof_v_rel_Boolv = prove
- (`(clos_numberProof_v_rel max_app x (closSem_Boolv b) <=> (x =
-  closSem_Boolv b)) /\
+ (`(clos_numberProof_v_rel max_app x (closSem_Boolv b) <=> (x = closSem_Boolv
+  b)) /\
     (clos_numberProof_v_rel max_app (closSem_Boolv b) x <=> (x =
       closSem_Boolv b))`,
   CHEAT_TAC);;
@@ -201,10 +192,8 @@ add_simp clos_numberProof_v_rel_Boolv;;
 
 (* v_rel_Unit *)
 let clos_numberProof_v_rel_Unit = prove
- (`(clos_numberProof_v_rel max_app x closSem_Unit <=> (x =
-  closSem_Unit)) /\
-    (clos_numberProof_v_rel max_app closSem_Unit x <=> (x =
-      closSem_Unit))`,
+ (`(clos_numberProof_v_rel max_app x closSem_Unit <=> (x = closSem_Unit)) /\
+    (clos_numberProof_v_rel max_app closSem_Unit x <=> (x = closSem_Unit))`,
   CHEAT_TAC);;
 add_simp clos_numberProof_v_rel_Unit;;
 
@@ -235,8 +224,7 @@ let dest_closure_v_rel_full = prove
  (`!c f args f' args' args1 args2.
      clos_numberProof_v_rel max_app f f' /\
      ALL2 (clos_numberProof_v_rel max_app) args args' /\
-     dest_closure max_app NONE f args = SOME (Full_app exp args1
-       args2) ==>
+     dest_closure max_app NONE f args = SOME (Full_app exp args1 args2) ==>
      (?args1' args2' n.
        dest_closure max_app NONE f' args' = SOME (Full_app (SND
          (renumber_code_locs n exp)) args1' args2') /\
@@ -287,46 +275,44 @@ let clos_numberProof_do_app_lemma = prove
           clos_numberProof_v_rel (closSem_state_max_app s) x y /\
           (closSem_state_max_app s1 = closSem_state_max_app s
             /\ clos_numberProof_state_rel s1 t1) /\
-          closSem_do_app opp ys t = Rval (y,t1)) | Rerr err1 ->
+          closSem_do_app opp ys t = Rval (y,t1))
+    | Rerr err1 ->
         (?err2.
           closSem_do_app opp ys t = Rerr err2 /\
-          exc_rel (clos_numberProof_v_rel (closSem_state_max_app
-            s)) err1 err2))`,
+          exc_rel (clos_numberProof_v_rel (closSem_state_max_app s)) err1
+            err2))`,
   CHEAT_TAC);;
 
 (* list_to_v_v_rel *)
 let clos_numberProof_list_to_v_v_rel = prove
  (`!xs ys.
-     ALL2 (clos_numberProof_v_rel ap) xs ys ==>
-       clos_numberProof_v_rel ap (closSem_list_to_v xs)
-       (closSem_list_to_v ys)`,
+     ALL2 (clos_numberProof_v_rel ap) xs ys ==> clos_numberProof_v_rel ap
+       (closSem_list_to_v xs) (closSem_list_to_v ys)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_app = prove
  (`clos_numberProof_state_rel s1 s2 /\
-     ALL2 (clos_numberProof_v_rel (closSem_state_max_app s1)) x1 x2
-       ==>
+     ALL2 (clos_numberProof_v_rel (closSem_state_max_app s1)) x1 x2 ==>
      (!err.
        closSem_do_app op x1 s1 = (Rerr err) ==>
        closSem_do_app op x2 s2 = (Rerr err)) /\
      (!v1 w1. closSem_do_app op x1 s1 = Rval (v1,w1) ==>
               (?v2 w2. closSem_do_app op x2 s2 = Rval (v2,w2) /\
-                      clos_numberProof_v_rel (closSem_state_max_app
-                        s1) v1 v2 /\ clos_numberProof_state_rel w1
-                        w2))`,
+                      clos_numberProof_v_rel (closSem_state_max_app s1) v1
+                        v2 /\ clos_numberProof_state_rel w1 w2))`,
   CHEAT_TAC);;
 
 (* v_to_bytes[local] *)
 let clos_numberProof_v_to_bytes = prove
- (`clos_numberProof_v_rel m v w ==> closSem_v_to_bytes v =
-  closSem_v_to_bytes w`,
+ (`clos_numberProof_v_rel m v w ==> closSem_v_to_bytes v = closSem_v_to_bytes
+  w`,
   CHEAT_TAC);;
 
 (* v_to_words[local] *)
 let clos_numberProof_v_to_words = prove
- (`clos_numberProof_v_rel m v w ==> closSem_v_to_words v =
-  closSem_v_to_words w`,
+ (`clos_numberProof_v_rel m v w ==> closSem_v_to_words v = closSem_v_to_words
+  w`,
   CHEAT_TAC);;
 
 (* HOL4 clos_numberProofScript.sml:531-538: ML code, not ported *)
@@ -338,18 +324,15 @@ let ignore_table_imp = prove
 (* [local] *)
 let do_install = prove
  (`clos_numberProof_state_rel s1 s2 /\
-    ALL2 (clos_numberProof_v_rel (closSem_state_max_app s1)) x1 x2
-      ==>
-    (!err t. closSem_do_install x1 s1 = (Rerr (Rabort
-      Rtimeout_error),t) ==>
+    ALL2 (clos_numberProof_v_rel (closSem_state_max_app s1)) x1 x2 ==>
+    (!err t. closSem_do_install x1 s1 = (Rerr (Rabort Rtimeout_error),t) ==>
              (?t'. closSem_do_install x2 s2 = (Rerr (Rabort
                Rtimeout_error),t') /\
                   clos_numberProof_state_rel t t')) /\
     (!e1 t1. closSem_do_install x1 s1 = (Rval e1,t1) ==>
       (?e2 t2. closSem_do_install x2 s2 = (Rval e2,t2) /\
               ~(contains_App_SOME (closSem_state_max_app t1) (e1))
-                /\ closSem_state_max_app t1 = closSem_state_max_app s1
-                /\
+                /\ closSem_state_max_app t1 = closSem_state_max_app s1 /\
               e2 = SND (clos_number_compile_inc (FST (FST
                 (closSem_state_compile_oracle s1 0))) e1) /\
               clos_numberProof_state_rel t1 t2))`,
@@ -363,58 +346,54 @@ let lookup_vars_NONE_related_env = prove
   CHEAT_TAC);;
 
 let lookup_vars_SOME_related_env = prove
- (`ALL2 (clos_numberProof_v_rel max_app) e1 e2 /\ lookup_vars vs e1 =
-  SOME e1' /\
-   lookup_vars vs e2 = SOME e2' ==> ALL2 (clos_numberProof_v_rel
-     max_app) e1' e2'`,
+ (`ALL2 (clos_numberProof_v_rel max_app) e1 e2 /\ lookup_vars vs e1 = SOME e1'
+  /\
+   lookup_vars vs e2 = SOME e2' ==> ALL2 (clos_numberProof_v_rel max_app)
+     e1' e2'`,
   CHEAT_TAC);;
 
 (* rel_update_thunk[local] *)
 let clos_numberProof_rel_update_thunk = prove
  (`clos_numberProof_state_rel s1 s2 /\
    ALL2 (clos_numberProof_v_rel (closSem_state_max_app s1)) vs ys /\
-   closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs
-     s1) vs = SOME refs1 ==>
+   closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs s1) vs =
+     SOME refs1 ==>
      (?refs2. closSem_update_thunk [closSem_RefPtr v ptr]
        (closSem_state_refs s2) ys = SOME refs2 /\
-             clos_numberProof_state_rel (closSem_state_refs_fupd (K
-               refs1) s1) (closSem_state_refs_fupd (K refs2) s2))`,
+             clos_numberProof_state_rel (closSem_state_refs_fupd (K refs1)
+               s1) (closSem_state_refs_fupd (K refs2) s2))`,
   CHEAT_TAC);;
 
-(* HOL4 clos_numberProofScript.sml:637-645: code that the source has
-   in a comment *)
+(* HOL4 clos_numberProofScript.sml:637-645: code that the source has in a
+   comment *)
 
 let renumber_code_locs_correct = prove
  (`(!tmp xs env (s1:(num#'c,'ffi)closSem_state) env' t1 res s2 n.
      tmp = (xs,env,s1) /\
-     (closSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr
-       (Rabort Rtype_error)) ==>
+     (closSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort
+       Rtype_error)) ==>
      ~(contains_App_SOME (closSem_state_max_app s1) xs) /\
-     ALL2 (clos_numberProof_v_rel (closSem_state_max_app s1)) env
-       env' /\
+     ALL2 (clos_numberProof_v_rel (closSem_state_max_app s1)) env env' /\
      clos_numberProof_state_rel s1 t1 ==>
      (?res' t2.
-        (closSem_evaluate (SND (renumber_code_locs_list n
-          xs),env',t1) = (res',t2)) /\
-        semanticPrimitivesProps_result_rel (ALL2
-          (clos_numberProof_v_rel (closSem_state_max_app s1)))
-          (clos_numberProof_v_rel (closSem_state_max_app s1)) res res'
-          /\
+        (closSem_evaluate (SND (renumber_code_locs_list n xs),env',t1) =
+          (res',t2)) /\
+        semanticPrimitivesProps_result_rel (ALL2 (clos_numberProof_v_rel
+          (closSem_state_max_app s1))) (clos_numberProof_v_rel
+          (closSem_state_max_app s1)) res res' /\
         clos_numberProof_state_rel s2 t2)) /\
    (!loc f args (s:(num#'c,'ffi)closSem_state) res s2 f' args' t1.
        evaluate_app loc f args s = (res,s2) /\ ~(res = Rerr (Rabort
          Rtype_error)) ==>
        clos_numberProof_v_rel (closSem_state_max_app s) f f' /\
        loc = NONE /\
-       ALL2 (clos_numberProof_v_rel (closSem_state_max_app s)) args
-         args' /\
+       ALL2 (clos_numberProof_v_rel (closSem_state_max_app s)) args args' /\
        clos_numberProof_state_rel s t1 ==>
        (?res' t2.
           (evaluate_app loc f' args' t1 = (res',t2)) /\
-          semanticPrimitivesProps_result_rel (ALL2
-            (clos_numberProof_v_rel (closSem_state_max_app s)))
-            (clos_numberProof_v_rel (closSem_state_max_app s)) res res'
-            /\
+          semanticPrimitivesProps_result_rel (ALL2 (clos_numberProof_v_rel
+            (closSem_state_max_app s))) (clos_numberProof_v_rel
+            (closSem_state_max_app s)) res res' /\
           clos_numberProof_state_rel s2 t2))`,
   CHEAT_TAC);;
 
@@ -431,10 +410,10 @@ let renumber_code_locs_every_Fn_vs_NONE = prove
   CHEAT_TAC);;
 
 let renumber_code_locs_EVEN = prove
- (`(!n es. EVEN n ==> EVEN (FST (renumber_code_locs_list n es)) /\ ALL
-  EVEN (code_locs (SND (renumber_code_locs_list n es)))) /\
-   (!n e. EVEN n ==> EVEN (FST (renumber_code_locs n e)) /\ ALL
-     EVEN (code_locs [SND (renumber_code_locs n e)]))`,
+ (`(!n es. EVEN n ==> EVEN (FST (renumber_code_locs_list n es)) /\ ALL EVEN
+  (code_locs (SND (renumber_code_locs_list n es)))) /\
+   (!n e. EVEN n ==> EVEN (FST (renumber_code_locs n e)) /\ ALL EVEN
+     (code_locs [SND (renumber_code_locs n e)]))`,
   CHEAT_TAC);;
 
 let renumber_code_locs_elist_globals = prove
@@ -448,18 +427,18 @@ let renumber_code_locs_elist_globals = prove
 
 let renumber_code_locs_esgc_free = prove
  (`(!loc es n es'.
-      renumber_code_locs_list loc es = (n,es') /\ ALL
-        closProps_esgc_free es ==>
+      renumber_code_locs_list loc es = (n,es') /\ ALL closProps_esgc_free es
+        ==>
       ALL closProps_esgc_free es') /\
    (!loc e n e'.
-      renumber_code_locs loc e = (n,e') /\ closProps_esgc_free e
-        ==> closProps_esgc_free e')`,
+      renumber_code_locs loc e = (n,e') /\ closProps_esgc_free e ==>
+        closProps_esgc_free e')`,
   CHEAT_TAC);;
 
 let renumber_code_locs_obeys_max_app = prove
  (`(!loc es n es'.
-      renumber_code_locs_list loc es = (n,es') /\ ALL (obeys_max_app
-        m) es ==>
+      renumber_code_locs_list loc es = (n,es') /\ ALL (obeys_max_app m) es
+        ==>
       ALL (obeys_max_app m) es') /\
    (!loc e n e'.
       renumber_code_locs loc e = (n,e') /\ obeys_max_app m e ==>
@@ -468,12 +447,10 @@ let renumber_code_locs_obeys_max_app = prove
 
 let renumber_code_locs_no_Labels = prove
  (`(!loc es n es'.
-      renumber_code_locs_list loc es = (n,es') /\ ALL no_Labels es
-        ==>
+      renumber_code_locs_list loc es = (n,es') /\ ALL no_Labels es ==>
       ALL no_Labels es') /\
    (!loc e n e'.
-      renumber_code_locs loc e = (n,e') /\ no_Labels e ==>
-        no_Labels e')`,
+      renumber_code_locs loc e = (n,e') /\ no_Labels e ==> no_Labels e')`,
   CHEAT_TAC);;
 
 let renumber_code_locs_imp_EVEN = prove
@@ -482,29 +459,28 @@ let renumber_code_locs_imp_EVEN = prove
   CHEAT_TAC);;
 
 let renumber_code_locs_get_code_labels = prove
- (`(!n es n' es'. renumber_code_locs_list n es = (n',es') /\ ALL ((=)
-  {}) (MAP closProps_get_code_labels es) /\ EVEN n ==>
-      UNIONS (set_of_list (MAP closProps_get_code_labels es')) = {n +
-        2 * k | k | n + 2 * k < n'}) /\
+ (`(!n es n' es'. renumber_code_locs_list n es = (n',es') /\ ALL ((=) {}) (MAP
+  closProps_get_code_labels es) /\ EVEN n ==>
+      UNIONS (set_of_list (MAP closProps_get_code_labels es')) = {n + 2 * k
+        | k | n + 2 * k < n'}) /\
    (!n e n' e'. renumber_code_locs n e = (n',e')
      /\ closProps_get_code_labels e = {} /\ EVEN n ==>
-     closProps_get_code_labels e' = {n + 2 * k | k | n + 2 * k <
-       n'})`,
+     closProps_get_code_labels e' = {n + 2 * k | k | n + 2 * k < n'})`,
   CHEAT_TAC);;
 
 let renumber_code_locs_any_dests = prove
- (`(!k xs n ys. renumber_code_locs_list k xs = (n,ys) ==>
-  (app_call_dests NONE) ys = {}) /\
-    (!k x n y. renumber_code_locs k x = (n,y) ==> (app_call_dests
-      NONE) [y] = {})`,
+ (`(!k xs n ys. renumber_code_locs_list k xs = (n,ys) ==> (app_call_dests NONE)
+  ys = {}) /\
+    (!k x n y. renumber_code_locs k x = (n,y) ==> (app_call_dests NONE)
+      [y] = {})`,
   CHEAT_TAC);;
 
 (* preservation of observable semantics *)
 
 let semantics_number = prove
  (`~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY co
-        (state_cc (ignore_table clos_number_compile_inc) cc) xs =
-          ffi_Fail) ==>
+        (state_cc (ignore_table clos_number_compile_inc) cc) xs = ffi_Fail)
+          ==>
       ~(contains_App_SOME max_app xs) /\
       (!n.
          SND (SND (co n)) = [] /\

@@ -51,17 +51,14 @@ let bvl_exp_INDUCT,bvl_exp_RECURSION = define_datatype
    | bvl_Op closLang_op (bvl_exp list)";;
 
 let bool_def = new_definition
-  `bvl_Bool b = bvl_Op (closLang_BlockOp (closLang_Cons (bool_to_tag
-  b))) []`;;
+  `bvl_Bool b = bvl_Op (closLang_BlockOp (closLang_Cons (bool_to_tag b))) []`;;
 
 let mk_tick_def = new_definition
   `mk_tick n e = (ITER n bvl_Tick e:bvl_exp)`;;
 
-(* HOL4 bvlScript.sml:50: the overload mk_unit, which the port
-   expands *)
+(* HOL4 bvlScript.sml:50: the overload mk_unit, which the port expands *)
 
-(* HOL4 bvlScript.sml:52: the overload mk_elem_at, which the port
-   expands *)
+(* HOL4 bvlScript.sml:52: the overload mk_elem_at, which the port expands *)
 
 (* and the interface *)
 let _ = unhide_overloads ();;

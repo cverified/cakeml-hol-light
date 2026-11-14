@@ -39,43 +39,43 @@ let _ = size_thms "line";;
 let labProps_extract_labels_def,labProps_extract_labels_ind = define_wf
   `MEASURE (\x0. list_size (line_size (\x. 0)) x0)`
   [`labProps_extract_labels x1 =
-        match x1 with
-          [] -> []
-        | CONS (labLang_Label l1 l2 _2) xs -> CONS (l1,l2)
-          (labProps_extract_labels xs)
-        | (CONS x xs) -> labProps_extract_labels xs`];;
+     match x1 with
+       [] -> []
+     | CONS (labLang_Label l1 l2 _) xs -> CONS (l1,l2)
+       (labProps_extract_labels xs)
+     | CONS x xs -> labProps_extract_labels xs`];;
 add_simp labProps_extract_labels_def;;
 
 (* HOL4 labPropsScript.sml:18: ML code, not ported *)
 
 let extract_labels_append = prove
  (`!A B.
-   labProps_extract_labels (APPEND A B) = APPEND
-     (labProps_extract_labels A) (labProps_extract_labels B)`,
+   labProps_extract_labels (APPEND A B) = APPEND (labProps_extract_labels
+     A) (labProps_extract_labels B)`,
   CHEAT_TAC);;
 
 let labs_of_def = new_definition
   `labs_of x1 =
-      match x1 with
-        labLang_LocValue _4 (labLang_Lab n1 n2) -> {(n1,n2)}
-      | (labLang_Jump (labLang_Lab n1 n2)) -> {(n1,n2)}
-      | (labLang_JumpCmp _5 _6 _7 (labLang_Lab n1 n2)) -> {(n1,n2)}
-      | _8 -> {}`;;
+   match x1 with
+     labLang_LocValue _ (labLang_Lab n1 n2) -> {(n1,n2)}
+   | labLang_Jump (labLang_Lab n1 n2) -> {(n1,n2)}
+   | labLang_JumpCmp _3 _4 _5 (labLang_Lab n1 n2) -> {(n1,n2)}
+   | _ -> {}`;;
 add_simp labs_of_def;;
 
 let line_get_labels_def = new_definition
   `line_get_labels x1 =
-      match x1 with
-        labLang_LabAsm a _9 _10 _11 -> labs_of a
-      | _12 -> {}`;;
+   match x1 with
+     labLang_LabAsm a _6 _7 _8 -> labs_of a
+   | _ -> {}`;;
 
 let sec_get_labels_def = define_general
-  [`sec_get_labels (Section _13 lines) =
+  [`sec_get_labels (Section _ lines) =
      UNIONS (IMAGE line_get_labels (set_of_list lines))`];;
 
 let labProps_get_labels_def = new_definition
-  `labProps_get_labels code = UNIONS (IMAGE sec_get_labels
-  (set_of_list code))`;;
+  `labProps_get_labels code = UNIONS (IMAGE sec_get_labels (set_of_list
+  code))`;;
 
 let get_labels_cons = prove
  (`labProps_get_labels (CONS x xs) = sec_get_labels x UNION
@@ -84,9 +84,9 @@ let get_labels_cons = prove
 
 let line_get_code_labels_def = new_definition
   `line_get_code_labels x1 =
-      match x1 with
-        labLang_Label _16 l _17 -> {l}
-      | _18 -> {}`;;
+   match x1 with
+     labLang_Label _11 l _12 -> {l}
+   | _ -> {}`;;
 add_simp line_get_code_labels_def;;
 
 let sec_get_code_labels_def = define_general
@@ -105,23 +105,22 @@ let get_code_labels_nil = prove
 add_simp get_code_labels_nil;;
 
 let get_code_labels_cons = prove
- (`labProps_get_code_labels (CONS s secs) = sec_get_code_labels s
-  UNION labProps_get_code_labels secs`,
+ (`labProps_get_code_labels (CONS s secs) = sec_get_code_labels s UNION
+  labProps_get_code_labels secs`,
   CHEAT_TAC);;
 
 let sec_ends_with_label_def = define_general
-  [`sec_ends_with_label (Section _19 ls) <=>
+  [`sec_ends_with_label (Section _ ls) <=>
      ~(NULL ls) /\ is_Label (LAST ls)`];;
 
 let reg_imm_with_clock = prove
- (`labSem_reg_imm r (labSem_state_clock_fupd (K z) s) = labSem_reg_imm
-  r s`,
+ (`labSem_reg_imm r (labSem_state_clock_fupd (K z) s) = labSem_reg_imm r s`,
   CHEAT_TAC);;
 add_simp reg_imm_with_clock;;
 
 let asm_inst_with_clock = prove
- (`asm_inst i (labSem_state_clock_fupd (K z) s) =
-  labSem_state_clock_fupd (K z) (asm_inst i s)`,
+ (`asm_inst i (labSem_state_clock_fupd (K z) s) = labSem_state_clock_fupd (K
+  z) (asm_inst i s)`,
   CHEAT_TAC);;
 add_simp asm_inst_with_clock;;
 
@@ -145,45 +144,34 @@ let update_simps = prove
     (labSem_state_ffi (labSem_dec_clock s) = labSem_state_ffi s) /\
     (labSem_state_pc (labSem_upd_pc x s) = x) /\
     (labSem_state_pc (labSem_dec_clock s) = labSem_state_pc s) /\
-    (labSem_state_clock (labSem_upd_pc x s) = labSem_state_clock s)
-      /\
+    (labSem_state_clock (labSem_upd_pc x s) = labSem_state_clock s) /\
     (labSem_state_ffi (labSem_upd_pc x s) = labSem_state_ffi s) /\
-    (labSem_state_clock (labSem_dec_clock s) = labSem_state_clock s -
-      1) /\
-    (labSem_state_len_reg (labSem_dec_clock s) = labSem_state_len_reg
-      s) /\
-    (labSem_state_len2_reg (labSem_dec_clock s) =
-      labSem_state_len2_reg s) /\
-    (labSem_state_link_reg (labSem_dec_clock s) =
-      labSem_state_link_reg s) /\
+    (labSem_state_clock (labSem_dec_clock s) = labSem_state_clock s - 1) /\
+    (labSem_state_len_reg (labSem_dec_clock s) = labSem_state_len_reg s) /\
+    (labSem_state_len2_reg (labSem_dec_clock s) = labSem_state_len2_reg s)
+      /\
+    (labSem_state_link_reg (labSem_dec_clock s) = labSem_state_link_reg s)
+      /\
     (labSem_state_code (labSem_dec_clock s) = labSem_state_code s) /\
-    (labSem_state_ptr_reg (labSem_dec_clock s) = labSem_state_ptr_reg
-      s) /\
-    (labSem_state_ptr2_reg (labSem_dec_clock s) =
-      labSem_state_ptr2_reg s) /\
+    (labSem_state_ptr_reg (labSem_dec_clock s) = labSem_state_ptr_reg s) /\
+    (labSem_state_ptr2_reg (labSem_dec_clock s) = labSem_state_ptr2_reg s)
+      /\
     (labSem_state_ffi (labSem_dec_clock s) = labSem_state_ffi s) /\
-    (labSem_state_len_reg (labSem_upd_pc x s) = labSem_state_len_reg
-      s) /\
-    (labSem_state_len2_reg (labSem_upd_pc x s) =
-      labSem_state_len2_reg s) /\
-    (labSem_state_link_reg (labSem_upd_pc x s) =
-      labSem_state_link_reg s) /\
+    (labSem_state_len_reg (labSem_upd_pc x s) = labSem_state_len_reg s) /\
+    (labSem_state_len2_reg (labSem_upd_pc x s) = labSem_state_len2_reg s) /\
+    (labSem_state_link_reg (labSem_upd_pc x s) = labSem_state_link_reg s) /\
     (labSem_state_code (labSem_upd_pc x s) = labSem_state_code s) /\
-    (labSem_state_ptr_reg (labSem_upd_pc x s) = labSem_state_ptr_reg
+    (labSem_state_ptr_reg (labSem_upd_pc x s) = labSem_state_ptr_reg s) /\
+    (labSem_state_ptr2_reg (labSem_upd_pc x s) = labSem_state_ptr2_reg s) /\
+    (labSem_state_mem_domain (labSem_upd_pc x s) = labSem_state_mem_domain
       s) /\
-    (labSem_state_ptr2_reg (labSem_upd_pc x s) =
-      labSem_state_ptr2_reg s) /\
-    (labSem_state_mem_domain (labSem_upd_pc x s) =
-      labSem_state_mem_domain s) /\
     (labSem_state_shared_mem_domain (labSem_upd_pc x s) =
       labSem_state_shared_mem_domain s) /\
-    (labSem_state_failed (labSem_upd_pc x s) = labSem_state_failed s)
-      /\
+    (labSem_state_failed (labSem_upd_pc x s) = labSem_state_failed s) /\
     (labSem_state_be (labSem_upd_pc x s) = labSem_state_be s) /\
     (labSem_state_mem (labSem_upd_pc x s) = labSem_state_mem s) /\
     (labSem_state_regs (labSem_upd_pc x s) = labSem_state_regs s) /\
-    (labSem_state_fp_regs (labSem_upd_pc x s) = labSem_state_fp_regs
-      s) /\
+    (labSem_state_fp_regs (labSem_upd_pc x s) = labSem_state_fp_regs s) /\
     (labSem_state_ffi (labSem_upd_pc x s) = labSem_state_ffi s) /\
     (labSem_state_ptr_reg (inc_pc s) = labSem_state_ptr_reg s) /\
     (labSem_state_ptr2_reg (inc_pc s) = labSem_state_ptr2_reg s) /\
@@ -193,21 +181,17 @@ let update_simps = prove
     (labSem_state_code (inc_pc s) = labSem_state_code s) /\
     (labSem_state_be (inc_pc s) = labSem_state_be s) /\
     (labSem_state_failed (inc_pc s) = labSem_state_failed s) /\
-    (labSem_state_mem_domain (inc_pc s) = labSem_state_mem_domain s)
-      /\
+    (labSem_state_mem_domain (inc_pc s) = labSem_state_mem_domain s) /\
     (labSem_state_shared_mem_domain (inc_pc s) =
       labSem_state_shared_mem_domain s) /\
     (labSem_state_io_regs (inc_pc s) = labSem_state_io_regs s) /\
-    (labSem_state_io_fp_regs (inc_pc s) = labSem_state_io_fp_regs s)
-      /\
+    (labSem_state_io_fp_regs (inc_pc s) = labSem_state_io_fp_regs s) /\
     (labSem_state_cc_regs (inc_pc s) = labSem_state_cc_regs s) /\
-    (labSem_state_cc_fp_regs (inc_pc s) = labSem_state_cc_fp_regs s)
-      /\
+    (labSem_state_cc_fp_regs (inc_pc s) = labSem_state_cc_fp_regs s) /\
     (labSem_state_compile (inc_pc s) = labSem_state_compile s) /\
-    (labSem_state_compile_oracle (inc_pc s) =
-      labSem_state_compile_oracle s) /\
-    (labSem_state_code_buffer (inc_pc s) = labSem_state_code_buffer
-      s) /\
+    (labSem_state_compile_oracle (inc_pc s) = labSem_state_compile_oracle s)
+      /\
+    (labSem_state_code_buffer (inc_pc s) = labSem_state_code_buffer s) /\
     (labSem_state_mem (inc_pc s) = labSem_state_mem s) /\
     (labSem_state_regs (inc_pc s) = labSem_state_regs s) /\
     (labSem_state_fp_regs (inc_pc s) = labSem_state_fp_regs s) /\
@@ -233,10 +217,8 @@ let labProps_binop_upd_consts = prove
         /\ labSem_state_link_reg
       (labSem_binop_upd a b c d x) = labSem_state_link_reg x
         /\ labSem_state_code
-      (labSem_binop_upd a b c d x) = labSem_state_code x
-        /\ labSem_state_be
-      (labSem_binop_upd a b c d x) = labSem_state_be x
-        /\ labSem_state_mem
+      (labSem_binop_upd a b c d x) = labSem_state_code x /\ labSem_state_be
+      (labSem_binop_upd a b c d x) = labSem_state_be x /\ labSem_state_mem
       (labSem_binop_upd a b c d x) = labSem_state_mem x
         /\ labSem_state_io_regs
       (labSem_binop_upd a b c d x) = labSem_state_io_regs x
@@ -253,8 +235,7 @@ let labProps_binop_upd_consts = prove
         /\ labSem_state_code_buffer
       (labSem_binop_upd a b c d x) = labSem_state_code_buffer x
         /\ labSem_state_pc
-      (labSem_binop_upd a b c d x) = labSem_state_pc x
-        /\ labSem_state_ffi
+      (labSem_binop_upd a b c d x) = labSem_state_pc x /\ labSem_state_ffi
       (labSem_binop_upd a b c d x) = labSem_state_ffi x`,
   CHEAT_TAC);;
 add_simp labProps_binop_upd_consts;;
@@ -274,12 +255,10 @@ let labProps_arith_upd_consts = prove
         /\ labSem_state_len2_reg
       (labSem_arith_upd a x) = labSem_state_len2_reg x
         /\ labSem_state_link_reg
-      (labSem_arith_upd a x) = labSem_state_link_reg x
-        /\ labSem_state_code
+      (labSem_arith_upd a x) = labSem_state_link_reg x /\ labSem_state_code
       (labSem_arith_upd a x) = labSem_state_code x /\ labSem_state_be
       (labSem_arith_upd a x) = labSem_state_be x /\ labSem_state_mem
-      (labSem_arith_upd a x) = labSem_state_mem x
-        /\ labSem_state_io_regs
+      (labSem_arith_upd a x) = labSem_state_mem x /\ labSem_state_io_regs
       (labSem_arith_upd a x) = labSem_state_io_regs x
         /\ labSem_state_io_fp_regs
       (labSem_arith_upd a x) = labSem_state_io_fp_regs x
@@ -292,8 +271,7 @@ let labProps_arith_upd_consts = prove
         /\ labSem_state_compile_oracle
       (labSem_arith_upd a x) = labSem_state_compile_oracle x
         /\ labSem_state_code_buffer
-      (labSem_arith_upd a x) = labSem_state_code_buffer x
-        /\ labSem_state_pc
+      (labSem_arith_upd a x) = labSem_state_code_buffer x /\ labSem_state_pc
       (labSem_arith_upd a x) = labSem_state_pc x /\ labSem_state_ffi
       (labSem_arith_upd a x) = labSem_state_ffi x`,
   CHEAT_TAC);;
@@ -306,18 +284,12 @@ let labProps_fp_upd_consts = prove
         /\ labSem_state_shared_mem_domain
       (labSem_fp_upd f x) = labSem_state_shared_mem_domain x
         /\ labSem_state_ptr_reg
-      (labSem_fp_upd f x) = labSem_state_ptr_reg x
-        /\ labSem_state_len_reg
-      (labSem_fp_upd f x) = labSem_state_len_reg x
-        /\ labSem_state_ptr2_reg
-      (labSem_fp_upd f x) = labSem_state_ptr2_reg x
-        /\ labSem_state_len2_reg
-      (labSem_fp_upd f x) = labSem_state_len2_reg x
-        /\ labSem_state_link_reg
-      (labSem_fp_upd f x) = labSem_state_link_reg x
-        /\ labSem_state_code
-      (labSem_fp_upd f x) = labSem_state_code x
-        /\ labSem_state_cc_regs
+      (labSem_fp_upd f x) = labSem_state_ptr_reg x /\ labSem_state_len_reg
+      (labSem_fp_upd f x) = labSem_state_len_reg x /\ labSem_state_ptr2_reg
+      (labSem_fp_upd f x) = labSem_state_ptr2_reg x /\ labSem_state_len2_reg
+      (labSem_fp_upd f x) = labSem_state_len2_reg x /\ labSem_state_link_reg
+      (labSem_fp_upd f x) = labSem_state_link_reg x /\ labSem_state_code
+      (labSem_fp_upd f x) = labSem_state_code x /\ labSem_state_cc_regs
       (labSem_fp_upd f x) = labSem_state_cc_regs x
         /\ labSem_state_cc_fp_regs
       (labSem_fp_upd f x) = labSem_state_cc_fp_regs x
@@ -326,22 +298,19 @@ let labProps_fp_upd_consts = prove
         /\ labSem_state_compile
       (labSem_fp_upd f x) = labSem_state_compile x
         /\ labSem_state_compile_oracle
-      (labSem_fp_upd f x) = labSem_state_compile_oracle x
-        /\ labSem_state_be
+      (labSem_fp_upd f x) = labSem_state_compile_oracle x /\ labSem_state_be
       (labSem_fp_upd f x) = labSem_state_be x /\ labSem_state_mem
-      (labSem_fp_upd f x) = labSem_state_mem x
-        /\ labSem_state_io_regs
+      (labSem_fp_upd f x) = labSem_state_mem x /\ labSem_state_io_regs
       (labSem_fp_upd f x) = labSem_state_io_regs x
         /\ labSem_state_io_fp_regs
-      (labSem_fp_upd f x) = labSem_state_io_fp_regs x
-        /\ labSem_state_pc
+      (labSem_fp_upd f x) = labSem_state_io_fp_regs x /\ labSem_state_pc
       (labSem_fp_upd f x) = labSem_state_pc x /\ labSem_state_ffi
       (labSem_fp_upd f x) = labSem_state_ffi x`,
   CHEAT_TAC);;
 add_simp labProps_fp_upd_consts;;
 
 let line_length_def = define_cases
-  [`line_length (labLang_Label k1 k2 l) = (if l = 0 then 0 else 1)`;
+  [`line_length (labLang_Label k1 k2 l) = if l = 0 then 0 else 1`;
    `line_length (labLang_Asm b bytes l) = LENGTH bytes`;
    `line_length (labLang_LabAsm a w bytes l) = LENGTH bytes`];;
 
@@ -350,78 +319,70 @@ let LENGTH_line_bytes = prove
   CHEAT_TAC);;
 add_simp LENGTH_line_bytes;;
 
-(* HOL4 labPropsScript.sml:271-277: a theorem that HOL4 states as the
-   value of an ML expression: case_eq_thms *)
+(* HOL4 labPropsScript.sml:271-277: a theorem that HOL4 states as the value
+   of an ML expression: case_eq_thms *)
 
-(* HOL4 labPropsScript.sml:279-310: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): evaluate_io_events_mono *)
+(* HOL4 labPropsScript.sml:279-310: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): evaluate_io_events_mono *)
 
-(* HOL4 labPropsScript.sml:312-334: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): evaluate_ADD_clock *)
+(* HOL4 labPropsScript.sml:312-334: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): evaluate_ADD_clock *)
 
-(* HOL4 labPropsScript.sml:336-340: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): addr_add_clock_eq *)
+(* HOL4 labPropsScript.sml:336-340: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): addr_add_clock_eq *)
 
 let share_mem_op_add_clock_same = prove
  (`(~(labSem_state_clock s = 0) /\ share_mem_op m n a s = NONE ==>
     share_mem_op m n a (labSem_state_clock_fupd (K (extra +
       labSem_state_clock s)) s) = NONE) /\
-   (~(labSem_state_clock s = 0) /\ share_mem_op m n a s = SOME
-     (FFI_return f l',r) ==>
+   (~(labSem_state_clock s = 0) /\ share_mem_op m n a s = SOME (FFI_return f
+     l',r) ==>
     share_mem_op m n a (labSem_state_clock_fupd (K (extra +
       labSem_state_clock s)) s) =
       SOME (FFI_return f l',labSem_state_clock_fupd (K (extra +
         labSem_state_clock r)) r)) /\
-   (~(labSem_state_clock s = 0) /\ share_mem_op m n a s = SOME
-     (FFI_final f2,r2) ==>
+   (~(labSem_state_clock s = 0) /\ share_mem_op m n a s = SOME (FFI_final
+     f2,r2) ==>
     share_mem_op m n a (labSem_state_clock_fupd (K (extra +
       labSem_state_clock s)) s) =
       SOME (FFI_final f2,(labSem_state_clock_fupd (K (extra +
         labSem_state_clock r2)) r2)))`,
   CHEAT_TAC);;
 
-(* HOL4 labPropsScript.sml:358-439: a theorem whose statement HOL
-   Light does not read (tools/unstated.py):
-   evaluate_add_clock_io_events_mono *)
+(* HOL4 labPropsScript.sml:358-439: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): evaluate_add_clock_io_events_mono *)
 
 let align_dm_def = new_definition
   `align_dm (s:('a,'c,'ffi)labSem_state) =
-     (labSem_state_mem_domain_fupd (K (labSem_state_mem_domain s
-       INTER byte_aligned)) s)`;;
+     (labSem_state_mem_domain_fupd (K (labSem_state_mem_domain s INTER
+       byte_aligned)) s)`;;
 
 let align_dm_const = prove
  (`labSem_state_clock
       (align_dm s) = labSem_state_clock s /\ labSem_state_pc
       (align_dm s) = labSem_state_pc s /\ labSem_state_code
       (align_dm s) = labSem_state_code s /\ labSem_state_mem
-      (align_dm s) = labSem_state_mem s
-        /\ labSem_state_shared_mem_domain
-      (align_dm s) = labSem_state_shared_mem_domain s
-        /\ labSem_state_be
+      (align_dm s) = labSem_state_mem s /\ labSem_state_shared_mem_domain
+      (align_dm s) = labSem_state_shared_mem_domain s /\ labSem_state_be
       (align_dm s) = labSem_state_be s /\ labSem_state_len_reg
       (align_dm s) = labSem_state_len_reg s /\ labSem_state_link_reg
       (align_dm s) = labSem_state_link_reg s /\ labSem_state_ptr_reg
       (align_dm s) = labSem_state_ptr_reg s /\ labSem_state_ptr2_reg
       (align_dm s) = labSem_state_ptr2_reg s /\ labSem_state_len2_reg
       (align_dm s) = labSem_state_len2_reg s /\ labSem_state_io_regs
-      (align_dm s) = labSem_state_io_regs s
-        /\ labSem_state_io_fp_regs
-      (align_dm s) = labSem_state_io_fp_regs s
-        /\ labSem_state_code_buffer
-      (align_dm s) = labSem_state_code_buffer s
-        /\ labSem_state_compile
-      (align_dm s) = labSem_state_compile s
-        /\ labSem_state_compile_oracle
-      (align_dm s) = labSem_state_compile_oracle s
-        /\ labSem_state_ffi
+      (align_dm s) = labSem_state_io_regs s /\ labSem_state_io_fp_regs
+      (align_dm s) = labSem_state_io_fp_regs s /\ labSem_state_code_buffer
+      (align_dm s) = labSem_state_code_buffer s /\ labSem_state_compile
+      (align_dm s) = labSem_state_compile s /\ labSem_state_compile_oracle
+      (align_dm s) = labSem_state_compile_oracle s /\ labSem_state_ffi
       (align_dm s) = labSem_state_ffi s /\ labSem_state_failed
       (align_dm s) = labSem_state_failed s`,
   CHEAT_TAC);;
 add_simp align_dm_const;;
 
 let align_dm_with_clock = prove
- (`align_dm (labSem_state_clock_fupd (K k) s) =
-  labSem_state_clock_fupd (K k) (align_dm s)`,
+ (`align_dm (labSem_state_clock_fupd (K k) s) = labSem_state_clock_fupd (K k)
+  (align_dm s)`,
   CHEAT_TAC);;
 
 let asm_fetch_align_dm = prove
@@ -445,8 +406,8 @@ let upd_mem_align_dm = prove
 add_simp upd_mem_align_dm;;
 
 let binop_upd_align_dm = prove
- (`labSem_binop_upd x y z w (align_dm s) = align_dm (labSem_binop_upd
-  x y z w s)`,
+ (`labSem_binop_upd x y z w (align_dm s) = align_dm (labSem_binop_upd x y z w
+  s)`,
   CHEAT_TAC);;
 add_simp binop_upd_align_dm;;
 
@@ -460,76 +421,74 @@ let assert_align_dm = prove
   CHEAT_TAC);;
 add_simp assert_align_dm;;
 
-(* HOL4 labPropsScript.sml:517-522: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): arith_upd_align_dm *)
+(* HOL4 labPropsScript.sml:517-522: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): arith_upd_align_dm *)
 
-(* HOL4 labPropsScript.sml:524-529: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): fp_upd_align_dm *)
+(* HOL4 labPropsScript.sml:524-529: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): fp_upd_align_dm *)
 
-(* HOL4 labPropsScript.sml:531-535: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): addr_align_dm *)
+(* HOL4 labPropsScript.sml:531-535: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): addr_align_dm *)
 
-(* HOL4 labPropsScript.sml:537-570: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): mem_load_align_dm *)
+(* HOL4 labPropsScript.sml:537-570: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): mem_load_align_dm *)
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let mem_load_32_align_dm = prove
  (cake_as_vars (fun () ->
-    `mem_load_32 (labSem_state_mem s) (labSem_state_mem_domain s) be x =
-  SOME y ==>
-     mem_load_32 (labSem_state_mem s) (labSem_state_mem_domain
-       (align_dm s)) be x = SOME y`),
+    `mem_load_32 (labSem_state_mem s) (labSem_state_mem_domain s) be x = SOME y
+  ==>
+     mem_load_32 (labSem_state_mem s) (labSem_state_mem_domain (align_dm
+       s)) be x = SOME y`),
   CHEAT_TAC);;
 
 let mem_load32_align_dm = prove
  (`good_dimindex (:'a) ==>
-   mem_load32 n (a:'a asm_addr) (align_dm s) = align_dm (mem_load32
-     n a s)`,
+   mem_load32 n (a:'a asm_addr) (align_dm s) = align_dm (mem_load32 n a s)`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let mem_load_byte_aux_align_dm = prove
  (cake_as_vars (fun () ->
-    `mem_load_byte_aux (labSem_state_mem s) (labSem_state_mem_domain s)
-  be x = SOME y ==>
-     mem_load_byte_aux (labSem_state_mem s)
-       (labSem_state_mem_domain (align_dm s)) be x = SOME y`),
+    `mem_load_byte_aux (labSem_state_mem s) (labSem_state_mem_domain s) be x =
+  SOME y ==>
+     mem_load_byte_aux (labSem_state_mem s) (labSem_state_mem_domain
+       (align_dm s)) be x = SOME y`),
   CHEAT_TAC);;
 
 let mem_load_byte_align_dm = prove
  (`good_dimindex (:'a) ==>
-   mem_load_byte n (a:'a asm_addr) (align_dm s) = align_dm
-     (mem_load_byte n a s)`,
+   mem_load_byte n (a:'a asm_addr) (align_dm s) = align_dm (mem_load_byte
+     n a s)`,
   CHEAT_TAC);;
 
-(* HOL4 labPropsScript.sml:624-657: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): mem_store_align_dm *)
+(* HOL4 labPropsScript.sml:624-657: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): mem_store_align_dm *)
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let mem_store_32_align_dm = prove
  (cake_as_vars (fun () ->
     `mem_store_32 mem (labSem_state_mem_domain s) be x c = SOME y ==>
-     mem_store_32 mem (labSem_state_mem_domain (align_dm s)) be x
-       c = SOME y`),
+     mem_store_32 mem (labSem_state_mem_domain (align_dm s)) be x c =
+       SOME y`),
   CHEAT_TAC);;
 
 let mem_store32_align_dm = prove
  (`good_dimindex (:'a) ==>
-   mem_store32 n (a:'a asm_addr) (align_dm s) = align_dm
-     (mem_store32 n a s)`,
+   mem_store32 n (a:'a asm_addr) (align_dm s) = align_dm (mem_store32 n a
+     s)`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let mem_store_byte_aux_align_dm = prove
  (cake_as_vars (fun () ->
-    `mem_store_byte_aux mem (labSem_state_mem_domain s) be x c = SOME y
-  ==>
-     mem_store_byte_aux mem (labSem_state_mem_domain (align_dm
-       s)) be x c = SOME y`),
+    `mem_store_byte_aux mem (labSem_state_mem_domain s) be x c = SOME y ==>
+     mem_store_byte_aux mem (labSem_state_mem_domain (align_dm s)) be x
+       c = SOME y`),
   CHEAT_TAC);;
 
 let mem_store_byte_align_dm = prove
@@ -538,16 +497,16 @@ let mem_store_byte_align_dm = prove
      (mem_store_byte n a s)`,
   CHEAT_TAC);;
 
-(* HOL4 labPropsScript.sml:711-719: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): mem_op_align_dm *)
+(* HOL4 labPropsScript.sml:711-719: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): mem_op_align_dm *)
 
 let asm_inst_align_dm = prove
  (`good_dimindex (:'a) ==>
    asm_inst (i:'a asm_inst) (align_dm s) = align_dm (asm_inst i s)`,
   CHEAT_TAC);;
 
-(* HOL4 labPropsScript.sml:728-732: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): dec_clock_align_dm *)
+(* HOL4 labPropsScript.sml:728-732: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): dec_clock_align_dm *)
 
 let inc_pc_align_dm = prove
  (`inc_pc (align_dm s) = align_dm (inc_pc s)`,
@@ -579,30 +538,27 @@ let read_bytearray_mem_load_byte_aux_align_dm = prove
 add_simp read_bytearray_mem_load_byte_aux_align_dm;;
 
 let write_bytearray_align_dm = prove
- (`!y x. write_bytearray x y (labSem_state_mem s)
-  (labSem_state_mem_domain (align_dm s)) (labSem_state_be s) =
-   write_bytearray x y (labSem_state_mem s)
-     (labSem_state_mem_domain s) (labSem_state_be s)`,
+ (`!y x. write_bytearray x y (labSem_state_mem s) (labSem_state_mem_domain
+  (align_dm s)) (labSem_state_be s) =
+   write_bytearray x y (labSem_state_mem s) (labSem_state_mem_domain s)
+     (labSem_state_be s)`,
   CHEAT_TAC);;
 add_simp write_bytearray_align_dm;;
 
 let share_mem_op_align_dm_simp = prove
- (`(share_mem_op m r a s = NONE ==> share_mem_op m r a (align_dm s) =
-  NONE) /\
+ (`(share_mem_op m r a s = NONE ==> share_mem_op m r a (align_dm s) = NONE) /\
    (share_mem_op m r a s = SOME (FFI_final f,s') ==>
-   share_mem_op m r a (align_dm s) = SOME (FFI_final f,align_dm s'))
-     /\
+   share_mem_op m r a (align_dm s) = SOME (FFI_final f,align_dm s')) /\
    (share_mem_op m r a s = SOME (FFI_return fs l,s') ==>
-   share_mem_op m r a (align_dm s) = SOME (FFI_return fs l,align_dm
-     s'))`,
+   share_mem_op m r a (align_dm s) = SOME (FFI_return fs l,align_dm s'))`,
   CHEAT_TAC);;
 add_simp share_mem_op_align_dm_simp;;
 
-(* HOL4 labPropsScript.sml:803-849: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): evaluate_align_dm *)
+(* HOL4 labPropsScript.sml:803-849: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): evaluate_align_dm *)
 
-(* HOL4 labPropsScript.sml:851-866: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): implements_align_dm *)
+(* HOL4 labPropsScript.sml:851-866: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): implements_align_dm *)
 
 (** align_sdm **)
 
@@ -622,27 +578,21 @@ let align_sdm_const = prove
       (align_sdm s) = labSem_state_len_reg s /\ labSem_state_link_reg
       (align_sdm s) = labSem_state_link_reg s /\ labSem_state_ptr_reg
       (align_sdm s) = labSem_state_ptr_reg s /\ labSem_state_ptr2_reg
-      (align_sdm s) = labSem_state_ptr2_reg s
-        /\ labSem_state_len2_reg
+      (align_sdm s) = labSem_state_ptr2_reg s /\ labSem_state_len2_reg
       (align_sdm s) = labSem_state_len2_reg s /\ labSem_state_io_regs
-      (align_sdm s) = labSem_state_io_regs s
-        /\ labSem_state_io_fp_regs
-      (align_sdm s) = labSem_state_io_fp_regs s
-        /\ labSem_state_code_buffer
-      (align_sdm s) = labSem_state_code_buffer s
-        /\ labSem_state_compile
-      (align_sdm s) = labSem_state_compile s
-        /\ labSem_state_compile_oracle
-      (align_sdm s) = labSem_state_compile_oracle s
-        /\ labSem_state_ffi
+      (align_sdm s) = labSem_state_io_regs s /\ labSem_state_io_fp_regs
+      (align_sdm s) = labSem_state_io_fp_regs s /\ labSem_state_code_buffer
+      (align_sdm s) = labSem_state_code_buffer s /\ labSem_state_compile
+      (align_sdm s) = labSem_state_compile s /\ labSem_state_compile_oracle
+      (align_sdm s) = labSem_state_compile_oracle s /\ labSem_state_ffi
       (align_sdm s) = labSem_state_ffi s /\ labSem_state_failed
       (align_sdm s) = labSem_state_failed s`,
   CHEAT_TAC);;
 add_simp align_sdm_const;;
 
 let align_sdm_with_clock = prove
- (`align_sdm (labSem_state_clock_fupd (K k) s) =
-  labSem_state_clock_fupd (K k) (align_sdm s)`,
+ (`align_sdm (labSem_state_clock_fupd (K k) s) = labSem_state_clock_fupd (K
+  k) (align_sdm s)`,
   CHEAT_TAC);;
 
 let asm_fetch_align_sdm = prove
@@ -666,8 +616,8 @@ let upd_mem_align_sdm = prove
 add_simp upd_mem_align_sdm;;
 
 let binop_upd_align_sdm = prove
- (`labSem_binop_upd x y z w (align_sdm s) = align_sdm
-  (labSem_binop_upd x y z w s)`,
+ (`labSem_binop_upd x y z w (align_sdm s) = align_sdm (labSem_binop_upd x y z
+  w s)`,
   CHEAT_TAC);;
 add_simp binop_upd_align_sdm;;
 
@@ -681,50 +631,49 @@ let assert_align_sdm = prove
   CHEAT_TAC);;
 add_simp assert_align_sdm;;
 
-(* HOL4 labPropsScript.sml:946-951: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): arith_upd_align_sdm *)
+(* HOL4 labPropsScript.sml:946-951: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): arith_upd_align_sdm *)
 
-(* HOL4 labPropsScript.sml:953-958: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): fp_upd_align_sdm *)
+(* HOL4 labPropsScript.sml:953-958: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): fp_upd_align_sdm *)
 
-(* HOL4 labPropsScript.sml:960-964: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): addr_align_sdm *)
+(* HOL4 labPropsScript.sml:960-964: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): addr_align_sdm *)
 
-(* HOL4 labPropsScript.sml:966-971: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): mem_load_align_sdm *)
+(* HOL4 labPropsScript.sml:966-971: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): mem_load_align_sdm *)
 
 let mem_load32_align_sdm = prove
- (`mem_load32 n (a:'a asm_addr) (align_sdm s) = align_sdm (mem_load32
-  n a s)`,
+ (`mem_load32 n (a:'a asm_addr) (align_sdm s) = align_sdm (mem_load32 n a s)`,
   CHEAT_TAC);;
 
 let mem_load_byte_align_sdm = prove
- (`mem_load_byte n (a:'a asm_addr) (align_sdm s) = align_sdm
-  (mem_load_byte n a s)`,
+ (`mem_load_byte n (a:'a asm_addr) (align_sdm s) = align_sdm (mem_load_byte n
+  a s)`,
   CHEAT_TAC);;
 
-(* HOL4 labPropsScript.sml:987-992: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): mem_store_align_sdm *)
+(* HOL4 labPropsScript.sml:987-992: a theorem whose statement HOL Light does
+   not read (tools/unstated.py): mem_store_align_sdm *)
 
 let mem_store32_align_sdm = prove
- (`mem_store32 n (a:'a asm_addr) (align_sdm s) = align_sdm
-  (mem_store32 n a s)`,
+ (`mem_store32 n (a:'a asm_addr) (align_sdm s) = align_sdm (mem_store32 n a
+  s)`,
   CHEAT_TAC);;
 
 let mem_store_byte_align_sdm = prove
- (`mem_store_byte n (a:'a asm_addr) (align_sdm s) = align_sdm
-  (mem_store_byte n a s)`,
+ (`mem_store_byte n (a:'a asm_addr) (align_sdm s) = align_sdm (mem_store_byte
+  n a s)`,
   CHEAT_TAC);;
 
-(* HOL4 labPropsScript.sml:1008-1015: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): mem_op_align_sdm *)
+(* HOL4 labPropsScript.sml:1008-1015: a theorem whose statement HOL Light
+   does not read (tools/unstated.py): mem_op_align_sdm *)
 
 let asm_inst_align_sdm = prove
  (`asm_inst (i:'a asm_inst) (align_sdm s) = align_sdm (asm_inst i s)`,
   CHEAT_TAC);;
 
-(* HOL4 labPropsScript.sml:1023-1027: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): dec_clock_align_sdm *)
+(* HOL4 labPropsScript.sml:1023-1027: a theorem whose statement HOL Light
+   does not read (tools/unstated.py): dec_clock_align_sdm *)
 
 let inc_pc_align_sdm = prove
  (`inc_pc (align_sdm s) = align_sdm (inc_pc s)`,
@@ -756,17 +705,17 @@ let read_bytearray_mem_load_byte_aux_align_sdm = prove
 add_simp read_bytearray_mem_load_byte_aux_align_sdm;;
 
 let write_bytearray_align_sdm = prove
- (`!y x. write_bytearray x y (labSem_state_mem s)
-  (labSem_state_mem_domain (align_sdm s)) (labSem_state_be s) =
-   write_bytearray x y (labSem_state_mem s)
-     (labSem_state_mem_domain s) (labSem_state_be s)`,
+ (`!y x. write_bytearray x y (labSem_state_mem s) (labSem_state_mem_domain
+  (align_sdm s)) (labSem_state_be s) =
+   write_bytearray x y (labSem_state_mem s) (labSem_state_mem_domain s)
+     (labSem_state_be s)`,
   CHEAT_TAC);;
 add_simp write_bytearray_align_sdm;;
 
 let align_sdm_aligned = prove
  (`good_dimindex (:'a) ==>
-   (((x:'a word) IN labSem_state_shared_mem_domain s /\ w2n x MOD
-     (dimindex (:'a) DIV 8) = 0) <=>
+   (((x:'a word) IN labSem_state_shared_mem_domain s /\ w2n x MOD (dimindex
+     (:'a) DIV 8) = 0) <=>
      x IN labSem_state_shared_mem_domain (align_sdm s))`,
   CHEAT_TAC);;
 
@@ -795,36 +744,35 @@ let share_mem_op_align_sdm_simp = prove
   CHEAT_TAC);;
 add_simp share_mem_op_align_sdm_simp;;
 
-(* HOL4 labPropsScript.sml:1174-1226: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): evaluate_align_sdm *)
+(* HOL4 labPropsScript.sml:1174-1226: a theorem whose statement HOL Light
+   does not read (tools/unstated.py): evaluate_align_sdm *)
 
-(* HOL4 labPropsScript.sml:1228-1243: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): implements_align_sdm *)
+(* HOL4 labPropsScript.sml:1228-1243: a theorem whose statement HOL Light
+   does not read (tools/unstated.py): implements_align_sdm *)
 
 
 (* asm_ok checks coming into lab_to_target *)
 let line_ok_pre_def = new_definition
   `line_ok_pre c x2 =
-        match (c,x2) with
-          ((c:'a asm_config),labLang_Asm b bytes l) -> asm_ok
-            (cbw_to_asm b) c
-        | (c,_20) -> T`;;
+     match (c,x2) with
+       ((c:'a asm_config),labLang_Asm b bytes l) -> asm_ok (cbw_to_asm b) c
+     | (c,_) -> T`;;
 
 let sec_ok_pre_def = define_general
   [`sec_ok_pre c (Section k ls) <=>
      ALL (line_ok_pre c) ls`];;
 add_simp sec_ok_pre_def;;
 
-(* HOL4 labPropsScript.sml:1257: the overload all_enc_ok_pre, which
-   the port expands *)
+(* HOL4 labPropsScript.sml:1257: the overload all_enc_ok_pre, which the port
+   expands *)
 
 (* invariant: labels have correct section number and are non-zero *)
 
 let sec_label_ok_def = new_definition
   `sec_label_ok k x2 =
-        match x2 with
-          labLang_Label l1 l2 len -> l1 = k /\ ~(l2 = 0)
-        | _21 -> T`;;
+     match x2 with
+       labLang_Label l1 l2 len -> l1 = k /\ ~(l2 = 0)
+     | _ -> T`;;
 add_simp sec_label_ok_def;;
 
 let sec_labels_ok_def = define_general
@@ -855,8 +803,7 @@ let get_code_labels_extract_labels = prove
    ALL sec_labels_ok code ==>
    labProps_get_code_labels code =
    IMAGE (\s. (Section_num s,0)) (set_of_list code) UNION
-   set_of_list (FLAT (MAP (labProps_extract_labels o Section_lines)
-     code))`,
+   set_of_list (FLAT (MAP (labProps_extract_labels o Section_lines) code))`,
   CHEAT_TAC);;
 
 let no_install_def = new_definition

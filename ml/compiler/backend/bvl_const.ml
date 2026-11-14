@@ -31,17 +31,17 @@ let _ = do_list hide_constant ["pmatch"];;
 
 let dest_simple_def = new_definition
   `dest_simple x1 =
-        match x1 with
-          bvl_Op (closLang_IntOp (closLang_Const i)) xs -> (if NULL
-            xs then SOME i else NONE)
-        | _1 -> NONE`;;
+     match x1 with
+       bvl_Op (closLang_IntOp (closLang_Const i)) xs -> if NULL xs then SOME
+         i else NONE
+     | _ -> NONE`;;
 add_simp dest_simple_def;;
 
 let dest_simple_pmatch = prove
  (`!op. dest_simple op =
-   (match op with
-     bvl_Op (closLang_IntOp (closLang_Const i)) [] -> SOME i | _2
-       -> NONE)`,
+   match op with
+     bvl_Op (closLang_IntOp (closLang_Const i)) [] -> SOME i
+   | _ -> NONE`,
   (* HOL4's pmatch is the match of HOL Light as well, so the two
      sides differ in one thing only: the pattern of the source
      matches any list and asks NULL of it, and this one matches the
@@ -51,234 +51,255 @@ let dest_simple_pmatch = prove
 
 let case_op_const_def = new_definition
   `case_op_const exp =
-       (match exp with (bvl_Op op [x1; bvl_Op (closLang_IntOp
-         (closLang_Const n2)) l]) -> (if NULL l then SOME (op,x1,n2)
-         else NONE) | _3 -> NONE)`;;
+       match exp with (bvl_Op op [x1; bvl_Op (closLang_IntOp (closLang_Const
+         n2)) l]) -> if NULL l then SOME (op,x1,n2) else NONE
+       | _ -> NONE`;;
 
 let case_op_const_pmatch = prove
  (`!exp. case_op_const exp =
-   (match exp with (bvl_Op op [x1; bvl_Op (closLang_IntOp
-     (closLang_Const n2)) []]) -> SOME (op,x1,n2) | _4 -> NONE)`,
+   match exp with (bvl_Op op [x1; bvl_Op (closLang_IntOp (closLang_Const
+     n2)) []]) -> SOME (op,x1,n2)
+     | _ -> NONE`,
   (GEN_TAC THEN REWRITE_TAC[case_op_const_def] THEN
    EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
 
 let SmartOp_flip_def = new_definition
   `SmartOp_flip op x1 x2 =
-     (match (dest_simple x1) with (SOME i) ->
-         (if MEM op [closLang_IntOp closLang_Add; closLang_IntOp
-           closLang_Mult] then (op,x2,x1) else if op = closLang_IntOp
-           closLang_Sub then (closLang_IntOp closLang_Add,x2,bvl_Op
-           (closLang_IntOp (closLang_Const (--i))) []) else
-           (op,x1,x2)) | _5 -> (op,x1,x2))`;;
+     match (dest_simple x1) with (SOME i) ->
+         if MEM op [closLang_IntOp closLang_Add; closLang_IntOp
+           closLang_Mult] then (op,x2,x1)
+         else if op = closLang_IntOp closLang_Sub then (closLang_IntOp
+           closLang_Add,x2,bvl_Op (closLang_IntOp (closLang_Const (--i))) [])
+         else (op,x1,x2)
+     | _ -> (op,x1,x2)`;;
 
 let SmartOp_flip_pmatch = prove
  (`!op x1 x2. SmartOp_flip op x1 x2 =
-     (match (dest_simple x1) with (SOME i) ->
-         (if MEM op [closLang_IntOp closLang_Add; closLang_IntOp
-           closLang_Mult] then (op,x2,x1) else if op = closLang_IntOp
-           closLang_Sub then (closLang_IntOp closLang_Add,x2,bvl_Op
-           (closLang_IntOp (closLang_Const (--i))) []) else
-           (op,x1,x2)) | _6 -> (op,x1,x2))`,
+     match (dest_simple x1) with (SOME i) ->
+         if MEM op [closLang_IntOp closLang_Add; closLang_IntOp
+           closLang_Mult] then (op,x2,x1)
+         else if op = closLang_IntOp closLang_Sub then (closLang_IntOp
+           closLang_Add,x2,bvl_Op (closLang_IntOp (closLang_Const (--i))) [])
+         else (op,x1,x2)
+     | _ -> (op,x1,x2)`,
   (* this one has no NULL in it, so the two sides are the same
      term and the definition is the whole proof *)
   (REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp_flip_def]));;
 
 let SmartOp2_def = new_definition
   `SmartOp2 (op,(x1:bvl_exp),(x2:bvl_exp)) =
-     (let mk_add_const = (\x1 c2.
-       if c2 = (&0) then x1 else bvl_Op (closLang_IntOp closLang_Add)
-         [x1; bvl_Op (closLang_IntOp (closLang_Const c2)) []]) in
+     let mk_add_const = (\x1 c2.
+       if c2 = (&0) then x1
+       else bvl_Op (closLang_IntOp closLang_Add) [x1; bvl_Op (closLang_IntOp
+         (closLang_Const c2)) []]) in
      let mk_add = (\x1 x2.
        let default = bvl_Op (closLang_IntOp closLang_Add) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
-                 (if op = closLang_IntOp closLang_Add then
-                   mk_add_const x11 (n2 + n12) else if op =
-                   closLang_IntOp closLang_Sub then bvl_Op
-                   (closLang_IntOp closLang_Sub) [x11; bvl_Op
-                   (closLang_IntOp (closLang_Const (n2 + n12))) []] else
-                   default) | _7 ->
+                 if op = closLang_IntOp closLang_Add then mk_add_const x11
+                   (n2 + n12)
+                 else if op = closLang_IntOp closLang_Sub then bvl_Op
+                   (closLang_IntOp closLang_Sub) [x11; bvl_Op (closLang_IntOp
+                   (closLang_Const (n2 + n12))) []]
+                 else default
+             | _ ->
                  (match (dest_simple x1) with SOME n1 -> bvl_Op
-                   (closLang_IntOp (closLang_Const (n2 + n1))) [] | _8
-                   -> mk_add_const x1 n2)) | _9 ->
+                   (closLang_IntOp (closLang_Const (n2 + n1))) []
+                 | _ -> mk_add_const x1 n2))
+         | _ ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
-                 (if op1 = closLang_IntOp closLang_Add /\ op2 =
+                 if op1 = closLang_IntOp closLang_Add /\ op2 =
                    closLang_IntOp closLang_Add then
-                   mk_add_const (bvl_Op (closLang_IntOp closLang_Add)
-                     [x11; x21]) (n22 + n12) else if op1 =
-                     closLang_IntOp closLang_Add /\ op2 = closLang_IntOp
-                     closLang_Sub then
+                   mk_add_const (bvl_Op (closLang_IntOp closLang_Add) [x11;
+                     x21]) (n22 + n12)
+                 else if op1 = closLang_IntOp closLang_Add /\ op2 =
+                   closLang_IntOp closLang_Sub then
                    bvl_Op (closLang_IntOp closLang_Sub) [bvl_Op
                      (closLang_IntOp closLang_Sub) [x11; x21]; bvl_Op
                      (closLang_IntOp (closLang_Const (n22 + n12))) []]
-                     else if op1 = closLang_IntOp closLang_Sub /\ op2 =
-                     closLang_IntOp closLang_Add then
-                   mk_add_const (bvl_Op (closLang_IntOp closLang_Sub)
-                     [x11; x21]) (n22 + n12) else default) | _10 ->
-                     default)) in
+                 else if op1 = closLang_IntOp closLang_Sub /\ op2 =
+                   closLang_IntOp closLang_Add then
+                   mk_add_const (bvl_Op (closLang_IntOp closLang_Sub) [x11;
+                     x21]) (n22 + n12)
+                 else default
+             | _ -> default)) in
      let mk_sub = (\x1 x2.
        let default = bvl_Op (closLang_IntOp closLang_Sub) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
-                 (if op = closLang_IntOp closLang_Add then bvl_Op
-                   (closLang_IntOp closLang_Sub) [x11; bvl_Op
-                   (closLang_IntOp (closLang_Const (n2 - n12))) []] else
-                   if op = closLang_IntOp closLang_Sub then mk_add_const
-                   x11 (n2 - n12) else default) | _11 ->
+                 if op = closLang_IntOp closLang_Add then bvl_Op
+                   (closLang_IntOp closLang_Sub) [x11; bvl_Op (closLang_IntOp
+                   (closLang_Const (n2 - n12))) []]
+                 else if op = closLang_IntOp closLang_Sub then mk_add_const
+                   x11 (n2 - n12)
+                 else default
+             | _ ->
                  (match (dest_simple x1) with SOME n1 -> bvl_Op
-                   (closLang_IntOp (closLang_Const (n2 - n1))) [] | _12
-                   -> default)) | _13 ->
+                   (closLang_IntOp (closLang_Const (n2 - n1))) []
+                 | _ -> default))
+         | _ ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
-                 (if op1 = closLang_IntOp closLang_Add /\ op2 =
+                 if op1 = closLang_IntOp closLang_Add /\ op2 =
                    closLang_IntOp closLang_Add then
                    bvl_Op (closLang_IntOp closLang_Add) [bvl_Op
                      (closLang_IntOp closLang_Sub) [x11; x21]; bvl_Op
                      (closLang_IntOp (closLang_Const (n22 - n12))) []]
-                     else if op1 = closLang_IntOp closLang_Add /\ op2 =
-                     closLang_IntOp closLang_Sub then
+                 else if op1 = closLang_IntOp closLang_Add /\ op2 =
+                   closLang_IntOp closLang_Sub then
                    bvl_Op (closLang_IntOp closLang_Sub) [bvl_Op
                      (closLang_IntOp closLang_Add) [x11; x21]; bvl_Op
                      (closLang_IntOp (closLang_Const (n22 - n12))) []]
-                     else if op1 = closLang_IntOp closLang_Sub /\ op2 =
-                     closLang_IntOp closLang_Add then
-                   mk_add_const (bvl_Op (closLang_IntOp closLang_Add)
-                     [x11; x21]) (n22 - n12) else default) | _14 ->
-                     default)) in
+                 else if op1 = closLang_IntOp closLang_Sub /\ op2 =
+                   closLang_IntOp closLang_Add then
+                   mk_add_const (bvl_Op (closLang_IntOp closLang_Add) [x11;
+                     x21]) (n22 - n12)
+                 else default
+             | _ -> default)) in
      let mk_mul = (\x1 x2.
-       let default = bvl_Op (closLang_IntOp closLang_Mult) [x1; x2]
-         in
+       let default = bvl_Op (closLang_IntOp closLang_Mult) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
-                 (if op = closLang_IntOp closLang_Mult then bvl_Op
-                   (closLang_IntOp closLang_Mult) [x11; bvl_Op
-                   (closLang_IntOp (closLang_Const (n2 * n12))) []] else
-                   default) | _15 ->
+                 if op = closLang_IntOp closLang_Mult then bvl_Op
+                   (closLang_IntOp closLang_Mult) [x11; bvl_Op (closLang_IntOp
+                   (closLang_Const (n2 * n12))) []]
+                 else default
+             | _ ->
                  (match (dest_simple x1) with SOME n1 -> bvl_Op
-                   (closLang_IntOp (closLang_Const (n2 * n1))) [] | _16
-                   ->
-                     (if n2 = (&1) then x1 else if n2 = --(&1) then
-                       mk_sub x1 (bvl_Op (closLang_IntOp (closLang_Const
-                       (&0))) []) else default))) | _17 ->
+                   (closLang_IntOp (closLang_Const (n2 * n1))) []
+                 | _ ->
+                     if n2 = (&1) then x1
+                     else if n2 = --(&1) then mk_sub x1 (bvl_Op
+                       (closLang_IntOp (closLang_Const (&0))) [])
+                     else default))
+         | _ ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
-                 (if op1 = closLang_IntOp closLang_Mult /\ op2 =
+                 if op1 = closLang_IntOp closLang_Mult /\ op2 =
                    closLang_IntOp closLang_Mult then
                    bvl_Op (closLang_IntOp closLang_Mult) [bvl_Op
-                     (closLang_IntOp (closLang_Const (n22 * n12))) [];
-                     bvl_Op (closLang_IntOp closLang_Mult) [x11; x21]]
-                     else default) | _18 -> default)) in
+                     (closLang_IntOp (closLang_Const (n22 * n12))) []; bvl_Op
+                     (closLang_IntOp closLang_Mult) [x11; x21]]
+                 else default
+             | _ -> default)) in
      let default = bvl_Op op [x1; x2] in
      if op = closLang_IntOp closLang_Add then
-       mk_add x1 x2 else if op = closLang_IntOp closLang_Sub then
-       mk_sub x1 x2 else if op = closLang_IntOp closLang_Mult then
-       mk_mul x1 x2 else if MEM op [closLang_IntOp closLang_Div;
-         closLang_IntOp closLang_Mod; closLang_IntOp closLang_Less;
-         closLang_IntOp closLang_LessEq; closLang_IntOp
-         closLang_Greater; closLang_IntOp closLang_GreaterEq] then
-       match (dest_simple x1,dest_simple x2) with (SOME x1,SOME
-         (x2:int)) ->
-           (match op with closLang_IntOp closLang_Div -> (if x1 =
-             (&0) then default else bvl_Op (closLang_IntOp
-             (closLang_Const (x2 / x1))) []) | closLang_IntOp
-             closLang_Mod -> (if x1 = (&0) then default else bvl_Op
-             (closLang_IntOp (closLang_Const (x2 % x1))) []) |
-             closLang_IntOp closLang_Less -> bvl_Bool (x2 < x1) |
-             closLang_IntOp closLang_LessEq -> bvl_Bool (x2 <= x1) |
-             closLang_IntOp closLang_Greater -> bvl_Bool (x2 > x1) |
-             closLang_IntOp closLang_GreaterEq -> bvl_Bool (x2 >= x1) |
-             _19 -> default) | _20 -> default else if op =
-             closLang_BlockOp closLang_Equal then
+       mk_add x1 x2
+     else if op = closLang_IntOp closLang_Sub then
+       mk_sub x1 x2
+     else if op = closLang_IntOp closLang_Mult then
+       mk_mul x1 x2
+     else if MEM op [closLang_IntOp closLang_Div; closLang_IntOp
+       closLang_Mod; closLang_IntOp closLang_Less; closLang_IntOp
+       closLang_LessEq; closLang_IntOp closLang_Greater; closLang_IntOp
+       closLang_GreaterEq] then
+       match (dest_simple x1,dest_simple x2) with (SOME x1,SOME (x2:int)) ->
+           (match op with closLang_IntOp closLang_Div -> if x1 = (&0) then
+             default else bvl_Op (closLang_IntOp (closLang_Const (x2 / x1))) []
+            | closLang_IntOp closLang_Mod -> if x1 = (&0) then default else
+              bvl_Op (closLang_IntOp (closLang_Const (x2 % x1))) []
+            | closLang_IntOp closLang_Less -> bvl_Bool (x2 < x1)
+            | closLang_IntOp closLang_LessEq -> bvl_Bool (x2 <= x1)
+            | closLang_IntOp closLang_Greater -> bvl_Bool (x2 > x1)
+            | closLang_IntOp closLang_GreaterEq -> bvl_Bool (x2 >= x1)
+            | _ -> default)
+       | _ -> default
+     else if op = closLang_BlockOp closLang_Equal then
        match (dest_simple x1,dest_simple x2) with (SOME i,SOME j) ->
-         bvl_Bool (j = i) | (SOME i,_21) -> bvl_Op (closLang_BlockOp
-         (closLang_EqualConst (closLang_Int i))) [x2] | (_22,SOME i) ->
-         bvl_Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
-         i))) [x1] | _23 -> default else if op = closLang_MemOp
-         closLang_El then
-       match dest_simple x1 with SOME i -> (if i < (&0) then
-         default else bvl_Op (closLang_BlockOp (closLang_ElemAt
-         (num_of_int i))) [x2]) | _24 -> default else default)`;;
+         bvl_Bool (j = i)
+       | (SOME i,_) -> bvl_Op (closLang_BlockOp (closLang_EqualConst
+         (closLang_Int i))) [x2]
+       | (_,SOME i) -> bvl_Op (closLang_BlockOp (closLang_EqualConst
+         (closLang_Int i))) [x1]
+       | _ -> default
+     else if op = closLang_MemOp closLang_El then
+       match dest_simple x1 with SOME i -> if i < (&0) then default else
+         bvl_Op (closLang_BlockOp (closLang_ElemAt (num_of_int i))) [x2]
+       | _ -> default
+     else default`;;
 
 (* NOTE: the space after case and pmatch is important *)
 (* HOL4 bvl_constScript.sml:196-198: ML code, not ported *)
 
-(* HOL4 bvl_constScript.sml:200-205: a theorem whose statement the
-   port cannot state yet: SmartOp2_pmatch *)
+(* HOL4 bvl_constScript.sml:200-205: a theorem whose statement the port
+   cannot state yet: SmartOp2_pmatch *)
 (* HOL4 bvl_constScript.sml:206: ML code, not ported *)
 
 
 let dest_EqualInt_def = new_definition
   `dest_EqualInt x1 =
-      match x1 with
-        closLang_BlockOp (closLang_EqualConst (closLang_Int i)) ->
-          SOME i
-      | _25 -> NONE`;;
+   match x1 with
+     closLang_BlockOp (closLang_EqualConst (closLang_Int i)) -> SOME i
+   | _ -> NONE`;;
 
 let dest_EqualInt_pmatch = prove
- (`dest_EqualInt x = (match x with closLang_BlockOp
-  (closLang_EqualConst (closLang_Int i)) -> SOME i | _26 -> NONE)`,
+ (`dest_EqualInt x = match x with closLang_BlockOp (closLang_EqualConst
+  (closLang_Int i)) -> SOME i | _ -> NONE`,
   (REWRITE_TAC[dest_EqualInt_def]));;
 
 let SmartOp1_def = new_definition
   `SmartOp1 op x =
-     (match dest_EqualInt op with NONE -> bvl_Op op [x] | SOME i ->
-       (match dest_simple x with NONE -> bvl_Op op [x] | SOME j ->
-         bvl_Bool (j = i)))`;;
+     match dest_EqualInt op with NONE -> bvl_Op op [x]
+     | SOME i ->
+       (match dest_simple x with NONE -> bvl_Op op [x]
+       | SOME j -> bvl_Bool (j = i))`;;
 
 
 let SmartOp_def = new_definition
   `bvl_const_SmartOp op xs =
-     (match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2) |
-       [x] -> SmartOp1 op x | _27 -> bvl_Op op xs)`;;
+     match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2)
+     | [x] -> SmartOp1 op x
+     | _ -> bvl_Op op xs`;;
 
 let SmartOp_pmatch = prove
  (`!op xs. bvl_const_SmartOp op xs =
-   (match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2) |
-     [x] -> SmartOp1 op x | _28 -> bvl_Op op xs)`,
+   match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2)
+   | [x] -> SmartOp1 op x
+   | _ -> bvl_Op op xs`,
   (REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp_def]));;
 
 let bvl_const_extract_def = new_definition
   `bvl_const_extract x1 ys =
-        match x1 with
-          ((bvl_Var n):bvl_exp) -> SOME ((bvl_Var (n + LENGTH ys +
-            1)):bvl_exp)
-        | (bvl_Op (closLang_IntOp (closLang_Const i)) xs) -> SOME
-          (bvl_Op (closLang_IntOp (closLang_Const i)) [])
-        | (bvl_Op (closLang_BlockOp (closLang_Cons t)) xs) ->
-       (if NULL xs then SOME (bvl_Op (closLang_BlockOp (closLang_Cons
-         t)) []) else NONE)
-        | _29 -> NONE`;;
+     match x1 with
+       ((bvl_Var n):bvl_exp) -> SOME ((bvl_Var (n + LENGTH ys + 1)):bvl_exp)
+     | bvl_Op (closLang_IntOp (closLang_Const i)) xs -> SOME (bvl_Op
+       (closLang_IntOp (closLang_Const i)) [])
+     | bvl_Op (closLang_BlockOp (closLang_Cons t)) xs ->
+       if NULL xs then SOME (bvl_Op (closLang_BlockOp (closLang_Cons t)) [])
+         else NONE
+     | _ -> NONE`;;
 
 let extract_pmatch = prove
  (`!op ys. bvl_const_extract op ys =
-   (match op with
-     ((bvl_Var n):bvl_exp) -> SOME ((bvl_Var (n + LENGTH ys +
-       1)):bvl_exp) | bvl_Op (closLang_IntOp (closLang_Const i)) xs ->
-       SOME (bvl_Op (closLang_IntOp (closLang_Const i)) []) | bvl_Op
-       (closLang_BlockOp (closLang_Cons t)) [] -> SOME (bvl_Op
-       (closLang_BlockOp (closLang_Cons t)) []) | _30 -> NONE)`,
+   match op with
+     ((bvl_Var n):bvl_exp) -> SOME ((bvl_Var (n + LENGTH ys + 1)):bvl_exp)
+   | bvl_Op (closLang_IntOp (closLang_Const i)) xs -> SOME (bvl_Op
+     (closLang_IntOp (closLang_Const i)) [])
+   | bvl_Op (closLang_BlockOp (closLang_Cons t)) [] -> SOME (bvl_Op
+     (closLang_BlockOp (closLang_Cons t)) [])
+   | _ -> NONE`,
   (REPEAT GEN_TAC THEN REWRITE_TAC[bvl_const_extract_def] THEN
    EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
 
 let bvl_const_extract_list_def,bvl_const_extract_list_ind = define_rec
   [`bvl_const_extract_list [] = []`;
-   `bvl_const_extract_list (CONS x xs) = CONS (bvl_const_extract x
-    xs) (bvl_const_extract_list xs)`];;
+   `bvl_const_extract_list (CONS x xs) = CONS (bvl_const_extract x xs)
+    (bvl_const_extract_list xs)`];;
 
 let bvl_const_delete_var_def = new_definition
   `bvl_const_delete_var x =
-        match x with
-          ((bvl_Var n):bvl_exp) -> bvl_Op (closLang_IntOp
-            (closLang_Const (&0))) []
-        | x -> x`;;
+     match x with
+       ((bvl_Var n):bvl_exp) -> bvl_Op (closLang_IntOp (closLang_Const
+         (&0))) []
+     | x -> x`;;
 
 let delete_var_pmatch = prove
  (`!op.
    bvl_const_delete_var op =
-     (match op with
-       bvl_Var n -> bvl_Op (closLang_IntOp (closLang_Const (&0)))
-         [] | x -> x)`,
+     match op with
+       bvl_Var n -> bvl_Op (closLang_IntOp (closLang_Const (&0))) []
+     | x -> x`,
   (GEN_TAC THEN REWRITE_TAC[bvl_const_delete_var_def]));;
 
 let _ = size_thms "bvl_exp";;
@@ -288,83 +309,81 @@ let _ = size_thms "bvl_exp";;
 let bvl_const_compile_def,bvl_const_compile_ind = define_wf_cheat
   `MEASURE (list_size bvl_exp_size o SND)`
   [`bvl_const_compile env [] = []`;
-   `bvl_const_compile env (CONS x (CONS y xs)) = APPEND
-    (bvl_const_compile env [x]) (bvl_const_compile env (CONS y xs))`;
-   `bvl_const_compile env [(bvl_Var v:bvl_exp)] =
-         (match (\l n. oEL n l) env v with NONE -> [bvl_Var v] |
-             SOME NONE -> [bvl_Var v] | SOME (SOME (bvl_Var i)) ->
-             [bvl_Var (v + i)] | SOME (SOME x) -> [x])`;
-   `bvl_const_compile env [(bvl_If x1 x2 x3:bvl_exp)] =
-         (let y1 = HD (bvl_const_compile env [x1]) in
+   `bvl_const_compile env (CONS x (CONS y xs)) = APPEND (bvl_const_compile
+    env [x]) (bvl_const_compile env (CONS y xs))`;
+   `bvl_const_compile env [bvl_Var v] =
+         match (\l n. oEL n l) env v with NONE -> [bvl_Var v]
+         | SOME NONE -> [bvl_Var v]
+         | SOME (SOME (bvl_Var i)) -> [bvl_Var (v + i)]
+         | SOME (SOME x) -> [x]`;
+   `bvl_const_compile env [bvl_If x1 x2 x3] =
+         let y1 = HD (bvl_const_compile env [x1]) in
          let y2 = HD (bvl_const_compile env [x2]) in
          let y3 = HD (bvl_const_compile env [x3]) in
-           if y1 = bvl_Bool T then [y2] else
-           if y1 = bvl_Bool F then [y3] else
-             [bvl_If y1 y2 y3])`;
-   `bvl_const_compile env [(bvl_Let xs x2:bvl_exp)] =
-         (let ys = bvl_const_compile env xs in
+           if y1 = bvl_Bool T then [y2] else if y1 = bvl_Bool F then
+               [y3] else [bvl_If y1 y2 y3]`;
+   `bvl_const_compile env [bvl_Let xs x2] =
+         let ys = bvl_const_compile env xs in
            [bvl_Let (MAP bvl_const_delete_var ys)
-                (HD (bvl_const_compile (APPEND
-                    (bvl_const_extract_list ys) env) [x2]))])`;
-   `bvl_const_compile env [(bvl_Handle x1 x2:bvl_exp)] =
+                (HD (bvl_const_compile (APPEND (bvl_const_extract_list
+                    ys) env) [x2]))]`;
+   `bvl_const_compile env [bvl_Handle x1 x2] =
          [bvl_Handle (HD (bvl_const_compile env [x1])) (HD
              (bvl_const_compile (CONS NONE env) [x2]))]`;
-   `bvl_const_compile env [(bvl_Raise x1:bvl_exp)] =
+   `bvl_const_compile env [bvl_Raise x1] =
          [bvl_Raise (HD (bvl_const_compile env [x1]))]`;
-   `bvl_const_compile env [(bvl_Op op xs:bvl_exp)] =
-    [bvl_const_SmartOp op (bvl_const_compile env xs)]`;
-   `bvl_const_compile env [(bvl_Tick x:bvl_exp)] = [bvl_Tick (HD
-    (bvl_const_compile env [x]))]`;
-   `bvl_const_compile env [(bvl_Force loc v:bvl_exp)] =
-         (match (\l n. oEL n l) env v with NONE -> [bvl_Force loc
-             v] | SOME NONE -> [bvl_Force loc v] | SOME (SOME
-             (bvl_Var i)) -> [bvl_Force loc (v + i)] | SOME (SOME x)
-             -> [bvl_Force loc v])`;
-   `bvl_const_compile env [(bvl_Call t dest xs:bvl_exp)] =
-    [bvl_Call t dest (bvl_const_compile env xs)]`];;
+   `bvl_const_compile env [bvl_Op op xs] = [bvl_const_SmartOp op
+    (bvl_const_compile env xs)]`;
+   `bvl_const_compile env [bvl_Tick x] = [bvl_Tick (HD (bvl_const_compile
+    env [x]))]`;
+   `bvl_const_compile env [bvl_Force loc v] =
+         match (\l n. oEL n l) env v with NONE -> [bvl_Force loc v]
+         | SOME NONE -> [bvl_Force loc v]
+         | SOME (SOME (bvl_Var i)) -> [bvl_Force loc (v + i)]
+         | SOME (SOME x) -> [bvl_Force loc v]`;
+   `bvl_const_compile env [bvl_Call t dest xs] = [bvl_Call t dest
+    (bvl_const_compile env xs)]`];;
 
 let bvl_const_compile_sing_def,bvl_const_compile_sing_ind = define_rec
-  [`bvl_const_compile_sing env (bvl_Var v:bvl_exp) =
-         (match (\l n. oEL n l) env v with NONE -> bvl_Var v |
-             SOME NONE -> bvl_Var v | SOME (SOME (bvl_Var i)) ->
-             bvl_Var (v + i) | SOME (SOME x) -> x)`;
-   `bvl_const_compile_sing env (bvl_If x1 x2 x3:bvl_exp) =
-         (let y1 = bvl_const_compile_sing env x1 in
+  [`bvl_const_compile_sing env (bvl_Var v) =
+         match (\l n. oEL n l) env v with NONE -> bvl_Var v
+         | SOME NONE -> bvl_Var v
+         | SOME (SOME (bvl_Var i)) -> bvl_Var (v + i)
+         | SOME (SOME x) -> x`;
+   `bvl_const_compile_sing env (bvl_If x1 x2 x3) =
+         let y1 = bvl_const_compile_sing env x1 in
          let y2 = bvl_const_compile_sing env x2 in
          let y3 = bvl_const_compile_sing env x3 in
-           if y1 = bvl_Bool T then y2 else
-           if y1 = bvl_Bool F then y3 else
-             bvl_If y1 y2 y3)`;
-   `bvl_const_compile_sing env (bvl_Let xs x2:bvl_exp) =
-         (let ys = bvl_const_compile_list env xs in
+           if y1 = bvl_Bool T then y2 else if y1 = bvl_Bool F then y3
+               else bvl_If y1 y2 y3`;
+   `bvl_const_compile_sing env (bvl_Let xs x2) =
+         let ys = bvl_const_compile_list env xs in
            bvl_Let (MAP bvl_const_delete_var ys)
-               (bvl_const_compile_sing (APPEND
-                   (bvl_const_extract_list ys) env) x2))`;
-   `bvl_const_compile_sing env (bvl_Handle x1 x2:bvl_exp) =
+               (bvl_const_compile_sing (APPEND (bvl_const_extract_list
+                   ys) env) x2)`;
+   `bvl_const_compile_sing env (bvl_Handle x1 x2) =
          bvl_Handle (bvl_const_compile_sing env x1)
              (bvl_const_compile_sing (CONS NONE env) x2)`;
-   `bvl_const_compile_sing env (bvl_Raise x1:bvl_exp) =
+   `bvl_const_compile_sing env (bvl_Raise x1) =
          bvl_Raise (bvl_const_compile_sing env x1)`;
-   `bvl_const_compile_sing env (bvl_Op op xs:bvl_exp) =
-    bvl_const_SmartOp op (bvl_const_compile_list env xs)`;
-   `bvl_const_compile_sing env (bvl_Tick x:bvl_exp) = bvl_Tick
+   `bvl_const_compile_sing env (bvl_Op op xs) = bvl_const_SmartOp op
+    (bvl_const_compile_list env xs)`;
+   `bvl_const_compile_sing env (bvl_Tick x) = bvl_Tick
     (bvl_const_compile_sing env x)`;
-   `bvl_const_compile_sing env (bvl_Force loc v:bvl_exp) =
-         (match (\l n. oEL n l) env v with NONE -> bvl_Force loc
-             v | SOME NONE -> bvl_Force loc v | SOME (SOME (bvl_Var
-             i)) -> bvl_Force loc (v + i) | SOME (SOME x) ->
-             bvl_Force loc v)`;
-   `bvl_const_compile_sing env (bvl_Call t dest xs:bvl_exp) =
-    bvl_Call t dest (bvl_const_compile_list env xs)`;
+   `bvl_const_compile_sing env (bvl_Force loc v) =
+         match (\l n. oEL n l) env v with NONE -> bvl_Force loc v
+         | SOME NONE -> bvl_Force loc v
+         | SOME (SOME (bvl_Var i)) -> bvl_Force loc (v + i)
+         | SOME (SOME x) -> bvl_Force loc v`;
+   `bvl_const_compile_sing env (bvl_Call t dest xs) = bvl_Call t dest
+    (bvl_const_compile_list env xs)`;
    `bvl_const_compile_list env [] = []`;
-   `bvl_const_compile_list env (CONS x xs) = CONS
-    (bvl_const_compile_sing env x) (bvl_const_compile_list env xs)`];;
+   `bvl_const_compile_list env (CONS x xs) = CONS (bvl_const_compile_sing
+    env x) (bvl_const_compile_list env xs)`];;
 
 let compile_eq = prove
- (`(!e env. bvl_const_compile env [e] = [bvl_const_compile_sing env e])
-  /\
-   (!es env. bvl_const_compile env es = bvl_const_compile_list env
-     es)`,
+ (`(!e env. bvl_const_compile env [e] = [bvl_const_compile_sing env e]) /\
+   (!es env. bvl_const_compile env es = bvl_const_compile_list env es)`,
   (let cp = bvl_const_compile_def in
    let cs = bvl_const_compile_sing_def in
    let sz = size_thms "bvl_exp" in
@@ -556,8 +575,7 @@ let bvl_const_compile_HD_SING = prove
 
 let bvl_const_compile_exp_def = new_definition
   `bvl_const_compile_exp x =
-     (match bvl_const_compile [] [x] with (CONS y _31) -> y | _32 ->
-       bvl_Var 0)
+     match bvl_const_compile [] [x] with (CONS y _) -> y | _ -> bvl_Var 0
    // impossible`;;
 
 (* compile_exp_eq *)

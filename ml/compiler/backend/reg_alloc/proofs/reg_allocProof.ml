@@ -71,7 +71,8 @@ let no_clash_def = new_definition
      has_edge adj_ls x y ==>
      (match (EL x node_tag,EL y node_tag) with
        (Fixed n,Fixed m) ->
-         n = m ==> x = y | _1 -> T))`;;
+         n = m ==> x = y
+     | _ -> T))`;;
 
 (*
   Good preference oracle may only inspect, but not touch the state
@@ -84,7 +85,8 @@ let good_pref_def = new_definition
      (?res.
      pref n ks s = (M_success res,s) /\
      (match res with
-       NONE -> T | SOME k -> MEM k ks)))`;;
+       NONE -> T
+     | SOME k -> MEM k ks)))`;;
 
 (* HOL4 reg_allocProofScript.sml:84: ML code, not ported *)
 
@@ -97,13 +99,13 @@ let good_pref_def = new_definition
 (* HOL4 reg_allocProofScript.sml:92: ML code, not ported *)
 
 (* M_success conditions *)
-(* HOL4 reg_allocProofScript.sml:95-98: a theorem that HOL4 states as
-   the value of an ML expression: case_eq_thms *)
+(* HOL4 reg_allocProofScript.sml:95-98: a theorem that HOL4 states as the
+   value of an ML expression: case_eq_thms *)
 
 let tag_case_st = prove
  (`!t.
-   (reg_alloc_tag_CASE t a b c) f = (reg_alloc_tag_CASE t (\n. a n
-     f) (b f) (c f))`,
+   (reg_alloc_tag_CASE t a b c) f = (reg_alloc_tag_CASE t (\n. a n f) (b
+     f) (c f))`,
   CHEAT_TAC);;
 
 let list_case_st = prove
@@ -126,47 +128,48 @@ let list_case_st = prove
 let msub_eqn = prove
  (`!e n ls v.
    Msub e n ls =
-   (if n < LENGTH ls then M_success (EL n ls) else M_failure e)`,
+   if n < LENGTH ls then M_success (EL n ls)
+                  else M_failure e`,
   CHEAT_TAC);;
 add_simp msub_eqn;;
 
 let adj_ls_sub_eqn = prove
  (`adj_ls_sub n s =
-   (if n < LENGTH (ra_state_adj_ls s) then
-   (M_success (EL n (ra_state_adj_ls s)),s) else
-   (M_failure (reg_alloc_Subscript),s))`,
+   if n < LENGTH (ra_state_adj_ls s) then
+   (M_success (EL n (ra_state_adj_ls s)),s)
+   else (M_failure (reg_alloc_Subscript),s)`,
   CHEAT_TAC);;
 add_simp adj_ls_sub_eqn;;
 
 let node_tag_sub_eqn = prove
  (`node_tag_sub n s =
-   (if n < LENGTH (ra_state_node_tag s) then
-   (M_success (EL n (ra_state_node_tag s)),s) else
-   (M_failure (reg_alloc_Subscript),s))`,
+   if n < LENGTH (ra_state_node_tag s) then
+   (M_success (EL n (ra_state_node_tag s)),s)
+   else (M_failure (reg_alloc_Subscript),s)`,
   CHEAT_TAC);;
 add_simp node_tag_sub_eqn;;
 
 let degrees_sub_eqn = prove
  (`degrees_sub n s =
-   (if n < LENGTH (ra_state_degrees s) then
-   (M_success (EL n (ra_state_degrees s)),s) else
-   (M_failure (reg_alloc_Subscript),s))`,
+   if n < LENGTH (ra_state_degrees s) then
+   (M_success (EL n (ra_state_degrees s)),s)
+   else (M_failure (reg_alloc_Subscript),s)`,
   CHEAT_TAC);;
 add_simp degrees_sub_eqn;;
 
 let coalesced_sub = prove
  (`coalesced_sub n s =
-   (if n < LENGTH (ra_state_coalesced s) then
-   (M_success (EL n (ra_state_coalesced s)),s) else
-   (M_failure reg_alloc_Subscript,s))`,
+   if n < LENGTH (ra_state_coalesced s) then
+   (M_success (EL n (ra_state_coalesced s)),s)
+   else (M_failure reg_alloc_Subscript,s)`,
   CHEAT_TAC);;
 add_simp coalesced_sub;;
 
 let move_related_sub = prove
  (`move_related_sub n s =
-   (if n < LENGTH (ra_state_move_related s) then
-   (M_success (EL n (ra_state_move_related s)),s) else
-   (M_failure reg_alloc_Subscript,s))`,
+   if n < LENGTH (ra_state_move_related s) then
+   (M_success (EL n (ra_state_move_related s)),s)
+   else (M_failure reg_alloc_Subscript,s)`,
   CHEAT_TAC);;
 add_simp move_related_sub;;
 
@@ -175,54 +178,54 @@ add_simp move_related_sub;;
 let mupdate_eqn = prove
  (`!e x n ls.
    Mupdate e x n ls =
-   (if n < LENGTH ls then
-   M_success (LUPDATE x n ls) else
-   M_failure e)`,
+   if n < LENGTH ls then
+   M_success (LUPDATE x n ls)
+   else M_failure e`,
   CHEAT_TAC);;
 add_simp mupdate_eqn;;
 
 let update_adj_ls_eqn = prove
  (`update_adj_ls n t s =
-   (if n < LENGTH (ra_state_adj_ls s) then
-    (M_success one,ra_state_adj_ls_fupd (K (LUPDATE t n
-      (ra_state_adj_ls s))) s) else
-    (M_failure (reg_alloc_Subscript),s))`,
+   if n < LENGTH (ra_state_adj_ls s) then
+    (M_success one,ra_state_adj_ls_fupd (K (LUPDATE t n (ra_state_adj_ls
+      s))) s)
+   else (M_failure (reg_alloc_Subscript),s)`,
   CHEAT_TAC);;
 add_simp update_adj_ls_eqn;;
 
 let update_node_tag_eqn = prove
  (`update_node_tag n t s =
-   (if n < LENGTH (ra_state_node_tag s) then
-    (M_success one,ra_state_node_tag_fupd (K (LUPDATE t n
-      (ra_state_node_tag s))) s) else
-    (M_failure (reg_alloc_Subscript),s))`,
+   if n < LENGTH (ra_state_node_tag s) then
+    (M_success one,ra_state_node_tag_fupd (K (LUPDATE t n (ra_state_node_tag
+      s))) s)
+   else (M_failure (reg_alloc_Subscript),s)`,
   CHEAT_TAC);;
 add_simp update_node_tag_eqn;;
 
 let update_degrees_eqn = prove
  (`update_degrees n t s =
-   (if n < LENGTH (ra_state_degrees s) then
-    (M_success one,ra_state_degrees_fupd (K (LUPDATE t n
-      (ra_state_degrees s))) s) else
-    (M_failure (reg_alloc_Subscript),s))`,
+   if n < LENGTH (ra_state_degrees s) then
+    (M_success one,ra_state_degrees_fupd (K (LUPDATE t n (ra_state_degrees
+      s))) s)
+   else (M_failure (reg_alloc_Subscript),s)`,
   CHEAT_TAC);;
 add_simp update_degrees_eqn;;
 
 let update_coalesced_eqn = prove
  (`update_coalesced n t s =
-   (if n < LENGTH (ra_state_coalesced s) then
+   if n < LENGTH (ra_state_coalesced s) then
     (M_success one,ra_state_coalesced_fupd (K (LUPDATE t n
-      (ra_state_coalesced s))) s) else
-    (M_failure (reg_alloc_Subscript),s))`,
+      (ra_state_coalesced s))) s)
+   else (M_failure (reg_alloc_Subscript),s)`,
   CHEAT_TAC);;
 add_simp update_coalesced_eqn;;
 
 let update_move_related_eqn = prove
  (`update_move_related n t s =
-   (if n < LENGTH (ra_state_move_related s) then
+   if n < LENGTH (ra_state_move_related s) then
     (M_success one,ra_state_move_related_fupd (K (LUPDATE t n
-      (ra_state_move_related s))) s) else
-    (M_failure (reg_alloc_Subscript),s))`,
+      (ra_state_move_related s))) s)
+   else (M_failure (reg_alloc_Subscript),s)`,
   CHEAT_TAC);;
 add_simp update_move_related_eqn;;
 
@@ -243,8 +246,8 @@ let st_ex_MAP_node_tag_sub = prove
 let st_ex_MAP_adj_ls_sub = prove
  (`!ls s.
    ALL (\v. v < LENGTH (ra_state_adj_ls s)) ls ==>
-   st_ex_MAP adj_ls_sub ls s = (M_success (MAP (\i. EL i
-     (ra_state_adj_ls s)) ls),s)`,
+   st_ex_MAP adj_ls_sub ls s = (M_success (MAP (\i. EL i (ra_state_adj_ls
+     s)) ls),s)`,
   CHEAT_TAC);;
 
 let st_ex_MAP_degrees_sub = prove
@@ -268,7 +271,8 @@ let remove_colours_success = prove
    Abbrev (set_of_list ls SUBSET set_of_list ks /\
    (!n. MEM n adjs /\ n < LENGTH (ra_state_node_tag s') ==>
    (match EL n (ra_state_node_tag s) with
-     Fixed c -> ~(MEM c ls) | _2 -> T)))`,
+     Fixed c -> ~(MEM c ls)
+   | _ -> T)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -282,8 +286,7 @@ let no_clash_LUPDATE_Fixed = prove
  (`undirected adjls /\
    ALL (\ls. ALL (\v. v < LENGTH tags) ls) adjls /\
    n < LENGTH adjls /\
-   (!m. MEM m (EL n adjls) /\ m < LENGTH tags ==> ~(EL m tags = Fixed
-     x)) /\
+   (!m. MEM m (EL n adjls) /\ m < LENGTH tags ==> ~(EL m tags = Fixed x)) /\
    no_clash adjls tags ==>
    no_clash adjls (LUPDATE (Fixed x) n tags)`,
   CHEAT_TAC);;
@@ -304,8 +307,8 @@ let assign_Atemp_tag_correct = prove
    assign_Atemp_tag ks pref n s = (M_success one,s') /\
    (!m.
    if n = m /\ EL n (ra_state_node_tag s) = Atemp then ~(EL n
-     (ra_state_node_tag s') = Atemp) else EL m (ra_state_node_tag s') =
-     EL m (ra_state_node_tag s)) /\
+     (ra_state_node_tag s') = Atemp)
+     else EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s)) /\
    no_clash (ra_state_adj_ls s') (ra_state_node_tag s') /\
    good_ra_state s' /\
    s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s)`,
@@ -319,15 +322,14 @@ let assign_Atemps_FOREACH_lem = prove
    good_pref prefs /\
    ALL (\v. v < ra_state_dim s) ls ==>
    (?s'.
-     st_ex_FOREACH ls (assign_Atemp_tag ks prefs) s = (M_success
-       one,s') /\
+     st_ex_FOREACH ls (assign_Atemp_tag ks prefs) s = (M_success one,s') /\
      no_clash (ra_state_adj_ls s') (ra_state_node_tag s') /\
      good_ra_state s' /\
      s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s /\
      (!m.
-       if MEM m ls /\ EL m (ra_state_node_tag s) = Atemp then ~(EL
-         m (ra_state_node_tag s') = Atemp) else EL m
-         (ra_state_node_tag s') = EL m (ra_state_node_tag s)))`,
+       if MEM m ls /\ EL m (ra_state_node_tag s) = Atemp then ~(EL m
+         (ra_state_node_tag s') = Atemp)
+         else EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s)))`,
   CHEAT_TAC);;
 
 let assign_Atemps_correct = prove
@@ -343,8 +345,8 @@ let assign_Atemps_correct = prove
    ALL (\n. ~(n = Atemp)) (ra_state_node_tag s') /\
    // The next one is probably necessary for coloring correctness
    (!m.
-   m < LENGTH (ra_state_node_tag s) /\ ~(EL m (ra_state_node_tag s) =
-     Atemp) ==>
+   m < LENGTH (ra_state_node_tag s) /\ ~(EL m (ra_state_node_tag s) = Atemp)
+     ==>
    EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s)))`,
   CHEAT_TAC);;
 
@@ -374,7 +376,8 @@ let good_neg_pref_def = new_definition
      (?res.
      pref n bads s = (M_success res,s) /\
      (match res with
-       NONE -> T | SOME c -> ~(MEM c bads) /\ k <= c)))`;;
+       NONE -> T
+     | SOME c -> ~(MEM c bads) /\ k <= c)))`;;
 
 let assign_Stemp_tag_correct = prove
  (`good_ra_state s /\
@@ -385,8 +388,8 @@ let assign_Stemp_tag_correct = prove
    assign_Stemp_tag k prefs n s = (M_success one,s') /\
    (!m.
      if n = m /\ EL n (ra_state_node_tag s) = Stemp then ?k'. EL n
-       (ra_state_node_tag s') = Fixed k' /\ k <= k' else EL m
-       (ra_state_node_tag s') = EL m (ra_state_node_tag s)) /\
+       (ra_state_node_tag s') = Fixed k' /\ k <= k'
+       else EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s)) /\
    no_clash (ra_state_adj_ls s') (ra_state_node_tag s') /\
    good_ra_state s' /\
    s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s)`,
@@ -401,14 +404,13 @@ let assign_Stemps_FOREACH_lem = prove
    ALL (\v. v < ra_state_dim s) ls /\
    good_neg_pref k prefs ==>
    (?s'.
-     st_ex_FOREACH ls (assign_Stemp_tag k prefs) s = (M_success
-       one,s') /\
+     st_ex_FOREACH ls (assign_Stemp_tag k prefs) s = (M_success one,s') /\
      no_clash (ra_state_adj_ls s') (ra_state_node_tag s') /\
      good_ra_state s' /\
      (!m.
-       if MEM m ls /\ EL m (ra_state_node_tag s) = Stemp then ?k'. EL
-         m (ra_state_node_tag s') = Fixed k' /\ k <= k' else EL m
-         (ra_state_node_tag s') = EL m (ra_state_node_tag s)) /\
+       if MEM m ls /\ EL m (ra_state_node_tag s) = Stemp then ?k'. EL m
+         (ra_state_node_tag s') = Fixed k' /\ k <= k'
+         else EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s)) /\
      s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s)`,
   CHEAT_TAC);;
 
@@ -424,8 +426,8 @@ let assign_Stemps_correct = prove
      (!m.
        m < LENGTH (ra_state_node_tag s) ==>
        (if EL m (ra_state_node_tag s) = Stemp then
-         ?k'. EL m (ra_state_node_tag s') = Fixed k' /\ k <= k' else
-       EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s))))`,
+         ?k'. EL m (ra_state_node_tag s') = Fixed k' /\ k <= k'
+       else EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s))))`,
   CHEAT_TAC);;
 
 (* --  Random sanity checks that will be needed at some point -- *)
@@ -436,8 +438,9 @@ let first_match_col_correct = prove
  (`!x ks s.
    ?res. first_match_col ks x s = (res,s) /\
    (match res with
-     M_failure v -> v = reg_alloc_Subscript | M_success (SOME k) ->
-       MEM k ks | _3 -> T)`,
+     M_failure v -> v = reg_alloc_Subscript
+   | M_success (SOME k) -> MEM k ks
+   | _ -> T)`,
   CHEAT_TAC);;
 
 let coalesce_root_success = prove
@@ -453,15 +456,15 @@ let good_pref_biased_pref = prove
 
 let in_clash_tree_def,in_clash_tree_ind = define_rec
   [`in_clash_tree (reg_alloc_Delta w r) x <=> MEM x w \/ MEM x r`;
-   `in_clash_tree (reg_alloc_Set names:clash_tree) x <=> x IN domain
-    names`;
-   `in_clash_tree (reg_alloc_Branch name_opt t1 t2:clash_tree) x <=>
+   `in_clash_tree (reg_alloc_Set names) x <=> x IN domain names`;
+   `in_clash_tree (reg_alloc_Branch name_opt t1 t2) x <=>
         in_clash_tree t1 x \/
         in_clash_tree t2 x \/
         (match name_opt with
-          SOME names -> x IN domain names | NONE -> F)`;
-   `in_clash_tree (reg_alloc_Seq t t':clash_tree) x <=>
-    in_clash_tree t x \/ in_clash_tree t' x`];;
+          SOME names -> x IN domain names
+        | NONE -> F)`;
+   `in_clash_tree (reg_alloc_Seq t t') x <=> in_clash_tree t x \/
+    in_clash_tree t' x`];;
 
 (*g inverts f as an sptree *)
 let sp_inverts_def = new_definition
@@ -486,8 +489,8 @@ let list_remap_domain = prove
    domain ta' = domain ta UNION set_of_list ls`,
   CHEAT_TAC);;
 
-(* HOL4 reg_allocProofScript.sml:814-835: a theorem that HOL4 states
-   as the value of an ML expression: list_remap_bij *)
+(* HOL4 reg_allocProofScript.sml:814-835: a theorem that HOL4 states as the
+   value of an ML expression: list_remap_bij *)
 
 (* [local] *)
 let mk_bij_aux_domain = prove
@@ -496,8 +499,8 @@ let mk_bij_aux_domain = prove
    domain ta' = domain ta UNION {x | in_clash_tree ct x}`,
   CHEAT_TAC);;
 
-(* HOL4 reg_allocProofScript.sml:879-919: a theorem that HOL4 states
-   as the value of an ML expression: mk_bij_aux_bij *)
+(* HOL4 reg_allocProofScript.sml:879-919: a theorem that HOL4 states as the
+   value of an ML expression: mk_bij_aux_bij *)
 
 (* [local] *)
 let list_remap_wf = prove
@@ -553,8 +556,7 @@ let GT_TRANS = prove
 
 (* [local] *)
 let GT_sorted_eq = prove
- (`SORTED (>) (CONS (x:num) L) <=> SORTED (>) L /\ (!y. MEM y L ==> x
-  > y)`,
+ (`SORTED (>) (CONS (x:num) L) <=> SORTED (>) L /\ (!y. MEM y L ==> x > y)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -598,8 +600,8 @@ let insert_edge_succeeds = prove
    s' = ra_state_adj_ls_fupd (K (ra_state_adj_ls s')) s /\
    (!a b.
    (has_edge (ra_state_adj_ls s') a b <=>
-   (a = x /\ b = y) \/ (a = y /\ b = x) \/ (has_edge
-     (ra_state_adj_ls s) a b))))`,
+   (a = x /\ b = y) \/ (a = y /\ b = x) \/ (has_edge (ra_state_adj_ls s) a
+     b))))`,
   CHEAT_TAC);;
 
 let list_insert_edge_succeeds = prove
@@ -738,8 +740,7 @@ let mk_graph_succeeds = prove
  (`!ct ta liveout s.
    good_ra_state s /\
    (!x. in_clash_tree ct x ==> ta x < ra_state_dim s) /\
-   INJ ta ({x | in_clash_tree ct x}) (count (LENGTH (ra_state_adj_ls
-     s))) /\
+   INJ ta ({x | in_clash_tree ct x}) (count (LENGTH (ra_state_adj_ls s))) /\
    (is_clique liveout (ra_state_adj_ls s)) /\
    ALL_DISTINCT liveout /\
    (ALL (\y. y < ra_state_dim s) liveout) ==>
@@ -838,8 +839,7 @@ let mk_graph_check_clash_tree = prove
    good_ra_state s /\
    domain flive = IMAGE (col o ta) (domain live) ==>
    (?livein flivein.
-   check_clash_tree (col o ta) ct live flive = SOME (livein,flivein)
-     /\
+   check_clash_tree (col o ta) ct live flive = SOME (livein,flivein) /\
    IMAGE ta (domain livein) = set_of_list livelist' /\
    domain flivein = IMAGE (col o ta) (domain livein))`,
   CHEAT_TAC);;
@@ -849,8 +849,7 @@ let mk_graph_check_clash_tree = prove
 let extend_graph_succeeds = prove
  (`!(forced:(num#num) list) f s.
    good_ra_state s /\
-   ALL (\(x,y). f x < ra_state_dim s /\ f y < ra_state_dim s) forced
-     ==>
+   ALL (\(x,y). f x < ra_state_dim s /\ f y < ra_state_dim s) forced ==>
    (?s'.
    extend_graph f forced s = (M_success one,s') /\
    good_ra_state s' /\
@@ -873,20 +872,22 @@ let mk_tags_st_ex_FOREACH_lem = prove
      st_ex_FOREACH ls
         (\i.
         if fa i MOD 4 = 1 then
-         (match sptree_lookup (fa i) fs with NONE -> update_node_tag
-           i Atemp | SOME one -> update_node_tag i Stemp) else if fa i
-           MOD 4 = 3 then update_node_tag i Stemp else update_node_tag i
-           (Fixed (fa i DIV 2))) s = (M_success one,s') /\
+         (match sptree_lookup (fa i) fs with NONE -> update_node_tag i Atemp
+         | SOME one -> update_node_tag i Stemp)
+        else if fa i MOD 4 = 3 then update_node_tag i Stemp
+        else update_node_tag i (Fixed (fa i DIV 2))) s = (M_success one,s')
+          /\
      good_ra_state s' /\
      s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s /\
      (!x.
      x < ra_state_dim s ==>
      (if MEM x ls then
-       (if is_phy_var (fa x) then EL x (ra_state_node_tag s') = Fixed
-         ((fa x) DIV 2) else if is_stack_var (fa x) then EL x
-         (ra_state_node_tag s') = Stemp else EL x (ra_state_node_tag s')
-         = Atemp \/ EL x (ra_state_node_tag s') = Stemp) else
-        EL x (ra_state_node_tag s') = EL x (ra_state_node_tag s))))`,
+       (if is_phy_var (fa x) then EL x (ra_state_node_tag s') = Fixed ((fa
+         x) DIV 2)
+       else if is_stack_var (fa x) then EL x (ra_state_node_tag s') = Stemp
+       else EL x (ra_state_node_tag s') = Atemp \/ EL x (ra_state_node_tag
+         s') = Stemp)
+     else EL x (ra_state_node_tag s') = EL x (ra_state_node_tag s))))`,
   CHEAT_TAC);;
 
 let mk_tags_succeeds = prove
@@ -898,10 +899,10 @@ let mk_tags_succeeds = prove
      s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s /\
      (!x y.
      x < n /\ y = fa x ==>
-     (if is_phy_var y then EL x (ra_state_node_tag s') = Fixed (y
-       DIV 2) else if is_stack_var y then EL x (ra_state_node_tag s')
-       = Stemp else EL x (ra_state_node_tag s') = Atemp \/ EL x
-       (ra_state_node_tag s') = Stemp)))`,
+     (if is_phy_var y then EL x (ra_state_node_tag s') = Fixed (y DIV 2)
+     else if is_stack_var y then EL x (ra_state_node_tag s') = Stemp
+     else EL x (ra_state_node_tag s') = Atemp \/ EL x (ra_state_node_tag
+       s') = Stemp)))`,
   CHEAT_TAC);;
 
 (* copied from word-to-stack proof*)
@@ -917,8 +918,8 @@ let extract_color_st_ex_MAP_lem = prove
    ALL (\(k,v). v < LENGTH (ra_state_node_tag s)) ls ==>
    st_ex_MAP (\(k,v). st_ex_bind (node_tag_sub v) (\t. st_ex_return
      (k,extract_tag t))) ls s =
-   (M_success (MAP (\(k,v). (k,extract_tag (EL v (ra_state_node_tag
-     s)))) ls),s)`,
+   (M_success (MAP (\(k,v). (k,extract_tag (EL v (ra_state_node_tag s))))
+     ls),s)`,
   CHEAT_TAC);;
 
 let extract_color_succeeds = prove
@@ -926,8 +927,8 @@ let extract_color_succeeds = prove
    (!x y. sptree_lookup x ta = SOME y ==> y < ra_state_dim s) /\
    sptree_wf ta ==>
    extract_color ta s =
-   (M_success (sptree_map (\v. extract_tag (EL v (ra_state_node_tag
-     s))) ta),s)`,
+   (M_success (sptree_map (\v. extract_tag (EL v (ra_state_node_tag s)))
+     ta),s)`,
   CHEAT_TAC);;
 
 (* Here are the proofs about the "heuristic steps" *)
@@ -949,8 +950,8 @@ let is_not_coalesced_succeeds = prove
 let st_ex_PARTITION_split_degree = prove
  (`!atemps k lss lss' s.
    good_ra_state s ==>
-   (?ts fs. st_ex_PARTITION (split_degree (ra_state_dim s) k) atemps
-     lss lss' s =
+   (?ts fs. st_ex_PARTITION (split_degree (ra_state_dim s) k) atemps lss
+     lss' s =
      (M_success (ts,fs),s) /\
    ALL (\x. MEM x (lss) \/ MEM x atemps) ts /\
    ALL (\x. MEM x (lss') \/ MEM x atemps) fs)`,
@@ -973,8 +974,8 @@ let dec_deg_success = prove
  (`!ls s.
    ALL (\v. v < ra_state_dim s) ls /\
    good_ra_state s ==>
-   (?d. st_ex_FOREACH ls dec_deg s = (M_success
-     one,ra_state_degrees_fupd (K d) s) /\
+   (?d. st_ex_FOREACH ls dec_deg s = (M_success one,ra_state_degrees_fupd (K
+     d) s) /\
    LENGTH d = LENGTH (ra_state_degrees s))`,
   CHEAT_TAC);;
 
@@ -983,8 +984,8 @@ let dec_degree_success = prove
  (`!ls s.
    good_ra_state s ==>
    (?d.
-   st_ex_FOREACH ls dec_degree s = (M_success
-     one,ra_state_degrees_fupd (K d) s) /\
+   st_ex_FOREACH ls dec_degree s = (M_success one,ra_state_degrees_fupd (K
+     d) s) /\
    LENGTH d = LENGTH (ra_state_degrees s))`,
   CHEAT_TAC);;
 
@@ -1000,9 +1001,8 @@ let revive_moves_success = prove
  (`ALL (\x. x < LENGTH (ra_state_adj_ls s)) ls ==>
    (?s'.
    revive_moves ls s = (M_success one,s') /\
-   s' = ra_state_unavail_moves_wl_fupd (K (ra_state_unavail_moves_wl
-     s')) (ra_state_avail_moves_wl_fupd (K (ra_state_avail_moves_wl s'))
-     s) /\
+   s' = ra_state_unavail_moves_wl_fupd (K (ra_state_unavail_moves_wl s'))
+     (ra_state_avail_moves_wl_fupd (K (ra_state_avail_moves_wl s')) s) /\
    ALL (\x. MEM x (APPEND (ra_state_avail_moves_wl s)
      (ra_state_unavail_moves_wl s))) (ra_state_avail_moves_wl s') /\
    ALL (\x. MEM x (APPEND (ra_state_avail_moves_wl s)
@@ -1016,8 +1016,7 @@ let unspill_success = prove
    (?s' b.
    unspill k s = (M_success one,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
-     /\ ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\ ra_state_dim
    s = ra_state_dim s' /\ ra_state_node_tag
    s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1028,9 +1027,8 @@ let push_stack_success = prove
    ALL (\x. x < ra_state_dim s) ls /\
    good_ra_state s ==>
    (?d mr st.
-   st_ex_FOREACH ls push_stack s = (M_success one,ra_state_stack_fupd
-     (K st) (ra_state_move_related_fupd (K mr) (ra_state_degrees_fupd (K
-     d)
+   st_ex_FOREACH ls push_stack s = (M_success one,ra_state_stack_fupd (K st)
+     (ra_state_move_related_fupd (K mr) (ra_state_degrees_fupd (K d)
      s))) /\
    LENGTH d = LENGTH (ra_state_degrees s) /\
    LENGTH mr = LENGTH (ra_state_move_related s))`,
@@ -1043,8 +1041,7 @@ let do_simplify_success = prove
    (?s' b.
    do_simplify k s = (M_success b,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
-     /\ ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\ ra_state_dim
    s = ra_state_dim s' /\ ra_state_node_tag
    s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1075,9 +1072,8 @@ let consistency_ok_success = prove
 let st_ex_FILTER_consistency_ok = prove
  (`!ls acc s.
    good_ra_state s /\
-   ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s) ls
-     ==>
-   (?ts. st_ex_FILTER (\(_4,x,y). consistency_ok x y) ls acc s =
+   ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s) ls ==>
+   (?ts. st_ex_FILTER (\(_,x,y). consistency_ok x y) ls acc s =
      (M_success ts,s) /\
    ALL (\(p,(x,y)). x < ra_state_dim s /\ y < ra_state_dim s \/ MEM
      (p,(x,y)) acc) ts)`,
@@ -1110,9 +1106,10 @@ let bg_ok_success = prove
    (?opt.
    bg_ok k x y s = (M_success opt,s) /\
    (match opt with
-    NONE -> T | SOME (case1,case2) ->
-     ALL (\v. v < ra_state_dim s) case1 /\ ALL (\v. v <
-       ra_state_dim s) case2))`,
+    NONE -> T
+   | SOME (case1,case2) ->
+     ALL (\v. v < ra_state_dim s) case1 /\ ALL (\v. v < ra_state_dim s)
+       case2))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1139,24 +1136,21 @@ let canonize_move_success = prove
 let st_ex_FIRST_consistency_ok_bg_ok = prove
  (`!ls acc s.
    good_ra_state s /\
-   ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s) ls
-     /\
-   ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s) acc
-     ==>
+   ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s) ls /\
+   ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s) acc ==>
    (?ores ys s' coal.
-   st_ex_FIRST consistency_ok (bg_ok k) ls acc s = (M_success
-     (ores,ys),s') /\
+   st_ex_FIRST consistency_ok (bg_ok k) ls acc s = (M_success (ores,ys),s')
+     /\
    good_ra_state s' /\
    s' = ra_state_coalesced_fupd (K coal) s /\
-   ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s) ys
-     /\
+   ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s) ys /\
    (match ores with
      SOME ((x,y),(case1,case2),rest) ->
      x < ra_state_dim s /\ y < ra_state_dim s /\
      ALL (\v. v < ra_state_dim s) case1 /\
      ALL (\v. v < ra_state_dim s) case2 /\
-     ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s)
-       rest | _5 -> T))`,
+     ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s) rest
+   | _ -> T))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1170,8 +1164,7 @@ let do_coalesce_real_success = prove
    (?s'.
    do_coalesce_real x y case1 case2 s = (M_success one,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
-     /\ ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\ ra_state_dim
    s = ra_state_dim s' /\ ra_state_node_tag
    s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1183,8 +1176,7 @@ let do_coalesce_success = prove
      (?s' b.
       do_coalesce k s = (M_success b,s') /\
       good_ra_state s' /\
-      is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
-        /\ ra_state_dim
+      is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\ ra_state_dim
       s = ra_state_dim s' /\ ra_state_node_tag
       s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1205,8 +1197,8 @@ let reset_move_related_success = prove
    good_ra_state s /\
    ALL (\(p,(x,y)). x < ra_state_dim s /\ y < ra_state_dim s) ls ==>
    (?mv.
-   reset_move_related ls s = (M_success
-     one,ra_state_move_related_fupd (K mv) s) /\
+   reset_move_related ls s = (M_success one,ra_state_move_related_fupd (K
+     mv) s) /\
    LENGTH mv = ra_state_dim s)`,
   CHEAT_TAC);;
 
@@ -1217,8 +1209,7 @@ let do_prefreeze_success = prove
    (?s' b.
    do_prefreeze k s = (M_success b,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
-     /\ ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\ ra_state_dim
    s = ra_state_dim s' /\ ra_state_node_tag
    s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1231,8 +1222,7 @@ let do_freeze_success = prove
    (?s' b.
    do_freeze k s = (M_success b,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
-     /\ ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\ ra_state_dim
    s = ra_state_dim s' /\ ra_state_node_tag
    s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1245,8 +1235,8 @@ let st_ex_list_MIN_cost_success = prove
    ALL (\v. v < ra_state_dim s) acc /\
    k < ra_state_dim s ==>
    (?x y.
-   st_ex_list_MIN_cost scost ls (ra_state_dim s) k v acc s =
-     (M_success (x,y),s) /\
+   st_ex_list_MIN_cost scost ls (ra_state_dim s) k v acc s = (M_success
+     (x,y),s) /\
    x < ra_state_dim s /\
    ALL (\v. v < ra_state_dim s) y)`,
   CHEAT_TAC);;
@@ -1258,8 +1248,7 @@ let st_ex_list_MAX_deg_success = prove
    ALL (\v. v < ra_state_dim s) acc /\
    k < ra_state_dim s ==>
    (?x y.
-   st_ex_list_MAX_deg ls (ra_state_dim s) k v acc s = (M_success
-     (x,y),s) /\
+   st_ex_list_MAX_deg ls (ra_state_dim s) k v acc s = (M_success (x,y),s) /\
    x < ra_state_dim s /\
    ALL (\v. v < ra_state_dim s) y)`,
   CHEAT_TAC);;
@@ -1271,8 +1260,7 @@ let do_spill_success = prove
      (?s' b.
        do_spill scost k s = (M_success b,s') /\
        good_ra_state s' /\
-       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
-         /\ ra_state_dim
+       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\ ra_state_dim
        s = ra_state_dim s' /\ ra_state_node_tag
        s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1284,8 +1272,7 @@ let do_step_success = prove
      (?b s'.
        do_step scost k s = (M_success b,s') /\
        good_ra_state s' /\
-       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
-         /\ ra_state_dim
+       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\ ra_state_dim
        s = ra_state_dim s' /\ ra_state_node_tag
        s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1298,8 +1285,7 @@ let rpt_do_step_success = prove
      (?s'.
        rpt_do_step scost k n s = (M_success one,s') /\
        good_ra_state s' /\
-       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
-         /\ ra_state_dim
+       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\ ra_state_dim
        s = ra_state_dim s' /\ ra_state_node_tag
        s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1317,8 +1303,7 @@ let full_consistency_ok_success = prove
 let st_ex_FILTER_full_consistency_ok = prove
  (`!ls acc s.
    good_ra_state s ==>
-   (?ts. st_ex_FILTER (\(_6,x,y). full_consistency_ok k x y) ls acc s
-     =
+   (?ts. st_ex_FILTER (\(_,x,y). full_consistency_ok k x y) ls acc s =
      (M_success ts,s) /\
    ALL (\(p,(x,y)). x < ra_state_dim s /\ y < ra_state_dim s \/ MEM
      (p,(x,y)) acc) ts)`,
@@ -1327,13 +1312,11 @@ let st_ex_FILTER_full_consistency_ok = prove
 (* [local] *)
 let do_alloc1_success = prove
  (`good_ra_state s /\
-   ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s)
-     moves ==>
+   ALL (\((p:num),x,y). x < ra_state_dim s /\ y < ra_state_dim s) moves ==>
    (?ls s'.
    do_alloc1 moves scost k s = (M_success ls,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
-     /\ ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\ ra_state_dim
    // This allows the coalescing phase to modify the adjacency list
    s' = ra_state_dim s /\ ra_state_node_tag
    s' = ra_state_node_tag s)`,
@@ -1345,7 +1328,7 @@ let no_clash_colouring_satisfactory = prove
    ALL (\n. ~(n = Stemp) /\ ~(n = Atemp)) node_tag ==>
    colouring_satisfactory
    (\f. if f < LENGTH node_tag then extract_tag (EL f node_tag)
-     else 0) adjls`,
+   else 0) adjls`,
   CHEAT_TAC);;
 
 let check_partial_col_same_dom = prove
@@ -1395,8 +1378,8 @@ let check_partial_col_INJ = prove
    INJ g UNIV UNIV /\
    domain gt = IMAGE g (domain ft) ==>
    (match check_partial_col f ls t ft with
-   NONE -> check_partial_col (g o f) ls t gt = NONE | SOME (tt,ftt)
-     ->
+   NONE -> check_partial_col (g o f) ls t gt = NONE
+   | SOME (tt,ftt) ->
    (?gtt. check_partial_col (g o f) ls t gt = SOME (tt,gtt) /\
    domain gtt = IMAGE g (domain ftt)))`,
   CHEAT_TAC);;
@@ -1404,7 +1387,8 @@ let check_partial_col_INJ = prove
 let check_col_INJ = prove
  (`INJ g UNIV UNIV ==>
    (match check_col f (s:1 spt) with
-   NONE -> check_col (g o f) s = NONE | SOME (t,ft) ->
+   NONE -> check_col (g o f) s = NONE
+   | SOME (t,ft) ->
    (?gt. check_col (g o f) s = SOME (t,gt) /\
    domain gt = IMAGE g (domain ft)))`,
   CHEAT_TAC);;
@@ -1414,11 +1398,10 @@ let check_clash_tree_INJ = prove
    INJ g UNIV UNIV /\
    domain glive = IMAGE g (domain flive) ==>
    (match check_clash_tree f ct live flive with
-   NONE -> check_clash_tree (g o f) ct live glive = NONE | SOME
-     (liveout,fliveout) ->
+   NONE -> check_clash_tree (g o f) ct live glive = NONE
+   | SOME (liveout,fliveout) ->
    (?gliveout.
-   check_clash_tree (g o f) ct live glive = SOME (liveout,gliveout)
-     /\
+   check_clash_tree (g o f) ct live glive = SOME (liveout,gliveout) /\
    domain gliveout = IMAGE g (domain fliveout)))`,
   CHEAT_TAC);;
 
@@ -1427,8 +1410,9 @@ let neg_first_match_col_correct = prove
  (`!x ks s.
    ?res. neg_first_match_col k ks x s = (res,s) /\
    (match res with
-     M_failure v -> v = reg_alloc_Subscript | M_success (SOME c) ->
-       ~(MEM c ks) /\ k <= c | _7 -> T)`,
+     M_failure v -> v = reg_alloc_Subscript
+   | M_success (SOME c) -> ~(MEM c ks) /\ k <= c
+   | _ -> T)`,
   CHEAT_TAC);;
 
 let good_neg_pref_neg_biased_pref = prove
@@ -1453,19 +1437,19 @@ let do_reg_alloc_correct = prove
    // Needs to be proved in wordLang
    ALL (\(x,y). in_clash_tree ct x /\ in_clash_tree ct y) forced ==>
    (?spcol st' livein flivein.
-     do_reg_alloc alg scost k moves ct forced fs (ta,fa,n) st =
-       (M_success spcol,st') /\
-     check_clash_tree (sp_default spcol) ct LN LN = SOME
-       (livein,flivein) /\
+     do_reg_alloc alg scost k moves ct forced fs (ta,fa,n) st = (M_success
+       spcol,st') /\
+     check_clash_tree (sp_default spcol) ct LN LN = SOME (livein,flivein) /\
      (!x. in_clash_tree ct x ==>
      x IN domain spcol /\
      (if is_phy_var x then
-       sp_default spcol x = x DIV 2 else if is_stack_var x then
-       k <= (sp_default spcol x) else
-       T)) /\
+       sp_default spcol x = x DIV 2
+     else if is_stack_var x then
+       k <= (sp_default spcol x)
+     else T)) /\
      (!x. x IN domain spcol ==> in_clash_tree ct x) /\
-     ALL (\(x,y). (sp_default spcol) x = (sp_default spcol) y ==> x
-       = y) forced)`,
+     ALL (\(x,y). (sp_default spcol) x = (sp_default spcol) y ==> x = y)
+       forced)`,
   CHEAT_TAC);;
 
 (* HOL4 reg_allocProofScript.sml:3455-3457: a proof *)
@@ -1477,17 +1461,17 @@ let reg_alloc_correct = prove
    ALL (\(x,y). in_clash_tree ct x /\ in_clash_tree ct y) forced ==>
    (?spcol livein flivein.
      reg_alloc alg scost k moves ct forced fs = M_success spcol /\
-     check_clash_tree (sp_default spcol) ct LN LN = SOME
-       (livein,flivein) /\
+     check_clash_tree (sp_default spcol) ct LN LN = SOME (livein,flivein) /\
      (!x. in_clash_tree ct x ==>
      x IN domain spcol /\
      (if is_phy_var x then
-       sp_default spcol x = x DIV 2 else if is_stack_var x then
-       k <= (sp_default spcol x) else
-       T)) /\
+       sp_default spcol x = x DIV 2
+     else if is_stack_var x then
+       k <= (sp_default spcol x)
+     else T)) /\
      (!x. x IN domain spcol ==> in_clash_tree ct x) /\
-     ALL (\(x,y). (sp_default spcol) x = (sp_default spcol) y ==> x
-       = y) forced)`,
+     ALL (\(x,y). (sp_default spcol) x = (sp_default spcol) y ==> x = y)
+       forced)`,
   CHEAT_TAC);;
 (* --- --- *)
 

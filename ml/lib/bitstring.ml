@@ -34,10 +34,10 @@ let zero_extend_def = new_definition
 
 let fixwidth_def = new_definition
   `fixwidth n v =
-      (let l = LENGTH v in
+      let l = LENGTH v in
         if l < n then
-           zero_extend n v else
-           DROP (l - n) v)`;;
+           zero_extend n v
+        else DROP (l - n) v`;;
 
 let shiftr_def = new_definition
   `shiftr (v:bool list) m = TAKE (LENGTH v - m) v`;;
@@ -50,5 +50,5 @@ let testbit_def = new_definition
 
 let add_def = new_definition
   `add a b =
-     (let m = MAX (LENGTH a) (LENGTH b) in
-       zero_extend m (n2v (v2n a + v2n b)))`;;
+     let m = MAX (LENGTH a) (LENGTH b) in
+       zero_extend m (n2v (v2n a + v2n b))`;;

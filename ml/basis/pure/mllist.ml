@@ -22,20 +22,20 @@ let _ = do_list hide_constant ["length"; "negate"];;
 
 let intersperse_def,intersperse_ind = define_guess
   [`intersperse sep x2 =
-      match x2 with
-        [] -> []
-      | [x] -> [x]
-      | (CONS x xs) -> CONS x (CONS sep (intersperse sep xs))`];;
+   match x2 with
+     [] -> []
+   | [x] -> [x]
+   | CONS x xs -> CONS x (CONS sep (intersperse sep xs))`];;
 
 (* ===== TODO: TO BE PORTED TO HOL (better theorems for mergesort_tail) ===== *)
 let merge_tail_MEM = prove
- (`!negate' R xs ys acc. MEM x (merge_tail negate' R xs ys acc) =
-  ((MEM x xs) \/ (MEM x ys) \/ (MEM x acc))`,
+ (`!negate' R xs ys acc. MEM x (merge_tail negate' R xs ys acc) = ((MEM x xs)
+  \/ (MEM x ys) \/ (MEM x acc))`,
   CHEAT_TAC);;
 
 let mergesortN_tail_MEM = prove
- (`!negate' R length' lst. (MEM x (mergesortN_tail negate' R length'
-  lst) <=> MEM x (TAKE length' lst))`,
+ (`!negate' R length' lst. (MEM x (mergesortN_tail negate' R length' lst) <=>
+  MEM x (TAKE length' lst))`,
   CHEAT_TAC);;
 
 let sort3_tail_sort3 = prove
@@ -51,15 +51,15 @@ let sort2_tail_sort2 = prove
 let mergetail_merge = prove
  (`!negate' R xs ys acc.
       merge_tail negate' R xs ys acc =
-      (if negate' then APPEND (REVERSE (mergesort_merge (\x y. ~(R
-        x y)) xs ys)) acc else APPEND (REVERSE (mergesort_merge R xs
-        ys)) acc)`,
+      (if negate' then APPEND (REVERSE (mergesort_merge (\x y. ~(R x y)) xs
+        ys)) acc
+       else APPEND (REVERSE (mergesort_merge R xs ys)) acc)`,
   CHEAT_TAC);;
 
 let merge_tail_acc = prove
  (`!negate' R xs ys acc acc'.
-     merge_tail negate' R xs ys (APPEND acc acc') = APPEND
-       (merge_tail negate' R xs ys acc) acc'`,
+     merge_tail negate' R xs ys (APPEND acc acc') = APPEND (merge_tail
+       negate' R xs ys acc) acc'`,
   (REPEAT GEN_TAC THEN REWRITE_TAC[mergetail_merge] THEN
     COND_CASES_TAC THEN
    REWRITE_TAC[APPEND_ASSOC]));;
@@ -69,8 +69,8 @@ let mergesort_tail_MEM = prove
   CHEAT_TAC);;
 
 let merge_tail_PERM = prove
- (`!negate' R xs ys acc. PERM (APPEND (APPEND xs ys) acc) (merge_tail
-  negate' R xs ys acc)`,
+ (`!negate' R xs ys acc. PERM (APPEND (APPEND xs ys) acc) (merge_tail negate'
+  R xs ys acc)`,
   CHEAT_TAC);;
 
 let sort2_tail_PERM = prove
@@ -135,13 +135,11 @@ let drop_def = new_definition
 
 let takeUntil_def,takeUntil_ind = define_rec
   [`takeUntil p [] = []`;
-   `takeUntil p (CONS x xs) = (if p x then [] else CONS x
-    (takeUntil p xs))`];;
+   `takeUntil p (CONS x xs) = if p x then [] else CONS x (takeUntil p xs)`];;
 
 let dropUntil_def,dropUntil_ind = define_rec
   [`dropUntil p [] = []`;
-   `dropUntil p (CONS x xs) = (if p x then CONS x xs else dropUntil
-    p xs)`];;
+   `dropUntil p (CONS x xs) = if p x then CONS x xs else dropUntil p xs`];;
 
 let mllist_mapi_def,mllist_mapi_ind = define_rec
   [`mllist_mapi f (n:num) [] = []`;
@@ -168,17 +166,17 @@ let MAPI_thm = prove
 
 let mapPartial_def,mapPartial_ind = define_rec
   [`mllist_mapPartial f [] = []`;
-   `mllist_mapPartial f (CONS h t) = (match (f h) with
-        NONE -> mllist_mapPartial f t | (SOME x) -> CONS x
-            (mllist_mapPartial f t))`];;
+   `mllist_mapPartial f (CONS h t) = match (f h) with
+        NONE -> mllist_mapPartial f t
+        | (SOME x) -> CONS x (mllist_mapPartial f t)`];;
 
 let mapPartial_thm = prove
  (`!f l. mllist_mapPartial f l = MAP THE (FILTER IS_SOME (MAP f l))`,
   CHEAT_TAC);;
 
 let index_find_thm = prove
- (`!x y. OPTION_MAP SND (INDEX_FIND x f l) = OPTION_MAP SND
-  (INDEX_FIND y f l)`,
+ (`!x y. OPTION_MAP SND (INDEX_FIND x f l) = OPTION_MAP SND (INDEX_FIND y f
+  l)`,
   CHEAT_TAC);;
 
 let FIND_thm = prove
@@ -189,8 +187,9 @@ let FIND_thm = prove
 let partition_aux_def,partition_aux_ind = define_rec
   [`partition_aux f [] pos neg =
         (REVERSE pos,REVERSE neg)`;
-   `partition_aux f (CONS h t) pos neg = (if f h then partition_aux
-    f t (CONS h pos) neg else partition_aux f t pos (CONS h neg))`];;
+   `partition_aux f (CONS h t) pos neg = if f h then partition_aux f t (CONS h
+    pos) neg
+          else partition_aux f t pos (CONS h neg)`];;
 
 let partition_def = new_definition
   `partition (f:'a->bool) l = partition_aux f l [] []`;;
@@ -199,8 +198,8 @@ let partition_def = new_definition
 let partition_aux_thm = prove
  (`!f l l1 l2.
      partition_aux f l l1 l2 =
-     (APPEND (REVERSE l1) (FILTER f l),APPEND (REVERSE l2) (FILTER
-       ((~) o f) l))`,
+     (APPEND (REVERSE l1) (FILTER f l),APPEND (REVERSE l2) (FILTER ((~) o
+       f) l))`,
   (GEN_TAC THEN LIST_INDUCT_TAC THEN
    ASM_REWRITE_TAC[partition_aux_def; FILTER; APPEND_NIL; o_THM] THEN
    REPEAT GEN_TAC THEN COND_CASES_TAC THEN
@@ -220,16 +219,16 @@ let foldl_def,foldl_ind = define_rec
 
 let foldli_aux_def,foldli_aux_ind = define_rec
   [`mllist_foldli_aux f e n [] = e`;
-   `mllist_foldli_aux f e n (CONS h t) = mllist_foldli_aux f (f n h
-    e) (SUC n) t`];;
+   `mllist_foldli_aux f e n (CONS h t) = mllist_foldli_aux f (f n h e)
+    (SUC n) t`];;
 
 let foldli_def = new_definition
   `mllist_foldli f e l = mllist_foldli_aux f e 0 l`;;
 
 (* [local] *)
 let foldli_aux_thm = prove
- (`!l f e n. mllist_foldli_aux f e n l = FOLDRi (\n'. f ((LENGTH l +
-  n) - (SUC n'))) e (REVERSE l)`,
+ (`!l f e n. mllist_foldli_aux f e n l = FOLDRi (\n'. f ((LENGTH l + n) -
+  (SUC n'))) e (REVERSE l)`,
   CHEAT_TAC);;
 
 let foldl_intro = prove
@@ -251,19 +250,19 @@ let foldli_thm = prove
 let tabulate_aux_def,tabulate_aux_ind = define_wf
   `MEASURE (\(n,m,_1,_2). m - n)`
   [`tabulate_aux n m f acc =
-     (let b = (n >= m) in
-     if b then REVERSE acc else
-       let v = f n in
+     let b = (n >= m) in
+     if b then REVERSE acc
+     else let v = f n in
        let n = n + 1 in
        let acc = CONS v acc in
-       tabulate_aux n m f acc)`];;
+       tabulate_aux n m f acc`];;
 
 let tabulate_def = new_definition
-  `mllist_tabulate n f = (let l = [] in tabulate_aux 0 n f l)`;;
+  `mllist_tabulate n f = let l = [] in tabulate_aux 0 n f l`;;
 
 let tabulate_aux_GENLIST = prove
- (`!n m f acc. tabulate_aux n m f acc = APPEND (REVERSE acc)
-  (list_of_seq (f o ITER n SUC) (m - n))`,
+ (`!n m f acc. tabulate_aux n m f acc = APPEND (REVERSE acc) (list_of_seq (f
+  o ITER n SUC) (m - n))`,
   CHEAT_TAC);;
 
 let tabulate_GENLIST = prove
@@ -279,12 +278,11 @@ let collate_def,collate_ind = define_guess
    `mllist_collate f [] (CONS h t) = LESS`;
    `mllist_collate f (CONS h t) [] = GREATER`;
    `mllist_collate f (CONS h1 t1) (CONS h2 t2) =
-        (if f h1 h2 = EQUAL then mllist_collate f t1 t2 else f
-            h1 h2)`];;
+        if f h1 h2 = EQUAL then mllist_collate f t1 t2
+        else f h1 h2`];;
 
 let collate_equal_thm = prove
- (`!l. (!x. MEM x l ==> (f x x = EQUAL)) ==> (mllist_collate f l l =
-  EQUAL)`,
+ (`!l. (!x. MEM x l ==> (f x x = EQUAL)) ==> (mllist_collate f l l = EQUAL)`,
   (LIST_INDUCT_TAC THEN REWRITE_TAC[collate_def; MEM] THEN
    STRIP_TAC THEN ASM_SIMP_TAC[] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
    ASM_MESON_TAC[]));;
@@ -313,11 +311,11 @@ let LENGTH_AUX_def,LENGTH_AUX_ind = define_rec
   [`LENGTH_AUX [] (n:num) = (n:num)`;
    `LENGTH_AUX (CONS x xs) (n:num) = ((LENGTH_AUX xs (n + 1)):num)`];;
 
-(* HOL4 mllistScript.sml:572-575: a theorem that HOL4 states as the
-   value of an ML expression: LENGTH_AUX_THM *)
+(* HOL4 mllistScript.sml:572-575: a theorem that HOL4 states as the value of
+   an ML expression: LENGTH_AUX_THM *)
 
-(* HOL4 mllistScript.sml:577-578: a theorem that HOL4 states as the
-   value of an ML expression: list_compare_def *)
+(* HOL4 mllistScript.sml:577-578: a theorem that HOL4 states as the value of
+   an ML expression: list_compare_def *)
 
 (* tail-recursive MAP *)
 
@@ -355,8 +353,8 @@ let map_rev_thm = prove
 
 let filter_rev'_def,filter_rev'_ind = define_rec
   [`filter_rev' P [] acc = acc`;
-   `filter_rev' P (CONS h t) acc = (if P h then filter_rev' P t
-    (CONS h acc) else filter_rev' P t acc)`];;
+   `filter_rev' P (CONS h t) acc = if P h then filter_rev' P t (CONS h
+    acc) else filter_rev' P t acc`];;
 
 let filter_rev_def = new_definition
   `filter_rev P xs = filter_rev' P xs []`;;

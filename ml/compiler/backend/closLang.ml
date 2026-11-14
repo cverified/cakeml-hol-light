@@ -204,8 +204,7 @@ let closLang_exp_INDUCT,closLang_exp_RECURSION = define_datatype
      // loc
      // args
    | closLang_App tra (num option) closLang_exp (closLang_exp list)
-   | closLang_Fn mlstring (num option) ((num list) option) num
-       closLang_exp
+   | closLang_Fn mlstring (num option) ((num list) option) num closLang_exp
    | closLang_Letrec (mlstring list) (num option) ((num list) option)
        ((num#closLang_exp) list) closLang_exp
    | closLang_Op tra closLang_op (closLang_exp list)";;
@@ -213,84 +212,81 @@ let closLang_exp_INDUCT,closLang_exp_RECURSION = define_datatype
 (* HOL4 closLangScript.sml:143: ML code, not ported *)
 
 (* the termination relation that HOL4 gives is
-     MEASURE (\x. match x with INL e -> closLang_exp_size e | INR es ->
-       list_size closLang_exp_size es)
+     MEASURE (\x. match x with INL e -> closLang_exp_size e
+                                   | INR es -> list_size closLang_exp_size es)
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
-(* HOL4 closLangScript.sml:159-168: the tactic that proves the
-   termination *)
+(* HOL4 closLangScript.sml:159-168: the tactic that proves the termination *)
 let has_install_def,has_install_ind = define_shaped_rec
   "nested"
   [`has_install ((closLang_Var t n):closLang_exp) = F`;
-   `has_install (closLang_If t e1 e2 e3:closLang_exp) = (has_install
-    e1 \/ has_install e2 \/ has_install e3)`;
-   `has_install (closLang_Let t es e:closLang_exp) = (has_install e
-    \/ has_install_list es)`;
-   `has_install (closLang_Op t p es:closLang_exp) = (p =
-    closLang_Install \/ has_install_list es)`;
-   `has_install (closLang_Raise t e:closLang_exp) = has_install e`;
-   `has_install (closLang_Tick t e:closLang_exp) = has_install e`;
+   `has_install (closLang_If t e1 e2 e3) = (has_install e1 \/ has_install e2
+    \/ has_install e3)`;
+   `has_install (closLang_Let t es e) = (has_install e \/ has_install_list
+    es)`;
+   `has_install (closLang_Op t p es) = (p = closLang_Install \/
+    has_install_list es)`;
+   `has_install (closLang_Raise t e) = has_install e`;
+   `has_install (closLang_Tick t e) = has_install e`;
    `has_install (closLang_Fn _1 _2 _3 _4 e) = has_install e`;
-   `has_install (closLang_Handle t e1 e2:closLang_exp) = (has_install
-    e1 \/ has_install e2)`;
-   `has_install (closLang_Call _8 _9 _10 es:closLang_exp) =
-    has_install_list es`;
-   `has_install (closLang_App _13 _14 e es:closLang_exp) =
-    (has_install e \/ has_install_list es)`;
-   `has_install (closLang_Letrec _18 _19 _20 fns e:closLang_exp) =
-    (has_install_list (MAP SND fns) \/ has_install e)`;
+   `has_install (closLang_Handle t e1 e2) = (has_install e1 \/ has_install
+    e2)`;
+   `has_install (closLang_Call _8 _9 _10 es) = has_install_list es`;
+   `has_install (closLang_App _13 _14 e es) = (has_install e \/
+    has_install_list es)`;
+   `has_install (closLang_Letrec _18 _19 _20 fns e) = (has_install_list (MAP
+    SND fns) \/ has_install e)`;
    `has_install_list [] = F`;
-   `has_install_list (CONS x xs) = (has_install x \/
-    has_install_list xs)`];;
+   `has_install_list (CONS x xs) = (has_install x \/ has_install_list xs)`];;
 
 let exp1_size_lemma = prove
- (`!fns n x. MEM (n,x) fns ==> closLang_exp_size x < list_size
-  (pair_size (\x. x) closLang_exp_size) fns`,
+ (`!fns n x. MEM (n,x) fns ==> closLang_exp_size x < list_size (pair_size
+  (\x. x) closLang_exp_size) fns`,
   CHEAT_TAC);;
 
 let pure_op_def = new_definition
   `closLang_pure_op op <=>
      (match op with
-       closLang_FFI _21 -> F | closLang_GlobOp (closLang_SetGlobal
-         _22) -> F | closLang_GlobOp closLang_AllocGlobal -> F |
-         closLang_MemOp (closLang_RefByte _23) -> F | closLang_MemOp
-         closLang_RefArray -> F | closLang_MemOp closLang_UpdateByte
-         -> F | closLang_MemOp (closLang_CopyByte F) -> F |
-         closLang_MemOp closLang_XorByte -> F | closLang_MemOp
-         closLang_Ref -> F | closLang_MemOp closLang_Update -> F |
-         closLang_Install -> F | closLang_ThunkOp _24 -> F | _25 ->
-         T)`;;
+       closLang_FFI _ -> F
+     | closLang_GlobOp (closLang_SetGlobal _) -> F
+     | closLang_GlobOp closLang_AllocGlobal -> F
+     | closLang_MemOp (closLang_RefByte _) -> F
+     | closLang_MemOp closLang_RefArray -> F
+     | closLang_MemOp closLang_UpdateByte -> F
+     | closLang_MemOp (closLang_CopyByte F) -> F
+     | closLang_MemOp closLang_XorByte -> F
+     | closLang_MemOp closLang_Ref -> F
+     | closLang_MemOp closLang_Update -> F
+     | closLang_Install -> F
+     | closLang_ThunkOp _ -> F
+     | _ -> T)`;;
 
 (* pure e means e can neither raise an exception nor side-effect the state *)
 let pure_def,pure_ind = define_shaped_rec
   "nested"
-  [`pure (closLang_Var _28 _29:closLang_exp) <=> T`;
-   `pure (closLang_If _31 e1 e2 e3:closLang_exp) <=> pure e1 /\ pure
-    e2 /\ pure e3`;
-   `pure (closLang_Let _33 es e2:closLang_exp) <=> ALL pure es
-    /\ pure e2`;
-   `pure (closLang_Raise _36 _37:closLang_exp) <=> F`;
-   `pure (closLang_Handle _39 e1 e2:closLang_exp) <=> pure e1`;
-   `pure (closLang_Tick _42 _43:closLang_exp) <=> F`;
-   `pure (closLang_Call _48 _49 _50 _51:closLang_exp) <=> F`;
-   `pure (closLang_App _56 _57 _58 _59:closLang_exp) <=> F`;
-   `pure (closLang_Fn _60 _61 _62 _63 _64) <=> T`;
-   `pure (closLang_Letrec _69 _70 _71 _72 x:closLang_exp) <=> pure x`;
-   `pure (closLang_Op _74 opn es:closLang_exp) <=> ALL pure es
-    /\ closLang_pure_op opn`];;
+  [`pure (closLang_Var _23 _24) <=> T`;
+   `pure (closLang_If _ e1 e2 e3) <=> pure e1 /\ pure e2 /\ pure e3`;
+   `pure (closLang_Let _ es e2) <=> ALL pure es /\ pure e2`;
+   `pure (closLang_Raise _27 _28) <=> F`;
+   `pure (closLang_Handle _ e1 e2) <=> pure e1`;
+   `pure (closLang_Tick _31 _32) <=> F`;
+   `pure (closLang_Call _37 _38 _39 _40) <=> F`;
+   `pure (closLang_App _45 _46 _47 _48) <=> F`;
+   `pure (closLang_Fn _49 _50 _51 _52 _53) <=> T`;
+   `pure (closLang_Letrec _58 _59 _60 _61 x) <=> pure x`;
+   `pure (closLang_Op _ opn es) <=> ALL pure es /\ closLang_pure_op opn`];;
 
 (* used in proofs about closLang, BVL, BVI and dataLang *)
 let assign_get_code_label_def = new_definition
   `assign_get_code_label x =
-        match x with
-          closLang_Label x -> {x}
-        | x -> {}`;;
+     match x with
+       closLang_Label x -> {x}
+     | x -> {}`;;
 
-new_type_abbrev("clos_prog",`:closLang_exp
-   list#(num#num#closLang_exp) list`);;
+new_type_abbrev("clos_prog",`:closLang_exp list#(num#num#closLang_exp) list`);;
 
-(* HOL4 closLangScript.sml:228: the type abbreviation clos_cc, which
-   the port expands *)
+(* HOL4 closLangScript.sml:228: the type abbreviation clos_cc, which the
+   port expands *)
 
 (* and the interface *)
 let _ = unhide_overloads ();;

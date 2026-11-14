@@ -20,15 +20,15 @@ needs "compiler/backend/semantics/closSem.ml";;
 let _ = cake_theory "clos_constantProof"
   ["closLang"; "closSem"; "clos_to_bvl"];;
 
-(* HOL4 clos_constantProofScript.sml:11-23: code that the source has
-   in a comment *)
+(* HOL4 clos_constantProofScript.sml:11-23: code that the source has in a
+   comment *)
 
 (* naive implementation *)
 
 let make_part_def = new_definition
   `make_part n p aux =
-     (match ALOOKUP aux p with SOME k -> (n,k,aux) | NONE -> (n +
-       1,n,CONS (p,n) aux))`;;
+     match ALOOKUP aux p with SOME k -> (n,k,aux)
+     | NONE -> (n + 1,n,CONS (p,n) aux)`;;
 
 let parts_def,parts_ind = define_rec
   [`parts (ConstInt i) n aux = make_part n (closLang_Int i) aux /\
@@ -54,16 +54,15 @@ let to_parts_def = define_cases
 (* semantics *)
 
 let build_part_def = define_cases
-  [`build_part mem' (closLang_Int i:const_part) = ConstInt i`;
-   `build_part mem' (closLang_Str s:const_part) = ConstStr s`;
-   `build_part mem' (closLang_W64 w:const_part) = ConstWord64 w`;
-   `build_part mem' (closLang_Con t ns:const_part) = ConstCons t
-    (MAP mem' ns)`];;
+  [`build_part mem' (closLang_Int i) = ConstInt i`;
+   `build_part mem' (closLang_Str s) = ConstStr s`;
+   `build_part mem' (closLang_W64 w) = ConstWord64 w`;
+   `build_part mem' (closLang_Con t ns) = ConstCons t (MAP mem' ns)`];;
 
 let build_def,build_ind = define_rec
   [`build mem' i [] = mem' (i - 1)`;
-   `build mem' i (CONS p rest) = build ((i =+ build_part mem' p)
-    mem') (i + 1) rest`];;
+   `build mem' i (CONS p rest) = build ((i =+ build_part mem' p) mem') (i
+    + 1) rest`];;
 
 let build_const_def = new_definition
   `build_const xs = build (\x. ConstInt (&0)) 0 xs`;;
@@ -76,8 +75,8 @@ let _ = size_thms "const_part";;
 let build_map_def,build_map_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size const_part_size x2)`
   [`build_map mem' i [] = mem'`;
-   `build_map mem' i (CONS p rest) = build_map ((i =+ build_part
-    mem' p) mem') (i + 1) rest`];;
+   `build_map mem' i (CONS p rest) = build_map ((i =+ build_part mem' p)
+    mem') (i + 1) rest`];;
 
 let build_mem_thm = prove
  (`!mem' i xs y.
@@ -89,15 +88,13 @@ let parts_acc = prove
  (`(!c n aux m r res.
       parts c n aux = (m,r,res) ==> (?a. res = APPEND a aux)) /\
    (!cs n aux m rs res.
-      parts_list cs n aux = (m,rs,res) ==> (?a. res = APPEND a
-        aux))`,
+      parts_list cs n aux = (m,rs,res) ==> (?a. res = APPEND a aux))`,
   CHEAT_TAC);;
 
 let conses_ok_def = new_definition
   `conses_ok aux <=>
      (!n. n < LENGTH aux ==> (?p. EL n (REVERSE aux) = (p,n))) /\
-     (!n rs m r. MEM (closLang_Con n rs,r) aux /\ MEM m rs ==> m <
-       r)`;;
+     (!n rs m r. MEM (closLang_Con n rs,r) aux /\ MEM m rs ==> m < r)`;;
 
 let IMP_conses_ok_CONS = prove
  (`(!n rs. x = closLang_Con n rs ==> ALL (\m. m < LENGTH aux) rs) ==>
@@ -122,8 +119,8 @@ let build_map_ignore = prove
 let ALOOKUP_conses_ok_IMP = prove
  (`ALOOKUP aux x = SOME r /\ conses_ok aux ==>
    (?(xs:(const_part#num) list) (ys:(const_part#num) list).
-     MAP FST (REVERSE aux) = APPEND (APPEND (MAP FST (REVERSE xs))
-       [x]) (MAP FST (REVERSE ys)) /\
+     MAP FST (REVERSE aux) = APPEND (APPEND (MAP FST (REVERSE xs)) [x]) (MAP
+       FST (REVERSE ys)) /\
      LENGTH xs = r /\ r < LENGTH aux /\
      (!t ys y. x = closLang_Con t ys /\ MEM y ys ==> y < r))`,
   CHEAT_TAC);;
@@ -134,8 +131,7 @@ let parts_thm = prove
       ALL_DISTINCT (MAP SND aux) /\
       conses_ok aux /\ n = LENGTH aux /\
       ALL (\(p,k). k < n) aux ==>
-      build_map (\x. ConstInt (&0)) 0 (MAP FST (REVERSE res)) r = c
-        /\
+      build_map (\x. ConstInt (&0)) 0 (MAP FST (REVERSE res)) r = c /\
       n <= m /\ r < m /\
       ALL_DISTINCT (MAP SND res) /\
       conses_ok res /\ m = LENGTH res /\
@@ -145,8 +141,8 @@ let parts_thm = prove
       ALL_DISTINCT (MAP SND aux) /\
       conses_ok aux /\ n = LENGTH aux /\
       ALL (\(p,k). k < n) aux ==>
-      ALL2 (\c r. build_map (\x. ConstInt (&0)) 0 (MAP FST (REVERSE
-        res)) r = c) cs rs /\
+      ALL2 (\c r. build_map (\x. ConstInt (&0)) 0 (MAP FST (REVERSE res)) r
+        = c) cs rs /\
       n <= m /\ ALL_DISTINCT (MAP SND res) /\
       ALL (\k. k < m) rs /\
       conses_ok res /\ m = LENGTH res /\
@@ -170,10 +166,9 @@ let build_const_to_parts = prove
 
 let update_tag_def = new_definition
   `update_tag x =
-      match x with
-        (closLang_Con t ns:const_part) -> closLang_Con
-          (clos_tag_shift t) ns
-      | x -> x`;;
+   match x with
+     closLang_Con t ns -> closLang_Con (clos_tag_shift t) ns
+   | x -> x`;;
 
 let update_tag_11 = prove
  (`update_tag x = update_tag y <=> x = y`,
@@ -182,13 +177,13 @@ let update_tag_11 = prove
 let good_hash_table_def = new_definition
   `good_hash_table m aux =
      (!k v. ALOOKUP aux k = SOME v <=>
-           (?bucket. sptree_lookup (part_hash (update_tag k)) m =
-             SOME bucket /\
+           (?bucket. sptree_lookup (part_hash (update_tag k)) m = SOME
+             bucket /\
                     ALOOKUP bucket (update_tag k) = SOME v))`;;
 
 let add_part_thm = prove
- (`add_part n (update_tag x) m (MAP (update_tag o FST) aux) =
-  (n1,rs,m1,acc1) /\
+ (`add_part n (update_tag x) m (MAP (update_tag o FST) aux) = (n1,rs,m1,acc1)
+  /\
    make_part n x aux = (n2,rs1,aux1) /\
    good_hash_table m aux ==>
    n1 = n2 /\ rs = rs1 /\ MAP (update_tag o FST) aux1 = acc1
@@ -212,24 +207,23 @@ let add_parts_thm = prove
 
 let compile_const_thm = prove
  (`(!i. ~(c = ConstInt i)) /\ (!t. ~(c = ConstCons t [])) ==>
-   compile_const c = closLang_BlockOp (closLang_Build (MAP
-     update_tag (to_parts c)))`,
+   compile_const c = closLang_BlockOp (closLang_Build (MAP update_tag
+     (to_parts c)))`,
   CHEAT_TAC);;
 
 (* connection to closSem *)
 
 let build_part'_def = define_cases
-  [`build_part' mem' (closLang_Int i:const_part) = closSem_Number i /\
-   build_part' mem' (closLang_Str s) = closSem_ByteVector (MAP (n2w
-     o ORD) (explode s)) /\
+  [`build_part' mem' (closLang_Int i) = closSem_Number i /\
+   build_part' mem' (closLang_Str s) = closSem_ByteVector (MAP (n2w o ORD)
+     (explode s)) /\
    build_part' mem' (closLang_W64 w) = closSem_Word64 w /\
-   build_part' mem' (closLang_Con t ns) = closSem_Block t (MAP
-     mem' ns)`];;
+   build_part' mem' (closLang_Con t ns) = closSem_Block t (MAP mem' ns)`];;
 
 let build'_def,build'_ind = define_rec
   [`build' mem' i [] = mem' (i - 1)`;
-   `build' mem' i (CONS p rest) = build' ((i =+ build_part' mem' p)
-    mem') (i + 1) rest`];;
+   `build' mem' i (CONS p rest) = build' ((i =+ build_part' mem' p) mem')
+    (i + 1) rest`];;
 
 let build_const'_def = new_definition
   `build_const' xs = build' (\x. closSem_Number (&0)) 0 xs`;;

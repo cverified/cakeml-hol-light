@@ -21,9 +21,8 @@ let _ = cake_theory "clos_knownProps"
 (* HOL4 clos_knownPropsScript.sml:10: ML code, not ported *)
 
 let merge_Other = prove
- (`clos_known_merge (clos_known_Other:val_approx) a =
-  (clos_known_Other:val_approx) /\ clos_known_merge a clos_known_Other
-  = clos_known_Other`,
+ (`clos_known_merge clos_known_Other a = (clos_known_Other:val_approx)
+  /\ clos_known_merge a clos_known_Other = clos_known_Other`,
   CHEAT_TAC);;
 add_simp merge_Other;;
 
@@ -41,8 +40,8 @@ let merge_comm = prove
   CHEAT_TAC);;
 
 let merge_assoc = prove
- (`!a1 a2 a3. clos_known_merge a1 (clos_known_merge a2 a3) =
-  clos_known_merge (clos_known_merge a1 a2) a3`,
+ (`!a1 a2 a3. clos_known_merge a1 (clos_known_merge a2 a3) = clos_known_merge
+  (clos_known_merge a1 a2) a3`,
   CHEAT_TAC);;
 
 let merge_idem = prove
@@ -70,14 +69,13 @@ let subapprox_antisym = prove
   CHEAT_TAC);;
 
 let subapprox_merge = prove
- (`subapprox a (clos_known_merge a b) /\ subapprox a (clos_known_merge
-  b a)`,
+ (`subapprox a (clos_known_merge a b) /\ subapprox a (clos_known_merge b a)`,
   CHEAT_TAC);;
 add_simp subapprox_merge;;
 
 let subapprox_Other = prove
- (`(subapprox clos_known_Other a <=> (a = clos_known_Other))
-  /\ subapprox a clos_known_Other`,
+ (`(subapprox clos_known_Other a <=> (a = clos_known_Other)) /\ subapprox a
+  clos_known_Other`,
   CHEAT_TAC);;
 add_simp subapprox_Other;;
 
@@ -91,18 +89,18 @@ add_simp subapprox_Int;;
 
 
 let subapprox_ClosNoInline = prove
- (`(subapprox a (clos_known_ClosNoInline m n) <=> a =
-  clos_known_ClosNoInline m n \/ a = clos_known_Impossible) /\
+ (`(subapprox a (clos_known_ClosNoInline m n) <=> a = clos_known_ClosNoInline m
+  n \/ a = clos_known_Impossible) /\
    (subapprox (clos_known_ClosNoInline m n) a <=> a =
      clos_known_ClosNoInline m n \/ a = clos_known_Other)`,
   CHEAT_TAC);;
 add_simp subapprox_ClosNoInline;;
 
 let subapprox_Clos = prove
- (`(subapprox a (clos_known_Clos m n e s) <=> a = clos_known_Clos m n e
-  s \/ a = clos_known_Impossible) /\
-   (subapprox (clos_known_Clos m n e s) a <=> a = clos_known_Clos m
-     n e s \/ a = clos_known_Other)`,
+ (`(subapprox a (clos_known_Clos m n e s) <=> a = clos_known_Clos m n e s \/ a
+  = clos_known_Impossible) /\
+   (subapprox (clos_known_Clos m n e s) a <=> a = clos_known_Clos m n e s
+     \/ a = clos_known_Other)`,
   CHEAT_TAC);;
 add_simp subapprox_Clos;;
 
@@ -113,8 +111,8 @@ let subapprox_Impossible = prove
 add_simp subapprox_Impossible;;
 
 let subapprox_Tuple = prove
- (`subapprox (clos_known_Tuple tg1 as1) (clos_known_Tuple tg2 as2) <=>
-  tg1 = tg2 /\ ALL2 subapprox as1 as2`,
+ (`subapprox (clos_known_Tuple tg1 as1) (clos_known_Tuple tg2 as2) <=> tg1 =
+  tg2 /\ ALL2 subapprox as1 as2`,
   CHEAT_TAC);;
 add_simp subapprox_Tuple;;
 
@@ -129,8 +127,7 @@ let better_definedg_refl = prove
 add_simp better_definedg_refl;;
 
 let better_definedg_trans = prove
- (`better_definedg g1 g2 /\ better_definedg g2 g3 ==> better_definedg
-  g1 g3`,
+ (`better_definedg g1 g2 /\ better_definedg g2 g3 ==> better_definedg g1 g3`,
   CHEAT_TAC);;
 
 let known_op_better_definedg = prove
@@ -144,9 +141,8 @@ let known_better_definedg = prove
 
 let mk_Ticks_alt = prove
  (`(!t tc e. clos_known_mk_Ticks t tc 0 e = e) /\
-   (!t tc n e. clos_known_mk_Ticks t tc (SUC n) e =
-     clos_known_mk_Ticks t (tc + 1) n (closLang_Tick (mk_cons t tc)
-     e))`,
+   (!t tc n e. clos_known_mk_Ticks t tc (SUC n) e = clos_known_mk_Ticks t
+     (tc + 1) n (closLang_Tick (mk_cons t tc) e))`,
   CHEAT_TAC);;
 
 (* and the interface *)

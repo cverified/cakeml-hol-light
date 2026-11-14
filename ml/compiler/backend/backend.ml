@@ -37,16 +37,15 @@ needs "compiler/backend/word_unreach.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ffi/ffi.ml";;
 needs "semantics/primTypes.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "backend"
   ["bvi_to_data"; "bvl_to_bvi"; "clos_to_bvl"; "data_to_word";
-   "flat_to_clos"; "jsonLang"; "lab_to_target"; "presLang";
-   "primTypes"; "source_to_flat"; "source_to_source"; "stack_to_lab";
-   "word_to_stack"; "word_to_word"];;
+   "flat_to_clos"; "jsonLang"; "lab_to_target"; "presLang"; "primTypes";
+   "source_to_flat"; "source_to_source"; "stack_to_lab"; "word_to_stack";
+   "word_to_word"];;
 
 let _ = do_list hide_constant ["bvl_to_bvi"];;
 
@@ -69,8 +68,8 @@ let backend_config_FIELDS = define_record "backend_config"
 
 let attach_bitmaps_def = define_cases
   [`attach_bitmaps names c bm (SOME (bytes,c')) =
-        SOME (bytes,bm,backend_config_symbols_fupd (K (MAP
-            (\(n,p,l). (lookup_any n names (implode "NOTFOUND"),p,l))
+        SOME (bytes,bm,backend_config_symbols_fupd (K (MAP (\(n,p,l).
+            (lookup_any n names (implode "NOTFOUND"),p,l))
             (lab_to_target_config_sec_pos_len c')))
             (backend_config_lab_conf_fupd (K c')
               c))`;
@@ -78,16 +77,15 @@ let attach_bitmaps_def = define_cases
 
 let backend_compile_def = new_definition
   `backend_compile asm_conf c p =
-     (let p = source_to_source_compile p in
+     let p = source_to_source_compile p in
      let _1 = empty_ffi (implode "finished: source_to_source") in
-     let (c',p) = source_to_flat_compile (backend_config_source_conf
-       c) p in
+     let (c',p) = source_to_flat_compile (backend_config_source_conf c) p in
      let _2 = empty_ffi (implode "finished: source_to_flat") in
      let c = backend_config_source_conf_fupd (K c') c in
      let p = flat_to_clos_compile_prog p in
      let _3 = empty_ffi (implode "finished: flat_to_clos") in
-     let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf
-       c) p in
+     let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf c) p
+       in
      let c = backend_config_clos_conf_fupd (K c') c in
      let _4 = empty_ffi (implode "finished: clos_to_bvl") in
      let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
@@ -114,48 +112,45 @@ let backend_compile_def = new_definition
        (stack_remove_stub_names one))) names in
      let _7 = empty_ffi (implode "finished: data_to_word") in
      let (bm,c',fs,p) = word_to_stack_compile asm_conf
-       (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p
-       in
+       (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
      let c = backend_config_word_conf_fupd (K c') c in
      let _8 = empty_ffi (implode "finished: word_to_stack") in
      let p = stack_to_lab_compile (backend_config_stack_conf
        c) (backend_config_data_conf c) (2 * max_heap_limit (:'a)
          (backend_config_data_conf c) - 1)
-       (asm_config_reg_count asm_conf - (LENGTH
-         (asm_config_avoid_regs asm_conf) + 3))
+       (asm_config_reg_count asm_conf - (LENGTH (asm_config_avoid_regs
+         asm_conf) + 3))
        (asm_config_addr_offset asm_conf) p in
      let _9 = empty_ffi (implode "finished: stack_to_lab") in
      let res = attach_bitmaps names c bm
-       (lab_to_target_compile asm_conf (backend_config_lab_conf c)
-         (p:('a sec) list)) in
+       (lab_to_target_compile asm_conf (backend_config_lab_conf c) (p:('a
+         sec) list)) in
      let _10 = empty_ffi (implode "finished: lab_to_target") in
-       res)`;;
+       res`;;
 
 let to_flat_def = new_definition
   `to_flat c p =
-     (let p = source_to_source_compile p in
-     let (c',p) = source_to_flat_compile (backend_config_source_conf
-       c) p in
+     let p = source_to_source_compile p in
+     let (c',p) = source_to_flat_compile (backend_config_source_conf c) p in
      let c = backend_config_source_conf_fupd (K c') c in
-     (c,p))`;;
+     (c,p)`;;
 
 let to_clos_def = new_definition
   `to_clos c p =
-   (let (c,p) = to_flat c p in
+   let (c,p) = to_flat c p in
    let p = flat_to_clos_compile_prog p in
-   (c,p))`;;
+   (c,p)`;;
 
 let to_bvl_def = new_definition
   `to_bvl c p =
-   (let (c,p) = to_clos c p in
-   let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf
-     c) p in
+   let (c,p) = to_clos c p in
+   let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf c) p in
    let c = backend_config_clos_conf_fupd (K c') c in
-   (c,p,names))`;;
+   (c,p,names)`;;
 
 let to_bvi_def = new_definition
   `to_bvi c p =
-   (let (c,p,names) = to_bvl c p in
+   let (c,p,names) = to_bvl c p in
    let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
      (clos_to_bvl_config_start (backend_config_clos_conf c))
      (backend_config_bvl_conf c) names p in
@@ -163,72 +158,72 @@ let to_bvi_def = new_definition
      (data_to_word_stub_names one)
      (word_to_stack_stub_names one)) (stack_alloc_stub_names one))
      (stack_remove_stub_names one))) names in
-   let c = backend_config_clos_conf_fupd (\c.
-     clos_to_bvl_config_start_fupd (K s) c) c in
+   let c = backend_config_clos_conf_fupd (\c. clos_to_bvl_config_start_fupd
+     (K s) c) c in
    let c = backend_config_bvl_conf_fupd (\c.
      bvl_to_bvi_config_next_name3_fupd (K n3)
      (bvl_to_bvi_config_next_name2_fupd (K n2)
      (bvl_to_bvi_config_next_name1_fupd (K n1)
-     (bvl_to_bvi_config_bvi_inlines_fupd (K bl)
-     (bvl_to_bvi_config_inlines_fupd (K l) c))))) c in
-   (c,p,names))`;;
+     (bvl_to_bvi_config_bvi_inlines_fupd (K bl) (bvl_to_bvi_config_inlines_fupd
+     (K l) c))))) c in
+   (c,p,names)`;;
 
 let to_data_def = new_definition
   `to_data c p =
-   (let (c,p,names) = to_bvi c p in
+   let (c,p,names) = to_bvi c p in
    let p = bvi_to_data_compile_prog p in
-   (c,p,names))`;;
+   (c,p,names)`;;
 
 let to_word_0_def = new_definition
   `to_word_0 asm_conf c p =
-     (let (c,p,names) = to_data c p in
+     let (c,p,names) = to_data c p in
      let p = compile_0 (backend_config_data_conf c) asm_conf p in
-       (c,p,names))`;;
+       (c,p,names)`;;
 
 let to_word_def = new_definition
   `to_word asm_conf c p =
-   (let (c,p,names) = to_data c p in
+   let (c,p,names) = to_data c p in
    let (col,p) = data_to_word_compile (backend_config_data_conf c)
      (backend_config_word_to_word_conf c) asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   (c,p,names))`;;
+   (c,p,names)`;;
 
 let to_word_thm = prove
  (`to_word asm_conf c p =
-   (let (c,p,names) = to_word_0 asm_conf c p in
+   let (c,p,names) = to_word_0 asm_conf c p in
    let (col,p) = backend_compile (backend_config_word_to_word_conf c)
      asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   (c,p,names))`,
+   (c,p,names)`,
   CHEAT_TAC);;
 
 let to_stack_def = new_definition
   `to_stack asm_conf c p =
-   (let (c,p,names) = to_word asm_conf c p in
+   let (c,p,names) = to_word asm_conf c p in
    let (bm,c',fs,p) = word_to_stack_compile asm_conf
      (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
    let c = backend_config_word_conf_fupd (K c') c in
-   (bm,c,p,names))`;;
+   (bm,c,p,names)`;;
 
 let to_lab_def = new_definition
   `to_lab asm_conf c p =
-   (let (bm,c,p,names) = to_stack asm_conf c p in
+   let (bm,c,p,names) = to_stack asm_conf c p in
    let p = stack_to_lab_compile (backend_config_stack_conf
      c) (backend_config_data_conf c) (2 * max_heap_limit (:'a)
        (backend_config_data_conf c) - 1)
      (asm_config_reg_count asm_conf - (LENGTH (asm_config_avoid_regs
        asm_conf) + 3))
      (asm_config_addr_offset asm_conf) p in
-   (bm,c,(p:('a sec) list),names))`;;
+   (bm,c,(p:('a sec) list),names)`;;
 
 let to_target_def = new_definition
   `to_target asm_conf c p =
-   (let (bm,c,p,names) = to_lab asm_conf c p in
+   let (bm,c,p,names) = to_lab asm_conf c p in
      attach_bitmaps names c bm (
        lab_to_target_compile
-         asm_conf (backend_config_lab_conf c) p))`;;
+         asm_conf (backend_config_lab_conf c) p)`;;
 
 let compile_eq_to_target = prove
  (`backend_compile = to_target`,
@@ -237,111 +232,107 @@ let compile_eq_to_target = prove
 let prim_src_config_def = new_definition
   `prim_src_config =
      (let (_11,next',env,_12,_13) = source_to_flat_compile_decs [] 1
-       (source_to_flat_config_next empty_config)
-       source_to_flat_empty_env
+       (source_to_flat_config_next empty_config) source_to_flat_empty_env
          ARB prim_types_program in
      (source_to_flat_config_mod_env_fupd (K env)
        (source_to_flat_config_next_fupd (K next') empty_config)))`;;
 
-(* HOL4 backendScript.sml:203: a theorem that HOL4 states as the
-   value of an ML expression: prim_src_config_eq *)
+(* HOL4 backendScript.sml:203: a theorem that HOL4 states as the value of an
+   ML expression: prim_src_config_eq *)
 
 let prim_config_def = new_definition
   `prim_config =
-     FST (to_flat (mk_backend_config empty_config ARB ARB ARB ARB
-       ARB ARB ARB ARB ARB ARB) (prim_types_program))`;;
+     FST (to_flat (mk_backend_config empty_config ARB ARB ARB ARB ARB ARB
+       ARB ARB ARB ARB) (prim_types_program))`;;
 
-(* HOL4 backendScript.sml:210-211: a theorem that HOL4 states as the
-   value of an ML expression: prim_config_eq *)
+(* HOL4 backendScript.sml:210-211: a theorem that HOL4 states as the value
+   of an ML expression: prim_config_eq *)
 
 let from_lab_def = new_definition
   `from_lab asm_conf c names p bm =
      attach_bitmaps names c bm
-       (lab_to_target_compile asm_conf (backend_config_lab_conf c)
-         p)`;;
+       (lab_to_target_compile asm_conf (backend_config_lab_conf c) p)`;;
 
 let from_stack_def = new_definition
   `from_stack asm_conf c names p bm =
-   (let p = stack_to_lab_compile (backend_config_stack_conf
+   let p = stack_to_lab_compile (backend_config_stack_conf
      c) (backend_config_data_conf c) (2 * max_heap_limit (:'a)
        (backend_config_data_conf c) - 1)
      (asm_config_reg_count asm_conf - (LENGTH (asm_config_avoid_regs
        asm_conf) + 3))
      (asm_config_addr_offset asm_conf) p in
-   from_lab asm_conf c names (p:('a sec) list) bm)`;;
+   from_lab asm_conf c names (p:('a sec) list) bm`;;
 
 let from_word_def = new_definition
   `from_word asm_conf c names p =
-   (let (bm,c',fs,p) = word_to_stack_compile asm_conf
+   let (bm,c',fs,p) = word_to_stack_compile asm_conf
      (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
    let c = backend_config_word_conf_fupd (K c') c in
-   from_stack asm_conf c names p bm)`;;
+   from_stack asm_conf c names p bm`;;
 
 let from_word_0_def = new_definition
   `from_word_0 asm_conf c names p =
-   (let (col,prog) = word_to_word_compile
-     (backend_config_word_to_word_conf c) asm_conf p in
+   let (col,prog) = word_to_word_compile (backend_config_word_to_word_conf
+     c) asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   from_word asm_conf c names prog)`;;
+   from_word asm_conf c names prog`;;
 
 let from_data_def = new_definition
   `from_data asm_conf c names p =
-   (let (col,p) = data_to_word_compile (backend_config_data_conf c)
+   let (col,p) = data_to_word_compile (backend_config_data_conf c)
      (backend_config_word_to_word_conf c) asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   from_word asm_conf c names p)`;;
+   from_word asm_conf c names p`;;
 
 let from_data_thm = prove
  (`from_data asm_conf c names p =
-   (let p = compile_0 (backend_config_data_conf c) asm_conf p in
-   from_word_0 asm_conf c names p)`,
+   let p = compile_0 (backend_config_data_conf c) asm_conf p in
+   from_word_0 asm_conf c names p`,
   CHEAT_TAC);;
 
 let from_bvi_def = new_definition
   `from_bvi asm_conf c names p =
-   (let p = bvi_to_data_compile_prog p in
-     from_data asm_conf c names p)`;;
+   let p = bvi_to_data_compile_prog p in
+     from_data asm_conf c names p`;;
 
 let from_bvl_def = new_definition
   `from_bvl asm_conf c names p =
-   (let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
+   let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
      (clos_to_bvl_config_start (backend_config_clos_conf c))
      (backend_config_bvl_conf c) names p in
    let names = sptree_union (fromAList (APPEND (APPEND (APPEND
      (data_to_word_stub_names one)
      (word_to_stack_stub_names one)) (stack_alloc_stub_names one))
      (stack_remove_stub_names one))) names in
-   let c = backend_config_clos_conf_fupd (\c.
-     clos_to_bvl_config_start_fupd (K s) c) c in
+   let c = backend_config_clos_conf_fupd (\c. clos_to_bvl_config_start_fupd
+     (K s) c) c in
    let c = backend_config_bvl_conf_fupd (\c.
      bvl_to_bvi_config_next_name3_fupd (K n3)
      (bvl_to_bvi_config_next_name2_fupd (K n2)
      (bvl_to_bvi_config_next_name1_fupd (K n1)
-     (bvl_to_bvi_config_bvi_inlines_fupd (K bl)
-     (bvl_to_bvi_config_inlines_fupd (K l) c))))) c in
-   from_bvi asm_conf c names p)`;;
+     (bvl_to_bvi_config_bvi_inlines_fupd (K bl) (bvl_to_bvi_config_inlines_fupd
+     (K l) c))))) c in
+   from_bvi asm_conf c names p`;;
 
 let from_clos_def = new_definition
   `from_clos asm_conf c e =
-   (let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf
-     c) e in
+   let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf c) e in
    let c = backend_config_clos_conf_fupd (K c') c in
-   from_bvl asm_conf c names p)`;;
+   from_bvl asm_conf c names p`;;
 
 let from_flat_def = new_definition
   `from_flat asm_conf c p =
-   (let p = flat_to_clos_compile_prog p in
-   from_clos asm_conf c p)`;;
+   let p = flat_to_clos_compile_prog p in
+   from_clos asm_conf c p`;;
 
 let from_source_def = new_definition
   `from_source asm_conf c p =
-   (let p = source_to_source_compile p in
-   let (c',p) = source_to_flat_compile (backend_config_source_conf c)
-     p in
+   let p = source_to_source_compile p in
+   let (c',p) = source_to_flat_compile (backend_config_source_conf c) p in
    let c = backend_config_source_conf_fupd (K c') c in
-   from_flat asm_conf c p)`;;
+   from_flat asm_conf c p`;;
 
 let compile_eq_from_source = prove
  (`backend_compile = from_source`,
@@ -349,7 +340,7 @@ let compile_eq_from_source = prove
 
 let to_livesets_0_def = new_definition
   `to_livesets_0 asm_conf ((c:backend_config),p,(names:mlstring spt)) =
-   (let word_conf = backend_config_word_to_word_conf c in
+   let word_conf = backend_config_word_to_word_conf c in
    let alg = word_to_word_config_reg_alg word_conf in
    let p =
      MAP (\(name_num,arg_count,prog).
@@ -370,8 +361,8 @@ let to_livesets_0_def = new_definition
      let (heu_moves,spillcosts) = get_heuristics alg name_num prog in
      (get_clash_tree prog [],heu_moves,spillcosts,
        get_forced asm_conf prog [],get_stack_only prog)) p in
-     ((asm_config_reg_count asm_conf - (5 + LENGTH
-       (asm_config_avoid_regs asm_conf)),data),c,names,p))`;;
+     ((asm_config_reg_count asm_conf - (5 + LENGTH (asm_config_avoid_regs
+       asm_conf)),data),c,names,p)`;;
 
 let to_livesets_def = new_definition
   `to_livesets asm_conf c p =
@@ -380,41 +371,39 @@ let to_livesets_def = new_definition
 let to_data_conf_inv = prove
  (`to_data c p = (c',p',names) ==> backend_config_data_conf
    c' = backend_config_data_conf c /\ backend_config_word_conf
-   c' = backend_config_word_conf c
-     /\ backend_config_word_to_word_conf
-   c' = backend_config_word_to_word_conf c
-     /\ backend_config_stack_conf
+   c' = backend_config_word_conf c /\ backend_config_word_to_word_conf
+   c' = backend_config_word_to_word_conf c /\ backend_config_stack_conf
    c' = backend_config_stack_conf c /\ backend_config_lab_conf
    c' = backend_config_lab_conf c`,
   CHEAT_TAC);;
 
 let from_livesets_def = new_definition
   `from_livesets asm_conf ((k,data),c,names,p) =
-   (let word_conf = backend_config_word_to_word_conf c in
+   let word_conf = backend_config_word_to_word_conf c in
    let (n_oracles,col) = next_n_oracle (LENGTH p)
      (word_to_word_config_col_oracle word_conf) in
    let alg = word_to_word_config_reg_alg word_conf in
    let prog_with_oracles = ZIP n_oracles (ZIP data p) in
    let p =
      MAP
-       (\(col_opt,((tree,heu_moves,spillcosts,forced,fs),name_num
-       ,arg_count,prog)).
+       (\(col_opt,((tree,heu_moves,spillcosts,forced,fs),name_num,arg_count
+       ,prog)).
        match oracle_colour_ok k col_opt tree prog forced with
          NONE ->
-           (let cp =
-             (match select_reg_alloc alg spillcosts k heu_moves tree
-               forced fs with
+           let cp =
+             (match select_reg_alloc alg spillcosts k heu_moves tree forced
+               fs with
                M_success col ->
-                 (apply_colour (total_colour col) prog) | M_failure
-                   _14 -> prog) in
+                 (apply_colour (total_colour col) prog)
+             | M_failure _ -> prog) in
            (
             // cannot happen
-            name_num,arg_count,remove_must_terminate cp)) | SOME
-              col_prog -> (name_num,arg_count,remove_must_terminate
-              col_prog)) prog_with_oracles in
+            name_num,arg_count,remove_must_terminate cp)
+       | SOME col_prog -> (name_num,arg_count,remove_must_terminate
+         col_prog)) prog_with_oracles in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   from_word asm_conf c names p)`;;
+   from_word asm_conf c names p`;;
 
 (* [local] *)
 let ZIP_MAP_MAP = prove
@@ -440,12 +429,11 @@ let compile_oracle = prove
 
 let compile_oracle_word_0 = prove
  (`backend_compile asm_conf c p =
-   (let (c,p,names) = to_word_0 asm_conf c p in
-   from_word_0 asm_conf c names p)`,
+   let (c,p,names) = to_word_0 asm_conf c p in
+   from_word_0 asm_conf c names p`,
   CHEAT_TAC);;
 
-(* HOL4 backendScript.sml:469-494: code that the source has in a
-   comment *)
+(* HOL4 backendScript.sml:469-494: code that the source has in a comment *)
 
 let to_data_change_config = prove
  (`to_data c1 prog = (c1',prog') ==>
@@ -456,50 +444,49 @@ let to_data_change_config = prove
    to_data c2 prog =
      (backend_config_bvl_conf_fupd (K (backend_config_bvl_conf c1'))
        (backend_config_clos_conf_fupd (K (backend_config_clos_conf c1'))
-       (backend_config_source_conf_fupd (K (backend_config_source_conf
-       c1')) c2)),
+       (backend_config_source_conf_fupd (K (backend_config_source_conf c1'))
+       c2)),
       prog')`,
   CHEAT_TAC);;
 
 let ensure_fp_conf_ok_def = new_definition
   `ensure_fp_conf_ok asm_c c = data_to_word_config_has_fp_tern_fupd (K
   (asm_config_ISA asm_c = ARMv7 /\ 2 < asm_config_fp_reg_count asm_c))
-  (data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count
-  asm_c))
+  (data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count asm_c))
    c)`;;
 
-(* HOL4 backendScript.sml:519: the overload bvl_inline_compile_prog,
-   which the port expands *)
-(* HOL4 backendScript.sml:520: the overload bvi_tailrec_compile_prog,
-   which the port expands *)
-(* HOL4 backendScript.sml:521: the overload bvi_to_data_compile_prog,
-   which the port expands *)
-(* HOL4 backendScript.sml:522: the overload bvl_to_bvi_compile_prog,
-   which the port expands *)
-(* HOL4 backendScript.sml:523: the overload bvl_to_bvi_compile_inc,
-   which the port expands *)
-(* HOL4 backendScript.sml:524: the overload bvl_to_bvi_compile, which
+(* HOL4 backendScript.sml:519: the overload bvl_inline_compile_prog, which
    the port expands *)
-(* HOL4 backendScript.sml:525: the overload bvi_to_data_compile,
-   which the port expands *)
-(* HOL4 backendScript.sml:526: the overload bvi_let_compile, which
+(* HOL4 backendScript.sml:520: the overload bvi_tailrec_compile_prog, which
    the port expands *)
-(* HOL4 backendScript.sml:527: the overload bvl_const_compile, which
+(* HOL4 backendScript.sml:521: the overload bvi_to_data_compile_prog, which
    the port expands *)
-(* HOL4 backendScript.sml:528: the overload bvl_handle_compile, which
+(* HOL4 backendScript.sml:522: the overload bvl_to_bvi_compile_prog, which
    the port expands *)
-(* HOL4 backendScript.sml:529: the overload bvl_inline_compile_inc,
-   which the port expands *)
-(* HOL4 backendScript.sml:530: the overload bvl_to_bvi_compile_exps,
-   which the port expands *)
-(* HOL4 backendScript.sml:531: the overload flat_to_clos_inc_compile,
-   which the port expands *)
-(* HOL4 backendScript.sml:532: the overload stack_remove_prog_comp,
-   which the port expands *)
-(* HOL4 backendScript.sml:533: the overload stack_alloc_prog_comp,
-   which the port expands *)
-(* HOL4 backendScript.sml:534: the overload stack_names_prog_comp,
-   which the port expands *)
+(* HOL4 backendScript.sml:523: the overload bvl_to_bvi_compile_inc, which
+   the port expands *)
+(* HOL4 backendScript.sml:524: the overload bvl_to_bvi_compile, which the
+   port expands *)
+(* HOL4 backendScript.sml:525: the overload bvi_to_data_compile, which the
+   port expands *)
+(* HOL4 backendScript.sml:526: the overload bvi_let_compile, which the port
+   expands *)
+(* HOL4 backendScript.sml:527: the overload bvl_const_compile, which the
+   port expands *)
+(* HOL4 backendScript.sml:528: the overload bvl_handle_compile, which the
+   port expands *)
+(* HOL4 backendScript.sml:529: the overload bvl_inline_compile_inc, which
+   the port expands *)
+(* HOL4 backendScript.sml:530: the overload bvl_to_bvi_compile_exps, which
+   the port expands *)
+(* HOL4 backendScript.sml:531: the overload flat_to_clos_inc_compile, which
+   the port expands *)
+(* HOL4 backendScript.sml:532: the overload stack_remove_prog_comp, which
+   the port expands *)
+(* HOL4 backendScript.sml:533: the overload stack_alloc_prog_comp, which the
+   port expands *)
+(* HOL4 backendScript.sml:534: the overload stack_names_prog_comp, which the
+   port expands *)
 
 let backend_progs_FIELDS = define_record "backend_progs"
   ["env_id","num#num";
@@ -516,37 +503,35 @@ let backend_progs_FIELDS = define_record "backend_progs"
    "target_prog","(word8 list#('a word) list) option"];;
 
 let empty_progs_def = new_definition
-  `empty_progs = mk_backend_progs (0,0) [] [] ([],[]) [] [] [] [] []
-  [] [] (SOME ([],[]))`;;
+  `empty_progs = mk_backend_progs (0,0) [] [] ([],[]) [] [] [] [] [] [] []
+  (SOME ([],[]))`;;
 
 let keep_progs_def = new_definition
-  `keep_progs k ps = (match k with T -> ps | _15 -> [])`;;
+  `keep_progs k ps = (match k with T -> ps | _ -> [])`;;
 
 let compile_inc_progs_def = new_definition
   `compile_inc_progs k asm_conf c p_tup =
-     (let (env_id,p) = p_tup in
+     let (env_id,p) = p_tup in
      let ps = backend_progs_source_prog_fupd (K p)
        (backend_progs_env_id_fupd (K env_id) empty_progs) in
      let p = source_to_source_compile p in
-     let (c',p) = inc_compile env_id (backend_config_source_conf c) p
-       in
+     let (c',p) = inc_compile env_id (backend_config_source_conf c) p in
      let ps = backend_progs_flat_prog_fupd (K (keep_progs k p)) ps in
      let c = backend_config_source_conf_fupd (K c') c in
      let p = inc_compile_decs p in
-     let ps = backend_progs_clos_prog_fupd (K ((keep_progs k ##
-       keep_progs k) p)) ps in
+     let ps = backend_progs_clos_prog_fupd (K ((keep_progs k ## keep_progs
+       k) p)) ps in
      let (c',p) = clos_to_bvl_clos_to_bvl_compile_inc
        (backend_config_clos_conf c) p in
      let c = backend_config_clos_conf_fupd (K c') c in
      let ps = backend_progs_bvl_prog_fupd (K (keep_progs k p)) ps in
-     let (c',p) = bvl_to_bvi_compile_inc_all (backend_config_bvl_conf
-       c) p in
+     let (c',p) = bvl_to_bvi_compile_inc_all (backend_config_bvl_conf c) p
+       in
      let c = backend_config_bvl_conf_fupd (K c') c in
      let ps = backend_progs_bvi_prog_fupd (K (keep_progs k p)) ps in
      let p = bvi_to_data_compile_prog p in
      let ps = backend_progs_data_prog_fupd (K (keep_progs k p)) ps in
-     let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c)
-       in
+     let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c) in
      let p = MAP (data_to_word_compile_part dc) p in
      let reg_count1 = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
@@ -555,8 +540,8 @@ let compile_inc_progs_def = new_definition
        (backend_config_word_to_word_conf
          c)) asm_conf (p,NONE)) p in
      let ps = backend_progs_word_prog_fupd (K (keep_progs k p)) ps in
-     let bm0 = word_to_stack_config_bitmaps_length
-       (backend_config_word_conf c) in
+     let bm0 = word_to_stack_config_bitmaps_length (backend_config_word_conf
+       c) in
      let (p,fs,bm) = compile_word_to_stack asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c))
        reg_count1 p (misc_Nil,bm0) in
@@ -574,65 +559,63 @@ let compile_inc_progs_def = new_definition
            (asm_config_addr_offset asm_conf)
          reg_count2 p in
      let ps = backend_progs_lab_prog_fupd (K (keep_progs k p)) ps in
-     let target = lab_to_target_compile asm_conf
-       (backend_config_lab_conf c) (p:('a sec) list) in
+     let target = lab_to_target_compile asm_conf (backend_config_lab_conf c)
+       (p:('a sec) list) in
      let ps = backend_progs_target_prog_fupd (K (OPTION_MAP
-         (\(bytes,_16). (bytes,cur_bm)) target)) ps in
-     let c = backend_config_lab_conf_fupd (match target with NONE ->
-       I | SOME (_17,c') -> K c') c in
-     (c,ps))`;;
+         (\(bytes,_14). (bytes,cur_bm)) target)) ps in
+     let c = backend_config_lab_conf_fupd (match target with NONE -> I
+         | SOME (_,c') -> K c') c in
+     (c,ps)`;;
 let compile_inc_progs_for_eval_def = new_definition
   `compile_inc_progs_for_eval asm_conf x =
-   (let (env_id,c',decs) = x in
+   let (env_id,c',decs) = x in
    let (c'',ps) = compile_inc_progs T asm_conf c' (env_id,decs) in
      OPTION_MAP (\(bs,ws). (c'',bs,MAP upper_w2w ws))
        (backend_progs_target_prog
-         ps))`;;
+         ps)`;;
 
 let to_word_0_invariant = prove
  (`(word_to_word_config_reg_alg wc = word_to_word_config_reg_alg
   (backend_config_word_to_word_conf c)) ==>
-   ((to_word_0 asm_conf (backend_config_word_to_word_conf_fupd (K wc)
-     c) p) =
+   ((to_word_0 asm_conf (backend_config_word_to_word_conf_fupd (K wc) c) p)
+     =
    (let (c,p,names) = to_word_0 asm_conf c p in
      (backend_config_word_to_word_conf_fupd (K wc) c,p,names)))`,
   CHEAT_TAC);;
 
 let compile_inc_progs_for_eval_eq = prove
  (`compile_inc_progs_for_eval asm_conf (env_id,c,p) =
-     (let p = source_to_source_compile p in
-     let (c',p) = inc_compile env_id (backend_config_source_conf c) p
-       in
-     let _18 = empty_ffi (implode "finished: source_to_flat") in
+     let p = source_to_source_compile p in
+     let (c',p) = inc_compile env_id (backend_config_source_conf c) p in
+     let _15 = empty_ffi (implode "finished: source_to_flat") in
      let c = backend_config_source_conf_fupd (K c') c in
      let p = inc_compile_decs p in
-     let _19 = empty_ffi (implode "finished: flat_to_clos") in
+     let _16 = empty_ffi (implode "finished: flat_to_clos") in
      let (c',p) = clos_to_bvl_clos_to_bvl_compile_inc
        (backend_config_clos_conf c) p in
-     let _20 = empty_ffi (implode "finished: clos_to_bvl") in
+     let _17 = empty_ffi (implode "finished: clos_to_bvl") in
      let c = backend_config_clos_conf_fupd (K c') c in
-     let (c',p) = bvl_to_bvi_compile_inc_all (backend_config_bvl_conf
-       c) p in
-     let _21 = empty_ffi (implode "finished: bvl_to_bvi") in
+     let (c',p) = bvl_to_bvi_compile_inc_all (backend_config_bvl_conf c) p
+       in
+     let _18 = empty_ffi (implode "finished: bvl_to_bvi") in
      let c = backend_config_bvl_conf_fupd (K c') c in
      let p = bvi_to_data_compile_prog p in
-     let _22 = empty_ffi (implode "finished: bvi_to_data") in
-     let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c)
-       in
+     let _19 = empty_ffi (implode "finished: bvi_to_data") in
+     let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c) in
      let p = MAP (data_to_word_compile_part dc) p in
      let reg_count1 = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
-     let p = MAP (\p. full_compile_single_for_eval
-       (asm_config_two_reg_arith asm_conf) reg_count1
-       (word_to_word_config_reg_alg (backend_config_word_to_word_conf
+     let p = MAP (\p. full_compile_single_for_eval (asm_config_two_reg_arith
+       asm_conf) reg_count1 (word_to_word_config_reg_alg
+       (backend_config_word_to_word_conf
          c)) asm_conf (p,NONE)) p in
-     let _23 = empty_ffi (implode "finished: data_to_word") in
-     let bm0 = word_to_stack_config_bitmaps_length
-       (backend_config_word_conf c) in
+     let _20 = empty_ffi (implode "finished: data_to_word") in
+     let bm0 = word_to_stack_config_bitmaps_length (backend_config_word_conf
+       c) in
      let (p,fs,bm) = compile_word_to_stack asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c))
        reg_count1 p (misc_Nil,bm0) in
-     let _24 = empty_ffi (implode "finished: word_to_stack") in
+     let _21 = empty_ffi (implode "finished: word_to_stack") in
      let cur_bm = append (FST bm) in
      let c = backend_config_word_conf_fupd (K
        (word_to_stack_config_bitmaps_length_fupd (K (SND bm))
@@ -644,13 +627,13 @@ let compile_inc_progs_for_eval_eq = prove
          c)) (stack_to_lab_config_jump (backend_config_stack_conf c))
            (asm_config_addr_offset asm_conf)
          reg_count2 p in
-     let _25 = empty_ffi (implode "finished: stack_to_lab") in
-     let target = lab_to_target_compile asm_conf
-       (backend_config_lab_conf c) (p:('a sec) list) in
-     let _26 = empty_ffi (implode "finished: lab_to_target") in
-     let c = backend_config_lab_conf_fupd (match target with NONE ->
-       I | SOME (_27,c') -> K c') c in
-       OPTION_MAP (\x. (c,FST x,MAP upper_w2w cur_bm)) target)`,
+     let _22 = empty_ffi (implode "finished: stack_to_lab") in
+     let target = lab_to_target_compile asm_conf (backend_config_lab_conf c)
+       (p:('a sec) list) in
+     let _23 = empty_ffi (implode "finished: lab_to_target") in
+     let c = backend_config_lab_conf_fupd (match target with NONE -> I
+                              | SOME (_,c') -> K c') c in
+       OPTION_MAP (\x. (c,FST x,MAP upper_w2w cur_bm)) target`,
   CHEAT_TAC);;
 
 let _ = size_thms "ffiname";;
@@ -659,9 +642,9 @@ let _ = size_thms "ffiname";;
 let ffinames_to_string_list_def,ffinames_to_string_list_ind = define_wf
   `MEASURE (\x0. list_size ffiname_size x0)`
   [`ffinames_to_string_list [] = []`;
-   `ffinames_to_string_list (CONS (ffi_ExtCall s:ffiname) rest) =
-    CONS s (ffinames_to_string_list rest)`;
-   `ffinames_to_string_list (CONS (ffi_SharedMem _28) rest) =
+   `ffinames_to_string_list (CONS (ffi_ExtCall s) rest) = CONS s
+    (ffinames_to_string_list rest)`;
+   `ffinames_to_string_list (CONS (ffi_SharedMem _) rest) =
         ffinames_to_string_list rest`];;
 
 let set_oracle_def = new_definition

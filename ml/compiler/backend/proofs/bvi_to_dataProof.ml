@@ -55,12 +55,12 @@ let code_rel_def = new_definition
    termination *)
 let data_to_bvi_v_def,data_to_bvi_v_ind = define_shaped_rec
   "nested"
-  [`data_to_bvi_v (dataSem_Number i:dataSem_v) = bvlSem_Number i`;
-   `data_to_bvi_v (dataSem_Word64 w:dataSem_v) = bvlSem_Word64 w`;
-   `data_to_bvi_v (dataSem_CodePtr p:dataSem_v) = bvlSem_CodePtr p`;
-   `data_to_bvi_v (dataSem_RefPtr b r:dataSem_v) = bvlSem_RefPtr b r`;
-   `data_to_bvi_v (dataSem_Block _2 tag l:dataSem_v) = bvlSem_Block
-    tag (MAP data_to_bvi_v l)`];;
+  [`data_to_bvi_v (dataSem_Number i) = bvlSem_Number i`;
+   `data_to_bvi_v (dataSem_Word64 w) = bvlSem_Word64 w`;
+   `data_to_bvi_v (dataSem_CodePtr p) = bvlSem_CodePtr p`;
+   `data_to_bvi_v (dataSem_RefPtr b r) = bvlSem_RefPtr b r`;
+   `data_to_bvi_v (dataSem_Block _ tag l) = bvlSem_Block tag (MAP
+    data_to_bvi_v l)`];;
 add_simp data_to_bvi_v_def;;
 
 (* Projection for Unit constant *)
@@ -79,13 +79,12 @@ add_simp data_to_bvi_v_Boolv;;
 let data_to_bvi_ref_def = define_cases
   [`data_to_bvi_ref (bvlSem_ValueArray l) = bvlSem_ValueArray (MAP
     data_to_bvi_v l)`;
-   `data_to_bvi_ref (bvlSem_ByteArray b bl) = (bvlSem_ByteArray b
-    bl:'a bvlSem_ref)`;
-   `data_to_bvi_ref (bvlSem_Thunk m v) = bvlSem_Thunk m
-    (data_to_bvi_v v)`;
+   `data_to_bvi_ref (bvlSem_ByteArray b bl) = (bvlSem_ByteArray b bl:'a
+    bvlSem_ref)`;
+   `data_to_bvi_ref (bvlSem_Thunk m v) = bvlSem_Thunk m (data_to_bvi_v v)`;
    `data_to_bvi_ref (bvlSem_MutBlock tg fin ls c rs) =
-        bvlSem_MutBlock tg fin (MAP data_to_bvi_v ls)
-            (data_to_bvi_v c) (MAP data_to_bvi_v rs)`];;
+        bvlSem_MutBlock tg fin (MAP data_to_bvi_v ls) (data_to_bvi_v
+            c) (MAP data_to_bvi_v rs)`];;
 add_simp data_to_bvi_ref_def;;
 
 (* State relation *)
@@ -93,37 +92,36 @@ let bvi_to_dataProof_state_rel_def = new_definition
   `bvi_to_dataProof_state_rel (s:('c,'ffi)bviSem_state)
   (t:('c,'ffi)dataSem_state) <=>
      (bviSem_state_clock s = dataSem_state_clock t) /\
-     bvi_to_dataProof_code_rel (bviSem_state_code s)
-       (dataSem_state_code t) /\
-     (dataSem_state_compile_oracle t = ((I ##
-       bvi_to_data_compile_prog) o bviSem_state_compile_oracle s)) /\
-     (bviSem_state_compile s = (\cfg prog. dataSem_state_compile t
-       cfg (bvi_to_data_compile_prog prog))) /\
-     (!n. FLOOKUP (bviSem_state_refs s) n = sptree_lookup n
-       (sptree_map data_to_bvi_ref (dataSem_state_refs t))) /\
+     bvi_to_dataProof_code_rel (bviSem_state_code s) (dataSem_state_code t)
+       /\
+     (dataSem_state_compile_oracle t = ((I ## bvi_to_data_compile_prog) o
+       bviSem_state_compile_oracle s)) /\
+     (bviSem_state_compile s = (\cfg prog. dataSem_state_compile t cfg
+       (bvi_to_data_compile_prog prog))) /\
+     (!n. FLOOKUP (bviSem_state_refs s) n = sptree_lookup n (sptree_map
+       data_to_bvi_ref (dataSem_state_refs t))) /\
      (bviSem_state_ffi s = dataSem_state_ffi t) /\
      (bviSem_state_global s = dataSem_state_global t)`;;
 
 (* semantics lemmas *)
 
-(* HOL4 bvi_to_dataProofScript.sml:87-88: an overload that the source
-   brings to the front: find_code, written out as bvlSem_find_code *)
+(* HOL4 bvi_to_dataProofScript.sml:87-88: an overload that the source brings
+   to the front: find_code, written out as bvlSem_find_code *)
 
 (* [local] *)
 let find_code_lemma = prove
  (`bvi_to_dataProof_state_rel r t2 /\
-     bvlSem_find_code dest (MAP data_to_bvi_v a) (bviSem_state_code
-       r) = SOME (args,exp) ==> (?args' ss.
+     bvlSem_find_code dest (MAP data_to_bvi_v a) (bviSem_state_code r) =
+       SOME (args,exp) ==> (?args' ss.
         args = MAP data_to_bvi_v args' /\
         dataSem_find_code dest a (dataSem_state_code t2)
           (dataSem_state_stack_frame_sizes t2) =
-          SOME (args',bvi_to_data_compile_exp (LENGTH args')
-            exp,ss))`,
+          SOME (args',bvi_to_data_compile_exp (LENGTH args') exp,ss))`,
   CHEAT_TAC);;
 
 let optimise_correct = prove
- (`!c s. ~(FST (dataSem_evaluate (c,s)) = SOME (Rerr (Rabort
-  Rtype_error))) /\ ~(FST (dataSem_evaluate (c,s)) = NONE) ==>
+ (`!c s. ~(FST (dataSem_evaluate (c,s)) = SOME (Rerr (Rabort Rtype_error)))
+  /\ ~(FST (dataSem_evaluate (c,s)) = NONE) ==>
          (?safe peak smx ls.
            dataSem_evaluate (bvi_to_data_optimise c,s) = (I ## (\x.
              dataSem_state_stack_max_fupd (K smx)
@@ -136,23 +134,22 @@ let optimise_correct = prove
 (* [local] *)
 let compile_RANGE_lemma = prove
  (`!n env tail live xs.
-       ALL (\v. v < (SND (SND (bvi_to_data_compile n env tail live
-         xs))))
+       ALL (\v. v < (SND (SND (bvi_to_data_compile n env tail live xs))))
          (FST (SND (bvi_to_data_compile n env tail live xs)))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let compile_RANGE = prove
- (`(bvi_to_data_compile n env tail live xs = (ys,vs,k)) ==> ALL (\v. v
-  < k) vs`,
+ (`(bvi_to_data_compile n env tail live xs = (ys,vs,k)) ==> ALL (\v. v < k)
+  vs`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_to_dataProofScript.sml:156: the overload isException,
-   which the port expands *)
-(* HOL4 bvi_to_dataProofScript.sml:157: the overload isReturn, which
-   the port expands *)
-(* HOL4 bvi_to_dataProofScript.sml:158: the overload isResult, which
-   the port expands *)
+(* HOL4 bvi_to_dataProofScript.sml:156: the overload isException, which the
+   port expands *)
+(* HOL4 bvi_to_dataProofScript.sml:157: the overload isReturn, which the
+   port expands *)
+(* HOL4 bvi_to_dataProofScript.sml:158: the overload isResult, which the
+   port expands *)
 
 (* HOL4 bvi_to_dataProofScript.sml:160: ML code, not ported *)
 
@@ -160,17 +157,17 @@ let compile_RANGE = prove
 
 (* [local] *)
 let compile_part_thm = prove
- (`bvi_to_data_compile_part = (\(x,y). (x,(\(a,b).
-  (a,bvi_to_data_compile_exp a b)) y))`,
+ (`bvi_to_data_compile_part = (\(x,y). (x,(\(a,b). (a,bvi_to_data_compile_exp
+  a b)) y))`,
   CHEAT_TAC);;
 
 (* Projection for results, injective upto `dataSem$v` *)
 let data_to_bvi_result_def = new_definition
   `data_to_bvi_result x1 =
-      match x1 with
-        Rval vs -> Rval (MAP data_to_bvi_v vs)
-      | (Rerr (Rraise v)) -> Rerr (Rraise (Exn (data_to_bvi_v v)))
-      | (Rerr (Rabort err)) -> Rerr (Rabort err)`;;
+   match x1 with
+     Rval vs -> Rval (MAP data_to_bvi_v vs)
+   | Rerr (Rraise v) -> Rerr (Rraise (Exn (data_to_bvi_v v)))
+   | Rerr (Rabort err) -> Rerr (Rabort err)`;;
 add_simp data_to_bvi_result_def;;
 
 (* All the `dataSem$v` values project to `bvlSem$Boolv b` satisfy `isBool` *)
@@ -180,8 +177,8 @@ let isBool_eq = prove
 
 (* Lifting `data_to_bvi_v` projection to work over `bvlSem$v list` *)
 let v_to_list_eq = prove
- (`!x. dataSem_v_to_list (data_to_bvi_v x) = OPTION_MAP (MAP
-  data_to_bvi_v) (dataSem_v_to_list x)`,
+ (`!x. dataSem_v_to_list (data_to_bvi_v x) = OPTION_MAP (MAP data_to_bvi_v)
+  (dataSem_v_to_list x)`,
   CHEAT_TAC);;
 add_simp v_to_list_eq;;
 
@@ -201,14 +198,14 @@ let data_to_bvi_word_eq = prove
 
 (* Bijection of `data_to_bvi_v (Number n)` over multiple maps *)
 let MAP_data_to_bvi_Number = prove
- (`!xs ws. MAP data_to_bvi_v (MAP dataSem_Number xs) = MAP
-  data_to_bvi_v ws <=> (MAP dataSem_Number xs) = ws`,
+ (`!xs ws. MAP data_to_bvi_v (MAP dataSem_Number xs) = MAP data_to_bvi_v ws
+  <=> (MAP dataSem_Number xs) = ws`,
   CHEAT_TAC);;
 
 (* Bijection of `data_to_bvi_v (Word64 n)` over multiple maps *)
 let MAP_data_to_bvi_Word64 = prove
- (`!xs ws. MAP data_to_bvi_v (MAP dataSem_Word64 xs) = MAP
-  data_to_bvi_v ws <=> (MAP dataSem_Word64 xs) = ws`,
+ (`!xs ws. MAP data_to_bvi_v (MAP dataSem_Word64 xs) = MAP data_to_bvi_v ws
+  <=> (MAP dataSem_Word64 xs) = ws`,
   CHEAT_TAC);;
 
 (* `data_to_bvi_v_def` is idempotent over `v_to_bytes` *)
@@ -236,8 +233,8 @@ let isBool_simps = prove
  *)
 let get_vars_lift_thm = prove
  (`!vs a t2.
-     var_corr a vs (sptree_map data_to_bvi_v t2) ==> (?z.
-       dataSem_get_vars vs t2 = SOME z /\ a = (MAP data_to_bvi_v z))`,
+     var_corr a vs (sptree_map data_to_bvi_v t2) ==> (?z. dataSem_get_vars
+       vs t2 = SOME z /\ a = (MAP data_to_bvi_v z))`,
   CHEAT_TAC);;
 
 let var_corr_inter = prove
@@ -245,42 +242,39 @@ let var_corr_inter = prove
   CHEAT_TAC);;
 
 let get_vars_mk_wf = prove
- (`!vs t z. dataSem_get_vars vs (mk_wf t) = SOME z <=>
-  dataSem_get_vars vs t = SOME z`,
+ (`!vs t z. dataSem_get_vars vs (mk_wf t) = SOME z <=> dataSem_get_vars vs t
+  = SOME z`,
   CHEAT_TAC);;
 add_simp get_vars_mk_wf;;
 
 let get_vars_inter = prove
- (`!vs p t z. dataSem_get_vars vs (inter p t) = SOME z ==>
-  dataSem_get_vars vs p = SOME z`,
+ (`!vs p t z. dataSem_get_vars vs (inter p t) = SOME z ==> dataSem_get_vars
+  vs p = SOME z`,
   CHEAT_TAC);;
 
 (* `data_to_bvi_v` preserves `var_corr` *)
 let var_corr_map = prove
- (`!p f vs z. var_corr z vs p ==> var_corr (MAP f z) vs (sptree_map f
-  p)`,
+ (`!p f vs z. var_corr z vs p ==> var_corr (MAP f z) vs (sptree_map f p)`,
   CHEAT_TAC);;
 
 (* Construction of the pre-image of `data_to_bvi_v`,
    wich in all cases except `Block` is bijective
  *)
 let data_to_bvi_v_eq = prove
- (`(!v n i. data_to_bvi_v v = dataSem_Number i <=> v = dataSem_Number i)
-  /\
-   (!v n w. data_to_bvi_v v = dataSem_Word64 w <=> v = dataSem_Word64
-     w) /\
-   (!v n p. data_to_bvi_v v = dataSem_CodePtr p <=> v =
-     dataSem_CodePtr p) /\
-   (!v n r b. data_to_bvi_v v = dataSem_RefPtr b r <=> v =
-     dataSem_RefPtr b r) /\
+ (`(!v n i. data_to_bvi_v v = dataSem_Number i <=> v = dataSem_Number i) /\
+   (!v n w. data_to_bvi_v v = dataSem_Word64 w <=> v = dataSem_Word64 w) /\
+   (!v n p. data_to_bvi_v v = dataSem_CodePtr p <=> v = dataSem_CodePtr p)
+     /\
+   (!v n r b. data_to_bvi_v v = dataSem_RefPtr b r <=> v = dataSem_RefPtr b
+     r) /\
    (!v n l.
-     data_to_bvi_v v = bvlSem_Block n l <=> (?ts l'. v =
-       dataSem_Block ts n l' /\ l = MAP data_to_bvi_v l'))`,
+     data_to_bvi_v v = bvlSem_Block n l <=> (?ts l'. v = dataSem_Block ts
+       n l' /\ l = MAP data_to_bvi_v l'))`,
   CHEAT_TAC);;
 add_simp data_to_bvi_v_eq;;
 (*flip LHS equalities*)
-(* HOL4 bvi_to_dataProofScript.sml:351-353: a theorem that HOL4
-   states as the value of an ML expression: data_to_bvi_v_eq' *)
+(* HOL4 bvi_to_dataProofScript.sml:351-353: a theorem that HOL4 states as
+   the value of an ML expression: data_to_bvi_v_eq' *)
 
 (* HOL4 bvi_to_dataProofScript.sml:355-361: ML code, not ported *)
 
@@ -288,83 +282,79 @@ let data_to_bvi_ref_eq = prove
  (`(!v fl ds. data_to_bvi_ref v = bvlSem_ByteArray fl ds <=> v =
   bvlSem_ByteArray fl ds) /\
    (!v l.
-     data_to_bvi_ref v = bvlSem_ValueArray l <=> (?l'. v =
-       bvlSem_ValueArray l' /\ l = MAP data_to_bvi_v l')) /\
+     data_to_bvi_ref v = bvlSem_ValueArray l <=> (?l'. v = bvlSem_ValueArray
+       l' /\ l = MAP data_to_bvi_v l')) /\
    (!v m w.
-     data_to_bvi_ref v = bvlSem_Thunk m w <=> (?w'. v = bvlSem_Thunk
-       m w' /\ w = data_to_bvi_v w')) /\
+     data_to_bvi_ref v = bvlSem_Thunk m w <=> (?w'. v = bvlSem_Thunk m w'
+       /\ w = data_to_bvi_v w')) /\
    (!v tg fin ls c rs.
-     data_to_bvi_ref v = bvlSem_MutBlock tg fin ls c rs <=> (?ls' c'
-       rs'. v = bvlSem_MutBlock tg fin ls' c' rs' /\
-                      ls = MAP data_to_bvi_v ls' /\ c = data_to_bvi_v
-                        c' /\
+     data_to_bvi_ref v = bvlSem_MutBlock tg fin ls c rs <=> (?ls' c' rs'. v
+       = bvlSem_MutBlock tg fin ls' c' rs' /\
+                      ls = MAP data_to_bvi_v ls' /\ c = data_to_bvi_v c' /\
                       rs = MAP data_to_bvi_v rs'))`,
   CHEAT_TAC);;
 add_simp data_to_bvi_ref_eq;;
 
-(* HOL4 bvi_to_dataProofScript.sml:377-379: a theorem that HOL4
-   states as the value of an ML expression: data_to_bvi_ref_eq' *)
+(* HOL4 bvi_to_dataProofScript.sml:377-379: a theorem that HOL4 states as
+   the value of an ML expression: data_to_bvi_ref_eq' *)
 
 (* HOL4 bvi_to_dataProofScript.sml:381-385: ML code, not ported *)
 
 (* Construction of the pre-image of `data_to_bvi_result` *)
 let data_to_bvi_result_eq = prove
  (`!x v.
-    data_to_bvi_result x = Rerr (Rraise v) <=> (?z. x = Rerr
-      (Rraise z) /\ Exn (data_to_bvi_v z) = v)`,
+    data_to_bvi_result x = Rerr (Rraise v) <=> (?z. x = Rerr (Rraise z)
+      /\ Exn (data_to_bvi_v z) = v)`,
   CHEAT_TAC);;
 add_simp data_to_bvi_result_eq;;
 
 let data_to_bvi_v_list_to_v_Nil = prove
  (`!z ts.
-   data_to_bvi_v (dataSem_list_to_v ts (dataSem_Block 0 nil_tag [])
-     z) =
+   data_to_bvi_v (dataSem_list_to_v ts (dataSem_Block 0 nil_tag []) z) =
    dataSem_list_to_v (MAP data_to_bvi_v z)`,
   CHEAT_TAC);;
 
 (* `data_to_bvi_v` preservers `do_eq` *)
 let data_to_bvi_do_eq = prove
  (`(!t v1 v2 r.
-     (!n. FLOOKUP r n = sptree_lookup n (sptree_map data_to_bvi_ref
-       t)) ==> dataSem_do_eq r (data_to_bvi_v v1) (data_to_bvi_v v2) =
+     (!n. FLOOKUP r n = sptree_lookup n (sptree_map data_to_bvi_ref t)) ==>
+       dataSem_do_eq r (data_to_bvi_v v1) (data_to_bvi_v v2) =
        dataSem_do_eq t v1 v2) /\
    (!t l1 l2 r.
-     (!n. FLOOKUP r n = sptree_lookup n (sptree_map data_to_bvi_ref
-       t)) ==> dataSem_do_eq_list r (MAP data_to_bvi_v l1) (MAP
-       data_to_bvi_v l2) =
+     (!n. FLOOKUP r n = sptree_lookup n (sptree_map data_to_bvi_ref t)) ==>
+       dataSem_do_eq_list r (MAP data_to_bvi_v l1) (MAP data_to_bvi_v l2) =
        dataSem_do_eq_list t l1 l2)`,
   CHEAT_TAC);;
 
 let data_to_bvi_v_list_to_v_APPEND = prove
  (`!l vl v ts.
-    dataSem_v_to_list v = SOME vl ==> data_to_bvi_v
-      (dataSem_list_to_v ts v l) =
+    dataSem_v_to_list v = SOME vl ==> data_to_bvi_v (dataSem_list_to_v ts v
+      l) =
    data_to_bvi_v (dataSem_list_to_v ts (dataSem_Block 0 nil_tag [])
      (APPEND l vl))`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_to_dataProofScript.sml:445-452: code that the source has
-   in a comment *)
+(* HOL4 bvi_to_dataProofScript.sml:445-452: code that the source has in a
+   comment *)
 
 (* [local] *)
 let refs_rel_LEAST_eq = prove
  (`!s1 s2.
-    (!n. FLOOKUP s1 n = sptree_lookup n (sptree_map data_to_bvi_ref
-      s2)) ==> (minimal ptr. ~(ptr IN FDOM s1)) = (minimal ptr. ~(ptr
-      IN domain s2))`,
+    (!n. FLOOKUP s1 n = sptree_lookup n (sptree_map data_to_bvi_ref s2))
+      ==> (minimal ptr. ~(ptr IN FDOM s1)) = (minimal ptr. ~(ptr IN domain
+      s2))`,
   CHEAT_TAC);;
 
 let do_build_thm = prove
  (`!parts' m1 m2 k ts r t q rs.
      dataSem_do_build m1 k parts' r = (q,rs) /\
-     (!n. FLOOKUP r n = OPTION_MAP data_to_bvi_ref (sptree_lookup n
-       t)) /\
+     (!n. FLOOKUP r n = OPTION_MAP data_to_bvi_ref (sptree_lookup n t)) /\
      (!n. m1 n = data_to_bvi_v (m2 n)) ==>
      (?pres s1 ts1.
        dataSem_do_build m2 k parts' t ts = (pres,s1,ts1) /\
        q = data_to_bvi_v pres /\
-       (!n. FLOOKUP rs n = OPTION_MAP data_to_bvi_ref
-         (sptree_lookup n s1)))`,
+       (!n. FLOOKUP rs n = OPTION_MAP data_to_bvi_ref (sptree_lookup n
+         s1)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -376,30 +366,29 @@ let data_to_bvi_v_Boolv_IMP = prove
    time stamps taken by the dataLang version are invisible to the projection *)
 let data_to_bvi_finalise_cons = prove
  (`!v refs ts brefs bv brefs'.
-     (!n. FLOOKUP brefs n = OPTION_MAP data_to_bvi_ref (sptree_lookup
-       n refs)) /\
-     bviSem_finalise_cons (data_to_bvi_v v) brefs = SOME (bv,brefs')
-       ==> (?pv refs' ts'.
+     (!n. FLOOKUP brefs n = OPTION_MAP data_to_bvi_ref (sptree_lookup n
+       refs)) /\
+     bviSem_finalise_cons (data_to_bvi_v v) brefs = SOME (bv,brefs') ==>
+       (?pv refs' ts'.
          dataSem_finalise_cons v refs ts = SOME (pv,refs',ts') /\
          bv = data_to_bvi_v pv /\
-         (!n. FLOOKUP brefs' n = OPTION_MAP data_to_bvi_ref
-           (sptree_lookup n refs')))`,
+         (!n. FLOOKUP brefs' n = OPTION_MAP data_to_bvi_ref (sptree_lookup
+           n refs')))`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_to_dataProofScript.sml:527-530: a proof *)
 
 let data_to_bvi_do_app = prove
  (`!op t r z res s1.
-     ~(op = wordLang_Install) /\ ~(op = closLang_IntOp
-       closLang_Greater) /\ ~(op = closLang_IntOp closLang_GreaterEq)
-       /\ ~(op = closLang_WordOp (WordTest ast_W8 (ast_Compare ast_Gt)))
-       /\ ~(op = closLang_WordOp (WordTest ast_W8 (ast_Compare
-       ast_Geq))) /\
+     ~(op = wordLang_Install) /\ ~(op = closLang_IntOp closLang_Greater)
+       /\ ~(op = closLang_IntOp closLang_GreaterEq) /\ ~(op = closLang_WordOp
+       (WordTest ast_W8 (ast_Compare ast_Gt))) /\ ~(op = closLang_WordOp
+       (WordTest ast_W8 (ast_Compare ast_Geq))) /\
      (!b. ~(op = closLang_MemOp (closLang_CopyByte b))) /\ ~(op =
        closLang_ThunkOp ForceThunk) /\
      bvi_to_dataProof_state_rel r t /\
-     dataSem_do_app op (MAP data_to_bvi_v z) r = Rval (res,s1) ==>
-       (?s2 pres.
+     dataSem_do_app op (MAP data_to_bvi_v z) r = Rval (res,s1) ==> (?s2
+       pres.
         dataSem_do_app_aux op z t = Rval (pres,s2) /\
         res = data_to_bvi_v pres /\
         bvi_to_dataProof_state_rel s1 s2)`,
@@ -408,8 +397,8 @@ let data_to_bvi_do_app = prove
 let state_rel_peak_safe = prove
  (`!s s' safe peak ls smx.
      bvi_to_dataProof_state_rel s s' =
-       bvi_to_dataProof_state_rel s (dataSem_state_stack_max_fupd
-         (K smx) (dataSem_state_peak_heap_length_fupd (K peak)
+       bvi_to_dataProof_state_rel s (dataSem_state_stack_max_fupd (K smx)
+         (dataSem_state_peak_heap_length_fupd (K peak)
          (dataSem_state_safe_for_space_fupd (K safe)
          (dataSem_state_locals_size_fupd (K ls) s'))))`,
   CHEAT_TAC);;
@@ -417,9 +406,8 @@ let state_rel_peak_safe = prove
 let jump_exc_peak_safe = prove
  (`!s t safe peak ls smx.
      dataSem_jump_exc s = SOME t ==> dataSem_jump_exc
-       (dataSem_state_stack_max_fupd (K smx)
-       (dataSem_state_locals_size_fupd (K ls)
-       (dataSem_state_peak_heap_length_fupd (K peak)
+       (dataSem_state_stack_max_fupd (K smx) (dataSem_state_locals_size_fupd (K
+       ls) (dataSem_state_peak_heap_length_fupd (K peak)
        (dataSem_state_safe_for_space_fupd (K safe) s)))) =
          SOME (dataSem_state_stack_max_fupd (K smx)
            (dataSem_state_peak_heap_length_fupd (K peak)
@@ -450,8 +438,8 @@ let state_rel_dest_thunk = prove
  (`bvi_to_dataProof_state_rel s t /\
    dataSem_dest_thunk (data_to_bvi_v z) (bviSem_state_refs s) =
      dataSem_IsThunk ev v ==>
-     (?v'. dataSem_dest_thunk z (dataSem_state_refs t) =
-       dataSem_IsThunk ev v' /\
+     (?v'. dataSem_dest_thunk z (dataSem_state_refs t) = dataSem_IsThunk ev
+       v' /\
           data_to_bvi_v v' = v)`,
   CHEAT_TAC);;
 
@@ -476,18 +464,17 @@ add_simp list_insert_list_to_num_set;;
 let state_rel_do_app_FFI_err = prove
  (`!i z r t x.
      bvi_to_dataProof_state_rel r t /\
-     dataSem_do_app (closLang_FFI i) (MAP data_to_bvi_v z) r = Rerr
-       (Rabort (Rffi_error x)) ==>
-     dataSem_do_app (closLang_FFI i) z t = Rerr (Rabort (Rffi_error
-       x))`,
+     dataSem_do_app (closLang_FFI i) (MAP data_to_bvi_v z) r = Rerr (Rabort
+       (Rffi_error x)) ==>
+     dataSem_do_app (closLang_FFI i) z t = Rerr (Rabort (Rffi_error x))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_Return_GENLIST_Var = prove
  (`!rets ret_vs env s'.
      LENGTH ret_vs = rets ==>
-     bviSem_evaluate ([bvi_Return (list_of_seq bvi_Var rets)],APPEND
-       ret_vs env,s') =
+     bviSem_evaluate ([bvi_Return (list_of_seq bvi_Var rets)],APPEND ret_vs
+       env,s') =
      (Rerr (Rraise (Ret ret_vs)),s')`,
   CHEAT_TAC);;
 
@@ -498,18 +485,15 @@ let bvi_to_dataProof_compile_correct = prove
  (`!xs env s1 res s2 t1 n corr tail live.
       dataSem_evaluate (xs,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
         Rtype_error)) /\
-      var_corr env corr (sptree_map data_to_bvi_v
-        (dataSem_state_locals t1)) /\
+      var_corr env corr (sptree_map data_to_bvi_v (dataSem_state_locals t1))
+        /\
       (~(LENGTH xs = 1) ==> ~tail) /\
-      (!k. n <= k ==> (sptree_lookup k (dataSem_state_locals t1) =
-        NONE)) /\
+      (!k. n <= k ==> (sptree_lookup k (dataSem_state_locals t1) = NONE)) /\
       bvi_to_dataProof_state_rel s1 t1 /\
-      ALL (\n. ~(sptree_lookup n (dataSem_state_locals t1) = NONE))
-        live /\
-      ((\x. ?v. x = Rerr (Rraise (Exn v))) res ==> ~(dataSem_jump_exc
-        t1 = NONE)) ==> (?t2 prog pres vs next_var ls.
-          bvi_to_data_compile n corr tail live xs =
-            (prog,vs,next_var) /\
+      ALL (\n. ~(sptree_lookup n (dataSem_state_locals t1) = NONE)) live /\
+      ((\x. ?v. x = Rerr (Rraise (Exn v))) res ==> ~(dataSem_jump_exc t1 =
+        NONE)) ==> (?t2 prog pres vs next_var ls.
+          bvi_to_data_compile n corr tail live xs = (prog,vs,next_var) /\
           dataSem_evaluate (prog,t1) = (pres,t2) /\
           bvi_to_dataProof_state_rel s2 t2 /\
           (match pres with SOME r ->
@@ -517,42 +501,39 @@ let bvi_to_dataProof_compile_correct = prove
                 data_to_bvi_result r = res) /\
                ((\x. ?vs. x = Rerr (Rraise (Ret vs))) res ==>
                   (?vs'. r = Rval vs' /\
-                        res = Rerr (Rraise (Ret (MAP data_to_bvi_v
-                          vs'))))) /\
-               (((\x. ?v. x = Rval v) res \/ (\x. ?vs. x = Rerr
-                 (Rraise (Ret vs))) res) ==>
-                  (dataSem_state_stack t1 = dataSem_state_stack t2)
-                    /\
-                  (dataSem_state_handler t1 = dataSem_state_handler
-                    t2)) /\
+                        res = Rerr (Rraise (Ret (MAP data_to_bvi_v vs')))))
+                          /\
+               (((\x. ?v. x = Rval v) res \/ (\x. ?vs. x = Rerr (Rraise (Ret
+                 vs))) res) ==>
+                  (dataSem_state_stack t1 = dataSem_state_stack t2) /\
+                  (dataSem_state_handler t1 = dataSem_state_handler t2)) /\
                ((\x. ?v. x = Rval v) res ==> tail) /\
                ((\x. ?v. x = Rerr (Rraise (Exn v))) res ==>
                   (dataSem_jump_exc (dataSem_state_handler_fupd (K
-                    (dataSem_state_handler t1))
-                    (dataSem_state_stack_fupd (K (dataSem_state_stack
-                    t1)) t2)) =
-                     SOME (dataSem_state_locals_size_fupd (K ls)
-                       t2)))) | NONE -> ~tail /\ n <= next_var /\
+                    (dataSem_state_handler t1)) (dataSem_state_stack_fupd (K
+                    (dataSem_state_stack t1)) t2)) =
+                     SOME (dataSem_state_locals_size_fupd (K ls) t2))))
+           | NONE -> ~tail /\ n <= next_var /\
                      ALL (\v. v < next_var) vs /\
                      (!k. next_var <= k ==> (sptree_lookup k
                        (dataSem_state_locals t2) = NONE)) /\
                      var_corr env corr (sptree_map data_to_bvi_v
                        (dataSem_state_locals t2)) /\
-                     (!k x. (sptree_lookup k (dataSem_state_locals
-                       t2) = SOME x) ==> k < next_var) /\
-                     (!k x. (sptree_lookup k (dataSem_state_locals
-                       t1) = SOME x) /\
+                     (!k x. (sptree_lookup k (dataSem_state_locals t2) =
+                       SOME x) ==> k < next_var) /\
+                     (!k x. (sptree_lookup k (dataSem_state_locals t1) =
+                       SOME x) /\
                             (~(MEM k live) ==> MEM k corr) ==>
-                            (sptree_lookup k (dataSem_state_locals
-                              t2) = SOME x)) /\
-                     (dataSem_state_stack t1 = dataSem_state_stack
-                       t2) /\ (dataSem_state_handler t1 =
-                       dataSem_state_handler t2) /\
-                     (~(dataSem_jump_exc t1 = NONE) ==>
-                       ~(dataSem_jump_exc t2 = NONE)) /\
-                     (match res with Rval xs -> var_corr xs vs
-                       (sptree_map data_to_bvi_v (dataSem_state_locals
-                       t2)) | _3 -> F)))`,
+                            (sptree_lookup k (dataSem_state_locals t2) =
+                              SOME x)) /\
+                     (dataSem_state_stack t1 = dataSem_state_stack t2)
+                       /\ (dataSem_state_handler t1 = dataSem_state_handler t2)
+                       /\
+                     (~(dataSem_jump_exc t1 = NONE) ==> ~(dataSem_jump_exc
+                       t2 = NONE)) /\
+                     (match res with Rval xs -> var_corr xs vs (sptree_map
+                       data_to_bvi_v (dataSem_state_locals t2))
+                     | _ -> F)))`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_to_dataProofScript.sml:878-883: a proof *)
@@ -586,8 +567,8 @@ let bvi_to_dataProof_compile_correct = prove
 
 (* HOL4 bvi_to_dataProofScript.sml:2894-2897: ML code, not ported *)
 
-(* HOL4 bvi_to_dataProofScript.sml:2899-2918: a theorem whose
-   statement the port cannot state yet: compile_exp_correct *)
+(* HOL4 bvi_to_dataProofScript.sml:2899-2918: a theorem whose statement the
+   port cannot state yet: compile_exp_correct *)
 
 (* [local] *)
 let state_rel_dec_clock = prove
@@ -599,15 +580,13 @@ let state_rel_dec_clock = prove
    variables of its own are read as variables *)
 let compile_part_evaluate = prove
  (cake_as_vars (fun () ->
-    `dataSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],s1) =
-  (res,s2) /\ ~(res = Rerr (Rabort Rtype_error))
-  /\ bvi_to_dataProof_state_rel s1 t1 /\
-     (\t. t = LN) (dataSem_state_locals t1) /\ (!x. res = Rerr
-       (Rraise x) ==> ~(dataSem_jump_exc t1 = NONE)) ==> (?r t2.
-        dataSem_evaluate ((bvi_Call NONE (SOME start) [] NONE),t1)
-          = (SOME r,t2) /\
-        bvi_to_dataProof_state_rel s2 t2 /\ data_to_bvi_result r
-          = res)`),
+    `dataSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],s1) = (res,s2)
+  /\ ~(res = Rerr (Rabort Rtype_error)) /\ bvi_to_dataProof_state_rel s1 t1 /\
+     (\t. t = LN) (dataSem_state_locals t1) /\ (!x. res = Rerr (Rraise x)
+       ==> ~(dataSem_jump_exc t1 = NONE)) ==> (?r t2.
+        dataSem_evaluate ((bvi_Call NONE (SOME start) [] NONE),t1) = (SOME
+          r,t2) /\
+        bvi_to_dataProof_state_rel s2 t2 /\ data_to_bvi_result r = res)`),
   CHEAT_TAC);;
 
 let MAP_FST_compile_prog = prove
@@ -620,17 +599,14 @@ add_simp MAP_FST_compile_prog;;
 let compile_prog_evaluate = prove
  (cake_as_vars (fun () ->
     `dataSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],
-       dataSem_initial_state ffi0 (fromAList prog) co (\cfg prog.
-         cc cfg (bvi_to_data_compile_prog prog)) k) = (r,s) /\ ~(r =
-         Rerr (Rabort Rtype_error)) /\ (!x. ~(r = Rerr (Rraise x))) ==>
-         (?r2 s2.
+       dataSem_initial_state ffi0 (fromAList prog) co (\cfg prog. cc cfg
+         (bvi_to_data_compile_prog prog)) k) = (r,s) /\ ~(r = Rerr (Rabort
+         Rtype_error)) /\ (!x. ~(r = Rerr (Rraise x))) ==> (?r2 s2.
          dataSem_evaluate (bvi_Call NONE (SOME start) [] NONE,
-           dataSem_initial_state ffi0 (fromAList
-             (bvi_to_data_compile_prog prog)) ((I ##
-             bvi_to_data_compile_prog) o co) cc T lims ss k) = (SOME
-             r2,s2) /\
-           bvi_to_dataProof_state_rel s s2 /\ data_to_bvi_result
-             r2 = r)`),
+           dataSem_initial_state ffi0 (fromAList (bvi_to_data_compile_prog
+             prog)) ((I ## bvi_to_data_compile_prog) o co) cc T lims ss k) =
+             (SOME r2,s2) /\
+           bvi_to_dataProof_state_rel s s2 /\ data_to_bvi_result r2 = r)`),
   CHEAT_TAC);;
 
 let FST_compile_part = prove
@@ -647,15 +623,14 @@ let bvi_to_dataProof_compile_prog_semantics = prove
  (cake_as_vars (fun () ->
     `~(dataSem_semantics (ffi0:'ffi ffi_state)
                (fromAList prog) co
-               (\cfg prog. cc cfg (bvi_to_data_compile_prog prog))
-                 start = ffi_Fail) ==> dataSem_semantics ffi0
+               (\cfg prog. cc cfg (bvi_to_data_compile_prog prog)) start =
+                 ffi_Fail) ==> dataSem_semantics ffi0
                  (fromAList (bvi_to_data_compile_prog prog))
-                 ((I ## bvi_to_data_compile_prog) o co) cc lim ss
-                   start =
+                 ((I ## bvi_to_data_compile_prog) o co) cc lim ss start =
        dataSem_semantics ffi0
                  (fromAList prog) co
-                 (\cfg prog. cc cfg (bvi_to_data_compile_prog
-                   prog)) start`),
+                 (\cfg prog. cc cfg (bvi_to_data_compile_prog prog))
+                   start`),
   CHEAT_TAC);;
 
 let get_code_labels_iAssign = prove
@@ -666,14 +641,14 @@ add_simp get_code_labels_iAssign;;
 
 (* get_code_labels_compile *)
 let bvi_to_dataProof_get_code_labels_compile = prove
- (`!a b c d e. dataProps_get_code_labels (FST (bvi_to_data_compile a b c
-  d e)) SUBSET
+ (`!a b c d e. dataProps_get_code_labels (FST (bvi_to_data_compile a b c d e))
+  SUBSET
     UNIONS (set_of_list (MAP dataProps_get_code_labels e))`,
   CHEAT_TAC);;
 
 let compile_prog_good_code_labels = prove
- (`!p. dataProps_good_code_labels p elabs ==>
-  dataProps_good_code_labels (bvi_to_data_compile_prog p) elabs`,
+ (`!p. dataProps_good_code_labels p elabs ==> dataProps_good_code_labels
+  (bvi_to_data_compile_prog p) elabs`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

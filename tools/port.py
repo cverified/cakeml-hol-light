@@ -135,7 +135,7 @@ IGNORE_ML = [
 ]
 
 
-def lay(pre, words, width=68):
+def lay(pre, words, width=75):
   """lay out the words in lines of at most width characters, the
      first line starting with pre and the others indented like it,
      with two spaces after a full stop"""
@@ -152,7 +152,7 @@ def lay(pre, words, width=68):
   return lines
 
 
-def fill(pre, words, width=70, tight=False):
+def fill(pre, words, width=77, tight=False):
   """lay out the words in lines of at most width characters, the
      first line starting with pre and the others indented by 3.
      With tight the first word follows pre with no space, which is
@@ -260,7 +260,7 @@ def verbatim(text):
   return out[:i] + QUOTE + ' ' + out[i:] if i >= 0 else out + ' ' + QUOTE
 
 
-def shorten(text, width=72):
+def shorten(text, width=79):
   """break the lines of a comment of the port's own that are too
      long; a line that opens the comment is continued under its (* """
   out = '\n'.join(wrap(l.rstrip(), 0, width,
@@ -458,7 +458,7 @@ class Porter:
     """the head of a theorem: `let foo = prove`, or the name and
        the prove on two lines where that does not fit"""
     head = 'let %s = prove' % name
-    return head if len(head) <= 72 else 'let %s =\n  prove' % name
+    return head if len(head) <= 79 else 'let %s =\n  prove' % name
 
   def annot_vars(self, e, vs):
     """a statement that uses the name of a record accessor for a
@@ -617,7 +617,7 @@ class Porter:
         want = fieldvars.VARS.get(nm, [])
         self.varannot = set()
         stmt = fmt(self.term(body, defn=False, varty=want),
-                   indent=3, width=72, last=2)
+                   indent=3, width=79, last=2)
         vars_read = nm in fieldvars.READ or \
                     (bool(want) and
                      set(v for v, _ in want) - self.varannot)
@@ -625,7 +625,7 @@ class Porter:
           # the statement has to be read with the overloads taken
           # away, so it is rendered one indent deeper
           stmt = fmt(self.term(body, defn=False), indent=5,
-                     width=72, last=2)
+                     width=79, last=2)
       finally:
         hterm.ANTIQ_STRICT[0] = False
         hterm.DROP_TYVAR_ANNOT[0] = False
@@ -758,7 +758,7 @@ class Porter:
     line = '    '
     for part in p.split('/'):
       part = part + ('' if part.endswith('.sml') else '/')
-      if len(line) + len(part) > 70 and line.strip():
+      if len(line) + len(part) > 77 and line.strip():
         out += line + '\n'
         line = '      '
       line += part
@@ -780,7 +780,7 @@ class Porter:
           break
     where = '%s:%d' % (f, a) if z <= a else '%s:%d-%d' % (f, a, z)
     return '\n'.join(fill('(* HOL4 %s:' % where,
-                          what.split(), 69)) + ' *)'
+                          what.split(), 76)) + ' *)'
 
   def nm(self, n):
     return self.ctx.name(n)
@@ -1371,7 +1371,7 @@ class Porter:
         # else it cannot say is
         self.out.append(
           '\n'.join(fill('(* PORT FAILED: %s %s:' % (b.kind, b.name),
-                          str(ex).split(), 69)) + ' *)\n'
+                          str(ex).split(), 76)) + ' *)\n'
           + self.at(b, 'the %s' % b.kind.lower()))
       new = self.out[before:]
       if new:
@@ -1483,7 +1483,7 @@ class Porter:
               else []
       for n in self.anc_scope[1:]:
         # the last line of the list carries the ];; as well
-        if len(lines[-1]) + len(n) + 7 > 72:
+        if len(lines[-1]) + len(n) + 7 > 79:
           lines.append('   "' + n + '"')
         else:
           lines[-1] += '; "' + n + '"'
@@ -1498,7 +1498,7 @@ class Porter:
       # HOL Light's hide_constant says
       lines = ['let _ = do_list hide_constant ["' + hide[0] + '"']
       for n in hide[1:]:
-        if len(lines[-1]) + len(n) + 4 > 70:
+        if len(lines[-1]) + len(n) + 4 > 77:
           lines.append('       "' + n + '"')
         else:
           lines[-1] += '; "' + n + '"'
@@ -1614,7 +1614,7 @@ class Porter:
       ext = [d for d in deps if d not in self.db.thy_of_file]
       if ext:
         self.out.append('\n'.join(
-          fill('(* HOL4 ancestors outside the port:', ext, 69)) + ' *)')
+          fill('(* HOL4 ancestors outside the port:', ext, 76)) + ' *)')
       # a comment of the source about an ancestor that the port
       # does not have stands after that line (wordSem's "for
       # call_FFI"), which is where the ancestor itself is
@@ -1670,7 +1670,7 @@ class Porter:
         at = ('[' + ','.join(ats) + ']') if ats else ''
         text = (('(* %s *)\n' % at) if at else '') + \
                ('let %s = %s;;' % (nm, self.db.thmbind[alias]))
-        if max(len(l) for l in text.split('\n')) > 72:
+        if max(len(l) for l in text.split('\n')) > 79:
           text = (('(* %s *)\n' % at) if at else '') + \
                  ('let %s =\n  %s;;' % (nm, self.db.thmbind[alias]))
         self.out.append(text + ('\nadd_simp %s;;' % nm if simp else ''))
@@ -1872,7 +1872,7 @@ class Porter:
       out, cur = [], head
       for w in t.split(' '):
         if cur == head: cur += w
-        elif len(cur) + 1 + len(w) <= 72: cur += ' ' + w
+        elif len(cur) + 1 + len(w) <= 79: cur += ' ' + w
         else:
           out.append(cur)
           cur = '       ' + w
@@ -1897,9 +1897,9 @@ class Porter:
     overloads = self.overloads_of(
       [c for _, cons in parts for c, _, _, _ in cons])
     head = 'let %s = define_datatype' % lhs
-    if len(head) > 72:
+    if len(head) > 79:
       head = 'let %s =\n  define_datatype' % lhs
-      if max(len(l) for l in head.split('\n')) > 72:
+      if max(len(l) for l in head.split('\n')) > 79:
         head = ('let %s,\n    %s =\n  define_datatype'
                 % tuple(lhs.split(',')))
     self.out.append('%s\n%s";;' % (head, text))
@@ -1980,7 +1980,7 @@ class Porter:
              for part in spec.split(';\n')]
     lhs = '%s_INDUCT,%s_RECURSION' % (names[0], names[0])
     text = '\n'.join(
-      ' \\\n'.join(fill('  "' if m == 0 else '   ', part.split(), 69))
+      ' \\\n'.join(fill('  "' if m == 0 else '   ', part.split(), 76))
       for m, part in enumerate(spec.split('\n')))
     self.out.append('%slet %s = define_datatype\n%s";;'
                     % (pre, lhs, text))
@@ -2039,7 +2039,7 @@ class Porter:
     for i, (f, t, cs) in enumerate(flds):
       pre = '  [' if i == 0 and not lead else '   '
       body += ' \\\n'.join(
-        fill(pre + '"%s","' % f, t.split(' '), 70)) + '"'
+        fill(pre + '"%s","' % f, t.split(' '), 77)) + '"'
       if i < len(flds) - 1: body += ';'
       for c in cs:
         body += '\n   ' + ' '.join(c.split())
@@ -2050,7 +2050,7 @@ class Porter:
     if flds and flds[-1][2]: body += '\n  '
     head = ('let %s_FIELDS = define_record "%s"'
             % (ocaml_name(self.tnm(ty)), self.tnm(ty)))
-    if len(head) > 72:
+    if len(head) > 79:
       head = ('let %s_FIELDS =\n  define_record "%s"'
               % (ocaml_name(self.tnm(ty)), self.tnm(ty)))
     self.out.append('%s\n%s];;' % (head, body))
@@ -2175,7 +2175,7 @@ class Porter:
                        % (b.name, overrides.NOT_YET[key].split('\n')[0]))
       self.out.append(
         '\n'.join(fill('(* PENDING:',
-                       overrides.NOT_YET[key].split(), 69)) + ' *)\n'
+                       overrides.NOT_YET[key].split(), 76)) + ' *)\n'
         + self.at(b, 'the definition'))
       return
     key = (self.thy, name)
@@ -2420,7 +2420,7 @@ class Porter:
     # the list ends in `];; and not in `;;, so its last line has
     # one character less to go on
     body = (clauses if term is None
-            else '[`%s`]' % fmt(rawterm, width=71, last=4))
+            else '[`%s`]' % fmt(rawterm, width=78, last=4))
     head = head_way(strat)
     if assumed: recursive = recursive_text(body, names)
     elif head in NOT_RECURSIVE: recursive = False
@@ -2550,12 +2550,9 @@ class Porter:
     # bvl's Var and db_vars' Var both take one argument, so
     # nothing but the place says which is which.  A patch that
     # does not apply is an error and not a silence
-    for was, now in overrides.DEF_PATCH.get(key, []):
-      if was not in text:
-        if os.environ.get('PATCHDBG'):
-          print('PATCHDBG', text[:600], file=sys.stderr)
-        raise SyntaxError('DEF_PATCH does not apply: ' + was[:40])
-      text = text.replace(was, now)
+    if os.environ.get('PATCHDBG') and key in overrides.DEF_PATCH:
+      print('PATCHDBG', text[:900], file=sys.stderr)
+    text = patch_text(text, overrides.DEF_PATCH.get(key, []))
     # HOL4's [simp] on a definition says that its equations belong
     # to the set that its simplifier reaches for, which the port
     # says with a call after the definition, as it does for a
@@ -3983,17 +3980,17 @@ class Porter:
       # the type may be too long for one line
       body = self.typ(txt, keep=True)
       head = 'new_type_abbrev("%s",`:' % self.tnm(b.name)
-      text = ('\n'.join(fill(head, body.split(' '), 69, tight=True))
+      text = ('\n'.join(fill(head, body.split(' '), 76, tight=True))
               + '`);;')
-      if max(len(l) for l in text.split('\n')) > 72:
+      if max(len(l) for l in text.split('\n')) > 79:
         text = ('new_type_abbrev("%s",\n' % self.tnm(b.name) +
-                '\n'.join(fill('  `:', body.split(' '), 69,
+                '\n'.join(fill('  `:', body.split(' '), 76,
                                 tight=True)) + '`);;')
       # the comment stands after the phrase, on its line where the
       # source has it there and the line is not too long
       for c in cs:
         ls = text.split('\n')
-        text = (text + ' ' + c if len(ls[-1]) + len(c) + 1 <= 72
+        text = (text + ' ' + c if len(ls[-1]) + len(c) + 1 <= 79
                 else text + '\n' + c)
       self.out.append(text)
 
@@ -4240,9 +4237,9 @@ class Porter:
       s = hterm.print_type(ty2, self.ctx) if ty2 is not None else 'num'
       pre = '  [' if i == 0 else '   '
       lines.append(' \\\n'.join(
-        fill(pre + '"%s","' % f, s.split(' '), 70)) + '"')
+        fill(pre + '"%s","' % f, s.split(' '), 77)) + '"')
     head = ('let %s_FIELDS = define_record "%s"' % (ocaml_name(new), new))
-    if len(head) > 72:
+    if len(head) > 79:
       head = ('let %s_FIELDS =\n  define_record "%s"'
               % (ocaml_name(new), new))
     self.out.append('%s\n%s];;' % (head, ';\n'.join(lines)))
@@ -4336,12 +4333,9 @@ class Porter:
     # bvl's Var and db_vars' Var both take one argument, so
     # nothing but the place says which is which.  A patch that
     # does not apply is an error and not a silence
-    for was, now in overrides.DEF_PATCH.get(key, []):
-      if was not in text:
-        if os.environ.get('PATCHDBG'):
-          print('PATCHDBG', text[:600], file=sys.stderr)
-        raise SyntaxError('DEF_PATCH does not apply: ' + was[:40])
-      text = text.replace(was, now)
+    if os.environ.get('PATCHDBG') and key in overrides.DEF_PATCH:
+      print('PATCHDBG', text[:900], file=sys.stderr)
+    text = patch_text(text, overrides.DEF_PATCH.get(key, []))
     # HOL4's [simp] on a definition says that its equations belong
     # to the set that its simplifier reaches for, which the port
     # says with a call after the definition, as it does for a
@@ -4536,15 +4530,33 @@ def letline(binding, how, rest):
      a line each where they do not fit on one, and the two names of
      the pair on a line each where even that is too long."""
   head = 'let %s = %s' % (binding, how)
-  if len(head) <= 72:
+  if len(head) <= 79:
     return '%s\n  %s;;' % (head, rest)
-  if len('let %s =' % binding) <= 72:
+  if len('let %s =' % binding) <= 79:
     return 'let %s =\n  %s\n  %s;;' % (binding, how, rest)
   a, b = binding.split(',')
   return 'let %s,\n    %s =\n  %s\n  %s;;' % (a, b, how, rest)
 
 
-def fmt(text, indent=3, width=72, last=3, extra=2):
+def patch_text(text, patches):
+  """apply the DEF_PATCH entries of a definition to its text.  The
+     text is laid out already, so a patch is matched with every run
+     of whitespace of it standing for any other (a patch is about
+     what the port says and not about where the lines of it break),
+     and a line that the patch makes too long is broken again.  A
+     patch that does not apply is an error and not a silence"""
+  for was, now in patches:
+    pat = re.compile(r'\s+'.join(re.escape(w) for w in was.split()))
+    m = pat.search(text)
+    if m is None:
+      raise SyntaxError('DEF_PATCH does not apply: '
+                        + ' '.join(was.split())[:40])
+    text = text[:m.start()] + ' '.join(now.split()) + text[m.end():]
+  return '\n'.join(wrap(l, 0, 79) if len(l) > 79 else l
+                   for l in text.split('\n'))
+
+
+def fmt(text, indent=3, width=79, last=3, extra=2):
   """the layout of a translated term in the HOL Light source; the
      last line of the term is followed by a quote and a ;; (last
      characters), so it has to be that much shorter.  A line that
@@ -4667,16 +4679,16 @@ def port(thy, db=None):
   # broken here; a comment of a source keeps its length
   out, incomment = [], False
   for l in text.split('\n'):
-    if not incomment and len(l) > 72 and '(*' not in l \
+    if not incomment and len(l) > 79 and '(*' not in l \
        and '//' not in l:
       w = wrap(l, 0, 72)
-      l = w if max(len(x) for x in w.split('\n')) <= 72 else l
+      l = w if max(len(x) for x in w.split('\n')) <= 79 else l
     if '(*' in l and '*)' not in l.split('(*')[-1]: incomment = True
     elif '*)' in l: incomment = False
     out.append(l)
   text = '\n'.join(out)
   for i, l in enumerate(text.split('\n')):
-    if len(l) > 72:
+    if len(l) > 79:
       p.warn.append('line %d is %d characters' % (i + 1, len(l)))
   path = ML + db.mlpath_of(thy)
   os.makedirs(os.path.dirname(path), exist_ok=True)

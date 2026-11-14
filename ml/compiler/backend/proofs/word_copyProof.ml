@@ -59,8 +59,8 @@ let _ = hide_overloads
    "compile","word_to_word_compile";
    "data_buffer","data_buffer"];;
 
-(* HOL4 word_copyProofScript.sml:10: the ML values that the
-   definitions below antiquote *)
+(* HOL4 word_copyProofScript.sml:10: the ML values that the definitions
+   below antiquote *)
 
 let CPstate_inv_def = new_definition
   `CPstate_inv cs = (
@@ -68,8 +68,7 @@ let CPstate_inv_def = new_definition
      // cs.next is a fresh class
      !v c. sptree_lookup v (copy_state_to_eq cs) = SOME c ==> c <
        copy_state_next cs) /\
-    (!c. c IN domain (copy_state_from_eq cs) ==> c < copy_state_next
-      cs) /\
+    (!c. c IN domain (copy_state_from_eq cs) ==> c < copy_state_next cs) /\
     (!s c. ALOOKUP (copy_state_store_to_eq cs) s = SOME c ==> c <
       copy_state_next cs) /\
     (
@@ -84,9 +83,8 @@ let CPstate_inv_def = new_definition
 let unique_rep = prove
  (`CPstate_inv cs ==>
    c IN domain (copy_state_from_eq cs) /\
-   c' IN domain (copy_state_from_eq cs) /\ ~(c = c') ==>
-     ~(sptree_lookup c (copy_state_from_eq cs) = sptree_lookup c'
-     (copy_state_from_eq cs))`,
+   c' IN domain (copy_state_from_eq cs) /\ ~(c = c') ==> ~(sptree_lookup c
+     (copy_state_from_eq cs) = sptree_lookup c' (copy_state_from_eq cs))`,
   CHEAT_TAC);;
 
 let empty_eq_inv = prove
@@ -174,8 +172,8 @@ let lookup_eq_set_eq_is_alloc_var1 = prove
 let lookup_eq_set_eq_is_alloc_var2 = prove
  (`CPstate_inv cs /\
    both_alloc_vars (t,s) ==>
-   sptree_lookup t (copy_state_to_eq cs) = NONE ==> ~(v = t) ==>
-     ~(lookup_eq cs s = lookup_eq cs v) ==>
+   sptree_lookup t (copy_state_to_eq cs) = NONE ==> ~(v = t) ==> ~(lookup_eq
+     cs s = lookup_eq cs v) ==>
    lookup_eq (set_eq cs t s) v = lookup_eq cs v`,
   CHEAT_TAC);;
 
@@ -216,46 +214,46 @@ let CPstate_models_def = new_definition
 let CPstate_models_with_const = prove
  (`CPstate_models cs (wordSem_state_locals_size_fupd (K ls) s) =
   (CPstate_models cs s) /\
-   CPstate_models cs (wordSem_state_fp_regs_fupd (K fp) s) =
-     CPstate_models cs s /\
-   CPstate_models cs (wordSem_state_stack_fupd (K xs) s) =
-     CPstate_models cs s /\
+   CPstate_models cs (wordSem_state_fp_regs_fupd (K fp) s) = CPstate_models
+     cs s /\
+   CPstate_models cs (wordSem_state_stack_fupd (K xs) s) = CPstate_models cs
+     s /\
    CPstate_models cs (wordSem_state_stack_limit_fupd (K sl) s) =
      CPstate_models cs s /\
    CPstate_models cs (wordSem_state_stack_max_fupd (K sm) s) =
      CPstate_models cs s /\
    CPstate_models cs (wordSem_state_stack_size_fupd (K ssize) s) =
      CPstate_models cs s /\
-   CPstate_models cs (wordSem_state_memory_fupd (K m) s) =
-     CPstate_models cs s /\
-   CPstate_models cs (wordSem_state_mdomain_fupd (K md) s) =
-     CPstate_models cs s /\
+   CPstate_models cs (wordSem_state_memory_fupd (K m) s) = CPstate_models cs
+     s /\
+   CPstate_models cs (wordSem_state_mdomain_fupd (K md) s) = CPstate_models
+     cs s /\
    CPstate_models cs (wordSem_state_sh_mdomain_fupd (K smd) s) =
      CPstate_models cs s /\
-   CPstate_models cs (wordSem_state_permute_fupd (K p) s) =
-     CPstate_models cs s /\
-   CPstate_models cs (wordSem_state_compile_fupd (K c) s) =
-     CPstate_models cs s /\
+   CPstate_models cs (wordSem_state_permute_fupd (K p) s) = CPstate_models
+     cs s /\
+   CPstate_models cs (wordSem_state_compile_fupd (K c) s) = CPstate_models
+     cs s /\
    CPstate_models cs (wordSem_state_compile_oracle_fupd (K co) s) =
      CPstate_models cs s /\
    CPstate_models cs (wordSem_state_code_buffer_fupd (K cb) s) =
      CPstate_models cs s /\
    CPstate_models cs (wordSem_state_data_buffer_fupd (K db) s) =
      CPstate_models cs s /\
-   CPstate_models cs (wordSem_state_gc_fun_fupd (K g) s) =
-     CPstate_models cs s /\
-   CPstate_models cs (wordSem_state_handler_fupd (K hd) s) =
-     CPstate_models cs s /\
-   CPstate_models cs (wordSem_state_clock_fupd (K clk) s) =
-     CPstate_models cs s /\
+   CPstate_models cs (wordSem_state_gc_fun_fupd (K g) s) = CPstate_models cs
+     s /\
+   CPstate_models cs (wordSem_state_handler_fupd (K hd) s) = CPstate_models
+     cs s /\
+   CPstate_models cs (wordSem_state_clock_fupd (K clk) s) = CPstate_models
+     cs s /\
    CPstate_models cs (wordSem_state_termdep_fupd (K tdep) s) =
      CPstate_models cs s /\
-   CPstate_models cs (wordSem_state_code_fupd (K cd) s) =
-     CPstate_models cs s /\
-   CPstate_models cs (wordSem_state_be_fupd (K b) s) = CPstate_models
-     cs s /\
-   CPstate_models cs (wordSem_state_ffi_fupd (K ffi) s) =
-     CPstate_models cs s`,
+   CPstate_models cs (wordSem_state_code_fupd (K cd) s) = CPstate_models cs
+     s /\
+   CPstate_models cs (wordSem_state_be_fupd (K b) s) = CPstate_models cs s
+     /\
+   CPstate_models cs (wordSem_state_ffi_fupd (K ffi) s) = CPstate_models
+     cs s`,
   CHEAT_TAC);;
 add_simp CPstate_models_with_const;;
 
@@ -300,8 +298,8 @@ let remove_eq_model_insert' = prove
  (`CPstate_inv cs /\
    CPstate_models cs st /\ wordSem_state_locals
    (st':('a,'b,'c)wordSem_state) =
-     sptree_insert t val (wordSem_state_locals
-       (st:('a,'b,'c)wordSem_state)) /\ wordSem_state_store
+     sptree_insert t val (wordSem_state_locals (st:('a,'b,'c)wordSem_state))
+       /\ wordSem_state_store
    st' = wordSem_state_store st ==>
    CPstate_models (remove_eq cs t) st'`,
   CHEAT_TAC);;
@@ -367,18 +365,16 @@ let copy_prop_move_model_aux = prove
    CPstate_models cs st /\
    both_alloc_vars (t,s) /\
    sptree_lookup s (wordSem_state_locals st) = SOME sval ==>
-   CPstate_models (set_eq (remove_eq cs t) t s)
-     (wordSem_state_locals_fupd (K (sptree_insert t sval
-     (wordSem_state_locals st))) st)`,
+   CPstate_models (set_eq (remove_eq cs t) t s) (wordSem_state_locals_fupd
+     (K (sptree_insert t sval (wordSem_state_locals st))) st)`,
   CHEAT_TAC);;
 
 let set_eq_remove_eq_models = prove
  (`CPstate_inv cs /\
    CPstate_models cs st /\
    sptree_lookup s (wordSem_state_locals st) = SOME sval ==>
-   CPstate_models (set_eq (remove_eq cs t) t s)
-     (wordSem_state_locals_fupd (K (sptree_insert t sval
-     (wordSem_state_locals st))) st)`,
+   CPstate_models (set_eq (remove_eq cs t) t s) (wordSem_state_locals_fupd
+     (K (sptree_insert t sval (wordSem_state_locals st))) st)`,
   CHEAT_TAC);;
 
 let lookup_eq_idempotent = prove
@@ -395,36 +391,33 @@ let CPstate_modelsD_get_var = prove
 let CPstate_modelsD_get_vars = prove
  (`CPstate_inv cs /\
    CPstate_models cs st ==>
-   wordSem_get_vars (MAP (lookup_eq cs) xs) st = wordSem_get_vars
-     xs st`,
+   wordSem_get_vars (MAP (lookup_eq cs) xs) st = wordSem_get_vars xs st`,
   CHEAT_TAC);;
 
 let CPstate_modelsD_get_var_imm = prove
  (`CPstate_inv cs /\
    CPstate_models cs st ==>
-   wordSem_get_var_imm (lookup_eq_imm cs x) st =
-     wordSem_get_var_imm x st`,
+   wordSem_get_var_imm (lookup_eq_imm cs x) st = wordSem_get_var_imm x st`,
   CHEAT_TAC);;
 
 let CPstate_modelsD_Var = prove
  (`CPstate_inv cs /\
    CPstate_models cs st ==>
-   wordSem_word_exp st (wordLang_Var (lookup_eq cs x)) =
-     wordSem_word_exp st (wordLang_Var x)`,
+   wordSem_word_exp st (wordLang_Var (lookup_eq cs x)) = wordSem_word_exp
+     st (wordLang_Var x)`,
   CHEAT_TAC);;
 
 let CPstate_modelsD_lookup_eq_imm = prove
  (`CPstate_inv cs ==>
    CPstate_models cs st ==>
-   wordSem_word_exp st (match lookup_eq_imm cs x with Reg r ->
-     wordLang_Var r | Imm w -> wordLang_Const w) =
-   wordSem_word_exp st (match x with Reg r -> wordLang_Var r | Imm
-     w -> wordLang_Const w)`,
+   wordSem_word_exp st (match lookup_eq_imm cs x with Reg r -> wordLang_Var
+     r | Imm w -> wordLang_Const w) =
+   wordSem_word_exp st (match x with Reg r -> wordLang_Var r | Imm w ->
+     wordLang_Const w)`,
   CHEAT_TAC);;
 
 let MAP_get_var_eqD = prove
- (`MAP (\x. wordSem_get_var x st) xx = MAP (\x. wordSem_get_var x st) yy
-  ==>
+ (`MAP (\x. wordSem_get_var x st) xx = MAP (\x. wordSem_get_var x st) yy ==>
    wordSem_get_vars xx st = wordSem_get_vars yy st`,
   CHEAT_TAC);;
 
@@ -441,16 +434,16 @@ let copy_prop_move_get_vars = prove
  (`CPstate_inv cs ==>
    CPstate_models cs st ==>
    copy_prop_move moves cs = (moves',cs') ==>
-   wordSem_get_vars (MAP SND moves') st = wordSem_get_vars (MAP SND
-     moves) st`,
+   wordSem_get_vars (MAP SND moves') st = wordSem_get_vars (MAP SND moves)
+     st`,
   CHEAT_TAC);;
 
 let copy_prop_move_eval_aux2 = prove
  (`MAP FST moves1 = MAP FST moves2 ==>
-   wordSem_get_vars (MAP SND moves1) st = wordSem_get_vars (MAP SND
-     moves2) st ==>
-   wordSem_evaluate (wordLang_Move pri moves1,st) =
-     wordSem_evaluate (wordLang_Move pri moves2,st)`,
+   wordSem_get_vars (MAP SND moves1) st = wordSem_get_vars (MAP SND moves2)
+     st ==>
+   wordSem_evaluate (wordLang_Move pri moves1,st) = wordSem_evaluate
+     (wordLang_Move pri moves2,st)`,
   CHEAT_TAC);;
 
 let copy_prop_move_eval_aux3 = prove
@@ -469,8 +462,8 @@ let copy_prop_move_eval = prove
 
 let lookup_alist_insert_same = prove
  (`~(s IN set_of_list tt) ==>
-     sptree_lookup s (alist_insert tt values locals) =
-       sptree_lookup s locals`,
+     sptree_lookup s (alist_insert tt values locals) = sptree_lookup s
+       locals`,
   CHEAT_TAC);;
 
 let copy_prop_move_inv = prove
@@ -492,8 +485,8 @@ let copy_prop_prog_inv = prove
   CHEAT_TAC);;
 
 (* unused *)
-(* HOL4 word_copyProofScript.sml:740-750: code that the source has in
-   a comment *)
+(* HOL4 word_copyProofScript.sml:740-750: code that the source has in a
+   comment *)
 
 let empty_eq_model = prove
  (`CPstate_models empty_eq st`,
@@ -502,16 +495,14 @@ let empty_eq_model = prove
 let copy_prop_move_model = prove
  (`CPstate_inv cs ==>
    CPstate_models cs st ==>
-   set_of_list (MAP FST moves) INTER set_of_list (MAP SND moves) = {}
-     ==>
+   set_of_list (MAP FST moves) INTER set_of_list (MAP SND moves) = {} ==>
    copy_prop_move moves cs = (moves',cs') ==>
    wordSem_get_vars (MAP SND moves) st = SOME values ==>
    CPstate_models cs' (wordSem_set_vars (MAP FST moves) values st)`,
   CHEAT_TAC);;
 
 let EVERY_NOT_MEM_D = prove
- (`ALL (\t. ~(MEM t ss)) tt ==> set_of_list tt INTER set_of_list ss =
-  {}`,
+ (`ALL (\t. ~(MEM t ss)) tt ==> set_of_list tt INTER set_of_list ss = {}`,
   CHEAT_TAC);;
 
 let copy_prop_move_correct = prove
@@ -544,8 +535,8 @@ let word_exp_cong_Op = prove
 let word_exp_cong_Shift = prove
  (`wordSem_word_exp st e' = wordSem_word_exp st e ==>
    wordSem_word_exp st e2' = wordSem_word_exp st e2 ==>
-   wordSem_word_exp st (wordLang_Shift sh e' e2') =
-     wordSem_word_exp st (wordLang_Shift sh e e2)`,
+   wordSem_word_exp st (wordLang_Shift sh e' e2') = wordSem_word_exp st
+     (wordLang_Shift sh e e2)`,
   CHEAT_TAC);;
 
 (* HOL4 word_copyProofScript.sml:872-895: a proof *)
@@ -567,8 +558,7 @@ let copy_prop_inst_eval = prove
    CPstate_inv cs ==>
    CPstate_models cs st ==>
    (prog',cs') = copy_prop_inst ins cs ==>
-   wordSem_evaluate (prog',st) = wordSem_evaluate (wordLang_Inst
-     ins,st)`,
+   wordSem_evaluate (prog',st) = wordSem_evaluate (wordLang_Inst ins,st)`,
   CHEAT_TAC);;
 
 let remove_eq_comm = prove
@@ -590,14 +580,13 @@ let remove_eq_model_unset_var = prove
    CPstate_models (remove_eq cs t) (wordSem_unset_var t st)`,
   CHEAT_TAC);;
 
-(* HOL4 word_copyProofScript.sml:966-981: code that the source has in
-   a comment *)
+(* HOL4 word_copyProofScript.sml:966-981: code that the source has in a
+   comment *)
 
 let CPstate_modelsD_copy_prop_share = prove
  (`CPstate_inv cs ==>
    CPstate_models cs st ==>
-   wordSem_word_exp st (copy_prop_share e cs) = wordSem_word_exp st
-     e`,
+   wordSem_word_exp st (copy_prop_share e cs) = wordSem_word_exp st e`,
   CHEAT_TAC);;
 
 let lookup_store_eq_SOME = prove
@@ -655,8 +644,8 @@ let set_store_eq_model_set_var = prove
    CPstate_models cs st /\
    lookup_store_eq cs s = NONE /\
    wordSem_get_store s st = SOME w ==>
-   CPstate_models (set_store_eq (remove_eq cs n) s n)
-     (wordSem_set_var n w st)`,
+   CPstate_models (set_store_eq (remove_eq cs n) s n) (wordSem_set_var n w
+     st)`,
   CHEAT_TAC);;
 
 (* Conditional body congruence for Loop: if the body transformation
@@ -665,21 +654,18 @@ let set_store_eq_model_set_var = prove
 let evaluate_Loop_body_cong_err = prove
  (`!(s:('a,'c,'ffi)wordSem_state) names c c' exit_names res s'.
      (!(v:('a,'c,'ffi)wordSem_state) res s'.
-        wordSem_evaluate (c,v) = (res,s') /\ ~(res = SOME
-          wordSem_Error) ==>
+        wordSem_evaluate (c,v) = (res,s') /\ ~(res = SOME wordSem_Error) ==>
         wordSem_evaluate (c',v) = (res,s')) /\
      wordSem_evaluate (wordLang_Loop names c exit_names,s) = (res,s')
        /\ ~(res = SOME wordSem_Error) ==>
-     wordSem_evaluate (wordLang_Loop names c' exit_names,s) =
-       (res,s')`,
+     wordSem_evaluate (wordLang_Loop names c' exit_names,s) = (res,s')`,
   CHEAT_TAC);;
 
 let copy_prop_correct = prove
  (`!prog cs st prog' cs' err st'.
    CPstate_inv cs /\
    CPstate_models cs st /\
-   copy_prop_prog prog cs = (prog',cs') /\ ~(err = SOME
-     wordSem_Error) /\
+   copy_prop_prog prog cs = (prog',cs') /\ ~(err = SOME wordSem_Error) /\
    wordSem_evaluate (prog,st) = (err,st') ==>
    wordSem_evaluate (prog',st) = (err,st') /\
    (err = NONE ==> CPstate_models cs' st')`,

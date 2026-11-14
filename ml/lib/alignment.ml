@@ -20,5 +20,5 @@ let byte_align_def = new_definition
   `byte_align (w:'a word) = align (LOG2 (dimindex (:'a) DIV 8)) w`;;
 
 let byte_aligned_def = new_definition
-  `byte_aligned (w:'a word) = alignment_aligned (LOG2 (dimindex (:'a)
-  DIV 8)) w`;;
+  `byte_aligned (w:'a word) = alignment_aligned (LOG2 (dimindex (:'a) DIV
+  8)) w`;;

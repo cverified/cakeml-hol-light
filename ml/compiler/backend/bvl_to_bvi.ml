@@ -33,32 +33,32 @@ needs "misc/misc.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "bvl_to_bvi"
   ["backend_common"; "bvi"; "bvi_inline"; "bvi_let"; "bvi_tailrec";
-   "bvi_tmc"; "bvl"; "bvl_const"; "bvl_handle"; "bvl_inline";
-   "dataLang"];;
+   "bvi_tmc"; "bvl"; "bvl_const"; "bvl_handle"; "bvl_inline"; "dataLang"];;
 
 let _ = do_list hide_constant ["num_stubs"; "pmatch"];;
 
 let destLet_def = new_definition
   `destLet x1 =
-        match x1 with
-          ((bvl_Let xs b):bvl_exp) -> (xs,b)
-        | _1 -> ([],bvl_Var 0)`;;
+     match x1 with
+       ((bvl_Let xs b):bvl_exp) -> (xs,b)
+     | _ -> ([],bvl_Var 0)`;;
 
 let destLet_pmatch = prove
  (`!exp.
    destLet exp =
-     (match exp with
-       bvl_Let xs b -> (xs,b) | _2 -> ([],bvl_Var 0))`,
+     match exp with
+       bvl_Let xs b -> (xs,b)
+     | _ -> ([],bvl_Var 0)`,
   CHEAT_TAC);;
 
-(* HOL4 bvl_to_bviScript.sml:37: the ML values that the definitions
-   below antiquote *)
+(* HOL4 bvl_to_bviScript.sml:37: the ML values that the definitions below
+   antiquote *)
 
 let compile_int_def = new_definition
   `compile_int (i:int) =
-     bvi_Op (if --((&268435457):int) <= i /\ i <=
-       ((&268435457):int) then closLang_IntOp (closLang_Const i) else
-       closLang_BlockOp (closLang_Build [closLang_Int i])) []`;;
+     bvi_Op (if --((&268435457):int) <= i /\ i <= ((&268435457):int) then
+       closLang_IntOp (closLang_Const i) else closLang_BlockOp
+       (closLang_Build [closLang_Int i])) []`;;
 
 let _ = size_thms "bvl_exp";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -66,52 +66,52 @@ let _ = size_thms "bvl_exp";;
 let alloc_glob_count_def,alloc_glob_count_ind = define_wf
   `MEASURE (\x0. bvl_exp_size1 x0)`
   [`alloc_glob_count x1 =
-        match x1 with
-          [] -> (0:num)
-        | (CONS x (CONS y xs)) ->
+     match x1 with
+       [] -> (0:num)
+     | CONS x (CONS y xs) ->
         alloc_glob_count [x] + alloc_glob_count (CONS y xs)
-        | [(bvl_Var _3):bvl_exp] -> 0
-        | [bvl_If x y z] ->
+     | [(bvl_Var _):bvl_exp] -> 0
+     | [bvl_If x y z] ->
         alloc_glob_count [x] +
         alloc_glob_count [y] +
         alloc_glob_count [z]
-        | [bvl_Handle x y] ->
+     | [bvl_Handle x y] ->
         alloc_glob_count [x] +
         alloc_glob_count [y]
-        | [bvl_Tick x] -> alloc_glob_count [x]
-        | [bvl_Force loc v] -> 0
-        | [bvl_Raise x] -> alloc_glob_count [x]
-        | [bvl_Let xs x] -> alloc_glob_count (CONS x xs)
-        | [bvl_Call _4 _5 xs] -> alloc_glob_count xs
-        | [bvl_Op op xs] ->
-        (if op = closLang_GlobOp closLang_AllocGlobal then 1 +
-          alloc_glob_count xs else alloc_glob_count xs)
-        | [_6] -> 0
-        // Impossible`];;
+     | [bvl_Tick x] -> alloc_glob_count [x]
+     | [bvl_Force loc v] -> 0
+     | [bvl_Raise x] -> alloc_glob_count [x]
+     | [bvl_Let xs x] -> alloc_glob_count (CONS x xs)
+     | [bvl_Call _1 _2 xs] -> alloc_glob_count xs
+     | [bvl_Op op xs] ->
+        if op = closLang_GlobOp closLang_AllocGlobal then 1 +
+          alloc_glob_count xs
+                              else alloc_glob_count xs
+     | [_] -> 0
+     // Impossible`];;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 bvl_to_bviScript.sml:88-93: the tactic that proves the
-   termination *)
+(* HOL4 bvl_to_bviScript.sml:88-93: the tactic that proves the termination *)
 let global_count_sing_def,global_count_sing_ind = define_rec
-  [`global_count_sing ((bvl_Var _7):bvl_exp) = 0`;
-   `global_count_sing (bvl_If x y z:bvl_exp) =
+  [`global_count_sing ((bvl_Var _):bvl_exp) = 0`;
+   `global_count_sing (bvl_If x y z) =
          global_count_sing x +
          global_count_sing y +
          global_count_sing z`;
-   `global_count_sing (bvl_Handle x y:bvl_exp) =
+   `global_count_sing (bvl_Handle x y) =
          global_count_sing x +
          global_count_sing y`;
-   `global_count_sing (bvl_Force loc v:bvl_exp) = 0`;
-   `global_count_sing (bvl_Tick x:bvl_exp) = global_count_sing x`;
-   `global_count_sing (bvl_Raise x:bvl_exp) = global_count_sing x`;
-   `global_count_sing (bvl_Let xs x:bvl_exp) =
+   `global_count_sing (bvl_Force loc v) = 0`;
+   `global_count_sing (bvl_Tick x) = global_count_sing x`;
+   `global_count_sing (bvl_Raise x) = global_count_sing x`;
+   `global_count_sing (bvl_Let xs x) =
          global_count_sing x + global_count_list xs`;
-   `global_count_sing (bvl_Call _10 _11 xs:bvl_exp) =
-    global_count_list xs`;
-   `global_count_sing (bvl_Op op xs:bvl_exp) =
-         (if op = closLang_GlobOp closLang_AllocGlobal then 1 +
-             global_count_list xs else global_count_list xs)`;
+   `global_count_sing (bvl_Call _5 _6 xs) = global_count_list xs`;
+   `global_count_sing (bvl_Op op xs) =
+         if op = closLang_GlobOp closLang_AllocGlobal then 1 +
+             global_count_list xs
+                              else global_count_list xs`;
    `global_count_list [] = (0:num)`;
    `global_count_list (CONS x xs) = ((
          global_count_sing x + global_count_list xs):num)`];;
@@ -138,58 +138,55 @@ let SumListLength_location_def = new_definition
 let ConcatByte_location_def = new_definition
   `ConcatByte_location = SumListLength_location + 1`;;
 
-(* HOL4 bvl_to_bviScript.sml:129-130: a theorem that HOL4 states as
-   the value of an ML expression: AllocGlobal_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:131-132: a theorem that HOL4 states as
-   the value of an ML expression: CopyGlobals_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:133-134: a theorem that HOL4 states as
-   the value of an ML expression: InitGlobals_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:135-136: a theorem that HOL4 states as
-   the value of an ML expression: ListLength_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:137-138: a theorem that HOL4 states as
-   the value of an ML expression: FromListByte_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:139-140: a theorem that HOL4 states as
-   the value of an ML expression: ToListByte_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:141-142: a theorem that HOL4 states as
-   the value of an ML expression: SumListLength_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:143-144: a theorem that HOL4 states as
-   the value of an ML expression: ConcatByte_location_eq *)
+(* HOL4 bvl_to_bviScript.sml:129-130: a theorem that HOL4 states as the
+   value of an ML expression: AllocGlobal_location_eq *)
+(* HOL4 bvl_to_bviScript.sml:131-132: a theorem that HOL4 states as the
+   value of an ML expression: CopyGlobals_location_eq *)
+(* HOL4 bvl_to_bviScript.sml:133-134: a theorem that HOL4 states as the
+   value of an ML expression: InitGlobals_location_eq *)
+(* HOL4 bvl_to_bviScript.sml:135-136: a theorem that HOL4 states as the
+   value of an ML expression: ListLength_location_eq *)
+(* HOL4 bvl_to_bviScript.sml:137-138: a theorem that HOL4 states as the
+   value of an ML expression: FromListByte_location_eq *)
+(* HOL4 bvl_to_bviScript.sml:139-140: a theorem that HOL4 states as the
+   value of an ML expression: ToListByte_location_eq *)
+(* HOL4 bvl_to_bviScript.sml:141-142: a theorem that HOL4 states as the
+   value of an ML expression: SumListLength_location_eq *)
+(* HOL4 bvl_to_bviScript.sml:143-144: a theorem that HOL4 states as the
+   value of an ML expression: ConcatByte_location_eq *)
 
 let AllocGlobal_code_def = new_definition
   `AllocGlobal_code = ((1:num),
      bvi_Let [bvi_Op (closLang_GlobOp closLang_GlobalsPtr) []] (
-     bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-       (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 0]] (
-     bvi_Let [bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 0;
-       bvi_Var 2]] (
+     bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
+       (closLang_Const (&0))) []; bvi_Var 0]] (
+     bvi_Let [bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 0; bvi_Var 2]] (
      bvi_Let [bvi_Op (closLang_MemOp closLang_Length) [bvi_Var 2]] (
-     bvi_Let [bvi_Op (closLang_MemOp closLang_Update) [bvi_Var 1;
-       bvi_Op (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 3]]
-       (bvi_If (bvi_Op (closLang_IntOp closLang_Less) [bvi_Var 1;
-         bvi_Var 2]) (bvi_Var 0)
+     bvi_Let [bvi_Op (closLang_MemOp closLang_Update) [bvi_Var 1; bvi_Op
+       (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 3]]
+       (bvi_If (bvi_Op (closLang_IntOp closLang_Less) [bvi_Var 1; bvi_Var
+         2]) (bvi_Var 0)
           (bvi_Let [bvi_Op (closLang_MemOp closLang_RefArray) [bvi_Op
-            (closLang_IntOp (closLang_Const (&0))) []; bvi_Op
-            (closLang_IntOp closLang_Add) [bvi_Var 2; bvi_Var 2]]] (
-           bvi_Let [bvi_Op (closLang_GlobOp closLang_SetGlobalsPtr)
-             [bvi_Var 0]]
+            (closLang_IntOp (closLang_Const (&0))) []; bvi_Op (closLang_IntOp
+            closLang_Add) [bvi_Var 2; bvi_Var 2]]] (
+           bvi_Let [bvi_Op (closLang_GlobOp closLang_SetGlobalsPtr) [bvi_Var
+             0]]
              (bvi_Call 0 (SOME CopyGlobals_location)
                [bvi_Var 1; bvi_Var 6; bvi_Op (closLang_IntOp
-                 closLang_Sub) [bvi_Op (closLang_IntOp
-                 (closLang_Const (&1))) []; bvi_Var 3]] NONE)))))))))`;;
+                 closLang_Sub) [bvi_Op (closLang_IntOp (closLang_Const
+                 (&1))) []; bvi_Var 3]] NONE)))))))))`;;
 
 let CopyGlobals_code_def = new_definition
   `CopyGlobals_code = ((3:num),
      // ptr to new array, ptr to old array, index to copy
      bvi_Let [bvi_Op (closLang_MemOp closLang_Update) [bvi_Op
-       (closLang_MemOp closLang_El) [bvi_Var 2; bvi_Var 1]; bvi_Var 2;
-       bvi_Var 0]]
+       (closLang_MemOp closLang_El) [bvi_Var 2; bvi_Var 1]; bvi_Var 2; bvi_Var
+       0]]
        (bvi_If (bvi_Op (closLang_BlockOp closLang_Equal) [bvi_Op
-         (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 3]) (bvi_Var
-         0)
-         (bvi_Call 0 (SOME CopyGlobals_location) [bvi_Var 1;
-           bvi_Var 2; bvi_Op (closLang_IntOp closLang_Sub) [bvi_Op
-           (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 3]]
-           NONE)))`;;
+         (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 3]) (bvi_Var 0)
+         (bvi_Call 0 (SOME CopyGlobals_location) [bvi_Var 1; bvi_Var 2;
+           bvi_Op (closLang_IntOp closLang_Sub) [bvi_Op (closLang_IntOp
+           (closLang_Const (&1))) []; bvi_Var 3]] NONE)))`;;
 
 let InitGlobals_max_def = new_definition
   `InitGlobals_max = 10000`;;
@@ -198,11 +195,11 @@ let InitGlobals_code_def = new_definition
   `InitGlobals_code start' n = ((0:num),
      (let n = MIN (MAX n 1) InitGlobals_max in
        bvi_Let [bvi_Op (closLang_MemOp closLang_RefArray) [bvi_Op
-         (closLang_IntOp (closLang_Const (&0))) []; bvi_Op
-         (closLang_IntOp (closLang_Const (&n))) []]]
+         (closLang_IntOp (closLang_Const (&0))) []; bvi_Op (closLang_IntOp
+         (closLang_Const (&n))) []]]
          (bvi_Let [bvi_Op (closLang_MemOp closLang_Update) [bvi_Op
-           (closLang_IntOp (closLang_Const (&1))) []; bvi_Op
-           (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 0]]
+           (closLang_IntOp (closLang_Const (&1))) []; bvi_Op (closLang_IntOp
+           (closLang_Const (&0))) []; bvi_Var 0]]
            (bvi_Let [bvi_Op (closLang_GlobOp closLang_SetGlobalsPtr)
              [bvi_Var 1]]
               (bvi_Call 0 (SOME start') [] (SOME (bvi_Var 0)))))))`;;
@@ -214,11 +211,9 @@ let ListLength_code_def = new_definition
        [bvi_Var 0])
        (bvi_Var 1) (bvi_Call 0 (SOME ListLength_location)
                  [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-                   (closLang_IntOp (closLang_Const (&1))) []; bvi_Var
-                   0];
-                  bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 1;
-                    bvi_Op (closLang_IntOp (closLang_Const (&1)))
-                    []]] NONE))`;;
+                   (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 0];
+                  bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 1; bvi_Op
+                    (closLang_IntOp (closLang_Const (&1))) []]] NONE))`;;
 
 let FromListByte_code_def = new_definition
   `FromListByte_code = (3,
@@ -226,11 +221,11 @@ let FromListByte_code_def = new_definition
      bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0))
        [bvi_Var 0]) (bvi_Var 2)
        (bvi_Let [bvi_Op (closLang_MemOp closLang_UpdateByte) [bvi_Op
-         (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
-         (closLang_Const (&0))) []; bvi_Var 0]; bvi_Var 1; bvi_Var 2]]
+         (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp (closLang_Const
+         (&0))) []; bvi_Var 0]; bvi_Var 1; bvi_Var 2]]
          (bvi_Call 0 (SOME FromListByte_location)
-           [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-             (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 1];
+           [bvi_Op (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
+             (closLang_Const (&1))) []; bvi_Var 1];
             bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 2; bvi_Op
               (closLang_IntOp (closLang_Const (&1))) []];
             bvi_Var 3] NONE)))`;;
@@ -238,15 +233,15 @@ let FromListByte_code_def = new_definition
 let ToListByte_code_def = new_definition
   `ToListByte_code = (3,
      // list, current index, byte array
-     bvi_If (bvi_Op (closLang_BlockOp (closLang_EqualConst
-       (closLang_Int (&0:int)))) [bvi_Var 1]) (bvi_Var 0)
+     bvi_If (bvi_Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
+       (&0:int)))) [bvi_Var 1]) (bvi_Var 0)
        (bvi_Let [bvi_Op (closLang_IntOp closLang_Sub) [bvi_Op
          (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 1]]
-       (bvi_Let [bvi_Op (closLang_MemOp closLang_DerefByte) [bvi_Var
-         0; bvi_Var 3]]
+       (bvi_Let [bvi_Op (closLang_MemOp closLang_DerefByte) [bvi_Var 0;
+         bvi_Var 3]]
          (bvi_Call 0 (SOME ToListByte_location)
-           [bvi_Op (closLang_BlockOp (closLang_Cons 0)) [bvi_Var 2;
-             bvi_Var 0];
+           [bvi_Op (closLang_BlockOp (closLang_Cons 0)) [bvi_Var 2; bvi_Var
+             0];
             bvi_Var 1;
             bvi_Var 4] NONE))))`;;
 
@@ -257,32 +252,29 @@ let SumListLength_code_def = new_definition
        [bvi_Var 0])
        (bvi_Var 1)
        (bvi_Call 0 (SOME SumListLength_location)
-          [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-            (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 0];
+          [bvi_Op (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
+            (closLang_Const (&1))) []; bvi_Var 0];
            bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 1; bvi_Op
              (closLang_MemOp closLang_LengthByte)
-                            [bvi_Op (closLang_MemOp closLang_El)
-                              [bvi_Op (closLang_IntOp (closLang_Const
-                              (&0))) []; bvi_Var 0]]]] NONE))`;;
+                            [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
+                              (closLang_IntOp (closLang_Const (&0))) [];
+                              bvi_Var 0]]]] NONE))`;;
 
 let ConcatByte_code_def = new_definition
   `ConcatByte_code = (3,
      // list, current index, destination
      bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0))
        [bvi_Var 0]) (bvi_Var 2)
-       (bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-         (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 0]]
-         (bvi_Let [bvi_Op (closLang_MemOp closLang_LengthByte)
-           [bvi_Var 0]]
+       (bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
+         (closLang_Const (&0))) []; bvi_Var 0]]
+         (bvi_Let [bvi_Op (closLang_MemOp closLang_LengthByte) [bvi_Var 0]]
            (bvi_Let [bvi_Op (closLang_MemOp (closLang_CopyByte F))
-                   [bvi_Var 3; bvi_Var 4; bvi_Var 0; bvi_Op
-                     (closLang_IntOp (closLang_Const (&0))) []; bvi_Var
-                     1]]
+                   [bvi_Var 3; bvi_Var 4; bvi_Var 0; bvi_Op (closLang_IntOp
+                     (closLang_Const (&0))) []; bvi_Var 1]]
              (bvi_Call 0 (SOME ConcatByte_location)
-               [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-                 (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 3];
-                bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 4;
-                  bvi_Var 1];
+               [bvi_Op (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
+                 (closLang_Const (&1))) []; bvi_Var 3];
+                bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 4; bvi_Var 1];
                 bvi_Var 5] NONE)))))`;;
 
 let stubs_def = new_definition
@@ -295,103 +287,107 @@ let stubs_def = new_definition
                     (SumListLength_location,SumListLength_code);
                     (ConcatByte_location,ConcatByte_code)]`;;
 
-(* HOL4 bvl_to_bviScript.sml:243: the overload num_stubs, which the
-   port expands *)
+(* HOL4 bvl_to_bviScript.sml:243: the overload num_stubs, which the port
+   expands *)
 
 let compile_op_def = new_definition
   `bvl_to_bvi_compile_op op c1 =
-     (match op with closLang_IntOp (closLang_Const i) ->
-       (match c1 with [] -> compile_int i | _12 -> bvi_Let [bvi_Op
-         (closLang_IntOp (closLang_Const (&0))) c1] (compile_int i)) |
-         closLang_GlobOp (closLang_Global n) ->
-       (if NULL c1 then bvi_Op (closLang_GlobOp (closLang_Global (n +
-         1))) [] else bvi_Let c1 (bvi_Op (closLang_MemOp closLang_El) [
+     match op with closLang_IntOp (closLang_Const i) ->
+       (match c1 with [] -> compile_int i
+       | _ -> bvi_Let [bvi_Op (closLang_IntOp (closLang_Const (&0))) c1]
+         (compile_int i))
+     | closLang_GlobOp (closLang_Global n) ->
+       (if NULL c1 then bvi_Op (closLang_GlobOp (closLang_Global (n + 1)))
+         []
+       else bvi_Let c1 (bvi_Op (closLang_MemOp closLang_El) [
          bvi_Op (closLang_IntOp closLang_Add) [bvi_Op (closLang_IntOp
            (closLang_Const (&2))) []; bvi_Var 0];
-         bvi_Op (closLang_GlobOp closLang_GlobalsPtr) []])) |
-           closLang_GlobOp (closLang_SetGlobal n) -> bvi_Op
-           (closLang_GlobOp (closLang_SetGlobal (n + 1))) c1 |
-           closLang_GlobOp closLang_AllocGlobal -> bvi_Call 0 (SOME
-           AllocGlobal_location) c1 NONE | closLang_BlockOp
-           (closLang_FromList n) -> bvi_Let
-         (if NULL c1 then [bvi_Op (closLang_IntOp (closLang_Const
-           (&0))) []] else c1)
+         bvi_Op (closLang_GlobOp closLang_GlobalsPtr) []]))
+     | closLang_GlobOp (closLang_SetGlobal n) -> bvi_Op (closLang_GlobOp
+       (closLang_SetGlobal (n + 1))) c1
+     | closLang_GlobOp closLang_AllocGlobal -> bvi_Call 0 (SOME
+       AllocGlobal_location) c1 NONE
+     | closLang_BlockOp (closLang_FromList n) -> bvi_Let
+         (if NULL c1 then [bvi_Op (closLang_IntOp (closLang_Const (&0))) []]
+           else c1)
          (bvi_Op (closLang_BlockOp (closLang_FromList n))
-         [bvi_Var 0; bvi_Call 0 (SOME ListLength_location) [bvi_Var
-           0; bvi_Op (closLang_IntOp (closLang_Const (&0))) []] NONE]) |
-           closLang_Install -> bvi_Let
+         [bvi_Var 0; bvi_Call 0 (SOME ListLength_location) [bvi_Var 0;
+           bvi_Op (closLang_IntOp (closLang_Const (&0))) []] NONE])
+     | closLang_Install -> bvi_Let
        (if ~(LENGTH c1 = 2) then [bvi_Let c1 (bvi_Op (closLang_IntOp
-         (closLang_Const (&0))) []); bvi_Op (closLang_IntOp
-         (closLang_Const (&0))) []] else c1)
+         (closLang_Const (&0))) []); bvi_Op (closLang_IntOp (closLang_Const
+         (&0))) []] else c1)
        (bvi_Op closLang_Install
         [bvi_Call 0 (SOME ListLength_location)
-           [bvi_Var 0; bvi_Op (closLang_IntOp (closLang_Const (&0)))
-             []] NONE;
+           [bvi_Var 0; bvi_Op (closLang_IntOp (closLang_Const (&0))) []]
+             NONE;
          bvi_Call 0 (SOME ListLength_location)
-           [bvi_Var 1; bvi_Op (closLang_IntOp (closLang_Const (&0)))
-             []] NONE;
-         bvi_Var 0; bvi_Var 1]) | closLang_MemOp
-           closLang_FromListByte ->
-         bvi_Let (if NULL c1 then [bvi_Op (closLang_IntOp
-           (closLang_Const (&0))) []] else c1)
+           [bvi_Var 1; bvi_Op (closLang_IntOp (closLang_Const (&0))) []]
+             NONE;
+         bvi_Var 0; bvi_Var 1])
+     | closLang_MemOp closLang_FromListByte ->
+         bvi_Let (if NULL c1 then [bvi_Op (closLang_IntOp (closLang_Const
+           (&0))) []] else c1)
            (bvi_Call 0 (SOME FromListByte_location)
               [bvi_Var 0;
                bvi_Op (closLang_IntOp (closLang_Const (&0))) [];
                bvi_Op (closLang_MemOp (closLang_RefByte T))
                  [bvi_Op (closLang_IntOp (closLang_Const (&0))) [];
                   bvi_Call 0 (SOME ListLength_location)
-                    [bvi_Var 0; bvi_Op (closLang_IntOp
-                      (closLang_Const (&0))) []] NONE]]
-              NONE) | closLang_MemOp closLang_ToListByte ->
-         bvi_Let (if NULL c1 then [bvi_Op (closLang_IntOp
-           (closLang_Const (&0))) []] else c1)
+                    [bvi_Var 0; bvi_Op (closLang_IntOp (closLang_Const
+                      (&0))) []] NONE]]
+              NONE)
+     | closLang_MemOp closLang_ToListByte ->
+         bvi_Let (if NULL c1 then [bvi_Op (closLang_IntOp (closLang_Const
+           (&0))) []] else c1)
            (bvi_Call 0 (SOME ToListByte_location)
               [bvi_Op (closLang_BlockOp (closLang_Cons 0)) [];
-               bvi_Op (closLang_MemOp closLang_LengthByte) [bvi_Var
-                 0];
+               bvi_Op (closLang_MemOp closLang_LengthByte) [bvi_Var 0];
                bvi_Var 0]
-              NONE) | closLang_MemOp closLang_ConcatByteVec ->
-         bvi_Let (if NULL c1 then [bvi_Op (closLang_IntOp
-           (closLang_Const (&0))) []] else c1)
+              NONE)
+     | closLang_MemOp closLang_ConcatByteVec ->
+         bvi_Let (if NULL c1 then [bvi_Op (closLang_IntOp (closLang_Const
+           (&0))) []] else c1)
            (bvi_Call 0 (SOME ConcatByte_location)
              [bvi_Var 0;
               bvi_Op (closLang_IntOp (closLang_Const (&0))) [];
               bvi_Op (closLang_MemOp (closLang_RefByte T))
                 [bvi_Op (closLang_IntOp (closLang_Const (&0))) [];
                  bvi_Call 0 (SOME SumListLength_location)
-                   [bvi_Var 0; bvi_Op (closLang_IntOp (closLang_Const
-                     (&0))) []] NONE]] NONE) | closLang_MemOp
-                     (closLang_CopyByte T) ->
+                   [bvi_Var 0; bvi_Op (closLang_IntOp (closLang_Const (&0)))
+                     []] NONE]] NONE)
+     | closLang_MemOp (closLang_CopyByte T) ->
        // TODO: this should eventually be implemented in data_to_word instead for efficiency
        bvi_Let (if LENGTH c1 < 3 then (APPEND c1 (REPLICATE 3 (bvi_Op
          (closLang_IntOp (closLang_Const (&0))) []))) else c1)
-         (bvi_Let [bvi_Op (closLang_MemOp (closLang_RefByte T))
-           [bvi_Op (closLang_IntOp (closLang_Const (&0))) []; bvi_Var
-           0]]
-            (bvi_Let [bvi_Op (closLang_MemOp (closLang_CopyByte F))
-              [bvi_Op (closLang_IntOp (closLang_Const (&0))) []; bvi_Var
-              0; bvi_Var 1; bvi_Var 2; bvi_Var 3]]
-              (bvi_Var 1))) | closLang_Label l -> bvi_Op
-                (closLang_Label (bvl_num_stubs + bvl_to_bvi_namespaces *
-                l)) c1 | closLang_BlockOp (closLang_Build ps) -> bvi_Op
-                (closLang_BlockOp (closLang_Build ps)) c1 |
-                closLang_BlockOp (closLang_EqualConst p) -> bvi_Op
-                (closLang_BlockOp (closLang_EqualConst p)) c1 |
+         (bvi_Let [bvi_Op (closLang_MemOp (closLang_RefByte T)) [bvi_Op
+           (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 0]]
+            (bvi_Let [bvi_Op (closLang_MemOp (closLang_CopyByte F)) [bvi_Op
+              (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 0; bvi_Var 1;
+              bvi_Var 2; bvi_Var 3]]
+              (bvi_Var 1)))
+     | closLang_Label l -> bvi_Op (closLang_Label (bvl_num_stubs +
+       bvl_to_bvi_namespaces * l)) c1
+     | closLang_BlockOp (closLang_Build ps) -> bvi_Op (closLang_BlockOp
+       (closLang_Build ps)) c1
+     | closLang_BlockOp (closLang_EqualConst p) -> bvi_Op (closLang_BlockOp
+       (closLang_EqualConst p)) c1
+     |
        // reserved for bvi_tmc; bvlSem$do_app is Error on these, so compile them out
-       closLang_MemOp (closLang_MutCons tag i) -> bvi_Let c1
-         (bvi_Op (closLang_IntOp (closLang_Const (&0))) []) |
-         closLang_MemOp closLang_UpdateCons -> bvi_Let c1 (bvi_Op
-         (closLang_IntOp (closLang_Const (&0))) []) | closLang_MemOp
-         closLang_FinaliseCons -> bvi_Let c1 (bvi_Op (closLang_IntOp
-         (closLang_Const (&0))) []) | _13 -> bvi_Op op c1)`;;
+       closLang_MemOp (closLang_MutCons tag i) -> bvi_Let c1 (bvi_Op
+         (closLang_IntOp (closLang_Const (&0))) [])
+     | closLang_MemOp closLang_UpdateCons -> bvi_Let c1 (bvi_Op
+       (closLang_IntOp (closLang_Const (&0))) [])
+     | closLang_MemOp closLang_FinaliseCons -> bvi_Let c1 (bvi_Op
+       (closLang_IntOp (closLang_Const (&0))) [])
+     | _ -> bvi_Op op c1`;;
 
-(* HOL4 bvl_to_bviScript.sml:313-321: a theorem that HOL4 states as
-   the value of an ML expression: compile_op_pmatch *)
+(* HOL4 bvl_to_bviScript.sml:313-321: a theorem that HOL4 states as the
+   value of an ML expression: compile_op_pmatch *)
 
-(* HOL4 bvl_to_bviScript.sml:323: the overload ++, which the port
-   writes as an application of SmartAppend *)
-(* HOL4 bvl_to_bviScript.sml:324: the overload nss, which the port
-   expands *)
+(* HOL4 bvl_to_bviScript.sml:323: the overload ++, which the port writes as
+   an application of SmartAppend *)
+(* HOL4 bvl_to_bviScript.sml:324: the overload nss, which the port expands *)
 
 let compile_aux_def = new_definition
   `compile_aux (k,args,p) =
@@ -402,120 +398,113 @@ let compile_exps_def,compile_exps_ind = assume_definition_rec
   "the port cannot make this definition"
   [`bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)`;
    `bvl_to_bvi_compile_exps n (CONS (x:bvl_exp) (CONS y xs)) =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
-         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (CONS y xs)
-             in
-           (APPEND c1 c2,SmartAppend aux1 aux2,n2))`;
-   `bvl_to_bvi_compile_exps n [(bvl_Var v:bvl_exp)] = ([(bvi_Var
+         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
+         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (CONS y xs) in
+           (APPEND c1 c2,SmartAppend aux1 aux2,n2)`;
+   `bvl_to_bvi_compile_exps n [bvl_Var v] = ([(bvi_Var
     v):bvi_exp],misc_Nil,n)`;
-   `bvl_to_bvi_compile_exps n [(bvl_If x1 x2 x3:bvl_exp)] =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+   `bvl_to_bvi_compile_exps n [bvl_If x1 x2 x3] =
+         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
          let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
          let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x3] in
-           ([bvi_If (HD c1) (HD c2) (HD c3)],SmartAppend
-               (SmartAppend aux1 aux2) aux3,n3))`;
-   `bvl_to_bvi_compile_exps n [(bvl_Let xs x2:bvl_exp)] =
-         (if NULL xs then
+           ([bvi_If (HD c1) (HD c2) (HD c3)],SmartAppend (SmartAppend
+               aux1 aux2) aux3,n3)`;
+   `bvl_to_bvi_compile_exps n [bvl_Let xs x2] =
+         if NULL xs then
            // i.e. a marker
            let (args,x0) = destLet x2 in
            let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
            let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
            let n3 = n2 + 1 in
-             ([bvi_Call 0 (SOME (bvl_num_stubs +
-                 bvl_to_bvi_namespaces * n2 + 1)) c1 NONE],SmartAppend
-                 (SmartAppend aux1 aux2) (compile_aux (n2,LENGTH args,HD
-                 c2)),n3) else
-           let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
+             ([bvi_Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces * n2
+                 + 1)) c1 NONE],SmartAppend (SmartAppend aux1 aux2)
+                 (compile_aux (n2,LENGTH args,HD c2)),n3)
+         else let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
            let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
-             ([bvi_Let c1 (HD c2)],SmartAppend aux1 aux2,n2))`;
-   `bvl_to_bvi_compile_exps n [(bvl_Raise x1:bvl_exp)] =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
-           ([bvi_Raise (HD c1)],aux1,n1))`;
-   `bvl_to_bvi_compile_exps n [(bvl_Tick x1:bvl_exp)] =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
-           ([bvi_Tick (HD c1)],aux1,n1))`;
-   `bvl_to_bvi_compile_exps n [(bvl_Force loc v:bvl_exp)] =
-         ([bvi_Force (bvl_num_stubs + bvl_to_bvi_namespaces *
-             loc) v],misc_Nil,n)`;
-   `bvl_to_bvi_compile_exps n [(bvl_Op op xs:bvl_exp)] =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-           ([bvl_to_bvi_compile_op op c1],aux1,n1))`;
-   `bvl_to_bvi_compile_exps n [(bvl_Handle x1 x2:bvl_exp)] =
-         (let (args,x0) = destLet x1 in
+             ([bvi_Let c1 (HD c2)],SmartAppend aux1 aux2,n2)`;
+   `bvl_to_bvi_compile_exps n [bvl_Raise x1] =
+         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+           ([bvi_Raise (HD c1)],aux1,n1)`;
+   `bvl_to_bvi_compile_exps n [bvl_Tick x1] =
+         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+           ([bvi_Tick (HD c1)],aux1,n1)`;
+   `bvl_to_bvi_compile_exps n [bvl_Force loc v] =
+         ([bvi_Force (bvl_num_stubs + bvl_to_bvi_namespaces * loc)
+             v],misc_Nil,n)`;
+   `bvl_to_bvi_compile_exps n [bvl_Op op xs] =
+         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
+           ([bvl_to_bvi_compile_op op c1],aux1,n1)`;
+   `bvl_to_bvi_compile_exps n [bvl_Handle x1 x2] =
+         let (args,x0) = destLet x1 in
          let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
          let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
          let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x2] in
          let aux4 = compile_aux (n3,LENGTH args,HD c2) in
          let n4 = n3 + 1 in
-           ([bvi_Call 0 (SOME (bvl_num_stubs +
-               bvl_to_bvi_namespaces * n3 + 1)) c1 (SOME (HD
-               c3))],SmartAppend (SmartAppend (SmartAppend aux1 aux2)
-               aux3) aux4,n4))`;
-   `bvl_to_bvi_compile_exps n [(bvl_Call ticks dest xs:bvl_exp)] =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
+           ([bvi_Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
+               n3 + 1)) c1 (SOME (HD c3))],SmartAppend (SmartAppend
+               (SmartAppend aux1 aux2) aux3) aux4,n4)`;
+   `bvl_to_bvi_compile_exps n [bvl_Call ticks dest xs] =
+         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
            ([bvi_Call ticks
-                  (match dest with NONE -> NONE | SOME n ->
-                      SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
-                      n)) c1 NONE],aux1,n1))`];;
+                  (match dest with NONE -> NONE
+                   | SOME n -> SOME (bvl_num_stubs +
+                       bvl_to_bvi_namespaces * n)) c1 NONE],aux1,n1)`];;
 
 let compile_exps_sing_def,compile_exps_sing_ind = assume_definition_rec
   "the port cannot make this definition"
-  [`compile_exps_sing n (bvl_Var v:bvl_exp) = (((bvi_Var
-    v):bvi_exp),misc_Nil,n)`;
-   `compile_exps_sing n (bvl_If x1 x2 x3:bvl_exp) =
-         (let (c1,aux1,n1) = compile_exps_sing n x1 in
+  [`compile_exps_sing n (bvl_Var v) = (((bvi_Var v):bvi_exp),misc_Nil,n)`;
+   `compile_exps_sing n (bvl_If x1 x2 x3) =
+         let (c1,aux1,n1) = compile_exps_sing n x1 in
          let (c2,aux2,n2) = compile_exps_sing n1 x2 in
          let (c3,aux3,n3) = compile_exps_sing n2 x3 in
-           (bvi_If c1 c2 c3,SmartAppend (SmartAppend aux1 aux2)
-               aux3,n3))`;
-   `compile_exps_sing n (bvl_Let xs x2:bvl_exp) =
-         (if NULL xs then
+           (bvi_If c1 c2 c3,SmartAppend (SmartAppend aux1 aux2) aux3,n3)`;
+   `compile_exps_sing n (bvl_Let xs x2) =
+         if NULL xs then
            // i.e. a marker
            let (args,x0) = destLet x2 in
            let (c1,aux1,n1) = compile_exps_list n args in
            let (c2,aux2,n2) = compile_exps_sing n1 x0 in
            let n3 = n2 + 1 in
-             ((bvi_Call 0 (SOME (bvl_num_stubs +
-                 bvl_to_bvi_namespaces * n2 + 1)) c1 NONE),SmartAppend
-                 (SmartAppend aux1 aux2) (compile_aux (n2,LENGTH
-                 args,c2)),n3) else
-           let (c1,aux1,n1) = compile_exps_list n xs in
+             ((bvi_Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces * n2
+                 + 1)) c1 NONE),SmartAppend (SmartAppend aux1 aux2)
+                 (compile_aux (n2,LENGTH args,c2)),n3)
+         else let (c1,aux1,n1) = compile_exps_list n xs in
            let (c2,aux2,n2) = compile_exps_sing n1 x2 in
-             ((bvi_Let c1 (c2)),SmartAppend aux1 aux2,n2))`;
-   `compile_exps_sing n (bvl_Raise x1:bvl_exp) =
-         (let (c1,aux1,n1) = compile_exps_sing n x1 in
-           (bvi_Raise c1,aux1,n1))`;
-   `compile_exps_sing n (bvl_Tick x1:bvl_exp) =
-         (let (c1,aux1,n1) = compile_exps_sing n x1 in
-           (bvi_Tick c1,aux1,n1))`;
-   `compile_exps_sing n (bvl_Force loc v:bvl_exp) =
+             ((bvi_Let c1 (c2)),SmartAppend aux1 aux2,n2)`;
+   `compile_exps_sing n (bvl_Raise x1) =
+         let (c1,aux1,n1) = compile_exps_sing n x1 in
+           (bvi_Raise c1,aux1,n1)`;
+   `compile_exps_sing n (bvl_Tick x1) =
+         let (c1,aux1,n1) = compile_exps_sing n x1 in
+           (bvi_Tick c1,aux1,n1)`;
+   `compile_exps_sing n (bvl_Force loc v) =
          (bvi_Force (bvl_num_stubs + bvl_to_bvi_namespaces * loc)
              v,misc_Nil,n)`;
-   `compile_exps_sing n (bvl_Op op xs:bvl_exp) =
-         (let (c1,aux1,n1) = compile_exps_list n xs in
-           (bvl_to_bvi_compile_op op c1,aux1,n1))`;
-   `compile_exps_sing n (bvl_Handle x1 x2:bvl_exp) =
-         (let (args,x0) = destLet x1 in
+   `compile_exps_sing n (bvl_Op op xs) =
+         let (c1,aux1,n1) = compile_exps_list n xs in
+           (bvl_to_bvi_compile_op op c1,aux1,n1)`;
+   `compile_exps_sing n (bvl_Handle x1 x2) =
+         let (args,x0) = destLet x1 in
          let (c1,aux1,n1) = compile_exps_list n args in
          let (c2,aux2,n2) = compile_exps_sing n1 x0 in
          let (c3,aux3,n3) = compile_exps_sing n2 x2 in
          let aux4 = compile_aux (n3,LENGTH args,c2) in
          let n4 = n3 + 1 in
-           ((bvi_Call 0 (SOME (bvl_num_stubs +
-               bvl_to_bvi_namespaces * n3 + 1)) c1 (SOME
-               c3)),SmartAppend (SmartAppend (SmartAppend aux1 aux2)
-               aux3) aux4,n4))`;
-   `compile_exps_sing n (bvl_Call ticks dest xs:bvl_exp) =
-         (let (c1,aux1,n1) = compile_exps_list n xs in
+           ((bvi_Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
+               n3 + 1)) c1 (SOME c3)),SmartAppend (SmartAppend (SmartAppend
+               aux1 aux2) aux3) aux4,n4)`;
+   `compile_exps_sing n (bvl_Call ticks dest xs) =
+         let (c1,aux1,n1) = compile_exps_list n xs in
            ((bvi_Call ticks
-                  (match dest with NONE -> NONE | SOME n -> SOME
-                      (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
-                      NONE),aux1,n1))`;
+                  (match dest with NONE -> NONE
+                   | SOME n -> SOME (bvl_num_stubs +
+                       bvl_to_bvi_namespaces * n)) c1 NONE),aux1,n1)`;
    `compile_exps_list n [] = ([],misc_Nil,n)`;
    `compile_exps_list n (CONS (x:bvl_exp) xs) =
-         (let (c1,aux1,n1) = compile_exps_sing n x in
+         let (c1,aux1,n1) = compile_exps_sing n x in
          let (c2,aux2,n2) = compile_exps_list n1 xs in
-           (CONS c1 c2,SmartAppend aux1 aux2,n2))`];;
+           (CONS c1 c2,SmartAppend aux1 aux2,n2)`];;
 
 let compile_exps_sing = prove
  (`(!n e. bvl_to_bvi_compile_exps n [e] =
@@ -529,8 +518,7 @@ let compile_exps_LENGTH_lemma = prove
   CHEAT_TAC);;
 
 let compile_exps_LENGTH = prove
- (`(bvl_to_bvi_compile_exps n xs = (ys,aux,n1)) ==> (LENGTH ys =
-  LENGTH xs)`,
+ (`(bvl_to_bvi_compile_exps n xs = (ys,aux,n1)) ==> (LENGTH ys = LENGTH xs)`,
   (REPEAT STRIP_TAC THEN
    MP_TAC(SPECL [`n:num`; `xs:bvl_exp list`]
      compile_exps_LENGTH_lemma) THEN
@@ -546,44 +534,41 @@ let compile_exps_SING = prove
 
 let compile_single_def = new_definition
   `bvl_to_bvi_compile_single n (name,arg_count,exp) =
-     (let (c,aux,n1) = bvl_to_bvi_compile_exps n [exp] in
+     let (c,aux,n1) = bvl_to_bvi_compile_exps n [exp] in
        (
-         SmartAppend (misc_List [(bvl_num_stubs +
-           bvl_to_bvi_namespaces * name,arg_count,bvi_let_compile_exp
-           (HD c))]) aux,n1))`;;
+         SmartAppend (misc_List [(bvl_num_stubs + bvl_to_bvi_namespaces *
+           name,arg_count,bvi_let_compile_exp (HD c))]) aux,n1)`;;
 
 let compile_single_eq = prove
  (`bvl_to_bvi_compile_single n (name,arg_count,exp) =
-     (let (c,aux,n1) = compile_exps_sing n exp in
+     let (c,aux,n1) = compile_exps_sing n exp in
        (
-         SmartAppend (misc_List [(bvl_num_stubs +
-           bvl_to_bvi_namespaces * name,arg_count,bvi_let_compile_exp
-           c)]) aux,n1))`,
+         SmartAppend (misc_List [(bvl_num_stubs + bvl_to_bvi_namespaces *
+           name,arg_count,bvi_let_compile_exp c)]) aux,n1)`,
   CHEAT_TAC);;
 
 let compile_list_def,compile_list_ind = define_rec
   [`bvl_to_bvi_compile_list n [] = (misc_List [],n)`;
    `bvl_to_bvi_compile_list n (CONS p progs) =
-         (let (code1,n1) = bvl_to_bvi_compile_single n p in
+         let (code1,n1) = bvl_to_bvi_compile_single n p in
          let (code2,n2) = bvl_to_bvi_compile_list n1 progs in
-           (SmartAppend code1 code2,n2))`];;
+           (SmartAppend code1 code2,n2)`];;
 
 let bvl_to_bvi_compile_inc_def = new_definition
   `// incremental version used by Install
    bvl_to_bvi_compile_inc n prog =
-     (let (p1,n1) = bvl_to_bvi_compile_list n prog in
-       (n1,append p1))`;;
+     let (p1,n1) = bvl_to_bvi_compile_list n prog in
+       (n1,append p1)`;;
 
 let bvl_to_bvi_compile_prog_def = new_definition
   `bvl_to_bvi_compile_prog start' n prog =
-     (let k = alloc_glob_count (MAP (\(_14,_15,p). p) prog) in
+     let k = alloc_glob_count (MAP (\(_7,_8,p). p) prog) in
      let (code,n1) = bvl_to_bvi_compile_list n prog in
-       (InitGlobals_location,APPEND (bvl_to_bvi_stubs
-         (bvl_num_stubs + bvl_to_bvi_namespaces * start') k) (append
-         code),n1))`;;
+       (InitGlobals_location,APPEND (bvl_to_bvi_stubs (bvl_num_stubs +
+         bvl_to_bvi_namespaces * start') k) (append code),n1)`;;
 
-(* HOL4 bvl_to_bviScript.sml:520-521: a theorem that HOL4 states as
-   the value of an ML expression: compile_prog_eq *)
+(* HOL4 bvl_to_bviScript.sml:520-521: a theorem that HOL4 states as the
+   value of an ML expression: compile_prog_eq *)
 
 let bvl_to_bvi_config_FIELDS = define_record "bvl_to_bvi_config"
   ["inline_size_limit","num";
@@ -604,59 +589,57 @@ let bvl_to_bvi_config_FIELDS = define_record "bvl_to_bvi_config"
 
 let default_config_def = new_definition
   `bvl_to_bvi_default_config =
-     mk_bvl_to_bvi_config 10 1000 T (bvl_num_stubs + 1)
-       (bvl_num_stubs + 2) (bvl_num_stubs + 3) T T LN LN`;;
+     mk_bvl_to_bvi_config 10 1000 T (bvl_num_stubs + 1) (bvl_num_stubs +
+       2) (bvl_num_stubs + 3) T T LN LN`;;
 
 let get_names_def = new_definition
   `bvl_to_bvi_get_names final_nums old_names =
      fromAList (MAP (\n. (n,
-       (if n = InitGlobals_location then implode "start" else
-       if n = AllocGlobal_location then implode "AllocGlobal" else
-       if n = CopyGlobals_location then implode "CopyGlobals" else
-       if n = ListLength_location then implode "ListLength" else
-       if n = FromListByte_location then implode "FromListByte" else
-       if n = ToListByte_location then implode "ToListByte" else
-       if n = SumListLength_location then implode "SumListLength"
-         else
-       if n = ConcatByte_location then implode "ConcatByte" else
-       if n < bvl_num_stubs then implode "bvi_unknown" else
-         let k = n - bvl_num_stubs in
+       (if n = InitGlobals_location then implode "start" else if n =
+         AllocGlobal_location then implode "AllocGlobal" else if n =
+         CopyGlobals_location then implode "CopyGlobals" else if n =
+         ListLength_location then implode "ListLength" else if n =
+         FromListByte_location then implode "FromListByte" else if n =
+         ToListByte_location then implode "ToListByte" else if n =
+         SumListLength_location then implode "SumListLength" else if n =
+         ConcatByte_location then implode "ConcatByte" else if n <
+         bvl_num_stubs then implode "bvi_unknown" else let k = n -
+         bvl_num_stubs in
          let kd = k DIV bvl_to_bvi_namespaces in
          let km = k MOD bvl_to_bvi_namespaces in
-         let n = (match sptree_lookup kd old_names with NONE ->
-           implode "bvi_unmapped" | SOME name -> name) in
-         let aux = (if km = 0 then implode "" else implode
-           "_bvi_aux") in strcat n aux))) final_nums)`;;
+         let n = (match sptree_lookup kd old_names with NONE -> implode
+           "bvi_unmapped"
+           | SOME name -> name) in
+         let aux = (if km = 0 then implode "" else implode "_bvi_aux") in
+           strcat n aux))) final_nums)`;;
 
 let bvl_to_bvi_compile_def = new_definition
   `bvl_to_bvi_compile start' c names prog =
-     (let (inlines,prog) = bvl_inline_compile_prog
+     let (inlines,prog) = bvl_inline_compile_prog
        (bvl_to_bvi_config_inline_size_limit c)
        (bvl_to_bvi_config_split_main_at_seq
             c) (bvl_to_bvi_config_exp_cut c) prog in
      let (loc,code,n1) = bvl_to_bvi_compile_prog start' 0 prog in
-     let (n2,code') = bvi_tailrec_compile_prog
-       (bvl_to_bvi_config_do_tailrec c) (bvl_num_stubs + 2) code in
-     let (n3,code') = bvi_tmc_compile_prog (bvl_to_bvi_config_do_tmc
-       c) (bvl_num_stubs + 3) code' in
+     let (n2,code') = bvi_tailrec_compile_prog (bvl_to_bvi_config_do_tailrec
+       c) (bvl_num_stubs + 2) code in
+     let (n3,code') = bvi_tmc_compile_prog (bvl_to_bvi_config_do_tmc c)
+       (bvl_num_stubs + 3) code' in
      let (bvi_inlines,code') = bvi_inline_compile_prog code' in
        (loc,code',inlines,bvi_inlines,n1,n2,n3,
-        bvl_to_bvi_get_names (MAP FST code') names))`;;
+        bvl_to_bvi_get_names (MAP FST code') names)`;;
 
 let bvl_to_bvi_compile_inc_all_def = new_definition
   `bvl_to_bvi_compile_inc_all c p =
-     (let (inl,p) = bvl_inline_compile_inc
+     let (inl,p) = bvl_inline_compile_inc
        (bvl_to_bvi_config_inline_size_limit c)
        (bvl_to_bvi_config_split_main_at_seq
-         c) (bvl_to_bvi_config_exp_cut c) (bvl_to_bvi_config_inlines
-           c) p in
+         c) (bvl_to_bvi_config_exp_cut c) (bvl_to_bvi_config_inlines c) p in
      let c = bvl_to_bvi_config_inlines_fupd (K inl) c in
-     let (nn1,p) = bvl_to_bvi_compile_inc
-       (bvl_to_bvi_config_next_name1 c) p in
+     let (nn1,p) = bvl_to_bvi_compile_inc (bvl_to_bvi_config_next_name1 c) p
+       in
      let c = bvl_to_bvi_config_next_name1_fupd (K nn1) c in
-     let (nn2,p) = bvi_tailrec_compile_prog
-       (bvl_to_bvi_config_do_tailrec c) (bvl_to_bvi_config_next_name2 c)
-       p in
+     let (nn2,p) = bvi_tailrec_compile_prog (bvl_to_bvi_config_do_tailrec c)
+       (bvl_to_bvi_config_next_name2 c) p in
      let c = bvl_to_bvi_config_next_name2_fupd (K nn2) c in
      let (nn3,p) = bvi_tmc_compile_prog (bvl_to_bvi_config_do_tmc c)
        (bvl_to_bvi_config_next_name3 c) p in
@@ -664,7 +647,7 @@ let bvl_to_bvi_compile_inc_all_def = new_definition
      let (bvi_inlines,p) = bvi_inline_compile_inc
        (bvl_to_bvi_config_bvi_inlines c) p in
      let c = bvl_to_bvi_config_bvi_inlines_fupd (K bvi_inlines) c in
-       (c,p))`;;
+       (c,p)`;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

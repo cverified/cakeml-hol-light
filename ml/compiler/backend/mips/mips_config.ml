@@ -43,23 +43,21 @@ let mips_names_def = new_definition
       sptree_insert 24 0 o
       sptree_insert 31 1) LN:num spt)`;;
 
-(* HOL4 mips_configScript.sml:35-36: a theorem that HOL4 states as
-   the value of an ML expression: mips_names_def *)
+(* HOL4 mips_configScript.sml:35-36: a theorem that HOL4 states as the value
+   of an ML expression: mips_names_def *)
 
-(* HOL4 mips_configScript.sml:38-44: the ML values that the
-   definitions below antiquote *)
+(* HOL4 mips_configScript.sml:38-44: the ML values that the definitions
+   below antiquote *)
 
 let mips_backend_config_def = new_definition
   `mips_backend_config =
               mk_backend_config prim_src_config
-                (clos_to_bvl_default_config)
-                (bvl_to_bvi_default_config) (mk_data_to_word_config 4
-                4 2 32 T F F F T F data_to_word_Simple)
-                (mk_word_to_word_config 2 [])
-                (mk_word_to_stack_config 0 LN)
-                (mk_stack_to_lab_config mips_names F F)
-                (mk_lab_to_target_config LN [] 0 5 NONE [] 104729) []
-                default_tap_config []`;;
+                (clos_to_bvl_default_config) (bvl_to_bvi_default_config)
+                (mk_data_to_word_config 4 4 2 32 T F F F T F
+                data_to_word_Simple) (mk_word_to_word_config 2 [])
+                (mk_word_to_stack_config 0 LN) (mk_stack_to_lab_config
+                mips_names F F) (mk_lab_to_target_config LN [] 0 5 NONE []
+                104729) [] default_tap_config []`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

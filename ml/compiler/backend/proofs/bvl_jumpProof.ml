@@ -23,10 +23,9 @@ let _ = cake_theory "bvl_jumpProof"
 let evaluate_JumpList = prove
  (`!n xs k.
        k < LENGTH xs ==>
-       (bvlSem_evaluate ([JumpList n xs],CONS (bvlSem_Number (&(n +
-         k))) env,s) =
-        bvlSem_evaluate ([EL k xs],CONS (bvlSem_Number (&(n + k)))
-          env,s))`,
+       (bvlSem_evaluate ([JumpList n xs],CONS (bvlSem_Number (&(n + k)))
+         env,s) =
+        bvlSem_evaluate ([EL k xs],CONS (bvlSem_Number (&(n + k))) env,s))`,
   CHEAT_TAC);;
 
 let evaluate_Jump = prove
@@ -37,8 +36,8 @@ let evaluate_Jump = prove
   CHEAT_TAC);;
 
 let bvl_get_code_labels_JumpList = prove
- (`!n xs. bvlProps_get_code_labels (JumpList n xs) = UNIONS
-  (set_of_list (MAP bvlProps_get_code_labels xs))`,
+ (`!n xs. bvlProps_get_code_labels (JumpList n xs) = UNIONS (set_of_list (MAP
+  bvlProps_get_code_labels xs))`,
   CHEAT_TAC);;
 
 (* and the interface *)

@@ -14,8 +14,8 @@ let _ = cake_library ();;
 
 let TAILREC_PRE_def = new_definition
   `TAILREC_PRE f1 guard' precondition' (x:'a) <=>
-     (!k. (!m. m < k ==> guard' (ITER m f1 x)) ==> precondition'
-       (ITER k f1 x)) /\
+     (!k. (!m. m < k ==> guard' (ITER m f1 x)) ==> precondition' (ITER k f1
+       x)) /\
      (?n. ~(guard' (ITER n f1 x)))`;;
 
 let TAILREC_def = new_definition
@@ -23,8 +23,7 @@ let TAILREC_def = new_definition
 
 let SHORT_TAILREC_def = new_definition
   `SHORT_TAILREC (f:'a->('a+'b)#bool) =
-     tailrec_TAILREC (OUTL o FST o f) (OUTR o FST o f) (ISL o FST
-       o f)`;;
+     tailrec_TAILREC (OUTL o FST o f) (OUTR o FST o f) (ISL o FST o f)`;;
 
 let SHORT_TAILREC_PRE_def = new_definition
   `SHORT_TAILREC_PRE (f:'a->('a+'b)#bool) =

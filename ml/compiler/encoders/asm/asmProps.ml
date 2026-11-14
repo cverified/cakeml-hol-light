@@ -26,8 +26,7 @@ let _ = hide_overloads
 (* -- semantics is deterministic -- *)
 
 let asm_deterministic = prove
- (`!c i s1 s2 s3. asm_step c s1 i s2 /\ asm_step c s1 i s3 ==> (s2 =
-  s3)`,
+ (`!c i s1 s2 s3. asm_step c s1 i s2 /\ asm_step c s1 i s3 ==> (s2 = s3)`,
   (REWRITE_TAC[asm_step_def] THEN MESON_TAC[]));;
 
 (* -- well-formedness of encoding -- *)
@@ -35,10 +34,10 @@ let asm_deterministic = prove
 let offset_monotonic_def = new_definition
   `offset_monotonic enc c a1 a2 i1 i2 <=>
    asm_ok i1 c /\ asm_ok i2 c ==>
-   ((n2w 0) <= a1 /\ (n2w 0) <= a2 /\ a1 <= a2 ==> LENGTH (enc i1) <=
-     LENGTH (enc i2)) /\
-   (a1 < (n2w 0) /\ a2 < (n2w 0) /\ a2 <= a1 ==> LENGTH (enc i1)
-     <= LENGTH (enc i2))`;;
+   ((n2w 0) <= a1 /\ (n2w 0) <= a2 /\ a1 <= a2 ==> LENGTH (enc i1) <= LENGTH
+     (enc i2)) /\
+   (a1 < (n2w 0) /\ a2 < (n2w 0) /\ a2 <= a1 ==> LENGTH (enc i1) <=
+     LENGTH (enc i2))`;;
 
 let enc_ok_def = new_definition
   `enc_ok (c:'a asm_config) <=>
@@ -47,19 +46,19 @@ let enc_ok_def = new_definition
       2 EXP asm_config_code_alignment c = LENGTH (asm_config_encode c
         (asm_Inst asm_Skip))) /\
      (!w. (LENGTH (asm_config_encode c w) MOD 2 EXP
-       asm_config_code_alignment c = 0) /\ ~(LENGTH (asm_config_encode c
-       w) = 0)) /\
+       asm_config_code_alignment c = 0) /\ ~(LENGTH (asm_config_encode c w) =
+       0)) /\
      (
       // label instantiation predictably affects length of code
-      !w1 w2. offset_monotonic (asm_config_encode c) c w1 w2
-        (asm_Jump w1) (asm_Jump w2)) /\
+      !w1 w2. offset_monotonic (asm_config_encode c) c w1 w2 (asm_Jump w1)
+        (asm_Jump w2)) /\
      (!cmp r ri w1 w2.
         offset_monotonic (asm_config_encode c) c w1 w2
            (asm_JumpCmp cmp r ri w1) (asm_JumpCmp cmp r ri w2)) /\
-     (!w1 w2. offset_monotonic (asm_config_encode c) c w1 w2
-       (asm_Call w1) (asm_Call w2)) /\
-     (!w1 w2 r. offset_monotonic (asm_config_encode c) c w1 w2
-       (asm_Loc r w1) (asm_Loc r w2))`;;
+     (!w1 w2. offset_monotonic (asm_config_encode c) c w1 w2 (asm_Call w1)
+       (asm_Call w2)) /\
+     (!w1 w2 r. offset_monotonic (asm_config_encode c) c w1 w2 (asm_Loc r
+       w1) (asm_Loc r w2))`;;
 
 (* -- correctness property to be proved for each backend -- *)
 
@@ -93,20 +92,18 @@ let target_ok_def = new_definition
      (target_state_rel t s ms1 = target_state_rel t s ms2) /\
      (target_state_ok t ms1 = target_state_ok t ms2) /\
      (target_get_pc t ms1 = target_get_pc t ms2) /\
-     (!a. a IN asm_state_mem_domain s ==> target_get_byte t ms1 a
-       = target_get_byte t ms2 a))`;;
+     (!a. a IN asm_state_mem_domain s ==> target_get_byte t ms1 a =
+       target_get_byte t ms2 a))`;;
 
 let interference_ok_def = new_definition
-  `interference_ok env proj <=> (!(i:num) ms. proj (env i ms) = proj
-  ms)`;;
+  `interference_ok env proj <=> (!(i:num) ms. proj (env i ms) = proj ms)`;;
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let all_pcs_def,all_pcs_ind = define_guess_cheat
   [`all_pcs n a k =
-        match n with
-          0 -> {}
-        | n -> a INSERT all_pcs (n - (2 EXP k)) (a + n2w (2 EXP
-          k)) k`];;
+     match n with
+       0 -> {}
+     | n -> a INSERT all_pcs (n - (2 EXP k)) (a + n2w (2 EXP k)) k`];;
 
 let all_pcs_thm = prove
  (`all_pcs n a k = {a + n2w (i * (2 EXP k)) | i | i * (2 EXP k) < n}`,
@@ -116,49 +113,44 @@ let all_pcs_thm = prove
    what the port found for it *)
 let asserts_def,asserts_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
-  [`asserts 0 next' ms _1 Q <=> Q (next' 0 ms)`;
+  [`asserts 0 next' ms _ Q <=> Q (next' 0 ms)`;
    `asserts (SUC n) next' ms P Q <=>
-         (let ms' = next' (SUC n) ms in P ms' /\ asserts n
-             next' ms' P Q)`];;
+         (let ms' = next' (SUC n) ms in P ms' /\ asserts n next' ms' P
+             Q)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let asserts2_def,asserts2_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
   [`(asserts2 n fi fc ms P =
-    (if n = 0 then T else
-      P ms (fc ms) /\
-      asserts2 (n - 1) fi fc (fi n (fc ms)) P))`];;
+    if n = 0 then T else P ms (fc ms) /\
+      asserts2 (n - 1) fi fc (fi n (fc ms)) P)`];;
 
 let encoder_correct_def = new_definition
   `encoder_correct t <=>
      target_ok t /\
      (!s1 i s2 ms.
-       asm_step (target_config t) s1 i s2 /\ target_state_rel t s1 ms
-         ==>
+       asm_step (target_config t) s1 i s2 /\ target_state_rel t s1 ms ==>
        (?n. !env.
              interference_ok (env:num->'b->'b) (target_proj t
                (asm_state_mem_domain s1)) ==>
-             (let pcs = all_pcs (LENGTH (asm_config_encode
-               (target_config t) i)) (asm_state_pc s1) in
+             (let pcs = all_pcs (LENGTH (asm_config_encode (target_config t)
+               i)) (asm_state_pc s1) in
              asserts n (\k s. env (n - k) (target_next t s)) ms
                (\ms'. target_state_ok t ms' /\
-                      (!pc'. pc' IN pcs 0 ==> target_get_byte t ms'
-                        pc' = target_get_byte t ms pc') /\ target_get_pc
-                      t ms' IN pcs (asm_config_code_alignment
-                        (target_config t)))
+                      (!pc'. pc' IN pcs 0 ==> target_get_byte t ms' pc' =
+                        target_get_byte t ms pc') /\ target_get_pc
+                      t ms' IN pcs (asm_config_code_alignment (target_config
+                        t)))
                (\ms'. target_state_rel t s2 ms') /\
-             asserts2 (n + 1) (\k. env ((n + 1) - k)) (target_next t)
-               ms
+             asserts2 (n + 1) (\k. env ((n + 1) - k)) (target_next t) ms
                (\ms1 ms2. !x. ~(x IN asm_state_mem_domain s1) ==>
-                 target_get_byte t ms1 x = target_get_byte t ms2
-                 x))))`;;
+                 target_get_byte t ms1 x = target_get_byte t ms2 x))))`;;
 
 (* lemma for proofs *)
 
 let bytes_in_memory_all_pcs = prove
- (`!xs pc'. bytes_in_memory pc' xs m d ==> all_pcs (LENGTH xs) pc' k
-  SUBSET d`,
+ (`!xs pc'. bytes_in_memory pc' xs m d ==> all_pcs (LENGTH xs) pc' k SUBSET d`,
   CHEAT_TAC);;
 
 let read_bytearray_IMP_bytes_in_memory = prove
@@ -182,12 +174,12 @@ let sym_target_state_rel = prove
        (asm_state_fp_regs s i = target_get_fp_reg t ms i))`,
   (REWRITE_TAC[target_state_rel_def] THEN MESON_TAC[]));;
 
-(* HOL4 asmPropsScript.sml:195: a theorem that HOL4 states as the
-   value of an ML expression: all_pcs *)
+(* HOL4 asmPropsScript.sml:195: a theorem that HOL4 states as the value of
+   an ML expression: all_pcs *)
 
 (* HOL4 asmPropsScript.sml:197-205: ML code, not ported *)
-(* HOL4 asmPropsScript.sml:206-207: a theorem that HOL4 states as the
-   value of an ML expression: asserts_eval *)
+(* HOL4 asmPropsScript.sml:206-207: a theorem that HOL4 states as the value
+   of an ML expression: asserts_eval *)
 
 let asserts_IMP_FOLDR_COUNT_LIST = prove
  (`!n next' ms P Q. asserts n next' ms P Q ==>
@@ -203,17 +195,15 @@ let asserts_WEAKEN = prove
  (`!n next' s P Q.
       (!k. k <= n ==>
         (next' k = next' k) /\
-        (P (ITLIST next' (REVERSE (list_of_seq ((-) n) (SUC k))) s)
-          ==>
-         P' (ITLIST next' (REVERSE (list_of_seq ((-) n) (SUC k)))
-           s))) ==>
+        (P (ITLIST next' (REVERSE (list_of_seq ((-) n) (SUC k))) s) ==>
+         P' (ITLIST next' (REVERSE (list_of_seq ((-) n) (SUC k))) s))) ==>
       asserts n next' s P Q ==>
       asserts n next' s P' Q`,
   CHEAT_TAC);;
 
 (* HOL4 asmPropsScript.sml:269-273: ML code, not ported *)
-(* HOL4 asmPropsScript.sml:274-275: a theorem that HOL4 states as the
-   value of an ML expression: asserts2_eval *)
+(* HOL4 asmPropsScript.sml:274-275: a theorem that HOL4 states as the value
+   of an ML expression: asserts2_eval *)
 
 let asserts2_change_interfer = prove
  (`asserts2 n fi fc ms P /\
@@ -235,8 +225,7 @@ let asserts2_every = prove
 
 let upd_pc_simps = prove
  (`(asm_state_align (asmSem_upd_pc x s) = asm_state_align s) /\
-   (asm_state_mem_domain (asmSem_upd_pc x s) = asm_state_mem_domain
-     s) /\
+   (asm_state_mem_domain (asmSem_upd_pc x s) = asm_state_mem_domain s) /\
    (asm_state_failed (asmSem_upd_pc x s) = asm_state_failed s) /\
    (asm_state_be (asmSem_upd_pc x s) = asm_state_be s) /\
    (asm_state_mem (asmSem_upd_pc x s) = asm_state_mem s) /\
@@ -253,18 +242,16 @@ let asm_failed_ignore_new_pc = prove
   CHEAT_TAC);;
 
 let asm_mem_ignore_new_pc = prove
- (`!i v w s. asm_state_mem (asmSem_asm i w s) = asm_state_mem
-  (asmSem_asm i v s)`,
+ (`!i v w s. asm_state_mem (asmSem_asm i w s) = asm_state_mem (asmSem_asm i v
+  s)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let SND_read_mem_word_consts = prove
- (`!n a s. (asm_state_be (SND (read_mem_word a n s)) = asm_state_be s)
-  /\
-             (asm_state_lr (SND (read_mem_word a n s)) = asm_state_lr
+ (`!n a s. (asm_state_be (SND (read_mem_word a n s)) = asm_state_be s) /\
+             (asm_state_lr (SND (read_mem_word a n s)) = asm_state_lr s) /\
+             (asm_state_align (SND (read_mem_word a n s)) = asm_state_align
                s) /\
-             (asm_state_align (SND (read_mem_word a n s)) =
-               asm_state_align s) /\
              (asm_state_mem_domain (SND (read_mem_word a n s)) =
                asm_state_mem_domain s)`,
   CHEAT_TAC);;
@@ -272,21 +259,18 @@ let SND_read_mem_word_consts = prove
 (* [local] *)
 let write_mem_word_consts = prove
  (`!n a w s. (asm_state_be (write_mem_word a n w s) = asm_state_be s) /\
-               (asm_state_lr (write_mem_word a n w s) = asm_state_lr
+               (asm_state_lr (write_mem_word a n w s) = asm_state_lr s) /\
+               (asm_state_align (write_mem_word a n w s) = asm_state_align
                  s) /\
-               (asm_state_align (write_mem_word a n w s) =
-                 asm_state_align s) /\
                (asm_state_mem_domain (write_mem_word a n w s) =
                  asm_state_mem_domain s)`,
   CHEAT_TAC);;
 
 let binop_upd_consts = prove
- (`(asm_state_mem_domain (asmSem_binop_upd a b c d x) =
-  asm_state_mem_domain x) /\
-   (asm_state_align (asmSem_binop_upd a b c d x) = asm_state_align x)
-     /\
-   (asm_state_failed (asmSem_binop_upd a b c d x) = asm_state_failed
-     x) /\
+ (`(asm_state_mem_domain (asmSem_binop_upd a b c d x) = asm_state_mem_domain x)
+  /\
+   (asm_state_align (asmSem_binop_upd a b c d x) = asm_state_align x) /\
+   (asm_state_failed (asmSem_binop_upd a b c d x) = asm_state_failed x) /\
    (asm_state_mem (asmSem_binop_upd a b c d x) = asm_state_mem x) /\
    (asm_state_lr (asmSem_binop_upd a b c d x) = asm_state_lr x) /\
    (asm_state_be (asmSem_binop_upd a b c d x) = asm_state_be x)`,
@@ -294,8 +278,7 @@ let binop_upd_consts = prove
 add_simp binop_upd_consts;;
 
 let arith_upd_consts = prove
- (`(asm_state_mem_domain (asmSem_arith_upd a x) = asm_state_mem_domain
-  x) /\
+ (`(asm_state_mem_domain (asmSem_arith_upd a x) = asm_state_mem_domain x) /\
    (asm_state_align (asmSem_arith_upd a x) = asm_state_align x) /\
    (asm_state_mem (asmSem_arith_upd a x) = asm_state_mem x) /\
    (asm_state_lr (asmSem_arith_upd a x) = asm_state_lr x) /\
@@ -304,8 +287,7 @@ let arith_upd_consts = prove
 add_simp arith_upd_consts;;
 
 let fp_upd_consts = prove
- (`(asm_state_mem_domain (asmSem_fp_upd a x) = asm_state_mem_domain x)
-  /\
+ (`(asm_state_mem_domain (asmSem_fp_upd a x) = asm_state_mem_domain x) /\
    (asm_state_align (asmSem_fp_upd a x) = asm_state_align x) /\
    (asm_state_mem (asmSem_fp_upd a x) = asm_state_mem x) /\
    (asm_state_lr (asmSem_fp_upd a x) = asm_state_lr x) /\
@@ -316,16 +298,15 @@ add_simp fp_upd_consts;;
 let asm_consts = prove
  (`!i w s. (asm_state_be (asmSem_asm i w s) = asm_state_be s) /\
             (asm_state_lr (asmSem_asm i w s) = asm_state_lr s) /\
-            (asm_state_align (asmSem_asm i w s) = asm_state_align s)
-              /\
+            (asm_state_align (asmSem_asm i w s) = asm_state_align s) /\
             (asm_state_mem_domain (asmSem_asm i w s) =
               asm_state_mem_domain s)`,
   CHEAT_TAC);;
 add_simp asm_consts;;
 
 let RTC_asm_step_consts = prove
- (`RTC (\s1 s2. ?i. asm_step c s1 i s2) s1 s2 ==> (asm_state_mem_domain
-  s2 = asm_state_mem_domain s1) /\
+ (`RTC (\s1 s2. ?i. asm_step c s1 i s2) s1 s2 ==> (asm_state_mem_domain s2 =
+  asm_state_mem_domain s1) /\
     (asm_state_lr s2 = asm_state_lr s1) /\
     (asm_state_align s2 = asm_state_align s1) /\
     (asm_state_be s2 = asm_state_be s1)`,
@@ -345,27 +326,24 @@ let write_mem_word_mem_eq = prove
  (`!k b a s x.
       ~(asm_state_failed (write_mem_word b k a s)) /\ ~(x IN
         asm_state_mem_domain s) ==>
-      (asm_state_mem (write_mem_word b k a s) x = asm_state_mem s
-        x)`,
+      (asm_state_mem (write_mem_word b k a s) x = asm_state_mem s x)`,
   CHEAT_TAC);;
 
 let mem_op_outside_mem_domain = prove
  (`!m n a s x. ~(x IN asm_state_mem_domain s) /\ ~(asm_state_failed
   (asmSem_mem_op m n a s)) ==>
-               (asm_state_mem (asmSem_mem_op m n a s) x =
-                 asm_state_mem s x)`,
+               (asm_state_mem (asmSem_mem_op m n a s) x = asm_state_mem s
+                 x)`,
   CHEAT_TAC);;
 
 let inst_outside_mem_domain = prove
- (`!i. ~(x IN asm_state_mem_domain s) /\ ~(asm_state_failed
-  (asmSem_inst i s)) ==> (asm_state_mem (asmSem_inst i s) x =
-  asm_state_mem s x)`,
+ (`!i. ~(x IN asm_state_mem_domain s) /\ ~(asm_state_failed (asmSem_inst i
+  s)) ==> (asm_state_mem (asmSem_inst i s) x = asm_state_mem s x)`,
   CHEAT_TAC);;
 
 let asm_outside_mem_domain = prove
- (`!i p s x. ~(x IN asm_state_mem_domain s) /\ ~(asm_state_failed
-  (asmSem_asm i p s)) ==> (asm_state_mem (asmSem_asm i p s) x =
-  asm_state_mem s x)`,
+ (`!i p s x. ~(x IN asm_state_mem_domain s) /\ ~(asm_state_failed (asmSem_asm
+  i p s)) ==> (asm_state_mem (asmSem_asm i p s) x = asm_state_mem s x)`,
   CHEAT_TAC);;
 
 let asm_step_outside_mem_domain = prove
@@ -380,8 +358,7 @@ let asm_step_outside_mem_domain = prove
 let RTC_asm_step_outside_mem_domain = prove
  (`!s1 s2.
    RTC (\s1 s2. ?i. asm_step c s1 i s2) s1 s2 ==> (!a. ~(a IN
-     asm_state_mem_domain s1) ==> (asm_state_mem s2 a = asm_state_mem
-     s1 a))`,
+     asm_state_mem_domain s1) ==> (asm_state_mem s2 a = asm_state_mem s1 a))`,
   CHEAT_TAC);;
 
 (* and the interface *)

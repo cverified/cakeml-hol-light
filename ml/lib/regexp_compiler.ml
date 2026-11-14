@@ -12,9 +12,9 @@ needs "lib/sorting.ml";;
 
 (* of no theory of the port: what it registers is in the scope of every file *)
 let _ = cake_library ();;
-(* HOL4 ancestors outside the port: option pair relation arithmetic
-   pred_set bag container list rich_list string regexp_map oset
-   finite_map vec_map charset regexp *)
+(* HOL4 ancestors outside the port: option pair relation arithmetic pred_set
+   bag container list rich_list string regexp_map oset finite_map vec_map
+   charset regexp *)
 
 let regexp_compiler_vector_INDUCT,regexp_compiler_vector_RECURSION =
   define_datatype

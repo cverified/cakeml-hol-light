@@ -24,8 +24,8 @@ let exc_INDUCT,exc_RECURSION = define_datatype
      M_success ('a)
    | M_failure ('b)";;
 
-(* HOL4 ml_monadBaseScript.sml:21: the type abbreviation M, which the
-   port expands *)
+(* HOL4 ml_monadBaseScript.sml:21: the type abbreviation M, which the port
+   expands *)
 
 let liftM_def = new_definition
   `((liftM read' (write':('a->'a)->'d->'d)
@@ -36,20 +36,20 @@ let liftM_def = new_definition
 (* Definitions using monadic syntax *)
 
 let st_ex_bind_def = new_definition
-  `(st_ex_bind:('a->('b,'c)exc#'a)->('b->'a->('d,'c)exc#'a)->'a->('d
-  ,'c)exc#'a) x f =
+  `(st_ex_bind:('a->('b,'c)exc#'a)->('b->'a->('d,'c)exc#'a)->'a->('d,'c)exc#'a)
+  x f =
      (\s.
        match x s with
-         (M_success y,s) -> f y s | (M_failure x,s) -> (M_failure
-           x,s))`;;
+         (M_success y,s) -> f y s
+       | (M_failure x,s) -> (M_failure x,s))`;;
 
 let st_ex_ignore_bind_def = new_definition
-  `(st_ex_ignore_bind:('a->('b,'c)exc#'a)->('a->('d,'c)exc#'a)->'a->('d
-  ,'c)exc#'a) x f =
+  `(st_ex_ignore_bind:('a->('b,'c)exc#'a)->('a->('d,'c)exc#'a)->'a->('d,'c)exc
+  #'a) x f =
      (\s.
        match x s with
-         (M_success y,s) -> f s | (M_failure x,s) -> (M_failure
-           x,s))`;;
+         (M_success y,s) -> f s
+       | (M_failure x,s) -> (M_failure x,s))`;;
 
 
 (*
@@ -71,8 +71,8 @@ let st_ex_ignore_bind_CONG = prove
 let st_ex_bind_CONG = prove
  (`!x s x' s' f f'.
      (x = x') /\ (s = s') /\
-     (!y s''. (x' s' = (M_success y,s'')) ==> (f y s'' = f' y s''))
-       ==> (st_ex_bind x f s = st_ex_bind x' f' s')`,
+     (!y s''. (x' s' = (M_success y,s'')) ==> (f y s'' = f' y s'')) ==>
+       (st_ex_bind x f s = st_ex_bind x' f' s')`,
   CHEAT_TAC);;
 (* HOL4 ml_monadBaseScript.sml:83: ML code, not ported *)
 
@@ -88,8 +88,8 @@ let st_ex_return_def = new_definition
 let otherwise_def = new_definition
   `otherwise x y =
        (\s. match ((x:'a->('b,'c)exc#'a) s) with
-             (M_success y,s) -> (M_success y,s) | (M_failure e,s)
-               -> (y:'a->('b,'c)exc#'a) s)`;;
+             (M_success y,s) -> (M_success y,s)
+           | (M_failure e,s) -> (y:'a->('b,'c)exc#'a) s)`;;
 
 let can_def = new_definition
   `can f x = (
@@ -107,9 +107,9 @@ let store_ref_INDUCT,store_ref_RECURSION = define_datatype
 let msub_def,msub_ind = define_shaped_rec
   "match"
   [`Msub e (n:num) l =
-     (match l with
-       [] -> M_failure e | CONS x l' -> (if n = 0 then M_success
-         x else Msub e (n - 1) l'))`];;
+     match l with
+       [] -> M_failure e
+     | CONS x l' -> if n = 0 then M_success x else Msub e (n - 1) l'`];;
 
 (* Msub_eq *)
 let msub_eq = prove
@@ -125,18 +125,18 @@ let msub_exn_eq = prove
 let mupdate_def,mupdate_ind = define_shaped_rec
   "match"
   [`Mupdate e x (n:num) l =
-     (match l with
-       [] -> M_failure e | CONS x' l' ->
-         (if n = 0 then
-           M_success (CONS x l') else
-           (match Mupdate e x (n - 1) l' with
-              M_success l'' -> M_success (CONS x' l'') | other
-                -> other)))`];;
+     match l with
+       [] -> M_failure e
+     | CONS x' l' ->
+         if n = 0 then
+           M_success (CONS x l')
+         else (match Mupdate e x (n - 1) l' with
+              M_success l'' -> M_success (CONS x' l'')
+            | other -> other)`];;
 
 (* Mupdate_eq *)
 let mupdate_eq = prove
- (`!l n x e. n < LENGTH l ==> (Mupdate e x n l = M_success (LUPDATE x
-  n l))`,
+ (`!l n x e. n < LENGTH l ==> (Mupdate e x n l = M_success (LUPDATE x n l))`,
   CHEAT_TAC);;
 
 (* Mupdate_exn_eq *)
@@ -150,15 +150,15 @@ let mupdate_exn_eq = prove
 let array_resize_def,array_resize_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x0)`
   [`array_resize (n:num) x a =
-     (if n = 0 then
-       [] else
-       match a with
-         [] -> CONS x (array_resize (n - 1) x a) | CONS x' a' ->
-           CONS x' (array_resize (n - 1) x a'))`];;
+     if n = 0 then
+       []
+     else match a with
+         [] -> CONS x (array_resize (n - 1) x a)
+       | CONS x' a' -> CONS x' (array_resize (n - 1) x a')`];;
 
 let array_resize_eq = prove
- (`!a n x. array_resize n x a = APPEND (TAKE n a) (REPLICATE (n -
-  LENGTH a) x)`,
+ (`!a n x. array_resize n x a = APPEND (TAKE n a) (REPLICATE (n - LENGTH a)
+  x)`,
   CHEAT_TAC);;
 
 (* User functions *)
@@ -173,8 +173,8 @@ let marray_sub_def = new_definition
 let marray_update_def = new_definition
   `Marray_update get_arr set_arr e n x =
      (\s. match Mupdate e x n (get_arr s) with
-           M_success a -> (M_success one,set_arr a s) | M_failure
-             e -> (M_failure e,s))`;;
+           M_success a -> (M_success one,set_arr a s)
+         | M_failure e -> (M_failure e,s))`;;
 
 let marray_alloc_def = new_definition
   `Marray_alloc set_arr n x =
@@ -182,13 +182,11 @@ let marray_alloc_def = new_definition
 
 let marray_resize_def = new_definition
   `Marray_resize get_arr set_arr n x =
-     (\s. (M_success one,set_arr (array_resize n x (get_arr s))
-       s))`;;
+     (\s. (M_success one,set_arr (array_resize n x (get_arr s)) s))`;;
 
 (* Dynamic allocated references *)
 let mref_def = new_definition
-  `Mref cons x = (\s. (M_success (StoreRef (LENGTH s)),CONS (cons x)
-  s))`;;
+  `Mref cons x = (\s. (M_success (StoreRef (LENGTH s)),CONS (cons x) s))`;;
 
 let dref_def = new_definition
   `dref n = (\s. EL (LENGTH s - n - 1) s)`;;
@@ -199,8 +197,9 @@ let mdref_aux_def,mdref_aux_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
   [`Mdref_aux e (n:num) =
      (\s. match s with
-           [] -> M_failure e | CONS x s -> (if n = 0 then
-             M_success x else Mdref_aux e (n - 1) s))`];;
+           [] -> M_failure e
+         | CONS x s -> if n = 0 then M_success x else Mdref_aux e (n -
+           1) s)`];;
 
 let mdref_def = define_general
   [`Mdref e (StoreRef n) =
@@ -208,8 +207,8 @@ let mdref_def = define_general
 
 let mpop_ref_def = new_definition
   `Mpop_ref e =
-     (\(r,s). match s with CONS x s -> (r,s) | [] -> (M_failure
-       e,s))`;;
+     (\(r,s). match s with CONS x s -> (r,s)
+              | [] -> (M_failure e,s))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -217,17 +216,18 @@ let mref_assign_aux_def,mref_assign_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
   [`Mref_assign_aux e (n:num) x =
      (\s. match s with CONS x' s ->
-             (if n = 0 then
-               M_success (CONS x s) else
-               (match Mref_assign_aux e (n - 1) x s with
-                  M_success s -> M_success (CONS x' s) | other
-                    -> other)) | [] -> M_failure e)`];;
+             if n = 0 then
+               M_success (CONS x s)
+             else (match Mref_assign_aux e (n - 1) x s with
+                  M_success s -> M_success (CONS x' s)
+                | other -> other)
+         | [] -> M_failure e)`];;
 
 let mref_assign_def = define_general
   [`Mref_assign e (StoreRef n) x =
      (\s. match Mref_assign_aux e (LENGTH s - n - 1) x s with
-           M_success s -> (M_success one,s) | M_failure e ->
-             (M_failure e,s))`];;
+           M_success s -> (M_success one,s)
+         | M_failure e -> (M_failure e,s))`];;
 
 let ref_assign_def = new_definition
   `ref_assign n x = (\s. LUPDATE x (LENGTH s - n - 1) s)`;;
@@ -245,8 +245,7 @@ let dref_first = prove
 let mdref_eq = prove
  (`!state n.
      n < LENGTH state ==>
-     (Mdref e (StoreRef n) state = (M_success (dref n
-       state),state))`,
+     (Mdref e (StoreRef n) state = (M_success (dref n state),state))`,
   CHEAT_TAC);;
 
 (* Mref_assign_aux_eq *)
@@ -261,15 +260,15 @@ let mref_assign_aux_eq = prove
 let mref_assign_eq = prove
  (`!state e n x.
      n < LENGTH state ==>
-     (Mref_assign e (StoreRef n) x state = (M_success
-       one,ref_assign n x state))`,
+     (Mref_assign e (StoreRef n) x state = (M_success one,ref_assign n x
+       state))`,
   CHEAT_TAC);;
 
 let ref_bind_def = new_definition
   `ref_bind create f pop =
      (\s. match create s with
-           (M_success x,s) -> pop (f x s) | (M_failure x,s) ->
-             (M_failure x,s))`;;
+           (M_success x,s) -> pop (f x s)
+         | (M_failure x,s) -> (M_failure x,s))`;;
 
 (* TODO: use that *)
 let mget_ref_def = new_definition
@@ -350,8 +349,8 @@ let marray_sub_failure = prove
 (* Marray_sub_eq[local] *)
 let marray_sub_eq = prove
  (`Marray_sub get_arr e n s = (r,s') <=>
-    (n < LENGTH (get_arr s) /\ s' = s /\ r = M_success (EL n (get_arr
-      s))) \/
+    (n < LENGTH (get_arr s) /\ s' = s /\ r = M_success (EL n (get_arr s)))
+      \/
     (n >= LENGTH (get_arr s) /\ s' = s /\ r = M_failure e)`,
   CHEAT_TAC);;
 
@@ -392,8 +391,8 @@ let marray_alloc_success = prove
   CHEAT_TAC);;
 
 (* HOL4 ml_monadBaseScript.sml:557-560: ML code, not ported *)
-(* HOL4 ml_monadBaseScript.sml:561-562: a theorem that HOL4 states as
-   the value of an ML expression: monad_eqs *)
+(* HOL4 ml_monadBaseScript.sml:561-562: a theorem that HOL4 states as the
+   value of an ML expression: monad_eqs *)
 
 (* Run *)
 let run_def = new_definition

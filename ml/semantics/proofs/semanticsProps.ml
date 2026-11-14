@@ -23,12 +23,12 @@ let _ = cake_theory "semanticsProps"
 
 let evaluate_prog_events_determ = prove
  (`!st env k p k'.
-   LENGTH (ffi_state_io_events (FST (evaluate_prog_with_clock st env
-     k p))) = LENGTH (ffi_state_io_events (FST (evaluate_prog_with_clock
-     st env k' p))) ==>
+   LENGTH (ffi_state_io_events (FST (evaluate_prog_with_clock st env k p)))
+     = LENGTH (ffi_state_io_events (FST (evaluate_prog_with_clock st env k'
+     p))) ==>
     ffi_state_io_events
-   (FST (evaluate_prog_with_clock st env k p)) =
-     ffi_state_io_events (FST (evaluate_prog_with_clock st env k' p))`,
+   (FST (evaluate_prog_with_clock st env k p)) = ffi_state_io_events (FST
+     (evaluate_prog_with_clock st env k' p))`,
   CHEAT_TAC);;
 
 let evaluate_prog_io_events_chain = prove
@@ -73,16 +73,15 @@ let semantics_prog_Diverge_not_Fail = prove
 let state_invariant_def = new_definition
   `state_invariant st <=>
    (?ctMap tenvS.
-     FRANGE ((SND o SND) o_f ctMap) SUBSET semantics_state_type_ids
-       st /\
+     FRANGE ((SND o SND) o_f ctMap) SUBSET semantics_state_type_ids st /\
      type_sound_invariant (semantics_state_sem_st st)
-       (semantics_state_sem_env st) ctMap tenvS {}
-       (semantics_state_tenv st))`;;
+       (semantics_state_sem_env st) ctMap tenvS {} (semantics_state_tenv
+       st))`;;
 
 (* [local] *)
 let clock_lemmas = prove
- (`(semanticPrimitives_state_clock (semanticPrimitives_state_clock_fupd
-  (K c) x) = c) /\
+ (`(semanticPrimitives_state_clock (semanticPrimitives_state_clock_fupd (K c)
+  x) = c) /\
     ((semanticPrimitives_state_clock_fupd (K d)
       (semanticPrimitives_state_clock_fupd (K c) x)) =
       (semanticPrimitives_state_clock_fupd (K d) x)) /\
@@ -92,8 +91,8 @@ let clock_lemmas = prove
 
 let semantics_deterministic = prove
  (`state_invariant st ==>
-   semantics_semantics st prelude inp = Execute bs ==> (?b. bs =
-     {b} /\ ~(b = ffi_Fail))`,
+   semantics_semantics st prelude inp = Execute bs ==> (?b. bs = {b}
+     /\ ~(b = ffi_Fail))`,
   CHEAT_TAC);;
 
 let extend_with_resource_limit_def = new_definition
@@ -106,8 +105,8 @@ let extend_with_resource_limit_def = new_definition
 
 let extend_with_resource_limit'_def = new_definition
   `extend_with_resource_limit' precise behaviours =
-     (if precise then behaviours else
-       extend_with_resource_limit behaviours)`;;
+     if precise then behaviours else extend_with_resource_limit
+       behaviours`;;
 
 let implements_def = new_definition
   `implements x y <=>
@@ -118,8 +117,7 @@ let implements'_def = new_definition
   extend_with_resource_limit' precise y`;;
 
 let extend_with_resource_limit_not_fail = prove
- (`x IN extend_with_resource_limit y /\ ~(ffi_Fail IN y) ==> ~(x =
-  ffi_Fail)`,
+ (`x IN extend_with_resource_limit y /\ ~(ffi_Fail IN y) ==> ~(x = ffi_Fail)`,
   CHEAT_TAC);;
 
 let implements_intro = prove

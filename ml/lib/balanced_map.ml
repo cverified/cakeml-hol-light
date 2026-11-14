@@ -11,8 +11,8 @@ needs "lib/ternaryComparisons.ml";;
 
 (* of no theory of the port: what it registers is in the scope of every file *)
 let _ = cake_library ();;
-(* HOL4 ancestors outside the port: option pair string arithmetic
-   pred_set list finite_map alist *)
+(* HOL4 ancestors outside the port: option pair string arithmetic pred_set
+   list finite_map alist *)
 
 let key_set_def = new_definition
   `key_set cmp k = {k' | cmp k k' = EQUAL}`;;
@@ -33,15 +33,14 @@ let balanced_map_size_def = define_cases
    `balanced_map_size (Bin s k v l r) = s`];;
 
 let bin_def = new_definition
-  `bin k x l r = Bin (balanced_map_size l + balanced_map_size r + 1)
-  k x l r`;;
+  `bin k x l r = Bin (balanced_map_size l + balanced_map_size r + 1) k x l r`;;
 
 let balanced_map_lookup_def,balanced_map_lookup_ind = define_rec
   [`balanced_map_lookup cmp k Tip = NONE`;
    `balanced_map_lookup cmp k (Bin s k' v l r) =
-      (match cmp k k' with LESS -> balanced_map_lookup cmp k l
-          | GREATER -> balanced_map_lookup cmp k r | EQUAL -> SOME
-          v)`];;
+      match cmp k k' with LESS -> balanced_map_lookup cmp k l
+         | GREATER -> balanced_map_lookup cmp k r
+         | EQUAL -> SOME v`];;
 
 let empty_def = new_definition
   `balanced_map_empty = Tip`;;
@@ -51,116 +50,110 @@ let singleton_def = new_definition
 
 let balanceL_def = new_definition
   `balanceL k x x3 x4 =
-        match (x3,x4) with
-          (Tip,Tip) ->
+     match (x3,x4) with
+       (Tip,Tip) ->
      Bin 1 k x Tip Tip
-        | ((Bin s' k' v' Tip Tip),Tip) ->
+     | (Bin s' k' v' Tip Tip,Tip) ->
      Bin 2 k x (Bin s' k' v' Tip Tip) Tip
-        | ((Bin _7 lk lx Tip (Bin _8 lrk lrx _9 _10)),Tip) ->
+     | (Bin _7 lk lx Tip (Bin _8 lrk lrx _9 _10),Tip) ->
      Bin 3 lrk lrx (Bin 1 lk lx Tip Tip) (Bin 1 k x Tip Tip)
-        | ((Bin _11 lk lx (Bin s' k' v' l' r') Tip),Tip) ->
+     | (Bin _ lk lx (Bin s' k' v' l' r') Tip,Tip) ->
      Bin 3 lk lx (Bin s' k' v' l' r') (Bin 1 k x Tip Tip)
-        | ((Bin ls lk lx (Bin lls k' v' l' r') (Bin lrs lrk lrx lrl
-          lrr)),Tip) ->
-     (if lrs < ratio * lls then
+     | (Bin ls lk lx (Bin lls k' v' l' r') (Bin lrs lrk lrx lrl lrr),Tip) ->
+     if lrs < ratio * lls then
        Bin (1 + ls) lk lx (Bin lls k' v' l' r')
-                        (Bin (1 + lrs) k x (Bin lrs lrk lrx lrl lrr)
-                          Tip) else
-       Bin (1 + ls) lrk lrx (Bin (1 + lls + balanced_map_size lrl) lk
-         lx (Bin lls k' v' l' r') lrl)
-                          (Bin (1 + balanced_map_size lrr) k x lrr
-                            Tip))
-        | (Tip,(Bin rs k' v' l' r')) ->
+                        (Bin (1 + lrs) k x (Bin lrs lrk lrx lrl lrr) Tip)
+     else Bin (1 + ls) lrk lrx (Bin (1 + lls + balanced_map_size lrl) lk lx
+       (Bin lls k' v' l' r') lrl)
+                          (Bin (1 + balanced_map_size lrr) k x lrr Tip)
+     | (Tip,Bin rs k' v' l' r') ->
      Bin (1 + rs) k x Tip (Bin rs k' v' l' r')
-        | ((Bin ls lk lx ll lr),(Bin rs k' v' l' r')) ->
-     (if ls > delta * rs then
-       match (ll,lr) with (Bin lls _12 _13 _14 _15,Bin lrs lrk lrx
-         lrl lrr) ->
-              (if lrs < ratio * lls then
-                Bin (1 + ls + rs) lk lx ll (Bin (1 + rs + lrs) k x lr
-                  (Bin rs k' v' l' r')) else
-                Bin (1 + ls + rs) lrk lrx (Bin (1 + lls +
-                  balanced_map_size lrl) lk lx ll lrl)
-                              (Bin (1 + rs + balanced_map_size lrr) k
-                                x lrr (Bin rs k' v' l' r'))) | (_16,_17)
-                                -> Tip else
+     | (Bin ls lk lx ll lr,Bin rs k' v' l' r') ->
+     if ls > delta * rs then
+       match (ll,lr) with (Bin lls _11 _12 _13 _14,Bin lrs lrk lrx lrl lrr)
+         ->
+              if lrs < ratio * lls then
+                Bin (1 + ls + rs) lk lx ll (Bin (1 + rs + lrs) k x lr (Bin
+                  rs k' v' l' r'))
+              else Bin (1 + ls + rs) lrk lrx (Bin (1 + lls +
+                balanced_map_size lrl) lk lx ll lrl)
+                              (Bin (1 + rs + balanced_map_size lrr) k x lrr
+                                (Bin rs k' v' l' r'))
+          | (_15,_16) -> Tip
+     else
        // error "Failure in Data.Map.balanceL"
-       Bin (1 + ls + rs) k x (Bin ls lk lx ll lr) (Bin rs k' v' l'
-         r'))`;;
+       Bin (1 + ls + rs) k x (Bin ls lk lx ll lr) (Bin rs k' v' l' r')`;;
 
 let balanceR_def = new_definition
   `balanceR k x x3 x4 =
-        match (x3,x4) with
-          (Tip,Tip) ->
+     match (x3,x4) with
+       (Tip,Tip) ->
      Bin 1 k x Tip Tip
-        | (Tip,(Bin s' k' v' Tip Tip)) ->
+     | (Tip,Bin s' k' v' Tip Tip) ->
      Bin 2 k x Tip (Bin s' k' v' Tip Tip)
-        | (Tip,(Bin _24 rk rx Tip (Bin s' k' v' l' r'))) ->
+     | (Tip,Bin _ rk rx Tip (Bin s' k' v' l' r')) ->
      Bin 3 rk rx (Bin 1 k x Tip Tip) (Bin s' k' v' l' r')
-        | (Tip,(Bin _25 rk rx (Bin _26 rlk rlx _27 _28) Tip)) ->
+     | (Tip,Bin _23 rk rx (Bin _24 rlk rlx _25 _26) Tip) ->
      Bin 3 rlk rlx (Bin 1 k x Tip Tip) (Bin 1 rk rx Tip Tip)
-        | (Tip,(Bin rs rk rx (Bin rls rlk rlx rll rlr) (Bin rrs k' v'
-          l' r'))) ->
-     (if rls < ratio * rrs then
-       Bin (1 + rs) rk rx (Bin (1 + rls) k x Tip (Bin rls rlk rlx rll
-         rlr)) (Bin rrs k' v' l' r') else
-       Bin (1 + rs) rlk rlx (Bin (1 + balanced_map_size rll) k x Tip
-         rll)
-                          (Bin (1 + rrs + balanced_map_size rlr) rk
-                            rx rlr (Bin rrs k' v' l' r')))
-        | ((Bin ls k' v' l' r'),Tip) ->
+     | (Tip,Bin rs rk rx (Bin rls rlk rlx rll rlr) (Bin rrs k' v' l' r')) ->
+     if rls < ratio * rrs then
+       Bin (1 + rs) rk rx (Bin (1 + rls) k x Tip (Bin rls rlk rlx rll rlr))
+         (Bin rrs k' v' l' r')
+     else Bin (1 + rs) rlk rlx (Bin (1 + balanced_map_size rll) k x Tip rll)
+                          (Bin (1 + rrs + balanced_map_size rlr) rk rx rlr
+                            (Bin rrs k' v' l' r'))
+     | (Bin ls k' v' l' r',Tip) ->
      Bin (1 + ls) k x (Bin ls k' v' l' r') Tip
-        | ((Bin ls k' v' l' r'),(Bin rs rk rx rl rr)) ->
-     (if rs > delta * ls then
-       match (rl,rr) with (Bin rls rlk rlx rll rlr,Bin rrs _29 _30
-         _31 _32) ->
-              (if rls < ratio * rrs then
-                Bin (1 + ls + rs) rk rx (Bin (1 + ls + rls) k x (Bin
-                  ls k' v' l' r') rl) rr else
-                Bin (1 + ls + rs) rlk rlx (Bin (1 + ls +
-                  balanced_map_size rll) k x (Bin ls k' v' l' r') rll)
-                              (Bin (1 + rrs + balanced_map_size rlr)
-                                rk rx rlr rr)) | (_33,_34) -> Tip else
+     | (Bin ls k' v' l' r',Bin rs rk rx rl rr) ->
+     if rs > delta * ls then
+       match (rl,rr) with (Bin rls rlk rlx rll rlr,Bin rrs _27 _28 _29 _30)
+         ->
+              if rls < ratio * rrs then
+                Bin (1 + ls + rs) rk rx (Bin (1 + ls + rls) k x (Bin ls k'
+                  v' l' r') rl) rr
+              else Bin (1 + ls + rs) rlk rlx (Bin (1 + ls +
+                balanced_map_size rll) k x (Bin ls k' v' l' r') rll)
+                              (Bin (1 + rrs + balanced_map_size rlr) rk rx
+                                rlr rr)
+          | (_31,_32) -> Tip
+     else
        // error "Failure in Data.Map.balanceR"
-       Bin (1 + ls + rs) k x (Bin ls k' v' l' r') (Bin rs rk rx rl
-         rr))`;;
+       Bin (1 + ls + rs) k x (Bin ls k' v' l' r') (Bin rs rk rx rl rr)`;;
 
 let balanced_map_insert_def,balanced_map_insert_ind = define_rec
   [`balanced_map_insert cmp k v Tip = singleton k v`;
    `balanced_map_insert cmp k v (Bin s k' v' l r) =
-      (match cmp k k' with LESS -> balanceL k' v'
-          (balanced_map_insert cmp k v l) r | GREATER -> balanceR
-          k' v' l (balanced_map_insert cmp k v r) | EQUAL -> Bin s
-          k v l r)`];;
+      match cmp k k' with LESS -> balanceL k' v' (balanced_map_insert cmp k
+          v l) r
+         | GREATER -> balanceR k' v' l (balanced_map_insert cmp k v r)
+         | EQUAL -> Bin s k v l r`];;
 
 let insertR_def,insertR_ind = define_rec
   [`insertR cmp k v Tip = singleton k v`;
    `insertR cmp k v (Bin s k' v' l r) =
-      (match cmp k k' with LESS -> balanceL k' v' (insertR cmp
-          k v l) r | GREATER -> balanceR k' v' l (insertR cmp k v
-          r) | EQUAL -> Bin s k' v' l r)`];;
+      match cmp k k' with LESS -> balanceL k' v' (insertR cmp k v l) r
+         | GREATER -> balanceR k' v' l (insertR cmp k v r)
+         | EQUAL -> Bin s k' v' l r`];;
 
 let insertMax_def,insertMax_ind = define_rec
   [`insertMax k v Tip = singleton k v`;
-   `insertMax k v (Bin s k' v' l r) = balanceR k' v' l (insertMax k
-    v r)`];;
+   `insertMax k v (Bin s k' v' l r) = balanceR k' v' l (insertMax k v r)`];;
 
 let insertMin_def,insertMin_ind = define_rec
   [`insertMin k v Tip = singleton k v`;
-   `insertMin k v (Bin s k' v' l r) = balanceL k' v' (insertMin k v
-    l) r`];;
+   `insertMin k v (Bin s k' v' l r) = balanceL k' v' (insertMin k v l) r`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let deleteFindMax_def,deleteFindMax_ind = define_wf
   `MEASURE (\x0. balanced_map_size1 (\x. 0) (\x. 0) x0)`
   [`deleteFindMax x1 =
-        match x1 with
-          Bin s k x l Tip -> ((k,x),l)
-        | (Bin s k x l r) ->
-     (let (km,r') = deleteFindMax r in
-       (km,balanceL k x l r'))
-        | Tip ->
+     match x1 with
+       Bin s k x l Tip -> ((k,x),l)
+     | Bin s k x l r ->
+     let (km,r') = deleteFindMax r in
+       (km,balanceL k x l r')
+     | Tip ->
      (ARB,Tip)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -168,86 +161,87 @@ let deleteFindMax_def,deleteFindMax_ind = define_wf
 let deleteFindMin_def,deleteFindMin_ind = define_wf
   `MEASURE (\x0. balanced_map_size1 (\x. 0) (\x. 0) x0)`
   [`deleteFindMin x1 =
-        match x1 with
-          Bin s k x Tip r -> ((k,x),r)
-        | (Bin s k x l r) ->
-     (let (km,l') = deleteFindMin l in
-       (km,balanceR k x l' r))
-        | Tip ->
+     match x1 with
+       Bin s k x Tip r -> ((k,x),r)
+     | Bin s k x l r ->
+     let (km,l') = deleteFindMin l in
+       (km,balanceR k x l' r)
+     | Tip ->
      (ARB,Tip)`];;
 
 let glue_def = new_definition
   `glue l r =
-        match (l,r) with
-          (Tip,r) -> r
-        | (l,Tip) -> l
-        | (l,r) ->
-     (if balanced_map_size l > balanced_map_size r then
+     match (l,r) with
+       (Tip,r) -> r
+     | (l,Tip) -> l
+     | (l,r) ->
+     if balanced_map_size l > balanced_map_size r then
        let ((km,m),l') = deleteFindMax l in
-         balanceR km m l' r else
-       let ((km,m),r') = deleteFindMin r in
-         balanceL km m l r')`;;
+         balanceR km m l' r
+     else let ((km,m),r') = deleteFindMin r in
+         balanceL km m l r'`;;
 
 let balanced_map_delete_def,balanced_map_delete_ind = define_rec
   [`balanced_map_delete cmp k Tip = Tip`;
    `balanced_map_delete cmp k (Bin s k' v l r) =
-      (match cmp k k' with LESS -> balanceR k' v
-          (balanced_map_delete cmp k l) r | GREATER -> balanceL k'
-          v l (balanced_map_delete cmp k r) | Eq' -> glue l r)`];;
+      match cmp k k' with LESS -> balanceR k' v (balanced_map_delete cmp k
+          l) r
+         | GREATER -> balanceL k' v l (balanced_map_delete cmp k r)
+         | Eq' -> glue l r`];;
 
 let trim_help_greater_def,trim_help_greater_ind = define_rec
   [`trim_help_greater cmp lo (Bin s' k v' l' r) =
-      (if cmp k lo = LESS \/ cmp k lo = EQUAL then
-        trim_help_greater cmp lo r else
-        Bin s' k v' l' r)`;
+      if cmp k lo = LESS \/ cmp k lo = EQUAL then
+        trim_help_greater cmp lo r
+      else Bin s' k v' l' r`;
    `trim_help_greater cmp lo Tip = Tip`];;
 
 let trim_help_lesser_def,trim_help_lesser_ind = define_rec
   [`trim_help_lesser cmp hi (Bin s' k v' l r') =
-      (if cmp k hi = GREATER \/ cmp k hi = EQUAL then
-        trim_help_lesser cmp hi l else
-        Bin s' k v' l r')`;
+      if cmp k hi = GREATER \/ cmp k hi = EQUAL then
+        trim_help_lesser cmp hi l
+      else Bin s' k v' l r'`;
    `trim_help_lesser cmp lo Tip = Tip`];;
 
 let trim_help_middle_def,trim_help_middle_ind = define_rec
   [`trim_help_middle cmp lo hi (Bin s' k v' l r) =
-      (if cmp k lo = LESS \/ cmp k lo = EQUAL then
-        trim_help_middle cmp lo hi r else if cmp k hi = GREATER \/
-            cmp k hi = EQUAL then
-        trim_help_middle cmp lo hi l else
-        Bin s' k v' l r)`;
+      if cmp k lo = LESS \/ cmp k lo = EQUAL then
+        trim_help_middle cmp lo hi r
+      else if cmp k hi = GREATER \/ cmp k hi = EQUAL then
+        trim_help_middle cmp lo hi l
+      else Bin s' k v' l r`;
    `trim_help_middle lo cmp hi Tip = Tip`];;
 
 let trim_def = new_definition
   `trim cmp x2 x3 t =
-        match (x2,x3) with
-          (NONE,NONE) -> t
-        | ((SOME lk),NONE) -> trim_help_greater cmp lk t
-        | (NONE,(SOME hk)) -> trim_help_lesser cmp hk t
-        | ((SOME lk),(SOME hk)) -> trim_help_middle cmp lk hk t`;;
+     match (x2,x3) with
+       (NONE,NONE) -> t
+     | (SOME lk,NONE) -> trim_help_greater cmp lk t
+     | (NONE,SOME hk) -> trim_help_lesser cmp hk t
+     | (SOME lk,SOME hk) -> trim_help_middle cmp lk hk t`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let link_def,link_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3).      balanced_map_size1 (\x. 0) (\x. 0) x2
-  +      balanced_map_size1 (\x. 0) (\x. 0) x3)`
+  `MEASURE (\(x0,x1,x2,x3).      balanced_map_size1 (\x. 0) (\x. 0) x2 +
+  balanced_map_size1 (\x. 0) (\x. 0) x3)`
   [`link k v l r =
-        match (l,r) with
-          (Tip,r) -> insertMin k v r
-        | (l,Tip) -> insertMax k v l
-        | ((Bin sizeL ky y ly ry),(Bin sizeR kz z lz rz)) ->
-     (if delta * sizeL < sizeR then
-       balanceL kz z (link k v (Bin sizeL ky y ly ry) lz) rz else if
-         delta * sizeR < sizeL then
-       balanceR ky y ly (link k v ry (Bin sizeR kz z lz rz)) else
-       bin k v (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz))`];;
+     match (l,r) with
+       (Tip,r) -> insertMin k v r
+     | (l,Tip) -> insertMax k v l
+     | (Bin sizeL ky y ly ry,Bin sizeR kz z lz rz) ->
+     if delta * sizeL < sizeR then
+       balanceL kz z (link k v (Bin sizeL ky y ly ry) lz) rz
+     else if delta * sizeR < sizeL then
+       balanceR ky y ly (link k v ry (Bin sizeR kz z lz rz))
+     else bin k v (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz)`];;
 
 let filterLt_help_def,filterLt_help_ind = define_rec
   [`filterLt_help cmp b Tip = Tip`;
    `filterLt_help cmp b' (Bin s kx x l r) =
-      (match cmp kx b' with LESS -> link kx x l (filterLt_help
-          cmp b' r) | EQUAL -> l | GREATER -> filterLt_help cmp b'
-          l)`];;
+      match cmp kx b' with LESS -> link kx x l (filterLt_help cmp b' r)
+         | EQUAL -> l
+         | GREATER -> filterLt_help cmp b' l`];;
 
 let filterLt_def = define_cases
   [`filterLt cmp NONE t = t`;
@@ -256,9 +250,9 @@ let filterLt_def = define_cases
 let filterGt_help_def,filterGt_help_ind = define_rec
   [`filterGt_help cmp b Tip = Tip`;
    `filterGt_help cmp b' (Bin s kx x l r) =
-      (match cmp b' kx with LESS -> link kx x (filterGt_help
-          cmp b' l) r | EQUAL -> r | GREATER -> filterGt_help cmp
-          b' r)`];;
+      match cmp b' kx with LESS -> link kx x (filterGt_help cmp b' l) r
+         | EQUAL -> r
+         | GREATER -> filterGt_help cmp b' r`];;
 
 let filterGt_def = define_cases
   [`filterGt cmp NONE t = t`;
@@ -269,35 +263,34 @@ let filterGt_def = define_cases
 let hedgeUnion_def,hedgeUnion_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). balanced_map_size1 (\x. 0) (\x. 0) x3)`
   [`hedgeUnion cmp blo bhi t1 t2 =
-        match (t1,t2) with
-          (t1,Tip) -> t1
-        | (Tip,(Bin _35 kx x l r)) ->
+     match (t1,t2) with
+       (t1,Tip) -> t1
+     | (Tip,Bin _ kx x l r) ->
      link kx x (filterGt cmp blo l) (filterLt cmp bhi r)
-        | (t1,(Bin _36 kx x Tip Tip)) -> insertR cmp kx x t1
-        | ((Bin s kx x l r),t2) ->
-     link kx x (hedgeUnion cmp blo (SOME kx) l (trim cmp blo (SOME
-       kx) t2))
-               (hedgeUnion cmp (SOME kx) bhi r (trim cmp (SOME
-                 kx) bhi t2))`];;
+     | (t1,Bin _ kx x Tip Tip) -> insertR cmp kx x t1
+     | (Bin s kx x l r,t2) ->
+     link kx x (hedgeUnion cmp blo (SOME kx) l (trim cmp blo (SOME kx) t2))
+               (hedgeUnion cmp (SOME kx) bhi r (trim cmp (SOME kx) bhi
+                 t2))`];;
 
 let balanced_map_union_def = new_definition
   `balanced_map_union cmp t1 t2 =
-        match (t1,t2) with
-          (Tip,t2) -> t2
-        | (t1,Tip) -> t1
-        | (t1,t2) -> hedgeUnion cmp NONE NONE t1 t2`;;
+     match (t1,t2) with
+       (Tip,t2) -> t2
+     | (t1,Tip) -> t1
+     | (t1,t2) -> hedgeUnion cmp NONE NONE t1 t2`;;
 
 let foldrWithKey_def,foldrWithKey_ind = define_rec
   [`foldrWithKey f z' Tip = z'`;
-   `foldrWithKey f z' (Bin _37 kx x l r) =
+   `foldrWithKey f z' (Bin _ kx x l r) =
       foldrWithKey f (f kx x (foldrWithKey f z' r)) l`];;
 
 let toAscList_def = new_definition
   `toAscList t = foldrWithKey (\k x xs. CONS (k,x) xs) [] t`;;
 
 let compare_def = new_definition
-  `balanced_map_compare cmp1 cmp2 t1 t2 = list_compare (pair_compare
-  cmp1 cmp2) (toAscList t1) (toAscList t2)`;;
+  `balanced_map_compare cmp1 cmp2 t1 t2 = list_compare (pair_compare cmp1
+  cmp2) (toAscList t1) (toAscList t2)`;;
 
 let mapWithKey_def,mapWithKey_ind = define_rec
   [`mapWithKey f Tip = Tip`;
@@ -310,16 +303,15 @@ let balanced_map_map_def = new_definition
 let to_fmap_def,to_fmap_ind = define_rec
   [`to_fmap cmp Tip = FEMPTY`;
    `to_fmap cmp (Bin s k v l r) =
-      (FUNION (to_fmap cmp l) (to_fmap cmp r)) |+ (key_set cmp
-          k,v)`];;
+      (FUNION (to_fmap cmp l) (to_fmap cmp r)) |+ (key_set cmp k,v)`];;
 
 let balanced_def = new_definition
   `balanced l r <=> l + r <= 1 \/ MAX l r <= delta * MIN l r`;;
 
 let structure_size_def,structure_size_ind = define_rec
   [`structure_size Tip = 0`;
-   `structure_size (Bin n k v l r) = 1 + structure_size l +
-    structure_size r`];;
+   `structure_size (Bin n k v l r) = 1 + structure_size l + structure_size
+    r`];;
 
 let key_ordered_def,key_ordered_ind = define_rec
   [`key_ordered cmp k Tip res <=> T`;
@@ -340,9 +332,11 @@ let invariant_def,invariant_ind = define_rec
 
 let exists_def,exists_ind = define_rec
   [`balanced_map_exists f Tip = F`;
-   `balanced_map_exists f (Bin _38 kx x l r) =
-      (if f kx x then
-        T else if balanced_map_exists f l then
-        T else if balanced_map_exists f r then
-        T else
-        F)`];;
+   `balanced_map_exists f (Bin _ kx x l r) =
+      if f kx x then
+        T
+      else if balanced_map_exists f l then
+        T
+      else if balanced_map_exists f r then
+        T
+      else F`];;

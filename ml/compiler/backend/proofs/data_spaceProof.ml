@@ -21,23 +21,23 @@ let _ = cake_theory "data_spaceProof"
 
 let _ = do_list hide_constant ["vars"];;
 
-(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source
-   brings to the front: get_vars, written out as dataSem_get_vars *)
-(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source
-   brings to the front: cut_env, written out as dataSem_cut_env *)
-(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source
-   brings to the front: evaluate, written out as dataSem_evaluate *)
-(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source
-   brings to the front: lookup, written out as sptree_lookup *)
-(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source
-   brings to the front: insert, written out as sptree_insert *)
-(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source
-   brings to the front: wf, written out as sptree_wf *)
+(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source brings
+   to the front: get_vars, written out as dataSem_get_vars *)
+(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source brings
+   to the front: cut_env, written out as dataSem_cut_env *)
+(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source brings
+   to the front: evaluate, written out as dataSem_evaluate *)
+(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source brings
+   to the front: lookup, written out as sptree_lookup *)
+(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source brings
+   to the front: insert, written out as sptree_insert *)
+(* HOL4 data_spaceProofScript.sml:12-17: an overload that the source brings
+   to the front: wf, written out as sptree_wf *)
 
 (* [local] *)
 let IMP_sptree_eq = prove
- (`sptree_wf x /\ sptree_wf y /\ (!a. sptree_lookup a x =
-  sptree_lookup a y) ==> (x = y)`,
+ (`sptree_wf x /\ sptree_wf y /\ (!a. sptree_lookup a x = sptree_lookup a y)
+  ==> (x = y)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -65,15 +65,16 @@ let data_spaceProof_evaluate_compile = prove
   /\ (dataSem_evaluate (c,s) = (res,s2)) /\
       locals_ok (dataSem_state_locals s) l ==>
       (?w safe peak smx.
-       (dataSem_evaluate (data_space_compile
-         c,dataSem_state_locals_fupd (K l) s) =
-          (res,(if res = NONE then dataSem_state_stack_max_fupd (K
-            smx) (dataSem_state_peak_heap_length_fupd (K peak)
-            (dataSem_state_safe_for_space_fupd (K safe)
-            (dataSem_state_locals_fupd (K w) s2))) else
-            dataSem_state_stack_max_fupd (K smx)
+       (dataSem_evaluate (data_space_compile c,dataSem_state_locals_fupd (K
+         l) s) =
+          (res,(if res = NONE then dataSem_state_stack_max_fupd (K smx)
             (dataSem_state_peak_heap_length_fupd (K peak)
-            (dataSem_state_safe_for_space_fupd (K safe) s2))))) /\
+            (dataSem_state_safe_for_space_fupd (K safe)
+            (dataSem_state_locals_fupd (K w) s2)))
+                             else dataSem_state_stack_max_fupd (K smx)
+                               (dataSem_state_peak_heap_length_fupd (K peak)
+                               (dataSem_state_safe_for_space_fupd (K safe)
+                               s2))))) /\
           locals_ok (dataSem_state_locals s2) w)`,
   CHEAT_TAC);;
 
@@ -104,13 +105,12 @@ let data_spaceProof_evaluate_compile = prove
 
 (* compile_correct *)
 let data_spaceProof_compile_correct = prove
- (`!c s. ~(FST (dataSem_evaluate (c,s)) = NONE) /\ ~(FST
-  (dataSem_evaluate (c,s)) = SOME (Rerr (Rabort Rtype_error))) ==>
+ (`!c s. ~(FST (dataSem_evaluate (c,s)) = NONE) /\ ~(FST (dataSem_evaluate
+  (c,s)) = SOME (Rerr (Rabort Rtype_error))) ==>
       (?safe peak smx. dataSem_evaluate (data_space_compile c,s) =
                       (I ## (\s. dataSem_state_stack_max_fupd (K smx)
                         (dataSem_state_peak_heap_length_fupd (K peak)
-                        (dataSem_state_safe_for_space_fupd (K safe)
-                        s))))
+                        (dataSem_state_safe_for_space_fupd (K safe) s))))
                       (dataSem_evaluate (c,s)))`,
   CHEAT_TAC);;
 

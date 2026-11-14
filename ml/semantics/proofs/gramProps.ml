@@ -32,44 +32,75 @@ let _ = cake_theory "gramProps"
 
 let NT_rank_def = new_definition
   `NT_rank N =
-     (match N with INR _1 -> 0 | INL n ->
-         (if n = nElist1 then 16 else if n = nEseq then 16 else if
-           n = nTopLevelDecs then 16 else if n = nElist2 then 16 else
-           if n = nE then 15 else if n = nEhandle then 14 else if n =
-           nPE then 14 else if n = nElogicOR then 13 else if n =
-           nElogicAND then 12 else if n = nEtyped then 11 else if n =
-           nEbefore then 10 else if n = nEcomp then 9 else if n =
-           nErel then 8 else if n = nElistop then 7 else if n = nEadd
-           then 6 else if n = nEmult then 5 else if n = nEapp then 4
-           else if n = nEbase then 3 else if n = nFQV then 2 else if
-           n = nV then 1 else if n = nDtypeCons then 3 else if n =
-           nDconstructor then 2 else if n = nConstructorName then 2
-           else if n = nUQConstructorName then 1 else if n =
-           nTypeList2 then 8 else if n = nTypeList1 then 7 else if n
-           = nType then 6 else if n = nPType then 5 else if n =
-           nDType then 4 else if n = nTbaseList then 4 else if n =
-           nPTbase then 3 else if n = nTbase then 3 else if n = nTyOp
-           then 2 else if n = nTypeName then 2 else if n = nUQTyOp
-           then 1 else if n = nNonETopLevelDecs then 4 else if n =
-           nDecls then 3 else if n = nStructure then 1 else if n =
-           nDecl then 2 else if n = nTypeDec then 1 else if n =
-           nSpecLineList then 3 else if n = nSpecLine then 2 else if
-           n = nPtuple then 2 else if n = nPbase then 3 else if n =
-           nPbaseList1 then 4 else if n = nPapp then 4 else if n =
-           nPcons then 5 else if n = nPas then 6 else if n = nPattern
-           then 7 else if n = nPatternList then 8 else if n = nPEs
-           then 9 else if n = nLetDecs then 2 else if n = nLetDec
-           then 1 else if n = nDtypeDecl then 3 else if n =
-           nAndFDecls then 3 else if n = nFDecl then 2 else if n =
-           nTyVarList then 2 else if n = nTyvarN then 1 else 0))`;;
+     match N with INR _ -> 0
+       | INL n ->
+         if n = nElist1 then 16
+         else if n = nEseq then 16
+         else if n = nTopLevelDecs then 16
+         else if n = nElist2 then 16
+         else if n = nE then 15
+         else if n = nEhandle then 14
+         else if n = nPE then 14
+         else if n = nElogicOR then 13
+         else if n = nElogicAND then 12
+         else if n = nEtyped then 11
+         else if n = nEbefore then 10
+         else if n = nEcomp then 9
+         else if n = nErel then 8
+         else if n = nElistop then 7
+         else if n = nEadd then 6
+         else if n = nEmult then 5
+         else if n = nEapp then 4
+         else if n = nEbase then 3
+         else if n = nFQV then 2
+         else if n = nV then 1
+         else if n = nDtypeCons then 3
+         else if n = nDconstructor then 2
+         else if n = nConstructorName then 2
+         else if n = nUQConstructorName then 1
+         else if n = nTypeList2 then 8
+         else if n = nTypeList1 then 7
+         else if n = nType then 6
+         else if n = nPType then 5
+         else if n = nDType then 4
+         else if n = nTbaseList then 4
+         else if n = nPTbase then 3
+         else if n = nTbase then 3
+         else if n = nTyOp then 2
+         else if n = nTypeName then 2
+         else if n = nUQTyOp then 1
+         else if n = nNonETopLevelDecs then 4
+         else if n = nDecls then 3
+         else if n = nStructure then 1
+         else if n = nDecl then 2
+         else if n = nTypeDec then 1
+         else if n = nSpecLineList then 3
+         else if n = nSpecLine then 2
+         else if n = nPtuple then 2
+         else if n = nPbase then 3
+         else if n = nPbaseList1 then 4
+         else if n = nPapp then 4
+         else if n = nPcons then 5
+         else if n = nPas then 6
+         else if n = nPattern then 7
+         else if n = nPatternList then 8
+         else if n = nPEs then 9
+         else if n = nLetDecs then 2
+         else if n = nLetDec then 1
+         else if n = nDtypeDecl then 3
+         else if n = nAndFDecls then 3
+         else if n = nFDecl then 2
+         else if n = nTyVarList then 2
+         else if n = nTyvarN then 1
+         else 0`;;
 
-(* HOL4 gramPropsScript.sml:104-131: a theorem that HOL4 states as
-   the value of an ML expression: cmlG_applied *)
-(* HOL4 gramPropsScript.sml:104-131: the ML values that the
-   definitions below antiquote *)
+(* HOL4 gramPropsScript.sml:104-131: a theorem that HOL4 states as the value
+   of an ML expression: cmlG_applied *)
+(* HOL4 gramPropsScript.sml:104-131: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 gramPropsScript.sml:133-134: a theorem that HOL4 states as
-   the value of an ML expression: cmlG_FDOM *)
+(* HOL4 gramPropsScript.sml:133-134: a theorem that HOL4 states as the value
+   of an ML expression: cmlG_FDOM *)
 
 (* [local] *)
 let paireq = prove
@@ -79,8 +110,8 @@ let paireq = prove
 (* [local] *)
 let GSPEC_INTER = prove
  (`hol4_GSPEC f INTER Q =
-     hol4_GSPEC (hol4_S ((,) o FST o f) (hol4_S ((/\) o SND o f) (Q
-       o FST o f)))`,
+     hol4_GSPEC (hol4_S ((,) o FST o f) (hol4_S ((/\) o SND o f) (Q o FST
+       o f)))`,
   (* the n-th pair of f is split by paireq, and then the two sides
      say the same of it: Q of x, and Q of the FST that x is *)
   (REWRITE_TAC[hol4_GSPEC; hol4_S; o_THM] THEN
@@ -101,8 +132,8 @@ let GSPEC_applied = prove
  (`GSPEC f x <=> x IN GSPEC f`,
   (REWRITE_TAC[IN]));;
 
-(* HOL4 gramPropsScript.sml:162-167: the ML values that the
-   definitions below antiquote *)
+(* HOL4 gramPropsScript.sml:162-167: the ML values that the definitions
+   below antiquote *)
 
 (* HOL4 gramPropsScript.sml:169-175: ML code, not ported *)
 
@@ -123,8 +154,8 @@ let null2 = prove
   CHEAT_TAC);;
 
 
-(* HOL4 gramPropsScript.sml:197-243: the ML values that the
-   definitions below antiquote *)
+(* HOL4 gramPropsScript.sml:197-243: the ML values that the definitions
+   below antiquote *)
 
 (* HOL4 gramPropsScript.sml:245-249: ML code, not ported *)
 
@@ -158,12 +189,11 @@ let derives_singleTOK = prove
 add_simp derives_singleTOK;;
 
 let fringe_lengths_V = prove
- (`fringe_lengths cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nV)] =
-  {1}`,
+ (`fringe_lengths cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nV)] = {1}`,
   CHEAT_TAC);;
 
-(* HOL4 gramPropsScript.sml:340-350: a theorem that HOL4 states as
-   the value of an ML expression: parsing_ind *)
+(* HOL4 gramPropsScript.sml:340-350: a theorem that HOL4 states as the value
+   of an ML expression: parsing_ind *)
 
 (* and the interface *)
 let _ = unhide_overloads ();;

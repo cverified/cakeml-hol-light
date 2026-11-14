@@ -28,15 +28,14 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "type_eDeterm"
-  ["ast"; "envRel"; "evaluate"; "infer"; "inferProps";
-   "infer_eComplete"; "infer_eSound"; "namespace"; "namespaceProps";
-   "semanticPrimitives"; "typeSysProps"; "typeSystem"; "unify"];;
+  ["ast"; "envRel"; "evaluate"; "infer"; "inferProps"; "infer_eComplete";
+   "infer_eSound"; "namespace"; "namespaceProps"; "semanticPrimitives";
+   "typeSysProps"; "typeSystem"; "unify"];;
 
 (* [local] *)
 let sub_completion_empty = prove
- (`!m n s s'. sub_completion m n s [] s' <=> count n SUBSET FDOM s'
-  /\ (!uv. uv IN FDOM s' ==> check_t m {} (t_walkstar s' (Infer_Tuvar
-  uv))) /\ s = s'`,
+ (`!m n s s'. sub_completion m n s [] s' <=> count n SUBSET FDOM s' /\ (!uv.
+  uv IN FDOM s' ==> check_t m {} (t_walkstar s' (Infer_Tuvar uv))) /\ s = s'`,
   CHEAT_TAC);;
 
 let type_p_pat_bindings = prove
@@ -50,8 +49,7 @@ let type_p_pat_bindings = prove
 
 let infer_pe_complete = prove
  (`ienv_ok {} ienv /\
-    env_rel_complete FEMPTY ienv tenv (bind_tvar tvs
-      typeSystem_Empty) /\
+    env_rel_complete FEMPTY ienv tenv (bind_tvar tvs typeSystem_Empty) /\
     ALL_DISTINCT (ast_pat_bindings p) /\
     type_p tvs tenv p t1 tenv1 /\
     type_e tenv (bind_tvar tvs typeSystem_Empty) e t1 ==>
@@ -101,8 +99,7 @@ let t_vars_check_t = prove
 
 let t_walkstar_diff = prove
  (`t_wfs s1 /\ t_wfs s2 /\
-   (~(t_walkstar s1 (Infer_Tuvar n) = t_walkstar s2 (Infer_Tuvar n)))
-     ==>
+   (~(t_walkstar s1 (Infer_Tuvar n) = t_walkstar s2 (Infer_Tuvar n))) ==>
    (!t. (n IN t_vars t) ==> ~(t_walkstar s1 t = t_walkstar s2 t)) /\
    (!ts.
    !x. MEM x ts ==>
@@ -153,22 +150,21 @@ let infer_funs_complete = prove
      typeSystem_Empty)) funs bindings ==>
    (?funs_ts st st' constr s.
    infer_funs loc
-   (inf_env_inf_v_fupd (K (nsAppend (alist_to_ns (MAP2 (\(f,x,e)
-     uvar. (f,0,uvar)) funs (MAP (\n. Infer_Tuvar n)
+   (inf_env_inf_v_fupd (K (nsAppend (alist_to_ns (MAP2 (\(f,x,e) uvar.
+     (f,0,uvar)) funs (MAP (\n. Infer_Tuvar n)
       (COUNT_LIST (LENGTH funs))))) (inf_env_inf_v ienv))) ienv) funs
-        (infer_st_next_uvar_fupd (K (infer_st_next_uvar
-        (init_infer_state ss) + LENGTH funs)) (init_infer_state ss)) =
+        (infer_st_next_uvar_fupd (K (infer_st_next_uvar (init_infer_state ss) +
+        LENGTH funs)) (init_infer_state ss)) =
    (M_success funs_ts,st) /\ infer_st_next_uvar
    st = infer_st_next_uvar st' /\ infer_st_next_id
    st = infer_st_next_id st' /\
    pure_add_constraints (infer_st_subst st)
-   (ZIP (MAP (\n. Infer_Tuvar (infer_st_next_uvar (init_infer_state
-     ss) + n))
-             (COUNT_LIST (LENGTH funs))) funs_ts) (infer_st_subst
-               st') /\
+   (ZIP (MAP (\n. Infer_Tuvar (infer_st_next_uvar (init_infer_state ss) +
+     n))
+             (COUNT_LIST (LENGTH funs))) funs_ts) (infer_st_subst st') /\
    check_s 0 (count (infer_st_next_uvar st')) (infer_st_subst st') /\
-   sub_completion tvs (infer_st_next_uvar st') (infer_st_subst st')
-     constr s /\
+   sub_completion tvs (infer_st_next_uvar st') (infer_st_subst st') constr s
+     /\
    FDOM s = count (infer_st_next_uvar st') /\
    MAP SND bindings = MAP (convert_t o t_walkstar s) funs_ts)`,
   CHEAT_TAC);;

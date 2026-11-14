@@ -28,8 +28,8 @@ needs "compiler/encoders/asm/asm.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "wordConvsProof"
   ["wordConvs"; "wordLang"; "word_alloc"; "word_copy"; "word_cse";
-   "word_elim"; "word_inst"; "word_remove"; "word_simp";
-   "word_to_word"; "word_unreach"];;
+   "word_elim"; "word_inst"; "word_remove"; "word_simp"; "word_to_word";
+   "word_unreach"];;
 
 let _ = do_list hide_constant ["C"; "comp"; "dummy"];;
 
@@ -190,8 +190,8 @@ let _ = do_list hide_constant ["C"; "comp"; "dummy"];;
 (* labels_rel *)
 (* [local] *)
 let extract_labels_SmartSeq = prove
- (`wordConvs_extract_labels (SmartSeq p1 p2) =
-  wordConvs_extract_labels (wordLang_Seq p1 p2)`,
+ (`wordConvs_extract_labels (SmartSeq p1 p2) = wordConvs_extract_labels
+  (wordLang_Seq p1 p2)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -222,8 +222,7 @@ add_simp extract_labels_drop_consts;;
 let extract_labels_const_fp_loop = prove
  (`!p cs p1 cs1.
    const_fp_loop p cs = (p1,cs1) ==>
-   labels_rel (wordConvs_extract_labels p)
-     (wordConvs_extract_labels p1)`,
+   labels_rel (wordConvs_extract_labels p) (wordConvs_extract_labels p1)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -241,8 +240,8 @@ let labels_rel_append_imp = prove
 
 (* HOL4 wordConvsProofScript.sml:254-260: ML code, not ported *)
 
-(* HOL4 wordConvsProofScript.sml:262-265: a theorem that HOL4 states
-   as the value of an ML expression: const_fp_loop_Seq *)
+(* HOL4 wordConvsProofScript.sml:262-265: a theorem that HOL4 states as the
+   value of an ML expression: const_fp_loop_Seq *)
 
 (* The tricky part: to prove this syntactic property (and only for this) we
    have to show that the strategy actually works, and that any program which
@@ -250,8 +249,8 @@ let labels_rel_append_imp = prove
    in which nothing is duplicated. *)
 (* [local] *)
 let const_fp_loop_dummy_cases = prove
- (`const_fp_loop (wordLang_If cmp lhs rhs (wordLang_Raise 1)
-  (wordLang_Raise 2)) cs = (p2,cs2) ==>
+ (`const_fp_loop (wordLang_If cmp lhs rhs (wordLang_Raise 1) (wordLang_Raise
+  2)) cs = (p2,cs2) ==>
    (dest_Raise_num p2 = 1 /\
    (!br1 br2. const_fp_loop (wordLang_If cmp lhs rhs br1 br2) cs =
      const_fp_loop br1 cs)) \/
@@ -263,8 +262,7 @@ let const_fp_loop_dummy_cases = prove
 
 (* dest_If_thm[local] *)
 let wordConvsProof_dest_If_thm = prove
- (`dest_If x2 = SOME (g1,g2,g3,g4,g5) <=> x2 = wordLang_If g1 g2 g3 g4
-  g5`,
+ (`dest_If x2 = SOME (g1,g2,g3,g4,g5) <=> x2 = wordLang_If g1 g2 g3 g4 g5`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -272,8 +270,8 @@ let labels_rel_hoist2 = prove
  (`!N p1 interm dummy' p2 s.
    try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
    dest_If p2 = SOME (cmp,lhs,rhs,br1,br2) ==>
-   dummy' = wordLang_If cmp lhs rhs (wordLang_Raise 1)
-     (wordLang_Raise 2) ==>
+   dummy' = wordLang_If cmp lhs rhs (wordLang_Raise 1) (wordLang_Raise 2)
+     ==>
    wordConvs_extract_labels interm = [] ==>
    labels_rel (APPEND (wordConvs_extract_labels p1)
      (wordConvs_extract_labels p2))
@@ -282,20 +280,19 @@ let labels_rel_hoist2 = prove
 
 (* [local] *)
 let labels_rel_simp_duplicate_if = prove
- (`!p. labels_rel (wordConvs_extract_labels p)
-  (wordConvs_extract_labels (simp_duplicate_if p))`,
+ (`!p. labels_rel (wordConvs_extract_labels p) (wordConvs_extract_labels
+  (simp_duplicate_if p))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let labels_rel_push_out_if = prove
- (`!p. labels_rel (wordConvs_extract_labels p)
-  (wordConvs_extract_labels (push_out_if p))`,
+ (`!p. labels_rel (wordConvs_extract_labels p) (wordConvs_extract_labels
+  (push_out_if p))`,
   CHEAT_TAC);;
 
 let extract_labels_compile_exp = prove
  (`!p. labels_rel (wordConvs_extract_labels p)
-                  (wordConvs_extract_labels (word_simp_compile_exp
-                    p))`,
+                  (wordConvs_extract_labels (word_simp_compile_exp p))`,
   CHEAT_TAC);;
 
 (* inst_ok_less *)
@@ -467,8 +464,8 @@ let word_good_handlers_const_fp_loop = prove
 (* [local] *)
 let word_get_code_labels_Seq_assoc = prove
  (`!p1 p2.
-   wordConvs_get_code_labels (Seq_assoc p1 p2) =
-     wordConvs_get_code_labels p1 UNION wordConvs_get_code_labels p2`,
+   wordConvs_get_code_labels (Seq_assoc p1 p2) = wordConvs_get_code_labels
+     p1 UNION wordConvs_get_code_labels p2`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -482,8 +479,7 @@ let word_good_handlers_Seq_assoc = prove
 let word_good_handlers_try_if_hoist2 = prove
  (`!N p1 interm dummy' p2 s.
    try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
-   good_handlers n p1 /\ good_handlers n p2 /\ good_handlers n interm
-     ==>
+   good_handlers n p1 /\ good_handlers n p2 /\ good_handlers n interm ==>
    good_handlers n p3`,
   CHEAT_TAC);;
 
@@ -509,8 +505,8 @@ let word_get_code_labels_try_if_hoist2 = prove
  (`!N p1 interm dummy' p2 s.
    try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
    wordConvs_get_code_labels p3 SUBSET
-   (wordConvs_get_code_labels p1 UNION wordConvs_get_code_labels
-     interm UNION wordConvs_get_code_labels p2)`,
+   (wordConvs_get_code_labels p1 UNION wordConvs_get_code_labels interm
+     UNION wordConvs_get_code_labels p2)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -544,8 +540,8 @@ let inst_select_exp_no_lab = prove
 
 let inst_select_lab_pres = prove
  (`!c temp prog.
-     wordConvs_extract_labels prog = wordConvs_extract_labels
-       (inst_select c temp prog)`,
+     wordConvs_extract_labels prog = wordConvs_extract_labels (inst_select
+       c temp prog)`,
   CHEAT_TAC);;
 
 (* inst_select syntax *)
@@ -619,32 +615,31 @@ let word_good_handlers_inst_select = prove
 let fake_moves_no_labs = prove
  (`!ls a b c d e f g h.
    fake_moves prio ls a b c = (d,e,f,g,h) ==>
-   wordConvs_extract_labels d = [] /\ wordConvs_extract_labels e =
-     []`,
+   wordConvs_extract_labels d = [] /\ wordConvs_extract_labels e = []`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_no_labs = prove
- (`!ls. wordConvs_extract_labels (ITLIST wordLang_Seq (MAP (\r.
-  fake_move r) ls) wordLang_Skip) = []`,
+ (`!ls. wordConvs_extract_labels (ITLIST wordLang_Seq (MAP (\r. fake_move r)
+  ls) wordLang_Skip) = []`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_get_code_labels = prove
- (`!ls. wordConvs_get_code_labels (ITLIST wordLang_Seq (MAP (\r.
-  fake_move r) ls) wordLang_Skip) = {}`,
+ (`!ls. wordConvs_get_code_labels (ITLIST wordLang_Seq (MAP (\r. fake_move r)
+  ls) wordLang_Skip) = {}`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_good_handlers = prove
- (`!ls. good_handlers n (ITLIST wordLang_Seq (MAP (\r. fake_move r)
-  ls) wordLang_Skip)`,
+ (`!ls. good_handlers n (ITLIST wordLang_Seq (MAP (\r. fake_move r) ls)
+  wordLang_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_flat_exp_conventions = prove
- (`!ls. flat_exp_conventions (ITLIST wordLang_Seq (MAP (\r. fake_move
-  r) ls) wordLang_Skip)`,
+ (`!ls. flat_exp_conventions (ITLIST wordLang_Seq (MAP (\r. fake_move r) ls)
+  wordLang_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -728,8 +723,8 @@ let fake_moves_not_created_subprogs = prove
 
 (* [local] *)
 let fake_seq_not_created_subprogs = prove
- (`!ls. not_created_subprogs P (ITLIST wordLang_Seq (MAP (\r.
-  fake_move r) ls) wordLang_Skip)`,
+ (`!ls. not_created_subprogs P (ITLIST wordLang_Seq (MAP (\r. fake_move r)
+  ls) wordLang_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -805,8 +800,8 @@ let word_good_handlers_full_ssa_cc_trans = prove
 (* [local] *)
 let flat_exp_conventions_ShareInst = prove
  (`flat_exp_conventions (wordLang_ShareInst op v exp) <=>
-     ((?v c. exp = wordLang_Op asm_Add [wordLang_Var v;
-       wordLang_Const c]) \/ (?v. exp = wordLang_Var v))`,
+     ((?v c. exp = wordLang_Op asm_Add [wordLang_Var v; wordLang_Const c])
+       \/ (?v. exp = wordLang_Var v))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -876,15 +871,13 @@ let remove_dead_conventions = prove
      (wordConvs_extract_labels p = wordConvs_extract_labels comp')`,
   CHEAT_TAC);;
 
-(* HOL4 wordConvsProofScript.sml:1563-1565: a theorem that HOL4
-   states as the value of an ML expression:
-   remove_dead_prog_conventions *)
+(* HOL4 wordConvsProofScript.sml:1563-1565: a theorem that HOL4 states as
+   the value of an ML expression: remove_dead_prog_conventions *)
 
 (* [local] *)
 let word_get_code_labels_remove_dead = prove
  (`!ps live nlive lt.
-   wordConvs_get_code_labels (FST (remove_dead ps live nlive lt))
-     SUBSET
+   wordConvs_get_code_labels (FST (remove_dead ps live nlive lt)) SUBSET
    wordConvs_get_code_labels ps`,
   CHEAT_TAC);;
 
@@ -1036,8 +1029,8 @@ let flat_exp_conventions_copy_prop = prove
 
 (* [local] *)
 let copy_prop_prog_not_alloc_var_aux1 = prove
- (`(!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq
-  cs) = NONE) ==>
+ (`(!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq cs) =
+  NONE) ==>
    ~(is_alloc_var x) ==>
    balanced_map_lookup x (copy_state_to_eq (remove_eq cs y)) = NONE`,
   CHEAT_TAC);;
@@ -1045,28 +1038,27 @@ let copy_prop_prog_not_alloc_var_aux1 = prove
 (* [local] *)
 let copy_prop_prog_not_alloc_var_aux2 = prove
  (`!cs.
-   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq
-     cs) = NONE) ==>
+   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq cs) =
+     NONE) ==>
    ~(is_alloc_var x) ==>
-   balanced_map_lookup x (copy_state_to_eq (remove_eqs cs yy)) =
-     NONE`,
+   balanced_map_lookup x (copy_state_to_eq (remove_eqs cs yy)) = NONE`,
   CHEAT_TAC);;
 
 (* trivial and tedious *)
 (* [local] *)
 let copy_prop_prog_not_alloc_var = prove
  (`!p cs.
-   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq
-     cs) = NONE) ==>
-   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x
-     (copy_state_to_eq (SND (copy_prop_prog p cs))) = NONE)`,
+   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq cs) =
+     NONE) ==>
+   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq (SND
+     (copy_prop_prog p cs))) = NONE)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let pre_alloc_conventions_copy_prop_aux = prove
  (`!p cs.
-   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq
-     cs) = NONE) ==>
+   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq cs) =
+     NONE) ==>
    pre_alloc_conventions p ==>
    pre_alloc_conventions (FST (copy_prop_prog p cs))`,
   CHEAT_TAC);;
@@ -1227,16 +1219,16 @@ let remove_unreach_not_created_subprogs = prove
 
 (* [local] *)
 let extract_labels_SimpSeq = prove
- (`set_of_list (wordConvs_extract_labels (SimpSeq p1 p2)) SUBSET
-  set_of_list (wordConvs_extract_labels (wordLang_Seq p1 p2))`,
+ (`set_of_list (wordConvs_extract_labels (SimpSeq p1 p2)) SUBSET set_of_list
+  (wordConvs_extract_labels (wordLang_Seq p1 p2))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let extract_labels_Seq_assoc_right_lemma = prove
- (`!p1 p2. set_of_list (wordConvs_extract_labels (Seq_assoc_right p1
-  p2)) SUBSET
-           set_of_list (wordConvs_extract_labels p1) UNION
-             set_of_list (wordConvs_extract_labels p2)`,
+ (`!p1 p2. set_of_list (wordConvs_extract_labels (Seq_assoc_right p1 p2))
+  SUBSET
+           set_of_list (wordConvs_extract_labels p1) UNION set_of_list
+             (wordConvs_extract_labels p2)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1253,15 +1245,14 @@ let MEM_extract_labels_Seq_assoc_right_lemma = prove
        (wordConvs_extract_labels p2)`,
   CHEAT_TAC);;
 
-(* HOL4 wordConvsProofScript.sml:2491-2492: a theorem that HOL4
-   states as the value of an ML expression: helper *)
+(* HOL4 wordConvsProofScript.sml:2491-2492: a theorem that HOL4 states as
+   the value of an ML expression: helper *)
 
 (* [local] *)
 let ALL_DISTINCT_extract_labels_Seq_assoc_right_lemma = prove
  (`!p1 p2. ALL_DISTINCT (APPEND (wordConvs_extract_labels p1)
   (wordConvs_extract_labels p2)) ==>
-           ALL_DISTINCT (wordConvs_extract_labels (Seq_assoc_right
-             p1 p2))`,
+           ALL_DISTINCT (wordConvs_extract_labels (Seq_assoc_right p1 p2))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1373,13 +1364,13 @@ let flat_exp_conventions_remove_unreach = prove
 (* [local] *)
 let apply_colour_lab_pres = prove
  (`!col prog.
-   wordConvs_extract_labels prog = wordConvs_extract_labels
-     (apply_colour col prog)`,
+   wordConvs_extract_labels prog = wordConvs_extract_labels (apply_colour
+     col prog)`,
   CHEAT_TAC);;
 
 let word_alloc_lab_pres = prove
- (`wordConvs_extract_labels prog = wordConvs_extract_labels
-  (word_alloc fc c alg k prog col_opt)`,
+ (`wordConvs_extract_labels prog = wordConvs_extract_labels (word_alloc fc c
+  alg k prog col_opt)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1495,14 +1486,14 @@ let word_good_handlers_word_to_word_incr_helper = prove
 let word_good_handlers_word_to_word_incr = prove
  (`ALL (\(n,m,pp). good_handlers n pp) progs ==>
    ALL (\(n,m,pp). good_handlers n pp)
-     (MAP (\p. full_compile_single tra reg_count1 ralg asm_c
-       (p,NONE)) progs)`,
+     (MAP (\p. full_compile_single tra reg_count1 ralg asm_c (p,NONE))
+       progs)`,
   CHEAT_TAC);;
 
 let word_good_handlers_word_to_word = prove
  (`ALL (\(n,m,pp). good_handlers n pp) progs ==>
-   ALL (\(n,m,pp). good_handlers n pp) (SND (word_to_word_compile
-     wc ac progs))`,
+   ALL (\(n,m,pp). good_handlers n pp) (SND (word_to_word_compile wc ac
+     progs))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1519,14 +1510,14 @@ let word_good_code_labels_word_to_word_incr_helper = prove
 let word_good_code_labels_word_to_word_incr = prove
  (`wordConvs_good_code_labels progs elabs ==>
    wordConvs_good_code_labels
-     (MAP (\p. full_compile_single tra reg_count1 ralg asm_c
-       (p,NONE)) progs) elabs`,
+     (MAP (\p. full_compile_single tra reg_count1 ralg asm_c (p,NONE))
+       progs) elabs`,
   CHEAT_TAC);;
 
 let word_good_code_labels_word_to_word = prove
  (`wordConvs_good_code_labels progs elabs ==>
-   wordConvs_good_code_labels (SND (word_to_word_compile wc ac
-     progs)) elabs`,
+   wordConvs_good_code_labels (SND (word_to_word_compile wc ac progs))
+     elabs`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

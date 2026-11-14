@@ -29,25 +29,24 @@ let _ = hide_overloads
    replacing the CHEAT_TAC is all that is left *)
 let adjust_pc_def,adjust_pc_ind = define_guess_cheat
   [`adjust_pc p xs =
-     (if p = 0 then 0 else
-       match xs with [] -> p | (CONS (Section n []) rest) ->
-         adjust_pc p rest | (CONS (Section n (CONS l lines)) rest) ->
-           (if is_Label l then
-             adjust_pc p (CONS (Section n lines) rest) else if
-               not_skip l then
+     if p = 0 then 0 else match xs with [] -> p
+       | (CONS (Section n []) rest) -> adjust_pc p rest
+       | (CONS (Section n (CONS l lines)) rest) ->
+           if is_Label l then
+             adjust_pc p (CONS (Section n lines) rest)
+           else if not_skip l then
              adjust_pc (p - 1) (CONS (Section n lines) rest) + 1
-               else adjust_pc (p - 1) (CONS (Section n lines)
-               rest)))`];;
+           else adjust_pc (p - 1) (CONS (Section n lines) rest)`];;
 
 (*All skips for the next k*)
 let all_skips_def = new_definition
   `all_skips pc' code k <=>
-   (!x y. ~(asm_fetch_aux (pc' + k) code = SOME (labLang_Asm (Asmi
-     (asm_Inst asm_Skip)) x y))) /\
+   (!x y. ~(asm_fetch_aux (pc' + k) code = SOME (labLang_Asm (Asmi (asm_Inst
+     asm_Skip)) x y))) /\
    (!i. i < k ==>
      (?x y.
-     asm_fetch_aux (pc' + i) code = SOME (labLang_Asm (Asmi
-       (asm_Inst asm_Skip)) x y)))`;;
+     asm_fetch_aux (pc' + i) code = SOME (labLang_Asm (Asmi (asm_Inst
+       asm_Skip)) x y)))`;;
 
 (* [local] *)
 let is_Label_not_skip = prove
@@ -77,8 +76,8 @@ There is probably a neater way to prove this*)
 let asm_fetch_aux_eq = prove
  (`!pc' code.
    ?k.
-     asm_fetch_aux (pc' + k) code = asm_fetch_aux (adjust_pc pc'
-       code) (filter_skip code) /\
+     asm_fetch_aux (pc' + k) code = asm_fetch_aux (adjust_pc pc' code)
+       (filter_skip code) /\
      all_skips pc' code k`,
   CHEAT_TAC);;
 (*For any adjusted fetch, the original fetch is either equal or is a skip
@@ -86,8 +85,8 @@ This is probably the wrong direction*)
 (* [local] *)
 let asm_fetch_not_skip_adjust_pc = prove
  (`!pc' code inst'.
-   (!x y. ~(asm_fetch_aux pc' code = SOME (labLang_Asm (Asmi
-     (asm_Inst asm_Skip)) x y))) ==>
+   (!x y. ~(asm_fetch_aux pc' code = SOME (labLang_Asm (Asmi (asm_Inst
+     asm_Skip)) x y))) ==>
    asm_fetch_aux pc' code = asm_fetch_aux (adjust_pc pc' code)
      (filter_skip code)`,
   CHEAT_TAC);;
@@ -102,18 +101,18 @@ let state_rw = prove
   CHEAT_TAC);;
 
 (* 2) all_skips allow swapping pc for clock*)
-(* HOL4 lab_filterProofScript.sml:170-197: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): all_skips_evaluate *)
+(* HOL4 lab_filterProofScript.sml:170-197: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): all_skips_evaluate *)
 
 let lab_filterProof_state_rel_def = new_definition
   `lab_filterProof_state_rel (s1:('a,'c,'ffi)labSem_state) t1 <=>
      (?s1compile.
       s1 = labSem_state_compile_fupd (K s1compile)
-        (labSem_state_compile_oracle_fupd (K (\n. (\(a,b).
-        (a,filter_skip b)) (labSem_state_compile_oracle t1 n)))
-        (labSem_state_pc_fupd (K (adjust_pc (labSem_state_pc t1)
-        (labSem_state_code t1))) (labSem_state_code_fupd (K (filter_skip
-        (labSem_state_code t1))) t1))) /\ labSem_state_compile
+        (labSem_state_compile_oracle_fupd (K (\n. (\(a,b). (a,filter_skip b))
+        (labSem_state_compile_oracle t1 n))) (labSem_state_pc_fupd (K
+        (adjust_pc (labSem_state_pc t1) (labSem_state_code t1)))
+        (labSem_state_code_fupd (K (filter_skip (labSem_state_code t1))) t1)))
+        /\ labSem_state_compile
      t1 = (\c p. s1compile c (filter_skip p))) /\
      ~(labSem_state_failed t1)`;;
 
@@ -137,8 +136,8 @@ let asm_fetch_aux_eq2 = prove
 
 (* HOL4 lab_filterProofScript.sml:261: ML code, not ported *)
 
-(* HOL4 lab_filterProofScript.sml:263-278: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): all_skips_evaluate_rw *)
+(* HOL4 lab_filterProofScript.sml:263-278: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): all_skips_evaluate_rw *)
 
 (*For all initial code there is some all_skips*)
 (* [local] *)
@@ -182,8 +181,8 @@ let all_skips_get_lab_after = prove
 let get_lab_after_adjust = prove
  (`!pc' code k.
    all_skips pc' code k ==>
-   get_lab_after (pc' + k) code = get_lab_after (adjust_pc pc'
-     code) (filter_skip code)`,
+   get_lab_after (pc' + k) code = get_lab_after (adjust_pc pc' code)
+     (filter_skip code)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -201,12 +200,12 @@ let share_mem_op_NONE_filter_correct = prove
  (`all_skips (labSem_state_pc t1) (labSem_state_code t1) k /\
    share_mem_op m r a
      (labSem_state_compile_oracle_fupd (K arb_oracle)
-       (labSem_state_compile_fupd (K arb_compile)
-       (labSem_state_code_fupd (K (filter_skip (labSem_state_code t1)))
-       (labSem_state_pc_fupd (K (adjust_pc (labSem_state_pc t1)
-       (labSem_state_code t1))) t1)))) = NONE ==>
-   share_mem_op m r a (labSem_state_pc_fupd (K (k + labSem_state_pc
-     t1)) t1) = NONE`,
+       (labSem_state_compile_fupd (K arb_compile) (labSem_state_code_fupd (K
+       (filter_skip (labSem_state_code t1))) (labSem_state_pc_fupd (K
+       (adjust_pc (labSem_state_pc t1) (labSem_state_code t1))) t1)))) = NONE
+       ==>
+   share_mem_op m r a (labSem_state_pc_fupd (K (k + labSem_state_pc t1))
+     t1) = NONE`,
   CHEAT_TAC);;
 
 (* HOL4 lab_filterProofScript.sml:594-602: a proof *)
@@ -216,23 +215,20 @@ let share_mem_op_NONE_filter_correct = prove
 let share_mem_op_FFI_return_filter_correct = prove
  (`(all_skips (labSem_state_pc t1) (labSem_state_code t1) k
   /\ ~(labSem_state_clock t1 = 0) /\ labSem_state_compile
-   t1 = (\c p. s1compile c (filter_skip p)) /\ ~(labSem_state_failed
-     t1) /\
+   t1 = (\c p. s1compile c (filter_skip p)) /\ ~(labSem_state_failed t1) /\
    share_mem_op m r a
-     (labSem_state_compile_oracle_fupd (K (\n. (\(a,b).
-       (a,filter_skip b)) (labSem_state_compile_oracle t1 n)))
-       (labSem_state_compile_fupd (K s1compile) (labSem_state_code_fupd
-       (K (filter_skip (labSem_state_code t1))) (labSem_state_pc_fupd (K
-       (adjust_pc (labSem_state_pc t1) (labSem_state_code t1))) t1)))) =
-       SOME (FFI_return f l,s)) ==>
+     (labSem_state_compile_oracle_fupd (K (\n. (\(a,b). (a,filter_skip b))
+       (labSem_state_compile_oracle t1 n))) (labSem_state_compile_fupd (K
+       s1compile) (labSem_state_code_fupd (K (filter_skip (labSem_state_code
+       t1))) (labSem_state_pc_fupd (K (adjust_pc (labSem_state_pc t1)
+       (labSem_state_code t1))) t1)))) = SOME (FFI_return f l,s)) ==>
    (?s2. !k'. share_mem_op m r a (labSem_state_pc_fupd (K (k +
      labSem_state_pc t1)) t1) =
      SOME (FFI_return f l,s2) /\
    lab_filterProof_state_rel s s2 /\ ~(labSem_state_failed s)
      /\ ~(labSem_state_failed s2) /\
-   share_mem_op m r a (labSem_state_clock_fupd (K (k' +
-     labSem_state_clock t1)) (labSem_state_pc_fupd (K (k +
-     labSem_state_pc t1)) t1)) =
+   share_mem_op m r a (labSem_state_clock_fupd (K (k' + labSem_state_clock
+     t1)) (labSem_state_pc_fupd (K (k + labSem_state_pc t1)) t1)) =
      SOME (FFI_return f l,labSem_state_clock_fupd (K (k' +
        labSem_state_clock s2)) s2))`,
   CHEAT_TAC);;
@@ -240,31 +236,26 @@ let share_mem_op_FFI_return_filter_correct = prove
 let share_mem_op_FFI_final_filter_correct = prove
  (`(all_skips (labSem_state_pc t1) (labSem_state_code t1) k
   /\ ~(labSem_state_clock t1 = 0) /\ labSem_state_compile
-   t1 = (\c p. s1compile c (filter_skip p)) /\ ~(labSem_state_failed
-     t1) /\
+   t1 = (\c p. s1compile c (filter_skip p)) /\ ~(labSem_state_failed t1) /\
    share_mem_op m r a
-     (labSem_state_compile_oracle_fupd (K (\n. (\(a,b).
-       (a,filter_skip b)) (labSem_state_compile_oracle t1 n)))
-       (labSem_state_compile_fupd (K s1compile) (labSem_state_code_fupd
-       (K (filter_skip (labSem_state_code t1))) (labSem_state_pc_fupd (K
-       (adjust_pc (labSem_state_pc t1) (labSem_state_code t1))) t1)))) =
-       SOME (FFI_final f,s)) ==>
-   (?s2. share_mem_op m r a (labSem_state_pc_fupd (K (k +
-     labSem_state_pc t1)) t1) = SOME (FFI_final f,s2)
-     /\ labSem_state_ffi
+     (labSem_state_compile_oracle_fupd (K (\n. (\(a,b). (a,filter_skip b))
+       (labSem_state_compile_oracle t1 n))) (labSem_state_compile_fupd (K
+       s1compile) (labSem_state_code_fupd (K (filter_skip (labSem_state_code
+       t1))) (labSem_state_pc_fupd (K (adjust_pc (labSem_state_pc t1)
+       (labSem_state_code t1))) t1)))) = SOME (FFI_final f,s)) ==>
+   (?s2. share_mem_op m r a (labSem_state_pc_fupd (K (k + labSem_state_pc
+     t1)) t1) = SOME (FFI_final f,s2) /\ labSem_state_ffi
    s = labSem_state_ffi s2)`,
   CHEAT_TAC);;
 
-(* HOL4 lab_filterProofScript.sml:669-1037: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): filter_correct *)
+(* HOL4 lab_filterProofScript.sml:669-1037: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): filter_correct *)
 
-(* HOL4 lab_filterProofScript.sml:1039-1152: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   state_rel_IMP_sem_EQ_sem *)
+(* HOL4 lab_filterProofScript.sml:1039-1152: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): state_rel_IMP_sem_EQ_sem *)
 
-(* HOL4 lab_filterProofScript.sml:1154-1167: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   filter_skip_semantics *)
+(* HOL4 lab_filterProofScript.sml:1154-1167: a theorem whose statement HOL
+   Light does not read (tools/unstated.py): filter_skip_semantics *)
 
 let sec_ends_with_label_filter_skip = prove
  (`!code.

@@ -9,13 +9,12 @@
 
 (* of no theory of the port: what it registers is in the scope of every file *)
 let _ = cake_library ();;
-(* HOL4 ancestors outside the port: list rich_list llist pred_set
-   option *)
+(* HOL4 ancestors outside the port: list rich_list llist pred_set option *)
 
 let lprefix_chain_def = new_definition
   `lprefix_chain ls <=>
-     (!ll1 ll2. ll1 IN ls /\ ll2 IN ls ==> LPREFIX ll1 ll2 \/
-       LPREFIX ll2 ll1)`;;
+     (!ll1 ll2. ll1 IN ls /\ ll2 IN ls ==> LPREFIX ll1 ll2 \/ LPREFIX ll2
+       ll1)`;;
 
 let lprefix_chain_nth_def = new_definition
   `lprefix_chain_nth n ls =

@@ -23,18 +23,18 @@ let _ = cake_theory "mlvector"
 
 let _ = do_list hide_constant ["Equal"; "Greater"; "Less"];;
 
-(* HOL4 mlvectorScript.sml:10-11: a theorem that HOL4 states as the
-   value of an ML expression: vector_nchotomy *)
+(* HOL4 mlvectorScript.sml:10-11: a theorem that HOL4 states as the value of
+   an ML expression: vector_nchotomy *)
 
-(* HOL4 mlvectorScript.sml:13-14: a theorem that HOL4 states as the
-   value of an ML expression: sub_def *)
+(* HOL4 mlvectorScript.sml:13-14: a theorem that HOL4 states as the value of
+   an ML expression: sub_def *)
 
 let sub_unsafe_def = define_general
   [`// same as sub_def, but translator targets Vsub_unsafe
    sub_unsafe (Vector l) n = EL n l`];;
 
-(* HOL4 mlvectorScript.sml:20-21: a theorem that HOL4 states as the
-   value of an ML expression: length_def *)
+(* HOL4 mlvectorScript.sml:20-21: a theorem that HOL4 states as the value of
+   an ML expression: length_def *)
 
 let mlvector_tabulate_def = new_definition
   `mlvector_tabulate n f = Vector (list_of_seq f n)`;;
@@ -44,8 +44,8 @@ let mlvector_tabulate_def = new_definition
 let toList_aux_def,toList_aux_ind = define_wf
   `MEASURE (\(vec,n). length vec - n)`
   [`toList_aux vec n =
-   (if length (vec) <= n then [] else CONS (sub vec n)
-     (toList_aux vec (n + 1)))`];;
+   if length (vec) <= n then []
+   else CONS (sub vec n) (toList_aux vec (n + 1))`];;
 
 (* HOL4 mlvectorScript.sml:36: ML code, not ported *)
 
@@ -54,7 +54,7 @@ let mlvector_toList_def = new_definition
 
 (* [local] *)
 let toList_aux_thm = prove
- (`!vec n. toList_aux vec n = (match vec with Vector vs -> DROP n vs)`,
+ (`!vec n. toList_aux vec n = match vec with Vector vs -> DROP n vs`,
   CHEAT_TAC);;
 
 let toList_thm = prove
@@ -75,8 +75,7 @@ let EL_toList = prove
   CHEAT_TAC);;
 
 let toList_fromList = prove
- (`(mlvector_toList (fromList l) = l) /\ (fromList (mlvector_toList v)
-  = v)`,
+ (`(mlvector_toList (fromList l) = l) /\ (fromList (mlvector_toList v) = v)`,
   CHEAT_TAC);;
 add_simp toList_fromList;;
 
@@ -84,8 +83,8 @@ let update_def = new_definition
   `update vec i x = Vector (LUPDATE x i (mlvector_toList (vec)))`;;
 
 let update_thm = prove
- (`!vec i x. sub (update vec i x) i = (if i < length vec then x else
-  sub vec i)`,
+ (`!vec i x. sub (update vec i x) i = if i < length vec then x
+    else sub vec i`,
   CHEAT_TAC);;
 
 
@@ -110,24 +109,23 @@ let less_than_length_thm = prove
 let mlvector_foldli_aux_def,mlvector_foldli_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
   [`mlvector_foldli_aux f e vec n 0 = e`;
-   `mlvector_foldli_aux f e vec n (SUC len) = mlvector_foldli_aux f
-    (f n (sub vec n) e) vec (n + 1) len`];;
+   `mlvector_foldli_aux f e vec n (SUC len) = mlvector_foldli_aux f (f n
+    (sub vec n) e) vec (n + 1) len`];;
 
 let mlvector_foldli_def = new_definition
-  `mlvector_foldli f e vec = mlvector_foldli_aux f e vec 0 (length
-  vec)`;;
+  `mlvector_foldli f e vec = mlvector_foldli_aux f e vec 0 (length vec)`;;
 
 (* foldli_aux_thm[local] *)
 let mlvector_foldli_aux_thm = prove
  (`!f e vec n len. (n + len = length vec) ==>
-     (mlvector_foldli_aux f e vec n len = mllist_foldli_aux f e n
-       (DROP n (mlvector_toList vec)))`,
+     (mlvector_foldli_aux f e vec n len = mllist_foldli_aux f e n (DROP n
+       (mlvector_toList vec)))`,
   CHEAT_TAC);;
 
 (* foldli_thm *)
 let mlvector_foldli_thm = prove
- (`!f e vec. mlvector_foldli f e vec = mllist_foldli f e
-  (mlvector_toList vec)`,
+ (`!f e vec. mlvector_foldli f e vec = mllist_foldli f e (mlvector_toList
+  vec)`,
   CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -135,8 +133,8 @@ let mlvector_foldli_thm = prove
 let foldl_aux_def,foldl_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
   [`foldl_aux f e vec n 0 = e`;
-   `foldl_aux f e vec n (SUC len) = foldl_aux f (f e (sub vec n))
-    vec (n + 1) len`];;
+   `foldl_aux f e vec n (SUC len) = foldl_aux f (f e (sub vec n)) vec (n +
+    1) len`];;
 
 let mlvector_foldl_def = new_definition
   `mlvector_foldl f e vec = foldl_aux f e vec 0 (length vec)`;;
@@ -144,8 +142,7 @@ let mlvector_foldl_def = new_definition
 (* [local] *)
 let foldl_aux_thm = prove
  (`!f e vec x len. (x + len = length vec) ==>
-     (foldl_aux f e vec x len = FOLDL f e (DROP x (mlvector_toList
-       vec)))`,
+     (foldl_aux f e vec x len = FOLDL f e (DROP x (mlvector_toList vec)))`,
   CHEAT_TAC);;
 
 let foldl_thm = prove
@@ -158,8 +155,8 @@ let foldl_thm = prove
 let foldri_aux_def,foldri_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`foldri_aux f e vec 0 = e`;
-   `foldri_aux f e vec (SUC len) = foldri_aux f (f len (sub vec
-    len) e) vec len`];;
+   `foldri_aux f e vec (SUC len) = foldri_aux f (f len (sub vec len) e)
+    vec len`];;
 
 let foldri_def = new_definition
   `foldri f e vec = foldri_aux f e vec (length vec)`;;
@@ -168,8 +165,8 @@ let foldri_def = new_definition
 (* [local] *)
 let foldri_aux_thm = prove
  (`!f e vec len. len <= length vec ==>
-     (foldri_aux f e vec len = FOLDRi f e (TAKE len
-       (mlvector_toList vec)))`,
+     (foldri_aux f e vec len = FOLDRi f e (TAKE len (mlvector_toList
+       vec)))`,
   CHEAT_TAC);;
 
 let foldri_thm = prove
@@ -182,8 +179,7 @@ let foldri_thm = prove
 let foldr_aux_def,foldr_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`foldr_aux f e vec 0 = e`;
-   `foldr_aux f e vec (SUC len) = foldr_aux f (f (sub vec len) e)
-    vec len`];;
+   `foldr_aux f e vec (SUC len) = foldr_aux f (f (sub vec len) e) vec len`];;
 
 let foldr_def = new_definition
   `foldr f e vec = foldr_aux f e vec (length vec)`;;
@@ -191,8 +187,7 @@ let foldr_def = new_definition
 (* [local] *)
 let foldr_aux_thm = prove
  (`!f e vec len. len <= length vec ==>
-     (foldr_aux f e vec len = ITLIST f (TAKE len (mlvector_toList
-       vec)) e)`,
+     (foldr_aux f e vec len = ITLIST f (TAKE len (mlvector_toList vec)) e)`,
   CHEAT_TAC);;
 
 let foldr_thm = prove
@@ -206,8 +201,8 @@ let findi_aux_def,findi_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`findi_aux f vec n 0 = NONE`;
    `findi_aux f vec n (SUC len) =
-      (if f n (sub vec n) then SOME (n,(sub vec n)) else
-          findi_aux f vec (n + 1) len)`];;
+      if f n (sub vec n) then SOME (n,(sub vec n))
+      else findi_aux f vec (n + 1) len`];;
 
 let mlvector_findi_def = new_definition
   `mlvector_findi f vec = findi_aux f vec 0 (length vec)`;;
@@ -219,16 +214,16 @@ let find_aux_def,find_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`find_aux f vec n 0 = NONE`;
    `find_aux f vec n (SUC len) =
-      (if f (sub vec n) then SOME (sub vec n) else find_aux f
-          vec (n + 1) len)`];;
+      if f (sub vec n) then SOME (sub vec n)
+      else find_aux f vec (n + 1) len`];;
 
 let find_def = new_definition
   `find f vec = find_aux f vec 0 (length vec)`;;
 
 (* [local] *)
 let find_aux_thm = prove
- (`!f vec n len. (n + len = length vec) ==> (find_aux f vec n len =
-  FIND f (DROP n (mlvector_toList vec)))`,
+ (`!f vec n len. (n + len = length vec) ==> (find_aux f vec n len = FIND f
+  (DROP n (mlvector_toList vec)))`,
   CHEAT_TAC);;
 
 let find_thm = prove
@@ -242,8 +237,8 @@ let exists_aux_def,exists_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`exists_aux f vec n 0 = F`;
    `exists_aux f vec n (SUC len) =
-        (if f (sub vec n) then T else exists_aux f vec (n + 1)
-            len)`];;
+        if f (sub vec n) then T
+        else exists_aux f vec (n + 1) len`];;
 
 let mlvector_exists_def = new_definition
   `mlvector_exists f vec = exists_aux f vec 0 (length vec)`;;
@@ -265,8 +260,8 @@ let all_aux_def,all_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`all_aux f vec n 0 = T`;
    `all_aux f vec n (SUC len) =
-        (if f (sub vec n) then all_aux f vec (n + 1) len else
-            F)`];;
+        if f (sub vec n) then all_aux f vec (n + 1) len
+        else F`];;
 
 let all_def = new_definition
   `all f vec = all_aux f vec 0 (length vec)`;;
@@ -288,17 +283,17 @@ let mlvector_collate_aux_def,mlvector_collate_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4,x5). (\n. n) x5)`
   [`mlvector_collate_aux f vec1 vec2 n ord 0 = ord`;
    `mlvector_collate_aux f vec1 vec2 n ord (SUC len) =
-        (if f (sub vec1 n) (sub vec2 n) = EQUAL then
-            mlvector_collate_aux f vec1 vec2 (n + 1) ord len else f
-            (sub vec1 n) (sub vec2 n))`];;
+        if f (sub vec1 n) (sub vec2 n) = EQUAL then mlvector_collate_aux f
+            vec1 vec2 (n + 1) ord len
+        else f (sub vec1 n) (sub vec2 n)`];;
 
 let mlvector_collate_def = new_definition
   `mlvector_collate f vec1 vec2 =
-   (if (length vec1) < (length vec2) then mlvector_collate_aux f
-     vec1 vec2 0 LESS (length vec1) else if (length vec2) < (length
-     vec1) then mlvector_collate_aux f vec1 vec2 0 GREATER (length
-     vec2) else mlvector_collate_aux f vec1 vec2 0 EQUAL (length
-     vec2))`;;
+   if (length vec1) < (length vec2) then mlvector_collate_aux f vec1 vec2 0
+     LESS (length vec1)
+   else if (length vec2) < (length vec1) then mlvector_collate_aux f vec1
+     vec2 0 GREATER (length vec2)
+   else mlvector_collate_aux f vec1 vec2 0 EQUAL (length vec2)`;;
 
 (* collate_aux_less_thm[local] *)
 let mlvector_collate_aux_less_thm = prove
@@ -330,8 +325,8 @@ let mlvector_collate_aux_greater_thm = prove
 (* collate_thm *)
 let mlvector_collate_thm = prove
  (`!f vec1 vec2.
-     mlvector_collate f vec1 vec2 = mllist_collate f
-       (mlvector_toList vec1) (mlvector_toList vec2)`,
+     mlvector_collate f vec1 vec2 = mllist_collate f (mlvector_toList
+       vec1) (mlvector_toList vec2)`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

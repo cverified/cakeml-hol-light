@@ -34,17 +34,18 @@ let _ = cake_theory "misc" [];;
 
 let _ = do_list hide_constant ["C"; "num_cmp"];;
 (* HOL4 ancestors outside the port: alist arithmetic blast bag combin
-   container list pred_set finite_map rich_list llist option pair
-   relation bit words string address path res_quan *)
+   container list pred_set finite_map rich_list llist option pair relation
+   bit words string address path res_quan *)
 
 (* Total version of THE *)
 let the_def = define_cases
-  [`the _1 (SOME x) = x`;
+  [`the _ (SOME x) = x`;
    `the x NONE = x`];;
 
 let opt_bind_def = new_definition
   `opt_bind n v e =
-     (match n with NONE -> e | SOME n' -> CONS (n',v) e)`;;
+     match n with NONE -> e
+     | SOME n' -> CONS (n',v) e`;;
 
 (* Note: This globally hides constants over the reals that gets imported through machine_ieeeTheory *)
 
@@ -71,13 +72,13 @@ let DROP_NIL = prove
 
 let revdroprev = prove
  (`!l n.
-     n <= LENGTH l ==> (REVERSE (DROP n (REVERSE l)) = TAKE (LENGTH
-       l - n) l)`,
+     n <= LENGTH l ==> (REVERSE (DROP n (REVERSE l)) = TAKE (LENGTH l - n)
+       l)`,
   CHEAT_TAC);;
 
 let revtakerev = prove
- (`!n l. n <= LENGTH l ==> REVERSE (TAKE n (REVERSE l)) = DROP (LENGTH
-  l - n) l`,
+ (`!n l. n <= LENGTH l ==> REVERSE (TAKE n (REVERSE l)) = DROP (LENGTH l - n)
+  l`,
   CHEAT_TAC);;
 
 let times_add_o = prove
@@ -101,9 +102,10 @@ let read_bytearray_def,read_bytearray_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
   [`read_bytearray a 0 get_byte' = SOME []`;
    `read_bytearray a (SUC n) get_byte' =
-         (match get_byte' a with NONE -> NONE | SOME b ->
-             (match read_bytearray (a + (n2w 1)) n get_byte' with
-             NONE -> NONE | SOME bs -> SOME (CONS b bs)))`];;
+         match get_byte' a with NONE -> NONE
+         | SOME b -> (match read_bytearray (a + (n2w 1)) n get_byte' with
+             NONE -> NONE
+                     | SOME bs -> SOME (CONS b bs))`];;
 
 (* HOL to have OPT_MMAP f l1 = SOME l2 ==> (LENGTH l2 = LENGTH l1) *)
 let read_bytearray_LENGTH = prove
@@ -121,8 +123,8 @@ let SUM_SET_IN_LT = prove
 
 (* only used in proof of tlookup_bij_iff *)
 let CARD_IMAGE_ID_BIJ = prove
- (`!s. FINITE s ==> (!x. x IN s ==> f x IN s) /\ CARD (IMAGE f s) =
-  CARD s ==> BIJ f s s`,
+ (`!s. FINITE s ==> (!x. x IN s ==> f x IN s) /\ CARD (IMAGE f s) = CARD s
+  ==> BIJ f s s`,
   CHEAT_TAC);;
 
 (* never used *)
@@ -145,21 +147,20 @@ let IMAGE_SUC_SUBSET_UNION = prove
     x SUBSET y UNION z`,
   CHEAT_TAC);;
 
-(* HOL4 miscScript.sml:182: the overload LLOOKUP, which the port
-   expands *)
+(* HOL4 miscScript.sml:182: the overload LLOOKUP, which the port expands *)
 
-(* HOL4 miscScript.sml:184-185: a theorem that HOL4 states as the
-   value of an ML expression: LLOOKUP_def *)
-(* HOL4 miscScript.sml:186-187: a theorem that HOL4 states as the
-   value of an ML expression: LLOOKUP_EQ_EL *)
-(* HOL4 miscScript.sml:188-189: a theorem that HOL4 states as the
-   value of an ML expression: LLOOKUP_THM *)
-(* HOL4 miscScript.sml:190-191: a theorem that HOL4 states as the
-   value of an ML expression: LLOOKUP_DROP *)
-(* HOL4 miscScript.sml:192-193: a theorem that HOL4 states as the
-   value of an ML expression: LLOOKUP_TAKE_IMP *)
-(* HOL4 miscScript.sml:194-195: a theorem that HOL4 states as the
-   value of an ML expression: LLOOKUP_LUPDATE *)
+(* HOL4 miscScript.sml:184-185: a theorem that HOL4 states as the value of
+   an ML expression: LLOOKUP_def *)
+(* HOL4 miscScript.sml:186-187: a theorem that HOL4 states as the value of
+   an ML expression: LLOOKUP_EQ_EL *)
+(* HOL4 miscScript.sml:188-189: a theorem that HOL4 states as the value of
+   an ML expression: LLOOKUP_THM *)
+(* HOL4 miscScript.sml:190-191: a theorem that HOL4 states as the value of
+   an ML expression: LLOOKUP_DROP *)
+(* HOL4 miscScript.sml:192-193: a theorem that HOL4 states as the value of
+   an ML expression: LLOOKUP_TAKE_IMP *)
+(* HOL4 miscScript.sml:194-195: a theorem that HOL4 states as the value of
+   an ML expression: LLOOKUP_LUPDATE *)
 
 (* app_list stuff should be in an app_list theory *)
 let app_list_INDUCT,app_list_RECURSION = define_datatype
@@ -171,8 +172,7 @@ let app_list_INDUCT,app_list_RECURSION = define_datatype
 let append_aux_def,append_aux_ind = define_rec
   [`append_aux misc_Nil aux = aux`;
    `append_aux (misc_List xs) aux = APPEND xs aux`;
-   `append_aux (misc_Append l1 l2) aux = append_aux l1 (append_aux
-    l2 aux)`];;
+   `append_aux (misc_Append l1 l2) aux = append_aux l1 (append_aux l2 aux)`];;
 
 let append_def = new_definition
   `append l = append_aux l []`;;
@@ -190,17 +190,17 @@ add_simp append_thm;;
 
 let SmartAppend_def = new_definition
   `SmartAppend l1 l2 =
-        match (l1,l2) with
-          (misc_Nil,l2) -> l2
-        | (l1,misc_Nil) -> l1
-        | (l1,l2) -> misc_Append l1 l2`;;
+     match (l1,l2) with
+       (misc_Nil,l2) -> l2
+     | (l1,misc_Nil) -> l1
+     | (l1,l2) -> misc_Append l1 l2`;;
 add_simp SmartAppend_def;;
 
 let SmartAppend_thm = prove
  (`!l1 l2.
     SmartAppend l1 l2 =
-      (if l1 = misc_Nil then l2 else
-      if l2 = misc_Nil then l1 else misc_Append l1 l2)`,
+      if l1 = misc_Nil then l2 else if l2 = misc_Nil then l1 else
+        misc_Append l1 l2`,
   CHEAT_TAC);;
 
 let SmartAppend_Nil = prove
@@ -221,14 +221,14 @@ let GENLIST_eq_MAP = prove
 
 (* TODO - already in HOL as ZIP_GENLIST *)
 let ZIP_GENLIST1 = prove
- (`!l f n. LENGTH l = n ==> ZIP (list_of_seq f n) l = list_of_seq (\x.
-  (f x,EL x l)) n`,
+ (`!l f n. LENGTH l = n ==> ZIP (list_of_seq f n) l = list_of_seq (\x. (f
+  x,EL x l)) n`,
   CHEAT_TAC);;
 
 (* used once *)
 let MAP_REVERSE_STEP = prove
- (`!x f. ~(x = []) ==> MAP f (REVERSE x) = CONS (f (LAST x)) (MAP f
-  (REVERSE (BUTLAST x)))`,
+ (`!x f. ~(x = []) ==> MAP f (REVERSE x) = CONS (f (LAST x)) (MAP f (REVERSE
+  (BUTLAST x)))`,
   CHEAT_TAC);;
 
 (* used three times, once with MIN_DEF alongside, which turns it into
@@ -258,8 +258,7 @@ let LIST_REL_lookup_fromList = prove
   CHEAT_TAC);;
 
 let LIST_REL_lookup_fromList_MAP = prove
- (`ALL2 (\v x. ?z. sptree_lookup v (sptree_fromList args) = SOME z /\ x
-  = f z)
+ (`ALL2 (\v x. ?z. sptree_lookup v (sptree_fromList args) = SOME z /\ x = f z)
     (list_of_seq I (LENGTH args)) (MAP f args)`,
   CHEAT_TAC);;
 
@@ -283,18 +282,19 @@ let lemmas = prove
 
 let lookup_any_def = new_definition
   `lookup_any x sp d =
-     (match sptree_lookup x sp with NONE -> d | SOME m -> m)`;;
+     match sptree_lookup x sp with NONE -> d
+     | SOME m -> m`;;
 
 let fromList2_def = new_definition
-  `fromList2 l = SND (FOLDL (\(i,t) a. (i + 2,sptree_insert i a t))
-  (0,LN) l)`;;
+  `fromList2 l = SND (FOLDL (\(i,t) a. (i + 2,sptree_insert i a t)) (0,LN)
+  l)`;;
 
 (* [local] *)
 let EVEN_fromList2_lemma = prove
  (`!l n t.
        EVEN n /\ (!x. x IN domain t ==> EVEN x) ==>
-       (!x. x IN domain (SND (FOLDL (\(i,t) a. (i + 2,sptree_insert
-         i a t)) (n,t) l)) ==> EVEN x)`,
+       (!x. x IN domain (SND (FOLDL (\(i,t) a. (i + 2,sptree_insert i a
+         t)) (n,t) l)) ==> EVEN x)`,
   CHEAT_TAC);;
 
 let EVEN_fromList2 = prove
@@ -304,8 +304,8 @@ let EVEN_fromList2 = prove
 let SUBMAP_mono_FUPDATE_LIST = prove
  (`!ls f g.
    DRESTRICT f (COMPL (set_of_list (MAP FST ls))) SUBMAP
-   DRESTRICT g (COMPL (set_of_list (MAP FST ls))) ==> f |++ ls
-     SUBMAP g |++ ls`,
+   DRESTRICT g (COMPL (set_of_list (MAP FST ls))) ==> f |++ ls SUBMAP g
+     |++ ls`,
   CHEAT_TAC);;
 
 let INJ_FAPPLY_FUPDATE = prove
@@ -346,8 +346,8 @@ let every_shim = prove
   CHEAT_TAC);;
 
 let every_shim2 = prove
- (`!l P Q. ALL (\(x,y). P x /\ Q y) l = (ALL (\x. P (FST x)) l /\ ALL
-  (\x. Q (SND x)) l)`,
+ (`!l P Q. ALL (\(x,y). P x /\ Q y) l = (ALL (\x. P (FST x)) l /\ ALL (\x. Q
+  (SND x)) l)`,
   CHEAT_TAC);;
 
 let MEM_ZIP2 = prove
@@ -366,17 +366,14 @@ let MAP_FST_I_PAIR_MAP = prove
 add_simp MAP_FST_I_PAIR_MAP;;
 
 let EVERY_FST_SND = prove
- (`ALL (\(a,b). P a /\ Q b) ls <=> ALL P (MAP FST ls) /\ ALL Q (MAP
-  SND ls)`,
+ (`ALL (\(a,b). P a /\ Q b) ls <=> ALL P (MAP FST ls) /\ ALL Q (MAP SND ls)`,
   CHEAT_TAC);;
 
 let zlookup_def = new_definition
-  `zlookup m k = (match sptree_lookup k m with NONE -> 0 | SOME k ->
-  k)`;;
+  `zlookup m k = match sptree_lookup k m with NONE -> 0 | SOME k -> k`;;
 
 let tlookup_def = new_definition
-  `tlookup m k = (match sptree_lookup k m with NONE -> k | SOME k ->
-  k)`;;
+  `tlookup m k = match sptree_lookup k m with NONE -> k | SOME k -> k`;;
 
 let tlookup_id = prove
  (`~(x IN domain names) ==> tlookup names x = x`,
@@ -395,15 +392,15 @@ let tlookup_bij_iff = prove
 (* should be composition of oEL and as-yet-undefined "THE default" *)
 let any_el_def,any_el_ind = define_rec
   [`any_el n [] d = d`;
-   `any_el n (CONS x xs) d = (if n = 0 then x else any_el (n -
-    (1:num)) xs d)`];;
+   `any_el n (CONS x xs) d = if n = 0 then x else any_el (n - (1:num)) xs
+    d`];;
 
 let update_resize_def = new_definition
   `update_resize ls default v n =
-     (if n < LENGTH ls then
-       LUPDATE v n ls else
-       LUPDATE v n (APPEND ls (REPLICATE ((n * 2 + 1) - LENGTH ls)
-         default)))`;;
+     if n < LENGTH ls then
+       LUPDATE v n ls
+     else LUPDATE v n (APPEND ls (REPLICATE ((n * 2 + 1) - LENGTH ls)
+       default))`;;
 
 (*TODO upstream*)
 let MAX_LIST_APPEND = prove
@@ -435,19 +432,19 @@ let list_inter_def = new_definition
   `list_inter xs ys = FILTER (\y. MEM y xs) ys`;;
 
 let max3_def = new_definition
-  `max3 (x:num) y z = (if x > y then (if z > x then z else x) else
-  (if z > y then z else y))`;;
+  `max3 (x:num) y z = if x > y then (if z > x then z else x)
+                      else (if z > y then z else y)`;;
 add_simp max3_def;;
 
 let ALOOKUP_SNOC = prove
  (`!ls p k. ALOOKUP (SNOC p ls) k =
-      (match ALOOKUP ls k with SOME v -> SOME v |
-        NONE -> (if k = FST p then SOME (SND p) else NONE))`,
+      match ALOOKUP ls k with SOME v -> SOME v | NONE -> if k = FST p then
+        SOME (SND p) else NONE`,
   CHEAT_TAC);;
 
 let ALOOKUP_GENLIST = prove
- (`!f n k. ALOOKUP (list_of_seq (\i. (i,f i)) n) k = (if k < n then
-  SOME (f k) else NONE)`,
+ (`!f n k. ALOOKUP (list_of_seq (\i. (i,f i)) n) k = if k < n then SOME (f k)
+  else NONE`,
   CHEAT_TAC);;
 
 let ALOOKUP_ZIP_FAIL = prove
@@ -467,8 +464,8 @@ let MEM_ALOOKUP = prove
 let anub_def,anub_ind = define_rec
   [`anub [] acc = []`;
    `anub (CONS (k,v) ls) acc =
-       (if MEM k acc then anub ls acc else CONS (k,v) (anub ls
-           (CONS k acc)))`];;
+       if MEM k acc then anub ls acc else CONS (k,v) (anub ls (CONS k
+           acc))`];;
 
 (* HOL4 miscScript.sml:691: ML code, not ported *)
 
@@ -481,7 +478,8 @@ let EVERY_anub_imp = prove
 (* terrible rewrite *)
 let ALOOKUP_anub = prove
  (`ALOOKUP (anub ls acc) k =
-    (if MEM k acc then ALOOKUP (anub ls acc) k else ALOOKUP ls k)`,
+    if MEM k acc then ALOOKUP (anub ls acc) k
+    else ALOOKUP ls k`,
   CHEAT_TAC);;
 
 let anub_eq_nil = prove
@@ -490,8 +488,8 @@ let anub_eq_nil = prove
 
 let EVERY_anub_suff = prove
  (`!ls acc.
-    (!x. ~(MEM x acc) ==> (match ALOOKUP ls x with SOME v -> P
-      (x,v) | NONE -> T)) ==> ALL P (anub ls acc)`,
+    (!x. ~(MEM x acc) ==> (match ALOOKUP ls x with SOME v -> P (x,v) |
+      NONE -> T)) ==> ALL P (anub ls acc)`,
   CHEAT_TAC);;
 
 let anub_notin_acc = prove
@@ -499,9 +497,8 @@ let anub_notin_acc = prove
   CHEAT_TAC);;
 
 let anub_tl_anub = prove
- (`!x y h t. anub x y = CONS h t ==> (?a b. t = anub a b
-  /\ set_of_list a SUBSET set_of_list x /\ set_of_list b SUBSET
-  set_of_list (CONS (FST h) y))`,
+ (`!x y h t. anub x y = CONS h t ==> (?a b. t = anub a b /\ set_of_list a
+  SUBSET set_of_list x /\ set_of_list b SUBSET set_of_list (CONS (FST h) y))`,
   CHEAT_TAC);;
 
 let anub_all_distinct_keys = prove
@@ -516,22 +513,22 @@ let MEM_anub_ALOOKUP = prove
   CHEAT_TAC);;
 
 new_type_abbrev("misc_num_set",`:1 spt`);;
-(* HOL4 miscScript.sml:788: the type abbreviation num_map, which the
-   port expands *)
+(* HOL4 miscScript.sml:788: the type abbreviation num_map, which the port
+   expands *)
 
 let toAList_domain = prove
  (`!x. MEM x (MAP FST (toAList t)) <=> x IN domain t`,
   CHEAT_TAC);;
 
 let domain_nat_set_from_list = prove
- (`!ls ns. domain (FOLDL (\s n. sptree_insert n one s) ns ls) = domain
-  ns UNION set_of_list ls`,
+ (`!ls ns. domain (FOLDL (\s n. sptree_insert n one s) ns ls) = domain ns
+  UNION set_of_list ls`,
   CHEAT_TAC);;
 add_simp domain_nat_set_from_list;;
 
 let wf_nat_set_from_list = prove
- (`!ls ns. sptree_wf ns ==> sptree_wf (FOLDL (\s n. sptree_insert n z
-  s) ns ls)`,
+ (`!ls ns. sptree_wf ns ==> sptree_wf (FOLDL (\s n. sptree_insert n z s) ns
+  ls)`,
   CHEAT_TAC);;
 
 let BIT_11 = prove
@@ -539,8 +536,7 @@ let BIT_11 = prove
   CHEAT_TAC);;
 
 let BIT_11_2 = prove
- (`!n m. (!z. (z < 2 EXP (MAX n m)) ==> (BIT n z <=> BIT m z)) <=> (n
-  = m)`,
+ (`!n m. (!z. (z < 2 EXP (MAX n m)) ==> (BIT n z <=> BIT m z)) <=> (n = m)`,
   CHEAT_TAC);;
 
 (* only used below in proof of theorem that is in turn used just twice *)
@@ -555,31 +551,29 @@ let LOG2_TIMES2_1 = prove
 
 (* used only twice, both times in candle/set-theory *)
 let C_BIT_11 = prove
- (`!n m. (!z. (z <= LOG2 (MAX n m)) ==> (BIT z n <=> BIT z m)) <=> (n
-  = m)`,
+ (`!n m. (!z. (z <= LOG2 (MAX n m)) ==> (BIT z n <=> BIT z m)) <=> (n = m)`,
   CHEAT_TAC);;
 
 let BIT_num_from_bin_list_leading = prove
- (`!l x. ALL ((>) 2) l /\ LENGTH l <= x ==> ~(BIT x (num_from_bin_list
-  l))`,
+ (`!l x. ALL ((>) 2) l /\ LENGTH l <= x ==> ~(BIT x (num_from_bin_list l))`,
   CHEAT_TAC);;
 
 let least_from_def = new_definition
-  `least_from P n = (if (?x. P x /\ n <= x) then minimal x. P x /\ n
-  <= x else (minimal) P)`;;
+  `least_from P n = if (?x. P x /\ n <= x) then minimal x. P x /\ n <= x
+  else (minimal) P`;;
 
 let LEAST_thm = prove
  (`(minimal) P = least_from P 0`,
   CHEAT_TAC);;
 
 let least_from_thm = prove
- (`least_from P n = (if P n then n else least_from P (n + 1))`,
+ (`least_from P n = if P n then n else least_from P (n + 1)`,
   CHEAT_TAC);;
 
 let FUNPOW_mono = prove
  (`(!x y. R1 x y ==> R2 x y) /\
-    (!R1 R2. (!x y. R1 x y ==> R2 x y) ==> (!x y. f R1 x y ==> f R2 x
-      y)) ==>
+    (!R1 R2. (!x y. R1 x y ==> R2 x y) ==> (!x y. f R1 x y ==> f R2 x y))
+      ==>
     (!n x y. ITER n f R1 x y ==> ITER n f R2 x y)`,
   CHEAT_TAC);;
 
@@ -592,16 +586,15 @@ let FUNPOW_SUC_PLUS = prove
    or that with transitive expanded out *)
 let OPTREL_trans = prove
  (`!R x y z.
-    (!a b c. (x = SOME a) /\ (y = SOME b) /\ (z = SOME c) /\ R a b
-      /\ R b c ==> R a c) /\ OPTREL R x y /\ OPTREL R y z ==> OPTREL R
-      x z`,
+    (!a b c. (x = SOME a) /\ (y = SOME b) /\ (z = SOME c) /\ R a b /\ R b
+      c ==> R a c) /\ OPTREL R x y /\ OPTREL R y z ==> OPTREL R x z`,
   CHEAT_TAC);;
 
 let UPDATE_LIST_def = new_definition
   `UPDATE_LIST = FOLDL (hol4_C (UNCURRY UPDATE))`;;
 
-(* HOL4 miscScript.sml:1038: the overload =++, which the port writes
-   as an application of UPDATE_LIST *)
+(* HOL4 miscScript.sml:1038: the overload =++, which the port writes as an
+   application of UPDATE_LIST *)
 
 let UPDATE_LIST_THM = prove
  (`!f. (UPDATE_LIST f [] = f) /\ (!h t. (UPDATE_LIST f (CONS h t) =
@@ -609,15 +602,15 @@ let UPDATE_LIST_THM = prove
   CHEAT_TAC);;
 
 let APPLY_UPDATE_LIST_ALOOKUP = prove
- (`!ls f x. (UPDATE_LIST f ls) x = (match ALOOKUP (REVERSE ls) x with
-  NONE -> f x | SOME y -> y)`,
+ (`!ls f x. (UPDATE_LIST f ls) x = match ALOOKUP (REVERSE ls) x with NONE ->
+  f x | SOME y -> y`,
   CHEAT_TAC);;
 
 (* should be using indexedLists$findi, or INDEX_OF *)
 let find_index_def,find_index_ind = define_rec
-  [`find_index _2 [] _3 = NONE`;
-   `find_index y (CONS x xs) n = (if x = y then SOME n else
-    find_index y xs (n + 1))`];;
+  [`find_index _1 [] _2 = NONE`;
+   `find_index y (CONS x xs) n = if x = y then SOME n else find_index y xs
+    (n + 1)`];;
 
 let INDEX_FIND_CONS_EQ_SOME = prove
  (`(INDEX_FIND n f (CONS x xs) = SOME y) <=>
@@ -626,8 +619,7 @@ let INDEX_FIND_CONS_EQ_SOME = prove
   CHEAT_TAC);;
 
 let find_index_INDEX_FIND = prove
- (`!y xs n. find_index y xs n = OPTION_MAP FST (INDEX_FIND n ((=) y)
-  xs)`,
+ (`!y xs n. find_index y xs n = OPTION_MAP FST (INDEX_FIND n ((=) y) xs)`,
   CHEAT_TAC);;
 
 let find_index_INDEX_OF = prove
@@ -639,26 +631,26 @@ let find_index_NOT_MEM = prove
   CHEAT_TAC);;
 
 let find_index_MEM = prove
- (`!ls x n. MEM x ls ==> (?i. (find_index x ls n = SOME (n + i)) /\ i
-  < LENGTH ls /\ (EL i ls = x))`,
+ (`!ls x n. MEM x ls ==> (?i. (find_index x ls n = SOME (n + i)) /\ i <
+  LENGTH ls /\ (EL i ls = x))`,
   CHEAT_TAC);;
 
 let find_index_LEAST_EL = prove
- (`!ls x n. find_index x ls n = (if MEM x ls then SOME (n + (minimal
-  n. x = EL n ls)) else NONE)`,
+ (`!ls x n. find_index x ls n = if MEM x ls then SOME (n + (minimal n. x = EL
+  n ls)) else NONE`,
   CHEAT_TAC);;
 
 let find_index_LESS_LENGTH = prove
- (`!ls n m i. (find_index n ls m = SOME i) ==> (m <= i) /\ (i < m +
-  LENGTH ls)`,
+ (`!ls n m i. (find_index n ls m = SOME i) ==> (m <= i) /\ (i < m + LENGTH
+  ls)`,
   CHEAT_TAC);;
 
 let ALOOKUP_find_index_NONE = prove
  (`(ALOOKUP env k = NONE) ==> (find_index k (MAP FST env) m = NONE)`,
   CHEAT_TAC);;
 
-(* HOL4 miscScript.sml:1138-1146: a theorem that HOL4 states as the
-   value of an ML expression: ALOOKUP_find_index_SOME *)
+(* HOL4 miscScript.sml:1138-1146: a theorem that HOL4 states as the value of
+   an ML expression: ALOOKUP_find_index_SOME *)
 
 let ALOOKUP_find_index_SOME = prove
  (`(ALOOKUP env k = SOME v) ==>
@@ -667,8 +659,8 @@ let ALOOKUP_find_index_SOME = prove
   CHEAT_TAC);;
 
 let find_index_ALL_DISTINCT_EL = prove
- (`!ls n m. ALL_DISTINCT ls /\ n < LENGTH ls ==> (find_index (EL n ls)
-  ls m = SOME (m + n))`,
+ (`!ls n m. ALL_DISTINCT ls /\ n < LENGTH ls ==> (find_index (EL n ls) ls m =
+  SOME (m + n))`,
   CHEAT_TAC);;
 add_simp find_index_ALL_DISTINCT_EL;;
 
@@ -678,13 +670,13 @@ let find_index_ALL_DISTINCT_EL_eq = prove
   CHEAT_TAC);;
 
 let find_index_APPEND_same = prove
- (`!l1 n m i l2. (find_index n l1 m = SOME i) ==> (find_index n
-  (APPEND l1 l2) m = SOME i)`,
+ (`!l1 n m i l2. (find_index n l1 m = SOME i) ==> (find_index n (APPEND l1
+  l2) m = SOME i)`,
   CHEAT_TAC);;
 
 let find_index_ALL_DISTINCT_REVERSE = prove
- (`!ls x m j. ALL_DISTINCT ls /\ (find_index x ls m = SOME j) ==>
-  (find_index x (REVERSE ls) m = SOME ((m + LENGTH ls + m) - j - 1))`,
+ (`!ls x m j. ALL_DISTINCT ls /\ (find_index x ls m = SOME j) ==> (find_index
+  x (REVERSE ls) m = SOME ((m + LENGTH ls + m) - j - 1))`,
   CHEAT_TAC);;
 
 let THE_find_index_suff = prove
@@ -693,13 +685,13 @@ let THE_find_index_suff = prove
   CHEAT_TAC);;
 
 let find_index_APPEND1 = prove
- (`!l1 n l2 m i. (find_index n (APPEND l1 l2) m = SOME i) /\ (i < m +
-  LENGTH l1) ==> (find_index n l1 m = SOME i)`,
+ (`!l1 n l2 m i. (find_index n (APPEND l1 l2) m = SOME i) /\ (i < m + LENGTH
+  l1) ==> (find_index n l1 m = SOME i)`,
   CHEAT_TAC);;
 
 let find_index_APPEND2 = prove
- (`!l1 n l2 m i. (find_index n (APPEND l1 l2) m = SOME i) /\ (m +
-  LENGTH l1 <= i) ==> (find_index n l2 (m + LENGTH l1) = SOME i)`,
+ (`!l1 n l2 m i. (find_index n (APPEND l1 l2) m = SOME i) /\ (m + LENGTH l1
+  <= i) ==> (find_index n l2 (m + LENGTH l1) = SOME i)`,
   CHEAT_TAC);;
 
 let find_index_is_MEM = prove
@@ -707,24 +699,23 @@ let find_index_is_MEM = prove
   CHEAT_TAC);;
 
 let find_index_MAP_inj = prove
- (`!ls x n f. (!y. MEM y ls ==> (f x = f y) ==> x = y) ==> (find_index
-  (f x) (MAP f ls) n = find_index x ls n)`,
+ (`!ls x n f. (!y. MEM y ls ==> (f x = f y) ==> x = y) ==> (find_index (f x)
+  (MAP f ls) n = find_index x ls n)`,
   CHEAT_TAC);;
 
 let find_index_shift_0 = prove
- (`!ls x k. find_index x ls k = OPTION_MAP (\x. x + k) (find_index x
-  ls 0)`,
+ (`!ls x k. find_index x ls k = OPTION_MAP (\x. x + k) (find_index x ls 0)`,
   CHEAT_TAC);;
 
 let find_index_shift = prove
- (`!ls x k j. (find_index x ls k = SOME j) ==> j >= k /\ (!n.
-  find_index x ls n = SOME (j - k + n))`,
+ (`!ls x k j. (find_index x ls k = SOME j) ==> j >= k /\ (!n. find_index x ls
+  n = SOME (j - k + n))`,
   CHEAT_TAC);;
 
 let find_index_APPEND = prove
  (`!l1 l2 x n. find_index x (APPEND l1 l2) n =
-    (match find_index x l1 n with NONE -> find_index x l2 (n +
-      LENGTH l1) | SOME x -> SOME x)`,
+    match find_index x l1 n with NONE -> find_index x l2 (n + LENGTH l1)
+    | SOME x -> SOME x`,
   CHEAT_TAC);;
 
 let find_index_in_FILTER_ZIP_EQ = prove
@@ -740,9 +731,8 @@ let find_index_in_FILTER_ZIP_EQ = prove
 
 let ALL_DISTINCT_PERM_ALOOKUP_ZIP = prove
  (`!l1 l2 l3.
-    ALL_DISTINCT (MAP FST l1) /\ PERM (MAP FST l1) l2 ==>
-      (set_of_list l1 = set_of_list (ZIP l2 (MAP (THE o ALOOKUP
-      (APPEND l1 l3)) l2)))`,
+    ALL_DISTINCT (MAP FST l1) /\ PERM (MAP FST l1) l2 ==> (set_of_list l1
+      = set_of_list (ZIP l2 (MAP (THE o ALOOKUP (APPEND l1 l3)) l2)))`,
   CHEAT_TAC);;
 
 (* surely better with UNZIP rather than ZIP: i.e., UNZIP l1 = (a,b)...  *)
@@ -754,8 +744,8 @@ let PERM_ZIP = prove
 
 (* never used *)
 let RTC_invariant = prove
- (`!R P. (!x y. P x /\ R x y ==> P y) ==> (!x y. RTC R x y ==> P x ==>
-  RTC (RINTER R (\x y. P x /\ P y)) x y)`,
+ (`!R P. (!x y. P x /\ R x y ==> P y) ==> (!x y. RTC R x y ==> P x ==> RTC
+  (RINTER R (\x y. P x /\ P y)) x y)`,
   CHEAT_TAC);;
 
 (* never used *)
@@ -764,8 +754,8 @@ let RTC_RSUBSET = prove
   CHEAT_TAC);;
 
 let PERM_PART = prove
- (`!P L l1 l2 p q. ((p,q) = PART P L l1 l2) ==> PERM (APPEND L (APPEND
-  l1 l2)) (APPEND p q)`,
+ (`!P L l1 l2 p q. ((p,q) = PART P L l1 l2) ==> PERM (APPEND L (APPEND l1
+  l2)) (APPEND p q)`,
   CHEAT_TAC);;
 
 let PERM_PARTITION = prove
@@ -773,13 +763,12 @@ let PERM_PARTITION = prove
   CHEAT_TAC);;
 
 let option_case_NONE_F = prove
- (`(match X with NONE -> F | SOME x -> P x) = (?x. (X = SOME x) /\ P
-  x)`,
+ (`(match X with NONE -> F | SOME x -> P x) = (?x. (X = SOME x) /\ P x)`,
   CHEAT_TAC);;
 
 let IS_PREFIX_THM = prove
- (`!l2 l1. IS_PREFIX l1 l2 <=> (LENGTH l2 <= LENGTH l1) /\ (!n. n <
-  LENGTH l2 ==> (EL n l2 = EL n l1))`,
+ (`!l2 l1. IS_PREFIX l1 l2 <=> (LENGTH l2 <= LENGTH l1) /\ (!n. n < LENGTH l2
+  ==> (EL n l2 = EL n l1))`,
   CHEAT_TAC);;
 
 let EVERY2_RC_same = prove
@@ -789,14 +778,14 @@ add_simp EVERY2_RC_same;;
 
 (* used twice, and only in source_to_flatProof *)
 let FOLDL_invariant = prove
- (`!P f ls a. (P a) /\ (!x y. MEM y ls /\ P x ==> P (f x y)) ==> P
-  (FOLDL f a ls)`,
+ (`!P f ls a. (P a) /\ (!x y. MEM y ls /\ P x ==> P (f x y)) ==> P (FOLDL f a
+  ls)`,
   CHEAT_TAC);;
 
 (* never used *)
 let FOLDL_invariant_rest = prove
- (`!P f ls a. P ls a /\ (!x n. n < LENGTH ls /\ P (DROP n ls) x ==> P
-  (DROP (SUC n) ls) (f x (EL n ls))) ==> P [] (FOLDL f a ls)`,
+ (`!P f ls a. P ls a /\ (!x n. n < LENGTH ls /\ P (DROP n ls) x ==> P (DROP
+  (SUC n) ls) (f x (EL n ls))) ==> P [] (FOLDL f a ls)`,
   CHEAT_TAC);;
 
 let between_def = new_definition
@@ -863,14 +852,14 @@ let FOLDR_CONS_triple = prove
 
 (* never used *)
 let FOLDR_CONS_5tup = prove
- (`!f ls a. ITLIST (\(c,d,x,y,z) w. CONS (f c d x y z) w) ls a =
-  APPEND (MAP (\(c,d,x,y,z). f c d x y z) ls) a`,
+ (`!f ls a. ITLIST (\(c,d,x,y,z) w. CONS (f c d x y z) w) ls a = APPEND (MAP
+  (\(c,d,x,y,z). f c d x y z) ls) a`,
   CHEAT_TAC);;
 
 (* never used *)
 let FOLDR_transitive_property = prove
- (`!P ls f a. P [] a /\ (!n a. n < LENGTH ls /\ P (DROP (SUC n) ls) a
-  ==> P (DROP n ls) (f (EL n ls) a)) ==> P ls (ITLIST f ls a)`,
+ (`!P ls f a. P [] a /\ (!n a. n < LENGTH ls /\ P (DROP (SUC n) ls) a ==> P
+  (DROP n ls) (f (EL n ls) a)) ==> P ls (ITLIST f ls a)`,
   CHEAT_TAC);;
 
 (* Re-expressing curried lambdas *)
@@ -905,8 +894,8 @@ let SND_FST_pair = prove
 
 (* never used *)
 let MAP_ZIP_SND_triple = prove
- (`(LENGTH l1 = LENGTH l2) ==> (MAP (\(x,y,z). f y z) (ZIP l1 l2) =
-  MAP (UNCURRY f) l2)`,
+ (`(LENGTH l1 = LENGTH l2) ==> (MAP (\(x,y,z). f y z) (ZIP l1 l2) = MAP
+  (UNCURRY f) l2)`,
   CHEAT_TAC);;
 
 (* Specialisations to identity function *)
@@ -929,16 +918,14 @@ let MAP_EQ_ID = prove
 (* Specialisations to FEMPTY *)
 
 let FUN_FMAP_FAPPLY_FEMPTY_FAPPLY = prove
- (`FINITE s ==> (FAPPLY (FUN_FMAP (FAPPLY FEMPTY) s) x = FAPPLY FEMPTY
-  x)`,
+ (`FINITE s ==> (FAPPLY (FUN_FMAP (FAPPLY FEMPTY) s) x = FAPPLY FEMPTY x)`,
   CHEAT_TAC);;
 add_simp FUN_FMAP_FAPPLY_FEMPTY_FAPPLY;;
 
 (* FUPDATE_LIST stuff *)
 
 let NOT_MEM_FLOOKUP_ZIP = prove
- (`!ys xs zs. ~(MEM n ys) ==> FLOOKUP (xs |++ ZIP ys zs) n = FLOOKUP
-  xs n`,
+ (`!ys xs zs. ~(MEM n ys) ==> FLOOKUP (xs |++ ZIP ys zs) n = FLOOKUP xs n`,
   CHEAT_TAC);;
 
 (* Misc. *)
@@ -962,8 +949,8 @@ let map_some_eq = prove
 
 (* never used *)
 let map_some_eq_append = prove
- (`!l1 l2 l3. (APPEND (MAP SOME l1) (MAP SOME l2) = MAP SOME l3) <=>
-  (APPEND l1 l2 = l3)`,
+ (`!l1 l2 l3. (APPEND (MAP SOME l1) (MAP SOME l2) = MAP SOME l3) <=> (APPEND
+  l1 l2 = l3)`,
   CHEAT_TAC);;
 
 (* HOL4 miscScript.sml:1766: ML code, not ported *)
@@ -972,13 +959,12 @@ let map_some_eq_append = prove
 (* list misc *)
 
 let LASTN_LEMMA = prove
- (`(LASTN (LENGTH xs + 1 + 1) (CONS x (CONS y xs)) = CONS x (CONS y xs))
-  /\
+ (`(LASTN (LENGTH xs + 1 + 1) (CONS x (CONS y xs)) = CONS x (CONS y xs)) /\
     (LASTN (LENGTH xs + 1) (CONS x xs) = CONS x xs)`,
   CHEAT_TAC);;
 
-(* HOL4 miscScript.sml:1779-1782: a theorem that HOL4 states as the
-   value of an ML expression: LASTN_TL *)
+(* HOL4 miscScript.sml:1779-1782: a theorem that HOL4 states as the value of
+   an ML expression: LASTN_TL *)
 
 let LASTN_LENGTH_LESS_EQ = prove
  (`!xs n. LENGTH xs <= n ==> LASTN n xs = xs`,
@@ -986,8 +972,8 @@ let LASTN_LENGTH_LESS_EQ = prove
 
 let LASTN_ALT = prove
  (`(LASTN n [] = []) /\
-    (LASTN n (CONS x xs) = (if LENGTH (CONS x xs) <= n then CONS x
-      xs else LASTN n xs))`,
+    (LASTN n (CONS x xs) = (if LENGTH (CONS x xs) <= n then CONS x xs else
+      LASTN n xs))`,
   CHEAT_TAC);;
 
 let LENGTH_LASTN_LESS = prove
@@ -1007,8 +993,8 @@ Theorem MAP_EQ_MAP_IMP =
 
 let INJ_MAP_EQ_2 = prove
  (`!f l1 l2.
-   (!x y. x IN set_of_list l1 /\ y IN set_of_list l2 /\ f x = f y ==>
-     x = y) /\
+   (!x y. x IN set_of_list l1 /\ y IN set_of_list l2 /\ f x = f y ==> x = y)
+     /\
    MAP f l1 = MAP f l2 ==>
    l1 = l2`,
   CHEAT_TAC);;
@@ -1021,18 +1007,18 @@ let LENGTH_EQ_FILTER_FILTER = prove
 let LIST_REL_MAP_FILTER_NEQ = prove
  (`!P f1 f2 z1 z2 l1 l2.
       ALL2 P (MAP f1 l1) (MAP f2 l2) /\
-      (!y1 y2. MEM (y1,y2) (ZIP l1 l2) ==> (~(SND y1 = z1) <=> ~(SND
-        y2 = z2)) /\ (P (f1 y1) (f2 y2))) ==>
-      ALL2 P (MAP f1 (FILTER (\(x,y). ~(y = z1)) l1)) (MAP f2
-        (FILTER (\(x,y). ~(y = z2)) l2))`,
+      (!y1 y2. MEM (y1,y2) (ZIP l1 l2) ==> (~(SND y1 = z1) <=> ~(SND y2 =
+        z2)) /\ (P (f1 y1) (f2 y2))) ==>
+      ALL2 P (MAP f1 (FILTER (\(x,y). ~(y = z1)) l1)) (MAP f2 (FILTER
+        (\(x,y). ~(y = z2)) l2))`,
   CHEAT_TAC);;
 
 (* move into HOL? *)
 
 let word_list_def,word_list_ind = define_guess
   [`misc_word_list a [] = emp`;
-   `misc_word_list a (CONS x xs) = set_sep_one (a,x) *
-    misc_word_list (a + bytes_in_word) xs`];;
+   `misc_word_list a (CONS x xs) = set_sep_one (a,x) * misc_word_list (a +
+    bytes_in_word) xs`];;
 
 let word_list_exists_def = new_definition
   `word_list_exists a n =
@@ -1042,13 +1028,14 @@ let word_list_exists_def = new_definition
 let lookup_vars_def,lookup_vars_ind = define_rec
   [`lookup_vars [] env = SOME []`;
    `lookup_vars (CONS v vs) env =
-         (if v < LENGTH env then
-           match lookup_vars vs env with SOME xs -> SOME (CONS
-               (EL v env) xs) | NONE -> NONE else NONE)`];;
+         if v < LENGTH env then
+           match lookup_vars vs env with SOME xs -> SOME (CONS (EL v env)
+               xs)
+           | NONE -> NONE
+         else NONE`];;
 
 let EVERY_lookup_vars = prove
- (`!vs env env'. ALL P env /\ lookup_vars vs env = SOME env' ==> ALL P
-  env'`,
+ (`!vs env env'. ALL P env /\ lookup_vars vs env = SOME env' ==> ALL P env'`,
   CHEAT_TAC);;
 
 let EVERY_LAST = prove
@@ -1075,8 +1062,8 @@ let num_from_hex_string_leading_0 = prove
   CHEAT_TAC);;
 
 let num_from_hex_string_length_2_less_16 = prove
- (`!h1 h2. isHexDigit h1 ==> num_from_hex_string [h1; h2] < 16 ==> h1
-  = (CHR 48)`,
+ (`!h1 h2. isHexDigit h1 ==> num_from_hex_string [h1; h2] < 16 ==> h1 = (CHR
+  48)`,
   CHEAT_TAC);;
 
 let num_from_hex_string_num_to_hex_string = prove
@@ -1139,8 +1126,7 @@ let ALL_DISTINCT_MAP_FST_enumerate = prove
 let ALOOKUP_enumerate = prove
  (`!ls k x.
    ALOOKUP (enumerate k ls) x =
-   (if k <= x /\ x < LENGTH ls + k then SOME (EL (x - k) ls) else
-     NONE)`,
+   if k <= x /\ x < LENGTH ls + k then SOME (EL (x - k) ls) else NONE`,
   CHEAT_TAC);;
 
 let SUM_MAP_LENGTH_REPLICATE = prove
@@ -1148,8 +1134,7 @@ let SUM_MAP_LENGTH_REPLICATE = prove
   CHEAT_TAC);;
 
 let SUM_MAP_COUNT_LIST = prove
- (`!n k. SUM (MAP ((+) k) (COUNT_LIST n)) = (n * ((2 * k + n) - 1))
-  DIV 2`,
+ (`!n k. SUM (MAP ((+) k) (COUNT_LIST n)) = (n * ((2 * k + n) - 1)) DIV 2`,
   CHEAT_TAC);;
 
 let SUM_REPLICATE = prove
@@ -1196,8 +1181,8 @@ let UPDATE_LIST_NOT_MEM = prove
   CHEAT_TAC);;
 
 let MAP_ZIP_UPDATE_LIST_ALL_DISTINCT_same = prove
- (`!ks vs f. LENGTH ks = LENGTH vs /\ ALL_DISTINCT ks ==> (MAP
-  (UPDATE_LIST f (ZIP ks vs)) ks = vs)`,
+ (`!ks vs f. LENGTH ks = LENGTH vs /\ ALL_DISTINCT ks ==> (MAP (UPDATE_LIST f
+  (ZIP ks vs)) ks = vs)`,
   CHEAT_TAC);;
 
 let flookup_update_list_none = prove
@@ -1218,13 +1203,11 @@ let MULT_LE_EXP = prove
   CHEAT_TAC);;
 
 let domain_rrestrict_subset = prove
- (`set_relation_domain (rrestrict r s) SUBSET set_relation_domain r
-  INTER s`,
+ (`set_relation_domain (rrestrict r s) SUBSET set_relation_domain r INTER s`,
   CHEAT_TAC);;
 
 let range_rrestrict_subset = prove
- (`set_relation_range (rrestrict r s) SUBSET set_relation_range r
-  INTER s`,
+ (`set_relation_range (rrestrict r s) SUBSET set_relation_range r INTER s`,
   CHEAT_TAC);;
 
 let PERM_MAP_BIJ = prove
@@ -1235,13 +1218,13 @@ let PERM_MAP_BIJ = prove
 
 let lookup_fromList2 = prove
  (`!l n. sptree_lookup n (fromList2 l) =
-          (if EVEN n then sptree_lookup (n DIV 2) (sptree_fromList
-            l) else NONE)`,
+          if EVEN n then sptree_lookup (n DIV 2) (sptree_fromList l) else
+            NONE`,
   CHEAT_TAC);;
 
 let domain_fromList2 = prove
- (`!q. domain (fromList2 q) = set_of_list (list_of_seq (\x. 2 * x)
-  (LENGTH q))`,
+ (`!q. domain (fromList2 q) = set_of_list (list_of_seq (\x. 2 * x) (LENGTH
+  q))`,
   CHEAT_TAC);;
 
 let UNCURRY_eq_pair = prove
@@ -1293,12 +1276,11 @@ let o_PAIR_MAP = prove
   CHEAT_TAC);;
 
 let any_el_ALT = prove
- (`!l n d. any_el n l d = (if n < LENGTH l then EL n l else d)`,
+ (`!l n d. any_el n l d = if n < LENGTH l then EL n l else d`,
   CHEAT_TAC);;
 
 let MOD_MINUS = prove
- (`0 < p /\ 0 < k ==> (p * k - n MOD (p * k)) MOD k = (k - n MOD k)
-  MOD k`,
+ (`0 < p /\ 0 < k ==> (p * k - n MOD (p * k)) MOD k = (k - n MOD k) MOD k`,
   CHEAT_TAC);;
 
 let option_fold_def = define_cases
@@ -1334,14 +1316,14 @@ let TOKENS_END = prove
 
 let TOKENS_LENGTH_END = prove
  (`!l a.
-      LENGTH (TOKENS (\x. x = a) (APPEND l [a])) = LENGTH (TOKENS
-        (\x. x = a) l)`,
+      LENGTH (TOKENS (\x. x = a) (APPEND l [a])) = LENGTH (TOKENS (\x. x =
+        a) l)`,
   CHEAT_TAC);;
 
 let TOKENS_LENGTH_START = prove
  (`!l a.
-      LENGTH (TOKENS (\x. x = a) (CONS a l)) = LENGTH (TOKENS (\x.
-        x = a) l)`,
+      LENGTH (TOKENS (\x. x = a) (CONS a l)) = LENGTH (TOKENS (\x. x = a)
+        l)`,
   CHEAT_TAC);;
 
 
@@ -1370,8 +1352,7 @@ let LIST_ELEM_COUNT_CONS = prove
 (* [local] *)
 let FRONT_COUNT_IMP = prove
  (`!l1 l2 a. ~(l1 = []) /\ BUTLAST l1 = l2 ==> (LIST_ELEM_COUNT a l2 =
-  LIST_ELEM_COUNT a l1) \/ (LIST_ELEM_COUNT a l2 + 1 = LIST_ELEM_COUNT
-  a l1)`,
+  LIST_ELEM_COUNT a l1) \/ (LIST_ELEM_COUNT a l2 + 1 = LIST_ELEM_COUNT a l1)`,
   CHEAT_TAC);;
 
 let OPT_MMAP_MAP_o = prove
@@ -1387,13 +1368,11 @@ add_simp OPT_MMAP_SOME;;
 let OPT_MMAP_CONG = prove
  (`!l1 l2 f f'.
      (l1 = l2) /\
-     (!x. MEM x l2 ==> (f x = f' x)) ==> (OPT_MMAP f l1 = OPT_MMAP
-       f' l2)`,
+     (!x. MEM x l2 ==> (f x = f' x)) ==> (OPT_MMAP f l1 = OPT_MMAP f' l2)`,
   CHEAT_TAC);;
 
 let IMP_OPT_MMAP_EQ = prove
- (`!l1 l2. (MAP f1 l1 = MAP f2 l2) ==> (OPT_MMAP f1 l1 = OPT_MMAP f2
-  l2)`,
+ (`!l1 l2. (MAP f1 l1 = MAP f2 l2) ==> (OPT_MMAP f1 l1 = OPT_MMAP f2 l2)`,
   CHEAT_TAC);;
 
 let DISJOINT_set_simp = prove
@@ -1418,15 +1397,15 @@ let LUPDATE_commutes = prove
 let LUPDATE_APPEND = prove
  (`!xs n ys x.
       LUPDATE x n (APPEND xs ys) =
-      (if n < LENGTH xs then APPEND (LUPDATE x n xs) ys else APPEND
-        xs (LUPDATE x (n - LENGTH xs) ys))`,
+      if n < LENGTH xs then APPEND (LUPDATE x n xs) ys
+                       else APPEND xs (LUPDATE x (n - LENGTH xs) ys)`,
   CHEAT_TAC);;
 
 let FILTER_EL_EQ = prove
  (`!l1 l2.
    LENGTH l1 = LENGTH l2 /\
-   (!n. n < LENGTH l1 /\ (P (EL n l1) \/ P (EL n l2)) ==> (EL n l1 =
-     EL n l2)) ==>
+   (!n. n < LENGTH l1 /\ (P (EL n l1) \/ P (EL n l2)) ==> (EL n l1 = EL n
+     l2)) ==>
    FILTER P l1 = FILTER P l2`,
   CHEAT_TAC);;
 
@@ -1435,24 +1414,24 @@ let FST_EL_AFUPDKEY = prove
   CHEAT_TAC);;
 
 let EL_AFUPDKEY_unchanged = prove
- (`!n. n < LENGTH ls /\ ~(FST (EL n ls) = k) ==> EL n (AFUPDKEY k f
-  ls) = EL n ls`,
+ (`!n. n < LENGTH ls /\ ~(FST (EL n ls) = k) ==> EL n (AFUPDKEY k f ls) = EL
+  n ls`,
   CHEAT_TAC);;
 
 let findi_APPEND = prove
  (`!l1 l2 x.
       indexedLists_findi x (APPEND l1 l2) =
-        (let n0 = indexedLists_findi x l1 in
-          if n0 = LENGTH l1 then n0 + indexedLists_findi x l2 else
-            n0)`,
+        let n0 = indexedLists_findi x l1 in
+          if n0 = LENGTH l1 then n0 + indexedLists_findi x l2
+          else n0`,
   CHEAT_TAC);;
 
 let NOT_MEM_findi_IFF = prove
  (`~(MEM e l) <=> indexedLists_findi e l = LENGTH l`,
   CHEAT_TAC);;
 
-(* HOL4 miscScript.sml:2585-2586: a theorem that HOL4 states as the
-   value of an ML expression: NOT_MEM_findi *)
+(* HOL4 miscScript.sml:2585-2586: a theorem that HOL4 states as the value of
+   an ML expression: NOT_MEM_findi *)
 
 let ORD_eq_0 = prove
  (`(ORD c = 0 <=> c = CHR 0) /\ (0 = ORD c <=> c = CHR 0)`,
@@ -1463,12 +1442,11 @@ let HD_LUPDATE = prove
   CHEAT_TAC);;
 
 let DROP_LUPDATE = prove
- (`!n x m l. n <= m ==> DROP n (LUPDATE x m l) = LUPDATE x (m - n)
-  (DROP n l)`,
+ (`!n x m l. n <= m ==> DROP n (LUPDATE x m l) = LUPDATE x (m - n) (DROP n l)`,
   CHEAT_TAC);;
 
-(* HOL4 miscScript.sml:2608-2610: a theorem that HOL4 states as the
-   value of an ML expression: w2n_lt_256 *)
+(* HOL4 miscScript.sml:2608-2610: a theorem that HOL4 states as the value of
+   an ML expression: w2n_lt_256 *)
 
 let CHR_w2n_n2w_ORD = prove
  (`(CHR o w2n o (n2w:num->word8) o ORD) = I`,
@@ -1502,11 +1480,12 @@ let MAP_K_REPLICATE = prove
 let shift_left_def,shift_left_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
   [`shift_left (a:'a word) n =
-   (if n = 0 then a else if (a = (n2w 0)) \/ n > dimindex (:'a)
-     then (n2w 0) else if n > 32 then shift_left (a << 32) (n - 32)
-     else if n > 16 then shift_left (a << 16) (n - 16) else if n >
-     8 then shift_left (a << 8) (n - 8) else shift_left (a << 1) (n
-     - 1))`];;
+   if n = 0 then a
+   else if (a = (n2w 0)) \/ n > dimindex (:'a) then (n2w 0)
+   else if n > 32 then shift_left (a << 32) (n - 32)
+   else if n > 16 then shift_left (a << 16) (n - 16)
+   else if n > 8 then shift_left (a << 8) (n - 8)
+   else shift_left (a << 1) (n - 1)`];;
 
 let shift_left_rwt = prove
  (`!a n. a << n = shift_left a n`,
@@ -1517,11 +1496,12 @@ let shift_left_rwt = prove
 let shift_right_def,shift_right_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
   [`shift_right (a:'a word) n =
-   (if n = 0 then a else if (a = (n2w 0)) \/ n > dimindex (:'a)
-     then (n2w 0) else if n > 32 then shift_right (a >>> 32) (n -
-     32) else if n > 16 then shift_right (a >>> 16) (n - 16) else
-     if n > 8 then shift_right (a >>> 8) (n - 8) else shift_right
-     (a >>> 1) (n - 1))`];;
+   if n = 0 then a
+   else if (a = (n2w 0)) \/ n > dimindex (:'a) then (n2w 0)
+   else if n > 32 then shift_right (a >>> 32) (n - 32)
+   else if n > 16 then shift_right (a >>> 16) (n - 16)
+   else if n > 8 then shift_right (a >>> 8) (n - 8)
+   else shift_right (a >>> 1) (n - 1)`];;
 
 let shift_right_rwt = prove
  (`!a n. a >>> n = shift_right a n`,
@@ -1532,13 +1512,15 @@ let shift_right_rwt = prove
 let arith_shift_right_def,arith_shift_right_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
   [`arith_shift_right (a:'a word) n =
-   (if n = 0 then a else if (a = (n2w 0)) \/ n > dimindex (:'a)
-     /\ ~(word_msb a) then (n2w 0) else if (a = --(n2w 1)) \/ n >
-     dimindex (:'a) /\ word_msb a then --(n2w 1) else if n > 32
-     then arith_shift_right (a >> 32) (n - 32) else if n > 16 then
-     arith_shift_right (a >> 16) (n - 16) else if n > 8 then
-     arith_shift_right (a >> 8) (n - 8) else arith_shift_right (a
-     >> 1) (n - 1))`];;
+   if n = 0 then a
+   else if (a = (n2w 0)) \/ n > dimindex (:'a) /\ ~(word_msb a) then (n2w
+     0)
+   else if (a = --(n2w 1)) \/ n > dimindex (:'a) /\ word_msb a then --(n2w
+     1)
+   else if n > 32 then arith_shift_right (a >> 32) (n - 32)
+   else if n > 16 then arith_shift_right (a >> 16) (n - 16)
+   else if n > 8 then arith_shift_right (a >> 8) (n - 8)
+   else arith_shift_right (a >> 1) (n - 1)`];;
 
 let arith_shift_right_rwt = prove
  (`!a n. a >> n = arith_shift_right a n`,
@@ -1549,13 +1531,13 @@ let arith_shift_right_rwt = prove
 let any_word64_ror_def,any_word64_ror_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
   [`any_word64_ror (w:word64) (n:num) =
-     (if 64 <= n then any_word64_ror w (n - 64) else
-     if 32 <= n then any_word64_ror (word_ror w 32) (n - 32) else
-     if 16 <= n then any_word64_ror (word_ror w 16) (n - 16) else
-     if 8 <= n then any_word64_ror (word_ror w 8) (n - 8) else
-     if 4 <= n then any_word64_ror (word_ror w 4) (n - 4) else
-     if 2 <= n then any_word64_ror (word_ror w 2) (n - 2) else
-     if 1 <= n then word_ror w 1 else w)`];;
+     if 64 <= n then any_word64_ror w (n - 64) else if 32 <= n then
+       any_word64_ror (word_ror w 32) (n - 32) else if 16 <= n then
+       any_word64_ror (word_ror w 16) (n - 16) else if 8 <= n then
+       any_word64_ror (word_ror w 8) (n - 8) else if 4 <= n then
+       any_word64_ror (word_ror w 4) (n - 4) else if 2 <= n then
+       any_word64_ror (word_ror w 2) (n - 2) else if 1 <= n then word_ror
+       w 1 else w`];;
 
 let word_ror_eq_any_word64_ror = prove
  (`!a n. word_ror a n = any_word64_ror a n`,
@@ -1617,9 +1599,9 @@ let the_nil_eq_cons = prove
 
 let splitlines_def = new_definition
   `splitlines ls =
-   (let lines = FIELDS ((=) (CHR 10)) ls in
+   let lines = FIELDS ((=) (CHR 10)) ls in
    // discard trailing newline
-   if NULL (LAST lines) then BUTLAST lines else lines)`;;
+   if NULL (LAST lines) then BUTLAST lines else lines`;;
 
 let splitlines_next = prove
  (`splitlines ls = CONS ln lns ==>
@@ -1627,8 +1609,8 @@ let splitlines_next = prove
    ln <<= ls /\ (LENGTH ln < LENGTH ls ==> APPEND ln "\n" <<= ls)`,
   CHEAT_TAC);;
 
-(* HOL4 miscScript.sml:2935: a theorem that HOL4 states as the value
-   of an ML expression: splitlines_nil *)
+(* HOL4 miscScript.sml:2935: a theorem that HOL4 states as the value of an
+   ML expression: splitlines_nil *)
 
 let splitlines_eq_nil = prove
  (`splitlines ls = [] <=> (ls = [])`,
@@ -1641,8 +1623,8 @@ let splitlines_CONS_FST_SPLITP = prove
 
 let n2l_DIV_MOD = prove
  (`!b n k. 1 < b /\ 0 < k /\ b EXP k <= n ==>
-   (APPEND (APPEND (n2l b (n MOD (b EXP k))) (REPLICATE (k - LENGTH
-     (n2l b (n MOD (b EXP k)))) 0))
+   (APPEND (APPEND (n2l b (n MOD (b EXP k))) (REPLICATE (k - LENGTH (n2l b
+     (n MOD (b EXP k)))) 0))
     (n2l b (n DIV (b EXP k))) = n2l b n)`,
   CHEAT_TAC);;
 
@@ -1651,8 +1633,7 @@ let irreflexive_inv_image = prove
   CHEAT_TAC);;
 
 let trichotomous_inv_image = prove
- (`!R f. trichotomous R /\ (INJ f UNIV UNIV) ==> trichotomous
-  (inv_image R f)`,
+ (`!R f. trichotomous R /\ (INJ f UNIV UNIV) ==> trichotomous (inv_image R f)`,
   CHEAT_TAC);;
 
 let MEM_REPLICATE_IMP = prove
@@ -1665,8 +1646,8 @@ let plus_0_I = prove
 add_simp plus_0_I;;
 
 (* used once *)
-(* HOL4 miscScript.sml:3037-3038: a theorem that HOL4 states as the
-   value of an ML expression: SUM_COUNT_LIST *)
+(* HOL4 miscScript.sml:3037-3038: a theorem that HOL4 states as the value of
+   an ML expression: SUM_COUNT_LIST *)
 
 let OPTION_MAP_I = prove
  (`OPTION_MAP I x = x`,
@@ -1744,8 +1725,7 @@ let SND_SPLITP_DROP = prove
 
 let FST_SPLITP_DROP = prove
  (`!P n l. ALL ((~) o P) (TAKE n l) ==>
-    FST (SPLITP P l) = APPEND (TAKE n l) (FST (SPLITP P (DROP n
-      l)))`,
+    FST (SPLITP P l) = APPEND (TAKE n l) (FST (SPLITP P (DROP n l)))`,
   CHEAT_TAC);;
 
 let TAKE_DROP_SUBLIST = prove
@@ -1791,21 +1771,20 @@ let lnext_def =
   new_specification ["Lnext"] th;;
 
 let lnext_pos_def = new_definition
-  `Lnext_pos (ll:num llist) = Lnext (\ll. ?k. LHD ll = SOME k /\ ~(k
-  = 0)) ll`;;
+  `Lnext_pos (ll:num llist) = Lnext (\ll. ?k. LHD ll = SOME k /\ ~(k = 0))
+  ll`;;
 
 let OPTION_CHOICE_EQUALS_OPTION = prove
  (`!(x:'a option) y z. (OPTION_CHOICE x y = SOME z) <=>
-                       ((x = SOME z) \/ ((x = NONE) /\ (y = SOME
-                         z)))`,
+                       ((x = SOME z) \/ ((x = NONE) /\ (y = SOME z)))`,
   CHEAT_TAC);;
 
-(* HOL4 miscScript.sml:3210-3214: a theorem that HOL4 states as the
-   value of an ML expression: option_eq_some *)
+(* HOL4 miscScript.sml:3210-3214: a theorem that HOL4 states as the value of
+   an ML expression: option_eq_some *)
 
 let ALL_DISTINCT_alist_to_fmap_REVERSE = prove
- (`ALL_DISTINCT (MAP FST ls) ==> alist_to_fmap (REVERSE ls) =
-  alist_to_fmap ls`,
+ (`ALL_DISTINCT (MAP FST ls) ==> alist_to_fmap (REVERSE ls) = alist_to_fmap
+  ls`,
   CHEAT_TAC);;
 
 let FUPDATE_LIST_alist_to_fmap = prove
@@ -1828,8 +1807,8 @@ let SUM_MAP_K = prove
   CHEAT_TAC);;
 
 let LAST_FLAT = prove
- (`!ls. ~(NULL (FLAT ls)) ==> (LAST (FLAT ls) = LAST (LAST (FILTER
-  ((~) o NULL) ls)))`,
+ (`!ls. ~(NULL (FLAT ls)) ==> (LAST (FLAT ls) = LAST (LAST (FILTER ((~) o
+  NULL) ls)))`,
   CHEAT_TAC);;
 
 let TOKENS_unchanged = prove
@@ -1843,8 +1822,8 @@ let TOKENS_FLAT_MAP_SNOC = prove
 
 (* insert a string (l1) at specified index (n) in a list (l2) *)
 let insert_atI_def = new_definition
-  `insert_atI l1 n l2 = APPEND (APPEND (TAKE n l2) l1) (DROP (n +
-  LENGTH l1) l2)`;;
+  `insert_atI l1 n l2 = APPEND (APPEND (TAKE n l2) l1) (DROP (n + LENGTH l1)
+  l2)`;;
 
 let insert_atI_NIL = prove
  (`!n l. insert_atI [] n l = l`,
@@ -1853,13 +1832,11 @@ let insert_atI_NIL = prove
 let insert_atI_CONS = prove
  (`!n l h t.
      n + LENGTH t < LENGTH l ==>
-     insert_atI (CONS h t) n l = LUPDATE h n (insert_atI t (n + 1)
-       l)`,
+     insert_atI (CONS h t) n l = LUPDATE h n (insert_atI t (n + 1) l)`,
   CHEAT_TAC);;
 
 let LENGTH_insert_atI = prove
- (`p + LENGTH l1 <= LENGTH l2 ==> LENGTH (insert_atI l1 p l2) = LENGTH
-  l2`,
+ (`p + LENGTH l1 <= LENGTH l2 ==> LENGTH (insert_atI l1 p l2) = LENGTH l2`,
   CHEAT_TAC);;
 
 let insert_atI_app = prove
@@ -1874,8 +1851,8 @@ let insert_atI_end = prove
 
 let insert_atI_insert_atI = prove
  (`pos2 = pos1 + LENGTH c1 ==>
-    insert_atI c2 pos2 (insert_atI c1 pos1 l) = insert_atI (APPEND
-      c1 c2) pos1 l`,
+    insert_atI c2 pos2 (insert_atI c1 pos1 l) = insert_atI (APPEND c1 c2)
+      pos1 l`,
   CHEAT_TAC);;
 
 let LUPDATE_insert_commute = prove
@@ -1886,18 +1863,18 @@ let LUPDATE_insert_commute = prove
   CHEAT_TAC);;
 
 let LESS_EQ_LENGTH = prove
- (`!xs k. k <= LENGTH xs ==> (?ys1 ys2. (xs = APPEND ys1 ys2)
-  /\ (LENGTH ys1 = k))`,
+ (`!xs k. k <= LENGTH xs ==> (?ys1 ys2. (xs = APPEND ys1 ys2) /\ (LENGTH ys1
+  = k))`,
   CHEAT_TAC);;
 
 let LESS_LENGTH = prove
  (`!xs k. k < LENGTH xs ==>
-           (?ys1 y ys2. (xs = APPEND ys1 (CONS y ys2)) /\ (LENGTH
-             ys1 = k))`,
+           (?ys1 y ys2. (xs = APPEND ys1 (CONS y ys2)) /\ (LENGTH ys1 =
+             k))`,
   CHEAT_TAC);;
 
-(* HOL4 miscScript.sml:3372-3373: a theorem that HOL4 states as the
-   value of an ML expression: IN_EVEN *)
+(* HOL4 miscScript.sml:3372-3373: a theorem that HOL4 states as the value of
+   an ML expression: IN_EVEN *)
 
 let FOLDL_OPTION_CHOICE_EQ_SOME_IMP_MEM = prove
  (`FOLDL OPTION_CHOICE x ls = SOME y ==> MEM (SOME y) (CONS x ls)`,
@@ -1990,18 +1967,16 @@ let is_subseq_append_suff = prove
 
 (* TODO - candidate for move to HOL *)
 let is_subseq_FLAT_suff = prove
- (`!ls1 ls2. ALL2 is_subseq ls1 ls2 ==> is_subseq (FLAT ls1) (FLAT
-  ls2)`,
+ (`!ls1 ls2. ALL2 is_subseq ls1 ls2 ==> is_subseq (FLAT ls1) (FLAT ls2)`,
   CHEAT_TAC);;
 
 let LIST_REL_IMP_LAST = prove
  (`!P xs ys.
-      ALL2 P xs ys /\ (~(xs = []) \/ ~(ys = [])) ==> P (LAST xs)
-        (LAST ys)`,
+      ALL2 P xs ys /\ (~(xs = []) \/ ~(ys = [])) ==> P (LAST xs) (LAST ys)`,
   CHEAT_TAC);;
 
 let make_even_def = new_definition
-  `make_even n = (if EVEN n then n else n + 1)`;;
+  `make_even n = if EVEN n then n else n + 1`;;
 
 let EVEN_make_even = prove
  (`EVEN (make_even x)`,
@@ -2010,8 +1985,8 @@ add_simp EVEN_make_even;;
 
 let ALOOKUP_MAP_FST_INJ_SOME = prove
  (`!ls x y.
-    ALOOKUP ls x = SOME y /\ (!x'. IS_SOME (ALOOKUP ls x') /\ f x' =
-      f x ==> x = x') ==>
+    ALOOKUP ls x = SOME y /\ (!x'. IS_SOME (ALOOKUP ls x') /\ f x' = f x ==>
+      x = x') ==>
     ALOOKUP (MAP (f ## g) ls) (f x) = SOME (g y)`,
   CHEAT_TAC);;
 
@@ -2026,7 +2001,7 @@ let v2w_32_T = prove
 add_simp v2w_32_T;;
 
 let v2w_sing = prove
- (`v2w [b] = (if b then (n2w 1) else (n2w 0))`,
+ (`v2w [b] = if b then (n2w 1) else (n2w 0)`,
   CHEAT_TAC);;
 
 let FOLDR_FUNPOW = prove
@@ -2064,16 +2039,16 @@ let DIV_LESS_DIV = prove
 
 let toPath_fromList = prove
  (`(toPath (x,fromList []) = stopped_at x) /\
-   (toPath (x,fromList (CONS (y,z) t)) = pcons x y (toPath
-     (z,fromList t)))`,
+   (toPath (x,fromList (CONS (y,z) t)) = pcons x y (toPath (z,fromList
+     t)))`,
   CHEAT_TAC);;
 
 let steps_def,steps_ind = define_rec
   [`steps f x [] = []`;
    `steps f x (CONS j js) =
-       (let y = f x j in
+       let y = f x j in
        let tr = steps f y js in
-         (CONS (j,y) tr))`];;
+         (CONS (j,y) tr)`];;
 
 let steps_rel_def,steps_rel_ind = define_rec
   [`steps_rel R x [] <=> T`;
@@ -2092,8 +2067,7 @@ let steps_rel_LRC = prove
  (`!R x tr.
     steps_rel R x tr ==>
     LRC (\x y. ?i. R x i y)
-      (BUTLAST (CONS x (MAP SND tr))) x (LAST (CONS x (MAP SND
-        tr)))`,
+      (BUTLAST (CONS x (MAP SND tr))) x (LAST (CONS x (MAP SND tr)))`,
   CHEAT_TAC);;
 
 let LAST_MAP_SND_steps_FOLDL = prove
@@ -2105,8 +2079,7 @@ let LAST_MAP_SND_steps_FOLDL = prove
 let all_words_def,all_words_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
   [`all_words base 0 = {}`;
-   `all_words base (SUC n) = base INSERT (all_words (base + (n2w
-    1)) n)`];;
+   `all_words base (SUC n) = base INSERT (all_words (base + (n2w 1)) n)`];;
 
 let IN_all_words = prove
  (`x IN all_words base n <=> (?i. i < n /\ x = base + n2w i)`,
@@ -2166,8 +2139,8 @@ let asm_write_bytearray_append = prove
  (`!a l1 l2 m.
    w2n a + LENGTH l1 + LENGTH l2 < dimword (:'a) ==>
    (asm_write_bytearray (a:'a word) (APPEND l1 l2) m =
-    asm_write_bytearray (a + n2w (LENGTH l1)) l2
-      (asm_write_bytearray a l1 m))`,
+    asm_write_bytearray (a + n2w (LENGTH l1)) l2 (asm_write_bytearray a l1
+      m))`,
   CHEAT_TAC);;
 
 let asm_write_bytearray_EL = prove
@@ -2183,14 +2156,12 @@ let _ = size_thms "spt";;
 let eq_shape_def,eq_shape_ind = define_wf
   `MEASURE (\(x0,x1). spt_size (\x. 0) x0 + spt_size (\x. 0) x1)`
   [`eq_shape x1 x2 =
-      match (x1,x2) with
-        (LN,LN) -> T
-      | ((LS _4),(LS _5)) -> T
-      | ((BN t1 t2),(BN u1 u2)) -> (eq_shape t1 u1 /\ eq_shape t2
-        u2)
-      | ((BS t1 _6 t2),(BS u1 _7 u2)) -> (eq_shape t1 u1 /\ eq_shape
-        t2 u2)
-      | (_8,_9) -> F`];;
+   match (x1,x2) with
+     (LN,LN) -> T
+   | (LS _3,LS _4) -> T
+   | (BN t1 t2,BN u1 u2) -> (eq_shape t1 u1 /\ eq_shape t2 u2)
+   | (BS t1 _5 t2,BS u1 _6 u2) -> (eq_shape t1 u1 /\ eq_shape t2 u2)
+   | (_7,_8) -> F`];;
 
 let spt_eq = prove
  (`!t1 t2.
@@ -2213,19 +2184,18 @@ let copy_shape_def,copy_shape_ind = define_wf
   `MEASURE (\(x0,x1). spt_size (\x. 0) x0 + spt_size (\x. 0) x1)`
   [`copy_shape LN LN = LN`;
    `copy_shape LN (LS y) = LN`;
-   `copy_shape LN (BN t1 t2) = BN (copy_shape LN t1) (copy_shape LN
-    t2)`;
+   `copy_shape LN (BN t1 t2) = BN (copy_shape LN t1) (copy_shape LN t2)`;
    `copy_shape LN (BS t1 y t2) = LN`;
    `copy_shape (LS x) LN = LS x`;
    `copy_shape (LS x) (LS y) = LS x`;
    `copy_shape (LS x) (BN t1 t2) = LS x`;
-   `copy_shape (LS x) (BS t1 y t2) = BS (copy_shape LN t1) x
-    (copy_shape LN t2)`;
-   `copy_shape (BN u1 u2) LN = (if domain (BN u1 u2) = {} then LN
-    else BN u1 u2)`;
+   `copy_shape (LS x) (BS t1 y t2) = BS (copy_shape LN t1) x (copy_shape LN
+    t2)`;
+   `copy_shape (BN u1 u2) LN = (if domain (BN u1 u2) = {} then LN else BN u1
+    u2)`;
    `copy_shape (BN u1 u2) (LS y) = BN u1 u2`;
-   `copy_shape (BN u1 u2) (BN t1 t2) = BN (copy_shape u1 t1)
-    (copy_shape u2 t2)`;
+   `copy_shape (BN u1 u2) (BN t1 t2) = BN (copy_shape u1 t1) (copy_shape u2
+    t2)`;
    `copy_shape (BN u1 u2) (BS t1 y t2) = BN u1 u2`;
    `copy_shape (BS u1 x u2) LN = BS u1 x u2`;
    `copy_shape (BS u1 x u2) (LS y) =
@@ -2274,8 +2244,7 @@ let lookup_zero = prove
   CHEAT_TAC);;
 
 let empty_sub = prove
- (`(\t. t = LN) (difference a b) /\ (subspt b a) ==> (domain a =
-  domain b)`,
+ (`(\t. t = LN) (difference a b) /\ (subspt b a) ==> (domain a = domain b)`,
   CHEAT_TAC);;
 
 let subspt_delete = prove
@@ -2284,14 +2253,14 @@ let subspt_delete = prove
 
 let inter_union_empty = prove
  (`!a b c.
-   (\t. t = LN) (inter (sptree_union a b) c) <=> (\t. t = LN)
-     (inter a c) /\ (\t. t = LN) (inter b c)`,
+   (\t. t = LN) (inter (sptree_union a b) c) <=> (\t. t = LN) (inter a c)
+     /\ (\t. t = LN) (inter b c)`,
   CHEAT_TAC);;
 
 let inter_insert_empty = prove
  (`!n t1 t2.
-   (\t. t = LN) (inter (sptree_insert n one t1) t2) ==> ~(n IN
-     domain t2) /\ (\t. t = LN) (inter t1 t2)`,
+   (\t. t = LN) (inter (sptree_insert n one t1) t2) ==> ~(n IN domain t2)
+     /\ (\t. t = LN) (inter t1 t2)`,
   CHEAT_TAC);;
 
 let fromList2_value = prove
@@ -2366,8 +2335,7 @@ let word_sub_lt = prove
 let bytes_in_memory_def,bytes_in_memory_ind = define_rec
   [`bytes_in_memory a [] m dm <=> T`;
    `bytes_in_memory a (CONS (x:word8) xs) m dm <=>
-         (m a = x) /\ a IN dm /\ bytes_in_memory (a + (n2w 1))
-             xs m dm`];;
+         (m a = x) /\ a IN dm /\ bytes_in_memory (a + (n2w 1)) xs m dm`];;
 
 let bytes_in_memory_APPEND = prove
  (`!l1 l2 pc' mem' mem_domain'.
@@ -2391,13 +2359,13 @@ let bytes_in_memory_change_mem = prove
   CHEAT_TAC);;
 
 let bytes_in_memory_EL = prove
- (`!a bs m md k. bytes_in_memory a bs m md /\ k < LENGTH bs ==> (m (a
-  + n2w k) = EL k bs)`,
+ (`!a bs m md k. bytes_in_memory a bs m md /\ k < LENGTH bs ==> (m (a + n2w
+  k) = EL k bs)`,
   CHEAT_TAC);;
 
 let bytes_in_memory_in_domain = prove
- (`!a bs m md k. bytes_in_memory a bs m md /\ k < LENGTH bs ==> ((a +
-  n2w k) IN md)`,
+ (`!a bs m md k. bytes_in_memory a bs m md /\ k < LENGTH bs ==> ((a + n2w k)
+  IN md)`,
   CHEAT_TAC);;
 
 let bytes_in_mem_def,bytes_in_mem_ind = define_rec
@@ -2425,8 +2393,8 @@ let WORD_LS_IMP = prove
 
 let size_fromAList = prove
  (`// TODO: move to HOL
-   !xs. ALL_DISTINCT (MAP FST xs) ==> sptree_size (fromAList xs) =
-     LENGTH xs`,
+   !xs. ALL_DISTINCT (MAP FST xs) ==> sptree_size (fromAList xs) = LENGTH
+     xs`,
   CHEAT_TAC);;
 
 let ALL_DISTINCT_MAP_FST_toSortedAList = prove
@@ -2445,8 +2413,7 @@ let good_dimindex_get_byte_set_byte = prove
 (* [local] *)
 let byte_index_LESS_IMP = prove
  (`(dimindex (:'a) = 32 \/ dimindex (:'a) = 64) /\
-     byte_index (a:'a word) be < byte_index (a':'a word) be /\ i < 8
-       ==>
+     byte_index (a:'a word) be < byte_index (a':'a word) be /\ i < 8 ==>
      byte_index a be + i < byte_index a' be /\
      byte_index a be <= i + byte_index a' be /\
      byte_index a be + 8 <= i + byte_index a' be /\
@@ -2455,24 +2422,21 @@ let byte_index_LESS_IMP = prove
 
 (* [local] *)
 let NOT_w2w_bit = prove
- (`8 <= i /\ i < dimindex (:'b) ==> ~(FAPPLY ((w2w:word8->'b word) w)
-  i)`,
+ (`8 <= i /\ i < dimindex (:'b) ==> ~(FAPPLY ((w2w:word8->'b word) w) i)`,
   CHEAT_TAC);;
 
-(* HOL4 miscScript.sml:4351-4353: the ML values that the definitions
-   below antiquote *)
+(* HOL4 miscScript.sml:4351-4353: the ML values that the definitions below
+   antiquote *)
 
 (* [local] *)
 let DIV_EQ_DIV_IMP = prove
- (`0 < d /\ ~(n = n') /\ (n DIV d * d = n' DIV d * d) ==> ~(n MOD d =
-  n' MOD d)`,
+ (`0 < d /\ ~(n = n') /\ (n DIV d * d = n' DIV d * d) ==> ~(n MOD d = n' MOD
+  d)`,
   CHEAT_TAC);;
 
 let get_byte_set_byte_diff = prove
- (`good_dimindex (:'a) /\ ~(a = a') /\ (byte_align a = byte_align a')
-  ==>
-    (get_byte a (set_byte (a':'a word) b w be) be = get_byte a w
-      be)`,
+ (`good_dimindex (:'a) /\ ~(a = a') /\ (byte_align a = byte_align a') ==>
+    (get_byte a (set_byte (a':'a word) b w be) be = get_byte a w be)`,
   CHEAT_TAC);;
 
 (* helpful theorems for _size *)
@@ -2496,10 +2460,12 @@ add_simp fmap_update_def;;
 (* TODO: move to HOL? *)
 let sum_cmp_def = new_definition
   `sum_cmp c1 c2 x1 x2 =
-     (match x1 with INL n1 ->
-         (match x2 with INL n2 -> c1 n1 n2 | INR _10 -> LESS) | INR
-           n1 ->
-         (match x2 with INL _11 -> GREATER | INR n2 -> c2 n1 n2))`;;
+     match x1 with INL n1 ->
+         (match x2 with INL n2 -> c1 n1 n2
+          | INR _ -> LESS)
+     | INR n1 ->
+         (match x2 with INL _ -> GREATER
+          | INR n2 -> c2 n1 n2)`;;
 
 let TotOrd_sum = prove
  (`TotOrd c1 /\ TotOrd c2 ==>
@@ -2513,8 +2479,7 @@ let TotOrd_num_cmp = prove
 (* the shape num_cmp shares with mlint$int_cmp *)
 let num_cmp_thm = prove
  (`comparison_num_cmp n1 n2 =
-     (if n1 < n2 then LESS else
-     if n2 < n1 then GREATER else EQUAL)`,
+     if n1 < n2 then LESS else if n2 < n1 then GREATER else EQUAL`,
   CHEAT_TAC);;
 
 let TotOrd_pair_cmp = prove

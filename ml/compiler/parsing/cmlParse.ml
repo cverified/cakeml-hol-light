@@ -24,71 +24,68 @@ needs "semantics/typeSystem.ml";;
 let _ = cake_theory "cmlParse"
   ["cmlPEG"; "cmlPtreeConversion"];;
 
-(* HOL4 cmlParseScript.sml:13: the overload cmlpegexec, which the
-   port expands *)
+(* HOL4 cmlParseScript.sml:13: the overload cmlpegexec, which the port
+   expands *)
 
 let cmlParse_destResult_def = new_definition
   `cmlParse_destResult x1 =
-      match x1 with
-        pegexec_Result (peg_Success [] x eo) -> peg_Success [] x eo
-      | (pegexec_Result (peg_Success (CONS (_1,l) _2) _3 _4)) ->
+   match x1 with
+     pegexec_Result (peg_Success [] x eo) -> peg_Success [] x eo
+   | pegexec_Result (peg_Success (CONS (_1,l) _2) _3 _4) ->
    peg_Failure l "Expected to be at EOF"
-      | (pegexec_Result (peg_Failure fl fe)) -> peg_Failure fl fe
-      | _5 -> peg_Failure unknown_loc
-        "Something catastrophic happened"`;;
+   | pegexec_Result (peg_Failure fl fe) -> peg_Failure fl fe
+   | _ -> peg_Failure unknown_loc "Something catastrophic happened"`;;
 
-(* HOL4 cmlParseScript.sml:23: the type abbreviation M, which the
-   port expands *)
+(* HOL4 cmlParseScript.sml:23: the type abbreviation M, which the port
+   expands *)
 let pegresult_bind_def = new_definition
   `(pegresult_bind (f:(tokens_token#locs) list->((tokens_token#locs)
   list,'a,string)pegresult) (g:'a->(tokens_token#locs)
-  list->((tokens_token#locs)
-  list,'b,string)pegresult):(tokens_token#locs)
+  list->((tokens_token#locs) list,'b,string)pegresult):(tokens_token#locs)
   list->((tokens_token#locs) list,'b,string)pegresult) =
    (\toks.
      match f toks with
-       peg_Success toks' x eo -> g x toks' | peg_Failure fl fe ->
-         peg_Failure fl fe)`;;
+       peg_Success toks' x eo -> g x toks'
+     | peg_Failure fl fe -> peg_Failure fl fe)`;;
 
 let pegresult_choice_def = new_definition
   `(pegresult_choice (f:(tokens_token#locs) list->((tokens_token#locs)
-  list,'a,string)pegresult) (g:(tokens_token#locs)
-  list->((tokens_token#locs)
-  list,'a,string)pegresult):(tokens_token#locs)
-  list->((tokens_token#locs) list,'a,string)pegresult) =
+  list,'a,string)pegresult) (g:(tokens_token#locs) list->((tokens_token#locs)
+  list,'a,string)pegresult):(tokens_token#locs) list->((tokens_token#locs)
+  list,'a,string)pegresult) =
    (\toks.
      match f toks with
-       peg_Success toks' x eo -> peg_Success toks' x eo | _6 -> g
-         toks)`;;
+       peg_Success toks' x eo -> peg_Success toks' x eo
+     | _ -> g toks)`;;
 
 let toks_to_loc_def = define_cases
   [`toks_to_loc [] = unknown_loc`;
-   `toks_to_loc (CONS (h,L) _7) = L`];;
+   `toks_to_loc (CONS (h,L) _) = L`];;
 
 let pegresult_guard_def = new_definition
   `(pegresult_guard b:(tokens_token#locs) list->((tokens_token#locs)
   list,1,string)pegresult) =
-   (\toks. if b then peg_Success toks one NONE else peg_Failure
-     (toks_to_loc toks) "Assert failure")`;;
+   (\toks. if b then peg_Success toks one NONE
+          else peg_Failure (toks_to_loc toks) "Assert failure")`;;
 
 let optlift_def = define_general
   [`(optlift NONE:(tokens_token#locs) list->((tokens_token#locs)
-    list,'a,string)pegresult) = (\toks. peg_Failure (toks_to_loc
-    toks) "Option = NONE")`;
+    list,'a,string)pegresult) = (\toks. peg_Failure (toks_to_loc toks)
+    "Option = NONE")`;
    `optlift (SOME a) = (\toks. peg_Success toks a NONE)`];;
 
 let cmlParseExpr_def = new_definition
-  `cmlParseExpr = pegresult_bind (cmlParse_destResult o (\n t. peg_exec
-  cmlPEG (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) nE)
-  (\pts. pegresult_bind (optlift (oHD pts)) (\pt. pegresult_bind
-  (optlift (ptree_Expr nE pt)) (\ast.
+  `cmlParseExpr = pegresult_bind (cmlParse_destResult o (\n t. peg_exec cmlPEG
+  (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) nE) (\pts.
+  pegresult_bind (optlift (oHD pts)) (\pt. pegresult_bind (optlift (ptree_Expr
+  nE pt)) (\ast.
      (\a inp. peg_Success inp a NONE) ast)))`;;
 
 let parse_prog_def = new_definition
   `parse_prog =
      pegresult_bind (cmlParse_destResult o (\n t. peg_exec cmlPEG
-       (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed)
-       nTopLevelDecs) (\pts. pegresult_bind (optlift (oHD pts)) (\pt.
+       (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) nTopLevelDecs)
+       (\pts. pegresult_bind (optlift (oHD pts)) (\pt.
        optlift (ptree_TopLevelDecs pt)))`;;
 
 (* and the interface *)

@@ -106,13 +106,11 @@ let stackLang_prog_INDUCT,stackLang_prog_RECURSION = define_datatype
      // load word from read-only region
    | stackLang_Halt num";;
 
-(* HOL4 stackLangScript.sml:68: the overload While, which the port
-   expands *)
+(* HOL4 stackLangScript.sml:68: the overload While, which the port expands *)
 
-(* HOL4 stackLangScript.sml:70: the overload move, which the port
+(* HOL4 stackLangScript.sml:70: the overload move, which the port expands *)
+(* HOL4 stackLangScript.sml:71: the overload sub_1_inst, which the port
    expands *)
-(* HOL4 stackLangScript.sml:71: the overload sub_1_inst, which the
-   port expands *)
 (* HOL4 stackLangScript.sml:72: the overload sub_inst, which the port
    expands *)
 (* HOL4 stackLangScript.sml:73: the overload add_inst, which the port
@@ -121,24 +119,23 @@ let stackLang_prog_INDUCT,stackLang_prog_RECURSION = define_datatype
    expands *)
 (* HOL4 stackLangScript.sml:75: the overload xor_inst, which the port
    expands *)
-(* HOL4 stackLangScript.sml:76: the overload add_1_inst, which the
-   port expands *)
-(* HOL4 stackLangScript.sml:77: the overload or_inst, which the port
+(* HOL4 stackLangScript.sml:76: the overload add_1_inst, which the port
    expands *)
-(* HOL4 stackLangScript.sml:78: the overload add_bytes_in_word_inst,
-   which the port expands *)
-(* HOL4 stackLangScript.sml:79: the overload div2_inst, which the
-   port expands *)
-(* HOL4 stackLangScript.sml:80: the overload left_shift_inst, which
+(* HOL4 stackLangScript.sml:77: the overload or_inst, which the port expands *)
+(* HOL4 stackLangScript.sml:78: the overload add_bytes_in_word_inst, which
    the port expands *)
-(* HOL4 stackLangScript.sml:81: the overload right_shift_inst, which
-   the port expands *)
-(* HOL4 stackLangScript.sml:82: the overload const_inst, which the
+(* HOL4 stackLangScript.sml:79: the overload div2_inst, which the port
+   expands *)
+(* HOL4 stackLangScript.sml:80: the overload left_shift_inst, which the port
+   expands *)
+(* HOL4 stackLangScript.sml:81: the overload right_shift_inst, which the
    port expands *)
-(* HOL4 stackLangScript.sml:83: the overload load_inst, which the
-   port expands *)
-(* HOL4 stackLangScript.sml:84: the overload store_inst, which the
-   port expands *)
+(* HOL4 stackLangScript.sml:82: the overload const_inst, which the port
+   expands *)
+(* HOL4 stackLangScript.sml:83: the overload load_inst, which the port
+   expands *)
+(* HOL4 stackLangScript.sml:84: the overload store_inst, which the port
+   expands *)
 
 let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -154,10 +151,10 @@ let gc_stub_location_def = new_definition
   `gc_stub_location = stack_num_stubs - 1`;;
 let store_consts_stub_location_def = new_definition
   `stackLang_store_consts_stub_location = gc_stub_location - 1`;;
-(* HOL4 stackLangScript.sml:98-99: a theorem that HOL4 states as the
-   value of an ML expression: gc_stub_location_eq *)
-(* HOL4 stackLangScript.sml:100-101: a theorem that HOL4 states as
-   the value of an ML expression: store_consts_stub_location_eq *)
+(* HOL4 stackLangScript.sml:98-99: a theorem that HOL4 states as the value
+   of an ML expression: gc_stub_location_eq *)
+(* HOL4 stackLangScript.sml:100-101: a theorem that HOL4 states as the value
+   of an ML expression: store_consts_stub_location_eq *)
 
 (* and the interface *)
 let _ = unhide_overloads ();;

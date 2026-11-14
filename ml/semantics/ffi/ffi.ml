@@ -2,7 +2,7 @@
 (*  ffi: ported from HOL4's
     semantics/ffi/ffiScript.sml
     A definition theory, with 3 definitions, 10 datatypes and no
-    theorems.  Needed by 48 files of the port.  *)
+    theorems.  Needed by 46 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -41,10 +41,10 @@ let ffiname_INDUCT,ffiname_RECURSION = define_datatype
      ffi_ExtCall mlstring
    | ffi_SharedMem shmem_op";;
 
-(* HOL4 ffiScript.sml:31: the type abbreviation oracle_function,
-   which the port expands *)
-(* HOL4 ffiScript.sml:32: the type abbreviation oracle, which the
+(* HOL4 ffiScript.sml:31: the type abbreviation oracle_function, which the
    port expands *)
+(* HOL4 ffiScript.sml:32: the type abbreviation oracle, which the port
+   expands *)
 
 (* An I/O event, IO_event s bytes bytes2, represents the call of FFI function s with
  * immutable input bytes and mutable input map fst bytes2,
@@ -74,20 +74,19 @@ let ffi_result_INDUCT,ffi_result_RECURSION = define_datatype
 
 let call_FFI_def = new_definition
   `call_FFI (st:'ffi ffi_state) s conf bytes =
-     (if ~(s = ffi_ExtCall (implode "")) then
-       match ffi_state_oracle st s (ffi_state_ffi_state st) conf
-         bytes with
+     if ~(s = ffi_ExtCall (implode "")) then
+       match ffi_state_oracle st s (ffi_state_ffi_state st) conf bytes with
          Oracle_return ffi' bytes' ->
-           (if LENGTH bytes' = LENGTH bytes then
+           if LENGTH bytes' = LENGTH bytes then
              FFI_return
-               (ffi_state_io_events_fupd (K (APPEND
-                 (ffi_state_io_events
+               (ffi_state_io_events_fupd (K (APPEND (ffi_state_io_events
                     st) [IO_event s conf (ZIP bytes bytes')]))
                       (ffi_state_ffi_state_fupd (K ffi') st))
-               bytes' else FFI_final (Final_event s conf bytes
-                 FFI_failed)) | Oracle_final outcome ->
-         FFI_final (Final_event s conf bytes outcome) else
-           FFI_return st bytes)`;;
+               bytes'
+           else FFI_final (Final_event s conf bytes FFI_failed)
+       | Oracle_final outcome ->
+         FFI_final (Final_event s conf bytes outcome)
+     else FFI_return st bytes`;;
 
 let outcome_INDUCT,outcome_RECURSION = define_datatype
   "outcome =
@@ -117,11 +116,11 @@ let behaviour_INDUCT,behaviour_RECURSION = define_datatype
 
 let trace_oracle_def = new_definition
   `trace_oracle s io_trace conf input =
-     (match LHD io_trace with NONE -> Oracle_final FFI_failed | SOME
-       (IO_event s' conf' bytes2) ->
-       (if s = s' /\ MAP FST bytes2 = input /\ conf = conf' then
-         Oracle_return (THE (LTL io_trace)) (MAP SND bytes2) else
-           Oracle_final FFI_failed))`;;
+     match LHD io_trace with NONE -> Oracle_final FFI_failed
+     | SOME (IO_event s' conf' bytes2) ->
+       if s = s' /\ MAP FST bytes2 = input /\ conf = conf' then
+         Oracle_return (THE (LTL io_trace)) (MAP SND bytes2)
+       else Oracle_final FFI_failed`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

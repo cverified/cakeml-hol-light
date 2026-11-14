@@ -27,8 +27,8 @@ needs "misc/misc.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "word_cseProof"
-  ["reg_alloc"; "wordConvs"; "wordLang"; "wordProps"; "wordSem";
-   "word_cse"; "word_simp"];;
+  ["reg_alloc"; "wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_cse";
+   "word_simp"];;
 
 let _ = do_list hide_constant ["Greater"];;
 (* HOL4 ancestors outside the port: alist *)
@@ -49,52 +49,44 @@ let in_names_set_def = new_definition
 let wf_data_def = new_definition
   `wf_data (:'a) (data:knowledge) <=>
      (!r v.
-        balanced_map_lookup r (knowledge_to_canonical data) = SOME v
-          ==>
-        balanced_map_lookup v (knowledge_to_canonical data) = SOME v
-          /\ ODD r /\ ODD v) /\
+        balanced_map_lookup r (knowledge_to_canonical data) = SOME v ==>
+        balanced_map_lookup v (knowledge_to_canonical data) = SOME v /\ ODD
+          r /\ ODD v) /\
      (!r v.
         balanced_map_lookup r (knowledge_to_latest data) = SOME v ==>
         r IN domain (knowledge_to_canonical data) /\
         v IN domain (knowledge_to_canonical data)) /\
      (!k v.
-        balanced_map_lookup listCmp k (knowledge_instrs_mem data) =
-          SOME v ==>
-        balanced_map_lookup v (knowledge_to_canonical data) = SOME v)
-          /\
+        balanced_map_lookup listCmp k (knowledge_instrs_mem data) = SOME v
+          ==>
+        balanced_map_lookup v (knowledge_to_canonical data) = SOME v) /\
      (!(a:'a asm_arith) v.
         balanced_map_lookup listCmp (instToNumList (asm_Arith a))
           (knowledge_instrs_mem data) = SOME v ==>
-        in_names_set a (knowledge_to_canonical data) /\ can_mem_arith
-          a) /\
+        in_names_set a (knowledge_to_canonical data) /\ can_mem_arith a) /\
      (!op src v.
         balanced_map_lookup listCmp (OpCurrHeapToNumList op src)
           (knowledge_instrs_mem data) = SOME v ==>
-        balanced_map_lookup src (knowledge_to_canonical data) = SOME
-          src) /\
+        balanced_map_lookup src (knowledge_to_canonical data) = SOME src) /\
      (!x v.
         ALOOKUP (knowledge_gets_mem data) x = SOME v ==>
-        balanced_map_lookup v (knowledge_to_canonical data) = SOME v)
-          /\
+        balanced_map_lookup v (knowledge_to_canonical data) = SOME v) /\
      ALL_DISTINCT (MAP FST (knowledge_gets_mem data)) /\
      balanced_map_invariant listCmp (knowledge_instrs_mem data) /\
      (!k v.
-        balanced_map_lookup listCmp k (knowledge_loads_mem data) =
-          SOME v ==>
-        balanced_map_lookup v (knowledge_to_canonical data) = SOME v)
-          /\
+        balanced_map_lookup listCmp k (knowledge_loads_mem data) = SOME v
+          ==>
+        balanced_map_lookup v (knowledge_to_canonical data) = SOME v) /\
      (!op a (ofs:'a word) v.
         balanced_map_lookup listCmp (loadToNumList op a ofs)
           (knowledge_loads_mem data) = SOME v ==>
-        balanced_map_lookup a (knowledge_to_canonical data) = SOME a)
-          /\
+        balanced_map_lookup a (knowledge_to_canonical data) = SOME a) /\
      balanced_map_invariant listCmp (knowledge_loads_mem data)`;;
 
 let sem_inv_def = new_definition
   `sem_inv (data:knowledge) (s:('a,'c,'ffi)wordSem_state) <=>
      (!r v.
-        balanced_map_lookup r (knowledge_to_canonical data) = SOME v
-          ==>
+        balanced_map_lookup r (knowledge_to_canonical data) = SOME v ==>
         wordSem_get_var r s = wordSem_get_var v s) /\
      (!r v.
         balanced_map_lookup r (knowledge_to_latest data) = SOME v ==>
@@ -102,8 +94,8 @@ let sem_inv_def = new_definition
      (!n c v.
         balanced_map_lookup listCmp (instToNumList (asm_Const n c))
           (knowledge_instrs_mem data) = SOME v ==>
-        balanced_map_lookup v (wordSem_state_locals s) = SOME
-          (wordLang_Word c)) /\
+        balanced_map_lookup v (wordSem_state_locals s) = SOME (wordLang_Word
+          c)) /\
      (!(a:'a asm_arith) v.
         balanced_map_lookup listCmp (instToNumList (asm_Arith a))
           (knowledge_instrs_mem data) = SOME v ==>
@@ -117,48 +109,47 @@ let sem_inv_def = new_definition
           wordLang_Lookup CurrHeap]) = SOME w /\
             wordSem_get_var v s = SOME w)) /\
      (!l v.
-        balanced_map_lookup listCmp [48; l] (knowledge_instrs_mem
-          data) = SOME v ==>
-        balanced_map_lookup v (wordSem_state_locals s) = SOME
-          (wordLang_Loc l 0)) /\
+        balanced_map_lookup listCmp [48; l] (knowledge_instrs_mem data) =
+          SOME v ==>
+        balanced_map_lookup v (wordSem_state_locals s) = SOME (wordLang_Loc
+          l 0)) /\
      (!x v.
         ALOOKUP (knowledge_gets_mem data) x = SOME v ==>
-        (?w. FLOOKUP (wordSem_state_store s) x = SOME w
-          /\ wordSem_get_var v s = SOME w)) /\
+        (?w. FLOOKUP (wordSem_state_store s) x = SOME w /\ wordSem_get_var v
+          s = SOME w)) /\
      (!op a ofs v.
         ~(is_store op) /\
         balanced_map_lookup listCmp (loadToNumList op a ofs)
           (knowledge_loads_mem data) = SOME v ==>
         (?w. wordSem_get_var v s = SOME w /\
-            (!r. wordSem_evaluate (wordLang_Inst (asm_Mem op r
-              (Addr a ofs)),s) = (NONE,wordSem_set_var r w s))))`;;
+            (!r. wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
+              ofs)),s) = (NONE,wordSem_set_var r w s))))`;;
 
 let data_inv_def = new_definition
   `data_inv (data:knowledge) (s:('a,'c,'ffi)wordSem_state) <=>
      wf_data (:'a) data /\ sem_inv data s`;;
 
 let canonicalRegs_correct = prove
- (`!data r s. data_inv data s ==> wordSem_get_var (canonicalRegs data
-  r) s = wordSem_get_var r s`,
+ (`!data r s. data_inv data s ==> wordSem_get_var (canonicalRegs data r) s =
+  wordSem_get_var r s`,
   CHEAT_TAC);;
 add_simp canonicalRegs_correct;;
 
 let canonicalRegs'_correct = prove
- (`!a data r s. data_inv data s ==> wordSem_get_var (canonicalRegs' a
-  data r) s = wordSem_get_var r s`,
+ (`!a data r s. data_inv data s ==> wordSem_get_var (canonicalRegs' a data r)
+  s = wordSem_get_var r s`,
   CHEAT_TAC);;
 add_simp canonicalRegs'_correct;;
 
 let canonicalRegs_correct_bis = prove
- (`!data r s. data_inv data s ==> balanced_map_lookup (canonicalRegs
-  data r) (wordSem_state_locals s) = balanced_map_lookup r
-  (wordSem_state_locals s)`,
+ (`!data r s. data_inv data s ==> balanced_map_lookup (canonicalRegs data r)
+  (wordSem_state_locals s) = balanced_map_lookup r (wordSem_state_locals s)`,
   CHEAT_TAC);;
 add_simp canonicalRegs_correct_bis;;
 
 let canonicalArith_correct = prove
- (`!data s a. data_inv data s ==> wordSem_inst (asm_Arith
-  (canonicalArith data a)) s = wordSem_inst (asm_Arith a) s`,
+ (`!data s a. data_inv data s ==> wordSem_inst (asm_Arith (canonicalArith
+  data a)) s = wordSem_inst (asm_Arith a) s`,
   CHEAT_TAC);;
 add_simp canonicalArith_correct;;
 
@@ -178,8 +169,7 @@ let memOpToNum_eq = prove
 add_simp memOpToNum_eq;;
 
 let firstRegOfArith_canonicalArith = prove
- (`!data a. firstRegOfArith (canonicalArith data a) = firstRegOfArith
-  a`,
+ (`!data a. firstRegOfArith (canonicalArith data a) = firstRegOfArith a`,
   CHEAT_TAC);;
 add_simp firstRegOfArith_canonicalArith;;
 
@@ -191,8 +181,8 @@ let data_inv_locals = prove
 add_simp data_inv_locals;;
 
 let insert_eq = prove
- (`!(n1:num) n2 v1 v2 l. balanced_map_insert n1 v1 l =
-  balanced_map_insert n1 v2 l <=> v1 = v2`,
+ (`!(n1:num) n2 v1 v2 l. balanced_map_insert n1 v1 l = balanced_map_insert n1
+  v2 l <=> v1 = v2`,
   CHEAT_TAC);;
 
 (* A stored arith fact concerns a can_mem_arith shape, whose evaluation is
@@ -202,10 +192,9 @@ let insert_eq = prove
 let evaluate_arith_set_var = prove
  (`!a r u w s.
      can_mem_arith a /\ ~(MEM r (arithReads a)) ==>
-     (wordSem_evaluate (wordLang_Inst (asm_Arith a),wordSem_set_var r
-       u s) =
-        (NONE,wordSem_set_var (firstRegOfArith a) w (wordSem_set_var
-          r u s)) <=>
+     (wordSem_evaluate (wordLang_Inst (asm_Arith a),wordSem_set_var r u s) =
+        (NONE,wordSem_set_var (firstRegOfArith a) w (wordSem_set_var r u s))
+          <=>
       wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
         (NONE,wordSem_set_var (firstRegOfArith a) w s))`,
   CHEAT_TAC);;
@@ -217,10 +206,10 @@ let evaluate_arith_set_var = prove
 let evaluate_load_any_dest = prove
  (`!op r0 a ofs w s r.
      ~(is_store op) /\
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r0 (Addr a ofs)),s)
-       = (NONE,wordSem_set_var r0 w s) ==>
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s)
-       = (NONE,wordSem_set_var r w s)`,
+     wordSem_evaluate (wordLang_Inst (asm_Mem op r0 (Addr a ofs)),s) =
+       (NONE,wordSem_set_var r0 w s) ==>
+     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
+       (NONE,wordSem_set_var r w s)`,
   CHEAT_TAC);;
 
 (* A load reads its address register, the memory fields and be; the
@@ -232,8 +221,8 @@ let evaluate_load_set_var = prove
      (wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
        ofs)),wordSem_set_var n u s) =
         (NONE,wordSem_set_var r w (wordSem_set_var n u s)) <=>
-      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
-        ofs)),s) = (NONE,wordSem_set_var r w s))`,
+      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
+        (NONE,wordSem_set_var r w s))`,
   CHEAT_TAC);;
 
 (* A load's address register may be replaced by any register holding the
@@ -243,12 +232,12 @@ let evaluate_load_set_var = prove
 let evaluate_load_change_addr = prove
  (`!op r a a' ofs w (s:('a,'c,'ffi)wordSem_state).
      ~(is_store op) /\
-     balanced_map_lookup a' (wordSem_state_locals s) =
-       balanced_map_lookup a (wordSem_state_locals s) /\
+     balanced_map_lookup a' (wordSem_state_locals s) = balanced_map_lookup a
+       (wordSem_state_locals s) /\
      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
        (NONE,wordSem_set_var r w s) ==>
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a'
-       ofs)),s) = (NONE,wordSem_set_var r w s)`,
+     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a' ofs)),s) =
+       (NONE,wordSem_set_var r w s)`,
   CHEAT_TAC);;
 
 (* A storable arith instruction reads and writes registers only; its
@@ -269,14 +258,14 @@ let evaluate_arith_memory = prove
    to_canonical, so an untracked register is unmentioned. *)
 let wf_data_untracked = prove
  (`!data n.
-     wf_data (:'a) data /\ sptree_lookup n (knowledge_to_canonical
-       data) = NONE ==>
-     (!r v. balanced_map_lookup r (knowledge_to_canonical data) =
-       SOME v ==> ~(r = n) /\ ~(v = n)) /\
-     (!r v. balanced_map_lookup r (knowledge_to_latest data) = SOME v
-       ==> ~(r = n) /\ ~(v = n)) /\
-     (!k v. balanced_map_lookup listCmp k (knowledge_instrs_mem data)
-       = SOME v ==> ~(v = n)) /\
+     wf_data (:'a) data /\ sptree_lookup n (knowledge_to_canonical data) =
+       NONE ==>
+     (!r v. balanced_map_lookup r (knowledge_to_canonical data) = SOME v ==>
+       ~(r = n) /\ ~(v = n)) /\
+     (!r v. balanced_map_lookup r (knowledge_to_latest data) = SOME v ==>
+       ~(r = n) /\ ~(v = n)) /\
+     (!k v. balanced_map_lookup listCmp k (knowledge_instrs_mem data) = SOME
+       v ==> ~(v = n)) /\
      (!(a:'a asm_arith) v.
         balanced_map_lookup listCmp (instToNumList (asm_Arith a))
           (knowledge_instrs_mem data) = SOME v ==>
@@ -284,10 +273,9 @@ let wf_data_untracked = prove
      (!op src v.
         balanced_map_lookup listCmp (OpCurrHeapToNumList op src)
           (knowledge_instrs_mem data) = SOME v ==> ~(src = n)) /\
-     (!x v. ALOOKUP (knowledge_gets_mem data) x = SOME v ==> ~(v =
-       n)) /\
-     (!k v. balanced_map_lookup listCmp k (knowledge_loads_mem data)
-       = SOME v ==> ~(v = n)) /\
+     (!x v. ALOOKUP (knowledge_gets_mem data) x = SOME v ==> ~(v = n)) /\
+     (!k v. balanced_map_lookup listCmp k (knowledge_loads_mem data) = SOME
+       v ==> ~(v = n)) /\
      (!op a (ofs:'a word) v.
         balanced_map_lookup listCmp (loadToNumList op a ofs)
           (knowledge_loads_mem data) = SOME v ==> ~(a = n))`,
@@ -305,10 +293,9 @@ let data_inv_set_var = prove
 let evaluate_arith_unset_var = prove
  (`!a r w (s:('a,'c,'ffi)wordSem_state).
      can_mem_arith a /\ ~(MEM r (arithReads a)) ==>
-     (wordSem_evaluate (wordLang_Inst (asm_Arith a),wordSem_unset_var
-       r s) =
-        (NONE,wordSem_set_var (firstRegOfArith a) w
-          (wordSem_unset_var r s)) <=>
+     (wordSem_evaluate (wordLang_Inst (asm_Arith a),wordSem_unset_var r s) =
+        (NONE,wordSem_set_var (firstRegOfArith a) w (wordSem_unset_var r s))
+          <=>
       wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
         (NONE,wordSem_set_var (firstRegOfArith a) w s))`,
   CHEAT_TAC);;
@@ -320,8 +307,8 @@ let evaluate_load_unset_var = prove
      (wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
        ofs)),wordSem_unset_var n s) =
         (NONE,wordSem_set_var r w (wordSem_unset_var n s)) <=>
-      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
-        ofs)),s) = (NONE,wordSem_set_var r w s))`,
+      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
+        (NONE,wordSem_set_var r w s))`,
   CHEAT_TAC);;
 
 let data_inv_unset_var = prove
@@ -334,8 +321,8 @@ let not_seen_data_inv_alist_insert = prove
  (`!data s l r v.
      sptree_lookup r (knowledge_to_canonical data) = NONE ==>
      data_inv data (wordSem_state_locals_fupd (K l) s) ==>
-     data_inv data (wordSem_state_locals_fupd (K
-       (balanced_map_insert r v l)) s)`,
+     data_inv data (wordSem_state_locals_fupd (K (balanced_map_insert r v
+       l)) s)`,
   CHEAT_TAC);;
 add_simp not_seen_data_inv_alist_insert;;
 
@@ -348,8 +335,8 @@ let antisym_listCmp = prove
   CHEAT_TAC);;
 
 let transit_listCmp = prove
- (`!x y z. listCmp x y = asm_Less /\ listCmp y z = asm_Less ==>
-  listCmp x z = asm_Less`,
+ (`!x y z. listCmp x y = asm_Less /\ listCmp y z = asm_Less ==> listCmp x z =
+  asm_Less`,
   CHEAT_TAC);;
 
 let TotOrd_listCmp = prove
@@ -383,8 +370,8 @@ add_simp invariant_listCmp_empty;;
 let data_inv_memory = prove
  (`!data s m.
      data_inv data s ==>
-     data_inv (knowledge_loads_mem_fupd (K balanced_map_empty)
-       data) (wordSem_state_memory_fupd (K m) s)`,
+     data_inv (knowledge_loads_mem_fupd (K balanced_map_empty) data)
+       (wordSem_state_memory_fupd (K m) s)`,
   CHEAT_TAC);;
 
 (* A storable arith instruction reads and writes locals only; its evaluation
@@ -394,8 +381,8 @@ let evaluate_arith_agree = prove
  (`!a w (s1:('a,'c,'ffi)wordSem_state) (s2:('a,'c,'ffi)wordSem_state).
      wordSem_evaluate (wordLang_Inst (asm_Arith a),s1) =
        (NONE,wordSem_set_var (firstRegOfArith a) w s1) /\
-     can_mem_arith a /\ wordSem_state_locals s2 =
-       wordSem_state_locals s1 ==>
+     can_mem_arith a /\ wordSem_state_locals s2 = wordSem_state_locals s1
+       ==>
      wordSem_evaluate (wordLang_Inst (asm_Arith a),s2) =
        (NONE,wordSem_set_var (firstRegOfArith a) w s2)`,
   CHEAT_TAC);;
@@ -404,17 +391,16 @@ let evaluate_arith_agree = prove
    evaluation equation transports to any state agreeing on those. *)
 (* [local] *)
 let evaluate_load_agree = prove
- (`!op r a ofs w (s1:('a,'c,'ffi)wordSem_state)
-  (s2:('a,'c,'ffi)wordSem_state).
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s1)
-       = (NONE,wordSem_set_var r w s1) /\
-     ~(is_store op) /\ wordSem_state_locals s2 = wordSem_state_locals
-       s1 /\ wordSem_state_memory s2 = wordSem_state_memory s1
+ (`!op r a ofs w (s1:('a,'c,'ffi)wordSem_state) (s2:('a,'c,'ffi)wordSem_state).
+     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s1) =
+       (NONE,wordSem_set_var r w s1) /\
+     ~(is_store op) /\ wordSem_state_locals s2 = wordSem_state_locals s1
+       /\ wordSem_state_memory s2 = wordSem_state_memory s1
        /\ wordSem_state_mdomain
-     s2 = wordSem_state_mdomain s1 /\ wordSem_state_be s2 =
-       wordSem_state_be s1 ==>
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
-       ofs)),s2) = (NONE,wordSem_set_var r w s2)`,
+     s2 = wordSem_state_mdomain s1 /\ wordSem_state_be s2 = wordSem_state_be
+       s1 ==>
+     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s2) =
+       (NONE,wordSem_set_var r w s2)`,
   CHEAT_TAC);;
 
 (* The generic state-agreement transport: the whole invariant depends only
@@ -424,10 +410,10 @@ let data_inv_state_agree = prove
  (`!data (s1:('a,'c,'ffi)wordSem_state) (s2:('a,'c,'ffi)wordSem_state).
      data_inv data s1 /\ wordSem_state_locals
      s2 = wordSem_state_locals s1 /\ wordSem_state_store s2 =
-       wordSem_state_store s1 /\ wordSem_state_memory s2 =
-       wordSem_state_memory s1 /\ wordSem_state_mdomain
-     s2 = wordSem_state_mdomain s1 /\ wordSem_state_be s2 =
-       wordSem_state_be s1 ==>
+       wordSem_state_store s1 /\ wordSem_state_memory s2 = wordSem_state_memory
+       s1 /\ wordSem_state_mdomain
+     s2 = wordSem_state_mdomain s1 /\ wordSem_state_be s2 = wordSem_state_be
+       s1 ==>
      data_inv data s2`,
   CHEAT_TAC);;
 
@@ -437,27 +423,28 @@ let data_inv_state_agree = prove
    are present with an equal value in m2; characterised pointwise on to_fmap. *)
 let bm_inter_eq_acc_thm = prove
  (`!m2 m1 acc.
-     balanced_map_invariant listCmp m2 /\ balanced_map_invariant
-       listCmp m1 /\ balanced_map_invariant listCmp acc ==>
+     balanced_map_invariant listCmp m2 /\ balanced_map_invariant listCmp m1
+       /\ balanced_map_invariant listCmp acc ==>
      balanced_map_invariant listCmp (bm_inter_eq_acc m2 m1 acc) /\
      (!ks. FLOOKUP (to_fmap listCmp (bm_inter_eq_acc m2 m1 acc)) ks =
-          (match FLOOKUP (to_fmap listCmp m1) ks with NONE ->
-            FLOOKUP (to_fmap listCmp acc) ks | SOME v -> (if FLOOKUP
-            (to_fmap listCmp m2) ks = SOME v then SOME v else FLOOKUP
-            (to_fmap listCmp acc) ks)))`,
+          (match FLOOKUP (to_fmap listCmp m1) ks with NONE -> FLOOKUP
+            (to_fmap listCmp acc) ks
+          | SOME v -> if FLOOKUP (to_fmap listCmp m2) ks = SOME v then SOME
+            v
+                      else FLOOKUP (to_fmap listCmp acc) ks))`,
   CHEAT_TAC);;
 
 let invariant_bm_inter_eq = prove
  (`!m1 m2.
-     balanced_map_invariant listCmp m1 /\ balanced_map_invariant
-       listCmp m2 ==>
+     balanced_map_invariant listCmp m1 /\ balanced_map_invariant listCmp m2
+       ==>
      balanced_map_invariant listCmp (bm_inter_eq m1 m2)`,
   CHEAT_TAC);;
 
 let lookup_bm_inter_eq = prove
  (`!m1 m2 k v.
-     balanced_map_invariant listCmp m1 /\ balanced_map_invariant
-       listCmp m2 ==>
+     balanced_map_invariant listCmp m1 /\ balanced_map_invariant listCmp m2
+       ==>
      (balanced_map_lookup listCmp k (bm_inter_eq m1 m2) = SOME v <=>
       balanced_map_lookup listCmp k m1 = SOME v /\
       balanced_map_lookup listCmp k m2 = SOME v)`,
@@ -465,8 +452,7 @@ let lookup_bm_inter_eq = prove
 
 (* [local] *)
 let ALL_DISTINCT_MAP_FST_FILTER = prove
- (`!l P. ALL_DISTINCT (MAP FST l) ==> ALL_DISTINCT (MAP FST (FILTER P
-  l))`,
+ (`!l P. ALL_DISTINCT (MAP FST l) ==> ALL_DISTINCT (MAP FST (FILTER P l))`,
   CHEAT_TAC);;
 
 (* A merged fact is present (with equal value) in both branches' data; its
@@ -495,10 +481,8 @@ let data_inv_merge_r = prove
 let lookup_insert_listCmp = prove
  (`!k i v m.
      balanced_map_invariant listCmp m ==>
-     balanced_map_invariant listCmp (balanced_map_insert listCmp i v
-       m) /\
-     balanced_map_lookup listCmp k (balanced_map_insert listCmp i v
-       m) =
+     balanced_map_invariant listCmp (balanced_map_insert listCmp i v m) /\
+     balanced_map_lookup listCmp k (balanced_map_insert listCmp i v m) =
      (if k = i then SOME v else balanced_map_lookup listCmp k m)`,
   CHEAT_TAC);;
 
@@ -506,10 +490,8 @@ let register_read_simps = prove
  (`knowledge_instrs_mem
      (register_read data r) = knowledge_instrs_mem data
        /\ knowledge_to_latest
-     (register_read data r) = knowledge_to_latest data
-       /\ knowledge_gets_mem
-     (register_read data r) = knowledge_gets_mem data
-       /\ knowledge_loads_mem
+     (register_read data r) = knowledge_to_latest data /\ knowledge_gets_mem
+     (register_read data r) = knowledge_gets_mem data /\ knowledge_loads_mem
      (register_read data r) = knowledge_loads_mem data`,
   CHEAT_TAC);;
 add_simp register_read_simps;;
@@ -528,18 +510,16 @@ add_simp register_reads_simps;;
 
 let lookup_register_read = prove
  (`sptree_lookup x (knowledge_to_canonical (register_read data r)) =
-   (if x = r /\ ~(EVEN r) /\ sptree_lookup r
-     (knowledge_to_canonical data) = NONE then SOME r else
-     sptree_lookup x (knowledge_to_canonical data))`,
+   if x = r /\ ~(EVEN r) /\ sptree_lookup r (knowledge_to_canonical data)
+     = NONE then SOME r else sptree_lookup x (knowledge_to_canonical data)`,
   CHEAT_TAC);;
 
 let lookup_register_reads = prove
  (`!rs data x.
-     sptree_lookup x (knowledge_to_canonical (register_reads data
-       rs)) =
-     (if MEM x rs /\ ~(EVEN x) /\ sptree_lookup x
-       (knowledge_to_canonical data) = NONE then SOME x else
-       sptree_lookup x (knowledge_to_canonical data))`,
+     sptree_lookup x (knowledge_to_canonical (register_reads data rs)) =
+     if MEM x rs /\ ~(EVEN x) /\ sptree_lookup x (knowledge_to_canonical
+       data) = NONE then SOME x else sptree_lookup x (knowledge_to_canonical
+       data)`,
   CHEAT_TAC);;
 
 (* Extending to_canonical with a fresh key mapped to itself or to an
@@ -549,12 +529,12 @@ let data_inv_insert_to_canonical = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) x y.
      data_inv data s /\
      sptree_lookup x (knowledge_to_canonical data) = NONE /\
-     sptree_lookup y (balanced_map_insert x y (knowledge_to_canonical
-       data)) = SOME y /\
+     sptree_lookup y (balanced_map_insert x y (knowledge_to_canonical data))
+       = SOME y /\
      ODD x /\ ODD y /\
      wordSem_get_var x s = wordSem_get_var y s ==>
-     data_inv (knowledge_to_canonical_fupd (K (balanced_map_insert
-       x y (knowledge_to_canonical data))) data) s`,
+     data_inv (knowledge_to_canonical_fupd (K (balanced_map_insert x y
+       (knowledge_to_canonical data))) data) s`,
   CHEAT_TAC);;
 
 (* to_latest entries only require domain membership and agreeing values. *)
@@ -576,8 +556,8 @@ let data_inv_insert_gets = prove
      data_inv data s /\
      sptree_lookup v (knowledge_to_canonical data) = NONE /\ ODD v /\
      ALOOKUP (knowledge_gets_mem data) name = NONE /\
-     FLOOKUP (wordSem_state_store s) name = SOME w /\ wordSem_get_var
-       v s = SOME w ==>
+     FLOOKUP (wordSem_state_store s) name = SOME w /\ wordSem_get_var v s =
+       SOME w ==>
      data_inv (knowledge_gets_mem_fupd (K (CONS (name,v)
        (knowledge_gets_mem data))) (knowledge_to_latest_fupd (K
        (balanced_map_insert v v (knowledge_to_latest data)))
@@ -590,8 +570,8 @@ let data_inv_insert_gets = prove
 let data_inv_filter_gets = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) x.
      data_inv data s ==>
-     data_inv (knowledge_gets_mem_fupd (K (FILTER (\(m,n). ~(m =
-       x)) (knowledge_gets_mem data))) data) s`,
+     data_inv (knowledge_gets_mem_fupd (K (FILTER (\(m,n). ~(m = x))
+       (knowledge_gets_mem data))) data) s`,
   CHEAT_TAC);;
 
 (* Record a true store fact about an already-tracked register.  Matches the
@@ -602,18 +582,18 @@ let data_inv_cons_gets = prove
      data_inv data s /\
      ALOOKUP (knowledge_gets_mem data) x = NONE /\
      sptree_lookup h (knowledge_to_canonical data) = SOME h /\
-     FLOOKUP (wordSem_state_store s) x = SOME w /\ wordSem_get_var h
-       s = SOME w ==>
-     data_inv (knowledge_gets_mem_fupd (K (CONS (x,h)
-       (knowledge_gets_mem data))) data) s`,
+     FLOOKUP (wordSem_state_store s) x = SOME w /\ wordSem_get_var h s =
+       SOME w ==>
+     data_inv (knowledge_gets_mem_fupd (K (CONS (x,h) (knowledge_gets_mem
+       data))) data) s`,
   CHEAT_TAC);;
 
 (* A store write to a name no fact mentions preserves the invariant: only
    the OpCurrHeap clause (CurrHeap) and the gets clauses read the store. *)
 let data_inv_set_store = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) x w.
-     data_inv data s /\ ~(x = CurrHeap) /\ ALOOKUP
-       (knowledge_gets_mem data) x = NONE ==>
+     data_inv data s /\ ~(x = CurrHeap) /\ ALOOKUP (knowledge_gets_mem data)
+       x = NONE ==>
      data_inv data (wordSem_set_store x w s)`,
   CHEAT_TAC);;
 
@@ -625,8 +605,7 @@ let data_inv_reinsert_canonical = prove
      data_inv data s /\ ODD v ==>
      data_inv (knowledge_to_canonical_fupd (K
                  (balanced_map_insert v (lookup_any v
-                   (knowledge_to_canonical data) v)
-                   (knowledge_to_canonical
+                   (knowledge_to_canonical data) v) (knowledge_to_canonical
                    data))) data) s`,
   CHEAT_TAC);;
 
@@ -656,16 +635,16 @@ let data_inv_register_reads = prove
 let lookup_invalidate_regs_mono = prove
  (`!ws data r.
      sptree_lookup r (knowledge_to_canonical data) = NONE ==>
-     sptree_lookup r (knowledge_to_canonical (invalidate_regs data
-       ws)) = NONE`,
+     sptree_lookup r (knowledge_to_canonical (invalidate_regs data ws)) =
+       NONE`,
   CHEAT_TAC);;
 
 (* [local] *)
 let lookup_invalidate_regs = prove
  (`!ws data r.
      MEM r ws ==>
-     sptree_lookup r (knowledge_to_canonical (invalidate_regs data
-       ws)) = NONE`,
+     sptree_lookup r (knowledge_to_canonical (invalidate_regs data ws)) =
+       NONE`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -690,18 +669,16 @@ let with_locals_insert = prove
 (* [local] *)
 let data_inv_alist_insert_locals = prove
  (`!xs ys data (s:('a,'c,'ffi)wordSem_state) l.
-     ALL (\x. sptree_lookup x (knowledge_to_canonical data) = NONE)
-       xs ==>
-     (data_inv data (wordSem_state_locals_fupd (K (alist_insert xs ys
-       l)) s) <=>
+     ALL (\x. sptree_lookup x (knowledge_to_canonical data) = NONE) xs ==>
+     (data_inv data (wordSem_state_locals_fupd (K (alist_insert xs ys l)) s)
+       <=>
       data_inv data (wordSem_state_locals_fupd (K l) s))`,
   CHEAT_TAC);;
 
 (* data_inv is insensitive to writes to untracked registers. *)
 let data_inv_set_vars = prove
  (`!xs ys data (s:('a,'c,'ffi)wordSem_state).
-     ALL (\x. sptree_lookup x (knowledge_to_canonical data) = NONE)
-       xs ==>
+     ALL (\x. sptree_lookup x (knowledge_to_canonical data) = NONE) xs ==>
      (data_inv data (wordSem_set_vars xs ys s) <=> data_inv data s)`,
   CHEAT_TAC);;
 
@@ -742,12 +719,11 @@ let data_inv_insert_instrs_Const = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) r n (w:'a word).
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = SOME r /\
-     balanced_map_lookup r (wordSem_state_locals s) = SOME
-       (wordLang_Word w) ==>
+     balanced_map_lookup r (wordSem_state_locals s) = SOME (wordLang_Word w)
+       ==>
      data_inv (knowledge_instrs_mem_fupd (K
-                 (balanced_map_insert listCmp (instToNumList
-                   (asm_Const n w)) r (knowledge_instrs_mem data)))
-                   data) s`,
+                 (balanced_map_insert listCmp (instToNumList (asm_Const n
+                   w)) r (knowledge_instrs_mem data))) data) s`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -755,15 +731,13 @@ let data_inv_insert_instrs_Arith = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) r (a:'a asm_arith) w.
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = SOME r /\
-     can_mem_arith a /\ in_names_set a (knowledge_to_canonical data)
-       /\
+     can_mem_arith a /\ in_names_set a (knowledge_to_canonical data) /\
      wordSem_get_var r s = SOME w /\
      wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
        (NONE,wordSem_set_var (firstRegOfArith a) w s) ==>
      data_inv (knowledge_instrs_mem_fupd (K
-                 (balanced_map_insert listCmp (instToNumList
-                   (asm_Arith a)) r (knowledge_instrs_mem data)))
-                   data) s`,
+                 (balanced_map_insert listCmp (instToNumList (asm_Arith
+                   a)) r (knowledge_instrs_mem data))) data) s`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -772,12 +746,12 @@ let data_inv_insert_instrs_OpCurrHeap = prove
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = SOME r /\
      sptree_lookup src (knowledge_to_canonical data) = SOME src /\
-     wordSem_word_exp s (wordLang_Op op [wordLang_Var src;
-       wordLang_Lookup CurrHeap]) = SOME w /\
+     wordSem_word_exp s (wordLang_Op op [wordLang_Var src; wordLang_Lookup
+       CurrHeap]) = SOME w /\
      wordSem_get_var r s = SOME w ==>
      data_inv (knowledge_instrs_mem_fupd (K
-                 (balanced_map_insert listCmp (OpCurrHeapToNumList
-                   op src) r (knowledge_instrs_mem data))) data) s`,
+                 (balanced_map_insert listCmp (OpCurrHeapToNumList op src)
+                   r (knowledge_instrs_mem data))) data) s`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -785,8 +759,8 @@ let data_inv_insert_instrs_LocValue = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) r l.
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = SOME r /\
-     balanced_map_lookup r (wordSem_state_locals s) = SOME
-       (wordLang_Loc l 0) ==>
+     balanced_map_lookup r (wordSem_state_locals s) = SOME (wordLang_Loc l
+       0) ==>
      data_inv (knowledge_instrs_mem_fupd (K
                  (balanced_map_insert listCmp [48; l] r
                    (knowledge_instrs_mem data))) data) s`,
@@ -802,20 +776,18 @@ let add_to_data_aux_correct = prove
      sptree_lookup r (knowledge_to_canonical data) = NONE /\
      add_to_data_aux data r i p = (data',p') /\
      wordSem_evaluate (p,s) = (NONE,wordSem_set_var r w s) /\
-     (!v. balanced_map_lookup listCmp i (knowledge_instrs_mem data) =
-       SOME v ==>
+     (!v. balanced_map_lookup listCmp i (knowledge_instrs_mem data) = SOME v
+       ==>
           wordSem_get_var v s = SOME w) /\
      (~(EVEN r) ==>
         data_inv (
                   knowledge_instrs_mem_fupd (K
-                    (balanced_map_insert listCmp i r
-                      (knowledge_instrs_mem
+                    (balanced_map_insert listCmp i r (knowledge_instrs_mem
                       (knowledge_to_canonical_fupd (K
-                         (balanced_map_insert r r
-                           (knowledge_to_canonical data))) data))))
-                           (knowledge_to_canonical_fupd (K
-                           (balanced_map_insert r r
-                           (knowledge_to_canonical data))) data))
+                         (balanced_map_insert r r (knowledge_to_canonical
+                           data))) data)))) (knowledge_to_canonical_fupd (K
+                           (balanced_map_insert r r (knowledge_to_canonical
+                           data))) data))
                  (wordSem_set_var r w s)) ==>
      wordSem_evaluate (p',s) = (NONE,wordSem_set_var r w s) /\
      data_inv data' (wordSem_set_var r w s)`,
@@ -827,11 +799,10 @@ let add_to_data_aux_correct = prove
 let canonicalRegs_self_or_fresh = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) x.
      data_inv data s ==>
-     sptree_lookup (canonicalRegs data x) (knowledge_to_canonical
-       data) =
+     sptree_lookup (canonicalRegs data x) (knowledge_to_canonical data) =
        SOME (canonicalRegs data x) \/
-     sptree_lookup (canonicalRegs data x) (knowledge_to_canonical
-       data) = NONE`,
+     sptree_lookup (canonicalRegs data x) (knowledge_to_canonical data) =
+       NONE`,
   CHEAT_TAC);;
 
 (* The avoiding variant only differs when the canonical representative is
@@ -840,13 +811,13 @@ let canonicalRegs_self_or_fresh = prove
 (* [local] *)
 let canonicalRegs'_self_or_fresh = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) r1 x.
-     data_inv data s /\ sptree_lookup r1 (knowledge_to_canonical
-       data) = NONE ==>
-     sptree_lookup (canonicalRegs' r1 data x) (knowledge_to_canonical
-       data) =
+     data_inv data s /\ sptree_lookup r1 (knowledge_to_canonical data) =
+       NONE ==>
+     sptree_lookup (canonicalRegs' r1 data x) (knowledge_to_canonical data)
+       =
        SOME (canonicalRegs' r1 data x) \/
-     sptree_lookup (canonicalRegs' r1 data x)
-       (knowledge_to_canonical data) = NONE`,
+     sptree_lookup (canonicalRegs' r1 data x) (knowledge_to_canonical
+       data) = NONE`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -862,11 +833,10 @@ let can_mem_arith_ODD_reads = prove
 let add_to_data_const_correct = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) r (w:'a word) data' p'.
      data_inv data s /\
-     sptree_lookup r (knowledge_to_canonical data) = NONE /\ ~(EVEN
-       r) /\
+     sptree_lookup r (knowledge_to_canonical data) = NONE /\ ~(EVEN r) /\
      add_to_data_const data r w = (data',p') ==>
-     wordSem_evaluate (p',s) = (NONE,wordSem_set_var r (wordLang_Word
-       w) s) /\
+     wordSem_evaluate (p',s) = (NONE,wordSem_set_var r (wordLang_Word w) s)
+       /\
      data_inv data' (wordSem_set_var r (wordLang_Word w) s)`,
   CHEAT_TAC);;
 
@@ -875,10 +845,9 @@ let add_to_data_LocValue_correct = prove
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = NONE /\
      l IN domain (wordSem_state_code s) /\
-     add_to_data_aux data r [48; l] (wordLang_LocValue r l) =
-       (data',p') ==>
-     wordSem_evaluate (p',s) = (NONE,wordSem_set_var r (wordLang_Loc
-       l 0) s) /\
+     add_to_data_aux data r [48; l] (wordLang_LocValue r l) = (data',p') ==>
+     wordSem_evaluate (p',s) = (NONE,wordSem_set_var r (wordLang_Loc l 0) s)
+       /\
      data_inv data' (wordSem_set_var r (wordLang_Loc l 0) s)`,
   CHEAT_TAC);;
 
@@ -888,10 +857,9 @@ let add_to_data_OpCurrHeap_correct = prove
      sptree_lookup r1 (knowledge_to_canonical data) = NONE /\
      r2' = canonicalRegs' r1 data r2 /\
      ~(EVEN r2) /\ ~(r2 = r1) /\
-     wordSem_word_exp s (wordLang_Op b [wordLang_Var r2;
-       wordLang_Lookup CurrHeap]) = SOME w /\
-     add_to_data_aux (register_read data r2') r1 (OpCurrHeapToNumList
-       b r2')
+     wordSem_word_exp s (wordLang_Op b [wordLang_Var r2; wordLang_Lookup
+       CurrHeap]) = SOME w /\
+     add_to_data_aux (register_read data r2') r1 (OpCurrHeapToNumList b r2')
        (wordLang_OpCurrHeap b r1 r2) = (data',p') ==>
      wordSem_evaluate (p',s) = (NONE,wordSem_set_var r1 w s) /\
      data_inv data' (wordSem_set_var r1 w s)`,
@@ -906,8 +874,8 @@ let add_to_data_Arith_correct = prove
      r = firstRegOfArith a /\
      wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
        (NONE,wordSem_set_var r w s) /\
-     add_to_data (register_reads data (arithReads a')) r (asm_Arith
-       a') (asm_Arith a) = (data',p') ==>
+     add_to_data (register_reads data (arithReads a')) r (asm_Arith a')
+       (asm_Arith a) = (data',p') ==>
      wordSem_evaluate (p',s) = (NONE,wordSem_set_var r w s) /\
      data_inv data' (wordSem_set_var r w s)`,
   CHEAT_TAC);;
@@ -923,11 +891,11 @@ let data_inv_insert_loads = prove
      sptree_lookup a (knowledge_to_canonical data) = SOME a /\
      ~(is_store op) /\
      wordSem_get_var r s = SOME w /\
-     (!r'. wordSem_evaluate (wordLang_Inst (asm_Mem op r' (Addr a
-       ofs)),s) = (NONE,wordSem_set_var r' w s)) ==>
+     (!r'. wordSem_evaluate (wordLang_Inst (asm_Mem op r' (Addr a ofs)),s) =
+       (NONE,wordSem_set_var r' w s)) ==>
      data_inv (knowledge_loads_mem_fupd (K
-                 (balanced_map_insert listCmp (loadToNumList op a
-                   ofs) r (knowledge_loads_mem data))) data) s`,
+                 (balanced_map_insert listCmp (loadToNumList op a ofs) r
+                   (knowledge_loads_mem data))) data) s`,
   CHEAT_TAC);;
 
 (* Generic correctness of add_to_load_aux — the loads_mem mirror of
@@ -938,20 +906,18 @@ let add_to_load_aux_correct = prove
      sptree_lookup r (knowledge_to_canonical data) = NONE /\
      add_to_load_aux data r i p = (data',p') /\
      wordSem_evaluate (p,s) = (NONE,wordSem_set_var r w s) /\
-     (!v. balanced_map_lookup listCmp i (knowledge_loads_mem data) =
-       SOME v ==>
+     (!v. balanced_map_lookup listCmp i (knowledge_loads_mem data) = SOME v
+       ==>
           wordSem_get_var v s = SOME w) /\
      (~(EVEN r) ==>
         data_inv (
                   knowledge_loads_mem_fupd (K
-                    (balanced_map_insert listCmp i r
-                      (knowledge_loads_mem
+                    (balanced_map_insert listCmp i r (knowledge_loads_mem
                       (knowledge_to_canonical_fupd (K
-                         (balanced_map_insert r r
-                           (knowledge_to_canonical data))) data))))
-                           (knowledge_to_canonical_fupd (K
-                           (balanced_map_insert r r
-                           (knowledge_to_canonical data))) data))
+                         (balanced_map_insert r r (knowledge_to_canonical
+                           data))) data)))) (knowledge_to_canonical_fupd (K
+                           (balanced_map_insert r r (knowledge_to_canonical
+                           data))) data))
                  (wordSem_set_var r w s)) ==>
      wordSem_evaluate (p',s) = (NONE,wordSem_set_var r w s) /\
      data_inv data' (wordSem_set_var r w s)`,
@@ -960,16 +926,14 @@ let add_to_load_aux_correct = prove
 (* The instantiation of add_to_load_aux_correct at the word_cseInst Mem-arm
    call site. *)
 let add_to_load_correct = prove
- (`!data (s:('a,'c,'ffi)wordSem_state) op r a a' (ofs:'a word) w data'
-  p'.
+ (`!data (s:('a,'c,'ffi)wordSem_state) op r a a' (ofs:'a word) w data' p'.
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = NONE /\
      a' = canonicalRegs' r data a /\
      ~(is_store op) /\ ~(EVEN r) /\ ~(EVEN a) /\ ~(a = r) /\
      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
        (NONE,wordSem_set_var r w s) /\
-     add_to_load_aux (register_read data a') r (loadToNumList op a'
-       ofs)
+     add_to_load_aux (register_read data a') r (loadToNumList op a' ofs)
        (wordLang_Inst (asm_Mem op r (Addr a ofs))) = (data',p') ==>
      wordSem_evaluate (p',s) = (NONE,wordSem_set_var r w s) /\
      data_inv data' (wordSem_set_var r w s)`,
@@ -977,23 +941,22 @@ let add_to_load_correct = prove
 
 (* [local] *)
 let MAP_FST_lemma = prove
- (`!moves. MAP FST (MAP (\(a,b). (a,canonicalRegs data b)) moves) =
-  MAP FST moves`,
+ (`!moves. MAP FST (MAP (\(a,b). (a,canonicalRegs data b)) moves) = MAP FST
+  moves`,
   CHEAT_TAC);;
 
 (* [local] *)
 let MAP_SND_lemma = prove
  (`!moves x.
-     wordSem_get_vars (MAP SND moves) s = SOME x /\ data_inv data s
-       ==>
-     wordSem_get_vars (MAP SND (MAP (\(a,b). (a,canonicalRegs data
-       b)) moves)) s = SOME x`,
+     wordSem_get_vars (MAP SND moves) s = SOME x /\ data_inv data s ==>
+     wordSem_get_vars (MAP SND (MAP (\(a,b). (a,canonicalRegs data b))
+       moves)) s = SOME x`,
   CHEAT_TAC);;
 
 let lookup_map_insert0 = prove
  (`!xs r. balanced_map_lookup r (map_insert xs m) =
-          (match ALOOKUP xs r with NONE -> balanced_map_lookup r m
-            | SOME r' -> SOME r')`,
+          match ALOOKUP xs r with NONE -> balanced_map_lookup r m | SOME
+            r' -> SOME r'`,
   CHEAT_TAC);;
 
 let get_set_vars_lemma = prove
@@ -1005,8 +968,8 @@ let get_set_vars_lemma = prove
 
 (* [local] *)
 let get_set_vars_not_in = prove
- (`!rs vs r s. ~(MEM r rs) ==> wordSem_get_var r (wordSem_set_vars rs
-  vs s) = wordSem_get_var r s`,
+ (`!rs vs r s. ~(MEM r rs) ==> wordSem_get_var r (wordSem_set_vars rs vs s) =
+  wordSem_get_var r s`,
   CHEAT_TAC);;
 
 let MEM_FST_reduc = prove
@@ -1028,10 +991,9 @@ let get_set_vars_in_2 = prove
  (`!moves r p_2 x' x data s.
      MEM (r,p_2) moves ==>
      ALL_DISTINCT (MAP FST moves) ==>
-     balanced_map_lookup p_2 (knowledge_to_canonical data) = SOME x'
-       ==>
-     wordSem_get_vars (MAP SND (MAP (\(a,b). (a,canonicalRegs data
-       b)) moves)) s = SOME x ==>
+     balanced_map_lookup p_2 (knowledge_to_canonical data) = SOME x' ==>
+     wordSem_get_vars (MAP SND (MAP (\(a,b). (a,canonicalRegs data b))
+       moves)) s = SOME x ==>
      wordSem_get_var r (wordSem_set_vars (MAP FST moves) x s) =
        wordSem_get_var x' s`,
   CHEAT_TAC);;
@@ -1040,10 +1002,10 @@ let get_set_vars_in_2 = prove
 let lookup_set_vars_not_in = prove
  (`!moves v data c x.
      ~(MEM v (MAP FST moves)) ==>
-     balanced_map_lookup v (wordSem_state_locals s) = SOME
-       (wordLang_Word c) ==>
-     balanced_map_lookup v (wordSem_state_locals (wordSem_set_vars
-       (MAP FST moves) x s)) = SOME (wordLang_Word c)`,
+     balanced_map_lookup v (wordSem_state_locals s) = SOME (wordLang_Word c)
+       ==>
+     balanced_map_lookup v (wordSem_state_locals (wordSem_set_vars (MAP
+       FST moves) x s)) = SOME (wordLang_Word c)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1057,15 +1019,14 @@ let list_insert_insert = prove
 (* [local] *)
 let data_inv_insert_canonical_pair = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) x y tc tl.
-     data_inv (knowledge_to_latest_fupd (K tl)
-       (knowledge_to_canonical_fupd (K tc) data)) s /\
+     data_inv (knowledge_to_latest_fupd (K tl) (knowledge_to_canonical_fupd
+       (K tc) data)) s /\
      sptree_lookup x tc = NONE /\
      sptree_lookup y (balanced_map_insert x y tc) = SOME y /\
      ODD x /\ ODD y /\
      wordSem_get_var x s = wordSem_get_var y s ==>
      data_inv (knowledge_to_latest_fupd (K tl)
-       (knowledge_to_canonical_fupd (K (balanced_map_insert x y tc))
-       data)) s`,
+       (knowledge_to_canonical_fupd (K (balanced_map_insert x y tc)) data)) s`,
   CHEAT_TAC);;
 
 (* One recorded register equivalence (fresh destination, already-canonical
@@ -1073,13 +1034,12 @@ let data_inv_insert_canonical_pair = prove
 (* [local] *)
 let data_inv_insert_pair = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) x y tc tl.
-     data_inv (knowledge_to_latest_fupd (K tl)
-       (knowledge_to_canonical_fupd (K tc) data)) s /\
+     data_inv (knowledge_to_latest_fupd (K tl) (knowledge_to_canonical_fupd
+       (K tc) data)) s /\
      sptree_lookup x tc = NONE /\ sptree_lookup y tc = SOME y /\
      ODD x /\ ODD y /\ wordSem_get_var x s = wordSem_get_var y s ==>
-     data_inv (knowledge_to_latest_fupd (K (balanced_map_insert y x
-       tl)) (knowledge_to_canonical_fupd (K (balanced_map_insert x y
-       tc)) data)) s`,
+     data_inv (knowledge_to_latest_fupd (K (balanced_map_insert y x tl))
+       (knowledge_to_canonical_fupd (K (balanced_map_insert x y tc)) data)) s`,
   CHEAT_TAC);;
 
 (* Recording a list of register equivalences (fresh destination, canonical
@@ -1089,18 +1049,16 @@ let data_inv_move_pairs = prove
  (`!ps data (s:('a,'c,'ffi)wordSem_state).
      data_inv data s /\
      ALL_DISTINCT (MAP FST ps) /\
-     ALL (\(x,y). sptree_lookup x (knowledge_to_canonical data) =
-       NONE /\
-                    sptree_lookup y (knowledge_to_canonical data) =
-                      SOME y /\
-                    ODD x /\ wordSem_get_var x s = wordSem_get_var y
-                      s) ps ==>
-     data_inv (knowledge_to_latest_fupd (K (map_insert (MAP (\(a,b).
-       (b,a)) ps) (knowledge_to_latest
-                              data))) (knowledge_to_canonical_fupd
-                                (K (map_insert ps
-                                (knowledge_to_canonical data))) data))
-                                s`,
+     ALL (\(x,y). sptree_lookup x (knowledge_to_canonical data) = NONE /\
+                    sptree_lookup y (knowledge_to_canonical data) = SOME y
+                      /\
+                    ODD x /\ wordSem_get_var x s = wordSem_get_var y s) ps
+                      ==>
+     data_inv (knowledge_to_latest_fupd (K (map_insert (MAP (\(a,b). (b,a))
+       ps) (knowledge_to_latest
+                              data))) (knowledge_to_canonical_fupd (K
+                                (map_insert ps (knowledge_to_canonical
+                                data))) data)) s`,
   CHEAT_TAC);;
 
 (* The Move case: registering the sources and recording the surviving
@@ -1111,8 +1069,8 @@ let canonicalMoveRegs_lemma = prove
      data_inv data s /\
      ALL_DISTINCT (MAP FST rs) /\
      wordSem_get_vars (MAP SND rs) s = SOME vs ==>
-     data_inv (canonicalMoveRegs data rs) (wordSem_set_vars (MAP
-       FST rs) vs s)`,
+     data_inv (canonicalMoveRegs data rs) (wordSem_set_vars (MAP FST rs)
+       vs s)`,
   CHEAT_TAC);;
 
 (* ------------------------------------------------------------------------
@@ -1138,10 +1096,10 @@ let evaluate_arith_clock = prove
  (`!a w s c td.
      can_mem_arith a ==>
      (wordSem_evaluate (wordLang_Inst (asm_Arith
-       a),wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd (K
-       c) s)) =
-        (NONE,wordSem_state_termdep_fupd (K td)
-          (wordSem_state_clock_fupd (K c)
+       a),wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd (K c) s))
+       =
+        (NONE,wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd (K
+          c)
          (wordSem_set_var (firstRegOfArith a) w s))) <=>
       wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
         (NONE,wordSem_set_var (firstRegOfArith a) w s))`,
@@ -1152,20 +1110,19 @@ let evaluate_load_clock = prove
  (`!op r a ofs w s c td.
      ~(is_store op) ==>
      (wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
-       ofs)),wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd
-       (K c)
+       ofs)),wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd (K c)
                 s)) =
-        (NONE,wordSem_state_termdep_fupd (K td)
-          (wordSem_state_clock_fupd (K c) (wordSem_set_var r w s))) <=>
-      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
-        ofs)),s) = (NONE,wordSem_set_var r w s))`,
+        (NONE,wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd (K
+          c) (wordSem_set_var r w s))) <=>
+      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
+        (NONE,wordSem_set_var r w s))`,
   CHEAT_TAC);;
 
 (* data_inv is insensitive to the clock and termdep fields. *)
 let data_inv_clock = prove
  (`!data s c td.
-     data_inv data s ==> data_inv data (wordSem_state_termdep_fupd
-       (K td) (wordSem_state_clock_fupd (K c) s))`,
+     data_inv data s ==> data_inv data (wordSem_state_termdep_fupd (K td)
+       (wordSem_state_clock_fupd (K c) s))`,
   CHEAT_TAC);;
 
 (* ------------------------------------------------------------------------
@@ -1185,18 +1142,16 @@ add_simp wf_data_empty;;
 
 (* Wiping the load facts only removes obligations. *)
 let wf_data_loads_wipe = prove
- (`!data. wf_data (:'a) data ==> wf_data (:'a)
-  (knowledge_loads_mem_fupd (K balanced_map_empty) data)`,
+ (`!data. wf_data (:'a) data ==> wf_data (:'a) (knowledge_loads_mem_fupd (K
+  balanced_map_empty) data)`,
   CHEAT_TAC);;
 
 let wf_data_invalidate = prove
- (`!data r. wf_data (:'a) data ==> wf_data (:'a) (invalidate_data data
-  r)`,
+ (`!data r. wf_data (:'a) data ==> wf_data (:'a) (invalidate_data data r)`,
   CHEAT_TAC);;
 
 let wf_data_invalidate_regs = prove
- (`!rs data. wf_data (:'a) data ==> wf_data (:'a) (invalidate_regs
-  data rs)`,
+ (`!rs data. wf_data (:'a) data ==> wf_data (:'a) (invalidate_regs data rs)`,
   CHEAT_TAC);;
 
 (* wf sibling of data_inv_insert_to_canonical. *)
@@ -1204,11 +1159,11 @@ let wf_data_insert_to_canonical = prove
  (`!data x y.
      wf_data (:'a) data /\
      sptree_lookup x (knowledge_to_canonical data) = NONE /\
-     sptree_lookup y (balanced_map_insert x y (knowledge_to_canonical
-       data)) = SOME y /\
+     sptree_lookup y (balanced_map_insert x y (knowledge_to_canonical data))
+       = SOME y /\
      ODD x /\ ODD y ==>
-     wf_data (:'a) (knowledge_to_canonical_fupd (K
-       (balanced_map_insert x y (knowledge_to_canonical data))) data)`,
+     wf_data (:'a) (knowledge_to_canonical_fupd (K (balanced_map_insert x
+       y (knowledge_to_canonical data))) data)`,
   CHEAT_TAC);;
 
 (* wf sibling of data_inv_insert_to_latest. *)
@@ -1217,18 +1172,16 @@ let wf_data_insert_to_latest = prove
      wf_data (:'a) data /\
      x IN domain (knowledge_to_canonical data) /\ y IN domain
        (knowledge_to_canonical data) ==>
-     wf_data (:'a) (knowledge_to_latest_fupd (K
-       (balanced_map_insert x y (knowledge_to_latest data))) data)`,
+     wf_data (:'a) (knowledge_to_latest_fupd (K (balanced_map_insert x y
+       (knowledge_to_latest data))) data)`,
   CHEAT_TAC);;
 
 let wf_data_register_read = prove
- (`!data r. wf_data (:'a) data ==> wf_data (:'a) (register_read data
-  r)`,
+ (`!data r. wf_data (:'a) data ==> wf_data (:'a) (register_read data r)`,
   CHEAT_TAC);;
 
 let wf_data_register_reads = prove
- (`!rs data. wf_data (:'a) data ==> wf_data (:'a) (register_reads data
-  rs)`,
+ (`!rs data. wf_data (:'a) data ==> wf_data (:'a) (register_reads data rs)`,
   CHEAT_TAC);;
 
 (* wf siblings of the per-family fact-insert lemmas (F1-F5): a new fact
@@ -1240,8 +1193,8 @@ let wf_data_insert_instrs_Const = prove
      wf_data (:'a) data /\
      sptree_lookup r (knowledge_to_canonical data) = SOME r ==>
      wf_data (:'a) (knowledge_instrs_mem_fupd (K
-                      (balanced_map_insert listCmp (instToNumList
-                        (asm_Const n w)) r (knowledge_instrs_mem
+                      (balanced_map_insert listCmp (instToNumList (asm_Const
+                        n w)) r (knowledge_instrs_mem
                         data))) data)`,
   CHEAT_TAC);;
 
@@ -1250,11 +1203,10 @@ let wf_data_insert_instrs_Arith = prove
  (`!data r (a:'a asm_arith).
      wf_data (:'a) data /\
      sptree_lookup r (knowledge_to_canonical data) = SOME r /\
-     can_mem_arith a /\ in_names_set a (knowledge_to_canonical data)
-       ==>
+     can_mem_arith a /\ in_names_set a (knowledge_to_canonical data) ==>
      wf_data (:'a) (knowledge_instrs_mem_fupd (K
-                      (balanced_map_insert listCmp (instToNumList
-                        (asm_Arith a)) r (knowledge_instrs_mem
+                      (balanced_map_insert listCmp (instToNumList (asm_Arith
+                        a)) r (knowledge_instrs_mem
                         data))) data)`,
   CHEAT_TAC);;
 
@@ -1265,9 +1217,8 @@ let wf_data_insert_instrs_OpCurrHeap = prove
      sptree_lookup r (knowledge_to_canonical data) = SOME r /\
      sptree_lookup src (knowledge_to_canonical data) = SOME src ==>
      wf_data (:'a) (knowledge_instrs_mem_fupd (K
-                      (balanced_map_insert listCmp
-                        (OpCurrHeapToNumList op src) r
-                        (knowledge_instrs_mem
+                      (balanced_map_insert listCmp (OpCurrHeapToNumList op
+                        src) r (knowledge_instrs_mem
                         data))) data)`,
   CHEAT_TAC);;
 
@@ -1288,8 +1239,8 @@ let wf_data_insert_loads = prove
      sptree_lookup r (knowledge_to_canonical data) = SOME r /\
      sptree_lookup a (knowledge_to_canonical data) = SOME a ==>
      wf_data (:'a) (knowledge_loads_mem_fupd (K
-                      (balanced_map_insert listCmp (loadToNumList op
-                        a ofs) r (knowledge_loads_mem
+                      (balanced_map_insert listCmp (loadToNumList op a ofs)
+                        r (knowledge_loads_mem
                         data))) data)`,
   CHEAT_TAC);;
 
@@ -1307,10 +1258,10 @@ let wf_add_to_data_aux = prove
            knowledge_instrs_mem_fupd (K
              (balanced_map_insert listCmp i r (knowledge_instrs_mem
                (knowledge_to_canonical_fupd (K
-                  (balanced_map_insert r r (knowledge_to_canonical
-                    data))) data)))) (knowledge_to_canonical_fupd (K
-                    (balanced_map_insert r r (knowledge_to_canonical
-                    data))) data))) ==>
+                  (balanced_map_insert r r (knowledge_to_canonical data)))
+                    data)))) (knowledge_to_canonical_fupd (K
+                    (balanced_map_insert r r (knowledge_to_canonical data)))
+                    data))) ==>
      wf_data (:'a) data'`,
   CHEAT_TAC);;
 
@@ -1320,8 +1271,7 @@ let wf_add_to_data_aux = prove
 let wf_add_to_data_const = prove
  (`!data r (w:'a word) data' p'.
      wf_data (:'a) data /\
-     sptree_lookup r (knowledge_to_canonical data) = NONE /\ ~(EVEN
-       r) /\
+     sptree_lookup r (knowledge_to_canonical data) = NONE /\ ~(EVEN r) /\
      add_to_data_const data r w = (data',p') ==>
      wf_data (:'a) data'`,
   CHEAT_TAC);;
@@ -1337,10 +1287,10 @@ let wf_add_to_load_aux = prove
            knowledge_loads_mem_fupd (K
              (balanced_map_insert listCmp i r (knowledge_loads_mem
                (knowledge_to_canonical_fupd (K
-                  (balanced_map_insert r r (knowledge_to_canonical
-                    data))) data)))) (knowledge_to_canonical_fupd (K
-                    (balanced_map_insert r r (knowledge_to_canonical
-                    data))) data))) ==>
+                  (balanced_map_insert r r (knowledge_to_canonical data)))
+                    data)))) (knowledge_to_canonical_fupd (K
+                    (balanced_map_insert r r (knowledge_to_canonical data)))
+                    data))) ==>
      wf_data (:'a) data'`,
   CHEAT_TAC);;
 
@@ -1363,8 +1313,8 @@ let wf_data_filter_gets = prove
  (`!data x.
      wf_data (:'a) data ==>
      wf_data (:'a) (knowledge_gets_mem_fupd (K
-                      (FILTER (\(m,n). ~(m = x))
-                        (knowledge_gets_mem data))) data)`,
+                      (FILTER (\(m,n). ~(m = x)) (knowledge_gets_mem
+                        data))) data)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1392,8 +1342,8 @@ let wf_data_reinsert_canonical = prove
    enough for the equality-intersection merge. *)
 let wf_data_merge = prove
  (`!d1 d2.
-     wf_data (:'a) d1 /\ wf_data (:'a) d2 ==> wf_data (:'a)
-       (merge_data d1 d2)`,
+     wf_data (:'a) d1 /\ wf_data (:'a) d2 ==> wf_data (:'a) (merge_data d1
+       d2)`,
   CHEAT_TAC);;
 
 (* wf sibling of data_inv_move_pairs — WITHOUT the ALL_DISTINCT premise:
@@ -1406,23 +1356,21 @@ let wf_data_merge = prove
 let wf_data_move_pairs = prove
  (`!ps data.
      wf_data (:'a) data /\
-     ALL (\(x,y). sptree_lookup x (knowledge_to_canonical data) =
-       NONE /\
-                    sptree_lookup y (knowledge_to_canonical data) =
-                      SOME y /\
+     ALL (\(x,y). sptree_lookup x (knowledge_to_canonical data) = NONE /\
+                    sptree_lookup y (knowledge_to_canonical data) = SOME y
+                      /\
                     ODD x /\ ODD y) ps ==>
      wf_data (:'a)
-       (knowledge_to_latest_fupd (K (map_insert (MAP (\(a,b). (b,a))
-         ps) (knowledge_to_latest
-                              data))) (knowledge_to_canonical_fupd
-                                (K (map_insert ps
-                                (knowledge_to_canonical data))) data))`,
+       (knowledge_to_latest_fupd (K (map_insert (MAP (\(a,b). (b,a)) ps)
+         (knowledge_to_latest
+                              data))) (knowledge_to_canonical_fupd (K
+                                (map_insert ps (knowledge_to_canonical
+                                data))) data))`,
   CHEAT_TAC);;
 
 (* wf sibling of canonicalMoveRegs_lemma's knowledge-update content. *)
 let wf_canonicalMoveRegs = prove
- (`!data rs. wf_data (:'a) data ==> wf_data (:'a) (canonicalMoveRegs
-  data rs)`,
+ (`!data rs. wf_data (:'a) data ==> wf_data (:'a) (canonicalMoveRegs data rs)`,
   CHEAT_TAC);;
 
 (* wf-premise variants of the self-or-fresh lemmas (the data_inv versions
@@ -1431,29 +1379,27 @@ let wf_canonicalMoveRegs = prove
 let canonicalRegs_self_or_fresh_wf = prove
  (`!data x.
      wf_data (:'a) data ==>
-     sptree_lookup (canonicalRegs data x) (knowledge_to_canonical
-       data) =
+     sptree_lookup (canonicalRegs data x) (knowledge_to_canonical data) =
        SOME (canonicalRegs data x) \/
-     sptree_lookup (canonicalRegs data x) (knowledge_to_canonical
-       data) = NONE`,
+     sptree_lookup (canonicalRegs data x) (knowledge_to_canonical data) =
+       NONE`,
   CHEAT_TAC);;
 
 (* [local] *)
 let canonicalRegs'_self_or_fresh_wf = prove
  (`!data r1 x.
-     wf_data (:'a) data /\ sptree_lookup r1 (knowledge_to_canonical
-       data) = NONE ==>
-     sptree_lookup (canonicalRegs' r1 data x) (knowledge_to_canonical
-       data) =
+     wf_data (:'a) data /\ sptree_lookup r1 (knowledge_to_canonical data) =
+       NONE ==>
+     sptree_lookup (canonicalRegs' r1 data x) (knowledge_to_canonical data)
+       =
        SOME (canonicalRegs' r1 data x) \/
-     sptree_lookup (canonicalRegs' r1 data x)
-       (knowledge_to_canonical data) = NONE`,
+     sptree_lookup (canonicalRegs' r1 data x) (knowledge_to_canonical
+       data) = NONE`,
   CHEAT_TAC);;
 
 (* [local] *)
 let in_names_set_insert_self = prove
- (`!a tc x. in_names_set a tc ==> in_names_set a (balanced_map_insert
-  x x tc)`,
+ (`!a tc x. in_names_set a tc ==> in_names_set a (balanced_map_insert x x tc)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1461,8 +1407,8 @@ let in_names_set_register_reads = prove
  (`!a data.
      ALL ODD (arithReads a) /\
      ALL (\w. sptree_lookup w (knowledge_to_canonical data) = NONE \/
-                sptree_lookup w (knowledge_to_canonical data) = SOME
-                  w) (arithReads a) ==>
+                sptree_lookup w (knowledge_to_canonical data) = SOME w)
+                  (arithReads a) ==>
      in_names_set a (knowledge_to_canonical (register_reads data
        (arithReads a)))`,
   CHEAT_TAC);;
@@ -1474,11 +1420,10 @@ let canonicalArith_reads_self_or_fresh = prove
  (`!data (a:'a asm_arith).
      wf_data (:'a) data /\
      can_mem_arith (canonicalArith data a) /\
-     sptree_lookup (firstRegOfArith a) (knowledge_to_canonical data)
-       = NONE ==>
+     sptree_lookup (firstRegOfArith a) (knowledge_to_canonical data) = NONE
+       ==>
      ALL (\w. sptree_lookup w (knowledge_to_canonical data) = NONE \/
-                sptree_lookup w (knowledge_to_canonical data) = SOME
-                  w)
+                sptree_lookup w (knowledge_to_canonical data) = SOME w)
            (arithReads (canonicalArith data a))`,
   CHEAT_TAC);;
 
@@ -1523,10 +1468,10 @@ let word_cse_wf_data = prove
 let comp_correct = prove
  (`!v v1 res s' data p' data'.
      wordSem_evaluate (v,v1) = (res,s') /\ flat_exp_conventions v
-       /\ data_inv data v1 /\ ~(res = SOME wordSem_Error) /\ word_cse
-       data v = (data',p') ==>
-     wordSem_evaluate (p',v1) = (res,s') /\ (res = NONE ==>
-       data_inv data' s')`,
+       /\ data_inv data v1 /\ ~(res = SOME wordSem_Error) /\ word_cse data v =
+       (data',p') ==>
+     wordSem_evaluate (p',v1) = (res,s') /\ (res = NONE ==> data_inv data'
+       s')`,
   CHEAT_TAC);;
 
 (* proof of the cases *)

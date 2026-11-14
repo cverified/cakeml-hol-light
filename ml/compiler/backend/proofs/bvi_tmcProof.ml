@@ -27,36 +27,30 @@ let _ = cake_theory "bvi_tmcProof"
 
 let _ = do_list hide_constant ["all"; "parts"; "vars"];;
 
-(* HOL4 bvi_tmcProofScript.sml:10: the ML values that the definitions
-   below antiquote *)
+(* HOL4 bvi_tmcProofScript.sml:10: the ML values that the definitions below
+   antiquote *)
 
-(* HOL4 bvi_tmcProofScript.sml:12: the overload in_ns_3, which the
-   port expands *)
+(* HOL4 bvi_tmcProofScript.sml:12: the overload in_ns_3, which the port
+   expands *)
 
 let v_rel = cake_inductive
   `(!f i. bvi_tmcProof_v_rel f (bvlSem_Number i) (bvlSem_Number i)) /\
-   (!f w. bvi_tmcProof_v_rel f (bvlSem_Word64 w) (bvlSem_Word64 w))
-     /\
+   (!f w. bvi_tmcProof_v_rel f (bvlSem_Word64 w) (bvlSem_Word64 w)) /\
    (!f n xs ys.
        ALL2 (bvi_tmcProof_v_rel f) xs ys ==>
-       bvi_tmcProof_v_rel f (bvlSem_Block n xs) (bvlSem_Block n ys))
-         /\
-   (!f n. bvi_tmcProof_v_rel f (bvlSem_CodePtr n) (bvlSem_CodePtr n))
-     /\
+       bvi_tmcProof_v_rel f (bvlSem_Block n xs) (bvlSem_Block n ys)) /\
+   (!f n. bvi_tmcProof_v_rel f (bvlSem_CodePtr n) (bvlSem_CodePtr n)) /\
    (!f n m b.
        FLOOKUP f n = SOME m ==>
-       bvi_tmcProof_v_rel f (bvlSem_RefPtr b n) (bvlSem_RefPtr b
-         m))`;;
+       bvi_tmcProof_v_rel f (bvlSem_RefPtr b n) (bvlSem_RefPtr b m))`;;
 
 let ref_rel = cake_inductive
-  `(bvi_tmcProof_ref_rel f (bvlSem_ByteArray b bs) (bvlSem_ByteArray b
-  bs)) /\
+  `(bvi_tmcProof_ref_rel f (bvlSem_ByteArray b bs) (bvlSem_ByteArray b bs)) /\
    (ALL2 (bvi_tmcProof_v_rel f) xs ys ==>
-     bvi_tmcProof_ref_rel f (bvlSem_ValueArray xs) (bvlSem_ValueArray
-       ys)) /\
+     bvi_tmcProof_ref_rel f (bvlSem_ValueArray xs) (bvlSem_ValueArray ys))
+       /\
    (bvi_tmcProof_v_rel f x y ==>
-     bvi_tmcProof_ref_rel f (bvlSem_Thunk tm x) (bvlSem_Thunk tm
-       y))`;;
+     bvi_tmcProof_ref_rel f (bvlSem_Thunk tm x) (bvlSem_Thunk tm y))`;;
 
 let bvi_tmcProof_env_rel_def = new_definition
   `bvi_tmcProof_env_rel opt f env1 env2 <=>
@@ -71,29 +65,27 @@ let bvi_tmcProof_env_rel_def = new_definition
          small_enough_int hole_idx)))`;;
 
 let no_mutcons_op_def = new_definition
-  `no_mutcons_op op <=> (!tag i. ~(op = closLang_MemOp
-  (closLang_MutCons tag i)))`;;
+  `no_mutcons_op op <=> (!tag i. ~(op = closLang_MemOp (closLang_MutCons tag
+  i)))`;;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 let no_mutcons_def,no_mutcons_ind = define_wf
   `MEASURE bvi_exp_size`
-  [`no_mutcons (bvi_Var n:bvi_exp) <=> T`;
-   `no_mutcons (bvi_If x1 x2 x3:bvi_exp) <=> no_mutcons x1
-    /\ no_mutcons x2 /\ no_mutcons x3`;
-   `no_mutcons (bvi_Let xs x:bvi_exp) <=> ALL no_mutcons xs
-    /\ no_mutcons x`;
-   `no_mutcons (bvi_Raise x:bvi_exp) <=> no_mutcons x`;
-   `no_mutcons (bvi_Tick x:bvi_exp) <=> no_mutcons x`;
-   `no_mutcons (bvi_Call ticks dest xs handler:bvi_exp) <=>
-         ALL no_mutcons xs /\ (match handler with NONE -> T |
-             SOME x -> no_mutcons x)`;
-   `no_mutcons (bvi_Force loc n:bvi_exp) <=> T`;
-   `no_mutcons (bvi_LetCall rets ticks dest xs y) <=> ALL no_mutcons
-    xs /\ no_mutcons y`;
-   `no_mutcons (bvi_Return xs:bvi_exp) <=> ALL no_mutcons xs`;
-   `no_mutcons (bvi_Op op xs:bvi_exp) <=> no_mutcons_op op /\ ALL
-    no_mutcons xs`];;
+  [`no_mutcons (bvi_Var n) <=> T`;
+   `no_mutcons (bvi_If x1 x2 x3) <=> no_mutcons x1 /\ no_mutcons x2
+    /\ no_mutcons x3`;
+   `no_mutcons (bvi_Let xs x) <=> ALL no_mutcons xs /\ no_mutcons x`;
+   `no_mutcons (bvi_Raise x) <=> no_mutcons x`;
+   `no_mutcons (bvi_Tick x) <=> no_mutcons x`;
+   `no_mutcons (bvi_Call ticks dest xs handler) <=>
+         ALL no_mutcons xs /\ (match handler with NONE -> T | SOME x ->
+             no_mutcons x)`;
+   `no_mutcons (bvi_Force loc n) <=> T`;
+   `no_mutcons (bvi_LetCall rets ticks dest xs y) <=> ALL no_mutcons xs
+    /\ no_mutcons y`;
+   `no_mutcons (bvi_Return xs) <=> ALL no_mutcons xs`;
+   `no_mutcons (bvi_Op op xs) <=> no_mutcons_op op /\ ALL no_mutcons xs`];;
 add_simp no_mutcons_def;;
 
 let bvi_tmcProof_code_rel_def = new_definition
@@ -116,14 +108,14 @@ let bvi_tmcProof_code_rel_domain = prove
   CHEAT_TAC);;
 
 let bvi_tmcProof_free_names_def = new_definition
-  `bvi_tmcProof_free_names n (name:num) <=> (!k. ~(n +
-  bvl_to_bvi_namespaces * k = name))`;;
+  `bvi_tmcProof_free_names n (name:num) <=> (!k. ~(n + bvl_to_bvi_namespaces
+  * k = name))`;;
 
 let bvi_tmcProof_namespace_rel_def = new_definition
   `bvi_tmcProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
      (!n. n IN domain c2 /\ bvl_num_stubs <= n ==> (if (\n. n MOD
-       bvl_to_bvi_namespaces = 3) n then ~(n IN domain c1) else n IN
-       domain c1)) /\
+       bvl_to_bvi_namespaces = 3) n then ~(n IN domain c1) else n IN domain
+       c1)) /\
      (!n. n IN domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
        bvl_to_bvi_namespaces = 3) n)) /\
      (!n. n IN domain c2 /\ n < bvl_num_stubs ==> n IN domain c1)`;;
@@ -134,14 +126,14 @@ let bvi_tmcProof_input_condition_def = new_definition
      ALL (bvi_tmcProof_free_names next' o FST) prog /\
      ALL (no_mutcons o SND o SND) prog /\
      ALL_DISTINCT (MAP FST prog) /\
-     ALL ((~) o (\n. n MOD bvl_to_bvi_namespaces = 3) o FST) (FILTER
-       ((<=) bvl_num_stubs o FST) prog) /\
-     bvl_num_stubs <= next' /\ (\n. n MOD bvl_to_bvi_namespaces =
-       3) next'`;;
+     ALL ((~) o (\n. n MOD bvl_to_bvi_namespaces = 3) o FST) (FILTER ((<=)
+       bvl_num_stubs o FST) prog) /\
+     bvl_num_stubs <= next' /\ (\n. n MOD bvl_to_bvi_namespaces = 3)
+       next'`;;
 
 let state_ref_rel_def = new_definition
-  `state_ref_rel f (s_refs:(num,bvlSem_v bvlSem_ref)fmap)
-  (t_refs:(num,bvlSem_v bvlSem_ref)fmap) <=>
+  `state_ref_rel f (s_refs:(num,bvlSem_v bvlSem_ref)fmap) (t_refs:(num,bvlSem_v
+  bvlSem_ref)fmap) <=>
      FDOM f = FDOM s_refs /\
      (!i v.
        FLOOKUP s_refs i = SOME v ==>
@@ -151,8 +143,8 @@ let state_ref_rel_def = new_definition
 
 let fmap_inj_def = new_definition
   `fmap_inj (f:(num,num)fmap) <=>
-     (!p1 p2 q. FLOOKUP f p1 = SOME q /\ FLOOKUP f p2 = SOME q ==>
-       p1 = p2)`;;
+     (!p1 p2 q. FLOOKUP f p1 = SOME q /\ FLOOKUP f p2 = SOME q ==> p1 =
+       p2)`;;
 
 let fmap_inj_FEMPTY = prove
  (`fmap_inj FEMPTY`,
@@ -173,13 +165,12 @@ let bvi_tmcProof_state_rel_def = new_definition
      OPTREL (\p p'. FLOOKUP f p = SOME p') (bviSem_state_global s)
        (bviSem_state_global t) /\ bviSem_state_ffi
      t = bviSem_state_ffi s /\ bviSem_state_compile_oracle
-     t = state_co bvi_tmc_compile_each (bviSem_state_compile_oracle
-       s) /\ bviSem_state_compile
+     t = state_co bvi_tmc_compile_each (bviSem_state_compile_oracle s)
+       /\ bviSem_state_compile
      s = state_cc bvi_tmc_compile_each (bviSem_state_compile t) /\
-     bvi_tmcProof_code_rel (bviSem_state_code s) (bviSem_state_code
-       t) /\
-     bvi_tmcProof_namespace_rel (bviSem_state_code s)
-       (bviSem_state_code t) /\
+     bvi_tmcProof_code_rel (bviSem_state_code s) (bviSem_state_code t) /\
+     bvi_tmcProof_namespace_rel (bviSem_state_code s) (bviSem_state_code t)
+       /\
      (!n. let ((next',cfg),prog) = bviSem_state_compile_oracle s n in
              bvi_tmcProof_input_condition next' prog) /\
      (!n. n IN domain (bviSem_state_code t) /\ (\n. n MOD
@@ -205,8 +196,7 @@ let bvi_tmcProof_is_free_name = prove
 (* EVERY_free_names_SUCSUC[local] *)
 let bvi_tmcProof_EVERY_free_names_SUCSUC = prove
  (`!xs. ALL (bvi_tmcProof_free_names n o FST) xs ==>
-        ALL (bvi_tmcProof_free_names (n + bvl_to_bvi_namespaces) o
-          FST) xs`,
+        ALL (bvi_tmcProof_free_names (n + bvl_to_bvi_namespaces) o FST) xs`,
   CHEAT_TAC);;
 
 (* EVERY_free_names_thm[local] *)
@@ -241,8 +231,8 @@ add_simp free_names_succ_F;;
 (* [local] *)
 let rewrite_wrapper_NONE_irrel = prove
  (`!loc lo1 n exp lo2.
-     rewrite_wrapper loc lo1 n exp = NONE ==> rewrite_wrapper loc
-       lo2 n exp = NONE`,
+     rewrite_wrapper loc lo1 n exp = NONE ==> rewrite_wrapper loc lo2 n
+       exp = NONE`,
   CHEAT_TAC);;
 
 (* compile_exp_next_addr[local] *)
@@ -251,8 +241,8 @@ let rewrite_wrapper_NONE_irrel = prove
 let bvi_tmcProof_compile_exp_next_addr = prove
  (cake_as_vars (fun () ->
     `bvi_tmc_compile_exp loc next args exp = NONE ==>
-     bvi_tmc_compile_exp loc (next + bvl_to_bvi_namespaces) args
-       exp = NONE`),
+     bvi_tmc_compile_exp loc (next + bvl_to_bvi_namespaces) args exp =
+       NONE`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -277,8 +267,8 @@ let bvi_tmcProof_compile_each_next_mono = prove
 
 (* compile_prog_next_mono *)
 let bvi_tmcProof_compile_prog_next_mono = prove
- (`!b n xs n1 ys. bvi_tmc_compile_prog b n xs = (n1,ys) ==> (?k. n1 =
-  n + bvl_to_bvi_namespaces * k)`,
+ (`!b n xs n1 ys. bvi_tmc_compile_prog b n xs = (n1,ys) ==> (?k. n1 = n +
+  bvl_to_bvi_namespaces * k)`,
   CHEAT_TAC);;
 
 (* compile_each_MEM *)
@@ -307,16 +297,14 @@ let bvi_tmcProof_compile_each_intro = prove
 let bvi_tmcProof_compile_each_ALL_DISTINCT = prove
  (`bvi_tmc_compile_each n xs = (n1,ys) /\ ALL_DISTINCT (MAP FST xs) /\
    ALL (bvi_tmcProof_free_names n o FST) xs ==>
-   ALL_DISTINCT (MAP FST ys) /\ ALL (bvi_tmcProof_free_names n1 o
-     FST) ys`,
+   ALL_DISTINCT (MAP FST ys) /\ ALL (bvi_tmcProof_free_names n1 o FST) ys`,
   CHEAT_TAC);;
 
 (* compile_prog_ALL_DISTINCT *)
 let bvi_tmcProof_compile_prog_ALL_DISTINCT = prove
  (`bvi_tmc_compile_prog b n xs = (n1,ys) /\ ALL_DISTINCT (MAP FST xs) /\
    ALL (bvi_tmcProof_free_names n o FST) xs ==>
-   ALL_DISTINCT (MAP FST ys) /\ ALL (bvi_tmcProof_free_names n1 o
-     FST) ys`,
+   ALL_DISTINCT (MAP FST ys) /\ ALL (bvi_tmcProof_free_names n1 o FST) ys`,
   CHEAT_TAC);;
 
 (* compile_each_namespace_rel *)
@@ -326,37 +314,36 @@ let bvi_tmcProof_compile_each_namespace_rel = prove
  (cake_as_vars (fun () ->
     `bvi_tmc_compile_each next prog = (next1,prog2) /\ (\n. n MOD
   bvl_to_bvi_namespaces = 3) next /\ bvl_num_stubs <= next /\
-     ALL ((~) o (\n. n MOD bvl_to_bvi_namespaces = 3) o FST)
-       (FILTER ((<=) bvl_num_stubs o FST) prog) ==>
-     bvi_tmcProof_namespace_rel (fromAList prog) (fromAList
-       prog2)`),
+     ALL ((~) o (\n. n MOD bvl_to_bvi_namespaces = 3) o FST) (FILTER ((<=)
+       bvl_num_stubs o FST) prog) ==>
+     bvi_tmcProof_namespace_rel (fromAList prog) (fromAList prog2)`),
   CHEAT_TAC);;
 
 (* namespace_rel_union *)
 let bvi_tmcProof_namespace_rel_union = prove
- (`bvi_tmcProof_namespace_rel x y /\ bvi_tmcProof_namespace_rel t s
-  /\ DISJOINT (domain s) (domain y) ==>
+ (`bvi_tmcProof_namespace_rel x y /\ bvi_tmcProof_namespace_rel t s /\ DISJOINT
+  (domain s) (domain y) ==>
    bvi_tmcProof_namespace_rel (sptree_union x t) (sptree_union y s)`,
   CHEAT_TAC);;
 
 (* code_rel_union *)
 let bvi_tmcProof_code_rel_union = prove
- (`bvi_tmcProof_code_rel x y /\ bvi_tmcProof_code_rel t s /\ DISJOINT
-  (domain s) (domain y) ==>
+ (`bvi_tmcProof_code_rel x y /\ bvi_tmcProof_code_rel t s /\ DISJOINT (domain
+  s) (domain y) ==>
    bvi_tmcProof_code_rel (sptree_union x t) (sptree_union y s)`,
   CHEAT_TAC);;
 
 (* state_rel_code_rel *)
 let bvi_tmcProof_state_rel_code_rel = prove
- (`bvi_tmcProof_state_rel f s t ==> bvi_tmcProof_code_rel
-  (bviSem_state_code s) (bviSem_state_code t)`,
+ (`bvi_tmcProof_state_rel f s t ==> bvi_tmcProof_code_rel (bviSem_state_code
+  s) (bviSem_state_code t)`,
   CHEAT_TAC);;
 
 (* compile_each_untouched[local] *)
 let bvi_tmcProof_compile_each_untouched = prove
  (`!next' prog prog2 loc exp arity.
-     bvi_tmcProof_free_names next' loc /\ sptree_lookup loc
-       (fromAList prog) = SOME (arity,exp) /\
+     bvi_tmcProof_free_names next' loc /\ sptree_lookup loc (fromAList prog)
+       = SOME (arity,exp) /\
      bvi_tmc_compile_exp loc next' arity exp = NONE /\
      bvi_tmc_compile_each next' prog = (next1,prog2) ==>
        sptree_lookup loc (fromAList prog2) = SOME (arity,exp)`,
@@ -365,18 +352,18 @@ let bvi_tmcProof_compile_each_untouched = prove
 (* compile_each_touched[local] *)
 let bvi_tmcProof_compile_each_touched = prove
  (`!next' prog prog2 loc exp arity.
-     ALL_DISTINCT (MAP FST prog) /\ ALL (bvi_tmcProof_free_names
-       next' o FST) prog /\
-     bvi_tmcProof_free_names next' loc /\ sptree_lookup loc
-       (fromAList prog) = SOME (arity,exp) /\
+     ALL_DISTINCT (MAP FST prog) /\ ALL (bvi_tmcProof_free_names next' o
+       FST) prog /\
+     bvi_tmcProof_free_names next' loc /\ sptree_lookup loc (fromAList prog)
+       = SOME (arity,exp) /\
      (?w. bvi_tmc_compile_exp loc next' arity exp = SOME w) /\
      bvi_tmc_compile_each next' prog = (next1,prog2) ==>
        (?k. !wrap work.
-         bvi_tmc_compile_exp loc (next' + bvl_to_bvi_namespaces * k)
-           arity exp = SOME (wrap,work) ==>
+         bvi_tmc_compile_exp loc (next' + bvl_to_bvi_namespaces * k) arity
+           exp = SOME (wrap,work) ==>
            sptree_lookup loc (fromAList prog2) = SOME (arity,wrap) /\
-           sptree_lookup (next' + bvl_to_bvi_namespaces * k)
-             (fromAList prog2) = SOME (arity + 2,work))`,
+           sptree_lookup (next' + bvl_to_bvi_namespaces * k) (fromAList
+             prog2) = SOME (arity + 2,work))`,
   CHEAT_TAC);;
 
 (* compile_each_code_rel *)
@@ -384,28 +371,27 @@ let bvi_tmcProof_compile_each_touched = prove
    variables of its own are read as variables *)
 let bvi_tmcProof_compile_each_code_rel = prove
  (cake_as_vars (fun () ->
-    `bvi_tmc_compile_each next prog = (next1,prog2) /\ ALL_DISTINCT (MAP
-  FST prog) /\
-     ALL (bvi_tmcProof_free_names next o FST) prog /\ ALL
-       (no_mutcons o SND o SND) prog ==>
+    `bvi_tmc_compile_each next prog = (next1,prog2) /\ ALL_DISTINCT (MAP FST
+  prog) /\
+     ALL (bvi_tmcProof_free_names next o FST) prog /\ ALL (no_mutcons o
+       SND o SND) prog ==>
      bvi_tmcProof_code_rel (fromAList prog) (fromAList prog2)`),
   CHEAT_TAC);;
 
 let eor_rel_def = new_definition
   `eor_rel f x2 x3 =
-        match (x2,x3) with
-          (Exn v1,Exn v2) -> bvi_tmcProof_v_rel f v1 v2
-        | ((Ret vs1),(Ret vs2)) -> ALL2 (bvi_tmcProof_v_rel f) vs1
-          vs2
-        | (_1,_2) -> F`;;
+     match (x2,x3) with
+       (Exn v1,Exn v2) -> bvi_tmcProof_v_rel f v1 v2
+     | (Ret vs1,Ret vs2) -> ALL2 (bvi_tmcProof_v_rel f) vs1 vs2
+     | (_1,_2) -> F`;;
 add_simp eor_rel_def;;
 
 let opt_res_rel_def = new_definition
-  `opt_res_rel f (r1:(bvlSem_v
-  list,exn_or_ret)semanticPrimitives_result) (r2:(bvlSem_v
-  list,exn_or_ret)semanticPrimitives_result) =
-   (match (r1,r2) with (Rval v1,Rval [bvlSem_Block 0 []]) -> T |
-     (Rerr e1,Rerr e2) -> exc_rel (eor_rel f) e1 e2 | _3 -> F)`;;
+  `opt_res_rel f (r1:(bvlSem_v list,exn_or_ret)semanticPrimitives_result)
+  (r2:(bvlSem_v list,exn_or_ret)semanticPrimitives_result) =
+   match (r1,r2) with (Rval v1,Rval [bvlSem_Block 0 []]) -> T
+   | (Rerr e1,Rerr e2) -> exc_rel (eor_rel f) e1 e2
+   | _ -> F`;;
 
 let v_rel_submap = prove
  (`!f v1 v2 f'. bvi_tmcProof_v_rel f v1 v2 /\ f SUBMAP f' ==>
@@ -491,8 +477,8 @@ let state_rel_dec = prove
      s = SUC n /\ bviSem_state_clock
      s' = SUC n /\
      SUC n >= t ==>
-     bvi_tmcProof_state_rel f (bviSem_dec_clock t s)
-       (bviSem_dec_clock t s')`,
+     bvi_tmcProof_state_rel f (bviSem_dec_clock t s) (bviSem_dec_clock t
+       s')`,
   CHEAT_TAC);;
 
 (* state_rel_with_clock *)
@@ -517,35 +503,34 @@ let state_rel_filled = prove
   CHEAT_TAC);;
 
 let hole_has_val_def = new_definition
-  `hole_has_val (f:(num,num)fmap) (env1:bvlSem_v list) (env2:bvlSem_v
-  list) (refs:(num,bvlSem_v bvlSem_ref)fmap) c <=>
+  `hole_has_val (f:(num,num)fmap) (env1:bvlSem_v list) (env2:bvlSem_v list)
+  (refs:(num,bvlSem_v bvlSem_ref)fmap) c <=>
    LENGTH env2 = LENGTH env1 + 2 /\
    (?hole_ptr tag finalised left right. EL (LENGTH env1)
      env2 = bvlSem_RefPtr F hole_ptr /\ EL (LENGTH env1 + 1)
      env2 = bvlSem_Number (&(LENGTH left)) /\
      small_enough_int (&(LENGTH left)) /\ ~(hole_ptr IN FRANGE f) /\
-     FLOOKUP refs hole_ptr = SOME (bvlSem_MutBlock tag finalised
-       left c right))`;;
+     FLOOKUP refs hole_ptr = SOME (bvlSem_MutBlock tag finalised left c
+       right))`;;
 
 let holes_unchanged_except_def = new_definition
   `holes_unchanged_except f refs refs' changed <=>
      (!ptr tag finalised left child right. ~(ptr IN FRANGE f) /\
-        FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag finalised left
-          child right) ==>
+        FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag finalised left child
+          right) ==>
         (?finalised' child'.
-          FLOOKUP refs' ptr = SOME (bvlSem_MutBlock tag finalised'
-            left child' right) /\
+          FLOOKUP refs' ptr = SOME (bvlSem_MutBlock tag finalised' left
+            child' right) /\
           (~(ptr IN changed) ==> child = child')))`;;
 
 let hole_not_finalised_def = new_definition
   `hole_not_finalised refs ptr <=>
      (?tag left child right.
-       FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag F left child
-         right))`;;
+       FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag F left child right))`;;
 
 let holes_still_not_finalised_def = new_definition
-  `holes_still_not_finalised f (refs:('b,'c bvlSem_ref)fmap)
-  (refs':('b,'c bvlSem_ref)fmap) <=>
+  `holes_still_not_finalised f (refs:('b,'c bvlSem_ref)fmap) (refs':('b,'c
+  bvlSem_ref)fmap) <=>
      (!ptr. ~(ptr IN FRANGE f) /\
        hole_not_finalised refs ptr ==>
        hole_not_finalised refs' ptr)`;;
@@ -558,22 +543,21 @@ let holes_still_not_finalised_refl = prove
 let holes_still_not_finalised_ins = prove
  (`!f refs refs' ptr tag l c r.
      holes_still_not_finalised f refs refs' ==>
-     holes_still_not_finalised f refs (refs' |+
-       (ptr,bvlSem_MutBlock tag F l c r))`,
+     holes_still_not_finalised f refs (refs' |+ (ptr,bvlSem_MutBlock tag F
+       l c r))`,
   CHEAT_TAC);;
 
 let holes_still_not_finalised_del = prove
  (`!f refs refs' ptr tag l c r.
-     holes_still_not_finalised f (refs |+ (ptr,bvlSem_MutBlock tag F
-       l c r)) refs' ==>
+     holes_still_not_finalised f (refs |+ (ptr,bvlSem_MutBlock tag F l c r))
+       refs' ==>
      holes_still_not_finalised f refs refs'`,
   CHEAT_TAC);;
 
 let only_fresh_def = new_definition
-  `only_fresh (f:(num,num)fmap) (f':(num,num)fmap)
-  (refs_old:(num,bvlSem_v bvlSem_ref)fmap) =
-   (!n. n IN FRANGE f' /\ ~(n IN FRANGE f) ==> ~(n IN FDOM
-     refs_old))`;;
+  `only_fresh (f:(num,num)fmap) (f':(num,num)fmap) (refs_old:(num,bvlSem_v
+  bvlSem_ref)fmap) =
+   (!n. n IN FRANGE f' /\ ~(n IN FRANGE f) ==> ~(n IN FDOM refs_old))`;;
 
 let holes_unchanged_except_refl = prove
  (`!f refs changed. holes_unchanged_except f refs refs changed`,
@@ -615,33 +599,30 @@ let holes_unchanged_except_del = prove
  (`!f refs_old refs_new changed ptr v.
      holes_unchanged_except f (refs_old |+ (ptr,v)) refs_new changed
        /\ ~(ptr IN FDOM refs_old) ==>
-     holes_unchanged_except f refs_old refs_new (changed DIFF
-       {ptr})`,
+     holes_unchanged_except f refs_old refs_new (changed DIFF {ptr})`,
   CHEAT_TAC);;
 
 let holes_unchanged_except_del_SING = prove
  (`!f refs_old refs_new changed ptr v.
-     holes_unchanged_except f (refs_old |+ (ptr,v)) refs_new {ptr}
-       /\ ~(ptr IN FDOM refs_old) ==>
+     holes_unchanged_except f (refs_old |+ (ptr,v)) refs_new {ptr} /\ ~(ptr
+       IN FDOM refs_old) ==>
      holes_unchanged_except f refs_old refs_new EMPTY`,
   CHEAT_TAC);;
 
 let holes_unchanged_except_changed = prove
  (`!f refs_old refs_new changed ptr tag fin l c r.
-     holes_unchanged_except f (refs_old |+ (ptr,bvlSem_MutBlock tag
-       fin l c r)) refs_new EMPTY /\
-     FLOOKUP refs_old ptr = SOME (bvlSem_MutBlock tag fin' l c' r)
-       ==>
+     holes_unchanged_except f (refs_old |+ (ptr,bvlSem_MutBlock tag fin l c
+       r)) refs_new EMPTY /\
+     FLOOKUP refs_old ptr = SOME (bvlSem_MutBlock tag fin' l c' r) ==>
      holes_unchanged_except f refs_old refs_new {ptr}`,
   CHEAT_TAC);;
 
 let holes_unchanged_except_filled = prove
  (`!f refs_old refs_new changed ptr tag fin l c r.
      holes_unchanged_except f refs_old refs_new EMPTY /\
-     FLOOKUP refs_old ptr = SOME (bvlSem_MutBlock tag fin' l c' r)
-       ==>
-     holes_unchanged_except f refs_old (refs_new |+
-       (ptr,bvlSem_MutBlock tag fin l c r)) {ptr}`,
+     FLOOKUP refs_old ptr = SOME (bvlSem_MutBlock tag fin' l c' r) ==>
+     holes_unchanged_except f refs_old (refs_new |+ (ptr,bvlSem_MutBlock
+       tag fin l c r)) {ptr}`,
   CHEAT_TAC);;
 
 let unchanged_hole_has_val = prove
@@ -649,8 +630,8 @@ let unchanged_hole_has_val = prove
      hole_has_val f env (APPEND env' [bvlSem_RefPtr F hole_ptr;
        bvlSem_Number hole_idx]) refs c /\
      only_fresh f f' refs /\
-     holes_unchanged_except f refs refs' changed /\ ~(hole_ptr IN
-       changed) ==>
+     holes_unchanged_except f refs refs' changed /\ ~(hole_ptr IN changed)
+       ==>
      hole_has_val f' env (APPEND env' [bvlSem_RefPtr F hole_ptr;
        bvlSem_Number hole_idx]) refs' c`,
   CHEAT_TAC);;
@@ -678,11 +659,9 @@ let hole_has_val_unappend = prove
 
 let hole_has_val_dec = prove
  (`!f env env' s c n.
-     hole_has_val f env env' (bviSem_state_refs s) c
-       /\ bviSem_state_clock
+     hole_has_val f env env' (bviSem_state_refs s) c /\ bviSem_state_clock
      s = SUC n ==>
-     hole_has_val f env env' (bviSem_state_refs (bviSem_dec_clock 1
-       s)) c`,
+     hole_has_val f env env' (bviSem_state_refs (bviSem_dec_clock 1 s)) c`,
   CHEAT_TAC);;
 
 let only_fresh_refl = prove
@@ -715,8 +694,8 @@ let fresh_ptr_fresh = prove
 
 let fresh_not_in_range_f = prove
  (`!f s_refs t_refs.
-     state_ref_rel f s_refs t_refs ==> ~((minimal ptr. ~(ptr IN
-       FDOM t_refs)) IN FRANGE f)`,
+     state_ref_rel f s_refs t_refs ==> ~((minimal ptr. ~(ptr IN FDOM
+       t_refs)) IN FRANGE f)`,
   CHEAT_TAC);;
 
 let only_fresh_del = prove
@@ -740,20 +719,21 @@ let flookup_com_neq = prove
    replacing the CHEAT_TAC is all that is left *)
 let mb_rel_def,mb_rel_ind = define_guess_cheat
   [`mb_rel f x2 refs v1 v2 =
-        match (x2,v1,v2) with
-          ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),(bvlSem_Block
-            tag xs:bvlSem_v),(bvlSem_RefPtr b ptr:bvlSem_v)) ->
-      (if b \/ ptr IN FRANGE f \/ ptr IN FDOM refs_old then F else
-        match FLOOKUP refs ptr with SOME (bvlSem_MutBlock tag' fin'
-          left' child' right') ->
+     match (x2,v1,v2) with
+       ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),bvlSem_Block tag
+         xs,bvlSem_RefPtr b ptr) ->
+      if b \/ ptr IN FRANGE f \/ ptr IN FDOM refs_old then F else match
+        FLOOKUP refs ptr with SOME (bvlSem_MutBlock tag' fin' left' child'
+        right') ->
             (tag = tag' /\
              fin' = F /\
              (?left child right.
                xs = APPEND (APPEND left [child]) right /\
                ALL2 (bvi_tmcProof_v_rel f) left left' /\
                mb_rel f refs_old (refs \\ ptr) child child' /\
-               ALL2 (bvi_tmcProof_v_rel f) right right')) | _4 -> F)
-        | (_5,v1,v2) -> bvi_tmcProof_v_rel f v1 v2`];;
+               ALL2 (bvi_tmcProof_v_rel f) right right'))
+        | _ -> F
+     | (_,v1,v2) -> bvi_tmcProof_v_rel f v1 v2`];;
 
 let mb_rel_cons = prove
  (`!refs_old refs ptr f tag left left' v v' right right'.
@@ -762,16 +742,16 @@ let mb_rel_cons = prove
      ALL2 (bvi_tmcProof_v_rel f) right right' /\
      FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag F left' v' right')
        /\ ~(ptr IN FRANGE f) /\ ~(ptr IN FDOM refs_old) ==>
-     mb_rel f refs_old refs (bvlSem_Block tag (APPEND (APPEND left
-       [v]) right)) (bvlSem_RefPtr F ptr)`,
+     mb_rel f refs_old refs (bvlSem_Block tag (APPEND (APPEND left [v])
+       right)) (bvlSem_RefPtr F ptr)`,
   CHEAT_TAC);;
 
 let mb_rel_del = prove
  (`!f refs_old refs v1 v2 ptr tag left ptr' right.
      mb_rel f refs_old refs v1 v2 /\
-     FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag F left
-       (bvlSem_RefPtr F ptr') right) /\ ~(ptr' IN FDOM refs) /\ ~(ptr'
-       IN FDOM refs_old) /\ ~(ptr' IN FRANGE f) ==>
+     FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag F left (bvlSem_RefPtr F
+       ptr') right) /\ ~(ptr' IN FDOM refs) /\ ~(ptr' IN FDOM refs_old)
+       /\ ~(ptr' IN FRANGE f) ==>
      mb_rel f refs_old (refs \\ ptr) v1 v2`,
   CHEAT_TAC);;
 
@@ -806,8 +786,8 @@ let ref_rel_submap = prove
 
 let state_ref_rel_alloc = prove
  (`!f s_refs t_refs src tgt rv rw.
-     state_ref_rel f s_refs t_refs /\ ~(src IN FDOM s_refs) /\ ~(tgt
-       IN FDOM t_refs) /\ ~(tgt IN FRANGE f) /\
+     state_ref_rel f s_refs t_refs /\ ~(src IN FDOM s_refs) /\ ~(tgt IN FDOM
+       t_refs) /\ ~(tgt IN FRANGE f) /\
      bvi_tmcProof_ref_rel (f |+ (src,tgt)) rv rw ==>
      state_ref_rel (f |+ (src,tgt)) (s_refs |+ (src,rv)) (t_refs |+
        (tgt,rw))`,
@@ -815,21 +795,19 @@ let state_ref_rel_alloc = prove
 
 let state_rel_alloc = prove
  (`!f s s' src tgt rv rw.
-     bvi_tmcProof_state_rel f s s' /\ ~(src IN FDOM
-       (bviSem_state_refs s)) /\ ~(tgt IN FDOM (bviSem_state_refs s'))
-       /\ ~(tgt IN FRANGE f) /\
+     bvi_tmcProof_state_rel f s s' /\ ~(src IN FDOM (bviSem_state_refs s))
+       /\ ~(tgt IN FDOM (bviSem_state_refs s')) /\ ~(tgt IN FRANGE f) /\
      bvi_tmcProof_ref_rel (f |+ (src,tgt)) rv rw ==>
      FLOOKUP (f |+ (src,tgt)) src = SOME tgt /\
      bvi_tmcProof_state_rel (f |+ (src,tgt))
-       (bviSem_state_refs_fupd (K (bviSem_state_refs s |+ (src,rv)))
-         s) (bviSem_state_refs_fupd (K (bviSem_state_refs s' |+
-         (tgt,rw))) s') /\
+       (bviSem_state_refs_fupd (K (bviSem_state_refs s |+ (src,rv))) s)
+         (bviSem_state_refs_fupd (K (bviSem_state_refs s' |+ (tgt,rw))) s') /\
      f SUBMAP f |+ (src,tgt) /\
      only_fresh f (f |+ (src,tgt)) (bviSem_state_refs s') /\
-     holes_unchanged_except f (bviSem_state_refs s')
-       (bviSem_state_refs s' |+ (tgt,rw)) {} /\
-     holes_still_not_finalised f (bviSem_state_refs s')
-       (bviSem_state_refs s' |+ (tgt,rw))`,
+     holes_unchanged_except f (bviSem_state_refs s') (bviSem_state_refs s'
+       |+ (tgt,rw)) {} /\
+     holes_still_not_finalised f (bviSem_state_refs s') (bviSem_state_refs
+       s' |+ (tgt,rw))`,
   CHEAT_TAC);;
 
 let state_ref_rel_lookup = prove
@@ -848,15 +826,14 @@ let fmap_inj_flookup_eq = prove
 let v_to_list_v_rel = prove
  (`!lv xs lw f.
      bvlSem_v_to_list lv = SOME xs /\ bvi_tmcProof_v_rel f lv lw ==>
-     (?ys. bvlSem_v_to_list lw = SOME ys /\ ALL2
-       (bvi_tmcProof_v_rel f) xs ys)`,
+     (?ys. bvlSem_v_to_list lw = SOME ys /\ ALL2 (bvi_tmcProof_v_rel f) xs
+       ys)`,
   CHEAT_TAC);;
 
 let list_to_v_v_rel = prove
  (`!xs ys f.
      ALL2 (bvi_tmcProof_v_rel f) xs ys ==>
-     bvi_tmcProof_v_rel f (bvlSem_list_to_v xs) (bvlSem_list_to_v
-       ys)`,
+     bvi_tmcProof_v_rel f (bvlSem_list_to_v xs) (bvlSem_list_to_v ys)`,
   CHEAT_TAC);;
 
 let do_eq_v_rel = prove
@@ -865,24 +842,22 @@ let do_eq_v_rel = prove
         /\ state_ref_rel f refs t_refs /\ fmap_inj f ==>
       bvlSem_do_eq refs x1 x2 = bvlSem_do_eq t_refs y1 y2) /\
    (!refs x1s x2s t_refs y1s y2s.
-      ALL2 (bvi_tmcProof_v_rel f) x1s y1s /\ ALL2 (bvi_tmcProof_v_rel
-        f) x2s y2s /\
+      ALL2 (bvi_tmcProof_v_rel f) x1s y1s /\ ALL2 (bvi_tmcProof_v_rel f) x2s
+        y2s /\
       state_ref_rel f refs t_refs /\ fmap_inj f ==>
-      bvlSem_do_eq_list refs x1s x2s = bvlSem_do_eq_list t_refs y1s
-        y2s)`,
+      bvlSem_do_eq_list refs x1s x2s = bvlSem_do_eq_list t_refs y1s y2s)`,
   CHEAT_TAC);;
 
 let do_word_app_v_rel = prove
  (`!w vs res vs' f.
-     bvlSem_do_word_app w vs = SOME res /\ ALL2 (bvi_tmcProof_v_rel
-       f) vs vs' ==>
+     bvlSem_do_word_app w vs = SOME res /\ ALL2 (bvi_tmcProof_v_rel f) vs
+       vs' ==>
      vs' = vs`,
   CHEAT_TAC);;
 
 let do_word_app_v_rel_refl = prove
  (`!w vs res f.
-     bvlSem_do_word_app w vs = SOME res ==> bvi_tmcProof_v_rel f
-       res res`,
+     bvlSem_do_word_app w vs = SOME res ==> bvi_tmcProof_v_rel f res res`,
   CHEAT_TAC);;
 
 let no_mutblock = prove
@@ -896,26 +871,26 @@ let no_mutblock = prove
 
 (* [local] *)
 let list_rel_v_rel_number = prove
- (`!g ns ys f. ALL2 (bvi_tmcProof_v_rel f) (MAP (bvlSem_Number o g)
-  ns) ys ==> ys = MAP (bvlSem_Number o g) ns`,
+ (`!g ns ys f. ALL2 (bvi_tmcProof_v_rel f) (MAP (bvlSem_Number o g) ns) ys
+  ==> ys = MAP (bvlSem_Number o g) ns`,
   CHEAT_TAC);;
 
 (* [local] *)
 let list_rel_v_rel_word = prove
- (`!ns ys f. ALL2 (bvi_tmcProof_v_rel f) (MAP bvlSem_Word64 ns) ys ==>
-  ys = MAP bvlSem_Word64 ns`,
+ (`!ns ys f. ALL2 (bvi_tmcProof_v_rel f) (MAP bvlSem_Word64 ns) ys ==> ys =
+  MAP bvlSem_Word64 ns`,
   CHEAT_TAC);;
 
 (* v_to_bytes_eq[local] *)
 let bvi_tmcProof_v_to_bytes_eq = prove
- (`(bvlSem_v_to_bytes lv = SOME bytes) <=> (bvlSem_v_to_list lv = SOME
-  (MAP (bvlSem_Number o (&) o w2n) bytes))`,
+ (`(bvlSem_v_to_bytes lv = SOME bytes) <=> (bvlSem_v_to_list lv = SOME (MAP
+  (bvlSem_Number o (&) o w2n) bytes))`,
   CHEAT_TAC);;
 
 (* v_to_words_eq[local] *)
 let bvi_tmcProof_v_to_words_eq = prove
- (`(bvlSem_v_to_words lv = SOME ws) <=> (bvlSem_v_to_list lv = SOME
-  (MAP bvlSem_Word64 ws))`,
+ (`(bvlSem_v_to_words lv = SOME ws) <=> (bvlSem_v_to_list lv = SOME (MAP
+  bvlSem_Word64 ws))`,
   CHEAT_TAC);;
 
 let v_to_bytes_v_rel = prove
@@ -930,31 +905,27 @@ let v_to_words_v_rel = prove
 
 let do_build_v_rel = prove
  (`!parts' m i refs1 v refs1' f m' refs2.
-     bvlSem_do_build m i parts' refs1 = (v,refs1') /\ state_ref_rel f
-       refs1 refs2 /\
+     bvlSem_do_build m i parts' refs1 = (v,refs1') /\ state_ref_rel f refs1
+       refs2 /\
      fmap_inj f /\ (!j. bvi_tmcProof_v_rel f (m j) (m' j)) ==>
      (?f' v' refs2'.
-       bvlSem_do_build m' i parts' refs2 = (v',refs2')
-         /\ bvi_tmcProof_v_rel f' v v' /\
-       state_ref_rel f' refs1' refs2' /\ fmap_inj f' /\ f SUBMAP f'
-         /\
-       only_fresh f f' refs2 /\ holes_unchanged_except f refs2 refs2'
-         {} /\
+       bvlSem_do_build m' i parts' refs2 = (v',refs2') /\ bvi_tmcProof_v_rel
+         f' v v' /\
+       state_ref_rel f' refs1' refs2' /\ fmap_inj f' /\ f SUBMAP f' /\
+       only_fresh f f' refs2 /\ holes_unchanged_except f refs2 refs2' {} /\
        holes_still_not_finalised f refs2 refs2')`,
   CHEAT_TAC);;
 
 let do_build_const_v_rel = prove
  (`!l refs1 v refs1' f refs2.
-     bvlSem_do_build_const l refs1 = (v,refs1') /\ state_ref_rel f
-       refs1 refs2 /\
+     bvlSem_do_build_const l refs1 = (v,refs1') /\ state_ref_rel f refs1
+       refs2 /\
      fmap_inj f ==>
      (?f' v' refs2'.
-       bvlSem_do_build_const l refs2 = (v',refs2')
-         /\ bvi_tmcProof_v_rel f' v v' /\
-       state_ref_rel f' refs1' refs2' /\ fmap_inj f' /\ f SUBMAP f'
-         /\
-       only_fresh f f' refs2 /\ holes_unchanged_except f refs2 refs2'
-         {} /\
+       bvlSem_do_build_const l refs2 = (v',refs2') /\ bvi_tmcProof_v_rel f'
+         v v' /\
+       state_ref_rel f' refs1' refs2' /\ fmap_inj f' /\ f SUBMAP f' /\
+       only_fresh f f' refs2 /\ holes_unchanged_except f refs2 refs2' {} /\
        holes_still_not_finalised f refs2 refs2')`,
   CHEAT_TAC);;
 
@@ -970,8 +941,8 @@ let do_app_op_rel = prove
        bvi_tmcProof_state_rel f' t t' /\
        f SUBMAP f' /\
        only_fresh f f' (bviSem_state_refs s') /\
-       holes_unchanged_except f (bviSem_state_refs s')
-         (bviSem_state_refs t') {} /\
+       holes_unchanged_except f (bviSem_state_refs s') (bviSem_state_refs
+         t') {} /\
        holes_still_not_finalised f (bviSem_state_refs s')
          (bviSem_state_refs t'))`,
   CHEAT_TAC);;
@@ -1022,13 +993,11 @@ let do_app_op_rel = prove
 
 let do_app_op_finalise_rel = prove
  (`!v1 refs v1' v2 f s s'.
-     bviSem_finalise_cons v1 (bviSem_state_refs s) = SOME (v2,refs)
-       /\
+     bviSem_finalise_cons v1 (bviSem_state_refs s) = SOME (v2,refs) /\
      bvi_tmcProof_state_rel f s s' /\
      bvi_tmcProof_v_rel f v1 v1' ==>
      (?f' v2' refs'.
-       bviSem_finalise_cons v1' (bviSem_state_refs s') = SOME
-         (v2',refs') /\
+       bviSem_finalise_cons v1' (bviSem_state_refs s') = SOME (v2',refs') /\
        f SUBMAP f' /\
        bvi_tmcProof_v_rel f' v2 v2' /\
        bvi_tmcProof_state_rel f' (bviSem_state_refs_fupd (K refs) s)
@@ -1157,15 +1126,15 @@ let finalise_cons_refs_SUBSET = prove
 
 (* do_app_refs_SUBSET *)
 let bvi_tmcProof_do_app_refs_SUBSET = prove
- (`(bviSem_do_app op a r = Rval (q,t)) ==> FDOM (bviSem_state_refs r)
-  SUBSET FDOM (bviSem_state_refs t)`,
+ (`(bviSem_do_app op a r = Rval (q,t)) ==> FDOM (bviSem_state_refs r) SUBSET
+  FDOM (bviSem_state_refs t)`,
   CHEAT_TAC);;
 
 (* evaluate_refs_SUBSET *)
 let bvi_tmcProof_evaluate_refs_SUBSET = prove
  (`!xs env s r t.
-     (bviSem_evaluate (xs,env,s) = (r,t)) ==> FDOM
-       (bviSem_state_refs s) SUBSET FDOM (bviSem_state_refs t)`,
+     (bviSem_evaluate (xs,env,s) = (r,t)) ==> FDOM (bviSem_state_refs s)
+       SUBSET FDOM (bviSem_state_refs t)`,
   CHEAT_TAC);;
 
 let list_rel_reverse = prove
@@ -1197,14 +1166,14 @@ let evaluate_fill_hole = prove
      bvi_tmcProof_env_rel T f env1 env2 /\
      bvi_tmcProof_state_rel f s s' /\
      f SUBMAP f' /\
-     semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel
-       f')) (eor_rel f') r r' /\
+     semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel f'))
+       (eor_rel f') r r' /\
      hole_has_val f env1 env2 (bviSem_state_refs s') c /\
      hole_not_finalised (bviSem_state_refs s') hole_ptr /\
-     holes_unchanged_except f (bviSem_state_refs s')
-       (bviSem_state_refs t') {} /\
-     holes_still_not_finalised f (bviSem_state_refs s')
-       (bviSem_state_refs t') /\
+     holes_unchanged_except f (bviSem_state_refs s') (bviSem_state_refs t')
+       {} /\
+     holes_still_not_finalised f (bviSem_state_refs s') (bviSem_state_refs
+       t') /\
      only_fresh f f' (bviSem_state_refs s') /\
      bvi_tmcProof_state_rel f' t t' /\ EL (LENGTH env1)
      env2 = bvlSem_RefPtr F hole_ptr ==>
@@ -1215,17 +1184,16 @@ let evaluate_fill_hole = prove
        bvi_tmcProof_state_rel f_fill t t_fill /\
        f SUBMAP f_fill /\
        only_fresh f f_fill (bviSem_state_refs s') /\
-       holes_unchanged_except f (bviSem_state_refs s')
-         (bviSem_state_refs t_fill) {hole_ptr} /\
-       holes_still_not_finalised f (bviSem_state_refs s')
-         (bviSem_state_refs t_fill) /\
+       holes_unchanged_except f (bviSem_state_refs s') (bviSem_state_refs
+         t_fill) {hole_ptr} /\
+       holes_still_not_finalised f (bviSem_state_refs s') (bviSem_state_refs
+         t_fill) /\
        (!v.
          r = Rval [v] ==>
          (?v_fill.
-           mb_rel f_fill (bviSem_state_refs s') (bviSem_state_refs
-             t_fill \\ hole_ptr) v v_fill /\
-           hole_has_val f env1 env2 (bviSem_state_refs t_fill)
-             v_fill)))`,
+           mb_rel f_fill (bviSem_state_refs s') (bviSem_state_refs t_fill
+             \\ hole_ptr) v v_fill /\
+           hole_has_val f env1 env2 (bviSem_state_refs t_fill) v_fill)))`,
   CHEAT_TAC);;
 
 let evaluate_fill_hole_val = prove
@@ -1238,10 +1206,10 @@ let evaluate_fill_hole_val = prove
      bvi_tmcProof_v_rel f' v v' /\
      hole_has_val f env1 env2 (bviSem_state_refs s') c /\
      hole_not_finalised (bviSem_state_refs s') hole_ptr /\
-     holes_unchanged_except f (bviSem_state_refs s')
-       (bviSem_state_refs t') {} /\
-     holes_still_not_finalised f (bviSem_state_refs s')
-       (bviSem_state_refs t') /\
+     holes_unchanged_except f (bviSem_state_refs s') (bviSem_state_refs t')
+       {} /\
+     holes_still_not_finalised f (bviSem_state_refs s') (bviSem_state_refs
+       t') /\
      only_fresh f f' (bviSem_state_refs s') /\
      bvi_tmcProof_state_rel f' t t' /\ EL (LENGTH env1)
      env2 = bvlSem_RefPtr F hole_ptr ==>
@@ -1252,52 +1220,51 @@ let evaluate_fill_hole_val = prove
        bvi_tmcProof_state_rel f_fill t t_fill /\
        f SUBMAP f_fill /\
        only_fresh f f_fill (bviSem_state_refs s') /\
-       holes_unchanged_except f (bviSem_state_refs s')
-         (bviSem_state_refs t_fill) {hole_ptr} /\
-       holes_still_not_finalised f (bviSem_state_refs s')
-         (bviSem_state_refs t_fill) /\
+       holes_unchanged_except f (bviSem_state_refs s') (bviSem_state_refs
+         t_fill) {hole_ptr} /\
+       holes_still_not_finalised f (bviSem_state_refs s') (bviSem_state_refs
+         t_fill) /\
        (?v_fill.
-         mb_rel f_fill (bviSem_state_refs s') (bviSem_state_refs
-           t_fill \\ hole_ptr) v v_fill /\
-         hole_has_val f env1 env2 (bviSem_state_refs t_fill)
-           v_fill))`,
+         mb_rel f_fill (bviSem_state_refs s') (bviSem_state_refs t_fill
+           \\ hole_ptr) v v_fill /\
+         hole_has_val f env1 env2 (bviSem_state_refs t_fill) v_fill))`,
   CHEAT_TAC);;
 
 let evaluate_vars_source = prove
  (`!vs env (s:(num#'c,'ffi)bviSem_state).
      wf_vars (LENGTH env) vs ==>
-     bviSem_evaluate (MAP (\n. bvi_Var n) vs,env,s) = (Rval (MAP
-       (\n. EL n env) vs),s)`,
+     bviSem_evaluate (MAP (\n. bvi_Var n) vs,env,s) = (Rval (MAP (\n. EL n
+       env) vs),s)`,
   CHEAT_TAC);;
 
 let evaluate_vars_target = prove
  (`!vs n env (s:('c,'ffi)bviSem_state).
      wf_vars n vs /\
      LENGTH env >= n ==>
-     bviSem_evaluate (MAP (\n. bvi_Var n) vs,env,s) = (Rval (MAP
-       (\n. EL n env) vs),s)`,
+     bviSem_evaluate (MAP (\n. bvi_Var n) vs,env,s) = (Rval (MAP (\n. EL n
+       env) vs),s)`,
   CHEAT_TAC);;
 
 let evaluate_vars_expand_env = prove
  (`!vs env s v extras.
      bviSem_evaluate (MAP (\n. bvi_Var n) vs,env,s) = (Rval v,s) ==>
-     bviSem_evaluate (MAP (\n. bvi_Var n) vs,APPEND env extras,s) =
-       (Rval v,s)`,
+     bviSem_evaluate (MAP (\n. bvi_Var n) vs,APPEND env extras,s) = (Rval
+       v,s)`,
   CHEAT_TAC);;
 
 let evaluate_var_list = prove
  (`!ns env s t r.
-     bviSem_evaluate (MAP (\n. bvi_Var n) ns,env,s) = (r,t) /\ ~(r =
-       Rerr (Rabort Rtype_error)) ==>
+     bviSem_evaluate (MAP (\n. bvi_Var n) ns,env,s) = (r,t) /\ ~(r = Rerr
+       (Rabort Rtype_error)) ==>
      (r,t) = (Rval (MAP (\n. EL n env) ns),s)`,
   CHEAT_TAC);;
 
 let evaluate_var_list_binders = prove
  (`!ns extras env s r t.
-     bviSem_evaluate (MAP (\n. bvi_Var n) ns,env,s) = (r,t) /\ ~(r =
-       Rerr (Rabort Rtype_error)) ==>
-     bviSem_evaluate (MAP (\n. bvi_Var (n + LENGTH extras))
-       ns,APPEND extras env,s) = (r,t)`,
+     bviSem_evaluate (MAP (\n. bvi_Var n) ns,env,s) = (r,t) /\ ~(r = Rerr
+       (Rabort Rtype_error)) ==>
+     bviSem_evaluate (MAP (\n. bvi_Var (n + LENGTH extras)) ns,APPEND
+       extras env,s) = (r,t)`,
   CHEAT_TAC);;
 
 let evaluate_binders = prove
@@ -1306,35 +1273,33 @@ let evaluate_binders = prove
      bvi_tmc_bind next' args = (vs,next') ==>
      (!ys.
        LENGTH ys = next' ==>
-       bviSem_evaluate (MAP (\n. bvi_Var n) vs,APPEND ys as,t) =
-         (Rval as,t))`,
+       bviSem_evaluate (MAP (\n. bvi_Var n) vs,APPEND ys as,t) = (Rval
+         as,t))`,
   CHEAT_TAC);;
 
 let evaluate_shift_vars = prove
  (`!vs env s bs.
-     bviSem_evaluate (MAP (\n. bvi_Var n) (shift_vars (LENGTH bs)
-       vs),APPEND bs env,s) =
+     bviSem_evaluate (MAP (\n. bvi_Var n) (shift_vars (LENGTH bs) vs),APPEND
+       bs env,s) =
      bviSem_evaluate (MAP (\n. bvi_Var n) vs,env,s)`,
   CHEAT_TAC);;
 
 let evaluate_shift_vars_sing = prove
  (`!vs env s b.
-     bviSem_evaluate (MAP (\n. bvi_Var n) (shift_vars 1 vs),CONS b
-       env,s) =
+     bviSem_evaluate (MAP (\n. bvi_Var n) (shift_vars 1 vs),CONS b env,s) =
      bviSem_evaluate (MAP (\n. bvi_Var n) vs,env,s)`,
   CHEAT_TAC);;
 
 let evaluate_shift_cb = prove
  (`!cb loc env s bs.
-     bviSem_evaluate ([cb_to_bvi loc (shift_cb (LENGTH bs)
-       cb)],APPEND bs env,s) = bviSem_evaluate ([cb_to_bvi loc
-       cb],env,s)`,
+     bviSem_evaluate ([cb_to_bvi loc (shift_cb (LENGTH bs) cb)],APPEND bs
+       env,s) = bviSem_evaluate ([cb_to_bvi loc cb],env,s)`,
   CHEAT_TAC);;
 
 let evaluate_shift_cb_sing = prove
  (`!cb loc env s b.
-     bviSem_evaluate ([cb_to_bvi loc (shift_cb 1 cb)],CONS b env,s)
-       = bviSem_evaluate ([cb_to_bvi loc cb],env,s)`,
+     bviSem_evaluate ([cb_to_bvi loc (shift_cb 1 cb)],CONS b env,s) =
+       bviSem_evaluate ([cb_to_bvi loc cb],env,s)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1343,15 +1308,15 @@ let evaluate_pure_exp_lemma = prove
       pure_exp n e ==>
       (!env.
         n <= LENGTH env ==>
-        (?v. !(s:('c,'ffi)bviSem_state). bviSem_evaluate ([e],env,s)
-          = (Rval v,s)))) /\
+        (?v. !(s:('c,'ffi)bviSem_state). bviSem_evaluate ([e],env,s) = (Rval
+          v,s)))) /\
    (!(x:bvi_exp option). T) /\
    (!xs n.
       pure_exps n xs ==>
       (!env.
         n <= LENGTH env ==>
-        (?v. !(s:('c,'ffi)bviSem_state). bviSem_evaluate (xs,env,s)
-          = (Rval v,s))))`,
+        (?v. !(s:('c,'ffi)bviSem_state). bviSem_evaluate (xs,env,s) =
+          (Rval v,s))))`,
   CHEAT_TAC);;
 
 let evaluate_pure_exps = prove
@@ -1374,8 +1339,7 @@ let evaluate_bvi_to_cb_aux_inl_lemma = prove
         (?v.
           !(s:('c,'ffi)bviSem_state).
             bviSem_evaluate ([exp],env,s) = (Rval v,s) /\
-            bviSem_evaluate (MAP (\n. bvi_Var n) vs,v,s) = (Rval
-              v,s)))) /\
+            bviSem_evaluate (MAP (\n. bvi_Var n) vs,v,s) = (Rval v,s)))) /\
    (!n loc tag args bs vs.
       bvi_to_cb_aux n loc tag args = SOME (bs,INL vs) ==>
       bs = args /\
@@ -1384,12 +1348,11 @@ let evaluate_bvi_to_cb_aux_inl_lemma = prove
         (?v.
           !(s:('c,'ffi)bviSem_state).
             bviSem_evaluate (args,env,s) = (Rval v,s) /\
-            bviSem_evaluate (MAP (\n. bvi_Var n) vs,v,s) = (Rval
-              v,s))))`,
+            bviSem_evaluate (MAP (\n. bvi_Var n) vs,v,s) = (Rval v,s))))`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tmcProofScript.sml:2708: a theorem that HOL4 states as
-   the value of an ML expression: evaluate_bvi_to_cb_aux_inl *)
+(* HOL4 bvi_tmcProofScript.sml:2708: a theorem that HOL4 states as the value
+   of an ML expression: evaluate_bvi_to_cb_aux_inl *)
 
 (* [local] *)
 let evaluate_bvi_to_cb_aux_inr_lemma = prove
@@ -1405,8 +1368,8 @@ let evaluate_bvi_to_cb_aux_inr_lemma = prove
            as = Rval vs ==>
            bviSem_evaluate ([cb_to_bvi loc cb],vs,u) = (r,t) /\
            (!extras.
-             bviSem_evaluate ([cb_to_bvi loc cb],APPEND vs extras,u)
-               = (r,t))) /\
+             bviSem_evaluate ([cb_to_bvi loc cb],APPEND vs extras,u) =
+               (r,t))) /\
         (!e.
            as = Rerr e ==>
            (as,u) = (r,t)))) /\
@@ -1422,23 +1385,22 @@ let evaluate_bvi_to_cb_aux_inr_lemma = prove
            as = Rval vs ==>
            bviSem_evaluate ([cb_to_bvi loc cb],vs,u) = (r,t) /\
            (!extras.
-             bviSem_evaluate ([cb_to_bvi loc cb],APPEND vs extras,u)
-               = (r,t))) /\
+             bviSem_evaluate ([cb_to_bvi loc cb],APPEND vs extras,u) =
+               (r,t))) /\
         (!e.
            as = Rerr e ==>
            (as,u) = (r,t))))`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tmcProofScript.sml:2897: a theorem that HOL4 states as
-   the value of an ML expression: evaluate_bvi_to_cb_aux_inr *)
+(* HOL4 bvi_tmcProofScript.sml:2897: a theorem that HOL4 states as the value
+   of an ML expression: evaluate_bvi_to_cb_aux_inr *)
 
 let evaluate_bvi_to_cb = prove
  (`!cb n loc x env s t r bs.
      bviSem_evaluate ([x],env,s) = (r,t) /\
      bvi_to_cb n loc x = SOME (bs,cb) /\
      n <= LENGTH env ==>
-     bviSem_evaluate ([bvi_Let bs (cb_to_bvi loc cb)],env,s) =
-       (r,t)`,
+     bviSem_evaluate ([bvi_Let bs (cb_to_bvi loc cb)],env,s) = (r,t)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1460,33 +1422,31 @@ let evaluate_rewrite_tmc = prove
  (`!n xs (s:(num#'c,'ffi)bviSem_state) env1 r t opt f s' env2 loc.
      bviSem_evaluate (xs,env1,s) = (r,t) /\
      n = (bviSem_state_clock s,list_size bvi_exp_size xs) /\
-     bvi_tmcProof_env_rel opt f env1 env2 /\ ALL (\x. no_mutcons x)
-       xs /\
+     bvi_tmcProof_env_rel opt f env1 env2 /\ ALL (\x. no_mutcons x) xs /\
      bvi_tmcProof_state_rel f s s' /\
      (opt ==> LENGTH xs = 1) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
      (?t' f' r'.
        bviSem_evaluate (xs,env2,s') = (r',t') /\
-       semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel
-         f')) (eor_rel f') r r' /\
+       semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel f'))
+         (eor_rel f') r r' /\
        bvi_tmcProof_state_rel f' t t' /\
        f SUBMAP f' /\
        only_fresh f f' (bviSem_state_refs s') /\
-       holes_unchanged_except f (bviSem_state_refs s')
-         (bviSem_state_refs t') {} /\
-       holes_still_not_finalised f (bviSem_state_refs s')
-         (bviSem_state_refs t') /\
+       holes_unchanged_except f (bviSem_state_refs s') (bviSem_state_refs
+         t') {} /\
+       holes_still_not_finalised f (bviSem_state_refs s') (bviSem_state_refs
+         t') /\
        (!loc_opt.
           optimised_code loc loc_opt (bviSem_state_code s)
             (bviSem_state_code s') ==>
           (!wrap.
              LENGTH xs = 1 /\
-             rewrite_wrapper loc loc_opt (LENGTH env1) (HD xs) = SOME
-               wrap ==>
+             rewrite_wrapper loc loc_opt (LENGTH env1) (HD xs) = SOME wrap
+               ==>
              (?t_wrap f_wrap r_wrap.
                bviSem_evaluate ([wrap],env2,s') = (r_wrap,t_wrap) /\
-               semanticPrimitivesProps_result_rel (ALL2
-                 (bvi_tmcProof_v_rel f_wrap)) (eor_rel f_wrap) r r_wrap
-                 /\
+               semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel
+                 f_wrap)) (eor_rel f_wrap) r r_wrap /\
                bvi_tmcProof_state_rel f_wrap t t_wrap /\
                f SUBMAP f_wrap /\
                only_fresh f f_wrap (bviSem_state_refs s') /\
@@ -1498,11 +1458,10 @@ let evaluate_rewrite_tmc = prove
            (!i j hole_ptr work.
               i = LENGTH env1 /\
               j = LENGTH env1 + 1 /\
-              (?c. hole_has_val f env1 env2 (bviSem_state_refs s') c)
-                /\
+              (?c. hole_has_val f env1 env2 (bviSem_state_refs s') c) /\
               hole_not_finalised (bviSem_state_refs s') hole_ptr /\
-              rewrite_worker loc loc_opt i j (LENGTH env1) (HD xs) =
-                work /\ EL i
+              rewrite_worker loc loc_opt i j (LENGTH env1) (HD xs) = work
+                /\ EL i
               env2 = bvlSem_RefPtr F hole_ptr ==>
               (?r_work f_work t_work.
                 bviSem_evaluate ([work],env2,s') = (r_work,t_work) /\
@@ -1517,30 +1476,28 @@ let evaluate_rewrite_tmc = prove
                 (!res_v.
                   r = Rval [res_v] ==>
                   (?res_v'.
-                    mb_rel f_work (bviSem_state_refs s')
-                      (bviSem_state_refs t_work \\ hole_ptr) res_v
-                      res_v' /\
-                    hole_has_val f env1 env2 (bviSem_state_refs
-                      t_work) res_v')))))))`,
+                    mb_rel f_work (bviSem_state_refs s') (bviSem_state_refs
+                      t_work \\ hole_ptr) res_v res_v' /\
+                    hole_has_val f env1 env2 (bviSem_state_refs t_work)
+                      res_v')))))))`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_tmcProofScript.sml:3031-3106: a proof *)
 
 let hypothesis_def = new_definition
-  `hypothesis xs' (s'':(num#'c,'ffi)bviSem_state) clock <=>
-  bviSem_state_clock
+  `hypothesis xs' (s'':(num#'c,'ffi)bviSem_state) clock <=> bviSem_state_clock
    s'' < clock ==>
    (!env1' r' t' opt' f' s'3' env2' loc'.
              bviSem_evaluate (xs',env1',s'') = (r',t') /\
-             bvi_tmcProof_env_rel opt' f' env1' env2' /\ ALL (\x.
-               no_mutcons x) xs' /\
+             bvi_tmcProof_env_rel opt' f' env1' env2' /\ ALL (\x. no_mutcons
+               x) xs' /\
              bvi_tmcProof_state_rel f' s'' s'3' /\
-             (opt' ==> LENGTH xs' = 1) /\ ~(r' = Rerr (Rabort
-               Rtype_error)) ==>
+             (opt' ==> LENGTH xs' = 1) /\ ~(r' = Rerr (Rabort Rtype_error))
+               ==>
              (?t'' f'' r''.
                bviSem_evaluate (xs',env2',s'3') = (r'',t'') /\
-               semanticPrimitivesProps_result_rel (ALL2
-                 (bvi_tmcProof_v_rel f'')) (eor_rel f'') r' r'' /\
+               semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel
+                 f'')) (eor_rel f'') r' r'' /\
                bvi_tmcProof_state_rel f'' t' t'' /\ f' SUBMAP f''
                  /\ only_fresh f' f'' (bviSem_state_refs s'3') /\
                holes_unchanged_except f' (bviSem_state_refs s'3')
@@ -1552,51 +1509,48 @@ let hypothesis_def = new_definition
                    (bviSem_state_code s'3') ==>
                  (!wrap.
                     LENGTH xs' = 1 /\
-                    rewrite_wrapper loc' loc_opt (LENGTH env1') (HD
-                      xs') = SOME wrap ==>
+                    rewrite_wrapper loc' loc_opt (LENGTH env1') (HD xs') =
+                      SOME wrap ==>
                     (?t_wrap f_wrap r_wrap.
-                      bviSem_evaluate ([wrap],env2',s'3') =
-                        (r_wrap,t_wrap) /\
+                      bviSem_evaluate ([wrap],env2',s'3') = (r_wrap,t_wrap)
+                        /\
                       semanticPrimitivesProps_result_rel (ALL2
                         (bvi_tmcProof_v_rel f_wrap)) (eor_rel f_wrap) r'
-                        r_wrap /\ bvi_tmcProof_state_rel f_wrap t'
-                          t_wrap /\ f' SUBMAP f_wrap /\
-                      only_fresh f' f_wrap (bviSem_state_refs s'3')
-                        /\
-                      holes_unchanged_except f' (bviSem_state_refs
-                        s'3') (bviSem_state_refs t_wrap) {} /\
-                      holes_still_not_finalised f' (bviSem_state_refs
-                        s'3') (bviSem_state_refs t_wrap))) /\
+                        r_wrap /\ bvi_tmcProof_state_rel f_wrap t' t_wrap
+                          /\ f' SUBMAP f_wrap /\
+                      only_fresh f' f_wrap (bviSem_state_refs s'3') /\
+                      holes_unchanged_except f' (bviSem_state_refs s'3')
+                        (bviSem_state_refs t_wrap) {} /\
+                      holes_still_not_finalised f' (bviSem_state_refs s'3')
+                        (bviSem_state_refs t_wrap))) /\
                  (opt' ==>
                   (!hole_ptr.
-                    (?c. hole_has_val f' env1' env2'
-                      (bviSem_state_refs s'3') c) /\
-                    hole_not_finalised (bviSem_state_refs s'3')
-                      hole_ptr /\ EL (LENGTH env1')
+                    (?c. hole_has_val f' env1' env2' (bviSem_state_refs
+                      s'3') c) /\
+                    hole_not_finalised (bviSem_state_refs s'3') hole_ptr
+                      /\ EL (LENGTH env1')
                     env2' = bvlSem_RefPtr F hole_ptr ==>
                     (?r_work f_work t_work.
                       bviSem_evaluate
                         ([rewrite_worker loc' loc_opt (LENGTH env1')
                             (LENGTH env1' + 1) (LENGTH env1') (HD
                               xs')],env2',s'3') =
-                      (r_work,t_work) /\ opt_res_rel f_work r' r_work
-                        /\
-                      bvi_tmcProof_state_rel f_work t' t_work /\ f'
-                        SUBMAP f_work /\
-                      only_fresh f' f_work (bviSem_state_refs s'3')
-                        /\
-                      holes_unchanged_except f' (bviSem_state_refs
-                        s'3') (bviSem_state_refs t_work) {hole_ptr} /\
-                      holes_still_not_finalised f' (bviSem_state_refs
-                        s'3') (bviSem_state_refs t_work) /\
+                      (r_work,t_work) /\ opt_res_rel f_work r' r_work /\
+                      bvi_tmcProof_state_rel f_work t' t_work /\ f' SUBMAP
+                        f_work /\
+                      only_fresh f' f_work (bviSem_state_refs s'3') /\
+                      holes_unchanged_except f' (bviSem_state_refs s'3')
+                        (bviSem_state_refs t_work) {hole_ptr} /\
+                      holes_still_not_finalised f' (bviSem_state_refs s'3')
+                        (bviSem_state_refs t_work) /\
                       (!res_v.
                         r' = Rval [res_v] ==>
                         (?res_v'.
                           mb_rel f_work (bviSem_state_refs s'3')
-                            (bviSem_state_refs t_work \\ hole_ptr) res_v
-                            res_v' /\
-                          hole_has_val f' env1' env2'
-                            (bviSem_state_refs t_work) res_v'))))))))`;;
+                            (bviSem_state_refs t_work \\ hole_ptr) res_v res_v'
+                            /\
+                          hole_has_val f' env1' env2' (bviSem_state_refs
+                            t_work) res_v'))))))))`;;
 
 let alloc_hole_has_val_def = new_definition
   `alloc_hole_has_val f refs extras i_ptr c_idx c <=>
@@ -1604,25 +1558,23 @@ let alloc_hole_has_val_def = new_definition
        i_ptr < LENGTH extras /\ EL i_ptr
        extras = bvlSem_RefPtr F hole_ptr /\
        c_idx = LENGTH left /\
-       small_enough_int (&(LENGTH left)) /\ ~(hole_ptr IN FRANGE f)
-         /\
-       FLOOKUP refs hole_ptr = SOME (bvlSem_MutBlock tag F left c
-         right))`;;
+       small_enough_int (&(LENGTH left)) /\ ~(hole_ptr IN FRANGE f) /\
+       FLOOKUP refs hole_ptr = SOME (bvlSem_MutBlock tag F left c right))`;;
 
 let wf_vars_list_rel = prove
  (`!vars' opt f env1 env2.
      bvi_tmcProof_env_rel opt f env1 env2 /\
      wf_vars (LENGTH env1) vars' ==>
-     ALL2 (bvi_tmcProof_v_rel f) (MAP (\n. EL n env1) vars') (MAP
-       (\n. EL n env2) vars')`,
+     ALL2 (bvi_tmcProof_v_rel f) (MAP (\n. EL n env1) vars') (MAP (\n. EL
+       n env2) vars')`,
   CHEAT_TAC);;
 
 let wf_vars_env_rel = prove
  (`!vars' opt f env1 env2.
      bvi_tmcProof_env_rel opt f env1 env2 /\
      wf_vars (LENGTH env1) vars' ==>
-     bvi_tmcProof_env_rel F f (MAP (\n. EL n env1) vars') (MAP (\n.
-       EL n env2) vars')`,
+     bvi_tmcProof_env_rel F f (MAP (\n. EL n env1) vars') (MAP (\n. EL n
+       env2) vars')`,
   CHEAT_TAC);;
 
 let wf_vars_env_rel_opt = prove
@@ -1630,9 +1582,8 @@ let wf_vars_env_rel_opt = prove
      bvi_tmcProof_env_rel opt f env1 env2 /\
      wf_vars (LENGTH env1) vars' /\
      small_enough_int idx ==>
-     bvi_tmcProof_env_rel T f (MAP (\n. EL n env1) vars') (APPEND
-       (MAP (\n. EL n env2) vars') [bvlSem_RefPtr F ptr; bvlSem_Number
-       idx])`,
+     bvi_tmcProof_env_rel T f (MAP (\n. EL n env1) vars') (APPEND (MAP
+       (\n. EL n env2) vars') [bvlSem_RefPtr F ptr; bvlSem_Number idx])`,
   CHEAT_TAC);;
 
 let state_ref_rel_sub = prove
@@ -1644,10 +1595,10 @@ let state_ref_rel_sub = prove
 let holes_unchanged_except_finalised = prove
  (`!f p ptr r1 r2 tag fin1 left child right fin2.
      holes_unchanged_except f (r1 \\ ptr) r2 EMPTY /\
-     FLOOKUP r1 ptr = SOME (bvlSem_MutBlock tag fin1 left child
-       right) /\ ~(ptr IN FRANGE f) ==>
-     holes_unchanged_except f r1 (r2 |+ (ptr,bvlSem_MutBlock tag
-       fin2 left child right)) EMPTY`,
+     FLOOKUP r1 ptr = SOME (bvlSem_MutBlock tag fin1 left child right)
+       /\ ~(ptr IN FRANGE f) ==>
+     holes_unchanged_except f r1 (r2 |+ (ptr,bvlSem_MutBlock tag fin2 left
+       child right)) EMPTY`,
   CHEAT_TAC);;
 
 let holes_still_not_finalised_sub = prove
@@ -1658,10 +1609,9 @@ let holes_still_not_finalised_sub = prove
 
 let holes_still_not_finalised_non_dom = prove
  (`!f refs refs' ptr tag l c r.
-     holes_still_not_finalised f refs refs' /\ ~(ptr IN FDOM refs)
-       ==>
-     holes_still_not_finalised f refs (refs' |+
-       (ptr,bvlSem_MutBlock tag T l c r))`,
+     holes_still_not_finalised f refs refs' /\ ~(ptr IN FDOM refs) ==>
+     holes_still_not_finalised f refs (refs' |+ (ptr,bvlSem_MutBlock tag T
+       l c r))`,
   CHEAT_TAC);;
 
 let evaluate_finalise_cons = prove
@@ -1696,9 +1646,8 @@ let cons_append = prove
 
 let rw_block_args = prove
  (`!left child right f.
-     REVERSE (APPEND (APPEND (MAP f left) [child]) (MAP f right)) =
-       APPEND (APPEND (MAP f (REVERSE right)) [child]) (MAP f (REVERSE
-       left))`,
+     REVERSE (APPEND (APPEND (MAP f left) [child]) (MAP f right)) = APPEND
+       (APPEND (MAP f (REVERSE right)) [child]) (MAP f (REVERSE left))`,
   CHEAT_TAC);;
 
 let shift_cb_suc = prove
@@ -1724,25 +1673,25 @@ let evaluate_cb = prove
         hypothesis xs' s'' clock) ==>
      (?r' t' f'.
         bviSem_evaluate ([cb_to_bvi loc cb],env2,s') = (r',t') /\
-        semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel
-          f')) (eor_rel f') r r' /\
+        semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel f'))
+          (eor_rel f') r r' /\
         bvi_tmcProof_state_rel f' t t' /\
         f SUBMAP f' /\
         only_fresh f f' (bviSem_state_refs s') /\
-        holes_unchanged_except f (bviSem_state_refs s')
-          (bviSem_state_refs t') {} /\
+        holes_unchanged_except f (bviSem_state_refs s') (bviSem_state_refs
+          t') {} /\
         holes_still_not_finalised f (bviSem_state_refs s')
           (bviSem_state_refs t')) /\
      (!loc_opt.
-       optimised_code loc loc_opt (bviSem_state_code s)
-         (bviSem_state_code s') ==>
+       optimised_code loc loc_opt (bviSem_state_code s) (bviSem_state_code
+         s') ==>
        (!tag left child right.
           cb = CallBlock tag left child right ==>
           (?t_wrap f_wrap r_wrap.
             bviSem_evaluate ([cb_to_bvi_wrapper tag left child right
               loc_opt],env2,s') = (r_wrap,t_wrap) /\
-            semanticPrimitivesProps_result_rel (ALL2
-              (bvi_tmcProof_v_rel f_wrap)) (eor_rel f_wrap) r r_wrap /\
+            semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel
+              f_wrap)) (eor_rel f_wrap) r r_wrap /\
             bvi_tmcProof_state_rel f_wrap t t_wrap /\
             f SUBMAP f_wrap /\
             only_fresh f f_wrap (bviSem_state_refs s') /\
@@ -1756,25 +1705,23 @@ let evaluate_cb = prove
           (FDOM (bviSem_state_refs s')) SUBSET (FDOM refs) /\
           EL ptr extras = bvlSem_RefPtr F hole_ptr ==>
           (?r_aux t_aux f_aux.
-            bviSem_evaluate ([cb_to_bvi_worker_aux (shift_cb (LENGTH
-              extras) cb) loc_opt ptr idx],APPEND extras
-              env2,bviSem_state_refs_fupd (K refs) s') = (r_aux,t_aux)
-              /\
+            bviSem_evaluate ([cb_to_bvi_worker_aux (shift_cb (LENGTH extras)
+              cb) loc_opt ptr idx],APPEND extras env2,bviSem_state_refs_fupd (K
+              refs) s') = (r_aux,t_aux) /\
             opt_res_rel f_aux r r_aux /\
             bvi_tmcProof_state_rel f_aux t t_aux /\
             f SUBMAP f_aux /\
             only_fresh f f_aux refs /\
             holes_unchanged_except f refs (bviSem_state_refs t_aux)
               {hole_ptr} /\
-            holes_still_not_finalised f refs (bviSem_state_refs
-              t_aux) /\
+            holes_still_not_finalised f refs (bviSem_state_refs t_aux) /\
             (!res_v.
               r = Rval [res_v] ==>
               (?res_v'.
-                mb_rel f_aux (bviSem_state_refs s')
-                  (bviSem_state_refs t_aux \\ hole_ptr) res_v res_v' /\
-                alloc_hole_has_val f (bviSem_state_refs t_aux) extras
-                  ptr idx res_v')))) /\
+                mb_rel f_aux (bviSem_state_refs s') (bviSem_state_refs t_aux
+                  \\ hole_ptr) res_v res_v' /\
+                alloc_hole_has_val f (bviSem_state_refs t_aux) extras ptr
+                  idx res_v')))) /\
        (opt ==>
         (!ptr idx work hole_ptr.
            ptr = LENGTH env /\
@@ -1783,8 +1730,8 @@ let evaluate_cb = prove
            hole_not_finalised (bviSem_state_refs s') hole_ptr /\
            EL ptr env2 = bvlSem_RefPtr F hole_ptr ==>
            (?r_work f_work t_work.
-             bviSem_evaluate ([cb_to_bvi_worker cb loc_opt ptr
-               idx],env2,s') = (r_work,t_work) /\
+             bviSem_evaluate ([cb_to_bvi_worker cb loc_opt ptr idx],env2,s')
+               = (r_work,t_work) /\
              opt_res_rel f_work r r_work /\
              bvi_tmcProof_state_rel f_work t t_work /\
              f SUBMAP f_work /\
@@ -1796,39 +1743,36 @@ let evaluate_cb = prove
              (!res_v.
                r = Rval [res_v] ==>
                (?res_v'.
-                 mb_rel f_work (bviSem_state_refs s')
-                   (bviSem_state_refs t_work \\ hole_ptr) res_v res_v'
-                   /\
+                 mb_rel f_work (bviSem_state_refs s') (bviSem_state_refs
+                   t_work \\ hole_ptr) res_v res_v' /\
                  hole_has_val f env env2 (bviSem_state_refs t_work)
                    res_v'))))))`,
   CHEAT_TAC);;
 
 let evaluate_pres_opt_code = prove
  (`!loc loc_opt s1 s2 xs env1 env2 r1 u1 r2 u2.
-     optimised_code loc loc_opt (bviSem_state_code s1)
-       (bviSem_state_code s2) /\
+     optimised_code loc loc_opt (bviSem_state_code s1) (bviSem_state_code
+       s2) /\
      bviSem_evaluate (xs,env1,s1) = (r1,u1) /\
      bviSem_evaluate (xs,env2,s2) = (r2,u2) ==>
-     optimised_code loc loc_opt (bviSem_state_code u1)
-       (bviSem_state_code u2)`,
+     optimised_code loc loc_opt (bviSem_state_code u1) (bviSem_state_code
+       u2)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let bvi_to_cb_aux_no_mutcons_lemma = prove
  (`(!n loc tag exp cb bs.
       bvi_to_cb_aux_sing n loc tag exp = SOME (bs,cb) /\
-      no_mutcons (bvi_Op (closLang_BlockOp (closLang_Cons tag))
-        [exp]) ==>
+      no_mutcons (bvi_Op (closLang_BlockOp (closLang_Cons tag)) [exp]) ==>
       ALL (\x. no_mutcons x) bs) /\
    (!n loc tag args cb bs.
       bvi_to_cb_aux n loc tag args = SOME (bs,cb) /\
-      no_mutcons (bvi_Op (closLang_BlockOp (closLang_Cons tag)) args)
-        ==>
+      no_mutcons (bvi_Op (closLang_BlockOp (closLang_Cons tag)) args) ==>
       ALL (\x. no_mutcons x) bs)`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tmcProofScript.sml:4193: a theorem that HOL4 states as
-   the value of an ML expression: bvi_to_cb_aux_no_mutcons *)
+(* HOL4 bvi_tmcProofScript.sml:4193: a theorem that HOL4 states as the value
+   of an ML expression: bvi_to_cb_aux_no_mutcons *)
 
 let bvi_to_cb_no_mutcons = prove
  (`!cb bs n loc x.
@@ -1875,22 +1819,20 @@ let bvi_to_cb_no_mutcons = prove
 
 let find_code_rel = prove
  (`!f vs vs' s s' dest args body.
-     bvlSem_find_code dest vs (bviSem_state_code s) = SOME
-       (args,body) /\
+     bvlSem_find_code dest vs (bviSem_state_code s) = SOME (args,body) /\
      ALL2 (bvi_tmcProof_v_rel f) vs vs' /\
      bvi_tmcProof_state_rel f s s' ==>
      no_mutcons body /\
      (?args' body' loc.
-       bvlSem_find_code dest vs' (bviSem_state_code s') = SOME
-         (args',body') /\
+       bvlSem_find_code dest vs' (bviSem_state_code s') = SOME (args',body')
+         /\
        bvi_tmcProof_env_rel F f args args' /\
        LENGTH args = LENGTH args' /\
        (~(body = body') ==>
         (?loc_opt.
           optimised_code loc loc_opt (bviSem_state_code s)
             (bviSem_state_code s') /\
-          rewrite_wrapper loc loc_opt (LENGTH args) body = SOME
-            body')))`,
+          rewrite_wrapper loc loc_opt (LENGTH args) body = SOME body')))`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_tmcProofScript.sml:5091-5095: a proof *)
@@ -1948,21 +1890,20 @@ let bvi_tmcProof_evaluate_compile_each = prove
     `bvi_tmcProof_input_condition next' prog /\
      (!n next' cfg prog. co n = ((next',cfg),prog) ==>
        bvi_tmcProof_input_condition next' prog) /\
-     (!n. MEM n (MAP FST (SND (bvi_tmc_compile_each next' prog)))
-       /\ (\n. n MOD bvl_to_bvi_namespaces = 3) n ==> n < FST (FST (co
-       0))) /\
+     (!n. MEM n (MAP FST (SND (bvi_tmc_compile_each next' prog))) /\ (\n.
+       n MOD bvl_to_bvi_namespaces = 3) n ==> n < FST (FST (co 0))) /\
      bviSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],
                bviSem_initial_state ffi0 (fromAList prog) co
-                   (state_cc bvi_tmc_compile_each cc) k) = (r,s)
-                     /\ ~(r = Rerr (Rabort Rtype_error)) ==>
+                   (state_cc bvi_tmc_compile_each cc) k) = (r,s) /\ ~(r =
+                     Rerr (Rabort Rtype_error)) ==>
      (?f s2 r2.
        bviSem_evaluate
         ([bvi_Call 0 (SOME start) [] NONE],[],
-          bviSem_initial_state ffi0 (fromAList (SND
-            (bvi_tmc_compile_each next' prog)))
+          bviSem_initial_state ffi0 (fromAList (SND (bvi_tmc_compile_each
+            next' prog)))
               (state_co bvi_tmc_compile_each co) cc k) = (r2,s2) /\
-       semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel
-         f)) (eor_rel f) r r2 /\
+       semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel f))
+         (eor_rel f) r r2 /\
        bvi_tmcProof_state_rel f s s2)`),
   CHEAT_TAC);;
 
@@ -1983,11 +1924,11 @@ let bvi_tmcProof_compile_each_semantics = prove
     `bvi_tmcProof_input_condition n prog /\
      (!k n cfg prog. co k = ((n,cfg),prog) ==>
        bvi_tmcProof_input_condition n prog) /\
-     (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
-       = 3) k ==> k < FST (FST (co 0))) /\
-     SND (bvi_tmc_compile_each n prog) = prog2
-       /\ ~(bviSem_semantics ffi (fromAList prog) co (state_cc
-       bvi_tmc_compile_each cc) start = ffi_Fail) ==>
+     (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces = 3) k
+       ==> k < FST (FST (co 0))) /\
+     SND (bvi_tmc_compile_each n prog) = prog2 /\ ~(bviSem_semantics ffi
+       (fromAList prog) co (state_cc bvi_tmc_compile_each cc) start = ffi_Fail)
+       ==>
      bviSem_semantics ffi (fromAList prog) co (state_cc
        bvi_tmc_compile_each cc) start =
      bviSem_semantics ffi (fromAList prog2) (state_co
@@ -2002,11 +1943,10 @@ let bvi_tmcProof_compile_prog_semantics = prove
     `bvi_tmcProof_input_condition n prog /\
      (!k n cfg prog. co k = ((n,cfg),prog) ==>
        bvi_tmcProof_input_condition n prog) /\
-     (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
-       = 3) k ==> k < FST (FST (co 0))) /\
-     SND (bvi_tmc_compile_prog b n prog) = prog2
-       /\ ~(bviSem_semantics ffi (fromAList prog) co (state_cc
-       (bvi_tmc_compile_prog b) cc) start =
+     (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces = 3) k
+       ==> k < FST (FST (co 0))) /\
+     SND (bvi_tmc_compile_prog b n prog) = prog2 /\ ~(bviSem_semantics ffi
+       (fromAList prog) co (state_cc (bvi_tmc_compile_prog b) cc) start =
        ffi_Fail) ==>
      bviSem_semantics ffi (fromAList prog) co (state_cc
        (bvi_tmc_compile_prog b) cc) start =
@@ -2022,28 +1962,27 @@ let bvi_tmcProof_compile_prog_semantics = prove
 
 (* [local] *)
 let get_code_labels_MAP_Var = prove
- (`UNIONS (set_of_list (MAP bviProps_get_code_labels (MAP (\n. bvi_Var
-  n) vs))) = {}`,
+ (`UNIONS (set_of_list (MAP bviProps_get_code_labels (MAP (\n. bvi_Var n)
+  vs))) = {}`,
   CHEAT_TAC);;
 add_simp get_code_labels_MAP_Var;;
 
 (* [local] *)
 let cb_to_bvi_worker_aux_code_labels = prove
  (`!cb loc_opt ptr idx.
-     bviProps_get_code_labels (cb_to_bvi_worker_aux cb loc_opt ptr
-       idx) = {loc_opt}`,
+     bviProps_get_code_labels (cb_to_bvi_worker_aux cb loc_opt ptr idx) =
+       {loc_opt}`,
   CHEAT_TAC);;
 
 (* [local] *)
 let cb_to_bvi_worker_code_labels = prove
- (`bviProps_get_code_labels (cb_to_bvi_worker cb loc_opt ptr idx) =
-  {loc_opt}`,
+ (`bviProps_get_code_labels (cb_to_bvi_worker cb loc_opt ptr idx) = {loc_opt}`,
   CHEAT_TAC);;
 
 (* [local] *)
 let cb_to_bvi_wrapper_code_labels = prove
- (`bviProps_get_code_labels (cb_to_bvi_wrapper tag left child right
-  loc_opt) = {loc_opt}`,
+ (`bviProps_get_code_labels (cb_to_bvi_wrapper tag left child right loc_opt)
+  = {loc_opt}`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2070,15 +2009,14 @@ let bvi_to_cb_code_labels = prove
 let rewrite_wrapper_code_labels = prove
  (`!loc loc_opt n exp y.
      rewrite_wrapper loc loc_opt n exp = SOME y ==>
-     bviProps_get_code_labels y SUBSET bviProps_get_code_labels exp
-       UNION {loc_opt}`,
+     bviProps_get_code_labels y SUBSET bviProps_get_code_labels exp UNION
+       {loc_opt}`,
   CHEAT_TAC);;
 
 (* [local] *)
 let rewrite_worker_code_labels = prove
  (`!loc loc_opt p i n exp.
-     bviProps_get_code_labels (rewrite_worker loc loc_opt p i n exp)
-       SUBSET
+     bviProps_get_code_labels (rewrite_worker loc loc_opt p i n exp) SUBSET
      bviProps_get_code_labels exp UNION {loc_opt}`,
   CHEAT_TAC);;
 
@@ -2088,49 +2026,47 @@ let rewrite_worker_code_labels = prove
 let bvi_tmcProof_compile_exp_code_labels = prove
  (cake_as_vars (fun () ->
     `bvi_tmc_compile_exp loc next arity exp = SOME (exp_w,exp_k) ==>
-     bviProps_get_code_labels exp_w SUBSET bviProps_get_code_labels
-       exp UNION {next} /\
-     bviProps_get_code_labels exp_k SUBSET
-       bviProps_get_code_labels exp UNION {next}`),
+     bviProps_get_code_labels exp_w SUBSET bviProps_get_code_labels exp
+       UNION {next} /\
+     bviProps_get_code_labels exp_k SUBSET bviProps_get_code_labels exp
+       UNION {next}`),
   CHEAT_TAC);;
 
 (* compile_each_good_code_labels *)
 let bvi_tmcProof_compile_each_good_code_labels = prove
  (`!n c n2 c2.
      bvi_tmc_compile_each n c = (n2,c2) /\
-     UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND)
-       c)) SUBSET all /\
-     {n + k * bvl_to_bvi_namespaces | k | n + k *
-       bvl_to_bvi_namespaces < n2} SUBSET all ==>
-     UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o
-       SND) c2)) SUBSET all`,
+     UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) c))
+       SUBSET all /\
+     {n + k * bvl_to_bvi_namespaces | k | n + k * bvl_to_bvi_namespaces <
+       n2} SUBSET all ==>
+     UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) c2))
+       SUBSET all`,
   CHEAT_TAC);;
 
 (* compile_prog_good_code_labels *)
 let bvi_tmcProof_compile_prog_good_code_labels = prove
  (`!b n c n2 c2.
      bvi_tmc_compile_prog b n c = (n2,c2) /\
-     UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND)
-       c)) SUBSET all /\
-     {n + k * bvl_to_bvi_namespaces | k | n + k *
-       bvl_to_bvi_namespaces < n2} SUBSET all ==>
-     UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o
-       SND) c2)) SUBSET all`,
+     UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) c))
+       SUBSET all /\
+     {n + k * bvl_to_bvi_namespaces | k | n + k * bvl_to_bvi_namespaces <
+       n2} SUBSET all ==>
+     UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) c2))
+       SUBSET all`,
   CHEAT_TAC);;
 
 (* compile_each_keeps_names *)
 let bvi_tmcProof_compile_each_keeps_names = prove
  (`!next' xs next' ys.
-     bvi_tmc_compile_each next' xs = (next',ys) /\ MEM x (MAP FST xs)
-       ==>
+     bvi_tmc_compile_each next' xs = (next',ys) /\ MEM x (MAP FST xs) ==>
      MEM x (MAP FST ys)`,
   CHEAT_TAC);;
 
 (* compile_prog_keeps_names *)
 let bvi_tmcProof_compile_prog_keeps_names = prove
  (`!b next' xs next' ys.
-     bvi_tmc_compile_prog b next' xs = (next',ys) /\ MEM x (MAP FST
-       xs) ==>
+     bvi_tmc_compile_prog b next' xs = (next',ys) /\ MEM x (MAP FST xs) ==>
      MEM x (MAP FST ys)`,
   CHEAT_TAC);;
 

@@ -30,21 +30,19 @@ let _ = do_list hide_constant ["shift"];;
 (* move candidates *)
 let bytes_in_word_mul_eq_shift = prove
  (`good_dimindex (:'a) ==>
-   (bytes_in_word * w = ((w << backend_common_word_shift (:'a)):'a
-     word))`,
+   (bytes_in_word * w = ((w << backend_common_word_shift (:'a)):'a word))`,
   CHEAT_TAC);;
 
 let word_or_eq_0 = prove
  (`(w || v) = (n2w 0) <=> w = (n2w 0) /\ v = (n2w 0)`,
   CHEAT_TAC);;
 
-(* HOL4 word_gcFunctionsScript.sml:30: the ML values that the
-   definitions below antiquote *)
+(* HOL4 word_gcFunctionsScript.sml:30: the ML values that the definitions
+   below antiquote *)
 
 let shift_length_has_fp_ops = prove
  (`shift_length (data_to_word_config_has_fp_tern_fupd (K b2)
-  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) = shift_length
-  conf`,
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) = shift_length conf`,
   CHEAT_TAC);;
 add_simp shift_length_has_fp_ops;;
 
@@ -65,150 +63,131 @@ let update_addr_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let memcpy_def,memcpy_ind = define_guess_cheat
   [`memcpy w a b m dm =
-     (if w = (n2w 0) then (b,m,T) else
-       let (b1,m1,c1) = memcpy (w - (n2w 1)) (a + bytes_in_word) (b
-         + bytes_in_word)
+     if w = (n2w 0) then (b,m,T) else let (b1,m1,c1) = memcpy (w - (n2w 1))
+       (a + bytes_in_word) (b + bytes_in_word)
                        ((b =+ m a) m) dm in
-         (b1,m1,(c1 /\ a IN dm /\ b IN dm)))`];;
+         (b1,m1,(c1 /\ a IN dm /\ b IN dm))`];;
 
 let decode_length_def = new_definition
   `decode_length conf (w:'a word) = w >>> (dimindex (:'a) -
   data_to_word_config_len_size conf)`;;
 
 let word_gc_move_def = define_general
-  [`word_gc_move conf (wordLang_Loc l1 l2,i,pa,old,m,dm) =
-    ((wordLang_Loc l1 l2:'a word_loc),i,pa,m,(l2 = 0))`;
+  [`word_gc_move conf (wordLang_Loc l1 l2,i,pa,old,m,dm) = ((wordLang_Loc l1
+    l2:'a word_loc),i,pa,m,(l2 = 0))`;
    `word_gc_move conf (wordLang_Word w,i,pa,old,m,dm) =
-         (if (w && (n2w 1)) = (n2w 0) then ((wordLang_Word w:'a
-             word_loc),i,pa,m,T) else
-           let c = (ptr_to_addr conf old w IN dm) in
+         if (w && (n2w 1)) = (n2w 0) then ((wordLang_Word w:'a
+             word_loc),i,pa,m,T) else let c = (ptr_to_addr conf old w IN dm) in
            let v = m (ptr_to_addr conf old w) in
              if is_fwd_ptr v then
                (wordLang_Word (update_addr conf (theWord v >>> 2)
-                   w),i,pa,m,c) else
-               let header_addr = ptr_to_addr conf old w in
-               let c = (c /\ header_addr IN dm /\ isWord (m
-                   header_addr)) in
-               let len = decode_length conf (theWord (m
-                   header_addr)) in
-               let v = i + len + (n2w 1) in
-               let (pa1,m1,c1) = memcpy (len + (n2w 1)) header_addr
-                   pa m dm in
-               let c = (c /\ header_addr IN dm /\ c1) in
-               let m1 = (header_addr =+ wordLang_Word (i << 2)) m1
+                   w),i,pa,m,c)
+             else let header_addr = ptr_to_addr conf old w in
+               let c = (c /\ header_addr IN dm /\ isWord (m header_addr))
                    in
-                 (wordLang_Word (update_addr conf i
-                     w),v,pa1,m1,c))`];;
+               let len = decode_length conf (theWord (m header_addr)) in
+               let v = i + len + (n2w 1) in
+               let (pa1,m1,c1) = memcpy (len + (n2w 1)) header_addr pa m dm
+                   in
+               let c = (c /\ header_addr IN dm /\ c1) in
+               let m1 = (header_addr =+ wordLang_Word (i << 2)) m1 in
+                 (wordLang_Word (update_addr conf i w),v,pa1,m1,c)`];;
 
 let word_gen_gc_partial_move_def = define_general
-  [`word_gen_gc_partial_move conf (wordLang_Loc l1
-    l2,i,pa,old,m,dm,gs,rs) = ((wordLang_Loc l1 l2:'a
-    word_loc),i,pa,m,(l2 = 0))`;
-   `word_gen_gc_partial_move conf (wordLang_Word w,i,pa,old,m,dm,gs,rs)
-    =
-       (if (w && (n2w 1)) = (n2w 0) then (wordLang_Word w,i,pa,m,T)
-           else
-         let header_addr = ptr_to_addr conf old w in
+  [`word_gen_gc_partial_move conf (wordLang_Loc l1 l2,i,pa,old,m,dm,gs,rs) =
+    ((wordLang_Loc l1 l2:'a word_loc),i,pa,m,(l2 = 0))`;
+   `word_gen_gc_partial_move conf (wordLang_Word w,i,pa,old,m,dm,gs,rs) =
+       if (w && (n2w 1)) = (n2w 0) then (wordLang_Word w,i,pa,m,T) else let
+           header_addr = ptr_to_addr conf old w in
          let tmp = header_addr - old in
            if tmp <+ gs \/ rs <=+ tmp then
-             (wordLang_Word w,i,pa,m,T) else
-             let c = (ptr_to_addr conf old w IN dm) in
+             (wordLang_Word w,i,pa,m,T)
+           else let c = (ptr_to_addr conf old w IN dm) in
              let v = m (ptr_to_addr conf old w) in
                if is_fwd_ptr v then
                  (wordLang_Word (update_addr conf (theWord v >>> 2)
-                     w),i,pa,m,c) else
-                 let c = (c /\ header_addr IN dm /\ isWord (m
-                     header_addr)) in
-                 let len = decode_length conf (theWord (m
-                     header_addr)) in
+                     w),i,pa,m,c)
+               else let c = (c /\ header_addr IN dm /\ isWord (m
+                   header_addr)) in
+                 let len = decode_length conf (theWord (m header_addr)) in
                  let v = i + len + (n2w 1) in
-                 let (pa1,m1,c1) = memcpy (len + (n2w 1))
-                     header_addr pa m dm in
+                 let (pa1,m1,c1) = memcpy (len + (n2w 1)) header_addr pa m
+                     dm in
                  let c = (c /\ header_addr IN dm /\ c1) in
-                 let m1 = (header_addr =+ wordLang_Word (i << 2)) m1
-                     in
-                   (wordLang_Word (update_addr conf i
-                       w),v,pa1,m1,c))`];;
+                 let m1 = (header_addr =+ wordLang_Word (i << 2)) m1 in
+                   (wordLang_Word (update_addr conf i w),v,pa1,m1,c)`];;
 
 let _ = size_thms "word_loc";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_gc_move_roots_def,word_gc_move_roots_ind = define_wf
-  `MEASURE (\(x0,x1).      pair_size (list_size (word_loc_size (\x.
-  0)))      (pair_size (\x. 0)      (pair_size (\x. 0) (pair_size (\x.
-  0) (pair_size (\x. 0) (\x. 0)))))      x1)`
+  `MEASURE (\(x0,x1).      pair_size (list_size (word_loc_size (\x. 0)))
+  (pair_size (\x. 0)      (pair_size (\x. 0) (pair_size (\x. 0) (pair_size
+  (\x. 0) (\x. 0)))))      x1)`
   [`word_gc_move_roots conf ([],i,pa,old,m,dm) = ([],i,pa,m,T)`;
    `word_gc_move_roots conf (CONS w ws,i,pa,old,m,dm) =
-         (let (w1,i1,pa1,m1,c1) = word_gc_move conf
-             (w,i,pa,old,m,dm) in
+         let (w1,i1,pa1,m1,c1) = word_gc_move conf (w,i,pa,old,m,dm) in
          let (ws2,i2,pa2,m2,c2) = word_gc_move_roots conf
              (ws,i1,pa1,old,m1,dm) in
-           (CONS w1 ws2,i2,pa2,m2,(c1 /\ c2)))`];;
+           (CONS w1 ws2,i2,pa2,m2,(c1 /\ c2))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let word_gc_move_list_def,word_gc_move_list_ind = define_guess_cheat
-  [`word_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
-  word),old,m,dm) =
-    (if l = (n2w 0) then (a,i,pa,m,T) else
-      let w = ((m a):'a word_loc) in
+  [`word_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a word),old,m,dm) =
+    if l = (n2w 0) then (a,i,pa,m,T) else let w = ((m a):'a word_loc) in
       let (w1,i1,pa1,m1,c1) = word_gc_move conf (w,i,pa,old,m,dm) in
       let m1 = (a =+ w1) m1 in
-      let (a2,i2,pa2,m2,c2) = word_gc_move_list conf (a +
-        bytes_in_word,l - (n2w 1),i1,pa1,old,m1,dm) in
-        (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2)))`];;
+      let (a2,i2,pa2,m2,c2) = word_gc_move_list conf (a + bytes_in_word,l -
+        (n2w 1),i1,pa1,old,m1,dm) in
+        (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2))`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let word_gen_gc_partial_move_roots_def,
-    word_gen_gc_partial_move_roots_ind =
+let word_gen_gc_partial_move_roots_def,word_gen_gc_partial_move_roots_ind =
   define_wf
-  `MEASURE (\(x0,x1).      pair_size (list_size (word_loc_size (\x.
-  0)))      (pair_size (\x. 0)      (pair_size (\x. 0)      (pair_size
-  (\x. 0)      (pair_size (\x. 0) (pair_size (\x. 0) (pair_size (\x. 0)
-  (\x. 0)))))))      x1)`
+  `MEASURE (\(x0,x1).      pair_size (list_size (word_loc_size (\x. 0)))
+  (pair_size (\x. 0)      (pair_size (\x. 0)      (pair_size (\x. 0)
+  (pair_size (\x. 0) (pair_size (\x. 0) (pair_size (\x. 0) (\x. 0)))))))
+  x1)`
   [`word_gen_gc_partial_move_roots conf ([],i,pa,old,m,dm,gs,rs) =
     ([],i,pa,m,T)`;
-   `word_gen_gc_partial_move_roots conf (CONS w ws,i,pa,old,m,dm,gs,rs)
-    =
-         (let (w1,i1,pa1,m1,c1) = word_gen_gc_partial_move conf
+   `word_gen_gc_partial_move_roots conf (CONS w ws,i,pa,old,m,dm,gs,rs) =
+         let (w1,i1,pa1,m1,c1) = word_gen_gc_partial_move conf
              (w,i,pa,old,m,dm,gs,rs) in
-         let (ws2,i2,pa2,m2,c2) = word_gen_gc_partial_move_roots
-             conf (ws,i1,pa1,old,m1,dm,gs,rs) in
-           (CONS w1 ws2,i2,pa2,m2,(c1 /\ c2)))`];;
+         let (ws2,i2,pa2,m2,c2) = word_gen_gc_partial_move_roots conf
+             (ws,i1,pa1,old,m1,dm,gs,rs) in
+           (CONS w1 ws2,i2,pa2,m2,(c1 /\ c2))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_gen_gc_partial_move_list_def,
-    word_gen_gc_partial_move_list_ind =
+let word_gen_gc_partial_move_list_def,word_gen_gc_partial_move_list_ind =
   define_guess_cheat
   [`word_gen_gc_partial_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),old,m,dm,gs,rs) =
-    (if l = (n2w 0) then (a,i,pa,m,T) else
-      let w = ((m a):'a word_loc) in
+    if l = (n2w 0) then (a,i,pa,m,T) else let w = ((m a):'a word_loc) in
       let (w1,i1,pa1,m1,c1) = word_gen_gc_partial_move conf
         (w,i,pa,old,m,dm,gs,rs) in
       let m1 = (a =+ w1) m1 in
-      let (a2,i2,pa2,m2,c2) = word_gen_gc_partial_move_list conf (a
-        + bytes_in_word,l - (n2w 1),i1,pa1,old,m1,dm,gs,rs) in
-        (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2)))`];;
+      let (a2,i2,pa2,m2,c2) = word_gen_gc_partial_move_list conf (a +
+        bytes_in_word,l - (n2w 1),i1,pa1,old,m1,dm,gs,rs) in
+        (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2))`];;
 
 let word_gen_gc_partial_move_list_zero = prove
- (`word_gen_gc_partial_move_list conf (a,(n2w 0),i,pa,old,m,dm,gs,rs)
-  = (a,i,pa,m,T)`,
+ (`word_gen_gc_partial_move_list conf (a,(n2w 0),i,pa,old,m,dm,gs,rs) =
+  (a,i,pa,m,T)`,
   CHEAT_TAC);;
 
 let word_gen_gc_partial_move_list_suc = prove
  (`word_gen_gc_partial_move_list conf (a,(n2w (SUC l):'a
   word),i,pa,old,m,dm,gs,rs) =
-   (if n2w (SUC l) = ((n2w 0):'a word) then (a,i,pa,m,T) else
-    let w = m a in
+   if n2w (SUC l) = ((n2w 0):'a word) then (a,i,pa,m,T) else let w = m a in
     let (w1,i1,pa1,m1,c1) = word_gen_gc_partial_move conf
       (w,i,pa,old,m,dm,gs,rs) in
     let m1 = (a =+ w1) m1 in
     let (a2,i2,pa2,m2,c2) = word_gen_gc_partial_move_list conf (a +
       bytes_in_word,n2w l,i1,pa1,old,m1,dm,gs,rs) in
-      (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2)))`,
+      (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2))`,
   CHEAT_TAC);;
 
 let word_gen_gc_partial_move_list_append = prove
@@ -228,28 +207,26 @@ let word_gen_gc_partial_move_list_append = prove
 let word_gc_move_loop_def,word_gc_move_loop_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x0)`
   [`word_gc_move_loop k conf (pb,i,pa,old,m,dm,c) =
-     (if pb = pa then (i,pa,m,c) else
-     if k = 0 then (i,pa,m,F) else
-       let w = m pb in
+     if pb = pa then (i,pa,m,c) else if k = 0 then (i,pa,m,F) else let w =
+       m pb in
        let c = (c /\ pb IN dm /\ isWord w) in
        let len = decode_length conf (theWord w) in
          if word_bit 2 (theWord w) then
            let pb = pb + (len + (n2w 1)) * bytes_in_word in
              word_gc_move_loop (k - 1) conf (pb,i,pa,old,m,dm,c)
-               else
-           let pb = pb + bytes_in_word in
+         else let pb = pb + bytes_in_word in
            let (pb,i1,pa1,m1,c1) = word_gc_move_list conf
              (pb,len,i,pa,old,m,dm) in
-             word_gc_move_loop (k - 1) conf
-               (pb,i1,pa1,old,m1,dm,(c /\ c1)))`];;
+             word_gc_move_loop (k - 1) conf (pb,i1,pa1,old,m1,dm,(c
+               /\ c1))`];;
 
 let word_full_gc_def = new_definition
   `word_full_gc conf (all_roots,new,(old:'a word),m,dm) =
-     (let (rs,i1,pa1,m1,c1) = word_gc_move_roots conf (all_roots,(n2w
+     let (rs,i1,pa1,m1,c1) = word_gc_move_roots conf (all_roots,(n2w
        0),new,old,m,dm) in
      let (i1,pa1,m1,c2) =
            word_gc_move_loop (dimword (:'a)) conf
-             (new,i1,pa1,old,m1,dm,c1) in (rs,i1,pa1,m1,c2))`;;
+             (new,i1,pa1,old,m1,dm,c1) in (rs,i1,pa1,m1,c2)`;;
 
 let word_gc_fun_assum_def = new_definition
   `word_gc_fun_assum (conf:data_to_word_config) (s:(store_name,'a
@@ -269,8 +246,8 @@ let word_gc_fun_assum_def = new_definition
      shift_length conf < dimindex (:'a)`;;
 
 let word_gen_gc_can_do_partial_def = new_definition
-  `word_gen_gc_can_do_partial gen_sizes (s:(store_name,'a word_loc)fmap)
-  <=> ~(gen_sizes = []) /\
+  `word_gen_gc_can_do_partial gen_sizes (s:(store_name,'a word_loc)fmap) <=>
+  ~(gen_sizes = []) /\
      (let allo = theWord (FAPPLY s AllocSize) in
      let trig = theWord (FAPPLY s TriggerGC) in
      let endh = theWord (FAPPLY s EndOfHeap) in
@@ -282,20 +259,18 @@ let word_gen_gc_can_do_partial_def = new_definition
 
 let new_trig_def = new_definition
   `new_trig (heap_space:'a word) (alloc_pref:'a word) gs =
-     (let a = w2n alloc_pref in
+     let a = w2n alloc_pref in
      let g = w2n ((get_gen_size gs):'a word) in
      let h = w2n heap_space in
        if a <= g then
                // allocation smaller than gen
-               n2w (MIN h g) else
-       if h < a then
+               n2w (MIN h g) else if h < a then
               // allocation too big
-              n2w h else
-       if byte_aligned alloc_pref then
+              n2w h else if byte_aligned alloc_pref then
         // should always be the case
         alloc_pref else
            // very unlikely and a bad choice
-           n2w h)`;;
+           n2w h`;;
 
 let _ = size_thms "heap_element";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -303,11 +278,11 @@ let _ = size_thms "heap_element";;
 let refs_to_addresses_def,refs_to_addresses_ind = define_wf
   `MEASURE (\x0. list_size (heap_element_size (\x. 0) (\x. 0)) x0)`
   [`refs_to_addresses x1 =
-        match x1 with
-          [] -> []
-        | CONS (DataElement ptrs _1 _2) refs -> APPEND ptrs
-          (refs_to_addresses refs)
-        | (CONS _3 refs) -> refs_to_addresses refs`];;
+     match x1 with
+       [] -> []
+     | CONS (DataElement ptrs _1 _2) refs -> APPEND ptrs (refs_to_addresses
+       refs)
+     | CONS _ refs -> refs_to_addresses refs`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -315,170 +290,150 @@ let word_gen_gc_partial_move_ref_list_def,
     word_gen_gc_partial_move_ref_list_ind =
   define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x0)`
-  [`word_gen_gc_partial_move_ref_list k conf
-  (pb,i,pa,old,m,dm,c,gs,rs,re) =
-     (if pb = re then (i,pa,m,c) else
-     if k = 0 then (i,pa,m,F) else
-       let w = m pb in
+  [`word_gen_gc_partial_move_ref_list k conf (pb,i,pa,old,m,dm,c,gs,rs,re) =
+     if pb = re then (i,pa,m,c) else if k = 0 then (i,pa,m,F) else let w =
+       m pb in
        let c = (c /\ pb IN dm /\ isWord w) in
        let len = decode_length conf (theWord w) in
        let pb = pb + bytes_in_word in
        let (pb,i1,pa1,m1,c1) = word_gen_gc_partial_move_list conf
          (pb,len,i,pa,old,m,dm,gs,rs) in
          word_gen_gc_partial_move_ref_list (k - 1) conf
-           (pb,i1,pa1,old,m1,dm,(c /\ c1),gs,rs,re))`];;
+           (pb,i1,pa1,old,m1,dm,(c /\ c1),gs,rs,re)`];;
 
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let word_gen_gc_partial_move_data_def,
-    word_gen_gc_partial_move_data_ind =
+let word_gen_gc_partial_move_data_def,word_gen_gc_partial_move_data_ind =
   define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
   [`word_gen_gc_partial_move_data conf k ((h2a:'a word),i,(pa:'a
   word),old,m,dm,gs,rs) =
-     (if h2a = pa then (i,pa,m,T) else
-     if k = 0 then (i,pa,m,F) else
-       let c = (h2a IN dm) in
+     if h2a = pa then (i,pa,m,T) else if k = 0 then (i,pa,m,F) else let c =
+       (h2a IN dm) in
        let v = m h2a in
        let c = (c /\ isWord v) in
        let l = decode_length conf (theWord v) in
          if word_bit 2 (theWord v) then
            let h2a = h2a + (l + (n2w 1)) * bytes_in_word in
-           let (i,pa,m,c2) = word_gen_gc_partial_move_data conf (k -
-             1)
+           let (i,pa,m,c2) = word_gen_gc_partial_move_data conf (k - 1)
                          (h2a,i,pa,old,m,dm,gs,rs) in
-             (i,pa,m,(c /\ c2)) else
-           let (h2a,i,pa,m,c1) = word_gen_gc_partial_move_list conf
-                         (h2a + bytes_in_word,l,i,pa,old,m,dm,gs,rs)
-                           in
-           let (i,pa,m,c2) = word_gen_gc_partial_move_data conf (k -
-             1)
+             (i,pa,m,(c /\ c2))
+         else let (h2a,i,pa,m,c1) = word_gen_gc_partial_move_list conf
+                         (h2a + bytes_in_word,l,i,pa,old,m,dm,gs,rs) in
+           let (i,pa,m,c2) = word_gen_gc_partial_move_data conf (k - 1)
                          (h2a,i,pa,old,m,dm,gs,rs) in
-             (i,pa,m,(c /\ c1 /\ c2)))`];;
+             (i,pa,m,(c /\ c1 /\ c2))`];;
 
 
 let word_gen_gc_partial_def = new_definition
   `word_gen_gc_partial conf (roots,(curr:'a word),new,len,m,dm,gs,rs) =
-     (let refs_end = curr + len in
+     let refs_end = curr + len in
      let gen_start = gs >>> backend_common_word_shift (:'a) in
      let (roots,i,pa,m,c1) = word_gen_gc_partial_move_roots conf
                      (roots,gen_start,new,curr,m,dm,gs,rs) in
-     let (i,pa,m,c2) = word_gen_gc_partial_move_ref_list (dimword
-       (:'a)) conf
-                              (curr +
-                                rs,i,pa,curr,m,dm,c1,gs,rs,refs_end) in
-     let (i,pa,m,c3) = word_gen_gc_partial_move_data conf (dimword
-       (:'a))
+     let (i,pa,m,c2) = word_gen_gc_partial_move_ref_list (dimword (:'a))
+       conf
+                              (curr + rs,i,pa,curr,m,dm,c1,gs,rs,refs_end)
+                                in
+     let (i,pa,m,c3) = word_gen_gc_partial_move_data conf (dimword (:'a))
                               (new,i,pa,curr,m,dm,gs,rs) in
-       (roots,i,pa,m,(c2 /\ c3)))`;;
+       (roots,i,pa,m,(c2 /\ c3))`;;
 
 let word_gen_gc_partial_full_def = new_definition
-  `word_gen_gc_partial_full conf (roots,(curr:'a
-  word),new,len,m,dm,gs,rs) =
-     (let (roots,i,pa,m,c1) = word_gen_gc_partial conf
+  `word_gen_gc_partial_full conf (roots,(curr:'a word),new,len,m,dm,gs,rs) =
+     let (roots,i,pa,m,c1) = word_gen_gc_partial conf
        (roots,curr,new,len,m,dm,gs,rs) in
-     let cpy_length = (pa - new) >>> backend_common_word_shift (:'a)
-       in
+     let cpy_length = (pa - new) >>> backend_common_word_shift (:'a) in
      let (b1,m,c2) = memcpy cpy_length new (curr + gs) m dm in
-      (roots,i,b1,m,(c1 /\ c2)))`;;
+      (roots,i,b1,m,(c1 /\ c2))`;;
 
 let is_ref_header_def = new_definition
-  `is_ref_header (v:'a word) <=> ((v && (n2w 0b1100)) = (n2w
-  0b01000))`;;
+  `is_ref_header (v:'a word) <=> ((v && (n2w 0b1100)) = (n2w 0b01000))`;;
 
 let word_gen_gc_move_def = define_general
   [`word_gen_gc_move conf (wordLang_Loc l1 l2,i,pa,ib,pb,old,m,dm) =
          ((wordLang_Loc l1 l2:'a word_loc),i,pa,ib,pb,m,(l2 = 0))`;
    `word_gen_gc_move conf (wordLang_Word w,i,pa,ib,pb,old,m,dm) =
-         (if ((n2w 1) && w) = (n2w 0) then ((wordLang_Word w:'a
-             word_loc),i,pa,ib,pb,m,T) else
-           let c = (ptr_to_addr conf old w IN dm) in
+         if ((n2w 1) && w) = (n2w 0) then ((wordLang_Word w:'a
+             word_loc),i,pa,ib,pb,m,T) else let c = (ptr_to_addr conf old w IN
+             dm) in
            let v = m (ptr_to_addr conf old w) in
            let c = (c /\ isWord v) in
              if is_fwd_ptr v then
                (wordLang_Word (update_addr conf (theWord v >>> 2)
-                   w),i,pa,ib,pb,m,c) else
-               let header_addr = ptr_to_addr conf old w in
-               let c = (c /\ header_addr IN dm /\ isWord (m
-                   header_addr)) in
-               let len = decode_length conf (theWord (m
-                   header_addr)) in
+                   w),i,pa,ib,pb,m,c)
+             else let header_addr = ptr_to_addr conf old w in
+               let c = (c /\ header_addr IN dm /\ isWord (m header_addr))
+                   in
+               let len = decode_length conf (theWord (m header_addr)) in
                  if is_ref_header (theWord v) then
                    let v = ib - (len + (n2w 1)) in
                    let pb1 = pb - (len + (n2w 1)) * bytes_in_word in
-                   let (_7,m1,c1) = memcpy (len + (n2w 1))
-                       header_addr pb1 m dm in
+                   let (_,m1,c1) = memcpy (len + (n2w 1)) header_addr pb1 m
+                       dm in
                    let c = (c /\ header_addr IN dm /\ c1) in
-                   let m1 = (header_addr =+ wordLang_Word (v << 2))
-                       m1 in
-                     (wordLang_Word (update_addr conf v
-                         w),i,pa,v,pb1,m1,c) else
-                  let v = i + len + (n2w 1) in
-                  let (pa1,m1,c1) = memcpy (len + (n2w 1))
-                      header_addr pa m dm in
+                   let m1 = (header_addr =+ wordLang_Word (v << 2)) m1 in
+                     (wordLang_Word (update_addr conf v w),i,pa,v,pb1,m1,c)
+                 else let v = i + len + (n2w 1) in
+                  let (pa1,m1,c1) = memcpy (len + (n2w 1)) header_addr pa m
+                      dm in
                   let c = (c /\ header_addr IN dm /\ c1) in
-                  let m1 = (header_addr =+ wordLang_Word (i << 2))
-                      m1 in
+                  let m1 = (header_addr =+ wordLang_Word (i << 2)) m1 in
                     (wordLang_Word (update_addr conf i
-                        w),v,pa1,ib,pb,m1,c))`];;
+                        w),v,pa1,ib,pb,m1,c)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_gen_gc_move_roots_def,word_gen_gc_move_roots_ind = define_wf
-  `MEASURE (\(x0,x1).      pair_size (list_size (word_loc_size (\x.
-  0)))      (pair_size (\x. 0)      (pair_size (\x. 0)      (pair_size
-  (\x. 0)      (pair_size (\x. 0) (pair_size (\x. 0) (pair_size (\x. 0)
-  (\x. 0)))))))      x1)`
+  `MEASURE (\(x0,x1).      pair_size (list_size (word_loc_size (\x. 0)))
+  (pair_size (\x. 0)      (pair_size (\x. 0)      (pair_size (\x. 0)
+  (pair_size (\x. 0) (pair_size (\x. 0) (pair_size (\x. 0) (\x. 0)))))))
+  x1)`
   [`word_gen_gc_move_roots conf ([],i,pa,ib,pb,old,m,dm) =
     ([],i,pa,ib,pb,m,T)`;
    `word_gen_gc_move_roots conf (CONS w ws,i,pa,ib,pb,old,m,dm) =
-         (let (w1,i1,pa1,ib,pb,m1,c1) = word_gen_gc_move conf
+         let (w1,i1,pa1,ib,pb,m1,c1) = word_gen_gc_move conf
              (w,i,pa,ib,pb,old,m,dm) in
          let (ws2,i2,pa2,ib,pb,m2,c2) = word_gen_gc_move_roots conf
              (ws,i1,pa1,ib,pb,old,m1,dm) in
-           (CONS w1 ws2,i2,pa2,ib,pb,m2,(c1 /\ c2)))`];;
+           (CONS w1 ws2,i2,pa2,ib,pb,m2,(c1 /\ c2))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_gen_gc_move_list_def,word_gen_gc_move_list_ind =
-  define_guess_cheat
+let word_gen_gc_move_list_def,word_gen_gc_move_list_ind = define_guess_cheat
   [`word_gen_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),ib,pb,old,m,dm) =
-    (if l = (n2w 0) then (a,i,pa,ib,pb,m,T) else
-      let w = ((m a):'a word_loc) in
+    if l = (n2w 0) then (a,i,pa,ib,pb,m,T) else let w = ((m a):'a word_loc)
+      in
       let (w1,i1,pa1,ib,pb,m1,c1) = word_gen_gc_move conf
         (w,i,pa,ib,pb,old,m,dm) in
       let m1 = (a =+ w1) m1 in
       let (a2,i2,pa2,ib,pb,m2,c2) = word_gen_gc_move_list conf (a +
         bytes_in_word,l - (n2w 1),i1,pa1,ib,pb,old,m1,dm) in
-        (a2,i2,pa2,ib,pb,m2,(a IN dm /\ c1 /\ c2)))`];;
+        (a2,i2,pa2,ib,pb,m2,(a IN dm /\ c1 /\ c2))`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_gen_gc_move_data_def,word_gen_gc_move_data_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
-  [`word_gen_gc_move_data conf k ((h2a:'a word),i,(pa:'a
-  word),ib,pb,old,m,dm) =
-     (if h2a = pa then (i,pa,ib,pb,m,T) else
-     if k = 0 then (i,pa,ib,pb,m,F) else
-       let c = (h2a IN dm) in
+  [`word_gen_gc_move_data conf k ((h2a:'a word),i,(pa:'a word),ib,pb,old,m,dm)
+  =
+     if h2a = pa then (i,pa,ib,pb,m,T) else if k = 0 then (i,pa,ib,pb,m,F)
+       else let c = (h2a IN dm) in
        let v = m h2a in
        let c = (c /\ isWord v) in
        let l = decode_length conf (theWord v) in
          if word_bit 2 (theWord v) then
            let h2a = h2a + (l + (n2w 1)) * bytes_in_word in
-           let (i,pa,ib,pb,m,c2) = word_gen_gc_move_data conf (k -
-             1)
+           let (i,pa,ib,pb,m,c2) = word_gen_gc_move_data conf (k - 1)
                          (h2a,i,pa,ib,pb,old,m,dm) in
-             (i,pa,ib,pb,m,(c /\ c2)) else
-           let (h2a,i,pa,ib,pb,m,c1) = word_gen_gc_move_list conf
-                         (h2a + bytes_in_word,l,i,pa,ib,pb,old,m,dm)
-                           in
-           let (i,pa,ib,pb,m,c2) = word_gen_gc_move_data conf (k -
-             1)
+             (i,pa,ib,pb,m,(c /\ c2))
+         else let (h2a,i,pa,ib,pb,m,c1) = word_gen_gc_move_list conf
+                         (h2a + bytes_in_word,l,i,pa,ib,pb,old,m,dm) in
+           let (i,pa,ib,pb,m,c2) = word_gen_gc_move_data conf (k - 1)
                          (h2a,i,pa,ib,pb,old,m,dm) in
-             (i,pa,ib,pb,m,(c /\ c1 /\ c2)))`];;
+             (i,pa,ib,pb,m,(c /\ c1 /\ c2))`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -486,19 +441,17 @@ let word_gen_gc_move_refs_def,word_gen_gc_move_refs_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
   [`word_gen_gc_move_refs conf k ((r2a:'a word),(r1a:'a word),i,(pa:'a
   word),ib,pb,old,(m:'a word->'a word_loc),dm) =
-     (if r2a = r1a then (r2a,i,pa,ib,pb,m,T) else
-     if k = 0 then (r2a,i,pa,ib,pb,m,F) else
-       let c = (r2a IN dm) in
+     if r2a = r1a then (r2a,i,pa,ib,pb,m,T) else if k = 0 then
+       (r2a,i,pa,ib,pb,m,F) else let c = (r2a IN dm) in
        let v = m r2a in
        let c = (c /\ isWord v) in
        let l = decode_length conf (theWord v) in
        let (r2a,i,pa,ib,pb,m,c1) = word_gen_gc_move_list conf
-                              (r2a +
-                                bytes_in_word,l,i,pa,ib,pb,old,m,dm) in
-       let (r2a,i,pa,ib,pb,m,c2) = word_gen_gc_move_refs conf (k -
-         1)
+                              (r2a + bytes_in_word,l,i,pa,ib,pb,old,m,dm)
+                                in
+       let (r2a,i,pa,ib,pb,m,c2) = word_gen_gc_move_refs conf (k - 1)
                               (r2a,r1a,i,pa,ib,pb,old,m,dm) in
-         (r2a,i,pa,ib,pb,m,(c /\ c1 /\ c2)))`];;
+         (r2a,i,pa,ib,pb,m,(c /\ c1 /\ c2))`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -506,61 +459,58 @@ let word_gen_gc_move_loop_def,word_gen_gc_move_loop_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
   [`word_gen_gc_move_loop conf k ((pax:'a word),i,(pa:'a
   word),ib,pb,pbx,old,m,dm) =
-     (if pbx = pb then
+     if pbx = pb then
        if pax = pa then
-         (i,pa,ib,pb,m,T) else
-         let (i,pa,ib,pb,m,c1) = word_gen_gc_move_data conf (dimword
-           (:'a))
+         (i,pa,ib,pb,m,T)
+       else let (i,pa,ib,pb,m,c1) = word_gen_gc_move_data conf (dimword
+         (:'a))
                               (pax,i,pa,ib,pb,old,m,dm) in
-           if k = 0 then (i,pa,ib,pb,m,F) else
-             let (i,pa,ib,pb,m,c2) = word_gen_gc_move_loop conf (k -
-               1)
+           if k = 0 then (i,pa,ib,pb,m,F) else let (i,pa,ib,pb,m,c2) =
+             word_gen_gc_move_loop conf (k - 1)
                             (pa,i,pa,ib,pb,pbx,old,m,dm) in
-               (i,pa,ib,pb,m,(c1 /\ c2)) else
-         let (pbx,i,pa,ib,pb',m,c1) = word_gen_gc_move_refs conf
-           (dimword (:'a))
+               (i,pa,ib,pb,m,(c1 /\ c2))
+       else let (pbx,i,pa,ib,pb',m,c1) = word_gen_gc_move_refs conf
+         (dimword (:'a))
                               (pb,pbx,i,pa,ib,pb,old,m,dm) in
-           if k = 0 then (i,pa,ib,pb,m,F) else
-             let (i,pa,ib,pb,m,c2) = word_gen_gc_move_loop conf (k -
-               1)
+           if k = 0 then (i,pa,ib,pb,m,F) else let (i,pa,ib,pb,m,c2) =
+             word_gen_gc_move_loop conf (k - 1)
                             (pax,i,pa,ib,pb',pb,old,m,dm) in
-               (i,pa,ib,pb,m,(c1 /\ c2)))`];;
+               (i,pa,ib,pb,m,(c1 /\ c2))`];;
 
 let word_gen_gc_def = new_definition
   `word_gen_gc conf (roots,curr,new,(len:'a word),m,dm) =
-     (let new_end = new + len in
+     let new_end = new + len in
      let len = len >>> backend_common_word_shift (:'a) in
      let (roots,i,pa,ib,pb,m,c1) = word_gen_gc_move_roots conf
                      (roots,(n2w 0),new,len,new_end,curr,m,dm) in
      let (i,pa,ib,pb,m,c2) = word_gen_gc_move_loop conf (w2n len)
                               (new,i,pa,ib,pb,new_end,curr,m,dm) in
-       (roots,i,pa,ib,pb,m,(c1 /\ c2)))`;;
+       (roots,i,pa,ib,pb,m,(c1 /\ c2))`;;
 
 let glob_real_def = new_definition
   `glob_real c curr w =
-        match w with
-          wordLang_Word (w:'a word) ->
+     match w with
+       wordLang_Word (w:'a word) ->
         wordLang_Word (curr + (w >>> (shift_length c) <<
           backend_common_word_shift (:'a)))
-        | w -> w`;;
+     | w -> w`;;
 
 let word_gc_fun_def = new_definition
-  `((word_gc_fun (conf:data_to_word_config)):('a word_loc) list#('a
-  word->'a word_loc)#('a word->bool)#(store_name,'a word_loc)fmap->(('a
-  word_loc) list#('a word->'a word_loc)#(store_name,'a word_loc)fmap)
-  option) = (\(roots,m,dm,s).
+  `((word_gc_fun (conf:data_to_word_config)):('a word_loc) list#('a word->'a
+  word_loc)#('a word->bool)#(store_name,'a word_loc)fmap->(('a word_loc)
+  list#('a word->'a word_loc)#(store_name,'a word_loc)fmap) option) =
+  (\(roots,m,dm,s).
       let c1 = word_gc_fun_assum conf s in
       let new = theWord (FAPPLY s OtherHeap) in
       let old = theWord (FAPPLY s CurrHeap) in
       let len = theWord (FAPPLY s HeapLength) in
       let all_roots = CONS (FAPPLY s Globals) roots in
-        match data_to_word_config_gc_kind conf with data_to_word_None
-          ->
+        match data_to_word_config_gc_kind conf with data_to_word_None ->
          (let s1 = s |++ [(NextFree,wordLang_Word old);
                           (TriggerGC,wordLang_Word old);
                           (EndOfHeap,wordLang_Word old)] in
-            if c1 then SOME (roots,m,s1) else NONE) |
-              data_to_word_Simple ->
+            if c1 then SOME (roots,m,s1) else NONE)
+        | data_to_word_Simple ->
          (let (roots1,i1,pa1,m1,c2) =
             word_full_gc conf (all_roots,new,old,m,dm) in
           let s1 = s |++ [(CurrHeap,wordLang_Word new);
@@ -569,12 +519,11 @@ let word_gc_fun_def = new_definition
                           (TriggerGC,wordLang_Word (new + len));
                           (EndOfHeap,wordLang_Word (new + len));
                           (Globals,HD roots1);
-                          (GlobReal,glob_real conf new (HD roots1))]
-                            in
-            if c1 /\ c2 then SOME (TL roots1,m1,s1) else NONE) |
-              data_to_word_Generational gen_sizes ->
-         (if ~c1 then NONE else
-         if word_gen_gc_can_do_partial gen_sizes s then
+                          (GlobReal,glob_real conf new (HD roots1))] in
+            if c1 /\ c2 then SOME (TL roots1,m1,s1) else NONE)
+        | data_to_word_Generational gen_sizes ->
+         if ~c1 then NONE else if word_gen_gc_can_do_partial gen_sizes s
+           then
            (let gs = theWord (FAPPLY s GenStart) in
             let rs = theWord (FAPPLY s EndOfHeap) - theWord (FAPPLY s
               CurrHeap) in
@@ -588,29 +537,27 @@ let word_gc_fun_def = new_definition
                             (OtherHeap,wordLang_Word new);
                             (NextFree,wordLang_Word pa1);
                             (GenStart,wordLang_Word (pa1 - old));
-                            (TriggerGC,wordLang_Word (pa1 + new_trig
-                              (endh - pa1) a gen_sizes));
+                            (TriggerGC,wordLang_Word (pa1 + new_trig (endh -
+                              pa1) a gen_sizes));
                             (Globals,HD roots1);
-                            (GlobReal,glob_real conf old (HD
-                              roots1));
+                            (GlobReal,glob_real conf old (HD roots1));
                             (Temp (n2w 0),wordLang_Word (n2w 0));
                             (Temp (n2w 1),wordLang_Word (n2w 0))] in
-            let c3 = (a <=+ endh - pa1 /\ a <=+ new_trig (endh - pa1)
-              a gen_sizes) in
-              if c2 /\ c3 then SOME (TL roots1,m1,s1) else NONE) else
-           (let (roots1,i1,pa1,ib1,pb1,m1,c2) =
+            let c3 = (a <=+ endh - pa1 /\ a <=+ new_trig (endh - pa1) a
+              gen_sizes) in
+              if c2 /\ c3 then SOME (TL roots1,m1,s1) else NONE)
+         else (let (roots1,i1,pa1,ib1,pb1,m1,c2) =
               word_gen_gc conf (all_roots,old,new,len,m,dm) in
             let a = theWord (FAPPLY s AllocSize) in
             let s1 = s |++ [(CurrHeap,wordLang_Word new);
                             (OtherHeap,wordLang_Word old);
                             (NextFree,wordLang_Word pa1);
                             (GenStart,wordLang_Word (pa1 - new));
-                            (TriggerGC,wordLang_Word (pa1 + new_trig
-                              (pb1 - pa1) a gen_sizes));
+                            (TriggerGC,wordLang_Word (pa1 + new_trig (pb1 -
+                              pa1) a gen_sizes));
                             (EndOfHeap,wordLang_Word pb1);
                             (Globals,HD roots1);
-                            (GlobReal,glob_real conf new (HD
-                              roots1));
+                            (GlobReal,glob_real conf new (HD roots1));
                             (Temp (n2w 0),wordLang_Word (n2w 0));
                             (Temp (n2w 1),wordLang_Word (n2w 0));
                             (Temp (n2w 2),wordLang_Word (n2w 0));
@@ -618,7 +565,7 @@ let word_gc_fun_def = new_definition
                             (Temp (n2w 4),wordLang_Word (n2w 0));
                             (Temp (n2w 5),wordLang_Word (n2w 0));
                             (Temp (n2w 6),wordLang_Word (n2w 0))] in
-              if c2 then SOME (TL roots1,m1,s1) else NONE)))`;;
+              if c2 then SOME (TL roots1,m1,s1) else NONE))`;;
 
 let word_gc_move_roots_IMP_EVERY2 = prove
  (`!xs ys pa m i c1 m1 pa1 i1 old dm c.
@@ -645,13 +592,12 @@ let word_gen_gc_partial_move_roots_IMP_EVERY2 = prove
 
 let word_gc_IMP_EVERY2 = prove
  (`word_gc_fun c (xs,m,dm,st) = SOME (ys,m1,s1) ==>
-    ALL2 (\x y. (isWord x <=> isWord y) /\ (is_gc_word_const x ==>
-      x = y)) xs ys`,
+    ALL2 (\x y. (isWord x <=> isWord y) /\ (is_gc_word_const x ==> x = y))
+      xs ys`,
   CHEAT_TAC);;
 
 let word_gc_fun_LENGTH = prove
- (`word_gc_fun c (xs,m,dm,s) = SOME (zs,m1,s1) ==> LENGTH xs = LENGTH
-  zs`,
+ (`word_gc_fun c (xs,m,dm,s) = SOME (zs,m1,s1) ==> LENGTH xs = LENGTH zs`,
   CHEAT_TAC);;
 
 (* lemmas about has_fp_ops *)
@@ -677,44 +623,43 @@ let word_gen_gc_move_has_fp_ops = prove
 add_simp word_gen_gc_move_has_fp_ops;;
 
 let word_gen_gc_partial_move_has_fp_ops = prove
- (`!x. word_gen_gc_partial_move (data_to_word_config_has_fp_tern_fupd (K
-  b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+ (`!x. word_gen_gc_partial_move (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
         word_gen_gc_partial_move conf x`,
   CHEAT_TAC);;
 add_simp word_gen_gc_partial_move_has_fp_ops;;
 
 let word_gc_move_list_has_fp_ops = prove
- (`!conf x. word_gc_move_list (data_to_word_config_has_fp_tern_fupd (K
-  b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+ (`!conf x. word_gc_move_list (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
              word_gc_move_list conf x`,
   CHEAT_TAC);;
 add_simp word_gc_move_list_has_fp_ops;;
 
 let word_gen_gc_move_list_has_fp_ops = prove
- (`!conf x. word_gen_gc_move_list (data_to_word_config_has_fp_tern_fupd
-  (K b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+ (`!conf x. word_gen_gc_move_list (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
              word_gen_gc_move_list conf x`,
   CHEAT_TAC);;
 add_simp word_gen_gc_move_list_has_fp_ops;;
 
 let word_gen_gc_partial_move_list_has_fp_ops = prove
- (`!conf x. word_gen_gc_partial_move_list
-  (data_to_word_config_has_fp_tern_fupd (K b2)
-  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+ (`!conf x. word_gen_gc_partial_move_list (data_to_word_config_has_fp_tern_fupd
+  (K b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
              word_gen_gc_partial_move_list conf x`,
   CHEAT_TAC);;
 add_simp word_gen_gc_partial_move_list_has_fp_ops;;
 
 let word_gc_move_roots_has_fp_ops = prove
- (`!conf x. word_gc_move_roots (data_to_word_config_has_fp_tern_fupd (K
-  b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+ (`!conf x. word_gc_move_roots (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
              word_gc_move_roots conf x`,
   CHEAT_TAC);;
 add_simp word_gc_move_roots_has_fp_ops;;
 
 let word_gen_gc_move_roots_has_fp_ops = prove
- (`!conf x. word_gen_gc_move_roots (data_to_word_config_has_fp_tern_fupd
-  (K b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+ (`!conf x. word_gen_gc_move_roots (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
              word_gen_gc_move_roots conf x`,
   CHEAT_TAC);;
 add_simp word_gen_gc_move_roots_has_fp_ops;;
@@ -728,8 +673,8 @@ let word_gen_gc_partial_move_roots_has_fp_ops = prove
 add_simp word_gen_gc_partial_move_roots_has_fp_ops;;
 
 let word_gc_move_loop_has_fp_ops = prove
- (`!n conf x. word_gc_move_loop n (data_to_word_config_has_fp_tern_fupd
-  (K b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+ (`!n conf x. word_gc_move_loop n (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
                word_gc_move_loop n conf x`,
   CHEAT_TAC);;
 add_simp word_gc_move_loop_has_fp_ops;;
@@ -743,17 +688,15 @@ let word_gen_gc_partial_move_data_has_fp_ops = prove
 add_simp word_gen_gc_partial_move_data_has_fp_ops;;
 
 let word_gen_gc_move_data_has_fp_ops = prove
- (`!n conf x. word_gen_gc_move_data
-  (data_to_word_config_has_fp_tern_fupd (K b2)
-  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
+ (`!n conf x. word_gen_gc_move_data (data_to_word_config_has_fp_tern_fupd (K
+  b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
                word_gen_gc_move_data conf n x`,
   CHEAT_TAC);;
 add_simp word_gen_gc_move_data_has_fp_ops;;
 
 let word_gen_gc_move_refs_has_fp_ops = prove
- (`!n conf x. word_gen_gc_move_refs
-  (data_to_word_config_has_fp_tern_fupd (K b2)
-  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
+ (`!n conf x. word_gen_gc_move_refs (data_to_word_config_has_fp_tern_fupd (K
+  b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
                word_gen_gc_move_refs conf n x`,
   CHEAT_TAC);;
 add_simp word_gen_gc_move_refs_has_fp_ops;;
@@ -767,9 +710,8 @@ let word_gen_gc_partial_move_ref_list_has_fp_ops = prove
 add_simp word_gen_gc_partial_move_ref_list_has_fp_ops;;
 
 let word_gen_gc_move_loop_has_fp_ops = prove
- (`!n conf x. word_gen_gc_move_loop
-  (data_to_word_config_has_fp_tern_fupd (K b2)
-  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
+ (`!n conf x. word_gen_gc_move_loop (data_to_word_config_has_fp_tern_fupd (K
+  b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
                word_gen_gc_move_loop conf n x`,
   CHEAT_TAC);;
 add_simp word_gen_gc_move_loop_has_fp_ops;;
@@ -782,8 +724,8 @@ let word_full_gc_has_fp_ops = prove
 add_simp word_full_gc_has_fp_ops;;
 
 let word_gen_gc_partial_full_has_fp_ops = prove
- (`!x. word_gen_gc_partial_full (data_to_word_config_has_fp_tern_fupd (K
-  b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+ (`!x. word_gen_gc_partial_full (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
         word_gen_gc_partial_full conf x`,
   CHEAT_TAC);;
 add_simp word_gen_gc_partial_full_has_fp_ops;;
@@ -804,8 +746,7 @@ add_simp glob_real_has_fp_ops;;
 
 let word_gc_fun_has_fp_ops = prove
  (`word_gc_fun (data_to_word_config_has_fp_tern_fupd (K b2)
-  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) = word_gc_fun
-  conf`,
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) = word_gc_fun conf`,
   CHEAT_TAC);;
 add_simp word_gc_fun_has_fp_ops;;
 

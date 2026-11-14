@@ -27,9 +27,9 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "inferSound"
-  ["ast"; "envRel"; "infer"; "inferProps"; "infer_eComplete";
-   "infer_eSound"; "infer_t"; "namespaceProps"; "semanticPrimitives";
-   "typeSysProps"; "typeSystem"; "type_eDeterm"; "unify"];;
+  ["ast"; "envRel"; "infer"; "inferProps"; "infer_eComplete"; "infer_eSound";
+   "infer_t"; "namespaceProps"; "semanticPrimitives"; "typeSysProps";
+   "typeSystem"; "type_eDeterm"; "unify"];;
 
 (* [local] *)
 let letrec_lemma2 = prove
@@ -38,8 +38,8 @@ let letrec_lemma2 = prove
      t_walkstar s' t2) /\
    (LENGTH funs_ts = LENGTH l) /\
    (LENGTH funs_ts = LENGTH l') /\
-   MAP (\n. t_walkstar s (Infer_Tuvar n)) l' = MAP (t_walkstar s)
-     funs_ts ==>
+   MAP (\n. t_walkstar s (Infer_Tuvar n)) l' = MAP (t_walkstar s) funs_ts
+     ==>
    (
    MAP2 (\(f,x,e) t. (f,t)) l (MAP (\n. convert_t (t_walkstar s'
      (Infer_Tuvar n))) l') =
@@ -48,9 +48,8 @@ let letrec_lemma2 = prove
 
 (* sub_completion_empty[local] *)
 let inferSound_sub_completion_empty = prove
- (`!m n s s'. sub_completion m n s [] s' <=> count n SUBSET FDOM s'
-  /\ (!uv. uv IN FDOM s' ==> check_t m {} (t_walkstar s' (Infer_Tuvar
-  uv))) /\ s = s'`,
+ (`!m n s s'. sub_completion m n s [] s' <=> count n SUBSET FDOM s' /\ (!uv.
+  uv IN FDOM s' ==> check_t m {} (t_walkstar s' (Infer_Tuvar uv))) /\ s = s'`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -77,8 +76,7 @@ let lookup_var_empty = prove
 (* env_rel_complete_bind *)
 let inferSound_env_rel_complete_bind = prove
  (`env_rel_complete FEMPTY ienv tenv typeSystem_Empty ==>
-   env_rel_complete FEMPTY ienv tenv (bind_tvar tvs
-     typeSystem_Empty)`,
+   env_rel_complete FEMPTY ienv tenv (bind_tvar tvs typeSystem_Empty)`,
   CHEAT_TAC);;
 
 (* TODO: The generated set of type identifiers (tids)
@@ -105,8 +103,7 @@ let set_ids_eq_union = prove
   CHEAT_TAC);;
 
 let set_ids_eq_union_eq = prove
- (`x <= y /\ y <= z /\ s = set_ids y z ==> set_ids x z = set_ids x y
-  UNION s`,
+ (`x <= y /\ y <= z /\ s = set_ids y z ==> set_ids x z = set_ids x y UNION s`,
   CHEAT_TAC);;
 
 (* HOL4 inferSoundScript.sml:133-134: ML code, not ported *)
@@ -116,14 +113,14 @@ let infer_d_sound = prove
     infer_d ienv d st1 = (M_success ienv',st2) /\
     envRel_env_rel tenv ienv /\
     start_type_id <= infer_st_next_id st1 ==>
-    type_d T tenv d (set_ids (infer_st_next_id st1) (infer_st_next_id
-      st2)) (ienv_to_tenv ienv')) /\
+    type_d T tenv d (set_ids (infer_st_next_id st1) (infer_st_next_id st2))
+      (ienv_to_tenv ienv')) /\
    (!ds tenv ienv st1 st2 ienv'.
     infer_ds ienv ds st1 = (M_success ienv',st2) /\
     envRel_env_rel tenv ienv /\
     start_type_id <= infer_st_next_id st1 ==>
-    type_ds T tenv ds (set_ids (infer_st_next_id st1)
-      (infer_st_next_id st2)) (ienv_to_tenv ienv'))`,
+    type_ds T tenv ds (set_ids (infer_st_next_id st1) (infer_st_next_id
+      st2)) (ienv_to_tenv ienv'))`,
   CHEAT_TAC);;
 
 let db_subst_infer_subst_swap2 = prove
@@ -144,8 +141,7 @@ let db_subst_infer_subst_swap2 = prove
     ALL (\t. check_t tvs {} t) ts ==>
     (MAP (convert_t o
          t_walkstar s o
-         infer_deBruijn_subst (MAP (\n. Infer_Tuvar n) (COUNT_LIST
-           tvs)))
+         infer_deBruijn_subst (MAP (\n. Infer_Tuvar n) (COUNT_LIST tvs)))
         ts =
      MAP (deBruijn_subst 0 (MAP (convert_t o t_walkstar s) (MAP (\n.
        Infer_Tuvar n) (COUNT_LIST tvs))) o
@@ -153,8 +149,7 @@ let db_subst_infer_subst_swap2 = prove
         ts))`,
   CHEAT_TAC);;
 
-(* HOL4 inferSoundScript.sml:754-1137: code that the source has in a
-   comment *)
+(* HOL4 inferSoundScript.sml:754-1137: code that the source has in a comment *)
 
 (* and the interface *)
 let _ = unhide_overloads ();;

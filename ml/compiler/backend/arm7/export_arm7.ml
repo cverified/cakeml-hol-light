@@ -61,7 +61,8 @@ let export_arm7_startup_def = new_definition
          [(implode "     ldr    r2,=cake_bitmaps\n");
           (implode (APPEND
             "     str    r2,[r1]                  /* store bitm"
-            "ap pointer */\n"))] else []))
+            "ap pointer */\n"))]
+       else []))
      (SmartAppend (misc_List
        [(implode (APPEND
          "     ldr    r2,=cdecl(cml_stack)     /* arg3: firs"
@@ -73,8 +74,8 @@ let export_arm7_startup_def = new_definition
         (implode "     ldr    r3,[r3]\n")])
      (SmartAppend (misc_List
        (if ret then
-         [(implode "     b      cml_enter\n")] else
-         [(implode "     b      cake_main\n")]))
+         [(implode "     b      cml_enter\n")]
+       else [(implode "     b      cake_main\n")]))
      (misc_List
        [(implode "     .ltorg\n");
         (implode "\n")]))))`;;
@@ -88,17 +89,17 @@ let export_arm7_ffi_asm_def,export_arm7_ffi_asm_ind = define_rec
            (implode "     .p2align 4\n");
            (implode "\n")]) (export_arm7_ffi_asm ffis)`];;
 
-(* HOL4 export_arm7Script.sml:69-93: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_arm7Script.sml:69-93: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_arm7Script.sml:95-97: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_arm7Script.sml:95-97: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_arm7Script.sml:99-100: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_arm7Script.sml:99-100: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_arm7Script.sml:102-149: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_arm7Script.sml:102-149: the ML values that the definitions
+   below antiquote *)
 
 let export_arm7_export_func_def = new_definition
   `export_arm7_export_func appl (name,label,start',len) =
@@ -114,20 +115,20 @@ let export_arm7_export_func_def = new_definition
 
 let export_arm7_export_funcs_def = new_definition
   `export_arm7_export_funcs lsyms exp =
-     FOLDL export_arm7_export_func misc_Nil (FILTER ((C MEM exp) o
-       FST) lsyms)`;;
+     FOLDL export_arm7_export_func misc_Nil (FILTER ((C MEM exp) o FST)
+       lsyms)`;;
 
 let arm7_export_def = new_definition
   `arm7_export ffi_names' bytes (data:word32 list) syms exp ret pk =
-     (let lsyms = get_sym_labels syms in
+     let lsyms = get_sym_labels syms in
      SmartAppend
        (SmartAppend (misc_List preamble)
        (SmartAppend (misc_List (data_section ".long" ret))
        (SmartAppend (split16 (words_line (implode "\t.long ")
          word_to_string) data)
        (SmartAppend (misc_List data_buffer)
-       (SmartAppend (export_arm7_startup ret pk) ((\ret. if ret then
-         ((\ret. SmartAppend
+       (SmartAppend (export_arm7_startup ret pk) ((\ret. if ret then ((\ret.
+         SmartAppend
      (misc_List (MAP (\n. implode (APPEND n "\n"))
       [(APPEND "/* CakeML FFI interface (each block is 16 bytes lo"
         "ng) */"); "";
@@ -141,24 +142,24 @@ let arm7_export_def = new_definition
         "";
         "cake_exit:"]
         (if ret then
-          ["     b   cml_return"] else
-          ["     b   cdecl(cml_exit)"]))
+          ["     b   cml_return"]
+        else ["     b   cdecl(cml_exit)"]))
        ["     .p2align 4";
         "";
         "cake_main:";
         "";
         "/* Generated machine code follows */";
-        ""]))))) T) else ((\ret. SmartAppend (misc_List (MAP (\n.
-          implode (APPEND n "\n")) [(APPEND
-          "/* CakeML FFI interface (each block is 16 bytes lo"
-          "ng) */"); ""; "     .p2align 4"; ""])) (SmartAppend
-          (export_arm7_ffi_asm (REVERSE ffi_names')) (misc_List (MAP
-          (\n. implode (APPEND n "\n")) (APPEND (APPEND ["cake_clear:";
-          "     b   cdecl(cml_exit)"; "     .p2align 4"; "";
-          "cake_exit:"] (if ret then ["     b   cml_return"] else
-          ["     b   cdecl(cml_exit)"])) ["     .p2align 4"; "";
-          "cake_main:"; ""; "/* Generated machine code follows */";
-          ""]))))) F)) ret))))))
+        ""]))))) T) else ((\ret. SmartAppend (misc_List (MAP (\n. implode
+          (APPEND n "\n")) [(APPEND
+          "/* CakeML FFI interface (each block is 16 bytes lo" "ng) */"); "";
+          "     .p2align 4"; ""])) (SmartAppend (export_arm7_ffi_asm (REVERSE
+          ffi_names')) (misc_List (MAP (\n. implode (APPEND n "\n")) (APPEND
+          (APPEND ["cake_clear:"; "     b   cdecl(cml_exit)";
+          "     .p2align 4"; ""; "cake_exit:"] (if ret then
+          ["     b   cml_return"]
+        else ["     b   cdecl(cml_exit)"])) ["     .p2align 4"; "";
+          "cake_main:"; ""; "/* Generated machine code follows */"; ""])))))
+          F)) ret))))))
        (SmartAppend (split16 (words_line (implode "\t.byte ")
          byte_to_string) bytes) (SmartAppend (misc_List code_buffer)
          (SmartAppend (emit_symbols lsyms)
@@ -170,8 +171,7 @@ let arm7_export_def = new_definition
       "     .p2align 4";
       ""; "";
       "cake_enter:";
-      "     push   {r5,r6,r8,r10,r11,lr}";
-        "     ldr    r5,=can_enter";
+      "     push   {r5,r6,r8,r10,r11,lr}"; "     ldr    r5,=can_enter";
       "     ldr    r6, [r5]";
       "     cmp    r6, #0";
       "     beq    cake_err3";
@@ -207,8 +207,8 @@ let arm7_export_def = new_definition
       "     mov    r0, #3";
       "     b      cdecl(cml_err)";
       "     .p2align 4";
-      ""]))) (export_arm7_export_funcs lsyms exp)) else misc_List
-        [])))))`;;
+      ""]))) (export_arm7_export_funcs lsyms exp))
+       else misc_List []))))`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

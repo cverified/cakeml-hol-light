@@ -20,8 +20,8 @@ needs "semantics/typeSystem.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "type_dCanon"
-  ["ast"; "inferProps"; "namespace"; "namespaceProps";
-   "typeSoundInvariants"; "typeSysProps"; "typeSystem"];;
+  ["ast"; "inferProps"; "namespace"; "namespaceProps"; "typeSoundInvariants";
+   "typeSysProps"; "typeSystem"];;
 
 let _ = do_list hide_constant ["all"; "id"];;
 
@@ -29,12 +29,9 @@ let _ = do_list hide_constant ["all"; "id"];;
 
 let tenv_equiv_def = new_definition
   `tenv_equiv tenv1 tenv2 <=>
-      nsAll2 (\i v1 v2. v1 = v2) (type_env_t tenv1) (type_env_t
-        tenv2) /\
-      nsAll2 (\i v1 v2. v1 = v2) (type_env_c tenv1) (type_env_c
-        tenv2) /\
-      nsAll2 (\i v1 v2. v1 = v2) (type_env_v tenv1) (type_env_v
-        tenv2)`;;
+      nsAll2 (\i v1 v2. v1 = v2) (type_env_t tenv1) (type_env_t tenv2) /\
+      nsAll2 (\i v1 v2. v1 = v2) (type_env_c tenv1) (type_env_c tenv2) /\
+      nsAll2 (\i v1 v2. v1 = v2) (type_env_v tenv1) (type_env_v tenv2)`;;
 
 let tenv_equiv_refl = prove
  (`tenv_equiv tenv tenv`,
@@ -57,8 +54,7 @@ let check_type_names_tenv_equiv = prove
   CHEAT_TAC);;
 
 let lookup_var_tenv_equiv = prove
- (`tenv_equiv tenv1 tenv2 ==> lookup_var n bvs tenv1 = lookup_var n
-  bvs tenv2`,
+ (`tenv_equiv tenv1 tenv2 ==> lookup_var n bvs tenv1 = lookup_var n bvs tenv2`,
   CHEAT_TAC);;
 
 let type_name_subst_tenv_equiv = prove
@@ -105,8 +101,8 @@ let type_pe_determ_tenv_equiv = prove
 let set_tids_tenv_def = new_definition
   `set_tids_tenv tids tenv <=>
    nsAll (\i (ls,t). set_tids_subset tids t) (type_env_t tenv) /\
-   nsAll (\i (ls,ts,tid). ALL (\t. set_tids_subset tids t) ts /\ tid
-     IN tids) (type_env_c tenv) /\
+   nsAll (\i (ls,ts,tid). ALL (\t. set_tids_subset tids t) ts /\ tid IN
+     tids) (type_env_c tenv) /\
    nsAll (\i (n,t). set_tids_subset tids t) (type_env_v tenv)`;;
 
 let type_pe_determ_canon_def = new_definition
@@ -115,8 +111,7 @@ let type_pe_determ_canon_def = new_definition
      type_p 0 tenv p t1 tenv1 /\ type_e tenv tenvE e t1 /\
      ALL (\(k,t). set_tids_subset (count n) t) tenv1 /\
      type_p 0 tenv p t2 tenv2 /\ type_e tenv tenvE e t2 /\
-     ALL (\(k,t). set_tids_subset (count n) t) tenv2 ==> tenv1 =
-       tenv2)`;;
+     ALL (\(k,t). set_tids_subset (count n) t) tenv2 ==> tenv1 = tenv2)`;;
 
 let type_pe_determ_canon_tenv_equiv = prove
  (`type_pe_determ_canon n t1 x y z /\
@@ -141,15 +136,14 @@ let type_d_canon = cake_inductive
      (type_p tvs' tenv p t' bindings' /\
      type_e tenv (bind_tvar tvs' typeSystem_Empty) e t' /\
      ALL (\(k,t). set_tids_subset (count n) t) bindings') ==>
-           ALL2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
-             (MAP SND (tenv_add_tvs tvs bindings)))) ==>
+           ALL2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings')) (MAP
+             SND (tenv_add_tvs tvs bindings)))) ==>
      type_d_canon n tenv (Dlet locs p e)
        0
        (mk_type_env (alist_to_ns (tenv_add_tvs tvs bindings)) nsEmpty
          nsEmpty)) /\
    (!n tenv p e t bindings locs.
-     ((~(is_value e) /\ type_pe_determ_canon n tenv typeSystem_Empty
-       p e) /\
+     ((~(is_value e) /\ type_pe_determ_canon n tenv typeSystem_Empty p e) /\
      ALL_DISTINCT (ast_pat_bindings p) /\
      type_p ((0:num)) tenv p t bindings /\
      type_e tenv typeSystem_Empty e t) ==>
@@ -160,17 +154,16 @@ let type_d_canon = cake_inductive
      (type_funs tenv (bind_var_list ((0:num)) bindings (bind_tvar tvs
        typeSystem_Empty)) funs bindings /\
      (!tvs' bindings'.
-         type_funs tenv (bind_var_list ((0:num)) bindings' (bind_tvar
-           tvs' typeSystem_Empty)) funs bindings' /\
+         type_funs tenv (bind_var_list ((0:num)) bindings' (bind_tvar tvs'
+           typeSystem_Empty)) funs bindings' /\
          ALL (\(k,t). set_tids_subset (count n) t) bindings' ==>
-           ALL2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
-             (MAP SND (tenv_add_tvs tvs bindings)))) ==>
+           ALL2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings')) (MAP
+             SND (tenv_add_tvs tvs bindings)))) ==>
      type_d_canon n tenv (Dletrec locs funs)
      0 (mk_type_env (alist_to_ns (tenv_add_tvs tvs bindings)) nsEmpty
        nsEmpty)) /\
    (!n type_identities tenv tdefs tenvT locs.
-     (ITLIST MAX (CONS Tlist_num (CONS Tbool_num prim_type_nums)) 0 <
-       n /\
+     (ITLIST MAX (CONS Tlist_num (CONS Tbool_num prim_type_nums)) 0 < n /\
      type_identities = list_of_seq (\i. i + n) (LENGTH tdefs) /\
      check_ctor_tenv (nsAppend tenvT (type_env_t tenv)) tdefs /\
      (tenvT = alist_to_ns (MAP2
@@ -179,8 +172,8 @@ let type_d_canon = cake_inductive
                            tdefs type_identities))) ==>
      type_d_canon n tenv (Dtype locs tdefs)
        (LENGTH tdefs)
-       (mk_type_env nsEmpty (build_ctor_tenv (nsAppend tenvT
-         (type_env_t tenv)) tdefs type_identities) tenvT)) /\
+       (mk_type_env nsEmpty (build_ctor_tenv (nsAppend tenvT (type_env_t
+         tenv)) tdefs type_identities) tenvT)) /\
    (!n tenv tvs tn t locs.
      (check_freevars_ast tvs t /\
      check_type_names (type_env_t tenv) t /\
@@ -194,15 +187,15 @@ let type_d_canon = cake_inductive
      ALL (check_type_names (type_env_t tenv)) ts) ==>
      type_d_canon n tenv (Dexn locs cn ts)
        0
-       (mk_type_env nsEmpty (nsSing cn ([],MAP (type_name_subst
-         (type_env_t tenv)) ts,Texn_num)) nsEmpty)) /\
+       (mk_type_env nsEmpty (nsSing cn ([],MAP (type_name_subst (type_env_t
+         tenv)) ts,Texn_num)) nsEmpty)) /\
    (!n tenv mn ds decls tenv'.
      (type_ds_canon n tenv ds decls tenv') ==>
      type_d_canon n tenv (Dmod mn ds) decls (tenvLift mn tenv')) /\
    (!n tenv lds ds decls1 decls2 tenv1 tenv2.
      (type_ds_canon n tenv lds decls1 tenv1) /\
-     (type_ds_canon (n + decls1) (extend_dec_tenv tenv1 tenv) ds
-       decls2 tenv2) ==>
+     (type_ds_canon (n + decls1) (extend_dec_tenv tenv1 tenv) ds decls2
+       tenv2) ==>
      type_d_canon n tenv (Dlocal lds ds) (decls1 + decls2) tenv2) /\
    (!n tenv.
      T ==>
@@ -211,8 +204,8 @@ let type_d_canon = cake_inductive
        (mk_type_env nsEmpty nsEmpty nsEmpty)) /\
    (!n tenv d ds tenv1 tenv2 decls1 decls2.
      (type_d_canon n tenv d decls1 tenv1 /\
-     type_ds_canon (n + decls1) (extend_dec_tenv tenv1 tenv) ds
-       decls2 tenv2) ==>
+     type_ds_canon (n + decls1) (extend_dec_tenv tenv1 tenv) ds decls2
+       tenv2) ==>
      type_ds_canon n tenv (CONS d ds)
        (decls1 + decls2) (extend_dec_tenv tenv2 tenv1))`;;
 
@@ -235,26 +228,23 @@ let ts_tid_rename_type_name_subst = prove
    good_remap f /\
    check_type_names tenvt t ==>
    ts_tid_rename f (type_name_subst tenvt t) =
-   type_name_subst (nsMap (\(ls,t). (ls,ts_tid_rename f t)) tenvt)
-     t`,
+   type_name_subst (nsMap (\(ls,t). (ls,ts_tid_rename f t)) tenvt) t`,
   CHEAT_TAC);;
 
 (* [local] *)
 let check_type_names_ts_tid_rename = prove
  (`!tenvt t.
    check_type_names tenvt t <=>
-   check_type_names (nsMap (\(ls,t). (ls,ts_tid_rename f t)) tenvt)
-     t`,
+   check_type_names (nsMap (\(ls,t). (ls,ts_tid_rename f t)) tenvt) t`,
   CHEAT_TAC);;
 
 let extend_bij_def = new_definition
   `extend_bij (f:num->num) g ids n v =
-   (if v IN ids then
-     n + g v else
-     f v)`;;
+   if v IN ids then
+     n + g v
+   else f v`;;
 
-(* HOL4 type_dCanonScript.sml:334-344: code that the source has in a
-   comment *)
+(* HOL4 type_dCanonScript.sml:334-344: code that the source has in a comment *)
 
 let extend_bij_id = prove
  (`(extend_bij f f s 0 = f) /\
@@ -287,8 +277,7 @@ let good_remap_extend_bij = prove
    good_remap (extend_bij f g ids n)`,
   CHEAT_TAC);;
 
-(* HOL4 type_dCanonScript.sml:390-404: code that the source has in a
-   comment *)
+(* HOL4 type_dCanonScript.sml:390-404: code that the source has in a comment *)
 
 (* [local] *)
 let remap_tenv_extend_dec_tenv = prove
@@ -300,12 +289,10 @@ let BIJ_extend_bij = prove
  (`DISJOINT tids ids /\
    BIJ f tids (count n) /\
    BIJ g ids (count (CARD ids)) ==>
-   BIJ (extend_bij f g ids n) (tids UNION ids) (count (n + CARD
-     ids))`,
+   BIJ (extend_bij f g ids n) (tids UNION ids) (count (n + CARD ids))`,
   CHEAT_TAC);;
 
-(* HOL4 type_dCanonScript.sml:428-460: code that the source has in a
-   comment *)
+(* HOL4 type_dCanonScript.sml:428-460: code that the source has in a comment *)
 
 let set_tids_subset_mono = prove
  (`!tids t tids'.
@@ -334,8 +321,8 @@ let sing_renum_def = new_definition
 (* [local] *)
 let sing_renum_NOT_tscheme_inst = prove
  (`!t.
-   m IN set_tids t /\ ~(m = n) ==> ~(ts_tid_rename (sing_renum m n) t
-     = t) /\
+   m IN set_tids t /\ ~(m = n) ==> ~(ts_tid_rename (sing_renum m n) t = t)
+     /\
    (!tvs tvs'.
    ~(tscheme_inst (tvs,ts_tid_rename (sing_renum m n) t) (tvs',t)) /\
    ~(tscheme_inst (tvs',t) (tvs,ts_tid_rename (sing_renum m n) t)))`,
@@ -347,8 +334,8 @@ let sing_renum_NOTIN_ID = prove
   CHEAT_TAC);;
 
 let sing_renum_IN_NOT_ID = prove
- (`!t. m IN set_tids t /\ ~(m = n) ==> ~(ts_tid_rename (sing_renum m
-  n) t = t)`,
+ (`!t. m IN set_tids t /\ ~(m = n) ==> ~(ts_tid_rename (sing_renum m n) t =
+  t)`,
   CHEAT_TAC);;
 
 (* TODO: this is only true up to equivalence on tenvs *)
@@ -377,12 +364,11 @@ let type_op_ts_tid_rename = prove
   CHEAT_TAC);;
 
 let remap_tenvE_def,remap_tenvE_ind = define_rec
-  [`remap_tenvE f (typeSystem_Empty:tenv_val_exp) =
-    (typeSystem_Empty:tenv_val_exp)`;
+  [`remap_tenvE f typeSystem_Empty = (typeSystem_Empty:tenv_val_exp)`;
    `remap_tenvE f (typeSystem_Bind_tvar n e) = typeSystem_Bind_tvar n
     (remap_tenvE f e)`;
-   `remap_tenvE f (typeSystem_Bind_name s n t e) =
-    typeSystem_Bind_name s n (ts_tid_rename f t) (remap_tenvE f e)`];;
+   `remap_tenvE f (typeSystem_Bind_name s n t e) = typeSystem_Bind_name s
+    n (ts_tid_rename f t) (remap_tenvE f e)`];;
 
 (* [local] *)
 let num_tvs_remap_tenvE = prove
@@ -393,8 +379,8 @@ let num_tvs_remap_tenvE = prove
 let remap_tenvE_bind_var_list = prove
  (`!n env tenvE.
    remap_tenvE f (bind_var_list n env tenvE) =
-   bind_var_list n (MAP (\(n,t). (n,ts_tid_rename f t)) env)
-     (remap_tenvE f tenvE)`,
+   bind_var_list n (MAP (\(n,t). (n,ts_tid_rename f t)) env) (remap_tenvE
+     f tenvE)`,
   CHEAT_TAC);;
 
 let remap_tenvE_bind_tvar = prove
@@ -419,29 +405,27 @@ let lookup_varE_remap_tenvE = prove
 let ts_tid_rename_deBruijn_subst = prove
  (`!n targs t.
    ts_tid_rename f (deBruijn_subst n targs t) =
-   deBruijn_subst n (MAP (ts_tid_rename f) targs) (ts_tid_rename f
-     t)`,
+   deBruijn_subst n (MAP (ts_tid_rename f) targs) (ts_tid_rename f t)`,
   CHEAT_TAC);;
 
 let type_e_ts_tid_rename = prove
  (`good_remap f ==>
    (!tenv tenvE e t.
    type_e tenv tenvE e t ==>
-   type_e (remap_tenv f tenv) (remap_tenvE f tenvE) e (ts_tid_rename
-     f t)) /\
+   type_e (remap_tenv f tenv) (remap_tenvE f tenvE) e (ts_tid_rename f t))
+     /\
    (!tenv tenvE es ts.
    type_es tenv tenvE es ts ==>
-   type_es (remap_tenv f tenv) (remap_tenvE f tenvE) es (MAP
-     (ts_tid_rename f) ts)) /\
+   type_es (remap_tenv f tenv) (remap_tenvE f tenvE) es (MAP (ts_tid_rename
+     f) ts)) /\
    (!tenv tenvE funs env.
    type_funs tenv tenvE funs env ==>
-   type_funs (remap_tenv f tenv) (remap_tenvE f tenvE) funs (MAP
-     (\(n,t). (n,ts_tid_rename f t)) env))`,
+   type_funs (remap_tenv f tenv) (remap_tenvE f tenvE) funs (MAP (\(n,t).
+     (n,ts_tid_rename f t)) env))`,
   CHEAT_TAC);;
 
 let good_remap_LINV = prove
- (`good_remap f /\ prim_tids T s /\ INJ f s t ==> good_remap (LINV f s
-  o f)`,
+ (`good_remap f /\ prim_tids T s /\ INJ f s t ==> good_remap (LINV f s o f)`,
   CHEAT_TAC);;
 
 let ts_tid_rename_LINV = prove
@@ -450,8 +434,7 @@ let ts_tid_rename_LINV = prove
   CHEAT_TAC);;
 
 let LINVI_def = new_definition
-  `LINVI f s y = (match LINV_OPT f s y with SOME x -> x | NONE -> f
-  y)`;;
+  `LINVI f s y = match LINV_OPT f s y with SOME x -> x | NONE -> f y`;;
 
 let remap_tenv_LINV = prove
  (`BIJ f s t /\ set_tids_tenv s tenv ==>
@@ -459,13 +442,11 @@ let remap_tenv_LINV = prove
   CHEAT_TAC);;
 
 let good_remap_BIJ = prove
- (`good_remap f /\ prim_tids T s /\ BIJ f s t ==> good_remap (LINV f
-  s)`,
+ (`good_remap f /\ prim_tids T s /\ BIJ f s t ==> good_remap (LINV f s)`,
   CHEAT_TAC);;
 
 let good_remap_LINVI = prove
- (`good_remap f /\ prim_tids T s /\ INJ f s t ==> good_remap (LINVI f
-  s)`,
+ (`good_remap f /\ prim_tids T s /\ INJ f s t ==> good_remap (LINVI f s)`,
   CHEAT_TAC);;
 
 let INJ_LINVI = prove
@@ -477,12 +458,11 @@ let LINVI_RINV = prove
    f (LINVI f s y) = y`,
   CHEAT_TAC);;
 
-(* HOL4 type_dCanonScript.sml:839-853: code that the source has in a
-   comment *)
+(* HOL4 type_dCanonScript.sml:839-853: code that the source has in a comment *)
 
 let ts_tid_rename_LINVI = prove
- (`!f x. INJ f s t /\ set_tids_subset s x ==> ts_tid_rename (LINVI f
-  s) (ts_tid_rename f x) = x`,
+ (`!f x. INJ f s t /\ set_tids_subset s x ==> ts_tid_rename (LINVI f s)
+  (ts_tid_rename f x) = x`,
   CHEAT_TAC);;
 
 let remap_tenv_LINVI = prove
@@ -491,8 +471,7 @@ let remap_tenv_LINVI = prove
   CHEAT_TAC);;
 
 let ts_tid_rename_compose = prove
- (`!g t f. ts_tid_rename f (ts_tid_rename g t) = ts_tid_rename (f o g)
-  t`,
+ (`!g t f. ts_tid_rename f (ts_tid_rename g t) = ts_tid_rename (f o g) t`,
   CHEAT_TAC);;
 
 let remap_tenv_compose = prove
@@ -504,8 +483,8 @@ let ts_tid_rename_eq_id = prove
   CHEAT_TAC);;
 
 let ts_tid_rename_eq_f = prove
- (`!f t g. (ts_tid_rename f t = ts_tid_rename g t <=> (!x. x IN
-  set_tids t ==> f x = g x))`,
+ (`!f t g. (ts_tid_rename f t = ts_tid_rename g t <=> (!x. x IN set_tids t
+  ==> f x = g x))`,
   CHEAT_TAC);;
 
 let inj_ts_tid_rename_eq = prove
@@ -516,8 +495,7 @@ let inj_ts_tid_rename_eq = prove
     (ts_tid_rename f t1 = ts_tid_rename f t2) ==> t1 = t2`,
   CHEAT_TAC);;
 
-(* HOL4 type_dCanonScript.sml:938-945: code that the source has in a
-   comment *)
+(* HOL4 type_dCanonScript.sml:938-945: code that the source has in a comment *)
 
 (* [local] *)
 let type_p_ts_tid_rename_sing_renum = prove
@@ -533,8 +511,8 @@ let type_e_ts_tid_rename_sing_renum = prove
  (`~(m IN tids) /\ prim_tids T tids /\
    type_e tenv tenvE e t /\
    set_tids_tenv tids tenv ==>
-   type_e tenv (remap_tenvE (sing_renum m n) tenvE) e
-     (ts_tid_rename (sing_renum m n) t)`,
+   type_e tenv (remap_tenvE (sing_renum m n) tenvE) e (ts_tid_rename
+     (sing_renum m n) t)`,
   CHEAT_TAC);;
 
 let type_funs_ts_tid_rename_sing_renum = prove
@@ -561,8 +539,8 @@ let type_pe_bindings_tids = prove
   CHEAT_TAC);;
 
 let type_funs_bindings_tids = prove
- (`type_funs tenv (bind_var_list 0 bindings (bind_tvar tvs
-  typeSystem_Empty)) funs bindings /\
+ (`type_funs tenv (bind_var_list 0 bindings (bind_tvar tvs typeSystem_Empty))
+  funs bindings /\
    set_tids_tenv tids tenv /\ prim_tids T tids /\
    (!tvs' bindings'.
      type_funs tenv (bind_var_list 0 bindings' (bind_tvar tvs'
@@ -597,18 +575,18 @@ let build_ctor_tenv_type_identities = prove
      type_identities) t) tenvt /\
    LENGTH xs = LENGTH type_identities ==>
    nsAll ((\i (ls,ts,tid).
-   ALL (\t. set_tids_subset (tids UNION set_of_list type_identities)
-     t) ts /\
+   ALL (\t. set_tids_subset (tids UNION set_of_list type_identities) t) ts
+     /\
    (tid IN tids \/ MEM tid type_identities)))
    (build_ctor_tenv tenvt xs type_identities)`,
   CHEAT_TAC);;
 
-(* HOL4 type_dCanonScript.sml:1173-1183: code that the source has in
-   a comment *)
+(* HOL4 type_dCanonScript.sml:1173-1183: code that the source has in a
+   comment *)
 
 let DISJOINT_CARD_UNION = prove
- (`FINITE s /\ FINITE t /\ DISJOINT s t ==> CARD (s UNION t) = CARD s
-  + CARD t`,
+ (`FINITE s /\ FINITE t /\ DISJOINT s t ==> CARD (s UNION t) = CARD s + CARD
+  t`,
   CHEAT_TAC);;
 
 (* For any type_d, prove that the canonical type identifier strategy
@@ -633,13 +611,13 @@ let type_d_type_d_canon = prove
    tenv_equiv (remap_tenv f tenv) mapped_tenv ==>
      (?g mapped_tenv'.
        // This is actually a property of the type system
-       set_tids_tenv (tids UNION ids) tenv' /\ prim_tids F ids
-         /\ FINITE ids /\
+       set_tids_tenv (tids UNION ids) tenv' /\ prim_tids F ids /\ FINITE ids
+         /\
        // This forces g to extend the injection on f
        BIJ g ids (count (CARD ids)) /\
        type_d_canon n mapped_tenv d (CARD ids) mapped_tenv' /\
-       tenv_equiv (remap_tenv (extend_bij f g ids n) tenv')
-         mapped_tenv'))) /\
+       tenv_equiv (remap_tenv (extend_bij f g ids n) tenv') mapped_tenv')))
+         /\
    (!extra_checks tenv ds ids tenv'.
    type_ds extra_checks tenv ds ids tenv' ==>
    (!tids f n mapped_tenv.
@@ -650,12 +628,11 @@ let type_d_type_d_canon = prove
    prim_tids T tids /\ good_remap f /\
    tenv_equiv (remap_tenv f tenv) mapped_tenv ==>
    (?g mapped_tenv'.
-     set_tids_tenv (tids UNION ids) tenv' /\ prim_tids F ids
-       /\ FINITE ids /\
+     set_tids_tenv (tids UNION ids) tenv' /\ prim_tids F ids /\ FINITE ids
+       /\
      BIJ g ids (count (CARD ids)) /\
      type_ds_canon n mapped_tenv ds (CARD ids) mapped_tenv' /\
-     tenv_equiv (remap_tenv (extend_bij f g ids n) tenv')
-       mapped_tenv')))`,
+     tenv_equiv (remap_tenv (extend_bij f g ids n) tenv') mapped_tenv')))`,
   CHEAT_TAC);;
 
 (* n.b. proof almost entirely copied from type_d_tenv_ok_helper *)

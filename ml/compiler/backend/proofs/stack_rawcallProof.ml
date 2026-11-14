@@ -27,14 +27,14 @@ let _ = cake_theory "stack_rawcallProof"
 
 (* HOL4 stack_rawcallProofScript.sml:14-16: ML code, not ported *)
 
-(* HOL4 stack_rawcallProofScript.sml:18: the overload good_dimindex,
-   which the port expands *)
-(* HOL4 stack_rawcallProofScript.sml:19: the overload comp, which the
-   port expands *)
-(* HOL4 stack_rawcallProofScript.sml:20: the overload compile, which
+(* HOL4 stack_rawcallProofScript.sml:18: the overload good_dimindex, which
    the port expands *)
-(* HOL4 stack_rawcallProofScript.sml:21: the type abbreviation prog,
-   which the port expands *)
+(* HOL4 stack_rawcallProofScript.sml:19: the overload comp, which the port
+   expands *)
+(* HOL4 stack_rawcallProofScript.sml:20: the overload compile, which the
+   port expands *)
+(* HOL4 stack_rawcallProofScript.sml:21: the type abbreviation prog, which
+   the port expands *)
 
 let stack_rawcallProof_state_ok_def = new_definition
   `stack_rawcallProof_state_ok i code <=>
@@ -60,8 +60,8 @@ let stack_rawcallProof_state_rel_def = new_definition
          (?i. stack_rawcallProof_state_ok i (labSem_state_code s) /\
              sptree_lookup n c = SOME (comp_top i b))))`;;
 
-(* HOL4 stack_rawcallProofScript.sml:46-47: a theorem that HOL4
-   states as the value of an ML expression: state_rel_thm *)
+(* HOL4 stack_rawcallProofScript.sml:46-47: a theorem that HOL4 states as
+   the value of an ML expression: state_rel_thm *)
 
 (* [local] *)
 let with_stack_space = prove
@@ -75,15 +75,14 @@ let comp_LN = prove
 
 let comp_seq_neq_IMP = prove
  (`~(comp_seq p1 p2 i default = default) ==>
-     (?k dest. p1 = stackLang_StackFree k /\ p2 = stackLang_Call
-       NONE (INL dest) NONE)`,
+     (?k dest. p1 = stackLang_StackFree k /\ p2 = stackLang_Call NONE (INL
+       dest) NONE)`,
   CHEAT_TAC);;
 
 (* get_labels_comp *)
 let stack_rawcallProof_get_labels_comp = prove
  (`!i e.
-     labProps_get_labels (stack_rawcall_comp i e) =
-       labProps_get_labels e /\
+     labProps_get_labels (stack_rawcall_comp i e) = labProps_get_labels e /\
      labProps_get_labels (comp_top i e) = labProps_get_labels e`,
   CHEAT_TAC);;
 
@@ -95,8 +94,7 @@ let evaluate_comp_Inst = prove
    (?ck t1 k1.
      stack_rawcallProof_state_rel i' s1 t1 /\
      stackSem_evaluate (stack_rawcall_comp i' (stackLang_Inst
-       i),stackSem_state_clock_fupd (K (ck + stackSem_state_clock t)) t)
-       =
+       i),stackSem_state_clock_fupd (K (ck + stackSem_state_clock t)) t) =
      (r,stackSem_state_stack_space_fupd (K k1) t1) /\
      (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackLang_Halt
        (wordLang_Word (n2w 2)))) ==>
@@ -114,36 +112,31 @@ let stack_rawcallProof_comp_correct = prove
           (stackSem_state_clock t + ck)) t) =
           (r,stackSem_state_stack_space_fupd (K k1) t1) /\
         (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackLang_Halt
-          (wordLang_Word (n2w 2)))) ==> k1 = stackSem_state_stack_space
-          t1)) /\
+          (wordLang_Word (n2w 2)))) ==> k1 = stackSem_state_stack_space t1)) /\
      (?ck t1 k1.
         stack_rawcallProof_state_rel i s1 t1 /\
-        stackSem_evaluate (stack_rawcall_comp i
-          p,stackSem_state_clock_fupd (K (stackSem_state_clock t + ck))
-          t) =
+        stackSem_evaluate (stack_rawcall_comp i p,stackSem_state_clock_fupd
+          (K (stackSem_state_clock t + ck)) t) =
           (r,stackSem_state_stack_space_fupd (K k1) t1) /\
         (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackLang_Halt
-          (wordLang_Word (n2w 2)))) ==> k1 =
-          stackSem_state_stack_space t1))`,
+          (wordLang_Word (n2w 2)))) ==> k1 = stackSem_state_stack_space t1))`,
   CHEAT_TAC);;
 
 let domain_fromAList_compile = prove
- (`domain (fromAList (stack_rawcall_compile code)) = domain (fromAList
-  code)`,
+ (`domain (fromAList (stack_rawcall_compile code)) = domain (fromAList code)`,
   CHEAT_TAC);;
 
 let lookup_collect_info = prove
  (`!xs n rest.
      ALL_DISTINCT (MAP FST xs) ==>
      sptree_lookup n (collect_info xs rest) =
-       (match ALOOKUP xs n with NONE -> sptree_lookup n rest | SOME
-         body -> sptree_lookup n (collect_info [(n,body)] rest))`,
+       (match ALOOKUP xs n with NONE -> sptree_lookup n rest
+       | SOME body -> sptree_lookup n (collect_info [(n,body)] rest))`,
   CHEAT_TAC);;
 
 let state_ok_collect_info = prove
  (`ALL_DISTINCT (MAP FST code) ==>
-   stack_rawcallProof_state_ok (collect_info code LN) (fromAList
-     code)`,
+   stack_rawcallProof_state_ok (collect_info code LN) (fromAList code)`,
   CHEAT_TAC);;
 
 (* compile_semantics *)
@@ -153,10 +146,9 @@ let stack_rawcallProof_compile_semantics = prove
  (cake_as_vars (fun () ->
     `ALL_DISTINCT (MAP FST code) /\ stackSem_state_use_stack s
   /\ stackSem_state_code
-     s = fromAList code /\ ~(stackSem_semantics start s = ffi_Fail)
-       ==>
-     stackSem_semantics start (stackSem_state_code_fupd (K
-       (fromAList (stack_rawcall_compile code))) s) =
+     s = fromAList code /\ ~(stackSem_semantics start s = ffi_Fail) ==>
+     stackSem_semantics start (stackSem_state_code_fupd (K (fromAList
+       (stack_rawcall_compile code))) s) =
      stackSem_semantics start s`),
   CHEAT_TAC);;
 
@@ -164,17 +156,15 @@ let extract_labels_comp = prove
  (`!i p.
      stackProps_extract_labels (stack_rawcall_comp i p) =
        stackProps_extract_labels p /\
-     stackProps_extract_labels (comp_top i p) =
-       stackProps_extract_labels p`,
+     stackProps_extract_labels (comp_top i p) = stackProps_extract_labels
+       p`,
   CHEAT_TAC);;
 
 let stack_asm_name_comp = prove
  (`!i p.
-     (stack_asm_name c (stack_rawcall_comp i p) = stack_asm_name c p
-       /\
+     (stack_asm_name c (stack_rawcall_comp i p) = stack_asm_name c p /\
       stack_asm_name c (comp_top i p) = stack_asm_name c p) /\
-     (stack_asm_remove c (stack_rawcall_comp i p) = stack_asm_remove
-       c p /\
+     (stack_asm_remove c (stack_rawcall_comp i p) = stack_asm_remove c p /\
       stack_asm_remove c (comp_top i p) = stack_asm_remove c p)`,
   CHEAT_TAC);;
 
@@ -199,16 +189,14 @@ let stack_rawcall_reg_bound = prove
 
 let call_args_comp = prove
  (`!i p.
-     call_args (stack_rawcall_comp i p) r1 r2 r3 r4 r5 = call_args p
-       r1 r2 r3 r4 r5 /\
-     call_args (comp_top i p) r1 r2 r3 r4 r5 = call_args p r1 r2 r3
-       r4 r5`,
+     call_args (stack_rawcall_comp i p) r1 r2 r3 r4 r5 = call_args p r1 r2
+       r3 r4 r5 /\
+     call_args (comp_top i p) r1 r2 r3 r4 r5 = call_args p r1 r2 r3 r4 r5`,
   CHEAT_TAC);;
 
 (* stack_alloc_call_args *)
 let stack_rawcallProof_stack_alloc_call_args = prove
- (`ALL (\p. call_args p 1 2 3 4 0) (MAP SND (stack_rawcall_compile
-  prog1)) =
+ (`ALL (\p. call_args p 1 2 3 4 0) (MAP SND (stack_rawcall_compile prog1)) =
    ALL (\p. call_args p 1 2 3 4 0) (MAP SND prog1)`,
   CHEAT_TAC);;
 

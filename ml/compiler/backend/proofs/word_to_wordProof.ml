@@ -32,14 +32,13 @@ needs "lib/sptree.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "word_to_wordProof"
-  ["wordConvs"; "wordConvsProof"; "wordProps"; "wordSem";
-   "word_allocProof"; "word_copyProof"; "word_cseProof"; "word_elim";
-   "word_elimProof"; "word_instProof"; "word_removeProof";
-   "word_simpProof"; "word_to_word"; "word_unreach";
-   "word_unreachProof"];;
+  ["wordConvs"; "wordConvsProof"; "wordProps"; "wordSem"; "word_allocProof";
+   "word_copyProof"; "word_cseProof"; "word_elim"; "word_elimProof";
+   "word_instProof"; "word_removeProof"; "word_simpProof"; "word_to_word";
+   "word_unreach"; "word_unreachProof"];;
 
-(* HOL4 word_to_wordProofScript.sml:17: an overload that the source
-   brings to the front: Call, written out as wordLang_Call *)
+(* HOL4 word_to_wordProofScript.sml:17: an overload that the source brings
+   to the front: Call, written out as wordLang_Call *)
 
 (* HOL4 word_to_wordProofScript.sml:19-23: a proof *)
 
@@ -54,18 +53,19 @@ let compile_single_lem = prove
    domain (wordSem_state_locals st) = set_of_list (even_list n) /\
    gc_fun_const_ok (wordSem_state_gc_fun st) ==>
    (?perm'.
-   let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd
-     (K perm') st) in
+   let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd (K
+     perm') st) in
    let (_1,_2,cprog) = (word_to_word_compile_single t k a c
      ((name,n,prog),col)) in
-   if (res = SOME wordSem_Error) then T else
-   let (res',rcst) = wordSem_evaluate (cprog,st) in
+   if (res = SOME wordSem_Error) then T else let (res',rcst) =
+     wordSem_evaluate (cprog,st) in
      res = res' /\
      word_state_eq_rel rst rcst /\
      (match res with
-       NONE -> T | SOME (wordLang_Break _3) -> T | SOME
-         (wordLang_Continue _4) -> T | SOME _5 -> wordSem_state_locals
-         rst = wordSem_state_locals rcst))`,
+       NONE -> T
+     | SOME (wordLang_Break _) -> T
+     | SOME (wordLang_Continue _) -> T
+     | SOME _ -> wordSem_state_locals rst = wordSem_state_locals rcst))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -80,15 +80,15 @@ let rm_perm = prove
 let word_to_wordProof_find_code_thm = prove
  (`(!n v. sptree_lookup n (wordSem_state_code st) = SOME v ==>
           (?t k a c col.
-          sptree_lookup n l = SOME (SND (word_to_word_compile_single
-            t k a c ((n,v),col))))) /\
+          sptree_lookup n l = SOME (SND (word_to_word_compile_single t k a c
+            ((n,v),col))))) /\
    wordSem_find_code o1 (add_ret_loc o' x) (wordSem_state_code st)
      (wordSem_state_stack_size st) = SOME (args,prog,locsize) ==>
    (?t k a c col n prog'.
-   SND (word_to_word_compile_single t k a c ((n,LENGTH
-     args,prog),col)) = (LENGTH args,prog') /\
-   wordSem_find_code o1 (add_ret_loc o' x) l
-     (wordSem_state_stack_size st) = SOME (args,prog',locsize))`,
+   SND (word_to_word_compile_single t k a c ((n,LENGTH args,prog),col)) =
+     (LENGTH args,prog') /\
+   wordSem_find_code o1 (add_ret_loc o' x) l (wordSem_state_stack_size st)
+     = SOME (args,prog',locsize))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -102,8 +102,8 @@ let word_to_wordProof_code_rel_def = new_definition
   `word_to_wordProof_code_rel stc ttc <=>
    (!n v. sptree_lookup n stc = SOME v ==>
           (?col t k a c.
-          sptree_lookup n ttc = SOME (SND
-            (word_to_word_compile_single t k a c ((n,v),col)))))`;;
+          sptree_lookup n ttc = SOME (SND (word_to_word_compile_single t
+            k a c ((n,v),col)))))`;;
 
 (* [local] *)
 let compile_single_eta = prove
@@ -118,8 +118,8 @@ let code_rel_union_fromAList = prove
    word_to_wordProof_code_rel s l /\
    domain s = domain l ==>
    word_to_wordProof_code_rel (sptree_union s (fromAList ls))
-     (sptree_union l (fromAList (MAP (\p. word_to_word_compile_single
-     t k a c (p,NONE)) ls)))`,
+     (sptree_union l (fromAList (MAP (\p. word_to_word_compile_single t k a c
+     (p,NONE)) ls)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -128,30 +128,30 @@ let compile_single_correct = prove
    word_to_wordProof_code_rel (wordSem_state_code st) l /\
    (domain (wordSem_state_code st) = domain l) /\
    (wordSem_state_compile st = (\conf progs.
-     cc conf (MAP (\p. word_to_word_compile_single tt kk aa co
-       (p,NONE)) progs))) /\
+     cc conf (MAP (\p. word_to_word_compile_single tt kk aa co (p,NONE))
+       progs))) /\
    (coracle = (I ## MAP (\p. word_to_word_compile_single tt kk aa co
      (p,NONE))) o wordSem_state_compile_oracle st) /\
    gc_fun_const_ok (wordSem_state_gc_fun st) ==>
    (?perm'.
-     let (res,rst) = wordSem_evaluate
-       (prog,wordSem_state_permute_fupd (K perm') st) in
-       if res = SOME wordSem_Error then T else
-         let (res1,rst1) = wordSem_evaluate
-           (prog,wordSem_state_compile_fupd (K cc)
-           (wordSem_state_compile_oracle_fupd (K coracle)
-           (wordSem_state_code_fupd (K l)
+     let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd (K
+       perm') st) in
+       if res = SOME wordSem_Error then T
+       else let (res1,rst1) = wordSem_evaluate
+         (prog,wordSem_state_compile_fupd (K cc)
+         (wordSem_state_compile_oracle_fupd (K coracle)
+         (wordSem_state_code_fupd (K l)
            st))) in
            res1 = res /\
            word_to_wordProof_code_rel (wordSem_state_code rst)
              (wordSem_state_code rst1) /\
-           domain (wordSem_state_code rst) = domain
-             (wordSem_state_code rst1) /\
+           domain (wordSem_state_code rst) = domain (wordSem_state_code
+             rst1) /\
            rst1 = wordSem_state_compile_fupd (K cc)
              (wordSem_state_compile_oracle_fupd (K ((I ## MAP (\p.
              word_to_word_compile_single tt kk aa co (p,NONE))) o
-             wordSem_state_compile_oracle rst)) (wordSem_state_code_fupd
-             (K (wordSem_state_code rst1)) rst)))
+             wordSem_state_compile_oracle rst)) (wordSem_state_code_fupd (K
+             (wordSem_state_code rst1)) rst)))
    // todo: rst1.perm?`,
   CHEAT_TAC);;
 
@@ -234,22 +234,21 @@ let compile_word_to_word_thm = prove
   (st:('a,'c,'ffi)wordSem_state)) l /\
      (domain (wordSem_state_code st) = domain l) /\
      (wordSem_state_compile st = (\conf progs.
-     cc conf (MAP (\p. full_compile_single tt kk aa co (p,NONE))
-       progs))) /\
-     (coracle = (I ## MAP (\p. full_compile_single tt kk aa co
-       (p,NONE))) o wordSem_state_compile_oracle st) /\
+     cc conf (MAP (\p. full_compile_single tt kk aa co (p,NONE)) progs)))
+       /\
+     (coracle = (I ## MAP (\p. full_compile_single tt kk aa co (p,NONE)))
+       o wordSem_state_compile_oracle st) /\
      gc_fun_const_ok (wordSem_state_gc_fun st) ==>
      (?perm' clk.
      let prog = wordLang_Call NONE (SOME start) [0] NONE in
-     let (res,rst) = wordSem_evaluate
-       (prog,wordSem_state_permute_fupd (K perm') st) in
-      if res = SOME wordSem_Error then T else
-      let (res1,rst1) = wordSem_evaluate
-        (prog,wordSem_state_compile_oracle_fupd (K coracle)
-        (wordSem_state_compile_fupd (K cc) (wordSem_state_termdep_fupd
-        (K 0) (wordSem_state_clock_fupd (K (wordSem_state_clock st +
-        clk)) (wordSem_state_code_fupd (K (sptree_map (I ##
-        remove_must_terminate) l))
+     let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd (K
+       perm') st) in
+      if res = SOME wordSem_Error then T else let (res1,rst1) =
+        wordSem_evaluate (prog,wordSem_state_compile_oracle_fupd (K coracle)
+        (wordSem_state_compile_fupd (K cc) (wordSem_state_termdep_fupd (K 0)
+        (wordSem_state_clock_fupd (K (wordSem_state_clock st + clk))
+        (wordSem_state_code_fupd (K (sptree_map (I ## remove_must_terminate)
+        l))
         st))))) in
         res1 = res /\ wordSem_state_clock
         rst1 = wordSem_state_clock rst /\ wordSem_state_ffi
@@ -287,24 +286,21 @@ let full_compile_single_no_share_inst = prove
 
 (* syntax going into stackLang *)
 let compile_to_word_conventions = prove
- (`ALL (\(_6,_7,prg). no_share_inst prg \/ ~(asm_config_ISA ac = Ag32))
-  p ==>
-   (let (_8,progs) = word_to_word_compile wc ac p in
+ (`ALL (\(_3,_4,prg). no_share_inst prg \/ ~(asm_config_ISA ac = Ag32)) p ==>
+   (let (_5,progs) = word_to_word_compile wc ac p in
    MAP FST progs = MAP FST p /\
    ALL2 labels_rel (MAP (wordConvs_extract_labels o SND o SND) p)
-                     (MAP (wordConvs_extract_labels o SND o SND)
-                       progs) /\
+                     (MAP (wordConvs_extract_labels o SND o SND) progs) /\
    ALL (\(n,m,prog).
      flat_exp_conventions prog /\
      post_alloc_conventions (asm_config_reg_count ac - (5 + LENGTH
        (asm_config_avoid_regs ac))) prog /\
      (ALL (\(n,m,prog). every_inst (inst_ok_less ac) prog) p /\
-      asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0)
-        /\ asm_offset_ok 0 (asm_config_hw_offset ac) (n2w 0)
-        /\ asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0) ==>
+      asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\ asm_offset_ok 0
+        (asm_config_hw_offset ac) (n2w 0) /\ asm_offset_ok 0
+        (asm_config_byte_offset ac) (n2w 0) ==>
        full_inst_ok_less ac prog) /\
-     (asm_config_two_reg_arith ac ==> every_inst two_reg_inst prog)
-       /\
+     (asm_config_two_reg_arith ac ==> every_inst two_reg_inst prog) /\
      (no_share_inst prog \/ ~(asm_config_ISA ac = Ag32))) progs)`,
   CHEAT_TAC);;
 
@@ -318,14 +314,14 @@ let code_rel_not_created_subprogs = prove
    not_created_subprogs P (FST (SND v'))`,
   CHEAT_TAC);;
 
-(* HOL4 word_to_wordProofScript.sml:1082: a theorem that HOL4 states
-   as the value of an ML expression: code_rel_P *)
+(* HOL4 word_to_wordProofScript.sml:1082: a theorem that HOL4 states as the
+   value of an ML expression: code_rel_P *)
 
-(* HOL4 word_to_wordProofScript.sml:1084-1085: a theorem that HOL4
-   states as the value of an ML expression: code_rel_no_alloc *)
+(* HOL4 word_to_wordProofScript.sml:1084-1085: a theorem that HOL4 states as
+   the value of an ML expression: code_rel_no_alloc *)
 
-(* HOL4 word_to_wordProofScript.sml:1087-1088: a theorem that HOL4
-   states as the value of an ML expression: code_rel_no_install *)
+(* HOL4 word_to_wordProofScript.sml:1087-1088: a theorem that HOL4 states as
+   the value of an ML expression: code_rel_no_install *)
 
 
 (***** compile_single correctness for no_alloc & no_install ******)
@@ -338,18 +334,18 @@ let no_install_no_alloc_compile_single_correct = prove
      (domain (wordSem_state_code st) = domain l) /\
      gc_fun_const_ok (wordSem_state_gc_fun st) ==>
      (?perm'.
-       let (res,rst) = wordSem_evaluate
-         (prog,wordSem_state_permute_fupd (K perm') st) in
-         if res = SOME wordSem_Error then T else
-           let (res1,rst1) = wordSem_evaluate
-             (prog,wordSem_state_code_fupd (K l) st) in
+       let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd (K
+         perm') st) in
+         if res = SOME wordSem_Error then T
+         else let (res1,rst1) = wordSem_evaluate
+           (prog,wordSem_state_code_fupd (K l) st) in
              res1 = res /\
              word_to_wordProof_code_rel (wordSem_state_code rst)
                (wordSem_state_code rst1) /\
-             domain (wordSem_state_code rst) = domain
-               (wordSem_state_code rst1) /\
-             rst1 = wordSem_state_code_fupd (K (wordSem_state_code
-               rst1)) rst)`,
+             domain (wordSem_state_code rst) = domain (wordSem_state_code
+               rst1) /\
+             rst1 = wordSem_state_code_fupd (K (wordSem_state_code rst1))
+               rst)`,
   CHEAT_TAC);;
 
 (* HOL4 word_to_wordProofScript.sml:1145-1147: a proof *)
@@ -410,8 +406,8 @@ let no_install_no_alloc_compile_single_correct = prove
 
 (* HOL4 word_to_wordProofScript.sml:1692: a proof *)
 
-(* HOL4 word_to_wordProofScript.sml:1694-2098: code that the source
-   has in a comment *)
+(* HOL4 word_to_wordProofScript.sml:1694-2098: code that the source has in a
+   comment *)
 
 (******** more on no_mt **********)
 
@@ -482,15 +478,13 @@ let panLang_compile_word_to_word_thm = prove
      gc_fun_const_ok (wordSem_state_gc_fun st) ==>
      (?perm' clk.
        let prog = wordLang_Call NONE (SOME start) [0] NONE in
-         let (res,rst) = wordSem_evaluate
-           (prog,wordSem_state_permute_fupd (K perm') st) in
-           if res = SOME wordSem_Error then T else
-             let (res1,rst1) = wordSem_evaluate
-               (prog,wordSem_state_code_fupd (K l) st) in
+         let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd
+           (K perm') st) in
+           if res = SOME wordSem_Error then T else let (res1,rst1) =
+             wordSem_evaluate (prog,wordSem_state_code_fupd (K l) st) in
                res1 = res /\ wordSem_state_clock
                rst1 = wordSem_state_clock rst /\ wordSem_state_ffi
-               rst1 = wordSem_state_ffi rst
-                 /\ wordSem_state_stack_max
+               rst1 = wordSem_state_ffi rst /\ wordSem_state_stack_max
                rst1 = wordSem_state_stack_max rst)`),
   CHEAT_TAC);;
 
@@ -509,8 +503,8 @@ let word_to_word_compile_semantics = prove
        /\ wordSem_state_code
      // start = lc + first_name ∧
      // EL lc wprog0 = (start, v) ∧
-     t = fromAList wprog /\ sptree_lookup 0 (wordSem_state_locals
-       t) = SOME (wordLang_Loc 1 0) /\
+     t = fromAList wprog /\ sptree_lookup 0 (wordSem_state_locals t) =
+       SOME (wordLang_Loc 1 0) /\
      t = wordSem_state_code_fupd (K (wordSem_state_code t)) s
        /\ wordSem_state_code
      s = fromAList wprog0 /\ ~(wordSem_semantics

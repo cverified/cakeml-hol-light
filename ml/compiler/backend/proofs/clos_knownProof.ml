@@ -28,18 +28,18 @@ needs "semantics/semanticPrimitives.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "clos_knownProof"
-  ["backendProps"; "closLang"; "closProps"; "closSem";
-   "clos_fvsProof"; "clos_known"; "clos_knownProps";
-   "clos_letopProof"; "clos_opProof"; "clos_ticksProof"; "db_vars"];;
+  ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_fvsProof";
+   "clos_known"; "clos_knownProps"; "clos_letopProof"; "clos_opProof";
+   "clos_ticksProof"; "db_vars"];;
 
-(* HOL4 clos_knownProofScript.sml:19: an overload that the source
-   brings to the front: domain *)
+(* HOL4 clos_knownProofScript.sml:19: an overload that the source brings to
+   the front: domain *)
 
 (* HOL4 clos_knownProofScript.sml:21-22: ML code, not ported *)
 
 (* fixeqs flips any equations in the assumption that have evaluate on the rhs *)
-(* HOL4 clos_knownProofScript.sml:25: the ML values that the
-   definitions below antiquote *)
+(* HOL4 clos_knownProofScript.sml:25: the ML values that the definitions
+   below antiquote *)
 
 (* HOL4 clos_knownProofScript.sml:27: ML code, not ported *)
 
@@ -75,29 +75,28 @@ let known_unchanged_globals = prove
 let known_op_changed_globals_alt = prove
  (`!opn aenv g0 a g.
      known_op opn aenv g0 = (a,g) ==>
-       BAG_OF_SET (domain g) <= (BAG_UNION) (BAG_OF_SET (domain
-         g0)) (closProps_op_gbag opn)`,
+       BAG_OF_SET (domain g) <= (BAG_UNION) (BAG_OF_SET (domain g0))
+         (closProps_op_gbag opn)`,
   CHEAT_TAC);;
 
 let known_op_changed_globals_alt_set = prove
  (`!opn aenv g0 a g.
      known_op opn aenv g0 = (a,g) ==>
-       domain g SUBSET domain g0 UNION SET_OF_BAG
-         (closProps_op_gbag opn)`,
+       domain g SUBSET domain g0 UNION SET_OF_BAG (closProps_op_gbag opn)`,
   CHEAT_TAC);;
 
 let known_changed_globals_alt = prove
  (`!c xs aenv g0 alist g.
      known c xs aenv g0 = (alist,g) ==>
-       BAG_OF_SET (domain g) <= (BAG_UNION) (BAG_OF_SET (domain
-         g0)) (closProps_elist_globals xs)`,
+       BAG_OF_SET (domain g) <= (BAG_UNION) (BAG_OF_SET (domain g0))
+         (closProps_elist_globals xs)`,
   CHEAT_TAC);;
 
 let known_changed_globals_alt_set = prove
  (`!c xs aenv g0 alist g.
      known c xs aenv g0 = (alist,g) ==>
-       domain g SUBSET domain g0 UNION SET_OF_BAG
-         (closProps_elist_globals xs)`,
+       domain g SUBSET domain g0 UNION SET_OF_BAG (closProps_elist_globals
+         xs)`,
   CHEAT_TAC);;
 
 (* Take the first n expression lists returned by the compile oracle. *)
@@ -117,8 +116,8 @@ let MEM_first_n_exps = prove
    the compile oracle are unique. *)
 let unique_set_globals_def = new_definition
   `unique_set_globals es co <=>
-     (!n. BAG_ALL_DISTINCT (closProps_elist_globals (APPEND es
-       (FLAT (first_n_exps co n)))))`;;
+     (!n. BAG_ALL_DISTINCT (closProps_elist_globals (APPEND es (FLAT
+       (first_n_exps co n)))))`;;
 
 let unique_set_globals_shift_seq = prove
  (`!es co. unique_set_globals es co ==> (!k. unique_set_globals es
@@ -126,16 +125,15 @@ let unique_set_globals_shift_seq = prove
   CHEAT_TAC);;
 
 let unique_set_globals_evaluate = prove
- (`!es xs env s1 s2 res. unique_set_globals xs
-  (closSem_state_compile_oracle s1) /\
-   closSem_evaluate (es,env,s1) = (res,s2) ==> unique_set_globals
-     xs (closSem_state_compile_oracle s2)`,
+ (`!es xs env s1 s2 res. unique_set_globals xs (closSem_state_compile_oracle
+  s1) /\
+   closSem_evaluate (es,env,s1) = (res,s2) ==> unique_set_globals xs
+     (closSem_state_compile_oracle s2)`,
   CHEAT_TAC);;
 
 let unique_set_globals_subexps = prove
  (`(unique_set_globals (CONS x1 (CONS x2 xs)) co ==>
-      unique_set_globals [x1] co /\ unique_set_globals (CONS x2 xs)
-        co) /\
+      unique_set_globals [x1] co /\ unique_set_globals (CONS x2 xs) co) /\
    (unique_set_globals [flatLang_If t x1 x2 x3] co ==>
       unique_set_globals [x1] co /\ unique_set_globals [x2] co
         /\ unique_set_globals [x3] co) /\
@@ -149,13 +147,12 @@ let unique_set_globals_subexps = prove
       unique_set_globals xs co) /\
    (
     // /\ !n. BAG_ALL_DISTINCT (op_gbag opn ⊎ (elist_globals (first_n_exps co n)))
-    unique_set_globals [closLang_Fn src_name loc_opt vsopt num_args
-      x1] co ==>
+    unique_set_globals [closLang_Fn src_name loc_opt vsopt num_args x1] co
+      ==>
       unique_set_globals [x1] co) /\
-   (unique_set_globals [closLang_Letrec src_names loc_opt vsopt fns
-     x1] co ==>
-      unique_set_globals [x1] co /\ unique_set_globals (MAP SND fns)
-        co) /\
+   (unique_set_globals [closLang_Letrec src_names loc_opt vsopt fns x1] co
+     ==>
+      unique_set_globals [x1] co /\ unique_set_globals (MAP SND fns) co) /\
    (unique_set_globals [closLang_App t loc_opt x1 xs] co ==>
       unique_set_globals [x1] co /\ unique_set_globals xs co) /\
    (unique_set_globals [closLang_Tick t x1] co ==>
@@ -172,8 +169,8 @@ let unique_set_globals_IMP_es_distinct_elist_globals = prove
   CHEAT_TAC);;
 
 let set_globals_empty_unique_set_globals = prove
- (`closProps_set_globals e = EMPTY_BAG ==> (unique_set_globals [e] co
-  <=> unique_set_globals [] co)`,
+ (`closProps_set_globals e = EMPTY_BAG ==> (unique_set_globals [e] co <=>
+  unique_set_globals [] co)`,
   CHEAT_TAC);;
 
 let nil_unique_set_globals = prove
@@ -188,15 +185,14 @@ let nil_unique_set_globals = prove
 let val_approx_sgc_free_def,val_approx_sgc_free_ind = define_wf
   `MEASURE val_approx_size`
   [`val_approx_sgc_free x1 =
-        match x1 with
-          clos_known_ClosNoInline m n -> T
-        | (clos_known_Clos m n e s) -> closProps_set_globals e =
-          EMPTY_BAG
-        | (clos_known_Tuple tag vas) -> ALL val_approx_sgc_free vas
-        | _1 -> T`];;
+     match x1 with
+       clos_known_ClosNoInline m n -> T
+     | clos_known_Clos m n e s -> closProps_set_globals e = EMPTY_BAG
+     | clos_known_Tuple tag vas -> ALL val_approx_sgc_free vas
+     | _ -> T`];;
 
-(* HOL4 clos_knownProofScript.sml:257-258: a theorem that HOL4 states
-   as the value of an ML expression: val_approx_sgc_free_def *)
+(* HOL4 clos_knownProofScript.sml:257-258: a theorem that HOL4 states as the
+   value of an ML expression: val_approx_sgc_free_def *)
 
 let val_approx_sgc_free_merge = prove
  (`!a1 a2. val_approx_sgc_free a1 /\ val_approx_sgc_free a2 ==>
@@ -214,23 +210,22 @@ let val_approx_val = cake_inductive
    (!i. val_approx_val (clos_known_Int i) (closSem_Number i)) /\
    (!tg vas vs.
       ALL2 val_approx_val vas vs ==>
-      val_approx_val (clos_known_Tuple tg vas) (closSem_Block tg vs))
-        /\
+      val_approx_val (clos_known_Tuple tg vas) (closSem_Block tg vs)) /\
    (!m n env b. val_approx_val (clos_known_ClosNoInline m n)
      (closSem_Closure (SOME m) [] env n b)) /\
    (!m n env base fs j.
       m = base + 2 * j /\ j < LENGTH fs /\ n = FST (EL j fs) ==>
-      val_approx_val (clos_known_ClosNoInline m n)
-        (closSem_Recclosure (SOME base) [] env fs j)) /\
+      val_approx_val (clos_known_ClosNoInline m n) (closSem_Recclosure (SOME
+        base) [] env fs j)) /\
    (!m n b s env. val_approx_val (clos_known_Clos m n b s)
      (closSem_Closure (SOME m) [] env n b))`;;
 
-(* HOL4 clos_knownProofScript.sml:294-302: a theorem that HOL4 states
-   as the value of an ML expression: val_approx_val_simps *)
+(* HOL4 clos_knownProofScript.sml:294-302: a theorem that HOL4 states as the
+   value of an ML expression: val_approx_val_simps *)
 
 let val_approx_val_merge_I_lemma = prove
- (`!a1 v. val_approx_val a1 v ==> (!a2. val_approx_val
-  (clos_known_merge a1 a2) v)`,
+ (`!a1 v. val_approx_val a1 v ==> (!a2. val_approx_val (clos_known_merge a1
+  a2) v)`,
   CHEAT_TAC);;
 
 let val_approx_val_merge_I = prove
@@ -252,8 +247,8 @@ let shift_seq_zero = prove
 add_simp shift_seq_zero;;
 
 let shift_seq_add = prove
- (`!co k1 k2. misc_shift_seq k2 (misc_shift_seq k1 co) =
-  misc_shift_seq (k1 + k2) co`,
+ (`!co k1 k2. misc_shift_seq k2 (misc_shift_seq k1 co) = misc_shift_seq (k1 +
+  k2) co`,
   CHEAT_TAC);;
 add_simp shift_seq_add;;
 
@@ -282,8 +277,8 @@ let state_globals_approx_clock_fupd = prove
 add_simp state_globals_approx_clock_fupd;;
 
 let state_globals_approx_dec_clock = prove
- (`state_globals_approx (closSem_dec_clock n s) g <=>
-  state_globals_approx s g`,
+ (`state_globals_approx (closSem_dec_clock n s) g <=> state_globals_approx s
+  g`,
   CHEAT_TAC);;
 add_simp state_globals_approx_dec_clock;;
 
@@ -331,26 +326,24 @@ let mglobals_extend_refl = prove
 add_simp mglobals_extend_refl;;
 
 let mglobals_extend_trans = prove
- (`!s0 s1 s2 g1 g2. mglobals_extend s0 g1 s1 /\ mglobals_extend s1 g2 s2
-  ==>
+ (`!s0 s1 s2 g1 g2. mglobals_extend s0 g1 s1 /\ mglobals_extend s1 g2 s2 ==>
    mglobals_extend s0 (g1 UNION g2) s2`,
   CHEAT_TAC);;
 
 let mglobals_extend_SUBSET = prove
- (`!s0 s g1 g2. mglobals_extend s0 g1 s /\ g1 SUBSET g2 ==>
-  mglobals_extend s0 g2 s`,
+ (`!s0 s g1 g2. mglobals_extend s0 g1 s /\ g1 SUBSET g2 ==> mglobals_extend
+  s0 g2 s`,
   CHEAT_TAC);;
 
 let subspt_better_definedg = prove
- (`!sp1 sp2 sp3. subspt sp1 sp3 /\ better_definedg sp1 sp2
-  /\ better_definedg sp2 sp3 ==>
+ (`!sp1 sp2 sp3. subspt sp1 sp3 /\ better_definedg sp1 sp2 /\ better_definedg
+  sp2 sp3 ==>
    subspt sp1 sp2`,
   CHEAT_TAC);;
 
 let subspt_known_elist_globals = prove
  (`!c es1 as1 g0 al1 g1 es2 as2 al2 g2.
-     known c es1 as1 g0 = (al1,g1) /\ known c es2 as2 g1 = (al2,g2)
-       /\
+     known c es1 as1 g0 = (al1,g1) /\ known c es2 as2 g1 = (al2,g2) /\
      subspt g0 g2 /\ BAG_DISJOINT (closProps_elist_globals es1)
        (closProps_elist_globals es2) ==>
      subspt g0 g1 /\ subspt g1 g2`,
@@ -358,10 +351,9 @@ let subspt_known_elist_globals = prove
 
 let subspt_known_op_elist_globals = prove
  (`!c es as1 g0 al1 g1 opn as2 g2 a.
-      known c es as1 g0 = (al1,g1) /\ known_op opn as2 g1 = (a,g2)
-        /\ subspt g0 g2 /\
-      BAG_DISJOINT (closProps_op_gbag opn) (closProps_elist_globals
-        es) ==>
+      known c es as1 g0 = (al1,g1) /\ known_op opn as2 g1 = (a,g2) /\ subspt
+        g0 g2 /\
+      BAG_DISJOINT (closProps_op_gbag opn) (closProps_elist_globals es) ==>
       subspt g0 g1 /\ subspt g1 g2`,
   CHEAT_TAC);;
 
@@ -371,8 +363,7 @@ let fv_max_def = new_definition
   `fv_max n xs = (!v. fv v xs ==> v < n)`;;
 
 let fv_max_SmartOp = prove
- (`fv_max n [closLang_Op t op xs] ==> fv_max n [clos_op_SmartOp t op
-  xs]`,
+ (`fv_max n [closLang_Op t op xs] ==> fv_max n [clos_op_SmartOp t op xs]`,
   CHEAT_TAC);;
 
 let fv_alt = prove
@@ -385,32 +376,30 @@ let fv1_alt = prove
 
 let fv_max_rw = prove
  (`(fv_max n [] <=> T) /\
-   (fv_max n (CONS x (CONS y xs)) <=> fv_max n [x] /\ fv_max n (CONS
-     y xs)) /\
+   (fv_max n (CONS x (CONS y xs)) <=> fv_max n [x] /\ fv_max n (CONS y xs))
+     /\
    (fv_max n [closLang_Var tr v] <=> v < n) /\
-   (fv_max n [flatLang_If tr x1 x2 x3] <=> fv_max n [x1] /\ fv_max n
-     [x2] /\ fv_max n [x3]) /\
-   (fv_max n [closLang_Let tr xs x1] <=> fv_max n xs /\ fv_max (n +
-     LENGTH xs) [x1]) /\
+   (fv_max n [flatLang_If tr x1 x2 x3] <=> fv_max n [x1] /\ fv_max n [x2]
+     /\ fv_max n [x3]) /\
+   (fv_max n [closLang_Let tr xs x1] <=> fv_max n xs /\ fv_max (n + LENGTH
+     xs) [x1]) /\
    (fv_max n [flatLang_Raise tr x1] <=> fv_max n [x1]) /\
    (fv_max n [closLang_Tick tr x1] <=> fv_max n [x1]) /\
    (fv_max n [closLang_Op tr opn xs] <=> fv_max n xs) /\
-   (fv_max n [closLang_App tr lopt x1 xs] <=> fv_max n [x1] /\ fv_max
-     n xs) /\
-   (fv_max n [closLang_Fn src_name loc vs num_args x1] <=> fv_max (n
-     + num_args) [x1]) /\
+   (fv_max n [closLang_App tr lopt x1 xs] <=> fv_max n [x1] /\ fv_max n xs)
+     /\
+   (fv_max n [closLang_Fn src_name loc vs num_args x1] <=> fv_max (n +
+     num_args) [x1]) /\
    (fv_max n [closLang_Letrec src_names loc vs fns x1] <=>
-      ALL (\(num_args,x). fv_max (n + num_args + LENGTH fns) [x]) fns
-        /\
+      ALL (\(num_args,x). fv_max (n + num_args + LENGTH fns) [x]) fns /\
       fv_max (n + LENGTH fns) [x1]) /\
-   (fv_max n [flatLang_Handle tr x1 x2] <=> fv_max n [x1] /\ fv_max
-     (n + 1) [x2]) /\
+   (fv_max n [flatLang_Handle tr x1 x2] <=> fv_max n [x1] /\ fv_max (n + 1)
+     [x2]) /\
    (fv_max n [closLang_Call tr ticks dest xs] <=> fv_max n xs)`,
   CHEAT_TAC);;
 
 let fv_max_mk_Ticks = prove
- (`!t trc i e. fv_max n [clos_ticksProof_mk_Ticks t trc i e] <=>
-  fv_max n [e]`,
+ (`!t trc i e. fv_max n [clos_ticksProof_mk_Ticks t trc i e] <=> fv_max n [e]`,
   CHEAT_TAC);;
 add_simp fv_max_mk_Ticks;;
 
@@ -431,34 +420,33 @@ let fv_max_less = prove
 
 let known_op_correct_approx = prove
  (`!opn args g0 a g vs s0 v s.
-     known_op opn args g0 = (a,g) /\ closSem_do_app opn vs s0 = Rval
-       (v,s) /\
+     known_op opn args g0 = (a,g) /\ closSem_do_app opn vs s0 = Rval (v,s)
+       /\
      ALL2 val_approx_val args vs /\ state_globals_approx s0 g0 ==>
        state_globals_approx s g /\ val_approx_val a v`,
   CHEAT_TAC);;
 
 let ssgc_free_co_shift_seq = prove
- (`ssgc_free s ==> (!k. ssgc_free (closSem_state_compile_oracle_fupd
-  (K (misc_shift_seq k (closSem_state_compile_oracle s))) s))`,
+ (`ssgc_free s ==> (!k. ssgc_free (closSem_state_compile_oracle_fupd (K
+  (misc_shift_seq k (closSem_state_compile_oracle s))) s))`,
   CHEAT_TAC);;
 
 let ssgc_free_do_install = prove
  (`!s. ssgc_free s ==>
-   ssgc_free (closSem_state_code_fupd (K (closSem_state_code s |++
-     SND (SND (closSem_state_compile_oracle s 0))))
+   ssgc_free (closSem_state_code_fupd (K (closSem_state_code s |++ SND
+     (SND (closSem_state_compile_oracle s 0))))
      (closSem_state_compile_oracle_fupd (K (misc_shift_seq 1
      (closSem_state_compile_oracle s))) s))`,
   CHEAT_TAC);;
 
 let do_install_ssgc = prove
- (`!vs s0 es s1. closSem_do_install vs s0 = (Rval es,s1) /\ ssgc_free s0
-  ==>
+ (`!vs s0 es s1. closSem_do_install vs s0 = (Rval es,s1) /\ ssgc_free s0 ==>
    ssgc_free s1 /\ ALL closProps_esgc_free es /\ ~(es = [])
      /\ closSem_state_compile_oracle
    s1 = misc_shift_seq 1 (closSem_state_compile_oracle s0) /\
    first_n_exps (closSem_state_compile_oracle s0) 1 = [es] /\
-   mglobals_extend (closSem_state_globals s0) EMPTY
-     (closSem_state_globals s1)`,
+   mglobals_extend (closSem_state_globals s0) EMPTY (closSem_state_globals
+     s1)`,
   CHEAT_TAC);;
 
 (* HOL4 clos_knownProofScript.sml:705-709: ML code, not ported *)
@@ -473,8 +461,7 @@ let do_app_ssgc = prove
      closSem_do_app opn args s0 = res /\
      ALL vsgc_free args /\ ssgc_free s0 ==>
      (!v s. res = Rval (v,s) ==>
-            vsgc_free v /\ ssgc_free s
-              /\ closSem_state_compile_oracle
+            vsgc_free v /\ ssgc_free s /\ closSem_state_compile_oracle
             s = closSem_state_compile_oracle s0 /\
             mglobals_extend (closSem_state_globals s0) (SET_OF_BAG
               (closProps_op_gbag opn)) (closSem_state_globals s)) /\
@@ -485,16 +472,16 @@ let dest_closure_Full_sgc_free = prove
  (`dest_closure max_app loc_opt f (CONS arg0 args) =
      SOME (Full_app fbody env rest_args) /\
    vsgc_free f /\ vsgc_free arg0 /\ ALL vsgc_free args ==>
-   closProps_set_globals fbody = EMPTY_BAG /\ ALL vsgc_free env
-     /\ ALL vsgc_free rest_args`,
+   closProps_set_globals fbody = EMPTY_BAG /\ ALL vsgc_free env /\ ALL
+     vsgc_free rest_args`,
   CHEAT_TAC);;
 
 (* [local] *)
 let update_thunk_ssgc_free = prove
  (`ssgc_free s /\
    ALL vsgc_free vs /\
-   closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs s)
-     vs = SOME refs ==>
+   closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs s) vs =
+     SOME refs ==>
      ssgc_free (closSem_state_refs_fupd (K refs) s)`,
   CHEAT_TAC);;
 
@@ -513,8 +500,8 @@ let evaluate_changed_globals_0 = prove
            mglobals_extend (closSem_state_globals s0)
              (SET_OF_BAG (closProps_elist_globals es) UNION
               SET_OF_BAG (closProps_elist_globals (FLAT (first_n_exps
-                (closSem_state_compile_oracle s0) n))))
-                (closSem_state_globals s))) /\
+                (closSem_state_compile_oracle s0) n)))) (closSem_state_globals
+                s))) /\
     (!loc_opt f args (s0:('c,'ffi)closSem_state) res s.
        evaluate_app loc_opt f args s0 = (res,s) /\
        ssgc_free s0 /\ vsgc_free f /\ ALL vsgc_free args ==>
@@ -522,21 +509,20 @@ let evaluate_changed_globals_0 = prove
          (?n. closSem_state_compile_oracle
            s = misc_shift_seq n (closSem_state_compile_oracle s0) /\
            mglobals_extend (closSem_state_globals s0)
-             (SET_OF_BAG (closProps_elist_globals (FLAT
-               (first_n_exps (closSem_state_compile_oracle s0) n))))
-               (closSem_state_globals s)))`,
+             (SET_OF_BAG (closProps_elist_globals (FLAT (first_n_exps
+               (closSem_state_compile_oracle s0) n)))) (closSem_state_globals
+               s)))`,
   CHEAT_TAC);;
 
-(* HOL4 clos_knownProofScript.sml:1231-1232: a theorem that HOL4
-   states as the value of an ML expression: evaluate_changed_globals *)
+(* HOL4 clos_knownProofScript.sml:1231-1232: a theorem that HOL4 states as
+   the value of an ML expression: evaluate_changed_globals *)
 
-(* HOL4 clos_knownProofScript.sml:1234-1235: a theorem that HOL4
-   states as the value of an ML expression:
-   evaluate_app_changed_globals *)
+(* HOL4 clos_knownProofScript.sml:1234-1235: a theorem that HOL4 states as
+   the value of an ML expression: evaluate_app_changed_globals *)
 
 let mk_Ticks_set_globals = prove
- (`!t tc n exp. closProps_set_globals (clos_ticksProof_mk_Ticks t tc n
-  exp) = closProps_set_globals exp`,
+ (`!t tc n exp. closProps_set_globals (clos_ticksProof_mk_Ticks t tc n exp) =
+  closProps_set_globals exp`,
   CHEAT_TAC);;
 add_simp mk_Ticks_set_globals;;
 
@@ -553,8 +539,8 @@ let gapprox_disjoint_rw = prove
   CHEAT_TAC);;
 
 let oracle_gapprox_disjoint_def = new_definition
-  `oracle_gapprox_disjoint g co <=> (!n. gapprox_disjoint g (FST (SND
-  (co n))))`;;
+  `oracle_gapprox_disjoint g co <=> (!n. gapprox_disjoint g (FST (SND (co
+  n))))`;;
 
 let oracle_gapprox_disjoint_shift_seq = prove
  (`oracle_gapprox_disjoint g co ==>
@@ -574,8 +560,8 @@ let oracle_gapprox_disjoint_first_n_exps = prove
   CHEAT_TAC);;
 
 let mk_Ticks_esgc_free = prove
- (`!t tc n exp. closProps_esgc_free (clos_ticksProof_mk_Ticks t tc n
-  exp) <=> closProps_esgc_free exp`,
+ (`!t tc n exp. closProps_esgc_free (clos_ticksProof_mk_Ticks t tc n exp) <=>
+  closProps_esgc_free exp`,
   CHEAT_TAC);;
 add_simp mk_Ticks_esgc_free;;
 
@@ -600,13 +586,14 @@ let loptrel_def = new_definition
   `loptrel fv' numargs lopt1 lopt2 <=>
       lopt2 = lopt1 \/
       lopt1 = NONE /\
-      (match (fv',lopt2) with (closSem_Closure (SOME loc1) ae _2 n
-        bod,SOME loc2) ->
-             loc1 = loc2 /\ n = numargs /\ ae = [] |
-               (closSem_Recclosure (SOME loc1) ae _3 fns i,SOME loc2) ->
-          i < LENGTH fns /\ loc2 = loc1 + 2 * i /\ numargs = FST (EL
-            i fns) /\
-          ae = [] | _4 -> F)`;;
+      (match (fv',lopt2) with (closSem_Closure (SOME loc1) ae _ n bod,SOME
+        loc2) ->
+             loc1 = loc2 /\ n = numargs /\ ae = []
+        | (closSem_Recclosure (SOME loc1) ae _ fns i,SOME loc2) ->
+          i < LENGTH fns /\ loc2 = loc1 + 2 * i /\ numargs = FST (EL i fns)
+            /\
+          ae = []
+        | _ -> F)`;;
 
 let decide_inline_LetInline_IMP_Clos = prove
  (`!c fapx lopt arity body.
@@ -627,8 +614,7 @@ let known_preserves_esgc_free_0 = prove
      ALL closProps_esgc_free es /\
      ALL val_approx_sgc_free aenv /\
      globals_approx_sgc_free g0 ==>
-     closProps_elist_globals (MAP FST eas1) <=
-       closProps_elist_globals es /\
+     closProps_elist_globals (MAP FST eas1) <= closProps_elist_globals es /\
      ALL closProps_esgc_free (MAP FST eas1) /\
      ALL val_approx_sgc_free (MAP SND eas1) /\
      globals_approx_sgc_free g`,
@@ -651,8 +637,7 @@ let known_elglobals_dont_grow = prove
      ALL closProps_esgc_free es /\
      ALL val_approx_sgc_free aenv /\
      globals_approx_sgc_free g0 ==>
-     closProps_elist_globals (MAP FST eas1) <=
-       closProps_elist_globals es`,
+     closProps_elist_globals (MAP FST eas1) <= closProps_elist_globals es`,
   CHEAT_TAC);;
 
 let known_preserves_pure = prove
@@ -665,52 +650,48 @@ let known_preserves_pure = prove
 let evaluate_mk_Ticks_rw = prove
  (`!t tc n exp env (s:('c,'ffi)closSem_state).
      closSem_evaluate ([clos_ticksProof_mk_Ticks t tc n exp],env,s) =
-     (if closSem_state_clock s < n then (Rerr (Rabort
-       Rtimeout_error),closSem_state_clock_fupd (K 0) s) else
-       closSem_evaluate ([exp],env,closSem_dec_clock n s))`,
+     if closSem_state_clock s < n then (Rerr (Rabort
+       Rtimeout_error),closSem_state_clock_fupd (K 0) s)
+     else closSem_evaluate ([exp],env,closSem_dec_clock n s)`,
   CHEAT_TAC);;
 
 let evaluate_mk_Ticks_IMP = prove
  (`!t tc n exp env (s0:('c,'ffi)closSem_state) res s.
-     closSem_evaluate ([clos_ticksProof_mk_Ticks t tc n exp],env,s0)
-       = (res,s) ==>
-     (res = Rerr (Rabort Rtimeout_error) /\ s =
-       closSem_state_clock_fupd (K 0) s0) \/
-     (closSem_evaluate ([exp],env,closSem_dec_clock n s0) =
-       (res,s))`,
+     closSem_evaluate ([clos_ticksProof_mk_Ticks t tc n exp],env,s0) =
+       (res,s) ==>
+     (res = Rerr (Rabort Rtimeout_error) /\ s = closSem_state_clock_fupd (K
+       0) s0) \/
+     (closSem_evaluate ([exp],env,closSem_dec_clock n s0) = (res,s))`,
   CHEAT_TAC);;
 
 let clos_gen_noinline_eq = prove
  (`!n c fns.
    clos_gen_noinline n c fns =
-   list_of_seq (\i. clos_known_ClosNoInline (2 * (i + c) + n) (FST
-     (EL i fns))) (LENGTH fns)`,
+   list_of_seq (\i. clos_known_ClosNoInline (2 * (i + c) + n) (FST (EL i
+     fns))) (LENGTH fns)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let letrec_case_eq = prove
  (`!limit' loc fns.
    (match loc with
-     NONE -> REPLICATE (LENGTH fns) clos_known_Other | SOME n ->
-       clos_gen_noinline n 0 fns) =
-   list_of_seq (match loc with NONE -> K clos_known_Other |
-                        SOME n -> (\i. clos_known_ClosNoInline (n +
-                          2 * i) (FST (EL i fns)))) (LENGTH fns)`,
+     NONE -> REPLICATE (LENGTH fns) clos_known_Other
+   | SOME n -> clos_gen_noinline n 0 fns) =
+   list_of_seq (match loc with NONE -> K clos_known_Other | SOME n -> (\i.
+     clos_known_ClosNoInline (n + 2 * i) (FST (EL i fns)))) (LENGTH fns)`,
   CHEAT_TAC);;
 
-let clos_knownProof_every_var_def,clos_knownProof_every_var_ind =
-  define_rec
-  [`clos_knownProof_every_var P (db_vars_Empty:db_var_set) = T`;
-   `clos_knownProof_every_var P (db_vars_Var v:db_var_set) <=> P v`;
-   `clos_knownProof_every_var P (db_vars_Shift k d:db_var_set) <=>
+let clos_knownProof_every_var_def,clos_knownProof_every_var_ind = define_rec
+  [`clos_knownProof_every_var P db_vars_Empty = T`;
+   `clos_knownProof_every_var P (db_vars_Var v) <=> P v`;
+   `clos_knownProof_every_var P (db_vars_Shift k d) <=>
     clos_knownProof_every_var (\v. k <= v ==> P (v - k)) d`;
-   `clos_knownProof_every_var P (db_vars_Union d1 d2:db_var_set)
-    <=> clos_knownProof_every_var P d1 /\ clos_knownProof_every_var
-    P d2`];;
+   `clos_knownProof_every_var P (db_vars_Union d1 d2) <=>
+    clos_knownProof_every_var P d1 /\ clos_knownProof_every_var P d2`];;
 
 let every_var_mk_Union = prove
- (`clos_knownProof_every_var P (mk_Union d1 d2) <=>
-  clos_knownProof_every_var P d1 /\ clos_knownProof_every_var P d2`,
+ (`clos_knownProof_every_var P (mk_Union d1 d2) <=> clos_knownProof_every_var
+  P d1 /\ clos_knownProof_every_var P d2`,
   CHEAT_TAC);;
 add_simp every_var_mk_Union;;
 
@@ -736,8 +717,7 @@ let oracle_gapprox_subspt_def = new_definition
 
 let oracle_gapprox_subspt_add = prove
  (`oracle_gapprox_subspt co <=>
-     (!(n:num) k. subspt (FST (FST (co n))) (FST (FST (co (n +
-       k)))))`,
+     (!(n:num) k. subspt (FST (FST (co n))) (FST (FST (co (n + k)))))`,
   CHEAT_TAC);;
 
 let oracle_gapprox_subspt_alt = prove
@@ -746,8 +726,8 @@ let oracle_gapprox_subspt_alt = prove
   CHEAT_TAC);;
 
 let oracle_gapprox_subspt_shift_seq = prove
- (`oracle_gapprox_subspt co ==> (!k. oracle_gapprox_subspt
-  (misc_shift_seq k co))`,
+ (`oracle_gapprox_subspt co ==> (!k. oracle_gapprox_subspt (misc_shift_seq k
+  co))`,
   CHEAT_TAC);;
 
 let oracle_gapprox_subspt_evaluate = prove
@@ -759,8 +739,8 @@ let oracle_gapprox_subspt_evaluate = prove
 
 (* oracle_state_sgc_free *)
 let oracle_state_sgc_free_def = new_definition
-  `oracle_state_sgc_free co = (!n. globals_approx_sgc_free (FST (FST
-  (co n))))`;;
+  `oracle_state_sgc_free co = (!n. globals_approx_sgc_free (FST (FST (co
+  n))))`;;
 
 let oracle_state_sgc_free_shift_seq = prove
  (`!co. oracle_state_sgc_free co ==> (!n. oracle_state_sgc_free
@@ -794,14 +774,12 @@ let mglobals_disjoint_rw = prove
    (mglobals_disjoint s [closLang_Call tr ticks dest xs] <=>
       mglobals_disjoint s xs) /\
    (mglobals_disjoint s [closLang_Op tr opn xs] <=>
-      mglobals_disjoint s xs /\ DISJOINT (mapped_globals s)
-        (SET_OF_BAG (closProps_op_gbag opn))) /\
+      mglobals_disjoint s xs /\ DISJOINT (mapped_globals s) (SET_OF_BAG
+        (closProps_op_gbag opn))) /\
    (mglobals_disjoint s [closLang_App tr lopt x1 xs] <=>
       mglobals_disjoint s [x1] /\ mglobals_disjoint s xs) /\
-   (mglobals_disjoint s [closLang_Letrec src_names lopt vs fns x1]
-     <=>
-      mglobals_disjoint s (MAP SND fns) /\ mglobals_disjoint s
-        [x1])`,
+   (mglobals_disjoint s [closLang_Letrec src_names lopt vs fns x1] <=>
+      mglobals_disjoint s (MAP SND fns) /\ mglobals_disjoint s [x1])`,
   CHEAT_TAC);;
 
 (**)
@@ -809,15 +787,15 @@ let mglobals_disjoint_rw = prove
 let known_changed_globals_cases = prove
  (`!c xs aenv g0 alist g.
      known c xs aenv g0 = (alist,g) ==>
-     (!k a. sptree_lookup k g = SOME a ==> sptree_lookup k g0 =
-       SOME a \/ k IN SET_OF_BAG (closProps_elist_globals xs))`,
+     (!k a. sptree_lookup k g = SOME a ==> sptree_lookup k g0 = SOME a \/
+       k IN SET_OF_BAG (closProps_elist_globals xs))`,
   CHEAT_TAC);;
 
 let known_op_changed_globals_cases = prove
  (`!opn aenv g0 ea g.
      known_op opn aenv g0 = (ea,g) ==>
-     (!k a. sptree_lookup k g = SOME a ==> sptree_lookup k g0 =
-       SOME a \/ k IN SET_OF_BAG (closProps_op_gbag opn))`,
+     (!k a. sptree_lookup k g = SOME a ==> sptree_lookup k g0 = SOME a \/
+       k IN SET_OF_BAG (closProps_op_gbag opn))`,
   CHEAT_TAC);;
 
 
@@ -833,8 +811,7 @@ let mglobals_disjoint_evaluate = prove
  (`!s0 xs ys env res s.
    closSem_evaluate (ys,env,s0) = (res,s) /\
    ssgc_free s0 /\ ALL vsgc_free env /\ ALL closProps_esgc_free ys /\
-   unique_set_globals (APPEND xs ys) (closSem_state_compile_oracle
-     s0) /\
+   unique_set_globals (APPEND xs ys) (closSem_state_compile_oracle s0) /\
    mglobals_disjoint (closSem_state_globals s0) xs ==>
    mglobals_disjoint (closSem_state_globals s) xs`,
   CHEAT_TAC);;
@@ -842,16 +819,16 @@ let mglobals_disjoint_evaluate = prove
 
 let gapprox_extend_def = new_definition
   `gapprox_extend g1 gd g2 <=>
-     (!i. i IN domain g2 /\ (i IN domain g1 ==> ~(sptree_lookup i g2
-       = sptree_lookup i g1)) ==>
+     (!i. i IN domain g2 /\ (i IN domain g1 ==> ~(sptree_lookup i g2 =
+       sptree_lookup i g1)) ==>
          i IN gd)`;;
 
 let state_globals_approx_disjoint_extends = prove
  (`!s1 mgx s2 g1 gax g2.
-     mglobals_extend (closSem_state_globals s1) mgx
-       (closSem_state_globals s2) /\ gapprox_extend g1 gax g2 /\
-     DISJOINT (mapped_globals (closSem_state_globals s1)) gax
-       /\ DISJOINT gax mgx /\
+     mglobals_extend (closSem_state_globals s1) mgx (closSem_state_globals
+       s2) /\ gapprox_extend g1 gax g2 /\
+     DISJOINT (mapped_globals (closSem_state_globals s1)) gax /\ DISJOINT
+       gax mgx /\
      state_globals_approx s2 g1 ==>
      state_globals_approx s2 g2`,
   CHEAT_TAC);;
@@ -862,8 +839,7 @@ let state_globals_approx_evaluate = prove
    known c ys aenv g0 = (eas,g) /\
    ssgc_free s0 /\ ALL vsgc_free env /\ ALL closProps_esgc_free xs /\
    mglobals_disjoint (closSem_state_globals s0) ys /\
-   unique_set_globals (APPEND xs ys) (closSem_state_compile_oracle
-     s0) /\
+   unique_set_globals (APPEND xs ys) (closSem_state_compile_oracle s0) /\
    state_globals_approx s g0 ==>
    state_globals_approx s g`,
   CHEAT_TAC);;
@@ -874,8 +850,8 @@ let state_globals_approx_known_op_evaluate = prove
    ssgc_free s0 /\ ALL vsgc_free env /\ ALL closProps_esgc_free xs /\
    DISJOINT (mapped_globals (closSem_state_globals s0)) (SET_OF_BAG
      (closProps_op_gbag opn)) /\
-   unique_set_globals [closLang_Op tr opn xs]
-     (closSem_state_compile_oracle s0) /\
+   unique_set_globals [closLang_Op tr opn xs] (closSem_state_compile_oracle
+     s0) /\
    state_globals_approx s g0 ==>
    state_globals_approx s g`,
   CHEAT_TAC);;
@@ -888,16 +864,13 @@ let elist_globals_first_n_exps_lemma = prove
 
 let elist_globals_first_n_exps_shift_seq_lemma = prove
  (`!i k co. BAG_IN i (closProps_elist_globals (FST (SND (co k)))) ==>
-         (!m n. m < k /\ k < m + n ==> BAG_IN i
-           (closProps_elist_globals (FLAT (first_n_exps
-           (misc_shift_seq m co) n))))`,
+         (!m n. m < k /\ k < m + n ==> BAG_IN i (closProps_elist_globals
+           (FLAT (first_n_exps (misc_shift_seq m co) n))))`,
   CHEAT_TAC);;
 
 let elist_globals_first_n_exps_exists = prove
- (`!i co n. BAG_IN i (closProps_elist_globals (FLAT (first_n_exps co
-  n))) ==>
-     (?k. k < n /\ BAG_IN i (closProps_elist_globals (FST (SND (co
-       k)))))`,
+ (`!i co n. BAG_IN i (closProps_elist_globals (FLAT (first_n_exps co n))) ==>
+     (?k. k < n /\ BAG_IN i (closProps_elist_globals (FST (SND (co k)))))`,
   CHEAT_TAC);;
 
 let oracle_gapprox_disjoint_Install = prove
@@ -930,8 +903,8 @@ let oracle_gapprox_disjoint_lemma = prove
 (* HOL4 clos_knownProofScript.sml:1893: ML code, not ported *)
 
 let known_correct_approx = prove
- (`!c xs aenv g0 eas g env extra (s0:(val_approx
-  spt#'c,'ffi)closSem_state) res s.
+ (`!c xs aenv g0 eas g env extra (s0:(val_approx spt#'c,'ffi)closSem_state) res
+  s.
    known c xs aenv g0 = (eas,g) /\
    closSem_evaluate (xs,APPEND env extra,s0) = (res,s) /\
    // fv_max (LENGTH env) xs /\
@@ -949,35 +922,31 @@ let known_correct_approx = prove
 
 let monotonic_gapprox_disjoint = prove
  (`known c xs aenv LN = (ys,g) ==>
-   oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o
-     SND)
+   oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND)
        (<) (SET_OF_BAG b) co ==>
    b = closProps_elist_globals xs ==>
    oracle_gapprox_disjoint g co`,
   CHEAT_TAC);;
 
 let elist_globals_FLAT_APPEND_FOLDR = prove
- (`closProps_elist_globals (APPEND xs (FLAT ys)) = ITLIST (BAG_UNION)
-  (MAP closProps_elist_globals (CONS xs ys)) EMPTY_BAG`,
+ (`closProps_elist_globals (APPEND xs (FLAT ys)) = ITLIST (BAG_UNION) (MAP
+  closProps_elist_globals (CONS xs ys)) EMPTY_BAG`,
   CHEAT_TAC);;
 
-(* HOL4 clos_knownProofScript.sml:2503-2504: a theorem that HOL4
-   states as the value of an ML expression: elist_globals_FLAT_FOLDR *)
+(* HOL4 clos_knownProofScript.sml:2503-2504: a theorem that HOL4 states as
+   the value of an ML expression: elist_globals_FLAT_FOLDR *)
 
 let monotonic_unique_set_globals = prove
- (`oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND)
-  (<)
+ (`oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND) (<)
        (SET_OF_BAG (closProps_elist_globals xs)) co ==>
    BAG_ALL_DISTINCT (closProps_elist_globals xs) /\
-   (!n. BAG_ALL_DISTINCT (closProps_elist_globals (FST (SND (co
-     n))))) ==>
+   (!n. BAG_ALL_DISTINCT (closProps_elist_globals (FST (SND (co n))))) ==>
    unique_set_globals xs co`,
   CHEAT_TAC);;
 
 let pure_co_oracle_props = prove
  (`oracle_gapprox_subspt (pure_co f o co) = oracle_gapprox_subspt co /\
-   oracle_state_sgc_free (pure_co f o co) = oracle_state_sgc_free
-     co`,
+   oracle_state_sgc_free (pure_co f o co) = oracle_state_sgc_free co`,
   CHEAT_TAC);;
 
 let state_oracle_domain = prove
@@ -995,8 +964,8 @@ let exp_rel_def = new_definition
        subspt g g' /\
        ALL val_approx_sgc_free aenv /\
        globals_approx_sgc_free g0 /\
-       known (clos_known_config_inline_factor_fupd (K k) c) [e1]
-         aenv g0 = ([(e2,apx)],g))`;;
+       known (clos_known_config_inline_factor_fupd (K k) c) [e1] aenv g0
+         = ([(e2,apx)],g))`;;
 
 let exp_rel_dec_inline_factor = prove
  (`clos_knownProof_exp_rel (dec_inline_factor c) aenv g e1 e2 <=>
@@ -1013,26 +982,25 @@ let clos_knownProof_f_rel_def = new_definition
 
 let _ = size_thms "closSem_v";;
 let v1_size_append = prove
- (`!xs ys. list_size closSem_v_size (APPEND xs ys) = list_size
-  closSem_v_size xs + list_size closSem_v_size ys`,
+ (`!xs ys. list_size closSem_v_size (APPEND xs ys) = list_size closSem_v_size
+  xs + list_size closSem_v_size ys`,
   CHEAT_TAC);;
 
-let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind =
-  assume_definition_rec
+let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`clos_knownProof_v_rel c g (closSem_Number i:closSem_v) v <=> v =
-    (closSem_Number i:closSem_v)`;
-   `clos_knownProof_v_rel c g (closSem_Word64 w:closSem_v) v <=> v =
-    (closSem_Word64 w:closSem_v)`;
+  [`clos_knownProof_v_rel c g (closSem_Number i) v <=> v = (closSem_Number
+    i:closSem_v)`;
+   `clos_knownProof_v_rel c g (closSem_Word64 w) v <=> v = (closSem_Word64
+    w:closSem_v)`;
    `clos_knownProof_v_rel c g (closSem_ByteVector ws) v <=> v =
     closSem_ByteVector ws`;
-   `clos_knownProof_v_rel c g (closSem_RefPtr b n:closSem_v) v <=> v
-    = (closSem_RefPtr b n:closSem_v)`;
-   `clos_knownProof_v_rel c g (closSem_Block n xs:closSem_v) v <=>
-         (?ys. v = closSem_Block n ys /\ ALL2
-             (clos_knownProof_v_rel c g) xs ys)`;
-   `clos_knownProof_v_rel c g (closSem_Closure loc_opt args1 env1
-    num_args e1:closSem_v) v <=>
+   `clos_knownProof_v_rel c g (closSem_RefPtr b n) v <=> v = (closSem_RefPtr
+    b n:closSem_v)`;
+   `clos_knownProof_v_rel c g (closSem_Block n xs) v <=>
+         (?ys. v = closSem_Block n ys /\ ALL2 (clos_knownProof_v_rel c
+             g) xs ys)`;
+   `clos_knownProof_v_rel c g (closSem_Closure loc_opt args1 env1 num_args e1)
+    v <=>
          every_Fn_vs_NONE [e1] /\
          (?aenv env1a env1b args2 env2a env2b e2.
            if env1 = APPEND env1a env1b then
@@ -1044,41 +1012,41 @@ let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind =
                clos_known_Other) aenv) g e1 e2 /\
            v = closSem_Closure loc_opt args2 (APPEND env2a env2b)
                num_args e2 else F)`;
-   `clos_knownProof_v_rel c g (closSem_Recclosure loc_opt args1 env1
-    funs1 i:closSem_v) v <=>
+   `clos_knownProof_v_rel c g (closSem_Recclosure loc_opt args1 env1 funs1 i) v
+    <=>
          ALL (\(n,e). every_Fn_vs_NONE [e]) funs1 /\
-         (let clos = (match loc_opt with NONE -> REPLICATE (LENGTH
-             funs1) clos_known_Other | SOME loc -> clos_gen_noinline loc
-             0 funs1) in ?aenv env1a env1b args2 env2a env2b funs2.
+         (let clos = (match loc_opt with NONE -> REPLICATE (LENGTH funs1)
+             clos_known_Other
+                      | SOME loc -> clos_gen_noinline loc 0 funs1) in ?aenv
+                          env1a env1b args2 env2a env2b funs2.
            if env1 = APPEND env1a env1b then
-           ALL (\(num_args,exp). fv_max (num_args + LENGTH funs1 +
-               LENGTH env1a) [exp]) funs1 /\
+           ALL (\(num_args,exp). fv_max (num_args + LENGTH funs1 + LENGTH
+               env1a) [exp]) funs1 /\
            ALL2 (clos_knownProof_v_rel c g) args1 args2 /\
            ALL2 (clos_knownProof_v_rel c g) env1a env2a /\
            ALL2 val_approx_val aenv env1a /\
-           ALL2 (clos_knownProof_f_rel c (APPEND clos aenv) g) funs1
-               funs2 /\
-           v = closSem_Recclosure loc_opt args2 (APPEND env2a
-               env2b) funs2 i else F)`];;
+           ALL2 (clos_knownProof_f_rel c (APPEND clos aenv) g) funs1 funs2
+               /\
+           v = closSem_Recclosure loc_opt args2 (APPEND env2a env2b)
+               funs2 i else F)`];;
 
-(* HOL4 clos_knownProofScript.sml:2619-2620: a theorem that HOL4
-   states as the value of an ML expression: v_rel_def *)
+(* HOL4 clos_knownProofScript.sml:2619-2620: a theorem that HOL4 states as
+   the value of an ML expression: v_rel_def *)
 
 (* HOL4 clos_knownProofScript.sml:2622: ML code, not ported *)
 
 let v_rel_app_def = define_cases
-  [`v_rel_app c g (closSem_Number i:closSem_v) v args1 <=>
-    clos_knownProof_v_rel c g ((closSem_Number i:closSem_v)) v`;
-   `v_rel_app c g (closSem_Word64 w:closSem_v) v args1 <=>
-    clos_knownProof_v_rel c g ((closSem_Word64 w:closSem_v)) v`;
-   `v_rel_app c g (closSem_ByteVector ws) v args1 <=>
-    clos_knownProof_v_rel c g (closSem_ByteVector ws) v`;
-   `v_rel_app c g (closSem_RefPtr b n:closSem_v) v args1 <=>
-    clos_knownProof_v_rel c g ((closSem_RefPtr b n:closSem_v)) v`;
-   `v_rel_app c g (closSem_Block n xs:closSem_v) v args1 <=>
-    clos_knownProof_v_rel c g ((closSem_Block n xs:closSem_v)) v`;
-   `v_rel_app c g (closSem_Closure loc_opt pargs1 env1 num_args
-    e1:closSem_v) v args1 <=>
+  [`v_rel_app c g (closSem_Number i) v args1 <=> clos_knownProof_v_rel c g
+    ((closSem_Number i:closSem_v)) v`;
+   `v_rel_app c g (closSem_Word64 w) v args1 <=> clos_knownProof_v_rel c g
+    ((closSem_Word64 w:closSem_v)) v`;
+   `v_rel_app c g (closSem_ByteVector ws) v args1 <=> clos_knownProof_v_rel
+    c g (closSem_ByteVector ws) v`;
+   `v_rel_app c g (closSem_RefPtr b n) v args1 <=> clos_knownProof_v_rel c g
+    ((closSem_RefPtr b n:closSem_v)) v`;
+   `v_rel_app c g (closSem_Block n xs) v args1 <=> clos_knownProof_v_rel c g
+    ((closSem_Block n xs:closSem_v)) v`;
+   `v_rel_app c g (closSem_Closure loc_opt pargs1 env1 num_args e1) v args1 <=>
          every_Fn_vs_NONE [e1] /\
          (?aenv env1a env1b pargs2 env2a env2b e2 aargs.
            env1 = APPEND env1a env1b /\
@@ -1087,49 +1055,46 @@ let v_rel_app_def = define_cases
            ALL2 (clos_knownProof_v_rel c g) env1a env2a /\
            ALL2 val_approx_val aenv env1a /\
            (match args1 with NONE -> aargs = REPLICATE num_args
-               clos_known_Other | SOME args1' -> ALL2 val_approx_val
-               aargs args1' /\
+               clos_known_Other
+             | SOME args1' -> ALL2 val_approx_val aargs args1' /\
                               pargs1 = []) /\
            clos_knownProof_exp_rel c (APPEND aargs aenv) g e1 e2 /\
-           v = closSem_Closure loc_opt pargs2 (APPEND env2a
-               env2b) num_args e2)`;
-   `v_rel_app c g (closSem_Recclosure loc_opt pargs1 env1 funs1
-    i:closSem_v) v args1 <=>
-         clos_knownProof_v_rel c g ((closSem_Recclosure loc_opt
-             pargs1 env1 funs1 i:closSem_v)) v`];;
+           v = closSem_Closure loc_opt pargs2 (APPEND env2a env2b)
+               num_args e2)`;
+   `v_rel_app c g (closSem_Recclosure loc_opt pargs1 env1 funs1 i) v args1 <=>
+         clos_knownProof_v_rel c g ((closSem_Recclosure loc_opt pargs1
+             env1 funs1 i:closSem_v)) v`];;
 
 let v_rel_app_NONE = prove
  (`v_rel_app c g v1 v2 NONE = clos_knownProof_v_rel c g v1 v2`,
   CHEAT_TAC);;
 
 let exp_rel_upd_inline_factor = prove
- (`clos_knownProof_exp_rel (clos_known_config_inline_factor_fupd (K k)
-  c) = clos_knownProof_exp_rel c`,
+ (`clos_knownProof_exp_rel (clos_known_config_inline_factor_fupd (K k) c) =
+  clos_knownProof_exp_rel c`,
   CHEAT_TAC);;
 
 let f_rel_upd_inline_factor = prove
- (`clos_knownProof_f_rel (clos_known_config_inline_factor_fupd (K k)
-  c) = clos_knownProof_f_rel c`,
+ (`clos_knownProof_f_rel (clos_known_config_inline_factor_fupd (K k) c) =
+  clos_knownProof_f_rel c`,
   CHEAT_TAC);;
 
 let v_rel_upd_inline_factor = prove
- (`!c. clos_knownProof_v_rel (clos_known_config_inline_factor_fupd (K
-  k) c) = clos_knownProof_v_rel c`,
+ (`!c. clos_knownProof_v_rel (clos_known_config_inline_factor_fupd (K k) c) =
+  clos_knownProof_v_rel c`,
   CHEAT_TAC);;
 
 let v_rel_Block = prove
- (`clos_knownProof_v_rel c g x (closSem_Block n ys:closSem_v) <=>
-     (?xs. x = closSem_Block n xs /\ ALL2 (clos_knownProof_v_rel c
-       g) xs ys)`,
+ (`clos_knownProof_v_rel c g x (closSem_Block n ys) <=>
+     (?xs. x = closSem_Block n xs /\ ALL2 (clos_knownProof_v_rel c g) xs
+       ys)`,
   CHEAT_TAC);;
 add_simp v_rel_Block;;
 
 (* v_rel_Boolv *)
 let clos_knownProof_v_rel_Boolv = prove
- (`(clos_knownProof_v_rel c g (closSem_Boolv b) v <=> v = closSem_Boolv
-  b) /\
-   (clos_knownProof_v_rel c g v (closSem_Boolv b) <=> v =
-     closSem_Boolv b)`,
+ (`(clos_knownProof_v_rel c g (closSem_Boolv b) v <=> v = closSem_Boolv b) /\
+   (clos_knownProof_v_rel c g v (closSem_Boolv b) <=> v = closSem_Boolv b)`,
   CHEAT_TAC);;
 add_simp clos_knownProof_v_rel_Boolv;;
 
@@ -1173,54 +1138,52 @@ let clos_knownProof_v_rel_IMP_v_to_words = prove
 (* state relation *)
 
 let clos_knownProof_ref_rel = cake_inductive
-  `(!bs. clos_knownProof_ref_rel c g (closSem_ByteArray bs)
-  (closSem_ByteArray bs)) /\
+  `(!bs. clos_knownProof_ref_rel c g (closSem_ByteArray bs) (closSem_ByteArray
+  bs)) /\
    (!xs ys.
      ALL2 (clos_knownProof_v_rel c g) xs ys ==>
-     clos_knownProof_ref_rel c g (closSem_ValueArray xs)
-       (closSem_ValueArray ys)) /\
+     clos_knownProof_ref_rel c g (closSem_ValueArray xs) (closSem_ValueArray
+       ys)) /\
    (!m v w.
      clos_knownProof_v_rel c g v w ==>
-       clos_knownProof_ref_rel c g (closSem_Thunk m v)
-         (closSem_Thunk m w))`;;
+       clos_knownProof_ref_rel c g (closSem_Thunk m v) (closSem_Thunk m
+         w))`;;
 
-(* HOL4 clos_knownProofScript.sml:2762-2766: a theorem that HOL4
-   states as the value of an ML expression: ref_rel_simps *)
+(* HOL4 clos_knownProofScript.sml:2762-2766: a theorem that HOL4 states as
+   the value of an ML expression: ref_rel_simps *)
 
 let ref_rel_upd_inline_factor = prove
- (`clos_knownProof_ref_rel (clos_known_config_inline_factor_fupd (K k)
-  c) = clos_knownProof_ref_rel c`,
+ (`clos_knownProof_ref_rel (clos_known_config_inline_factor_fupd (K k) c) =
+  clos_knownProof_ref_rel c`,
   CHEAT_TAC);;
 
 let clos_knownProof_state_rel_def = new_definition
-  `clos_knownProof_state_rel c g (s:(val_approx
-  spt#'c,'ffi)closSem_state) (t:('c,'ffi)closSem_state) <=>
+  `clos_knownProof_state_rel c g (s:(val_approx spt#'c,'ffi)closSem_state)
+  (t:('c,'ffi)closSem_state) <=>
      (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
      (!n. fv_max 0 (FST (SND (closSem_state_compile_oracle s n))))
        /\ closSem_state_code
-     s = FEMPTY /\ closSem_state_code t = FEMPTY
-       /\ closSem_state_clock
-     s = closSem_state_clock t /\ closSem_state_ffi s =
-       closSem_state_ffi t /\ closSem_state_max_app s =
-       closSem_state_max_app t /\
-     ALL2 (OPTREL (clos_knownProof_v_rel c g)) (closSem_state_globals
-       s) (closSem_state_globals t) /\
+     s = FEMPTY /\ closSem_state_code t = FEMPTY /\ closSem_state_clock
+     s = closSem_state_clock t /\ closSem_state_ffi s = closSem_state_ffi t
+       /\ closSem_state_max_app s = closSem_state_max_app t /\
+     ALL2 (OPTREL (clos_knownProof_v_rel c g)) (closSem_state_globals s)
+       (closSem_state_globals t) /\
      fmap_rel (clos_knownProof_ref_rel c g) (closSem_state_refs s)
        (closSem_state_refs t) /\ closSem_state_compile
-     s = state_cc (clos_known_compile_inc c) (closSem_state_compile
-       t) /\ closSem_state_compile_oracle
+     s = state_cc (clos_known_compile_inc c) (closSem_state_compile t)
+       /\ closSem_state_compile_oracle
      t = state_co (clos_known_compile_inc c)
        (closSem_state_compile_oracle s)`;;
 
 (* [local] *)
 let compile_inc_upd_inline_factor = prove
- (`clos_known_compile_inc (clos_known_config_inline_factor_fupd (K k)
-  c) = clos_known_compile_inc c`,
+ (`clos_known_compile_inc (clos_known_config_inline_factor_fupd (K k) c) =
+  clos_known_compile_inc c`,
   CHEAT_TAC);;
 
 let state_rel_upd_inline_factor = prove
- (`clos_knownProof_state_rel (clos_known_config_inline_factor_fupd (K
-  k) c) = clos_knownProof_state_rel c`,
+ (`clos_knownProof_state_rel (clos_known_config_inline_factor_fupd (K k) c) =
+  clos_knownProof_state_rel c`,
   CHEAT_TAC);;
 
 let v_rel_subspt = prove
@@ -1230,8 +1193,8 @@ let v_rel_subspt = prove
 
 let v_rel_LIST_REL_subspt = prove
  (`!vs1 vs2. ALL2 (clos_knownProof_v_rel c g) vs1 vs2 ==>
-             (!g'. subspt g g' ==> ALL2 (clos_knownProof_v_rel c
-               g') vs1 vs2)`,
+             (!g'. subspt g g' ==> ALL2 (clos_knownProof_v_rel c g') vs1
+               vs2)`,
   CHEAT_TAC);;
 
 let ref_rel_subspt = prove
@@ -1240,8 +1203,8 @@ let ref_rel_subspt = prove
   CHEAT_TAC);;
 
 let state_rel_subspt = prove
- (`!c g s1 s2 g'. clos_knownProof_state_rel c g s1 s2 /\ subspt g g'
-  ==> clos_knownProof_state_rel c g' s1 s2`,
+ (`!c g s1 s2 g'. clos_knownProof_state_rel c g s1 s2 /\ subspt g g' ==>
+  clos_knownProof_state_rel c g' s1 s2`,
   CHEAT_TAC);;
 
 let co_every_Fn_vs_NONE_def = new_definition
@@ -1251,24 +1214,24 @@ let co_every_Fn_vs_NONE_def = new_definition
        every_Fn_vs_NONE (MAP (SND o SND) aux))`;;
 
 let co_every_Fn_vs_NONE_shift_seq = prove
- (`!co. co_every_Fn_vs_NONE co ==> (!n. co_every_Fn_vs_NONE
-  (misc_shift_seq n co))`,
+ (`!co. co_every_Fn_vs_NONE co ==> (!n. co_every_Fn_vs_NONE (misc_shift_seq n
+  co))`,
   CHEAT_TAC);;
 
 let state_rel_co_elist_globals = prove
- (`clos_knownProof_state_rel c g s t /\ ssgc_free s
-  /\ oracle_state_sgc_free (closSem_state_compile_oracle s) ==>
-     closProps_elist_globals (FST (SND
-       (closSem_state_compile_oracle t n))) <= closProps_elist_globals
-       (FST (SND (closSem_state_compile_oracle s n)))`,
+ (`clos_knownProof_state_rel c g s t /\ ssgc_free s /\ oracle_state_sgc_free
+  (closSem_state_compile_oracle s) ==>
+     closProps_elist_globals (FST (SND (closSem_state_compile_oracle t
+       n))) <= closProps_elist_globals (FST (SND
+       (closSem_state_compile_oracle s n)))`,
   CHEAT_TAC);;
 
 let state_rel_first_n_exps = prove
- (`clos_knownProof_state_rel c g s t /\ ssgc_free s
-  /\ oracle_state_sgc_free (closSem_state_compile_oracle s) ==>
+ (`clos_knownProof_state_rel c g s t /\ ssgc_free s /\ oracle_state_sgc_free
+  (closSem_state_compile_oracle s) ==>
      closProps_elist_globals (FLAT (first_n_exps
-       (closSem_state_compile_oracle t) n)) <= closProps_elist_globals
-       (FLAT (first_n_exps (closSem_state_compile_oracle s) n))`,
+       (closSem_state_compile_oracle t) n)) <= closProps_elist_globals (FLAT
+       (first_n_exps (closSem_state_compile_oracle s) n))`,
   CHEAT_TAC);;
 
 let state_rel_unique_set_globals = prove
@@ -1289,43 +1252,40 @@ let state_rel_get_global_IMP = prove
 let clos_knownProof_do_app_lemma = prove
  (`!c g s t xs ys opp. clos_knownProof_state_rel c g s t /\ ALL2
   (clos_knownProof_v_rel c g) xs ys ==>
-     (match closSem_do_app opp xs s with Rerr err1 -> (?err2.
-       closSem_do_app opp ys t = Rerr err2 /\
-                             exc_rel (clos_knownProof_v_rel c g) err1
-                               err2) | Rval (x,s1) -> (?y t1.
-                               clos_knownProof_v_rel c g x y
-                               /\ clos_knownProof_state_rel c g s1 t1 /\
-                              closSem_do_app opp ys t = Rval
-                                (y,t1)))`,
+     (match closSem_do_app opp xs s with Rerr err1 -> (?err2. closSem_do_app
+       opp ys t = Rerr err2 /\
+                             exc_rel (clos_knownProof_v_rel c g) err1 err2)
+       | Rval (x,s1) -> (?y t1. clos_knownProof_v_rel c g x y
+         /\ clos_knownProof_state_rel c g s1 t1 /\
+                              closSem_do_app opp ys t = Rval (y,t1)))`,
   CHEAT_TAC);;
 
 let evaluate_app_exact_rw = prove
  (`~(args = []) /\ num_args = LENGTH args ==>
-   evaluate_app (SOME loc) (closSem_Closure (SOME loc) [] env
-     num_args body) args s =
+   evaluate_app (SOME loc) (closSem_Closure (SOME loc) [] env num_args body)
+     args s =
    (if closSem_state_clock s < LENGTH args then
      (Rerr (Rabort Rtimeout_error),closSem_state_clock_fupd (K 0) s)
-       else
-     closSem_evaluate ([body],APPEND args env,closSem_dec_clock
-       num_args s))`,
+   else closSem_evaluate ([body],APPEND args env,closSem_dec_clock
+     num_args s))`,
   CHEAT_TAC);;
 
 (* HOL4 clos_knownProofScript.sml:2960-2970: the ML values that the
    definitions below antiquote *)
 
-(* HOL4 clos_knownProofScript.sml:2972-2974: a theorem that HOL4
-   states as the value of an ML expression: loptrel_arg1_SOME *)
+(* HOL4 clos_knownProofScript.sml:2972-2974: a theorem that HOL4 states as
+   the value of an ML expression: loptrel_arg1_SOME *)
 
-(* HOL4 clos_knownProofScript.sml:2976-2978: a theorem that HOL4
-   states as the value of an ML expression: loptrel_arg1_NONE *)
+(* HOL4 clos_knownProofScript.sml:2976-2978: a theorem that HOL4 states as
+   the value of an ML expression: loptrel_arg1_NONE *)
 
 (* dest_closure_SOME_IMP *)
 let clos_knownProof_dest_closure_SOME_IMP = prove
  (`dest_closure max_app loc_opt f2 xs = SOME x ==>
-    (?loc arg_env clo_env num_args e. f2 = closSem_Closure loc
-      arg_env clo_env num_args e) \/
-    (?loc arg_env clo_env fns i. f2 = closSem_Recclosure loc
-      arg_env clo_env fns i)`,
+    (?loc arg_env clo_env num_args e. f2 = closSem_Closure loc arg_env
+      clo_env num_args e) \/
+    (?loc arg_env clo_env fns i. f2 = closSem_Recclosure loc arg_env
+      clo_env fns i)`,
   CHEAT_TAC);;
 
 let state_globals_approx_subspt = prove
@@ -1346,8 +1306,7 @@ let decide_inline_inlD_LetInline_sgc_free = prove
 let known_op_subspt = prove
  (`!opn aargs g0 a g.
      known_op opn aargs g0 = (a,g) /\
-     BAG_DISJOINT (BAG_OF_SET (domain g0)) (closProps_op_gbag opn)
-       ==>
+     BAG_DISJOINT (BAG_OF_SET (domain g0)) (closProps_op_gbag opn) ==>
      BAG_OF_SET (domain g) <= (BAG_UNION) (BAG_OF_SET (domain g0))
        (closProps_op_gbag opn) /\
      subspt g0 g`,
@@ -1369,8 +1328,7 @@ let known_subspt = prove
 (* Set globals in all future installs is disjoint from currently mapped globals. *)
 let state_oracle_mglobals_disjoint_def = new_definition
   `state_oracle_mglobals_disjoint s <=> (!n. mglobals_disjoint
-  (closSem_state_globals s) (FST (SND (closSem_state_compile_oracle s
-  n))))`;;
+  (closSem_state_globals s) (FST (SND (closSem_state_compile_oracle s n))))`;;
 
 let state_oracle_mglobals_disjoint_evaluate_suff = prove
  (`!xs env s0 res s. closSem_evaluate (xs,env,s0) = (res,s) /\
@@ -1383,12 +1341,12 @@ let state_oracle_mglobals_disjoint_evaluate_suff = prove
 
 (* state_rel_opt_rel_refs[local] *)
 let clos_knownProof_state_rel_opt_rel_refs = prove
- (`(clos_knownProof_state_rel c g s1 s2 /\ FLOOKUP (closSem_state_refs
-  s1) n = r1 ==>
+ (`(clos_knownProof_state_rel c g s1 s2 /\ FLOOKUP (closSem_state_refs s1) n =
+  r1 ==>
       (?r2. FLOOKUP (closSem_state_refs s2) n = r2 /\ OPTREL
         (clos_knownProof_ref_rel c g) r1 r2)) /\
-   (clos_knownProof_state_rel c g s1 s2 /\ FLOOKUP
-     (closSem_state_refs s2) n = r2 ==>
+   (clos_knownProof_state_rel c g s1 s2 /\ FLOOKUP (closSem_state_refs s2) n
+     = r2 ==>
       (?r1. FLOOKUP (closSem_state_refs s1) n = r1 /\ OPTREL
         (clos_knownProof_ref_rel c g) r1 r2))`,
   CHEAT_TAC);;
@@ -1397,13 +1355,12 @@ let clos_knownProof_state_rel_opt_rel_refs = prove
 let clos_knownProof_rel_update_thunk = prove
  (`clos_knownProof_state_rel c g s1 s2 /\
    ALL2 (clos_knownProof_v_rel c g) vs ys ==>
-     (closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs
-       s1) vs = SOME refs1 ==>
+     (closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs s1) vs
+       = SOME refs1 ==>
         (?refs2. closSem_update_thunk [closSem_RefPtr v ptr]
           (closSem_state_refs s2) ys = SOME refs2 /\
-                clos_knownProof_state_rel c g
-                  (closSem_state_refs_fupd (K refs1) s1)
-                  (closSem_state_refs_fupd (K refs2) s2)))`,
+                clos_knownProof_state_rel c g (closSem_state_refs_fupd (K
+                  refs1) s1) (closSem_state_refs_fupd (K refs2) s2)))`,
   CHEAT_TAC);;
 
 
@@ -1411,8 +1368,7 @@ let clos_knownProof_rel_update_thunk = prove
 
 (* [local] *)
 let known_correct0 = prove
- (`(!xs env1full (s0:(val_approx spt#'c,'ffi)closSem_state) res1 s env1
-  xenv1
+ (`(!xs env1full (s0:(val_approx spt#'c,'ffi)closSem_state) res1 s env1 xenv1
      env2 xenv2 t0 c g0 g aenv eas.
       closSem_evaluate (xs,env1full,s0) = (res1,s) /\
       known c xs aenv g0 = (eas,g) /\
@@ -1420,8 +1376,8 @@ let known_correct0 = prove
       every_Fn_vs_NONE xs /\
       co_every_Fn_vs_NONE (closSem_state_compile_oracle s0) /\
       mglobals_disjoint (closSem_state_globals s0) xs /\
-      oracle_gapprox_disjoint (next_g s0)
-        (closSem_state_compile_oracle s0) /\
+      oracle_gapprox_disjoint (next_g s0) (closSem_state_compile_oracle s0)
+        /\
       state_oracle_mglobals_disjoint s0 /\
       ALL closProps_esgc_free xs /\ ssgc_free s0 /\
       ALL vsgc_free env1full /\
@@ -1437,26 +1393,24 @@ let known_correct0 = prove
       unique_set_globals xs (closSem_state_compile_oracle s0) /\
       is_state_oracle (clos_known_compile_inc c)
         (closSem_state_compile_oracle s0) /\
-      env1full = APPEND env1 xenv1 /\ ~(res1 = Rerr (Rabort
-        Rtype_error)) ==>
+      env1full = APPEND env1 xenv1 /\ ~(res1 = Rerr (Rabort Rtype_error))
+        ==>
       (?res2 t.
-        closSem_evaluate (MAP FST eas,APPEND env2 xenv2,t0) =
-          (res2,t) /\
-        semanticPrimitivesProps_result_rel (ALL2
-          (clos_knownProof_v_rel c (next_g s))) (clos_knownProof_v_rel c
-          (next_g s)) res1 res2 /\
+        closSem_evaluate (MAP FST eas,APPEND env2 xenv2,t0) = (res2,t) /\
+        semanticPrimitivesProps_result_rel (ALL2 (clos_knownProof_v_rel c
+          (next_g s))) (clos_knownProof_v_rel c (next_g s)) res1 res2 /\
         clos_knownProof_state_rel c (next_g s) s t /\
         state_globals_approx s (next_g s) /\
         is_state_oracle (clos_known_compile_inc c)
           (closSem_state_compile_oracle s) /\
-        oracle_gapprox_disjoint (next_g s)
-          (closSem_state_compile_oracle s))) /\
-   (!lopt1 f1 args1 (s0:(val_approx spt#'c,'ffi)closSem_state) res1 s
-     lopt2 f2 args2 t0 c argsopt.
+        oracle_gapprox_disjoint (next_g s) (closSem_state_compile_oracle
+          s))) /\
+   (!lopt1 f1 args1 (s0:(val_approx spt#'c,'ffi)closSem_state) res1 s lopt2
+     f2 args2 t0 c argsopt.
       evaluate_app lopt1 f1 args1 s0 = (res1,s) /\
       v_rel_app c (next_g s0) f1 f2 argsopt /\
-      oracle_gapprox_disjoint (next_g s0)
-        (closSem_state_compile_oracle s0) /\
+      oracle_gapprox_disjoint (next_g s0) (closSem_state_compile_oracle s0)
+        /\
       state_oracle_mglobals_disjoint s0 /\
       ssgc_free s0 /\ vsgc_free f1 /\ ALL vsgc_free args1 /\
       oracle_state_sgc_free (closSem_state_compile_oracle s0) /\
@@ -1469,21 +1423,19 @@ let known_correct0 = prove
       state_globals_approx s0 (next_g s0) /\
       oracle_gapprox_subspt (closSem_state_compile_oracle s0) /\
       loptrel f2 (LENGTH args1) lopt1 lopt2 /\
-      (IS_SOME argsopt ==> argsopt = SOME args1 /\ ~(args1 = [])
-        /\ (?exp env. dest_closure (closSem_state_max_app s0) lopt1 f1
-        args1 = SOME (Full_app exp env []))) /\ ~(res1 = Rerr (Rabort
-        Rtype_error)) ==>
+      (IS_SOME argsopt ==> argsopt = SOME args1 /\ ~(args1 = []) /\ (?exp
+        env. dest_closure (closSem_state_max_app s0) lopt1 f1 args1 = SOME
+        (Full_app exp env []))) /\ ~(res1 = Rerr (Rabort Rtype_error)) ==>
       (?res2 t.
         evaluate_app lopt2 f2 args2 t0 = (res2,t) /\
-        semanticPrimitivesProps_result_rel (ALL2
-          (clos_knownProof_v_rel c (next_g s))) (clos_knownProof_v_rel c
-          (next_g s)) res1 res2 /\
+        semanticPrimitivesProps_result_rel (ALL2 (clos_knownProof_v_rel c
+          (next_g s))) (clos_knownProof_v_rel c (next_g s)) res1 res2 /\
         clos_knownProof_state_rel c (next_g s) s t /\
         state_globals_approx s (next_g s) /\
         is_state_oracle (clos_known_compile_inc c)
           (closSem_state_compile_oracle s) /\
-        oracle_gapprox_disjoint (next_g s)
-          (closSem_state_compile_oracle s)))`,
+        oracle_gapprox_disjoint (next_g s) (closSem_state_compile_oracle
+          s)))`,
   CHEAT_TAC);;
 
 let semantics_known = prove
@@ -1491,8 +1443,8 @@ let semantics_known = prove
         (state_cc (clos_known_compile_inc c) cc) xs = ffi_Fail) ==>
       (!n. SND (SND (co n)) = []) /\
       (!n. fv_max 0 (FST (SND (co n)))) /\
-      (!n exps aux. SND (co n) = (exps,aux) ==> ALL
-        closProps_esgc_free exps) /\
+      (!n exps aux. SND (co n) = (exps,aux) ==> ALL closProps_esgc_free
+        exps) /\
       every_Fn_vs_NONE xs /\
       co_every_Fn_vs_NONE co /\
       oracle_gapprox_subspt co /\
@@ -1511,8 +1463,7 @@ let semantics_known = prove
   CHEAT_TAC);;
 
 let code_locs_mk_Ticks = prove
- (`!a b c d. code_locs [clos_ticksProof_mk_Ticks a b c d] = code_locs
-  [d]`,
+ (`!a b c d. code_locs [clos_ticksProof_mk_Ticks a b c d] = code_locs [d]`,
   CHEAT_TAC);;
 add_simp code_locs_mk_Ticks;;
 
@@ -1527,8 +1478,7 @@ let code_locs_decide_inline = prove
 let known_code_locs_bag = prove
  (`!c xs aenv g0 eas g.
      known c xs aenv g0 = (eas,g) ==>
-     LIST_TO_BAG (code_locs (MAP FST eas)) <= LIST_TO_BAG
-       (code_locs xs)`,
+     LIST_TO_BAG (code_locs (MAP FST eas)) <= LIST_TO_BAG (code_locs xs)`,
   CHEAT_TAC);;
 
 let compile_code_locs_bag = prove
@@ -1547,11 +1497,11 @@ let clos_knownProof_syntax_ok_def = new_definition
      BAG_ALL_DISTINCT (closProps_elist_globals xs) /\
      ALL closProps_esgc_free xs`;;
 
-(* HOL4 clos_knownProofScript.sml:5010: the overload fvs_compile,
-   which the port expands *)
+(* HOL4 clos_knownProofScript.sml:5010: the overload fvs_compile, which the
+   port expands *)
 
-(* HOL4 clos_knownProofScript.sml:5012: the ML values that the
-   definitions below antiquote *)
+(* HOL4 clos_knownProofScript.sml:5012: the ML values that the definitions
+   below antiquote *)
 
 let syntax_oracle_ok_def = new_definition
   `clos_knownProof_syntax_oracle_ok c xs co conf <=>
@@ -1560,11 +1510,10 @@ let syntax_oracle_ok_def = new_definition
        (clos_fvs_compile_inc:closLang_exp list#(num#num#closLang_exp)
        list->closLang_exp list#(num#num#closLang_exp) list) o co) /\
      conf = FST (FST (co 0)) /\
-     oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o
-       SND) (<)
+     oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND) (<)
        (SET_OF_BAG (closProps_elist_globals xs)) co /\
-     (!n. clos_knownProof_syntax_ok (FST (SND (co n))) /\ SND (SND
-       (co n)) = [])`;;
+     (!n. clos_knownProof_syntax_ok (FST (SND (co n))) /\ SND (SND (co
+       n)) = [])`;;
 
 let known_cc_def = new_definition
   `known_cc known_conf cc =
@@ -1574,69 +1523,65 @@ let known_cc_def = new_definition
             (pure_cc clos_ticks_compile_inc
               (pure_cc clos_letop_compile_inc
                 (cc:'b->closLang_exp list#(num#num#closLang_exp)
-                  list->(word8 list#word64 list#'b)
-                  option):'b->closLang_exp
-                  list#(num#num#closLang_exp) list->(word8
-                  list#word64 list#'b) option):'b->closLang_exp
-                  list#(num#num#closLang_exp) list->(word8
-                  list#word64 list#'b) option))) | NONE -> (state_cc
-                  (CURRY I) cc:val_approx spt#'b->closLang_exp
-                  list#(num#num#closLang_exp) list->(word8
-                  list#word64 list#val_approx spt#'b) option))`;;
+                  list->(word8 list#word64 list#'b) option):'b->closLang_exp
+                  list#(num#num#closLang_exp) list->(word8 list#word64 list#'b)
+                  option):'b->closLang_exp list#(num#num#closLang_exp)
+                  list->(word8 list#word64 list#'b) option)))
+      | NONE -> (state_cc (CURRY I) cc:val_approx spt#'b->closLang_exp
+        list#(num#num#closLang_exp) list->(word8 list#word64 list#val_approx
+        spt#'b) option))`;;
 
 let known_co_def = new_definition
   `known_co known_conf (co:num->(val_approx spt#'b)#closLang_exp
   list#(num#num#closLang_exp) list) =
-     (match known_conf with SOME kcfg -> (pure_co
-       clos_letop_compile_inc o
+     (match known_conf with SOME kcfg -> (pure_co clos_letop_compile_inc o
                         ((pure_co clos_ticks_compile_inc o
                            (state_co (clos_known_compile_inc kcfg)
                              (pure_co clos_fvs_compile_inc o
                                co):num->'b#closLang_exp
                                list#(num#num#closLang_exp)
                                list)):num->'b#closLang_exp
-                               list#(num#num#closLang_exp) list)) |
-                               NONE -> ((state_co (CURRY I)
-                               co):num->'b#closLang_exp
-                               list#(num#num#closLang_exp) list))`;;
+                               list#(num#num#closLang_exp) list))
+      | NONE -> ((state_co (CURRY I) co):num->'b#closLang_exp
+        list#(num#num#closLang_exp) list))`;;
 
 let known_co_eq_pure_state = prove
  (`known_co known_conf co =
      pure_co (if IS_SOME known_conf then
-             clos_letop_compile_inc o
-               (clos_ticks_compile_inc:closLang_exp
+             clos_letop_compile_inc o (clos_ticks_compile_inc:closLang_exp
                list#(num#num#closLang_exp) list->closLang_exp
-               list#(num#num#closLang_exp) list) else I) o
-     state_co (match known_conf with SOME kcfg ->
-       clos_known_compile_inc kcfg | NONE -> CURRY I)
-     (pure_co (if IS_SOME known_conf then clos_fvs_compile_inc else
-       I) o co)`,
+               list#(num#num#closLang_exp) list)
+         else I) o
+     state_co (match known_conf with SOME kcfg -> clos_known_compile_inc
+       kcfg
+         | NONE -> CURRY I)
+     (pure_co (if IS_SOME known_conf then clos_fvs_compile_inc else I) o
+       co)`,
   CHEAT_TAC);;
 
 let known_mk_co_def = new_definition
   `known_mk_co kc kc' mk =
      add_state_co (if IS_SOME kc then clos_known_compile_inc (THE kc)
-       else CURRY I)
+         else CURRY I)
      (option_val_approx_spt kc')
      (mk o pure_co_progs (if IS_SOME kc then
-           clos_letop_compile_inc o
-             (clos_ticks_compile_inc:closLang_exp
+           clos_letop_compile_inc o (clos_ticks_compile_inc:closLang_exp
              list#(num#num#closLang_exp) list->closLang_exp
-             list#(num#num#closLang_exp) list) else I)) o
-             pure_co_progs (if IS_SOME kc then clos_fvs_compile_inc
-             else I)`;;
+             list#(num#num#closLang_exp) list)
+         else I)) o pure_co_progs (if IS_SOME kc then
+           clos_fvs_compile_inc else I)`;;
 
 let known_co_progs_def = new_definition
   `known_co_progs kc kc' =
      pure_co_progs (if IS_SOME kc then
-           clos_letop_compile_inc o
-             (clos_ticks_compile_inc:closLang_exp
+           clos_letop_compile_inc o (clos_ticks_compile_inc:closLang_exp
              list#(num#num#closLang_exp) list->closLang_exp
-             list#(num#num#closLang_exp) list) else I) o
-     state_co_progs (if IS_SOME kc then clos_known_compile_inc
-       (THE kc) else CURRY I) (match kc' with NONE -> LN | SOME kcfg
-       -> clos_known_config_val_approx_spt kcfg) o pure_co_progs (if
-       IS_SOME kc then clos_fvs_compile_inc else I)`;;
+             list#(num#num#closLang_exp) list)
+         else I) o
+     state_co_progs (if IS_SOME kc then clos_known_compile_inc (THE kc)
+         else CURRY I) (match kc' with NONE -> LN | SOME kcfg ->
+           clos_known_config_val_approx_spt kcfg) o pure_co_progs (if
+           IS_SOME kc then clos_fvs_compile_inc else I)`;;
 
 let known_co_known_mk_co = prove
  (`known_co kc (syntax_to_full_oracle (known_mk_co kc kc' mk) co) =
@@ -1674,8 +1619,8 @@ let clos_knownProof_semantics_compile = prove
   CHEAT_TAC);;
 
 let every_Fn_SOME_mk_Ticks = prove
- (`!t tc n e. every_Fn_SOME [e] ==> every_Fn_SOME
-  [clos_ticksProof_mk_Ticks t tc n e]`,
+ (`!t tc n e. every_Fn_SOME [e] ==> every_Fn_SOME [clos_ticksProof_mk_Ticks t
+  tc n e]`,
   CHEAT_TAC);;
 
 let every_Fn_vs_NONE_mk_Ticks = prove
@@ -1685,17 +1630,15 @@ let every_Fn_vs_NONE_mk_Ticks = prove
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 clos_knownProofScript.sml:5264-5268: the tactic that proves
-   the termination *)
-let val_approx_every_Fn_SOME_def,val_approx_every_Fn_SOME_ind =
-  define_wf
+(* HOL4 clos_knownProofScript.sml:5264-5268: the tactic that proves the
+   termination *)
+let val_approx_every_Fn_SOME_def,val_approx_every_Fn_SOME_ind = define_wf
   `MEASURE val_approx_size`
   [`val_approx_every_Fn_SOME x1 =
-        match x1 with
-          (clos_known_Tuple _6 vs:val_approx) -> ALL
-            val_approx_every_Fn_SOME vs
-        | (clos_known_Clos _7 _8 b _9) -> every_Fn_SOME [b]
-        | _10 -> T`];;
+     match x1 with
+       clos_known_Tuple _ vs -> ALL val_approx_every_Fn_SOME vs
+     | clos_known_Clos _2 _3 b _4 -> every_Fn_SOME [b]
+     | _ -> T`];;
 add_simp val_approx_every_Fn_SOME_def;;
 
 let val_approx_every_Fn_SOME_merge = prove
@@ -1704,15 +1647,13 @@ let val_approx_every_Fn_SOME_merge = prove
   CHEAT_TAC);;
 
 let decide_inline_every_Fn_SOME = prove
- (`val_approx_every_Fn_SOME b /\ decide_inline a b c d = inlD_LetInline
-  e ==>
+ (`val_approx_every_Fn_SOME b /\ decide_inline a b c d = inlD_LetInline e ==>
    every_Fn_SOME [e]`,
   CHEAT_TAC);;
 
 let globals_approx_every_Fn_SOME_def = new_definition
   `globals_approx_every_Fn_SOME g =
-     (!c d. sptree_lookup c g = SOME d ==>
-       val_approx_every_Fn_SOME d)`;;
+     (!c d. sptree_lookup c g = SOME d ==> val_approx_every_Fn_SOME d)`;;
 
 let known_op_every_Fn_SOME = prove
  (`known_op op x y = (a,b) /\
@@ -1737,41 +1678,36 @@ let known_every_Fn_SOME = prove
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 clos_knownProofScript.sml:5383-5387: the tactic that proves
-   the termination *)
-let val_approx_every_Fn_vs_NONE_def,val_approx_every_Fn_vs_NONE_ind =
-  define_wf
+(* HOL4 clos_knownProofScript.sml:5383-5387: the tactic that proves the
+   termination *)
+let val_approx_every_Fn_vs_NONE_def,val_approx_every_Fn_vs_NONE_ind = define_wf
   `MEASURE val_approx_size`
   [`val_approx_every_Fn_vs_NONE x1 =
-        match x1 with
-          (clos_known_Tuple _12 vs:val_approx) -> ALL
-            val_approx_every_Fn_vs_NONE vs
-        | (clos_known_Clos _13 _14 b _15) -> every_Fn_vs_NONE [b]
-        | _16 -> T`];;
+     match x1 with
+       clos_known_Tuple _ vs -> ALL val_approx_every_Fn_vs_NONE vs
+     | clos_known_Clos _6 _7 b _8 -> every_Fn_vs_NONE [b]
+     | _ -> T`];;
 add_simp val_approx_every_Fn_vs_NONE_def;;
 
 let val_approx_every_Fn_vs_NONE_merge = prove
- (`!a b. val_approx_every_Fn_vs_NONE a /\ val_approx_every_Fn_vs_NONE b
-  ==>
+ (`!a b. val_approx_every_Fn_vs_NONE a /\ val_approx_every_Fn_vs_NONE b ==>
      val_approx_every_Fn_vs_NONE (clos_known_merge a b)`,
   CHEAT_TAC);;
 
 let decide_inline_every_Fn_vs_NONE = prove
- (`val_approx_every_Fn_vs_NONE b /\ decide_inline a b c d =
-  inlD_LetInline e ==>
+ (`val_approx_every_Fn_vs_NONE b /\ decide_inline a b c d = inlD_LetInline e
+  ==>
    every_Fn_vs_NONE [e]`,
   CHEAT_TAC);;
 
 let globals_approx_every_Fn_vs_NONE_def = new_definition
   `globals_approx_every_Fn_vs_NONE g =
-     (!c d. sptree_lookup c g = SOME d ==>
-       val_approx_every_Fn_vs_NONE d)`;;
+     (!c d. sptree_lookup c g = SOME d ==> val_approx_every_Fn_vs_NONE d)`;;
 
 let known_op_every_Fn_vs_NONE = prove
  (`known_op op x y = (a,b) /\
    ALL val_approx_every_Fn_vs_NONE x /\
-   globals_approx_every_Fn_vs_NONE y ==> val_approx_every_Fn_vs_NONE
-     a /\
+   globals_approx_every_Fn_vs_NONE y ==> val_approx_every_Fn_vs_NONE a /\
      globals_approx_every_Fn_vs_NONE b`,
   CHEAT_TAC);;
 
@@ -1785,8 +1721,7 @@ let known_every_Fn_vs_NONE = prove
     every_Fn_vs_NONE b /\ ALL val_approx_every_Fn_vs_NONE c /\
     globals_approx_every_Fn_vs_NONE d ==>
     every_Fn_vs_NONE (MAP FST (FST (known a b c d))) /\
-    ALL val_approx_every_Fn_vs_NONE (MAP SND (FST (known a b c d)))
-      /\
+    ALL val_approx_every_Fn_vs_NONE (MAP SND (FST (known a b c d))) /\
     globals_approx_every_Fn_vs_NONE (SND (known a b c d))`,
   CHEAT_TAC);;
 
@@ -1797,19 +1732,18 @@ let known_every_Fn_vs_NONE = prove
 let val_approx_no_Labels_def,val_approx_no_Labels_ind = define_wf
   `MEASURE val_approx_size`
   [`val_approx_no_Labels x1 =
-        match x1 with
-          clos_known_ClosNoInline m n -> T
-        | (clos_known_Clos m n e s) -> no_Labels e
-        | (clos_known_Tuple tag vas) -> ALL val_approx_no_Labels vas
-        | _17 -> T`];;
+     match x1 with
+       clos_known_ClosNoInline m n -> T
+     | clos_known_Clos m n e s -> no_Labels e
+     | clos_known_Tuple tag vas -> ALL val_approx_no_Labels vas
+     | _ -> T`];;
 (* HOL4 clos_knownProofScript.sml:5516-5522: ML code, not ported *)
 
-(* HOL4 clos_knownProofScript.sml:5524-5527: a theorem that HOL4
-   states as the value of an ML expression: val_approx_no_Labels_simp *)
+(* HOL4 clos_knownProofScript.sml:5524-5527: a theorem that HOL4 states as
+   the value of an ML expression: val_approx_no_Labels_simp *)
 
 let decide_inline_no_Labels = prove
- (`val_approx_no_Labels b /\ decide_inline a b c d = inlD_LetInline e
-  ==>
+ (`val_approx_no_Labels b /\ decide_inline a b c d = inlD_LetInline e ==>
    no_Labels e`,
   CHEAT_TAC);;
 
@@ -1830,8 +1764,7 @@ let known_op_no_Labels = prove
   CHEAT_TAC);;
 
 let no_Labels_mk_Ticks = prove
- (`!t tc n e. no_Labels e ==> no_Labels (clos_ticksProof_mk_Ticks t tc
-  n e)`,
+ (`!t tc n e. no_Labels e ==> no_Labels (clos_ticksProof_mk_Ticks t tc n e)`,
   CHEAT_TAC);;
 
 let clos_gen_no_inline_no_Labels = prove
@@ -1851,53 +1784,46 @@ let known_no_Labels = prove
 let compile_no_Labels = prove
  (`clos_known_compile (SOME c) xs = (res,ys) /\ ALL no_Labels xs ==>
     (?c1. res = SOME c1 /\ ALL no_Labels ys /\
-         globals_approx_no_Labels (clos_known_config_val_approx_spt
-           c1))`,
+         globals_approx_no_Labels (clos_known_config_val_approx_spt c1))`,
   CHEAT_TAC);;
 
 (* obeys_max_app *)
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let val_approx_obeys_max_app_def,val_approx_obeys_max_app_ind =
-  define_wf
+let val_approx_obeys_max_app_def,val_approx_obeys_max_app_ind = define_wf
   `MEASURE (val_approx_size o SND)`
   [`val_approx_obeys_max_app k x2 =
-        match x2 with
-          clos_known_ClosNoInline m n -> T
-        | (clos_known_Clos m n e s) -> obeys_max_app k e
-        | (clos_known_Tuple tag vas) -> ALL
-          (val_approx_obeys_max_app k) vas
-        | _18 -> T`];;
+     match x2 with
+       clos_known_ClosNoInline m n -> T
+     | clos_known_Clos m n e s -> obeys_max_app k e
+     | clos_known_Tuple tag vas -> ALL (val_approx_obeys_max_app k) vas
+     | _ -> T`];;
 
 let decide_inline_obeys_max_app = prove
- (`val_approx_obeys_max_app k b /\ decide_inline a b c d =
-  inlD_LetInline e ==>
+ (`val_approx_obeys_max_app k b /\ decide_inline a b c d = inlD_LetInline e ==>
    obeys_max_app k e`,
   CHEAT_TAC);;
 
 let globals_approx_obeys_max_app_def = new_definition
   `globals_approx_obeys_max_app k g =
-     (!c d. sptree_lookup c g = SOME d ==>
-       val_approx_obeys_max_app k d)`;;
+     (!c d. sptree_lookup c g = SOME d ==> val_approx_obeys_max_app k d)`;;
 
 let val_approx_obeys_max_app_merge = prove
- (`!a b. val_approx_obeys_max_app k a /\ val_approx_obeys_max_app k b
-  ==>
+ (`!a b. val_approx_obeys_max_app k a /\ val_approx_obeys_max_app k b ==>
          val_approx_obeys_max_app k (clos_known_merge a b)`,
   CHEAT_TAC);;
 
 let known_op_obeys_max_app = prove
  (`known_op op x y = (a,b) /\
    ALL (val_approx_obeys_max_app k) x /\
-   globals_approx_obeys_max_app k y ==> val_approx_obeys_max_app k a
-     /\
+   globals_approx_obeys_max_app k y ==> val_approx_obeys_max_app k a /\
      globals_approx_obeys_max_app k b`,
   CHEAT_TAC);;
 
 let obeys_max_app_mk_Ticks = prove
- (`!t tc n e. obeys_max_app k e ==> obeys_max_app k
-  (clos_ticksProof_mk_Ticks t tc n e)`,
+ (`!t tc n e. obeys_max_app k e ==> obeys_max_app k (clos_ticksProof_mk_Ticks
+  t tc n e)`,
   CHEAT_TAC);;
 
 let clos_gen_no_inline_obeys_max_app = prove
@@ -1914,29 +1840,26 @@ let known_obeys_max_app = prove
     ALL (obeys_max_app k) b /\ ALL (val_approx_obeys_max_app k) c /\
     globals_approx_obeys_max_app k d ==>
     ALL (obeys_max_app k) (MAP FST (FST (known a b c d))) /\
-    ALL (val_approx_obeys_max_app k) (MAP SND (FST (known a b c d)))
-      /\
+    ALL (val_approx_obeys_max_app k) (MAP SND (FST (known a b c d))) /\
     globals_approx_obeys_max_app k (SND (known a b c d))`,
   CHEAT_TAC);;
 
 let compile_obeys_max_app = prove
- (`clos_known_compile (SOME c) xs = (res,ys) /\ ALL (obeys_max_app k) xs
-  ==>
+ (`clos_known_compile (SOME c) xs = (res,ys) /\ ALL (obeys_max_app k) xs ==>
     (?c1. res = SOME c1 /\ ALL (obeys_max_app k) ys /\
-         globals_approx_obeys_max_app k
-           (clos_known_config_val_approx_spt c1))`,
+         globals_approx_obeys_max_app k (clos_known_config_val_approx_spt
+           c1))`,
   CHEAT_TAC);;
 
 let known_compile_IS_SOME = prove
- (`clos_known_compile kc es = (kc',es') ==> (IS_SOME kc' <=> IS_SOME
-  kc)`,
+ (`clos_known_compile kc es = (kc',es') ==> (IS_SOME kc' <=> IS_SOME kc)`,
   CHEAT_TAC);;
 
 (* names *)
 
 let get_code_labels_mk_Ticks = prove
- (`!a b c d. closProps_get_code_labels (clos_ticksProof_mk_Ticks a b c
-  d) = closProps_get_code_labels d`,
+ (`!a b c d. closProps_get_code_labels (clos_ticksProof_mk_Ticks a b c d) =
+  closProps_get_code_labels d`,
   CHEAT_TAC);;
 add_simp get_code_labels_mk_Ticks;;
 

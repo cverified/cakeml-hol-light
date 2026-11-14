@@ -30,7 +30,6 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_bignum.ml";;
 needs "compiler/backend/word_depth.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/location.ml";;
 needs "lib/mc_multiword.ml";;
@@ -45,11 +44,10 @@ needs "semantics/typeSystem.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "data_to_word_bignumProof"
-  ["backend_common"; "copying_gc"; "dataProps"; "dataSem";
-   "data_to_word"; "data_to_word_gcProof"; "data_to_word_memoryProof";
-   "gc_shared"; "gen_gc"; "gen_gc_partial"; "mllist";
-   "semanticsProps"; "wordLang"; "wordProps"; "wordSem";
-   "word_bignum"; "word_bignumProof"; "word_depthProof";
+  ["backend_common"; "copying_gc"; "dataProps"; "dataSem"; "data_to_word";
+   "data_to_word_gcProof"; "data_to_word_memoryProof"; "gc_shared"; "gen_gc";
+   "gen_gc_partial"; "mllist"; "semanticsProps"; "wordLang"; "wordProps";
+   "wordSem"; "word_bignum"; "word_bignumProof"; "word_depthProof";
    "word_gcFunctions"];;
 
 (* this file reads the name of a record field as a variable and
@@ -59,9 +57,8 @@ let _ = hide_overloads
   ["failed","pegexec_failed"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map *)
 
-(* HOL4 data_to_word_bignumProofScript.sml:22: an overload that the
-   source brings to the front: cut_env, written out as
-   wordSem_cut_env *)
+(* HOL4 data_to_word_bignumProofScript.sml:22: an overload that the source
+   brings to the front: cut_env, written out as wordSem_cut_env *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:26-27: a proof *)
 
@@ -69,8 +66,8 @@ let _ = hide_overloads
 
 (* HOL4 data_to_word_bignumProofScript.sml:32-36: a proof *)
 
-(* HOL4 data_to_word_bignumProofScript.sml:38-46: a theorem that HOL4
-   states as the value of an ML expression: eq_eval *)
+(* HOL4 data_to_word_bignumProofScript.sml:38-46: a theorem that HOL4 states
+   as the value of an ML expression: eq_eval *)
 
 let word_list_IMP_store_list = prove
  (`!xs a frame m dm.
@@ -80,26 +77,27 @@ let word_list_IMP_store_list = prove
 
 let word_exp_set_var_ShiftVar_lemma = prove
  (`wordSem_word_exp t (ShiftVar sow v n) =
-    (match sptree_lookup v (wordSem_state_locals t) with SOME
-      (wordLang_Word w) ->
+    match sptree_lookup v (wordSem_state_locals t) with SOME (wordLang_Word
+      w) ->
         OPTION_MAP wordLang_Word
-          (match sow with Lsl -> SOME (w << n) | Lsr -> SOME (w >>>
-            n) | Asr -> SOME (w >> n) | Ror -> SOME (word_ror w n)) |
-            _1 -> FAIL (wordSem_word_exp t (ShiftVar sow v n))
-            "lookup failed")`,
+          (match sow with Lsl -> SOME (w << n)
+                     | Lsr -> SOME (w >>> n)
+                     | Asr -> SOME (w >> n)
+                     | Ror -> SOME (word_ror w n))
+    | _ -> FAIL (wordSem_word_exp t (ShiftVar sow v n)) "lookup failed"`,
   CHEAT_TAC);;
 
 let i2mw_small_int_IMP_0 = prove
- (`(!v1. ~(i2mw v = (F,[v1:'a word]))) /\ (!v1. ~(i2mw v = (T,[v1:'a
-  word]))) /\
+ (`(!v1. ~(i2mw v = (F,[v1:'a word]))) /\ (!v1. ~(i2mw v = (T,[v1:'a word])))
+  /\
     small_int (:'a) v /\ good_dimindex (:'a) ==> v = (&0)`,
   CHEAT_TAC);;
 
 let state_rel_Number_small_int = prove
- (`data_to_word_gcProof_state_rel c r1 r2 s t (SOME [x]) locs
-  /\ small_int (:'a) i ==>
-    data_to_word_gcProof_state_rel c r1 r2 s t (SOME
-      [(dataSem_Number i,wordLang_Word (Smallnum i:'a word))]) locs`,
+ (`data_to_word_gcProof_state_rel c r1 r2 s t (SOME [x]) locs /\ small_int
+  (:'a) i ==>
+    data_to_word_gcProof_state_rel c r1 r2 s t (SOME [(dataSem_Number
+      i,wordLang_Word (Smallnum i:'a word))]) locs`,
   CHEAT_TAC);;
 
 let heap_lookup_Unused_Bignum = prove
@@ -113,9 +111,8 @@ let push_env_insert_0 = prove
   wordSem_state_permute_fupd (K (\n. wordSem_state_permute t (n + 1)))
   (wordSem_state_stack_max_fupd (K
                 (OPTION_MAP2 MAX (wordSem_state_stack_max t)
-                  (stack_size (CONS (StackFrame
-                    (wordSem_state_locals_size t) [(0,x)] [] NONE)
-                    (wordSem_state_stack t)))))
+                  (stack_size (CONS (StackFrame (wordSem_state_locals_size
+                    t) [(0,x)] [] NONE) (wordSem_state_stack t)))))
                     (wordSem_state_stack_fupd (K (CONS (StackFrame
                     (wordSem_state_locals_size t) [(0,x)] [] NONE)
                     (wordSem_state_stack t)))
@@ -124,8 +121,8 @@ let push_env_insert_0 = prove
 
 let mc_header_i2mw_eq_0w = prove
  (`2 * LENGTH (SND (i2mw i):('a word) list) + 1 < dimword (:'a) ==>
-    (mc_header (i2mw i:bool#('a word) list) = ((n2w 0):'a word) <=>
-      i = (&0))`,
+    (mc_header (i2mw i:bool#('a word) list) = ((n2w 0):'a word) <=> i =
+      (&0))`,
   CHEAT_TAC);;
 
 let MustTerminate_limit_eq = prove
@@ -140,7 +137,7 @@ let SND_i2mw_NIL = prove
   CHEAT_TAC);;
 
 let word_cmp_Test_1 = prove
- (`wordSem_word_cmp (asm_Test:cmp) w (n2w 1) <=> ~(word_bit 0 w)`,
+ (`wordSem_word_cmp asm_Test w (n2w 1) <=> ~(word_bit 0 w)`,
   CHEAT_TAC);;
 
 let word_bit_if_1_0 = prove
@@ -149,23 +146,20 @@ let word_bit_if_1_0 = prove
 
 let get_iop_def = new_definition
   `get_iop (n:num) =
-     (if n = 0 then multiword_Add else
-     if n = 1 then multiword_Sub else
-     if n = 4 then multiword_Mul else
-     if n = 5 then multiword_Div else
-                   multiword_Mod)`;;
+     if n = 0 then multiword_Add else if n = 1 then multiword_Sub else if
+       n = 4 then multiword_Mul else if n = 5 then multiword_Div else
+       multiword_Mod`;;
 
 let data_to_word_bignumProof_int_op_def = new_definition
   `data_to_word_bignumProof_int_op op_index (i:int) (j:int) =
-     (if op_index = 0 then SOME (i + j) else
-     if op_index = 1 then SOME (i - j) else
-     if op_index = 4 then SOME (i * j) else
-     if op_index = 5 /\ ~(j = (&0)) then SOME (i / j) else
-     if op_index = 6 /\ ~(j = (&0)) then SOME (i % j) else NONE)`;;
+     if op_index = 0 then SOME (i + j) else if op_index = 1 then SOME (i
+       - j) else if op_index = 4 then SOME (i * j) else if op_index = 5
+       /\ ~(j = (&0)) then SOME (i / j) else if op_index = 6 /\ ~(j = (&0))
+       then SOME (i % j) else NONE`;;
 
 let get_sign_word_lemma = prove
- (`good_dimindex (:'a) ==> ((n2w 1) && x >>> 4) = (if word_bit 4 x
-  then (n2w 1) else (n2w 0):'a word)`,
+ (`good_dimindex (:'a) ==> ((n2w 1) && x >>> 4) = (if word_bit 4 x then (n2w
+  1) else (n2w 0):'a word)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -188,12 +182,10 @@ let b2n_not = prove
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_bignumProofScript.sml:254-363: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   LongDiv1_thm' *)
+   statement HOL Light does not read (tools/unstated.py): LongDiv1_thm' *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:365-478: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   LongDiv1_thm *)
+   statement HOL Light does not read (tools/unstated.py): LongDiv1_thm *)
 
 (* [local] *)
 let lt_dimindex_MOD_dimword = prove
@@ -204,11 +196,10 @@ add_simp lt_dimindex_MOD_dimword;;
 let get_real_addr_lemma = prove
  (`shift_length c < dimindex (:'a) /\
     good_dimindex (:'a) /\
-    wordSem_get_var v (t:('a,'c,'ffi)wordSem_state) = SOME
-      (wordLang_Word ptr_w) /\
+    wordSem_get_var v (t:('a,'c,'ffi)wordSem_state) = SOME (wordLang_Word
+      ptr_w) /\
     get_real_addr c (wordSem_state_store t) ptr_w = SOME x ==>
-    wordSem_word_exp t (real_addr c v) = SOME (wordLang_Word (x:'a
-      word))`,
+    wordSem_word_exp t (real_addr c v) = SOME (wordLang_Word (x:'a word))`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -216,13 +207,12 @@ let get_real_addr_lemma = prove
 let memory_rel_lookup = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs s st m dm
-        (APPEND (join_env l1 (toAList (inter l2 (adjust_set l1))))
-          xs) /\
-      sptree_lookup n l1 = SOME x /\ sptree_lookup (adjust_var n)
-        l2 = SOME w ==>
+        (APPEND (join_env l1 (toAList (inter l2 (adjust_set l1)))) xs) /\
+      sptree_lookup n l1 = SOME x /\ sptree_lookup (adjust_var n) l2 =
+        SOME w ==>
       memory_rel c be ts refs s st m dm
-       (CONS (x,w) (APPEND (join_env l1 (toAList (inter l2
-         (adjust_set l1)))) xs))`),
+       (CONS (x,w) (APPEND (join_env l1 (toAList (inter l2 (adjust_set
+         l1)))) xs))`),
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_bignumProofScript.sml:516-577: a theorem whose
@@ -230,18 +220,17 @@ let memory_rel_lookup = prove
    evaluate_AddNumSize *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:579-731: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   AnyHeader_thm *)
+   statement HOL Light does not read (tools/unstated.py): AnyHeader_thm *)
 
 let state_rel_set_store_Temp = prove
- (`data_to_word_gcProof_state_rel c l1 l2 s (wordSem_set_store (Temp
-  tmp) w t) vs locs =
+ (`data_to_word_gcProof_state_rel c l1 l2 s (wordSem_set_store (Temp tmp) w t)
+  vs locs =
    data_to_word_gcProof_state_rel c l1 l2 s t vs locs`,
   CHEAT_TAC);;
 
 let state_rel_IMP_num_size_limit = prove
- (`data_to_word_gcProof_state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs /\
+ (`data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
+  locs /\
     wordSem_get_var k (state_locals s) = SOME (dataSem_Number i) ==>
     LENGTH (SND (i2mw i):('a word) list) < dimword (:'a) DIV 16`,
   CHEAT_TAC);;
@@ -249,21 +238,20 @@ let state_rel_IMP_num_size_limit = prove
 let word_list_store_list = prove
  (`!xs a frame m dm.
       (misc_word_list a xs * frame) (fun2set (m,dm)) ==>
-      (?m2. (data_to_word_memoryProof_store_list a (REPLICATE (LENGTH
-        xs) (wordLang_Word (n2w 0))) m dm = SOME m2) /\
-           (misc_word_list a (REPLICATE (LENGTH xs) (wordLang_Word
-             (n2w 0))) * frame)
+      (?m2. (data_to_word_memoryProof_store_list a (REPLICATE (LENGTH xs)
+        (wordLang_Word (n2w 0))) m dm = SOME m2) /\
+           (misc_word_list a (REPLICATE (LENGTH xs) (wordLang_Word (n2w 0)))
+             * frame)
               (fun2set (m2,dm)))`,
   CHEAT_TAC);;
 
 let MustTerminate_limit_SUB_2 = prove
- (`good_dimindex (:'a) ==> dimword (:'a) <= MustTerminate_limit (:'a)
-  - 2`,
+ (`good_dimindex (:'a) ==> dimword (:'a) <= MustTerminate_limit (:'a) - 2`,
   CHEAT_TAC);;
 
 let cut_env_fromList_sing = prove
- (`wordSem_cut_env (sptree_fromList [one]) (sptree_insert 0
-  (wordLang_Loc l1 l2) LN) =
+ (`wordSem_cut_env (sptree_fromList [one]) (sptree_insert 0 (wordLang_Loc l1
+  l2) LN) =
     SOME (sptree_insert 0 (wordLang_Loc l1 l2) LN)`,
   CHEAT_TAC);;
 
@@ -287,8 +275,8 @@ add_simp IMP_LESS_MustTerminate_limit;;
    evaluate_LongDiv_code *)
 
 let div_code_assum_thm = prove
- (`data_to_word_gcProof_state_rel c l1 l2 s
-  (t:('a,'c,'ffi)wordSem_state) NONE locs ==>
+ (`data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
+  locs ==>
     div_code_assum (:'ffi) (:'c) (wordSem_state_code t)`,
   CHEAT_TAC);;
 
@@ -307,11 +295,9 @@ add_simp TWO_LESS_MustTerminate_limit;;
 
 let arith_location_def = new_definition
   `Arith_location index =
-     (if index = 0 then Add_location else
-     if index = 1 then Sub_location else
-     if index = 4 then Mul_location else
-     if index = 5 then Div_location else
-     if index = 6 then Mod_location else ARB)`;;
+     if index = 0 then Add_location else if index = 1 then Sub_location
+       else if index = 4 then Mul_location else if index = 5 then
+       Div_location else if index = 6 then Mod_location else ARB`;;
 
 let push_env_code = prove
  (`wordSem_state_code
@@ -322,19 +308,17 @@ let arith_code_def = new_definition
   `Arith_code index =
      word_bignum_Seq (word_bignum_Assign 6 (wordLang_Const (n2w (4 *
        index))))
-       (wordLang_Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
-         NONE)`;;
+       (wordLang_Call NONE (SOME AnyArith_location) [0; 2; 4; 6] NONE)`;;
 
 let lookup_Arith_location = prove
  (`data_to_word_gcProof_state_rel c l1 l2 x t NONE locs
   /\ data_to_word_bignumProof_int_op index i1 i2 = SOME r ==>
-    sptree_lookup (Arith_location index) (wordSem_state_code t) =
-      SOME (3,Arith_code index)`,
+    sptree_lookup (Arith_location index) (wordSem_state_code t) = SOME
+      (3,Arith_code index)`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_bignumProofScript.sml:1010-1055: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   Replicate_code_thm *)
+   statement HOL Light does not read (tools/unstated.py): Replicate_code_thm *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:1057-1130: a theorem whose
    statement HOL Light does not read (tools/unstated.py):
@@ -342,21 +326,19 @@ let lookup_Arith_location = prove
 
 let bignum_digits_LENGTH_n2mw = prove
  (`good_dimindex (:'a) ==>
-   (!n. bignum_digits (dimindex (:'a) = 64) n = LENGTH ((n2mw
-     n):('a word) list))`,
+   (!n. bignum_digits (dimindex (:'a) = 64) n = LENGTH ((n2mw n):('a word)
+     list))`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_bignumProofScript.sml:1145: the ML values that
-   the definitions below antiquote *)
+(* HOL4 data_to_word_bignumProofScript.sml:1145: the ML values that the
+   definitions below antiquote *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:1147: ML code, not ported *)
 
-(* HOL4 data_to_word_bignumProofScript.sml:1149-1152: ML code, not
-   ported *)
+(* HOL4 data_to_word_bignumProofScript.sml:1149-1152: ML code, not ported *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:1154-2126: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   AnyArith_thm *)
+   statement HOL Light does not read (tools/unstated.py): AnyArith_thm *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:2128: ML code, not ported *)
 
@@ -378,8 +360,8 @@ let env_to_list_domain_eq = prove
 
 let size_of_LE_append = prove
  (`!vs ys lims refs seen.
-     FST (size_of lims ys refs seen) <= FST (size_of lims (APPEND
-       vs ys) refs seen)`,
+     FST (size_of lims ys refs seen) <= FST (size_of lims (APPEND vs ys)
+       refs seen)`,
   CHEAT_TAC);;
 
 let size_of_heap_LE_args = prove
@@ -400,13 +382,11 @@ let structure_le_IMP_option_le = prove
      option_le (max_depth l x) (max_depth l y)`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_bignumProofScript.sml:2450-2453: a theorem that
-   HOL4 states as the value of an ML expression:
-   evaluate_Assign_Const *)
+(* HOL4 data_to_word_bignumProofScript.sml:2450-2453: a theorem that HOL4
+   states as the value of an ML expression: evaluate_Assign_Const *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:2455-2583: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   eval_Call_Arith *)
+   statement HOL Light does not read (tools/unstated.py): eval_Call_Arith *)
 
 (* and the interface *)
 let _ = unhide_overloads ();;

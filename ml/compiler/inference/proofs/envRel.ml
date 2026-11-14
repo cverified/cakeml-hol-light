@@ -35,22 +35,20 @@ let _ = do_list hide_constant ["id"];;
      MEASURE infer_t_size
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
-(* HOL4 envRelScript.sml:16-23: the tactic that proves the
-   termination *)
+(* HOL4 envRelScript.sml:16-23: the tactic that proves the termination *)
 let convert_t_def,convert_t_ind = define_shaped_rec
   "nested"
   [`convert_t (Infer_Tvar_db n) = Tvar_db n`;
    `convert_t (Infer_Tapp ts tc) = Tapp (MAP convert_t ts) tc`];;
 
 let convert_env_def = new_definition
-  `convert_env s env = MAP (\(x,t). (x,convert_t (t_walkstar s t)))
-  env`;;
+  `convert_env s env = MAP (\(x,t). (x,convert_t (t_walkstar s t))) env`;;
 
 (* HOL4 envRelScript.sml:29-42: code that the source has in a comment *)
 
 let check_convert_freevars = prove
- (`(!tvs uvs t. check_t tvs uvs t ==> (uvs = {}) ==> check_freevars
-  tvs [] (convert_t t))`,
+ (`(!tvs uvs t. check_t tvs uvs t ==> (uvs = {}) ==> check_freevars tvs []
+  (convert_t t))`,
   CHEAT_TAC);;
 
 let check_t_to_check_freevars = prove
@@ -61,8 +59,8 @@ let check_t_to_check_freevars = prove
 let convert_inc = prove
  (`!t tvs tvs'.
     check_t tvs' {} t ==>
-    (convert_t (infer_deBruijn_inc tvs t) = deBruijn_inc 0 tvs
-      (convert_t t))`,
+    (convert_t (infer_deBruijn_inc tvs t) = deBruijn_inc 0 tvs (convert_t
+      t))`,
   CHEAT_TAC);;
 
 (* HOL4 envRelScript.sml:74: ML code, not ported *)
@@ -71,8 +69,7 @@ let db_subst_infer_subst_swap = prove
  (`(!t s tvs uvar n.
     t_wfs s /\
     count (uvar + tvs) SUBSET FDOM s /\
-    (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar
-      uv))) /\
+    (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar uv))) /\
     check_t tvs (FDOM s) t ==>
     (convert_t
       (t_walkstar s
@@ -86,13 +83,12 @@ let db_subst_infer_subst_swap = prove
    (!ts s tvs uvar n.
     t_wfs s /\
     count (uvar + tvs) SUBSET FDOM s /\
-    (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar
-      uv))) /\
+    (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar uv))) /\
     ALL (\t. check_t tvs (FDOM s) t) ts ==>
     (MAP (convert_t o
          t_walkstar s o
-         infer_deBruijn_subst (MAP (\n. Infer_Tuvar (uvar + n))
-           (COUNT_LIST tvs)))
+         infer_deBruijn_subst (MAP (\n. Infer_Tuvar (uvar + n)) (COUNT_LIST
+           tvs)))
         ts =
      MAP (deBruijn_subst 0 (MAP (convert_t o t_walkstar s) (MAP (\n.
        Infer_Tuvar (uvar + n)) (COUNT_LIST tvs))) o
@@ -102,10 +98,10 @@ let db_subst_infer_subst_swap = prove
   CHEAT_TAC);;
 
 let inc_convert_t = prove
- (`(!t tvs' tvs. check_t tvs' {} t ==> (deBruijn_inc tvs' tvs (convert_t
-  t) = convert_t t)) /\
-   (!ts tvs' tvs. ALL (check_t tvs' {}) ts ==> (MAP (deBruijn_inc
-     tvs' tvs o convert_t) ts = MAP convert_t ts))`,
+ (`(!t tvs' tvs. check_t tvs' {} t ==> (deBruijn_inc tvs' tvs (convert_t t) =
+  convert_t t)) /\
+   (!ts tvs' tvs. ALL (check_t tvs' {}) ts ==> (MAP (deBruijn_inc tvs' tvs
+     o convert_t) ts = MAP convert_t ts))`,
   CHEAT_TAC);;
 
 let convert_t_subst = prove
@@ -118,8 +114,7 @@ let convert_t_subst = prove
       (LENGTH tvs = LENGTH ts') /\
       ALL (check_freevars 0 tvs) ts ==>
       MAP convert_t (MAP (infer_type_subst (ZIP tvs ts')) ts) =
-      MAP (type_subst (alist_to_fmap (ZIP tvs (MAP convert_t
-        ts')))) ts)`,
+      MAP (type_subst (alist_to_fmap (ZIP tvs (MAP convert_t ts')))) ts)`,
   CHEAT_TAC);;
 
 let deBruijn_subst_convert = prove
@@ -147,10 +142,9 @@ let check_freevars_to_check_t = prove
   CHEAT_TAC);;
 
 let infer_type_subst_nil = prove
- (`(!t. check_freevars n [] t ==> infer_type_subst [] t = unconvert_t t)
-  /\
-    (!ts. ALL (check_freevars n []) ts ==> MAP (infer_type_subst
-      []) ts = MAP unconvert_t ts)`,
+ (`(!t. check_freevars n [] t ==> infer_type_subst [] t = unconvert_t t) /\
+    (!ts. ALL (check_freevars n []) ts ==> MAP (infer_type_subst []) ts =
+      MAP unconvert_t ts)`,
   CHEAT_TAC);;
 
 (* ---------- relating inference and type system environments ---------- *)
@@ -200,8 +194,8 @@ let tscheme_approx_def = new_definition
        (!subst.
         LENGTH subst = tvs ==>
         t_walkstar s (infer_deBruijn_subst subst t) =
-        t_walkstar s (infer_deBruijn_subst (MAP
-          (infer_deBruijn_subst subst) subst') t')))`;;
+        t_walkstar s (infer_deBruijn_subst (MAP (infer_deBruijn_subst
+          subst) subst') t')))`;;
 
 let tscheme_approx_thm = prove
  (`!t' max_tvs s tvs tvs' t.
@@ -237,8 +231,7 @@ let unconvert_db_subst = prove
 
 let tscheme_inst_to_approx = prove
  (`tscheme_inst (tvs,t) (tvs',t') ==>
-   tscheme_approx 0 FEMPTY (tvs,unconvert_t t) (tvs',unconvert_t
-     t')`,
+   tscheme_approx 0 FEMPTY (tvs,unconvert_t t) (tvs',unconvert_t t')`,
   CHEAT_TAC);;
 
 let env_rel_sound_def = new_definition
@@ -250,8 +243,7 @@ let env_rel_sound_def = new_definition
        (?tvs' t'.
          check_freevars (tvs' + num_tvs tenvE) [] t' /\
          lookup_var x tenvE tenv = SOME (tvs',t') /\
-         tscheme_approx (num_tvs tenvE) s ts (tvs',unconvert_t
-           t')))`;;
+         tscheme_approx (num_tvs tenvE) s ts (tvs',unconvert_t t')))`;;
 
 let env_rel_sound_lookup_none = prove
  (`!ienv tenv s tenvE id'.
@@ -262,8 +254,8 @@ let env_rel_sound_lookup_none = prove
 
 let env_rel_sound_lookup_some = prove
  (`!id' ts s ienv tenv tenvE.
-    nsLookup (inf_env_inf_v ienv) id' = SOME ts /\ env_rel_sound s
-      ienv tenv tenvE ==>
+    nsLookup (inf_env_inf_v ienv) id' = SOME ts /\ env_rel_sound s ienv tenv
+      tenvE ==>
     (?tvs' t'.
       check_freevars (tvs' + num_tvs tenvE) [] t' /\
       lookup_var id' tenvE tenv = SOME (tvs',t') /\
@@ -274,8 +266,7 @@ let db_subst_infer_subst_swap3 = prove
  (`!t tvs s subst.
     t_wfs s /\
     check_freevars tvs [] t ==>
-    convert_t (t_walkstar s (infer_deBruijn_subst subst (unconvert_t
-      t))) =
+    convert_t (t_walkstar s (infer_deBruijn_subst subst (unconvert_t t))) =
     deBruijn_subst 0 (MAP (convert_t o t_walkstar s) subst) t`,
   CHEAT_TAC);;
 
@@ -306,10 +297,9 @@ let env_rel_sound_extend0 = prove
     check_t (num_tvs tenvE) (FDOM s) t /\
     (!uv. uv IN FDOM s ==> check_t (num_tvs tenvE) {} (t_walkstar s
       (Infer_Tuvar uv))) ==>
-    env_rel_sound s (inf_env_inf_v_fupd (K (nsBind x (0,t)
-      (inf_env_inf_v ienv))) ienv)
-      tenv (typeSystem_Bind_name x 0 (convert_t (t_walkstar s t))
-        tenvE)`,
+    env_rel_sound s (inf_env_inf_v_fupd (K (nsBind x (0,t) (inf_env_inf_v
+      ienv))) ienv)
+      tenv (typeSystem_Bind_name x 0 (convert_t (t_walkstar s t)) tenvE)`,
   CHEAT_TAC);;
 
 let env_rel_sound_merge0 = prove
@@ -320,8 +310,8 @@ let env_rel_sound_merge0 = prove
     ALL (\(x,t). check_t 0 (FDOM s) t) bindings /\
     env_rel_sound s ienv tenv tenvE ==>
     env_rel_sound s
-       (inf_env_inf_v_fupd (K (nsAppend (alist_to_ns (MAP (\(n,t).
-         (n,0,t)) bindings)) (inf_env_inf_v ienv))) ienv)
+       (inf_env_inf_v_fupd (K (nsAppend (alist_to_ns (MAP (\(n,t). (n,0,t))
+         bindings)) (inf_env_inf_v ienv))) ienv)
        tenv
        (bind_var_list 0 (convert_env s bindings) tenvE)`,
   CHEAT_TAC);;
@@ -339,14 +329,14 @@ let env_rel_e_sound_letrec_merge0 = prove
           (alist_to_ns
             (MAP2 (\(f,x,e) uvar. (f,0,uvar))
               funs
-              (MAP (\n. Infer_Tuvar (uvs + n)) (COUNT_LIST (LENGTH
-                funs))))) (inf_env_inf_v
+              (MAP (\n. Infer_Tuvar (uvs + n)) (COUNT_LIST (LENGTH funs)))))
+                (inf_env_inf_v
           ienv))) ienv)
       tenv
       (bind_var_list 0 (MAP2 (\(f,x,e) t. (f,t))
                          funs
-                         (MAP (\n. convert_t (t_walkstar s
-                           (Infer_Tuvar (uvs + n))))
+                         (MAP (\n. convert_t (t_walkstar s (Infer_Tuvar (uvs
+                           + n))))
                            (COUNT_LIST (LENGTH funs)))) tenvE)`,
   CHEAT_TAC);;
 
@@ -363,8 +353,7 @@ let env_rel_complete_def = new_definition
          nsLookup (inf_env_inf_v ienv) x = SOME (tvs',t') /\
          // A stronger version is guaranteed by ienv_ok
          // check_t (tvs' + num_tvs tenvE) {} t' ∧
-         tscheme_approx (num_tvs tenvE) s (tvs,unconvert_t t)
-           (tvs',t')))`;;
+         tscheme_approx (num_tvs tenvE) s (tvs,unconvert_t t) (tvs',t')))`;;
 
 let env_rel_complete_lookup_none = prove
  (`!ienv tenv s tenvE x.
@@ -375,8 +364,7 @@ let env_rel_complete_lookup_none = prove
 
 let env_rel_e_sound_empty_to = prove
  (`!s ienv tenv tenvE.
-    t_wfs s /\ ienv_ok {} ienv /\ env_rel_sound FEMPTY ienv tenv
-      tenvE ==>
+    t_wfs s /\ ienv_ok {} ienv /\ env_rel_sound FEMPTY ienv tenv tenvE ==>
     env_rel_sound s ienv tenv tenvE`,
   CHEAT_TAC);;
 
@@ -393,7 +381,7 @@ let envRel_env_rel_def = new_definition
     env_rel_complete FEMPTY ienv tenv typeSystem_Empty`;;
 
 let lookup_varE_empty = prove
- (`!x. lookup_varE x (typeSystem_Empty:tenv_val_exp) = NONE`,
+ (`!x. lookup_varE x typeSystem_Empty = NONE`,
   CHEAT_TAC);;
 add_simp lookup_varE_empty;;
 
@@ -401,8 +389,8 @@ let env_rel_extend = prove
  (`!tenv1 ienv1 tenv2 ienv2.
     envRel_env_rel tenv1 ienv1 /\
     envRel_env_rel tenv2 ienv2 ==>
-    envRel_env_rel (extend_dec_tenv tenv1 tenv2) (extend_dec_ienv
-      ienv1 ienv2)`,
+    envRel_env_rel (extend_dec_tenv tenv1 tenv2) (extend_dec_ienv ienv1
+      ienv2)`,
   CHEAT_TAC);;
 
 let env_rel_empty = prove
@@ -412,15 +400,14 @@ let env_rel_empty = prove
 add_simp env_rel_empty;;
 
 let env_rel_lift = prove
- (`!tenv ienv mn. envRel_env_rel tenv ienv ==> envRel_env_rel
-  (tenvLift mn tenv) (lift_ienv mn ienv)`,
+ (`!tenv ienv mn. envRel_env_rel tenv ienv ==> envRel_env_rel (tenvLift mn
+  tenv) (lift_ienv mn ienv)`,
   CHEAT_TAC);;
 
 let ienv_to_tenv_def = new_definition
   `ienv_to_tenv ienv =
-     mk_type_env (nsMap (\(tvs,t). (tvs,convert_t t))
-       (inf_env_inf_v ienv)) (inf_env_inf_c ienv) (inf_env_inf_t
-       ienv)`;;
+     mk_type_env (nsMap (\(tvs,t). (tvs,convert_t t)) (inf_env_inf_v
+       ienv)) (inf_env_inf_c ienv) (inf_env_inf_t ienv)`;;
 
 let ienv_to_tenv_extend = prove
  (`!ienv1 ienv2.
@@ -429,8 +416,8 @@ let ienv_to_tenv_extend = prove
   CHEAT_TAC);;
 
 let ienv_to_tenv_lift = prove
- (`!mn ienv. ienv_to_tenv (lift_ienv mn ienv) = tenvLift mn
-  (ienv_to_tenv ienv)`,
+ (`!mn ienv. ienv_to_tenv (lift_ienv mn ienv) = tenvLift mn (ienv_to_tenv
+  ienv)`,
   CHEAT_TAC);;
 
 let env_rel_ienv_to_tenv = prove
@@ -439,8 +426,8 @@ let env_rel_ienv_to_tenv = prove
 
 let tenv_to_ienv_def = new_definition
   `tenv_to_ienv tenv =
-     mk_inf_env (nsMap (\(tvs,t). (tvs,unconvert_t t)) (type_env_v
-       tenv)) (type_env_c tenv) (type_env_t tenv)`;;
+     mk_inf_env (nsMap (\(tvs,t). (tvs,unconvert_t t)) (type_env_v tenv))
+       (type_env_c tenv) (type_env_t tenv)`;;
 
 let tenv_to_ienv_extend = prove
  (`!tenv1 tenv2.
@@ -453,8 +440,8 @@ let env_rel_tenv_to_ienv = prove
   CHEAT_TAC);;
 
 let tenv_to_ienv_lift = prove
- (`!mn tenv. tenv_to_ienv (tenvLift mn tenv) = lift_ienv mn
-  (tenv_to_ienv tenv)`,
+ (`!mn tenv. tenv_to_ienv (tenvLift mn tenv) = lift_ienv mn (tenv_to_ienv
+  tenv)`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

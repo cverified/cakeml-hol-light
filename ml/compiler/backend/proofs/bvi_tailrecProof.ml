@@ -44,16 +44,16 @@ add_simp get_bin_args_SOME;;
 
 let opbinargs_SOME = prove
  (`!exp opr.
-   opbinargs opr exp = SOME q <=> ~(opr = bvi_tailrec_Noop) /\ (?x
-     y. q = (x,y) /\ exp = bvi_Op (to_op opr) [x; y])`,
+   opbinargs opr exp = SOME q <=> ~(opr = bvi_tailrec_Noop) /\ (?x y. q =
+     (x,y) /\ exp = bvi_Op (to_op opr) [x; y])`,
   CHEAT_TAC);;
 add_simp opbinargs_SOME;;
 
 let decide_ty_simp1 = prove
- (`(decide_ty ty1 ty2 = bvi_tailrec_Int <=> ty1 = bvi_tailrec_Int /\ ty2
-  = bvi_tailrec_Int) /\
-   (decide_ty ty1 ty2 = bvi_tailrec_List <=> ty1 = bvi_tailrec_List
-     /\ ty2 = bvi_tailrec_List)`,
+ (`(decide_ty ty1 ty2 = bvi_tailrec_Int <=> ty1 = bvi_tailrec_Int /\ ty2 =
+  bvi_tailrec_Int) /\
+   (decide_ty ty1 ty2 = bvi_tailrec_List <=> ty1 = bvi_tailrec_List /\ ty2
+     = bvi_tailrec_List)`,
   CHEAT_TAC);;
 add_simp decide_ty_simp1;;
 
@@ -69,30 +69,25 @@ add_simp to_op_11;;
 
 let to_op_eq_simp = prove
  (`(to_op x = closLang_IntOp closLang_Add <=> (x = bvi_tailrec_Plus)) /\
-   (to_op x = closLang_IntOp closLang_Mult <=> (x =
-     bvi_tailrec_Times)) /\
-   (to_op x = closLang_IntOp closLang_Mod <=> (x = bvi_tailrec_Noop))
-     /\
+   (to_op x = closLang_IntOp closLang_Mult <=> (x = bvi_tailrec_Times)) /\
+   (to_op x = closLang_IntOp closLang_Mod <=> (x = bvi_tailrec_Noop)) /\
    (to_op x = closLang_BlockOp closLang_ListAppend <=> (x =
      bvi_tailrec_Append)) /\
-   (closLang_IntOp closLang_Add = to_op x <=> (x = bvi_tailrec_Plus))
-     /\
-   (closLang_IntOp closLang_Mult = to_op x <=> (x =
-     bvi_tailrec_Times)) /\
+   (closLang_IntOp closLang_Add = to_op x <=> (x = bvi_tailrec_Plus)) /\
+   (closLang_IntOp closLang_Mult = to_op x <=> (x = bvi_tailrec_Times)) /\
    (closLang_BlockOp closLang_ListAppend = to_op x <=> (x =
      bvi_tailrec_Append)) /\
-   (closLang_IntOp closLang_Mod = to_op x <=> (x =
-     bvi_tailrec_Noop))`,
+   (closLang_IntOp closLang_Mod = to_op x <=> (x = bvi_tailrec_Noop))`,
   CHEAT_TAC);;
 add_simp to_op_eq_simp;;
 
 let op_eq_simp = prove
- (`(op_eq bvi_tailrec_Plus x <=> (?xs. x = bvi_Op (closLang_IntOp
-  closLang_Add) xs)) /\
+ (`(op_eq bvi_tailrec_Plus x <=> (?xs. x = bvi_Op (closLang_IntOp closLang_Add)
+  xs)) /\
    (op_eq bvi_tailrec_Times x <=> (?xs. x = bvi_Op (closLang_IntOp
      closLang_Mult) xs)) /\
-   (op_eq bvi_tailrec_Append x <=> (?xs. x = bvi_Op
-     (closLang_BlockOp closLang_ListAppend) xs))`,
+   (op_eq bvi_tailrec_Append x <=> (?xs. x = bvi_Op (closLang_BlockOp
+     closLang_ListAppend) xs))`,
   CHEAT_TAC);;
 add_simp op_eq_simp;;
 
@@ -120,8 +115,8 @@ add_simp decide_ty_simp;;
 let ty_rel_def = new_definition
   `ty_rel = ALL2
      (\v t. (t = bvi_tailrec_Int ==> (?k. v = bvlSem_Number k)) /\
-            (t = bvi_tailrec_List ==> (?ys. bvlSem_v_to_list v =
-              SOME ys)))`;;
+            (t = bvi_tailrec_List ==> (?ys. bvlSem_v_to_list v = SOME
+              ys)))`;;
 
 (* HOL4 bvi_tailrecProofScript.sml:120-122: ML code, not ported *)
 
@@ -138,8 +133,8 @@ let term_ok_int_SING = prove
      bviSem_evaluate ([exp],env,s) = (r,t) ==>
        s = t /\
        (?v. r = Rval [v] /\
-       (!((s:('c,'ffi)bviSem_state)). bviSem_evaluate ([exp],env,s) =
-         (r,s)) /\
+       (!((s:('c,'ffi)bviSem_state)). bviSem_evaluate ([exp],env,s) = (r,s))
+         /\
        (?k. v = bvlSem_Number k))`,
   CHEAT_TAC);;
 
@@ -152,8 +147,8 @@ let term_ok_any_SING = prove
      bviSem_evaluate ([exp],env,s) = (r,t) ==>
        s = t /\
        (?v. r = Rval [v] /\
-       (!((s:('c,'ffi)bviSem_state)). bviSem_evaluate ([exp],env,s) =
-         (r,s)) /\
+       (!((s:('c,'ffi)bviSem_state)). bviSem_evaluate ([exp],env,s) = (r,s))
+         /\
        (list' ==> (?ys. bvlSem_v_to_list v = SOME ys))))`,
   CHEAT_TAC);;
 
@@ -164,18 +159,18 @@ let term_ok_SING = prove
      bviSem_evaluate ([exp],env,s) = (r,t) ==>
        s = t /\
        (?v. r = Rval [v] /\
-       (!((s:('c,'ffi)bviSem_state)). bviSem_evaluate ([exp],env,s) =
-         (r,s)) /\
+       (!((s:('c,'ffi)bviSem_state)). bviSem_evaluate ([exp],env,s) = (r,s))
+         /\
        (match ty with
-         bvi_tailrec_Int -> (?k. v = bvlSem_Number k) |
-           bvi_tailrec_List -> (?ys. bvlSem_v_to_list v = SOME ys) |
-           _1 -> T))`,
+         bvi_tailrec_Int -> (?k. v = bvlSem_Number k)
+       | bvi_tailrec_List -> (?ys. bvlSem_v_to_list v = SOME ys)
+       | _ -> T))`,
   CHEAT_TAC);;
 
 let op_id_val_def = define_cases
   [`op_id_val bvi_tailrec_Plus = bvlSem_Number (&0)`;
    `op_id_val bvi_tailrec_Times = bvlSem_Number (&1)`;
-   `op_id_val (bvi_tailrec_Append:assoc_op) = bvlSem_Block nil_tag []`;
+   `op_id_val bvi_tailrec_Append = bvlSem_Block nil_tag []`;
    `op_id_val bvi_tailrec_Noop = bvlSem_Number (&6333)`];;
 
 let scan_expr_not_Noop = prove
@@ -191,12 +186,12 @@ let bvi_tailrecProof_env_rel_def = new_definition
        LENGTH env1 = acc /\
        LENGTH env2 > acc /\
        (match ty with
-         bvi_tailrec_Int -> (?k. EL acc env2 = bvlSem_Number k) |
-           bvi_tailrec_List -> (?ys. bvlSem_v_to_list (EL acc env2) =
-           SOME ys) | bvi_tailrec_Any -> F))`;;
+         bvi_tailrec_Int -> (?k. EL acc env2 = bvlSem_Number k)
+       | bvi_tailrec_List -> (?ys. bvlSem_v_to_list (EL acc env2) = SOME ys)
+       | bvi_tailrec_Any -> F))`;;
 
-(* HOL4 bvi_tailrecProofScript.sml:274: the overload in_ns_2, which
-   the port expands *)
+(* HOL4 bvi_tailrecProofScript.sml:274: the overload in_ns_2, which the port
+   expands *)
 
 let bvi_tailrecProof_code_rel_def = new_definition
   `bvi_tailrecProof_code_rel c1 c2 <=>
@@ -207,8 +202,8 @@ let bvi_tailrecProof_code_rel_def = new_definition
        (check_exp loc arity exp = SOME op ==>
          (?n.
            !exp_aux exp_opt.
-           bvi_tailrec_compile_exp loc n arity exp = SOME
-             (exp_aux,exp_opt) ==>
+           bvi_tailrec_compile_exp loc n arity exp = SOME (exp_aux,exp_opt)
+             ==>
              sptree_lookup loc c2 = SOME (arity,exp_aux) /\
              sptree_lookup n c2 = SOME (arity + 1,exp_opt))))`;;
 
@@ -224,8 +219,8 @@ let code_rel_find_code_SOME = prove
 let code_rel_find_code_NONE = prove
  (`!c1 c2 (args:bvlSem_v list) a exp.
       bvi_tailrecProof_code_rel c1 c2 /\
-      bvlSem_find_code NONE args c1 = SOME (a,exp) ==>
-        ~(bvlSem_find_code NONE args c2 = NONE)`,
+      bvlSem_find_code NONE args c1 = SOME (a,exp) ==> ~(bvlSem_find_code
+        NONE args c2 = NONE)`,
   CHEAT_TAC);;
 
 let code_rel_domain = prove
@@ -234,10 +229,8 @@ let code_rel_domain = prove
   CHEAT_TAC);;
 
 let evaluate_let_wrap = prove
- (`!x op vs ((s:('c,'ffi)bviSem_state)) r t. ~(op = bvi_tailrec_Noop)
-  ==>
-     bviSem_evaluate ([let_wrap (LENGTH vs) (id_from_op op) x],vs,s)
-       =
+ (`!x op vs ((s:('c,'ffi)bviSem_state)) r t. ~(op = bvi_tailrec_Noop) ==>
+     bviSem_evaluate ([let_wrap (LENGTH vs) (id_from_op op) x],vs,s) =
      bviSem_evaluate ([x],APPEND (APPEND vs [op_id_val op]) vs,s)`,
   CHEAT_TAC);;
 
@@ -274,8 +267,8 @@ let ty_rel_decide_ty = prove
 (* [local] *)
 let ty_rel_APPEND = prove
  (`!env ts ws vs.
-      ty_rel env ts /\ ty_rel vs ws ==> ty_rel (APPEND vs env)
-        (APPEND ws ts)`,
+      ty_rel env ts /\ ty_rel vs ws ==> ty_rel (APPEND vs env) (APPEND ws
+        ts)`,
   CHEAT_TAC);;
 
 let LAST1_thm = prove
@@ -286,26 +279,34 @@ let try_update_EL = prove
  (`n < LENGTH ts ==>
    EL n (try_update ty idx ts) =
      (match idx with
-       NONE -> EL n ts | SOME m ->
-         (if n < m then
-           EL n ts else if n > m then
-           EL n ts else if EL n ts = bvi_tailrec_Any \/ EL n ts = ty
-             then
-           ty else
-           EL n ts))`,
+       NONE -> EL n ts
+     | SOME m ->
+         if n < m then
+           EL n ts
+         else if n > m then
+           EL n ts
+         else if EL n ts = bvi_tailrec_Any \/ EL n ts = ty then
+           ty
+         else EL n ts)`,
   CHEAT_TAC);;
 
 let try_update_twice = prove
  (`n < LENGTH ts ==>
    EL n (try_update ty idx1 (try_update ty idx2 ts)) =
      (match (idx1,idx2) with
-       (NONE,NONE) -> EL n ts | (NONE,SOME b) ->
-         (if ~(n = b) then EL n ts else if EL n ts = bvi_tailrec_Any
-           then ty else EL n ts) | (SOME a,NONE) ->
-         (if ~(n = a) then EL n ts else if EL n ts = bvi_tailrec_Any
-           then ty else EL n ts) | (SOME a,SOME b) ->
-         (if ~(n = a) /\ ~(n = b) then EL n ts else if EL n ts =
-           bvi_tailrec_Any then ty else EL n ts))`,
+       (NONE,NONE) -> EL n ts
+     | (NONE,SOME b) ->
+         if ~(n = b) then EL n ts
+         else if EL n ts = bvi_tailrec_Any then ty
+         else EL n ts
+     | (SOME a,NONE) ->
+         if ~(n = a) then EL n ts
+         else if EL n ts = bvi_tailrec_Any then ty
+         else EL n ts
+     | (SOME a,SOME b) ->
+         if ~(n = a) /\ ~(n = b) then EL n ts
+         else if EL n ts = bvi_tailrec_Any then ty
+         else EL n ts)`,
   CHEAT_TAC);;
 
 let index_of_simp = prove
@@ -328,17 +329,16 @@ let check_op_thm = prove
      bvi_tailrec_is_rec loc x /\
      term_ok ts (op_type opr) y /\
      expr = bvi_Op (to_op opr) [y; x] /\
-     (exp = bvi_Op (to_op opr) [x; y] \/ exp = bvi_Op (to_op opr)
-       [y; x]))`,
+     (exp = bvi_Op (to_op opr) [x; y] \/ exp = bvi_Op (to_op opr) [y; x]))`,
   CHEAT_TAC);;
 
 let rewrite_scan_expr = prove
  (`!loc next' op acc ts exp tt ty p exp2 r opr.
-   rewrite loc next' op acc ts exp = (p,exp2) /\ ~(op =
-     bvi_tailrec_Noop) /\
+   rewrite loc next' op acc ts exp = (p,exp2) /\ ~(op = bvi_tailrec_Noop) /\
    scan_expr ts loc [exp] = [(tt,ty,r,opr)] ==>
      (match opr with
-       SOME op1 -> op = op1 ==> p | NONE -> ~p)`,
+       SOME op1 -> op = op1 ==> p
+     | NONE -> ~p)`,
   CHEAT_TAC);;
 
 let scan_expr_op_type = prove
@@ -346,15 +346,14 @@ let scan_expr_op_type = prove
      scan_expr ts loc xs = ys ==>
      ALL (\(tt,ty,r,opr).
        match opr with
-         SOME op -> ~(ty = bvi_tailrec_Any) ==> op_type op = ty |
-           NONE -> T) ys`,
+         SOME op -> ~(ty = bvi_tailrec_Any) ==> op_type op = ty
+       | NONE -> T) ys`,
   CHEAT_TAC);;
 
 let optimized_code_def = new_definition
   `optimized_code loc arity exp n c op =
      (?exp_aux exp_opt.
-         bvi_tailrec_compile_exp loc n arity exp = SOME
-           (exp_aux,exp_opt) /\
+         bvi_tailrec_compile_exp loc n arity exp = SOME (exp_aux,exp_opt) /\
          check_exp loc arity exp = SOME op /\
          sptree_lookup loc c = SOME (arity,exp_aux) /\
          sptree_lookup n c = SOME (arity + 1,exp_opt))`;;
@@ -365,8 +364,7 @@ let code_rel_subspt = prove
   CHEAT_TAC);;
 
 let compile_each_LENGTH = prove
- (`!n prog. LENGTH (SND (bvi_tailrec_compile_each n prog)) >= LENGTH
-  prog`,
+ (`!n prog. LENGTH (SND (bvi_tailrec_compile_each n prog)) >= LENGTH prog`,
   CHEAT_TAC);;
 
 let free_names_def = new_definition
@@ -375,8 +373,8 @@ let free_names_def = new_definition
 
 (* [local] *)
 let more_free_names = prove
- (`bvi_tailrecProof_free_names n name ==> bvi_tailrecProof_free_names
-  (n + bvl_to_bvi_namespaces) name`,
+ (`bvi_tailrecProof_free_names n name ==> bvi_tailrecProof_free_names (n +
+  bvl_to_bvi_namespaces) name`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -390,8 +388,8 @@ let is_free_name = prove
 let compile_exp_next_addr = prove
  (cake_as_vars (fun () ->
     `bvi_tailrec_compile_exp loc next args exp = NONE ==>
-        bvi_tailrec_compile_exp loc (next +
-          bvl_to_bvi_namespaces) args exp = NONE`),
+        bvi_tailrec_compile_exp loc (next + bvl_to_bvi_namespaces) args
+          exp = NONE`),
   CHEAT_TAC);;
 
 let compile_each_untouched = prove
@@ -408,8 +406,8 @@ let compile_each_untouched = prove
 let EVERY_free_names_SUCSUC = prove
  (`!xs.
       ALL (bvi_tailrecProof_free_names n o FST) xs ==>
-        ALL (bvi_tailrecProof_free_names (n +
-          bvl_to_bvi_namespaces) o FST) xs`,
+        ALL (bvi_tailrecProof_free_names (n + bvl_to_bvi_namespaces) o
+          FST) xs`,
   CHEAT_TAC);;
 
 let compile_each_touched = prove
@@ -421,12 +419,11 @@ let compile_each_touched = prove
      check_exp loc arity exp = SOME op /\
      bvi_tailrec_compile_each next' prog = (next1,prog2) ==>
        (?k. !exp_aux exp_opt.
-         bvi_tailrec_compile_exp loc (next' + bvl_to_bvi_namespaces *
-           k) arity exp = SOME (exp_aux,exp_opt) ==>
-           sptree_lookup loc (fromAList prog2) = SOME (arity,exp_aux)
-             /\
-           sptree_lookup (next' + bvl_to_bvi_namespaces * k)
-             (fromAList prog2) = SOME (arity + 1,exp_opt))`,
+         bvi_tailrec_compile_exp loc (next' + bvl_to_bvi_namespaces * k)
+           arity exp = SOME (exp_aux,exp_opt) ==>
+           sptree_lookup loc (fromAList prog2) = SOME (arity,exp_aux) /\
+           sptree_lookup (next' + bvl_to_bvi_namespaces * k) (fromAList
+             prog2) = SOME (arity + 1,exp_opt))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -434,8 +431,8 @@ let compile_each_touched = prove
    variables of its own are read as variables *)
 let check_exp_NONE_compile_exp = prove
  (cake_as_vars (fun () ->
-    `check_exp loc arity exp = NONE ==> bvi_tailrec_compile_exp loc
-  next arity exp = NONE`),
+    `check_exp loc arity exp = NONE ==> bvi_tailrec_compile_exp loc next
+  arity exp = NONE`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -464,18 +461,17 @@ let compile_each_code_rel = prove
     `bvi_tailrec_compile_each next prog = (next1,prog2) /\
      ALL_DISTINCT (MAP FST prog) /\
      ALL (bvi_tailrecProof_free_names next o FST) prog ==>
-       bvi_tailrecProof_code_rel (fromAList prog) (fromAList
-         prog2)`),
+       bvi_tailrecProof_code_rel (fromAList prog) (fromAList prog2)`),
   CHEAT_TAC);;
 
 let compile_each_next_mono = prove
- (`!n xs n1 ys. bvi_tailrec_compile_each n xs = (n1,ys) ==> (?k. n1 =
-  n + bvl_to_bvi_namespaces * k)`,
+ (`!n xs n1 ys. bvi_tailrec_compile_each n xs = (n1,ys) ==> (?k. n1 = n +
+  bvl_to_bvi_namespaces * k)`,
   CHEAT_TAC);;
 
 let compile_prog_next_mono = prove
- (`!b n xs n1 ys. bvi_tailrec_compile_prog b n xs = (n1,ys) ==> (?k.
-  n1 = n + bvl_to_bvi_namespaces * k)`,
+ (`!b n xs n1 ys. bvi_tailrec_compile_prog b n xs = (n1,ys) ==> (?k. n1 = n +
+  bvl_to_bvi_namespaces * k)`,
   CHEAT_TAC);;
 
 let compile_each_MEM = prove
@@ -501,16 +497,14 @@ let compile_each_intro = prove
   CHEAT_TAC);;
 
 let compile_each_ALL_DISTINCT = prove
- (`bvi_tailrec_compile_each n xs = (n1,ys) /\ ALL_DISTINCT (MAP FST xs)
-  /\
+ (`bvi_tailrec_compile_each n xs = (n1,ys) /\ ALL_DISTINCT (MAP FST xs) /\
    ALL (bvi_tailrecProof_free_names n o FST) xs ==>
    ALL_DISTINCT (MAP FST ys) /\
    ALL (bvi_tailrecProof_free_names n1 o FST) ys`,
   CHEAT_TAC);;
 
 let compile_prog_ALL_DISTINCT = prove
- (`bvi_tailrec_compile_prog b n xs = (n1,ys) /\ ALL_DISTINCT (MAP FST
-  xs) /\
+ (`bvi_tailrec_compile_prog b n xs = (n1,ys) /\ ALL_DISTINCT (MAP FST xs) /\
    ALL (bvi_tailrecProof_free_names n o FST) xs ==>
    ALL_DISTINCT (MAP FST ys) /\
    ALL (bvi_tailrecProof_free_names n1 o FST) ys`,
@@ -519,8 +513,8 @@ let compile_prog_ALL_DISTINCT = prove
 let namespace_rel_def = new_definition
   `bvi_tailrecProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
      (!n. n IN domain c2 /\ bvl_num_stubs <= n ==> (if (\n. n MOD
-       bvl_to_bvi_namespaces = 2) n then ~(n IN domain c1) else n IN
-       domain c1)) /\
+       bvl_to_bvi_namespaces = 2) n then ~(n IN domain c1) else n IN domain
+       c1)) /\
      (!n. n IN domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
        bvl_to_bvi_namespaces = 2) n)) /\
      (!n. n IN domain c2 /\ n < bvl_num_stubs ==> n IN domain c1)`;;
@@ -529,26 +523,23 @@ let input_condition_def = new_definition
   `bvi_tailrecProof_input_condition next' prog <=>
      ALL (bvi_tailrecProof_free_names next' o FST) prog /\
     ALL_DISTINCT (MAP FST prog) /\
-    ALL ((~) o (\n. n MOD bvl_to_bvi_namespaces = 2) o FST) (FILTER
-      ((<=) bvl_num_stubs o FST) prog) /\
-    bvl_num_stubs <= next' /\ (\n. n MOD bvl_to_bvi_namespaces =
-      2) next'`;;
+    ALL ((~) o (\n. n MOD bvl_to_bvi_namespaces = 2) o FST) (FILTER ((<=)
+      bvl_num_stubs o FST) prog) /\
+    bvl_num_stubs <= next' /\ (\n. n MOD bvl_to_bvi_namespaces = 2) next'`;;
 
 let bvi_tailrecProof_state_rel_def = new_definition
-  `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=>
-  bviSem_state_refs
+  `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=> bviSem_state_refs
      t = bviSem_state_refs s /\ bviSem_state_clock
      t = bviSem_state_clock s /\ bviSem_state_global
      t = bviSem_state_global s /\ bviSem_state_ffi
      t = bviSem_state_ffi s /\ bviSem_state_compile_oracle
-     t = state_co bvi_tailrec_compile_each
-       (bviSem_state_compile_oracle s) /\ bviSem_state_compile
-     s = state_cc bvi_tailrec_compile_each (bviSem_state_compile t)
+     t = state_co bvi_tailrec_compile_each (bviSem_state_compile_oracle s)
+       /\ bviSem_state_compile
+     s = state_cc bvi_tailrec_compile_each (bviSem_state_compile t) /\
+     bvi_tailrecProof_code_rel (bviSem_state_code s) (bviSem_state_code t)
        /\
-     bvi_tailrecProof_code_rel (bviSem_state_code s)
-       (bviSem_state_code t) /\
-     bvi_tailrecProof_namespace_rel (bviSem_state_code s)
-       (bviSem_state_code t) /\
+     bvi_tailrecProof_namespace_rel (bviSem_state_code s) (bviSem_state_code
+       t) /\
      (!n. let ((next',cfg),prog) = bviSem_state_compile_oracle s n in
              bvi_tailrecProof_input_condition next' prog) /\
      (!n. n IN domain (bviSem_state_code t) /\ (\n. n MOD
@@ -583,11 +574,9 @@ let code_rel_union = prove
   CHEAT_TAC);;
 
 let namespace_rel_union = prove
- (`bvi_tailrecProof_namespace_rel x y /\ bvi_tailrecProof_namespace_rel
-  t s /\
+ (`bvi_tailrecProof_namespace_rel x y /\ bvi_tailrecProof_namespace_rel t s /\
    DISJOINT (domain s) (domain y) ==>
-   bvi_tailrecProof_namespace_rel (sptree_union x t) (sptree_union
-     y s)`,
+   bvi_tailrecProof_namespace_rel (sptree_union x t) (sptree_union y s)`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -596,26 +585,24 @@ let compile_each_namespace_rel = prove
  (cake_as_vars (fun () ->
     `bvi_tailrec_compile_each next prog = (next1,prog2) /\ (\n. n MOD
   bvl_to_bvi_namespaces = 2) next /\ bvl_num_stubs <= next /\
-     ALL ((~) o (\n. n MOD bvl_to_bvi_namespaces = 2) o FST)
-       (FILTER ((<=) bvl_num_stubs o FST) prog) ==>
-     bvi_tailrecProof_namespace_rel (fromAList prog) (fromAList
-       prog2)`),
+     ALL ((~) o (\n. n MOD bvl_to_bvi_namespaces = 2) o FST) (FILTER ((<=)
+       bvl_num_stubs o FST) prog) ==>
+     bvi_tailrecProof_namespace_rel (fromAList prog) (fromAList prog2)`),
   CHEAT_TAC);;
 
 let state_rel_do_app_aux = prove
  (`bviSem_do_app_aux op vs s = res /\
-   bvi_tailrecProof_state_rel s t /\ ~(op = closLang_Install) /\ (!n.
-     ~(op = closLang_Label n)) ==>
+   bvi_tailrecProof_state_rel s t /\ ~(op = closLang_Install) /\ (!n. ~(op =
+     closLang_Label n)) ==>
    (?res'.
      bviSem_do_app_aux op vs t = res' /\
-     OPTREL (OPTREL (RPROD (=) bvi_tailrecProof_state_rel)) res
-       res')`,
+     OPTREL (OPTREL (RPROD (=) bvi_tailrecProof_state_rel)) res res')`,
   CHEAT_TAC);;
 
 let state_rel_do_app = prove
  (`bviSem_do_app op vs s = Rval (r,s') /\
-   bvi_tailrecProof_state_rel s t /\ ~(op = closLang_Install) /\ (!n.
-     ~(op = closLang_Label n)) ==>
+   bvi_tailrecProof_state_rel s t /\ ~(op = closLang_Install) /\ (!n. ~(op =
+     closLang_Label n)) ==>
    (?t'.
      bviSem_do_app op vs t = Rval (r,t') /\
      bvi_tailrecProof_state_rel s' t')`,
@@ -623,9 +610,9 @@ let state_rel_do_app = prove
 
 let state_rel_do_app_err = prove
  (`bviSem_do_app op vs s = Rerr e /\
-   bvi_tailrecProof_state_rel s t /\ ~(op = closLang_Install) /\ (!n.
-     ~(op = closLang_Label n)) /\ (!n. ~(op = closLang_BlockOp
-     (closLang_Build n))) ==>
+   bvi_tailrecProof_state_rel s t /\ ~(op = closLang_Install) /\ (!n. ~(op =
+     closLang_Label n)) /\ (!n. ~(op = closLang_BlockOp (closLang_Build n)))
+     ==>
    bviSem_do_app op vs t = Rerr e`,
   CHEAT_TAC);;
 
@@ -655,8 +642,7 @@ let term_ok_int_extend = prove
 
 let term_ok_any_extend = prove
  (`!ts list' exp extra.
-     term_ok_any ts list' exp ==> term_ok_any (APPEND ts extra)
-       list' exp`,
+     term_ok_any ts list' exp ==> term_ok_any (APPEND ts extra) list' exp`,
   CHEAT_TAC);;
 
 let term_ok_extend = prove
@@ -695,8 +681,7 @@ let op_type_lem = prove
 add_simp op_type_lem;;
 
 let evaluate_rewrite_tail = prove
- (`!xs ((s:(num#'c,'ffi)bviSem_state)) env1 r t opt s' acc env2 loc ts
-  ty.
+ (`!xs ((s:(num#'c,'ffi)bviSem_state)) env1 r t opt s' acc env2 loc ts ty.
      bviSem_evaluate (xs,env1,s) = (r,t) /\
      bvi_tailrecProof_env_rel ty opt acc env1 env2 /\
      bvi_tailrecProof_state_rel s s' /\
@@ -707,20 +692,17 @@ let evaluate_rewrite_tail = prove
        bvi_tailrecProof_state_rel t t' /\
        (opt ==>
          (!op n exp arity.
-           sptree_lookup loc (bviSem_state_code s) = SOME (arity,exp)
-             /\
-           optimized_code loc arity exp n (bviSem_state_code s') op
-             /\
+           sptree_lookup loc (bviSem_state_code s) = SOME (arity,exp) /\
+           optimized_code loc arity exp n (bviSem_state_code s') op /\
            op_type op = ty /\
            (?op1 tt ty r.
-             scan_expr ts loc [HD xs] = [(tt,ty,r,SOME op1)] /\ ~(ty
-               = bvi_tailrec_Any) /\ ~(op1 = bvi_tailrec_Noop)
-               /\ op_type op1 = op_type op) ==>
+             scan_expr ts loc [HD xs] = [(tt,ty,r,SOME op1)] /\ ~(ty =
+               bvi_tailrec_Any) /\ ~(op1 = bvi_tailrec_Noop) /\ op_type op1 =
+               op_type op) ==>
                (let (lr,x) = rewrite loc n op acc ts (HD xs) in
                  ?rrr t1 t2.
                  bviSem_evaluate ([x],env2,s') = (rrr,t1) /\
-                 bviSem_evaluate ([apply_op op (bvi_Var acc) (HD
-                   xs)],
+                 bviSem_evaluate ([apply_op op (bvi_Var acc) (HD xs)],
                    env2,s') = (rrr,t2) /\
                  bvi_tailrecProof_state_rel t t1 /\
                  bvi_tailrecProof_state_rel t t2))))`,
@@ -741,15 +723,15 @@ let evaluate_rewrite_tail = prove
 (* HOL4 bvi_tailrecProofScript.sml:1468-1681: a proof *)
 
 (* HOL4 bvi_tailrecProofScript.sml:1683-1857: a proof *)
-(* HOL4 bvi_tailrecProofScript.sml:1858: code that the source has in
-   a comment *)
-(* HOL4 bvi_tailrecProofScript.sml:1859: code that the source has in
-   a comment *)
-(* HOL4 bvi_tailrecProofScript.sml:1860: code that the source has in
-   a comment *)
+(* HOL4 bvi_tailrecProofScript.sml:1858: code that the source has in a
+   comment *)
+(* HOL4 bvi_tailrecProofScript.sml:1859: code that the source has in a
+   comment *)
+(* HOL4 bvi_tailrecProofScript.sml:1860: code that the source has in a
+   comment *)
 (* HOL4 bvi_tailrecProofScript.sml:1861-1868: a proof *)
-(* HOL4 bvi_tailrecProofScript.sml:1869: code that the source has in
-   a comment *)
+(* HOL4 bvi_tailrecProofScript.sml:1869: code that the source has in a
+   comment *)
 (* HOL4 bvi_tailrecProofScript.sml:1870-2050: a proof *)
 
 (* HOL4 bvi_tailrecProofScript.sml:2052-2132: a proof *)
@@ -769,20 +751,18 @@ let evaluate_compile_each = prove
     `bvi_tailrecProof_input_condition next' prog /\
      (!n next' cfg prog. co n = ((next',cfg),prog) ==>
        bvi_tailrecProof_input_condition next' prog) /\
-     (!n. MEM n (MAP FST (SND (bvi_tailrec_compile_each next'
-       prog))) /\ (\n. n MOD bvl_to_bvi_namespaces = 2) n ==> n < FST
-       (FST (co 0))) /\
+     (!n. MEM n (MAP FST (SND (bvi_tailrec_compile_each next' prog)))
+       /\ (\n. n MOD bvl_to_bvi_namespaces = 2) n ==> n < FST (FST (co 0))) /\
      bviSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],
                bviSem_initial_state ffi0 (fromAList prog) co
-                   (state_cc bvi_tailrec_compile_each cc) k) =
-                     (r,s) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
+                   (state_cc bvi_tailrec_compile_each cc) k) = (r,s)
+                     /\ ~(r = Rerr (Rabort Rtype_error)) ==>
      (?s2.
        bviSem_evaluate
         ([bvi_Call 0 (SOME start) [] NONE],[],
           bviSem_initial_state ffi0 (fromAList (SND
             (bvi_tailrec_compile_each next' prog)))
-              (state_co bvi_tailrec_compile_each co) cc k) = (r,s2)
-                /\
+              (state_co bvi_tailrec_compile_each co) cc k) = (r,s2) /\
        bvi_tailrecProof_state_rel s s2)`),
   CHEAT_TAC);;
 
@@ -793,11 +773,10 @@ let compile_each_semantics = prove
     `bvi_tailrecProof_input_condition n prog /\
      (!k n cfg prog. co k = ((n,cfg),prog) ==>
        bvi_tailrecProof_input_condition n prog) /\
-     (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
-       = 2) k ==> k < FST (FST (co 0))) /\
-     SND (bvi_tailrec_compile_each n prog) = prog2
-       /\ ~(bviSem_semantics ffi (fromAList prog) co (state_cc
-       bvi_tailrec_compile_each cc) start =
+     (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces = 2) k
+       ==> k < FST (FST (co 0))) /\
+     SND (bvi_tailrec_compile_each n prog) = prog2 /\ ~(bviSem_semantics
+       ffi (fromAList prog) co (state_cc bvi_tailrec_compile_each cc) start =
         ffi_Fail) ==>
      bviSem_semantics ffi (fromAList prog) co (state_cc
        bvi_tailrec_compile_each cc) start =
@@ -813,11 +792,11 @@ let bvi_tailrecProof_compile_prog_semantics = prove
     `bvi_tailrecProof_input_condition n prog /\
      (!k n cfg prog. co k = ((n,cfg),prog) ==>
        bvi_tailrecProof_input_condition n prog) /\
-     (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
-       = 2) k ==> k < FST (FST (co 0))) /\
-     SND (bvi_tailrec_compile_prog b n prog) = prog2
-       /\ ~(bviSem_semantics ffi (fromAList prog) co (state_cc
-       (bvi_tailrec_compile_prog b) cc) start =
+     (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces = 2) k
+       ==> k < FST (FST (co 0))) /\
+     SND (bvi_tailrec_compile_prog b n prog) = prog2 /\ ~(bviSem_semantics
+       ffi (fromAList prog) co (state_cc (bvi_tailrec_compile_prog b) cc) start
+       =
         ffi_Fail) ==>
      bviSem_semantics ffi (fromAList prog) co (state_cc
        (bvi_tailrec_compile_prog b) cc) start =
@@ -828,22 +807,21 @@ let bvi_tailrecProof_compile_prog_semantics = prove
 let compile_each_labels = prove
  (`!next1 code1 next2 code2.
      bvi_tailrec_compile_each next1 code1 = (next2,code2) ==>
-     set_of_list (MAP FST code1) UNION {next1 + k *
-       bvl_to_bvi_namespaces | k | next1 + k * bvl_to_bvi_namespaces <
-       next2} =
+     set_of_list (MAP FST code1) UNION {next1 + k * bvl_to_bvi_namespaces |
+       k | next1 + k * bvl_to_bvi_namespaces < next2} =
      set_of_list (MAP FST code2) /\
      next1 <= next2`,
   CHEAT_TAC);;
 
 let compile_each_keeps_names = prove
- (`!next' xs next' ys. bvi_tailrec_compile_each next' xs = (next',ys)
-  /\ MEM x (MAP FST xs) ==> MEM x (MAP FST ys)`,
+ (`!next' xs next' ys. bvi_tailrec_compile_each next' xs = (next',ys) /\ MEM
+  x (MAP FST xs) ==> MEM x (MAP FST ys)`,
   CHEAT_TAC);;
 
 let compile_prog_keeps_names = prove
  (`!b next' xs next' ys.
-     bvi_tailrec_compile_prog b next' xs = (next',ys) /\ MEM x (MAP
-       FST xs) ==> MEM x (MAP FST ys)`,
+     bvi_tailrec_compile_prog b next' xs = (next',ys) /\ MEM x (MAP FST
+       xs) ==> MEM x (MAP FST ys)`,
   CHEAT_TAC);;
 
 let get_code_labels_rewrite = prove
@@ -861,33 +839,32 @@ add_simp get_code_labels_let_wrap;;
 
 let get_code_labels_compile_exp = prove
  (`!loc next' arity exp exp_aux exp_opt.
-   bvi_tailrec_compile_exp loc next' arity exp = SOME
-     (exp_aux,exp_opt) ==>
-   bviProps_get_code_labels exp_aux UNION bviProps_get_code_labels
-     exp_opt SUBSET next' INSERT bviProps_get_code_labels exp`,
+   bvi_tailrec_compile_exp loc next' arity exp = SOME (exp_aux,exp_opt) ==>
+   bviProps_get_code_labels exp_aux UNION bviProps_get_code_labels exp_opt
+     SUBSET next' INSERT bviProps_get_code_labels exp`,
   CHEAT_TAC);;
 
 let compile_each_good_code_labels = prove
  (`!n c n2 c2.
    bvi_tailrec_compile_each n c = (n2,c2) /\
-   UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND)
-     c)) SUBSET all /\
-   {n + k * bvl_to_bvi_namespaces | k | n + k * bvl_to_bvi_namespaces
-     < n2} SUBSET all ==>
-   UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND)
-     c2)) SUBSET all`,
+   UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) c))
+     SUBSET all /\
+   {n + k * bvl_to_bvi_namespaces | k | n + k * bvl_to_bvi_namespaces < n2}
+     SUBSET all ==>
+   UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) c2))
+     SUBSET all`,
   CHEAT_TAC);;
 
 (* compile_prog_good_code_labels *)
 let bvi_tailrecProof_compile_prog_good_code_labels = prove
  (`!b n c n2 c2.
    bvi_tailrec_compile_prog b n c = (n2,c2) /\
-   UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND)
-     c)) SUBSET all /\
-   {n + k * bvl_to_bvi_namespaces | k | n + k * bvl_to_bvi_namespaces
-     < n2} SUBSET all ==>
-   UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND)
-     c2)) SUBSET all`,
+   UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) c))
+     SUBSET all /\
+   {n + k * bvl_to_bvi_namespaces | k | n + k * bvl_to_bvi_namespaces < n2}
+     SUBSET all ==>
+   UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) c2))
+     SUBSET all`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

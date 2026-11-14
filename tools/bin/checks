@@ -23,14 +23,14 @@
 #   defshape  a definition has the connectives of the source's
 #   freenames a name of the shape of an accessor that the port
 #             has no constant of (needs tools/constants.txt)
-#   lines     no line of ml/ outside a comment is longer than 72
+#   lines     no line of ml/ outside a comment is longer than 79
 #             characters (a comment of a source is unaltered)
 #   ancestors every file says which theories its source can see,
 #             and puts the interface back at the end of itself
 #   stale     every entry of an override table still names a
 #             block that the source it is about has
 #   proofs    every proof of proofs/ names a theorem that the port
-#             states, and no line of one is over 72 characters
+#             states, and no line of one is over 79 characters
 #   prfcheck  a section uses nothing that its file binds after the
 #             theorem it proves, and its tactic has its brackets
 #   secorder  a helper of a section stands before its first use
@@ -65,7 +65,7 @@ echo "=== the connectives of the definitions"
 python3 -I tools/defshape.py 2>&1 | tail -3
 echo "=== the names that look like an accessor"
 python3 -I tools/freenames.py 2>&1 | tail -4
-echo "=== lines over 72 characters"
+echo "=== lines over 79 characters"
 python3 -I tools/lines.py 2>&1 | tail -6
 echo "=== the theories that a file says its source can see"
 python3 -I tools/ancestors.py 2>&1 | tail -3

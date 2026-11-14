@@ -131,11 +131,10 @@ cheat, and a cheat that another cheat depends on is fine.
 - A comment of a source is kept **unaltered**, whatever it is
   about -- a comment about HOL4 is a comment of the source and
   stays as it stands.  It is not reflowed and not shortened, so
-  a line of one may be longer than 72 characters (691 of them
-  are); `tools/lines.py` is the check, and what it has to report
-  is no line over 72 _outside_ a comment.  The one thing that is
-  put right is a quote that OCaml would read as the start of a
-  string.
+  a line of one may be longer than 79 characters; `tools/lines.py`
+  is the check, and what it has to report is no line over 79
+  _outside_ a comment.  The one thing that is put right is a
+  quote that OCaml would read as the start of a string.
 - Every file of the port starts with a **preface**: a comment
   that says what the file is (a definition theory of CakeML, a
   proof theory and of which file, or a HOL4 library theory of
@@ -166,7 +165,7 @@ cheat, and a cheat that another cheat depends on is fine.
 - The HOL Light files must **load efficiently**.  A definition
   that takes minutes to process is a bug; fix it (or record the
   timing in a comment if there really is no alternative).
-- Lines in `.ml` files are at most 72 characters.
+- Lines in `.ml` files are at most 79 characters.
 - The port must not add **any axiom** _when the whole port is
   done_: `length (axioms())` has to be 3 then, the three axioms
   of HOL Light's kernel.  So in the end no `mk_thm`, no

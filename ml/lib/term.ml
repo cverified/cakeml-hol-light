@@ -21,8 +21,7 @@ let term_INDUCT,term_RECURSION = define_datatype
 let pair_count_def,pair_count_ind = define_rec
   [`pair_count (term_Var v) = 0`;
    `pair_count (term_Const c) = 0`;
-   `pair_count (term_Pair t1 t2) = 1 + pair_count t1 + pair_count
-    t2`];;
+   `pair_count (term_Pair t1 t2) = 1 + pair_count t1 + pair_count t2`];;
 add_simp pair_count_def;;
 
 (* HOL4 termScript.sml: the case constant that its Datatype makes *)
@@ -39,7 +38,7 @@ let vars_def,vars_ind = define_wf
   `MEASURE (\x0. term_size (\x. 0) x0)`
   [`vars (term_Var x) = {x}`;
    `vars (term_Pair t1 t2) = vars t1 UNION vars t2`;
-   `vars (term_Const _2) = {}`];;
+   `vars (term_Const _) = {}`];;
 add_simp vars_def;;
 
 (* the termination relation is not in the HOL4 source; this one is

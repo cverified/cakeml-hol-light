@@ -21,8 +21,8 @@ let _ = cake_theory "mlint"
 (* HOL4 ancestors outside the port: gcd *)
 
 let toChar_def = new_definition
-  `toChar digit = (if digit < 10 then CHR (ORD (CHR 48) + digit) else
-  CHR ((ORD (CHR 65) + digit) - 10))`;;
+  `toChar digit = if digit < 10 then CHR (ORD (CHR 48) + digit)
+   else CHR ((ORD (CHR 65) + digit) - 10)`;;
 
 let toChar_HEX = prove
  (`d < 16 ==> (toChar d = HEX d)`,
@@ -36,31 +36,29 @@ let exp_for_dec_enc_def = new_definition
 (* compatibility with previous version*)
 let padLen_DEC_def = new_definition
   `padLen_DEC = exp_for_dec_enc`;;
-(* HOL4 mlintScript.sml:31: a theorem that HOL4 states as the value
-   of an ML expression: padLen_DEC_eq *)
+(* HOL4 mlintScript.sml:31: a theorem that HOL4 states as the value of an ML
+   expression: padLen_DEC_eq *)
 let maxSmall_DEC_def1 = new_definition
   `maxSmall_DEC = 10 EXP exp_for_dec_enc`;;
-(* HOL4 mlintScript.sml:35: a theorem that HOL4 states as the value
-   of an ML expression: maxSmall_DEC_def *)
+(* HOL4 mlintScript.sml:35: a theorem that HOL4 states as the value of an ML
+   expression: maxSmall_DEC_def *)
 
-(* HOL4 mlintScript.sml:37-38: the ML values that the definitions
-   below antiquote *)
+(* HOL4 mlintScript.sml:37-38: the ML values that the definitions below
+   antiquote *)
 
 (* the termination relation that HOL4 gives is
      inv_image (MEASURE I LEX MEASURE I)
-            (\(i,j,k,_1). (i * (10 EXP j)) + k,exp_for_dec_enc - j)
+            (\(i,j,k,_). (i * (10 EXP j)) + k,exp_for_dec_enc - j)
    which is not one that HOL Light takes here; the one
    below is what the port found for it *)
 (* HOL4 mlintScript.sml:45-54: the tactic that proves the termination *)
 let num_to_chars_def,num_to_chars_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x0)`
-  [`num_to_chars i 0 k acc = num_to_chars (i DIV (10 EXP
-    exp_for_dec_enc))
-          exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k)
-              acc`;
-   `num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then CONS
-    (toChar k) acc else num_to_chars i j (k DIV 10) (CONS (toChar
-    (k MOD 10)) acc))`];;
+  [`num_to_chars i 0 k acc = num_to_chars (i DIV (10 EXP exp_for_dec_enc))
+          exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k) acc`;
+   `num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then CONS (toChar k) acc
+          else num_to_chars i j (k DIV 10) (CONS (toChar (k MOD 10))
+              acc))`];;
 
 (* [local] *)
 let add_lt_divisible_iff = prove
@@ -74,21 +72,21 @@ let add_lt_divisible_iff = prove
 
 let num_to_chars_thm = prove
  (`!i j k acc.
-     num_to_chars i j k acc = APPEND (num_to_dec_string (k + (i *
-       (10 EXP j)))) acc`,
+     num_to_chars i j k acc = APPEND (num_to_dec_string (k + (i * (10 EXP
+       j)))) acc`,
   CHEAT_TAC);;
 
 let int_to_string_def = new_definition
   `int_to_string neg_char i =
-     (if (&0:int) <= i then implode (num_to_chars (num_of_int i) 0
-       0 []) else implode (CONS neg_char (num_to_chars (num_of_int
-       (abs i)) 0 0 [])))`;;
+     (if (&0:int) <= i then implode (num_to_chars (num_of_int i) 0 0 [])
+         else implode (CONS neg_char (num_to_chars (num_of_int (abs i)) 0
+           0 [])))`;;
 
 let toString_def1 = new_definition
   `mlint_toString i = int_to_string (CHR 126) i`;;
 
-(* HOL4 mlintScript.sml:95: a theorem that HOL4 states as the value
-   of an ML expression: toString_def *)
+(* HOL4 mlintScript.sml:95: a theorem that HOL4 states as the value of an ML
+   expression: toString_def *)
 
 let int_to_string_thm = prove
  (`int_to_string neg_char i =
@@ -97,15 +95,14 @@ let int_to_string_thm = prove
   CHEAT_TAC);;
 
 let toString_thm = prove
- (`mlint_toString i = implode (APPEND (if i < (&0:int) then "~" else
-  "") (num_to_dec_string (num_of_int (abs i))))`,
+ (`mlint_toString i = implode (APPEND (if i < (&0:int) then "~" else "")
+  (num_to_dec_string (num_of_int (abs i))))`,
   CHEAT_TAC);;
 
 let num_to_str_def = new_definition
   `num_to_str (n:num) = mlint_toString (&n)`;;
 
-(* HOL4 mlintScript.sml:115: the overload toString, which the port
-   expands *)
+(* HOL4 mlintScript.sml:115: the overload toString, which the port expands *)
 
 let num_to_str_thm = prove
  (`num_to_str n = implode (num_to_dec_string n)`,
@@ -117,15 +114,21 @@ let fromChar_unsafe_def = new_definition
 
 let fromChar_def = new_definition
   `fromChar char' =
-     (match char' with (CHR 48) -> SOME 0 | (CHR 49) -> SOME 1 |
-       (CHR 50) -> SOME 2 | (CHR 51) -> SOME 3 | (CHR 52) -> SOME 4 |
-       (CHR 53) -> SOME 5 | (CHR 54) -> SOME 6 | (CHR 55) -> SOME 7 |
-       (CHR 56) -> SOME 8 | (CHR 57) -> SOME 9 | _2 -> NONE)`;;
+     match char' with (CHR 48) -> SOME 0
+       | (CHR 49) -> SOME 1
+       | (CHR 50) -> SOME 2
+       | (CHR 51) -> SOME 3
+       | (CHR 52) -> SOME 4
+       | (CHR 53) -> SOME 5
+       | (CHR 54) -> SOME 6
+       | (CHR 55) -> SOME 7
+       | (CHR 56) -> SOME 8
+       | (CHR 57) -> SOME 9
+       | _ -> NONE`;;
 
 (* Equivalence between the safe and unsafe versions of fromChar *)
 let fromChar_eq_unsafe = prove
- (`!char'. isDigit char' ==> fromChar char' = SOME (fromChar_unsafe
-  char')`,
+ (`!char'. isDigit char' ==> fromChar char' = SOME (fromChar_unsafe char')`,
   CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -134,8 +137,8 @@ let fromChars_range_unsafe_def,fromChars_range_unsafe_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
   [`fromChars_range_unsafe l 0 str = 0`;
    `fromChars_range_unsafe l (SUC n) str =
-      fromChars_range_unsafe l n str * 10 + fromChar_unsafe
-          (strsub str (l + n))`];;
+      fromChars_range_unsafe l n str * 10 + fromChar_unsafe (strsub
+          str (l + n))`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -143,9 +146,9 @@ let fromChars_range_def,fromChars_range_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
   [`fromChars_range l 0 str = SOME 0`;
    `fromChars_range l (SUC n) str =
-      (let rest = OPTION_MAP ((*) 10) (fromChars_range l n str) and
-          head = fromChar (strsub str (l + n)) in OPTION_MAP2
-              (+) rest head)`];;
+      let rest = OPTION_MAP ((*) 10) (fromChars_range l n str) and
+          head = fromChar (strsub str (l + n)) in OPTION_MAP2 (+) rest
+              head`];;
 
 let fromChars_range_eq_unsafe = prove
  (`!str l r. ALL isDigit str /\ l + r <= LENGTH str ==>
@@ -155,39 +158,37 @@ let fromChars_range_eq_unsafe = prove
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 mlintScript.sml:188-190: the tactic that proves the
-   termination *)
+(* HOL4 mlintScript.sml:188-190: the tactic that proves the termination *)
 let fromChars_unsafe_def,fromChars_unsafe_ind = define_wf
   `MEASURE FST`
   [`fromChars_unsafe n str =
-      match n with
-        0 -> 0
-      // Shouldn't happend
-      | n ->
-     (if n <= padLen_DEC then fromChars_range_unsafe 0 n str else
-       let n' = n - padLen_DEC in let
+   match n with
+     0 -> 0
+   // Shouldn't happend
+   | n ->
+     if n <= padLen_DEC then fromChars_range_unsafe 0 n str
+     else let n' = n - padLen_DEC in let
               front = fromChars_unsafe n' str * maxSmall_DEC in let
-              back = fromChars_range_unsafe n' padLen_DEC str in
-                front + back)`];;
+              back = fromChars_range_unsafe n' padLen_DEC str in front
+                + back`];;
 (* HOL4 mlintScript.sml:191: ML code, not ported *)
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 mlintScript.sml:202-204: the tactic that proves the
-   termination *)
+(* HOL4 mlintScript.sml:202-204: the tactic that proves the termination *)
 let fromChars_def,fromChars_ind = define_wf
   `MEASURE FST`
   [`fromChars n str =
-      match n with
-        0 -> NONE
-      // Shouldn't happend
-      | n ->
-     (if n <= padLen_DEC then fromChars_range 0 n str else let n' =
-       n - padLen_DEC in let
-              front = OPTION_MAP ((*) maxSmall_DEC) (fromChars n'
-                str) in let
-              back = fromChars_range n' padLen_DEC str in
-                OPTION_MAP2 (+) front back)`];;
+   match n with
+     0 -> NONE
+   // Shouldn't happend
+   | n ->
+     if n <= padLen_DEC then fromChars_range 0 n str
+     else let n' = n - padLen_DEC in let
+              front = OPTION_MAP ((*) maxSmall_DEC) (fromChars n' str) in
+                let
+              back = fromChars_range n' padLen_DEC str in OPTION_MAP2
+                (+) front back`];;
 (* HOL4 mlintScript.sml:205: ML code, not ported *)
 
 let fromChars_eq_unsafe = prove
@@ -197,30 +198,29 @@ let fromChars_eq_unsafe = prove
 
 let fromString_unsafe_def = new_definition
   `fromString_unsafe str =
-     (if strlen str = 0 then (&0:int) else if strsub str 0 = (CHR
-       126) then --(&(fromChars_unsafe (strlen str - 1)
+     if strlen str = 0 then (&0:int)
+     else if strsub str 0 = (CHR 126) then --(&(fromChars_unsafe (strlen str
+       - 1)
                               (substring str 1 (strlen str - 1))))
-                                else &(fromChars_unsafe (strlen str)
-                                str))`;;
+       else &(fromChars_unsafe (strlen str) str)`;;
 
 let fromString_def = new_definition
   `mlint_fromString str =
-     (if strlen str = 0 then (NONE:int option) else if strsub str 0 =
-       (CHR 126) \/
+     if strlen str = 0 then (NONE:int option)
+     else if strsub str 0 = (CHR 126) \/
              strsub str 0 = (CHR 45) then OPTION_MAP ((--) o (&))
               (fromChars (strlen str - 1)
-                         (substring str 1 (strlen str - 1))) else if
-                           strsub str 0 = (CHR 43) then OPTION_MAP (&)
+                         (substring str 1 (strlen str - 1)))
+     else if strsub str 0 = (CHR 43) then OPTION_MAP (&)
               (fromChars (strlen str - 1)
-                         (substring str 1 (strlen str - 1))) else
-                           OPTION_MAP (&) (fromChars (strlen str)
-                           str))`;;
+                         (substring str 1 (strlen str - 1)))
+       else OPTION_MAP (&) (fromChars (strlen str) str)`;;
 
 let fromNatString_def = new_definition
   `fromNatString str =
-     (match mlint_fromString str with
-       NONE -> NONE | SOME i -> (if (&0) <= i then SOME
-         (num_of_int i) else NONE))`;;
+     match mlint_fromString str with
+       NONE -> NONE
+     | SOME i -> if (&0) <= i then SOME (num_of_int i) else NONE`;;
 
 (* fromString auxiliar lemmas *)
 let fromChars_range_unsafe_0_substring_thm = prove
@@ -268,40 +268,41 @@ let fromChars_range_unsafe_thm = prove
   CHEAT_TAC);;
 
 let fromChars_range_unsafe_eq = prove
- (`!n s. n <= (strlen s) ==> fromChars_unsafe n s =
-  fromChars_range_unsafe 0 n s`,
+ (`!n s. n <= (strlen s) ==> fromChars_unsafe n s = fromChars_range_unsafe 0
+  n s`,
   CHEAT_TAC);;
 
 let fromString_unsafe_thm = prove
  (`!str. (~(HD str = (CHR 126)) ==> ALL isDigit str) /\
          (HD str = (CHR 126) ==> ALL isDigit (DROP 1 str)) ==>
          fromString_unsafe (implode str) =
-           (if HD str = (CHR 126) then --(&(num_from_dec_string
-             (DROP 1 str))) else &(num_from_dec_string str))`,
+           (if HD str = (CHR 126) then --(&(num_from_dec_string (DROP 1
+             str)))
+           else &(num_from_dec_string str))`,
   CHEAT_TAC);;
 
-(* HOL4 mlintScript.sml:355-362: a theorem that HOL4 states as the
-   value of an ML expression: fromChars_range_lemma *)
+(* HOL4 mlintScript.sml:355-362: a theorem that HOL4 states as the value of
+   an ML expression: fromChars_range_lemma *)
 
 let fromString_thm = prove
  (`!str. ~(str = "") /\
-     (~(HD str = (CHR 126)) /\ ~(HD str = (CHR 45)) /\ ~(HD str =
-       (CHR 43)) ==> ALL isDigit str) /\
-     (HD str = (CHR 126) \/ HD str = (CHR 45) \/ HD str = (CHR 43)
-       ==> ALL isDigit (DROP 1 str) /\ LENGTH str >= 2) ==>
+     (~(HD str = (CHR 126)) /\ ~(HD str = (CHR 45)) /\ ~(HD str = (CHR 43))
+       ==> ALL isDigit str) /\
+     (HD str = (CHR 126) \/ HD str = (CHR 45) \/ HD str = (CHR 43) ==> ALL
+       isDigit (DROP 1 str) /\ LENGTH str >= 2) ==>
        mlint_fromString (implode str) = SOME
          (if HD str = (CHR 126) \/ HD str = (CHR 45) then
-           --(&(num_from_dec_string (DROP 1 str))) else if HD str =
-           (CHR 43) then &(num_from_dec_string (DROP 1 str)) else
-           &(num_from_dec_string str))`,
+           --(&(num_from_dec_string (DROP 1 str)))
+         else if HD str = (CHR 43) then &(num_from_dec_string (DROP 1 str))
+         else &(num_from_dec_string str))`,
   CHEAT_TAC);;
 
-(* HOL4 mlintScript.sml:386-387: a theorem that HOL4 states as the
-   value of an ML expression: fromString_eq_unsafe *)
+(* HOL4 mlintScript.sml:386-387: a theorem that HOL4 states as the value of
+   an ML expression: fromString_eq_unsafe *)
 
 let fromString_toString_Num = prove
- (`(&0) <= n ==> mlint_fromString (implode (num_to_dec_string
-  (num_of_int n))) = SOME n`,
+ (`(&0) <= n ==> mlint_fromString (implode (num_to_dec_string (num_of_int
+  n))) = SOME n`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -347,40 +348,38 @@ let fromChar_IS_SOME_IFF = prove
   CHEAT_TAC);;
 
 let fromChars_range_IS_SOME_IFF = prove
- (`!s x y. (x + y <= strlen s) ==> (IS_SOME (fromChars_range x y s)
-  <=> ALL isDigit (TAKE y (DROP x (explode s))))`,
+ (`!s x y. (x + y <= strlen s) ==> (IS_SOME (fromChars_range x y s) <=> ALL
+  isDigit (TAKE y (DROP x (explode s))))`,
   CHEAT_TAC);;
 
 let fromChars_IS_SOME_IFF = prove
- (`!n s. n <= strlen s /\ n >= 1 ==> (IS_SOME (fromChars n s) <=> ALL
-  isDigit (TAKE n (explode s)))`,
+ (`!n s. n <= strlen s /\ n >= 1 ==> (IS_SOME (fromChars n s) <=> ALL isDigit
+  (TAKE n (explode s)))`,
   CHEAT_TAC);;
 
 let fromString_EQ_NONE = prove
- (`~(isDigit c) /\ ~(c = (CHR 43)) /\ ~(c = (CHR 126)) /\ ~(c = (CHR
-  45)) ==>
+ (`~(isDigit c) /\ ~(c = (CHR 43)) /\ ~(c = (CHR 126)) /\ ~(c = (CHR 45)) ==>
    mlint_fromString (implode (CONS c x)) = NONE`,
   CHEAT_TAC);;
 
 (* this formulation avoids a comparsion using = for better performance *)
 let mlint_int_cmp_def = new_definition
-  `mlint_int_cmp i (j:int) = (if i < j then LESS else
-                       if j < i then GREATER else EQUAL)`;;
+  `mlint_int_cmp i (j:int) = if i < j then LESS else if j < i then GREATER
+  else EQUAL`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let num_gcd_def,num_gcd_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x0)`
-  [`mlint_num_gcd a b = (if a = 0 then b else mlint_num_gcd (b MOD
-  a) a)`];;
+  [`mlint_num_gcd a b = if a = 0 then b else mlint_num_gcd (b MOD a) a`];;
 
 let num_gcd_eq_gcd = prove
  (`mlint_num_gcd = hol4_gcd`,
   CHEAT_TAC);;
 
 let int_gcd_def = new_definition
-  `mlint_int_gcd (m:int) (n:int) = (&(mlint_num_gcd (num_of_int (abs
-  m)) (num_of_int (abs n))):int)`;;
+  `mlint_int_gcd (m:int) (n:int) = (&(mlint_num_gcd (num_of_int (abs m))
+  (num_of_int (abs n))):int)`;;
 
 (* lemmas *)
 
@@ -403,14 +402,13 @@ let ORD_HEX_BOUND2 = prove
   CHEAT_TAC);;
 
 let num_to_str_every = prove
- (`num_to_str (i:num) = implode s ==> ALL (\x. 48 <= ORD x /\ ORD x <=
-  57) s`,
+ (`num_to_str (i:num) = implode s ==> ALL (\x. 48 <= ORD x /\ ORD x <= 57) s`,
   CHEAT_TAC);;
 
 let num_to_str_imp_cons = prove
  (`num_to_str (i:num) = implode s ==>
-   (?x xs. s = CONS x xs /\ 48 <= ORD x /\ ORD x <= 57 /\ ALL (\x.
-     48 <= ORD x /\ ORD x <= 57) xs)`,
+   (?x xs. s = CONS x xs /\ 48 <= ORD x /\ ORD x <= 57 /\ ALL (\x. 48 <=
+     ORD x /\ ORD x <= 57) xs)`,
   CHEAT_TAC);;
 
 let num_to_str_APPEND_11 = prove

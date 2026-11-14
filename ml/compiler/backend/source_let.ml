@@ -19,14 +19,14 @@ let _ = cake_theory "source_let"
   ["ast"; "evaluate"; "misc"];;
 
 
-(* HOL4 source_letScript.sml:12: the overload string_size, which the
-   port expands *)
+(* HOL4 source_letScript.sml:12: the overload string_size, which the port
+   expands *)
 
 let dest_Let_def = new_definition
   `dest_Let x1 =
-      match x1 with
-        (ast_Let opt x y:ast_exp) -> SOME (opt,x,y)
-      | _1 -> NONE`;;
+   match x1 with
+     ast_Let opt x y -> SOME (opt,x,y)
+   | _ -> NONE`;;
 add_simp dest_Let_def;;
 
 let dest_Let_SOME = prove
@@ -39,9 +39,9 @@ let dest_Let_NONE = prove
 
 let dest_Letrec_def = new_definition
   `dest_Letrec x1 =
-      match x1 with
-        (ast_Letrec funs x:ast_exp) -> SOME (funs,x)
-      | _2 -> NONE`;;
+   match x1 with
+     ast_Letrec funs x -> SOME (funs,x)
+   | _ -> NONE`;;
 add_simp dest_Letrec_def;;
 
 let dest_Letrec_SOME = prove
@@ -54,27 +54,28 @@ let dest_Letrec_NONE = prove
 
 let lift_let_def = new_definition
   `lift_let x1 =
-        match x1 with
-          Dlet l p x ->
-       (match dest_Let x with SOME (NONE,x,y) -> SOME (Dlet l
-         ast_Pany x,Dlet l p y) | SOME (SOME m,x,y) -> SOME (Dlet l
-         (ast_Pvar m) x,Dlet l p y) | NONE ->
+     match x1 with
+       Dlet l p x ->
+       (match dest_Let x with SOME (NONE,x,y) -> SOME (Dlet l ast_Pany
+         x,Dlet l p y)
+       | SOME (SOME m,x,y) -> SOME (Dlet l (ast_Pvar m) x,Dlet l p y)
+       | NONE ->
            (match dest_Letrec x with SOME (funs,x) -> SOME (Dletrec l
-             funs,Dlet l p x) | NONE -> NONE))
-        | _3 -> NONE`;;
+             funs,Dlet l p x)
+           | NONE -> NONE))
+     | _ -> NONE`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (dec_size o SND)
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
-(* HOL4 source_letScript.sml:68-73: the tactic that proves the
-   termination *)
+(* HOL4 source_letScript.sml:68-73: the tactic that proves the termination *)
 let lift_lets_def,lift_lets_ind = define_guess
   [`lift_lets sofar d =
-     (match lift_let d with NONE ->
-         (match sofar with [] -> NONE | _4 -> SOME (REVERSE
-           sofar,d)) | SOME (d1,d2) -> lift_lets (CONS d1 sofar)
-           d2)`];;
+     match lift_let d with NONE ->
+         (match sofar with [] -> NONE
+         | _ -> SOME (REVERSE sofar,d))
+     | SOME (d1,d2) -> lift_lets (CONS d1 sofar) d2`];;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -82,15 +83,14 @@ let source_let_compile_decs_def,source_let_compile_decs_ind = define_wf
   `MEASURE (list_size dec_size)`
   [`source_let_compile_decs [] = []`;
    `source_let_compile_decs (CONS d ds) =
-        (match lift_lets [] d with SOME (pre,d) -> CONS (Dlocal pre
-            [d]) (source_let_compile_decs ds) | NONE ->
+        match lift_lets [] d with SOME (pre,d) -> CONS (Dlocal pre [d])
+            (source_let_compile_decs ds)
+        | NONE ->
             (match d with Dmod mn ds1 -> CONS (Dmod mn
-                (source_let_compile_decs ds1))
-                (source_let_compile_decs ds) | Dlocal ds1 ds2 ->
-                CONS (Dlocal (source_let_compile_decs ds1)
-                (source_let_compile_decs ds2))
-                (source_let_compile_decs ds) | _6 -> CONS d
-                (source_let_compile_decs ds)))`];;
+                (source_let_compile_decs ds1)) (source_let_compile_decs ds)
+            | Dlocal ds1 ds2 -> CONS (Dlocal (source_let_compile_decs ds1)
+                (source_let_compile_decs ds2)) (source_let_compile_decs ds)
+            | _ -> CONS d (source_let_compile_decs ds))`];;
 
 (*
 val test3 = EVAL “

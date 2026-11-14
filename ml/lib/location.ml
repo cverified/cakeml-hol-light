@@ -31,10 +31,9 @@ let locs_INDUCT,locs_RECURSION = define_datatype
   "locs =
      Locs locn locn";;
 
-(* HOL4 locationScript.sml:35: the overload end_locn, which the port
+(* HOL4 locationScript.sml:35: the overload end_locn, which the port expands *)
+(* HOL4 locationScript.sml:36: the overload unknown_locn, which the port
    expands *)
-(* HOL4 locationScript.sml:36: the overload unknown_locn, which the
-   port expands *)
 
 let unknown_loc_def = new_definition
   `unknown_loc = Locs UNKNOWNpt UNKNOWNpt`;;
@@ -49,8 +48,8 @@ let locnle_def = new_definition
      // maximal element
      // otherwise compare row and col lexicographically
      l2 = UNKNOWNpt) /\ ~(l1 = EOFpt) /\
-     (locnrow l1 < locnrow l2 \/ locnrow l1 = locnrow l2
-       /\ locncol l1 < locncol l2)`;;
+     (locnrow l1 < locnrow l2 \/ locnrow l1 = locnrow l2 /\ locncol l1 <
+       locncol l2)`;;
 
 let locsle_def = define_general
   [`locsle (Locs l1 _1) (Locs l2 _2) <=> locnle l1 l2`];;
@@ -65,8 +64,8 @@ let _ = size_thms "locs";;
 let merge_list_locs_def,merge_list_locs_ind = define_wf
   `MEASURE (\x0. list_size locs_size x0)`
   [`merge_list_locs x1 =
-        match x1 with
-          [] -> unknown_loc
-        | (CONS h []) -> h
-        | (CONS h1 (CONS h2 [])) -> merge_locs h1 h2
-        | (CONS h1 (CONS h2 t)) -> merge_list_locs (CONS h1 t)`];;
+     match x1 with
+       [] -> unknown_loc
+     | CONS h [] -> h
+     | CONS h1 (CONS h2 []) -> merge_locs h1 h2
+     | CONS h1 (CONS h2 t) -> merge_list_locs (CONS h1 t)`];;

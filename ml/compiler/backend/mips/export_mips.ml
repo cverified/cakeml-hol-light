@@ -49,8 +49,7 @@ let export_mips_startup_def = new_definition
         (implode "     .type   cml_main, function\n");
         (implode "cdecl(cml_main):\n");
         (implode (APPEND
-          "     dla     $a0,cake_main           # arg1: entry"
-          " address\n"));
+          "     dla     $a0,cake_main           # arg1: entry" " address\n"));
         (implode (APPEND
           "     ld      $a1,cdecl(cml_heap)     # arg2: first"
           " address of heap\n"))])
@@ -59,7 +58,8 @@ let export_mips_startup_def = new_definition
          [(implode "     dla     $t0,cake_bitmaps\n");
           (implode (APPEND
             "     sd      $t0, 0($a1)             # store bitma"
-            "p pointer\n"))] else []))
+            "p pointer\n"))]
+       else []))
      (SmartAppend (misc_List
        [(implode (APPEND
          "     ld      $a2,cdecl(cml_stack)    # arg3: first"
@@ -69,8 +69,8 @@ let export_mips_startup_def = new_definition
           " address past the stack\n"))])
      (SmartAppend (misc_List
        (if ret then
-         [(implode "     j       cml_enter\n")] else
-         [(implode "     j       cake_main\n")]))
+         [(implode "     j       cml_enter\n")]
+       else [(implode "     j       cake_main\n")]))
      (misc_List
        [(implode "     nop\n");
         (implode "\n")]))))`;;
@@ -80,23 +80,22 @@ let export_mips_ffi_asm_def,export_mips_ffi_asm_ind = define_rec
    `export_mips_ffi_asm (CONS ffi ffis) =
           SmartAppend (misc_List [
            (implode "cake_ffi"); ffi; (implode ":\n");
-           (implode "     dla    $t9,cdecl(ffi"); ffi; (implode
-               ")\n");
+           (implode "     dla    $t9,cdecl(ffi"); ffi; (implode ")\n");
            (implode "     jr     $t9\n");
            (implode "     .p2align 4\n");
            (implode "\n")]) (export_mips_ffi_asm ffis)`];;
 
-(* HOL4 export_mipsScript.sml:66-92: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_mipsScript.sml:66-92: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_mipsScript.sml:94-96: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_mipsScript.sml:94-96: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_mipsScript.sml:98-99: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_mipsScript.sml:98-99: the ML values that the definitions
+   below antiquote *)
 
-(* HOL4 export_mipsScript.sml:101-174: the ML values that the
-   definitions below antiquote *)
+(* HOL4 export_mipsScript.sml:101-174: the ML values that the definitions
+   below antiquote *)
 
 let export_mips_export_func_def = new_definition
   `export_mips_export_func appl (name,label,start',len) =
@@ -111,20 +110,20 @@ let export_mips_export_func_def = new_definition
 
 let export_mips_export_funcs_def = new_definition
   `export_mips_export_funcs lsyms exp =
-     FOLDL export_mips_export_func misc_Nil (FILTER ((C MEM exp) o
-       FST) lsyms)`;;
+     FOLDL export_mips_export_func misc_Nil (FILTER ((C MEM exp) o FST)
+       lsyms)`;;
 
 let mips_export_def = new_definition
   `mips_export ffi_names' bytes (data:word64 list) syms exp ret pk =
-     (let lsyms = get_sym_labels syms in
+     let lsyms = get_sym_labels syms in
      SmartAppend
        (SmartAppend (misc_List preamble)
        (SmartAppend (misc_List (data_section ".quad" ret))
        (SmartAppend (split16 (words_line (implode "\t.quad ")
          word_to_string) data)
        (SmartAppend (misc_List data_buffer)
-       (SmartAppend (export_mips_startup ret pk) ((\ret. if ret then
-         ((\ret. SmartAppend
+       (SmartAppend (export_mips_startup ret pk) ((\ret. if ret then ((\ret.
+         SmartAppend
      (misc_List (MAP (\n. implode (APPEND n "\n"))
       [(APPEND "#### CakeML FFI interface (each block is 16 bytes "
         "long)"); "";
@@ -139,24 +138,23 @@ let mips_export_def = new_definition
         "";
         "cake_exit:"]
         (if ret then
-          ["     j    cml_return"] else
-         ["     dla   $t9,cdecl(cml_exit)";
+          ["     j    cml_return"]
+        else ["     dla   $t9,cdecl(cml_exit)";
           "     jr    $t9"]))
         ["     .p2align 4";
         "";
         "cake_main:";
         "";
         "#### Generated machine code follows";
-        ""]))))) T) else ((\ret. SmartAppend (misc_List (MAP (\n.
-          implode (APPEND n "\n")) [(APPEND
-          "#### CakeML FFI interface (each block is 16 bytes " "long)");
-          ""; "     .p2align 4"; ""])) (SmartAppend (export_mips_ffi_asm
-          (REVERSE ffi_names')) (misc_List (MAP (\n. implode (APPEND n
-          "\n")) (APPEND (APPEND ["cake_clear:";
-          "     dla   $t9,cdecl(cml_exit)"; "     jr    $t9";
-          "     .p2align 4"; ""; "cake_exit:"] (if ret then
-          ["     j    cml_return"] else
-          ["     dla   $t9,cdecl(cml_exit)"; "     jr    $t9"]))
+        ""]))))) T) else ((\ret. SmartAppend (misc_List (MAP (\n. implode
+          (APPEND n "\n")) [(APPEND
+          "#### CakeML FFI interface (each block is 16 bytes " "long)"); "";
+          "     .p2align 4"; ""])) (SmartAppend (export_mips_ffi_asm (REVERSE
+          ffi_names')) (misc_List (MAP (\n. implode (APPEND n "\n")) (APPEND
+          (APPEND ["cake_clear:"; "     dla   $t9,cdecl(cml_exit)";
+          "     jr    $t9"; "     .p2align 4"; ""; "cake_exit:"] (if ret then
+          ["     j    cml_return"]
+        else ["     dla   $t9,cdecl(cml_exit)"; "     jr    $t9"]))
           ["     .p2align 4"; ""; "cake_main:"; "";
           "#### Generated machine code follows"; ""]))))) F)) ret))))))
        (SmartAppend (split16 (words_line (implode "\t.byte ")
@@ -231,8 +229,8 @@ let mips_export_def = new_definition
       "     dla     $t9,cdecl(cml_err)";
       "     jr      $t9";
       "     .p2align 4";
-      ""]))) (export_mips_export_funcs lsyms exp)) else misc_List
-        [])))))`;;
+      ""]))) (export_mips_export_funcs lsyms exp))
+       else misc_List []))))`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

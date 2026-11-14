@@ -24,8 +24,7 @@ needs "semantics/semanticPrimitives.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "flat_elimProof"
-  ["ast"; "ffi"; "flatLang"; "flatProps"; "flatSem"; "flat_elim";
-   "misc"];;
+  ["ast"; "ffi"; "flatLang"; "flatProps"; "flatSem"; "flat_elim"; "misc"];;
 
 (************************** LEMMAS ***************************)
 
@@ -37,8 +36,8 @@ let is_pure_EVERY_aconv = prove
   (REWRITE_TAC[ETA_AX]));;
 
 let find_lookupsL_MEM = prove
- (`!e es. MEM e es ==> domain (find_lookups e) SUBSET domain
-  (find_lookupsL es)`,
+ (`!e es. MEM e es ==> domain (find_lookups e) SUBSET domain (find_lookupsL
+  es)`,
   CHEAT_TAC);;
 
 let find_lookupsL_APPEND = prove
@@ -52,8 +51,8 @@ let find_lookupsL_REVERSE = prove
 
 let find_loc_EVERY_isEmpty = prove
  (`!l (reachable:1 spt).
-      ALL (\e. (\t. t = LN) (inter (find_loc e) reachable)) l <=>
-        (\t. t = LN) (inter (find_locL l) reachable)`,
+      ALL (\e. (\t. t = LN) (inter (find_loc e) reachable)) l <=> (\t. t =
+        LN) (inter (find_locL l) reachable)`,
   CHEAT_TAC);;
 
 
@@ -62,15 +61,14 @@ let find_loc_EVERY_isEmpty = prove
 let _ = size_thms "flatSem_v";;
 let _ = size_thms "mlstring";;
 let SUM_MAP_v3_size = prove
- (`!xs. SUM (MAP (pair_size mlstring_size flatSem_v_size) xs) = LENGTH
-  xs +
+ (`!xs. SUM (MAP (pair_size mlstring_size flatSem_v_size) xs) = LENGTH xs +
      SUM (MAP (mlstring_size o FST) xs) +
      SUM (MAP (flatSem_v_size o SND) xs)`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (\e. match e with INL x -> flatSem_v_size x | INR y ->
-       list_size flatSem_v_size y)
+     MEASURE (\e. match e with INL x -> flatSem_v_size x
+                    | INR y -> list_size flatSem_v_size y)
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 flat_elimProofScript.sml:118-126: the tactic that proves the
@@ -78,19 +76,16 @@ let SUM_MAP_v3_size = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let find_v_globals_def,find_v_globals_ind = define_guess_cheat
-  [`find_v_globals (flatSem_Conv _2 vl:flatSem_v) = ((find_v_globalsL
-    vl):1 spt)`;
-   `find_v_globals (flatSem_Closure env _4 e:flatSem_v) =
+  [`find_v_globals (flatSem_Conv _ vl) = ((find_v_globalsL vl):1 spt)`;
+   `find_v_globals (flatSem_Closure env _ e) =
             ((sptree_union (find_v_globalsL (MAP SND
-                (flatSem_environment_v env))) (find_lookups e)):1
-                spt)`;
-   `find_v_globals (flatSem_Recclosure env vves _6:flatSem_v) =
-            ((sptree_union (find_v_globalsL (MAP SND
-                (flatSem_environment_v env)))
+                (flatSem_environment_v env))) (find_lookups e)):1 spt)`;
+   `find_v_globals (flatSem_Recclosure env vves _) =
+            ((sptree_union (find_v_globalsL (MAP SND (flatSem_environment_v
+                env)))
                 (find_lookupsL (MAP (SND o SND) vves))):1 spt)`;
-   `find_v_globals (flatSem_Vectorv vl:flatSem_v) = ((find_v_globalsL
-    vl):1 spt)`;
-   `find_v_globals _7 = ((LN):1 spt)`;
+   `find_v_globals (flatSem_Vectorv vl) = ((find_v_globalsL vl):1 spt)`;
+   `find_v_globals _ = ((LN):1 spt)`;
    `find_v_globalsL [] = LN`;
    `find_v_globalsL (CONS h t) = sptree_union (find_v_globals h)
     (find_v_globalsL t)`];;
@@ -114,8 +109,7 @@ let find_v_globalsL_MEM = prove
 
 let find_v_globalsL_EL = prove
  (`!n vs. n < LENGTH vs ==>
-   domain (find_v_globals (EL n vs)) SUBSET domain (find_v_globalsL
-     vs)`,
+   domain (find_v_globals (EL n vs)) SUBSET domain (find_v_globalsL vs)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -126,10 +120,11 @@ let find_v_globalsL_EL_trans = prove
 
 let find_v_globals_MAP_Recclosure = prove
  (`!funs v l.
-   domain (find_v_globalsL (MAP (\x. flatSem_Recclosure env l (f x))
-     funs)) =
-   (if NULL funs then {} else domain (find_v_globalsL (MAP SND
-     (flatSem_environment_v env))) UNION
+   domain (find_v_globalsL (MAP (\x. flatSem_Recclosure env l (f x)) funs))
+     =
+   (if NULL funs then {}
+       else domain (find_v_globalsL (MAP SND (flatSem_environment_v env)))
+         UNION
            domain (find_lookupsL (MAP (SND o SND) l)))`,
   CHEAT_TAC);;
 
@@ -149,15 +144,15 @@ let find_v_globalsL_LUPDATE = prove
 let find_v_globals_v_to_list = prove
  (`!x (reachable:1 spt) xs.
       domain (find_v_globals x) SUBSET domain reachable
-        /\ flatSem_v_to_list x = SOME xs ==> domain (find_v_globalsL
-        xs) SUBSET domain reachable`,
+        /\ flatSem_v_to_list x = SOME xs ==> domain (find_v_globalsL xs)
+        SUBSET domain reachable`,
   CHEAT_TAC);;
 
 let find_v_globals_list_to_v = prove
  (`!xs (reachable:1 spt) x.
       domain (find_v_globalsL xs) SUBSET domain reachable
-        /\ flatSem_list_to_v xs = x ==> domain (find_v_globals x)
-        SUBSET domain reachable`,
+        /\ flatSem_list_to_v xs = x ==> domain (find_v_globals x) SUBSET
+        domain reachable`,
   CHEAT_TAC);;
 
 let _ = size_thms "store_v";;
@@ -166,23 +161,23 @@ let _ = size_thms "store_v";;
 let find_refs_globals_def,find_refs_globals_ind = define_wf
   `MEASURE (\x0. list_size (store_v_size flatSem_v_size) x0)`
   [`find_refs_globals x1 =
-        match x1 with
-          CONS (semanticPrimitives_Refv a) t ->
+     match x1 with
+       CONS (semanticPrimitives_Refv a) t ->
            sptree_union (find_v_globals a) (find_refs_globals t)
-        | (CONS (semanticPrimitives_Varray l) t) ->
+     | CONS (semanticPrimitives_Varray l) t ->
            sptree_union (find_v_globalsL l) (find_refs_globals t)
-        | (CONS (semanticPrimitives_Thunk _8 a) t) ->
+     | CONS (semanticPrimitives_Thunk _ a) t ->
            sptree_union (find_v_globals a) (find_refs_globals t)
-        | (CONS _9 t) -> find_refs_globals t
-        | [] -> LN`];;
+     | CONS _ t -> find_refs_globals t
+     | [] -> LN`];;
 
 (* HOL4 flat_elimProofScript.sml:225: ML code, not ported *)
 
 let find_refs_globals_MEM = prove
  (`!refs (reachable:1 spt).
       domain (find_refs_globals refs) SUBSET R ==> (!a.
-          MEM (semanticPrimitives_Refv a) refs ==> domain
-            (find_v_globals a) SUBSET R) /\
+          MEM (semanticPrimitives_Refv a) refs ==> domain (find_v_globals a)
+            SUBSET R) /\
       (!vs.
           MEM (semanticPrimitives_Varray vs) refs ==> domain
             (find_v_globalsL vs) SUBSET R) /\
@@ -206,26 +201,23 @@ let find_refs_globals_EL = prove
 
 let find_refs_globals_LUPDATE = prove
  (`!(reachable:1 spt) refs n.
-      n < LENGTH refs /\ domain (find_refs_globals refs) SUBSET
-        domain reachable ==>
+      n < LENGTH refs /\ domain (find_refs_globals refs) SUBSET domain
+        reachable ==>
       (!a.
           domain (find_v_globals a) SUBSET domain reachable ==>
-              domain (find_refs_globals (LUPDATE
-                (semanticPrimitives_Refv a) n refs)) SUBSET domain
-                reachable) /\
+              domain (find_refs_globals (LUPDATE (semanticPrimitives_Refv a)
+                n refs)) SUBSET domain reachable) /\
    (!vs.
       domain (find_v_globalsL vs) SUBSET domain reachable ==>
-          domain (find_refs_globals (LUPDATE
-            (semanticPrimitives_Varray vs) n refs)) SUBSET domain
-            reachable) /\
+          domain (find_refs_globals (LUPDATE (semanticPrimitives_Varray vs)
+            n refs)) SUBSET domain reachable) /\
    (!ws.
-      domain (find_refs_globals (LUPDATE (semanticPrimitives_W8array
-        ws) n refs)) SUBSET domain reachable) /\
+      domain (find_refs_globals (LUPDATE (semanticPrimitives_W8array ws) n
+        refs)) SUBSET domain reachable) /\
    (!m a.
       domain (find_v_globals a) SUBSET domain reachable ==>
-          domain (find_refs_globals (LUPDATE
-            (semanticPrimitives_Thunk m a) n refs)) SUBSET domain
-            reachable)`,
+          domain (find_refs_globals (LUPDATE (semanticPrimitives_Thunk m
+            a) n refs)) SUBSET domain reachable)`,
   CHEAT_TAC);;
 
 let find_refs_globals_APPEND = prove
@@ -234,14 +226,14 @@ let find_refs_globals_APPEND = prove
   CHEAT_TAC);;
 
 let find_env_globals_def = new_definition
-  `find_env_globals env = find_v_globalsL (MAP SND
-  (flatSem_environment_v env))`;;
+  `find_env_globals env = find_v_globalsL (MAP SND (flatSem_environment_v
+  env))`;;
 
 let find_result_globals_def = new_definition
   `find_result_globals x1 =
-        match x1 with
-          SOME (Rraise v) -> find_v_globals v
-        | _10 -> LN`;;
+     match x1 with
+       SOME (Rraise v) -> find_v_globals v
+     | _ -> LN`;;
 
 (* HOL4 flat_elimProofScript.sml:294: ML code, not ported *)
 
@@ -251,8 +243,8 @@ let find_sem_prim_res_globals_def = define_cases
             find_result_globals (SOME e)`;
    `find_sem_prim_res_globals (Rval e) = find_v_globalsL e`];;
 
-(* HOL4 flat_elimProofScript.sml:303-306: the ML values that the
-   definitions below antiquote *)
+(* HOL4 flat_elimProofScript.sml:303-306: the ML values that the definitions
+   below antiquote *)
 
 (* the termination relation that HOL4 gives is
      MEASURE flatSem_v_size
@@ -264,40 +256,38 @@ let find_sem_prim_res_globals_def = define_cases
    replacing the CHEAT_TAC is all that is left *)
 let v_has_Eval_def1,v_has_Eval_def1_ind = define_guess_cheat
   [`v_has_Eval x1 =
-        match x1 with
-          (flatSem_Closure env _12 e:flatSem_v) -> (has_Eval e \/
+     match x1 with
+       flatSem_Closure env _ e -> (has_Eval e \/
        EX v_has_Eval (MAP SND (flatSem_environment_v env)))
-        | (flatSem_Conv _13 vl) -> EX v_has_Eval vl
-        | (flatSem_Recclosure env nm_es _14) ->
+     | flatSem_Conv _ vl -> EX v_has_Eval vl
+     | flatSem_Recclosure env nm_es _ ->
        (EX v_has_Eval (MAP SND (flatSem_environment_v env)) \/
          EX has_Eval (MAP (SND o SND) nm_es))
-        | (flatSem_Vectorv vl) -> EX v_has_Eval vl
-        | _15 -> F`];;
+     | flatSem_Vectorv vl -> EX v_has_Eval vl
+     | _ -> F`];;
 
-(* HOL4 flat_elimProofScript.sml:326: a theorem that HOL4 states as
-   the value of an ML expression: v_has_Eval_def *)
+(* HOL4 flat_elimProofScript.sml:326: a theorem that HOL4 states as the
+   value of an ML expression: v_has_Eval_def *)
 
 (* s_g = state globals, t_g = removed state globals *)
 let globals_rel_def = new_definition
   `globals_rel (reachable:1 spt) s_g t_g <=>
        LENGTH s_g = LENGTH t_g /\
        (!n.
-         n IN domain reachable /\ n < LENGTH t_g ==> EL n s_g = EL n
-           t_g) /\
+         n IN domain reachable /\ n < LENGTH t_g ==> EL n s_g = EL n t_g) /\
        (!n x.
-         n < LENGTH t_g /\ EL n t_g = SOME x ==> EL n s_g = SOME x)
-           /\
+         n < LENGTH t_g /\ EL n t_g = SOME x ==> EL n s_g = SOME x) /\
        (!n.
          n < LENGTH t_g /\ EL n s_g = NONE ==> EL n t_g = NONE) /\
        (!n x.
            n IN domain reachable /\ n < LENGTH t_g /\
-         EL n t_g = SOME x ==> ~(v_has_Eval x) /\ domain
-           (find_v_globals x) SUBSET domain reachable)`;;
+         EL n t_g = SOME x ==> ~(v_has_Eval x) /\ domain (find_v_globals
+           x) SUBSET domain reachable)`;;
 
 let globals_rel_trans = prove
  (`!reachable s1 s2 s3.
-      globals_rel reachable s1 s2 /\ globals_rel reachable s2 s3
-        ==> globals_rel reachable s1 s3`,
+      globals_rel reachable s1 s2 /\ globals_rel reachable s2 s3 ==>
+        globals_rel reachable s1 s3`,
   (REWRITE_TAC[globals_rel_def] THEN MESON_TAC[]));;
 
 let decs_closed_def = new_definition
@@ -308,24 +298,23 @@ let decs_closed_def = new_definition
        reachable))`;;
 
 let decs_closed_reduce = prove
- (`!reachable e t. decs_closed reachable (CONS e t) ==> decs_closed
-  reachable t`,
+ (`!reachable e t. decs_closed reachable (CONS e t) ==> decs_closed reachable
+  t`,
   CHEAT_TAC);;
 
 let decs_closed_reduce_HD = prove
  (`!reachable e t.
-      decs_closed reachable (CONS e t) ==> decs_closed reachable
-        [e]`,
+      decs_closed reachable (CONS e t) ==> decs_closed reachable [e]`,
   CHEAT_TAC);;
 
 (* s = state, t = removed state *)
 let flat_state_rel_def = new_definition
   `flat_state_rel reachable (s:('c,'ffi)flatSem_state)
   (t:('c,'ffi)flatSem_state) <=> flatSem_state_clock
-     s = flatSem_state_clock t /\ flatSem_state_refs s =
-       flatSem_state_refs t /\ flatSem_state_ffi
-     s = flatSem_state_ffi t /\ globals_rel reachable
-       (flatSem_state_globals s) (flatSem_state_globals t) /\
+     s = flatSem_state_clock t /\ flatSem_state_refs s = flatSem_state_refs
+       t /\ flatSem_state_ffi
+     s = flatSem_state_ffi t /\ globals_rel reachable (flatSem_state_globals
+       s) (flatSem_state_globals t) /\
      domain (find_refs_globals (flatSem_state_refs s)) SUBSET domain
        reachable /\
      ALL (ALL ((~) o v_has_Eval) o flatProps_store_v_vs)
@@ -334,8 +323,7 @@ let flat_state_rel_def = new_definition
 let flat_state_rel_trans = prove
  (`!reachable s1 s2 s3.
      flat_state_rel reachable s1 s2 /\
-     flat_state_rel reachable s2 s3 ==> flat_state_rel reachable s1
-       s3`,
+     flat_state_rel reachable s2 s3 ==> flat_state_rel reachable s1 s3`,
   (REWRITE_TAC[flat_state_rel_def] THEN MESON_TAC[globals_rel_trans]));;
 
 (**************************** FLATLANG LEMMAS *****************************)
@@ -352,17 +340,17 @@ let pmatch_Match_reachable = prove
       flatSem_pmatch_list s p vs l = Match a /\
       domain (find_v_globalsL vs) SUBSET domain reachable /\
       domain (find_v_globalsL (MAP SND l)) SUBSET domain reachable /\
-      domain (find_refs_globals (flatSem_state_refs s)) SUBSET
-        domain reachable ==> domain (find_v_globalsL (MAP SND a))
-        SUBSET domain reachable)`,
+      domain (find_refs_globals (flatSem_state_refs s)) SUBSET domain
+        reachable ==> domain (find_v_globalsL (MAP SND a)) SUBSET domain
+        reachable)`,
   CHEAT_TAC);;
 
 let find_v_globals_list_to_v_APPEND = prove
  (`!xs (reachable:1 spt) ys.
       domain (find_v_globalsL xs) SUBSET domain reachable /\
-      domain (find_v_globalsL ys) SUBSET domain reachable ==>
-        domain (find_v_globals (flatSem_list_to_v (APPEND xs ys)))
-        SUBSET domain reachable`,
+      domain (find_v_globalsL ys) SUBSET domain reachable ==> domain
+        (find_v_globals (flatSem_list_to_v (APPEND xs ys))) SUBSET domain
+        reachable`,
   CHEAT_TAC);;
 
 let find_v_globals_Unitv = prove
@@ -376,20 +364,18 @@ let EVERY_EL_IMP = prove
 
 (* [local] *)
 let not_v_has_Eval_EVERY_EL = prove
- (`ALL ((~) o v_has_Eval) xs /\ i < LENGTH xs ==> ~(v_has_Eval (EL i
-  xs))`,
+ (`ALL ((~) o v_has_Eval) xs /\ i < LENGTH xs ==> ~(v_has_Eval (EL i xs))`,
   (REWRITE_TAC[GSYM ALL_EL; o_THM] THEN MESON_TAC[]));;
 
-(* HOL4 flat_elimProofScript.sml:462: the ML values that the
-   definitions below antiquote *)
+(* HOL4 flat_elimProofScript.sml:462: the ML values that the definitions
+   below antiquote *)
 
 let v_has_Eval_list_to_v = prove
  (`v_has_Eval (flatSem_list_to_v xs) = EX v_has_Eval xs`,
   CHEAT_TAC);;
 
 let v_has_Eval_v_to_list = prove
- (`!v xs. flatSem_v_to_list v = SOME xs ==> v_has_Eval v = EX
-  v_has_Eval xs`,
+ (`!v xs. flatSem_v_to_list v = SOME xs ==> v_has_Eval v = EX v_has_Eval xs`,
   CHEAT_TAC);;
 
 (* HOL4 flat_elimProofScript.sml:479-481: ML code, not ported *)
@@ -398,8 +384,8 @@ let v_has_Eval_v_to_list = prove
 
 (* [local] *)
 let fvg_map_char_empty = prove
- (`find_v_globals (flatSem_list_to_v (MAP (\c. flatSem_Litv (ast_Char
-  c)) ss)) = LN`,
+ (`find_v_globals (flatSem_list_to_v (MAP (\c. flatSem_Litv (ast_Char c))
+  ss)) = LN`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -421,14 +407,14 @@ let flat_elimProof_pair_case_eq = prove
 
 (* pair_lam_lem[local] *)
 let flat_elimProof_pair_lam_lem = prove
- (`!f v z. (let (x,y) = z in f x y) = v <=> (?x1 x2. z = (x1,x2) /\ (f
-  x1 x2 = v))`,
+ (`!f v z. (let (x,y) = z in f x y) = v <=> (?x1 x2. z = (x1,x2) /\ (f x1 x2
+  = v))`,
   CHEAT_TAC);;
 
 (* HOL4 flat_elimProofScript.sml:519: ML code, not ported *)
 
-(* HOL4 flat_elimProofScript.sml:521-524: a theorem that HOL4 states
-   as the value of an ML expression: do_app_cases *)
+(* HOL4 flat_elimProofScript.sml:521-524: a theorem that HOL4 states as the
+   value of an ML expression: do_app_cases *)
 
 
 (* [local] *)
@@ -439,25 +425,21 @@ let fvg_v_to_flat = prove
 add_simp fvg_v_to_flat;;
 
 let do_app_SOME_flat_state_rel = prove
- (`!reachable state removed_state op l new_state result
-  new_removed_state.
-      flat_state_rel reachable state removed_state /\ ~(op =
-        flatLang_Src ast_Opapp) /\
+ (`!reachable state removed_state op l new_state result new_removed_state.
+      flat_state_rel reachable state removed_state /\ ~(op = flatLang_Src
+        ast_Opapp) /\
       domain (find_v_globalsL l) SUBSET domain reachable /\
-      domain (find_lookups (flatLang_App tra op [])) SUBSET domain
-        reachable /\
+      domain (find_lookups (flatLang_App tra op [])) SUBSET domain reachable
+        /\
       ALL ((~) o v_has_Eval) l ==>
-          flatSem_do_app state op l = SOME (new_state,result)
-            /\ ~(result = Rerr (Rabort Rtype_error)) ==>
-            (?new_removed_state.
+          flatSem_do_app state op l = SOME (new_state,result) /\ ~(result =
+            Rerr (Rabort Rtype_error)) ==> (?new_removed_state.
               flat_state_rel reachable new_state new_removed_state /\
               flatSem_do_app removed_state op l =
                   SOME (new_removed_state,result) /\
-              domain (find_sem_prim_res_globals (list_result result))
-                SUBSET
+              domain (find_sem_prim_res_globals (list_result result)) SUBSET
                   domain reachable /\
-              ALL ((~) o v_has_Eval) (result_vs (list_result
-                result)))`,
+              ALL ((~) o v_has_Eval) (result_vs (list_result result)))`,
   CHEAT_TAC);;
 
 
@@ -476,8 +458,7 @@ let flat_state_rel_pmatch = prove
 
 let flat_state_rel_pmatch_rows = prove
  (`flat_state_rel reachable new_state new_removed_state ==>
-   pmatch_rows (pes:(flatLang_pat#flatLang_exp) list)
-     new_removed_state a =
+   pmatch_rows (pes:(flatLang_pat#flatLang_exp) list) new_removed_state a =
    pmatch_rows pes new_state a`,
   CHEAT_TAC);;
 
@@ -491,38 +472,37 @@ let pmatch_not_has_Eval = prove
  (`(
    !(s:('c,'ffi)flatSem_state) p v bindings env.
    flatSem_pmatch s p v bindings = Match env /\ ~(v_has_Eval v) /\
-   ALL (ALL ((~) o v_has_Eval) o flatProps_store_v_vs)
-     (flatSem_state_refs s) /\
+   ALL (ALL ((~) o v_has_Eval) o flatProps_store_v_vs) (flatSem_state_refs
+     s) /\
    ALL ((~) o v_has_Eval o SND) bindings ==>
    ALL ((~) o v_has_Eval o SND) env) /\ (
    !(s:('c,'ffi)flatSem_state) ps vs bindings env.
    flatSem_pmatch_list s ps vs bindings = Match env /\
    ALL ((~) o v_has_Eval) vs /\
-   ALL (ALL ((~) o v_has_Eval) o flatProps_store_v_vs)
-     (flatSem_state_refs s) /\
+   ALL (ALL ((~) o v_has_Eval) o flatProps_store_v_vs) (flatSem_state_refs
+     s) /\
    ALL ((~) o v_has_Eval o SND) bindings ==>
    ALL ((~) o v_has_Eval o SND) env)`,
   CHEAT_TAC);;
 
 (* has_Eval_def[local] *)
 let flat_elimProof_has_Eval_def = prove
- (`(has_Eval (flatLang_Handle _17 e pes:flatLang_exp) = (has_Eval e \/
-  EX has_Eval (MAP SND pes))) /\
-   (has_Eval (flatLang_Con _18 _19 es) = EX has_Eval es) /\
-   (has_Eval (flatLang_Fun _20 _21 e) = has_Eval e) /\
-   (has_Eval (flatLang_App t op es) = (op = flatLang_Src ast_Eval \/
-     EX has_Eval es)) /\
-   (has_Eval (flatLang_If t e1 e2 e3) = (has_Eval e1 \/ has_Eval e2
-     \/ has_Eval e3)) /\
-   (has_Eval (flatLang_Mat t e pes) = (has_Eval e \/ EX has_Eval (MAP
-     SND pes))) /\
-   (has_Eval (flatLang_Let _22 opt e1 e2) = (has_Eval e1 \/ has_Eval
-     e2)) /\
-   (has_Eval (flatLang_Letrec _23 funs e) = (has_Eval e \/ EX
-     has_Eval (MAP (SND o SND) funs))) /\
-   (has_Eval (flatLang_Raise _24 e) = has_Eval e) /\
-   (has_Eval (flatLang_Var_local _25 _26) = F) /\
-   (has_Eval (flatLang_Lit _27 v) = F)`,
+ (`(has_Eval (flatLang_Handle _3 e pes) = (has_Eval e \/ EX has_Eval (MAP SND
+  pes))) /\
+   (has_Eval (flatLang_Con _4 _5 es) = EX has_Eval es) /\
+   (has_Eval (flatLang_Fun _6 _7 e) = has_Eval e) /\
+   (has_Eval (flatLang_App t op es) = (op = flatLang_Src ast_Eval \/ EX
+     has_Eval es)) /\
+   (has_Eval (flatLang_If t e1 e2 e3) = (has_Eval e1 \/ has_Eval e2 \/
+     has_Eval e3)) /\
+   (has_Eval (flatLang_Mat t e pes) = (has_Eval e \/ EX has_Eval (MAP SND
+     pes))) /\
+   (has_Eval (flatLang_Let _8 opt e1 e2) = (has_Eval e1 \/ has_Eval e2)) /\
+   (has_Eval (flatLang_Letrec _9 funs e) = (has_Eval e \/ EX has_Eval (MAP
+     (SND o SND) funs))) /\
+   (has_Eval (flatLang_Raise _10 e) = has_Eval e) /\
+   (has_Eval (flatLang_Var_local _11 _12) = F) /\
+   (has_Eval (flatLang_Lit _13 v) = F)`,
   CHEAT_TAC);;
 
 (******** EVALUATE INDUCTION ********)
@@ -537,13 +517,12 @@ let evaluate_keep_flat_state_rel_eq_lemma = prove
        flat_state_rel reachable state removed_state /\
        domain (find_env_globals env) SUBSET domain reachable /\
        ALL (((~)) o v_has_Eval o SND) (flatSem_environment_v env) /\
-       ALL (((~)) o has_Eval) exprL /\ ~(result = Rerr (Rabort
-         Rtype_error)) ==> (?new_removed_state.
-       flatSem_evaluate env removed_state exprL =
-         (new_removed_state,result) /\
+       ALL (((~)) o has_Eval) exprL /\ ~(result = Rerr (Rabort Rtype_error))
+         ==> (?new_removed_state.
+       flatSem_evaluate env removed_state exprL = (new_removed_state,result)
+         /\
        flat_state_rel reachable new_state new_removed_state /\
-       domain (find_sem_prim_res_globals result) SUBSET domain
-         reachable /\
+       domain (find_sem_prim_res_globals result) SUBSET domain reachable /\
        ALL (((~)) o v_has_Eval) (result_vs result)))`,
   CHEAT_TAC);;
 
@@ -552,8 +531,8 @@ let evaluate_keep_flat_state_rel_eq_lemma = prove
 let evaluate_sing_keep_flat_state_rel_eq = prove
  (`!env ((state:('c,'ffi)flatSem_state)) exprL new_state result expr
      reachable removed_state.
-     flatSem_evaluate (flatSem_environment_v_fupd (K []) env) state
-       exprL = (new_state,result) /\
+     flatSem_evaluate (flatSem_environment_v_fupd (K []) env) state exprL =
+       (new_state,result) /\
      flat_state_rel reachable state removed_state /\
      exprL = [expr] /\
      keep reachable expr /\
@@ -572,8 +551,7 @@ let evaluate_dec_flat_state_rel = prove
      reachable removed_state.
      evaluate_dec state dec = (new_state,result) /\
      decs_closed reachable [dec] /\
-     flat_state_rel reachable state removed_state /\ keep reachable
-       dec /\
+     flat_state_rel reachable state removed_state /\ keep reachable dec /\
      ~(has_Eval_dec dec) /\ ~(result = SOME (Rabort Rtype_error)) ==>
        (?new_removed_state.
        evaluate_dec removed_state dec =
@@ -583,8 +561,8 @@ let evaluate_dec_flat_state_rel = prove
 
 let total_pat_IMP = prove
  (`(!(s:('c,'ffi)flatSem_state) p v env res.
-      flatSem_pmatch s p v env = res /\ total_pat p ==> ~(res =
-        No_match)) /\
+      flatSem_pmatch s p v env = res /\ total_pat p ==> ~(res = No_match))
+        /\
    (!(s:('c,'ffi)flatSem_state) ps vs env res.
       LENGTH ps = LENGTH vs /\
       flatSem_pmatch_list s ps vs env = res /\
@@ -592,8 +570,7 @@ let total_pat_IMP = prove
   CHEAT_TAC);;
 
 let EXISTS_total_pat = prove
- (`EX total_pat (MAP FST pes) ==> ~(pmatch_rows pes new_state v =
-  No_match)`,
+ (`EX total_pat (MAP FST pes) ==> ~(pmatch_rows pes new_state v = No_match)`,
   CHEAT_TAC);;
 
 
@@ -609,9 +586,9 @@ let evaluate_flat_state_rel_lemma = prove
        ALL (((~)) o v_has_Eval o SND) (flatSem_environment_v env) /\
        ALL (((~)) o has_Eval) exprL /\
        ALL (\e. (\t. t = LN) (inter (find_loc e) reachable)) exprL /\
-       flat_state_rel reachable state removed_state /\ ~(result =
-         Rerr (Rabort Rtype_error)) ==> (?values. flat_state_rel
-         reachable new_state removed_state /\
+       flat_state_rel reachable state removed_state /\ ~(result = Rerr
+         (Rabort Rtype_error)) ==> (?values. flat_state_rel reachable new_state
+         removed_state /\
        result = Rval values /\
        ALL (((~)) o v_has_Eval) values))`,
   CHEAT_TAC);;
@@ -621,14 +598,14 @@ let evaluate_flat_state_rel_lemma = prove
 let evaluate_sing_notKeep_flat_state_rel = prove
  (`!env state exprL new_state result expr
        reachable removed_state.
-       flatSem_evaluate (flatSem_environment_v_fupd (K []) env) state
-         exprL = (new_state,result) /\
+       flatSem_evaluate (flatSem_environment_v_fupd (K []) env) state exprL
+         = (new_state,result) /\
        exprL = [expr] /\
        ~(has_Eval expr) /\
        ~(keep reachable expr) /\
-       flat_state_rel reachable state removed_state /\ ~(result =
-         Rerr (Rabort Rtype_error)) ==> flat_state_rel reachable
-         new_state removed_state /\
+       flat_state_rel reachable state removed_state /\ ~(result = Rerr
+         (Rabort Rtype_error)) ==> flat_state_rel reachable new_state
+         removed_state /\
        (?(value:flatSem_v). result = Rval [value])`,
   CHEAT_TAC);;
 
@@ -638,13 +615,12 @@ let evaluate_sing_notKeep_flat_state_rel = prove
 let flat_decs_removal_lemma = prove
  (`!((state:('c,'ffi)flatSem_state)) decs new_state result
       reachable removed_decs removed_state.
-      flatSem_evaluate_decs state decs = (new_state,result)
-        /\ ~(result = SOME (Rabort Rtype_error)) /\
+      flatSem_evaluate_decs state decs = (new_state,result) /\ ~(result =
+        SOME (Rabort Rtype_error)) /\
       remove_unreachable reachable decs = removed_decs /\
       flat_state_rel reachable state removed_state /\
       ALL ((~) o has_Eval_dec) decs /\
-      decs_closed reachable decs ==> (?new_removed_state.
-        flatSem_state_ffi
+      decs_closed reachable decs ==> (?new_removed_state. flatSem_state_ffi
       new_removed_state = flatSem_state_ffi new_state /\
       flatSem_evaluate_decs removed_state removed_decs =
           (new_removed_state,result))`,
@@ -661,8 +637,8 @@ let flat_removal_thm = prove
        remove_unreachable reachable decs = removed_decs ==> (?s.
          flatSem_state_ffi
        s = flatSem_state_ffi new_state /\
-       flatSem_evaluate_decs (flatSem_initial_state ffi k ec)
-         removed_decs = (s,result))`,
+       flatSem_evaluate_decs (flatSem_initial_state ffi k ec) removed_decs
+         = (s,result))`,
   CHEAT_TAC);;
 
 let flat_remove_eval_sim = prove
@@ -670,8 +646,8 @@ let flat_remove_eval_sim = prove
                     (\d1 d2. d2 = remove_flat_prog d1) F`,
   CHEAT_TAC);;
 
-(* HOL4 flat_elimProofScript.sml:1676-1678: a theorem that HOL4
-   states as the value of an ML expression: flat_remove_semantics *)
+(* HOL4 flat_elimProofScript.sml:1676-1678: a theorem that HOL4 states as
+   the value of an ML expression: flat_remove_semantics *)
 
 (* syntactic results *)
 

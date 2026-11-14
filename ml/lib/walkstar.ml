@@ -12,8 +12,8 @@ needs "lib/walk.ml";;
 
 (* of no theory of the port: what it registers is in the scope of every file *)
 let _ = cake_library ();;
-(* HOL4 ancestors outside the port: relation pair bag prim_rec
-   finite_map pred_set *)
+(* HOL4 ancestors outside the port: relation pair bag prim_rec finite_map
+   pred_set *)
 
 let WALKSTARR_RULES,WALKSTARR_INDUCT,WALKSTARR_CASES =
   new_inductive_definition
@@ -38,5 +38,5 @@ let oc_RULES,oc_INDUCT,oc_CASES =
 
 let walkstarR_def = new_definition
   `walkstarR s =
-    inv_image ((LEX) (TC (mlt1 (TC (vR s)))) (MEASURE pair_count))
-      (\t. (varb t,t))`;;
+    inv_image ((LEX) (TC (mlt1 (TC (vR s)))) (MEASURE pair_count)) (\t.
+      (varb t,t))`;;

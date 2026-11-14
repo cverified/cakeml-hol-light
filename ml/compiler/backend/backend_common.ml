@@ -26,8 +26,7 @@ let opw_INDUCT,opw_RECURSION = define_datatype
 
 (* Small general definition *)
 let small_enough_int_def = new_definition
-  `small_enough_int i <=> --(&268435457) <= i /\ i <=
-  ((&268435457):int)`;;
+  `small_enough_int i <=> --(&268435457) <= i /\ i <= ((&268435457):int)`;;
 
 (* these must match what the prim_types_program generates *)
 
@@ -63,7 +62,7 @@ let closure_tag_def = new_definition
 let partial_app_tag_def = new_definition
   `partial_app_tag = (31:num)`;;
 let clos_tag_shift_def = new_definition
-  `clos_tag_shift tag = (if tag < 30 then tag:num else tag + 2)`;;
+  `clos_tag_shift tag = if tag < 30 then tag:num else tag + 2`;;
 
 (* Trace of an expression through the compiler, for exploring transformations *)
 let tra_INDUCT,tra_RECURSION = define_datatype
@@ -81,8 +80,8 @@ let tra_INDUCT,tra_RECURSION = define_datatype
 
 (* The code below replaces "Cons" in hol output with the chosen symbol *)
 (* HOL4 backend_commonScript.sml:83: ML code, not ported *)
-(* HOL4 backend_commonScript.sml:84: the overload ▷, which the port
-   writes as an application of backend_common_Cons *)
+(* HOL4 backend_commonScript.sml:84: the overload ▷, which the port writes
+   as an application of backend_common_Cons *)
 
 (* An "orphan" expression is one that originates directly from a declaration.
 * This happens in source_to_mod, and in con_to_dec. It is an orphan because
@@ -98,23 +97,23 @@ let orphan_trace_def = new_definition
 * turned off. *)
 let mk_cons_def = new_definition
   `mk_cons tr n =
-     (match tr with backend_common_None -> backend_common_None |
-       _1 -> backend_common_Cons tr n)`;;
+     match tr with backend_common_None -> backend_common_None
+        | _ -> backend_common_Cons tr n`;;
 
 (* HOL4 backend_commonScript.sml:106: ML code, not ported *)
-(* HOL4 backend_commonScript.sml:107: the overload §, which the port
-   writes as an application of mk_cons *)
+(* HOL4 backend_commonScript.sml:107: the overload §, which the port writes
+   as an application of mk_cons *)
 
 (* Create new Cons trace, unless any of the original traces are `None`,
 * indicating traces are turned off. *)
 let mk_union_def = new_definition
   `mk_union tr1 tr2 =
-     (match tr1 with backend_common_None -> backend_common_None |
-       _2 -> (match tr2 with backend_common_None ->
-       backend_common_None | _3 -> backend_common_Union tr1 tr2))`;;
+     match tr1 with backend_common_None -> backend_common_None
+        | _ -> (match tr2 with backend_common_None -> backend_common_None
+                   | _ -> backend_common_Union tr1 tr2)`;;
 
 let bool_to_tag_def = new_definition
-  `bool_to_tag b = (if b then true_tag else false_tag)`;;
+  `bool_to_tag b = if b then true_tag else false_tag`;;
 
 let stack_num_stubs_def = new_definition
   `stack_num_stubs = 5`;;
@@ -159,19 +158,17 @@ let word_shift_def = new_definition
      // this could be defined as LOG 2 (dimindex(:'a)) - 3, but I want
      // to be sure that LOG doesn't unnecessarily end up in the
      // generated CakeML code
-     (if dimindex (:'a) = 32 then 2 else 3:num)`;;
+     if dimindex (:'a) = 32 then 2 else 3:num`;;
 
 let upper_w2w_def = new_definition
   `upper_w2w (w:'a word) =
-     (if dimindex (:'a) = 32 then w2w w << 32 else (w2w w):word64)`;;
+     if dimindex (:'a) = 32 then w2w w << 32 else (w2w w):word64`;;
 
 let word_add_carry_def = new_definition
-  `(word_add_carry (l:'a word) (r:'a word) (c:'a word):'a word#'a word)
-  =
-   (let
+  `(word_add_carry (l:'a word) (r:'a word) (c:'a word):'a word#'a word) =
+   let
      res = w2n l + w2n r + (if c = (n2w 0) then 0 else 1) in
-     (n2w res,(if dimword (:'a) <= res then (n2w 1) else (n2w
-       0))))`;;
+     (n2w res,(if dimword (:'a) <= res then (n2w 1) else (n2w 0)))`;;
 
 (* TODO: prefer this over `FOLDR delete`? Consider upstreaming this and
    its associated lemmas (e.g. `domain_list_delete` in loop_liveProof). *)
@@ -181,7 +178,7 @@ let list_delete_def,list_delete_ind = define_rec
 
 let lookup_list_delete = prove
  (`!xs l n. sptree_lookup n (list_delete xs l) =
-            (if MEM n xs then NONE else sptree_lookup n l)`,
+            if MEM n xs then NONE else sptree_lookup n l`,
   CHEAT_TAC);;
 
 (* and the interface *)

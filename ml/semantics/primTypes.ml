@@ -39,15 +39,14 @@ let prim_types_program_def = new_definition
        ((implode "True"),[])])];
      Dtype unknown_loc
            [([(implode "'a")],(implode "list"),
-             [((implode "[]"),[]); ((implode "::"),[Atvar (implode
-               "'a"); Atapp [Atvar (implode "'a")] (Short (implode
-               "list"))])])]]`;;
+             [((implode "[]"),[]); ((implode "::"),[Atvar (implode "'a");
+               Atapp [Atvar (implode "'a")] (Short (implode "list"))])])]]`;;
 
 let add_to_sem_env_def = new_definition
   `add_to_sem_env ((st:'ffi semanticPrimitives_state),env) prog =
-   (match evaluate_evaluate_decs st env prog with
-     (st,Rval env') -> SOME (st,extend_dec_env env' env) |
-       (st,Rerr _1) -> NONE)`;;
+   match evaluate_evaluate_decs st env prog with
+     (st,Rval env') -> SOME (st,extend_dec_env env' env)
+   | (st,Rerr _) -> NONE`;;
 
 let prim_sem_env_def = new_definition
   `prim_sem_env (ffi:'ffi ffi_state) =
@@ -67,12 +66,12 @@ let prim_tenv_def = new_definition
                 ((implode "False"),[],[],Tbool_num); ((implode
                   "True"),[],[],Tbool_num);
                 ((implode "[]"),[(implode "'a")],[],Tlist_num);
-                ((implode "::"),[(implode "'a")],[Tvar (implode
-                  "'a"); Tlist (Tvar (implode "'a"))],Tlist_num)]))
+                ((implode "::"),[(implode "'a")],[Tvar (implode "'a"); Tlist
+                  (Tvar (implode "'a"))],Tlist_num)]))
           (alist_to_ns
             (REVERSE
-               [((implode "array"),[(implode "'a")],Tapp [Tvar
-                 (implode "'a")] Tarray_num);
+               [((implode "array"),[(implode "'a")],Tapp [Tvar (implode
+                 "'a")] Tarray_num);
                 ((implode "bool"),[],Tapp [] Tbool_num);
                 ((implode "char"),[],Tapp [] Tchar_num);
                 ((implode "double"),[],Tapp [] Tdouble_num);
@@ -80,20 +79,19 @@ let prim_tenv_def = new_definition
                 ((implode "int"),[],Tapp [] Tint_num);
                 (
                  // Tfn is ->, specially handled
-                 (implode "list"),[(implode "'a")],Tapp [Tvar
-                   (implode "'a")] Tlist_num);
-                ((implode "ref"),[(implode "'a")],Tapp [Tvar (implode
-                  "'a")] Tref_num);
+                 (implode "list"),[(implode "'a")],Tapp [Tvar (implode
+                   "'a")] Tlist_num);
+                ((implode "ref"),[(implode "'a")],Tapp [Tvar (implode "'a")]
+                  Tref_num);
                 ((implode "string"),[],Tapp [] Tstring_num);
                 ((implode "unit"),[],Tapp [] Ttup_num);
                 (
                  // pairs are specially handled
-                 (implode "vector"),[(implode "'a")],Tapp [Tvar
-                   (implode "'a")] Tvector_num);
+                 (implode "vector"),[(implode "'a")],Tapp [Tvar (implode
+                   "'a")] Tvector_num);
                 ((implode "word64"),[],Tapp [] Tword64_num);
                 ((implode "word8"),[],Tapp [] Tword8_num);
-                ((implode "word8array"),[],Tapp []
-                  Tword8array_num)]))`;;
+                ((implode "word8array"),[],Tapp [] Tword8array_num)]))`;;
 
 let prim_type_ids_def = new_definition
   `prim_type_ids = set_of_list (CONS Tlist_num (CONS Tbool_num

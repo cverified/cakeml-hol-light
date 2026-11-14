@@ -31,8 +31,8 @@ let obj_INDUCT,obj_RECURSION = define_datatype
    | jsonLang_Bool bool
    | jsonLang_Null";;
 
-(* HOL4 jsonLangScript.sml:24: the overload ++, which the port writes
-   as an application of misc_Append *)
+(* HOL4 jsonLangScript.sml:24: the overload ++, which the port writes as an
+   application of misc_Append *)
 
 let _ = size_thms "app_list";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -40,20 +40,19 @@ let _ = size_thms "app_list";;
 let concat_with_def,concat_with_ind = define_wf
   `MEASURE (\(x0,x1). list_size (app_list_size (\x. 0)) x0)`
   [`concat_with x1 c =
-        match x1 with
-          [] -> misc_List []
-        | [s] -> s
-        | (CONS s ss) -> misc_Append s (misc_Append c
-          (concat_with ss c))`];;
+     match x1 with
+       [] -> misc_List []
+     | [s] -> s
+     | CONS s ss -> misc_Append s (misc_Append c (concat_with ss c))`];;
 
 let printable_def = new_definition
-  `printable c <=> ORD c >= 32 /\ ORD c < 127 /\ ~(c = (CHR 34))
-  /\ ~(c = (CHR 92))`;;
+  `printable c <=> ORD c >= 32 /\ ORD c < 127 /\ ~(c = (CHR 34)) /\ ~(c =
+  (CHR 92))`;;
 
 let num_to_hex_digit_def = new_definition
   `num_to_hex_digit n =
-     (if n < 10 then [CHR (48 + n)] else
-     if n < 16 then [CHR (55 + n)] else [])`;;
+     if n < 10 then [CHR (48 + n)] else if n < 16 then [CHR (55 + n)]
+       else []`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -65,11 +64,12 @@ let n_rev_hex_digs,n_rev_hex_digs_ind = define_wf
 
 let encode_str_def = new_definition
   `encode_str unicode s =
-   (let s2 = explode s in
-   if ALL printable s2 then s else mlstring_concat (MAP (\c. if
-     printable c then implode [c] else if unicode then implode
-     (APPEND "\\u" (REVERSE (n_rev_hex_digs 4 (ORD c)))) else
-     mlstring_concat [(implode "\\"); num_to_str (ORD c)]) s2))`;;
+   let s2 = explode s in
+   if ALL printable s2 then s
+   else mlstring_concat (MAP (\c. if printable c then implode [c]
+     else if unicode then implode (APPEND "\\u" (REVERSE (n_rev_hex_digs 4
+       (ORD c))))
+     else mlstring_concat [(implode "\\"); num_to_str (ORD c)]) s2)`;;
 
 let _ = size_thms "obj";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -77,26 +77,24 @@ let _ = size_thms "obj";;
 let json_to_mlstring_def,json_to_mlstring_ind = define_wf
   `MEASURE (sum_measure (\x0. obj_size x0) (\x0. obj_size3 x0))`
   [`json_to_mlstring obj =
-        (match obj with jsonLang_Object mems -> misc_Append
-            (misc_Append (misc_List [(implode "{")])
+        match obj with jsonLang_Object mems -> misc_Append (misc_Append
+            (misc_List [(implode "{")])
                     (concat_with (MAP mem_to_string mems) (misc_List
                         [(implode ",")])))
-                    (misc_List [(implode "}")]) | jsonLang_Array obs
-                        -> misc_Append (misc_Append (misc_List [(implode
-                        "[")])
-                    (concat_with (MAP json_to_mlstring obs)
-                        (misc_List [(implode ",")])))
-                    (misc_List [(implode "]")]) | jsonLang_String
-                        s -> misc_List ([implode "\""; encode_str T
-                        s; implode "\""]) | jsonLang_Int i ->
-                        misc_List [mlint_toString i] | jsonLang_Bool
-                        b -> (if b then misc_List [(implode "true")]
-                        else misc_List [(implode "false")]) |
-                        jsonLang_Null -> misc_List [(implode
-                        "null")])`;
-   `mem_to_string n_obj = (let (n,obj) = n_obj in misc_Append
-    (misc_List [implode "\""; n; implode "\":"]) (json_to_mlstring
-    obj))`];;
+                    (misc_List [(implode "}")])
+            | jsonLang_Array obs -> misc_Append (misc_Append (misc_List
+                [(implode "[")])
+                    (concat_with (MAP json_to_mlstring obs) (misc_List
+                        [(implode ",")])))
+                    (misc_List [(implode "]")])
+           | jsonLang_String s -> misc_List ([implode "\""; encode_str T s;
+               implode "\""])
+           | jsonLang_Int i -> misc_List [mlint_toString i]
+           | jsonLang_Bool b -> if b then misc_List [(implode "true")] else
+               misc_List [(implode "false")]
+           | jsonLang_Null -> misc_List [(implode "null")]`;
+   `mem_to_string n_obj = let (n,obj) = n_obj in misc_Append (misc_List
+    [implode "\""; n; implode "\":"]) (json_to_mlstring obj)`];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

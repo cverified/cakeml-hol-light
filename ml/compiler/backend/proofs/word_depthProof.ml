@@ -42,8 +42,8 @@ let OPTION_MAP2_SOME_0 = prove
 add_simp OPTION_MAP2_SOME_0;;
 
 let max_depth_mk_Branch = prove
- (`!t1 t2. max_depth s (mk_Branch t1 t2) = max_depth s
-  (word_depth_Branch t1 t2)`,
+ (`!t1 t2. max_depth s (mk_Branch t1 t2) = max_depth s (word_depth_Branch t1
+  t2)`,
   CHEAT_TAC);;
 
 let MEM_max_depth_graphs = prove
@@ -55,8 +55,7 @@ let MEM_max_depth_graphs = prove
 
 let option_le_max_depth_graph = prove
  (`!funs h ns1 t x1 ns2.
-     set_of_list ns2 SUBSET set_of_list ns1 /\ LENGTH ns2 <= LENGTH
-       ns1 ==>
+     set_of_list ns2 SUBSET set_of_list ns1 /\ LENGTH ns2 <= LENGTH ns1 ==>
      option_le
        (max_depth ss (call_graph funs h ns1 t x1))
        (max_depth ss (call_graph funs h ns2 t x1))`,
@@ -64,8 +63,7 @@ let option_le_max_depth_graph = prove
 
 let option_le_max_depth_graphs = prove
  (`!ns ns1 ns2.
-     set_of_list ns2 SUBSET set_of_list ns1 /\ LENGTH ns2 <= LENGTH
-       ns1 ==>
+     set_of_list ns2 SUBSET set_of_list ns1 /\ LENGTH ns2 <= LENGTH ns1 ==>
      option_le (max_depth_graphs ss ns ns1 funs funs2)
                (max_depth_graphs ss ns ns2 funs funs2)`,
   CHEAT_TAC);;
@@ -73,8 +71,8 @@ let option_le_max_depth_graphs = prove
 (* [local] *)
 let LENGTH_LESS_size = prove
  (`!name ns funs y.
-     ~(MEM name ns) /\ set_of_list ns SUBSET domain funs
-       /\ ALL_DISTINCT ns /\
+     ~(MEM name ns) /\ set_of_list ns SUBSET domain funs /\ ALL_DISTINCT ns
+       /\
      sptree_lookup name funs = SOME y ==>
      LENGTH ns < sptree_size funs`,
   CHEAT_TAC);;
@@ -86,24 +84,22 @@ let max_depth_call_graph_lemma = prove
        /\ wordSem_state_locals_size
      s = sptree_lookup n (wordSem_state_stack_size s) /\ ~(res = SOME
        wordSem_Error) /\
-     MEM n ns /\ ALL_DISTINCT ns /\ set_of_list ns SUBSET domain
-       funs2 ==>
+     MEM n ns /\ ALL_DISTINCT ns /\ set_of_list ns SUBSET domain funs2 ==>
      option_le (wordSem_state_stack_max s1)
        (OPTION_MAP2 MAX (wordSem_state_stack_max s)
          (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s))
            (OPTION_MAP2 MAX
-             (max_depth_graphs (wordSem_state_stack_size s) ns ns
-               funs funs2)
-             (max_depth (wordSem_state_stack_size s) (call_graph funs
-               n ns (sptree_size funs2) prog))))) /\
-     (~(max_depth_graphs (wordSem_state_stack_size s) ns ns funs
-       funs2 = NONE) /\ ~(max_depth (wordSem_state_stack_size s)
-       (call_graph funs n ns (sptree_size funs2) prog) = NONE) ==>
-       wordSem_state_stack_size
+             (max_depth_graphs (wordSem_state_stack_size s) ns ns funs
+               funs2)
+             (max_depth (wordSem_state_stack_size s) (call_graph funs n ns
+               (sptree_size funs2) prog))))) /\
+     (~(max_depth_graphs (wordSem_state_stack_size s) ns ns funs funs2 =
+       NONE) /\ ~(max_depth (wordSem_state_stack_size s) (call_graph funs n ns
+       (sptree_size funs2) prog) = NONE) ==> wordSem_state_stack_size
       s1 = wordSem_state_stack_size s /\
-      ((res = NONE \/ (?k. res = SOME (wordSem_Break k)) \/ (?k.
-        res = SOME (wordSem_Continue k))) ==>
-        wordSem_state_locals_size s1 = wordSem_state_locals_size s))`,
+      ((res = NONE \/ (?k. res = SOME (wordSem_Break k)) \/ (?k. res =
+        SOME (wordSem_Continue k))) ==> wordSem_state_locals_size s1 =
+        wordSem_state_locals_size s))`,
   CHEAT_TAC);;
 
 (* HOL4 word_depthProofScript.sml:290-382: a proof *)
@@ -125,40 +121,38 @@ let max_depth_call_graph_lemma = prove
 
 let max_depth_call_graph = prove
  (`!prog s res s1 funs n a.
-     wordSem_evaluate (prog,s) = (res,s1) /\ subspt funs
-       (wordSem_state_code s) /\
-     sptree_lookup n funs = SOME (a,prog)
-       /\ wordSem_state_locals_size
+     wordSem_evaluate (prog,s) = (res,s1) /\ subspt funs (wordSem_state_code
+       s) /\
+     sptree_lookup n funs = SOME (a,prog) /\ wordSem_state_locals_size
      s = sptree_lookup n (wordSem_state_stack_size s) /\ ~(res = SOME
        wordSem_Error) ==>
      option_le (wordSem_state_stack_max s1)
        (OPTION_MAP2 MAX (wordSem_state_stack_max s)
          (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s))
-           (max_depth (wordSem_state_stack_size s) (full_call_graph
-             n funs))))`,
+           (max_depth (wordSem_state_stack_size s) (full_call_graph n
+             funs))))`,
   CHEAT_TAC);;
 
 let max_depth_Call_SOME = prove
- (`wordSem_evaluate (wordLang_Call (SOME (n1,n2,wordLang_Skip,n3,n4))
-  (SOME dest) args NONE,s) = (res,s1) /\ ~(res = SOME wordSem_Error)
-  /\ subspt funs (wordSem_state_code s) ==>
+ (`wordSem_evaluate (wordLang_Call (SOME (n1,n2,wordLang_Skip,n3,n4)) (SOME
+  dest) args NONE,s) = (res,s1) /\ ~(res = SOME wordSem_Error) /\ subspt funs
+  (wordSem_state_code s) ==>
    option_le (wordSem_state_stack_max s1)
      (OPTION_MAP2 MAX (wordSem_state_stack_max s)
        (OPTION_MAP2 (+) (wordSem_state_locals_size s)
          (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s))
-           (max_depth (wordSem_state_stack_size s) (full_call_graph
-             dest funs)))))`,
+           (max_depth (wordSem_state_stack_size s) (full_call_graph dest
+             funs)))))`,
   CHEAT_TAC);;
 
 let max_depth_Call_NONE = prove
- (`wordSem_evaluate (wordLang_Call NONE (SOME dest) args NONE,s) =
-  (res,s1) /\ ~(res = SOME wordSem_Error) /\ subspt funs
-  (wordSem_state_code s) ==>
+ (`wordSem_evaluate (wordLang_Call NONE (SOME dest) args NONE,s) = (res,s1)
+  /\ ~(res = SOME wordSem_Error) /\ subspt funs (wordSem_state_code s) ==>
    option_le (wordSem_state_stack_max s1)
      (OPTION_MAP2 MAX (wordSem_state_stack_max s)
        (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s))
-         (max_depth (wordSem_state_stack_size s) (full_call_graph
-           dest funs))))`,
+         (max_depth (wordSem_state_stack_size s) (full_call_graph dest
+           funs))))`,
   CHEAT_TAC);;
 
 (* and the interface *)

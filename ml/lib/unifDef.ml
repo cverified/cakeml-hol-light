@@ -13,11 +13,11 @@ needs "lib/walkstar.ml";;
 
 (* of no theory of the port: what it registers is in the scope of every file *)
 let _ = cake_library ();;
-(* HOL4 ancestors outside the port: string arithmetic finite_map
-   pred_set bag relation prim_rec pair *)
+(* HOL4 ancestors outside the port: string arithmetic finite_map pred_set
+   bag relation prim_rec pair *)
 
 let ext_s_check_def = new_definition
-  `ext_s_check s v t = (if oc s t v then NONE else SOME (s |+ (v,t)))`;;
+  `ext_s_check s v t = if oc s t v then NONE else SOME (s |+ (v,t))`;;
 add_simp ext_s_check_def;;
 
 let UNIFYR_RULES,UNIFYR_INDUCT,UNIFYR_CASES =

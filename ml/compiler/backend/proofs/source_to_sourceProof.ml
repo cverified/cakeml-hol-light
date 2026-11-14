@@ -35,8 +35,7 @@ let source_to_sourceProof_compile_semantics = prove
  (cake_as_vars (fun () ->
     `~(semantics_prog s env prog ffi_Fail) /\
      semantics_prog s env prog outcome ==>
-       semantics_prog s env (source_to_source_compile prog)
-         outcome`),
+       semantics_prog s env (source_to_source_compile prog) outcome`),
   CHEAT_TAC);;
 
 (* compile_semantics_oracle *)

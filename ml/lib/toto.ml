@@ -17,8 +17,7 @@ let TotOrd = new_definition
   `TotOrd (c:'a->'a->ordering) = (
       (!x y. (c x y = EQUAL) <=> (x = y)) /\
       (!x y. (c x y = GREATER) <=> (c y x = LESS)) /\
-      (!x y z. (c x y = LESS) /\ (c y z = LESS) ==> (c x z =
-        LESS)))`;;
+      (!x y z. (c x y = LESS) /\ (c y z = LESS) ==> (c x z = LESS)))`;;
 
 (* ================================================================ *)
 (*  The theorems of totoTheory that LightCake proves and this     *)

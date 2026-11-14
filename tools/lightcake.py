@@ -540,9 +540,9 @@ def file_head(nm, src):
 
 
 
-def wrap72(text, wide=72):
+def wrap72(text, wide=79):
   """LightCake writes wider lines than this port allows, so a
-     line over 72 characters is broken at a space.  A break
+     line over 79 characters is broken at a space.  A break
      inside a quotation is harmless (a term is the same term
      whatever its whitespace); one inside a string of OCaml is
      not, so those spans are left alone.  A proof of the store
@@ -873,7 +873,7 @@ def emit(argv):
       line = '     %-32s' % n
       col = min(len(line), 38)
       for w in need:
-        if len(line) + 1 + len(w) > 72 and line.strip():
+        if len(line) + 1 + len(w) > 79 and line.strip():
           rows.append(line.rstrip()); line = ' ' * col
         line += ' ' + w
       rows.append(line.rstrip())
@@ -1013,7 +1013,7 @@ def fill(argv):
     # is primed in the tactic that names it too, and the binder
     # that says it is a variable stands in the statement
     t, _ = c.ported(body)
-    took.append((n, wrap72(reindent(tactic_of(t)), 69)))
+    took.append((n, wrap72(reindent(tactic_of(t)), 76)))
   if took:
     os.makedirs(os.path.dirname(pp), exist_ok=True)
     old = open(pp).read().rstrip('\n') + '\n\n' \

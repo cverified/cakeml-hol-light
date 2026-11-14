@@ -24,13 +24,11 @@ let db_var_set_INDUCT,db_var_set_RECURSION = define_datatype
 
 let mk_Union_def = new_definition
   `mk_Union t1 t2 =
-     (if t1 = db_vars_Empty then t2 else
-     if t2 = db_vars_Empty then t1 else
-       db_vars_Union t1 t2)`;;
+     if t1 = db_vars_Empty then t2 else if t2 = db_vars_Empty then t1
+       else db_vars_Union t1 t2`;;
 
 let mk_Union_Empty = prove
- (`mk_Union (db_vars_Empty:db_var_set) A = A /\ mk_Union A
-  db_vars_Empty = A`,
+ (`mk_Union db_vars_Empty A = A /\ mk_Union A db_vars_Empty = A`,
   CHEAT_TAC);;
 add_simp mk_Union_Empty;;
 
@@ -40,17 +38,16 @@ let list_mk_Union_def,list_mk_Union_ind = define_rec
 
 let FOLDR_mk_Union_UNZIP = prove
  (`ITLIST (\(x,l) (ts,frees). (CONS x ts,mk_Union l frees)) l ([],A) =
-   (let (ts,fvs) = UNZIP l in
-     (ts,list_mk_Union (APPEND fvs [A])))`,
+   let (ts,fvs) = UNZIP l in
+     (ts,list_mk_Union (APPEND fvs [A]))`,
   CHEAT_TAC);;
 
 let db_to_set_acc_def,db_to_set_acc_ind = define_rec
   [`db_to_set_acc (n:num) (db_vars_Empty:db_var_set) s = s`;
-   `db_to_set_acc (n:num) (db_vars_Var v:db_var_set) s =
-         (if v < n then s else sptree_insert (v - n) one s)`;
-   `db_to_set_acc (n:num) (db_vars_Shift k d:db_var_set) s =
-    db_to_set_acc (n + k) d s`;
-   `db_to_set_acc (n:num) (db_vars_Union v1 v2:db_var_set) s =
+   `db_to_set_acc (n:num) (db_vars_Var v) s =
+         if v < n then s else sptree_insert (v - n) one s`;
+   `db_to_set_acc (n:num) (db_vars_Shift k d) s = db_to_set_acc (n + k) d s`;
+   `db_to_set_acc (n:num) (db_vars_Union v1 v2) s =
          db_to_set_acc n v1 (db_to_set_acc n v2 s)`];;
 
 let wf_db_to_set_acc = prove
@@ -68,18 +65,17 @@ let vars_to_list_def = new_definition
   `vars_to_list db = MAP FST (toAList (db_to_set db))`;;
 
 let vars_from_list_def = new_definition
-  `vars_from_list vs = FOLDL (\s1 v. db_vars_Union (db_vars_Var v)
-  s1) db_vars_Empty vs`;;
+  `vars_from_list vs = FOLDL (\s1 v. db_vars_Union (db_vars_Var v) s1)
+  db_vars_Empty vs`;;
 
 let vars_flatten_def = new_definition
   `vars_flatten db = vars_from_list (vars_to_list db)`;;
 
 let has_var_def,has_var_ind = define_rec
-  [`has_var n (db_vars_Empty:db_var_set) <=> F`;
-   `has_var n (db_vars_Var v:db_var_set) <=> (n = v)`;
-   `has_var n (db_vars_Shift k d:db_var_set) <=> has_var (n + k) d`;
-   `has_var n (db_vars_Union d1 d2:db_var_set) <=> has_var n d1 \/
-    has_var n d2`];;
+  [`has_var n db_vars_Empty <=> F`;
+   `has_var n (db_vars_Var v) <=> (n = v)`;
+   `has_var n (db_vars_Shift k d) <=> has_var (n + k) d`;
+   `has_var n (db_vars_Union d1 d2) <=> has_var n d1 \/ has_var n d2`];;
 add_simp has_var_def;;
 
 let has_var_mk_Union = prove
@@ -95,7 +91,7 @@ add_simp has_var_list_mk_Union;;
 let lookup_db_to_set_acc = prove
  (`!d n k s.
      sptree_lookup n (db_to_set_acc k d s) =
-       (if has_var (n + k) d then SOME one else sptree_lookup n s)`,
+       if has_var (n + k) d then SOME one else sptree_lookup n s`,
   (MATCH_MP_TAC db_var_set_INDUCT THEN
    REWRITE_TAC[has_var_def; db_to_set_acc_def] THEN REPEAT STRIP_TAC
      THENL
@@ -118,8 +114,8 @@ let lookup_db_to_set = prove
    COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT]));;
 
 let lookup_db_to_set_Shift = prove
- (`sptree_lookup n (db_to_set (db_vars_Shift k s)) = sptree_lookup (n
-  + k) (db_to_set s)`,
+ (`sptree_lookup n (db_to_set (db_vars_Shift k s)) = sptree_lookup (n + k)
+  (db_to_set s)`,
   (REWRITE_TAC[db_to_set_def; db_to_set_acc_def;
     lookup_db_to_set_acc;
    lookup_def; ADD_CLAUSES]));;
@@ -130,8 +126,8 @@ let MEM_vars_to_list = prove
 
 (* [local] *)
 let has_var_FOLDL_Union = prove
- (`!vs n s. has_var n (FOLDL (\s1 v. db_vars_Union (db_vars_Var v) s1) s
-  vs) <=>
+ (`!vs n s. has_var n (FOLDL (\s1 v. db_vars_Union (db_vars_Var v) s1) s vs)
+  <=>
               MEM n vs \/ has_var n s`,
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[FOLDL; MEM; has_var_def] THEN
    MESON_TAC[]));;

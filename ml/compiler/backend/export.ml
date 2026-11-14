@@ -27,26 +27,24 @@ let _ = cake_theory "export"
      MEASURE (LENGTH o SND)
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
-(* HOL4 exportScript.sml:17-20: the tactic that proves the
-   termination *)
+(* HOL4 exportScript.sml:17-20: the tactic that proves the termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let split16_def,split16_ind = define_guess_cheat
   [`split16 f xs =
-        match xs with
-          [] -> misc_Nil
-        | xs ->
-        (let xs1 = TAKE 16 xs in
+     match xs with
+       [] -> misc_Nil
+     | xs ->
+        let xs1 = TAKE 16 xs in
         let xs2 = DROP 16 xs in
-          SmartAppend (f xs1) (split16 f xs2))`];;
+          SmartAppend (f xs1) (split16 f xs2)`];;
 
-(* HOL4 exportScript.sml:22-72: the ML values that the definitions
-   below antiquote *)
+(* HOL4 exportScript.sml:22-72: the ML values that the definitions below
+   antiquote *)
 let preamble_def = new_definition
   `preamble = ((MAP (\n. implode (APPEND n "\n"))
-       [(APPEND "/* Preprocessor to get around Mac OS, Windows, and"
-         (APPEND " Linux differences in naming and calling conventio"
-         "ns */"));
+       [(APPEND "/* Preprocessor to get around Mac OS, Windows, and" (APPEND
+         " Linux differences in naming and calling conventio" "ns */"));
         "";
         "#if defined(__APPLE__)";
         "# define cdecl(s) _##s";
@@ -108,10 +106,11 @@ let data_section_def = new_definition
            word_directive) " 0"; APPEND (APPEND "cdecl(cml_stackend): "
            word_directive) " 0"]
          (if ret then
-           [APPEND (APPEND "ret_base: " word_directive) " 0"; APPEND
-             (APPEND "ret_stack: " word_directive) " 0"; APPEND (APPEND
+           [APPEND (APPEND "ret_base: " word_directive) " 0"; APPEND (APPEND
+             "ret_stack: " word_directive) " 0"; APPEND (APPEND
              "ret_stackend: " word_directive) " 0"; APPEND (APPEND
-             "can_enter: " word_directive) " 0"] else []))
+             "can_enter: " word_directive) " 0"]
+          else []))
          ["     .p2align 3";
          "cake_bitmaps:"])`;;
 
@@ -146,9 +145,9 @@ let newl_strlit_def = new_definition
 
 let comma_cat_def,comma_cat_ind = define_guess
   [`comma_cat f x =
-     (match x with [] -> [newl_strlit] | [x] -> [f x;
-       newl_strlit] | (CONS x xs) -> CONS (f x) (CONS comm_strlit
-       (comma_cat f xs)))`];;
+     match x with [] -> [newl_strlit]
+     | [x] -> [f x; newl_strlit]
+     | (CONS x xs) -> CONS (f x) (CONS comm_strlit (comma_cat f xs))`];;
 
 let words_line_def = new_definition
   `words_line word_directive to_string ls =
@@ -167,8 +166,8 @@ let byte_to_string_def = new_definition
 let all_bytes_def = new_definition
   `all_bytes = Vector (list_of_seq (\n. byte_to_string (n2w n)) 256)`;;
 
-(* HOL4 exportScript.sml:155-156: a theorem that HOL4 states as the
-   value of an ML expression: all_bytes_eq *)
+(* HOL4 exportScript.sml:155-156: a theorem that HOL4 states as the value of
+   an ML expression: all_bytes_eq *)
 
 let byte_to_string_eq = prove
  (`!b. byte_to_string b = sub all_bytes (w2n b)`,
@@ -183,18 +182,18 @@ let byte_to_string_eq = prove
 (* we prefix labels and reserve $; . is special *)
 
 let escape_sym_char_def = new_definition
-  `escape_sym_char ch = (let code = ORD ch in
+  `escape_sym_char ch = let code = ORD ch in
      if code >= 97 /\ code <= 122 \/ code >= 65 /\ code <= 90 \/
-        code >= 48 /\ code <= 57 \/ code = 95 then chr_to_str
-          ch else strcat (strcat (implode "$") (num_to_str (code)))
-            (implode "_"))`;;
+        code >= 48 /\ code <= 57 \/ code = 95 then chr_to_str ch else
+          strcat (strcat (implode "$") (num_to_str (code))) (implode
+          "_")`;;
 
 let get_sym_label_def = new_definition
   `get_sym_label (ix,appl) (name,start',len) =
-     (let label = strcat (strcat (strcat (implode "cml_")
-       (mlstring_concat (MAP escape_sym_char (explode name))))
+     let label = strcat (strcat (strcat (implode "cml_") (mlstring_concat
+       (MAP escape_sym_char (explode name))))
        (implode "_")) (num_to_str (ix)) in
-     (ix + 1,APPEND appl [(name,label,start',len)]))`;;
+     (ix + 1,APPEND appl [(name,label,start',len)])`;;
 
 let get_sym_labels_def = new_definition
   `get_sym_labels syms =
@@ -204,8 +203,8 @@ let emit_symbol_def = new_definition
   `emit_symbol appl (name,label,start',len) =
      misc_Append appl (misc_List
        [strcat (strcat (strcat (strcat (strcat (strcat (implode
-         "    makesym(") label) (implode ", ")) (mlint_toString
-         (start'))) (implode ", "))
+         "    makesym(") label) (implode ", ")) (mlint_toString (start')))
+         (implode ", "))
        (mlint_toString (len))) (implode ")\n")])`;;
 
 let emit_symbols_def = new_definition
