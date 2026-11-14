@@ -1561,9 +1561,10 @@ MEASURE = {
 # name several theories in scope have (bvl_to_bvi's compile_exps
 # gives back a bvi expression, which only its Var clause says)
 ONE_QUOTATION = set([
-  # the result is a bvi expression, which only the Var clause says
-  ('bvl_to_bvi', 'compile_exps_def'),
-  ('bvl_to_bvi', 'compile_exps_sing_def'),
+  # (bvl_to_bvi's compile_exps was here: the result is a bvi
+  # expression, which only the Var clause said.  Now that every
+  # constructor is written out, the clauses say it themselves and
+  # CON_BODY can name the theory of the bodies)
   # the Var of the right hand side is the one of bvl, which only
   # the other clauses say (db_vars has a Var of its own, and it is
   # the one that HOL Light takes in a clause of its own)
@@ -12025,15 +12026,6 @@ DEF_PATCH = {
   # lookup_word_op matches on an opw, whose constructors the port
   # calls after backend_common, and gives the binop of asm that
   # it is: the body says asm (CON_BODY) and the pattern is this
-  # compile_exps reads a bvl expression and builds a bvi one, and
-  # the patterns say bvl themselves; no bvi_to_data Call stands
-  # in these, so the bodies are the bvi one wherever they say Call
-  ('bvl_to_bvi', 'compile_exps_def'): [
-    ('dataLang_Call', 'bvi_Call'),
-  ],
-  ('bvl_to_bvi', 'compile_exps_sing_def'): [
-    ('dataLang_Call', 'bvi_Call'),
-  ],
   # the second component of the result is a db_var_set and the
   # first a list of bvl expressions; bvl's Var and db_vars' Var
   # both take one argument, so only the place says which it is
