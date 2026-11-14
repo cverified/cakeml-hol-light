@@ -11744,3 +11744,13 @@ CON_FILE = {
   'stackSem': {'Const': 'asm'},
   'bvl_inlineProof': {'compile_oracle': 'bvl_inline'},
 }
+
+
+# DEF_NAMES: a name that one definition means another constant by.
+# HOL4 overloads toString on the type of its argument -- mlint's
+# toString of an integer and num_to_str of a number -- and the
+# port writes the constant, so the definition says which.
+DEF_NAMES = {
+  ('presLang', 'num_to_display_def'): {'toString': 'num_to_str'},
+  ('jsonLang', 'encode_str_def'): {'toString': 'num_to_str'},
+}

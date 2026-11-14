@@ -371,6 +371,8 @@ class Porter:
     self.conof_wild = False  # did the override use the wildcard?
     self.conbody = {}      # the constructors of the body only
     self.defkey = None     # the definition that is being ported
+    self.defnames_was = {}  # the names DEF_NAMES took the place of
+    self.defnames_ovl = set()
     self.rec_src = {}      # record type -> [(field, type)]
     self.annotated = {}    # the terms a pattern resolved
     self.intargs = set()   # arguments that hold an integer
@@ -2093,6 +2095,19 @@ class Porter:
       else:
         self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm),
                                                             nm)
+    # a name that this definition means another constant by
+    # (overrides.DEF_NAMES): HOL4's toString is num_to_str of a
+    # number and mlint's toString of an integer, and presLang has
+    # a definition of each
+    self.defnames_was = {}
+    self.defnames_ovl = set()
+    for n, new2 in overrides.DEF_NAMES.get(key, {}).items():
+      for k in (n, (self.thy, n)):
+        self.defnames_was[k] = self.ctx.names.get(k)
+        self.ctx.names[k] = new2
+      if n in self.ctx.overloaded:
+        self.defnames_ovl.add(n)
+        self.ctx.overloaded.discard(n)
     # the record type of a variable, for this definition only
     fv = overrides.FIELD_VAR_DEF.get(key)
     if fv:
@@ -2381,6 +2396,12 @@ class Porter:
       if ovl: self.ctx.overloaded.add(nm)
       if was is None: self.ctx.names.pop((self.thy, nm), None)
       else: self.ctx.names[(self.thy, nm)] = was
+    for k, old2 in self.defnames_was.items():
+      if old2 is None: self.ctx.names.pop(k, None)
+      else: self.ctx.names[k] = old2
+    self.ctx.overloaded |= self.defnames_ovl
+    self.defnames_was = {}
+    self.defnames_ovl = set()
     self.conof = {}
     self.conbody = {}
     if self.ctx.fieldvar is not self.fieldvar:
