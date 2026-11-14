@@ -11955,6 +11955,7 @@ DEF_NAMES = {
   # sptree's and takes two arguments; balanced_map's takes three
   ('word_cse', 'keep_data_def'): {'lookup': 'sptree_lookup'},
   ('displayLang', 'trace_to_json_def'): {'toString': 'num_to_str'},
+  ('presLang', 'attach_name_def'): {'toString': 'num_to_str'},
   # the toString of the length of a list is num_to_str, which the
   # port writes as toString of the injection in some places and
   # left without one in two
@@ -11972,6 +11973,13 @@ DEF_NAMES = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # the toString of a character is mlstring's chr_to_str and the
+  # toString of the number of it is num_to_str: one definition,
+  # two of HOL4's overload
+  ('export', 'escape_sym_char_def'): [
+    ('mlint_toString\n          ch', 'chr_to_str\n          ch'),
+    ('mlint_toString (code)', 'num_to_str (code)'),
+  ],
   # lab_inst reads a lab assembly instruction and gives the asm
   # instruction that it is, and the two share Jump, JumpCmp and
   # Call; the definition is one quotation, where a rule for the
