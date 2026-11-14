@@ -409,14 +409,7 @@ let bvi_let_compile_exp_def = new_definition
      match bvi_let_compile [] 0 [x] with (CONS y _) -> y | _ -> bvi_Var 0
    // impossible`;;
 
-(* compile_exp_eq *)
-let bvi_let_compile_exp_eq = prove
- (`!x. bvi_let_compile_exp x = bvi_let_compile_sing [] 0 x`,
-  (* HOL4 applies compile_sing to compile_exp_def: the compiled
-     list of one is a singleton, so the match reduces to its head *)
-  (let ce = bvi_let_compile_exp_def in
-   GEN_TAC THEN REWRITE_TAC[ce; CONJUNCT1 compile_sing] THEN
-   MATCH_REDUCE_TAC THEN REWRITE_TAC[]));;
+let bvi_let_compile_exp_eq = SIMP_RULE [compile_sing] bvi_let_compile_exp_def;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

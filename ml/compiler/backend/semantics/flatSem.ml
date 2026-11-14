@@ -1037,11 +1037,13 @@ let flatSem_fix_clock_evaluate = prove
      flatSem_evaluate_decs s ds`,
   CHEAT_TAC);;
 
-(* HOL4 flatSemScript.sml:986-987: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_def *)
+(* [compute,allow_rebind] *)
+let flatSem_evaluate_def =
+  REWRITE_RULE [flatSem_fix_clock_evaluate] flatSem_evaluate_def;;
 
-(* HOL4 flatSemScript.sml:989-990: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_ind *)
+(* [allow_rebind] *)
+let flatSem_evaluate_ind =
+  REWRITE_RULE [flatSem_fix_clock_evaluate] flatSem_evaluate_ind;;
 
 let flatSem_initial_state_def = new_definition
   `flatSem_initial_state ffi k ec =

@@ -1176,11 +1176,13 @@ let stackSem_fix_clock_evaluate = prove
  (`stackSem_fix_clock s (stackSem_evaluate (xs,s)) = stackSem_evaluate (xs,s)`,
   CHEAT_TAC);;
 
-(* HOL4 stackSemScript.sml:1108-1109: a theorem that HOL4 states as the
-   value of an ML expression: evaluate_def *)
+(* [compute,allow_rebind] *)
+let stackSem_evaluate_def =
+  REWRITE_RULE [stackSem_fix_clock_evaluate] stackSem_evaluate_def;;
 
-(* HOL4 stackSemScript.sml:1111-1112: a theorem that HOL4 states as the
-   value of an ML expression: evaluate_ind *)
+(* [allow_rebind] *)
+let stackSem_evaluate_ind =
+  REWRITE_RULE [stackSem_fix_clock_evaluate] stackSem_evaluate_ind;;
 
 (* observational semantics *)
 

@@ -701,8 +701,9 @@ let MEM_compile = prove
      word_bignumProof_good_code xx5`,
   CHEAT_TAC);;
 
-(* HOL4 word_bignumProofScript.sml:1327-1330: a theorem that HOL4 states as
-   the value of an ML expression: compile_NIL_IMP *)
+let compile_NIL_IMP =
+  SIMP_RULE [good_code_def; MEM] (SPECL [`k`; `l1`; `l2`; `(l,[])`]
+  MEM_compile);;
 
 
 (* correctenss judgement *)

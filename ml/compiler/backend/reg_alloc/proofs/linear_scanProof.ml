@@ -1039,8 +1039,8 @@ let spill_register_FILTER_invariants_hidden = prove
    st <= EL reg (linear_scan_hidden_state_colors sthout))`,
   CHEAT_TAC);;
 
-(* HOL4 linear_scanProofScript.sml:2914-2916: a theorem that HOL4 states as
-   the value of an ML expression: spill_register_FILTER_invariants *)
+let spill_register_FILTER_invariants =
+  REWRITE_RULE [id_def] spill_register_FILTER_invariants_hidden;;
 
 let FILTER_MEM_active = prove
  (`!(reg:num) l. (!(e:int). ~(MEM (e,reg) l)) ==> FILTER (\(e,r). ~(r = reg))

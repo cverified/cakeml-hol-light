@@ -247,11 +247,11 @@ let oracle_monotonic_state_with_inv_init = prove
    oracle_monotonic f (<) (St:num->bool) (state_co f_inc orac)`,
   CHEAT_TAC);;
 
-(* HOL4 backendPropsScript.sml:348-349: a theorem that HOL4 states as the
-   value of an ML expression: oracle_monotonic_state *)
+let oracle_monotonic_state =
+  SIMP_RULE [] (SPEC `\x. T` oracle_monotonic_state_with_inv);;
 
-(* HOL4 backendPropsScript.sml:351-352: a theorem that HOL4 states as the
-   value of an ML expression: oracle_monotonic_state_init *)
+let oracle_monotonic_state_init =
+  SIMP_RULE [] (SPEC `\x. T` oracle_monotonic_state_with_inv_init);;
 
 let restrict_zero_def = new_definition
   `restrict_zero (labels:num#num->bool) =

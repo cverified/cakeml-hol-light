@@ -8,7 +8,7 @@ import sys, os, re, subprocess
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hol4, hterm, db as dbmod, overrides, grammardef
 import fieldvars, strategies, unstated
-import proofstore
+import proofstore, derive
 
 # every theorem that the port states, as (theory, HOL4 name,
 # binding), in the order of the files, and every definition as
@@ -17,6 +17,11 @@ import proofstore
 # binding it has in the file that makes it
 EMITTED = []
 EMITTED_DEFS = []
+# the binding and the HOL4 body of every definition that is not
+# recursive, by the constant it defines: a term that HOL4 gives to
+# its EVAL is computed in HOL Light by unfolding the definitions
+# that the term reaches, and these are what it reaches
+DEF_BODY = {}
 
 # the definitions whose termination the first pass assumes: the
 # port writes CHEAT_TAC in the place of the Termination tactic of
@@ -304,7 +309,14 @@ class Porter:
     self.abbrevs, self.declared_abbrevs = db.abbrevs_for(thy)
     # the names that mean one theory's constant everywhere in
     # this file (overrides.CON_FILE)
-    self.con_file = overrides.CON_FILE.get(thy, {})
+    cf = overrides.CON_FILE.get(thy, {})
+    # a name whose theory depends on how many arguments it takes
+    # (clos_to_bvlProof's Var is bvl's where it takes a number
+    # and closLang's where it takes a trace and a number)
+    self.con_file_ar = {k: v for k, v in cf.items()
+                        if isinstance(v, dict)}
+    self.con_file = {k: v for k, v in cf.items()
+                     if not isinstance(v, dict)}
     # the names that the port gives the constants, so that a size
     # function is not made for a name that is one of them
     self.constnames = set(db.names_for(thy).values())
@@ -602,6 +614,11 @@ class Porter:
         if t2 != t: continue
         for c in cons:
           if c in self.ctx.overloaded: conof.setdefault(c, t)
+    self.conof_arities = {k: v for k, v in conof.items()
+                          if isinstance(v, dict)}
+    for k in self.conof_arities: del conof[k]
+    for k, v in self.con_file_ar.items():
+      self.conof_arities.setdefault(k, v)
     self.conof_said = conof
     try:
       # the statement is a quotation in a function, so that one
@@ -692,7 +709,7 @@ class Porter:
     if simp: self.out.append('add_simp %s;;' % name)
     # the binding is there, so a source that states a theorem as
     # the value of this one (Theorem foo = bar) can use it
-    self.db.thmbind[nm] = name
+    dbmod.bind_thm(self.db, self.thy, nm, name)
 
   def front_overloads(self, b):
     """a source that brings an overload to the front (HOL4's
@@ -749,6 +766,87 @@ class Porter:
       nm = ocaml_name(dbmod.short_thy(self.thy) + '_' + name)
     self.db.thmnames.add(nm)
     return nm
+
+  def resolve_thm(self, name):
+    """the OCaml binding of the port for a theorem that a source
+       names, where the port has it: the theorem of the theory
+       that the source says (listTheory.oEL_def), or, where it
+       says none, the one of this file before the one of another
+       -- and nothing where two files of the port bind the name
+       and the source does not say which is meant"""
+    if '.' in name:
+      thy, nm = name.rsplit('.', 1)
+      if thy.endswith('Theory'): thy = thy[:-6]
+      b = self.db.thmbind_thy.get((thy, nm))
+      if b: return b
+      if nm not in self.db.thmbind_many and nm in self.db.thmbind:
+        return self.db.thmbind[nm]
+      return (overrides.THM_MAP.get(name) or
+              overrides.THM_MAP.get(nm) or
+              (nm if nm in self.db.hlids else None))
+    b = self.db.thmbind_thy.get((self.thy, name))
+    if b: return b
+    if name not in self.db.thmbind_many and name in self.db.thmbind:
+      return self.db.thmbind[name]
+    # a theorem of HOL Light itself, which the two systems share
+    # under one name (FUN_EQ_THM, MAP, LENGTH) or under two
+    # (HOL4's LET_THM is HOL Light's LET_DEF)
+    nm = overrides.THM_MAP.get(name)
+    if nm: return nm
+    return name if name in self.db.hlids else None
+
+  def eval_defs(self, text, skip=()):
+    """the definitions that a term reaches, innermost last: what
+       HOL4 has in the compset of its whole development and the
+       port has to say"""
+    seen, order, work = set(skip), [], [text]
+    while work:
+      t = work.pop()
+      for w in re.findall(r"[A-Za-z_][A-Za-z_0-9']*", t):
+        if w in seen or w not in DEF_BODY: continue
+        seen.add(w)
+        order.append(DEF_BODY[w][0])
+        work.append(DEF_BODY[w][1])
+    return order
+
+  def evalconv(self, text):
+    """the HOL Light expression that computes the value of a term,
+       which HOL4 computes with the compset of its whole
+       development: the port unfolds the definitions that the term
+       reaches and reduces the arithmetic"""
+    order = self.eval_defs(text)
+    if not order: return None
+    try:
+      tm = self.term(text, defn=False)
+    except Exception:
+      return None
+    return 'CAKE_EVAL [%s] `%s`' % ('; '.join(order), tm)
+
+  def evaldefs(self, name):
+    """the same for the right-hand side of a definition, which a
+       source evaluates by its name (CONV_RULE (RAND_CONV EVAL)
+       x64_names_def): the definition itself is not one to unfold,
+       because its own left-hand side is what is evaluated"""
+    nm = name.split('.')[-1]
+    if nm.endswith('_def'): nm = nm[:-4]
+    if nm not in DEF_BODY: return None
+    body = DEF_BODY[nm][1]
+    order = self.eval_defs(body, dbmod.definition_names(body))
+    return '[%s]' % '; '.join(order) if order else None
+
+  def derived(self, b):
+    """a theorem that HOL4 states as the value of an ML
+       expression of the derived rules: the port computes it the
+       same way, so the theorem is there with a proof"""
+    key = (self.thy, b.name)
+    if key in overrides.NO_DERIVE: return None
+    e, why = derive.translate(b.text, self.resolve_thm,
+                              lambda t: self.term(t, defn=False),
+                              self.evalconv, self.evaldefs)
+    if not e:
+      self.warn.append('derive %s: %s' % (b.name, why))
+      return None
+    return e
 
   def srcname(self):
     """the path of the HOL4 source, over as many lines as it
@@ -1649,7 +1747,24 @@ class Porter:
           text = (('(* %s *)\n' % at) if at else '') + \
                  ('let %s =\n  %s;;' % (nm, self.db.thmbind[alias]))
         self.out.append(text + ('\nadd_simp %s;;' % nm if simp else ''))
-        self.db.thmbind[b.name] = nm
+        dbmod.bind_thm(self.db, self.thy, b.name, nm)
+        return
+      # a theorem that HOL4 states as the value of an expression
+      # of the derived rules of the logic, which HOL Light has as
+      # well: the port computes the theorem the same way, so it
+      # is there with a proof and not with a pointer
+      e = self.derived(b)
+      if e and b.name:
+        nm = self.bindname(b.name)
+        simp = 'simp' in b.attrs
+        ats = [a for a in b.attrs if a != 'simp']
+        at = ('(* [%s] *)\n' % ','.join(ats)) if ats else ''
+        text = at + 'let %s = %s;;' % (nm, e)
+        if max(len(l) for l in text.split('\n')) > 79:
+          text = at + 'let %s =\n  %s;;' % (nm, wrap(e, 2, 77))
+        self.out.append(text + ('\nadd_simp %s;;' % nm
+                                if simp else ''))
+        dbmod.bind_thm(self.db, self.thy, b.name, nm)
         return
       # a theorem that HOL4 binds to the value of an ML
       # expression, where phase three has worked out what that
@@ -2198,6 +2313,7 @@ class Porter:
     # source, or that name with the theory in front of it where
     # another file of the port has the name already
     bind = self.bindname(b.name)
+    dbmod.bind_thm(self.db, self.thy, b.name, bind)
     self.ctx.defining = set(dbmod.definition_names(body))
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.intneg = key in overrides.INT_NEG
@@ -2245,6 +2361,8 @@ class Porter:
     self.conof_arities = {k: v for k, v in conof.items()
                           if isinstance(v, dict)}
     for k in self.conof_arities: del conof[k]
+    for k, v in self.con_file_ar.items():
+      self.conof_arities.setdefault(k, v)
     self.conof_said = {k: v for k, v in conof.items() if k != '*'}
     if '*' in conof:
       # every constructor name of that theory
@@ -2497,6 +2615,16 @@ class Porter:
                    'takes here, so the\n   port lets its own '
                    'machinery find one *)\n' % inset(hol4rel))
     binding = '%s,%s' % (bind, indbind) if recursive else bind
+    # what a term that HOL4 evaluates unfolds to: a recursive
+    # definition is not one to unfold, because rewriting with it
+    # does not stop
+    if not recursive:
+      for c in dbmod.definition_names(b.body):
+        DEF_BODY[c] = (bind, b.body)
+    # the induction theorem is bound only where the definition is
+    # recursive, so a block that names it finds it only then
+    if recursive and b.name.endswith('_def'):
+      dbmod.bind_thm(self.db, self.thy, b.name[:-4] + '_ind', indbind)
     # a comment of the source that cannot stand in the quotation
     sizes += getattr(self, 'clause_pre', '') or ''
     sizes += splitnote
@@ -3838,6 +3966,33 @@ class Porter:
           return args[0], args[1]
       return None, None
 
+    def tuple_parts(t):
+      """the component types of a tuple type, as the text of the
+         type says them: a pattern that takes a value apart binds
+         its components, and their types are not the type of the
+         whole"""
+      s = t.strip()
+      while s.startswith('(') and s.endswith(')'):
+        d, whole = 0, True
+        for i, c in enumerate(s):
+          if c == '(': d += 1
+          elif c == ')':
+            d -= 1
+            if d == 0 and i != len(s) - 1: whole = False; break
+        if not whole: break
+        s = s[1:-1].strip()
+      out, d, cur = [], 0, ''
+      for c in s:
+        if c == '(': d += 1
+        elif c == ')': d -= 1
+        if c == '#' and d == 0:
+          out.append(cur); cur = ''
+        else:
+          cur += c
+      out.append(cur)
+      out = [x.strip() for x in out]
+      return out if len(out) > 1 and all(out) else None
+
     def walk(p, tys):
       while p.kind in ('paren', 'typed'): p = p.e
       # the tail of a cons pattern is a list of the same elements
@@ -3876,6 +4031,26 @@ class Porter:
         for a in p.items: walk(a, None)
         return
       if p.kind == 'infix':
+        # a pattern that takes a value apart as a tuple binds its
+        # components, whose types are not the type of the whole:
+        # a clause that binds the whole and one that binds a
+        # component cannot stand in one quotation
+        # (cmlPtreeConversion's ptree_Decl has Nd (nt,locs) args
+        # where its ptree_Structure has Nd nt args)
+        if p.op == ',':
+          cs, b2 = [], p
+          while b2.kind == 'infix' and b2.op == ',':
+            cs.append(b2.l); b2 = b2.r
+            while b2.kind in ('paren', 'typed'): b2 = b2.e
+          cs.append(b2)
+          parts = None
+          t0 = next(iter(tys)) if tys and len(tys) == 1 else None
+          if isinstance(t0, str):
+            ps = tuple_parts(t0)
+            if ps and len(ps) == len(cs): parts = ps
+          for j, c in enumerate(cs):
+            walk(c, {parts[j]} if parts else None)
+          return
         walk(p.l, None); walk(p.r, None)
     # the type of each argument of the function, as a pattern of
     # some clause says it: without that, a variable at argument 1
@@ -4447,6 +4622,7 @@ class Porter:
     if nm != name and text.startswith(name):
       text = nm + text[len(name):]
     bind = self.bindname(name + '_def')
+    dbmod.bind_thm(self.db, self.thy, name + '_def', bind)
     self.out.append('let %s = new_definition\n  `%s`;;\n'
                     % (bind, fmt(text)))
     EMITTED_DEFS.append((self.thy, nm, bind))
@@ -4638,6 +4814,7 @@ class Porter:
     # (word_bignumProof and five other files state a v_rel of
     # their own, and a proof names the one of its file)
     bind = self.bindname(b.name)
+    dbmod.bind_thm(self.db, self.thy, b.name, bind)
     text = 'let %s = cake_inductive\n  `%s`;;' % (bind, term)
     for c in defined:
       EMITTED_DEFS.append((self.thy,

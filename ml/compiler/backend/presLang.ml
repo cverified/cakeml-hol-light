@@ -429,11 +429,10 @@ let source_to_display_dec_def,source_to_display_dec_ind = assume_definition_rec
 
 (* flatLang *)
 
-make_size "flat_pat";;
 (* [local] *)
 let MEM_pat_size = prove
- (`!pats a. MEM a (pats:flat_pat list) ==> pattern_semantics_pat_size a <
-  list_size flat_pat_size pats`,
+ (`!pats a. MEM a (pats:flat_pat list) ==> flat_pat_size a < list_size
+  flat_pat_size pats`,
   CHEAT_TAC);;
 
 let opt_con_to_display_def = new_definition
@@ -1427,8 +1426,8 @@ let MEM_append_word_seqs = prove
   word_prog_size ARB x`,
   CHEAT_TAC);;
 
-(* HOL4 presLangScript.sml:1311-1312: a theorem that HOL4 states as the
-   value of an ML expression: MEM_word_exps_size_ARB *)
+(* [local] *)
+let MEM_word_exps_size_ARB = SPEC `ARB` (GEN `l` word_MEM_IMP_exp_size);;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL v -> word_exp_size ARB v | INR v ->

@@ -332,11 +332,12 @@ let fix_clock_evaluate = prove
      evaluate_evaluate_decs s1 env ds`,
   CHEAT_TAC);;
 
-(* HOL4 evaluateScript.sml:314-315: a theorem that HOL4 states as the value
-   of an ML expression: full_evaluate_def *)
+(* [compute] *)
+let full_evaluate_def =
+  REWRITE_RULE [fix_clock_evaluate; fix_clock_do_eval_res] evaluate_def;;
 
-(* HOL4 evaluateScript.sml:317-318: a theorem that HOL4 states as the value
-   of an ML expression: full_evaluate_ind *)
+let full_evaluate_ind =
+  REWRITE_RULE [fix_clock_evaluate; fix_clock_do_eval_res] evaluate_ind;;
 
 (* store evaluate_def and evaluate_ind in parts *)
 
@@ -358,14 +359,18 @@ let fix_clock_evaluate = prove
 (* HOL4 evaluateScript.sml:344: a theorem that HOL4 states as the value of
    an ML expression: evaluate_decs_def *)
 
-(* HOL4 evaluateScript.sml:346-350: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_ind *)
+(* [allow_rebind] *)
+let evaluate_ind =
+  GENL [`P1`; `P2`] (SIMP_RULE [] (SPECL [`P1`; `P2`; `\v1 v2 v3. T`]
+  full_evaluate_ind));;
 
-(* HOL4 evaluateScript.sml:352-356: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_match_ind *)
+let evaluate_match_ind =
+  GEN `P2` (SIMP_RULE [] (SPECL [`\v1 v2 v3. T`; `P2`; `\v1 v2 v3. T`]
+  full_evaluate_ind));;
 
-(* HOL4 evaluateScript.sml:358-362: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_decs_ind *)
+let evaluate_decs_ind =
+  GEN `P` (SIMP_RULE [] (SPECL [`\v1 v2 v3. T`; `\v1 v2 v3 v4 v5. T`; `P`]
+  full_evaluate_ind));;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -1406,10 +1406,12 @@ let wordSem_fix_clock_evaluate = prove
 
 (* We store the theorems without fix_clock *)
 
-(* HOL4 wordSemScript.sml:1367-1368: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_ind *)
-(* HOL4 wordSemScript.sml:1369-1370: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_def *)
+(* [allow_rebind] *)
+let wordSem_evaluate_ind =
+  REWRITE_RULE [wordSem_fix_clock_evaluate] wordSem_evaluate_ind;;
+(* [allow_rebind] *)
+let wordSem_evaluate_def =
+  REWRITE_RULE [wordSem_fix_clock_evaluate] wordSem_evaluate_def;;
 
 (* observational semantics *)
 

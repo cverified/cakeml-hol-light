@@ -404,11 +404,13 @@ let bviSem_fix_clock_evaluate = prove
 
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
 
-(* HOL4 bviSemScript.sml:392-393: a theorem that HOL4 states as the value of
-   an ML expression: evaluate_def *)
+(* [compute,allow_rebind] *)
+let bviSem_evaluate_def =
+  REWRITE_RULE [bviSem_fix_clock_evaluate] bviSem_evaluate_def;;
 
-(* HOL4 bviSemScript.sml:395-396: a theorem that HOL4 states as the value of
-   an ML expression: evaluate_ind *)
+(* [allow_rebind] *)
+let bviSem_evaluate_ind =
+  REWRITE_RULE [bviSem_fix_clock_evaluate] bviSem_evaluate_ind;;
 
 (* observational semantics *)
 

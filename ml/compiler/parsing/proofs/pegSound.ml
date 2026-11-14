@@ -331,8 +331,9 @@ let PAIR_MAP_I = prove
   CHEAT_TAC);;
 add_simp PAIR_MAP_I;;
 
-(* HOL4 pegSoundScript.sml:443: a theorem that HOL4 states as the value of
-   an ML expression: bindNT0_lemma *)
+(* [local] *)
+let bindNT0_lemma = REWRITE_RULE [GSYM mkNd_def] bindNT0_def;;
+add_simp bindNT0_lemma;;
 
 (* left recursive rules in the grammar turn into calls to rpt in the PEG,
    and this in turn requires inductions *)

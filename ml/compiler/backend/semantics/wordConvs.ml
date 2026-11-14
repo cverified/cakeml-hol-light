@@ -109,8 +109,9 @@ let labels_rel_APPEND = prove
    labels_rel (APPEND xs ys) (APPEND xs1 ys1)`,
   CHEAT_TAC);;
 
-(* HOL4 wordConvsScript.sml:158-160: a theorem that HOL4 states as the value
-   of an ML expression: labels_rel_CONS *)
+let labels_rel_CONS =
+  SIMP_RULE [APPEND] (SPECL [`[x]`; `[x1]`] (GENL [`xs`; `xs1`]
+  labels_rel_APPEND));;
 
 let PERM_IMP_labels_rel = prove
  (`PERM xs ys ==> labels_rel ys xs`,

@@ -443,8 +443,8 @@ let lex_aux_tokens_thm_1 = prove
                (res1 = SOME (ts,lexer_fun_aux rest l')))`,
   CHEAT_TAC);;
 
-(* HOL4 lexer_implScript.sml:578: a theorem that HOL4 states as the value of
-   an ML expression: lex_aux_tokens_thm *)
+(* [local] *)
+let lex_aux_tokens_thm = SIMP_RULE [] lex_aux_tokens_thm_1;;
 
 (* [local] *)
 let lex_impl_all_tokens_thm = prove
@@ -462,8 +462,10 @@ let lexer_impl_lex_aux_tokens_thm_1 = prove
            (APPEND (REVERSE acc) input = APPEND toks rest)`,
   CHEAT_TAC);;
 
-(* HOL4 lexer_implScript.sml:614-615: a theorem that HOL4 states as the
-   value of an ML expression: lex_aux_tokens_thm *)
+(* [local] *)
+let lexer_impl_lex_aux_tokens_thm =
+  SIMP_RULE [LENGTH] (SPECL [`input`; `0`; `[]`]
+  lexer_impl_lex_aux_tokens_thm_1);;
 
 (* [local] *)
 let split_top_level_semi_thm = prove

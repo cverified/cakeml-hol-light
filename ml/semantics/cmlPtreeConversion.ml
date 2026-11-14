@@ -1139,8 +1139,10 @@ let dumb1 = prove
 let dumb2 = prove
  (`COND gd t NONE = OPTION_IGNORE_BIND (OPTION_GUARD gd) t`,
   CHEAT_TAC);;
-(* HOL4 cmlPtreeConversionScript.sml:1259-1262: a theorem that HOL4 states
-   as the value of an ML expression: ptree_Expr_def' *)
+(* [local] *)
+let ptree_Expr_def' =
+  REWRITE_RULE [dumb2] (SIMP_RULE [] (ONCE_REWRITE_RULE [dumb1]
+  ptree_Expr_def));;
 
 (* HOL4 cmlPtreeConversionScript.sml:1264-1271: a theorem that HOL4 states
    as the value of an ML expression: ptree_Expr_pevaled *)
@@ -1233,14 +1235,16 @@ let ptree_SignatureValue_def = define_cases
               ptree_SpeclineList sll_pt)
           | _ -> NONE)`;;
 
+(* the clauses in two quotations: nt is 'b inf and ('b inf # 'locs), which
+   one quotation cannot typecheck *)
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let ptree_Decl_def,ptree_Decl_ind = define_wf
+let ptree_Decl_def,ptree_Decl_ind = define_wf_clauses
   `MEASURE (sum_measure  (\x0. parsetree_size locs_size MMLnonT_size
   tokens_token_size x0) (sum_measure  (\x0. parsetree_size locs_size
   MMLnonT_size tokens_token_size x0) (\x0. parsetree_size locs_size
   MMLnonT_size tokens_token_size x0)))`
-  `((ptree_Decl pt:dec option) =
+  [`((ptree_Decl pt:dec option) =
         match pt with
            Lf _ -> NONE
          | Nd (nt',locs) args ->
@@ -1273,8 +1277,8 @@ let ptree_Decl_def,ptree_Decl_ind = define_wf
                        (\decls1. OPTION_BIND (ptree_Decls decls2_pt) (\decls2.
                    SOME (Dlocal decls1 decls2))))
                | _ -> NONE)) /\
-   (ptree_Decls (Lf _) = NONE) /\
-   (ptree_Decls (Nd (nt',_) args) =
+    (ptree_Decls (Lf _) = NONE) /\
+    (ptree_Decls (Nd (nt',_) args) =
         if ~(nt' = (INL:MMLnonT->MMLnonT+num) nDecls) then NONE
         else match args with
               [] -> SOME []
@@ -1284,8 +1288,8 @@ let ptree_Decl_def,ptree_Decl_ind = define_wf
                   (ptree_Decls ds_pt) (\ds.
                   SOME (CONS d ds))))
             | _ -> NONE) /\
-   (ptree_Structure (Lf _) = NONE) /\
-   (ptree_Structure (Nd nt' args) =
+    (ptree_Structure (Lf _) = NONE)`;
+   `ptree_Structure (Nd nt' args) =
       if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nStructure) then NONE
       else match args with
             [structuretok; sname_pt; asc_opt; eqtok; structtok; ds_pt;
@@ -1313,7 +1317,7 @@ let ptree_Decl_def,ptree_Decl_ind = define_wf
               SOME (Dmod sname
                   // asc
                   ds)))))
-          | _ -> NONE)`;;
+          | _ -> NONE`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)

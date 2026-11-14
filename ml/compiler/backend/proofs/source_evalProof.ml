@@ -209,11 +209,14 @@ let env_rel_nsLookup_c = prove
 
 (* various trivia *)
 
-(* HOL4 source_evalProofScript.sml:194-196: a theorem that HOL4 states as
-   the value of an ML expression: alist_to_ns_to_bind2 *)
+(* [local] *)
+let alist_to_ns_to_bind2 =
+  REWRITE_RULE [nsAppend_nsEmpty] (SPEC `nsEmpty` (GEN_ALL
+  nsAppend_to_nsBindList));;
 
-(* HOL4 source_evalProofScript.sml:198-200: a theorem that HOL4 states as
-   the value of an ML expression: nsSing_eq_bind *)
+(* [local] *)
+let nsSing_eq_bind =
+  REWRITE_RULE [GSYM nsBind_def; GSYM nsEmpty_def] nsSing_def;;
 
 (* [local] *)
 let pair_CASE_eq_pairarg = prove

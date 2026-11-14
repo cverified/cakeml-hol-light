@@ -855,58 +855,53 @@ let AppUnit_def = new_definition
   `closSem_AppUnit x = clos_App backend_common_None NONE x [clos_Op
   backend_common_None (clos_BlockOp (clos_Cons 0)) []]`;;
 
-(* a match per member of the family: every clause of the source
-   says the arguments of a constructor as a0, a1, a2 and a3, which
-   is a dozen types for one name over the definition, and the arms
-   of a match bind their own *)
-let exp_alt_size_def,exp_alt_size_ind = define_rec
-  `(closSem_exp_alt_size x1 =
-    match x1 with
-      clos_Var a0 a1 -> 1 + (tra_size a0 + a1)
-    | clos_If a0 a1 a2 a3 ->
-    1 + (tra_size a0 + (closSem_exp_alt_size a1 + (closSem_exp_alt_size a2
-        + closSem_exp_alt_size a3)))
-    | clos_Let a0 a1 a2 ->
+(* the clauses in 8 quotations: a0 is tra, mlstring, (mlstring list) and exp;
+   a1 is num, exp, (exp list), (_)list, (num option) and op; a2 is num, exp,
+   (num list option), (exp list) and (_)list; a3 is (exp list), (_)list, exp,
+   num and ((num # exp) list), which one quotation cannot typecheck *)
+let exp_alt_size_def,exp_alt_size_ind = define_rec_clauses
+  [`(closSem_exp_alt_size (clos_Var a0 a1) = 1 + (tra_size a0 + a1)) /\
+    (closSem_exp_alt_size (clos_Call a0 a1 a2 a3) =
+    1 + (tra_size a0 + (a1 + (a2 + closSem_exp3_alt_size a3)))) /\
+    (closSem_exp1_alt_size [] = 0) /\
+    (closSem_exp3_alt_size [] = 0)`;
+   `(closSem_exp_alt_size (clos_If a0 a1 a2 a3) =
+    1 + (tra_size a0 + (closSem_exp_alt_size a1 + (closSem_exp_alt_size
+        a2 + closSem_exp_alt_size a3)))) /\
+    (closSem_exp_alt_size (clos_Raise a0 a1) = 1 + (tra_size a0 +
+    closSem_exp_alt_size a1)) /\
+    (closSem_exp_alt_size (clos_Handle a0 a1 a2) =
+    1 + (tra_size a0 + (closSem_exp_alt_size a1 + closSem_exp_alt_size
+        a2))) /\
+    (closSem_exp_alt_size (clos_Tick a0 a1) = 1 + (tra_size a0 +
+    closSem_exp_alt_size a1)) /\
+    (closSem_exp2_alt_size (a0,a1) = 1 + (a0 + closSem_exp_alt_size a1))`;
+   `(closSem_exp_alt_size (clos_Let a0 a1 a2) =
     1 + (tra_size a0 + (closSem_exp3_alt_size a1 + closSem_exp_alt_size
-        a2))
-    | clos_Raise a0 a1 -> 1 + (tra_size a0 + closSem_exp_alt_size a1)
-    | clos_Handle a0 a1 a2 ->
-    1 + (tra_size a0 + (closSem_exp_alt_size a1 + closSem_exp_alt_size a2))
-    | clos_Tick a0 a1 -> 1 + (tra_size a0 + closSem_exp_alt_size a1)
-    | clos_Call a0 a1 a2 a3 ->
-    1 + (tra_size a0 + (a1 + (a2 + closSem_exp3_alt_size a3)))
-    | clos_App a0 a1 a2 a3 ->
+        a2))) /\
+    (closSem_exp1_alt_size (CONS a0 a1) = 1 + (closSem_exp2_alt_size a0 +
+    closSem_exp1_alt_size a1))`;
+   `closSem_exp_alt_size (clos_App a0 a1 a2 a3) =
     1 +
     (tra_size a0 + (option_size (\x. x) a1 + (closSem_exp_alt_size a2 +
-        closSem_exp3_alt_size a3)))
-    | clos_Fn a0 a1 a2 a3 a4 ->
+        closSem_exp3_alt_size a3)))`;
+   `closSem_exp_alt_size (clos_Fn a0 a1 a2 a3 a4) =
     1 +
     (mlstring_size a0 +
      (option_size (\x. x) a1 +
       (option_size (list_size (\x. x)) a2 + (a3 + closSem_exp_alt_size
-          a4))))
-    | clos_Letrec a0 a1 a2 a3 a4 ->
+          a4))))`;
+   `closSem_exp_alt_size (clos_Letrec a0 a1 a2 a3 a4) =
     1 +
     (list_size mlstring_size a0 +
      (option_size (\x. x) a1 +
       (option_size (list_size (\x. x)) a2 + (closSem_exp1_alt_size a3 +
-          closSem_exp_alt_size a4))))
-    | clos_Op a0 a1 a2 ->
+          closSem_exp_alt_size a4))))`;
+   `closSem_exp_alt_size (clos_Op a0 a1 a2) =
       1 + (tra_size a0 + (clos_op_size a1 + closSem_exp3_alt_size a2))
-          + (if a1 = clos_ThunkOp ForceThunk then 100 else 0)) /\
-   (closSem_exp1_alt_size x1' =
-    match x1' with
-      [] -> 0
-    | CONS a0 a1 -> 1 + (closSem_exp2_alt_size a0 +
-        closSem_exp1_alt_size a1)) /\
-   (closSem_exp2_alt_size x1'' =
-    match x1'' with
-      a0,a1 -> 1 + (a0 + closSem_exp_alt_size a1)) /\
-   (closSem_exp3_alt_size x1''' =
-      match x1''' with
-        [] -> 0
-      | CONS a0 a1 -> 1 + (closSem_exp_alt_size a0 +
-          closSem_exp3_alt_size a1))`;;
+          + (if a1 = clos_ThunkOp ForceThunk then 100 else 0)`;
+   `closSem_exp3_alt_size (CONS a0 a1) = 1 + (closSem_exp_alt_size a0 +
+    closSem_exp3_alt_size a1)`];;
 add_simp exp_alt_size_def;;
 
 (* [local] *)
@@ -1103,11 +1098,13 @@ let closSem_fix_clock_evaluate = prove
 
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
 
-(* HOL4 closSemScript.sml:900-901: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_def *)
+(* [compute,allow_rebind] *)
+let closSem_evaluate_def =
+  REWRITE_RULE [closSem_fix_clock_evaluate] closSem_evaluate_def;;
 
-(* HOL4 closSemScript.sml:903-904: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_ind *)
+(* [allow_rebind] *)
+let closSem_evaluate_ind =
+  REWRITE_RULE [closSem_fix_clock_evaluate] closSem_evaluate_ind;;
 
 (* observational semantics *)
 

@@ -1352,8 +1352,8 @@ let evaluate_bvi_to_cb_aux_inl_lemma = prove
             bviSem_evaluate (MAP (\n. bvi_Var n) vs,v,s) = (Rval v,s))))`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tmcProofScript.sml:2708: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_bvi_to_cb_aux_inl *)
+let evaluate_bvi_to_cb_aux_inl =
+  el 1 (CONJUNCTS evaluate_bvi_to_cb_aux_inl_lemma);;
 
 (* [local] *)
 let evaluate_bvi_to_cb_aux_inr_lemma = prove
@@ -1391,8 +1391,8 @@ let evaluate_bvi_to_cb_aux_inr_lemma = prove
            (as,u) = (r,t))))`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tmcProofScript.sml:2897: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_bvi_to_cb_aux_inr *)
+let evaluate_bvi_to_cb_aux_inr =
+  el 1 (CONJUNCTS evaluate_bvi_to_cb_aux_inr_lemma);;
 
 let evaluate_bvi_to_cb = prove
  (`!cb n loc x env s t r bs.
@@ -1770,8 +1770,8 @@ let bvi_to_cb_aux_no_mutcons_lemma = prove
       ALL (\x. no_mutcons x) bs)`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tmcProofScript.sml:4193: a theorem that HOL4 states as the value
-   of an ML expression: bvi_to_cb_aux_no_mutcons *)
+let bvi_to_cb_aux_no_mutcons =
+  el 1 (CONJUNCTS bvi_to_cb_aux_no_mutcons_lemma);;
 
 let bvi_to_cb_no_mutcons = prove
  (`!cb bs n loc x.

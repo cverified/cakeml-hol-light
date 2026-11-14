@@ -2021,11 +2021,12 @@ let state_rel_thm = assume_definition
           Globals)])
         (flat (dataSem_state_stack s) (wordSem_state_stack t)))`;;
 
-(* HOL4 data_to_word_gcProofScript.sml:4538-4539: a theorem that HOL4 states
-   as the value of an ML expression: state_rel_thm *)
+(* [allow_rebind] *)
+let data_to_word_gcProof_state_rel_thm = state_rel_thm;;
 
-(* HOL4 data_to_word_gcProofScript.sml:4541-4542: a theorem that HOL4 states
-   as the value of an ML expression: state_rel_def *)
+(* [allow_rebind,compute] *)
+let data_to_word_gcProof_state_rel_def =
+  REWRITE_RULE [memory_rel_def] data_to_word_gcProof_state_rel_thm;;
 
 (* state_rel_with_clock *)
 let data_to_word_gcProof_state_rel_with_clock = prove

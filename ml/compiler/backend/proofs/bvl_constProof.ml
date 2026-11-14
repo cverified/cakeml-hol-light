@@ -1635,27 +1635,9 @@ let bvl_constProof_evaluate_env_rel = prove
     sub_cases;
     TRY cons_cons_case]));;
 
-(* compile_thm *)
-let bvl_constProof_compile_thm = prove
- (`!xs env (s1:('c,'ffi)bvlSem_state) res s2 ys. (bvlSem_evaluate (xs,env,s1)
-  = (res,s2)) /\ ~(res = Rerr (Rabort Rtype_error)) ==> (bvlSem_evaluate
-  (bvl_const_compile [] xs,env,s1) = (res,s2))`,
-  (* evaluate_env_rel at ax = [], where env_rel [] env env is
-     env = env.  The environment is taken out of the goal: the
-     state of the statement has type variables of its own
-     (PORTING-GUIDE.md entry 12) *)
-  (let er = bvl_constProof_env_rel_def in
-   let env_rel_refl = prove
-    (`!env. bvl_constProof_env_rel (:'c) (:'ffi) [] env env`,
-     GEN_TAC THEN ONCE_REWRITE_TAC[er] THEN
-     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
-   REPEAT GEN_TAC THEN STRIP_TAC THEN
-   FIRST_ASSUM(fun ev ->
-     let tup = rand(lhs(concl ev)) in
-     let env_tm = fst(dest_pair(snd(dest_pair tup))) in
-     FIRST_ASSUM(fun ne ->
-       ACCEPT_TAC(SPEC_ALL(MATCH_MP bvl_constProof_evaluate_env_rel
-         (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne))))))));;
+let bvl_constProof_compile_thm =
+  SIMP_RULE [bvl_constProof_env_rel_def] (GEN_ALL (SPECL [`xs`; `env`; `s1`;
+  `[]`; `env`] bvl_constProof_evaluate_env_rel));;
 
 (* evaluate_compile_exp *)
 let bvl_constProof_evaluate_compile_exp = prove

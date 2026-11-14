@@ -136,22 +136,43 @@ let SumListLength_location_def = new_definition
 let ConcatByte_location_def = new_definition
   `ConcatByte_location = SumListLength_location + 1`;;
 
-(* HOL4 bvl_to_bviScript.sml:129-130: a theorem that HOL4 states as the
-   value of an ML expression: AllocGlobal_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:131-132: a theorem that HOL4 states as the
-   value of an ML expression: CopyGlobals_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:133-134: a theorem that HOL4 states as the
-   value of an ML expression: InitGlobals_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:135-136: a theorem that HOL4 states as the
-   value of an ML expression: ListLength_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:137-138: a theorem that HOL4 states as the
-   value of an ML expression: FromListByte_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:139-140: a theorem that HOL4 states as the
-   value of an ML expression: ToListByte_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:141-142: a theorem that HOL4 states as the
-   value of an ML expression: SumListLength_location_eq *)
-(* HOL4 bvl_to_bviScript.sml:143-144: a theorem that HOL4 states as the
-   value of an ML expression: ConcatByte_location_eq *)
+let AllocGlobal_location_eq =
+  CAKE_EVAL [AllocGlobal_location_def; data_num_stubs_def;
+  word_num_stubs_def; stack_num_stubs_def] `AllocGlobal_location`;;
+let CopyGlobals_location_eq =
+  CAKE_EVAL [CopyGlobals_location_def; AllocGlobal_location_def;
+  data_num_stubs_def; word_num_stubs_def; stack_num_stubs_def]
+  `CopyGlobals_location`;;
+let InitGlobals_location_eq =
+  CAKE_EVAL [InitGlobals_location_def; CopyGlobals_location_def;
+  AllocGlobal_location_def; data_num_stubs_def; word_num_stubs_def;
+  stack_num_stubs_def] `InitGlobals_location`;;
+let ListLength_location_eq =
+  CAKE_EVAL [ListLength_location_def; InitGlobals_location_def;
+  CopyGlobals_location_def; AllocGlobal_location_def; data_num_stubs_def;
+  word_num_stubs_def; stack_num_stubs_def] `ListLength_location`;;
+let FromListByte_location_eq =
+  CAKE_EVAL [FromListByte_location_def; ListLength_location_def;
+  InitGlobals_location_def; CopyGlobals_location_def;
+  AllocGlobal_location_def; data_num_stubs_def; word_num_stubs_def;
+  stack_num_stubs_def] `FromListByte_location`;;
+let ToListByte_location_eq =
+  CAKE_EVAL [ToListByte_location_def; FromListByte_location_def;
+  ListLength_location_def; InitGlobals_location_def;
+  CopyGlobals_location_def; AllocGlobal_location_def; data_num_stubs_def;
+  word_num_stubs_def; stack_num_stubs_def] `ToListByte_location`;;
+let SumListLength_location_eq =
+  CAKE_EVAL [SumListLength_location_def; ToListByte_location_def;
+  FromListByte_location_def; ListLength_location_def;
+  InitGlobals_location_def; CopyGlobals_location_def;
+  AllocGlobal_location_def; data_num_stubs_def; word_num_stubs_def;
+  stack_num_stubs_def] `SumListLength_location`;;
+let ConcatByte_location_eq =
+  CAKE_EVAL [ConcatByte_location_def; SumListLength_location_def;
+  ToListByte_location_def; FromListByte_location_def;
+  ListLength_location_def; InitGlobals_location_def;
+  CopyGlobals_location_def; AllocGlobal_location_def; data_num_stubs_def;
+  word_num_stubs_def; stack_num_stubs_def] `ConcatByte_location`;;
 
 let AllocGlobal_code_def = new_definition
   `AllocGlobal_code = ((1:num),
@@ -554,8 +575,9 @@ let bvl_to_bvi_compile_prog_def = new_definition
        (InitGlobals_location,APPEND (bvl_to_bvi_stubs (bvl_num_stubs +
          bvl_to_bvi_namespaces * start') k) (append code),n1)`;;
 
-(* HOL4 bvl_to_bviScript.sml:520-521: a theorem that HOL4 states as the
-   value of an ML expression: compile_prog_eq *)
+let compile_prog_eq =
+  SIMP_RULE [GSYM alloc_glob_count_eq_global_count_list]
+  bvl_to_bvi_compile_prog_def;;
 
 let bvl_to_bvi_config_FIELDS = define_record "bvl_to_bvi_config"
   ["inline_size_limit","num";

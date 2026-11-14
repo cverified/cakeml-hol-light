@@ -87,10 +87,9 @@ add_simp alt_fv_nil;;
 let alt_fv1_def = new_definition
   `alt_fv1 v e = alt_fv v [e]`;;
 
-(* HOL4 clos_annotateProofScript.sml:81-82: a theorem that HOL4 states as
-   the value of an ML expression: alt_fv1_intro *)
-(* HOL4 clos_annotateProofScript.sml:83-84: a theorem that HOL4 states as
-   the value of an ML expression: alt_fv1_thm *)
+let alt_fv1_intro = GSYM alt_fv1_def;;
+add_simp alt_fv1_intro;;
+let alt_fv1_thm = SIMP_RULE [] alt_fv;;
 
 let alt_fv_cons = prove
  (`alt_fv v (CONS x xs) <=> alt_fv1 v x \/ alt_fv v xs`,

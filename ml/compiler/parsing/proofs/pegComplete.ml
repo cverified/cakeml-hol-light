@@ -1066,8 +1066,8 @@ let pattern_input_monotone0 = prove
           ((INL:MMLnonT->MMLnonT+num) N) I) (APPEND i sfx,rlist,res')))`,
   CHEAT_TAC);;
 
-(* HOL4 pegCompleteScript.sml:1645-1646: a theorem that HOL4 states as the
-   value of an ML expression: Pattern_input_monotone *)
+let pattern_input_monotone =
+  SIMP_RULE [FORALL_AND_THM] pattern_input_monotone0;;
 
 let extend_Pbase_list = prove
  (`!results pfx sfx sfx' result e eo.

@@ -277,8 +277,7 @@ let gc_move_list_ok = prove
 
 (* HOL4 copying_gcScript.sml:619-620: ML code, not ported *)
 
-(* HOL4 copying_gcScript.sml:622-623: a theorem that HOL4 states as the
-   value of an ML expression: gc_move_loop_ok *)
+let gc_move_loop_ok = th;;
 
 let gc_move_list_IMP_LENGTH = prove
  (`!l5 h a n heap c k xs ys a1 xs1 heap1 c1.

@@ -257,12 +257,19 @@ let is_clock_io_mono_acc_safe = prove
 
 (* HOL4 evaluatePropsScript.sml:306-308: a theorem that HOL4 states as the
    value of an ML expression: is_clock_io_mono_if_safe *)
-(* HOL4 evaluatePropsScript.sml:309-311: a theorem that HOL4 states as the
-   value of an ML expression: is_clock_io_mono_option_case_safe *)
-(* HOL4 evaluatePropsScript.sml:312-315: a theorem that HOL4 states as the
-   value of an ML expression: is_clock_io_mono_match_case_safe *)
-(* HOL4 evaluatePropsScript.sml:316-319: a theorem that HOL4 states as the
-   value of an ML expression: is_clock_io_mono_match_case_pair_safe *)
+let is_clock_io_mono_option_case_safe =
+  SIMP_RULE [] (SPEC `\v st. match v with NONE -> g st | SOME x -> h x st`
+  (ISPEC `NONE` is_clock_io_mono_acc_safe));;
+let is_clock_io_mono_match_case_safe =
+  SIMP_RULE [] (SPEC `\m st. match m with No_match -> g st
+    |
+  Match_type_error -> h st | Match env -> j env st` (ISPEC `No_match`
+  is_clock_io_mono_acc_safe));;
+let is_clock_io_mono_match_case_pair_safe =
+  SIMP_RULE [] (SPEC `\m st. (st,(match m with No_match -> g st
+    |
+  Match_type_error -> h st | Match env -> j env st))` (ISPEC `No_match`
+  is_clock_io_mono_acc_safe));;
 
 (* HOL4 evaluatePropsScript.sml:321-326: a proof *)
 

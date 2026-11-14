@@ -47,8 +47,9 @@ let x64_names_def = new_definition
       sptree_insert 14 4 o
       sptree_insert 15 5) LN:num spt)`;;
 
-(* HOL4 x64_configScript.sml:38-39: a theorem that HOL4 states as the value
-   of an ML expression: x64_names_def *)
+(* [compute,allow_rebind] *)
+let x64_config_x64_names_def =
+  CONV_RULE (RAND_CONV (CAKE_EVAL [the_def])) x64_names_def;;
 
 (* HOL4 x64_configScript.sml:41-43: the ML values that the definitions below
    antiquote *)

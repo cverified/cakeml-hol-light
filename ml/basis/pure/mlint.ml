@@ -36,12 +36,12 @@ let exp_for_dec_enc_def = new_definition
 (* compatibility with previous version*)
 let padLen_DEC_def = new_definition
   `padLen_DEC = exp_for_dec_enc`;;
-(* HOL4 mlintScript.sml:31: a theorem that HOL4 states as the value of an ML
-   expression: padLen_DEC_eq *)
+let padLen_DEC_eq =
+  CAKE_EVAL [padLen_DEC_def; exp_for_dec_enc_def] `padLen_DEC`;;
 let maxSmall_DEC_def1 = new_definition
   `maxSmall_DEC = 10 EXP exp_for_dec_enc`;;
-(* HOL4 mlintScript.sml:35: a theorem that HOL4 states as the value of an ML
-   expression: maxSmall_DEC_def *)
+let maxSmall_DEC_def =
+  CAKE_EVAL [maxSmall_DEC_def1; exp_for_dec_enc_def] `maxSmall_DEC`;;
 
 (* HOL4 mlintScript.sml:37-38: the ML values that the definitions below
    antiquote *)
@@ -85,8 +85,7 @@ let int_to_string_def = new_definition
 let toString_def1 = new_definition
   `mlint_toString i = int_to_string (CHR 126) i`;;
 
-(* HOL4 mlintScript.sml:95: a theorem that HOL4 states as the value of an ML
-   expression: toString_def *)
+let toString_def = REWRITE_RULE [int_to_string_def] toString_def1;;
 
 let int_to_string_thm = prove
  (`int_to_string neg_char i =
@@ -297,8 +296,8 @@ let fromString_thm = prove
          else &(num_from_dec_string str))`,
   CHEAT_TAC);;
 
-(* HOL4 mlintScript.sml:386-387: a theorem that HOL4 states as the value of
-   an ML expression: fromString_eq_unsafe *)
+let fromString_eq_unsafe =
+  SIMP_RULE [GSYM fromString_unsafe_thm] fromString_thm;;
 
 let fromString_toString_Num = prove
  (`(&0) <= n ==> mlint_fromString (implode (num_to_dec_string (num_of_int

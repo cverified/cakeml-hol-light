@@ -430,8 +430,9 @@ let keep_progs_T = prove
  (`keep_progs T = I`,
   CHEAT_TAC);;
 
-(* HOL4 backendProofScript.sml:493-494: a theorem that HOL4 states as the
-   value of an ML expression: compile_inc_progs_defs *)
+(* [local] *)
+let compile_inc_progs_defs =
+  end_itlist CONJ [compile_inc_progs_def; keep_progs_T];;
 
 let cake_orac_eqs = prove
  (`state_co (\c (env_id,decs). inc_compile env_id c
@@ -1702,8 +1703,10 @@ let compile_correct' = prove
   CHEAT_TAC);;
 
 
-(* HOL4 backendProofScript.sml:4429-4431: a theorem that HOL4 states as the
-   value of an ML expression: compile_correct_no_eval *)
+(* [local] *)
+let compile_correct_no_eval =
+  SIMP_RULE [add_eval_state_def; opt_eval_config_wf_def] (INST [`NONE`,`ev`]
+  compile_correct');;
 
 (* compile_correct *)
 let backendProof_compile_correct = prove

@@ -111,8 +111,8 @@ let COND_true = prove
  (`P ==> ((if P then x else y) = x)`,
   CHEAT_TAC);;
 
-(* HOL4 flat_patternProofScript.sml:165-166: a theorem that HOL4 states as
-   the value of an ML expression: FILTER_EQ_MONO *)
+let FILTER_EQ_MONO =
+  REWRITE_RULE [LIST_REL_eq] (ISPEC `(=)` (GEN `R` LIST_REL_FILTER_MONO));;
 
 (* HOL4 flat_patternProofScript.sml:168-171: a theorem that HOL4 states as
    the value of an ML expression: FILTER_EQ_MONO_TRANS *)
@@ -122,8 +122,7 @@ let FILTER_EQ_ALOOKUP_EQ = prove
    ALOOKUP xs x = ALOOKUP ys x`,
   CHEAT_TAC);;
 
-(* HOL4 flat_patternProofScript.sml:183-184: a theorem that HOL4 states as
-   the value of an ML expression: ALOOKUP_FILTER_EQ *)
+let ALOOKUP_FILTER_EQ = GSYM (SIMP_RULE [] FILTER_EQ_ALOOKUP_EQ);;
 
 let MEM_enumerate_EL = prove
  (`!xs i x. MEM x (enumerate i xs) = (?j. j < LENGTH xs /\ x = (i + j,EL j
@@ -460,8 +459,9 @@ let flat_patternProof_simple_state_rel = prove
   (flat_patternProof_state_rel cfg)`,
   CHEAT_TAC);;
 
-(* HOL4 flat_patternProofScript.sml:929-930: a theorem that HOL4 states as
-   the value of an ML expression: do_app_thm *)
+let flat_patternProof_do_app_thm =
+  MATCH_MP simple_do_app_thm (CONJ flat_patternProof_simple_val_rel
+  flat_patternProof_simple_state_rel);;
 
 let do_app_thm_REVERSE = prove
  (`flatSem_do_app s1 op (REVERSE vs1) = SOME (t1,r1) /\
@@ -622,8 +622,9 @@ let naive_pattern_match_correct = prove
     pure_eval_to s env exp (flatSem_Boolv (~(res = No_match)))`,
   CHEAT_TAC);;
 
-(* HOL4 flat_patternProofScript.sml:1308-1312: a theorem that HOL4 states as
-   the value of an ML expression: naive_pattern_match_correct_inst *)
+let naive_pattern_match_correct_inst =
+  GEN_ALL (SIMP_RULE [] (REWRITE_RULE [pure_eval_to_def] (SPECL [`t`;
+  `[(p,x)]`; `[v]`; `[]`] naive_pattern_match_correct)));;
 
 let naive_pattern_matches_correct = prove
  (`!t x mats dflt exp v res.

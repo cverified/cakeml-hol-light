@@ -237,8 +237,10 @@ let prim_src_config_def = new_definition
      (source_to_flat_config_mod_env_fupd (K env)
        (source_to_flat_config_next_fupd (K next') empty_config)))`;;
 
-(* HOL4 backendScript.sml:203: a theorem that HOL4 states as the value of an
-   ML expression: prim_src_config_eq *)
+let prim_src_config_eq =
+  CAKE_EVAL [prim_src_config_def; empty_config_def; empty_env_def;
+  prim_types_program_def; unknown_loc_def; nsEmpty_def; init_config_def]
+  `prim_src_config`;;
 
 let prim_config_def = new_definition
   `prim_config =

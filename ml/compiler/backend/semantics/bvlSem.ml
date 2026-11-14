@@ -934,11 +934,13 @@ let bvlSem_fix_clock_evaluate = prove
 
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
 
-(* HOL4 bvlSemScript.sml:729-730: a theorem that HOL4 states as the value of
-   an ML expression: evaluate_def *)
+(* [compute,allow_rebind] *)
+let bvlSem_evaluate_def =
+  REWRITE_RULE [bvlSem_fix_clock_evaluate] bvlSem_evaluate_def;;
 
-(* HOL4 bvlSemScript.sml:732-733: a theorem that HOL4 states as the value of
-   an ML expression: evaluate_ind *)
+(* [allow_rebind] *)
+let bvlSem_evaluate_ind =
+  REWRITE_RULE [bvlSem_fix_clock_evaluate] bvlSem_evaluate_ind;;
 
 (* observational semantics *)
 

@@ -271,72 +271,280 @@ let StringCmpLoop_location_def = new_definition
 let bignum_location_def = new_definition
   `Bignum_location = StringCmpLoop_location + 1`;;
 
-(* HOL4 data_to_wordScript.sml:273-274: a theorem that HOL4 states as the
-   value of an ML expression: FromList_location_eq *)
-(* HOL4 data_to_wordScript.sml:275-276: a theorem that HOL4 states as the
-   value of an ML expression: FromList1_location_eq *)
-(* HOL4 data_to_wordScript.sml:277-278: a theorem that HOL4 states as the
-   value of an ML expression: RefByte_location_eq *)
-(* HOL4 data_to_wordScript.sml:279-280: a theorem that HOL4 states as the
-   value of an ML expression: RefArray_location_eq *)
-(* HOL4 data_to_wordScript.sml:281-282: a theorem that HOL4 states as the
-   value of an ML expression: Replicate_location_eq *)
-(* HOL4 data_to_wordScript.sml:283-284: a theorem that HOL4 states as the
-   value of an ML expression: AnyArith_location_eq *)
-(* HOL4 data_to_wordScript.sml:285-286: a theorem that HOL4 states as the
-   value of an ML expression: Add_location_eq *)
-(* HOL4 data_to_wordScript.sml:287-288: a theorem that HOL4 states as the
-   value of an ML expression: Sub_location_eq *)
-(* HOL4 data_to_wordScript.sml:289-290: a theorem that HOL4 states as the
-   value of an ML expression: Mul_location_eq *)
-(* HOL4 data_to_wordScript.sml:291-292: a theorem that HOL4 states as the
-   value of an ML expression: Div_location_eq *)
-(* HOL4 data_to_wordScript.sml:293-294: a theorem that HOL4 states as the
-   value of an ML expression: Mod_location_eq *)
-(* HOL4 data_to_wordScript.sml:295-296: a theorem that HOL4 states as the
-   value of an ML expression: Compare1_location_eq *)
-(* HOL4 data_to_wordScript.sml:297-298: a theorem that HOL4 states as the
-   value of an ML expression: Compare_location_eq *)
-(* HOL4 data_to_wordScript.sml:299-300: a theorem that HOL4 states as the
-   value of an ML expression: Equal1_location_eq *)
-(* HOL4 data_to_wordScript.sml:301-302: a theorem that HOL4 states as the
-   value of an ML expression: Equal_location_eq *)
-(* HOL4 data_to_wordScript.sml:303-304: a theorem that HOL4 states as the
-   value of an ML expression: LongDiv1_location_eq *)
-(* HOL4 data_to_wordScript.sml:305-306: a theorem that HOL4 states as the
-   value of an ML expression: LongDiv_location_eq *)
-(* HOL4 data_to_wordScript.sml:307-308: a theorem that HOL4 states as the
-   value of an ML expression: MemCopy_location_eq *)
-(* HOL4 data_to_wordScript.sml:309-310: a theorem that HOL4 states as the
-   value of an ML expression: Bignum_location_eq *)
-(* HOL4 data_to_wordScript.sml:311-312: a theorem that HOL4 states as the
-   value of an ML expression: ByteCopy_location_eq *)
-(* HOL4 data_to_wordScript.sml:313-314: a theorem that HOL4 states as the
-   value of an ML expression: ByteCopyAdd_location_eq *)
-(* HOL4 data_to_wordScript.sml:315-316: a theorem that HOL4 states as the
-   value of an ML expression: ByteCopySub_location_eq *)
-(* HOL4 data_to_wordScript.sml:317-318: a theorem that HOL4 states as the
-   value of an ML expression: ByteCopyNew_location_eq *)
-(* HOL4 data_to_wordScript.sml:319-320: a theorem that HOL4 states as the
-   value of an ML expression: Install_location_eq *)
-(* HOL4 data_to_wordScript.sml:321-322: a theorem that HOL4 states as the
-   value of an ML expression: InstallCode_location_eq *)
-(* HOL4 data_to_wordScript.sml:323-324: a theorem that HOL4 states as the
-   value of an ML expression: InstallData_location_eq *)
-(* HOL4 data_to_wordScript.sml:325-326: a theorem that HOL4 states as the
-   value of an ML expression: Dummy_location_eq *)
-(* HOL4 data_to_wordScript.sml:327-328: a theorem that HOL4 states as the
-   value of an ML expression: Append_location_eq *)
-(* HOL4 data_to_wordScript.sml:329-330: a theorem that HOL4 states as the
-   value of an ML expression: AppendMainLoop_location_eq *)
-(* HOL4 data_to_wordScript.sml:331-332: a theorem that HOL4 states as the
-   value of an ML expression: AppendLenLoop_location_eq *)
-(* HOL4 data_to_wordScript.sml:333-334: a theorem that HOL4 states as the
-   value of an ML expression: XorLoop_location_eq *)
-(* HOL4 data_to_wordScript.sml:335-336: a theorem that HOL4 states as the
-   value of an ML expression: Unused_location_eq *)
-(* HOL4 data_to_wordScript.sml:337-338: a theorem that HOL4 states as the
-   value of an ML expression: StringCmpLoop_location_eq *)
+let FromList_location_eq =
+  CAKE_EVAL [FromList_location_def; word_num_stubs_def; stack_num_stubs_def]
+  `FromList_location`;;
+let FromList1_location_eq =
+  CAKE_EVAL [FromList1_location_def; FromList_location_def;
+  word_num_stubs_def; stack_num_stubs_def] `FromList1_location`;;
+let RefByte_location_eq =
+  CAKE_EVAL [RefByte_location_def; FromList1_location_def;
+  FromList_location_def; word_num_stubs_def; stack_num_stubs_def]
+  `RefByte_location`;;
+let RefArray_location_eq =
+  CAKE_EVAL [RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `RefArray_location`;;
+let replicate_location_eq =
+  CAKE_EVAL [replicate_location_def; RefArray_location_def;
+  RefByte_location_def; FromList1_location_def; FromList_location_def;
+  word_num_stubs_def; stack_num_stubs_def] `Replicate_location`;;
+let AnyArith_location_eq =
+  CAKE_EVAL [AnyArith_location_def; replicate_location_def;
+  RefArray_location_def; RefByte_location_def; FromList1_location_def;
+  FromList_location_def; word_num_stubs_def; stack_num_stubs_def]
+  `AnyArith_location`;;
+let add_location_eq =
+  CAKE_EVAL [add_location_def; AnyArith_location_def; replicate_location_def;
+  RefArray_location_def; RefByte_location_def; FromList1_location_def;
+  FromList_location_def; word_num_stubs_def; stack_num_stubs_def]
+  `Add_location`;;
+let sub_location_eq =
+  CAKE_EVAL [sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `Sub_location`;;
+let mul_location_eq =
+  CAKE_EVAL [mul_location_def; sub_location_def; add_location_def;
+  AnyArith_location_def; replicate_location_def; RefArray_location_def;
+  RefByte_location_def; FromList1_location_def; FromList_location_def;
+  word_num_stubs_def; stack_num_stubs_def] `Mul_location`;;
+let div_location_eq =
+  CAKE_EVAL [data_to_word_Div_location_def; mul_location_def;
+  sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `Div_location`;;
+let mod_location_eq =
+  CAKE_EVAL [mod_location_def; data_to_word_Div_location_def;
+  mul_location_def; sub_location_def; add_location_def;
+  AnyArith_location_def; replicate_location_def; RefArray_location_def;
+  RefByte_location_def; FromList1_location_def; FromList_location_def;
+  word_num_stubs_def; stack_num_stubs_def] `Mod_location`;;
+let compare1_location_eq =
+  CAKE_EVAL [compare1_location_def; mod_location_def;
+  data_to_word_Div_location_def; mul_location_def; sub_location_def;
+  add_location_def; AnyArith_location_def; replicate_location_def;
+  RefArray_location_def; RefByte_location_def; FromList1_location_def;
+  FromList_location_def; word_num_stubs_def; stack_num_stubs_def]
+  `Compare1_location`;;
+let compare_location_eq =
+  CAKE_EVAL [compare_location_def; compare1_location_def; mod_location_def;
+  data_to_word_Div_location_def; mul_location_def; sub_location_def;
+  add_location_def; AnyArith_location_def; replicate_location_def;
+  RefArray_location_def; RefByte_location_def; FromList1_location_def;
+  FromList_location_def; word_num_stubs_def; stack_num_stubs_def]
+  `Compare_location`;;
+let equal1_location_eq =
+  CAKE_EVAL [equal1_location_def; compare_location_def;
+  compare1_location_def; mod_location_def; data_to_word_Div_location_def;
+  mul_location_def; sub_location_def; add_location_def;
+  AnyArith_location_def; replicate_location_def; RefArray_location_def;
+  RefByte_location_def; FromList1_location_def; FromList_location_def;
+  word_num_stubs_def; stack_num_stubs_def] `Equal1_location`;;
+let equal_location_eq =
+  CAKE_EVAL [equal_location_def; equal1_location_def; compare_location_def;
+  compare1_location_def; mod_location_def; data_to_word_Div_location_def;
+  mul_location_def; sub_location_def; add_location_def;
+  AnyArith_location_def; replicate_location_def; RefArray_location_def;
+  RefByte_location_def; FromList1_location_def; FromList_location_def;
+  word_num_stubs_def; stack_num_stubs_def] `Equal_location`;;
+let LongDiv1_location_eq =
+  CAKE_EVAL [LongDiv1_location_def; equal_location_def; equal1_location_def;
+  compare_location_def; compare1_location_def; mod_location_def;
+  data_to_word_Div_location_def; mul_location_def; sub_location_def;
+  add_location_def; AnyArith_location_def; replicate_location_def;
+  RefArray_location_def; RefByte_location_def; FromList1_location_def;
+  FromList_location_def; word_num_stubs_def; stack_num_stubs_def]
+  `LongDiv1_location`;;
+let LongDiv_location_eq =
+  CAKE_EVAL [LongDiv_location_def; LongDiv1_location_def; equal_location_def;
+  equal1_location_def; compare_location_def; compare1_location_def;
+  mod_location_def; data_to_word_Div_location_def; mul_location_def;
+  sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `LongDiv_location`;;
+let MemCopy_location_eq =
+  CAKE_EVAL [MemCopy_location_def; LongDiv_location_def;
+  LongDiv1_location_def; equal_location_def; equal1_location_def;
+  compare_location_def; compare1_location_def; mod_location_def;
+  data_to_word_Div_location_def; mul_location_def; sub_location_def;
+  add_location_def; AnyArith_location_def; replicate_location_def;
+  RefArray_location_def; RefByte_location_def; FromList1_location_def;
+  FromList_location_def; word_num_stubs_def; stack_num_stubs_def]
+  `MemCopy_location`;;
+let bignum_location_eq =
+  CAKE_EVAL [bignum_location_def; StringCmpLoop_location_def;
+  unused_location_def; XorLoop_location_def; AppendLenLoop_location_def;
+  AppendMainLoop_location_def; append_location_def; dummy_location_def;
+  InstallData_location_def; InstallCode_location_def; install_location_def;
+  ByteCopyNew_location_def; ByteCopySub_location_def;
+  ByteCopyAdd_location_def; ByteCopy_location_def; MemCopy_location_def;
+  LongDiv_location_def; LongDiv1_location_def; equal_location_def;
+  equal1_location_def; compare_location_def; compare1_location_def;
+  mod_location_def; data_to_word_Div_location_def; mul_location_def;
+  sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `Bignum_location`;;
+let ByteCopy_location_eq =
+  CAKE_EVAL [ByteCopy_location_def; MemCopy_location_def;
+  LongDiv_location_def; LongDiv1_location_def; equal_location_def;
+  equal1_location_def; compare_location_def; compare1_location_def;
+  mod_location_def; data_to_word_Div_location_def; mul_location_def;
+  sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `ByteCopy_location`;;
+let ByteCopyAdd_location_eq =
+  CAKE_EVAL [ByteCopyAdd_location_def; ByteCopy_location_def;
+  MemCopy_location_def; LongDiv_location_def; LongDiv1_location_def;
+  equal_location_def; equal1_location_def; compare_location_def;
+  compare1_location_def; mod_location_def; data_to_word_Div_location_def;
+  mul_location_def; sub_location_def; add_location_def;
+  AnyArith_location_def; replicate_location_def; RefArray_location_def;
+  RefByte_location_def; FromList1_location_def; FromList_location_def;
+  word_num_stubs_def; stack_num_stubs_def] `ByteCopyAdd_location`;;
+let ByteCopySub_location_eq =
+  CAKE_EVAL [ByteCopySub_location_def; ByteCopyAdd_location_def;
+  ByteCopy_location_def; MemCopy_location_def; LongDiv_location_def;
+  LongDiv1_location_def; equal_location_def; equal1_location_def;
+  compare_location_def; compare1_location_def; mod_location_def;
+  data_to_word_Div_location_def; mul_location_def; sub_location_def;
+  add_location_def; AnyArith_location_def; replicate_location_def;
+  RefArray_location_def; RefByte_location_def; FromList1_location_def;
+  FromList_location_def; word_num_stubs_def; stack_num_stubs_def]
+  `ByteCopySub_location`;;
+let ByteCopyNew_location_eq =
+  CAKE_EVAL [ByteCopyNew_location_def; ByteCopySub_location_def;
+  ByteCopyAdd_location_def; ByteCopy_location_def; MemCopy_location_def;
+  LongDiv_location_def; LongDiv1_location_def; equal_location_def;
+  equal1_location_def; compare_location_def; compare1_location_def;
+  mod_location_def; data_to_word_Div_location_def; mul_location_def;
+  sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `ByteCopyNew_location`;;
+let install_location_eq =
+  CAKE_EVAL [install_location_def; ByteCopyNew_location_def;
+  ByteCopySub_location_def; ByteCopyAdd_location_def; ByteCopy_location_def;
+  MemCopy_location_def; LongDiv_location_def; LongDiv1_location_def;
+  equal_location_def; equal1_location_def; compare_location_def;
+  compare1_location_def; mod_location_def; data_to_word_Div_location_def;
+  mul_location_def; sub_location_def; add_location_def;
+  AnyArith_location_def; replicate_location_def; RefArray_location_def;
+  RefByte_location_def; FromList1_location_def; FromList_location_def;
+  word_num_stubs_def; stack_num_stubs_def] `Install_location`;;
+let InstallCode_location_eq =
+  CAKE_EVAL [InstallCode_location_def; install_location_def;
+  ByteCopyNew_location_def; ByteCopySub_location_def;
+  ByteCopyAdd_location_def; ByteCopy_location_def; MemCopy_location_def;
+  LongDiv_location_def; LongDiv1_location_def; equal_location_def;
+  equal1_location_def; compare_location_def; compare1_location_def;
+  mod_location_def; data_to_word_Div_location_def; mul_location_def;
+  sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `InstallCode_location`;;
+let InstallData_location_eq =
+  CAKE_EVAL [InstallData_location_def; InstallCode_location_def;
+  install_location_def; ByteCopyNew_location_def; ByteCopySub_location_def;
+  ByteCopyAdd_location_def; ByteCopy_location_def; MemCopy_location_def;
+  LongDiv_location_def; LongDiv1_location_def; equal_location_def;
+  equal1_location_def; compare_location_def; compare1_location_def;
+  mod_location_def; data_to_word_Div_location_def; mul_location_def;
+  sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `InstallData_location`;;
+let dummy_location_eq =
+  CAKE_EVAL [dummy_location_def; InstallData_location_def;
+  InstallCode_location_def; install_location_def; ByteCopyNew_location_def;
+  ByteCopySub_location_def; ByteCopyAdd_location_def; ByteCopy_location_def;
+  MemCopy_location_def; LongDiv_location_def; LongDiv1_location_def;
+  equal_location_def; equal1_location_def; compare_location_def;
+  compare1_location_def; mod_location_def; data_to_word_Div_location_def;
+  mul_location_def; sub_location_def; add_location_def;
+  AnyArith_location_def; replicate_location_def; RefArray_location_def;
+  RefByte_location_def; FromList1_location_def; FromList_location_def;
+  word_num_stubs_def; stack_num_stubs_def] `Dummy_location`;;
+let append_location_eq =
+  CAKE_EVAL [append_location_def; dummy_location_def;
+  InstallData_location_def; InstallCode_location_def; install_location_def;
+  ByteCopyNew_location_def; ByteCopySub_location_def;
+  ByteCopyAdd_location_def; ByteCopy_location_def; MemCopy_location_def;
+  LongDiv_location_def; LongDiv1_location_def; equal_location_def;
+  equal1_location_def; compare_location_def; compare1_location_def;
+  mod_location_def; data_to_word_Div_location_def; mul_location_def;
+  sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `Append_location`;;
+let AppendMainLoop_location_eq =
+  CAKE_EVAL [AppendMainLoop_location_def; append_location_def;
+  dummy_location_def; InstallData_location_def; InstallCode_location_def;
+  install_location_def; ByteCopyNew_location_def; ByteCopySub_location_def;
+  ByteCopyAdd_location_def; ByteCopy_location_def; MemCopy_location_def;
+  LongDiv_location_def; LongDiv1_location_def; equal_location_def;
+  equal1_location_def; compare_location_def; compare1_location_def;
+  mod_location_def; data_to_word_Div_location_def; mul_location_def;
+  sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `AppendMainLoop_location`;;
+let AppendLenLoop_location_eq =
+  CAKE_EVAL [AppendLenLoop_location_def; AppendMainLoop_location_def;
+  append_location_def; dummy_location_def; InstallData_location_def;
+  InstallCode_location_def; install_location_def; ByteCopyNew_location_def;
+  ByteCopySub_location_def; ByteCopyAdd_location_def; ByteCopy_location_def;
+  MemCopy_location_def; LongDiv_location_def; LongDiv1_location_def;
+  equal_location_def; equal1_location_def; compare_location_def;
+  compare1_location_def; mod_location_def; data_to_word_Div_location_def;
+  mul_location_def; sub_location_def; add_location_def;
+  AnyArith_location_def; replicate_location_def; RefArray_location_def;
+  RefByte_location_def; FromList1_location_def; FromList_location_def;
+  word_num_stubs_def; stack_num_stubs_def] `AppendLenLoop_location`;;
+let XorLoop_location_eq =
+  CAKE_EVAL [XorLoop_location_def; AppendLenLoop_location_def;
+  AppendMainLoop_location_def; append_location_def; dummy_location_def;
+  InstallData_location_def; InstallCode_location_def; install_location_def;
+  ByteCopyNew_location_def; ByteCopySub_location_def;
+  ByteCopyAdd_location_def; ByteCopy_location_def; MemCopy_location_def;
+  LongDiv_location_def; LongDiv1_location_def; equal_location_def;
+  equal1_location_def; compare_location_def; compare1_location_def;
+  mod_location_def; data_to_word_Div_location_def; mul_location_def;
+  sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `XorLoop_location`;;
+let unused_location_eq =
+  CAKE_EVAL [unused_location_def; XorLoop_location_def;
+  AppendLenLoop_location_def; AppendMainLoop_location_def;
+  append_location_def; dummy_location_def; InstallData_location_def;
+  InstallCode_location_def; install_location_def; ByteCopyNew_location_def;
+  ByteCopySub_location_def; ByteCopyAdd_location_def; ByteCopy_location_def;
+  MemCopy_location_def; LongDiv_location_def; LongDiv1_location_def;
+  equal_location_def; equal1_location_def; compare_location_def;
+  compare1_location_def; mod_location_def; data_to_word_Div_location_def;
+  mul_location_def; sub_location_def; add_location_def;
+  AnyArith_location_def; replicate_location_def; RefArray_location_def;
+  RefByte_location_def; FromList1_location_def; FromList_location_def;
+  word_num_stubs_def; stack_num_stubs_def] `Unused_location`;;
+let StringCmpLoop_location_eq =
+  CAKE_EVAL [StringCmpLoop_location_def; unused_location_def;
+  XorLoop_location_def; AppendLenLoop_location_def;
+  AppendMainLoop_location_def; append_location_def; dummy_location_def;
+  InstallData_location_def; InstallCode_location_def; install_location_def;
+  ByteCopyNew_location_def; ByteCopySub_location_def;
+  ByteCopyAdd_location_def; ByteCopy_location_def; MemCopy_location_def;
+  LongDiv_location_def; LongDiv1_location_def; equal_location_def;
+  equal1_location_def; compare_location_def; compare1_location_def;
+  mod_location_def; data_to_word_Div_location_def; mul_location_def;
+  sub_location_def; add_location_def; AnyArith_location_def;
+  replicate_location_def; RefArray_location_def; RefByte_location_def;
+  FromList1_location_def; FromList_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `StringCmpLoop_location`;;
 
 let SilentFFI_def = new_definition
   `SilentFFI c n names =

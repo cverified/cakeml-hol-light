@@ -323,8 +323,7 @@ let bvi_to_cb_aux_wf_inl_lemma = prove
       small_enough_int (&(LENGTH vs)))`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tmcScript.sml:443: a theorem that HOL4 states as the value of an
-   ML expression: bvi_to_cb_aux_wf_inl *)
+let bvi_to_cb_aux_wf_inl = el 1 (CONJUNCTS bvi_to_cb_aux_wf_inl_lemma);;
 
 let bvi_to_cb_aux_sing = prove
  (`!n loc tag arg bs cb.
@@ -347,8 +346,7 @@ let bvi_to_cb_aux_wf_inr_lemma = prove
         cb = CallBlock tag l child r))`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tmcScript.sml:490: a theorem that HOL4 states as the value of an
-   ML expression: bvi_to_cb_aux_wf_inr *)
+let bvi_to_cb_aux_wf_inr = el 1 (CONJUNCTS bvi_to_cb_aux_wf_inr_lemma);;
 
 let bvi_to_cb_def = new_definition
   `bvi_to_cb n loc x3 =
@@ -402,8 +400,7 @@ let bvi_to_cb_aux_size_lemma = prove
       list_size bvi_exp_size bs <= list_size bvi_exp_size args)`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tmcScript.sml:577: a theorem that HOL4 states as the value of an
-   ML expression: bvi_to_cb_aux_size *)
+let bvi_to_cb_aux_size = el 1 (CONJUNCTS bvi_to_cb_aux_size_lemma);;
 
 let bvi_to_cb_size = prove
  (`!n loc x bs cb.

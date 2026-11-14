@@ -277,8 +277,8 @@ let term_ok_int_def,term_ok_int_ind = define_wf
            y)
      | _ -> F`;;
 
-(* HOL4 bvi_tailrecScript.sml:286: a theorem that HOL4 states as the value
-   of an ML expression: term_ok_int_ind *)
+(* [allow_rebind] *)
+let term_ok_int_ind = SIMP_RULE [] term_ok_int_ind;;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -323,8 +323,8 @@ let is_op_thms = prove
      (clos_Cons 0) <=> op = clos_BlockOp (clos_Cons 0))`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tailrecScript.sml:322: a theorem that HOL4 states as the value
-   of an ML expression: term_ok_any_ind *)
+(* [allow_rebind] *)
+let term_ok_any_ind = SIMP_RULE [is_op_thms] term_ok_any_ind;;
 
 (* HOL4 bvi_tailrecScript.sml:324-346: code that the source has in a comment *)
 
@@ -685,8 +685,7 @@ let rewrite_PMATCH = prove
                f))))`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tailrecScript.sml:694: a theorem that HOL4 states as the value
-   of an ML expression: rewrite_eq *)
+let rewrite_eq = SIMP_RULE [scan_expr_eq] rewrite_def;;
 
 
 (* --- Top-level expression check --- *)
@@ -759,8 +758,8 @@ let check_exp_def = new_definition
              | SOME op ->
                  if ~(ty = op_type op) then NONE else opr)`;;
 
-(* HOL4 bvi_tailrecScript.sml:771-772: a theorem that HOL4 states as the
-   value of an ML expression: check_exp_eq *)
+let check_exp_eq =
+  SIMP_RULE [scan_expr_eq; has_rec1_def; has_rec_eq] check_exp_def;;
 
 let let_wrap_def = new_definition
   `let_wrap arity id' exp =

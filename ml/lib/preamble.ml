@@ -38,6 +38,7 @@ needs "lib/define.ml";;
 needs "lib/induction.ml";;
 needs "lib/definition.ml";;
 needs "lib/theorem.ml";;
+needs "lib/derive.ml";;
 needs "lib/records.ml";;
 needs "lib/words4.ml";;
 needs "lib/finite_map.ml";;

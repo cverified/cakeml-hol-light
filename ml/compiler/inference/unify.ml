@@ -370,8 +370,9 @@ let capply_subst_def,capply_subst_ind = define_shaped_rec
     ts) tc) /\
    (capply_subst s (Infer_Tvar_db n) = Infer_Tvar_db n)`;;
 
-(* HOL4 unifyScript.sml:579: a theorem that HOL4 states as the value of an
-   ML expression: capply_subst_thm *)
+(* [compute] *)
+let capply_subst_thm = SIMP_RULE [] capply_subst_def;;
+add_simp capply_subst_thm;;
 
 (* HOL4 unifyScript.sml:581-592: a theorem that HOL4 states as the value of
    an ML expression: cunify_thm *)
@@ -493,8 +494,8 @@ let cvwalk_eta = prove
 (* HOL4 unifyScript.sml:833-837: a theorem that HOL4 states as the value of
    an ML expression: tcvwalk_thm *)
 
-(* HOL4 unifyScript.sml:839-840: a theorem that HOL4 states as the value of
-   an ML expression: tcvwalk_correct *)
+let tcvwalk_correct =
+  SIMP_RULE [FORALL_PAIR_THM; GSYM tcvwalk_def] cvwalk_cleaned;;
 
 let tcwalk_def = new_definition
   `tcwalk s it = match it with
@@ -567,8 +568,8 @@ let dfkcoc_def = new_definition
 let dfkcocl_def = new_definition
   `dfkcocl s ts n k = kcocl s ts n (apply_kcockont s n k)`;;
 
-(* HOL4 unifyScript.sml:941-942: a theorem that HOL4 states as the value of
-   an ML expression: apply_kcockont_thm *)
+let apply_kcockont_thm =
+  REWRITE_RULE [GSYM dfkcocl_def; apply_kcockontT] apply_kcockont_def;;
 
 (* HOL4 unifyScript.sml:944-947: a theorem that HOL4 states as the value of
    an ML expression: dfkcoc_thm *)
@@ -714,8 +715,8 @@ let kcocwl_cleaned = prove
 let tcocwl_def = new_definition
   `tcocwl s n is = TAILREC (kcocwl_code s n) is`;;
 
-(* HOL4 unifyScript.sml:1207-1208: a theorem that HOL4 states as the value
-   of an ML expression: tcocwl_correct0 *)
+let tcocwl_correct0 =
+  SIMP_RULE [FORALL_PAIR_THM; GSYM tcocwl_def] kcocwl_cleaned;;
 let tcocwl_correct = prove
  (`cwfs s ==> cocl s ts n = tcocwl s n [ts]`,
   CHEAT_TAC);;
@@ -925,8 +926,8 @@ let tcwalkstar_p2_def = new_definition
 (* HOL4 unifyScript.sml:1492-1503: a theorem that HOL4 states as the value
    of an ML expression: tcwalkstarwl_thm *)
 
-(* HOL4 unifyScript.sml:1505-1506: a theorem that HOL4 states as the value
-   of an ML expression: tcwalkstarwl_correct0 *)
+let tcwalkstarwl_correct0 =
+  SIMP_RULE [FORALL_PAIR_THM; GSYM tcwalkstarwl_def] kcwalkstarwl_cleaned;;
 
 let tcwalkstarwl_correct = prove
  (`cwfs s ==> cwalkstar s it = HD (tcwalkstar_p1 s [it] [])`,
@@ -967,8 +968,7 @@ let abs_EQ_apply_cunifk = prove
    apply_cunifk (CONS (ts,us) k)`,
   CHEAT_TAC);;
 
-(* HOL4 unifyScript.sml:1568-1569: a theorem that HOL4 states as the value
-   of an ML expression: apply_cunifk_thm *)
+let apply_cunifk_thm = SIMP_RULE [GSYM dfkcunifyl_def] apply_cunifk_def;;
 
 (* HOL4 unifyScript.sml:1571-1577: a theorem that HOL4 states as the value
    of an ML expression: dfkcunifyl_thm *)
@@ -1142,8 +1142,8 @@ let tcunify_def = new_definition
 (* HOL4 unifyScript.sml:2007-2012: a theorem that HOL4 states as the value
    of an ML expression: tcunify_thm *)
 
-(* HOL4 unifyScript.sml:2014-2015: a theorem that HOL4 states as the value
-   of an ML expression: tcunify_correct0 *)
+let tcunify_correct0 =
+  SIMP_RULE [FORALL_PAIR_THM; GSYM tcunify_def] kcunifywl_cleaned;;
 
 let tcunify_correct = prove
  (`cwfs s ==> cunify s t1 t2 = tcunify s [([t1],[t2])]`,
@@ -1466,8 +1466,7 @@ let t_unify_strongind' = prove
                                            THEN
      ASM_MESON_TAC[t_unify_unifier]]));;
 
-(* HOL4 unifyScript.sml:2778-2779: a theorem that HOL4 states as the value
-   of an ML expression: t_unify_strongind *)
+let t_unify_strongind = SIMP_RULE [] t_unify_strongind';;
 
 (* [local] *)
 let encode_walkstar = prove

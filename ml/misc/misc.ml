@@ -1608,8 +1608,8 @@ let splitlines_next = prove
    ln <<= ls /\ (LENGTH ln < LENGTH ls ==> APPEND ln "\n" <<= ls)`,
   CHEAT_TAC);;
 
-(* HOL4 miscScript.sml:2935: a theorem that HOL4 states as the value of an
-   ML expression: splitlines_nil *)
+let splitlines_nil = CAKE_EVAL [splitlines_def] `splitlines ""`;;
+add_simp splitlines_nil;;
 
 let splitlines_eq_nil = prove
  (`splitlines ls = [] <=> (ls = [])`,
@@ -1645,8 +1645,7 @@ let plus_0_I = prove
 add_simp plus_0_I;;
 
 (* used once *)
-(* HOL4 miscScript.sml:3037-3038: a theorem that HOL4 states as the value of
-   an ML expression: SUM_COUNT_LIST *)
+let SUM_COUNT_LIST = SIMP_RULE [] (SPECL [`n`; `0`] SUM_MAP_COUNT_LIST);;
 
 let OPTION_MAP_I = prove
  (`OPTION_MAP I x = x`,

@@ -536,8 +536,8 @@ let do_app_lss_sm_safe_peak_swap_aux = prove
            (dataSem_state_locals_size_fupd (K lss') s')))))`,
   CHEAT_TAC);;
 
-(* HOL4 dataPropsScript.sml:550-551: a theorem that HOL4 states as the value
-   of an ML expression: do_app_lss_sm_safe_peak_swap *)
+let do_app_lss_sm_safe_peak_swap =
+  SIMP_RULE [LET_DEF] do_app_lss_sm_safe_peak_swap_aux;;
 
 (* [local] *)
 let do_app_sm_safe_peak_swap_aux = prove
@@ -551,8 +551,8 @@ let do_app_sm_safe_peak_swap_aux = prove
            (dataSem_state_stack_max_fupd (K smx') s'))))`,
   CHEAT_TAC);;
 
-(* HOL4 dataPropsScript.sml:564-565: a theorem that HOL4 states as the value
-   of an ML expression: do_app_sm_safe_peak_swap *)
+let do_app_sm_safe_peak_swap =
+  SIMP_RULE [LET_DEF] do_app_sm_safe_peak_swap_aux;;
 
 let do_app_aux_sm_safe_peak_swap = prove
  (`!op vs s q s' smx safe peak.
@@ -613,8 +613,8 @@ let do_app_lss_stk_stfrm_swap_aux = prove
          (dataSem_state_locals_size_fupd (K lss) s')))))))`,
   CHEAT_TAC);;
 
-(* HOL4 dataPropsScript.sml:621: a theorem that HOL4 states as the value of
-   an ML expression: do_app_lss_stk_stfrm_swap *)
+let do_app_lss_stk_stfrm_swap =
+  SIMP_RULE [LET_DEF] do_app_lss_stk_stfrm_swap_aux;;
 
 let do_app_err_lss_stk_stfrm_swap = prove
  (`!op vs s lss stk stfrm.
@@ -636,8 +636,7 @@ let do_app_lim_swap_aux = prove
            (K lim) s')))))`,
   CHEAT_TAC);;
 
-(* HOL4 dataPropsScript.sml:643: a theorem that HOL4 states as the value of
-   an ML expression: do_app_lim_swap *)
+let do_app_lim_swap = SIMP_RULE [LET_DEF] do_app_lim_swap_aux;;
 
 
 let do_app_err_lim_swap = prove
@@ -719,14 +718,16 @@ let evaluate_fl_smx_safe_peak_swap_aux = prove
                s')))))`,
   CHEAT_TAC);;
 
-(* HOL4 dataPropsScript.sml:876-877: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_smx_safe_peak_swap_aux *)
-(* HOL4 dataPropsScript.sml:878: a theorem that HOL4 states as the value of
-   an ML expression: evaluate_smx_safe_peak_swap *)
+let evaluate_smx_safe_peak_swap_aux =
+  GEN_ALL (SIMP_RULE [] (SPECL [`c`; `s`; `r`; `s'`; `T`; `smx`; `safe`;
+  `peak`] evaluate_fl_smx_safe_peak_swap_aux));;
+let evaluate_smx_safe_peak_swap =
+  SIMP_RULE [LET_DEF] evaluate_smx_safe_peak_swap_aux;;
 
 
-(* HOL4 dataPropsScript.sml:881-882: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_safe_peak_swap_aux *)
+let evaluate_safe_peak_swap_aux =
+  GEN_ALL (SIMP_RULE [] (SPECL [`c`; `s`; `r`; `s'`; `F`; `smx`; `safe`;
+  `peak`] evaluate_fl_smx_safe_peak_swap_aux));;
 
 let evaluate_safe_peak_swap = prove
  (`!safe s' s r peak c.

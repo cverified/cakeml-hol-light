@@ -650,8 +650,17 @@ let generated_bignum_stubs_def = new_definition
        mc_iop_code in CONS (n,1,word_Seq x1 (word_Return 0 [0])) (MAP
        (\(x,y,z). (y,1,word_Seq z (word_Return 0 [0]))) cs)`;;
 
-(* HOL4 word_bignumScript.sml:576-577: a theorem that HOL4 states as the
-   value of an ML expression: generated_bignum_stubs_eq *)
+let generated_bignum_stubs_eq =
+  SIMP_RULE [GSYM ADD_ASSOC] (CAKE_EVAL [generated_bignum_stubs_def;
+  clos_to_bvl_compile_def; compile_common_def; num_stubs_def; toAList_def;
+  init_code_def; init_globals_def; force_thunk_code_def;
+  clos_to_bvl_compile_prog_def; make_name_alist_def;
+  partial_app_label_table_loc_def; tuple_tag_def; mk_label_def;
+  partial_app_fn_location_def; the_def; fromList_def;
+  generate_generic_app_def; generate_partial_app_closure_fn_def;
+  mk_const_def; jump_def; mk_cl_call_def; mk_tick_def; closure_tag_def;
+  partial_app_tag_def; mk_el_def; partial_app_fn_location_code_def;
+  generic_app_fn_location_def; install_def] `generated_bignum_stubs n`);;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

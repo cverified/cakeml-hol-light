@@ -325,8 +325,8 @@ let lem2 = prove
   a))`,
   CHEAT_TAC);;
 
-(* HOL4 lexer_funScript.sml:342: a theorem that HOL4 states as the value of
-   an ML expression: read_while_EMPTY *)
+let read_while_EMPTY = CONJUNCT1 read_while_def;;
+add_simp read_while_EMPTY;;
 
 (* [local] *)
 let NOT_NIL_EXISTS_CONS = prove

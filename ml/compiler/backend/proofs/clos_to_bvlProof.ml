@@ -273,8 +273,8 @@ let list_CASE_same = prove
 let evaluate_genlist_prev_args = prove
  (`!prev_args z x tag arg_list st.
      bvlSem_evaluate (REVERSE (list_of_seq (\prev_arg.
-       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (db_vars_Var
-         (LENGTH x)) (prev_arg + LENGTH z)) (LENGTH prev_args)),APPEND x (CONS
+       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (bvl_Var (LENGTH
+         x)) (prev_arg + LENGTH z)) (LENGTH prev_args)),APPEND x (CONS
          (bvlSem_Block tag (APPEND z prev_args)) arg_list),
             st) =
      (Rval (REVERSE prev_args),st)`,
@@ -284,7 +284,7 @@ let evaluate_genlist_prev_args = prove
 let evaluate_genlist_prev_args1_simpl = prove
  (`!prev_args x y tag p n cl a st.
      bvlSem_evaluate (REVERSE (list_of_seq (\prev_arg.
-       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (db_vars_Var 3)
+       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (bvl_Var 3)
          (prev_arg + 3)) (LENGTH prev_args)),
             [x; y; a; bvlSem_Block tag (CONS p (CONS n (CONS cl
               prev_args)))],
@@ -296,8 +296,8 @@ let evaluate_genlist_prev_args1_simpl = prove
 let evaluate_genlist_prev_args_no_rev = prove
  (`!prev_args z x tag arg_list st.
      bvlSem_evaluate (list_of_seq (\prev_arg.
-       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (db_vars_Var
-         (LENGTH x)) (prev_arg + LENGTH z)) (LENGTH prev_args),APPEND x (CONS
+       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (bvl_Var (LENGTH
+         x)) (prev_arg + LENGTH z)) (LENGTH prev_args),APPEND x (CONS
          (bvlSem_Block tag (APPEND z prev_args)) arg_list),
             st) =
      (Rval prev_args,st)`,
@@ -307,9 +307,9 @@ let evaluate_genlist_prev_args_no_rev = prove
 let evaluate_genlist_prev_args1_no_rev = prove
  (`!prev_args x tag p n cl args st.
      bvlSem_evaluate (list_of_seq (\prev_arg.
-       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (db_vars_Var
-         (LENGTH args + 1)) (prev_arg + 3)) (LENGTH prev_args),CONS x (APPEND
-         args [bvlSem_Block tag (CONS p (CONS n (CONS cl prev_args)))]),
+       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (bvl_Var (LENGTH
+         args + 1)) (prev_arg + 3)) (LENGTH prev_args),CONS x (APPEND args
+         [bvlSem_Block tag (CONS p (CONS n (CONS cl prev_args)))]),
             st) =
      (Rval prev_args,st)`,
   CHEAT_TAC);;
@@ -322,8 +322,8 @@ let evaluate_partial_app_fn_location_code = prove
       n < total_args /\ total_args < max_app ==>
       bvlSem_evaluate
         ([partial_app_fn_location_code max_app
-                ((\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b])
-                  (db_vars_Var (LENGTH args + 1)) 1)
+                ((\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (bvl_Var
+                  (LENGTH args + 1)) 1)
                 (bvl_Op (clos_IntOp (clos_Const (&n))) [])],
          (CONS x (APPEND args [bvlSem_Block tag (CONS ptr (CONS
            (bvlSem_Number (&total_args)) fvs))])),
@@ -445,10 +445,10 @@ let evaluate_generic_app_full = prove
                         [v],st') ->
              (match
                 bvlSem_evaluate
-                  ([mk_cl_call (db_vars_Var 0) (list_of_seq (\n. db_vars_Var
-                    (n + 3)) (n - rem_args))],APPEND (CONS v (CONS
-                    (bvlSem_Number (&rem_args)) (CONS (bvlSem_Number (&rem_args
-                    - &(LENGTH args)))
+                  ([mk_cl_call (bvl_Var 0) (list_of_seq (\n. bvl_Var (n +
+                    3)) (n - rem_args))],APPEND (CONS v (CONS (bvlSem_Number
+                    (&rem_args)) (CONS (bvlSem_Number (&rem_args - &(LENGTH
+                    args)))
                        args))) [bvlSem_Block tag (CONS (bvlSem_CodePtr l)
                          (CONS (bvlSem_Number (&rem_args)) vs))],
                    st') with
@@ -460,23 +460,20 @@ let evaluate_generic_app_full = prove
 (* [local] *)
 let mk_cl_lem = prove
  (`l < LENGTH env ==>
-    bvlSem_evaluate (list_of_seq (\n. db_vars_Var (n + 3)) l,CONS a (CONS b
+    bvlSem_evaluate (list_of_seq (\n. bvl_Var (n + 3)) l,CONS a (CONS b
       (CONS c env)),st) =
-    bvlSem_evaluate (list_of_seq (\n. db_vars_Var (n + 1)) l,CONS a
-      env,st)`,
+    bvlSem_evaluate (list_of_seq (\n. bvl_Var (n + 1)) l,CONS a env,st)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_mk_cl_simpl = prove
- (`bvlSem_evaluate ([mk_cl_call (db_vars_Var 0) (list_of_seq (\n. db_vars_Var
-  (n + 3)) (LENGTH args' - (n + 1)))],CONS v (CONS a (CONS b (APPEND args'
-  [bvlSem_Block tag (CONS (bvlSem_CodePtr p) (CONS (bvlSem_Number (&n))
-  xs))]))),
+ (`bvlSem_evaluate ([mk_cl_call (bvl_Var 0) (list_of_seq (\n. bvl_Var (n + 3))
+  (LENGTH args' - (n + 1)))],CONS v (CONS a (CONS b (APPEND args' [bvlSem_Block
+  tag (CONS (bvlSem_CodePtr p) (CONS (bvlSem_Number (&n)) xs))]))),
                               st') =
-    bvlSem_evaluate ([mk_cl_call (db_vars_Var 0) (list_of_seq (\n.
-      db_vars_Var (n + 1)) (LENGTH args' - (n + 1)))],CONS v (APPEND args'
-      [bvlSem_Block tag (CONS (bvlSem_CodePtr p) (CONS (bvlSem_Number (&n))
-      xs))]),
+    bvlSem_evaluate ([mk_cl_call (bvl_Var 0) (list_of_seq (\n. bvl_Var (n +
+      1)) (LENGTH args' - (n + 1)))],CONS v (APPEND args' [bvlSem_Block tag
+      (CONS (bvlSem_CodePtr p) (CONS (bvlSem_Number (&n)) xs))]),
                               st')`,
   CHEAT_TAC);;
 
@@ -506,8 +503,8 @@ let evaluate_mk_cl_call = prove
             + 1)) args') [bvlSem_Block tag (CONS (bvlSem_CodePtr p) (CONS
             (bvlSem_Number (&n)) xs))],
                       bvlSem_dec_clock (n + 2) s) with (Rval [v],st') ->
-                 (match bvlSem_evaluate ([mk_cl_call (db_vars_Var 0)
-                   (list_of_seq (\n. db_vars_Var (n + 1)) (LENGTH args' - (n +
+                 (match bvlSem_evaluate ([mk_cl_call (bvl_Var 0)
+                   (list_of_seq (\n. bvl_Var (n + 1)) (LENGTH args' - (n +
                    1)))],CONS v (APPEND args' [bvlSem_Block tag (CONS
                    (bvlSem_CodePtr p) (CONS (bvlSem_Number (&n)) xs))]),
                               st') with (Rval v,s2) -> (Rval [HD v],s2)
@@ -563,8 +560,8 @@ let cl_rel = cake_inductive
      (clos_to_bvl_compile_exps max_app [x] aux = ([c],aux1)) /\
      clos_to_bvlProof_code_installed aux1 code /\
      (sptree_lookup (p + (num_stubs max_app)) code =
-       SOME (num_args + (1:num),bvl_Let (APPEND (list_of_seq db_vars_Var
-         num_args) (free_let (db_vars_Var num_args) (LENGTH env))) c)) ==>
+       SOME (num_args + (1:num),bvl_Let (APPEND (list_of_seq bvl_Var
+         num_args) (free_let (bvl_Var num_args) (LENGTH env))) c)) ==>
     cl_rel max_app fs refs code
            (env,ys)
            (closSem_Closure (SOME p) [] env num_args x)
@@ -577,8 +574,8 @@ let cl_rel = cake_inductive
      clos_to_bvl_compile_exps max_app [x] aux = ([c],aux1) /\
      clos_to_bvlProof_code_installed aux1 code /\
      sptree_lookup (p + (num_stubs max_app)) code =
-       SOME (num_args + (1:num),bvl_Let (APPEND (list_of_seq db_vars_Var
-         (num_args + 1)) (free_let (db_vars_Var num_args) (LENGTH env))) c) ==>
+       SOME (num_args + (1:num),bvl_Let (APPEND (list_of_seq bvl_Var
+         (num_args + 1)) (free_let (bvl_Var num_args) (LENGTH env))) c) ==>
      cl_rel max_app fs refs code (env,ys)
             (closSem_Recclosure (SOME p) [] env [(num_args,x)] 0)
             (bvlSem_Block closure_tag (CONS (bvlSem_CodePtr (p + (num_stubs
@@ -1103,7 +1100,7 @@ let lookup_vars_IMP = prove
  (`!vs env xs env2.
        (lookup_vars vs env = SOME xs) /\
        clos_to_bvlProof_env_rel max_app f refs code env env2 ==>
-       (?ys. (bvlSem_evaluate (MAP db_vars_Var vs,env2,t1) = (Rval
+       (?ys. (bvlSem_evaluate (MAP bvl_Var vs,env2,t1) = (Rval
          ys,(t1:('c,'ffi)bvlSem_state))) /\
             ALL2 (clos_to_bvlProof_v_rel max_app f refs code) xs ys /\
             (LENGTH vs = LENGTH xs))`,
@@ -1180,8 +1177,8 @@ let evaluate_app_helper = prove
  (`(!x. ~(r = Rval x)) /\ bvlSem_evaluate (c8,env,s) = (r,s') ==>
      bvlSem_evaluate
             ([match loc with
-               NONE -> bvl_Let (APPEND c8 [c7]) (mk_cl_call (db_vars_Var
-                 (LENGTH c8)) (list_of_seq db_vars_Var (LENGTH c8)))
+               NONE -> bvl_Let (APPEND c8 [c7]) (mk_cl_call (bvl_Var (LENGTH
+                 c8)) (list_of_seq bvl_Var (LENGTH c8)))
              | SOME loc -> bvl_Call (LENGTH c8 - 1) (SOME (loc + num_stubs
                max_app)) (APPEND c8 [c7])],env,s) = (r,s')`,
   CHEAT_TAC);;
@@ -1191,8 +1188,8 @@ let evaluate_app_helper2 = prove
  (`(!x. ~(r = Rval x)) /\ bvlSem_evaluate (c8,env,s) = (Rval x,s')
   /\ bvlSem_evaluate ([c7],env,s') = (r,s'') ==>
      bvlSem_evaluate ([match loc with
-               NONE -> bvl_Let (APPEND c8 [c7]) (mk_cl_call (db_vars_Var
-                 (LENGTH c8)) (list_of_seq db_vars_Var (LENGTH c8)))
+               NONE -> bvl_Let (APPEND c8 [c7]) (mk_cl_call (bvl_Var (LENGTH
+                 c8)) (list_of_seq bvl_Var (LENGTH c8)))
              | SOME loc -> bvl_Call (LENGTH c8 - 1) (SOME (loc + num_stubs
                max_app)) (APPEND c8 [c7])],env,s) = (r,s'')`,
   CHEAT_TAC);;
@@ -1201,7 +1198,7 @@ let evaluate_app_helper2 = prove
 let evaluate_simple_genlist_vars = prove
  (`!env1 env2 s.
      0 < LENGTH env1 ==>
-     bvlSem_evaluate (list_of_seq db_vars_Var (LENGTH env1),APPEND env1
+     bvlSem_evaluate (list_of_seq bvl_Var (LENGTH env1),APPEND env1
        env2,s) = (Rval env1,s)`,
   CHEAT_TAC);;
 
@@ -1316,8 +1313,8 @@ let evaluate_mk_cl_call_spec = prove
          /\
      LENGTH args - 1 >= n /\
      n < max_app /\ ~(LENGTH args = 0) ==>
-     bvlSem_evaluate ([mk_cl_call (db_vars_Var (LENGTH args)) (list_of_seq
-       db_vars_Var (LENGTH args))],APPEND (APPEND args [bvlSem_Block tag (CONS
+     bvlSem_evaluate ([mk_cl_call (bvl_Var (LENGTH args)) (list_of_seq
+       bvl_Var (LENGTH args))],APPEND (APPEND args [bvlSem_Block tag (CONS
        (bvlSem_CodePtr p) (CONS (bvlSem_Number (&n)) xs))]) env,s) =
       (if n = LENGTH args - 1 then
         if state_clock s < LENGTH args then (Rerr (Rabort
@@ -1331,8 +1328,8 @@ let evaluate_mk_cl_call_spec = prove
             1)) args) [bvlSem_Block tag (CONS (bvlSem_CodePtr p) (CONS
             (bvlSem_Number (&n)) xs))],
                       bvlSem_dec_clock (n + 2) s) with (Rval [v],st') ->
-                 (match bvlSem_evaluate ([mk_cl_call (db_vars_Var 0)
-                   (list_of_seq (\n. db_vars_Var (n + 1)) (LENGTH args - (n +
+                 (match bvlSem_evaluate ([mk_cl_call (bvl_Var 0)
+                   (list_of_seq (\n. bvl_Var (n + 1)) (LENGTH args - (n +
                    1)))],CONS v (APPEND args [bvlSem_Block tag (CONS
                    (bvlSem_CodePtr p) (CONS (bvlSem_Number (&n)) xs))]),
                               st') with (Rval v,s2) -> (Rval [HD v],s2)
@@ -1397,8 +1394,8 @@ let dest_cl_imp_dest_cl' = prove
 (* [local] *)
 let cl_rel_run_lemma1 = prove
  (`num_args <= LENGTH args' ==>
-    bvlSem_evaluate (list_of_seq db_vars_Var num_args,APPEND (DROP (LENGTH
-      args' - num_args) args') stuff,t1) =
+    bvlSem_evaluate (list_of_seq bvl_Var num_args,APPEND (DROP (LENGTH args'
+      - num_args) args') stuff,t1) =
     (Rval (DROP (LENGTH args' - num_args) args'),t1)`,
   CHEAT_TAC);;
 
@@ -1422,7 +1419,7 @@ let genlist_el = prove
      FLOOKUP (state_refs st) r = SOME (bvlSem_ValueArray (APPEND ys xs)) /\
      skip = LENGTH ys ==>
      bvlSem_evaluate (list_of_seq (\i. (\b i. bvl_Op (clos_BlockOp
-       (clos_ElemAt i)) [b]) (db_vars_Var 0) (i + skip)) (LENGTH xs),CONS
+       (clos_ElemAt i)) [b]) (bvl_Var 0) (i + skip)) (LENGTH xs),CONS
        (bvlSem_RefPtr T r) (APPEND args (CONS (bvlSem_Block closure_tag
        [bvlSem_CodePtr p; bvlSem_Number (&n); bvlSem_RefPtr T r]) env)),
             st) =
@@ -1815,10 +1812,10 @@ let clos_to_bvlProof_compile_exps_correct = prove
        (~(LENGTH args' = 0) ==>
          (match loc_opt with NONE ->
               bvlSem_evaluate
-                    ([mk_cl_call (db_vars_Var (LENGTH args')) (list_of_seq
-                      db_vars_Var (LENGTH args'))],APPEND (APPEND args'
-                      [func']) env,bvlSem_state_clock_fupd (K
-                      (closSem_state_clock s1 + ck))
+                    ([mk_cl_call (bvl_Var (LENGTH args')) (list_of_seq
+                      bvl_Var (LENGTH args'))],APPEND (APPEND args' [func'])
+                      env,bvlSem_state_clock_fupd (K (closSem_state_clock s1 +
+                      ck))
                       t1) =
                 (res',t2)
            | SOME loc ->
@@ -2844,8 +2841,9 @@ let compile_inc_monotonic = prove
      (pure_co (clos_to_bvl_compile_inc max_app) o co)`,
   CHEAT_TAC);;
 
-(* HOL4 clos_to_bvlProofScript.sml:7921-7922: a theorem that HOL4 states as
-   the value of an ML expression: code_locs_Op_cons *)
+let code_locs_Op_cons =
+  REWRITE_RULE [code_locs_def] (GEN_ALL (SPEC `clos_Op a b c`
+  code_locs_cons));;
 
 let EXISTS_CONS_NOT_NULL = prove
  (`(?x xs. ys = CONS x xs) = (~(NULL ys))`,

@@ -66,14 +66,20 @@ let _ = cake_theory "clos_to_bvl"
 
 let _ = do_list hide_constant ["pmatch"];;
 
-(* HOL4 clos_to_bvlScript.sml:50-51: a theorem that HOL4 states as the value
-   of an ML expression: partial_app_tag_neq_closure_tag *)
+let partial_app_tag_neq_closure_tag =
+  EQF_ELIM (CAKE_EVAL [partial_app_tag_def; closure_tag_def] `partial_app_tag
+  = closure_tag`);;
+add_simp partial_app_tag_neq_closure_tag;;
 
-(* HOL4 clos_to_bvlScript.sml:53-54: a theorem that HOL4 states as the value
-   of an ML expression: clos_tag_shift_nil_tag *)
+let clos_tag_shift_nil_tag =
+  EQT_ELIM (CAKE_EVAL [clos_tag_shift_def; nil_tag_def] `clos_tag_shift
+  nil_tag = nil_tag`);;
+add_simp clos_tag_shift_nil_tag;;
 
-(* HOL4 clos_to_bvlScript.sml:56-57: a theorem that HOL4 states as the value
-   of an ML expression: clos_tag_shift_cons_tag *)
+let clos_tag_shift_cons_tag =
+  EQT_ELIM (CAKE_EVAL [clos_tag_shift_def; cons_tag_def] `clos_tag_shift
+  cons_tag = cons_tag`);;
+add_simp clos_tag_shift_cons_tag;;
 
 let clos_tag_shift_inj = prove
  (`clos_tag_shift n1 = clos_tag_shift n2 ==> n1 = n2`,
@@ -672,8 +678,8 @@ let clos_to_bvl_compile_prog_def = new_definition
        max_app,args,exp))
          prog new_exps) aux`;;
 
-(* HOL4 clos_to_bvlScript.sml:610: a theorem that HOL4 states as the value
-   of an ML expression: compile_prog_eq *)
+let clos_to_bvl_compile_prog_eq =
+  SIMP_RULE [compile_exp_sing_eq] clos_to_bvl_compile_prog_def;;
 
 (* [local] *)
 let pair_lem1 = prove
@@ -887,8 +893,8 @@ let make_name_alist_def = new_definition
                                 NONE -> implode "unknown_clos_fun"
                               | SOME s -> s))) nums):mlstring spt`;;
 
-(* HOL4 clos_to_bvlScript.sml:878-879: a theorem that HOL4 states as the
-   value of an ML expression: make_name_alist_eq *)
+let make_name_alist_eq =
+  SIMP_RULE [get_src_names_sing_eq] make_name_alist_def;;
 
 let clos_to_bvl_compile_def = new_definition
   `clos_to_bvl_compile c0 es =

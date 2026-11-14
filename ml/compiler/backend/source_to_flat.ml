@@ -62,14 +62,12 @@ let compile_var_def = define_cases
    (compile_var t (source_to_flat_Local _ s) = flat_Var_local t s)`;;
 
 make_size "ast_pat";;
-make_size "pattern_semantics_pat";;
 let ast_pat1_size = prove
- (`list_size ast_pat_size xs = LENGTH xs + SUM (MAP
-  pattern_semantics_pat_size xs)`,
+ (`list_size ast_pat_size xs = LENGTH xs + SUM (MAP ast_pat_size xs)`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (pattern_semantics_pat_size o SND)
+     MEASURE (ast_pat_size o SND)
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 source_to_flatScript.sml:68-72: the tactic that proves the
@@ -544,24 +542,22 @@ let store_env_id_def = new_definition
 
 let inc_compile_prog_def = new_definition
   `inc_compile_prog env_id c p =
-     (let env = lookup_env_id env_id (environment_generation_store_envs c)
-       in
-     let envs' = mk_environment_generation_store 0
-       (source_to_flat_config_next (environment_generation_store_envs c)) LN in
+     let env = lookup_env_id env_id (source_to_flat_config_envs c) in
+     let envs' = mk_environment_generation_store 0 (environment_store_next
+       (source_to_flat_config_envs c)) LN in
      let (_,next',e,gen,p') = source_to_flat_compile_decs [] 1
        (source_to_flat_config_next c) env envs' p in
      let gen_envs = sptree_insert (environment_generation_store_next gen)
        (extend_env e env) (environment_generation_store_envs gen) in
-     let envs2 = mk_environment_store (source_to_flat_config_next
-       (environment_generation_store_envs c) + 1) (sptree_insert
-       (source_to_flat_config_next (environment_generation_store_envs c))
-       gen_envs (environment_store_env_gens (environment_generation_store_envs
-       c))) in
-     (environment_generation_store_envs_fupd (K envs2)
+     let envs2 = mk_environment_store (environment_store_next
+       (source_to_flat_config_envs c) + 1) (sptree_insert
+       (environment_store_next (source_to_flat_config_envs c)) gen_envs
+       (environment_store_env_gens (source_to_flat_config_envs c))) in
+     (source_to_flat_config_envs_fupd (K envs2)
        (source_to_flat_config_next_fupd (K next') c),APPEND (CONS
        (glob_alloc next' c) p') [store_env_id
        (environment_generation_store_generation gen)
-       (environment_generation_store_next gen)]))`;;
+       (environment_generation_store_next gen)])`;;
 
 let source_to_flat_compile_def = new_definition
   `source_to_flat_compile c p =

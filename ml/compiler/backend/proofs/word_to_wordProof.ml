@@ -314,14 +314,18 @@ let code_rel_not_created_subprogs = prove
    not_created_subprogs P (FST (SND v'))`,
   CHEAT_TAC);;
 
-(* HOL4 word_to_wordProofScript.sml:1082: a theorem that HOL4 states as the
-   value of an ML expression: code_rel_P *)
+(* [local] *)
+let code_rel_P = GEN `P` code_rel_not_created_subprogs;;
 
-(* HOL4 word_to_wordProofScript.sml:1084-1085: a theorem that HOL4 states as
-   the value of an ML expression: code_rel_no_alloc *)
+(* [local] *)
+let code_rel_no_alloc =
+  REWRITE_RULE [GSYM no_alloc_subprogs_def] (SPEC `(\x y. ~(x = y))
+  (word_Alloc 0 (LN,LN))` code_rel_P);;
 
-(* HOL4 word_to_wordProofScript.sml:1087-1088: a theorem that HOL4 states as
-   the value of an ML expression: code_rel_no_install *)
+(* [local] *)
+let code_rel_no_install =
+  REWRITE_RULE [GSYM no_install_subprogs_def] (SPEC `(\x y. ~(x = y))
+  (word_Install 0 0 0 0 (LN,LN))` code_rel_P);;
 
 
 (***** compile_single correctness for no_alloc & no_install ******)

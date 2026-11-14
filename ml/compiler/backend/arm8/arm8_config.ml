@@ -40,8 +40,9 @@ let arm8_names_def = new_definition
       sptree_insert 29 18 o
       sptree_insert 30 26) LN:num spt)`;;
 
-(* HOL4 arm8_configScript.sml:32-33: a theorem that HOL4 states as the value
-   of an ML expression: arm8_names_def *)
+(* [compute,allow_rebind] *)
+let arm8_config_arm8_names_def =
+  CONV_RULE (RAND_CONV (CAKE_EVAL [can_def])) arm8_names_def;;
 
 (* HOL4 arm8_configScript.sml:35-37: the ML values that the definitions
    below antiquote *)

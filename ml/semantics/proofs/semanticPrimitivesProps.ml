@@ -124,10 +124,10 @@ let pmatch_nsAppend = prove
       m))`,
   CHEAT_TAC);;
 
-(* HOL4 semanticPrimitivesPropsScript.sml:163: a theorem that HOL4 states as
-   the value of an ML expression: pmatch_nsAppend_No_match *)
-(* HOL4 semanticPrimitivesPropsScript.sml:164: a theorem that HOL4 states as
-   the value of an ML expression: pmatch_nsAppend_Match *)
+let pmatch_nsAppend_No_match =
+  el 0 (CONJUNCTS (el 0 (CONJUNCTS pmatch_nsAppend)));;
+let pmatch_nsAppend_Match =
+  el 1 (CONJUNCTS (el 0 (CONJUNCTS pmatch_nsAppend)));;
 
 let pmatch_acc = prove
  (`(!envc store p v env env' env2.

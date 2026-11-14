@@ -458,7 +458,7 @@ let inst_select_pmatch = prove
    | word_ShareInst op var exp ->
      (let exp = (flatten_exp o pull_exp) exp in
      match exp with word_Op asm_Add [exp'; word_Const w] ->
-       if ((op = word_Load \/ op = word_Store) /\ asm_offset_ok 0
+       if ((op = asm_Load \/ op = asm_Store) /\ asm_offset_ok 0
          (asm_config_addr_offset c) w) \/
            ((op = asm_Load32 \/ op = asm_Store32) /\ asm_offset_ok 0
              (asm_config_addr_offset c) w) \/

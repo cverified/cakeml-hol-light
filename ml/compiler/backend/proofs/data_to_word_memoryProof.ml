@@ -7094,8 +7094,9 @@ let list_to_BlockReps_data_up_to_lem = prove
    MATCH_MP_TAC list_to_BlockReps_isDataElement THEN
    ASM_REWRITE_TAC[]));;
 
-(* HOL4 data_to_word_memoryProofScript.sml:2360-2363: a theorem that HOL4
-   states as the value of an ML expression: list_to_BlockReps_data_up_to *)
+let list_to_BlockReps_data_up_to =
+  SIMP_RULE [] (INST [`list_to_BlockReps conf x len xs`,`h1`]
+  list_to_BlockReps_data_up_to_lem);;
 
 let list_to_BlockReps_ForwardPointer = prove
  (`~(xs = []) ==> FILTER isForwardPointer (list_to_BlockReps conf x len xs) =
@@ -7252,8 +7253,8 @@ let list_to_BlockReps_Pointer_lem = prove
      RULE_ASSUM_TAC(REWRITE_RULE[MEM]) THEN
      ASM_REWRITE_TAC[MEM] THEN ASM_MESON_TAC[]]));;
 
-(* HOL4 data_to_word_memoryProofScript.sml:2435-2437: a theorem that HOL4
-   states as the value of an ML expression: list_to_BlockReps_Pointer *)
+let list_to_BlockReps_Pointer =
+  SIMP_RULE [LET_DEF] list_to_BlockReps_Pointer_lem;;
 
 let list_to_v_get_refs = prove
  (`!xs t r ts.
@@ -7761,8 +7762,7 @@ let v_inv_list_to_v_lem = prove
      [single_vl; cons_pre THEN cons_bnd THEN cons_ih THEN
       cons_fin]])));;
 
-(* HOL4 data_to_word_memoryProofScript.sml:2670-2671: a theorem that HOL4
-   states as the value of an ML expression: v_inv_list_to_v *)
+let v_inv_list_to_v = SIMP_RULE [LET_DEF] v_inv_list_to_v_lem;;
 
 (* A timestamp that is not in the  *)
 
@@ -16950,8 +16950,9 @@ let gen_state_ok_update_byte = prove
      (* or it is the one that was written, which holds no pointer *)
      bytes_nopt]));;
 
-(* HOL4 data_to_word_memoryProofScript.sml:5900-5902: a theorem that HOL4
-   states as the value of an ML expression: heap_length_Bytes *)
+let heap_length_Bytes =
+  SIMP_RULE [LENGTH_write_bytes] (CAKE_EVAL [heap_length_def; bytes_def;
+  el_length_def] `heap_length [Bytes be fl bs ws]`);;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
@@ -22101,8 +22102,8 @@ let duplicate_thm = prove
            ACCEPT_TAC rr]);
        FIRST_ASSUM ACCEPT_TAC]]));;
 
-(* HOL4 data_to_word_memoryProofScript.sml:7427-7429: a theorem that HOL4
-   states as the value of an ML expression: duplicate1_thm *)
+let duplicate1_thm =
+  SIMP_RULE [LENGTH; APPEND] (INST [`[x1]`,`xs`; `[r1]`,`rs`] duplicate_thm);;
 
 (* move *)
 
@@ -23406,8 +23407,7 @@ let word_ml_inv_num = prove
     ASM_REWRITE_TAC[MAP; FST; SND; ALL2] THEN
     REWRITE_TAC(word_addr_clauses () @ [smn; and4])));;
 
-(* HOL4 data_to_word_memoryProofScript.sml:8032-8033: a theorem that HOL4
-   states as the value of an ML expression: word_ml_inv_zero *)
+let word_ml_inv_zero = SIMP_RULE [] (INST [`0`,`n`] word_ml_inv_num);;
 
 let word_ml_inv_neg_num_lemma = prove
  (`good_dimindex (:'a) ==> (--(n2w 2) && --(n2w 4) * v) = --(n2w 4) * (v:'a
@@ -28819,8 +28819,8 @@ let IMP_memory_rel_bignum_alt = prove
                 REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp]) in
       ACCEPT_TAC (REWRITE_RULE[GSYM eq] sl2))))));;
 
-(* HOL4 data_to_word_memoryProofScript.sml:9113-9114: a theorem that HOL4
-   states as the value of an ML expression: IMP_memory_rel_bignum_alt *)
+let data_to_word_memoryProof_IMP_memory_rel_bignum_alt =
+  SIMP_RULE [APPEND] (INST [`[]`,`vs`] IMP_memory_rel_bignum_alt);;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -47657,11 +47657,12 @@ let fix_clock_word_eq = prove
    FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP wle th)) THEN
    ARITH_TAC));;
 
-(* HOL4 data_to_word_memoryProofScript.sml:14055-14056: a theorem that HOL4
-   states as the value of an ML expression: word_eq_def *)
+(* [compute,allow_rebind] *)
+let data_to_word_memoryProof_word_eq_def =
+  REWRITE_RULE [fix_clock_word_eq] word_eq_def;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:14058-14059: a theorem that HOL4
-   states as the value of an ML expression: word_eq_ind *)
+(* [allow_rebind] *)
+let word_eq_ind = REWRITE_RULE [fix_clock_word_eq] word_eq_ind;;
 
 let bit_pattern_1100 = prove
  (`good_dimindex (:'a) ==>
@@ -55494,8 +55495,8 @@ let memory_rel_write_bytearray_lemma = prove
     stepb1 THEN loadsb THEN writeb THEN storeb THEN
     finishb])));;
 
-(* HOL4 data_to_word_memoryProofScript.sml:16298-16299: a theorem that HOL4
-   states as the value of an ML expression: memory_rel_write_bytearray *)
+let memory_rel_write_bytearray =
+  SPEC_ALL (SIMP_RULE [] (SPEC `[]` memory_rel_write_bytearray_lemma));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)

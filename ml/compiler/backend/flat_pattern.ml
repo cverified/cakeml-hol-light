@@ -64,10 +64,8 @@ let enc_num_to_name_def = new_definition
   `enc_num_to_name i = implode (enc_num_to_name_aux i [])`;;
 
 make_size "flat_pat";;
-make_size "pattern_semantics_pat";;
 let pat1_size = prove
- (`list_size flat_pat_size xs = LENGTH xs + SUM (MAP
-  pattern_semantics_pat_size xs)`,
+ (`list_size flat_pat_size xs = LENGTH xs + SUM (MAP flat_pat_size xs)`,
   CHEAT_TAC);;
 
 let MAPi_eq_MAP = prove
@@ -188,7 +186,7 @@ let decode_dtree_def,decode_dtree_ind = define_shaped_rec
    else SmartIf t (decode_guard t v guard') dec1 dec2`;;
 
 (* the termination relation that HOL4 gives is
-     MEASURE pattern_semantics_pat_size
+     MEASURE flat_pat_size
    which is not one that HOL Light takes here; the one
    below is what the port found for it *)
 (* HOL4 flat_patternScript.sml:173-177: the tactic that proves the
@@ -208,8 +206,7 @@ let encode_pat_def,encode_pat_ind = define_wf
    | flat_Pref p -> pattern_semantics_Ref (encode_pat p)`;;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (\x. SUM (MAP (pattern_semantics_pat_size o FST) (SND x)) + LENGTH
-       (SND x))
+     MEASURE (\x. SUM (MAP (flat_pat_size o FST) (SND x)) + LENGTH (SND x))
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 flat_patternScript.sml:197-202: the tactic that proves the

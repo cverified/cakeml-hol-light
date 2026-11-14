@@ -69,34 +69,34 @@ let StackHandlerArgs_F = prove
 
 let PushHandler_F = prove
  (`PushHandler F l1 l2 (k,f,f') =
-     reg_alloc_Seq (stack_StackAlloc 3)
-    (reg_alloc_Seq (word_Inst (asm_Const k (n2w 1)))
-    (reg_alloc_Seq (stack_StackStore k 0)
-    (reg_alloc_Seq (stack_LocValue k l1 l2)
-    (reg_alloc_Seq (stack_StackStore k 1)
-    (reg_alloc_Seq (word_Get k Handler)
-    (reg_alloc_Seq (stack_StackStore k 2)
-    (reg_alloc_Seq word_Skip
-    (reg_alloc_Seq (stack_StackGetSize k)
+     stack_Seq (stack_StackAlloc 3)
+    (stack_Seq (word_Inst (asm_Const k (n2w 1)))
+    (stack_Seq (stack_StackStore k 0)
+    (stack_Seq (stack_LocValue k l1 l2)
+    (stack_Seq (stack_StackStore k 1)
+    (stack_Seq (word_Get k Handler)
+    (stack_Seq (stack_StackStore k 2)
+    (stack_Seq word_Skip
+    (stack_Seq (stack_StackGetSize k)
          (word_Set Handler k)))))))))`,
   CHEAT_TAC);;
 
 let PopHandler_F = prove
  (`PopHandler F (k,f,f') prog =
-     reg_alloc_Seq (stack_StackLoad k 2)
-    (reg_alloc_Seq (word_Set Handler k)
-    (reg_alloc_Seq (stack_StackFree 3) prog))`,
+     stack_Seq (stack_StackLoad k 2)
+    (stack_Seq (word_Set Handler k)
+    (stack_Seq (stack_StackFree 3) prog))`,
   CHEAT_TAC);;
 
 let raise_stub_F = prove
  (`raise_stub F k =
-     reg_alloc_Seq (word_Get k Handler)
-    (reg_alloc_Seq (stack_StackSetSize k)
-    (reg_alloc_Seq word_Skip
-    (reg_alloc_Seq (stack_StackLoad k 2)
-    (reg_alloc_Seq (word_Set Handler k)
-    (reg_alloc_Seq (stack_StackLoad k 1)
-    (reg_alloc_Seq (stack_StackFree 3)
+     stack_Seq (word_Get k Handler)
+    (stack_Seq (stack_StackSetSize k)
+    (stack_Seq word_Skip
+    (stack_Seq (stack_StackLoad k 2)
+    (stack_Seq (word_Set Handler k)
+    (stack_Seq (stack_StackLoad k 1)
+    (stack_Seq (stack_StackFree 3)
          (word_Raise k)))))))`,
   CHEAT_TAC);;
 
@@ -104,7 +104,7 @@ let copy_ret_F = prove
  (`copy_ret F is_handle (k,f,f') vs kont =
      let n = num_stack_ret k vs in
      if n = 0 then kont
-     else reg_alloc_Seq (copy_ret_aux k (if is_handle then f + 3 else f) n)
+     else stack_Seq (copy_ret_aux k (if is_handle then f + 3 else f) n)
               (SeqStackFree n kont)`,
   CHEAT_TAC);;
 

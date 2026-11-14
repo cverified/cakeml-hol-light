@@ -153,6 +153,15 @@ class Db:
     # theorem as the value of another one (Theorem foo = bar) is
     # that binding in the port
     self.thmbind = {}
+    # the same, by the theory and the name, so that a source that
+    # names a theorem of another theory (listTheory.oEL_def) gets
+    # that theory's and not the one of whichever file bound the
+    # name last
+    self.thmbind_thy = {}
+    # the names that two theories of the port both bind: a source
+    # that names one of them without saying which theory it is of
+    # is one the port does not resolve
+    self.thmbind_many = set()
     self._ambflds = None
     self.ty_params = {}        # (thy,type) -> the type parameters
     self.monads = {'option': {'bind': 'OPTION_BIND',
@@ -1062,6 +1071,16 @@ def rule_names(body):
 # list does.
 
 DOUBLE = {'size'}
+
+
+def bind_thm(db, thy, name, bind):
+  """record the OCaml binding that the port gives a theorem or a
+     definition of a source, so that a block which names it (and
+     one of another file that does) finds it"""
+  if name in db.thmbind and db.thmbind[name] != bind:
+    db.thmbind_many.add(name)
+  db.thmbind[name] = bind
+  db.thmbind_thy[(thy, name)] = bind
 
 
 def short_thy(thy):

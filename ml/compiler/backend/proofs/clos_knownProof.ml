@@ -511,11 +511,9 @@ let evaluate_changed_globals_0 = prove
                s)))`,
   CHEAT_TAC);;
 
-(* HOL4 clos_knownProofScript.sml:1231-1232: a theorem that HOL4 states as
-   the value of an ML expression: evaluate_changed_globals *)
+let evaluate_changed_globals = CONJUNCT1 evaluate_changed_globals_0;;
 
-(* HOL4 clos_knownProofScript.sml:1234-1235: a theorem that HOL4 states as
-   the value of an ML expression: evaluate_app_changed_globals *)
+let evaluate_app_changed_globals = CONJUNCT2 evaluate_changed_globals_0;;
 
 let mk_Ticks_set_globals = prove
  (`!t tc n exp. closProps_set_globals (clos_ticksProof_mk_Ticks t tc n exp) =
@@ -930,8 +928,8 @@ let elist_globals_FLAT_APPEND_FOLDR = prove
   closProps_elist_globals (CONS xs ys)) EMPTY_BAG`,
   CHEAT_TAC);;
 
-(* HOL4 clos_knownProofScript.sml:2503-2504: a theorem that HOL4 states as
-   the value of an ML expression: elist_globals_FLAT_FOLDR *)
+let elist_globals_FLAT_FOLDR =
+  SIMP_RULE [] (INST [`[]`,`xs`] elist_globals_FLAT_APPEND_FOLDR);;
 
 let monotonic_unique_set_globals = prove
  (`oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND) (<)

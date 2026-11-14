@@ -492,10 +492,9 @@ add_simp fv_nil;;
 let fv1_def = new_definition
   `fv1 v e = fv v [e]`;;
 
-(* HOL4 closPropsScript.sml:499-500: a theorem that HOL4 states as the value
-   of an ML expression: fv1_intro *)
-(* HOL4 closPropsScript.sml:501-502: a theorem that HOL4 states as the value
-   of an ML expression: fv1_thm *)
+let fv1_intro = GSYM fv1_def;;
+add_simp fv1_intro;;
+let fv1_thm = SIMP_RULE [] fv_def;;
 
 let fv_cons = prove
  (`fv v (CONS x xs) <=> fv1 v x \/ fv v xs`,
@@ -1042,8 +1041,9 @@ let closProps_evaluate_add_to_clock = prove
            s'))`,
   CHEAT_TAC);;
 
-(* HOL4 closPropsScript.sml:1622-1626: a theorem that HOL4 states as the
-   value of an ML expression: evaluate_add_clock *)
+let closProps_evaluate_add_clock =
+  GEN_ALL (DISCH_ALL (GEN `extra` (UNDISCH (SPEC_ALL (SIMP_RULE [] (CONJUNCT1
+  closProps_evaluate_add_to_clock))))));;
 
 (* evaluate_add_clock_initial_state *)
 let closProps_evaluate_add_clock_initial_state = prove
@@ -2037,8 +2037,9 @@ let app_call_dests_def,app_call_dests_ind = assume_definition_rec
          if opt = SOME F then app_call_dests opt xs else dest INSERT
              app_call_dests opt xs)`;;
 
-(* HOL4 closPropsScript.sml:3636-3637: a theorem that HOL4 states as the
-   value of an ML expression: app_call_dests_def *)
+(* [compute,allow_rebind] *)
+let closProps_app_call_dests_def = app_call_dests_def;;
+add_simp closProps_app_call_dests_def;;
 
 (* HOL4 closPropsScript.sml:3639: the overload call_dests, which the port
    expands *)
@@ -2054,24 +2055,18 @@ let app_call_dests_cons = prove
          app_call_dests opt [x] UNION app_call_dests opt y`,
   CHEAT_TAC);;
 
-(* HOL4 closPropsScript.sml:3652-3653: a theorem that HOL4 states as the
-   value of an ML expression: any_dest_cons *)
-(* HOL4 closPropsScript.sml:3654-3655: a theorem that HOL4 states as the
-   value of an ML expression: call_dest_cons *)
-(* HOL4 closPropsScript.sml:3656-3657: a theorem that HOL4 states as the
-   value of an ML expression: app_dest_cons *)
+let any_dest_cons = INST [`NONE`,`opt`] app_call_dests_cons;;
+let call_dest_cons = INST [`SOME T`,`opt`] app_call_dests_cons;;
+let app_dest_cons = INST [`SOME F`,`opt`] app_call_dests_cons;;
 
 let app_call_dests_append = prove
  (`!l1 l2. app_call_dests opt (APPEND l1 l2) =
            app_call_dests opt l1 UNION app_call_dests opt l2`,
   CHEAT_TAC);;
 
-(* HOL4 closPropsScript.sml:3668-3669: a theorem that HOL4 states as the
-   value of an ML expression: any_dest_append *)
-(* HOL4 closPropsScript.sml:3670-3671: a theorem that HOL4 states as the
-   value of an ML expression: call_dest_append *)
-(* HOL4 closPropsScript.sml:3672-3673: a theorem that HOL4 states as the
-   value of an ML expression: app_dest_append *)
+let any_dest_append = INST [`NONE`,`opt`] app_call_dests_append;;
+let call_dest_append = INST [`SOME T`,`opt`] app_call_dests_append;;
+let app_dest_append = INST [`SOME F`,`opt`] app_call_dests_append;;
 
 let app_call_dests_map = prove
  (`!ls. app_call_dests opt (MAP f ls) =

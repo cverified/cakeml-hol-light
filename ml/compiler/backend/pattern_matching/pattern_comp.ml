@@ -87,8 +87,8 @@ let pmatchResult_case_NONE = prove
             | PTypeFailure -> K NONE NONE) = NONE`,
   CHEAT_TAC);;
 
-(* HOL4 pattern_compScript.sml:92: a theorem that HOL4 states as the value
-   of an ML expression: pmatchResult_case_NONE *)
+let pattern_comp_pmatchResult_case_NONE =
+  REWRITE_RULE [K_DEF] pmatchResult_case_NONE;;
 
 let is_const_row_lemma = prove
  (`(!t. ~(v = pattern_semantics_Term t [])) /\ is_const_row (p_1,p_2)

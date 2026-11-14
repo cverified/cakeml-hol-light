@@ -112,7 +112,7 @@ let word_cmp_not_NONE = prove
 add_simp word_cmp_not_NONE;;
 
 let word_cmp_negate_alt = prove
- (`asm_word_cmp (negate cmp) w1 w2 <=> ~(wordSem_word_cmp cmp w1 w2)`,
+ (`asm_word_cmp (negate cmp) w1 w2 <=> ~(asm_word_cmp cmp w1 w2)`,
   CHEAT_TAC);;
 add_simp word_cmp_negate_alt;;
 

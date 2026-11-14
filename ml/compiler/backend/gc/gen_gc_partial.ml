@@ -794,8 +794,8 @@ let f_old_ptrs_finite = prove
    MESON_TAC[heap_lookup_LESS]));;
 add_simp f_old_ptrs_finite;;
 
-(* HOL4 gen_gc_partialScript.sml:1315-1316: a theorem that HOL4 states as
-   the value of an ML expression: f_old_ptrs_finite_open *)
+let f_old_ptrs_finite_open = SIMP_RULE [f_old_ptrs_def] f_old_ptrs_finite;;
+add_simp f_old_ptrs_finite_open;;
 
 let new_f_def = new_definition
   `new_f f conf heap =
@@ -837,8 +837,8 @@ let isSomeDataElement_to_gen_heap_list = prove
   CHEAT_TAC);;
 add_simp isSomeDataElement_to_gen_heap_list;;
 
-(* HOL4 gen_gc_partialScript.sml:1371-1372: a theorem that HOL4 states as
-   the value of an ML expression: isSomeDataElement_to_gen_heap_element *)
+let isSomeDataElement_to_gen_heap_element =
+  SIMP_RULE [to_gen_heap_list_def] isSomeDataElement_to_gen_heap_list;;
 
 (* [local] *)
 let MEM_refs_to_roots_IMP_MEM = prove
@@ -880,8 +880,9 @@ let roots_ok_simulation = prove
      (MAP (to_gen_heap_element conf) heap_current)`,
   CHEAT_TAC);;
 
-(* HOL4 gen_gc_partialScript.sml:1459-1460: a theorem that HOL4 states as
-   the value of an ML expression: heap_length_to_gen_heap_element *)
+let heap_length_to_gen_heap_element =
+  SIMP_RULE [to_gen_heap_list_def] heap_length_to_gen_heap_list;;
+add_simp heap_length_to_gen_heap_element;;
 
 (* [local] *)
 let MEM_to_gen_heap_IMP_MEM = prove

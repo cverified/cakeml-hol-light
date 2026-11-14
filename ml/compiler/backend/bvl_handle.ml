@@ -351,8 +351,10 @@ let bvl_handle_compile_sing = prove
  (`bvl_handle_compile l n [x] = (dx,lx,s) ==> (?y. dx = [y])`,
   CHEAT_TAC);;
 
-(* HOL4 bvl_handleScript.sml:346-353: a theorem that HOL4 states as the
-   value of an ML expression: compile_seqs_compute *)
+let compile_seqs_compute =
+  end_itlist CONJ [SIMP_RULE [LET_DEF] (SPECL [`e`; `c`; `NONE`]
+  compile_seqs_def); SIMP_RULE [LET_DEF] (SPECL [`e`; `c`; `SOME y`]
+  compile_seqs_def)];;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

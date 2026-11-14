@@ -431,8 +431,9 @@ let check_ctor_types_def,check_ctor_types_ind = define_wf
                 tenvT tvs ts) (
           check_ctor_types l tenvT tvs ctors))`;;
 
-(* HOL4 inferScript.sml:475-476: a theorem that HOL4 states as the value of
-   an ML expression: check_ctor_types_expand *)
+let check_ctor_types_expand =
+  SIMP_RULE [ignore_bind_type_name_check_subst; FUN_EQ_THM; st_ex_return_def]
+  check_ctor_types_def;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -455,8 +456,9 @@ let check_ctors_def,check_ctors_ind = define_wf
           st_ex_ignore_bind (check_ctor_types l tenvT tvs ctors) (
           check_ctors l tenvT tds))))`;;
 
-(* HOL4 inferScript.sml:495-497: a theorem that HOL4 states as the value of
-   an ML expression: check_ctors_expand *)
+let check_ctors_expand =
+  SIMP_RULE [st_ex_ignore_bind_def] (SIMP_RULE [check_dups_eq_find_dup;
+  FUN_EQ_THM; st_ex_return_def] check_ctors_def);;
 
 let check_type_definition_def = new_definition
   `check_type_definition l tenvT tds =
@@ -468,8 +470,9 @@ let check_type_definition_def = new_definition
                   (MAP (FST o SND) tds)) (
        check_ctors l tenvT tds)`;;
 
-(* HOL4 inferScript.sml:510-511: a theorem that HOL4 states as the value of
-   an ML expression: check_type_definition_expand *)
+let check_type_definition_expand =
+  SIMP_RULE [check_dups_eq_find_dup; FUN_EQ_THM; st_ex_return_def]
+  check_type_definition_def;;
 
 (* the clauses in two quotations: ps is (pat list) and (_)list; s is char and
    mlstring; w is word8 and word64, which one quotation cannot typecheck *)
@@ -541,8 +544,11 @@ let option_case_rand = prove
    (match x with NONE -> y s | SOME a -> f a s)`,
   CHEAT_TAC);;
 
-(* HOL4 inferScript.sml:584-589: a theorem that HOL4 states as the value of
-   an ML expression: infer_p_expand *)
+let infer_p_expand =
+  SIMP_RULE [st_ex_bind_def; st_ex_ignore_bind_def; FUN_EQ_THM;
+  st_ex_return_def; failwith_def; option_case_rand] (SIMP_RULE
+  [st_ex_bind_pair] (SIMP_RULE [st_ex_bind_triple] (SIMP_RULE
+  [ignore_bind_guard; bind_guard; bind_type_name_check_subst] infer_p_def)));;
 
 let word_tc_def = define_cases
   `(word_tc ast_W8 = Tword8_num) /\
@@ -952,8 +958,12 @@ let FUN_EQ_THM_state = prove
  (`f = g <=> (!s. f s = g s)`,
   (REWRITE_TAC[FUN_EQ_THM]));;
 
-(* HOL4 inferScript.sml:1033-1038: a theorem that HOL4 states as the value
-   of an ML expression: infer_e_expand *)
+let infer_e_expand =
+  SIMP_RULE [st_ex_bind_def; st_ex_ignore_bind_def; FUN_EQ_THM_state;
+  st_ex_return_def; failwith_def; option_case_rand; COND_RATOR] (SIMP_RULE
+  [st_ex_bind_pair] (SIMP_RULE [st_ex_bind_triple] (SIMP_RULE
+  [check_dups_eq_find_dup; ignore_bind_guard; bind_type_name_check_subst]
+  infer_e_def)));;
 
 let extend_dec_ienv_def = new_definition
   `extend_dec_ienv ienv' ienv =
@@ -1061,8 +1071,12 @@ let infer_d_def,infer_d_ind = assume_definition_rec
           (extend_dec_ienv ienv' ienv) ds) (\ienv''.
         st_ex_return (extend_dec_ienv ienv'' ienv'))))`;;
 
-(* HOL4 inferScript.sml:1147-1152: a theorem that HOL4 states as the value
-   of an ML expression: infer_d_expand *)
+let infer_d_expand =
+  SIMP_RULE [st_ex_bind_def; st_ex_ignore_bind_def; FUN_EQ_THM;
+  st_ex_return_def; failwith_def; option_case_rand] (SIMP_RULE
+  [st_ex_bind_pair] (SIMP_RULE [st_ex_bind_triple] (SIMP_RULE
+  [check_dups_eq_find_dup; bind_guard; bind_type_name_check_subst]
+  infer_d_def)));;
 
 (* The starting Id should be greater than Tlist_num :: (Tbool_num :: prim_type_nums) *)
 let start_type_id_def = new_definition

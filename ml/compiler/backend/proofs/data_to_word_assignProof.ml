@@ -77,8 +77,15 @@ let _ = hide_overloads
 (* HOL4 data_to_word_assignProofScript.sml:55-60: a proof *)
 
 (* This list must list all auxiliary definitions used in assign_def *)
-(* HOL4 data_to_word_assignProofScript.sml:63-72: a theorem that HOL4 states
-   as the value of an ML expression: assign_def_extras *)
+let assign_def_extras =
+  end_itlist CONJ [LoadWord64_def; WriteWord64_def; BignumHalt_def;
+  LoadBignum_def; AnyArith_code_def; add_code_def; sub_code_def;
+  mul_code_def; div_code_def; mod_code_def; compare1_code_def;
+  compare_code_def; equal1_code_def; equal_code_def; LongDiv1_code_def;
+  LongDiv_code_def; ShiftVar_def; generated_bignum_stubs_eq; DivCode_def;
+  AddNumSize_def; AnyHeader_def; WriteWord64_on_32_def;
+  WriteWord32_on_32_def; AllocVar_def; SilentFFI_def; WordOp64_on_32_def;
+  WordShift64_on_32_def; make_ptr_bits_code_def];;
 
 let get_vars_SING = prove
  (`dataSem_get_vars args s = SOME [w] ==> (?y. args = [y])`,
@@ -1635,26 +1642,26 @@ let word_exp_insert = prove
 
 let word_cmp_Less_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (wordSem_word_cmp asm_Less (word_cmp_res i i') ((n2w 1):'a
-             word) <=> i < i')`,
+           (asm_word_cmp asm_Less (word_cmp_res i i') ((n2w 1):'a word)
+             <=> i < i')`,
   CHEAT_TAC);;
 
 let word_cmp_NotLess_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (wordSem_word_cmp asm_NotLess ((n2w 1):'a word) (word_cmp_res i
-             i') <=> (i <= i'))`,
+           (asm_word_cmp asm_NotLess ((n2w 1):'a word) (word_cmp_res i i')
+             <=> (i <= i'))`,
   CHEAT_TAC);;
 
 let word_cmp_not_NotLess_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (~(wordSem_word_cmp asm_NotLess ((n2w 1):'a word) (word_cmp_res
-             i i')) <=> (i' < i))`,
+           (~(asm_word_cmp asm_NotLess ((n2w 1):'a word) (word_cmp_res i
+             i')) <=> (i' < i))`,
   CHEAT_TAC);;
 
 let not_word_cmp_Less_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (~(wordSem_word_cmp asm_Less (word_cmp_res i i') ((n2w 1):'a
-             word)) <=> (i' <= i))`,
+           (~(asm_word_cmp asm_Less (word_cmp_res i i') ((n2w 1):'a word))
+             <=> (i' <= i))`,
   CHEAT_TAC);;
 
 let IMP_spt_eq = prove

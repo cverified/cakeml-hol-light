@@ -576,15 +576,8 @@ let bvl_const_compile_exp_def = new_definition
      match bvl_const_compile [] [x] with (CONS y _) -> y | _ -> bvl_Var 0
    // impossible`;;
 
-(* compile_exp_eq *)
-let bvl_const_compile_exp_eq = prove
- (`!x. bvl_const_compile_exp x = bvl_const_compile_sing [] x`,
-  (* HOL4 applies compile_eq to compile_exp_def: the compiled list
-     of one is a singleton, so the match of compile_exp reduces to
-     its head *)
-  (let ce = bvl_const_compile_exp_def in
-   GEN_TAC THEN REWRITE_TAC[ce; CONJUNCT1 compile_eq] THEN
-   MATCH_REDUCE_TAC THEN REWRITE_TAC[]));;
+let bvl_const_compile_exp_eq =
+  SIMP_RULE [compile_eq] bvl_const_compile_exp_def;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

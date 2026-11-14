@@ -318,7 +318,7 @@ let locs_to_string_def = new_definition
            let underline =
              mlstring_concat (APPEND (REPLICATE c (implode " ")) (REPLICATE
                ((stop - c) + 1) (implode [CHR 94]))) in
-             mlstring_concat [(implode "line "); mlint_toString (r + (&1));
+             mlstring_concat [(implode "line "); num_to_str (r + 1);
                (implode "\n\n");
                      line; (implode "\n");
                      underline; (implode "\n")])

@@ -26,15 +26,13 @@ let _ = do_list hide_constant ["Equal"; "Greater"; "Less"];;
 (* HOL4 mlvectorScript.sml:10-11: a theorem that HOL4 states as the value of
    an ML expression: vector_nchotomy *)
 
-(* HOL4 mlvectorScript.sml:13-14: a theorem that HOL4 states as the value of
-   an ML expression: sub_def *)
+let mlvector_sub_def = sub_def;;
 
 let sub_unsafe_def = define_general
   `// same as sub_def, but translator targets Vsub_unsafe
    sub_unsafe (Vector l) n = EL n l`;;
 
-(* HOL4 mlvectorScript.sml:20-21: a theorem that HOL4 states as the value of
-   an ML expression: length_def *)
+let mlvector_length_def = length_def;;
 
 let mlvector_tabulate_def = new_definition
   `mlvector_tabulate n f = Vector (list_of_seq f n)`;;

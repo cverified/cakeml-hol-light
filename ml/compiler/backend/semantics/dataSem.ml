@@ -183,10 +183,10 @@ let check_res_size_of = prove
  (`check_res refs (size_of lims vs refs seen) = size_of lims vs refs seen`,
   CHEAT_TAC);;
 
-(* HOL4 dataSemScript.sml:159: a theorem that HOL4 states as the value of an
-   ML expression: size_of_def *)
-(* HOL4 dataSemScript.sml:160: a theorem that HOL4 states as the value of an
-   ML expression: size_of_ind *)
+(* [allow_rebind,compute] *)
+let dataSem_size_of_def = REWRITE_RULE [check_res_size_of] size_of_def;;
+(* [allow_rebind] *)
+let size_of_ind = REWRITE_RULE [check_res_size_of] size_of_ind;;
 
 let extract_stack_def = define_cases
   `(extract_stack (dataSem_Env _ env) = sptree_toList env) /\
@@ -1814,11 +1814,13 @@ let dataSem_fix_clock_evaluate = prove
 
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
 
-(* HOL4 dataSemScript.sml:1583-1584: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_def *)
+(* [compute,allow_rebind] *)
+let dataSem_evaluate_def =
+  REWRITE_RULE [dataSem_fix_clock_evaluate] dataSem_evaluate_def;;
 
-(* HOL4 dataSemScript.sml:1586-1587: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_ind *)
+(* [allow_rebind] *)
+let dataSem_evaluate_ind =
+  REWRITE_RULE [dataSem_fix_clock_evaluate] dataSem_evaluate_ind;;
 
 (* observational semantics *)
 

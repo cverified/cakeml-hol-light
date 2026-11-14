@@ -93,10 +93,12 @@ let raise_stub_location_def = new_definition
 let word_store_consts_stub_location_def = new_definition
   `word_store_consts_stub_location = word_num_stubs - 1`;;
 
-(* HOL4 wordLangScript.sml:77: a theorem that HOL4 states as the value of an
-   ML expression: raise_stub_location_eq *)
-(* HOL4 wordLangScript.sml:78: a theorem that HOL4 states as the value of an
-   ML expression: store_consts_stub_location_eq *)
+let raise_stub_location_eq =
+  CAKE_EVAL [raise_stub_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `raise_stub_location`;;
+let word_store_consts_stub_location_eq =
+  CAKE_EVAL [word_store_consts_stub_location_def; word_num_stubs_def;
+  stack_num_stubs_def] `word_store_consts_stub_location`;;
 
 (* HOL4 wordLangScript.sml:80-82: code that the source has in a comment *)
 

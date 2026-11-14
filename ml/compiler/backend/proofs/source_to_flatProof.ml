@@ -323,8 +323,9 @@ let env_rel_one = prove
    (?v. xs = [(a,v)] /\ source_to_flatProof_v_rel genv b v)`,
   CHEAT_TAC);;
 
-(* HOL4 source_to_flatProofScript.sml:434-437: a theorem that HOL4 states as
-   the value of an ML expression: env_rel_bind_one *)
+let env_rel_bind_one =
+  SIMP_RULE [env_rel_one] (GEN_ALL (SPECL [`genv`; `nsBind a b nsEmpty`;
+  `env2`; `[(c,d)]`] source_to_flatProof_env_rel_append));;
 
 (* env_rel_el[local] *)
 let source_to_flatProof_env_rel_el = prove

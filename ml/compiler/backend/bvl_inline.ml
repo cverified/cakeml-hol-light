@@ -152,8 +152,7 @@ let is_small_sing = prove
 let is_small_def = new_definition
   `is_small limit' e = ~(is_small_aux limit' [e] = 0)`;;
 
-(* HOL4 bvl_inlineScript.sml:164: a theorem that HOL4 states as the value of
-   an ML expression: is_small_eq *)
+let is_small_eq = SIMP_RULE [is_small_sing] is_small_def;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -207,8 +206,7 @@ let must_inline_def = new_definition
   `must_inline name limit' e =
      if is_small limit' e then ~(bvl_inline_is_rec name [e]) else F`;;
 
-(* HOL4 bvl_inlineScript.sml:227: a theorem that HOL4 states as the value of
-   an ML expression: must_inline_eq *)
+let must_inline_eq = SIMP_RULE [is_rec_sing] must_inline_def;;
 
 let tick_inline_all_def,tick_inline_all_ind = define_rec
   `(tick_inline_all limit' cs [] aux = (cs,REVERSE aux)) /\
@@ -218,8 +216,7 @@ let tick_inline_all_def,tick_inline_all_ind = define_rec
              (arity,e2) cs else cs) in
            tick_inline_all limit' cs2 xs (CONS (n,arity,e2) aux))`;;
 
-(* HOL4 bvl_inlineScript.sml:237-238: a theorem that HOL4 states as the
-   value of an ML expression: tick_inline_all_eq *)
+let tick_inline_all_eq = SIMP_RULE [tick_inline_sing] tick_inline_all_def;;
 
 let tick_compile_prog_def = new_definition
   `tick_compile_prog limit' cs prog = tick_inline_all limit' cs prog []`;;
@@ -384,8 +381,7 @@ let let_op_sing_def = new_definition
      match bvl_inline_let_op [x] with (CONS y ys) -> y
      | _ -> bvl_Op (clos_IntOp (clos_Const (&0))) []`;;
 
-(* HOL4 bvl_inlineScript.sml:414: a theorem that HOL4 states as the value of
-   an ML expression: let_op_sing_eq *)
+let let_op_sing_eq = SIMP_RULE [let_op_one] let_op_sing_def;;
 
 let bvl_inline_optimise_def = new_definition
   `bvl_inline_optimise split_seq cut_size (name,arity,exp) =
@@ -393,8 +389,7 @@ let bvl_inline_optimise_def = new_definition
                    (bvl_inline_let_op_sing (HD (bvl_inline_remove_ticks
                      [exp]))))`;;
 
-(* HOL4 bvl_inlineScript.sml:422: a theorem that HOL4 states as the value of
-   an ML expression: optimise_eq *)
+let optimise_eq = SIMP_RULE [remove_ticks_sing] bvl_inline_optimise_def;;
 
 let bvl_inline_compile_inc_def = new_definition
   `bvl_inline_compile_inc limit' split_seq cut_size cs prog =

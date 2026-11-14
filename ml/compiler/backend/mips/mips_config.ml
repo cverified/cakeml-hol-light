@@ -43,8 +43,14 @@ let mips_names_def = new_definition
       sptree_insert 24 0 o
       sptree_insert 31 1) LN:num spt)`;;
 
-(* HOL4 mips_configScript.sml:35-36: a theorem that HOL4 states as the value
-   of an ML expression: mips_names_def *)
+(* [compute,allow_rebind] *)
+let mips_config_mips_names_def =
+  CONV_RULE (RAND_CONV (CAKE_EVAL [can_def; asm_def; the_def; upd_pc_def;
+  inst_def; jump_def; jump_to_offset_def; word_cmp_def; read_reg_def;
+  reg_imm_def; upd_reg_def; assert_def; aligned_def; align_def;
+  arith_upd_def; mem_op_def; fp_upd_def; read_fp_reg_def; upd_fp_reg_def;
+  mem_load_def; mem_store_def; addr_def; binop_upd_def;
+  asmSem_word_shift_def])) mips_names_def;;
 
 (* HOL4 mips_configScript.sml:38-44: the ML values that the definitions
    below antiquote *)

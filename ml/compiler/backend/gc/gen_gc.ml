@@ -585,8 +585,9 @@ let gen_gc_LESS_IMP_heap_lookup = prove
   heap_lookup j xs)`,
   CHEAT_TAC);;
 
-(* HOL4 gen_gcScript.sml:1619-1623: a theorem that HOL4 states as the value
-   of an ML expression: heap_lookup_IMP_heap_addresses *)
+let heap_lookup_IMP_heap_addresses =
+  GEN_ALL (SIMP_RULE [] (SPECL [`xs`; `0`]
+  heap_lookup_IMP_heap_addresses_GEN));;
 
 (* [local] *)
 let heap_lookup_AND_APPEND_IMP = prove
@@ -704,7 +705,8 @@ let gc_move_refs_ok = prove
  (`!conf s. gc_state_ok (gc_move_refs conf s) ==> gc_state_ok s`,
   CHEAT_TAC);;
 
-let gc_move_loop_ok = prove
+(* gc_move_loop_ok *)
+let gen_gc_gc_move_loop_ok = prove
  (`!conf s c. gc_state_ok (gen_gc_gc_move_loop conf s c) ==> gc_state_ok s`,
   CHEAT_TAC);;
 

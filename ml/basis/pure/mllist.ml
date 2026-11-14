@@ -316,8 +316,7 @@ let LENGTH_AUX_def,LENGTH_AUX_ind = define_rec
 (* HOL4 mllistScript.sml:572-575: a theorem that HOL4 states as the value of
    an ML expression: LENGTH_AUX_THM *)
 
-(* HOL4 mllistScript.sml:577-578: a theorem that HOL4 states as the value of
-   an ML expression: list_compare_def *)
+let mllist_list_compare_def = list_compare_def;;
 
 (* tail-recursive MAP *)
 

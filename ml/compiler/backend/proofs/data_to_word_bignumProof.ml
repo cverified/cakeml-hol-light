@@ -137,7 +137,7 @@ let SND_i2mw_NIL = prove
   CHEAT_TAC);;
 
 let word_cmp_Test_1 = prove
- (`wordSem_word_cmp asm_Test w (n2w 1) <=> ~(word_bit 0 w)`,
+ (`asm_word_cmp asm_Test w (n2w 1) <=> ~(word_bit 0 w)`,
   CHEAT_TAC);;
 
 let word_bit_if_1_0 = prove

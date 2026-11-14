@@ -151,10 +151,12 @@ let gc_stub_location_def = new_definition
   `gc_stub_location = stack_num_stubs - 1`;;
 let store_consts_stub_location_def = new_definition
   `stack_store_consts_stub_location = gc_stub_location - 1`;;
-(* HOL4 stackLangScript.sml:98-99: a theorem that HOL4 states as the value
-   of an ML expression: gc_stub_location_eq *)
-(* HOL4 stackLangScript.sml:100-101: a theorem that HOL4 states as the value
-   of an ML expression: store_consts_stub_location_eq *)
+let gc_stub_location_eq =
+  CONV_RULE (RAND_CONV (CAKE_EVAL [stack_num_stubs_def]))
+  gc_stub_location_def;;
+let store_consts_stub_location_eq =
+  CONV_RULE (RAND_CONV (CAKE_EVAL [gc_stub_location_def;
+  stack_num_stubs_def])) store_consts_stub_location_def;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -134,7 +134,8 @@ let clos_letop_let_op_sing_def,clos_letop_let_op_sing_ind =
    `clos_letop_let_op_sing (clos_Fn t loc_opt vs num_args x1) = (clos_Fn t
     loc_opt vs num_args ((clos_letop_let_op_sing (x1))))`];;
 
-let let_op_sing_eq = prove
+(* let_op_sing_eq *)
+let clos_letop_let_op_sing_eq = prove
  (`(!e. clos_letop_let_op [e] = [clos_letop_let_op_sing e]) /\
    (!es. clos_letop_let_op es = clos_letop_let_op_list es) /\
    (!fns.

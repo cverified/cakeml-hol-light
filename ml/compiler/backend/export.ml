@@ -166,8 +166,7 @@ let byte_to_string_def = new_definition
 let all_bytes_def = new_definition
   `all_bytes = Vector (list_of_seq (\n. byte_to_string (n2w n)) 256)`;;
 
-(* HOL4 exportScript.sml:155-156: a theorem that HOL4 states as the value of
-   an ML expression: all_bytes_eq *)
+let all_bytes_eq = CAKE_EVAL [all_bytes_def; byte_to_string_def] `all_bytes`;;
 
 let byte_to_string_eq = prove
  (`!b. byte_to_string b = sub all_bytes (w2n b)`,

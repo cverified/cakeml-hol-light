@@ -385,6 +385,13 @@ SIZE_OF = {
   # the prog_size of the relation of dataSem's evaluate is the one
   # of dataLang (wordLang has a prog as well)
   'dataSem': {'prog_size': 'dataLang'},
+  # the pat_size that stands beside a pat1_size is the one of the
+  # same language, which the qualified pat1_size says and the
+  # bare pat_size does not (pattern_semantics has a pat as well,
+  # and it is the last theory of their scope that has one)
+  'source_to_flat': {'pat_size': 'ast'},
+  'flat_pattern': {'pat_size': 'flatLang'},
+  'presLang': {'pat_size': 'flatLang'},
 }
 
 # the constructors of a wordLang program and of the expressions
@@ -427,6 +434,9 @@ CON_BODY = {
   # call_graph matches on a wordLang program and builds a
   # call_tree, and both have Call
   ('word_depth', 'call_graph_def'): {'Call': 'word_depth'},
+  # the Skip that data_simp's simp takes is dataLang's, and
+  # word_bignum, wordLang and stackLang have one as well
+  ('backend_passes', 'to_data_all_def'): {'Skip': 'dataLang'},
   # word_cseInst matches on an instruction of asm and builds a
   # program of wordLang, and both have Inst
   ('word_cse', 'word_cseInst_def'): {'Inst': 'wordLang'},
@@ -521,8 +531,12 @@ FIELD_VAR_DEF = {
   # two records and its next and its envs of three
   ('source_to_flat', 'compile_prog_def'):
     {'gen': 'environment_generation_store'},
+  # and its c is the config, which nothing in this one says: its
+  # next and its envs are fields of the generation store as well,
+  # and the mod_env that settles it in compile_prog is not here
   ('source_to_flat', 'inc_compile_prog_def'):
-    {'gen': 'environment_generation_store'},
+    {'gen': 'environment_generation_store',
+     'c': 'source_to_flat_config'},
   # the state that bvl_to_bvi's state_rel relates to a state of
   # bviSem is one of bvlSem, which its globals say and the
   # statement does not
@@ -1069,6 +1083,33 @@ THM_NAMES = {
 # source.  PENDING.md says which of the 454 these are and why the
 # rest are still pointers; the proof is a section of the file's
 # proof store, under the name of the theorem.
+# the theorems that HOL4 states as the value of an ML expression
+# whose HOL Light counterpart the port writes but does not keep:
+# it was run and it did not go through, and the reason is here.
+# A rule that rewrites does not compute the same theorem in the
+# two systems, because the simpsets differ, so the ones that go
+# are the ones whose value HOL Light cannot reach.
+NO_DERIVE = {
+}
+
+# THM_MAP: the HOL Light name of a theorem that HOL4 names in an
+# expression which computes a theorem, where the two systems have
+# the theorem under different names.  A name that the two share is
+# not here: tools/hl-idents.txt says which those are.
+THM_MAP = {
+  'LET_THM': 'LET_DEF',
+  'FORALL_PROD': 'FORALL_PAIR_THM',
+  'EXISTS_PROD': 'EXISTS_PAIR_THM',
+  'pairTheory.FORALL_PROD': 'FORALL_PAIR_THM',
+  'pairTheory.EXISTS_PROD': 'EXISTS_PAIR_THM',
+  'combinTheory.o_DEF': 'o_DEF',
+  'combinTheory.K_THM': 'K_DEF',
+  'o_THM': 'o_THM',
+  'K_THM': 'K_DEF',
+  'ETA_THM': 'ETA_AX',
+  'ETA_AX': 'ETA_AX',
+}
+
 THM_VALUE = {
   # compile_exp_def |> SRULE [compile_sing]: the compiled singleton
   # is a singleton, so the match of compile_exp reduces to its head
@@ -1428,19 +1469,6 @@ WAY = {
 
 
 MATCH_CLAUSES = {
-  # every clause of this says the arguments of a constructor as
-  # a0, a1, a2, a3, so that a name is a dozen types over the
-  # definition and one quotation per clause is what it would take.
-  # As a match per member the arms bind their own variables and
-  # one quotation does
-  ('closSem', 'exp_alt_size_def'):
-    (['exp_alt_size', 'exp1_alt_size', 'exp2_alt_size',
-      'exp3_alt_size'], """
-(* a match per member of the family: every clause of the source
-   says the arguments of a constructor as a0, a1, a2 and a3, which
-   is a dozen types for one name over the definition, and the arms
-   of a match bind their own *)
-"""),
   # the mutual vb_eq_size/vb_eq_size_list of
   # data_to_word_memoryProof, which is the same shape as the do_eq
   # above: the last clause of each catches what the earlier ones
@@ -1989,6 +2017,37 @@ CON_OF = {
   # expression of wordLang, which the pull_exp below it then could
   # not typecheck at all
   ('word_inst', 'op_consts_def'): {'Const': 'wordLang'},
+  # the memory operation that a ShareInst and a Mem take is asm's
+  # and takes no arguments, where the Load and the Store of a
+  # wordLang expression and of a wordLang program take some
+  ('word_inst', 'inst_select_pmatch'):
+    {'Load': {0: 'asm'}, 'Store': {0: 'asm'},
+     'Load8': {0: 'asm'}, 'Store8': {0: 'asm'}},
+  # the stubs that these four build are stackLang programs, and
+  # reg_alloc has a Seq of clash trees
+  ('word_to_stackProof', 'PushHandler_F'): {'Seq': 'stackLang'},
+  ('word_to_stackProof', 'PopHandler_F'): {'Seq': 'stackLang'},
+  ('word_to_stackProof', 'copy_ret_F'): {'Seq': 'stackLang'},
+  ('word_to_stackProof', 'raise_stub_F'): {'Seq': 'stackLang'},
+  # the vector that this one is about is mlvector's, and llist
+  # has a fromList as well
+  ('mlvector', 'toList_fromList'): {'fromList': 'mlvector'},
+  # the word_cmp of these is asm's, which compares two words,
+  # and not wordSem's, which compares two word_locs
+  ('data_to_word_assignProof', 'word_cmp_Less_word_cmp_res'):
+    {'word_cmp': 'asm'},
+  ('data_to_word_assignProof', 'word_cmp_NotLess_word_cmp_res'):
+    {'word_cmp': 'asm'},
+  ('data_to_word_assignProof', 'word_cmp_not_NotLess_word_cmp_res'):
+    {'word_cmp': 'asm'},
+  ('data_to_word_assignProof', 'not_word_cmp_Less_word_cmp_res'):
+    {'word_cmp': 'asm'},
+  ('data_to_word_bignumProof', 'word_cmp_Test_1'): {'word_cmp': 'asm'},
+  ('stack_to_labProof', 'word_cmp_negate_alt'): {'word_cmp': 'asm'},
+  # the Equal that the If of a wordLang program takes is the
+  # comparison of asm, and an ordering has an Equal as well
+  ('word_cse', 'test_if_merge'): {'Equal': 'asm'},
+  ('word_cse', 'test_if_merge_clobber'): {'Equal': 'asm'},
   ('word_simp', 'drop_consts_def'): {'*': 'wordLang'},
   ('word_cse', 'seqs_def'): {'*': 'wordLang'},
   # the Shift and the Div that this canonicalises are asm's
@@ -12157,6 +12216,10 @@ CON_FILE = {
                   'Or': 'asm', 'Xor': 'asm'},
   # the reference cells of bvlSem are its own
   'bvlSem': {'ByteArray': 'bvlSem', 'ValueArray': 'bvlSem'},
+  # the Var of this proof is bvl's where it takes a number and
+  # closLang's where it takes a trace and a number; db_vars has a
+  # Var as well and this file never means that one
+  'clos_to_bvlProof': {'Var': {0: 'bvl', 1: 'bvl', 2: 'closLang'}},
   # the word operations that data_to_word builds are the binops
   # of asm, which is what wordLang's Op takes
   'data_to_word': {'Xor': 'asm', 'And': 'asm', 'Or': 'asm'},
@@ -12216,6 +12279,9 @@ DEF_NAMES = {
   ('presLang', 'stack_prog_to_display_def'):
     {'toString': 'num_to_str'},
   ('jsonLang', 'encode_str_def'): {'toString': 'num_to_str'},
+  # the line a location is on is a number, so its toString is
+  # num_to_str
+  ('compiler', 'locs_to_string_def'): {'toString': 'num_to_str'},
 }
 
 

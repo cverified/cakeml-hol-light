@@ -24,6 +24,7 @@ needs "compiler/backend/word_simp.ml";;
 needs "compiler/backend/word_to_word.ml";;
 needs "compiler/backend/word_unreach.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/sptree.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "wordConvsProof"
@@ -869,8 +870,9 @@ let remove_dead_conventions = prove
      (wordConvs_extract_labels p = wordConvs_extract_labels comp')`,
   CHEAT_TAC);;
 
-(* HOL4 wordConvsProofScript.sml:1563-1565: a theorem that HOL4 states as
-   the value of an ML expression: remove_dead_prog_conventions *)
+let remove_dead_prog_conventions =
+  SIMP_RULE [LET_DEF; FORALL_AND_THM; GSYM remove_dead_prog_def] (SPEC_ALL
+  (SPEC `[]` (SPEC `[]` (SPEC `LN` (SPEC `p` remove_dead_conventions)))));;
 
 (* [local] *)
 let word_get_code_labels_remove_dead = prove
