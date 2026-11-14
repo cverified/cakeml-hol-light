@@ -12123,18 +12123,20 @@ DEF_NAMES = {
   ('displayLang', 'trace_to_json_def'): {'toString': 'num_to_str'},
   ('presLang', 'attach_name_def'): {'toString': 'num_to_str'},
   ('presLang', 'num_set_to_display_def'): {'toString': 'num_to_str'},
-  # the toString of the length of a list is num_to_str, which the
-  # port writes as toString of the injection in some places and
-  # left without one in two
+  # the toString of the length of a list is of the injection of it
+  # in most places, and so mlint's; where the source leaves the
+  # injection out it is num_to_str
   ('infer', 'type_name_check_sub_def'): {'toString': 'num_to_str'},
-  ('infer', 'type_name_check_subst_def'):
-    {'toString': 'num_to_str'},
   ('export', 'word_to_string_def'): {'toString': 'num_to_str'},
   # the label is the concat of a list of mlstrings and the
   # toString of a number
   ('export', 'get_sym_label_def'):
     {'concat': 'mlstring_concat', 'toString': 'num_to_str'},
   ('presLang', 'num_to_display_def'): {'toString': 'num_to_str'},
+  # the stack offsets and the registers a stackLang program names
+  # are numbers, so their toString is num_to_str
+  ('presLang', 'stack_prog_to_display_def'):
+    {'toString': 'num_to_str'},
   ('jsonLang', 'encode_str_def'): {'toString': 'num_to_str'},
 }
 
