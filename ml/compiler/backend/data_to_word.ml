@@ -129,13 +129,13 @@ let data_to_word_list_Seq_def,data_to_word_list_Seq_ind = define_wf
   `MEASURE (\x0. list_size (wordLang_prog_size (\x. 0)) x0)`
   [`(data_to_word_list_Seq [] = wordLang_Skip) /\
    (data_to_word_list_Seq [x] = x) /\
-   (data_to_word_list_Seq (x :: y :: xs) = Seq x
-     (data_to_word_list_Seq (y :: xs)))`];;
+   (data_to_word_list_Seq (CONS x (CONS y xs)) = Seq x
+     (data_to_word_list_Seq (CONS y xs)))`];;
 hol4_overload "list_Seq" "data_to_word_list_Seq";;
 
 let StoreEach_def,StoreEach_ind = define_rec
   [`StoreEach v [] (offset:'a word) = wordLang_Skip`;
-   `StoreEach v (x :: xs) (offset:'a word) =
+   `StoreEach v (CONS x xs) (offset:'a word) =
          wordLang_Seq (wordLang_Store (wordLang_Op asm_Add
            [wordLang_Var v; wordLang_Const offset]) x)
              (StoreEach v xs (offset + bytes_in_word))`];;
@@ -1254,7 +1254,7 @@ let smallnum_def = new_definition
 let MemEqList_def,MemEqList_ind = define_rec
   [`MemEqList a [] = (Assign 1 (Const (n2w 18:'a word)):'a
   wordLang_prog)`;
-   `MemEqList a (w :: ws) =
+   `MemEqList a (CONS w ws) =
          ((Seq (Assign 5 (wordLang_Load (Op asm_Add [Var 3; Const
            a])))
              (If Equal 5 (Imm w) (MemEqList (a + bytes_in_word)
@@ -1262,7 +1262,7 @@ let MemEqList_def,MemEqList_ind = define_rec
 
 let get_gen_size_def = define_cases
   [`get_gen_size [] = bytes_in_word * ((--(n2w 1)):'a word)`;
-   `get_gen_size (x :: xs) =
+   `get_gen_size (CONS x xs) =
          (if w2n (bytes_in_word:'a word) * x < dimword (:'a)
            then bytes_in_word * n2w x else bytes_in_word * (--(n2w
            1)))`];;
@@ -1447,8 +1447,8 @@ let assign_Cons_def = new_definition
                         -> (list_Seq
                          [Assign 1 (wordLang_Lookup NextFree);
                           Assign 3 (wordLang_Const header);
-                          StoreEach 1 (3 :: MAP adjust_var args) (n2w
-                            0);
+                          StoreEach 1 (CONS 3 (MAP adjust_var args))
+                            (n2w 0);
                           Assign (adjust_var dest)
                             (Op asm_Or [(\sh e n. Shift sh e
                               (wordLang_Const (n2w n))) Lsl (Op asm_Sub
@@ -1486,9 +1486,9 @@ let assign_ConfigGC_def = new_definition
 
 let getWords_def,getWords_ind = define_rec
   [`getWords [] aux = (REVERSE aux,[])`;
-   `getWords (c :: cs) aux =
-      (match c with (b,wordLang_Word w) -> getWords cs ((b,w)
-        :: aux) | _11 -> (REVERSE aux,c :: cs))`];;
+   `getWords (CONS c cs) aux =
+      (match c with (b,wordLang_Word w) -> getWords cs (CONS
+        (b,w) aux) | _11 -> (REVERSE aux,CONS c cs))`];;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)
@@ -1504,14 +1504,15 @@ let StoreAnyConsts_def,StoreAnyConsts_ind = define_guess_cheat
           (match SND v with Loc n _15 -> LocValue r1 n |
             wordLang_Word w -> Assign r1 (if FST v then Op asm_Add
             [Const w; Var r3] else (Const w)))`;
-   `StoreAnyConsts r1 r2 r3 (v :: vs) w =
+   `StoreAnyConsts r1 r2 r3 (CONS v vs) w =
       (match ((SND v):'a word_loc) with Loc n _16 -> list_Seq
         [LocValue r1 n;
                              Store (Var r2) r1;
                              Assign r2 (Op asm_Add [Var r2; Const
                                bytes_in_word]);
                              StoreAnyConsts r1 r2 r3 vs w] | _17 ->
-                               (let (ws,vs1) = getWords (v :: vs) [] in
+                               (let (ws,vs1) = getWords (CONS v vs) []
+                               in
                Seq (StoreConsts r2 r3 r2 r3 ws)
                    (StoreAnyConsts r1 r2 r3 vs1 w)))`];;
 
@@ -1555,10 +1556,10 @@ let make_ptr_def = new_definition
 
 let write_bytes_def,write_bytes_ind = define_rec
   [`write_bytes bs [] be' = []`;
-   `write_bytes bs ((w:'a word) :: ws) be' =
+   `write_bytes bs (CONS (w:'a word) ws) be' =
          (let k = dimindex (:'a) DIV 8 in
-           bytes_to_word k (n2w 0) bs w be' :: write_bytes
-             (DROP k bs) ws be')`];;
+              CONS (bytes_to_word k (n2w 0) bs w be')
+                (write_bytes (DROP k bs) ws be'))`];;
 
 let small_int_def = new_definition
   `small_int (:'a) i <=>
@@ -1572,8 +1573,8 @@ let part_to_words_def = define_cases
               match encode_header c (if sign then 7 else 3) (LENGTH
                 ws) with NONE -> NONE | SOME hd -> SOME ((T,(make_ptr c
                 offset ((n2w 0):'a word) (LENGTH ws))),
-                              MAP (\w. (F,wordLang_Word w)) (hd
-                                :: ws)))`;
+                              MAP (\w. (F,wordLang_Word w)) (CONS
+                                hd ws)))`;
    `part_to_words c m (closLang_Con t ns) (offset:'a word) =
       (if NULL ns then
          if t < dimword (:'a) DIV 16 then SOME ((F,wordLang_Word
@@ -1583,17 +1584,16 @@ let part_to_words_def = define_cases
                               (offset << (shift_length c -
                                 backend_common_word_shift (:'a)) +
                               (ptr_bits c t (LENGTH ns) || (n2w
-                                1)))),
-                            (F,wordLang_Word hd) :: (MAP
-                              (lookup_mem m) ns)))`;
+                                1)))),CONS (F,wordLang_Word hd) (MAP
+                                (lookup_mem m) ns)))`;
    `part_to_words c m (W64 w:const_part) (offset:'a word) =
       (let ws = (if dimindex (:'a) < 64 then [((63 >< 32) w); ((31
         >< 0) w)] else [((63 >< 0) w):'a word]) in
          match encode_header c 3 (LENGTH ws) with NONE -> NONE |
            SOME hd -> SOME ((T,(make_ptr c offset ((n2w 0):'a word)
            (LENGTH ws))),
-                            MAP (\w. (F,wordLang_Word w)) (hd ::
-                              ws)))`;
+                            MAP (\w. (F,wordLang_Word w)) (CONS
+                              hd ws)))`;
    `part_to_words c m (closLang_Str s:const_part) (offset:'a word) =
       (let bytes = MAP (n2w o ORD) (explode s) in
        let n = LENGTH bytes in
@@ -1604,18 +1604,18 @@ let part_to_words_def = define_cases
          if k < 2 EXP (dimindex (:'a) - 4) /\ k < 2 EXP
            data_to_word_config_len_size c then SOME ((T,(make_ptr c
            offset ((n2w 0):'a word) k)),
-                    MAP (\w. (F,wordLang_Word w)) (hd :: ws))
+                    MAP (\w. (F,wordLang_Word w)) (CONS hd ws))
                       else NONE)`];;
 
 let parts_to_words_def,parts_to_words_ind = define_rec
   [`parts_to_words c m i [] (off:'a word) = SOME (lookup_mem m (i -
   (1:num)),[])`;
-   `parts_to_words c m i (x :: parts') (off:'a word) =
+   `parts_to_words c m i (CONS x parts') (off:'a word) =
       (match part_to_words c m x off with NONE -> NONE | SOME (w,xs)
         ->
         (match parts_to_words c (insert i w m) (i + 1) parts'
                  (off + bytes_in_word * n2w (LENGTH xs)) with
-                   NONE -> NONE | SOME (r,ys) -> SOME (r,xs ++
+                   NONE -> NONE | SOME (r,ys) -> SOME (r,APPEND xs
                    ys)))`];;
 
 let const_parts_to_words_def = new_definition
@@ -1645,7 +1645,8 @@ let assign_Build_def = new_definition
 let assign_ConsExtend_def = new_definition
   `assign_ConsExtend (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) tag args =
-         ((match args with (old :: start' :: len :: tot :: rest) ->
+         ((match args with (CONS old (CONS start' (CONS len (CONS tot
+           rest)))) ->
            (match encode_header c (4 * tag) 0 with
               NONE -> (GiveUp,l) | SOME header ->
                (let limit' = MIN (2 EXP data_to_word_config_len_size
@@ -1664,7 +1665,8 @@ let assign_ConsExtend_def = new_definition
                     Assign 7 ((\sh e n. Shift sh e (wordLang_Const
                       (n2w n))) Lsr (Var (adjust_var tot)) 2);
                     Assign 9 (wordLang_Const (n2w tag));
-                    StoreEach 1 (5 :: MAP adjust_var rest) (n2w 0);
+                    StoreEach 1 (CONS 5 (MAP adjust_var rest)) (n2w
+                      0);
                     Make_ptr_bits_code c 9 7 3;
                     Set NextFree (Op asm_Add [Var 1; Const
                       bytes_in_word;
@@ -1704,7 +1706,8 @@ let assign_Ref_def = new_definition
                         1))]);
                    Set EndOfHeap (Var 1);
                    Assign 3 (wordLang_Const header);
-                   StoreEach 1 (3 :: MAP adjust_var args) (n2w 0);
+                   StoreEach 1 (CONS 3 (MAP adjust_var args)) (n2w
+                     0);
                    Assign (adjust_var dest)
                      (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
                        (n2w n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
@@ -3031,8 +3034,8 @@ let comp_def,comp_ind = define_wf
                    data_to_word_assign c secn l dest op args names |
                    Force ret loc v -> force_thunk c secn l ret loc v |
                    Call ret target args handler ->
-         (match ret with NONE -> (Call NONE target (0 :: MAP
-           adjust_var args) NONE,l) | SOME (ns,names) ->
+         (match ret with NONE -> (Call NONE target (CONS 0 (MAP
+           adjust_var args)) NONE,l) | SOME (ns,names) ->
              (let ret = SOME (MAP adjust_var ns,adjust_sets
                names,Skip,secn,l) in
                match handler with NONE -> (Call ret target (MAP
@@ -3174,7 +3177,7 @@ let ByteCopyNew_code_def = new_definition
   `ByteCopyNew_code c = (Skip:'a wordLang_prog)`;;
 
 let data_to_word_stubs_def = new_definition
-  `data_to_word_stubs (:'a) data_conf = [
+  `data_to_word_stubs (:'a) data_conf = APPEND [
      (FromList_location,4,((FromList_code data_conf):'a
        wordLang_prog));
      (FromList1_location,6,FromList1_code data_conf);
@@ -3209,12 +3212,12 @@ let data_to_word_stubs_def = new_definition
      (ByteCopyAdd_location,5,ByteCopyAdd_code);
      (ByteCopySub_location,5,ByteCopySub_code);
      (ByteCopyNew_location,4,ByteCopyNew_code data_conf);
-     (Dummy_location,0,Skip)] ++ generated_bignum_stubs
-       Bignum_location`;;
+     (Dummy_location,0,Skip)] (generated_bignum_stubs
+       Bignum_location)`;;
 hol4_overload "stubs" "data_to_word_stubs";;
 
 let stub_names_def = new_definition
-  `data_to_word_stub_names one = [
+  `data_to_word_stub_names one = APPEND [
      (FromList_location,(implode "_FromList"));
      (FromList1_location,(implode "_FromList1"));
      (RefByte_location,(implode "_RefByte"));
@@ -3246,9 +3249,9 @@ let stub_names_def = new_definition
      (ByteCopyAdd_location,(implode "_ByteCopyAdd"));
      (ByteCopySub_location,(implode "_ByteCopySub"));
      (ByteCopyNew_location,(implode "_ByteCopyNew"));
-     (Dummy_location,(implode "_Dummy"))] ++ GENLIST (\i. (i +
+     (Dummy_location,(implode "_Dummy"))] (list_of_seq (\i. (i +
        Bignum_location,(implode "_Bignum")))
-     (data_num_stubs - Bignum_location)`;;
+     (data_num_stubs - Bignum_location))`;;
 hol4_overload "stub_names" "data_to_word_stub_names";;
 
 let check_stubs_length = prove
@@ -3267,8 +3270,8 @@ let data_to_word_compile_def = new_definition
          asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
          (data_to_word_config_has_fp_ops_fupd (K (1 <
          asm_config_fp_reg_count asm_conf)) data_conf)) in
-     let p = data_to_word_stubs (:'a) data_conf ++ MAP
-       (data_to_word_compile_part data_conf) prog in
+     let p = APPEND (data_to_word_stubs (:'a) data_conf) (MAP
+       (data_to_word_compile_part data_conf) prog) in
        word_to_word_compile word_conf (asm_conf:'a asm_config) p)`;;
 hol4_overload "compile" "data_to_word_compile";;
 
@@ -3276,12 +3279,14 @@ let compile_0_def = new_definition
   `compile_0 data_conf (asm_conf:'a asm_config) prog =
      (let data_conf = (data_to_word_config_has_fp_tern_fupd (K
        (asm_config_ISA asm_conf = ARMv7 /\
-                              2 < asm_config_fp_reg_count asm_conf))
-                                (data_to_word_config_has_fp_ops_fupd (K
-                                (1 < asm_config_fp_reg_count asm_conf))
-                                data_conf)) in
-       data_to_word_stubs (:'a) data_conf ++ MAP
-         (data_to_word_compile_part data_conf) prog)`;;
+                              2 < asm_config_fp_reg_count
+                                asm_conf))
+                                (data_to_word_config_has_fp_ops_fupd
+                                (K (1 < asm_config_fp_reg_count
+                                asm_conf)) data_conf)) in APPEND
+                                (data_to_word_stubs (:'a) data_conf)
+                                (MAP (data_to_word_compile_part
+                                data_conf) prog))`;;
 
 (* compute bignum call graph *)
 

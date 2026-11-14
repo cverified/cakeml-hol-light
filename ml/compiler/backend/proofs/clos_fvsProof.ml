@@ -42,7 +42,7 @@ let HD_remove_fvs_SING = prove
   CHEAT_TAC);;
 
 let EVERY_remove_fvs_SING = prove
- (`EVERY P (remove_fvs fvs [x]) <=> P (HD (remove_fvs fvs [x]))`,
+ (`ALL P (remove_fvs fvs [x]) <=> P (HD (remove_fvs fvs [x]))`,
   CHEAT_TAC);;
 
 let clos_fvsProof_code_rel_def = new_definition
@@ -55,9 +55,10 @@ let code_rel_IMP_LENGTH = prove
   CHEAT_TAC);;
 
 let code_rel_CONS_CONS = prove
- (`clos_fvsProof_code_rel fvs (x1 :: x2 :: xs) (y1 :: y2 :: ys) ==>
+ (`clos_fvsProof_code_rel fvs (CONS x1 (CONS x2 xs)) (CONS y1 (CONS y2
+  ys)) ==>
       clos_fvsProof_code_rel fvs [x1] [y1] /\
-        clos_fvsProof_code_rel fvs (x2 :: xs) (y2 :: ys)`,
+        clos_fvsProof_code_rel fvs (CONS x2 xs) (CONS y2 ys)`,
   CHEAT_TAC);;
 
 (* value relation *)
@@ -75,20 +76,20 @@ let clos_fvsProof_v_rel = cake_inductive
    (!n b. clos_fvsProof_v_rel (closSem_RefPtr b n) (closSem_RefPtr b
      n)) /\
    (!tag xs ys.
-      LIST_REL clos_fvsProof_v_rel xs ys ==>
+      ALL2 clos_fvsProof_v_rel xs ys ==>
         clos_fvsProof_v_rel (closSem_Block tag xs) (closSem_Block tag
           ys)) /\
    (!loc args1 args2 env1 env2 num_args e1 e2.
-      LIST_REL clos_fvsProof_v_rel env1 env2 /\
-      LIST_REL clos_fvsProof_v_rel args1 args2 /\
+      ALL2 clos_fvsProof_v_rel env1 env2 /\
+      ALL2 clos_fvsProof_v_rel args1 args2 /\
       clos_fvsProof_code_rel (LENGTH env1 + num_args) [e1] [e2] ==>
         clos_fvsProof_v_rel (Closure loc args1 env1 num_args e1)
           (Closure loc args2 env2 num_args e2)) /\
    (!loc args1 args2 env1 env2 k.
-      LIST_REL clos_fvsProof_v_rel env1 env2 /\
-      LIST_REL clos_fvsProof_v_rel args1 args2 /\
-      LIST_REL (clos_fvsProof_f_rel (LENGTH env1 + LENGTH funs1))
-        funs1 funs2 ==>
+      ALL2 clos_fvsProof_v_rel env1 env2 /\
+      ALL2 clos_fvsProof_v_rel args1 args2 /\
+      ALL2 (clos_fvsProof_f_rel (LENGTH env1 + LENGTH funs1)) funs1
+        funs2 ==>
         clos_fvsProof_v_rel (Recclosure loc args1 env1 funs1 k)
           (Recclosure loc args2 env2 funs2 k))`;;
 hol4_overload "v_rel" "clos_fvsProof_v_rel";;
@@ -102,7 +103,7 @@ let clos_fvsProof_ref_rel = cake_inductive
   `(!bs. clos_fvsProof_ref_rel (closSem_ByteArray bs) (closSem_ByteArray
   bs)) /\
    (!xs ys.
-     LIST_REL clos_fvsProof_v_rel xs ys ==>
+     ALL2 clos_fvsProof_v_rel xs ys ==>
      clos_fvsProof_ref_rel (closSem_ValueArray xs)
        (closSem_ValueArray ys)) /\
    (!m v w.
@@ -121,7 +122,7 @@ let clos_fvsProof_state_rel_def = new_definition
        closSem_state_clock
      t = closSem_state_clock s /\ closSem_state_ffi
      t = closSem_state_ffi s /\
-     LIST_REL (OPTREL clos_fvsProof_v_rel) (closSem_state_globals s)
+     ALL2 (OPTREL clos_fvsProof_v_rel) (closSem_state_globals s)
        (closSem_state_globals t) /\
      fmap_rel ref_rel (closSem_state_refs s) (closSem_state_refs t)
        /\ closSem_state_compile
@@ -167,9 +168,9 @@ let v_rel_IMP_v_to_words = prove
 (* *)
 
 let lookup_vars_lemma = prove
- (`!vs env1 env2. LIST_REL clos_fvsProof_v_rel env1 env2 ==>
+ (`!vs env1 env2. ALL2 clos_fvsProof_v_rel env1 env2 ==>
     (match lookup_vars vs env1 with NONE -> lookup_vars vs env2 =
-      NONE | SOME l1 -> (?l2. LIST_REL clos_fvsProof_v_rel l1 l2 /\
+      NONE | SOME l1 -> (?l2. ALL2 clos_fvsProof_v_rel l1 l2 /\
       lookup_vars vs env2 = SOME l2))`,
   CHEAT_TAC);;
 
@@ -189,15 +190,15 @@ let dest_closure_SOME_IMP = prove
   CHEAT_TAC);;
 
 let dest_closure_SOME_Full_app = prove
- (`clos_fvsProof_v_rel f1 f2 /\ clos_fvsProof_v_rel a1 a2 /\ LIST_REL
+ (`clos_fvsProof_v_rel f1 f2 /\ clos_fvsProof_v_rel a1 a2 /\ ALL2
   clos_fvsProof_v_rel args1 args2 /\
-    dest_closure max_app loc_opt f1 (a1 :: args1) = SOME (Full_app
+    dest_closure max_app loc_opt f1 (CONS a1 args1) = SOME (Full_app
       exp1 env1 rest_args1) ==>
       (?exp2 env2 rest_args2.
       clos_fvsProof_code_rel (LENGTH env1) [exp1] [exp2] /\
-      LIST_REL clos_fvsProof_v_rel env1 env2 /\
-      LIST_REL clos_fvsProof_v_rel rest_args1 rest_args2 /\
-      dest_closure max_app loc_opt f2 (a2 :: args2) = SOME
+      ALL2 clos_fvsProof_v_rel env1 env2 /\
+      ALL2 clos_fvsProof_v_rel rest_args1 rest_args2 /\
+      dest_closure max_app loc_opt f2 (CONS a2 args2) = SOME
         (Full_app exp2 env2 rest_args2))`,
   CHEAT_TAC);;
 
@@ -209,7 +210,7 @@ let simple_state_rel = prove
 
 (* do_app_lemma[local] *)
 let clos_fvsProof_do_app_lemma = prove
- (`clos_fvsProof_state_rel s t /\ LIST_REL clos_fvsProof_v_rel xs ys ==>
+ (`clos_fvsProof_state_rel s t /\ ALL2 clos_fvsProof_v_rel xs ys ==>
    (match do_app opp xs s with Rerr err1 -> (?err2. do_app opp ys t =
      Rerr err2 /\
                            exc_rel clos_fvsProof_v_rel err1 err2) |
@@ -220,7 +221,7 @@ let clos_fvsProof_do_app_lemma = prove
 
 (* [local] *)
 let do_install_lemma = prove
- (`clos_fvsProof_state_rel s t /\ LIST_REL clos_fvsProof_v_rel xs ys ==>
+ (`clos_fvsProof_state_rel s t /\ ALL2 clos_fvsProof_v_rel xs ys ==>
    (match closSem_do_install xs s with (Rerr err1,s1) -> (?err2 t1.
      closSem_do_install ys t = (Rerr err2,t1) /\
                            exc_rel clos_fvsProof_v_rel err1 err2 /\
@@ -258,7 +259,7 @@ let clos_fvsProof_state_rel_dec_clock = prove
 (* rel_update_thunk[local] *)
 let clos_fvsProof_rel_update_thunk = prove
  (`clos_fvsProof_state_rel s1 s2 /\
-   LIST_REL clos_fvsProof_v_rel vs ys ==>
+   ALL2 clos_fvsProof_v_rel vs ys ==>
      (update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs = NONE
        ==>
         update_thunk [closSem_RefPtr v ptr] (state_refs s2) ys =
@@ -276,36 +277,36 @@ let clos_fvsProof_rel_update_thunk = prove
 let evaluate_remove_fvs = prove
  (`(!xs env1 (s1:('c,'ffi)closSem_state) res1 s2 ys env2 t1.
       closSem_evaluate (xs,env1,s1) = (res1,s2) /\
-      LIST_REL clos_fvsProof_v_rel env1 env2 /\
-        clos_fvsProof_state_rel s1 t1 /\
+      ALL2 clos_fvsProof_v_rel env1 env2 /\ clos_fvsProof_state_rel
+        s1 t1 /\
       clos_fvsProof_code_rel (LENGTH env1) xs ys ==>
       (?res2 t2.
         closSem_evaluate (ys,env2,t1) = (res2,t2) /\
-        semanticPrimitivesProps_result_rel (LIST_REL
-          clos_fvsProof_v_rel) clos_fvsProof_v_rel res1 res2 /\
+        semanticPrimitivesProps_result_rel (ALL2 clos_fvsProof_v_rel)
+          clos_fvsProof_v_rel res1 res2 /\
         clos_fvsProof_state_rel s2 t2)) /\
    (!loc_opt f1 args1 (s1:('c,'ffi)closSem_state) res1 s2 f2 args2
      t1.
       evaluate_app loc_opt f1 args1 s1 = (res1,s2) /\
-      clos_fvsProof_v_rel f1 f2 /\ LIST_REL clos_fvsProof_v_rel args1
+      clos_fvsProof_v_rel f1 f2 /\ ALL2 clos_fvsProof_v_rel args1
         args2 /\
       clos_fvsProof_state_rel s1 t1 ==>
       (?res2 t2.
         evaluate_app loc_opt f2 args2 t1 = (res2,t2) /\
-        semanticPrimitivesProps_result_rel (LIST_REL
-          clos_fvsProof_v_rel) clos_fvsProof_v_rel res1 res2 /\
+        semanticPrimitivesProps_result_rel (ALL2 clos_fvsProof_v_rel)
+          clos_fvsProof_v_rel res1 res2 /\
         clos_fvsProof_state_rel s2 t2))`,
   CHEAT_TAC);;
 
 let remove_fvs_correct = prove
  (`!xs env1 (s1:('c,'ffi)closSem_state) res1 s2 env2 t1.
        closSem_evaluate (xs,env1,s1) = (res1,s2) /\
-       LIST_REL clos_fvsProof_v_rel env1 env2 /\
-         clos_fvsProof_state_rel s1 t1 ==>
+       ALL2 clos_fvsProof_v_rel env1 env2 /\ clos_fvsProof_state_rel
+         s1 t1 ==>
        (?res2 t2.
          closSem_evaluate (remove_fvs (LENGTH env1) xs,env2,t1) =
            (res2,t2) /\
-         semanticPrimitivesProps_result_rel (LIST_REL
+         semanticPrimitivesProps_result_rel (ALL2
            clos_fvsProof_v_rel) clos_fvsProof_v_rel res1 res2 /\
          clos_fvsProof_state_rel s2 t2)`,
   CHEAT_TAC);;
@@ -362,7 +363,7 @@ let set_globals_HD_remove_fvs_SING = prove
 
 (* [simp] *)
 let remove_fvs_esgc_free = prove
- (`!fvs x. EVERY closProps_esgc_free (remove_fvs fvs x) <=> EVERY
+ (`!fvs x. ALL closProps_esgc_free (remove_fvs fvs x) <=> ALL
   closProps_esgc_free x`,
   CHEAT_TAC);;
 
@@ -373,16 +374,16 @@ let remove_fvs_elist_globals = prove
   CHEAT_TAC);;
 
 let EVERY_remove_fvs_sing = prove
- (`EVERY f (remove_fvs n [y]) <=> f (HD (remove_fvs n [y]))`,
+ (`ALL f (remove_fvs n [y]) <=> f (HD (remove_fvs n [y]))`,
   CHEAT_TAC);;
 
 let remove_fvs_no_Labels = prove
- (`!n xs. EVERY no_Labels (remove_fvs n xs) = EVERY no_Labels xs`,
+ (`!n xs. ALL no_Labels (remove_fvs n xs) = ALL no_Labels xs`,
   CHEAT_TAC);;
 
 let remove_fvs_obeys_max_app = prove
- (`!n xs. EVERY (obeys_max_app k) (remove_fvs n xs) = EVERY
-  (obeys_max_app k) xs`,
+ (`!n xs. ALL (obeys_max_app k) (remove_fvs n xs) = ALL (obeys_max_app
+  k) xs`,
   CHEAT_TAC);;
 
 (* [simp] *)

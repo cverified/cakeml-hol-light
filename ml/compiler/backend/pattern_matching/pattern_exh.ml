@@ -76,7 +76,7 @@ let ctor_arity_def = define_cases
 let anys_def,anys_ind = define_wf
   `MEASURE (\x0. (\n. n) x0)`
   [`anys 0 = []`;
-   `anys (SUC n) = pattern_semantics_Any :: anys n`];;
+   `anys (SUC n) = CONS pattern_semantics_Any (anys n)`];;
 
 
 (* -------------------------------------------------------------------- *
@@ -89,20 +89,22 @@ let anys_def,anys_ind = define_wf
 
 let add_head_def,add_head_ind = define_rec
   [`add_head x [] = []`;
-   `add_head x (ys :: yss) = (x :: ys) :: add_head x yss`];;
+   `add_head x (CONS ys yss) = CONS (CONS x ys) (add_head x yss)`];;
 
 let mk_prods_def,mk_prods_ind = define_rec
   [`mk_prods [] ys = []`;
-   `mk_prods (x :: xs) ys = add_head x ys ++ mk_prods xs ys`];;
+   `mk_prods (CONS x xs) ys = APPEND (add_head x ys) (mk_prods xs
+  ys)`];;
 
 let mk_refs_def,mk_refs_ind = define_rec
   [`mk_refs [] = []`;
-   `mk_refs (p :: ps) = pattern_semantics_Ref p :: mk_refs ps`];;
+   `mk_refs (CONS p ps) = CONS (pattern_semantics_Ref p) (mk_refs
+  ps)`];;
 
 let mk_conses_def,mk_conses_ind = define_rec
   [`mk_conses t [] = []`;
-   `mk_conses t (ps :: pss) = pattern_semantics_Cons t ps ::
-  mk_conses t pss`];;
+   `mk_conses t (CONS ps pss) = CONS (pattern_semantics_Cons t ps)
+  (mk_conses t pss)`];;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
@@ -114,21 +116,23 @@ let expand_def,expand_ind = define_mutual_rec
   [(pattern_semantics_Any:pattern_semantics_pat)]`;
    `expand (Lit l:pattern_semantics_pat) = [(Lit
   l:pattern_semantics_pat)]`;
-   `expand (Or p q:pattern_semantics_pat) = expand p ++ expand q`;
+   `expand (Or p q:pattern_semantics_pat) = APPEND (expand p) (expand
+  q)`;
    `expand (pattern_semantics_Ref p:pattern_semantics_pat) = mk_refs
   (expand p)`;
    `expand (pattern_semantics_Cons t ps:pattern_semantics_pat) =
   mk_conses t (expand_list ps)`;
    `expand_list [] = [[]]`;
-   `expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`];;
+   `expand_list (CONS p ps) = mk_prods (expand p) (expand_list ps)`];;
 
 let mk_rows_def,mk_rows_ind = define_rec
   [`mk_rows [] = []`;
-   `mk_rows (p :: ps) = [p] :: mk_rows ps`];;
+   `mk_rows (CONS p ps) = CONS [p] (mk_rows ps)`];;
 
 let or_rows_def,or_rows_ind = define_rec
   [`or_rows [] = []`;
-   `or_rows ((p,e) :: rows) = mk_rows (expand p) ++ or_rows rows`];;
+   `or_rows (CONS (p,e) rows) = APPEND (mk_rows (expand p))
+  (or_rows rows)`];;
 
 
 (* -------------------------------------------------------------------- *
@@ -142,12 +146,12 @@ let or_rows_def,or_rows_ind = define_rec
 
 let tag_ctors_def,tag_ctors_ind = define_rec
   [`tag_ctors [] = []`;
-   `tag_ctors ((t,a) :: sibs) = TagC t a :: tag_ctors sibs`];;
+   `tag_ctors (CONS (t,a) sibs) = CONS (TagC t a) (tag_ctors sibs)`];;
 
 let ctor_nub_def,ctor_nub_ind = define_rec
   [`ctor_nub [] = []`;
-   `ctor_nub (x :: xs) = (if MEM x xs then ctor_nub xs else x ::
-  ctor_nub xs)`];;
+   `ctor_nub (CONS x xs) = (if MEM x xs then ctor_nub xs else CONS
+  x (ctor_nub xs))`];;
 
 let ctors_of_def = new_definition
   `ctors_of x1 =
@@ -159,13 +163,13 @@ let ctors_of_def = new_definition
       | (pattern_semantics_Cons NONE qs) -> SOME [TupC (LENGTH qs)]
       | (pattern_semantics_Cons (SOME (t,NONE)) qs) -> NONE
       | (pattern_semantics_Cons (SOME (t,SOME sibs)) qs) ->
-     SOME (ctor_nub (TagC t (LENGTH qs) :: tag_ctors sibs))`;;
+     SOME (ctor_nub (CONS (TagC t (LENGTH qs)) (tag_ctors sibs)))`;;
 
 let ctor_keep_def,ctor_keep_ind = define_rec
   [`ctor_keep [] ys = []`;
-   `ctor_keep (x :: xs) ys =
-      (if MEM x ys then x :: ctor_keep xs ys else ctor_keep xs
-        ys)`];;
+   `ctor_keep (CONS x xs) ys =
+      (if MEM x ys then CONS x (ctor_keep xs ys) else ctor_keep
+        xs ys)`];;
 
 let ctor_inter_def = new_definition
   `ctor_inter xs ys =
@@ -180,8 +184,8 @@ let _ = size_thms "pattern_semantics_pat";;
 let col_ctors_def,col_ctors_ind = define_wf
   `MEASURE (\x0. list_size pattern_semantics_pat_size1 x0)`
   [`col_ctors [] = NONE`;
-   `col_ctors ([] :: rows) = col_ctors rows`;
-   `col_ctors ((p :: _5) :: rows) = ctor_inter (ctors_of p)
+   `col_ctors (CONS [] rows) = col_ctors rows`;
+   `col_ctors (CONS (CONS p _5) rows) = ctor_inter (ctors_of p)
   (col_ctors rows)`];;
 
 
@@ -198,35 +202,38 @@ let spec_row_def = new_definition
   `spec_row c x2 =
       match x2 with
         [] -> []
-      | ((pattern_semantics_Any:pattern_semantics_pat) :: rest) ->
-        [anys (ctor_arity c) ++ rest]
-      | ((pattern_semantics_Cons NONE qs) :: rest) ->
-     (if c = TupC (LENGTH qs) then [qs ++ rest] else [])
-      | ((pattern_semantics_Cons (SOME ts) qs) :: rest) ->
-     (if c = TagC (FST ts) (LENGTH qs) then [qs ++ rest] else [])
-      | ((pattern_semantics_Ref q) :: rest) -> (if c = RefC then [q
-        :: rest] else [])
-      | ((Lit l) :: rest) -> []
-      | ((Or p q) :: rest) -> []`;;
+      | CONS (pattern_semantics_Any:pattern_semantics_pat) rest ->
+        [APPEND (anys (ctor_arity c)) rest]
+      | (CONS (pattern_semantics_Cons NONE qs) rest) ->
+     (if c = TupC (LENGTH qs) then [APPEND qs rest] else [])
+      | (CONS (pattern_semantics_Cons (SOME ts) qs) rest) ->
+     (if c = TagC (FST ts) (LENGTH qs) then [APPEND qs rest] else [])
+      | (CONS (pattern_semantics_Ref q) rest) -> (if c = RefC then
+        [CONS q rest] else [])
+      | (CONS (Lit l) rest) -> []
+      | (CONS (Or p q) rest) -> []`;;
 
 let spec_mat_def,spec_mat_ind = define_rec
   [`spec_mat c [] = []`;
-   `spec_mat c (r :: rows) = spec_row c r ++ spec_mat c rows`];;
+   `spec_mat c (CONS r rows) = APPEND (spec_row c r) (spec_mat c
+  rows)`];;
 
 let spec_mats_def,spec_mats_ind = define_rec
   [`spec_mats [] rows = []`;
-   `spec_mats (c :: cs) rows = spec_mat c rows :: spec_mats cs rows`];;
+   `spec_mats (CONS c cs) rows = CONS (spec_mat c rows) (spec_mats
+  cs rows)`];;
 
 let default_row_def = new_definition
   `default_row x1 =
       match x1 with
-        ((pattern_semantics_Any:pattern_semantics_pat) :: rest) ->
+        CONS (pattern_semantics_Any:pattern_semantics_pat) rest ->
           [rest]
       | _6 -> []`;;
 
 let default_mat_def,default_mat_ind = define_rec
   [`default_mat [] = []`;
-   `default_mat (r :: rows) = default_row r ++ default_mat rows`];;
+   `default_mat (CONS r rows) = APPEND (default_row r) (default_mat
+  rows)`];;
 
 
 (* -------------------------------------------------------------------- *
@@ -255,27 +262,28 @@ let pat_weight_def,pat_weight_ind = define_mutual_rec
    `pat_weight (pattern_semantics_Cons t ps:pattern_semantics_pat) =
   ((1 + pats_weight ps):num)`;
    `pats_weight [] = 0`;
-   `pats_weight (p :: ps) = pat_weight p + pats_weight ps`];;
+   `pats_weight (CONS p ps) = pat_weight p + pats_weight ps`];;
 
 let mat_weight_def,mat_weight_ind = define_rec
   [`mat_weight [] = 0`;
-   `mat_weight (r :: rows) = pats_weight r + mat_weight rows`];;
+   `mat_weight (CONS r rows) = pats_weight r + mat_weight rows`];;
 
 let mat_len_def,mat_len_ind = define_rec
   [`mat_len [] = 0`;
-   `mat_len (r :: rows) = LENGTH r + mat_len rows`];;
+   `mat_len (CONS r rows) = LENGTH r + mat_len rows`];;
 
 let mats_weight_def,mats_weight_ind = define_rec
   [`mats_weight [] = 0`;
-   `mats_weight (m :: ms) = MAX (mat_weight m) (mats_weight ms)`];;
+   `mats_weight (CONS m ms) = MAX (mat_weight m) (mats_weight ms)`];;
 
 let mats_len_def,mats_len_ind = define_rec
   [`mats_len [] = 0`;
-   `mats_len (m :: ms) = MAX (mat_len m) (mats_len ms)`];;
+   `mats_len (CONS m ms) = MAX (mat_len m) (mats_len ms)`];;
 
 (* [local] *)
 let pats_weight_append = prove
- (`!xs ys. pats_weight (xs ++ ys) = pats_weight xs + pats_weight ys`,
+ (`!xs ys. pats_weight (APPEND xs ys) = pats_weight xs + pats_weight
+  ys`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -285,12 +293,12 @@ let pats_weight_anys = prove
 
 (* [local] *)
 let mat_weight_append = prove
- (`!xs ys. mat_weight (xs ++ ys) = mat_weight xs + mat_weight ys`,
+ (`!xs ys. mat_weight (APPEND xs ys) = mat_weight xs + mat_weight ys`,
   CHEAT_TAC);;
 
 (* [local] *)
 let mat_len_append = prove
- (`!xs ys. mat_len (xs ++ ys) = mat_len xs + mat_len ys`,
+ (`!xs ys. mat_len (APPEND xs ys) = mat_len xs + mat_len ys`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -306,7 +314,8 @@ let mat_weight_spec_mat = prove
 (* [local] *)
 let mat_weight_spec_row_less = prove
  (`!c p r. ~(ctors_of p = NONE) ==>
-           mat_weight (spec_row c (p :: r)) < pats_weight (p :: r)`,
+           mat_weight (spec_row c (CONS p r)) < pats_weight (CONS p
+             r)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -335,7 +344,8 @@ let mats_weight_spec_mats = prove
 (* [local] *)
 let mat_len_default_mat_less = prove
  (`!r rows. ~(r = []) ==>
-            mat_len (default_mat (r :: rows)) < mat_len (r :: rows)`,
+            mat_len (default_mat (CONS r rows)) < mat_len (CONS r
+              rows)`,
   CHEAT_TAC);;
 
 
@@ -357,13 +367,13 @@ let mat_len_default_mat_less = prove
 let exh_matrix_def,exh_matrix_ind = define_mutual_shaped_rec_cheat
   "maplist>measure"
   [`exh_matrix [] = F`;
-   `exh_matrix (r :: rows) =
+   `exh_matrix (CONS r rows) =
       (if NULL r then T else
-         match col_ctors (r :: rows) with NONE -> exh_matrix
-           (default_mat (r :: rows)) | SOME cs -> exh_mats (spec_mats
-           cs (r :: rows)))`;
+         match col_ctors (CONS r rows) with NONE -> exh_matrix
+           (default_mat (CONS r rows)) | SOME cs -> exh_mats
+           (spec_mats cs (CONS r rows)))`;
    `exh_mats [] = T`;
-   `exh_mats (m :: ms) = (exh_matrix m /\ exh_mats ms)`];;
+   `exh_mats (CONS m ms) = (exh_matrix m /\ exh_mats ms)`];;
 
 let exh_rows_def = new_definition
   `exh_rows rows = exh_matrix (or_rows rows)`;;
@@ -397,17 +407,17 @@ let exh_rows_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let exh_steps_def,exh_steps_ind = define_mutual_guess_cheat
   [`exh_steps [] = (1:num)`;
-   `exh_steps (r :: rows) =
+   `exh_steps (CONS r rows) =
       (((if NULL r then 1 else
-         match col_ctors (r :: rows) with NONE -> 1 + exh_steps
-           (default_mat (r :: rows)) | SOME cs -> 1 + exh_steps_list
-           (spec_mats cs (r :: rows)))):num)`;
+         match col_ctors (CONS r rows) with NONE -> 1 + exh_steps
+           (default_mat (CONS r rows)) | SOME cs -> 1 +
+           exh_steps_list (spec_mats cs (CONS r rows)))):num)`;
    `exh_steps_list [] = 0`;
-   `exh_steps_list (m :: ms) = exh_steps m + exh_steps_list ms`];;
+   `exh_steps_list (CONS m ms) = exh_steps m + exh_steps_list ms`];;
 
 (* [local] *)
 let exh_steps_list_append = prove
- (`!xs ys. exh_steps_list (xs ++ ys) = exh_steps_list xs +
+ (`!xs ys. exh_steps_list (APPEND xs ys) = exh_steps_list xs +
   exh_steps_list ys`,
   CHEAT_TAC);;
 
@@ -421,16 +431,16 @@ let exh_steps_list_append = prove
    replacing the CHEAT_TAC is all that is left *)
 let exh_all_def,exh_all_ind = define_guess_cheat
   [`exh_all [] = T`;
-   `exh_all ([] :: ms) = F`;
-   `exh_all ((r :: rows) :: ms) =
+   `exh_all (CONS [] ms) = F`;
+   `exh_all (CONS (CONS r rows) ms) =
       (if NULL r then exh_all ms else
-         match col_ctors (r :: rows) with NONE -> exh_all
-           (default_mat (r :: rows) :: ms) | SOME cs -> exh_all
-           (spec_mats cs (r :: rows) ++ ms))`];;
+         match col_ctors (CONS r rows) with NONE -> exh_all
+           (CONS (default_mat (CONS r rows)) ms) | SOME cs ->
+           exh_all (APPEND (spec_mats cs (CONS r rows)) ms))`];;
 
 (* [local] *)
 let exh_mats_append = prove
- (`!xs ys. exh_mats (xs ++ ys) <=> exh_mats xs /\ exh_mats ys`,
+ (`!xs ys. exh_mats (APPEND xs ys) <=> exh_mats xs /\ exh_mats ys`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -509,13 +519,13 @@ let pmatch_Any = prove
 (* [local,simp] *)
 let pmatch_list_nil = prove
  (`pmatch_list refs [] [] = PMatchSuccess /\
-   pmatch_list refs [] (v :: vs) = PTypeFailure /\
-   pmatch_list refs (p :: ps) [] = PTypeFailure`,
+   pmatch_list refs [] (CONS v vs) = PTypeFailure /\
+   pmatch_list refs (CONS p ps) [] = PTypeFailure`,
   CHEAT_TAC);;
 
 (* [local,simp] *)
 let pmatch_list_cons = prove
- (`pmatch_list refs (p :: ps) (v :: vs) =
+ (`pmatch_list refs (CONS p ps) (CONS v vs) =
    pand (pmatch refs p v) (pmatch_list refs ps vs)`,
   CHEAT_TAC);;
 
@@ -529,7 +539,7 @@ let pmatch_list_LENGTH = prove
 let pmatch_list_append = prove
  (`!ps us qs ws refs.
      LENGTH ps = LENGTH us ==>
-     pmatch_list refs (ps ++ qs) (us ++ ws) =
+     pmatch_list refs (APPEND ps qs) (APPEND us ws) =
      pand (pmatch_list refs ps us) (pmatch_list refs qs ws)`,
   CHEAT_TAC);;
 
@@ -574,14 +584,14 @@ let MEM_spec_mats = prove
 
 (* [local,simp] *)
 let MEM_add_head = prove
- (`!yss x ys. MEM ys (add_head x yss) <=> (?zs. MEM zs yss /\ ys = x
-  :: zs)`,
+ (`!yss x ys. MEM ys (add_head x yss) <=> (?zs. MEM zs yss /\ ys =
+  CONS x zs)`,
   CHEAT_TAC);;
 
 (* [local,simp] *)
 let MEM_mk_prods = prove
  (`!xs yss zs. MEM zs (mk_prods xs yss) <=>
-               (?x ys. MEM x xs /\ MEM ys yss /\ zs = x :: ys)`,
+               (?x ys. MEM x xs /\ MEM ys yss /\ zs = CONS x ys)`,
   CHEAT_TAC);;
 
 (* [local,simp] *)
@@ -681,7 +691,7 @@ let ctors_of_thm = prove
 let col_ctors_thm = prove
  (`!M cs refs v vs.
      col_ctors M = SOME cs /\
-     EVERY (\r. ~(pmatch_list refs r (v :: vs) = PTypeFailure)) M ==>
+     ALL (\r. ~(pmatch_list refs r (CONS v vs) = PTypeFailure)) M ==>
      (?c as. dest_val refs v = SOME (c,as) /\ MEM c cs)`,
   CHEAT_TAC);;
 
@@ -701,7 +711,8 @@ let col_ctors_thm = prove
 let spec_row_thm = prove
  (`!c r row refs v vs as.
      dest_val refs v = SOME (c,as) /\ MEM row (spec_row c r) ==>
-     pmatch_list refs row (as ++ vs) = pmatch_list refs r (v :: vs)`,
+     pmatch_list refs row (APPEND as vs) = pmatch_list refs r (CONS
+       v vs)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -709,15 +720,15 @@ let spec_mat_MEM = prove
  (`!M c as refs v vs row.
      dest_val refs v = SOME (c,as) /\ MEM row (spec_mat c M) ==>
      (?r. MEM r M /\
-         pmatch_list refs row (as ++ vs) = pmatch_list refs r (v ::
-           vs))`,
+         pmatch_list refs row (APPEND as vs) = pmatch_list refs r
+           (CONS v vs))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let default_row_thm = prove
  (`!r row refs v vs.
      MEM row (default_row r) ==>
-     pmatch_list refs row vs = pmatch_list refs r (v :: vs)`,
+     pmatch_list refs row vs = pmatch_list refs r (CONS v vs)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -725,7 +736,7 @@ let default_mat_MEM = prove
  (`!M refs v vs row.
      MEM row (default_mat M) ==>
      (?r. MEM r M /\ pmatch_list refs row vs = pmatch_list refs r
-       (v :: vs))`,
+       (CONS v vs))`,
   CHEAT_TAC);;
 
 
@@ -739,13 +750,13 @@ let default_mat_MEM = prove
 (* [local] *)
 let exh_matrix_thm = prove
  (`(!M refs vs.
-      exh_matrix M /\ EVERY (\r. ~(pmatch_list refs r vs =
+      exh_matrix M /\ ALL (\r. ~(pmatch_list refs r vs =
         PTypeFailure)) M ==>
-      EXISTS (\r. pmatch_list refs r vs = PMatchSuccess) M) /\
+      EX (\r. pmatch_list refs r vs = PMatchSuccess) M) /\
    (!ms m refs vs.
       exh_mats ms /\ MEM m ms /\
-      EVERY (\r. ~(pmatch_list refs r vs = PTypeFailure)) m ==>
-      EXISTS (\r. pmatch_list refs r vs = PMatchSuccess) m)`,
+      ALL (\r. ~(pmatch_list refs r vs = PTypeFailure)) m ==>
+      EX (\r. pmatch_list refs r vs = PMatchSuccess) m)`,
   CHEAT_TAC);;
 
 
@@ -756,29 +767,29 @@ let exh_matrix_thm = prove
 (* [local] *)
 let match_no_PTypeFailure = prove
  (`!rows. ~(pattern_semantics_match refs rows v = NONE) ==>
-          EVERY (\(p,e). ~(pmatch refs p v = PTypeFailure)) rows`,
+          ALL (\(p,e). ~(pmatch refs p v = PTypeFailure)) rows`,
   CHEAT_TAC);;
 
 (* [local] *)
 let match_EXISTS = prove
  (`!rows. ~(pattern_semantics_match refs rows v = NONE) /\
-          EXISTS (\(p,e). pmatch refs p v = PMatchSuccess) rows ==>
+          EX (\(p,e). pmatch refs p v = PMatchSuccess) rows ==>
             ~(pattern_semantics_match refs rows v = SOME MatchFailure)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let or_rows_ok = prove
- (`!rows. EVERY (\(p,e). ~(pmatch refs p v = PTypeFailure)) rows ==>
-          EVERY (\r. ~(pmatch_list refs r [v] = PTypeFailure))
+ (`!rows. ALL (\(p,e). ~(pmatch refs p v = PTypeFailure)) rows ==>
+          ALL (\r. ~(pmatch_list refs r [v] = PTypeFailure))
             (or_rows rows)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let or_rows_hit = prove
- (`!rows. EVERY (\(p,e). ~(pmatch refs p v = PTypeFailure)) rows /\
-          EXISTS (\r. pmatch_list refs r [v] = PMatchSuccess)
-            (or_rows rows) ==>
-          EXISTS (\(p,e). pmatch refs p v = PMatchSuccess) rows`,
+ (`!rows. ALL (\(p,e). ~(pmatch refs p v = PTypeFailure)) rows /\
+          EX (\r. pmatch_list refs r [v] = PMatchSuccess) (or_rows
+            rows) ==>
+          EX (\(p,e). pmatch refs p v = PMatchSuccess) rows`,
   CHEAT_TAC);;
 
 

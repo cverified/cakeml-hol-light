@@ -56,21 +56,21 @@ let pmatch_state = prove
 let flatProps_pmatch_extend = prove
  (`(!(s:('c,'ffi)flatSem_state) p v env env' env''.
     pmatch s p v env = Match env' ==>
-    (?env''. env' = env'' ++ env /\ MAP FST env'' = pat_bindings p))
-      /\
+    (?env''. env' = APPEND env'' env /\ MAP FST env'' = pat_bindings
+      p)) /\
    (!(s:('c,'ffi)flatSem_state) ps vs env env' env''.
     pmatch_list s ps vs env = Match env' ==>
-    (?env''. env' = env'' ++ env /\ MAP FST env'' = pats_bindings
-      ps))`,
+    (?env''. env' = APPEND env'' env /\ MAP FST env'' =
+      pats_bindings ps))`,
   CHEAT_TAC);;
 
 let pmatch_bindings = prove
  (`(!(s:('c,'ffi)flatSem_state) p v env r.
       flatSem_pmatch s p v env = Match r ==>
-      MAP FST r = pat_bindings p ++ MAP FST env) /\
+      MAP FST r = APPEND (pat_bindings p) (MAP FST env)) /\
    (!(s:('c,'ffi)flatSem_state) ps vs env r.
      flatSem_pmatch_list s ps vs env = Match r ==>
-     MAP FST r = pats_bindings ps ++ MAP FST env)`,
+     MAP FST r = APPEND (pats_bindings ps) (MAP FST env))`,
   CHEAT_TAC);;
 
 let pmatch_length = prove
@@ -108,8 +108,7 @@ let pmatch_any_match_error = prove
 let pmatch_list_pairwise = prove
  (`!ps vs (s:('c,'ffi)flatSem_state) env env'.
       pmatch_list s ps vs env = Match env' ==>
-      EVERY2 (\p v. !env. ?env'. pmatch s p v env = Match env') ps
-        vs`,
+      ALL2 (\p v. !env. ?env'. pmatch s p v env = Match env') ps vs`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -122,7 +121,7 @@ let pmatch_list_snoc_nil = prove
 (* pmatch_list_append *)
 let flatProps_pmatch_list_append = prove
  (`!ps vs ps' vs' s env. LENGTH ps = LENGTH vs ==>
-      pmatch_list s (ps ++ ps') (vs ++ vs') env =
+      pmatch_list s (APPEND ps ps') (APPEND vs vs') env =
       (match pmatch_list s ps vs env with Match env' -> pmatch_list s
         ps' vs' env' | Match_type_error -> Match_type_error | No_match
         ->
@@ -147,10 +146,10 @@ let map_match_eq_case = prove
 let flatProps_pmatch_append = prove
  (`(!(s:('c,'ffi)flatSem_state) p v env pred_env.
      map_match (hol4_C APPEND tail_env) (pmatch s p v env) =
-       pmatch s p v (env ++ tail_env)) /\
+       pmatch s p v (APPEND env tail_env)) /\
    (!(s:('c,'ffi)flatSem_state) ps vs env n.
      map_match (hol4_C APPEND tail_env) (pmatch_list s ps vs env) =
-      pmatch_list s ps vs (env ++ tail_env))`,
+      pmatch_list s ps vs (APPEND env tail_env))`,
   CHEAT_TAC);;
 
 (* HOL4 flatPropsScript.sml:217-221: a theorem that HOL4 states as
@@ -177,17 +176,17 @@ let pmatch_rows_IMP_pmatch = prove
 (* build_rec_env_help_lem[local] *)
 let flatProps_build_rec_env_help_lem = prove
  (`!funs env funs'.
-   ITLIST (\(f,x,e) env'. (f,flatSem_Recclosure env funs' f) :: env')
-     funs env' =
-   MAP (\(fn,n,e). (fn,Recclosure env funs' fn)) funs ++ env'`,
+   ITLIST (\(f,x,e) env'. CONS (f,flatSem_Recclosure env funs' f)
+     env') funs env' = APPEND (MAP (\(fn,n,e). (fn,Recclosure env
+     funs' fn)) funs) env'`,
   CHEAT_TAC);;
 
 (* Alternate definition for build_rec_env *)
 (* build_rec_env_merge *)
 let flatProps_build_rec_env_merge = prove
  (`!funs funs' env env'.
-    build_rec_env funs env env' =
-    MAP (\(fn,n,e). (fn,Recclosure env funs fn)) funs ++ env'`,
+    build_rec_env funs env env' = APPEND (MAP (\(fn,n,e).
+      (fn,Recclosure env funs fn)) funs) env'`,
   CHEAT_TAC);;
 
 (* evaluate_length *)
@@ -198,10 +197,10 @@ let flatProps_evaluate_length = prove
 
 (* evaluate_cons *)
 let flatProps_evaluate_cons = prove
- (`flatSem_evaluate env s (e :: es) =
+ (`flatSem_evaluate env s (CONS e es) =
    (match evaluate env s [e] with (s,Rval v) ->
-      (match evaluate env s es with (s,Rval vs) -> (s,Rval (v ++
-        vs)) | r -> r) | r -> r)`,
+      (match evaluate env s es with (s,Rval vs) -> (s,Rval (APPEND
+        v vs)) | r -> r) | r -> r)`,
   CHEAT_TAC);;
 
 (* evaluate_sing *)
@@ -211,10 +210,10 @@ let flatProps_evaluate_sing = prove
 
 (* evaluate_append *)
 let flatProps_evaluate_append = prove
- (`evaluate env s (l1 ++ l2) =
+ (`evaluate env s (APPEND l1 l2) =
    (match evaluate env s l1 with (s,Rval v1) ->
-     (match evaluate env s l2 with (s,Rval v2) -> (s,Rval (v1 ++
-       v2)) | r -> r) | r -> r)`,
+     (match evaluate env s l2 with (s,Rval v2) -> (s,Rval (APPEND
+       v1 v2)) | r -> r) | r -> r)`,
   CHEAT_TAC);;
 
 let do_app_state_unchanged = prove
@@ -226,7 +225,7 @@ let do_app_state_unchanged = prove
 (* evaluate_decs_append *)
 let flatProps_evaluate_decs_append = prove
  (`!s ds1 s1 s2 r ds2.
-     evaluate_decs s (ds1 ++ ds2) =
+     evaluate_decs s (APPEND ds1 ds2) =
      (match evaluate_decs s ds1 with (s1,NONE) -> evaluate_decs s1
        ds2 | (s1,SOME err) -> (s1,SOME err))`,
   CHEAT_TAC);;
@@ -373,7 +372,7 @@ let evaluate_vars = prove
     ALL_DISTINCT (MAP FST kvs) /\
     DISJOINT (set_of_list (MAP FST kvs)) (set_of_list (MAP FST env'))
       /\ flatSem_environment_v
-    env = env' ++ kvs /\ ks = MAP FST kvs /\ vs = MAP SND kvs /\
+    env = APPEND env' kvs /\ ks = MAP FST kvs /\ vs = MAP SND kvs /\
     LENGTH ts = LENGTH ks ==>
     evaluate env s (bind_locals_list ts ks) = (s,Rval vs)`,
   CHEAT_TAC);;
@@ -477,7 +476,7 @@ let flatProps_set_globals_def,flatProps_set_globals_ind =
   fs))`;
    `flatProps_set_globals _5 = EMPTY_BAG`;
    `flatProps_elist_globals [] = EMPTY_BAG`;
-   `flatProps_elist_globals (e :: es) = (BAG_UNION)
+   `flatProps_elist_globals (CONS e es) = (BAG_UNION)
   (flatProps_set_globals e) (flatProps_elist_globals es)`];;
 hol4_overload "elist_globals" "flatProps_elist_globals";;
 hol4_overload "set_globals" "flatProps_set_globals";;
@@ -494,15 +493,15 @@ let flatProps_esgc_free_def,flatProps_esgc_free_ind = define_wf
         match x1 with
           (Raise t e:flatLang_exp) -> flatProps_esgc_free e
         | (Handle t e pes) ->
-       flatProps_esgc_free e /\ EVERY flatProps_esgc_free (MAP SND
+       flatProps_esgc_free e /\ ALL flatProps_esgc_free (MAP SND
          pes)
-        | (Con t id' es) -> EVERY flatProps_esgc_free es
+        | (Con t id' es) -> ALL flatProps_esgc_free es
         | (Fun t v e) -> flatProps_set_globals e = EMPTY_BAG
-        | (App t op es) -> EVERY flatProps_esgc_free es
+        | (App t op es) -> ALL flatProps_esgc_free es
         | (If t e1 e2 e3) ->
        flatProps_esgc_free e1 /\ flatProps_esgc_free e2 /\
          flatProps_esgc_free e3
-        | (Mat t e pes) -> flatProps_esgc_free e /\ EVERY
+        | (Mat t e pes) -> flatProps_esgc_free e /\ ALL
           flatProps_esgc_free (MAP SND pes)
         | (Let t v e1 e2) -> flatProps_esgc_free e1 /\
           flatProps_esgc_free e2
@@ -522,7 +521,7 @@ let elist_globals_eq_empty = prove
 
 (* elist_globals_append *)
 let flatProps_elist_globals_append = prove
- (`flatProps_elist_globals (xs ++ ys) = (BAG_UNION)
+ (`flatProps_elist_globals (APPEND xs ys) = (BAG_UNION)
   (flatProps_elist_globals xs) (flatProps_elist_globals ys)`,
   CHEAT_TAC);;
 
@@ -545,8 +544,8 @@ let flatProps_initial_state_clock = prove
   CHEAT_TAC);;
 
 let build_rec_env_eq_MAP = prove
- (`build_rec_env funs cl_env env =
-   MAP (\(f,x,e). (f,Recclosure cl_env funs f)) funs ++ env`,
+ (`build_rec_env funs cl_env env = APPEND (MAP (\(f,x,e).
+  (f,Recclosure cl_env funs f)) funs) env`,
   CHEAT_TAC);;
 
 let evaluate_decs_add_to_clock_io_events_mono_alt = prove
@@ -592,8 +591,8 @@ let flatProps_simple_val_rel_def = new_definition
   `flatProps_simple_val_rel vr = (
      (!v1 v2. (vr v1 v2 ==> isClosure v1 = isClosure v2)) /\ (!v1 v2.
        ~(isClosure v1) ==> vr v1 v2 = (
-         simple_basic_val_rel v1 v2 /\ LIST_REL vr (v_container_xs
-           v1) (v_container_xs v2))))`;;
+         simple_basic_val_rel v1 v2 /\ ALL2 vr (v_container_xs v1)
+           (v_container_xs v2))))`;;
 hol4_overload "simple_val_rel" "flatProps_simple_val_rel";;
 
 (* HOL4 flatPropsScript.sml:953-954: a theorem that HOL4 states as
@@ -609,16 +608,16 @@ let simple_val_rel_isClosure = prove
 
 let flatProps_simple_state_rel_def = new_definition
   `flatProps_simple_state_rel vr sr <=>
-     (!s t. sr s t ==> LIST_REL (semanticPrimitivesProps_sv_rel vr)
+     (!s t. sr s t ==> ALL2 (semanticPrimitivesProps_sv_rel vr)
        (state_refs s) (state_refs t)) /\
      (!s t srefs trefs.
-         sr s t /\ LIST_REL (semanticPrimitivesProps_sv_rel vr) srefs
+         sr s t /\ ALL2 (semanticPrimitivesProps_sv_rel vr) srefs
            trefs ==> sr (state_refs_fupd (K srefs) s) (state_refs_fupd
            (K trefs) t)) /\
-     (!s t. sr s t ==> LIST_REL (OPTREL vr) (flatSem_state_globals s)
+     (!s t. sr s t ==> ALL2 (OPTREL vr) (flatSem_state_globals s)
        (flatSem_state_globals t)) /\
      (!s t sglob tglob.
-         sr s t /\ LIST_REL (OPTREL vr) sglob tglob ==> sr
+         sr s t /\ ALL2 (OPTREL vr) sglob tglob ==> sr
            (flatSem_state_globals_fupd (K sglob) s)
            (flatSem_state_globals_fupd (K tglob) t)) /\
      (!s t. sr s t ==> state_ffi s = state_ffi t) /\
@@ -636,7 +635,7 @@ let simple_do_eq_thm_ind = prove
    (!x1 y1 x2 y2 b.
    flatProps_simple_val_rel vr /\
    do_eq_list x1 y1 = Eq_val b /\
-   LIST_REL vr x1 x2 /\ LIST_REL vr y1 y2 ==>
+   ALL2 vr x1 x2 /\ ALL2 vr y1 y2 ==>
    do_eq_list x2 y2 = Eq_val b)`,
   CHEAT_TAC);;
 
@@ -678,17 +677,17 @@ let simple_v_to_char_list_v_rel = prove
 let simple_v_to_list_v_rel = prove
  (`flatProps_simple_val_rel vr ==>
    (!x y ls. vr x y /\ v_to_list x = SOME ls ==>
-   (?ls'. v_to_list y = SOME ls' /\ LIST_REL vr ls ls'))`,
+   (?ls'. v_to_list y = SOME ls' /\ ALL2 vr ls ls'))`,
   CHEAT_TAC);;
 
 let simple_v_rel_list_to_v = prove
  (`flatProps_simple_val_rel vr ==>
-   (!x y. LIST_REL vr x y ==> vr (list_to_v x) (list_to_v y))`,
+   (!x y. ALL2 vr x y ==> vr (list_to_v x) (list_to_v y))`,
   CHEAT_TAC);;
 
 let simple_vs_to_string_v_rel = prove
  (`flatProps_simple_val_rel vr ==>
-   (!vs ws str. LIST_REL vr vs ws /\ vs_to_string vs = SOME str ==>
+   (!vs ws str. ALL2 vr vs ws /\ vs_to_string vs = SOME str ==>
    vs_to_string ws = SOME str)`,
   CHEAT_TAC);;
 
@@ -708,8 +707,8 @@ let flatProps_simple_val_rel_v_to_bytes = prove
 
 (* [local] *)
 let check_type_LIST_REL_same = prove
- (`LIST_REL vr vs1 vs2 /\
-   EVERY (check_type ty) (MAP flat_to_v vs1) /\
+ (`ALL2 vr vs1 vs2 /\
+   ALL (check_type ty) (MAP flat_to_v vs1) /\
    flatProps_simple_val_rel vr ==>
    vs2 = vs1`,
   CHEAT_TAC);;
@@ -721,7 +720,7 @@ let simple_do_app_thm = prove
    flatProps_simple_state_rel vr sr ==>
    (!s1 vs1 t1 r1 s2 vs2.
    do_app s1 op vs1 = SOME (t1,r1) ==>
-   sr s1 s2 /\ LIST_REL vr vs1 vs2 ==>
+   sr s1 s2 /\ ALL2 vr vs1 vs2 ==>
    (?t2 r2. semanticPrimitivesProps_result_rel vr vr r1 r2 /\
    sr t1 t2 /\ do_app s2 op vs2 = SOME (t2,r2)))`,
   CHEAT_TAC);;
@@ -732,8 +731,8 @@ let evaluate_match_def = new_definition
        (Rabort Rtype_error)) | No_match -> (s,Rerr (Rraise err_v)) |
        Match (env',p',e') ->
          (if ALL_DISTINCT (pat_bindings p') then evaluate
-           (flatSem_environment_v_fupd (K (env' ++
-           flatSem_environment_v env)) env) s [e'] else (s,Rerr
+           (flatSem_environment_v_fupd (K (APPEND env'
+           (flatSem_environment_v env))) env) s [e'] else (s,Rerr
            (Rabort Rtype_error))))`;;
 hol4_overload "evaluate_match" "flatProps_evaluate_match";;
 
@@ -759,15 +758,15 @@ let evaluate_match_NIL = prove
   CHEAT_TAC);;
 
 let evaluate_match_CONS = prove
- (`evaluate_match env s v ((p,e) :: pes) err_v =
+ (`evaluate_match env s v (CONS (p,e) pes) err_v =
      (match pmatch s p v [] with No_match -> evaluate_match env s v
        pes err_v | Match_type_error -> (s,Rerr (Rabort Rtype_error)) |
        Match env_v' ->
          (if ALL_DISTINCT (pat_bindings p) /\ ~(pmatch_rows pes s v
            = Match_type_error) then evaluate
-           (flatSem_environment_v_fupd (K (env_v' ++
-           flatSem_environment_v env)) env) s [e] else (s,Rerr (Rabort
-           Rtype_error))))`,
+           (flatSem_environment_v_fupd (K (APPEND env_v'
+           (flatSem_environment_v env))) env) s [e] else (s,Rerr
+           (Rabort Rtype_error))))`,
   CHEAT_TAC);;
 
 (* HOL4 flatPropsScript.sml:1432-1446: the ML values that the
@@ -798,22 +797,22 @@ let no_Mat_def,no_Mat_ind = assume_definition_rec
   [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;
    `no_Mat (Lit t l:flatLang_exp) <=> T`;
    `no_Mat (flatLang_Var_local t v) <=> T`;
-   `no_Mat (Con t n es:flatLang_exp) <=> EVERY no_Mat es`;
-   `no_Mat (App t op es:flatLang_exp) <=> EVERY no_Mat es`;
+   `no_Mat (Con t n es:flatLang_exp) <=> ALL no_Mat es`;
+   `no_Mat (App t op es:flatLang_exp) <=> ALL no_Mat es`;
    `no_Mat (Fun t v e:flatLang_exp) <=> no_Mat e`;
    `no_Mat (If t x1 x2 x3:flatLang_exp) <=> no_Mat x1 /\ no_Mat x2 /\
   no_Mat x3`;
    `no_Mat (Let t vo e1 e2:flatLang_exp) <=> no_Mat e1 /\ no_Mat e2`;
    `no_Mat (Mat t e pes:flatLang_exp) <=> F`;
-   `no_Mat (Handle t e pes:flatLang_exp) <=> no_Mat e /\ EVERY no_Mat
-  (MAP SND pes) /\
+   `no_Mat (Handle t e pes:flatLang_exp) <=> no_Mat e /\ ALL no_Mat (MAP
+  SND pes) /\
         (match pes with [(Pvar _24,_25)] -> T | _26 -> F)`;
-   `no_Mat (Letrec t funs e:flatLang_exp) <=> EVERY no_Mat (MAP
-  (SND o SND) funs) /\ no_Mat e`];;
+   `no_Mat (Letrec t funs e:flatLang_exp) <=> ALL no_Mat (MAP (SND
+  o SND) funs) /\ no_Mat e`];;
 
 let no_Mat_decs_def,no_Mat_decs_ind = define_rec
   [`no_Mat_decs [] = T`;
-   `no_Mat_decs (e :: xs) = (no_Mat e /\ no_Mat_decs xs)`];;
+   `no_Mat_decs (CONS e xs) = (no_Mat e /\ no_Mat_decs xs)`];;
 
 let mk_flat_install_conf_def = new_definition
   `flatProps_mk_flat_install_conf cc co =

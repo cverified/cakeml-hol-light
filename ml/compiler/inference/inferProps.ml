@@ -151,22 +151,21 @@ let generalise_subst = prove
    (!ts m n s tvs s' ts'.
     (generalise_list m n s ts = (tvs,s',ts')) ==>
     (s SUBMAP s') /\
-    (FDOM s' = FDOM s UNION {uv | uv IN BIGUNION (set_of_list (MAP
+    (FDOM s' = FDOM s UNION {uv | uv IN UNIONS (set_of_list (MAP
       t_vars ts)) /\ m <= uv}) /\
     (!uv. uv IN FDOM s' DIFF FDOM s ==> (?tv. (FAPPLY s' uv = tv) /\
       n <= tv /\ tv < tvs + n)) /\
-    (!uv. uv IN BIGUNION (set_of_list (MAP t_vars ts')) ==> uv < m)
-      /\
+    (!uv. uv IN UNIONS (set_of_list (MAP t_vars ts')) ==> uv < m) /\
     (MAP (infer_subst s') ts = MAP (infer_subst s) ts'))`,
   CHEAT_TAC);;
 
 let generalise_subst_empty = prove
  (`!n ts tvs s ts'.
     (generalise_list 0 n FEMPTY ts = (tvs,s,ts')) ==>
-    (FDOM s = {uv | uv IN BIGUNION (set_of_list (MAP t_vars ts))}) /\
+    (FDOM s = {uv | uv IN UNIONS (set_of_list (MAP t_vars ts))}) /\
     (!uv. uv IN FDOM s ==> (?tv. (FAPPLY s uv = tv) /\ tv < tvs + n))
       /\
-    (BIGUNION (set_of_list (MAP t_vars ts')) = {}) /\
+    (UNIONS (set_of_list (MAP t_vars ts')) = {}) /\
     (ts' = MAP (infer_subst s) ts)`,
   CHEAT_TAC);;
 
@@ -262,8 +261,8 @@ let add_constraints_nil2_success = prove
 
 (* [local] *)
 let add_constraints_cons2_success = prove
- (`(add_constraints l ts1 (t2 :: ts2) st = (M_success x,st')) = (?t1 tl1
-  st''. ts1 = t1 :: tl1 /\
+ (`(add_constraints l ts1 (CONS t2 ts2) st = (M_success x,st')) = (?t1
+  tl1 st''. ts1 = CONS t1 tl1 /\
      add_constraint l t1 t2 st = (M_success one,st'') /\
      add_constraints l tl1 ts2 st'' = (M_success x,st'))`,
   CHEAT_TAC);;
@@ -336,16 +335,16 @@ let type_name_check_subst_success = prove
     type_name_check_subst_list l f tenvT tvs ts s = (M_success r,s')
       <=>
     s = s' /\ r = MAP (type_name_subst tenvT) ts /\
-    EVERY (check_freevars_ast tvs) ts /\ EVERY (check_type_names
-      tenvT) ts)`,
+    ALL (check_freevars_ast tvs) ts /\ ALL (check_type_names tenvT)
+      ts)`,
   CHEAT_TAC);;
 
 let check_ctor_types_success = prove
  (`!l tenvT tvs ts s s'.
    check_ctor_types l tenvT tvs ts s = (M_success one,s') <=>
    s = s' /\
-   EVERY (\(cn,ts). EVERY (check_freevars_ast tvs) ts /\
-   EVERY (check_type_names tenvT) ts) ts`,
+   ALL (\(cn,ts). ALL (check_freevars_ast tvs) ts /\
+   ALL (check_type_names tenvT) ts) ts`,
   CHEAT_TAC);;
 
 (* check_dup_ctors_thm *)
@@ -430,7 +429,7 @@ let pure_add_constraints_apply = prove
 
 let pure_add_constraints_append = prove
  (`!s1 ts1 s3 ts2.
-    pure_add_constraints s1 (ts1 ++ ts2) s3 =
+    pure_add_constraints s1 (APPEND ts1 ts2) s3 =
     (?s2. pure_add_constraints s1 ts1 s2 /\ pure_add_constraints s2
       ts2 s3)`,
   CHEAT_TAC);;
@@ -540,36 +539,36 @@ let infer_e_wfs = prove
 
 let check_t_more = prove
  (`(!t tvs. check_t tvs {} t ==> (!uvs. check_t tvs uvs t)) /\
-   (!ts tvs. EVERY (check_t tvs {}) ts ==> (!uvs. EVERY (check_t
-     tvs uvs) ts))`,
+   (!ts tvs. ALL (check_t tvs {}) ts ==> (!uvs. ALL (check_t tvs
+     uvs) ts))`,
   CHEAT_TAC);;
 
 let check_t_more2 = prove
  (`(!t tvs uvs. check_t tvs uvs t ==> (!tvs'. check_t (tvs' + tvs) uvs
   t)) /\
-   (!ts tvs uvs. EVERY (check_t tvs uvs) ts ==> (!tvs'. EVERY
-     (check_t (tvs' + tvs) uvs) ts))`,
+   (!ts tvs uvs. ALL (check_t tvs uvs) ts ==> (!tvs'. ALL (check_t
+     (tvs' + tvs) uvs) ts))`,
   CHEAT_TAC);;
 
 let check_t_more3 = prove
  (`(!t uvs tvs. check_t tvs (count uvs) t ==> (!uvs'. check_t tvs (count
   (uvs + uvs')) t)) /\
-   (!ts uvs tvs. EVERY (check_t tvs (count uvs)) ts ==> (!uvs'.
-     EVERY (check_t tvs (count (uvs + uvs'))) ts))`,
+   (!ts uvs tvs. ALL (check_t tvs (count uvs)) ts ==> (!uvs'. ALL
+     (check_t tvs (count (uvs + uvs'))) ts))`,
   CHEAT_TAC);;
 
 let check_t_more4 = prove
  (`(!t uvs tvs. check_t tvs (count uvs) t ==> (!uvs'. uvs <= uvs' ==>
   check_t tvs (count uvs') t)) /\
-   (!ts uvs tvs. EVERY (check_t tvs (count uvs)) ts ==> (!uvs'. uvs
-     <= uvs' ==> EVERY (check_t tvs (count uvs')) ts))`,
+   (!ts uvs tvs. ALL (check_t tvs (count uvs)) ts ==> (!uvs'. uvs
+     <= uvs' ==> ALL (check_t tvs (count uvs')) ts))`,
   CHEAT_TAC);;
 
 let check_t_more5 = prove
  (`(!t uvs tvs. check_t tvs uvs t ==> (!uvs'. uvs SUBSET uvs' ==>
   check_t tvs uvs' t)) /\
-   (!ts uvs tvs. EVERY (check_t tvs uvs) ts ==> (!uvs'. uvs SUBSET
-     uvs' ==> EVERY (check_t tvs uvs') ts))`,
+   (!ts uvs tvs. ALL (check_t tvs uvs) ts ==> (!uvs'. uvs SUBSET
+     uvs' ==> ALL (check_t tvs uvs') ts))`,
   CHEAT_TAC);;
 
 let check_t_t_vars = prove
@@ -614,7 +613,7 @@ let infer_deBruijn_subst_twice = prove
      infer_deBruijn_subst (MAP (infer_deBruijn_subst subst1) subst2)
        t)) /\
    (!ts.
-    EVERY (check_t (LENGTH subst2) uvs) ts ==>
+    ALL (check_t (LENGTH subst2) uvs) ts ==>
     MAP ((infer_deBruijn_subst subst1) o (infer_deBruijn_subst
       subst2)) ts =
     MAP (infer_deBruijn_subst (MAP (infer_deBruijn_subst subst1)
@@ -680,8 +679,8 @@ let t_unify_check_s_help = prove
    (!s ts1 ts2. t_wfs s ==>
      (!tvs uvs s'.
             check_s tvs uvs s /\
-            EVERY (check_t tvs uvs) ts1 /\
-            EVERY (check_t tvs uvs) ts2 /\
+            ALL (check_t tvs uvs) ts1 /\
+            ALL (check_t tvs uvs) ts2 /\
             (ts_unify s ts1 ts2 = SOME s') ==>
             check_s tvs uvs s'))`,
   CHEAT_TAC);;
@@ -695,10 +694,10 @@ let check_t_walkstar = prove
       check_t tvs {} (t_walkstar s t)) /\
    (!ts tvs s.
       t_wfs s /\
-      EVERY (check_t tvs (FDOM s)) ts /\
+      ALL (check_t tvs (FDOM s)) ts /\
       (!uv. uv IN FDOM s ==> check_t tvs {} (t_walkstar s
         (Infer_Tuvar uv))) ==>
-      EVERY (check_t tvs {} o t_walkstar s) ts)`,
+      ALL (check_t tvs {} o t_walkstar s) ts)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -732,7 +731,7 @@ let pure_add_constraints_check_s = prove
  (`!s1 tvs uvs ts s2.
     pure_add_constraints s1 ts s2 /\
     t_wfs s1 /\
-    EVERY (\(t1,t2). check_t tvs (count uvs) t1 /\ check_t tvs (count
+    ALL (\(t1,t2). check_t tvs (count uvs) t1 /\ check_t tvs (count
       uvs) t2) ts /\
     check_s tvs (count uvs) s1 ==>
     check_s tvs (count uvs) s2`,
@@ -741,14 +740,14 @@ let pure_add_constraints_check_s = prove
 let infer_p_check_t = prove
  (`(!l cenv p st t env st'.
       (infer_p l cenv p st = (M_success (t,env),st')) ==>
-      EVERY (\(x,t). check_t 0 (count (infer_st_next_uvar st')) t)
-        env /\
+      ALL (\(x,t). check_t 0 (count (infer_st_next_uvar st')) t) env
+        /\
       check_t 0 (count (infer_st_next_uvar st')) t) /\
    (!l cenv ps st ts env st'.
       (infer_ps l cenv ps st = (M_success (ts,env),st')) ==>
-      EVERY (\(x,t). check_t 0 (count (infer_st_next_uvar st')) t)
-        env /\
-      EVERY (check_t 0 (count (infer_st_next_uvar st'))) ts)`,
+      ALL (\(x,t). check_t 0 (count (infer_st_next_uvar st')) t) env
+        /\
+      ALL (check_t 0 (count (infer_st_next_uvar st'))) ts)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -758,10 +757,10 @@ let check_infer_type_subst = prove
    check_t 0 (count (LENGTH tvs + uvs)) (infer_type_subst (ZIP tvs
      (MAP (\n. Infer_Tuvar (uvs + n)) (COUNT_LIST (LENGTH tvs)))) t)) /\
    (!ts tvs uvs.
-   EVERY (check_freevars 0 tvs) ts ==>
-   EVERY (\t. check_t 0 (count (LENGTH tvs + uvs))
-     (infer_type_subst (ZIP tvs (MAP (\n. Infer_Tuvar (uvs + n))
-     (COUNT_LIST (LENGTH tvs)))) t)) ts)`,
+   ALL (check_freevars 0 tvs) ts ==>
+   ALL (\t. check_t 0 (count (LENGTH tvs + uvs)) (infer_type_subst
+     (ZIP tvs (MAP (\n. Infer_Tuvar (uvs + n)) (COUNT_LIST (LENGTH
+     tvs)))) t)) ts)`,
   CHEAT_TAC);;
 
 (* moved this one around a bit *)
@@ -770,8 +769,8 @@ let infer_type_subst_empty_check = prove
    check_freevars 0 [] t ==>
    check_t 0 {} (infer_type_subst [] t)) /\
    (!ts.
-   EVERY (check_freevars 0 []) ts ==>
-   EVERY (check_t 0 {}) (MAP (infer_type_subst []) ts))`,
+   ALL (check_freevars 0 []) ts ==>
+   ALL (check_t 0 {}) (MAP (infer_type_subst []) ts))`,
   CHEAT_TAC);;
 
 let type_name_check_subst_thm = prove
@@ -783,8 +782,8 @@ let type_name_check_subst_thm = prove
    (!ts l err tenvT fvs (st:'a) rs st'.
      type_name_check_subst_list l err tenvT fvs ts st = (M_success
        rs,st') ==>
-     EVERY (check_freevars_ast fvs) ts /\ EVERY (check_type_names
-       tenvT) ts /\
+     ALL (check_freevars_ast fvs) ts /\ ALL (check_type_names tenvT)
+       ts /\
      rs = MAP (type_name_subst tenvT) ts)`,
   CHEAT_TAC);;
 
@@ -794,8 +793,8 @@ let type_name_check_subst_comp_thm = prove
      type_name_check_subst l err tenvT fvs t st =
        (M_success (type_name_subst tenvT t),st)) /\
    (!ts l err tenvT fvs (st:'a) rs st'.
-     EVERY (check_freevars_ast fvs) ts /\ EVERY (check_type_names
-       tenvT) ts ==>
+     ALL (check_freevars_ast fvs) ts /\ ALL (check_type_names tenvT)
+       ts ==>
      type_name_check_subst_list l err tenvT fvs ts st =
        (M_success (MAP (type_name_subst tenvT) ts),st))`,
   CHEAT_TAC);;
@@ -843,9 +842,9 @@ let check_t_infer_db_subst = prove
       Infer_Tuvar (uvs + n)) (COUNT_LIST tvs)) t) =
     check_t tvs (count (uvs + tvs)) t) /\
    (!ts uvs tvs.
-    EVERY (check_t 0 (count (uvs + tvs)) o infer_deBruijn_subst (MAP
+    ALL (check_t 0 (count (uvs + tvs)) o infer_deBruijn_subst (MAP
       (\n. Infer_Tuvar (uvs + n)) (COUNT_LIST tvs))) ts =
-    EVERY (check_t tvs (count (uvs + tvs))) ts)`,
+    ALL (check_t tvs (count (uvs + tvs))) ts)`,
   CHEAT_TAC);;
 
 let check_t_infer_db_subst2 = prove
@@ -854,9 +853,9 @@ let check_t_infer_db_subst2 = prove
        Infer_Tuvar n) (COUNT_LIST tvs2)) t) =
      check_t (tvs1 + tvs2) (count tvs2) t) /\
    (!ts tvs1 tvs2.
-     EVERY (check_t tvs1 (count tvs2) o infer_deBruijn_subst (MAP
-       (\n. Infer_Tuvar n) (COUNT_LIST tvs2))) ts =
-     EVERY (check_t (tvs1 + tvs2) (count tvs2)) ts)`,
+     ALL (check_t tvs1 (count tvs2) o infer_deBruijn_subst (MAP (\n.
+       Infer_Tuvar n) (COUNT_LIST tvs2))) ts =
+     ALL (check_t (tvs1 + tvs2) (count tvs2)) ts)`,
   CHEAT_TAC);;
 
 let infer_e_check_t = prove
@@ -869,7 +868,7 @@ let infer_e_check_t = prove
       infer_es l ienv es st = (M_success ts,st') /\
       ienv_val_ok (count (infer_st_next_uvar st)) (inf_env_inf_v
         ienv) ==>
-      EVERY (check_t 0 (count (infer_st_next_uvar st'))) ts) /\
+      ALL (check_t 0 (count (infer_st_next_uvar st'))) ts) /\
    (!l ienv pes t1 t2 st st'.
       infer_pes l ienv pes t1 t2 st = (M_success one,st') /\
      ienv_val_ok (count (infer_st_next_uvar st)) (inf_env_inf_v ienv)
@@ -879,7 +878,7 @@ let infer_e_check_t = prove
       infer_funs l ienv funs st = (M_success ts',st') /\
       ienv_val_ok (count (infer_st_next_uvar st)) (inf_env_inf_v
         ienv) ==>
-      EVERY (check_t 0 (count (infer_st_next_uvar st'))) ts')`,
+      ALL (check_t 0 (count (infer_st_next_uvar st'))) ts')`,
   CHEAT_TAC);;
 
 (* HOL4 inferPropsScript.sml:1836-1837: ML code, not ported *)
@@ -896,7 +895,7 @@ let constrain_op_wfs = prove
 let constrain_op_check_t = prove
  (`!l tvs op ts t st st'.
     constrain_op l op ts st = (M_success t,st') /\
-    EVERY (check_t 0 (count (infer_st_next_uvar st))) ts ==>
+    ALL (check_t 0 (count (infer_st_next_uvar st))) ts ==>
     check_t 0 (count (infer_st_next_uvar st')) t`,
   CHEAT_TAC);;
 
@@ -904,7 +903,7 @@ let constrain_op_check_s = prove
  (`!l tvs op ts t st st'.
     constrain_op l op ts st = (M_success t,st') /\
     t_wfs (infer_st_subst st) /\
-    EVERY (check_t 0 (count (infer_st_next_uvar st))) ts /\
+    ALL (check_t 0 (count (infer_st_next_uvar st))) ts /\
     check_s tvs (count (infer_st_next_uvar st)) (infer_st_subst st)
       ==>
     check_s tvs (count (infer_st_next_uvar st')) (infer_st_subst
@@ -974,7 +973,7 @@ let generalise_complete_lemma2 = prove
  (`!s ts.
    t_wfs s /\
    ALL_DISTINCT (MAP FST ts) /\
-   EVERY (\t. t = Infer_Tapp [] TC_unit \/ (?tvs. t = Infer_Tvar_db
+   ALL (\t. t = Infer_Tapp [] TC_unit \/ (?tvs. t = Infer_Tvar_db
      tvs)) (MAP SND ts) /\
    DISJOINT (FDOM s) (FDOM (FEMPTY |++ ts)) ==>
    pure_add_constraints s (MAP (\(uv,t). (Infer_Tuvar uv,t)) ts) (s
@@ -1049,8 +1048,8 @@ let set_tids_def,set_tids_ind = define_wf
   `MEASURE t_size`
   [`set_tids x1 =
         match x1 with
-          Tapp ts tn -> tn INSERT (BIGUNION (set_of_list (MAP
-            set_tids ts)))
+          Tapp ts tn -> tn INSERT (UNIONS (set_of_list (MAP set_tids
+            ts)))
         | _3 -> {}`];;
 
 (* HOL4 inferPropsScript.sml:2506: ML code, not ported *)
@@ -1093,7 +1092,7 @@ let inf_set_tids_def,inf_set_tids_ind = define_wf
   `MEASURE infer_t_size`
   [`inf_set_tids x1 =
         match x1 with
-          Infer_Tapp ts tn -> tn INSERT (BIGUNION (set_of_list (MAP
+          Infer_Tapp ts tn -> tn INSERT (UNIONS (set_of_list (MAP
             inf_set_tids ts)))
         | _4 -> {}`];;
 
@@ -1106,14 +1105,14 @@ let inf_set_tids_subset_def = new_definition
 let inf_set_tids_infer_type_subst_SUBSET = prove
  (`!subst (t:t).
      inf_set_tids (infer_type_subst subst t) SUBSET
-     set_tids t UNION BIGUNION (IMAGE inf_set_tids (set_of_list
-       (MAP SND subst)))`,
+     set_tids t UNION UNIONS (IMAGE inf_set_tids (set_of_list (MAP
+       SND subst)))`,
   CHEAT_TAC);;
 
 let inf_set_tids_infer_deBruijn_subst_SUBSET = prove
  (`!subst t.
      inf_set_tids (infer_deBruijn_subst subst t) SUBSET
-     inf_set_tids t UNION BIGUNION (IMAGE inf_set_tids (set_of_list
+     inf_set_tids t UNION UNIONS (IMAGE inf_set_tids (set_of_list
        subst))`,
   CHEAT_TAC);;
 
@@ -1126,7 +1125,7 @@ let inf_set_tids_ienv_def = new_definition
   `inf_set_tids_ienv tids (ienv:inf_env) <=>
    nsAll (\i (ls,t). inf_set_tids_subset tids (unconvert_t t))
      (inf_env_inf_t ienv) /\
-   nsAll (\i (ls,ts,tid). EVERY (\t. inf_set_tids_subset tids
+   nsAll (\i (ls,ts,tid). ALL (\t. inf_set_tids_subset tids
      (unconvert_t t)) ts /\ tid IN tids) (inf_env_inf_c ienv) /\
    nsAll (\i (n,t). inf_set_tids_subset tids t) (inf_env_inf_v
      ienv)`;;
@@ -1137,8 +1136,8 @@ let inf_set_tids_subst_def = new_definition
 
 let prim_tids_def = new_definition
   `prim_tids contain' tids <=>
-     EVERY (\x. x IN tids <=> contain') (Tlist_num :: Tbool_num ::
-       prim_type_nums)`;;
+     ALL (\x. x IN tids <=> contain') (CONS Tlist_num (CONS
+       Tbool_num prim_type_nums))`;;
 
 let set_tids_subset_type_name_subst = prove
  (`!tenvt t tids.
@@ -1153,7 +1152,7 @@ let generalise_complete = prove
       /\
     t_wfs s /\
     check_s 0 (count next_uvar) s /\
-    EVERY (\t. check_t 0 (count next_uvar) t) l ==>
+    ALL (\t. check_t 0 (count next_uvar) t) l ==>
     (?ec1 last_sub.
       (ts = MAP (t_walkstar last_sub) l) /\
       t_wfs last_sub /\
@@ -1271,12 +1270,12 @@ let count_list_one = prove
 let check_freevars_more_append = prove
  (`(!t x fvs1 fvs2.
    check_freevars x fvs1 t ==>
-   check_freevars x (fvs2 ++ fvs1) t /\
-   check_freevars x (fvs1 ++ fvs2) t) /\
+   check_freevars x (APPEND fvs2 fvs1) t /\
+   check_freevars x (APPEND fvs1 fvs2) t) /\
    (!ts x fvs1 fvs2.
-   EVERY (check_freevars x fvs1) ts ==>
-   EVERY (check_freevars x (fvs2 ++ fvs1)) ts /\
-   EVERY (check_freevars x (fvs1 ++ fvs2)) ts)`,
+   ALL (check_freevars x fvs1) ts ==>
+   ALL (check_freevars x (APPEND fvs2 fvs1)) ts /\
+   ALL (check_freevars x (APPEND fvs1 fvs2)) ts)`,
   CHEAT_TAC);;
 
 let check_freevars_more = prove
@@ -1323,17 +1322,17 @@ let deBruijn_subst_nothing = prove
 let infer_deBruijn_subst_id2 = prove
  (`(!t.
    check_t tvs {} t ==>
-   infer_deBruijn_subst (GENLIST (Infer_Tvar_db) tvs) t = t) /\
+   infer_deBruijn_subst (list_of_seq (Infer_Tvar_db) tvs) t = t) /\
    (!ts.
-   EVERY (check_t tvs {}) ts ==>
-   MAP (infer_deBruijn_subst (GENLIST (Infer_Tvar_db) tvs)) ts =
-     ts)`,
+   ALL (check_t tvs {}) ts ==>
+   MAP (infer_deBruijn_subst (list_of_seq (Infer_Tvar_db) tvs)) ts
+     = ts)`,
   CHEAT_TAC);;
 
 let check_t_infer_deBruijn_subst = prove
  (`!subst t tvs uvs.
      check_t (tvs + LENGTH subst) uvs t /\
-     EVERY (check_t tvs uvs) subst ==>
+     ALL (check_t tvs uvs) subst ==>
      check_t tvs uvs (infer_deBruijn_subst subst t)`,
   CHEAT_TAC);;
 
@@ -1374,21 +1373,21 @@ let generalise_subst_exist = prove
    (?subst'.
    LENGTH subst' = a /\
    (!x. MEM x subst' ==> check_t tvs {} x) /\
-   (!x. x IN FDOM b ==> EL (FAPPLY b x) (subst ++ subst') =
+   (!x. x IN FDOM b ==> EL (FAPPLY b x) (APPEND subst subst') =
      t_walkstar s (Infer_Tuvar x)))) /\
    (!ts subst n smap a b ts'.
    LENGTH subst = n /\
    FRANGE smap SUBSET count n /\
    (!x. MEM x subst ==> check_t tvs {} x) /\
-   EVERY (\t. t_vars t SUBSET FDOM s) ts /\
-   EVERY (check_t 0 (FDOM s)) ts /\
+   ALL (\t. t_vars t SUBSET FDOM s) ts /\
+   ALL (check_t 0 (FDOM s)) ts /\
    (!x. x IN FDOM smap ==> EL (FAPPLY smap x) subst = t_walkstar s
      (Infer_Tuvar x)) /\
    generalise_list 0 n smap ts = (a,b,ts') ==>
    (?subst'.
    LENGTH subst' = a /\
    (!x. MEM x subst' ==> check_t tvs {} x) /\
-   (!x. x IN FDOM b ==> EL (FAPPLY b x) (subst ++ subst') =
+   (!x. x IN FDOM b ==> EL (FAPPLY b x) (APPEND subst subst') =
      t_walkstar s (Infer_Tuvar x))))`,
   CHEAT_TAC);;
 
@@ -1404,10 +1403,10 @@ let infer_deBruijn_subst_infer_subst_walkstar = prove
    infer_deBruijn_subst subst (infer_subst b t) =
    t_walkstar s t) /\
    (!ts.
-   EVERY (\t. (!x. x IN t_vars t ==> EL (FAPPLY b x) subst =
-     t_walkstar s (Infer_Tuvar x))) ts /\
-   EVERY (check_t 0 m) ts /\
-   EVERY (\t. t_vars t SUBSET FDOM b) ts ==>
+   ALL (\t. (!x. x IN t_vars t ==> EL (FAPPLY b x) subst = t_walkstar
+     s (Infer_Tuvar x))) ts /\
+   ALL (check_t 0 m) ts /\
+   ALL (\t. t_vars t SUBSET FDOM b) ts ==>
    MAP ((infer_deBruijn_subst subst) o (infer_subst b)) ts =
    MAP (t_walkstar s) ts))`,
   CHEAT_TAC);;
@@ -1460,8 +1459,8 @@ let t_unify_set_tids = prove
    (!s ts1 ts2. t_wfs s ==>
    (!s'.
    inf_set_tids_subst tids s /\
-   EVERY (inf_set_tids_subset tids) ts1 /\
-   EVERY (inf_set_tids_subset tids) ts2 /\
+   ALL (inf_set_tids_subset tids) ts1 /\
+   ALL (inf_set_tids_subset tids) ts2 /\
    ts_unify s ts1 ts2 = SOME s' ==>
    inf_set_tids_subst tids s'))`,
   CHEAT_TAC);;
@@ -1469,8 +1468,8 @@ let t_unify_set_tids = prove
 let pure_add_constraints_set_tids = prove
  (`!s1 ls s2.
    t_wfs s1 /\
-   EVERY (inf_set_tids_subset tids) (MAP FST ls) /\
-   EVERY (inf_set_tids_subset tids) (MAP SND ls) /\
+   ALL (inf_set_tids_subset tids) (MAP FST ls) /\
+   ALL (inf_set_tids_subset tids) (MAP SND ls) /\
    inf_set_tids_subst tids s1 /\
    pure_add_constraints s1 ls s2 ==>
    inf_set_tids_subst tids s2`,
@@ -1487,21 +1486,21 @@ let infer_p_inf_set_tids = prove
    inf_set_tids_subst tids (infer_st_subst st) /\ t_wfs
      (infer_st_subst st) ==>
    inf_set_tids_subset tids t /\
-   EVERY (inf_set_tids_subset tids o SND) env /\
+   ALL (inf_set_tids_subset tids o SND) env /\
    inf_set_tids_subst tids (infer_st_subst st')) /\
    (!l cenv ps st ts env st'.
    (infer_ps l cenv ps st = (M_success (ts,env),st')) ==>
    prim_tids T tids /\ inf_set_tids_ienv tids cenv /\
    inf_set_tids_subst tids (infer_st_subst st) /\ t_wfs
      (infer_st_subst st) ==>
-   EVERY (inf_set_tids_subset tids) ts /\
-   EVERY (inf_set_tids_subset tids o SND) env /\
+   ALL (inf_set_tids_subset tids) ts /\
+   ALL (inf_set_tids_subset tids o SND) env /\
    inf_set_tids_subst tids (infer_st_subst st'))`,
   CHEAT_TAC);;
 
 let constrain_op_set_tids = prove
  (`constrain_op l op ts st = (M_success t,st') /\
-   EVERY (inf_set_tids_subset tids) ts /\
+   ALL (inf_set_tids_subset tids) ts /\
    inf_set_tids_subst tids (infer_st_subst st) /\
    t_wfs (infer_st_subst st) /\ prim_tids T tids ==>
    inf_set_tids_subset tids t /\ inf_set_tids_subst tids
@@ -1521,7 +1520,7 @@ let infer_e_inf_set_tids = prove
      prim_tids T tids /\ inf_set_tids_ienv tids cenv /\
      inf_set_tids_subst tids (infer_st_subst st) /\ t_wfs
        (infer_st_subst st) ==>
-     EVERY (inf_set_tids_subset tids) ts /\
+     ALL (inf_set_tids_subset tids) ts /\
      inf_set_tids_subst tids (infer_st_subst st')) /\
    (!l cenv ps t1 t2 st st'.
      (infer_pes l cenv ps t1 t2 st = (M_success one,st')) ==>
@@ -1535,7 +1534,7 @@ let infer_e_inf_set_tids = prove
      prim_tids T tids /\ inf_set_tids_ienv tids cenv /\
      inf_set_tids_subst tids (infer_st_subst st) /\ t_wfs
        (infer_st_subst st) ==>
-     EVERY (inf_set_tids_subset tids) ts /\
+     ALL (inf_set_tids_subset tids) ts /\
      inf_set_tids_subst tids (infer_st_subst st'))`,
   CHEAT_TAC);;
 
@@ -1543,7 +1542,7 @@ let generalise_inf_set_tids = prove
  (`(!d a b c e f g. generalise a b c d = (e,f,g) ==>
                     inf_set_tids g = inf_set_tids d) /\
    (!d a b c e f g. generalise_list a b c d = (e,f,g) ==>
-                    EVERY2 (inv_image (=) inf_set_tids) d g)`,
+                    ALL2 (inv_image (=) inf_set_tids) d g)`,
   CHEAT_TAC);;
 
 let start_type_id_prim_tids_count = prove
@@ -1585,7 +1584,7 @@ let nsMap_FOLDL_nsAppend = prove
 
 let nsAll_FOLDL_nsAppend = prove
  (`!ls ns.
-   nsAll P ns /\ EVERY (nsAll P) ls ==> nsAll P (FOLDL nsAppend ns
+   nsAll P ns /\ ALL (nsAll P) ls ==> nsAll P (FOLDL nsAppend ns
      ls)`,
   CHEAT_TAC);;
 

@@ -34,7 +34,7 @@ let cmlParse_destResult_def = new_definition
   `cmlParse_destResult x1 =
       match x1 with
         pegexec_Result (peg_Success [] x eo) -> peg_Success [] x eo
-      | (pegexec_Result (peg_Success ((_1,l) :: _2) _3 _4)) ->
+      | (pegexec_Result (peg_Success (CONS (_1,l) _2) _3 _4)) ->
    peg_Failure l "Expected to be at EOF"
       | (pegexec_Result (peg_Failure fl fe)) -> peg_Failure fl fe
       | _5 -> peg_Failure unknown_loc
@@ -67,7 +67,7 @@ let pegresult_choice_def = new_definition
 
 let toks_to_loc_def = define_cases
   [`toks_to_loc [] = unknown_loc`;
-   `toks_to_loc ((h,L) :: _7) = L`];;
+   `toks_to_loc (CONS (h,L) _7) = L`];;
 
 let pegresult_guard_def = new_definition
   `(pegresult_guard b:(tokens_token#locs) list->((tokens_token#locs)

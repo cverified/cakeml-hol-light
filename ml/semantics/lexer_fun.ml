@@ -50,20 +50,20 @@ let read_while_def,read_while_ind = define_shaped_rec
   [`read_while P x2 s =
         match x2 with
           "" -> (IMPLODE (REVERSE s),"")
-        | (STRING c cs) ->
-        (if P c then read_while P cs (c :: s) else (IMPLODE
-          (REVERSE s),STRING c cs))`];;
+        | (CONS c cs) ->
+        (if P c then read_while P cs (CONS c s) else (IMPLODE
+          (REVERSE s),CONS c cs))`];;
 
 let read_while_thm = prove
  (`!cs s cs' s'.
-       (read_while P cs s = (s',cs')) ==> STRLEN cs' <= STRLEN cs`,
+       (read_while P cs s = (s',cs')) ==> LENGTH cs' <= LENGTH cs`,
   CHEAT_TAC);;
 
 let is_single_char_symbol_def = new_definition
   `is_single_char_symbol c = MEM c "()[]{},;"`;;
 
 let isSymbol_def = new_definition
-  `isSymbol c = MEM c (CHR 96 ::
+  `isSymbol c = MEM c (CONS (CHR 96)
                 // backquote
                 "!%&$#+-/:<=>?@\\~^|*")`;;
 
@@ -114,24 +114,25 @@ let lexer_fun_read_string_def,lexer_fun_read_string_ind =
      if HD str = (CHR 34) then (StringS s,loc,TL str) else
      if HD str = (CHR 10) then (ErrorS,next_line loc,TL str) else
      if ~(HD str = (CHR 92)) then
-       lexer_fun_read_string (TL str) (s ++ [HD str]) (next_loc 1
-         loc) else
-       match TL str with (CHR 92) :: cs -> lexer_fun_read_string cs
-         (s ++ "\\") (next_loc 2 loc) | (CHR 34) :: cs ->
-         lexer_fun_read_string cs (s ++ "\"") (next_loc 2 loc) | (CHR
-         97) :: cs -> lexer_fun_read_string cs (s ++ [CHR 7]) (next_loc
-         2 loc) | (CHR 98) :: cs -> lexer_fun_read_string cs (s ++ [CHR
-         8]) (next_loc 2 loc) | (CHR 116) :: cs ->
-         lexer_fun_read_string cs (s ++ [CHR 9]) (next_loc 2 loc) |
-         (CHR 110) :: cs -> lexer_fun_read_string cs (s ++ [CHR 10])
-         (next_loc 2 loc) | (CHR 118) :: cs -> lexer_fun_read_string cs
-         (s ++ [CHR 11]) (next_loc 2 loc) | (CHR 102) :: cs ->
-         lexer_fun_read_string cs (s ++ [CHR 12]) (next_loc 2 loc) |
-         (CHR 114) :: cs -> lexer_fun_read_string cs (s ++ [CHR 13])
-         (next_loc 2 loc) | c :: cs -> (if isDigit c then
-                    match read_char_as_3digits (c :: cs) with
-                      NONE -> (ErrorS,loc,c :: cs) | SOME (c,cs') ->
-                        lexer_fun_read_string cs' (s ++ [c])
+       lexer_fun_read_string (TL str) (APPEND s [HD str]) (next_loc
+         1 loc) else
+       match TL str with CONS (CHR 92) cs -> lexer_fun_read_string
+         cs (APPEND s "\\") (next_loc 2 loc) | CONS (CHR 34) cs ->
+         lexer_fun_read_string cs (APPEND s "\"") (next_loc 2 loc) |
+         CONS (CHR 97) cs -> lexer_fun_read_string cs (APPEND s [CHR
+         7]) (next_loc 2 loc) | CONS (CHR 98) cs ->
+         lexer_fun_read_string cs (APPEND s [CHR 8]) (next_loc 2 loc) |
+         CONS (CHR 116) cs -> lexer_fun_read_string cs (APPEND s [CHR
+         9]) (next_loc 2 loc) | CONS (CHR 110) cs ->
+         lexer_fun_read_string cs (APPEND s [CHR 10]) (next_loc 2 loc)
+         | CONS (CHR 118) cs -> lexer_fun_read_string cs (APPEND s [CHR
+         11]) (next_loc 2 loc) | CONS (CHR 102) cs ->
+         lexer_fun_read_string cs (APPEND s [CHR 12]) (next_loc 2 loc)
+         | CONS (CHR 114) cs -> lexer_fun_read_string cs (APPEND s [CHR
+         13]) (next_loc 2 loc) | CONS c cs -> (if isDigit c then
+                    match read_char_as_3digits (CONS c cs) with
+                      NONE -> (ErrorS,loc,CONS c cs) | SOME (c,cs')
+                        -> lexer_fun_read_string cs' (APPEND s [c])
                               (next_loc 4 loc) else
                                 (ErrorS,loc,TL str)) | _2 ->
                                 (ErrorS,loc,TL str))`];;
@@ -148,14 +149,14 @@ let skip_comment_def,skip_comment_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size char_size x0)`
   [`skip_comment "" d _3 = NONE`;
    `skip_comment [x] d _4 = NONE`;
-   `skip_comment (x :: y :: xs) d loc =
+   `skip_comment (CONS x (CONS y xs)) d loc =
         (if [x; y] = "(*" then
           skip_comment xs (d + (1:num)) (next_loc 2 loc) else if [x;
             y] = "*)" then
           (if d = 0 then SOME (xs,next_loc 2 loc) else skip_comment
             xs (d - 1) (next_loc 2 loc)) else if ORD x = 10 then
-          skip_comment (y :: xs) d (next_line loc) else
-            skip_comment (y :: xs) d (next_loc 1 loc))`];;
+          skip_comment (CONS y xs) d (next_line loc) else
+            skip_comment (CONS y xs) d (next_loc 1 loc))`];;
 
 let skip_comment_thm = prove
  (`!xs d l l' str. (skip_comment xs d l = SOME (str,l')) ==> LENGTH
@@ -164,12 +165,12 @@ let skip_comment_thm = prove
 
 let read_FFIcall_def,read_FFIcall_ind = define_rec
   [`read_FFIcall "" acc loc = (ErrorS,loc,"")`;
-   `read_FFIcall (c :: s0) acc loc =
+   `read_FFIcall (CONS c s0) acc loc =
           (if c = (CHR 41) then
             (FFIS (REVERSE acc),next_loc 2 loc,s0) else if c = (CHR
               10) then (ErrorS,loc,s0) else if isSpace c then
             read_FFIcall s0 acc (next_loc 1 loc) else
-            read_FFIcall s0 (c :: acc) (next_loc 1 loc))`];;
+            read_FFIcall s0 (CONS c acc) (next_loc 1 loc))`];;
 
 let read_FFIcall_reduces_input = prove
  (`!s0 a l0 t l s.
@@ -178,15 +179,15 @@ let read_FFIcall_reduces_input = prove
 
 let read_REPLcommand_def,read_REPLcommand_ind = define_rec
   [`read_REPLcommand "" acc loc = (ErrorS,loc,"")`;
-   `read_REPLcommand (c :: s0) acc loc =
+   `read_REPLcommand (CONS c s0) acc loc =
           (if c = (CHR 125) then
             (FFIS (REVERSE acc),locn_colupdate ((+) 2) loc,s0) else
               if c = (CHR 10) then (ErrorS,loc,s0) else if isSpace c
               then
             read_REPLcommand s0 acc (locn_colupdate ((+) 1) loc)
               else
-            read_REPLcommand s0 (c :: acc) (locn_colupdate ((+)
-              1) loc))`];;
+            read_REPLcommand s0 (CONS c acc) (locn_colupdate
+              ((+) 1) loc))`];;
 
 let read_REPLcommand_reduces_input = prove
  (`!s0 a l0 t l s.
@@ -214,7 +215,7 @@ let read_Ident_ret_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let read_Ident_def,read_Ident_ind = define_guess_cheat
   [`read_Ident [] loc acc = (ErrorS,loc,[])`;
-   `read_Ident (c :: str) loc acc =
+   `read_Ident (CONS c str) loc acc =
       (if is_single_char_symbol c then
         // single character tokens, i.e. delimiters
         if NULL acc then
@@ -226,8 +227,8 @@ let read_Ident_def,read_Ident_ind = define_guess_cheat
         let (n,rest) = read_while isAlphaNumPrime str [c] in
         let new_loc = next_loc (LENGTH n) loc in
           match rest with [] -> read_Ident_ret acc n new_loc rest |
-            c1 :: rest1 ->
-            (if c1 = (CHR 46) then read_Ident rest1 new_loc (n ::
+            CONS c1 rest1 ->
+            (if c1 = (CHR 46) then read_Ident rest1 new_loc (CONS n
               acc) else read_Ident_ret acc n new_loc rest) else
         (
          // input not recognised
@@ -242,7 +243,7 @@ let read_Ident_def,read_Ident_ind = define_guess_cheat
    termination *)
 let next_sym_def,next_sym_ind = define_guess
   [`next_sym "" _5 = NONE`;
-   `next_sym (c :: str) loc =
+   `next_sym (CONS c str) loc =
          (if c = (CHR 10) then
             // skip new line
             next_sym str (next_line loc) else if isSpace c then
@@ -269,7 +270,7 @@ let next_sym_def,next_sym_ind = define_guess
                        Locs loc (next_loc (LENGTH n) loc),
                        rest) else
                let (n,rest) = read_while isDigit str [] in
-                 SOME (NumberS (&(num_from_dec_string (c :: n))),
+                 SOME (NumberS (&(num_from_dec_string (CONS c n))),
                        Locs loc (next_loc (LENGTH n) loc),
                        rest) else if c = (CHR 126) /\ ~(str = "") /\
                          isDigit (HD str) then
@@ -285,23 +286,24 @@ let next_sym_def,next_sym_ind = define_guess
            // read string
            let (t,loc',rest) = lexer_fun_read_string str ""
              (next_loc 1 loc) in
-             SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
-               str) then
+             SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (CONS
+               c str) then
            SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
-             isPREFIX "#\"" (c :: str) then
+             isPREFIX "#\"" (CONS c str) then
            let (t,loc',rest) = lexer_fun_read_string (TL str) ""
              (next_loc 2 loc) in
              SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX
-               "#(" (c :: str) then
+               "#(" (CONS c str) then
            let (t,loc',rest) = read_FFIcall (TL str) "" (next_loc 2
              loc) in
-             SOME (t,Locs loc loc',rest) else if isPREFIX "(*" (c ::
-               str) then
+             SOME (t,Locs loc loc',rest) else if isPREFIX "(*" (CONS
+               c str) then
            match skip_comment (TL str) 0 (next_loc 2 loc) with NONE
              -> SOME (ErrorS,Locs loc (next_loc 2 loc),"") | SOME
              (rest,loc') -> next_sym rest loc' else if c = (CHR 95) then
              SOME (OtherS "_",Locs loc loc,str) else
-           let (tok',end_loc,rest) = read_Ident (c :: str) loc [] in
+           let (tok',end_loc,rest) = read_Ident (CONS c str) loc []
+             in
              SOME (tok',Locs loc end_loc,rest))`];;
 
 (* EVAL “next_sym "  Foo.Bar.<  " (POSN 0 0)” *)
@@ -323,8 +325,8 @@ let lem2 = prove
 
 (* [local] *)
 let NOT_NIL_EXISTS_CONS = prove
- (`(~(n = []) <=> (?h t. n = h :: t)) /\
-   (list_CASE n F P <=> (?h t. n = h :: t /\ P h t))`,
+ (`(~(n = []) <=> (?h t. n = CONS h t)) /\
+   (list_CASE n F P <=> (?h t. n = CONS h t /\ P h t))`,
   CHEAT_TAC);;
 
 (* HOL4 lexer_funScript.sml:350-351: ML code, not ported *)
@@ -356,10 +358,10 @@ let init_loc_def = new_definition
 
 let processIdent_def = new_definition
   `processIdent s =
-     (match s with "" -> tokens_LexErrorT | c :: s ->
+     (match s with "" -> tokens_LexErrorT | CONS c s ->
             (if isAlpha c then
-              tokens_AlphaT (implode (c :: s)) else
-              tokens_SymbolT (implode (c :: s))))`;;
+              tokens_AlphaT (implode (CONS c s)) else
+              tokens_SymbolT (implode (CONS c s))))`;;
 
 let get_token_def = new_definition
   `get_token s =
@@ -421,7 +423,7 @@ let get_token_def = new_definition
 
 let to_path_def,to_path_ind = define_rec
   [`to_path [] = tokens_End`;
-   `to_path (x :: xs) = tokens_Mod x (to_path xs)`];;
+   `to_path (CONS x xs) = tokens_Mod x (to_path xs)`];;
 
 let token_of_sym_def = new_definition
   `token_of_sym s =
@@ -455,9 +457,8 @@ let next_token_LESS = prove
 let lexer_fun_aux_def,lexer_fun_aux_ind = define_guess_cheat
   [`lexer_fun_aux input loc =
      (match next_token input loc with NONE -> [] | SOME (token,Locs
-       loc' loc'',rest_of_input) ->
-         (token,Locs loc' loc'') ::
-             lexer_fun_aux rest_of_input (next_loc 1 loc''))`];;
+       loc' loc'',rest_of_input) -> CONS (token,Locs loc' loc'')
+             (lexer_fun_aux rest_of_input (next_loc 1 loc'')))`];;
 
 let lexer_fun_def = new_definition
   `lexer_fun input = lexer_fun_aux input init_loc`;;
@@ -480,7 +481,7 @@ let lexer_fun_def = new_definition
 
 let toplevel_semi_dex_def,toplevel_semi_dex_ind = define_rec
   [`toplevel_semi_dex (i:num) (d:num) [] = NONE`;
-   `toplevel_semi_dex (i:num) (d:num) ((h,l) :: t) =
+   `toplevel_semi_dex (i:num) (d:num) (CONS (h,l) t) =
         (if h = tokens_SemicolonT /\ (d = 0) then SOME (i + 1)
           else if h = tokens_LetT then toplevel_semi_dex (i + 1) (d
           + 1) t else if h = tokens_StructT then toplevel_semi_dex
@@ -507,8 +508,8 @@ let toplevel_semi_dex_non0 = prove
 let split_top_level_semi_def,split_top_level_semi_ind =
   define_guess_cheat
   [`(split_top_level_semi toks =
-    (match toplevel_semi_dex 0 0 toks with NONE -> [] | SOME i ->
-        TAKE i toks :: split_top_level_semi (DROP i toks)))`];;
+    (match toplevel_semi_dex 0 0 toks with NONE -> [] | SOME i
+      -> CONS (TAKE i toks) (split_top_level_semi (DROP i toks))))`];;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

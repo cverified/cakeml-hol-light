@@ -15,7 +15,7 @@ let _ = hol4_lib ();;
    While prim_rec arithmetic bag list *)
 
 let rangevars_def = new_definition
-  `rangevars s = BIGUNION (IMAGE vars (FRANGE s))`;;
+  `rangevars s = UNIONS (IMAGE vars (FRANGE s))`;;
 
 let substvars_def = new_definition
   `substvars s = FDOM s UNION rangevars s`;;

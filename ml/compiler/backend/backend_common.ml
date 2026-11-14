@@ -183,7 +183,7 @@ let word_add_carry_def = new_definition
    its associated lemmas (e.g. `domain_list_delete` in loop_liveProof). *)
 let list_delete_def,list_delete_ind = define_rec
   [`list_delete [] s = s`;
-   `list_delete (v :: vs) s = list_delete vs (sptree_delete v s)`];;
+   `list_delete (CONS v vs) s = list_delete vs (sptree_delete v s)`];;
 
 let lookup_list_delete = prove
  (`!xs l n. sptree_lookup n (list_delete xs l) =

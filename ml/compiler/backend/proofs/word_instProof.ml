@@ -40,7 +40,7 @@ let _ = do_list hide_constant ["C"];;
 (* TODO: Move, but some of these are specific instantiations *)
 (* [local] *)
 let PERM_SWAP_SIMP = prove
- (`PERM (A ++ (B :: C)) (B :: (A ++ C))`,
+ (`PERM (APPEND A (CONS B C)) (CONS B (APPEND A C))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -50,7 +50,7 @@ let EL_FILTER = prove
 
 (* [local] *)
 let PERM_SWAP = prove
- (`PERM (A ++ B ++ C) (B ++ (A ++ C))`,
+ (`PERM (APPEND (APPEND A B) C) (APPEND B (APPEND A C))`,
   CHEAT_TAC);;
 
 (* Instruction selection and assorted optimisation correctness
@@ -85,15 +85,16 @@ let word_exp_op_permute_lem = prove
 (*Remove tail recursion to make proof easier...*)
 let pull_ops_simp_def,pull_ops_simp_ind = define_rec
   [`pull_ops_simp op [] = []`;
-   `pull_ops_simp op (x :: xs) =
+   `pull_ops_simp op (CONS x xs) =
         (match x with (wordLang_Op op' ls) -> (if op = op' then
-          ls ++ (pull_ops_simp op xs) else x :: (pull_ops_simp op
-          xs)) | _2 -> x :: (pull_ops_simp op xs))`];;
+          APPEND ls (pull_ops_simp op xs) else CONS x
+          (pull_ops_simp op xs)) | _2 -> CONS x (pull_ops_simp op
+          xs))`];;
 
 (* [local] *)
 let pull_ops_simp_pull_ops_perm = prove
  (`!ls x.
-   PERM (pull_ops op ls x) ((pull_ops_simp op ls) ++ x)`,
+   PERM (pull_ops op ls x) (APPEND (pull_ops_simp op ls) x)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -110,18 +111,18 @@ let word_exp_op_mono = prove
  (`~(op = Sub) ==>
      wordSem_word_exp s (wordLang_Op op ls) = wordSem_word_exp s
        (wordLang_Op op ls') ==>
-     wordSem_word_exp s (wordLang_Op op (x :: ls)) =
-     wordSem_word_exp s (wordLang_Op op (x :: ls'))`,
+     wordSem_word_exp s (wordLang_Op op (CONS x ls)) =
+     wordSem_word_exp s (wordLang_Op op (CONS x ls'))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let the_words_append = prove
  (`!ls ls'.
-   the_words (ls ++ ls') =
+   the_words (APPEND ls ls') =
    (match the_words ls with
      NONE -> NONE | SOME w ->
      (match the_words ls' with
-       NONE -> NONE | SOME w' -> SOME (w ++ w')))`,
+       NONE -> NONE | SOME w' -> SOME (APPEND w w')))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -130,8 +131,8 @@ let word_exp_op_op = prove
      (!ls ls'.
      wordSem_word_exp s (wordLang_Op op ls) = wordSem_word_exp s
        (wordLang_Op op ls') ==>
-     wordSem_word_exp s (wordLang_Op op (l ++ ls)) =
-     wordSem_word_exp s (wordLang_Op op ((wordLang_Op op l) ::
+     wordSem_word_exp s (wordLang_Op op (APPEND l ls)) =
+     wordSem_word_exp s (wordLang_Op op (CONS (wordLang_Op op l)
        ls')))`,
   CHEAT_TAC);;
 
@@ -148,21 +149,21 @@ let pull_ops_ok = prove
 let word_exp_swap_head = prove
  (`!B. ~(op = Sub) ==>
    wordSem_word_exp s (wordLang_Op op A) = SOME (wordLang_Word w) ==>
-   wordSem_word_exp s (wordLang_Op op (B ++ A)) = wordSem_word_exp
-     s (wordLang_Op op (Const w :: B))`,
+   wordSem_word_exp s (wordLang_Op op (APPEND B A)) =
+     wordSem_word_exp s (wordLang_Op op (CONS (Const w) B))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let EVERY_is_const_word_exp = prove
- (`!ls. EVERY word_inst_is_const ls ==>
-   EVERY IS_SOME (MAP (\a. wordSem_word_exp s a) ls)`,
+ (`!ls. ALL word_inst_is_const ls ==>
+   ALL IS_SOME (MAP (\a. wordSem_word_exp s a) ls)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let all_consts_simp = prove
  (`~(op = Sub) ==>
      (!ls.
-     EVERY word_inst_is_const ls ==>
+     ALL word_inst_is_const ls ==>
      wordSem_word_exp s (wordLang_Op op ls) =
      SOME (wordLang_Word (THE (wordLang_word_op op (MAP rm_const
        ls)))))`,
@@ -170,7 +171,8 @@ let all_consts_simp = prove
 
 (* [local] *)
 let word_exp_reduce_const = prove
- (`wordSem_word_exp s (wordLang_Op op (Const w :: rest)) = SOME x ==>
+ (`wordSem_word_exp s (wordLang_Op op (CONS (Const w) rest)) = SOME x
+  ==>
    wordSem_word_exp s (reduce_const op w rest) = SOME x`,
   CHEAT_TAC);;
 
@@ -232,8 +234,8 @@ let binary_branch_exp_def,binary_branch_exp_ind = define_wf
   `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
   [`binary_branch_exp exp =
         match exp with
-          wordLang_Op asm_Sub exps -> EVERY (binary_branch_exp) exps
-        | (wordLang_Op op xs) -> (LENGTH xs = 2 /\ EVERY
+          wordLang_Op asm_Sub exps -> ALL (binary_branch_exp) exps
+        | (wordLang_Op op xs) -> (LENGTH xs = 2 /\ ALL
           (binary_branch_exp) xs)
         | (Load exp) -> binary_branch_exp exp
         | (Shift shift' exp nexp) -> (binary_branch_exp exp /\

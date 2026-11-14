@@ -51,24 +51,24 @@ let export_riscv_startup_def = new_definition
         (implode "     .globl  cdecl(cml_stackend)\n");
         (implode "     .type   cml_main, function\n");
         (implode "cdecl(cml_main):\n");
-        (implode
-          ("     la      a0,cake_main           # arg1: entry " ++
+        (implode (APPEND
+          "     la      a0,cake_main           # arg1: entry "
           "address\n"));
-        (implode
-          ("     ld      a1,cdecl(cml_heap)     # arg2: first " ++
+        (implode (APPEND
+          "     ld      a1,cdecl(cml_heap)     # arg2: first "
           "address of heap\n"))])
      (SmartAppend (misc_List
        (if ~pk then
          [(implode "     la      t3,cake_bitmaps\n");
-         (implode
-           ("     sd      t3, 0(a1)              # store bitmap" ++
+         (implode (APPEND
+           "     sd      t3, 0(a1)              # store bitmap"
            " pointer\n"))] else []))
      (SmartAppend (misc_List
-       [(implode
-         ("     ld      a2,cdecl(cml_stack)    # arg3: first " ++
+       [(implode (APPEND
+         "     ld      a2,cdecl(cml_stack)    # arg3: first "
          "address of stack\n"));
-        (implode
-          ("     ld      a3,cdecl(cml_stackend) # arg4: first " ++
+        (implode (APPEND
+          "     ld      a3,cdecl(cml_stackend) # arg4: first "
           "address past the stack\n"))])
      (SmartAppend (misc_List
        (if ret then
@@ -80,7 +80,7 @@ hol4_overload "startup" "export_riscv_startup";;
 
 let export_riscv_ffi_asm_def,export_riscv_ffi_asm_ind = define_rec
   [`export_riscv_ffi_asm [] = misc_Nil`;
-   `export_riscv_ffi_asm (ffi :: ffis) =
+   `export_riscv_ffi_asm (CONS ffi ffis) =
           SmartAppend (misc_List [
            (implode "cake_ffi"); ffi; (implode ":\n");
            (implode "     tail cdecl(ffi"); ffi; (implode ")\n");
@@ -129,41 +129,41 @@ let riscv_export_def = new_definition
        (SmartAppend (misc_List data_buffer)
        (SmartAppend (export_riscv_startup ret pk) ((\ret. if ret then
          ((\ret. SmartAppend
-     (misc_List (MAP (\n. implode (n ++ "\n"))
-      [("#### CakeML FFI interface (each block is 16 bytes " ++
+     (misc_List (MAP (\n. implode (APPEND n "\n"))
+      [(APPEND "#### CakeML FFI interface (each block is 16 bytes "
         "long)");
         "";
         "     .p2align 4"; ""])) (
      SmartAppend
       (export_riscv_ffi_asm (REVERSE ffi_names'))
-      (misc_List (MAP (\n. implode (n ++ "\n"))
-       (["cake_clear:";
+      (misc_List (MAP (\n. implode (APPEND n "\n"))
+       (APPEND (APPEND ["cake_clear:";
         "     tail cdecl(cml_exit)"; "     .p2align 4";
         "";
-        "cake_exit:"] ++
+        "cake_exit:"]
         (if ret then
           ["     j    cml_return"] else
-          ["     tail cdecl(cml_exit)"]) ++
+          ["     tail cdecl(cml_exit)"]))
         ["     .p2align 4";
         "";
         "cake_main:";
         "";
         "#### Generated machine code follows";
         ""]))))) T) else ((\ret. SmartAppend (misc_List (MAP (\n.
-          implode (n ++ "\n"))
-          [("#### CakeML FFI interface (each block is 16 bytes " ++
-          "long)"); ""; "     .p2align 4"; ""])) (SmartAppend
+          implode (APPEND n "\n")) [(APPEND
+          "#### CakeML FFI interface (each block is 16 bytes " "long)");
+          ""; "     .p2align 4"; ""])) (SmartAppend
           (export_riscv_ffi_asm (REVERSE ffi_names')) (misc_List (MAP
-          (\n. implode (n ++ "\n")) (["cake_clear:";
+          (\n. implode (APPEND n "\n")) (APPEND (APPEND ["cake_clear:";
           "     tail cdecl(cml_exit)"; "     .p2align 4"; "";
-          "cake_exit:"] ++ (if ret then ["     j    cml_return"] else
-          ["     tail cdecl(cml_exit)"]) ++ ["     .p2align 4"; "";
+          "cake_exit:"] (if ret then ["     j    cml_return"] else
+          ["     tail cdecl(cml_exit)"])) ["     .p2align 4"; "";
           "cake_main:"; ""; "#### Generated machine code follows";
           ""]))))) F)) ret))))))
        (SmartAppend (split16 (words_line (implode "\t.byte ")
          byte_to_string) bytes) (SmartAppend (misc_List code_buffer)
        (SmartAppend (emit_symbols lsyms) (if ret then (SmartAppend
-         ((misc_List (MAP (\n. implode (n ++ "\n"))
+         ((misc_List (MAP (\n. implode (APPEND n "\n"))
      [""; "";
       "cml_enter:";
       "     addi    sp, sp, -104";

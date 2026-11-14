@@ -36,7 +36,7 @@ let word_unreach_merge_moves_def = new_definition
   `word_unreach_merge_moves l1 l2 =
      (let l2' = MAP (\(x,y). match ALOOKUP l1 y with NONE -> (x,y) |
        SOME v -> (x,v)) l2 in
-       anub (l2' ++ l1) ([]:num list))`;;
+       anub (APPEND l2' l1) ([]:num list))`;;
 hol4_overload "merge_moves" "word_unreach_merge_moves";;
 
 let SimpSeq_def = new_definition

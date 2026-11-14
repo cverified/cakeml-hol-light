@@ -82,7 +82,7 @@ let type_pes_def = new_definition
 
 let type_pes_cons = prove
  (`!tvs tvs' tenv tenvE p e pes t1 t2.
-    type_pes tvs tvs' tenv tenvE ((p,e) :: pes) t1 t2 <=>
+    type_pes tvs tvs' tenv tenvE (CONS (p,e) pes) t1 t2 <=>
     (ALL_DISTINCT (ast_pat_bindings p) /\
      (?bindings.
          type_p tvs tenv p t1 bindings /\
@@ -103,7 +103,7 @@ let check_freevars_subst_single = prove
  (`!dbmax tvs t tvs' ts.
     LENGTH tvs = LENGTH ts /\
     check_freevars dbmax tvs t /\
-    EVERY (check_freevars dbmax tvs') ts ==>
+    ALL (check_freevars dbmax tvs') ts ==>
     check_freevars dbmax tvs' (type_subst (alist_to_fmap (ZIP tvs
       ts)) t)`,
   CHEAT_TAC);;
@@ -111,10 +111,10 @@ let check_freevars_subst_single = prove
 let check_freevars_subst_list = prove
  (`!dbmax tvs tvs' ts ts'.
     (LENGTH tvs = LENGTH ts) /\
-    EVERY (check_freevars dbmax tvs) ts' /\
-    EVERY (check_freevars dbmax tvs') ts ==>
-    EVERY (check_freevars dbmax tvs') (MAP (type_subst
-      (alist_to_fmap (ZIP tvs ts))) ts')`,
+    ALL (check_freevars dbmax tvs) ts' /\
+    ALL (check_freevars dbmax tvs') ts ==>
+    ALL (check_freevars dbmax tvs') (MAP (type_subst (alist_to_fmap
+      (ZIP tvs ts))) ts')`,
   CHEAT_TAC);;
 
 (* ---------- deBruijn_inc ---------- *)
@@ -151,7 +151,7 @@ let type_subst_deBruijn_inc_single = prove
 let type_subst_deBruijn_inc_list = prove
  (`!ts' ts tvs inc sk.
     (LENGTH tvs = LENGTH ts) /\
-    EVERY (check_freevars 0 tvs) ts' ==>
+    ALL (check_freevars 0 tvs) ts' ==>
     (MAP (deBruijn_inc sk inc) (MAP (type_subst (alist_to_fmap (ZIP
       tvs ts))) ts') =
      MAP (type_subst (alist_to_fmap (ZIP tvs (MAP (\t. deBruijn_inc
@@ -176,14 +176,14 @@ let nil_deBruijn_inc = prove
 let deBruijn_subst_check_freevars = prove
  (`!tvs tvs' t ts n.
     check_freevars tvs tvs' t /\
-    EVERY (check_freevars tvs tvs') ts ==>
+    ALL (check_freevars tvs tvs') ts ==>
     check_freevars tvs tvs' (deBruijn_subst 0 ts t)`,
   CHEAT_TAC);;
 
 let deBruijn_subst_check_freevars2 = prove
  (`!tvs tvs' t ts n tvs''.
     check_freevars (LENGTH ts) tvs' t /\
-    EVERY (check_freevars tvs tvs') ts ==>
+    ALL (check_freevars tvs tvs') ts ==>
     check_freevars tvs tvs' (deBruijn_subst 0 ts t)`,
   CHEAT_TAC);;
 
@@ -192,7 +192,7 @@ let check_freevars_subst_inc = prove
     check_freevars tvs tvs2 t ==>
     (!tvs' targs tvs1.
     tvs = LENGTH targs + tvs' /\
-    EVERY (check_freevars (tvs1 + tvs') tvs2) targs ==>
+    ALL (check_freevars (tvs1 + tvs') tvs2) targs ==>
     check_freevars (tvs1 + tvs') tvs2
        (deBruijn_subst 0 targs (deBruijn_inc (LENGTH targs) tvs1
          t)))`,
@@ -203,7 +203,7 @@ let check_freevars_subst = prove
     check_freevars tvs tvs2 t ==>
     (!tvs' targs tvs1.
     tvs = LENGTH targs + tvs' /\
-    EVERY (check_freevars (tvs1 + tvs') tvs2) targs ==>
+    ALL (check_freevars (tvs1 + tvs') tvs2) targs ==>
     check_freevars (tvs1 + tvs') tvs2 (deBruijn_subst 0 targs t))`,
   CHEAT_TAC);;
 
@@ -222,7 +222,7 @@ let type_subst_deBruijn_subst_single = prove
 let type_subst_deBruijn_subst_list = prove
  (`!t tvs tvs' ts ts' ts'' inc.
     (LENGTH tvs = LENGTH ts) /\
-    EVERY (check_freevars 0 tvs) ts'' ==>
+    ALL (check_freevars 0 tvs) ts'' ==>
     (MAP (deBruijn_subst inc ts') (MAP (type_subst (alist_to_fmap
       (ZIP tvs ts))) ts'') =
      MAP (type_subst (alist_to_fmap (ZIP tvs (MAP (\t.
@@ -235,7 +235,7 @@ let check_freevars_lem = prove
    check_freevars l tvs' t ==>
    (!targs n1 tvs.
      (l = n1 + (LENGTH targs)) /\
-     EVERY (check_freevars tvs tvs') targs ==>
+     ALL (check_freevars tvs tvs') targs ==>
       check_freevars (n1 + tvs) tvs'
         (deBruijn_subst n1 (MAP (deBruijn_inc 0 n1) targs) t))`,
   CHEAT_TAC);;
@@ -253,7 +253,7 @@ let deBruijn_subst2 = prove
      deBruijn_subst 0 (MAP (deBruijn_subst sk (MAP (deBruijn_inc 0
        sk) targs')) targs) t)) /\
    (!ts sk targs targs' tvs'.
-    EVERY (check_freevars (LENGTH targs) []) ts ==>
+    ALL (check_freevars (LENGTH targs) []) ts ==>
     (MAP (deBruijn_subst sk (MAP (deBruijn_inc 0 sk) targs')) (MAP
       (deBruijn_subst 0 targs) ts) =
     (MAP (deBruijn_subst 0 (MAP (deBruijn_subst sk (MAP
@@ -265,7 +265,7 @@ let type_e_subst_lem3 = prove
     check_freevars tvs tvs2 t ==>
     (!tvs' targs n.
     (tvs = n + LENGTH targs) /\
-    EVERY (check_freevars tvs' tvs2) targs ==>
+    ALL (check_freevars tvs' tvs2) targs ==>
     check_freevars (n + tvs') tvs2
        (deBruijn_subst n (MAP (deBruijn_inc 0 n) targs) t))`,
   CHEAT_TAC);;
@@ -317,14 +317,14 @@ let type_e_subst_lem7 = prove
 let deBruijn_subst_id = prove
  (`(!t n. check_freevars n [] t ==> (deBruijn_subst 0 (MAP Tvar_db
   (COUNT_LIST n)) t = t)) /\
-   (!ts n. EVERY (check_freevars n []) ts ==> (MAP (deBruijn_subst
-     0 (MAP Tvar_db (COUNT_LIST n))) ts = ts))`,
+   (!ts n. ALL (check_freevars n []) ts ==> (MAP (deBruijn_subst 0
+     (MAP Tvar_db (COUNT_LIST n))) ts = ts))`,
   CHEAT_TAC);;
 
 let deBruijn_subst_freevars = prove
  (`!skip targs t tvs.
     skip = 0 /\
-    EVERY (check_freevars tvs []) targs /\
+    ALL (check_freevars tvs []) targs /\
     check_freevars (LENGTH targs) [] t ==>
     check_freevars tvs [] (deBruijn_subst skip targs t)`,
   CHEAT_TAC);;
@@ -368,7 +368,7 @@ let tenv_ctor_ok_merge = prove
 let tenv_ctor_ok_lookup = prove
  (`!tenvC cn tvs ts tn.
     tenv_ctor_ok tenvC /\ nsLookup tenvC cn = SOME (tvs,ts,tn) ==>
-    EVERY (check_freevars 0 tvs) ts`,
+    ALL (check_freevars 0 tvs) ts`,
   CHEAT_TAC);;
 
 (* ---------- tenv_val_exp stuff ---------- *)
@@ -452,7 +452,7 @@ let tveLookup_bvl = prove
 
 let bind_var_list_append = prove
  (`!n te1 te2 te3.
-    bind_var_list n (te1 ++ te2) te3 = bind_var_list n te1
+    bind_var_list n (APPEND te1 te2) te3 = bind_var_list n te1
       (bind_var_list n te2 te3)`,
   CHEAT_TAC);;
 
@@ -464,8 +464,8 @@ let num_tvs_bind_var_list = prove
 
 let tenv_val_exp_ok_bvl = prove
  (`!tenvE env.
-    tenv_val_exp_ok tenvE /\ EVERY (check_freevars (num_tvs tenvE)
-      []) (MAP SND env) ==>
+    tenv_val_exp_ok tenvE /\ ALL (check_freevars (num_tvs tenvE) [])
+      (MAP SND env) ==>
     tenv_val_exp_ok (bind_var_list 0 env tenvE)`,
   CHEAT_TAC);;
 
@@ -505,7 +505,7 @@ let tveLookup_add_inc = prove
 
 let tveLookup_freevars_subst = prove
  (`!tenvE targs n t inc.
-    EVERY (check_freevars (inc + num_tvs tenvE) []) targs /\
+    ALL (check_freevars (inc + num_tvs tenvE) []) targs /\
     tveLookup n inc tenvE = SOME (LENGTH targs,t) /\
     tenv_val_exp_ok tenvE ==>
     check_freevars (inc + num_tvs tenvE) [] (deBruijn_subst 0 targs
@@ -575,11 +575,11 @@ let type_p_freevars = prove
  (`(!tvs tenvC p t env'.
      type_p tvs tenvC p t env' ==>
      check_freevars tvs [] t /\
-     EVERY (check_freevars tvs []) (MAP SND env')) /\
+     ALL (check_freevars tvs []) (MAP SND env')) /\
    (!tvs tenvC ps ts env'.
      type_ps tvs tenvC ps ts env' ==>
-     EVERY (check_freevars tvs []) ts /\
-     EVERY (check_freevars tvs []) (MAP SND env'))`,
+     ALL (check_freevars tvs []) ts /\
+     ALL (check_freevars tvs []) (MAP SND env'))`,
   CHEAT_TAC);;
 
 let type_p_subst = prove
@@ -588,7 +588,7 @@ let type_p_subst = prove
       tenv_abbrev_ok (type_env_t tenv) /\
       tenv_ctor_ok (type_env_c tenv) /\
       (n = inc + LENGTH targs) /\
-      EVERY (check_freevars tvs []) targs /\
+      ALL (check_freevars tvs []) targs /\
       (targs' = MAP (deBruijn_inc 0 inc) targs) ==>
       type_p (inc + tvs) tenv
              p
@@ -600,7 +600,7 @@ let type_p_subst = prove
       tenv_abbrev_ok (type_env_t tenv) /\
       tenv_ctor_ok (type_env_c tenv) /\
       (n = inc + LENGTH targs) /\
-      EVERY (check_freevars tvs []) targs /\
+      ALL (check_freevars tvs []) targs /\
       (targs' = MAP (deBruijn_inc 0 inc) targs) ==>
       type_ps (inc + tvs) tenv
              ps
@@ -630,7 +630,7 @@ let type_p_tenvV_indep = prove
 (* ---------- type_e, type_es, type_funs ---------- *)
 
 let type_es_list_rel = prove
- (`!es ts tenv tenvE. type_es tenv tenvE es ts = LIST_REL (type_e tenv
+ (`!es ts tenv tenvE. type_es tenv tenvE es ts = ALL2 (type_e tenv
   tenvE) es ts`,
   CHEAT_TAC);;
 
@@ -668,11 +668,11 @@ let type_e_freevars = prove
    (!tenv tenvE es ts.
      type_es tenv tenvE es ts ==>
      tenv_val_exp_ok tenvE /\ tenv_val_ok (type_env_v tenv) ==>
-     EVERY (check_freevars (num_tvs tenvE) []) ts) /\
+     ALL (check_freevars (num_tvs tenvE) []) ts) /\
    (!tenv tenvE funs env.
      type_funs tenv tenvE funs env ==>
      tenv_val_exp_ok tenvE /\ tenv_val_ok (type_env_v tenv) ==>
-     EVERY (check_freevars (num_tvs tenvE) []) (MAP SND env))`,
+     ALL (check_freevars (num_tvs tenvE) []) (MAP SND env))`,
   CHEAT_TAC);;
 
 let type_e_subst = prove
@@ -683,7 +683,7 @@ let type_e_subst = prove
         tenv_ctor_ok (type_env_c tenv) /\
         tenv_val_ok (type_env_v tenv) /\
         tenv_val_exp_ok tenvE /\
-        EVERY (check_freevars tvs []) targs /\
+        ALL (check_freevars tvs []) targs /\
         tenvE = db_merge tenvE1 (bind_tvar (LENGTH targs) tenvE2) /\
         targs' = MAP (deBruijn_inc 0 (num_tvs tenvE1)) targs ==>
         type_e tenv (db_merge (deBruijn_subst_tenvE targs tenvE1)
@@ -697,7 +697,7 @@ let type_e_subst = prove
         tenv_ctor_ok (type_env_c tenv) /\
         tenv_val_ok (type_env_v tenv) /\
         tenv_val_exp_ok tenvE /\
-        EVERY (check_freevars tvs []) targs /\
+        ALL (check_freevars tvs []) targs /\
         tenvE = db_merge tenvE1 (bind_tvar (LENGTH targs) tenvE2) /\
         targs' = MAP (deBruijn_inc 0 (num_tvs tenvE1)) targs ==>
         type_es tenv (db_merge (deBruijn_subst_tenvE targs tenvE1)
@@ -712,7 +712,7 @@ let type_e_subst = prove
         tenv_ctor_ok (type_env_c tenv) /\
         tenv_val_ok (type_env_v tenv) /\
         tenv_val_exp_ok tenvE /\
-        EVERY (check_freevars tvs []) targs /\
+        ALL (check_freevars tvs []) targs /\
         tenvE = db_merge tenvE1 (bind_tvar (LENGTH targs) tenvE2) /\
         targs' = MAP (deBruijn_inc 0 (num_tvs tenvE1)) targs ==>
         type_funs tenv (db_merge (deBruijn_subst_tenvE targs tenvE1)
@@ -781,7 +781,7 @@ let type_e_subst_lem = prove
    tenv_ctor_ok (type_env_c tenv) /\
    tenv_val_ok (type_env_v tenv) /\
    tenv_val_exp_ok (bind_tvar (LENGTH targs) tenvE) /\
-   EVERY (check_freevars tvs []) targs /\
+   ALL (check_freevars tvs []) targs /\
    check_freevars (LENGTH targs) [] t1 ==>
    type_e tenv (typeSystem_Bind_name x 0 (deBruijn_subst 0 targs
      t1) (bind_tvar tvs tenvE)) e (deBruijn_subst 0 targs t)`,
@@ -803,14 +803,13 @@ let type_def_to_ctMap_def,type_def_to_ctMap_ind = define_wf
   (pair_size (\x. 0) (list_size (pair_size mlstring_size
   ast_t_size1))))      x2)`
   [`type_def_to_ctMap tenvT next_stamp [] [] = []`;
-   `type_def_to_ctMap tenvT next_stamp ((tvs,tn,ctors) :: tds) (id' ::
-  ids) =
-        type_def_to_ctMap tenvT (next_stamp + 1) tds ids ++
-        REVERSE
+   `type_def_to_ctMap tenvT next_stamp (CONS (tvs,tn,ctors) tds) (CONS
+  id' ids) = APPEND (type_def_to_ctMap tenvT (next_stamp + 1) tds ids)
+        (REVERSE
           (MAP (\(cn,ts).
             (TypeStamp cn next_stamp,(tvs,MAP (type_name_subst
               tenvT) ts,id')))
-            ctors)`];;
+            ctors))`];;
 
 let mem_type_def_to_ctMap = prove
  (`!tenvT next' tds ids stamp x.
@@ -836,7 +835,7 @@ let ctMap_ok_merge_imp = prove
 let ctMap_ok_lookup = prove
  (`!ctMap cn tvs ts ti tn.
     ctMap_ok ctMap /\ (FLOOKUP ctMap tn = SOME (tvs,ts,ti)) ==>
-    EVERY (check_freevars 0 tvs) ts`,
+    ALL (check_freevars 0 tvs) ts`,
   CHEAT_TAC);;
 
 let type_def_to_ctMap_mem = prove
@@ -878,8 +877,8 @@ let all_distinct_map_fst_lemma = prove
 
 let check_ctor_tenv_change_tenvT = prove
  (`!tenvT1 env tenvT2.
-   EVERY (\(cn,ts). EVERY (check_type_names tenvT1) ts ==>
-                    EVERY (check_type_names tenvT2) ts)
+   ALL (\(cn,ts). ALL (check_type_names tenvT1) ts ==>
+                    ALL (check_type_names tenvT2) ts)
          (FLAT (MAP (SND o SND) env)) /\
    check_ctor_tenv tenvT1 env ==>
    check_ctor_tenv tenvT2 env`,
@@ -888,11 +887,11 @@ let check_ctor_tenv_change_tenvT = prove
 let check_ctor_tenv_EVERY = prove
  (`!tenvT tds.
      check_ctor_tenv tenvT tds <=>
-     EVERY check_dup_ctors tds /\
-     EVERY (ALL_DISTINCT o FST) tds /\
-     EVERY (\(tvs,tn,ctors).
-       EVERY (\(cn,ts). EVERY (check_freevars_ast tvs) ts /\
-                        EVERY (check_type_names tenvT) ts) ctors) tds
+     ALL check_dup_ctors tds /\
+     ALL (ALL_DISTINCT o FST) tds /\
+     ALL (\(tvs,tn,ctors).
+       ALL (\(cn,ts). ALL (check_freevars_ast tvs) ts /\
+                        ALL (check_type_names tenvT) ts) ctors) tds
                           /\
     ALL_DISTINCT (MAP (FST o SND) tds)`,
   CHEAT_TAC);;
@@ -962,7 +961,7 @@ let typeSysProps_type_subst = prove
      type_v tvs ctMap tenvS v t ==>
      tvs = LENGTH targs /\
      ctMap_ok ctMap /\
-     EVERY (check_freevars tvs' []) targs /\
+     ALL (check_freevars tvs' []) targs /\
      check_freevars (LENGTH targs) [] t ==>
      type_v tvs' ctMap tenvS v (deBruijn_subst 0 targs t)`,
   CHEAT_TAC);;

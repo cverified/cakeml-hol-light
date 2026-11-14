@@ -199,9 +199,8 @@ let try_update_def = define_cases
   [`try_update vty NONE ts = ts`;
    `try_update vty (SOME n) ts =
         (if n < LENGTH ts then
-          if EL n ts = bvi_tailrec_Any then
-            TAKE n ts ++ [vty] ++ DROP (n + 1) ts else ts else
-              ts)`];;
+          if EL n ts = bvi_tailrec_Any then APPEND (APPEND
+            (TAKE n ts) [vty]) (DROP (n + 1) ts) else ts else ts)`];;
 
 (* --- Checking termination guarantees --- *)
 
@@ -376,7 +375,7 @@ let LAST1_def,LAST1_ind = define_guess
       match x1 with
         [] -> NONE
       | [x] -> SOME x
-      | (x :: xs) -> LAST1 xs`];;
+      | (CONS x xs) -> LAST1 xs`];;
 
 let update_context_def = new_definition
   `update_context ty ts x1 x2 =
@@ -457,9 +456,9 @@ let op_ty_PMATCH = prove
 let scan_expr_def,scan_expr_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`scan_expr ts loc [] = []`;
-   `scan_expr ts loc (x :: y :: xs) =
-        (let (tx,ty,r,op) = HD (scan_expr ts loc [x]) in
-          (tx,ty,r,op) :: scan_expr tx loc (y :: xs))`;
+   `scan_expr ts loc (CONS x (CONS y xs)) =
+        (let (tx,ty,r,op) = HD (scan_expr ts loc [x]) in CONS
+          (tx,ty,r,op) (scan_expr tx loc (CONS y xs)))`;
    `scan_expr ts loc [(Var n:bvi_exp)] =
         (let ty = (if n < LENGTH ts then EL n ts else
           bvi_tailrec_Any) in
@@ -478,7 +477,8 @@ let scan_expr_def,scan_expr_ind = assume_definition_rec
         let tt = MAP (FST o SND) ys in
         let tr = (match LAST1 ys with SOME c -> FST c | NONE -> ts)
           in
-        let (tu,ty,_49,op) = HD (scan_expr (tt ++ tr) loc [x]) in
+        let (tu,ty,_49,op) = HD (scan_expr (APPEND tt tr) loc [x])
+          in
           [(DROP (LENGTH ys) tu,ty,F,op)])`;
    `scan_expr ts loc [(Raise x:bvi_exp)] =
   [(ts,bvi_tailrec_Any,F,NONE)]`;
@@ -547,7 +547,7 @@ let scan_expr_sing_def,scan_expr_sing_ind = define_mutual_rec
         let tt = MAP (FST o SND) ys in
         let tr = (match LAST1 ys with SOME c -> FST c | NONE -> ts)
           in
-        let (tu,ty,_69,op) = scan_expr_sing (tt ++ tr) loc x in
+        let (tu,ty,_69,op) = scan_expr_sing (APPEND tt tr) loc x in
           (DROP (LENGTH ys) tu,ty,F,op))`;
    `scan_expr_sing ts loc (Raise x:bvi_exp) =
   (ts,bvi_tailrec_Any,F,NONE)`;
@@ -594,9 +594,9 @@ let scan_expr_sing_def,scan_expr_sing_ind = define_mutual_rec
                     (update_context opt ts x y,opt,F,NONE) else
                 (ts,bvi_tailrec_Any,F,NONE)))`;
    `scan_expr_list ts loc [] = []`;
-   `scan_expr_list ts loc (x :: xs) =
-        (let (tx,ty,r,op) = scan_expr_sing ts loc x in
-          (tx,ty,r,op) :: scan_expr_list tx loc xs)`];;
+   `scan_expr_list ts loc (CONS x xs) =
+        (let (tx,ty,r,op) = scan_expr_sing ts loc x in CONS
+          (tx,ty,r,op) (scan_expr_list tx loc xs))`];;
 
 let scan_expr_eq = prove
  (`(!e ts loc. scan_expr ts loc [e] = [scan_expr_sing ts loc e]) /\
@@ -607,7 +607,7 @@ let push_call_def = new_definition
   `push_call n op acc exp x5 =
         match x5 with
           SOME (ticks,dest,args,handler) ->
-       Call ticks (SOME n) (args ++ [apply_op op (Var acc) exp])
+       Call ticks (SOME n) (APPEND args [apply_op op (Var acc) exp])
          handler
         | _75 -> dummy`;;
 
@@ -628,8 +628,8 @@ let rewrite_def,rewrite_ind = define_shaped_rec
        let tt = MAP (FST o SND) ys in
        let tr = (match LAST1 ys with NONE -> ts | SOME c -> FST c)
          in
-       let (r,y) = rewrite loc next' opr (acc + LENGTH xs) (tt ++
-         tr) x in
+       let (r,y) = rewrite loc next' opr (acc + LENGTH xs) (APPEND
+         tt tr) x in
          (r,Let xs y))
         | (Tick x) ->
        (let (r,y) = rewrite loc next' opr acc ts x in
@@ -658,8 +658,8 @@ let rewrite_PMATCH = prove
            let tt = MAP (FST o SND) ys in
            let tr = (match LAST1 ys with NONE -> ts | SOME c -> FST
              c) in
-           let (r,y) = rewrite loc next' opr (acc + LENGTH xs) (tt ++
-             tr) x in
+           let (r,y) = rewrite loc next' opr (acc + LENGTH xs)
+             (APPEND tt tr) x in
              (r,Let xs y)) | Tick x ->
            (let (r,y) = rewrite loc next' opr acc ts x in (r,Tick y))
              | Force l v -> (F,Force l v) | _76 ->
@@ -683,15 +683,15 @@ let has_rec_def,has_rec_ind = define_guess_cheat
   [`has_rec loc x2 =
         match x2 with
           [] -> F
-        | (x :: y :: xs) ->
-       (if has_rec loc [x] then T else has_rec loc (y :: xs))
+        | (CONS x (CONS y xs)) ->
+       (if has_rec loc [x] then T else has_rec loc (CONS y xs))
         | [(If x1 x2 x3:bvi_exp)] ->
        (if has_rec loc [x2] then T else has_rec loc [x3])
         | [Let xs x] -> has_rec loc [x]
         | [Tick x] -> has_rec loc [x]
         | [Op op xs] ->
-       (if EXISTS (bvi_tailrec_is_rec loc) xs then T else has_rec
-         loc xs)
+       (if EX (bvi_tailrec_is_rec loc) xs then T else has_rec loc
+         xs)
         | [x] -> F`];;
 
 let has_rec1_def = new_definition
@@ -704,11 +704,11 @@ let has_rec_sing_def,has_rec_sing_ind = assume_definition_rec
    `has_rec_sing loc (Let xs x:bvi_exp) = has_rec_sing loc x`;
    `has_rec_sing loc (Tick x:bvi_exp) = has_rec_sing loc x`;
    `has_rec_sing loc (Op op xs:bvi_exp) =
-        (if EXISTS (bvi_tailrec_is_rec loc) xs then T else
+        (if EX (bvi_tailrec_is_rec loc) xs then T else
           has_rec_list loc xs)`;
    `has_rec_sing loc x = F`;
    `has_rec_list loc [] = F`;
-   `has_rec_list loc (x :: xs) =
+   `has_rec_list loc (CONS x xs) =
         (if has_rec_sing loc x then T else has_rec_list loc xs)`];;
 
 let has_rec_eq = prove
@@ -734,7 +734,7 @@ let check_exp_def = new_definition
      (if ~(has_rec1 loc exp) then NONE else
        let context = REPLICATE arity bvi_tailrec_Any in
          match scan_expr context loc [exp] with
-           [] -> NONE | (ts,ty,r,opr) :: _77 ->
+           [] -> NONE | CONS (ts,ty,r,opr) _77 ->
              (match opr with
                NONE -> NONE | SOME op ->
                  (if ~(ty = op_type op) then NONE else opr)))`;;
@@ -744,11 +744,12 @@ let check_exp_def = new_definition
 
 let let_wrap_def = new_definition
   `let_wrap arity id' exp =
-     Let ((GENLIST (\i. Var i) arity) ++ [id']) exp`;;
+     Let (APPEND (list_of_seq (\i. Var i) arity) [id']) exp`;;
 
 let mk_aux_call_def = new_definition
   `mk_aux_call loc arity id' =
-     Call 0 (SOME loc) (id' :: GENLIST (\i. Var i) arity) NONE`;;
+     Call 0 (SOME loc) (CONS id' (list_of_seq (\i. Var i) arity))
+       NONE`;;
 
 let bvi_tailrec_compile_exp_def = new_definition
   `bvi_tailrec_compile_exp loc next' arity exp =
@@ -762,15 +763,16 @@ hol4_overload "compile_exp" "bvi_tailrec_compile_exp";;
 
 let compile_each_def,compile_each_ind = define_rec
   [`bvi_tailrec_compile_each next' [] = (next',[])`;
-   `bvi_tailrec_compile_each next' ((loc,arity,exp) :: xs) =
+   `bvi_tailrec_compile_each next' (CONS (loc,arity,exp) xs) =
         (match bvi_tailrec_compile_exp loc next' arity exp with NONE
           ->
             (let (n,ys) = bvi_tailrec_compile_each next' xs in
-              (n,(loc,arity,exp) :: ys)) | SOME (exp_aux,exp_opt) ->
+              (n,CONS (loc,arity,exp) ys)) | SOME (exp_aux,exp_opt)
+                ->
             (let (n,ys) = bvi_tailrec_compile_each (next' +
               bvl_to_bvi_namespaces) xs in
-            (n,(loc,arity,exp_aux) :: (next',arity + 1,exp_opt)
-              :: ys)))`];;
+            (n,CONS (loc,arity,exp_aux) (CONS (next',arity +
+              1,exp_opt) ys))))`];;
 hol4_overload "compile_each" "bvi_tailrec_compile_each";;
 
 let bvi_tailrec_compile_prog_def = new_definition

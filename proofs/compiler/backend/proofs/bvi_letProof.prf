@@ -273,7 +273,7 @@
      NAMED_CASES_TAC (mk_var("hres",rty)) [["hv"]; ["he"]] THEN
      tidy THEN split_tail `hs:('c,'ffi)bviSem_state` THEN
      use_ih `hs:('c,'ffi)bviSem_state` THEN
-     EXISTS_TAC `HD (hv:bvlSem_v list) :: bb` THEN
+     EXISTS_TAC `CONS (HD (hv:bvlSem_v list)) bb` THEN
      ASM_REWRITE_TAC[] THEN tidy THEN
      env_rel_cons THEN REWRITE_TAC[oEL] THEN
      ASM_REWRITE_TAC[] in
@@ -290,7 +290,7 @@
      ASM_REWRITE_TAC[HD] THEN tidy THEN STRIP_TAC THEN tidy THEN
      split_tail `s:('c,'ffi)bviSem_state` THEN
      use_ih `s:('c,'ffi)bviSem_state` THEN
-     EXISTS_TAC `((Number (&0)):bvlSem_v) :: bb` THEN
+     EXISTS_TAC `CONS ((Number (&0)):bvlSem_v) bb` THEN
      ASM_REWRITE_TAC[] THEN tidy THEN env_rel_cons THEN
      SUBGOAL_THEN
        `LENGTH (t:bvi_exp list) = LENGTH (bb:bvlSem_v list)`
@@ -318,7 +318,7 @@
    FIRST_ASSUM(CHOOSE_THEN SUBST_ALL_TAC o
                MATCH_MP evaluate_SING_IMP) THEN
    ASM_MESON_TAC[bviProps_evaluate_IMP_LENGTH;
-                 prove(`!l x. SNOC x l = l ++ [x]`,
+                 prove(`!l x. SNOC x l = APPEND l [x]`,
                        LIST_INDUCT_TAC THEN
                        ASM_REWRITE_TAC[SNOC; APPEND])])
 
@@ -480,7 +480,7 @@
         ["rets"; "tt"; "dd"; "es"; "e"]; ["es"]] THENL sub_cases in
    let cons_cons_case =
      REWRITE_TAC[cp; labs_APPEND] THEN
-     use_ih `[z1:bvi_exp]` THEN use_ih `(z2:bvi_exp) :: zs2` THEN
+     use_ih `[z1:bvi_exp]` THEN use_ih `CONS (z2:bvi_exp) zs2` THEN
      finish in
    let base_case =
      REPEAT GEN_TAC THEN DISCH_TAC THEN
@@ -709,7 +709,7 @@
    let env_rel_CONS = prove
     (`!ax d env1 env2 v.
         bvi_letProof_env_rel ax d env1 env2 ==>
-        bvi_letProof_env_rel (0 :: ax) d (v :: env1) (v :: env2)`,
+        bvi_letProof_env_rel (CONS 0 ax) d (CONS v env1) (CONS v env2)`,
      REPEAT GEN_TAC THEN DISCH_TAC THEN
      ONCE_REWRITE_TAC[er] THEN MATCH_REDUCE_TAC THEN
      REWRITE_TAC[vr] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
@@ -784,11 +784,11 @@
      tidy THEN
      use_ih_for `[x1:bvi_exp]` THEN tidy THEN
      TRY(NAMED_CASES_TAC
-           `evaluate ((x2:bvi_exp) :: xr2,env1,
+           `evaluate (CONS (x2:bvi_exp) xr2,env1,
                       hs:('c,'ffi)bviSem_state)`
            [["tres"; "ts"]] THEN
          NAMED_CASES_TAC (mk_var("tres",rty)) [["tv"]; ["te"]] THEN
-         tidy THEN use_ih_for `(x2:bvi_exp) :: xr2` THEN tidy) in
+         tidy THEN use_ih_for `CONS (x2:bvi_exp) xr2` THEN tidy) in
    (* the conditions of the semantics are if-then-else as well as
       case, and both sides test the same one; the condition goes
       first, because a condition that is still open when the
@@ -893,7 +893,7 @@
             `APPEND (av:bvlSem_v list) env2`
             `d + LENGTH (yl:bvi_exp list)` `[xl:bvi_exp]` in
    let ih_body =
-     USE_IH `extract_list (bvi_let_compile ax d es) ++ ax`
+     USE_IH `APPEND (extract_list (bvi_let_compile ax d es)) ax`
             `APPEND (b:bvlSem_v list) env2` `d:num` `[e:bvi_exp]` in
    let is_compile t =
      try fst(dest_const(fst(strip_comb t))) = "bvi_let_compile"

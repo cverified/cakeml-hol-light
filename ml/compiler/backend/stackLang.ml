@@ -165,8 +165,8 @@ let list_Seq_def,list_Seq_ind = define_wf
   `MEASURE (\x0. list_size (stackLang_prog_size (\x. 0)) x0)`
   [`stackLang_list_Seq [] = Skip`;
    `stackLang_list_Seq [x] = x`;
-   `stackLang_list_Seq (x :: y :: xs) = stackLang_Seq x
-  (stackLang_list_Seq (y :: xs))`];;
+   `stackLang_list_Seq (CONS x (CONS y xs)) = stackLang_Seq x
+  (stackLang_list_Seq (CONS y xs))`];;
 hol4_overload "list_Seq" "stackLang_list_Seq";;
 
 let gc_stub_location_def = new_definition

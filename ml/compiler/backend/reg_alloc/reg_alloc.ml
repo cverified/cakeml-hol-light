@@ -342,7 +342,7 @@ let update_move_related_def = new_definition
 (* Monadic list functions -- doesn't care about order *)
 let st_ex_FOREACH_def,st_ex_FOREACH_ind = define_guess
   [`st_ex_FOREACH [] a = st_ex_return one`;
-   `st_ex_FOREACH (x :: xs) a =
+   `st_ex_FOREACH (CONS x xs) a =
       st_ex_ignore_bind
         (a x) (
         st_ex_FOREACH xs a)`];;
@@ -360,47 +360,47 @@ let reg_alloc_tag_CASE =
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_MAP_def,st_ex_MAP_ind = define_guess_cheat
   [`st_ex_MAP f [] = st_ex_return []`;
-   `st_ex_MAP f (x :: xs) =
+   `st_ex_MAP f (CONS x xs) =
       st_ex_bind (f x) (\
         fx. st_ex_bind (st_ex_MAP f xs) (\
         fxs.
-        st_ex_return (fx :: fxs)))`];;
+        st_ex_return (CONS fx fxs)))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_PARTITION_def,st_ex_PARTITION_ind = define_guess_cheat
   [`st_ex_PARTITION P [] tt ff = st_ex_return (tt,ff)`;
-   `st_ex_PARTITION P (x :: xs) tt ff =
+   `st_ex_PARTITION P (CONS x xs) tt ff =
       st_ex_bind (P x) (\
         Px.
         if Px then
-          st_ex_PARTITION P xs (x :: tt) ff else
-          st_ex_PARTITION P xs tt (x :: ff))`];;
+          st_ex_PARTITION P xs (CONS x tt) ff else
+          st_ex_PARTITION P xs tt (CONS x ff))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_FILTER_def,st_ex_FILTER_ind = define_guess_cheat
   [`st_ex_FILTER P [] acc = st_ex_return acc`;
-   `st_ex_FILTER P (x :: xs) acc =
+   `st_ex_FILTER P (CONS x xs) acc =
       st_ex_bind (P x) (\
         Px.
         if Px then
-          st_ex_FILTER P xs (x :: acc) else
+          st_ex_FILTER P xs (CONS x acc) else
           st_ex_FILTER P xs acc)`];;
 
 (* Keep adjacency lists sorted by > *)
 
 (* Insert an undirect edge into the adj list representation *)
 let sorted_insert_def,sorted_insert_ind = define_rec
-  [`sorted_insert (x:num) acc [] = REVERSE (x :: acc)`;
-   `sorted_insert (x:num) acc (y :: ys) =
-        (if x = y then REVERSE acc ++ (y :: ys) else if x > y
-          then REVERSE acc ++ (x :: y :: ys) else sorted_insert x
-          (y :: acc) ys)`];;
+  [`sorted_insert (x:num) acc [] = REVERSE (CONS x acc)`;
+   `sorted_insert (x:num) acc (CONS y ys) =
+        (if x = y then APPEND (REVERSE acc) (CONS y ys) else if
+          x > y then APPEND (REVERSE acc) (CONS x (CONS y ys)) else
+          sorted_insert x (CONS y acc) ys)`];;
 
 let sorted_mem_def,sorted_mem_ind = define_rec
   [`sorted_mem (x:num) [] = F`;
-   `sorted_mem (x:num) (y :: ys) =
+   `sorted_mem (x:num) (CONS y ys) =
         (if x = y then T else if x > y then F else sorted_mem x
           ys)`];;
 
@@ -419,7 +419,7 @@ let insert_edge_def = new_definition
 let list_insert_edge_def,list_insert_edge_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x1)`
   [`list_insert_edge x [] = st_ex_return one`;
-   `list_insert_edge x (y :: ys) =
+   `list_insert_edge x (CONS y ys) =
         st_ex_ignore_bind
           (insert_edge x y) (
           list_insert_edge x ys)`];;
@@ -429,7 +429,7 @@ let list_insert_edge_def,list_insert_edge_ind = define_wf
 let clique_insert_edge_def,clique_insert_edge_ind = define_wf
   `MEASURE (\x0. list_size (\n. n) x0)`
   [`clique_insert_edge [] = st_ex_return one`;
-   `clique_insert_edge (x :: xs) =
+   `clique_insert_edge (CONS x xs) =
       st_ex_ignore_bind
         (list_insert_edge x xs) (
         clique_insert_edge xs)`];;
@@ -442,12 +442,12 @@ let clique_insert_edge_def,clique_insert_edge_ind = define_wf
 let extend_clique_def,extend_clique_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0)`
   [`extend_clique [] cli = st_ex_return cli`;
-   `extend_clique (x :: xs) cli =
+   `extend_clique (CONS x xs) cli =
         (if MEM x cli then
           extend_clique xs cli else
         st_ex_ignore_bind
           (list_insert_edge x cli) (
-          extend_clique xs (x :: cli)))`];;
+          extend_clique xs (CONS x cli)))`];;
 
 (* The allocator heuristics, designed to minimize proof at the
    cost of some extra computation *)
@@ -474,19 +474,19 @@ let add_simp_wl_def = new_definition
   `add_simp_wl ls =
    st_ex_bind get_simp_wl (\
      swl.
-     set_simp_wl (ls ++ swl))`;;
+     set_simp_wl (APPEND ls swl))`;;
 
 let add_spill_wl_def = new_definition
   `add_spill_wl ls =
    st_ex_bind get_spill_wl (\
      swl.
-     set_spill_wl (ls ++ swl))`;;
+     set_spill_wl (APPEND ls swl))`;;
 
 let add_freeze_wl_def = new_definition
   `add_freeze_wl ls =
    st_ex_bind get_freeze_wl (\
      fwl.
-     set_freeze_wl (ls ++ fwl))`;;
+     set_freeze_wl (APPEND ls fwl))`;;
 
 (* push x onto the stack, deleting it from "existence" *)
 let push_stack_def = new_definition
@@ -495,13 +495,13 @@ let push_stack_def = new_definition
      swl. st_ex_ignore_bind
      (update_degrees x 0) (st_ex_ignore_bind
      (update_move_related x F) (
-     set_stack (x :: swl))))`;;
+     set_stack (CONS x swl))))`;;
 
 let add_unavail_moves_wl_def = new_definition
   `add_unavail_moves_wl ls =
    st_ex_bind get_unavail_moves_wl (\
      swl.
-     set_unavail_moves_wl (ls ++ swl))`;;
+     set_unavail_moves_wl (APPEND ls swl))`;;
 
 (* unspill:
    Move any vertices in the spill list that has
@@ -540,10 +540,9 @@ let smerge_def,smerge_ind = define_wf
         match (xs,ys) with
           ([],ys) -> ys
         | (xs,[]) -> xs
-        | ((((p:num),m) :: xs),((p',m') :: ys)) ->
-       (if p >= p' then
-         (p,m) :: smerge xs ((p',m') :: ys) else
-         (p',m') :: smerge ((p,m) :: xs) ys)`];;
+        | ((CONS ((p:num),m) xs),(CONS (p',m') ys)) ->
+       (if p >= p' then CONS (p,m) (smerge xs (CONS (p',m') ys))
+         else CONS (p',m') (smerge (CONS (p,m) xs) ys))`];;
 
 (*
   revive the unavailable moves that touch each neighbor
@@ -555,8 +554,8 @@ let revive_moves_def = new_definition
      uam. st_ex_bind get_avail_moves_wl (\
      am.
      let (rev,unavail) = PARTITION
-       (\(_1,(x,y)). EXISTS (sorted_mem x) nbs \/ EXISTS (sorted_mem
-         y) nbs) uam in
+       (\(_1,(x,y)). EX (sorted_mem x) nbs \/ EX (sorted_mem y) nbs)
+         uam in
      let sorted = smerge (reg_alloc_sort_moves rev) am in
      st_ex_ignore_bind
        (set_avail_moves_wl sorted) (
@@ -789,7 +788,7 @@ let st_ex_FIRST_def,st_ex_FIRST_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3).      list_size (pair_size (\x. 0)
   (pair_size (\n. n) (\n. n))) x2)`
   [`st_ex_FIRST P Q [] unavail = st_ex_return (NONE,unavail)`;
-   `st_ex_FIRST P Q (m :: ms) unavail =
+   `st_ex_FIRST P Q (CONS m ms) unavail =
         (let (p,(x,y)) = m in
         st_ex_bind (coalesce_parent x) (\
           x. st_ex_bind (coalesce_parent y) (\
@@ -801,7 +800,7 @@ let st_ex_FIRST_def,st_ex_FIRST_ind = define_wf
             (x,y). st_ex_bind (Q x y) (\
             optb2.
             match optb2 with
-              NONE -> st_ex_FIRST P Q ms ((p,(x,y)) :: unavail) |
+              NONE -> st_ex_FIRST P Q ms (CONS (p,(x,y)) unavail) |
                 SOME pr ->
               st_ex_return (SOME ((x,y),pr,ms),unavail)))))))`];;
 
@@ -897,7 +896,7 @@ let do_freeze_def = new_definition
    st_ex_bind get_freeze_wl (\
      freeze.
      match freeze with
-       [] -> st_ex_return F | x :: xs ->
+       [] -> st_ex_return F | CONS x xs ->
        st_ex_ignore_bind
          (dec_degree x) (st_ex_ignore_bind
          (push_stack x) (st_ex_ignore_bind
@@ -920,15 +919,15 @@ let safe_div_def = new_definition
 let st_ex_list_MIN_cost_def,st_ex_list_MIN_cost_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4,x5). list_size (\n. n) x1)`
   [`st_ex_list_MIN_cost scost [] d k v acc = st_ex_return (k,acc)`;
-   `st_ex_list_MIN_cost scost (x :: xs) d k v acc =
+   `st_ex_list_MIN_cost scost (CONS x xs) d k v acc =
       (if x < d then
         st_ex_bind (degrees_sub x) (\
           xv. st_ex_bind (st_ex_return (safe_div (lookup_any x scost
             0) xv)) (\
           cost.
           if v > cost then
-            st_ex_list_MIN_cost scost xs d x cost (k :: acc) else
-            st_ex_list_MIN_cost scost xs d k v (x :: acc))) else
+            st_ex_list_MIN_cost scost xs d x cost (CONS k acc) else
+            st_ex_list_MIN_cost scost xs d k v (CONS x acc))) else
         st_ex_list_MIN_cost scost xs d k v acc)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -936,13 +935,13 @@ let st_ex_list_MIN_cost_def,st_ex_list_MIN_cost_ind = define_wf
 let st_ex_list_MAX_deg_def,st_ex_list_MAX_deg_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). list_size (\n. n) x0)`
   [`st_ex_list_MAX_deg [] d k v acc = st_ex_return (k,acc)`;
-   `st_ex_list_MAX_deg (x :: xs) d k v acc =
+   `st_ex_list_MAX_deg (CONS x xs) d k v acc =
       (if x < d then
         st_ex_bind (degrees_sub x) (\
           xv.
           if v < xv then
-            st_ex_list_MAX_deg xs d x xv (k :: acc) else
-            st_ex_list_MAX_deg xs d k v (x :: acc)) else
+            st_ex_list_MAX_deg xs d x xv (CONS k acc) else
+            st_ex_list_MAX_deg xs d k v (CONS x acc)) else
       st_ex_list_MAX_deg xs d k v acc)`];;
 
 let do_spill_def = new_definition
@@ -951,7 +950,7 @@ let do_spill_def = new_definition
      spills. st_ex_bind get_dim (\
      d.
      match spills with
-       [] -> st_ex_return F | (x :: xs) ->
+       [] -> st_ex_return F | (CONS x xs) ->
        st_ex_bind (degrees_sub x) (\
          xv. st_ex_bind (match scostopt with
                NONE -> st_ex_list_MAX_deg xs d x xv [] | SOME scost
@@ -1009,7 +1008,7 @@ let remove_colours_def,remove_colours_ind = define_wf
         // Some available colour after checking
         | ([],(ks:num list)) -> st_ex_return ks
         // Do the check for vertex x
-        | ((x :: xs),ks) ->
+        | ((CONS x xs),ks) ->
        st_ex_bind (node_tag_sub x) (\
          cx. st_ex_bind
          (match cx with
@@ -1032,7 +1031,7 @@ let assign_Atemp_tag_def = new_definition
          adjs. st_ex_bind (remove_colours adjs ks) (\
          ks.
          match ks with
-           [] -> update_node_tag n Stemp | (x :: _7) ->
+           [] -> update_node_tag n Stemp | (CONS x _7) ->
            st_ex_bind (prefs n ks) (\
              c.
              // Apply monadic preference oracle
@@ -1048,8 +1047,8 @@ let assign_Atemps_def = new_definition
   `assign_Atemps k ls prefs =
    st_ex_bind get_dim (\
      d. st_ex_bind (st_ex_return (FILTER (\n. n < d) ls)) (\
-     ls. st_ex_bind (st_ex_return (GENLIST (\x. x) k)) (\
-     ks. st_ex_bind (st_ex_return (GENLIST (\x. x) d)) (\
+     ls. st_ex_bind (st_ex_return (list_of_seq (\x. x) k)) (\
+     ks. st_ex_bind (st_ex_return (list_of_seq (\x. x) d)) (\
      cs. st_ex_ignore_bind
      // actually, only need to do those not already in ls
      // Assign all the ones that the ls tells us to
@@ -1070,7 +1069,7 @@ let tag_col_def = new_definition
 *)
 let unbound_colour_def,unbound_colour_ind = define_rec
   [`unbound_colour col [] = col`;
-   `unbound_colour col ((x:num) :: xs) =
+   `unbound_colour col (CONS (x:num) xs) =
         (if col < x then
           col else if x = col then
           unbound_colour (col + 1) xs else
@@ -1101,7 +1100,7 @@ let assign_Stemp_tag_def = new_definition
 let assign_Stemps_def = new_definition
   `assign_Stemps k prefs =
    st_ex_bind get_dim (\
-     d. st_ex_bind (st_ex_return (GENLIST (\x. x) d)) (\
+     d. st_ex_bind (st_ex_return (list_of_seq (\x. x) d)) (\
      cs.
      st_ex_FOREACH cs (assign_Stemp_tag k prefs)))`;;
 
@@ -1111,7 +1110,7 @@ let assign_Stemps_def = new_definition
 let first_match_col_def,first_match_col_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x1)`
   [`first_match_col ks [] = st_ex_return NONE`;
-   `first_match_col ks (x :: xs) =
+   `first_match_col ks (CONS x xs) =
         st_ex_bind (node_tag_sub x) (\
           c.
           match c with
@@ -1149,8 +1148,8 @@ hol4_overload "Seq" "reg_alloc_Seq";;
 (* --- clash_tree oracle checks --- *)
 let numset_list_delete_def,numset_list_delete_ind = define_rec
   [`numset_list_delete [] (t:'a spt) = t`;
-   `numset_list_delete (x :: xs) (t:'a spt) = numset_list_delete xs
-  (sptree_delete x t)`];;
+   `numset_list_delete (CONS x xs) (t:'a spt) = numset_list_delete
+  xs (sptree_delete x t)`];;
 
 (*Check that a numset is injective over the clash sets in an interpreted tree*)
 let check_col_def = new_definition
@@ -1161,7 +1160,7 @@ let check_col_def = new_definition
 
 let check_partial_col_def,check_partial_col_ind = define_rec
   [`check_partial_col f [] t ft = SOME (t,ft)`;
-   `check_partial_col f (x :: xs) t ft =
+   `check_partial_col f (CONS x xs) t ft =
         (match sptree_lookup x t with
           SOME one -> check_partial_col f xs t ft | NONE ->
         (match sptree_lookup (f x) ft with
@@ -1214,7 +1213,7 @@ The second remap is probably not necessary?
 let list_remap_def,list_remap_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0)`
   [`list_remap [] (ta,fa,nv) = (ta,fa,nv)`;
-   `list_remap (x :: xs) (ta,fa,nv) =
+   `list_remap (CONS x xs) (ta,fa,nv) =
         (match sptree_lookup x ta with
           SOME v -> list_remap xs (ta,fa,nv) | NONE ->
           list_remap xs (sptree_insert x nv ta,sptree_insert nv
@@ -1261,7 +1260,7 @@ let convention_partitions = prove
 (* Set the tags according to wordLang conventions *)
 let mk_tags_def = new_definition
   `mk_tags n fs fa =
-   st_ex_bind (st_ex_return (GENLIST (\x. x) n)) (\
+   st_ex_bind (st_ex_return (list_of_seq (\x. x) n)) (\
      inds.
      st_ex_FOREACH inds
      (\i.
@@ -1323,7 +1322,7 @@ let sp_default_def = new_definition
 let extend_graph_def,extend_graph_ind = define_wf
   `MEASURE (\(x0,x1). list_size (pair_size (\x. 0) (\x. 0)) x1)`
   [`extend_graph ta [] = st_ex_return one`;
-   `extend_graph ta ((x,y) :: xs) =
+   `extend_graph ta (CONS (x,y) xs) =
       st_ex_ignore_bind
         (insert_edge (ta x) (ta y)) (
         extend_graph ta xs)`];;
@@ -1410,7 +1409,7 @@ let pri_move_insert_def = new_definition
    (match sptree_lookup x acc with
      NONE ->
        sptree_insert x [(p,y)] acc | SOME ls ->
-       sptree_insert x ((p,y) :: ls) acc)`;;
+       sptree_insert x (CONS (p,y) ls) acc)`;;
 
 let undir_move_insert_def = new_definition
   `undir_move_insert p x y acc =
@@ -1418,7 +1417,7 @@ let undir_move_insert_def = new_definition
 
 let moves_to_sp_def,moves_to_sp_ind = define_rec
   [`moves_to_sp [] acc = acc`;
-   `moves_to_sp (move' :: xs) acc =
+   `moves_to_sp (CONS move' xs) acc =
         (let (p,x,y) = move' in
         moves_to_sp xs (undir_move_insert p x y acc))`];;
 
@@ -1459,8 +1458,8 @@ let biased_pref_def = new_definition
        v.
        let vs = (match sptree_lookup n mtable with NONE -> [] | SOME
          vs -> vs) in
-       handle_Subscript (first_match_col ks (v :: vs)) (st_ex_return
-         NONE)) else
+       handle_Subscript (first_match_col ks (CONS v vs))
+         (st_ex_return NONE)) else
        st_ex_return NONE)`;;
 
 (* very similar to consistency_ok, but for initializing *)
@@ -1498,7 +1497,7 @@ let update_move_def = new_definition
 let neg_first_match_col_def,neg_first_match_col_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x2)`
   [`neg_first_match_col k bads [] = st_ex_return NONE`;
-   `neg_first_match_col k bads (x :: xs) =
+   `neg_first_match_col k bads (CONS x xs) =
         st_ex_bind (node_tag_sub x) (\
           c.
           match c with

@@ -69,7 +69,7 @@ let get_token_eqn = prove
                    tokens_SymbolT (implode s) else
                    if c = (CHR 124) then tokens_BarT else
                    if c = (CHR 125) then tokens_RbraceT else
-                   tokens_SymbolT (implode s)) | c :: s' ->
+                   tokens_SymbolT (implode s)) | CONS c s' ->
              (if c < (CHR 97) then
                if c <= (CHR 46) then
                  if c = (CHR 39) then tokens_TyvarT (implode s) else
@@ -154,7 +154,7 @@ let num_from_hex_string_alt_def = new_definition
    termination *)
 let next_sym_alt_def,next_sym_alt_ind = define_guess
   [`next_sym_alt "" _1 = NONE`;
-   `next_sym_alt (c :: str) loc =
+   `next_sym_alt (CONS c str) loc =
          (if c = (CHR 10) then
             // skip new line
             next_sym_alt str (next_line loc) else if isSpace c then
@@ -181,7 +181,7 @@ let next_sym_alt_def,next_sym_alt_ind = define_guess
                        Locs loc (next_loc (LENGTH n) loc),
                        rest) else
                let (n,rest) = read_while isDigit str [] in
-                 SOME (NumberS (&(num_from_dec_string_alt (c ::
+                 SOME (NumberS (&(num_from_dec_string_alt (CONS c
                    n))),
                        Locs loc (next_loc (LENGTH n) loc),
                        rest) else if c = (CHR 126) /\ ~(str = "") /\
@@ -199,67 +199,67 @@ let next_sym_alt_def,next_sym_alt_ind = define_guess
            // read string
            let (t,loc',rest) = lexer_fun_read_string str ""
              (next_loc 1 loc) in
-             SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
-               str) then
+             SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (CONS
+               c str) then
            SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
-             isPREFIX "#\"" (c :: str) then
+             isPREFIX "#\"" (CONS c str) then
            let (t,loc',rest) = lexer_fun_read_string (TL str) ""
              (next_loc 2 loc) in
              SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX
-               "#(" (c :: str) then
+               "#(" (CONS c str) then
            let (t,loc',rest) =
                  read_FFIcall (TL str) "" (next_loc 2 loc) in
-             SOME (t,Locs loc loc',rest) else if isPREFIX "(*" (c ::
-               str) then
+             SOME (t,Locs loc loc',rest) else if isPREFIX "(*" (CONS
+               c str) then
            match skip_comment (TL str) (0:num) (next_loc 2 loc) with
              NONE -> SOME (ErrorS,Locs loc (next_loc 2 loc),"") | SOME
              (rest,loc') -> next_sym_alt rest loc' else if c = (CHR 95)
              then SOME (OtherS "_",Locs loc loc,str) else
-           let (tok',end_loc,rest) = read_Ident (STRING c str) loc
-             [] in
+           let (tok',end_loc,rest) = read_Ident (CONS c str) loc []
+             in
              SOME (tok',Locs loc end_loc,rest))`];;
 
 (* [local] *)
 let EVERY_isDigit_imp = prove
- (`EVERY isDigit x ==>
+ (`ALL isDigit x ==>
    MAP UNHEX x = MAP unhex_alt x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let toNum_rw = prove
- (`!x. EVERY isDigit x ==>
+ (`!x. ALL isDigit x ==>
    num_from_dec_string x = num_from_dec_string_alt x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let EVERY_isHexDigit_imp = prove
- (`EVERY isHexDigit x ==>
+ (`ALL isHexDigit x ==>
    MAP UNHEX x = MAP unhex_alt x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let num_from_hex_string_rw = prove
- (`!x. EVERY isHexDigit x ==>
+ (`!x. ALL isHexDigit x ==>
        num_from_hex_string x = num_from_hex_string_alt x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let EVERY_IMPLODE = prove
  (`!ls P.
-     EVERY P (IMPLODE ls) <=> EVERY P ls`,
+     ALL P (IMPLODE ls) <=> ALL P ls`,
   CHEAT_TAC);;
 
 (* [local] *)
 let read_while_P_lem = prove
  (`!ls rest P x y.
-     EVERY P rest /\
+     ALL P rest /\
      read_while P ls rest = (x,y) ==>
-     EVERY P x`,
+     ALL P x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let read_while_P = prove
- (`!ls P x y. read_while P ls "" = (x,y) ==> EVERY P x`,
+ (`!ls P x y. read_while P ls "" = (x,y) ==> ALL P x`,
   CHEAT_TAC);;
 
 let next_sym_eq = prove
@@ -283,7 +283,7 @@ let lexer_impl_lex_aux_def,lexer_impl_lex_aux_ind = define_guess_cheat
        NONE -> NONE |
        // case: token found
        SOME (token,Locs loc' loc'',rest) ->
-         (let new_acc = ((token,Locs loc' loc'') :: acc) in
+         (let new_acc = (CONS (token,Locs loc' loc'') acc) in
          let newloc = next_loc 1 loc'' in
            if token = tokens_SemicolonT /\ (d = 0) then SOME
              (REVERSE new_acc,newloc,rest) else
@@ -333,7 +333,7 @@ let lex_aux_alt_def,lex_aux_alt_ind = define_guess_cheat
        NONE -> NONE |
        // case: token found
        SOME (token,Locs loc' loc'',rest) ->
-         (let new_acc = ((token,Locs loc' loc'') :: acc) in
+         (let new_acc = (CONS (token,Locs loc' loc'') acc) in
          let newloc = next_loc 1 loc'' in
            if (token = OtherS ";") /\ (d = 0) then SOME (REVERSE
              new_acc,newloc,rest) else if MEM token [OtherS "let";
@@ -398,14 +398,14 @@ let lex_until_top_semicolon_alt_thm = prove
 let lex_impl_all_def,lex_impl_all_ind = define_guess_cheat
   [`lex_impl_all input l =
      (match lex_until_toplevel_semicolon input l with NONE -> []
-       | SOME (t,loc,input') -> t :: lex_impl_all input' loc)`];;
+       | SOME (t,loc,input') -> CONS t (lex_impl_all input' loc))`];;
 
 let lex_aux_tokens_def,lex_aux_tokens_ind = define_shaped_rec
   "match"
   [`lex_aux_tokens acc (d:num) input =
       (match input with
-        [] -> NONE | (token,locs) :: rest ->
-          (let new_acc = (token,locs) :: acc in
+        [] -> NONE | CONS (token,locs) rest ->
+          (let new_acc = CONS (token,locs) acc in
             if token = tokens_SemicolonT /\ (d = 0) then
               SOME (REVERSE (new_acc),rest) else
               if token = tokens_LetT then
@@ -445,8 +445,8 @@ let lex_aux_tokens_LESS = prove
 let lex_impl_all_tokens_def,lex_impl_all_tokens_ind = define_guess_cheat
   [`lex_impl_all_tokens input =
       (match lex_until_toplevel_semicolon_tokens input with
-        NONE -> [] | SOME (t,input) -> t :: lex_impl_all_tokens
-          input)`];;
+        NONE -> [] | SOME (t,input) -> CONS t
+          (lex_impl_all_tokens input))`];;
 
 (* [local] *)
 let lex_aux_tokens_thm_1 = prove
@@ -474,7 +474,7 @@ let lexer_impl_lex_aux_tokens_thm_1 = prove
            SOME (toks,rest) ->
            (toplevel_semi_dex (LENGTH acc) d input = SOME (LENGTH
              toks)) /\
-           (REVERSE acc ++ input = toks ++ rest)`,
+           (APPEND (REVERSE acc) input = APPEND toks rest)`,
   CHEAT_TAC);;
 
 (* HOL4 lexer_implScript.sml:614-615: a theorem that HOL4 states as

@@ -64,7 +64,7 @@ let find_word_ref_def,find_word_ref_ind = define_wf
 
 let analyse_word_code_def,analyse_word_code_ind = define_rec
   [`analyse_word_code [] = (LN:(1 spt) spt)`;
-   `analyse_word_code ((n,args,prog) :: t) =
+   `analyse_word_code (CONS (n,args,prog) t) =
             ((sptree_insert n (find_word_ref prog)
               (analyse_word_code t)):(1 spt) spt)`];;
 

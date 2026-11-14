@@ -27,8 +27,8 @@ let _ = hol4_ancestors "clos_opProof"
 
 (* [local] *)
 let list_split3 = prove
- (`!P. P [] /\ (!x y z zs. P (x :: y :: z :: zs)) /\ (!x. P [x]) /\ (!x
-  y. P [x; y]) ==>
+ (`!P. P [] /\ (!x y z zs. P (CONS x (CONS y (CONS z zs)))) /\ (!x. P
+  [x]) /\ (!x y. P [x; y]) ==>
        (!xs. P xs)`,
   CHEAT_TAC);;
 
@@ -109,7 +109,7 @@ let evaluate_dont_lift = prove
 let lift_exps_acc = prove
  (`!xs n binds ys k binds2.
      lift_exps xs n binds = (ys,k,binds2) ==>
-     (?binds1. binds2 = binds ++ binds1)`,
+     (?binds1. binds2 = APPEND binds binds1)`,
   CHEAT_TAC);;
 
 let lift_exps_n = prove
@@ -135,7 +135,7 @@ let lift_exps_thm = prove
        (!ws (s3:('a,'b)closSem_state) bind_vals.
          res = Rval bind_vals ==>
          (?vs. res0 = Rval vs /\
-              closSem_evaluate (ys,bind_vals ++ ws,s3) = (Rval
+              closSem_evaluate (ys,APPEND bind_vals ws,s3) = (Rval
                 vs,s3))))`,
   CHEAT_TAC);;
 
@@ -158,7 +158,7 @@ let simple_exp = cake_inductive
      (closLang_Constant (ConstStr i))) [])) /\
    (!t i. simple_exp (closLang_Op t (closLang_BlockOp
      (closLang_Constant (ConstWord64 i))) [])) /\
-   (!t i xs. EVERY simple_exp xs ==> simple_exp (closLang_Op t
+   (!t i xs. ALL simple_exp xs ==> simple_exp (closLang_Op t
      (closLang_BlockOp (closLang_Cons i)) xs)) /\
    (!t i x. simple_exp x ==> simple_exp (closLang_Op t
      (closLang_BlockOp (closLang_EqualConst (closLang_Int i))) [x])) /\
@@ -178,41 +178,41 @@ let simple_exp_pure = prove
   CHEAT_TAC);;
 
 let simple_exp_pure_every = prove
- (`EVERY simple_exp xs ==> EVERY pure xs`,
+ (`ALL simple_exp xs ==> ALL pure xs`,
   CHEAT_TAC);;
 
 let lift_exps_simple_exp = prove
  (`!xs n binds ys k binds2.
-     lift_exps xs n binds = (ys,k,binds2) ==> EVERY simple_exp ys`,
+     lift_exps xs n binds = (ys,k,binds2) ==> ALL simple_exp ys`,
   CHEAT_TAC);;
 
 let evaluate_ConjList_append_F = prove
  (`!xs ys.
      closSem_evaluate ([ConjList xs],env1,r) = (Rval [Boolv F],r) /\
-       EVERY pure xs ==>
-     closSem_evaluate ([ConjList (xs ++ ys)],env1,r) = (Rval [Boolv
-       F],(r:('c,'ffi)closSem_state))`,
+       ALL pure xs ==>
+     closSem_evaluate ([ConjList (APPEND xs ys)],env1,r) = (Rval
+       [Boolv F],(r:('c,'ffi)closSem_state))`,
   CHEAT_TAC);;
 
 let evaluate_ConjList_append_T = prove
  (`!xs ys.
      closSem_evaluate ([ConjList xs],env1,r) = (Rval [Boolv T],r) /\
-       EVERY pure xs ==>
-     closSem_evaluate ([ConjList (xs ++ ys)],env1,r) =
+       ALL pure xs ==>
+     closSem_evaluate ([ConjList (APPEND xs ys)],env1,r) =
      closSem_evaluate ([ConjList
        ys],env1,(r:('c,'ffi)closSem_state))`,
   CHEAT_TAC);;
 
 let evaluate_ConjList_F = prove
  (`closSem_evaluate ([x],env,r) = (Rval [Boolv F],r) ==>
-   closSem_evaluate ([ConjList (x :: xs)],env,r) = (Rval [Boolv
+   closSem_evaluate ([ConjList (CONS x xs)],env,r) = (Rval [Boolv
      F],r)`,
   CHEAT_TAC);;
 
 let evaluate_ConjList_T = prove
  (`closSem_evaluate ([x],env,r) = (Rval [Boolv T],r) /\
    closSem_evaluate ([ConjList xs],env,r) = res ==>
-   closSem_evaluate ([ConjList (x :: xs)],env,r) = res`,
+   closSem_evaluate ([ConjList (CONS x xs)],env,r) = res`,
   CHEAT_TAC);;
 
 let eq_direct_simple_exp = prove
@@ -222,14 +222,14 @@ let eq_direct_simple_exp = prove
 
 let simple_exp_eq_pure_list = prove
  (`!xs.
-     EVERY (\(x,y). simple_exp x /\ simple_exp y) xs ==>
-     EVERY simple_exp (append (eq_pure_list xs))`,
+     ALL (\(x,y). simple_exp x /\ simple_exp y) xs ==>
+     ALL simple_exp (append (eq_pure_list xs))`,
   CHEAT_TAC);;
 
 let evaluate_EL = prove
  (`!xs i vs.
      closSem_evaluate (xs,env,s) = (Rval vs,s) /\ i < LENGTH xs /\
-       EVERY pure xs ==>
+       ALL pure xs ==>
      closSem_evaluate ([EL i xs],env,s) = (Rval [EL i vs],s)`,
   CHEAT_TAC);;
 
@@ -273,14 +273,14 @@ let red_rel = cake_inductive
    ((!x. red_rel [x] [x])) /\
    ((!v t. red_rel [Var t v] [])) /\
    ((!x y zs x1 x2.
-       red_rel [x] x1 /\ red_rel (y :: zs) x2 ==>
-       red_rel (x :: y :: zs) (x1 ++ x2))) /\
+       red_rel [x] x1 /\ red_rel (CONS y zs) x2 ==>
+       red_rel (CONS x (CONS y zs)) (APPEND x1 x2))) /\
    ((!xs x x1 t.
        red_rel xs x1 /\ red_rel [x] [] ==>
        red_rel [Let t xs x] x1)) /\
    ((!x y z x1 x2 x3.
        red_rel [x] x1 /\ red_rel [y] x2 /\ red_rel [z] x3 ==>
-       red_rel [If t x y z] (x1 ++ x2 ++ x3)))`;;
+       red_rel [If t x y z] (APPEND (APPEND x1 x2) x3)))`;;
 
 (* HOL4 clos_opProofScript.sml:733-734: a theorem that HOL4 states as
    the value of an ML expression: red_rel_nil *)
@@ -290,11 +290,11 @@ let red_rel_ConjList = prove
   CHEAT_TAC);;
 
 let red_rel_EVERY = prove
- (`!xs. EVERY (\h. red_rel [h] []) xs ==> red_rel xs []`,
+ (`!xs. ALL (\h. red_rel [h] []) xs ==> red_rel xs []`,
   CHEAT_TAC);;
 
 let simple_exp_red_rel = prove
- (`!xs. EVERY simple_exp xs ==> red_rel xs []`,
+ (`!xs. ALL simple_exp xs ==> red_rel xs []`,
   CHEAT_TAC);;
 
 let red_rel_eq_pure = prove
@@ -302,26 +302,28 @@ let red_rel_eq_pure = prove
   CHEAT_TAC);;
 
 let IMP_red_rel_cons_0 = prove
- (`red_rel [x] ys /\ red_rel xs zs ==> red_rel (x :: xs) (ys ++ zs)`,
+ (`red_rel [x] ys /\ red_rel xs zs ==> red_rel (CONS x xs) (APPEND ys
+  zs)`,
   CHEAT_TAC);;
 
 let red_rel_exists_append = prove
- (`red_rel (h :: xs) ys <=>
-   (?ys1 ys2. red_rel [h] ys1 /\ red_rel xs ys2 /\ ys = ys1 ++ ys2)`,
+ (`red_rel (CONS h xs) ys <=>
+   (?ys1 ys2. red_rel [h] ys1 /\ red_rel xs ys2 /\ ys = APPEND ys1
+     ys2)`,
   CHEAT_TAC);;
 
 let IMP_red_rel_append = prove
  (`!xs ys xs1 ys1.
-     red_rel xs ys /\ red_rel xs1 ys1 ==> red_rel (xs ++ xs1) (ys
-       ++ ys1)`,
+     red_rel xs ys /\ red_rel xs1 ys1 ==> red_rel (APPEND xs xs1)
+       (APPEND ys ys1)`,
   CHEAT_TAC);;
 
 let IMP_red_rel_cons = prove
- (`red_rel [x] [] /\ red_rel xs ys ==> red_rel (x :: xs) ys`,
+ (`red_rel [x] [] /\ red_rel xs ys ==> red_rel (CONS x xs) ys`,
   CHEAT_TAC);;
 
 let IMP_red_rel_cons_1 = prove
- (`red_rel xs ys ==> red_rel (x :: xs) (x :: ys)`,
+ (`red_rel xs ys ==> red_rel (CONS x xs) (CONS x ys)`,
   CHEAT_TAC);;
 
 let lift_exps_red_rel = prove
@@ -346,7 +348,7 @@ let red_rel_exists = prove
   CHEAT_TAC);;
 
 let red_rel_pure = prove
- (`!xs ys. red_rel xs ys ==> (EVERY pure xs <=> EVERY pure ys)`,
+ (`!xs ys. red_rel xs ys ==> (ALL pure xs <=> ALL pure ys)`,
   CHEAT_TAC);;
 
 let red_rel_elist_globals = prove
@@ -355,7 +357,7 @@ let red_rel_elist_globals = prove
   CHEAT_TAC);;
 
 let red_rel_esgc_free = prove
- (`!xs ys. red_rel xs ys ==> (EVERY closProps_esgc_free xs <=> EVERY
+ (`!xs ys. red_rel xs ys ==> (ALL closProps_esgc_free xs <=> ALL
   closProps_esgc_free ys)`,
   CHEAT_TAC);;
 
@@ -402,8 +404,8 @@ let no_Labels_SmartOp = prove
   CHEAT_TAC);;
 
 let obeys_max_app_SmartOp = prove
- (`EVERY (obeys_max_app k) xs ==> obeys_max_app k (clos_op_SmartOp t
-  op xs)`,
+ (`ALL (obeys_max_app k) xs ==> obeys_max_app k (clos_op_SmartOp t op
+  xs)`,
   CHEAT_TAC);;
 
 let lift_exps_fv = prove

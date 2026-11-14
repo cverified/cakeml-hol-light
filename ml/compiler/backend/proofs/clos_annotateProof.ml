@@ -48,16 +48,16 @@ let alt_free_thm = prove
 
 let alt_fv = prove
  (`(!n. alt_fv n [] <=> F) /\
-    (!y xs x n. alt_fv n (x :: y :: xs) <=> alt_fv n [x] \/ alt_fv n
-      (y :: xs)) /\
+    (!y xs x n. alt_fv n (CONS x (CONS y xs)) <=> alt_fv n [x] \/
+      alt_fv n (CONS y xs)) /\
     (!v0 v n. alt_fv n [Var v0 v] <=> n = v) /\
     (!x3 x2 x1 v1 n.
       alt_fv n [If v1 x1 x2 x3] <=> alt_fv n [x1] \/ alt_fv n [x2] \/
         alt_fv n [x3]) /\
     (!xs x2 v2 n.
       alt_fv n [Let v2 xs x2] <=>
-        (if no_overlap (LENGTH xs) (SND (alt_free [x2])) /\ EVERY
-          pure xs then
+        (if no_overlap (LENGTH xs) (SND (alt_free [x2])) /\ ALL pure
+          xs then
           alt_fv (n + LENGTH xs) [x2] else
           alt_fv n xs \/ alt_fv (n + LENGTH xs) [x2])) /\
     (!x1 v3 n. alt_fv n [Raise v3 x1] <=> alt_fv n [x1]) /\
@@ -74,8 +74,8 @@ let alt_fv = prove
          // if clos_annotate$no_overlap (LENGTH fns) (SND (alt_free [x1])) then
          // alt_fv (n + LENGTH fns) [x1]
          // else
-         EXISTS (\(num_args,x). alt_fv (n + num_args + LENGTH fns)
-           [x]) fns \/
+         EX (\(num_args,x). alt_fv (n + num_args + LENGTH fns) [x])
+           fns \/
          alt_fv (n + LENGTH fns) [x1]) /\
     (!x2 x1 v9 n. alt_fv n [Handle v9 x1 x2] <=> alt_fv n [x1] \/
       alt_fv (n + 1) [x2]) /\
@@ -98,7 +98,7 @@ let alt_fv1_def = new_definition
 
 (* [simp] *)
 let alt_fv_cons = prove
- (`alt_fv v (x :: xs) <=> alt_fv1 v x \/ alt_fv v xs`,
+ (`alt_fv v (CONS x xs) <=> alt_fv1 v x \/ alt_fv v xs`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -114,7 +114,7 @@ let alt_fv_REPLICATE = prove
 let clos_annotateProof_v_rel = cake_inductive
   `(clos_annotateProof_v_rel (closSem_Number j) (closSem_Number j)) /\
    (clos_annotateProof_v_rel (Word64 w) (Word64 w)) /\
-   (EVERY2 clos_annotateProof_v_rel (xs:closSem_v list) (ys:closSem_v
+   (ALL2 clos_annotateProof_v_rel (xs:closSem_v list) (ys:closSem_v
      list) ==>
     clos_annotateProof_v_rel (closSem_Block t xs) (closSem_Block t
       ys)) /\
@@ -126,11 +126,10 @@ let clos_annotateProof_v_rel = cake_inductive
     (!n. (\x y. alt_fv y x) [c] n /\ num_args <= n ==>
          env_ok m 0 i env env' (n - num_args)) /\
     every_Fn_vs_NONE [c] /\
-    (LENGTH env = m) /\ EVERY2 clos_annotateProof_v_rel vals vals'
-      ==>
+    (LENGTH env = m) /\ ALL2 clos_annotateProof_v_rel vals vals' ==>
     clos_annotateProof_v_rel (Closure p vals env num_args c) (Closure
       p vals' env' num_args c')) /\
-   (EVERY2 (\(num_args,c1) (num_args',c1').
+   (ALL2 (\(num_args,c1) (num_args',c1').
       ?m i.
         (num_args' = num_args) /\
         (clos_annotate_shift (FST (alt_free [c1])) m (LENGTH cs +
@@ -140,8 +139,7 @@ let clos_annotateProof_v_rel = cake_inductive
            env_ok m 0 i env env' (n - (num_args + LENGTH cs))) /\
         every_Fn_vs_NONE [c1] /\
         (LENGTH env = m)) cs cs' /\
-    EVERY2 clos_annotateProof_v_rel vals vals' /\ index < LENGTH cs
-      ==>
+    ALL2 clos_annotateProof_v_rel vals vals' /\ index < LENGTH cs ==>
     clos_annotateProof_v_rel (Recclosure p vals env cs index)
       (Recclosure p vals' env' cs' index)) /\
    (l + m <= n ==>
@@ -177,9 +175,9 @@ let v_rel_Unit = prove
 
 (* [local] *)
 let env_ok_EXTEND = prove
- (`EVERY2 clos_annotateProof_v_rel env1 env2 /\ (l1 = LENGTH env1) /\
+ (`ALL2 clos_annotateProof_v_rel env1 env2 /\ (l1 = LENGTH env1) /\
      (l1 <= n ==> env_ok m l i env1' env2' (n - l1)) ==>
-     env_ok m (l + l1) i (env1 ++ env1') (env2 ++ env2') n`,
+     env_ok m (l + l1) i (APPEND env1 env1') (APPEND env2 env2') n`,
   CHEAT_TAC);;
 
 (* HOL4 clos_annotateProofScript.sml:211-213: ML code, not ported *)
@@ -195,7 +193,7 @@ let env_ok_EXTEND_IGNORE = prove
  (`(LENGTH env2 = LENGTH env1) /\ LENGTH env1 <= n /\ l1 = LENGTH env1
   /\
     env_ok m l i env1' env2' (n - l1) ==>
-    env_ok m (l + l1) i (env1 ++ env1') (env2 ++ env2') n`,
+    env_ok m (l + l1) i (APPEND env1 env1') (APPEND env2 env2') n`,
   CHEAT_TAC);;
 
 let clos_annotateProof_state_rel_def = new_definition
@@ -209,8 +207,8 @@ let clos_annotateProof_state_rel_def = new_definition
      (closSem_state_compile s = (\cfg (es,aux). closSem_state_compile
        t cfg (clos_annotate_annotate 0 es,clos_annotate_compile aux)))
        /\
-     EVERY2 (OPTREL clos_annotateProof_v_rel) (closSem_state_globals
-       s) (closSem_state_globals t) /\
+     ALL2 (OPTREL clos_annotateProof_v_rel) (closSem_state_globals s)
+       (closSem_state_globals t) /\
      (FDOM (closSem_state_refs s) = FDOM (closSem_state_refs t)) /\
      (!n r1.
        (FLOOKUP (closSem_state_refs s) n = SOME r1) ==>
@@ -249,15 +247,15 @@ let ALOOKUP_compile = prove
   CHEAT_TAC);;
 
 let compile_append = prove
- (`clos_annotate_compile (p1 ++ p2) = clos_annotate_compile p1 ++
-  clos_annotate_compile p2`,
+ (`clos_annotate_compile (APPEND p1 p2) = APPEND
+  (clos_annotate_compile p1) (clos_annotate_compile p2)`,
   CHEAT_TAC);;
 
 (* semantic functions respect relation *)
 
 (* list_to_v_v_rel *)
 let clos_annotateProof_list_to_v_v_rel = prove
- (`!xs ys. LIST_REL clos_annotateProof_v_rel xs ys ==>
+ (`!xs ys. ALL2 clos_annotateProof_v_rel xs ys ==>
   clos_annotateProof_v_rel (list_to_v xs) (list_to_v ys)`,
   CHEAT_TAC);;
 
@@ -269,13 +267,13 @@ let v_to_list = prove
         v_to_list h' = NONE) \/
        (?x x'. (v_to_list h = SOME x) /\
               (v_to_list h' = SOME x') /\
-              EVERY2 clos_annotateProof_v_rel x x')`,
+              ALL2 clos_annotateProof_v_rel x x')`,
   CHEAT_TAC);;
 
 (* do_app_lemma[local] *)
 let clos_annotateProof_do_app_lemma = prove
- (`clos_annotateProof_state_rel s t /\ LIST_REL clos_annotateProof_v_rel
-  xs ys ==>
+ (`clos_annotateProof_state_rel s t /\ ALL2 clos_annotateProof_v_rel xs
+  ys ==>
    (match do_app opp xs s with
      Rval (x,s1) ->
        (?y t1. clos_annotateProof_v_rel x y /\
@@ -287,7 +285,7 @@ let clos_annotateProof_do_app_lemma = prove
 
 (* [local] *)
 let do_app_thm = prove
- (`clos_annotateProof_state_rel s1 t1 /\ EVERY2 clos_annotateProof_v_rel
+ (`clos_annotateProof_state_rel s1 t1 /\ ALL2 clos_annotateProof_v_rel
   xs ys /\
     (do_app op xs s1 = Rval (v,s2)) ==>
     (?w t2. (do_app op ys t1 = Rval (w,t2)) /\
@@ -309,7 +307,7 @@ let v_rel_Number = prove
 
 (* [local] *)
 let do_app_err_thm = prove
- (`clos_annotateProof_state_rel s1 t1 /\ EVERY2 clos_annotateProof_v_rel
+ (`clos_annotateProof_state_rel s1 t1 /\ ALL2 clos_annotateProof_v_rel
   xs ys /\
     do_app op xs s1 = Rerr err /\ (~(err = Rabort Rtype_error)) ==>
       (?w. do_app op ys t1 = Rerr w /\
@@ -327,8 +325,8 @@ let v_to_words = prove
   CHEAT_TAC);;
 
 let do_install_thm = prove
- (`clos_annotateProof_state_rel s1 t1 /\ LIST_REL
-  clos_annotateProof_v_rel xs ys /\
+ (`clos_annotateProof_state_rel s1 t1 /\ ALL2 clos_annotateProof_v_rel
+  xs ys /\
    closSem_do_install xs s1 = (res1,s2) /\
    closSem_do_install ys t1 = (res2,t2) ==>
    semanticPrimitivesProps_result_rel (\e1 e2. e2 =
@@ -366,9 +364,9 @@ let EL_shift_alt_free = prove
 (* [local] *)
 let FOLDR_mk_Union = prove
  (`!ys aux l.
-     ITLIST (\(x,l) (ts,alt_frees). (x :: ts,mk_Union l alt_frees))
+     ITLIST (\(x,l) (ts,alt_frees). (CONS x ts,mk_Union l alt_frees))
        ys (aux,l) =
-     (MAP FST ys ++ aux,ITLIST mk_Union (MAP SND ys) l)`,
+     (APPEND (MAP FST ys) aux,ITLIST mk_Union (MAP SND ys) l)`,
   CHEAT_TAC);;
 
 (* HOL4 clos_annotateProofScript.sml:533-539: code that the source
@@ -388,7 +386,7 @@ let no_overlap_has_var_IMP = prove
 
 (* [local] *)
 let evaluate_pure_IMP = prove
- (`closSem_evaluate (xs,env,(s:('c,'ffi)closSem_state)) = (q,r) /\ EVERY
+ (`closSem_evaluate (xs,env,(s:('c,'ffi)closSem_state)) = (q,r) /\ ALL
   pure xs /\ ~(q = Rerr (Rabort Rtype_error)) ==>
    (?vs. q = Rval vs /\ r = s /\ LENGTH vs = LENGTH xs)`,
   CHEAT_TAC);;
@@ -417,7 +415,7 @@ let state_rel_clocks_eqs = prove
 (* [local] *)
 let rel_update_thunk = prove
  (`clos_annotateProof_state_rel s1 s2 /\
-   LIST_REL clos_annotateProof_v_rel vs ys ==>
+   ALL2 clos_annotateProof_v_rel vs ys ==>
      (update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs = SOME
        refs1 ==>
         (?refs2. update_thunk [closSem_RefPtr v ptr] (state_refs s2)
@@ -443,14 +441,14 @@ let shift_correct = prove
       (?res' t2.
          (closSem_evaluate (clos_annotate_shift (FST (alt_free xs)) m
            l i,env',t1) = (res',t2)) /\
-         semanticPrimitivesProps_result_rel (LIST_REL
+         semanticPrimitivesProps_result_rel (ALL2
            clos_annotateProof_v_rel) clos_annotateProof_v_rel res res'
            /\
          clos_annotateProof_state_rel s2 t2)) /\
     (!loc_opt f args (s1:('c,'ffi)closSem_state) res s2 f' args' s1'.
       (evaluate_app loc_opt f args s1 = (res,s2)) /\
-      clos_annotateProof_v_rel f f' /\ EVERY2
-        clos_annotateProof_v_rel args args' /\
+      clos_annotateProof_v_rel f f' /\ ALL2 clos_annotateProof_v_rel
+        args args' /\
       FEVERY (\p. every_Fn_vs_NONE [SND (SND p)]) (closSem_state_code
         s1) /\
       (!n. every_Fn_vs_NONE (FST (SND (closSem_state_compile_oracle
@@ -461,7 +459,7 @@ let shift_correct = prove
         Rtype_error)) ==>
       (?res' s2'.
         (evaluate_app loc_opt f' args' s1' = (res',s2')) /\
-        semanticPrimitivesProps_result_rel (LIST_REL
+        semanticPrimitivesProps_result_rel (ALL2
           clos_annotateProof_v_rel) clos_annotateProof_v_rel res res' /\
         clos_annotateProof_state_rel s2 s2'))`,
   CHEAT_TAC);;
@@ -538,42 +536,42 @@ let annotate_code_locs = prove
   CHEAT_TAC);;
 
 let EVERY_shift_sing = prove
- (`EVERY f (clos_annotate_shift [y] x1 x2 x3) <=> f (HD
+ (`ALL f (clos_annotate_shift [y] x1 x2 x3) <=> f (HD
   (clos_annotate_shift [y] x1 x2 x3))`,
   CHEAT_TAC);;
 
 let shift_obeys_max_app = prove
  (`!xs m l i.
-      EVERY (obeys_max_app n) xs ==>
-      EVERY (obeys_max_app n) (clos_annotate_shift xs m l i)`,
+      ALL (obeys_max_app n) xs ==>
+      ALL (obeys_max_app n) (clos_annotate_shift xs m l i)`,
   CHEAT_TAC);;
 
 let alt_free_obeys_max_app = prove
  (`!xs m l i.
-      EVERY (obeys_max_app n) xs ==>
-      EVERY (obeys_max_app n) (FST (alt_free xs))`,
+      ALL (obeys_max_app n) xs ==>
+      ALL (obeys_max_app n) (FST (alt_free xs))`,
   CHEAT_TAC);;
 
 let annotate_obeys_max_app = prove
- (`!n xs. EVERY (obeys_max_app m) xs ==>
-           EVERY (obeys_max_app m) (clos_annotate_annotate n xs)`,
+ (`!n xs. ALL (obeys_max_app m) xs ==>
+           ALL (obeys_max_app m) (clos_annotate_annotate n xs)`,
   CHEAT_TAC);;
 
 let shift_no_Labels = prove
  (`!xs m l i.
-      EVERY no_Labels xs ==>
-      EVERY no_Labels (clos_annotate_shift xs m l i)`,
+      ALL no_Labels xs ==>
+      ALL no_Labels (clos_annotate_shift xs m l i)`,
   CHEAT_TAC);;
 
 let alt_free_no_Labels = prove
  (`!xs m l i.
-      EVERY no_Labels xs ==>
-      EVERY no_Labels (FST (alt_free xs))`,
+      ALL no_Labels xs ==>
+      ALL no_Labels (FST (alt_free xs))`,
   CHEAT_TAC);;
 
 let annotate_no_Labels = prove
- (`!n xs. EVERY no_Labels xs ==>
-           EVERY no_Labels (clos_annotate_annotate n xs)`,
+ (`!n xs. ALL no_Labels xs ==>
+           ALL no_Labels (clos_annotate_annotate n xs)`,
   CHEAT_TAC);;
 
 let code_locs_REP_const_0 = prove
@@ -624,15 +622,15 @@ let call_dests_shift = prove
 
 let no_Labels_ann = prove
  (`!xs.
-      EVERY no_Labels (MAP (SND o SND) xs) ==>
-      EVERY no_Labels (MAP (SND o SND) (clos_annotate_compile xs))`,
+      ALL no_Labels (MAP (SND o SND) xs) ==>
+      ALL no_Labels (MAP (SND o SND) (clos_annotate_compile xs))`,
   CHEAT_TAC);;
 
 let obeys_max_app_ann = prove
  (`!xs.
-      EVERY (obeys_max_app m) (MAP (SND o SND) xs) ==>
-      EVERY (obeys_max_app m) (MAP (SND o SND)
-        (clos_annotate_compile xs))`,
+      ALL (obeys_max_app m) (MAP (SND o SND) xs) ==>
+      ALL (obeys_max_app m) (MAP (SND o SND) (clos_annotate_compile
+        xs))`,
   CHEAT_TAC);;
 
 let HD_annotate_SING = prove

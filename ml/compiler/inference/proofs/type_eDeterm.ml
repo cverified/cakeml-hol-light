@@ -68,8 +68,7 @@ let infer_pe_complete = prove
       t1 = convert_t (t_walkstar s' t) /\
       t_wfs s /\
       // This might be implied by something above
-      EVERY (\(n,t). check_t tvs {} (t_walkstar s' t)) new_bindings
-        /\
+      ALL (\(n,t). check_t tvs {} (t_walkstar s' t)) new_bindings /\
       convert_env s' new_bindings = tenv1)`,
   CHEAT_TAC);;
 
@@ -87,7 +86,7 @@ let infer_e_type_pe_determ = prove
     infer_e loc ienv e (init_infer_state ss) = (M_success t,st) /\
     infer_p loc ienv p st = (M_success (t',tenv'),st') /\
     t_unify (infer_st_subst st') t t' = SOME s /\
-    EVERY (\(n,t). check_t 0 {} (t_walkstar s t)) tenv' ==>
+    ALL (\(n,t). check_t 0 {} (t_walkstar s t)) tenv' ==>
     type_pe_determ tenv typeSystem_Empty p e`,
   CHEAT_TAC);;
 
@@ -136,7 +135,7 @@ let type_pe_determ_infer_e = prove
     infer_p loc ienv p st = (M_success (t',new_bindings),st') /\
     t_unify (infer_st_subst st') t t' = SOME s /\
     type_pe_determ tenv typeSystem_Empty p e ==>
-    EVERY (\(n,t). check_t 0 {} (t_walkstar s t)) new_bindings`,
+    ALL (\(n,t). check_t 0 {} (t_walkstar s t)) new_bindings`,
   CHEAT_TAC);;
 
  (*From ¬check_t 0 {} (t_walkstar s tt) it should follow that

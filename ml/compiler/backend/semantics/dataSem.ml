@@ -188,8 +188,8 @@ let bignum_size_def = new_definition
 let size_of_def,size_of_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`size_of lims [] refs seen = (0,refs,seen)`;
-   `size_of lims (x :: y :: ys) refs seen =
-        (let (n1,refs1,seen1) = check_res refs (size_of lims (y ::
+   `size_of lims (CONS x (CONS y ys)) refs seen =
+        (let (n1,refs1,seen1) = check_res refs (size_of lims (CONS y
           ys) refs seen) in
         let (n2,refs2,seen2) = size_of lims [x] refs1 seen1 in
           (n1 + n2,refs2,seen2))`;
@@ -208,8 +208,8 @@ let size_of_def,size_of_ind = assume_definition_rec
                                 size_of lims [v] (delete r refs) seen in
                               (n + 2,refs,seen)) | SOME
                                 (bvlSem_MutBlock tg fin ls c rs) ->
-             (let (n,refs,seen) = size_of lims (ls ++ [c] ++ rs)
-               (delete r refs) seen in
+             (let (n,refs,seen) = size_of lims (APPEND (APPEND ls
+               [c]) rs) (delete r refs) seen in
                (n + LENGTH ls + LENGTH rs + 2,refs,seen)))`;
    `(size_of lims [Block ts tag []]) refs seen = (0,refs,seen)`;
    `size_of lims [(Block ts tag vs:dataSem_v)] refs seen =
@@ -238,10 +238,9 @@ let global_to_vs_def = define_cases
    `global_to_vs (SOME n) = [RefPtr T n]`];;
 
 let stack_to_vs_def = new_definition
-  `stack_to_vs (s:('c,'ffi)dataSem_state) =
-     sptree_toList (dataSem_state_locals s) ++ FLAT (MAP
-       extract_stack (dataSem_state_stack s)) ++ global_to_vs
-       (dataSem_state_global s)`;;
+  `stack_to_vs (s:('c,'ffi)dataSem_state) = APPEND (APPEND
+  (sptree_toList (dataSem_state_locals s)) (FLAT (MAP extract_stack
+  (dataSem_state_stack s)))) (global_to_vs (dataSem_state_global s))`;;
 
 (* Measures the amount of space everything in a dataLang "heap" would need
    to fit in wordLang memory (over-approximation) *)
@@ -279,9 +278,9 @@ let add_space_def = new_definition
    evaluator hands the state to do_app, is the NARROW cut without args). *)
 let size_of_heap_args_def = new_definition
   `size_of_heap_args op_args (s:('c,'ffi)dataSem_state) =
-     (let (n,_27,_28) = size_of (dataSem_state_limits s) (op_args ++
-       stack_to_vs ((s:('c,'ffi)dataSem_state))) (dataSem_state_refs
-       ((s:('c,'ffi)dataSem_state))) LN in
+     (let (n,_27,_28) = size_of (dataSem_state_limits s) (APPEND
+       op_args (stack_to_vs ((s:('c,'ffi)dataSem_state))))
+       (dataSem_state_refs ((s:('c,'ffi)dataSem_state))) LN in
        n)`;;
 
 (* HOL4 dataSemScript.sml:214-216: the overload add_space_safe_args,
@@ -311,8 +310,8 @@ let dataSem_v_to_list_def,dataSem_v_to_list_ind = define_wf
         (if tag = nil_tag then SOME [] else NONE)
         | (Block ts tag [h; bt]) ->
         (if tag = cons_tag then
-          (match dataSem_v_to_list bt with SOME t -> SOME (h :: t) |
-            _30 -> NONE) else NONE)
+          (match dataSem_v_to_list bt with SOME t -> SOME (CONS h t)
+            | _30 -> NONE) else NONE)
         | _31 -> NONE`];;
 hol4_overload "v_to_list" "dataSem_v_to_list";;
 
@@ -324,10 +323,11 @@ let space_consumed_def = new_definition
   `space_consumed s x2 x3 =
         match (s,x2,x3) with
           ((s:('c,'ffi)dataSem_state),closLang_BlockOp
-            (closLang_ConsExtend tag),((Block _34 _35 xs':dataSem_v) ::
-            Number lower :: Number len :: Number tot :: xs)) ->
-      LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int lower)
-        xs')) + 1
+            (closLang_ConsExtend tag),CONS (Block _34 _35 xs':dataSem_v)
+            (CONS (Number lower) (CONS (Number len) (CONS (Number tot)
+            xs)))) ->
+      LENGTH (APPEND xs (TAKE (num_of_int len) (DROP (num_of_int
+        lower) xs'))) + 1
         | (s,(closLang_MemOp closLang_RefArray),[Number len; _36]) ->
           num_of_int len + 1
         | (s,(closLang_MemOp (closLang_RefByte _37)),[Number len;
@@ -429,7 +429,7 @@ let vs_depth_def,vs_depth_ind = define_mutual_wf
            (Block ts t ls:dataSem_v) -> vs_depth_list ls
          | _40 -> 0`;
    `vs_depth_list [] = 0`;
-   `vs_depth_list (x :: xs) = MAX (1 + vs_depth x) (vs_depth_list
+   `vs_depth_list (CONS x xs) = MAX (1 + vs_depth x) (vs_depth_list
   xs)`];;
 
 let eq_code_stack_max_def = new_definition
@@ -644,7 +644,7 @@ let dataSem_do_eq_def,dataSem_do_eq_ind = define_mutual_wf
    `dataSem_do_eq_list refs x2 x3 =
          match (x2,x3) with
            ([],[]) -> Eq_val T
-         | ((v1 :: vs1),(v2 :: vs2)) ->
+         | ((CONS v1 vs1),(CONS v2 vs2)) ->
        (match dataSem_do_eq refs v1 v2 with Eq_val T ->
          dataSem_do_eq_list refs vs1 vs2 | Eq_val F -> Eq_val F | bad ->
          bad)
@@ -667,7 +667,7 @@ let dataSem_do_install_def = new_definition
                 let new_oracle = misc_shift_seq 1
                   (dataSem_state_compile_oracle s) in
                   (match (dataSem_state_compile s cfg progs,progs)
-                    with (SOME (bytes',data',cfg'),(k,prog) :: _75) ->
+                    with (SOME (bytes',data',cfg'),CONS (k,prog) _75) ->
                        (if bytes = bytes' /\ data = data' /\ FST
                          (new_oracle 0) = cfg' then
                          let s' = dataSem_state_compile_oracle_fupd
@@ -685,7 +685,7 @@ hol4_overload "do_install" "dataSem_do_install";;
 
 let dataSem_list_to_v_def,dataSem_list_to_v_ind = define_rec
   [`dataSem_list_to_v ts t [] = t`;
-   `dataSem_list_to_v ts t (h :: l) = Block ts cons_tag [h;
+   `dataSem_list_to_v ts t (CONS h l) = Block ts cons_tag [h;
   dataSem_list_to_v (ts + 1) t l]`];;
 hol4_overload "list_to_v" "dataSem_list_to_v";;
 
@@ -756,15 +756,18 @@ let lim_safe_def = new_definition
            1 < limits_length_limit lims /\
            3 * (SUC (LENGTH xs)) < 2 EXP (arch_size lims) DIV 8 | _81
              -> T)
-        | ((closLang_BlockOp (closLang_ConsExtend tag)),(Block _82
-          _83 xs' :: Number lower :: Number len :: Number tot :: xs)) ->
+        | ((closLang_BlockOp (closLang_ConsExtend tag)),(CONS (Block
+          _82 _83 xs') (CONS (Number lower) (CONS (Number len) (CONS
+          (Number tot) xs))))) ->
            (if lower < (&0) \/ len < (&0) \/ lower + len > &(LENGTH
              xs') \/
               tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then T else
-                LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int
-                lower) xs')) < 2 EXP limits_length_limit lims /\
-                LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int
-                  lower) xs')) < 2 EXP (arch_size lims) DIV 16 /\
+                LENGTH (APPEND xs (TAKE (num_of_int len) (DROP
+                (num_of_int lower) xs'))) < 2 EXP limits_length_limit
+                lims /\
+                LENGTH (APPEND xs (TAKE (num_of_int len) (DROP
+                  (num_of_int lower) xs'))) < 2 EXP (arch_size lims) DIV
+                  16 /\
                 4 * tag < 2 EXP (arch_size lims) DIV 16 /\
                 4 * tag < 2 EXP (arch_size lims - limits_length_limit
                   lims - 2))
@@ -807,8 +810,8 @@ let lim_safe_def = new_definition
       ((&0) <= i /\
        num_of_int i < 2 EXP (arch_size lims) DIV 16 /\
        num_of_int i < 2 EXP limits_length_limit lims)
-        | ((closLang_MemOp (closLang_RefByte _84)),(Number i :: xs))
-          ->
+        | ((closLang_MemOp (closLang_RefByte _84)),(CONS (Number i)
+          xs)) ->
       ((&0) <= i /\
        num_of_int i DIV (arch_size lims DIV 8) < 2 EXP (arch_size
          lims) DIV arch_size lims /\
@@ -819,7 +822,7 @@ let lim_safe_def = new_definition
       (LENGTH xs < 2 EXP limits_length_limit lims /\
        LENGTH xs < 2 EXP arch_size lims DIV 16)
         | ((closLang_BlockOp (closLang_Build parts')),_85) ->
-      EVERY (lim_safe_part lims) parts'
+      ALL (lim_safe_part lims) parts'
         | ((closLang_WordOp WordToInt),_86) ->
       (1 < limits_length_limit lims)
         | ((closLang_WordOp WordFromInt),_87) ->
@@ -872,7 +875,7 @@ hol4_overload "do_part" "dataSem_do_part";;
 
 let dataSem_do_build_def,dataSem_do_build_ind = define_rec
   [`dataSem_do_build m i [] s ts = (m (i - 1),s,ts)`;
-   `dataSem_do_build m i (p :: rest) s ts =
+   `dataSem_do_build m i (CONS p rest) s ts =
       (let (x,s1,ts1) = do_part m p s ts in
         dataSem_do_build ((i =+ x) m) (i + 1) rest s1 ts1)`];;
 hol4_overload "do_build" "dataSem_do_build";;
@@ -1007,7 +1010,7 @@ let dataSem_finalise_cons_def,dataSem_finalise_cons_ind =
              (match dataSem_finalise_cons c (delete ptr refs) ts
                with SOME (c',refs',ts') ->
                   SOME (Block (match ts' with NONE -> 0 | SOME n ->
-                    n) tag (l ++ [c'] ++ r),
+                    n) tag (APPEND (APPEND l [c']) r),
                         insert ptr (bvlSem_MutBlock tag T l c r)
                           refs',
                         OPTION_MAP SUC ts') | NONE -> NONE) else
@@ -1144,8 +1147,9 @@ let dataSem_do_app_aux_def = new_definition
                               (\ts s'. Rval (Block ts tag xs,
                               check_lim s' (LENGTH xs)))) |
                                 (closLang_BlockOp (closLang_ConsExtend
-                                tag),Block x y xs' :: Number lower ::
-                                Number len :: Number tot :: xs) ->
+                                tag),CONS (Block x y xs') (CONS (Number
+                                lower) (CONS (Number len) (CONS (Number
+                                tot) xs)))) ->
          (if lower < (&0) \/ len < (&0) \/ lower + len > &(LENGTH
            xs') \/
             tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then
@@ -1154,9 +1158,9 @@ let dataSem_do_app_aux_def = new_definition
              ,dataSem_v)semanticPrimitives_result) else with_fresh_ts s
              1
                             (\ts s'.
-                              let l = (xs ++ TAKE (num_of_int len)
-                                (DROP (num_of_int lower) xs')) in Rval
-                                (Block ts tag l,
+                              let l = (APPEND xs (TAKE (num_of_int
+                                len) (DROP (num_of_int lower) xs'))) in
+                                Rval (Block ts tag l,
                               check_lim s' (LENGTH l)))) |
                                 (closLang_BlockOp (closLang_ConsExtend
                                 tag),_128) -> ((Rerr (Rabort
@@ -1513,10 +1517,10 @@ hol4_overload "get_var" "dataSem_get_var";;
 
 let get_vars_def,get_vars_ind = define_rec
   [`dataSem_get_vars [] s = SOME []`;
-   `dataSem_get_vars (v :: vs) s =
+   `dataSem_get_vars (CONS v vs) s =
          (match get_var v s with NONE -> NONE | SOME x ->
            (match dataSem_get_vars vs s with NONE -> NONE | SOME xs
-           -> SOME (x :: xs)))`];;
+           -> SOME (CONS x xs)))`];;
 hol4_overload "get_vars" "dataSem_get_vars";;
 
 let set_var_def = new_definition
@@ -1571,8 +1575,8 @@ hol4_overload "call_env" "dataSem_call_env";;
 
 let push_env_def = define_general
   [`dataSem_push_env env F (s:('c,'ffi)dataSem_state) =
-        (let stack' = Env (dataSem_state_locals_size s) env :: stack
-          s in let
+        (let stack' = CONS (Env (dataSem_state_locals_size s) env)
+          (stack s) in let
             stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
               (size_of_stack stack') in let
             stack_safe = the F (OPTION_MAP ((>)
@@ -1582,8 +1586,8 @@ let push_env_def = define_general
               (dataSem_state_stack_max_fupd (K stack_max) (stack_fupd
               (K stack') s)))`;
    `dataSem_push_env env T (s:('c,'ffi)dataSem_state) =
-       (let stack' = dataSem_Exc (dataSem_state_locals_size s) env
-         (dataSem_state_handler s) :: stack s in let
+       (let stack' = CONS (dataSem_Exc (dataSem_state_locals_size s)
+         env (dataSem_state_handler s)) (stack s) in let
            stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
              (size_of_stack stack') in let
            stack_safe = the F (OPTION_MAP ((>)
@@ -1597,10 +1601,10 @@ hol4_overload "push_env" "dataSem_push_env";;
 
 let pop_env_def = new_definition
   `dataSem_pop_env (s:('c,'ffi)dataSem_state) =
-     (match dataSem_state_stack s with (Env ss e :: xs) ->
+     (match dataSem_state_stack s with (CONS (Env ss e) xs) ->
          SOME (dataSem_state_locals_size_fupd (K ss)
            (dataSem_state_stack_fupd (K xs) (dataSem_state_locals_fupd
-           (K e) s))) | (dataSem_Exc ss e n :: xs) ->
+           (K e) s))) | (CONS (dataSem_Exc ss e n) xs) ->
          SOME (dataSem_state_handler_fupd (K n)
            (dataSem_state_locals_size_fupd (K ss)
            (dataSem_state_stack_fupd (K xs)
@@ -1612,7 +1616,7 @@ let jump_exc_def = new_definition
      (if dataSem_state_handler s < LENGTH (dataSem_state_stack s)
        then
        match LASTN (dataSem_state_handler s + 1) (dataSem_state_stack
-         s) with dataSem_Exc ss e n :: xs ->
+         s) with CONS (dataSem_Exc ss e n) xs ->
            SOME (dataSem_state_locals_size_fupd (K ss)
              (dataSem_state_stack_fupd (K xs)
              (dataSem_state_locals_fupd (K e)
@@ -1661,9 +1665,9 @@ let dataSem_find_code_def = define_cases
            match LAST args with CodePtr loc ->
                (match sptree_lookup loc code with NONE -> NONE |
                  SOME (arity,exp) ->
-                   (if LENGTH args = arity + 1 then SOME (FRONT
-                     args,exp,lookup loc ssize) else NONE)) | other
-                     -> NONE)`];;
+                   (if LENGTH args = arity + 1 then SOME
+                     (BUTLAST args,exp,lookup loc ssize) else
+                     NONE)) | other -> NONE)`];;
 hol4_overload "find_code" "dataSem_find_code";;
 
 let isBool_def = new_definition

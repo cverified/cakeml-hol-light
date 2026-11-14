@@ -93,12 +93,12 @@ let n_fresh_uvar_def,n_fresh_uvar_ind = define_wf
      st_ex_return [] else
      st_ex_bind fresh_uvar (\v. st_ex_bind (n_fresh_uvar (n - 1)) (\
         vs.
-        st_ex_return (v :: vs))))`];;
+        st_ex_return (CONS v vs))))`];;
 
 let n_fresh_id_def = new_definition
   `n_fresh_id n =
    (\s.
-   (M_success (GENLIST (\x. infer_st_next_id s + x)
+   (M_success (list_of_seq (\x. infer_st_next_id s + x)
      n),infer_st_next_id_fupd (K (infer_st_next_id s + n)) s))`;;
 
 (* Doesn't reset the ID component *)
@@ -134,7 +134,7 @@ let add_constraints_def,add_constraints_ind = define_wf
         match (x2,x3) with
           ([],[]) ->
      st_ex_return one
-        | ((t1 :: ts1),(t2 :: ts2)) ->
+        | ((CONS t1 ts1),(CONS t2 ts2)) ->
      st_ex_bind (add_constraint l t1 t2) (\one. st_ex_bind
        (add_constraints l ts1 ts2) (\
         one.
@@ -183,11 +183,11 @@ let generalise_def,generalise_ind = define_mutual_rec
         (0,s,Infer_Tvar_db k)`;
    `generalise_list m n s [] =
       (0,s,[])`;
-   `generalise_list m n s (t :: ts) =
+   `generalise_list m n s (CONS t ts) =
       (let (num_gen,s',t') = generalise m n s t in
       let (num_gen',s'',ts') = generalise_list m (num_gen + n) s' ts
         in
-        (num_gen + num_gen',s'',t' :: ts'))`];;
+        (num_gen + num_gen',s'',CONS t' ts'))`];;
 
 let infer_type_subst_def,infer_type_subst_ind = define_mutual_rec
   [`infer_type_subst s (Tvar tv) =
@@ -199,8 +199,8 @@ let infer_type_subst_def,infer_type_subst_ind = define_mutual_rec
    `infer_type_subst s (Tapp ts tn) =
       Infer_Tapp (infer_type_subst_list s ts) tn`;
    `infer_type_subst_list s [] = []`;
-   `infer_type_subst_list s (x :: xs) =
-      infer_type_subst s x :: infer_type_subst_list s xs`];;
+   `infer_type_subst_list s (CONS x xs) = CONS (infer_type_subst s
+  x) (infer_type_subst_list s xs)`];;
 
 let infer_type_subst_alt = prove
  (`(infer_type_subst s (Tvar tv) =
@@ -226,9 +226,8 @@ let infer_deBruijn_subst_def,infer_deBruijn_subst_ind =
    `infer_deBruijn_subst s (Infer_Tuvar n) =
       Infer_Tuvar n`;
    `infer_deBruijn_subst_list s [] = []`;
-   `infer_deBruijn_subst_list s (t :: ts) =
-      infer_deBruijn_subst s t :: infer_deBruijn_subst_list s
-        ts`];;
+   `infer_deBruijn_subst_list s (CONS t ts) = CONS
+  (infer_deBruijn_subst s t) (infer_deBruijn_subst_list s ts)`];;
 
 let infer_deBruijn_subst_alt = prove
  (`(infer_deBruijn_subst s (Infer_Tvar_db n) =
@@ -278,12 +277,12 @@ let type_name_check_subst_def,type_name_check_subst_ind =
           st_ex_return (type_subst (alist_to_fmap (ZIP tvs' ts'))
             t'))))`;
    `type_name_check_subst_list l f tenvT fvs [] = st_ex_return []`;
-   `type_name_check_subst_list l f tenvT fvs (t :: ts) =
+   `type_name_check_subst_list l f tenvT fvs (CONS t ts) =
         st_ex_bind (type_name_check_subst l f tenvT fvs t) (\
           t'. st_ex_bind (type_name_check_subst_list l f tenvT fvs
             ts) (\
           ts'.
-          st_ex_return (t' :: ts')))`];;
+          st_ex_return (CONS t' ts')))`];;
 
 let bind_guard = prove
  (`st_ex_bind (infer_guard b l x) g =
@@ -366,12 +365,12 @@ let type_name_check_sub_def,type_name_check_sub_ind = define_mutual_wf
                                 (M_failure x,s) -> (M_failure x,s)) |
                                 (M_failure x,s) -> (M_failure x,s))`;
    `type_name_check_sub_list l tenvT fvs [] = (\s. (M_success [],s))`;
-   `type_name_check_sub_list l tenvT fvs (t :: ts) =
+   `type_name_check_sub_list l tenvT fvs (CONS t ts) =
            (\s. match type_name_check_sub l tenvT fvs t s with
                   (M_success t',s) ->
                     (match type_name_check_sub_list l tenvT fvs ts s
                       with
-                       (M_success ts',s) -> (M_success (t' ::
+                       (M_success ts',s) -> (M_success (CONS t'
                          ts'),s) | (M_failure x,s) -> (M_failure
                          x,s)) | (M_failure x,s) -> (M_failure
                          x,s))`];;
@@ -418,7 +417,8 @@ let ignore_bind_type_name_check_subst = prove
 
 let find_dup_def,find_dup_ind = define_rec
   [`find_dup [] = NONE`;
-   `find_dup (x :: xs) = (if MEM x xs then SOME x else find_dup xs)`];;
+   `find_dup (CONS x xs) = (if MEM x xs then SOME x else find_dup
+  xs)`];;
 
 let _ = size_thms "loc_err_info";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -426,7 +426,7 @@ let _ = size_thms "loc_err_info";;
 let check_dups_def,check_dups_ind = define_wf
   `MEASURE (\(x0,x1,x2). loc_err_info_size x0)`
   [`check_dups l f [] = st_ex_return one`;
-   `check_dups l f (h :: t) =
+   `check_dups l f (CONS h t) =
          (if MEM h t then
            infer_failwith l (f h) else
            check_dups l f t)`];;
@@ -446,7 +446,7 @@ let check_ctor_types_def,check_ctor_types_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). list_size (pair_size mlstring_size
   ast_t_size1) x3)`
   [`check_ctor_types l tenvT tvs [] = st_ex_return one`;
-   `check_ctor_types l tenvT tvs ((cn,ts) :: ctors) =
+   `check_ctor_types l tenvT tvs (CONS (cn,ts) ctors) =
         st_ex_ignore_bind
           (type_name_check_subst_list l
                 (\tv. mlstring_concat [(implode
@@ -469,7 +469,7 @@ let check_ctors_def,check_ctors_ind = define_wf
   mlstring_size)      (pair_size mlstring_size      (list_size
   (pair_size mlstring_size ast_t_size1))))      x2)`
   [`check_ctors l tenvT [] = st_ex_return one`;
-   `check_ctors l tenvT ((tvs,tn,ctors) :: tds) =
+   `check_ctors l tenvT (CONS (tvs,tn,ctors) tds) =
         st_ex_ignore_bind
           (check_dups l
                      (\n. mlstring_concat [(implode
@@ -558,9 +558,9 @@ let infer_p_def,infer_p_ind = assume_definition_rec
          (type_name_check_subst l
                   (\tv. mlstring_concat [(implode "Type variable ");
                     tv; (implode " found in type annotation. ");
-                              (implode
+                              (implode (APPEND
 
-      ("Type variables are not supported in type annotatio" ++ "ns."))])
+      "Type variables are not supported in type annotatio" "ns."))])
       (inf_env_inf_t
                   ienv) [] t) (\
           t''. st_ex_bind (add_constraint l t' (infer_type_subst []
@@ -569,11 +569,11 @@ let infer_p_def,infer_p_ind = assume_definition_rec
           st_ex_return (t',tenv))))`;
    `infer_ps l ienv [] =
         st_ex_return ([],[])`;
-   `infer_ps l ienv (p :: ps) =
+   `infer_ps l ienv (CONS p ps) =
         st_ex_bind (infer_p l ienv p) (\(t,tenv). st_ex_bind
           (infer_ps l ienv ps) (\
            (ts,tenv').
-           st_ex_return (t :: ts,APPEND tenv' tenv)))`];;
+           st_ex_return (CONS t ts,APPEND tenv' tenv)))`];;
 
 let option_case_rand = prove
  (`(match x with NONE -> y | SOME a -> f a) s =
@@ -985,9 +985,9 @@ let infer_e_def,infer_e_ind = assume_definition_rec
           (type_name_check_subst l
                   (\tv. mlstring_concat [(implode "Type variable ");
                     tv; (implode " found in type annotation. ");
-                              (implode
+                              (implode (APPEND
 
-      ("Type variables are not supported in type annotatio" ++ "ns."))])
+      "Type variables are not supported in type annotatio" "ns."))])
       (inf_env_inf_t
                   ienv) [] t) (\
            t''. st_ex_bind (add_constraint l t' (infer_type_subst []
@@ -998,14 +998,14 @@ let infer_e_def,infer_e_ind = assume_definition_rec
         infer_e (loc_err_info_loc_fupd (K (SOME new_l)) l) ienv e`;
    `infer_es l ienv [] =
         st_ex_return []`;
-   `infer_es l ienv (e :: es) =
+   `infer_es l ienv (CONS e es) =
         st_ex_bind (infer_e l ienv e) (\t. st_ex_bind (infer_es l
           ienv es) (\
            ts.
-           st_ex_return (t :: ts)))`;
+           st_ex_return (CONS t ts)))`;
    `infer_pes l ienv [] t1 t2 =
          st_ex_return one`;
-   `infer_pes l ienv ((p,e) :: pes) t1 t2 =
+   `infer_pes l ienv (CONS (p,e) pes) t1 t2 =
         st_ex_bind (infer_p l ienv p) (\(t1',env').
           st_ex_ignore_bind
           (check_dups l (\n. mlstring_concat [(implode
@@ -1020,13 +1020,14 @@ let infer_e_def,infer_e_ind = assume_definition_rec
            one.
            st_ex_return one))))))`;
    `infer_funs l ienv [] = st_ex_return []`;
-   `infer_funs l ienv ((f,x,e) :: funs) =
+   `infer_funs l ienv (CONS (f,x,e) funs) =
         st_ex_bind fresh_uvar (\uvar. st_ex_bind (infer_e l
           (inf_env_inf_v_fupd (K (nsBind x (0,uvar) (inf_env_inf_v
           ienv))) ienv) e) (\
            t. st_ex_bind (infer_funs l ienv funs) (\
            ts.
-           st_ex_return (Infer_Tapp [uvar; t] Tfn_num :: ts))))`];;
+           st_ex_return (CONS (Infer_Tapp [uvar; t] Tfn_num)
+             ts))))`];;
 
 (* [local] *)
 let FUN_EQ_THM_state = prove
@@ -1138,9 +1139,9 @@ let infer_d_def,infer_d_ind = assume_definition_rec
                 (\tv. mlstring_concat [(implode "Type variable ");
                   tv; (implode " found in declaration of exception ");
                   cn;
-                              (implode
+                              (implode (APPEND
 
-      (". Type variables are not allowed in exception decl" ++
+      ". Type variables are not allowed in exception decl"
       "arations."))]) (inf_env_inf_t
                 ienv) [] ts) (\
         ts'.
@@ -1157,7 +1158,7 @@ let infer_d_def,infer_d_ind = assume_definition_rec
         infer_ds (extend_dec_ienv ienv' ienv) ds)`;
    `infer_ds ienv [] =
       st_ex_return (mk_inf_env nsEmpty nsEmpty nsEmpty)`;
-   `infer_ds ienv (d :: ds) =
+   `infer_ds ienv (CONS d ds) =
       st_ex_bind (infer_d ienv d) (\
         ienv'. st_ex_bind (infer_ds (extend_dec_ienv ienv' ienv) ds)
           (\
@@ -1170,7 +1171,8 @@ let infer_d_def,infer_d_ind = assume_definition_rec
 (* The starting Id should be greater than Tlist_num :: (Tbool_num :: prim_type_nums) *)
 let start_type_id_def = new_definition
   `start_type_id =
-     ITLIST MAX (Tlist_num :: Tbool_num :: prim_type_nums) 0 + 1`;;
+     ITLIST MAX (CONS Tlist_num (CONS Tbool_num prim_type_nums)) 0 +
+       1`;;
 
 let infertype_prog_def = new_definition
   `infertype_prog ienv prog =
@@ -1215,7 +1217,7 @@ let infer_subst_def,infer_subst_ind = define_shaped_rec
 
 let pure_add_constraints_def,pure_add_constraints_ind = define_rec
   [`pure_add_constraints s [] s' = (s = s')`;
-   `pure_add_constraints s1 ((t1,t2) :: rest) s' =
+   `pure_add_constraints s1 (CONS (t1,t2) rest) s' =
       (?s2. (t_unify s1 t1 t2 = SOME s2) /\
            pure_add_constraints s2 rest s')`];;
 
@@ -1224,7 +1226,7 @@ let check_t_def,check_t_ind = define_shaped_rec
   [`check_t n uvars (Infer_Tuvar v) = (v IN uvars)`;
    `check_t n uvars (Infer_Tvar_db n') =
         (n' < n)`;
-   `check_t n uvars (Infer_Tapp ts tc) = EVERY (check_t n uvars) ts`];;
+   `check_t n uvars (Infer_Tapp ts tc) = ALL (check_t n uvars) ts`];;
 
 let ienv_val_ok_def = new_definition
   `ienv_val_ok uvars env =
@@ -1257,26 +1259,27 @@ let sub_completion_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let alist_nub_def,alist_nub_ind = define_guess_cheat
   [`alist_nub [] = []`;
-   `alist_nub ((x,y) :: xs) = (x,y) :: alist_nub (FILTER (\t. ~(x =
-  FST t)) xs)`];;
+   `alist_nub (CONS (x,y) xs) = CONS (x,y) (alist_nub (FILTER (\t.
+  ~(x = FST t)) xs))`];;
 
 let ns_nub_def,ns_nub_ind = define_mutual_shaped_rec
   "maplist>nested"
   [`ns_nub (Bind xs ys) = Bind (alist_nub xs) (alist_nub
   (inner_ns_nubs ys))`;
    `inner_ns_nubs [] = []`;
-   `inner_ns_nubs ((x,y) :: tl) = (x,ns_nub y) :: inner_ns_nubs tl`];;
+   `inner_ns_nubs (CONS (x,y) tl) = CONS (x,ns_nub y)
+  (inner_ns_nubs tl)`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let ns_to_alist_def,ns_to_alist_ind = define_guess_cheat
   [`ns_to_alist (Bind [] []) = []`;
-   `ns_to_alist (Bind [] ((n,x) :: ms)) =
-        MAP (\(x,y). ((\x y. strcat x y) ((\x y. strcat x y) n
-          (implode ".")) x,y)) (ns_to_alist x) ++
-        ns_to_alist (Bind [] ms)`;
-   `ns_to_alist (Bind ((s,x) :: xs) m) = (s,x) :: ns_to_alist (Bind
-  xs m)`];;
+   `ns_to_alist (Bind [] (CONS (n,x) ms)) = APPEND (MAP (\(x,y). ((\x y.
+  strcat x y) ((\x y. strcat x y) n (implode ".")) x,y)) (ns_to_alist
+  x))
+        (ns_to_alist (Bind [] ms))`;
+   `ns_to_alist (Bind (CONS (s,x) xs) m) = CONS (s,x) (ns_to_alist
+  (Bind xs m))`];;
 
 let inf_env_to_types_string_def = new_definition
   `inf_env_to_types_string s =

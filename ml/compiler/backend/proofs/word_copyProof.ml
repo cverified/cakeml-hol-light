@@ -514,8 +514,8 @@ let copy_prop_move_model = prove
   CHEAT_TAC);;
 
 let EVERY_NOT_MEM_D = prove
- (`EVERY (\t. ~(MEM t ss)) tt ==> set_of_list tt INTER set_of_list ss
-  = {}`,
+ (`ALL (\t. ~(MEM t ss)) tt ==> set_of_list tt INTER set_of_list ss =
+  {}`,
   CHEAT_TAC);;
 
 let copy_prop_move_correct = prove

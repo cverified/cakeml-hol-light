@@ -78,14 +78,14 @@ let is_Recclosure_def = new_definition
 let every_refv_def = new_definition
   `every_refv P x2 =
         match x2 with
-          closSem_ValueArray vs -> EVERY P vs
+          closSem_ValueArray vs -> ALL P vs
         | (Thunk m v) -> P v
         | _12 -> T`;;
 
 (* [local] *)
 let IMP_EXISTS_IFF = prove
  (`!xs. (!x. MEM x xs ==> (P x <=> Q x)) ==>
-          (EXISTS P xs <=> EXISTS Q xs)`,
+          (EX P xs <=> EX Q xs)`,
   CHEAT_TAC);;
 
 (* -- *)
@@ -159,15 +159,15 @@ let make_g_IMP_subg = prove
     ALL_DISTINCT (MAP FST progs1) /\
     make_g r1 (code |++ progs1) = SOME g1 /\ subspt r0 r1 /\
     set_of_list (MAP FST progs1) SUBSET IMAGE SUC (domain r1) ==>
-    subg (r1,progs1 ++ SND g0) g1`,
+    subg (r1,APPEND progs1 (SND g0)) g1`,
   CHEAT_TAC);;
 
 let recclosure_wf_def = new_definition
   `recclosure_wf loc fns <=>
      every_Fn_SOME (MAP SND fns) /\
      every_Fn_vs_NONE (MAP SND fns) /\
-     DISJOINT (set_of_list (GENLIST (\i. 2 * i + loc) (LENGTH fns)))
-       (set_of_list (code_locs (MAP SND fns))) /\
+     DISJOINT (set_of_list (list_of_seq (\i. 2 * i + loc) (LENGTH
+       fns))) (set_of_list (code_locs (MAP SND fns))) /\
      ALL_DISTINCT (code_locs (MAP SND fns))`;;
 
 let code_includes_def = new_definition
@@ -180,11 +180,11 @@ let recclosure_rel_def = new_definition
       wfg g0 /\
       DISJOINT (IMAGE SUC (set_of_list (code_locs (MAP SND fns1))))
         (set_of_list (MAP FST (SND g0))) /\
-      DISJOINT (set_of_list (GENLIST (\i. 2 * i + loc + 1) (LENGTH
-        fns1))) (set_of_list (MAP FST (SND g0))) /\
+      DISJOINT (set_of_list (list_of_seq (\i. 2 * i + loc + 1)
+        (LENGTH fns1))) (set_of_list (MAP FST (SND g0))) /\
       (let (es,new_g) = calls (MAP SND fns1) (insert_each loc (LENGTH
         fns1) g0) in
-      if EVERY2 (\(n,_13) p. !v. has_var v (SND (clos_call_free [p]))
+      if ALL2 (\(n,_13) p. !v. has_var v (SND (clos_call_free [p]))
         ==> v < n) fns1 es then
         (?tra n. fns2 = calls_list tra n loc fns1) /\
         subg (code_list loc (ZIP (MAP FST fns1) es) new_g) g /\
@@ -197,14 +197,14 @@ let recclosure_rel_def = new_definition
         subg new_g g /\
         set_of_list (code_locs (MAP SND fns1)) DIFF domain (FST
           new_g) SUBSET l /\
-        set_of_list (GENLIST (\i. 2 * i + loc) (LENGTH fns1)) SUBSET
-          l /\
+        set_of_list (list_of_seq (\i. 2 * i + loc) (LENGTH fns1))
+          SUBSET l /\
         code_includes (SND new_g) code))`;;
 
 let clos_callProof_env_rel_def = new_definition
   `clos_callProof_env_rel R env1 env2 a es <=>
-     (if LENGTH env1 = LENGTH env2 then LIST_REL R env1 env2 else
-     !x. EXISTS (\(n,p). fv1 (n + a + x) p) es ==>
+     (if LENGTH env1 = LENGTH env2 then ALL2 R env1 env2 else
+     !x. EX (\(n,p). fv1 (n + a + x) p) es ==>
          x < LENGTH env1 /\ x < LENGTH env2 /\
          R (EL x env1) (EL x env2))`;;
 hol4_overload "env_rel" "clos_callProof_env_rel";;
@@ -231,7 +231,7 @@ let clos_callProof_v_rel_def,clos_callProof_v_rel_ind =
    `clos_callProof_v_rel g l code (Word64 w:closSem_v) v <=> v =
   (Word64 w:closSem_v)`;
    `clos_callProof_v_rel g l code (closSem_Block n vs:closSem_v) v <=>
-        (?vs'. v = closSem_Block n vs' /\ LIST_REL
+        (?vs'. v = closSem_Block n vs' /\ ALL2
           (clos_callProof_v_rel g l code) vs vs')`;
    `clos_callProof_v_rel g l code (closSem_ByteVector ws) v <=> v =
   closSem_ByteVector ws`;
@@ -243,7 +243,7 @@ let clos_callProof_v_rel_def,clos_callProof_v_rel_ind =
            recclosure_rel g l code loc [(n,bod1)] [(n,bod2)] /\
            v = Closure (SOME loc) vs2 env2 n bod2 /\ loco = SOME loc
              /\
-           LIST_REL (clos_callProof_v_rel g l code) vs1 vs2 /\
+           ALL2 (clos_callProof_v_rel g l code) vs1 vs2 /\
            clos_callProof_env_rel (clos_callProof_v_rel g l code)
              env1 env2 0 [(n,bod2)])`;
    `clos_callProof_v_rel g l code (Recclosure loco vs1 env1 fns1
@@ -252,7 +252,7 @@ let clos_callProof_v_rel_def,clos_callProof_v_rel_ind =
            recclosure_rel g l code loc fns1 fns2 /\
            v = Recclosure (SOME loc) vs2 env2 fns2 i /\ loco = SOME
              loc /\
-           LIST_REL (clos_callProof_v_rel g l code) vs1 vs2 /\
+           ALL2 (clos_callProof_v_rel g l code) vs1 vs2 /\
            clos_callProof_env_rel (clos_callProof_v_rel g l
              code) env1 env2 (LENGTH fns2) fns2)`];;
 hol4_overload "v_rel" "clos_callProof_v_rel";;
@@ -271,21 +271,21 @@ let wfv_def,wfv_ind = define_wf
           (Closure NONE _18 _19 _20 _21:closSem_v) -> F
         | (Recclosure NONE _22 _23 _24 _25) -> F
         | (Closure (SOME loc) vs env n bod) ->
-       EVERY (wfv g l code) vs /\ EVERY (wfv g l code) env /\
+       ALL (wfv g l code) vs /\ ALL (wfv g l code) env /\
        (?fns2.
        recclosure_rel g l code loc [(n,bod)] fns2)
         | (Recclosure (SOME loc) vs env fns i) ->
-       EVERY (wfv g l code) vs /\ EVERY (wfv g l code) env /\
+       ALL (wfv g l code) vs /\ ALL (wfv g l code) env /\
        (?fns2.
        recclosure_rel g l code loc fns fns2)
-        | (closSem_Block _26 vs) -> EVERY (wfv g l code) vs
+        | (closSem_Block _26 vs) -> ALL (wfv g l code) vs
         | _27 -> T`];;
 
 (* HOL4 clos_callProofScript.sml:355: ML code, not ported *)
 
 let wfv_state_def = new_definition
   `wfv_state g l code s <=>
-     EVERY (OPTION_ALL (wfv g l code)) (closSem_state_globals s) /\
+     ALL (OPTION_ALL (wfv g l code)) (closSem_state_globals s) /\
      FEVERY (every_refv (wfv g l code) o SND) (state_refs s) /\
        closSem_state_code
      s = FEMPTY`;;
@@ -299,8 +299,8 @@ let clos_callProof_state_rel_def = new_definition
      (closSem_state_ffi s = closSem_state_ffi t) /\
      (closSem_state_clock s = closSem_state_clock t) /\
      (closSem_state_max_app s = closSem_state_max_app t) /\
-     LIST_REL (OPTREL (clos_callProof_v_rel g l (closSem_state_code
-       t))) (closSem_state_globals s) (closSem_state_globals t) /\
+     ALL2 (OPTREL (clos_callProof_v_rel g l (closSem_state_code t)))
+       (closSem_state_globals s) (closSem_state_globals t) /\
      fmap_rel (closProps_ref_rel (clos_callProof_v_rel g l
        (closSem_state_code t))) (closSem_state_refs s)
        (closSem_state_refs t) /\ closSem_state_code
@@ -353,7 +353,7 @@ let calls_list_length = prove
   CHEAT_TAC);;
 
 let domain_FST_insert_each = prove
- (`!p n g. domain (FST (insert_each p n g)) = set_of_list (GENLIST
+ (`!p n g. domain (FST (insert_each p n g)) = set_of_list (list_of_seq
   (\i. 2 * i + p) n) UNION domain (FST g)`,
   CHEAT_TAC);;
 
@@ -364,15 +364,14 @@ let SND_code_list_change = prove
 
 let MAP_FST_code_list = prove
  (`!loc fns g.
-    MAP FST (SND (code_list loc fns g)) =
-    REVERSE (GENLIST (\i. loc + i * 2 + 1) (LENGTH fns)) ++ MAP FST
-      (SND g)`,
+    MAP FST (SND (code_list loc fns g)) = APPEND (REVERSE
+      (list_of_seq (\i. loc + i * 2 + 1) (LENGTH fns))) (MAP FST (SND
+      g))`,
   CHEAT_TAC);;
 
 let SND_code_list_ZIP = prove
- (`!loc fns g. SND (code_list loc fns g) =
-   REVERSE (ZIP (GENLIST ((+) (loc + 1) o (*) 2) (LENGTH fns)) fns)
-     ++ (SND g)`,
+ (`!loc fns g. SND (code_list loc fns g) = APPEND (REVERSE (ZIP
+  (list_of_seq ((+) (loc + 1) o (*) 2) (LENGTH fns)) fns)) (SND g)`,
   CHEAT_TAC);;
 
 let ALOOKUP_code_list = prove
@@ -457,8 +456,8 @@ let wfg'_insert_each = prove
 
 let wfg'_code_list = prove
  (`!ls g loc.
-      wfg' g /\ set_of_list (GENLIST (\i. loc + 2 * i) (LENGTH ls))
-        SUBSET domain (FST g) ==> wfg' (code_list loc ls g)`,
+      wfg' g /\ set_of_list (list_of_seq (\i. loc + 2 * i) (LENGTH
+        ls)) SUBSET domain (FST g) ==> wfg' (code_list loc ls g)`,
   CHEAT_TAC);;
 
 let closed_Fn = prove
@@ -490,7 +489,7 @@ let calls_wfg = prove
 
 let calls_fv1_subset = prove
  (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
-    LIST_REL (\x y. (hol4_C fv1) y SUBSET (hol4_C fv1) x) xs ys`,
+    ALL2 (\x y. (hol4_C fv1) y SUBSET (hol4_C fv1) x) xs ys`,
   CHEAT_TAC);;
 
 let calls_fv_imp = prove
@@ -507,16 +506,16 @@ let code_list_replace_SND = prove
  (`!loc fns g0 g g0' ls.
    code_list loc fns g0 = g /\
    FST g0 = FST g0' /\
-   SND g = ls ++ SND g0 ==>
-   code_list loc fns g0' = (FST g,ls ++ SND g0')`,
+   SND g = APPEND ls (SND g0) ==>
+   code_list loc fns g0' = (FST g,APPEND ls (SND g0'))`,
   CHEAT_TAC);;
 
 let calls_replace_SND = prove
  (`!xs g0 ys g g0' ls.
     calls xs g0 = (ys,g) /\
     FST g0 = FST g0' /\
-    SND g = ls ++ SND g0 ==>
-    calls xs g0' = (ys,(FST g,ls ++ SND g0'))`,
+    SND g = APPEND ls (SND g0) ==>
+    calls xs g0' = (ys,(FST g,APPEND ls (SND g0')))`,
   CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -525,16 +524,16 @@ let insert_each'_def,insert_each'_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). list_size (pair_size (\n. n) (\x. 0)) x0)`
   [`insert_each' gt p 0 g = g`;
    `insert_each' gt p (SUC n) (g1,g2) =
-       insert_each' gt (p + 2) n (sptree_insert p one g1,((p +
-         1,THE (ALOOKUP gt (p + 1))) :: g2))`];;
+       insert_each' gt (p + 2) n (sptree_insert p one g1,(CONS
+         (p + 1,THE (ALOOKUP gt (p + 1))) g2))`];;
 
 (* HOL4 clos_callProofScript.sml:965: ML code, not ported *)
 
 let wfg_insert_each' = prove
  (`!gt p n g.
     wfg g /\
-    DISJOINT (set_of_list (GENLIST (\i. p + 2 * i) n)) (domain (FST
-      g)) ==> wfg (insert_each' gt p n g)`,
+    DISJOINT (set_of_list (list_of_seq (\i. p + 2 * i) n)) (domain
+      (FST g)) ==> wfg (insert_each' gt p n g)`,
   CHEAT_TAC);;
 
 let FST_insert_each' = prove
@@ -543,15 +542,15 @@ let FST_insert_each' = prove
 
 let MAP_FST_insert_each' = prove
  (`!gt p n g.
-   MAP FST (SND (insert_each' gt p n g)) =
-   REVERSE (GENLIST (\i. p + i * 2 + 1) n) ++
-   MAP FST (SND g)`,
+   MAP FST (SND (insert_each' gt p n g)) = APPEND (REVERSE
+     (list_of_seq (\i. p + i * 2 + 1) n))
+   (MAP FST (SND g))`,
   CHEAT_TAC);;
 
 let SND_insert_each' = prove
- (`!gt p n g. SND (insert_each' gt p n g) =
-    REVERSE (GENLIST (\i. (2 * i + p + 1,THE (ALOOKUP gt (2 * i + p
-      + 1)))) n) ++ SND g`,
+ (`!gt p n g. SND (insert_each' gt p n g) = APPEND (REVERSE
+  (list_of_seq (\i. (2 * i + p + 1,THE (ALOOKUP gt (2 * i + p + 1))))
+  n)) (SND g)`,
   CHEAT_TAC);;
 
 let calls_el_sing = prove
@@ -583,8 +582,7 @@ let insert_each_pair_arg = prove
 
 (* [local] *)
 let calls_acc_0 = prove
- (`!xs tmp x r.
-      x ++ r = SND tmp ==>
+ (`!xs tmp x r. APPEND x r = SND tmp ==>
       calls xs tmp = (I ## I ## (hol4_C (++) r)) (calls xs (FST
         tmp,x))`,
   CHEAT_TAC);;
@@ -592,7 +590,7 @@ let calls_acc_0 = prove
 let calls_acc = prove
  (`!xs d old res d1 aux.
       calls xs (d,[]) = (res,d1,aux) ==>
-      calls xs (d,old) = (res,d1,aux ++ old)`,
+      calls xs (d,old) = (res,d1,APPEND aux old)`,
   CHEAT_TAC);;
 
 (* properties of value relation *)
@@ -621,16 +619,17 @@ let code_includes_ALOOKUP = prove
 let dest_closure_v_rel_lookup = prove
  (`dest_closure max_app (SOME loc) v1 env1 = SOME x /\
    clos_callProof_v_rel g l code v1 v2 /\
-   LIST_REL (clos_callProof_v_rel g l code) env1 env2 /\
+   ALL2 (clos_callProof_v_rel g l code) env1 env2 /\
    wfg g /\ loc IN domain (FST g) /\ ~(loc IN l) ==>
    (?e l1 xs n ls g01 g1 l1' tra i.
-     x = Full_app e (env1 ++ l1) [] /\ EL n xs = (LENGTH env1,e) /\
+     x = Full_app e (APPEND env1 l1) [] /\ EL n xs = (LENGTH env1,e)
+       /\
      calls (MAP SND xs) g01 = (ls,g1) /\ n < LENGTH ls /\
      subg (code_list (loc - 2 * n) (ZIP (MAP FST xs) ls) g1) g /\
      ALOOKUP (SND g) (loc + 1) = SOME (LENGTH env1,EL n ls) /\
      dest_closure max_app (SOME loc) v2 env2 =
        SOME (Full_app (closLang_Call tra 0 (loc + 1)
-         (GENLIST_Var tra 1 (LENGTH env1))) (env2 ++ l1') []) /\
+         (GENLIST_Var tra 1 (LENGTH env1))) (APPEND env2 l1') []) /\
      code_includes (SND (code_list (loc - 2 * n) (ZIP (MAP FST xs)
        ls) g1)) code)`,
   CHEAT_TAC);;
@@ -638,7 +637,7 @@ let dest_closure_v_rel_lookup = prove
 let dest_closure_v_rel = prove
  (`dest_closure max_app loco v1 env1 = SOME x1 /\
    clos_callProof_v_rel g l code v1 v2 /\
-   LIST_REL (clos_callProof_v_rel g l code) env1 env2 ==>
+   ALL2 (clos_callProof_v_rel g l code) env1 env2 ==>
    (?x2.
    dest_closure max_app loco v2 env2 = SOME x2 /\
    (match x1 with Partial_app c1 ->
@@ -648,12 +647,12 @@ let dest_closure_v_rel = prove
         x2 = Full_app (SND (EL i fns2)) args2 rest2 /\
         (let m = (if is_Recclosure v2 then LENGTH fns2 else 0) in
          n + m <= LENGTH args1 /\ n + m <= LENGTH args2 /\
-         LIST_REL (clos_callProof_v_rel g l code) (TAKE (n + m)
-           args1) (TAKE (n + m) args2) /\
+         ALL2 (clos_callProof_v_rel g l code) (TAKE (n + m) args1)
+           (TAKE (n + m) args2) /\
          clos_callProof_env_rel (clos_callProof_v_rel g l code) (DROP
            (n + m) args1)
                               (DROP (n + m) args2) m [EL i fns2]) /\
-        LIST_REL (clos_callProof_v_rel g l code) rest1 rest2 /\
+        ALL2 (clos_callProof_v_rel g l code) rest1 rest2 /\
         recclosure_rel g l code loc fns1 fns2 /\
         i < LENGTH fns1 /\
         EL i fns1 = (n,e1))))`,
@@ -661,45 +660,46 @@ let dest_closure_v_rel = prove
 
 let dest_closure_partial_wfv = prove
  (`dest_closure max_app loco v env = SOME (Partial_app x) /\
-   EVERY (wfv g l code) env /\ wfv g l code v ==> wfv g l code x`,
+   ALL (wfv g l code) env /\ wfv g l code v ==> wfv g l code x`,
   CHEAT_TAC);;
 
 let dest_closure_full_wfv = prove
  (`dest_closure max_app loco v env = SOME (Full_app e args rest) /\
-   wfv g l code v /\ EVERY (wfv g l code) env ==>
+   wfv g l code v /\ ALL (wfv g l code) env ==>
    (?ys g01 loc fns1 fns2 i.
-     EVERY (wfv g l code) args /\ EVERY (wfv g l code) rest /\
+     ALL (wfv g l code) args /\ ALL (wfv g l code) rest /\
      recclosure_rel g l code loc fns1 fns2 /\
      SND (EL i fns1) = e /\ i < LENGTH fns1)`,
   CHEAT_TAC);;
 
 let env_rel_DROP = prove
  (`clos_callProof_env_rel R (DROP x l1) (DROP x l2) x es /\
-   LIST_REL R (TAKE x l1) (TAKE x l2) /\
+   ALL2 R (TAKE x l1) (TAKE x l2) /\
    x <= LENGTH l1 /\ x <= LENGTH l2 ==>
    clos_callProof_env_rel R l1 l2 0 es`,
   CHEAT_TAC);;
 
 let env_rel_DROP_args = prove
  (`clos_callProof_env_rel R (DROP n l1) (DROP n l2) a [(n,e)] /\
-   LIST_REL R (TAKE n l1) (TAKE n l2) /\
+   ALL2 R (TAKE n l1) (TAKE n l2) /\
    n <= LENGTH l1 /\ n <= LENGTH l2 ==>
    clos_callProof_env_rel R l1 l2 a [(0,e)]`,
   CHEAT_TAC);;
 
 let subg_insert_each' = prove
  (`!gb fns1 es g1.
-      subg gb (FST new_g,l ++ SND (insert_each' g1 loc (LENGTH fns1)
-        g)) /\
-      SND new_g = l ++ SND g /\
+      subg gb (FST new_g,APPEND l (SND (insert_each' g1 loc (LENGTH
+        fns1) g))) /\
+      SND new_g = APPEND l (SND g) /\
       LENGTH fns1 = LENGTH es /\ wfg g /\
-      DISJOINT (set_of_list (GENLIST (\i. 2 * i + loc + 1) (LENGTH
-        fns1))) (IMAGE SUC (domain (FST g))) /\
+      DISJOINT (set_of_list (list_of_seq (\i. 2 * i + loc + 1)
+        (LENGTH fns1))) (IMAGE SUC (domain (FST g))) /\
       DISJOINT (set_of_list (MAP FST l)) (IMAGE SUC (domain (FST g)))
         /\
       (!i. i < LENGTH fns1 ==> ALOOKUP g1 (2 * i + loc + 1) = SOME
         (FST (EL i fns1),EL i es)) ==>
-      subg (FST new_g,l ++ SND (insert_each' g1 loc (LENGTH fns1) g))
+      subg (FST new_g,APPEND l (SND (insert_each' g1 loc (LENGTH
+        fns1) g)))
         (code_list loc (ZIP (MAP FST fns1) es) new_g)`,
   CHEAT_TAC);;
 
@@ -720,14 +720,14 @@ let wfv_SUBMAP = prove
   CHEAT_TAC);;
 
 let EVERY_wfv_SUBMAP = prove
- (`EVERY (wfv g1 l1 code) env /\ code SUBMAP code1 ==>
-    EVERY (wfv g1 l1 code1) env`,
+ (`ALL (wfv g1 l1 code) env /\ code SUBMAP code1 ==>
+    ALL (wfv g1 l1 code1) env`,
   CHEAT_TAC);;
 
 let EVERY_wfv_subg = prove
- (`EVERY (wfv g l code) env /\ code SUBMAP code2 /\ subg g g2 /\ l
-  SUBSET l2 ==>
-     EVERY (wfv g2 l2 code2) env`,
+ (`ALL (wfv g l code) env /\ code SUBMAP code2 /\ subg g g2 /\ l SUBSET
+  l2 ==>
+     ALL (wfv g2 l2 code2) env`,
   CHEAT_TAC);;
 
 let every_refv_mono = prove
@@ -760,15 +760,15 @@ let v_rel_SUBMAP_subg = prove
 
 let LIST_REL_v_rel_SUBMAP = prove
  (`!g1 l1 code v1 v2 code1.
-       LIST_REL (clos_callProof_v_rel g1 l1 code) v1 v2 /\ code
-         SUBMAP code1 ==>
-       LIST_REL (clos_callProof_v_rel g1 l1 code1) v1 v2`,
+       ALL2 (clos_callProof_v_rel g1 l1 code) v1 v2 /\ code SUBMAP
+         code1 ==>
+       ALL2 (clos_callProof_v_rel g1 l1 code1) v1 v2`,
   CHEAT_TAC);;
 
 let LIST_REL_v_rel_subg = prove
- (`LIST_REL (clos_callProof_v_rel g l code) xs ys /\ subg g g2 /\ l
-  SUBSET l2 /\ code SUBMAP code2 ==> LIST_REL (clos_callProof_v_rel g2
-  l2 code2) xs ys`,
+ (`ALL2 (clos_callProof_v_rel g l code) xs ys /\ subg g g2 /\ l SUBSET
+  l2 /\ code SUBMAP code2 ==> ALL2 (clos_callProof_v_rel g2 l2 code2)
+  xs ys`,
   CHEAT_TAC);;
 
 let env_rel_SUBMAP = prove
@@ -798,8 +798,8 @@ let v_to_list_thm = prove
  (`!h h' x.
       v_to_list h = SOME x /\ clos_callProof_v_rel g1 l1 code h h'
         ==>
-      (?x'. v_to_list h' = SOME x' /\ LIST_REL
-        (clos_callProof_v_rel g1 l1 code) x x')`,
+      (?x'. v_to_list h' = SOME x' /\ ALL2 (clos_callProof_v_rel g1
+        l1 code) x x')`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -835,7 +835,7 @@ let v_to_words_thm = prove
   CHEAT_TAC);;
 
 let v_to_list_wfv = prove
- (`!h x. v_to_list h = SOME x /\ wfv g1 l1 code h ==> EVERY (wfv g1 l1
+ (`!h x. v_to_list h = SOME x /\ wfv g1 l1 code h ==> ALL (wfv g1 l1
   code) x`,
   CHEAT_TAC);;
 
@@ -845,13 +845,13 @@ let wfv_Boolv = prove
 
 let vrel_list_to_v = prove
  (`!xs1 xs2 ys1 ys2.
-     LIST_REL (clos_callProof_v_rel g l code) xs1 xs2 /\
-     LIST_REL (clos_callProof_v_rel g l code) ys1 ys2 /\
+     ALL2 (clos_callProof_v_rel g l code) xs1 xs2 /\
+     ALL2 (clos_callProof_v_rel g l code) ys1 ys2 /\
      clos_callProof_v_rel g l code (list_to_v xs1) (list_to_v xs2) /\
      clos_callProof_v_rel g l code (list_to_v ys1) (list_to_v ys2)
        ==>
-       clos_callProof_v_rel g l code (list_to_v (xs1 ++ ys1))
-         (list_to_v (xs2 ++ ys2))`,
+       clos_callProof_v_rel g l code (list_to_v (APPEND xs1 ys1))
+         (list_to_v (APPEND xs2 ys2))`,
   CHEAT_TAC);;
 
 let vrel_v2l_l2v = prove
@@ -871,7 +871,7 @@ let wfv_v2l = prove
  (`!x y xs ys.
    wfv g l code x /\ wfv g l code y /\
    v_to_list x = SOME xs /\ v_to_list y = SOME ys ==>
-     (?z. wfv g l code z /\ v_to_list z = SOME (xs ++ ys))`,
+     (?z. wfv g l code z /\ v_to_list z = SOME (APPEND xs ys))`,
   CHEAT_TAC);;
 
 (* do_app_thm *)
@@ -881,23 +881,23 @@ let clos_callProof_do_app_thm = prove
       (e = Rtype_error \/
        (?f.
             e = Rffi_error f /\ (
-            LIST_REL (clos_callProof_v_rel g2 l2 (closSem_state_code
-              t)) a v /\ clos_callProof_state_rel g2 l2 r t ==> do_app
-              op (REVERSE v) t = Rerr (Rabort (Rffi_error f))))) | Rval
+            ALL2 (clos_callProof_v_rel g2 l2 (closSem_state_code t))
+              a v /\ clos_callProof_state_rel g2 l2 r t ==> do_app op
+              (REVERSE v) t = Rerr (Rabort (Rffi_error f))))) | Rval
               (w,s) ->
-       (wfv_state g2 l2 (closSem_state_code t) r /\ EVERY (wfv g2 l2
+       (wfv_state g2 l2 (closSem_state_code t) r /\ ALL (wfv g2 l2
          (closSem_state_code t)) a ==>
         wfv_state g2 l2 (closSem_state_code t) s /\ wfv g2 l2
           (closSem_state_code t) w) /\
-       (LIST_REL (clos_callProof_v_rel g2 l2 (closSem_state_code t))
-         a v /\ clos_callProof_state_rel g2 l2 r t ==>
+       (ALL2 (clos_callProof_v_rel g2 l2 (closSem_state_code t)) a v
+         /\ clos_callProof_state_rel g2 l2 r t ==>
         (?w' s'. (do_app op (REVERSE v) t = Rval (w',s')) /\
                 clos_callProof_v_rel g2 l2 (closSem_state_code t) w
                   w' /\ clos_callProof_state_rel g2 l2 s s'))`,
   CHEAT_TAC);;
 
 let NOT_IN_domain_FST_g = prove
- (`ALL_DISTINCT (code_locs xs ++ code_locs ys) ==>
+ (`ALL_DISTINCT (APPEND (code_locs xs) (code_locs ys)) ==>
     calls ys g' = (e2,g) ==>
     wfg g' ==>
     MEM x (code_locs xs) ==> ~(x IN domain (FST g')) ==> ~(x IN
@@ -1047,7 +1047,7 @@ let fv_GENLIST_Var_alt = prove
   CHEAT_TAC);;
 
 let env_rel_env_exists = prove
- (`!vars'. EVERY (wfv g1 l1 code) env ==>
+ (`!vars'. ALL (wfv g1 l1 code) env ==>
            (?env5. clos_callProof_env_rel (clos_callProof_v_rel g1 l1
              code) env env5 0 vars' /\
                   LENGTH env5 = LENGTH env)`,
@@ -1074,7 +1074,7 @@ let evaluate_app_mono = prove
 
 let calls_pure = prove
  (`!xs g es g1.
-    EVERY pure xs /\ calls xs g = (es,g1) ==> EVERY pure es`,
+    ALL pure xs /\ calls xs g = (es,g1) ==> ALL pure es`,
   CHEAT_TAC);;
 
 let calls_pure_sing = prove
@@ -1147,8 +1147,8 @@ let calls_correct = prove
                            t0) (closSem_state_compile t0)
                              (closSem_state_compile_oracle t0) /\
      every_Fn_SOME xs /\ every_Fn_vs_NONE xs /\
-     EVERY (wfv g1 l1 (closSem_state_code t0)) env1 /\ wfv_state g1
-       l1 (closSem_state_code t0) s0 /\ wfg g0 /\
+     ALL (wfv g1 l1 (closSem_state_code t0)) env1 /\ wfv_state g1 l1
+       (closSem_state_code t0) s0 /\ wfg g0 /\
      ALL_DISTINCT (code_locs xs) /\
      DISJOINT (IMAGE SUC (set_of_list (code_locs xs))) (set_of_list
        (MAP FST (SND g0))) /\
@@ -1168,15 +1168,14 @@ let calls_correct = prove
        wfv_state g2 l2 (closSem_state_code t) s /\
        subg g1 g2 /\ wfg g2 /\ l1 SUBSET l2 /\ DISJOINT l2 (domain
          (FST g2)) /\
-       every_result (EVERY (wfv g2 l2 (closSem_state_code t))) (wfv
-         g2 l2 (closSem_state_code t)) res /\
+       every_result (ALL (wfv g2 l2 (closSem_state_code t))) (wfv g2
+         l2 (closSem_state_code t)) res /\
        closSem_evaluate (ys,env2,closSem_state_clock_fupd (K
          (closSem_state_clock t0 + ck)) t0) = (res',t) /\
        clos_callProof_state_rel g2 l2 s t /\
-       semanticPrimitivesProps_result_rel (LIST_REL
-         (clos_callProof_v_rel g2 l2 (closSem_state_code t)))
-         (clos_callProof_v_rel g2 l2 (closSem_state_code t)) res res'))
-         /\
+       semanticPrimitivesProps_result_rel (ALL2 (clos_callProof_v_rel
+         g2 l2 (closSem_state_code t))) (clos_callProof_v_rel g2 l2
+         (closSem_state_code t)) res res')) /\
    (!loco f args s0 loc g l (t0:('c,'ffi)closSem_state) res s f'
      args'.
      evaluate_app loco f args s0 = (res,s) /\ ~(res = Rerr (Rabort
@@ -1186,13 +1185,12 @@ let calls_correct = prove
        (closSem_state_code
                          t0) (closSem_state_compile t0)
                            (closSem_state_compile_oracle t0) /\
-     wfv g l (closSem_state_code t0) f /\ EVERY (wfv g l
+     wfv g l (closSem_state_code t0) f /\ ALL (wfv g l
        (closSem_state_code t0)) args /\
      wfv_state g l (closSem_state_code t0) s0 /\
      wfg g /\ DISJOINT l (domain (FST g)) /\
-     clos_callProof_v_rel g l (closSem_state_code t0) f f' /\
-       LIST_REL (clos_callProof_v_rel g l (closSem_state_code t0)) args
-       args' /\
+     clos_callProof_v_rel g l (closSem_state_code t0) f f' /\ ALL2
+       (clos_callProof_v_rel g l (closSem_state_code t0)) args args' /\
      clos_callProof_state_rel g l s0 t0 ==>
      (?ck res' t g2 l2.
        code_inv (SOME g2) l2 (closSem_state_code s)
@@ -1201,14 +1199,14 @@ let calls_correct = prove
                              t) (closSem_state_compile t)
                                (closSem_state_compile_oracle t) /\
        wfv_state g2 l2 (closSem_state_code t) s /\
-       every_result (EVERY (wfv g2 l2 (closSem_state_code t))) (wfv
-         g2 l2 (closSem_state_code t)) res /\
+       every_result (ALL (wfv g2 l2 (closSem_state_code t))) (wfv g2
+         l2 (closSem_state_code t)) res /\
        evaluate_app loco f' args' (closSem_state_clock_fupd (K
          (closSem_state_clock t0 + ck)) t0) = (res',t) /\
        clos_callProof_state_rel g2 l2 s t /\
        subg g g2 /\ wfg g2 /\ l SUBSET l2 /\ DISJOINT l2 (domain (FST
          g2)) /\
-       semanticPrimitivesProps_result_rel (LIST_REL
+       semanticPrimitivesProps_result_rel (ALL2
          (clos_callProof_v_rel g2 l2 (closSem_state_code t)))
          (clos_callProof_v_rel g2 l2 (closSem_state_code t)) res
          res'))`,
@@ -1224,7 +1222,8 @@ let code_locs_code_list_MEM = prove
  (`!ls n rest x.
    MEM x (code_locs (MAP (SND o SND) (SND (code_list n ls rest))))
      <=>
-   MEM x (code_locs (MAP (SND o SND) (SND rest) ++ MAP SND ls))`,
+   MEM x (code_locs (APPEND (MAP (SND o SND) (SND rest)) (MAP SND
+     ls)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1232,8 +1231,8 @@ let code_locs_code_list_ALL_DISTINCT = prove
  (`!ls n rest.
    ALL_DISTINCT (code_locs (MAP (SND o SND) (SND (code_list n ls
      rest)))) <=>
-   ALL_DISTINCT (code_locs (MAP (SND o SND) (SND rest) ++ MAP SND
-     ls))`,
+   ALL_DISTINCT (code_locs (APPEND (MAP (SND o SND) (SND rest))
+     (MAP SND ls)))`,
   CHEAT_TAC);;
 
 (* All code_locs come from the original code,
@@ -1251,10 +1250,10 @@ let calls_code_locs_MEM = prove
 (* the all distinctness of code_locs is preserved *)
 let calls_code_locs_ALL_DISTINCT = prove
  (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
-    ALL_DISTINCT (code_locs xs ++ code_locs (MAP (SND o SND) (SND
-      g0))) ==>
-    ALL_DISTINCT (code_locs ys ++ code_locs (MAP (SND o SND) (SND
-      g)))`,
+    ALL_DISTINCT (APPEND (code_locs xs) (code_locs (MAP (SND o SND)
+      (SND g0)))) ==>
+    ALL_DISTINCT (APPEND (code_locs ys) (code_locs (MAP (SND o SND)
+      (SND g))))`,
   CHEAT_TAC);;
 
 let oracle_monotonic_init_UNION = prove
@@ -1351,7 +1350,7 @@ let calls_preserves_every_Fn_vs_NONE = prove
 (* obeys_max_app and no_Labels *)
 
 let state_syntax_def = new_definition
-  `state_syntax f ((g,xs):1 spt#(num#num#closLang_exp) list) = EVERY
+  `state_syntax f ((g,xs):1 spt#(num#num#closLang_exp) list) = ALL
   (\(x1,x2,x3). f x3) xs`;;
 
 let state_syntax_insert_each = prove
@@ -1362,39 +1361,38 @@ let state_syntax_insert_each = prove
 let state_syntax_code_list = prove
  (`!n xs g.
       state_syntax f (code_list n xs g) <=>
-      state_syntax f g /\ EVERY f (MAP SND xs)`,
+      state_syntax f g /\ ALL f (MAP SND xs)`,
   CHEAT_TAC);;
 
 let obeys_max_app_GENLIST_Var = prove
- (`!n l w. EVERY (obeys_max_app k) (GENLIST_Var n l w)`,
+ (`!n l w. ALL (obeys_max_app k) (GENLIST_Var n l w)`,
   CHEAT_TAC);;
 
 let obeys_max_app_calls_list = prove
- (`!t k1 loc fns. EVERY (obeys_max_app k) (MAP SND (calls_list t k1
-  loc fns))`,
+ (`!t k1 loc fns. ALL (obeys_max_app k) (MAP SND (calls_list t k1 loc
+  fns))`,
   CHEAT_TAC);;
 
 let calls_obeys_max_app = prove
  (`!xs g ys g1.
       calls xs g = (ys,g1) /\ state_syntax (obeys_max_app k) g /\
-      EVERY (obeys_max_app k) xs ==>
-      EVERY (obeys_max_app k) ys /\ state_syntax (obeys_max_app k)
-        g1`,
+      ALL (obeys_max_app k) xs ==>
+      ALL (obeys_max_app k) ys /\ state_syntax (obeys_max_app k) g1`,
   CHEAT_TAC);;
 
 let no_Labels_GENLIST_Var = prove
- (`!n l w. EVERY no_Labels (GENLIST_Var n l w)`,
+ (`!n l w. ALL no_Labels (GENLIST_Var n l w)`,
   CHEAT_TAC);;
 
 let no_Labels_calls_list = prove
- (`!t k1 loc fns. EVERY no_Labels (MAP SND (calls_list t k1 loc fns))`,
+ (`!t k1 loc fns. ALL no_Labels (MAP SND (calls_list t k1 loc fns))`,
   CHEAT_TAC);;
 
 let calls_no_Labels = prove
  (`!xs g ys g1.
       calls xs g = (ys,g1) /\ state_syntax no_Labels g /\
-      EVERY no_Labels xs ==>
-      EVERY no_Labels ys /\ state_syntax no_Labels g1`,
+      ALL no_Labels xs ==>
+      ALL no_Labels ys /\ state_syntax no_Labels g1`,
   CHEAT_TAC);;
 
 (* names *)

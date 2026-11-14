@@ -53,18 +53,18 @@ let is_Or_row_def = new_definition
 
 let take_until_Any_def,take_until_Any_ind = define_rec
   [`take_until_Any [] = []`;
-   `take_until_Any ((p,x) :: xs) =
-      (if is_Any p then [(p,x)] else (p,x) :: take_until_Any
-        xs)`];;
+   `take_until_Any (CONS (p,x) xs) =
+      (if is_Any p then [(p,x)] else CONS (p,x) (take_until_Any
+        xs))`];;
 
 let move_const_up_def = new_definition
   `move_const_up rows =
      (let new_rows = take_until_Any rows in
-       if 5 <= LENGTH new_rows \/ EXISTS is_Or_row new_rows then
-         new_rows else
+       if 5 <= LENGTH new_rows \/ EX is_Or_row new_rows then
+         new_rows else APPEND
          // long pattern rows should not be changed
-         FILTER is_const_row new_rows ++
-         FILTER (\x. ~(is_const_row x)) new_rows)`;;
+         (FILTER is_const_row new_rows)
+         (FILTER (\x. ~(is_const_row x)) new_rows))`;;
 
 let is_Any_pmatch = prove
  (`!p. is_Any p ==> ~(pmatch refs p v = PMatchFailure)`,
@@ -78,7 +78,7 @@ let match_take_until_Any = prove
 
 let match_append = prove
  (`!xs ys refs v.
-     pattern_semantics_match refs (xs ++ ys) v =
+     pattern_semantics_match refs (APPEND xs ys) v =
      (match pattern_semantics_match refs xs v with NONE -> NONE |
        SOME (MatchSuccess e) -> (if ~(pattern_semantics_match refs ys
        v = NONE) then SOME (MatchSuccess e) else NONE) | SOME _7 ->
@@ -106,7 +106,7 @@ let not_is_const_row = prove
   CHEAT_TAC);;
 
 let EVERY_take_until_Any = prove
- (`!rows. EVERY (\(x,y). ~(is_Any x)) (TL (REVERSE (take_until_Any
+ (`!rows. ALL (\(x,y). ~(is_Any x)) (TL (REVERSE (take_until_Any
   (rows:(pattern_semantics_pat#num) list))))`,
   CHEAT_TAC);;
 
@@ -140,7 +140,7 @@ let insert_Any_def,insert_Any_ind = define_wf
       match x1 with
         [] -> []
       | [p,x] -> [(pattern_semantics_Any,x)]
-      | (x :: xs) -> x :: insert_Any xs`];;
+      | (CONS x xs) -> CONS x (insert_Any xs)`];;
 
 let match_insert_Any = prove
  (`!rows. ~(pattern_semantics_match refs rows v = NONE) ==>
@@ -173,7 +173,7 @@ let mk_If_def = new_definition
 
 let get_pos_def,get_pos_ind = define_rec
   [`get_pos [] = EmptyPos`;
-   `get_pos (n :: ns) = Pos n (get_pos ns)`];;
+   `get_pos (CONS n ns) = Pos n (get_pos ns)`];;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL (_11,p) -> pattern_semantics_pat_size
@@ -198,21 +198,21 @@ let pat_to_guard_def,pat_to_guard_ind = define_mutual_guess_cheat
    `pat_to_guard l (Or p1 p2:pattern_semantics_pat) = mk_Disj
   (pat_to_guard l p1) (pat_to_guard l p2)`;
    `pat_to_guard l (pattern_semantics_Ref p:pattern_semantics_pat) =
-  pat_to_guard (0 :: l) p`;
+  pat_to_guard (CONS 0 l) p`;
    `pats_to_guard l k [] = pattern_semantics_True`;
-   `pats_to_guard l k [p] = pat_to_guard (k :: l) p`;
-   `pats_to_guard l k (p :: ps) = mk_Conj (pat_to_guard (k :: l) p)
-  (pats_to_guard l (k + 1) ps)`];;
+   `pats_to_guard l k [p] = pat_to_guard (CONS k l) p`;
+   `pats_to_guard l k (CONS p ps) = mk_Conj (pat_to_guard (CONS k
+  l) p) (pats_to_guard l (k + 1) ps)`];;
 
 let pats_to_code_def,pats_to_code_ind = define_rec
   [`pats_to_code [] = Fail`;
-   `pats_to_code ((p,x) :: rows) =
+   `pats_to_code (CONS (p,x) rows) =
       mk_If (pat_to_guard [] p) (pattern_semantics_Leaf x)
         (pats_to_code rows)`];;
 
 let pattern_comp_walk_def,pattern_comp_walk_ind = define_rec
   [`pattern_comp_walk [] x refs = SOME x`;
-   `pattern_comp_walk (n :: ns) x refs =
+   `pattern_comp_walk (CONS n ns) x refs =
       (match x with (pattern_semantics_Term t xs) -> (if n < LENGTH
         xs then pattern_comp_walk ns (EL n xs) refs else NONE) |
         (pattern_semantics_RefPtr p) -> (if ~(n = 0) then NONE else
@@ -241,7 +241,7 @@ let walk_thm = prove
 
 let walk_append = prove
  (`!xs ys v refs.
-     pattern_comp_walk (xs ++ ys) v refs =
+     pattern_comp_walk (APPEND xs ys) v refs =
      (match pattern_comp_walk xs v refs with NONE -> NONE | SOME v
        -> pattern_comp_walk ys v refs)`,
   CHEAT_TAC);;
@@ -264,8 +264,8 @@ let dt_eval_guard_pat_to_guard = prove
        SOME (pmatch refs p x = PMatchSuccess)) /\
    (!l k ps xs ys. ~(pmatch_list refs ps xs = PTypeFailure) /\ LENGTH
      ys = k /\
-     walk_list (REVERSE l) v refs = SOME (ys ++ xs) /\ LENGTH xs =
-       LENGTH ps ==>
+     walk_list (REVERSE l) v refs = SOME (APPEND ys xs) /\ LENGTH xs
+       = LENGTH ps ==>
      dt_eval_guard refs v (pats_to_guard l k ps) =
        SOME (pmatch_list refs ps xs = PMatchSuccess))`,
   CHEAT_TAC);;

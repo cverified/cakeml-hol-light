@@ -64,10 +64,10 @@ let generalise_none = prove
     s' = FEMPTY /\
     check_t 0 {} t) /\
    (!ts s' ts' x.
-    EVERY (check_t 0 x) ts /\
+    ALL (check_t 0 x) ts /\
     generalise_list 0 0 FEMPTY ts = (0,s',ts') ==>
     s' = FEMPTY /\
-    EVERY (check_t 0 {}) ts)`,
+    ALL (check_t 0 {}) ts)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -95,7 +95,7 @@ let set_ids_def = new_definition
 (* [local] *)
 let set_ids_eq = prove
  (`set_ids n1 n2 =
-   set_of_list (GENLIST (\x. x + n1) (n2 - n1))`,
+   set_of_list (list_of_seq (\x. x + n1) (n2 - n1))`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -144,7 +144,7 @@ let db_subst_infer_subst_swap2 = prove
       (convert_t t))) /\
    (!ts s tvs uvar n.
     t_wfs s /\
-    EVERY (\t. check_t tvs {} t) ts ==>
+    ALL (\t. check_t tvs {} t) ts ==>
     (MAP (convert_t o
          t_walkstar s o
          infer_deBruijn_subst (MAP (\n. Infer_Tuvar n) (COUNT_LIST

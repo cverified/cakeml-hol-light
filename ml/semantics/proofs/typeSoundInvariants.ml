@@ -38,7 +38,7 @@ let tenv_abbrev_ok_def = new_definition
   t) tenvT`;;
 
 let tenv_ctor_ok_def = new_definition
-  `tenv_ctor_ok tenvC <=> nsAll (\id' (tvs,ts,tn). EVERY
+  `tenv_ctor_ok tenvC <=> nsAll (\id' (tvs,ts,tn). ALL
   (check_freevars 0 tvs) ts) tenvC`;;
 
 let tenv_val_ok_def = new_definition
@@ -67,7 +67,7 @@ new_type_abbrev("ctMap",`: (stamp,mlstring list#t list#num)fmap`);;
 let ctMap_ok_def = new_definition
   `ctMap_ok ctMap <=>
      // No free variables in the range
-     FEVERY (\(stamp,(tvs,ts,_1)). EVERY (check_freevars 0 tvs) ts)
+     FEVERY (\(stamp,(tvs,ts,_1)). ALL (check_freevars 0 tvs) ts)
        ctMap /\
      (
       // Exceptions have type exception, and no type variables
@@ -121,16 +121,16 @@ let type_v = cake_inductive
      type_v tvs ctMap tenvS (semanticPrimitives_Litv (ast_Float64 w))
        Tdouble) /\
    (!tvs ctMap tenvS vs tvs' stamp ts' ts ti.
-     EVERY (check_freevars tvs []) ts' /\
+     ALL (check_freevars tvs []) ts' /\
      LENGTH tvs' = LENGTH ts' /\
-     LIST_REL (type_v tvs ctMap tenvS)
+     ALL2 (type_v tvs ctMap tenvS)
        vs (MAP (type_subst (FUPDATE_LIST FEMPTY (REVERSE (ZIP tvs'
          ts')))) ts) /\
      FLOOKUP ctMap stamp = SOME (tvs',ts,ti) ==>
      type_v tvs ctMap tenvS (semanticPrimitives_Conv (SOME stamp) vs)
        (Tapp ts' ti)) /\
    (!tvs ctMap tenvS vs ts.
-     LIST_REL (type_v tvs ctMap tenvS) vs ts ==>
+     ALL2 (type_v tvs ctMap tenvS) vs ts ==>
      type_v tvs ctMap tenvS (semanticPrimitives_Conv NONE vs) (Ttup
        ts)) /\
    (!tvs ctMap tenvS env tenv tenvE n e t1 t2.
@@ -174,7 +174,7 @@ let type_v = cake_inductive
        /\
    (!tvs ctMap tenvS vs t.
      check_freevars 0 [] t /\
-     EVERY (\v. type_v tvs ctMap tenvS v t) vs ==>
+     ALL (\v. type_v tvs ctMap tenvS v t) vs ==>
      type_v tvs ctMap tenvS (semanticPrimitives_Vectorv vs)
        (Tvector t))`;;
 
@@ -185,7 +185,7 @@ let type_sv_def = new_definition
             v t
         | ((semanticPrimitives_W8array v),W8array_t) -> T
         | ((semanticPrimitives_Varray vs),(Varray_t t)) ->
-       EVERY (\v. type_v 0 ctMap tenvS v t) vs
+       ALL (\v. type_v 0 ctMap tenvS v t) vs
         | (_4,_5) -> F`;;
 
 

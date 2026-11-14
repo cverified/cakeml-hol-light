@@ -27,19 +27,19 @@ let _ = hol4_ancestors "bvl_jumpProof"
 let evaluate_JumpList = prove
  (`!n xs k.
        k < LENGTH xs ==>
-       (evaluate ([JumpList n xs],Number (&(n + k)) :: env,s) =
-        evaluate ([EL k xs],Number (&(n + k)) :: env,s))`,
+       (evaluate ([JumpList n xs],CONS (Number (&(n + k))) env,s) =
+        evaluate ([EL k xs],CONS (Number (&(n + k))) env,s))`,
   CHEAT_TAC);;
 
 let evaluate_Jump = prove
  (`(evaluate ([x],env,s) = (Rval [Number (&n)],t)) /\
     n < LENGTH xs ==>
     (evaluate ([bvl_jump_Jump x xs],env,s) =
-     evaluate ([EL n xs],Number (&n) :: env,t))`,
+     evaluate ([EL n xs],CONS (Number (&n)) env,t))`,
   CHEAT_TAC);;
 
 let bvl_get_code_labels_JumpList = prove
- (`!n xs. bvlProps_get_code_labels (JumpList n xs) = BIGUNION
+ (`!n xs. bvlProps_get_code_labels (JumpList n xs) = UNIONS
   (set_of_list (MAP bvlProps_get_code_labels xs))`,
   CHEAT_TAC);;
 

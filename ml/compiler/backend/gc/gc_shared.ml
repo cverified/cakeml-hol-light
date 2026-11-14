@@ -90,12 +90,12 @@ let heap_length_GTE = prove
   CHEAT_TAC);;
 
 let heap_length_APPEND = prove
- (`heap_length (xs ++ ys) = heap_length xs + heap_length ys`,
+ (`heap_length (APPEND xs ys) = heap_length xs + heap_length ys`,
   CHEAT_TAC);;
 
 let heap_lookup_def,heap_lookup_ind = define_rec
   [`heap_lookup a [] = NONE`;
-   `heap_lookup a (x :: xs) =
+   `heap_lookup a (CONS x xs) =
          (if a = 0 then SOME x else
          if a < el_length x then NONE else heap_lookup (a -
            el_length x) xs)`];;
@@ -114,16 +114,16 @@ let heap_lookup_LESS = prove
 
 let heap_split_def,heap_split_ind = define_rec
   [`heap_split a [] = (if a = 0 then SOME ([],[]) else NONE)`;
-   `heap_split a (el :: heap) =
-        (if a = 0 then SOME ([],el :: heap) else
+   `heap_split a (CONS el heap) =
+        (if a = 0 then SOME ([],CONS el heap) else
         if a < el_length el then NONE else
         match heap_split (a - el_length el) heap with NONE -> NONE |
           SOME (h1,h2) ->
-          SOME (el :: h1,h2))`];;
+          SOME (CONS el h1,h2))`];;
 
 let heap_lookup_SPLIT = prove
  (`!heap n x. (heap_lookup n heap = SOME x) ==>
-               (?ha hb. (heap = ha ++ (x :: hb)) /\ (n =
+               (?ha hb. (heap = APPEND ha (CONS x hb)) /\ (n =
                  heap_length ha))`,
   CHEAT_TAC);;
 
@@ -141,8 +141,8 @@ let heap_split_heap_length = prove
  (`!heap h1 h2 a.
     (heap_split a heap = SOME (h1,h2)) ==>
     (heap_length h1 = a) /\
-    (heap_length (h1 ++ h2) = heap_length heap) /\
-    (h1 ++ h2 = heap)`,
+    (heap_length (APPEND h1 h2) = heap_length heap) /\
+    (APPEND h1 h2 = heap)`,
   CHEAT_TAC);;
 
 let heap_segment_def = new_definition
@@ -155,9 +155,9 @@ let heap_segment_def = new_definition
 let heap_segment_IMP = prove
  (`!heap a b h1 h2 h3.
     (heap_segment (a,b) heap = SOME (h1,h2,h3)) ==>
-    (h1 ++ h2 ++ h3 = heap) /\
+    (APPEND (APPEND h1 h2) h3 = heap) /\
     (heap_length h1 = a) /\
-    (heap_length (h1 ++ h2) = b) /\
+    (heap_length (APPEND h1 h2) = b) /\
     (heap_length h3 = (heap_length heap - b))`,
   CHEAT_TAC);;
 
@@ -208,23 +208,23 @@ let heap_ok_def = new_definition
 let gc_forward_ptr_def,gc_forward_ptr_ind = define_rec
   [`// replace cell at a with a forwardpointer to ptr
     gc_forward_ptr a [] ptr d ok = ([],F)`;
-   `gc_forward_ptr a (x :: xs) ptr d ok =
+   `gc_forward_ptr a (CONS x xs) ptr d ok =
          (if a = 0 then
-           (ForwardPointer ptr d ((el_length x) - 1) ::
+           (CONS (ForwardPointer ptr d ((el_length x) - 1))
              xs,(isDataElement x /\ ok)) else
-         if a < el_length x then (x :: xs,F) else
+         if a < el_length x then (CONS x xs,F) else
            let (xs,ok) = gc_forward_ptr (a - el_length x) xs ptr d
              ok in
-             (x :: xs,ok))`];;
+             (CONS x xs,ok))`];;
 
 let gc_forward_ptr_ok = prove
  (`!heap n a c x. (gc_forward_ptr n heap a d c = (x,T)) ==> c`,
   CHEAT_TAC);;
 
 let gc_forward_ptr_thm = prove
- (`!ha. gc_forward_ptr (heap_length ha) (ha ++ (DataElement ys l d ::
-  hb)) a u c =
-         (ha ++ (ForwardPointer a u l :: hb),c)`,
+ (`!ha. gc_forward_ptr (heap_length ha) (APPEND ha (CONS (DataElement ys
+  l d) hb)) a u c =
+         (APPEND ha (CONS (ForwardPointer a u l) hb),c)`,
   CHEAT_TAC);;
 
 (* HOL4 gc_sharedScript.sml:309-327: code that the source has in a
@@ -241,9 +241,9 @@ let heap_map_def,heap_map_ind = define_wf
   [`heap_map a x2 =
         match x2 with
           [] -> FEMPTY
-        | (ForwardPointer ptr d l :: xs) ->
+        | CONS (ForwardPointer ptr d l) xs ->
         heap_map (a + l + 1) xs |+ (a,ptr)
-        | (x :: xs) -> heap_map (a + el_length x) xs`];;
+        | (CONS x xs) -> heap_map (a + el_length x) xs`];;
 
 let heap_map1_def = new_definition
   `heap_map1 heap = (\a. FAPPLY (heap_map 0 heap) a)`;;
@@ -254,7 +254,7 @@ let _ = size_thms "heap_element";;
 let heap_addresses_def,heap_addresses_ind = define_wf
   `MEASURE (\(x0,x1). list_size (heap_element_size (\x. 0) (\x. 0)) x1)`
   [`heap_addresses a [] = {}`;
-   `heap_addresses a (x :: xs) = a INSERT heap_addresses (a +
+   `heap_addresses a (CONS x xs) = a INSERT heap_addresses (a +
   el_length x) xs`];;
 
 let _ = size_thms "heap_address";;
@@ -263,10 +263,10 @@ let _ = size_thms "heap_address";;
 let ADDR_MAP_def,ADDR_MAP_ind = define_wf
   `MEASURE (\(x0,x1). list_size (heap_address_size (\x. 0)) x1)`
   [`ADDR_MAP f [] = []`;
-   `ADDR_MAP f (gc_shared_Data x :: xs) = (gc_shared_Data x:'a
-  heap_address) :: ADDR_MAP f xs`;
-   `ADDR_MAP f (gc_shared_Pointer a d :: xs) = gc_shared_Pointer (f
-  a) d :: ADDR_MAP f xs`];;
+   `ADDR_MAP f (CONS (gc_shared_Data x) xs) = CONS (gc_shared_Data
+  x:'a heap_address) (ADDR_MAP f xs)`;
+   `ADDR_MAP f (CONS (gc_shared_Pointer a d) xs) = CONS
+  (gc_shared_Pointer (f a) d) (ADDR_MAP f xs)`];;
 
 let ADDR_MAP_EQ = prove
  (`!xs. (!p d. MEM (gc_shared_Pointer p d) xs ==> (f p = g p)) ==>
@@ -279,7 +279,8 @@ let ADDR_MAP_LENGTH = prove
 
 let ADDR_MAP_APPEND = prove
  (`!h1 h2 f.
-    ADDR_MAP f (h1 ++ h2) = ADDR_MAP f h1 ++ ADDR_MAP f h2`,
+    ADDR_MAP f (APPEND h1 h2) = APPEND (ADDR_MAP f h1) (ADDR_MAP f
+      h2)`,
   CHEAT_TAC);;
 
 let ADDR_APPLY_def = define_cases
@@ -294,7 +295,7 @@ let ADDR_APPLY_def = define_cases
 
 let heaps_similar_def = new_definition
   `heaps_similar heap0 heap =
-     EVERY2 (\h0 h. if isForwardPointer h then
+     ALL2 (\h0 h. if isForwardPointer h then
                       (el_length h = el_length h0) /\
                         isDataElement h0 else (h = h0)) heap0 heap`;;
 
@@ -307,10 +308,10 @@ let IN_heap_map_IMP = prove
 
 let isSomeDataOrForward_lemma = prove
  (`!ha ptr.
-      isSomeDataOrForward (heap_lookup ptr (ha ++ (DataElement ys l d
-        :: hb))) <=>
-      isSomeDataOrForward (heap_lookup ptr (ha ++ [ForwardPointer a
-        u l] ++ hb))`,
+      isSomeDataOrForward (heap_lookup ptr (APPEND ha (CONS
+        (DataElement ys l d) hb))) <=>
+      isSomeDataOrForward (heap_lookup ptr (APPEND (APPEND ha
+        [ForwardPointer a u l]) hb))`,
   CHEAT_TAC);;
 
 let heaps_similar_IMP_heap_length = prove
@@ -318,32 +319,35 @@ let heaps_similar_IMP_heap_length = prove
   CHEAT_TAC);;
 
 let heap_similar_Data_IMP = prove
- (`heaps_similar heap0 (ha ++ (DataElement ys l d :: hb)) ==>
-    (?ha0 hb0. (heap0 = ha0 ++ (DataElement ys l d :: hb0)) /\
+ (`heaps_similar heap0 (APPEND ha (CONS (DataElement ys l d) hb)) ==>
+    (?ha0 hb0. (heap0 = APPEND ha0 (CONS (DataElement ys l d) hb0))
+      /\
               (heap_length ha = heap_length ha0))`,
   CHEAT_TAC);;
 
 let heaps_similar_lemma = prove
  (`!ha heap0.
-      heaps_similar heap0 (ha ++ (DataElement ys l d :: hb)) ==>
-      heaps_similar heap0 (ha ++ [ForwardPointer (heap_length (h1
-        ++ h2)) u l] ++ hb)`,
+      heaps_similar heap0 (APPEND ha (CONS (DataElement ys l d) hb))
+        ==>
+      heaps_similar heap0 (APPEND (APPEND ha [ForwardPointer
+        (heap_length (APPEND h1 h2)) u l]) hb)`,
   CHEAT_TAC);;
 
 let heap_lookup_PREFIX = prove
- (`!xs. (heap_lookup (heap_length xs) (xs ++ (x :: ys)) = SOME x)`,
+ (`!xs. (heap_lookup (heap_length xs) (APPEND xs (CONS x ys)) = SOME
+  x)`,
   CHEAT_TAC);;
 
 let heap_lookup_EXTEND = prove
  (`!xs n ys x. (heap_lookup n xs = SOME x) ==>
-                (heap_lookup n (xs ++ ys) = SOME x)`,
+                (heap_lookup n (APPEND xs ys) = SOME x)`,
   (LIST_INDUCT_TAC THEN REWRITE_TAC[heap_lookup_def; APPEND;
     option_DISTINCT] THEN
    REPEAT GEN_TAC THEN REPEAT COND_CASES_TAC THEN
    REWRITE_TAC[option_DISTINCT] THEN ASM_MESON_TAC[]));;
 
 let heap_map_APPEND = prove
- (`!xs n ys. (heap_map n (xs ++ ys)) =
+ (`!xs n ys. (heap_map n (APPEND xs ys)) =
               FUNION (heap_map n xs) (heap_map (n + heap_length xs)
                 ys)`,
   CHEAT_TAC);;
@@ -352,19 +356,19 @@ let heap_map_APPEND = prove
    the value of an ML expression: FDOM_heap_map *)
 
 let heap_addresses_APPEND = prove
- (`!xs ys n. heap_addresses n (xs ++ ys) =
+ (`!xs ys n. heap_addresses n (APPEND xs ys) =
               heap_addresses n xs UNION heap_addresses (n +
                 heap_length xs) ys`,
   CHEAT_TAC);;
 
 let LESS_IMP_heap_lookup = prove
- (`!xs j ys. j < heap_length xs ==> (heap_lookup j (xs ++ ys) =
+ (`!xs j ys. j < heap_length xs ==> (heap_lookup j (APPEND xs ys) =
   heap_lookup j xs)`,
   CHEAT_TAC);;
 
 let NOT_LESS_IMP_heap_lookup = prove
  (`!xs j ys. ~(j < heap_length xs) ==>
-              (heap_lookup j (xs ++ ys) = heap_lookup (j -
+              (heap_lookup j (APPEND xs ys) = heap_lookup (j -
                 heap_length xs) ys)`,
   CHEAT_TAC);;
 
@@ -403,8 +407,8 @@ let heap_length_heap_expand = prove
   CHEAT_TAC);;
 
 let EVERY_isDataElement_IMP_LEMMA = prove
- (`!heap2. EVERY isDataElement heap2 ==> (FILTER isForwardPointer
-  heap2 = [])`,
+ (`!heap2. ALL isDataElement heap2 ==> (FILTER isForwardPointer heap2
+  = [])`,
   (LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; FILTER; isDataElement_def]
     THEN
    STRIP_TAC THEN ASM_REWRITE_TAC[isForwardPointer_def] THEN
@@ -412,16 +416,17 @@ let EVERY_isDataElement_IMP_LEMMA = prove
 
 let isSome_heap_looukp_IMP_APPEND = prove
  (`!xs ptr. isSomeDataElement (heap_lookup ptr xs) ==>
-             isSomeDataElement (heap_lookup ptr (xs ++ ys))`,
+             isSomeDataElement (heap_lookup ptr (APPEND xs ys))`,
   CHEAT_TAC);;
 
 let heap_split_APPEND_if = prove
- (`!h1 n h2. heap_split n (h1 ++ h2) =
+ (`!h1 n h2. heap_split n (APPEND h1 h2) =
    (if n < heap_length h1 then
     match heap_split n h1 with
-        NONE -> NONE | SOME (h1',h2') -> SOME (h1',h2' ++ h2) else
+        NONE -> NONE | SOME (h1',h2') -> SOME (h1',APPEND h2' h2)
+          else
     match heap_split (n - heap_length h1) h2 with
-        NONE -> NONE | SOME (h1',h2') -> SOME (h1 ++ h1',h2'))`,
+        NONE -> NONE | SOME (h1',h2') -> SOME (APPEND h1 h1',h2'))`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -475,9 +480,8 @@ let CARD_heap_addresses = prove
 
 let heap_filter_aux_def,heap_filter_aux_ind = define_rec
   [`heap_filter_aux n P [] = []`;
-   `heap_filter_aux n P (x :: xs) =
-         (if n IN P then [x] else []) ++ heap_filter_aux (n +
-           el_length x) P xs`];;
+   `heap_filter_aux n P (CONS x xs) = APPEND (if n IN P then [x]
+  else []) (heap_filter_aux (n + el_length x) P xs)`];;
 
 let heap_filter_def = new_definition
   `heap_filter = heap_filter_aux 0`;;
@@ -560,9 +564,8 @@ let heap_length_heap_filter = prove
 
 let heap_filter_aux_APPEND = prove
  (`!xs ys n s.
-      heap_filter_aux n s (xs ++ ys) =
-      heap_filter_aux n s xs ++ heap_filter_aux (n + heap_length
-        xs) s ys`,
+      heap_filter_aux n s (APPEND xs ys) = APPEND (heap_filter_aux
+        n s xs) (heap_filter_aux (n + heap_length xs) s ys)`,
   CHEAT_TAC);;
 
 let heap_filter_aux_heap_addresses_UNION = prove

@@ -2,7 +2,7 @@
 (*  sptree: ported from HOL4's
     src/finite_maps/sptreeScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs, and 84 theorems of it from LightCake.  Needed
+    that CakeML needs, and 83 theorems of it from LightCake.  Needed
     by 106 files of the port.  *)
 (* ======================================================== *)
 
@@ -223,13 +223,13 @@ let mapi_def = new_definition
 hol4_overload "mapi" "sptree_mapi";;
 
 let toAList_def = new_definition
-  `toAList = foldi (\k v a. (k,v) :: a) 0 []`;;
+  `toAList = foldi (\k v a. CONS (k,v) a) 0 []`;;
 
 let toListA_def,toListA_ind = define_rec
   [`toListA acc LN = acc`;
-   `toListA acc (LS a) = a :: acc`;
+   `toListA acc (LS a) = CONS a acc`;
    `toListA acc (BN t1 t2) = toListA (toListA acc t2) t1`;
-   `toListA acc (BS t1 a t2) = toListA (a :: toListA acc t2) t1`];;
+   `toListA acc (BS t1 a t2) = toListA (CONS a (toListA acc t2)) t1`];;
 
 let toList_def = new_definition
   `sptree_toList m = toListA [] m`;;
@@ -243,7 +243,7 @@ let mk_wf_def,mk_wf_ind = define_rec
 
 let fromAList_def,fromAList_ind = define_rec
   [`fromAList [] = LN`;
-   `fromAList ((x,y) :: xs) = sptree_insert x y (fromAList xs)`];;
+   `fromAList (CONS (x,y) xs) = sptree_insert x y (fromAList xs)`];;
 
 let map_def,map_ind = define_rec
   [`sptree_map f LN = LN`;
@@ -298,12 +298,12 @@ let spt_fold_def,spt_fold_ind = define_rec
 
 let list_to_num_set_def,list_to_num_set_ind = define_rec
   [`list_to_num_set [] = LN`;
-   `list_to_num_set (n :: ns) = sptree_insert n one
+   `list_to_num_set (CONS n ns) = sptree_insert n one
   (list_to_num_set ns)`];;
 
 let list_insert_def,list_insert_ind = define_rec
   [`list_insert [] t = t`;
-   `list_insert (n :: ns) t = list_insert ns (sptree_insert n one
+   `list_insert (CONS n ns) t = list_insert ns (sptree_insert n one
   t)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -314,12 +314,12 @@ let alist_insert_def,alist_insert_ind = define_wf
       match (vs,xs) with
         ([],xs) -> t
       | (vs,[]) -> t
-      | ((v :: vs),(x :: xs)) -> sptree_insert v x (alist_insert
-        vs xs t)`];;
+      | ((CONS v vs),(CONS x xs)) -> sptree_insert v x
+        (alist_insert vs xs t)`];;
 
 let spts_to_alist_add_pause_def = new_definition
-  `spts_to_alist_add_pause j q = (match q with [] -> [(j,LN)] |
-  ((i,spt) :: q) -> ((i + j,spt) :: q))`;;
+  `spts_to_alist_add_pause j q = (match q with [] -> [(j,LN)] | (CONS
+  (i,spt) q) -> (CONS (i + j,spt) q))`;;
 
 (* HOL4 sptreeScript.sml:2378: the overload add_pause, which the port
    expands *)
@@ -327,16 +327,16 @@ let spts_to_alist_add_pause_def = new_definition
 let spts_to_alist_aux_def,spts_to_alist_aux_ind = define_shaped_rec
   "match"
   [`spts_to_alist_aux i xs acc_cent acc_right acc_left repeat =
-     (match xs with [] -> (i,REVERSE acc_right ++ REVERSE
-       acc_left,acc_cent,repeat) | (j,spt) :: ys ->
+     (match xs with [] -> (i,APPEND (REVERSE acc_right) (REVERSE
+       acc_left),acc_cent,repeat) | CONS (j,spt) ys ->
        (if (\t. t = LN) spt then spts_to_alist_aux (i + j) ys
          acc_cent
          (spts_to_alist_add_pause j acc_right)
            (spts_to_alist_add_pause j acc_left)
          repeat else spts_to_alist_aux (i + j) ys
-         ((match spt_center spt with NONE -> [] | SOME c -> [(i,c)])
-           ++ acc_cent)
-         ((j,spt_right spt) :: acc_right) ((j,spt_left spt) ::
+         (APPEND (match spt_center spt with NONE -> [] | SOME c ->
+           [(i,c)]) acc_cent)
+         (CONS (j,spt_right spt) acc_right) (CONS (j,spt_left spt)
            acc_left)
          T))`];;
 
@@ -696,19 +696,6 @@ let SPTAUX_BIT_RW = prove
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN TRY ARITH_TAC THEN
   DISCH_THEN(MP_TAC o AP_TERM `EVEN`) THEN
   REWRITE_TAC[EVEN_ADD; EVEN_MULT; ARITH]);;
-
-let lookup_ind = prove
- (`!P. (!k. P k (LN:A spt)) /\ (!k (a:A). P k (LS a)) /\
-       (!k t1 t2. (~(k = 0) ==> P ((k - 1) DIV 2) (if EVEN k then t1
-         else t2))
-                  ==> P k (BN t1 t2)) /\
-       (!k t1 (a:A) t2.
-          (~(k = 0) ==> P ((k - 1) DIV 2) (if EVEN k then t1 else t2))
-          ==> P k (BS t1 a t2))
-       ==> !k t. P k t`,
-  GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC num_WF THEN
-  X_GEN_TAC `k:num` THEN DISCH_TAC THEN MATCH_MP_TAC spt_INDUCT THEN
-  ASM_MESON_TAC[SPTAUX_DIV2_LT]);;
 
 let lookup_rwts = prove
  (`sptree_lookup k (LN:A spt) = NONE /\
@@ -1388,14 +1375,12 @@ let SPTAUX_FORALL_lookup_P = prove
    yet, with the names of its own that each proof
    uses:
 
-     spt_INDUCT                       cake_type
      spt_CASE                         case_def
      spt_case_eq                      case_eq
      spt_size_def                     size_def
      SPTAUX_TC_TAC                    WF_REL_THMS
      SPTAUX_BITS_TAC                  term
      SPTAUX_CASES_TAC                 CASES_ON term
-     insert_ind                       cake_ind
      wf_insert                        -- Exception: Failure "TAC_PROOF:
                                       Unsolved goals".
      isEmpty_union                    spt_CASE
@@ -1508,7 +1493,6 @@ let SPTAUX_FORALL_lookup_P = prove
                                       union_insert_LN
      map_map_K                        K_THM
      lookup_map_K                     K_THM OPTION_MAP_DEF lookup_map
-     alist_insert_ind                 CONS
      lookup_alist_insert              ALOOKUP_DEF option_CASE
      domain_alist_insert              domain_insert
      alist_insert_append              -- no answer
@@ -1531,7 +1515,6 @@ let SPTAUX_FORALL_lookup_P = prove
      SPTAUX_delete_delete_lt          SPTAUX_BITS_TAC
      delete_delete                    SPTAUX_delete_delete_lt
                                       SPTAUX_delete_delete_same
-     list_size_APPEND                 list_size
      size_map                         -- Error: Unbound value
                                       size_domain
      size_mapi                        domain_mapi size_domain
@@ -1552,7 +1535,6 @@ let SPTAUX_FORALL_lookup_P = prove
                                       SPTAUX_spt_size_left_right
                                       SPTAUX_spts_to_alist_aux_thm SUM
                                       spt_size_def
-     spts_to_alist_def                SPTAUX_spts_to_alist_eqn pair_CASE
      SPTAUX_LENGTH_COUNT_LIST         COUNT_LIST_DEF
      SPTAUX_ALOOKUP_ZIP_MAP_SUC       ALOOKUP_DEF
      SPTAUX_ALOOKUP_ZIP_COUNT_LIST    ALOOKUP_DEF COUNT_LIST_DEF

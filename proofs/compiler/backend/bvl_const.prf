@@ -186,7 +186,7 @@
       one] in
    let cons_cons_case =
      REWRITE_TAC[cp; LENGTH_APPEND] THEN
-     use_ih `[x1:bvl_exp]` THEN use_ih `(x2:bvl_exp) :: xr2` THEN
+     use_ih `[x1:bvl_exp]` THEN use_ih `CONS (x2:bvl_exp) xr2` THEN
      REWRITE_TAC[LENGTH] THEN ARITH_TAC in
    let base_case =
      REPEAT GEN_TAC THEN DISCH_TAC THEN

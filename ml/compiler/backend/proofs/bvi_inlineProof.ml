@@ -46,7 +46,8 @@ let remove_ticks_exps_LENGTH = prove
 
 (* [simp] *)
 let inline_exps_CONS = prove
- (`inline_exps cs (x :: xs) = inline_exp cs x :: inline_exps cs xs`,
+ (`inline_exps cs (CONS x xs) = CONS (inline_exp cs x) (inline_exps cs
+  xs)`,
   CHEAT_TAC);;
 
 let inline_exps_MAP = prove
@@ -65,7 +66,7 @@ let inline_exps_MAP_Var = prove
 
 (* [simp] *)
 let inline_exps_GENLIST_Var = prove
- (`!cs n. inline_exps cs (GENLIST Var n) = GENLIST Var n`,
+ (`!cs n. inline_exps cs (list_of_seq Var n) = list_of_seq Var n`,
   CHEAT_TAC);;
 
 let incremental_wrapper_example = prove
@@ -86,9 +87,9 @@ let canonical_wrapper_thm = prove
      canonical_wrapper name arity body <=>
        (?rets ticks worker tag. ~(worker = name) /\
          body =
-           bvi_LetCall rets ticks worker (GENLIST bvi_Var arity)
+           bvi_LetCall rets ticks worker (list_of_seq bvi_Var arity)
              (bvi_Op (closLang_BlockOp (closLang_Cons tag))
-                (REVERSE (GENLIST bvi_Var rets))))`,
+                (REVERSE (list_of_seq bvi_Var rets))))`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -118,30 +119,29 @@ let compile_inc_ALL_DISTINCT = prove
 
 let remove_ticks_get_code_labels = prove
  (`(!e. get_code_labels (remove_ticks_exp e) = get_code_labels e) /\
-   (!es. BIGUNION (set_of_list (MAP get_code_labels
-     (remove_ticks_exps es))) =
-         BIGUNION (set_of_list (MAP get_code_labels es)))`,
+   (!es. UNIONS (set_of_list (MAP get_code_labels (remove_ticks_exps
+     es))) =
+         UNIONS (set_of_list (MAP get_code_labels es)))`,
   CHEAT_TAC);;
 
 let remove_ticks_prog_code_labels = prove
  (`!prog.
-     BIGUNION (set_of_list (MAP (get_code_labels o SND o SND)
+     UNIONS (set_of_list (MAP (get_code_labels o SND o SND)
        (MAP (\(name,arity,body).
          (name,arity,remove_ticks_exp body)) prog))) =
-     BIGUNION (set_of_list (MAP (get_code_labels o SND o SND)
-       prog))`,
+     UNIONS (set_of_list (MAP (get_code_labels o SND o SND) prog))`,
   CHEAT_TAC);;
 
 let compile_inc_code_labels = prove
  (`compile_inc cs prog = (cs1,prog1) ==>
-   BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) prog1)) =
-   BIGUNION (set_of_list (MAP (get_code_labels o SND o SND)
+   UNIONS (set_of_list (MAP (get_code_labels o SND o SND) prog1)) =
+   UNIONS (set_of_list (MAP (get_code_labels o SND o SND)
      (SND (inline_all cs prog))))`,
   CHEAT_TAC);;
 
 let cache_code_labels_def = new_definition
   `cache_code_labels (cs:(num#bvi_exp) spt) =
-     BIGUNION (set_of_list (MAP (bviProps_get_code_labels o SND)
+     UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND)
        (sptree_toList cs)))`;;
 
 let lookup_cache_code_labels = prove
@@ -165,27 +165,26 @@ let inline_exp_code_labels = prove
       get_code_labels (inline_exp cs e) SUBSET
         get_code_labels e UNION cache_code_labels cs) /\
    (!cs es.
-      BIGUNION (set_of_list (MAP get_code_labels (inline_exps cs
-        es))) SUBSET
-        BIGUNION (set_of_list (MAP get_code_labels es)) UNION
+      UNIONS (set_of_list (MAP get_code_labels (inline_exps cs es)))
+        SUBSET
+        UNIONS (set_of_list (MAP get_code_labels es)) UNION
           cache_code_labels cs)`,
   CHEAT_TAC);;
 
 let inline_all_code_labels = prove
  (`!cs prog.
-     BIGUNION (set_of_list (MAP (get_code_labels o SND o SND)
+     UNIONS (set_of_list (MAP (get_code_labels o SND o SND)
        (SND (inline_all cs prog)))) SUBSET
-       BIGUNION (set_of_list (MAP (get_code_labels o SND o SND)
-         prog)) UNION
+       UNIONS (set_of_list (MAP (get_code_labels o SND o SND) prog))
+         UNION
        cache_code_labels cs`,
   CHEAT_TAC);;
 
 let compile_prog_code_labels = prove
  (`compile_prog prog = (cs1,prog1) ==>
-   BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) prog1))
+   UNIONS (set_of_list (MAP (get_code_labels o SND o SND) prog1))
      SUBSET
-     BIGUNION (set_of_list (MAP (get_code_labels o SND o SND)
-       prog))`,
+     UNIONS (set_of_list (MAP (get_code_labels o SND o SND) prog))`,
   CHEAT_TAC);;
 
 let subspt_insert_union_fresh = prove
@@ -216,31 +215,31 @@ let exp_rel = cake_inductive
           x2 y2 /\ bvi_inlineProof_exp_rel c x3 y3 ==>
         bvi_inlineProof_exp_rel c (If x1 x2 x3) (If y1 y2 y3))) /\
    ((!c xs ys x y.
-        LIST_REL (bvi_inlineProof_exp_rel c) xs ys /\
+        ALL2 (bvi_inlineProof_exp_rel c) xs ys /\
           bvi_inlineProof_exp_rel c x y ==>
         bvi_inlineProof_exp_rel c (Let xs x) (Let ys y))) /\
    ((!c x y. bvi_inlineProof_exp_rel c x y ==>
      bvi_inlineProof_exp_rel c (Raise x) (Raise y))) /\
    ((!c x y. bvi_inlineProof_exp_rel c x y ==>
      bvi_inlineProof_exp_rel c (Tick x) (Tick y))) /\
-   ((!c op xs ys. LIST_REL (bvi_inlineProof_exp_rel c) xs ys ==>
+   ((!c op xs ys. ALL2 (bvi_inlineProof_exp_rel c) xs ys ==>
         bvi_inlineProof_exp_rel c (Op op xs) (Op op ys))) /\
    ((!c ticks dest xs ys handler handler1.
-        LIST_REL (bvi_inlineProof_exp_rel c) xs ys /\ OPTREL
+        ALL2 (bvi_inlineProof_exp_rel c) xs ys /\ OPTREL
           (bvi_inlineProof_exp_rel c) handler handler1 ==>
         bvi_inlineProof_exp_rel c (bvi_Call ticks dest xs handler)
           (bvi_Call ticks dest ys handler1))) /\
    ((!c rets ticks dest xs ys x y.
-        LIST_REL (bvi_inlineProof_exp_rel c) xs ys /\
+        ALL2 (bvi_inlineProof_exp_rel c) xs ys /\
           bvi_inlineProof_exp_rel c x y ==>
         bvi_inlineProof_exp_rel c (bvi_LetCall rets ticks dest xs x)
           (bvi_LetCall rets ticks dest ys y))) /\
-   ((!c xs ys. LIST_REL (bvi_inlineProof_exp_rel c) xs ys ==>
+   ((!c xs ys. ALL2 (bvi_inlineProof_exp_rel c) xs ys ==>
         bvi_inlineProof_exp_rel c (bvi_Return xs) (bvi_Return ys)))
           /\
    ((!c ticks n xs ys arity body.
-        LIST_REL (bvi_inlineProof_exp_rel c) xs ys /\ sptree_lookup n
-          c = SOME (arity,body) /\
+        ALL2 (bvi_inlineProof_exp_rel c) xs ys /\ sptree_lookup n c =
+          SOME (arity,body) /\
         LENGTH ys = arity ==>
         bvi_inlineProof_exp_rel c (bvi_Call ticks (SOME n) xs NONE)
           (Let ys (bvi_mk_tick (SUC ticks) body))))`;;
@@ -252,8 +251,8 @@ let exp_rel_mono = prove
   CHEAT_TAC);;
 
 let exp_rel_mono_list = prove
- (`LIST_REL (bvi_inlineProof_exp_rel c) xs ys /\ subspt c c1 ==>
-  LIST_REL (bvi_inlineProof_exp_rel c1) xs ys`,
+ (`ALL2 (bvi_inlineProof_exp_rel c) xs ys /\ subspt c c1 ==> ALL2
+  (bvi_inlineProof_exp_rel c1) xs ys`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -261,9 +260,9 @@ let exp_rel_evaluate_mono = prove
  (`(evaluate (es,env,t) = (res,t1) /\ bvi_inlineProof_exp_rel
   (state_code t) x y ==>
       bvi_inlineProof_exp_rel (state_code t1) x y) /\
-   (evaluate (es,env,t) = (res,t1) /\ LIST_REL
-     (bvi_inlineProof_exp_rel (state_code t)) xs ys ==>
-      LIST_REL (bvi_inlineProof_exp_rel (state_code t1)) xs ys)`,
+   (evaluate (es,env,t) = (res,t1) /\ ALL2 (bvi_inlineProof_exp_rel
+     (state_code t)) xs ys ==>
+      ALL2 (bvi_inlineProof_exp_rel (state_code t1)) xs ys)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -272,8 +271,8 @@ let exp_rel_refl = prove
   CHEAT_TAC);;
 
 let inline_call_none_exp_rel = prove
- (`subspt cs c /\ LIST_REL (bvi_inlineProof_exp_rel c) es (inline_exps
-  cs es) ==>
+ (`subspt cs c /\ ALL2 (bvi_inlineProof_exp_rel c) es (inline_exps cs
+  es) ==>
    bvi_inlineProof_exp_rel c (Call ticks dest es NONE)
      (inline_exp cs (Call ticks dest es NONE))`,
   CHEAT_TAC);;
@@ -281,8 +280,7 @@ let inline_call_none_exp_rel = prove
 let inline_exp_rel = prove
  (`subspt cs c ==>
      (!e. bvi_inlineProof_exp_rel c e (inline_exp cs e)) /\
-     (!es. LIST_REL (bvi_inlineProof_exp_rel c) es (inline_exps cs
-       es))`,
+     (!es. ALL2 (bvi_inlineProof_exp_rel c) es (inline_exps cs es))`,
   CHEAT_TAC);;
 
 let evaluate_bvi_mk_tick = prove
@@ -297,7 +295,7 @@ let evaluate_bvi_mk_tick = prove
 let bvi_inlineProof_evaluate_expand_env = prove
  (`!xs a s env. ~(FST (evaluate (xs,a,s)) = Rerr (Rabort Rtype_error))
   ==>
-     evaluate (xs,a ++ env,s) = evaluate (xs,a,s)`,
+     evaluate (xs,APPEND a env,s) = evaluate (xs,a,s)`,
   CHEAT_TAC);;
 
 let in_cc_def = new_definition
@@ -424,9 +422,9 @@ let do_app_state_swap_Rerr = prove
 
 (* [local] *)
 let inline_all_head_names = prove
- (`inline_all cs ((name,arity,body) :: rest) = (final_cache,out) ==>
+ (`inline_all cs (CONS (name,arity,body) rest) = (final_cache,out) ==>
    (?tail.
-     out = (name,arity,inline_exp cs body) :: tail /\
+     out = CONS (name,arity,inline_exp cs body) tail /\
      MAP FST tail = MAP FST rest)`,
   CHEAT_TAC);;
 
@@ -492,32 +490,32 @@ let exp_rel_inv = prove
         /\ bvi_inlineProof_exp_rel c x2 y2 /\
         bvi_inlineProof_exp_rel c x3 y3)) /\
    (bvi_inlineProof_exp_rel c (Let xs x) y <=>
-      (?ys y1. y = Let ys y1 /\ LIST_REL (bvi_inlineProof_exp_rel c)
-        xs ys /\ bvi_inlineProof_exp_rel c x y1)) /\
+      (?ys y1. y = Let ys y1 /\ ALL2 (bvi_inlineProof_exp_rel c) xs
+        ys /\ bvi_inlineProof_exp_rel c x y1)) /\
    (bvi_inlineProof_exp_rel c (Raise x) y <=> (?y1. y = Raise y1 /\
      bvi_inlineProof_exp_rel c x y1)) /\
    (bvi_inlineProof_exp_rel c (Tick x) y <=> (?y1. y = Tick y1 /\
      bvi_inlineProof_exp_rel c x y1)) /\
    (bvi_inlineProof_exp_rel c (Op op xs) y <=>
-      (?ys. y = Op op ys /\ LIST_REL (bvi_inlineProof_exp_rel c) xs
-        ys)) /\
+      (?ys. y = Op op ys /\ ALL2 (bvi_inlineProof_exp_rel c) xs ys))
+        /\
    (bvi_inlineProof_exp_rel c (bvi_Return xs) y <=>
-      (?ys. y = bvi_Return ys /\ LIST_REL (bvi_inlineProof_exp_rel c)
-        xs ys)) /\
+      (?ys. y = bvi_Return ys /\ ALL2 (bvi_inlineProof_exp_rel c) xs
+        ys)) /\
    (bvi_inlineProof_exp_rel c (bvi_LetCall rets ticks target xs x) y
      <=>
       (?ys y1. y = bvi_LetCall rets ticks target ys y1 /\
-        LIST_REL (bvi_inlineProof_exp_rel c) xs ys /\
+        ALL2 (bvi_inlineProof_exp_rel c) xs ys /\
           bvi_inlineProof_exp_rel c x y1)) /\
    (bvi_inlineProof_exp_rel c (bvi_Call ticks dest xs handler) y <=>
       (?ys handler1. y = bvi_Call ticks dest ys handler1 /\
-         LIST_REL (bvi_inlineProof_exp_rel c) xs ys /\ OPTREL
+         ALL2 (bvi_inlineProof_exp_rel c) xs ys /\ OPTREL
            (bvi_inlineProof_exp_rel c) handler handler1) \/
       (?n ys arity body.
          dest = SOME n /\ handler = NONE /\
          y = Let ys (bvi_mk_tick (SUC ticks) body) /\
-         LIST_REL (bvi_inlineProof_exp_rel c) xs ys /\ sptree_lookup
-           n c = SOME (arity,body) /\
+         ALL2 (bvi_inlineProof_exp_rel c) xs ys /\ sptree_lookup n c
+           = SOME (arity,body) /\
          LENGTH ys = arity))`,
   CHEAT_TAC);;
 
@@ -538,7 +536,7 @@ let evaluate_inlined_call = prove
 let evaluate_inline = prove
  (cake_as_vars (fun () ->
     `!es env s res s1 t es1.
-       bvi_inlineProof_in_state_rel s t /\ LIST_REL
+       bvi_inlineProof_in_state_rel s t /\ ALL2
          (bvi_inlineProof_exp_rel (state_code t)) es es1 /\
        evaluate (es,env,s) = (res,s1) /\ ~(res = Rerr (Rabort
          Rtype_error)) ==>
@@ -641,8 +639,8 @@ let evaluate_add_extra_clock = prove
 (* [local,simp] *)
 let clean_prog_CONS = prove
  (`clean_prog [] = [] /\
-   clean_prog (p :: ps) = (I ## I ## remove_ticks_exp) p ::
-     clean_prog ps`,
+   clean_prog (CONS p ps) = CONS ((I ## I ## remove_ticks_exp) p)
+     (clean_prog ps)`,
   CHEAT_TAC);;
 
 (* [local,simp] *)

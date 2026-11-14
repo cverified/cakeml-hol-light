@@ -175,9 +175,9 @@ let strip_const_def,strip_const_ind = define_wf
   [`strip_const x1 =
         match x1 with
           [] -> SOME []
-        | (wordLang_Const w :: cs) ->
-        (match strip_const cs with SOME ws -> SOME (w :: ws) | _7 ->
-          NONE)
+        | CONS (wordLang_Const w) cs ->
+        (match strip_const cs with SOME ws -> SOME (CONS w ws) | _7
+          -> NONE)
         | _8 -> NONE`];;
 
 let _ = size_thms "wordLang_exp";;
@@ -208,7 +208,7 @@ let const_fp_exp_def,const_fp_exp_ind = define_wf
 
 let const_fp_move_cs_def,const_fp_move_cs_ind = define_rec
   [`const_fp_move_cs [] _14 cs = cs`;
-   `const_fp_move_cs (m :: ms) ocs ncs =
+   `const_fp_move_cs (CONS m ms) ocs ncs =
         (let v = FST m in
         let nncs =
           (match sptree_lookup (SND m) ocs with SOME c ->
@@ -260,7 +260,7 @@ let all_names_def = new_definition
 (* We only drop constants that can potentially be in registers *)
 let drop_consts_def,drop_consts_ind = define_rec
   [`drop_consts cs [] = wordLang_Skip`;
-   `drop_consts cs (n :: ns) =
+   `drop_consts cs (CONS n ns) =
       (match sptree_lookup n cs with NONE -> drop_consts cs ns
         | SOME w -> SmartSeq (drop_consts cs ns) (wordLang_Assign n
         (wordLang_Const w)))`];;

@@ -28,10 +28,10 @@ let renumber_code_locs_def,renumber_code_locs_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
   [`renumber_code_locs_list n [] = (n,[])`;
-   `renumber_code_locs_list n (x :: xs) =
+   `renumber_code_locs_list n (CONS x xs) =
          (let (n,x) = renumber_code_locs n x in
          let (n,xs) = renumber_code_locs_list n xs in
-         (n,x :: xs))`;
+         (n,CONS x xs))`;
    `renumber_code_locs n (Var t v:closLang_exp) = (n,((Var t
   v:closLang_exp)))`;
    `renumber_code_locs n (If t x1 x2 x3:closLang_exp) =
@@ -87,8 +87,8 @@ let clos_number_compile_inc_def = new_definition
        (
         // embed the name of the first free slot (n) in the code
         // no code will be generated for this pure Const expression
-        m,closLang_Op backend_common_None (closLang_IntOp
-          (closLang_Const (&n))) [] :: ys))`;;
+        m,CONS (closLang_Op backend_common_None (closLang_IntOp
+          (closLang_Const (&n))) []) ys))`;;
 hol4_overload "compile_inc" "clos_number_compile_inc";;
 
 let ignore_table_def = new_definition

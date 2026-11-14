@@ -96,9 +96,9 @@ let semantics_semantics_def = new_definition
   `semantics_semantics state prelude input =
      (match semantics_parse (lexer_fun input) with NONE ->
        CannotParse | SOME prog ->
-       (if can_type_prog state (prelude ++ prog) then Execute
+       (if can_type_prog state (APPEND prelude prog) then Execute
          (semantics_prog (semantics_state_sem_st state)
-         (semantics_state_sem_env state) (prelude ++ prog)) else
+         (semantics_state_sem_env state) (APPEND prelude prog)) else
          IllTyped))`;;
 hol4_overload "semantics" "semantics_semantics";;
 

@@ -201,16 +201,17 @@ let asserts_IMP_FOLDR_COUNT_LIST = prove
 
 let asserts_IMP_FOLDR_COUNT_LIST_LESS = prove
  (`!k n next' ms P Q. asserts n next' ms P Q /\ k < n ==>
-      P (ITLIST next' (REVERSE (GENLIST ((-) n) (SUC k))) ms)`,
+      P (ITLIST next' (REVERSE (list_of_seq ((-) n) (SUC k))) ms)`,
   CHEAT_TAC);;
 
 let asserts_WEAKEN = prove
  (`!n next' s P Q.
       (!k. k <= n ==>
         (next' k = next' k) /\
-        (P (ITLIST next' (REVERSE (GENLIST ((-) n) (SUC k))) s) ==>
-         P' (ITLIST next' (REVERSE (GENLIST ((-) n) (SUC k))) s)))
-           ==>
+        (P (ITLIST next' (REVERSE (list_of_seq ((-) n) (SUC k))) s)
+          ==>
+         P' (ITLIST next' (REVERSE (list_of_seq ((-) n) (SUC k)))
+           s))) ==>
       asserts n next' s P Q ==>
       asserts n next' s P' Q`,
   CHEAT_TAC);;

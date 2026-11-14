@@ -113,8 +113,8 @@ let word_test_lemma2 = prove
    variables of its own are read as variables *)
 let memory_rel_Thunk_bits = prove
  (cake_as_vars (fun () ->
-    `memory_rel c be ts refs sp st m dm ((RefPtr bl p,wordLang_Word
-  (w:'a word)) :: vars) /\
+    `memory_rel c be ts refs sp st m dm (CONS (RefPtr bl p,wordLang_Word
+  (w:'a word)) vars) /\
      lookup p refs = SOME (Thunk ev z) /\
      good_dimindex (:'a) /\
      get_real_addr c st w = SOME a /\
@@ -177,7 +177,7 @@ let state_rel_pop_env_set_vars_IMP = prove
      /\
    pop_env s1 = SOME s2 ==>
    (?t2 l8 l9 ll.
-     pop_env t1 = SOME t2 /\ locs = (l8,l9) :: ll /\
+     pop_env t1 = SOME t2 /\ locs = CONS (l8,l9) ll /\
      state_rel c l8 l9 (set_vars ns as s2) (set_vars (MAP
        adjust_var ns) ws t2) NONE ll)`,
   CHEAT_TAC);;
@@ -214,7 +214,8 @@ let data_compile_correct = prove
                (res1 = SOME (wordSem_Exception (mk_loc (jump_exc t))
                  w)) /\
                (~(jump_exc t = NONE) ==>
-                LASTN (LENGTH (stack s1) + 1) locs = (l5,l6) :: ll /\
+                LASTN (LENGTH (stack s1) + 1) locs = CONS (l5,l6) ll
+                  /\
                 (!i. state_rel c l5 l6 (set_var i v s1)
                        (set_var (adjust_var i) w t1) NONE ll))) |
                          SOME (Rerr (Rabort (Rffi_error f))) -> (res1
@@ -419,7 +420,7 @@ let data_to_word_lab_pres_lem = prove
  (`!c n l p. ~(l = 0) ==>
      (let (cp,l') = comp c n l p in
      l <= l' /\
-     EVERY (\(l1,l2). l1 = n /\ l <= l2 /\ l2 < l')
+     ALL (\(l1,l2). l1 = n /\ l <= l2 /\ l2 < l')
        (wordConvs_extract_labels cp) /\
      ALL_DISTINCT (wordConvs_extract_labels cp))`,
   CHEAT_TAC);;
@@ -430,8 +431,8 @@ let labels_rel_emp = prove
   CHEAT_TAC);;
 
 let stub_labels = prove
- (`EVERY (\(n,m,p).
-   EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
+ (`ALL (\(n,m,p).
+   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
      (wordConvs_extract_labels p) /\
                     ALL_DISTINCT (wordConvs_extract_labels p))
    (stubs (:'a) data_conf)`,
@@ -452,7 +453,7 @@ let stubs_with_has_fp_tern = prove
 (* no ShareInst in the compiled program *)
 
 let list_Seq_no_share_inst = prove
- (`!xs. no_share_inst (list_Seq xs) = EVERY no_share_inst xs`,
+ (`!xs. no_share_inst (list_Seq xs) = ALL no_share_inst xs`,
   CHEAT_TAC);;
 
 let StoreEach_no_share_inst = prove
@@ -469,7 +470,7 @@ let StoreAnyConsts_no_share_inst = prove
   CHEAT_TAC);;
 
 let stubs_no_share_inst = prove
- (`EVERY (\x. no_share_inst (SND (SND x))) (data_to_word_stubs (:'a)
+ (`ALL (\x. no_share_inst (SND (SND x))) (data_to_word_stubs (:'a)
   data_conf)`,
   CHEAT_TAC);;
 
@@ -487,17 +488,18 @@ let data_to_wordProof_MAP_FST_ZIP = prove
 let compile_no_share_inst = prove
  (`data_to_word_compile data_conf word_conf asm_conf prog = (xx,prog')
   ==>
-   EVERY (\(n,m,pp). no_share_inst pp) prog'`,
+   ALL (\(n,m,pp). no_share_inst pp) prog'`,
   CHEAT_TAC);;
 
 (***)
 
 let data_to_word_compile_lab_pres = prove
  (`let (c,p) = compile data_conf word_conf asm_conf prog in
-   MAP FST p = MAP FST (stubs (:'a) data_conf) ++ MAP FST prog /\
-   EVERY (\(n,m,(p:'a wordLang_prog)).
+   MAP FST p = APPEND (MAP FST (stubs (:'a) data_conf)) (MAP FST
+     prog) /\
+   ALL (\(n,m,(p:'a wordLang_prog)).
      let labs = wordConvs_extract_labels p in
-     EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\
+     ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\
      ALL_DISTINCT labs) p`,
   CHEAT_TAC);;
 
@@ -573,7 +575,7 @@ let bounds_lem = prove
 let data_to_word_compile_conventions = prove
  (`good_dimindex (:'a) ==>
    (let (c,p) = compile data_conf wc ac prog in
-   EVERY (\(n,m,prog).
+   ALL (\(n,m,prog).
    flat_exp_conventions (prog:'a wordLang_prog) /\
    post_alloc_conventions (asm_config_reg_count ac - (5 + LENGTH
      (asm_config_avoid_regs ac))) prog /\
@@ -595,10 +597,11 @@ let data_to_word_compile_conventions = prove
   CHEAT_TAC);;
 
 let data_to_word_names = prove
- (`word_to_word_compile c1 c2 (stubs (:'a) (backend_config_data_conf c)
-  ++ MAP (compile_part c3) prog) = (col,p) ==>
-    MAP FST p = (MAP FST (stubs (:'a) (backend_config_data_conf
-      c))) ++ MAP FST prog`,
+ (`word_to_word_compile c1 c2 (APPEND (stubs (:'a)
+  (backend_config_data_conf c)) (MAP (compile_part c3) prog)) = (col,p)
+  ==>
+    MAP FST p = APPEND (MAP FST (stubs (:'a)
+      (backend_config_data_conf c))) (MAP FST prog)`,
   CHEAT_TAC);;
 
 let ALL_DISTINCT_MAP_FST_stubs = prove
@@ -642,7 +645,7 @@ let part_to_words_isWord = prove
  (`!h c m i w ws.
      part_to_words c m h i = SOME (w,ws) /\
      (!n v. sptree_lookup n m = SOME v ==> isWord (SND v)) ==>
-     EVERY isWord (MAP SND ws) /\ isWord (SND w)`,
+     ALL isWord (MAP SND ws) /\ isWord (SND w)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -650,13 +653,13 @@ let parts_to_words_isWord = prove
  (`!ps c w ws m n i.
      parts_to_words c m n ps i = SOME (w,ws) /\
      (!n v. sptree_lookup n m = SOME v ==> isWord (SND v)) ==>
-     EVERY isWord (MAP SND ws) /\ isWord (SND w)`,
+     ALL isWord (MAP SND ws) /\ isWord (SND w)`,
   CHEAT_TAC);;
 
 let const_parts_to_words_isWord = prove
  (`!c ps w ws.
      const_parts_to_words c ps = SOME (w,ws) ==>
-     EVERY isWord (MAP SND ws) /\ isWord (SND w)`,
+     ALL isWord (MAP SND ws) /\ isWord (SND w)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -669,8 +672,8 @@ let word_get_code_labels_StoreAnyConsts = prove
 let getWords_good_loc = prove
  (`!xs ys ws vs1 s.
      getWords xs ys = (ws,vs1) /\
-     EVERY (good_loc s o SND) xs ==>
-     EVERY (good_loc s o SND) vs1`,
+     ALL (good_loc s o SND) xs ==>
+     ALL (good_loc s o SND) vs1`,
   CHEAT_TAC);;
 
 let const_parts_to_words_labels = prove
@@ -732,8 +735,8 @@ let data_to_word_comp_good_handlers = prove
 
 (* [local] *)
 let stubs_labels = prove
- (`BIGUNION (set_of_list (MAP (\(n,m,pp). wordConvs_get_code_labels
-  pp) (stubs (:'a) dc))) SUBSET set_of_list (MAP FST (stubs (:'a) dc))`,
+ (`UNIONS (set_of_list (MAP (\(n,m,pp). wordConvs_get_code_labels pp)
+  (stubs (:'a) dc))) SUBSET set_of_list (MAP FST (stubs (:'a) dc))`,
   CHEAT_TAC);;
 
 let data_to_word_good_code_labels = prove
@@ -767,11 +770,11 @@ let data_to_word_good_code_labels_incr = prove
 let data_to_word_good_handlers = prove
  (`(data_to_word_compile data_conf word_conf asm_conf prog) = (xx,prog')
   ==>
-   EVERY (\(n,m,pp). good_handlers n pp) prog'`,
+   ALL (\(n,m,pp). good_handlers n pp) prog'`,
   CHEAT_TAC);;
 
 let data_to_word_good_handlers_incr = prove
- (`EVERY (\(n,m,pp). good_handlers n pp) (MAP (compile_part dc) progs)`,
+ (`ALL (\(n,m,pp). good_handlers n pp) (MAP (compile_part dc) progs)`,
   CHEAT_TAC);;
 
 (* and the names that this file reads as variables are constants again *)

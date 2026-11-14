@@ -143,10 +143,10 @@ let evaluate_SING_IMP = prove
 
 (* evaluate_CONS *)
 let bviProps_evaluate_CONS = prove
- (`evaluate (x :: xs,env,s) =
+ (`evaluate (CONS x xs,env,s) =
       (match evaluate ([x],env,s) with (Rval v,s2) ->
-         (match evaluate (xs,env,s2) with (Rval vs,s1) -> (Rval (HD
-           v :: vs),s1) | t -> t) | t -> t)`,
+         (match evaluate (xs,env,s2) with (Rval vs,s1) -> (Rval
+           (CONS (HD v) vs),s1) | t -> t) | t -> t)`,
   CHEAT_TAC);;
 
 (* evaluate_SNOC *)
@@ -154,19 +154,19 @@ let bviProps_evaluate_SNOC = prove
  (`!xs env s x.
       evaluate (SNOC x xs,env,s) =
       (match evaluate (xs,env,s) with (Rval vs,s2) ->
-         (match evaluate ([x],env,s2) with (Rval v,s1) -> (Rval (vs
-           ++ v),s1) | t -> t) | t -> t)`,
+         (match evaluate ([x],env,s2) with (Rval v,s1) -> (Rval
+           (APPEND vs v),s1) | t -> t) | t -> t)`,
   CHEAT_TAC);;
 
 (* evaluate_APPEND *)
 let bviProps_evaluate_APPEND = prove
  (`!xs env s ys.
-      evaluate (xs ++ ys,env,s) =
+      evaluate (APPEND xs ys,env,s) =
       (match evaluate (xs,env,s) with
         (Rval vs,s2) ->
           (match evaluate (ys,env,s2) with
-             (Rval ws,s1) -> (Rval (vs ++ ws),s1) | res -> res) |
-               res -> res)`,
+             (Rval ws,s1) -> (Rval (APPEND vs ws),s1) | res -> res)
+               | res -> res)`,
   CHEAT_TAC);;
 
 let bviProps_inc_clock_def = new_definition
@@ -296,15 +296,17 @@ let do_app_oracle = prove
 
 (* [local] *)
 let GENLIST_add_split = prove
- (`!f a b. GENLIST f a ++ GENLIST (\i. f (a + i)) b = GENLIST f (a +
-  b)`,
+ (`!f a b. APPEND (list_of_seq f a) (list_of_seq (\i. f (a + i)) b) =
+  list_of_seq f (a + b)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let FOLDL_union_GENLIST_split = prove
  (`FOLDL sptree_union (FOLDL sptree_union c (MAP (fromAList o SND)
-  (GENLIST f a))) (MAP (fromAList o SND) (GENLIST (\i. f (i + a)) b)) =
-   FOLDL sptree_union c (MAP (fromAList o SND) (GENLIST f (a + b)))`,
+  (list_of_seq f a))) (MAP (fromAList o SND) (list_of_seq (\i. f (i +
+  a)) b)) =
+   FOLDL sptree_union c (MAP (fromAList o SND) (list_of_seq f (a +
+     b)))`,
   CHEAT_TAC);;
 
 (* evaluate_code *)
@@ -314,7 +316,7 @@ let bviProps_evaluate_code = prove
      (?n. compile_oracle
        s2 = misc_shift_seq n (compile_oracle s1) /\ state_code
        s2 = FOLDL sptree_union (state_code s1) (MAP (fromAList o SND)
-         (GENLIST (compile_oracle s1) n)))`,
+         (list_of_seq (compile_oracle s1) n)))`,
   CHEAT_TAC);;
 
 let evaluate_code_mono = prove
@@ -454,8 +456,8 @@ let bviProps_evaluate_add_to_clock_io_events_mono = prove
 let bviProps_take_drop_lem = prove
  (`!skip env.
      skip < LENGTH env /\
-     skip + SUC n <= LENGTH env /\ ~(DROP skip env = []) ==>
-     EL skip env :: TAKE n (DROP (1 + skip) env) = TAKE (n + 1)
+     skip + SUC n <= LENGTH env /\ ~(DROP skip env = []) ==> CONS
+       (EL skip env) (TAKE n (DROP (1 + skip) env)) = TAKE (n + 1)
        (DROP skip env)`,
   CHEAT_TAC);;
 
@@ -463,7 +465,7 @@ let bviProps_take_drop_lem = prove
 let bviProps_evaluate_genlist_vars = prove
  (`!skip env n (st:('c,'ffi)bviSem_state).
     n + skip <= LENGTH env ==>
-    evaluate (GENLIST (\arg. Var (arg + skip)) n,env,st) =
+    evaluate (list_of_seq (\arg. Var (arg + skip)) n,env,st) =
     (Rval (TAKE n (DROP skip env)),st)`,
   CHEAT_TAC);;
 
@@ -474,9 +476,8 @@ let bviProps_get_code_labels_def,bviProps_get_code_labels_ind =
    `bviProps_get_code_labels (If e1 e2 e3:bvi_exp) =
   bviProps_get_code_labels e1 UNION bviProps_get_code_labels e2 UNION
   bviProps_get_code_labels e3`;
-   `bviProps_get_code_labels (Let es e:bvi_exp) = BIGUNION
-  (set_of_list (MAP bviProps_get_code_labels es)) UNION
-  bviProps_get_code_labels e`;
+   `bviProps_get_code_labels (Let es e:bvi_exp) = UNIONS (set_of_list
+  (MAP bviProps_get_code_labels es)) UNION bviProps_get_code_labels e`;
    `bviProps_get_code_labels (Raise e:bvi_exp) =
   bviProps_get_code_labels e`;
    `bviProps_get_code_labels (Tick e:bvi_exp) =
@@ -486,14 +487,14 @@ let bviProps_get_code_labels_def,bviProps_get_code_labels_ind =
         (match d with NONE -> {} | SOME n -> {n}) UNION
         (match h with NONE -> {} | SOME e ->
           bviProps_get_code_labels e) UNION
-        BIGUNION (set_of_list (MAP bviProps_get_code_labels es))`;
+        UNIONS (set_of_list (MAP bviProps_get_code_labels es))`;
    `bviProps_get_code_labels (Op op es:bvi_exp) =
-  assign_get_code_label op UNION BIGUNION (set_of_list (MAP
+  assign_get_code_label op UNION UNIONS (set_of_list (MAP
   bviProps_get_code_labels es))`;
-   `bviProps_get_code_labels (bvi_Return es:bvi_exp) = BIGUNION
+   `bviProps_get_code_labels (bvi_Return es:bvi_exp) = UNIONS
   (set_of_list (MAP bviProps_get_code_labels es))`;
    `bviProps_get_code_labels (bvi_LetCall _5 _6 d es y) =
-        {d} UNION bviProps_get_code_labels y UNION BIGUNION
+        {d} UNION bviProps_get_code_labels y UNION UNIONS
           (set_of_list (MAP bviProps_get_code_labels es))`];;
 hol4_overload "get_code_labels" "bviProps_get_code_labels";;
 
@@ -502,7 +503,7 @@ hol4_overload "get_code_labels" "bviProps_get_code_labels";;
 
 let bviProps_good_code_labels_def = new_definition
   `bviProps_good_code_labels p elabs <=>
-     BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) p))
+     UNIONS (set_of_list (MAP (get_code_labels o SND o SND) p))
        SUBSET set_of_list (MAP FST p) UNION elabs`;;
 hol4_overload "good_code_labels" "bviProps_good_code_labels";;
 

@@ -54,7 +54,7 @@ let peg_FT = prove
   CHEAT_TAC);;
 
 let peg_eval_choicel_CONS = prove
- (`!x. peg_eval G (i0,cmlPEG_choicel (h :: t)) x <=>
+ (`!x. peg_eval G (i0,cmlPEG_choicel (CONS h t)) x <=>
          (?i r eopt.
             peg_eval G (i0,h) (peg_Success i r eopt) /\ x =
               peg_Success i r eopt) \/
@@ -83,7 +83,7 @@ let peg_eval_try = prove
   CHEAT_TAC);;
 
 let peg_eval_seql_CONS = prove
- (`!x. peg_eval G (i0,seql (h :: t) f) x <=>
+ (`!x. peg_eval G (i0,seql (CONS h t) f) x <=>
          (?fl fe. peg_eval G (i0,h) (peg_Failure fl fe) /\ x =
            peg_Failure fl fe) \/
          (?rh i1 fl fe eopt.
@@ -93,7 +93,7 @@ let peg_eval_seql_CONS = prove
          (?rh i1 i rt eopt1 eopt2.
             peg_eval G (i0,h) (peg_Success i1 rh eopt1) /\
             peg_eval G (i1,seql t I) (peg_Success i rt eopt2) /\
-            x = peg_Success i (f (rh ++ rt)) eopt2)`,
+            x = peg_Success i (f (APPEND rh rt)) eopt2)`,
   CHEAT_TAC);;
 
 (* HOL4 pegSoundScript.sml:100-107: a theorem that HOL4 states as the
@@ -109,7 +109,7 @@ let not_peg0_LENGTH_decreases = prove
 (* [simp] *)
 let peg_eval_tokSymP = prove
  (`peg_eval G (i0,tokSymP P) (peg_Success i r eo) <=>
-   (?h s. FST h = tokens_SymbolT s /\ P s /\ i0 = h :: i /\ r =
+   (?h s. FST h = tokens_SymbolT s /\ P s /\ i0 = CONS h i /\ r =
      mktokLf h /\ eo = NONE)`,
   CHEAT_TAC);;
 
@@ -121,46 +121,49 @@ let FADISJ_EQ_IMP' = prove
 
 let peg_eval_TypeDec_wrongtok = prove
  (`~(FST tk = tokens_DatatypeT) ==>
-      ~(peg_eval cmlPEG (tk :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
-        nTypeDec) f) (peg_Success i' r eo))`,
+      ~(peg_eval cmlPEG (CONS tk i,peg_nt
+        ((INL:MMLnonT->MMLnonT+num) nTypeDec) f) (peg_Success i' r
+        eo))`,
   CHEAT_TAC);;
 
 let peg_eval_TypeAbbrevDec_wrongtok = prove
  (`~(FST tk = tokens_TypeT) ==>
-      ~(peg_eval cmlPEG (tk :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
-        nTypeAbbrevDec) f) (peg_Success i' r eo))`,
+      ~(peg_eval cmlPEG (CONS tk i,peg_nt
+        ((INL:MMLnonT->MMLnonT+num) nTypeAbbrevDec) f) (peg_Success i'
+        r eo))`,
   CHEAT_TAC);;
 
 let peg_eval_Structure_wrongtok = prove
  (`~(FST tk = tokens_StructureT) ==>
-     ~(peg_eval cmlPEG (tk :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
-       nStructure) f) (peg_Success i' r e0))`,
+     ~(peg_eval cmlPEG (CONS tk i,peg_nt
+       ((INL:MMLnonT->MMLnonT+num) nStructure) f) (peg_Success i' r
+       e0))`,
   CHEAT_TAC);;
 
 
 let peg_eval_LetDec_wrongtok = prove
  (`FST tk = tokens_SemicolonT ==>
-   ~(peg_eval cmlPEG (tk :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
+   ~(peg_eval cmlPEG (CONS tk i,peg_nt ((INL:MMLnonT->MMLnonT+num)
      nLetDec) f) (peg_Success i' r eo))`,
   CHEAT_TAC);;
 
 let peg_eval_nUQConstructor_wrongtok = prove
  (`(!s. ~(FST t = tokens_AlphaT s)) ==>
-    ~(peg_eval cmlPEG (t :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
+    ~(peg_eval cmlPEG (CONS t i,peg_nt ((INL:MMLnonT->MMLnonT+num)
       nUQConstructorName) f) (peg_Success i' r eo))`,
   CHEAT_TAC);;
 
 let peg_eval_nConstructor_wrongtok = prove
  (`(!s. ~(FST t = tokens_AlphaT s)) /\ (!s1 s2. ~(FST t = tokens_LongidT
   s1 s2)) ==>
-   ~(peg_eval cmlPEG (t :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
+   ~(peg_eval cmlPEG (CONS t i,peg_nt ((INL:MMLnonT->MMLnonT+num)
      nConstructorName) f) (peg_Success i' r eo))`,
   CHEAT_TAC);;
 
 let peg_eval_nV_wrongtok = prove
  (`(!s. ~(FST t = tokens_AlphaT s)) /\ (!s. ~(FST t = tokens_SymbolT s))
   ==>
-    ~(peg_eval cmlPEG (t :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
+    ~(peg_eval cmlPEG (CONS t i,peg_nt ((INL:MMLnonT->MMLnonT+num)
       nV) f) (peg_Success i' r eo))`,
   CHEAT_TAC);;
 
@@ -168,7 +171,7 @@ let peg_eval_nFQV_wrongtok = prove
  (`(!s. ~(FST t = tokens_AlphaT s)) /\ (!s. ~(FST t = tokens_SymbolT s))
   /\
    (!s1 s2. ~(FST t = tokens_LongidT s1 s2)) ==>
-   ~(peg_eval cmlPEG (t :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
+   ~(peg_eval cmlPEG (CONS t i,peg_nt ((INL:MMLnonT->MMLnonT+num)
      nFQV) f) (peg_Success i' r eo))`,
   CHEAT_TAC);;
 
@@ -260,10 +263,10 @@ let peg_linfix_correct_lemma = prove
               valid_lptree cmlG pt /\
               MAP
                 ((grammar_TOK:tokens_token->(tokens_token
-                ,MMLnonT)grammar_symbol) ## I) i0' = real_fringe pt ++
-                MAP
+                ,MMLnonT)grammar_symbol) ## I) i0' = APPEND (real_fringe
+                pt) (MAP
                 ((grammar_TOK:tokens_token->(tokens_token
-                ,MMLnonT)grammar_symbol) ## I) i)) /\
+                ,MMLnonT)grammar_symbol) ## I) i))) /\
       (!i pts s eo.
          s IN {sym,sepsym} ==>
          peg_eval cmlPEG (i0,s) (peg_Success i pts eo) ==>
@@ -271,10 +274,10 @@ let peg_linfix_correct_lemma = prove
               valid_lptree cmlG pt /\
               MAP
                 ((grammar_TOK:tokens_token->(tokens_token
-                ,MMLnonT)grammar_symbol) ## I) i0 = real_fringe pt ++
-                MAP
+                ,MMLnonT)grammar_symbol) ## I) i0 = APPEND (real_fringe
+                pt) (MAP
                 ((grammar_TOK:tokens_token->(tokens_token
-                ,MMLnonT)grammar_symbol) ## I) i)) /\
+                ,MMLnonT)grammar_symbol) ## I) i))) /\
       ~(peg0 cmlPEG sym) /\
       UpperN IN FDOM (rules cmlG) /\
       {[gsym] | gsym IN pegsym_to_sym sym} SUBSET FAPPLY (rules cmlG)
@@ -287,9 +290,10 @@ let peg_linfix_correct_lemma = prove
         valid_lptree cmlG pt /\
            MAP
              ((grammar_TOK:tokens_token->(tokens_token
-             ,MMLnonT)grammar_symbol) ## I) i0 = real_fringe pt ++ MAP
+             ,MMLnonT)grammar_symbol) ## I) i0 = APPEND (real_fringe
+             pt) (MAP
              ((grammar_TOK:tokens_token->(tokens_token
-             ,MMLnonT)grammar_symbol) ## I) i)`,
+             ,MMLnonT)grammar_symbol) ## I) i))`,
   CHEAT_TAC);;
 
 let length_no_greater = prove
@@ -306,7 +310,7 @@ let MAP_TK_11 = prove
 
 let peg_eval_nTyOp_wrongtok = prove
  (`FST tk = tokens_LparT ==>
-   ~(peg_eval cmlPEG (tk :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
+   ~(peg_eval cmlPEG (CONS tk i,peg_nt ((INL:MMLnonT->MMLnonT+num)
      nTyOp) f) (peg_Success i' r eo))`,
   CHEAT_TAC);;
 
@@ -321,14 +325,14 @@ let peg_EbaseParen_sound = prove
            pts = [pt] /\ ptree_head pt = grammar_NT
              ((INL:MMLnonT->MMLnonT+num) N) /\
            valid_lptree cmlG pt /\
-           MAP (grammar_TOK ## I) i0' = real_fringe pt ++ MAP
-             (grammar_TOK ## I) i)) ==>
+           MAP (grammar_TOK ## I) i0' = APPEND (real_fringe pt) (MAP
+             (grammar_TOK ## I) i))) ==>
       (?pt.
         pts = [pt] /\ ptree_head pt = grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nEbase) /\
         valid_lptree cmlG pt /\
-        MAP (grammar_TOK ## I) i0 = real_fringe pt ++ MAP
-          (grammar_TOK ## I) i)`,
+        MAP (grammar_TOK ## I) i0 = APPEND (real_fringe pt) (MAP
+          (grammar_TOK ## I) i))`,
   CHEAT_TAC);;
 
 (* [local,simp] *)
@@ -352,9 +356,10 @@ let ptPapply_lemma = prove
          pt /\
             MAP
               ((grammar_TOK:tokens_token->(tokens_token
-              ,MMLnonT)grammar_symbol) ## I) i0 = real_fringe pt ++ MAP
+              ,MMLnonT)grammar_symbol) ## I) i0 = APPEND (real_fringe
+              pt) (MAP
               ((grammar_TOK:tokens_token->(tokens_token
-              ,MMLnonT)grammar_symbol) ## I) i)) ==>
+              ,MMLnonT)grammar_symbol) ## I) i))) ==>
      (!ptlist pt0 acc i0 err.
        peg_eval_list cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num)
          nPbase) I) (i,ptlist,err) /\
@@ -363,16 +368,16 @@ let ptPapply_lemma = prove
        ptree_head acc = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
          nt')) nPConApp /\ valid_lptree cmlG acc /\
        LENGTH i0 < limit' ==>
-       (?pt. ptPapply0 acc (pt0 :: FLAT ptlist) = [pt] /\
+       (?pt. ptPapply0 acc (CONS pt0 (FLAT ptlist)) = [pt] /\
             ptree_head pt = (\nt'. grammar_NT
               ((INL:MMLnonT->MMLnonT+num) nt')) nPapp /\ valid_lptree
-              cmlG pt /\
-            real_fringe acc ++ real_fringe pt0 ++ MAP
+              cmlG pt /\ APPEND (APPEND (real_fringe acc) (real_fringe
+              pt0)) (MAP
               ((grammar_TOK:tokens_token->(tokens_token
-              ,MMLnonT)grammar_symbol) ## I) i0 =
-            real_fringe pt ++ MAP
+              ,MMLnonT)grammar_symbol) ## I) i0) = APPEND (real_fringe
+              pt) (MAP
               ((grammar_TOK:tokens_token->(tokens_token
-              ,MMLnonT)grammar_symbol) ## I) i))`,
+              ,MMLnonT)grammar_symbol) ## I) i)))`,
   CHEAT_TAC);;
 
 (* HOL4 pegSoundScript.sml:479-482: a proof *)
@@ -395,8 +400,8 @@ let peg_sound = prove
        peg_eval cmlPEG (i0,peg_nt N I) (peg_Success i pts eo) ==>
        (?pt. pts = [pt] /\ ptree_head pt = grammar_NT N /\
             valid_lptree cmlG pt /\
-            MAP (grammar_TOK ## I) i0 = real_fringe pt ++ MAP
-              (grammar_TOK ## I) i)`,
+            MAP (grammar_TOK ## I) i0 = APPEND (real_fringe pt)
+              (MAP (grammar_TOK ## I) i))`,
   CHEAT_TAC);;
 
 (* and the overloads that this file cannot see are back in the

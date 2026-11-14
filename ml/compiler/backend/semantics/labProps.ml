@@ -48,17 +48,17 @@ let labProps_extract_labels_def,labProps_extract_labels_ind = define_wf
   [`labProps_extract_labels x1 =
         match x1 with
           [] -> []
-        | (labLang_Label l1 l2 _2 :: xs) -> (l1,l2) ::
-          labProps_extract_labels xs
-        | (x :: xs) -> labProps_extract_labels xs`];;
+        | CONS (labLang_Label l1 l2 _2) xs -> CONS (l1,l2)
+          (labProps_extract_labels xs)
+        | (CONS x xs) -> labProps_extract_labels xs`];;
 hol4_overload "extract_labels" "labProps_extract_labels";;
 
 (* HOL4 labPropsScript.sml:18: ML code, not ported *)
 
 let extract_labels_append = prove
  (`!A B.
-   labProps_extract_labels (A ++ B) = labProps_extract_labels A ++
-     labProps_extract_labels B`,
+   labProps_extract_labels (APPEND A B) = APPEND
+     (labProps_extract_labels A) (labProps_extract_labels B)`,
   CHEAT_TAC);;
 
 let labs_of_def = new_definition
@@ -77,15 +77,15 @@ let line_get_labels_def = new_definition
 
 let sec_get_labels_def = define_general
   [`sec_get_labels (Section _13 lines) =
-     BIGUNION (IMAGE line_get_labels (set_of_list lines))`];;
+     UNIONS (IMAGE line_get_labels (set_of_list lines))`];;
 
 let labProps_get_labels_def = new_definition
-  `labProps_get_labels code = BIGUNION (IMAGE sec_get_labels
+  `labProps_get_labels code = UNIONS (IMAGE sec_get_labels
   (set_of_list code))`;;
 hol4_overload "get_labels" "labProps_get_labels";;
 
 let get_labels_cons = prove
- (`labProps_get_labels (x :: xs) = sec_get_labels x UNION
+ (`labProps_get_labels (CONS x xs) = sec_get_labels x UNION
   labProps_get_labels xs`,
   CHEAT_TAC);;
 
@@ -98,12 +98,12 @@ let line_get_code_labels_def = new_definition
 let sec_get_code_labels_def = define_general
   [`sec_get_code_labels (Section n1 lines) =
      (n1,0) INSERT
-     IMAGE (\n2. (n1,n2)) (BIGUNION (IMAGE line_get_code_labels
+     IMAGE (\n2. (n1,n2)) (UNIONS (IMAGE line_get_code_labels
        (set_of_list lines)))`];;
 
 let labProps_get_code_labels_def = new_definition
-  `labProps_get_code_labels code = BIGUNION (IMAGE
-  sec_get_code_labels (set_of_list code))`;;
+  `labProps_get_code_labels code = UNIONS (IMAGE sec_get_code_labels
+  (set_of_list code))`;;
 hol4_overload "get_code_labels" "labProps_get_code_labels";;
 
 (* [simp] *)
@@ -112,8 +112,8 @@ let get_code_labels_nil = prove
   CHEAT_TAC);;
 
 let get_code_labels_cons = prove
- (`labProps_get_code_labels (s :: secs) = sec_get_code_labels s UNION
-  labProps_get_code_labels secs`,
+ (`labProps_get_code_labels (CONS s secs) = sec_get_code_labels s
+  UNION labProps_get_code_labels secs`,
   CHEAT_TAC);;
 
 let sec_ends_with_label_def = define_general
@@ -757,7 +757,7 @@ let line_ok_pre_def = new_definition
 
 let sec_ok_pre_def = define_general
   [`sec_ok_pre c (Section k ls) <=>
-     EVERY (line_ok_pre c) ls`];;
+     ALL (line_ok_pre c) ls`];;
 
 (* HOL4 labPropsScript.sml:1257: the overload all_enc_ok_pre, which
    the port expands *)
@@ -771,30 +771,30 @@ let sec_label_ok_def = new_definition
         | _21 -> T`;;
 
 let sec_labels_ok_def = define_general
-  [`sec_labels_ok (Section k ls) <=> EVERY (sec_label_ok k) ls`];;
+  [`sec_labels_ok (Section k ls) <=> ALL (sec_label_ok k) ls`];;
 
 let sec_label_ok_extract_labels = prove
- (`EVERY (sec_label_ok n1) lines /\
+ (`ALL (sec_label_ok n1) lines /\
    MEM (n1',n2) (labProps_extract_labels lines) ==>
    n1' = n1 /\ ~(n2 = 0)`,
   CHEAT_TAC);;
 
 let EVERY_sec_label_ok = prove
- (`EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0)) (labProps_extract_labels l) <=>
+ (`ALL (\(l1,l2). l1 = n /\ ~(l2 = 0)) (labProps_extract_labels l) <=>
     // ∧
     // ALL_DISTINCT (extract_labels l)
-    EVERY (sec_label_ok n) l`,
+    ALL (sec_label_ok n) l`,
   CHEAT_TAC);;
 
 let line_get_code_labels_extract_labels = prove
  (`!l.
-   BIGUNION (IMAGE line_get_code_labels (set_of_list l)) =
+   UNIONS (IMAGE line_get_code_labels (set_of_list l)) =
    IMAGE SND (set_of_list (labProps_extract_labels l))`,
   CHEAT_TAC);;
 
 let get_code_labels_extract_labels = prove
  (`!code.
-   EVERY sec_labels_ok code ==>
+   ALL sec_labels_ok code ==>
    labProps_get_code_labels code =
    IMAGE (\s. (Section_num s,0)) (set_of_list code) UNION
    set_of_list (FLAT (MAP (labProps_extract_labels o Section_lines)

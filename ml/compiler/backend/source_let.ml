@@ -74,7 +74,8 @@ let lift_lets_def,lift_lets_ind = define_guess
   [`lift_lets sofar d =
      (match lift_let d with NONE ->
          (match sofar with [] -> NONE | _4 -> SOME (REVERSE
-           sofar,d)) | SOME (d1,d2) -> lift_lets (d1 :: sofar) d2)`];;
+           sofar,d)) | SOME (d1,d2) -> lift_lets (CONS d1 sofar)
+           d2)`];;
 
 let _ = size_thms "dec";;
 (* the termination relation that HOL4 gives, with
@@ -82,16 +83,16 @@ let _ = size_thms "dec";;
 let source_let_compile_decs_def,source_let_compile_decs_ind = define_wf
   `MEASURE (list_size dec_size)`
   [`source_let_compile_decs [] = []`;
-   `source_let_compile_decs (d :: ds) =
-        (match lift_lets [] d with SOME (pre,d) -> Dlocal pre [d] ::
-          source_let_compile_decs ds | NONE ->
-            (match d with Dmod mn ds1 ->
-                Dmod mn (source_let_compile_decs ds1) ::
-                  source_let_compile_decs ds | Dlocal ds1 ds2 ->
-                Dlocal (source_let_compile_decs ds1)
-                  (source_let_compile_decs ds2) ::
-                  source_let_compile_decs ds | _6 -> d ::
-                  source_let_compile_decs ds))`];;
+   `source_let_compile_decs (CONS d ds) =
+        (match lift_lets [] d with SOME (pre,d) -> CONS (Dlocal pre
+          [d]) (source_let_compile_decs ds) | NONE ->
+            (match d with Dmod mn ds1 -> CONS (Dmod mn
+              (source_let_compile_decs ds1))
+              (source_let_compile_decs ds) | Dlocal ds1 ds2 -> CONS
+              (Dlocal (source_let_compile_decs ds1)
+              (source_let_compile_decs ds2))
+              (source_let_compile_decs ds) | _6 -> CONS d
+              (source_let_compile_decs ds)))`];;
 hol4_overload "compile_decs" "source_let_compile_decs";;
 
 (*

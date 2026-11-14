@@ -57,9 +57,10 @@ let clos_letopProof_code_rel_IMP_LENGTH = prove
 
 (* code_rel_CONS_CONS *)
 let clos_letopProof_code_rel_CONS_CONS = prove
- (`clos_letopProof_code_rel (x1 :: x2 :: xs) (y1 :: y2 :: ys) ==>
+ (`clos_letopProof_code_rel (CONS x1 (CONS x2 xs)) (CONS y1 (CONS y2
+  ys)) ==>
       clos_letopProof_code_rel [x1] [y1] /\
-        clos_letopProof_code_rel (x2 :: xs) (y2 :: ys)`,
+        clos_letopProof_code_rel (CONS x2 xs) (CONS y2 ys)`,
   CHEAT_TAC);;
 
 (* value relation *)
@@ -77,19 +78,19 @@ let clos_letopProof_v_rel = cake_inductive
    (!n b. clos_letopProof_v_rel (closSem_RefPtr b n) (closSem_RefPtr
      b n)) /\
    (!tag xs ys.
-      LIST_REL clos_letopProof_v_rel xs ys ==>
+      ALL2 clos_letopProof_v_rel xs ys ==>
         clos_letopProof_v_rel (closSem_Block tag xs) (closSem_Block
           tag ys)) /\
    (!loc args1 args2 env1 env2 num_args e1 e2.
-      LIST_REL clos_letopProof_v_rel env1 env2 /\
-      LIST_REL clos_letopProof_v_rel args1 args2 /\
+      ALL2 clos_letopProof_v_rel env1 env2 /\
+      ALL2 clos_letopProof_v_rel args1 args2 /\
       clos_letopProof_code_rel [e1] [e2] ==>
         clos_letopProof_v_rel (Closure loc args1 env1 num_args e1)
           (Closure loc args2 env2 num_args e2)) /\
    (!loc args1 args2 env1 env2 k.
-      LIST_REL clos_letopProof_v_rel env1 env2 /\
-      LIST_REL clos_letopProof_v_rel args1 args2 /\
-      LIST_REL clos_letopProof_f_rel funs1 funs2 ==>
+      ALL2 clos_letopProof_v_rel env1 env2 /\
+      ALL2 clos_letopProof_v_rel args1 args2 /\
+      ALL2 clos_letopProof_f_rel funs1 funs2 ==>
         clos_letopProof_v_rel (Recclosure loc args1 env1 funs1 k)
           (Recclosure loc args2 env2 funs2 k))`;;
 hol4_overload "v_rel" "clos_letopProof_v_rel";;
@@ -103,7 +104,7 @@ let clos_letopProof_ref_rel = cake_inductive
   `(!bs. clos_letopProof_ref_rel (closSem_ByteArray bs)
   (closSem_ByteArray bs)) /\
    (!xs ys.
-     LIST_REL clos_letopProof_v_rel xs ys ==>
+     ALL2 clos_letopProof_v_rel xs ys ==>
      clos_letopProof_ref_rel (closSem_ValueArray xs)
        (closSem_ValueArray ys)) /\
    (!m v w.
@@ -129,8 +130,8 @@ let clos_letopProof_state_rel_def = new_definition
        closSem_state_clock
      t = closSem_state_clock s /\ closSem_state_ffi
      t = closSem_state_ffi s /\
-     LIST_REL (OPTREL clos_letopProof_v_rel) (closSem_state_globals
-       s) (closSem_state_globals t) /\
+     ALL2 (OPTREL clos_letopProof_v_rel) (closSem_state_globals s)
+       (closSem_state_globals t) /\
      clos_letopProof_FMAP_REL ref_rel (closSem_state_refs s)
        (closSem_state_refs t) /\ closSem_state_compile
      s = pure_cc clos_letop_compile_inc (closSem_state_compile t) /\
@@ -190,21 +191,22 @@ let clos_letopProof_var_list_IMP_evaluate = prove
  (`!a2 a1 xs (ys:closLang_exp list) (s:('c,'ffi)closSem_state) env.
      clos_letop_var_list (LENGTH a1) xs ys /\ LENGTH ys = LENGTH a2
        ==>
-     closSem_evaluate (xs,a1 ++ a2 ++ env,s) = (Rval a2,s)`,
+     closSem_evaluate (xs,APPEND (APPEND a1 a2) env,s) = (Rval
+       a2,s)`,
   CHEAT_TAC);;
 
 (* var_list_IMP_evaluate[local] *)
 let clos_letopProof_var_list_IMP_evaluate = prove
  (`!vs xs (ys:closLang_exp list) (s:('c,'ffi)closSem_state) env.
      clos_letop_var_list 0 xs ys /\ LENGTH ys = LENGTH vs ==>
-       closSem_evaluate (xs,vs ++ env,s) = (Rval vs,s)`,
+       closSem_evaluate (xs,APPEND vs env,s) = (Rval vs,s)`,
   CHEAT_TAC);;
 
 (* lookup_vars_lemma *)
 let clos_letopProof_lookup_vars_lemma = prove
- (`!vs env1 env2. LIST_REL clos_letopProof_v_rel env1 env2 ==>
+ (`!vs env1 env2. ALL2 clos_letopProof_v_rel env1 env2 ==>
     (match lookup_vars vs env1 with NONE -> lookup_vars vs env2 =
-      NONE | SOME l1 -> (?l2. LIST_REL clos_letopProof_v_rel l1 l2 /\
+      NONE | SOME l1 -> (?l2. ALL2 clos_letopProof_v_rel l1 l2 /\
       lookup_vars vs env2 = SOME l2))`,
   CHEAT_TAC);;
 
@@ -226,15 +228,15 @@ let clos_letopProof_dest_closure_SOME_IMP = prove
 
 (* dest_closure_SOME_Full_app *)
 let clos_letopProof_dest_closure_SOME_Full_app = prove
- (`clos_letopProof_v_rel f1 f2 /\ clos_letopProof_v_rel a1 a2 /\
-  LIST_REL clos_letopProof_v_rel args1 args2 /\
-    dest_closure max_app loc_opt f1 (a1 :: args1) = SOME (Full_app
+ (`clos_letopProof_v_rel f1 f2 /\ clos_letopProof_v_rel a1 a2 /\ ALL2
+  clos_letopProof_v_rel args1 args2 /\
+    dest_closure max_app loc_opt f1 (CONS a1 args1) = SOME (Full_app
       exp1 env1 rest_args1) ==>
       (?exp2 env2 rest_args2.
       clos_letopProof_code_rel [exp1] [exp2] /\
-      LIST_REL clos_letopProof_v_rel env1 env2 /\
-      LIST_REL clos_letopProof_v_rel rest_args1 rest_args2 /\
-      dest_closure max_app loc_opt f2 (a2 :: args2) = SOME
+      ALL2 clos_letopProof_v_rel env1 env2 /\
+      ALL2 clos_letopProof_v_rel rest_args1 rest_args2 /\
+      dest_closure max_app loc_opt f2 (CONS a2 args2) = SOME
         (Full_app exp2 env2 rest_args2))`,
   CHEAT_TAC);;
 
@@ -246,8 +248,7 @@ let clos_letopProof_simple_state_rel = prove
 
 (* do_app_lemma[local] *)
 let clos_letopProof_do_app_lemma = prove
- (`clos_letopProof_state_rel s t /\ LIST_REL clos_letopProof_v_rel xs ys
-  ==>
+ (`clos_letopProof_state_rel s t /\ ALL2 clos_letopProof_v_rel xs ys ==>
    (match do_app opp xs s with Rerr err1 -> (?err2. do_app opp ys t =
      Rerr err2 /\
                            exc_rel clos_letopProof_v_rel err1 err2) |
@@ -259,8 +260,7 @@ let clos_letopProof_do_app_lemma = prove
 
 (* do_install_lemma[local] *)
 let clos_letopProof_do_install_lemma = prove
- (`clos_letopProof_state_rel s t /\ LIST_REL clos_letopProof_v_rel xs ys
-  ==>
+ (`clos_letopProof_state_rel s t /\ ALL2 clos_letopProof_v_rel xs ys ==>
    (match closSem_do_install xs s with (Rerr err1,s1) -> (?err2 t1.
      closSem_do_install ys t = (Rerr err2,t1) /\
                            exc_rel clos_letopProof_v_rel err1 err2 /\
@@ -299,7 +299,7 @@ let clos_letopProof_state_rel_dec_clock = prove
 (* rel_update_thunk[local] *)
 let clos_letopProof_rel_update_thunk = prove
  (`clos_letopProof_state_rel s1 s2 /\
-   LIST_REL clos_letopProof_v_rel vs ys ==>
+   ALL2 clos_letopProof_v_rel vs ys ==>
      (update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs = NONE
        ==>
         update_thunk [closSem_RefPtr v ptr] (state_refs s2) ys =
@@ -318,23 +318,23 @@ let clos_letopProof_rel_update_thunk = prove
 let clos_letopProof_evaluate_let_op = prove
  (`(!xs env1 (s1:('c,'ffi)closSem_state) res1 s2 ys env2 t1.
        closSem_evaluate (xs,env1,s1) = (res1,s2) /\
-       LIST_REL clos_letopProof_v_rel env1 env2 /\
+       ALL2 clos_letopProof_v_rel env1 env2 /\
          clos_letopProof_state_rel s1 t1 /\
        clos_letopProof_code_rel xs ys ==>
        (?res2 t2.
          closSem_evaluate (ys,env2,t1) = (res2,t2) /\
-         semanticPrimitivesProps_result_rel (LIST_REL
+         semanticPrimitivesProps_result_rel (ALL2
            clos_letopProof_v_rel) clos_letopProof_v_rel res1 res2 /\
          clos_letopProof_state_rel s2 t2)) /\
     (!loc_opt f1 args1 (s1:('c,'ffi)closSem_state) res1 s2 f2 args2
       t1.
        evaluate_app loc_opt f1 args1 s1 = (res1,s2) /\
-       clos_letopProof_v_rel f1 f2 /\ LIST_REL clos_letopProof_v_rel
+       clos_letopProof_v_rel f1 f2 /\ ALL2 clos_letopProof_v_rel
          args1 args2 /\
        clos_letopProof_state_rel s1 t1 ==>
        (?res2 t2.
          evaluate_app loc_opt f2 args2 t1 = (res2,t2) /\
-         semanticPrimitivesProps_result_rel (LIST_REL
+         semanticPrimitivesProps_result_rel (ALL2
            clos_letopProof_v_rel) clos_letopProof_v_rel res1 res2 /\
          clos_letopProof_state_rel s2 t2))`,
   CHEAT_TAC);;
@@ -342,12 +342,12 @@ let clos_letopProof_evaluate_let_op = prove
 let let_op_correct = prove
  (`!xs env1 (s1:('c,'ffi)closSem_state) res1 s2 env2 t1.
        closSem_evaluate (xs,env1,s1) = (res1,s2) /\
-       LIST_REL clos_letopProof_v_rel env1 env2 /\
+       ALL2 clos_letopProof_v_rel env1 env2 /\
          clos_letopProof_state_rel s1 t1 ==>
        (?res2 t2.
          closSem_evaluate (clos_letop_let_op xs,env2,t1) = (res2,t2)
            /\
-         semanticPrimitivesProps_result_rel (LIST_REL
+         semanticPrimitivesProps_result_rel (ALL2
            clos_letopProof_v_rel) clos_letopProof_v_rel res1 res2 /\
          clos_letopProof_state_rel s2 t2)`,
   CHEAT_TAC);;
@@ -398,21 +398,21 @@ let let_op_every_Fn_vs_NONE = prove
   CHEAT_TAC);;
 
 let EVERY_let_op_sing = prove
- (`EVERY f (clos_letop_let_op [x]) = f (HD (clos_letop_let_op [x]))`,
+ (`ALL f (clos_letop_let_op [x]) = f (HD (clos_letop_let_op [x]))`,
   CHEAT_TAC);;
 
 let var_list_no_Labels = prove
- (`!n l m. clos_letop_var_list n l m ==> EVERY no_Labels l /\ EVERY
+ (`!n l m. clos_letop_var_list n l m ==> ALL no_Labels l /\ ALL
   (obeys_max_app k) l`,
   CHEAT_TAC);;
 
 let let_op_obeys_max_app = prove
- (`!es. EVERY (obeys_max_app k) (clos_letop_let_op es) <=> EVERY
+ (`!es. ALL (obeys_max_app k) (clos_letop_let_op es) <=> ALL
   (obeys_max_app k) es`,
   CHEAT_TAC);;
 
 let let_op_no_Labels = prove
- (`!es. EVERY no_Labels (clos_letop_let_op es) <=> EVERY no_Labels es`,
+ (`!es. ALL no_Labels (clos_letop_let_op es) <=> ALL no_Labels es`,
   CHEAT_TAC);;
 
 let var_list_app_call_dests = prove
@@ -426,7 +426,7 @@ let let_op_app_call_dests = prove
 
 (* var_list_code_labels_imp *)
 let clos_letopProof_var_list_code_labels_imp = prove
- (`!n x y. clos_letop_var_list n x y ==> BIGUNION (set_of_list (MAP
+ (`!n x y. clos_letop_var_list n x y ==> UNIONS (set_of_list (MAP
   closProps_get_code_labels x)) = {}`,
   CHEAT_TAC);;
 

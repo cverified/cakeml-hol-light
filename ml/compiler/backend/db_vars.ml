@@ -40,12 +40,12 @@ let mk_Union_Empty = prove
 
 let list_mk_Union_def,list_mk_Union_ind = define_rec
   [`list_mk_Union [] = db_vars_Empty`;
-   `list_mk_Union (x :: xs) = mk_Union x (list_mk_Union xs)`];;
+   `list_mk_Union (CONS x xs) = mk_Union x (list_mk_Union xs)`];;
 
 let FOLDR_mk_Union_UNZIP = prove
- (`ITLIST (\(x,l) (ts,frees). (x :: ts,mk_Union l frees)) l ([],A) =
+ (`ITLIST (\(x,l) (ts,frees). (CONS x ts,mk_Union l frees)) l ([],A) =
    (let (ts,fvs) = UNZIP l in
-     (ts,list_mk_Union (fvs ++ [A])))`,
+     (ts,list_mk_Union (APPEND fvs [A])))`,
   CHEAT_TAC);;
 
 let db_to_set_acc_def,db_to_set_acc_ind = define_rec
@@ -92,7 +92,7 @@ let has_var_mk_Union = prove
 
 (* [simp] *)
 let has_var_list_mk_Union = prove
- (`!ls. has_var n (list_mk_Union ls) <=> EXISTS (has_var n) ls`,
+ (`!ls. has_var n (list_mk_Union ls) <=> EX (has_var n) ls`,
   CHEAT_TAC);;
 
 let lookup_db_to_set_acc = prove

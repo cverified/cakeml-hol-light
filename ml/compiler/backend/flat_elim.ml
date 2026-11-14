@@ -42,7 +42,7 @@ let is_hidden_def,is_hidden_ind = define_wf
         // exception handler
         | (Lit t l) -> T
         // literal
-        | (Con t id_option es) -> EVERY is_hidden es
+        | (Con t id_option es) -> ALL is_hidden es
         // constructor
         | (flatLang_Var_local t str) -> T
         // local var
@@ -75,7 +75,7 @@ let total_pat_def,total_pat_ind = define_mutual_shaped_rec_cheat
    `total_pat (Pas p _5:flatLang_pat) = total_pat p`;
    `total_pat _6 = F`;
    `total_pat_list [] = T`;
-   `total_pat_list (p :: ps) = (total_pat p /\ total_pat_list ps)`];;
+   `total_pat_list (CONS p ps) = (total_pat p /\ total_pat_list ps)`];;
 
 (* check if expression is pure in that it does not make any visible changes
     (other than writing to globals) *)
@@ -90,16 +90,16 @@ let flat_elim_is_pure_def,flat_elim_is_pure_ind = define_wf
         match x1 with
           (Handle t e pes:flatLang_exp) -> flat_elim_is_pure e
         | (Lit t l) -> T
-        | (Con t id_option es) -> EVERY flat_elim_is_pure es
+        | (Con t id_option es) -> ALL flat_elim_is_pure es
         | (flatLang_Var_local t str) -> T
         | (Fun t name body) -> T
-        | (App t (flatLang_GlobalVarInit g) es) -> EVERY
+        | (App t (flatLang_GlobalVarInit g) es) -> ALL
           flat_elim_is_pure es
         | (If t e1 e2 e3) -> (flat_elim_is_pure e1 /\
           flat_elim_is_pure e2 /\ flat_elim_is_pure e3)
         | (Mat t e1 pes) ->
-         (flat_elim_is_pure e1 /\ EVERY flat_elim_is_pure (MAP SND
-           pes) /\ EXISTS total_pat (MAP FST pes))
+         (flat_elim_is_pure e1 /\ ALL flat_elim_is_pure (MAP SND
+           pes) /\ EX total_pat (MAP FST pes))
         | (Let t opt e1 e2) -> (flat_elim_is_pure e1 /\
           flat_elim_is_pure e2)
         | (Letrec t funs e) -> flat_elim_is_pure e
@@ -128,11 +128,12 @@ let has_Eval_def,has_Eval_ind = assume_definition_rec
   has_Eval e2`;
    `has_Eval _30 <=> F`;
    `has_Eval_list [] <=> F`;
-   `has_Eval_list (e :: es) <=> has_Eval e \/ has_Eval_list es`;
+   `has_Eval_list (CONS e es) <=> has_Eval e \/ has_Eval_list es`;
    `has_Eval_pats [] <=> F`;
-   `has_Eval_pats ((p,e) :: pes) <=> has_Eval e \/ has_Eval_pats pes`;
+   `has_Eval_pats (CONS (p,e) pes) <=> has_Eval e \/ has_Eval_pats
+  pes`;
    `has_Eval_funs [] <=> F`;
-   `has_Eval_funs ((_31,_32,e) :: fs) <=> has_Eval e \/
+   `has_Eval_funs (CONS (_31,_32,e) fs) <=> has_Eval e \/
   has_Eval_funs fs`];;
 
 let dest_GlobalVarInit_def = new_definition
@@ -178,7 +179,8 @@ let find_loc_def,find_loc_ind = assume_definition_rec
             ((sptree_union (find_locL (MAP (SND o SND) vv_es))
               (find_loc elr1)):1 spt)`;
    `find_locL [] = LN`;
-   `find_locL (e :: es) = sptree_union (find_loc e) (find_locL es)`];;
+   `find_locL (CONS e es) = sptree_union (find_loc e) (find_locL
+  es)`];;
 
 let find_lookups_def,find_lookups_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -206,7 +208,7 @@ let find_lookups_def,find_lookups_ind = assume_definition_rec
             sptree_union (find_lookupsL (MAP (SND o SND) vv_es))
               (find_lookups elr1)`;
    `find_lookupsL [] = LN`;
-   `find_lookupsL (e :: es) = sptree_union (find_lookups e)
+   `find_lookupsL (CONS e es) = sptree_union (find_lookups e)
   (find_lookupsL es)`];;
 
 let analyse_exp_def = new_definition
@@ -224,7 +226,7 @@ let code_analysis_union_def = new_definition
 
 let analyse_code_def,analyse_code_ind = define_rec
   [`analyse_code [] = (LN,LN)`;
-   `analyse_code (e :: cs) =
+   `analyse_code (CONS e cs) =
         code_analysis_union (analyse_exp e) (analyse_code cs)`];;
 
 
@@ -248,7 +250,7 @@ let has_Eval_dec_def = new_definition
 
 let remove_flat_prog_def = new_definition
   `remove_flat_prog code =
-     (if EXISTS has_Eval_dec code then code else
+     (if EX has_Eval_dec code then code else
        let (r,t) = analyse_code code in
        let reachable = closure_spt r t in
        remove_unreachable reachable code)`;;

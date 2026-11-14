@@ -59,20 +59,20 @@ cake_term_facts :=
 let TOKENS_aux,TOKENS_ind = define_wf
   `MEASURE (LENGTH o SND)`
   [`(TOKENS P ([]:(A)list) = []) /\
-   (TOKENS P (h :: t) =
-      if NULL (FST (SPLITP P (h :: t)))
-      then TOKENS P (TL (SND (SPLITP P (h :: t))))
-      else FST (SPLITP P (h :: t)) ::
-           TOKENS P (SND (SPLITP P (h :: t))))`];;
+   (TOKENS P (CONS h t) =
+      if NULL (FST (SPLITP P (CONS h t)))
+      then TOKENS P (TL (SND (SPLITP P (CONS h t))))
+      else CONS (FST (SPLITP P (CONS h t))) (TOKENS P (SND (SPLITP P
+        (CONS h t)))))`];;
 
 let TOKENS_def = prove
  (`(TOKENS P ([]:(A)list) = []) /\
-   (TOKENS P (h :: t) =
-      let l,r = SPLITP P (h :: t) in
+   (TOKENS P (CONS h t) =
+      let l,r = SPLITP P (CONS h t) in
         if NULL l then
           TOKENS P (TL r)
         else
-          l :: TOKENS P r)`,
+          CONS l (TOKENS P r))`,
   CONJ_TAC THENL [REWRITE_TAC[TOKENS_aux]; ALL_TAC] THEN
   GEN_REWRITE_TAC LAND_CONV [TOKENS_aux] THEN
   SPEC_TAC(`SPLITP (P:A->bool) (CONS h t)`,`pr:(A)list#(A)list`) THEN
@@ -82,22 +82,22 @@ let TOKENS_def = prove
 let FIELDS_aux,FIELDS_ind = define_wf
   `MEASURE (LENGTH o SND)`
   [`(FIELDS P ([]:(A)list) = [[]]) /\
-   (FIELDS P (h :: t) =
-      if NULL (FST (SPLITP P (h :: t)))
-      then [] :: FIELDS P (TL (SND (SPLITP P (h :: t))))
-      else if NULL (SND (SPLITP P (h :: t)))
-           then [FST (SPLITP P (h :: t))]
-           else FST (SPLITP P (h :: t)) ::
-                FIELDS P (TL (SND (SPLITP P (h :: t)))))`];;
+   (FIELDS P (CONS h t) =
+      if NULL (FST (SPLITP P (CONS h t)))
+      then CONS [] (FIELDS P (TL (SND (SPLITP P (CONS h t)))))
+      else if NULL (SND (SPLITP P (CONS h t)))
+           then [FST (SPLITP P (CONS h t))]
+           else CONS (FST (SPLITP P (CONS h t))) (FIELDS P (TL (SND
+             (SPLITP P (CONS h t))))))`];;
 
 let FIELDS_def = prove
  (`(FIELDS P ([]:(A)list) = [[]]) /\
-   (FIELDS P (h :: t) =
-      let l,r = SPLITP P (h :: t) in
+   (FIELDS P (CONS h t) =
+      let l,r = SPLITP P (CONS h t) in
         if NULL l then
-          [] :: FIELDS P (TL r)
+          CONS [] (FIELDS P (TL r))
         else
-          if NULL r then [l] else l :: FIELDS P (TL r))`,
+          if NULL r then [l] else CONS l (FIELDS P (TL r)))`,
   CONJ_TAC THENL [REWRITE_TAC[FIELDS_aux]; ALL_TAC] THEN
   GEN_REWRITE_TAC LAND_CONV [FIELDS_aux] THEN
   SPEC_TAC(`SPLITP (P:A->bool) (CONS h t)`,`pr:(A)list#(A)list`) THEN

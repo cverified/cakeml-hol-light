@@ -136,7 +136,7 @@ let every_var_exp_def,every_var_exp_ind = define_wf
         match expr with
           wordLang_Var num' -> P num'
         | (Load exp) -> every_var_exp P exp
-        | (wordLang_Op wop ls) -> EVERY (every_var_exp P) ls
+        | (wordLang_Op wop ls) -> ALL (every_var_exp P) ls
         | (Shift sh e1 e2) -> (every_var_exp P e1 /\ every_var_exp P
           e2)
         | expr -> T`];;
@@ -184,8 +184,8 @@ let every_var_inst_def = new_definition
 
 let every_name_def = new_definition
   `every_name P (t:1 spt#1 spt) <=>
-   EVERY P (MAP FST (toAList (FST t))) /\
-   EVERY P (MAP FST (toAList (SND t)))`;;
+   ALL P (MAP FST (toAList (FST t))) /\
+   ALL P (MAP FST (toAList (SND t)))`;;
 
 let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -195,7 +195,7 @@ let every_var_def,every_var_ind = define_wf
   [`wordLang_every_var P p =
         match p with
           (Skip:'a wordLang_prog) -> T
-        | (wordLang_Move pri ls) -> (EVERY P (MAP FST ls) /\ EVERY P
+        | (wordLang_Move pri ls) -> (ALL P (MAP FST ls) /\ ALL P
           (MAP SND ls))
         | (Inst i) -> every_var_inst P i
         | (wordLang_Assign num' exp) -> (P num' /\ every_var_exp P
@@ -211,10 +211,10 @@ let every_var_def,every_var_ind = define_wf
        (P cptr /\ P clen /\ P ptr /\ P len /\ every_name P names)
         | (wordLang_MustTerminate s1) -> wordLang_every_var P s1
         | (Call ret dest args h) ->
-       ((EVERY P args) /\
+       ((ALL P args) /\
        (match ret with
          NONE -> T | SOME (v,cutset,ret_handler,l1,l2) ->
-         (EVERY P v /\ every_name P cutset /\
+         (ALL P v /\ every_name P cutset /\
          wordLang_every_var P ret_handler /\
          (match h with
            NONE -> T | SOME (v,prog,l1,l2) ->
@@ -230,16 +230,16 @@ let every_var_def,every_var_ind = define_wf
         | (StoreConsts a b c d ws) ->
        (P a /\ P b /\ P c /\ P d)
         | (Raise num') -> P num'
-        | (Return num1 ns) -> (P num1 /\ EVERY P ns)
+        | (Return num1 ns) -> (P num1 /\ ALL P ns)
         | (OpCurrHeap _3 num1 num2) -> (P num1 /\ P num2)
         | Tick -> T
         | (Set n exp) -> every_var_exp P exp
         | (wordLang_ShareInst op num' exp) -> (P num' /\
           every_var_exp P exp)
         | (wordLang_Loop names body exit_names) ->
-       (EVERY P (MAP FST (toAList names)) /\ wordLang_every_var P
-         body /\
-        EVERY P (MAP FST (toAList exit_names)))
+       (ALL P (MAP FST (toAList names)) /\ wordLang_every_var P body
+         /\
+        ALL P (MAP FST (toAList exit_names)))
         | p -> T`];;
 hol4_overload "every_var" "wordLang_every_var";;
 
@@ -340,7 +340,7 @@ let max_var_def,max_var_ind = define_wf
         match p with
           wordLang_Skip -> 0
         | (wordLang_Move pri ls) ->
-       MAX_LIST (MAP FST ls ++ MAP SND ls)
+       MAX_LIST (APPEND (MAP FST ls) (MAP SND ls))
         | (Inst i) -> max_var_inst i
         | (wordLang_Assign num' exp) -> MAX num' (max_var_exp exp)
         | (Get num' store) -> num'
@@ -374,7 +374,7 @@ let max_var_def,max_var_ind = define_wf
        MAX_LIST [ptr1; len1; ptr2; len2; cutsets_max numset]
         | (Raise num') -> num'
         | (OpCurrHeap _12 num1 num2) -> MAX num1 num2
-        | (Return num1 ns) -> MAX_LIST (num1 :: ns)
+        | (Return num1 ns) -> MAX_LIST (CONS num1 ns)
         | Tick -> 0
         | (LocValue r l1) -> r
         | (Set n exp) -> max_var_exp exp

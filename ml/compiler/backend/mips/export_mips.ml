@@ -51,24 +51,24 @@ let export_mips_startup_def = new_definition
         (implode "     .globl  cdecl(cml_stackend)\n");
         (implode "     .type   cml_main, function\n");
         (implode "cdecl(cml_main):\n");
-        (implode
-          ("     dla     $a0,cake_main           # arg1: entry" ++
+        (implode (APPEND
+          "     dla     $a0,cake_main           # arg1: entry"
           " address\n"));
-        (implode
-          ("     ld      $a1,cdecl(cml_heap)     # arg2: first" ++
+        (implode (APPEND
+          "     ld      $a1,cdecl(cml_heap)     # arg2: first"
           " address of heap\n"))])
      (SmartAppend (misc_List
        (if ~pk then
          [(implode "     dla     $t0,cake_bitmaps\n");
-          (implode
-            ("     sd      $t0, 0($a1)             # store bitma" ++
+          (implode (APPEND
+            "     sd      $t0, 0($a1)             # store bitma"
             "p pointer\n"))] else []))
      (SmartAppend (misc_List
-       [(implode
-         ("     ld      $a2,cdecl(cml_stack)    # arg3: first" ++
+       [(implode (APPEND
+         "     ld      $a2,cdecl(cml_stack)    # arg3: first"
          " address of stack\n"));
-        (implode
-          ("     ld      $a3,cdecl(cml_stackend) # arg4: first" ++
+        (implode (APPEND
+          "     ld      $a3,cdecl(cml_stackend) # arg4: first"
           " address past the stack\n"))])
      (SmartAppend (misc_List
        (if ret then
@@ -81,7 +81,7 @@ hol4_overload "startup" "export_mips_startup";;
 
 let export_mips_ffi_asm_def,export_mips_ffi_asm_ind = define_rec
   [`export_mips_ffi_asm [] = misc_Nil`;
-   `export_mips_ffi_asm (ffi :: ffis) =
+   `export_mips_ffi_asm (CONS ffi ffis) =
           SmartAppend (misc_List [
            (implode "cake_ffi"); ffi; (implode ":\n");
            (implode "     dla    $t9,cdecl(ffi"); ffi; (implode
@@ -132,38 +132,38 @@ let mips_export_def = new_definition
        (SmartAppend (misc_List data_buffer)
        (SmartAppend (export_mips_startup ret pk) ((\ret. if ret then
          ((\ret. SmartAppend
-     (misc_List (MAP (\n. implode (n ++ "\n"))
-      [("#### CakeML FFI interface (each block is 16 bytes " ++
+     (misc_List (MAP (\n. implode (APPEND n "\n"))
+      [(APPEND "#### CakeML FFI interface (each block is 16 bytes "
         "long)"); "";
         "     .p2align 4";
         ""])) (SmartAppend
       (export_mips_ffi_asm (REVERSE ffi_names'))
-      (misc_List (MAP (\n. implode (n ++ "\n"))
-       (["cake_clear:";
+      (misc_List (MAP (\n. implode (APPEND n "\n"))
+       (APPEND (APPEND ["cake_clear:";
         "     dla   $t9,cdecl(cml_exit)";
         "     jr    $t9";
         "     .p2align 4";
         "";
-        "cake_exit:"] ++
+        "cake_exit:"]
         (if ret then
           ["     j    cml_return"] else
          ["     dla   $t9,cdecl(cml_exit)";
-          "     jr    $t9"]) ++
+          "     jr    $t9"]))
         ["     .p2align 4";
         "";
         "cake_main:";
         "";
         "#### Generated machine code follows";
         ""]))))) T) else ((\ret. SmartAppend (misc_List (MAP (\n.
-          implode (n ++ "\n"))
-          [("#### CakeML FFI interface (each block is 16 bytes " ++
-          "long)"); ""; "     .p2align 4"; ""])) (SmartAppend
-          (export_mips_ffi_asm (REVERSE ffi_names')) (misc_List (MAP
-          (\n. implode (n ++ "\n")) (["cake_clear:";
+          implode (APPEND n "\n")) [(APPEND
+          "#### CakeML FFI interface (each block is 16 bytes " "long)");
+          ""; "     .p2align 4"; ""])) (SmartAppend (export_mips_ffi_asm
+          (REVERSE ffi_names')) (misc_List (MAP (\n. implode (APPEND n
+          "\n")) (APPEND (APPEND ["cake_clear:";
           "     dla   $t9,cdecl(cml_exit)"; "     jr    $t9";
-          "     .p2align 4"; ""; "cake_exit:"] ++ (if ret then
+          "     .p2align 4"; ""; "cake_exit:"] (if ret then
           ["     j    cml_return"] else
-          ["     dla   $t9,cdecl(cml_exit)"; "     jr    $t9"]) ++
+          ["     dla   $t9,cdecl(cml_exit)"; "     jr    $t9"]))
           ["     .p2align 4"; ""; "cake_main:"; "";
           "#### Generated machine code follows"; ""]))))) F)) ret))))))
        (SmartAppend (split16 (words_line (implode "\t.byte ")
@@ -171,7 +171,7 @@ let mips_export_def = new_definition
        (SmartAppend (misc_List code_buffer)
        (SmartAppend (emit_symbols lsyms)
        (if ret then
-         (SmartAppend ((misc_List (MAP (\n. implode (n ++ "\n"))
+         (SmartAppend ((misc_List (MAP (\n. implode (APPEND n "\n"))
      [""; "";
       "cml_enter:"; "     daddiu  $sp, $sp, -72";
       "     sd      $ra, 0($sp)"; "     sd      $s7, 8($sp)";

@@ -119,10 +119,10 @@ hol4_overload "compile" "stack_names_compile";;
 
 let names_ok_def = new_definition
   `stack_names_names_ok names reg_count avoid_regs =
-     (let xs = GENLIST (tlookup names) (reg_count - LENGTH
+     (let xs = list_of_seq (tlookup names) (reg_count - LENGTH
        avoid_regs) in
        ALL_DISTINCT xs /\
-       EVERY (\x. x < reg_count /\ ~(MEM x avoid_regs)) xs)`;;
+       ALL (\x. x < reg_count /\ ~(MEM x avoid_regs)) xs)`;;
 hol4_overload "names_ok" "stack_names_names_ok";;
 
 (* and the overloads that this file cannot see are back in the

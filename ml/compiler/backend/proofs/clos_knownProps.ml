@@ -116,7 +116,7 @@ let subapprox_Impossible = prove
 (* [simp] *)
 let subapprox_Tuple = prove
  (`(subapprox) (clos_known_Tuple tg1 as1) (clos_known_Tuple tg2 as2)
-  <=> tg1 = tg2 /\ LIST_REL subapprox as1 as2`,
+  <=> tg1 = tg2 /\ ALL2 subapprox as1 as2`,
   CHEAT_TAC);;
 
 let better_definedg_def = new_definition

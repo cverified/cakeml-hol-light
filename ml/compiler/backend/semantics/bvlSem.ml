@@ -120,14 +120,14 @@ let bvlSem_v_to_list_def,bvlSem_v_to_list_ind = define_wf
         (if tag = nil_tag then SOME [] else NONE)
         | (Block tag [h; bt]) ->
         (if tag = cons_tag then
-          (match bvlSem_v_to_list bt with SOME t -> SOME (h :: t) |
-            _1 -> NONE) else NONE)
+          (match bvlSem_v_to_list bt with SOME t -> SOME (CONS h t)
+            | _1 -> NONE) else NONE)
         | _2 -> NONE`];;
 hol4_overload "v_to_list" "bvlSem_v_to_list";;
 
 let bvlSem_list_to_v_def,bvlSem_list_to_v_ind = define_rec
   [`bvlSem_list_to_v [] = Block nil_tag []`;
-   `bvlSem_list_to_v (v :: vs) = Block cons_tag [v;
+   `bvlSem_list_to_v (CONS v vs) = Block cons_tag [v;
   bvlSem_list_to_v vs]`];;
 hol4_overload "list_to_v" "bvlSem_list_to_v";;
 
@@ -177,7 +177,7 @@ let bvlSem_do_eq_def,bvlSem_do_eq_ind = define_mutual_wf
    `bvlSem_do_eq_list refs x2 x3 =
          match (x2,x3) with
            ([],[]) -> Eq_val T
-         | ((v1 :: vs1),(v2 :: vs2)) ->
+         | ((CONS v1 vs1),(CONS v2 vs2)) ->
        (match bvlSem_do_eq refs v1 v2 with Eq_val T ->
          bvlSem_do_eq_list refs vs1 vs2 | Eq_val F -> Eq_val F | bad ->
          bad)
@@ -214,7 +214,7 @@ let bvlSem_do_install_def = new_definition
                    (set_of_list (MAP FST progs)) /\
                      ALL_DISTINCT (MAP FST progs) then
                   (match (bvlSem_state_compile s cfg progs,progs)
-                    with (SOME (bytes',data',cfg'),(k,prog) :: _27) ->
+                    with (SOME (bytes',data',cfg'),CONS (k,prog) _27) ->
                        (if bytes = bytes' /\ data = data' /\ FST
                          (new_oracle 0) = cfg' then
                          let s' = bvlSem_state_compile_oracle_fupd (K
@@ -244,7 +244,7 @@ hol4_overload "do_part" "bvlSem_do_part";;
 
 let do_build_def,do_build_ind = define_rec
   [`bvlSem_do_build m i [] refs = (m (i - 1),refs)`;
-   `bvlSem_do_build m i (p :: rest) refs =
+   `bvlSem_do_build m i (CONS p rest) refs =
       (let (x,refs1) = bvlSem_do_part m p refs in
         bvlSem_do_build ((i =+ x) m) (i + 1) rest refs1)`];;
 hol4_overload "do_build" "bvlSem_do_build";;
@@ -420,11 +420,12 @@ let bvlSem_do_app_def = new_definition
          (if i < (&0) then ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result) else Rval
-           (Unit,bvlSem_state_globals_fupd (K (bvlSem_state_globals s ++
-           REPLICATE (num_of_int i) NONE)) s)) | (closLang_Install,vs)
-           -> do_install vs s | (closLang_BlockOp (closLang_Cons
-           tag),xs) -> Rval (Block tag xs,s) | (closLang_BlockOp
-           (closLang_BoolTest test),[v1; v2]) ->
+           (Unit,bvlSem_state_globals_fupd (K (APPEND
+           (bvlSem_state_globals s) (REPLICATE (num_of_int i) NONE)))
+           s)) | (closLang_Install,vs) -> do_install vs s |
+           (closLang_BlockOp (closLang_Cons tag),xs) -> Rval (Block tag
+           xs,s) | (closLang_BlockOp (closLang_BoolTest test),[v1; v2])
+           ->
          (if (~(v1 = Boolv T) /\ ~(v1 = Boolv F)) then ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result) else
@@ -440,16 +441,17 @@ let bvlSem_do_app_def = new_definition
             (closLang_Build parts'),[]) ->
          (let (v,rs) = bvlSem_do_build_const parts'
            (bvlSem_state_refs s) in Rval (v,bvlSem_state_refs_fupd (K
-           rs) s)) | (closLang_BlockOp (closLang_ConsExtend tag),Block
-           _43 xs' :: Number lower :: Number len :: Number tot :: xs) ->
+           rs) s)) | (closLang_BlockOp (closLang_ConsExtend tag),CONS
+           (Block _43 xs') (CONS (Number lower) (CONS (Number len) (CONS
+           (Number tot) xs)))) ->
          (if lower < (&0) \/ len < (&0) \/ lower + len > &(LENGTH
            xs') \/
             tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then
            ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result) else
-           Rval (Block tag (xs ++ TAKE (num_of_int len) (DROP
-             (num_of_int lower) xs')),s)) | (closLang_BlockOp
+           Rval (Block tag (APPEND xs (TAKE (num_of_int len) (DROP
+             (num_of_int lower) xs'))),s)) | (closLang_BlockOp
              (closLang_ConsExtend tag),_44) -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result) | (closLang_MemOp
@@ -484,7 +486,7 @@ let bvlSem_do_app_def = new_definition
                ,bvlSem_v)semanticPrimitives_result)) | (closLang_BlockOp
                ListAppend,[x1; x2]) ->
          (match (v_to_list x1,v_to_list x2) with (SOME xs,SOME ys) ->
-           Rval (list_to_v (xs ++ ys),s) | _49 -> ((Rerr (Rabort
+           Rval (list_to_v (APPEND xs ys),s) | _49 -> ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result)) | (closLang_BlockOp
            closLang_LengthBlock,[Block tag xs]) ->
@@ -568,7 +570,7 @@ let bvlSem_do_app_def = new_definition
            ,bvlSem_v)semanticPrimitives_result)) | (closLang_MemOp
            closLang_FromListByte,[lv]) ->
          (match some (\ns. v_to_list lv = SOME (MAP (Number o (&))
-           ns) /\ EVERY (\n. n < 256) ns) with SOME ns -> (let ptr =
+           ns) /\ ALL (\n. n < 256) ns) with SOME ns -> (let ptr =
            (LEAST (\ptr. ~(ptr IN FDOM (bvlSem_state_refs s)))) in
                           Rval (RefPtr T ptr,bvlSem_state_refs_fupd
                             (K (bvlSem_state_refs s |+
@@ -800,8 +802,8 @@ let bvlSem_find_code_def = define_cases
            match LAST args with bvlSem_CodePtr loc ->
                (match sptree_lookup loc code with NONE -> NONE
                  | SOME (arity,exp) -> (if LENGTH args = arity + 1
-                 then SOME (FRONT args,exp) else NONE)) | other ->
-                 NONE)`];;
+                 then SOME (BUTLAST args,exp) else NONE)) | other
+                 -> NONE)`];;
 hol4_overload "find_code" "bvlSem_find_code";;
 
 (* The evaluation is defined as a clocked functional version of
@@ -847,11 +849,12 @@ let bvlSem_evaluate_def,bvlSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`(bvlSem_evaluate ([],env,(s:('c,'ffi)bvlSem_state)) = (Rval [],s))
   /\
-   (bvlSem_evaluate (x :: y :: xs,env,s) =
+   (bvlSem_evaluate (CONS x (CONS y xs),env,s) =
       (match fix_clock s (bvlSem_evaluate ([x],env,s)) with (Rval
         v1,s1) ->
-          (match bvlSem_evaluate (y :: xs,env,s1) with (Rval vs,s2)
-            -> (Rval (HD v1 :: vs),s2) | res -> res) | res -> res)) /\
+          (match bvlSem_evaluate (CONS y xs,env,s1) with (Rval
+            vs,s2) -> (Rval (CONS (HD v1) vs),s2) | res -> res) | res
+            -> res)) /\
    (bvlSem_evaluate ([Var n],env,s) =
       (if n < LENGTH env then (Rval [EL n env],s) else (Rerr (Rabort
         Rtype_error),s))) /\
@@ -865,13 +868,14 @@ let bvlSem_evaluate_def,bvlSem_evaluate_ind = assume_definition_rec
              (Rerr (Rabort Rtype_error),s1)) | res -> res)) /\
    (bvlSem_evaluate ([Let xs x2],env,s) =
       (match fix_clock s (bvlSem_evaluate (xs,env,s)) with (Rval
-        vs,s1) -> bvlSem_evaluate ([x2],vs ++ env,s1) | res -> res)) /\
+        vs,s1) -> bvlSem_evaluate ([x2],APPEND vs env,s1) | res ->
+        res)) /\
    (bvlSem_evaluate ([Raise x1],env,s) =
       (match bvlSem_evaluate ([x1],env,s) with (Rval vs,s) -> (Rerr
         (Rraise (HD vs)),s) | res -> res)) /\
    (bvlSem_evaluate ([Handle x1 x2],env,s1) =
       (match fix_clock s1 (bvlSem_evaluate ([x1],env,s1)) with (Rerr
-        (Rraise v),s) -> bvlSem_evaluate ([x2],v :: env,s) | res ->
+        (Rraise v),s) -> bvlSem_evaluate ([x2],CONS v env,s) | res ->
         res)) /\
    (bvlSem_evaluate ([Op op xs],env,s) =
       (match fix_clock s (bvlSem_evaluate (xs,env,s)) with (Rval

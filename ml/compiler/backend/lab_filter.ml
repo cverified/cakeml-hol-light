@@ -30,8 +30,8 @@ let _ = size_thms "sec";;
 let filter_skip_def,filter_skip_ind = define_wf
   `MEASURE (\x0. list_size (sec_size (\x. 0)) x0)`
   [`filter_skip [] = []`;
-   `filter_skip (Section n xs :: rest) =
-         Section n (FILTER not_skip xs) :: filter_skip rest`];;
+   `filter_skip (CONS (Section n xs) rest) = CONS (Section n
+  (FILTER not_skip xs)) (filter_skip rest)`];;
 
 let filter_skip_MAP = prove
  (`!ls. filter_skip ls = MAP (\x. match x with Section n xs -> Section

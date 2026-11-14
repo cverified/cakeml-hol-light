@@ -28,9 +28,9 @@ let parse_sexp_def = new_definition
 let escape_string_def,escape_string_ind = define_wf
   `MEASURE (\x0. list_size char_size x0)`
   [`escape_string s =
-     (match s with "" -> "" | (CHR 92) :: s -> "\\\\" ++
-       escape_string s | (CHR 34) :: s -> "\\\"" ++ escape_string s
-       | c :: s -> c :: (escape_string s))`];;
+     (match s with "" -> "" | CONS (CHR 92) s -> APPEND "\\\\"
+       (escape_string s) | CONS (CHR 34) s -> APPEND "\\\""
+       (escape_string s) | CONS c s -> CONS c (escape_string s))`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -40,14 +40,15 @@ let print_space_separated_def,print_space_separated_ind = define_wf
         match x1 with
           [] -> ""
         | [x] -> x
-        | (x :: xs) -> x ++ " " ++ print_space_separated xs`];;
+        | (CONS x xs) -> APPEND (APPEND x " ")
+          (print_space_separated xs)`];;
 
 let strip_dot_def,strip_dot_ind = define_rec
   [`strip_dot (SX_NUM n) = ([],SOME (SX_NUM n))`;
    `strip_dot (SX_STR s) = ([],SOME (SX_STR s))`;
    `strip_dot (SX_SYM s) =
       (if s = "nil" then ([],NONE) else ([],SOME (SX_SYM s)))`;
-   `strip_dot (SX_CONS a d) = (let (ls,n) = strip_dot d in (a ::
+   `strip_dot (SX_CONS a d) = (let (ls,n) = strip_dot d in (CONS a
   ls,n))`];;
 
 (* the termination relation that HOL4 gives is
@@ -63,13 +64,13 @@ let print_sexp_def,print_sexp_ind = define_guess_cheat
         match s with
           SX_SYM s -> s
         | (SX_NUM n) -> num_to_dec_string n
-        | (SX_STR s) -> "\"" ++ escape_string s ++ "\""
+        | (SX_STR s) -> APPEND (APPEND "\"" (escape_string s)) "\""
         | s ->
       (let (ls,n) = strip_dot s in
       match n with NONE ->
-        (if LENGTH ls = 2 /\ HD ls = SX_SYM "quote" then "'" ++
-          print_sexp (EL 1 ls) else "(" ++ print_space_separated (MAP
-          print_sexp ls) ++ ")") | SOME last ->
-          "(" ++ print_space_separated (MAP print_sexp ls) ++ " . "
-            ++
-          print_sexp last ++ ")")`];;
+        (if LENGTH ls = 2 /\ HD ls = SX_SYM "quote" then APPEND "'"
+          (print_sexp (EL 1 ls)) else APPEND (APPEND "("
+          (print_space_separated (MAP print_sexp ls))) ")") | SOME last
+          -> APPEND (APPEND (APPEND (APPEND "(" (print_space_separated
+          (MAP print_sexp ls))) " . ")
+          (print_sexp last)) ")")`];;

@@ -110,7 +110,7 @@ let labels_rel_refl = prove
 
 let labels_rel_APPEND = prove
  (`labels_rel xs xs1 /\ labels_rel ys ys1 ==>
-   labels_rel (xs ++ ys) (xs1 ++ ys1)`,
+   labels_rel (APPEND xs ys) (APPEND xs1 ys1)`,
   CHEAT_TAC);;
 
 (* HOL4 wordConvsScript.sml:158-160: a theorem that HOL4 states as
@@ -373,8 +373,8 @@ let call_arg_convention_def,call_arg_convention_ind = define_wf
         match p with
           wordLang_Inst i ->
        inst_arg_convention i
-        | (Return x ys) -> (ys = GENLIST (\x. 2 * (x + 1)) (LENGTH
-          ys))
+        | (Return x ys) -> (ys = list_of_seq (\x. 2 * (x + 1))
+          (LENGTH ys))
         | (Raise y) -> (y = 2)
         | (Install ptr len _18 _19 _20) -> (ptr = 2 /\ len = 4)
         | (FFI x ptr len ptr2 len2 args) -> (ptr = 2 /\ len = 4 /\
@@ -384,10 +384,10 @@ let call_arg_convention_def,call_arg_convention_ind = define_wf
        ((a = 0) /\ (b = 2) /\ (c = 4) /\ (d = 6))
         | (Call ret dest args h) ->
        (match ret with
-         NONE -> args = GENLIST (\x. 2 * x) (LENGTH args) | SOME
+         NONE -> args = list_of_seq (\x. 2 * x) (LENGTH args) | SOME
            (vs,cutset,ret_handler,l1,l2) ->
-         args = GENLIST (\x. 2 * (x + 1)) (LENGTH args) /\
-         (vs = GENLIST (\x. 2 * (x + 1)) (LENGTH vs)) /\
+         args = list_of_seq (\x. 2 * (x + 1)) (LENGTH args) /\
+         (vs = list_of_seq (\x. 2 * (x + 1)) (LENGTH vs)) /\
            call_arg_convention ret_handler /\
        (match h with
          // Does not check the case where Calls are ill-formed
@@ -430,16 +430,18 @@ let extract_labels_def,extract_labels_ind = define_wf
          NONE -> [] | SOME (v,cutset,ret_handler,l1,l2) ->
          (let ret_rest = wordConvs_extract_labels ret_handler in
        (match h with
-         NONE -> [(l1,l2)] ++ ret_rest | SOME (v,prog,l1',l2') ->
-         (let h_rest = wordConvs_extract_labels prog in
-         [(l1,l2); (l1',l2')] ++ ret_rest ++ h_rest))))
+         NONE -> APPEND [(l1,l2)] ret_rest | SOME (v,prog,l1',l2')
+           ->
+         (let h_rest = wordConvs_extract_labels prog in APPEND
+           (APPEND [(l1,l2); (l1',l2')] ret_rest) h_rest))))
         | (wordLang_MustTerminate s1) -> wordConvs_extract_labels s1
-        | (Seq s1 s2) ->
-       wordConvs_extract_labels s1 ++ wordConvs_extract_labels s2
+        | (Seq s1 s2) -> APPEND (wordConvs_extract_labels s1)
+          (wordConvs_extract_labels s2)
         | (Loop names p exit_names) ->
        wordConvs_extract_labels p
         | (If cmp r1 ri e2 e3) ->
-       (wordConvs_extract_labels e2 ++ wordConvs_extract_labels e3)
+       (APPEND (wordConvs_extract_labels e2)
+         (wordConvs_extract_labels e3))
         | _21 -> []`];;
 hol4_overload "extract_labels" "wordConvs_extract_labels";;
 
@@ -506,8 +508,8 @@ let good_handlers_def,good_handlers_ind = define_wf
 
 let good_code_labels_def = new_definition
   `wordConvs_good_code_labels p elabs <=>
-   EVERY (\(n,m,pp). good_handlers n pp) p /\
-   (BIGUNION (set_of_list (MAP (\(n,m,pp). (wordConvs_get_code_labels
+   ALL (\(n,m,pp). good_handlers n pp) p /\
+   (UNIONS (set_of_list (MAP (\(n,m,pp). (wordConvs_get_code_labels
      pp)) p))) SUBSET
    (set_of_list (MAP FST p) UNION elabs)`;;
 hol4_overload "good_code_labels" "wordConvs_good_code_labels";;

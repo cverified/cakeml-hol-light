@@ -54,7 +54,7 @@ let can_interpret_def,can_interpret_ind = define_mutual_rec
         LENGTH es = 1)`;
    `can_interpret (Letrec _17 _18 _19 fns e:closLang_exp) = F`;
    `can_interpret_list [] = T`;
-   `can_interpret_list (x :: xs) = (can_interpret x /\
+   `can_interpret_list (CONS x xs) = (can_interpret x /\
   can_interpret_list xs)`];;
 
 (* check size *)
@@ -97,7 +97,7 @@ let check_size_def,check_size_ind = define_mutual_rec
    `check_size (k:num) (Letrec _38 _39 _40 fns e:closLang_exp) =
   ((k):num)`;
    `check_size_list (k:num) [] = k`;
-   `check_size_list (k:num) (x :: xs) =
+   `check_size_list (k:num) (CONS x xs) =
       (let k = check_size k x in if k = 0 then 0 else
          check_size_list k xs)`];;
 
@@ -124,7 +124,7 @@ let to_constant_def,to_constant_ind = assume_definition_rec
       ConstCons 0 [ConstInt (&n)]`;
    `to_constant (App _48 _49 e es:closLang_exp) =
       ConstCons 0 [to_constant e; match es with [] -> ConstInt
-        (&0) | (e1 :: _50) -> to_constant e1]`;
+        (&0) | (CONS e1 _50) -> to_constant e1]`;
    `to_constant (If t e1 e2 e3:closLang_exp) =
       ConstCons 0 [to_constant e1; to_constant e2; to_constant
         e3]`;
@@ -144,7 +144,7 @@ let to_constant_def,to_constant_ind = assume_definition_rec
    `to_constant (Letrec _64 _65 _66 fns e:closLang_exp) = ConstInt
   (&0)`;
    `to_constant_list [] = ConstCons 0 []`;
-   `to_constant_list (x :: xs) = ConstCons 0 [to_constant x;
+   `to_constant_list (CONS x xs) = ConstCons 0 [to_constant x;
   to_constant_list xs]`];;
 
 (* interpreter as closLang program *)
@@ -477,8 +477,8 @@ let compile_init_def = new_definition
          (closLang_SetGlobal 0)) [Var backend_common_None 1])`;;
 
 let attach_interpreter_def = new_definition
-  `attach_interpreter xs =
-     compile_init (has_install_list xs) :: xs`;;
+  `attach_interpreter xs = CONS (compile_init (has_install_list xs))
+  xs`;;
 
 let insert_interp_def = new_definition
   `insert_interp xs = MAP insert_interp1 xs`;;

@@ -68,8 +68,8 @@ let display_to_json_def,display_to_json_ind = define_shaped_rec
      (let es' = MAP display_to_json es in
      let props = [((implode "name"),String name); ((implode
        "args"),jsonLang_Array es')] in
-     let props' = (match tra with NONE -> props | SOME t ->
-       ((implode "trace"),trace_to_json t) :: props) in
+     let props' = (match tra with NONE -> props | SOME t -> CONS
+       ((implode "trace"),trace_to_json t) props) in
        jsonLang_Object props')) /\
    (display_to_json (String s:sExp) = String s) /\
    (display_to_json (displayLang_Tuple es) =
@@ -81,8 +81,8 @@ let display_to_json_def,display_to_json_ind = define_shaped_rec
 
 let display_to_str_tree_def,display_to_str_tree_ind = define_mutual_rec
   [`display_to_str_tree (displayLang_Item tra name es) =
-         mlsexp_Trees (mlsexp_Str name ::
-           display_to_str_tree_list es)`;
+         mlsexp_Trees (CONS (mlsexp_Str name)
+           (display_to_str_tree_list es))`;
    `display_to_str_tree (String s:sExp) = mlsexp_Str s`;
    `display_to_str_tree (displayLang_Tuple es:sExp) =
          (if NULL es then mlsexp_Str (implode "()") else
@@ -92,8 +92,8 @@ let display_to_str_tree_def,display_to_str_tree_ind = define_mutual_rec
            mlsexp_Trees (MAP mlsexp_GrabLine
            (display_to_str_tree_list es)))`;
    `display_to_str_tree_list [] = []`;
-   `display_to_str_tree_list (x :: xs) =
-        display_to_str_tree x :: display_to_str_tree_list xs`];;
+   `display_to_str_tree_list (CONS x xs) = CONS
+  (display_to_str_tree x) (display_to_str_tree_list xs)`];;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

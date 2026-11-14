@@ -113,13 +113,13 @@ let gc_fun_const_ok_def = new_definition
   `gc_fun_const_ok (f:('a word_loc) list#('a word->'a word_loc)#('a
   word->bool)#(store_name,'a word_loc)fmap->(('a word_loc) list#('a
   word->'a word_loc)#(store_name,'a word_loc)fmap) option) =
-     (!x y. f x = SOME y ==> EVERY2 (\a b. is_gc_word_const a ==>
-       b = a) (FST x) (FST y))`;;
+     (!x y. f x = SOME y ==> ALL2 (\a b. is_gc_word_const a ==> b
+       = a) (FST x) (FST y))`;;
 
 
 let sf_gc_consts_def = define_general
   [`sf_gc_consts (StackFrame _5 l0 sv h) (StackFrame _6 l0' sw h') =
-   (EVERY2 (\(ak,av) (bk,bv). (ak = bk) /\ (is_gc_word_const av
+   (ALL2 (\(ak,av) (bk,bv). (ak = bk) /\ (is_gc_word_const av
      ==> bv = av)) sv sw /\ l0 = l0' /\ h = h')`];;
 
 (* HOL4 word_simpProofScript.sml:146-152: code that the source has in
@@ -277,16 +277,16 @@ let lookup_filter_v_SOME_imp = prove
 (* LIST_REL/EVERY2 thms *)
 
 let LIST_REL_prefix = prove
- (`!R l1 l2 l1' l2'. LIST_REL R (l1 ++ l2) (l1' ++ l2') /\
+ (`!R l1 l2 l1' l2'. ALL2 R (APPEND l1 l2) (APPEND l1' l2') /\
                      LENGTH l1 = LENGTH l1' ==>
-                     LIST_REL R l1 l1'`,
+                     ALL2 R l1 l1'`,
   CHEAT_TAC);;
 
 let LIST_REL_append_left = prove
  (`!l0 l1 l2 R.
-   LIST_REL R (l0 ++ l1) l2 ==>
-   LIST_REL R l0 (TAKE (LENGTH l0) l2) /\
-   LIST_REL R l1 (DROP (LENGTH l0) l2)`,
+   ALL2 R (APPEND l0 l1) l2 ==>
+   ALL2 R l0 (TAKE (LENGTH l0) l2) /\
+   ALL2 R l1 (DROP (LENGTH l0) l2)`,
   CHEAT_TAC);;
 
 (* Stack thms *)
@@ -305,8 +305,8 @@ let pop_env_stack_gc = prove
 
 let ALOOKUP_LIST_REL_sf_gc_consts = prove
  (`!l1 l2 k v.
-   LIST_REL (\(ak,av) (bk,bv). ak = bk /\ (is_gc_word_const av ==> bv
-     = av)) l1 l2 /\
+   ALL2 (\(ak,av) (bk,bv). ak = bk /\ (is_gc_word_const av ==> bv =
+     av)) l1 l2 /\
    is_gc_word_const v /\
    ALOOKUP l1 k = SOME v ==>
    ALOOKUP l2 k = SOME v`,
@@ -314,8 +314,8 @@ let ALOOKUP_LIST_REL_sf_gc_consts = prove
 
 let ALOOKUP_LIST_REL_sf_gc_consts_NONE = prove
  (`!l1 l2 k v.
-   LIST_REL (\(ak,av) (bk,bv). ak = bk /\ (is_gc_word_const av ==> bv
-     = av)) l1 l2 /\
+   ALL2 (\(ak,av) (bk,bv). ak = bk /\ (is_gc_word_const av ==> bv =
+     av)) l1 l2 /\
    ALOOKUP l1 k = NONE ==>
    ALOOKUP l2 k = NONE`,
   CHEAT_TAC);;
@@ -326,8 +326,8 @@ let ALL_DISTINCT_PERM_FST = prove
   CHEAT_TAC);;
 
 let ALOOKUP_LIST_REL_value_rel = prove
- (`!f l' l k v. LIST_REL (\(ak,av) (bk,bv). (ak = bk) /\ (f av ==> bv =
-  av)) l' l /\
+ (`!f l' l k v. ALL2 (\(ak,av) (bk,bv). (ak = bk) /\ (f av ==> bv = av))
+  l' l /\
                 ALOOKUP l' k = SOME v /\
                 f v ==>
                 ALOOKUP l k = SOME v`,
@@ -372,10 +372,10 @@ let get_above_handler_def = new_definition
 
 let enc_stack_dec_stack_is_gc_word_const = prove
  (`!s s' s'l.
-   LIST_REL (\a b. is_gc_word_const a ==> b = a) (wordSem_enc_stack
-     s) s'l /\
+   ALL2 (\a b. is_gc_word_const a ==> b = a) (wordSem_enc_stack s)
+     s'l /\
    wordSem_dec_stack s'l s = SOME s' ==>
-   LIST_REL sf_gc_consts s s'`,
+   ALL2 sf_gc_consts s s'`,
   CHEAT_TAC);;
 
 let gc_fun_sf_gc_consts = prove
@@ -384,12 +384,12 @@ let gc_fun_sf_gc_consts = prove
    gc_fun (wordSem_enc_stack s,memory',mdomain,store) = SOME
      (s'l,memory',store') /\
    wordSem_dec_stack s'l s = SOME s' ==>
-   LIST_REL sf_gc_consts s s'`,
+   ALL2 sf_gc_consts s s'`,
   CHEAT_TAC);;
 
 let gc_sf_gc_consts = prove
  (`!s s'. gc_fun_const_ok (wordSem_state_gc_fun s) /\ wordSem_gc s =
-  SOME s' ==> LIST_REL sf_gc_consts (stack s) (stack s')`,
+  SOME s' ==> ALL2 sf_gc_consts (stack s) (stack s')`,
   CHEAT_TAC);;
 
 let gc_handler = prove
@@ -398,7 +398,7 @@ let gc_handler = prove
   CHEAT_TAC);;
 
 let sf_gc_consts_get_above_handler = prove
- (`!s s'. LIST_REL sf_gc_consts (stack s) (stack s') /\
+ (`!s s'. ALL2 sf_gc_consts (stack s) (stack s') /\
   wordSem_state_handler
           s' = wordSem_state_handler s /\ wordSem_state_handler
           s < LENGTH (stack s) ==>
@@ -407,11 +407,11 @@ let sf_gc_consts_get_above_handler = prove
 
 let LIST_REL_call_Result = prove
  (`!s s' s'' s''' env handler.
-   LIST_REL sf_gc_consts (stack (wordSem_push_env env handler s))
-     (stack s'') /\
+   ALL2 sf_gc_consts (stack (wordSem_push_env env handler s)) (stack
+     s'') /\
    wordSem_pop_env s'' = SOME s''' /\ wordSem_state_handler
    s'' = wordSem_state_handler (wordSem_push_env env handler s) ==>
-   LIST_REL sf_gc_consts (stack s) (stack s''') /\
+   ALL2 sf_gc_consts (stack s) (stack s''') /\
      wordSem_state_handler s''' = wordSem_state_handler s`,
   CHEAT_TAC);;
 
@@ -431,24 +431,24 @@ let call_env_push_env_dec_clock_handler_length = prove
   CHEAT_TAC);;
 
 let EVERY2_trans_LASTN_sf_gc_consts = prove
- (`!l l' l'' n R. n <= LENGTH l /\ LIST_REL sf_gc_consts l l' /\
-  LIST_REL sf_gc_consts (LASTN n l') l'' ==>
-             LIST_REL sf_gc_consts (LASTN n l) l''`,
+ (`!l l' l'' n R. n <= LENGTH l /\ ALL2 sf_gc_consts l l' /\ ALL2
+  sf_gc_consts (LASTN n l') l'' ==>
+             ALL2 sf_gc_consts (LASTN n l) l''`,
   CHEAT_TAC);;
 
 let LIST_REL_push_env = prove
- (`!R s s' env h. LIST_REL R (stack (wordSem_push_env env h s)) (stack
-  s') ==> LIST_REL R (stack s) (TL (stack s'))`,
+ (`!R s s' env h. ALL2 R (stack (wordSem_push_env env h s)) (stack s')
+  ==> ALL2 R (stack s) (TL (stack s'))`,
   CHEAT_TAC);;
 
 (*TODO move*)
 let LASTN_LENGTH_CONS = prove
- (`!l h. LASTN (LENGTH l) (h :: l) = l`,
+ (`!l h. LASTN (LENGTH l) (CONS h l) = l`,
   CHEAT_TAC);;
 
 let LASTN_TL_res = prove
- (`!l n h t. n < LENGTH l /\ LASTN (n + 1) l = (h :: t) ==> t = LASTN
-  n l`,
+ (`!l n h t. n < LENGTH l /\ LASTN (n + 1) l = (CONS h t) ==> t =
+  LASTN n l`,
   CHEAT_TAC);;
 
 let HD_LASTN = prove
@@ -461,7 +461,7 @@ let push_env_pop_env_locals_thm = prove
   s''' env names (handler:(num#'a wordLang_prog#num#num) option).
    cut_envs names (wordSem_state_locals s) = SOME env /\
    wordSem_push_env env handler s = s' /\
-   LIST_REL sf_gc_consts (stack s') (wordSem_state_stack s'') /\
+   ALL2 sf_gc_consts (stack s') (wordSem_state_stack s'') /\
    wordSem_pop_env s'' = SOME s''' ==>
    (!v w. wordSem_get_var v s = SOME w /\ is_gc_word_const w /\
      ~(sptree_lookup v (all_names names) = NONE) ==> wordSem_get_var v
@@ -473,22 +473,22 @@ let evaluate_sf_gc_consts = prove
    wordSem_evaluate (p,s) = (res,s') /\ gc_fun_const_ok
      (wordSem_state_gc_fun s) ==>
    (match res with NONE ->
-       LIST_REL sf_gc_consts (stack s) (stack s') /\
+       ALL2 sf_gc_consts (stack s) (stack s') /\
          wordSem_state_handler
        s' = wordSem_state_handler s | SOME (wordSem_Result _12 _13)
          ->
-       LIST_REL sf_gc_consts (stack s) (stack s') /\
+       ALL2 sf_gc_consts (stack s) (stack s') /\
          wordSem_state_handler
        s' = wordSem_state_handler s | SOME (wordSem_Exception _14
          _15) -> wordSem_state_handler
        s < LENGTH (stack s) ==>
-       LIST_REL sf_gc_consts (LASTN (wordSem_state_handler s) (stack
-         s)) (stack s') /\ wordSem_state_handler
+       ALL2 sf_gc_consts (LASTN (wordSem_state_handler s) (stack s))
+         (stack s') /\ wordSem_state_handler
        s' = get_above_handler s | SOME (Break _16) ->
-       LIST_REL sf_gc_consts (stack s) (stack s') /\
+       ALL2 sf_gc_consts (stack s) (stack s') /\
          wordSem_state_handler
        s' = wordSem_state_handler s | SOME (Continue _17) ->
-       LIST_REL sf_gc_consts (stack s) (stack s') /\
+       ALL2 sf_gc_consts (stack s) (stack s') /\
          wordSem_state_handler
        s' = wordSem_state_handler s | _18 -> T)`,
   CHEAT_TAC);;

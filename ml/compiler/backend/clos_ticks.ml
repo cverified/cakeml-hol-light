@@ -27,9 +27,9 @@ let clos_ticks_remove_ticks_def,clos_ticks_remove_ticks_ind =
   define_shaped_rec
   "sing>nested"
   [`clos_ticks_remove_ticks [] = []`;
-   `clos_ticks_remove_ticks ((x:closLang_exp) :: y :: xs) =
-         HD (clos_ticks_remove_ticks [x]) ::
-           clos_ticks_remove_ticks (y :: xs)`;
+   `clos_ticks_remove_ticks (CONS (x:closLang_exp) (CONS y xs)) =
+  CONS (HD (clos_ticks_remove_ticks [x])) (clos_ticks_remove_ticks
+  (CONS y xs))`;
    `clos_ticks_remove_ticks [(Var t v:closLang_exp)] = [(Var t
   v:closLang_exp)]`;
    `clos_ticks_remove_ticks [(If t x1 x2 x3:closLang_exp)] =
@@ -103,13 +103,11 @@ let clos_ticks_remove_ticks_sing_def,clos_ticks_remove_ticks_sing_ind =
          (closLang_Fn t loc_opt vs num_args
            ((clos_ticks_remove_ticks_sing (x1))))`;
    `clos_ticks_remove_ticks_list [] = []`;
-   `clos_ticks_remove_ticks_list ((x:closLang_exp) :: xs) =
-         clos_ticks_remove_ticks_sing x ::
-           clos_ticks_remove_ticks_list xs`;
+   `clos_ticks_remove_ticks_list (CONS (x:closLang_exp) xs) = CONS
+  (clos_ticks_remove_ticks_sing x) (clos_ticks_remove_ticks_list xs)`;
    `remove_ticks_let [] = []`;
-   `remove_ticks_let ((num_args,x) :: xs) =
-       (num_args,clos_ticks_remove_ticks_sing x) ::
-         remove_ticks_let xs`];;
+   `remove_ticks_let (CONS (num_args,x) xs) = CONS
+  (num_args,clos_ticks_remove_ticks_sing x) (remove_ticks_let xs)`];;
 hol4_overload "remove_ticks_list" "clos_ticks_remove_ticks_list";;
 hol4_overload "remove_ticks_sing" "clos_ticks_remove_ticks_sing";;
 

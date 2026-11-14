@@ -55,7 +55,7 @@ let option_lookup_def = new_definition
   x -> x)`;;
 
 let even_list_def = new_definition
-  `(even_list = GENLIST (\x. 2 * x))`;;
+  `(even_list = list_of_seq (\x. 2 * x))`;;
 
 (*Consistently sets up the next alloc variable rename for v*)
 let next_var_rename_def = new_definition
@@ -64,11 +64,11 @@ let next_var_rename_def = new_definition
 
 let list_next_var_rename_def,list_next_var_rename_ind = define_rec
   [`list_next_var_rename [] ssa (na:num) = ([],ssa,na)`;
-   `list_next_var_rename (x :: xs) ssa (na:num) =
+   `list_next_var_rename (CONS x xs) ssa (na:num) =
         // Write this way to make it ascending, can also use acc passing
         (let (y,ssa',na') = next_var_rename x ssa na in
         let (ys,ssa'',na'') = list_next_var_rename xs ssa' na' in
-          (y :: ys,ssa'',na''))`];;
+          (CONS y ys,ssa'',na''))`];;
 
 let fake_move_def = new_definition
   `(fake_move v:'a wordLang_prog) = Inst (asm_Const v (n2w 0))`;;
@@ -77,7 +77,7 @@ let fake_move_def = new_definition
 let merge_moves_def,merge_moves_ind = define_rec
   [`word_alloc_merge_moves [] ssa_L ssa_R (na:num) =
   ([],[],na,ssa_L,ssa_R)`;
-   `word_alloc_merge_moves (x :: xs) ssa_L ssa_R (na:num) =
+   `word_alloc_merge_moves (CONS x xs) ssa_L ssa_R (na:num) =
         (let (seqL,seqR,na',ssa_L',ssa_R') =
           word_alloc_merge_moves xs ssa_L ssa_R na in
         let optLx = sptree_lookup x ssa_L' in
@@ -88,7 +88,7 @@ let merge_moves_def,merge_moves_ind = define_rec
             (seqL,seqR,na',ssa_L',ssa_R') else
             let Lmove = (na',Lx) in
             let Rmove = (na',Ly) in
-            (Lmove :: seqL,Rmove :: seqR,na' + 4,
+            (CONS Lmove seqL,CONS Rmove seqR,na' + 4,
                               sptree_insert x na'
                                 ssa_L',sptree_insert x na' ssa_R'))
                                 | _2 ->
@@ -116,7 +116,7 @@ let priority_def = new_definition
 let fake_moves_def,fake_moves_ind = define_rec
   [`fake_moves prio [] ssa_L ssa_R (na:num) = ((Skip:'a
   wordLang_prog),(Skip:'a wordLang_prog),na,ssa_L,ssa_R)`;
-   `fake_moves prio (x :: xs) ssa_L ssa_R (na:num) =
+   `fake_moves prio (CONS x xs) ssa_L ssa_R (na:num) =
         (let (seqL,seqR,na',ssa_L',ssa_R') =
           fake_moves prio xs ssa_L ssa_R na in
         let optLx = sptree_lookup x ssa_L' in
@@ -319,7 +319,7 @@ let list_next_var_rename_move_def = new_definition
   x is already remapped *)
 let force_rename_def,force_rename_ind = define_rec
   [`force_rename [] ssa = ssa`;
-   `force_rename ((x,y) :: xs) ssa =
+   `force_rename (CONS (x,y) xs) ssa =
         force_rename xs (sptree_insert x y ssa)`];;
 
 let mk_prio_def = new_definition
@@ -462,7 +462,7 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
    `ssa_cc_trans (wordLang_Return num' nums) ssa na lt =
         (let num' = option_lookup ssa num' in
         let nums' = MAP (option_lookup ssa) nums in
-        let rets = GENLIST (\x. 2 * (x + 1)) (LENGTH nums') in
+        let rets = list_of_seq (\x. 2 * (x + 1)) (LENGTH nums') in
         let mov = wordLang_Move 0 (ZIP rets nums') in
         (wordLang_Seq mov (wordLang_Return num' rets),ssa,na))`;
    `ssa_cc_trans wordLang_Tick ssa na lt = (wordLang_Tick,ssa,na)`;
@@ -527,7 +527,7 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
         (prog,ssa'',na''))`;
    `ssa_cc_trans (wordLang_Call NONE dest args h) ssa na lt =
         (let names = MAP (option_lookup ssa) args in
-        let conv_args = GENLIST (\x. 2 * x) (LENGTH names) in
+        let conv_args = list_of_seq (\x. 2 * x) (LENGTH names) in
         let move_args = ((wordLang_Move 1) (ZIP conv_args names)) in
         let prog = wordLang_Seq move_args (wordLang_Call NONE dest
           conv_args h) in
@@ -541,7 +541,8 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
         let stack_set = apply_nummaps_key (option_lookup ssa')
           numset in
         let names = MAP (option_lookup ssa) args in
-        let conv_args = GENLIST (\x. 2 * (x + 1)) (LENGTH names) in
+        let conv_args = list_of_seq (\x. 2 * (x + 1)) (LENGTH names)
+          in
         let move_args = ((wordLang_Move 1) (ZIP conv_args names)) in
         let ssa_cut = inter ssa' all_names' in
         let (ret_mov,ssa'',na'') =
@@ -552,7 +553,7 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
           na'' in
         let (ren_ret_handler,ssa_2,na_2) =
           ssa_cc_trans ret_handler ssa_2_p na_2_p lt in
-        let regs' = GENLIST (\x. 2 * (x + 1)) (LENGTH ret) in
+        let regs' = list_of_seq (\x. 2 * (x + 1)) (LENGTH ret) in
         let mov_ret_handler =
             (wordLang_Seq ret_mov (wordLang_Seq ((wordLang_Move 1)
               (ZIP ret' regs')) (ren_ret_handler))) in
@@ -607,7 +608,7 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
      let ssa_body = inter ssa_refreshed names in
      let (body',ssa',na') =
        ssa_cc_trans body ssa_body na_refreshed
-         ((ssa_refreshed,names,exit_names) :: lt) in
+         (CONS (ssa_refreshed,names,exit_names) lt) in
      let back_moves = ssa_reconcile ssa' ssa_refreshed names in
      let body_final = (if back_moves = wordLang_Skip then body' else
        wordLang_Seq body' back_moves) in
@@ -874,8 +875,8 @@ let word_alloc_numset_list_insert_def,
     word_alloc_numset_list_insert_ind =
   define_rec
   [`word_alloc_numset_list_insert [] t = t`;
-   `word_alloc_numset_list_insert (x :: xs) t = sptree_insert x one
-  (word_alloc_numset_list_insert xs t)`];;
+   `word_alloc_numset_list_insert (CONS x xs) t = sptree_insert x
+  one (word_alloc_numset_list_insert xs t)`];;
 hol4_overload "numset_list_insert" "word_alloc_numset_list_insert";;
 
 let get_live_def,get_live_ind = define_shaped_rec
@@ -1046,8 +1047,8 @@ let remove_dead_def,remove_dead_ind = assume_definition_rec
          Var r ->
          (if MEM store_name nlive then
            (Skip,live,nlive) else
-           (Set store_name (Var r),sptree_insert r one
-             live,store_name :: nlive)) | _12 ->
+           (Set store_name (Var r),sptree_insert r one live,CONS
+             store_name nlive)) | _12 ->
          (let prog = Set store_name exp in
            (prog,get_live prog live lt,[])))
         | (Seq s1 s2) ->
@@ -1112,7 +1113,7 @@ let remove_dead_def,remove_dead_ind = assume_definition_rec
         // iteration).  Cost: no store-DCE across Loops; ordinary locals-DCE
         // inside the body still applies.
         | (Loop names body exit_names) ->
-       (let lt' = (names,exit_names) :: lt in
+       (let lt' = CONS (names,exit_names) lt in
        let (body',_15,_16) = remove_dead body names [] lt' in
        (Loop names body' exit_names,names,[]))
         // Break/Continue reset nlive to [] because they jump past whatever
@@ -1230,8 +1231,8 @@ let get_reads_exp_def,get_reads_exp_ind = define_wf
         | (Load exp) -> get_reads_exp exp
         | (wordLang_Op wop ls) ->
          FLAT (MAP get_reads_exp ls)
-        | (Shift sh exp nexp) -> get_reads_exp exp ++ get_reads_exp
-          nexp
+        | (Shift sh exp nexp) -> APPEND (get_reads_exp exp)
+          (get_reads_exp nexp)
         | expr -> []`];;
 
 let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec
@@ -1245,7 +1246,7 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec
    `get_clash_tree (wordLang_Get num' store) lt = reg_alloc_Delta
   [num'] []`;
    `get_clash_tree (wordLang_Store exp num') lt = reg_alloc_Delta []
-  (num' :: get_reads_exp exp)`;
+  (CONS num' (get_reads_exp exp))`;
    `get_clash_tree (wordLang_Seq s1 s2) lt = reg_alloc_Seq
   (get_clash_tree s1 lt) (get_clash_tree s2 lt)`;
    `get_clash_tree (wordLang_If cmp r1 ri e2 e3) lt =
@@ -1277,7 +1278,7 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec
    `get_clash_tree (wordLang_Raise num') lt = reg_alloc_Delta []
   [num']`;
    `get_clash_tree (wordLang_Return num1 nums) lt = reg_alloc_Delta
-  [] (num1 :: nums)`;
+  [] (CONS num1 nums)`;
    `get_clash_tree wordLang_Tick lt = reg_alloc_Delta [] []`;
    `get_clash_tree (wordLang_LocValue r l1) lt = reg_alloc_Delta [r]
   []`;
@@ -1289,13 +1290,13 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec
   reg_alloc_Delta [a; b; c; d] [c; d]`;
    `get_clash_tree (wordLang_ShareInst op v exp) lt = (if op = Store
   \/ op = asm_Store8 \/ op = asm_Store16 \/ op = asm_Store32 then
-  reg_alloc_Delta [] (v :: get_reads_exp exp) else reg_alloc_Delta
-  [v] (get_reads_exp exp))`;
+  reg_alloc_Delta [] (CONS v (get_reads_exp exp)) else
+  reg_alloc_Delta [v] (get_reads_exp exp))`;
    `get_clash_tree (wordLang_Loop names body exit_names) lt =
         reg_alloc_Seq (reg_alloc_Set names)
           (reg_alloc_Seq (reg_alloc_Set exit_names)
-            (reg_alloc_Seq (get_clash_tree body ((names,exit_names)
-              :: lt))
+            (reg_alloc_Seq (get_clash_tree body (CONS
+              (names,exit_names) lt))
               (reg_alloc_Set names)))`;
    `// Break n: exit_names vars must all be live
     get_clash_tree (wordLang_Break n) lt =
@@ -1337,8 +1338,8 @@ let get_prefs_def,get_prefs_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x0)`
   [`get_prefs prog acc =
         match prog with
-          wordLang_Move pri ls -> (MAP (\(x,y). (pri,x,y)) ls) ++
-            acc
+          wordLang_Move pri ls -> APPEND (MAP (\(x,y). (pri,x,y))
+            ls) acc
         | (wordLang_MustTerminate s1) ->
        get_prefs s1 acc
         | (Seq s1 s2) ->
@@ -1355,8 +1356,8 @@ let get_prefs_def,get_prefs_ind = define_wf
 let get_prefs_pmatch = prove
  (`!s acc.
    get_prefs s acc =
-     (match s with (wordLang_Move pri ls) -> (MAP (\(x,y). (pri,x,y))
-       ls) ++ acc | (wordLang_MustTerminate s1) ->
+     (match s with (wordLang_Move pri ls) -> APPEND (MAP (\(x,y).
+       (pri,x,y)) ls) acc | (wordLang_MustTerminate s1) ->
      get_prefs s1 acc | (Seq s1 s2) ->
      get_prefs s1 (get_prefs s2 acc) | (If cmp num' rimm e2 e3) ->
      get_prefs e2 (get_prefs e3 acc) | (Call (SOME
@@ -1601,30 +1602,27 @@ let get_forced_def,get_forced_ind = define_wf
        (match i with
          Arith (asm_AddCarry r1 r2 r3 r4) ->
           (if (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V)
-            then
-             (if r1 = r3 then [] else [(r1,r3)]) ++
-             (if r1 = r4 then [] else [(r1,r4)]) ++
+            then APPEND (APPEND (if r1 = r3 then [] else [(r1,r3)])
+             (if r1 = r4 then [] else [(r1,r4)]))
              acc else acc) | Arith (asm_AddOverflow r1 r2 r3 r4) ->
           (if (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V)
-            then
-             (if r1 = r3 then [] else [(r1,r3)]) ++
+            then APPEND (if r1 = r3 then [] else [(r1,r3)])
              acc else acc) | Arith (asm_SubOverflow r1 r2 r3 r4) ->
           (if (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V)
-            then
-             (if r1 = r3 then [] else [(r1,r3)]) ++
+            then APPEND (if r1 = r3 then [] else [(r1,r3)])
              acc else acc) | Arith (asm_LongMul r1 r2 r3 r4) ->
-          (if (asm_config_ISA c = ARMv7) then
-            (if (r1 = r2) then [] else [(r1,r2)]) ++ acc else if
-              (asm_config_ISA c = ARMv8) \/ (asm_config_ISA c = RISC_V)
-              \/ (asm_config_ISA c = Ag32) then
-            (if r1 = r3 then [] else [(r1,r3)]) ++
-            (if r1 = r4 then [] else [(r1,r4)]) ++
+          (if (asm_config_ISA c = ARMv7) then APPEND (if (r1 = r2)
+            then [] else [(r1,r2)]) acc else if (asm_config_ISA c =
+            ARMv8) \/ (asm_config_ISA c = RISC_V) \/ (asm_config_ISA c
+            = Ag32) then APPEND (APPEND (if r1 = r3 then [] else
+            [(r1,r3)])
+            (if r1 = r4 then [] else [(r1,r4)]))
             acc else
-            acc) | asm_FP (FPMovToReg r1 r2 d) ->
-           (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
-             []) ++ acc | asm_FP (FPMovFromReg d r1 r2) ->
-           (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
-             []) ++ acc | _85 -> acc)
+            acc) | asm_FP (FPMovToReg r1 r2 d) -> APPEND (if
+              dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else [])
+              acc | asm_FP (FPMovFromReg d r1 r2) -> APPEND (if
+              dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else [])
+              acc | _85 -> acc)
         | (c,(wordLang_MustTerminate s1)) ->
        get_forced c s1 acc
         | (c,(Seq s1 s2)) ->
@@ -1645,34 +1643,30 @@ let get_forced_pmatch = prove
      (match prog with
        Inst (Arith (asm_AddCarry r1 r2 r3 r4)) ->
         (if (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V)
-          then
-           (if r1 = r3 then [] else [(r1,r3)]) ++
-           (if r1 = r4 then [] else [(r1,r4)]) ++
+          then APPEND (APPEND (if r1 = r3 then [] else [(r1,r3)])
+           (if r1 = r4 then [] else [(r1,r4)]))
            acc else acc) | Inst (Arith (asm_AddOverflow r1 r2 r3 r4))
              ->
         (if (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V)
-          then
-           (if r1 = r3 then [] else [(r1,r3)]) ++
+          then APPEND (if r1 = r3 then [] else [(r1,r3)])
            acc else acc) | Inst (Arith (asm_SubOverflow r1 r2 r3 r4))
              ->
         (if (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V)
-          then
-           (if r1 = r3 then [] else [(r1,r3)]) ++
+          then APPEND (if r1 = r3 then [] else [(r1,r3)])
            acc else acc) | Inst (Arith (asm_LongMul r1 r2 r3 r4)) ->
-        (if (asm_config_ISA c = ARMv7) then
-          (if (r1 = r2) then [] else [(r1,r2)]) ++ acc else if
-            (asm_config_ISA c = ARMv8) \/ (asm_config_ISA c = RISC_V) \/
-            (asm_config_ISA c = Ag32) then
-          (if r1 = r3 then [] else [(r1,r3)]) ++
-          (if r1 = r4 then [] else [(r1,r4)]) ++
+        (if (asm_config_ISA c = ARMv7) then APPEND (if (r1 = r2) then
+          [] else [(r1,r2)]) acc else if (asm_config_ISA c = ARMv8) \/
+          (asm_config_ISA c = RISC_V) \/ (asm_config_ISA c = Ag32) then
+          APPEND (APPEND (if r1 = r3 then [] else [(r1,r3)])
+          (if r1 = r4 then [] else [(r1,r4)]))
           acc else
-          acc) | Inst (asm_FP (FPMovToReg r1 r2 d)) ->
-         (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
-           []) ++ acc | Inst (asm_FP (FPMovFromReg d r1 r2)) ->
-         (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
-           []) ++ acc | wordLang_MustTerminate s1 -> get_forced c s1 acc
-           | Seq s1 s2 -> get_forced c s1 (get_forced c s2 acc) | If cmp
-           num' rimm e2 e3 ->
+          acc) | Inst (asm_FP (FPMovToReg r1 r2 d)) -> APPEND (if
+            dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else [])
+            acc | Inst (asm_FP (FPMovFromReg d r1 r2)) -> APPEND (if
+            dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else [])
+            acc | wordLang_MustTerminate s1 -> get_forced c s1 acc | Seq
+            s1 s2 -> get_forced c s1 (get_forced c s2 acc) | If cmp num'
+            rimm e2 e3 ->
        get_forced c e2 (get_forced c e3 acc) | Call (SOME
          (v,cutset,ret_handler,l1,l2)) dest args NONE ->
        get_forced c ret_handler acc | Call (SOME
@@ -1686,14 +1680,14 @@ let get_forced_pmatch = prove
 (*col is injective over every cut set*)
 let check_colouring_ok_alt_def,check_colouring_ok_alt_ind = define_rec
   [`check_colouring_ok_alt col [] = T`;
-   `check_colouring_ok_alt col (x :: xs) <=>
+   `check_colouring_ok_alt col (CONS x xs) <=>
         (let names = MAP (col o FST) (toAList x) in
           ALL_DISTINCT names /\ check_colouring_ok_alt col xs)`];;
 
 let every_even_colour_def = new_definition
   `every_even_colour col <=>
-   EVERY (\(x,y). if is_phy_var x then y = x DIV 2 else T)
-     (toAList col)`;;
+   ALL (\(x,y). if is_phy_var x then y = x DIV 2 else T) (toAList
+     col)`;;
 
 (*Extract a colouring function from the generated sptree*)
 let total_colour_def = new_definition
@@ -1718,7 +1712,7 @@ let oracle_colour_ok_def = new_definition
           // Note: possibly avoid these checks and instead check the oracle domain directly
           // every_var is_phy_var prog ∧
           every_stack_var (\x. x >= 2 * k) prog /\
-          EVERY (\(x,y). ~((tcol x) = (tcol y))) ls then
+          ALL (\(x,y). ~((tcol x) = (tcol y))) ls then
           SOME prog else
           NONE else NONE))`;;
 
@@ -1736,11 +1730,13 @@ let oracle_colour_ok_def = new_definition
   returns (num, maxpriority, (x,y))
 *)
 let canonize_moves_aux_def,canonize_moves_aux_ind = define_rec
-  [`canonize_moves_aux curp curm ctr [] acc = (ctr,curp,curm) :: acc`;
-   `canonize_moves_aux curp curm ctr ((p,m) :: xs) acc =
+  [`canonize_moves_aux curp curm ctr [] acc = CONS (ctr,curp,curm)
+  acc`;
+   `canonize_moves_aux curp curm ctr (CONS (p,m) xs) acc =
         (if curm = m then
           canonize_moves_aux (MAX curp p) m (ctr + 1) xs acc else
-          canonize_moves_aux p m 1 xs ((ctr,curp,curm) :: acc))`];;
+          canonize_moves_aux p m 1 xs (CONS (ctr,curp,curm)
+            acc))`];;
 
 let canonize_moves_def = new_definition
   `canonize_moves ls =
@@ -1751,8 +1747,8 @@ let canonize_moves_def = new_definition
        if x1 = x2 then
          if y1 = y2 then
            p1 < p2 else y1 < y2 else x1 < x2) can1 in
-   match can2 with [] -> [] | ((p,m) :: xs) -> canonize_moves_aux
-     p m 1 xs [])`;;
+   match can2 with [] -> [] | (CONS (p,m) xs) ->
+     canonize_moves_aux p m 1 xs [])`;;
 
 (* TODO: ALL of these magic numbers must be adjusted!! *)
 
@@ -1856,8 +1852,8 @@ let get_stack_only_aux_def,get_stack_only_aux_ind = define_guess_cheat
        get_stack_only_aux tfs body
         | prog ->
        (match get_clash_tree prog [] with
-         reg_alloc_Delta ws rs -> remove_temp_stack (ws ++ rs)
-           tfs | _95 -> tfs)`];;
+         reg_alloc_Delta ws rs -> remove_temp_stack (APPEND ws
+           rs) tfs | _95 -> tfs)`];;
 
 let get_stack_only_def = new_definition
   `get_stack_only prog = SND (get_stack_only_aux (LN,LN) prog)`;;

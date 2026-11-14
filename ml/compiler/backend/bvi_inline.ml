@@ -43,8 +43,8 @@ let canonical_wrapper_def = new_definition
           bvi_LetCall rets ticks worker args
            (bvi_Op (closLang_BlockOp (closLang_Cons tag)) rvs) ->
              ~(worker = name) /\
-        args = GENLIST bvi_Var arity /\
-        rvs = REVERSE (GENLIST bvi_Var rets)
+        args = list_of_seq bvi_Var arity /\
+        rvs = REVERSE (list_of_seq bvi_Var rets)
         | _1 -> F`;;
 
 let wrapper_ok_def = new_definition
@@ -84,16 +84,17 @@ let inline_exp_def,inline_exp_ind = assume_definition_rec
            (inline_exp cs y)`;
    `inline_exp cs (bvi_Return xs) = bvi_Return (inline_exps cs xs)`;
    `inline_exps cs [] = []`;
-   `inline_exps cs (x :: xs) = inline_exp cs x :: inline_exps cs xs`];;
+   `inline_exps cs (CONS x xs) = CONS (inline_exp cs x)
+  (inline_exps cs xs)`];;
 
 let inline_all_def,inline_all_ind = define_rec
   [`inline_all cs [] = (cs,[])`;
-   `inline_all cs ((name,arity,body) :: prog) =
+   `inline_all cs (CONS (name,arity,body) prog) =
          (let body = inline_exp cs body in
          let cs1 = (if wrapper_ok name arity body then
                      sptree_insert name (arity,body) cs else cs) in
          let (cs2,prog2) = inline_all cs1 prog in
-           (cs2,(name,arity,body) :: prog2))`];;
+           (cs2,CONS (name,arity,body) prog2))`];;
 
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives is
@@ -126,8 +127,8 @@ let remove_ticks_exp_def,remove_ticks_exp_ind = define_mutual_shaped_wf
    `remove_ticks_exp (bvi_Return xs) =
          bvi_Return (remove_ticks_exps xs)`;
    `remove_ticks_exps [] = []`;
-   `remove_ticks_exps (x :: xs) =
-         remove_ticks_exp x :: remove_ticks_exps xs`];;
+   `remove_ticks_exps (CONS x xs) = CONS (remove_ticks_exp x)
+  (remove_ticks_exps xs)`];;
 
 let compile_inc_def = new_definition
   `bvi_inline_compile_inc cs prog =
@@ -142,48 +143,48 @@ hol4_overload "compile_prog" "bvi_inline_compile_prog";;
 
 let canonical_four_result_wrapper = prove
  (`wrapper_ok 10 3
-     (bvi_LetCall 4 0 11 (GENLIST Var 3)
+     (bvi_LetCall 4 0 11 (list_of_seq Var 3)
        (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (REVERSE
-         (GENLIST Var 4))))`,
+         (list_of_seq Var 4))))`,
   CHEAT_TAC);;
 
 let malformed_wrappers_rejected = prove
  (`~(wrapper_ok 10 3
-       (bvi_LetCall 4 0 10 (GENLIST Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST Var
-           4)))) /\
+       (bvi_LetCall 4 0 10 (list_of_seq Var 3)
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
+           Var 4)))) /\
    ~(wrapper_ok 10 3
        (bvi_LetCall 4 0 11 [Var 0; Var 2; Var 1]
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST Var
-           4)))) /\
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
+           Var 4)))) /\
    ~(wrapper_ok 10 3
-       (bvi_LetCall 4 0 11 (GENLIST Var 3)
+       (bvi_LetCall 4 0 11 (list_of_seq Var 3)
          (bvi_Op (closLang_BlockOp (closLang_Cons 7)) [Var 0; Var 1;
            Var 2]))) /\
-   ~(wrapper_ok 10 3 (bvi_Return (GENLIST Var 3)))`,
+   ~(wrapper_ok 10 3 (bvi_Return (list_of_seq Var 3)))`,
   CHEAT_TAC);;
 
 let inline_boundary_examples = prove
  (`inline_exp (sptree_insert 10 (3,
-       bvi_LetCall 4 0 11 (GENLIST Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST Var
-           4))) LN) (Call 2 (SOME 10) [Var 4; Var 5; Var 6]
+       bvi_LetCall 4 0 11 (list_of_seq Var 3)
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
+           Var 4))) LN) (Call 2 (SOME 10) [Var 4; Var 5; Var 6]
            NONE:bvi_exp) =
        Let [Var 4; Var 5; Var 6]
          (bvi_mk_tick 3
-           (bvi_LetCall 4 0 11 (GENLIST Var 3)
-             (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST
-               Var 4)))) /\
+           (bvi_LetCall 4 0 11 (list_of_seq Var 3)
+             (bvi_Op (closLang_BlockOp (closLang_Cons 7))
+               (list_of_seq Var 4)))) /\
    inline_exp (sptree_insert 10 (3,
-       bvi_LetCall 4 0 11 (GENLIST Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST Var
-           4))) LN)
+       bvi_LetCall 4 0 11 (list_of_seq Var 3)
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
+           Var 4))) LN)
      (Call 2 (SOME 10) [Var 4; Var 5; Var 6] (SOME (Var 0))) =
        Call 2 (SOME 10) [Var 4; Var 5; Var 6] (SOME (Var 0)) /\
    inline_exp (sptree_insert 10 (3,
-       bvi_LetCall 4 0 11 (GENLIST Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST Var
-           4))) LN)
+       bvi_LetCall 4 0 11 (list_of_seq Var 3)
+         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
+           Var 4))) LN)
      (bvi_LetCall 1 2 10 [Var 4; Var 5; Var 6] (bvi_Return [Var 0]))
        =
        bvi_LetCall 1 2 10 [Var 4; Var 5; Var 6] (bvi_Return [Var

@@ -78,7 +78,7 @@ let call_graph_def,call_graph_ind = assume_definition_rec
             (match ret with NONE ->
               (if LENGTH ns < total' then
                  mk_Branch (Call d (word_depth_Leaf))
-                   (call_graph funs d (d :: ns) total' body) else
+                   (call_graph funs d (CONS d ns) total' body) else
                      word_depth_Leaf) | SOME (_4,_5,ret_prog,_6,_7) ->
               (let new_funs = sptree_delete d funs in
                 match handler with NONE -> word_depth_Branch
@@ -113,7 +113,7 @@ let full_call_graph_def = new_definition
 
 let max_depth_graphs_def,max_depth_graphs_ind = define_rec
   [`max_depth_graphs ss [] all' funs all_funs = SOME 0`;
-   `max_depth_graphs ss (n :: ns) all' funs all_funs =
+   `max_depth_graphs ss (CONS n ns) all' funs all_funs =
       (match sptree_lookup n all_funs with NONE -> NONE | SOME
         (a,body) ->
           OPTION_MAP2 MAX (sptree_lookup n ss)

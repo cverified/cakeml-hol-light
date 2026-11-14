@@ -73,7 +73,7 @@ let state_rel_1_def = new_definition
 
 (* [local] *)
 let LIST_REL_eq' = prove
- (`!xs ys. LIST_REL (\v1 v2. v1 = v2) = (\xs ys. xs = ys)`,
+ (`!xs ys. ALL2 (\v1 v2. v1 = v2) = (\xs ys. xs = ys)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -141,11 +141,10 @@ let clos_interp_el_thm = prove
  (`!n env rest cl_env.
      n < LENGTH env /\ 1 <= closSem_state_max_app t4 ==>
      (?c. closSem_evaluate
-           ([clos_interp_el],
-            list_to_v env :: closSem_Number (&n) ::
-            Recclosure NONE [] cl_env
+           ([clos_interp_el],CONS (list_to_v env) (CONS
+             (closSem_Number (&n)) (CONS (Recclosure NONE [] cl_env
               [(1,closLang_Fn (implode "") NONE NONE 1
-                clos_interp_el)] 0 :: rest,state_clock_fupd (K (c +
+                clos_interp_el)] 0) rest)),state_clock_fupd (K (c +
                 state_clock t4))
             t4) = (Rval [EL n env],t4))`,
   CHEAT_TAC);;
@@ -154,14 +153,13 @@ let clos_interp_rev_thm = prove
  (`!a env rest cl_env.
      1 <= closSem_state_max_app t4 ==>
      closSem_evaluate
-       ([clos_interp_rev],
-         list_to_v env :: list_to_v a ::
-            Recclosure NONE [] cl_env
+       ([clos_interp_rev],CONS (list_to_v env) (CONS (list_to_v a)
+         (CONS (Recclosure NONE [] cl_env
               [(1,closLang_Fn (implode "") NONE NONE 1
-                clos_interp_rev)] 0 :: rest,state_clock_fupd (K (2 *
+                clos_interp_rev)] 0) rest)),state_clock_fupd (K (2 *
                 LENGTH a + state_clock t4))
             t4) =
-      (Rval [list_to_v (REVERSE a ++ env)],t4)`,
+      (Rval [list_to_v (APPEND (REVERSE a) env)],t4)`,
   CHEAT_TAC);;
 
 (* HOL4 clos_interpProofScript.sml:171-172: the ML values that the
@@ -333,21 +331,21 @@ let v_ok_def,v_ok_ind = define_shaped_rec
   "nested"
   [`v_ok (closSem_Number i:closSem_v) <=> T`;
    `v_ok (Word64 w:closSem_v) <=> T`;
-   `v_ok (closSem_Block n vs:closSem_v) <=> EVERY v_ok vs`;
+   `v_ok (closSem_Block n vs:closSem_v) <=> ALL v_ok vs`;
    `v_ok (closSem_ByteVector ws) <=> T`;
    `v_ok (closSem_RefPtr b n:closSem_v) <=> T`;
    `v_ok (Closure loco vs1 env1 n bod1:closSem_v) <=>
-        ~(has_install bod1) /\ EVERY v_ok env1 /\ EVERY v_ok vs1`;
+        ~(has_install bod1) /\ ALL v_ok env1 /\ ALL v_ok vs1`;
    `v_ok (Recclosure loco vs1 env1 fns1 i:closSem_v) <=>
-        EVERY v_ok env1 /\ EVERY v_ok vs1 /\ i < LENGTH fns1 /\
-        EVERY ((~) o has_install o SND) fns1`];;
+        ALL v_ok env1 /\ ALL v_ok vs1 /\ i < LENGTH fns1 /\
+        ALL ((~) o has_install o SND) fns1`];;
 
 let res_ok_def = new_definition
   `res_ok x1 =
       match x1 with
         Rerr (Rabort _2) -> T
       | (Rerr (Rraise v)) -> v_ok v
-      | (Rval v) -> EVERY v_ok v`;;
+      | (Rval v) -> ALL v_ok v`;;
 
 let state_rel'_def = new_definition
   `state_rel' (s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state) <=>
@@ -359,11 +357,11 @@ let state_rel'_def = new_definition
        closSem_state_clock
      t = closSem_state_clock s /\ closSem_state_ffi
      t = closSem_state_ffi s /\ closSem_state_globals
-     s = closSem_state_globals t /\ EVERY (OPTION_ALL v_ok)
+     s = closSem_state_globals t /\ ALL (OPTION_ALL v_ok)
        (closSem_state_globals t) /\ closSem_state_refs
      s = closSem_state_refs t /\
-     FEVERY (\(k,v). !vs. v = closSem_ValueArray vs ==> EVERY v_ok
-       vs) (closSem_state_refs t) /\
+     FEVERY (\(k,v). !vs. v = closSem_ValueArray vs ==> ALL v_ok vs)
+       (closSem_state_refs t) /\
      FEVERY (\(k,v). !m w. v = Thunk m w ==> v_ok w)
        (closSem_state_refs t) /\ closSem_state_compile
      s = pure_cc (insert_interp ## I) (closSem_state_compile t) /\
@@ -372,8 +370,8 @@ let state_rel'_def = new_definition
        closSem_state_compile_oracle s`;;
 
 let lookup_vars_ok = prove
- (`!vs env env'. lookup_vars vs env = SOME env' /\ EVERY v_ok env ==>
-  EVERY v_ok env'`,
+ (`!vs env env'. lookup_vars vs env = SOME env' /\ ALL v_ok env ==>
+  ALL v_ok env'`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -394,7 +392,7 @@ let state_rel'_dec_clock = prove
 
 (* [local] *)
 let has_install_list_eq = prove
- (`!xs. has_install_list xs <=> EXISTS has_install xs`,
+ (`!xs. has_install_list xs <=> EX has_install xs`,
   CHEAT_TAC);;
 
 let evaluate_change_oracle = prove
@@ -402,14 +400,14 @@ let evaluate_change_oracle = prove
      tmp = (xs,env,s1) /\
      (closSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr
        (Rabort Rtype_error)) ==>
-     state_rel' s1 t1 /\ ~(has_install_list xs) /\ EVERY v_ok env ==>
+     state_rel' s1 t1 /\ ~(has_install_list xs) /\ ALL v_ok env ==>
      (?t2.
         (closSem_evaluate (xs,env,t1) = (res,t2)) /\
         state_rel' s2 t2 /\ res_ok res)) /\
    (!loc f args (s:('c,'ffi)closSem_state) res s2 t1.
        evaluate_app loc f args s = (res,s2) /\ ~(res = Rerr (Rabort
          Rtype_error)) ==>
-       state_rel' s t1 /\ EVERY v_ok args /\ v_ok f ==>
+       state_rel' s t1 /\ ALL v_ok args /\ v_ok f ==>
        (?t2.
           (evaluate_app loc f args t1 = (res,t2)) /\
           state_rel' s2 t2 /\ res_ok res))`,
@@ -469,11 +467,11 @@ let every_Fn_vs_NONE_insert_interp = prove
   CHEAT_TAC);;
 
 let insert_interp_no_mti = prove
- (`MEM e (insert_interp xs) ==> EVERY no_mti xs ==> no_mti e`,
+ (`MEM e (insert_interp xs) ==> ALL no_mti xs ==> no_mti e`,
   CHEAT_TAC);;
 
 let insert_interp_esgc_free = prove
- (`EVERY closProps_esgc_free (insert_interp xs) = EVERY
+ (`ALL closProps_esgc_free (insert_interp xs) = ALL
   closProps_esgc_free xs`,
   CHEAT_TAC);;
 

@@ -48,8 +48,8 @@ let pure_add_constraints_success = prove
 (*t_compat is preserved over certain types of pure_add_constraints*)
 let t_compat_pure_add_constraints_1 = prove
  (`!ls s sx.
-    t_compat s sx /\ EVERY (\(x,y). t_walkstar sx x = t_walkstar sx
-      y) ls ==>
+    t_compat s sx /\ ALL (\(x,y). t_walkstar sx x = t_walkstar sx y)
+      ls ==>
     (?si. pure_add_constraints s ls si /\ t_compat si sx)`,
   CHEAT_TAC);;
 
@@ -58,7 +58,7 @@ let t_compat_pure_add_constraints_2 = prove
  (`!ls s sx.
     t_wfs s /\
     pure_add_constraints s ls sx ==>
-    EVERY (\(x,y). t_walkstar sx x = t_walkstar sx y) ls`,
+    ALL (\(x,y). t_walkstar sx x = t_walkstar sx y) ls`,
   CHEAT_TAC);;
 
 (*behaves like a function if the first 2 arguments are equal*)
@@ -73,15 +73,15 @@ let pure_add_constraints_functional = prove
 (* [local] *)
 let pure_add_constraints_swap_lemma = prove
  (`t_wfs s /\
-   pure_add_constraints s (a ++ b) sx ==>
-   (?si. pure_add_constraints s (b ++ a) si /\
+   pure_add_constraints s (APPEND a b) sx ==>
+   (?si. pure_add_constraints s (APPEND b a) si /\
         t_compat si sx)`,
   CHEAT_TAC);;
 
 let pure_add_constraints_swap = prove
  (`t_wfs s /\
-    pure_add_constraints s (a ++ b) sx ==>
-    (?si. pure_add_constraints s (b ++ a) si /\
+    pure_add_constraints s (APPEND a b) sx ==>
+    (?si. pure_add_constraints s (APPEND b a) si /\
          t_compat si sx /\
          t_compat sx si)`,
   CHEAT_TAC);;
@@ -100,8 +100,8 @@ let extend_t_vR_WF = prove
 (* [local] *)
 let not_t_oc = prove
  (`(!t s v lim. t_wfs s /\ check_t lim {} t ==> ~(t_oc s t v)) /\
-   (!ts s t v lim. t_wfs s /\ EVERY (check_t lim {}) ts ==>
-     ~(EXISTS (\t. t_oc s t v) ts))`,
+   (!ts s t v lim. t_wfs s /\ ALL (check_t lim {}) ts ==> ~(EX (\t.
+     t_oc s t v) ts))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -114,7 +114,7 @@ let pure_add_constraints_exists = prove
  (`!s ts next_uvar lim.
     t_wfs s /\
     FDOM s = count next_uvar /\
-    EVERY (check_freevars lim []) ts ==>
+    ALL (check_freevars lim []) ts ==>
     (let tys = MAP (\n. (next_uvar + n)) (COUNT_LIST (LENGTH ts)) in
     let targs = MAP unconvert_t ts in
     let constraints = ZIP (MAP Infer_Tuvar tys) targs in
@@ -141,7 +141,7 @@ let t_walkstar_ignore_inc = prove
    (!ts. (!t.
    (!uv. uv IN FDOM s ==> check_t 0 {} (t_walkstar s (Infer_Tuvar
      uv))) ==>
-   EVERY (\t. t_walkstar (infer_deBruijn_inc tvs o_f s) t =
+   ALL (\t. t_walkstar (infer_deBruijn_inc tvs o_f s) t =
      t_walkstar s t) ts))`,
   CHEAT_TAC);;
 
@@ -204,7 +204,7 @@ let t_walk_submap_walkstar = prove
 (* [local] *)
 let t_unify_to_pure_add_constraints = prove
  (`!s s' h t constraints s''.
-   pure_add_constraints s (constraints ++ [h,t]) s'' ==>
+   pure_add_constraints s (APPEND constraints [h,t]) s'' ==>
    (?s'. pure_add_constraints s constraints s' /\
    t_unify s' h t = SOME s'')`,
   CHEAT_TAC);;
@@ -227,7 +227,7 @@ let pure_add_constraints_combine = prove
    (pure_add_constraints (infer_st_subst st') ls' (infer_st_subst
      st'') /\ y1 = infer_st_next_uvar st' /\ y2 = infer_st_next_id st'))
      <=>
-   pure_add_constraints (infer_st_subst st) (ls ++ ls')
+   pure_add_constraints (infer_st_subst st) (APPEND ls ls')
      (infer_st_subst st'') /\ y1 = x1 /\ y2 = x2`,
   CHEAT_TAC);;
 
@@ -245,8 +245,8 @@ let t_unify_ignore = prove
 
 let pure_add_constraints_ignore = prove
  (`!s ls.
-    t_wfs s /\ EVERY (\(x,y). t_walkstar s x = t_walkstar s y) ls
-      ==> pure_add_constraints s ls s`,
+    t_wfs s /\ ALL (\(x,y). t_walkstar s x = t_walkstar s y) ls ==>
+      pure_add_constraints s ls s`,
   CHEAT_TAC);;
 
 (*t_compat preserves all grounded (no unification variable after walk) terms*)
@@ -280,9 +280,9 @@ let check_t_less = prove
    t_wfs s /\
    (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar
      uv))) /\
-   EVERY (check_t 0 uvars) ts ==>
-   EVERY (check_t n (uvars INTER (COMPL (FDOM s)))) (MAP
-     (t_walkstar s) ts))`,
+   ALL (check_t 0 uvars) ts ==>
+   ALL (check_t n (uvars INTER (COMPL (FDOM s)))) (MAP (t_walkstar
+     s) ts))`,
   CHEAT_TAC);;
 
 (*Double sided t_compat thm*)
@@ -315,7 +315,7 @@ let extend_one_props = prove
    s SUBMAP s' /\ infer_st_subst
    st SUBMAP s' /\
    pure_add_constraints (infer_st_subst st)
-     (constraints ++ [(Infer_Tuvar (infer_st_next_uvar
+     (APPEND constraints [(Infer_Tuvar (infer_st_next_uvar
        st),unconvert_t t)]) s' /\
    FDOM s' = count (infer_st_next_uvar st + 1) /\
    t_walkstar s' (Infer_Tuvar (infer_st_next_uvar st)) = unconvert_t
@@ -342,7 +342,7 @@ let extend_multi_props = prove
     pure_add_constraints (infer_st_subst st) constraints s /\
     (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar
       uv))) /\
-    EVERY (check_freevars n []) ts /\
+    ALL (check_freevars n []) ts /\
     FDOM s = count (infer_st_next_uvar st) ==>
     (let tys = MAP (\n. (infer_st_next_uvar st + n)) (COUNT_LIST
       (LENGTH ts)) in
@@ -351,7 +351,7 @@ let extend_multi_props = prove
     let extension = ZIP tys targs in
     let s' = s |++ extension in
     pure_add_constraints s new_constraints s' /\
-    pure_add_constraints (infer_st_subst st) (constraints ++
+    pure_add_constraints (infer_st_subst st) (APPEND constraints
       new_constraints) s' /\
     t_wfs s' /\
     s SUBMAP s' /\ infer_st_subst
@@ -409,7 +409,7 @@ let constrain_op_complete_simple_helper = prove
      FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
      FDOM s = count (infer_st_next_uvar st) /\
      t_wfs (infer_st_subst st) /\
-     EVERY (check_t n {}) (MAP (t_walkstar s) ts') /\
+     ALL (check_t n {}) (MAP (t_walkstar s) ts') /\
      check_freevars n [] t ==>
      (?st' xs t'.
      t = convert_t (t_walkstar s t') /\
@@ -432,7 +432,7 @@ let constrain_op_complete = prove
    FDOM s = count (infer_st_next_uvar st) /\
    t_wfs (infer_st_subst st) /\
    MAP (convert_t o (t_walkstar s)) ts' = ts /\
-   EVERY (check_t n {}) (MAP (t_walkstar s) ts') /\
+   ALL (check_t n {}) (MAP (t_walkstar s) ts') /\
    check_freevars n [] t ==>
    (?t' st' s' constraints'.
    constrain_op l op ts' st = (M_success t',st') /\
@@ -470,7 +470,7 @@ let simp_tenv_invC_more = prove
 let simp_tenv_invC_append = prove
  (`simp_tenv_invC s'' tvs tenv tenvE /\
    simp_tenv_invC s'' tvs tenv' tenvE' ==>
-   simp_tenv_invC s'' tvs (tenv' ++ tenv) (tenvE' ++ tenvE)`,
+   simp_tenv_invC s'' tvs (APPEND tenv' tenv) (APPEND tenvE' tenvE)`,
   CHEAT_TAC);;
 
 (*convert on both sides of eqn*)
@@ -485,13 +485,13 @@ let convert_bi_remove = prove
 (* [local] *)
 let infer_type_subst_check_t_less = prove
  (`LENGTH ls = LENGTH tvs /\
-   EVERY (check_t n {}) ls ==>
+   ALL (check_t n {}) ls ==>
    (!t.
    check_freevars n tvs t ==>
    check_t n {} (infer_type_subst (ZIP tvs ls) t)) /\
    (!ts.
-   EVERY (check_freevars n tvs) ts ==>
-   EVERY (check_t n {}) (MAP (infer_type_subst (ZIP tvs ls)) ts))`,
+   ALL (check_freevars n tvs) ts ==>
+   ALL (check_t n {}) (MAP (infer_type_subst (ZIP tvs ls)) ts))`,
   CHEAT_TAC);;
 
 let infer_p_complete = prove
@@ -618,7 +618,7 @@ let deBrujin_subst_excess = prove
    check_freevars (LENGTH targs) [] t /\
    deBruijn_subst n targs t = t' ==>
    (!ls.
-   deBruijn_subst n (targs ++ ls) t = t'))`,
+   deBruijn_subst n (APPEND targs ls) t = t'))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -644,7 +644,7 @@ let t_walkstar_infer_db_subst = prove
    t_walkstar s' (infer_deBruijn_subst (MAP (\n. Infer_Tuvar (n +
      uvars)) (COUNT_LIST (LENGTH subst))) t)) /\
    (!ts.
-   EVERY (check_t (LENGTH subst) (count uvars)) ts ==>
+   ALL (check_t (LENGTH subst) (count uvars)) ts ==>
    MAP (t_walkstar s o infer_deBruijn_subst subst) ts =
    MAP (t_walkstar s' o infer_deBruijn_subst (MAP (\n. Infer_Tuvar
      (n + uvars)) (COUNT_LIST (LENGTH subst)))) ts)`,

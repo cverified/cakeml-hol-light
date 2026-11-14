@@ -89,14 +89,14 @@ let adjust_bv_Boolv = prove
 
 let aux_code_installed_def,aux_code_installed_ind = define_rec
   [`aux_code_installed [] t <=> T`;
-   `aux_code_installed ((name,arg_count,body) :: rest) t <=>
+   `aux_code_installed (CONS (name,arg_count,body) rest) t <=>
          (sptree_lookup name t = SOME (arg_count,body)) /\
          aux_code_installed rest t`];;
 
 (* [local] *)
 let aux_code_installed_APPEND = prove
  (`!xs ys.
-       aux_code_installed (xs ++ ys) code ==>
+       aux_code_installed (APPEND xs ys) code ==>
        aux_code_installed xs code /\
        aux_code_installed ys code`,
   CHEAT_TAC);;
@@ -114,7 +114,7 @@ let aux_code_installed_subspt = prove
 let bvl_to_bviProof_names_ok_def = new_definition
   `bvl_to_bviProof_names_ok s_code t_code s_oracle <=>
      (!n k prog. s_oracle n = (k,prog) ==>
-                 EVERY (\(name,arity,exp). handle_ok [exp]) prog) /\
+                 ALL (\(name,arity,exp). handle_ok [exp]) prog) /\
      (let next' = FST (FST (s_oracle 0)) in
        (!n. n IN domain t_code /\ bvl_num_stubs <= n ==>
             (if (\n. n MOD bvl_to_bvi_namespaces = 1) n then n <
@@ -140,11 +140,12 @@ let bvl_to_bviProof_state_rel_def = new_definition
        (state_refs s))) /\
             (?z. FLOOKUP (bviSem_state_refs t) p =
                   SOME (ValueArray
-                    ((Number (&(SUC (LENGTH (state_globals s))))) ::
-                     (MAP (the (Number (&0)) o OPTION_MAP (adjust_bv
-                       b)) (state_globals s) ++
-                     REPLICATE (z - (SUC (LENGTH (state_globals s))))
-                       (Number (&0))))) /\
+                    (CONS (Number (&(SUC (LENGTH (state_globals
+                      s)))))
+                     (APPEND (MAP (the (Number (&0)) o OPTION_MAP
+                       (adjust_bv b)) (state_globals s))
+                     (REPLICATE (z - (SUC (LENGTH (state_globals
+                       s)))) (Number (&0)))))) /\
                 SUC (LENGTH (state_globals s)) <= z)) /\
      (state_clock s = bviSem_state_clock t) /\
        bviSem_state_compile_oracle
@@ -217,7 +218,7 @@ let bv_ok_def,bv_ok_ind = define_wf
         match (refs,x2) with
           ((refs:(num,bvlSem_v bvlSem_ref)fmap),(RefPtr l
             r:bvlSem_v)) -> r IN FDOM refs
-        | (refs,(Block tag vs)) -> EVERY (bv_ok refs) vs
+        | (refs,(Block tag vs)) -> ALL (bv_ok refs) vs
         | (refs,_1) -> T`];;
 
 (* HOL4 bvl_to_bviProofScript.sml:178: ML code, not ported *)
@@ -249,11 +250,11 @@ let bv_ok_IMP_adjust_bv_eq = prove
 
 let state_ok_def = new_definition
   `bvl_to_bviProof_state_ok (s:('c,'ffi)bvlSem_state) <=>
-     EVERY (\x. match x with NONE -> T | SOME v -> bv_ok
+     ALL (\x. match x with NONE -> T | SOME v -> bv_ok
        (bvlSem_state_refs s) v) (bvlSem_state_globals s) /\
      (!k. match FLOOKUP (bvlSem_state_refs s) k with SOME
-       (ValueArray vs) -> EVERY (bv_ok (bvlSem_state_refs s)) vs |
-       SOME (Thunk _2 v) -> bv_ok (bvlSem_state_refs s) v | _3 -> T)`;;
+       (ValueArray vs) -> ALL (bv_ok (bvlSem_state_refs s)) vs | SOME
+       (Thunk _2 v) -> bv_ok (bvlSem_state_refs s) v | _3 -> T)`;;
 hol4_overload "state_ok" "bvl_to_bviProof_state_ok";;
 
 (* evaluate preserves state_ok *)
@@ -269,26 +270,26 @@ let evaluate_ok_lemma = prove
 let evaluate_IMP_bv_ok = prove
  (`(bvlSem_evaluate (xs,env,s) = (res,t)) ==>
      (bv_ok (state_refs s) a1 ==> bv_ok (state_refs t) a1) /\
-     (EVERY (bv_ok (state_refs s)) as ==> EVERY (bv_ok (state_refs
-       t)) as)`,
+     (ALL (bv_ok (state_refs s)) as ==> ALL (bv_ok (state_refs t))
+       as)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let v_to_list_ok = prove
  (`!v x. v_to_list v = SOME x /\
           bv_ok refs v ==>
-          EVERY (bv_ok refs) x`,
+          ALL (bv_ok refs) x`,
   CHEAT_TAC);;
 
 let list_to_v_ok = prove
- (`!xs. EVERY (bv_ok refs) xs ==> bv_ok refs (list_to_v xs)`,
+ (`!xs. ALL (bv_ok refs) xs ==> bv_ok refs (list_to_v xs)`,
   CHEAT_TAC);;
 
 let list_to_v_ok_APPEND = prove
  (`!xs ys.
      bv_ok refs (list_to_v xs) /\
      bv_ok refs (list_to_v ys) ==>
-       bv_ok refs (list_to_v (xs ++ ys))`,
+       bv_ok refs (list_to_v (APPEND xs ys))`,
   CHEAT_TAC);;
 
 (* HOL4 bvl_to_bviProofScript.sml:264-276: code that the source has
@@ -307,17 +308,17 @@ let do_build_ok = prove
 
 (* [local] *)
 let do_app_ok_lemma = prove
- (`bvl_to_bviProof_state_ok r /\ EVERY (bv_ok (state_refs r)) a /\
+ (`bvl_to_bviProof_state_ok r /\ ALL (bv_ok (state_refs r)) a /\
    (do_app op a r = Rval (q,t)) ==>
    bvl_to_bviProof_state_ok t /\ bv_ok (state_refs t) q`,
   CHEAT_TAC);;
 
 let do_app_ok = prove
- (`bvl_to_bviProof_state_ok r /\ EVERY (bv_ok (state_refs r)) a /\
+ (`bvl_to_bviProof_state_ok r /\ ALL (bv_ok (state_refs r)) a /\
     (do_app op a r = Rval (q,t)) ==>
     bvl_to_bviProof_state_ok t /\ bv_ok (state_refs t) q /\
-    (EVERY (bv_ok (state_refs r)) env ==> EVERY (bv_ok (state_refs
-      t)) env)`,
+    (ALL (bv_ok (state_refs r)) env ==> ALL (bv_ok (state_refs t))
+      env)`,
   CHEAT_TAC);;
 (* HOL4 bvl_to_bviProofScript.sml:596: ML code, not ported *)
 
@@ -329,19 +330,19 @@ let bvl_to_bviProof_dec_clock_inc_clock = prove
 
 let find_code_bv_ok = prove
  (`bvlSem_find_code dest vs s = SOME (args,e2) /\
-    EVERY (bv_ok (refs:(num,bvlSem_v bvlSem_ref)fmap)) vs ==> EVERY
+    ALL (bv_ok (refs:(num,bvlSem_v bvlSem_ref)fmap)) vs ==> ALL
       (bv_ok refs) args`,
   CHEAT_TAC);;
 
 let evaluate_ok = prove
  (`!xs env s res t.
       (evaluate (xs,env,s) = (res,t)) /\
-      bvl_to_bviProof_state_ok s /\ EVERY (bv_ok (state_refs s)) env
+      bvl_to_bviProof_state_ok s /\ ALL (bv_ok (state_refs s)) env
         ==>
       bvl_to_bviProof_state_ok t /\
-      (match res with Rval vs -> EVERY (bv_ok (state_refs t)) vs |
-        Rerr (Rraise v) -> bv_ok (state_refs t) v | _4 -> T) /\
-      EVERY (bv_ok (state_refs t)) env`,
+      (match res with Rval vs -> ALL (bv_ok (state_refs t)) vs | Rerr
+        (Rraise v) -> bv_ok (state_refs t) v | _4 -> T) /\
+      ALL (bv_ok (state_refs t)) env`,
   CHEAT_TAC);;
 
 (* semantics lemmas *)
@@ -356,7 +357,7 @@ let evaluate_ok = prove
 let bEval_bVarBound = prove
  (`!xs vs s env.
        bVarBound (LENGTH vs) xs ==>
-       (bvlSem_evaluate (xs,vs ++ env,s) = evaluate (xs,vs,s))`,
+       (bvlSem_evaluate (xs,APPEND vs env,s) = evaluate (xs,vs,s))`,
   CHEAT_TAC);;
 
 (* HOL4 bvl_to_bviProofScript.sml:727: ML code, not ported *)
@@ -378,13 +379,14 @@ let evaluate_CopyGlobals_code = prove
                 [RefPtr b1 p1; RefPtr b p; Number (&n)],
                 inc_clock c s) =
       (Rval [Unit],state_refs_fupd (K (state_refs s |+
-        (p1,ValueArray (TAKE (SUC n) ls ++ DROP (SUC n) l1)))) s))`,
+        (p1,ValueArray (APPEND (TAKE (SUC n) ls) (DROP (SUC n) l1)))))
+        s))`,
   CHEAT_TAC);;
 (* HOL4 bvl_to_bviProofScript.sml:782-783: ML code, not ported *)
 
 (* [local] *)
 let evaluate_AllocGlobal_code = prove
- (`FLOOKUP (state_refs s) p = SOME (ValueArray (Number (&(SUC n)) ::
+ (`FLOOKUP (state_refs s) p = SOME (ValueArray (CONS (Number (&(SUC n)))
   ls)) /\ n <= LENGTH ls /\ bviSem_state_global
    s = SOME p /\
    sptree_lookup CopyGlobals_location (state_code s) = SOME (3,SND
@@ -395,11 +397,11 @@ let evaluate_AllocGlobal_code = prove
      evaluate ([SND AllocGlobal_code],[Number (&k)],inc_clock c s) =
        (Rval [Unit],state_refs_fupd (K
           (
-          state_refs s |+ (p,ValueArray ((Number (&(SUC (n + k)))) ::
-            ls)) |+ (p1,ValueArray (((Number (&(SUC (n + k)))) ::
-                              ls) ++ (REPLICATE extra (Number
-                                (&0))))))) (bviSem_state_global_fupd (K
-                                (SOME p1))
+          state_refs s |+ (p,ValueArray (CONS (Number (&(SUC (n +
+            k)))) ls)) |+ (p1,ValueArray (APPEND (CONS (Number (&(SUC (n
+            + k))))
+                              ls) (REPLICATE extra (Number (&0)))))))
+                                (bviSem_state_global_fupd (K (SOME p1))
         s)))`,
   CHEAT_TAC);;
 
@@ -420,32 +422,32 @@ let evaluate_FromListByte_code = prove
       LENGTH bs /\
     sptree_lookup FromListByte_location (bviSem_state_code s) = SOME
       (3,SND FromListByte_code) /\
-    EVERY (\n. n < 256) vs /\
+    ALL (\n. n < 256) vs /\
     FLOOKUP (bviSem_state_refs s) p = SOME (ByteArray fl bs) /\ n =
       LENGTH bs - LENGTH vs ==>
     (?c.
       evaluate ([SND FromListByte_code],[lv; Number (&n); RefPtr b
         p],inc_clock c s) =
         (Rval [RefPtr b p],bviSem_state_refs_fupd (K
-          (bviSem_state_refs s |+ (p,ByteArray fl (TAKE n bs ++ (MAP
-          n2w vs))))) s))`,
+          (bviSem_state_refs s |+ (p,ByteArray fl (APPEND (TAKE n bs)
+          (MAP n2w vs))))) s))`,
   CHEAT_TAC);;
 
 let evaluate_ToListByte_code = prove
  (`!bs rest p (s:('c,'ffi)bviSem_state).
      sptree_lookup ToListByte_location (bviSem_state_code s) = SOME
        (3,SND ToListByte_code) /\
-     FLOOKUP (bviSem_state_refs s) p = SOME (ByteArray fl (bs ++
+     FLOOKUP (bviSem_state_refs s) p = SOME (ByteArray fl (APPEND bs
        rest)) ==>
      (?c.
        evaluate ([SND ToListByte_code],
          [list_to_v (MAP (\b. Number (&(w2n b))) rest);
           Number (&(LENGTH bs)); RefPtr b p],inc_clock c s) =
-         (Rval [list_to_v (MAP (\b. Number (&(w2n b))) bs ++
-                           MAP (\b. Number (&(w2n b)))
-                             rest)],bviSem_state_refs_fupd (K
-                             (bviSem_state_refs s |+ (p,ByteArray fl (bs
-                             ++ rest))))
+         (Rval [list_to_v (APPEND (MAP (\b. Number (&(w2n b))) bs)
+                           (MAP (\b. Number (&(w2n b)))
+                             rest))],bviSem_state_refs_fupd (K
+                             (bviSem_state_refs s |+ (p,ByteArray fl
+                             (APPEND bs rest))))
           s))`,
   CHEAT_TAC);;
 
@@ -471,7 +473,7 @@ let evaluate_ConcatByte_code = prove
      ps) /\
    MAP (FLOOKUP (bviSem_state_refs s)) ps = MAP (SOME o ByteArray T)
      wss /\
-   FLOOKUP (bviSem_state_refs s) dst = SOME (ByteArray T (ds1 ++
+   FLOOKUP (bviSem_state_refs s) dst = SOME (ByteArray T (APPEND ds1
      ds2)) /\
    n = LENGTH ds1 /\ LENGTH (FLAT wss) = LENGTH ds2 ==>
    (?c.
@@ -479,8 +481,8 @@ let evaluate_ConcatByte_code = prove
        ([SND ConcatByte_code],[lv; Number (&n); RefPtr b
          dst],inc_clock c s) =
        (Rval [RefPtr b dst],bviSem_state_refs_fupd (K
-         (bviSem_state_refs s |+ (dst,ByteArray T (ds1 ++ FLAT wss))))
-         s))`,
+         (bviSem_state_refs s |+ (dst,ByteArray T (APPEND ds1 (FLAT
+         wss))))) s))`,
   CHEAT_TAC);;
 
 (* compiler correctness *)
@@ -489,7 +491,7 @@ let evaluate_ConcatByte_code = prove
 
 (* [local] *)
 let compile_exps_Var_list = prove
- (`!l n. EVERY isVar l ==> (?aux. compile_exps n l = (MAP (Var o
+ (`!l n. ALL isVar l ==> (?aux. compile_exps n l = (MAP (Var o
   destVar) l,aux,n) /\ append aux = [])`,
   CHEAT_TAC);;
 
@@ -502,14 +504,15 @@ let compile_int_thm = prove
    states as the value of an ML expression: compile_string_thm *)
 
 let HD_APPEND3 = prove
- (`0 < LENGTH (l1 ++ l2) ==> HD (l1 ++ l2 ++ l3) = HD (l1 ++ l2)`,
+ (`0 < LENGTH (APPEND l1 l2) ==> HD (APPEND (APPEND l1 l2) l3) = HD
+  (APPEND l1 l2)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let iEval_bVarBound = prove
  (`!(n:num) xs n vs (s:('c,'ffi)bviSem_state) env.
      bVarBound (LENGTH vs) xs /\ handle_ok xs ==>
-     (evaluate (FST (compile_exps n xs),vs ++ env,s) =
+     (evaluate (FST (compile_exps n xs),APPEND vs env,s) =
       evaluate (FST (compile_exps n xs),vs,s))`,
   CHEAT_TAC);;
 
@@ -531,7 +534,7 @@ let do_eq_adjust_lemma = prove
                refs = state_refs r /\
                do_eq_list refs x1 x2 = Eq_val b /\ state_rel b2 r t2
                  /\
-               EVERY (bv_ok (state_refs r)) x1 /\ EVERY (bv_ok
+               ALL (bv_ok (state_refs r)) x1 /\ ALL (bv_ok
                  (state_refs r)) x2 ==>
                do_eq_list (state_refs t2) (MAP (adjust_bv b2) x1)
                  (MAP (adjust_bv b2) x2) = Eq_val b)`,
@@ -555,8 +558,8 @@ let list_to_v_adjust_APPEND = prove
      list_to_v (MAP (adjust_bv b) xs) = adjust_bv b (list_to_v xs) /\
      list_to_v (MAP (adjust_bv b) xs) = adjust_bv b (list_to_v xs)
        ==>
-      list_to_v (MAP (adjust_bv b) (xs ++ ys)) =
-      adjust_bv b (list_to_v (xs ++ ys))`,
+      list_to_v (MAP (adjust_bv b) (APPEND xs ys)) =
+      adjust_bv b (list_to_v (APPEND xs ys))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -578,8 +581,8 @@ let do_app_adjust = prove
    (!b. ~(op = closLang_MemOp (closLang_CopyByte b))) /\ (~(op =
      closLang_MemOp closLang_ConcatByteVec)) /\ (!n. ~(op =
      closLang_Label n)) /\
-   (do_app op (REVERSE a) s5 = Rval (q,r)) /\ EVERY (bv_ok
-     (state_refs s5)) (REVERSE a) ==>
+   (do_app op (REVERSE a) s5 = Rval (q,r)) /\ ALL (bv_ok (state_refs
+     s5)) (REVERSE a) ==>
    (?t3. (do_app op (MAP (adjust_bv b2) (REVERSE a)) t2 =
          Rval (adjust_bv b2 q,t3)) /\
        state_rel b2 r t3)`,
@@ -591,8 +594,9 @@ let eval_ind_alt = prove
      (!x y xs env s.
         (!v3 s1 v1.
            evaluate ([x],env,s) = (v3,s1) /\ v3 = Rval v1 ==>
-           P (y :: xs,env,s1)) /\ P ([x],env,s) ==>
-        P (x :: y :: xs,env,s)) /\ (!n env s. P ([Var n],env,s)) /\
+           P (CONS y xs,env,s1)) /\ P ([x],env,s) ==>
+        P (CONS x (CONS y xs),env,s)) /\ (!n env s. P ([Var
+          n],env,s)) /\
      (!x1 x2 x3 env s.
         (!v2 s1 vs.
            evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs /\ ~(Boolv
@@ -612,7 +616,7 @@ let eval_ind_alt = prove
           (ys,env,s)) /\
         (!v2 s1 vs.
            evaluate (xs,env,s) = (v2,s1) /\ v2 = Rval vs ==>
-           P ([x2],vs ++ env,s1)) /\
+           P ([x2],APPEND vs env,s1)) /\
         P (xs,env,s) ==>
         P ([Let xs x2],env,s)) /\
      (!x1 env s. P ([x1],env,s) ==> P ([Raise x1],env,s)) /\
@@ -621,7 +625,7 @@ let eval_ind_alt = prove
         (!v3 s v8 v.
            evaluate ([x1],env,s1) = (v3,s) /\ v3 = Rerr v8 /\
            v8 = Rraise v ==>
-           P ([x2],v :: env,s)) /\
+           P ([x2],CONS v env,s)) /\
         (!xs env. list_size bvl_exp_size xs <= bvl_exp_size x1 ==> P
           (xs,env,s1)) ==>
         P ([Handle x1 x2],env,s1)) /\
@@ -653,8 +657,8 @@ let eval_ind_alt = prove
 
 let EVERY_isVar_evaluate_Rval_MEM = prove
  (`!l env a s r.
-      EVERY isVar l /\ bvlSem_evaluate (l,env,s) = (Rval a,r) ==>
-      EVERY (\x. MEM x env) a /\ s = r`,
+      ALL isVar l /\ bvlSem_evaluate (l,env,s) = (Rval a,r) ==>
+      ALL (\x. MEM x env) a /\ s = r`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -703,7 +707,7 @@ let iEval_bVarBound_extra = prove
  (`!n xs n vs s env d.
     bVarBound (LENGTH vs) xs /\ handle_ok xs /\ d = FST (compile_exps
       n xs) ==>
-    evaluate (d,vs ++ env,s) =
+    evaluate (d,APPEND vs env,s) =
     evaluate (d,vs,s)`,
   CHEAT_TAC);;
 
@@ -742,9 +746,9 @@ let aux_code_installed_sublist = prove
 let compile_exps_aux_sorted = prove
  (`!n es c aux n1. compile_exps n es = (c,aux,n1) ==>
    SORTED (<) (MAP FST (append aux)) /\
-   EVERY (\x. ?n. x = bvl_num_stubs + bvl_to_bvi_namespaces * n + 1)
+   ALL (\x. ?n. x = bvl_num_stubs + bvl_to_bvi_namespaces * n + 1)
      (MAP FST (append aux)) /\
-   EVERY (between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
+   ALL (between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
      (bvl_num_stubs + bvl_to_bvi_namespaces * n1)) (MAP FST (append
      aux)) /\ n <= n1`,
   CHEAT_TAC);;
@@ -879,7 +883,7 @@ let compile_exps_correct = prove
        Rtype_error)) /\
      (compile_exps n xs = (ys,aux,n2)) /\
      state_rel b1 s1 t1 /\
-     bvl_to_bviProof_state_ok s1 /\ EVERY (bv_ok (state_refs s1)) env
+     bvl_to_bviProof_state_ok s1 /\ ALL (bv_ok (state_refs s1)) env
        /\
      aux_code_installed (append aux) (bviSem_state_code t1) /\
      handle_ok xs /\ IS_SOME (bviSem_state_global t1) ==>
@@ -948,14 +952,14 @@ let bvi_stubs_evaluate = prove
  (`!kk start' ffi0 code k.
      0 < k /\ bvl_num_stubs <= start' ==>
    (let t0 = (mk_bviSem_state (FEMPTY |+
-                (0,ValueArray ([Number (&1)] ++
-                  REPLICATE ((MIN (MAX kk 1) InitGlobals_max) - 1)
-                    (Number (&0))))) k (SOME 0) cc co (fromAList
-                    (bvl_to_bvi_stubs start' kk ++ code))
+                (0,ValueArray (APPEND [Number (&1)]
+                  (REPLICATE ((MIN (MAX kk 1) InitGlobals_max) - 1)
+                    (Number (&0)))))) k (SOME 0) cc co (fromAList
+                    (APPEND (bvl_to_bvi_stubs start' kk) code))
                     ffi0:('c,'ffi)bviSem_state) in
       evaluate ([Call 0 (SOME InitGlobals_location) [] NONE],[],
-        initial_state ffi0 (fromAList (bvl_to_bvi_stubs start' kk ++
-          code)) co cc (k + 1)) =
+        initial_state ffi0 (fromAList (APPEND (bvl_to_bvi_stubs
+          start' kk) code)) co cc (k + 1)) =
    (let (r,s) = evaluate ([Call 0 (SOME start') [] NONE],[],t0) in
      ((match r with Rerr (Rraise (Exn v)) -> Rval [v] | _5 ->
        r),s)))`,
@@ -967,15 +971,15 @@ let compile_list_distinct_locs = prove
      compile_list n prog = (code_app,n') /\
      code = append code_app ==>
      ALL_DISTINCT (MAP FST code) /\
-     EVERY (between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
+     ALL (between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
        (bvl_num_stubs + bvl_to_bvi_namespaces * n'))
        (FILTER (\n. in_ns 1 (n - bvl_num_stubs)) (MAP FST code)) /\
      FILTER (\n. in_ns 0 (n - bvl_num_stubs)) (MAP FST code) =
        MAP (\n. bvl_num_stubs + bvl_to_bvi_namespaces * n) (MAP FST
          prog) /\
       // redundant, but useful
-      EVERY ((<=) bvl_num_stubs) (MAP FST code) /\
-     EVERY (\n. ~(in_ns 2 (n - bvl_num_stubs)) /\ ~(in_ns 3 (n -
+      ALL ((<=) bvl_num_stubs) (MAP FST code) /\
+     ALL (\n. ~(in_ns 2 (n - bvl_num_stubs)) /\ ~(in_ns 3 (n -
        bvl_num_stubs)))
        (MAP FST code) /\
      n <= n'`,
@@ -993,7 +997,7 @@ let bvl_to_bviProof_compile_prog_evaluate = prove
      0 < k /\
      ALL_DISTINCT (MAP FST prog) /\
      handle_ok (MAP (SND o SND) prog) /\
-     (!n. EVERY ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
+     (!n. ALL ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
      n' <= (FST (FST (co 0))) /\ ~(r = Rerr (Rabort Rtype_error))
        ==>
      (?ck b2 s2.
@@ -1014,7 +1018,7 @@ let bvl_to_bviProof_compile_prog_semantics = prove
     `compile_prog start n prog = (start',prog',n') /\
      ALL_DISTINCT (MAP FST prog) /\
      handle_ok (MAP (SND o SND) prog) /\
-     (!n. EVERY ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
+     (!n. ALL ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
      n' <= FST (FST ((co:num->(num#'c)#(num#num#bvl_exp) list) 0))
        /\ ~(semantics (ffi0:'ffi ffi_state) (fromAList prog) co
        (state_cc compile_inc cc) start = ffi_Fail) ==>
@@ -1031,11 +1035,11 @@ let compile_prog_distinct_locs = prove
     `compile_prog start n prog = (k,prog1,n1) /\ ALL_DISTINCT (MAP FST
   prog) ==>
       ALL_DISTINCT (MAP FST prog1) /\
-      EVERY (between (bvl_to_bvi_namespaces * n + bvl_num_stubs)
+      ALL (between (bvl_to_bvi_namespaces * n + bvl_num_stubs)
         (bvl_to_bvi_namespaces * n1 + bvl_num_stubs))
         (FILTER (\n. in_ns 1 (n - bvl_num_stubs)) (MAP FST prog1))
           /\
-      EVERY (\n. ~(in_ns 2 (n - bvl_num_stubs)) /\ ~(in_ns 3 (n -
+      ALL (\n. ~(in_ns 2 (n - bvl_num_stubs)) /\ ~(in_ns 3 (n -
         bvl_num_stubs)))
         (MAP FST prog1)`),
   CHEAT_TAC);;
@@ -1111,7 +1115,7 @@ let bvi_let_delete_var_no_mutcons = prove
 let bvi_let_compile_no_mutcons = prove
  (`(!env d e. no_mutcons e ==> no_mutcons (bvi_let_compile_sing env d
   e)) /\
-   (!env d es. EVERY no_mutcons es ==> EVERY no_mutcons
+   (!env d es. ALL no_mutcons es ==> ALL no_mutcons
      (bvi_let_compile_list env d es))`,
   CHEAT_TAC);;
 
@@ -1129,25 +1133,24 @@ let compile_int_no_mutcons = prove
 
 (* [local] *)
 let compile_op_no_mutcons = prove
- (`EVERY no_mutcons c1 ==> no_mutcons (compile_op op c1)`,
+ (`ALL no_mutcons c1 ==> no_mutcons (compile_op op c1)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let compile_exps_sing_no_mutcons = prove
  (`(!n e c aux n1.
       compile_exps_sing n e = (c,aux,n1) ==>
-      no_mutcons c /\ EVERY (no_mutcons o SND o SND) (append aux)) /\
+      no_mutcons c /\ ALL (no_mutcons o SND o SND) (append aux)) /\
    (!n es c aux n1.
       compile_exps_list n es = (c,aux,n1) ==>
-      EVERY no_mutcons c /\ EVERY (no_mutcons o SND o SND) (append
+      ALL no_mutcons c /\ ALL (no_mutcons o SND o SND) (append
         aux))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let compile_exps_no_mutcons = prove
  (`compile_exps n xs = (c,aux,n1) ==>
-   EVERY no_mutcons c /\ EVERY (no_mutcons o SND o SND) (append
-     aux)`,
+   ALL no_mutcons c /\ ALL (no_mutcons o SND o SND) (append aux)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1155,25 +1158,25 @@ let compile_exps_no_mutcons = prove
    variables of its own are read as variables *)
 let stubs_no_mutcons = prove
  (cake_as_vars (fun () ->
-    `EVERY (no_mutcons o SND o SND) (bvl_to_bvi_stubs start n)`),
+    `ALL (no_mutcons o SND o SND) (bvl_to_bvi_stubs start n)`),
   CHEAT_TAC);;
 
 (* [local] *)
 let compile_single_no_mutcons = prove
  (`bvl_to_bvi_compile_single n p = (q,n1) ==>
-   EVERY (no_mutcons o SND o SND) (append q)`,
+   ALL (no_mutcons o SND o SND) (append q)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let compile_list_no_mutcons = prove
  (`!n progs q n1.
      compile_list n progs = (q,n1) ==>
-     EVERY (no_mutcons o SND o SND) (append q)`,
+     ALL (no_mutcons o SND o SND) (append q)`,
   CHEAT_TAC);;
 
 let compile_inc_no_mutcons = prove
  (`bvl_to_bvi_compile_inc n prog = (n1,prog1) ==>
-   EVERY (no_mutcons o SND o SND) prog1`,
+   ALL (no_mutcons o SND o SND) prog1`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -1181,7 +1184,7 @@ let compile_inc_no_mutcons = prove
 let compile_prog_no_mutcons = prove
  (cake_as_vars (fun () ->
     `compile_prog start n prog = (loc,code,n1) ==>
-     EVERY (no_mutcons o SND o SND) code`),
+     ALL (no_mutcons o SND o SND) code`),
   CHEAT_TAC);;
 
 (* no_mutcons preservation: bvi_tailrec *)
@@ -1232,7 +1235,7 @@ let check_op_no_mutcons = prove
 (* [local] *)
 let args_from_no_mutcons = prove
  (`args_from f = SOME (t,d,args,hdl) /\ no_mutcons f ==>
-   EVERY no_mutcons args /\ (match hdl with NONE -> T | SOME h ->
+   ALL no_mutcons args /\ (match hdl with NONE -> T | SOME h ->
      no_mutcons h)`,
   CHEAT_TAC);;
 
@@ -1277,15 +1280,15 @@ let tailrec_compile_exp_no_mutcons = prove
 let bvi_tailrec_compile_each_no_mutcons = prove
  (`!next' prog next1 prog1.
      bvi_tailrec_compile_each next' prog = (next1,prog1) /\
-     EVERY (no_mutcons o SND o SND) prog ==>
-     EVERY (no_mutcons o SND o SND) prog1`,
+     ALL (no_mutcons o SND o SND) prog ==>
+     ALL (no_mutcons o SND o SND) prog1`,
   CHEAT_TAC);;
 
 let bvi_tailrec_compile_prog_no_mutcons = prove
  (`!b next' prog next1 prog1.
      bvi_tailrec_compile_prog b next' prog = (next1,prog1) /\
-     EVERY (no_mutcons o SND o SND) prog ==>
-     EVERY (no_mutcons o SND o SND) prog1`,
+     ALL (no_mutcons o SND o SND) prog ==>
+     ALL (no_mutcons o SND o SND) prog1`,
   CHEAT_TAC);;
 
 (* A name outside namespace 2 cannot be one of bvi_tailrec's fresh names,
@@ -1294,8 +1297,8 @@ let bvi_tailrec_compile_prog_no_mutcons = prove
    printing (and identically stated) constant of the same name. *)
 (* [local] *)
 let EVERY_free_names_not_in_ns_2 = prove
- (`EVERY (\n. ~(in_ns 2 (n - bvl_num_stubs))) (MAP FST xs) ==>
-   EVERY (bvi_tailrecProof_free_names (bvl_num_stubs + 2) o FST) xs`,
+ (`ALL (\n. ~(in_ns 2 (n - bvl_num_stubs))) (MAP FST xs) ==>
+   ALL (bvi_tailrecProof_free_names (bvl_num_stubs + 2) o FST) xs`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -1326,7 +1329,7 @@ let compile_distinct_names = prove
  (`bvl_to_bvi_compile n0 c ns p2 = (k,p3,l,bl,n1,n2,ns') /\
    ALL_DISTINCT (MAP FST p2) /\ bvl_to_bvi_config_next_name2
    c = bvl_num_stubs + 2 + n02 * bvl_to_bvi_namespaces ==>
-   EVERY (\n. data_num_stubs <= n) (MAP FST p3) /\
+   ALL (\n. data_num_stubs <= n) (MAP FST p3) /\
    ALL_DISTINCT (MAP FST p3)`,
   CHEAT_TAC);;
 
@@ -1342,7 +1345,7 @@ let ALL_DISTINCT_MAP_FST_SND_full_co = prove
 
 let destLet_code_labels = prove
  (`destLet x = (y,z) ==>
-    BIGUNION (set_of_list (MAP get_code_labels y)) UNION
+    UNIONS (set_of_list (MAP get_code_labels y)) UNION
       get_code_labels z SUBSET get_code_labels x`,
   CHEAT_TAC);;
 
@@ -1353,7 +1356,7 @@ let compile_int_code_labels = prove
 
 let compile_op_code_labels = prove
  (`get_code_labels (compile_op op c) SUBSET
-    BIGUNION (set_of_list (MAP get_code_labels c)) UNION
+    UNIONS (set_of_list (MAP get_code_labels c)) UNION
     IMAGE (\n. bvl_num_stubs + n * bvl_to_bvi_namespaces)
       (assign_get_code_label op) UNION
     set_of_list (MAP FST (bvl_to_bvi_stubs x y))`,
@@ -1362,11 +1365,11 @@ let compile_op_code_labels = prove
 let compile_exps_get_code_labels = prove
  (`!n xs ys aux m.
     bvl_to_bvi_compile_exps n xs = (ys,aux,m) ==>
-     BIGUNION (set_of_list (MAP get_code_labels ys)) UNION
-     BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) (append
+     UNIONS (set_of_list (MAP get_code_labels ys)) UNION
+     UNIONS (set_of_list (MAP (get_code_labels o SND o SND) (append
        aux))) SUBSET
-     IMAGE (\k. bvl_num_stubs + (k * bvl_to_bvi_namespaces))
-       (BIGUNION (set_of_list (MAP get_code_labels xs))) UNION
+     IMAGE (\k. bvl_num_stubs + (k * bvl_to_bvi_namespaces)) (UNIONS
+       (set_of_list (MAP get_code_labels xs))) UNION
      {bvl_num_stubs + (k * bvl_to_bvi_namespaces + 1) | k | n <= k /\
        k < m} UNION
      set_of_list (MAP FST (bvl_to_bvi_stubs x y))`,
@@ -1380,8 +1383,8 @@ let compile_exps_aux_contains = prove
 
 let compile_single_get_code_labels = prove
  (`!n p code m. bvl_to_bvi_compile_single n p = (code,m) ==>
-      BIGUNION (set_of_list (MAP (get_code_labels o SND o SND)
-        (append code))) SUBSET
+      UNIONS (set_of_list (MAP (get_code_labels o SND o SND) (append
+        code))) SUBSET
       IMAGE (\k. bvl_num_stubs + k * bvl_to_bvi_namespaces)
         (get_code_labels (SND (SND p))) UNION
       set_of_list (MAP FST (append code)) UNION
@@ -1391,11 +1394,11 @@ let compile_single_get_code_labels = prove
 let compile_list_get_code_labels = prove
  (`!n p code m. compile_list n p = (code,m) ==>
    n <= m /\
-   BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) (append
+   UNIONS (set_of_list (MAP (get_code_labels o SND o SND) (append
      code))) SUBSET
    set_of_list (MAP FST (append code)) UNION
    IMAGE (\k. bvl_num_stubs + k * bvl_to_bvi_namespaces)
-     (BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) p)))
+     (UNIONS (set_of_list (MAP (get_code_labels o SND o SND) p)))
        UNION
    set_of_list (MAP FST (bvl_to_bvi_stubs x y))`,
   CHEAT_TAC);;
@@ -1404,12 +1407,12 @@ let compile_list_get_code_labels = prove
 let bvl_to_bviProof_compile_prog_get_code_labels = prove
  (`!s n p t q m.
    bvl_to_bvi_compile_prog s n p = (t,q,m) ==>
-   BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) q))
-     SUBSET (
+   UNIONS (set_of_list (MAP (get_code_labels o SND o SND) q)) SUBSET
+     (
      bvl_num_stubs + s * bvl_to_bvi_namespaces) INSERT (
      set_of_list (MAP FST q) UNION
      IMAGE (\k. bvl_num_stubs + (k * bvl_to_bvi_namespaces))
-       (BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) p))))`,
+       (UNIONS (set_of_list (MAP (get_code_labels o SND o SND) p))))`,
   CHEAT_TAC);;
 
 (* The code-label containment for the whole pass boundary, composing all four
@@ -1421,12 +1424,12 @@ let compile_get_code_labels = prove
  (`!start' c names prog loc code inlines bvi_inlines n1 n2 n3 names'.
    bvl_to_bvi_compile start' c names prog =
      (loc,code,inlines,bvi_inlines,n1,n2,n3,names') ==>
-   BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) code))
+   UNIONS (set_of_list (MAP (get_code_labels o SND o SND) code))
      SUBSET (
      bvl_num_stubs + start' * bvl_to_bvi_namespaces) INSERT (
      set_of_list (MAP FST code) UNION
      IMAGE (\k. bvl_num_stubs + (k * bvl_to_bvi_namespaces))
-       (BIGUNION (set_of_list (MAP (get_code_labels o SND o SND)
+       (UNIONS (set_of_list (MAP (get_code_labels o SND o SND)
          prog))) UNION
      {bvl_num_stubs + 2 + k * bvl_to_bvi_namespaces | k |
        bvl_num_stubs + 2 + k * bvl_to_bvi_namespaces < n2} UNION

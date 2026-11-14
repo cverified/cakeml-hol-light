@@ -12,39 +12,33 @@
 (*    ODD                                                             *)
 (*    NIL CONS APPEND LENGTH MAP FILTER MEM EL HD TL LAST NULL REVERSE*)
 (*    ZIP MAP2 REPLICATE SOME NONE INL INR OUTL OUTR                  *)
-(*  and the following, which the port uses under the HOL Light name:  *)
-(*    EVERY = ALL, EXISTS = EX, FRONT = BUTLAST,                      *)
+(*  and the following, which the port writes under the HOL Light     *)
+(*  name, because it is read as a HOL Light development:              *)
+(*    x::xs = CONS x xs, l1 ++ l2 = APPEND l1 l2,                     *)
+(*    EVERY = ALL, EXISTS = EX, EVERY2 = LIST_REL = ALL2,             *)
+(*    FRONT = BUTLAST, BIGUNION = UNIONS,                             *)
 (*    LIST_TO_SET = set_of_list, GENLIST f n = list_of_seq f n,       *)
+(*    STRING = CONS, STRCAT = APPEND, STRLEN = LENGTH,                *)
+(*    EXPLODE and IMPLODE are the identity,                           *)
 (*    FOLDR f e l = ITLIST f l e                                      *)
 (* ================================================================== *)
 
 (* ------------------------------------------------------------------ *)
 (* The HOL4 names and notations of the HOL Light constants that have  *)
-(* another name, so that the port can use the CakeML ones.            *)
+(* another name.                                                      *)
 (* ------------------------------------------------------------------ *)
 
-parse_as_infix("::",(15,"right"));;
-override_interface("::",`CONS:A->(A)list->(A)list`);;
-override_interface("++",`APPEND:(A)list->(A)list->(A)list`);;
-(* a CakeML source may overload ++ with an append of its own
-   (misc's Append on app_list, bvl_to_bvi's SmartAppend) *)
-make_overloadable "++" `:A`;;
-override_interface("EVERY",`ALL:(A->bool)->(A)list->bool`);;
-override_interface("EXISTS",`EX:(A->bool)->(A)list->bool`);;
-override_interface("FRONT",`BUTLAST:(A)list->(A)list`);;
-override_interface("GENLIST",`list_of_seq:(num->A)->num->(A)list`);;
-override_interface("LIST_TO_SET",`set_of_list:(A)list->A->bool`);;
-(* HOL4's BIGUNION is HOL Light's UNIONS *)
-override_interface("BIGUNION",
-  `UNIONS:((A->bool)->bool)->A->bool`);;
-override_interface("LIST_REL",
-  `ALL2:(A->B->bool)->(A)list->(B)list->bool`);;
-(* HOL4's EVERY2 is its LIST_REL *)
-override_interface("EVERY2",
-  `ALL2:(A->B->bool)->(A)list->(B)list->bool`);;
-(* and its STRING is the CONS of a string, which is a list of
-   characters in HOL Light as well *)
-override_interface("STRING",`CONS:char->(char)list->(char)list`);;
+(* Nothing here: a notion of HOL4 that HOL Light has is written
+   as HOL Light writes it, so the port says CONS and APPEND and
+   not :: and ++ (HOL Light has neither infix, and its ++ is the
+   addition of realax's nadd), ALL and EX and not EVERY and
+   EXISTS, ALL2 and not LIST_REL, BUTLAST and not FRONT,
+   list_of_seq and not GENLIST, set_of_list and not LIST_TO_SET,
+   UNIONS and not BIGUNION.  tools/overrides.py NAME_MAP is the
+   dictionary and a file's preface says the words it uses.  A
+   CakeML source that overloads ++ with an append of its own
+   (misc's Append on app_list, bvl_to_bvi's SmartAppend) has the
+   port write that constant out. *)
 
 (* HOL4's FOLDR takes its arguments in another order than the
    ITLIST of HOL Light, so it is a definition and not a name for
@@ -658,17 +652,9 @@ overload_interface("<=",`string_le:string->string->bool`);;
 overload_interface(">",`string_gt:string->string->bool`);;
 overload_interface(">=",`string_ge:string->string->bool`);;
 
-let STRCAT = new_definition
-  `STRCAT (s1:string) s2 = APPEND s1 s2`;;
-
-let STRLEN = new_definition
-  `STRLEN (s:string) = LENGTH s`;;
-
-let EXPLODE = new_definition
-  `EXPLODE (s:string) = s`;;
-
-let IMPLODE = new_definition
-  `IMPLODE (l:char list) = l`;;
+(* HOL4's STRCAT, STRLEN, EXPLODE and IMPLODE are HOL Light's
+   APPEND and LENGTH and the identity, because a string is a
+   list of characters in both, so the port writes those *)
 
 let isLower = new_definition
   `isLower c <=> 97 <= ORD c /\ ORD c <= 122`;;

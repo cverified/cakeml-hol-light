@@ -320,8 +320,8 @@ let locs_to_string_def = new_definition
              (match endl with POSN r1 c1 -> (if r1 = r then c1 else
                len) | _3 -> len) in
            let underline =
-             concat (REPLICATE c (implode " ") ++ REPLICATE ((stop -
-               c) + 1) (implode [CHR 94])) in
+             concat (APPEND (REPLICATE c (implode " ")) (REPLICATE
+               ((stop - c) + 1) (implode [CHR 94]))) in
              concat [(implode "line "); toString (r + 1); (implode
                "\n\n");
                      line; (implode "\n");
@@ -356,7 +356,7 @@ let compiler_compile_def = new_definition
         (let _9 = empty_ffi (implode "finished: lexing and parsing")
           in
         let full_prog = (if compiler_config_exclude_prelude c then
-          prog else prelude ++ prog) in
+          prog else APPEND prelude prog) in
         match
           (if compiler_config_skip_type_inference c then M_success
             (compiler_config_inferencer_config c) else infertype_prog
@@ -368,13 +368,14 @@ let compiler_compile_def = new_definition
            (let _10 = empty_ffi (implode "finished: type inference")
              in
            if compiler_config_only_print_types c then
-             (M_failure (TypeError (concat ([(implode "\n")] ++
-                              inf_env_to_types_string ic ++
+             (M_failure (TypeError (concat (APPEND (APPEND [(implode
+               "\n")]
+                              (inf_env_to_types_string ic))
                               [(implode "\n")]))),misc_Nil) else if
                                 compiler_config_only_print_sexp c then
              (M_failure (TypeError (implode
-                ("\n" ++ print_sexp (listsexp (MAP decsexp
-                  full_prog))))),misc_Nil) else
+                (APPEND "\n" (print_sexp (listsexp (MAP decsexp
+                  full_prog)))))),misc_Nil) else
            match compile_tap (compiler_config_asm_config c)
              (compiler_config_backend_config c) full_prog with
              (NONE,td) -> (M_failure AssembleError,td) | (SOME
@@ -442,7 +443,7 @@ let is_error_msg_def = new_definition
 let parse_num_def = new_definition
   `parse_num str =
    (let str = explode str in
-   if EVERY isDigit str then
+   if ALL isDigit str then
      SOME (num_from_dec_string_alt str) else NONE)`;;
 
 let parse_bool_def = new_definition
@@ -454,7 +455,7 @@ let parse_bool_def = new_definition
   returns the rest of the string after it *)
 let find_str_def,find_str_ind = define_rec
   [`find_str flag [] = NONE`;
-   `find_str flag (x :: xs) =
+   `find_str flag (CONS x xs) =
         (if isPrefix flag x then
           SOME (extract x (strlen flag) NONE) else
           find_str flag xs)`];;
@@ -463,9 +464,9 @@ let find_str_def,find_str_ind = define_rec
    the remainder in each occurence. *)
 let find_strs_def,find_strs_ind = define_rec
   [`find_strs flag [] = []`;
-   `find_strs flag (x :: xs) =
-        (if isPrefix flag x then
-          (extract x (strlen flag) NONE) :: find_strs flag xs else
+   `find_strs flag (CONS x xs) =
+        (if isPrefix flag x then CONS (extract x (strlen flag) NONE)
+          (find_strs flag xs) else
           find_strs flag xs)`];;
 
 (* If flag is not present then F, else if it is present then
@@ -497,21 +498,21 @@ let get_err_str_def = define_cases
 (* All the numbers must parse *)
 let parse_num_list_def,parse_num_list_ind = define_rec
   [`parse_num_list [] = INL []`;
-   `parse_num_list (x :: xs) =
+   `parse_num_list (CONS x xs) =
          (match parse_num x with
            NONE -> INR (concat [(implode
              "Unable to parse as num: "); x]) | SOME n ->
            (match parse_num_list xs with
-             INR s -> INR s | INL ns -> INL (n :: ns)))`];;
+             INR s -> INR s | INL ns -> INL (CONS n ns)))`];;
 
 let comma_tokens_def,comma_tokens_ind = define_rec
-  [`comma_tokens acc (xs:string) [] = (if NULL xs then acc else acc
-  ++ [implode xs])`;
-   `comma_tokens acc (xs:string) (c :: (cs:string)) =
+  [`comma_tokens acc (xs:string) [] = (if NULL xs then acc else
+  APPEND acc [implode xs])`;
+   `comma_tokens acc (xs:string) (CONS c (cs:string)) =
         (if c = (CHR 44) then
-          comma_tokens (acc ++ (if NULL xs then [] else [implode
+          comma_tokens (APPEND acc (if NULL xs then [] else [implode
             xs])) [] cs else
-          comma_tokens acc (STRCAT xs [c]) cs)`];;
+          comma_tokens acc (APPEND xs [c]) cs)`];;
 
 
 let parse_nums_def = new_definition
@@ -1021,7 +1022,7 @@ let compile_pancake_64_def = new_definition
                (let ext_conf = pancake_backend_conf ext_conf in
                match compile_pancake aconf ext_conf input with
                  (M_failure err,td,warns) ->
-                   (List [],concat (MAP error_to_str (err :: (if
+                   (List [],concat (MAP error_to_str (CONS err (if
                      nowarn then [] else warns)))) | (M_success
                      (bytes,data,c),td,warns) ->
                    (add_tap_output td
@@ -1084,7 +1085,7 @@ let compile_pancake_32_def = new_definition
                (let ext_conf = pancake_backend_conf ext_conf in
                match compile_pancake aconf ext_conf input with
                  (M_failure err,td,warns) ->
-                   (List [],concat (MAP error_to_str (err :: (if
+                   (List [],concat (MAP error_to_str (CONS err (if
                      nowarn then [] else warns)))) | (M_success
                      (bytes,data,c),td,warns) ->
                    (add_tap_output td

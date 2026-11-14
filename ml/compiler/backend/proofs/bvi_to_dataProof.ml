@@ -144,13 +144,13 @@ let optimise_correct = prove
 (* [local] *)
 let compile_RANGE_lemma = prove
  (`!n env tail live xs.
-       EVERY (\v. v < (SND (SND (compile n env tail live xs))))
+       ALL (\v. v < (SND (SND (compile n env tail live xs))))
          (FST (SND (compile n env tail live xs)))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let compile_RANGE = prove
- (`(compile n env tail live xs = (ys,vs,k)) ==> EVERY (\v. v < k) vs`,
+ (`(compile n env tail live xs = (ys,vs,k)) ==> ALL (\v. v < k) vs`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_to_dataProofScript.sml:156: the overload isException,
@@ -334,7 +334,7 @@ let data_to_bvi_do_eq = prove
 let data_to_bvi_v_list_to_v_APPEND = prove
  (`!l vl v ts.
     v_to_list v = SOME vl ==> data_to_bvi_v (list_to_v ts v l) =
-   data_to_bvi_v (list_to_v ts (Block 0 nil_tag []) (l ++ vl))`,
+   data_to_bvi_v (list_to_v ts (Block 0 nil_tag []) (APPEND l vl))`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_to_dataProofScript.sml:445-452: code that the source has
@@ -456,8 +456,8 @@ let domain_list_to_num_set2 = prove
 
 (* [simp,local] *)
 let list_insert_list_to_num_set = prove
- (`list_insert xs (list_to_num_set (xs ++ ys ++ zs)) =
-   list_to_num_set (xs ++ ys ++ zs)`,
+ (`list_insert xs (list_to_num_set (APPEND (APPEND xs ys) zs)) =
+   list_to_num_set (APPEND (APPEND xs ys) zs)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -473,7 +473,8 @@ let state_rel_do_app_FFI_err = prove
 let evaluate_Return_GENLIST_Var = prove
  (`!rets ret_vs env s'.
      LENGTH ret_vs = rets ==>
-     bviSem_evaluate ([Return (GENLIST Var rets)],ret_vs ++ env,s') =
+     bviSem_evaluate ([Return (list_of_seq Var rets)],APPEND ret_vs
+       env,s') =
      (Rerr (Rraise (Ret ret_vs)),s')`,
   CHEAT_TAC);;
 
@@ -489,8 +490,7 @@ let bvi_to_dataProof_compile_correct = prove
       (~(LENGTH xs = 1) ==> ~tail) /\
       (!k. n <= k ==> (lookup k (dataSem_state_locals t1) = NONE)) /\
       state_rel s1 t1 /\
-      EVERY (\n. ~(lookup n (dataSem_state_locals t1) = NONE)) live
-        /\
+      ALL (\n. ~(lookup n (dataSem_state_locals t1) = NONE)) live /\
       ((\x. ?v. x = Rerr (Rraise (Exn v))) res ==> ~(dataSem_jump_exc
         t1 = NONE)) ==> (?t2 prog pres vs next_var ls.
           compile n corr tail live xs = (prog,vs,next_var) /\
@@ -515,7 +515,7 @@ let bvi_to_dataProof_compile_correct = prove
                     t1)) t2)) =
                      SOME (dataSem_state_locals_size_fupd (K ls)
                        t2)))) | NONE -> ~tail /\ n <= next_var /\
-                     EVERY (\v. v < next_var) vs /\
+                     ALL (\v. v < next_var) vs /\
                      (!k. next_var <= k ==> (lookup k
                        (dataSem_state_locals t2) = NONE)) /\
                      var_corr env corr (map data_to_bvi_v
@@ -639,7 +639,7 @@ let get_code_labels_iAssign = prove
 (* get_code_labels_compile *)
 let bvi_to_dataProof_get_code_labels_compile = prove
  (`!a b c d e. get_code_labels (FST (compile a b c d e)) SUBSET
-    BIGUNION (set_of_list (MAP get_code_labels e))`,
+    UNIONS (set_of_list (MAP get_code_labels e))`,
   CHEAT_TAC);;
 
 let compile_prog_good_code_labels = prove

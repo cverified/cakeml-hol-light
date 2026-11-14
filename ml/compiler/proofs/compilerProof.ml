@@ -154,7 +154,8 @@ let compile_correct_gen = prove
               extend_with_resource_limit'
                 (is_safe_for_space (state_ffi (semantics_state_sem_st
                   st)) cc
-                   (prelude ++ source_decs) (read_limits cc mc ms))
+                   (APPEND prelude source_decs) (read_limits cc mc
+                     ms))
                 behaviours)))`,
   CHEAT_TAC);;
 
@@ -184,7 +185,8 @@ let compilerProof_compile_correct_lemma = prove
              machine_sem mc ffi ms SUBSET
                extend_with_resource_limit'
                  (is_safe_for_space ffi cc
-                    (prelude ++ source_decs) (read_limits cc mc ms))
+                    (APPEND prelude source_decs) (read_limits cc mc
+                      ms))
                  behaviours)))`,
   CHEAT_TAC);;
 
@@ -198,7 +200,7 @@ let compile_correct_safe_for_space = prove
          (semantics_init ffi prelude input = Execute behaviours) /\
          parse (lexer_fun input) = SOME source_decs /\
          (!ms.
-           is_safe_for_space ffi cc (prelude ++ source_decs)
+           is_safe_for_space ffi cc (APPEND prelude source_decs)
              (
               // cost semantics
               read_limits cc mc ms) /\

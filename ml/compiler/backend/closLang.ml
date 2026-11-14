@@ -295,8 +295,8 @@ let has_install_def,has_install_ind = define_mutual_shaped_rec
    `has_install (Letrec _18 _19 _20 fns e:closLang_exp) =
   (has_install_list (MAP SND fns) \/ has_install e)`;
    `has_install_list [] = F`;
-   `has_install_list (x :: xs) = (has_install x \/ has_install_list
-  xs)`];;
+   `has_install_list (CONS x xs) = (has_install x \/
+  has_install_list xs)`];;
 
 (* HOL4 closLangScript.sml:170-175: a theorem whose statement the
    port cannot state yet: exp1_size_lemma *)
@@ -320,7 +320,7 @@ let pure_def,pure_ind = define_shaped_rec
   [`pure (Var _28 _29:closLang_exp) <=> T`;
    `pure (If _31 e1 e2 e3:closLang_exp) <=> pure e1 /\ pure e2 /\
   pure e3`;
-   `pure (Let _33 es e2:closLang_exp) <=> EVERY pure es /\ pure e2`;
+   `pure (Let _33 es e2:closLang_exp) <=> ALL pure es /\ pure e2`;
    `pure (Raise _36 _37:closLang_exp) <=> F`;
    `pure (Handle _39 e1 e2:closLang_exp) <=> pure e1`;
    `pure (closLang_Tick _42 _43:closLang_exp) <=> F`;
@@ -328,7 +328,7 @@ let pure_def,pure_ind = define_shaped_rec
    `pure (App _56 _57 _58 _59:closLang_exp) <=> F`;
    `pure (closLang_Fn _60 _61 _62 _63 _64) <=> T`;
    `pure (Letrec _69 _70 _71 _72 x:closLang_exp) <=> pure x`;
-   `pure (closLang_Op _74 opn es:closLang_exp) <=> EVERY pure es /\
+   `pure (closLang_Op _74 opn es:closLang_exp) <=> ALL pure es /\
   closLang_pure_op opn`];;
 
 (* used in proofs about closLang, BVL, BVI and dataLang *)

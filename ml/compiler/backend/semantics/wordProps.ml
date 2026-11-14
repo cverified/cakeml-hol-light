@@ -1883,9 +1883,9 @@ let get_vars_length_lemma = prove
    variables of its own are read as variables *)
 let stack_size_eq = prove
  (cake_as_vars (fun () ->
-    `(stack_size (StackFrame n _5 _6 NONE :: stack) = OPTION_MAP2 (+) n
-  (stack_size stack)) /\
-     (stack_size (StackFrame n _7 _8 (SOME handler) :: stack) =
+    `(stack_size (CONS (StackFrame n _5 _6 NONE) stack) = OPTION_MAP2
+  (+) n (stack_size stack)) /\
+     (stack_size (CONS (StackFrame n _7 _8 (SOME handler)) stack) =
         OPTION_MAP2 (+) (OPTION_MAP ((+) 3) n) (stack_size stack))
           /\
      (stack_size [] = SOME 1)`),
@@ -1895,7 +1895,7 @@ let stack_size_eq = prove
    variables of its own are read as variables *)
 let stack_size_eq2 = prove
  (cake_as_vars (fun () ->
-    `(stack_size (sfrm :: stack) =
+    `(stack_size (CONS sfrm stack) =
        OPTION_MAP2 (+) (stack_size_frame sfrm) (stack_size stack))
          /\
      (stack_size [] = SOME 1)`),
@@ -1929,7 +1929,7 @@ let s_val_eq_def,s_val_eq_ind = define_wf
   [`s_val_eq x1 x2 =
         match (x1,x2) with
           ([],[]) -> T
-        | ((x :: xs),(y :: ys)) -> (s_val_eq xs ys /\
+        | ((CONS x xs),(CONS y ys)) -> (s_val_eq xs ys /\
                               s_frame_val_eq x y)
         | (_11,_12) -> F`];;
 
@@ -1960,18 +1960,18 @@ let s_key_eq_def,s_key_eq_ind = define_wf
   [`s_key_eq x1 x2 =
         match (x1,x2) with
           ([],[]) -> T
-        | ((x :: xs),(y :: ys)) -> (s_key_eq xs ys /\
+        | ((CONS x xs),(CONS y ys)) -> (s_key_eq xs ys /\
                               s_frame_key_eq x y)
         | (_15,_16) -> F`];;
 
 let s_key_eq_def2 = prove
  (`!l1 l2.
-   s_key_eq l1 l2 = LIST_REL s_frame_key_eq l1 l2`,
+   s_key_eq l1 l2 = ALL2 s_frame_key_eq l1 l2`,
   CHEAT_TAC);;
 
 let s_val_eq_def2 = prove
  (`!l1 l2.
-   s_val_eq l1 l2 = LIST_REL s_frame_val_eq l1 l2`,
+   s_val_eq l1 l2 = ALL2 s_frame_val_eq l1 l2`,
   CHEAT_TAC);;
 
 (*Reflexive*)
@@ -2041,8 +2041,8 @@ let s_frame_val_and_key_eq = prove
   CHEAT_TAC);;
 
 let LIST_REL_CONJ2 = prove
- (`LIST_REL (\a b. P a b /\ Q a b) l1 l2 <=>
-   LIST_REL P l1 l2 /\ LIST_REL Q l1 l2`,
+ (`ALL2 (\a b. P a b /\ Q a b) l1 l2 <=>
+   ALL2 P l1 l2 /\ ALL2 Q l1 l2`,
   CHEAT_TAC);;
 
 let s_val_and_key_eq = prove
@@ -2123,7 +2123,7 @@ let gc_s_val_eq_gen = prove
 let push_env_pop_env_s_key_eq = prove
  (`!x b s t. s_key_eq (stack (wordSem_push_env x b s)) (stack t) ==>
        (?n l ls opt. stack
-              t = (StackFrame n (toAList (FST x)) l opt) :: ls /\
+              t = CONS (StackFrame n (toAList (FST x)) l opt) ls /\
               (?y. (wordSem_pop_env t = SOME y /\
                 wordSem_state_locals
                    y = sptree_union (fromAList l) (fromAList (toAList
@@ -2150,8 +2150,8 @@ let s_key_eq_length = prove
 
 (* [local] *)
 let s_val_eq_APPEND = prove
- (`!s t x y. (s_val_eq s t /\ s_val_eq x y) ==> s_val_eq (s ++ x) (t
-  ++ y)`,
+ (`!s t x y. (s_val_eq s t /\ s_val_eq x y) ==> s_val_eq (APPEND s x)
+  (APPEND t y)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2172,8 +2172,8 @@ let s_val_eq_LASTN = prove
 
 (* [local] *)
 let s_key_eq_APPEND = prove
- (`!s t x y. (s_key_eq s t /\ s_key_eq x y) ==> s_key_eq (s ++ x) (t
-  ++ y)`,
+ (`!s t x y. (s_key_eq s t /\ s_key_eq x y) ==> s_key_eq (APPEND s x)
+  (APPEND t y)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2193,28 +2193,28 @@ let s_key_eq_LASTN = prove
   CHEAT_TAC);;
 
 let s_key_eq_tail = prove
- (`!a b c d. s_key_eq (a :: b) (c :: d) ==> s_key_eq b d`,
+ (`!a b c d. s_key_eq (CONS a b) (CONS c d) ==> s_key_eq b d`,
   CHEAT_TAC);;
 
 (* [local] *)
 let s_val_eq_tail = prove
- (`!a b c d. s_val_eq (a :: b) (c :: d) ==> s_val_eq b d`,
+ (`!a b c d. s_val_eq (CONS a b) (CONS c d) ==> s_val_eq b d`,
   CHEAT_TAC);;
 
 (* [local] *)
 let s_key_eq_LASTN_exists = prove
  (`!s t n m e0 e y xs.
      s_key_eq s t /\
-     LASTN n s = StackFrame m e0 e (SOME y) :: xs ==> (?e' ls.
-         LASTN n t = StackFrame m e0 e' (SOME y) :: ls /\
+     LASTN n s = CONS (StackFrame m e0 e (SOME y)) xs ==> (?e' ls.
+         LASTN n t = CONS (StackFrame m e0 e' (SOME y)) ls /\
          MAP FST e' = MAP FST e /\ s_key_eq xs ls)`,
   CHEAT_TAC);;
 
 let s_val_eq_LASTN_exists = prove
  (`!s t n m e0 e y xs.
     s_val_eq s t /\
-   LASTN n s = StackFrame m e0 e (SOME y) :: xs ==> (?e0' e' ls.
-       LASTN n t = StackFrame m e0' e' (SOME y) :: ls /\
+   LASTN n s = CONS (StackFrame m e0 e (SOME y)) xs ==> (?e0' e' ls.
+       LASTN n t = CONS (StackFrame m e0' e' (SOME y)) ls /\
        MAP SND e' = MAP SND e /\ s_val_eq xs ls)`,
   CHEAT_TAC);;
 
@@ -2241,7 +2241,7 @@ let s_key_eq_stack_size = prove
 
 let s_val_append_eq_stack_size = prove
  (`!stk stk' frm. s_val_eq stk stk' ==>
-     stack_size (frm :: stk) = stack_size (frm :: stk')`,
+     stack_size (CONS frm stk) = stack_size (CONS frm stk')`,
   CHEAT_TAC);;
 
 (* Stack swap theorem for evaluate *)
@@ -2282,8 +2282,8 @@ let wordProps_evaluate_stack_swap = prove
             // precondition for jump_exc
             ?e0 e n ls m lss.
                (LASTN (wordSem_state_handler s + 1)
-                 (wordSem_state_stack s) = StackFrame m e0 e (SOME n) ::
-                 ls) /\
+                 (wordSem_state_stack s) = CONS (StackFrame m e0 e (SOME
+                 n)) ls) /\
                Abbrev (m = wordSem_state_locals_size s1) /\
                (MAP FST e = MAP FST lss /\ wordSem_state_locals
                   s1 = sptree_union (fromAList lss) (fromAList e0))
@@ -2293,7 +2293,7 @@ let wordProps_evaluate_stack_swap = prove
                  a)) /\
                (!xs e0' e' ls'.
                           (LASTN (wordSem_state_handler s + 1) xs =
-                            StackFrame m e0' e' (SOME n) :: ls') /\
+                            CONS (StackFrame m e0' e' (SOME n)) ls') /\
                           (s_val_eq (wordSem_state_stack s) xs) ==>
                           // this implies n=n' and m=m' and MAP SND e0' = MAP SND e0
                           (?st locs.
@@ -2347,13 +2347,13 @@ let locals_rel_def = new_definition
 let the_words_EVERY_IS_SOME = prove
  (`!ls x.
    the_words ls = SOME x ==>
-   EVERY IS_SOME ls`,
+   ALL IS_SOME ls`,
   CHEAT_TAC);;
 
 let locals_rel_get_vars = prove
  (`!ls vs.
    wordSem_get_vars ls st = SOME vs /\
-   EVERY (\x. x < temp) ls /\
+   ALL (\x. x < temp) ls /\
    locals_rel temp (wordSem_state_locals st) loc ==>
    wordSem_get_vars ls (wordSem_state_locals_fupd (K loc) st) =
      SOME vs`,
@@ -2362,7 +2362,7 @@ let locals_rel_get_vars = prove
 let locals_rel_alist_insert = prove
  (`!ls vs s t.
    locals_rel temp s t /\
-   EVERY (\x. x < temp) ls ==>
+   ALL (\x. x < temp) ls ==>
    locals_rel temp (alist_insert ls vs s) (alist_insert ls vs t)`,
   CHEAT_TAC);;
 
@@ -2382,7 +2382,7 @@ let locals_rel_get_var_simp = prove
   CHEAT_TAC);;
 
 let locals_rel_get_vars_simp = prove
- (`EVERY (\x. x < temp) l /\
+ (`ALL (\x. x < temp) l /\
    locals_rel temp (wordSem_state_locals st) loc ==>
    wordSem_get_vars l (wordSem_state_locals_fupd (K loc) st) =
      wordSem_get_vars l st`,
@@ -2822,7 +2822,7 @@ let PERM_fromAList = prove
 
 let stack_size_perm = prove
  (`!l1 l2.
-   LIST_REL (\s1 s2. match (s1,s2) with
+   ALL2 (\s1 s2. match (s1,s2) with
                               (StackFrame ss l env h,StackFrame ss'
                                 l' env' h') ->
                               ss = ss' /\ h = h' /\ l = l' /\ PERM
@@ -2842,7 +2842,7 @@ let permute_swap_lemma2 = prove
        st) /\ no_alloc prog /\
      no_install_code (wordSem_state_code st) /\ wordConvs_no_install
        prog /\
-     LIST_REL (\s1 s2. match (s1,s2) with
+     ALL2 (\s1 s2. match (s1,s2) with
                               (StackFrame ss l env h,StackFrame ss'
                                 l' env' h') ->
                               ss = ss' /\ h = h' /\ l = l' /\ PERM
@@ -2852,7 +2852,7 @@ let permute_swap_lemma2 = prove
        wordSem_evaluate (prog,stack_fupd (K stack')
          (wordSem_state_permute_fupd (K perm) st)) = (res,stack_fupd (K
          stack') (wordSem_state_permute_fupd (K perm') rst)) /\
-       LIST_REL (\s1 s2. match (s1,s2) with
+       ALL2 (\s1 s2. match (s1,s2) with
                               (StackFrame ss l env h,StackFrame ss'
                                 l' env' h') ->
                               ss = ss' /\ h = h' /\ l = l' /\ PERM
@@ -2871,13 +2871,13 @@ let permute_swap_lemma3 = prove
        st) /\ no_alloc prog /\
      no_install_code (wordSem_state_code st) /\ wordConvs_no_install
        prog /\
-     EVERY (\st. match st with StackFrame _20 _21 vs handler ->
+     ALL (\st. match st with StackFrame _20 _21 vs handler ->
        ALL_DISTINCT (MAP FST vs)) (stack st) ==>
      (?perm' stack'.
        wordSem_evaluate (prog,wordSem_state_permute_fupd (K perm) st)
          = (res,stack_fupd (K stack') (wordSem_state_permute_fupd (K
          perm') rst)) /\
-       LIST_REL (\s1 s2. match (s1,s2) with
+       ALL2 (\s1 s2. match (s1,s2) with
                               (StackFrame ss l env h,StackFrame ss'
                                 l' env' h') ->
                               ss = ss' /\ h = h' /\ l = l' /\ PERM

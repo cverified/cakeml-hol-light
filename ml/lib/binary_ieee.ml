@@ -223,7 +223,7 @@ let float_round_with_flags_def = new_definition
    // are two possible methods.`;;
 
 let check_for_signalling_def = new_definition
-  `check_for_signalling l = flags_InvalidOp_fupd (K (EXISTS
+  `check_for_signalling l = flags_InvalidOp_fupd (K (EX
   float_is_signalling l))
    clear_flags`;;
 

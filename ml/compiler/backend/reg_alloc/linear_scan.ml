@@ -37,7 +37,7 @@ hol4_overload "Seq" "linear_scan_Seq";;
 
 let numset_list_insert_def,numset_list_insert_ind = define_rec
   [`linear_scan_numset_list_insert [] t = t`;
-   `linear_scan_numset_list_insert (x :: xs) t =
+   `linear_scan_numset_list_insert (CONS x xs) t =
   linear_scan_numset_list_insert xs (sptree_insert x one t)`];;
 hol4_overload "numset_list_insert" "linear_scan_numset_list_insert";;
 
@@ -45,8 +45,8 @@ let numset_list_insert_nottailrec_def,
     numset_list_insert_nottailrec_ind =
   define_rec
   [`numset_list_insert_nottailrec [] t = t`;
-   `numset_list_insert_nottailrec (x :: xs) t = sptree_insert x one
-  (numset_list_insert_nottailrec xs t)`];;
+   `numset_list_insert_nottailrec (CONS x xs) t = sptree_insert x
+  one (numset_list_insert_nottailrec xs t)`];;
 
 let get_live_tree_def,get_live_tree_ind = define_rec
   [`get_live_tree (reg_alloc_Delta wr rd) =
@@ -108,7 +108,7 @@ let fix_domination_def = new_definition
 
 let numset_list_add_if_def,numset_list_add_if_ind = define_rec
   [`numset_list_add_if [] (v:int) s P = s`;
-   `numset_list_add_if (x :: xs) (v:int) s P =
+   `numset_list_add_if (CONS x xs) (v:int) s P =
       (match sptree_lookup x s with (SOME v') ->
           (if P v v' then numset_list_add_if xs v (sptree_insert x v
             s) P else numset_list_add_if xs v s P) | NONE ->
@@ -500,7 +500,7 @@ let numset_list_add_if_lt_monad_def,numset_list_add_if_lt_monad_ind =
   `MEASURE (\(x0,x1). list_size (\n. n) x0)`
   [`numset_list_add_if_lt_monad [] (v:int) =
       st_ex_return one`;
-   `numset_list_add_if_lt_monad (r :: rs) (v:int) =
+   `numset_list_add_if_lt_monad (CONS r rs) (v:int) =
       st_ex_bind (int_beg_sub r) (\
         begr.
         if (&0) < begr then
@@ -519,7 +519,7 @@ let numset_list_add_if_gt_monad_def,numset_list_add_if_gt_monad_ind =
   `MEASURE (\(x0,x1). list_size (\n. n) x0)`
   [`numset_list_add_if_gt_monad [] (v:int) =
       st_ex_return one`;
-   `numset_list_add_if_gt_monad (r :: rs) (v:int) =
+   `numset_list_add_if_gt_monad (CONS r rs) (v:int) =
       st_ex_bind (int_end_sub r) (\
         begr.
         if (&0) < begr then
@@ -587,29 +587,28 @@ let remove_inactive_intervals_def,remove_inactive_intervals_ind =
   define_guess_cheat
   [`remove_inactive_intervals beg st =
      (match linear_scan_state_active st with [] -> st_ex_return st |
-       (e,r) :: activetail -> (
+       CONS (e,r) activetail -> (
        if e < beg then
          st_ex_bind (colors_sub r) (\
            col.
-           let st' = linear_scan_state_colorpool_fupd (\l. col :: l)
-             (linear_scan_state_active_fupd (K activetail) st) in
+           let st' = linear_scan_state_colorpool_fupd (\l. CONS col
+             l) (linear_scan_state_active_fupd (K activetail) st) in
            remove_inactive_intervals beg st') else
          st_ex_return st))`];;
 
 let add_active_interval_def,add_active_interval_ind = define_rec
   [`add_active_interval v [] = [v]`;
-   `add_active_interval (v1:int#num) (v2 :: tail) =
-        (if FST v1 <= FST v2 then
-            v1 :: v2 :: tail else
-            v2 :: (add_active_interval v1 tail))`];;
+   `add_active_interval (v1:int#num) (CONS v2 tail) =
+        (if FST v1 <= FST v2 then CONS v1 (CONS v2 tail) else
+          CONS v2 (add_active_interval v1 tail))`];;
 
 let find_color_in_list_def,find_color_in_list_ind = define_rec
   [`find_color_in_list [] (forbidden:1 spt) = NONE`;
-   `find_color_in_list (r :: rs) (forbidden:1 spt) =
+   `find_color_in_list (CONS r rs) (forbidden:1 spt) =
         (if sptree_lookup r forbidden = NONE then
           SOME (r,rs) else
           match find_color_in_list rs forbidden with NONE ->
-            NONE | SOME (col,rest) -> SOME (col,r :: rest))`];;
+            NONE | SOME (col,rest) -> SOME (col,CONS r rest))`];;
 
 let find_color_in_colornum_def = new_definition
   `find_color_in_colornum st (forbidden:1 spt) =
@@ -650,11 +649,11 @@ let find_last_stealable_def,find_last_stealable_ind = define_wf
   `MEASURE (\(x0,x1). list_size (pair_size (\x. 0) (\n. n)) x0)`
   [`find_last_stealable [] (forbidden:1 spt) =
         st_ex_return NONE`;
-   `find_last_stealable (x :: xs) (forbidden:1 spt) =
+   `find_last_stealable (CONS x xs) (forbidden:1 spt) =
       st_ex_bind (find_last_stealable xs forbidden) (\
         recursion.
         match recursion with SOME (steal,rest) -> st_ex_return (SOME
-          (steal,x :: rest)) | NONE -> (
+          (steal,CONS x rest)) | NONE -> (
             st_ex_bind (colors_sub (SND x)) (\
               xcol.
               if ~(is_phy_var (SND x)) /\ (sptree_lookup xcol
@@ -750,7 +749,7 @@ let linear_reg_alloc_pass2_initial_state_def = new_definition
 let find_reg_exchange_def,find_reg_exchange_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x0)`
   [`find_reg_exchange [] exch invexch = st_ex_return (exch,invexch)`;
-   `find_reg_exchange (r :: rs) exch invexch =
+   `find_reg_exchange (CONS r rs) exch invexch =
       st_ex_bind (colors_sub r) (\
         col1.
         let fcol1 = r DIV 2 in
@@ -785,7 +784,7 @@ let apply_reg_exchange_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_FOLDL_def,st_ex_FOLDL_ind = define_guess_cheat
   [`st_ex_FOLDL f e [] = st_ex_return e`;
-   `st_ex_FOLDL f e (x :: xs) =
+   `st_ex_FOLDL f e (CONS x xs) =
       st_ex_bind (f e x) (\
         e'.
         st_ex_FOLDL f e' xs)`];;
@@ -795,13 +794,13 @@ let st_ex_FOLDL_def,st_ex_FOLDL_ind = define_guess_cheat
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_FILTER_good_def,st_ex_FILTER_good_ind = define_guess_cheat
   [`st_ex_FILTER_good P [] = st_ex_return []`;
-   `st_ex_FILTER_good P (x :: xs) =
+   `st_ex_FILTER_good P (CONS x xs) =
       st_ex_bind (P x) (\
         Px.
         if Px then
           st_ex_bind (st_ex_FILTER_good P xs) (\
             filter_xs.
-            st_ex_return (x :: filter_xs)) else
+            st_ex_return (CONS x filter_xs)) else
           st_ex_FILTER_good P xs)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -809,16 +808,16 @@ let st_ex_FILTER_good_def,st_ex_FILTER_good_ind = define_guess_cheat
 let edges_to_adjlist_def,edges_to_adjlist_ind = define_wf
   `MEASURE (\(x0,x1). list_size (pair_size (\n. n) (\n. n)) x0)`
   [`edges_to_adjlist [] acc = st_ex_return acc`;
-   `edges_to_adjlist ((a,b) :: abs') acc =
+   `edges_to_adjlist (CONS (a,b) abs') acc =
       (if a = b then
         edges_to_adjlist abs' acc else
         st_ex_bind (int_beg_sub a) (\
           bega. st_ex_bind (int_beg_sub b) (\
           begb.
           if bega < begb \/ (bega = begb /\ a <= b) then
-            edges_to_adjlist abs' (sptree_insert b (a :: (the []
+            edges_to_adjlist abs' (sptree_insert b (CONS a (the []
               (sptree_lookup b acc))) acc) else
-            edges_to_adjlist abs' (sptree_insert a (b :: (the
+            edges_to_adjlist abs' (sptree_insert a (CONS b (the
               [] (sptree_lookup a acc))) acc))))`];;
 
 let sort_moves_rev_def = new_definition
@@ -879,7 +878,7 @@ let list_to_sorted_regs_def,list_to_sorted_regs_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0)`
   [`list_to_sorted_regs [] n =
         st_ex_return one`;
-   `list_to_sorted_regs (r :: rs) n =
+   `list_to_sorted_regs (CONS r rs) n =
       st_ex_ignore_bind
         (update_sorted_regs n r) (
         list_to_sorted_regs rs (n + 1))`];;
@@ -894,7 +893,7 @@ let sorted_regs_to_list_def,sorted_regs_to_list_ind = define_wf
        st_ex_bind (sorted_regs_sub n) (\
          r. st_ex_bind (sorted_regs_to_list (n + 1) last) (\
          l.
-         st_ex_return (r :: l))))`];;
+         st_ex_return (CONS r l))))`];;
 
 let swap_moves_def = new_definition
   `swap_moves i1 i2 =
@@ -950,7 +949,7 @@ let list_to_sorted_moves_def,list_to_sorted_moves_ind = define_wf
   (\n. n))) x0)`
   [`list_to_sorted_moves [] n =
         st_ex_return one`;
-   `list_to_sorted_moves (r :: rs) n =
+   `list_to_sorted_moves (CONS r rs) n =
       st_ex_ignore_bind
         (update_sorted_moves n r) (
         list_to_sorted_moves rs (n + 1))`];;
@@ -965,7 +964,7 @@ let sorted_moves_to_list_def,sorted_moves_to_list_ind = define_wf
        st_ex_bind (sorted_moves_sub n) (\
          r. st_ex_bind (sorted_moves_to_list (n + 1) len) (\
          l.
-         st_ex_return (r :: l))))`];;
+         st_ex_return (CONS r l))))`];;
 
 let linear_reg_alloc_intervals_def = new_definition
   `linear_reg_alloc_intervals k forced moves reglist_unsorted =
@@ -1018,7 +1017,7 @@ let linear_reg_alloc_intervals_def = new_definition
 let extract_coloration_def,extract_coloration_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x1)`
   [`extract_coloration invbij [] acc = st_ex_return acc`;
-   `extract_coloration invbij (r :: rs) acc =
+   `extract_coloration invbij (CONS r rs) acc =
       st_ex_bind (colors_sub r) (\
         col.
         extract_coloration invbij rs (sptree_insert (the 0

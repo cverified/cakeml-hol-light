@@ -77,7 +77,7 @@ let nsLookup_nsEmpty = prove
 
 (* [simp] *)
 let nsLookupMod_nsEmpty = prove
- (`!x y. nsLookupMod nsEmpty (x :: y) = NONE`,
+ (`!x y. nsLookupMod nsEmpty (CONS x y) = NONE`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -134,7 +134,7 @@ let nsLookup_Bind_v_some = prove
 
 (* [simp] *)
 let alist_to_ns_cons = prove
- (`!k v l. alist_to_ns ((k,v) :: l) = nsBind k v (alist_to_ns l)`,
+ (`!k v l. alist_to_ns (CONS (k,v) l) = nsBind k v (alist_to_ns l)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -146,7 +146,7 @@ let nsAppend_nsBind = prove
 (* [simp] *)
 let nsAppend_alist_to_ns = prove
  (`!al1 al2. nsAppend (alist_to_ns al1) (alist_to_ns al2) =
-  alist_to_ns (al1 ++ al2)`,
+  alist_to_ns (APPEND al1 al2)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -223,7 +223,7 @@ let nsDomMod_nsSing = prove
 
 (* [simp] *)
 let nsLookupMod_alist_to_ns = prove
- (`!l x y. nsLookupMod (alist_to_ns l) (x :: y) = NONE`,
+ (`!l x y. nsLookupMod (alist_to_ns l) (CONS x y) = NONE`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -271,7 +271,7 @@ let nsLookup_nsLift = prove
 let nsLookupMod_nsLift = prove
  (`!mn e path'.
     nsLookupMod (nsLift mn e) path' =
-    (match path' with [] -> SOME (nsLift mn e) | (mn' :: path') ->
+    (match path' with [] -> SOME (nsLift mn e) | (CONS mn' path') ->
       (if mn = mn' then
         nsLookupMod e path' else
         NONE))`,
@@ -294,7 +294,7 @@ let nsLookup_nsAppend_none = prove
     nsLookup (nsAppend e1 e2) id' = NONE <=>
     (nsLookup e1 id' = NONE /\
      (nsLookup e2 id' = NONE \/
-      (?p1 p2 e3. ~(p1 = []) /\ id_to_mods id' = p1 ++ p2 /\
+      (?p1 p2 e3. ~(p1 = []) /\ id_to_mods id' = APPEND p1 p2 /\
         nsLookupMod e1 p1 = SOME e3)))`,
   CHEAT_TAC);;
 
@@ -303,7 +303,7 @@ let nsLookup_nsAppend_some = prove
     nsLookup (nsAppend e1 e2) id' = SOME v <=>
     nsLookup e1 id' = SOME v \/
     (nsLookup e1 id' = NONE /\ nsLookup e2 id' = SOME v /\
-     (!p1 p2. ~(p1 = []) /\ id_to_mods id' = p1 ++ p2 ==>
+     (!p1 p2. ~(p1 = []) /\ id_to_mods id' = APPEND p1 p2 ==>
        nsLookupMod e1 p1 = NONE))`,
   CHEAT_TAC);;
 
@@ -316,8 +316,8 @@ let nsLookupMod_nsAppend_none = prove
     nsLookupMod (nsAppend e1 e2) path' = NONE <=>
     (nsLookupMod e1 path' = NONE /\
      (nsLookupMod e2 path' = NONE \/
-      (?p1 p2 e3. ~(p1 = []) /\ path' = p1 ++ p2 /\ nsLookupMod e1
-        p1 = SOME e3)))`,
+      (?p1 p2 e3. ~(p1 = []) /\ path' = APPEND p1 p2 /\ nsLookupMod
+        e1 p1 = SOME e3)))`,
   CHEAT_TAC);;
 
 let nsLookupMod_nsAppend_some = prove
@@ -327,8 +327,8 @@ let nsLookupMod_nsAppend_some = prove
      (if path' = [] then x = nsAppend e1 e2 else
      nsLookupMod e1 path' = SOME x \/
       (nsLookupMod e2 path' = SOME x /\
-      (!p1 p2. ~(p1 = []) /\ path' = p1 ++ p2 ==> nsLookupMod e1 p1
-        = NONE))))`,
+      (!p1 p2. ~(p1 = []) /\ path' = APPEND p1 p2 ==> nsLookupMod
+        e1 p1 = NONE))))`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -362,7 +362,7 @@ let nsAll_nsOptBind = prove
   CHEAT_TAC);;
 
 let nsAll_alist_to_ns = prove
- (`!R l. EVERY (\(n,v). R (Short n) v) l ==> nsAll R (alist_to_ns l)`,
+ (`!R l. ALL (\(n,v). R (Short n) v) l ==> nsAll R (alist_to_ns l)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -407,7 +407,7 @@ let nsSub_nsAppend_lift = prove
 
 let alist_rel_restr_def,alist_rel_restr_ind = define_rec
   [`alist_rel_restr R l1 l2 [] <=> T`;
-   `alist_rel_restr R l1 l2 (k1 :: keys) <=>
+   `alist_rel_restr R l1 l2 (CONS k1 keys) <=>
         (match ALOOKUP l1 k1 with NONE -> F | SOME v1 ->
           (match ALOOKUP l2 k1 with NONE -> F | SOME v2 -> R k1
             v1 v2 /\ alist_rel_restr R l1 l2 keys))`];;
@@ -443,8 +443,8 @@ let nsSub_compute_def,nsSub_compute_ind = define_guess_cheat
   [`nsSub_compute path' R (Bind e1V e1M) (Bind e2V e2M) <=>
      alistSub (\k v1 v2. R (mk_id (REVERSE path') k) v1 v2) e1V e2V
        /\
-     alistSub (\k v1 v2. nsSub_compute (k :: path') R v1 v2) e1M
-       e2M`];;
+     alistSub (\k v1 v2. nsSub_compute (CONS k path') R v1 v2)
+       e1M e2M`];;
 
 let nsLookup_FOLDR_nsLift = prove
  (`!e p k. nsLookup (ITLIST nsLift p e) (mk_id p k) = nsLookup e
@@ -455,14 +455,14 @@ let nsLookup_FOLDR_nsLift_some = prove
  (`!e p id' v.
     nsLookup (ITLIST nsLift p e) id' = SOME v <=>
     (p = [] /\ nsLookup e id' = SOME v) \/
-    (~(p = []) /\ (?p2 n. id' = mk_id (p ++ p2) n /\ nsLookup e
+    (~(p = []) /\ (?p2 n. id' = mk_id (APPEND p p2) n /\ nsLookup e
       (mk_id p2 n) = SOME v))`,
   CHEAT_TAC);;
 
 let nsLookupMod_FOLDR_nsLift_none = prove
  (`!e p1 p2. nsLookupMod (ITLIST nsLift p1 e) p2 = NONE <=>
     (IS_PREFIX p1 p2 \/ IS_PREFIX p2 p1) ==>
-    (?p3. p2 = p1 ++ p3 /\ nsLookupMod e p3 = NONE)`,
+    (?p3. p2 = APPEND p1 p3 /\ nsLookupMod e p3 = NONE)`,
   CHEAT_TAC);;
 
 (* HOL4 namespacePropsScript.sml:841-989: code that the source has in
@@ -503,7 +503,7 @@ let nsAll2_nsBind = prove
 
 let nsAll2_nsBindList = prove
  (`!R l1 l2 e1 e2.
-     LIST_REL (\(x,y) (x',y'). x = x' /\ R (Short x) y y') l1 l2 /\
+     ALL2 (\(x,y) (x',y'). x = x' /\ R (Short x) y y') l1 l2 /\
        nsAll2 R e1 e2 ==>
      nsAll2 R (nsBindList l1 e1) (nsBindList l2 e2)`,
   CHEAT_TAC);;
@@ -515,8 +515,8 @@ let nsAll2_nsAppend = prove
   CHEAT_TAC);;
 
 let nsAll2_alist_to_ns = prove
- (`!R l1 l2. LIST_REL (\(x,y) (x',y'). x = x' /\ R (Short x) y y') l1
-  l2 ==> nsAll2 R (alist_to_ns l1) (alist_to_ns l2)`,
+ (`!R l1 l2. ALL2 (\(x,y) (x',y'). x = x' /\ R (Short x) y y') l1 l2
+  ==> nsAll2 R (alist_to_ns l1) (alist_to_ns l2)`,
   CHEAT_TAC);;
 
 (* [simp] *)

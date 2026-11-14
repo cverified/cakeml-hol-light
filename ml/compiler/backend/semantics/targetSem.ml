@@ -160,7 +160,7 @@ let targetSem_evaluate_def,targetSem_evaluate_ind =
              (machine_config_next_interfer mc) ms1 in
            let mc = machine_config_next_interfer_fupd (K new_oracle)
              mc in
-             if EVERY (target_state_ok (machine_config_target mc))
+             if ALL (target_state_ok (machine_config_target mc))
                [ms; ms1; ms2] /\
                 (!x. ~(x IN machine_config_prog_addresses mc) ==>
                   target_get_byte (machine_config_target
@@ -240,10 +240,10 @@ let targetSem_evaluate_def,targetSem_evaluate_ind =
                               (match call_FFI ffi (EL ffi_index
                                 (machine_config_ffi_names mc)) [nb]
                               (
-                              (let w = target_get_reg
+                              APPEND (let w = target_get_reg
                                 (machine_config_target mc) ms reg in
                               if nb = (n2w 0) then word_to_bytes w F
-                                else word_to_bytes_aux (w2n nb) w F) ++
+                                else word_to_bytes_aux (w2n nb) w F)
                                 (word_to_bytes ad F)) with FFI_final
                                 outcome ->
                               (Halt (ffi_FFI_outcome
@@ -620,7 +620,7 @@ let installed_def = new_definition
         ms) + shmem_info_num_entry_pc rec) shmem_extra =
         DROP i (MAP w2n (machine_config_ffi_entry_pcs mc_conf)) /\
           machine_config_mmio_info
-      mc_conf = ZIP (GENLIST (\index. index + i) (LENGTH
+      mc_conf = ZIP (list_of_seq (\index. index + i) (LENGTH
         shmem_extra))
                               (MAP (\rec. (shmem_info_num_nbytes rec,
                               Addr (shmem_info_num_addr_reg rec) (n2w

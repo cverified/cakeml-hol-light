@@ -105,9 +105,9 @@ let map_bitmap_APPEND = prove
  (`!x q stack' p0 p1.
        filter_bitmap x stack' = SOME (p0,p1) /\
        LENGTH q = LENGTH p0 ==>
-       map_bitmap x (q ++ q') stack' =
+       map_bitmap x (APPEND q q') stack' =
        (match map_bitmap x q stack' with NONE -> NONE | SOME
-         (hd,ts,ws) -> SOME (hd,ts ++ q',ws))`,
+         (hd,ts,ws) -> SOME (hd,APPEND ts q',ws))`,
   CHEAT_TAC);;
 
 let filter_bitmap_map_bitmap = prove
@@ -119,7 +119,7 @@ let filter_bitmap_map_bitmap = prove
   CHEAT_TAC);;
 
 let get_bits_def = new_definition
-  `get_bits w = GENLIST (\i. FAPPLY w i) (bit_length w - 1)`;;
+  `get_bits w = list_of_seq (\i. FAPPLY w i) (bit_length w - 1)`;;
 
 let bit_length_thm = prove
  (`!w. ((w >>> bit_length w) = (n2w 0)) /\ (!n. n < bit_length w ==>
@@ -147,17 +147,17 @@ let word_msb_IMP_bit_length = prove
 (* [local] *)
 let get_bits_intro = prove
  (`word_msb (h:'a word) ==>
-     GENLIST (\i. FAPPLY h i) (dimindex (:'a) - 1) = get_bits h`,
+     list_of_seq (\i. FAPPLY h i) (dimindex (:'a) - 1) = get_bits h`,
   CHEAT_TAC);;
 
 (* [local] *)
 let filter_bitmap_APPEND = prove
  (`!xs stack' ys.
-       filter_bitmap (xs ++ ys) stack' =
+       filter_bitmap (APPEND xs ys) stack' =
        (match filter_bitmap xs stack' with NONE -> NONE | SOME
          (zs,rs) ->
          (match filter_bitmap ys rs with NONE -> NONE | SOME
-           (zs2,rs) -> SOME (zs ++ zs2,rs)))`,
+           (zs2,rs) -> SOME (APPEND zs zs2,rs)))`,
   CHEAT_TAC);;
 
 let bit_length_minus_1 = prove
@@ -214,13 +214,14 @@ let lower_2w_eq = prove
 
 (* [local] *)
 let EL_LENGTH_ADD_LEMMA = prove
- (`EL (LENGTH init + LENGTH old) (init ++ old ++ [x] ++ st1) = x`,
+ (`EL (LENGTH init + LENGTH old) (APPEND (APPEND (APPEND init old)
+  [x]) st1) = x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let LUPDATE_LENGTH_ADD_LEMMA = prove
- (`LUPDATE w (LENGTH init + LENGTH old) (init ++ old ++ [x] ++ st1) =
-        init ++ old ++ [w] ++ st1`,
+ (`LUPDATE w (LENGTH init + LENGTH old) (APPEND (APPEND (APPEND init
+  old) [x]) st1) = APPEND (APPEND (APPEND init old) [w]) st1`,
   CHEAT_TAC);;
 
 let word_msb_IFF_lsr_EQ_0 = prove
@@ -241,7 +242,7 @@ let filter_bitmap_IMP_LENGTH = prove
 
 (* EL_LENGTH_ADD_LEMMA[local] *)
 let stack_allocProof_EL_LENGTH_ADD_LEMMA = prove
- (`!n xs y ys. LENGTH xs = n ==> EL n (xs ++ (y :: ys)) = y`,
+ (`!n xs y ys. LENGTH xs = n ==> EL n (APPEND xs (CONS y ys)) = y`,
   CHEAT_TAC);;
 
 let bytes_in_word_word_shift_n2w = prove
@@ -431,8 +432,8 @@ let gc_thm = prove
             then SOME (stackSem_state_memory_fupd (K m1)
             (stackSem_state_regs_fupd (K FEMPTY)
             (stackSem_state_store_fupd (K s1)
-            (stackSem_state_stack_fupd (K (unused ++ stack')) s))))
-            else NONE)`,
+            (stackSem_state_stack_fupd (K (APPEND unused stack'))
+            s)))) else NONE)`,
   CHEAT_TAC);;
 
 let word_gc_move_bitmaps_def = new_definition
@@ -449,12 +450,12 @@ let word_gc_move_bitmaps_def = new_definition
 (* [local] *)
 let word_gc_move_roots_APPEND = prove
  (`!xs ys i1 pa1 m.
-       word_gc_move_roots conf (xs ++ ys,i1,pa1,curr,m,dm) =
+       word_gc_move_roots conf (APPEND xs ys,i1,pa1,curr,m,dm) =
          (let (ws1,i1,pa1,m1,c1) = word_gc_move_roots conf
            (xs,i1,pa1,curr,m,dm) in
          let (ws2,i2,pa2,m2,c2) = word_gc_move_roots conf
            (ys,i1,pa1,curr,m1,dm) in
-           (ws1 ++ ws2,i2,pa2,m2,(c1 /\ c2)))`,
+           (APPEND ws1 ws2,i2,pa2,m2,(c1 /\ c2)))`,
   CHEAT_TAC);;
 
 let word_gc_move_roots_IMP_LENGTH = prove
@@ -472,7 +473,7 @@ let word_gc_move_roots_bitmaps = prove
          (stack2,i2,pa2,m2,T)) ==>
        word_gc_move_roots_bitmaps conf
          (stack',bitmaps,i1,pa1,curr,m,dm) =
-       (match stack' with [] -> (ARB,ARB,ARB,ARB,F) | (w :: ws) ->
+       (match stack' with [] -> (ARB,ARB,ARB,ARB,F) | (CONS w ws) ->
          (if w = wordLang_Word (n2w 0) then (stack',i1,pa1,m,(ws =
            [])) else
            match word_gc_move_bitmaps conf
@@ -481,7 +482,8 @@ let word_gc_move_roots_bitmaps = prove
                (let (stack',i,pa,m,c3) =
                  word_gc_move_roots_bitmaps conf
                    (stack',bitmaps,i2,pa2,curr,m2,dm) in
-                   ((w :: new) ++ stack',i,pa,m,(c2 /\ c3)))))`,
+                   (APPEND (CONS w new) stack',i,pa,m,(c2 /\
+                     c3)))))`,
   CHEAT_TAC);;
 
 let word_gc_move_bitmap_def = new_definition
@@ -512,14 +514,15 @@ let word_gc_move_bitmaps_unroll = prove
        word_gc_move_bitmaps conf (wordLang_Word
          w,stack,bitmaps,i1,pa1,curr,m,dm) =
        (match DROP (w2n (w - ((n2w 1):'a word))) bitmaps with [] ->
-         NONE | (y :: ys) ->
+         NONE | (CONS y ys) ->
          (match word_gc_move_bitmap conf (y,stack,i1,pa1,curr,m,dm)
            with NONE -> NONE | SOME (hd,ws,i2,pa2,m2,c2) ->
              (if ~(word_msb y) then SOME (hd,ws,i2,pa2,m2,c2) else
                match word_gc_move_bitmaps conf (wordLang_Word (w +
                  (n2w 1)),ws,bitmaps,i2,pa2,curr,m2,dm) with NONE ->
                  NONE | SOME (hd3,ws3,i3,pa3,m3,c3) ->
-                   SOME (hd ++ hd3,ws3,i3,pa3,m3,(c2 /\ c3)))))`),
+                   SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2 /\
+                     c3)))))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -527,17 +530,17 @@ let word_gc_move_bitmap_unroll = prove
  (`word_gc_move_bitmap conf (w,stack',i1,pa1,curr,m,dm) =
      (if w = ((n2w 0):'a word) then SOME ([],stack',i1,pa1,m,T) else
      if w = (n2w 1) then SOME ([],stack',i1,pa1,m,T) else
-       match stack' with [] -> NONE | (x :: xs) ->
+       match stack' with [] -> NONE | (CONS x xs) ->
          (if (w && (n2w 1)) = (n2w 0) then
            match word_gc_move_bitmap conf (w >>>
              1,xs,i1,pa1,curr,m,dm) with NONE -> NONE | SOME
-             (new,stack',i1,pa1,m,c) -> SOME (x ::
+             (new,stack',i1,pa1,m,c) -> SOME (CONS x
              new,stack',i1,pa1,m,c) else
            let (x1,i1,pa1,m1,c1) = word_gc_move conf
              (x,i1,pa1,curr,m,dm) in
            match word_gc_move_bitmap conf (w >>>
              1,xs,i1,pa1,curr,m1,dm) with NONE -> NONE | SOME
-             (new,stack',i1,pa1,m,c) -> SOME (x1 ::
+             (new,stack',i1,pa1,m,c) -> SOME (CONS x1
              new,stack',i1,pa1,m,(c1 /\ c))))`,
   CHEAT_TAC);;
 
@@ -681,7 +684,8 @@ let word_gc_move_bitmap_code_thm = prove
       get_var 7 s = SOME (wordLang_Word w) /\
       get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w (LENGTH
         old))) /\ stackSem_state_stack
-      s = init ++ old ++ stack' /\ stackSem_state_stack_space
+      s = APPEND (APPEND init old) stack' /\
+        stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -699,8 +703,9 @@ let word_gc_move_bitmap_code_thm = prove
                               (6,r6);
                               (7,r7);
                       (8,wordLang_Word (bytes_in_word * n2w (LENGTH
-                        (old ++ new))))])) (stackSem_state_stack_fupd
-                        (K (init ++ old ++ new ++ stack1))
+                        (APPEND old new))))]))
+                        (stackSem_state_stack_fupd (K (APPEND (APPEND
+                        (APPEND init old) new) stack1))
                         (stackSem_state_memory_fupd (K m1) s))))`,
   CHEAT_TAC);;
 
@@ -743,7 +748,8 @@ let word_gc_move_bitmaps_code_thm = prove
         old))) /\
       get_var 9 s = SOME (wordLang_Word (w - (n2w 1))) /\
         stackSem_state_stack
-      s = init ++ old ++ stack' /\ stackSem_state_stack_space
+      s = APPEND (APPEND init old) stack' /\
+        stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -761,13 +767,13 @@ let word_gc_move_bitmaps_code_thm = prove
                               (6,r6);
                               (7,r7);
                       (8,wordLang_Word (bytes_in_word * n2w (LENGTH
-                        (old ++ new))));
+                        (APPEND old new))));
                               (9,r9)])) (stackSem_state_clock_fupd
                                 (K (stackSem_state_clock s))
-                                (stackSem_state_stack_fupd (K (init ++
-                                old ++ new ++ stack1))
-                                (stackSem_state_memory_fupd (K m1)
-                                s)))))`,
+                                (stackSem_state_stack_fupd (K (APPEND
+                                (APPEND (APPEND init old) new)
+                                stack1)) (stackSem_state_memory_fupd
+                                (K m1) s)))))`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -804,7 +810,8 @@ let word_gc_move_roots_bitmaps_code_thm = prove
         get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
           (LENGTH old))) /\
         get_var 9 s = SOME (HD stack) /\ stackSem_state_stack
-        s = init ++ old ++ stack /\ stackSem_state_stack_space
+        s = APPEND (APPEND init old) stack /\
+          stackSem_state_stack_space
         s = LENGTH init /\
         (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
           dimword (:'a) ==>
@@ -826,8 +833,8 @@ let word_gc_move_roots_bitmaps_code_thm = prove
                               (9,wordLang_Word (n2w 0))]))
                                 (stackSem_state_clock_fupd (K
                                 (stackSem_state_clock s))
-                                (stackSem_state_stack_fupd (K (init ++
-                                old ++ stack1))
+                                (stackSem_state_stack_fupd (K (APPEND
+                                (APPEND init old) stack1))
                                 (stackSem_state_memory_fupd (K m1)
                                 s)))))`),
   CHEAT_TAC);;
@@ -934,7 +941,7 @@ let stack_allocProof_word_gc_fun_thm = prove
                          theWord (FAPPLY s CurrHeap) +
                          theWord (FAPPLY s HeapLength))))
                   (word_gen_gc_partial_move_roots conf
-                     (FAPPLY s Globals :: roots,
+                     (CONS (FAPPLY s Globals) roots,
                       theWord (FAPPLY s GenStart) >>>
                         backend_common_word_shift (:'a),
                       theWord (FAPPLY s OtherHeap),theWord (FAPPLY s
@@ -1097,8 +1104,8 @@ let stack_allocProof_gc_thm = prove
               /\ c4 /\ c5 /\ c6 then SOME (stackSem_state_memory_fupd (K
               m1) (stackSem_state_regs_fupd (K FEMPTY)
               (stackSem_state_store_fupd (K s1)
-              (stackSem_state_stack_fupd (K (unused ++ ws2)) s)))) else
-              NONE) else
+              (stackSem_state_stack_fupd (K (APPEND unused ws2)) s))))
+              else NONE) else
          (let unused = TAKE (stackSem_state_stack_space s)
            (stackSem_state_stack s) in
           let stack' = DROP (stackSem_state_stack_space s)
@@ -1156,7 +1163,7 @@ let stack_allocProof_gc_thm = prove
               c1 /\ c2 /\ c3 then SOME (stackSem_state_memory_fupd (K
               m3) (stackSem_state_regs_fupd (K FEMPTY)
               (stackSem_state_store_fupd (K s1)
-              (stackSem_state_stack_fupd (K (unused ++ ws2)) s))))
+              (stackSem_state_stack_fupd (K (APPEND unused ws2)) s))))
               else NONE))`,
   CHEAT_TAC);;
 
@@ -1189,7 +1196,7 @@ let word_gen_gc_partial_move_bitmaps_def = new_definition
 (* [local] *)
 let word_gen_gc_move_roots_APPEND = prove
  (`!xs ys i1 pa1 ib1 pb1 m.
-       word_gen_gc_move_roots conf (xs ++
+       word_gen_gc_move_roots conf (APPEND xs
          ys,i1,pa1,ib1,pb1,curr,m,dm) =
          (let (ws1,i1,pa1,ib1,pb1,m1,c1) =
            word_gen_gc_move_roots conf (xs,i1,pa1,ib1,pb1,curr,m,dm)
@@ -1197,13 +1204,13 @@ let word_gen_gc_move_roots_APPEND = prove
          let (ws2,i2,pa2,ib2,pb2,m2,c2) =
            word_gen_gc_move_roots conf (ys,i1,pa1,ib1,pb1,curr,m1,dm)
              in
-             (ws1 ++ ws2,i2,pa2,ib2,pb2,m2,(c1 /\ c2)))`,
+             (APPEND ws1 ws2,i2,pa2,ib2,pb2,m2,(c1 /\ c2)))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let word_gen_gc_partial_move_roots_APPEND = prove
  (`!xs ys i1 pa1 ib1 pb1 m.
-       word_gen_gc_partial_move_roots conf (xs ++
+       word_gen_gc_partial_move_roots conf (APPEND xs
          ys,i1,pa1,curr,m,dm,gs,rs) =
          (let (ws1,i1,pa1,m1,c1) =
            word_gen_gc_partial_move_roots conf
@@ -1211,7 +1218,7 @@ let word_gen_gc_partial_move_roots_APPEND = prove
          let (ws2,i2,pa2,m2,c2) =
            word_gen_gc_partial_move_roots conf
              (ys,i1,pa1,curr,m1,dm,gs,rs) in
-             (ws1 ++ ws2,i2,pa2,m2,(c1 /\ c2)))`,
+             (APPEND ws1 ws2,i2,pa2,m2,(c1 /\ c2)))`,
   CHEAT_TAC);;
 
 let word_gen_gc_move_roots_IMP_LENGTH = prove
@@ -1237,7 +1244,7 @@ let word_gen_gc_move_roots_bitmaps = prove
          (stack2,i2,pa2,ib2,pb2,m2,T)) ==>
        word_gen_gc_move_roots_bitmaps conf
          (stack',bitmaps,i1,pa1,ib1,pb1,curr,m,dm) =
-       (match stack' with [] -> (ARB,ARB,ARB,ARB,ARB,ARB,F) | (w ::
+       (match stack' with [] -> (ARB,ARB,ARB,ARB,ARB,ARB,F) | (CONS w
          ws) ->
          (if w = wordLang_Word (n2w 0) then
            (stack',i1,pa1,ib1,pb1,m,(ws = [])) else
@@ -1248,8 +1255,8 @@ let word_gen_gc_move_roots_bitmaps = prove
                (let (stack',i,pa,ib1,pb1,m,c3) =
                  word_gen_gc_move_roots_bitmaps conf
                    (stack',bitmaps,i2,pa2,ib2,pb2,curr,m2,dm) in
-                     ((w :: new) ++ stack',i,pa,ib1,pb1,m,(c2 /\
-                       c3)))))`,
+                     (APPEND (CONS w new) stack',i,pa,ib1,pb1,m,(c2
+                       /\ c3)))))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1260,7 +1267,7 @@ let word_gen_gc_partial_move_roots_bitmaps = prove
            (stack2,i2,pa2,m2,T)) ==>
        word_gen_gc_partial_move_roots_bitmaps conf
          (stack',bitmaps,i1,pa1,curr,m,dm,gs,rs) =
-       (match stack' with [] -> (ARB,ARB,ARB,ARB,F) | (w :: ws) ->
+       (match stack' with [] -> (ARB,ARB,ARB,ARB,F) | (CONS w ws) ->
          (if w = wordLang_Word (n2w 0) then (stack',i1,pa1,m,(ws =
            [])) else
            match word_gen_gc_partial_move_bitmaps conf
@@ -1269,7 +1276,8 @@ let word_gen_gc_partial_move_roots_bitmaps = prove
                (let (stack',i,pa,m,c3) =
                  word_gen_gc_partial_move_roots_bitmaps conf
                    (stack',bitmaps,i2,pa2,curr,m2,dm,gs,rs) in
-                     ((w :: new) ++ stack',i,pa,m,(c2 /\ c3)))))`,
+                     (APPEND (CONS w new) stack',i,pa,m,(c2 /\
+                       c3)))))`,
   CHEAT_TAC);;
 
 let word_gen_gc_move_bitmap_def = new_definition
@@ -1316,7 +1324,7 @@ let word_gen_gc_move_bitmaps_unroll = prove
        word_gen_gc_move_bitmaps conf (wordLang_Word
          w,stack,bitmaps,i1,pa1,ib1,pb1,curr,m,dm) =
        (match DROP (w2n (w - ((n2w 1):'a word))) bitmaps with [] ->
-         NONE | (y :: ys) ->
+         NONE | (CONS y ys) ->
          (match word_gen_gc_move_bitmap conf
            (y,stack,i1,pa1,ib1,pb1,curr,m,dm) with NONE -> NONE | SOME
            (hd,ws,i2,pa2,ib2,pb2,m2,c2) ->
@@ -1326,8 +1334,8 @@ let word_gen_gc_move_bitmaps_unroll = prove
                  (w + (n2w 1)),ws,bitmaps,i2,pa2,ib2,pb2,curr,m2,dm)
                  with NONE -> NONE | SOME (hd3,ws3,i3,pa3,ib3,pb3,m3,c3)
                  ->
-                   SOME (hd ++ hd3,ws3,i3,pa3,ib3,pb3,m3,(c2 /\
-                     c3)))))`),
+                   SOME (APPEND hd hd3,ws3,i3,pa3,ib3,pb3,m3,(c2
+                     /\ c3)))))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1343,7 +1351,7 @@ let word_gen_gc_partial_move_bitmaps_unroll = prove
        word_gen_gc_partial_move_bitmaps conf
          (wordLang_Word w,stack,bitmaps,i1,pa1,curr,m,dm,gs,rs) =
        (match DROP (w2n (w - ((n2w 1):'a word))) bitmaps with [] ->
-         NONE | (y :: ys) ->
+         NONE | (CONS y ys) ->
          (match word_gen_gc_partial_move_bitmap conf
            (y,stack,i1,pa1,curr,m,dm,gs,rs) with NONE -> NONE | SOME
            (hd,ws,i2,pa2,m2,c2) ->
@@ -1352,7 +1360,8 @@ let word_gen_gc_partial_move_bitmaps_unroll = prove
                       (wordLang_Word (w + (n2w
                         1)),ws,bitmaps,i2,pa2,curr,m2,dm,gs,rs) with
                         NONE -> NONE | SOME (hd3,ws3,i3,pa3,m3,c3) ->
-                   SOME (hd ++ hd3,ws3,i3,pa3,m3,(c2 /\ c3)))))`),
+                   SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2 /\
+                     c3)))))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1361,18 +1370,19 @@ let word_gen_gc_move_bitmap_unroll = prove
      (if w = ((n2w 0):'a word) then SOME
        ([],stack',i1,pa1,ib1,pb1,m,T) else
      if w = (n2w 1) then SOME ([],stack',i1,pa1,ib1,pb1,m,T) else
-       match stack' with [] -> NONE | (x :: xs) ->
+       match stack' with [] -> NONE | (CONS x xs) ->
          (if (w && (n2w 1)) = (n2w 0) then
            match word_gen_gc_move_bitmap conf (w >>>
              1,xs,i1,pa1,ib1,pb1,curr,m,dm) with NONE -> NONE | SOME
              (new,stack',i1,pa1,ib1,pb1,m,c) ->
-               SOME (x :: new,stack',i1,pa1,ib1,pb1,m,c) else
+               SOME (CONS x new,stack',i1,pa1,ib1,pb1,m,c) else
            let (x1,i1,pa1,ib1,pb1,m1,c1) =
              word_gen_gc_move conf (x,i1,pa1,ib1,pb1,curr,m,dm) in
            match word_gen_gc_move_bitmap conf (w >>>
              1,xs,i1,pa1,ib1,pb1,curr,m1,dm) with NONE -> NONE | SOME
              (new,stack',i1,pa1,ib1,pb1,m,c) ->
-               SOME (x1 :: new,stack',i1,pa1,ib1,pb1,m,(c1 /\ c))))`,
+               SOME (CONS x1 new,stack',i1,pa1,ib1,pb1,m,(c1 /\
+                 c))))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1381,19 +1391,19 @@ let word_gen_gc_partial_move_bitmap_unroll = prove
   (w,stack',i1,pa1,curr,m,dm,gs,rs) =
      (if w = ((n2w 0):'a word) then SOME ([],stack',i1,pa1,m,T) else
      if w = (n2w 1) then SOME ([],stack',i1,pa1,m,T) else
-       match stack' with [] -> NONE | (x :: xs) ->
+       match stack' with [] -> NONE | (CONS x xs) ->
          (if (w && (n2w 1)) = (n2w 0) then
            match word_gen_gc_partial_move_bitmap conf
                   (w >>> 1,xs,i1,pa1,curr,m,dm,gs,rs) with NONE ->
                     NONE | SOME (new,stack',i1,pa1,m,c) ->
-               SOME (x :: new,stack',i1,pa1,m,c) else
+               SOME (CONS x new,stack',i1,pa1,m,c) else
            let (x1,i1,pa1,m1,c1) =
              word_gen_gc_partial_move conf (x,i1,pa1,curr,m,dm,gs,rs)
                in
            match word_gen_gc_partial_move_bitmap conf
                   (w >>> 1,xs,i1,pa1,curr,m1,dm,gs,rs) with NONE ->
                     NONE | SOME (new,stack',i1,pa1,m,c) ->
-               SOME (x1 :: new,stack',i1,pa1,m,(c1 /\ c))))`,
+               SOME (CONS x1 new,stack',i1,pa1,m,(c1 /\ c))))`,
   CHEAT_TAC);;
 
 let word_gen_gc_move_code_thm = prove
@@ -1515,7 +1525,8 @@ let word_gen_gc_move_bitmap_code_thm = prove
         (wordLang_Word pb) /\
       FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME
         (wordLang_Word ib) /\ stackSem_state_stack
-      s = init ++ old ++ stack' /\ stackSem_state_stack_space
+      s = APPEND (APPEND init old) stack' /\
+        stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -1533,14 +1544,15 @@ let word_gen_gc_move_bitmap_code_thm = prove
                               (6,r6);
                               (7,r7);
                       (8,wordLang_Word (bytes_in_word * n2w (LENGTH
-                        (old ++ new))))])) (stackSem_state_store_fupd (K
+                        (APPEND old new))))]))
+                        (stackSem_state_store_fupd (K
                         (stackSem_state_store
                             s |++
                             [(Temp (n2w 0),t0); (Temp (n2w 1),t1);
                               (Temp (n2w 2),wordLang_Word pb1);
                              (Temp (n2w 3),wordLang_Word ib1)]))
-                               (stackSem_state_stack_fupd (K (init ++
-                               old ++ new ++ stack1))
+                               (stackSem_state_stack_fupd (K (APPEND
+                               (APPEND (APPEND init old) new) stack1))
                                (stackSem_state_memory_fupd (K m1)
                                s)))))`,
   CHEAT_TAC);;
@@ -1575,7 +1587,8 @@ let word_gen_gc_partial_move_bitmap_code_thm = prove
         (wordLang_Word gs) /\
       FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME
         (wordLang_Word rs) /\ stackSem_state_stack
-      s = init ++ old ++ stack' /\ stackSem_state_stack_space
+      s = APPEND (APPEND init old) stack' /\
+        stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -1594,8 +1607,9 @@ let word_gen_gc_partial_move_bitmap_code_thm = prove
                               (6,r6);
                               (7,r7);
                       (8,wordLang_Word (bytes_in_word * n2w (LENGTH
-                        (old ++ new))))])) (stackSem_state_stack_fupd
-                        (K (init ++ old ++ new ++ stack1))
+                        (APPEND old new))))]))
+                        (stackSem_state_stack_fupd (K (APPEND (APPEND
+                        (APPEND init old) new) stack1))
                         (stackSem_state_memory_fupd (K m1) s))))`,
   CHEAT_TAC);;
 
@@ -1655,7 +1669,8 @@ let word_gen_gc_move_bitmaps_code_thm = prove
         (wordLang_Word pb) /\
       FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME
         (wordLang_Word ib) /\ stackSem_state_stack
-      s = init ++ old ++ stack' /\ stackSem_state_stack_space
+      s = APPEND (APPEND init old) stack' /\
+        stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -1673,7 +1688,7 @@ let word_gen_gc_move_bitmaps_code_thm = prove
                               (6,r6);
                               (7,r7);
                       (8,wordLang_Word (bytes_in_word * n2w (LENGTH
-                        (old ++ new))));
+                        (APPEND old new))));
                               (9,r9)])) (stackSem_state_store_fupd (K
                                 (stackSem_state_store
                             s |++
@@ -1682,8 +1697,8 @@ let word_gen_gc_move_bitmaps_code_thm = prove
                              (Temp (n2w 3),wordLang_Word ib1)]))
                                (stackSem_state_clock_fupd (K
                                (stackSem_state_clock s))
-                               (stackSem_state_stack_fupd (K (init ++
-                               old ++ new ++ stack1))
+                               (stackSem_state_stack_fupd (K (APPEND
+                               (APPEND (APPEND init old) new) stack1))
                                (stackSem_state_memory_fupd (K m1)
                                s))))))`,
   CHEAT_TAC);;
@@ -1722,7 +1737,8 @@ let word_gen_gc_partial_move_bitmaps_code_thm = prove
         (wordLang_Word gs) /\
       FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME
         (wordLang_Word rs) /\ stackSem_state_stack
-      s = init ++ old ++ stack' /\ stackSem_state_stack_space
+      s = APPEND (APPEND init old) stack' /\
+        stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -1740,13 +1756,13 @@ let word_gen_gc_partial_move_bitmaps_code_thm = prove
                               (6,r6);
                               (7,r7);
                       (8,wordLang_Word (bytes_in_word * n2w (LENGTH
-                        (old ++ new))));
+                        (APPEND old new))));
                               (9,r9)])) (stackSem_state_clock_fupd
                                 (K (stackSem_state_clock s))
-                                (stackSem_state_stack_fupd (K (init ++
-                                old ++ new ++ stack1))
-                                (stackSem_state_memory_fupd (K m1)
-                                s)))))`,
+                                (stackSem_state_stack_fupd (K (APPEND
+                                (APPEND (APPEND init old) new)
+                                stack1)) (stackSem_state_memory_fupd
+                                (K m1) s)))))`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -1789,7 +1805,8 @@ let word_gen_gc_move_roots_bitmaps_code_thm = prove
           (wordLang_Word pb) /\
         FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME
           (wordLang_Word ib) /\ stackSem_state_stack
-        s = init ++ old ++ stack /\ stackSem_state_stack_space
+        s = APPEND (APPEND init old) stack /\
+          stackSem_state_stack_space
         s = LENGTH init /\
         (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
           dimword (:'a) ==>
@@ -1818,8 +1835,8 @@ let word_gen_gc_move_roots_bitmaps_code_thm = prove
                               (Temp (n2w 3),wordLang_Word ib1)]))
                                 (stackSem_state_clock_fupd (K
                                 (stackSem_state_clock s))
-                                (stackSem_state_stack_fupd (K (init ++
-                                old ++ stack1))
+                                (stackSem_state_stack_fupd (K (APPEND
+                                (APPEND init old) stack1))
                                 (stackSem_state_memory_fupd (K m1)
                                 s))))))`),
   CHEAT_TAC);;
@@ -1862,7 +1879,8 @@ let word_gen_gc_partial_move_roots_bitmaps_code_thm = prove
           (wordLang_Word gs) /\
         FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME
           (wordLang_Word rs) /\ stackSem_state_stack
-        s = init ++ old ++ stack /\ stackSem_state_stack_space
+        s = APPEND (APPEND init old) stack /\
+          stackSem_state_stack_space
         s = LENGTH init /\
         (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
           dimword (:'a) ==>
@@ -1884,8 +1902,8 @@ let word_gen_gc_partial_move_roots_bitmaps_code_thm = prove
                               (9,wordLang_Word (n2w 0))]))
                                 (stackSem_state_clock_fupd (K
                                 (stackSem_state_clock s))
-                                (stackSem_state_stack_fupd (K (init ++
-                                old ++ stack1))
+                                (stackSem_state_stack_fupd (K (APPEND
+                                (APPEND init old) stack1))
                                 (stackSem_state_memory_fupd (K m1)
                                 s)))))`),
   CHEAT_TAC);;
@@ -2342,8 +2360,8 @@ let alloc_correct_lemma_Generational = prove
 let filter_bitmap_map_bitmap_IMP = prove
  (`!x ws q r x' q' q'' r''.
      filter_bitmap x ws = SOME (q,r) /\
-     map_bitmap x (q ++ x') ws = SOME (q',q'',r'') ==>
-     q'' = x' /\ r = r'' /\ ws = q' ++ r`,
+     map_bitmap x (APPEND q x') ws = SOME (q',q'',r'') ==>
+     q'' = x' /\ r = r'' /\ ws = APPEND q' r`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2733,12 +2751,12 @@ let extract_labels_next_lab = prove
 
 let stack_alloc_lab_pres = prove
  (`!n nl p aux.
-   EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) (extract_labels
+   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) (extract_labels
      p) /\
    ALL_DISTINCT (extract_labels p) /\
    next_lab p 2 <= nl ==>
    (let (cp,nl') = comp n nl p in
-   EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) (extract_labels
+   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) (extract_labels
      cp) /\
    ALL_DISTINCT (extract_labels cp) /\
    (!lab. MEM lab (extract_labels cp) ==> MEM lab (extract_labels p)
@@ -2754,8 +2772,8 @@ let stack_alloc_comp_stack_asm_name = prove
   CHEAT_TAC);;
 
 let stack_alloc_stack_asm_convs = prove
- (`EVERY (\(n,p). stack_asm_name c p) prog /\
-   EVERY (\(n,p). (stack_asm_remove (c:'a asm_config) p)) prog /\
+ (`ALL (\(n,p). stack_asm_name c p) prog /\
+   ALL (\(n,p). (stack_asm_remove (c:'a asm_config) p)) prog /\
    // conf_ok is too strong, but we already have it anyway
    conf_ok (:'a) conf /\
    asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
@@ -2764,21 +2782,21 @@ let stack_alloc_stack_asm_convs = prove
    c (INL Add) (n2w 4) /\ asm_config_valid_imm
    c (INL Add) (n2w 1) /\ asm_config_valid_imm
    c (INL Sub) (n2w 1) ==>
-   EVERY (\(n,p). stack_asm_name c p) (compile conf prog) /\
-   EVERY (\(n,p). stack_asm_remove c p) (compile conf prog)`,
+   ALL (\(n,p). stack_asm_name c p) (compile conf prog) /\
+   ALL (\(n,p). stack_asm_remove c p) (compile conf prog)`,
   CHEAT_TAC);;
 
 let stack_alloc_reg_bound = prove
  (`10 <= sp /\
-    EVERY (\p. reg_bound p sp)
+    ALL (\p. reg_bound p sp)
        (MAP SND prog1) ==>
-    EVERY (\p. reg_bound p sp)
+    ALL (\p. reg_bound p sp)
        (MAP SND (compile dc prog1))`,
   CHEAT_TAC);;
 
 let stack_alloc_call_args = prove
- (`EVERY (\p. call_args p 1 2 3 4 0) (MAP SND prog1) ==>
-   EVERY (\p. call_args p 1 2 3 4 0) (MAP SND (compile dc prog1))`,
+ (`ALL (\p. call_args p 1 2 3 4 0) (MAP SND prog1) ==>
+   ALL (\p. call_args p 1 2 3 4 0) (MAP SND (compile dc prog1))`,
   CHEAT_TAC);;
 
 (* [simp] *)

@@ -175,11 +175,11 @@ let DROP_TAKE_NIL = prove
 (* delete END *)
 
 let MAX_LIST_GENLIST_evens = prove
- (`!n. MAX_LIST (GENLIST (\x. 2 * x) n) = 2 * (n - 1)`,
+ (`!n. MAX_LIST (list_of_seq (\x. 2 * x) n) = 2 * (n - 1)`,
   CHEAT_TAC);;
 
 let MAX_LIST_GENLIST_evens2 = prove
- (`!n. MAX_LIST (GENLIST (\x. 2 * (x + 1)) n) = 2 * n`,
+ (`!n. MAX_LIST (list_of_seq (\x. 2 * (x + 1)) n) = 2 * n`,
   CHEAT_TAC);;
 
 (*misc word stuff*)
@@ -213,8 +213,7 @@ let push_env_set_store = prove
 let LASTN_LENGTH_ID2 = prove
  (`!stack' x.
    (x + 1 = LENGTH stack') ==>
-   LASTN (x + 1) stack' =
-   HD stack' :: LASTN x stack'`,
+   LASTN (x + 1) stack' = CONS (HD stack') (LASTN x stack')`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -235,7 +234,7 @@ let LASTN_LENGTH_BOUNDS = prove
 (* [local] *)
 let LASTN_CONS_ID = prove
  (`n = LENGTH ls ==>
-   LASTN (SUC n) (frame :: ls) = (frame :: ls)`,
+   LASTN (SUC n) (CONS frame ls) = (CONS frame ls)`,
   CHEAT_TAC);;
 
 (*Strengthened version of LASTN_DROP after change to make it total*)
@@ -247,7 +246,7 @@ let LASTN_DROP2 = prove
 
 (* [local] *)
 let EVERY_IMP_EVERY_LASTN = prove
- (`!xs ys P. EVERY P xs /\ LASTN n xs = ys ==> EVERY P ys`,
+ (`!xs ys P. ALL P xs /\ LASTN n xs = ys ==> ALL P ys`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -268,7 +267,8 @@ let LLOOKUP_TAKE = prove
 
 let index_list_def,index_list_ind = define_rec
   [`index_list [] n = []`;
-   `index_list (x :: xs) n = (n + LENGTH xs,x) :: index_list xs n`];;
+   `index_list (CONS x xs) n = CONS (n + LENGTH xs,x) (index_list
+  xs n)`];;
 
 let LENGTH_index_list = prove
  (`!l n. LENGTH (index_list l n) = LENGTH l`,
@@ -409,8 +409,8 @@ let word_to_stackProof_MIN_ADD = prove
 
 let list_LUPDATE_def,list_LUPDATE_ind = define_rec
   [`list_LUPDATE [] n ys = ys`;
-   `list_LUPDATE (x :: xs) n ys = list_LUPDATE xs (n + 1) (LUPDATE
-  x n ys)`];;
+   `list_LUPDATE (CONS x xs) n ys = list_LUPDATE xs (n + 1)
+  (LUPDATE x n ys)`];;
 
 (* [simp] *)
 let LENGTH_list_LUPDATE = prove
@@ -453,25 +453,26 @@ let list_LUPDATE_NIL = prove
 
 (* [local] *)
 let LUPDATE_TAKE_LEMMA = prove
- (`!xs n w. LUPDATE w n xs = TAKE n xs ++ LUPDATE w 0 (DROP n xs)`,
+ (`!xs n w. LUPDATE w n xs = APPEND (TAKE n xs) (LUPDATE w 0 (DROP n
+  xs))`,
   CHEAT_TAC);;
 
 let list_LUPDATE_TAKE_DROP = prove
  (`!xs (ys:'a list) n.
-       list_LUPDATE xs n ys = TAKE n ys ++ list_LUPDATE xs 0 (DROP
-         n ys)`,
+       list_LUPDATE xs n ys = APPEND (TAKE n ys) (list_LUPDATE xs 0
+         (DROP n ys))`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let list_LUPDATE_0_CONS = prove
- (`!xs x ys y. list_LUPDATE (x :: xs) 0 (y :: ys) = x :: list_LUPDATE
-  xs 0 ys`,
+ (`!xs x ys y. list_LUPDATE (CONS x xs) 0 (CONS y ys) = CONS x
+  (list_LUPDATE xs 0 ys)`,
   CHEAT_TAC);;
 
 let list_LUPDATE_APPEND = prove
  (`!xs ys zs.
-      LENGTH xs = LENGTH ys ==> (list_LUPDATE xs 0 (ys ++ zs) = xs
-        ++ zs)`,
+      LENGTH xs = LENGTH ys ==> (list_LUPDATE xs 0 (APPEND ys zs) =
+        APPEND xs zs)`,
   CHEAT_TAC);;
 
 (* move to stackProps? *)
@@ -510,8 +511,8 @@ let abs_stack_def,abs_stack_ind = assume_definition_rec
           ((bitmaps:('a word) list),[],stack',[]) ->
        (if stack' = [wordLang_Word ((n2w 0):'a word)] then SOME []
          else NONE)
-        | (bitmaps,(StackFrame n l0 l NONE :: xs),(w :: stack'),(len
-          :: lens)) ->
+        | (bitmaps,CONS (StackFrame n l0 l NONE) xs,CONS w
+          stack',CONS len lens) ->
        // Should cover the stack = [] case automatically
        (match full_read_bitmap bitmaps w with NONE -> NONE |
          // read_bitmap reads a bitmap and returns the liveness bits,
@@ -523,14 +524,14 @@ let abs_stack_def,abs_stack_ind = assume_definition_rec
              let frame = TAKE len stack' in
              let rest = DROP len stack' in
                match abs_stack bitmaps xs rest lens with NONE ->
-                 NONE | SOME ys -> SOME ((NONE,bits,frame) :: ys)))
-        | (bitmaps,((StackFrame n l0 l (SOME _1)) :: xs),(w ::
-          stack'),(len :: lens)) ->
+                 NONE | SOME ys -> SOME (CONS (NONE,bits,frame) ys)))
+        | (bitmaps,(CONS (StackFrame n l0 l (SOME _1)) xs),(CONS w
+          stack'),(CONS len lens)) ->
        // Index for bitmap for a handler frame
        (if ~(w = wordLang_Word (n2w 1)) then NONE else
-         (match stack' with
+         (match stack' with CONS
            // Read next 2 elements on the stack for the handler
-           loc :: hv :: w :: stack' ->
+           loc (CONS hv (CONS w stack')) ->
             (match full_read_bitmap bitmaps w with NONE -> NONE |
                // read_bitmap reads a bitmap and returns the liveness bits,
                // the words read and the rest of the stack
@@ -541,8 +542,8 @@ let abs_stack_def,abs_stack_ind = assume_definition_rec
                    let frame = TAKE len stack' in
                    let rest = DROP len stack' in
                      match abs_stack bitmaps xs rest lens with NONE
-                       -> NONE | SOME ys -> SOME ((SOME
-                       (loc,hv),bits,frame) :: ys))) | _2 -> NONE))
+                       -> NONE | SOME ys -> SOME (CONS (SOME
+                       (loc,hv),bits,frame) ys))) | _2 -> NONE))
         | (bitmaps,_3,_4,_5) -> NONE`];;
 
 (* HOL4 word_to_stackProofScript.sml:742: ML code, not ported *)
@@ -550,20 +551,20 @@ let abs_stack_def,abs_stack_ind = assume_definition_rec
 let read_bitmap_append_extra = prove
  (`!l1 l2 bits.
    read_bitmap l1 = SOME bits ==>
-   read_bitmap (l1 ++ l2) = SOME bits`,
+   read_bitmap (APPEND l1 l2) = SOME bits`,
   CHEAT_TAC);;
 
 let full_read_bitmap_append = prove
  (`!bitmaps w bits more_bitmaps.
    full_read_bitmap bitmaps w = SOME bits ==>
-   full_read_bitmap (bitmaps ++ more_bitmaps) w = SOME bits`,
+   full_read_bitmap (APPEND bitmaps more_bitmaps) w = SOME bits`,
   CHEAT_TAC);;
 
 let abs_stack_bitmaps_prefix = prove
  (`!bitmaps frames stack' lens more_bitmaps result.
    abs_stack bitmaps frames stack' lens = SOME result ==>
-   abs_stack (bitmaps ++ more_bitmaps) frames stack' lens = SOME
-     result`,
+   abs_stack (APPEND bitmaps more_bitmaps) frames stack' lens =
+     SOME result`,
   CHEAT_TAC);;
 
 (*TODO this should probably be an Overload*)
@@ -582,9 +583,9 @@ let adjust_names_def = new_definition
 let handler_val_def,handler_val_ind = define_shaped_rec
   "cases"
   [`handler_val [] = 1`;
-   `handler_val ((NONE,_6,frame) :: stack') =
+   `handler_val (CONS (NONE,_6,frame) stack') =
         1 + LENGTH frame + handler_val stack'`;
-   `handler_val ((SOME _7,_8,frame) :: stack') =
+   `handler_val (CONS (SOME _7,_8,frame) stack') =
         // 1 for handler bitmaps pointer
         // + 2 more for the pointer and locs
         // + 1 for the next bitmap pointer
@@ -610,8 +611,8 @@ let stack_rel_aux_def,stack_rel_aux_ind = define_wf
   [`stack_rel_aux k len x3 x4 =
         match (x3,x4) with
           ([],[]) -> T
-        | ((StackFrame n l0 l NONE :: xs),((NONE,bits,frame) ::
-          stack')) ->
+        | (CONS (StackFrame n l0 l NONE) xs,CONS (NONE,bits,frame)
+          stack') ->
        (!n v.
          ALOOKUP l0 n = SOME v /\ ALOOKUP l n = NONE ==>
          adjust_names n < k + LENGTH bits /\
@@ -622,8 +623,8 @@ let stack_rel_aux_def,stack_rel_aux_ind = define_wf
          adjust_names l,[]) /\
        the (LENGTH frame + 1) n = LENGTH frame + 1 /\
        stack_rel_aux k len xs stack'
-        | (((StackFrame n l0 l (SOME (h1,l1,l2))) :: xs),((SOME
-          (loc,hv),bits,frame) :: stack')) ->
+        | ((CONS (StackFrame n l0 l (SOME (h1,l1,l2))) xs),(CONS
+          (SOME (loc,hv),bits,frame) stack')) ->
        (h1 < LENGTH stack' /\
        is_handler_frame (EL (LENGTH stack' - (h1 + 1)) xs) ==>
        hv = wordLang_Word (n2w (len - handler_val (LASTN (h1 + 1)
@@ -648,7 +649,7 @@ let sorted_env_def = define_general
 let word_to_stackProof_stack_rel_def = new_definition
   `word_to_stackProof_stack_rel k s_handler s_stack t_handler
   t_rest_of_stack t_stack_length t_bitmaps lens <=>
-     EVERY sorted_env s_stack /\
+     ALL sorted_env s_stack /\
      (?stack'.
        abs_stack t_bitmaps s_stack t_rest_of_stack lens = SOME stack'
          /\
@@ -729,10 +730,10 @@ let word_to_stackProof_state_rel_def = new_definition
          (misc_Nil,bm0) in
          (cfg,progs,append (FST bm))) /\
      (!n. let ((bm0,cfg),progs) = wordSem_state_compile_oracle s n in
-         EVERY (post_alloc_conventions k o SND o SND) progs /\
-         EVERY (flat_exp_conventions o SND o SND) progs /\
-         EVERY ((\x y. ~(x = y)) raise_stub_location o FST) progs /\
-         EVERY ((\x y. ~(x = y)) store_consts_stub_location o FST)
+         ALL (post_alloc_conventions k o SND o SND) progs /\
+         ALL (flat_exp_conventions o SND o SND) progs /\
+         ALL ((\x y. ~(x = y)) raise_stub_location o FST) progs /\
+         ALL ((\x y. ~(x = y)) store_consts_stub_location o FST)
            progs /\
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t))) /\
      domain (stackSem_state_code t) = raise_stub_location INSERT
@@ -845,8 +846,8 @@ let list_LUPDATE_write_bitmap_NOT_NIL = prove
 let bit_length_bits_to_word = prove
  (`!qs.
        LENGTH qs + 1 < dimindex (:'a) ==>
-       bit_length (bits_to_word (qs ++ [T]):'a word) = LENGTH qs +
-         1`,
+       bit_length (bits_to_word (APPEND qs [T]):'a word) = LENGTH
+         qs + 1`,
   CHEAT_TAC);;
 
 let bits_to_word_bitstring_reverse = prove
@@ -855,38 +856,38 @@ let bits_to_word_bitstring_reverse = prove
 
 (* [local] *)
 let GENLIST_bits_to_word_alt = prove
- (`LENGTH (xs ++ ys) <= dimindex (:'a) ==>
-     GENLIST (\i. FAPPLY (bits_to_word (xs ++ ys):'a word) i)
-       (LENGTH xs) = xs`,
+ (`LENGTH (APPEND xs ys) <= dimindex (:'a) ==>
+     list_of_seq (\i. FAPPLY (bits_to_word (APPEND xs ys):'a word)
+       i) (LENGTH xs) = xs`,
   CHEAT_TAC);;
 
 (* [local] *)
 let GENLIST_bits_to_word = prove
  (`LENGTH qs' + 1 < dimindex (:'a) ==>
-     GENLIST (\i. FAPPLY (bits_to_word (qs' ++ [T]):'a word) i)
-       (LENGTH qs') = qs'`,
+     list_of_seq (\i. FAPPLY (bits_to_word (APPEND qs' [T]):'a
+       word) i) (LENGTH qs') = qs'`,
   CHEAT_TAC);;
 
 (* [local] *)
 let read_bitmap_word_list = prove
  (`8 <= dimindex (:'a) ==>
      read_bitmap
-       ((word_list (qs ++ [T]) (dimindex (:'a) - 1)) ++ (xs:('a word)
-         list)) =
+       (APPEND (word_list (APPEND qs [T]) (dimindex (:'a) - 1))
+         (xs:('a word) list)) =
      SOME qs`,
   CHEAT_TAC);;
 
 (* [local] *)
 let APPEND_LEMMA = prove
  (`n1 + n2 + n3 <= LENGTH xs ==>
-     (?xs2 xs3. (DROP n1 xs = xs2 ++ xs3) /\ n2 = LENGTH xs2)`,
+     (?xs2 xs3. (DROP n1 xs = APPEND xs2 xs3) /\ n2 = LENGTH xs2)`,
   CHEAT_TAC);;
 
 let read_bitmap_write_bitmap = prove
  (`8 <= dimindex (:'a) ==>
    read_bitmap ((write_bitmap names k f'):('a word) list) =
-   SOME (GENLIST (\x. MEM x (MAP (\(r,y). f' - 1 - (r DIV 2 - k))
-     (toAList names))) f')`,
+   SOME (list_of_seq (\x. MEM x (MAP (\(r,y). f' - 1 - (r DIV 2 -
+     k)) (toAList names))) f')`,
   CHEAT_TAC);;
 
 let read_bitmap_insert_bitmap = prove
@@ -895,7 +896,7 @@ let read_bitmap_insert_bitmap = prove
    IS_SOME (read_bitmap bm) /\
    n = LENGTH cur + LENGTH (append bs) /\
    insert_bitmap bm (bs,n) = ((bs',n'),i) ==> read_bitmap (DROP (i
-     MOD dimword (:'a)) (cur ++ append bs')) = read_bitmap bm`,
+     MOD dimword (:'a)) (APPEND cur (append bs'))) = read_bitmap bm`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -908,7 +909,7 @@ let abs_stack_IMP_LENGTH = prove
 (* [local] *)
 let SORTED_FST_LESS_IMP = prove
  (`!xs x.
-       SORTED (\x y. FST x > (FST y:num)) (x :: xs) ==>
+       SORTED (\x y. FST x > (FST y:num)) (CONS x xs) ==>
        SORTED (\x y. FST x > FST y) xs /\ ~(MEM x xs) /\
        (!y. MEM y xs ==> FST x > FST y)`,
   CHEAT_TAC);;
@@ -975,7 +976,7 @@ let isPREFIX_DROP = prove
 (* [local] *)
 let LLOOKUP_cons_SUC = prove
  (`m < n ==>
-   (\l n. oEL n l) (h :: xs) (n - m) =
+   (\l n. oEL n l) (CONS h xs) (n - m) =
    (\l n. oEL n l) xs (n - (m + 1))`,
   CHEAT_TAC);;
 
@@ -1004,7 +1005,7 @@ let evaluate_wLive = prove
        word_to_stackProof_state_rel ac k 0 0
          (wordSem_state_locals_size_fupd (K (SOME 0))
          (wordSem_state_locals_fupd (K LN) (wordSem_push_env envs
-         ((NONE:(num#'a wordLang_prog#num#num) option)) s))) t5 (f' ::
+         ((NONE:(num#'a wordLang_prog#num#num) option)) s))) t5 (CONS f'
          lens) 0 /\
        word_to_stackProof_state_rel ac k f f' s t5 lens 0 /\
        LENGTH (stackSem_state_stack t5) = LENGTH
@@ -1039,7 +1040,7 @@ let n2w_lsr_1 = prove
 let handler_bitmap_props = prove
  (cake_as_vars (fun () ->
     `good_dimindex (:'a) ==>
-     read_bitmap (((n2w 4):'a word) :: stack) = SOME [F; F]`),
+     read_bitmap (CONS ((n2w 4):'a word) stack) = SOME [F; F]`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1078,7 +1079,7 @@ let map_bitmap_success = prove
 let map_bitmap_more = prove
  (`!bs ls stack' n a c ls'.
    map_bitmap bs ls stack' = SOME (a,[],c) ==>
-   map_bitmap bs (ls ++ ls') stack' = SOME (a,ls',c)`,
+   map_bitmap bs (APPEND ls ls') stack' = SOME (a,ls',c)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1119,8 +1120,8 @@ let sorted_env_zip = prove
 let word_stack_dec_stack_sorted = prove
  (`!(ls:('a word_loc) list) (wstack:('a stack_frame) list) res.
    dec_stack ls wstack = SOME res /\
-   EVERY sorted_env wstack ==>
-   EVERY sorted_env res`,
+   ALL sorted_env wstack ==>
+   ALL sorted_env res`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1139,7 +1140,7 @@ let abs_frame_eq_def = new_definition
 (* [local] *)
 let LIST_REL_abs_frame_eq_handler_val = prove
  (`!xs ys.
-   LIST_REL abs_frame_eq xs ys ==>
+   ALL2 abs_frame_eq xs ys ==>
    handler_val xs = handler_val ys`,
   CHEAT_TAC);;
 
@@ -1161,7 +1162,7 @@ let dec_stack_lemma1 = prove
    abs_stack bs wdec sdec lens = SOME bstack /\
    stack_rel_aux k len wdec bstack /\
    // They have exactly the same shape
-   LIST_REL abs_frame_eq astack bstack)`,
+   ALL2 abs_frame_eq astack bstack)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1253,7 +1254,7 @@ let word_to_stackProof_s_key_eq_stack_size = prove
 
 let s_key_eq_push_env_locals_size = prove
  (`s_key_eq (stack (wordSem_push_env env opt1 s))
-            (StackFrame n l0 l opt2 :: stack') ==>
+            (CONS (StackFrame n l0 l opt2) stack') ==>
    n = wordSem_state_locals_size s /\ stack_size (stack s) =
      stack_size stack'`,
   CHEAT_TAC);;
@@ -1272,7 +1273,7 @@ let alloc_IMP_alloc = prove
        word_to_stackProof_state_rel ac k 0 0
          (wordSem_state_locals_size_fupd (K (SOME 0))
          (wordSem_state_locals_fupd (K LN) (wordSem_push_env envs
-         ((NONE:(num#'a wordLang_prog#num#num) option)) s))) t5 (f' ::
+         ((NONE:(num#'a wordLang_prog#num#num) option)) s))) t5 (CONS f'
          lens) 0 /\
        (cut_envs names (wordSem_state_locals s) = SOME envs) /\
          ~(res = SOME Error) ==>
@@ -1293,8 +1294,8 @@ let alloc_IMP_alloc = prove
 
 (* [local] *)
 let word_gc_empty_frame = prove
- (`gc (stack_fupd (K (StackFrame n [] [] NONE :: stack s)) s) = SOME x
-  /\
+ (`gc (stack_fupd (K (CONS (StackFrame n [] [] NONE) (stack s))) s) =
+  SOME x /\
    wordSem_pop_env x = SOME y ==> wordSem_state_locals
    y = LN /\
    gc s = SOME (wordSem_state_locals_size_fupd (K
@@ -1352,8 +1353,8 @@ let Halt_EQ_compile_result = prove
 (* HOL4 word_to_stackProofScript.sml:2429-2431: ML code, not ported *)
 
 let push_locals_def = new_definition
-  `push_locals l0 l s = stack_fupd (K (StackFrame
-  (wordSem_state_locals_size s) l0 l NONE :: stack s))
+  `push_locals l0 l s = stack_fupd (K (CONS (StackFrame
+  (wordSem_state_locals_size s) l0 l NONE) (stack s)))
   (wordSem_state_locals_size_fupd (K (SOME 0))
   (wordSem_state_locals_fupd (K LN) s))`;;
 
@@ -1413,7 +1414,7 @@ let EL_REVERSE_REWRITE = prove
 let LASTN_LESS = prove
  (`!ls n x xs.
    n + 1 <= LENGTH ls /\
-   LASTN (n + 1) ls = x :: xs ==>
+   LASTN (n + 1) ls = CONS x xs ==>
    LASTN n ls = xs`,
   CHEAT_TAC);;
 
@@ -1425,7 +1426,7 @@ let ALOOKUP_IFF_MEM = prove
 
 (* [local] *)
 let SORTED_CONS_IMP = prove
- (`SORTED (\x y. FST x > ((FST y):num)) (h :: t) ==>
+ (`SORTED (\x y. FST x > ((FST y):num)) (CONS h t) ==>
      ~(MEM h t) /\ SORTED (\x y. FST x > FST y) t /\
      (!x. MEM x t ==> FST h > FST x)`,
   CHEAT_TAC);;
@@ -1463,13 +1464,13 @@ let stack_rel_raise = prove
     `n <= LENGTH sstack /\
      handler + 1 <= LENGTH wstack /\ SORTED (\x y. FST x > FST y) l
        /\
-     LASTN (handler + 1) wstack = StackFrame m l0 l (SOME
-       (h1,l3,l4)) :: rest /\
+     LASTN (handler + 1) wstack = CONS (StackFrame m l0 l (SOME
+       (h1,l3,l4))) rest /\
      abs_stack bs wstack (DROP n sstack) lens = SOME stack /\
      stack_rel_aux k (LENGTH sstack) wstack stack ==>
      (?ex payload.
-       LASTN (handler + 1) stack = (SOME ex,payload) :: LASTN
-         handler stack /\
+       LASTN (handler + 1) stack = CONS (SOME ex,payload) (LASTN
+         handler stack) /\
        3 <= LENGTH sstack /\ 3 <= handler_val (LASTN (handler + 1)
          stack) /\
        EL (LENGTH sstack - handler_val (LASTN (handler + 1) stack)
@@ -1483,16 +1484,16 @@ let stack_rel_raise = prove
              (LENGTH sstack - handler_val (LASTN (h1 + 1) (LASTN
                (handler + 1) stack)))))) /\
        stack_rel_aux k (LENGTH sstack)
-         (StackFrame m l0
-           (FST (env_to_list (fromAList l) (K I))) NONE :: rest)
-             ((NONE,payload) :: LASTN handler stack) /\
+         (CONS (StackFrame m l0
+           (FST (env_to_list (fromAList l) (K I))) NONE) rest)
+             (CONS (NONE,payload) (LASTN handler stack)) /\
        abs_stack bs
-         (StackFrame m l0
-           (FST (env_to_list (fromAList l) (K I))) NONE :: rest)
+         (CONS (StackFrame m l0
+           (FST (env_to_list (fromAList l) (K I))) NONE) rest)
          (DROP (LENGTH sstack - handler_val (LASTN (handler + 1)
            stack) + 3)
-            sstack) (LASTN (handler + 1) lens) = SOME
-              ((NONE,payload) :: LASTN handler stack))`),
+            sstack) (LASTN (handler + 1) lens) = SOME (CONS
+              (NONE,payload) (LASTN handler stack)))`),
   CHEAT_TAC);;
 
 let insert_bitmap_isPREFIX = prove
@@ -1526,7 +1527,7 @@ let compile_word_to_stack_isPREFIX = prove
 
 let wMoveAux_thm = prove
  (`evaluate (wMoveAux [] kf,s) = (NONE,s) /\
-   evaluate (wMoveAux (x :: xs) kf,s) =
+   evaluate (wMoveAux (CONS x xs) kf,s) =
    evaluate (Seq (wMoveSingle x kf) (wMoveAux xs kf),s)`,
   CHEAT_TAC);;
 
@@ -1612,8 +1613,8 @@ let IS_SOME_get_vars_set_var = prove
 
 let IS_SOME_get_vars_EVERY = prove
  (`!xs s.
-     IS_SOME (wordSem_get_vars xs s) <=> EVERY (\x. IS_SOME
-       (get_var x s)) xs`,
+     IS_SOME (wordSem_get_vars xs s) <=> ALL (\x. IS_SOME (get_var
+       x s)) xs`,
   CHEAT_TAC);;
 
 (* HOL4 word_to_stackProofScript.sml:3127-3128: a theorem that HOL4
@@ -1629,8 +1630,7 @@ let evaluate_wMoveAux_seqsem = prove
    (match find_index NONE (MAP SND ms) 0 with NONE -> T | SOME i ->
       (match find_index NONE (MAP FST ms) 0 with NONE -> IS_SOME (r
         NONE) | SOME j -> i <= j ==> IS_SOME (r NONE))) /\
-   EVERY (\(x,y). !a. (x = SOME a \/ y = SOME a) ==> a < f' + k) ms
-     /\
+   ALL (\(x,y). !a. (x = SOME a \/ y = SOME a) ==> a < f' + k) ms /\
    ALL_DISTINCT (FILTER IS_SOME (MAP FST ms)) ==>
    (?t'.
      evaluate (wMoveAux (MAP (format_var k ## format_var k) ms)
@@ -1659,7 +1659,7 @@ let word_to_stackProof_get_vars_eq = prove
      get_vars ls st = SOME z ==>
      (let lookups = MAP (\x. sptree_lookup x (wordSem_state_locals
        st)) ls in
-       EVERY IS_SOME lookups /\
+       ALL IS_SOME lookups /\
        z = MAP THE lookups)`,
   CHEAT_TAC);;
 
@@ -1726,8 +1726,8 @@ let MAP_FILTER_IS_SOME = prove
 (* [local] *)
 let TIMES2_DIV2_lemma = prove
  (`windmill moves /\
-    EVERY EVEN (MAP FST moves) /\
-    EVERY EVEN (MAP SND moves) ==>
+    ALL EVEN (MAP FST moves) /\
+    ALL EVEN (MAP SND moves) ==>
     MAP ((*) 2 o THE) (FILTER IS_SOME (MAP FST (parmove (MAP (DIV2
       ## DIV2) moves)))) = MAP THE (FILTER IS_SOME (MAP FST (parmove
       moves)))`,
@@ -1745,8 +1745,8 @@ let IS_SOME_o_OPTION_MAP = prove
 (* [local] *)
 let parsem_parmove_DIV2_lemma = prove
  (`windmill moves /\
-    EVERY EVEN (MAP FST moves) /\
-    EVERY EVEN (MAP SND moves) ==>
+    ALL EVEN (MAP FST moves) /\
+    ALL EVEN (MAP SND moves) ==>
     MAP (parsem (MAP (SOME ## SOME) (MAP (DIV2 ## DIV2) moves)) r)
        (FILTER IS_SOME (MAP FST (parmove (MAP (DIV2 ## DIV2)
          moves)))) =
@@ -1799,7 +1799,7 @@ let wf_fromList2 = prove
   CHEAT_TAC);;
 
 let wStackLoad_append = prove
- (`wStackLoad (l1 ++ l2) = wStackLoad l1 o (wStackLoad l2)`,
+ (`wStackLoad (APPEND l1 l2) = wStackLoad l1 o (wStackLoad l2)`,
   CHEAT_TAC);;
 
 let wRegWrite1_thm1 = prove
@@ -2151,7 +2151,7 @@ let state_rel_set_store = prove
 (*For calls*)
 (* [local] *)
 let get_vars_fromList2_eq = prove
- (`get_vars (GENLIST (\x. 2 * x) (LENGTH args)) s = SOME x /\
+ (`get_vars (list_of_seq (\x. 2 * x) (LENGTH args)) s = SOME x /\
      sptree_lookup n (fromList2 x) = SOME y ==>
      sptree_lookup n (wordSem_state_locals s) = SOME y`,
   CHEAT_TAC);;
@@ -2159,9 +2159,9 @@ let get_vars_fromList2_eq = prove
 (*For returning calls*)
 (* [local] *)
 let get_vars_fromList2_eq_cons = prove
- (`get_vars (GENLIST (\x. 2 * (x + 1)) (LENGTH args)) s = SOME x /\
-     sptree_lookup n (fromList2 (Loc x3 x4 :: x)) = SOME y /\ ~(n =
-       0) ==>
+ (`get_vars (list_of_seq (\x. 2 * (x + 1)) (LENGTH args)) s = SOME x /\
+     sptree_lookup n (fromList2 (CONS (Loc x3 x4) x)) = SOME y /\ ~(n
+       = 0) ==>
      sptree_lookup n (wordSem_state_locals s) = SOME y`,
   CHEAT_TAC);;
 
@@ -2257,16 +2257,17 @@ let pop_env_ffi = prove
 
 (* [local] *)
 let stack_rel_DROP_NONE = prove
- (`word_to_stackProof_stack_rel k whandler (StackFrame n l0 l NONE ::
-  wstack) shandler sstack len bs (f' :: lens) ==>
+ (`word_to_stackProof_stack_rel k whandler (CONS (StackFrame n l0 l
+  NONE) wstack) shandler sstack len bs (CONS f' lens) ==>
    word_to_stackProof_stack_rel k whandler wstack shandler (DROP
      (f' + 1) sstack) len bs lens`,
   CHEAT_TAC);;
 
 (* [local] *)
 let stack_rel_DROP_SOME = prove
- (`word_to_stackProof_stack_rel k whandler (StackFrame n l0 l (SOME
-  (whandler',b,c)) :: wstack) shandler sstack len bs (f' :: lens) ==>
+ (`word_to_stackProof_stack_rel k whandler (CONS (StackFrame n l0 l
+  (SOME (whandler',b,c))) wstack) shandler sstack len bs (CONS f' lens)
+  ==>
    word_to_stackProof_stack_rel k whandler' wstack (SOME (EL 2
      sstack)) (DROP (f' + 4) sstack) len bs lens`,
   CHEAT_TAC);;
@@ -2274,29 +2275,29 @@ let stack_rel_DROP_SOME = prove
 (* [local] *)
 let LAST_GENLIST_evens = prove
  (`~(n = 0) ==>
-     (let reg = LAST (GENLIST (\x. 2 * (x + 1)) n) in ~(reg = 0) /\
-       EVEN reg)`,
+     (let reg = LAST (list_of_seq (\x. 2 * (x + 1)) n) in ~(reg =
+       0) /\ EVEN reg)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let stack_rel_cons_LEN_NONE = prove
- (`word_to_stackProof_stack_rel k whandler (StackFrame n l0 l NONE ::
-  wstack) shandler sstack len bs (f' :: lens) ==>
+ (`word_to_stackProof_stack_rel k whandler (CONS (StackFrame n l0 l
+  NONE) wstack) shandler sstack len bs (CONS f' lens) ==>
    f' + 1 <= LENGTH sstack`,
   CHEAT_TAC);;
 
 (* [local] *)
 let stack_rel_cons_LEN_SOME = prove
- (`word_to_stackProof_stack_rel k whandler (StackFrame n l0 l (SOME
-  (a,b,c)) :: wstack) shandler sstack len bs (f' :: lens) ==>
+ (`word_to_stackProof_stack_rel k whandler (CONS (StackFrame n l0 l
+  (SOME (a,b,c))) wstack) shandler sstack len bs (CONS f' lens) ==>
    f' + 4 <= LENGTH sstack`,
   CHEAT_TAC);;
 
 let stack_rel_cons_locals_size = prove
- (`word_to_stackProof_stack_rel k whandler (StackFrame n l0 l opt ::
+ (`word_to_stackProof_stack_rel k whandler (CONS (StackFrame n l0 l opt)
   t'')
      shandler rest_of_stack len
-     bitmaps (f' :: lens) ==>
+     bitmaps (CONS f' lens) ==>
    the (f' + 1) n = (f' + 1)`,
   CHEAT_TAC);;
 
@@ -2308,7 +2309,7 @@ let IS_SOME_OPTION_MAP2_EQ = prove
 (* [local] *)
 let DROP_SUB = prove
  (`a <= LENGTH ls /\ b <= a ==>
-   DROP (a - b) ls = (DROP (a - b) (TAKE a ls)) ++ DROP a ls`,
+   DROP (a - b) ls = APPEND (DROP (a - b) (TAKE a ls)) (DROP a ls)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2326,7 +2327,7 @@ let evaluate_PushHandler = prove
    word_to_stackProof_state_rel ac k 0 0
      (wordSem_state_locals_size_fupd (K (SOME 0))
      (wordSem_state_locals_fupd (K LN) (wordSem_push_env x' NONE s))) t
-     (f' :: lens) 0 /\
+     (CONS f' lens) 0 /\
    loc_check (state_code t) (x''2,x''3) ==>
    (?(t':('a,'c,'ffi)stackSem_state).
    evaluate (PushHandler F (x''2:num) (x''3:num) (k,(f:num),f'),t) =
@@ -2347,7 +2348,8 @@ let evaluate_PushHandler = prove
    word_to_stackProof_state_rel ac k 0 0
      (wordSem_state_locals_size_fupd (K (SOME 0))
      (wordSem_state_locals_fupd (K LN) (wordSem_push_env x' (SOME
-     (x''0,(x''1:'a wordLang_prog),x''2,x''3)) s))) t' (f' :: lens) 0)`,
+     (x''0,(x''1:'a wordLang_prog),x''2,x''3)) s))) t' (CONS f' lens)
+     0)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2443,7 +2445,7 @@ let compile_word_to_stack_IMP_LENGTH = prove
 (* Used in backendProof *)
 let compile_word_to_stack_bitmaps = prove
  (`word_to_stack_compile c F p = (bitmaps,c2,prog1) ==>
-    (match bitmaps with [] -> F | h :: v1 -> (n2w 4) = h) /\
+    (match bitmaps with [] -> F | CONS h v1 -> (n2w 4) = h) /\
       word_to_stack_config_bitmaps_length c2 = LENGTH bitmaps`,
   CHEAT_TAC);;
 
@@ -2487,7 +2489,7 @@ let chunk_to_bits_bound = prove
 
 let chunk_to_bits_0 = prove
  (`FAPPLY
-     (chunk_to_bits ((b,w) :: words)) 0 <=> b`,
+     (chunk_to_bits (CONS (b,w) words)) 0 <=> b`,
   CHEAT_TAC);;
 
 let copy_words_for_pattern_thm = prove
@@ -2495,7 +2497,7 @@ let copy_words_for_pattern_thm = prove
      LENGTH words < dimindex (:'a) /\ const_addresses a words dm ==>
      copy_words_for_pattern (chunk_to_bits words) (LENGTH xs) (a:'a
        word) off
-       (xs ++ MAP SND words ++ ys) dm m =
+       (APPEND (APPEND xs (MAP SND words)) ys) dm m =
      SOME (LENGTH xs + LENGTH words,
            a + bytes_in_word * n2w (LENGTH words),
            const_writes a off words m)`,
@@ -2510,12 +2512,12 @@ let word_msb_chunk_to_bits = prove
 let copy_words = prove
  (`const_addresses a words dm /\ good_dimindex (:'a) /\
    LENGTH words < dimindex (:'a) ==>
-   copy_words (LENGTH xs) a off (xs ++ chunk_to_bitmap words ++ ys)
-     dm m =
+   copy_words (LENGTH xs) a off (APPEND (APPEND xs (chunk_to_bitmap
+     words)) ys) dm m =
      (if LENGTH words = dimindex (:'a) - 1 then
        copy_words (LENGTH xs + (LENGTH words + 1))
              (a + bytes_in_word * n2w (LENGTH words)) off
-             (xs ++ chunk_to_bitmap words ++ ys) dm
+             (APPEND (APPEND xs (chunk_to_bitmap words)) ys) dm
              (const_writes a off words m) else
        SOME (a + bytes_in_word * n2w (LENGTH words),
              const_writes (a:'a word) off words m))`,
@@ -2523,14 +2525,14 @@ let copy_words = prove
 
 let const_writes_append = prove
  (`!h t a off m.
-     const_writes a off (h ++ t) m =
+     const_writes a off (APPEND h t) m =
      const_writes (a + bytes_in_word * n2w (LENGTH h)) off t
        (const_writes a off h m)`,
   CHEAT_TAC);;
 
 let const_addresses_append = prove
  (`!xs ys dm a.
-     const_addresses a (xs ++ ys) dm <=>
+     const_addresses a (APPEND xs ys) dm <=>
      const_addresses a xs dm /\
      const_addresses (a + bytes_in_word * n2w (LENGTH xs)) ys dm`,
   CHEAT_TAC);;
@@ -2539,8 +2541,8 @@ let copy_words_correct = prove
  (`!words xs ys a off dm m.
      const_addresses a words dm /\ good_dimindex (:'a) ==>
      copy_words (LENGTH xs) (a:'a word) off
-       (xs ++ const_words_to_bitmap words (LENGTH words) ++ ys) dm m
-         =
+       (APPEND (APPEND xs (const_words_to_bitmap words (LENGTH
+         words))) ys) dm m =
      SOME (a + bytes_in_word * n2w (LENGTH words),const_writes a
        off words m)`,
   CHEAT_TAC);;
@@ -2584,7 +2586,7 @@ let stack_rel_aux_stack_size = prove
   CHEAT_TAC);;
 
 let abs_stack_CONS_NIL = prove
- (`abs_stack bm (x :: rest) [] l = NONE`,
+ (`abs_stack bm (CONS x rest) [] l = NONE`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -3007,10 +3009,10 @@ let init_state_ok_def = new_definition
          (misc_Nil,bm0) in
          (cfg,progs,append (FST bm))) /\
      (!n. let ((bm0,cfg),progs) = coracle n in
-         EVERY (post_alloc_conventions k o SND o SND) progs /\
-         EVERY (flat_exp_conventions o SND o SND) progs /\
-         EVERY ((\x y. ~(x = y)) raise_stub_location o FST) progs /\
-         EVERY ((\x y. ~(x = y)) store_consts_stub_location o FST)
+         ALL (post_alloc_conventions k o SND o SND) progs /\
+         ALL (flat_exp_conventions o SND o SND) progs /\
+         ALL ((\x y. ~(x = y)) raise_stub_location o FST) progs /\
+         ALL ((\x y. ~(x = y)) store_consts_stub_location o FST)
            progs /\
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t)))`;;
 
@@ -3111,28 +3113,28 @@ let word_to_stack_lab_pres = prove
   CHEAT_TAC);;
 
 let word_to_stack_compile_lab_pres = prove
- (`EVERY (\(n,m,p).
+ (`ALL (\(n,m,p).
    let labs = extract_labels p in
-   EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\
+   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\
    ALL_DISTINCT labs) prog ==>
    (let (bytes,c,f,p) = compile asm_conf F prog in
-     MAP FST p = (raise_stub_location :: store_consts_stub_location
-       :: MAP FST prog) /\
-     EVERY (\(n,p).
+     MAP FST p = (CONS raise_stub_location (CONS
+       store_consts_stub_location (MAP FST prog))) /\
+     ALL (\(n,p).
        let labs = extract_labels p in
-       EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\
+       ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\
        ALL_DISTINCT labs) p)`,
   CHEAT_TAC);;
 
 let compile_word_to_stack_lab_pres = prove
  (`!p perf b q r.
    compile_word_to_stack ac perf k p b = (q,r) /\
-   EVERY (\(l,m,e).
-     EVERY (\(l1,l2). (l1 = l) /\ (~(l2 = 0)) /\ (~(l2 = 1)))
+   ALL (\(l,m,e).
+     ALL (\(l1,l2). (l1 = l) /\ (~(l2 = 0)) /\ (~(l2 = 1)))
        (extract_labels e) /\
      ALL_DISTINCT (extract_labels e)) p ==>
-   EVERY (\(l,e).
-     EVERY (\(l1,l2). (l1 = l) /\ (~(l2 = 0)) /\ (~(l2 = 1)))
+   ALL (\(l,e).
+     ALL (\(l1,l2). (l1 = l) /\ (~(l2 = 0)) /\ (~(l2 = 1)))
        (extract_labels e) /\
      ALL_DISTINCT (extract_labels e)) q`,
   CHEAT_TAC);;
@@ -3241,7 +3243,7 @@ let word_to_stack_stack_asm_remove_lem = prove
   CHEAT_TAC);;
 
 let word_to_stack_stack_asm_convs = prove
- (`EVERY (\(n,m,p).
+ (`ALL (\(n,m,p).
      full_inst_ok_less c p /\
      (asm_config_two_reg_arith c ==> every_inst two_reg_inst p) /\
      (no_share_inst p \/ ~(asm_config_ISA c = Ag32)) /\
@@ -3249,7 +3251,7 @@ let word_to_stack_stack_asm_convs = prove
        (asm_config_avoid_regs c) + 5)) p) progs /\
      4 < (asm_config_reg_count c - (LENGTH (asm_config_avoid_regs c)
        + 5)) ==>
-   EVERY (\(n,p). stack_asm_name c p /\ stack_asm_remove c p) (SND
+   ALL (\(n,p). stack_asm_name c p /\ stack_asm_remove c p) (SND
      (SND (SND (compile c F progs))))`,
   CHEAT_TAC);;
 
@@ -3339,25 +3341,25 @@ let reg_bound_mono = prove
 (* Gluing all the conventions together *)
 let word_to_stack_stack_convs = prove
  (`word_to_stack_compile ac F p = (bytes,c',f',p') /\
-   EVERY (post_alloc_conventions k) (MAP (SND o SND) p) /\
+   ALL (post_alloc_conventions k) (MAP (SND o SND) p) /\
    k = (asm_config_reg_count ac - (5 + LENGTH (asm_config_avoid_regs
      ac))) /\
    4 <= k ==>
-   EVERY alloc_arg (MAP SND p') /\
-   EVERY (\p. reg_bound p (k + 2)) (MAP SND p') /\
-   EVERY (\p. call_args p 1 2 3 4 0) (MAP SND p')`,
+   ALL alloc_arg (MAP SND p') /\
+   ALL (\p. reg_bound p (k + 2)) (MAP SND p') /\
+   ALL (\p. call_args p 1 2 3 4 0) (MAP SND p')`,
   CHEAT_TAC);;
 
 let compile_word_to_stack_convs = prove
  (`!p bm q bm'.
     compile_word_to_stack c F k p bm = (q,bm') /\
-    EVERY (\(n,m,p).
+    ALL (\(n,m,p).
       full_inst_ok_less c p /\
       (asm_config_two_reg_arith c ==> every_inst two_reg_inst p) /\
       (no_share_inst p \/ ~(asm_config_ISA c = Ag32)) /\
       post_alloc_conventions k p) p /\ 4 < k /\ k + 1 <
         asm_config_reg_count c - LENGTH (asm_config_avoid_regs c) ==>
-    EVERY (\(x,y).
+    ALL (\(x,y).
       stack_asm_name c y /\
       stack_asm_remove c y /\
       alloc_arg y /\
@@ -3417,18 +3419,18 @@ let word_to_stack_comp_code_labels = prove
 
 let compile_word_to_stack_code_labels = prove
  (`!ac perf k p bs p' bs'.
-   EVERY (\(n,m,pp). good_handlers n pp) p /\
+   ALL (\(n,m,pp). good_handlers n pp) p /\
    perf = F /\
    compile_word_to_stack ac perf k p bs = (p',bs') ==>
    // every label in the compiled code
-   BIGUNION (IMAGE get_code_labels (set_of_list (MAP SND p'))) SUBSET
+   UNIONS (IMAGE get_code_labels (set_of_list (MAP SND p'))) SUBSET
    (raise_stub_location,0) INSERT
    (store_consts_stub_location,0) INSERT (
    // either came from wordLang
-   IMAGE (\n. (n,0)) (BIGUNION (set_of_list (MAP (\(n,m,pp).
+   IMAGE (\n. (n,0)) (UNIONS (set_of_list (MAP (\(n,m,pp).
      (get_code_labels pp)) p))) UNION
    // or has been introduced into the handler labels
-   BIGUNION (set_of_list (MAP (\(n,pp). (stack_get_handler_labels n
+   UNIONS (set_of_list (MAP (\(n,pp). (stack_get_handler_labels n
      pp)) p')))`,
   CHEAT_TAC);;
 
@@ -3452,13 +3454,13 @@ let sub_union_lemma = prove
   CHEAT_TAC);;
 
 let word_to_stack_good_handler_labels = prove
- (`EVERY (\(n,m,pp). good_handlers n pp) prog ==>
+ (`ALL (\(n,m,pp). good_handlers n pp) prog ==>
    compile asm_conf F prog = (bytes,bs,fs,prog') ==>
    stack_good_handler_labels prog'`,
   CHEAT_TAC);;
 
 let word_to_stack_good_handler_labels_incr = prove
- (`EVERY (\(n,m,pp). good_handlers n pp) prog ==>
+ (`ALL (\(n,m,pp). good_handlers n pp) prog ==>
    compile_word_to_stack ac F k prog bs = (prog',fs',bs') ==>
    stack_good_handler_labels prog'`,
   CHEAT_TAC);;
@@ -3513,10 +3515,10 @@ let comp_no_install = prove
 
 let compile_word_to_stack_no_install = prove
  (`!ac perf k prog bs prog' fs' bs'.
-     EVERY (\(n,m,pp). wordConvs_no_install pp) prog /\
+     ALL (\(n,m,pp). wordConvs_no_install pp) prog /\
      compile_word_to_stack ac perf k prog bs = (prog',fs',bs') /\
      perf = F ==>
-     EVERY (\(a,p). no_install p) prog'`,
+     ALL (\(a,p). no_install p) prog'`,
   CHEAT_TAC);;
 
 (* no_share_mem is preserved *)
@@ -3594,22 +3596,22 @@ let comp_no_shmemop = prove
 
 let compile_word_to_stack_no_share_inst = prove
  (`!ac perf k prog bs prog' fs' bs'.
-     EVERY (\(n,m,pp). no_share_inst pp) prog /\
+     ALL (\(n,m,pp). no_share_inst pp) prog /\
      compile_word_to_stack ac perf k prog bs = (prog',fs',bs') ==>
-     EVERY (\(a,p). no_shmemop p) prog'`,
+     ALL (\(a,p). no_shmemop p) prog'`,
   CHEAT_TAC);;
 
 let compile_no_shmemop = prove
  (`compile cf F prog = (bs,fs,ns,prog') /\
-   EVERY (\(n,m,pp). no_share_inst pp) prog ==>
-   EVERY (\(a,p). no_shmemop p) prog'`,
+   ALL (\(n,m,pp). no_share_inst pp) prog ==>
+   ALL (\(a,p). no_shmemop p) prog'`,
   CHEAT_TAC);;
 
 let word_to_stack_compile_no_install = prove
  (`ALL_DISTINCT (MAP FST prog) /\
    no_install_code (fromAList prog) /\
    word_to_stack_compile ac F prog = (bm,c,fs,p) ==>
-   EVERY (\(n,x). no_install x) p`,
+   ALL (\(n,x). no_install x) p`,
   CHEAT_TAC);;
 
 (* and the names that this file reads as variables are constants again *)

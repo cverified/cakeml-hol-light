@@ -67,8 +67,8 @@ let _ = size_thms "line";;
 let sec_loc_to_pc_def,sec_loc_to_pc_ind = define_wf
   `MEASURE (\(x0,x1). list_size (line_size (\x. 0)) x1)`
   [`(sec_loc_to_pc n2 xs =
-    (if n2 = 0 then SOME 0 else match xs with [] -> NONE | (z :: zs)
-      ->
+    (if n2 = 0 then SOME 0 else match xs with [] -> NONE | (CONS z
+      zs) ->
       (if (?n1 k. z = labLang_Label n1 n2 k) then SOME 0 else if
         is_Label z then sec_loc_to_pc n2 zs else OPTION_MAP SUC
         (sec_loc_to_pc n2 zs))))`];;
@@ -76,7 +76,7 @@ let sec_loc_to_pc_def,sec_loc_to_pc_ind = define_wf
 (* HOL4 lab_to_targetProofScript.sml:39: ML code, not ported *)
 
 let sec_loc_to_pc_cons = prove
- (`sec_loc_to_pc n2 (l :: lines) =
+ (`sec_loc_to_pc n2 (CONS l lines) =
    (if n2 = 0 \/ (?n1 k. l = labLang_Label n1 n2 k) then SOME 0
      else OPTION_MAP (if is_Label l then I else SUC) (sec_loc_to_pc n2
      lines))`,
@@ -87,9 +87,9 @@ let sec_loc_to_pc_cons = prove
 
 let loc_to_pc_thm = prove
  (`!n1 n2 ls.
-     EVERY sec_labels_ok ls ==>
+     ALL sec_labels_ok ls ==>
      loc_to_pc n1 n2 ls =
-       (match ls with [] -> NONE | (Section k xs :: ys) ->
+       (match ls with [] -> NONE | (CONS (Section k xs) ys) ->
          (if n1 = k then
            match sec_loc_to_pc n2 xs with NONE -> OPTION_MAP ((+)
              (LENGTH (FILTER ((~) o is_Label) xs))) (loc_to_pc n1 n2
@@ -109,13 +109,13 @@ let enc_with_nop_def = new_definition
      let step = enc (asm_Inst asm_Skip) in
        if LENGTH step = 0 then bytes = init else
          let n = (LENGTH bytes - LENGTH init) DIV LENGTH step in
-           bytes = init ++ FLAT (REPLICATE n step))`;;
+           bytes = APPEND init (FLAT (REPLICATE n step)))`;;
 
 (* [local] *)
 let enc_with_nop_thm = prove
  (`enc_with_nop enc (b:'a asm) bytes =
-       (?n. bytes = enc b ++ FLAT (REPLICATE n (enc (asm_Inst
-         asm_Skip))))`,
+       (?n. bytes = APPEND (enc b) (FLAT (REPLICATE n (enc
+         (asm_Inst asm_Skip)))))`,
   CHEAT_TAC);;
 
 let asm_step_nop_def = new_definition
@@ -252,10 +252,10 @@ let labs_domain_insert = prove
    replacing the CHEAT_TAC is all that is left *)
 let has_odd_inst_def,has_odd_inst_ind = define_guess_cheat
   [`has_odd_inst [] = F`;
-   `has_odd_inst (Section k [] :: xs) = has_odd_inst xs`;
-   `has_odd_inst (Section k (y :: ys) :: xs) <=>
-         ~(EVEN (line_length y)) \/ has_odd_inst ((Section k
-           ys) :: xs)`];;
+   `has_odd_inst (CONS (Section k []) xs) = has_odd_inst xs`;
+   `has_odd_inst (CONS (Section k (CONS y ys)) xs) <=>
+         ~(EVEN (line_length y)) \/ has_odd_inst (CONS (Section
+           k ys) xs)`];;
 
 let line_similar_def = new_definition
   `line_similar x1 x2 =
@@ -279,10 +279,10 @@ let code_similar_def,code_similar_ind = define_wf
   [`code_similar x1 x2 =
         match (x1,x2) with
           ([],[]) -> T
-        | ((Section s1 lines1 :: rest1),(Section s2 lines2 ::
-          rest2)) ->
+        | (CONS (Section s1 lines1) rest1,CONS (Section s2 lines2)
+          rest2) ->
         code_similar rest1 rest2 /\
-        EVERY2 line_similar lines1 lines2 /\ (s1 = s2)
+        ALL2 line_similar lines1 lines2 /\ (s1 = s2)
         | (_3,_4) -> F`];;
 
 (* HOL4 lab_to_targetProofScript.sml:408: ML code, not ported *)
@@ -324,26 +324,26 @@ let code_similar_append = prove
  (`!l1 l2 r1 r2.
      code_similar l1 l2 /\
      code_similar r1 r2 ==>
-     code_similar (l1 ++ r1) (l2 ++ r2)`,
+     code_similar (APPEND l1 r1) (APPEND l2 r2)`,
   CHEAT_TAC);;
 
 let line_similar_sec_label_ok = prove
  (`!l1 l2.
-   EVERY (sec_label_ok s) l1 /\
-   LIST_REL line_similar l1 l2 ==>
-   EVERY (sec_label_ok s) l2`,
+   ALL (sec_label_ok s) l1 /\
+   ALL2 line_similar l1 l2 ==>
+   ALL (sec_label_ok s) l2`,
   CHEAT_TAC);;
 
 let code_similar_sec_labels_ok = prove
  (`!c1 c2.
-   EVERY sec_labels_ok c1 /\
+   ALL sec_labels_ok c1 /\
    code_similar c1 c2 ==>
-   EVERY sec_labels_ok c2`,
+   ALL sec_labels_ok c2`,
   CHEAT_TAC);;
 
 let line_similar_len_no_lab = prove
  (`!l1 l2.
-   LIST_REL line_similar l1 l2 ==>
+   ALL2 line_similar l1 l2 ==>
    (\xs. LENGTH (FILTER ((~) o is_Label) xs)) l1 = (\xs. LENGTH
      (FILTER ((~) o is_Label) xs)) l2`,
   CHEAT_TAC);;
@@ -367,9 +367,9 @@ let word_loc_val_def = define_cases
    replacing the CHEAT_TAC is all that is left *)
 let has_io_name_def,has_io_name_ind = define_guess_cheat
   [`has_io_name index [] = F`;
-   `has_io_name index (Section k [] :: xs) = has_io_name index xs`;
-   `has_io_name index (Section k (y :: ys) :: xs) <=>
-         has_io_name index ((Section k ys) :: xs) \/
+   `has_io_name index (CONS (Section k []) xs) = has_io_name index xs`;
+   `has_io_name index (CONS (Section k (CONS y ys)) xs) <=>
+         has_io_name index (CONS (Section k ys) xs) \/
          (match y with labLang_LabAsm (labLang_CallFFI i) _5 _6
            _7 -> (i = index) | _8 -> F)`];;
 
@@ -416,7 +416,7 @@ let line_ok_def = new_definition
 
 let lines_ok_def,lines_ok_ind = define_rec
   [`lines_ok c labs ffis pos [] = T`;
-   `lines_ok c labs ffis pos (y :: ys) <=>
+   `lines_ok c labs ffis pos (CONS y ys) <=>
        line_ok c labs ffis pos y /\
        lines_ok c labs ffis (pos + line_length y) ys`];;
 
@@ -424,18 +424,18 @@ let lines_ok_def,lines_ok_ind = define_rec
    replacing the CHEAT_TAC is all that is left *)
 let all_enc_ok_def,all_enc_ok_ind = define_guess_cheat
   [`all_enc_ok c labs ffis pos [] = T`;
-   `all_enc_ok c labs ffis pos (Section k [] :: xs) <=>
+   `all_enc_ok c labs ffis pos (CONS (Section k []) xs) <=>
          EVEN pos /\ all_enc_ok c labs ffis pos xs`;
-   `all_enc_ok c labs ffis pos (Section k (y :: ys) :: xs) <=>
+   `all_enc_ok c labs ffis pos (CONS (Section k (CONS y ys)) xs) <=>
          line_ok c labs ffis pos y /\
-         all_enc_ok c labs ffis (pos + line_length y) ((Section
-           k ys) :: xs)`];;
+         all_enc_ok c labs ffis (pos + line_length y) (CONS
+           (Section k ys) xs)`];;
 
 (* HOL4 lab_to_targetProofScript.sml:589: ML code, not ported *)
 
 let all_enc_ok_cons = prove
  (`!ls pos.
-   all_enc_ok c labs ffis pos (Section k ls :: xs) <=>
+   all_enc_ok c labs ffis pos (CONS (Section k ls) xs) <=>
    all_enc_ok c labs ffis (pos + SUM (MAP line_length ls)) xs /\
    EVEN (pos + SUM (MAP line_length ls)) /\
    lines_ok c labs ffis pos ls`,
@@ -447,13 +447,13 @@ let _ = size_thms "sec";;
 let pos_val_def,pos_val_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (sec_size (\x. 0)) x2)`
   [`pos_val i (pos:num) [] = (pos:num)`;
-   `pos_val i (pos:num) (Section k [] :: xs) = ((pos_val i pos
+   `pos_val i (pos:num) (CONS (Section k []) xs) = ((pos_val i pos
   xs):num)`;
-   `pos_val i (pos:num) (Section k (y :: ys) :: xs) =
+   `pos_val i (pos:num) (CONS (Section k (CONS y ys)) xs) =
          ((if is_Label y then pos_val i (pos + line_length y)
-           ((Section k ys) :: xs) else if i = (0:num) then pos else
-           pos_val (i - 1) (pos + line_length y) ((Section k ys) ::
-           xs)):num)`];;
+           (CONS (Section k ys) xs) else if i = (0:num) then pos
+           else pos_val (i - 1) (pos + line_length y) (CONS
+           (Section k ys) xs)):num)`];;
 
 (* HOL4 lab_to_targetProofScript.sml:612: ML code, not ported *)
 
@@ -464,7 +464,7 @@ let pos_val_0 = prove
 
 let sec_pos_val_def,sec_pos_val_ind = define_rec
   [`sec_pos_val i pos [] = NONE`;
-   `sec_pos_val i pos (y :: ys) =
+   `sec_pos_val i pos (CONS y ys) =
        (if is_Label y then
          sec_pos_val i (pos + line_length y) ys else if i = 0
            then SOME pos else sec_pos_val (i - 1) (pos +
@@ -477,15 +477,14 @@ let sec_pos_val_too_big = prove
   CHEAT_TAC);;
 
 let EVERY_is_Label_sec_pos_val = prove
- (`!n pos lines. EVERY is_Label lines ==> sec_pos_val n pos lines =
-  NONE`,
+ (`!n pos lines. ALL is_Label lines ==> sec_pos_val n pos lines = NONE`,
   CHEAT_TAC);;
 
 (* [local] *)
 let pos_val_thm0 = prove
  (`!i pos acc.
      pos_val i pos acc =
-       (match acc with [] -> pos | Section k s :: ss ->
+       (match acc with [] -> pos | CONS (Section k s) ss ->
          (match sec_pos_val i pos s with NONE ->
          pos_val (i - LENGTH (FILTER ((~) o is_Label) s)) (pos +
            SUM (MAP line_length s)) ss | SOME x -> x))`,
@@ -493,7 +492,7 @@ let pos_val_thm0 = prove
 
 let pos_val_thm = prove
  (`(pos_val i pos [] = pos) /\
-   (pos_val i pos (Section k s :: ss) =
+   (pos_val i pos (CONS (Section k s) ss) =
     (match sec_pos_val i pos s with NONE ->
       pos_val (i - LENGTH (FILTER ((~) o is_Label) s)) (pos + SUM
         (MAP line_length s)) ss | SOME x -> x))`,
@@ -501,24 +500,24 @@ let pos_val_thm = prove
 
 let lab_to_targetProof_good_code_def = new_definition
   `lab_to_targetProof_good_code c labs code <=>
-    EVERY sec_ends_with_label code /\
-    EVERY sec_labels_ok code /\
+    ALL sec_ends_with_label code /\
+    ALL sec_labels_ok code /\
     ALL_DISTINCT (MAP Section_num code) /\
-    EVERY (ALL_DISTINCT o extract_labels o Section_lines) code /\
+    ALL (ALL_DISTINCT o extract_labels o Section_lines) code /\
     DISJOINT (domain labs) (set_of_list (MAP Section_num code)) /\
     restrict_nonzero (get_labels code) SUBSET get_code_labels code
       UNION labs_domain labs /\
-    (\c ls. EVERY (sec_ok_pre c) ls) c code`;;
+    (\c ls. ALL (sec_ok_pre c) ls) c code`;;
 hol4_overload "good_code" "lab_to_targetProof_good_code";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let num_pcs_def,num_pcs_ind = define_guess_cheat
   [`num_pcs [] = (0:num)`;
-   `num_pcs (Section _13 [] :: rest) = ((num_pcs rest):num)`;
-   `num_pcs (Section k (x :: xs) :: rest) = ((if is_Label x then
-  num_pcs ((Section k xs) :: rest) else 1 + num_pcs ((Section k xs)
-  :: rest)):num)`];;
+   `num_pcs (CONS (Section _13 []) rest) = ((num_pcs rest):num)`;
+   `num_pcs (CONS (Section k (CONS x xs)) rest) = ((if is_Label x
+  then num_pcs (CONS (Section k xs) rest) else 1 + num_pcs (CONS
+  (Section k xs) rest)):num)`];;
 
 let share_mem_domain_code_rel_def = new_definition
   `share_mem_domain_code_rel mc_conf p code2 (s1_shared_mem_domain:'a
@@ -616,11 +615,11 @@ let share_mem_state_rel_def = new_definition
           call_FFI st (ffi_SharedMem MappedWrite)
            [nb]
            (
-            (let w = target_get_reg (machine_config_target mc_conf)
-              ms2 re in
+            APPEND (let w = target_get_reg (machine_config_target
+              mc_conf) ms2 re in
                if nb = (n2w 0) then word_to_bytes w F else
-                 word_to_bytes_aux (w2n nb) w F) ++ (word_to_bytes ad'
-                 F)) =
+                 word_to_bytes_aux (w2n nb) w F) (word_to_bytes ad' F))
+                 =
            FFI_return new_st new_bytes ==>
            target_state_rel (machine_config_target mc_conf)
              (asm_state_pc_fupd (K pc') t1)
@@ -640,7 +639,7 @@ let share_mem_state_rel_def = new_definition
 let no_install_or_no_share_mem_def = new_definition
   `no_install_or_no_share_mem code ffi_names' <=>
     (no_share_mem_inst code /\
-     EVERY (\x. ?s. x = ffi_ExtCall s) ffi_names') \/
+     ALL (\x. ?s. x = ffi_ExtCall s) ffi_names') \/
      no_install code`;;
 
 (* The lab-level oracles record the register residues that the machine run
@@ -1016,7 +1015,7 @@ let lab_to_targetProof_state_rel_def = new_definition
      all_enc_ok (target_config (machine_config_target mc_conf)) labs
        (TAKE (THE (mmio_pcs_min_index (machine_config_ffi_names
          mc_conf))) (machine_config_ffi_names mc_conf)) 0 code2 /\
-     EVERY sec_labels_ok code2 /\
+     ALL sec_labels_ok code2 /\
      code_similar (labSem_state_code s1) code2 /\
      share_mem_state_rel mc_conf s1 t1 ms1 /\
      share_mem_domain_code_rel mc_conf p code2
@@ -1072,7 +1071,8 @@ let prog_to_bytes_lemma = prove
            labs ffi_names pos code2 /\
          (asm_fetch_aux pc' code1 = SOME i) ==>
          (?bs j bs2.
-           (prog_to_bytes code2 = bs ++ line_bytes j ++ bs2) /\
+           (prog_to_bytes code2 = APPEND (APPEND bs (line_bytes j))
+             bs2) /\
            (LENGTH bs + pos = pos_val pc' pos code2) /\
            (LENGTH bs + pos + LENGTH (line_bytes j) = pos_val (pc'
              + 1) pos code2) /\
@@ -1086,7 +1086,7 @@ let prog_to_bytes_lemma = prove
 (* [local] *)
 let bytes_in_mem_APPEND = prove
  (`!xs ys a m md md1.
-       bytes_in_mem a (xs ++ ys) m md md1 <=>
+       bytes_in_mem a (APPEND xs ys) m md md1 <=>
        bytes_in_mem a xs m md md1 /\
        bytes_in_mem (a + n2w (LENGTH xs)) ys m md md1`,
   CHEAT_TAC);;
@@ -1799,14 +1799,14 @@ let list_add_if_fresh_simp = prove
 
 let list_add_if_fresh_thm = prove
  (`list_add_if_fresh s l =
-    (if MEM s l then l else l ++ [s])`,
+    (if MEM s l then l else APPEND l [s])`,
   CHEAT_TAC);;
 
 (* HOL4 lab_to_targetProofScript.sml:3052: ML code, not ported *)
 
 (* [local] *)
 let find_index_append = prove
- (`!n. find_index s (l ++ l') n =
+ (`!n. find_index s (APPEND l l') n =
    (match find_index s l n with NONE -> find_index s l' (n + LENGTH
      l) | SOME i -> SOME i)`,
   CHEAT_TAC);;
@@ -1834,8 +1834,8 @@ let EL_get_ffi_index_MEM = prove
 
 let has_io_name_EXISTS = prove
  (`!name ls. has_io_name name ls <=>
-    EXISTS (\x. match x with labLang_LabAsm (labLang_CallFFI i) _14
-      _15 _16 -> i = name | _17 -> F)
+    EX (\x. match x with labLang_LabAsm (labLang_CallFFI i) _14 _15
+      _16 -> i = name | _17 -> F)
     (FLAT (MAP Section_lines ls))`,
   CHEAT_TAC);;
 
@@ -1867,27 +1867,29 @@ let _ = size_thms "line";;
 let enc_lines_again_simp_def,enc_lines_again_simp_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). list_size (line_size (\x. 0)) x4)`
   [`enc_lines_again_simp labs ffis pos enc [] = ([],T)`;
-   `enc_lines_again_simp labs ffis pos enc (labLang_LabAsm a w bytes l
-  :: xs) =
+   `enc_lines_again_simp labs ffis pos enc (CONS (labLang_LabAsm a w
+  bytes l) xs) =
         (let w1 = get_jump_offset a ffis labs pos in
           if w = w1 then
             let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
               enc xs in
-              (labLang_LabAsm a w bytes l :: rest,ok) else
+              (CONS (labLang_LabAsm a w bytes l) rest,ok) else
             let bs = enc (lab_inst w1 a) in
             let l1 = MAX (LENGTH bs) l in
             let (rest,ok) = enc_lines_again_simp labs ffis (pos +
               l1) enc xs in
-              (labLang_LabAsm a w1 bs l1 :: rest,(l1 = l /\ ok)))`;
-   `enc_lines_again_simp labs ffis pos enc (labLang_Label k1 k2 l :: xs)
-  =
+              (CONS (labLang_LabAsm a w1 bs l1) rest,(l1 = l /\
+                ok)))`;
+   `enc_lines_again_simp labs ffis pos enc (CONS (labLang_Label k1 k2 l)
+  xs) =
         (let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
           enc xs in
-        ((labLang_Label k1 k2 l:'a line) :: rest,ok))`;
-   `enc_lines_again_simp labs ffis pos enc (labLang_Asm x1 x2 l :: xs) =
+        (CONS (labLang_Label k1 k2 l:'a line) rest,ok))`;
+   `enc_lines_again_simp labs ffis pos enc (CONS (labLang_Asm x1 x2 l)
+  xs) =
         (let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
           enc xs in
-        (labLang_Asm x1 x2 l :: rest,ok))`];;
+        (CONS (labLang_Asm x1 x2 l) rest,ok))`];;
 
 (* HOL4 lab_to_targetProofScript.sml:3172: ML code, not ported *)
 
@@ -1895,8 +1897,8 @@ let enc_lines_again_simp_def,enc_lines_again_simp_ind = define_wf
 let enc_lines_again_simp_EQ = prove
  (`!labs ffis pos enc ls acc b.
    let (ls',flag) = enc_lines_again_simp labs ffis pos enc ls in
-   enc_lines_again labs ffis pos enc ls (acc,b) = (REVERSE acc ++
-     ls',sec_length ls' pos,(b /\ flag))`,
+   enc_lines_again labs ffis pos enc ls (acc,b) = (APPEND (REVERSE
+     acc) ls',sec_length ls' pos,(b /\ flag))`,
   CHEAT_TAC);;
 
 let enc_lines_again_simp_len = prove
@@ -1917,58 +1919,58 @@ let section_labels_sec_length = prove
 
 let section_labels_append = prove
  (`!pos l1 labs l2.
-    section_labels pos (l1 ++ l2) labs =
+    section_labels pos (APPEND l1 l2) labs =
     section_labels (pos + (SUM (MAP line_len l1))) l2 (SND
       (section_labels pos l1 labs))`,
   CHEAT_TAC);;
 
 let line_length_add_nop1 = prove
  (`!nop ls.
-   ~(EVERY is_Label ls) ==>
+   ~(ALL is_Label ls) ==>
    SUM (MAP line_length (add_nop nop ls)) =
    SUM (MAP line_length ls) + LENGTH nop`,
   CHEAT_TAC);;
 
 let line_length_add_nop = prove
  (`!nop ls.
-   EVERY is_Label ls ==>
+   ALL is_Label ls ==>
    SUM (MAP line_length (add_nop nop ls)) =
    SUM (MAP line_length ls)`,
   CHEAT_TAC);;
 
 let line_len_add_nop1 = prove
- (`!nop ls. ~(EVERY is_Label ls) ==>
+ (`!nop ls. ~(ALL is_Label ls) ==>
     SUM (MAP line_len (add_nop nop ls)) =
     SUM (MAP line_len ls) + 1`,
   CHEAT_TAC);;
 
 let line_len_add_nop = prove
- (`!nop ls. EVERY is_Label ls ==>
+ (`!nop ls. ALL is_Label ls ==>
     SUM (MAP line_len (add_nop nop ls)) =
     SUM (MAP line_len ls)`,
   CHEAT_TAC);;
 
 let add_nop_append = prove
  (`!nop l1 l2.
-    add_nop nop (l1 ++ l2) = (if EVERY is_Label l1 then l1 ++
-      add_nop nop l2 else add_nop nop l1 ++ l2)`,
+    add_nop nop (APPEND l1 l2) = (if ALL is_Label l1 then APPEND l1
+      (add_nop nop l2) else APPEND (add_nop nop l1) l2)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let EXISTS_not_Label_add_nop = prove
  (`!nop acc.
-     EXISTS ((~) o is_Label) (add_nop nop acc) <=> EXISTS ((~) o
-       is_Label) acc`,
+     EX ((~) o is_Label) (add_nop nop acc) <=> EX ((~) o is_Label)
+       acc`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let EVERY_is_Label_add_nop_preserved = prove
  (`!nop acc.
-     EVERY is_Label (add_nop nop acc) <=> EVERY is_Label acc`,
+     ALL is_Label (add_nop nop acc) <=> ALL is_Label acc`,
   CHEAT_TAC);;
 
 let EVERY_is_Label_add_nop = prove
- (`!nop ls. EVERY is_Label ls ==> add_nop nop ls = ls`,
+ (`!nop ls. ALL is_Label ls ==> add_nop nop ls = ls`,
   CHEAT_TAC);;
 
 let SND_lines_upd_lab_len = prove
@@ -1983,14 +1985,14 @@ let SND_lines_upd_lab_len = prove
 (* [local] *)
 let line_similar_add_nop = prove
  (`!ls ls' h.
-   LIST_REL line_similar ls ls' ==>
-   LIST_REL line_similar ls (add_nop h ls')`,
+   ALL2 line_similar ls ls' ==>
+   ALL2 line_similar ls (add_nop h ls')`,
   CHEAT_TAC);;
 
 let line_similar_pad_section = prove
  (`!nop l2 aux l1.
-     LIST_REL line_similar l1 (REVERSE aux ++ l2) ==>
-     LIST_REL line_similar l1 (pad_section nop l2 aux)`,
+     ALL2 line_similar l1 (APPEND (REVERSE aux) l2) ==>
+     ALL2 line_similar l1 (pad_section nop l2 aux)`,
   CHEAT_TAC);;
 
 let code_similar_pad_code = prove
@@ -2002,8 +2004,8 @@ let code_similar_pad_code = prove
 (* [local] *)
 let LIST_REL_enc_line = prove
  (`!ls ls'.
-   LIST_REL line_similar ls ls' <=>
-   LIST_REL line_similar (MAP (enc_line enc len) ls) ls'`,
+   ALL2 line_similar ls ls' <=>
+   ALL2 line_similar (MAP (enc_line enc len) ls) ls'`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -2018,8 +2020,8 @@ let enc_lines_again_IMP_similar = prove
  (`!labs ffis pos enc lines acc ok lines' ok' curr.
    enc_lines_again labs ffis pos enc lines (acc,ok) = (lines',ok')
      ==>
-   LIST_REL line_similar curr (REVERSE acc) ==>
-   LIST_REL line_similar (curr ++ lines) lines'`,
+   ALL2 line_similar curr (REVERSE acc) ==>
+   ALL2 line_similar (APPEND curr lines) lines'`,
   CHEAT_TAC);;
 
 let enc_secs_again_IMP_similar = prove
@@ -2034,8 +2036,8 @@ let enc_secs_again_IMP_similar = prove
 (* [local] *)
 let line_similar_lines_upd_lab_len = prove
  (`!l aux pos l1.
-       LIST_REL line_similar (FST (lines_upd_lab_len pos l [])) l1 =
-       LIST_REL line_similar l l1`,
+       ALL2 line_similar (FST (lines_upd_lab_len pos l [])) l1 =
+       ALL2 line_similar l l1`,
   CHEAT_TAC);;
 
 let code_similar_upd_lab_len = prove
@@ -2046,8 +2048,8 @@ let code_similar_upd_lab_len = prove
 
 let lines_upd_lab_len_similar = prove
  (`!pos lines aux.
-    LIST_REL line_similar (FST (lines_upd_lab_len pos lines aux))
-      (REVERSE aux ++ lines)`,
+    ALL2 line_similar (FST (lines_upd_lab_len pos lines aux))
+      (APPEND (REVERSE aux) lines)`,
   CHEAT_TAC);;
 
 (* implications of code_similar *)
@@ -2073,65 +2075,64 @@ let code_similar_loc_to_pc = prove
 
 let enc_sec_list_sec_labels_ok = prove
  (`!enc code.
-   EVERY sec_labels_ok code ==> EVERY sec_labels_ok (enc_sec_list
-     enc code)`,
+   ALL sec_labels_ok code ==> ALL sec_labels_ok (enc_sec_list enc
+     code)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let enc_lines_again_sec_labels_ok = prove
  (`!labs ffis pos enc lines acc ok res ok' k.
      enc_lines_again labs ffis pos enc lines (acc,ok) = (res,ok') /\
-     EVERY (sec_label_ok k) acc /\
-     EVERY (sec_label_ok k) lines ==>
-     EVERY (sec_label_ok k) res`,
+     ALL (sec_label_ok k) acc /\
+     ALL (sec_label_ok k) lines ==>
+     ALL (sec_label_ok k) res`,
   CHEAT_TAC);;
 
 let enc_secs_again_sec_labels_ok = prove
  (`!pos ffis labs enc ls res ok k.
-    enc_secs_again pos ffis labs enc ls = (res,ok) /\ EVERY
+    enc_secs_again pos ffis labs enc ls = (res,ok) /\ ALL
       sec_labels_ok ls ==>
-    EVERY sec_labels_ok res`,
+    ALL sec_labels_ok res`,
   CHEAT_TAC);;
 
 (* [local] *)
 let lines_upd_lab_len_sec_label_ok = prove
  (`!pos lines acc k.
-      EVERY (sec_label_ok k) lines /\
-      EVERY (sec_label_ok k) acc ==>
-      EVERY (sec_label_ok k) (FST (lines_upd_lab_len pos lines
-        acc))`,
+      ALL (sec_label_ok k) lines /\
+      ALL (sec_label_ok k) acc ==>
+      ALL (sec_label_ok k) (FST (lines_upd_lab_len pos lines acc))`,
   CHEAT_TAC);;
 
 let upd_lab_len_sec_labels_ok = prove
- (`!n ls. EVERY sec_labels_ok ls ==> EVERY sec_labels_ok (upd_lab_len
-  n ls)`,
+ (`!n ls. ALL sec_labels_ok ls ==> ALL sec_labels_ok (upd_lab_len n
+  ls)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let add_nop_sec_label_ok = prove
  (`!nop aux.
-     EVERY (sec_label_ok k) aux ==>
-     EVERY (sec_label_ok k) (add_nop nop aux)`,
+     ALL (sec_label_ok k) aux ==>
+     ALL (sec_label_ok k) (add_nop nop aux)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let pad_section_sec_label_ok = prove
  (`!nop xs acc k.
-     EVERY (sec_label_ok k) xs /\
-     EVERY (sec_label_ok k) acc ==>
-     EVERY (sec_label_ok k) (pad_section nop xs acc)`,
+     ALL (sec_label_ok k) xs /\
+     ALL (sec_label_ok k) acc ==>
+     ALL (sec_label_ok k) (pad_section nop xs acc)`,
   CHEAT_TAC);;
 
 let pad_code_sec_labels_ok = prove
  (`!nop code.
-    EVERY sec_labels_ok code ==>
-    EVERY sec_labels_ok (pad_code nop code)`,
+    ALL sec_labels_ok code ==>
+    ALL sec_labels_ok (pad_code nop code)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let sec_labels_ok_filter_skip = prove
- (`!code. EVERY sec_labels_ok (filter_skip code) <=> EVERY
-  sec_labels_ok code`,
+ (`!code. ALL sec_labels_ok (filter_skip code) <=> ALL sec_labels_ok
+  code`,
   CHEAT_TAC);;
 
 (* invariant: lines are encoded and non-label lengths annotated *)
@@ -2147,7 +2148,7 @@ let line_encd0_def = new_definition
         | _27 -> T`;;
 
 let sec_encd0_def = define_general
-  [`sec_encd0 enc (Section _28 ls) = EVERY (line_encd0 enc) ls`];;
+  [`sec_encd0 enc (Section _28 ls) = ALL (line_encd0 enc) ls`];;
 
 (* HOL4 lab_to_targetProofScript.sml:3628: the overload all_encd0,
    which the port expands *)
@@ -2155,7 +2156,7 @@ let sec_encd0_def = define_general
 (* establishing encd0 *)
 
 let enc_sec_list_encd0 = prove
- (`!ls. (\enc l. EVERY (sec_encd0 enc) l) enc (enc_sec_list enc ls)`,
+ (`!ls. (\enc l. ALL (sec_encd0 enc) l) enc (enc_sec_list enc ls)`,
   CHEAT_TAC);;
 
 (* encd0 preservation *)
@@ -2163,28 +2164,28 @@ let enc_sec_list_encd0 = prove
 let enc_lines_again_encd0 = prove
  (`!labs ffis pos enc lines acc ok res ok'.
     enc_lines_again labs ffis pos enc lines (acc,ok) = (res,ok') /\
-    EVERY (line_encd0 enc) lines /\
-    EVERY (line_encd0 enc) acc ==>
-    EVERY (line_encd0 enc) res`,
+    ALL (line_encd0 enc) lines /\
+    ALL (line_encd0 enc) acc ==>
+    ALL (line_encd0 enc) res`,
   CHEAT_TAC);;
 
 let enc_secs_again_encd0 = prove
  (`!pos labs ffis enc ls res ok.
     enc_secs_again pos labs ffis enc ls = (res,ok) /\
-    (\enc l. EVERY (sec_encd0 enc) l) enc ls ==>
-    (\enc l. EVERY (sec_encd0 enc) l) enc res`,
+    (\enc l. ALL (sec_encd0 enc) l) enc ls ==>
+    (\enc l. ALL (sec_encd0 enc) l) enc res`,
   CHEAT_TAC);;
 
 let lines_upd_lab_len_encd0 = prove
  (`!pos ls acc.
-    EVERY (line_encd0 enc) ls /\
-    EVERY (line_encd0 enc) acc ==>
-    EVERY (line_encd0 enc) (FST (lines_upd_lab_len pos ls acc))`,
+    ALL (line_encd0 enc) ls /\
+    ALL (line_encd0 enc) acc ==>
+    ALL (line_encd0 enc) (FST (lines_upd_lab_len pos ls acc))`,
   CHEAT_TAC);;
 
 let upd_lab_len_encd0 = prove
- (`!pos ss. (\enc l. EVERY (sec_encd0 enc) l) enc ss ==> (\enc l.
-  EVERY (sec_encd0 enc) l) enc (upd_lab_len pos ss)`,
+ (`!pos ss. (\enc l. ALL (sec_encd0 enc) l) enc ss ==> (\enc l. ALL
+  (sec_encd0 enc) l) enc (upd_lab_len pos ss)`,
   CHEAT_TAC);;
 
 (* invariant: annotated lengths are not too small *)
@@ -2200,7 +2201,7 @@ let line_length_leq_def = new_definition
         | _32 -> T`;;
 
 let sec_length_leq_def = define_general
-  [`sec_length_leq (Section _33 ls) = EVERY line_length_leq ls`];;
+  [`sec_length_leq (Section _33 ls) = ALL line_length_leq ls`];;
 
 (* HOL4 lab_to_targetProofScript.sml:3713: the overload
    all_length_leq, which the port expands *)
@@ -2214,18 +2215,18 @@ let label_one_def = new_definition
         | _38 -> T`;;
 
 let sec_label_one_def = define_general
-  [`sec_label_one (Section _39 ls) = EVERY label_one ls`];;
+  [`sec_label_one (Section _39 ls) = ALL label_one ls`];;
 
 (* establishing label_one *)
 
 let lines_upd_lab_len_label_one = prove
  (`!pos ls acc.
-    EVERY label_one acc ==>
-    EVERY label_one (FST (lines_upd_lab_len pos ls acc))`,
+    ALL label_one acc ==>
+    ALL label_one (FST (lines_upd_lab_len pos ls acc))`,
   CHEAT_TAC);;
 
 let upd_lab_len_label_one = prove
- (`!pos ss. EVERY sec_label_one (upd_lab_len pos ss)`,
+ (`!pos ss. ALL sec_label_one (upd_lab_len pos ss)`,
   CHEAT_TAC);;
 
 (* label_one preservation *)
@@ -2233,15 +2234,15 @@ let upd_lab_len_label_one = prove
 let enc_lines_again_simp_label_one = prove
  (`!labs ffis pos enc ls res ok.
     enc_lines_again_simp labs ffis pos enc ls = (res,ok) /\
-    EVERY label_one ls ==>
-    EVERY label_one res`,
+    ALL label_one ls ==>
+    ALL label_one res`,
   CHEAT_TAC);;
 
 let enc_secs_again_label_one = prove
  (`!pos labs ffis enc lines res ok.
     enc_secs_again pos labs ffis enc lines = (res,ok) /\
-    EVERY sec_label_one lines ==>
-    EVERY sec_label_one res`,
+    ALL sec_label_one lines ==>
+    ALL sec_label_one res`,
   CHEAT_TAC);;
 
 (* simple consequences of label_one *)
@@ -2249,9 +2250,9 @@ let enc_secs_again_label_one = prove
 let line_length_pad_section1 = prove
  (`!nop ls acc.
    LENGTH nop = 1 /\
-   EVERY label_one ls /\
-   EVERY line_length_leq ls /\
-   ~(EVERY is_Label acc) /\
+   ALL label_one ls /\
+   ALL line_length_leq ls /\
+   ~(ALL is_Label acc) /\
    SUM (MAP line_length acc) = SUM (MAP line_len acc) ==>
    SUM (MAP line_length (pad_section nop ls acc)) =
    SUM (MAP line_len ls) + SUM (MAP line_len acc)`,
@@ -2260,8 +2261,8 @@ let line_length_pad_section1 = prove
 let line_len_pad_section1 = prove
  (`!nop xs aux.
    LENGTH nop = 1 /\
-   EVERY label_one xs /\
-   ~(EVERY is_Label aux) ==>
+   ALL label_one xs /\
+   ~(ALL is_Label aux) ==>
    SUM (MAP line_len (pad_section nop xs aux)) =
    SUM (MAP line_len xs) + SUM (MAP line_len aux)`,
   CHEAT_TAC);;
@@ -2302,7 +2303,7 @@ let line_encd_def = new_definition
 
 let lines_encd_def,lines_encd_ind = define_rec
   [`lines_encd enc labs ffis pos [] <=> T`;
-   `lines_encd enc labs ffis pos (l :: ls) <=>
+   `lines_encd enc labs ffis pos (CONS l ls) <=>
        line_encd enc labs ffis pos l /\
        lines_encd enc labs ffis (pos + line_len l) ls`];;
 
@@ -2312,7 +2313,7 @@ let _ = size_thms "sec";;
 let all_encd_def,all_encd_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). list_size (sec_size (\x. 0)) x4)`
   [`all_encd enc labs ffis pos [] <=> T`;
-   `all_encd enc labs ffis pos (Section k ls :: ss) <=>
+   `all_encd enc labs ffis pos (CONS (Section k ls) ss) <=>
        lines_encd enc labs ffis pos ls /\
        all_encd enc labs ffis (pos + SUM (MAP line_len ls)) ss`];;
 
@@ -2324,12 +2325,12 @@ let line_encd_length_leq = prove
   CHEAT_TAC);;
 
 let lines_encd_length_leq = prove
- (`!enc labs ffis pos ls. lines_encd enc labs ffis pos ls ==> EVERY
+ (`!enc labs ffis pos ls. lines_encd enc labs ffis pos ls ==> ALL
   line_length_leq ls`,
   CHEAT_TAC);;
 
 let all_encd_length_leq = prove
- (`!enc labs ffis pos ls. all_encd enc labs ffis pos ls ==> (\l. EVERY
+ (`!enc labs ffis pos ls. all_encd enc labs ffis pos ls ==> (\l. ALL
   sec_length_leq l) ls`,
   CHEAT_TAC);;
 
@@ -2338,16 +2339,16 @@ let all_encd_length_leq = prove
 let enc_lines_again_simp_encd = prove
  (`!labs ffis pos enc lines res.
     enc_lines_again_simp labs ffis pos enc lines = (res,T) /\
-    EVERY label_one lines /\
-    EVERY (line_encd0 enc) lines ==>
+    ALL label_one lines /\
+    ALL (line_encd0 enc) lines ==>
     lines_encd enc labs ffis pos res`,
   CHEAT_TAC);;
 
 let enc_secs_again_encd = prove
  (`!pos labs ffis enc ls res.
     enc_secs_again pos labs ffis enc ls = (res,T) /\
-    EVERY sec_label_one ls /\
-    EVERY (sec_encd0 enc) ls ==>
+    ALL sec_label_one ls /\
+    ALL (sec_encd0 enc) ls ==>
     all_encd enc labs ffis pos res`,
   CHEAT_TAC);;
 
@@ -2357,13 +2358,13 @@ let line_length_ok_def = new_definition
   `line_length_ok l <=> LENGTH (line_bytes l) = line_len l`;;
 
 let sec_length_ok_def = define_general
-  [`sec_length_ok (Section _48 ls) = EVERY line_length_ok ls`];;
+  [`sec_length_ok (Section _48 ls) = ALL line_length_ok ls`];;
 
 (* simple consequences of length_ok *)
 
 let sec_length_sum_line_length = prove
  (`!ls n.
-    EVERY line_length_ok ls ==>
+    ALL line_length_ok ls ==>
     (sec_length ls n = SUM (MAP line_length ls) + n)`,
   CHEAT_TAC);;
 
@@ -2376,48 +2377,48 @@ let label_zero_def = new_definition
         | _53 -> T`;;
 
 let sec_label_zero_def = define_general
-  [`sec_label_zero (Section _54 ls) = EVERY label_zero ls`];;
+  [`sec_label_zero (Section _54 ls) = ALL label_zero ls`];;
 
 (* label_zero preservation *)
 
 (* [local] *)
 let EVERY_label_zero_add_nop = prove
- (`!xs. EVERY label_zero (add_nop nop xs) = EVERY label_zero xs`,
+ (`!xs. ALL label_zero (add_nop nop xs) = ALL label_zero xs`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let EVERY_label_zero_pad_section = prove
  (`!nop xs aux.
-     EVERY label_zero aux ==>
-     EVERY label_zero (pad_section nop xs aux)`,
+     ALL label_zero aux ==>
+     ALL label_zero (pad_section nop xs aux)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let EVERY_sec_label_zero_pad_code = prove
- (`!nop ls. EVERY sec_label_zero (pad_code nop ls)`,
+ (`!nop ls. ALL sec_label_zero (pad_code nop ls)`,
   CHEAT_TAC);;
 
 let enc_lines_again_simp_label_zero = prove
  (`!labs ffis pos enc ls res ok.
     enc_lines_again_simp labs ffis pos enc ls = (res,ok) /\
-    EVERY label_zero ls ==>
-    EVERY label_zero res`,
+    ALL label_zero ls ==>
+    ALL label_zero res`,
   CHEAT_TAC);;
 
 let enc_secs_again_label_zero = prove
  (`!pos labs ffis enc lines res ok.
     enc_secs_again pos labs ffis enc lines = (res,ok) /\
-    EVERY sec_label_zero lines ==>
-    EVERY sec_label_zero res`,
+    ALL sec_label_zero lines ==>
+    ALL sec_label_zero res`,
   CHEAT_TAC);;
 
 let lines_upd_lab_len_encd0_label_zero = prove
  (`!pos lines aux.
     enc_ok c /\ enc = asm_config_encode c /\
       ~(asm_config_code_alignment c = 0) /\
-    EVERY (line_encd0 enc) lines /\ EVEN pos /\
-    EVERY label_zero aux ==>
-    EVERY label_zero (FST (lines_upd_lab_len pos lines aux))`,
+    ALL (line_encd0 enc) lines /\ EVEN pos /\
+    ALL label_zero aux ==>
+    ALL label_zero (FST (lines_upd_lab_len pos lines aux))`,
   CHEAT_TAC);;
 
 let EVEN_sec_length_lines_upd_lab_len = prove
@@ -2434,35 +2435,35 @@ let upd_lab_len_encd0_label_zero = prove
  (`!pos code.
     enc_ok c /\ enc = asm_config_encode c /\
       ~(asm_config_code_alignment c = 0) /\
-    (\enc l. EVERY (sec_encd0 enc) l) enc code /\ EVEN pos /\ EVERY
+    (\enc l. ALL (sec_encd0 enc) l) enc code /\ EVEN pos /\ ALL
       sec_ends_with_label code ==>
-    EVERY sec_label_zero (upd_lab_len pos code)`,
+    ALL sec_label_zero (upd_lab_len pos code)`,
   CHEAT_TAC);;
 
 (* simple consequences of label_zero *)
 
 let sec_pos_val_0 = prove
- (`!pos lines. ~(EVERY is_Label lines) /\ EVERY label_zero lines ==>
+ (`!pos lines. ~(ALL is_Label lines) /\ ALL label_zero lines ==>
   sec_pos_val 0 pos lines = SOME pos`,
   CHEAT_TAC);;
 
 let line_len_pad_section0 = prove
  (`!nop ls aux.
-   EVERY label_zero ls ==>
+   ALL label_zero ls ==>
    SUM (MAP line_len (pad_section nop ls aux)) =
    SUM (MAP line_len ls) + SUM (MAP line_len aux)`,
   CHEAT_TAC);;
 
 let sec_label_zero_pos_val_0 = prove
  (`!xs pos.
-   EVERY sec_label_zero xs ==>
+   ALL sec_label_zero xs ==>
    pos_val 0 pos xs = pos`,
   CHEAT_TAC);;
 
 let all_enc_ok_imp_sec_label_zero = prove
  (`!conf labs ffis n code.
    all_enc_ok conf labs ffis n code ==>
-   EVERY sec_label_zero code`,
+   ALL sec_label_zero code`,
   CHEAT_TAC);;
 
 (* invariant: lines aligned *)
@@ -2473,17 +2474,17 @@ let line_aligned_def = new_definition
      line_length l MOD m = 0`;;
 
 let sec_aligned_def = define_general
-  [`sec_aligned noplen (Section _55 ls) = EVERY (line_aligned
-  noplen) ls`];;
+  [`sec_aligned noplen (Section _55 ls) = ALL (line_aligned noplen)
+  ls`];;
 
 (* establishing aligned *)
 
 let all_encd0_aligned = prove
  (`!c enc code.
    enc_ok c /\ enc = asm_config_encode c /\
-   (\enc l. EVERY (sec_encd0 enc) l) enc code /\
-   EVERY sec_label_zero code ==>
-   EVERY (sec_aligned (LENGTH (enc (Inst asm_Skip)))) code`,
+   (\enc l. ALL (sec_encd0 enc) l) enc code /\
+   ALL sec_label_zero code ==>
+   ALL (sec_aligned (LENGTH (enc (Inst asm_Skip)))) code`,
   CHEAT_TAC);;
 
 (* aligned preservation *)
@@ -2492,16 +2493,16 @@ let enc_lines_again_simp_aligned = prove
  (`!labs ffis pos enc ls res ok.
     (!a. LENGTH (enc a) MOD len = 0) /\
     enc_lines_again_simp labs ffis pos enc ls = (res,ok) /\
-    EVERY (line_aligned len) ls ==>
-    EVERY (line_aligned len) res`,
+    ALL (line_aligned len) ls ==>
+    ALL (line_aligned len) res`,
   CHEAT_TAC);;
 
 let enc_secs_again_aligned = prove
  (`!pos labs ffis enc lines res ok.
     (!a. LENGTH (enc a) MOD len = 0) /\
     enc_secs_again pos labs ffis enc lines = (res,ok) /\
-    EVERY (sec_aligned len) lines ==>
-    EVERY (sec_aligned len) res`,
+    ALL (sec_aligned len) lines ==>
+    ALL (sec_aligned len) res`,
   CHEAT_TAC);;
 
 (* invariant: all initial labels have annotated length 0 *)
@@ -2515,10 +2516,10 @@ let sec_label_prefix_zero_def = define_general
   [`sec_label_prefix_zero (Section k ls) <=> label_prefix_zero ls`];;
 
 let label_prefix_zero_cons = prove
- (`(label_prefix_zero (labLang_Label l1 l2 len :: ls) <=> ((len = 0) /\
-  label_prefix_zero ls)) /\
-   (label_prefix_zero (labLang_Asm a b c :: ls) <=> T) /\
-   (label_prefix_zero (labLang_LabAsm d e f g :: ls) <=> T)`,
+ (`(label_prefix_zero (CONS (labLang_Label l1 l2 len) ls) <=> ((len = 0)
+  /\ label_prefix_zero ls)) /\
+   (label_prefix_zero (CONS (labLang_Asm a b c) ls) <=> T) /\
+   (label_prefix_zero (CONS (labLang_LabAsm d e f g) ls) <=> T)`,
   CHEAT_TAC);;
 
 (* establishing label_prefix_zero *)
@@ -2526,26 +2527,26 @@ let label_prefix_zero_cons = prove
 let label_prefix_zero_append_suff = prove
  (`!l1 l2.
    label_prefix_zero l1 /\ label_prefix_zero l2 ==>
-   label_prefix_zero (l1 ++ l2)`,
+   label_prefix_zero (APPEND l1 l2)`,
   CHEAT_TAC);;
 
 let label_prefix_zero_append_suff2 = prove
  (`!l1 l2.
-   label_prefix_zero l1 /\ EXISTS ((~) o is_Label) l1 ==>
-   label_prefix_zero (l1 ++ l2)`,
+   label_prefix_zero l1 /\ EX ((~) o is_Label) l1 ==>
+   label_prefix_zero (APPEND l1 l2)`,
   CHEAT_TAC);;
 
 let lines_upd_lab_len_label_prefix_zero = prove
  (`!pos ls acc.
-    (EVERY is_Label acc ==> EVEN pos) /\ label_prefix_zero (REVERSE
+    (ALL is_Label acc ==> EVEN pos) /\ label_prefix_zero (REVERSE
       acc) ==>
     label_prefix_zero (FST (lines_upd_lab_len pos ls acc))`,
   CHEAT_TAC);;
 
 let upd_lab_len_label_prefix_zero = prove
  (`!pos ss.
-    EVEN pos /\ EVERY sec_ends_with_label ss ==>
-    EVERY sec_label_prefix_zero (upd_lab_len pos ss)`,
+    EVEN pos /\ ALL sec_ends_with_label ss ==>
+    ALL sec_label_prefix_zero (upd_lab_len pos ss)`,
   CHEAT_TAC);;
 
 (* label_prefix_zero preservation *)
@@ -2560,8 +2561,8 @@ let enc_lines_again_simp_label_prefix_zero = prove
 let enc_secs_again_label_prefix_zero = prove
  (`!pos labs ffis enc lines res ok.
     enc_secs_again pos labs ffis enc lines = (res,ok) /\
-    EVERY sec_label_prefix_zero lines ==>
-    EVERY sec_label_prefix_zero res`,
+    ALL sec_label_prefix_zero lines ==>
+    ALL sec_label_prefix_zero res`,
   CHEAT_TAC);;
 
 (* simple consequences of label_prefix_zero *)
@@ -2569,10 +2570,10 @@ let enc_secs_again_label_prefix_zero = prove
 let line_length_pad_section = prove
  (`!nop ls acc.
    LENGTH nop = 1 /\
-   EVERY label_one ls /\
-   EVERY line_length_leq ls /\
+   ALL label_one ls /\
+   ALL line_length_leq ls /\
    SUM (MAP line_length acc) = SUM (MAP line_len acc) /\
-   EVERY is_Label acc /\ label_prefix_zero ls ==>
+   ALL is_Label acc /\ label_prefix_zero ls ==>
    SUM (MAP line_length (pad_section nop ls acc)) =
    SUM (MAP line_len ls) + SUM (MAP line_len acc)`,
   CHEAT_TAC);;
@@ -2580,11 +2581,11 @@ let line_length_pad_section = prove
 let label_zero_line_length_pad_section = prove
  (`!nop ls acc.
    0 < LENGTH nop /\
-   EVERY label_zero ls /\
+   ALL label_zero ls /\
    MAP line_length acc = MAP line_len acc /\
-   EVERY line_length_leq ls ==>
+   ALL line_length_leq ls ==>
    MAP line_length (pad_section nop ls acc) =
-   MAP line_len (REVERSE acc ++ ls)`,
+   MAP line_len (APPEND (REVERSE acc) ls)`,
   CHEAT_TAC);;
 
 (* invariant: lines encd with nops *)
@@ -2624,14 +2625,14 @@ let line_enc_with_nop_def = new_definition
 
 let lines_enc_with_nop_def,lines_enc_with_nop_ind = define_rec
   [`lines_enc_with_nop enc labs ffis pos [] <=> T`;
-   `lines_enc_with_nop enc labs ffis pos (l :: ls) <=>
+   `lines_enc_with_nop enc labs ffis pos (CONS l ls) <=>
        line_enc_with_nop enc labs ffis pos l /\
        lines_enc_with_nop enc labs ffis (pos + line_length l)
          ls`];;
 
 let lines_enc_with_nop_append = prove
  (`!enc labs ffis pos l1 l2.
-   lines_enc_with_nop enc labs ffis pos (l1 ++ l2) <=>
+   lines_enc_with_nop enc labs ffis pos (APPEND l1 l2) <=>
    lines_enc_with_nop enc labs ffis pos l1 /\
    lines_enc_with_nop enc labs ffis (pos + SUM (MAP line_length
      l1)) l2`,
@@ -2641,18 +2642,19 @@ let lines_enc_with_nop_append = prove
    replacing the CHEAT_TAC is all that is left *)
 let all_enc_with_nop_def,all_enc_with_nop_ind = define_guess_cheat
   [`all_enc_with_nop enc labs ffis pos [] <=> T`;
-   `all_enc_with_nop enc labs ffis pos (Section k [] :: xs) <=>
+   `all_enc_with_nop enc labs ffis pos (CONS (Section k []) xs) <=>
        all_enc_with_nop enc labs ffis pos xs`;
-   `all_enc_with_nop enc labs ffis pos (Section k (y :: ys) :: xs) <=>
+   `all_enc_with_nop enc labs ffis pos (CONS (Section k (CONS y ys)) xs)
+  <=>
        line_enc_with_nop enc labs ffis pos y /\
        all_enc_with_nop enc labs ffis (pos + line_length y)
-         (Section k ys :: xs)`];;
+         (CONS (Section k ys) xs)`];;
 
 (* HOL4 lab_to_targetProofScript.sml:4384: ML code, not ported *)
 
 let all_enc_with_nop_alt = prove
  (`(all_enc_with_nop enc labs ffis pos [] <=> T) /\
-   (all_enc_with_nop enc labs ffis pos (Section k ls :: ss) <=>
+   (all_enc_with_nop enc labs ffis pos (CONS (Section k ls) ss) <=>
     lines_enc_with_nop enc labs ffis pos ls /\
     all_enc_with_nop enc labs ffis (pos + SUM (MAP line_length ls))
       ss)`,
@@ -2668,7 +2670,7 @@ let line_enc_with_nop_length_ok = prove
 
 let lines_enc_with_nop_length_ok = prove
  (`!enc labs ffis pos ls. lines_enc_with_nop enc labs ffis pos ls ==>
-  EVERY line_length_ok ls`,
+  ALL line_length_ok ls`,
   CHEAT_TAC);;
 
 (* enc_with_nop implies label_zero *)
@@ -2680,14 +2682,14 @@ let line_enc_with_nop_label_zero = prove
 
 let lines_enc_with_nop_label_zero = prove
  (`!enc labs ffis pos lines.
-     lines_enc_with_nop enc labs ffis pos lines ==> EVERY
-       label_zero lines`,
+     lines_enc_with_nop enc labs ffis pos lines ==> ALL label_zero
+       lines`,
   CHEAT_TAC);;
 
 let all_enc_with_nop_label_zero = prove
  (`!enc labs ffis pos ls.
     all_enc_with_nop enc labs ffis pos ls ==>
-    EVERY sec_label_zero ls`,
+    ALL sec_label_zero ls`,
   CHEAT_TAC);;
 
 (* line_ok implies enc_with_nop *)
@@ -2732,28 +2734,28 @@ let lines_enc_with_nop_pad_section1 = prove
     nop = enc (Inst asm_Skip) /\ LENGTH nop = 1 /\
     lines_encd enc labs ffis (pos + (SUM (MAP line_len aux))) code /\
     lines_enc_with_nop enc labs ffis pos (REVERSE aux) /\
-    ~(EVERY is_Label aux) /\
-    EVERY label_one code ==>
+    ~(ALL is_Label aux) /\
+    ALL label_one code ==>
     lines_enc_with_nop enc labs ffis pos (pad_section nop code aux)`,
   CHEAT_TAC);;
 
 let lines_enc_with_nop_pad_section01 = prove
  (`!nop code aux pos.
     nop = enc (Inst asm_Skip) /\ 0 < LENGTH nop /\
-    EVERY (line_aligned (LENGTH nop)) code /\
+    ALL (line_aligned (LENGTH nop)) code /\
     lines_encd enc labs ffis (pos + SUM (MAP line_len aux)) code /\
     lines_enc_with_nop enc labs ffis pos (REVERSE aux) /\
-    ~(EVERY is_Label aux) /\ EVERY label_zero code ==>
+    ~(ALL is_Label aux) /\ ALL label_zero code ==>
     lines_enc_with_nop enc labs ffis pos (pad_section nop code aux)`,
   CHEAT_TAC);;
 
 let lines_enc_with_nop_pad_section0 = prove
  (`!nop code aux pos.
     nop = enc (Inst asm_Skip) /\ 0 < LENGTH nop /\
-    EVERY (line_aligned (LENGTH nop)) code /\
+    ALL (line_aligned (LENGTH nop)) code /\
     lines_encd enc labs ffis (pos + SUM (MAP line_len aux)) code /\
     lines_enc_with_nop enc labs ffis pos (REVERSE aux) /\
-    EVERY is_Label aux /\ EVERY label_zero code ==>
+    ALL is_Label aux /\ ALL label_zero code ==>
     lines_enc_with_nop enc labs ffis pos (pad_section nop code aux)`,
   CHEAT_TAC);;
 
@@ -2762,19 +2764,19 @@ let lines_enc_with_nop_pad_section = prove
     nop = enc (Inst asm_Skip) /\ LENGTH nop = 1 /\
     lines_encd enc labs ffis (pos + SUM (MAP line_len aux)) code /\
     lines_enc_with_nop enc labs ffis pos (REVERSE aux) /\
-    EVERY is_Label aux /\ EVERY label_one code /\ label_prefix_zero
-      code ==>
+    ALL is_Label aux /\ ALL label_one code /\ label_prefix_zero code
+      ==>
     lines_enc_with_nop enc labs ffis pos (pad_section nop code aux)`,
   CHEAT_TAC);;
 
 let all_enc_with_nop_pad_code = prove
  (`!nop code pos.
    0 < LENGTH nop /\ nop = enc (Inst asm_Skip) /\
-   (~(LENGTH nop = 1) ==> EVERY (sec_aligned (LENGTH nop)) code /\
-     EVERY sec_label_zero code) /\
-   EVERY sec_label_one code /\
-   EVERY sec_length_leq code /\
-   EVERY sec_label_prefix_zero code /\
+   (~(LENGTH nop = 1) ==> ALL (sec_aligned (LENGTH nop)) code /\ ALL
+     sec_label_zero code) /\
+   ALL sec_label_one code /\
+   ALL sec_length_leq code /\
+   ALL sec_label_prefix_zero code /\
    all_encd enc labs ffis pos code ==>
    all_enc_with_nop enc labs ffis pos (pad_code nop code)`,
   CHEAT_TAC);;
@@ -2790,13 +2792,13 @@ let line_lab_len_pos_ok_def = new_definition
 
 let lab_len_pos_ok_def,lab_len_pos_ok_ind = define_rec
   [`lab_len_pos_ok pos [] <=> T`;
-   `lab_len_pos_ok pos (l :: ls) <=>
+   `lab_len_pos_ok pos (CONS l ls) <=>
          line_lab_len_pos_ok pos l /\
          lab_len_pos_ok (pos + line_len l) ls`];;
 
 let lab_len_pos_ok_append = prove
  (`!l1 pos l2.
-   lab_len_pos_ok pos (l1 ++ l2) <=>
+   lab_len_pos_ok pos (APPEND l1 l2) <=>
    lab_len_pos_ok pos l1 /\
    lab_len_pos_ok (pos + SUM (MAP line_len l1)) l2`,
   CHEAT_TAC);;
@@ -2807,7 +2809,7 @@ let _ = size_thms "sec";;
 let all_lab_len_pos_ok_def,all_lab_len_pos_ok_ind = define_wf
   `MEASURE (\(x0,x1). list_size (sec_size (\x. 0)) x1)`
   [`all_lab_len_pos_ok _71 [] <=> T`;
-   `all_lab_len_pos_ok pos (Section k ls :: ss) <=>
+   `all_lab_len_pos_ok pos (CONS (Section k ls) ss) <=>
        lab_len_pos_ok pos ls /\
        all_lab_len_pos_ok (pos + sec_length ls 0) ss`];;
 
@@ -2852,7 +2854,7 @@ let pad_section_pos_ok = prove
  (`!nop lines aux pos.
     lab_len_pos_ok (pos + SUM (MAP line_len aux)) lines /\
     lab_len_pos_ok pos (REVERSE aux) /\
-    EVERY label_zero aux /\
+    ALL label_zero aux /\
     ((NULL aux \/ is_Label (HD aux)) ==> label_prefix_zero lines) ==>
     lab_len_pos_ok pos (pad_section nop lines aux)`,
   CHEAT_TAC);;
@@ -2860,8 +2862,8 @@ let pad_section_pos_ok = prove
 let line_len_pad_section = prove
  (`!nop xs aux.
     LENGTH nop = 1 /\
-    EVERY label_one xs /\
-    (EVERY is_Label aux ==> label_prefix_zero xs) ==>
+    ALL label_one xs /\
+    (ALL is_Label aux ==> label_prefix_zero xs) ==>
     SUM (MAP line_len (pad_section nop xs aux)) =
     SUM (MAP line_len xs) + SUM (MAP line_len aux)`,
   CHEAT_TAC);;
@@ -2869,9 +2871,9 @@ let line_len_pad_section = prove
 let all_lab_len_pos_ok_pad_code = prove
  (`!nop code pos.
     all_lab_len_pos_ok pos code /\
-    (~(LENGTH nop = 1) ==> EVERY sec_label_zero code) /\
-    EVERY sec_label_one code /\
-    EVERY sec_label_prefix_zero code ==>
+    (~(LENGTH nop = 1) ==> ALL sec_label_zero code) /\
+    ALL sec_label_one code /\
+    ALL sec_label_prefix_zero code ==>
     all_lab_len_pos_ok pos (pad_code nop code)`,
   CHEAT_TAC);;
 
@@ -2886,13 +2888,13 @@ let line_offset_ok_def = new_definition
 
 let lines_offset_ok_def,lines_offset_ok_ind = define_rec
   [`lines_offset_ok labs ffis pos [] <=> T`;
-   `lines_offset_ok labs ffis pos (l :: ls) <=>
+   `lines_offset_ok labs ffis pos (CONS l ls) <=>
        line_offset_ok labs ffis pos l /\
        lines_offset_ok labs ffis (pos + line_len l) ls`];;
 
 let lines_offset_ok_append = prove
  (`!labs ffis pos l1 l2.
-    lines_offset_ok labs ffis pos (l1 ++ l2) <=>
+    lines_offset_ok labs ffis pos (APPEND l1 l2) <=>
     lines_offset_ok labs ffis pos l1 /\
     lines_offset_ok labs ffis (pos + SUM (MAP line_len l1)) l2`,
   CHEAT_TAC);;
@@ -2904,7 +2906,8 @@ let lab_to_targetProof_offset_ok_def,lab_to_targetProof_offset_ok_ind =
   define_wf
   `MEASURE (\(x0,x1,x2,x3). list_size (sec_size (\x. 0)) x3)`
   [`lab_to_targetProof_offset_ok labs ffis pos [] <=> T`;
-   `lab_to_targetProof_offset_ok labs ffis pos (Section k ls :: ss) <=>
+   `lab_to_targetProof_offset_ok labs ffis pos (CONS (Section k ls) ss)
+  <=>
        lines_offset_ok labs ffis pos ls /\
        lab_to_targetProof_offset_ok labs ffis (pos + SUM (MAP
          line_len ls)) ss`];;
@@ -2931,19 +2934,19 @@ let enc_secs_again_offset_ok = prove
 let lines_offset_ok_pad_section = prove
  (`!nop lines aux labs ffis pos.
     lab_len_pos_ok (pos + SUM (MAP line_len aux)) lines /\
-    lab_len_pos_ok pos (REVERSE aux) /\ EVERY label_zero aux /\
+    lab_len_pos_ok pos (REVERSE aux) /\ ALL label_zero aux /\
     (~(NULL lines) /\ is_Label (HD lines) /\ line_len (HD lines) = 1
       ==>
      ~(NULL aux) /\ ~(is_Label (HD aux))) /\
-    lines_offset_ok labs ffis pos (REVERSE aux ++ lines) ==>
+    lines_offset_ok labs ffis pos (APPEND (REVERSE aux) lines) ==>
     lines_offset_ok labs ffis pos (pad_section nop lines aux)`,
   CHEAT_TAC);;
 
 let offset_ok_pad_code = prove
  (`!labs ffis pos code.
-    (~(LENGTH nop = 1) ==> EVERY sec_label_zero code) /\
-    EVERY sec_label_one code /\
-    EVERY sec_label_prefix_zero code /\
+    (~(LENGTH nop = 1) ==> ALL sec_label_zero code) /\
+    ALL sec_label_one code /\
+    ALL sec_label_prefix_zero code /\
     all_lab_len_pos_ok pos code /\
     offset_ok labs ffis pos code ==>
     offset_ok labs ffis pos (pad_code nop code)`,
@@ -2962,7 +2965,7 @@ let line_labs_exist_def = new_definition
 (* HOL4 lab_to_targetProofScript.sml:4998: ML code, not ported *)
 
 let sec_labs_exist_def = define_general
-  [`sec_labs_exist labs (Section _78 ls) <=> EVERY (line_labs_exist
+  [`sec_labs_exist labs (Section _78 ls) <=> ALL (line_labs_exist
   labs) ls`];;
 
 (* HOL4 lab_to_targetProofScript.sml:5004: the overload
@@ -3005,36 +3008,36 @@ let line_similar_line_labs_exist = prove
   CHEAT_TAC);;
 
 let code_similar_all_labs_exist = prove
- (`!c1 c2. code_similar c1 c2 ==> ((\labs code. EVERY (sec_labs_exist
-  labs) code) labs c1 <=> (\labs code. EVERY (sec_labs_exist labs)
-  code) labs c2)`,
+ (`!c1 c2. code_similar c1 c2 ==> ((\labs code. ALL (sec_labs_exist
+  labs) code) labs c1 <=> (\labs code. ALL (sec_labs_exist labs) code)
+  labs c2)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let all_labs_exist_pad_code = prove
- (`!nop code. (\labs code. EVERY (sec_labs_exist labs) code) labs
-  (pad_code nop code) <=> (\labs code. EVERY (sec_labs_exist labs)
-  code) labs code`,
+ (`!nop code. (\labs code. ALL (sec_labs_exist labs) code) labs
+  (pad_code nop code) <=> (\labs code. ALL (sec_labs_exist labs) code)
+  labs code`,
   CHEAT_TAC);;
 
 let enc_lines_again_line_labs_exist = prove
  (`!labs ffis pos enc lines acc ok res ok' k.
    enc_lines_again labs ffis pos enc lines (acc,ok) = (res,ok') /\
-   EVERY (line_labs_exist labs') acc /\
-   EVERY (line_labs_exist labs') lines ==>
-   EVERY (line_labs_exist labs') res`,
+   ALL (line_labs_exist labs') acc /\
+   ALL (line_labs_exist labs') lines ==>
+   ALL (line_labs_exist labs') res`,
   CHEAT_TAC);;
 
 let enc_secs_again_all_labs_exist = prove
  (`!pos ffis labs enc ls res ok k.
     enc_secs_again pos ffis labs enc ls = (res,ok) /\ (\labs code.
-      EVERY (sec_labs_exist labs) code) labs' ls ==>
-    (\labs code. EVERY (sec_labs_exist labs) code) labs' res`,
+      ALL (sec_labs_exist labs) code) labs' ls ==>
+    (\labs code. ALL (sec_labs_exist labs) code) labs' res`,
   CHEAT_TAC);;
 
 let upd_lab_len_all_labs_exist = prove
- (`!pos code. (\labs code. EVERY (sec_labs_exist labs) code) labs
-  (upd_lab_len pos code) <=> (\labs code. EVERY (sec_labs_exist labs)
+ (`!pos code. (\labs code. ALL (sec_labs_exist labs) code) labs
+  (upd_lab_len pos code) <=> (\labs code. ALL (sec_labs_exist labs)
   code) labs code`,
   CHEAT_TAC);;
 
@@ -3061,7 +3064,7 @@ let sec_labs_exist_get_labels = prove
   CHEAT_TAC);;
 
 let all_labs_exist_get_labels = prove
- (`(\labs code. EVERY (sec_labs_exist labs) code) labs code <=>
+ (`(\labs code. ALL (sec_labs_exist labs) code) labs code <=>
   get_labels code SUBSET labs_domain labs`,
   CHEAT_TAC);;
 
@@ -3083,7 +3086,7 @@ let section_labels_line_get_code_labels = prove
  (`!pos lines aux new_pos labs. section_labels pos lines aux =
   (new_pos,labs) ==>
    0 INSERT set_of_list (MAP FST labs) = 0 INSERT (set_of_list (MAP
-     FST aux) UNION BIGUNION (IMAGE line_get_code_labels (set_of_list
+     FST aux) UNION UNIONS (IMAGE line_get_code_labels (set_of_list
      lines)))`,
   CHEAT_TAC);;
 
@@ -3101,22 +3104,22 @@ let labs_domain_compute_labels_alt = prove
    replacing the CHEAT_TAC is all that is left *)
 let even_labels_def,even_labels_ind = define_guess_cheat
   [`even_labels pos [] <=> T`;
-   `even_labels pos (Section _79 [] :: ls) <=> even_labels pos ls`;
-   `even_labels pos (Section k (y :: ys) :: ls) <=>
+   `even_labels pos (CONS (Section _79 []) ls) <=> even_labels pos ls`;
+   `even_labels pos (CONS (Section k (CONS y ys)) ls) <=>
        (is_Label y ==> EVEN pos) /\
-       even_labels (pos + line_len y) (Section k ys :: ls)`];;
+       even_labels (pos + line_len y) (CONS (Section k ys) ls)`];;
 
 (* HOL4 lab_to_targetProofScript.sml:5229: ML code, not ported *)
 
 let lines_even_labels_def,lines_even_labels_ind = define_rec
   [`lines_even_labels pos [] <=> T`;
-   `lines_even_labels pos (y :: ys) <=>
+   `lines_even_labels pos (CONS y ys) <=>
        (is_Label y ==> EVEN pos) /\
        lines_even_labels (pos + line_len y) ys`];;
 
 let even_labels_alt = prove
  (`(even_labels pos [] <=> T) /\
-   (even_labels pos (Section _80 ls :: ss) <=>
+   (even_labels pos (CONS (Section _80 ls) ss) <=>
     lines_even_labels pos ls /\
     even_labels (pos + SUM (MAP line_len ls)) ss)`,
   CHEAT_TAC);;
@@ -3125,18 +3128,18 @@ let even_labels_alt = prove
    replacing the CHEAT_TAC is all that is left *)
 let even_labels_strong_def,even_labels_strong_ind = define_guess_cheat
   [`even_labels_strong pos [] <=> T`;
-   `even_labels_strong pos (Section _81 [] :: ls) <=>
+   `even_labels_strong pos (CONS (Section _81 []) ls) <=>
         EVEN pos /\ even_labels_strong pos ls`;
-   `even_labels_strong pos (Section k (y :: ys) :: ls) <=>
+   `even_labels_strong pos (CONS (Section k (CONS y ys)) ls) <=>
        (is_Label y ==> EVEN pos) /\
-       even_labels_strong (pos + line_len y) (Section k ys ::
-         ls)`];;
+       even_labels_strong (pos + line_len y) (CONS (Section k
+         ys) ls)`];;
 
 let even_labels_ends_imp_strong = prove
  (`!pos code.
     even_labels pos code /\
-    EVERY sec_ends_with_label code /\
-    EVERY sec_label_zero code ==>
+    ALL sec_ends_with_label code /\
+    ALL sec_label_zero code ==>
     even_labels_strong pos code`,
   CHEAT_TAC);;
 
@@ -3158,7 +3161,7 @@ let lines_ok_section_lab_lookup_even = prove
 (* [local] *)
 let all_enc_ok_split = prove
  (`!c labs ffis pos k lines xs.
-   all_enc_ok c labs ffis pos (Section k lines :: xs) ==>
+   all_enc_ok c labs ffis pos (CONS (Section k lines) xs) ==>
    all_enc_ok c labs ffis pos [Section k lines] /\
    all_enc_ok c labs ffis (pos + sec_length lines 0) xs`,
   CHEAT_TAC);;
@@ -3194,10 +3197,10 @@ let line_ok_pre_light_imp_line_ok = prove
 let all_enc_ok_pre_light_imp_all_enc_ok = prove
  (`!c labs ffis pos code.
     all_enc_with_nop (asm_config_encode c) labs ffis pos code /\
-    (\c ls. EVERY (sec_ok_pre c) ls) c code /\
-    (\c ls. EVERY (sec_ok_light c) ls) c code /\
+    (\c ls. ALL (sec_ok_pre c) ls) c code /\
+    (\c ls. ALL (sec_ok_light c) ls) c code /\
     even_labels_strong pos code /\
-    (\labs code. EVERY (sec_labs_exist labs) code) labs code /\
+    (\labs code. ALL (sec_labs_exist labs) code) labs code /\
     offset_ok labs ffis pos code ==>
     all_enc_ok c labs ffis pos code`,
   CHEAT_TAC);;
@@ -3207,8 +3210,8 @@ let all_enc_ok_pre_light_imp_all_enc_ok = prove
 
 let upd_lab_len_ends_with_label = prove
  (`!pos ss.
-    EVERY sec_ends_with_label ss ==>
-    EVERY sec_ends_with_label (upd_lab_len pos ss)`,
+    ALL sec_ends_with_label ss ==>
+    ALL sec_ends_with_label (upd_lab_len pos ss)`,
   CHEAT_TAC);;
 
 let lab_lookup_compute_labels_alt_ignore = prove
@@ -3220,9 +3223,9 @@ let lab_lookup_compute_labels_alt_ignore = prove
 
 let ALOOKUP_section_labels = prove
  (`!pos lines acc pc'.
-   EVERY (sec_label_ok n1) lines /\
-   EVERY line_length_ok lines /\
-   EVERY label_zero lines /\
+   ALL (sec_label_ok n1) lines /\
+   ALL line_length_ok lines /\
+   ALL label_zero lines /\
    ALL_DISTINCT (extract_labels lines) /\
    sec_loc_to_pc n2 lines = SOME pc' /\ ~(n2 = 0) ==>
    (?i.
@@ -3236,11 +3239,11 @@ let ALOOKUP_section_labels = prove
 (* [local] *)
 let lab_lookup_compute_labels_test = prove
  (`!pos sec_list acc l1 l2 x2 c labs ffis nop.
-       EVERY sec_labels_ok sec_list /\
+       ALL sec_labels_ok sec_list /\
        ALL_DISTINCT (MAP Section_num sec_list) /\
-       EVERY (ALL_DISTINCT o extract_labels o Section_lines) sec_list
+       ALL (ALL_DISTINCT o extract_labels o Section_lines) sec_list
          /\
-       EVERY sec_label_zero sec_list /\
+       ALL sec_label_zero sec_list /\
        all_enc_ok c labs ffis pos sec_list /\
        loc_to_pc l1 l2 sec_list = SOME x2 ==>
        lab_lookup l1 l2 (compute_labels_alt pos sec_list acc) =
@@ -3257,33 +3260,33 @@ let enc_lines_again_simp_ends_with_label = prove
 let enc_secs_again_ends_with_label = prove
  (`!pos labs ffis enc lines res ok.
     enc_secs_again pos labs ffis enc lines = (res,ok) /\
-    EVERY sec_ends_with_label lines ==>
-    EVERY sec_ends_with_label res`,
+    ALL sec_ends_with_label lines ==>
+    ALL sec_ends_with_label res`,
   CHEAT_TAC);;
 
 let enc_sec_list_ends_with_label = prove
  (`!enc code.
-   EVERY sec_ends_with_label code ==>
-   EVERY sec_ends_with_label (enc_sec_list enc code)`,
+   ALL sec_ends_with_label code ==>
+   ALL sec_ends_with_label (enc_sec_list enc code)`,
   CHEAT_TAC);;
 
 let lines_even_labels_append = prove
  (`!l1 l2 pos.
-    lines_even_labels pos (l1 ++ l2) <=>
+    lines_even_labels pos (APPEND l1 l2) <=>
     lines_even_labels pos l1 /\
     lines_even_labels (pos + SUM (MAP line_len l1)) l2`,
   CHEAT_TAC);;
 
 let label_zero_pos_ok_lines_even_labels = prove
  (`!pos ls.
-    EVERY label_zero ls /\
+    ALL label_zero ls /\
     lab_len_pos_ok pos ls ==>
     lines_even_labels pos ls`,
   CHEAT_TAC);;
 
 let label_zero_pos_ok_even_labels = prove
  (`!pos code.
-   EVERY sec_label_zero code /\
+   ALL sec_label_zero code /\
    all_lab_len_pos_ok pos code ==>
    even_labels pos code`,
   CHEAT_TAC);;
@@ -3312,8 +3315,8 @@ let label_zero_pos_ok_even_labels = prove
 
 let pad_code_ends_with_label = prove
  (`!nop ls.
-    EVERY sec_ends_with_label ls ==>
-    EVERY sec_ends_with_label (pad_code nop ls)`,
+    ALL sec_ends_with_label ls ==>
+    ALL sec_ends_with_label (pad_code nop ls)`,
   CHEAT_TAC);;
 
 let enc_lines_again_section_labels = prove
@@ -3354,19 +3357,19 @@ let enc_secs_again_compute_labels = prove
 let pad_section_labels = prove
  (`!nop lines aux pos labs.
     lab_len_pos_ok (pos + SUM (MAP line_len aux)) lines /\
-    lab_len_pos_ok pos (REVERSE aux) /\ EVERY label_zero aux /\
+    lab_len_pos_ok pos (REVERSE aux) /\ ALL label_zero aux /\
     (~(NULL lines) /\ is_Label (HD lines) /\ line_len (HD lines) = 1
       ==>
      ~(NULL aux) /\ ~(is_Label (HD aux))) ==>
     section_labels pos (pad_section nop lines aux) labs =
-    section_labels pos (REVERSE aux ++ lines) labs`,
+    section_labels pos (APPEND (REVERSE aux) lines) labs`,
   CHEAT_TAC);;
 
 let pad_code_compute_labels = prove
  (`!pos code acc.
-    EVERY sec_label_one code /\
-    (~(LENGTH nop = 1) ==> EVERY sec_label_zero code) /\
-    EVERY sec_label_prefix_zero code /\
+    ALL sec_label_one code /\
+    (~(LENGTH nop = 1) ==> ALL sec_label_zero code) /\
+    ALL sec_label_prefix_zero code /\
     all_lab_len_pos_ok pos code ==>
     compute_labels_alt pos (pad_code nop code) acc =
     compute_labels_alt pos code acc`,
@@ -3376,51 +3379,51 @@ let pad_code_compute_labels = prove
 let enc_lines_again_all_enc_ok_pre = prove
  (`!labs ffis pos enc lines acc ok res ok' c.
    enc_lines_again labs ffis pos enc lines (acc,ok) = (res,ok') /\
-   EVERY (line_ok_pre c) lines /\ EVERY (line_ok_pre c) acc ==>
-   EVERY (line_ok_pre c) res`,
+   ALL (line_ok_pre c) lines /\ ALL (line_ok_pre c) acc ==>
+   ALL (line_ok_pre c) res`,
   CHEAT_TAC);;
 
 (* [local] *)
 let enc_secs_again_all_enc_ok_pre = prove
  (`!pos labs ffis enc ls res ok c.
-   enc_secs_again pos labs ffis enc ls = (res,ok) /\ (\c ls. EVERY
+   enc_secs_again pos labs ffis enc ls = (res,ok) /\ (\c ls. ALL
      (sec_ok_pre c) ls) c ls ==>
-   (\c ls. EVERY (sec_ok_pre c) ls) c res`,
+   (\c ls. ALL (sec_ok_pre c) ls) c res`,
   CHEAT_TAC);;
 
 (* [local] *)
 let line_ok_pre_add_nop = prove
- (`EVERY (line_ok_pre c) xs ==>
-   EVERY (line_ok_pre c) (add_nop nop xs)`,
+ (`ALL (line_ok_pre c) xs ==>
+   ALL (line_ok_pre c) (add_nop nop xs)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let line_ok_pre_pad_section = prove
  (`!nop xs acc c.
-   EVERY (line_ok_pre c) xs /\ EVERY (line_ok_pre c) acc ==>
-   EVERY (line_ok_pre c) (pad_section nop xs acc)`,
+   ALL (line_ok_pre c) xs /\ ALL (line_ok_pre c) acc ==>
+   ALL (line_ok_pre c) (pad_section nop xs acc)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let all_enc_ok_pre_pad_code = prove
  (`!nop code c.
-   (\c ls. EVERY (sec_ok_pre c) ls) c code ==>
-   (\c ls. EVERY (sec_ok_pre c) ls) c (pad_code nop code)`,
+   (\c ls. ALL (sec_ok_pre c) ls) c code ==>
+   (\c ls. ALL (sec_ok_pre c) ls) c (pad_code nop code)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let all_enc_ok_pre_lines_upd_lab_len = prove
  (`!n lines acc.
-   EVERY (line_ok_pre c) lines /\
-   EVERY (line_ok_pre c) acc ==>
-   EVERY (line_ok_pre c) (FST (lines_upd_lab_len n lines acc))`,
+   ALL (line_ok_pre c) lines /\
+   ALL (line_ok_pre c) acc ==>
+   ALL (line_ok_pre c) (FST (lines_upd_lab_len n lines acc))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let all_enc_ok_pre_upd_lab_len = prove
  (`!n code.
-   (\c ls. EVERY (sec_ok_pre c) ls) c code ==>
-   (\c ls. EVERY (sec_ok_pre c) ls) c (upd_lab_len n code)`,
+   (\c ls. ALL (sec_ok_pre c) ls) c code ==>
+   (\c ls. ALL (sec_ok_pre c) ls) c (upd_lab_len n code)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -3447,24 +3450,24 @@ let remove_labels_loop_thm = prove
  (`!n c init_pos init_labs ffis code code2 labs.
      remove_labels_loop n c init_pos init_labs ffis code = SOME
        (code2,labs) /\
-     EVERY sec_ends_with_label code /\
-     EVERY sec_labels_ok code /\
+     ALL sec_ends_with_label code /\
+     ALL sec_labels_ok code /\
      ALL_DISTINCT (MAP Section_num code) /\
-     EVERY (ALL_DISTINCT o extract_labels o Section_lines) code /\
+     ALL (ALL_DISTINCT o extract_labels o Section_lines) code /\
      DISJOINT (domain init_labs) (set_of_list (MAP Section_num code))
        /\
      // TODO this is stronger:
      // get_labels code ⊆ get_code_labels code ∪ labs_domain init_labs ∧
      restrict_nonzero (get_labels code) SUBSET get_code_labels code
        UNION labs_domain init_labs /\
-     (\c ls. EVERY (sec_ok_pre c) ls) c code /\
+     (\c ls. ALL (sec_ok_pre c) ls) c code /\
      // new loop invariant
-     (\enc l. EVERY (sec_encd0 enc) l) (asm_config_encode c) code /\
+     (\enc l. ALL (sec_encd0 enc) l) (asm_config_encode c) code /\
      enc_ok c /\
      EVEN init_pos /\
      (!l1 l2. OPTION_ALL EVEN (lab_lookup l1 l2 init_labs)) ==>
-     (\c ls. EVERY (sec_ok_pre c) ls) c code2 /\
-     EVERY sec_labels_ok code2 /\
+     (\c ls. ALL (sec_ok_pre c) ls) c code2 /\
+     ALL sec_labels_ok code2 /\
      all_enc_ok c labs ffis init_pos code2 /\
      code_similar code code2 /\
      (has_odd_inst code2 ==> asm_config_code_alignment c = 0) /\
@@ -3485,8 +3488,8 @@ let loc_to_pc_enc_sec_list = prove
 (* [local] *)
 let all_enc_ok_pre_enc_sec_list = prove
  (`!code enc c.
-   (\c ls. EVERY (sec_ok_pre c) ls) c code ==>
-   (\c ls. EVERY (sec_ok_pre c) ls) c (enc_sec_list enc code)`,
+   (\c ls. ALL (sec_ok_pre c) ls) c code ==>
+   (\c ls. ALL (sec_ok_pre c) ls) c (enc_sec_list enc code)`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -3496,15 +3499,15 @@ let remove_labels_thm = prove
     `remove_labels clock conf init_pos init_labs ffi_names code = SOME
   (code2,labs) /\
      enc_ok conf /\
-     EVERY sec_ends_with_label code /\
-     EVERY sec_labels_ok code /\
+     ALL sec_ends_with_label code /\
+     ALL sec_labels_ok code /\
      ALL_DISTINCT (MAP Section_num code) /\
-     EVERY (ALL_DISTINCT o extract_labels o Section_lines) code /\
+     ALL (ALL_DISTINCT o extract_labels o Section_lines) code /\
      DISJOINT (domain init_labs) (set_of_list (MAP Section_num
        code)) /\
      restrict_nonzero (get_labels code) SUBSET get_code_labels code
        UNION labs_domain init_labs /\
-     (\c ls. EVERY (sec_ok_pre c) ls) conf code /\
+     (\c ls. ALL (sec_ok_pre c) ls) conf code /\
      EVEN init_pos /\
      (!l1 l2. OPTION_ALL EVEN (lab_lookup l1 l2 init_labs)) ==>
      all_enc_ok conf labs ffi_names init_pos code2 /\
@@ -3552,7 +3555,8 @@ let LENGTH_prog_to_bytes2 = prove
   CHEAT_TAC);;
 
 let prog_to_bytes_APPEND = prove
- (`prog_to_bytes (c1 ++ c2) = prog_to_bytes c1 ++ prog_to_bytes c2`,
+ (`prog_to_bytes (APPEND c1 c2) = APPEND (prog_to_bytes c1)
+  (prog_to_bytes c2)`,
   CHEAT_TAC);;
 
 let line_ok_line_byte_length = prove
@@ -3577,8 +3581,8 @@ let all_enc_ok_prog_to_bytes_EVEN = prove
 (* [local] *)
 let loc_to_pc_append = prove
  (`!l1 l2 c1 c2 conf labs ffis pos.
-   EVERY sec_labels_ok (c1 ++ c2) ==>
-   loc_to_pc l1 l2 (c1 ++ c2) =
+   ALL sec_labels_ok (APPEND c1 c2) ==>
+   loc_to_pc l1 l2 (APPEND c1 c2) =
    (match loc_to_pc l1 l2 c1 with
      SOME x -> SOME x | NONE ->
      (match loc_to_pc l1 l2 c2 with
@@ -3590,12 +3594,12 @@ let all_enc_ok_append = prove
  (`!conf labs ffi n c1 c2.
    all_enc_ok conf labs ffi n c1 /\
    all_enc_ok conf labs ffi (n + LENGTH (prog_to_bytes c1)) c2 ==>
-   all_enc_ok conf labs ffi n (c1 ++ c2)`,
+   all_enc_ok conf labs ffi n (APPEND c1 c2)`,
   CHEAT_TAC);;
 
 let extract_labels_loc_to_pc = prove
  (`!l1 l2 code.
-   EVERY sec_labels_ok code /\
+   ALL sec_labels_ok code /\
    MEM (l1,l2) (FLAT (MAP (extract_labels o Section_lines) code)) ==>
    (?y. loc_to_pc l1 l2 code = SOME y)`,
   CHEAT_TAC);;
@@ -3611,8 +3615,8 @@ let all_enc_ok_labs_mono = prove
 
 let pos_val_append = prove
  (`!c1 i pos c2.
-   EVERY sec_label_zero c2 ==>
-   pos_val i pos (c1 ++ c2) =
+   ALL sec_label_zero c2 ==>
+   pos_val i pos (APPEND c1 c2) =
    (if i <= (SUM (MAP ((\xs. LENGTH (FILTER ((~) o is_Label) xs)) o
      Section_lines) c1)) then
    pos_val i pos c1 else
@@ -3648,7 +3652,7 @@ let sec_loc_to_pc_bound = prove
 
 let loc_to_pc_bound = prove
  (`!code l1 l2 x.
-   EVERY sec_labels_ok code /\
+   ALL sec_labels_ok code /\
    loc_to_pc l1 l2 code = SOME x ==>
    x <= SUM (MAP ((\xs. LENGTH (FILTER ((~) o is_Label) xs)) o
      Section_lines) code)`,
@@ -3657,9 +3661,8 @@ let loc_to_pc_bound = prove
 (* [local] *)
 let find_ffi_names_append = prove
  (`!l1 l2.
-   find_ffi_names (l1 ++ l2) =
-   (find_ffi_names l2) ++
-   FILTER (\n. ~(MEM n (find_ffi_names l2))) (find_ffi_names l1)`,
+   find_ffi_names (APPEND l1 l2) = APPEND (find_ffi_names l2)
+   (FILTER (\n. ~(MEM n (find_ffi_names l2))) (find_ffi_names l1))`,
   CHEAT_TAC);;
 
 let all_enc_ok_aligned_pos_val = prove
@@ -3746,12 +3749,11 @@ let asm_fetch_SOME_IMP_LESS_num_pcs = prove
 
 let GENLIST_asm_fetch_aux_next = prove
  (`~(is_Label x) ==>
-   GENLIST (\i.
-     (i,asm_fetch_aux i (Section k (x :: xs) :: rest)))
-     (n + 1) =
-   (0,SOME x) :: (
-     GENLIST (\i.
-       (i + 1,asm_fetch_aux i (Section k xs :: rest))) n)`,
+   list_of_seq (\i.
+     (i,asm_fetch_aux i (CONS (Section k (CONS x xs)) rest)))
+     (n + 1) = CONS (0,SOME x) (
+     list_of_seq (\i.
+       (i + 1,asm_fetch_aux i (CONS (Section k xs) rest))) n)`,
   CHEAT_TAC);;
 
 let pos_val_acc_sum = prove
@@ -3766,9 +3768,9 @@ let pos_val_acc_0 = prove
   CHEAT_TAC);;
 
 let FILTER_mmio_pcs_min_index = prove
- (`EVERY (\x. ?op. x = ffi_SharedMem op) l ==>
+ (`ALL (\x. ?op. x = ffi_SharedMem op) l ==>
    mmio_pcs_min_index
-     (FILTER (\x. ?s. x = ffi_ExtCall s) ffis ++ l) =
+     (APPEND (FILTER (\x. ?s. x = ffi_ExtCall s) ffis) l) =
    SOME (LENGTH
      (FILTER (\x. ?s. x = ffi_ExtCall s) ffis))`,
   CHEAT_TAC);;
@@ -3914,13 +3916,14 @@ let no_share_mem_lemma = prove
 let asm_fetch_aux_APPEND1 = prove
  (`!pc' code.
      pc' < num_pcs code ==>
-     asm_fetch_aux pc' (code ++ sec_list) = asm_fetch_aux pc' code`,
+     asm_fetch_aux pc' (APPEND code sec_list) = asm_fetch_aux pc'
+       code`,
   CHEAT_TAC);;
 
 let pos_val_APPEND1 = prove
  (`!pc' code.
      pc' < num_pcs code ==>
-     pos_val pc' 0 (code ++ sec_list) = pos_val pc' 0 code`,
+     pos_val pc' 0 (APPEND code sec_list) = pos_val pc' 0 code`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -3928,7 +3931,7 @@ let pos_val_APPEND1 = prove
 let asm_fetch_aux_APPEND2 = prove
  (cake_as_vars (fun () ->
     `!code.
-       asm_fetch_aux (pc + num_pcs code) (code ++ sec_list) =
+       asm_fetch_aux (pc + num_pcs code) (APPEND code sec_list) =
          asm_fetch_aux pc sec_list`),
   CHEAT_TAC);;
 
@@ -3938,7 +3941,7 @@ let pos_val_APPEND2 = prove
  (cake_as_vars (fun () ->
     `!c labs ffis p code.
        all_enc_ok c labs ffis p code ==>
-       pos_val (pc + num_pcs code) 0 (code ++ sec_list) =
+       pos_val (pc + num_pcs code) 0 (APPEND code sec_list) =
          LENGTH (prog_to_bytes code) + pos_val pc 0 sec_list`),
   CHEAT_TAC);;
 
@@ -3946,18 +3949,18 @@ let get_shmem_info_MappedRead_or_MappedWrite = prove
  (`!sec pos ffi_names' info new_ffi_names new_info.
      get_shmem_info sec pos ffi_names' info =
        (new_ffi_names,new_info) ==>
-     (?l. new_ffi_names = ffi_names' ++ l /\
-       EVERY (\x. ?op. x = ffi_SharedMem op) l)`,
+     (?l. new_ffi_names = APPEND ffi_names' l /\
+       ALL (\x. ?op. x = ffi_SharedMem op) l)`,
   CHEAT_TAC);;
 
 let no_share_mem_APPEND = prove
  (`no_share_mem_inst code /\
    no_share_mem_inst secs ==>
-   no_share_mem_inst (code ++ secs)`,
+   no_share_mem_inst (APPEND code secs)`,
   CHEAT_TAC);;
 
 let no_install_APPEND_IMP = prove
- (`no_install (code ++ secs) ==>
+ (`no_install (APPEND code secs) ==>
    no_install code /\ no_install secs`,
   CHEAT_TAC);;
 
@@ -4143,7 +4146,7 @@ let init_ok_def = new_definition
 
 let set_bytes_def,set_bytes_ind = define_rec
   [`set_bytes a be' [] = (n2w 0)`;
-   `set_bytes a be' (b :: bs) = set_byte a b (set_bytes (a + (n2w
+   `set_bytes a be' (CONS b bs) = set_byte a b (set_bytes (a + (n2w
   1)) be' bs) be'`];;
 
 let make_word_def = new_definition
@@ -4222,12 +4225,12 @@ let get_shmem_info_APPEND = prove
      get_shmem_info secs pos ffi_names' (shmem_info:shmem_info_num
        list) =
        (new_ffi_names,new_shmem_info) /\
-     ffi_names' = ffis1 ++ ffis2 /\
-     shmem_info = info1 ++ info2 ==>
-     new_ffi_names = ffis1 ++ (FST (get_shmem_info secs pos ffis2
+     ffi_names' = APPEND ffis1 ffis2 /\
+     shmem_info = APPEND info1 info2 ==>
+     new_ffi_names = APPEND ffis1 (FST (get_shmem_info secs pos ffis2
        info2)) /\
-     new_shmem_info = info1 ++ (SND (get_shmem_info secs pos ffis2
-       info2))`,
+     new_shmem_info = APPEND info1 (SND (get_shmem_info secs pos
+       ffis2 info2))`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -4237,10 +4240,10 @@ let get_shmem_info_PREPEND = prove
     `get_shmem_info secs pos ffi_names (shmem_info:shmem_info_num list)
   =
        (new_ffi_names,new_shmem_info) ==>
-     new_ffi_names = ffi_names ++ (FST (get_shmem_info secs pos []
-       [])) /\
-     new_shmem_info = shmem_info ++ (SND (get_shmem_info secs pos
-       [] []))`),
+     new_ffi_names = APPEND ffi_names (FST (get_shmem_info secs pos
+       [] [])) /\
+     new_shmem_info = APPEND shmem_info (SND (get_shmem_info secs
+       pos [] []))`),
   CHEAT_TAC);;
 
 let line_to_info_def = new_definition
@@ -4253,22 +4256,22 @@ let line_to_info_def = new_definition
           r (pos_val (FST x) p secs + LENGTH bytes))]) | _83 -> [])`;;
 
 let line_to_info_next = prove
- (`line_to_info (Section k1 (labLang_LabAsm a b bytes1 len1 :: xs1) ::
-  rest1) p1 (i1 + 1,l1) = line_to_info ((Section k1 xs1) :: rest1) (p1 +
-  LENGTH bytes1) (i1,l1) /\
-   line_to_info (Section k2 (labLang_Asm c2 bytes2 len2 :: xs2) ::
-     rest2) p2 (i2 + 1,l2) = line_to_info ((Section k2 xs2) :: rest2)
-     (p2 + LENGTH bytes2) (i2,l2)`,
+ (`line_to_info (CONS (Section k1 (CONS (labLang_LabAsm a b bytes1 len1)
+  xs1)) rest1) p1 (i1 + 1,l1) = line_to_info (CONS (Section k1 xs1)
+  rest1) (p1 + LENGTH bytes1) (i1,l1) /\
+   line_to_info (CONS (Section k2 (CONS (labLang_Asm c2 bytes2
+     len2) xs2)) rest2) p2 (i2 + 1,l2) = line_to_info (CONS (Section
+     k2 xs2) rest2) (p2 + LENGTH bytes2) (i2,l2)`,
   CHEAT_TAC);;
 
 let line_to_info_hd_empty = prove
- (`line_to_info (Section k [] :: rest) p t =
+ (`line_to_info (CONS (Section k []) rest) p t =
      line_to_info rest p t`,
   CHEAT_TAC);;
 
 let line_to_info_hd_Label = prove
- (`line_to_info (Section k ((labLang_Label a b 0) :: xs) :: rest)
-     p t = line_to_info (Section k xs :: rest) p t`,
+ (`line_to_info (CONS (Section k (CONS (labLang_Label a b 0) xs)) rest)
+     p t = line_to_info (CONS (Section k xs) rest) p t`,
   CHEAT_TAC);;
 
 let get_shmem_info_thm = prove
@@ -4278,9 +4281,9 @@ let get_shmem_info_thm = prove
      (let (new_ffis,new_info) =
        UNZIP (FLAT (
        MAP (line_to_info secs p) (
-       GENLIST (\i. (i,asm_fetch_aux i secs))
-       (num_pcs secs)))) in (ffi_names' ++ new_ffis,shmem_info ++
-         new_info))`,
+       list_of_seq (\i. (i,asm_fetch_aux i secs))
+       (num_pcs secs)))) in (APPEND ffi_names' new_ffis,APPEND
+         shmem_info new_info))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -4292,9 +4295,9 @@ let FILTER_NOT_MEM_Mapped = prove
   CHEAT_TAC);;
 
 let mmio_pcs_min_index_APPEND_thm = prove
- (`EVERY (\x. !s. ~(x = ffi_ExtCall s)) l /\
-   EVERY (\x. ?s. x = ffi_ExtCall s) ffis ==>
-   mmio_pcs_min_index (ffis ++ l) = SOME (LENGTH ffis)`,
+ (`ALL (\x. !s. ~(x = ffi_ExtCall s)) l /\
+   ALL (\x. ?s. x = ffi_ExtCall s) ffis ==>
+   mmio_pcs_min_index (APPEND ffis l) = SOME (LENGTH ffis)`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -4353,7 +4356,7 @@ let get_shmem_info_init_pc_offset = prove
 
 let mmio_pcs_min_index_get_shmem_info_ok = prove
  (`all_enc_ok c labs ffis' p' (code2:('a sec) list) /\
-   enc_ok c /\ EVERY (\x. ?s. x = ffi_ExtCall s) ffis /\
+   enc_ok c /\ ALL (\x. ?s. x = ffi_ExtCall s) ffis /\
    get_shmem_info code2 p ffis [] = (new_ffi_names,new_shmem_info)
      ==>
    mmio_pcs_min_index new_ffi_names = SOME (LENGTH ffis)`,
@@ -4363,7 +4366,7 @@ let get_shmem_info_ok_lemma = prove
  (`all_enc_ok c labs ffis' p' (code2:('a sec) list) /\
    enc_ok c /\
    LENGTH (prog_to_bytes code2) < dimword (:'a) /\
-   EVERY (\x. ?s. x = ffi_ExtCall s) ffis /\
+   ALL (\x. ?s. x = ffi_ExtCall s) ffis /\
    get_shmem_info code2 p ffis [] = (new_ffi_names,new_shmem_info)
      ==>
    (!pc' op re a inst' len i.
@@ -4450,9 +4453,9 @@ let list_subset_trans = prove
 
 let genlist_line_to_info_entry_pc_max = prove
  (`all_enc_ok c labs ffis p' code2 /\ enc_ok c ==>
-   EVERY (\x. shmem_info_num_entry_pc (SND x) < pos_val (num_pcs
-     code2) 0 code2)
-     (FLAT (GENLIST
+   ALL (\x. shmem_info_num_entry_pc (SND x) < pos_val (num_pcs code2)
+     0 code2)
+     (FLAT (list_of_seq
        (\i. line_to_info code2 0 (i,asm_fetch_aux i code2))
        (num_pcs code2)))`,
   CHEAT_TAC);;
@@ -4491,8 +4494,8 @@ let IMP_state_rel_make_init = prove
     mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i /\
     MAP (\rec. shmem_info_num_entry_pc rec) new_shmem_info = DROP i
       (MAP w2n (machine_config_ffi_entry_pcs mc_conf)) /\
-    (machine_config_mmio_info mc_conf = ZIP (GENLIST (\index. index +
-      i) (LENGTH new_shmem_info))
+    (machine_config_mmio_info mc_conf = ZIP (list_of_seq (\index.
+      index + i) (LENGTH new_shmem_info))
                               (MAP (\rec. (shmem_info_num_nbytes rec,
                               Addr (shmem_info_num_addr_reg rec) (n2w
                                 (shmem_info_num_addr_off
@@ -4593,8 +4596,8 @@ let find_ffi_names_filter_skip = prove
 (* [local] *)
 let all_enc_ok_pre_filter_skip = prove
  (`!code c.
-   (\c ls. EVERY (sec_ok_pre c) ls) c code ==>
-   (\c ls. EVERY (sec_ok_pre c) ls) c (filter_skip code)`,
+   (\c ls. ALL (sec_ok_pre c) ls) c code ==>
+   (\c ls. ALL (sec_ok_pre c) ls) c (filter_skip code)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -4672,8 +4675,8 @@ let asm_fetch_aux_MEM = prove
 (* HOL4 lab_to_targetProofScript.sml:10866-10941: code that the
    source has in a comment *)
 let find_ffi_names_EVERY = prove
- (`!code ls. find_ffi_names code = ls ==> EVERY (\x. ?s. x =
-  ffi_ExtCall s) ls`,
+ (`!code ls. find_ffi_names code = ls ==> ALL (\x. ?s. x = ffi_ExtCall
+  s) ls`,
   CHEAT_TAC);;
 
 (* HOL4 lab_to_targetProofScript.sml:10953-11010: code that the

@@ -32,7 +32,7 @@ let _ = hol4_ancestors "clos_constantProof"
 let make_part_def = new_definition
   `make_part n p aux =
      (match ALOOKUP aux p with SOME k -> (n,k,aux) | NONE -> (n +
-       1,n,(p,n) :: aux))`;;
+       1,n,CONS (p,n) aux))`;;
 
 let parts_def,parts_ind = define_mutual_rec
   [`parts (ConstInt i) n aux = make_part n (Int i) aux /\
@@ -42,10 +42,10 @@ let parts_def,parts_ind = define_mutual_rec
      (let (n,rs,aux) = parts_list cs n aux in
         make_part n (Con t rs) aux) /\
    parts_list [] n aux = (n,[],aux) /\
-   parts_list (c :: cs) n aux =
+   parts_list (CONS c cs) n aux =
      (let (n,r,aux) = parts c n aux in
      let (n,rs,aux) = parts_list cs n aux in
-       (n,r :: rs,aux))`];;
+       (n,CONS r rs,aux))`];;
 
 let to_parts_def = define_cases
   [`to_parts (ConstInt i) = [Int i] /\
@@ -53,7 +53,7 @@ let to_parts_def = define_cases
    to_parts (ConstWord64 w) = [W64 w] /\
    to_parts (ConstCons t cs) =
      (let (n,rs,aux) = parts_list cs 0 [] in
-       REVERSE ((Con t rs) :: MAP FST aux))`];;
+       REVERSE (CONS (Con t rs) (MAP FST aux)))`];;
 
 (* semantics *)
 
@@ -66,7 +66,7 @@ let build_part_def = define_cases
 
 let build_def,build_ind = define_rec
   [`build mem' i [] = mem' (i - 1)`;
-   `build mem' i (p :: rest) = build ((i =+ build_part mem' p)
+   `build mem' i (CONS p rest) = build ((i =+ build_part mem' p)
   mem') (i + 1) rest`];;
 
 let build_const_def = new_definition
@@ -80,20 +80,21 @@ let _ = size_thms "const_part";;
 let build_map_def,build_map_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size const_part_size x2)`
   [`build_map mem' i [] = mem'`;
-   `build_map mem' i (p :: rest) = build_map ((i =+ build_part mem'
-  p) mem') (i + 1) rest`];;
+   `build_map mem' i (CONS p rest) = build_map ((i =+ build_part
+  mem' p) mem') (i + 1) rest`];;
 
 let build_mem_thm = prove
  (`!mem' i xs y.
-     build mem' i (xs ++ [y]) =
+     build mem' i (APPEND xs [y]) =
        build (build_map mem' i xs) (i + LENGTH xs) [y]`,
   CHEAT_TAC);;
 
 let parts_acc = prove
  (`(!c n aux m r res.
-      parts c n aux = (m,r,res) ==> (?a. res = a ++ aux)) /\
+      parts c n aux = (m,r,res) ==> (?a. res = APPEND a aux)) /\
    (!cs n aux m rs res.
-      parts_list cs n aux = (m,rs,res) ==> (?a. res = a ++ aux))`,
+      parts_list cs n aux = (m,rs,res) ==> (?a. res = APPEND a
+        aux))`,
   CHEAT_TAC);;
 
 let conses_ok_def = new_definition
@@ -102,19 +103,19 @@ let conses_ok_def = new_definition
      (!n rs m r. MEM (Con n rs,r) aux /\ MEM m rs ==> m < r)`;;
 
 let IMP_conses_ok_CONS = prove
- (`(!n rs. x = Con n rs ==> EVERY (\m. m < LENGTH aux) rs) ==>
-   conses_ok aux ==> conses_ok ((x,LENGTH aux) :: aux)`,
+ (`(!n rs. x = Con n rs ==> ALL (\m. m < LENGTH aux) rs) ==>
+   conses_ok aux ==> conses_ok (CONS (x,LENGTH aux) aux)`,
   CHEAT_TAC);;
 
 let build_map_APPEND = prove
  (`!xs ys m n.
-     build_map m n (xs ++ ys) =
+     build_map m n (APPEND xs ys) =
      build_map (build_map m n xs) (n + LENGTH xs) ys`,
   CHEAT_TAC);;
 
 (* [local] *)
 let LIST_REL_eq = prove
- (`!l rs. LIST_REL (\c r. f r = c) l rs <=> l = MAP f rs`,
+ (`!l rs. ALL2 (\c r. f r = c) l rs <=> l = MAP f rs`,
   CHEAT_TAC);;
 
 let build_map_ignore = prove
@@ -124,8 +125,8 @@ let build_map_ignore = prove
 let ALOOKUP_conses_ok_IMP = prove
  (`ALOOKUP aux x = SOME r /\ conses_ok aux ==>
    (?(xs:(const_part#num) list) (ys:(const_part#num) list).
-     MAP FST (REVERSE aux) = MAP FST (REVERSE xs) ++ [x] ++ MAP FST
-       (REVERSE ys) /\
+     MAP FST (REVERSE aux) = APPEND (APPEND (MAP FST (REVERSE xs))
+       [x]) (MAP FST (REVERSE ys)) /\
      LENGTH xs = r /\ r < LENGTH aux /\
      (!t ys y. x = Con t ys /\ MEM y ys ==> y < r))`,
   CHEAT_TAC);;
@@ -135,24 +136,24 @@ let parts_thm = prove
       parts c n aux = (m,r,res) /\
       ALL_DISTINCT (MAP SND aux) /\
       conses_ok aux /\ n = LENGTH aux /\
-      EVERY (\(p,k). k < n) aux ==>
+      ALL (\(p,k). k < n) aux ==>
       build_map (\x. ConstInt (&0)) 0 (MAP FST (REVERSE res)) r = c
         /\
       n <= m /\ r < m /\
       ALL_DISTINCT (MAP SND res) /\
       conses_ok res /\ m = LENGTH res /\
-      EVERY (\(p,k). k < m) res) /\
+      ALL (\(p,k). k < m) res) /\
    (!cs n aux m rs res.
       parts_list cs n aux = (m,rs,res) /\
       ALL_DISTINCT (MAP SND aux) /\
       conses_ok aux /\ n = LENGTH aux /\
-      EVERY (\(p,k). k < n) aux ==>
-      LIST_REL (\c r. build_map (\x. ConstInt (&0)) 0 (MAP FST
-        (REVERSE res)) r = c) cs rs /\
+      ALL (\(p,k). k < n) aux ==>
+      ALL2 (\c r. build_map (\x. ConstInt (&0)) 0 (MAP FST (REVERSE
+        res)) r = c) cs rs /\
       n <= m /\ ALL_DISTINCT (MAP SND res) /\
-      EVERY (\k. k < m) rs /\
+      ALL (\k. k < m) rs /\
       conses_ok res /\ m = LENGTH res /\
-      EVERY (\(p,k). k < m) res)`,
+      ALL (\(p,k). k < m) res)`,
   CHEAT_TAC);;
 
 (*
@@ -228,7 +229,7 @@ let build_part'_def = define_cases
 
 let build'_def,build'_ind = define_rec
   [`build' mem' i [] = mem' (i - 1)`;
-   `build' mem' i (p :: rest) = build' ((i =+ build_part' mem' p)
+   `build' mem' i (CONS p rest) = build' ((i =+ build_part' mem' p)
   mem') (i + 1) rest`];;
 
 let build_const'_def = new_definition

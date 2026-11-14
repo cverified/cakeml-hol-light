@@ -17,12 +17,12 @@ new_type_abbrev("bitstring",`: bool list`);;
 
 let boolify_def,boolify_ind = define_rec
   [`boolify a [] = a`;
-   `boolify a (n :: l) = boolify ((~(n = 0)) :: a) l`];;
+   `boolify a (CONS n l) = boolify (CONS (~(n = 0)) a) l`];;
 
 let bitify_def,bitify_ind = define_guess
   [`bitify a [] = a`;
-   `bitify a (F :: l) = bitify (0 :: a) l`;
-   `bitify a (T :: l) = bitify (1 :: a) l`];;
+   `bitify a (CONS F l) = bitify (CONS 0 a) l`;
+   `bitify a (CONS T l) = bitify (CONS 1 a) l`];;
 
 let n2v_def = new_definition
   `n2v n = boolify [] (n2l 2 n)`;;

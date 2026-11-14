@@ -75,11 +75,12 @@ let evaluate_def,evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`evaluate (st:'ffi semanticPrimitives_state) env [] = ((st:'ffi
   semanticPrimitives_state),Rval [])`;
-   `evaluate (st:'ffi semanticPrimitives_state) env (e1 :: e2 :: es) =
+   `evaluate (st:'ffi semanticPrimitives_state) env (CONS e1 (CONS e2
+  es)) =
       (match evaluate_fix_clock st (evaluate st env [e1]) with
          (st',Rval v1) ->
-           (match evaluate st' env (e2 :: es) with
-              (st'',Rval vs) -> (st'',Rval (HD v1 :: vs)) |
+           (match evaluate st' env (CONS e2 es) with
+              (st'',Rval vs) -> (st'',Rval (CONS (HD v1) vs)) |
                 (st'',Rerr v8) -> (st'',Rerr v8)) | (st',Rerr v10) ->
                 (st',Rerr v10))`;
    `evaluate (st:'ffi semanticPrimitives_state) env [(ast_Lit
@@ -226,7 +227,7 @@ let evaluate_def,evaluate_ind = assume_definition_rec
    `evaluate_evaluate_match (st:'ffi semanticPrimitives_state) env v
   [] err_v = (st,Rerr (Rraise err_v))`;
    `evaluate_evaluate_match (st:'ffi semanticPrimitives_state) env v
-  ((p,e) :: pes) err_v =
+  (CONS (p,e) pes) err_v =
       (if ALL_DISTINCT (ast_pat_bindings p) then
          match semanticPrimitives_pmatch (sem_env_c env)
            (semanticPrimitives_state_refs st) p v [] with
@@ -238,13 +239,13 @@ let evaluate_def,evaluate_ind = assume_definition_rec
              Rtype_error)))`;
    `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env []
   = (st,Rval (mk_sem_env nsEmpty nsEmpty))`;
-   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env (d1 ::
-  d2 :: ds) =
+   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env (CONS
+  d1 (CONS d2 ds)) =
       (match evaluate_fix_clock st (evaluate_evaluate_decs st env
         [d1]) with
          (st1,Rval env1) ->
            (match evaluate_evaluate_decs st1 (extend_dec_env env1
-             env) (d2 :: ds) with
+             env) (CONS d2 ds) with
               (st2,r) -> (st2,combine_dec_result env1 r)) |
                 (st1,Rerr v7) -> (st1,Rerr v7))`;
    `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dlet
@@ -266,13 +267,13 @@ let evaluate_def,evaluate_ind = assume_definition_rec
   [Dletrec locs funs] =
       (st,
        (if ALL_DISTINCT (MAP (\(x,y,z). x) funs) /\
-          EVERY (\(f,n,e). every_exp (one_con_check (sem_env_c env))
+          ALL (\(f,n,e). every_exp (one_con_check (sem_env_c env))
             e) funs then
          Rval (mk_sem_env (semanticPrimitives_build_rec_env funs
            env nsEmpty) nsEmpty) else Rerr (Rabort Rtype_error)))`;
    `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dtype
   locs tds] =
-      (if EVERY check_dup_ctors tds then
+      (if ALL check_dup_ctors tds then
          (semanticPrimitives_state_next_type_stamp_fupd (K
            (semanticPrimitives_state_next_type_stamp st + LENGTH tds))
            st,

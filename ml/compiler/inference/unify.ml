@@ -56,7 +56,7 @@ let encode_infer_t_def,encode_infer_t_ind = define_mutual_rec
       term_Var n`;
    `encode_infer_ts [] =
       term_Const Null_tag`;
-   `encode_infer_ts (t :: ts) =
+   `encode_infer_ts (CONS t ts) =
       term_Pair (encode_infer_t t) (encode_infer_ts ts)`];;
 
 (* [simp] *)
@@ -79,8 +79,8 @@ let decode_infer_t_def,decode_infer_t_ind = define_mutual_guess_cheat
    `decode_infer_t _1 = Infer_Tuvar 5`;
    `decode_infer_ts (term_Const Null_tag) =
       []`;
-   `decode_infer_ts (term_Pair s1 s2) =
-      decode_infer_t s1 :: decode_infer_ts s2`;
+   `decode_infer_ts (term_Pair s1 s2) = CONS (decode_infer_t s1)
+  (decode_infer_ts s2)`;
    `decode_infer_ts _2 = []`];;
 
 (* [simp] *)
@@ -239,8 +239,8 @@ let coc_def = new_definition
 let soc_encode_ts = prove
  (`cwfs s ==>
    (soc (sptree_map encode_infer_t s) (encode_infer_ts its) n <=>
-      EXISTS (\i. soc (sptree_map encode_infer_t s) (encode_infer_t
-        i) n) its)`,
+      EX (\i. soc (sptree_map encode_infer_t s) (encode_infer_t i)
+        n) its)`,
   CHEAT_TAC);;
 
 (* [transfer_rule] *)
@@ -405,7 +405,7 @@ let cunifyl_thm = prove
  (`cwfs s ==>
    cunifyl s ts1 ts2 =
    (match (ts1,ts2) with
-     ([],[]) -> SOME s | (t1 :: ts1,t2 :: ts2) -> OPTION_BIND
+     ([],[]) -> SOME s | (CONS t1 ts1,CONS t2 ts2) -> OPTION_BIND
        (cunify s t1 t2) (\s'. cunifyl s' ts1 ts2) | _3 -> NONE)`,
   CHEAT_TAC);;
 
@@ -517,10 +517,10 @@ let tcwalk_correct = prove
 
 let cocl_def,cocl_ind = define_rec
   [`cocl s [] n <=> F`;
-   `cocl s (i :: is) n <=> coc s i n \/ cocl s is n`];;
+   `cocl s (CONS i is) n <=> coc s i n \/ cocl s is n`];;
 
 let cocl_EXISTS = prove
- (`cocl s its n <=> EXISTS (\i. coc s i n) its`,
+ (`cocl s its n <=> EX (\i. coc s i n) its`,
   CHEAT_TAC);;
 
 (* HOL4 unifyScript.sml:866: a theorem that HOL4 states as the value
@@ -562,7 +562,7 @@ let _ = size_thms "infer_t";;
 let apply_kcockont_def,apply_kcockont_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). list_size infer_t_size1 x2)`
   [`apply_kcockont s n [] b = b`;
-   `apply_kcockont s n (ts :: rest) b =
+   `apply_kcockont s n (CONS ts rest) b =
     (if b then apply_kcockont s n rest T else kcocl s ts n
       (apply_kcockont s n rest))`];;
 
@@ -587,15 +587,15 @@ let dfkcocl_def = new_definition
    value of an ML expression: dfkcocl_thm *)
 
 let apply_kcockont_HDNIL = prove
- (`apply_kcockont s n ([] :: k) = apply_kcockont s n k`,
+ (`apply_kcockont s n (CONS [] k) = apply_kcockont s n k`,
   CHEAT_TAC);;
 
 let dfkcocl_HDNIL = prove
- (`dfkcocl s ts n ([] :: k) = dfkcocl s ts n k`,
+ (`dfkcocl s ts n (CONS [] k) = dfkcocl s ts n k`,
   CHEAT_TAC);;
 
 let dfkcocl_removed = prove
- (`dfkcocl s ts n k = apply_kcockont s n (ts :: k) F`,
+ (`dfkcocl s ts n k = apply_kcockont s n (CONS ts k) F`,
   CHEAT_TAC);;
 
 (* HOL4 unifyScript.sml:975: ML code, not ported *)
@@ -746,7 +746,8 @@ let disj2cond = prove
 
 let cwalkstarl_def,cwalkstarl_ind = define_rec
   [`cwalkstarl s [] = []`;
-   `cwalkstarl s (it :: its) = cwalkstar s it :: cwalkstarl s its`];;
+   `cwalkstarl s (CONS it its) = CONS (cwalkstar s it) (cwalkstarl
+  s its)`];;
 
 let MAP_cwalkstar = prove
  (`MAP (cwalkstar s) l = cwalkstarl s l`,
@@ -780,15 +781,15 @@ let _ = size_thms "kclkont";;
 let apply_kclkont_def,apply_kclkont_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size kclkont_size x1)`
   [`apply_kclkont s [] its = its`;
-   `apply_kclkont s (DBk n :: k) its = apply_kclkont s k
-  (Infer_Tvar_db n :: its)`;
-   `apply_kclkont s (APPk aits n :: k) its =
-      apply_kclkont s k (Infer_Tapp aits n :: its)`;
-   `apply_kclkont s (UVk n :: k) its = apply_kclkont s k (Infer_Tuvar
-  n :: its)`;
-   `apply_kclkont s (CONSk cits n :: k) its =
-    kcwalkstarl s cits (\xk'. apply_kclkont s k (Infer_Tapp its
-      n :: xk'))`];;
+   `apply_kclkont s (CONS (DBk n) k) its = apply_kclkont s k (CONS
+  (Infer_Tvar_db n) its)`;
+   `apply_kclkont s (CONS (APPk aits n) k) its =
+      apply_kclkont s k (CONS (Infer_Tapp aits n) its)`;
+   `apply_kclkont s (CONS (UVk n) k) its = apply_kclkont s k (CONS
+  (Infer_Tuvar n) its)`;
+   `apply_kclkont s (CONS (CONSk cits n) k) its =
+    kcwalkstarl s cits (\xk'. apply_kclkont s k (CONS
+      (Infer_Tapp its n) xk'))`];;
 
 (* HOL4 unifyScript.sml: the case constant that its Datatype makes
    for the continuation of the walk *)
@@ -839,9 +840,9 @@ let star_kwork_def,star_kwork_ind = define_wf
   [`star_kwork x1 =
       match x1 with
         [] -> EMPTY_BAG
-      | (CONSk its n :: ks) -> (BAG_UNION) ((FOLDR BAG_INSERT
+      | CONS (CONSk its n) ks -> (BAG_UNION) ((FOLDR BAG_INSERT
         EMPTY_BAG) its) (star_kwork ks)
-      | (_4 :: ks) -> star_kwork ks`];;
+      | (CONS _4 ks) -> star_kwork ks`];;
 
 let star_workbag_def = new_definition
   `star_workbag v its k =
@@ -958,8 +959,8 @@ let apply_cunifk_def,apply_cunifk_ind = define_wf
   `MEASURE (\(x0,x1). list_size (pair_size infer_t_size1 infer_t_size1)
   x0)`
   [`apply_cunifk [] x = x`;
-   `apply_cunifk ((ts,us) :: k) NONE = apply_cunifk k NONE`;
-   `apply_cunifk ((ts,us) :: k) (SOME m) = kcunifyl m ts us
+   `apply_cunifk (CONS (ts,us) k) NONE = apply_cunifk k NONE`;
+   `apply_cunifk (CONS (ts,us) k) (SOME m) = kcunifyl m ts us
   (apply_cunifk k)`];;
 
 (* [simp] *)
@@ -972,7 +973,7 @@ let dfkcunifyl_def = new_definition
 
 let abs_EQ_apply_cunifk = prove
  (`(\ov. match ov with NONE -> NONE | SOME x -> dfkcunifyl x ts us k) =
-   apply_cunifk ((ts,us) :: k)`,
+   apply_cunifk (CONS (ts,us) k)`,
   CHEAT_TAC);;
 
 (* HOL4 unifyScript.sml:1568-1569: a theorem that HOL4 states as the
@@ -1010,7 +1011,7 @@ let _ = size_thms "infer_t";;
 let isvars_def,isvars_ind = define_wf
   `MEASURE (\x0. infer_t_size1 x0)`
   [`isvars [] = {}`;
-   `isvars (t :: ts) = vars (encode_infer_t t) UNION isvars ts`];;
+   `isvars (CONS t ts) = vars (encode_infer_t t) UNION isvars ts`];;
 
 (* [simp] *)
 let FINITE_isvars = prove
@@ -1024,8 +1025,8 @@ let _ = size_thms "infer_t";;
 let cplist_vars_def,cplist_vars_ind = define_wf
   `MEASURE (\x0. list_size (pair_size infer_t_size1 infer_t_size1) x0)`
   [`cplist_vars [] = {}`;
-   `cplist_vars ((ts,us) :: rest) = isvars ts UNION isvars us UNION
-  cplist_vars rest`];;
+   `cplist_vars (CONS (ts,us) rest) = isvars ts UNION isvars us
+  UNION cplist_vars rest`];;
 
 (* [simp] *)
 let FINITE_cplist_vars = prove
@@ -1038,11 +1039,11 @@ let _ = size_thms "infer_t";;
 let PFLAT_def,PFLAT_ind = define_wf
   `MEASURE (\x0. list_size (pair_size infer_t_size1 infer_t_size1) x0)`
   [`PFLAT [] = EMPTY_BAG`;
-   `PFLAT (([],[]) :: ps) = PFLAT ps`;
-   `PFLAT (([],j :: js) :: ps) =
-      BAG_INSERT (encode_infer_t j) (PFLAT (([],js) :: ps))`;
-   `PFLAT ((i :: is,js) :: ps) =
-      BAG_INSERT (encode_infer_t i) (PFLAT ((is,js) :: ps))`];;
+   `PFLAT (CONS ([],[]) ps) = PFLAT ps`;
+   `PFLAT (CONS ([],CONS j js) ps) =
+      BAG_INSERT (encode_infer_t j) (PFLAT (CONS ([],js) ps))`;
+   `PFLAT (CONS (CONS i is,js) ps) =
+      BAG_INSERT (encode_infer_t i) (PFLAT (CONS (is,js) ps))`];;
 
 (* [simp] *)
 let FINITE_BAG_PFLAT = prove
@@ -1069,8 +1070,8 @@ let WF_kcunifywlR = prove
 
 (* [simp] *)
 let PFLAT_CONS2 = prove
- (`PFLAT ((l1,h2 :: t2) :: rest) =
-   BAG_INSERT (encode_infer_t h2) (PFLAT ((l1,t2) :: rest))`,
+ (`PFLAT (CONS (l1,CONS h2 t2) rest) =
+   BAG_INSERT (encode_infer_t h2) (PFLAT (CONS (l1,t2) rest))`,
   CHEAT_TAC);;
 
 let mlt_BAG_INSERT2 = prove
@@ -1116,14 +1117,14 @@ let vars_encode_infer_ts = prove
 
 (* [simp] *)
 let PFLAT_NIL1 = prove
- (`PFLAT (([],l2) :: rest) =
+ (`PFLAT (CONS ([],l2) rest) =
    (BAG_UNION) ((FOLDR BAG_INSERT EMPTY_BAG) (MAP encode_infer_t
      l2)) (PFLAT rest)`,
   CHEAT_TAC);;
 
 let PFLAT_eqn = prove
  (`!l1 l2.
-     PFLAT ((l1,l2) :: rest) =
+     PFLAT (CONS (l1,l2) rest) =
      (BAG_UNION) ((FOLDR BAG_INSERT EMPTY_BAG) (MAP encode_infer_t
        l1))
                ((BAG_UNION) ((FOLDR BAG_INSERT EMPTY_BAG) (MAP
@@ -1133,7 +1134,7 @@ let PFLAT_eqn = prove
 let vars_walkstar_encode_infer_ts = prove
  (`wfs s ==>
    vars (walkstar s (encode_infer_ts L)) =
-   BIGUNION {vars (walkstar s (encode_infer_t e)) | MEM e L}`,
+   UNIONS {vars (walkstar s (encode_infer_t e)) | MEM e L}`,
   CHEAT_TAC);;
 
 let kcunifywl_ensures_decrease = prove
@@ -1225,14 +1226,14 @@ let encode_vwalk = prove
 let t_oc_eqn_help = prove
  (`!l v s.
    oc (encode_infer_t o_f s) (encode_infer_ts l) v <=>
-   EXISTS (\t. oc (encode_infer_t o_f s) (encode_infer_t t) v) l`,
+   EX (\t. oc (encode_infer_t o_f s) (encode_infer_t t) v) l`,
   CHEAT_TAC);;
 
 let t_oc_eqn = prove
  (`!s. t_wfs s ==>
     (!t v. t_oc s t v =
       (match t_walk s t with Infer_Tuvar u -> v = u | Infer_Tapp ts
-        tc -> EXISTS (\t. t_oc s t v) ts | Infer_Tvar_db n -> F))`,
+        tc -> EX (\t. t_oc s t v) ts | Infer_Tvar_db n -> F))`,
   CHEAT_TAC);;
 
 let t_ext_s_check_def = new_definition
@@ -1262,7 +1263,7 @@ let ts_unify_def,ts_unify_ind = define_wf
   [`ts_unify s x2 x3 =
         match (x2,x3) with
           ([],[]) -> SOME s
-        | ((t1 :: ts1),(t2 :: ts2)) ->
+        | ((CONS t1 ts1),(CONS t2 ts2)) ->
      (match t_unify s t1 t2 with NONE -> NONE | SOME s' -> ts_unify
        s' ts1 ts2)
         | (_8,_9) -> NONE`];;
@@ -1361,11 +1362,12 @@ let t_unify_ind = prove
          P0 s t1 t2) /\
       (!s ts1 ts2.
          (!t1 ts1' t2 ts2' s'.
-            (ts1 = t1 :: ts1' /\ ts2 = t2 :: ts2') /\
+            (ts1 = CONS t1 ts1' /\ ts2 = CONS t2 ts2') /\
             t_unify s t1 t2 = SOME s' ==>
             P1 s' ts1' ts2') /\
          (!t1 ts1' t2 ts2'.
-            ts1 = t1 :: ts1' /\ ts2 = t2 :: ts2' ==> P0 s t1 t2) ==>
+            ts1 = CONS t1 ts1' /\ ts2 = CONS t2 ts2' ==> P0 s t1 t2)
+              ==>
          P1 s ts1 ts2) ==>
       (!s t1 t2. t_wfs s ==> P0 s t1 t2) /\
       (!s ts1 ts2. t_wfs s ==> P1 s ts1 ts2)`,
@@ -1451,11 +1453,12 @@ let t_unify_strongind' = prove
      (!s ts1 ts2.
         t_wfs s /\
         (!t1 ts1' t2 ts2' s'.
-           (ts1 = t1 :: ts1' /\ ts2 = t2 :: ts2') /\
+           (ts1 = CONS t1 ts1' /\ ts2 = CONS t2 ts2') /\
            t_unify s t1 t2 = SOME s' ==>
            P1 s' ts1' ts2') /\
         (!t1 ts1' t2 ts2'.
-           ts1 = t1 :: ts1' /\ ts2 = t2 :: ts2' ==> P0 s t1 t2) ==>
+           ts1 = CONS t1 ts1' /\ ts2 = CONS t2 ts2' ==> P0 s t1 t2)
+             ==>
         P1 s ts1 ts2) ==>
      (!s t1 t2. t_wfs s ==> (t_wfs s ==> P0 s t1 t2)) /\
      (!s ts1 ts2. t_wfs s ==> (t_wfs s ==> P1 s ts1 ts2))`,
@@ -1501,12 +1504,12 @@ let t_rangevars_def = new_definition
   `t_rangevars s = rangevars (encode_infer_t o_f s)`;;
 
 let t_rangevars_eqn = prove
- (`!s. t_rangevars s = BIGUNION (IMAGE t_vars (FRANGE s))`,
+ (`!s. t_rangevars s = UNIONS (IMAGE t_vars (FRANGE s))`,
   CHEAT_TAC);;
 
 let t_vars_eqn = prove
  (`(!x. t_vars (Infer_Tvar_db x) = {}) /\
-   (!ts tc. t_vars (Infer_Tapp ts tc) = BIGUNION (set_of_list (MAP
+   (!ts tc. t_vars (Infer_Tapp ts tc) = UNIONS (set_of_list (MAP
      t_vars ts))) /\
    (!u. t_vars (Infer_Tuvar u) = {u})`,
   CHEAT_TAC);;
@@ -1523,7 +1526,7 @@ let t_walkstar_vars_notin = prove
 
 let t_walkstar_vars_in = prove
  (`!s. t_wfs s ==> (!t. t_vars (t_walkstar s t) SUBSET t_vars t UNION
-  BIGUNION (FRANGE (t_vars o_f s)))`,
+  UNIONS (FRANGE (t_vars o_f s)))`,
   CHEAT_TAC);;
 
 let t_walkstar_idempotent = prove

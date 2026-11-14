@@ -658,10 +658,9 @@ let word_gen_gc_move_loop_code_def = new_definition
 
 let word_gc_partial_or_full_def = new_definition
   `word_gc_partial_or_full gen_sizes partial_code full_code =
-     (match gen_sizes with [] -> list_Seq ([stackLang_Get 8
+     (match gen_sizes with [] -> list_Seq (APPEND [stackLang_Get 8
        TriggerGC; stackLang_Get 7 EndOfHeap; (\r1 r2. Inst (Arith
-       (asm_Binop Sub r1 r1 (Reg r2)))) 7 8] ++ full_code) | _1 ->
-       list_Seq
+       (asm_Binop Sub r1 r1 (Reg r2)))) 7 8] full_code) | _1 -> list_Seq
               [stackLang_Get 8 TriggerGC;
                stackLang_Get 7 EndOfHeap;
                (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
@@ -981,8 +980,8 @@ let prog_comp_def = new_definition
 hol4_overload "prog_comp" "stack_alloc_prog_comp";;
 
 let stack_alloc_compile_def = new_definition
-  `stack_alloc_compile c prog = stubs c ++ MAP stack_alloc_prog_comp
-  prog`;;
+  `stack_alloc_compile c prog = APPEND (stubs c) (MAP
+  stack_alloc_prog_comp prog)`;;
 hol4_overload "compile" "stack_alloc_compile";;
 
 (* and the overloads that this file cannot see are back in the

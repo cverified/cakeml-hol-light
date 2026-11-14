@@ -160,8 +160,8 @@ let MEM_LUPDATE_E = prove
   ASM_MESON_TAC[]);;
 
 let LUPDATE_LENGTH = prove
- (`!(l:A list) x y r. LUPDATE x (LENGTH l) (l ++ (y :: r)) =
-                      l ++ (x :: r)`,
+ (`!(l:A list) x y r. LUPDATE x (LENGTH l) (APPEND l (CONS y r)) =
+                      APPEND l (CONS x r)`,
   LIST_INDUCT_TAC THEN
   REWRITE_TAC[LENGTH; APPEND; LUPDATE; SUC_SUB1; NOT_SUC] THEN
   ASM_REWRITE_TAC[ARITH_RULE `~(SUC n = 0)`]);;
@@ -240,9 +240,9 @@ let int_sign_iff = prove
 
 let APPEND_EQ_APPEND = prove
  (`!(l1:A list) l2 m1 m2.
-     l1 ++ l2 = m1 ++ m2
-     ==> (?l. l1 = m1 ++ l /\ m2 = l ++ l2) \/
-         (?l. m1 = l1 ++ l /\ l2 = l ++ m2)`,
+     APPEND l1 l2 = APPEND m1 m2
+     ==> (?l. l1 = APPEND m1 l /\ m2 = APPEND l l2) \/
+         (?l. m1 = APPEND l1 l /\ l2 = APPEND l m2)`,
   (* the witness is one of the pieces that the assumptions name *)
   (let pieces =
      W(fun (asl,_) ->
@@ -563,14 +563,14 @@ let WORD_ADD_SPLIT_MUL = prove
 (* ------------------------------------------------------------------ *)
 
 let TAKE_DROP = prove
- (`!(l:A list) n. TAKE n l ++ DROP n l = l`,
+ (`!(l:A list) n. APPEND (TAKE n l) (DROP n l) = l`,
   LIST_INDUCT_TAC THEN GEN_TAC THEN
   REWRITE_TAC[TAKE; DROP; APPEND] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[APPEND]);;
 
 let DROP_EL_CONS = prove
  (`!(l:A list) n. n < LENGTH l
-                  ==> DROP n l = EL n l :: DROP (SUC n) l`,
+                  ==> DROP n l = CONS (EL n l) (DROP (SUC n) l)`,
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[LENGTH; LT];
     GEN_TAC THEN STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
@@ -615,7 +615,7 @@ let LENGTH_TAKE = prove
 
 let TAKE_SUM = prove
  (`!(l:A list) a b.
-     TAKE (a + b) l = TAKE a l ++ TAKE b (DROP a l)`,
+     TAKE (a + b) l = APPEND (TAKE a l) (TAKE b (DROP a l))`,
   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[TAKE; DROP; APPEND] THEN
   STRUCT_CASES_TAC(SPEC `a:num` num_CASES) THEN
@@ -653,20 +653,20 @@ let DROP_TAKE = prove
     REWRITE_TAC[]]);;
 
 let TAKE_LENGTH_APPEND = prove
- (`!(l1:A list) l2. TAKE (LENGTH l1) (l1 ++ l2) = l1`,
+ (`!(l1:A list) l2. TAKE (LENGTH l1) (APPEND l1 l2) = l1`,
   LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[LENGTH; APPEND; TAKE; TAKE_0; NOT_SUC;
                   SUC_SUB1]);;
 
 let DROP_LENGTH_APPEND = prove
- (`!(l1:A list) l2. DROP (LENGTH l1) (l1 ++ l2) = l2`,
+ (`!(l1:A list) l2. DROP (LENGTH l1) (APPEND l1 l2) = l2`,
   LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[LENGTH; APPEND; DROP; DROP_0; NOT_SUC;
                   SUC_SUB1]);;
 
 let TAKE_APPEND1 = prove
  (`!(l1:A list) l2 k.
-     k <= LENGTH l1 ==> TAKE k (l1 ++ l2) = TAKE k l1`,
+     k <= LENGTH l1 ==> TAKE k (APPEND l1 l2) = TAKE k l1`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; APPEND; TAKE] THENL
    [REPEAT GEN_TAC THEN DISCH_TAC THEN
     (SUBGOAL_THEN `k = 0` SUBST1_TAC THENL
@@ -678,7 +678,7 @@ let TAKE_APPEND1 = prove
 
 let DROP_APPEND1 = prove
  (`!(l1:A list) l2 k.
-     k <= LENGTH l1 ==> DROP k (l1 ++ l2) = DROP k l1 ++ l2`,
+     k <= LENGTH l1 ==> DROP k (APPEND l1 l2) = APPEND (DROP k l1) l2`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; APPEND; DROP] THENL
    [REPEAT GEN_TAC THEN DISCH_TAC THEN
     (SUBGOAL_THEN `k = 0` SUBST1_TAC THENL
@@ -691,7 +691,7 @@ let DROP_APPEND1 = prove
 let DROP_APPEND2 = prove
  (`!(l1:A list) l2 k.
      LENGTH l1 <= k
-     ==> DROP k (l1 ++ l2) = DROP (k - LENGTH l1) l2`,
+     ==> DROP k (APPEND l1 l2) = DROP (k - LENGTH l1) l2`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   MP_TAC(SPECL [`l1:A list`; `l2:A list`] DROP_LENGTH_APPEND) THEN
   DISCH_THEN(fun th ->
@@ -1079,7 +1079,7 @@ let FUPDATE_SUBMAP = prove
 
 let LIST_REL_APPEND_IMP = prove
  (`!(P:A->B->bool) xs ys xs1 ys1.
-     EVERY2 P (xs ++ xs1) (ys ++ ys1) /\ LENGTH xs = LENGTH ys
+     EVERY2 P (APPEND xs xs1) (APPEND ys ys1) /\ LENGTH xs = LENGTH ys
      ==> EVERY2 P xs ys /\ EVERY2 P xs1 ys1`,
   GEN_TAC THEN LIST_INDUCT_TAC THENL
    [REPEAT GEN_TAC THEN REWRITE_TAC[APPEND; LENGTH] THEN

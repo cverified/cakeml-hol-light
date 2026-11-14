@@ -105,10 +105,10 @@ let bviSem_finalise_cons_def,bviSem_finalise_cons_ind =
          finalised l c r) ->
            (if ~finalised then
              (match bviSem_finalise_cons c (refs \\ ptr) with SOME
-               (c',refs') -> SOME (Block tag (l ++ [c'] ++ r),refs' |+
-               (ptr,bvlSem_MutBlock tag T l c r)) | NONE -> NONE) else
-               NONE) | SOME res -> SOME (RefPtr b ptr,refs) | NONE ->
-               NONE)
+               (c',refs') -> SOME (Block tag (APPEND (APPEND l [c'])
+               r),refs' |+ (ptr,bvlSem_MutBlock tag T l c r)) | NONE ->
+               NONE) else NONE) | SOME res -> SOME (RefPtr b ptr,refs)
+               | NONE -> NONE)
         | v -> SOME (v,refs)`];;
 hol4_overload "finalise_cons" "bviSem_finalise_cons";;
 
@@ -207,7 +207,7 @@ let bviSem_do_install_def = new_definition
                     (set_of_list (MAP FST progs)) /\ ALL_DISTINCT (MAP
                     FST progs) then
                   (match (bviSem_state_compile s cfg progs,progs)
-                    with (SOME (bytes',data',cfg'),(k,prog) :: _19) ->
+                    with (SOME (bytes',data',cfg'),CONS (k,prog) _19) ->
                        (if bytes = bytes' /\ data = data' /\ FST
                          (new_oracle 0) = cfg' then
                          let s' = bviSem_state_compile_oracle_fupd (K
@@ -293,12 +293,12 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
   list,exn_or_ret)semanticPrimitives_result),s)`;
-   `bviSem_evaluate (x :: y :: xs,env,s) =
+   `bviSem_evaluate (CONS x (CONS y xs),env,s) =
          (match fix_clock s (bviSem_evaluate ([x],env,s)) with (Rval
            v1,s1) ->
-             (match bviSem_evaluate (y :: xs,env,s1) with (Rval
-               vs,s2) -> (Rval (HD v1 :: vs),s2) | res -> res) | res
-               -> res)`;
+             (match bviSem_evaluate (CONS y xs,env,s1) with (Rval
+               vs,s2) -> (Rval (CONS (HD v1) vs),s2) | res -> res) |
+               res -> res)`;
    `bviSem_evaluate ([(Var n:bvi_exp)],env,s) =
          (if n < LENGTH env then (Rval [EL n env],s) else (Rerr
            (Rabort Rtype_error),s))`;
@@ -312,8 +312,8 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec
                 (Rerr (Rabort Rtype_error),s1)) | res -> res)`;
    `bviSem_evaluate ([(Let xs x2:bvi_exp)],env,s) =
          (match fix_clock s (bviSem_evaluate (xs,env,s)) with
-           (Rval vs,s1) -> bviSem_evaluate ([x2],vs ++ env,s1) | res
-           -> res)`;
+           (Rval vs,s1) -> bviSem_evaluate ([x2],APPEND vs env,s1) |
+           res -> res)`;
    `bviSem_evaluate ([(Raise x1:bvi_exp)],env,s) =
          (match bviSem_evaluate ([x1],env,s) with (Rval vs,s) ->
            (Rerr (Rraise (Exn (HD vs))),s) | res -> res)`;
@@ -360,7 +360,7 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec
                       (bviSem_evaluate ([exp],args,dec_clock (ticks + 1)
                       s)) with (Rerr (Rraise (Exn v)),s) ->
                          (match handler with SOME x ->
-                              (match bviSem_evaluate ([x],v ::
+                              (match bviSem_evaluate ([x],CONS v
                                 env,s) with (Rerr (Rraise (Ret
                                 _42)),s1) -> (Rerr (Rabort
                                 Rtype_error),s1) | res -> res) | NONE
@@ -382,7 +382,7 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec
                       Rtype_error),s) | (Rerr (Rraise (Ret ret_vs)),s)
                       ->
                         (if LENGTH ret_vs = rets then
-                          bviSem_evaluate ([y],ret_vs ++ env,s)
+                          bviSem_evaluate ([y],APPEND ret_vs env,s)
                           else (Rerr (Rabort Rtype_error),s)) | res
                           -> res)) | res -> res)`];;
 hol4_overload "evaluate" "bviSem_evaluate";;

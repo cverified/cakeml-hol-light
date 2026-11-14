@@ -42,7 +42,7 @@ let can_raise_def,can_raise_ind = define_mutual_rec
    `can_raise (Force m n:bvl_exp) = T`;
    `can_raise (Call t dest xs:bvl_exp) = T`;
    `can_raise1 [] = F`;
-   `can_raise1 (x :: xs) = (can_raise x \/ can_raise1 xs)`];;
+   `can_raise1 (CONS x xs) = (can_raise x \/ can_raise1 xs)`];;
 
 let dest_handle_Raise_def = new_definition
   `dest_handle_Raise x1 =
@@ -91,8 +91,8 @@ let handle_adj_vars_def,handle_adj_vars_ind = define_mutual_rec
    (handle_adj_vars l d (Call t dest xs) =
       Call t dest (handle_adj_vars1 l d xs)) /\
    (handle_adj_vars1 l d [] = []) /\
-   (handle_adj_vars1 l d (x :: xs) = handle_adj_vars l d x ::
-     handle_adj_vars1 l d xs)`];;
+   (handle_adj_vars1 l d (CONS x xs) = CONS (handle_adj_vars l d
+     x) (handle_adj_vars1 l d xs))`];;
 
 let handle_size_def,handle_size_ind = define_mutual_rec
   [`handle_size (Var v:bvl_exp) = 1`;
@@ -108,7 +108,7 @@ let handle_size_def,handle_size_ind = define_mutual_rec
    `handle_size (Force m n:bvl_exp) = 1`;
    `handle_size (Call t dest xs:bvl_exp) = 1 + handle_size1 xs`;
    `handle_size1 [] = (1:num)`;
-   `handle_size1 (x :: xs) = ((1 + handle_size x + handle_size1
+   `handle_size1 (CONS x xs) = ((1 + handle_size x + handle_size1
   xs):num)`];;
 
 (* [local] *)
@@ -131,8 +131,8 @@ let handle_simp_def,handle_simp_ind = assume_definition_rec
    `handle_simp (Call t dest xs:bvl_exp) = Call t dest
   (handle_simp_list xs)`;
    `handle_simp_list [] = ([]:bvl_exp list)`;
-   `handle_simp_list (x :: xs) = ((handle_simp x :: handle_simp_list
-  xs):bvl_exp list)`;
+   `handle_simp_list (CONS x xs) = ((CONS (handle_simp x)
+  (handle_simp_list xs)):bvl_exp list)`;
    `make_handle x1 x2 l =
          (match dest_handle_Raise x1 with SOME r -> Let [r]
            (handle_adj_vars 1 l (handle_simp x2)) | NONE ->
@@ -155,11 +155,11 @@ let SmartLet_def = new_definition
 
 let LetLet_def = new_definition
   `LetLet env_length fvs (body:bvl_exp) =
-     (let xs = GENLIST I env_length in
+     (let xs = list_of_seq I env_length in
      let zs = FILTER (\n. IS_SOME (sptree_lookup n fvs)) xs in
      let ys = MAPi (\i x. (x,i)) zs in
-     let long_list = GENLIST (\n. match ALOOKUP ys n with NONE -> Op
-       (closLang_IntOp (closLang_Const (&0))) [] | SOME k -> Var k)
+     let long_list = list_of_seq (\n. match ALOOKUP ys n with NONE ->
+       Op (closLang_IntOp (closLang_Const (&0))) [] | SOME k -> Var k)
        env_length in
        Let (MAP Var zs) (SmartLet long_list body))`;;
 
@@ -189,10 +189,10 @@ let _ = size_thms "bvl_exp";;
 let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
   `MEASURE (\(x0,x1,x2). bvl_exp_size1 x2)`
   [`bvl_handle_compile l n [] = (([]:bvl_exp list),db_vars_Empty,0,T)`;
-   `bvl_handle_compile l n (x :: y :: xs) =
+   `bvl_handle_compile l n (CONS x (CONS y xs)) =
          (let (dx,lx,s1,nr1) = bvl_handle_compile l n [x] in
-         let (dy,ly,s2,nr2) = bvl_handle_compile l n (y :: xs) in
-           (dx ++ dy,mk_Union lx ly,s1 + s2,(nr1 /\ nr2)))`;
+         let (dy,ly,s2,nr2) = bvl_handle_compile l n (CONS y xs) in
+           (APPEND dx dy,mk_Union lx ly,s1 + s2,(nr1 /\ nr2)))`;
    `bvl_handle_compile l n [(Var v:bvl_exp)] = (if v < n then ([Var
   v],Var v,1,T) else ([Op (closLang_IntOp (closLang_Const (&0)))
   []],db_vars_Empty,1,T))`;
@@ -297,10 +297,10 @@ let bvl_handle_compile_sing_def,bvl_handle_compile_sing_ind =
              F)`;
    `bvl_handle_compile_list l n [] = (([]:bvl_exp
   list),db_vars_Empty,0,T)`;
-   `bvl_handle_compile_list l n (x :: xs) =
+   `bvl_handle_compile_list l n (CONS x xs) =
          (let (dx,lx,s1,nr1) = bvl_handle_compile_sing l n x in
          let (dy,ly,s2,nr2) = bvl_handle_compile_list l n xs in
-           (dx :: dy,mk_Union lx ly,s1 + s2,(nr1 /\ nr2)))`];;
+           (CONS dx dy,mk_Union lx ly,s1 + s2,(nr1 /\ nr2)))`];;
 hol4_overload "compile_list" "bvl_handle_compile_list";;
 hol4_overload "compile_sing" "bvl_handle_compile_sing";;
 

@@ -202,9 +202,8 @@ let extract_labels_SmartSeq = prove
 
 (* [local] *)
 let extract_labels_Seq_assoc_lemma = prove
- (`!p1 p2. wordConvs_extract_labels (Seq_assoc p1 p2) =
-            wordConvs_extract_labels p1 ++ wordConvs_extract_labels
-              p2`,
+ (`!p1 p2. wordConvs_extract_labels (Seq_assoc p1 p2) = APPEND
+  (wordConvs_extract_labels p1) (wordConvs_extract_labels p2)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -240,7 +239,7 @@ let extract_labels_const_fp = prove
 
 (* [local] *)
 let labels_rel_append_imp = prove
- (`labels_rel (Y ++ X) Z ==> labels_rel (X ++ Y) Z`,
+ (`labels_rel (APPEND Y X) Z ==> labels_rel (APPEND X Y) Z`,
   CHEAT_TAC);;
 
 (* HOL4 wordConvsProofScript.sml:252: ML code, not ported *)
@@ -278,8 +277,8 @@ let labels_rel_hoist2 = prove
    dest_If p2 = SOME (cmp,lhs,rhs,br1,br2) ==>
    dummy' = If cmp lhs rhs (Raise 1) (Raise 2) ==>
    wordConvs_extract_labels interm = [] ==>
-   labels_rel (wordConvs_extract_labels p1 ++
-     wordConvs_extract_labels p2)
+   labels_rel (APPEND (wordConvs_extract_labels p1)
+     (wordConvs_extract_labels p2))
      (wordConvs_extract_labels p3)`,
   CHEAT_TAC);;
 
@@ -1251,7 +1250,7 @@ let MEM_extract_labels_Seq_assoc_right_lemma = prove
 
 (* [local] *)
 let ALL_DISTINCT_extract_labels_Seq_assoc_right_lemma = prove
- (`!p1 p2. ALL_DISTINCT ((wordConvs_extract_labels p1) ++
+ (`!p1 p2. ALL_DISTINCT (APPEND (wordConvs_extract_labels p1)
   (wordConvs_extract_labels p2)) ==>
            ALL_DISTINCT (wordConvs_extract_labels (Seq_assoc_right
              p1 p2))`,
@@ -1479,22 +1478,22 @@ let compile_single_not_created_subprogs = prove
 let word_good_handlers_word_to_word_incr_helper = prove
  (`!oracles.
    LENGTH progs = LENGTH oracles ==>
-   EVERY (\(n,m,pp). good_handlers n pp) progs ==>
-   EVERY (\(n,m,pp). good_handlers n pp)
+   ALL (\(n,m,pp). good_handlers n pp) progs ==>
+   ALL (\(n,m,pp). good_handlers n pp)
    (MAP (full_compile_single tra reg_count1
          ralg asm_c) (ZIP progs oracles))`,
   CHEAT_TAC);;
 
 let word_good_handlers_word_to_word_incr = prove
- (`EVERY (\(n,m,pp). good_handlers n pp) progs ==>
-   EVERY (\(n,m,pp). good_handlers n pp)
+ (`ALL (\(n,m,pp). good_handlers n pp) progs ==>
+   ALL (\(n,m,pp). good_handlers n pp)
      (MAP (\p. full_compile_single tra reg_count1 ralg asm_c
        (p,NONE)) progs)`,
   CHEAT_TAC);;
 
 let word_good_handlers_word_to_word = prove
- (`EVERY (\(n,m,pp). good_handlers n pp) progs ==>
-   EVERY (\(n,m,pp). good_handlers n pp) (SND (word_to_word_compile
+ (`ALL (\(n,m,pp). good_handlers n pp) progs ==>
+   ALL (\(n,m,pp). good_handlers n pp) (SND (word_to_word_compile
      wc ac progs))`,
   CHEAT_TAC);;
 

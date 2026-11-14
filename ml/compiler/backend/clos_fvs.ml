@@ -22,8 +22,8 @@ let _ = hol4_ancestors "clos_fvs"
 let remove_fvs_def,remove_fvs_ind = define_shaped_rec
   "sing>nested"
   [`remove_fvs fvs [] = []`;
-   `remove_fvs fvs ((x:closLang_exp) :: y :: xs) =
-         HD (remove_fvs fvs [x]) :: remove_fvs fvs (y :: xs)`;
+   `remove_fvs fvs (CONS (x:closLang_exp) (CONS y xs)) = CONS (HD
+  (remove_fvs fvs [x])) (remove_fvs fvs (CONS y xs))`;
    `remove_fvs fvs [(Var t v:closLang_exp)] =
         (if v < fvs then [(Var t v:closLang_exp)] else
           [closLang_Op t (closLang_MemOp closLang_El) []])`;
@@ -112,12 +112,12 @@ let remove_fvs_sing_def,remove_fvs_sing_ind = define_mutual_shaped_rec
         closLang_Fn t loc_opt vs num_args (remove_fvs_sing
           (num_args + fvs) x1))`;
    `remove_fvs_list fvs [] = []`;
-   `remove_fvs_list fvs ((x:closLang_exp) :: xs) =
-         remove_fvs_sing fvs x :: remove_fvs_list fvs xs`;
+   `remove_fvs_list fvs (CONS (x:closLang_exp) xs) = CONS
+  (remove_fvs_sing fvs x) (remove_fvs_list fvs xs)`;
    `remove_fvs_let m fvs [] = []`;
-   `remove_fvs_let m new_fvs ((num_args,x) :: xs) =
-         (num_args,remove_fvs_sing (num_args + m + new_fvs) x)
-           :: remove_fvs_let m new_fvs xs`];;
+   `remove_fvs_let m new_fvs (CONS (num_args,x) xs) = CONS
+  (num_args,remove_fvs_sing (num_args + m + new_fvs) x)
+  (remove_fvs_let m new_fvs xs)`];;
 
 let remove_fvs_sing_eq = prove
  (`(!fvs e. remove_fvs fvs [e] = [remove_fvs_sing fvs e]) /\

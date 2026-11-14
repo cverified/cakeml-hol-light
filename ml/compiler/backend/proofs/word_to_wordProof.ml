@@ -290,18 +290,18 @@ let full_compile_single_no_share_inst = prove
 
 (* syntax going into stackLang *)
 let compile_to_word_conventions = prove
- (`EVERY (\(_6,_7,prg). no_share_inst prg \/ ~(asm_config_ISA ac =
-  Ag32)) p ==>
+ (`ALL (\(_6,_7,prg). no_share_inst prg \/ ~(asm_config_ISA ac = Ag32))
+  p ==>
    (let (_8,progs) = word_to_word_compile wc ac p in
    MAP FST progs = MAP FST p /\
-   EVERY2 labels_rel (MAP (wordConvs_extract_labels o SND o SND) p)
+   ALL2 labels_rel (MAP (wordConvs_extract_labels o SND o SND) p)
                      (MAP (wordConvs_extract_labels o SND o SND)
                        progs) /\
-   EVERY (\(n,m,prog).
+   ALL (\(n,m,prog).
      flat_exp_conventions prog /\
      post_alloc_conventions (asm_config_reg_count ac - (5 + LENGTH
        (asm_config_avoid_regs ac))) prog /\
-     (EVERY (\(n,m,prog). every_inst (inst_ok_less ac) prog) p /\
+     (ALL (\(n,m,prog). every_inst (inst_ok_less ac) prog) p /\
       asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\
         asm_offset_ok 0 (asm_config_hw_offset ac) (n2w 0) /\
         asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0) ==>

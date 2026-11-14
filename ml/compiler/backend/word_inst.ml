@@ -38,10 +38,10 @@ hol4_overload "Shift" "wordLang_Shift";;
 (*Pull all nested arguments with the same op up*)
 let pull_ops_def,pull_ops_ind = define_rec
   [`pull_ops op [] acc = acc`;
-   `pull_ops op (x :: xs) acc =
+   `pull_ops op (CONS x xs) acc =
         (match x with (wordLang_Op op' ls) -> (if op = op' then
-          pull_ops op xs (ls ++ acc) else pull_ops op xs (x ::
-          acc)) | _2 -> pull_ops op xs (x :: acc))`];;
+          pull_ops op xs (APPEND ls acc) else pull_ops op xs (CONS
+          x acc)) | _2 -> pull_ops op xs (CONS x acc))`];;
 
 let word_inst_is_const_def = new_definition
   `word_inst_is_const x1 =
@@ -94,8 +94,8 @@ let reduce_const_def = new_definition
        match rest with
          [] -> Const w | [x] -> x | _7 -> wordLang_Op op rest else if
            op = And then
-       Const (n2w 0) else wordLang_Op op (Const w :: rest) else
-         wordLang_Op op (Const w :: rest))`;;
+       Const (n2w 0) else wordLang_Op op (CONS (Const w) rest)
+         else wordLang_Op op (CONS (Const w) rest))`;;
 
 let optimize_consts_def = new_definition
   `optimize_consts op ls =
@@ -173,8 +173,8 @@ let flatten_exp_def,flatten_exp_ind = define_wf
             flatten_exp exps)
         | (wordLang_Op op []) -> op_consts op
         | (wordLang_Op op [x]) -> flatten_exp x
-        | (wordLang_Op op (x :: xs)) -> wordLang_Op op [flatten_exp
-          (wordLang_Op op xs); flatten_exp x]
+        | (wordLang_Op op (CONS x xs)) -> wordLang_Op op
+          [flatten_exp (wordLang_Op op xs); flatten_exp x]
         | (Load exp) -> Load (flatten_exp exp)
         | (Shift shift' exp nexp) -> Shift shift' (flatten_exp exp)
           (flatten_exp nexp)

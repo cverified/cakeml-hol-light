@@ -72,23 +72,23 @@ let optmax_def = new_definition
 (* HOL4 pegScript.sml:84: the overload EOF, which the port expands *)
 let sloc_def = define_cases
   [`sloc [] = (Locs EOFpt EOFpt)`;
-   `sloc (h :: t) = SND h`];;
+   `sloc (CONS h t) = SND h`];;
 let peg_eval = cake_inductive
   `((!s c. peg_eval G (s,peg_empty c) (peg_Success s c NONE))) /\
    ((!n s f res.
           n IN FDOM (peg_rules G) /\ peg_eval G (s,FAPPLY (peg_rules
             G) n) res ==>
           peg_eval G (s,peg_nt n f) (resultmap f res))) /\
-   ((!h t f. peg_eval G (h :: t,peg_any f) (peg_Success t (f h)
+   ((!h t f. peg_eval G (CONS h t,peg_any f) (peg_Success t (f h)
      NONE))) /\
    ((!f. peg_eval G ([],peg_any f) (peg_Failure (Locs EOFpt EOFpt)
      (peg_anyEOF G)))) /\
    ((!e t P f.
-        P (FST e) ==> peg_eval G (e :: t,peg_tok P f) (peg_Success t
-          (f e) NONE))) /\
+        P (FST e) ==> peg_eval G (CONS e t,peg_tok P f) (peg_Success
+          t (f e) NONE))) /\
    ((!h t P f.
         ~(P (FST h)) ==>
-        peg_eval G (h :: t,peg_tok P f) (peg_Failure (SND h)
+        peg_eval G (CONS h t,peg_tok P f) (peg_Failure (SND h)
           (peg_tokFALSE G)))) /\
    ((!P f. peg_eval G ([],peg_tok P f) (peg_Failure (Locs EOFpt
      EOFpt) (peg_tokEOF G)))) /\
@@ -137,7 +137,7 @@ let peg_eval = cake_inductive
    ((!e eo0 eo s0 s1 s2 c cs.
         peg_eval G (s0,e) (peg_Success s1 c eo0) /\
         peg_eval_list G (s1,e) (s2,cs,eo) ==>
-        peg_eval_list G (s0,e) (s2,c :: cs,eo)))`;;
+        peg_eval_list G (s0,e) (s2,CONS c cs,eo)))`;;
 
 let peg0 = cake_inductive
   `(!c. peg0 G (peg_empty c)) /\
@@ -222,7 +222,7 @@ let subexprs_def,subexprs_ind = define_wf
    `subexprs (peg_rpt e f5) = peg_rpt e f5 INSERT subexprs e`];;
 
 let gexprs_def = new_definition
-  `Gexprs G = BIGUNION (IMAGE subexprs (start G INSERT FRANGE
+  `Gexprs G = UNIONS (IMAGE subexprs (start G INSERT FRANGE
   (peg_rules G)))`;;
 
 let wfG_def = new_definition
@@ -239,6 +239,6 @@ let ignoreR_def = new_definition
 
 let choicel_def,choicel_ind = define_rec
   [`peg_choicel [] = peg_not (peg_empty ARB) ARB`;
-   `peg_choicel (h :: t) = peg_choice h (peg_choicel t) (\s.
+   `peg_choicel (CONS h t) = peg_choice h (peg_choicel t) (\s.
   sum_CASE s I I)`];;
 hol4_overload "choicel" "peg_choicel";;

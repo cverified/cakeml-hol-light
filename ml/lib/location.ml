@@ -63,6 +63,6 @@ let merge_list_locs_def,merge_list_locs_ind = define_wf
   [`merge_list_locs x1 =
         match x1 with
           [] -> unknown_loc
-        | (h :: []) -> h
-        | (h1 :: h2 :: []) -> merge_locs h1 h2
-        | (h1 :: h2 :: t) -> merge_list_locs (h1 :: t)`];;
+        | (CONS h []) -> h
+        | (CONS h1 (CONS h2 [])) -> merge_locs h1 h2
+        | (CONS h1 (CONS h2 t)) -> merge_list_locs (CONS h1 t)`];;

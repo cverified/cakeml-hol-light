@@ -297,7 +297,7 @@ let foldrWithKey_def,foldrWithKey_ind = define_rec
       foldrWithKey f (f kx x (foldrWithKey f z' r)) l`];;
 
 let toAscList_def = new_definition
-  `toAscList t = foldrWithKey (\k x xs. (k,x) :: xs) [] t`;;
+  `toAscList t = foldrWithKey (\k x xs. CONS (k,x) xs) [] t`;;
 
 let compare_def = new_definition
   `balanced_map_compare cmp1 cmp2 t1 t2 = list_compare (pair_compare

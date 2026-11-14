@@ -55,14 +55,14 @@ let ALL_DISTINCT_merge_moves = prove
 let word_unreachProof_copy_vars_def,word_unreachProof_copy_vars_ind =
   define_rec
   [`word_unreachProof_copy_vars [] from to = to`;
-   `word_unreachProof_copy_vars ((l,r) :: rest) from to =
+   `word_unreachProof_copy_vars (CONS (l,r) rest) from to =
       sptree_insert l (THE (sptree_lookup r from))
         (word_unreachProof_copy_vars rest from to)`];;
 hol4_overload "copy_vars" "word_unreachProof_copy_vars";;
 
 let copy_vars_append = prove
  (`!xs ys from to.
-     word_unreachProof_copy_vars (xs ++ ys) from to =
+     word_unreachProof_copy_vars (APPEND xs ys) from to =
        word_unreachProof_copy_vars xs from
        (word_unreachProof_copy_vars ys from to)`,
   CHEAT_TAC);;
@@ -110,14 +110,14 @@ let lookup_copy_vars = prove
 let get_vars_IS_SOME_lookup = prove
  (`!xs s.
      (?ws. wordSem_get_vars xs s = SOME ws) <=>
-     EVERY (\x. IS_SOME (sptree_lookup x (wordSem_state_locals s)))
+     ALL (\x. IS_SOME (sptree_lookup x (wordSem_state_locals s)))
        xs`,
   CHEAT_TAC);;
 
 let IMP_EVERY_MAP_SND_anub = prove
  (`!xs acc p.
-     EVERY p (MAP SND xs) ==>
-     EVERY p (MAP SND (anub xs acc))`,
+     ALL p (MAP SND xs) ==>
+     ALL p (MAP SND (anub xs acc))`,
   CHEAT_TAC);;
 
 let merge_moves_Skip = prove

@@ -149,16 +149,12 @@ def definitions(path, upto=None):
 
 
 def theirs_of(name):
-  """where LightCake keeps the file this port calls <name>.ml"""
-  for d in ('src/hol4/', 'src/misc/', 'src/semantics/',
-            'src/basis/pure/', 'src/compiler/backend/',
-            'src/compiler/backend/semantics/',
-            'src/compiler/backend/gc/',
-            'src/compiler/backend/reg_alloc/',
-            'src/compiler/backend/pattern_matching/',
-            'src/semantics/proofs/'):
-    p = LC + d + name + '.ml'
-    if os.path.exists(p): return p
+  """where LightCake keeps the file this port calls <name>.ml.
+     Its layout is CakeML's, so it grows a directory whenever it
+     takes another part of it: the file is looked for and not
+     looked up"""
+  for p in lc_files():
+    if os.path.basename(p) == name + '.ml': return p
   return None
 
 

@@ -37,7 +37,7 @@ let sumID_def = define_cases
 hol4_overload "sumID" "simpleSexpPEG_sumID";;
 let simpleSexpPEG_choicel_def,simpleSexpPEG_choicel_ind = define_rec
   [`simpleSexpPEG_choicel [] = peg_not (peg_empty arb_sexp) arb_sexp`;
-   `simpleSexpPEG_choicel (h :: t) = peg_choice h
+   `simpleSexpPEG_choicel (CONS h t) = peg_choice h
   (simpleSexpPEG_choicel t) simpleSexpPEG_sumID`];;
 hol4_overload "choicel" "simpleSexpPEG_choicel";;
 
@@ -109,11 +109,14 @@ let sexpPEG_def = new_definition
                 [c]))
                   (peg_rpt (peg_tok valid_symchar (\(c,l). SX_SYM
                     [c]))
-                   (SX_SYM o FOLDR (\s a. destSXSYM s ++ a) []))
-                  (\s1 s2. SX_SYM (destSXSYM s1 ++ destSXSYM s2)));
+                   (SX_SYM o FOLDR (\s a. APPEND (destSXSYM s) a)
+                     []))
+                  (\s1 s2. SX_SYM (APPEND (destSXSYM s1) (destSXSYM
+                    s2))));
              (INL sxnt_strcontents,
               peg_rpt (simpleSexpPEG_pnt sxnt_strchar)
-                  (SX_STR o FOLDR (\s a. destSXSYM s ++ a) []));
+                  (SX_STR o FOLDR (\s a. APPEND (destSXSYM s) a)
+                    []));
              (INL sxnt_strchar,
               choicel [ignoreL (simpleSexpPEG_tokeq (CHR 92))
                 (simpleSexpPEG_pnt sxnt_escapedstrchar);

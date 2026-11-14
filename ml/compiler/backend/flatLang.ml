@@ -83,13 +83,13 @@ let flatLang_pat_bindings_def,flatLang_pat_bindings_ind =
    `flatLang_pat_bindings (Plit l:flatLang_pat) = []`;
    `flatLang_pat_bindings (Pcon _2 ps:flatLang_pat) =
   flatLang_pats_bindings ps`;
-   `flatLang_pat_bindings (Pas p i:flatLang_pat) =
-  flatLang_pat_bindings p ++ [i]`;
+   `flatLang_pat_bindings (Pas p i:flatLang_pat) = APPEND
+  (flatLang_pat_bindings p) [i]`;
    `flatLang_pat_bindings (Pref p:flatLang_pat) =
   flatLang_pat_bindings p`;
    `flatLang_pats_bindings [] = []`;
-   `flatLang_pats_bindings (p :: ps) = flatLang_pats_bindings ps ++
-  flatLang_pat_bindings p`];;
+   `flatLang_pats_bindings (CONS p ps) = APPEND
+  (flatLang_pats_bindings ps) (flatLang_pat_bindings p)`];;
 hol4_overload "pat_bindings" "flatLang_pat_bindings";;
 hol4_overload "pats_bindings" "flatLang_pats_bindings";;
 

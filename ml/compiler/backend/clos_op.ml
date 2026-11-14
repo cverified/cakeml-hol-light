@@ -295,7 +295,7 @@ let eq_pure_list_def,eq_pure_list_ind = define_guess_cheat
                      backend_common_None (closLang_BlockOp
                      (closLang_ElemAt i)) [y])) (REVERSE xs))) |
                      (NONE,SOME (t1,ys)) -> eq_pure_list [(y,x)]))
-      | (xy :: xys) -> misc_Append (eq_pure_list [xy])
+      | (CONS xy xys) -> misc_Append (eq_pure_list [xy])
         (eq_pure_list xys)`];;
 
 let _ = size_thms "closLang_exp";;
@@ -307,7 +307,7 @@ let ConjList_def,ConjList_ind = define_wf
       match x1 with
         [] -> MakeBool T
       | [x] -> x
-      | (x :: xs) -> If backend_common_None x (ConjList xs)
+      | (CONS x xs) -> If backend_common_None x (ConjList xs)
         (MakeBool F)`];;
 
 let eq_pure_def = new_definition
@@ -350,24 +350,26 @@ let _ = size_thms "closLang_exp";;
 let lift_exps_def,lift_exps_ind = define_wf
   `MEASURE (\(xs,n,binds). list_size closLang_exp_size xs)`
   [`lift_exps [] n binds = ([],n,binds)`;
-   `lift_exps (x :: xs) n binds =
+   `lift_exps (CONS x xs) n binds =
       (if dont_lift x then
         (let (xs,n,binds) = lift_exps xs n binds in
-           (x :: xs,n,binds)) else match (dest_Op clos_op_dest_Cons)
-             x with SOME (t,ys) ->
+           (CONS x xs,n,binds)) else match (dest_Op
+             clos_op_dest_Cons) x with SOME (t,ys) ->
               (let (ys,n,binds) = lift_exps ys n binds in
                let (xs,n,binds) = lift_exps xs n binds in
-                 (closLang_Op backend_common_None (closLang_BlockOp
-                   (closLang_Cons t)) ys :: xs,n,binds)) | NONE ->
-              (let (xs,n1,binds) = lift_exps xs (n + 1) (binds ++
-                [x]) in
-                (Var backend_common_None n :: xs,n1,binds)))`];;
+                 (CONS (closLang_Op backend_common_None
+                   (closLang_BlockOp (closLang_Cons t)) ys) xs,n,binds))
+                   | NONE ->
+              (let (xs,n1,binds) = lift_exps xs (n + 1) (APPEND
+                binds [x]) in
+                (CONS (Var backend_common_None n)
+                  xs,n1,binds)))`];;
 
 let eq_any_def = new_definition
   `eq_any x y =
-     (match lift_exps [x; y] 0 [] with (x :: y :: _26,_27,binds)
-       -> SOME (Let backend_common_None binds (eq_pure x y)) | _28 ->
-       NONE)`;;
+     (match lift_exps [x; y] 0 [] with (CONS x (CONS y
+       _26),_27,binds) -> SOME (Let backend_common_None binds
+       (eq_pure x y)) | _28 -> NONE)`;;
 
 let eq_op_def = new_definition
   `eq_op x y =

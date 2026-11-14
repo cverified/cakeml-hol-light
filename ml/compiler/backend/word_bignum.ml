@@ -512,7 +512,7 @@ let code_acc_next_def = new_definition
   `code_acc_next (n,code_list') = (n + 1,code_list')`;;
 
 let install_def = new_definition
-  `install c (n,code_list') = (n,c :: code_list')`;;
+  `install c (n,code_list') = (n,CONS c code_list')`;;
 
 let _ = size_thms "wordLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -576,12 +576,12 @@ let DivCode_def = new_definition
 
 let LoadRegs_def,LoadRegs_ind = define_rec
   [`LoadRegs [] (p:'a wordLang_prog) = (p:'a wordLang_prog)`;
-   `LoadRegs (n :: ns) (p:'a wordLang_prog) = ((Seq (Get (n + 2)
+   `LoadRegs (CONS n ns) (p:'a wordLang_prog) = ((Seq (Get (n + 2)
   (Temp (n2w n))) (LoadRegs ns p)):'a wordLang_prog)`];;
 
 let SaveRegs_def,SaveRegs_ind = define_rec
   [`SaveRegs [] = (Skip:'a wordLang_prog)`;
-   `SaveRegs (n :: ns) = ((Seq (Set (Temp (n2w n)) (Var (n + 2)))
+   `SaveRegs (CONS n ns) = ((Seq (Set (Temp (n2w n)) (Var (n + 2)))
   (SaveRegs ns)):'a wordLang_prog)`];;
 
 let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
@@ -666,10 +666,9 @@ hol4_overload "compile" "word_bignum_compile";;
 
 let generated_bignum_stubs_def = new_definition
   `generated_bignum_stubs n =
-     (let (x1,_4,_5,(_6,cs)) = word_bignum_compile n 2 1 (n + 1,[])
-       mc_iop_code in
-       (n,1,Seq x1 (Return 0 [0])) :: MAP (\(x,y,z). (y,1,Seq z
-         (Return 0 [0]))) cs)`;;
+     (let (x1,_4,_5,(_6,cs)) = word_bignum_compile n 2 1 (n +
+       1,[]) mc_iop_code in CONS (n,1,Seq x1 (Return 0 [0])) (MAP
+       (\(x,y,z). (y,1,Seq z (Return 0 [0]))) cs))`;;
 
 (* HOL4 word_bignumScript.sml:576-577: a theorem that HOL4 states as
    the value of an ML expression: generated_bignum_stubs_eq *)

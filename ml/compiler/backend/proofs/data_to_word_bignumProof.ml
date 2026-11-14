@@ -107,7 +107,7 @@ let state_rel_Number_small_int = prove
   CHEAT_TAC);;
 
 let heap_lookup_Unused_Bignum = prove
- (`heap_lookup a (Unused k :: hb) = SOME (Bignum j) <=>
+ (`heap_lookup a (CONS (Unused k) hb) = SOME (Bignum j) <=>
     k + 1 <= a /\
     heap_lookup (a - (k + 1)) hb = SOME (Bignum j)`,
   CHEAT_TAC);;
@@ -116,10 +116,10 @@ let push_env_insert_0 = prove
  (`push_env (insert 0 x LN,LN) NONE t = wordSem_state_permute_fupd (K
   (\n. wordSem_state_permute t (n + 1))) (state_stack_max_fupd (K
                 (OPTION_MAP2 MAX (state_stack_max t)
-                  (stack_size (StackFrame (state_locals_size t)
-                    [(0,x)] [] NONE :: stack t)))) (stack_fupd (K
-                    (StackFrame (state_locals_size t) [(0,x)] [] NONE ::
-                    stack t))
+                  (stack_size (CONS (StackFrame (state_locals_size t)
+                    [(0,x)] [] NONE) (stack t))))) (stack_fupd (K (CONS
+                    (StackFrame (state_locals_size t) [(0,x)] [] NONE)
+                    (stack t)))
     t))`,
   CHEAT_TAC);;
 
@@ -217,11 +217,12 @@ let get_real_addr_lemma = prove
 let memory_rel_lookup = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs s st m dm
-        (join_env l1 (toAList (inter l2 (adjust_set l1))) ++ xs) /\
+        (APPEND (join_env l1 (toAList (inter l2 (adjust_set l1))))
+          xs) /\
       lookup n l1 = SOME x /\ lookup (adjust_var n) l2 = SOME w ==>
       memory_rel c be ts refs s st m dm
-       ((x,w) :: (join_env l1 (toAList (inter l2 (adjust_set
-         l1))) ++ xs))`),
+       (CONS (x,w) (APPEND (join_env l1 (toAList (inter l2
+         (adjust_set l1)))) xs))`),
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_bignumProofScript.sml:516-577: a theorem whose
@@ -370,8 +371,8 @@ let env_to_list_domain_eq = prove
 
 let size_of_LE_append = prove
  (`!vs ys lims refs seen.
-     FST (size_of lims ys refs seen) <= FST (size_of lims (vs ++
-       ys) refs seen)`,
+     FST (size_of lims ys refs seen) <= FST (size_of lims (APPEND
+       vs ys) refs seen)`,
   CHEAT_TAC);;
 
 let size_of_heap_LE_args = prove
@@ -383,7 +384,7 @@ let size_of_heap_LE_args = prove
    eval_Call_Arith_max_stack_NONE *)
 
 let EVERY_IMP_ALOOKUP = prove
- (`!xs P. EVERY P xs ==> (!x y. ALOOKUP xs x = SOME y ==> P (x,y))`,
+ (`!xs P. ALL P xs ==> (!x y. ALOOKUP xs x = SOME y ==> P (x,y))`,
   CHEAT_TAC);;
 
 let structure_le_IMP_option_le = prove

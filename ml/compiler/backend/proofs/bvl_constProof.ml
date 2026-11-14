@@ -57,11 +57,12 @@ let bvl_constProof_env_rel_def,bvl_constProof_env_rel_ind = define_wf
   [`bvl_constProof_env_rel x1 x2 x3 e1 e2 =
         match (x1,x2,x3,e1,e2) with
           ((:'c),(:'ffi),[],e1,e2) -> (e1 = e2)
-        | ((:'c),(:'ffi),(NONE :: rest),(x :: e1),(y :: e2)) ->
+        | ((:'c),(:'ffi),CONS NONE rest,CONS x e1,CONS y e2) ->
         (x = y) /\ bvl_constProof_env_rel (:'c) (:'ffi) rest e1 e2
-        | ((:'c),(:'ffi),(SOME a :: rest),(x :: e1),(y :: e2)) ->
-        bvl_constProof_v_rel (:'c) (:'ffi) a x y (x :: e1) (y :: e2)
-          /\ bvl_constProof_env_rel (:'c) (:'ffi) rest e1 e2
+        | ((:'c),(:'ffi),(CONS (SOME a) rest),(CONS x e1),(CONS y
+          e2)) ->
+        bvl_constProof_v_rel (:'c) (:'ffi) a x y (CONS x e1) (CONS y
+          e2) /\ bvl_constProof_env_rel (:'c) (:'ffi) rest e1 e2
         | (_4,_5,_6,_7,_8) -> F`];;
 hol4_overload "env_rel" "bvl_constProof_env_rel";;
 
@@ -292,8 +293,9 @@ let bvl_constProof_evaluate_delete_var_Rval = prove
        bvl_constProof_env_rel (:'c) (:'ffi) ax env env2 ==>
        (?b. evaluate (MAP bvl_const_delete_var xs,env2,s) = (Rval
          b,r) /\
-           bvl_constProof_env_rel (:'c) (:'ffi)
-             (bvl_const_extract_list xs ++ ax) (a ++ env) (b ++ env2))`,
+           bvl_constProof_env_rel (:'c) (:'ffi) (APPEND
+             (bvl_const_extract_list xs) ax) (APPEND a env) (APPEND b
+             env2))`,
   (let rty = `:(bvlSem_v list,bvlSem_v)
                 semanticPrimitives_result` in
    let dv = bvl_const_delete_var_def in
@@ -470,7 +472,7 @@ let bvl_constProof_evaluate_delete_var_Rval = prove
      STRIP_TAC THEN split_head THEN
      split_tail `hs:('c,'ffi)bvlSem_state` THEN
      use_ih `hs:('c,'ffi)bvlSem_state` THEN
-     EXISTS_TAC `HD (hv:bvlSem_v list) :: bb` THEN
+     EXISTS_TAC `CONS (HD (hv:bvlSem_v list)) bb` THEN
      ASM_REWRITE_TAC[] THEN tidy THEN
      REWRITE_TAC[APPEND] THEN
      (* the second argument of extract is only there for its
@@ -497,7 +499,7 @@ let bvl_constProof_evaluate_delete_var_Rval = prove
      ASM_REWRITE_TAC[HD] THEN tidy THEN STRIP_TAC THEN tidy THEN
      split_tail `s:('c,'ffi)bvlSem_state` THEN
      use_ih `s:('c,'ffi)bvlSem_state` THEN
-     EXISTS_TAC `((Number (&0)):bvlSem_v) :: bb` THEN
+     EXISTS_TAC `CONS ((Number (&0)):bvlSem_v) bb` THEN
      ASM_REWRITE_TAC[] THEN tidy THEN
      REWRITE_TAC[APPEND] THEN REWRITE_TAC erc THEN
      REWRITE_TAC vrc THEN
@@ -1622,11 +1624,11 @@ let bvl_constProof_evaluate_env_rel = prove
      NAMED_CASES_TAC (mk_var("hres",rty)) [["hv"]; ["he"]] THEN
      tidy THEN use_ih_for `[x1:bvl_exp]` THEN tidy THEN
      TRY(NAMED_CASES_TAC
-           (ev_term `(x2:bvl_exp) :: xr2` `env1:bvlSem_v list`
+           (ev_term `CONS (x2:bvl_exp) xr2` `env1:bvlSem_v list`
               `hs:('c,'ffi)bvlSem_state`)
            [["tres"; "ts"]] THEN
          NAMED_CASES_TAC (mk_var("tres",rty)) [["tv"]; ["te"]] THEN
-         tidy THEN use_ih_for `(x2:bvl_exp) :: xr2` THEN tidy) in
+         tidy THEN use_ih_for `CONS (x2:bvl_exp) xr2` THEN tidy) in
    (* ---- the nine cases, in the order of the datatype ------------ *)
    let sub_cases =
      [var_case; if_case; let_case; one_sub `[e:bvl_exp]`;
@@ -1813,7 +1815,7 @@ let SmartOp1_code_labels = prove
 (* [simp] *)
 let SmartOp_code_labels = prove
  (`bvlProps_get_code_labels (SmartOp op xs) =
-   assign_get_code_label op UNION BIGUNION (set_of_list (MAP
+   assign_get_code_label op UNION UNIONS (set_of_list (MAP
      bvlProps_get_code_labels xs))`,
   (let so = SmartOp_def in
    let sof = SmartOp_flip_def in
@@ -1886,12 +1888,11 @@ let MEM_extract_list_code_labels = prove
 
 (* compile_code_labels *)
 let bvl_constProof_compile_code_labels = prove
- (`!x y. BIGUNION (set_of_list (MAP bvlProps_get_code_labels
+ (`!x y. UNIONS (set_of_list (MAP bvlProps_get_code_labels
   (bvl_const_compile x y))) SUBSET
-         BIGUNION (set_of_list (MAP bvlProps_get_code_labels y))
-           UNION
-         BIGUNION (set_of_list (MAP (bvlProps_get_code_labels o
-           THE) (FILTER IS_SOME x)))`,
+         UNIONS (set_of_list (MAP bvlProps_get_code_labels y)) UNION
+         UNIONS (set_of_list (MAP (bvlProps_get_code_labels o THE)
+           (FILTER IS_SOME x)))`,
   (* HOL4 takes the induction theorem that its termination proof
      left behind (recInduct compile_ind); the port induces on the
      measure the definition was made with.  What the proof says is
@@ -2092,7 +2093,7 @@ let bvl_constProof_compile_code_labels = prove
      REWRITE_TAC[cp] THEN REWRITE_TAC[labs_app] THEN
      REWRITE_TAC lset THEN
      use_ih xx `[y1:bvl_exp]` THEN
-     use_ih xx `(y2:bvl_exp) :: yr2` THEN
+     use_ih xx `CONS (y2:bvl_exp) yr2` THEN
      REWRITE_TAC lset THEN sub_tac in
    let base_case =
      REPEAT GEN_TAC THEN DISCH_TAC THEN

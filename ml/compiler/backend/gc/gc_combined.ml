@@ -42,21 +42,21 @@ let gc_combined_def = new_definition
      (roots,heap,0,0,gs,T)
       | (Simple,(roots,heap,gs,_4,_5)) ->
      (let (roots,heap,a,c) = full_gc (roots,heap,limit conf) in
-        (roots,heap ++ heap_expand (limit conf - a),a,limit conf -
-          a,gs,c))
+        (roots,APPEND heap (heap_expand (limit conf - a)),a,limit
+          conf - a,gs,c))
       | ((data_to_word_Generational
         limits),(roots,heap,gs,rs,do_partial')) ->
      (if do_partial' then
        (let partial_conf = make_partial_conf conf gs rs in
         let (roots,state) = partial_gc partial_conf (roots,heap) in
-          (roots,gc_state_old state ++ gc_state_h1 state ++
-            heap_expand (gc_state_n state) ++ gc_state_r1
-            state,gc_state_a
+          (roots,APPEND (APPEND (APPEND (gc_state_old state)
+            (gc_state_h1 state)) (heap_expand (gc_state_n state)))
+            (gc_state_r1 state),gc_state_a
            state,gc_state_n state,GenState 0 (MAP (K (gc_state_a
              state)) limits),gc_state_ok state)) else
        (let (roots,state) = gen_gc conf (roots,heap) in
-          (roots,gc_state_h1 state ++ heap_expand (gc_state_n state)
-            ++ gc_state_r1 state,gc_state_a
+          (roots,APPEND (APPEND (gc_state_h1 state) (heap_expand
+            (gc_state_n state))) (gc_state_r1 state),gc_state_a
            state,gc_state_n state,GenState 0 (MAP (K (gc_state_a
              state)) limits),gc_state_ok state)))`;;
 

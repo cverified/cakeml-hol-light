@@ -45,7 +45,8 @@ let gen_gc_gc_move_def = define_cases
            let n = gc_state_n state - (l + 1) in
             if gen_gc_conf_isRef conf dd then
               // put refs in r4
-              let r4 = (DataElement xs l dd) :: gc_state_r4 state in
+              let r4 = CONS (DataElement xs l dd) (gc_state_r4
+                state) in
               let (heap,ok) = gc_forward_ptr ptr (gc_state_heap
                 state) (gc_state_a state + n) d ok in
                 (
@@ -54,7 +55,8 @@ let gen_gc_gc_move_def = define_cases
                   (gc_state_n_fupd (K n) (gc_state_r4_fupd (K r4)
                   state)))) else
               // put data in h2
-              let h2 = gc_state_h2 state ++ [DataElement xs l dd] in
+              let h2 = APPEND (gc_state_h2 state) [DataElement xs l
+                dd] in
               let (heap,ok) = gc_forward_ptr ptr (gc_state_heap
                 state) (gc_state_a state) d ok in
               let a = gc_state_a state + l + 1 in
@@ -82,10 +84,10 @@ let gc_move_IMP = prove
 
 let gen_gc_gc_move_list_def,gen_gc_gc_move_list_ind = define_rec
   [`gen_gc_gc_move_list conf state [] = ([],state)`;
-   `gen_gc_gc_move_list conf state (x :: xs) =
+   `gen_gc_gc_move_list conf state (CONS x xs) =
         (let (x,state) = gen_gc_gc_move conf state x in
         let (xs,state) = gen_gc_gc_move_list conf state xs in
-          (x :: xs,state))`];;
+          (CONS x xs,state))`];;
 hol4_overload "gc_move_list" "gen_gc_gc_move_list";;
 
 let gc_move_list_IMP = prove
@@ -110,12 +112,13 @@ let gc_move_list_IMP = prove
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_data_def,gc_move_data_ind = define_guess_cheat
   [`(gen_gc_gc_move_data conf state =
-     (match gc_state_h2 state with [] -> state | h :: h2 ->
-       (if gen_gc_conf_limit conf < heap_length (gc_state_h1 state
-         ++ (h :: h2)) then gc_state_ok_fupd (K F) state else
+     (match gc_state_h2 state with [] -> state | CONS h h2 ->
+       (if gen_gc_conf_limit conf < heap_length (APPEND (gc_state_h1
+         state) (CONS h h2)) then gc_state_ok_fupd (K F) state else
         match h with DataElement xs l d ->
           (let (xs,state) = gen_gc_gc_move_list conf state xs in
-          let h1 = gc_state_h1 state ++ [DataElement xs l d] in
+          let h1 = APPEND (gc_state_h1 state) [DataElement xs l d]
+            in
           let h2 = TL (gc_state_h2 state) in
           let ok = (gc_state_ok state /\ ~(gc_state_h2 state = [])
             /\ (HD (gc_state_h2 state) = h)) in
@@ -135,12 +138,12 @@ hol4_overload "gc_move_data" "gen_gc_gc_move_data";;
 let gc_move_refs_def,gc_move_refs_ind = define_guess_cheat
   [`// maybe more refs (r4 could have more)
    gc_move_refs conf state =
-     (match gc_state_r2 state with [] -> gc_state_r1_fupd (K
-       (gc_state_r3 state ++ gc_state_r1 state)) (gc_state_r3_fupd (K
-       []) state) | ref :: r2 ->
+     (match gc_state_r2 state with [] -> gc_state_r1_fupd (K (APPEND
+       (gc_state_r3 state) (gc_state_r1 state))) (gc_state_r3_fupd (K
+       []) state) | CONS ref r2 ->
        (match ref with DataElement xs l d ->
          (let (xs,state) = gen_gc_gc_move_list conf state xs in
-         let r3 = gc_state_r3 state ++ [DataElement xs l d] in
+         let r3 = APPEND (gc_state_r3 state) [DataElement xs l d] in
            gc_move_refs conf (gc_state_r3_fupd (K r3)
              (gc_state_r2_fupd (K r2) state))) | _6 ->
              gc_state_ok_fupd (K F) state))`];;
@@ -153,10 +156,11 @@ let gen_gc_gc_move_loop_def,gen_gc_gc_move_loop_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   [`gen_gc_gc_move_loop conf state (clock:num) =
      (match gc_state_r4 state with [] ->
-       (match gc_state_h2 state with [] -> state | (h :: h2) ->
+       (match gc_state_h2 state with [] -> state | (CONS h h2) ->
           (let state = gen_gc_gc_move_data conf state in
           if clock = 0 then gc_state_ok_fupd (K F) state else
-            gen_gc_gc_move_loop conf state (clock - 1))) | (h :: r4) ->
+            gen_gc_gc_move_loop conf state (clock - 1))) | (CONS h r4)
+            ->
        (let state = gc_move_refs conf (gc_state_r4_fupd (K [])
          (gc_state_r2_fupd (K (gc_state_r4 state)) state)) in
        if clock = 0 then gc_state_ok_fupd (K F) state else
@@ -190,17 +194,19 @@ let is_final_def = new_definition
 let gen_gc_gc_inv_def = new_definition
   `gen_gc_gc_inv conf state (heap0:(('a,'b)heap_element) list)
   (roots0:('a heap_address) list) =
-     (let heap' = gc_state_h1 state ++ gc_state_h2 state ++
-                 heap_expand (gc_state_n state) ++ gc_state_r4
-                 state ++ gc_state_r3 state ++ gc_state_r2 state ++
-                   gc_state_r1 state in
+     (let heap' = APPEND (APPEND (APPEND (APPEND (APPEND (APPEND
+       (gc_state_h1 state) (gc_state_h2 state))
+                 (heap_expand (gc_state_n state))) (gc_state_r4
+                 state)) (gc_state_r3 state)) (gc_state_r2 state))
+                   (gc_state_r1 state) in
      (
       // lengths
-      heap_length (gc_state_h1 state ++ gc_state_h2 state) =
+      heap_length (APPEND (gc_state_h1 state) (gc_state_h2 state)) =
         gc_state_a state) /\
-     (gc_state_a state + gc_state_n state + heap_length (gc_state_r4
-       state ++ gc_state_r3 state ++ gc_state_r2 state ++ gc_state_r1
-       state) = gen_gc_conf_limit conf) /\
+     (gc_state_a state + gc_state_n state + heap_length (APPEND
+       (APPEND (APPEND (gc_state_r4 state) (gc_state_r3 state))
+       (gc_state_r2 state)) (gc_state_r1 state)) = gen_gc_conf_limit
+       conf) /\
      (heap_length (FILTER (\h. ~(isForwardPointer h)) (gc_state_heap
        state)) = gc_state_n state) /\
      ((heap_length (gc_state_heap state)) = gen_gc_conf_limit conf)
@@ -210,26 +216,26 @@ let gen_gc_gc_inv_def = new_definition
      heap_ok heap0 (gen_gc_conf_limit conf) /\
      heaps_similar heap0 (gc_state_heap state) /\
      // ----
-     EVERY isDataElement (gc_state_h1 state) /\ EVERY isDataElement
+     ALL isDataElement (gc_state_h1 state) /\ ALL isDataElement
        (gc_state_h2 state) /\
-     EVERY isDataElement (gc_state_r1 state) /\ EVERY isDataElement
+     ALL isDataElement (gc_state_r1 state) /\ ALL isDataElement
        (gc_state_r2 state) /\
-     EVERY isDataElement (gc_state_r3 state) /\ EVERY isDataElement
+     ALL isDataElement (gc_state_r3 state) /\ ALL isDataElement
        (gc_state_r4 state) /\
      (
       // ----
-      !x l d. MEM (DataElement x l d) (gc_state_r4 state ++
-        gc_state_r3 state ++ gc_state_r2 state ++ gc_state_r1 state) ==>
-        gen_gc_conf_isRef
+      !x l d. MEM (DataElement x l d) (APPEND (APPEND (APPEND
+        (gc_state_r4 state) (gc_state_r3 state)) (gc_state_r2 state))
+        (gc_state_r1 state)) ==> gen_gc_conf_isRef
            conf d) /\
      // ----
      BIJ (heap_map1 (gc_state_heap state)) (FDOM (heap_map 0
        (gc_state_heap state)))
-         (heap_addresses 0 (gc_state_h1 state ++ gc_state_h2 state)
-           UNION
+         (heap_addresses 0 (APPEND (gc_state_h1 state) (gc_state_h2
+           state)) UNION
           heap_addresses (gc_state_a state + gc_state_n state)
-            (gc_state_r4 state ++ gc_state_r3 state ++ gc_state_r2
-              state ++ gc_state_r1 state)) /\
+            (APPEND (APPEND (APPEND (gc_state_r4 state) (gc_state_r3
+              state)) (gc_state_r2 state)) (gc_state_r1 state))) /\
      // ----
      (!i j.
        (FLOOKUP (heap_map 0 (gc_state_heap state)) i = SOME j) ==>
@@ -252,18 +258,18 @@ hol4_overload "gc_inv" "gen_gc_gc_inv";;
 (* [local] *)
 let heap_map_ForwardPointer_lemma = prove
  (`!ptr.
-     heap_map 0 (ha ++ (ForwardPointer ptr a l :: hb)) =
-     heap_map 0 (ha ++ (DataElement ys l d :: hb)) |+ (heap_length
-       ha,ptr)`,
+     heap_map 0 (APPEND ha (CONS (ForwardPointer ptr a l) hb)) =
+     heap_map 0 (APPEND ha (CONS (DataElement ys l d) hb)) |+
+       (heap_length ha,ptr)`,
   CHEAT_TAC);;
 
 (* isSomeDataOrForward_lemma[local] *)
 let gen_gc_isSomeDataOrForward_lemma = prove
  (`!ha ptr.
-     isSomeDataOrForward (heap_lookup ptr (ha ++ (DataElement ys l d
-       :: hb))) <=>
-     isSomeDataOrForward (heap_lookup ptr (ha ++ (ForwardPointer a
-       u l :: hb)))`,
+     isSomeDataOrForward (heap_lookup ptr (APPEND ha (CONS
+       (DataElement ys l d) hb))) <=>
+     isSomeDataOrForward (heap_lookup ptr (APPEND ha (CONS
+       (ForwardPointer a u l) hb)))`,
   CHEAT_TAC);;
 
 (* HOL4 gen_gcScript.sml:264-266: ML code, not ported *)
@@ -290,17 +296,17 @@ let NOT_IN_heap_addresses_gt = prove
 
 (* [local] *)
 let heap_length_CONS = prove
- (`!x xs. heap_length (x :: xs) = el_length x + heap_length xs`,
+ (`!x xs. heap_length (CONS x xs) = el_length x + heap_length xs`,
   CHEAT_TAC);;
 
 let heap_lookup_LENGTH = prove
- (`!xs x ys l. (heap_length xs = l) ==> (heap_lookup l (xs ++ (x ::
-  ys)) = SOME x)`,
+ (`!xs x ys l. (heap_length xs = l) ==> (heap_lookup l (APPEND xs
+  (CONS x ys)) = SOME x)`,
   CHEAT_TAC);;
 
 let heap_lookup_APPEND = prove
  (`!j xs ys.
-    heap_lookup j (xs ++ ys) =
+    heap_lookup j (APPEND xs ys) =
       (if j < heap_length xs then heap_lookup j xs else heap_lookup
         (j - heap_length xs) ys)`,
   CHEAT_TAC);;
@@ -326,8 +332,10 @@ let gen_gc_ADDR_MAP_EQ = prove
 (* heaps_similar_lemma[local] *)
 let gen_gc_heaps_similar_lemma = prove
  (`!ha heap0 hb ptr ys l d a l.
-     heaps_similar heap0 (ha ++ [DataElement ys l d] ++ hb) ==>
-     heaps_similar heap0 (ha ++ [ForwardPointer ptr a l] ++ hb)`,
+     heaps_similar heap0 (APPEND (APPEND ha [DataElement ys l d]) hb)
+       ==>
+     heaps_similar heap0 (APPEND (APPEND ha [ForwardPointer ptr a
+       l]) hb)`,
   CHEAT_TAC);;
 
 (* gc_move_thm *)
@@ -357,9 +365,9 @@ let gen_gc_gc_move_ALT = prove
  (`gen_gc_gc_move conf state y =
      (let (y',state') = gen_gc_gc_move conf (gc_state_r4_fupd (K [])
        (gc_state_h2_fupd (K []) state)) y in
-       (y',gc_state_r4_fupd (K (gc_state_r4 state' ++ gc_state_r4
-         state)) (gc_state_h2_fupd (K (gc_state_h2 state ++
-         gc_state_h2 state')) state')))`,
+       (y',gc_state_r4_fupd (K (APPEND (gc_state_r4 state')
+         (gc_state_r4 state))) (gc_state_h2_fupd (K (APPEND
+         (gc_state_h2 state) (gc_state_h2 state'))) state')))`,
   CHEAT_TAC);;
 
 (* gc_move_list_thm[local] *)
@@ -392,22 +400,23 @@ let gen_gc_gc_move_list_ALT = prove
         (let (ys',state') = gen_gc_gc_move_list conf
           (gc_state_r4_fupd (K []) (gc_state_h2_fupd (K []) state)) ys
           in
-        (ys',gc_state_r4_fupd (K (gc_state_r4 state' ++ gc_state_r4
-          state)) (gc_state_h2_fupd (K (gc_state_h2 state ++
-          gc_state_h2 state')) state')))`,
+        (ys',gc_state_r4_fupd (K (APPEND (gc_state_r4 state')
+          (gc_state_r4 state))) (gc_state_h2_fupd (K (APPEND
+          (gc_state_h2 state) (gc_state_h2 state'))) state')))`,
   CHEAT_TAC);;
 
 (* gc_move_list_APPEND_lemma[local] *)
 let gen_gc_gc_move_list_APPEND_lemma = prove
  (`!ys state.
      (gen_gc_gc_move_list conf state ys = (ys',state')) ==>
-       (?h2' r4'. (gc_state_h2 state' = gc_state_h2 state ++ h2')
-         /\ (gc_state_r4 state' = r4' ++ gc_state_r4 state))`,
+       (?h2' r4'. (gc_state_h2 state' = APPEND (gc_state_h2 state)
+         h2') /\ (gc_state_r4 state' = APPEND r4' (gc_state_r4
+         state)))`,
   CHEAT_TAC);;
 
 (* heap_addresses_APPEND[local] *)
 let gen_gc_heap_addresses_APPEND = prove
- (`!xs ys n. heap_addresses n (xs ++ ys) =
+ (`!xs ys n. heap_addresses n (APPEND xs ys) =
              heap_addresses n xs UNION heap_addresses (n +
                heap_length xs) ys`,
   CHEAT_TAC);;
@@ -415,7 +424,7 @@ let gen_gc_heap_addresses_APPEND = prove
 (* [local] *)
 let heap_addresses_APPEND_IN = prove
  (`!xs ys n j.
-     j IN heap_addresses n (xs ++ ys) ==>
+     j IN heap_addresses n (APPEND xs ys) ==>
      j IN heap_addresses n xs \/ j IN heap_addresses (n +
        heap_length xs) ys`,
   CHEAT_TAC);;
@@ -423,8 +432,9 @@ let heap_addresses_APPEND_IN = prove
 (* [local] *)
 let GREATER_IMP_heap_lookup = prove
  (`!ys xs j.
-   (heap_length (xs ++ ys) <= j + heap_length ys) ==>
-   (heap_lookup j (xs ++ ys) = heap_lookup (j - heap_length xs) ys)`,
+   (heap_length (APPEND xs ys) <= j + heap_length ys) ==>
+   (heap_lookup j (APPEND xs ys) = heap_lookup (j - heap_length xs)
+     ys)`,
   CHEAT_TAC);;
 
 let heap_lookup_IMP_MEM = prove
@@ -486,15 +496,15 @@ let gc_move_data_thm = prove
 let gc_move_refs_lemma = prove
  (`!state l n b xs' t state'.
       gen_gc_gc_inv conf state heap0 roots0 /\
-      (gc_state_r2 state = DataElement l n b :: t) /\
+      (gc_state_r2 state = CONS (DataElement l n b) t) /\
       (gen_gc_gc_move_list conf state l = (xs',state')) /\
       (!ptr u. MEM (gc_shared_Pointer ptr u) l ==>
         isSomeDataOrForward (heap_lookup ptr (gc_state_heap state))
           /\
         reachable_addresses roots0 heap0 ptr) ==>
       gen_gc_gc_inv conf
-        (gc_state_r2_fupd (K t) (gc_state_r3_fupd (K (gc_state_r3
-          state' ++ [DataElement xs' n b])) state'))
+        (gc_state_r2_fupd (K t) (gc_state_r3_fupd (K (APPEND
+          (gc_state_r3 state') [DataElement xs' n b])) state'))
         heap0 roots0`,
   CHEAT_TAC);;
 
@@ -545,16 +555,16 @@ let gc_move_refs_heap_length = prove
 let gc_move_loop_gc_inv = prove
  (`!conf state h t.
      gen_gc_gc_inv conf state heap0 roots0 /\ (gc_state_r2 state =
-       []) /\ (gc_state_r4 state = h :: t) /\
+       []) /\ (gc_state_r4 state = CONS h t) /\
      (gc_state_r3 state = []) ==>
      gen_gc_gc_inv conf (gc_state_r4_fupd (K []) (gc_state_r2_fupd
-       (K (h :: t)) state)) heap0 roots0`,
+       (K (CONS h t)) state)) heap0 roots0`,
   CHEAT_TAC);;
 
 (* [local] *)
 let reachable_addresses_gc_inv_r4 = prove
  (`gen_gc_gc_inv conf state heap roots0 /\
-   (gc_state_r4 state = DataElement l n b :: t) /\ MEM
+   (gc_state_r4 state = CONS (DataElement l n b) t) /\ MEM
      (gc_shared_Pointer ptr u) l ==>
    reachable_addresses roots0 heap ptr`,
   CHEAT_TAC);;
@@ -607,7 +617,7 @@ let gen_gc_thm = prove
 
 (* LESS_IMP_heap_lookup *)
 let gen_gc_LESS_IMP_heap_lookup = prove
- (`!xs j ys. j < heap_length xs ==> (heap_lookup j (xs ++ ys) =
+ (`!xs j ys. j < heap_length xs ==> (heap_lookup j (APPEND xs ys) =
   heap_lookup j xs)`,
   CHEAT_TAC);;
 
@@ -618,14 +628,14 @@ let gen_gc_LESS_IMP_heap_lookup = prove
 let heap_lookup_AND_APPEND_IMP = prove
  (`!xs n ys d d1.
      (heap_lookup n xs = SOME d) /\
-     (heap_lookup n (xs ++ ys) = SOME d1) ==> (d1 = d)`,
+     (heap_lookup n (APPEND xs ys) = SOME d1) ==> (d1 = d)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let heap_lookup_AND_PREPEND_IMP = prove
  (`!n xs ys d d1.
      (heap_lookup n ys = SOME d) /\
-     (heap_lookup (heap_length xs + n) (xs ++ ys) = SOME d1) ==>
+     (heap_lookup (heap_length xs + n) (APPEND xs ys) = SOME d1) ==>
      (d1 = d)`,
   CHEAT_TAC);;
 
@@ -642,14 +652,14 @@ let FILTER_isForward_heap_expand_lemma = prove
 (* [local] *)
 let heap_lookup_CONS_IMP = prove
  (`(heap_lookup j ys = SOME z) ==>
-   (heap_lookup (j + heap_length [x]) (x :: ys) = SOME z)`,
+   (heap_lookup (j + heap_length [x]) (CONS x ys) = SOME z)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let heap_lookup_PREPEND_EXTEND = prove
  (`!xs j ys z.
    (heap_lookup j ys = SOME z) ==>
-   (heap_lookup (heap_length xs + j) (xs ++ ys) = SOME z)`,
+   (heap_lookup (heap_length xs + j) (APPEND xs ys) = SOME z)`,
   CHEAT_TAC);;
 
 let gen_gc_ok = prove
@@ -657,8 +667,8 @@ let gen_gc_ok = prove
     roots_ok roots heap /\ heap_ok (heap:(('a,'b)heap_element) list)
       (gen_gc_conf_limit conf) ==>
     (?state roots' heap'.
-      (heap' = gc_state_h1 state ++ heap_expand (gc_state_n state) ++
-        gc_state_r1 state) /\
+      (heap' = APPEND (APPEND (gc_state_h1 state) (heap_expand
+        (gc_state_n state))) (gc_state_r1 state)) /\
       (gen_gc conf ((roots:('a heap_address) list),heap) =
         (roots',state)) /\ gc_state_ok
       state /\
@@ -676,7 +686,7 @@ let IN_heap_addresses_LESS = prove
 (* heap_lookup_EXTEND *)
 let gen_gc_heap_lookup_EXTEND = prove
  (`!xs n ys x. (heap_lookup n xs = SOME x) ==>
-                (heap_lookup n (xs ++ ys) = SOME x)`,
+                (heap_lookup n (APPEND xs ys) = SOME x)`,
   CHEAT_TAC);;
 
 let gen_gc_related = prove
@@ -687,14 +697,15 @@ let gen_gc_related = prove
       (gen_gc conf ((roots:('a heap_address) list),heap) =
          (ADDR_MAP (FAPPLY f) roots,state)) /\
       (FDOM f = reachable_addresses roots heap) /\
-      (FRANGE f = {a | isSomeDataElement (heap_lookup a (gc_state_h1
-        state ++ heap_expand (gc_state_n state) ++ gc_state_r1 state))})
-        /\
-      (heap_length (gc_state_h1 state ++ gc_state_r1 state) =
+      (FRANGE f = {a | isSomeDataElement (heap_lookup a (APPEND
+        (APPEND (gc_state_h1 state) (heap_expand (gc_state_n state)))
+        (gc_state_r1 state)))}) /\
+      (heap_length (APPEND (gc_state_h1 state) (gc_state_r1 state)) =
        heap_length (heap_filter (FDOM f) heap)) /\
-      gc_related f heap (gc_state_h1 state ++ heap_expand (gc_state_n
-        state) ++ gc_state_r1 state) /\
-      EVERY isDataElement (gc_state_h1 state ++ gc_state_r1 state))`,
+      gc_related f heap (APPEND (APPEND (gc_state_h1 state)
+        (heap_expand (gc_state_n state))) (gc_state_r1 state)) /\
+      ALL isDataElement (APPEND (gc_state_h1 state) (gc_state_r1
+        state)))`,
   CHEAT_TAC);;
 
 (* gc_forward_ptr_ok *)

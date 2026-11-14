@@ -85,12 +85,12 @@ let knowledge_FIELDS = define_record "knowledge"
    what the port found for it *)
 let listCmp_def,listCmp_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0 + list_size (\n. n) x1)`
-  [`(listCmp ((hd1:num) :: tl1) ((hd2:num) :: tl2) =
+  [`(listCmp (CONS (hd1:num) tl1) (CONS (hd2:num) tl2) =
     (if hd1 = hd2 then listCmp tl1 tl2 else if hd1 > hd2 then
       GREATER else Less)) /\
    (listCmp [] [] = Equal) /\
-   (listCmp (hd1 :: tl1) [] = GREATER) /\
-   (listCmp [] (hd2 :: tl2) = Less)`];;
+   (listCmp (CONS hd1 tl1) [] = GREATER) /\
+   (listCmp [] (CONS hd2 tl2) = Less)`];;
 
 let empty_data_def = new_definition
   `empty_data = mk_knowledge LN LN [] balanced_map_empty
@@ -111,7 +111,7 @@ let invalidate_data_def = new_definition
   instructions); empties the data if any of them is tracked. *)
 let invalidate_regs_def,invalidate_regs_ind = define_rec
   [`invalidate_regs data [] = data`;
-   `invalidate_regs data (r :: rs) = invalidate_regs
+   `invalidate_regs data (CONS r rs) = invalidate_regs
   (invalidate_data data r) rs`];;
 
 (* Enter an odd register that a stored fact reads into the tracked set as a
@@ -125,7 +125,7 @@ let register_read_def = new_definition
 
 let register_reads_def,register_reads_ind = define_rec
   [`register_reads data [] = data`;
-   `register_reads data (r :: rs) = register_reads (register_read
+   `register_reads data (CONS r rs) = register_reads (register_read
   data r) rs`];;
 
 (* REGISTER TRANSFORMATIONS *)
@@ -154,7 +154,7 @@ let canonicalMultRegs_def = new_definition
 
 let map_insert_def,map_insert_ind = define_rec
   [`map_insert [] m = m`;
-   `map_insert ((x,y) :: xs) m =
+   `map_insert (CONS (x,y) xs) m =
       insert x y (map_insert xs m)`];;
 
 let canonicalMoveRegs_def = new_definition
@@ -163,7 +163,7 @@ let canonicalMoveRegs_def = new_definition
    // destination is then tracked and fails the keep_data check below, so
    // no equivalence is recorded across a self-interfering parallel move.
    (let data = register_reads data (MAP SND moves) in
-   if EVERY (keep_data (knowledge_to_canonical data)) (MAP FST moves)
+   if ALL (keep_data (knowledge_to_canonical data)) (MAP FST moves)
      then
      let xs = FILTER (\(a,b). ~(EVEN a) /\ ~(EVEN b)) moves in
      let ys = MAP (\(a,b). (a,canonicalRegs data b)) xs in
@@ -259,14 +259,14 @@ let regImmToNumList_def = define_cases
    `regImmToNumList (Imm w) = [34; wordToNum w]`];;
 
 let arithToNumList_def = define_cases
-  [`arithToNumList (asm_Binop op r1 r2 ri) = [25; arithOpToNum op; r2
-  + 100] ++ regImmToNumList ri`;
+  [`arithToNumList (asm_Binop op r1 r2 ri) = APPEND [25; arithOpToNum
+  op; r2 + 100] (regImmToNumList ri)`;
    `arithToNumList (asm_LongMul r1 r2 r3 r4) = [26; r3 + 100; r4 +
   100]`;
    `arithToNumList (asm_LongDiv r1 r2 r3 r4 r5) = [27; r3 + 100; r4 +
   100; r5 + 100]`;
-   `arithToNumList (asm_Shift s r1 r2 ri) = [28; shiftToNum s; r2 +
-  100] ++ regImmToNumList ri`;
+   `arithToNumList (asm_Shift s r1 r2 ri) = APPEND [28; shiftToNum s;
+  r2 + 100] (regImmToNumList ri)`;
    `arithToNumList (asm_Div r1 r2 r3) = [29; r2 + 100; r3 + 100]`;
    `arithToNumList (asm_AddCarry r1 r2 r3 r4) = [30; r2 + 100; r3 +
   100]`;
@@ -315,8 +315,8 @@ let instToNumList_def = new_definition
   `instToNumList x1 =
       match x1 with
         asm_Const r w -> [2; wordToNum w]
-      | (Arith a) -> 3 :: (arithToNumList a)
-      | (asm_FP fp) -> 4 :: (fpToNumList fp)
+      | (Arith a) -> CONS 3 (arithToNumList a)
+      | (asm_FP fp) -> CONS 4 (fpToNumList fp)
       | _1 -> [1]`;;
 
 (*
@@ -574,8 +574,8 @@ let word_cse_def,word_cse_ind = define_rec
                         (knowledge_to_latest data)))
                         (knowledge_to_canonical_fupd (K (insert r r
                         (knowledge_to_canonical data)))
-                        (knowledge_gets_mem_fupd (K ((x,r) ::
-                        knowledge_gets_mem data)) data)),
+                        (knowledge_gets_mem_fupd (K (CONS (x,r)
+                        (knowledge_gets_mem data))) data)),
                        wordLang_Get r x)) | SOME k -> (if EVEN r
                          then (data,wordLang_Move 1 [(r,lookup_any k
                          (knowledge_to_latest data) k)]) else
@@ -601,7 +601,7 @@ let word_cse_def,word_cse_ind = define_rec
                             (lookup_any v (knowledge_to_canonical data)
                             v) (knowledge_to_canonical
                               data))) (knowledge_gets_mem_fupd (K
-                                ((x,canonicalRegs data v) ::
+                                (CONS (x,canonicalRegs data v)
                                 new_gets_mem)) data),
                            wordLang_Set x e)))`;
    `word_cse data (wordLang_MustTerminate p) =
@@ -691,8 +691,8 @@ let word_cse_Seqs_def,word_cse_Seqs_ind = define_wf
   `MEASURE (\x0. list_size (wordLang_prog_size (\x. 0)) x0)`
   [`word_cse_Seqs [] = wordLang_Skip`;
    `word_cse_Seqs [x] = x`;
-   `word_cse_Seqs (x :: y :: xs) = wordLang_Seq x (word_cse_Seqs (y
-  :: xs))`];;
+   `word_cse_Seqs (CONS x (CONS y xs)) = wordLang_Seq x
+  (word_cse_Seqs (CONS y xs))`];;
 hol4_overload "Seqs" "word_cse_Seqs";;
 
 (* [local] *)

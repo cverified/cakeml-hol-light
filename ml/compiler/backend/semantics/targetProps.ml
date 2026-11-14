@@ -101,7 +101,7 @@ let find_next_interference_def,find_next_interference_ind = define_wf
              (machine_config_next_interfer mc) ms1 in
            let mc = machine_config_next_interfer_fupd (K new_oracle)
              mc in
-             if EVERY (target_state_ok (machine_config_target mc))
+             if ALL (target_state_ok (machine_config_target mc))
                [ms; ms1; ms2] /\
                 (!x. ~(x IN machine_config_prog_addresses mc) ==>
                   target_get_byte (machine_config_target
@@ -179,10 +179,10 @@ let find_next_interference_def,find_next_interference_ind = define_wf
                               (match call_FFI ffi (EL ffi_index
                                 (machine_config_ffi_names mc)) [nb]
                               (
-                              (let w = target_get_reg
+                              APPEND (let w = target_get_reg
                                 (machine_config_target mc) ms reg in
                               if nb = (n2w 0) then word_to_bytes w F
-                                else word_to_bytes_aux (w2n nb) w F) ++
+                                else word_to_bytes_aux (w2n nb) w F)
                                 (word_to_bytes ad F)) with FFI_final
                                 outcome -> NONE | FFI_return new_ffi
                                 new_bytes ->
@@ -582,11 +582,12 @@ let next_interference_MappedWrite = prove
        ms) nb (Addr r off) reg pc' (machine_config_target
        mc) ms (machine_config_prog_addresses mc) /\
      call_FFI ffi (EL index (machine_config_ffi_names mc)) [nb]
-       ((let w = target_get_reg (machine_config_target mc) ms reg in
+       (APPEND (let w = target_get_reg (machine_config_target mc) ms
+         reg in
            if nb = (n2w 0) then word_to_bytes w F else
-             word_to_bytes_aux (w2n nb) w F) ++
-        word_to_bytes (target_get_reg (machine_config_target mc) ms r
-          + off) F) =
+             word_to_bytes_aux (w2n nb) w F)
+        (word_to_bytes (target_get_reg (machine_config_target mc) ms
+          r + off) F)) =
        FFI_return new_ffi new_bytes ==>
      next_interference (mc:('b,'a,'c)machine_config) ffi ms =
        SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer
@@ -627,12 +628,12 @@ let next_interference_SharedMem = prove
           mc) ms) nb (Addr r off) reg pc' (machine_config_target
           mc) ms (machine_config_prog_addresses mc) /\
         call_FFI ffi (EL index (machine_config_ffi_names mc)) [nb]
-          ((let w = target_get_reg (machine_config_target mc) ms reg
-            in
+          (APPEND (let w = target_get_reg (machine_config_target mc)
+            ms reg in
               if nb = (n2w 0) then word_to_bytes w F else
-                word_to_bytes_aux (w2n nb) w F) ++
-           word_to_bytes (target_get_reg (machine_config_target mc)
-             ms r + off) F) =
+                word_to_bytes_aux (w2n nb) w F)
+           (word_to_bytes (target_get_reg (machine_config_target mc)
+             ms r + off) F)) =
           FFI_return new_ffi new_bytes) ==>
      next_interference (mc:('b,'a,'c)machine_config) ffi ms =
        SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer

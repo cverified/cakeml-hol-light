@@ -29,31 +29,31 @@ let disjImpI = prove
 
 (* [simp] *)
 let firstSet_nUQTyOp = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nUQTyOp :: rest) =
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nUQTyOp) rest) =
    {tokens_AlphaT s | T} UNION {tokens_SymbolT s | T}`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nTyOp = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nTyOp :: rest) =
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nTyOp) rest) =
    {tokens_AlphaT s | T} UNION {tokens_SymbolT s | T} UNION
      {tokens_LongidT s1 s2 | T}`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nPTbase = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nPTbase :: rest) =
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nPTbase) rest) =
    firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nt')) nTyOp] UNION {tokens_LparT} UNION {tokens_TyvarT s | T}`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nTbaseList = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nTbaseList :: rest) =
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nTbaseList) rest) =
    firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nt')) nPTbase] UNION firstSet cmlG rest`,
   CHEAT_TAC);;
@@ -118,13 +118,13 @@ let IMAGE_GSPEC1 = prove
 
 (* [local,simp] *)
 let BIGUNION_singletons = prove
- (`BIGUNION (hol4_GSPEC (\a. {f a},P a)) = hol4_GSPEC (\a. f a,P a)`,
+ (`UNIONS (hol4_GSPEC (\a. {f a},P a)) = hol4_GSPEC (\a. f a,P a)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nMultOps = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nMultOps) ::
-  rest) =
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nMultOps)) rest) =
    {tokens_AlphaT (implode "div"),tokens_AlphaT (implode
      "mod"),tokens_StarT} UNION {tokens_SymbolT s | validMultSym
      (explode s)}`,
@@ -132,7 +132,7 @@ let firstSet_nMultOps = prove
 
 (* [simp] *)
 let firstSet_nRelOps = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nRelOps) ::
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num) nRelOps))
   rest) =
    tokens_EqualsT INSERT {tokens_SymbolT s | validRelSym (explode
      s)}`,
@@ -140,20 +140,21 @@ let firstSet_nRelOps = prove
 
 (* [simp] *)
 let firstSet_nAddOps = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nAddOps) ::
-  rest) = {tokens_SymbolT s | validAddSym (explode s)}`,
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nAddOps)) rest) = {tokens_SymbolT s | validAddSym (explode s)}`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nCompOps = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nCompOps) ::
-  rest) = {tokens_AlphaT (implode "o"),tokens_SymbolT (implode ":=")}`,
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nCompOps)) rest) = {tokens_AlphaT (implode "o"),tokens_SymbolT
+  (implode ":=")}`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nListOps = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nListOps) ::
-  rest) = {tokens_SymbolT s | validListSym (explode s)}`,
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nListOps)) rest) = {tokens_SymbolT s | validListSym (explode s)}`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -171,8 +172,8 @@ let firstSet_nSpecLineList = prove
   CHEAT_TAC);;
 
 let firstSet_nV = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV
-  :: rest) =
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nV) rest) =
    {tokens_AlphaT s | ~(s = (implode "")) /\ ~(isUpper (strsub s 0))
      /\ ~(s = (implode "before")) /\ ~(s = (implode "div")) /\ ~(s =
      (implode "mod")) /\ ~(s = (implode "o"))} UNION
@@ -188,14 +189,14 @@ let firstSet_nFQV = prove
   CHEAT_TAC);;
 
 let firstSet_nUQConstructorName = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nUQConstructorName :: rest) =
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nUQConstructorName) rest) =
    {tokens_AlphaT s | ~(s = (implode "")) /\ isUpper (strsub s 0)}`,
   CHEAT_TAC);;
 
 let firstSet_nConstructorName = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nConstructorName :: rest) =
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nConstructorName) rest) =
    {tokens_LongidT str s | (str,s) | ~(s = (implode "")) /\ isAlpha
      (strsub s 0) /\ isUpper (strsub s 0)} UNION
                               {tokens_AlphaT s | ~(s = (implode
@@ -206,8 +207,8 @@ let firstSet_nConstructorName = prove
 let firstSetML_nConstructorName = prove
  (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) ==>
-     (firstSetML cmlG sn ((\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName :: rest) =
+     (firstSetML cmlG sn (CONS ((\nt'. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName) rest) =
       firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
         nt')) nConstructorName])`,
   CHEAT_TAC);;
@@ -215,8 +216,8 @@ let firstSetML_nConstructorName = prove
 (* [simp] *)
 let firstSetML_nV = prove
  (`~((INL:MMLnonT->MMLnonT+num) nV IN sn) ==>
-     (firstSetML cmlG sn ((\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nV :: rest) = firstSet cmlG
+     (firstSetML cmlG sn (CONS ((\nt'. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nt')) nV) rest) = firstSet cmlG
        [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV])`,
   CHEAT_TAC);;
 
@@ -224,8 +225,8 @@ let firstSetML_nV = prove
 let firstSetML_nFQV = prove
  (`~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nV IN sn) ==>
-     (firstSetML cmlG sn ((\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nFQV :: rest) = firstSet cmlG
+     (firstSetML cmlG sn (CONS ((\nt'. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nt')) nFQV) rest) = firstSet cmlG
        [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nFQV])`,
   CHEAT_TAC);;
 
@@ -246,8 +247,8 @@ let firstSet_nEliteral = prove
 (* [simp] *)
 let firstSetML_nEliteral = prove
  (`~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-     firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num)
-       nEliteral) :: rest) =
+     firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+       nEliteral)) rest) =
      firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num)
        nEliteral)]`,
   CHEAT_TAC);;
@@ -273,8 +274,8 @@ let firstSetML_nEbase = prove
   ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
   nEliteral IN sn) ==>
-     firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num)
-       nEbase) :: rest) =
+     firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+       nEbase)) rest) =
      firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
@@ -292,8 +293,8 @@ let firstSetML_nEapp = prove
   ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
   nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-   firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num) nEapp)
-     :: rest) =
+   firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+     nEapp)) rest) =
    firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
@@ -312,8 +313,8 @@ let firstSetML_nEmult = prove
   ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
   nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-   firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num) nEmult)
-     :: rest) =
+   firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+     nEmult)) rest) =
    firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
@@ -333,15 +334,15 @@ let firstSetML_nEadd = prove
   nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-     firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num)
-       nEadd) :: rest) =
+     firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+       nEadd)) rest) =
      firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nElistop = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nElistop) ::
-  rest) =
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nElistop)) rest) =
    firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
@@ -356,14 +357,14 @@ let firstSetML_nElistop = prove
   ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-   firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num)
-     nElistop) :: rest) =
+   firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+     nElistop)) rest) =
    firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nErel = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nErel) ::
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num) nErel))
   rest) = firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num)
   nEbase)]`,
   CHEAT_TAC);;
@@ -380,16 +381,16 @@ let firstSetML_nErel = prove
   ~((INL:MMLnonT->MMLnonT+num) nErel IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-   firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num)
-     nErel) :: rest) = firstSet cmlG [(\nt'. grammar_NT
+   firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+     nErel)) rest) = firstSet cmlG [(\nt'. grammar_NT
      ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nEcomp = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nEcomp) ::
-  rest) = firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num)
-  nEbase)]`,
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nEcomp)) rest) = firstSet cmlG [grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -405,15 +406,15 @@ let firstSetML_nEcomp = prove
   ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-     firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num)
-       nEcomp) :: rest) = firstSet cmlG [(\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]`,
+     firstSetML cmlG sn (CONS (grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nEcomp)) rest) = firstSet cmlG
+       [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nEbefore = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbefore) ::
-  rest) =
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nEbefore)) rest) =
    firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
@@ -431,16 +432,16 @@ let firstSetML_nEbefore = prove
   ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-     firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num)
-       nEbefore) :: rest) = firstSet cmlG [(\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]`,
+     firstSetML cmlG sn (CONS (grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nEbefore)) rest) = firstSet cmlG
+       [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nEtyped = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nEtyped) ::
-  rest) = firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num)
-  nEbase)]`,
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nEtyped)) rest) = firstSet cmlG [grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -458,16 +459,16 @@ let firstSetML_nEtyped = prove
   ~((INL:MMLnonT->MMLnonT+num) nEtyped IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-   firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num)
-     nEtyped) :: rest) = firstSet cmlG [(\nt'. grammar_NT
+   firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+     nEtyped)) rest) = firstSet cmlG [(\nt'. grammar_NT
      ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nElogicAND = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nElogicAND)
-  :: rest) = firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num)
-  nEbase)]`,
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nElogicAND)) rest) = firstSet cmlG [grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -486,17 +487,17 @@ let firstSetML_nElogicAND = prove
   ~((INL:MMLnonT->MMLnonT+num) nElogicAND IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-   firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num)
-     nElogicAND) :: rest) =
+   firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+     nElogicAND)) rest) =
    firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nt')) nEbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nElogicOR = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nElogicOR) ::
-  rest) = firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num)
-  nEbase)]`,
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nElogicOR)) rest) = firstSet cmlG [grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -516,17 +517,17 @@ let firstSetML_nElogicOR = prove
   ~((INL:MMLnonT->MMLnonT+num) nElogicOR IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-   firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num)
-     nElogicOR) :: rest) =
+   firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+     nElogicOR)) rest) =
    firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nt')) nEbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nEhandle = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nEhandle) ::
-  rest) = firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num)
-  nEbase)]`,
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nEhandle)) rest) = firstSet cmlG [grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -547,14 +548,15 @@ let firstSetML_nEhandle = prove
   ~((INL:MMLnonT->MMLnonT+num) nEhandle IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-   firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num)
-     nEhandle) :: rest) =
+   firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+     nEhandle)) rest) =
    firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nt')) nEbase]`,
   CHEAT_TAC);;
 
 let firstSet_nE = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nE) :: rest) =
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num) nE))
+  rest) =
    firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]
      UNION {tokens_IfT,tokens_CaseT,tokens_FnT,tokens_RaiseT}`,
   CHEAT_TAC);;
@@ -581,27 +583,27 @@ let firstSet_nNonETopLevelDecs = prove
 
 (* [simp] *)
 let firstSet_nEseq = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nEseq :: rest) = firstSet cmlG [(\nt'. grammar_NT
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nEseq) rest) = firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nE]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let NOTIN_firstSet_nE = prove
- (`~(tokens_ValT IN firstSet cmlG (grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nE) :: rest)) /\ ~(tokens_StructureT IN
-  firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nE) :: rest))
-  /\ ~(tokens_FunT IN firstSet cmlG (grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nE) :: rest)) /\ ~(tokens_DatatypeT IN
-  firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nE) :: rest))
-  /\ ~(tokens_ExceptionT IN firstSet cmlG (grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nE) :: rest)) /\ ~(tokens_SemicolonT IN
-  firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nE) :: rest))
-  /\ ~(tokens_RparT IN firstSet cmlG ((\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nE :: rest)) /\ ~(tokens_RbrackT
-  IN firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
-  nt')) nE :: rest)) /\ ~(tokens_TypeT IN firstSet cmlG ((\nt'.
-  grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nE :: rest))`,
+ (`~(tokens_ValT IN firstSet cmlG (CONS (grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nE)) rest)) /\ ~(tokens_StructureT IN
+  firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num) nE))
+  rest)) /\ ~(tokens_FunT IN firstSet cmlG (CONS (grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nE)) rest)) /\ ~(tokens_DatatypeT IN
+  firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num) nE))
+  rest)) /\ ~(tokens_ExceptionT IN firstSet cmlG (CONS (grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nE)) rest)) /\ ~(tokens_SemicolonT IN
+  firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num) nE))
+  rest)) /\ ~(tokens_RparT IN firstSet cmlG (CONS ((\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nE) rest)) /\ ~(tokens_RbrackT IN
+  firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nE) rest)) /\ ~(tokens_TypeT IN firstSet cmlG (CONS ((\nt'.
+  grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nE) rest))`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -622,40 +624,42 @@ let firstSetML_nE = prove
   ~((INL:MMLnonT->MMLnonT+num) nEhandle IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nE IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
   nElistop IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
-     firstSetML cmlG sn (grammar_NT ((INL:MMLnonT->MMLnonT+num) nE)
-       :: rest) = firstSet cmlG [(\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nE]`,
+     firstSetML cmlG sn (CONS (grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nE)) rest) = firstSet cmlG [(\nt'.
+       grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nE]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nElist1 = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nElist1) ::
-  rest) = firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nE)]`,
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nElist1)) rest) = firstSet cmlG [grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nE)]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nElist2 = prove
- (`firstSet cmlG (grammar_NT ((INL:MMLnonT->MMLnonT+num) nElist2) ::
-  rest) = firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nE)]`,
+ (`firstSet cmlG (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nElist2)) rest) = firstSet cmlG [grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nE)]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSetML_nPtuple = prove
  (`~((INL:MMLnonT->MMLnonT+num) nPtuple IN sn) ==> (firstSetML cmlG sn
-  ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPtuple ::
+  (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPtuple)
   rest) = {tokens_LparT})`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nPtuple = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nPtuple :: rest) = {tokens_LparT}`,
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nPtuple) rest) = {tokens_LparT}`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nPbase = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nPbase :: rest) =
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nPbase) rest) =
    {tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_OpT} UNION
      {tokens_IntT i | T} UNION {tokens_StringT s | T} UNION
                               {tokens_CharT c | T} UNION
@@ -673,16 +677,15 @@ let firstSetML_nPbase = prove
   nConstructorName IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
   nUQConstructorName IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nPtuple IN
   sn) ==>
-     firstSetML cmlG sn ((\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nPbase :: rest) = firstSet
-       cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-       nPbase]`,
+     firstSetML cmlG sn (CONS ((\nt'. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nt')) nPbase) rest) = firstSet cmlG
+       [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nPConApp = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nPConApp :: rest) =
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nPConApp) rest) =
    firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nt')) nConstructorName]`,
   CHEAT_TAC);;
@@ -692,16 +695,16 @@ let firstSetML_nPConApp = prove
  (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) ==>
-     firstSetML cmlG sn ((\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nPConApp :: rest) =
+     firstSetML cmlG sn (CONS ((\nt'. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nt')) nPConApp) rest) =
      firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
        nt')) nConstructorName]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nPapp = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nPapp :: rest) = firstSet cmlG [(\nt'. grammar_NT
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nPapp) rest) = firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
   CHEAT_TAC);;
 
@@ -713,16 +716,15 @@ let firstSetML_nPapp = prove
   nUQConstructorName IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nPtuple IN
   sn) /\ ~((INL:MMLnonT->MMLnonT+num) nPapp IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn) ==>
-     firstSetML cmlG sn ((\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nPapp :: rest) = firstSet
-       cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-       nPbase]`,
+     firstSetML cmlG sn (CONS ((\nt'. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nt')) nPapp) rest) = firstSet cmlG
+       [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nPcons = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nPcons :: rest) = firstSet cmlG [(\nt'. grammar_NT
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nPcons) rest) = firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
   CHEAT_TAC);;
 
@@ -735,16 +737,15 @@ let firstSetML_nPcons = prove
   sn) /\ ~((INL:MMLnonT->MMLnonT+num) nPapp IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nPcons IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn) ==>
-     firstSetML cmlG sn ((\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nPcons :: rest) = firstSet
-       cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-       nPbase]`,
+     firstSetML cmlG sn (CONS ((\nt'. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nt')) nPcons) rest) = firstSet cmlG
+       [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nPas = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nPas :: rest) = firstSet cmlG [(\nt'. grammar_NT
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nPas) rest) = firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
   CHEAT_TAC);;
 
@@ -758,36 +759,36 @@ let firstSetML_nPas = prove
   ~((INL:MMLnonT->MMLnonT+num) nPcons IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn) /\
   ~((INL:MMLnonT->MMLnonT+num) nPas IN sn) ==>
-     firstSetML cmlG sn ((\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nPas :: rest) = firstSet cmlG
+     firstSetML cmlG sn (CONS ((\nt'. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) nt')) nPas) rest) = firstSet cmlG
        [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nPattern = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nPattern :: rest) = firstSet cmlG [(\nt'. grammar_NT
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nPattern) rest) = firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nPatternList = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nPatternList :: rest) = firstSet cmlG [(\nt'. grammar_NT
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nPatternList) rest) = firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nPattern]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nPbaseList1 = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nPbaseList1 :: rest) = firstSet cmlG [(\nt'. grammar_NT
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nPbaseList1) rest) = firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let firstSet_nPEsfx = prove
- (`firstSet cmlG ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-  nPEsfx :: rest) =
+ (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+  nt')) nPEsfx) rest) =
    tokens_BarT INSERT tokens_HandleT INSERT firstSet cmlG rest`,
   CHEAT_TAC);;
 

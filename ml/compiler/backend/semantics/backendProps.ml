@@ -333,8 +333,7 @@ let restrict_nonzero_mono = prove
     MESON_TAC[]));;
 
 let restrict_nonzero_BIGUNION = prove
- (`restrict_nonzero (BIGUNION ss) = BIGUNION (IMAGE restrict_nonzero
-  ss)`,
+ (`restrict_nonzero (UNIONS ss) = UNIONS (IMAGE restrict_nonzero ss)`,
   (REWRITE_TAC[restrict_nonzero_def; EXTENSION; IN_UNIONS;
     EXISTS_IN_IMAGE;
                IN_ELIM_THM] THEN

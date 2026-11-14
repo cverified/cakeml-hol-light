@@ -40,7 +40,7 @@ let sub_unsafe_def = define_general
    value of an ML expression: length_def *)
 
 let mlvector_tabulate_def = new_definition
-  `mlvector_tabulate n f = Vector (GENLIST f n)`;;
+  `mlvector_tabulate n f = Vector (list_of_seq f n)`;;
 hol4_overload "tabulate" "mlvector_tabulate";;
 
 (* the termination relation that HOL4 gives, with
@@ -48,8 +48,8 @@ hol4_overload "tabulate" "mlvector_tabulate";;
 let toList_aux_def,toList_aux_ind = define_wf
   `MEASURE (\(vec,n). length vec - n)`
   [`toList_aux vec n =
-   (if length (vec) <= n then [] else sub vec n :: toList_aux
-     vec (n + 1))`];;
+   (if length (vec) <= n then [] else CONS (sub vec n)
+     (toList_aux vec (n + 1)))`];;
 
 (* HOL4 mlvectorScript.sml:36: ML code, not ported *)
 
@@ -108,8 +108,8 @@ hol4_overload "mapi" "mlvector_mapi";;
 
 (* [local] *)
 let less_than_length_thm = prove
- (`!xs n. (n < LENGTH xs) ==> (?ys z zs. (xs = ys ++ (z :: zs)) /\
-  (LENGTH ys = n))`,
+ (`!xs n. (n < LENGTH xs) ==> (?ys z zs. (xs = APPEND ys (CONS z zs))
+  /\ (LENGTH ys = n))`,
   CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -258,11 +258,11 @@ let mlvector_exists_def = new_definition
 let exists_aux_thm = prove
  (`!f vec n len.
      n + len = length vec ==>
-     exists_aux f vec n len = EXISTS f (DROP n (toList vec))`,
+     exists_aux f vec n len = EX f (DROP n (toList vec))`,
   CHEAT_TAC);;
 
 let exists_thm = prove
- (`!f vec. mlvector_exists f vec = EXISTS f (toList vec)`,
+ (`!f vec. mlvector_exists f vec = EX f (toList vec)`,
   CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -281,11 +281,11 @@ let all_def = new_definition
 let all_aux_thm = prove
  (`!f vec n len.
      n + len = length vec ==>
-     all_aux f vec n len = EVERY f (DROP n (toList vec))`,
+     all_aux f vec n len = ALL f (DROP n (toList vec))`,
   CHEAT_TAC);;
 
 let all_thm = prove
- (`!f vec. all f vec = EVERY f (toList vec)`,
+ (`!f vec. all f vec = ALL f (toList vec)`,
   CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is

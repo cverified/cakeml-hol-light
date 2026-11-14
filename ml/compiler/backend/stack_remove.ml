@@ -313,13 +313,13 @@ hol4_overload "prog_comp" "stack_remove_prog_comp";;
 let store_list_code_def,store_list_code_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (sum_size (\n. n) (\x. 0)) x2)`
   [`(store_list_code a t [] = Skip) /\
-   (store_list_code a t (INL w :: xs) =
+   (store_list_code a t (CONS (INL w) xs) =
      stackLang_Seq (stackLang_list_Seq [(\r w. Inst (asm_Const r w))
        t w; (\r a. Inst (asm_Mem asm_Store r (Addr a (n2w 0)))) t a;
        (\r1. Inst (Arith (asm_Binop asm_Add r1 r1 (Imm
        (bytes_in_word))))) a])
          (store_list_code a t xs)) /\
-   (store_list_code a t (INR i :: xs) =
+   (store_list_code a t (CONS (INR i) xs) =
      stackLang_Seq (stackLang_list_Seq [(\r a. Inst (asm_Mem
        asm_Store r (Addr a (n2w 0)))) i a; (\r1. Inst (Arith (asm_Binop
        asm_Add r1 r1 (Imm (bytes_in_word))))) a])
@@ -482,9 +482,9 @@ let check_init_stubs_length = prove
 (* -- full compiler -- *)
 
 let stack_remove_compile_def = new_definition
-  `stack_remove_compile jump off gen_gc' max_heap k start' prog =
-     init_stubs gen_gc' max_heap k start' ++
-     MAP (stack_remove_prog_comp jump off k) prog`;;
+  `stack_remove_compile jump off gen_gc' max_heap k start' prog = APPEND
+  (init_stubs gen_gc' max_heap k start')
+     (MAP (stack_remove_prog_comp jump off k) prog)`;;
 hol4_overload "compile" "stack_remove_compile";;
 
 (* and the names that this file reads as variables are constants again *)

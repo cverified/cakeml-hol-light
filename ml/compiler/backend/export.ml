@@ -47,10 +47,10 @@ let split16_def,split16_ind = define_guess_cheat
 (* HOL4 exportScript.sml:22-72: the ML values that the definitions
    below antiquote *)
 let preamble_def = new_definition
-  `preamble = ((MAP (\n. implode (n ++ "\n"))
-       [("/* Preprocessor to get around Mac OS, Windows, and" ++
-         " Linux differences in naming and calling conventio" ++
-         "ns */");
+  `preamble = ((MAP (\n. implode (APPEND n "\n"))
+       [(APPEND "/* Preprocessor to get around Mac OS, Windows, and"
+         (APPEND " Linux differences in naming and calling conventio"
+         "ns */"));
         "";
         "#if defined(__APPLE__)";
         "# define cdecl(s) _##s";
@@ -78,13 +78,13 @@ let preamble_def = new_definition
         ".macro _makesym name, base, len";
         ".set \\name, cake_main+\\base";
         ".endm";
-        ("# define makesym(name,base,len) _makesym name, bas" ++
+        (APPEND "# define makesym(name,base,len) _makesym name, bas"
           "e, len");
         "#elif defined(__WIN32)";
         ".macro _makesym name, base, len";
         ".set \\name, cake_main+\\base";
         ".endm";
-        ("# define makesym(name,base,len) _makesym name, bas" ++
+        (APPEND "# define makesym(name,base,len) _makesym name, bas"
           "e, len");
         "#else";
         ".macro _makesym name, base, len";
@@ -93,7 +93,7 @@ let preamble_def = new_definition
         ".size \\name, \\len";
         ".type \\name, function";
         ".endm";
-        ("# define makesym(name,base,len) _makesym name, bas" ++
+        (APPEND "# define makesym(name,base,len) _makesym name, bas"
           "e, len");
         "#endif";
         "";
@@ -105,23 +105,23 @@ let preamble_def = new_definition
 
 let data_section_def = new_definition
   `data_section word_directive ret =
-      MAP (\n. implode (n ++ "\n"))
-        (["     .data";
-         "     .p2align 3";
-         "cdecl(cml_heap): " ++ word_directive ++ " 0";
-         "cdecl(cml_stack): " ++ word_directive ++ " 0";
-         "cdecl(cml_stackend): " ++ word_directive ++ " 0"] ++
+      MAP (\n. implode (APPEND n "\n"))
+        (APPEND (APPEND ["     .data";
+         "     .p2align 3"; APPEND (APPEND "cdecl(cml_heap): "
+           word_directive) " 0"; APPEND (APPEND "cdecl(cml_stack): "
+           word_directive) " 0"; APPEND (APPEND "cdecl(cml_stackend): "
+           word_directive) " 0"]
          (if ret then
-           ["ret_base: " ++ word_directive ++ " 0";
-            "ret_stack: " ++ word_directive ++ " 0";
-            "ret_stackend: " ++ word_directive ++ " 0";
-            "can_enter: " ++ word_directive ++ " 0"] else []) ++
+           [APPEND (APPEND "ret_base: " word_directive) " 0"; APPEND
+             (APPEND "ret_stack: " word_directive) " 0"; APPEND (APPEND
+             "ret_stackend: " word_directive) " 0"; APPEND (APPEND
+             "can_enter: " word_directive) " 0"] else []))
          ["     .p2align 3";
          "cake_bitmaps:"])`;;
 
 let data_buffer_def = new_definition
   `data_buffer =
-      MAP (\n. implode (n ++ "\n"))
+      MAP (\n. implode (APPEND n "\n"))
         ["     .globl cdecl(cake_bitmaps_buffer_begin)";
          "cdecl(cake_bitmaps_buffer_begin):";
          "#if defined(EVAL)";
@@ -132,7 +132,7 @@ let data_buffer_def = new_definition
 
 let code_buffer_def = new_definition
   `code_buffer =
-      MAP (\n. implode (n ++ "\n"))
+      MAP (\n. implode (APPEND n "\n"))
         ["     .globl cdecl(cake_codebuffer_begin)";
          "cdecl(cake_codebuffer_begin):";
          "#if defined(EVAL)";
@@ -151,12 +151,12 @@ let newl_strlit_def = new_definition
 let comma_cat_def,comma_cat_ind = define_guess
   [`comma_cat f x =
      (match x with [] -> [newl_strlit] | [x] -> [f x;
-       newl_strlit] | (x :: xs) -> f x :: comm_strlit :: comma_cat
-       f xs)`];;
+       newl_strlit] | (CONS x xs) -> CONS (f x) (CONS comm_strlit
+       (comma_cat f xs)))`];;
 
 let words_line_def = new_definition
   `words_line word_directive to_string ls =
-     misc_List (word_directive :: comma_cat to_string ls)`;;
+     misc_List (CONS word_directive (comma_cat to_string ls))`;;
 
 let word_to_string_def = new_definition
   `word_to_string w = toString (w2n w)`;;
@@ -164,11 +164,12 @@ let word_to_string_def = new_definition
 let byte_to_string_def = new_definition
   `byte_to_string (b:word8) =
      implode (
-                  "0x" ++ [EL (w2n b DIV 16) "0123456789ABCDEF"]
-                    ++ [EL (w2n b MOD 16) "0123456789ABCDEF"])`;;
+                  APPEND (APPEND "0x" [EL (w2n b DIV 16)
+                    "0123456789ABCDEF"]) [EL (w2n b MOD 16)
+                    "0123456789ABCDEF"])`;;
 
 let all_bytes_def = new_definition
-  `all_bytes = Vector (GENLIST (\n. byte_to_string (n2w n)) 256)`;;
+  `all_bytes = Vector (list_of_seq (\n. byte_to_string (n2w n)) 256)`;;
 
 (* HOL4 exportScript.sml:155-156: a theorem that HOL4 states as the
    value of an ML expression: all_bytes_eq *)
@@ -193,7 +194,7 @@ let get_sym_label_def = new_definition
        strcat x y) (implode "cml_") (concat (MAP escape_sym_char
        (explode name))))
        (implode "_")) (toString (ix)) in
-     (ix + 1,appl ++ [(name,label,start',len)]))`;;
+     (ix + 1,APPEND appl [(name,label,start',len)]))`;;
 
 let get_sym_labels_def = new_definition
   `get_sym_labels syms =

@@ -366,8 +366,11 @@ INFIX = {
   '|++':   (500, 'l', '|++',    15),
   '\\\\':    (600, 'l', '\\\\',     21),
   '|->':   (100, 'n', '|->',    13),
-  '++':    (480, 'l', '++',     16),
-  '::':    (490, 'r', '::',     15),
+  # no precedence: HOL Light has neither infix, so the port
+  # writes the application (a source that overloads ++ with an
+  # append of its own has that one, ctx.overloads)
+  '++':    (480, 'l', '++',     None),
+  '::':    (490, 'r', '::',     None),
   '+':     (500, 'l', '+',      16),
   '-':     (500, 'l', '-',      18),
   'UNION': (500, 'l', 'UNION',  16),
@@ -1433,7 +1436,11 @@ def hl_string(body):
   if cur: parts.append('"%s"' % ''.join(cur))
   if not parts: return '""'
   if len(parts) == 1: return parts[0]
-  return '(' + ' ++ '.join(parts) + ')'
+  # the pieces are appended, and HOL Light's append is APPEND
+  out = parts[-1]
+  for i, q in enumerate(reversed(parts[:-1])):
+    out = 'APPEND %s %s' % (q, out if not i else '(' + out + ')')
+  return '(' + out + ')'
 
 
 SYMCHARS = set('\\!@#$%^&*-+<>/?|~=:')

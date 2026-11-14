@@ -60,9 +60,9 @@ let num_to_chars_def,num_to_chars_ind = define_wf
   exp_for_dec_enc))
           exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k)
             acc`;
-   `num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then toChar
-  k :: acc else num_to_chars i j (k DIV 10) (toChar (k MOD 10) ::
-  acc))`];;
+   `num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then CONS
+  (toChar k) acc else num_to_chars i j (k DIV 10) (CONS (toChar (k
+  MOD 10)) acc))`];;
 
 (* [local] *)
 let add_lt_divisible_iff = prove
@@ -71,15 +71,15 @@ let add_lt_divisible_iff = prove
 
 let num_to_chars_thm = prove
  (`!i j k acc.
-     num_to_chars i j k acc =
-     num_to_dec_string (k + (i * (10 EXP j))) ++ acc`,
+     num_to_chars i j k acc = APPEND (num_to_dec_string (k + (i *
+       (10 EXP j)))) acc`,
   CHEAT_TAC);;
 
 let int_to_string_def = new_definition
   `int_to_string neg_char i =
      (if (&0:int) <= i then implode (num_to_chars (num_of_int i) 0
-       0 []) else implode (neg_char :: num_to_chars (num_of_int (abs
-       i)) 0 0 []))`;;
+       0 []) else implode (CONS neg_char (num_to_chars (num_of_int
+       (abs i)) 0 0 [])))`;;
 
 let toString_def1 = new_definition
   `mlint_toString i = int_to_string (CHR 126) i`;;
@@ -90,13 +90,13 @@ hol4_overload "toString" "mlint_toString";;
 
 let int_to_string_thm = prove
  (`int_to_string neg_char i =
-   implode ((if i < (&0:int) then [neg_char] else []) ++
-     num_to_dec_string (num_of_int (abs i)))`,
+   implode (APPEND (if i < (&0:int) then [neg_char] else [])
+     (num_to_dec_string (num_of_int (abs i))))`,
   CHEAT_TAC);;
 
 let toString_thm = prove
- (`toString i = implode ((if i < (&0:int) then "~" else "") ++
-  num_to_dec_string (num_of_int (abs i)))`,
+ (`toString i = implode (APPEND (if i < (&0:int) then "~" else "")
+  (num_to_dec_string (num_of_int (abs i))))`,
   CHEAT_TAC);;
 
 let num_to_str_def = new_definition
@@ -145,7 +145,7 @@ let fromChars_range_def,fromChars_range_ind = define_wf
             (+) rest head)`];;
 
 let fromChars_range_eq_unsafe = prove
- (`!str l r. EVERY isDigit str /\ l + r <= STRLEN str ==>
+ (`!str l r. ALL isDigit str /\ l + r <= LENGTH str ==>
      fromChars_range l r (implode str) =
      SOME (fromChars_range_unsafe l r (implode str))`,
   CHEAT_TAC);;
@@ -188,7 +188,7 @@ let fromChars_def,fromChars_ind = define_wf
 (* HOL4 mlintScript.sml:205: ML code, not ported *)
 
 let fromChars_eq_unsafe = prove
- (`!n s. EVERY isDigit (explode s) /\ n <= strlen s /\ n >= 1 ==>
+ (`!n s. ALL isDigit (explode s) /\ n <= strlen s /\ n >= 1 ==>
     fromChars n s = SOME (fromChars_unsafe n s)`,
   CHEAT_TAC);;
 
@@ -240,8 +240,8 @@ let fromChar_unsafe_thm = prove
   CHEAT_TAC);;
 
 let fromChars_range_unsafe_thm = prove
- (`!str. EVERY isDigit str ==>
-    fromChars_range_unsafe 0 (STRLEN str) (implode str) =
+ (`!str. ALL isDigit str ==>
+    fromChars_range_unsafe 0 (LENGTH str) (implode str) =
       num_from_dec_string str`,
   CHEAT_TAC);;
 
@@ -251,8 +251,8 @@ let fromChars_range_unsafe_eq = prove
   CHEAT_TAC);;
 
 let fromString_unsafe_thm = prove
- (`!str. (~(HD str = (CHR 126)) ==> EVERY isDigit str) /\
-         (HD str = (CHR 126) ==> EVERY isDigit (DROP 1 str)) ==>
+ (`!str. (~(HD str = (CHR 126)) ==> ALL isDigit str) /\
+         (HD str = (CHR 126) ==> ALL isDigit (DROP 1 str)) ==>
          fromString_unsafe (implode str) =
            (if HD str = (CHR 126) then --(&(num_from_dec_string
              (DROP 1 str))) else &(num_from_dec_string str))`,
@@ -264,9 +264,9 @@ let fromString_unsafe_thm = prove
 let fromString_thm = prove
  (`!str. ~(str = "") /\
      (~(HD str = (CHR 126)) /\ ~(HD str = (CHR 45)) /\ ~(HD str =
-       (CHR 43)) ==> EVERY isDigit str) /\
+       (CHR 43)) ==> ALL isDigit str) /\
      (HD str = (CHR 126) \/ HD str = (CHR 45) \/ HD str = (CHR 43)
-       ==> EVERY isDigit (DROP 1 str) /\ STRLEN str >= 2) ==>
+       ==> ALL isDigit (DROP 1 str) /\ LENGTH str >= 2) ==>
        fromString (implode str) = SOME
          (if HD str = (CHR 126) \/ HD str = (CHR 45) then
            --(&(num_from_dec_string (DROP 1 str))) else if HD str =
@@ -294,7 +294,7 @@ let fromString_hd = prove
 
 (* [local] *)
 let toString_len = prove
- (`STRLEN (toString (i:num)) + 1 >= 2`,
+ (`LENGTH (toString (i:num)) + 1 >= 2`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -326,18 +326,18 @@ let fromChar_IS_SOME_IFF = prove
 
 let fromChars_range_IS_SOME_IFF = prove
  (`!s x y. (x + y <= strlen s) ==> (IS_SOME (fromChars_range x y s)
-  <=> EVERY isDigit (TAKE y (DROP x (explode s))))`,
+  <=> ALL isDigit (TAKE y (DROP x (explode s))))`,
   CHEAT_TAC);;
 
 let fromChars_IS_SOME_IFF = prove
- (`!n s. n <= strlen s /\ n >= 1 ==> (IS_SOME (fromChars n s) <=>
-  EVERY isDigit (TAKE n (explode s)))`,
+ (`!n s. n <= strlen s /\ n >= 1 ==> (IS_SOME (fromChars n s) <=> ALL
+  isDigit (TAKE n (explode s)))`,
   CHEAT_TAC);;
 
 let fromString_EQ_NONE = prove
  (`~(isDigit c) /\ ~(c = (CHR 43)) /\ ~(c = (CHR 126)) /\ ~(c = (CHR
   45)) ==>
-   fromString (implode (STRING c x)) = NONE`,
+   fromString (implode (CONS c x)) = NONE`,
   CHEAT_TAC);;
 
 (* this formulation avoids a comparsion using = for better performance *)
@@ -382,23 +382,23 @@ let ORD_HEX_BOUND2 = prove
   CHEAT_TAC);;
 
 let num_to_str_every = prove
- (`num_to_str (i:num) = implode s ==> EVERY (\x. 48 <= ORD x /\ ORD x
-  <= 57) s`,
+ (`num_to_str (i:num) = implode s ==> ALL (\x. 48 <= ORD x /\ ORD x <=
+  57) s`,
   CHEAT_TAC);;
 
 let num_to_str_imp_cons = prove
  (`toString (i:num) = implode s ==>
-   (?x xs. s = x :: xs /\ 48 <= ORD x /\ ORD x <= 57 /\ EVERY (\x.
+   (?x xs. s = CONS x xs /\ 48 <= ORD x /\ ORD x <= 57 /\ ALL (\x.
      48 <= ORD x /\ ORD x <= 57) xs)`,
   CHEAT_TAC);;
 
 let num_to_str_APPEND_11 = prove
- (`STRCAT s1 (STRING x1 xs1) = STRCAT s2 (STRING x2 xs2) /\
+ (`APPEND s1 (CONS x1 xs1) = APPEND s2 (CONS x2 xs2) /\
    toString n1 = implode s1 /\
    toString n2 = implode s2 /\
    ~(48 <= ORD x1 /\ ORD x1 <= 57) /\
    ~(48 <= ORD x2 /\ ORD x2 <= 57) ==>
-   n1 = n2 /\ x1 :: xs1 = x2 :: xs2`,
+   n1 = n2 /\ CONS x1 xs1 = CONS x2 xs2`,
   CHEAT_TAC);;
 
 (* and the overloads that this file cannot see are back in the

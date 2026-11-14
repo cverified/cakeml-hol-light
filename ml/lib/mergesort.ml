@@ -38,28 +38,27 @@ let merge_def,merge_ind = define_guess
           ([],[]) -> []
         | (l,[]) -> l
         | ([],l) -> l
-        | ((x :: l1),(y :: l2)) ->
-       (if R x y then
-         x :: mergesort_merge R l1 (y :: l2) else
-         y :: mergesort_merge R (x :: l1) l2)`];;
+        | ((CONS x l1),(CONS y l2)) ->
+       (if R x y then CONS x (mergesort_merge R l1 (CONS y l2))
+         else CONS y (mergesort_merge R (CONS x l1) l2))`];;
 hol4_overload "merge" "mergesort_merge";;
 
 let mergesortN_def,mergesortN_ind = define_wf
   `MEASURE (\(R,n,l). n)`
   [`mergesortN R n l =
      if n = 0 then [] else
-     if n = 1 then (match l with [] -> [] | x :: l -> [x]) else
+     if n = 1 then (match l with [] -> [] | CONS x l -> [x]) else
      if n = 2 then
        (match l with
           [] -> []
         | [x] -> [x]
-        | x :: y :: l -> sort2 R x y) else
+        | CONS x (CONS y l) -> sort2 R x y) else
      if n = 3 then
        (match l with
           [] -> []
         | [x] -> [x]
         | [x; y] -> sort2 R x y
-        | x :: y :: z :: l -> sort3 R x y z) else
+        | CONS x (CONS y (CONS z l)) -> sort3 R x y z) else
      let len1 = DIV2 n in
        mergesort_merge R
          (mergesortN R (DIV2 n) l)
@@ -92,27 +91,27 @@ let merge_tail_def,merge_tail_ind = define_guess
           ((negate':bool),[],[]) -> acc
         | (negate',l,[]) -> REV l acc
         | (negate',[],l) -> REV l acc
-        | (negate',(x :: l1),(y :: l2)) ->
+        | (negate',(CONS x l1),(CONS y l2)) ->
        (if ~(R x y = negate') then
-         merge_tail negate' R l1 (y :: l2) (x :: acc) else
-         merge_tail negate' R (x :: l1) l2 (y :: acc))`];;
+         merge_tail negate' R l1 (CONS y l2) (CONS x acc) else
+         merge_tail negate' R (CONS x l1) l2 (CONS y acc))`];;
 
 let mergesortN_tail_def,mergesortN_tail_ind = define_wf
   `MEASURE (\(negate,R,n,l). n)`
   [`mergesortN_tail negate R n l =
      if n = 0 then [] else
-     if n = 1 then (match l with [] -> [] | x :: l -> [x]) else
+     if n = 1 then (match l with [] -> [] | CONS x l -> [x]) else
      if n = 2 then
        (match l with
           [] -> []
         | [x] -> [x]
-        | x :: y :: l -> sort2_tail negate R x y) else
+        | CONS x (CONS y l) -> sort2_tail negate R x y) else
      if n = 3 then
        (match l with
           [] -> []
         | [x] -> [x]
         | [x; y] -> sort2_tail negate R x y
-        | x :: y :: z :: l -> sort3_tail negate R x y z) else
+        | CONS x (CONS y (CONS z l)) -> sort3_tail negate R x y z) else
      let len1 = DIV2 n in
      let neg = ~negate in
        merge_tail neg R (mergesortN_tail neg R (DIV2 n) l)

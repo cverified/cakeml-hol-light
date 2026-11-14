@@ -21,7 +21,7 @@ let b2w_def = new_definition
 
 let mw2n_def,mw2n_ind = define_rec
   [`mw2n [] = 0`;
-   `mw2n (x :: xs) = w2n (x:'a word) + dimword (:'a) * mw2n xs`];;
+   `mw2n (CONS x xs) = w2n (x:'a word) + dimword (:'a) * mw2n xs`];;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -29,9 +29,8 @@ let mw2n_def,mw2n_ind = define_rec
    termination *)
 let n2mw_def,n2mw_ind = define_wf
   `MEASURE I`
-  [`n2mw n = (if n = 0 then []:('a word) list else
-              n2w (n MOD dimword (:'a)) :: n2mw (n DIV dimword
-                (:'a)))`];;
+  [`n2mw n = (if n = 0 then []:('a word) list else CONS (n2w (n MOD
+  dimword (:'a))) (n2mw (n DIV dimword (:'a))))`];;
 
 let i2mw_def = new_definition
   `i2mw i = ((i < (&0)),n2mw (num_of_int (abs i)))`;;
@@ -49,12 +48,12 @@ let single_sub_def = new_definition
 
 let mw_sub_def,mw_sub_ind = define_guess
   [`mw_sub [] ys c = ([],c)`;
-   `mw_sub (x :: xs) [] c =
+   `mw_sub (CONS x xs) [] c =
         (let (z,c1) = single_sub x (n2w 0) c in
-        let (zs,c2) = mw_sub xs [] c1 in (z :: zs,c2))`;
-   `mw_sub (x :: xs) (y :: ys) c =
+        let (zs,c2) = mw_sub xs [] c1 in (CONS z zs,c2))`;
+   `mw_sub (CONS x xs) (CONS y ys) c =
         (let (z,c1) = single_sub x y c in
-        let (zs,c2) = mw_sub xs ys c1 in (z :: zs,c2))`];;
+        let (zs,c2) = mw_sub xs ys c1 in (CONS z zs,c2))`];;
 
 let single_mul_def = new_definition
   `single_mul (x:'a word) (y:'a word) (c:'a word) =
@@ -65,9 +64,8 @@ let mw_shift_def,mw_shift_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`mw_shift [] = []`;
    `mw_shift [w] = [w >>> 1]`;
-   `mw_shift ((w:'a word) :: x :: xs) =
-         (w >>> 1 || x << (dimindex (:'a) - 1)) :: mw_shift (x
-           :: xs)`];;
+   `mw_shift (CONS (w:'a word) (CONS x xs)) = CONS (w >>> 1 || x <<
+  (dimindex (:'a) - 1)) (mw_shift (CONS x xs))`];;
 
 (* the termination relation that HOL4 gives is
      MEASURE (LENGTH o FST)

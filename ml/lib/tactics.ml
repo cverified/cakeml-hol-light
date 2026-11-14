@@ -945,7 +945,7 @@ let v_all_vs_clauses =
           (!n. v_all_vs [CodePtr n] = [CodePtr n]) /\
           (!b n. v_all_vs [RefPtr b n] = [RefPtr b n]) /\
           (!ts tag l. v_all_vs [Block ts tag l] =
-                      Block ts tag l :: v_all_vs l)`,
+                      CONS (Block ts tag l) (v_all_vs l))`,
          REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
          GEN_REWRITE_TAC LAND_CONV [vav] THEN MATCH_REDUCE_TAC THEN
          REWRITE_TAC[vnil; APPEND_NIL]) in
@@ -955,13 +955,13 @@ let v_all_vs_clauses =
           (!n. v_all_ts (CodePtr n) = []) /\
           (!b n. v_all_ts (RefPtr b n) = []) /\
           (!ts tag l. v_all_ts (Block ts tag l) =
-                      ts :: FLAT (MAP v_all_ts l))`,
+                      CONS ts (FLAT (MAP v_all_ts l)))`,
          REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
          GEN_REWRITE_TAC LAND_CONV [vat] THEN MATCH_REDUCE_TAC THEN
          REWRITE_TAC[]) in
        let vcons = prove
         (`!(a:dataSem_v) l.
-            v_all_vs (CONS a l) = v_all_vs [a] ++ v_all_vs l`,
+            v_all_vs (CONS a l) = APPEND (v_all_vs [a]) (v_all_vs l)`,
          REPEAT GEN_TAC THEN
          STRUCT_CASES_TAC(ISPEC `a:dataSem_v`
                                 (cases_of `:dataSem_v`)) THEN

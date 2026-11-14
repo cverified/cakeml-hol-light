@@ -183,11 +183,10 @@ let stack_asm_name_comp = prove
 
 (* stack_alloc_stack_asm_convs *)
 let stack_rawcallProof_stack_alloc_stack_asm_convs = prove
- (`EVERY (\(n,p). stack_asm_name c p) (stack_rawcall_compile prog) =
-   EVERY (\(n,p). stack_asm_name c p) prog /\
-   EVERY (\(n,p). stack_asm_remove c p) (stack_rawcall_compile prog)
-     =
-   EVERY (\(n,p). stack_asm_remove c p) prog`,
+ (`ALL (\(n,p). stack_asm_name c p) (stack_rawcall_compile prog) =
+   ALL (\(n,p). stack_asm_name c p) prog /\
+   ALL (\(n,p). stack_asm_remove c p) (stack_rawcall_compile prog) =
+   ALL (\(n,p). stack_asm_remove c p) prog`,
   CHEAT_TAC);;
 
 let reg_bound_comp = prove
@@ -197,8 +196,8 @@ let reg_bound_comp = prove
   CHEAT_TAC);;
 
 let stack_rawcall_reg_bound = prove
- (`EVERY (\p. reg_bound p sp) (MAP SND (stack_rawcall_compile prog1)) =
-   EVERY (\p. reg_bound p sp) (MAP SND prog1)`,
+ (`ALL (\p. reg_bound p sp) (MAP SND (stack_rawcall_compile prog1)) =
+   ALL (\p. reg_bound p sp) (MAP SND prog1)`,
   CHEAT_TAC);;
 
 let call_args_comp = prove
@@ -211,9 +210,9 @@ let call_args_comp = prove
 
 (* stack_alloc_call_args *)
 let stack_rawcallProof_stack_alloc_call_args = prove
- (`EVERY (\p. call_args p 1 2 3 4 0) (MAP SND (stack_rawcall_compile
+ (`ALL (\p. call_args p 1 2 3 4 0) (MAP SND (stack_rawcall_compile
   prog1)) =
-   EVERY (\p. call_args p 1 2 3 4 0) (MAP SND prog1)`,
+   ALL (\p. call_args p 1 2 3 4 0) (MAP SND prog1)`,
   CHEAT_TAC);;
 
 (* MAP_FST_compile *)

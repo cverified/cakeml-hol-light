@@ -57,7 +57,7 @@ let pure_exp_def,pure_exp_ind = define_mutual_rec
    `pure_exp n (Op op args:bvi_exp) = (pure_op op args /\ pure_exps n
   args)`;
    `pure_exps n [] = T`;
-   `pure_exps n (h :: t) = (pure_exp n h /\ pure_exps n t)`];;
+   `pure_exps n (CONS h t) = (pure_exp n h /\ pure_exps n t)`];;
 
 (* [simp] *)
 let pure_exps_sing = prove
@@ -68,7 +68,7 @@ let pure_exps_cons = prove
  (`!n h t.
      pure_exps n [h] /\
      pure_exps n t <=>
-     pure_exps n (h :: t)`,
+     pure_exps n (CONS h t)`,
   CHEAT_TAC);;
 
 (* The equations below express pure_exps without the auxiliary pure_exp.  This
@@ -88,8 +88,8 @@ let pure_exps_eqns = prove
    (pure_exps n [bvi_Return res] <=> F) /\
    (pure_exps n [bvi_Op oop oargs] <=> pure_op oop oargs /\ pure_exps
      n oargs) /\
-   (pure_exps n (x1 :: x2 :: xs) <=> pure_exps n [x1] /\ pure_exps
-     n (x2 :: xs))`,
+   (pure_exps n (CONS x1 (CONS x2 xs)) <=> pure_exps n [x1] /\
+     pure_exps n (CONS x2 xs))`,
   CHEAT_TAC);;
 
 let pure_exp_eq = prove
@@ -100,7 +100,7 @@ let pure_exps_append = prove
  (`!n es1 es2.
      pure_exps n es1 /\
      pure_exps n es2 ==>
-     pure_exps n (es1 ++ es2)`,
+     pure_exps n (APPEND es1 es2)`,
   CHEAT_TAC);;
 
 let dest_Cons_def = new_definition
@@ -125,8 +125,8 @@ let call_block_INDUCT,call_block_RECURSION = define_datatype
 
 let bind_def,bind_ind = define_rec
   [`bvi_tmc_bind (n:num) [] = ([],n)`;
-   `bvi_tmc_bind (n:num) (_45 :: t) =
-       (match bvi_tmc_bind (n + 1) t with (vs,n') -> (n ::
+   `bvi_tmc_bind (n:num) (CONS _45 t) =
+       (match bvi_tmc_bind (n + 1) t with (vs,n') -> (CONS n
          vs,n'))`];;
 hol4_overload "bind" "bvi_tmc_bind";;
 
@@ -138,7 +138,8 @@ let bind_size = prove
 
 let shift_vars_def,shift_vars_ind = define_rec
   [`shift_vars (n:num) [] = []`;
-   `shift_vars (n:num) (h :: t) = (h + (n:num)) :: shift_vars n t`];;
+   `shift_vars (n:num) (CONS h t) = CONS (h + (n:num)) (shift_vars
+  n t)`];;
 
 let shift_cb_def,shift_cb_ind = define_rec
   [`shift_cb n (RCall ts args) = RCall ts (shift_vars n args)`;
@@ -206,7 +207,7 @@ let bvi_to_cb_aux_def,bvi_to_cb_aux_ind = assume_definition_rec
          SOME ([exp],INL [0]) else NONE)`;
    `bvi_to_cb_aux _52 _53 _54 [] = SOME ([],INL [])`;
    `bvi_to_cb_aux n loc tag [exp] = bvi_to_cb_aux_sing n loc tag exp`;
-   `bvi_to_cb_aux n loc tag (h :: t) =
+   `bvi_to_cb_aux n loc tag (CONS h t) =
        // Recurse right to left to find last occurence of recursive call
        (match bvi_to_cb_aux n loc tag t with NONE -> NONE | SOME
          (bs2,INL vs2) ->
@@ -218,20 +219,21 @@ let bvi_to_cb_aux_def,bvi_to_cb_aux_ind = assume_definition_rec
                 (if small_enough_int (&(LENGTH vs1 + LENGTH vs2))
                   then
                   let vs2' = shift_vars (LENGTH bs1) vs2 in
-                    SOME (bs1 ++ bs2,INL (vs1 ++ vs2')) else NONE) |
-                      SOME (bs1,INR (CallBlock _55 [] child [])) ->
+                    SOME (APPEND bs1 bs2,INL (APPEND vs1 vs2')) else
+                      NONE) | SOME (bs1,INR (CallBlock _55 [] child []))
+                      ->
                 // We've constructed a CallBlock at this level with just h, pad the other args
                 // l and r are always empty if args is a singleton
                 (let vs2' = shift_vars (LENGTH bs1) vs2 in
-                  SOME (bs1 ++ bs2,INR (CallBlock tag [] child
+                  SOME (APPEND bs1 bs2,INR (CallBlock tag [] child
                     vs2'))) | _56 -> NONE) | SOME (bs2,INR cb) ->
            // Recursive call found, first is let bound and added to the left
            (match shift_cb 1 cb with CallBlock tag l child r ->
-               (let cb' = CallBlock tag (0 :: l) child r in
-                 SOME (h :: bs2,INR cb')) | _57 -> NONE))`];;
+               (let cb' = CallBlock tag (CONS 0 l) child r in
+                 SOME (CONS h bs2,INR cb')) | _57 -> NONE))`];;
 
 let wf_vars_def = new_definition
-  `wf_vars n (vs:num list) <=> EVERY (\v. v < n) vs`;;
+  `wf_vars n (vs:num list) <=> ALL (\v. v < n) vs`;;
 
 let wf_vars_empty = prove
  (`!n.
@@ -261,14 +263,14 @@ let wf_vars_append = prove
  (`!n vs1 vs2.
      wf_vars n vs1 /\
      wf_vars n vs2 ==>
-     wf_vars n (vs1 ++ vs2)`,
+     wf_vars n (APPEND vs1 vs2)`,
   CHEAT_TAC);;
 
 let wf_vars_cons = prove
  (`!n v vs.
      v < n /\
      wf_vars n vs ==>
-     wf_vars n (v :: vs)`,
+     wf_vars n (CONS v vs)`,
   CHEAT_TAC);;
 
 let wf_vars_bind = prove
@@ -374,8 +376,8 @@ let cb_to_bvi_def,cb_to_bvi_ind = define_rec
          (let l' = MAP (\n. Var n) l in
          let child' = cb_to_bvi loc child in
          let r' = MAP (\n. Var n) r in
-           Op (closLang_BlockOp (closLang_Cons tag)) (l' ++
-             [child'] ++ r'))`;
+           Op (closLang_BlockOp (closLang_Cons tag)) (APPEND
+             (APPEND l' [child']) r'))`;
    `cb_to_bvi loc (RCall ts args) =
          (let args' = MAP (\n. Var n) args in
            bvi_Call ts (SOME loc) args' NONE)`];;
@@ -407,8 +409,8 @@ let mut_cons_def = new_definition
      let hole' = Op (closLang_IntOp (closLang_Const (&0))) [] in
      let r' = MAP (\n. Var n) r in
      let i = LENGTH r in
-     Op (closLang_MemOp (closLang_MutCons t i)) (l' ++ [hole'] ++
-       r'))`;;
+     Op (closLang_MemOp (closLang_MutCons t i)) (APPEND (APPEND l'
+       [hole']) r'))`;;
 
 let finalise_cons_def = new_definition
   `bvi_tmc_finalise_cons i_top_ptr = Op (closLang_MemOp
@@ -421,7 +423,8 @@ let fill_hole_def = new_definition
 
 let optimise_call_def = new_definition
   `optimise_call call_ts loc_opt call_args' exp_ptr exp_idx =
-   (let args = MAP (\n. Var n) call_args' ++ [exp_ptr; exp_idx] in
+   (let args = APPEND (MAP (\n. Var n) call_args') [exp_ptr; exp_idx]
+     in
      Call call_ts (SOME loc_opt) args NONE)`;;
 
 let update_cons_def = new_definition
@@ -583,15 +586,15 @@ hol4_overload "compile_exp" "bvi_tmc_compile_exp";;
 
 let bvi_tmc_compile_each_def,bvi_tmc_compile_each_ind = define_rec
   [`bvi_tmc_compile_each next' [] = (next',[])`;
-   `bvi_tmc_compile_each next' ((loc,arity,exp) :: xs) =
+   `bvi_tmc_compile_each next' (CONS (loc,arity,exp) xs) =
         (match bvi_tmc_compile_exp loc next' arity exp with NONE ->
             (let (n,ys) = bvi_tmc_compile_each next' xs in
-              (n,(loc,arity,exp) :: ys)) | SOME
+              (n,CONS (loc,arity,exp) ys)) | SOME
                 (exp_wrapper,exp_worker) ->
             (let (n,ys) = bvi_tmc_compile_each (next' +
               bvl_to_bvi_namespaces) xs in
-            (n,(loc,arity,exp_wrapper) :: (next',arity +
-              2,exp_worker) :: ys)))`];;
+            (n,CONS (loc,arity,exp_wrapper) (CONS (next',arity
+              + 2,exp_worker) ys))))`];;
 hol4_overload "compile_each" "bvi_tmc_compile_each";;
 
 let bvi_tmc_compile_prog_def = new_definition

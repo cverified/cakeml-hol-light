@@ -78,8 +78,9 @@ let call_FFI_def = new_definition
          Oracle_return ffi' bytes' ->
            (if LENGTH bytes' = LENGTH bytes then
              FFI_return
-               (ffi_state_io_events_fupd (K (ffi_state_io_events
-                    st ++ [IO_event s conf (ZIP bytes bytes')]))
+               (ffi_state_io_events_fupd (K (APPEND
+                 (ffi_state_io_events
+                    st) [IO_event s conf (ZIP bytes bytes')]))
                       (ffi_state_ffi_state_fupd (K ffi') st))
                bytes' else FFI_final (Final_event s conf bytes
                  FFI_failed)) | Oracle_final outcome ->

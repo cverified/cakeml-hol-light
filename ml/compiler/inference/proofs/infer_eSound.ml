@@ -39,14 +39,14 @@ let sub_completion_unify = prove
    (t_unify (infer_st_subst st) t1 t2 = SOME s1) /\
    sub_completion n (infer_st_next_uvar st + 1) s1 ts s2 ==>
    sub_completion n (infer_st_next_uvar st) (infer_st_subst st)
-     ((t1,t2) :: ts) s2`,
+     (CONS (t1,t2) ts) s2`,
   CHEAT_TAC);;
 
 let sub_completion_unify2 = prove
  (`!t1 t2 s1 ts s2 n s3 next_uvar.
     (t_unify s1 t1 t2 = SOME s2) /\
     sub_completion n next_uvar s2 ts s3 ==>
-    sub_completion n next_uvar s1 ((t1,t2) :: ts) s3`,
+    sub_completion n next_uvar s1 (CONS (t1,t2) ts) s3`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -56,14 +56,14 @@ let sub_completion_infer = prove
    sub_completion n (infer_st_next_uvar st2) (infer_st_subst st2) ts2
      s ==>
    (?ts1. sub_completion n (infer_st_next_uvar st1) (infer_st_subst
-     st1) (ts1 ++ ts2) s)`,
+     st1) (APPEND ts1 ts2) s)`,
   CHEAT_TAC);;
 
 let sub_completion_add_constraints = prove
  (`!s1 ts1 s2 n next_uvar s3 ts2.
     pure_add_constraints s1 ts1 s2 /\
     sub_completion n next_uvar s2 ts2 s3 ==>
-    sub_completion n next_uvar s1 (ts1 ++ ts2) s3`,
+    sub_completion n next_uvar s1 (APPEND ts1 ts2) s3`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -80,7 +80,7 @@ let sub_completion_infer_es = prove
    sub_completion n (infer_st_next_uvar st2) (infer_st_subst st2) ts2
      s ==>
    (?ts1. sub_completion n (infer_st_next_uvar st1) (infer_st_subst
-     st1) (ts1 ++ ts2) s)`,
+     st1) (APPEND ts1 ts2) s)`,
   CHEAT_TAC);;
 
 let sub_completion_infer_p = prove
@@ -89,13 +89,13 @@ let sub_completion_infer_p = prove
      sub_completion tvs (infer_st_next_uvar st') (infer_st_subst st')
        extra_constraints s ==>
      (?ts. sub_completion tvs (infer_st_next_uvar st) (infer_st_subst
-       st) (ts ++ extra_constraints) s)) /\
+       st) (APPEND ts extra_constraints) s)) /\
    (!l cenv ps st ts env st' tvs extra_constraints s.
      infer_ps l cenv ps st = (M_success (ts,env),st') /\
      sub_completion tvs (infer_st_next_uvar st') (infer_st_subst st')
        extra_constraints s ==>
      (?ts. sub_completion tvs (infer_st_next_uvar st)
-       (infer_st_subst st) (ts ++ extra_constraints) s))`,
+       (infer_st_subst st) (APPEND ts extra_constraints) s))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -105,7 +105,7 @@ let sub_completion_infer_pes = prove
    sub_completion n (infer_st_next_uvar st2) (infer_st_subst st2) ts2
      s ==>
    (?ts1. sub_completion n (infer_st_next_uvar st1) (infer_st_subst
-     st1) (ts1 ++ ts2) s)`,
+     st1) (APPEND ts1 ts2) s)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -115,7 +115,7 @@ let sub_completion_infer_funs = prove
    sub_completion n (infer_st_next_uvar st2) (infer_st_subst st2) ts2
      s ==>
    (?ts1. sub_completion n (infer_st_next_uvar st1) (infer_st_subst
-     st1) (ts1 ++ ts2) s)`,
+     st1) (APPEND ts1 ts2) s)`,
   CHEAT_TAC);;
 
 let sub_completion_apply = prove
@@ -139,7 +139,7 @@ let sub_completion_apply_list = prove
 let sub_completion_check = prove
  (`!tvs m s uvar s' extra_constraints.
    sub_completion m (uvar + tvs) s' extra_constraints s ==>
-   EVERY (\n. check_freevars m [] (convert_t (t_walkstar s
+   ALL (\n. check_freevars m [] (convert_t (t_walkstar s
      (Infer_Tuvar (uvar + n))))) (COUNT_LIST tvs)`,
   CHEAT_TAC);;
 

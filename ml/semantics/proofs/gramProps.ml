@@ -107,12 +107,12 @@ let GSPEC_applied = prove
 
 (* [local] *)
 let nullloop_th = prove
- (`nullableML G (N INSERT sn) (grammar_NT N :: rest) = F`,
+ (`nullableML G (N INSERT sn) (CONS (grammar_NT N) rest) = F`,
   CHEAT_TAC);;
 
 (* [local] *)
 let null2 = prove
- (`nullableML G sn (x :: y :: z) <=>
+ (`nullableML G sn (CONS x (CONS y z)) <=>
        nullableML G sn [x] /\ nullableML G sn [y] /\
        nullableML G sn z`,
   CHEAT_TAC);;

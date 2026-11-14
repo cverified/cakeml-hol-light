@@ -122,7 +122,7 @@ let pattern_semantics_pmatch_def,pattern_semantics_pmatch_ind =
    `pattern_semantics_pmatch_list refs [] [] = PMatchSuccess`;
    `pattern_semantics_pmatch_list refs [] ts = PTypeFailure`;
    `pattern_semantics_pmatch_list refs ps [] = PTypeFailure`;
-   `pattern_semantics_pmatch_list refs (p :: ps) (t :: ts) =
+   `pattern_semantics_pmatch_list refs (CONS p ps) (CONS t ts) =
         (match pattern_semantics_pmatch refs p t with
           PMatchSuccess -> pattern_semantics_pmatch_list refs ps ts
             | PMatchFailure -> (match pattern_semantics_pmatch_list refs
@@ -135,7 +135,7 @@ hol4_overload "pmatch_list" "pattern_semantics_pmatch_list";;
 
 let match_def,match_ind = define_rec
   [`pattern_semantics_match refs [] v = SOME MatchFailure`;
-   `pattern_semantics_match refs ((p,e) :: rows) v =
+   `pattern_semantics_match refs (CONS (p,e) rows) v =
         (match pmatch refs p v with
            PMatchSuccess ->
              (match pattern_semantics_match refs rows v with
@@ -166,9 +166,9 @@ let app_pos_def,app_pos_ind = define_wf
         | ((Pos 0 pos),(pattern_semantics_RefPtr r)) ->
         (match FLOOKUP refs r with NONE -> NONE | SOME v -> app_pos
           refs pos v)
-        | ((Pos 0 pos),(pattern_semantics_Term c (x :: xs))) ->
+        | ((Pos 0 pos),(pattern_semantics_Term c (CONS x xs))) ->
           app_pos refs pos x
-        | ((Pos (SUC n) pos),(pattern_semantics_Term c (x :: xs)))
+        | ((Pos (SUC n) pos),(pattern_semantics_Term c (CONS x xs)))
           ->
        app_pos refs (Pos n pos) (pattern_semantics_Term c xs)
         | ((Pos _13 _14),_15) -> NONE`];;

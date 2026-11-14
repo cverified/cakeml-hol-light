@@ -43,7 +43,7 @@ let seq_stack_alloc_pmatch = prove
 
 let collect_info_def,collect_info_ind = define_rec
   [`collect_info [] f = f`;
-   `collect_info ((n,(b:'a stackLang_prog)) :: xs) f =
+   `collect_info (CONS (n,(b:'a stackLang_prog)) xs) f =
          collect_info xs (match seq_stack_alloc b with NONE ->
            f | SOME k -> insert n k f)`];;
 

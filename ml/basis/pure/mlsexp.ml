@@ -49,27 +49,27 @@ let read_string_aux_def,read_string_aux_ind = define_wf
   [`read_string_aux [] acc =
       INL ((implode
         "read_string_aux: unterminated string literal"),[])`;
-   `read_string_aux (c :: rest) acc =
+   `read_string_aux (CONS c rest) acc =
       (if c = (CHR 34) then INR (implode (REVERSE acc),rest) else
       if c = (CHR 92) then
-        (match rest with [] -> read_string_aux rest acc | (
+        (match rest with [] -> read_string_aux rest acc | (CONS
             // causes error: unterminated string
-            e :: rest) ->
-             (if e = (CHR 92) then read_string_aux rest ((CHR 92) ::
-               acc) else
-              if e = (CHR 34) then read_string_aux rest ((CHR 34) ::
-                acc) else
-              if e = (CHR 48) then read_string_aux rest ((CHR 0) ::
-                acc) else
-              if e = (CHR 110) then read_string_aux rest ((CHR 10)
-                :: acc) else
-              if e = (CHR 114) then read_string_aux rest ((CHR 13)
-                :: acc) else
-              if e = (CHR 116) then read_string_aux rest ((CHR 9) ::
-                acc) else
+            e rest) ->
+             (if e = (CHR 92) then read_string_aux rest (CONS (CHR
+               92) acc) else
+              if e = (CHR 34) then read_string_aux rest (CONS (CHR
+                34) acc) else
+              if e = (CHR 48) then read_string_aux rest (CONS (CHR
+                0) acc) else
+              if e = (CHR 110) then read_string_aux rest (CONS (CHR
+                10) acc) else
+              if e = (CHR 114) then read_string_aux rest (CONS (CHR
+                13) acc) else
+              if e = (CHR 116) then read_string_aux rest (CONS (CHR
+                9) acc) else
                 INL ((implode
                   "read_string_aux: unrecognised escape"),rest))) else
-        read_string_aux rest (c :: acc))`];;
+        read_string_aux rest (CONS c acc))`];;
 
 (* Returns the string until a closing quote, and the rest of the input.
    Fails with an error message if closing quotes are missing or an
@@ -98,9 +98,9 @@ let read_string_length = prove
 let read_symbol_def,read_symbol_ind = define_rec
   [`read_symbol [] acc =
       (implode (REVERSE acc),[])`;
-   `read_symbol (c :: cs) acc =
+   `read_symbol (CONS c cs) acc =
       (if c = (CHR 41) \/ isSpace c then (implode (REVERSE
-        acc),(c :: cs)) else read_symbol cs (c :: acc))`];;
+        acc),(CONS c cs)) else read_symbol cs (CONS c acc))`];;
 
 let read_symbol_length = prove
  (`!input acc.
@@ -123,18 +123,18 @@ let lex_aux_def,lex_aux_ind = define_guess_cheat
   list#string) =
       (if depth = (0:num) then INR (acc,[]) else INL ((implode
         "lex_aux: missing closing parenthesis"),[]))`;
-   `mlsexp_lex_aux depth (c :: cs) acc =
+   `mlsexp_lex_aux depth (CONS c cs) acc =
       (if isSpace c then mlsexp_lex_aux depth cs acc else if c =
-        (CHR 40) then mlsexp_lex_aux (depth + 1) cs (OPEN :: acc) else
+        (CHR 40) then mlsexp_lex_aux (depth + 1) cs (CONS OPEN acc) else
         if c = (CHR 41) then
         (if depth = 0 then INL ((implode
           "lex_aux: too many closing parenthesis"),cs) else if depth = 1
-          then INR (CLOSE :: acc,cs) else mlsexp_lex_aux (depth - 1) cs
-          (CLOSE :: acc)) else if c = (CHR 34) then
+          then INR (CONS CLOSE acc,cs) else mlsexp_lex_aux (depth - 1)
+          cs (CONS CLOSE acc)) else if c = (CHR 34) then
         match mlsexp_read_string cs with INL (msg,rest) -> INL
           (msg,rest) | INR (s,rest) ->
             (if depth = 0 then INR ([SYMBOL s],rest) else
-              mlsexp_lex_aux depth rest ((SYMBOL s) :: acc)) else
+              mlsexp_lex_aux depth rest (CONS (SYMBOL s) acc)) else
         // We know that c is not a closing parenthesis or a space, so read_symbol
         // (c::cs) [] is equivalent to read_symbol cs [c].
         //
@@ -146,7 +146,7 @@ let lex_aux_def,lex_aux_ind = define_guess_cheat
         // the other branches.
         match read_symbol cs [c] with (s,rest) ->
             (if depth = 0 then INR ([SYMBOL s],rest) else
-              mlsexp_lex_aux depth rest ((SYMBOL s) :: acc)))`];;
+              mlsexp_lex_aux depth rest (CONS (SYMBOL s) acc)))`];;
 hol4_overload "lex_aux" "mlsexp_lex_aux";;
 
 let lex_aux_length = prove
@@ -187,12 +187,12 @@ let _ = size_thms "mlsexp_token";;
 let parse_aux_def,parse_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size mlsexp_token_size x0)`
   [`parse_aux [] xs s = xs`;
-   `parse_aux (CLOSE :: rest) xs s = parse_aux rest [] (xs :: s)`;
-   `parse_aux (OPEN :: rest) xs s =
-      (match s with [] -> parse_aux rest xs s | (y :: ys) ->
-        parse_aux rest ((Expr xs) :: y) ys)`;
-   `parse_aux (SYMBOL sy :: rest) xs s = parse_aux rest ((Atom sy)
-  :: xs) s`];;
+   `parse_aux (CONS CLOSE rest) xs s = parse_aux rest [] (CONS xs s)`;
+   `parse_aux (CONS OPEN rest) xs s =
+      (match s with [] -> parse_aux rest xs s | (CONS y ys) ->
+        parse_aux rest (CONS (Expr xs) y) ys)`;
+   `parse_aux (CONS (SYMBOL sy) rest) xs s = parse_aux rest (CONS
+  (Atom sy) xs) s`];;
 
 (* Parses (at most) one S-expression, and returns the rest of the input.
    Fails exactly when lexing fails. *)
@@ -201,7 +201,8 @@ let parse_def = new_definition
      (match lex input with INL (msg,rest) -> INL (msg,rest) | INR
        (rev_toks,rest) ->
          (match parse_aux rev_toks [] [] with [] -> INL ((implode
-           "parse: empty input"),rest) | (v :: _3) -> INR (v,rest)))`;;
+           "parse: empty input"),rest) | (CONS v _3) -> INR
+           (v,rest)))`;;
 hol4_overload "parse" "mlsexp_parse";;
 
 let parse_IMP_LENGTH_LESS = prove
@@ -210,7 +211,7 @@ let parse_IMP_LENGTH_LESS = prove
   CHEAT_TAC);;
 
 let parse_space = prove
- (`mlsexp_parse ((CHR 10) :: xs) = mlsexp_parse xs`,
+ (`mlsexp_parse (CONS (CHR 10) xs) = mlsexp_parse xs`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -257,7 +258,7 @@ let newlines_def,newlines_ind = define_wf
       match x1 with
         [] -> mlsexp_String (implode "")
       | [x] -> x
-      | (x :: xs) -> Append x T (newlines xs)`];;
+      | (CONS x xs) -> Append x T (newlines xs)`];;
 
 let _ = size_thms "str_tree";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -271,8 +272,8 @@ let v2pretty_def,v2pretty_ind = define_mutual_wf
            mlsexp_Trees l -> mlsexp_Parenthesis (newlines (vs2pretty
            l)))`;
    `vs2pretty vs =
-         (match vs with [] -> [] | (v :: vs) -> v2pretty v ::
-           vs2pretty vs)`];;
+         (match vs with [] -> [] | (CONS v vs) -> CONS
+           (v2pretty v) (vs2pretty vs))`];;
 
 let mlsexp_get_size_def,mlsexp_get_size_ind = define_shaped_rec
   "match"
@@ -336,13 +337,13 @@ let smart_remove_def,smart_remove_ind = define_rec
 let flatten_def,flatten_ind = define_rec
   [`mlsexp_flatten indent (mlsexp_Size n p) s = mlsexp_flatten indent
   p s`;
-   `mlsexp_flatten indent (mlsexp_Parenthesis p) s =
-      (implode "(") :: mlsexp_flatten (mlstring_concat [indent;
-        (implode "   ")]) p ((implode ")") :: s)`;
-   `mlsexp_flatten indent (mlsexp_String t:pretty) s = t :: s`;
+   `mlsexp_flatten indent (mlsexp_Parenthesis p) s = CONS (implode
+  "(") (mlsexp_flatten (mlstring_concat [indent; (implode "   ")]) p
+  (CONS (implode ")") s))`;
+   `mlsexp_flatten indent (mlsexp_String t:pretty) s = CONS t s`;
    `mlsexp_flatten indent (Append p1 b p2:pretty) s =
-      mlsexp_flatten indent p1 ((if b then indent else (implode
-        " ")) :: mlsexp_flatten indent p2 s)`];;
+      mlsexp_flatten indent p1 (CONS (if b then indent else
+        (implode " ")) (mlsexp_flatten indent p2 s))`];;
 hol4_overload "flatten" "mlsexp_flatten";;
 
 let str_tree_to_strs_def = new_definition
@@ -395,7 +396,7 @@ let sexp2tree_def,sexp2tree_ind = define_mutual_rec
   [`sexp2tree (Atom s) = mlsexp_Str (make_str_safe s)`;
    `sexp2tree (Expr l) = mlsexp_Trees (sexp2trees l)`;
    `sexp2trees [] = []`;
-   `sexp2trees (v :: vs) = sexp2tree v :: sexp2trees vs`];;
+   `sexp2trees (CONS v vs) = CONS (sexp2tree v) (sexp2trees vs)`];;
 
 let sexp_to_app_list_def,sexp_to_app_list_ind = define_mutual_rec
   [`sexp_to_app_list (Atom s) = misc_List [make_str_safe s]`;
@@ -404,7 +405,7 @@ let sexp_to_app_list_def,sexp_to_app_list_ind = define_mutual_rec
              (misc_Append (sexps_to_app_list l) (misc_List
                [(implode ")")]))`;
    `sexps_to_app_list [] = misc_List []`;
-   `sexps_to_app_list (v :: vs) =
+   `sexps_to_app_list (CONS v vs) =
       (if NULL vs then sexp_to_app_list v else Append
         (sexp_to_app_list v)
                   (misc_Append (misc_List [(implode " ")])
@@ -424,14 +425,14 @@ let sexp_to_pretty_string_def = new_definition
 let to_tokens_def,to_tokens_ind = define_shaped_rec
   "nested"
   [`to_tokens (Atom a) = [SYMBOL a]`;
-   `to_tokens (Expr xs) = [OPEN] ++ FLAT (MAP (\x. to_tokens x) xs)
-  ++ [CLOSE]`];;
+   `to_tokens (Expr xs) = APPEND (APPEND [OPEN] (FLAT (MAP (\x.
+  to_tokens x) xs))) [CLOSE]`];;
 
 (* [local] *)
 let parse_aux_to_tokens_lemma = prove
  (`!x xs s rest.
-     parse_aux (REVERSE (to_tokens x) ++ rest) xs s =
-     parse_aux rest (x :: xs) s`,
+     parse_aux (APPEND (REVERSE (to_tokens x)) rest) xs s =
+     parse_aux rest (CONS x xs) s`,
   CHEAT_TAC);;
 
 let parse_aux_to_tokens_thm = prove
@@ -445,119 +446,124 @@ let str_every_thm = prove
 
 let read_symbol_thm = prove
  (`!t s acc.
-     EVERY is_safe_char t /\ (~(s = "") ==> isSpace (HD s) \/ HD s =
+     ALL is_safe_char t /\ (~(s = "") ==> isSpace (HD s) \/ HD s =
        (CHR 41)) ==>
-     read_symbol (t ++ s) acc = (implode (REVERSE acc ++ t),s)`,
+     read_symbol (APPEND t s) acc = (implode (APPEND (REVERSE acc)
+       t),s)`,
   CHEAT_TAC);;
 
 let read_string_aux_thm = prove
  (`!xs s acc.
-     read_string_aux (STRCAT (STRCAT (CONCAT (MAP char_escaped xs))
+     read_string_aux (APPEND (APPEND (CONCAT (MAP char_escaped xs))
        "\"") s) acc =
-     INR (implode (REVERSE acc ++ xs),s)`,
+     INR (implode (APPEND (REVERSE acc) xs),s)`,
   CHEAT_TAC);;
 
 let lex_aux_make_str_safe = prove
  (`!m s ts depth.
      (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
      (depth = 0 ==> ts = []) ==>
-     mlsexp_lex_aux depth (STRCAT (match make_str_safe m with implode
+     mlsexp_lex_aux depth (APPEND (match make_str_safe m with implode
        x -> x) s) ts =
-     (if depth = 0 then INR (SYMBOL m :: ts,s) else mlsexp_lex_aux
-       depth s (SYMBOL m :: ts))`,
+     (if depth = 0 then INR (CONS (SYMBOL m) ts,s) else
+       mlsexp_lex_aux depth s (CONS (SYMBOL m) ts))`,
   CHEAT_TAC);;
 
 let flatten_acc = prove
- (`!x indent s. mlsexp_flatten indent x s = mlsexp_flatten indent x []
-  ++ s`,
+ (`!x indent s. mlsexp_flatten indent x s = APPEND (mlsexp_flatten
+  indent x []) s`,
   CHEAT_TAC);;
 
 let lex_aux_spaces = prove
  (`!t rest ts depth.
-     EVERY isSpace t ==>
-     mlsexp_lex_aux depth (t ++ rest) ts = mlsexp_lex_aux depth
+     ALL isSpace t ==>
+     mlsexp_lex_aux depth (APPEND t rest) ts = mlsexp_lex_aux depth
        rest ts`,
   CHEAT_TAC);;
 
 let lex_aux_sexp2tree = prove
  (`(!x s ts depth m n indent.
       (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
-      (depth = 0 ==> ts = []) /\ ~(indent = (implode "")) /\ EVERY
+      (depth = 0 ==> ts = []) /\ ~(indent = (implode "")) /\ ALL
         isSpace (explode indent) ==>
       mlsexp_lex_aux depth
-              (STRCAT
+              (APPEND
                (explode
                 (mlstring_concat
                  (mlsexp_flatten indent
                           (smart_remove m n (mlsexp_annotate
                             (v2pretty (sexp2tree x))))
                           []))) s) ts =
-      (if depth = 0 then INR (REVERSE (to_tokens x) ++ ts,s) else
-        mlsexp_lex_aux depth s (REVERSE (to_tokens x) ++ ts)) /\
+      (if depth = 0 then INR (APPEND (REVERSE (to_tokens x)) ts,s)
+        else mlsexp_lex_aux depth s (APPEND (REVERSE (to_tokens x)) ts))
+        /\
       mlsexp_lex_aux depth
-              (STRCAT
+              (APPEND
                (explode
                 (mlstring_concat
                  (mlsexp_flatten indent
                           (remove_all (mlsexp_annotate (v2pretty
                             (sexp2tree x))))
                           []))) s) ts =
-      (if depth = 0 then INR (REVERSE (to_tokens x) ++ ts,s) else
-        mlsexp_lex_aux depth s (REVERSE (to_tokens x) ++ ts))) /\
+      (if depth = 0 then INR (APPEND (REVERSE (to_tokens x)) ts,s)
+        else mlsexp_lex_aux depth s (APPEND (REVERSE (to_tokens x))
+        ts))) /\
    (!xs s ts depth indent m n.
       (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\ ~(depth =
-        0) /\ ~(indent = (implode "")) /\ EVERY isSpace (explode indent)
+        0) /\ ~(indent = (implode "")) /\ ALL isSpace (explode indent)
         ==>
       mlsexp_lex_aux depth
-              (STRCAT
+              (APPEND
                (explode
                 (mlstring_concat
                  (mlsexp_flatten indent
                    (smart_remove m n (mlsexp_annotate (newlines
                      (vs2pretty (sexp2trees xs)))))
                    []))) s) ts =
-      (mlsexp_lex_aux depth s (REVERSE (FLAT (MAP to_tokens xs)) ++
-        ts)) /\
+      (mlsexp_lex_aux depth s (APPEND (REVERSE (FLAT (MAP to_tokens
+        xs))) ts)) /\
       mlsexp_lex_aux depth
-              (STRCAT
+              (APPEND
                (explode
                 (mlstring_concat
                  (mlsexp_flatten indent
                    (remove_all (mlsexp_annotate (newlines (vs2pretty
                      (sexp2trees xs)))))
                    []))) s) ts =
-      (mlsexp_lex_aux depth s (REVERSE (FLAT (MAP to_tokens xs)) ++
-        ts)))`,
+      (mlsexp_lex_aux depth s (APPEND (REVERSE (FLAT (MAP to_tokens
+        xs))) ts)))`,
   CHEAT_TAC);;
 
 let lex_aux_sexp_to_list = prove
  (`(!x s ts depth.
       (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
       (depth = 0 ==> ts = []) ==>
-      mlsexp_lex_aux depth (explode (mlstring_concat (append
-        (sexp_to_app_list x))) ++ s) ts =
+      mlsexp_lex_aux depth (APPEND (explode (mlstring_concat (append
+        (sexp_to_app_list x)))) s) ts =
       (if depth = 0 then
-        INR (REVERSE (to_tokens x) ++ ts,s) else
-        mlsexp_lex_aux depth s (REVERSE (to_tokens x) ++ ts))) /\
+        INR (APPEND (REVERSE (to_tokens x)) ts,s) else
+        mlsexp_lex_aux depth s (APPEND (REVERSE (to_tokens x)) ts)))
+          /\
    (!xs s ts depth.
       (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\ ~(depth =
         0) ==>
-      mlsexp_lex_aux depth (explode (mlstring_concat (append
-        (sexps_to_app_list xs))) ++ s) ts =
-      mlsexp_lex_aux depth s (REVERSE (FLAT (MAP (\x. to_tokens x)
-        xs)) ++ ts))`,
+      mlsexp_lex_aux depth (APPEND (explode (mlstring_concat (append
+        (sexps_to_app_list xs)))) s) ts =
+      mlsexp_lex_aux depth s (APPEND (REVERSE (FLAT (MAP (\x.
+        to_tokens x) xs))) ts))`,
   CHEAT_TAC);;
 
 let parse_sexp_to_string = prove
  (`!s x.
      (~(s = "") ==> isSpace (HD s)) ==>
-     mlsexp_parse (explode (sexp_to_string x) ++ s) = INR (x,s)`,
+     mlsexp_parse (APPEND (explode (sexp_to_string x)) s) = INR
+       (x,s)`,
   CHEAT_TAC);;
 
 let parse_sexp_to_pretty_string = prove
  (`!s x.
-     mlsexp_parse (explode (sexp_to_pretty_string x) ++ s) = INR
-       (x,"\n" ++ s)`,
+     mlsexp_parse (APPEND (explode (sexp_to_pretty_string x)) s) =
+       INR (x,APPEND "\n" s)`,
   CHEAT_TAC);;
 
 let fromString_sexp_to_string = prove

@@ -99,8 +99,8 @@ let prim_tenv_def = new_definition
                   Tword8array_num)]))`;;
 
 let prim_type_ids_def = new_definition
-  `prim_type_ids = set_of_list (Tlist_num :: Tbool_num ::
-  prim_type_nums)`;;
+  `prim_type_ids = set_of_list (CONS Tlist_num (CONS Tbool_num
+  prim_type_nums))`;;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

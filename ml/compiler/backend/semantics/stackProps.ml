@@ -428,9 +428,9 @@ let evaluate_code_bitmaps = prove
    (?n. compile_oracle
     s1 = misc_shift_seq n (compile_oracle s) /\ state_code
     s1 = FOLDL sptree_union (state_code s) (MAP (fromAList o FST o
-      SND) (GENLIST (compile_oracle s) n)) /\ stackSem_state_bitmaps
-    s1 = stackSem_state_bitmaps s ++ FLAT (MAP (SND o SND) (GENLIST
-      (compile_oracle s) n)))`,
+      SND) (list_of_seq (compile_oracle s) n)) /\ stackSem_state_bitmaps
+    s1 = APPEND (stackSem_state_bitmaps s) (FLAT (MAP (SND o SND)
+      (list_of_seq (compile_oracle s) n))))`,
   CHEAT_TAC);;
 
 (* evaluate_mono *)
@@ -567,15 +567,15 @@ let stackProps_extract_labels_def,stackProps_extract_labels_ind =
          NONE -> [] | SOME (ret_handler,_9,l1,l2) ->
          (let ret_rest = stackProps_extract_labels ret_handler in
        (match h with
-         NONE -> [(l1,l2)] ++ ret_rest | SOME (prog,l1',l2') ->
-         (let h_rest = stackProps_extract_labels prog in
-         [(l1,l2); (l1',l2')] ++ ret_rest ++ h_rest))))
+         NONE -> APPEND [(l1,l2)] ret_rest | SOME (prog,l1',l2') ->
+         (let h_rest = stackProps_extract_labels prog in APPEND
+           (APPEND [(l1,l2); (l1',l2')] ret_rest) h_rest))))
         | (Loop s1) -> stackProps_extract_labels s1
-        | (Seq s1 s2) ->
-       stackProps_extract_labels s1 ++ stackProps_extract_labels s2
+        | (Seq s1 s2) -> APPEND (stackProps_extract_labels s1)
+          (stackProps_extract_labels s2)
         | (If cmp r1 ri e2 e3) ->
-       (stackProps_extract_labels e2 ++ stackProps_extract_labels
-         e3)
+       (APPEND (stackProps_extract_labels e2)
+         (stackProps_extract_labels e3))
         | _10 -> []`];;
 hol4_overload "extract_labels" "stackProps_extract_labels";;
 
@@ -865,7 +865,7 @@ let reg_bound_exp_def,reg_bound_exp_ind = define_wf
         | (Shift _45 e1 e2) -> reg_bound_exp e1 k /\ reg_bound_exp
           e2 k
         | (wordLang_Lookup _46) -> F
-        | (wordLang_Op _47 es) -> EVERY (\e. reg_bound_exp e k) es
+        | (wordLang_Op _47 es) -> ALL (\e. reg_bound_exp e k) es
         | _48 -> T`];;
 
 let reg_bound_inst_def = new_definition
@@ -1032,10 +1032,10 @@ hol4_overload "get_code_labels" "stackProps_get_code_labels";;
 (* elabs gives a set of existing code labels *)
 let stack_good_code_labels_def = new_definition
   `stack_good_code_labels p elabs <=>
-   BIGUNION (IMAGE stackProps_get_code_labels (set_of_list (MAP SND
+   UNIONS (IMAGE stackProps_get_code_labels (set_of_list (MAP SND
      p))) SUBSET
-   BIGUNION (set_of_list (MAP (\(n,pp). stack_get_handler_labels n
-     pp) p)) UNION
+   UNIONS (set_of_list (MAP (\(n,pp). stack_get_handler_labels n pp)
+     p)) UNION
    IMAGE (\n. n,0) (set_of_list (MAP FST p)) UNION IMAGE (\n. n,0)
      elabs UNION
    IMAGE (\n. n,1) (set_of_list (MAP FST p)) UNION IMAGE (\n. n,1)
@@ -1043,10 +1043,10 @@ let stack_good_code_labels_def = new_definition
 
 let stack_good_handler_labels_def = new_definition
   `stack_good_handler_labels p <=>
-   restrict_nonzero (BIGUNION (IMAGE stackProps_get_code_labels
+   restrict_nonzero (UNIONS (IMAGE stackProps_get_code_labels
      (set_of_list (MAP SND p)))) SUBSET
-   BIGUNION (set_of_list (MAP (\(n,pp). stack_get_handler_labels n
-     pp) p)) UNION
+   UNIONS (set_of_list (MAP (\(n,pp). stack_get_handler_labels n pp)
+     p)) UNION
    IMAGE (\n. n,1) (set_of_list (MAP FST p))`;;
 
 let _ = size_thms "stackLang_prog";;

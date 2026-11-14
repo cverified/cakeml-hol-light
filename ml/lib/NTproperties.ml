@@ -28,25 +28,25 @@ let nullable_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let nullableML_def,nullableML_ind = define_guess_cheat
   [`nullableML G seen [] = T`;
-   `nullableML G seen (grammar_TOK t :: _1) = F`;
-   `nullableML G seen (grammar_NT n :: rest) =
+   `nullableML G seen (CONS (grammar_TOK t) _1) = F`;
+   `nullableML G seen (CONS (grammar_NT n) rest) =
         (if n IN FDOM (grammar_rules G) /\ ~(n IN seen) then
           if FAPPLY (grammar_rules G) n INTER {r | nullableML G
             (n INSERT seen) r} = {} then F else nullableML G seen
             rest else F)`];;
 
 let firstSet_def = new_definition
-  `firstSet G sf = {t | ?rest. (\G. RTC (derive G)) G sf (grammar_TOK
-  t :: rest)}`;;
+  `firstSet G sf = {t | ?rest. (\G. RTC (derive G)) G sf (CONS
+  (grammar_TOK t) rest)}`;;
 
 let firstSetML_def,firstSetML_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`firstSetML G seen [] = {}`;
-   `firstSetML G seen (grammar_TOK t :: _2) = {t}`;
-   `firstSetML G seen (grammar_NT n :: rest) =
+   `firstSetML G seen (CONS (grammar_TOK t) _2) = {t}`;
+   `firstSetML G seen (CONS (grammar_NT n) rest) =
       (if n IN FDOM (grammar_rules G) then
         (if ~(n IN seen) then
-          BIGUNION (IMAGE (firstSetML G (n INSERT seen))
+          UNIONS (IMAGE (firstSetML G (n INSERT seen))
                           (FAPPLY (grammar_rules G) n)) else {})
                             UNION
         (if nullable G [grammar_NT n] then firstSetML G seen

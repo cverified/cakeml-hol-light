@@ -34,7 +34,7 @@ let valid_symchar_def = new_definition
 
 let valid_symbol_def = define_cases
   [`valid_symbol "" <=> F`;
-   `valid_symbol (c :: cs) <=> valid_first_symchar c /\ EVERY
+   `valid_symbol (CONS c cs) <=> valid_first_symchar c /\ ALL
   valid_symchar cs`];;
 
 let valid_sexp_def,valid_sexp_ind = define_shaped_rec
@@ -43,7 +43,7 @@ let valid_sexp_def,valid_sexp_ind = define_shaped_rec
         match s with
           SX_SYM s -> valid_symbol s
         | (SX_CONS s1 s2) -> valid_sexp s1 /\ valid_sexp s2
-        | (SX_STR s) -> EVERY isPrint s
+        | (SX_STR s) -> ALL isPrint s
         | s -> T`];;
 
 let arb_sexp_def = new_definition

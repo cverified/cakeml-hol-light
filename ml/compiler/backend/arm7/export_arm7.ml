@@ -52,26 +52,26 @@ let export_arm7_startup_def = new_definition
         (implode "     .globl  cdecl(cml_stackend)\n");
         (implode "     .type   cml_main, function\n");
         (implode "cdecl(cml_main):\n");
-        (implode
-          ("     ldr    r0,=cake_main            /* arg1: entr" ++
+        (implode (APPEND
+          "     ldr    r0,=cake_main            /* arg1: entr"
           "y address */\n"));
-        (implode
-          ("     ldr    r1,=cdecl(cml_heap)      /* arg2: firs" ++
+        (implode (APPEND
+          "     ldr    r1,=cdecl(cml_heap)      /* arg2: firs"
           "t address of heap */\n"));
         (implode "     ldr    r1,[r1]\n")])
      (SmartAppend (misc_List
        (if ~pk then
          [(implode "     ldr    r2,=cake_bitmaps\n");
-          (implode
-            ("     str    r2,[r1]                  /* store bitm" ++
+          (implode (APPEND
+            "     str    r2,[r1]                  /* store bitm"
             "ap pointer */\n"))] else []))
      (SmartAppend (misc_List
-       [(implode
-         ("     ldr    r2,=cdecl(cml_stack)     /* arg3: firs" ++
+       [(implode (APPEND
+         "     ldr    r2,=cdecl(cml_stack)     /* arg3: firs"
          "t address of stack */\n"));
         (implode "     ldr    r2,[r2]\n");
-        (implode
-          ("     ldr    r3,=cdecl(cml_stackend)  /* arg4: firs" ++
+        (implode (APPEND
+          "     ldr    r3,=cdecl(cml_stackend)  /* arg4: firs"
           "t address past the stack */\n"));
         (implode "     ldr    r3,[r3]\n")])
      (SmartAppend (misc_List
@@ -85,7 +85,7 @@ hol4_overload "startup" "export_arm7_startup";;
 
 let export_arm7_ffi_asm_def,export_arm7_ffi_asm_ind = define_rec
   [`export_arm7_ffi_asm [] = misc_Nil`;
-   `export_arm7_ffi_asm (ffi :: ffis) =
+   `export_arm7_ffi_asm (CONS ffi ffis) =
           SmartAppend (misc_List [
            (implode "cake_ffi"); ffi; (implode ":\n");
            (implode "     b     cdecl(ffi"); ffi; (implode ")\n");
@@ -135,42 +135,42 @@ let arm7_export_def = new_definition
        (SmartAppend (misc_List data_buffer)
        (SmartAppend (export_arm7_startup ret pk) ((\ret. if ret then
          ((\ret. SmartAppend
-     (misc_List (MAP (\n. implode (n ++ "\n"))
-      [("/* CakeML FFI interface (each block is 16 bytes lo" ++
+     (misc_List (MAP (\n. implode (APPEND n "\n"))
+      [(APPEND "/* CakeML FFI interface (each block is 16 bytes lo"
         "ng) */"); "";
         "     .p2align 4";
         ""])) (SmartAppend
       (export_arm7_ffi_asm (REVERSE ffi_names')) (misc_List (MAP (\n.
-        implode (n ++ "\n"))
-       (["cake_clear:";
+        implode (APPEND n "\n"))
+       (APPEND (APPEND ["cake_clear:";
         "     b   cdecl(cml_exit)";
         "     .p2align 4";
         "";
-        "cake_exit:"] ++
+        "cake_exit:"]
         (if ret then
           ["     b   cml_return"] else
-          ["     b   cdecl(cml_exit)"]) ++
+          ["     b   cdecl(cml_exit)"]))
        ["     .p2align 4";
         "";
         "cake_main:";
         "";
         "/* Generated machine code follows */";
         ""]))))) T) else ((\ret. SmartAppend (misc_List (MAP (\n.
-          implode (n ++ "\n"))
-          [("/* CakeML FFI interface (each block is 16 bytes lo" ++
+          implode (APPEND n "\n")) [(APPEND
+          "/* CakeML FFI interface (each block is 16 bytes lo"
           "ng) */"); ""; "     .p2align 4"; ""])) (SmartAppend
           (export_arm7_ffi_asm (REVERSE ffi_names')) (misc_List (MAP
-          (\n. implode (n ++ "\n")) (["cake_clear:";
+          (\n. implode (APPEND n "\n")) (APPEND (APPEND ["cake_clear:";
           "     b   cdecl(cml_exit)"; "     .p2align 4"; "";
-          "cake_exit:"] ++ (if ret then ["     b   cml_return"] else
-          ["     b   cdecl(cml_exit)"]) ++ ["     .p2align 4"; "";
+          "cake_exit:"] (if ret then ["     b   cml_return"] else
+          ["     b   cdecl(cml_exit)"])) ["     .p2align 4"; "";
           "cake_main:"; ""; "/* Generated machine code follows */";
           ""]))))) F)) ret))))))
        (SmartAppend (split16 (words_line (implode "\t.byte ")
          byte_to_string) bytes) (SmartAppend (misc_List code_buffer)
          (SmartAppend (emit_symbols lsyms)
        (if ret then
-         (SmartAppend ((misc_List (MAP (\n. implode (n ++ "\n"))
+         (SmartAppend ((misc_List (MAP (\n. implode (APPEND n "\n"))
      [""; "";
       "cml_enter:"; "     push   {r5,r6,r8,r10,r11,lr}";
       "     b      cake_main";

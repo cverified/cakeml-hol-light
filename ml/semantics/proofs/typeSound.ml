@@ -39,8 +39,7 @@ let _ = hol4_ancestors "typeSound"
 (* HOL4 typeSoundScript.sml:17-32: ML code, not ported *)
 
 let list_rel_flat = prove
- (`!R l1 l2. LIST_REL (LIST_REL R) l1 l2 ==> LIST_REL R (FLAT l1)
-  (FLAT l2)`,
+ (`!R l1 l2. ALL2 (ALL2 R) l1 l2 ==> ALL2 R (FLAT l1) (FLAT l2)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -59,8 +58,7 @@ let sing_list = prove
 
 (* [local] *)
 let EVERY_LIST_REL = prove
- (`EVERY (\x. f x y) l = LIST_REL (\x y. f x y) l (REPLICATE (LENGTH
-  l) y)`,
+ (`ALL (\x. f x y) l = ALL2 (\x y. f x y) l (REPLICATE (LENGTH l) y)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -106,11 +104,11 @@ let prim_canonical_values_thm = prove
      ctMap envS tenvS ==>
     (?n vs. v = semanticPrimitives_Loc T n /\ store_lookup n envS =
       SOME (semanticPrimitives_Varray vs) /\
-            EVERY (\v. type_v 0 ctMap tenvS v t) vs /\
+            ALL (\v. type_v 0 ctMap tenvS v t) vs /\
             FLOOKUP tenvS n = SOME (Varray_t t))) /\
    (type_v tvs ctMap tenvS v (Tvector t) /\ ctMap_ok ctMap ==>
-    (?vs. v = semanticPrimitives_Vectorv vs /\ EVERY (\v. type_v
-      tvs ctMap tenvS v t) vs))`,
+    (?vs. v = semanticPrimitives_Vectorv vs /\ ALL (\v. type_v tvs
+      ctMap tenvS v t) vs))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -120,7 +118,7 @@ let has_lists_v_to_list = prove
      ctMap_has_lists ctMap /\
      type_v tvs ctMap tenvS v (Tlist t3) ==>
      (?vs. semanticPrimitives_v_to_list v = SOME vs /\
-          EVERY (\v. type_v tvs ctMap tenvS v t3) vs /\
+          ALL (\v. type_v tvs ctMap tenvS v t3) vs /\
           (t3 = Tchar ==> (?vs. semanticPrimitives_v_to_char_list v =
             SOME vs)) /\
           (t3 = Tstring ==> (?str. semanticPrimitives_vs_to_string
@@ -135,7 +133,7 @@ let ctor_canonical_values_thm = prove
      ctMap_has_lists ctMap ==>
     (?vs.
       semanticPrimitives_v_to_list v = SOME vs /\
-      EVERY (\v. type_v tvs ctMap tenvS v t) vs /\
+      ALL (\v. type_v tvs ctMap tenvS v t) vs /\
       (t = Tchar ==> (?vs. semanticPrimitives_v_to_char_list v = SOME
         vs)) /\
       (t = Tstring ==> (?str. semanticPrimitives_vs_to_string vs =
@@ -163,8 +161,8 @@ let eq_same_type = prove
         v2 = Eq_type_error)) /\
    (!vs1 vs2 tvs ctMap cns tenvS ts.
       ctMap_ok ctMap /\
-      LIST_REL (type_v tvs ctMap tenvS) vs1 ts /\
-      LIST_REL (type_v tvs ctMap tenvS) vs2 ts ==>
+      ALL2 (type_v tvs ctMap tenvS) vs1 ts /\
+      ALL2 (type_v tvs ctMap tenvS) vs2 ts ==>
         ~(semanticPrimitives_do_eq_list vs1 vs2 = Eq_type_error))`,
   CHEAT_TAC);;
 
@@ -202,7 +200,7 @@ let type_recfun_env_help = prove
        funs' bindings' /\
      type_funs tenv (bind_var_list 0 bindings' (bind_tvar tvs tenvE))
        funs bindings ==>
-     LIST_REL (\(x,y) (x',y'). x = x' /\ (\(tvs,t). type_v tvs ctMap
+     ALL2 (\(x,y) (x',y'). x = x' /\ (\(tvs,t). type_v tvs ctMap
        tenvS y t) y')
               (MAP (\(fn,n,e). (fn,semanticPrimitives_Recclosure env
                 funs' fn)) funs)
@@ -220,7 +218,7 @@ let type_recfun_env = prove
      type_funs tenv (bind_var_list 0 bindings (bind_tvar tvs tenvE))
        funs bindings /\
      ALL_DISTINCT (MAP FST funs) ==>
-     LIST_REL (\(x,y) (x',y'). x = x' /\ (\(tvs,t). type_v tvs ctMap
+     ALL2 (\(x,y) (x',y'). x = x' /\ (\(tvs,t). type_v tvs ctMap
        tenvS y t) y')
               (MAP (\(fn,n,e). (fn,semanticPrimitives_Recclosure env
                 funs fn)) funs)
@@ -244,7 +242,7 @@ let opapp_type_sound = prove
  (`!ctMap tenvS vs ts t.
      ctMap_ok ctMap /\
      type_op ast_Opapp ts t /\
-     LIST_REL (type_v 0 ctMap tenvS) vs ts ==>
+     ALL2 (type_v 0 ctMap tenvS) vs ts ==>
      (?env e tenv tenvE.
        tenv_ok tenv /\
        tenv_val_exp_ok tenvE /\
@@ -315,8 +313,8 @@ let type_v_list_to_v_APPEND = prove
        Tlist_num) /\
      type_v 0 ctMap tenvS (semanticPrimitives_list_to_v ys) (Tapp [t]
        Tlist_num) ==>
-     type_v 0 ctMap tenvS (semanticPrimitives_list_to_v (xs ++ ys))
-       (Tapp [t] Tlist_num)`,
+     type_v 0 ctMap tenvS (semanticPrimitives_list_to_v (APPEND xs
+       ys)) (Tapp [t] Tlist_num)`,
   CHEAT_TAC);;
 
 let do_eq_Boolv = prove
@@ -344,7 +342,7 @@ let op_type_sound = prove
      type_s ctMap store tenvS /\
      type_op op ts t /\
      check_freevars 0 [] t /\
-     LIST_REL (type_v 0 ctMap tenvS) vs (REVERSE ts) ==>
+     ALL2 (type_v 0 ctMap tenvS) vs (REVERSE ts) ==>
    (?tenvS' store' ffi' r.
      store_type_extension tenvS tenvS' /\
      type_s ctMap store' tenvS' /\
@@ -360,9 +358,9 @@ let build_conv_type_sound = prove
    nsAll2 (type_ctor ctMap) envC tenvC /\
    do_con_check envC (SOME cn) l /\
    num_tvs tenvE = 0 /\
-   EVERY (check_freevars (num_tvs (bind_tvar tvs tenvE)) []) ts' /\
+   ALL (check_freevars (num_tvs (bind_tvar tvs tenvE)) []) ts' /\
    LENGTH tvs' = LENGTH ts' /\
-   LIST_REL (type_v tvs ctMap tenvS) vs
+   ALL2 (type_v tvs ctMap tenvS) vs
      (REVERSE (MAP (type_subst (alist_to_fmap (ZIP tvs' ts'))) ts))
        /\
    nsLookup tenvC cn = SOME (tvs',ts,tn) ==>
@@ -388,32 +386,32 @@ let pat_type_sound = prove
     type_v tvs ctMap tenvS v t /\
     type_p tvs tenv p t new_tbindings /\
     type_s ctMap st tenvS /\
-    LIST_REL (\(x,v) (x',t). x = x' /\ type_v tvs ctMap tenvS v t)
+    ALL2 (\(x,v) (x',t). x = x' /\ type_v tvs ctMap tenvS v t)
       bindings tbindings ==>
     semanticPrimitives_pmatch cenv st p v bindings = No_match \/
     (?bindings'.
       semanticPrimitives_pmatch cenv st p v bindings = Match
         bindings' /\
-      LIST_REL (\(x,v) (x',t). x = x' /\ type_v tvs ctMap tenvS v t)
+      ALL2 (\(x,v) (x',t). x = x' /\ type_v tvs ctMap tenvS v t)
         bindings'
-        (new_tbindings ++ tbindings))) /\
+        (APPEND new_tbindings tbindings))) /\
    (!(cenv:(mlstring,mlstring,num#stamp)namespace) st ps vs bindings
      tenv ctMap tbindings new_tbindings ts tenvS tvs.
     ctMap_ok ctMap /\
     nsAll2 (type_ctor ctMap) cenv (type_env_c tenv) /\
-    LIST_REL (type_v tvs ctMap tenvS) vs ts /\
+    ALL2 (type_v tvs ctMap tenvS) vs ts /\
     type_ps tvs tenv ps ts new_tbindings /\
     type_s ctMap st tenvS /\
-    LIST_REL (\(x,v) (x',t). x = x' /\ type_v tvs ctMap tenvS v t)
+    ALL2 (\(x,v) (x',t). x = x' /\ type_v tvs ctMap tenvS v t)
       bindings tbindings ==>
     semanticPrimitives_pmatch_list cenv st ps vs bindings = No_match
       \/
     (?bindings'.
       semanticPrimitives_pmatch_list cenv st ps vs bindings = Match
         bindings' /\
-      LIST_REL (\(x,v) (x',t). x = x' /\ type_v tvs ctMap tenvS v t)
+      ALL2 (\(x,v) (x',t). x = x' /\ type_v tvs ctMap tenvS v t)
         bindings'
-        (new_tbindings ++ tbindings)))`,
+        (APPEND new_tbindings tbindings)))`,
   CHEAT_TAC);;
 
 let lookup_var_sound = prove
@@ -423,7 +421,7 @@ let lookup_var_sound = prove
     ctMap_ok ctMap /\
     tenv_val_exp_ok tenvE /\
     num_tvs tenvE = 0 /\
-    EVERY (check_freevars tvs []) targs /\
+    ALL (check_freevars tvs []) targs /\
     type_all_env ctMap tenvS env (type_env_v_fupd (K (add_tenvE tenvE
       (type_env_v tenv))) tenv) ==>
     (?v. nsLookup (sem_env_v env) n = SOME v /\ type_v tvs ctMap
@@ -432,15 +430,15 @@ let lookup_var_sound = prove
 
 (* TODO: Move *)
 let EVERY_REPLICATE = prove
- (`EVERY (\x. type_v tvs ctMap tenv x t') vs =
-   EVERY (\x. type_v tvs ctMap tenv (FST x) (SND x)) (ZIP vs
+ (`ALL (\x. type_v tvs ctMap tenv x t') vs =
+   ALL (\x. type_v tvs ctMap tenv (FST x) (SND x)) (ZIP vs
      (REPLICATE (LENGTH vs) t'))`,
   CHEAT_TAC);;
 
 (* EVERY_LIST_REL *)
 let typeSound_EVERY_LIST_REL = prove
- (`EVERY (\v. type_v n ctMap tenvS v t) vs =
-   LIST_REL (type_v n ctMap tenvS) vs (REPLICATE (LENGTH vs) t)`,
+ (`ALL (\v. type_v n ctMap tenvS v t) vs =
+   ALL2 (type_v n ctMap tenvS) vs (REPLICATE (LENGTH vs) t)`,
   CHEAT_TAC);;
 
 let exp_type_sound = prove
@@ -454,7 +452,7 @@ let exp_type_sound = prove
      type_all_env ctMap tenvS env (type_env_v_fupd (K (add_tenvE
        tenvE (type_env_v tenv))) tenv) /\
      type_s ctMap (semanticPrimitives_state_refs s) tenvS /\
-     (~(tvs = 0) ==> EVERY is_value es) /\
+     (~(tvs = 0) ==> ALL is_value es) /\
      type_es tenv (bind_tvar tvs tenvE) es ts ==>
      (?tenvS'.
        type_s ctMap (semanticPrimitives_state_refs s') tenvS' /\
@@ -463,8 +461,8 @@ let exp_type_sound = prove
        s' = semanticPrimitives_state_next_type_stamp s /\
          semanticPrimitives_state_next_exn_stamp
        s' = semanticPrimitives_state_next_exn_stamp s /\
-       (match r with Rval vs -> LIST_REL (type_v tvs ctMap tenvS') vs
-         ts | Rerr (Rraise v) -> type_v 0 ctMap tenvS' v Texn | Rerr
+       (match r with Rval vs -> ALL2 (type_v tvs ctMap tenvS') vs ts
+         | Rerr (Rraise v) -> type_v 0 ctMap tenvS' v Texn | Rerr
          (Rabort Rtimeout_error) -> T | Rerr (Rabort (Rffi_error _3)) ->
          T | Rerr (Rabort Rtype_error) -> F))) /\
    (!(s:'ffi semanticPrimitives_state) env v pes err_v r s' tenv
@@ -499,7 +497,7 @@ let exp_type_sound = prove
 let build_tdefs_build_tenv = prove
  (`!tenvT (tds:(mlstring list#mlstring#(mlstring#ast_t list) list) list)
   (tids:num list) next' (ctMap:(stamp,mlstring list#t list#num)fmap).
-     EVERY (\(_5,_6,ctors). ALL_DISTINCT (MAP FST ctors)) tds /\
+     ALL (\(_5,_6,ctors). ALL_DISTINCT (MAP FST ctors)) tds /\
      LENGTH tds = LENGTH tids ==>
      nsAll2
        (type_ctor (ctMap |++ REVERSE (type_def_to_ctMap tenvT next'
@@ -516,7 +514,7 @@ let type_sound_invariant_union = prove
 
 (* [local] *)
 let check_ctor_tenv_dups = prove
- (`!tenvT tds. check_ctor_tenv tenvT tds ==> EVERY check_dup_ctors tds`,
+ (`!tenvT tds. check_ctor_tenv tenvT tds ==> ALL check_dup_ctors tds`,
   CHEAT_TAC);;
 
 let type_all_env_extend = prove
@@ -533,11 +531,11 @@ let type_e_con_check = prove
    (!tenv tenvE es ts.
      type_es tenv tenvE es ts ==>
      nsAll2 (type_ctor ctMap) envc (type_env_c tenv) ==>
-     EVERY (every_exp (one_con_check envc)) es) /\
+     ALL (every_exp (one_con_check envc)) es) /\
    (!tenv tenvE funs env.
      type_funs tenv tenvE funs env ==>
      nsAll2 (type_ctor ctMap) envc (type_env_c tenv) ==>
-     EVERY (\(f,n,e). every_exp (one_con_check envc) e) funs)`,
+     ALL (\(f,n,e). every_exp (one_con_check envc) e) funs)`,
   CHEAT_TAC);;
 
 let decs_type_sound_no_check = prove

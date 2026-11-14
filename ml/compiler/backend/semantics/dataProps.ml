@@ -56,8 +56,8 @@ let approx_of_def,approx_of_ind = define_guess_cheat
   [`approx_of lims x2 refs =
         match x2 with
           [] -> 0
-        | (x :: y :: ys) ->
-       approx_of lims [x] refs + approx_of lims (y :: ys) refs
+        | (CONS x (CONS y ys)) ->
+       approx_of lims [x] refs + approx_of lims (CONS y ys) refs
         | [(Word64 _2:dataSem_v)] -> 3
         | [Number i] ->
        (if small_num (limits_arch_64_bit lims) i then 0 else
@@ -71,7 +71,8 @@ let approx_of_def,approx_of_ind = define_guess_cheat
               (Thunk _6 v) ->
             approx_of lims [v] (delete r refs) + 2 | SOME
               (bvlSem_MutBlock tg fin ls c rs) ->
-            approx_of lims (ls ++ [c] ++ rs) (delete r refs) +
+            approx_of lims (APPEND (APPEND ls [c]) rs) (delete r
+              refs) +
             LENGTH ls + LENGTH rs + 2)
         | [Block ts tag []] -> 0
         | [Block ts tag vs] ->
@@ -172,16 +173,16 @@ let with_same_locals = prove
 
 let var_corr_def = new_definition
   `var_corr env corr t <=>
-     EVERY2 (\v x. dataSem_get_var v t = SOME x) corr env`;;
+     ALL2 (\v x. dataSem_get_var v t = SOME x) corr env`;;
 
 let get_vars_thm = prove
  (`!vs a t2. var_corr a vs t2 ==> (dataSem_get_vars vs t2 = SOME a)`,
   CHEAT_TAC);;
 
 let get_vars_append = prove
- (`!l1 l2 s. dataSem_get_vars (l1 ++ l2) s = OPTION_BIND
+ (`!l1 l2 s. dataSem_get_vars (APPEND l1 l2) s = OPTION_BIND
   (dataSem_get_vars l1 s) (\y1. OPTION_BIND (dataSem_get_vars l2 s)
-  (\y2. SOME (y1 ++ y2)))`,
+  (\y2. SOME (APPEND y1 y2)))`,
   CHEAT_TAC);;
 
 let get_vars_reverse = prove
@@ -191,7 +192,7 @@ let get_vars_reverse = prove
 
 let EVERY_get_vars = prove
  (`!args s1 s2.
-      EVERY (\a. lookup a s1 = lookup a s2) args ==>
+      ALL (\a. lookup a s1 = lookup a s2) args ==>
       (dataSem_get_vars args s1 = dataSem_get_vars args s2)`,
   CHEAT_TAC);;
 
@@ -666,9 +667,9 @@ let do_app_err_lim_swap = prove
    variables of its own are read as variables *)
 let size_of_stack_eq = prove
  (cake_as_vars (fun () ->
-    `(size_of_stack ((Env n l:dataSem_stack) :: stack) = OPTION_MAP2 (+)
-  n (size_of_stack stack)) /\
-     (size_of_stack (dataSem_Exc n v1 v2 :: stack) =
+    `(size_of_stack (CONS (Env n l:dataSem_stack) stack) = OPTION_MAP2
+  (+) n (size_of_stack stack)) /\
+     (size_of_stack (CONS (dataSem_Exc n v1 v2) stack) =
         OPTION_MAP2 (+) (OPTION_MAP ((+) 3) n) (size_of_stack
           stack)) /\
      (size_of_stack [] = SOME 1)`),
@@ -761,7 +762,7 @@ let same_stack_size_def = new_definition
 
 let same_stack_size_size_of_stack = prove
  (`!xs ys.
-   LIST_REL same_stack_size xs ys ==>
+   ALL2 same_stack_size xs ys ==>
    size_of_stack xs = size_of_stack ys`,
   CHEAT_TAC);;
 
@@ -1081,7 +1082,7 @@ let jump_exc_IMP = prove
  (`(dataSem_jump_exc s = SOME t) ==> dataSem_state_handler
     s < LENGTH (stack s) /\
     (?n e ls xs. (LASTN (dataSem_state_handler s + 1) (stack s) =
-      dataSem_Exc ls e n :: xs) /\
+      CONS (dataSem_Exc ls e n) xs) /\
                 (t = stack_fupd (K xs) (dataSem_state_locals_fupd
                   (K e) (dataSem_state_locals_size_fupd (K ls)
                   (dataSem_state_handler_fupd (K n) s)))))`,
@@ -1326,8 +1327,8 @@ hol4_overload "get_code_labels" "dataProps_get_code_labels";;
 
 let dataProps_good_code_labels_def = new_definition
   `dataProps_good_code_labels p elabs <=>
-     (BIGUNION (set_of_list (MAP (\(n,m,pp).
-       (dataProps_get_code_labels pp)) p))) SUBSET
+     (UNIONS (set_of_list (MAP (\(n,m,pp). (dataProps_get_code_labels
+       pp)) p))) SUBSET
      (set_of_list (MAP FST p)) UNION elabs`;;
 hol4_overload "good_code_labels" "dataProps_good_code_labels";;
 
@@ -1342,7 +1343,7 @@ let v_to_list_SOME_NIL_IFF = prove
 
 let v_to_list_SOME_CONS_IMP = prove
  (`!v x xs ts.
-   v_to_list v = SOME (x :: xs) ==> (?ts' ys. v = Block ts'
+   v_to_list v = SOME (CONS x xs) ==> (?ts' ys. v = Block ts'
      cons_tag [x; ys] /\ v_to_list ys = SOME xs)`,
   CHEAT_TAC);;
 
@@ -1426,8 +1427,8 @@ let do_app_stack_eq = prove
 
 let do_app_stack_frame_size_rel = prove
  (`!op vs s q s' stk. do_app op vs s = Rval (q,s') /\
-     LIST_REL stack_frame_size_rel (stack s) stk ==>
-       LIST_REL stack_frame_size_rel (stack s') stk`,
+     ALL2 stack_frame_size_rel (stack s) stk ==>
+       ALL2 stack_frame_size_rel (stack s') stk`,
   CHEAT_TAC);;
 
 (* HOL4 dataPropsScript.sml:2541-2545: a proof *)
@@ -1452,8 +1453,8 @@ let cut_state_opt_stack = prove
 (* [local] *)
 let evaluate_swap_stack_frame_sizes_aux = prove
  (`!c s r s' xs lsz sfs.
-    evaluate (c,s) = (r,s') /\ LIST_REL stack_frame_size_rel (stack
-      s) xs ==>
+    evaluate (c,s) = (r,s') /\ ALL2 stack_frame_size_rel (stack s) xs
+      ==>
     (let s0 = dataSem_state_stack_frame_sizes_fupd (K sfs)
       (stack_fupd (K xs) (dataSem_state_locals_size_fupd (K lsz) s)) in
     ?xs lsz smx safe peak sfs'.
@@ -1462,7 +1463,7 @@ let evaluate_swap_stack_frame_sizes_aux = prove
         (dataSem_state_stack_frame_sizes_fupd (K sfs') (stack_fupd (K
         xs) (dataSem_state_safe_for_space_fupd (K safe)
         (dataSem_state_locals_size_fupd (K lsz) s')))))) /\
-       LIST_REL stack_frame_size_rel (stack s') xs))`,
+       ALL2 stack_frame_size_rel (stack s') xs))`,
   CHEAT_TAC);;
 
 let evaluate_swap_local_sizes = prove
@@ -1475,7 +1476,7 @@ let evaluate_swap_local_sizes = prove
            (dataSem_state_stack_frame_sizes_fupd (K sfs) (stack_fupd (K
            xs) (dataSem_state_safe_for_space_fupd (K safe)
            (dataSem_state_locals_size_fupd (K lsz) s')))))) /\
-       LIST_REL stack_frame_size_rel (stack s') xs))`,
+       ALL2 stack_frame_size_rel (stack s') xs))`,
   CHEAT_TAC);;
 
 let evaluate_swap_stack_frame_sizes = prove
@@ -1488,7 +1489,7 @@ let evaluate_swap_stack_frame_sizes = prove
         (dataSem_state_stack_frame_sizes_fupd (K sfs') (stack_fupd (K
         xs) (dataSem_state_safe_for_space_fupd (K safe)
         (dataSem_state_locals_size_fupd (K lsz) s')))))) /\
-       LIST_REL stack_frame_size_rel (stack s') xs))`,
+       ALL2 stack_frame_size_rel (stack s') xs))`,
   CHEAT_TAC);;
 
 (* [local] *)

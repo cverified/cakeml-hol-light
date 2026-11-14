@@ -119,8 +119,8 @@ let semantics_remove_ticks = prove
   CHEAT_TAC);;
 
 let remove_ticks_CONS = prove
- (`!xs x. bvl_inline_remove_ticks (x :: xs) =
-              HD (remove_ticks [x]) :: remove_ticks xs`,
+ (`!xs x. bvl_inline_remove_ticks (CONS x xs) = CONS (HD (remove_ticks
+  [x])) (remove_ticks xs)`,
   CHEAT_TAC);;
 
 (* correctness of tick_inline *)
@@ -131,8 +131,9 @@ let bvl_inlineProof_exp_rel = cake_inductive
    (!cs. bvl_inlineProof_exp_rel cs [] []) /\
    (!cs x x1 xs y y1 ys.
       bvl_inlineProof_exp_rel cs [x] [y] /\
-      bvl_inlineProof_exp_rel cs (x1 :: xs) (y1 :: ys) ==>
-      bvl_inlineProof_exp_rel cs (x :: x1 :: xs) (y :: y1 :: ys)) /\
+      bvl_inlineProof_exp_rel cs (CONS x1 xs) (CONS y1 ys) ==>
+      bvl_inlineProof_exp_rel cs (CONS x (CONS x1 xs)) (CONS y (CONS
+        y1 ys))) /\
    (bvl_inlineProof_exp_rel cs [x1] [y1] /\
     bvl_inlineProof_exp_rel cs [x2] [y2] /\
     bvl_inlineProof_exp_rel cs [x3] [y3] ==>
@@ -201,21 +202,22 @@ let tick_inline_all_acc = prove
  (`!limit' cs t aux.
          tick_inline_all limit' cs t aux =
            (let (cs1,xs) = tick_inline_all limit' cs t [] in
-             (cs1,REVERSE aux ++ xs))`,
+             (cs1,APPEND (REVERSE aux) xs))`,
   CHEAT_TAC);;
 
 let tick_inline_all_names = prove
  (`!limit' cs t aux cs1 xs aux.
-     tick_inline_all limit' cs t aux = (cs1,xs) ==>
-     MAP FST (REVERSE aux) ++ MAP FST t = MAP FST xs`,
+     tick_inline_all limit' cs t aux = (cs1,xs) ==> APPEND (MAP FST
+       (REVERSE aux)) (MAP FST t) = MAP FST xs`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let tick_compile_prog_IMP = prove
  (cake_as_vars (fun () ->
-    `tick_compile_prog limit q0 ((k,prog) :: t) = (cs1,prog1) ==>
-         (?p1 vs. prog1 = (k,p1) :: vs /\ MAP FST vs = MAP FST t)`),
+    `tick_compile_prog limit q0 (CONS (k,prog) t) = (cs1,prog1) ==>
+         (?p1 vs. prog1 = CONS (k,p1) vs /\ MAP FST vs = MAP FST
+           t)`),
   CHEAT_TAC);;
 
 let subspt_union_lemma = prove
@@ -258,7 +260,7 @@ let exp_rel_rw = prove
   (sptree_insert p1 (p2,p3) LN)) (fromAList in1))
          [exp] [exp2] <=>
        bvl_inlineProof_exp_rel (sptree_union src_code (fromAList
-         ((p1,p2,p3) :: in1))) [exp] [exp2]`,
+         (CONS (p1,p2,p3) in1))) [exp] [exp2]`,
   CHEAT_TAC);;
 
 let exp_rel_tick_inline = prove
@@ -374,8 +376,8 @@ let subspt_tick_inline = prove
  (cake_as_vars (fun () ->
     `!prog cs aux.
            subspt cs (fromAList (REVERSE aux)) /\
-           EVERY (\x. ~(FST x IN domain cs)) prog /\
-           ALL_DISTINCT (MAP FST prog ++ MAP FST aux) ==>
+           ALL (\x. ~(FST x IN domain cs)) prog /\
+           ALL_DISTINCT (APPEND (MAP FST prog) (MAP FST aux)) ==>
            subspt (FST (tick_inline_all limit cs prog aux))
                   (fromAList (SND (tick_inline_all limit cs prog
                     aux)))`),
@@ -456,13 +458,14 @@ let let_op_sing_thm = prove
 let var_list_IMP_evaluate = prove
  (`!a2 a1 l (xs:bvl_exp list) (s:('a,'b)bvlSem_state).
          var_list (LENGTH a1) l xs /\ LENGTH xs = LENGTH a2 ==>
-         evaluate (l,a1 ++ a2 ++ env,s) = (Rval a2,s)`,
+         evaluate (l,APPEND (APPEND a1 a2) env,s) = (Rval a2,s)`,
   CHEAT_TAC);;
 
 (* var_list_IMP_evaluate *)
 let bvl_inlineProof_var_list_IMP_evaluate = prove
  (`var_list 0 l xs /\ LENGTH (xs:bvl_exp list) = LENGTH a ==>
-       evaluate (l,a ++ env,(s:('a,'b)bvlSem_state)) = (Rval a,s)`,
+       evaluate (l,APPEND a env,(s:('a,'b)bvlSem_state)) = (Rval
+         a,s)`,
   CHEAT_TAC);;
 
 (* LENGTH_let_op *)
@@ -532,7 +535,7 @@ let is_small_aux_0 = prove
   CHEAT_TAC);;
 
 let is_small_aux_CONS = prove
- (`is_small_aux n (x :: xs) =
+ (`is_small_aux n (CONS x xs) =
        (if n = 0 then n else
          let n = is_small_aux n [x] in
            if n = 0 then n else is_small_aux n xs)`,
@@ -544,7 +547,7 @@ let is_small_aux_remove_ticks = prove
   CHEAT_TAC);;
 
 let is_rec_CONS = prove
- (`bvl_inline_is_rec n (x :: xs) <=> bvl_inline_is_rec n [x] \/
+ (`bvl_inline_is_rec n (CONS x xs) <=> bvl_inline_is_rec n [x] \/
   bvl_inline_is_rec n xs`,
   CHEAT_TAC);;
 
@@ -678,13 +681,13 @@ let compile_prog_names = prove
   CHEAT_TAC);;
 
 let var_list_code_labels_imp = prove
- (`!n x y. var_list n x y ==> BIGUNION (set_of_list (MAP
+ (`!n x y. var_list n x y ==> UNIONS (set_of_list (MAP
   bvlProps_get_code_labels x)) = {}`,
   CHEAT_TAC);;
 
 let let_op_code_labels = prove
- (`!x. BIGUNION (set_of_list (MAP bvlProps_get_code_labels (let_op
-  x))) = BIGUNION (set_of_list (MAP bvlProps_get_code_labels x))`,
+ (`!x. UNIONS (set_of_list (MAP bvlProps_get_code_labels (let_op x)))
+  = UNIONS (set_of_list (MAP bvlProps_get_code_labels x))`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -695,9 +698,9 @@ let let_op_sing_code_labels = prove
 
 let remove_ticks_code_labels = prove
  (`!x.
-     BIGUNION (set_of_list (MAP bvlProps_get_code_labels
-       (remove_ticks x))) =
-     BIGUNION (set_of_list (MAP bvlProps_get_code_labels x))`,
+     UNIONS (set_of_list (MAP bvlProps_get_code_labels (remove_ticks
+       x))) =
+     UNIONS (set_of_list (MAP bvlProps_get_code_labels x))`,
   CHEAT_TAC);;
 
 let optimise_get_code_labels = prove
@@ -709,32 +712,32 @@ let optimise_get_code_labels = prove
 
 let tick_inline_code_labels = prove
  (`!cs xs.
-     BIGUNION (set_of_list (MAP bvlProps_get_code_labels (tick_inline
+     UNIONS (set_of_list (MAP bvlProps_get_code_labels (tick_inline
        cs xs))) SUBSET
-     BIGUNION (set_of_list (MAP bvlProps_get_code_labels xs)) UNION
-     BIGUNION (set_of_list (MAP (bvlProps_get_code_labels o SND)
+     UNIONS (set_of_list (MAP bvlProps_get_code_labels xs)) UNION
+     UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND)
        (toList cs)))`,
   CHEAT_TAC);;
 
 let tick_inline_all_code_labels = prove
  (`!limit' cs xs aux cs1 xs1.
      tick_inline_all limit' cs xs aux = (cs1,xs1) ==>
-     BIGUNION (set_of_list (MAP (bvlProps_get_code_labels o SND o
-       SND) xs1)) SUBSET
-     BIGUNION (set_of_list (MAP (bvlProps_get_code_labels o SND o
-       SND) xs)) UNION
-     BIGUNION (set_of_list (MAP (bvlProps_get_code_labels o SND o
-       SND) aux)) UNION
-     BIGUNION (set_of_list (MAP (bvlProps_get_code_labels o SND)
+     UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND)
+       xs1)) SUBSET
+     UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND)
+       xs)) UNION
+     UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND)
+       aux)) UNION
+     UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND)
        (toList cs)))`,
   CHEAT_TAC);;
 
 let compile_prog_get_code_labels = prove
  (`bvl_inline_compile_prog x y z p = (inlines,q) ==>
-   BIGUNION (set_of_list (MAP (bvlProps_get_code_labels o SND o SND)
+   UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND)
      q)) SUBSET
-   BIGUNION (set_of_list (MAP (bvlProps_get_code_labels o SND o
-     SND) p))`,
+   UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND)
+     p))`,
   CHEAT_TAC);;
 
 (* and the overloads that this file cannot see are back in the

@@ -61,7 +61,7 @@ let mk_linfix_def,mk_linfix_ind = define_wf
   `MEASURE (\(x0,x1,x2). parsetree_size1 locs_size (\x. 0) (\x. 0) x2)`
   [`mk_linfix tgt acc [] = acc`;
    `mk_linfix tgt acc [t] = acc`;
-   `mk_linfix tgt acc (opt :: t :: rest) =
+   `mk_linfix tgt acc (CONS opt (CONS t rest)) =
      mk_linfix tgt (mkNd tgt [acc; opt; t]) rest`];;
 
 let _ = size_thms "locs";;
@@ -72,14 +72,14 @@ let mk_rinfix_def,mk_rinfix_ind = define_wf
   `MEASURE (\(x0,x1). parsetree_size1 locs_size (\x. 0) (\x. 0) x1)`
   [`mk_rinfix tgt [] = mkNd tgt []`;
    `mk_rinfix tgt [t] = mkNd tgt [t]`;
-   `mk_rinfix tgt (t :: opt :: rest) = mkNd tgt [t; opt; mk_rinfix
-  tgt rest]`];;
+   `mk_rinfix tgt (CONS t (CONS opt rest)) = mkNd tgt [t; opt;
+  mk_rinfix tgt rest]`];;
 
 let peg_linfix_def = new_definition
   `peg_linfix tgtnt rptsym opsym =
      peg_seq rptsym (peg_rpt (peg_seq opsym rptsym (++)) FLAT)
          (\a b. match a with
-                    [] -> [] | h :: _1 -> [mk_linfix tgtnt (mkNd
+                    [] -> [] | CONS h _1 -> [mk_linfix tgtnt (mkNd
                       tgtnt [h]) b])`;;
 
 (* have to use these versions of choicel and pegf below because the
@@ -89,7 +89,7 @@ let peg_linfix_def = new_definition
 *)
 let cmlPEG_choicel_def,cmlPEG_choicel_ind = define_rec
   [`cmlPEG_choicel [] = peg_not (peg_empty []) []`;
-   `cmlPEG_choicel (h :: t) = peg_choice h (cmlPEG_choicel t)
+   `cmlPEG_choicel (CONS h t) = peg_choice h (cmlPEG_choicel t)
   cmlPEG_sumID`];;
 hol4_overload "choicel" "cmlPEG_choicel";;
 
@@ -137,7 +137,7 @@ let peg_TypeDec_def = new_definition
          (peg_linfix ((INL:MMLnonT->MMLnonT+num) nDtypeDecls)
            (cmlPEG_pnt nDtypeDecl)
                      (cmlPEG_tokeq tokens_AndT))
-         (\l1 l2. bindNT nTypeDec (l1 ++ l2))`;;
+         (\l1 l2. bindNT nTypeDec (APPEND l1 l2))`;;
 
 (* expressions *)
 let peg_V_def = new_definition
@@ -210,7 +210,8 @@ let ptPapply0_def,ptPapply0_ind = define_wf
         [] -> []
       // can't happen
       | [pb_pt] -> bindNT nPapp [c; pb_pt]
-      | (pb :: pbs) -> ptPapply0 (bindNT0 nPConApp [c; pb]) pbs`];;
+      | (CONS pb pbs) -> ptPapply0 (bindNT0 nPConApp [c; pb])
+        pbs`];;
 
 let ptPapply_def = new_definition
   `ptPapply x1 =
@@ -219,7 +220,7 @@ let ptPapply_def = new_definition
       // can't happen
       | [_3] -> []
       // can't happen
-      | (c :: rest) -> ptPapply0 (bindNT0 nPConApp [c]) rest`;;
+      | (CONS c rest) -> ptPapply0 (bindNT0 nPConApp [c]) rest`;;
 
 
 let cmlPEG_def = new_definition
@@ -237,7 +238,7 @@ let cmlPEG_def = new_definition
                   FLAT]
                      (\l.
                         match l with
-                          [] -> [] | h :: t -> [FOLDL (\a b. mkNd
+                          [] -> [] | CONS h t -> [FOLDL (\a b. mkNd
                             ((INL:MMLnonT->MMLnonT+num) nEapp) [a; b])
                               (mkNd ((INL:MMLnonT->MMLnonT+num)
                                 nEapp) [h]) t]));
@@ -247,10 +248,9 @@ let cmlPEG_def = new_definition
                      (bindNT nElist1));
                ((INL:MMLnonT->MMLnonT+num) nMultOps,
                 pegf (
-                  choicel (
-                    tokSymP (validMultSym o explode) ::
-                    MAP cmlPEG_tokeq [tokens_StarT; tokens_AlphaT
-                      (implode "mod"); tokens_AlphaT (implode "div")]))
+                  choicel (CONS (tokSymP (validMultSym o explode))
+                    (MAP cmlPEG_tokeq [tokens_StarT; tokens_AlphaT
+                      (implode "mod"); tokens_AlphaT (implode "div")])))
                       (bindNT nMultOps));
                ((INL:MMLnonT->MMLnonT+num) nAddOps,pegf (tokSymP
                  (validAddSym o explode)) (bindNT nAddOps));
@@ -418,7 +418,7 @@ let cmlPEG_def = new_definition
                   FLAT]
                      (\subs.
                         match subs with
-                            [] -> [] | h :: t -> [FOLDL (\a b. mkNd
+                            [] -> [] | CONS h t -> [FOLDL (\a b. mkNd
                               ((INL:MMLnonT->MMLnonT+num) nDType) [a;
                               b])
                               (mkNd ((INL:MMLnonT->MMLnonT+num)
@@ -709,7 +709,7 @@ let peg0_pegf = prove
 (* [simp] *)
 let peg0_seql = prove
  (`(peg0 G (seql [] f) <=> T) /\
-   (peg0 G (seql (h :: t) f) <=> peg0 G h /\ peg0 G (seql t I))`,
+   (peg0 G (seql (CONS h t) f) <=> peg0 G h /\ peg0 G (seql t I))`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -725,8 +725,8 @@ let peg0_tokSymP = prove
 (* [simp] *)
 let peg0_choicel = prove
  (`(peg0 G (choicel []) = F) /\
-   (peg0 G (choicel (h :: t)) <=> peg0 G h \/ pegfail G h /\ peg0 G
-     (choicel t))`,
+   (peg0 G (choicel (CONS h t)) <=> peg0 G h \/ pegfail G h /\ peg0
+     G (choicel t))`,
   CHEAT_TAC);;
 
 (* HOL4 cmlPEGScript.sml:681-695: a theorem that HOL4 states as the

@@ -181,7 +181,7 @@ let colouring_ok_def,colouring_ok_ind = define_wf
         | (Loop names body exit_names) ->
        (INJ f (domain names) UNIV /\
        INJ f (domain exit_names) UNIV /\
-       colouring_ok f body names ((names,exit_names) :: lt))
+       colouring_ok f body names (CONS (names,exit_names) lt))
         | prog ->
        // live before must be fine, and clash set must be fine
        (let lset = get_live prog live lt in
@@ -360,8 +360,8 @@ let list_rearrange_perm = prove
 (* [local] *)
 let GENLIST_MAP = prove
  (`!k. (!i. i < LENGTH l ==> m i < LENGTH l) /\ k <= LENGTH l ==>
-         GENLIST (\i. EL (m i) (MAP f l)) k =
-         MAP f (GENLIST (\i. EL (m i) l) k)`,
+         list_of_seq (\i. EL (m i) (MAP f l)) k =
+         MAP f (list_of_seq (\i. EL (m i) l) k)`,
   CHEAT_TAC);;
 
 let list_rearrange_MAP = prove
@@ -450,10 +450,11 @@ let gc_frame = prove
 *)
 let s_key_eq_val_eq_pop_env = prove
  (`wordSem_pop_env s = SOME s' /\
-   s_key_eq (stack s) ((StackFrame n lsz ls opt) :: keys) /\
+   s_key_eq (stack s) (CONS (StackFrame n lsz ls opt) keys) /\
    s_val_eq (stack s) vals ==>
    (?lsz' ls' rest.
-   vals = StackFrame n lsz' ls' opt :: rest /\ wordSem_state_locals
+   vals = CONS (StackFrame n lsz' ls' opt) rest /\
+     wordSem_state_locals
    s' =
      sptree_union (fromAList (ZIP (MAP FST ls) (MAP SND ls')))
        (fromAList lsz) /\
@@ -557,7 +558,7 @@ let strong_locals_rel_insert = prove
 
 (* [local] *)
 let LASTN_LENGTH2 = prove
- (`LASTN (LENGTH xs + 1) (x :: xs) = x :: xs`,
+ (`LASTN (LENGTH xs + 1) (CONS x xs) = CONS x xs`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -598,7 +599,7 @@ let strong_locals_rel_set_vars_dom = prove
 let s_key_eq_push_env_imp_MAP_FST = prove
  (`s_key_eq (stack
      (wordSem_push_env (x',x'') o0 s))
-     (StackFrame n' bb l opt :: ls) /\
+     (CONS (StackFrame n' bb l opt) ls) /\
    env_to_list x'' (wordSem_state_permute s) = (ll,res) ==>
    MAP FST ll = MAP FST l /\
    set_of_list (MAP FST bb) = domain x'`,
@@ -928,7 +929,7 @@ let clash_tree_colouring_ok = prove
  (`!prog lt f live flive livein flivein.
    wf_cutsets prog /\
    sptree_wf live /\
-   EVERY (\(n,e). sptree_wf n /\ sptree_wf e) lt /\
+   ALL (\(n,e). sptree_wf n /\ sptree_wf e) lt /\
    domain flive = IMAGE f (domain live) /\
    INJ f (domain live) UNIV /\
    check_clash_tree f (get_clash_tree prog lt) live flive = SOME
@@ -959,33 +960,32 @@ let even_starting_locals_def = new_definition
 (* [local] *)
 let get_forced_tail_split = prove
  (`!c p ls ls'.
-   get_forced c p (ls ++ ls') =
-   get_forced c p ls ++ ls'`,
+   get_forced c p (APPEND ls ls') = APPEND (get_forced c p ls) ls'`,
   CHEAT_TAC);;
 
 (* [local] *)
 let EVERY_get_forced = prove
- (`EVERY P (get_forced c p ls) <=>
-   EVERY P (get_forced c p []) /\ EVERY P ls`,
+ (`ALL P (get_forced c p ls) <=>
+   ALL P (get_forced c p []) /\ ALL P ls`,
   CHEAT_TAC);;
 
 (* [local] *)
 let get_forced_pairwise_distinct = prove
  (`!c prog ls.
-   EVERY (\(x,y). ~(x = y)) ls ==>
-   EVERY (\(x,y). ~(x = y)) (get_forced c prog ls)`,
+   ALL (\(x,y). ~(x = y)) ls ==>
+   ALL (\(x,y). ~(x = y)) (get_forced c prog ls)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let get_forced_in_get_clash_tree = prove
  (`!prog lt c.
-   EVERY (\(x,y). in_clash_tree (get_clash_tree prog lt) x /\
+   ALL (\(x,y). in_clash_tree (get_clash_tree prog lt) x /\
      in_clash_tree (get_clash_tree prog lt) y) (get_forced c prog [])`,
   CHEAT_TAC);;
 
 let select_reg_alloc_correct = prove
  (`!alg spillcosts k heu_moves tree forced fs.
-   EVERY (\(r1,r2). in_clash_tree tree r1 /\ in_clash_tree tree r2)
+   ALL (\(r1,r2). in_clash_tree tree r1 /\ in_clash_tree tree r2)
      forced ==>
    (?spcol livein flivein.
    select_reg_alloc alg spillcosts k heu_moves tree forced fs =
@@ -999,8 +999,8 @@ let select_reg_alloc_correct = prove
        k <= (sp_default spcol r) else
        T)) /\
    (!r. r IN domain spcol ==> in_clash_tree tree r) /\
-   EVERY (\(r1,r2). (sp_default spcol) r1 = (sp_default spcol) r2
-     ==> r1 = r2) forced)`,
+   ALL (\(r1,r2). (sp_default spcol) r1 = (sp_default spcol) r2 ==>
+     r1 = r2) forced)`,
   CHEAT_TAC);;
 
 (*Prove the full correctness theorem for word_alloc*)
@@ -1052,7 +1052,7 @@ let nlive_store_def,nlive_store_ind = define_wf
   [`nlive_store nlive x2 =
         match x2 with
           wordLang_Op _16 ls ->
-         EVERY (nlive_store nlive) ls
+         ALL (nlive_store nlive) ls
         | (wordLang_Lookup s) -> ~(s IN set_of_list nlive)
         | (Load e) ->
        nlive_store nlive e
@@ -1195,7 +1195,7 @@ let evaluate_remove_dead_Loop_helper = prove
           st') t' /\
         live_store_rel nlivein' (wordSem_state_store st') tstore' /\
         wordSem_evaluate (body,st') = (res',rst') /\
-        remove_dead body names [] ((names,exit_names) :: lt) =
+        remove_dead body names [] (CONS (names,exit_names) lt) =
           (prog'',livein',nlivein') /\ ~(res' = SOME wordSem_Error)
             ==>
         (?t'' tstore''.
@@ -1210,13 +1210,13 @@ let evaluate_remove_dead_Loop_helper = prove
                live_store_rel [] (wordSem_state_store rst') tstore''
                  | SOME (Break n) -> wordSem_state_store
                rst' = tstore'' /\
-               (match oEL n ((names,exit_names) :: lt) with
+               (match oEL n (CONS (names,exit_names) lt) with
                   SOME (_19,exit_names) ->
                     strong_locals_rel I (domain exit_names)
                       (wordSem_state_locals rst') t'' | NONE -> T) |
                       SOME (Continue n) -> wordSem_state_store
                rst' = tstore'' /\
-               (match oEL n ((names,exit_names) :: lt) with
+               (match oEL n (CONS (names,exit_names) lt) with
                   SOME (names,_20) ->
                     strong_locals_rel I (domain names)
                       (wordSem_state_locals rst') t'' | NONE -> T) |
@@ -1452,8 +1452,8 @@ let merge_moves_fst = prove
    let (moveL,moveR,na',ssaL',ssaR') = word_alloc_merge_moves ls ssaL
      ssaR na in
    na <= na' /\
-   EVERY (\x. x < na' /\ x >= na) (MAP FST moveL) /\
-   EVERY (\x. x < na' /\ x >= na) (MAP FST moveR)`,
+   ALL (\x. x < na' /\ x >= na) (MAP FST moveL) /\
+   ALL (\x. x < na' /\ x >= na) (MAP FST moveR)`,
   CHEAT_TAC);;
 
 (*Characterize result of merge_moves*)
@@ -1488,7 +1488,7 @@ let mov_eval_head = prove
    y IN domain (wordSem_state_locals st) /\
    ~(MEM y (MAP FST moves)) /\
    ~(MEM x (MAP FST moves)) ==>
-   wordSem_evaluate (wordLang_Move p ((x,y) :: moves),st) =
+   wordSem_evaluate (wordLang_Move p (CONS (x,y) moves),st) =
      (NONE,wordSem_state_locals_fupd (K (sptree_insert x (THE
      (sptree_lookup y (wordSem_state_locals st)))
      (wordSem_state_locals rst))) rst)`,
@@ -1743,8 +1743,8 @@ let get_vars_list_insert_eq_gen = prove
    (LENGTH ls = LENGTH x /\ ALL_DISTINCT ls /\
                    LENGTH a = LENGTH b /\ (!e. MEM e ls ==> ~(MEM e
                      a))) ==> wordSem_get_vars ls
-                     (wordSem_state_locals_fupd (K (alist_insert (a ++
-                     ls) (b ++ x) locs)) st) = SOME x`,
+                     (wordSem_state_locals_fupd (K (alist_insert
+                     (APPEND a ls) (APPEND b x) locs)) st) = SOME x`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1778,7 +1778,7 @@ let ssa_locals_rel_ignore_list_insert = prove
  (`ssa_map_ok na ssa /\
    ssa_locals_rel na ssa (wordSem_state_locals st)
      (wordSem_state_locals cst) /\
-   EVERY is_phy_var ls /\
+   ALL is_phy_var ls /\
    LENGTH ls = LENGTH x ==>
    ssa_locals_rel na ssa (wordSem_state_locals st) (alist_insert ls
      x (wordSem_state_locals cst))`,
@@ -1811,7 +1811,7 @@ let ssa_locals_rel_list_next_var_rename = prove
    ssa_locals_rel na ssa stloc cstloc /\
    ssa_map_ok na ssa /\
    LENGTH xs = LENGTH ls /\
-   EVERY (\x. x < na) xs /\
+   ALL (\x. x < na) xs /\
    ALL_DISTINCT xs /\
    ~(is_phy_var na) ==>
    ssa_locals_rel na' ssa' (alist_insert xs ls stloc) (alist_insert
@@ -1946,7 +1946,7 @@ let ssa_map_ok_insert = prove
 let ssa_map_ok_force_rename = prove
  (`!ls ssa.
    ssa_map_ok na ssa /\
-   EVERY (\x. SND x < na /\ ~(is_phy_var (SND x))) ls ==>
+   ALL (\x. SND x < na /\ ~(is_phy_var (SND x))) ls ==>
    ssa_map_ok na (force_rename ls ssa)`,
   CHEAT_TAC);;
 
@@ -2048,8 +2048,8 @@ let domain_force_rename = prove
 
 let ssa_locals_rel_force_rename = prove
  (`ssa_locals_rel na ssa st1 st2 /\
-   EVERY (\x. sptree_lookup (FST x) st1 = sptree_lookup (SND x) st2)
-     ls /\
+   ALL (\x. sptree_lookup (FST x) st1 = sptree_lookup (SND x) st2) ls
+     /\
    set_of_list (MAP SND ls) SUBSET domain st2 ==>
    ssa_locals_rel na (force_rename ls ssa) st1 st2`,
   CHEAT_TAC);;
@@ -2172,7 +2172,7 @@ let evaluate_ssa_reconcile = prove
 
 let lt_ok_def = new_definition
   `lt_ok lt <=>
-     EVERY (\(tgt_ssa,names,exit_names).
+     ALL (\(tgt_ssa,names,exit_names).
        INJ (option_lookup tgt_ssa) (domain names) UNIV /\
        INJ (option_lookup tgt_ssa) (domain exit_names) UNIV) lt`;;
 
@@ -2277,11 +2277,12 @@ let ssa_cc_trans_Loop_helper = prove
      INJ (option_lookup ssa_refreshed) (domain exit_names) UNIV /\
      domain names SUBSET domain ssa_refreshed /\
      domain exit_names SUBSET domain ssa_refreshed /\
-     EVERY (\x. x < na_refreshed) (MAP FST (toAList names)) /\
-     EVERY (\x. x < na_refreshed) (MAP FST (toAList exit_names)) /\
+     ALL (\x. x < na_refreshed) (MAP FST (toAList names)) /\
+     ALL (\x. x < na_refreshed) (MAP FST (toAList exit_names)) /\
      lt_ok lt /\
      ssa_cc_trans body (inter ssa_refreshed names) na_refreshed
-       ((ssa_refreshed,names,exit_names) :: lt) = (body',ssa',na') /\
+       (CONS (ssa_refreshed,names,exit_names) lt) = (body',ssa',na')
+         /\
      (!(st':('a,'b,'c)wordSem_state) cst' ssa'' na'' lt'.
         word_state_eq_rel st' cst' /\
         ssa_locals_rel na'' ssa'' (wordSem_state_locals st')
@@ -2593,8 +2594,8 @@ let fix_inconsistencies_conventions = prove
   CHEAT_TAC);;
 
 let every_name_def2 = prove
- (`every_name P t = EVERY P (MAP FST (toAList (sptree_union (FST t)
-  (SND t))))`,
+ (`every_name P t = ALL P (MAP FST (toAList (sptree_union (FST t) (SND
+  t))))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2788,8 +2789,8 @@ let every_var_exp_apply_colour_exp = prove
 (* [local] *)
 let every_apply_nummap_key_helper = prove
  (`!f names P Q.
-   EVERY P (MAP FST (toAList names)) /\ (!x. P x ==> Q (f x)) ==>
-   EVERY Q (MAP FST (toAList (fromAList (MAP (\((x:num),(y:1)). (f
+   ALL P (MAP FST (toAList names)) /\ (!x. P x ==> Q (f x)) ==>
+   ALL Q (MAP FST (toAList (fromAList (MAP (\((x:num),(y:1)). (f
      x,one)) (toAList names)))))`,
   CHEAT_TAC);;
 
@@ -2851,7 +2852,7 @@ let pre_post_conventions_word_alloc = prove
 let word_alloc_full_inst_ok_less_lem = prove
  (`!f prog c.
    full_inst_ok_less c prog /\
-   EVERY (\(x,y). ~((f x) = (f y))) (get_forced c prog []) ==>
+   ALL (\(x,y). ~((f x) = (f y))) (get_forced c prog []) ==>
    full_inst_ok_less c (apply_colour f prog)`,
   CHEAT_TAC);;
 
@@ -2860,11 +2861,11 @@ let word_alloc_full_inst_ok_less_lem = prove
 
 (* [local] *)
 let forced_distinct_col = prove
- (`EVERY (\(x,y). (sp_default spcol) x = (sp_default spcol) y ==> x = y)
+ (`ALL (\(x,y). (sp_default spcol) x = (sp_default spcol) y ==> x = y)
   ls /\
-   EVERY (\(x,y). ~(x = y)) ls ==>
-   EVERY (\(x,y). ~((total_colour spcol) x = (total_colour spcol)
-     y)) ls`,
+   ALL (\(x,y). ~(x = y)) ls ==>
+   ALL (\(x,y). ~((total_colour spcol) x = (total_colour spcol) y))
+     ls`,
   CHEAT_TAC);;
 
 let word_alloc_full_inst_ok_less = prove

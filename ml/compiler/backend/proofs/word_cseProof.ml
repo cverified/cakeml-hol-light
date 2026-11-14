@@ -42,7 +42,7 @@ let _ = do_list hide_constant ["Greater"];;
    of them resets the data. *)
 let in_names_set_def = new_definition
   `in_names_set (a:'a asm_arith) tc <=>
-     EVERY (\r. sptree_lookup r tc = SOME r) (arithReads a)`;;
+     ALL (\r. sptree_lookup r tc = SOME r) (arithReads a)`;;
 
 (* The invariant is factored into a STATE-FREE syntactic part (wf_data) and
    a state-dependent semantic part (sem_inv). The If-join merge needs
@@ -567,10 +567,11 @@ let data_inv_insert_gets = prove
      ALOOKUP (knowledge_gets_mem data) name = NONE /\
      FLOOKUP (wordSem_state_store s) name = SOME w /\ wordSem_get_var
        v s = SOME w ==>
-     data_inv (knowledge_gets_mem_fupd (K ((name,v) ::
-       knowledge_gets_mem data)) (knowledge_to_latest_fupd (K (insert
-       v v (knowledge_to_latest data))) (knowledge_to_canonical_fupd
-       (K (insert v v (knowledge_to_canonical data))) data))) s`,
+     data_inv (knowledge_gets_mem_fupd (K (CONS (name,v)
+       (knowledge_gets_mem data))) (knowledge_to_latest_fupd (K
+       (insert v v (knowledge_to_latest data)))
+       (knowledge_to_canonical_fupd (K (insert v v
+       (knowledge_to_canonical data))) data))) s`,
   CHEAT_TAC);;
 
 (* Dropping store facts never hurts. Matches the Set-arm FILTER. *)
@@ -592,8 +593,8 @@ let data_inv_cons_gets = prove
      sptree_lookup h (knowledge_to_canonical data) = SOME h /\
      FLOOKUP (wordSem_state_store s) x = SOME w /\ wordSem_get_var h
        s = SOME w ==>
-     data_inv (knowledge_gets_mem_fupd (K ((x,h) ::
-       knowledge_gets_mem data)) data) s`,
+     data_inv (knowledge_gets_mem_fupd (K (CONS (x,h)
+       (knowledge_gets_mem data))) data) s`,
   CHEAT_TAC);;
 
 (* A store write to a name no fact mentions preserves the invariant: only
@@ -677,7 +678,7 @@ let with_locals_insert = prove
 (* [local] *)
 let data_inv_alist_insert_locals = prove
  (`!xs ys data (s:('a,'c,'ffi)wordSem_state) l.
-     EVERY (\x. sptree_lookup x (knowledge_to_canonical data) = NONE)
+     ALL (\x. sptree_lookup x (knowledge_to_canonical data) = NONE)
        xs ==>
      (data_inv data (wordSem_state_locals_fupd (K (alist_insert xs ys
        l)) s) <=>
@@ -687,7 +688,7 @@ let data_inv_alist_insert_locals = prove
 (* data_inv is insensitive to writes to untracked registers. *)
 let data_inv_set_vars = prove
  (`!xs ys data (s:('a,'c,'ffi)wordSem_state).
-     EVERY (\x. sptree_lookup x (knowledge_to_canonical data) = NONE)
+     ALL (\x. sptree_lookup x (knowledge_to_canonical data) = NONE)
        xs ==>
      (data_inv data (wordSem_set_vars xs ys s) <=> data_inv data s)`,
   CHEAT_TAC);;
@@ -832,7 +833,7 @@ let canonicalRegs'_self_or_fresh = prove
 
 (* [local] *)
 let can_mem_arith_ODD_reads = prove
- (`!a. can_mem_arith a ==> EVERY ODD (arithReads a)`,
+ (`!a. can_mem_arith a ==> ALL ODD (arithReads a)`,
   CHEAT_TAC);;
 
 (* Correctness of add_to_data_const: a repeated constant keeps its register
@@ -1063,7 +1064,7 @@ let data_inv_move_pairs = prove
  (`!ps data (s:('a,'c,'ffi)wordSem_state).
      data_inv data s /\
      ALL_DISTINCT (MAP FST ps) /\
-     EVERY (\(x,y). sptree_lookup x (knowledge_to_canonical data) =
+     ALL (\(x,y). sptree_lookup x (knowledge_to_canonical data) =
        NONE /\
                     sptree_lookup y (knowledge_to_canonical data) =
                       SOME y /\
@@ -1319,10 +1320,11 @@ let wf_data_insert_gets = prove
      wf_data (:'a) data /\
      sptree_lookup v (knowledge_to_canonical data) = NONE /\ ODD v /\
      ALOOKUP (knowledge_gets_mem data) name = NONE ==>
-     wf_data (:'a) (knowledge_gets_mem_fupd (K ((name,v) ::
-       knowledge_gets_mem data)) (knowledge_to_latest_fupd (K (insert
-       v v (knowledge_to_latest data))) (knowledge_to_canonical_fupd
-       (K (insert v v (knowledge_to_canonical data))) data)))`,
+     wf_data (:'a) (knowledge_gets_mem_fupd (K (CONS (name,v)
+       (knowledge_gets_mem data))) (knowledge_to_latest_fupd (K
+       (insert v v (knowledge_to_latest data)))
+       (knowledge_to_canonical_fupd (K (insert v v
+       (knowledge_to_canonical data))) data)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1340,8 +1342,8 @@ let wf_data_cons_gets = prove
      wf_data (:'a) data /\
      ALOOKUP (knowledge_gets_mem data) x = NONE /\
      sptree_lookup h (knowledge_to_canonical data) = SOME h ==>
-     wf_data (:'a) (knowledge_gets_mem_fupd (K ((x,h) ::
-       knowledge_gets_mem data)) data)`,
+     wf_data (:'a) (knowledge_gets_mem_fupd (K (CONS (x,h)
+       (knowledge_gets_mem data))) data)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1372,7 +1374,7 @@ let wf_data_merge = prove
 let wf_data_move_pairs = prove
  (`!ps data.
      wf_data (:'a) data /\
-     EVERY (\(x,y). sptree_lookup x (knowledge_to_canonical data) =
+     ALL (\(x,y). sptree_lookup x (knowledge_to_canonical data) =
        NONE /\
                     sptree_lookup y (knowledge_to_canonical data) =
                       SOME y /\
@@ -1424,9 +1426,8 @@ let in_names_set_insert_self = prove
 (* [local] *)
 let in_names_set_register_reads = prove
  (`!a data.
-     EVERY ODD (arithReads a) /\
-     EVERY (\w. sptree_lookup w (knowledge_to_canonical data) = NONE
-       \/
+     ALL ODD (arithReads a) /\
+     ALL (\w. sptree_lookup w (knowledge_to_canonical data) = NONE \/
                 sptree_lookup w (knowledge_to_canonical data) = SOME
                   w) (arithReads a) ==>
      in_names_set a (knowledge_to_canonical (register_reads data
@@ -1442,8 +1443,7 @@ let canonicalArith_reads_self_or_fresh = prove
      can_mem_arith (canonicalArith data a) /\
      sptree_lookup (firstRegOfArith a) (knowledge_to_canonical data)
        = NONE ==>
-     EVERY (\w. sptree_lookup w (knowledge_to_canonical data) = NONE
-       \/
+     ALL (\w. sptree_lookup w (knowledge_to_canonical data) = NONE \/
                 sptree_lookup w (knowledge_to_canonical data) = SOME
                   w)
            (arithReads (canonicalArith data a))`,

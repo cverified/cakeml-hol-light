@@ -58,7 +58,7 @@ let dec_clock_with_code = prove
 let do_app_split_list = prove
  (`do_app op vs s = res <=>
    vs = [] /\ do_app op [] s = res \/
-   (?v vs1. vs = v :: vs1 /\ do_app op (v :: vs1) s = res)`,
+   (?v vs1. vs = CONS v vs1 /\ do_app op (CONS v vs1) s = res)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -163,7 +163,7 @@ let boolv_11 = prove
 let find_code_EVERY_IMP = prove
  (`(find_code dest a (bvlSem_state_code (r:('c,'ffi)bvlSem_state)) =
   SOME (q,t)) ==>
-    EVERY P a ==> EVERY P q`,
+    ALL P a ==> ALL P q`,
   CHEAT_TAC);;
 
 let do_app_err = prove
@@ -184,28 +184,28 @@ let evaluate_IMP_LENGTH = prove
   CHEAT_TAC);;
 
 let evaluate_CONS = prove
- (`evaluate (x :: xs,env,s) =
+ (`evaluate (CONS x xs,env,s) =
       (match evaluate ([x],env,s) with (Rval v,s2) ->
-         (match evaluate (xs,env,s2) with (Rval vs,s1) -> (Rval (HD
-           v :: vs),s1) | t -> t) | t -> t)`,
+         (match evaluate (xs,env,s2) with (Rval vs,s1) -> (Rval
+           (CONS (HD v) vs),s1) | t -> t) | t -> t)`,
   CHEAT_TAC);;
 
 let evaluate_SNOC = prove
  (`!xs env s x.
       evaluate (SNOC x xs,env,s) =
       (match evaluate (xs,env,s) with (Rval vs,s2) ->
-         (match evaluate ([x],env,s2) with (Rval v,s1) -> (Rval (vs
-           ++ v),s1) | t -> t) | t -> t)`,
+         (match evaluate ([x],env,s2) with (Rval v,s1) -> (Rval
+           (APPEND vs v),s1) | t -> t) | t -> t)`,
   CHEAT_TAC);;
 
 let evaluate_APPEND = prove
  (`!xs env s ys.
-      evaluate (xs ++ ys,env,s) =
+      evaluate (APPEND xs ys,env,s) =
       (match evaluate (xs,env,s) with
         (Rval vs,s2) ->
           (match evaluate (ys,env,s2) with
-             (Rval ws,s1) -> (Rval (vs ++ ws),s1) | res -> res) |
-               res -> res)`,
+             (Rval ws,s1) -> (Rval (APPEND vs ws),s1) | res -> res)
+               | res -> res)`,
   CHEAT_TAC);;
 
 let evaluate_SING = prove
@@ -218,7 +218,7 @@ let evaluate_code = prove
      (?n. compile_oracle
        s2 = misc_shift_seq n (compile_oracle s1) /\ state_code
        s2 = FOLDL sptree_union (state_code s1) (MAP (fromAList o SND)
-         (GENLIST (compile_oracle s1) n)))`,
+         (list_of_seq (compile_oracle s1) n)))`,
   CHEAT_TAC);;
 
 let evaluate_mono = prove
@@ -253,7 +253,7 @@ let evaluate_Bool = prove
 let evaluate_expand_env = prove
  (`!xs a s env. ~(FST (evaluate (xs,a,s)) = Rerr (Rabort Rtype_error))
   ==>
-     (evaluate (xs,a ++ env,s) = evaluate (xs,a,s))`,
+     (evaluate (xs,APPEND a env,s) = evaluate (xs,a,s))`,
   CHEAT_TAC);;
 
 let inc_clock_def = new_definition
@@ -393,15 +393,15 @@ let evaluate_add_to_clock_io_events_mono = prove
 let take_drop_lem = prove
  (`!skip env.
      skip < LENGTH env /\
-     skip + SUC n <= LENGTH env /\ ~(DROP skip env = []) ==>
-     EL skip env :: TAKE n (DROP (1 + skip) env) = TAKE (n + 1)
+     skip + SUC n <= LENGTH env /\ ~(DROP skip env = []) ==> CONS
+       (EL skip env) (TAKE n (DROP (1 + skip) env)) = TAKE (n + 1)
        (DROP skip env)`,
   CHEAT_TAC);;
 
 let evaluate_genlist_vars = prove
  (`!skip env n st.
     n + skip <= LENGTH env ==>
-    evaluate (GENLIST (\arg. Var (arg + skip)) n,env,st) =
+    evaluate (list_of_seq (\arg. Var (arg + skip)) n,env,st) =
     (Rval (TAKE n (DROP skip env)),st)`,
   CHEAT_TAC);;
 
@@ -414,7 +414,8 @@ let evaluate_var_reverse = prove
 let evaluate_genlist_vars_rev = prove
  (`!skip env n st.
      n + skip <= LENGTH env ==>
-     evaluate (REVERSE (GENLIST (\arg. Var (arg + skip)) n),env,st) =
+     evaluate (REVERSE (list_of_seq (\arg. Var (arg + skip))
+       n),env,st) =
      (Rval (REVERSE (TAKE n (DROP skip env))),st)`,
   CHEAT_TAC);;
 
@@ -443,10 +444,10 @@ let evaluate_refs_SUBSET = prove
 
 let bvlProps_get_vars_def,bvlProps_get_vars_ind = define_rec
   [`bvlProps_get_vars [] env = SOME []`;
-   `bvlProps_get_vars (n :: ns) env =
+   `bvlProps_get_vars (CONS n ns) env =
          (if n < LENGTH env then
            (match bvlProps_get_vars ns env with NONE -> NONE |
-             SOME vs -> SOME (EL n env :: vs)) else NONE)`];;
+             SOME vs -> SOME (CONS (EL n env) vs)) else NONE)`];;
 hol4_overload "get_vars" "bvlProps_get_vars";;
 
 let isVar_def = new_definition
@@ -459,7 +460,7 @@ let destVar_def = define_general
   [`(destVar ((Var n):bvl_exp) = n)`];;
 
 let evaluate_Var_list = prove
- (`!l. EVERY isVar l ==>
+ (`!l. ALL isVar l ==>
        (evaluate (l,env,s) = (Rerr (Rabort Rtype_error),s)) \/
        (?vs. (evaluate (l,env,s) = (Rval vs,s)) /\
             (bvlProps_get_vars (MAP destVar l) env = SOME vs) /\
@@ -474,8 +475,8 @@ let _ = size_thms "bvl_exp";;
 let bVarBound_def,bVarBound_ind = define_wf
   `MEASURE (list_size bvl_exp_size o SND)`
   [`bVarBound n [] <=> T`;
-   `bVarBound n ((x:bvl_exp) :: y :: xs) <=>
-         bVarBound n [x] /\ bVarBound n (y :: xs)`;
+   `bVarBound n (CONS (x:bvl_exp) (CONS y xs)) <=>
+         bVarBound n [x] /\ bVarBound n (CONS y xs)`;
    `bVarBound n [(Var v:bvl_exp)] <=> v < n`;
    `bVarBound n [(If x1 x2 x3:bvl_exp)] <=>
          bVarBound n [x1] /\ bVarBound n [x2] /\ bVarBound n [x3]`;
@@ -497,8 +498,8 @@ let _ = size_thms "bvl_exp";;
 let bEvery_def,bEvery_ind = define_wf
   `MEASURE (list_size bvl_exp_size o SND)`
   [`bEvery P [] <=> T`;
-   `bEvery P ((x:bvl_exp) :: y :: xs) <=>
-         bEvery P [x] /\ bEvery P (y :: xs)`;
+   `bEvery P (CONS (x:bvl_exp) (CONS y xs)) <=>
+         bEvery P [x] /\ bEvery P (CONS y xs)`;
    `bEvery P [(Var v:bvl_exp)] <=> P ((Var v:bvl_exp))`;
    `bEvery P [(If x1 x2 x3:bvl_exp)] <=> P ((If x1 x2 x3:bvl_exp)) /\
          bEvery P [x1] /\ bEvery P [x2] /\ bEvery P [x3]`;
@@ -517,11 +518,11 @@ let bEvery_def,bEvery_ind = define_wf
   xs:bvl_exp)) /\ bEvery P xs`];;
 
 let bVarBound_EVERY = prove
- (`!ls. bVarBound P ls <=> EVERY (\e. bVarBound P [e]) ls`,
+ (`!ls. bVarBound P ls <=> ALL (\e. bVarBound P [e]) ls`,
   CHEAT_TAC);;
 
 let bEvery_EVERY = prove
- (`!ls. bEvery P ls <=> EVERY (\e. bEvery P [e]) ls`,
+ (`!ls. bEvery P ls <=> ALL (\e. bEvery P [e]) ls`,
   CHEAT_TAC);;
 
 let _ = size_thms "bvl_exp";;
@@ -538,9 +539,8 @@ let bvlProps_get_code_labels_def,bvlProps_get_code_labels_ind =
    `bvlProps_get_code_labels (If e1 e2 e3:bvl_exp) =
   bvlProps_get_code_labels e1 UNION bvlProps_get_code_labels e2 UNION
   bvlProps_get_code_labels e3`;
-   `bvlProps_get_code_labels (Let es e:bvl_exp) = BIGUNION
-  (set_of_list (MAP bvlProps_get_code_labels es)) UNION
-  bvlProps_get_code_labels e`;
+   `bvlProps_get_code_labels (Let es e:bvl_exp) = UNIONS (set_of_list
+  (MAP bvlProps_get_code_labels es)) UNION bvlProps_get_code_labels e`;
    `bvlProps_get_code_labels (Raise e:bvl_exp) =
   bvlProps_get_code_labels e`;
    `bvlProps_get_code_labels (Handle e1 e2:bvl_exp) =
@@ -549,10 +549,10 @@ let bvlProps_get_code_labels_def,bvlProps_get_code_labels_ind =
   bvlProps_get_code_labels e`;
    `bvlProps_get_code_labels (Force loc v:bvl_exp) = {loc}`;
    `bvlProps_get_code_labels (Call _4 d es:bvl_exp) = (match d with
-  NONE -> {} | SOME n -> {n}) UNION BIGUNION (set_of_list (MAP
+  NONE -> {} | SOME n -> {n}) UNION UNIONS (set_of_list (MAP
   bvlProps_get_code_labels es))`;
    `bvlProps_get_code_labels (Op op es:bvl_exp) =
-  assign_get_code_label op UNION BIGUNION (set_of_list (MAP
+  assign_get_code_label op UNION UNIONS (set_of_list (MAP
   bvlProps_get_code_labels es))`];;
 hol4_overload "get_code_labels" "bvlProps_get_code_labels";;
 

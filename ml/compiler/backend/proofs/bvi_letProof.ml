@@ -46,8 +46,8 @@ let env_rel_def,env_rel_ind = define_wf
   [`bvi_letProof_env_rel x1 d e1 e2 =
         match (x1,e1,e2) with
           ([],e1,e2) -> (e1 = DROP d e2)
-        | ((a :: rest),(x :: e1),(y :: e2)) ->
-        bvi_letProof_v_rel a x y (x :: e1) (y :: e2) /\
+        | ((CONS a rest),(CONS x e1),(CONS y e2)) ->
+        bvi_letProof_v_rel a x y (CONS x e1) (CONS y e2) /\
           bvi_letProof_env_rel rest d e1 e2
         | (_1,_2,_3) -> F`];;
 hol4_overload "env_rel" "bvi_letProof_env_rel";;
@@ -219,8 +219,8 @@ let evaluate_delete_var_Rval = prove
        evaluate (xs,env2,(s:('c,'ffi)bviSem_state)) = (Rval a,r) /\
        bvi_letProof_env_rel ax d env env2 ==>
        (?b. evaluate (MAP delete_var xs,env2,s) = (Rval b,r) /\
-           bvi_letProof_env_rel (extract_list xs ++ ax) d (a ++
-             env) (b ++ env2))`,
+           bvi_letProof_env_rel (APPEND (extract_list xs) ax) d
+             (APPEND a env) (APPEND b env2))`,
   (let rty = `:(bvlSem_v list,exn_or_ret)
                 semanticPrimitives_result` in
    let dv = delete_var_def in
@@ -315,7 +315,7 @@ let evaluate_delete_var_Rval = prove
      NAMED_CASES_TAC (mk_var("hres",rty)) [["hv"]; ["he"]] THEN
      tidy THEN split_tail `hs:('c,'ffi)bviSem_state` THEN
      use_ih `hs:('c,'ffi)bviSem_state` THEN
-     EXISTS_TAC `HD (hv:bvlSem_v list) :: bb` THEN
+     EXISTS_TAC `CONS (HD (hv:bvlSem_v list)) bb` THEN
      ASM_REWRITE_TAC[] THEN tidy THEN
      env_rel_cons THEN REWRITE_TAC[oEL] THEN
      ASM_REWRITE_TAC[] in
@@ -332,7 +332,7 @@ let evaluate_delete_var_Rval = prove
      ASM_REWRITE_TAC[HD] THEN tidy THEN STRIP_TAC THEN tidy THEN
      split_tail `s:('c,'ffi)bviSem_state` THEN
      use_ih `s:('c,'ffi)bviSem_state` THEN
-     EXISTS_TAC `((Number (&0)):bvlSem_v) :: bb` THEN
+     EXISTS_TAC `CONS ((Number (&0)):bvlSem_v) bb` THEN
      ASM_REWRITE_TAC[] THEN tidy THEN env_rel_cons THEN
      SUBGOAL_THEN
        `LENGTH (t:bvi_exp list) = LENGTH (bb:bvlSem_v list)`
@@ -365,19 +365,20 @@ let evaluate_SNOC_Rval = prove
    FIRST_ASSUM(CHOOSE_THEN SUBST_ALL_TAC o
                MATCH_MP evaluate_SING_IMP) THEN
    ASM_MESON_TAC[bviProps_evaluate_IMP_LENGTH;
-                 prove(`!l x. SNOC x l = l ++ [x]`,
+                 prove(`!l x. SNOC x l = APPEND l [x]`,
                        LIST_INDUCT_TAC THEN
                        ASM_REWRITE_TAC[SNOC; APPEND])]));;
 
 let compile_CONS = prove
- (`compile ax d (x :: xs) = compile ax d [x] ++ compile ax d xs`,
+ (`compile ax d (CONS x xs) = APPEND (compile ax d [x]) (compile ax d
+  xs)`,
   (let compile_def = bvi_let_compile_def in
    STRUCT_CASES_TAC(ISPEC `xs:bvi_exp list` list_CASES) THEN
    REWRITE_TAC[compile_def; APPEND_NIL]));;
 
 let compile_APPEND = prove
- (`!xs ys ax d. compile ax d (xs ++ ys) = compile ax d xs ++ compile
-  ax d ys`,
+ (`!xs ys ax d. compile ax d (APPEND xs ys) = APPEND (compile ax d xs)
+  (compile ax d ys)`,
   (let compile_def = bvi_let_compile_def in
    LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; compile_def] THEN
    ONCE_REWRITE_TAC[compile_CONS] THEN
@@ -388,8 +389,8 @@ let IMP_COMM = prove
   (MESON_TAC[]));;
 
 let exp_size_APPEND = prove
- (`!xs ys. bvi_exp_size1 (xs ++ ys) = bvi_exp_size1 xs + bvi_exp_size1
-  ys`,
+ (`!xs ys. bvi_exp_size1 (APPEND xs ys) = bvi_exp_size1 xs +
+  bvi_exp_size1 ys`,
   (* the same theorem as bvi_let's exp2_size_APPEND, which the
      source states again here *)
   (let sz = size_thms "bvi_exp" in
@@ -400,7 +401,7 @@ let env_rel_MAP = prove
  (`!ax env1 env2 d a.
       bvi_letProof_env_rel ax d env1 env2 ==>
       bvi_letProof_env_rel (MAP ((+) (LENGTH a)) ax) (d + LENGTH a)
-        env1 (a ++ env2)`,
+        env1 (APPEND a env2)`,
   (* HOL4 moves the head of the new environment into ax with the
      append gymnastics of bvi_letProofScript.sml:157-176; the same
      induction, one element at a time *)
@@ -436,8 +437,8 @@ let env_rel_MAP = prove
 let env_rel_REPLICATE_0 = prove
  (`!vs ax d env1 env2.
      bvi_letProof_env_rel ax d env1 env2 ==>
-     bvi_letProof_env_rel (REPLICATE (LENGTH vs) 0 ++ ax) d (vs ++
-       env1) (vs ++ env2)`,
+     bvi_letProof_env_rel (APPEND (REPLICATE (LENGTH vs) 0) ax) d
+       (APPEND vs env1) (APPEND vs env2)`,
   (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
    ASM_REWRITE_TAC[REPLICATE; LENGTH; APPEND] THEN
    ONCE_REWRITE_TAC[env_rel_def] THEN MATCH_REDUCE_TAC THEN
@@ -601,7 +602,7 @@ let evaluate_env_rel = prove
    let env_rel_CONS = prove
     (`!ax d env1 env2 v.
         bvi_letProof_env_rel ax d env1 env2 ==>
-        bvi_letProof_env_rel (0 :: ax) d (v :: env1) (v :: env2)`,
+        bvi_letProof_env_rel (CONS 0 ax) d (CONS v env1) (CONS v env2)`,
      REPEAT GEN_TAC THEN DISCH_TAC THEN
      ONCE_REWRITE_TAC[er] THEN MATCH_REDUCE_TAC THEN
      REWRITE_TAC[vr] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
@@ -676,11 +677,11 @@ let evaluate_env_rel = prove
      tidy THEN
      use_ih_for `[x1:bvi_exp]` THEN tidy THEN
      TRY(NAMED_CASES_TAC
-           `evaluate ((x2:bvi_exp) :: xr2,env1,
+           `evaluate (CONS (x2:bvi_exp) xr2,env1,
                       hs:('c,'ffi)bviSem_state)`
            [["tres"; "ts"]] THEN
          NAMED_CASES_TAC (mk_var("tres",rty)) [["tv"]; ["te"]] THEN
-         tidy THEN use_ih_for `(x2:bvi_exp) :: xr2` THEN tidy) in
+         tidy THEN use_ih_for `CONS (x2:bvi_exp) xr2` THEN tidy) in
    (* the conditions of the semantics are if-then-else as well as
       case, and both sides test the same one; the condition goes
       first, because a condition that is still open when the
@@ -785,7 +786,7 @@ let evaluate_env_rel = prove
             `APPEND (av:bvlSem_v list) env2`
             `d + LENGTH (yl:bvi_exp list)` `[xl:bvi_exp]` in
    let ih_body =
-     USE_IH `extract_list (bvi_let_compile ax d es) ++ ax`
+     USE_IH `APPEND (extract_list (bvi_let_compile ax d es)) ax`
             `APPEND (b:bvlSem_v list) env2` `d:num` `[e:bvi_exp]` in
    let is_compile t =
      try fst(dest_const(fst(strip_comb t))) = "bvi_let_compile"
@@ -966,9 +967,9 @@ let dest_var_code_labels = prove
                UNION_EMPTY; EMPTY_UNION]));;
 
 let compile_code_labels = prove
- (`!x y z. BIGUNION (set_of_list (MAP get_code_labels (bvi_let_compile x
-  y z))) =
-           BIGUNION (set_of_list (MAP get_code_labels z))`,
+ (`!x y z. UNIONS (set_of_list (MAP get_code_labels (bvi_let_compile x y
+  z))) =
+           UNIONS (set_of_list (MAP get_code_labels z))`,
   (let cp = bvi_let_compile_def in
    let gcl = bviProps_get_code_labels_def in
    let sz = size_thms "bvi_exp" in
@@ -1094,7 +1095,7 @@ let compile_code_labels = prove
         ["rets"; "tt"; "dd"; "es"; "e"]; ["es"]] THENL sub_cases in
    let cons_cons_case =
      REWRITE_TAC[cp; labs_APPEND] THEN
-     use_ih `[z1:bvi_exp]` THEN use_ih `(z2:bvi_exp) :: zs2` THEN
+     use_ih `[z1:bvi_exp]` THEN use_ih `CONS (z2:bvi_exp) zs2` THEN
      finish in
    let base_case =
      REPEAT GEN_TAC THEN DISCH_TAC THEN

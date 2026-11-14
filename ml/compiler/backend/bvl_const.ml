@@ -267,8 +267,8 @@ let extract_pmatch = prove
 
 let bvl_const_extract_list_def,bvl_const_extract_list_ind = define_rec
   [`bvl_const_extract_list [] = []`;
-   `bvl_const_extract_list (x :: xs) = extract x xs ::
-  bvl_const_extract_list xs`];;
+   `bvl_const_extract_list (CONS x xs) = CONS (extract x xs)
+  (bvl_const_extract_list xs)`];;
 hol4_overload "extract_list" "bvl_const_extract_list";;
 
 let bvl_const_delete_var_def = new_definition
@@ -294,8 +294,8 @@ let _ = size_thms "bvl_exp";;
 let bvl_const_compile_def,bvl_const_compile_ind = define_wf_cheat
   `MEASURE (list_size bvl_exp_size o SND)`
   [`bvl_const_compile env [] = []`;
-   `bvl_const_compile env (x :: y :: xs) = bvl_const_compile env [x]
-  ++ bvl_const_compile env (y :: xs)`;
+   `bvl_const_compile env (CONS x (CONS y xs)) = APPEND
+  (bvl_const_compile env [x]) (bvl_const_compile env (CONS y xs))`;
    `bvl_const_compile env [(Var v:bvl_exp)] =
          (match (\l n. oEL n l) env v with NONE -> [Var v] | SOME
            NONE -> [Var v] | SOME (SOME (Var i)) -> [Var (v + i)] |
@@ -310,11 +310,11 @@ let bvl_const_compile_def,bvl_const_compile_ind = define_wf_cheat
    `bvl_const_compile env [(Let xs x2:bvl_exp)] =
          (let ys = bvl_const_compile env xs in
            [Let (MAP bvl_const_delete_var ys)
-                (HD (bvl_const_compile (bvl_const_extract_list ys
-                  ++ env) [x2]))])`;
+                (HD (bvl_const_compile (APPEND
+                  (bvl_const_extract_list ys) env) [x2]))])`;
    `bvl_const_compile env [(Handle x1 x2:bvl_exp)] =
          [Handle (HD (bvl_const_compile env [x1])) (HD
-           (bvl_const_compile (NONE :: env) [x2]))]`;
+           (bvl_const_compile (CONS NONE env) [x2]))]`;
    `bvl_const_compile env [(Raise x1:bvl_exp)] =
          [Raise (HD (bvl_const_compile env [x1]))]`;
    `bvl_const_compile env [(Op op xs:bvl_exp)] = [bvl_const_SmartOp
@@ -345,11 +345,11 @@ let bvl_const_compile_sing_def,bvl_const_compile_sing_ind =
    `bvl_const_compile_sing env (Let xs x2:bvl_exp) =
          (let ys = bvl_const_compile_list env xs in
            Let (MAP bvl_const_delete_var ys)
-               (bvl_const_compile_sing (bvl_const_extract_list ys
-                 ++ env) x2))`;
+               (bvl_const_compile_sing (APPEND
+                 (bvl_const_extract_list ys) env) x2))`;
    `bvl_const_compile_sing env (Handle x1 x2:bvl_exp) =
          Handle (bvl_const_compile_sing env x1)
-           (bvl_const_compile_sing (NONE :: env) x2)`;
+           (bvl_const_compile_sing (CONS NONE env) x2)`;
    `bvl_const_compile_sing env (Raise x1:bvl_exp) =
          Raise (bvl_const_compile_sing env x1)`;
    `bvl_const_compile_sing env (Op op xs:bvl_exp) = bvl_const_SmartOp
@@ -363,8 +363,8 @@ let bvl_const_compile_sing_def,bvl_const_compile_sing_ind =
    `bvl_const_compile_sing env (Call t dest xs:bvl_exp) = Call t dest
   (bvl_const_compile_list env xs)`;
    `bvl_const_compile_list env [] = []`;
-   `bvl_const_compile_list env (x :: xs) = bvl_const_compile_sing
-  env x :: bvl_const_compile_list env xs`];;
+   `bvl_const_compile_list env (CONS x xs) = CONS
+  (bvl_const_compile_sing env x) (bvl_const_compile_list env xs)`];;
 hol4_overload "compile_list" "bvl_const_compile_list";;
 hol4_overload "compile_sing" "bvl_const_compile_sing";;
 
@@ -532,7 +532,7 @@ let bvl_const_compile_length = prove
       one] in
    let cons_cons_case =
      REWRITE_TAC[cp; LENGTH_APPEND] THEN
-     use_ih `[x1:bvl_exp]` THEN use_ih `(x2:bvl_exp) :: xr2` THEN
+     use_ih `[x1:bvl_exp]` THEN use_ih `CONS (x2:bvl_exp) xr2` THEN
      REWRITE_TAC[LENGTH] THEN ARITH_TAC in
    let base_case =
      REPEAT GEN_TAC THEN DISCH_TAC THEN
@@ -563,7 +563,7 @@ let bvl_const_compile_HD_SING = prove
 
 let bvl_const_compile_exp_def = new_definition
   `bvl_const_compile_exp x =
-     (match bvl_const_compile [] [x] with (y :: _31) -> y | _32 ->
+     (match bvl_const_compile [] [x] with (CONS y _31) -> y | _32 ->
        Var 0)
    // impossible`;;
 hol4_overload "compile_exp" "bvl_const_compile_exp";;

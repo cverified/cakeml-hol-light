@@ -160,7 +160,7 @@ let env_rel_add_nsBind = prove
 let env_rel_add_nsBindList = prove
  (`!xs ys. source_evalProof_env_rel R (sem_env_v_fupd (K ev) env)
   (sem_env_v_fupd (K ev') env') /\
-   LIST_REL (RPROD (=) R) xs ys ==>
+   ALL2 (RPROD (=) R) xs ys ==>
    source_evalProof_env_rel R (sem_env_v_fupd (K (nsBindList xs
      ev)) env) (sem_env_v_fupd (K (nsBindList ys ev')) env')`,
   CHEAT_TAC);;
@@ -234,10 +234,10 @@ let source_evalProof_v_rel = cake_inductive
          source_evalProof_env_rel (source_evalProof_v_rel es) env
            env' ==>
      source_evalProof_v_rel es (semanticPrimitives_Env env id') v) /\
-   (LIST_REL (source_evalProof_v_rel es) xs ys ==>
+   (ALL2 (source_evalProof_v_rel es) xs ys ==>
      source_evalProof_v_rel es (semanticPrimitives_Vectorv xs)
        (semanticPrimitives_Vectorv ys)) /\
-   (LIST_REL (source_evalProof_v_rel es) xs ys ==>
+   (ALL2 (source_evalProof_v_rel es) xs ys ==>
      source_evalProof_v_rel es (semanticPrimitives_Conv stmp xs)
        (semanticPrimitives_Conv stmp ys)) /\
    (source_evalProof_env_rel (source_evalProof_v_rel es) env env' ==>
@@ -278,7 +278,7 @@ let s_rel_def = new_definition
    (?dec_s orac_s' refs'. s' =
      semanticPrimitives_state_eval_state_fupd (K (SOME (EvalOracle
      orac_s'))) (semanticPrimitives_state_refs_fupd (K refs') s) /\
-   LIST_REL (semanticPrimitivesProps_sv_rel (source_evalProof_v_rel
+   ALL2 (semanticPrimitivesProps_sv_rel (source_evalProof_v_rel
      orac_s')) (semanticPrimitives_state_refs s) refs' /\
      semanticPrimitives_state_eval_state
    s = SOME (EvalDecs dec_s) /\ eval_oracle_state_custom_do_eval
@@ -340,17 +340,16 @@ let v_rel_forward = prove
 let forward_rules = prove
  (`(source_evalProof_v_rel es x y /\ es_forward es es' ==>
   source_evalProof_v_rel es' x y) /\
-   (LIST_REL (source_evalProof_v_rel es) xs ys /\ es_forward es es'
-     ==>
-     LIST_REL (source_evalProof_v_rel es') xs ys) /\
+   (ALL2 (source_evalProof_v_rel es) xs ys /\ es_forward es es' ==>
+     ALL2 (source_evalProof_v_rel es') xs ys) /\
    (source_evalProof_env_rel (source_evalProof_v_rel es) env env' /\
      es_forward es es' ==>
      source_evalProof_env_rel (source_evalProof_v_rel es') env env')
        /\
-   (!xs ys. LIST_REL (semanticPrimitivesProps_sv_rel
+   (!xs ys. ALL2 (semanticPrimitivesProps_sv_rel
      (source_evalProof_v_rel es)) xs ys /\ es_forward es es' ==>
-     LIST_REL (semanticPrimitivesProps_sv_rel
-       (source_evalProof_v_rel es')) xs ys)`,
+     ALL2 (semanticPrimitivesProps_sv_rel (source_evalProof_v_rel
+       es')) xs ys)`,
   CHEAT_TAC);;
 
 (* a stronger notion that applies end-to-end over evaluate/evaluate_decs,
@@ -378,7 +377,7 @@ let match_result_rel_def = new_definition
 hol4_overload "match_result_rel" "source_evalProof_match_result_rel";;
 
 let store_lookup_rel = prove
- (`LIST_REL (semanticPrimitivesProps_sv_rel R) refs refs' ==>
+ (`ALL2 (semanticPrimitivesProps_sv_rel R) refs refs' ==>
    OPTREL (semanticPrimitivesProps_sv_rel R) (store_lookup i refs)
      (store_lookup i refs')`,
   CHEAT_TAC);;
@@ -413,8 +412,8 @@ let pmatch = prove
    s_refs = semanticPrimitives_state_refs s /\ env_c = sem_env_c env
      /\
    source_evalProof_v_rel es x y /\
-   LIST_REL (RPROD (=) (source_evalProof_v_rel es)) binds binds' ==>
-   source_evalProof_match_result_rel T (LIST_REL (RPROD (=)
+   ALL2 (RPROD (=) (source_evalProof_v_rel es)) binds binds' ==>
+   source_evalProof_match_result_rel T (ALL2 (RPROD (=)
      (source_evalProof_v_rel es)))
      (semanticPrimitives_pmatch env_c s_refs p x binds)
      (semanticPrimitives_pmatch (sem_env_c env')
@@ -422,9 +421,9 @@ let pmatch = prove
    (!env_c s_refs ps xs binds ys binds'.
    s_refs = semanticPrimitives_state_refs s /\ env_c = sem_env_c env
      /\
-   LIST_REL (source_evalProof_v_rel es) xs ys /\
-   LIST_REL (RPROD (=) (source_evalProof_v_rel es)) binds binds' ==>
-   source_evalProof_match_result_rel T (LIST_REL (RPROD (=)
+   ALL2 (source_evalProof_v_rel es) xs ys /\
+   ALL2 (RPROD (=) (source_evalProof_v_rel es)) binds binds' ==>
+   source_evalProof_match_result_rel T (ALL2 (RPROD (=)
      (source_evalProof_v_rel es)))
      (semanticPrimitives_pmatch_list env_c s_refs ps xs binds)
      (semanticPrimitives_pmatch_list (sem_env_c env')
@@ -440,7 +439,7 @@ let pmatch_drule_form = prove
      (semanticPrimitives_state_eval_state t))) env env' /\
    source_evalProof_v_rel (orac_s
      (semanticPrimitives_state_eval_state t)) x y ==>
-   source_evalProof_match_result_rel T (LIST_REL (RPROD (=)
+   source_evalProof_match_result_rel T (ALL2 (RPROD (=)
      (source_evalProof_v_rel (orac_s
      (semanticPrimitives_state_eval_state t)))))
      res (semanticPrimitives_pmatch (sem_env_c env')
@@ -472,22 +471,22 @@ let source_evalProof_do_eq = prove
    semanticPrimitives_do_eq x' y' = Eq_val b) /\
    (!xs ys xs' ys' b. semanticPrimitives_do_eq_list xs ys = Eq_val b
      /\
-   LIST_REL (source_evalProof_v_rel es) xs xs' /\
-   LIST_REL (source_evalProof_v_rel es) ys ys' ==>
+   ALL2 (source_evalProof_v_rel es) xs xs' /\
+   ALL2 (source_evalProof_v_rel es) ys ys' ==>
    semanticPrimitives_do_eq_list xs' ys' = Eq_val b)`,
   CHEAT_TAC);;
 
 let store_assign = prove
  (`store_assign lnum sv refs = SOME refs2 /\
-   LIST_REL (semanticPrimitivesProps_sv_rel R) refs refs3 /\
+   ALL2 (semanticPrimitivesProps_sv_rel R) refs refs3 /\
    semanticPrimitivesProps_sv_rel R sv sv' ==>
    (?refs4.
-   LIST_REL (semanticPrimitivesProps_sv_rel R) refs2 refs4 /\
+   ALL2 (semanticPrimitivesProps_sv_rel R) refs2 refs4 /\
    store_assign lnum sv' refs3 = SOME refs4)`,
   CHEAT_TAC);;
 
 let store_lookup = prove
- (`LIST_REL (semanticPrimitivesProps_sv_rel R) refs refs' /\
+ (`ALL2 (semanticPrimitivesProps_sv_rel R) refs refs' /\
    store_lookup n refs = SOME sv ==>
    (?sv'. semanticPrimitivesProps_sv_rel R sv sv' /\
    store_lookup n refs' = SOME sv')`,
@@ -497,7 +496,7 @@ let v_rel_list_to_v = prove
  (`!xs ys.
    source_evalProof_v_rel es (semanticPrimitives_list_to_v xs)
      (semanticPrimitives_list_to_v ys) <=>
-   LIST_REL (source_evalProof_v_rel es) xs ys`,
+   ALL2 (source_evalProof_v_rel es) xs ys`,
   CHEAT_TAC);;
 
 (* v_to_list *)
@@ -505,7 +504,7 @@ let source_evalProof_v_to_list = prove
  (`!x y xs. semanticPrimitives_v_to_list x = SOME xs /\
    source_evalProof_v_rel es x y ==>
    (?ys. semanticPrimitives_v_to_list y = SOME ys /\
-   LIST_REL (source_evalProof_v_rel es) xs ys)`,
+   ALL2 (source_evalProof_v_rel es) xs ys)`,
   CHEAT_TAC);;
 
 let v_to_char_list = prove
@@ -516,7 +515,7 @@ let v_to_char_list = prove
 
 let vs_to_string = prove
  (`!xs ys s. semanticPrimitives_vs_to_string xs = SOME s /\
-   LIST_REL (source_evalProof_v_rel es) xs ys ==>
+   ALL2 (source_evalProof_v_rel es) xs ys ==>
    semanticPrimitives_vs_to_string ys = SOME s`,
   CHEAT_TAC);;
 
@@ -534,8 +533,8 @@ let v_rel_check_type = prove
 
 (* [local] *)
 let LIST_REL_v_rel_check_type = prove
- (`LIST_REL (source_evalProof_v_rel x) vs1 vs2 ==>
-   (EVERY (semanticPrimitives_check_type ty) vs1 <=> EVERY
+ (`ALL2 (source_evalProof_v_rel x) vs1 vs2 ==>
+   (ALL (semanticPrimitives_check_type ty) vs1 <=> ALL
      (semanticPrimitives_check_type ty) vs2)`,
   CHEAT_TAC);;
 
@@ -544,7 +543,7 @@ let do_app_sim = prove
   s,semanticPrimitives_state_ffi s) op (REVERSE xs) = SOME
   ((refs,ffi),r) /\
    source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
-   LIST_REL (source_evalProof_v_rel (orac_s
+   ALL2 (source_evalProof_v_rel (orac_s
      (semanticPrimitives_state_eval_state t))) xs ys /\ ~(r = Rerr
      (Rabort Rtype_error)) ==>
    (?ref1 refs' r' es.
@@ -552,7 +551,7 @@ let do_app_sim = prove
      semanticPrimitives_do_app (semanticPrimitives_state_refs
        t,semanticPrimitives_state_ffi t) op (REVERSE ys) = SOME
        ((refs',ffi),r') /\
-     LIST_REL (semanticPrimitivesProps_sv_rel (source_evalProof_v_rel
+     ALL2 (semanticPrimitivesProps_sv_rel (source_evalProof_v_rel
        es)) refs refs' /\
      semanticPrimitivesProps_result_rel (source_evalProof_v_rel es)
        (source_evalProof_v_rel es) r r')`,
@@ -575,7 +574,7 @@ let concrete_v_rel = prove
 
 let v_to_list_concrete = prove
  (`!x xs. semanticPrimitives_v_to_list x = SOME xs ==>
-   concrete_v x = EVERY concrete_v xs`,
+   concrete_v x = ALL concrete_v xs`,
   CHEAT_TAC);;
 
 let maybe_all_list_SOME = prove
@@ -583,7 +582,7 @@ let maybe_all_list_SOME = prove
   CHEAT_TAC);;
 
 let maybe_all_list_EVERY = prove
- (`maybe_all_list xs = SOME ys ==> EVERY (\x. ~(x = NONE)) xs`,
+ (`maybe_all_list xs = SOME ys ==> ALL (\x. ~(x = NONE)) xs`,
   CHEAT_TAC);;
 
 let v_to_word8_list_concrete = prove
@@ -617,7 +616,7 @@ let do_eval_sim = prove
   (semanticPrimitives_state_eval_state s) = SOME (env,decs,es) /\
    source_evalProof_s_rel ((ci:'cfg compiler_instance)) (s:'a
      semanticPrimitives_state) t /\
-   LIST_REL (source_evalProof_v_rel (orac_s
+   ALL2 (source_evalProof_v_rel (orac_s
      (semanticPrimitives_state_eval_state t))) xs ys ==>
    (?env' es'.
    es_forward (orac_s (semanticPrimitives_state_eval_state t))
@@ -716,9 +715,8 @@ let eval_simulation = prove
    evaluate t env' exps = (t',res') /\
    source_evalProof_s_rel ci s' t' /\
    es' = orac_s (semanticPrimitives_state_eval_state t') /\
-   semanticPrimitivesProps_result_rel (LIST_REL
-     (source_evalProof_v_rel es')) (source_evalProof_v_rel es') res res'
-     /\
+   semanticPrimitivesProps_result_rel (ALL2 (source_evalProof_v_rel
+     es')) (source_evalProof_v_rel es') res res' /\
    es_forward (orac_s (semanticPrimitives_state_eval_state t)) es' /\
    (~(source_evalProof_abort res') ==> es_stack_forward (orac_s
      (semanticPrimitives_state_eval_state t)) es'))) /\
@@ -735,9 +733,8 @@ let eval_simulation = prove
    evaluate_evaluate_match t env' y pes err_y = (t',res') /\
    source_evalProof_s_rel ci s' t' /\
    es' = orac_s (semanticPrimitives_state_eval_state t') /\
-   semanticPrimitivesProps_result_rel (LIST_REL
-     (source_evalProof_v_rel es')) (source_evalProof_v_rel es') res res'
-     /\
+   semanticPrimitivesProps_result_rel (ALL2 (source_evalProof_v_rel
+     es')) (source_evalProof_v_rel es') res res' /\
    es_forward es es' /\
    (~(source_evalProof_abort res') ==> es_stack_forward es es'))) /\
    (!((s:'ffi semanticPrimitives_state)) env decs s' res t env'.
@@ -999,8 +996,8 @@ let insert_oracle_correct = prove
 
 let v_rel_concrete_v = prove
  (`(!v. concrete_v v ==> source_evalProof_v_rel es v v) /\
-   (!vs. concrete_v_list vs ==> LIST_REL (source_evalProof_v_rel
-     es) vs vs)`,
+   (!vs. concrete_v_list vs ==> ALL2 (source_evalProof_v_rel es) vs
+     vs)`,
   CHEAT_TAC);;
 
 let env_rel_concrete_v = prove

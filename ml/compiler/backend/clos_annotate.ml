@@ -42,10 +42,10 @@ let no_overlap_def,no_overlap_ind = define_wf
 let alt_free_def,alt_free_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`alt_free [] = ([],db_vars_Empty)`;
-   `alt_free ((x:closLang_exp) :: y :: xs) =
+   `alt_free (CONS (x:closLang_exp) (CONS y xs)) =
          (let (c1,l1) = alt_free [x] in
-         let (c2,l2) = alt_free (y :: xs) in
-           (c1 ++ c2,mk_Union l1 l2))`;
+         let (c2,l2) = alt_free (CONS y xs) in
+           (APPEND c1 c2,mk_Union l1 l2))`;
    `alt_free [(Var t v:closLang_exp)] = ([(Var t v:closLang_exp)],Var
   v)`;
    `alt_free [(If t x1 x2 x3:closLang_exp)] =
@@ -57,7 +57,7 @@ let alt_free_def,alt_free_ind = assume_definition_rec
    `alt_free [(Let t xs x2:closLang_exp)] =
          (let m = LENGTH xs in
          let (c2,l2) = alt_free [x2] in
-           if no_overlap m l2 /\ EVERY pure xs then
+           if no_overlap m l2 /\ ALL pure xs then
              ([Let t (REPLICATE m (const_0 t)) (HD c2)],Shift m l2)
                else
              let (c1,l1) = alt_free xs in
@@ -113,7 +113,7 @@ let alt_free_sing_def,alt_free_sing_ind = assume_definition_rec
    `alt_free_sing (Let t xs x2:closLang_exp) =
          (let m = LENGTH xs in
          let (c2,l2) = alt_free_sing x2 in
-           if no_overlap m l2 /\ EVERY pure xs then
+           if no_overlap m l2 /\ ALL pure xs then
              (Let t (REPLICATE m (const_0 t)) c2,Shift m l2) else
              let (c1,l1) = alt_free_list xs in
                (Let t c1 c2,mk_Union l1 (Shift (LENGTH xs) l2)))`;
@@ -154,19 +154,19 @@ let alt_free_sing_def,alt_free_sing_ind = assume_definition_rec
          (let (c1,l1) = alt_free_list xs in
            (closLang_Call t ticks dest c1,l1))`;
    `alt_free_list [] = ([],db_vars_Empty)`;
-   `alt_free_list ((x:closLang_exp) :: xs) =
+   `alt_free_list (CONS (x:closLang_exp) xs) =
          (let (c1,l1) = alt_free_sing x in
          let (c2,l2) = alt_free_list xs in
-           (c1 :: c2,mk_Union l1 l2))`;
+           (CONS c1 c2,mk_Union l1 l2))`;
    `alt_free_letrec m [] = []`;
-   `alt_free_letrec m ((n,x) :: rest) =
-         (let (c,l) = alt_free_sing x in
-           ((n,c),Shift (n + m) l) :: alt_free_letrec m rest)`];;
+   `alt_free_letrec m (CONS (n,x) rest) =
+         (let (c,l) = alt_free_sing x in CONS ((n,c),Shift (n +
+           m) l) (alt_free_letrec m rest))`];;
 
 let alt_free_sing_eq = prove
  (`(!e. alt_free [e] = (\(e,dbs). [e],dbs) (alt_free_sing e)) /\
    (!es. alt_free es = alt_free_list es) /\
-   (!m fns. EVERY (\(n,e). alt_free [e] = (\(e,dbs). [e],dbs)
+   (!m fns. ALL (\(n,e). alt_free [e] = (\(e,dbs). [e],dbs)
      (alt_free_sing e)) fns /\
             alt_free_letrec m fns =
             MAP (\(n,x). let (c,l) = alt_free_sing x in
@@ -195,8 +195,8 @@ let HD_FST_alt_free = prove
   CHEAT_TAC);;
 
 let alt_free_CONS = prove
- (`FST (alt_free (x :: xs)) = HD (FST (alt_free [x])) :: FST (alt_free
-  xs)`,
+ (`FST (alt_free (CONS x xs)) = CONS (HD (FST (alt_free [x]))) (FST
+  (alt_free xs))`,
   CHEAT_TAC);;
 
 (* shift renames variables to use only those in the annotations *)
@@ -208,17 +208,17 @@ hol4_overload "get_var" "clos_annotate_get_var";;
 
 let shifted_env_def,shifted_env_ind = define_rec
   [`shifted_env (n:num) [] = LN`;
-   `shifted_env (n:num) (x :: xs) = sptree_insert x (n:num)
+   `shifted_env (n:num) (CONS x xs) = sptree_insert x (n:num)
   (shifted_env (n + 1) xs)`];;
 
 let shift_def,shift_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`clos_annotate_shift [] (m:num) (l:num) (i:num spt) = []`;
-   `clos_annotate_shift ((x:closLang_exp) :: y :: xs) (m:num) (l:num)
-  (i:num spt) =
+   `clos_annotate_shift (CONS (x:closLang_exp) (CONS y xs)) (m:num)
+  (l:num) (i:num spt) =
          (let c1 = clos_annotate_shift [x] m l i in
-         let c2 = clos_annotate_shift (y :: xs) m l i in
-           (c1 ++ (c2:closLang_exp list)))`;
+         let c2 = clos_annotate_shift (CONS y xs) m l i in
+           (APPEND c1 (c2:closLang_exp list)))`;
    `clos_annotate_shift [(Var t v:closLang_exp)] (m:num) (l:num) (i:num
   spt) =
          [Var t (clos_annotate_get_var m l i v)]`;
@@ -342,20 +342,20 @@ let shift_sing_def,shift_sing_ind = assume_definition_rec
          (let c1 = shift_list xs m l i in
            (closLang_Call t ticks dest c1))`;
    `shift_list [] (m:num) (l:num) (i:num spt) = []`;
-   `shift_list ((x:closLang_exp) :: xs) (m:num) (l:num) (i:num spt) =
+   `shift_list (CONS (x:closLang_exp) xs) (m:num) (l:num) (i:num spt) =
          (let c1 = shift_sing x m l i in
          let c2 = shift_list xs m l i in
-           (c1 :: (c2:closLang_exp list)))`;
+           (CONS c1 (c2:closLang_exp list)))`;
    `shift_letrec fns_len k new_i [] = []`;
-   `shift_letrec fns_len k new_i ((n,x) :: rest) =
-         (let c = shift_sing x k (n + fns_len) new_i in
-           (n,c) :: shift_letrec fns_len k new_i rest)`];;
+   `shift_letrec fns_len k new_i (CONS (n,x) rest) =
+         (let c = shift_sing x k (n + fns_len) new_i in CONS
+           (n,c) (shift_letrec fns_len k new_i rest))`];;
 
 let shift_sing_eq = prove
  (`(!e m l i. clos_annotate_shift [e] m l i = [shift_sing e m l i]) /\
    (!es m l i. clos_annotate_shift es m l i = shift_list es m l i) /\
    (!fns_len k new_i fns.
-      EVERY (\(n,e). clos_annotate_shift [e] k (n + fns_len) new_i =
+      ALL (\(n,e). clos_annotate_shift [e] k (n + fns_len) new_i =
                      [shift_sing e k (n + fns_len) new_i]) fns /\
       shift_letrec fns_len k new_i fns =
         MAP (\(n,x). let c = shift_sing x k (n + fns_len) new_i in
@@ -370,10 +370,10 @@ let shift_LENGTH_LEMMA = prove
    as the value of an ML expression: shift_SING *)
 
 let shift_CONS = prove
- (`clos_annotate_shift ((x:closLang_exp) :: xs) m l i =
+ (`clos_annotate_shift (CONS (x:closLang_exp) xs) m l i =
       (let c1 = clos_annotate_shift [x] m l i in
       let c2 = clos_annotate_shift xs m l i in
-        (HD c1 :: (c2:closLang_exp list)))`,
+        (CONS (HD c1) (c2:closLang_exp list)))`,
   CHEAT_TAC);;
 
 (* [simp] *)

@@ -111,10 +111,10 @@ let backend_compile_def = new_definition
        (backend_config_word_to_word_conf c) asm_conf p in
      let c = backend_config_word_to_word_conf_fupd (\c.
        word_to_word_config_col_oracle_fupd (K col) c) c in
-     let names = sptree_union (fromAList (data_to_word_stub_names one
-       ++
-       word_to_stack_stub_names one ++ stack_alloc_stub_names one ++
-       stack_remove_stub_names one)) names in
+     let names = sptree_union (fromAList (APPEND (APPEND (APPEND
+       (data_to_word_stub_names one)
+       (word_to_stack_stub_names one)) (stack_alloc_stub_names one))
+       (stack_remove_stub_names one))) names in
      let _7 = empty_ffi (implode "finished: data_to_word") in
      let (bm,c',fs,p) = word_to_stack_compile asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p
@@ -163,10 +163,10 @@ let to_bvi_def = new_definition
    let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
      (clos_to_bvl_config_start (backend_config_clos_conf c))
      (backend_config_bvl_conf c) names p in
-   let names = sptree_union (fromAList (data_to_word_stub_names one
-     ++
-     word_to_stack_stub_names one ++ stack_alloc_stub_names one ++
-     stack_remove_stub_names one)) names in
+   let names = sptree_union (fromAList (APPEND (APPEND (APPEND
+     (data_to_word_stub_names one)
+     (word_to_stack_stub_names one)) (stack_alloc_stub_names one))
+     (stack_remove_stub_names one))) names in
    let c = backend_config_clos_conf_fupd (\c.
      clos_to_bvl_config_start_fupd (K s) c) c in
    let c = backend_config_bvl_conf_fupd (\c.
@@ -312,10 +312,10 @@ let from_bvl_def = new_definition
    (let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
      (clos_to_bvl_config_start (backend_config_clos_conf c))
      (backend_config_bvl_conf c) names p in
-   let names = sptree_union (fromAList (data_to_word_stub_names one
-     ++
-     word_to_stack_stub_names one ++ stack_alloc_stub_names one ++
-     stack_remove_stub_names one)) names in
+   let names = sptree_union (fromAList (APPEND (APPEND (APPEND
+     (data_to_word_stub_names one)
+     (word_to_stack_stub_names one)) (stack_alloc_stub_names one))
+     (stack_remove_stub_names one))) names in
    let c = backend_config_clos_conf_fupd (\c.
      clos_to_bvl_config_start_fupd (K s) c) c in
    let c = backend_config_bvl_conf_fupd (\c.
@@ -662,9 +662,9 @@ let _ = size_thms "ffiname";;
 let ffinames_to_string_list_def,ffinames_to_string_list_ind = define_wf
   `MEASURE (\x0. list_size ffiname_size x0)`
   [`ffinames_to_string_list [] = []`;
-   `ffinames_to_string_list ((ffi_ExtCall s:ffiname) :: rest) =
-        s :: (ffinames_to_string_list rest)`;
-   `ffinames_to_string_list (ffi_SharedMem _28 :: rest) =
+   `ffinames_to_string_list (CONS (ffi_ExtCall s:ffiname) rest) =
+  CONS s (ffinames_to_string_list rest)`;
+   `ffinames_to_string_list (CONS (ffi_SharedMem _28) rest) =
         ffinames_to_string_list rest`];;
 
 let set_oracle_def = new_definition

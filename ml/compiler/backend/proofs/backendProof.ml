@@ -150,7 +150,7 @@ let backend_config_ok_def = new_definition
      asm_conf (INL Add) (n2w 4) /\ asm_config_valid_imm
      asm_conf (INL Add) (n2w 1) /\ asm_config_valid_imm
      asm_conf (INL Sub) (n2w 1) /\
-     OPTION_ALL (EVERY (\x. ?s. x = ffi_ExtCall s)) (ffi_names
+     OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s)) (ffi_names
        (backend_config_lab_conf c)) /\
      tlookup (stack_to_lab_config_reg_names
        (backend_config_stack_conf c)) PERMUTES UNIV /\
@@ -193,7 +193,7 @@ let backend_config_ok_call_empty_ffi = prove
 
 let mc_init_ok_def = new_definition
   `mc_init_ok asm_conf c mc <=>
-   EVERY (\r. MEM (tlookup (stack_to_lab_config_reg_names
+   ALL (\r. MEM (tlookup (stack_to_lab_config_reg_names
      (backend_config_stack_conf c)) ((r + asm_config_reg_count
      (target_config (machine_config_target mc))) - (LENGTH
      (asm_config_avoid_regs (target_config (machine_config_target mc)))
@@ -319,18 +319,18 @@ let no_mti_IMP_obeys_max_app = prove
   CHEAT_TAC);;
 
 let EVERY_no_mti_IMP_obeys_max_app = prove
- (`!e3. 0 < m /\ EVERY no_mti exps ==> EVERY (obeys_max_app m) exps`,
+ (`!e3. 0 < m /\ ALL no_mti exps ==> ALL (obeys_max_app m) exps`,
   CHEAT_TAC);;
 
 (* TODO: move these *)
 let compile_common_syntax = prove
  (`!cf e3 cf1 e4.
       compile_common cf e3 = (cf1,e4) ==>
-      (EVERY no_Labels e3 ==>
-       EVERY no_Labels (MAP (SND o SND) e4)) /\
-      (0 < clos_to_bvl_config_max_app cf /\ EVERY no_mti e3 ==>
-       EVERY (obeys_max_app (clos_to_bvl_config_max_app cf)) (MAP
-         (SND o SND) e4)) /\
+      (ALL no_Labels e3 ==>
+       ALL no_Labels (MAP (SND o SND) e4)) /\
+      (0 < clos_to_bvl_config_max_app cf /\ ALL no_mti e3 ==>
+       ALL (obeys_max_app (clos_to_bvl_config_max_app cf)) (MAP (SND
+         o SND) e4)) /\
       every_Fn_SOME (MAP (SND o SND) e4)`,
   CHEAT_TAC);;
 
@@ -686,15 +686,15 @@ let compile_no_stubs_wrap_pure_co = prove
    the value of an ML expression: full_make_init_semantics2 *)
 
 let data_num_stubs_LE_tailrec_compile = prove
- (`data_num_stubs <= nn2 /\ EVERY ((<=) data_num_stubs) (MAP FST (orac
-  n)) ==>
-   EVERY ((<=) data_num_stubs)
+ (`data_num_stubs <= nn2 /\ ALL ((<=) data_num_stubs) (MAP FST (orac n))
+  ==>
+   ALL ((<=) data_num_stubs)
      (MAP FST (state_co_progs (bvi_tailrec_compile_prog do_it) nn2
        orac n))`,
   CHEAT_TAC);;
 
 let data_num_stubs_LE_bvl_bvi_compile = prove
- (`EVERY ((<=) data_num_stubs)
+ (`ALL ((<=) data_num_stubs)
      (MAP FST (state_co_progs bvl_to_bvi_compile_inc nn1 orac n))`,
   CHEAT_TAC);;
 
@@ -744,12 +744,12 @@ let bvl_to_bvi_compile_inc_all_num_stubs_LE = prove
  (`bvl_to_bvi_compile_inc_all c bvl = (c',bvi) ==>
    bvl_num_stubs <= bvl_to_bvi_config_next_name2 c /\ bvl_num_stubs
      <= bvl_to_bvi_config_next_name3 c ==>
-   EVERY ((<=) bvl_num_stubs) (MAP FST bvi)`,
+   ALL ((<=) bvl_num_stubs) (MAP FST bvi)`,
   CHEAT_TAC);;
 
 let bvl_num_stubs_LE_bvi_prog = prove
  (`compile asm_conf c prog = SOME (b,bm,c') ==>
-   EVERY ((<=) bvl_num_stubs)
+   ALL ((<=) bvl_num_stubs)
      (MAP FST (SND (cake_orac asm_conf c' syntax f (\ps.
        backend_progs_bvi_prog ps) n)))`,
   CHEAT_TAC);;
@@ -913,18 +913,18 @@ let MAP_full_compile_single_to_compile = prove
 
 let compile_to_word_conventions2 = prove
  (`compile wc ac p = (_9,ps) /\
-   EVERY (\(_10,_11,prg). no_share_inst prg \/ ~(asm_config_ISA ac =
+   ALL (\(_10,_11,prg). no_share_inst prg \/ ~(asm_config_ISA ac =
      Ag32)) p ==>
    MAP FST ps = MAP FST p /\
-   LIST_REL labels_rel
+   ALL2 labels_rel
      (MAP (wordConvs_extract_labels o SND o SND) p)
      (MAP (wordConvs_extract_labels o SND o SND) ps) /\
-   EVERY (\(n,m,prog).
+   ALL (\(n,m,prog).
      flat_exp_conventions prog /\
      post_alloc_conventions
        (asm_config_reg_count ac - (5 + LENGTH (asm_config_avoid_regs
          ac))) prog /\
-     (EVERY (\(n,m,prog).
+     (ALL (\(n,m,prog).
                every_inst (inst_ok_less ac) prog)
             p /\ asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0)
               /\ asm_offset_ok 0 (asm_config_hw_offset ac) (n2w 0) /\
@@ -937,7 +937,7 @@ let compile_to_word_conventions2 = prove
   CHEAT_TAC);;
 
 let sec_labels_ok_FST_code_labels_Section_num = prove
- (`EVERY sec_labels_ok code ==>
+ (`ALL sec_labels_ok code ==>
    IMAGE FST (labProps_get_code_labels code) = set_of_list (MAP
      Section_num code)`,
   CHEAT_TAC);;
@@ -968,7 +968,7 @@ let accum_lab_conf_labels = prove
    domain (lab_to_target_config_labels (backend_config_lab_conf
      (cake_configs asm_conf c' syntax i))) SUBSET
    domain (lab_to_target_config_labels (backend_config_lab_conf c'))
-     UNION BIGUNION (set_of_list (MAP (set_of_list o MAP Section_num o
+     UNION UNIONS (set_of_list (MAP (set_of_list o MAP Section_num o
      SND o cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND
        o SND o config_tuple2)
      (\ps. backend_progs_lab_prog ps)) (COUNT_LIST i)))`,
@@ -985,12 +985,12 @@ let to_data_labels_ok = prove
  (`compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==>
    (let (_12,p,_13) = to_data c prog in
-   EVERY (\n. data_num_stubs <= n) (MAP FST p) /\ ALL_DISTINCT (MAP
+   ALL (\n. data_num_stubs <= n) (MAP FST p) /\ ALL_DISTINCT (MAP
      FST p))`,
   CHEAT_TAC);;
 
 let data_to_word_stubs_above_store_consts_stub = prove
- (`EVERY (\n. n > store_consts_stub_location) (MAP FST
+ (`ALL (\n. n > store_consts_stub_location) (MAP FST
   (data_to_word_stubs (:'a) dc))`,
   CHEAT_TAC);;
 
@@ -999,10 +999,10 @@ let to_word_labels_ok = prove
   asm_conf c ==>
    (let (_14,p,_15) = to_word asm_conf c prog in
    ALL_DISTINCT (MAP FST p) /\
-   EVERY (\n. n > store_consts_stub_location) (MAP FST p) /\
-   EVERY (\(n,m,p).
+   ALL (\n. n > store_consts_stub_location) (MAP FST p) /\
+   ALL (\(n,m,p).
      let labs = wordConvs_extract_labels p in
-     EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\
+     ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\
        ALL_DISTINCT labs) p)`,
   CHEAT_TAC);;
 
@@ -1304,7 +1304,7 @@ let to_lab_good_code_lemma = prove
    compile data_conf word_conf asm_conf2 data_prog = (col,word_prog)
      /\
    labels_ok code /\
-   (\c ls. EVERY (sec_ok_pre c) ls) conf code ==>
+   (\c ls. ALL (sec_ok_pre c) ls) conf code ==>
    lab_to_targetProof_good_code conf LN code`,
   CHEAT_TAC);;
 
@@ -1754,7 +1754,7 @@ let remove_labels_loop_no_share_mem_inst = prove
 
 let compile_lab_IMP_mmio_pcs_min_index = prove
  (`compile_lab asm_conf c sec_list = SOME (bytes,c') /\
-   OPTION_ALL (EVERY (\x. ?s. x = ffi_ExtCall s)) (ffi_names c) ==>
+   OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s)) (ffi_names c) ==>
    (?ffi_names'. ffi_names c' = SOME ffi_names' /\
      (?x. mmio_pcs_min_index ffi_names' = SOME x))`,
   CHEAT_TAC);;
@@ -1762,7 +1762,7 @@ let compile_lab_IMP_mmio_pcs_min_index = prove
 let compile_lab_no_share_mem_IMP_mmio_pcs_min_index = prove
  (`compile_lab asm_conf c sec_list = SOME (bytes,c') /\
    no_share_mem_inst sec_list /\
-   OPTION_ALL (EVERY (\x. ?s. x = ffi_ExtCall s)) (ffi_names c) ==>
+   OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s)) (ffi_names c) ==>
    (?ffi_names'. ffi_names c' = SOME ffi_names' /\
    mmio_pcs_min_index ffi_names' = SOME (LENGTH ffi_names'))`,
   CHEAT_TAC);;

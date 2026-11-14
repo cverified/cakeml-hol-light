@@ -32,7 +32,7 @@ let clos_letop_var_list_def,clos_letop_var_list_ind = define_wf
   [`clos_letop_var_list n x2 x3 =
         match (x2,x3) with
           ([],[]) -> T
-        | (((Var t m:closLang_exp) :: xs),(y :: ys)) -> ((m = n) /\
+        | (CONS (Var t m:closLang_exp) xs,CONS y ys) -> ((m = n) /\
           clos_letop_var_list (n + 1) xs ys)
         | (_1,_2) -> F`];;
 hol4_overload "var_list" "clos_letop_var_list";;
@@ -48,9 +48,8 @@ hol4_overload "dest_op" "clos_letop_dest_op";;
 let clos_letop_let_op_def,clos_letop_let_op_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`clos_letop_let_op [] = []`;
-   `clos_letop_let_op ((x:closLang_exp) :: y :: xs) =
-         HD (clos_letop_let_op [x]) :: clos_letop_let_op (y ::
-           xs)`;
+   `clos_letop_let_op (CONS (x:closLang_exp) (CONS y xs)) = CONS (HD
+  (clos_letop_let_op [x])) (clos_letop_let_op (CONS y xs))`;
    `clos_letop_let_op [(Var t v:closLang_exp)] = [(Var t
   v:closLang_exp)]`;
    `clos_letop_let_op [(If t x1 x2 x3:closLang_exp)] =
@@ -134,11 +133,11 @@ let clos_letop_let_op_sing_def,clos_letop_let_op_sing_ind =
    `clos_letop_let_op_sing (closLang_Fn t loc_opt vs num_args x1) =
   (closLang_Fn t loc_opt vs num_args ((clos_letop_let_op_sing (x1))))`;
    `clos_letop_let_op_list [] = []`;
-   `clos_letop_let_op_list ((x:closLang_exp) :: xs) =
-       clos_letop_let_op_sing x :: clos_letop_let_op_list xs`;
+   `clos_letop_let_op_list (CONS (x:closLang_exp) xs) = CONS
+  (clos_letop_let_op_sing x) (clos_letop_let_op_list xs)`;
    `let_op_let [] = []`;
-   `let_op_let ((num_args,(x:closLang_exp)) :: xs) =
-       (num_args,clos_letop_let_op_sing x) :: let_op_let xs`];;
+   `let_op_let (CONS (num_args,(x:closLang_exp)) xs) = CONS
+  (num_args,clos_letop_let_op_sing x) (let_op_let xs)`];;
 hol4_overload "let_op_list" "clos_letop_let_op_list";;
 hol4_overload "let_op_sing" "clos_letop_let_op_sing";;
 

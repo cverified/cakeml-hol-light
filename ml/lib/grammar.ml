@@ -77,8 +77,8 @@ let valid_lptree_def = new_definition
 
 let derive_def = new_definition
   `derive G sf1 sf2 <=>
-     (?p sym rhs s. sf1 = p ++ [grammar_NT sym] ++ s /\ sf2 = p ++
-       rhs ++ s /\
+     (?p sym rhs s. sf1 = APPEND (APPEND p [grammar_NT sym]) s /\ sf2
+       = APPEND (APPEND p rhs) s /\
                    sym IN FDOM (grammar_rules G) /\ rhs IN FAPPLY
                      (grammar_rules G) sym)`;;
 

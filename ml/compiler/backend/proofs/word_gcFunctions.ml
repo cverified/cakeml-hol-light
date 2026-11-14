@@ -143,12 +143,12 @@ let word_gc_move_roots_def,word_gc_move_roots_ind = define_wf
   0)))      (pair_size (\x. 0)      (pair_size (\x. 0) (pair_size (\x.
   0) (pair_size (\x. 0) (\x. 0)))))      x1)`
   [`word_gc_move_roots conf ([],i,pa,old,m,dm) = ([],i,pa,m,T)`;
-   `word_gc_move_roots conf (w :: ws,i,pa,old,m,dm) =
+   `word_gc_move_roots conf (CONS w ws,i,pa,old,m,dm) =
          (let (w1,i1,pa1,m1,c1) = word_gc_move conf
            (w,i,pa,old,m,dm) in
          let (ws2,i2,pa2,m2,c2) = word_gc_move_roots conf
            (ws,i1,pa1,old,m1,dm) in
-           (w1 :: ws2,i2,pa2,m2,(c1 /\ c2)))`];;
+           (CONS w1 ws2,i2,pa2,m2,(c1 /\ c2)))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -175,12 +175,13 @@ let word_gen_gc_partial_move_roots_def,
   (\x. 0)))))))      x1)`
   [`word_gen_gc_partial_move_roots conf ([],i,pa,old,m,dm,gs,rs) =
   ([],i,pa,m,T)`;
-   `word_gen_gc_partial_move_roots conf (w :: ws,i,pa,old,m,dm,gs,rs) =
+   `word_gen_gc_partial_move_roots conf (CONS w ws,i,pa,old,m,dm,gs,rs)
+  =
          (let (w1,i1,pa1,m1,c1) = word_gen_gc_partial_move conf
            (w,i,pa,old,m,dm,gs,rs) in
          let (ws2,i2,pa2,m2,c2) = word_gen_gc_partial_move_roots
            conf (ws,i1,pa1,old,m1,dm,gs,rs) in
-           (w1 :: ws2,i2,pa2,m2,(c1 /\ c2)))`];;
+           (CONS w1 ws2,i2,pa2,m2,(c1 /\ c2)))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -310,9 +311,9 @@ let refs_to_addresses_def,refs_to_addresses_ind = define_wf
   [`refs_to_addresses x1 =
         match x1 with
           [] -> []
-        | (DataElement ptrs _1 _2 :: refs) ->
-       ptrs ++ refs_to_addresses refs
-        | (_3 :: refs) -> refs_to_addresses refs`];;
+        | CONS (DataElement ptrs _1 _2) refs -> APPEND ptrs
+          (refs_to_addresses refs)
+        | (CONS _3 refs) -> refs_to_addresses refs`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -438,12 +439,12 @@ let word_gen_gc_move_roots_def,word_gen_gc_move_roots_ind = define_wf
   (\x. 0)))))))      x1)`
   [`word_gen_gc_move_roots conf ([],i,pa,ib,pb,old,m,dm) =
   ([],i,pa,ib,pb,m,T)`;
-   `word_gen_gc_move_roots conf (w :: ws,i,pa,ib,pb,old,m,dm) =
+   `word_gen_gc_move_roots conf (CONS w ws,i,pa,ib,pb,old,m,dm) =
          (let (w1,i1,pa1,ib,pb,m1,c1) = word_gen_gc_move conf
            (w,i,pa,ib,pb,old,m,dm) in
          let (ws2,i2,pa2,ib,pb,m2,c2) = word_gen_gc_move_roots conf
            (ws,i1,pa1,ib,pb,old,m1,dm) in
-           (w1 :: ws2,i2,pa2,ib,pb,m2,(c1 /\ c2)))`];;
+           (CONS w1 ws2,i2,pa2,ib,pb,m2,(c1 /\ c2)))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -559,7 +560,7 @@ let word_gc_fun_def = new_definition
       let new = theWord (FAPPLY s OtherHeap) in
       let old = theWord (FAPPLY s CurrHeap) in
       let len = theWord (FAPPLY s HeapLength) in
-      let all_roots = FAPPLY s Globals :: roots in
+      let all_roots = CONS (FAPPLY s Globals) roots in
         match data_to_word_config_gc_kind conf with None ->
          (let s1 = s |++ [(NextFree,wordLang_Word old);
                           (TriggerGC,wordLang_Word old);
@@ -627,7 +628,7 @@ let word_gc_fun_def = new_definition
 let word_gc_move_roots_IMP_EVERY2 = prove
  (`!xs ys pa m i c1 m1 pa1 i1 old dm c.
       word_gc_move_roots c (xs,i,pa,old,m,dm) = (ys,i1,pa1,m1,c1) ==>
-      EVERY2 (\x y. (isWord x <=> isWord y) /\
+      ALL2 (\x y. (isWord x <=> isWord y) /\
                     (is_gc_word_const x ==> x = y)) xs ys`,
   CHEAT_TAC);;
 
@@ -635,7 +636,7 @@ let word_gen_gc_move_roots_IMP_EVERY2 = prove
  (`!xs ys pa m i ib pb c1 m1 pa1 i1 ib1 pb1 old dm c.
       word_gen_gc_move_roots c (xs,i,pa,ib,pb,old,m,dm) =
          (ys,i1,pa1,ib1,pb1,m1,c1) ==>
-      EVERY2 (\x y. (isWord x <=> isWord y) /\
+      ALL2 (\x y. (isWord x <=> isWord y) /\
                     (is_gc_word_const x ==> x = y)) xs ys`,
   CHEAT_TAC);;
 
@@ -643,14 +644,14 @@ let word_gen_gc_partial_move_roots_IMP_EVERY2 = prove
  (`!xs ys pa m i gs rs c1 m1 pa1 i1 old dm c.
       word_gen_gc_partial_move_roots c (xs,i,pa,old,m,dm,gs,rs) =
          (ys,i1,pa1,m1,c1) ==>
-      EVERY2 (\x y. (isWord x <=> isWord y) /\
+      ALL2 (\x y. (isWord x <=> isWord y) /\
                     (is_gc_word_const x ==> x = y)) xs ys`,
   CHEAT_TAC);;
 
 let word_gc_IMP_EVERY2 = prove
  (`word_gc_fun c (xs,m,dm,st) = SOME (ys,m1,s1) ==>
-    EVERY2 (\x y. (isWord x <=> isWord y) /\ (is_gc_word_const x
-      ==> x = y)) xs ys`,
+    ALL2 (\x y. (isWord x <=> isWord y) /\ (is_gc_word_const x ==>
+      x = y)) xs ys`,
   CHEAT_TAC);;
 
 let word_gc_fun_LENGTH = prove

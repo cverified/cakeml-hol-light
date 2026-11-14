@@ -30,7 +30,7 @@ let gc_move_def = define_general
            ->
              (let c = (c /\ l + 1 <= n /\ (a + n = limit')) in
              let n = n - (l + 1) in
-             let h2 = h2 ++ [DataElement xs l dd] in
+             let h2 = APPEND h2 [DataElement xs l dd] in
              let (heap,c) = gc_forward_ptr ptr heap a d c in
                (gc_shared_Pointer a d,h2,a + (l + 1),n,heap,c))
                  | SOME (ForwardPointer ptr _3 l) ->
@@ -43,12 +43,12 @@ hol4_overload "gc_move" "copying_gc_gc_move";;
 let gc_move_list_def,gc_move_list_ind = define_guess_cheat
   [`copying_gc_gc_move_list ([],h2,a,n,heap,c,limit') =
   ([],h2,a,n,heap,c)`;
-   `copying_gc_gc_move_list (x :: xs,h2,a,n,heap,c,limit') =
+   `copying_gc_gc_move_list (CONS x xs,h2,a,n,heap,c,limit') =
          (let (x,h2,a,n,heap,c) = copying_gc_gc_move
            (x,h2,a,n,heap,c,limit') in
          let (xs,h2,a,n,heap,c) = copying_gc_gc_move_list
            (xs,h2,a,n,heap,c,limit') in
-           (x :: xs,h2,a,n,heap,c))`];;
+           (CONS x xs,h2,a,n,heap,c))`];;
 hol4_overload "gc_move_list" "copying_gc_gc_move_list";;
 
 (* the termination relation that HOL4 gives is
@@ -62,15 +62,15 @@ hol4_overload "gc_move_list" "copying_gc_gc_move_list";;
 let gc_move_loop_def,gc_move_loop_ind = define_guess_cheat
   [`copying_gc_gc_move_loop (h1,[],a,n,heap,c,limit') =
   (h1,a,n,heap,c)`;
-   `copying_gc_gc_move_loop (h1,h :: h2,a,n,heap,c,limit') =
-         (if limit' < heap_length (h1 ++ (h :: h2)) then
+   `copying_gc_gc_move_loop (h1,CONS h h2,a,n,heap,c,limit') =
+         (if limit' < heap_length (APPEND h1 (CONS h h2)) then
            (h1,a,n,heap,F) else
            match h with DataElement xs l d ->
               (let (xs,h2,a,n,heap,c) = copying_gc_gc_move_list
-                (xs,h :: h2,a,n,heap,c,limit') in
+                (xs,CONS h h2,a,n,heap,c,limit') in
               let c = (c /\ ~(h2 = []) /\ (HD h2 = h)) in
               let h2 = TL h2 in
-              let h1 = h1 ++ [DataElement xs l d] in
+              let h1 = APPEND h1 [DataElement xs l d] in
                 copying_gc_gc_move_loop
                   (h1,h2,a,n,heap,c,limit')) | _6 ->
                   (h1,a,n,heap,F))`];;
@@ -96,7 +96,7 @@ let gc_inv_def = new_definition
   `copying_gc_gc_inv (h1,h2,a,n,heap,c,limit')
   (heap0:(('a,'b)heap_element) list) (roots0:('a heap_address) list) = (
      (a + n = limit') /\
-     (a = heap_length (h1 ++ h2)) /\
+     (a = heap_length (APPEND h1 h2)) /\
      (n = heap_length (FILTER (\h. ~(isForwardPointer h)) heap)) /\ c
        /\
      (heap_length heap = limit') /\
@@ -105,14 +105,14 @@ let gc_inv_def = new_definition
      // the initial heap is related to the current heap
      heaps_similar heap0 heap /\
      // the new heap consists of only DataElements
-     EVERY isDataElement h1 /\ EVERY isDataElement h2 /\
+     ALL isDataElement h1 /\ ALL isDataElement h2 /\
      // the forward pointers consitute a bijection into the new heap
      BIJ (heap_map1 heap) (FDOM (heap_map 0 heap)) (heap_addresses 0
-       (h1 ++ h2)) /\
+       (APPEND h1 h2)) /\
      (!i j. (FLOOKUP (heap_map 0 heap) i = SOME j) ==>
            (?xs l d. (heap_lookup i heap0 = SOME (DataElement xs l
              d)) /\
-                    (heap_lookup j (h1 ++ h2) =
+                    (heap_lookup j (APPEND h1 h2) =
                       SOME (DataElement (if j < heap_length h1 then
                               ADDR_MAP (heap_map1 heap) xs else xs) l
                                 d)) /\
@@ -139,7 +139,7 @@ let IN_FRANGE = prove
 (* [local] *)
 let heap_addresses_SNOC = prove
  (`!xs n x.
-       heap_addresses n (xs ++ [x]) =
+       heap_addresses n (APPEND xs [x]) =
        heap_addresses n xs UNION {heap_length xs + n}`,
   CHEAT_TAC);;
 
@@ -194,7 +194,7 @@ let gc_move_ALT = prove
  (`copying_gc_gc_move (ys,xs,a,n,heap,c,limit) =
       (let (ys,xs1,x) = copying_gc_gc_move (ys,[],a,n,heap,c,limit)
         in
-        (ys,xs ++ xs1,x))`,
+        (ys,APPEND xs xs1,x))`,
   CHEAT_TAC);;
 
 let gc_move_list_ALT = prove
@@ -202,7 +202,7 @@ let gc_move_list_ALT = prove
       copying_gc_gc_move_list (ys,xs,a,n,heap,c,limit') =
         (let (ys,xs1,x) = copying_gc_gc_move_list
           (ys,[],a,n,heap,c,limit') in
-          (ys,xs ++ xs1,x))`,
+          (ys,APPEND xs xs1,x))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -210,7 +210,7 @@ let gc_move_list_APPEND_lemma = prove
  (`!ys xs a n heap c limit' ys3 xs3 a3 n3 heap3 c3.
        (copying_gc_gc_move_list (ys,xs,a,n,heap,c,limit') =
          (ys3,xs3,a3,n3,heap3,c3)) ==>
-       (?xs1. xs3 = xs ++ xs1)`,
+       (?xs1. xs3 = APPEND xs xs1)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -264,9 +264,9 @@ let full_gc_ok = prove
     (?roots2 heap2 a2.
       (full_gc ((roots:('a heap_address) list),heap,limit) =
         (roots2,heap2,a2,T)) /\
-      a2 <= limit /\ roots_ok roots2 (heap2 ++ heap_expand (limit -
-        a2)) /\
-      heap_ok (heap2 ++ heap_expand (limit - a2)) limit)`,
+      a2 <= limit /\ roots_ok roots2 (APPEND heap2 (heap_expand
+        (limit - a2))) /\
+      heap_ok (APPEND heap2 (heap_expand (limit - a2))) limit)`,
   CHEAT_TAC);;
 
 let full_gc_related = prove
@@ -279,8 +279,8 @@ let full_gc_related = prove
       (FRANGE f = {a | isSomeDataElement (heap_lookup a heap2)}) /\
       (heap_length heap2 = heap_length (heap_filter (FDOM f) heap))
         /\
-      gc_related f heap (heap2 ++ heap_expand (limit - a2)) /\
-      EVERY isDataElement heap2)`,
+      gc_related f heap (APPEND heap2 (heap_expand (limit - a2))) /\
+      ALL isDataElement heap2)`,
   CHEAT_TAC);;
 
 (* Lemmas about ok and a *)
@@ -322,32 +322,32 @@ let full_gc_IMP_LENGTH = prove
 
 let gc_move_IMP_isDataElement = prove
  (`!l5 h a n heap c k xs ys a1 xs1 heap1 c1.
-      EVERY isDataElement h /\
+      ALL isDataElement h /\
       (copying_gc_gc_move (l5,h,a,n,heap,c,k) =
         (xs,ys,a1,xs1,heap1,c1)) ==>
-      EVERY isDataElement ys`,
+      ALL isDataElement ys`,
   CHEAT_TAC);;
 
 let gc_move_list_IMP_isDataElement = prove
  (`!l5 h a n heap c k xs ys a1 xs1 heap1 c1.
-      EVERY isDataElement h /\
+      ALL isDataElement h /\
       (copying_gc_gc_move_list (l5,h,a,n,heap,c,k) =
         (xs,ys,a1,xs1,heap1,c1)) ==>
-      EVERY isDataElement ys`,
+      ALL isDataElement ys`,
   CHEAT_TAC);;
 
 let gc_move_loop_IMP_isDataElement = prove
  (`!h1 h2 a n heap c limit' h1' a' n' heap' c'.
-      EVERY isDataElement h1 /\
-      EVERY isDataElement h2 /\
+      ALL isDataElement h1 /\
+      ALL isDataElement h2 /\
       (copying_gc_gc_move_loop (h1,h2,a,n,heap,c,limit') =
         (h1',a',n',heap',T)) ==>
-      EVERY isDataElement h1'`,
+      ALL isDataElement h1'`,
   CHEAT_TAC);;
 
 let full_gc_IMP_isDataElement = prove
  (`(full_gc (roots,heap,limit) = (roots1,heap1,a,T)) ==>
-    EVERY isDataElement heap1`,
+    ALL isDataElement heap1`,
   CHEAT_TAC);;
 
 (* and the overloads that this file cannot see are back in the

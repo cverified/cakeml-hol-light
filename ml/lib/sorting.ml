@@ -19,16 +19,17 @@ let PERM_DEF = new_definition
 let SORTED_DEF,SORTED_DEF_ind = define_guess
   [`SORTED R [] = T`;
    `SORTED R [x] = T`;
-   `SORTED R (x :: y :: rst) <=> R x y /\ SORTED R (y :: rst)`];;
+   `SORTED R (CONS x (CONS y rst)) <=> R x y /\ SORTED R (CONS y
+  rst)`];;
 
 let SORTS_DEF = new_definition
   `SORTS f R <=> (!l. PERM l (f R l) /\ SORTED R (f R l))`;;
 
 let PART_DEF,PART_DEF_ind = define_rec
   [`PART P [] l1 l2 = (l1,l2)`;
-   `PART P (h :: rst) l1 l2 =
-              (if P h then PART P rst (h :: l1) l2 else PART P
-                rst l1 (h :: l2))`];;
+   `PART P (CONS h rst) l1 l2 =
+              (if P h then PART P rst (CONS h l1) l2 else PART
+                P rst l1 (CONS h l2))`];;
 
 let PARTITION_DEF = new_definition
   `PARTITION P l = PART P l [] []`;;

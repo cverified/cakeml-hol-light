@@ -103,9 +103,9 @@ let compile_pat_def,compile_pat_ind = define_shaped_rec
 
 let pat_tups_def,pat_tups_ind = define_rec
   [`pat_tups t [] = []`;
-   `pat_tups t (x :: xs) =
-       (let t' = mk_cons t ((LENGTH xs) + 1) in
-         (x,source_to_flat_Local t' x) :: pat_tups t xs)`];;
+   `pat_tups t (CONS x xs) =
+       (let t' = mk_cons t ((LENGTH xs) + 1) in CONS
+         (x,source_to_flat_Local t' x) (pat_tups t xs))`];;
 
 let astOp_to_flatOp_def = new_definition
   `(astOp_to_flatOp (op:ast_op):flatLang_op) =
@@ -128,9 +128,9 @@ let str_sep_def = new_definition
 
 let join_all_names_aux_def,join_all_names_aux_ind = define_rec
   [`join_all_names_aux [] ys = ys`;
-   `join_all_names_aux (x :: xs) ys =
-      (match ys with [] -> join_all_names_aux xs (x :: ys) | _6
-        -> join_all_names_aux xs (x :: str_sep :: ys))`];;
+   `join_all_names_aux (CONS x xs) ys =
+      (match ys with [] -> join_all_names_aux xs (CONS x ys) |
+        _6 -> join_all_names_aux xs (CONS x (CONS str_sep ys)))`];;
 
 let join_all_names_def = new_definition
   `join_all_names xs =
@@ -203,8 +203,8 @@ let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
                           (flatLang_El 0) [flatLang_Var_local
                           backend_common_None (implode "r")])))] else
         if op = ast_Env_id then (match es with [_8] -> (match
-          source_to_flat_compile_exps t env es with x :: xs -> x | _9 ->
-          flatLang_Var_local backend_common_None (implode "")) |
+          source_to_flat_compile_exps t env es with CONS x xs -> x | _9
+          -> flatLang_Var_local backend_common_None (implode "")) |
             // Can't happen
             // possible only if one of es raises an exception
             _10 -> flatLang_App backend_common_None (flatLang_El 0)
@@ -236,7 +236,7 @@ let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
    `source_to_flat_compile_exp (t:mlstring list)
   (env:source_to_flat_environment) (Let (SOME x) e1 e2:ast_exp) =
           flatLang_Let backend_common_None (SOME x)
-            (source_to_flat_compile_exp (x :: t) env e1)
+            (source_to_flat_compile_exp (CONS x t) env e1)
             (source_to_flat_compile_exp t
               (source_to_flat_environment_v_fupd (K (nsBind x
               (source_to_flat_Local backend_common_None x)
@@ -267,35 +267,33 @@ let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
    `source_to_flat_compile_exps (t:mlstring list)
   (env:source_to_flat_environment) [] = []`;
    `source_to_flat_compile_exps (t:mlstring list)
-  (env:source_to_flat_environment) (e :: es) =
-         source_to_flat_compile_exp t env e ::
-           source_to_flat_compile_exps t env es`;
+  (env:source_to_flat_environment) (CONS e es) = CONS
+  (source_to_flat_compile_exp t env e) (source_to_flat_compile_exps t
+  env es)`;
    `compile_pes (t:mlstring list) (env:source_to_flat_environment) []
   = []`;
-   `compile_pes (t:mlstring list) (env:source_to_flat_environment)
-  ((p,e) :: pes) =
+   `compile_pes (t:mlstring list) (env:source_to_flat_environment) (CONS
+  (p,e) pes) =
         (let pbs = pat_bindings p in
         let pts = pat_tups backend_common_None pbs in
-        (compile_pat env p,source_to_flat_compile_exp t
+        CONS (compile_pat env p,source_to_flat_compile_exp t
           (source_to_flat_environment_v_fupd (K (nsBindList pts
-          (source_to_flat_environment_v env))) env) e) :: compile_pes
-          t env pes)`;
+          (source_to_flat_environment_v env))) env) e) (compile_pes t
+          env pes))`;
    `compile_funs (t:mlstring list) (env:source_to_flat_environment)
   [] = []`;
    `compile_funs (t:mlstring list) (env:source_to_flat_environment)
-  ((f,x,e) :: funs) =
-        (f,x,source_to_flat_compile_exp (f :: t)
-          (source_to_flat_environment_v_fupd (K (nsBind x
-          (source_to_flat_Local backend_common_None x)
-          (source_to_flat_environment_v env))) env) e) ::
-        compile_funs t env funs`];;
+  (CONS (f,x,e) funs) = CONS (f,x,source_to_flat_compile_exp (CONS f t)
+  (source_to_flat_environment_v_fupd (K (nsBind x (source_to_flat_Local
+  backend_common_None x) (source_to_flat_environment_v env))) env) e)
+        (compile_funs t env funs)`];;
 hol4_overload "compile_exp" "source_to_flat_compile_exp";;
 hol4_overload "compile_exps" "source_to_flat_compile_exps";;
 
 let compile_exps_append = prove
  (`!env es es'.
-    compile_exps t env (es ++ es') =
-    compile_exps t env es ++ compile_exps t env es'`,
+    compile_exps t env (APPEND es es') = APPEND (compile_exps t env
+      es) (compile_exps t env es')`,
   CHEAT_TAC);;
 
 let compile_exps_reverse = prove
@@ -308,7 +306,7 @@ let compile_funs_map = prove
  (`!env funs.
     compile_funs t env funs =
       MAP (\(f,x,e). (f,x,compile_exp
-        (f :: t) (source_to_flat_environment_v_fupd (K (nsBind x
+        (CONS f t) (source_to_flat_environment_v_fupd (K (nsBind x
           (source_to_flat_Local backend_common_None x)
           (source_to_flat_environment_v env))) env) e)) funs`,
   CHEAT_TAC);;
@@ -324,9 +322,8 @@ let om_tra_def = new_definition
 
 let alloc_defs_def,alloc_defs_ind = define_rec
   [`alloc_defs n next' [] = []`;
-   `alloc_defs n next' (x :: xs) =
-        (x,source_to_flat_Glob om_tra next') :: alloc_defs (n +
-          1) (next' + 1) xs`];;
+   `alloc_defs n next' (CONS x xs) = CONS (x,source_to_flat_Glob
+  om_tra next') (alloc_defs (n + 1) (next' + 1) xs)`];;
 
 let fst_alloc_defs = prove
  (`!n next' l. MAP FST (alloc_defs n next' l) = l`,
@@ -334,9 +331,8 @@ let fst_alloc_defs = prove
 
 let alloc_defs_append = prove
  (`!m n l1 l2.
-     alloc_defs m n (l1 ++ l2) =
-     alloc_defs m n l1 ++ alloc_defs (m + LENGTH l1) (n + LENGTH
-       l1) l2`,
+     alloc_defs m n (APPEND l1 l2) = APPEND (alloc_defs m n l1)
+       (alloc_defs (m + LENGTH l1) (n + LENGTH l1) l2)`,
   CHEAT_TAC);;
 
 let _ = size_thms "mlstring";;
@@ -350,7 +346,7 @@ let make_varls_def,make_varls_ind = define_wf
           (t,[]) -> Con backend_common_None NONE []
         | (t,[x]) -> App backend_common_None (flatLang_GlobalVarInit
           idx) [flatLang_Var_local backend_common_None x]
-        | ((t:tra),(x :: xs)) ->
+        | ((t:tra),(CONS x xs)) ->
          (Let backend_common_None NONE (App backend_common_None
            (flatLang_GlobalVarInit idx) [flatLang_Var_local
            backend_common_None x])
@@ -387,11 +383,12 @@ let lookup_inc_def = new_definition
 
 let alloc_tags1_def,alloc_tags1_ind = define_rec
   [`alloc_tags1 [] = (nsEmpty,LN,[])`;
-   `alloc_tags1 ((cn,ts) :: ctors) =
+   `alloc_tags1 (CONS (cn,ts) ctors) =
         (let (ns,cids,tag_list) = alloc_tags1 ctors in
         let arity = LENGTH ts in
         let (tag,new_cids) = lookup_inc arity cids in
-          (nsBind cn tag ns,new_cids,(tag,arity) :: tag_list))`];;
+          (nsBind cn tag ns,new_cids,CONS (tag,arity)
+            tag_list))`];;
 
 let alloc_tags_def = new_definition
   `alloc_tags tid ctors =
@@ -425,7 +422,7 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
                       nsEmpty,envs',[])) | NONE ->
             (let n' = n + 4 in
             let xs = REVERSE (pat_bindings p) in
-            let e' = compile_exp (xs ++ t) env e in
+            let e' = compile_exp (APPEND xs t) env e in
             let l = LENGTH xs in
             let n'' = n' + l in
               (n'',(next_indices_vidx_fupd (K (next_indices_vidx
@@ -474,7 +471,8 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
          [])
         | (t,[Dmod mn ds]) ->
         (let (n',next',new_env,envs',ds') =
-          source_to_flat_compile_decs (mn :: t) n next' env envs' ds in
+          source_to_flat_compile_decs (CONS mn t) n next' env envs' ds
+          in
           (n',next',(lift_env mn new_env),envs',ds'))
         | (t,[Dlocal lds ds]) ->
         (let (n',next1,new_env1,envs',lds') =
@@ -482,7 +480,7 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
         let (n'',next2,new_env2,envs'',ds') =
           source_to_flat_compile_decs t n' next1
            (extend_env new_env1 env) envs' ds in
-             (n'',next2,new_env2,envs'',lds' ++ ds'))
+             (n'',next2,new_env2,envs'',APPEND lds' ds'))
         | (t,[Denv nenv]) ->
         (n + 1,next_indices_vidx_fupd (K (next_indices_vidx next' +
           1)) next',
@@ -497,14 +495,14 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
                [env_id_tuple (generation envs') (next envs')])])
         | (t,[]) ->
        (n,next',source_to_flat_empty_env,envs',[])
-        | (t,(d :: ds)) ->
+        | (t,(CONS d ds)) ->
         (let (n',next1,new_env1,envs1,d') =
           source_to_flat_compile_decs t n next' env envs' [d] in
         let (n'',next2,new_env2,envs2,ds') =
           source_to_flat_compile_decs t n' next1 (extend_env
             new_env1 env) envs1 ds in
-          (n'',next2,extend_env new_env2 new_env1,envs2,d' ++
-            ds'))`];;
+          (n'',next2,extend_env new_env2 new_env1,envs2,APPEND
+            d' ds'))`];;
 hol4_overload "compile_decs" "source_to_flat_compile_decs";;
 
 let source_to_flat_config_FIELDS = define_record "source_to_flat_config"
@@ -551,9 +549,9 @@ let source_to_flat_compile_prog_def = new_definition
      let envs2 = mk_environment_store (next (envs c) + 1)
        (sptree_insert (next (envs c)) (envs gen)
        (environment_store_env_gens (envs c))) in
-     (source_to_flat_config_mod_env_fupd (K e) (envs_fupd (K envs2)
-       (next_fupd (K next') c)),
-         glob_alloc next' c :: alloc_env_ref :: p'))`;;
+     (source_to_flat_config_mod_env_fupd (K e) (envs_fupd (K
+       envs2) (next_fupd (K next') c)),CONS (glob_alloc next' c)
+       (CONS alloc_env_ref p')))`;;
 hol4_overload "compile_prog" "source_to_flat_compile_prog";;
 
 let lookup_env_id_def = new_definition
@@ -583,9 +581,9 @@ let inc_compile_prog_def = new_definition
      let envs2 = mk_environment_store (next (envs c) + 1)
        (sptree_insert (next (envs c)) gen_envs
        (environment_store_env_gens (envs c))) in
-     (envs_fupd (K envs2) (next_fupd (K next') c),(
-         glob_alloc next' c :: p') ++ [store_env_id (generation
-           gen) (next gen)]))`;;
+     (envs_fupd (K envs2) (next_fupd (K next') c),APPEND (CONS
+       (glob_alloc next' c) p') [store_env_id (generation gen) (next
+       gen)]))`;;
 
 let source_to_flat_compile_def = new_definition
   `source_to_flat_compile c p =

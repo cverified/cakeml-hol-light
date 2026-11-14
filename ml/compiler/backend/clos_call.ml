@@ -29,10 +29,10 @@ let _ = hol4_ancestors "clos_call"
 let free_def,free_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`clos_call_free [] = ([],db_vars_Empty)`;
-   `clos_call_free ((x:closLang_exp) :: y :: xs) =
+   `clos_call_free (CONS (x:closLang_exp) (CONS y xs)) =
          (let (c1,l1) = clos_call_free [x] in
-         let (c2,l2) = clos_call_free (y :: xs) in
-           (c1 ++ c2,mk_Union l1 l2))`;
+         let (c2,l2) = clos_call_free (CONS y xs) in
+           (APPEND c1 c2,mk_Union l1 l2))`;
    `clos_call_free [(Var t v:closLang_exp)] = ([(Var t
   v:closLang_exp)],Var v)`;
    `clos_call_free [(If t x1 x2 x3:closLang_exp)] =
@@ -131,10 +131,10 @@ let free_sing_def,free_sing_ind = assume_definition_rec
          (let (c1,l1) = free_list xs in
            (closLang_Call t ticks dest c1,l1))`;
    `free_list [] = ([],db_vars_Empty)`;
-   `free_list ((x:closLang_exp) :: xs) =
+   `free_list (CONS (x:closLang_exp) xs) =
          (let (c1,l1) = free_sing x in
          let (c2,l2) = free_list xs in
-           (c1 :: c2,mk_Union l1 l2))`];;
+           (CONS c1 c2,mk_Union l1 l2))`];;
 
 let free_sing_eq = prove
  (`(!e. clos_call_free [e] = (\(e,vs). ([e],vs)) (free_sing e)) /\
@@ -161,8 +161,8 @@ let HD_FST_free = prove
   CHEAT_TAC);;
 
 let free_CONS = prove
- (`FST (clos_call_free (x :: xs)) = HD (FST (clos_call_free [x])) ::
-  FST (clos_call_free xs)`,
+ (`FST (clos_call_free (CONS x xs)) = CONS (HD (FST (clos_call_free
+  [x]))) (FST (clos_call_free xs))`,
   CHEAT_TAC);;
 let closed_def = new_definition
   `clos_call_closed x = (\t. t = LN) (db_to_set (SND (clos_call_free
@@ -191,22 +191,22 @@ let insert_each_def,insert_each_ind = define_wf
 let code_list_def,code_list_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (pair_size (\x. 0) (\x. 0)) x1)`
   [`code_list loc [] g = g`;
-   `code_list loc ((n,p) :: xs) (g1,g2) =
-         code_list (loc + 2) xs (g1,(loc + 1,n,p) :: g2)`];;
+   `code_list loc (CONS (n,p) xs) (g1,g2) =
+         code_list (loc + 2) xs (g1,CONS (loc + 1,n,p) g2)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let GENLIST_Var_def,GENLIST_Var_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   [`GENLIST_Var t (i:num) n =
-     (if n = 0 then [] else
-       GENLIST_Var t (i + 1) (n - (1:num)) ++ [Var t (n - 1)])`];;
+     (if n = 0 then [] else APPEND (GENLIST_Var t (i + 1) (n -
+       (1:num))) [Var t (n - 1)])`];;
 
 let calls_list_def,calls_list_ind = define_rec
   [`calls_list t (i:num) loc [] = []`;
-   `calls_list t (i:num) loc ((n,_7) :: xs) =
-         (n,closLang_Call t 0 (loc + 1) (GENLIST_Var t 1 n)) ::
-              calls_list t (i + 1) (loc + 2) xs`];;
+   `calls_list t (i:num) loc (CONS (n,_7) xs) = CONS (n,closLang_Call t
+  0 (loc + 1) (GENLIST_Var t 1 n))
+              (calls_list t (i + 1) (loc + 2) xs)`];;
 
 (* HOL4 clos_callScript.sml:226-230: a theorem whose statement the
    port cannot state yet: exp3_size_MAP_SND *)
@@ -215,10 +215,10 @@ let _ = size_thms "closLang_exp";;
 let calls_def,calls_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`calls [] g = ([],g)`;
-   `calls ((x:closLang_exp) :: y :: xs) g =
+   `calls (CONS (x:closLang_exp) (CONS y xs)) g =
          (let (e1,g) = calls [x] g in
-         let (e2,g) = calls (y :: xs) g in
-           (e1 ++ e2,g))`;
+         let (e2,g) = calls (CONS y xs) g in
+           (APPEND e1 e2,g))`;
    `calls [(Var t v:closLang_exp)] g =
          ([(Var t v:closLang_exp)],g)`;
    `calls [(If t x1 x2 x3:closLang_exp)] g =
@@ -274,8 +274,8 @@ let calls_def,calls_ind = assume_definition_rec
            in
          let new_g = insert_each loc 1 g in
          let (e1,new_g) = calls [x1] new_g in
-         let new_g = (FST new_g,(loc + 1,num_args,HD e1) :: SND
-           new_g) in
+         let new_g = (FST new_g,CONS (loc + 1,num_args,HD e1) (SND
+           new_g)) in
            // Closedness is checked on the transformed program because
            // the calls function can sometimes remove free variables.
            if clos_call_closed (closLang_Fn t loc_opt ws num_args
@@ -291,7 +291,7 @@ let calls_def,calls_ind = assume_definition_rec
            in
          let new_g = insert_each loc (LENGTH fns) g in
          let (fns1,new_g) = calls (MAP SND fns) new_g in
-           if EVERY2 (\(n,_16) p. clos_call_closed (closLang_Fn
+           if ALL2 (\(n,_16) p. clos_call_closed (closLang_Fn
              (implode "") NONE NONE n p)) fns fns1 then
              let new_g = code_list loc (ZIP (MAP FST fns) fns1)
                new_g in
@@ -351,8 +351,8 @@ let calls_sing_def,calls_sing_ind = assume_definition_rec
            in
          let new_g = insert_each loc 1 g in
          let (e1,new_g) = calls_sing x1 new_g in
-         let new_g = (FST new_g,(loc + 1,num_args,e1) :: SND new_g)
-           in
+         let new_g = (FST new_g,CONS (loc + 1,num_args,e1) (SND
+           new_g)) in
            // Closedness is checked on the transformed program because
            // the calls function can sometimes remove free variables.
            if clos_call_closed (closLang_Fn t loc_opt ws num_args
@@ -368,7 +368,7 @@ let calls_sing_def,calls_sing_ind = assume_definition_rec
            in
          let new_g = insert_each loc (LENGTH fns) g in
          let (fns1,new_g) = calls_sing_list (MAP SND fns) new_g in
-           if EVERY2 (\(n,_25) p. clos_call_closed (closLang_Fn
+           if ALL2 (\(n,_25) p. clos_call_closed (closLang_Fn
              (implode "") NONE NONE n p)) fns fns1 then
              let new_g = code_list loc (ZIP (MAP FST fns) fns1)
                new_g in
@@ -380,10 +380,10 @@ let calls_sing_def,calls_sing_ind = assume_definition_rec
                (Letrec t loc_opt ws (ZIP (MAP FST fns) fns1)
                  e1,g))`;
    `calls_sing_list [] g = ([],g)`;
-   `calls_sing_list ((x:closLang_exp) :: xs) g =
+   `calls_sing_list (CONS (x:closLang_exp) xs) g =
          (let (e1,g) = calls_sing x g in
          let (e2,g) = calls_sing_list xs g in
-           (e1 :: e2,g))`];;
+           (CONS e1 e2,g))`];;
 
 let calls_sing_eq = prove
  (`(!e g. calls [e] g = (\(e,rest). ([e],rest)) (calls_sing e g)) /\

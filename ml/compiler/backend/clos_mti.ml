@@ -67,7 +67,7 @@ let collect_apps_def,collect_apps_ind = define_wf
         match e with
           (App tra NONE e es:closLang_exp) ->
        (if LENGTH args + LENGTH es <= max_app then
-         collect_apps max_app (args ++ es) e else
+         collect_apps max_app (APPEND args es) e else
          (args,App tra NONE e es))
         | e -> (args,e)`];;
 
@@ -102,9 +102,9 @@ let intro_multi_def,intro_multi_ind = define_guess_cheat
   [`intro_multi max_app x2 =
         match x2 with
           [] -> []
-        | (e1 :: e2 :: es) ->
-       HD (intro_multi max_app [e1]) :: HD (intro_multi max_app
-         [e2]) :: intro_multi max_app es
+        | (CONS e1 (CONS e2 es)) -> CONS (HD (intro_multi max_app
+          [e1])) (CONS (HD (intro_multi max_app [e2])) (intro_multi
+          max_app es))
         | [(Var t n:closLang_exp)] -> [Var t n]
         | [If t e1 e2 e3] ->
       [If t (HD (intro_multi max_app [e1]))

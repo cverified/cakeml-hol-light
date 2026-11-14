@@ -30,8 +30,8 @@ let _ = hol4_ancestors "bvl_inline"
 let tick_inline_def,tick_inline_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`tick_inline cs [] = []`;
-   `tick_inline cs (x :: y :: xs) =
-         HD (tick_inline cs [x]) :: tick_inline cs (y :: xs)`;
+   `tick_inline cs (CONS x (CONS y xs)) = CONS (HD (tick_inline cs
+  [x])) (tick_inline cs (CONS y xs))`;
    `tick_inline cs [(Var v:bvl_exp)] = [(Var v:bvl_exp)]`;
    `tick_inline cs [(If x1 x2 x3:bvl_exp)] =
          [If (HD (tick_inline cs [x1]))
@@ -84,8 +84,8 @@ let tick_inline_sing_def,tick_inline_sing_ind = define_mutual_rec
              Let (tick_inline_list cs xs) (mk_tick (SUC ticks)
                code)))`;
    `tick_inline_list cs [] = []`;
-   `tick_inline_list cs (x :: xs) =
-         (tick_inline_sing cs x) :: tick_inline_list cs xs`];;
+   `tick_inline_list cs (CONS x xs) = CONS (tick_inline_sing cs x)
+  (tick_inline_list cs xs)`];;
 
 let tick_inline_sing = prove
  (`(!e. tick_inline cs [e] = [tick_inline_sing cs e]) /\
@@ -99,10 +99,10 @@ let _ = size_thms "bvl_exp";;
 let is_small_aux_def,is_small_aux_ind = define_wf
   `MEASURE (\(x0,x1). bvl_exp_size1 x1)`
   [`is_small_aux n [] = n`;
-   `is_small_aux n (x :: y :: xs) =
+   `is_small_aux n (CONS x (CONS y xs)) =
          (if n = 0 then n else
            let n = is_small_aux n [x] in if n = 0 then n else
-             is_small_aux n (y :: xs))`;
+             is_small_aux n (CONS y xs))`;
    `is_small_aux n [(Var v:bvl_exp)] = n`;
    `is_small_aux n [(If x1 x2 x3:bvl_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
@@ -156,7 +156,7 @@ let is_small_sing_def,is_small_sing_ind = define_mutual_rec
          (let n = n - 1 in if n = 0 then 0 else
            is_small_list n xs)`;
    `is_small_list n [] = n`;
-   `is_small_list n (x :: xs) =
+   `is_small_list n (CONS x xs) =
          (if n = 0 then n else
            let n = is_small_sing n x in if n = 0 then n else
              is_small_list n xs)`];;
@@ -178,9 +178,9 @@ let _ = size_thms "bvl_exp";;
 let bvl_inline_is_rec_def,bvl_inline_is_rec_ind = define_wf
   `MEASURE (\(x0,x1). bvl_exp_size1 x1)`
   [`bvl_inline_is_rec n [] = F`;
-   `bvl_inline_is_rec n (x :: y :: xs) =
+   `bvl_inline_is_rec n (CONS x (CONS y xs)) =
          (if bvl_inline_is_rec n [x] then T else
-           bvl_inline_is_rec n (y :: xs))`;
+           bvl_inline_is_rec n (CONS y xs))`;
    `bvl_inline_is_rec n [(Var v:bvl_exp)] = F`;
    `bvl_inline_is_rec n [(If x1 x2 x3:bvl_exp)] =
          (if bvl_inline_is_rec n [x1] then T else
@@ -220,7 +220,7 @@ let is_rec_sing_def,is_rec_sing_ind = define_mutual_rec
    `is_rec_sing n (Call ticks dest xs:bvl_exp) =
          (if dest = SOME n then T else is_rec_list n xs)`;
    `is_rec_list n [] = F`;
-   `is_rec_list n (x :: xs) =
+   `is_rec_list n (CONS x xs) =
          (if is_rec_sing n x then T else
            is_rec_list n xs)`];;
 
@@ -239,11 +239,12 @@ let must_inline_def = new_definition
 
 let tick_inline_all_def,tick_inline_all_ind = define_rec
   [`tick_inline_all limit' cs [] aux = (cs,REVERSE aux)`;
-   `tick_inline_all limit' cs ((n,(arity:num),e1) :: xs) aux =
+   `tick_inline_all limit' cs (CONS (n,(arity:num),e1) xs) aux =
          (let e2 = HD (tick_inline cs [e1]) in
          let cs2 = (if must_inline n limit' e2 then sptree_insert n
            (arity,e2) cs else cs) in
-           tick_inline_all limit' cs2 xs ((n,arity,e2) :: aux))`];;
+           tick_inline_all limit' cs2 xs (CONS (n,arity,e2)
+             aux))`];;
 
 (* HOL4 bvl_inlineScript.sml:237-238: a theorem that HOL4 states as
    the value of an ML expression: tick_inline_all_eq *)
@@ -266,9 +267,9 @@ let HD_tick_inline = prove
 let remove_ticks_def,remove_ticks_ind = define_shaped_rec
   "sing>nested"
   [`bvl_inline_remove_ticks [] = []`;
-   `bvl_inline_remove_ticks (x :: y :: xs) =
-         HD (bvl_inline_remove_ticks [x]) ::
-           bvl_inline_remove_ticks (y :: xs)`;
+   `bvl_inline_remove_ticks (CONS x (CONS y xs)) = CONS (HD
+  (bvl_inline_remove_ticks [x])) (bvl_inline_remove_ticks (CONS y
+  xs))`;
    `bvl_inline_remove_ticks [(Var v:bvl_exp)] = [(Var v:bvl_exp)]`;
    `bvl_inline_remove_ticks [(If x1 x2 x3:bvl_exp)] =
          [If (HD (bvl_inline_remove_ticks [x1]))
@@ -315,9 +316,9 @@ let remove_ticks_sing_def,remove_ticks_sing_ind = define_mutual_rec
    `bvl_inline_remove_ticks_sing (Call ticks dest xs:bvl_exp) =
          Call 0 dest (bvl_inline_remove_ticks_list xs)`;
    `bvl_inline_remove_ticks_list [] = []`;
-   `bvl_inline_remove_ticks_list (x :: xs) =
-         (bvl_inline_remove_ticks_sing x) ::
-           bvl_inline_remove_ticks_list xs`];;
+   `bvl_inline_remove_ticks_list (CONS x xs) = CONS
+  (bvl_inline_remove_ticks_sing x) (bvl_inline_remove_ticks_list
+  xs)`];;
 hol4_overload "remove_ticks_list" "bvl_inline_remove_ticks_list";;
 hol4_overload "remove_ticks_sing" "bvl_inline_remove_ticks_sing";;
 
@@ -348,7 +349,7 @@ let var_list_def,var_list_ind = define_wf
   [`bvl_inline_var_list n x2 x3 =
       match (x2,x3) with
         ([],[]) -> T
-      | ((bvl_Var m :: xs),(y :: ys)) -> (m = n /\
+      | (CONS (bvl_Var m) xs,CONS y ys) -> (m = n /\
         bvl_inline_var_list (n + 1) xs ys)
       | (_17,_18) -> F`];;
 hol4_overload "var_list" "bvl_inline_var_list";;
@@ -364,9 +365,8 @@ hol4_overload "dest_op" "bvl_inline_dest_op";;
 let let_op_def,let_op_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`bvl_inline_let_op [] = []`;
-   `bvl_inline_let_op ((x:bvl_exp) :: y :: xs) =
-         HD (bvl_inline_let_op [x]) :: bvl_inline_let_op (y ::
-           xs)`;
+   `bvl_inline_let_op (CONS (x:bvl_exp) (CONS y xs)) = CONS (HD
+  (bvl_inline_let_op [x])) (bvl_inline_let_op (CONS y xs))`;
    `bvl_inline_let_op [(Var v:bvl_exp)] = [(Var v:bvl_exp)]`;
    `bvl_inline_let_op [(If x1 x2 x3:bvl_exp)] =
          [If (HD (bvl_inline_let_op [x1]))
@@ -414,8 +414,8 @@ let let_op_one_def,let_op_one_ind = define_mutual_rec
    `let_op_one (Call ticks dest xs:bvl_exp) = Call ticks dest
   (bvl_inline_let_op_list xs)`;
    `bvl_inline_let_op_list [] = []`;
-   `bvl_inline_let_op_list ((x:bvl_exp) :: xs) =
-         (let_op_one x) :: bvl_inline_let_op_list xs`];;
+   `bvl_inline_let_op_list (CONS (x:bvl_exp) xs) = CONS (let_op_one
+  x) (bvl_inline_let_op_list xs)`];;
 hol4_overload "let_op_list" "bvl_inline_let_op_list";;
 
 let let_op_one = prove
@@ -425,8 +425,8 @@ let let_op_one = prove
 
 let let_op_sing_def = new_definition
   `bvl_inline_let_op_sing x =
-     (match bvl_inline_let_op [x] with (y :: ys) -> y | _20 -> Op
-       (closLang_IntOp (closLang_Const (&0))) [])`;;
+     (match bvl_inline_let_op [x] with (CONS y ys) -> y | _20 ->
+       Op (closLang_IntOp (closLang_Const (&0))) [])`;;
 hol4_overload "let_op_sing" "bvl_inline_let_op_sing";;
 
 (* HOL4 bvl_inlineScript.sml:414: a theorem that HOL4 states as the

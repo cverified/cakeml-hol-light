@@ -75,21 +75,21 @@ hol4_overload "Lab" "backend_passes_Lab";;
 let to_flat_all_def = new_definition
   `to_flat_all (c:backend_config) p =
      (let ps = [] in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "original source code"),backend_passes_Source p)] in
      let p = source_let_compile_decs p in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after source_let"),backend_passes_Source p)] in
      let (c',p) = source_to_flat_compile_prog
        (backend_config_source_conf c) p in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after source_to_flat"),backend_passes_Flat p)] in
      let p = remove_flat_prog p in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after remove_flat"),backend_passes_Flat p)] in
      let p = MAP (compile_dec (source_to_flat_config_pattern_cfg c'))
        p in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after flat_pattern"),backend_passes_Flat p)] in
      let c = backend_config_source_conf_fupd (K c') c in
        ((ps:(mlstring#'a any_prog) list),c,p))`;;
@@ -102,7 +102,8 @@ let to_clos_all_def = new_definition
   `to_clos_all (c:backend_config) p =
      (let (ps,c,p) = to_flat_all c p in
      let p = flat_to_clos_compile_prog p in
-     let ps = ps ++ [((implode "after flat_to_clos"),Clos p [])] in
+     let ps = APPEND ps [((implode "after flat_to_clos"),Clos p [])]
+       in
        ((ps:(mlstring#'a any_prog) list),c,p))`;;
 
 let to_clos_thm = prove
@@ -115,22 +116,25 @@ let to_bvl_all_def = new_definition
      let c0 = backend_config_clos_conf c in
      let es = clos_mti_compile (clos_to_bvl_config_do_mti c0)
        (clos_to_bvl_config_max_app c0) es0 in
-     let ps = ps ++ [((implode "after clos_mti"),Clos es [])] in
+     let ps = APPEND ps [((implode "after clos_mti"),Clos es [])] in
      let loc = clos_to_bvl_config_next_loc c0 + MAX 1 (LENGTH es) in
      let loc = (if loc MOD 2 = 0 then loc else loc + 1) in
      let (n,es) = renumber_code_locs_list loc es in
-     let ps = ps ++ [((implode "after clos_number"),Clos es [])] in
+     let ps = APPEND ps [((implode "after clos_number"),Clos es [])]
+       in
      let (kc,es) = clos_known_compile (clos_to_bvl_config_known_conf
        c0) es in
-     let ps = ps ++ [((implode "after clos_known"),Clos es [])] in
+     let ps = APPEND ps [((implode "after clos_known"),Clos es [])]
+       in
      let (es,g,aux) = clos_call_compile (clos_to_bvl_config_do_call
        c0) es in
-     let ps = ps ++ [((implode "after clos_call"),Clos es aux)] in
-     let prog = chain_exps (clos_to_bvl_config_next_loc c0) es ++ aux
+     let ps = APPEND ps [((implode "after clos_call"),Clos es aux)]
        in
+     let prog = APPEND (chain_exps (clos_to_bvl_config_next_loc c0)
+       es) aux in
      let prog = clos_annotate_compile prog in
-     let ps = ps ++ [((implode "after clos_annotate"),Clos [] prog)]
-       in
+     let ps = APPEND ps [((implode "after clos_annotate"),Clos []
+       prog)] in
      let c1 = clos_to_bvl_config_call_state_fupd (K (g,aux))
        (clos_to_bvl_config_known_conf_fupd (K kc)
        (clos_to_bvl_config_next_loc_fupd (K n)
@@ -147,13 +151,13 @@ let to_bvl_all_def = new_definition
                  clos_to_bvl_config_start c1))] in
      let comp_progs = clos_to_bvl_compile_prog
        (clos_to_bvl_config_max_app c1) prog in
-     let prog' = init_stubs' ++ init_globs ++ comp_progs in
+     let prog' = APPEND (APPEND init_stubs' init_globs) comp_progs in
      let func_names =
              make_name_alist (MAP FST prog') prog (num_stubs
                (clos_to_bvl_config_max_app c1))
                (clos_to_bvl_config_next_loc
                c0) (LENGTH es0) in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after clos_to_bvl"),backend_passes_Bvl prog' func_names)] in
      let c2 = clos_to_bvl_config_start_fupd (K (num_stubs
        (clos_to_bvl_config_max_app c1) - 1)) c1 in
@@ -177,18 +181,18 @@ let to_bvi_all_def = new_definition
      let (inlines,prog1) = tick_compile_prog limit' LN p in
      let prog = MAP (\(name,arity,exp). (name,arity,HD (remove_ticks
        [exp]))) prog1 in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after bvl_inline and remove_ticks"),backend_passes_Bvl prog
        names)] in
      let prog = MAP (\(name,arity,exp). (name,arity,let_op_sing exp))
        prog in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after let_op_sing"),backend_passes_Bvl prog names)] in
      let prog = MAP (\(name,arity,exp). (name,arity,
                         compile_any split_seq cut_size arity exp))
                           prog in
-     let ps = ps ++ [((implode "after bvl_handle"),backend_passes_Bvl
-       prog names)] in
+     let ps = APPEND ps [((implode
+       "after bvl_handle"),backend_passes_Bvl prog names)] in
      let (loc,code,n1) = bvl_to_bvi_compile_prog start' 0 prog in
      let (n2,code2) = bvi_tailrec_compile_prog
        (bvl_to_bvi_config_do_tailrec c0) (bvl_num_stubs + 2) code in
@@ -198,18 +202,18 @@ let to_bvi_all_def = new_definition
      let (s,p,l,bl,n1,n2,n3,names) =
        (loc,code',inlines,bvi_inlines,n1,n2,n3,get_names (MAP FST
          code') names) in
-     let names = sptree_union (fromAList (data_to_word_stub_names one
-       ++
-       word_to_stack_stub_names one ++ stack_alloc_stub_names one ++
-       stack_remove_stub_names one)) names in
-     let ps = ps ++ [((implode "after bvl_to_bvi"),backend_passes_Bvi
-       code names)] in
-     let ps = ps ++ [((implode
+     let names = sptree_union (fromAList (APPEND (APPEND (APPEND
+       (data_to_word_stub_names one)
+       (word_to_stack_stub_names one)) (stack_alloc_stub_names one))
+       (stack_remove_stub_names one))) names in
+     let ps = APPEND ps [((implode
+       "after bvl_to_bvi"),backend_passes_Bvi code names)] in
+     let ps = APPEND ps [((implode
        "after bvi_tailrec"),backend_passes_Bvi code2 names)] in
-     let ps = ps ++ [((implode "after bvi_tmc"),backend_passes_Bvi
-       code3 names)] in
-     let ps = ps ++ [((implode "after bvi_inline"),backend_passes_Bvi
-       code' names)] in
+     let ps = APPEND ps [((implode
+       "after bvi_tmc"),backend_passes_Bvi code3 names)] in
+     let ps = APPEND ps [((implode
+       "after bvi_inline"),backend_passes_Bvi code' names)] in
      let c = backend_config_clos_conf_fupd (\c.
        clos_to_bvl_config_start_fupd (K s) c) c in
      let c = backend_config_bvl_conf_fupd
@@ -229,16 +233,16 @@ let to_data_all_def = new_definition
      (let (ps,c,p,names) = to_bvi_all c p in
      let p = MAP (\(a,n,e). (a,n,FST (compile n (COUNT_LIST n) T []
        [e]))) p in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after bvi_to_data"),backend_passes_Data p names)] in
      let p = MAP (\(a,n,e). (a,n,FST (data_live_compile e LN))) p in
-     let ps = ps ++ [((implode "after data_live"),backend_passes_Data
-       p names)] in
+     let ps = APPEND ps [((implode
+       "after data_live"),backend_passes_Data p names)] in
      let p = MAP (\(a,n,e). (a,n,simp e Skip)) p in
-     let ps = ps ++ [((implode "after data_simp"),backend_passes_Data
-       p names)] in
+     let ps = APPEND ps [((implode
+       "after data_simp"),backend_passes_Data p names)] in
      let p = MAP (\(a,n,e). (a,n,data_space_compile e)) p in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after data_space"),backend_passes_Data p names)] in
        ((ps:(mlstring#'a any_prog) list),c,p,names))`;;
 
@@ -254,39 +258,44 @@ let word_internal_all_def = new_definition
      let p = MAP (\((name_num,arg_count,prog)).
                    ((name_num,arg_count,word_simp_compile_exp prog)))
                      p in
-     let ps = ps ++ [((implode "after word_simp"),Word p names)] in
+     let ps = APPEND ps [((implode "after word_simp"),Word p names)]
+       in
      let p = MAP (\((name_num,arg_count,prog)).
                    ((name_num,arg_count,
                       inst_select asm_conf (max_var prog + 1) prog)))
                         p in
-     let ps = ps ++ [((implode "after word_inst"),Word p names)] in
+     let ps = APPEND ps [((implode "after word_inst"),Word p names)]
+       in
      let p = MAP (\((name_num,arg_count,prog)).
                    ((name_num,arg_count,full_ssa_cc_trans arg_count
                      prog))) p in
-     let ps = ps ++ [((implode "after word_ssa"),Word p names)] in
-     let p = MAP (\((name_num,arg_count,prog)).
-                   ((name_num,arg_count,remove_dead_prog prog))) p in
-     let ps = ps ++ [((implode "after remove_dead in word_ssa"),Word
-       p names)] in
-     let p = MAP (\((name_num,arg_count,prog)).
-                   ((name_num,arg_count,word_common_subexp_elim
-                     prog))) p in
-     let ps = ps ++ [((implode "after word_cse"),Word p names)] in
-     let p = MAP (\((name_num,arg_count,prog)).
-                   ((name_num,arg_count,copy_prop prog))) p in
-     let ps = ps ++ [((implode "after word_copy"),Word p names)] in
-     let p = MAP (\((name_num,arg_count,prog)).
-                   ((name_num,arg_count,
-                    three_to_two_reg_prog two_reg_arith prog))) p in
-     let ps = ps ++ [((implode
-       "after three_to_two_reg from word_inst"),Word p names)] in
-     let p = MAP (\((name_num,arg_count,prog)).
-                   ((name_num,arg_count,remove_unreach prog))) p in
-     let ps = ps ++ [((implode "after word_unreach"),Word p names)]
+     let ps = APPEND ps [((implode "after word_ssa"),Word p names)]
        in
      let p = MAP (\((name_num,arg_count,prog)).
                    ((name_num,arg_count,remove_dead_prog prog))) p in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
+       "after remove_dead in word_ssa"),Word p names)] in
+     let p = MAP (\((name_num,arg_count,prog)).
+                   ((name_num,arg_count,word_common_subexp_elim
+                     prog))) p in
+     let ps = APPEND ps [((implode "after word_cse"),Word p names)]
+       in
+     let p = MAP (\((name_num,arg_count,prog)).
+                   ((name_num,arg_count,copy_prop prog))) p in
+     let ps = APPEND ps [((implode "after word_copy"),Word p names)]
+       in
+     let p = MAP (\((name_num,arg_count,prog)).
+                   ((name_num,arg_count,
+                    three_to_two_reg_prog two_reg_arith prog))) p in
+     let ps = APPEND ps [((implode
+       "after three_to_two_reg from word_inst"),Word p names)] in
+     let p = MAP (\((name_num,arg_count,prog)).
+                   ((name_num,arg_count,remove_unreach prog))) p in
+     let ps = APPEND ps [((implode "after word_unreach"),Word p
+       names)] in
+     let p = MAP (\((name_num,arg_count,prog)).
+                   ((name_num,arg_count,remove_dead_prog prog))) p in
+     let ps = APPEND ps [((implode
        "after remove_dead in word_alloc"),Word p names)] in
      (p,ps))`;;
 
@@ -301,10 +310,10 @@ let to_word_all_def = new_definition
                    (data_to_word_config_has_fp_ops_fupd (K (1 <
                    asm_config_fp_reg_count asm_conf))
              data_conf) in
-     let p = stubs (:'a) data_conf ++ MAP (compile_part data_conf) p
-       in
-     let ps = ps ++ [((implode "after data_to_word"),Word p names)]
-       in
+     let p = APPEND (stubs (:'a) data_conf) (MAP (compile_part
+       data_conf) p) in
+     let ps = APPEND ps [((implode "after data_to_word"),Word p
+       names)] in
      let (p,ps) = word_internal_all asm_conf ps names p in
      let reg_count = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
@@ -316,7 +325,7 @@ let to_word_all_def = new_definition
                     remove_must_terminate
                       (word_alloc name_num asm_conf alg reg_count
                         prog col_opt)))) (ZIP p n_oracles) in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after word_alloc (and remove_must_terminate)"),Word p names)] in
      let c = backend_config_word_to_word_conf_fupd (\c.
        word_to_word_config_col_oracle_fupd (K col) c) c in
@@ -345,7 +354,7 @@ let to_stack_all_def = new_definition
      let (bm,c',fs,p) = word_to_stack_compile asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p
        in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after word_to_stack"),backend_passes_Stack p names)] in
      let c = backend_config_word_conf_fupd (K c') c in
        ((ps:(mlstring#'a any_prog) list),bm,c,p,names))`;;
@@ -366,23 +375,24 @@ let to_lab_all_def = new_definition
        (asm_config_avoid_regs asm_conf) + 3) in
      let offset = asm_config_addr_offset asm_conf in
      let prog = stack_rawcall_compile p in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after stack_rawcall"),backend_passes_Stack prog names)] in
      let prog = stack_alloc_compile data_conf prog in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after stack_alloc"),backend_passes_Stack prog names)] in
      let prog = stack_remove_compile (stack_to_lab_config_jump
        stack_conf) offset (is_gen_gc (data_to_word_config_gc_kind
        data_conf))
                   max_heap sp InitGlobals_location prog in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after stack_remove"),backend_passes_Stack prog names)] in
      let prog = stack_names_compile (stack_to_lab_config_reg_names
        stack_conf) prog in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after stack_names"),backend_passes_Stack prog names)] in
      let p = MAP prog_to_section prog in
-     let ps = ps ++ [((implode "after stack_to_lab"),Lab p names)] in
+     let ps = APPEND ps [((implode "after stack_to_lab"),Lab p
+       names)] in
        ((ps:(mlstring#'a any_prog) list),(bm:('a word)
          list),c,(p:('a sec) list),names))`;;
 
@@ -395,7 +405,8 @@ let to_target_all_def = new_definition
   `to_target_all asm_conf (c:backend_config) p =
      (let (ps,bm,c,p,names) = to_lab_all asm_conf c p in
      let p = filter_skip p in
-     let ps = ps ++ [((implode "after filter_skip"),Lab p names)] in
+     let ps = APPEND ps [((implode "after filter_skip"),Lab p names)]
+       in
      let p = compile_lab asm_conf (backend_config_lab_conf c) p in
        ((ps:(mlstring#'a any_prog) list),attach_bitmaps names c bm
          p))`;;
@@ -408,7 +419,8 @@ let from_lab_all_def = new_definition
   `from_lab_all ps asm_conf (c:backend_config) names p (bm:('a word)
   list) =
      (let p = filter_skip p in
-     let ps = ps ++ [((implode "after filter_skip"),Lab p names)] in
+     let ps = APPEND ps [((implode "after filter_skip"),Lab p names)]
+       in
      let p = compile_lab asm_conf (backend_config_lab_conf c) p in
        ((ps:(mlstring#'a any_prog) list),attach_bitmaps names c bm
          p))`;;
@@ -429,23 +441,24 @@ let from_stack_all_def = new_definition
        (asm_config_avoid_regs asm_conf) + 3) in
      let offset = asm_config_addr_offset asm_conf in
      let prog = stack_rawcall_compile p in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after stack_rawcall"),backend_passes_Stack prog names)] in
      let prog = stack_alloc_compile data_conf prog in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after stack_alloc"),backend_passes_Stack prog names)] in
      let prog = stack_remove_compile (stack_to_lab_config_jump
        stack_conf) offset (is_gen_gc (data_to_word_config_gc_kind
        data_conf))
                   max_heap sp InitGlobals_location prog in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after stack_remove"),backend_passes_Stack prog names)] in
      let prog = stack_names_compile (stack_to_lab_config_reg_names
        stack_conf) prog in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after stack_names"),backend_passes_Stack prog names)] in
      let p = MAP prog_to_section prog in
-     let ps = ps ++ [((implode "after stack_to_lab"),Lab p names)] in
+     let ps = APPEND ps [((implode "after stack_to_lab"),Lab p
+       names)] in
        from_lab_all ps asm_conf c names p bm)`;;
 
 let from_stack_thm = prove
@@ -458,7 +471,7 @@ let from_word_all_def = new_definition
      (let (bm,c',fs,p) = word_to_stack_compile asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p
        in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after word_to_stack"),backend_passes_Stack p names)] in
      let c = backend_config_word_conf_fupd (K c') c in
        from_stack_all ps asm_conf c names p bm)`;;
@@ -482,7 +495,7 @@ let from_word_0_all_def = new_definition
                     remove_must_terminate
                       (word_alloc name_num asm_conf alg reg_count
                         prog col_opt)))) (ZIP p n_oracles) in
-     let ps = ps ++ [((implode
+     let ps = APPEND ps [((implode
        "after word_alloc (and remove_must_terminate)"),Word p names)] in
      let c = backend_config_word_to_word_conf_fupd (\c.
        word_to_word_config_col_oracle_fupd (K col) c) c in
@@ -503,10 +516,10 @@ let from_data_all_def = new_definition
                    (data_to_word_config_has_fp_ops_fupd (K (1 <
                    asm_config_fp_reg_count asm_conf))
              data_conf) in
-     let p = stubs (:'a) data_conf ++ MAP (compile_part data_conf) p
-       in
-     let ps = ps ++ [((implode "after data_to_word"),Word p names)]
-       in
+     let p = APPEND (stubs (:'a) data_conf) (MAP (compile_part
+       data_conf) p) in
+     let ps = APPEND ps [((implode "after data_to_word"),Word p
+       names)] in
        from_word_0_all ps asm_conf c names p)`;;
 
 (* from_data_thm *)

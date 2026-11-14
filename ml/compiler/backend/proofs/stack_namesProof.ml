@@ -340,17 +340,17 @@ let stack_names_comp_stack_asm_ok = prove
   CHEAT_TAC);;
 
 let stack_names_stack_asm_ok = prove
- (`EVERY (\(n,p). stack_asm_name c p) prog /\
+ (`ALL (\(n,p). stack_asm_name c p) prog /\
    stack_names_names_ok f (asm_config_reg_count c)
      (asm_config_avoid_regs c) /\
    fixed_names f c ==>
-   EVERY (\(n,p). stack_asm_ok c p) (stack_names_compile f prog)`,
+   ALL (\(n,p). stack_asm_ok c p) (stack_names_compile f prog)`,
   CHEAT_TAC);;
 
 let stack_names_call_args = prove
  (`stack_names_compile f p = p' /\
-   EVERY (\p. call_args p 1 2 3 4 0) (MAP SND p) ==>
-   EVERY (\p. call_args p (tlookup f 1)
+   ALL (\p. call_args p 1 2 3 4 0) (MAP SND p) ==>
+   ALL (\p. call_args p (tlookup f 1)
                           (tlookup f 2)
                           (tlookup f 3)
                           (tlookup f 4)

@@ -65,7 +65,7 @@ let dest_result_loc_def = new_definition
   `dest_result_loc x1 =
         match x1 with
           SOME (wordSem_Result w ns) ->
-       BIGUNION (set_of_list (MAP (\x. match (dest_word_loc x) with
+       UNIONS (set_of_list (MAP (\x. match (dest_word_loc x) with
          NONE -> {} | SOME x -> {x}) ns))
         | (SOME (wordSem_Exception w (wordLang_Loc n n0))) -> {n}
         | _4 -> {}`;;
@@ -156,7 +156,7 @@ let word_elimProof_get_stack_def,word_elimProof_get_stack_ind =
   `MEASURE (\x0. list_size (stack_frame_size (\x. 0)) x0)`
   [`// stack : ('a stack_frame) list
     word_elimProof_get_stack [] = (LN:1 spt)`;
-   `word_elimProof_get_stack (StackFrame lsz e0 e _5 :: xs) =
+   `word_elimProof_get_stack (CONS (StackFrame lsz e0 e _5) xs) =
             ((sptree_union (sptree_union (get_num_wordloc_alist
               e0) (get_num_wordloc_alist e))
               (word_elimProof_get_stack xs)):1 spt)`];;
@@ -167,8 +167,9 @@ hol4_overload "get_stack" "word_elimProof_get_stack";;
 let get_stack_hd_thm = prove
  (`!stack' dr l0 l opt t.
       domain (get_stack stack') SUBSET dr /\
-      stack' = StackFrame lsz l l0 opt :: t ==> domain (get_locals
-        (sptree_union (fromAList l0) (fromAList l))) SUBSET dr /\
+      stack' = CONS (StackFrame lsz l l0 opt) t ==> domain
+        (get_locals (sptree_union (fromAList l0) (fromAList l))) SUBSET
+        dr /\
         domain (get_stack t) SUBSET dr`,
   CHEAT_TAC);;
 
@@ -178,8 +179,8 @@ let get_stack_LASTN = prove
   CHEAT_TAC);;
 
 let get_stack_CONS = prove
- (`!h t. domain (get_stack [h]) SUBSET domain (get_stack (h :: t)) /\
-      domain (get_stack t) SUBSET domain (get_stack (h :: t))`,
+ (`!h t. domain (get_stack [h]) SUBSET domain (get_stack (CONS h t)) /\
+      domain (get_stack t) SUBSET domain (get_stack (CONS h t))`,
   CHEAT_TAC);;
 
 let get_stack_enc_stack = prove
@@ -326,13 +327,13 @@ let get_locals_fromList2 = prove
 let get_locals_fromList2_extension = prove
  (`!x y ys.
    x IN domain (get_locals (fromList2 ys)) ==> x IN domain
-     (get_locals (fromList2 (ys ++ [y])))`,
+     (get_locals (fromList2 (APPEND ys [y])))`,
   CHEAT_TAC);;
 
 let get_locals_fromList2_FRONT = prove
  (`!args s x xf t.
-   wordSem_get_vars args s = SOME x /\ ~(x = []) /\ xf = FRONT x /\
-     t = fromList2 xf ==> domain (get_locals t) SUBSET domain
+   wordSem_get_vars args s = SOME x /\ ~(x = []) /\ xf = BUTLAST x
+     /\ t = fromList2 xf ==> domain (get_locals t) SUBSET domain
      (get_locals (wordSem_state_locals s))`,
   CHEAT_TAC);;
 
@@ -348,11 +349,11 @@ let stack_list_rearrange_lemma = prove
  (`!s dr locs opt lsz.
       domain (get_locals (wordSem_state_locals s)) SUBSET dr /\
       domain (get_stack (stack s)) SUBSET dr ==>
-      domain (get_stack (StackFrame lsz (toAList (inter
+      domain (get_stack (CONS (StackFrame lsz (toAList (inter
         (wordSem_state_locals s) n)) (list_rearrange
         (wordSem_state_permute s 0)
    (sort key_val_compare (toAList (inter (wordSem_state_locals s)
-     locs)))) opt :: stack s)) SUBSET dr`,
+     locs)))) opt) (stack s))) SUBSET dr`,
   CHEAT_TAC);;
 
 let remove_word_code_thm_FST = prove
@@ -405,7 +406,7 @@ let word_state_rel_set_var_word = prove
 (*TODO add assum to prove it*)
 let word_state_rel_set_vars = prove
  (`word_state_rel reachable s t /\
-   BIGUNION
+   UNIONS
            (set_of_list
               (MAP (\x'. match dest_word_loc x' with NONE -> {} |
                 SOME x -> {x})
@@ -521,8 +522,8 @@ let push_env_def2 = prove
           (wordSem_state_permute s) in
         let handler = (match handler with NONE -> NONE | SOME
           (w,h,l1,l2) -> SOME (wordSem_state_handler s,l1,l2)) in
-       let stack' = StackFrame (wordSem_state_locals_size s) l0 l
-         handler :: stack s in wordSem_state_handler_fupd (K (match
+       let stack' = CONS (StackFrame (wordSem_state_locals_size s) l0
+         l handler) (stack s) in wordSem_state_handler_fupd (K (match
          handler with NONE -> wordSem_state_handler s | SOME x -> LENGTH
          (stack s))) (wordSem_state_permute_fupd (K permute)
          (wordSem_state_stack_max_fupd (K (OPTION_MAP2 MAX

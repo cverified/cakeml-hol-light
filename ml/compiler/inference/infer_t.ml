@@ -54,11 +54,11 @@ let get_tyname_def,get_tyname_ind = define_wf
   `MEASURE (\(x0,x1).      namespace_size (pair_size (\x. 0) t_size)
   mlstring_size mlstring_size x1)`
   [`get_tyname n (Bind [] []) = NONE`;
-   `get_tyname n (Bind [] ((m,ys) :: xs)) =
+   `get_tyname n (Bind [] (CONS (m,ys) xs)) =
       (match get_tyname n ys with NONE -> get_tyname n (Bind []
         xs) | SOME x -> SOME ((\x y. strcat x y) ((\x y. strcat x y)
         m (implode ".")) x))`;
-   `get_tyname n (Bind ((tyname,_1,t) :: xs) m) =
+   `get_tyname n (Bind (CONS (tyname,_1,t) xs) m) =
       (if (match t with Tapp _2 m -> m = n | _3 -> F) then
         SOME tyname else get_tyname n (Bind xs m))`];;
 
@@ -83,7 +83,8 @@ let type_ident_to_string_def = new_definition
 
 let ty_var_name_def = new_definition
   `ty_var_name n =
-     (if n < 28 then implode ("'" ++ [CHR (n + ORD (CHR 97))]) else
+     (if n < 28 then implode (APPEND "'" [CHR (n + ORD (CHR 97))])
+       else
                     mlstring_concat [implode "'"; mlint_toString
                       (&n)])`;;
 
@@ -92,7 +93,7 @@ let infer_t_commas_def,infer_t_commas_ind = define_guess
       match x2 with
         [] -> []
       | [x] -> [x]
-      | (x :: ys) -> x :: c :: infer_t_commas c ys`];;
+      | (CONS x ys) -> CONS x (CONS c (infer_t_commas c ys))`];;
 hol4_overload "commas" "infer_t_commas";;
 
 let add_parens_def = new_definition
@@ -133,16 +134,16 @@ let inf_type_to_string_rec_def,inf_type_to_string_rec_ind =
             (mlstring_concat [add_parens 1 (inf_type_to_string_rec
               tys t); (implode " ");
                      type_ident_to_string tys ti],1) | _6 ->
-            (mlstring_concat ([(implode "(")] ++
-                     infer_t_commas (implode ", ")
+            (mlstring_concat (APPEND (APPEND [(implode "(")]
+                     (infer_t_commas (implode ", ")
                        (MAP (add_parens 5)
-                         (inf_type_to_string_rec_list tys ts)) ++
+                         (inf_type_to_string_rec_list tys ts))))
                      [(implode ") "); type_ident_to_string tys
                        ti]),1))`;
    `inf_type_to_string_rec_list tys [] = []`;
-   `inf_type_to_string_rec_list tys (t :: ts) =
-      inf_type_to_string_rec tys t ::
-      inf_type_to_string_rec_list tys ts`];;
+   `inf_type_to_string_rec_list tys (CONS t ts) = CONS
+  (inf_type_to_string_rec tys t)
+      (inf_type_to_string_rec_list tys ts)`];;
 
 let inf_type_to_string_def = new_definition
   `inf_type_to_string tys t = FST (inf_type_to_string_rec tys t)`;;

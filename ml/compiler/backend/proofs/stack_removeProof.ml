@@ -72,14 +72,15 @@ let stack_removeProof_word_list_exists_ADD = prove
 (* word_list_APPEND *)
 let stack_removeProof_word_list_APPEND = prove
  (`!xs ys a.
-      misc_word_list a (xs ++ ys) =
+      misc_word_list a (APPEND xs ys) =
       misc_word_list a xs * misc_word_list (a + bytes_in_word * n2w
         (LENGTH xs)) ys`,
   CHEAT_TAC);;
 
 (* LESS_LENGTH_IMP_APPEND *)
 let stack_removeProof_LESS_LENGTH_IMP_APPEND = prove
- (`!xs n. n < LENGTH xs ==> (?ys zs. xs = ys ++ zs /\ LENGTH ys = n)`,
+ (`!xs n. n < LENGTH xs ==> (?ys zs. xs = APPEND ys zs /\ LENGTH ys =
+  n)`,
   CHEAT_TAC);;
 
 (* call_FFI_LENGTH *)
@@ -127,7 +128,7 @@ let memory_def = new_definition
 
 let word_list_rev_def,word_list_rev_ind = define_guess
   [`word_list_rev a [] = emp`;
-   `word_list_rev a (x :: xs) =
+   `word_list_rev a (CONS x xs) =
          set_sep_one (a - bytes_in_word,x) * word_list_rev (a -
            bytes_in_word) xs`];;
 
@@ -201,9 +202,9 @@ let stack_removeProof_state_rel_def = new_definition
      s1 <= LENGTH (stackSem_state_stack s1) /\
      (let bp = (the_SOME_Word (FLOOKUP (stackSem_state_store s1)
        BitmapBase) << backend_common_word_shift (:'a)) in
-     let all_bitmaps = stackSem_state_bitmaps s1 ++ buffer_buffer
-       (stackSem_state_data_buffer s1) in buffer_position
-       (stackSem_state_data_buffer
+     let all_bitmaps = APPEND (stackSem_state_bitmaps s1)
+       (buffer_buffer (stackSem_state_data_buffer s1)) in
+       buffer_position (stackSem_state_data_buffer
        s1) = bp + bytes_in_word * n2w (LENGTH (stackSem_state_bitmaps
          s1)) /\
      (match FLOOKUP (stackSem_state_regs s2) (k + 1) with SOME
@@ -390,8 +391,8 @@ let state_rel_get_var_k = prove
      misc_word_list
        (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
          backend_common_word_shift (:'a))
-       (MAP wordLang_Word (stackSem_state_bitmaps s) ++ MAP
-         wordLang_Word (buffer_buffer (state_data_buffer s))) *
+       (APPEND (MAP wordLang_Word (stackSem_state_bitmaps s)) (MAP
+         wordLang_Word (buffer_buffer (state_data_buffer s)))) *
      word_list_exists
        (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
          backend_common_word_shift (:'a) +
@@ -609,9 +610,9 @@ let mem_load_lemma = prove
          misc_word_list
            (the_SOME_Word (FLOOKUP (stackSem_state_store s)
              BitmapBase) << backend_common_word_shift (:'a))
-           (MAP wordLang_Word (stackSem_state_bitmaps s) ++ MAP
-             wordLang_Word (buffer_buffer (stackSem_state_data_buffer
-             s))) *
+           (APPEND (MAP wordLang_Word (stackSem_state_bitmaps s))
+             (MAP wordLang_Word (buffer_buffer
+             (stackSem_state_data_buffer s)))) *
          word_list_exists
            (the_SOME_Word (FLOOKUP (stackSem_state_store s)
              BitmapBase) <<
@@ -635,8 +636,9 @@ let mem_load_lemma2 = prove
          misc_word_list
            (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
              backend_common_word_shift (:'a))
-           (MAP wordLang_Word (stackSem_state_bitmaps s) ++ MAP
-             wordLang_Word (buffer_buffer (state_data_buffer s))) *
+           (APPEND (MAP wordLang_Word (stackSem_state_bitmaps s))
+             (MAP wordLang_Word (buffer_buffer (state_data_buffer s))))
+             *
          word_list_exists
            (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
             backend_common_word_shift (:'a) +
@@ -665,8 +667,9 @@ let store_write_lemma = prove
          misc_word_list
            (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
              backend_common_word_shift (:'a))
-           (MAP wordLang_Word (stackSem_state_bitmaps s) ++ MAP
-             wordLang_Word (buffer_buffer (state_data_buffer s))) *
+           (APPEND (MAP wordLang_Word (stackSem_state_bitmaps s))
+             (MAP wordLang_Word (buffer_buffer (state_data_buffer s))))
+             *
          word_list_exists
            (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
             backend_common_word_shift (:'a) +
@@ -680,8 +683,8 @@ let store_write_lemma = prove
        misc_word_list
          (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
            backend_common_word_shift (:'a))
-         (MAP wordLang_Word (stackSem_state_bitmaps s) ++ MAP
-           wordLang_Word (buffer_buffer (state_data_buffer s))) *
+         (APPEND (MAP wordLang_Word (stackSem_state_bitmaps s)) (MAP
+           wordLang_Word (buffer_buffer (state_data_buffer s)))) *
        word_list_exists
          (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
            backend_common_word_shift (:'a) +
@@ -799,8 +802,8 @@ let store_list_code_thm = prove
       (LENGTH ys = LENGTH xs) /\ ~(a = t) /\
       get_var a s = SOME (wordLang_Word w) /\ t IN FDOM
         (stackSem_state_regs s) /\
-      EVERY (\x. !n. (INR n = x) ==> ~(n = a) /\ ~(n = t) /\ n IN
-        FDOM (stackSem_state_regs s)) xs ==>
+      ALL (\x. !n. (INR n = x) ==> ~(n = a) /\ ~(n = t) /\ n IN FDOM
+        (stackSem_state_regs s)) xs ==>
       (?r1 m1.
         (misc_word_list w (MAP (mem_val (stackSem_state_regs s)) xs)
           * frame) (fun2set (m1,state_mdomain s)) /\
@@ -829,9 +832,8 @@ let stack_removeProof_read_mem_def,stack_removeProof_read_mem_ind =
   define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   [`stack_removeProof_read_mem a m 0 = []`;
-   `stack_removeProof_read_mem a m (SUC n) =
-         m a :: stack_removeProof_read_mem (a + bytes_in_word)
-           m n`];;
+   `stack_removeProof_read_mem a m (SUC n) = CONS (m a)
+  (stack_removeProof_read_mem (a + bytes_in_word) m n)`];;
 hol4_overload "read_mem" "stack_removeProof_read_mem";;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -883,7 +885,7 @@ let word_list_EQ_rev = prove
 (* [local] *)
 let word_list_and_rev_join_lemma = prove
  (`(b = a + n2w (LENGTH xs + LENGTH ys) * bytes_in_word) /\
-     (p * misc_word_list a (xs ++ REVERSE ys) * q) ss /\ b1 ==>
+     (p * misc_word_list a (APPEND xs (REVERSE ys)) * q) ss /\ b1 ==>
      (p * misc_word_list a xs * word_list_rev b ys * q) ss /\ b1`,
   CHEAT_TAC);;
 
@@ -922,7 +924,7 @@ let init_reduce_def = new_definition
        DIV 8) in stackSem_state_store_fupd (K (FEMPTY |++ (MAP (\n.
        match store_init gen_gc' k n with INL w -> (n,wordLang_Word w) |
        INR i -> (n,FAPPLY (stackSem_state_regs s) i))
-                              (CurrHeap ::
+                              (CONS CurrHeap
                                 stack_remove_store_list))))
                                 (stackSem_state_stack_fupd (K
                                 (stack_removeProof_read_mem base_ptr
@@ -1079,8 +1081,8 @@ let word_list_wrap = prove
  (`good_dimindex (:'a) /\
    dimword (:'a) DIV (dimindex (:'a) DIV 8) < LENGTH ls ==>
    (?x xs y ys b.
-   misc_word_list (a:'a word) ls = misc_word_list a (x :: xs) *
-     misc_word_list b (y :: ys) /\
+   misc_word_list (a:'a word) ls = misc_word_list a (CONS x xs) *
+     misc_word_list b (CONS y ys) /\
    b = a)`,
   CHEAT_TAC);;
 
@@ -1160,8 +1162,8 @@ let word_list_set = prove
  (`!xs a. good_dimindex (:'a) /\
           w2n a + LENGTH xs * w2n (bytes_in_word:'a word) < dimword
             (:'a) ==>
-          misc_word_list a xs (set_of_list (GENLIST (\i. a + n2w i
-            * (bytes_in_word:'a word),EL i xs) (LENGTH xs)))`,
+          misc_word_list a xs (set_of_list (list_of_seq (\i. a +
+            n2w i * (bytes_in_word:'a word),EL i xs) (LENGTH xs)))`,
   CHEAT_TAC);;
 
 (* move? *)
@@ -1169,8 +1171,9 @@ let word_list_seteq = prove
  (`!xs a. good_dimindex (:'a) /\
           w2n a + LENGTH xs * w2n (bytes_in_word:'a word) < dimword
             (:'a) ==>
-          misc_word_list a xs = (\s. s = set_of_list (GENLIST (\i.
-            a + n2w i * (bytes_in_word:'a word),EL i xs) (LENGTH xs)))`,
+          misc_word_list a xs = (\s. s = set_of_list (list_of_seq
+            (\i. a + n2w i * (bytes_in_word:'a word),EL i xs) (LENGTH
+            xs)))`,
   CHEAT_TAC);;
 
 (* move? *)
@@ -1347,7 +1350,7 @@ let make_init_opt_SOME_semantics = prove
    variables of its own are read as variables *)
 let IMP_code_rel = prove
  (cake_as_vars (fun () ->
-    `EVERY (\(n,p). reg_bound p k /\ stack_num_stubs <= n + 1) code1 /\
+    `ALL (\(n,p). reg_bound p k /\ stack_num_stubs <= n + 1) code1 /\
       code2 = fromAList (compile jump off gen_gc max_heap k start
         code1) ==>
       stack_removeProof_code_rel jump off k (fromAList code1)
@@ -1360,7 +1363,7 @@ let make_init_any_def = new_definition
      (match make_init_opt gen_gc' max_heap bitmaps data_sp coracle
        jump off k code s with SOME t -> t | NONE -> state_store_fupd (K
        (FEMPTY |++ (MAP (\x. (x,wordLang_Word (n2w 0)))
-                              (CurrHeap ::
+                              (CONS CurrHeap
                                 stack_remove_store_list))))
                                 (state_code_fupd (K code)
                                 (state_code_buffer_fupd (K (mk_buffer
@@ -1384,7 +1387,7 @@ let make_init_any_def = new_definition
 let discharge_these_def = new_definition
   `discharge_these jump off gen_gc' max_heap k start' coracle code s2
   <=>
-       EVERY (\(n,p). reg_bound p k /\ stack_num_stubs <= n + 1) code
+       ALL (\(n,p). reg_bound p k /\ stack_num_stubs <= n + 1) code
          /\
        (!n i p.
          MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k /\
@@ -1544,8 +1547,8 @@ let stack_remove_comp_stack_asm_name = prove
    variables of its own are read as variables *)
 let stack_remove_stack_asm_name = prove
  (cake_as_vars (fun () ->
-    `EVERY (\(n,p). stack_asm_name c p) prog /\
-     EVERY (\(n,p). (stack_asm_remove (c:'a asm_config) p)) prog /\
+    `ALL (\(n,p). stack_asm_name c p) prog /\
+     ALL (\(n,p). (stack_asm_remove (c:'a asm_config) p)) prog /\
      asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
      good_dimindex (:'a) /\
      (!n. n <= max_stack_alloc ==> asm_config_valid_imm
@@ -1563,7 +1566,7 @@ let stack_remove_stack_asm_name = prove
      reg_name (k + 2) c /\
      reg_name (k + 1) c /\
      reg_name k c /\ ~(k = 0) ==>
-     EVERY (\(n,p). stack_asm_name c p)
+     ALL (\(n,p). stack_asm_name c p)
      (compile jump (asm_config_addr_offset c) gen_gc max_heap k
        start prog)`),
   CHEAT_TAC);;
@@ -1576,8 +1579,8 @@ let upshift_downshift_call_args = prove
 
 let stack_remove_call_args = prove
  (`compile jump off gen_gc n k pos p = p' /\
-    EVERY (\p. call_args p 1 2 3 4 0) (MAP SND p) ==>
-    EVERY (\p. call_args p 1 2 3 4 0) (MAP SND p')`,
+    ALL (\p. call_args p 1 2 3 4 0) (MAP SND p) ==>
+    ALL (\p. call_args p 1 2 3 4 0) (MAP SND p')`,
   CHEAT_TAC);;
 
 (* and the names that this file reads as variables are constants again *)

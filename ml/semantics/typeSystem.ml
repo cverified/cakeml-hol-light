@@ -145,7 +145,7 @@ let check_freevars_def,check_freevars_ind = define_shaped_rec
        (MEM tv tvs)`;
    `(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tapp ts tn)
   =
-       (EVERY (check_freevars dbmax tvs) ts)`;
+       (ALL (check_freevars dbmax tvs) ts)`;
    `(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar_db
   n) = (n < dbmax)`];;
 
@@ -154,11 +154,11 @@ let check_freevars_ast_def,check_freevars_ast_ind = define_shaped_rec
   [`(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atvar tv) =
        (MEM tv tvs)`;
    `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Attup ts) =
-       (EVERY (check_freevars_ast tvs) ts)`;
+       (ALL (check_freevars_ast tvs) ts)`;
    `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atfun t1 t2) =
        (check_freevars_ast tvs t1 /\ check_freevars_ast tvs t2)`;
    `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atapp ts tn) =
-       (EVERY (check_freevars_ast tvs) ts)`];;
+       (ALL (check_freevars_ast tvs) ts)`];;
 
 (* Simultaneous substitution of types for type variables in a type *)
 let type_subst_def,type_subst_ind = define_shaped_rec
@@ -286,7 +286,7 @@ let bind_var_list_def,bind_var_list_ind = define_rec
   [`(bind_var_list:num->(mlstring#t)
   list->tenv_val_exp->tenv_val_exp) tvs [] tenvE = tenvE`;
    `(bind_var_list:num->(mlstring#t) list->tenv_val_exp->tenv_val_exp)
-  tvs ((n,t) :: binds) tenvE =
+  tvs (CONS (n,t) binds) tenvE =
      (typeSystem_Bind_name n tvs t (bind_var_list tvs binds
        tenvE))`];;
 
@@ -381,7 +381,7 @@ let type_op_def = new_definition
           _6,[t1]) -> (t1 = Tword8) /\ (t = Tword8) | (ast_Shift ast_W64
           _7 _8,[t1]) -> (t1 = Tword64) /\ (t = Tword64) |
           (ast_Equality,[t1; t2]) -> (t1 = t2) /\ (t = Tbool) |
-          (ast_Arith a ty,ts) -> EVERY (\arg. arg = t_of ty) ts /\ (t =
+          (ast_Arith a ty,ts) -> ALL (\arg. arg = t_of ty) ts /\ (t =
           t_of ty) /\
                             supported_arith a ty = SOME (LENGTH ts) |
                               (ast_FromTo ty1 ty2,[t1]) -> (t1 = t_of
@@ -441,7 +441,7 @@ let check_type_names_def,check_type_names_ind = define_shaped_rec
        T`;
    `(check_type_names:(mlstring,mlstring,mlstring
   list#t)namespace->ast_t->bool) tenvT (Attup ts) =
-       (EVERY (check_type_names tenvT) ts)`;
+       (ALL (check_type_names tenvT) ts)`;
    `(check_type_names:(mlstring,mlstring,mlstring
   list#t)namespace->ast_t->bool) tenvT (Atfun t1 t2) =
        (check_type_names tenvT t1 /\ check_type_names tenvT t2)`;
@@ -449,7 +449,7 @@ let check_type_names_def,check_type_names_ind = define_shaped_rec
   list#t)namespace->ast_t->bool) tenvT (Atapp ts tn) =
        ((match nsLookup tenvT tn with
         SOME (tvs,_10) -> LENGTH tvs = LENGTH ts | NONE -> F) /\
-      EVERY (check_type_names tenvT) ts)`];;
+      ALL (check_type_names tenvT) ts)`];;
 
 (* Substitution of type names for the type they abbreviate *)
 let type_name_subst_def,type_name_subst_ind = define_shaped_rec
@@ -482,11 +482,11 @@ let check_ctor_tenv_def,check_ctor_tenv_ind = define_rec
   list) list->bool) tenvT [] = T`;
    `(check_ctor_tenv:(mlstring,mlstring,mlstring
   list#t)namespace->(mlstring list#mlstring#(mlstring#ast_t list) list)
-  list->bool) tenvT ((tvs,tn,ctors) :: tds) =
+  list->bool) tenvT (CONS (tvs,tn,ctors) tds) =
        (check_dup_ctors (tvs,tn,ctors) /\
       ALL_DISTINCT tvs /\
-      EVERY
-        (\(cn,ts). EVERY (check_freevars_ast tvs) ts /\ EVERY
+      ALL
+        (\(cn,ts). ALL (check_freevars_ast tvs) ts /\ ALL
           (check_type_names tenvT) ts)
         ctors /\
       ~(MEM tn (MAP (\p.
@@ -505,7 +505,7 @@ let build_ctor_tenv_def,build_ctor_tenv_ind = define_wf
   [`build_ctor_tenv tenvT x2 x3 =
         match (x2,x3) with
           ([],[]) -> (alist_to_ns [])
-        | (((tvs,tn,ctors) :: tds),(id' :: ids)) ->
+        | ((CONS (tvs,tn,ctors) tds),(CONS id' ids)) ->
       (nsAppend
        (build_ctor_tenv tenvT tds ids)
        (alist_to_ns
@@ -526,7 +526,7 @@ let is_value_def,is_value_ind = define_wf
   [`is_value x1 =
         match x1 with
           (ast_Lit _18:ast_exp) -> T
-        | (ast_Con _19 es) -> (EVERY is_value es)
+        | (ast_Con _19 es) -> (ALL is_value es)
         | (ast_Var _20) -> T
         | (ast_Fun _21 _22) -> T
         | (ast_Tannot e _23) -> (is_value e)
@@ -556,7 +556,7 @@ let type_p = cake_inductive
    T ==>
    type_p tvs tenv (ast_Plit (ast_Word64 w)) Tword64 []) /\
    (!tvs tenv cn ps ts tvs' tn ts' bindings.
-   (EVERY (check_freevars tvs []) ts' /\
+   (ALL (check_freevars tvs []) ts' /\
    (LENGTH ts' = LENGTH tvs') /\
    type_ps tvs tenv ps (MAP (type_subst (alist_to_fmap (ZIP tvs'
      ts'))) ts) bindings /\
@@ -570,7 +570,7 @@ let type_p = cake_inductive
    type_p tvs tenv (ast_Pref p) (Tref t) bindings) /\
    (!tvs tenv pat v t bindings.
    (type_p tvs tenv pat t bindings) ==>
-   type_p tvs tenv (ast_Pas pat v) t (bindings ++ [(v,t)])) /\
+   type_p tvs tenv (ast_Pas pat v) t (APPEND bindings [(v,t)])) /\
    (!tvs tenv p t bindings.
    (check_freevars_ast [] t /\
    check_type_names (type_env_t tenv) t /\
@@ -584,7 +584,8 @@ let type_p = cake_inductive
      bindings'.
    (type_p tvs tenv p t bindings /\
    type_ps tvs tenv ps ts bindings') ==>
-   type_ps tvs tenv (p :: ps) (t :: ts) (bindings' ++ bindings))`;;
+   type_ps tvs tenv (CONS p ps) (CONS t ts) (APPEND bindings'
+     bindings))`;;
 
 let type_e = cake_inductive
   `(!tenv tenvE n.
@@ -611,13 +612,13 @@ let type_e = cake_inductive
    type_e tenv tenvE (ast_Raise e) t) /\
    (!tenv tenvE e pes t.
    (type_e tenv tenvE e t /\ ~(pes = []) /\
-   (RES_FORALL (LIST_TO_SET pes) (\((p,e)). ?bindings.
+   (RES_FORALL (set_of_list pes) (\((p,e)). ?bindings.
       ALL_DISTINCT (ast_pat_bindings p) /\
       type_p (num_tvs tenvE) tenv p Texn bindings /\
       type_e tenv (bind_var_list ((0:num)) bindings tenvE) e t))) ==>
    type_e tenv tenvE (ast_Handle e pes) t) /\
    (!tenv tenvE cn es tvs tn ts' ts.
-   (EVERY (check_freevars (num_tvs tenvE) []) ts' /\
+   (ALL (check_freevars (num_tvs tenvE) []) ts' /\
    (LENGTH tvs = LENGTH ts') /\
    type_es tenv tenvE es (MAP (type_subst (alist_to_fmap (ZIP tvs
      ts'))) ts) /\
@@ -628,7 +629,7 @@ let type_e = cake_inductive
    type_e tenv tenvE (ast_Con NONE es) (Ttup ts)) /\
    (!tenv tenvE n t targs tvs.
    ((tvs = LENGTH targs) /\
-   EVERY (check_freevars (num_tvs tenvE) []) targs /\
+   ALL (check_freevars (num_tvs tenvE) []) targs /\
    (lookup_var n tenvE tenv = SOME (tvs,t))) ==>
    type_e tenv tenvE (ast_Var n) (deBruijn_subst ((0:num)) targs t))
      /\
@@ -652,7 +653,7 @@ let type_e = cake_inductive
    type_e tenv tenvE (ast_If e1 e2 e3) t) /\
    (!tenv tenvE e pes t1 t2.
    (type_e tenv tenvE e t1 /\ ~(pes = []) /\
-   (RES_FORALL (LIST_TO_SET pes) (\((p,e)). ?bindings.
+   (RES_FORALL (set_of_list pes) (\((p,e)). ?bindings.
       ALL_DISTINCT (ast_pat_bindings p) /\
       type_p (num_tvs tenvE) tenv p t1 bindings /\
       type_e tenv (bind_var_list ((0:num)) bindings tenvE) e t2)))
@@ -690,7 +691,7 @@ let type_e = cake_inductive
    (!tenv tenvE e es t ts.
    (type_e tenv tenvE e t /\
    type_es tenv tenvE es ts) ==>
-   type_es tenv tenvE (e :: es) (t :: ts)) /\
+   type_es tenv tenvE (CONS e es) (CONS t ts)) /\
    (!tenv tenvE.
    T ==>
    type_funs tenv tenvE [] []) /\ (!tenv tenvE fn n e funs bindings
@@ -699,7 +700,7 @@ let type_e = cake_inductive
    type_e tenv (typeSystem_Bind_name n ((0:num)) t1 tenvE) e t2 /\
    type_funs tenv tenvE funs bindings /\
    (ALOOKUP bindings fn = NONE)) ==>
-   type_funs tenv tenvE ((fn,n,e) :: funs) ((fn,Tfn t1 t2) ::
+   type_funs tenv tenvE (CONS (fn,n,e) funs) (CONS (fn,Tfn t1 t2)
      bindings))`;;
 
 (*val tenv_add_tvs : nat -> alist varN t -> alist varN (nat * t)*)
@@ -726,7 +727,7 @@ let tscheme_inst_def = new_definition
      (?subst.
       (LENGTH subst = tvs_impl) /\
       check_freevars tvs_impl [] t_impl /\
-      EVERY (check_freevars tvs_spec []) subst /\
+      ALL (check_freevars tvs_spec []) subst /\
       (deBruijn_subst ((0:num)) subst t_impl = t_spec)))`;;
 
 
@@ -746,7 +747,7 @@ let type_d = cake_inductive
      (!tvs' bindings' t'.
        (type_p tvs' tenv p t' bindings' /\
        type_e tenv (bind_tvar tvs' typeSystem_Empty) e t') ==>
-         EVERY2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
+         ALL2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
            (MAP SND (tenv_add_tvs tvs bindings))))) ==>
    type_d extra_checks tenv (Dlet locs p e)
      {}
@@ -774,15 +775,15 @@ let type_d = cake_inductive
      (!tvs' bindings'.
        type_funs tenv (bind_var_list ((0:num)) bindings' (bind_tvar
          tvs' typeSystem_Empty)) funs bindings' ==>
-         EVERY2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
+         ALL2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
            (MAP SND (tenv_add_tvs tvs bindings))))) ==>
    type_d extra_checks tenv (Dletrec locs funs)
      {} (mk_type_env (alist_to_ns (tenv_add_tvs tvs bindings))
        nsEmpty nsEmpty)) /\
    (!extra_checks tenv tdefs type_identities tenvT locs.
    (ALL_DISTINCT type_identities /\
-   DISJOINT (LIST_TO_SET type_identities)
-            (LIST_TO_SET (Tlist_num :: (Tbool_num ::
+   DISJOINT (set_of_list type_identities)
+            (set_of_list (CONS Tlist_num (CONS Tbool_num
               prim_type_nums))) /\
    check_ctor_tenv (nsAppend tenvT (type_env_t tenv)) tdefs /\
    (LENGTH type_identities = LENGTH tdefs) /\
@@ -791,7 +792,7 @@ let type_d = cake_inductive
                            (tn,(tvs,Tapp (MAP Tvar tvs) i)))
                          tdefs type_identities))) ==>
    type_d extra_checks tenv (Dtype locs tdefs)
-     (LIST_TO_SET type_identities)
+     (set_of_list type_identities)
      (mk_type_env nsEmpty (build_ctor_tenv (nsAppend tenvT
        (type_env_t tenv)) tdefs type_identities) tenvT)) /\
    (!extra_checks tenv tvs tn t locs.
@@ -803,8 +804,8 @@ let type_d = cake_inductive
      (mk_type_env nsEmpty nsEmpty (nsSing tn (tvs,type_name_subst
        (type_env_t tenv) t)))) /\
    (!extra_checks tenv cn ts locs.
-   (EVERY (check_freevars_ast []) ts /\
-   EVERY (check_type_names (type_env_t tenv)) ts) ==>
+   (ALL (check_freevars_ast []) ts /\
+   ALL (check_type_names (type_env_t tenv)) ts) ==>
    type_d extra_checks tenv (Dexn locs cn ts)
      {}
      (mk_type_env nsEmpty (nsSing cn ([],MAP (type_name_subst
@@ -830,7 +831,7 @@ let type_d = cake_inductive
    type_ds extra_checks (extend_dec_tenv tenv1 tenv) ds decls2 tenv2
      /\
    DISJOINT decls1 decls2) ==>
-   type_ds extra_checks tenv (d :: ds)
+   type_ds extra_checks tenv (CONS d ds)
      (decls1 UNION decls2) (extend_dec_tenv tenv2 tenv1))`;;
 
 (*

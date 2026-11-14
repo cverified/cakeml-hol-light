@@ -59,9 +59,9 @@ let dec_name_to_num_def = new_definition
    what the port found for it *)
 let enc_num_to_name_aux_def,enc_num_to_name_aux_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x0)`
-  [`enc_num_to_name_aux i xs = (if i < 90 then (CHR 46) :: (CHR 46)
-  :: CHR (i + 35) :: xs else enc_num_to_name_aux (i - 90) (CHR 125
-  :: xs))`];;
+  [`enc_num_to_name_aux i xs = (if i < 90 then CONS (CHR 46) (CONS
+  (CHR 46) (CONS (CHR (i + 35)) xs)) else enc_num_to_name_aux (i -
+  90) (CONS (CHR 125) xs))`];;
 
 let enc_num_to_name_def = new_definition
   `enc_num_to_name i = implode (enc_num_to_name_aux i [])`;;
@@ -77,21 +77,23 @@ let compile_pat_bindings_def,compile_pat_bindings_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
   [`compile_pat_bindings _1 _2 [] exp = (LN,exp)`;
-   `compile_pat_bindings t i (((Pany:flatLang_pat),_3,_4) :: m) exp =
+   `compile_pat_bindings t i (CONS ((Pany:flatLang_pat),_3,_4) m) exp =
       compile_pat_bindings t i m exp`;
-   `compile_pat_bindings t i (((Pvar s:flatLang_pat),k,x) :: m) exp = (
+   `compile_pat_bindings t i (CONS ((Pvar s:flatLang_pat),k,x) m) exp =
+  (
       let (spt,exp2) = compile_pat_bindings t i m exp in
       (sptree_insert k one spt,Let t (SOME s) x exp2))`;
-   `compile_pat_bindings t i (((Plit _6:flatLang_pat),_7,_8) :: m) exp =
+   `compile_pat_bindings t i (CONS ((Plit _6:flatLang_pat),_7,_8) m) exp
+  =
       compile_pat_bindings t i m exp`;
-   `compile_pat_bindings t i (((Pcon _36 ps:flatLang_pat),k,x) :: m) exp
-  = (
+   `compile_pat_bindings t i (CONS ((Pcon _36 ps:flatLang_pat),k,x) m)
+  exp = (
       let j_nms = MAP (\(j,p). let k = i + 1 + j in
           let nm = enc_num_to_name k in
           ((j,nm),(p,k,flatLang_Var_local t nm))) (enumerate 0 ps)
             in
       let (spt,exp2) = compile_pat_bindings t (i + 2 + LENGTH ps)
-          (MAP SND j_nms ++ m) exp in
+          (APPEND (MAP SND j_nms) m) exp in
       let j_nms_used = FILTER (\(_37,(_38,k,_39)). IS_SOME
         (sptree_lookup k spt)) j_nms in
       let exp3 = ITLIST (\((j,nm),_40) exp.
@@ -100,18 +102,20 @@ let compile_pat_bindings_def,compile_pat_bindings_ind =
       let spt2 = (if NULL j_nms_used then spt else sptree_insert k
         one spt) in
       (spt2,exp3))`;
-   `compile_pat_bindings t i (((Pas p v:flatLang_pat),k,x) :: m) exp = (
+   `compile_pat_bindings t i (CONS ((Pas p v:flatLang_pat),k,x) m) exp =
+  (
       let nm = enc_num_to_name (i + 1) in
       let (spt,exp2) = compile_pat_bindings t (i + 2)
-                        ((p,i + 1,flatLang_Var_local t nm) :: m) exp
-                          in
+                        (CONS (p,i + 1,flatLang_Var_local t nm) m)
+                          exp in
       (sptree_insert k one spt,Let t (SOME v) x
                               (Let t (SOME nm)
                                 (flatLang_Var_local t v) exp2)))`;
-   `compile_pat_bindings t i (((Pref p:flatLang_pat),k,x) :: m) exp = (
+   `compile_pat_bindings t i (CONS ((Pref p:flatLang_pat),k,x) m) exp =
+  (
       let nm = enc_num_to_name (i + 1) in
       let (spt,exp2) = compile_pat_bindings t (i + 2)
-          ((p,i + 1,flatLang_Var_local t nm) :: m) exp in
+          (CONS (p,i + 1,flatLang_Var_local t nm) m) exp in
       (sptree_insert k one spt,Let t (SOME nm) (App t
         (flatLang_El 0) [x]) exp2))`];;
 
@@ -224,29 +228,29 @@ let naive_pattern_match_def,naive_pattern_match_ind = define_guess_cheat
   [`naive_pattern_match t x2 =
       match x2 with
         [] -> flatLang_Bool t T
-      | ((flatLang_Pany,_43) :: mats) -> naive_pattern_match t mats
-      | ((Pvar _44,_45) :: mats) -> naive_pattern_match t mats
-      | ((Plit l,v) :: mats) -> SmartIf t
+      | CONS (flatLang_Pany,_43) mats -> naive_pattern_match t mats
+      | (CONS (Pvar _44,_45) mats) -> naive_pattern_match t mats
+      | (CONS (Plit l,v) mats) -> SmartIf t
      (App t (flatLang_Src ast_Equality) [v; Lit t l])
        (naive_pattern_match t mats) (flatLang_Bool t F)
-      | ((Pcon NONE ps,v) :: mats) ->
-     naive_pattern_match t (MAPi (\i p. (p,App t (flatLang_El i)
-       [v])) ps ++ mats)
-      | ((Pas p i,v) :: mats) ->
-     naive_pattern_match t ((p,v) :: mats)
-      | ((Pcon (SOME stmp) ps,v) :: mats) ->
+      | (CONS (Pcon NONE ps,v) mats) ->
+     naive_pattern_match t (APPEND (MAPi (\i p. (p,App t
+       (flatLang_El i) [v])) ps) mats)
+      | (CONS (Pas p i,v) mats) ->
+     naive_pattern_match t (CONS (p,v) mats)
+      | (CONS (Pcon (SOME stmp) ps,v) mats) ->
      SmartIf t (App t (flatLang_TagLenEq (FST stmp) (LENGTH ps))
        [v])
-       (naive_pattern_match t (MAPi (\i p. (p,App t (flatLang_El i)
-         [v])) ps ++ mats))
+       (naive_pattern_match t (APPEND (MAPi (\i p. (p,App t
+         (flatLang_El i) [v])) ps) mats))
        (flatLang_Bool t F)
-      | ((Pref p,v) :: mats) ->
-     naive_pattern_match t ((p,App t (flatLang_El 0) [v]) ::
+      | (CONS (Pref p,v) mats) ->
+     naive_pattern_match t (CONS (p,App t (flatLang_El 0) [v])
        mats)`];;
 
 let naive_pattern_matches_def,naive_pattern_matches_ind = define_rec
   [`naive_pattern_matches t v [] dflt_x = dflt_x`;
-   `naive_pattern_matches t v ((p,x) :: ps) dflt_x =
+   `naive_pattern_matches t v (CONS (p,x) ps) dflt_x =
     SmartIf t (naive_pattern_match t [(p,v)]) x
       (naive_pattern_matches t v ps dflt_x)`];;
 
@@ -263,7 +267,7 @@ let compile_pats_def = new_definition
 
 let max_dec_name_def,max_dec_name_ind = define_rec
   [`max_dec_name [] = 0`;
-   `max_dec_name (nm :: nms) = MAX (dec_name_to_num nm)
+   `max_dec_name (CONS nm nms) = MAX (dec_name_to_num nm)
   (max_dec_name nms)`];;
 
 let op_sets_globals_def = new_definition
@@ -324,7 +328,7 @@ let flat_pattern_compile_exp_def,flat_pattern_compile_exp_ind =
           c)) fs in
         let (i,sgx,y) = flat_pattern_compile_exp cfg x in
         let j = MAX_LIST (MAP (\(_48,_49,(j,_50,_51)). j) ys) in
-        let sgfs = EXISTS (\(_52,_53,(_54,sg,_55)). sg) ys in
+        let sgfs = EX (\(_52,_53,(_54,sg,_55)). sg) ys in
         let fs2 = MAP (\(a,b,(_56,_57,exp)). (a,b,exp)) ys in
         (MAX i j,(sgfs \/ sgx),flatLang_Letrec t fs2 y))`;
    `flat_pattern_compile_exp cfg (If t x1 x2 x3:flatLang_exp) =
@@ -334,16 +338,16 @@ let flat_pattern_compile_exp_def,flat_pattern_compile_exp_ind =
         (MAX i (MAX j k),(sg1 \/ sg2 \/ sg3),SmartIf t y1 y2 y3))`;
    `flat_pattern_compile_exp cfg exp = (0,F,exp)`;
    `flat_pattern_compile_exps cfg [] = (0,F,[])`;
-   `flat_pattern_compile_exps cfg (x :: xs) =
+   `flat_pattern_compile_exps cfg (CONS x xs) =
         (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
         let (j,sgy,ys) = flat_pattern_compile_exps cfg xs in
-        (MAX i j,(sgx \/ sgy),y :: ys))`;
+        (MAX i j,(sgx \/ sgy),CONS y ys))`;
    `compile_match cfg [] = (0,F,[])`;
-   `compile_match cfg ((p,x) :: ps) =
+   `compile_match cfg (CONS (p,x) ps) =
         (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
         let j = max_dec_name (pat_bindings p) in
         let (k,sgp,ps2) = compile_match cfg ps in
-        (MAX i (MAX j k),(sgx \/ sgp),((p,y) :: ps2)))`];;
+        (MAX i (MAX j k),(sgx \/ sgp),(CONS (p,y) ps2)))`];;
 hol4_overload "compile_exp" "flat_pattern_compile_exp";;
 hol4_overload "compile_exps" "flat_pattern_compile_exps";;
 

@@ -342,7 +342,7 @@ let list_result_eq_Rerr = prove
 
 (* [simp] *)
 let result_rel_list_result = prove
- (`semanticPrimitivesProps_result_rel (LIST_REL R) Q (list_result r1)
+ (`semanticPrimitivesProps_result_rel (ALL2 R) Q (list_result r1)
   (list_result r2) <=>
    semanticPrimitivesProps_result_rel R Q r1 r2`,
   CHEAT_TAC);;
@@ -374,18 +374,18 @@ let evaluate_sing = prove
 
 let evaluate_cons = prove
  (`!(s:'ffi semanticPrimitives_state) env e es.
-    evaluate s env (e :: es) =
+    evaluate s env (CONS e es) =
       (match evaluate s env [e] with (s',Rval vs) ->
        (match evaluate s' env es with (s'',Rval vs') -> (s'',Rval
-         (vs ++ vs')) | err -> err) | err -> err)`,
+         (APPEND vs vs')) | err -> err) | err -> err)`,
   CHEAT_TAC);;
 
 let evaluate_append = prove
  (`!(s:'ffi semanticPrimitives_state) env xs ys.
-    evaluate s env (xs ++ ys) =
+    evaluate s env (APPEND xs ys) =
       (match evaluate s env xs with (s',Rval vs) ->
        (match evaluate s' env ys with (s'',Rval vs') -> (s'',Rval
-         (vs ++ vs')) | err -> err) | err -> err)`,
+         (APPEND vs vs')) | err -> err) | err -> err)`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -397,7 +397,7 @@ let evaluate_decs_nil = prove
 
 let evaluate_decs_cons = prove
  (`!(s:'ffi semanticPrimitives_state) env d ds.
-    evaluate_evaluate_decs s env (d :: ds) =
+    evaluate_evaluate_decs s env (CONS d ds) =
       (match evaluate_evaluate_decs s env [d] with (s1,Rval env1) ->
        (match evaluate_evaluate_decs s1 (extend_dec_env env1 env)
          ds with (s2,r) -> (s2,combine_dec_result env1 r) | err ->
@@ -406,7 +406,7 @@ let evaluate_decs_cons = prove
 
 let evaluate_decs_append = prove
  (`!ds1 s env ds2.
-     evaluate_evaluate_decs s env (ds1 ++ ds2) =
+     evaluate_evaluate_decs s env (APPEND ds1 ds2) =
      (match evaluate_evaluate_decs s env ds1 with
        (s1,Rval env1) ->
          (match evaluate_evaluate_decs s1 (extend_dec_env env1 env)
@@ -699,7 +699,7 @@ let evaluate_set_init_clock = prove
 
 let can_pmatch_all_EVERY = prove
  (`can_pmatch_all envC refs ps v <=>
-   EVERY (\p. ~(semanticPrimitives_pmatch envC refs p v [] =
+   ALL (\p. ~(semanticPrimitives_pmatch envC refs p v [] =
      Match_type_error)) ps`,
   CHEAT_TAC);;
 
@@ -798,13 +798,13 @@ let pmatch_not_type_error_EQ = prove
       Match_type_error))) /\
    (~(semanticPrimitives_pmatch_list envC refs [] [] acc =
      Match_type_error) <=> T) /\
-   (~(semanticPrimitives_pmatch_list envC refs [] (v :: vs) acc =
+   (~(semanticPrimitives_pmatch_list envC refs [] (CONS v vs) acc =
      Match_type_error) <=> F) /\
-   (~(semanticPrimitives_pmatch_list envC refs (p :: ps) [] acc =
+   (~(semanticPrimitives_pmatch_list envC refs (CONS p ps) [] acc =
      Match_type_error) <=> F) /\
-   (~(semanticPrimitives_pmatch_list envC refs (p :: ps) (v :: vs)
-     acc = Match_type_error) <=> ~(semanticPrimitives_pmatch envC refs p
-     v acc = Match_type_error) /\
+   (~(semanticPrimitives_pmatch_list envC refs (CONS p ps) (CONS v
+     vs) acc = Match_type_error) <=> ~(semanticPrimitives_pmatch envC
+     refs p v acc = Match_type_error) /\
       (!a. semanticPrimitives_pmatch envC refs p v acc = No_match ==>
         ~(semanticPrimitives_pmatch_list envC refs ps vs acc =
         Match_type_error)) /\
@@ -816,7 +816,8 @@ let pmatch_not_type_error_EQ = prove
 let do_app_ffi_mono = prove
  (`semanticPrimitives_do_app (refs,(ffi:'ffi ffi_state)) op args = SOME
   ((refs',ffi'),r) ==>
-    (?l. ffi_state_io_events ffi' = ffi_state_io_events ffi ++ l)`,
+    (?l. ffi_state_io_events ffi' = APPEND (ffi_state_io_events
+      ffi) l)`,
   CHEAT_TAC);;
 
 let do_app_SOME_ffi_same_oracle_state = prove
@@ -824,44 +825,44 @@ let do_app_SOME_ffi_same_oracle_state = prove
   ((refs',ffi'),r) ==>
    semanticPrimitives_do_app (refs,ffi_state_io_events_fupd (K l)
      ffi) op args =
-   SOME ((refs',ffi_state_io_events_fupd (K (l ++ DROP (LENGTH
-     (ffi_state_io_events ffi)) (ffi_state_io_events ffi'))) ffi'),r)`,
+   SOME ((refs',ffi_state_io_events_fupd (K (APPEND l (DROP (LENGTH
+     (ffi_state_io_events ffi)) (ffi_state_io_events ffi')))) ffi'),r)`,
   CHEAT_TAC);;
 
 let evaluate_history_irrelevance = prove
  (`(!(st:'ffi semanticPrimitives_state) env exp st' res.
      evaluate st env exp = (st',res) ==>
      (?new_io. ffi_state_io_events (semanticPrimitives_state_ffi st')
-       = ffi_state_io_events (semanticPrimitives_state_ffi st) ++ new_io
-       /\
+       = APPEND (ffi_state_io_events (semanticPrimitives_state_ffi st))
+       new_io /\
      (!l. evaluate (semanticPrimitives_state_ffi_fupd (K
        (ffi_state_io_events_fupd (K l) (semanticPrimitives_state_ffi
        st))) st) env exp =
      (semanticPrimitives_state_ffi_fupd (K (ffi_state_io_events_fupd
-       (K (l ++ new_io)) (semanticPrimitives_state_ffi st')))
+       (K (APPEND l new_io)) (semanticPrimitives_state_ffi st')))
        st',res)))) /\
    (!(st:'ffi semanticPrimitives_state) env v pes err_v st' res.
      evaluate_evaluate_match st env v pes err_v = (st',res) ==>
      (?new_io. ffi_state_io_events (semanticPrimitives_state_ffi st')
-       = ffi_state_io_events (semanticPrimitives_state_ffi st) ++ new_io
-       /\
+       = APPEND (ffi_state_io_events (semanticPrimitives_state_ffi st))
+       new_io /\
      (!l. evaluate_evaluate_match (semanticPrimitives_state_ffi_fupd
        (K (ffi_state_io_events_fupd (K l) (semanticPrimitives_state_ffi
        st))) st) env
          v pes err_v =
      (semanticPrimitives_state_ffi_fupd (K (ffi_state_io_events_fupd
-       (K (l ++ new_io)) (semanticPrimitives_state_ffi st')))
+       (K (APPEND l new_io)) (semanticPrimitives_state_ffi st')))
        st',res)))) /\
    (!(st:'ffi semanticPrimitives_state) env ds st' res.
      evaluate_evaluate_decs st env ds = (st',res) ==>
      (?new_io. ffi_state_io_events (semanticPrimitives_state_ffi st')
-       = ffi_state_io_events (semanticPrimitives_state_ffi st) ++ new_io
-       /\
+       = APPEND (ffi_state_io_events (semanticPrimitives_state_ffi st))
+       new_io /\
      (!l. evaluate_evaluate_decs (semanticPrimitives_state_ffi_fupd
        (K (ffi_state_io_events_fupd (K l) (semanticPrimitives_state_ffi
        st))) st) env ds =
      (semanticPrimitives_state_ffi_fupd (K
-       (ffi_state_io_events_fupd (K (l ++ new_io))
+       (ffi_state_io_events_fupd (K (APPEND l new_io))
        (semanticPrimitives_state_ffi st'))) st',res))))`,
   CHEAT_TAC);;
 
@@ -872,8 +873,8 @@ let evaluate_add_history = prove
         st))) st) env exp = (st',res) ==>
       evaluate st env exp =
       (semanticPrimitives_state_ffi_fupd (K (ffi_state_io_events_fupd
-        (K (ffi_state_io_events (semanticPrimitives_state_ffi st) ++
-        ffi_state_io_events (semanticPrimitives_state_ffi st')))
+        (K (APPEND (ffi_state_io_events (semanticPrimitives_state_ffi
+        st)) (ffi_state_io_events (semanticPrimitives_state_ffi st'))))
         (semanticPrimitives_state_ffi st'))) st',res)) /\
    (!(st:'ffi semanticPrimitives_state) env v pes err_v st' res.
       evaluate_evaluate_match (semanticPrimitives_state_ffi_fupd (K
@@ -881,15 +882,15 @@ let evaluate_add_history = prove
         st))) st) env v pes err_v = (st',res) ==>
       evaluate_evaluate_match st env v pes err_v =
       (semanticPrimitives_state_ffi_fupd (K
-        (ffi_state_io_events_fupd (K (ffi_state_io_events
-        (semanticPrimitives_state_ffi st) ++ ffi_state_io_events
-        (semanticPrimitives_state_ffi st')))
+        (ffi_state_io_events_fupd (K (APPEND (ffi_state_io_events
+        (semanticPrimitives_state_ffi st)) (ffi_state_io_events
+        (semanticPrimitives_state_ffi st'))))
         (semanticPrimitives_state_ffi st'))) st',res))`,
   CHEAT_TAC);;
 
 (* Apps_append *)
 let apps_append = prove
- (`!xs ys f. Apps f (xs ++ ys) = Apps (Apps f xs) ys`,
+ (`!xs ys f. Apps f (APPEND xs ys) = Apps (Apps f xs) ys`,
   CHEAT_TAC);;
 
 let evaluate_Apps_Rerr = prove

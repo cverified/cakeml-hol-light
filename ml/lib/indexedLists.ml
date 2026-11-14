@@ -14,11 +14,11 @@ let _ = hol4_lib ();;
 
 let FOLDRi_def,FOLDRi_ind = define_rec
   [`FOLDRi f a [] = a`;
-   `FOLDRi f a (h :: t) = f 0 h (FOLDRi (f o SUC) a t)`];;
+   `FOLDRi f a (CONS h t) = f 0 h (FOLDRi (f o SUC) a t)`];;
 
 let findi_def,findi_ind = define_rec
   [`indexedLists_findi x [] = 0`;
-   `indexedLists_findi x (h :: t) = (if x = h then 0 else 1 +
+   `indexedLists_findi x (CONS h t) = (if x = h then 0 else 1 +
   indexedLists_findi x t)`];;
 hol4_overload "findi" "indexedLists_findi";;
 
@@ -26,4 +26,4 @@ let LIST_RELi_rules = cake_inductive
   `LIST_RELi R [] [] /\
    (!h1 h2 l1 l2.
       R (LENGTH l1) h1 h2 /\ LIST_RELi R l1 l2 ==>
-      LIST_RELi R (l1 ++ [h1]) (l2 ++ [h2]))`;;
+      LIST_RELi R (APPEND l1 [h1]) (APPEND l2 [h2]))`;;

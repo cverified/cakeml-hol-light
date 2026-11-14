@@ -199,7 +199,7 @@ let store_lookup_def = new_definition
      (if l < LENGTH st then SOME (EL l st) else NONE)`;;
 
 let store_alloc_def = new_definition
-  `store_alloc (v:'a store_v) st = (st ++ [v],LENGTH st)`;;
+  `store_alloc (v:'a store_v) st = (APPEND st [v],LENGTH st)`;;
 
 let store_assign_def = new_definition
   `store_assign n (v:'a store_v) st =
@@ -339,7 +339,7 @@ let pmatch_def,pmatch_ind = assume_definition_rec
   [`semanticPrimitives_pmatch envC s (ast_Pany:ast_pat) v' env =
   Match env`;
    `semanticPrimitives_pmatch envC s (ast_Pvar x:ast_pat) v' env =
-  Match ((x,v') :: env)`;
+  Match (CONS (x,v') env)`;
    `semanticPrimitives_pmatch envC s (ast_Plit l:ast_pat)
   (semanticPrimitives_Litv l':semanticPrimitives_v) env =
     (if l = l' then Match env else if lit_same_type l l' then
@@ -364,12 +364,12 @@ let pmatch_def,pmatch_ind = assume_definition_rec
          v) -> semanticPrimitives_pmatch envC s p v env | SOME _34 ->
          Match_type_error)`;
    `semanticPrimitives_pmatch envC s (ast_Pas p i:ast_pat) v env =
-  semanticPrimitives_pmatch envC s p v ((i,v) :: env)`;
+  semanticPrimitives_pmatch envC s p v (CONS (i,v) env)`;
    `semanticPrimitives_pmatch envC s (ast_Ptannot p t) v env =
   semanticPrimitives_pmatch envC s p v env`;
    `semanticPrimitives_pmatch envC s _35 _36 env = Match_type_error`;
    `semanticPrimitives_pmatch_list envC s [] [] env = Match env`;
-   `semanticPrimitives_pmatch_list envC s (p :: ps) (v :: vs) env =
+   `semanticPrimitives_pmatch_list envC s (CONS p ps) (CONS v vs) env =
     (match semanticPrimitives_pmatch envC s p v env with
        No_match ->
          (match semanticPrimitives_pmatch_list envC s ps vs env with
@@ -384,7 +384,7 @@ hol4_overload "pmatch_list" "semanticPrimitives_pmatch_list";;
 
 let can_pmatch_all_def,can_pmatch_all_ind = define_rec
   [`can_pmatch_all envC refs [] v <=> T`;
-   `can_pmatch_all envC refs (p :: ps) v <=>
+   `can_pmatch_all envC refs (CONS p ps) v <=>
          (if semanticPrimitives_pmatch envC refs p v [] =
            Match_type_error then F else can_pmatch_all envC refs ps
            v)`];;
@@ -406,8 +406,8 @@ let find_recfun_def,find_recfun_ind = define_shaped_rec
   [`(find_recfun:mlstring->(mlstring#'a#'b) list->('a#'b) option) n funs
   =
    (match funs with
-     [] -> NONE | (f,x,e) :: funs' -> (if f = n then SOME (x,e)
-       else find_recfun n funs'))`];;
+     [] -> NONE | CONS (f,x,e) funs' -> (if f = n then SOME
+       (x,e) else find_recfun n funs'))`];;
 
 let eq_result_INDUCT,eq_result_RECURSION = define_datatype
   "eq_result = Eq_val (bool) | Eq_type_error";;
@@ -461,7 +461,7 @@ let do_eq_def,do_eq_ind = assume_definition_rec
    `semanticPrimitives_do_eq_list x1 x2 =
        match (x1,x2) with
          ([],[]) -> Eq_val T
-       | ((v1 :: vs1),(v2 :: vs2)) ->
+       | ((CONS v1 vs1),(CONS v2 vs2)) ->
       (match semanticPrimitives_do_eq v1 v2 with
          Eq_val r -> (if ~r then Eq_val F else
            semanticPrimitives_do_eq_list vs1 vs2) | Eq_type_error ->
@@ -500,14 +500,14 @@ let v_to_list_def,v_to_list_ind = define_wf
       | (semanticPrimitives_Conv (SOME stamp) [v1; v2]) ->
      (if stamp = TypeStamp (implode "::") list_type_num then
         match semanticPrimitives_v_to_list v2 with NONE -> NONE |
-          SOME vs -> SOME (v1 :: vs) else NONE)
+          SOME vs -> SOME (CONS v1 vs) else NONE)
       | _44 -> NONE`];;
 hol4_overload "v_to_list" "semanticPrimitives_v_to_list";;
 
 let list_to_v_def,list_to_v_ind = define_rec
   [`semanticPrimitives_list_to_v [] = semanticPrimitives_Conv (SOME
   (TypeStamp (implode "[]") list_type_num)) []`;
-   `semanticPrimitives_list_to_v (x :: xs) =
+   `semanticPrimitives_list_to_v (CONS x xs) =
   semanticPrimitives_Conv (SOME (TypeStamp (implode "::")
   list_type_num)) [x; semanticPrimitives_list_to_v xs]`];;
 hol4_overload "list_to_v" "semanticPrimitives_list_to_v";;
@@ -527,7 +527,7 @@ let v_to_char_list_def,v_to_char_list_ind = define_wf
         [semanticPrimitives_Litv (ast_Char c); v]) ->
      (if stamp = TypeStamp (implode "::") list_type_num then
         match semanticPrimitives_v_to_char_list v with NONE -> NONE
-          | SOME cs -> SOME (STRING c cs) else NONE)
+          | SOME cs -> SOME (CONS c cs) else NONE)
       | _45 -> NONE`];;
 hol4_overload "v_to_char_list" "semanticPrimitives_v_to_char_list";;
 
@@ -539,11 +539,11 @@ let vs_to_string_def,vs_to_string_ind = define_wf
   [`semanticPrimitives_vs_to_string x1 =
       match x1 with
         [] -> SOME (implode "")
-      | ((semanticPrimitives_Litv (ast_StrLit
-        s1):semanticPrimitives_v) :: vs) ->
+      | CONS (semanticPrimitives_Litv (ast_StrLit
+        s1):semanticPrimitives_v) vs ->
      (match semanticPrimitives_vs_to_string vs with NONE -> NONE |
        SOME s2 -> SOME (strcat s1 s2))
-      | (_46 :: v1) -> NONE`];;
+      | (CONS _46 v1) -> NONE`];;
 hol4_overload "vs_to_string" "semanticPrimitives_vs_to_string";;
 
 let maybe_to_v_def = define_cases
@@ -578,9 +578,9 @@ let maybe_all_list_def,maybe_all_list_ind = define_shaped_rec
   "match"
   [`maybe_all_list v =
      (match v with
-       [] -> SOME [] | NONE :: vs -> NONE | SOME x :: vs ->
+       [] -> SOME [] | CONS NONE vs -> NONE | CONS (SOME x) vs ->
          (match maybe_all_list vs with NONE -> NONE | SOME xs ->
-           SOME (x :: xs)))`];;
+           SOME (CONS x xs)))`];;
 
 let v_to_word8_def = new_definition
   `v_to_word8 v =
@@ -616,8 +616,8 @@ let add_decs_generation_def = new_definition
          s)`;;
 
 let add_env_generation_def = new_definition
-  `add_env_generation s = eval_oracle_state_envs_fupd (K
-  (eval_oracle_state_envs s ++ [[]])) (eval_oracle_state_generation_fupd
+  `add_env_generation s = eval_oracle_state_envs_fupd (K (APPEND
+  (eval_oracle_state_envs s) [[]])) (eval_oracle_state_generation_fupd
   (K (LENGTH (eval_oracle_state_envs s)))
      s)`;;
 
@@ -642,9 +642,9 @@ let declare_env_def = new_definition
              gen_envs)],
             SOME
               (EvalOracle
-                 (eval_oracle_state_envs_fupd (K (LUPDATE
-                   (gen_envs ++ [env]) (eval_oracle_state_generation
-                   s') (eval_oracle_state_envs s'))) s')))))`;;
+                 (eval_oracle_state_envs_fupd (K (LUPDATE (APPEND
+                   gen_envs [env]) (eval_oracle_state_generation s')
+                   (eval_oracle_state_envs s'))) s')))))`;;
 
 (* Concrete, or first-order values, which do not contain code closures and
    are unchanged by many compiler phases. *)
@@ -656,7 +656,7 @@ let concrete_v_def,concrete_v_ind = assume_definition_rec
            v_ vs -> concrete_v_list vs | semanticPrimitives_Vectorv
            vs -> concrete_v_list vs | _53 -> F)`;
    `concrete_v_list [] <=> T`;
-   `concrete_v_list (v :: vs) <=> concrete_v v /\ concrete_v_list
+   `concrete_v_list (CONS v vs) <=> concrete_v v /\ concrete_v_list
   vs`];;
 
 let compiler_agrees_def = new_definition
@@ -731,9 +731,10 @@ let copy_array_def = new_definition
               (dstoff + len))) then
               NONE else
               SOME
-                (TAKE (num_of_int (abs (I dstoff))) dst ++ copied ++
-                 DROP (num_of_int (abs (I (dstoff + len))))
-                   dst))))`;;
+                (APPEND (APPEND (TAKE (num_of_int (abs (I dstoff)))
+                  dst) copied)
+                 (DROP (num_of_int (abs (I (dstoff + len))))
+                   dst)))))`;;
 
 let ws_to_chars_def = new_definition
   `ws_to_chars (ws:word8 list) = MAP (\w. CHR (w2n w)) ws`;;
@@ -770,9 +771,9 @@ let xor_bytes_def,xor_bytes_ind = define_guess
       match (bs1,bs2) with
         ([],bs2) -> SOME (bs2:word8 list)
       | (bs1,[]) -> NONE
-      | ((b1 :: bs1),(b2 :: bs2)) ->
+      | ((CONS b1 bs1),(CONS b2 bs2)) ->
      (match xor_bytes bs1 bs2 with NONE -> NONE | SOME rest ->
-       SOME (word_xor b1 b2 :: rest))`];;
+       SOME (CONS (word_xor b1 b2) rest))`];;
 
 (* With `dest_thunk` we check 3 things:
      - The values contain exactly one reference
@@ -1050,9 +1051,9 @@ let do_app_def = new_definition
        (match (semanticPrimitives_v_to_list
          x1,semanticPrimitives_v_to_list x2) with
            (SOME xs,SOME ys) -> SOME ((s,t),Rval
-             (semanticPrimitives_list_to_v (xs ++ ys))) | _76 -> NONE) |
-             (ast_Shift ast_W8 op n,[semanticPrimitives_Litv (ast_Word8
-             w)]) ->
+             (semanticPrimitives_list_to_v (APPEND xs ys))) | _76 ->
+             NONE) | (ast_Shift ast_W8 op n,[semanticPrimitives_Litv
+             (ast_Word8 w)]) ->
          SOME ((s,t),Rval (semanticPrimitives_Litv (ast_Word8
            (shift8_lookup op w n)))) | (ast_Shift ast_W64 op
            n,[semanticPrimitives_Litv (ast_Word64 w)]) ->
@@ -1340,7 +1341,7 @@ let do_app_def = new_definition
              Rval (semanticPrimitives_Conv NONE [gen; id'])) |
                (ast_ThunkOp th_op,vs) -> semanticPrimitives_thunk_op
                (s,t) th_op vs | (ast_Arith a ty,vs) ->
-         (if EVERY (semanticPrimitives_check_type ty) vs then
+         (if ALL (semanticPrimitives_check_type ty) vs then
             (match do_arith a ty vs with SOME (INR res) -> SOME
               ((s,t),Rval res) | SOME (INL exn) -> SOME ((s,t),Rerr
               (Rraise exn)) | NONE -> NONE) else NONE) | (ast_FromTo ty1
@@ -1383,7 +1384,7 @@ let build_tdefs_def,build_tdefs_ind = define_rec
   [`build_tdefs next_stamp ([]:(mlstring list#mlstring#(mlstring#ast_t
   list) list) list) =
       ((alist_to_ns []):(mlstring,mlstring,num#stamp)namespace)`;
-   `build_tdefs next_stamp ((tvs,tn,condefs) :: tds) =
+   `build_tdefs next_stamp (CONS (tvs,tn,condefs) tds) =
       ((nsAppend (build_tdefs (next_stamp + 1) tds)
         (alist_to_ns (REVERSE (build_constrs next_stamp
           condefs)))):(mlstring,mlstring,num#stamp)namespace)`];;
@@ -1394,7 +1395,7 @@ let check_dup_ctors_def = new_definition
   list#mlstring#(mlstring#ast_t list) list) <=>
      ALL_DISTINCT
        (let x2 = [] in
-          ITLIST (\(n,ts) x2. if T then n :: x2 else x2) condefs
+          ITLIST (\(n,ts) x2. if T then CONS n x2 else x2) condefs
             x2)`;;
 
 let combine_dec_result_def = new_definition

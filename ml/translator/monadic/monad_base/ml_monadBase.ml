@@ -110,8 +110,8 @@ let msub_def,msub_ind = define_shaped_rec
   "match"
   [`Msub e (n:num) l =
      (match l with
-       [] -> M_failure e | x :: l' -> (if n = 0 then M_success x
-         else Msub e (n - 1) l'))`];;
+       [] -> M_failure e | CONS x l' -> (if n = 0 then M_success
+         x else Msub e (n - 1) l'))`];;
 
 (* Msub_eq *)
 let msub_eq = prove
@@ -128,12 +128,12 @@ let mupdate_def,mupdate_ind = define_shaped_rec
   "match"
   [`Mupdate e x (n:num) l =
      (match l with
-       [] -> M_failure e | x' :: l' ->
+       [] -> M_failure e | CONS x' l' ->
          (if n = 0 then
-           M_success (x :: l') else
+           M_success (CONS x l') else
            (match Mupdate e x (n - 1) l' with
-              M_success l'' -> M_success (x' :: l'') | other ->
-                other)))`];;
+              M_success l'' -> M_success (CONS x' l'') | other
+                -> other)))`];;
 
 (* Mupdate_eq *)
 let mupdate_eq = prove
@@ -155,11 +155,12 @@ let array_resize_def,array_resize_ind = define_wf
      (if n = 0 then
        [] else
        match a with
-         [] -> x :: array_resize (n - 1) x a | x' :: a' -> x' ::
-           array_resize (n - 1) x a')`];;
+         [] -> CONS x (array_resize (n - 1) x a) | CONS x' a' ->
+           CONS x' (array_resize (n - 1) x a'))`];;
 
 let array_resize_eq = prove
- (`!a n x. array_resize n x a = TAKE n a ++ REPLICATE (n - LENGTH a) x`,
+ (`!a n x. array_resize n x a = APPEND (TAKE n a) (REPLICATE (n -
+  LENGTH a) x)`,
   CHEAT_TAC);;
 
 (* User functions *)
@@ -188,7 +189,8 @@ let marray_resize_def = new_definition
 
 (* Dynamic allocated references *)
 let mref_def = new_definition
-  `Mref cons x = (\s. (M_success (StoreRef (LENGTH s)),cons x :: s))`;;
+  `Mref cons x = (\s. (M_success (StoreRef (LENGTH s)),CONS (cons x)
+  s))`;;
 
 let dref_def = new_definition
   `dref n = (\s. EL (LENGTH s - n - 1) s)`;;
@@ -199,7 +201,7 @@ let mdref_aux_def,mdref_aux_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
   [`Mdref_aux e (n:num) =
      (\s. match s with
-           [] -> M_failure e | x :: s -> (if n = 0 then
+           [] -> M_failure e | CONS x s -> (if n = 0 then
              M_success x else Mdref_aux e (n - 1) s))`];;
 
 let mdref_def = define_general
@@ -208,21 +210,20 @@ let mdref_def = define_general
 
 let mpop_ref_def = new_definition
   `Mpop_ref e =
-     (\(r,s). match s with
-                x :: s -> (r,s) | [] -> (M_failure e,s))`;;
+     (\(r,s). match s with CONS x s -> (r,s) | [] -> (M_failure
+       e,s))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let mref_assign_aux_def,mref_assign_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
   [`Mref_assign_aux e (n:num) x =
-     (\s. match s with
-           x' :: s ->
+     (\s. match s with CONS x' s ->
              (if n = 0 then
-               M_success (x :: s) else
+               M_success (CONS x s) else
                (match Mref_assign_aux e (n - 1) x s with
-                  M_success s -> M_success (x' :: s) | other ->
-                    other)) | [] -> M_failure e)`];;
+                  M_success s -> M_success (CONS x' s) | other
+                    -> other)) | [] -> M_failure e)`];;
 
 let mref_assign_def = define_general
   [`Mref_assign e (StoreRef n) x =
@@ -234,11 +235,11 @@ let ref_assign_def = new_definition
   `ref_assign n x = (\s. LUPDATE x (LENGTH s - n - 1) s)`;;
 
 let dref_cons_state = prove
- (`n < LENGTH state ==> (dref n (x :: state) = dref n state)`,
+ (`n < LENGTH state ==> (dref n (CONS x state) = dref n state)`,
   CHEAT_TAC);;
 
 let dref_first = prove
- (`dref (LENGTH s) (r :: s) = r`,
+ (`dref (LENGTH s) (CONS r s) = r`,
   CHEAT_TAC);;
 
 (* Mdref_eq *)

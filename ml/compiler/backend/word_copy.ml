@@ -96,7 +96,7 @@ let remove_eq_def = new_definition
 
 let remove_eqs_def,remove_eqs_ind = define_rec
   [`remove_eqs cs [] = cs`;
-   `remove_eqs cs (v :: vs) =
+   `remove_eqs cs (CONS v vs) =
         remove_eqs (remove_eq cs v) vs`];;
 
 let copy_prop_inst_def = new_definition
@@ -244,10 +244,10 @@ let set_store_eq_def = new_definition
        NONE ->
        mk_copy_state (sptree_insert y (copy_state_next cs)
          (copy_state_to_eq cs)) (sptree_insert (copy_state_next cs) y
-         (copy_state_from_eq cs)) ((s,copy_state_next cs) ::
-         copy_state_store_to_eq cs) (copy_state_next cs + 1) | SOME c ->
-         copy_state_store_to_eq_fupd (K ((s,c) :: copy_state_store_to_eq
-         cs))
+         (copy_state_from_eq cs)) (CONS (s,copy_state_next cs)
+         (copy_state_store_to_eq cs)) (copy_state_next cs + 1) | SOME c
+         -> copy_state_store_to_eq_fupd (K (CONS (s,c)
+         (copy_state_store_to_eq cs)))
        cs else empty_eq)`;;
 
 let lookup_store_eq_def = new_definition
@@ -271,11 +271,11 @@ let merge_eqs_def = new_definition
 (* shouldn't matter whether we put y or y' in set_eq? *)
 let copy_prop_move_def,copy_prop_move_ind = define_rec
   [`copy_prop_move [] cs = ([],cs)`;
-   `copy_prop_move ((x,y) :: xs) cs =
+   `copy_prop_move (CONS (x,y) xs) cs =
         (let y' = lookup_eq cs y in
         let (ms,cs') = copy_prop_move xs cs in
         let cs'' = set_eq (remove_eq cs' x) x y in
-        ((x,y') :: ms,cs''))`];;
+        (CONS (x,y') ms,cs''))`];;
 
 let copy_prop_share_def = new_definition
   `copy_prop_share exp cs =
@@ -293,7 +293,7 @@ let copy_prop_prog_def,copy_prop_prog_ind = define_shaped_rec
        (Skip,cs)
         | (wordLang_Move pri xs) ->
        (let tt = MAP FST xs in let ss = MAP SND xs in
-       if EVERY (\t. ~(MEM t ss)) tt then
+       if ALL (\t. ~(MEM t ss)) tt then
          // set (MAP FST xs) ∩ set (MAP SND xs) = ∅
          let (xs',cs') = copy_prop_move xs cs in
          (wordLang_Move pri xs',cs') else (wordLang_Move pri

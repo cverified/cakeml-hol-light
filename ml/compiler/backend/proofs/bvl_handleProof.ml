@@ -44,21 +44,21 @@ let handle_adj_vars_0 = prove
 
 let evaluate_handle_adj_vars_lemma = prove
  (`(!x xs a env (r:('a,'b)bvlSem_state).
-      evaluate ([handle_adj_vars (LENGTH xs) (LENGTH a) x],xs ++ (a
-        ++ env),r) =
-      evaluate ([x],xs ++ env,r)) /\
+      evaluate ([handle_adj_vars (LENGTH xs) (LENGTH a) x],APPEND xs
+        (APPEND a env),r) =
+      evaluate ([x],APPEND xs env,r)) /\
    (!x xs a env (r:('a,'b)bvlSem_state).
-      evaluate (handle_adj_vars1 (LENGTH xs) (LENGTH a) x,xs ++ (a ++
-        env),r) =
-      evaluate (x,xs ++ env,r))`,
+      evaluate (handle_adj_vars1 (LENGTH xs) (LENGTH a) x,APPEND xs
+        (APPEND a env),r) =
+      evaluate (x,APPEND xs env,r))`,
   CHEAT_TAC);;
 
 let evaluate_handle_adj_vars = prove
  (`!xs l a env r.
      l <= LENGTH env ==>
-     evaluate ([handle_adj_vars (LENGTH xs) (l + LENGTH a) x2],xs ++
-       (a ++ env),r) =
-     evaluate ([handle_adj_vars (LENGTH xs) l x2],xs ++ env,r)`,
+     evaluate ([handle_adj_vars (LENGTH xs) (l + LENGTH a) x2],APPEND
+       xs (APPEND a env),r) =
+     evaluate ([handle_adj_vars (LENGTH xs) l x2],APPEND xs env,r)`,
   CHEAT_TAC);;
 
 let handle_adj_vars_evaluate = prove
@@ -90,8 +90,8 @@ let evaluate_SmartLet = prove
 let let_ok_def = new_definition
   `let_ok x1 =
         match x1 with
-          (Let xs b:bvl_exp) -> EVERY isVar xs /\ bVarBound (LENGTH
-            xs) [b]
+          (Let xs b:bvl_exp) -> ALL isVar xs /\ bVarBound (LENGTH xs)
+            [b]
         | _1 -> F`;;
 
 let _ = size_thms "bvl_exp";;
@@ -104,8 +104,8 @@ let _ = size_thms "bvl_exp";;
 let handle_ok_def,handle_ok_ind = define_wf_cheat
   `MEASURE (list_size bvl_exp_size)`
   [`handle_ok [] <=> T`;
-   `handle_ok ((x:bvl_exp) :: y :: xs) <=>
-         handle_ok [x] /\ handle_ok (y :: xs)`;
+   `handle_ok (CONS (x:bvl_exp) (CONS y xs)) <=>
+         handle_ok [x] /\ handle_ok (CONS y xs)`;
    `handle_ok [(Var v:bvl_exp)] <=> T`;
    `handle_ok [(If x1 x2 x3:bvl_exp)] <=>
          handle_ok [x1] /\ handle_ok [x2] /\ handle_ok [x3]`;
@@ -119,7 +119,7 @@ let handle_ok_def,handle_ok_ind = define_wf_cheat
    `handle_ok [(Op op xs:bvl_exp)] <=> handle_ok xs`;
    `handle_ok [(Handle x1 x2:bvl_exp)] <=>
          (match x1 with Let xs b ->
-             EVERY isVar xs /\ bVarBound (LENGTH xs) [b] /\
+             ALL isVar xs /\ bVarBound (LENGTH xs) [b] /\
              handle_ok [b] /\ handle_ok [x2] | _4 -> F)`;
    `handle_ok [(Force loc n:bvl_exp)] <=> T`;
    `handle_ok [(Call ticks dest xs:bvl_exp)] <=> handle_ok xs`];;
@@ -148,7 +148,7 @@ let env_rel_MAPi = prove
   CHEAT_TAC);;
 
 let IMP_EL_SING = prove
- (`k = LENGTH xs ==> EL k (xs ++ [x] ++ ys) = x`,
+ (`k = LENGTH xs ==> EL k (APPEND (APPEND xs [x]) ys) = x`,
   CHEAT_TAC);;
 
 (* HOL4 bvl_handleProofScript.sml:228-233: a theorem that HOL4 states
@@ -163,10 +163,10 @@ let IS_SOME_lookup_db_to_set = prove
 
 let evaluate_LetLet = prove
  (`(!env2 extra.
-       env_rel l1 env env2 ==> evaluate ([y],env2 ++ extra,s1) = res)
-         /\
+       env_rel l1 env env2 ==> evaluate ([y],APPEND env2 extra,s1) =
+         res) /\
     env_rel l1 env env1 ==>
-    evaluate ([LetLet (LENGTH env) (db_to_set l1) y],env1 ++
+    evaluate ([LetLet (LENGTH env) (db_to_set l1) y],APPEND env1
       extra,s1) = res`,
   CHEAT_TAC);;
 
@@ -186,10 +186,10 @@ let OptionalLetLet_IMP = prove
  (cake_as_vars (fun () ->
     `(ys,l,s',nr') = OptionalLetLet y (LENGTH env) lx s1 limit nr /\
        (!env2 extra.
-         env_rel l env env2 ==> evaluate ([y],env2 ++ extra,s) =
-           res) /\
+         env_rel l env env2 ==> evaluate ([y],APPEND env2 extra,s)
+           = res) /\
        env_rel l env env1 /\ b ==>
-       evaluate (ys,env1 ++ extra,s) = res /\ b`),
+       evaluate (ys,APPEND env1 extra,s) = res /\ b`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -251,7 +251,7 @@ let compile_IMP_LENGTH = prove
   CHEAT_TAC);;
 
 let bVarBound_CONS = prove
- (`bVarBound m [x] /\ bVarBound m xs ==> bVarBound m (x :: xs)`,
+ (`bVarBound m [x] /\ bVarBound m xs ==> bVarBound m (CONS x xs)`,
   CHEAT_TAC);;
 
 let bVarBound_MEM = prove
@@ -307,12 +307,12 @@ let compile_seqs_bVarBound = prove
   CHEAT_TAC);;
 
 let bEvery_CONS = prove
- (`bEvery p [x] /\ bEvery p xs ==> bEvery p (x :: xs)`,
+ (`bEvery p [x] /\ bEvery p xs ==> bEvery p (CONS x xs)`,
   CHEAT_TAC);;
 
 let handle_ok_Var_Const_list = prove
- (`EVERY (\x. ?v i. x = Var v \/ x = Op (closLang_IntOp
-  (closLang_Const i)) []) xs ==> handle_ok xs`,
+ (`ALL (\x. ?v i. x = Var v \/ x = Op (closLang_IntOp (closLang_Const
+  i)) []) xs ==> handle_ok xs`,
   CHEAT_TAC);;
 
 let handle_ok_SmartLet = prove
@@ -343,11 +343,11 @@ let compile_any_handle_ok = prove
   CHEAT_TAC);;
 
 let handle_ok_CONS = prove
- (`!x xs. handle_ok (x :: xs) <=> handle_ok [x] /\ handle_ok xs`,
+ (`!x xs. handle_ok (CONS x xs) <=> handle_ok [x] /\ handle_ok xs`,
   CHEAT_TAC);;
 
 let handle_ok_EVERY = prove
- (`!xs. handle_ok xs <=> EVERY (\x. handle_ok [x]) xs`,
+ (`!xs. handle_ok xs <=> ALL (\x. handle_ok [x]) xs`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -358,9 +358,9 @@ let LetLet_code_labels = prove
 
 (* compile_code_labels *)
 let bvl_handleProof_compile_code_labels = prove
- (`!a b c. BIGUNION (set_of_list (MAP bvlProps_get_code_labels (FST
+ (`!a b c. UNIONS (set_of_list (MAP bvlProps_get_code_labels (FST
   (bvl_handle_compile a b c)))) SUBSET
-           BIGUNION (set_of_list (MAP bvlProps_get_code_labels c))`,
+           UNIONS (set_of_list (MAP bvlProps_get_code_labels c))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -380,9 +380,9 @@ let get_code_labels_handle_adj_vars = prove
 let get_code_labels_handle_simp = prove
  (`(!c. bvlProps_get_code_labels (handle_simp c) SUBSET
   bvlProps_get_code_labels c) /\
-   (!c. BIGUNION (set_of_list (MAP bvlProps_get_code_labels
+   (!c. UNIONS (set_of_list (MAP bvlProps_get_code_labels
      (handle_simp_list c))) SUBSET
-        BIGUNION (set_of_list (MAP bvlProps_get_code_labels c))) /\
+        UNIONS (set_of_list (MAP bvlProps_get_code_labels c))) /\
    (!c d l. bvlProps_get_code_labels (make_handle c d l) SUBSET
             bvlProps_get_code_labels c UNION
               bvlProps_get_code_labels d)`,

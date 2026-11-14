@@ -91,7 +91,7 @@ let db_subst_infer_subst_swap = prove
     count (uvar + tvs) SUBSET FDOM s /\
     (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar
       uv))) /\
-    EVERY (\t. check_t tvs (FDOM s) t) ts ==>
+    ALL (\t. check_t tvs (FDOM s) t) ts ==>
     (MAP (convert_t o
          t_walkstar s o
          infer_deBruijn_subst (MAP (\n. Infer_Tuvar (uvar + n))
@@ -107,7 +107,7 @@ let db_subst_infer_subst_swap = prove
 let inc_convert_t = prove
  (`(!t tvs' tvs. check_t tvs' {} t ==> (deBruijn_inc tvs' tvs (convert_t
   t) = convert_t t)) /\
-   (!ts tvs' tvs. EVERY (check_t tvs' {}) ts ==> (MAP (deBruijn_inc
+   (!ts tvs' tvs. ALL (check_t tvs' {}) ts ==> (MAP (deBruijn_inc
      tvs' tvs o convert_t) ts = MAP convert_t ts))`,
   CHEAT_TAC);;
 
@@ -119,7 +119,7 @@ let convert_t_subst = prove
       type_subst (alist_to_fmap (ZIP tvs (MAP convert_t ts'))) t) /\
    (!ts tvs ts'.
       (LENGTH tvs = LENGTH ts') /\
-      EVERY (check_freevars 0 tvs) ts ==>
+      ALL (check_freevars 0 tvs) ts ==>
       MAP convert_t (MAP (infer_type_subst (ZIP tvs ts')) ts) =
       MAP (type_subst (alist_to_fmap (ZIP tvs (MAP convert_t
         ts')))) ts)`,
@@ -131,7 +131,7 @@ let deBruijn_subst_convert = prove
    deBruijn_subst 0 (MAP convert_t subst) (convert_t t) =
    convert_t (infer_deBruijn_subst subst t)) /\
    (!ts.
-   EVERY (check_t n {}) ts ==>
+   ALL (check_t n {}) ts ==>
    MAP ((deBruijn_subst 0 (MAP convert_t subst)) o convert_t) ts =
    MAP (convert_t o (infer_deBruijn_subst subst)) ts)`,
   CHEAT_TAC);;
@@ -152,7 +152,7 @@ let check_freevars_to_check_t = prove
 let infer_type_subst_nil = prove
  (`(!t. check_freevars n [] t ==> infer_type_subst [] t = unconvert_t t)
   /\
-    (!ts. EVERY (check_freevars n []) ts ==> MAP (infer_type_subst
+    (!ts. ALL (check_freevars n []) ts ==> MAP (infer_type_subst
       []) ts = MAP unconvert_t ts)`,
   CHEAT_TAC);;
 
@@ -199,7 +199,7 @@ let tscheme_approx_def = new_definition
   `tscheme_approx max_tvs s (tvs,t) (tvs',t') <=>
      (?subst'.
        LENGTH subst' = tvs' /\
-       EVERY (check_t (max_tvs + tvs) (FDOM s)) subst' /\
+       ALL (check_t (max_tvs + tvs) (FDOM s)) subst' /\
        (!subst.
         LENGTH subst = tvs ==>
         t_walkstar s (infer_deBruijn_subst subst t) =
@@ -212,10 +212,10 @@ let tscheme_approx_thm = prove
     (tscheme_approx max_tvs s (tvs,t) (tvs',t') ==>
      (!subst.
       LENGTH subst = tvs /\
-      EVERY (check_t max_tvs {}) subst ==>
+      ALL (check_t max_tvs {}) subst ==>
       (?subst'.
         LENGTH subst' = tvs' /\
-        EVERY (check_t max_tvs (FDOM s)) subst' /\
+        ALL (check_t max_tvs (FDOM s)) subst' /\
         t_walkstar s (infer_deBruijn_subst subst t) = t_walkstar s
           (infer_deBruijn_subst subst' t'))))`,
   CHEAT_TAC);;
@@ -320,7 +320,7 @@ let env_rel_sound_merge0 = prove
     t_wfs s /\
     (!uv. uv IN FDOM s ==> check_t (num_tvs tenvE) {} (t_walkstar s
       (Infer_Tuvar uv))) /\
-    EVERY (\(x,t). check_t 0 (FDOM s) t) bindings /\
+    ALL (\(x,t). check_t 0 (FDOM s) t) bindings /\
     env_rel_sound s ienv tenv tenvE ==>
     env_rel_sound s
        (inf_env_inf_v_fupd (K (nsAppend (alist_to_ns (MAP (\(n,t).

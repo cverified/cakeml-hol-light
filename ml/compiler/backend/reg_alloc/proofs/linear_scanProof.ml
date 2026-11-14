@@ -893,12 +893,12 @@ let good_linear_scan_state_def = new_definition
          (linear_scan_hidden_state_colors sth) /\ LENGTH
          (linear_scan_hidden_state_int_end sth) = LENGTH
          (linear_scan_hidden_state_colors sth) /\
-       ALL_DISTINCT (linear_scan_state_colorpool st ++ MAP (\(e,r).
-         EL r (linear_scan_hidden_state_colors sth))
-         (linear_scan_state_active st)) /\
-       EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) l
+       ALL_DISTINCT (APPEND (linear_scan_state_colorpool st) (MAP
+         (\(e,r). EL r (linear_scan_hidden_state_colors sth))
+         (linear_scan_state_active st))) /\
+       ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) l
          /\
-       EVERY (\r. EL r (linear_scan_hidden_state_colors sth) <
+       ALL (\r. EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_stacknum st) l /\
        domain (linear_scan_state_phyregs st) = {EL r
          (linear_scan_hidden_state_colors sth) | r | MEM r l /\
@@ -906,27 +906,27 @@ let good_linear_scan_state_def = new_definition
          linear_scan_state_colormax st} /\
        ALL_DISTINCT (MAP (\r. EL r (linear_scan_hidden_state_colors
          sth)) (FILTER is_phy_var l)) /\
-       EVERY (\c. c < linear_scan_state_colornum st)
+       ALL (\c. c < linear_scan_state_colornum st)
          (linear_scan_state_colorpool st) /\
-       EVERY (\(e,r). EL r (linear_scan_hidden_state_colors sth) <
+       ALL (\(e,r). EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_colornum st) (linear_scan_state_active st) /\
          linear_scan_state_colornum
        st <= linear_scan_state_colormax st /\
          linear_scan_state_colormax
        st <= linear_scan_state_stacknum st /\
-       EVERY (\r. EL r (linear_scan_hidden_state_colors sth) <
+       ALL (\r. EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_colormax st ==> EL r
          (linear_scan_hidden_state_colors sth) <
          linear_scan_state_colornum st) l /\
-       EVERY (\r. EL r (linear_scan_hidden_state_int_beg sth) <= pos)
-         l /\
-       EVERY (\r. ((pos <= EL r (linear_scan_hidden_state_int_end
-         sth) /\ EL r (linear_scan_hidden_state_colors sth) <
+       ALL (\r. EL r (linear_scan_hidden_state_int_beg sth) <= pos) l
+         /\
+       ALL (\r. ((pos <= EL r (linear_scan_hidden_state_int_end sth)
+         /\ EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_colormax st) ==> (MEM (EL r
          (linear_scan_hidden_state_int_end sth),r)
          (linear_scan_state_active st)))) l /\
-       EVERY (\r. ((MEM (EL r (linear_scan_hidden_state_int_end
-         sth),r) (linear_scan_state_active st)) ==> (pos <= (&1) + EL r
+       ALL (\r. ((MEM (EL r (linear_scan_hidden_state_int_end sth),r)
+         (linear_scan_state_active st)) ==> (pos <= (&1) + EL r
          (linear_scan_hidden_state_int_end sth)))) l /\
        (!r1 r2. MEM r1 l /\ MEM r2 l /\
            interval_intersect (EL r1
@@ -937,15 +937,16 @@ let good_linear_scan_state_def = new_definition
            EL r1 (linear_scan_hidden_state_colors sth) = EL r2
              (linear_scan_hidden_state_colors sth) ==> r1 = r2) /\
        SORTED less_FST (linear_scan_state_active st) /\
-       EVERY (\(e,r). e = EL r (linear_scan_hidden_state_int_end
-         sth)) (linear_scan_state_active st) /\
-       EVERY (\(e,r). MEM r l) (linear_scan_state_active st) /\
-       EVERY (\(r1,r2). MEM r1 l /\ MEM r2 l /\ EL r1
+       ALL (\(e,r). e = EL r (linear_scan_hidden_state_int_end sth))
+         (linear_scan_state_active st) /\
+       ALL (\(e,r). MEM r l) (linear_scan_state_active st) /\
+       ALL (\(r1,r2). MEM r1 l /\ MEM r2 l /\ EL r1
          (linear_scan_hidden_state_colors sth) = EL r2
          (linear_scan_hidden_state_colors sth) ==> r1 = r2) forced /\
        mincol <= linear_scan_state_colornum st /\
-       EVERY (\c. mincol <= c) (linear_scan_state_colorpool st ++
-         MAP (\r. EL r (linear_scan_hidden_state_colors sth)) l))`;;
+       ALL (\c. mincol <= c) (APPEND (linear_scan_state_colorpool
+         st) (MAP (\r. EL r (linear_scan_hidden_state_colors sth))
+         l)))`;;
 
 (* HOL4 linear_scanProofScript.sml:2444-2451: a proof *)
 
@@ -965,14 +966,14 @@ let add_active_interval_output = prove
    SORTED less_FST lin /\
    lout = add_active_interval (e,r) lin ==>
    SORTED less_FST lout /\
-   (?l1 l2. lin = l1 ++ l2 /\ lout = l1 ++ ((e,r) :: l2))`,
+   (?l1 l2. lin = APPEND l1 l2 /\ lout = APPEND l1 (CONS (e,r) l2))`,
   CHEAT_TAC);;
 
 let find_color_in_list_output = prove
  (`!forbidden col l rest.
    find_color_in_list l forbidden = SOME (col,rest) ==>
    MEM col l /\ ~(col IN domain forbidden) /\
-   (?l1 l2. rest = l1 ++ l2 /\ l = l1 ++ (col :: l2))`,
+   (?l1 l2. rest = APPEND l1 l2 /\ l = APPEND l1 (CONS col l2))`,
   CHEAT_TAC);;
 
 let find_color_in_colornum_invariants = prove
@@ -981,8 +982,8 @@ let find_color_in_colornum_invariants = prove
    domain forbidden SUBSET {EL r (linear_scan_hidden_state_colors
      sth) | r | MEM r l} /\
    find_color_in_colornum st forbidden = (stout,SOME col) ==>
-   good_linear_scan_state (linear_scan_state_colorpool_fupd (\l. col
-     :: l) stout) sth l pos forced mincol /\ linear_scan_state_colornum
+   good_linear_scan_state (linear_scan_state_colorpool_fupd (\l. CONS
+     col l) stout) sth l pos forced mincol /\ linear_scan_state_colornum
    st <= col /\ col < linear_scan_state_colornum stout /\
      linear_scan_state_colornum
    st <= linear_scan_state_colornum stout /\ ~(col IN domain
@@ -999,8 +1000,8 @@ let find_color_invariants = prove
    domain forbidden SUBSET {EL r (linear_scan_hidden_state_colors
      sth) | r | MEM r l} /\
    find_color st forbidden = (stout,SOME col) ==>
-   good_linear_scan_state (linear_scan_state_colorpool_fupd (\l. col
-     :: l) stout) sth l pos forced mincol /\
+   good_linear_scan_state (linear_scan_state_colorpool_fupd (\l. CONS
+     col l) stout) sth l pos forced mincol /\
    col < linear_scan_state_colornum stout /\ ~(col IN domain
      forbidden) /\
    st = linear_scan_state_colornum_fupd (K
@@ -1018,7 +1019,7 @@ let update_color_active_colors_same = prove
 
 let forced_update_stack_color_lemma = prove
  (`!(colors:num list) (stacknum:num) l r2 r1.
-   EVERY (\r. EL r colors < stacknum) l /\
+   ALL (\r. EL r colors < stacknum) l /\
    MEM r2 l /\
    r1 < LENGTH colors /\
    EL r1 (LUPDATE stacknum r1 colors) = EL r2 (LUPDATE stacknum r1
@@ -1029,10 +1030,10 @@ let forced_update_stack_color_lemma = prove
 (* TODO: this should be part of the standard library, but I couldn't find it *)
 let IS_SPARSE_SUBLIST_def,IS_SPARSE_SUBLIST_ind = define_guess
   [`IS_SPARSE_SUBLIST [] l2 = T`;
-   `IS_SPARSE_SUBLIST (x :: xs) [] = F`;
-   `IS_SPARSE_SUBLIST (x :: xs) (y :: ys) =
+   `IS_SPARSE_SUBLIST (CONS x xs) [] = F`;
+   `IS_SPARSE_SUBLIST (CONS x xs) (CONS y ys) =
       ((x = y /\ IS_SPARSE_SUBLIST xs ys) \/ IS_SPARSE_SUBLIST
-        (x :: xs) ys)`];;
+        (CONS x xs) ys)`];;
 
 let FILTER_IS_SPARSE_SUBLIST = prove
  (`!l. IS_SPARSE_SUBLIST (FILTER P l) l`,
@@ -1043,13 +1044,13 @@ let MEM_SPARSE_SUBLIST = prove
   CHEAT_TAC);;
 
 let IS_SPARSE_SUBLIST_APPEND_LEFT = prove
- (`!l1 l2 l. IS_SPARSE_SUBLIST l1 l2 ==> IS_SPARSE_SUBLIST (l ++ l1)
-  (l ++ l2)`,
+ (`!l1 l2 l. IS_SPARSE_SUBLIST l1 l2 ==> IS_SPARSE_SUBLIST (APPEND l
+  l1) (APPEND l l2)`,
   CHEAT_TAC);;
 
 let IS_SPARSE_SUBLIST_APPEND_RIGHT = prove
- (`!l1 l2 l. IS_SPARSE_SUBLIST l1 l2 ==> IS_SPARSE_SUBLIST (l1 ++ l)
-  (l2 ++ l)`,
+ (`!l1 l2 l. IS_SPARSE_SUBLIST l1 l2 ==> IS_SPARSE_SUBLIST (APPEND l1
+  l) (APPEND l2 l)`,
   CHEAT_TAC);;
 
 let MAP_IS_SPARSE_SUBLIST = prove
@@ -1071,7 +1072,7 @@ let spill_register_FILTER_invariants_hidden = prove
    (?stout sthout. (M_success stout,sthout) = spill_register
      (linear_scan_state_active_fupd (K (FILTER (\(e,r). ~(r = reg))
      (linear_scan_state_active st))) st) reg sth /\
-   good_linear_scan_state stout sthout (reg :: l) pos forced mincol
+   good_linear_scan_state stout sthout (CONS reg l) pos forced mincol
      /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
      (linear_scan_hidden_state_colors sth) /\
@@ -1104,7 +1105,7 @@ let spill_register_invariants = prove
    EL reg (linear_scan_hidden_state_int_beg sth) <= pos ==>
    (?stout sthout. (M_success stout,sthout) = spill_register st reg
      sth /\
-   good_linear_scan_state stout sthout (reg :: l) pos forced mincol
+   good_linear_scan_state stout sthout (CONS reg l) pos forced mincol
      /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
      (linear_scan_hidden_state_colors sth) /\
@@ -1126,14 +1127,15 @@ let edges_to_adjlist_step_def = new_definition
        acc else if ((<) LEX (<=)) (EL a
          (linear_scan_hidden_state_int_beg sth),a) (EL b
          (linear_scan_hidden_state_int_beg sth),b) then
-       sptree_insert b (a :: (the [] (sptree_lookup b acc))) acc else
-       sptree_insert a (b :: (the [] (sptree_lookup a acc))) acc)`;;
+       sptree_insert b (CONS a (the [] (sptree_lookup b acc))) acc
+         else
+       sptree_insert a (CONS b (the [] (sptree_lookup a acc)))
+         acc)`;;
 
 let edges_to_adjlist_FOLDL = prove
  (`!forced sth acc.
-   EVERY (\(r1,r2). r1 < LENGTH (linear_scan_hidden_state_int_beg
-     sth) /\ r2 < LENGTH (linear_scan_hidden_state_int_beg sth)) forced
-     ==>
+   ALL (\(r1,r2). r1 < LENGTH (linear_scan_hidden_state_int_beg sth)
+     /\ r2 < LENGTH (linear_scan_hidden_state_int_beg sth)) forced ==>
    edges_to_adjlist forced acc sth = (M_success (FOLDL (\acc pair.
      edges_to_adjlist_step sth pair acc) acc forced),sth)`,
   CHEAT_TAC);;
@@ -1176,9 +1178,8 @@ let edges_to_adjlist_FOLDR_output = prove
 
 let edges_to_adjlist_output = prove
  (`!forced sth.
-   EVERY (\(r1,r2). r1 < LENGTH (linear_scan_hidden_state_int_beg
-     sth) /\ r2 < LENGTH (linear_scan_hidden_state_int_beg sth)) forced
-     ==>
+   ALL (\(r1,r2). r1 < LENGTH (linear_scan_hidden_state_int_beg sth)
+     /\ r2 < LENGTH (linear_scan_hidden_state_int_beg sth)) forced ==>
    (?adjlist. edges_to_adjlist forced LN sth = (M_success
      adjlist,sth) /\
    (!reg. forbidden_is_from_forced forced
@@ -1189,13 +1190,13 @@ let edges_to_adjlist_output = prove
 let state_invariants_remove_head = prove
  (`!st sth reg l pos forced mincol.
    MEM reg l /\
-   good_linear_scan_state st sth (reg :: l) pos forced mincol ==>
+   good_linear_scan_state st sth (CONS reg l) pos forced mincol ==>
    good_linear_scan_state st sth l pos forced mincol`,
   CHEAT_TAC);;
 
 let find_last_stealable_success = prove
  (`!forbidden sth active.
-   EVERY (\(e,r). r < LENGTH (linear_scan_hidden_state_colors sth))
+   ALL (\(e,r). r < LENGTH (linear_scan_hidden_state_colors sth))
      active ==>
    (?optout. find_last_stealable active forbidden sth = (M_success
      optout,sth))`,
@@ -1207,13 +1208,14 @@ let find_last_stealable_output = prove
      (steal,rest)),sth) ==>
    ~(is_phy_var (SND steal)) /\ sptree_lookup (EL (SND steal)
      (linear_scan_hidden_state_colors sth)) forbidden = NONE /\
-   (?l1 l2. rest = l1 ++ l2 /\ active = l1 ++ (steal :: l2))`,
+   (?l1 l2. rest = APPEND l1 l2 /\ active = APPEND l1 (CONS steal
+     l2))`,
   CHEAT_TAC);;
 
 let good_linear_scan_state_active_length_colors = prove
  (`!st sth l pos forced mincol.
    good_linear_scan_state st sth l pos forced mincol ==>
-   EVERY (\(e,r). r < LENGTH (linear_scan_hidden_state_colors sth))
+   ALL (\(e,r). r < LENGTH (linear_scan_hidden_state_colors sth))
      (linear_scan_state_active st)`,
   CHEAT_TAC);;
 
@@ -1237,9 +1239,9 @@ let color_register_invariants = prove
      domain forbidden) /\
    (is_phy_var reg ==> domain (linear_scan_state_phyregs st) SUBSET
      domain forbidden) /\
-   ~(MEM col (linear_scan_state_colorpool st ++ MAP (\(e,r). EL r
-     (linear_scan_hidden_state_colors sth)) (linear_scan_state_active
-     st))) /\
+   ~(MEM col (APPEND (linear_scan_state_colorpool st) (MAP (\(e,r).
+     EL r (linear_scan_hidden_state_colors sth))
+     (linear_scan_state_active st)))) /\
    EL reg (linear_scan_hidden_state_int_beg sth) = pos /\
    EL reg (linear_scan_hidden_state_int_beg sth) <= EL reg
      (linear_scan_hidden_state_int_end sth) /\
@@ -1249,7 +1251,7 @@ let color_register_invariants = prove
    ~(MEM reg l) ==>
    (?stout sthout. (M_success stout,sthout) = color_register st reg
      col (EL reg (linear_scan_hidden_state_int_end sth)) sth /\
-   good_linear_scan_state stout sthout (reg :: l) pos forced mincol
+   good_linear_scan_state stout sthout (CONS reg l) pos forced mincol
      /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
      (linear_scan_hidden_state_colors sth) /\
@@ -1277,7 +1279,7 @@ let find_spill_invariants = prove
      (linear_scan_hidden_state_int_end sth) ==>
    (?stout sthout. (M_success stout,sthout) = find_spill st forbidden
      reg (EL reg (linear_scan_hidden_state_int_end sth)) force sth /\
-   good_linear_scan_state stout sthout (reg :: l) (EL reg
+   good_linear_scan_state stout sthout (CONS reg l) (EL reg
      (linear_scan_hidden_state_int_beg sth)) forced mincol /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
      (linear_scan_hidden_state_colors sth) /\
@@ -1285,8 +1287,9 @@ let find_spill_invariants = prove
    sthout = linear_scan_hidden_state_int_beg sth /\
      linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
-   (!r. ~(MEM r (reg :: l)) ==> EL r (linear_scan_hidden_state_colors
-     sthout) = EL r (linear_scan_hidden_state_colors sth)) /\
+   (!r. ~(MEM r (CONS reg l)) ==> EL r
+     (linear_scan_hidden_state_colors sthout) = EL r
+     (linear_scan_hidden_state_colors sth)) /\
    (!r. MEM r l /\ is_phy_var r ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
      (linear_scan_hidden_state_colors sth)) /\
@@ -1311,7 +1314,7 @@ let linear_reg_alloc_step_aux_invariants = prove
    (?stout sthout. (M_success stout,sthout) =
      linear_reg_alloc_step_aux st forbidden preferred reg (EL reg
      (linear_scan_hidden_state_int_end sth)) force sth /\
-   good_linear_scan_state stout sthout (reg :: l) (EL reg
+   good_linear_scan_state stout sthout (CONS reg l) (EL reg
      (linear_scan_hidden_state_int_beg sth)) forced mincol /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
      (linear_scan_hidden_state_colors sth) /\
@@ -1319,8 +1322,9 @@ let linear_reg_alloc_step_aux_invariants = prove
    sthout = linear_scan_hidden_state_int_beg sth /\
      linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
-   (!r. ~(MEM r (reg :: l)) ==> EL r (linear_scan_hidden_state_colors
-     sthout) = EL r (linear_scan_hidden_state_colors sth)) /\
+   (!r. ~(MEM r (CONS reg l)) ==> EL r
+     (linear_scan_hidden_state_colors sthout) = EL r
+     (linear_scan_hidden_state_colors sth)) /\
    (!r. MEM r l /\ is_phy_var r ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
      (linear_scan_hidden_state_colors sth)) /\
@@ -1330,7 +1334,7 @@ let linear_reg_alloc_step_aux_invariants = prove
 
 let st_ex_MAP_colors_sub = prove
  (`!l sth.
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) l ==>
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) l ==>
    st_ex_MAP colors_sub l sth = (M_success (MAP (\r. EL r
      (linear_scan_hidden_state_colors sth)) l),sth)`,
   CHEAT_TAC);;
@@ -1350,16 +1354,16 @@ let linear_reg_alloc_step_pass1_invariants = prove
    reg < LENGTH (linear_scan_hidden_state_colors sth) /\
    forbidden_is_from_forced_list forced l reg (the [] (sptree_lookup
      reg forced_adj)) /\
-   EVERY (\r. MEM r l) (the [] (sptree_lookup reg forced_adj)) /\
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the
-     [] (sptree_lookup reg forced_adj)) /\
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the
-     [] (sptree_lookup reg moves)) /\
+   ALL (\r. MEM r l) (the [] (sptree_lookup reg forced_adj)) /\
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the []
+     (sptree_lookup reg forced_adj)) /\
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the []
+     (sptree_lookup reg moves)) /\
    EL reg (linear_scan_hidden_state_int_beg sth) <= EL reg
      (linear_scan_hidden_state_int_end sth) ==>
    (?stout sthout. (M_success stout,sthout) =
      linear_reg_alloc_step_pass1 forced_adj moves st reg sth /\
-   good_linear_scan_state stout sthout (reg :: l) (EL reg
+   good_linear_scan_state stout sthout (CONS reg l) (EL reg
      (linear_scan_hidden_state_int_beg sth)) forced mincol /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
      (linear_scan_hidden_state_colors sth) /\
@@ -1367,13 +1371,14 @@ let linear_reg_alloc_step_pass1_invariants = prove
    sthout = linear_scan_hidden_state_int_beg sth /\
      linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
-   (!r. ~(MEM r (reg :: l)) ==> EL r (linear_scan_hidden_state_colors
-     sthout) = EL r (linear_scan_hidden_state_colors sth)) /\
+   (!r. ~(MEM r (CONS reg l)) ==> EL r
+     (linear_scan_hidden_state_colors sthout) = EL r
+     (linear_scan_hidden_state_colors sth)) /\
    (!r. MEM r l /\ is_phy_var r ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
      (linear_scan_hidden_state_colors sth)) /\
-   (phystack_on_stack l st sth ==> phystack_on_stack (reg :: l) stout
-     sthout) /\ linear_scan_state_colormax
+   (phystack_on_stack l st sth ==> phystack_on_stack (CONS reg l)
+     stout sthout) /\ linear_scan_state_colormax
    stout = linear_scan_state_colormax st)`,
   CHEAT_TAC);;
 
@@ -1385,16 +1390,16 @@ let linear_reg_alloc_step_pass2_invariants = prove
    reg < LENGTH (linear_scan_hidden_state_colors sth) /\
    forbidden_is_from_forced_list forced l reg (the [] (sptree_lookup
      reg forced_adj)) /\
-   EVERY (\r. MEM r l) (the [] (sptree_lookup reg forced_adj)) /\
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the
-     [] (sptree_lookup reg forced_adj)) /\
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the
-     [] (sptree_lookup reg moves)) /\
+   ALL (\r. MEM r l) (the [] (sptree_lookup reg forced_adj)) /\
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the []
+     (sptree_lookup reg forced_adj)) /\
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the []
+     (sptree_lookup reg moves)) /\
    EL reg (linear_scan_hidden_state_int_beg sth) <= EL reg
      (linear_scan_hidden_state_int_end sth) ==>
    (?stout sthout. (M_success stout,sthout) =
      linear_reg_alloc_step_pass2 forced_adj moves st reg sth /\
-   good_linear_scan_state stout sthout (reg :: l) (EL reg
+   good_linear_scan_state stout sthout (CONS reg l) (EL reg
      (linear_scan_hidden_state_int_beg sth)) forced mincol /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
      (linear_scan_hidden_state_colors sth) /\
@@ -1402,8 +1407,9 @@ let linear_reg_alloc_step_pass2_invariants = prove
    sthout = linear_scan_hidden_state_int_beg sth /\
      linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
-   (!r. ~(MEM r (reg :: l)) ==> EL r (linear_scan_hidden_state_colors
-     sthout) = EL r (linear_scan_hidden_state_colors sth)) /\
+   (!r. ~(MEM r (CONS reg l)) ==> EL r
+     (linear_scan_hidden_state_colors sthout) = EL r
+     (linear_scan_hidden_state_colors sth)) /\
    (!r. MEM r l /\ is_phy_var r ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
      (linear_scan_hidden_state_colors sth)) /\
@@ -1431,39 +1437,38 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants_lemma = prove
    (!r1 r2. MEM r1 l /\ MEM r2 regl ==> intbeg_less
      (linear_scan_hidden_state_int_beg sth) r1 r2) /\
    ALL_DISTINCT regl /\
-   EVERY (\r. ~(MEM r regl)) l /\
+   ALL (\r. ~(MEM r regl)) l /\
    good_linear_scan_state st sth l pos forced mincol /\
-   EVERY (\r. pos <= (EL r (linear_scan_hidden_state_int_beg sth)))
+   ALL (\r. pos <= (EL r (linear_scan_hidden_state_int_beg sth)))
      regl /\
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) regl
-     /\
-   (!r. forbidden_is_from_forced_sublist (l ++ regl) forced
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) regl /\
+   (!r. forbidden_is_from_forced_sublist (APPEND l regl) forced
      (linear_scan_hidden_state_int_beg sth) r (the [] (sptree_lookup r
      forced_adj))) /\
-   EVERY (\(r1,r2). MEM r1 (l ++ regl) /\ MEM r2 (l ++ regl)) forced
-     /\
-   (!r1. EVERY (\r2. r2 < LENGTH (linear_scan_hidden_state_colors
-     sth)) (the [] (sptree_lookup r1 forced_adj))) /\
-   (!r1. EVERY (\r2. r2 < LENGTH (linear_scan_hidden_state_colors
-     sth)) (the [] (sptree_lookup r1 moves))) /\
-   EVERY (\r. EL r (linear_scan_hidden_state_int_beg sth) <= EL r
+   ALL (\(r1,r2). MEM r1 (APPEND l regl) /\ MEM r2 (APPEND l regl))
+     forced /\
+   (!r1. ALL (\r2. r2 < LENGTH (linear_scan_hidden_state_colors sth))
+     (the [] (sptree_lookup r1 forced_adj))) /\
+   (!r1. ALL (\r2. r2 < LENGTH (linear_scan_hidden_state_colors sth))
+     (the [] (sptree_lookup r1 moves))) /\
+   ALL (\r. EL r (linear_scan_hidden_state_int_beg sth) <= EL r
      (linear_scan_hidden_state_int_end sth)) regl ==>
    (?stout sthout posout. (M_success stout,sthout) = st_ex_FOLDL ((if
      b then linear_reg_alloc_step_pass1 else
      linear_reg_alloc_step_pass2) forced_adj moves) st regl sth /\
-   good_linear_scan_state stout sthout ((REVERSE regl) ++ l) (posout)
-     forced mincol /\
+   good_linear_scan_state stout sthout (APPEND (REVERSE regl) l)
+     (posout) forced mincol /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
      (linear_scan_hidden_state_colors sth) /\
      linear_scan_hidden_state_int_beg
    sthout = linear_scan_hidden_state_int_beg sth /\
      linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
-   (!r. ~(MEM r (l ++ regl)) ==> EL r
+   (!r. ~(MEM r (APPEND l regl)) ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
      (linear_scan_hidden_state_colors sth)) /\
-   (b ==> (phystack_on_stack l st sth ==> phystack_on_stack ((REVERSE
-     regl) ++ l) stout sthout)) /\ linear_scan_state_colormax
+   (b ==> (phystack_on_stack l st sth ==> phystack_on_stack (APPEND
+     (REVERSE regl) l) stout sthout)) /\ linear_scan_state_colormax
    stout = linear_scan_state_colormax st)`,
   CHEAT_TAC);;
 
@@ -1473,19 +1478,18 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants = prove
      /\
    ALL_DISTINCT regl /\
    good_linear_scan_state st sth [] pos forced mincol /\
-   EVERY (\r. pos <= (EL r (linear_scan_hidden_state_int_beg sth)))
+   ALL (\r. pos <= (EL r (linear_scan_hidden_state_int_beg sth)))
      regl /\
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) regl
-     /\
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) regl /\
    (!r. forbidden_is_from_forced_sublist regl forced
      (linear_scan_hidden_state_int_beg sth) r (the [] (sptree_lookup r
      forced_adj))) /\
-   EVERY (\(r1,r2). MEM r1 regl /\ MEM r2 regl) forced /\
-   (!r1. EVERY (\r2. r2 < LENGTH (linear_scan_hidden_state_colors
-     sth)) (the [] (sptree_lookup r1 forced_adj))) /\
-   (!r1. EVERY (\r2. r2 < LENGTH (linear_scan_hidden_state_colors
-     sth)) (the [] (sptree_lookup r1 moves))) /\
-   EVERY (\r. EL r (linear_scan_hidden_state_int_beg sth) <= EL r
+   ALL (\(r1,r2). MEM r1 regl /\ MEM r2 regl) forced /\
+   (!r1. ALL (\r2. r2 < LENGTH (linear_scan_hidden_state_colors sth))
+     (the [] (sptree_lookup r1 forced_adj))) /\
+   (!r1. ALL (\r2. r2 < LENGTH (linear_scan_hidden_state_colors sth))
+     (the [] (sptree_lookup r1 moves))) /\
+   ALL (\r. EL r (linear_scan_hidden_state_int_beg sth) <= EL r
      (linear_scan_hidden_state_int_end sth)) regl ==>
    (?stout sthout posout. (M_success stout,sthout) = st_ex_FOLDL ((if
      b then linear_reg_alloc_step_pass1 else
@@ -1525,13 +1529,13 @@ let if_thm = prove
 let split_at_indice_sing = prove
  (`!l i.
    i < LENGTH l ==>
-   (?l1 x l2. l = l1 ++ [x] ++ l2 /\ LENGTH l1 = i)`,
+   (?l1 x l2. l = APPEND (APPEND l1 [x]) l2 /\ LENGTH l1 = i)`,
   CHEAT_TAC);;
 
 let split_at_indice = prove
  (`!l i.
    i <= LENGTH l ==>
-   (?l1 l2. l = l1 ++ l2 /\ LENGTH l1 = i)`,
+   (?l1 l2. l = APPEND l1 l2 /\ LENGTH l1 = i)`,
   CHEAT_TAC);;
 
 let swap_perm_lemma = prove
@@ -1591,7 +1595,7 @@ let partition_regs_correct = prove
 let PERM_EVERY_EQ = prove
  (`!P l1 l2.
    PERM l1 l2 ==>
-   (EVERY P l1 <=> EVERY P l2)`,
+   (ALL P l1 <=> ALL P l2)`,
   CHEAT_TAC);;
 
 let sort_regs_prop_lemma = prove
@@ -1692,7 +1696,7 @@ let sort_moves_correct = prove
 
 
 let list_minimum = prove
- (`!f (l:num list). ?(x:int). EVERY (\y. x <= f y) l`,
+ (`!f (l:num list). ?(x:int). ALL (\y. x <= f y) l`,
   CHEAT_TAC);;
 
 let linear_reg_alloc_pass1_initial_state_invariants = prove
@@ -1704,7 +1708,7 @@ let linear_reg_alloc_pass1_initial_state_invariants = prove
    (?pos.
    good_linear_scan_state (linear_reg_alloc_pass1_initial_state k)
      sth [] pos forced 0 /\
-   EVERY (\r. pos <= EL r (linear_scan_hidden_state_int_beg sth))
+   ALL (\r. pos <= EL r (linear_scan_hidden_state_int_beg sth))
      reglist)`,
   CHEAT_TAC);;
 
@@ -1717,14 +1721,14 @@ let linear_reg_alloc_pass2_initial_state_invariants = prove
    (?pos.
    good_linear_scan_state (linear_reg_alloc_pass2_initial_state k
      nreg) sth [] pos forced k /\
-   EVERY (\r. pos <= EL r (linear_scan_hidden_state_int_beg sth))
+   ALL (\r. pos <= EL r (linear_scan_hidden_state_int_beg sth))
      reglist)`,
   CHEAT_TAC);;
 
 let st_ex_FILTER_good_stack = prove
  (`!reglist sth k.
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth))
-     reglist ==>
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) reglist
+     ==>
    st_ex_FILTER_good (\r.
     st_ex_bind (colors_sub r) (\
       col.
@@ -1740,11 +1744,11 @@ let lookup_fromAList_MAP_not_NONE = prove
 
 (* PERM_PARTITION *)
 let linear_scanProof_PERM_PARTITION = prove
- (`!P l. PERM l ((FILTER (\x. P x) l) ++ (FILTER (\x. ~(P x)) l))`,
+ (`!P l. PERM l (APPEND (FILTER (\x. P x) l) (FILTER (\x. ~(P x)) l))`,
   CHEAT_TAC);;
 
 let forbidden_is_from_forced_take_sublist = prove
- (`EVERY (\(r1,r2). MEM r1 l /\ MEM r2 l) forced /\
+ (`ALL (\(r1,r2). MEM r1 l /\ MEM r2 l) forced /\
    (!r. forbidden_is_from_forced forced int_beg r (the []
      (sptree_lookup r forced_adj))) ==>
    (!r. forbidden_is_from_forced_sublist l forced int_beg r (the []
@@ -1820,17 +1824,17 @@ let sorted_moves_to_list_correct = prove
 
 let linear_reg_alloc_intervals_correct = prove
  (`!k forced moves reglist_unsorted sth.
-   EVERY (\(r1,r2). MEM r1 reglist_unsorted /\ MEM r2
-     reglist_unsorted) forced /\
-   EVERY (\(r1,r2). r1 < LENGTH (linear_scan_hidden_state_colors sth)
+   ALL (\(r1,r2). MEM r1 reglist_unsorted /\ MEM r2 reglist_unsorted)
+     forced /\
+   ALL (\(r1,r2). r1 < LENGTH (linear_scan_hidden_state_colors sth)
      /\ r2 < LENGTH (linear_scan_hidden_state_colors sth)) (MAP SND
      moves) /\
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth))
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth))
      reglist_unsorted /\
-   EVERY (\r. EL r (linear_scan_hidden_state_int_beg sth) <= EL r
+   ALL (\r. EL r (linear_scan_hidden_state_int_beg sth) <= EL r
      (linear_scan_hidden_state_int_end sth)) reglist_unsorted /\
    ALL_DISTINCT reglist_unsorted /\
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_int_beg sth))
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_int_beg sth))
      reglist_unsorted /\
    LENGTH (linear_scan_hidden_state_colors sth) = LENGTH
      (linear_scan_hidden_state_int_beg sth) /\
@@ -1850,15 +1854,14 @@ let linear_reg_alloc_intervals_correct = prove
       EL r1 (linear_scan_hidden_state_colors sthout) = EL r2
         (linear_scan_hidden_state_colors sthout) ==>
       r1 = r2) /\
-   EVERY (\r.
+   ALL (\r.
     if is_phy_var r then
       EL r (linear_scan_hidden_state_colors sthout) = r DIV 2 else if
         is_stack_var r then
       k <= EL r (linear_scan_hidden_state_colors sthout) else
       T) reglist_unsorted /\
-   EVERY (\(r1,r2). EL r1 (linear_scan_hidden_state_colors sthout) =
-     EL r2 (linear_scan_hidden_state_colors sthout) ==> r1 = r2) forced
-     /\
+   ALL (\(r1,r2). EL r1 (linear_scan_hidden_state_colors sthout) = EL
+     r2 (linear_scan_hidden_state_colors sthout) ==> r1 = r2) forced /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
      (linear_scan_hidden_state_colors sth))`,
   CHEAT_TAC);;
@@ -1948,8 +1951,7 @@ let numset_list_add_if_lt_monad_correct = prove
  (`!int_beg sth l v.
    v <= (&0) /\
    sptree_eq_list int_beg (linear_scan_hidden_state_int_beg sth) /\
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_int_beg sth)) l
-     ==>
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_int_beg sth)) l ==>
    (?sthout. numset_list_add_if_lt_monad l v sth = (M_success
      one,sthout) /\
    sptree_eq_list (numset_list_add_if_lt l v int_beg)
@@ -1964,8 +1966,7 @@ let numset_list_add_if_gt_monad_correct = prove
  (`!int_end sth l v.
    v <= (&0) /\
    sptree_eq_list int_end (linear_scan_hidden_state_int_end sth) /\
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_int_end sth)) l
-     ==>
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_int_end sth)) l ==>
    (?sthout. numset_list_add_if_gt_monad l v sth = (M_success
      one,sthout) /\
    sptree_eq_list (numset_list_add_if_gt l v int_end)
@@ -2071,9 +2072,9 @@ let linear_reg_alloc_without_renaming_correct = prove
    (!r. MEM r reglist_unsorted <=> in_clash_tree ct r) /\
    (!r. in_clash_tree ct r ==> r < LENGTH
      (linear_scan_hidden_state_int_beg sth)) /\
-   EVERY (\(r1,r2). in_clash_tree ct r1 /\ in_clash_tree ct r2)
-     forced /\
-   EVERY (\(r1,r2). r1 < LENGTH (linear_scan_hidden_state_colors sth)
+   ALL (\(r1,r2). in_clash_tree ct r1 /\ in_clash_tree ct r2) forced
+     /\
+   ALL (\(r1,r2). r1 < LENGTH (linear_scan_hidden_state_colors sth)
      /\ r2 < LENGTH (linear_scan_hidden_state_colors sth)) (MAP SND
      moves) /\
    LENGTH reglist_unsorted <= LENGTH
@@ -2098,9 +2099,8 @@ let linear_reg_alloc_without_renaming_correct = prove
         is_stack_var r then
       k <= EL r (linear_scan_hidden_state_colors sthout) else
       T)) /\
-   EVERY (\(r1,r2). EL r1 (linear_scan_hidden_state_colors sthout) =
-     EL r2 (linear_scan_hidden_state_colors sthout) ==> r1 = r2) forced
-     /\
+   ALL (\(r1,r2). EL r1 (linear_scan_hidden_state_colors sthout) = EL
+     r2 (linear_scan_hidden_state_colors sthout) ==> r1 = r2) forced /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
      (linear_scan_hidden_state_colors sth))`,
   CHEAT_TAC);;
@@ -2182,8 +2182,8 @@ let extract_coloration_output = prove
  (`!bij invbij sth l acc.
    sp_inverts bij invbij /\
    sp_inverts invbij bij /\
-   EVERY (\r. r IN domain invbij) l /\
-   EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) l ==>
+   ALL (\r. r IN domain invbij) l /\
+   ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) l ==>
    (?col. extract_coloration invbij l acc sth = (M_success col,sth)
      /\
    (!r. r IN domain bij ==>
@@ -2222,7 +2222,7 @@ let check_clash_tree_equal_col = prove
 
 let linear_scan_reg_alloc_correct = prove
  (`!k moves ct forced.
-     EVERY (\(r1,r2). in_clash_tree ct r1 /\ in_clash_tree ct r2)
+     ALL (\(r1,r2). in_clash_tree ct r1 /\ in_clash_tree ct r2)
        forced ==>
      (?col livein flivein.
      linear_scan_reg_alloc k moves ct forced = M_success col /\
@@ -2235,7 +2235,7 @@ let linear_scan_reg_alloc_correct = prove
          k <= (sp_default col r) else
          T)) /\
      (!r. r IN domain col ==> in_clash_tree ct r) /\
-     EVERY (\(r1,r2). (sp_default col) r1 = (sp_default col) r2 ==>
+     ALL (\(r1,r2). (sp_default col) r1 = (sp_default col) r2 ==>
        r1 = r2) forced)`,
   CHEAT_TAC);;
 

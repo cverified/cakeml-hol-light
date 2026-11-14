@@ -39,17 +39,19 @@ let _ = hol4_ancestors "parmove"
 (* HOL4 parmoveScript.sml:27: ML code, not ported *)
 
 let step_rules = cake_inductive
-  `(step (mu1 ++ [(r,r)] ++ mu2,sigma,tau) (mu1 ++ mu2,sigma,tau)) /\
-   (step (mu1 ++ [(d,s)] ++ mu2,[],tau) (mu1 ++ mu2,[(d,s)],tau)) /\
-   (step (mu1 ++ [(r,d)] ++ mu2,[(d,s)] ++ sigma,tau) (mu1 ++
-     mu2,[(r,d); (d,s)] ++ sigma,tau)) /\
-   (step (mu,sigma ++ [(d,s)],tau) (mu,sigma ++ [(d,NONE)],[(NONE,s)]
-     ++ tau)) /\
+  `(step (APPEND (APPEND mu1 [(r,r)]) mu2,sigma,tau) (APPEND mu1
+  mu2,sigma,tau)) /\
+   (step (APPEND (APPEND mu1 [(d,s)]) mu2,[],tau) (APPEND mu1
+     mu2,[(d,s)],tau)) /\
+   (step (APPEND (APPEND mu1 [(r,d)]) mu2,APPEND [(d,s)] sigma,tau)
+     (APPEND mu1 mu2,APPEND [(r,d); (d,s)] sigma,tau)) /\
+   (step (mu,APPEND sigma [(d,s)],tau) (mu,APPEND sigma
+     [(d,NONE)],APPEND [(NONE,s)] tau)) /\
    ((\mu dn. ~(MEM dn (MAP SND mu))) mu dn /\ ~(dn = s0) ==> step
-     (mu,[(dn,sn)] ++ sigma ++ [(d0,s0)],tau) (mu,sigma ++
-     [(d0,s0)],[(dn,sn)] ++ tau)) /\
+     (mu,APPEND (APPEND [(dn,sn)] sigma) [(d0,s0)],tau) (mu,APPEND sigma
+     [(d0,s0)],APPEND [(dn,sn)] tau)) /\
    ((\mu dn. ~(MEM dn (MAP SND mu))) mu d ==> step
-     (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
+     (mu,[(d,s)],tau) (mu,[],APPEND [(d,s)] tau))`;;
 
 (* HOL4 parmoveScript.sml:39: ML code, not ported *)
 (* HOL4 parmoveScript.sml:40: the overload ▷, which the port expands *)
@@ -63,7 +65,7 @@ let windmill_def = new_definition
   `windmill (moves:('a#'a) list) = ALL_DISTINCT (MAP FST moves)`;;
 
 let windmill_cons = prove
- (`windmill (x :: ls) <=> ~(MEM (FST x) (MAP FST ls)) /\ windmill ls`,
+ (`windmill (CONS x ls) <=> ~(MEM (FST x) (MAP FST ls)) /\ windmill ls`,
   CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -72,8 +74,8 @@ let path_def,path_ind = define_wf
   `MEASURE (\x0. list_size (pair_size (\x. 0) (\x. 0)) x0)`
   [`parmove_path [] <=> T`;
    `parmove_path [_1] <=> T`;
-   `parmove_path ((c,b') :: (b,a) :: p) <=>
-         (b = b') /\ parmove_path ((b,a) :: p)`];;
+   `parmove_path (CONS (c,b') (CONS (b,a) p)) <=>
+         (b = b') /\ parmove_path (CONS (b,a) p)`];;
 hol4_overload "path" "parmove_path";;
 
 let path_change_start = prove
@@ -82,12 +84,12 @@ let path_change_start = prove
   CHEAT_TAC);;
 
 let path_tail = prove
- (`!t h. parmove_path (h :: t) ==> parmove_path t`,
+ (`!t h. parmove_path (CONS h t) ==> parmove_path t`,
   CHEAT_TAC);;
 
 (* [local] *)
 let path_imp_mem = prove
- (`parmove_path (x :: y) ==>
+ (`parmove_path (CONS x y) ==>
     ~(NULL y) ==> MEM (SND x) (MAP FST y)`,
   CHEAT_TAC);;
 
@@ -116,19 +118,19 @@ let NoRead_path = prove
 
 let parmove_wf_def = new_definition
   `parmove_wf (mu,sigma,tau) <=>
-     windmill (mu ++ sigma) /\
-     EVERY IS_SOME (MAP FST mu) /\
-     EVERY IS_SOME (MAP SND mu) /\
-     (~(NULL sigma) ==> EVERY IS_SOME (MAP SND (FRONT sigma))) /\
-     EVERY IS_SOME (MAP FST sigma) /\
+     windmill (APPEND mu sigma) /\
+     ALL IS_SOME (MAP FST mu) /\
+     ALL IS_SOME (MAP SND mu) /\
+     (~(NULL sigma) ==> ALL IS_SOME (MAP SND (BUTLAST sigma))) /\
+     ALL IS_SOME (MAP FST sigma) /\
      parmove_path sigma`;;
 hol4_overload "wf" "parmove_wf";;
 (* HOL4 parmoveScript.sml:129: the overload ⊢, which the port expands *)
 
 let wf_init = prove
  (`windmill mu /\
-   EVERY IS_SOME (MAP FST mu) /\
-   EVERY IS_SOME (MAP SND mu) ==>
+   ALL IS_SOME (MAP FST mu) /\
+   ALL IS_SOME (MAP SND mu) ==>
     (wf) (mu,[],[])`,
   CHEAT_TAC);;
 
@@ -156,13 +158,13 @@ let parsem_nil = prove
 
 let parsem_cons = prove
  (`~(MEM x (MAP FST mu)) ==>
-   parsem ((x,y) :: mu) rho = (x =+ rho y) (parsem mu rho)`,
+   parsem (CONS (x,y) mu) rho = (x =+ rho y) (parsem mu rho)`,
   CHEAT_TAC);;
 
 let independence = prove
  (`!mu1 s d mu2 mu.
-      windmill mu /\ mu = mu1 ++ [(d,s)] ++ mu2 ==>
-      parsem mu = parsem ([(d,s)] ++ mu1 ++ mu2)`,
+      windmill mu /\ mu = APPEND (APPEND mu1 [(d,s)]) mu2 ==>
+      parsem mu = parsem (APPEND (APPEND [(d,s)] mu1) mu2)`,
   CHEAT_TAC);;
 
 let parsem_perm = prove
@@ -182,12 +184,13 @@ let parsem_change_env = prove
 
 let parsem_NoRead = prove
  (`(\mu dn. ~(MEM dn (MAP SND mu))) mu x ==>
-   parsem ((x,y) :: mu) rho = parsem mu ((x =+ rho y) rho)`,
+   parsem (CONS (x,y) mu) rho = parsem mu ((x =+ rho y) rho)`,
   CHEAT_TAC);;
 
 let parsem_MAP_INJ = prove
  (`!ms. windmill ms /\
-        INJ f (set_of_list (MAP FST ms ++ MAP SND ms)) UNIV ==>
+        INJ f (set_of_list (APPEND (MAP FST ms) (MAP SND ms))) UNIV
+          ==>
         (!x. MEM x (MAP FST ms) ==> parsem (MAP (f ## f) ms) r (f
           x) = parsem ms (r o f) x)`,
   CHEAT_TAC);;
@@ -197,12 +200,12 @@ let parsem_MAP_INJ = prove
 let seqsem_def,seqsem_ind = define_wf
   `MEASURE (\(x0,x1). list_size (pair_size (\x. 0) (\x. 0)) x0)`
   [`seqsem [] rho = rho`;
-   `seqsem ((d,s) :: tau) rho = seqsem tau ((d =+ rho s) rho)`];;
+   `seqsem (CONS (d,s) tau) rho = seqsem tau ((d =+ rho s) rho)`];;
 
 (* HOL4 parmoveScript.sml:323: ML code, not ported *)
 
 let seqsem_append = prove
- (`!l1 l2. seqsem (l1 ++ l2) = seqsem l2 o seqsem l1`,
+ (`!l1 l2. seqsem (APPEND l1 l2) = seqsem l2 o seqsem l1`,
   (LIST_INDUCT_TAC THEN REWRITE_TAC[FUN_EQ_THM; APPEND; seqsem_def;
     o_THM] THEN
    SPEC_TAC(`h:A#A`,`h:A#A`) THEN REWRITE_TAC[FORALL_PAIR_THM;
@@ -218,7 +221,7 @@ let seqsem_move_unchanged = prove
 (* semantics of the state *)
 
 let sem_def = new_definition
-  `sem (mu,sigma,tau) rho = parsem (mu ++ sigma) (seqsem (REVERSE
+  `sem (mu,sigma,tau) rho = parsem (APPEND mu sigma) (seqsem (REVERSE
   tau) rho)`;;
 
 let sem_init = prove
@@ -255,8 +258,8 @@ let steps_sem = prove
 
 let steps_correct = prove
  (`windmill mu /\
-   EVERY IS_SOME (MAP FST mu) /\
-   EVERY IS_SOME (MAP SND mu) /\ (RTC (step)) (mu,[],[]) ([],[],tau)
+   ALL IS_SOME (MAP FST mu) /\
+   ALL IS_SOME (MAP SND mu) /\ (RTC (step)) (mu,[],[]) ([],[],tau)
      ==>
    (!rho. eqenv (parsem mu rho) (seqsem (REVERSE tau) rho))`,
   (REPEAT STRIP_TAC THEN
@@ -275,19 +278,20 @@ let steps_correct = prove
 (* HOL4 parmoveScript.sml:476: ML code, not ported *)
 
 let dstep_rules = cake_inductive
-  `(dstep ([(r,r)] ++ mu,[],tau) (mu,[],tau)) /\
-   (~(s = d) ==> dstep ([(d,s)] ++ mu,[],tau) (mu,[(d,s)],tau)) /\
-   ((\mu dn. ~(MEM dn (MAP SND mu))) mu1 d ==> dstep (mu1 ++ [(r,d)]
-     ++ mu2,[(d,s)] ++ sigma,tau)
-    (mu1 ++ mu2,[(r,d); (d,s)] ++ sigma,tau)) /\
-   ((\mu dn. ~(MEM dn (MAP SND mu))) mu r ==> dstep (mu,[(r,s)] ++
-     sigma ++ [(d,r)],tau)
-    (mu,sigma ++ [(d,NONE)],[(r,s); (NONE,r)] ++ tau)) /\
+  `(dstep (APPEND [(r,r)] mu,[],tau) (mu,[],tau)) /\
+   (~(s = d) ==> dstep (APPEND [(d,s)] mu,[],tau) (mu,[(d,s)],tau))
+     /\
+   ((\mu dn. ~(MEM dn (MAP SND mu))) mu1 d ==> dstep (APPEND (APPEND
+     mu1 [(r,d)]) mu2,APPEND [(d,s)] sigma,tau)
+    (APPEND mu1 mu2,APPEND [(r,d); (d,s)] sigma,tau)) /\
+   ((\mu dn. ~(MEM dn (MAP SND mu))) mu r ==> dstep (mu,APPEND
+     (APPEND [(r,s)] sigma) [(d,r)],tau)
+    (mu,APPEND sigma [(d,NONE)],APPEND [(r,s); (NONE,r)] tau)) /\
    ((\mu dn. ~(MEM dn (MAP SND mu))) mu dn /\ ~(dn = s0) ==> dstep
-     (mu,[(dn,sn)] ++ sigma ++ [(d0,s0)],tau)
-    (mu,sigma ++ [(d0,s0)],[(dn,sn)] ++ tau)) /\
+     (mu,APPEND (APPEND [(dn,sn)] sigma) [(d0,s0)],tau)
+    (mu,APPEND sigma [(d0,s0)],APPEND [(dn,sn)] tau)) /\
    ((\mu dn. ~(MEM dn (MAP SND mu))) mu d ==> dstep
-     (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
+     (mu,[(d,s)],tau) (mu,[],APPEND [(d,s)] tau))`;;
 
 (* HOL4 parmoveScript.sml:494: ML code, not ported *)
 (* HOL4 parmoveScript.sml:495: the overload ↪, which the port expands *)
@@ -312,16 +316,16 @@ let dsteps_steps = prove
 
 let fstep_def = new_definition
   `fstep st =
-   (match st with ([],[],_2) -> st | ((d,s) :: t,[],l) ->
-     (if s = d then (t,[],l) else (t,[(d,s)],l)) | (t,(d,s) :: b,l)
+   (match st with ([],[],_2) -> st | (CONS (d,s) t,[],l) ->
+     (if s = d then (t,[],l) else (t,[(d,s)],l)) | (t,CONS (d,s) b,l)
        ->
      splitAtPki (\i p. SND p = d)
        (\t1 rt2.
-         match rt2 with (rd :: t2) -> (t1 ++ t2,rd :: (d,s) :: b,l) |
-           [] -> (if NULL b then (t,[],(d,s) :: l) else
-                 let (b',(d',s')) = (FRONT b,LAST b) in
-                 if s' = d then (t,SNOC (d',NONE) b',(d,s) ::
-                   (NONE,d) :: l) else (t,b,(d,s) :: l)))
+         match rt2 with (CONS rd t2) -> (APPEND t1 t2,CONS rd (CONS
+           (d,s) b),l) | [] -> (if NULL b then (t,[],CONS (d,s) l) else
+                 let (b',(d',s')) = (BUTLAST b,LAST b) in
+                 if s' = d then (t,SNOC (d',NONE) b',CONS (d,s) (CONS
+                   (NONE,d) l)) else (t,b,CONS (d,s) l)))
        t)`;;
 
 (* HOL4 parmoveScript.sml:547: the ML values that the definitions
@@ -368,7 +372,8 @@ let parmove_correct = prove
 let MEM_MAP_FST_SND_SND_pmov = prove
  (`!p x.
     MEM (SOME x) (MAP FST (SND (SND (pmov p)))) ==>
-    MEM (SOME x) (MAP FST (FST p ++ FST (SND p) ++ SND (SND p)))`,
+    MEM (SOME x) (MAP FST (APPEND (APPEND (FST p) (FST (SND p)))
+      (SND (SND p))))`,
   CHEAT_TAC);;
 
 let MEM_MAP_FST_parmove = prove
@@ -378,7 +383,8 @@ let MEM_MAP_FST_parmove = prove
 let MEM_MAP_SND_SND_SND_pmov = prove
  (`!p x.
     MEM (SOME x) (MAP SND (SND (SND (pmov p)))) ==>
-    MEM (SOME x) (MAP SND (FST p ++ FST (SND p) ++ SND (SND p)))`,
+    MEM (SOME x) (MAP SND (APPEND (APPEND (FST p) (FST (SND p)))
+      (SND (SND p))))`,
   CHEAT_TAC);;
 
 let MEM_MAP_SND_parmove = prove
@@ -396,21 +402,22 @@ let not_use_temp_before_assign_def,not_use_temp_before_assign_ind =
   [`not_use_temp_before_assign x1 =
         match x1 with
           [] -> T
-        | ((d,NONE) :: ls) -> F
-        | ((NONE,s) :: ls) -> T
-        | ((d,s) :: ls) -> not_use_temp_before_assign ls`];;
+        | CONS (d,NONE) ls -> F
+        | (CONS (NONE,s) ls) -> T
+        | (CONS (d,s) ls) -> not_use_temp_before_assign ls`];;
 
 let not_use_temp_before_assign_append = prove
  (`!l1 l2.
-   (not_use_temp_before_assign (l1 ++ l2) <=>
+   (not_use_temp_before_assign (APPEND l1 l2) <=>
     not_use_temp_before_assign l1 /\
-    (EVERY IS_SOME (MAP FST l1) ==> not_use_temp_before_assign l2))`,
+    (ALL IS_SOME (MAP FST l1) ==> not_use_temp_before_assign l2))`,
   CHEAT_TAC);;
 
 let not_use_temp_before_assign_insert = prove
  (`!l1 l2.
-   not_use_temp_before_assign (l1 ++ l2) ==>
-   not_use_temp_before_assign (l1 ++ [(SOME x,SOME y)] ++ l2)`,
+   not_use_temp_before_assign (APPEND l1 l2) ==>
+   not_use_temp_before_assign (APPEND (APPEND l1 [(SOME x,SOME y)])
+     l2)`,
   (GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC
     not_use_temp_before_assign_ind THEN
    ASM_REWRITE_TAC[not_use_temp_before_assign_def; APPEND] THEN
@@ -426,25 +433,25 @@ let not_use_temp_before_assign_thm = prove
 let step_not_use_temp_before_assign = prove
  (`!s1 s2. (step) s1 s2 ==>
      (wf) s1 /\
-    not_use_temp_before_assign (REVERSE (FST (SND s1) ++ SND (SND
-      s1))) ==>
-    not_use_temp_before_assign (REVERSE (FST (SND s2) ++ SND (SND
-      s2)))`,
+    not_use_temp_before_assign (REVERSE (APPEND (FST (SND s1)) (SND
+      (SND s1)))) ==>
+    not_use_temp_before_assign (REVERSE (APPEND (FST (SND s2)) (SND
+      (SND s2))))`,
   CHEAT_TAC);;
 
 let steps_not_use_temp_before_assign = prove
  (`!s1 s2.
-    (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (FST (SND
-      s1) ++ SND (SND s1)))) s1 /\ (RTC (step)) s1 s2 ==>
-    (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (FST (SND
-      s1) ++ SND (SND s1)))) s2`,
+    (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (APPEND (FST
+      (SND s1)) (SND (SND s1))))) s1 /\ (RTC (step)) s1 s2 ==>
+    (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (APPEND
+      (FST (SND s1)) (SND (SND s1))))) s2`,
   CHEAT_TAC);;
 
 let pmov_not_use_temp_before_assign = prove
  (`!p i.
-    (wf) p /\ not_use_temp_before_assign (REVERSE (FST (SND p) ++
-      SND (SND p))) ==> not_use_temp_before_assign (REVERSE (FST (SND
-      (pmov p)) ++ SND (SND (pmov p))))`,
+    (wf) p /\ not_use_temp_before_assign (REVERSE (APPEND (FST (SND
+      p)) (SND (SND p)))) ==> not_use_temp_before_assign (REVERSE
+      (APPEND (FST (SND (pmov p))) (SND (SND (pmov p)))))`,
   (REPEAT STRIP_TAC THEN
    MP_TAC(SPECL [`p:(A option#A option) list#(A option#A option)
      list#
@@ -467,25 +474,26 @@ let parmove_not_use_temp_before_assign = prove
 
 let ALL_DISTINCT_step = prove
  (`!s1 s2. (step) s1 s2 ==>
-    ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s1 ++ FST (SND s1) ++
-      (SND (SND s1))))) ==>
-    ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s2 ++ FST (SND s2)
-      ++ (SND (SND s2)))))`,
+    ALL_DISTINCT (FILTER IS_SOME (MAP FST (APPEND (APPEND (FST s1)
+      (FST (SND s1))) (SND (SND s1))))) ==>
+    ALL_DISTINCT (FILTER IS_SOME (MAP FST (APPEND (APPEND (FST s2)
+      (FST (SND s2))) (SND (SND s2)))))`,
   CHEAT_TAC);;
 
 let ALL_DISTINCT_steps = prove
  (`!s1 s2.
-    (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s1 ++ FST (SND
-      s1) ++ (SND (SND s1)))))) s1 /\ (RTC (step)) s1 s2 ==>
-    (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s1 ++ FST (SND
-      s1) ++ (SND (SND s1)))))) s2`,
+    (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (APPEND (APPEND (FST
+      s1) (FST (SND s1))) (SND (SND s1)))))) s1 /\ (RTC (step)) s1 s2
+      ==>
+    (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (APPEND (APPEND
+      (FST s1) (FST (SND s1))) (SND (SND s1)))))) s2`,
   CHEAT_TAC);;
 
 let ALL_DISTINCT_pmov = prove
- (`!p. (wf) p /\ ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST p ++ FST
-  (SND p) ++ SND (SND p)))) ==>
-       ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST (pmov p) ++ FST
-         (SND (pmov p)) ++ SND (SND (pmov p)))))`,
+ (`!p. (wf) p /\ ALL_DISTINCT (FILTER IS_SOME (MAP FST (APPEND (APPEND
+  (FST p) (FST (SND p))) (SND (SND p))))) ==>
+       ALL_DISTINCT (FILTER IS_SOME (MAP FST (APPEND (APPEND (FST
+         (pmov p)) (FST (SND (pmov p)))) (SND (SND (pmov p))))))`,
   (REPEAT STRIP_TAC THEN
    MP_TAC(SPECL [`p:(A option#A option) list#(A option#A option)
      list#
@@ -504,7 +512,8 @@ let ALL_DISTINCT_parmove = prove
 (* the compiler retains all non-trivial moves *)
 
 let state_to_list_def = new_definition
-  `state_to_list p = APPEND (FST p) (FST (SND p)) ++ SND (SND p)`;;
+  `state_to_list p = APPEND (APPEND (FST p) (FST (SND p))) (SND (SND
+  p))`;;
 
 let step_preserves_moves = prove
  (`!s1 s2. (step) s1 s2 ==>
@@ -550,7 +559,7 @@ let map_state_def = new_definition
 let inj_on_state_def = new_definition
   `inj_on_state f p =
       (let ls0 = state_to_list p in
-      let ls = MAP FST ls0 ++ MAP SND ls0 in
+      let ls = APPEND (MAP FST ls0) (MAP SND ls0) in
       (!x y. MEM x ls /\ MEM y ls /\ f x = f y ==> x = y) /\
       (!x. f x = NONE <=> x = NONE))`;;
 
@@ -587,8 +596,8 @@ let pmov_MAP_INJ = prove
   CHEAT_TAC);;
 
 let parmove_MAP_INJ = prove
- (`(let ls1 = MAP FST ls ++ MAP SND ls in (!x y. MEM x ls1 /\ MEM y ls1
-  /\ f x = f y ==> x = y)) /\
+ (`(let ls1 = APPEND (MAP FST ls) (MAP SND ls) in (!x y. MEM x ls1 /\
+  MEM y ls1 /\ f x = f y ==> x = y)) /\
    windmill ls ==>
    parmove (MAP (f ## f) ls) = MAP (OPTION_MAP f ## OPTION_MAP f)
      (parmove ls)`,

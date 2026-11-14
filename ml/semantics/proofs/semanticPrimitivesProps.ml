@@ -89,24 +89,24 @@ let pmatch_append = prove
  (`(!(cenv:(mlstring,mlstring,num#stamp)namespace)
   (st:(semanticPrimitives_v store_v) list) p v env env' env''.
       (semanticPrimitives_pmatch cenv st p v env = Match env') ==>
-      (semanticPrimitives_pmatch cenv st p v (env ++ env'') = Match
-        (env' ++ env''))) /\
+      (semanticPrimitives_pmatch cenv st p v (APPEND env env'') =
+        Match (APPEND env' env''))) /\
    (!(cenv:(mlstring,mlstring,num#stamp)namespace)
      (st:(semanticPrimitives_v store_v) list) ps v env env' env''.
       (semanticPrimitives_pmatch_list cenv st ps v env = Match env')
         ==>
-      (semanticPrimitives_pmatch_list cenv st ps v (env ++ env'') =
-        Match (env' ++ env'')))`,
+      (semanticPrimitives_pmatch_list cenv st ps v (APPEND env
+        env'') = Match (APPEND env' env'')))`,
   CHEAT_TAC);;
 
 let pmatch_extend = prove
  (`(!cenv s p v env env' env''.
     semanticPrimitives_pmatch cenv s p v env = Match env' ==>
-    (?env''. env' = env'' ++ env /\ MAP FST env'' = ast_pat_bindings
-      p)) /\
+    (?env''. env' = APPEND env'' env /\ MAP FST env'' =
+      ast_pat_bindings p)) /\
    (!cenv s ps vs env env' env''.
     semanticPrimitives_pmatch_list cenv s ps vs env = Match env' ==>
-    (?env''. env' = env'' ++ env /\ MAP FST env'' =
+    (?env''. env' = APPEND env'' env /\ MAP FST env'' =
       ast_pats_bindings ps))`,
   CHEAT_TAC);;
 
@@ -139,28 +139,28 @@ let pmatch_nsAppend = prove
 let pmatch_acc = prove
  (`(!envc store p v env env' env2.
      (semanticPrimitives_pmatch envc store p v env = Match env' <=>
-      semanticPrimitives_pmatch envc store p v (env ++ env2) = Match
-        (env' ++ env2)) /\
+      semanticPrimitives_pmatch envc store p v (APPEND env env2) =
+        Match (APPEND env' env2)) /\
      (semanticPrimitives_pmatch envc store p v env = No_match <=>
-      semanticPrimitives_pmatch envc store p v (env ++ env2) =
+      semanticPrimitives_pmatch envc store p v (APPEND env env2) =
         No_match) /\
      (semanticPrimitives_pmatch envc store p v env = Match_type_error
        <=>
-      semanticPrimitives_pmatch envc store p v (env ++ env2) =
+      semanticPrimitives_pmatch envc store p v (APPEND env env2) =
         Match_type_error)) /\
    (!envc store ps vs env env' env2.
      (semanticPrimitives_pmatch_list envc store ps vs env = Match
        env' <=>
-      semanticPrimitives_pmatch_list envc store ps vs (env ++ env2) =
-        Match (env' ++ env2)) /\
+      semanticPrimitives_pmatch_list envc store ps vs (APPEND env
+        env2) = Match (APPEND env' env2)) /\
      (semanticPrimitives_pmatch_list envc store ps vs env = No_match
        <=>
-      semanticPrimitives_pmatch_list envc store ps vs (env ++ env2) =
-        No_match) /\
+      semanticPrimitives_pmatch_list envc store ps vs (APPEND env
+        env2) = No_match) /\
      (semanticPrimitives_pmatch_list envc store ps vs env =
        Match_type_error <=>
-      semanticPrimitives_pmatch_list envc store ps vs (env ++ env2)
-        = Match_type_error))`,
+      semanticPrimitives_pmatch_list envc store ps vs (APPEND env
+        env2) = Match_type_error))`,
   CHEAT_TAC);;
 
 (* HOL4 semanticPrimitivesPropsScript.sml:194-196: ML code, not
@@ -234,8 +234,8 @@ let do_app_ffi_changed = prove
      st' = LUPDATE (semanticPrimitives_W8array ws') lnum st /\ oracle
      ffi' = oracle ffi /\ ffi_state_ffi_state
      ffi' = ffi_st /\ ffi_state_io_events
-     ffi' = ffi_state_io_events
-       ffi ++
+     ffi' = APPEND (ffi_state_io_events
+       ffi)
          [IO_event (ffi_ExtCall s) (MAP (\c. n2w (ORD c)) (explode
            conf))
                    (ZIP ws ws')])`,
@@ -404,7 +404,7 @@ let sv_every_def = new_definition
   `sv_every P x2 =
       match x2 with
         semanticPrimitives_Refv v -> P v
-      | (semanticPrimitives_Varray vs) -> EVERY P vs
+      | (semanticPrimitives_Varray vs) -> ALL P vs
       | (semanticPrimitives_Thunk m v) -> P v
       | _10 -> T`;;
 
@@ -416,7 +416,7 @@ let sv_rel_def = new_definition
       | ((semanticPrimitives_W8array w1),(semanticPrimitives_W8array
         w2)) -> (w1 = w2)
       | ((semanticPrimitives_Varray vs1),(semanticPrimitives_Varray
-        vs2)) -> LIST_REL R vs1 vs2
+        vs2)) -> ALL2 R vs1 vs2
       | ((semanticPrimitives_Thunk m1 v1),(semanticPrimitives_Thunk
         m2 v2)) -> (m1 = m2 /\ R v1 v2)
       | (_11,_12) -> F`;;
@@ -444,7 +444,7 @@ let sv_rel_cases = prove
     (?m v1 v2. x = semanticPrimitives_Thunk m v1 /\ y =
       semanticPrimitives_Thunk m v2 /\ R v1 v2) \/
     (?vs1 vs2. x = semanticPrimitives_Varray vs1 /\ y =
-      semanticPrimitives_Varray vs2 /\ LIST_REL R vs1 vs2)`,
+      semanticPrimitives_Varray vs2 /\ ALL2 R vs1 vs2)`,
   CHEAT_TAC);;
 
 let sv_rel_O = prove
@@ -473,21 +473,21 @@ let store_vs_def = new_definition
   `store_vs s = FLAT (MAP semanticPrimitivesProps_store_v_vs s)`;;
 
 let EVERY_sv_every_MAP_map_sv = prove
- (`!P f ls. EVERY P (MAP f (store_vs ls)) ==> EVERY (sv_every P) (MAP
+ (`!P f ls. ALL P (MAP f (store_vs ls)) ==> ALL (sv_every P) (MAP
   (map_sv f) ls)`,
   CHEAT_TAC);;
 
 let LIST_REL_store_vs_intro = prove
- (`!P l1 l2. LIST_REL (semanticPrimitivesProps_sv_rel P) l1 l2 ==>
-  LIST_REL P (store_vs l1) (store_vs l2)`,
+ (`!P l1 l2. ALL2 (semanticPrimitivesProps_sv_rel P) l1 l2 ==> ALL2 P
+  (store_vs l1) (store_vs l2)`,
   CHEAT_TAC);;
 
 let EVERY_sv_every_EVERY_store_vs = prove
- (`!P ls. EVERY (sv_every P) ls <=> EVERY P (store_vs ls)`,
+ (`!P ls. ALL (sv_every P) ls <=> ALL P (store_vs ls)`,
   CHEAT_TAC);;
 
 let EVERY_store_vs_intro = prove
- (`!P ls. EVERY (sv_every P) ls ==> EVERY P (store_vs ls)`,
+ (`!P ls. ALL (sv_every P) ls ==> ALL P (store_vs ls)`,
   CHEAT_TAC);;
 
 let map_sv_compose = prove
@@ -543,25 +543,25 @@ let FV_def,FV_ind = assume_definition_rec
    `FV (ast_Tannot e t) = FV e`;
    `FV (ast_Lannot e l) = FV e`;
    `FV_list [] = {}`;
-   `FV_list (e :: es) = FV e UNION FV_list es`;
+   `FV_list (CONS e es) = FV e UNION FV_list es`;
    `FV_pes [] = {}`;
-   `FV_pes ((p,e) :: pes) =
+   `FV_pes (CONS (p,e) pes) =
          (FV e DIFF (IMAGE Short (set_of_list (ast_pat_bindings
            p)))) UNION FV_pes pes`;
    `FV_defs [] = {}`;
-   `FV_defs ((_27,x,e) :: defs) =
+   `FV_defs (CONS (_27,x,e) defs) =
          (FV e DIFF {Short x}) UNION FV_defs defs`];;
 
 (* HOL4 semanticPrimitivesPropsScript.sml:663: the overload SFV,
    which the port expands *)
 
 let FV_pes_MAP = prove
- (`FV_pes pes = BIGUNION (IMAGE (\(p,e). FV e DIFF (IMAGE Short
+ (`FV_pes pes = UNIONS (IMAGE (\(p,e). FV e DIFF (IMAGE Short
   (set_of_list (ast_pat_bindings p)))) (set_of_list pes))`,
   CHEAT_TAC);;
 
 let FV_defs_MAP = prove
- (`!ls. FV_defs ls = BIGUNION (IMAGE (\(f,x,e). FV e DIFF {Short x})
+ (`!ls. FV_defs ls = UNIONS (IMAGE (\(f,x,e). FV e DIFF {Short x})
   (set_of_list ls))`,
   CHEAT_TAC);;
 
@@ -579,16 +579,16 @@ let nat_to_v_11 = prove
 
 (* [simp] *)
 let concrete_v_list = prove
- (`!xs. concrete_v_list xs = EVERY concrete_v xs`,
+ (`!xs. concrete_v_list xs = ALL concrete_v xs`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let concrete_v_simps = prove
  (`(concrete_v (semanticPrimitives_Litv l:semanticPrimitives_v) = T) /\
    (concrete_v (semanticPrimitives_Loc b n) = T) /\
-   (concrete_v (semanticPrimitives_Conv stmp xs) = EVERY concrete_v
-     xs) /\
-   (concrete_v (semanticPrimitives_Vectorv xs) = EVERY concrete_v xs)
+   (concrete_v (semanticPrimitives_Conv stmp xs) = ALL concrete_v xs)
+     /\
+   (concrete_v (semanticPrimitives_Vectorv xs) = ALL concrete_v xs)
      /\
    (concrete_v (semanticPrimitives_Env id e) = F) /\
    (concrete_v (semanticPrimitives_Closure e2 nm x) = F) /\

@@ -67,8 +67,8 @@ hol4_overload "extract" "bvi_let_extract";;
 
 let extract_list_def,extract_list_ind = define_rec
   [`bvi_let_extract_list [] = []`;
-   `bvi_let_extract_list (x :: xs) = extract x xs ::
-  bvi_let_extract_list xs`];;
+   `bvi_let_extract_list (CONS x xs) = CONS (extract x xs)
+  (bvi_let_extract_list xs)`];;
 hol4_overload "extract_list" "bvi_let_extract_list";;
 
 let delete_var_def = new_definition
@@ -80,8 +80,8 @@ let delete_var_def = new_definition
 hol4_overload "delete_var" "bvi_let_delete_var";;
 
 let exp2_size_APPEND = prove
- (`!xs ys. bvi_exp_size1 (xs ++ ys) = bvi_exp_size1 xs + bvi_exp_size1
-  ys`,
+ (`!xs ys. bvi_exp_size1 (APPEND xs ys) = bvi_exp_size1 xs +
+  bvi_exp_size1 ys`,
   (* bvi_exp_size1 is HOL4's exp2_size, which the size prelude
      states as a list_size (size_thms "bvi_exp"), so this is
      list_size_APPEND under another name *)
@@ -111,8 +111,8 @@ let _ = size_thms "bvi_exp";;
 let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat
   `MEASURE (list_size bvi_exp_size o SND o SND)`
   [`bvi_let_compile env d [] = []`;
-   `bvi_let_compile env d (x :: y :: xs) = bvi_let_compile env d [x]
-  ++ bvi_let_compile env d (y :: xs)`;
+   `bvi_let_compile env d (CONS x (CONS y xs)) = APPEND
+  (bvi_let_compile env d [x]) (bvi_let_compile env d (CONS y xs))`;
    `bvi_let_compile env d [(Var v):bvi_exp] =
          (match (\l n. oEL n l) env v with SOME n -> [Var (v +
            n)] | _2 -> [Var (v + d)])`;
@@ -131,8 +131,8 @@ let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat
                      + k) [LAST xs]))] else
                  let ys = bvi_let_compile env d xs in
                    [Let (MAP bvi_let_delete_var ys)
-                     (HD (bvi_let_compile (bvi_let_extract_list
-                       ys ++ env) d [x2]))])`;
+                     (HD (bvi_let_compile (APPEND
+                       (bvi_let_extract_list ys) env) d [x2]))])`;
    `bvi_let_compile env d [(Raise x1:bvi_exp)] =
          [Raise (HD (bvi_let_compile env d [x1]))]`;
    `bvi_let_compile env d [(Op op xs:bvi_exp)] = [Op op
@@ -145,7 +145,7 @@ let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat
    `bvi_let_compile env d [(Call t dest xs h:bvi_exp)] =
          [Call t dest (bvi_let_compile env d xs)
              (match h with NONE -> NONE | SOME e -> SOME (HD
-               (bvi_let_compile (0 :: env) d [e])))]`;
+               (bvi_let_compile (CONS 0 env) d [e])))]`;
    (* Return/LetCall are pass-through (only nested Lets are optimised). TODO(multiret):
       no optimisation specific to them yet -- e.g. the Let tail-position move could
       extend to `Let xs (Return (GENLIST Var n))`. *)
@@ -153,8 +153,8 @@ let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat
   (bvi_let_compile env d xs)]`;
    `bvi_let_compile env d [bvi_LetCall rets t dest xs y] =
          [bvi_LetCall rets t dest (bvi_let_compile env d xs)
-            (HD (bvi_let_compile (REPLICATE rets 0 ++ env) d
-              [y]))]`];;
+            (HD (bvi_let_compile (APPEND (REPLICATE rets 0)
+              env) d [y]))]`];;
 hol4_overload "compile" "bvi_let_compile";;
 
 let _ = size_thms "bvi_exp";;
@@ -188,8 +188,8 @@ let bvi_let_compile_sing_def,bvi_let_compile_sing_ind =
                      (d + k) (LAST xs)))) else
                  let ys = bvi_let_compile_list env d xs in
                    (Let (MAP bvi_let_delete_var ys)
-                     ((bvi_let_compile_sing (bvi_let_extract_list
-                       ys ++ env) d x2))))`;
+                     ((bvi_let_compile_sing (APPEND
+                       (bvi_let_extract_list ys) env) d x2))))`;
    `bvi_let_compile_sing env d (Raise x1:bvi_exp) =
          (Raise ((bvi_let_compile_sing env d x1)))`;
    `bvi_let_compile_sing env d (Op op xs:bvi_exp) = (Op op
@@ -202,16 +202,16 @@ let bvi_let_compile_sing_def,bvi_let_compile_sing_ind =
    `bvi_let_compile_sing env d (Call t dest xs h:bvi_exp) =
          (Call t dest (bvi_let_compile_list env d xs)
              (match h with NONE -> NONE | SOME e -> SOME
-               ((bvi_let_compile_sing (0 :: env) d e))))`;
+               ((bvi_let_compile_sing (CONS 0 env) d e))))`;
    `bvi_let_compile_sing env d (bvi_Return xs:bvi_exp) = bvi_Return
   (bvi_let_compile_list env d xs)`;
    `bvi_let_compile_sing env d (bvi_LetCall rets t dest xs y) =
          bvi_LetCall rets t dest (bvi_let_compile_list env d xs)
-            (bvi_let_compile_sing (REPLICATE rets 0 ++ env) d y)`;
+            (bvi_let_compile_sing (APPEND (REPLICATE rets 0) env)
+              d y)`;
    `bvi_let_compile_list env d [] = []`;
-   `bvi_let_compile_list env d (x :: xs) =
-        bvi_let_compile_sing env d x :: bvi_let_compile_list
-          env d xs`];;
+   `bvi_let_compile_list env d (CONS x xs) = CONS
+  (bvi_let_compile_sing env d x) (bvi_let_compile_list env d xs)`];;
 hol4_overload "compile_list" "bvi_let_compile_list";;
 hol4_overload "compile_sing" "bvi_let_compile_sing";;
 
@@ -386,7 +386,7 @@ let compile_length = prove
       one] in
    let cons_cons_case =
      REWRITE_TAC[cp; LENGTH_APPEND] THEN
-     use_ih `[x1:bvi_exp]` THEN use_ih `(x2:bvi_exp) :: xr2` THEN
+     use_ih `[x1:bvi_exp]` THEN use_ih `CONS (x2:bvi_exp) xr2` THEN
      REWRITE_TAC[LENGTH] THEN ARITH_TAC in
    let base_case =
      REPEAT GEN_TAC THEN DISCH_TAC THEN
@@ -416,7 +416,7 @@ let compile_HD_SING = prove
 
 let bvi_let_compile_exp_def = new_definition
   `bvi_let_compile_exp x =
-     (match bvi_let_compile [] 0 [x] with (y :: _14) -> y | _15 ->
+     (match bvi_let_compile [] 0 [x] with (CONS y _14) -> y | _15 ->
        Var 0)
    // impossible`;;
 hol4_overload "compile_exp" "bvi_let_compile_exp";;

@@ -122,7 +122,7 @@ let reg_write_def = define_cases
 
 let delete_vars_def,delete_vars_ind = define_rec
   [`delete_vars [] s = s`;
-   `delete_vars (v :: vs) s = reg_write v NONE (delete_vars vs s)`];;
+   `delete_vars (CONS v vs) s = reg_write v NONE (delete_vars vs s)`];;
 
 let array_write_def = new_definition
   `array_write n v s = word_bignumProof_state_arrays_fupd (K ((n =+
@@ -133,7 +133,7 @@ let clock_write_def = new_definition
 
 let copy_vars_def,copy_vars_ind = define_rec
   [`word_bignumProof_copy_vars [] s t = SOME t`;
-   `word_bignumProof_copy_vars (n :: ns) s t =
+   `word_bignumProof_copy_vars (CONS n ns) s t =
          (match FLOOKUP s n with NONE -> NONE | SOME x ->
            word_bignumProof_copy_vars ns s (reg_write n (SOME x)
            t))`];;
@@ -422,7 +422,7 @@ let syntax_ok_aux_def,syntax_ok_aux_ind = define_shaped_rec
       n1 < (25) /\ n2 < (25) /\
       n3 < (25) /\ n4 < (25) /\ n5 < (25)
       | (word_bignum_Rec save_regs _8) ->
-      EVERY (\n. n < (25)) save_regs /\ ALL_DISTINCT save_regs
+      ALL (\n. n < (25)) save_regs /\ ALL_DISTINCT save_regs
       | _9 -> T`];;
 
 let word_bignumProof_syntax_ok_def = new_definition
@@ -529,12 +529,12 @@ let evaluate_SeqTempImmNot = prove
 (* [local] *)
 let LESS_LENGTH_IMP_APPEND = prove
  (`!xs n. n < LENGTH xs ==>
-          (?ys z zs. xs = ys ++ (z :: zs) /\ LENGTH ys = n)`,
+          (?ys z zs. xs = APPEND ys (CONS z zs) /\ LENGTH ys = n)`,
   CHEAT_TAC);;
 
 (* word_list_APPEND *)
 let word_bignumProof_word_list_APPEND = prove
- (`!xs ys a. misc_word_list a (xs ++ ys) =
+ (`!xs ys a. misc_word_list a (APPEND xs ys) =
               misc_word_list a xs * misc_word_list (a + n2w (LENGTH
                 xs) * bytes_in_word) ys`,
   CHEAT_TAC);;
@@ -561,9 +561,9 @@ let b2n_if = prove
 let list_update_def,list_update_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x0)`
   [`list_update [] ys t = t`;
-   `list_update (x :: xs) (y :: ys) t = sptree_insert x y
+   `list_update (CONS x xs) (CONS y ys) t = sptree_insert x y
   (list_update xs ys t)`;
-   `list_update (x :: xs) [] t = sptree_insert x ARB (list_update
+   `list_update (CONS x xs) [] t = sptree_insert x ARB (list_update
   xs [] t)`];;
 
 let list_update_alist_insert = prove
@@ -576,9 +576,9 @@ let list_update_alist_insert = prove
 let evaluate_LoadRegs = prove
  (`!save_regs vals t1.
      word_bignumProof_state_rel s1 t1 cs2 t0 frame /\
-     EVERY (\n. n < (25)) save_regs /\ ALL_DISTINCT save_regs /\
-     EVERY2 (\n v. FLOOKUP (word_bignumProof_state_regs s1) n = SOME
-       v) save_regs vals ==>
+     ALL (\n. n < (25)) save_regs /\ ALL_DISTINCT save_regs /\
+     ALL2 (\n v. FLOOKUP (word_bignumProof_state_regs s1) n = SOME v)
+       save_regs vals ==>
      wordSem_evaluate (LoadRegs save_regs p,t1) =
      wordSem_evaluate (p,wordSem_state_locals_fupd (K
           (list_update (MAP (\n. n + 2) save_regs) (MAP
@@ -593,14 +593,14 @@ let domain_list_update = prove
 
 let list_store_def,list_store_ind = define_rec
   [`list_store [] ys s = s`;
-   `list_store (x :: xs) ys s = (list_store xs (TL ys) s) |+ (Temp
-  (n2w x),HD ys)`];;
+   `list_store (CONS x xs) ys s = (list_store xs (TL ys) s) |+
+  (Temp (n2w x),HD ys)`];;
 
 (* [local] *)
 let list_store_FUPDATE = prove
  (`!save_regs st ys.
      ~(MEM h save_regs) /\ h < (25) /\
-     EVERY (\n. n < (25)) save_regs ==>
+     ALL (\n. n < (25)) save_regs ==>
      list_store save_regs ys (st |+ (Temp (n2w h),wordLang_Word v)) =
      list_store save_regs ys st |+ (Temp (n2w h),wordLang_Word v)`,
   CHEAT_TAC);;
@@ -608,9 +608,9 @@ let list_store_FUPDATE = prove
 (* [local] *)
 let evaluate_SaveRegs = prove
  (`!save_regs t7 vals.
-     LIST_REL (\n v. sptree_lookup (n + 2) (wordSem_state_locals t7)
-       = SOME (wordLang_Word v)) save_regs vals /\
-     ALL_DISTINCT save_regs /\ EVERY (\n. n < (25)) save_regs ==>
+     ALL2 (\n v. sptree_lookup (n + 2) (wordSem_state_locals t7) =
+       SOME (wordLang_Word v)) save_regs vals /\
+     ALL_DISTINCT save_regs /\ ALL (\n. n < (25)) save_regs ==>
      wordSem_evaluate (SaveRegs save_regs,t7) =
        (NONE,wordSem_state_store_fupd (K (list_store save_regs (MAP
          wordLang_Word vals) (wordSem_state_store t7))) t7)`,
@@ -619,7 +619,7 @@ let evaluate_SaveRegs = prove
 (* [local] *)
 let FLOOKUP_list_store_ignore = prove
  (`!save_regs vals st.
-   EVERY (\n. n < (25)) save_regs ==>
+   ALL (\n. n < (25)) save_regs ==>
    FLOOKUP (list_store save_regs vals st) TempIn1 = FLOOKUP st
      TempIn1 /\
    FLOOKUP (list_store save_regs vals st) TempIn2 = FLOOKUP st
@@ -651,7 +651,7 @@ let copy_vars_ignore = prove
  (`!save_regs regs' s2 s3.
      word_bignumProof_copy_vars save_regs regs' s2 = SOME s3 /\
      ~(MEM a save_regs) /\ a < (25) /\
-     EVERY (\n. n < (25)) save_regs ==> FAPPLY
+     ALL (\n. n < (25)) save_regs ==> FAPPLY
        (word_bignumProof_state_regs
      s3) a = FAPPLY (word_bignumProof_state_regs s2) a`,
   CHEAT_TAC);;
@@ -661,16 +661,16 @@ let copy_vars_IMP = prove
  (`!save_regs s2 s3.
      word_bignumProof_copy_vars save_regs
        (word_bignumProof_state_regs s1) s2 = SOME s3 ==>
-     (?vals. EVERY2 (\n v. FLOOKUP (word_bignumProof_state_regs s1)
-       n = SOME v) save_regs vals)`,
+     (?vals. ALL2 (\n v. FLOOKUP (word_bignumProof_state_regs s1) n
+       = SOME v) save_regs vals)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let LIST_REL_lemma = prove
  (`!xs ys.
      (!x y. MEM x xs /\ MEM y ys ==> P x y ==> Q x y) ==>
-     LIST_REL P xs ys ==>
-     LIST_REL Q xs ys`,
+     ALL2 P xs ys ==>
+     ALL2 Q xs ys`,
   CHEAT_TAC);;
 
 (* HOL4 word_bignumProofScript.sml:677-680: ML code, not ported *)

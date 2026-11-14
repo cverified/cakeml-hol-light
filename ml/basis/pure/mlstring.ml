@@ -71,8 +71,8 @@ let concat_nil = prove
 let explode_aux_def,explode_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   [`explode_aux s n 0 = []`;
-   `explode_aux s n (SUC len) =
-        strsub s n :: (explode_aux s (n + 1) len)`];;
+   `explode_aux s n (SUC len) = CONS (strsub s n) (explode_aux s (n
+  + 1) len)`];;
 
 let explode_aux_thm = prove
  (`!max' n ls.
@@ -164,11 +164,11 @@ let strcat_def = new_definition
    as an application of strcat *)
 
 let concat_cons = prove
- (`mlstring_concat (h :: t) = strcat h (mlstring_concat t)`,
+ (`mlstring_concat (CONS h t) = strcat h (mlstring_concat t)`,
   CHEAT_TAC);;
 
 let strcat_thm = prove
- (`strcat s1 s2 = implode (explode s1 ++ explode s2)`,
+ (`strcat s1 s2 = implode (APPEND (explode s1) (explode s2))`,
   (REWRITE_TAC[strcat_def; concat_thm; MAP; FLAT; APPEND_NIL]));;
 
 (* [simp] *)
@@ -195,8 +195,8 @@ let mlstring_common_prefix = prove
 
 (* [simp] *)
 let mlstring_common_char_prefix = prove
- (`!c1 s1 s2 t2 t2. (strcat (implode (c1 :: s1)) t1) = (strcat (implode
-  (c2 :: s2)) t2) <=>
+ (`!c1 s1 s2 t2 t2. (strcat (implode (CONS c1 s1)) t1) = (strcat
+  (implode (CONS c2 s2)) t2) <=>
      c1 = c2 /\ strcat (implode s1) t1 = strcat (implode s2) t2`,
   CHEAT_TAC);;
 
@@ -207,18 +207,18 @@ let mlstring_common_suffix = prove
     explode_11]));;
 
 let concat_append = prove
- (`mlstring_concat (xs ++ ys) = strcat (mlstring_concat xs)
+ (`mlstring_concat (APPEND xs ys) = strcat (mlstring_concat xs)
   (mlstring_concat ys)`,
   CHEAT_TAC);;
 
 let implode_STRCAT = prove
  (`!l1 l2.
-    implode (STRCAT l1 l2) = strcat (implode l1) (implode l2)`,
+    implode (APPEND l1 l2) = strcat (implode l1) (implode l2)`,
   (REWRITE_TAC[strcat_thm; explode_thm]));;
 
 (* [simp] *)
 let explode_strcat = prove
- (`explode (strcat s1 s2) = explode s1 ++ explode s2`,
+ (`explode (strcat s1 s2) = APPEND (explode s1) (explode s2)`,
   (REWRITE_TAC[strcat_thm; explode_thm]));;
 
 (* [simp] *)
@@ -250,8 +250,8 @@ let strlen_toString = prove
 let translate_aux_def,translate_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`translate_aux f s n 0 = []`;
-   `translate_aux f s n (SUC len) = f (strsub s n) :: translate_aux
-  f s (n + 1) len`];;
+   `translate_aux f s n (SUC len) = CONS (f (strsub s n))
+  (translate_aux f s (n + 1) len)`];;
 
 let translate_def = new_definition
   `translate f s = implode (translate_aux f s 0 (strlen s))`;;
@@ -296,14 +296,14 @@ let splitl_SPLITL = prove
 let tokens_aux_def,tokens_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
   [`tokens_aux f s [] n 0 = []`;
-   `tokens_aux f s (h :: t) n 0 = [implode (REVERSE (h :: t))]`;
+   `tokens_aux f s (CONS h t) n 0 = [implode (REVERSE (CONS h t))]`;
    `tokens_aux f s [] n (SUC len) =
         (if f (strsub s n) then tokens_aux f s [] (n + 1) len
           else tokens_aux f s [strsub s n] (n + 1) len)`;
-   `tokens_aux f s (h :: t) n (SUC len) =
-        (if f (strsub s n) then (implode (REVERSE (h :: t))) ::
-          (tokens_aux f s [] (n + 1) len) else tokens_aux f s
-          (strsub s n :: (h :: t)) (n + 1) len)`];;
+   `tokens_aux f s (CONS h t) n (SUC len) =
+        (if f (strsub s n) then CONS (implode (REVERSE (CONS h
+          t))) (tokens_aux f s [] (n + 1) len) else tokens_aux f s
+          (CONS (strsub s n) (CONS h t)) (n + 1) len)`];;
 
 (* HOL4 mlstringScript.sml:384: ML code, not ported *)
 
@@ -315,8 +315,8 @@ let tokens_def = new_definition
 let tokens_aux_filter = prove
  (`!f s ss n len. (n + len = strlen s) ==> (mlstring_concat (tokens_aux
   f s ss n len) =
-       implode (REVERSE ss ++ FILTER ((~) o f) (DROP n (explode
-         s))))`,
+       implode (APPEND (REVERSE ss) (FILTER ((~) o f) (DROP n
+         (explode s)))))`,
   CHEAT_TAC);;
 
 let tokens_filter = prove
@@ -327,14 +327,13 @@ let tokens_filter = prove
 
 let TOKENS_eq_tokens_aux = prove
  (`!P ls ss n len. (n + len = LENGTH (explode ls)) ==>
-      (MAP explode (tokens_aux P ls ss n len) = (match ss with (h ::
-        t) -> (if (~(len = 0)) /\ ((~) (P (EL n (explode ls)))) then
-          (REVERSE (h :: t) ++ HD (TOKENS P (DROP n (explode ls))))
-            :: TL (TOKENS P (DROP n (explode ls))) else if (~(len = 0))
-            then
-              REVERSE (h :: t) :: (TOKENS P (DROP n (explode ls)))
-                else [REVERSE (h :: t)]) | [] -> (TOKENS P (DROP n
-                (explode ls)))))`,
+      (MAP explode (tokens_aux P ls ss n len) = (match ss with
+        (CONS h t) -> (if (~(len = 0)) /\ ((~) (P (EL n (explode
+        ls)))) then CONS (APPEND (REVERSE (CONS h t)) (HD (TOKENS P
+        (DROP n (explode ls))))) (TL (TOKENS P (DROP n (explode ls))))
+        else if (~(len = 0)) then CONS (REVERSE (CONS h t)) (TOKENS P
+        (DROP n (explode ls))) else [REVERSE (CONS h t)]) | [] ->
+        (TOKENS P (DROP n (explode ls)))))`,
   CHEAT_TAC);;
 (* HOL4 mlstringScript.sml:462-470: code that the source has in a
    comment *)
@@ -354,8 +353,8 @@ let TOKENS_eq_tokens = prove
 let tokens_append = prove
  (`!P s1 x s2.
     P x ==>
-      (tokens P (strcat (strcat s1 (toString x)) s2) = tokens P s1
-        ++ tokens P s2)`,
+      (tokens P (strcat (strcat s1 (toString x)) s2) = APPEND
+        (tokens P s1) (tokens P s2))`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives, with
@@ -367,8 +366,8 @@ let tokens_alt_aux_def,tokens_alt_aux_ind = define_wf
   [`(tokens_alt_aux f s i j n =
    (if j < n then
      (if f (strsub s j) then
-       (if i = j then tokens_alt_aux f s (i + 1) (j + 1) n else
-         substring s i (j - i) ::
+       (if i = j then tokens_alt_aux f s (i + 1) (j + 1) n else CONS
+         (substring s i (j - i))
          (tokens_alt_aux f s (j + 1) (j + 1) n)) else
        tokens_alt_aux f s i (j + 1) n) else
      if i = j then [] else [substring s i (j - i)]))`];;
@@ -412,9 +411,9 @@ let fields_aux_def,fields_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
   [`fields_aux f s ss n 0 = [implode (REVERSE ss)]`;
    `fields_aux f s ss n (SUC len) =
-        (if f (strsub s n) then implode (REVERSE ss) ::
-          (fields_aux f s [] (n + 1) len) else fields_aux f s
-          (strsub s n :: ss) (n + 1) len)`];;
+        (if f (strsub s n) then CONS (implode (REVERSE ss))
+          (fields_aux f s [] (n + 1) len) else fields_aux f s (CONS
+          (strsub s n) ss) (n + 1) len)`];;
 
 
 let fields_def = new_definition
@@ -425,8 +424,8 @@ let fields_def = new_definition
 let fields_aux_filter = prove
  (`!f s ss n len. (n + len = strlen s) ==> (mlstring_concat (fields_aux
   f s ss n len) =
-       implode (REVERSE ss ++ FILTER ((~) o f) (DROP n (explode
-         s))))`,
+       implode (APPEND (REVERSE ss) (FILTER ((~) o f) (DROP n
+         (explode s)))))`,
   CHEAT_TAC);;
 
 let fields_filter = prove
@@ -455,8 +454,7 @@ let fields_alt_aux_def,fields_alt_aux_ind = define_wf
   `MEASURE (\(f,s,i,j,n). n - j)`
   [`(fields_alt_aux f s i j n =
    (if j < n then
-     (if f (strsub s j) then
-         substring s i (j - i) ::
+     (if f (strsub s j) then CONS (substring s i (j - i))
          (fields_alt_aux f s (j + 1) (j + 1) n) else
        fields_alt_aux f s i (j + 1) n) else
      [substring s i (j - i)]))`];;
@@ -535,7 +533,8 @@ let exists_mlstring = prove
 let isprefix_thm_aux = prove
  (`!ys xs zs.
      LENGTH ys <= LENGTH zs ==>
-     (isStringThere_aux (implode (xs ++ ys)) (implode (xs ++ zs))
+     (isStringThere_aux (implode (APPEND xs ys)) (implode (APPEND xs
+       zs))
         (LENGTH xs) (LENGTH xs) (LENGTH ys) <=>
         ys <<= zs)`,
   CHEAT_TAC);;
@@ -610,7 +609,7 @@ let isSubstring_SEG = prove
   CHEAT_TAC);;
 
 let strlit_STRCAT = prove
- (`strcat (implode a) (implode b) = implode (a ++ b)`,
+ (`strcat (implode a) (implode b) = implode (APPEND a b)`,
   (REWRITE_TAC[strcat_thm; explode_thm]));;
 
 let isSubString_spec = prove
@@ -977,11 +976,12 @@ let char_escaped_def = new_definition
      NONE -> [c] | SOME s -> explode s)`;;
 
 let escape_str_def = new_definition
-  `escape_str s = implode ("\"" ++ FLAT (MAP char_escaped (explode
-  s)) ++ "\"")`;;
+  `escape_str s = implode (APPEND (APPEND "\"" (FLAT (MAP
+  char_escaped (explode s)))) "\"")`;;
 
 let escape_char_def = new_definition
-  `escape_char c = implode ("#\"" ++ char_escaped c ++ "\"")`;;
+  `escape_char c = implode (APPEND (APPEND "#\"" (char_escaped c))
+  "\"")`;;
 
 (* [simp] *)
 let ALL_DISTINCT_MAP_implode = prove
@@ -1001,7 +1001,7 @@ let app_list_ann_INDUCT,app_list_ann_RECURSION = define_datatype
 
 let sum_sizes_def,sum_sizes_ind = define_rec
   [`sum_sizes [] k = k`;
-   `sum_sizes (l :: ls) k = sum_sizes ls (strlen l + k)`];;
+   `sum_sizes (CONS l ls) k = sum_sizes ls (strlen l + k)`];;
 
 (* HOL4 mlstringScript.sml:1502: the overload size_limit, which the
    port expands *)

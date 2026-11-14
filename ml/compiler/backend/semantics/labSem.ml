@@ -120,11 +120,11 @@ let _ = size_thms "sec";;
 let asm_fetch_aux_def,asm_fetch_aux_ind = define_wf
   `MEASURE (\(x0,x1). list_size (sec_size (\x. 0)) x1)`
   [`asm_fetch_aux pos [] = NONE`;
-   `asm_fetch_aux pos (Section k [] :: xs) = asm_fetch_aux pos xs`;
-   `asm_fetch_aux pos (Section k (y :: ys) :: xs) =
-         (if is_Label y then asm_fetch_aux pos ((Section k ys)
-           :: xs) else if pos = (0:num) then SOME y else
-           asm_fetch_aux (pos - 1) ((Section k ys) :: xs))`];;
+   `asm_fetch_aux pos (CONS (Section k []) xs) = asm_fetch_aux pos xs`;
+   `asm_fetch_aux pos (CONS (Section k (CONS y ys)) xs) =
+         (if is_Label y then asm_fetch_aux pos (CONS (Section k
+           ys) xs) else if pos = (0:num) then SOME y else
+           asm_fetch_aux (pos - 1) (CONS (Section k ys) xs))`];;
 
 let asm_fetch_def = new_definition
   `asm_fetch s = asm_fetch_aux (pc s) (state_code s)`;;
@@ -414,10 +414,10 @@ let inc_pc_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let asm_code_length_def,asm_code_length_ind = define_guess_cheat
   [`asm_code_length [] = 0`;
-   `asm_code_length (Section k [] :: xs) = asm_code_length xs`;
-   `asm_code_length (Section k (y :: ys) :: xs) =
-         asm_code_length ((Section k ys) :: xs) + (if is_Label
-           y then 0 else 1:num)`];;
+   `asm_code_length (CONS (Section k []) xs) = asm_code_length xs`;
+   `asm_code_length (CONS (Section k (CONS y ys)) xs) =
+         asm_code_length (CONS (Section k ys) xs) + (if
+           is_Label y then 0 else 1:num)`];;
 
 (* [local] *)
 let asm_fetch_IMP = prove
@@ -432,14 +432,14 @@ let lab_to_loc_def = define_general
    replacing the CHEAT_TAC is all that is left *)
 let loc_to_pc_def,loc_to_pc_ind = define_guess_cheat
   [`loc_to_pc n1 n2 [] = NONE`;
-   `loc_to_pc n1 n2 (Section k xs :: ys) =
+   `loc_to_pc n1 n2 (CONS (Section k xs) ys) =
          (if (k = n1) /\ (n2 = 0) then SOME (0:num) else
-           match xs with [] -> loc_to_pc n1 n2 ys | (z :: zs) ->
+           match xs with [] -> loc_to_pc n1 n2 ys | (CONS z zs) ->
              (if (?k. z = labLang_Label n1 n2 k) /\ ~(n2 = 0) then
                SOME 0 else
-               if is_Label z then loc_to_pc n1 n2 ((Section k zs) ::
-                 ys) else
-                 match loc_to_pc n1 n2 ((Section k zs) :: ys)
+               if is_Label z then loc_to_pc n1 n2 (CONS (Section k
+                 zs) ys) else
+                 match loc_to_pc n1 n2 (CONS (Section k zs) ys)
                    with NONE -> NONE | SOME pos -> SOME (pos +
                    (1:num))))`];;
 
@@ -474,11 +474,11 @@ let next_label_def,next_label_ind = define_wf
   [`next_label x1 =
         match x1 with
           [] -> NONE
-        | (Section k [] :: xs) -> next_label xs
-        | ((Section k (labLang_Label n1 n2 _44 :: ys)) :: xs) ->
-          SOME (Loc n1 n2)
-        | ((Section k (y :: ys)) :: xs) -> next_label (Section k
-          ys :: xs)`];;
+        | CONS (Section k []) xs -> next_label xs
+        | (CONS (Section k (CONS (labLang_Label n1 n2 _44) ys)) xs)
+          -> SOME (Loc n1 n2)
+        | (CONS (Section k (CONS y ys)) xs) -> next_label (CONS
+          (Section k ys) xs)`];;
 
 let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -486,12 +486,12 @@ let _ = size_thms "sec";;
 let get_lab_after_def,get_lab_after_ind = define_wf
   `MEASURE (\(x0,x1). list_size (sec_size (\x. 0)) x1)`
   [`get_lab_after pos [] = NONE`;
-   `get_lab_after pos (Section k [] :: xs) = get_lab_after pos xs`;
-   `get_lab_after pos (Section k (y :: ys) :: xs) =
-         (if is_Label y then get_lab_after pos ((Section k ys)
-           :: xs) else if pos = (0:num) then next_label ((Section k
-           ys) :: xs) else get_lab_after (pos - 1) ((Section k ys)
-           :: xs))`];;
+   `get_lab_after pos (CONS (Section k []) xs) = get_lab_after pos xs`;
+   `get_lab_after pos (CONS (Section k (CONS y ys)) xs) =
+         (if is_Label y then get_lab_after pos (CONS (Section k
+           ys) xs) else if pos = (0:num) then next_label (CONS
+           (Section k ys) xs) else get_lab_after (pos - 1) (CONS
+           (Section k ys) xs))`];;
 
 let get_ret_Loc_def = new_definition
   `get_ret_Loc s = get_lab_after (pc s) (state_code s)`;;
@@ -528,8 +528,8 @@ let share_mem_store_def = new_definition
               (match call_FFI (labSem_state_ffi s) (ffi_SharedMem
                 MappedWrite)
                 [n2w n]
-                ((if n = 0 then word_to_bytes w F else TAKE n
-                  (word_to_bytes w F)) ++ (word_to_bytes v F)) with
+                (APPEND (if n = 0 then word_to_bytes w F else TAKE n
+                  (word_to_bytes w F)) (word_to_bytes v F)) with
                   FFI_final outcome -> SOME (FFI_final outcome,s) |
                   FFI_return new_ffi new_bytes ->
                   SOME ((FFI_return new_ffi new_bytes),
@@ -621,7 +621,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                let new_oracle = misc_shift_seq 1
                  (labSem_state_compile_oracle s) in
                  (match (labSem_state_compile s cfg prog,prog) with
-                   (SOME (bytes',cfg'),Section k _78 :: _79) ->
+                   (SOME (bytes',cfg'),CONS (Section k _78) _79) ->
                     (if bytes = bytes' /\ FST (new_oracle 0) = cfg'
                       then
                       // the oracle was correct
@@ -642,8 +642,8 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                                 (labSem_state_cc_fp_regs s)))
                                 (labSem_state_cc_regs_fupd (K
                                 (misc_shift_seq 1 (labSem_state_cc_regs
-                                s))) (labSem_state_code_fupd (K
-                                (labSem_state_code s ++ prog))
+                                s))) (labSem_state_code_fupd (K (APPEND
+                                (labSem_state_code s) prog))
                                 (labSem_state_code_buffer_fupd (K cb)
                                 (labSem_state_pc_fupd (K new_pc)
                                 s))))))))) else

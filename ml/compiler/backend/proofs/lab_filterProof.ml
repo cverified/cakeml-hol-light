@@ -35,13 +35,14 @@ let _ = hide_overloads
 let adjust_pc_def,adjust_pc_ind = define_guess_cheat
   [`adjust_pc p xs =
      (if p = 0 then 0 else
-       match xs with [] -> p | (Section n [] :: rest) -> adjust_pc p
-         rest | (Section n (l :: lines) :: rest) ->
+       match xs with [] -> p | (CONS (Section n []) rest) ->
+         adjust_pc p rest | (CONS (Section n (CONS l lines)) rest) ->
            (if is_Label l then
-             adjust_pc p (Section n lines :: rest) else if not_skip
-               l then
-             adjust_pc (p - 1) (Section n lines :: rest) + 1
-               else adjust_pc (p - 1) (Section n lines :: rest)))`];;
+             adjust_pc p (CONS (Section n lines) rest) else if
+               not_skip l then
+             adjust_pc (p - 1) (CONS (Section n lines) rest) + 1
+               else adjust_pc (p - 1) (CONS (Section n lines)
+               rest)))`];;
 
 (*All skips for the next k*)
 let all_skips_def = new_definition
@@ -193,7 +194,7 @@ let get_lab_after_adjust = prove
 let loc_to_pc_adjust_pc_append = prove
  (`!n1 n2 code pc' ls.
    loc_to_pc n1 n2 code = SOME pc' ==>
-   adjust_pc pc' code = adjust_pc pc' (code ++ ls)`,
+   adjust_pc pc' code = adjust_pc pc' (APPEND code ls)`,
   CHEAT_TAC);;
 
 (* HOL4 lab_filterProofScript.sml:556-563: a proof *)
@@ -261,8 +262,8 @@ let share_mem_op_FFI_final_filter_correct = prove
 
 let sec_ends_with_label_filter_skip = prove
  (`!code.
-   EVERY sec_ends_with_label code ==>
-   EVERY sec_ends_with_label (filter_skip code)`,
+   ALL sec_ends_with_label code ==>
+   ALL sec_ends_with_label (filter_skip code)`,
   CHEAT_TAC);;
 
 (* and the overloads that this file cannot see are back in the

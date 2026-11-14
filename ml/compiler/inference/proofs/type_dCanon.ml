@@ -108,17 +108,17 @@ let type_pe_determ_tenv_equiv = prove
 let set_tids_tenv_def = new_definition
   `set_tids_tenv tids tenv <=>
    nsAll (\i (ls,t). set_tids_subset tids t) (type_env_t tenv) /\
-   nsAll (\i (ls,ts,tid). EVERY (\t. set_tids_subset tids t) ts /\
-     tid IN tids) (type_env_c tenv) /\
+   nsAll (\i (ls,ts,tid). ALL (\t. set_tids_subset tids t) ts /\ tid
+     IN tids) (type_env_c tenv) /\
    nsAll (\i (n,t). set_tids_subset tids t) (type_env_v tenv)`;;
 
 let type_pe_determ_canon_def = new_definition
   `type_pe_determ_canon n tenv tenvE p e <=>
    (!t1 tenv1 t2 tenv2.
      type_p 0 tenv p t1 tenv1 /\ type_e tenv tenvE e t1 /\
-     EVERY (\(k,t). set_tids_subset (count n) t) tenv1 /\
+     ALL (\(k,t). set_tids_subset (count n) t) tenv1 /\
      type_p 0 tenv p t2 tenv2 /\ type_e tenv tenvE e t2 /\
-     EVERY (\(k,t). set_tids_subset (count n) t) tenv2 ==> tenv1 =
+     ALL (\(k,t). set_tids_subset (count n) t) tenv2 ==> tenv1 =
        tenv2)`;;
 
 let type_pe_determ_canon_tenv_equiv = prove
@@ -143,9 +143,9 @@ let type_d_canon = cake_inductive
      (!tvs' bindings' t'.
      (type_p tvs' tenv p t' bindings' /\
      type_e tenv (bind_tvar tvs' typeSystem_Empty) e t' /\
-     EVERY (\(k,t). set_tids_subset (count n) t) bindings') ==>
-           EVERY2 tscheme_inst (MAP SND (tenv_add_tvs tvs'
-             bindings')) (MAP SND (tenv_add_tvs tvs bindings)))) ==>
+     ALL (\(k,t). set_tids_subset (count n) t) bindings') ==>
+           ALL2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
+             (MAP SND (tenv_add_tvs tvs bindings)))) ==>
      type_d_canon n tenv (Dlet locs p e)
        0
        (mk_type_env (alist_to_ns (tenv_add_tvs tvs bindings)) nsEmpty
@@ -165,16 +165,16 @@ let type_d_canon = cake_inductive
      (!tvs' bindings'.
          type_funs tenv (bind_var_list ((0:num)) bindings' (bind_tvar
            tvs' typeSystem_Empty)) funs bindings' /\
-         EVERY (\(k,t). set_tids_subset (count n) t) bindings' ==>
-           EVERY2 tscheme_inst (MAP SND (tenv_add_tvs tvs'
-             bindings')) (MAP SND (tenv_add_tvs tvs bindings)))) ==>
+         ALL (\(k,t). set_tids_subset (count n) t) bindings' ==>
+           ALL2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
+             (MAP SND (tenv_add_tvs tvs bindings)))) ==>
      type_d_canon n tenv (Dletrec locs funs)
      0 (mk_type_env (alist_to_ns (tenv_add_tvs tvs bindings)) nsEmpty
        nsEmpty)) /\
    (!n type_identities tenv tdefs tenvT locs.
-     (ITLIST MAX (Tlist_num :: (Tbool_num :: prim_type_nums)) 0 < n
-       /\
-     type_identities = GENLIST (\i. i + n) (LENGTH tdefs) /\
+     (ITLIST MAX (CONS Tlist_num (CONS Tbool_num prim_type_nums)) 0 <
+       n /\
+     type_identities = list_of_seq (\i. i + n) (LENGTH tdefs) /\
      check_ctor_tenv (nsAppend tenvT (type_env_t tenv)) tdefs /\
      (tenvT = alist_to_ns (MAP2
                            (\(tvs,tn,ctors) i.
@@ -193,8 +193,8 @@ let type_d_canon = cake_inductive
        (mk_type_env nsEmpty nsEmpty (nsSing tn (tvs,type_name_subst
          (type_env_t tenv) t)))) /\
    (!n tenv cn ts locs.
-     (EVERY (check_freevars_ast []) ts /\
-     EVERY (check_type_names (type_env_t tenv)) ts) ==>
+     (ALL (check_freevars_ast []) ts /\
+     ALL (check_type_names (type_env_t tenv)) ts) ==>
      type_d_canon n tenv (Dexn locs cn ts)
        0
        (mk_type_env nsEmpty (nsSing cn ([],MAP (type_name_subst
@@ -216,14 +216,14 @@ let type_d_canon = cake_inductive
      (type_d_canon n tenv d decls1 tenv1 /\
      type_ds_canon (n + decls1) (extend_dec_tenv tenv1 tenv) ds
        decls2 tenv2) ==>
-     type_ds_canon n tenv (d :: ds)
+     type_ds_canon n tenv (CONS d ds)
        (decls1 + decls2) (extend_dec_tenv tenv2 tenv1))`;;
 
 (* The remapping must be identity on these numbers *)
 let good_remap_def = new_definition
   `good_remap f <=>
-   MAP f (Tlist_num :: (Tbool_num :: prim_type_nums)) =
-     Tlist_num :: (Tbool_num :: prim_type_nums)`;;
+   MAP f (CONS Tlist_num (CONS Tbool_num prim_type_nums)) = CONS
+     Tlist_num (CONS Tbool_num prim_type_nums)`;;
 
 (* [local] *)
 let ts_tid_rename_type_subst = prove
@@ -557,7 +557,7 @@ let type_pe_bindings_tids = prove
    (!tvs' bindings' t'.
        type_p tvs' tenv p t' bindings' /\
        type_e tenv (bind_tvar tvs' typeSystem_Empty) e t' ==>
-       LIST_REL tscheme_inst
+       ALL2 tscheme_inst
          (MAP SND (MAP (\(n,t). (n,tvs',t)) bindings'))
          (MAP SND (MAP (\(n,t). (n,tvs,t)) bindings))) ==>
    (!p_1 p_2. MEM (p_1,p_2) bindings ==> set_tids_subset tids p_2)`,
@@ -570,9 +570,9 @@ let type_funs_bindings_tids = prove
    (!tvs' bindings'.
      type_funs tenv (bind_var_list 0 bindings' (bind_tvar tvs'
        typeSystem_Empty)) funs bindings' ==>
-     LIST_REL tscheme_inst (MAP (\x. (tvs',SND x)) bindings')
+     ALL2 tscheme_inst (MAP (\x. (tvs',SND x)) bindings')
        (MAP (\x. (tvs,SND x)) bindings)) ==>
-   EVERY (set_tids_subset tids o SND) bindings`,
+   ALL (set_tids_subset tids o SND) bindings`,
   CHEAT_TAC);;
 
 let type_pe_bindings_tids_0 = prove
@@ -600,8 +600,8 @@ let build_ctor_tenv_type_identities = prove
      type_identities) t) tenvt /\
    LENGTH xs = LENGTH type_identities ==>
    nsAll ((\i (ls,ts,tid).
-   EVERY (\t. set_tids_subset (tids UNION set_of_list
-     type_identities) t) ts /\
+   ALL (\t. set_tids_subset (tids UNION set_of_list type_identities)
+     t) ts /\
    (tid IN tids \/ MEM tid type_identities)))
    (build_ctor_tenv tenvt xs type_identities)`,
   CHEAT_TAC);;

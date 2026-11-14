@@ -61,22 +61,22 @@ let filter_bitmap_def,filter_bitmap_ind = define_guess
   [`filter_bitmap x1 rs =
         match (x1,rs) with
           ([],rs) -> SOME ([],rs)
-        | ((F :: bs),(r :: rs)) -> filter_bitmap bs rs
-        | ((T :: bs),(r :: rs)) ->
+        | (CONS F bs,CONS r rs) -> filter_bitmap bs rs
+        | ((CONS T bs),(CONS r rs)) ->
         (match filter_bitmap bs rs with NONE -> NONE | SOME (ts,rs')
-          -> SOME (r :: ts,rs'))
+          -> SOME (CONS r ts,rs'))
         | (_1,_2) -> NONE`];;
 
 let map_bitmap_def,map_bitmap_ind = define_guess
   [`map_bitmap x1 ts rs =
         match (x1,ts,rs) with
           ([],ts,rs) -> SOME ([],ts,rs)
-        | ((F :: bs),ts,(r :: rs)) ->
+        | (CONS F bs,ts,CONS r rs) ->
         (match map_bitmap bs ts rs with NONE -> NONE | SOME
-          (xs,ys,zs) -> SOME (r :: xs,ys,zs))
-        | ((T :: bs),(t :: ts),(r :: rs)) ->
+          (xs,ys,zs) -> SOME (CONS r xs,ys,zs))
+        | ((CONS T bs),(CONS t ts),(CONS r rs)) ->
         (match map_bitmap bs ts rs with NONE -> NONE | SOME
-          (xs,ys,zs) -> SOME (t :: xs,ys,zs))
+          (xs,ys,zs) -> SOME (CONS t xs,ys,zs))
         | (_3,_4,_5) -> NONE`];;
 
 let filter_bitmap_LENGTH = prove
@@ -92,13 +92,15 @@ let map_bitmap_LENGTH = prove
 
 let read_bitmap_def,read_bitmap_ind = define_rec
   [`read_bitmap [] = NONE`;
-   `read_bitmap ((w:'a word) :: ws) =
+   `read_bitmap (CONS (w:'a word) ws) =
          (if word_msb w then
            // there is a continuation
            match read_bitmap ws with NONE -> NONE | SOME bs -> SOME
-             (GENLIST (\i. FAPPLY w i) (dimindex (:'a) - 1) ++ bs) else
+             (APPEND (list_of_seq (\i. FAPPLY w i) (dimindex (:'a) - 1))
+             bs) else
            // this is the last bitmap word
-           SOME (GENLIST (\i. FAPPLY w i) (bit_length w - 1)))`];;
+           SOME (list_of_seq (\i. FAPPLY w i) (bit_length w -
+             1)))`];;
 
 let stackSem_state_FIELDS = define_record "stackSem_state"
   ["regs","(num,'a word_loc)fmap";
@@ -204,7 +206,7 @@ let stackSem_word_exp_def,stackSem_word_exp_ind = define_shaped_rec
            -> NONE) | _19 -> NONE)`;
    `stackSem_word_exp s (wordLang_Op op wexps) =
          (let ws = MAP (stackSem_word_exp s) wexps in
-           if EVERY IS_SOME ws then wordLang_word_op op (MAP THE
+           if ALL IS_SOME ws then wordLang_word_op op (MAP THE
              ws) else NONE)`;
    `stackSem_word_exp s (wordLang_Shift sh wexp wexp1) =
          (match (stackSem_word_exp s wexp,stackSem_word_exp s
@@ -219,10 +221,10 @@ hol4_overload "get_var" "stackSem_get_var";;
 
 let stackSem_get_vars_def,stackSem_get_vars_ind = define_rec
   [`stackSem_get_vars [] s = SOME []`;
-   `stackSem_get_vars (v :: vs) s =
+   `stackSem_get_vars (CONS v vs) s =
          (match get_var v s with NONE -> NONE | SOME x ->
            (match stackSem_get_vars vs s with NONE -> NONE | SOME
-           xs -> SOME (x :: xs)))`];;
+           xs -> SOME (CONS x xs)))`];;
 hol4_overload "get_vars" "stackSem_get_vars";;
 
 let stackSem_get_fp_var_def = new_definition
@@ -262,8 +264,8 @@ let stackSem_sh_mem_store_def = new_definition
         (if a IN stackSem_state_sh_mdomain s then
           (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
             MappedWrite) [(n2w 0):word8]
-                         (word_to_bytes w F ++ word_to_bytes a F)
-                           with
+                         (APPEND (word_to_bytes w F) (word_to_bytes a
+                           F)) with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
                FFI_return new_ffi new_bytes ->
                (NONE,stackSem_state_ffi_fupd (K new_ffi) s)) else
@@ -295,8 +297,8 @@ let stackSem_sh_mem_store_byte_def = new_definition
         (if byte_align a IN stackSem_state_sh_mdomain s then
           (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
             MappedWrite) [(n2w 1):word8]
-                         ([get_byte (n2w 0) w F] ++ word_to_bytes a
-                           F) with
+                         (APPEND [get_byte (n2w 0) w F]
+                           (word_to_bytes a F)) with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
                FFI_return new_ffi new_bytes ->
                (NONE,stackSem_state_ffi_fupd (K new_ffi) s)) else
@@ -312,8 +314,8 @@ let stackSem_sh_mem_store16_def = new_definition
         (if byte_align a IN stackSem_state_sh_mdomain s then
           (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
             MappedWrite) [(n2w 2):word8]
-                         (TAKE 2 (word_to_bytes w F) ++ word_to_bytes
-                           a F) with
+                         (APPEND (TAKE 2 (word_to_bytes w F))
+                           (word_to_bytes a F)) with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
                FFI_return new_ffi new_bytes ->
                (NONE,stackSem_state_ffi_fupd (K new_ffi) s)) else
@@ -329,8 +331,8 @@ let stackSem_sh_mem_store32_def = new_definition
         (if byte_align a IN stackSem_state_sh_mdomain s then
           (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
             MappedWrite) [(n2w 4):word8]
-                         (TAKE 4 (word_to_bytes w F) ++ word_to_bytes
-                           a F) with
+                         (APPEND (TAKE 4 (word_to_bytes w F))
+                           (word_to_bytes a F)) with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
                FFI_return new_ffi new_bytes ->
                (NONE,stackSem_state_ffi_fupd (K new_ffi) s)) else
@@ -418,7 +420,7 @@ let full_read_bitmap_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let stackSem_enc_stack_def,stackSem_enc_stack_ind = define_guess_cheat
   [`stackSem_enc_stack bitmaps [] = NONE`;
-   `stackSem_enc_stack bitmaps (w :: ws) =
+   `stackSem_enc_stack bitmaps (CONS w ws) =
          (if w = wordLang_Word (n2w 0) then (if ws = [] then SOME []
            else NONE) else
            match full_read_bitmap bitmaps w with NONE -> NONE | SOME
@@ -426,7 +428,8 @@ let stackSem_enc_stack_def,stackSem_enc_stack_ind = define_guess_cheat
               (match filter_bitmap bs ws with NONE -> NONE | SOME
                 (ts,ws') ->
                   (match stackSem_enc_stack bitmaps ws' with
-                    NONE -> NONE | SOME rs -> SOME (ts ++ rs))))`];;
+                    NONE -> NONE | SOME rs -> SOME (APPEND ts
+                    rs))))`];;
 hol4_overload "enc_stack" "stackSem_enc_stack";;
 
 (* the termination relation that HOL4 gives is
@@ -439,7 +442,7 @@ hol4_overload "enc_stack" "stackSem_enc_stack";;
    replacing the CHEAT_TAC is all that is left *)
 let stackSem_dec_stack_def,stackSem_dec_stack_ind = define_guess_cheat
   [`stackSem_dec_stack bitmaps _28 [] = NONE`;
-   `stackSem_dec_stack bitmaps ts (w :: ws) =
+   `stackSem_dec_stack bitmaps ts (CONS w ws) =
         (if w = wordLang_Word (n2w 0) then (if ts = [] /\ ws = []
           then SOME [wordLang_Word (n2w 0)] else NONE) else
          match full_read_bitmap bitmaps w with NONE -> NONE | SOME
@@ -447,8 +450,8 @@ let stackSem_dec_stack_def,stackSem_dec_stack_ind = define_guess_cheat
             (match map_bitmap bs ts ws with NONE -> NONE | SOME
               (hd,ts',ws') ->
                (match stackSem_dec_stack bitmaps ts' ws' with
-                 NONE -> NONE | SOME rest -> SOME ([w] ++ hd ++
-                 rest))))`];;
+                 NONE -> NONE | SOME rest -> SOME (APPEND (APPEND
+                 [w] hd) rest))))`];;
 hol4_overload "dec_stack" "stackSem_dec_stack";;
 
 let stackSem_gc_def = new_definition
@@ -467,8 +470,8 @@ let stackSem_gc_def = new_definition
               with NONE -> NONE | SOME stack' ->
                  SOME (state_memory_fupd (K m)
                    (stackSem_state_regs_fupd (K FEMPTY)
-                   (state_store_fupd (K st) (stack_fupd (K (unused ++
-                   stack')) s)))))))`;;
+                   (state_store_fupd (K st) (stack_fupd (K (APPEND
+                   unused stack')) s)))))))`;;
 hol4_overload "gc" "stackSem_gc";;
 
 let stackSem_has_space_def = new_definition
@@ -1005,7 +1008,7 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
              SOME (bytes,cb),SOME (data,db)) ->
             (let new_oracle = misc_shift_seq 1 (compile_oracle s) in
             (match (compile s cfg progs,progs) with (SOME
-              (bytes',cfg'),(k,prog) :: _116) ->
+              (bytes',cfg'),CONS (k,prog) _116) ->
                 (if bytes = bytes' /\ data = bm /\ FST (new_oracle
                   0) = cfg' then
                 let s' = compile_oracle_fupd (K new_oracle)
@@ -1015,8 +1018,8 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
                   (state_code_fupd (K (sptree_union (state_code s)
                   (fromAList progs))) (state_data_buffer_fupd (K db)
                   (state_code_buffer_fupd (K cb)
-                  (stackSem_state_bitmaps_fupd (K
-                  (stackSem_state_bitmaps s ++ bm))
+                  (stackSem_state_bitmaps_fupd (K (APPEND
+                  (stackSem_state_bitmaps s) bm))
                     s)))))) in
                   (NONE,s') else (SOME Error,s)) | _117 -> (SOME
                     Error,s))) | _118 -> (SOME Error,s))) | _119 ->
