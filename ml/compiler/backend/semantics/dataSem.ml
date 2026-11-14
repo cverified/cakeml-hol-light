@@ -114,7 +114,7 @@ let dataSem_state_FIELDS = define_record "dataSem_state"
    antiquote *)
 
 let arch_size_def = new_definition
-  `arch_size lims = if limits_arch_64_bit lims then 64 else 32:num`;;
+  `arch_size lims = (if limits_arch_64_bit lims then 64 else 32:num)`;;
 
 let check_res_def = new_definition
   `check_res r (n,refs,seen) =
@@ -1792,12 +1792,12 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
 (* HOL4 dataSemScript.sml:1497: ML code, not ported *)
 
 let evaluate_safe_def = new_definition
-  `evaluate_safe c s = let (x,s1) = dataSem_evaluate (c,s) in
-  dataSem_state_safe_for_space s1`;;
+  `evaluate_safe c s = (let (x,s1) = dataSem_evaluate (c,s) in
+  dataSem_state_safe_for_space s1)`;;
 
 let evaluate_peak_def = new_definition
-  `evaluate_peak c s = let (x,s1) = dataSem_evaluate (c,s) in
-  dataSem_state_peak_heap_length s1`;;
+  `evaluate_peak c s = (let (x,s1) = dataSem_evaluate (c,s) in
+  dataSem_state_peak_heap_length s1)`;;
 
 (* We prove that the clock never increases. *)
 

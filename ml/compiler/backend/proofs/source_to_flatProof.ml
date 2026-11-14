@@ -1505,8 +1505,8 @@ let global_env_inv_extend = prove
      genv = APPEND (APPEND g1 (MAP SOME (REVERSE (MAP SND pat_env')))) g2 /\
      ALL_DISTINCT (MAP FST pat_env) ==>
      global_env_inv genv
-       (mk_source_to_flat_environment nsEmpty (alist_to_ns (alloc_defs tt
-         (LENGTH g1) (REVERSE (MAP FST pat_env')))))
+       (mk_sem_env (alist_to_ns (alloc_defs tt (LENGTH g1) (REVERSE (MAP FST
+         pat_env')))) nsEmpty)
        {}
        (mk_sem_env (alist_to_ns pat_env) nsEmpty)`,
   CHEAT_TAC);;
@@ -1548,8 +1548,8 @@ let invariant_make_varls = prove
    (!env1 tt. source_to_flatProof_env_rel genv' (alist_to_ns env1)
      (flatSem_environment_v env) ==>
      global_env_inv genv'
-       (mk_source_to_flat_environment nsEmpty (alist_to_ns (alloc_defs tt
-         vidx (REVERSE (MAP FST (flatSem_environment_v env))))))
+       (mk_sem_env (alist_to_ns (alloc_defs tt vidx (REVERSE (MAP FST
+         (flatSem_environment_v env))))) nsEmpty)
        {}
        (mk_sem_env (alist_to_ns env1) nsEmpty)))`,
   CHEAT_TAC);;
@@ -1767,9 +1767,8 @@ let alloc_tags_invariant = prove
    (let build_env = mk_sem_env nsEmpty (alist_to_ns
          (REVERSE (build_constrs (semanticPrimitives_state_next_type_stamp
            st) ctors))) in
-    global_env_inv genv' (mk_source_to_flat_environment ns nsEmpty) {}
-      build_env /\
-    env_domain_eq (mk_source_to_flat_environment ns nsEmpty) build_env))`,
+    global_env_inv genv' (mk_sem_env nsEmpty ns) {} build_env /\
+    env_domain_eq (mk_sem_env nsEmpty ns) build_env))`,
   CHEAT_TAC);;
 
 (* [local] *)

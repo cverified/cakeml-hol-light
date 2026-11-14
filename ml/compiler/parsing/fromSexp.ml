@@ -1413,8 +1413,9 @@ let mem_size_lemma = prove
  (`list_size sz xs < N ==> (MEM x xs ==> sz x < N)`,
   CHEAT_TAC);;
 
-(* the clauses in two quotations: name is tvarN and modN; x is typeN and
-   conN, which one quotation cannot typecheck *)
+(* the clauses in two quotations: funs is ((varN # varN # exp) list) and
+   (_#_#_)list; name is tvarN and modN; x is typeN and conN, which one
+   quotation cannot typecheck *)
 let decsexp_def,decsexp_ind = define_shaped_rec_clauses
   "nested"
   [`(decsexp (Dlet locs p e) =

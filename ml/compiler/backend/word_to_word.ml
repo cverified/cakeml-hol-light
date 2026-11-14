@@ -64,14 +64,14 @@ let next_n_oracle_def = new_definition
 
 let word_to_word_compile_def = new_definition
   `word_to_word_compile word_conf (asm_conf:'a asm_config) progs =
-     let (two_reg_arith,reg_count) = (asm_config_two_reg_arith
+     (let (two_reg_arith,reg_count) = (asm_config_two_reg_arith
        asm_conf,asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf))) in
      let (n_oracles,col) = next_n_oracle (LENGTH progs)
        (word_to_word_config_col_oracle word_conf) in
      let progs = ZIP progs n_oracles in
      (col,MAP (full_compile_single two_reg_arith reg_count
-       (word_to_word_config_reg_alg word_conf) asm_conf) progs)`;;
+       (word_to_word_config_reg_alg word_conf) asm_conf) progs))`;;
 
 let full_compile_single_for_eval_def = new_definition
   `full_compile_single_for_eval two_reg_arith reg_count alg c p =
@@ -110,7 +110,7 @@ let full_compile_single_for_eval_eq = prove
 (* used for bootstrap translation *)
 let compile_alt = prove
  (`word_to_word_compile word_conf (asm_conf:'a asm_config) progs =
-   let (two_reg_arith,reg_count) = (asm_config_two_reg_arith
+   (let (two_reg_arith,reg_count) = (asm_config_two_reg_arith
      asm_conf,asm_config_reg_count asm_conf - (5 + LENGTH
      (asm_config_avoid_regs asm_conf))) in
    let (n_oracles,col) = next_n_oracle (LENGTH progs)
@@ -143,7 +143,7 @@ let compile_alt = prove
    let _ = empty_ffi (implode "finished: word_alloc") in
    let rmt_ps = MAP remove_must_terminate reg_ps in
    let _ = empty_ffi (implode "finished: word_remove") in
-   (col,ZIP names (ZIP args rmt_ps))`,
+   (col,ZIP names (ZIP args rmt_ps)))`,
   CHEAT_TAC);;
 
 (* and the interface *)

@@ -511,7 +511,8 @@ let add_name_hint_def = new_definition
 
 (* the clauses in three quotations: exps is (exp list) and (_)list; funs is
    ((varN # varN # exp) list) and (_)list; pes is ((pat # exp) list) and
-   (_)list, which one quotation cannot typecheck *)
+   (_)list; xs is (_)list, (_#_)list and (_#_#_)list, which one quotation
+   cannot typecheck *)
 let flat_to_display_def,flat_to_display_ind = define_shaped_rec_clauses
   "maplist>maplist>maplist>nested"
   [`(flat_to_display (flatLang_Raise tra exp) =
@@ -549,10 +550,7 @@ let flat_to_display_def,flat_to_display_ind = define_shaped_rec_clauses
     (pat_flat_to_display_list (CONS (pat,exp) xs) = CONS (displayLang_Tuple
     [flat_pat_to_display pat; flat_to_display exp])
     (pat_flat_to_display_list xs)) /\
-    (fun_flat_to_display_list [] = []) /\
-    (fun_flat_to_display_list (CONS (v1,v2,e) xs) = CONS (displayLang_Tuple
-    [string_imp v1; string_imp v2; flat_to_display e])
-            (fun_flat_to_display_list xs))`;
+    (fun_flat_to_display_list [] = [])`;
    `(flat_to_display (flatLang_Con tra id_opt exps) =
         displayLang_Item (SOME tra) (implode "con") (
             CONS (opt_con_to_display id_opt) (flat_to_display_list
@@ -560,11 +558,14 @@ let flat_to_display_def,flat_to_display_ind = define_shaped_rec_clauses
     (flat_to_display (flatLang_App tra op exps) =
         displayLang_Item (SOME tra) (implode "app") (CONS
             (flat_op_to_display op) (flat_to_display_list exps)))`;
-   `flat_to_display (flatLang_Letrec name_hint funs exp) =
+   `(flat_to_display (flatLang_Letrec name_hint funs exp) =
         displayLang_Item (SOME backend_common_None) (add_name_hint (implode
             "letrec") name_hint)
             [displayLang_Tuple (fun_flat_to_display_list funs);
-                flat_to_display exp]`];;
+                flat_to_display exp]) /\
+    (fun_flat_to_display_list (CONS (v1,v2,e) xs) = CONS (displayLang_Tuple
+    [string_imp v1; string_imp v2; flat_to_display e])
+            (fun_flat_to_display_list xs))`];;
 
 (* clos to displayLang *)
 
@@ -783,9 +784,9 @@ let commas_def,commas_ind = define_wf
 
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)
-(* the clauses in two quotations: es is (_)list and ((num # exp) list);
-   name_hint is mlstring and (mlstring list); xs is (exp list) and (_)list,
-   which one quotation cannot typecheck *)
+(* the clauses in two quotations: es is ((num # exp) list), (_)list and
+   (_#_)list; name_hint is mlstring and (mlstring list); xs is (exp list) and
+   (_)list, which one quotation cannot typecheck *)
 let clos_to_display_def,clos_to_display_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(clos_to_display ns h (closLang_Var t n) =
@@ -847,14 +848,8 @@ let clos_to_display_def,clos_to_display_ind = assume_definition_rec_clauses
           CONS (displayLang_Tuple [display_num_as_varn (h + i);
               displayLang_String (implode "<-"); clos_to_display ns h x])
               (clos_to_display_lets ns h (i - 1) xs)) /\
-    (clos_to_display_letrecs ns h i len [] = []) /\
-    (clos_to_display_letrecs ns h i len (CONS (vn,e) es) =
-        CONS (displayLang_Tuple [display_num_as_varn (h + i);
-            (\f xs. displayLang_Tuple (MAP f xs)) string_imp
-                (num_to_varn_list ((h + len) - 1) vn);
-            clos_to_display ns (h + len + vn) e])
-                (clos_to_display_letrecs ns h (i - 1) len es))`;
-   `clos_to_display ns h (closLang_Letrec name_hint n1 n2 es e) =
+    (clos_to_display_letrecs ns h i len [] = [])`;
+   `(clos_to_display ns h (closLang_Letrec name_hint n1 n2 es e) =
         displayLang_Item (SOME backend_common_None) (add_name_hint (implode
             "letrec") (presLang_commas name_hint))
             [(\f opt. match opt with NONE -> empty_item (implode "none")
@@ -866,7 +861,13 @@ let clos_to_display_def,clos_to_display_ind = assume_definition_rec_clauses
                   n2;
              displayLang_Tuple (clos_to_display_letrecs ns h (LENGTH es -
                  1) (LENGTH es) es);
-             clos_to_display ns h e]`];;
+             clos_to_display ns h e]) /\
+    (clos_to_display_letrecs ns h i len (CONS (vn,e) es) =
+        CONS (displayLang_Tuple [display_num_as_varn (h + i);
+            (\f xs. displayLang_Tuple (MAP f xs)) string_imp
+                (num_to_varn_list ((h + len) - 1) vn);
+            clos_to_display ns (h + len + vn) e])
+                (clos_to_display_letrecs ns h (i - 1) len es))`];;
 
 let clos_fun_to_display_def = new_definition
   `clos_fun_to_display names (n,argc,body) =
@@ -1526,10 +1527,10 @@ let num_sets_to_display_def = new_definition
 
 (* the clauses in 6 quotations: a is ((num list # cutsets # wordLang$prog #
    num # num) option) and num; b is (num option), binop and num; c is (num
-   list) and num; d is ((num # wordLang$prog # num # num) option) and num; p
-   is wordLang$prog and prog; p1 is wordLang$prog and prog; p2 is
-   wordLang$prog and prog; prog is prog and wordLang$prog, which one
-   quotation cannot typecheck *)
+   list) and num; d is ((num # wordLang$prog # num # num) option) and num;
+   mvs is ((num # num) list) and (_#_)list; p is wordLang$prog and prog; p1
+   is wordLang$prog and prog; p2 is wordLang$prog and prog; prog is prog and
+   wordLang$prog, which one quotation cannot typecheck *)
 let word_prog_to_display_def,word_prog_to_display_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

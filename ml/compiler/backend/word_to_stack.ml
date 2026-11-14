@@ -655,7 +655,7 @@ let compile_word_to_stack_def,compile_word_to_stack_ind = define_rec
 
 let word_to_stack_compile_def = new_definition
   `word_to_stack_compile asm_conf perf progs =
-     let k = asm_config_reg_count asm_conf - (5 + LENGTH
+     (let k = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
      // Since we increase the slots for the handler when perf=T, we need to
      // update the bitmap to ensure that GC leaves the new entries alone.
@@ -668,7 +668,8 @@ let word_to_stack_compile_def = new_definition
        (append (FST bitmaps),
         mk_word_to_stack_config (SND bitmaps) sfs,CONS 0 fs,CONS
           (raise_stub_location,raise_stub perf k) (CONS
-          (stackLang_store_consts_stub_location,store_consts_stub k) progs))`;;
+          (stackLang_store_consts_stub_location,store_consts_stub k)
+          progs)))`;;
 
 let word_to_stack_stub_names_def = new_definition
   `word_to_stack_stub_names one = [

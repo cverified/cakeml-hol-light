@@ -881,7 +881,8 @@ let lab_to_targetProof_state_rel_def = new_definition
               // because some parts of it can be freely chosen (e.g. the clock)
               k = 0 ==> lab_to_target_config_labels
              cfg = labs /\ lab_to_target_config_pos
-             cfg = LENGTH (prog_to_bytes code2) /\ ffi_names
+             cfg = LENGTH (prog_to_bytes code2)
+               /\ lab_to_target_config_ffi_names
              cfg = SOME (machine_config_ffi_names mc_conf)))) /\
      (!l1 l2 x.
         (lab_lookup l1 l2 labs = SOME x) ==> EVEN x) /\
@@ -3925,8 +3926,8 @@ let oracle_tie_ccache_residues = prove
    (!k. find_next_interference mc_conf (labSem_state_ffi s1) (k + l) ms1 =
         find_next_interference mc2 (labSem_state_ffi s1) k ms2)
           /\ machine_config_target
-   mc2 = machine_config_target mc_conf /\ ptr_reg
-   mc2 = machine_config_ptr_reg mc_conf /\ len_reg
+   mc2 = machine_config_target mc_conf /\ machine_config_ptr_reg
+   mc2 = machine_config_ptr_reg mc_conf /\ machine_config_len_reg
    mc2 = machine_config_len_reg mc_conf /\ machine_config_ccache_interfer
    mc2 = machine_config_ccache_interfer mc_conf /\ ~(target_get_pc
      (machine_config_target

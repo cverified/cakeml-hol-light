@@ -515,9 +515,10 @@ add_simp ctors_of_dec_def;;
 
 (* free vars *)
 
-(* the clauses in three quotations: defs is (_)list and ((varN # varN # exp)
-   list); es is (_)list and (exp list); ls is (exp list) and (_)list; pes is
-   ((pat # exp) list) and (_)list, which one quotation cannot typecheck *)
+(* the clauses in three quotations: defs is ((varN # varN # exp) list),
+   (_)list, (_#_)list and (_#_#_)list; es is (_)list and (exp list); ls is
+   (exp list) and (_)list; pes is ((pat # exp) list), (_)list and (_#_)list,
+   which one quotation cannot typecheck *)
 let FV_def,FV_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(FV (ast_Raise e) = FV e) /\
@@ -538,13 +539,13 @@ let FV_def,FV_ind = assume_definition_rec_clauses
     (FV_pes (CONS (p,e) pes) =
          (FV e DIFF (IMAGE Short (set_of_list (ast_pat_bindings p))))
              UNION FV_pes pes) /\
-    (FV_defs [] = {}) /\
-    (FV_defs (CONS (_,x,e) defs) =
-         (FV e DIFF {Short x}) UNION FV_defs defs)`;
+    (FV_defs [] = {})`;
    `(FV (ast_Con _ ls) = FV_list ls) /\
     (FV (ast_App _ es) = FV_list es)`;
-   `FV (ast_Letrec defs b) = (FV_defs defs UNION FV b) DIFF set_of_list
-    (MAP (Short o FST) defs)`];;
+   `(FV (ast_Letrec defs b) = (FV_defs defs UNION FV b) DIFF set_of_list
+    (MAP (Short o FST) defs)) /\
+    (FV_defs (CONS (_,x,e) defs) =
+         (FV e DIFF {Short x}) UNION FV_defs defs)`];;
 add_simp FV_def;;
 
 (* HOL4 semanticPrimitivesPropsScript.sml:663: the overload SFV, which the

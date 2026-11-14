@@ -59,7 +59,7 @@ let any_prog_INDUCT,any_prog_RECURSION = define_datatype
 
 let to_flat_all_def = new_definition
   `to_flat_all (c:backend_config) p =
-     let ps = [] in
+     (let ps = [] in
      let ps = APPEND ps [((implode
        "original source code"),backend_passes_Source p)] in
      let p = source_let_compile_decs p in
@@ -76,7 +76,7 @@ let to_flat_all_def = new_definition
      let ps = APPEND ps [((implode "after flat_pattern"),backend_passes_Flat
        p)] in
      let c = backend_config_source_conf_fupd (K c') c in
-       ((ps:(mlstring#'a any_prog) list),c,p)`;;
+       ((ps:(mlstring#'a any_prog) list),c,p))`;;
 
 let to_flat_thm = prove
  (`SND (to_flat_all c p) = to_flat c p`,
@@ -96,7 +96,7 @@ let to_clos_thm = prove
 
 let to_bvl_all_def = new_definition
   `to_bvl_all (c:backend_config) p =
-     let (ps,c,es0) = to_clos_all c p in
+     (let (ps,c,es0) = to_clos_all c p in
      let c0 = backend_config_clos_conf c in
      let es = clos_mti_compile (clos_to_bvl_config_do_mti c0)
        (clos_to_bvl_config_max_app c0) es0 in
@@ -146,7 +146,7 @@ let to_bvl_all_def = new_definition
        (clos_to_bvl_config_max_app c1) - 1)) c1 in
      let p = code_sort prog' in
      let c = backend_config_clos_conf_fupd (K c2) c in
-       ((ps:(mlstring#'a any_prog) list),c,p,func_names)`;;
+       ((ps:(mlstring#'a any_prog) list),c,p,func_names))`;;
 
 let to_bvl_thm = prove
  (`SND (to_bvl_all c p) = to_bvl c p`,
@@ -154,7 +154,7 @@ let to_bvl_thm = prove
 
 let to_bvi_all_def = new_definition
   `to_bvi_all (c:backend_config) p =
-     let (ps,c,p,names) = to_bvl_all c p in
+     (let (ps,c,p,names) = to_bvl_all c p in
      let start' = clos_to_bvl_config_start (backend_config_clos_conf c) in
      let c0 = backend_config_bvl_conf c in
      let limit' = bvl_to_bvi_config_inline_size_limit c0 in
@@ -202,7 +202,7 @@ let to_bvi_all_def = new_definition
          (bvl_to_bvi_config_next_name1_fupd (K n1)
          (bvl_to_bvi_config_bvi_inlines_fupd (K bl)
          (bvl_to_bvi_config_inlines_fupd (K l) c))))) c in
-      ((ps:(mlstring#'a any_prog) list),c,p,names)`;;
+      ((ps:(mlstring#'a any_prog) list),c,p,names))`;;
 
 let to_bvi_thm = prove
  (`SND (to_bvi_all c p) = to_bvi c p`,
@@ -279,7 +279,7 @@ let word_internal_all_def = new_definition
 
 let to_word_all_def = new_definition
   `to_word_all asm_conf (c:backend_config) p =
-     let (ps,c,p,names) = to_data_all c p in
+     (let (ps,c,p,names) = to_data_all c p in
      let word_conf = backend_config_word_to_word_conf c in
      let data_conf = backend_config_data_conf c in
      let data_conf = data_to_word_config_has_fp_tern_fupd (K
@@ -308,7 +308,7 @@ let to_word_all_def = new_definition
        names)] in
      let c = backend_config_word_to_word_conf_fupd (\c.
        word_to_word_config_col_oracle_fupd (K col) c) c in
-       ((ps:(mlstring#'a any_prog) list),c,p,names)`;;
+       ((ps:(mlstring#'a any_prog) list),c,p,names))`;;
 
 let LENGTH_next_n_oracle = prove
  (`next_n_oracle n col = (a,b) ==> LENGTH a = n`,
@@ -342,7 +342,7 @@ let to_stack_thm = prove
 
 let to_lab_all_def = new_definition
   `to_lab_all asm_conf (c:backend_config) p =
-     let (ps,bm,c,p,names) = to_stack_all asm_conf c p in
+     (let (ps,bm,c,p,names) = to_stack_all asm_conf c p in
      let stack_conf = backend_config_stack_conf c in
      let data_conf = backend_config_data_conf c in
      let max_heap = 2 * max_heap_limit (:'a) (backend_config_data_conf c) -
@@ -369,7 +369,7 @@ let to_lab_all_def = new_definition
      let ps = APPEND ps [((implode "after stack_to_lab"),backend_passes_Lab
        p names)] in
        ((ps:(mlstring#'a any_prog) list),(bm:('a word) list),c,(p:('a
-         sec) list),names)`;;
+         sec) list),names))`;;
 
 let to_lab_thm = prove
  (`SND (to_lab_all asm_conf (c:backend_config) p) = to_lab asm_conf c p`,
@@ -403,7 +403,7 @@ let from_lab_thm = prove
 
 let from_stack_all_def = new_definition
   `from_stack_all ps (asm_conf:'a asm_config) (c:backend_config) names p bm =
-     let stack_conf = backend_config_stack_conf c in
+     (let stack_conf = backend_config_stack_conf c in
      let data_conf = backend_config_data_conf c in
      let max_heap = 2 * max_heap_limit (:'a) (backend_config_data_conf c) -
        1 in
@@ -428,7 +428,7 @@ let from_stack_all_def = new_definition
      let p = MAP prog_to_section prog in
      let ps = APPEND ps [((implode "after stack_to_lab"),backend_passes_Lab
        p names)] in
-       from_lab_all ps asm_conf c names p bm`;;
+       from_lab_all ps asm_conf c names p bm)`;;
 
 let from_stack_thm = prove
  (`SND (from_stack_all ps asm_conf c names p bm) = from_stack asm_conf c
@@ -450,7 +450,7 @@ let from_word_thm = prove
 
 let from_word_0_all_def = new_definition
   `from_word_0_all ps asm_conf (c:backend_config) names p =
-     let word_conf = backend_config_word_to_word_conf c in
+     (let word_conf = backend_config_word_to_word_conf c in
      let (p,ps) = word_internal_all asm_conf ps names p in
      let reg_count = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
@@ -467,7 +467,7 @@ let from_word_0_all_def = new_definition
        names)] in
      let c = backend_config_word_to_word_conf_fupd (\c.
        word_to_word_config_col_oracle_fupd (K col) c) c in
-       from_word_all ps asm_conf c names p`;;
+       from_word_all ps asm_conf c names p)`;;
 
 let from_word_0_thm = prove
  (`SND (from_word_0_all ps asm_conf c names p) = from_word_0 asm_conf c names

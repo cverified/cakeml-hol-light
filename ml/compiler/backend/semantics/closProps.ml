@@ -250,8 +250,9 @@ let contains_App_SOME_EXISTS = prove
   max_app [x]) ls`,
   CHEAT_TAC);;
 
-(* the clauses in two quotations: x2 is exp, (exp list) and (_)list; xs is
-   (exp list) and (_)list, which one quotation cannot typecheck *)
+(* the clauses in two quotations: fns is ((num # exp) list) and (_#_)list; x2
+   is exp, (exp list) and (_)list; xs is (_)list and (exp list), which one
+   quotation cannot typecheck *)
 let every_Fn_SOME_def,every_Fn_SOME_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(every_Fn_SOME [] <=> T) /\
@@ -298,8 +299,9 @@ let every_Fn_SOME_APPEND = prove
   CHEAT_TAC);;
 add_simp every_Fn_SOME_APPEND;;
 
-(* the clauses in two quotations: x2 is exp, (exp list) and (_)list; xs is
-   (exp list) and (_)list, which one quotation cannot typecheck *)
+(* the clauses in two quotations: fns is ((num # exp) list) and (_#_)list; x2
+   is exp, (exp list) and (_)list; xs is (_)list and (exp list), which one
+   quotation cannot typecheck *)
 let every_Fn_vs_NONE_def,every_Fn_vs_NONE_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(every_Fn_vs_NONE [] <=> T) /\
@@ -351,8 +353,9 @@ let every_Fn_vs_NONE_APPEND = prove
   CHEAT_TAC);;
 add_simp every_Fn_vs_NONE_APPEND;;
 
-(* the clauses in two quotations: x2 is exp, (exp list) and (_)list; xs is
-   (exp list) and (_)list, which one quotation cannot typecheck *)
+(* the clauses in two quotations: fns is ((num # exp) list) and (_#_)list; x2
+   is exp, (exp list) and (_)list; xs is (_)list and (exp list), which one
+   quotation cannot typecheck *)
 let every_Fn_vs_SOME_def,every_Fn_vs_SOME_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(every_Fn_vs_SOME [] <=> T) /\
@@ -452,7 +455,7 @@ let no_mti_def,no_mti_ind = define_shaped_rec_clauses
         ALL (\x. FST x = 1 /\ no_mti (SND x)) funs`];;
 
 (* the clauses in two quotations: x2 is exp, (exp list) and (_)list; xs is
-   (exp list) and (_)list, which one quotation cannot typecheck *)
+   (_)list and (exp list), which one quotation cannot typecheck *)
 let fv_def,fv_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(fv n [] <=> F) /\
@@ -1222,8 +1225,8 @@ let rsgc_free_def = new_definition
      | Rerr (Rraise v) -> vsgc_free v`;;
 add_simp rsgc_free_def;;
 
-(* the clauses in two quotations: binds is (exp list) and ((num # exp) list),
-   which one quotation cannot typecheck *)
+(* the clauses in two quotations: binds is (exp list), ((num # exp) list) and
+   (_#_)list, which one quotation cannot typecheck *)
 (* the termination relation that HOL4 gives is
      MEASURE closLang_exp_size
    which is not one that HOL Light takes here, so the
@@ -1948,8 +1951,8 @@ let evaluate_code_SUBMAP = prove
     SUBMAP_rel s1 s2))`,
   CHEAT_TAC);;
 
-(* the clauses in two quotations: es is (exp list) and ((num # exp) list),
-   which one quotation cannot typecheck *)
+(* the clauses in two quotations: es is (exp list), ((num # exp) list) and
+   (_#_)list, which one quotation cannot typecheck *)
 let obeys_max_app_def,obeys_max_app_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(obeys_max_app m (closLang_Var _ _) <=> T) /\
@@ -1972,8 +1975,8 @@ let obeys_max_app_def,obeys_max_app_ind = assume_definition_rec_clauses
 (* HOL4 closPropsScript.sml:3562-3564: a theorem that HOL4 states as the
    value of an ML expression: obeys_max_app_def *)
 
-(* the clauses in two quotations: es is (exp list) and ((num # exp) list),
-   which one quotation cannot typecheck *)
+(* the clauses in two quotations: es is (exp list), ((num # exp) list) and
+   (_#_)list, which one quotation cannot typecheck *)
 let no_Labels_def,no_Labels_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(no_Labels (closLang_Var _ _) <=> T) /\
@@ -2083,8 +2086,9 @@ let any_dests_call_dests_app_dests = prove
   (app_call_dests (SOME F)) xs`,
   CHEAT_TAC);;
 
-(* the clauses in three quotations: es is (exp list) and ((num # exp) list);
-   l is num and (num option), which one quotation cannot typecheck *)
+(* the clauses in three quotations: es is (exp list), ((num # exp) list) and
+   (_#_)list; l is num and (num option), which one quotation cannot typecheck
+   *)
 let closProps_get_code_labels_def,closProps_get_code_labels_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

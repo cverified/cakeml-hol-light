@@ -43,20 +43,20 @@ let buffer_FIELDS = define_record "buffer"
 
 let buffer_flush_def = new_definition
   `buffer_flush cb (w1:'a word) w2 =
-     if buffer_position cb = w1 /\ buffer_position cb + (n2w (dimindex (:'b)
-       DIV 8)) * n2w (LENGTH (buffer_buffer cb)) = w2 then
+     (if buffer_position cb = w1 /\ buffer_position cb + (n2w (dimindex
+       (:'b) DIV 8)) * n2w (LENGTH (buffer_buffer cb)) = w2 then
        SOME ((buffer_buffer cb:('b word) list),buffer_buffer_fupd (K [])
          (buffer_position_fupd (K w2)
              cb))
-     else NONE`;;
+     else NONE)`;;
 
 let buffer_write_def = new_definition
   `buffer_write cb (w:'a word) (b:'b word) =
-     if buffer_position cb + (n2w (dimindex (:'b) DIV 8)) * n2w (LENGTH
+     (if buffer_position cb + (n2w (dimindex (:'b) DIV 8)) * n2w (LENGTH
        (buffer_buffer cb)) = w /\ 0 < buffer_space_left cb then
        SOME (buffer_space_left_fupd (K (buffer_space_left cb - 1))
          (buffer_buffer_fupd (K (APPEND (buffer_buffer cb) [b])) cb))
-     else NONE`;;
+     else NONE)`;;
 
 let is_fwd_ptr_def = new_definition
   `is_fwd_ptr x1 =
@@ -1104,8 +1104,9 @@ let wordSem_fix_clock_IMP =
 if concl wordSem_fix_clock_IMP <> `T` then
   cake_term_facts := wordSem_fix_clock_IMP :: (!cake_term_facts);;
 
-(* the clauses in two quotations: names is cutsets and num_set; v is num and
-   store_name, which one quotation cannot typecheck *)
+(* the clauses in two quotations: moves is ((num # num) list) and (_#_)list;
+   names is cutsets and num_set; v is num and store_name, which one quotation
+   cannot typecheck *)
 let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(wordSem_evaluate ((wordLang_Skip:'a
@@ -1427,7 +1428,7 @@ let wordSem_fix_clock_evaluate = prove
 
 let wordSem_semantics_def = new_definition
   `wordSem_semantics (s:('a,'c,'ffi)wordSem_state) start' =
-   let prog = wordLang_Call NONE (SOME start') [0] NONE in
+   (let prog = wordLang_Call NONE (SOME start') [0] NONE in
    if ?k. match FST (wordSem_evaluate (prog,wordSem_state_clock_fupd (K k)
      s)) with SOME (wordSem_Exception _ _) -> T
           | SOME (wordSem_Result ret _) -> ~(ret = wordLang_Loc 1 0)
@@ -1450,15 +1451,15 @@ let wordSem_semantics_def = new_definition
           (build_lprefix_lub
             (IMAGE (\k. fromList (ffi_state_io_events (wordSem_state_ffi
                (SND (wordSem_evaluate (prog,wordSem_state_clock_fupd (K
-                 k) s)))))) UNIV))`;;
+                 k) s)))))) UNIV)))`;;
 
 let word_lang_safe_for_space_def = new_definition
   `word_lang_safe_for_space (s:('a,'c,'ffi)wordSem_state) start' =
-     let prog = wordLang_Call NONE (SOME start') [0] NONE in
+     (let prog = wordLang_Call NONE (SOME start') [0] NONE in
        (!k res t. wordSem_evaluate (prog,wordSem_state_clock_fupd (K k) s) =
          (res,t) ==>
          (?max'. wordSem_state_stack_max t = SOME max' /\ max' <=
-           wordSem_state_stack_limit t))`;;
+           wordSem_state_stack_limit t)))`;;
 
 (* clean up *)
 

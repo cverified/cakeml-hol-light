@@ -466,27 +466,27 @@ let word_bignumProof_compile_exp_thm = prove
 (* [local] *)
 let evaluate_SeqTemp = prove
  (`wordSem_evaluate (SeqTemp i r p,t) =
-   if Temp (n2w r) IN FDOM (wordSem_state_store t) then
+   (if Temp (n2w r) IN FDOM (wordSem_state_store t) then
       wordSem_evaluate (p,wordSem_set_var i (FAPPLY (wordSem_state_store t)
         (Temp (n2w r))) t)
-   else wordSem_evaluate (SeqTemp i r p,t)`,
+   else wordSem_evaluate (SeqTemp i r p,t))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_SeqTempImm = prove
  (`wordSem_evaluate (SeqTempImm i ri p,t) =
-   if !r. ri = Reg r ==> Temp (n2w r) IN FDOM (wordSem_state_store t) then
+   (if !r. ri = Reg r ==> Temp (n2w r) IN FDOM (wordSem_state_store t) then
       wordSem_evaluate (p,wordSem_set_var i (match ri with Imm w ->
         wordLang_Word w
                              | Reg r -> FAPPLY (wordSem_state_store t) (Temp
                                (n2w r))) t)
-   else wordSem_evaluate (SeqTempImm i ri p,t)`,
+   else wordSem_evaluate (SeqTempImm i ri p,t))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_SeqTempImmNot = prove
  (`wordSem_evaluate (SeqTempImmNot i ri p,t) =
-   if !r. ri = Reg r ==> Temp (n2w r) IN FDOM (wordSem_state_store t) /\
+   (if !r. ri = Reg r ==> Temp (n2w r) IN FDOM (wordSem_state_store t) /\
                          (?w. FAPPLY (wordSem_state_store t) (Temp (n2w r))
                            = wordLang_Word w) then
       wordSem_evaluate (p,wordSem_set_var i (match ri with Imm w ->
@@ -494,7 +494,7 @@ let evaluate_SeqTempImmNot = prove
                              | Reg r -> (match FAPPLY (wordSem_state_store
                                t) (Temp (n2w r)) with wordLang_Word w ->
                                wordLang_Word (word_not w))) t)
-   else wordSem_evaluate (SeqTempImmNot i ri p,t)`,
+   else wordSem_evaluate (SeqTempImmNot i ri p,t))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -855,9 +855,9 @@ let Corr_If = prove
 
 let loop_app_def = new_definition
   `loop_app f g x =
-     match f x with INL s -> (INL (word_bignumProof_dec_clock s),(g x
+     (match f x with INL s -> (INL (word_bignumProof_dec_clock s),(g x
        /\ ~(word_bignumProof_state_clock s = 0)))
-     | INR s -> (INR s,g x)`;;
+     | INR s -> (INR s,g x))`;;
 
 (* [local] *)
 let Corr_LoopBody = prove
@@ -869,8 +869,8 @@ let Corr_LoopBody = prove
 
 let tick_before_def = new_definition
   `tick_before vs f s =
-     if word_bignumProof_state_clock s = 0 then (s,F) else f (delete_vars
-       vs (word_bignumProof_dec_clock s))`;;
+     (if word_bignumProof_state_clock s = 0 then (s,F) else f
+       (delete_vars vs (word_bignumProof_dec_clock s)))`;;
 
 (* [local] *)
 let Corr_Loop_lemma = prove

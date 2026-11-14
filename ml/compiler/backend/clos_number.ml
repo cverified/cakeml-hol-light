@@ -20,9 +20,9 @@ let _ = cake_theory "clos_number"
 
 (* add fresh code locations *)
 
-(* the clauses in 4 quotations: t is tra, mlstring and (mlstring list); x2 is
-   exp, (exp list) and (_)list; xs is (_)list and (exp list), which one
-   quotation cannot typecheck *)
+(* the clauses in 4 quotations: fns is ((num # exp) list) and (_#_)list; t is
+   tra, mlstring and (mlstring list); x2 is exp, (exp list) and (_)list; xs
+   is (_)list and (exp list), which one quotation cannot typecheck *)
 let renumber_code_locs_def,renumber_code_locs_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

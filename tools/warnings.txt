@@ -103,8 +103,8 @@ clos_op	Overload dest_Op_Constant
 clos_ticks	ML code skipped: val remove_ticks_ind = theorem "remove_ticks_ind";
 clos_known	ML code skipped: val get_size_aux_ind = theorem "get_size_aux_ind";
 clos_known	ML code skipped: val val_approx_size_def = definition "val_approx_size_def"
-clos_known	line 470 is 87 characters
-clos_known	line 471 is 80 characters
+clos_known	line 472 is 87 characters
+clos_known	line 473 is 80 characters
 clos_mti	ML code skipped: val collect_args_ind = theorem "collect_args_ind";
 clos_mti	ML code skipped: val collect_apps_ind = theorem "collect_apps_ind";
 clos_mti	ML code skipped: val intro_multi_ind = theorem "intro_multi_ind";
@@ -185,9 +185,9 @@ linear_scan	line 871 is 99 characters
 word_alloc	Overload Move0
 word_alloc	Overload Move1
 word_alloc	line 139 is 103 characters
-word_alloc	line 1150 is 80 characters
-word_alloc	line 1564 is 81 characters
-word_alloc	line 1707 is 91 characters
+word_alloc	line 1151 is 80 characters
+word_alloc	line 1565 is 81 characters
+word_alloc	line 1708 is 91 characters
 word_cse	ML code skipped: val _ = Theory.delete_const "Seqs";
 word_cse	line 582 is 81 characters
 word_inst	line 360 is 83 characters
@@ -398,12 +398,12 @@ infer	ML code skipped: val type_name_check_subst_alt =   type_name_check_subst_d
 infer	Overload Tem
 infer	line 146 is 124 characters
 infer	line 155 is 85 characters
-infer	line 890 is 86 characters
-infer	line 919 is 87 characters
-infer	line 922 is 87 characters
-infer	line 927 is 86 characters
-infer	line 1064 is 87 characters
-infer	line 1089 is 82 characters
+infer	line 886 is 86 characters
+infer	line 915 is 87 characters
+infer	line 918 is 87 characters
+infer	line 923 is 86 characters
+infer	line 1065 is 87 characters
+infer	line 1090 is 82 characters
 lexer_fun	ML code skipped: val listeq = CaseEq "list" val optioneq = CaseEq "option"
 lexer_fun	line 353 is 80 characters
 lexer_impl	ML code skipped: val tac =  full_simp_tac (srw_ss()) [char_le_def, char_lt_de
@@ -455,7 +455,7 @@ gen_gc_partial	ML code skipped: val heap_lookup_heap_expand = isSomeDataElement_
 wordSem	ML code skipped: val state_component_equality = theorem"state_component_equal
 wordSem	ML code skipped: val s = ``(s:('a,'c,'ffi) wordSem$state)``
 wordSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-wordSem	line 1232 is 86 characters
+wordSem	line 1233 is 86 characters
 targetSem	line 62 is 86 characters
 targetSem	line 556 is 83 characters
 labSem	Overload read_reg
@@ -1738,9 +1738,9 @@ lab_to_targetProof	ML code skipped: Finalise IMP_state_rel_make_init;
 lab_to_targetProof	Theorem make_init_filter_skip: HOL Light does not read the statement
 lab_to_targetProof	Theorem semantics_compile_lemma': HOL Light does not read the statement
 lab_to_targetProof	Theorem semantics_compile: HOL Light does not read the statement
-lab_to_targetProof	line 3209 is 92 characters
-lab_to_targetProof	line 3250 is 84 characters
-lab_to_targetProof	line 4449 is 93 characters
+lab_to_targetProof	line 3210 is 92 characters
+lab_to_targetProof	line 3251 is 84 characters
+lab_to_targetProof	line 4450 is 93 characters
 flat_elimProof	ML code skipped: val find_v_globals_ind = theorem "find_v_globals_ind";
 flat_elimProof	ML code skipped: val find_refs_globals_ind = theorem "find_refs_globals_ind";
 flat_elimProof	ML code skipped: val find_result_globals_ind = theorem "find_result_globals_i

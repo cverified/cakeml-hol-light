@@ -47,17 +47,18 @@ let infer_t_CASE = new_recursive_definition infer_t_RECURSION
 let _ = size_thms "mlstring";;
 let _ = size_thms "namespace";;
 let _ = size_thms "t";;
-(* the clauses in two quotations: xs is (('m , namespace) alist) and (('n ,
-   'v) alist), which one quotation cannot typecheck *)
+(* the clauses in three quotations: xs is (_#_)list, (('m , namespace)
+   alist), (_#_#_)list and (('n , 'v) alist), which one quotation cannot
+   typecheck *)
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_tyname_def,get_tyname_ind = define_wf_clauses
   `MEASURE (\(x0,x1).      namespace_size (pair_size (\x. 0) t_size)
   mlstring_size mlstring_size x1)`
-  [`(get_tyname n (Bind [] []) = NONE) /\
-    (get_tyname n (Bind [] (CONS (m,ys) xs)) =
+  [`get_tyname n (Bind [] []) = NONE`;
+   `get_tyname n (Bind [] (CONS (m,ys) xs)) =
       (match get_tyname n ys with NONE -> get_tyname n (Bind [] xs)
-       | SOME x -> SOME (strcat (strcat m (implode ".")) x)))`;
+       | SOME x -> SOME (strcat (strcat m (implode ".")) x))`;
    `get_tyname n (Bind (CONS (tyname,_,t) xs) m) =
       if (match t with Tapp _ m -> m = n | _ -> F) then
         SOME tyname

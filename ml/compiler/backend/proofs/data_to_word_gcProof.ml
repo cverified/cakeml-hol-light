@@ -1757,9 +1757,9 @@ let glob_real_inv = prove
 
 let do_partial_def = new_definition
   `do_partial c s =
-     match data_to_word_config_gc_kind c with data_to_word_Generational l ->
-       word_gen_gc_can_do_partial l s
-     | _ -> F`;;
+     (match data_to_word_config_gc_kind c with data_to_word_Generational l
+       -> word_gen_gc_can_do_partial l s
+     | _ -> F)`;;
 
 let heap_segment_IMP_split = prove
  (`heap_segment (m,n) heap = SOME (x1,x2,x3) ==>
@@ -2105,14 +2105,14 @@ let state_rel_init = prove
        t = [] /\ wordSem_state_stack_max
        t = SOME 1 /\ wordSem_state_locals_size
        t = SOME 0 /\ wordSem_state_stack_limit
-       t = stack_limit lim /\ data_to_word_config_len_size
+       t = limits_stack_limit lim /\ data_to_word_config_len_size
        c = limits_length_limit lim /\ data_to_word_config_be
        c = wordSem_state_be t /\
        (limits_arch_64_bit lim <=> dimindex (:'a) = 64) /\ limits_heap_limit
        lim * w2n (bytes_in_word:'a word) < dimword (:'a) /\ FAPPLY
          (wordSem_state_store
        t) HeapLength = wordLang_Word (bytes_in_word * n2w (limits_heap_limit
-         lim)) /\ has_fp_ops
+         lim)) /\ limits_has_fp_ops
        lim = data_to_word_config_has_fp_ops c /\ limits_has_fp_tops
        lim = data_to_word_config_has_fp_tern c /\
        conf_ok (:'a) c /\
@@ -3291,13 +3291,13 @@ let gc_lemma_gen = prove
         (alloc_size k)) /\
       cut_envs (adjust_sets names) (wordSem_state_locals t) = SOME y ==>
       (?t2 wl m st w1 w2 stack'. wordSem_state_gc_fun
-        t0 (wordSem_enc_stack (stack t0),wordSem_state_memory
+        t0 (wordSem_enc_stack (wordSem_state_stack t0),wordSem_state_memory
           t0,wordSem_state_mdomain t0,wordSem_state_store t0) =
           SOME (wl,m,st) /\
-        wordSem_dec_stack wl (stack t0) = SOME stack' /\
+        wordSem_dec_stack wl (wordSem_state_stack t0) = SOME stack' /\
         wordSem_pop_env (wordSem_state_memory_fupd (K m)
-          (wordSem_state_store_fupd (K st) (stack_fupd (K stack') t0))) = SOME
-          t2 /\
+          (wordSem_state_store_fupd (K st) (wordSem_state_stack_fupd (K stack')
+          t0))) = SOME t2 /\
         FLOOKUP (wordSem_state_store t2) (Temp (n2w 29)) = FLOOKUP
           (wordSem_state_store t) (Temp (n2w 29)) /\
         FLOOKUP (wordSem_state_store t2) AllocSize = SOME (wordLang_Word

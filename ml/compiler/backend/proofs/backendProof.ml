@@ -1255,22 +1255,22 @@ max_print_depth := 20
 
 let compute_stack_frame_sizes_def = new_definition
   `compute_stack_frame_sizes c word_prog =
-     let reg_count = asm_config_reg_count c - LENGTH (asm_config_avoid_regs
+     (let reg_count = asm_config_reg_count c - LENGTH (asm_config_avoid_regs
        c) - 5 in
        sptree_mapi (\n (arg_count,prog).
                let stack_arg_count' = arg_count - reg_count in let
                    stack_var_count = MAX ((max_var prog DIV 2 + 1) -
                      reg_count) stack_arg_count' in if stack_var_count = 0 then
                      0 else stack_var_count + 1)
-         (fromAList (word_prog))`;;
+         (fromAList (word_prog)))`;;
 
 let compute_stack_frame_sizes_thm = prove
  (`compute_stack_frame_sizes c word_prog =
-     let k = asm_config_reg_count c - LENGTH (asm_config_avoid_regs c) - 5
+     (let k = asm_config_reg_count c - LENGTH (asm_config_avoid_regs c) - 5
        in
        sptree_mapi (\n (arg_count,prog).
          FST (SND (word_to_stack_compile_prog c F prog arg_count k
-           (misc_Nil,0)))) (fromAList word_prog)`,
+           (misc_Nil,0)))) (fromAList word_prog))`,
   CHEAT_TAC);;
 
 let is_64_bits_def = new_definition
@@ -1278,7 +1278,7 @@ let is_64_bits_def = new_definition
 
 let is_safe_for_space_def = new_definition
   `backendProof_is_safe_for_space ffi asm_conf c prog stack_heap_limit =
-     let data_prog = FST (SND (to_data c prog)) in
+     (let data_prog = FST (SND (to_data c prog)) in
      let word_prog = FST (SND (to_word (asm_conf:'a asm_config) c prog)) in
        data_lang_safe_for_space ffi (fromAList data_prog)
          (compute_limits (data_to_word_config_len_size
@@ -1288,7 +1288,7 @@ let is_safe_for_space_def = new_definition
            stack_heap_limit)
          (compute_stack_frame_sizes asm_conf word_prog) InitGlobals_location
            /\ ~(data_to_word_config_gc_kind (backend_config_data_conf
-       c) = backend_common_None)`;;
+       c) = backend_common_None))`;;
 
 let compile_word_conf_eq = prove
  (`!c prog code data conf w_conf stack_prog stack_names.

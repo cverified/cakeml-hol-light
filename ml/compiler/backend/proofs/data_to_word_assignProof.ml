@@ -677,10 +677,10 @@ let evaluate_SilentFFI_3 = prove
 let size_of_app_Number = prove
  (`!xs ys lims i refs seen.
      size_of lims (APPEND xs (CONS (dataSem_Number i) ys)) refs seen =
-     let (n,refs',seen') = size_of lims (APPEND xs ys) refs seen in
+     (let (n,refs',seen') = size_of lims (APPEND xs ys) refs seen in
      let k = (if small_num (limits_arch_64_bit lims) i then 0
              else bignum_size (limits_arch_64_bit lims) i) in
-     (n + k,refs',seen')`,
+     (n + k,refs',seen'))`,
   CHEAT_TAC);;
 
 let toList_delete_split = prove

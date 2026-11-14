@@ -157,7 +157,7 @@ let flatSem_do_eq_def,flatSem_do_eq_ind = assume_definition_rec_clauses
 (* Do an application *)
 let flatSem_do_opapp_def = new_definition
   `flatSem_do_opapp vs =
-   match vs with [flatSem_Closure env n e; v] ->
+   (match vs with [flatSem_Closure env n e; v] ->
        SOME (flatSem_environment_v_fupd (\env. CONS (n,v) env) env,e)
      | [flatSem_Recclosure env funs n; v] ->
        if ALL_DISTINCT (MAP FST funs) then
@@ -166,7 +166,7 @@ let flatSem_do_opapp_def = new_definition
            funs env (flatSem_environment_v env)))) env,e)
           | NONE -> NONE)
        else NONE
-     | _ -> NONE`;;
+     | _ -> NONE)`;;
 
 let _ = size_thms "flatSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -870,8 +870,9 @@ let flatSem_fix_clock_IMP =
 if concl flatSem_fix_clock_IMP <> `T` then
   cake_term_facts := flatSem_fix_clock_IMP :: (!cake_term_facts);;
 
-(* the clauses in two quotations: n is varN and (varN option), which one
-   quotation cannot typecheck *)
+(* the clauses in two quotations: es is (_)list and (exp list); funs is
+   ((varN # varN # exp) list) and (_#_)list; n is varN and (varN option),
+   which one quotation cannot typecheck *)
 let flatSem_evaluate_def,flatSem_evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(flatSem_evaluate (env:flatSem_v flatSem_environment)

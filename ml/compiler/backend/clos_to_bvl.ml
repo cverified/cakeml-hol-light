@@ -483,9 +483,9 @@ let force_thunk_code_def = new_definition
            [bvl_Var 0; bvl_Var 1]] (bvl_Var 1))):bvl_exp)`;;
 
 let _ = size_thms "closLang_exp";;
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (_)list; xs2 is (exp list) and (_)list, which one
-   quotation cannot typecheck *)
+(* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
+   t is tra, mlstring and (mlstring list); xs is (_)list and (exp list); xs2
+   is (exp list) and (_)list, which one quotation cannot typecheck *)
 let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -585,9 +585,9 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
 (* HOL4 clos_to_bvlScript.sml:495: ML code, not ported *)
 
 let _ = size_thms "bvl_exp";;
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (_)list; xs2 is (exp list) and (_)list, which one
-   quotation cannot typecheck *)
+(* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
+   t is tra, mlstring and (mlstring list); xs is (exp list) and (_)list; xs2
+   is (exp list) and (_)list, which one quotation cannot typecheck *)
 let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(compile_exp_sing max_app (closLang_Var t v) aux = (((bvl_Var
@@ -805,7 +805,7 @@ let chain_exps_def,chain_exps_ind = define_wf
 (* c.max_app must be the same each time this is called *)
 let compile_common_def = new_definition
   `compile_common c es =
-     let es = clos_mti_compile (clos_to_bvl_config_do_mti c)
+     (let es = clos_mti_compile (clos_to_bvl_config_do_mti c)
        (clos_to_bvl_config_max_app c) es in
      // Add space for functions to call the expressions
      let loc = clos_to_bvl_config_next_loc c + MAX 1 (LENGTH es) in
@@ -822,7 +822,7 @@ let compile_common_def = new_definition
          (clos_to_bvl_config_known_conf_fupd (K kc)
          (clos_to_bvl_config_next_loc_fupd (K n) (clos_to_bvl_config_start_fupd
          (K (clos_to_bvl_config_next_loc c)) c))),
-        prog)`;;
+        prog))`;;
 
 let add_src_names_def,add_src_names_ind = define_rec
   `(add_src_names n [] l = l) /\
@@ -909,7 +909,7 @@ let make_name_alist_def = new_definition
 
 let clos_to_bvl_compile_def = new_definition
   `clos_to_bvl_compile c0 es =
-     let (c,prog) = compile_common c0 es in
+     (let (c,prog) = compile_common c0 es in
      let n = num_stubs (clos_to_bvl_config_max_app c) in
      let init_stubs' = toAList (clos_to_bvl_init_code
        (clos_to_bvl_config_max_app c)) in
@@ -924,7 +924,7 @@ let clos_to_bvl_compile_def = new_definition
        (clos_to_bvl_config_next_loc
                         c0) (LENGTH es) in
      let c = clos_to_bvl_config_start_fupd (K (n - 1)) c in
-       (c,code_sort prog',func_names)`;;
+       (c,code_sort prog',func_names))`;;
 
 let extract_name_def = define_cases
   `(extract_name [] = (0,[])) /\
@@ -952,7 +952,7 @@ let clos_to_bvl_compile_inc_def = new_definition
 
 let clos_to_bvl_clos_to_bvl_compile_inc_def = new_definition
   `clos_to_bvl_clos_to_bvl_compile_inc c p =
-     let p = cond_mti_compile_inc (clos_to_bvl_config_do_mti c)
+     (let p = cond_mti_compile_inc (clos_to_bvl_config_do_mti c)
        (clos_to_bvl_config_max_app c) p in
      let (n,p) = ignore_table clos_number_compile_inc
        (clos_to_bvl_config_next_loc c) p in
@@ -967,7 +967,7 @@ let clos_to_bvl_clos_to_bvl_compile_inc_def = new_definition
      let c = clos_to_bvl_config_call_state_fupd (K (c',[])) c in
      let p = clos_annotate_compile_inc p in
      let p = clos_to_bvl_compile_inc (clos_to_bvl_config_max_app c) p in
-       (c,p)`;;
+       (c,p))`;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

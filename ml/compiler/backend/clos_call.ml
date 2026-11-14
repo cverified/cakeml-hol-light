@@ -22,9 +22,9 @@ needs "lib/sptree.ml";;
 let _ = cake_theory "clos_call"
   ["closLang"; "db_vars"];;
 
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (_)list; xs2 is (exp list) and (_)list, which one
-   quotation cannot typecheck *)
+(* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
+   t is tra, mlstring and (mlstring list); xs is (_)list and (exp list); xs2
+   is (exp list) and (_)list, which one quotation cannot typecheck *)
 let free_def,free_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(clos_call_free [] = ([],db_vars_Empty)) /\
@@ -83,9 +83,9 @@ let free_def,free_ind = assume_definition_rec_clauses
 
 (* HOL4 clos_callScript.sml:63: ML code, not ported *)
 
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (_)list; xs2 is (exp list) and (_)list, which one
-   quotation cannot typecheck *)
+(* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
+   t is tra, mlstring and (mlstring list); xs is (exp list) and (_)list; xs2
+   is (exp list) and (_)list, which one quotation cannot typecheck *)
 let free_sing_def,free_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(free_sing (closLang_Var t v) = ((closLang_Var t
@@ -221,8 +221,9 @@ let exp3_size_MAP_SND = prove
   (\x. x) closLang_exp_size) fns`,
   CHEAT_TAC);;
 
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (_)list, which one quotation cannot typecheck *)
+(* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
+   t is tra, mlstring and (mlstring list); xs is (_)list and (exp list),
+   which one quotation cannot typecheck *)
 let calls_def,calls_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(calls [] g = ([],g)) /\
@@ -307,8 +308,9 @@ let calls_def,calls_ind = assume_definition_rec_clauses
                ([closLang_Letrec t loc_opt ws (ZIP (MAP FST fns) fns1)
                    (HD e1)],g)`];;
 
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (_)list, which one quotation cannot typecheck *)
+(* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
+   t is tra, mlstring and (mlstring list); xs is (exp list) and (_)list,
+   which one quotation cannot typecheck *)
 let calls_sing_def,calls_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(calls_sing (closLang_Var t v) g =

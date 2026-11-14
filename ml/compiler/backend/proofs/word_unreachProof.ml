@@ -63,13 +63,13 @@ let copy_vars_append = prove
 
 let evaluate_Move = prove
  (`wordSem_evaluate (wordLang_Move pri moves,s) =
-   if ALL_DISTINCT (MAP FST moves) then
+   (if ALL_DISTINCT (MAP FST moves) then
      match wordSem_get_vars (MAP SND moves) s with
        NONE -> (SOME wordSem_Error,s)
      | SOME l -> (NONE,wordSem_state_locals_fupd (K
        (word_unreachProof_copy_vars moves (wordSem_state_locals s)
        (wordSem_state_locals s))) s)
-   else (SOME wordSem_Error,s)`,
+   else (SOME wordSem_Error,s))`,
   CHEAT_TAC);;
 
 let copy_vars_MEM_acc = prove

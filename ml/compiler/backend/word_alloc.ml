@@ -366,9 +366,10 @@ let loop_setup_def = new_definition
 
 (* the clauses in 7 quotations: b is num and binop; body is wordLang$prog and
    prog; e2 is wordLang$prog and prog; e3 is wordLang$prog and prog; h is
-   ((num # wordLang$prog # num # num) option) and prog; n is store_name and
-   num; s1 is wordLang$prog and prog; s2 is wordLang$prog and prog, which one
-   quotation cannot typecheck *)
+   ((num # wordLang$prog # num # num) option) and prog; ls is ((num # num)
+   list) and (_#_)list; n is store_name and num; s1 is wordLang$prog and
+   prog; s2 is wordLang$prog and prog, which one quotation cannot typecheck
+   *)
 let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(ssa_cc_trans wordLang_Skip ssa na lt = (wordLang_Skip,ssa,na)) /\
@@ -1205,10 +1206,10 @@ let get_reads_exp_def,get_reads_exp_ind = define_wf
      | expr -> []`;;
 
 (* the clauses in 6 quotations: b is binop and num; body is wordLang$prog and
-   prog; e2 is wordLang$prog and prog; e3 is wordLang$prog and prog; n is
-   store_name and num; s is wordLang$prog and prog; s1 is wordLang$prog and
-   prog; s2 is wordLang$prog and prog, which one quotation cannot typecheck
-   *)
+   prog; e2 is wordLang$prog and prog; e3 is wordLang$prog and prog; ls is
+   ((num # num) list) and (_#_)list; n is store_name and num; s is
+   wordLang$prog and prog; s1 is wordLang$prog and prog; s2 is wordLang$prog
+   and prog, which one quotation cannot typecheck *)
 let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(get_clash_tree wordLang_Skip lt = reg_alloc_Delta [] []) /\

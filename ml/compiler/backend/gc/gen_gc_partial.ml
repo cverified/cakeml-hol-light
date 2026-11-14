@@ -103,7 +103,7 @@ let gen_gc_partial_gc_move_list_IMP = prove
 let gen_gc_partial_gc_move_data_def,gen_gc_partial_gc_move_data_ind =
   define_guess_cheat
   `(gen_gc_partial_gc_move_data conf state =
-     match gc_state_h2 state with [] -> state
+     (match gc_state_h2 state with [] -> state
      | CONS h h2 ->
        (if gen_gc_partial_conf_limit conf < heap_length (APPEND (gc_state_h1
          state) (CONS h h2)) then gc_state_ok_fupd (K F) state else match h
@@ -115,7 +115,7 @@ let gen_gc_partial_gc_move_data_def,gen_gc_partial_gc_move_data_ind =
             (gc_state_h2 state) = h)) in
             gen_gc_partial_gc_move_data conf (gc_state_ok_fupd (K ok)
               (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1) state)))
-        | _ -> gc_state_ok_fupd (K F) state))`;;
+        | _ -> gc_state_ok_fupd (K F) state)))`;;
 
 let gc_move_data_IMP = prove
  (`!conf state state1.
@@ -156,7 +156,7 @@ let gc_move_ref_list_IMP = prove
 
 let partial_gc_def = new_definition
   `partial_gc conf (roots,heap) =
-     match heap_segment (gen_gc_partial_conf_gen_start
+     (match heap_segment (gen_gc_partial_conf_gen_start
        conf,gen_gc_partial_conf_refs_start conf) heap with NONE ->
        (roots,gc_state_ok_fupd (K F) empty_state)
      | SOME (old,current,refs) ->
@@ -173,7 +173,7 @@ let partial_gc_def = new_definition
        // process rest:
        let state = gen_gc_partial_gc_move_data conf (gc_state_r2_fupd (K [])
          (gc_state_r1_fupd (K refs') state)) in
-         (roots,state)`;;
+         (roots,state))`;;
 
 (* [local] *)
 let partial_gc_IMP = prove

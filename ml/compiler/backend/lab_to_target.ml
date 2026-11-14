@@ -336,7 +336,7 @@ let remove_labels_loop_def,remove_labels_loop_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4,x5). (\n. n) x0)`
   `remove_labels_loop clock c pos init_labs ffis sec_list =
      // compute labels
-     let labs = compute_labels_alt pos sec_list init_labs in
+     (let labs = compute_labels_alt pos sec_list init_labs in
      // update encodings and lengths (but not label lengths)
      let (sec_list,done') = enc_secs_again pos labs ffis (asm_config_encode
        c) sec_list in
@@ -359,7 +359,7 @@ let remove_labels_loop_def,remove_labels_loop_ind = define_wf
        else
          // repeat
          if clock = (0:num) then NONE else remove_labels_loop (clock -
-           1) c pos init_labs ffis sec_list`;;
+           1) c pos init_labs ffis sec_list)`;;
 
 let remove_labels_def = new_definition
   `remove_labels init_clock c pos labs ffis sec_list =
@@ -477,7 +477,7 @@ let get_shmem_info_def,get_shmem_info_ind = define_wf
 
 let compile_lab_def = new_definition
   `compile_lab asm_conf c sec_list =
-     let current_ffis = find_ffi_names sec_list in
+     (let current_ffis = find_ffi_names sec_list in
      let (ffis,ffis_ok) =
          (match lab_to_target_config_ffi_names c with SOME ffis ->
            (ffis,list_subset current_ffis ffis)
@@ -498,7 +498,7 @@ let compile_lab_def = new_definition
              l1)
                  c)))))
        | NONE -> NONE
-     else NONE`;;
+     else NONE)`;;
 
 (* compile labLang *)
 

@@ -3954,9 +3954,9 @@ let heap_expand_not_isRef = prove
 
 let reset_gens_def = new_definition
   `reset_gens conf a =
-     match data_to_word_config_gc_kind conf with data_to_word_Generational
+     (match data_to_word_config_gc_kind conf with data_to_word_Generational
        sizes -> GenState 0 (MAP (K a) sizes)
-     | _ -> GenState 0 []`;;
+     | _ -> GenState 0 [])`;;
 
 let gen_state_ok_reset = prove
  (`heap_ok (APPEND (APPEND h (heap_expand n)) r) l ==>
@@ -22337,13 +22337,13 @@ let heap_store_unused_alt_IMP_length = prove
 let pointer_bits_def = new_definition
   `// pointers have tag and len bits
    pointer_bits conf abs_heap n =
-     match heap_lookup n abs_heap with SOME (DataElement xs l (BlockTag
+     (match heap_lookup n abs_heap with SOME (DataElement xs l (BlockTag
        tag,[])) ->
          maxout_bits (LENGTH xs) (data_to_word_config_len_bits conf)
            (data_to_word_config_tag_bits conf + 2) ||
          maxout_bits tag (data_to_word_config_tag_bits conf) 2 || (n2w 1)
      | _ -> all_ones (data_to_word_config_len_bits conf +
-       data_to_word_config_tag_bits conf + 1) 0`;;
+       data_to_word_config_tag_bits conf + 1) 0)`;;
 
 let is_all_ones_def = new_definition
   `is_all_ones m n w = ((all_ones m n && w) = all_ones m n)`;;
@@ -65018,7 +65018,7 @@ let word_str_cmp_loop_def,word_str_cmp_loop_ind = define_wf
 
 let word_str_cmp_def = new_definition
   `word_str_cmp b (a1:'a word) (a2:'a word) dm m be' c =
-     let k = (dimindex (:'a) - data_to_word_config_len_size c -
+     (let k = (dimindex (:'a) - data_to_word_config_len_size c -
        backend_common_word_shift (:'a)) in
        if a1 IN dm /\ a2 IN dm /\ isWord (m a1) /\ isWord (m a2) then
          let l1 = (theWord (m a1) >>> k) in
@@ -65030,7 +65030,7 @@ let word_str_cmp_def = new_definition
            else (let l = n2w (MIN (w2n l1) (w2n l2)) in
                 word_str_cmp_loop (a1 + bytes_in_word) (a2 + bytes_in_word)
                   l1 l2 l dm m be' (dimword (:'a)))
-       else NONE`;;
+       else NONE)`;;
 
 let find_diff_def,find_diff_ind = define_guess
   `(find_diff [] [] r1 r2 = (r1,r2)) /\

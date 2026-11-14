@@ -36,11 +36,11 @@ let dec_clock_def = new_definition
 
 let do_eval_res_def = new_definition
   `do_eval_res vs s =
-     match semanticPrimitives_do_eval vs
+     (match semanticPrimitives_do_eval vs
        (semanticPrimitives_state_eval_state s) with NONE -> (s,Rerr (Rabort
        Rtype_error))
      | SOME (env1,decs,es1) -> (semanticPrimitives_state_eval_state_fupd
-       (K es1) s,Rval (env1,decs))`;;
+       (K es1) s,Rval (env1,decs)))`;;
 
 (* list_result is equivalent to map_result (\v. [v]) I, where map_result is
  * defined in evalPropsTheory *)
@@ -65,10 +65,11 @@ let sing_env_def = new_definition
      (mk_sem_env (nsBind n v nsEmpty) nsEmpty:semanticPrimitives_v
        sem_env)`;;
 
-(* the clauses in three quotations: cn is (((modN , conN) id) option) and
-   conN; ds is (dec list) and (_)list; l is lit and locs; lds is (dec list)
-   and (_)list; n is ((modN , varN) id) and tvarN; pes is ((pat # exp) list)
-   and (_)list, which one quotation cannot typecheck *)
+(* the clauses in 4 quotations: cn is (((modN , conN) id) option) and conN;
+   ds is (_)list and (dec list); es is (_)list and (exp list); funs is ((varN
+   # varN # exp) list) and (_#_#_)list; l is lit and locs; lds is (dec list)
+   and (_)list; n is ((modN , varN) id) and tvarN; pes is ((pat # exp) list),
+   (_#_)list and (_)list, which one quotation cannot typecheck *)
 let evaluate_def,evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(evaluate (st:'ffi semanticPrimitives_state) env [] = ((st:'ffi
@@ -181,15 +182,6 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
               NONE -> (st',Rerr (Rabort Rtype_error))
             | SOME e -> evaluate st' env [e])
        | (st',Rerr v8) -> (st',Rerr v8))) /\
-    (evaluate (st:'ffi semanticPrimitives_state) env [ast_Mat e pes] =
-      (match evaluate_fix_clock st (evaluate st env [e]) with
-         (st',Rval v) ->
-           if can_pmatch_all (sem_env_c env) (semanticPrimitives_state_refs
-               st') (MAP FST pes) (HD v) then
-             evaluate_evaluate_match st' env (HD v) pes
-                 semanticPrimitives_bind_exn_v
-           else (st',Rerr (Rabort Rtype_error))
-       | (st',Rerr v8) -> (st',Rerr v8))) /\
     (evaluate (st:'ffi semanticPrimitives_state) env [ast_Let xo e1 e2] =
       (match evaluate_fix_clock st (evaluate st env [e1]) with
          (st',Rval v) ->
@@ -205,17 +197,6 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
     evaluate st env [e]) /\
     (evaluate_evaluate_match (st:'ffi semanticPrimitives_state) env v []
     err_v = (st,Rerr (Rraise err_v))) /\
-    (evaluate_evaluate_match (st:'ffi semanticPrimitives_state) env v (CONS
-    (p,e) pes) err_v =
-      (if ALL_DISTINCT (ast_pat_bindings p) then
-         match semanticPrimitives_pmatch (sem_env_c env)
-             (semanticPrimitives_state_refs st) p v [] with
-           No_match -> evaluate_evaluate_match st env v pes err_v
-         | Match_type_error -> (st,Rerr (Rabort Rtype_error))
-         | Match env_v' ->
-           evaluate st (sem_env_v_fupd (K (nsAppend (alist_to_ns env_v')
-               (sem_env_v env))) env) [e]
-       else (st,Rerr (Rabort Rtype_error)))) /\
     (evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [] =
     (st,Rval (mk_sem_env nsEmpty nsEmpty))) /\
     (evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env (CONS d1
@@ -272,8 +253,28 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
            evaluate_evaluate_match st' env v pes v
          else (st',Rerr (Rabort Rtype_error))
        | (st',Rerr (Rabort v12)) -> (st',Rerr (Rabort v12)))`;
-   `(evaluate (st:'ffi semanticPrimitives_state) env [ast_Lannot e l] =
+   `(evaluate (st:'ffi semanticPrimitives_state) env [ast_Mat e pes] =
+      (match evaluate_fix_clock st (evaluate st env [e]) with
+         (st',Rval v) ->
+           if can_pmatch_all (sem_env_c env) (semanticPrimitives_state_refs
+               st') (MAP FST pes) (HD v) then
+             evaluate_evaluate_match st' env (HD v) pes
+                 semanticPrimitives_bind_exn_v
+           else (st',Rerr (Rabort Rtype_error))
+       | (st',Rerr v8) -> (st',Rerr v8))) /\
+    (evaluate (st:'ffi semanticPrimitives_state) env [ast_Lannot e l] =
     evaluate st env [e]) /\
+    (evaluate_evaluate_match (st:'ffi semanticPrimitives_state) env v (CONS
+    (p,e) pes) err_v =
+      (if ALL_DISTINCT (ast_pat_bindings p) then
+         match semanticPrimitives_pmatch (sem_env_c env)
+             (semanticPrimitives_state_refs st) p v [] with
+           No_match -> evaluate_evaluate_match st env v pes err_v
+         | Match_type_error -> (st,Rerr (Rabort Rtype_error))
+         | Match env_v' ->
+           evaluate st (sem_env_v_fupd (K (nsAppend (alist_to_ns env_v')
+               (sem_env_v env))) env) [e]
+       else (st,Rerr (Rabort Rtype_error)))) /\
     (evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Denv n] =
       (match declare_env (semanticPrimitives_state_eval_state st) env with
          NONE -> (st,Rerr (Rabort Rtype_error))
@@ -287,8 +288,8 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
           (semanticPrimitives_state_next_exn_stamp st + 1)) st,
        Rval
          (mk_sem_env nsEmpty (nsSing cn (LENGTH ts,ExnStamp
-             (semanticPrimitives_state_next_exn_stamp st)))))) /\
-    (evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dmod mn ds]
+             (semanticPrimitives_state_next_exn_stamp st))))))`;
+   `(evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dmod mn ds]
     =
       (match evaluate_evaluate_decs st env ds with
          (st',r) ->

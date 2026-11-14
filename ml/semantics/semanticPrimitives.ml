@@ -576,15 +576,15 @@ let v_to_word64_list_def = new_definition
 
 let lookup_env_def = new_definition
   `lookup_env s (i,j) =
-     match oEL i (eval_oracle_state_envs s) with NONE -> NONE | SOME
-       gen_envs -> oEL j gen_envs`;;
+     (match oEL i (eval_oracle_state_envs s) with NONE -> NONE | SOME
+       gen_envs -> oEL j gen_envs)`;;
 
 let add_decs_generation_def = new_definition
   `add_decs_generation s =
-     match eval_decs_state_env_id_counter s with
+     (match eval_decs_state_env_id_counter s with
        (cur_gen,next_id,next_gen) -> eval_decs_state_env_id_counter_fupd (K
          (next_gen,0,next_gen + 1))
-         s`;;
+         s)`;;
 
 let add_env_generation_def = new_definition
   `add_env_generation s = eval_oracle_state_envs_fupd (K (APPEND
@@ -1406,9 +1406,9 @@ let check_dup_ctors_def = new_definition
 let combine_dec_result_def = new_definition
   `combine_dec_result env (r:(semanticPrimitives_v
   sem_env,'a)semanticPrimitives_result) =
-     match r with Rval env' -> Rval (mk_sem_env (nsAppend (sem_env_v env')
+     (match r with Rval env' -> Rval (mk_sem_env (nsAppend (sem_env_v env')
        (sem_env_v env)) (nsAppend (sem_env_c env') (sem_env_c env)))
-     | Rerr e -> Rerr e`;;
+     | Rerr e -> Rerr e)`;;
 
 let extend_dec_env_def = new_definition
   `extend_dec_env new_env (env:semanticPrimitives_v sem_env) =

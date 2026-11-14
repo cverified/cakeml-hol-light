@@ -672,7 +672,7 @@ let stack_to_labProof_make_init_def = new_definition
 let full_make_init_def = new_definition
   `full_make_init stack_conf data_conf max_heap sp offset bitmaps code s4
   save_regs data_sp coracle =
-   let ggc = is_gen_gc (data_to_word_config_gc_kind data_conf) in
+   (let ggc = is_gen_gc (data_to_word_config_gc_kind data_conf) in
    let jump = stack_to_lab_config_jump stack_conf in
    let code1 = stack_alloc_compile data_conf (stack_rawcall_compile code) in
    let code2 = stack_to_lab_compile jump offset ggc max_heap sp
@@ -692,7 +692,7 @@ let full_make_init_def = new_definition
      sp (fromAList code1) s2 in
      (stack_to_labProof_make_init data_conf (fromAList code) coracle s1,
       make_init_opt ggc max_heap bitmaps data_sp coracle1 jump offset sp
-        (fromAList code1) s2)`;;
+        (fromAList code1) s2))`;;
 
 let full_make_init_buffer = prove
  (`buffer_buffer (state_code_buffer

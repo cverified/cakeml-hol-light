@@ -866,11 +866,11 @@ let stack_asm_name_def,stack_asm_name_ind = define_wf
 
 let fixed_names_def = new_definition
   `fixed_names names c =
-   if asm_config_ISA c = x86_64 then
+   (if asm_config_ISA c = x86_64 then
      tlookup names 3 = 2 /\
      tlookup names 4 = 1 /\
      tlookup names 0 = 0
-   else T`;;
+   else T)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)

@@ -1382,22 +1382,14 @@ CLAUSE_FORM = set([
   # a variable of these has one type in the clauses of one of the
   # functions and another in those of the next, which only shows
   # in the right hand sides, where clause_clash does not look.
-  # The xs of these four is a list of expressions in the clauses
-  # of the pass itself and a list of (num # exp) in the ones of
-  # the helper that walks the functions of a Letrec, and what
-  # says so is a MAP over a pair in the body
   ('bvi_tmc', 'bvi_to_cb_aux_def'),
-  ('clos_fvs', 'remove_fvs_def'),
-  ('clos_fvs', 'remove_fvs_sing_def'),
-  ('clos_letop', 'let_op_def'),
-  ('clos_letop', 'let_op_sing_def'),
-  ('clos_ticks', 'remove_ticks_def'),
-  ('clos_ticks', 'remove_ticks_sing_def'),
-  # and the es and the funs of these are a list of expressions in
-  # one clause and a list of pairs in another, which the MAP of a
-  # body says and the clauses do not
+  # and the es of this is a list of expressions in one clause and
+  # a list of pairs in another, which only a MAP of a body says
   ('presLang', 'exp_to_display_def'),
-  ('source_to_flat', 'compile_exp_def'),
+  # the first argument of this is the name of a nonterminal in one
+  # clause and the label of a parse tree node in another, which
+  # only the INL of a right hand side says
+  ('cmlPtreeConversion', 'ptree_Type_def'),
 ])
 
 # definitions whose clauses overlap, so that they depend on HOL4's
@@ -1430,6 +1422,19 @@ WAY = {
 
 
 MATCH_CLAUSES = {
+  # every clause of this says the arguments of a constructor as
+  # a0, a1, a2, a3, so that a name is a dozen types over the
+  # definition and one quotation per clause is what it would take.
+  # As a match per member the arms bind their own variables and
+  # one quotation does
+  ('closSem', 'exp_alt_size_def'):
+    (['exp_alt_size', 'exp1_alt_size', 'exp2_alt_size',
+      'exp3_alt_size'], """
+(* a match per member of the family: every clause of the source
+   says the arguments of a constructor as a0, a1, a2 and a3, which
+   is a dozen types for one name over the definition, and the arms
+   of a match bind their own *)
+"""),
   # the mutual vb_eq_size/vb_eq_size_list of
   # data_to_word_memoryProof, which is the same shape as the do_eq
   # above: the last clause of each catches what the earlier ones

@@ -888,6 +888,8 @@ class Porter:
     self.ctx.recseen = set()
     self.ctx.recamb = set()
     self.ctx.recpick = {}
+    self.ctx.recvar = {}
+    oldfv = self.ctx.fieldvar
     wild = self.ctx.wild
     out = f()
     self.filerecs |= self.ctx.recseen
@@ -904,17 +906,24 @@ class Porter:
         cands = [r for r in self.filerecs
                  if fld in self.ctx.recs.get(r, ())]
       if len(cands) == 1: pick[fld] = cands[0]
-    if not pick: return out
+    # and the records that the block settled the variables on
+    fv2 = dict((v, r) for v, r in self.ctx.recvar.items()
+               if v not in self.ctx.fieldvar)
+    if not pick and not fv2: return out
     # the second pass starts where the first did: the wildcards of
     # a term are numbered as they are printed, and a term that is
     # printed twice would number them on from the first pass
     self.ctx.recpick = pick
+    if fv2:
+      self.ctx.fieldvar = dict(self.ctx.fieldvar)
+      self.ctx.fieldvar.update(fv2)
     self.ctx.wild = wild
     self.ctx.head_for = None
     try:
       return f()
     finally:
       self.ctx.recpick = {}
+      self.ctx.fieldvar = oldfv
 
   def ovl_lambdas(self):
     """the overloads whose body is a lambda that reads a record
@@ -3814,8 +3823,37 @@ class Porter:
       return self.db.con_argty.get((nm, j))
     where = {}
     clause = [0]
+    def cons_parts(p):
+      """the head and the tail of a cons pattern, however the
+         source writes it"""
+      if p.kind == 'infix' and p.op == '::': return p.l, p.r
+      if p.kind == 'app':
+        h, args = hterm.strip_app(p)
+        if h.kind == 'id' and h.name == 'CONS' and len(args) == 2:
+          return args[0], args[1]
+      return None, None
+
     def walk(p, tys):
       while p.kind in ('paren', 'typed'): p = p.e
+      # the tail of a cons pattern is a list of the same elements
+      # as the whole, and an element that is a tuple says that it
+      # is a list of tuples (clos_fvs's remove_fvs_let takes a
+      # list of (num # exp) where its remove_fvs_sing takes a
+      # list of expressions)
+      hd, tl = cons_parts(p)
+      if tl is not None:
+        el = hd
+        while el.kind in ('paren', 'typed'): el = el.e
+        t = None
+        if el.kind == 'infix' and el.op == ',':
+          n2, v2 = 1, el
+          while v2.kind == 'infix' and v2.op == ',':
+            n2 += 1; v2 = v2.r
+            while v2.kind in ('paren', 'typed'): v2 = v2.e
+          t = '(' + '#'.join(['_'] * n2) + ')list'
+        walk(tl, {t} if t else tys)
+        walk(hd, None)
+        return
       if p.kind == 'id':
         # a wildcard is a fresh variable in every clause anyway, and
         # a position whose type is not known says nothing
@@ -3877,6 +3915,23 @@ class Porter:
     # arguments are of one type (balanced_map's trim_help_middle
     # has its comparison and its low bound the other way round in
     # its second clause, which is why HOL4 gets away with it)
+    def tuple_ty(f):
+      """the type of the elements that a function takes apart as a
+         tuple, as a list of holes: FST and SND take a pair, and a
+         lambda that binds a tuple takes one of its own width"""
+      while f.kind == 'paren': f = f.e
+      if f.kind == 'id' and f.name in ('FST', 'SND'): return '(_#_)list'
+      if f.kind == 'infix' and f.op == 'o':
+        return tuple_ty(f.l) or tuple_ty(f.r)
+      if f.kind != 'quant' or f.q != '\\' or len(f.vs) != 1: return None
+      v = f.vs[0]
+      while v.kind == 'paren': v = v.e
+      if not (v.kind == 'infix' and v.op == ','): return None
+      n = 1
+      while v.kind == 'infix' and v.op == ',':
+        n += 1; v = v.r
+        while v.kind == 'paren': v = v.e
+      return '(' + '#'.join(['_'] * n) + ')list'
     heads = set(fname(h) for h, _, _ in cls)
     def body(n, e):
       """a body that applies one of the functions being defined
@@ -3890,6 +3945,13 @@ class Porter:
           for i, a in enumerate(args):
             k = (h.name, i)
             walk(a, {argtys[k]} if k in argtys else {('arg',) + k})
+        # a MAP over a pair says that what it maps over is a list
+        # of pairs, which is what tells the clauses of a pass from
+        # the ones of the helper that walks the functions of a
+        # Letrec apart (clos_fvs, presLang and five others)
+        if h.kind == 'id' and h.name == 'MAP' and len(args) == 2:
+          t = tuple_ty(args[0])
+          if t: walk(args[1], {t})
       for t in hterm.subnodes(e): body(n, t)
     for n, (h, args, r) in enumerate(cls):
       clause[0] = n

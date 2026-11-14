@@ -46,13 +46,13 @@ let mpushPC_scope_def = new_definition
 let fixity_lookup_def,fixity_lookup_ind = define_shaped_rec
   "match"
   `fixity_lookup nm pcs =
-     match pcs with
+     (match pcs with
          [] -> NONE
        | CONS pc0 rest ->
            (match FLOOKUP (PCstate0_fixities pc0) nm with
                NONE -> fixity_lookup nm rest
              | SOME NONE -> NONE
-             | SOME r -> r)`;;
+             | SOME r -> r))`;;
 
 (* mfixity_lookup : mlstring -> num M
     'fails' if the mlstring has no fixity, even though it is perfectly
@@ -199,14 +199,14 @@ let tuplify_def = new_definition
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let ptree_Type_def,ptree_Type_ind = define_wf
+let ptree_Type_def,ptree_Type_ind = define_wf_clauses
   `MEASURE (sum_measure  (\(x0,x1). parsetree_size (\x. 0) MMLnonT_size
   tokens_token_size x1) (sum_measure (\x0. parsetree_size (\x. 0) MMLnonT_size
   tokens_token_size x0) (sum_measure (\x0. parsetree_size (\x. 0) MMLnonT_size
   tokens_token_size x0) (\x0. parsetree_size (\x. 0) MMLnonT_size
   tokens_token_size x0))))`
-  `((ptree_Type nt' (Lf _):ast_t option) = NONE) /\
-   (ptree_Type nm (Nd nt' args) =
+  [`(ptree_Type nt' (Lf _):ast_t option) = NONE`;
+   `ptree_Type nm (Nd nt' args) =
          if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nm) then NONE
          else if nm = nType then
            match args with
@@ -242,8 +242,8 @@ let ptree_Type_def,ptree_Type_ind = define_wf
                       (ptree_Tyop opn) (\opname.
                   SOME (Atapp tylist opname))))
              | _ -> NONE
-         else NONE) /\
-   ((ptree_Typelist2 ptree:(ast_t list) option) =
+         else NONE`;
+   `(ptree_Typelist2 ptree:(ast_t list) option) =
          match ptree with
            Lf _ -> NONE
          | Nd nt' args ->
@@ -253,8 +253,8 @@ let ptree_Type_def,ptree_Type_ind = define_wf
                        tokens_CommaT)) (OPTION_BIND (ptree_Type nType dt) (\ty.
                        OPTION_BIND (ptree_TypeList1 tl') (\tylist.
                    SOME (CONS ty tylist))))
-               | _ -> NONE)) /\
-   ((ptree_TypeList1 ptree:(ast_t list) option) =
+               | _ -> NONE)`;
+   `(ptree_TypeList1 ptree:(ast_t list) option) =
         match ptree with
             Lf _ -> NONE
           | Nd nt' args ->
@@ -269,8 +269,8 @@ let ptree_Type_def,ptree_Type_ind = define_wf
                         tokens_CommaT)) (OPTION_BIND (ptree_Type nType dt)
                         (\ty. OPTION_BIND (ptree_TypeList1 tl) (\tl.
                     SOME (CONS ty tl))))
-                | _ -> NONE)) /\
-   ((ptree_PType ptree:(ast_t list) option) =
+                | _ -> NONE)`;
+   `(ptree_PType ptree:(ast_t list) option) =
          match ptree with
              Lf _ -> NONE
            | Nd nt' args ->
@@ -284,7 +284,7 @@ let ptree_Type_def,ptree_Type_ind = define_wf
                          tokens_StarT)) (OPTION_BIND (ptree_Type nDType dty_pt)
                          (\dty. OPTION_BIND (ptree_PType pty_pt) (\ptys.
                      SOME (CONS dty ptys))))
-                 | _ -> NONE))`;;
+                 | _ -> NONE)`];;
 
 let ptree_TypeName_def = new_definition
   `(ptree_TypeName ptree:(mlstring list#mlstring) option) =

@@ -467,8 +467,8 @@ let flatProps_op_gbag_def = new_definition
      flatLang_GlobalVarInit n -> BAG_INSERT n EMPTY_BAG
    | _ -> EMPTY_BAG`;;
 
-(* the clauses in two quotations: es is (exp list) and (_)list, which one
-   quotation cannot typecheck *)
+(* the clauses in two quotations: es is (exp list) and (_)list; pes is ((pat
+   # exp) list) and (_#_)list, which one quotation cannot typecheck *)
 let flatProps_set_globals_def,flatProps_set_globals_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -741,14 +741,14 @@ let simple_do_app_thm = prove
 
 let evaluate_match_def = new_definition
   `flatProps_evaluate_match env s v pes err_v =
-     match pmatch_rows pes s v with Match_type_error -> (s,Rerr (Rabort
+     (match pmatch_rows pes s v with Match_type_error -> (s,Rerr (Rabort
        Rtype_error))
      | No_match -> (s,Rerr (Rraise err_v))
      | Match (env',p',e') ->
          if ALL_DISTINCT (flatLang_pat_bindings p') then flatSem_evaluate
            (flatSem_environment_v_fupd (K (APPEND env' (flatSem_environment_v
            env))) env) s [e']
-         else (s,Rerr (Rabort Rtype_error))`;;
+         else (s,Rerr (Rabort Rtype_error)))`;;
 
 let evaluate_Mat = prove
  (`flatSem_evaluate env s [flatLang_Mat tra e pes] =
@@ -775,15 +775,15 @@ let evaluate_match_NIL = prove
 
 let evaluate_match_CONS = prove
  (`flatProps_evaluate_match env s v (CONS (p,e) pes) err_v =
-     match flatSem_pmatch s p v [] with No_match -> flatProps_evaluate_match
-       env s v pes err_v
+     (match flatSem_pmatch s p v [] with No_match ->
+       flatProps_evaluate_match env s v pes err_v
      | Match_type_error -> (s,Rerr (Rabort Rtype_error))
      | Match env_v' ->
          if ALL_DISTINCT (flatLang_pat_bindings p) /\ ~(pmatch_rows pes s v
            = Match_type_error) then flatSem_evaluate
            (flatSem_environment_v_fupd (K (APPEND env_v' (flatSem_environment_v
            env))) env) s [e]
-         else (s,Rerr (Rabort Rtype_error))`,
+         else (s,Rerr (Rabort Rtype_error)))`,
   CHEAT_TAC);;
 
 (* HOL4 flatPropsScript.sml:1432-1446: the ML values that the definitions
@@ -810,8 +810,9 @@ add_simp result_vs_def;;
 (* HOL4 flatPropsScript.sml:1463-1469: a theorem whose statement the port
    cannot state yet: v_size_aux *)
 
-(* the clauses in two quotations: t is tra and varN, which one quotation
-   cannot typecheck *)
+(* the clauses in two quotations: funs is ((varN # varN # exp) list) and
+   (_#_)list; pes is ((pat # exp) list) and (_#_)list; t is tra and varN,
+   which one quotation cannot typecheck *)
 let no_Mat_def,no_Mat_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(no_Mat (flatLang_Raise t e) <=> no_Mat e) /\

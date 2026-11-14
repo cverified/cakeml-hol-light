@@ -98,8 +98,8 @@ cake_cheat_budget := 300;;
    no optimisation specific to them yet -- e.g. the Let tail-position move
      could
    extend to `Let xs (Return (GENLIST Var n))`. *)
-(* the clauses in two quotations: dest is (num option) and num; xs is (exp
-   list) and (_)list, which one quotation cannot typecheck *)
+(* the clauses in two quotations: dest is (num option) and num; xs is (_)list
+   and (exp list), which one quotation cannot typecheck *)
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvi_letScript.sml:110-116: the tactic that proves the termination *)

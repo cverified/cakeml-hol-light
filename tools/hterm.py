@@ -1259,6 +1259,9 @@ class Ctx:
                                        # not place in one
     self.recpick = {}                  # field -> the record of it
                                        # that the block settles on
+    self.recvar = {}                   # variable -> the record
+                                       # that a field read of it
+                                       # settled on
     self.loose_rhs = False             # may the right hand side
                                        # of the equation that the
                                        # whole quotation is stand
@@ -2727,6 +2730,17 @@ class Printer:
           rec = None
       if rec: self.ctx.recseen.add(rec)
       acc = (rec + '_' + e.fld) if rec else self.ctx.field(e.fld)
+      # the record that reading this field settled on is the
+      # record of the variable it is read of, wherever the block
+      # has that variable again -- an update of it among them
+      # (source_to_flat's inc_compile_prog updates the next of a
+      # c whose envs it reads)
+      if acc.endswith('_' + e.fld):
+        r2 = acc[:-len(e.fld) - 1]
+        v2 = e.e
+        while v2.kind in ('paren', 'typed', 'rawtyped'): v2 = v2.e
+        if v2.kind == 'id' and r2 in self.ctx.recs:
+          self.ctx.recvar.setdefault(v2.name, r2)
       return self.paren(acc + ' ' + self.pr(e.e, APP),
                         PRE_APP, prec)
     if k == 'recupd':

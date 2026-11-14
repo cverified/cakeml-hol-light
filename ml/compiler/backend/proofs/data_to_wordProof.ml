@@ -185,10 +185,10 @@ let data_compile_correct = prove
       (?t1 res1.
         (wordSem_evaluate (FST (data_to_word_comp c n l prog),t) =
           (res1,t1)) /\
-         option_le (state_stack_max t1) (state_stack_max s1) /\
+         option_le (state_stack_max t1) (dataSem_state_stack_max s1) /\
         (res1 = SOME wordSem_NotEnoughSpace ==> ffi_state_io_events
           (state_ffi
-           t1) <<= ffi_state_io_events (state_ffi s1) /\
+           t1) <<= ffi_state_io_events (dataSem_state_ffi s1) /\
            (~(data_to_word_config_gc_kind c = data_to_word_None) ==>
              ~(dataSem_state_safe_for_space s1))) /\
         (~(res1 = SOME wordSem_NotEnoughSpace) ==>
@@ -199,19 +199,21 @@ let data_compile_correct = prove
                   data_to_word_gcProof_state_rel c l1 l2 s1 t1 (SOME (ZIP v
                     ws)) locs /\
                   (res1 = SOME (wordSem_Result (wordLang_Loc l1 l2) ws)))
-         | SOME (Rerr (Rraise v)) -> (state_ffi t1 = state_ffi s1) /\
+         | SOME (Rerr (Rraise v)) -> (state_ffi t1 = dataSem_state_ffi s1)
+           /\
              (?w l5 l6 ll.
                (res1 = SOME (wordSem_Exception (mk_loc (wordSem_jump_exc t))
                  w)) /\
                (~(wordSem_jump_exc t = NONE) ==>
-                LASTN (LENGTH (stack s1) + 1) locs = CONS (l5,l6) ll /\
+                LASTN (LENGTH (dataSem_state_stack s1) + 1) locs = CONS
+                  (l5,l6) ll /\
                 (!i. data_to_word_gcProof_state_rel c l5 l6 (wordSem_set_var
                   i v s1)
                        (wordSem_set_var (adjust_var i) w t1) NONE ll)))
          | SOME (Rerr (Rabort (Rffi_error f))) -> (res1 = SOME
-           (wordSem_FinalFFI f) /\ state_ffi t1 = state_ffi s1)
+           (wordSem_FinalFFI f) /\ state_ffi t1 = dataSem_state_ffi s1)
          | SOME (Rerr (Rabort e)) -> (res1 = SOME targetSem_TimeOut)
-           /\ state_ffi t1 = state_ffi s1)))`,
+           /\ state_ffi t1 = dataSem_state_ffi s1)))`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_wordProofScript.sml:348-351: a proof *)
