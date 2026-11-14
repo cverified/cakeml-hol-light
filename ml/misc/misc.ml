@@ -567,11 +567,11 @@ let BIT_num_from_bin_list_leading = prove
   CHEAT_TAC);;
 
 let least_from_def = new_definition
-  `least_from P n = (if (?x. P x /\ n <= x) then minimal (\x. P x /\
-  n <= x) else minimal P)`;;
+  `least_from P n = (if (?x. P x /\ n <= x) then minimal x. P x /\ n
+  <= x else (minimal) P)`;;
 
 let LEAST_thm = prove
- (`minimal P = least_from P 0`,
+ (`(minimal) P = least_from P 0`,
   CHEAT_TAC);;
 
 let least_from_thm = prove
@@ -647,7 +647,7 @@ let find_index_MEM = prove
 
 let find_index_LEAST_EL = prove
  (`!ls x n. find_index x ls n = (if MEM x ls then SOME (n + (minimal
-  (\n. x = EL n ls))) else NONE)`,
+  n. x = EL n ls)) else NONE)`,
   CHEAT_TAC);;
 
 let find_index_LESS_LENGTH = prove
@@ -810,7 +810,7 @@ let IN_between = prove
 
 (* never used *)
 let SUC_LEAST = prove
- (`!x. P x ==> (SUC (minimal P) = minimal (\x. 0 < x /\ P (PRE x)))`,
+ (`!x. P x ==> (SUC ((minimal) P) = (minimal x. 0 < x /\ P (PRE x)))`,
   CHEAT_TAC);;
 
 (* never used *)

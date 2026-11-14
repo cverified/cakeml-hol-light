@@ -1703,32 +1703,32 @@ data_to_word_assignProof	Theorem evaluate_StoreAnyConsts: HOL Light does not rea
 data_to_word_assignProof	Theorem assign_Build: HOL Light does not read the statement
 data_to_word_assignProof	ML code skipped: fun foldr1 f (x::xs) = foldr f x xs | foldr1 f [] = fail();
 data_to_word_assignProof	Theorem assign_thm: HOL Light does not read the statement
-data_to_word_assignProof	line 643 is 80 characters
-data_to_word_assignProof	line 649 is 79 characters
-data_to_word_assignProof	line 670 is 86 characters
-data_to_word_assignProof	line 683 is 77 characters
-data_to_word_assignProof	line 684 is 73 characters
-data_to_word_assignProof	line 685 is 74 characters
+data_to_word_assignProof	line 642 is 80 characters
+data_to_word_assignProof	line 648 is 79 characters
+data_to_word_assignProof	line 669 is 86 characters
+data_to_word_assignProof	line 682 is 77 characters
+data_to_word_assignProof	line 683 is 73 characters
+data_to_word_assignProof	line 684 is 74 characters
+data_to_word_assignProof	line 1036 is 75 characters
 data_to_word_assignProof	line 1037 is 75 characters
-data_to_word_assignProof	line 1038 is 75 characters
-data_to_word_assignProof	line 1043 is 75 characters
-data_to_word_assignProof	line 1074 is 74 characters
-data_to_word_assignProof	line 1075 is 75 characters
-data_to_word_assignProof	line 1078 is 77 characters
-data_to_word_assignProof	line 1093 is 79 characters
-data_to_word_assignProof	line 1094 is 80 characters
-data_to_word_assignProof	line 1095 is 81 characters
-data_to_word_assignProof	line 1096 is 80 characters
-data_to_word_assignProof	line 1126 is 79 characters
-data_to_word_assignProof	line 1127 is 80 characters
-data_to_word_assignProof	line 1128 is 78 characters
-data_to_word_assignProof	line 1129 is 75 characters
-data_to_word_assignProof	line 1154 is 74 characters
-data_to_word_assignProof	line 1217 is 80 characters
-data_to_word_assignProof	line 1218 is 76 characters
-data_to_word_assignProof	line 1282 is 85 characters
-data_to_word_assignProof	line 1313 is 83 characters
-data_to_word_assignProof	line 2264 is 73 characters
+data_to_word_assignProof	line 1042 is 75 characters
+data_to_word_assignProof	line 1073 is 74 characters
+data_to_word_assignProof	line 1074 is 75 characters
+data_to_word_assignProof	line 1077 is 77 characters
+data_to_word_assignProof	line 1092 is 79 characters
+data_to_word_assignProof	line 1093 is 80 characters
+data_to_word_assignProof	line 1094 is 81 characters
+data_to_word_assignProof	line 1095 is 80 characters
+data_to_word_assignProof	line 1125 is 79 characters
+data_to_word_assignProof	line 1126 is 80 characters
+data_to_word_assignProof	line 1127 is 78 characters
+data_to_word_assignProof	line 1128 is 75 characters
+data_to_word_assignProof	line 1153 is 74 characters
+data_to_word_assignProof	line 1216 is 80 characters
+data_to_word_assignProof	line 1217 is 76 characters
+data_to_word_assignProof	line 1281 is 85 characters
+data_to_word_assignProof	line 1312 is 83 characters
+data_to_word_assignProof	line 2263 is 73 characters
 wordConvsProof	ML code skipped: fun FIRST_THEN tacs tac = FIRST (map (fn t => t \\ tac) tacs
 wordConvsProof	ML code skipped: val try_cancel_labels_rel_append =   FIRST_THEN [ALL_TAC, ir
 wordConvsProof	ML code skipped: val convs = [flat_exp_conventions_def,full_inst_ok_less_def,

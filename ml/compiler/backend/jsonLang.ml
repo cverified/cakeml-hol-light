@@ -65,8 +65,7 @@ let num_to_hex_digit_def = new_definition
 let n_rev_hex_digs,n_rev_hex_digs_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x0)`
   [`n_rev_hex_digs 0 x = []`;
-   `n_rev_hex_digs (SUC n) x = ((misc_Append) (num_to_hex_digit (x MOD
-  16))
+   `n_rev_hex_digs (SUC n) x = (APPEND (num_to_hex_digit (x MOD 16))
       (n_rev_hex_digs n (x DIV 16)))`];;
 
 let encode_str_def = new_definition
@@ -74,7 +73,7 @@ let encode_str_def = new_definition
    (let s2 = explode s in
    if ALL printable s2 then s else mlstring_concat (MAP (\c. if
      printable c then implode [c] else if unicode then implode
-     ((misc_Append) "\\u" (REVERSE (n_rev_hex_digs 4 (ORD c)))) else
+     (APPEND "\\u" (REVERSE (n_rev_hex_digs 4 (ORD c)))) else
      mlstring_concat [(implode "\\"); toString (ORD c)]) s2))`;;
 
 let _ = size_thms "obj";;

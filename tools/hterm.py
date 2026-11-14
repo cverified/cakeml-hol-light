@@ -1902,6 +1902,9 @@ class Printer:
       # HOL Light needs its parentheses where it stands on its own
       # (misc's FOLDR BAG_UNION b0 ls)
       if n2 in HL_INFIX: return '(' + n2 + ')'
+      # and so does a binder of HOL Light: HOL4's $LEAST P is
+      # (minimal) P, because minimal x. P x is the applied form
+      if n2 in BINDERS: return '(' + n2 + ')'
       # HOL4's auxiliary size functions of a datatype family
       # (exp1_size, exp2_size, ...) number the types of the family
       # in another order than HOL Light does, so the port cannot
@@ -1994,12 +1997,6 @@ class Printer:
         self.numctx = False
       if hop.kind == 'id':
         n = self.ctx.name(hop.name)
-        if n in BINDERS and len(args) == 1 and args[0].kind == 'quant' \
-           and args[0].q == '\\':
-          vs = ' '.join(self.pr(v, APP) for v in args[0].vs)
-          self.numctx = old
-          return self.paren(n + ' ' + vs + '. ' +
-                            self.pr(args[0].body, 0), 1, prec)
         if n in ARGPERM:
           # a permutation of a prefix of the arguments holds for
           # a partial application of that many as well (FUNPOW f
@@ -2013,6 +2010,24 @@ class Printer:
             self.numctx = old
             return self.paren(s, PRE_APP, prec)
       # HOL4's ZIP takes the two lists as a pair
+      # a name of HOL Light's that is a binder: HOL4 writes it
+      # applied, as $LEAST (\x. P x) or LEAST x. P x, and HOL
+      # Light writes minimal x. P x -- or (minimal) P where there
+      # is no abstraction to put under it
+      if hop.kind in ('id', 'dollar') and \
+         self.ctx.name(hop.name) in BINDERS:
+        nb = self.ctx.name(hop.name)
+        a0 = args[0] if args else None
+        while a0 is not None and a0.kind == 'paren': a0 = a0.e
+        self.numctx = old
+        if len(args) == 1 and a0 is not None and a0.kind == 'quant' \
+           and a0.q == '\\':
+          vs = ' '.join(self.pr(v, APP) for v in a0.vs)
+          return self.paren(nb + ' ' + vs + '. ' +
+                            self.pr(a0.body, 0), 1, prec)
+        return self.paren(
+          '(' + nb + ') ' + ' '.join(self.pr(a, APP) for a in args),
+          PRE_APP, prec)
       if hop.kind == 'id' and len(args) == 1 and \
          self.ctx.name(hop.name) in UNCURRIED:
         a = args[0]
@@ -2088,8 +2103,10 @@ class Printer:
       # and uses it for an append of two lists that nothing else
       # says the type of, the port writes the append out
       if op == '++' and self.ctx is not None and self.ctx.append:
-        return self.paren('APPEND ' + self.pr(e.l, APP) + ' ' +
-                          self.pr(e.r, APP), PRE_APP, prec)
+        l = self.pr(e.l, APP)
+        if self.ctx.append is True or l in self.ctx.append:
+          return self.paren('APPEND ' + l + ' ' +
+                            self.pr(e.r, APP), PRE_APP, prec)
       _, assoc, hop, hprec = INFIX[op]
       # an infix that HOL Light does not have is written as an
       # application of the constant that HOL4 overloads it with
@@ -2176,7 +2193,14 @@ class Printer:
         return self.paren(s, PRE_APP, prec)
     if k == 'some':
       vs = ' '.join(self.pr(v, APP) for v in e.vs)
-      return self.paren(self.ctx.name(e.name) + ' (\\' + vs + '. ' +
+      n = self.ctx.name(e.name)
+      # where this port's name for the binder is a binder of HOL
+      # Light as well (HOL4's $LEAST is minimal), it is written
+      # as one: minimal x. P x and not minimal (\x. P x)
+      if n in BINDERS:
+        return self.paren(n + ' ' + vs + '. ' + self.pr(e.body, 0),
+                          1, prec)
+      return self.paren(n + ' (\\' + vs + '. ' +
                         self.pr(e.body, 0) + ')', PRE_APP, prec)
     if k == 'quant':
       vs = ' '.join(self.pr(v, APP) for v in e.vs)
@@ -2358,7 +2382,10 @@ class Printer:
       # an operator that is not an identifier needs its parentheses
       if not n[0].isalpha() and n[0] != '_':
         return '(' + self.ctx.name(n) + ')'
-      return self.ctx.name(n)
+      n2 = self.ctx.name(n)
+      # and so does a binder of HOL Light
+      if n2 in BINDERS: return '(' + n2 + ')'
+      return n2
     if k == 'univ':
       if greek(e.ty): return 'UNIV'
       return '(UNIV:' + self.pr_type(e.ty) + '->bool)'

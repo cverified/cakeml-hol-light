@@ -665,11 +665,11 @@ let EVERY_isVar_evaluate_Rval_MEM = prove
 let do_app_Ref = prove
  (`do_app (closLang_MemOp closLang_Ref) vs s =
       Rval
-       (RefPtr T (minimal (\ptr. ~(ptr IN FDOM (state_refs s)))),
+       (RefPtr T (minimal ptr. ~(ptr IN FDOM (state_refs s))),
         bvl_to_bvi
          (state_refs_fupd (K (state_refs
-            s |+ ((minimal (\ptr. ~(ptr IN FDOM (state_refs
-              s)))),ValueArray vs))) (bvi_to_bvl s)) s)`,
+            s |+ ((minimal ptr. ~(ptr IN FDOM (state_refs
+              s))),ValueArray vs))) (bvi_to_bvl s)) s)`,
   CHEAT_TAC);;
 
 let state_rel_add_bytearray = prove

@@ -392,7 +392,7 @@ let compile_exps_def,compile_exps_ind = assume_definition_rec
    (bvl_to_bvi_compile_exps n (CONS (x:bvl_exp) (CONS y xs)) =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
       let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (CONS y xs) in
-        ((SmartAppend) c1 c2,(SmartAppend) aux1 aux2,n2))) /\
+        (APPEND c1 c2,(SmartAppend) aux1 aux2,n2))) /\
    (bvl_to_bvi_compile_exps n [Var v] = ([(Var
      v):bvi_exp],misc_Nil,n)) /\
    (bvl_to_bvi_compile_exps n [If x1 x2 x3] =

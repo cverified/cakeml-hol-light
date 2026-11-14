@@ -157,15 +157,15 @@ let do_app_aux_def = new_definition
                (closLang_RefByte f),xs) ->
          (match xs with [Number i; Number b] ->
              (if (&0) <= i /\ (?(w:word8). b = &(w2n w)) then
-               let ptr = (minimal (\ptr. ~(ptr IN FDOM
-                 (bviSem_state_refs s)))) in
+               let ptr = (minimal ptr. ~(ptr IN FDOM
+                 (bviSem_state_refs s))) in
                  SOME (SOME (RefPtr T ptr,bviSem_state_refs_fupd (K
                    (bviSem_state_refs s |+
                    (ptr,ByteArray f (REPLICATE (num_of_int i) (i2w
                      b))))) s)) else NONE) | _10 -> NONE) |
                      (closLang_MemOp (closLang_MutCons tag i),xs) ->
-         (let ptr = (minimal (\ptr. ~(ptr IN FDOM (bviSem_state_refs
-           s)))) in
+         (let ptr = (minimal ptr. ~(ptr IN FDOM (bviSem_state_refs
+           s))) in
             if i >= LENGTH xs then NONE else
               let l = TAKE i xs in
               let c = EL i xs in

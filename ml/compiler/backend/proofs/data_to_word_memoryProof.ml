@@ -61157,7 +61157,7 @@ let LENGTH_n2mw_LE_num_size = prove
      DISCH_THEN ACCEPT_TAC]));;
 
 let least_notin_domain = prove
- (`~((minimal (\ptr. ~(ptr IN domain refs))) IN domain (refs:'a spt))`,
+ (`~((minimal ptr. ~(ptr IN domain refs)) IN domain (refs:'a spt))`,
   (* the domain of a tree is finite, so some number is not in it,
      and the least number that is not in it is one of those *)
   (let fin = prove

@@ -357,8 +357,7 @@ let EXISTS_NOT_IN_spt_DOMAIN = prove
 
 (* TODO: move to sptreeTheory *)
 let LEAST_NOTIN_spt_DOMAIN = prove
- (`!refs. ~((minimal (\x. ~(x IN domain (refs:'a spt)))) IN domain
-  refs)`,
+ (`!refs. ~((minimal x. ~(x IN domain (refs:'a spt))) IN domain refs)`,
   CHEAT_TAC);;
 
 (*TODO: move to backendProps *)
@@ -995,8 +994,8 @@ let do_app_AllocThunk = prove
       (if bad_thunk_update m v (state_refs s1) then Rerr (Rabort
         Rtype_error) else
       Rval
-      (RefPtr F (minimal (\ptr. ~(ptr IN domain (state_refs
-        s1)))),state_stack_max_fupd (K (state_stack_max (
+      (RefPtr F (minimal ptr. ~(ptr IN domain (state_refs
+        s1))),state_stack_max_fupd (K (state_stack_max (
              do_stack
                (ThunkOp (AllocThunk m)) [v]
                (do_lim_safe s1 (ThunkOp (AllocThunk m)) [v]))))
@@ -1005,8 +1004,8 @@ let do_app_AllocThunk = prove
              do_stack
                (ThunkOp (AllocThunk m)) [v]
                (do_lim_safe s1 (ThunkOp (AllocThunk m)) [v]))))
-                 (state_refs_fupd (K (insert (minimal (\ptr. ~(ptr IN
-                 domain (state_refs s1)))) (Thunk m v) (state_refs s1)))
+                 (state_refs_fupd (K (insert (minimal ptr. ~(ptr IN
+                 domain (state_refs s1))) (Thunk m v) (state_refs s1)))
          s1)))))`,
   CHEAT_TAC);;
 
@@ -1223,8 +1222,8 @@ let the_F_not_option_le = prove
 let do_app_RefByte_eq = prove
  (`do_app (closLang_MemOp (closLang_RefByte fl)) [Number i; Number
   (&(w2n (w:word8)))] (s:('c,'ffi)dataSem_state) = Rval (v,s') ==>
-   (?ptr. v = RefPtr T ptr /\ ptr = (minimal (\p. ~(p IN domain
-     (dataSem_state_refs s)))) /\ (&0) <= i /\
+   (?ptr. v = RefPtr T ptr /\ ptr = (minimal p. ~(p IN domain
+     (dataSem_state_refs s))) /\ (&0) <= i /\
          s' = dataSem_state_peak_heap_length_fupd (K
                   ((\k op_args s. MAX (dataSem_state_peak_heap_length
                     s) (size_of_heap_args op_args s + k))
@@ -1928,15 +1927,15 @@ let data_to_word_assignProof_do_app_Ref = prove
     (match consume_space (LENGTH vals + 1) x with
       NONE -> Rerr (Rabort Rtype_error) | SOME s1 ->
       Rval
-      (RefPtr T (minimal (\ptr. ~(ptr IN domain (state_refs
-        s1)))),state_stack_max_fupd (K (state_stack_max
+      (RefPtr T (minimal ptr. ~(ptr IN domain (state_refs
+        s1))),state_stack_max_fupd (K (state_stack_max
              (do_stack (closLang_MemOp closLang_Ref) vals
                (do_lim_safe s1 (closLang_MemOp closLang_Ref) vals))))
                (dataSem_state_safe_for_space_fupd (K
                (dataSem_state_safe_for_space (do_stack (closLang_MemOp
                closLang_Ref) vals (do_lim_safe s1 (closLang_MemOp
                closLang_Ref) vals)))) (state_refs_fupd (K (insert
-               (minimal (\ptr. ~(ptr IN domain (state_refs s1))))
+               (minimal ptr. ~(ptr IN domain (state_refs s1)))
                (ValueArray vals) (state_refs s1)))
          s1))))`,
   CHEAT_TAC);;

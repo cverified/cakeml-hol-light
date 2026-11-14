@@ -1937,7 +1937,7 @@ class Porter:
     self.ctx.intvars = self.int_vars(body) | self.intargs
     self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
-    self.ctx.append = key in overrides.PLAIN_APPEND
+    self.ctx.append = overrides.PLAIN_APPEND.get(key, False)
     self.ctx.iffeq = key in overrides.IFF_IS_EQ
     # the map from the body of a match arm to its integer
     # variables is for this definition only (a node of another

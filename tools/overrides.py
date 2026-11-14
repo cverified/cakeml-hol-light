@@ -1012,10 +1012,23 @@ INT_NEG = set([
 # definitions where ++ is the append of two lists, which the
 # source overloads with the choice of a monad: the port writes
 # APPEND there, because nothing says the type of the two sides
-PLAIN_APPEND = set([
+# a block in which ++ is the append of lists although the source
+# overloads ++ with something of its own: True where every ++ of
+# the block is, and the texts of the left operands that are
+# where only some of them are (bvl_to_bvi's compile_exps appends
+# two lists of expressions and two app_lists in one clause,
+# c1 ++ c2 and aux1 ++ aux2)
+PLAIN_APPEND = {
   # the bindings that the two patterns of a pattern list bind
-  ('infer', 'infer_p_def'),
-])
+  ('infer', 'infer_p_def'): True,
+  # a hex digit is a list of characters, and so is what is put
+  # in front of the escape
+  ('jsonLang', 'n_rev_hex_digs'): True,
+  ('jsonLang', 'encode_str_def'): True,
+  # the code of a clause is a list of expressions; only the
+  # auxiliary code beside it is an app_list
+  ('bvl_to_bvi', 'compile_exps_def'): set(['c1']),
+}
 
 WORD_NOT = set([
   ('binary_ieee', 'float_negate_def'),
