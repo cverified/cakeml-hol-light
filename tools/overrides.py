@@ -1698,6 +1698,15 @@ CON_OF = {
   # the stubs that generated_bignum_stubs gives are wordLang
   # programs, so its Seq and its Return are wordLang's
   ('word_bignum', 'generated_bignum_stubs_def'): WORDLANG_PROG,
+  # these put a register in a num_map and an instruction in a
+  # balanced_map, and HOL4 calls both inserts insert: the one of a
+  # num_map takes three arguments and the other four
+  ('word_cse', 'add_to_data_aux_def'):
+    {'insert': {3: 'sptree', 4: 'balanced_map'}},
+  ('word_cse', 'add_to_data_const_def'):
+    {'insert': {3: 'sptree', 4: 'balanced_map'}},
+  ('word_cse', 'add_to_load_aux_def'):
+    {'insert': {3: 'sptree', 4: 'balanced_map'}},
   # inst_find_name reads an asm instruction and gives one, so its
   # Skip is asm's where every other Skip of the file is the one of
   # a stackLang program
@@ -12103,9 +12112,6 @@ DEF_NAMES = {
   ('word_cse', 'keep_data_def'): {'lookup': 'sptree_lookup'},
   # to_canonical and to_latest are num_maps as well, so the
   # insert and the delete of them are sptree's
-  ('word_cse', 'add_to_data_aux_def'): {'insert': 'sptree_insert'},
-  ('word_cse', 'add_to_data_const_def'): {'insert': 'sptree_insert'},
-  ('word_cse', 'add_to_load_aux_def'): {'insert': 'sptree_insert'},
   ('word_cse', 'register_read_def'): {'insert': 'sptree_insert'},
   ('word_cse', 'map_insert_def'): {'insert': 'sptree_insert'},
   ('displayLang', 'trace_to_json_def'): {'toString': 'num_to_str'},
