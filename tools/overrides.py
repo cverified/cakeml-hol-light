@@ -411,9 +411,12 @@ CON_BODY = {
   ('clos_to_bvl', 'compile_exps_def'): {'*': 'bvl'},
   ('clos_to_bvl', 'compile_exps_sing_def'): {'*': 'bvl'},
   # lookup_word_op matches on an opw and gives the binop of asm
-  # that it is
+  # that it is, and WordOp64_on_32 builds wordLang Ops of them
   ('data_to_word', 'lookup_word_op_def'):
     {'Xor': 'asm', 'Add': 'asm', 'Sub': 'asm'},
+  ('data_to_word', 'WordOp64_on_32_def'):
+    {'Xor': 'asm', 'Add': 'asm', 'Sub': 'asm',
+     'And': 'asm', 'Or': 'asm'},
   # get_live_tree reads a clash_tree of reg_alloc and builds a
   # live_tree of its own, and the two share Seq and Branch (the
   # patterns say reg_alloc$ themselves)
@@ -1576,6 +1579,11 @@ ONE_QUOTATION = set([
 # its scope (stack_remove's single_stack_free builds the Inst of
 # stackLang, and the port is loaded in one namespace, where the
 # Inst of wordLang comes later)
+# the constructors of the opw of backend_common, which asm has
+# three of the names of as binops
+OPW = dict((c, 'backend_common') for c in
+           ['Andw', 'Orw', 'Xor', 'Add', 'Sub'])
+
 # the constructors of a wordLang program and of the expressions
 # in it, for a definition that builds one and nothing else
 WORDLANG_PROG = dict((c, 'wordLang') for c in
@@ -1594,6 +1602,11 @@ BVL_EXP = dict((c, 'bvl') for c in
                 'Call', 'Force', 'Op'])
 
 CON_OF = {
+  # these match on an opw, whose constructors the port calls after
+  # backend_common, and build wordLang programs whose Op takes the
+  # binop of asm (CON_BODY says the bodies)
+  ('data_to_word', 'lookup_word_op_def'): OPW,
+  ('data_to_word', 'WordOp64_on_32_def'): OPW,
   # these build a wordLang program and not the mini language of
   # word_bignum, as the source says of SeqIndex (:'a wordLang$prog)
   # and of LoadRegs; the two share Seq, Assign, Var, Op, Const,
@@ -11931,6 +11944,14 @@ DEF_NAMES = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # the three constructors that an opw shares with the binop of
+  # asm, in the patterns of this one: the port writes the binop
+  # there, which is what its body wants and not its pattern
+  ('data_to_word', 'lookup_word_op_def'): [
+    ('(asm_Xor:opw)', '(backend_common_Xor:opw)'),
+    ('(word_bignum_Add:opw)', '(backend_common_Add:opw)'),
+    ('(word_bignum_Sub:opw)', '(backend_common_Sub:opw)'),
+  ],
   # lab_inst reads a lab assembly instruction and gives the asm
   # instruction that it is, and the two share Jump, JumpCmp and
   # Call; the definition is one quotation, where a rule for the
@@ -11949,9 +11970,6 @@ DEF_PATCH = {
   # lookup_word_op matches on an opw, whose constructors the port
   # calls after backend_common, and gives the binop of asm that
   # it is: the body says asm (CON_BODY) and the pattern is this
-  ('data_to_word', 'lookup_word_op_def'): [
-    ('(asm_Xor:binop)', '(backend_common_Xor:opw)'),
-  ],
   # compile_exps reads a bvl expression and builds a bvi one, and
   # the patterns say bvl themselves; no bvi_to_data Call stands
   # in these, so the bodies are the bvi one wherever they say Call
