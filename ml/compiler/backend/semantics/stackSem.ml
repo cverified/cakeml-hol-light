@@ -137,35 +137,37 @@ let stackSem_dec_clock_def = new_definition
   `stackSem_dec_clock (s:('a,'c,'ffi)stackSem_state) =
   stackSem_state_clock_fupd (K (stackSem_state_clock s - 1)) s`;;
 
+(* the clauses in three quotations: addr is exp and inst; wexp is exp and
+   inst; wexp1 is exp and inst, which one quotation cannot typecheck *)
 (* the termination relation that HOL4 gives is
      MEASURE (wordLang_exp_size ARB o SND)
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 stackSemScript.sml:151-156: the tactic that proves the termination *)
-let stackSem_word_exp_def,stackSem_word_exp_ind = define_shaped_rec
+let stackSem_word_exp_def,stackSem_word_exp_ind = define_shaped_rec_clauses
   "nested"
-  `(stackSem_word_exp s (asm_Const w) = SOME w) /\
-   (stackSem_word_exp s (wordLang_Var v) =
+  [`(stackSem_word_exp s (asm_Const w) = SOME w) /\
+    (stackSem_word_exp s (wordLang_Var v) =
          match FLOOKUP (stackSem_state_regs s) v with SOME (wordLang_Word
              w) -> SOME w
          | _ -> NONE) /\
-   (stackSem_word_exp s (wordLang_Lookup name) =
+    (stackSem_word_exp s (wordLang_Lookup name) =
          match FLOOKUP (stackSem_state_store s) name with SOME
              (wordLang_Word w) -> SOME w
          | _ -> NONE) /\
-   (stackSem_word_exp s (wordLang_Load addr') =
+    (stackSem_word_exp s (wordLang_Op op wexps) =
+         let ws = MAP (stackSem_word_exp s) wexps in
+           if ALL IS_SOME ws then wordLang_word_op op (MAP THE ws) else
+               NONE)`;
+   `stackSem_word_exp s (wordLang_Load addr') =
          match stackSem_word_exp s addr' with SOME w -> (match
              stackSem_mem_load w s with SOME (wordLang_Word w) -> SOME w
                       | _ -> NONE)
-         | _ -> NONE) /\
-   (stackSem_word_exp s (wordLang_Op op wexps) =
-         let ws = MAP (stackSem_word_exp s) wexps in
-           if ALL IS_SOME ws then wordLang_word_op op (MAP THE ws) else
-               NONE) /\
-   (stackSem_word_exp s (wordLang_Shift sh wexp wexp1) =
+         | _ -> NONE`;
+   `stackSem_word_exp s (wordLang_Shift sh wexp wexp1) =
          match (stackSem_word_exp s wexp,stackSem_word_exp s wexp1) with
              (SOME w,SOME w1) -> word_sh sh w (w2n w1)
-         | _ -> NONE)`;;
+         | _ -> NONE`];;
 
 let stackSem_get_var_def = new_definition
   `stackSem_get_var v (s:('a,'c,'ffi)stackSem_state) = FLOOKUP

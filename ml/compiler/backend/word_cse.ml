@@ -546,10 +546,10 @@ Signification of the terms:
     b -> binop
     s -> string
 *)
-(* the clauses in three quotations: c is cmp and wordLang$prog; p is
-   wordLang$prog and num; p1 is wordLang$prog and num; p2 is wordLang$prog
-   and num; r2 is ('a reg_imm), num and (num list), which one quotation
-   cannot typecheck *)
+(* the clauses in 6 quotations: c is cmp, wordLang$prog and prog; p is num,
+   wordLang$prog and prog; p1 is num, wordLang$prog and prog; p2 is num,
+   wordLang$prog and prog; r2 is num, ('a reg_imm) and (num list), which one
+   quotation cannot typecheck *)
 let word_cse_def,word_cse_ind = define_rec_clauses
   [`(word_cse data (wordLang_Move r rs) =
         let data' = canonicalMoveRegs data rs in
@@ -593,19 +593,17 @@ let word_cse_def,word_cse_ind = define_rec_clauses
                                   (x,canonicalRegs data v) new_gets_mem))
                                   data),
                            wordLang_Set x e)) /\
-    (word_cse data (wordLang_MustTerminate p) =
-                let (data',p') = word_cse data p in
-                    (data',wordLang_MustTerminate p')) /\
     (word_cse data (wordLang_Call ret dest args handler) =
                 (empty_data,wordLang_Call ret dest args handler)) /\
-    (word_cse data (wordLang_Seq p1 p2) =
-        let (data1,p1') = word_cse data p1 in
-        let (data2,p2') = word_cse data1 p2 in
-          (data2,wordLang_Seq p1' p2')) /\
-    (word_cse data (wordLang_If c r1 r2 p1 p2) =
-        let (data1,p1') = word_cse data p1 in
-        let (data2,p2') = word_cse data p2 in
-          (merge_data data1 data2,wordLang_If c r1 r2 p1' p2')) /\
+    (word_cse data ((wordLang_OpCurrHeap b r1 r2):'a wordLang_prog) =
+        let data = invalidate_data data r1 in
+          // r2 = r1 reads the register the instruction overwrites; such a fact
+          // would not describe the post-state, so it is not stored.
+          if EVEN r2 \/ r2 = r1 then (data,wordLang_OpCurrHeap b r1 r2)
+              else let r2' = canonicalRegs' r1 data r2 in
+            let pL = OpCurrHeapToNumList b r2' in
+              add_to_data_aux (register_read data r2') r1 pL
+                  (wordLang_OpCurrHeap b r1 r2)) /\
     (word_cse data (wordLang_LocValue r l) =
         // Loc l 0 is a constant determined by l, so CSE it like an immediate.
         // Tag 48 is distinct from every other stored hash head (0, 2, 3).
@@ -621,23 +619,6 @@ let word_cse_def,word_cse_ind = define_rec_clauses
     (word_cse data (wordLang_Raise r) = (data,wordLang_Raise r)) /\
     (word_cse data wordLang_Tick = (data,wordLang_Tick)) /\
     (word_cse data (wordLang_Alloc r m) = (empty_data,wordLang_Alloc r m)) /\
-    // Shared-memory op: a load writes its var; a store writes no register.
-    // Shared memory (sh_mdomain) is disjoint from the heap memory that load
-    // facts describe, so loads_mem survives both.
-    (word_cse data (wordLang_ShareInst op r exp) =
-      let data = (if is_store op then data else invalidate_data data r) in
-        (data,wordLang_ShareInst op r exp)) /\
-    (word_cse data (wordLang_Break k) = (data,wordLang_Break k)) /\
-    (word_cse data (wordLang_Continue k) = (data,wordLang_Continue k))`;
-   `(word_cse data ((wordLang_OpCurrHeap b r1 r2):'a wordLang_prog) =
-        let data = invalidate_data data r1 in
-          // r2 = r1 reads the register the instruction overwrites; such a fact
-          // would not describe the post-state, so it is not stored.
-          if EVEN r2 \/ r2 = r1 then (data,wordLang_OpCurrHeap b r1 r2)
-              else let r2' = canonicalRegs' r1 data r2 in
-            let pL = OpCurrHeapToNumList b r2' in
-              add_to_data_aux (register_read data r2') r1 pL
-                  (wordLang_OpCurrHeap b r1 r2)) /\
     (word_cse data (wordLang_Install p l dp dl m) =
     (empty_data,wordLang_Install p l dp dl m)) /\
     // Buffer writes touch only the code/data buffers, nothing we track.
@@ -654,11 +635,30 @@ let word_cse_def,word_cse_ind = define_rec_clauses
       (let data = invalidate_regs data [r1; r2; r3; r4] in
          (knowledge_loads_mem_fupd (K balanced_map_empty)
              data,wordLang_StoreConsts r1 r2 r3 r4 payload))) /\
-    // Conservative: optimise the loop body from empty state.
-    (word_cse data (wordLang_Loop names c exit_names) =
+    // Shared-memory op: a load writes its var; a store writes no register.
+    // Shared memory (sh_mdomain) is disjoint from the heap memory that load
+    // facts describe, so loads_mem survives both.
+    (word_cse data (wordLang_ShareInst op r exp) =
+      let data = (if is_store op then data else invalidate_data data r) in
+        (data,wordLang_ShareInst op r exp)) /\
+    (word_cse data (wordLang_Break k) = (data,wordLang_Break k)) /\
+    (word_cse data (wordLang_Continue k) = (data,wordLang_Continue k))`;
+   `word_cse data (wordLang_MustTerminate p) =
+                let (data',p') = word_cse data p in
+                    (data',wordLang_MustTerminate p')`;
+   `word_cse data (wordLang_Seq p1 p2) =
+        let (data1,p1') = word_cse data p1 in
+        let (data2,p2') = word_cse data1 p2 in
+          (data2,wordLang_Seq p1' p2')`;
+   `word_cse data (wordLang_If c r1 r2 p1 p2) =
+        let (data1,p1') = word_cse data p1 in
+        let (data2,p2') = word_cse data p2 in
+          (merge_data data1 data2,wordLang_If c r1 r2 p1' p2')`;
+   `word_cse data (wordLang_Return r1 r2) = (data,wordLang_Return r1 r2)`;
+   `// Conservative: optimise the loop body from empty state.
+    word_cse data (wordLang_Loop names c exit_names) =
       let (_,c') = word_cse empty_data c in
-        (empty_data,wordLang_Loop names c' exit_names))`;
-   `word_cse data (wordLang_Return r1 r2) = (data,wordLang_Return r1 r2)`];;
+        (empty_data,wordLang_Loop names c' exit_names)`];;
 
 let word_common_subexp_elim_def = new_definition
   `word_common_subexp_elim prog =

@@ -175,13 +175,13 @@ let shift_cb_dist = prove
    If a recursive call is found, returns all extracted/let-bound expressions and (INR) the call block.
    If an effectful operation appears right of the recursive call, the expression is not eligible for transformation and NONE is returned.
    If multiple recursive calls are found, all but the last are let bound. *)
-let bvi_to_cb_aux_def,bvi_to_cb_aux_ind = assume_definition_rec
+let bvi_to_cb_aux_def,bvi_to_cb_aux_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  `(bvi_to_cb_aux_sing n loc tag (bvi_Call t loc' args h) =
+  [`bvi_to_cb_aux_sing n loc tag (bvi_Call t loc' args h) =
        match call_to_cb loc t loc' args h with SOME (bs,cb) -> SOME (bs,INR
            (CallBlock tag [] cb []))
-       | _ -> NONE) /\
-   (bvi_to_cb_aux_sing n loc tag (bvi_Op op args) =
+       | _ -> NONE`;
+   `bvi_to_cb_aux_sing n loc tag (bvi_Op op args) =
        match bvi_tmc_dest_Cons op with SOME tag' ->
            (
             // BlockOp Cons - try to recurse
@@ -198,15 +198,15 @@ let bvi_to_cb_aux_def,bvi_to_cb_aux_ind = assume_definition_rec
            // Not a BlockOp Cons - whole thing gets let-bound
            if pure_exp n (bvi_Op op args) then
              SOME ([bvi_Op op args],INL [0])
-           else NONE) /\
-   (bvi_to_cb_aux_sing n _ _ exp =
+           else NONE`;
+   `bvi_to_cb_aux_sing n _ _ exp =
        // Some other expression - whole thing gets let-bound
        if pure_exp n exp then
          SOME ([exp],INL [0])
-        else NONE) /\
-   (bvi_to_cb_aux _ _ _ [] = SOME ([],INL [])) /\
-   (bvi_to_cb_aux n loc tag [exp] = bvi_to_cb_aux_sing n loc tag exp) /\
-   (bvi_to_cb_aux n loc tag (CONS h t) =
+        else NONE`;
+   `bvi_to_cb_aux _ _ _ [] = SOME ([],INL [])`;
+   `bvi_to_cb_aux n loc tag [exp] = bvi_to_cb_aux_sing n loc tag exp`;
+   `bvi_to_cb_aux n loc tag (CONS h t) =
        // Recurse right to left to find last occurence of recursive call
        match bvi_to_cb_aux n loc tag t with NONE -> NONE
        | SOME (bs2,INL vs2) ->
@@ -230,7 +230,7 @@ let bvi_to_cb_aux_def,bvi_to_cb_aux_ind = assume_definition_rec
            (match shift_cb 1 cb with CallBlock tag l child r ->
                let cb' = CallBlock tag (CONS 0 l) child r in
                  SOME (CONS h bs2,INR cb')
-           | _ -> NONE))`;;
+           | _ -> NONE)`];;
 
 let wf_vars_def = new_definition
   `wf_vars n (vs:num list) <=> ALL (\v. v < n) vs`;;

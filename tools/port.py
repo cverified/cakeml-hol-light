@@ -2291,8 +2291,11 @@ class Porter:
       clauses = self.clause_form(
                   body, overrides.MATCH_CLAUSES[key][0])
     elif key in overrides.CLAUSE_FORM:
+      # the clauses in separate quotations because the override
+      # says so, where what clashes only shows in the right hand
+      # sides and clause_clash does not look there
       term = None
-      clauses = self.clause_form(body)
+      clauses = self.clause_form(body, split=True)
     elif (key in overrides.MATCH_FORM or self.overlapping(body) or
           self.multi_pattern(body)):
       # one clause with a match, which HOL Light handles far better
@@ -2360,8 +2363,9 @@ class Porter:
     # why the clauses stand in several quotations
     splitnote = ''
     if term is None and getattr(self, 'clause_list', False) \
+       and getattr(self, 'clause_split', None) \
        and getattr(self, 'clause_why', None):
-      n = len(self.clause_split)
+      n = len(self.clause_split or [])
       splitnote = '\n'.join(fill(
         '(* the clauses in %s quotations:'
         % ('two' if n == 2 else 'three' if n == 3 else str(n)),
@@ -3538,7 +3542,7 @@ class Porter:
       if c.kind == 'infix' and c.op == '<=>': c.op = '='
     return e
 
-  def clause_form(self, body, matchcons=()):
+  def clause_form(self, body, matchcons=(), split=False):
     """the clauses of a definition, as one quotation with /\\
        between them -- which is how HOL4 writes them and how HOL
        Light's own define takes them.  Where a variable of the
@@ -3549,7 +3553,11 @@ class Porter:
        _clauses.  The clauses of a constant of `matchcons' are one
        quotation with a match in it, where they overlap and HOL4
        takes the first that matches (overrides.MATCH_CLAUSES)"""
-    self.clause_list = self.clause_clash(body)
+    self.clause_list = self.clause_clash(body) or split
+    # a clause of its own for each, where the override says to
+    # split: what clashes there does not show in the clauses, so
+    # there is nothing to group them by either
+    if split: self.clause_split = None
     # the comments of the body are kept: the tokenizer gives
     # every one of them to the token after it, and the printer
     # writes it there again
@@ -3670,10 +3678,13 @@ class Porter:
         for l in lines[k:]:
           out += '\n' + ind + l.lstrip()
       return '`' + out + '`'
-    groups2 = (self.clause_split
-               if self.clause_list and
-                  max(max(g) for g in self.clause_split) < len(cls)
-               else [list(range(len(cls)))])
+    if self.clause_list and self.clause_split is None:
+      groups2 = [[i] for i in range(len(cls))]
+    else:
+      groups2 = (self.clause_split
+                 if self.clause_list and
+                    max(max(g) for g in self.clause_split) < len(cls)
+                 else [list(range(len(cls)))])
     if len(groups2) < 2:
       self.clause_list = False
       return quot(groups2[0])
@@ -3796,15 +3807,24 @@ class Porter:
     # of one clause and at argument 2 of another would look like a
     # clash, where HOL Light unifies the two argument types
     # (mergesort's merge has 'merge R [] l' and 'merge R l []')
+    def hol4_ty(nm, arity):
+      """the name HOL4 gives the type of a constructor, which is
+         the vocabulary that con_argty above uses"""
+      t = self.con_thy(nm, arity=arity)
+      n = nm.split('$')[-1]
+      if not t: return None
+      for (t2, ty), (cons, _) in self.db.datatypes.items():
+        if t2 == t and n in cons: return ty
+      return None
     def pat_ty(a):
       while a.kind in ('paren', 'typed', 'rawtyped'): a = a.e
       if a.kind == 'list': return '(A)list'
       if a.kind == 'app':
         h, args0 = hterm.strip_app(a)
         if h.kind == 'id' and iscon(h.name):
-          return self.con_type(h.name, len(args0))
+          return hol4_ty(h.name, len(args0))
       elif a.kind == 'id' and iscon(a.name):
-        return self.con_type(a.name, 0)
+        return hol4_ty(a.name, 0)
       return None
     # keyed by the function too: a definition of a family has one
     # argument position per member, and the argument 1 of one of
@@ -3825,11 +3845,26 @@ class Porter:
     # arguments are of one type (balanced_map's trim_help_middle
     # has its comparison and its low bound the other way round in
     # its second clause, which is why HOL4 gets away with it)
-    for n, (h, args, _) in enumerate(cls):
+    heads = set(fname(h) for h, _, _ in cls)
+    def body(n, e):
+      """a body that applies one of the functions being defined
+         says the type of a variable in its arguments, as a
+         pattern of a clause does (clos_fvs's remove_fvs_sing has
+         an xs that its remove_fvs_let takes)"""
+      if not isinstance(e, hterm.Node): return
+      if e.kind == 'app':
+        h, args = hterm.strip_app(e)
+        if h.kind == 'id' and h.name in heads:
+          for i, a in enumerate(args):
+            k = (h.name, i)
+            walk(a, {argtys[k]} if k in argtys else {('arg',) + k})
+      for t in hterm.subnodes(e): body(n, t)
+    for n, (h, args, r) in enumerate(cls):
       clause[0] = n
       for i, a in enumerate(args):
         k = (fname(h), i)
         walk(a, {argtys[k]} if k in argtys else {('arg',) + k})
+      body(n, r)
     # two clauses cannot stand in one quotation where a variable of
     # both has no type in common between them; the clauses are
     # grouped into as few quotations as that allows, which is one
@@ -3864,7 +3899,11 @@ class Porter:
       byclass = {}
       for x in seen: byclass.setdefault(find(x), set()).add(x)
       for c in byclass.values():
-        if len([x for x in c if isinstance(x, str)]) > 1: return True
+        conc = [x for x in c if isinstance(x, str)]
+        for i2 in range(len(conc)):
+          for j2 in range(i2 + 1, len(conc)):
+            if not hterm.ty_compatible(conc[i2], conc[j2]):
+              return True
         # two arguments of one function that a variable makes one
         # type: the source means two types and gets away with it
         # because HOL4 typechecks every clause on its own
@@ -3901,11 +3940,12 @@ class Porter:
     if len(groups) > 1 and os.environ.get('CLASHDBG'):
       print('CLASH %s %s: %s' % (self.thy, self.defkey, groups),
             file=sys.stderr)
-      if os.environ.get('CLASHDBG') == '2':
+      if os.environ.get('CLASHDBG') in ('2', '3'):
         for n, (h, _, _) in enumerate(cls):
           print('   %2d %s' % (n, fname(h)), file=sys.stderr)
         for k, v in where.items():
-          if len(set(map(str, [t for _, t in v]))) > 1:
+          if (os.environ.get('CLASHDBG') == '3' or
+              len(set(map(str, [t for _, t in v]))) > 1):
             print('   %s: %s' % (k, v), file=sys.stderr)
     return len(groups) > 1
 

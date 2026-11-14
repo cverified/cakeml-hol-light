@@ -483,8 +483,9 @@ let force_thunk_code_def = new_definition
            [bvl_Var 0; bvl_Var 1]] (bvl_Var 1))):bvl_exp)`;;
 
 let _ = size_thms "closLang_exp";;
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list),
-   which one quotation cannot typecheck *)
+(* the clauses in three quotations: t is tra, mlstring and (mlstring list);
+   xs is (exp list) and (A)list; xs2 is (exp list) and (A)list, which one
+   quotation cannot typecheck *)
 let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -584,8 +585,9 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
 (* HOL4 clos_to_bvlScript.sml:495: ML code, not ported *)
 
 let _ = size_thms "bvl_exp";;
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list),
-   which one quotation cannot typecheck *)
+(* the clauses in three quotations: t is tra, mlstring and (mlstring list);
+   xs is (exp list) and (A)list; xs2 is (exp list) and (A)list, which one
+   quotation cannot typecheck *)
 let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(compile_exp_sing max_app (closLang_Var t v) aux = (((bvl_Var
@@ -746,9 +748,9 @@ let clos_to_bvl_default_config_def = new_definition
   `clos_to_bvl_default_config = mk_clos_to_bvl_config 0 1 T (SOME
   (clos_known_default_config 10)) T (LN,[]) 10`;;
 
-let code_split_def,code_split_ind = define_rec
-  `(code_split [] xs ys = (xs,ys)) /\
-   (code_split (CONS z zs) xs ys = code_split zs (CONS z ys) xs)`;;
+let code_split_def,code_split_ind = define_rec_clauses
+  [`code_split [] xs ys = (xs,ys)`;
+   `code_split (CONS z zs) xs ys = code_split zs (CONS z ys) xs`];;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(xs,ys). LENGTH xs + LENGTH ys)

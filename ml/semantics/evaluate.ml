@@ -65,9 +65,10 @@ let sing_env_def = new_definition
      (mk_sem_env (nsBind n v nsEmpty) nsEmpty:semanticPrimitives_v
        sem_env)`;;
 
-(* the clauses in two quotations: cn is (((modN , conN) id) option) and conN;
-   l is lit and locs; n is ((modN , varN) id) and tvarN, which one quotation
-   cannot typecheck *)
+(* the clauses in three quotations: cn is (((modN , conN) id) option) and
+   conN; ds is (dec list) and (A)list; l is lit and locs; lds is (dec list)
+   and (A)list; n is ((modN , varN) id) and tvarN; pes is ((pat # exp) list)
+   and (A)list, which one quotation cannot typecheck *)
 let evaluate_def,evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(evaluate (st:'ffi semanticPrimitives_state) env [] = ((st:'ffi
@@ -85,15 +86,6 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
       (match evaluate st env [e] with
          (st',Rval v) -> (st',Rerr (Rraise (HD v)))
        | (st',Rerr v8) -> (st',Rerr v8))) /\
-    (evaluate (st:'ffi semanticPrimitives_state) env [ast_Handle e pes] =
-      (match evaluate_fix_clock st (evaluate st env [e]) with
-         (st',Rval v7) -> (st',Rval v7)
-       | (st',Rerr (Rraise v)) ->
-         if can_pmatch_all (sem_env_c env) (semanticPrimitives_state_refs
-             st') (MAP FST pes) v then
-           evaluate_evaluate_match st' env v pes v
-         else (st',Rerr (Rabort Rtype_error))
-       | (st',Rerr (Rabort v12)) -> (st',Rerr (Rabort v12)))) /\
     (evaluate (st:'ffi semanticPrimitives_state) env [ast_Con cn es] =
       (if do_con_check (sem_env_c env) cn (LENGTH es) then
          match evaluate st env (REVERSE es) with
@@ -270,23 +262,16 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
        else (st,Rerr (Rabort Rtype_error)))) /\
     (evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dtabbrev
     locs tvs tn t] =
-      (st,Rval (mk_sem_env nsEmpty nsEmpty))) /\
-    (evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dmod mn ds]
-    =
-      (match evaluate_evaluate_decs st env ds with
-         (st',r) ->
-           (st',
-            (match r with
-              Rval env' ->
-                Rval (mk_sem_env (nsLift mn (sem_env_v env')) (nsLift mn
-                    (sem_env_c env')))
-            | Rerr err -> Rerr err)))) /\
-    (evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dlocal lds
-    ds] =
-      match evaluate_fix_clock st (evaluate_evaluate_decs st env lds) with
-        (st1,Rval env1) -> evaluate_evaluate_decs st1 (extend_dec_env env1
-            env) ds
-      | (st1,Rerr v7) -> (st1,Rerr v7))`;
+      (st,Rval (mk_sem_env nsEmpty nsEmpty)))`;
+   `evaluate (st:'ffi semanticPrimitives_state) env [ast_Handle e pes] =
+      (match evaluate_fix_clock st (evaluate st env [e]) with
+         (st',Rval v7) -> (st',Rval v7)
+       | (st',Rerr (Rraise v)) ->
+         if can_pmatch_all (sem_env_c env) (semanticPrimitives_state_refs
+             st') (MAP FST pes) v then
+           evaluate_evaluate_match st' env v pes v
+         else (st',Rerr (Rabort Rtype_error))
+       | (st',Rerr (Rabort v12)) -> (st',Rerr (Rabort v12)))`;
    `(evaluate (st:'ffi semanticPrimitives_state) env [ast_Lannot e l] =
     evaluate st env [e]) /\
     (evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Denv n] =
@@ -302,7 +287,23 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
           (semanticPrimitives_state_next_exn_stamp st + 1)) st,
        Rval
          (mk_sem_env nsEmpty (nsSing cn (LENGTH ts,ExnStamp
-             (semanticPrimitives_state_next_exn_stamp st))))))`];;
+             (semanticPrimitives_state_next_exn_stamp st)))))) /\
+    (evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dmod mn ds]
+    =
+      (match evaluate_evaluate_decs st env ds with
+         (st',r) ->
+           (st',
+            (match r with
+              Rval env' ->
+                Rval (mk_sem_env (nsLift mn (sem_env_v env')) (nsLift mn
+                    (sem_env_c env')))
+            | Rerr err -> Rerr err)))) /\
+    (evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dlocal lds
+    ds] =
+      match evaluate_fix_clock st (evaluate_evaluate_decs st env lds) with
+        (st1,Rval env1) -> evaluate_evaluate_decs st1 (extend_dec_env env1
+            env) ds
+      | (st1,Rerr v7) -> (st1,Rerr v7))`];;
 
 (* tidy up evalute_def and evaluate_ind *)
 

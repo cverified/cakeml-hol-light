@@ -1038,6 +1038,32 @@ def dtarg_texts(alt):
   return out
 
 
+def _is_tyvar(t):
+  """is this parsed type a type variable?  The port writes HOL
+     Light's A, B, ... and a source writes HOL4's 'a"""
+  return (t[0] == 'var' or
+          (t[0] == 'op' and not t[2] and
+           (t[1].startswith("'") or
+            (len(t[1]) == 1 and t[1].isupper()))))
+
+
+def ty_compatible(a, b):
+  """do two types of a source unify, with a type variable standing
+     for anything?  A pattern of [] says a list of anything, which
+     is no clash with a list of expressions"""
+  if a == b: return True
+  try:
+    ta, tb = parse_type_text(a), parse_type_text(b)
+  except Exception:
+    return True
+  def go(x, y):
+    if _is_tyvar(x) or _is_tyvar(y): return True
+    if x[0] != 'op' or y[0] != 'op': return True
+    if x[1] != y[1] or len(x[2]) != len(y[2]): return False
+    return all(go(p, q) for p, q in zip(x[2], y[2]))
+  return go(ta, tb)
+
+
 def open_tail(e):
   """does a term end in something that reaches as far to the right
      as it can -- a match, a binder -- so that what follows it

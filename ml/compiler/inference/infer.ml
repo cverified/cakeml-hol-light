@@ -471,8 +471,8 @@ let check_type_definition_def = new_definition
 (* HOL4 inferScript.sml:510-511: a theorem that HOL4 states as the value of
    an ML expression: check_type_definition_expand *)
 
-(* the clauses in two quotations: s is char and mlstring; w is word8 and
-   word64, which one quotation cannot typecheck *)
+(* the clauses in two quotations: ps is (pat list) and (A)list; s is char and
+   mlstring; w is word8 and word64, which one quotation cannot typecheck *)
 let infer_p_def,infer_p_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(infer_p l ienv (ast_Pvar n) =
@@ -785,8 +785,9 @@ let constrain_op_error_msg_sanity = prove
      IS_PREFIX (explode msg) "Thunk"`,
   CHEAT_TAC);;
 
-(* the clauses in two quotations: x is varN and (varN option), which one
-   quotation cannot typecheck *)
+(* the clauses in 4 quotations: es is (A)list and (exp list); funs is (A)list
+   and ((varN # varN # exp) list); pes is ((pat # exp) list) and (A)list; x
+   is varN and (varN option), which one quotation cannot typecheck *)
 let infer_e_def,infer_e_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(infer_e l ienv (ast_Raise e) =
@@ -815,34 +816,11 @@ let infer_e_def,infer_e_ind = assume_definition_rec_clauses
         st_ex_bind (lookup_st_ex l (implode "variable") id' (inf_env_inf_v
             ienv)) (\(tvs,t). st_ex_bind (n_fresh_uvar tvs) (\uvs.
            st_ex_return (infer_deBruijn_subst uvs t)))) /\
-    (infer_e l ienv (ast_Con cn_opt es) =
-        (match cn_opt with
-            NONE ->
-             st_ex_bind (infer_es l ienv es) (\ts.
-                st_ex_return (Infer_Tapp ts Ttup_num))
-          | SOME cn ->
-             st_ex_bind (lookup_st_ex l (implode "constructor") cn
-                 (inf_env_inf_c ienv)) (\(tvs',ts,tn). st_ex_bind (infer_es l
-                 ienv es) (\ts''. st_ex_bind (n_fresh_uvar (LENGTH tvs'))
-                 (\ts'.
-                 st_ex_ignore_bind (infer_guard (LENGTH ts'' = LENGTH ts) l
-                       (mlstring_concat [(implode "Constructor ");
-                           id_to_string cn; (implode " given ");
-                              mlint_toString (&(LENGTH ts'')); (implode
-                                  " arguments, but expected ");
-                              mlint_toString (&(LENGTH ts))])) (st_ex_bind
-                                  (add_constraints l ts'' (MAP
-                                  (infer_type_subst (ZIP tvs' ts')) ts)) (\one.
-                st_ex_return (Infer_Tapp ts' tn)))))))) /\
     (infer_e l ienv (ast_Fun x e) =
         st_ex_bind fresh_uvar (\t1. st_ex_bind (infer_e l
             (inf_env_inf_v_fupd (K (nsBind x (0,t1) (inf_env_inf_v ienv)))
             ienv) e) (\t2.
            st_ex_return (Infer_Tapp [t1; t2] Tfn_num)))) /\
-    (infer_e l ienv (ast_App op es) =
-        st_ex_bind (infer_es l ienv es) (\ts. st_ex_bind (constrain_op l op
-            ts) (\t.
-           st_ex_return t))) /\
     (infer_e l ienv (ast_Log log e1 e2) =
         st_ex_bind (infer_e l ienv e1) (\t1. st_ex_bind (infer_e l ienv e2)
             (\t2. st_ex_bind (add_constraint l t1 (Infer_Tapp [] Tbool_num))
@@ -855,41 +833,6 @@ let infer_e_def,infer_e_ind = assume_definition_rec_clauses
             (\t2. st_ex_bind (infer_e l ienv e3) (\t3. st_ex_bind
             (add_constraint l t2 t3) (\one.
            st_ex_return t2)))))) /\
-    (infer_e l ienv (ast_Mat e pes) =
-        if pes = [] then
-          infer_failwith l ((implode "No patterns in case"))
-        else st_ex_bind (infer_e l ienv e) (\t1. st_ex_bind fresh_uvar
-            (\t2. st_ex_bind (infer_pes l ienv pes t1 t2) (\one.
-             st_ex_return t2)))) /\
-    // Don't do polymorphism for non-top-level let recs
-    // (infer_e l ienv (Letrec funs e) =
-    // do () <- guard (ALL_DISTINCT (MAP FST funs)) "Duplicate function name variable";
-    // next <- get_next_uvar;
-    // uvars <- n_fresh_uvar (LENGTH funs);
-    // env' <- return (merge (list$MAP2 (\(f,x,e) uvar. (f,(0,uvar))) funs uvars) env);
-    // funs_ts <- infer_funs l (ienv with inf_v := env') funs;
-    // () <- add_constraints l uvars funs_ts;
-    // ts <- apply_subst_list uvars;
-    // (num_gen,s,ts') <- return (generalise_list next 0 FEMPTY ts);
-    // env'' <- return (merge (list$MAP2 (\(f,x,e) t. (f,(num_gen,t))) funs ts') env);
-    // t <- infer_e l (ienv with inf_v := env'') e;
-    // return t
-    // od) ∧
-    (infer_e l ienv (ast_Letrec funs e) =
-       st_ex_ignore_bind (check_dups l (\n. mlstring_concat [(implode
-           "Duplicate function name "); n;
-                              (implode
-
-      " in mutually recursive function definition")])
-                    (MAP FST funs)) (st_ex_bind (n_fresh_uvar (LENGTH
-                        funs)) (\uvars. st_ex_bind (st_ex_return (nsAppend
-                        (alist_to_ns (MAP2 (\(f,x,e) uvar. (f,(0,uvar))) funs
-                        uvars)) (inf_env_inf_v ienv))) (\env'. st_ex_bind
-                        (infer_funs l (inf_env_inf_v_fupd (K env') ienv) funs)
-                        (\funs_ts. st_ex_bind (add_constraints l uvars funs_ts)
-                        (\one. st_ex_bind (infer_e l (inf_env_inf_v_fupd (K
-                        env') ienv) e) (\t.
-        st_ex_return t))))))) /\
     (infer_e l ienv (ast_Tannot e t) =
         st_ex_bind (infer_e l ienv e) (\t'. st_ex_bind
             (type_name_check_subst l
@@ -910,26 +853,36 @@ let infer_e_def,infer_e_ind = assume_definition_rec_clauses
         st_ex_bind (infer_e l ienv e) (\t. st_ex_bind (infer_es l ienv es)
             (\ts.
            st_ex_return (CONS t ts)))) /\
-    (infer_pes l ienv [] t1 t2 =
-         st_ex_return one) /\
-    (infer_pes l ienv (CONS (p,e) pes) t1 t2 =
-        st_ex_bind (infer_p l ienv p) (\(t1',env').
-          st_ex_ignore_bind (check_dups l (\n. mlstring_concat [(implode
-              "Duplicate variable "); n; (implode " in pattern")])
-                    (MAP FST env')) (st_ex_bind (add_constraint l t1 t1')
-                        (\one. st_ex_bind (infer_e l (inf_env_inf_v_fupd (K
-                        (nsAppend (alist_to_ns (MAP (\(n,t). (n,(0,t))) env'))
-                        (inf_env_inf_v ienv))) ienv) e) (\t2'. st_ex_bind
-                        (add_constraint l t2 t2') (\one. st_ex_bind (infer_pes
-                        l ienv pes t1 t2) (\one.
-           st_ex_return one))))))) /\
     (infer_funs l ienv [] = st_ex_return []) /\
     (infer_funs l ienv (CONS (f,x,e) funs) =
         st_ex_bind fresh_uvar (\uvar. st_ex_bind (infer_e l
             (inf_env_inf_v_fupd (K (nsBind x (0,uvar) (inf_env_inf_v ienv)))
             ienv) e) (\t. st_ex_bind (infer_funs l ienv funs) (\ts.
            st_ex_return (CONS (Infer_Tapp [uvar; t] Tfn_num) ts)))))`;
-   `infer_e l ienv (ast_Let x e1 e2) =
+   `(infer_e l ienv (ast_Con cn_opt es) =
+        (match cn_opt with
+            NONE ->
+             st_ex_bind (infer_es l ienv es) (\ts.
+                st_ex_return (Infer_Tapp ts Ttup_num))
+          | SOME cn ->
+             st_ex_bind (lookup_st_ex l (implode "constructor") cn
+                 (inf_env_inf_c ienv)) (\(tvs',ts,tn). st_ex_bind (infer_es l
+                 ienv es) (\ts''. st_ex_bind (n_fresh_uvar (LENGTH tvs'))
+                 (\ts'.
+                 st_ex_ignore_bind (infer_guard (LENGTH ts'' = LENGTH ts) l
+                       (mlstring_concat [(implode "Constructor ");
+                           id_to_string cn; (implode " given ");
+                              mlint_toString (&(LENGTH ts'')); (implode
+                                  " arguments, but expected ");
+                              mlint_toString (&(LENGTH ts))])) (st_ex_bind
+                                  (add_constraints l ts'' (MAP
+                                  (infer_type_subst (ZIP tvs' ts')) ts)) (\one.
+                st_ex_return (Infer_Tapp ts' tn)))))))) /\
+    (infer_e l ienv (ast_App op es) =
+        st_ex_bind (infer_es l ienv es) (\ts. st_ex_bind (constrain_op l op
+            ts) (\t.
+           st_ex_return t))) /\
+    (infer_e l ienv (ast_Let x e1 e2) =
           // Don't do polymorphism for non-top-level lets
           // if is_value e1 then
           // do n <- get_next_uvar;
@@ -943,7 +896,55 @@ let infer_e_def,infer_e_ind = assume_definition_rec_clauses
           st_ex_bind (infer_e l ienv e1) (\t1. st_ex_bind (infer_e l
               (inf_env_inf_v_fupd (K (nsOptBind x (0,t1) (inf_env_inf_v ienv)))
               ienv) e2) (\t2.
-             st_ex_return t2))`];;
+             st_ex_return t2))) /\
+    (infer_pes l ienv [] t1 t2 =
+         st_ex_return one) /\
+    (infer_pes l ienv (CONS (p,e) pes) t1 t2 =
+        st_ex_bind (infer_p l ienv p) (\(t1',env').
+          st_ex_ignore_bind (check_dups l (\n. mlstring_concat [(implode
+              "Duplicate variable "); n; (implode " in pattern")])
+                    (MAP FST env')) (st_ex_bind (add_constraint l t1 t1')
+                        (\one. st_ex_bind (infer_e l (inf_env_inf_v_fupd (K
+                        (nsAppend (alist_to_ns (MAP (\(n,t). (n,(0,t))) env'))
+                        (inf_env_inf_v ienv))) ienv) e) (\t2'. st_ex_bind
+                        (add_constraint l t2 t2') (\one. st_ex_bind (infer_pes
+                        l ienv pes t1 t2) (\one.
+           st_ex_return one)))))))`;
+   `infer_e l ienv (ast_Mat e pes) =
+        if pes = [] then
+          infer_failwith l ((implode "No patterns in case"))
+        else st_ex_bind (infer_e l ienv e) (\t1. st_ex_bind fresh_uvar
+            (\t2. st_ex_bind (infer_pes l ienv pes t1 t2) (\one.
+             st_ex_return t2)))`;
+   `// Don't do polymorphism for non-top-level let recs
+    // (infer_e l ienv (Letrec funs e) =
+    // do () <- guard (ALL_DISTINCT (MAP FST funs)) "Duplicate function name variable";
+    // next <- get_next_uvar;
+    // uvars <- n_fresh_uvar (LENGTH funs);
+    // env' <- return (merge (list$MAP2 (\(f,x,e) uvar. (f,(0,uvar))) funs uvars) env);
+    // funs_ts <- infer_funs l (ienv with inf_v := env') funs;
+    // () <- add_constraints l uvars funs_ts;
+    // ts <- apply_subst_list uvars;
+    // (num_gen,s,ts') <- return (generalise_list next 0 FEMPTY ts);
+    // env'' <- return (merge (list$MAP2 (\(f,x,e) t. (f,(num_gen,t))) funs ts') env);
+    // t <- infer_e l (ienv with inf_v := env'') e;
+    // return t
+    // od) ∧
+    infer_e l ienv (ast_Letrec funs e) =
+       st_ex_ignore_bind (check_dups l (\n. mlstring_concat [(implode
+           "Duplicate function name "); n;
+                              (implode
+
+      " in mutually recursive function definition")])
+                    (MAP FST funs)) (st_ex_bind (n_fresh_uvar (LENGTH
+                        funs)) (\uvars. st_ex_bind (st_ex_return (nsAppend
+                        (alist_to_ns (MAP2 (\(f,x,e) uvar. (f,(0,uvar))) funs
+                        uvars)) (inf_env_inf_v ienv))) (\env'. st_ex_bind
+                        (infer_funs l (inf_env_inf_v_fupd (K env') ienv) funs)
+                        (\funs_ts. st_ex_bind (add_constraints l uvars funs_ts)
+                        (\one. st_ex_bind (infer_e l (inf_env_inf_v_fupd (K
+                        env') ienv) e) (\t.
+        st_ex_return t))))))`];;
 
 (* [local] *)
 let FUN_EQ_THM_state = prove
@@ -1155,12 +1156,14 @@ let alist_nub_def,alist_nub_ind = define_guess_cheat
    (alist_nub (CONS (x,y) xs) = CONS (x,y) (alist_nub (FILTER (\t. ~(x =
     FST t)) xs)))`;;
 
-let ns_nub_def,ns_nub_ind = define_shaped_rec
+(* the clauses in two quotations: ys is (('m , namespace) alist) and (A)list,
+   which one quotation cannot typecheck *)
+let ns_nub_def,ns_nub_ind = define_shaped_rec_clauses
   "maplist>nested"
-  `(ns_nub (Bind xs ys) = Bind (alist_nub xs) (alist_nub (inner_ns_nubs
-    ys))) /\
-   (inner_ns_nubs [] = []) /\
-   (inner_ns_nubs (CONS (x,y) tl) = CONS (x,ns_nub y) (inner_ns_nubs tl))`;;
+  [`ns_nub (Bind xs ys) = Bind (alist_nub xs) (alist_nub (inner_ns_nubs
+    ys))`;
+   `(inner_ns_nubs [] = []) /\
+    (inner_ns_nubs (CONS (x,y) tl) = CONS (x,ns_nub y) (inner_ns_nubs tl))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)

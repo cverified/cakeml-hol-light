@@ -865,21 +865,16 @@ let AppUnit_def = new_definition
   `closSem_AppUnit x = closLang_App backend_common_None NONE x [closLang_Op
   backend_common_None (closLang_BlockOp (closLang_Cons 0)) []]`;;
 
-(* the clauses in 7 quotations: a0 is tra, mlstring and (mlstring list); a1
-   is num, exp, (exp list), (num option) and op; a2 is num, exp, (num list
-   option) and (exp list); a3 is (exp list), exp, num and ((num # exp) list),
-   which one quotation cannot typecheck *)
+(* the clauses in 8 quotations: a0 is tra, mlstring, (mlstring list) and exp;
+   a1 is num, exp, (exp list), (A)list, (num option) and op; a2 is num, exp,
+   (num list option), (exp list) and (A)list; a3 is (exp list), (A)list, exp,
+   num and ((num # exp) list), which one quotation cannot typecheck *)
 let exp_alt_size_def,exp_alt_size_ind = define_rec_clauses
   [`(closSem_exp_alt_size (closLang_Var a0 a1) = 1 + (tra_size a0 + a1)) /\
     (closSem_exp_alt_size (closLang_Call a0 a1 a2 a3) =
     1 + (tra_size a0 + (a1 + (a2 + closSem_exp3_alt_size a3)))) /\
     (closSem_exp1_alt_size [] = 0) /\
-    (closSem_exp1_alt_size (CONS a0 a1) = 1 + (closSem_exp2_alt_size a0 +
-    closSem_exp1_alt_size a1)) /\
-    (closSem_exp2_alt_size (a0,a1) = 1 + (a0 + closSem_exp_alt_size a1)) /\
-    (closSem_exp3_alt_size [] = 0) /\
-    (closSem_exp3_alt_size (CONS a0 a1) = 1 + (closSem_exp_alt_size a0 +
-    closSem_exp3_alt_size a1))`;
+    (closSem_exp3_alt_size [] = 0)`;
    `(closSem_exp_alt_size (closLang_If a0 a1 a2 a3) =
     1 + (tra_size a0 + (closSem_exp_alt_size a1 + (closSem_exp_alt_size
         a2 + closSem_exp_alt_size a3)))) /\
@@ -889,10 +884,13 @@ let exp_alt_size_def,exp_alt_size_ind = define_rec_clauses
     1 + (tra_size a0 + (closSem_exp_alt_size a1 + closSem_exp_alt_size
         a2))) /\
     (closSem_exp_alt_size (closLang_Tick a0 a1) = 1 + (tra_size a0 +
-    closSem_exp_alt_size a1))`;
-   `closSem_exp_alt_size (closLang_Let a0 a1 a2) =
+    closSem_exp_alt_size a1)) /\
+    (closSem_exp2_alt_size (a0,a1) = 1 + (a0 + closSem_exp_alt_size a1))`;
+   `(closSem_exp_alt_size (closLang_Let a0 a1 a2) =
     1 + (tra_size a0 + (closSem_exp3_alt_size a1 + closSem_exp_alt_size
-        a2))`;
+        a2))) /\
+    (closSem_exp1_alt_size (CONS a0 a1) = 1 + (closSem_exp2_alt_size a0 +
+    closSem_exp1_alt_size a1))`;
    `closSem_exp_alt_size (closLang_App a0 a1 a2 a3) =
     1 +
     (tra_size a0 + (option_size (\x. x) a1 + (closSem_exp_alt_size a2 +
@@ -911,7 +909,9 @@ let exp_alt_size_def,exp_alt_size_ind = define_rec_clauses
           closSem_exp_alt_size a4))))`;
    `closSem_exp_alt_size (closLang_Op a0 a1 a2) =
       1 + (tra_size a0 + (closLang_op_size a1 + closSem_exp3_alt_size
-          a2)) + (if a1 = closLang_ThunkOp ForceThunk then 100 else 0)`];;
+          a2)) + (if a1 = closLang_ThunkOp ForceThunk then 100 else 0)`;
+   `closSem_exp3_alt_size (CONS a0 a1) = 1 + (closSem_exp_alt_size a0 +
+    closSem_exp3_alt_size a1)`];;
 add_simp exp_alt_size_def;;
 
 (* [local] *)
@@ -937,23 +937,21 @@ let closSem_fix_clock_IMP =
 if concl closSem_fix_clock_IMP <> `T` then
   cake_term_facts := closSem_fix_clock_IMP :: (!cake_term_facts);;
 
-(* the clauses in two quotations: args is (exp list) and (A)list, which one
-   quotation cannot typecheck *)
-let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec_clauses
+let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`(closSem_evaluate ([],(env:closSem_v list),(s:('c,'ffi)closSem_state)) =
+  `(closSem_evaluate ([],(env:closSem_v list),(s:('c,'ffi)closSem_state)) =
     (Rval [],s)) /\
-    (closSem_evaluate (CONS x (CONS y xs),env,s) =
+   (closSem_evaluate (CONS x (CONS y xs),env,s) =
          match closSem_fix_clock s (closSem_evaluate ([x],env,s)) with
              (Rval v1,s1) ->
              (match closSem_evaluate (CONS y xs,env,s1) with (Rval vs,s2)
                  -> (Rval (CONS (HD v1) vs),s2)
               | res -> res)
          | res -> res) /\
-    (closSem_evaluate ([closLang_Var _ n],env,s) =
+   (closSem_evaluate ([closLang_Var _ n],env,s) =
          if n < LENGTH env then (Rval [EL n env],s) else (Rerr (Rabort
              Rtype_error),s)) /\
-    (closSem_evaluate ([closLang_If _ x1 x2 x3],env,s) =
+   (closSem_evaluate ([closLang_If _ x1 x2 x3],env,s) =
          match closSem_fix_clock s (closSem_evaluate ([x1],env,s)) with
              (Rval vs,s1) ->
               if semanticPrimitives_Boolv T = HD vs then closSem_evaluate
@@ -961,19 +959,19 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec_clauses
                   closSem_evaluate ([x3],env,s1) else (Rerr (Rabort
                   Rtype_error),s1)
          | res -> res) /\
-    (closSem_evaluate ([closLang_Let _ xs x2],env,s) =
+   (closSem_evaluate ([closLang_Let _ xs x2],env,s) =
          match closSem_fix_clock s (closSem_evaluate (xs,env,s)) with (Rval
              vs,s1) -> closSem_evaluate ([x2],APPEND vs env,s1)
          | res -> res) /\
-    (closSem_evaluate ([closLang_Raise _ x1],env,s) =
+   (closSem_evaluate ([closLang_Raise _ x1],env,s) =
          match closSem_evaluate ([x1],env,s) with (Rval vs,s) -> (Rerr
              (Rraise (HD vs)),s)
          | res -> res) /\
-    (closSem_evaluate ([closLang_Handle _ x1 x2],env,s1) =
+   (closSem_evaluate ([closLang_Handle _ x1 x2],env,s1) =
          match closSem_fix_clock s1 (closSem_evaluate ([x1],env,s1)) with
              (Rerr (Rraise v),s) -> closSem_evaluate ([x2],CONS v env,s)
          | res -> res) /\
-    (closSem_evaluate ([closLang_Op _ op xs],env,s) =
+   (closSem_evaluate ([closLang_Op _ op xs],env,s) =
          match closSem_fix_clock s (closSem_evaluate (xs,env,s)) with (Rval
              vs,s) ->
            (if op = closLang_Install then
@@ -999,7 +997,7 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec_clauses
                (Rerr err,s)
             | Rval (v,s) -> (Rval [v],s)))
          | res -> res) /\
-    (closSem_evaluate ([closLang_Fn _ loc vsopt num_args exp],env,s) =
+   (closSem_evaluate ([closLang_Fn _ loc vsopt num_args exp],env,s) =
          if num_args <= closSem_state_max_app s /\ ~(num_args = 0) then
            match vsopt with NONE -> (Rval [closSem_Closure loc [] env
                num_args exp],s)
@@ -1009,7 +1007,7 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec_clauses
                   | SOME env' -> (Rval [closSem_Closure loc [] env'
                       num_args exp],s))
          else (Rerr (Rabort Rtype_error),s)) /\
-    (closSem_evaluate ([closLang_Letrec _ loc namesopt fns exp],env,s) =
+   (closSem_evaluate ([closLang_Letrec _ loc namesopt fns exp],env,s) =
          if ALL (\(num_args,e). num_args <= closSem_state_max_app s
              /\ ~(num_args = 0)) fns then
            let
@@ -1024,7 +1022,7 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec_clauses
                  NONE -> (Rerr (Rabort Rtype_error),s)
                | SOME ed -> closSem_evaluate ([exp],APPEND ed env,s)
          else (Rerr (Rabort Rtype_error),s)) /\
-    (closSem_evaluate ([closLang_App _ loc_opt x1 args],env,s) =
+   (closSem_evaluate ([closLang_App _ loc_opt x1 args],env,s) =
          if LENGTH args > 0 then
            (match closSem_fix_clock s (closSem_evaluate (args,env,s)) with
                (Rval y2,s1) ->
@@ -1033,11 +1031,11 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec_clauses
                | res -> res)
             | res -> res)
          else (Rerr (Rabort Rtype_error),s)) /\
-    (closSem_evaluate ([closLang_Tick _ x],env,s) =
+   (closSem_evaluate ([closLang_Tick _ x],env,s) =
          if closSem_state_clock s = 0 then (Rerr (Rabort
              Rtimeout_error),s) else closSem_evaluate
              ([x],env,closSem_dec_clock 1 s)) /\
-    (closSem_evaluate ([closLang_Call _ ticks dest xs],env,s1) =
+   (closSem_evaluate ([closLang_Call _ ticks dest xs],env,s1) =
          match closSem_fix_clock s1 (closSem_evaluate (xs,env,s1)) with
              (Rval vs,s) ->
              (match closSem_find_code dest vs (closSem_state_code s) with
@@ -1048,8 +1046,8 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec_clauses
                       closSem_evaluate ([exp],args,closSem_dec_clock (ticks +
                       1) s))
          | res -> res) /\
-    (evaluate_app loc_opt f [] (s:('c,'ffi)closSem_state) = (Rval [f],s))`;
-   `evaluate_app loc_opt f args (s:('c,'ffi)closSem_state) =
+   (evaluate_app loc_opt f [] (s:('c,'ffi)closSem_state) = (Rval [f],s)) /\
+   (evaluate_app loc_opt f args (s:('c,'ffi)closSem_state) =
          match dest_closure (closSem_state_max_app s) loc_opt f args with
              NONE -> (Rerr (Rabort Rtype_error),s)
          | SOME (Partial_app v) ->
@@ -1066,7 +1064,7 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec_clauses
                             (LENGTH args - LENGTH rest_args) s)) with (Rval
                             [v],s1) ->
                    evaluate_app loc_opt v rest_args s1
-               | res -> res)`];;
+               | res -> res))`;;
 
 (* HOL4 closSemScript.sml:845-846: a theorem that HOL4 states as the value
    of an ML expression: evaluate_app_NIL *)

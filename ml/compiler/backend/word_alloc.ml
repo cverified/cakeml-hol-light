@@ -364,8 +364,11 @@ let loop_setup_def = new_definition
        list_next_var_rename_move ssa_ext na_ext refresh_ls in
      (wordLang_Seq fake_prog refresh_mov,ssa_refreshed,na_refreshed)`;;
 
-(* the clauses in two quotations: b is num and binop; n is store_name and
-   num, which one quotation cannot typecheck *)
+(* the clauses in 7 quotations: b is num and binop; body is wordLang$prog and
+   prog; e2 is wordLang$prog and prog; e3 is wordLang$prog and prog; h is
+   ((num # wordLang$prog # num # num) option) and prog; n is store_name and
+   num; s1 is wordLang$prog and prog; s2 is wordLang$prog and prog, which one
+   quotation cannot typecheck *)
 let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(ssa_cc_trans wordLang_Skip ssa na lt = (wordLang_Skip,ssa,na)) /\
@@ -401,32 +404,6 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec_clauses
         let exp' = ssa_cc_trans_exp ssa exp in
         let num' = option_lookup ssa num' in
           (wordLang_Store exp' num',ssa,na)) /\
-    (ssa_cc_trans (wordLang_Seq s1 s2) ssa na lt =
-        let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
-        let (s2',ssa'',na'') = ssa_cc_trans s2 ssa' na' lt in
-          (wordLang_Seq s1' s2',ssa'',na'')) /\
-    (ssa_cc_trans (wordLang_MustTerminate s1) ssa na lt =
-        let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
-          (wordLang_MustTerminate s1',ssa',na')) /\
-    // Tricky pmatch 1: we need to merge the ssa results from both branches by
-    // unSSA-ing the phi functions
-    (ssa_cc_trans (wordLang_If cmp r1 ri e2 e3) ssa na lt =
-     let r1' = option_lookup ssa r1 in
-     let ri' = (match ri with Reg r -> Reg (option_lookup ssa r)
-                       | Imm v -> Imm v) in
-     // ssa is the copy for both branches,
-     // however, we can use new na2 and ns2
-     let (e2',ssa2,na2) = ssa_cc_trans e2 ssa na lt in
-     // ssa2 is the ssa map for the first branch
-     let (e3',ssa3,na3) = ssa_cc_trans e3 ssa na2 lt in
-     // ssa3 is the ssa map for the second branch, notice we
-     // continued using na2 here though!
-     // prioritizing original skips
-     let prio = mk_prio e2' e3' in
-     let (e2_cons,e3_cons,na_fin,ssa_fin) =
-       fix_inconsistencies prio ssa2 ssa3 na3 in
-     (wordLang_If cmp r1' ri' (wordLang_Seq e2' e2_cons) (wordLang_Seq
-         e3' e3_cons),ssa_fin,na_fin)) /\
     // For cutsets, we must restart the ssa mapping to maintain consistency
     (ssa_cc_trans (wordLang_Alloc num' numset) ssa na lt =
      let all_names' = sptree_union (FST numset) (SND numset) in
@@ -519,8 +496,60 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec_clauses
         let prog = wordLang_Seq move_args (wordLang_Call NONE dest
             conv_args h) in
           (prog,ssa,na)) /\
-    (ssa_cc_trans (wordLang_Call (SOME (ret,numset,ret_handler,l1,l2)) dest
-      args
+    (ssa_cc_trans (wordLang_ShareInst op v exp) ssa na lt =
+        let exp' = ssa_cc_trans_exp ssa exp in
+          if op = asm_Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op =
+              asm_Store32 then
+            (wordLang_ShareInst op (option_lookup ssa v) exp',ssa,na)
+          else let (v',ssa',na') = next_var_rename v ssa na in
+              (wordLang_ShareInst op v' exp',ssa',na'))`;
+   `ssa_cc_trans (wordLang_Seq s1 s2) ssa na lt =
+        let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
+        let (s2',ssa'',na'') = ssa_cc_trans s2 ssa' na' lt in
+          (wordLang_Seq s1' s2',ssa'',na'')`;
+   `ssa_cc_trans (wordLang_MustTerminate s1) ssa na lt =
+        let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
+          (wordLang_MustTerminate s1',ssa',na')`;
+   `// Tricky pmatch 1: we need to merge the ssa results from both branches by
+    // unSSA-ing the phi functions
+    ssa_cc_trans (wordLang_If cmp r1 ri e2 e3) ssa na lt =
+     let r1' = option_lookup ssa r1 in
+     let ri' = (match ri with Reg r -> Reg (option_lookup ssa r)
+                       | Imm v -> Imm v) in
+     // ssa is the copy for both branches,
+     // however, we can use new na2 and ns2
+     let (e2',ssa2,na2) = ssa_cc_trans e2 ssa na lt in
+     // ssa2 is the ssa map for the first branch
+     let (e3',ssa3,na3) = ssa_cc_trans e3 ssa na2 lt in
+     // ssa3 is the ssa map for the second branch, notice we
+     // continued using na2 here though!
+     // prioritizing original skips
+     let prio = mk_prio e2' e3' in
+     let (e2_cons,e3_cons,na_fin,ssa_fin) =
+       fix_inconsistencies prio ssa2 ssa3 na3 in
+     (wordLang_If cmp r1' ri' (wordLang_Seq e2' e2_cons) (wordLang_Seq
+         e3' e3_cons),ssa_fin,na_fin)`;
+   `(ssa_cc_trans (wordLang_OpCurrHeap b dst src) ssa na lt =
+        let src' = option_lookup ssa src in
+        let (dst',ssa',na') = next_var_rename dst ssa na in
+          (wordLang_OpCurrHeap b dst' src',ssa',na')) /\
+    // Break n: reconcile current ssa with target exit ssa
+    (ssa_cc_trans (wordLang_Break n) ssa na lt =
+     match oEL n lt with
+       NONE -> (wordLang_Break n,ssa,na)
+     | SOME (tgt_ssa,names,exit_names) ->
+         let moves = ssa_reconcile ssa tgt_ssa exit_names in
+         ((if moves = wordLang_Skip then wordLang_Break n else
+             wordLang_Seq moves (wordLang_Break n)),ssa,na)) /\
+    // Continue n: reconcile current ssa with target entry ssa
+    (ssa_cc_trans (wordLang_Continue n) ssa na lt =
+     match oEL n lt with
+       NONE -> (wordLang_Continue n,ssa,na)
+     | SOME (tgt_ssa,names,exit_names) ->
+         let moves = ssa_reconcile ssa tgt_ssa names in
+         ((if moves = wordLang_Skip then wordLang_Continue n else
+             wordLang_Seq moves (wordLang_Continue n)),ssa,na))`;
+   `ssa_cc_trans (wordLang_Call (SOME (ret,numset,ret_handler,l1,l2)) dest args
     h) ssa na lt =
         let all_names' = sptree_union (FST numset) (SND numset) in
         let ls = MAP FST (toAList all_names') in
@@ -566,19 +595,12 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec_clauses
                 (wordLang_Call (SOME
                     (regs',stack_set,cons_ret_handler,l1,l2))
                    dest conv_args (SOME (2,cons_exc_handler,l1',l2'))))) in
-            (prog,ssa_fin,na_fin))) /\
-    (ssa_cc_trans (wordLang_ShareInst op v exp) ssa na lt =
-        let exp' = ssa_cc_trans_exp ssa exp in
-          if op = asm_Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op =
-              asm_Store32 then
-            (wordLang_ShareInst op (option_lookup ssa v) exp',ssa,na)
-          else let (v',ssa',na') = next_var_rename v ssa na in
-              (wordLang_ShareInst op v' exp',ssa',na')) /\
-    // Loop: use loop_setup to refresh ssa for (names ∪ exit_names) before
+            (prog,ssa_fin,na_fin))`;
+   `// Loop: use loop_setup to refresh ssa for (names ∪ exit_names) before
     // the Loop, establishing INJ on their domains by construction. Body sees
     // ssa restricted to names; lt carries ssa_refreshed (full) for
     // Break/Continue reconciliation.
-    (ssa_cc_trans (wordLang_Loop names body exit_names) ssa na lt =
+    ssa_cc_trans (wordLang_Loop names body exit_names) ssa na lt =
      let (setup_prog,ssa_refreshed,na_refreshed) =
        loop_setup names exit_names ssa na in
      let ssa_names = apply_nummap_key (option_lookup ssa_refreshed) names
@@ -594,27 +616,7 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec_clauses
                       else wordLang_Seq body' back_moves) in
      (wordLang_Seq setup_prog (wordLang_Loop ssa_names body_final
          ssa_exit),
-      inter ssa_refreshed exit_names,na'))`;
-   `(ssa_cc_trans (wordLang_OpCurrHeap b dst src) ssa na lt =
-        let src' = option_lookup ssa src in
-        let (dst',ssa',na') = next_var_rename dst ssa na in
-          (wordLang_OpCurrHeap b dst' src',ssa',na')) /\
-    // Break n: reconcile current ssa with target exit ssa
-    (ssa_cc_trans (wordLang_Break n) ssa na lt =
-     match oEL n lt with
-       NONE -> (wordLang_Break n,ssa,na)
-     | SOME (tgt_ssa,names,exit_names) ->
-         let moves = ssa_reconcile ssa tgt_ssa exit_names in
-         ((if moves = wordLang_Skip then wordLang_Break n else
-             wordLang_Seq moves (wordLang_Break n)),ssa,na)) /\
-    // Continue n: reconcile current ssa with target entry ssa
-    (ssa_cc_trans (wordLang_Continue n) ssa na lt =
-     match oEL n lt with
-       NONE -> (wordLang_Continue n,ssa,na)
-     | SOME (tgt_ssa,names,exit_names) ->
-         let moves = ssa_reconcile ssa tgt_ssa names in
-         ((if moves = wordLang_Skip then wordLang_Continue n else
-             wordLang_Seq moves (wordLang_Continue n)),ssa,na))`];;
+      inter ssa_refreshed exit_names,na')`];;
 
 (*Recursively applying colours to a program*)
 
@@ -1202,8 +1204,11 @@ let get_reads_exp_def,get_reads_exp_ind = define_wf
        (get_reads_exp nexp)
      | expr -> []`;;
 
-(* the clauses in two quotations: b is binop and num; n is store_name and
-   num, which one quotation cannot typecheck *)
+(* the clauses in 6 quotations: b is binop and num; body is wordLang$prog and
+   prog; e2 is wordLang$prog and prog; e3 is wordLang$prog and prog; n is
+   store_name and num; s is wordLang$prog and prog; s1 is wordLang$prog and
+   prog; s2 is wordLang$prog and prog, which one quotation cannot typecheck
+   *)
 let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(get_clash_tree wordLang_Skip lt = reg_alloc_Delta [] []) /\
@@ -1216,18 +1221,6 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec_clauses
       /\
     (get_clash_tree (wordLang_Store exp num') lt = reg_alloc_Delta [] (CONS
     num' (get_reads_exp exp))) /\
-    (get_clash_tree (wordLang_Seq s1 s2) lt = reg_alloc_Seq (get_clash_tree
-    s1 lt) (get_clash_tree s2 lt)) /\
-    (get_clash_tree (wordLang_If cmp r1 ri e2 e3) lt =
-        let e2t = get_clash_tree e2 lt in
-        let e3t = get_clash_tree e3 lt in
-        match ri with
-          Reg r2 -> reg_alloc_Seq (reg_alloc_Delta [] [r1; r2])
-              (reg_alloc_Branch NONE e2t e3t)
-        | _ -> reg_alloc_Seq (reg_alloc_Delta [] [r1])
-            (reg_alloc_Branch NONE e2t e3t)) /\
-    (get_clash_tree (wordLang_MustTerminate s) lt =
-        get_clash_tree s lt) /\
     (get_clash_tree (wordLang_Alloc num' numset) lt =
         reg_alloc_Seq (reg_alloc_Delta [] [num']) (reg_alloc_Set
             (sptree_union (FST numset) (SND numset)))) /\
@@ -1255,12 +1248,6 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec_clauses
       = asm_Store8 \/ op = asm_Store16 \/ op = asm_Store32 then
     reg_alloc_Delta [] (CONS v (get_reads_exp exp))
         else reg_alloc_Delta [v] (get_reads_exp exp)) /\
-    (get_clash_tree (wordLang_Loop names body exit_names) lt =
-        reg_alloc_Seq (reg_alloc_Set names)
-          (reg_alloc_Seq (reg_alloc_Set exit_names)
-            (reg_alloc_Seq (get_clash_tree body (CONS (names,exit_names)
-                lt))
-              (reg_alloc_Set names)))) /\
     (get_clash_tree (wordLang_Call ret dest args h) lt =
         let args_set = word_alloc_numset_list_insert args LN in
         match ret with
@@ -1279,6 +1266,18 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec_clauses
               reg_alloc_Seq (reg_alloc_Set (sptree_insert v' one cutset))
                   (get_clash_tree prog lt) in
             reg_alloc_Branch (SOME live_set) ret_tree handler_tree))`;
+   `get_clash_tree (wordLang_Seq s1 s2) lt = reg_alloc_Seq (get_clash_tree
+    s1 lt) (get_clash_tree s2 lt)`;
+   `get_clash_tree (wordLang_If cmp r1 ri e2 e3) lt =
+        let e2t = get_clash_tree e2 lt in
+        let e3t = get_clash_tree e3 lt in
+        match ri with
+          Reg r2 -> reg_alloc_Seq (reg_alloc_Delta [] [r1; r2])
+              (reg_alloc_Branch NONE e2t e3t)
+        | _ -> reg_alloc_Seq (reg_alloc_Delta [] [r1])
+            (reg_alloc_Branch NONE e2t e3t)`;
+   `get_clash_tree (wordLang_MustTerminate s) lt =
+        get_clash_tree s lt`;
    `(get_clash_tree (wordLang_StoreConsts a b c d ws) lt = reg_alloc_Delta
     [a; b; c; d] [c; d]) /\
     // Break n: exit_names vars must all be live
@@ -1290,7 +1289,13 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec_clauses
     (get_clash_tree (wordLang_Continue n) lt =
      match oEL n lt with
        NONE -> reg_alloc_Set LN
-     | SOME (names,exit_names) -> reg_alloc_Set names)`];;
+     | SOME (names,exit_names) -> reg_alloc_Set names)`;
+   `get_clash_tree (wordLang_Loop names body exit_names) lt =
+        reg_alloc_Seq (reg_alloc_Set names)
+          (reg_alloc_Seq (reg_alloc_Set exit_names)
+            (reg_alloc_Seq (get_clash_tree body (CONS (names,exit_names)
+                lt))
+              (reg_alloc_Set names)))`];;
 
 (* Preference edges
   The allocator tries hard to coalesce these edges

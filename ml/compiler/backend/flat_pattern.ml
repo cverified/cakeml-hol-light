@@ -271,8 +271,9 @@ let op_sets_globals_EX = prove
  (`op_sets_globals op = (?n. op = flatLang_GlobalVarInit n)`,
   CHEAT_TAC);;
 
-(* the clauses in two quotations: t is tra and varN, which one quotation
-   cannot typecheck *)
+(* the clauses in two quotations: ps is ((pat # exp) list) and (A)list; t is
+   tra and varN; xs is (exp list) and (A)list, which one quotation cannot
+   typecheck *)
 let flat_pattern_compile_exp_def,flat_pattern_compile_exp_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -319,10 +320,6 @@ let flat_pattern_compile_exp_def,flat_pattern_compile_exp_ind =
         (MAX i (MAX j k),(sg1 \/ sg2 \/ sg3),SmartIf t y1 y2 y3)) /\
     (flat_pattern_compile_exp cfg exp = (0,F,exp)) /\
     (flat_pattern_compile_exps cfg [] = (0,F,[])) /\
-    (flat_pattern_compile_exps cfg (CONS x xs) =
-        let (i,sgx,y) = flat_pattern_compile_exp cfg x in
-        let (j,sgy,ys) = flat_pattern_compile_exps cfg xs in
-        (MAX i j,(sgx \/ sgy),CONS y ys)) /\
     (compile_match cfg [] = (0,F,[])) /\
     (compile_match cfg (CONS (p,x) ps) =
         let (i,sgx,y) = flat_pattern_compile_exp cfg x in
@@ -338,7 +335,11 @@ let flat_pattern_compile_exp_def,flat_pattern_compile_exp_ind =
         let j = MAX_LIST (MAP (\(_,_,(j,_,_)). j) ys) in
         let sgfs = EX (\(_,_,(_,sg,_)). sg) ys in
         let fs2 = MAP (\(a,b,(_,_,exp)). (a,b,exp)) ys in
-        (MAX i j,(sgfs \/ sgx),flatLang_Letrec t fs2 y))`];;
+        (MAX i j,(sgfs \/ sgx),flatLang_Letrec t fs2 y)) /\
+    (flat_pattern_compile_exps cfg (CONS x xs) =
+        let (i,sgx,y) = flat_pattern_compile_exp cfg x in
+        let (j,sgy,ys) = flat_pattern_compile_exps cfg xs in
+        (MAX i j,(sgx \/ sgy),CONS y ys))`];;
 
 let LENGTH_compile_exps_IMP = prove
  (`(!cfg x. let v = flat_pattern_compile_exp cfg x in T) /\

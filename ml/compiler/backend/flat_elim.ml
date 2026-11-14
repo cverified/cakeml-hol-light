@@ -102,27 +102,30 @@ let flat_elim_is_pure_def,flat_elim_is_pure_ind = define_wf
 (* HOL4 flat_elimScript.sml:82: a theorem that HOL4 states as the value of
    an ML expression: is_pure_def1 *)
 
-let has_Eval_def,has_Eval_ind = assume_definition_rec
+(* the clauses in two quotations: es is (exp list) and (A)list; pes is
+   (A)list and ((pat # exp) list), which one quotation cannot typecheck *)
+let has_Eval_def,has_Eval_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  `(has_Eval (flatLang_App t op es) <=> op = flatLang_Src ast_Eval \/
+  [`(has_Eval (flatLang_App t op es) <=> op = flatLang_Src ast_Eval \/
     has_Eval_list es) /\
-   (has_Eval (flatLang_Mat _ e pes) <=> has_Eval e \/ has_Eval_pats pes) /\
-   (has_Eval (flatLang_Letrec _ funs e) <=> has_Eval e \/ has_Eval_funs
+    (has_Eval (flatLang_Letrec _ funs e) <=> has_Eval e \/ has_Eval_funs
     funs) /\
-   (has_Eval (flatLang_Raise _ e) <=> has_Eval e) /\
-   (has_Eval (flatLang_Handle _ e pes) <=> has_Eval e \/ has_Eval_pats pes) /\
-   (has_Eval (flatLang_Con _ _ es) <=> has_Eval_list es) /\
-   (has_Eval (flatLang_Fun _ _ e) <=> has_Eval e) /\
-   (has_Eval (flatLang_If _ e1 e2 e3) <=> has_Eval e1 \/ has_Eval e2 \/
+    (has_Eval (flatLang_Raise _ e) <=> has_Eval e) /\
+    (has_Eval (flatLang_Con _ _ es) <=> has_Eval_list es) /\
+    (has_Eval (flatLang_Fun _ _ e) <=> has_Eval e) /\
+    (has_Eval (flatLang_If _ e1 e2 e3) <=> has_Eval e1 \/ has_Eval e2 \/
     has_Eval e3) /\
-   (has_Eval (flatLang_Let _ _ e1 e2) <=> has_Eval e1 \/ has_Eval e2) /\
-   (has_Eval _ <=> F) /\
-   (has_Eval_list [] <=> F) /\
-   (has_Eval_list (CONS e es) <=> has_Eval e \/ has_Eval_list es) /\
-   (has_Eval_pats [] <=> F) /\
-   (has_Eval_pats (CONS (p,e) pes) <=> has_Eval e \/ has_Eval_pats pes) /\
-   (has_Eval_funs [] <=> F) /\
-   (has_Eval_funs (CONS (_,_,e) fs) <=> has_Eval e \/ has_Eval_funs fs)`;;
+    (has_Eval (flatLang_Let _ _ e1 e2) <=> has_Eval e1 \/ has_Eval e2) /\
+    (has_Eval _ <=> F) /\
+    (has_Eval_list [] <=> F) /\
+    (has_Eval_list (CONS e es) <=> has_Eval e \/ has_Eval_list es) /\
+    (has_Eval_pats [] <=> F) /\
+    (has_Eval_pats (CONS (p,e) pes) <=> has_Eval e \/ has_Eval_pats pes) /\
+    (has_Eval_funs [] <=> F) /\
+    (has_Eval_funs (CONS (_,_,e) fs) <=> has_Eval e \/ has_Eval_funs fs)`;
+   `(has_Eval (flatLang_Mat _ e pes) <=> has_Eval e \/ has_Eval_pats pes) /\
+    (has_Eval (flatLang_Handle _ e pes) <=> has_Eval e \/ has_Eval_pats
+      pes)`];;
 
 let dest_GlobalVarInit_def = new_definition
   `dest_GlobalVarInit x1 =

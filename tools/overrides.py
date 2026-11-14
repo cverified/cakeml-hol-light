@@ -1378,8 +1378,18 @@ CLAUSE_FORM = set([
   ('source_to_flat', 'compile_pat_def'),
   # a variable of these has one type in the clauses of one of the
   # functions and another in those of the next, which only shows
-  # in the right hand sides, where clause_clash does not look
+  # in the right hand sides, where clause_clash does not look.
+  # The xs of these four is a list of expressions in the clauses
+  # of the pass itself and a list of (num # exp) in the ones of
+  # the helper that walks the functions of a Letrec, and what
+  # says so is a MAP over a pair in the body
   ('bvi_tmc', 'bvi_to_cb_aux_def'),
+  ('clos_fvs', 'remove_fvs_def'),
+  ('clos_fvs', 'remove_fvs_sing_def'),
+  ('clos_letop', 'let_op_def'),
+  ('clos_letop', 'let_op_sing_def'),
+  ('clos_ticks', 'remove_ticks_def'),
+  ('clos_ticks', 'remove_ticks_sing_def'),
 ])
 
 # definitions whose clauses overlap, so that they depend on HOL4's

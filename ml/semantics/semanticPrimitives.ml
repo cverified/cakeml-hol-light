@@ -314,17 +314,42 @@ let boolv_def = new_definition
  * number of arguments, and constructors in corresponding positions in the
  * pattern and value come from the same type.  Match_type_error is returned
  * when one of these conditions is violated *)
-let pmatch_def,pmatch_ind = assume_definition_rec
+(* the clauses in three quotations: ps is (A)list and (pat list); vs is
+   (A)list and (v list), which one quotation cannot typecheck *)
+let pmatch_def,pmatch_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  `(semanticPrimitives_pmatch envC s ast_Pany v' env = Match env) /\
-   (semanticPrimitives_pmatch envC s (ast_Pvar x) v' env = Match (CONS
+  [`(semanticPrimitives_pmatch envC s ast_Pany v' env = Match env) /\
+    (semanticPrimitives_pmatch envC s (ast_Pvar x) v' env = Match (CONS
     (x,v') env)) /\
-   (semanticPrimitives_pmatch envC s (ast_Plit l) (semanticPrimitives_Litv l')
+    (semanticPrimitives_pmatch envC s (ast_Plit l) (semanticPrimitives_Litv l')
     env =
     (if l = l' then Match env
      else if lit_same_type l l' then No_match
      else Match_type_error)) /\
-   (semanticPrimitives_pmatch envC s (ast_Pcon (SOME n) ps)
+    (semanticPrimitives_pmatch envC s (ast_Pref p) (semanticPrimitives_Loc _
+    lnum) env =
+    (match store_lookup lnum s with
+       NONE -> Match_type_error
+     | SOME (semanticPrimitives_Refv v) -> semanticPrimitives_pmatch envC s
+         p v env
+     | SOME _ -> Match_type_error)) /\
+    (semanticPrimitives_pmatch envC s (ast_Pas p i) v env =
+    semanticPrimitives_pmatch envC s p v (CONS (i,v) env)) /\
+    (semanticPrimitives_pmatch envC s (ast_Ptannot p t) v env =
+    semanticPrimitives_pmatch envC s p v env) /\
+    (semanticPrimitives_pmatch envC s _ _ env = Match_type_error) /\
+    (semanticPrimitives_pmatch_list envC s [] [] env = Match env) /\
+    (semanticPrimitives_pmatch_list envC s (CONS p ps) (CONS v vs) env =
+    (match semanticPrimitives_pmatch envC s p v env with
+       No_match ->
+         (match semanticPrimitives_pmatch_list envC s ps vs env with
+            No_match -> No_match
+          | Match_type_error -> Match_type_error
+          | Match v1 -> No_match)
+     | Match_type_error -> Match_type_error
+     | Match env' -> semanticPrimitives_pmatch_list envC s ps vs env')) /\
+    (semanticPrimitives_pmatch_list envC s _ _ env = Match_type_error)`;
+   `semanticPrimitives_pmatch envC s (ast_Pcon (SOME n) ps)
     (semanticPrimitives_Conv (SOME stamp') vs) env =
     (match nsLookup envC n with
        NONE -> Match_type_error
@@ -335,35 +360,12 @@ let pmatch_def,pmatch_ind = assume_definition_rec
                  vs env
              else Match_type_error
            else No_match
-         else Match_type_error)) /\
-   (semanticPrimitives_pmatch envC s (ast_Pcon NONE ps)
+         else Match_type_error)`;
+   `semanticPrimitives_pmatch envC s (ast_Pcon NONE ps)
     (semanticPrimitives_Conv NONE vs) env =
     (if LENGTH ps = LENGTH vs then semanticPrimitives_pmatch_list envC s ps
         vs env
-     else Match_type_error)) /\
-   (semanticPrimitives_pmatch envC s (ast_Pref p) (semanticPrimitives_Loc _
-    lnum) env =
-    (match store_lookup lnum s with
-       NONE -> Match_type_error
-     | SOME (semanticPrimitives_Refv v) -> semanticPrimitives_pmatch envC s
-         p v env
-     | SOME _ -> Match_type_error)) /\
-   (semanticPrimitives_pmatch envC s (ast_Pas p i) v env =
-    semanticPrimitives_pmatch envC s p v (CONS (i,v) env)) /\
-   (semanticPrimitives_pmatch envC s (ast_Ptannot p t) v env =
-    semanticPrimitives_pmatch envC s p v env) /\
-   (semanticPrimitives_pmatch envC s _ _ env = Match_type_error) /\
-   (semanticPrimitives_pmatch_list envC s [] [] env = Match env) /\
-   (semanticPrimitives_pmatch_list envC s (CONS p ps) (CONS v vs) env =
-    (match semanticPrimitives_pmatch envC s p v env with
-       No_match ->
-         (match semanticPrimitives_pmatch_list envC s ps vs env with
-            No_match -> No_match
-          | Match_type_error -> Match_type_error
-          | Match v1 -> No_match)
-     | Match_type_error -> Match_type_error
-     | Match env' -> semanticPrimitives_pmatch_list envC s ps vs env')) /\
-   (semanticPrimitives_pmatch_list envC s _ _ env = Match_type_error)`;;
+     else Match_type_error)`];;
 
 let can_pmatch_all_def,can_pmatch_all_ind = define_rec
   `(can_pmatch_all envC refs [] v <=> T) /\

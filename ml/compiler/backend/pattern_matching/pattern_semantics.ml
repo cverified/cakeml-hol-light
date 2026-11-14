@@ -72,46 +72,48 @@ let is_sibling_def = define_cases
   `(is_sibling x NONE = T) /\
    (is_sibling x (SOME l) = MEM x l)`;;
 
+(* the clauses in three quotations: pargs is (pat list) and (A)list; targs is
+   (term list) and (A)list, which one quotation cannot typecheck *)
 let pattern_semantics_pmatch_def,pattern_semantics_pmatch_ind =
-  assume_definition_rec
+  assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  `(pattern_semantics_pmatch refs pattern_semantics_Any t = PMatchSuccess) /\
-   (pattern_semantics_pmatch refs (pattern_semantics_Lit l)
+  [`(pattern_semantics_pmatch refs pattern_semantics_Any t = PMatchSuccess) /\
+    (pattern_semantics_pmatch refs (pattern_semantics_Lit l)
     (pattern_semantics_Litv l') =
          if ~(lit_same_type l l') then PTypeFailure else if l = l' then
              PMatchSuccess else PMatchFailure) /\
-   (pattern_semantics_pmatch refs (pattern_semantics_Cons (SOME (tag,siblings))
-    pargs) (pattern_semantics_Term (SOME t) targs) =
-        if tag = t /\ LENGTH pargs = LENGTH targs then
-            pattern_semantics_pmatch_list refs pargs targs else if
-            is_sibling (t,LENGTH targs) siblings then PMatchFailure else
-            PTypeFailure) /\
-   (pattern_semantics_pmatch refs (pattern_semantics_Cons NONE pargs)
-    (pattern_semantics_Term NONE targs) =
-        pattern_semantics_pmatch_list refs pargs targs) /\
-   (pattern_semantics_pmatch refs (pattern_semantics_Ref p)
+    (pattern_semantics_pmatch refs (pattern_semantics_Ref p)
     (pattern_semantics_RefPtr r) =
         match FLOOKUP refs r with NONE -> PTypeFailure
         | SOME v -> pattern_semantics_pmatch refs p v) /\
-   (pattern_semantics_pmatch refs (pattern_semantics_Or p1 p2) t =
+    (pattern_semantics_pmatch refs (pattern_semantics_Or p1 p2) t =
         match pattern_semantics_pmatch refs p1 t with
            PMatchSuccess -> (match pattern_semantics_pmatch refs p2 t with
                               PTypeFailure -> PTypeFailure
                              | _ -> PMatchSuccess)
          | PMatchFailure -> pattern_semantics_pmatch refs p2 t
          | PTypeFailure -> PTypeFailure) /\
-   (pattern_semantics_pmatch refs _ _ = PTypeFailure) /\
-   (pattern_semantics_pmatch_list refs [] [] = PMatchSuccess) /\
-   (pattern_semantics_pmatch_list refs [] ts = PTypeFailure) /\
-   (pattern_semantics_pmatch_list refs ps [] = PTypeFailure) /\
-   (pattern_semantics_pmatch_list refs (CONS p ps) (CONS t ts) =
+    (pattern_semantics_pmatch refs _ _ = PTypeFailure) /\
+    (pattern_semantics_pmatch_list refs [] [] = PMatchSuccess) /\
+    (pattern_semantics_pmatch_list refs [] ts = PTypeFailure) /\
+    (pattern_semantics_pmatch_list refs ps [] = PTypeFailure) /\
+    (pattern_semantics_pmatch_list refs (CONS p ps) (CONS t ts) =
         match pattern_semantics_pmatch refs p t with
           PMatchSuccess -> pattern_semantics_pmatch_list refs ps ts
         | PMatchFailure -> (match pattern_semantics_pmatch_list refs ps ts
             with
                               PTypeFailure -> PTypeFailure
                              | _ -> PMatchFailure)
-        | PTypeFailure -> PTypeFailure)`;;
+        | PTypeFailure -> PTypeFailure)`;
+   `pattern_semantics_pmatch refs (pattern_semantics_Cons (SOME (tag,siblings))
+    pargs) (pattern_semantics_Term (SOME t) targs) =
+        if tag = t /\ LENGTH pargs = LENGTH targs then
+            pattern_semantics_pmatch_list refs pargs targs else if
+            is_sibling (t,LENGTH targs) siblings then PMatchFailure else
+            PTypeFailure`;
+   `pattern_semantics_pmatch refs (pattern_semantics_Cons NONE pargs)
+    (pattern_semantics_Term NONE targs) =
+        pattern_semantics_pmatch_list refs pargs targs`];;
 
 let match_def,match_ind = define_rec
   `(pattern_semantics_match refs [] v = SOME MatchFailure) /\

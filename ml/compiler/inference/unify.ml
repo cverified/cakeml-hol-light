@@ -66,22 +66,24 @@ let encode_infer_t_11 = prove
   CHEAT_TAC);;
 add_simp encode_infer_t_11;;
 
+(* the clauses in two quotations: s1 is term and exp, which one quotation
+   cannot typecheck *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let decode_infer_t_def,decode_infer_t_ind = define_guess_cheat
-  `(decode_infer_t (term_Var n) =
+let decode_infer_t_def,decode_infer_t_ind = define_guess_cheat_clauses
+  [`(decode_infer_t (term_Var n) =
       Infer_Tuvar n) /\
-   (decode_infer_t (term_Const (DB_tag n)) =
+    (decode_infer_t (term_Const (DB_tag n)) =
       Infer_Tvar_db n) /\
-   (decode_infer_t (term_Pair (term_Const Tapp_tag) (term_Pair (term_Const
+    (decode_infer_t (term_Pair (term_Const Tapp_tag) (term_Pair (term_Const
     (TC_tag tc)) s)) =
       Infer_Tapp (decode_infer_ts s) tc) /\
-   (decode_infer_t _ = Infer_Tuvar 5) /\
-   (decode_infer_ts (term_Const Null_tag) =
+    (decode_infer_t _ = Infer_Tuvar 5) /\
+    (decode_infer_ts (term_Const Null_tag) =
       []) /\
-   (decode_infer_ts (term_Pair s1 s2) = CONS (decode_infer_t s1)
-    (decode_infer_ts s2)) /\
-   (decode_infer_ts _ = [])`;;
+    (decode_infer_ts _ = [])`;
+   `decode_infer_ts (term_Pair s1 s2) = CONS (decode_infer_t s1)
+    (decode_infer_ts s2)`];;
 
 let decode_left_inverse = prove
  (`(!t. decode_infer_t (encode_infer_t t) = t) /\
@@ -764,20 +766,22 @@ let kclkont_INDUCT,kclkont_RECURSION = define_datatype
    | CONSk (infer_t list) num";;
 
 let _ = size_thms "kclkont";;
+(* the clauses in three quotations: n is num and type_ident, which one
+   quotation cannot typecheck *)
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let apply_kclkont_def,apply_kclkont_ind = define_wf
+let apply_kclkont_def,apply_kclkont_ind = define_wf_clauses
   `MEASURE (\(x0,x1,x2). list_size kclkont_size x1)`
-  `(apply_kclkont s [] its = its) /\
-   (apply_kclkont s (CONS (DBk n) k) its = apply_kclkont s k (CONS
+  [`(apply_kclkont s [] its = its) /\
+    (apply_kclkont s (CONS (DBk n) k) its = apply_kclkont s k (CONS
     (Infer_Tvar_db n) its)) /\
-   (apply_kclkont s (CONS (APPk aits n) k) its =
-      apply_kclkont s k (CONS (Infer_Tapp aits n) its)) /\
-   (apply_kclkont s (CONS (UVk n) k) its = apply_kclkont s k (CONS
-    (Infer_Tuvar n) its)) /\
-   (apply_kclkont s (CONS (CONSk cits n) k) its =
+    (apply_kclkont s (CONS (UVk n) k) its = apply_kclkont s k (CONS
+    (Infer_Tuvar n) its))`;
+   `apply_kclkont s (CONS (APPk aits n) k) its =
+      apply_kclkont s k (CONS (Infer_Tapp aits n) its)`;
+   `apply_kclkont s (CONS (CONSk cits n) k) its =
     kcwalkstarl s cits (\xk'. apply_kclkont s k (CONS (Infer_Tapp its
-        n) xk')))`;;
+        n) xk'))`];;
 
 (* HOL4 unifyScript.sml: the case constant that its Datatype makes
    for the continuation of the walk *)

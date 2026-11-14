@@ -250,8 +250,8 @@ let contains_App_SOME_EXISTS = prove
   max_app [x]) ls`,
   CHEAT_TAC);;
 
-(* the clauses in two quotations: x2 is exp and (exp list), which one
-   quotation cannot typecheck *)
+(* the clauses in two quotations: x2 is exp, (exp list) and (A)list; xs is
+   (exp list) and (A)list, which one quotation cannot typecheck *)
 let every_Fn_SOME_def,every_Fn_SOME_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(every_Fn_SOME [] <=> T) /\
@@ -298,8 +298,8 @@ let every_Fn_SOME_APPEND = prove
   CHEAT_TAC);;
 add_simp every_Fn_SOME_APPEND;;
 
-(* the clauses in two quotations: x2 is exp and (exp list), which one
-   quotation cannot typecheck *)
+(* the clauses in two quotations: x2 is exp, (exp list) and (A)list; xs is
+   (exp list) and (A)list, which one quotation cannot typecheck *)
 let every_Fn_vs_NONE_def,every_Fn_vs_NONE_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(every_Fn_vs_NONE [] <=> T) /\
@@ -351,8 +351,8 @@ let every_Fn_vs_NONE_APPEND = prove
   CHEAT_TAC);;
 add_simp every_Fn_vs_NONE_APPEND;;
 
-(* the clauses in two quotations: x2 is exp and (exp list), which one
-   quotation cannot typecheck *)
+(* the clauses in two quotations: x2 is exp, (exp list) and (A)list; xs is
+   (exp list) and (A)list, which one quotation cannot typecheck *)
 let every_Fn_vs_SOME_def,every_Fn_vs_SOME_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(every_Fn_vs_SOME [] <=> T) /\
@@ -451,8 +451,8 @@ let no_mti_def,no_mti_ind = define_shaped_rec_clauses
         no_mti e /\ opt1 = NONE /\ opt2 = NONE /\
         ALL (\x. FST x = 1 /\ no_mti (SND x)) funs`];;
 
-(* the clauses in two quotations: x2 is exp and (exp list), which one
-   quotation cannot typecheck *)
+(* the clauses in two quotations: x2 is exp, (exp list) and (A)list; xs is
+   (exp list) and (A)list, which one quotation cannot typecheck *)
 let fv_def,fv_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(fv n [] <=> F) /\

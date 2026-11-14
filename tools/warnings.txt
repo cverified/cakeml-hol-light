@@ -103,8 +103,8 @@ clos_op	Overload dest_Op_Constant
 clos_ticks	ML code skipped: val remove_ticks_ind = theorem "remove_ticks_ind";
 clos_known	ML code skipped: val get_size_aux_ind = theorem "get_size_aux_ind";
 clos_known	ML code skipped: val val_approx_size_def = definition "val_approx_size_def"
-clos_known	line 469 is 87 characters
-clos_known	line 470 is 80 characters
+clos_known	line 470 is 87 characters
+clos_known	line 471 is 80 characters
 clos_mti	ML code skipped: val collect_args_ind = theorem "collect_args_ind";
 clos_mti	ML code skipped: val collect_apps_ind = theorem "collect_apps_ind";
 clos_mti	ML code skipped: val intro_multi_ind = theorem "intro_multi_ind";
@@ -146,8 +146,8 @@ semanticPrimitives	Overload f64lit
 semanticPrimitives	ML code skipped: val _ = set_fixity "+++" (Infixl 480);
 semanticPrimitives	line 26 is 87 characters
 semanticPrimitives	line 44 is 86 characters
-semanticPrimitives	line 373 is 80 characters
-semanticPrimitives	line 758 is 80 characters
+semanticPrimitives	line 375 is 80 characters
+semanticPrimitives	line 760 is 80 characters
 ml_monadBase	ML code skipped: DefnBase.export_cong "st_ex_ignore_bind_CONG";
 ml_monadBase	ML code skipped: DefnBase.export_cong "st_ex_bind_CONG";
 ml_monadBase	ML code skipped: val _ = add_infix ("otherwise", 400, HOLgrammars.RIGHT);
@@ -185,9 +185,9 @@ linear_scan	line 871 is 99 characters
 word_alloc	Overload Move0
 word_alloc	Overload Move1
 word_alloc	line 139 is 103 characters
-word_alloc	line 1148 is 80 characters
-word_alloc	line 1559 is 81 characters
-word_alloc	line 1702 is 91 characters
+word_alloc	line 1150 is 80 characters
+word_alloc	line 1564 is 81 characters
+word_alloc	line 1707 is 91 characters
 word_cse	ML code skipped: val _ = Theory.delete_const "Seqs";
 word_cse	line 582 is 81 characters
 word_inst	line 360 is 83 characters
@@ -393,17 +393,17 @@ unify	ML code skipped: val cunify_code = DefnBase.one_line_ify NONE kcunifywl_th
 unify	cunify_code_def: PENDING (tcallify_th makes it with ML code)
 unify	Overload kcuR
 unify	ML code skipped: val encode_walkstar_reverse = encode_walkstar |>            
-unify	line 1531 is 91 characters
+unify	line 1535 is 91 characters
 infer	ML code skipped: val type_name_check_subst_alt =   type_name_check_subst_def 
 infer	Overload Tem
 infer	line 146 is 124 characters
 infer	line 155 is 85 characters
-infer	line 864 is 87 characters
-infer	line 867 is 87 characters
-infer	line 872 is 86 characters
-infer	line 937 is 86 characters
-infer	line 1063 is 87 characters
-infer	line 1088 is 82 characters
+infer	line 890 is 86 characters
+infer	line 919 is 87 characters
+infer	line 922 is 87 characters
+infer	line 927 is 86 characters
+infer	line 1064 is 87 characters
+infer	line 1089 is 82 characters
 lexer_fun	ML code skipped: val listeq = CaseEq "list" val optioneq = CaseEq "option"
 lexer_fun	line 353 is 80 characters
 lexer_impl	ML code skipped: val tac =  full_simp_tac (srw_ss()) [char_le_def, char_lt_de
@@ -440,7 +440,7 @@ dataSem	Overload do_app_safe
 dataSem	Overload do_app_peak
 dataSem	ML code skipped: val evaluate_ind = theorem"evaluate_ind";
 dataSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-dataSem	line 414 is 85 characters
+dataSem	line 416 is 85 characters
 flatSem	ML code skipped: val s = ``s:('c,'ffi) flatSem$state``
 flatSem	ML code skipped: val eqs = LIST_CONJ (map TypeBase.case_eq_of   [``:op``, ``:
 flatSem	ML code skipped: val _ = map (can delete_const)   ["do_eq_UNION_aux","do_eq_U
@@ -461,7 +461,7 @@ targetSem	line 556 is 83 characters
 labSem	Overload read_reg
 labSem	line 50 is 205 characters
 stackSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-stackSem	line 1015 is 85 characters
+stackSem	line 1017 is 85 characters
 wordConvs	ML code skipped: val no_alloc_P = ``((<>) (Alloc 0 (LN,LN)))``
 wordConvs	ML code skipped: val no_install_P = ``((<>) (Install 0 0 0 0 (LN,LN)))``
 wordConvs	ML code skipped: val no_mt_P = ``((<>) (MustTerminate Skip))``

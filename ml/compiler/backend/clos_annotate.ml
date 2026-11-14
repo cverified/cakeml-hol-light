@@ -34,8 +34,9 @@ let no_overlap_def,no_overlap_ind = define_wf
    (no_overlap (SUC n) l <=>
          (if has_var n l then F else no_overlap n l))`;;
 
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list),
-   which one quotation cannot typecheck *)
+(* the clauses in three quotations: t is tra, mlstring and (mlstring list);
+   xs is (exp list) and (A)list; xs2 is (exp list) and (A)list, which one
+   quotation cannot typecheck *)
 let alt_free_def,alt_free_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(alt_free [] = ([],db_vars_Empty)) /\
@@ -99,8 +100,9 @@ let alt_free_def,alt_free_ind = assume_definition_rec_clauses
            ([closLang_Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
             mk_Union l1 (db_vars_Shift (LENGTH fns) l2))`];;
 
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list),
-   which one quotation cannot typecheck *)
+(* the clauses in three quotations: fns is ((num # exp) list) and (A)list; t
+   is tra, mlstring and (mlstring list); xs is (exp list) and (A)list; xs2 is
+   (exp list) and (A)list, which one quotation cannot typecheck *)
 let alt_free_sing_def,alt_free_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(alt_free_sing (closLang_Var t v) = ((closLang_Var t
@@ -216,8 +218,9 @@ let shifted_env_def,shifted_env_ind = define_rec
    (shifted_env (n:num) (CONS x xs) = sptree_insert x (n:num) (shifted_env
     (n + 1) xs))`;;
 
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list),
-   which one quotation cannot typecheck *)
+(* the clauses in three quotations: t is tra, mlstring and (mlstring list);
+   xs is (exp list) and (A)list; xs2 is (exp list) and (A)list, which one
+   quotation cannot typecheck *)
 let shift_def,shift_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(clos_annotate_shift [] (m:num) (l:num) (i:num spt) = []) /\
@@ -283,8 +286,9 @@ let shift_def,shift_ind = assume_definition_rec_clauses
          let c1 = clos_annotate_shift [x1] m (l + LENGTH fns) i in
            ([closLang_Letrec t loc (SOME vars') cs (HD c1)])`];;
 
-(* the clauses in three quotations: t is tra, mlstring and (mlstring list),
-   which one quotation cannot typecheck *)
+(* the clauses in three quotations: fns is ((num # exp) list) and (A)list; t
+   is tra, mlstring and (mlstring list); xs is (exp list) and (A)list; xs2 is
+   (exp list) and (A)list, which one quotation cannot typecheck *)
 let shift_sing_def,shift_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(shift_sing (closLang_Var t v) (m:num) (l:num) (i:num spt) =

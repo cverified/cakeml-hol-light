@@ -39,38 +39,36 @@ let clos_letop_dest_op_def = new_definition
          else NONE)
      | _ -> NONE`;;
 
-(* the clauses in three quotations: t is tra, (mlstring list) and mlstring,
-   which one quotation cannot typecheck *)
 let clos_letop_let_op_def,clos_letop_let_op_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`(clos_letop_let_op [] = []) /\
-    (clos_letop_let_op (CONS (x:closLang_exp) (CONS y xs)) = CONS (HD
-    (clos_letop_let_op [x])) (clos_letop_let_op (CONS y xs))) /\
-    (clos_letop_let_op [closLang_Var t v] = [(closLang_Var t
-    v:closLang_exp)]) /\
-    (clos_letop_let_op [closLang_If t x1 x2 x3] =
+  [`clos_letop_let_op [] = []`;
+   `clos_letop_let_op (CONS (x:closLang_exp) (CONS y xs)) = CONS (HD
+    (clos_letop_let_op [x])) (clos_letop_let_op (CONS y xs))`;
+   `clos_letop_let_op [closLang_Var t v] = [(closLang_Var t
+    v:closLang_exp)]`;
+   `clos_letop_let_op [closLang_If t x1 x2 x3] =
          [closLang_If t (HD (clos_letop_let_op [x1]))
                (HD (clos_letop_let_op [x2]))
-               (HD (clos_letop_let_op [x3]))]) /\
-    (clos_letop_let_op [closLang_Let t xs x2] =
+               (HD (clos_letop_let_op [x3]))]`;
+   `clos_letop_let_op [closLang_Let t xs x2] =
          let xs = clos_letop_let_op xs in
          let x2 = HD (clos_letop_let_op [x2]) in
            match clos_letop_dest_op x2 xs with SOME op -> [closLang_Op t op
                xs]
-           | NONE -> [(closLang_Let t xs x2:closLang_exp)]) /\
-    (clos_letop_let_op [closLang_Raise t x1] =
-         [closLang_Raise t (HD (clos_letop_let_op [x1]))]) /\
-    (clos_letop_let_op [closLang_Handle t x1 x2] =
+           | NONE -> [(closLang_Let t xs x2:closLang_exp)]`;
+   `clos_letop_let_op [closLang_Raise t x1] =
+         [closLang_Raise t (HD (clos_letop_let_op [x1]))]`;
+   `clos_letop_let_op [closLang_Handle t x1 x2] =
          [closLang_Handle t (HD (clos_letop_let_op [x1]))
-                  (HD (clos_letop_let_op [x2]))]) /\
-    (clos_letop_let_op [closLang_Op t op xs] =
-         [closLang_Op t op (clos_letop_let_op xs)]) /\
-    (clos_letop_let_op [closLang_Tick t x] = [closLang_Tick t (HD
-    (clos_letop_let_op [x]))]) /\
-    (clos_letop_let_op [closLang_Call t ticks dest xs] = [closLang_Call t
-    ticks dest (clos_letop_let_op xs)]) /\
-    (clos_letop_let_op [closLang_App t loc_opt x1 xs] = [closLang_App t
-    loc_opt (HD (clos_letop_let_op [x1])) (clos_letop_let_op xs)])`;
+                  (HD (clos_letop_let_op [x2]))]`;
+   `clos_letop_let_op [closLang_Op t op xs] =
+         [closLang_Op t op (clos_letop_let_op xs)]`;
+   `clos_letop_let_op [closLang_Tick t x] = [closLang_Tick t (HD
+    (clos_letop_let_op [x]))]`;
+   `clos_letop_let_op [closLang_Call t ticks dest xs] = [closLang_Call t
+    ticks dest (clos_letop_let_op xs)]`;
+   `clos_letop_let_op [closLang_App t loc_opt x1 xs] = [closLang_App t
+    loc_opt (HD (clos_letop_let_op [x1])) (clos_letop_let_op xs)]`;
    `clos_letop_let_op [closLang_Letrec t loc_opt vs fns x1] =
          let new_fns = MAP (\(num_args,x). (num_args,HD (clos_letop_let_op
              [x]))) fns in
@@ -85,8 +83,6 @@ let LENGTH_let_op = prove
  (`!xs. LENGTH (clos_letop_let_op xs) = LENGTH xs`,
   CHEAT_TAC);;
 
-(* the clauses in three quotations: t is tra, (mlstring list) and mlstring,
-   which one quotation cannot typecheck *)
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL x -> closLang_exp_size x
                                    | INR (INL x) -> list_size closLang_exp_size
@@ -99,43 +95,43 @@ let LENGTH_let_op = prove
 let clos_letop_let_op_sing_def,clos_letop_let_op_sing_ind =
   define_shaped_rec_clauses
   "maplist>maplist>nested"
-  [`(clos_letop_let_op_sing (closLang_Var t v) = ((closLang_Var t
-    v:closLang_exp))) /\
-    (clos_letop_let_op_sing (closLang_If t x1 x2 x3) =
+  [`clos_letop_let_op_sing (closLang_Var t v) = ((closLang_Var t
+    v:closLang_exp))`;
+   `clos_letop_let_op_sing (closLang_If t x1 x2 x3) =
          (closLang_If t ((clos_letop_let_op_sing (x1)))
                ((clos_letop_let_op_sing (x2)))
-               ((clos_letop_let_op_sing (x3))))) /\
-    (clos_letop_let_op_sing (closLang_Let t xs x2) =
+               ((clos_letop_let_op_sing (x3))))`;
+   `clos_letop_let_op_sing (closLang_Let t xs x2) =
          let xs = clos_letop_let_op_list xs in
          let x2 = (clos_letop_let_op_sing (x2)) in
            match clos_letop_dest_op x2 xs with SOME op -> (closLang_Op t op
                xs)
-           | NONE -> ((closLang_Let t xs x2:closLang_exp))) /\
-    (clos_letop_let_op_sing (closLang_Raise t x1) =
-         (closLang_Raise t ((clos_letop_let_op_sing (x1))))) /\
-    (clos_letop_let_op_sing (closLang_Handle t x1 x2) =
+           | NONE -> ((closLang_Let t xs x2:closLang_exp))`;
+   `clos_letop_let_op_sing (closLang_Raise t x1) =
+         (closLang_Raise t ((clos_letop_let_op_sing (x1))))`;
+   `clos_letop_let_op_sing (closLang_Handle t x1 x2) =
          (closLang_Handle t ((clos_letop_let_op_sing (x1)))
-                  ((clos_letop_let_op_sing (x2))))) /\
-    (clos_letop_let_op_sing (closLang_Op t op xs) =
-         (closLang_Op t op (clos_letop_let_op_list xs))) /\
-    (clos_letop_let_op_sing (closLang_Tick t x) = (closLang_Tick t
-    ((clos_letop_let_op_sing (x))))) /\
-    (clos_letop_let_op_sing (closLang_Call t ticks dest xs) = (closLang_Call
-    t ticks dest (clos_letop_let_op_list xs))) /\
-    (clos_letop_let_op_sing (closLang_App t loc_opt x1 xs) = (closLang_App t
-    loc_opt ((clos_letop_let_op_sing (x1))) (clos_letop_let_op_list xs))) /\
-    (clos_letop_let_op_list [] = []) /\
-    (clos_letop_let_op_list (CONS (x:closLang_exp) xs) = CONS
-    (clos_letop_let_op_sing x) (clos_letop_let_op_list xs)) /\
-    (let_op_let [] = []) /\
-    (let_op_let (CONS (num_args,(x:closLang_exp)) xs) = CONS
-    (num_args,clos_letop_let_op_sing x) (let_op_let xs))`;
+                  ((clos_letop_let_op_sing (x2))))`;
+   `clos_letop_let_op_sing (closLang_Op t op xs) =
+         (closLang_Op t op (clos_letop_let_op_list xs))`;
+   `clos_letop_let_op_sing (closLang_Tick t x) = (closLang_Tick t
+    ((clos_letop_let_op_sing (x))))`;
+   `clos_letop_let_op_sing (closLang_Call t ticks dest xs) = (closLang_Call
+    t ticks dest (clos_letop_let_op_list xs))`;
+   `clos_letop_let_op_sing (closLang_App t loc_opt x1 xs) = (closLang_App t
+    loc_opt ((clos_letop_let_op_sing (x1))) (clos_letop_let_op_list xs))`;
    `clos_letop_let_op_sing (closLang_Letrec t loc_opt vs fns x1) =
          let new_fns = let_op_let fns in
          (closLang_Letrec t loc_opt vs new_fns ((clos_letop_let_op_sing
              (x1))))`;
    `clos_letop_let_op_sing (closLang_Fn t loc_opt vs num_args x1) =
-    (closLang_Fn t loc_opt vs num_args ((clos_letop_let_op_sing (x1))))`];;
+    (closLang_Fn t loc_opt vs num_args ((clos_letop_let_op_sing (x1))))`;
+   `clos_letop_let_op_list [] = []`;
+   `clos_letop_let_op_list (CONS (x:closLang_exp) xs) = CONS
+    (clos_letop_let_op_sing x) (clos_letop_let_op_list xs)`;
+   `let_op_let [] = []`;
+   `let_op_let (CONS (num_args,(x:closLang_exp)) xs) = CONS
+    (num_args,clos_letop_let_op_sing x) (let_op_let xs)`];;
 
 let let_op_sing_eq = prove
  (`(!e. clos_letop_let_op [e] = [clos_letop_let_op_sing e]) /\

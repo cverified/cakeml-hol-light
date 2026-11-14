@@ -283,14 +283,12 @@ let op_to_display_def = new_definition
    | ast_Env_id -> empty_item (implode "Env_id")
    | ast_ThunkOp t -> thunk_op_to_display t`;;
 
-(* the clauses in two quotations: n is 'n and 'm, which one quotation cannot
-   typecheck *)
-let id_to_display_def,id_to_display_ind = define_rec_clauses
-  [`id_to_display (Short n) =
-      displayLang_Item NONE (implode "Short") [displayLang_String n]`;
-   `id_to_display (Long n i) =
+let id_to_display_def,id_to_display_ind = define_rec
+  `(id_to_display (Short n) =
+      displayLang_Item NONE (implode "Short") [displayLang_String n]) /\
+   (id_to_display (Long n i) =
       displayLang_Item NONE (implode "Long") [displayLang_String n;
-          id_to_display i]`];;
+          id_to_display i])`;;
 
 let ast_t_to_display_def,ast_t_to_display_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -509,59 +507,62 @@ let add_name_hint_def = new_definition
   `add_name_hint prefix name_hint =
      mlstring_concat [prefix; (implode "<"); name_hint; (implode ">")]`;;
 
-let flat_to_display_def,flat_to_display_ind = define_shaped_rec
+(* the clauses in three quotations: exps is (exp list) and (A)list; funs is
+   ((varN # varN # exp) list) and (A)list; pes is ((pat # exp) list) and
+   (A)list, which one quotation cannot typecheck *)
+let flat_to_display_def,flat_to_display_ind = define_shaped_rec_clauses
   "maplist>maplist>maplist>nested"
-  `(flat_to_display (flatLang_Raise tra exp) =
+  [`(flat_to_display (flatLang_Raise tra exp) =
         displayLang_Item (SOME tra) (implode "raise") [flat_to_display
             exp]) /\
-   (flat_to_display (flatLang_Handle tra exp pes) =
+    (flat_to_display (flatLang_Handle tra exp pes) =
         displayLang_Item (SOME tra) (implode "handle") (
             CONS (flat_to_display exp) (pat_flat_to_display_list pes))) /\
-   (flat_to_display (flatLang_Lit tra lit) = displayLang_Item (SOME tra)
+    (flat_to_display (flatLang_Lit tra lit) = displayLang_Item (SOME tra)
     (implode "lit") []) /\
-   (flat_to_display (flatLang_Con tra id_opt exps) =
-        displayLang_Item (SOME tra) (implode "con") (
-            CONS (opt_con_to_display id_opt) (flat_to_display_list
-                exps))) /\
-   (flat_to_display (flatLang_Var_local tra varN) =
+    (flat_to_display (flatLang_Var_local tra varN) =
         displayLang_Item (SOME tra) (implode "var_local") [string_imp
             varN]) /\
-   (flat_to_display (flatLang_Fun name_hint varN exp) =
+    (flat_to_display (flatLang_Fun name_hint varN exp) =
         displayLang_Item (SOME backend_common_None) (add_name_hint (implode
             "fun") name_hint)
           [string_imp varN; flat_to_display exp]) /\
-   (flat_to_display (flatLang_App tra op exps) =
-        displayLang_Item (SOME tra) (implode "app") (CONS
-            (flat_op_to_display op) (flat_to_display_list exps))) /\
-   (flat_to_display (flatLang_If tra exp1 exp2 exp3) =
+    (flat_to_display (flatLang_If tra exp1 exp2 exp3) =
         displayLang_Item (SOME tra) (implode "if") [flat_to_display exp1;
             flat_to_display exp2;
             flat_to_display exp3]) /\
-   (flat_to_display (flatLang_Mat tra exp pes) =
+    (flat_to_display (flatLang_Mat tra exp pes) =
         displayLang_Item (SOME tra) (implode "mat") (
             CONS (flat_to_display exp) (pat_flat_to_display_list pes))) /\
-   (flat_to_display (flatLang_Let tra varN_opt exp1 exp2) =
+    (flat_to_display (flatLang_Let tra varN_opt exp1 exp2) =
         displayLang_Item (SOME tra) (implode "let") [(\f opt. match opt
             with NONE -> empty_item (implode "none")
               | SOME opt' -> displayLang_Item NONE (implode "some") [f
                   opt']) string_imp varN_opt;
             flat_to_display exp1; flat_to_display exp2]) /\
-   (flat_to_display (flatLang_Letrec name_hint funs exp) =
+    (flat_to_display_list [] = []) /\
+    (flat_to_display_list (CONS x xs) = CONS (flat_to_display x)
+    (flat_to_display_list xs)) /\
+    (pat_flat_to_display_list [] = []) /\
+    (pat_flat_to_display_list (CONS (pat,exp) xs) = CONS (displayLang_Tuple
+    [flat_pat_to_display pat; flat_to_display exp])
+    (pat_flat_to_display_list xs)) /\
+    (fun_flat_to_display_list [] = []) /\
+    (fun_flat_to_display_list (CONS (v1,v2,e) xs) = CONS (displayLang_Tuple
+    [string_imp v1; string_imp v2; flat_to_display e])
+            (fun_flat_to_display_list xs))`;
+   `(flat_to_display (flatLang_Con tra id_opt exps) =
+        displayLang_Item (SOME tra) (implode "con") (
+            CONS (opt_con_to_display id_opt) (flat_to_display_list
+                exps))) /\
+    (flat_to_display (flatLang_App tra op exps) =
+        displayLang_Item (SOME tra) (implode "app") (CONS
+            (flat_op_to_display op) (flat_to_display_list exps)))`;
+   `flat_to_display (flatLang_Letrec name_hint funs exp) =
         displayLang_Item (SOME backend_common_None) (add_name_hint (implode
             "letrec") name_hint)
             [displayLang_Tuple (fun_flat_to_display_list funs);
-                flat_to_display exp]) /\
-   (flat_to_display_list [] = []) /\
-   (flat_to_display_list (CONS x xs) = CONS (flat_to_display x)
-    (flat_to_display_list xs)) /\
-   (pat_flat_to_display_list [] = []) /\
-   (pat_flat_to_display_list (CONS (pat,exp) xs) = CONS (displayLang_Tuple
-    [flat_pat_to_display pat; flat_to_display exp])
-    (pat_flat_to_display_list xs)) /\
-   (fun_flat_to_display_list [] = []) /\
-   (fun_flat_to_display_list (CONS (v1,v2,e) xs) = CONS (displayLang_Tuple
-    [string_imp v1; string_imp v2; flat_to_display e])
-            (fun_flat_to_display_list xs))`;;
+                flat_to_display exp]`];;
 
 (* clos to displayLang *)
 
@@ -780,7 +781,8 @@ let commas_def,commas_ind = define_wf
 
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)
-(* the clauses in two quotations: name_hint is mlstring and (mlstring list),
+(* the clauses in two quotations: es is (A)list and ((num # exp) list);
+   name_hint is mlstring and (mlstring list); xs is (exp list) and (A)list,
    which one quotation cannot typecheck *)
 let clos_to_display_def,clos_to_display_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -953,8 +955,8 @@ let MEM_bvi_exps_size = prove
  (`!exps e. MEM e exps ==> bvi_exp_size e < list_size bvi_exp_size exps`,
   CHEAT_TAC);;
 
-(* the clauses in two quotations: dest is (num option) and num, which one
-   quotation cannot typecheck *)
+(* the clauses in two quotations: dest is (num option) and num; xs is (exp
+   list) and (A)list, which one quotation cannot typecheck *)
 let bvi_to_display_def,bvi_to_display_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(bvi_to_display ns h (bvi_Var n) =
@@ -1291,25 +1293,28 @@ let list_size_append_stack_seqs = prove
    stackLang_prog_size ARB x + 1`,
   CHEAT_TAC);;
 
-let stack_prog_to_display_def,stack_prog_to_display_ind = assume_definition_rec
+(* the clauses in 4 quotations: x is stackLang$prog and prog; y is
+   stackLang$prog and prog, which one quotation cannot typecheck *)
+let stack_prog_to_display_def,stack_prog_to_display_ind =
+  assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  `(stack_prog_to_display 0 ns prog = empty_item (implode "...")) /\
-   (stack_prog_to_display (SUC k) ns stackLang_Skip = empty_item (implode
+  [`(stack_prog_to_display 0 ns prog = empty_item (implode "...")) /\
+    (stack_prog_to_display (SUC k) ns stackLang_Skip = empty_item (implode
     "skip")) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Inst i) =
+    (stack_prog_to_display (SUC k) ns (stackLang_Inst i) =
     asm_inst_to_display i) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Get n sn) = displayLang_Tuple
+    (stack_prog_to_display (SUC k) ns (stackLang_Get n sn) = displayLang_Tuple
       [num_to_display n; displayLang_String (implode "<-");
           store_name_to_display sn]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Set sn n) = displayLang_Tuple
+    (stack_prog_to_display (SUC k) ns (stackLang_Set sn n) = displayLang_Tuple
       [store_name_to_display sn; displayLang_String (implode "<-");
           num_to_display n]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_OpCurrHeap b n1 n2) =
+    (stack_prog_to_display (SUC k) ns (stackLang_OpCurrHeap b n1 n2) =
     displayLang_Tuple
       [num_to_display n1; displayLang_String (implode ":=");
           displayLang_String (implode "CurrHeap");
        asm_binop_to_display b; num_to_display n2]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Call rh tgt eh) =
+    (stack_prog_to_display (SUC k) ns (stackLang_Call rh tgt eh) =
       displayLang_Item NONE (implode "call")
            [(match rh with NONE -> empty_item (implode "tail")
              | SOME (p,lr,l1,l2) ->
@@ -1327,91 +1332,91 @@ let stack_prog_to_display_def,stack_prog_to_display_ind = assume_definition_rec
                      [displayLang_String (attach_name ns (SOME l1));
                       num_to_display l2;
                       stack_prog_to_display k ns p])]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Seq x y) =
+    (stack_prog_to_display (SUC k) ns (stackLang_Seq x y) =
          (let xs = append (misc_Append (stack_seqs x) (stack_seqs y)) in
             separate_lines (implode "seq") (stack_prog_to_display_list
                 k ns xs))) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_If c n to x y) =
-    displayLang_Item NONE (implode "if")
-         [displayLang_Tuple [asm_cmp_to_display c; num_to_display n;
-             asm_reg_imm_to_display to];
-          stack_prog_to_display k ns x;
-          stack_prog_to_display k ns y]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Loop x) = displayLang_Item NONE
-    (implode "loop")
-         [stack_prog_to_display k ns x]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_JumpLower n1 n2 n3) =
+    (stack_prog_to_display (SUC k) ns (stackLang_JumpLower n1 n2 n3) =
       item_with_nums (implode "jump_lower") [n1; n2; n3]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Alloc n) = item_with_num
+    (stack_prog_to_display (SUC k) ns (stackLang_Alloc n) = item_with_num
     (implode "alloc") n) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_StoreConsts n1 n2 _) =
+    (stack_prog_to_display (SUC k) ns (stackLang_StoreConsts n1 n2 _) =
     item_with_nums (implode "store_consts") [n1; n2]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Raise n) = item_with_num
+    (stack_prog_to_display (SUC k) ns (stackLang_Raise n) = item_with_num
     (implode "raise") n) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Return n) = item_with_num
+    (stack_prog_to_display (SUC k) ns (stackLang_Return n) = item_with_num
     (implode "return") n) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Break n) = item_with_num
+    (stack_prog_to_display (SUC k) ns (stackLang_Break n) = item_with_num
     (implode "break") n) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Continue n) = item_with_num
+    (stack_prog_to_display (SUC k) ns (stackLang_Continue n) = item_with_num
     (implode "continue") n) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_FFI nm cp cl ap al ra) =
+    (stack_prog_to_display (SUC k) ns (stackLang_FFI nm cp cl ap al ra) =
     displayLang_Item NONE (implode "ffi")
          (CONS (string_imp nm) (MAP num_to_display [cp; cl; ap; al;
              ra]))) /\
-   (stack_prog_to_display (SUC k) ns stackLang_Tick = empty_item (implode
+    (stack_prog_to_display (SUC k) ns stackLang_Tick = empty_item (implode
     "tick")) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_LocValue n1 n2 n3) =
+    (stack_prog_to_display (SUC k) ns (stackLang_LocValue n1 n2 n3) =
       displayLang_Item NONE (implode "loc_value") [num_to_display n1;
                              displayLang_String (attach_name ns (SOME n2));
                              num_to_display n3]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Install n1 n2 n3 n4 n5) =
+    (stack_prog_to_display (SUC k) ns (stackLang_Install n1 n2 n3 n4 n5) =
       item_with_nums (implode "install") [n1; n2; n3; n4; n5]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_ShMemOp mop r a) =
+    (stack_prog_to_display (SUC k) ns (stackLang_ShMemOp mop r a) =
       displayLang_Item NONE (implode "sh_mem") [asm_memop_to_display mop;
                               num_to_display r; asm_addr_to_display a]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_CodeBufferWrite n1 n2) =
+    (stack_prog_to_display (SUC k) ns (stackLang_CodeBufferWrite n1 n2) =
       item_with_nums (implode "code_buffer_write") [n1; n2]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_DataBufferWrite n1 n2) =
+    (stack_prog_to_display (SUC k) ns (stackLang_DataBufferWrite n1 n2) =
       item_with_nums (implode "data_buffer_write") [n1; n2]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_RawCall n) =
+    (stack_prog_to_display (SUC k) ns (stackLang_RawCall n) =
       displayLang_Item NONE (implode "raw_call") [displayLang_String
           (attach_name ns (SOME n))]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_StackAlloc n) =
+    (stack_prog_to_display (SUC k) ns (stackLang_StackAlloc n) =
     item_with_num (implode "stack_alloc") n) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_StackFree n) =
+    (stack_prog_to_display (SUC k) ns (stackLang_StackFree n) =
     item_with_num (implode "stack_free") n) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_StackStore n m) =
+    (stack_prog_to_display (SUC k) ns (stackLang_StackStore n m) =
       displayLang_Tuple [displayLang_String (strcat (strcat (strcat
           (implode "stack[") (num_to_hex_mlstring n)) (implode "] := "))
           (num_to_str m))]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_StackStoreAny n m) =
+    (stack_prog_to_display (SUC k) ns (stackLang_StackStoreAny n m) =
       displayLang_Tuple [displayLang_String (strcat (strcat (strcat
           (implode "stack[var ") (num_to_str n)) (implode "] := "))
           (num_to_str m))]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_StackLoad n m) =
+    (stack_prog_to_display (SUC k) ns (stackLang_StackLoad n m) =
       displayLang_Tuple [displayLang_String (mlstring_concat [num_to_str n;
                              (implode " := stack[");
                              num_to_hex_mlstring m; (implode "]")])]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_StackLoadAny n m) =
+    (stack_prog_to_display (SUC k) ns (stackLang_StackLoadAny n m) =
       displayLang_Tuple [displayLang_String (mlstring_concat [num_to_str n;
                              (implode " := stack[var ");
                              num_to_str m; (implode "]")])]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_StackGetSize n) =
+    (stack_prog_to_display (SUC k) ns (stackLang_StackGetSize n) =
     item_with_num (implode "stack_get_size") n) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_StackSetSize n) =
+    (stack_prog_to_display (SUC k) ns (stackLang_StackSetSize n) =
     item_with_num (implode "stack_set_size") n) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_BitmapLoad n m) =
+    (stack_prog_to_display (SUC k) ns (stackLang_BitmapLoad n m) =
       displayLang_Tuple [displayLang_String (mlstring_concat [num_to_str n;
                              (implode " := bitmap[");
                              num_to_hex_mlstring m;
                              (implode "]")])]) /\
-   (stack_prog_to_display (SUC k) ns (stackLang_Halt n) = item_with_num
+    (stack_prog_to_display (SUC k) ns (stackLang_Halt n) = item_with_num
     (implode "halt") n) /\
-   (stack_prog_to_display_list k ns [] = []) /\
-   (stack_prog_to_display_list k ns (CONS x xs) =
+    (stack_prog_to_display_list k ns [] = [])`;
+   `stack_prog_to_display (SUC k) ns (stackLang_If c n to x y) =
+    displayLang_Item NONE (implode "if")
+         [displayLang_Tuple [asm_cmp_to_display c; num_to_display n;
+             asm_reg_imm_to_display to];
+          stack_prog_to_display k ns x;
+          stack_prog_to_display k ns y]`;
+   `stack_prog_to_display (SUC k) ns (stackLang_Loop x) = displayLang_Item NONE
+    (implode "loop")
+         [stack_prog_to_display k ns x]`;
+   `stack_prog_to_display_list k ns (CONS x xs) =
         match k with 0 -> []
         | SUC k -> CONS (stack_prog_to_display k ns x)
-            (stack_prog_to_display_list k ns xs))`;;
+            (stack_prog_to_display_list k ns xs)`];;
 
 let stack_fun_to_display_def = new_definition
   `stack_fun_to_display names (n,body) =
@@ -1517,10 +1522,12 @@ let num_sets_to_display_def = new_definition
      displayLang_Tuple [num_set_to_display l;
             num_set_to_display r]`;;
 
-(* the clauses in three quotations: a is ((num list # cutsets # wordLang$prog
-   # num # num) option) and num; b is (num option), binop and num; c is (num
-   list) and num; d is ((num # wordLang$prog # num # num) option) and num,
-   which one quotation cannot typecheck *)
+(* the clauses in 6 quotations: a is ((num list # cutsets # wordLang$prog #
+   num # num) option) and num; b is (num option), binop and num; c is (num
+   list) and num; d is ((num # wordLang$prog # num # num) option) and num; p
+   is wordLang$prog and prog; p1 is wordLang$prog and prog; p2 is
+   wordLang$prog and prog; prog is prog and wordLang$prog, which one
+   quotation cannot typecheck *)
 let word_prog_to_display_def,word_prog_to_display_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -1554,9 +1561,6 @@ let word_prog_to_display_def,word_prog_to_display_ind =
         [displayLang_String (implode "share_mem"); asm_memop_to_display
             mop;
          num_to_display n; word_exp_to_display exp]) /\
-    (word_prog_to_display (SUC k) ns (wordLang_MustTerminate prog) =
-    displayLang_Item NONE (implode "must_terminate")
-        [word_prog_to_display k ns prog]) /\
     (word_prog_to_display (SUC k) ns (wordLang_Call a b c d) = displayLang_Item
     NONE (implode "call")
         [word_prog_to_display_ret k ns a;
@@ -1570,17 +1574,6 @@ let word_prog_to_display_def,word_prog_to_display_ind =
             in
            separate_lines (implode "seq") (word_prog_to_display_list k
                ns xs))) /\
-    (word_prog_to_display (SUC k) ns (wordLang_If cmp n reg p1 p2) =
-        displayLang_Item NONE (implode "if")
-          [displayLang_Tuple [asm_cmp_to_display cmp;
-                  num_to_display n;
-                  asm_reg_imm_to_display reg];
-           word_prog_to_display k ns p1; word_prog_to_display k ns p2]) /\
-    (word_prog_to_display (SUC k) ns (wordLang_Loop ns1 p ns2) =
-        displayLang_Item NONE (implode "Loop")
-          [num_set_to_display ns1;
-           word_prog_to_display k ns p;
-           num_set_to_display ns2]) /\
     (word_prog_to_display (SUC k) ns (wordLang_Alloc n ms) = displayLang_Item
     NONE (implode "alloc")
         [num_to_display n; num_sets_to_display ms]) /\
@@ -1635,11 +1628,25 @@ let word_prog_to_display_def,word_prog_to_display_ind =
             word_prog_to_display k ns prog;
             displayLang_String (attach_name ns (SOME n2));
             num_to_display n3]])`;
+   `word_prog_to_display (SUC k) ns (wordLang_MustTerminate prog) =
+    displayLang_Item NONE (implode "must_terminate")
+        [word_prog_to_display k ns prog]`;
    `word_prog_to_display (SUC k) ns (wordLang_OpCurrHeap b n1 n2) =
     displayLang_Tuple
         [num_to_display n1; displayLang_String (implode ":=");
             displayLang_String (implode "CurrHeap");
          asm_binop_to_display b; num_to_display n2]`;
+   `word_prog_to_display (SUC k) ns (wordLang_If cmp n reg p1 p2) =
+        displayLang_Item NONE (implode "if")
+          [displayLang_Tuple [asm_cmp_to_display cmp;
+                  num_to_display n;
+                  asm_reg_imm_to_display reg];
+           word_prog_to_display k ns p1; word_prog_to_display k ns p2]`;
+   `word_prog_to_display (SUC k) ns (wordLang_Loop ns1 p ns2) =
+        displayLang_Item NONE (implode "Loop")
+          [num_set_to_display ns1;
+           word_prog_to_display k ns p;
+           num_set_to_display ns2]`;
    `word_prog_to_display (SUC k) ns (wordLang_StoreConsts a b c d ws) =
     displayLang_Item NONE (implode "store_consts")
         [num_to_display a;

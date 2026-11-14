@@ -142,6 +142,8 @@ let bignum_size_def = new_definition
   `bignum_size arch64 i =
      1 + bignum_digits arch64 (num_of_int (abs i))`;;
 
+(* the clauses in two quotations: vs is (A)list and (v list), which one
+   quotation cannot typecheck *)
 let size_of_def,size_of_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(size_of lims [] refs seen = (0,refs,seen)) /\
