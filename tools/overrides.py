@@ -419,6 +419,10 @@ CON_BODY = {
   # patterns say reg_alloc$ themselves)
   ('linear_scan', 'get_live_tree_def'):
     {'Seq': 'linear_scan', 'Branch': 'linear_scan'},
+  # ssa_cc_trans_inst matches on an asm instruction and gives a
+  # wordLang program, as the note of the source says it must
+  ('word_alloc', 'ssa_cc_trans_inst_def'):
+    {'Skip': 'wordLang', 'Inst': 'wordLang'},
   # copy_prop_inst matches on an asm instruction and gives a
   # wordLang program, and both have Skip
   ('word_copy', 'copy_prop_inst_def'):
@@ -11906,6 +11910,9 @@ CON_FILE = {
 # toString of an integer and num_to_str of a number -- and the
 # port writes the constant, so the definition says which.
 DEF_NAMES = {
+  # the canonical registers are a num_map, so the lookup of one is
+  # sptree's and takes two arguments; balanced_map's takes three
+  ('word_cse', 'keep_data_def'): {'lookup': 'sptree_lookup'},
   ('displayLang', 'trace_to_json_def'): {'toString': 'num_to_str'},
   # the toString of the length of a list is num_to_str, which the
   # port writes as toString of the injection in some places and
