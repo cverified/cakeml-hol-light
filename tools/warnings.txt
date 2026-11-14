@@ -461,7 +461,7 @@ targetSem	line 556 is 83 characters
 labSem	Overload read_reg
 labSem	line 50 is 205 characters
 stackSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-stackSem	line 1015 is 86 characters
+stackSem	line 1015 is 85 characters
 wordConvs	ML code skipped: val no_alloc_P = ``((<>) (Alloc 0 (LN,LN)))``
 wordConvs	ML code skipped: val no_install_P = ``((<>) (Install 0 0 0 0 (LN,LN)))``
 wordConvs	ML code skipped: val no_mt_P = ``((<>) (MustTerminate Skip))``

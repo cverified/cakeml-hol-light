@@ -1192,13 +1192,13 @@ let ptree_SpecLine_def = define_cases
                   vname_pt) (\vname. OPTION_BIND (ptree_Type nType type_pt)
                   (\ty.
               SOME one)))
-          | _ -> NONE
-    // (Stype td)
-    // (Sexn nm tys)
-    // (case opteqn of
-    // NONE => Stype_opq vs nm
-    // | SOME ty => Stabbrev vs nm ty)
-    // (SDefinition vname ty))`;;
+          | _ -> NONE)
+   // (Stype td)
+   // (Sexn nm tys)
+   // (case opteqn of
+   // NONE => Stype_opq vs nm
+   // | SOME ty => Stabbrev vs nm ty)
+   // (SDefinition vname ty)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -1217,8 +1217,8 @@ let ptree_SpeclineList_def,ptree_SpeclineList_ind = define_wf
             else OPTION_BIND (ptree_SpecLine sl_pt) (\sl. OPTION_BIND
                 (ptree_SpeclineList sll_pt) (\sll.
                 SOME one))
-          | _ -> NONE
-    // (sl::sll))`;;
+          | _ -> NONE)
+   // (sl::sll)`;;
 
 let ptree_SignatureValue_def = define_cases
   `(ptree_SignatureValue (Lf _) = NONE) /\

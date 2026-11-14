@@ -463,8 +463,8 @@ let type_name_subst_def,type_name_subst_ind = define_shaped_rec
        (let args = (MAP (type_name_subst tenvT) ts) in
       (match nsLookup tenvT tc with
         SOME (tvs,t) -> type_subst (alist_to_fmap (ZIP tvs args)) t
-      | NONE -> Ttup args))
-    // can't happen, for a type that passes the check)`;;
+      | NONE -> Ttup args)))
+   // can't happen, for a type that passes the check`;;
 
 (* Check that a type definition defines no already defined types or duplicate
  * constructors, and that the free type variables of each constructor argument

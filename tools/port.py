@@ -3637,8 +3637,15 @@ class Porter:
         while j < len(lines) and lines[j].lstrip().startswith('//'):
           out += lines[j].lstrip() + '\n' + ind
           j += 1
-        rest = '\n'.join(lines[j:])
+        # and a comment at the end of the clause stands after its
+        # bracket, or the bracket would be inside the comment
+        k = len(lines)
+        while k > j + 1 and lines[k - 1].lstrip().startswith('//'):
+          k -= 1
+        rest = '\n'.join(lines[j:k])
         out += '(' + (rest.lstrip() if j else rest) + ')'
+        for l in lines[k:]:
+          out += '\n' + ind + l.lstrip()
       return '`' + out + '`'
     groups2 = (self.clause_split
                if self.clause_list and

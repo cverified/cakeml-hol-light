@@ -1013,9 +1013,9 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
                 else (SOME stackSem_Error,s)
               | _ -> (SOME stackSem_Error,s))
             | _ -> (SOME stackSem_Error,s))
-          | _ -> (SOME stackSem_Error,s)
-    // This order is convenient because it means all of s.code's entries are preserved
-    // TODO: this might need to be a new field, cc_save_regs) /\
+          | _ -> (SOME stackSem_Error,s))
+   // This order is convenient because it means all of s.code's entries are preserved
+   // TODO: this might need to be a new field, cc_save_regs /\
    (stackSem_evaluate (stackLang_ShMemOp op r (Addr a w),s) =
         (match stackSem_word_exp s (wordLang_Op asm_Add [wordLang_Var a;
             wordLang_Const w]) with SOME a ->

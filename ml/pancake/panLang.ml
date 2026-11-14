@@ -182,16 +182,16 @@ let size_of_sh_with_ctxt_def,size_of_sh_with_ctxt_ind = define_shaped_rec
     (size_of_sh_with_ctxt ctxt) shapes)) /\
    (size_of_sh_with_ctxt ctxt (Named name) =
       match ALOOKUP ctxt name with SOME info -> struct_info_size info
-      | NONE -> 1
-    // should not happen)`;;
+      | NONE -> 1)
+   // should not happen`;;
 
 (* For passes after Nameds are compiled away eg pan_to_crep *)
 let size_of_shape_def,size_of_shape_ind = define_shaped_rec
   "nested"
   `(size_of_shape One = 1) /\
    (size_of_shape (Comb shapes) = SUM (MAP size_of_shape shapes)) /\
-   (size_of_shape (Named name) = 1
-    // should not happen)`;;
+   (size_of_shape (Named name) = 1)
+   // should not happen`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)

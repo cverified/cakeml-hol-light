@@ -54,8 +54,8 @@ let renumber_code_locs_def,renumber_code_locs_ind =
            (n,(closLang_Handle t x1 x2:closLang_exp))) /\
     (renumber_code_locs n (closLang_Call t ticks dest xs) =
          let (n,xs) = renumber_code_locs_list n xs in
-           (n,closLang_Op t (closLang_IntOp closLang_Add) xs)
-    // this case cannot occur)`;
+           (n,closLang_Op t (closLang_IntOp closLang_Add) xs))
+    // this case cannot occur`;
    `(renumber_code_locs n (closLang_App t loc_opt x1 x2) =
          let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs_list n x2 in

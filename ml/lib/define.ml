@@ -3415,10 +3415,12 @@ let rec tyunify ins ty1 ty2 =
     else itlist2 (fun a b ins -> tyunify ins a b) args1 args2 ins;;
 
 let cake_conj_list cls =
-  (* every clause is typechecked on its own, so the function that
-     they define can have a different type in each of them (HOL4
-     typechecks them separately as well, but has one constant); the
-     types are unified here *)
+  (* every quotation is typechecked on its own, so the function
+     that the clauses define can have a different type in each of
+     them (HOL4 typechecks every clause separately, and has one
+     constant); the types are unified here.  A quotation may hold
+     several clauses, joined with /\ as a definition writes them *)
+  let cls = itlist (fun cl l -> conjuncts cl @ l) cls [] in
   let head cl = fst(strip_comb(lhs(snd(strip_forall cl)))) in
   let names = setify (map (fun cl -> fst(dest_var(head cl))) cls) in
   let ins =

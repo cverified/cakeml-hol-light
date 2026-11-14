@@ -1228,9 +1228,9 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
                 else (SOME wordSem_Error,s)
               | _ -> (SOME wordSem_Error,s))
             | _ -> (SOME wordSem_Error,s))
-          | _ -> (SOME wordSem_Error,s))
+          | _ -> (SOME wordSem_Error,s)))
     // This order is convenient because it means all of s.code's entries are preserved
-    // Install is not safe for space) /\
+    // Install is not safe for space /\
     (wordSem_evaluate (wordLang_CodeBufferWrite r1 r2,s) =
         (match (wordSem_get_var r1 s,wordSem_get_var r2 s) with (SOME
             (wordLang_Word w1),SOME (wordLang_Word w2)) ->

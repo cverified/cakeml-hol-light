@@ -33,8 +33,8 @@ let poplist_aux_def,poplist_aux_ind = define_shaped_rec
   "cases"
   `(poplist_aux acc (CONS (SOME h) t) = poplist_aux (CONS h acc) t) /\
    (poplist_aux acc (CONS NONE t) = (acc,t)) /\
-   (poplist_aux acc [] = (acc,[])
-    // should never happen)`;;
+   (poplist_aux acc [] = (acc,[]))
+   // should never happen`;;
 
 let poplistval_def = new_definition
   `poplistval f l = let (values,rest) = poplist_aux [] l in CONS (SOME (f
