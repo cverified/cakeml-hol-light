@@ -12,6 +12,10 @@
 # a definition and prove get their own names back there
 # (ml/lib/real.ml), so what is loaded after that is proved.
 #
+# With TOLERANT=1 a statement that HOL Light does not read is
+# logged and the file goes on, so one bad statement does not take
+# the files after it with it.
+#
 # NOTHING IS PROVED in such a session, and length (axioms ()) says
 # nothing about the port while it is on.  It is for developing the
 # next proof against the port, and for reading a statement; what
@@ -30,8 +34,27 @@ repl-step $s "loadt \"$C/ml/lib/fast.ml\";;" > /dev/null 2>&1
 python3 -I $C/tools/loadorder.py > $C/tools/load.txt
 for f in $(cat $C/tools/load.txt); do
   [ -n "$upto" ] && [ "$f" = "$upto" ] && break
-  TIMEOUT=${TIMEOUT:-300} repl-step $s "loadt \"$C/ml/$f\";;" \
+  g=$C/ml/$f
+  h=$g
+  # a statement that HOL Light does not read would stop the file
+  # and every file that needs it, which is the whole point of an
+  # abstract gone: with TOLERANT=1 each theorem is loaded in a try
+  # and the file goes on, as a harvest does (tools/bin/checkseq)
+  # its own copy, not tmp/locate.ml: a run writes that one, and a
+  # run may be going while this is
+  [ "$TOLERANT" = 1 ] && {
+    python3 -I $C/tools/tolerant.py "$g" $C/tmp/abstract-$s.ml \
+      > /dev/null
+    h=$C/tmp/abstract-$s.ml; }
+  TIMEOUT=${TIMEOUT:-300} repl-step $s "loadt \"$h\";;" \
     2>&1 | grep -E "Exception|Error in" | sed "s|^|$f: |"
+  # the file was loaded under the name of the instrumented copy,
+  # so it is registered under its own name, or a needs of it would
+  # load it a second time
+  [ "$TOLERANT" = 1 ] && repl-step $s \
+    "loaded_files :=
+       (Filename.basename \"$g\",Digest.file \"$g\") ::
+         !loaded_files;;" > /dev/null 2>&1
 done
 # in front of a file the session goes back to proving, so that
 # the file can be loaded for real

@@ -784,6 +784,11 @@ INT_NUMERALS = set([
 # The library layer has them under a name of their own and the
 # statements that mean them say so here.
 THM_NAMES = {
+  # the fromList of a sparse tree, where the one the name resolves
+  # to is the fromList of a lazy list (ml/lib/llist.ml)
+  ('misc', 'LIST_REL_lookup_fromList'): {'fromList': 'sptree_fromList'},
+  ('misc', 'LIST_REL_lookup_fromList_MAP'):
+    {'fromList': 'sptree_fromList'},
   ('misc', 'domain_rrestrict_subset'): {'domain': 'set_relation_domain'},
   ('misc', 'range_rrestrict_subset'): {'range': 'set_relation_range'},
   # HOL4's GSPEC takes a function to a pair of an element and a
