@@ -414,6 +414,10 @@ CON_BODY = {
   # that it is
   ('data_to_word', 'lookup_word_op_def'):
     {'Xor': 'asm', 'Add': 'asm', 'Sub': 'asm'},
+  # copy_prop_inst matches on an asm instruction and gives a
+  # wordLang program, and both have Skip
+  ('word_copy', 'copy_prop_inst_def'):
+    {'Skip': 'wordLang', 'Inst': 'wordLang'},
   # wInst matches on an asm instruction and wraps it in the Inst
   # of a stackLang program
   ('word_to_stack', 'wInst_def'): {'Inst': 'stackLang'},
@@ -11808,6 +11812,10 @@ MAIN_THEORY = {
 # this says the exceptions: a proof about bvl that names asm's Xor
 # or backend_common's word_shift wants that one wherever it stands.
 CON_FILE = {
+  # the Int of clos_known is the one of a val_approx, which is
+  # what it indexes a tuple with; closLang has an Int of a
+  # const_part and clos_known never writes that one
+  'clos_known': {'Int': 'clos_known'},
   # the instructions that stack_alloc builds are asm's, which is
   # what the Inst of a stackLang program takes
   'stack_alloc': {'Load': 'asm', 'Store': 'asm',
