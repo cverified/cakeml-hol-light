@@ -21,11 +21,8 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "source_letProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "source_letProof"
   ["ast"; "evaluate"; "evaluateProps"; "misc"; "semanticPrimitives";
    "semanticPrimitivesProps"; "semantics"; "source_evalProof";
    "source_let"];;
@@ -59,11 +56,12 @@ let evaluate_lift_lets = prove
        evaluate_evaluate_decs s env [Dlocal ds1 [ds2]] = (s2,res)`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let lift_lets_mod_local = prove
  (`(!ds1 ds2. lift_lets [] (Dlocal ds1 ds2) = NONE) /\
    (!mn ds. lift_lets [] (Dmod mn ds) = NONE)`,
   CHEAT_TAC);;
+add_simp lift_lets_mod_local;;
 
 (* HOL4 source_letProofScript.sml:105-107: a theorem that HOL4 states
    as the value of an ML expression: evaluate_lift_start *)
@@ -96,7 +94,3 @@ let compile_semantics_oracle = prove
              (adjust_oracle ci (source_let_compile_decs o f)) s)
          env prog outcome`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -140,18 +140,10 @@ let SAFE_MATCH_REDUCE_ASM_TAC =
   CHANGED_TAC(RULE_ASSUM_TRY(CONV_RULE(REDEPTH_CONV
                                safe_match_conv)));;
 
-(* case analysis on a scrutinee, as HOL4's Cases_on: a compound term
-   keeps its equation, because the lemmas about evaluate are applied
-   to it afterwards (TERM_INTRO_TAC, BasicProvers.sml:72); a
-   variable does not need one (VAR_INTRO_TAC) *)
-
-let CASES_ON_TAC t =
-  let th = if prod_type (type_of t) then ISPEC t PAIR_SURJECTIVE
-           else ISPEC t (cases_of (type_of t)) in
-  let use eq =
-    if is_var t then SUBST_ALL_TAC eq
-    else TRY(SUBST_ALL_TAC eq) THEN ASSUME_TAC eq in
-  (REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN use)) th;;
+(* case analysis on a scrutinee is CASES_ON_TAC, of
+   tactics/induct.ml, which the preamble loads before this file: a
+   compound term keeps its equation there, because the lemmas about
+   evaluate are applied to it afterwards *)
 
 (* the scrutinees of the matches of the goal and of the assumptions
    that are not in constructor shape yet, the deepest first.  Both,
@@ -1216,3 +1208,32 @@ let ATTEMPT_TAC secs tac =
     match r with
       Some gst -> gst
     | None -> CHEAT_TAC gl;;
+
+(* ================================================================== *)
+(* MESON with a budget.                                               *)
+(*                                                                    *)
+(* MESON searches a space that grows exponentially with the depth, so *)
+(* a call that is going to fail can run for hours: one call of the    *)
+(* port reached sixteen million inferences and a run sat out half an  *)
+(* hour on it.  A proof here that needs more than a minute of MESON   *)
+(* is a proof to write another way, so a call that goes over the      *)
+(* budget fails and says so, and the run names the theorem.           *)
+(*                                                                    *)
+(* Set meson_timeout to 0 to let a search run as long as it likes.    *)
+(* ================================================================== *)
+
+let meson_timeout = ref 60;;
+
+let budgeted name f =
+  fun thl g ->
+    let old = !cake_timeout in
+    cake_timeout := !meson_timeout;
+    let fin () = cake_timeout := old in
+    try let r = with_timeout (f thl) g in (fin (); r)
+    with Cake_timeout -> (fin (); failwith (name ^ ": over budget"))
+       | e -> (fin (); raise e);;
+
+let MESON_TAC : thm list -> tactic = budgeted "MESON_TAC" MESON_TAC;;
+
+let ASM_MESON_TAC : thm list -> tactic =
+  budgeted "ASM_MESON_TAC" ASM_MESON_TAC;;

@@ -7,9 +7,8 @@
 
 (* this file needs nothing of the port *)
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: arithmetic list words rich_list *)
 
 let byte_index_def = new_definition
@@ -53,7 +52,7 @@ let word_to_bytes_aux_def,word_to_bytes_aux_ind = define_wf
   [`// length, 'a word, endianness
     word_to_bytes_aux 0 (w:'a word) be' = []`;
    `word_to_bytes_aux (SUC n) (w:'a word) be' = APPEND
-  (word_to_bytes_aux n w be') [get_byte (n2w n) w be']`];;
+    (word_to_bytes_aux n w be') [get_byte (n2w n) w be']`];;
 
 let word_to_bytes_def = new_definition
   `word_to_bytes (w:'a word) be' =

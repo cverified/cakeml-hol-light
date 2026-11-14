@@ -14,26 +14,23 @@ needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_knownProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_knownProps"
   ["closProps"; "clos_known"];;
 
 (* HOL4 clos_knownPropsScript.sml:10: ML code, not ported *)
 
-(* [simp] *)
 let merge_Other = prove
  (`clos_known_merge (clos_known_Other:val_approx) a =
   (clos_known_Other:val_approx) /\ clos_known_merge a clos_known_Other
   = clos_known_Other`,
   CHEAT_TAC);;
+add_simp merge_Other;;
 
-(* [simp] *)
 let merge_Impossible = prove
  (`clos_known_merge a clos_known_Impossible = a`,
   CHEAT_TAC);;
+add_simp merge_Impossible;;
 
 (* See merge as a join operation on a semi-lattice: it's a join because it's
    a little akin to a union: as merge is used, more and more values might
@@ -48,10 +45,10 @@ let merge_assoc = prove
   clos_known_merge (clos_known_merge a1 a2) a3`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let merge_idem = prove
  (`clos_known_merge a a = a`,
   CHEAT_TAC);;
+add_simp merge_idem;;
 
 let subapprox_def = new_definition
   `subapprox a1 a2 <=> clos_known_merge a1 a2 = a2`;;
@@ -59,10 +56,10 @@ let subapprox_def = new_definition
 (* HOL4 clos_knownPropsScript.sml:61: ML code, not ported *)
 hol4_overload "◁" "subapprox";;
 
-(* [simp] *)
 let subapprox_refl = prove
  (`subapprox a a`,
   CHEAT_TAC);;
+add_simp subapprox_refl;;
 
 let subapprox_trans = prove
  (`subapprox a1 a2 /\ subapprox a2 a3 ==> subapprox a1 a3`,
@@ -72,64 +69,64 @@ let subapprox_antisym = prove
  (`subapprox a1 a2 /\ subapprox a2 a1 ==> a1 = a2`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let subapprox_merge = prove
  (`subapprox a (clos_known_merge a b) /\ subapprox a (clos_known_merge
   b a)`,
   CHEAT_TAC);;
+add_simp subapprox_merge;;
 
-(* [simp] *)
 let subapprox_Other = prove
  (`(subapprox clos_known_Other a <=> (a = clos_known_Other)) /\
   subapprox a clos_known_Other`,
   CHEAT_TAC);;
+add_simp subapprox_Other;;
 
-(* [simp] *)
 let subapprox_Int = prove
  (`(subapprox a (clos_known_Int i) <=> a = clos_known_Int i \/ a =
   clos_known_Impossible) /\
    (subapprox (clos_known_Int i) a <=> a = clos_known_Int i \/ a =
      clos_known_Other)`,
   CHEAT_TAC);;
+add_simp subapprox_Int;;
 
 
-(* [simp] *)
 let subapprox_ClosNoInline = prove
  (`(subapprox a (clos_known_ClosNoInline m n) <=> a =
   clos_known_ClosNoInline m n \/ a = clos_known_Impossible) /\
    (subapprox (clos_known_ClosNoInline m n) a <=> a =
      clos_known_ClosNoInline m n \/ a = clos_known_Other)`,
   CHEAT_TAC);;
+add_simp subapprox_ClosNoInline;;
 
-(* [simp] *)
 let subapprox_Clos = prove
  (`(subapprox a (clos_known_Clos m n e s) <=> a = clos_known_Clos m n e
   s \/ a = clos_known_Impossible) /\
    (subapprox (clos_known_Clos m n e s) a <=> a = clos_known_Clos m
      n e s \/ a = clos_known_Other)`,
   CHEAT_TAC);;
+add_simp subapprox_Clos;;
 
-(* [simp] *)
 let subapprox_Impossible = prove
  (`(subapprox a clos_known_Impossible <=> a = clos_known_Impossible)
   /\ subapprox clos_known_Impossible a`,
   CHEAT_TAC);;
+add_simp subapprox_Impossible;;
 
-(* [simp] *)
 let subapprox_Tuple = prove
  (`subapprox (clos_known_Tuple tg1 as1) (clos_known_Tuple tg2 as2) <=>
   tg1 = tg2 /\ ALL2 subapprox as1 as2`,
   CHEAT_TAC);;
+add_simp subapprox_Tuple;;
 
 let better_definedg_def = new_definition
   `better_definedg g1 g2 <=>
      (!k. k IN domain g1 ==> k IN domain g2 /\ subapprox (THE
        (sptree_lookup k g1)) (THE (sptree_lookup k g2)))`;;
 
-(* [simp] *)
 let better_definedg_refl = prove
  (`better_definedg g g`,
   CHEAT_TAC);;
+add_simp better_definedg_refl;;
 
 let better_definedg_trans = prove
  (`better_definedg g1 g2 /\ better_definedg g2 g3 ==> better_definedg
@@ -151,7 +148,3 @@ let mk_Ticks_alt = prove
      clos_known_mk_Ticks t (tc + 1) n (closLang_Tick (mk_cons t tc)
      e))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

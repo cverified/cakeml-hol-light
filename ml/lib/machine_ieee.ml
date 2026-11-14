@@ -8,9 +8,8 @@
 
 needs "lib/binary_ieee.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 
 (* HOL4 generates the definitions of the fp16, fp32 and fp64
    encodings of floating point numbers with ML code (the function

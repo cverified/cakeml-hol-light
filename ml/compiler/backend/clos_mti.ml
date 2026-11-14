@@ -15,11 +15,8 @@
 
 needs "compiler/backend/closLang.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_mti"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_mti"
   ["closLang"];;
 
 let _ = size_thms "closLang_exp";;
@@ -57,7 +54,6 @@ let collect_args_zero = prove
     num_args = 0`,
   CHEAT_TAC);;
 
-let _ = size_thms "closLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let collect_apps_def,collect_apps_ind = define_wf
@@ -200,11 +196,8 @@ let cond_mti_compile_inc_def = new_definition
   `cond_mti_compile_inc do_it max_app =
      (if do_it then (clos_mti_compile_inc max_app) else I)`;;
 
-(* compile_nil[simp] *)
+(* compile_nil *)
 let clos_mti_compile_nil = prove
  (`clos_mti_compile do_mti max_app [] = []`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;
+add_simp clos_mti_compile_nil;;

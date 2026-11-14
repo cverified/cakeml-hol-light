@@ -20,11 +20,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_simpProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_simpProof"
   ["mllist"; "wordLang"; "wordProps"; "wordSem"; "word_simp"];;
 
 let _ = do_list hide_constant ["addr"; "dummy"];;
@@ -505,13 +502,13 @@ let evaluate_drop_consts_1 = prove
    wordSem_evaluate (drop_consts cs vs,s) = (NONE,s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let evaluate_drop_consts = prove
  (`(!v w. sptree_lookup v cs = SOME w ==> wordSem_get_var v s = SOME
   (wordLang_Word w)) ==>
    wordSem_evaluate (SmartSeq (drop_consts cs vs) p,s) =
      wordSem_evaluate (p,s)`,
   CHEAT_TAC);;
+add_simp evaluate_drop_consts;;
 
 (* [local] *)
 let lookup_FOLDR_delete = prove
@@ -594,11 +591,7 @@ let compile_exp_thm = prove
    wordSem_evaluate (word_simp_compile_exp prog,s) = (res,s2)`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["addr";
    "dummy"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

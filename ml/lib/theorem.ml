@@ -117,7 +117,7 @@ let rec anc_scope thy =
   let out = itlist (fun t s -> union (t :: anc_scope t) s) anc [] in
   Hashtbl.replace the_anc_scope thy out; out;;
 
-let hol4_ancestors thy anc =
+let cake_theory thy anc =
   (* a file that failed before the end of itself left its own
      scope in the interface, so the interface goes back first *)
   if !the_saved_interface <> None then unhide_overloads ();
@@ -140,3 +140,12 @@ let hol4_ancestors thy anc =
                     (!the_overload_thy)) in
   the_interface :=
     filter (fun (n,(c,_)) -> not (mem (n,c) gone)) (!the_interface);;
+
+(* a file of a HOL4 library theory is of no theory of the port:
+   what it registers is in the scope of every file.  As a theory
+   does, it puts back the interface that the file before it cut
+   down *)
+
+let cake_library () =
+  if !the_saved_interface <> None then unhide_overloads ();
+  the_thy_loading := "";;

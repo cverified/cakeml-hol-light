@@ -15,11 +15,8 @@
 
 needs "compiler/backend/closLang.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_ticks"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_ticks"
   ["closLang"];;
 
 let clos_ticks_remove_ticks_def,clos_ticks_remove_ticks_ind =
@@ -27,17 +24,17 @@ let clos_ticks_remove_ticks_def,clos_ticks_remove_ticks_ind =
   "sing>nested"
   [`clos_ticks_remove_ticks [] = []`;
    `clos_ticks_remove_ticks (CONS (x:closLang_exp) (CONS y xs)) =
-  CONS (HD (clos_ticks_remove_ticks [x])) (clos_ticks_remove_ticks
-  (CONS y xs))`;
+    CONS (HD (clos_ticks_remove_ticks [x])) (clos_ticks_remove_ticks
+    (CONS y xs))`;
    `clos_ticks_remove_ticks [(closLang_Var t v:closLang_exp)] =
-  [(closLang_Var t v:closLang_exp)]`;
+    [(closLang_Var t v:closLang_exp)]`;
    `clos_ticks_remove_ticks [(closLang_If t x1 x2 x3:closLang_exp)] =
          [closLang_If t (HD (clos_ticks_remove_ticks [x1]))
                (HD (clos_ticks_remove_ticks [x2]))
                (HD (clos_ticks_remove_ticks [x3]))]`;
    `clos_ticks_remove_ticks [(closLang_Let t xs x2:closLang_exp)] =
          [closLang_Let t (clos_ticks_remove_ticks xs) (HD
-           (clos_ticks_remove_ticks [x2]))]`;
+             (clos_ticks_remove_ticks [x2]))]`;
    `clos_ticks_remove_ticks [(closLang_Raise t x1:closLang_exp)] =
          [closLang_Raise t (HD (clos_ticks_remove_ticks [x1]))]`;
    `clos_ticks_remove_ticks [(closLang_Handle t x1 x2:closLang_exp)] =
@@ -46,69 +43,70 @@ let clos_ticks_remove_ticks_def,clos_ticks_remove_ticks_ind =
    `clos_ticks_remove_ticks [(closLang_Op t op xs:closLang_exp)] =
          [closLang_Op t op (clos_ticks_remove_ticks xs)]`;
    `clos_ticks_remove_ticks [(closLang_Tick t x1:closLang_exp)] =
-  clos_ticks_remove_ticks [x1]`;
+    clos_ticks_remove_ticks [x1]`;
    `clos_ticks_remove_ticks [(closLang_Call t ticks dest
-  xs:closLang_exp)] =
+    xs:closLang_exp)] =
          [closLang_Call t 0 dest (clos_ticks_remove_ticks xs)]`;
    `clos_ticks_remove_ticks [(closLang_App t loc_opt x1
-  xs:closLang_exp)] =
+    xs:closLang_exp)] =
          [closLang_App t loc_opt (HD (clos_ticks_remove_ticks
-           [x1])) (clos_ticks_remove_ticks xs)]`;
+             [x1])) (clos_ticks_remove_ticks xs)]`;
    `clos_ticks_remove_ticks [(closLang_Letrec t loc_opt vs fns
-  x1:closLang_exp)] =
+    x1:closLang_exp)] =
          (let new_fns = MAP (\(num_args,x). (num_args,HD
-           (clos_ticks_remove_ticks [x]))) fns in
+             (clos_ticks_remove_ticks [x]))) fns in
          [closLang_Letrec t loc_opt vs new_fns (HD
-           (clos_ticks_remove_ticks [x1]))])`;
+             (clos_ticks_remove_ticks [x1]))])`;
    `clos_ticks_remove_ticks [closLang_Fn t loc_opt vs num_args x1] =
          [closLang_Fn t loc_opt vs num_args (HD
-           (clos_ticks_remove_ticks [x1]))]`];;
+             (clos_ticks_remove_ticks [x1]))]`];;
 
 let clos_ticks_remove_ticks_sing_def,clos_ticks_remove_ticks_sing_ind =
-  define_mutual_shaped_rec
+  define_shaped_rec
   "maplist>maplist>nested"
   [`clos_ticks_remove_ticks_sing (closLang_Var t v:closLang_exp) =
-  ((closLang_Var t v:closLang_exp))`;
+    ((closLang_Var t v:closLang_exp))`;
    `clos_ticks_remove_ticks_sing (closLang_If t x1 x2 x3:closLang_exp) =
          (closLang_If t ((clos_ticks_remove_ticks_sing (x1)))
                ((clos_ticks_remove_ticks_sing (x2)))
                ((clos_ticks_remove_ticks_sing (x3))))`;
    `clos_ticks_remove_ticks_sing (closLang_Let t xs x2:closLang_exp) =
          (closLang_Let t (clos_ticks_remove_ticks_list xs)
-           ((clos_ticks_remove_ticks_sing (x2))))`;
+             ((clos_ticks_remove_ticks_sing (x2))))`;
    `clos_ticks_remove_ticks_sing (closLang_Raise t x1:closLang_exp) =
          (closLang_Raise t ((clos_ticks_remove_ticks_sing (x1))))`;
    `clos_ticks_remove_ticks_sing (closLang_Handle t x1 x2:closLang_exp)
-  =
+    =
          (closLang_Handle t ((clos_ticks_remove_ticks_sing (x1)))
                    ((clos_ticks_remove_ticks_sing (x2))))`;
    `clos_ticks_remove_ticks_sing (closLang_Op t op xs:closLang_exp) =
          (closLang_Op t op (clos_ticks_remove_ticks_list xs))`;
    `clos_ticks_remove_ticks_sing (closLang_Tick t x1:closLang_exp) =
-  clos_ticks_remove_ticks_sing (x1)`;
+    clos_ticks_remove_ticks_sing (x1)`;
    `clos_ticks_remove_ticks_sing (closLang_Call t ticks dest
-  xs:closLang_exp) =
+    xs:closLang_exp) =
          (closLang_Call t 0 dest (clos_ticks_remove_ticks_list
-           xs))`;
+             xs))`;
    `clos_ticks_remove_ticks_sing (closLang_App t loc_opt x1
-  xs:closLang_exp) =
+    xs:closLang_exp) =
          (closLang_App t loc_opt ((clos_ticks_remove_ticks_sing
-           (x1))) (clos_ticks_remove_ticks_list xs))`;
+             (x1))) (clos_ticks_remove_ticks_list xs))`;
    `clos_ticks_remove_ticks_sing (closLang_Letrec t loc_opt vs fns
-  x1:closLang_exp) =
+    x1:closLang_exp) =
          (let new_fns = remove_ticks_let fns in
          (closLang_Letrec t loc_opt vs new_fns
-           ((clos_ticks_remove_ticks_sing (x1)))))`;
+             ((clos_ticks_remove_ticks_sing (x1)))))`;
    `clos_ticks_remove_ticks_sing (closLang_Fn t loc_opt vs num_args x1)
-  =
+    =
          (closLang_Fn t loc_opt vs num_args
-           ((clos_ticks_remove_ticks_sing (x1))))`;
+             ((clos_ticks_remove_ticks_sing (x1))))`;
    `clos_ticks_remove_ticks_list [] = []`;
    `clos_ticks_remove_ticks_list (CONS (x:closLang_exp) xs) = CONS
-  (clos_ticks_remove_ticks_sing x) (clos_ticks_remove_ticks_list xs)`;
+    (clos_ticks_remove_ticks_sing x) (clos_ticks_remove_ticks_list
+    xs)`;
    `remove_ticks_let [] = []`;
    `remove_ticks_let (CONS (num_args,x) xs) = CONS
-  (num_args,clos_ticks_remove_ticks_sing x) (remove_ticks_let xs)`];;
+    (num_args,clos_ticks_remove_ticks_sing x) (remove_ticks_let xs)`];;
 
 (* HOL4 clos_ticksScript.sml:77: ML code, not ported *)
 
@@ -131,7 +129,3 @@ let remove_ticks_sing_eq = prove
 
 let clos_ticks_compile_inc_def = new_definition
   `clos_ticks_compile_inc (e,xs) = (clos_ticks_remove_ticks e,[])`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -4,7 +4,7 @@
 
 A file of the port reads its statements with the overloads of the
 theories out of the scope of its source taken out of the interface
-(ml/lib/theorem.ml, hol4_ancestors; ISSUES.md "A statement that
+(ml/lib/theorem.ml, cake_theory; ISSUES.md "A statement that
 means another theory's constant").  The line that says which those
 are is written by tools/port.py out of the Ancestors blocks of the
 source, and the one that puts the interface back stands at the end
@@ -17,7 +17,7 @@ sys.path.insert(0, T)
 import db as dbmod
 C = T + '../'
 
-ANC = re.compile(r'(?m)^let _ = hol4_ancestors "([A-Za-z0-9_\']+)"'
+ANC = re.compile(r'(?m)^let _ = cake_theory "([A-Za-z0-9_\']+)"'
                  r'\s*(\[[^]]*\]);;')
 BACK = re.compile(r'(?m)^let _ = unhide_overloads \(\);;')
 
@@ -35,7 +35,7 @@ def main():
     ms = ANC.findall(text)
     want = db.announce(thy)
     if len(ms) != 1:
-      print('%s: %d hol4_ancestors lines' % (thy, len(ms)))
+      print('%s: %d cake_theory lines' % (thy, len(ms)))
       bad += 1
       continue
     got_thy, lst = ms[0]

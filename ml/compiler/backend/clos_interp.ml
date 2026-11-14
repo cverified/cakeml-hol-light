@@ -14,11 +14,8 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_interp"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_interp"
   ["backend_common"; "closLang"];;
 
 let _ = do_list hide_constant ["pmatch"];;
@@ -34,28 +31,28 @@ let can_interpret_op_def = new_definition
       | (closLang_BlockOp (closLang_Constant c)) -> (l = 0)
       | _1 -> F`;;
 
-let can_interpret_def,can_interpret_ind = define_mutual_rec
+let can_interpret_def,can_interpret_ind = define_rec
   [`can_interpret ((closLang_Var t n):closLang_exp) = T`;
    `can_interpret (closLang_If t e1 e2 e3:closLang_exp) =
       (can_interpret e1 /\ can_interpret e2 /\ can_interpret e3)`;
    `can_interpret (closLang_Let t es e:closLang_exp) = (can_interpret
-  e /\ can_interpret_list es)`;
+    e /\ can_interpret_list es)`;
    `can_interpret (closLang_Op t p es:closLang_exp) =
       (can_interpret_op p (LENGTH es) /\ can_interpret_list es)`;
    `can_interpret (closLang_Raise t e:closLang_exp) = can_interpret e`;
    `can_interpret (closLang_Tick t e:closLang_exp) = can_interpret e`;
    `can_interpret (closLang_Fn _2 _3 _4 _5 e) = F`;
    `can_interpret (closLang_Handle t e1 e2:closLang_exp) =
-  (can_interpret e1 /\ can_interpret e2)`;
+    (can_interpret e1 /\ can_interpret e2)`;
    `can_interpret (closLang_Call _9 _10 _11 es:closLang_exp) = F`;
    `can_interpret (closLang_App _13 opt e es:closLang_exp) =
       (IS_NONE opt /\ can_interpret e /\ can_interpret_list es /\
-        LENGTH es = 1)`;
+          LENGTH es = 1)`;
    `can_interpret (closLang_Letrec _17 _18 _19 fns e:closLang_exp) =
-  F`;
+    F`;
    `can_interpret_list [] = T`;
    `can_interpret_list (CONS x xs) = (can_interpret x /\
-  can_interpret_list xs)`];;
+    can_interpret_list xs)`];;
 
 (* check size *)
 
@@ -68,7 +65,7 @@ let check_size_op_def = new_definition
       | (closLang_GlobOp (closLang_Global n)) -> k
       | _20 -> k - 1`;;
 
-let check_size_def,check_size_ind = define_mutual_rec
+let check_size_def,check_size_ind = define_rec
   [`check_size (k:num) ((closLang_Var t n):closLang_exp) = (k:num)`;
    `check_size (k:num) (closLang_If t e1 e2 e3:closLang_exp) =
       (((let k = check_size k e1 in if k = 0 then 0 else
@@ -79,23 +76,23 @@ let check_size_def,check_size_ind = define_mutual_rec
          check_size k e)):num)`;
    `check_size (k:num) (closLang_Op t p es:closLang_exp) =
       (((let k = check_size_op k p (LENGTH es) in if k = 0 then 0
-        else
+          else
          check_size_list k es)):num)`;
    `check_size (k:num) (closLang_Raise t e:closLang_exp) =
-  ((check_size k e):num)`;
+    ((check_size k e):num)`;
    `check_size (k:num) (closLang_Tick t e:closLang_exp) =
-  ((check_size k e):num)`;
+    ((check_size k e):num)`;
    `check_size (k:num) (closLang_Fn _21 _22 _23 _24 e) = ((k):num)`;
    `check_size (k:num) (closLang_Handle t e1 e2:closLang_exp) =
       (((let k = check_size k e1 in if k = 0 then 0 else
          check_size k e2)):num)`;
    `check_size (k:num) (closLang_Call _28 _29 _30 es:closLang_exp) =
-  ((k):num)`;
+    ((k):num)`;
    `check_size (k:num) (closLang_App _33 _34 e es:closLang_exp) =
       (((let k = check_size (k - 1) e in if k = 0 then 0 else
          check_size_list k es)):num)`;
    `check_size (k:num) (closLang_Letrec _38 _39 _40 fns
-  e:closLang_exp) = ((k):num)`;
+    e:closLang_exp) = ((k):num)`;
    `check_size_list (k:num) [] = k`;
    `check_size_list (k:num) (CONS x xs) =
       (let k = check_size k x in if k = 0 then 0 else
@@ -124,28 +121,28 @@ let to_constant_def,to_constant_ind = assume_definition_rec
       ConstCons 0 [ConstInt (&n)]`;
    `to_constant (closLang_App _48 _49 e es:closLang_exp) =
       ConstCons 0 [to_constant e; match es with [] -> ConstInt
-        (&0) | (CONS e1 _50) -> to_constant e1]`;
+          (&0) | (CONS e1 _50) -> to_constant e1]`;
    `to_constant (closLang_If t e1 e2 e3:closLang_exp) =
       ConstCons 0 [to_constant e1; to_constant e2; to_constant
-        e3]`;
+          e3]`;
    `to_constant (closLang_Let t es e:closLang_exp) = ConstCons 1
-  [to_constant_list es; to_constant e]`;
+    [to_constant_list es; to_constant e]`;
    `to_constant (closLang_Op t p es:closLang_exp) = to_constant_op p
-  (LENGTH es) (to_constant_list es)`;
+    (LENGTH es) (to_constant_list es)`;
    `to_constant (closLang_Raise t e:closLang_exp) = ConstCons 3
-  [to_constant e]`;
+    [to_constant e]`;
    `to_constant (closLang_Tick t e:closLang_exp) = ConstCons 4
-  [to_constant e]`;
+    [to_constant e]`;
    `to_constant (closLang_Handle t e1 e2:closLang_exp) = ConstCons 2
-  [to_constant e1; to_constant e2]`;
+    [to_constant e1; to_constant e2]`;
    `to_constant (closLang_Fn _51 _52 _53 _54 e) = ConstInt (&0)`;
    `to_constant (closLang_Call _58 _59 _60 es:closLang_exp) =
-  ConstInt (&0)`;
+    ConstInt (&0)`;
    `to_constant (closLang_Letrec _64 _65 _66 fns e:closLang_exp) =
-  ConstInt (&0)`;
+    ConstInt (&0)`;
    `to_constant_list [] = ConstCons 0 []`;
    `to_constant_list (CONS x xs) = ConstCons 0 [to_constant x;
-  to_constant_list xs]`];;
+    to_constant_list xs]`];;
 
 (* interpreter as closLang program *)
 
@@ -541,10 +538,6 @@ let to_constant_op_pmatch = prove
        ConstCons (tag + 5) [cs]) | _70 -> ConstInt (&0))`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -16,11 +16,8 @@ needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "wordConvs"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "wordConvs"
   ["asm"; "reg_alloc"; "wordLang"];;
 
 let _ = do_list hide_constant ["inst"];;
@@ -102,10 +99,10 @@ let labels_rel_def = new_definition
      (ALL_DISTINCT old_labs ==> ALL_DISTINCT new_labs) /\
      set_of_list new_labs SUBSET set_of_list old_labs`;;
 
-(* [simp] *)
 let labels_rel_refl = prove
  (`!xs. labels_rel xs xs`,
   CHEAT_TAC);;
+add_simp labels_rel_refl;;
 
 let labels_rel_APPEND = prove
  (`labels_rel xs xs1 /\ labels_rel ys ys1 ==>
@@ -262,7 +259,6 @@ let two_reg_inst_def = new_definition
         | _7 -> T`;;
 
 (*** Recursor over instructions ***)
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let every_inst_def,every_inst_ind = define_wf
@@ -287,7 +283,6 @@ let every_inst_def,every_inst_ind = define_wf
         | prog -> T`];;
 
 (*** Every instruction is well-formed ***)
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let full_inst_ok_less_def,full_inst_ok_less_ind = define_wf
@@ -322,7 +317,6 @@ let wf_names_def = new_definition
   `wf_names t =
      (sptree_wf (FST t) /\ sptree_wf (SND t))`;;
 
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let wf_cutsets_def,wf_cutsets_ind = define_wf
@@ -367,7 +361,6 @@ let inst_arg_convention_def = new_definition
         | _17 -> T`;;
 
 (*** Calling conventions ***)
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let call_arg_convention_def,call_arg_convention_ind = define_wf
@@ -423,7 +416,6 @@ let post_alloc_conventions_def = new_definition
      call_arg_convention prog)`;;
 
 (*** This is for label preservation -- wordLang shouldn't need to inspect the labels explicitly. ***)
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let extract_labels_def,extract_labels_ind = define_wf
@@ -464,7 +456,6 @@ let max_var_intro = prove
   CHEAT_TAC);;
 
 (*** code_labels ***)
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_code_labels_def,get_code_labels_ind = define_wf
@@ -487,11 +478,11 @@ let get_code_labels_def,get_code_labels_ind = define_wf
         | (wordLang_MustTerminate p) -> wordConvs_get_code_labels p
         | (wordLang_LocValue _33 l1) -> {l1}
         | _34 -> {}`];;
+add_simp get_code_labels_def;;
 
 (*** TODO: This seems like it must have been established before
   handler labels point only within the current table entry
 ***)
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let good_handlers_def,good_handlers_ind = define_wf
@@ -511,6 +502,7 @@ let good_handlers_def,good_handlers_ind = define_wf
           good_handlers n p2
         | (wordLang_MustTerminate p) -> good_handlers n p
         | _45 -> T`];;
+add_simp good_handlers_def;;
 
 let good_code_labels_def = new_definition
   `wordConvs_good_code_labels p elabs <=>
@@ -523,7 +515,6 @@ let good_code_labels_def = new_definition
 
 (* Examines various syntactic elements within programs that some phases are
    expected to possibly remove but not create. *)
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let not_created_subprogs_def,not_created_subprogs_ind = define_wf
@@ -612,10 +603,6 @@ let no_share_inst_subprogs_def = new_definition
 (* HOL4 wordConvsScript.sml:612: the overload word_good_code_labels,
    which the port expands *)
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["inst"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

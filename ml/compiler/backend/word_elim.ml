@@ -19,11 +19,8 @@ needs "compiler/backend/wordLang.ml";;
 needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_elim"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_elim"
   ["wordLang"];;
 
 
@@ -64,7 +61,7 @@ let analyse_word_code_def,analyse_word_code_ind = define_rec
   [`analyse_word_code [] = (LN:(1 spt) spt)`;
    `analyse_word_code (CONS (n,args,prog) t) =
             ((sptree_insert n (find_word_ref prog)
-              (analyse_word_code t)):(1 spt) spt)`];;
+                (analyse_word_code t)):(1 spt) spt)`];;
 
 let remove_word_code_def = new_definition
   `remove_word_code reachable l =
@@ -76,7 +73,3 @@ let remove_word_prog_def = new_definition
        let reachable = closure_spt (sptree_insert n one (LN:1 spt)) t
          in
        remove_word_code reachable code)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -16,27 +16,24 @@ needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "semanticPrimitivesProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "semanticPrimitivesProps"
   ["ast"; "ffi"; "namespace"; "namespaceProps"; "semanticPrimitives"];;
 
 let _ = do_list hide_constant ["id"];;
 
 
-(* [simp] *)
 let with_same_v = prove
  (`sem_env_v_fupd (K (sem_env_v env))
       (env:'v sem_env) = env`,
   CHEAT_TAC);;
+add_simp with_same_v;;
 
-(* [simp] *)
 let unchanged_env = prove
  (`!(env:'a sem_env).
    mk_sem_env (sem_env_v env) (sem_env_c env) = env`,
   CHEAT_TAC);;
+add_simp unchanged_env;;
 
 (* with_same_clock *)
 let semanticPrimitivesProps_with_same_clock = prove
@@ -45,24 +42,26 @@ let semanticPrimitivesProps_with_same_clock = prove
       (st:'ffi semanticPrimitives_state) = st`,
   CHEAT_TAC);;
 
-(* Boolv_11[simp] *)
+(* Boolv_11 *)
 let semanticPrimitivesProps_Boolv_11 = prove
  (`semanticPrimitives_Boolv b1 = semanticPrimitives_Boolv b2 <=> (b1 =
   b2)`,
   CHEAT_TAC);;
+add_simp semanticPrimitivesProps_Boolv_11;;
 
-(* [simp] *)
 let extend_dec_env_assoc = prove
  (`!env1 env2 env3.
     extend_dec_env env1 (extend_dec_env env2 env3) =
     extend_dec_env (extend_dec_env env1 env2) env3`,
   CHEAT_TAC);;
+add_simp extend_dec_env_assoc;;
 
 let shift_lookup_def = define_general
   [`shift_lookup Lsl = word_lsl`;
    `shift_lookup Lsr = word_lsr`;
    `shift_lookup Asr = word_asr`;
    `shift_lookup Ror = word_ror`];;
+add_simp shift_lookup_def;;
 
 let do_shift_def = new_definition
   `do_shift sh n x3 x4 =
@@ -72,14 +71,15 @@ let do_shift_def = new_definition
         | (ast_W64,(ast_Word64 w)) -> SOME (ast_Word64 (shift_lookup
           sh w n))
         | (_1,_2) -> NONE`;;
+add_simp do_shift_def;;
 
 (* HOL4 semanticPrimitivesPropsScript.sml:58-75: code that the source
    has in a comment *)
 
-(* [simp] *)
 let lit_same_type_refl = prove
  (`!l. lit_same_type l l`,
   CHEAT_TAC);;
+add_simp lit_same_type_refl;;
 
 let lit_same_type_sym = prove
  (`!l1 l2. lit_same_type l1 l2 ==> lit_same_type l2 l1`,
@@ -277,31 +277,33 @@ let do_con_check_build_conv = prove
 let map_error_result_def = define_cases
   [`map_error_result f (Rraise e) = Rraise (f e)`;
    `map_error_result f (Rabort a) = Rabort a`];;
+add_simp map_error_result_def;;
 
-(* [simp] *)
 let map_error_result_Rtype_error = prove
  (`map_error_result f e = (Rabort a) <=> e = Rabort a`,
   CHEAT_TAC);;
+add_simp map_error_result_Rtype_error;;
 
-(* [simp] *)
 let map_error_result_I = prove
  (`map_error_result I e = e`,
   CHEAT_TAC);;
+add_simp map_error_result_I;;
 
 let map_result_def = define_cases
   [`map_result f1 f2 (Rval v) = Rval (f1 v)`;
    `map_result f1 f2 (Rerr e) = Rerr (map_error_result f2 e)`];;
+add_simp map_result_def;;
 
-(* [simp] *)
 let map_result_Rval = prove
  (`map_result f1 f2 e = Rval x <=> (?y. e = Rval y /\ x = f1 y)`,
   CHEAT_TAC);;
+add_simp map_result_Rval;;
 
-(* [simp] *)
 let map_result_Rerr = prove
  (`map_result f1 f2 e = Rerr e' <=> (?a. e = Rerr a /\
   map_error_result f2 a = e')`,
   CHEAT_TAC);;
+add_simp map_result_Rerr;;
 
 let exc_rel_def = new_definition
   `exc_rel R x2 x3 =
@@ -309,28 +311,29 @@ let exc_rel_def = new_definition
           (Rraise v1,Rraise v2) -> R v1 v2
         | ((Rabort a1),(Rabort a2)) -> a1 = a2
         | (_3,_4) -> F`;;
+add_simp exc_rel_def;;
 
-(* [simp] *)
 let exc_rel_raise1 = prove
  (`exc_rel R (Rraise v) e = (?v'. (e = Rraise v') /\ R v v')`,
   CHEAT_TAC);;
-(* [simp] *)
+add_simp exc_rel_raise1;;
 let exc_rel_raise2 = prove
  (`exc_rel R e (Rraise v) = (?v'. (e = Rraise v') /\ R v' v)`,
   CHEAT_TAC);;
-(* [simp] *)
+add_simp exc_rel_raise2;;
 let exc_rel_type_error1 = prove
  (`(exc_rel R (Rabort a) e = (e = Rabort a))`,
   CHEAT_TAC);;
-(* [simp] *)
+add_simp exc_rel_type_error1;;
 let exc_rel_type_error2 = prove
  (`(exc_rel R e (Rabort a) = (e = Rabort a))`,
   CHEAT_TAC);;
+add_simp exc_rel_type_error2;;
 
-(* [simp] *)
 let exc_rel_refl = prove
  (`(!x. R x x) ==> (!x. exc_rel R x x)`,
   CHEAT_TAC);;
+add_simp exc_rel_refl;;
 
 let exc_rel_trans = prove
  (`(!x y z. R x y /\ R y z ==> R x z) ==> (!x y z. exc_rel R x y /\
@@ -343,28 +346,29 @@ let result_rel_def = new_definition
           (Rval v1,Rval v2) -> R1 v1 v2
         | ((Rerr e1),(Rerr e2)) -> exc_rel R2 e1 e2
         | (_5,_6) -> F`;;
+add_simp result_rel_def;;
 
-(* [simp] *)
 let result_rel_Rval = prove
  (`semanticPrimitivesProps_result_rel R1 R2 (Rval v) r = (?v'. (r =
   Rval v') /\ R1 v v')`,
   CHEAT_TAC);;
-(* [simp] *)
+add_simp result_rel_Rval;;
 let result_rel_Rerr1 = prove
  (`semanticPrimitivesProps_result_rel R1 R2 (Rerr e) r = (?e'. (r =
   Rerr e') /\ exc_rel R2 e e')`,
   CHEAT_TAC);;
-(* [simp] *)
+add_simp result_rel_Rerr1;;
 let result_rel_Rerr2 = prove
  (`semanticPrimitivesProps_result_rel R1 R2 r (Rerr e) = (?e'. (r =
   Rerr e') /\ exc_rel R2 e' e)`,
   CHEAT_TAC);;
+add_simp result_rel_Rerr2;;
 
-(* [simp] *)
 let result_rel_refl = prove
  (`(!x. R1 x x) /\ (!x. R2 x x) ==> (!x.
   semanticPrimitivesProps_result_rel R1 R2 x x)`,
   CHEAT_TAC);;
+add_simp result_rel_refl;;
 
 let result_rel_trans = prove
  (`(!x y z. R1 x y /\ R1 y z ==> R1 x z) /\ (!x y z. R2 x y /\ R2 y z
@@ -376,28 +380,33 @@ let result_rel_trans = prove
 let every_error_result_def = define_cases
   [`every_error_result P (Rraise e) = P e`;
    `every_error_result P (Rabort a) = T`];;
+add_simp every_error_result_def;;
 
 let every_result_def = define_cases
   [`every_result P1 P2 (Rval v) = (P1 v)`;
    `every_result P1 P2 (Rerr e) = (every_error_result P2 e)`];;
+add_simp every_result_def;;
 
 let map_sv_def = define_cases
   [`map_sv f (semanticPrimitives_Refv v) = semanticPrimitives_Refv (f
-  v)`;
+    v)`;
    `map_sv _7 (semanticPrimitives_W8array w) =
-  (semanticPrimitives_W8array w)`;
+    (semanticPrimitives_W8array w)`;
    `map_sv f (semanticPrimitives_Varray vs) =
-  (semanticPrimitives_Varray (MAP f vs))`;
+    (semanticPrimitives_Varray (MAP f vs))`;
    `map_sv f (semanticPrimitives_Thunk m v) =
-  (semanticPrimitives_Thunk m (f v))`];;
+    (semanticPrimitives_Thunk m (f v))`];;
+add_simp map_sv_def;;
 
 let dest_Refv_def = define_general
   [`dest_Refv (semanticPrimitives_Refv v) = v`];;
+add_simp dest_Refv_def;;
 let is_Refv_def = new_definition
   `is_Refv x1 =
       match x1 with
         semanticPrimitives_Refv _8 -> T
       | _9 -> F`;;
+add_simp is_Refv_def;;
 
 let sv_every_def = new_definition
   `sv_every P x2 =
@@ -406,6 +415,7 @@ let sv_every_def = new_definition
       | (semanticPrimitives_Varray vs) -> ALL P vs
       | (semanticPrimitives_Thunk m v) -> P v
       | _10 -> T`;;
+add_simp sv_every_def;;
 
 let sv_rel_def = new_definition
   `semanticPrimitivesProps_sv_rel R x2 x3 =
@@ -419,11 +429,12 @@ let sv_rel_def = new_definition
       | ((semanticPrimitives_Thunk m1 v1),(semanticPrimitives_Thunk
         m2 v2)) -> (m1 = m2 /\ R v1 v2)
       | (_11,_12) -> F`;;
+add_simp sv_rel_def;;
 
-(* [simp] *)
 let sv_rel_refl = prove
  (`!R x. (!x. R x x) ==> semanticPrimitivesProps_sv_rel R x x`,
   CHEAT_TAC);;
+add_simp sv_rel_refl;;
 
 let sv_rel_trans = prove
  (`!R. (!x y z. R x y /\ R y z ==> R x z) ==> (!x y z.
@@ -458,13 +469,14 @@ let sv_rel_mono = prove
 
 let store_v_vs_def = define_cases
   [`semanticPrimitivesProps_store_v_vs (semanticPrimitives_Refv v) =
-  [v]`;
+    [v]`;
    `semanticPrimitivesProps_store_v_vs (semanticPrimitives_Varray vs)
-  = vs`;
+    = vs`;
    `semanticPrimitivesProps_store_v_vs (semanticPrimitives_W8array
-  _13) = []`;
+    _13) = []`;
    `semanticPrimitivesProps_store_v_vs (semanticPrimitives_Thunk
-  _15 v) = [v]`];;
+    _15 v) = [v]`];;
+add_simp store_v_vs_def;;
 
 let store_vs_def = new_definition
   `store_vs s = FLAT (MAP semanticPrimitivesProps_store_v_vs s)`;;
@@ -496,6 +508,7 @@ let map_match_def = new_definition
         match x with
           Match env -> Match (f env)
         | x -> x`;;
+add_simp map_match_def;;
 
 let find_recfun_ALOOKUP = prove
  (`!funs n. find_recfun n funs = ALOOKUP funs n`,
@@ -511,6 +524,7 @@ let find_recfun_el = prove
 
 let ctors_of_tdef_def = new_definition
   `ctors_of_tdef (_16,_17,condefs) = MAP FST condefs`;;
+add_simp ctors_of_tdef_def;;
 
 let ctors_of_dec_def = new_definition
   `ctors_of_dec x1 =
@@ -518,6 +532,7 @@ let ctors_of_dec_def = new_definition
         Dtype locs tds -> FLAT (MAP ctors_of_tdef tds)
       | (Dexn locs s _18) -> [s]
       | _19 -> []`;;
+add_simp ctors_of_dec_def;;
 
 (* free vars *)
 
@@ -534,9 +549,9 @@ let FV_def,FV_ind = assume_definition_rec
    `FV (ast_If e1 e2 e3:ast_exp) = FV e1 UNION FV e2 UNION FV e3`;
    `FV (ast_Mat e pes:ast_exp) = FV e UNION FV_pes pes`;
    `FV (ast_Let xo e b:ast_exp) = FV e UNION (FV b DIFF (match xo
-  with NONE -> {} | SOME x -> {Short x}))`;
+    with NONE -> {} | SOME x -> {Short x}))`;
    `FV (ast_Letrec defs b:ast_exp) = (FV_defs defs UNION FV b) DIFF
-  set_of_list (MAP (Short o FST) defs)`;
+    set_of_list (MAP (Short o FST) defs)`;
    `FV (ast_Tannot e t) = FV e`;
    `FV (ast_Lannot e l) = FV e`;
    `FV_list [] = {}`;
@@ -544,10 +559,11 @@ let FV_def,FV_ind = assume_definition_rec
    `FV_pes [] = {}`;
    `FV_pes (CONS (p,e) pes) =
          (FV e DIFF (IMAGE Short (set_of_list (ast_pat_bindings
-           p)))) UNION FV_pes pes`;
+             p)))) UNION FV_pes pes`;
    `FV_defs [] = {}`;
    `FV_defs (CONS (_27,x,e) defs) =
          (FV e DIFF {Short x}) UNION FV_defs defs`];;
+add_simp FV_def;;
 
 (* HOL4 semanticPrimitivesPropsScript.sml:663: the overload SFV,
    which the port expands *)
@@ -568,18 +584,18 @@ let FV_dec_def = define_general
    `FV_dec (Dtype _28 _29) = {}`;
    `FV_dec (Dtabbrev _30 _31 _32 _33) = {}`;
    `FV_dec (Dexn _34 _35 _36) = {}`];;
+add_simp FV_dec_def;;
 
-(* [simp] *)
 let nat_to_v_11 = prove
  (`!i j. nat_to_v i = nat_to_v j <=> i = j`,
   CHEAT_TAC);;
+add_simp nat_to_v_11;;
 
-(* [simp] *)
 let concrete_v_list = prove
  (`!xs. concrete_v_list xs = ALL concrete_v xs`,
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[concrete_v_def; ALL]));;
+add_simp concrete_v_list;;
 
-(* [simp] *)
 let concrete_v_simps = prove
  (`(concrete_v (semanticPrimitives_Litv l:semanticPrimitives_v) = T) /\
    (concrete_v (semanticPrimitives_Loc b n) = T) /\
@@ -591,6 +607,7 @@ let concrete_v_simps = prove
    (concrete_v (semanticPrimitives_Closure e2 nm x) = F) /\
    (concrete_v (semanticPrimitives_Recclosure e3 funs nm2) = F)`,
   CHEAT_TAC);;
+add_simp concrete_v_simps;;
 
 let prim_type_cases = prove
  (`!ty.
@@ -613,10 +630,6 @@ let do_arith_check_type = prove
    semanticPrimitives_check_type ty res`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

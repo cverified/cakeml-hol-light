@@ -26,11 +26,8 @@ needs "lib/tailrec.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_bignumProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_bignumProof"
   ["ast"; "backend_common"; "mllist"; "wordLang"; "wordProps";
    "wordSem"; "word_bignum"];;
 
@@ -76,7 +73,6 @@ let eval_exp_def,eval_exp_ind = define_wf
    eval_exp s (wordLang_Shift Ror x1 x2) = word_ror (eval_exp s
      x1) (w2n (eval_exp s x2))`];;
 
-let _ = size_thms "wordLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let eval_exp_pre_def,eval_exp_pre_ind = define_wf
@@ -95,10 +91,10 @@ let eval_exp_pre_def,eval_exp_pre_ind = define_wf
 
 let eval_ri_pre_def = define_cases
   [`eval_ri_pre (s:'a word_bignumProof_state) (Reg r) <=>
-  eval_exp_pre (s:'a word_bignumProof_state) ((wordLang_Var r):'a
-  wordLang_exp)`;
+    eval_exp_pre (s:'a word_bignumProof_state) ((wordLang_Var r):'a
+    wordLang_exp)`;
    `eval_ri_pre (s:'a word_bignumProof_state) (Imm (w:'a word)) <=>
-  T`];;
+    T`];;
 
 let eval_ri_def = define_cases
   [`eval_ri (s:'a word_bignumProof_state) (Reg r) =
@@ -111,11 +107,11 @@ let word_bignumProof_dec_clock_def = new_definition
 
 let reg_write_def = define_cases
   [`reg_write v NONE (s:'a word_bignumProof_state) =
-  word_bignumProof_state_regs_fupd (K (word_bignumProof_state_regs s
-  \\ v)) s`;
+    word_bignumProof_state_regs_fupd (K (word_bignumProof_state_regs
+    s \\ v)) s`;
    `reg_write n (SOME v) (s:'a word_bignumProof_state) =
-  word_bignumProof_state_regs_fupd (K (word_bignumProof_state_regs
-  s |+ (n,v))) s`];;
+    word_bignumProof_state_regs_fupd (K
+    (word_bignumProof_state_regs s |+ (n,v))) s`];;
 
 let delete_vars_def,delete_vars_ind = define_rec
   [`delete_vars [] s = s`;
@@ -132,8 +128,8 @@ let copy_vars_def,copy_vars_ind = define_rec
   [`word_bignumProof_copy_vars [] s t = SOME t`;
    `word_bignumProof_copy_vars (CONS n ns) s t =
          (match FLOOKUP s n with NONE -> NONE | SOME x ->
-           word_bignumProof_copy_vars ns s (reg_write n (SOME x)
-           t))`];;
+             word_bignumProof_copy_vars ns s (reg_write n (SOME x)
+             t))`];;
 
 let eval = cake_inductive
   `(!r s. word_bignumProof_Eval r s word_bignum_Skip (INR (s:'a
@@ -381,7 +377,6 @@ let word_bignumProof_state_rel_delete_vars = prove
           frame`,
   CHEAT_TAC);;
 
-let _ = size_thms "wordLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let exp_ok_def,exp_ok_ind = define_wf
@@ -562,9 +557,9 @@ let list_update_def,list_update_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x0)`
   [`list_update [] ys t = t`;
    `list_update (CONS x xs) (CONS y ys) t = sptree_insert x y
-  (list_update xs ys t)`;
+    (list_update xs ys t)`;
    `list_update (CONS x xs) [] t = sptree_insert x ARB (list_update
-  xs [] t)`];;
+    xs [] t)`];;
 
 let list_update_alist_insert = prove
  (`!xs ys t.
@@ -594,7 +589,7 @@ let domain_list_update = prove
 let list_store_def,list_store_ind = define_rec
   [`list_store [] ys s = s`;
    `list_store (CONS x xs) ys s = (list_store xs (TL ys) s) |+
-  (Temp (n2w x),HD ys)`];;
+    (Temp (n2w x),HD ys)`];;
 
 (* [local] *)
 let list_store_FUPDATE = prove
@@ -725,6 +720,7 @@ let good_code_def = new_definition
          word_bignum_compile n 2 1 cs1 prog = (p2,l2',i2,cs2) /\
            code_subset cs2 cs3))`;;
 
+let _ = size_thms "mini";;
 (* [local] *)
 let compile_LESS_mini_size = prove
  (`!k l1 l2 yy5 code xx1 xx2 xx3 xx5.
@@ -947,18 +943,18 @@ let dec_clock_thm = prove
   (word_bignumProof_state_clock s - 1) s`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let array_write_cancel = prove
  (`array_write n (word_bignumProof_state_arrays s n) s = s`,
   CHEAT_TAC);;
+add_simp array_write_cancel;;
 
-(* [simp] *)
 let reg_write_cancel = prove
  (`(n IN FDOM (word_bignumProof_state_regs s) ==> reg_write n (SOME
   (FAPPLY (word_bignumProof_state_regs s) n)) s = s) /\
     (~(n IN FDOM (word_bignumProof_state_regs s)) ==> reg_write n
       NONE s = s)`,
   CHEAT_TAC);;
+add_simp reg_write_cancel;;
 
 (* [local] *)
 let state_eq_lemma = prove
@@ -973,7 +969,6 @@ let state_eq_lemma = prove
      word_bignumProof_state_arrays s1 n)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let clock_write_simp = prove
  (`word_bignumProof_state_regs
       (clock_write n s) = word_bignumProof_state_regs s /\
@@ -982,8 +977,8 @@ let clock_write_simp = prove
          word_bignumProof_state_clock
        (clock_write n s) = n`,
   CHEAT_TAC);;
+add_simp clock_write_simp;;
 
-(* [simp] *)
 let dec_clock_write_simp = prove
  (`word_bignumProof_state_regs
       (word_bignumProof_dec_clock s) = word_bignumProof_state_regs s
@@ -993,8 +988,8 @@ let dec_clock_write_simp = prove
        (word_bignumProof_dec_clock s) =
          word_bignumProof_state_clock s - 1`,
   CHEAT_TAC);;
+add_simp dec_clock_write_simp;;
 
-(* [simp] *)
 let reg_write_simp = prove
  (`word_bignumProof_state_regs
       (reg_write n NONE s) = word_bignumProof_state_regs s \\ n /\
@@ -1005,6 +1000,7 @@ let reg_write_simp = prove
          word_bignumProof_state_clock
        (reg_write n v s) = word_bignumProof_state_clock s`,
   CHEAT_TAC);;
+add_simp reg_write_simp;;
 
 let reg_write_simp_alt = prove
  (`(FAPPLY (word_bignumProof_state_regs (reg_write n NONE s)) m = (if n
@@ -1019,7 +1015,6 @@ let reg_write_simp_alt = prove
       n INSERT FDOM (word_bignumProof_state_regs s))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let array_write_simp = prove
  (`word_bignumProof_state_regs
       (array_write n w s) = word_bignumProof_state_regs s /\
@@ -1028,8 +1023,8 @@ let array_write_simp = prove
          s) /\ word_bignumProof_state_clock
        (array_write n w s) = word_bignumProof_state_clock s`,
   CHEAT_TAC);;
+add_simp array_write_simp;;
 
-(* [simp] *)
 let delete_vars_simp = prove
  (`!vs. word_bignumProof_state_clock
       (delete_vars vs s) = word_bignumProof_state_clock s /\
@@ -1042,13 +1037,14 @@ let delete_vars_simp = prove
          (if MEM n vs then F else (n IN FDOM
            (word_bignumProof_state_regs s))))`,
   CHEAT_TAC);;
+add_simp delete_vars_simp;;
 
 (* HOL4 word_bignumProofScript.sml:1618-1619: ML code, not ported *)
 
-(* [simp] *)
 let FLOOKUP_DOMSUB = prove
  (`FLOOKUP (f \\ n) m = (if m = n then NONE else FLOOKUP f m)`,
   CHEAT_TAC);;
+add_simp FLOOKUP_DOMSUB;;
 
 (* HOL4 word_bignumProofScript.sml:1627: ML code, not ported *)
 
@@ -1254,10 +1250,6 @@ let word_bignumProof_code_subset_refl = prove
 (* HOL4 word_bignumProofScript.sml:2289-2333: a theorem that HOL4
    states as the value of an ML expression: evaluate_mc_iop *)
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["shift"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

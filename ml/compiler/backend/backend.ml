@@ -41,11 +41,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/primTypes.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "backend"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "backend"
   ["bvi_to_data"; "bvl_to_bvi"; "clos_to_bvl"; "data_to_word";
    "flat_to_clos"; "jsonLang"; "lab_to_target"; "presLang";
    "primTypes"; "source_to_flat"; "source_to_source"; "stack_to_lab";
@@ -73,9 +70,9 @@ let backend_config_FIELDS = define_record "backend_config"
 let attach_bitmaps_def = define_cases
   [`attach_bitmaps names c bm (SOME (bytes,c')) =
         SOME (bytes,bm,backend_config_symbols_fupd (K (MAP
-          (\(n,p,l). (lookup_any n names (implode "NOTFOUND"),p,l))
-          (lab_to_target_config_sec_pos_len c')))
-          (backend_config_lab_conf_fupd (K c')
+            (\(n,p,l). (lookup_any n names (implode "NOTFOUND"),p,l))
+            (lab_to_target_config_sec_pos_len c')))
+            (backend_config_lab_conf_fupd (K c')
               c))`;
    `attach_bitmaps names c bm NONE = NONE`];;
 
@@ -662,7 +659,7 @@ let ffinames_to_string_list_def,ffinames_to_string_list_ind = define_wf
   `MEASURE (\x0. list_size ffiname_size x0)`
   [`ffinames_to_string_list [] = []`;
    `ffinames_to_string_list (CONS (ffi_ExtCall s:ffiname) rest) =
-  CONS s (ffinames_to_string_list rest)`;
+    CONS s (ffinames_to_string_list rest)`;
    `ffinames_to_string_list (CONS (ffi_SharedMem _28) rest) =
         ffinames_to_string_list rest`];;
 
@@ -672,10 +669,6 @@ let set_oracle_def = new_definition
   (backend_config_word_to_word_conf c)))
      c`;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["bvl_to_bvi"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

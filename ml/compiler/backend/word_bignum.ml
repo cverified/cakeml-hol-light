@@ -25,32 +25,37 @@ needs "lib/sptree.ml";;
 needs "lib/term.ml";;
 needs "semantics/ast.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_bignum"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_bignum"
   ["ast"; "wordLang"];;
 
 (* syntax of a little language *)
 
 let address_INDUCT,address_RECURSION = define_datatype
-  "address = In1 | In2 | Out";;
+  "address =
+     In1
+   | In2
+   | Out";;
 
 let mini_INDUCT,mini_RECURSION = define_datatype
-  "mini = word_bignum_Skip | word_bignum_Assign (num) ('a \
-   wordLang_exp) | word_bignum_Delete (num list) | word_bignum_Seq \
-   (mini) (mini) | word_bignum_Load (num) (num) (address) | \
-   word_bignum_Store (num) (num) | word_bignum_If (cmp) (num) ('a \
-   asm_reg_imm) (mini) (mini) | word_bignum_Swap | word_bignum_Add \
-   (num) (num) (num) ('a asm_reg_imm) ('a asm_reg_imm) | \
-   word_bignum_Sub (num) (num) (num) ('a asm_reg_imm) ('a \
-   asm_reg_imm) | word_bignum_Mul (num) (num) (num) (num) | \
-   word_bignum_Div (num) (num) (num) (num) (num) | word_bignum_Loop \
-   (bool) (num list) (mini) | word_bignum_Continue | word_bignum_Rec \
-   (num list) (num list) | \
-   // the following is only used by the semantics\n\
-   word_bignum_LoopBody (mini)";;
+  "mini =
+     word_bignum_Skip
+   | word_bignum_Assign num ('a wordLang_exp)
+   | word_bignum_Delete (num list)
+   | word_bignum_Seq mini mini
+   | word_bignum_Load num num address
+   | word_bignum_Store num num
+   | word_bignum_If cmp num ('a asm_reg_imm) mini mini
+   | word_bignum_Swap
+   | word_bignum_Add num num num ('a asm_reg_imm) ('a asm_reg_imm)
+   | word_bignum_Sub num num num ('a asm_reg_imm) ('a asm_reg_imm)
+   | word_bignum_Mul num num num num
+   | word_bignum_Div num num num num num
+   | word_bignum_Loop bool (num list) mini
+   | word_bignum_Continue
+   | word_bignum_Rec (num list) (num list)
+     // the following is only used by the semantics
+   | word_bignum_LoopBody mini";;
 
 
 (* syntax helper funs *)
@@ -527,15 +532,15 @@ let SeqTemp_def = new_definition
 let SeqTempImm_def = define_cases
   [`SeqTempImm i (Reg r) p = SeqTemp i r p`;
    `SeqTempImm i (Imm w) p = word_bignum_Seq (wordLang_Assign i
-  (wordLang_Const w)) p`];;
+    (wordLang_Const w)) p`];;
 
 let SeqTempImmNot_def = define_cases
   [`SeqTempImmNot i (Reg r) p =
       SeqTemp i r (word_bignum_Seq (word_bignum_Assign i
-        (wordLang_Op asm_Xor [wordLang_Var i; asm_Const (word_not
-        (n2w 0))])) p)`;
+          (wordLang_Op asm_Xor [wordLang_Var i; asm_Const (word_not
+          (n2w 0))])) p)`;
    `SeqTempImmNot i (Imm w) p = word_bignum_Seq (wordLang_Assign i
-  (wordLang_Const (word_not w))) p`];;
+    (wordLang_Const (word_not w))) p`];;
 
 let SeqIndex_def = new_definition
   `SeqIndex i r arr p =
@@ -562,13 +567,14 @@ let DivCode_def = new_definition
 let LoadRegs_def,LoadRegs_ind = define_rec
   [`LoadRegs [] (p:'a wordLang_prog) = (p:'a wordLang_prog)`;
    `LoadRegs (CONS n ns) (p:'a wordLang_prog) = ((word_bignum_Seq
-  (wordLang_Get (n + 2) (Temp (n2w n))) (LoadRegs ns p)):'a
-  wordLang_prog)`];;
+    (wordLang_Get (n + 2) (Temp (n2w n))) (LoadRegs ns p)):'a
+    wordLang_prog)`];;
 
 let SaveRegs_def,SaveRegs_ind = define_rec
   [`SaveRegs [] = (word_bignum_Skip:'a wordLang_prog)`;
    `SaveRegs (CONS n ns) = ((word_bignum_Seq (wordLang_Set (Temp
-  (n2w n)) (wordLang_Var (n + 2))) (SaveRegs ns)):'a wordLang_prog)`];;
+    (n2w n)) (wordLang_Var (n + 2))) (SaveRegs ns)):'a
+    wordLang_prog)`];;
 
 let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
   "match"
@@ -674,7 +680,3 @@ let generated_bignum_stubs_def = new_definition
 
 (* HOL4 word_bignumScript.sml:576-577: a theorem that HOL4 states as
    the value of an ML expression: generated_bignum_stubs_eq *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

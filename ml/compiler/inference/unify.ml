@@ -26,30 +26,32 @@ needs "lib/unifDef.ml";;
 needs "lib/walk.ml";;
 needs "lib/walkstar.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "unify"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "unify"
   ["infer_t"];;
 (* HOL4 ancestors outside the port: unifProps transfer cps *)
 
 (* HOL4 unifyScript.sml:20-21: ML code, not ported *)
 
-(* I_o_f[local,simp] *)
+(* I_o_f[local] *)
 let i_o_f = prove
  (`!m. I o_f m = m`,
   CHEAT_TAC);;
+add_simp i_o_f;;
 
 let atom_INDUCT,atom_RECURSION = define_datatype
-  "atom = TC_tag (num) | DB_tag (num) | Tapp_tag | Null_tag";;
+  "atom =
+     TC_tag type_ident
+   | DB_tag num
+   | Tapp_tag
+   | Null_tag";;
 
-let encode_infer_t_def,encode_infer_t_ind = define_mutual_rec
+let encode_infer_t_def,encode_infer_t_ind = define_rec
   [`encode_infer_t (Infer_Tvar_db n) =
       term_Const (DB_tag n)`;
    `encode_infer_t (Infer_Tapp ts tc) =
       term_Pair (term_Const Tapp_tag) (term_Pair (term_Const
-        (TC_tag tc)) (encode_infer_ts ts))`;
+          (TC_tag tc)) (encode_infer_ts ts))`;
    `encode_infer_t (Infer_Tuvar n) =
       term_Var n`;
    `encode_infer_ts [] =
@@ -57,46 +59,46 @@ let encode_infer_t_def,encode_infer_t_ind = define_mutual_rec
    `encode_infer_ts (CONS t ts) =
       term_Pair (encode_infer_t t) (encode_infer_ts ts)`];;
 
-(* [simp] *)
 let encode_infer_t_11 = prove
  (`(!it1 it2. encode_infer_t it1 = encode_infer_t it2 <=> it1 = it2) /\
    (!its1 its2. encode_infer_ts its1 = encode_infer_ts its2 <=>
      its1 = its2)`,
   CHEAT_TAC);;
+add_simp encode_infer_t_11;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let decode_infer_t_def,decode_infer_t_ind = define_mutual_guess_cheat
+let decode_infer_t_def,decode_infer_t_ind = define_guess_cheat
   [`decode_infer_t (term_Var n) =
       Infer_Tuvar n`;
    `decode_infer_t (term_Const (DB_tag n)) =
       Infer_Tvar_db n`;
    `decode_infer_t (term_Pair (term_Const Tapp_tag) (term_Pair
-  (term_Const (TC_tag tc)) s)) =
+    (term_Const (TC_tag tc)) s)) =
       Infer_Tapp (decode_infer_ts s) tc`;
    `decode_infer_t _1 = Infer_Tuvar 5`;
    `decode_infer_ts (term_Const Null_tag) =
       []`;
    `decode_infer_ts (term_Pair s1 s2) = CONS (decode_infer_t s1)
-  (decode_infer_ts s2)`;
+    (decode_infer_ts s2)`;
    `decode_infer_ts _2 = []`];;
 
-(* [simp] *)
 let decode_left_inverse = prove
  (`(!t. decode_infer_t (encode_infer_t t) = t) /\
    (!ts. decode_infer_ts (encode_infer_ts ts) = ts)`,
   CHEAT_TAC);;
+add_simp decode_left_inverse;;
 
-(* [simp] *)
 let decode_left_inverse_I = prove
  (`decode_infer_t o encode_infer_t = I`,
   CHEAT_TAC);;
+add_simp decode_left_inverse_I;;
 
-(* [simp] *)
 let encode_eq_var = prove
  (`(ast_Var n = encode_infer_t i <=> i = Infer_Tuvar n) /\
    (encode_infer_t i = ast_Var n <=> i = Infer_Tuvar n)`,
   CHEAT_TAC);;
+add_simp encode_eq_var;;
 
 (* [local] *)
 let decode_right_inverse = prove
@@ -376,9 +378,9 @@ let capply_subst_def,capply_subst_ind = define_shaped_rec
   "nested"
   [`capply_subst s (Infer_Tuvar n) = (match sptree_lookup n s with
                               NONE -> Infer_Tuvar n | SOME it ->
-                                it)`;
+                                  it)`;
    `capply_subst s (Infer_Tapp ts tc) = Infer_Tapp (MAP (capply_subst
-  s) ts) tc`;
+    s) ts) tc`;
    `capply_subst s (Infer_Tvar_db n) = Infer_Tvar_db n`];;
 
 (* HOL4 unifyScript.sml:579: a theorem that HOL4 states as the value
@@ -554,9 +556,8 @@ let kcocl_Ky = prove
 (* HOL4 unifyScript.sml:907-916: a theorem that HOL4 states as the
    value of an ML expression: kcocl_thm *)
 
-new_type_abbrev("kcockont",`: (infer_t list) list`);;
+new_type_abbrev("kcockont",`:(infer_t list) list`);;
 
-let _ = size_thms "infer_t";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let apply_kcockont_def,apply_kcockont_ind = define_wf
@@ -564,12 +565,12 @@ let apply_kcockont_def,apply_kcockont_ind = define_wf
   [`apply_kcockont s n [] b = b`;
    `apply_kcockont s n (CONS ts rest) b =
     (if b then apply_kcockont s n rest T else kcocl s ts n
-      (apply_kcockont s n rest))`];;
+        (apply_kcockont s n rest))`];;
 
-(* [simp] *)
 let apply_kcockontT = prove
  (`apply_kcockont s n ts T = T`,
   CHEAT_TAC);;
+add_simp apply_kcockontT;;
 
 let dfkcoc_def = new_definition
   `dfkcoc s t n k = kcoc s t n (apply_kcockont s n k)`;;
@@ -647,10 +648,10 @@ let WF_kcocwlR = prove
  (`cwfs s ==> WF (kcocwlR s n)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let FINITE_BAG_FOLDR_INSERT = prove
  (`FINITE_BAG (ITLIST BAG_INSERT xs b) = FINITE_BAG b`,
   CHEAT_TAC);;
+add_simp FINITE_BAG_FOLDR_INSERT;;
 
 let FOLDR_BAG_INSERT_UNION = prove
  (`ITLIST BAG_INSERT xs b = (BAG_UNION) b ((FOLDR BAG_INSERT
@@ -674,22 +675,22 @@ let subterm_def = new_definition
   `subterm = TC (\a b. (?t. b = term_Pair a t) \/ (?t. b = term_Pair
   t a))`;;
 
-(* [simp] *)
 let subterm_thm = prove
  (`(subterm t (term_Pair u v) <=> t = u \/ t = v \/ subterm t u \/
   subterm t v) /\
    (subterm t (ast_Var vnm) <=> F) /\
    (subterm t (term_Const c) <=> F)`,
   CHEAT_TAC);;
+add_simp subterm_thm;;
 
 let subterm_pair_count = prove
  (`!t u. subterm t u ==> pair_count t < pair_count u`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let subterm_REFL = prove
  (`~(subterm t t)`,
   CHEAT_TAC);;
+add_simp subterm_REFL;;
 
 let subterm_TRANS = prove
  (`subterm t u /\ subterm u v ==> subterm t v`,
@@ -747,7 +748,8 @@ let disj2cond = prove
 let cwalkstarl_def,cwalkstarl_ind = define_rec
   [`cwalkstarl s [] = []`;
    `cwalkstarl s (CONS it its) = CONS (cwalkstar s it) (cwalkstarl
-  s its)`];;
+    s its)`];;
+add_simp cwalkstarl_def;;
 
 let MAP_cwalkstar = prove
  (`MAP (cwalkstar s) l = cwalkstarl s l`,
@@ -772,8 +774,11 @@ let kcwalkstarl_def = new_definition
    value of an ML expression: kcwalkstarl_thm *)
 
 let kclkont_INDUCT,kclkont_RECURSION = define_datatype
-  "kclkont = DBk (num) | APPk (infer_t list) (num) | UVk (num) | \
-   CONSk (infer_t list) (num)";;
+  "kclkont =
+     DBk num
+   | APPk (infer_t list) num
+   | UVk num
+   | CONSk (infer_t list) num";;
 
 let _ = size_thms "kclkont";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -782,14 +787,14 @@ let apply_kclkont_def,apply_kclkont_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size kclkont_size x1)`
   [`apply_kclkont s [] its = its`;
    `apply_kclkont s (CONS (DBk n) k) its = apply_kclkont s k (CONS
-  (Infer_Tvar_db n) its)`;
+    (Infer_Tvar_db n) its)`;
    `apply_kclkont s (CONS (APPk aits n) k) its =
       apply_kclkont s k (CONS (Infer_Tapp aits n) its)`;
    `apply_kclkont s (CONS (UVk n) k) its = apply_kclkont s k (CONS
-  (Infer_Tuvar n) its)`;
+    (Infer_Tuvar n) its)`;
    `apply_kclkont s (CONS (CONSk cits n) k) its =
     kcwalkstarl s cits (\xk'. apply_kclkont s k (CONS
-      (Infer_Tapp its n) xk'))`];;
+        (Infer_Tapp its n) xk'))`];;
 
 (* HOL4 unifyScript.sml: the case constant that its Datatype makes
    for the continuation of the walk *)
@@ -821,10 +826,10 @@ let kcwalkstarwl_def = define_general
 
 (* HOL4 unifyScript.sml:1326: a theorem that HOL4 states as the value
    of an ML expression: dfkcwalkstarl_removed *)
-(* [simp] *)
 let apply_kclkont_ID = prove
  (`apply_kclkont s [] = I`,
   CHEAT_TAC);;
+add_simp apply_kclkont_ID;;
 
 let cwalkstar_to_dfkcwalkstarl = prove
  (`cwalkstar s t = HD (dfkcwalkstarl s [t] [])`,
@@ -832,7 +837,6 @@ let cwalkstar_to_dfkcwalkstarl = prove
 
 (* kcwalkstarwl_thm is the target for tailcallification *)
 
-let _ = size_thms "kclkont";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let star_kwork_def,star_kwork_ind = define_wf
@@ -843,27 +847,29 @@ let star_kwork_def,star_kwork_ind = define_wf
       | CONS (CONSk its n) ks -> (BAG_UNION) ((FOLDR BAG_INSERT
         EMPTY_BAG) its) (star_kwork ks)
       | (CONS _4 ks) -> star_kwork ks`];;
+add_simp star_kwork_def;;
 
 let star_workbag_def = new_definition
   `star_workbag v its k =
    (if v then star_kwork k else (BAG_UNION) ((FOLDR BAG_INSERT
      EMPTY_BAG) its) (star_kwork k))`;;
 
-(* [simp] *)
 let FINITE_star_kwork = prove
  (`FINITE_BAG (star_kwork ks)`,
   CHEAT_TAC);;
+add_simp FINITE_star_kwork;;
 
-(* [simp] *)
 let FINITE_star_workbag = prove
  (`FINITE_BAG (star_workbag v its k)`,
   CHEAT_TAC);;
+add_simp FINITE_star_workbag;;
 
 let isCONSk_def = new_definition
   `isCONSk x1 =
       match x1 with
         CONSk _5 _6 -> T
       | _7 -> F`;;
+add_simp isCONSk_def;;
 
 let kcwalkstarwlR_def = new_definition
   `kcwalkstarwlR s =
@@ -951,8 +957,7 @@ let kcunifyl_def = new_definition
 (* HOL4 unifyScript.sml:1527-1541: a theorem that HOL4 states as the
    value of an ML expression: kcunifyl_thm *)
 
-new_type_abbrev("kcunifkont",`: (infer_t list#infer_t list) list`);;
-let _ = size_thms "infer_t";;
+new_type_abbrev("kcunifkont",`:(infer_t list#infer_t list) list`);;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let apply_cunifk_def,apply_cunifk_ind = define_wf
@@ -961,12 +966,12 @@ let apply_cunifk_def,apply_cunifk_ind = define_wf
   [`apply_cunifk [] x = x`;
    `apply_cunifk (CONS (ts,us) k) NONE = apply_cunifk k NONE`;
    `apply_cunifk (CONS (ts,us) k) (SOME m) = kcunifyl m ts us
-  (apply_cunifk k)`];;
+    (apply_cunifk k)`];;
 
-(* [simp] *)
 let apply_cunif_NONE = prove
  (`apply_cunifk k NONE = NONE`,
   CHEAT_TAC);;
+add_simp apply_cunif_NONE;;
 
 let dfkcunifyl_def = new_definition
   `dfkcunifyl s ts us k = kcunifyl s ts us (apply_cunifk k)`;;
@@ -1005,35 +1010,34 @@ let kcunifywl_tcallish = prove
        TAILCALL cunify_code (\(s,k). kcunifywl s k) x`,
   CHEAT_TAC);;
 
-let _ = size_thms "infer_t";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let isvars_def,isvars_ind = define_wf
   `MEASURE (\x0. infer_t_size1 x0)`
   [`isvars [] = {}`;
    `isvars (CONS t ts) = vars (encode_infer_t t) UNION isvars ts`];;
+add_simp isvars_def;;
 
-(* [simp] *)
 let FINITE_isvars = prove
  (`FINITE (isvars ts)`,
   CHEAT_TAC);;
+add_simp FINITE_isvars;;
 
 
-let _ = size_thms "infer_t";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let cplist_vars_def,cplist_vars_ind = define_wf
   `MEASURE (\x0. list_size (pair_size infer_t_size1 infer_t_size1) x0)`
   [`cplist_vars [] = {}`;
    `cplist_vars (CONS (ts,us) rest) = isvars ts UNION isvars us
-  UNION cplist_vars rest`];;
+    UNION cplist_vars rest`];;
+add_simp cplist_vars_def;;
 
-(* [simp] *)
 let FINITE_cplist_vars = prove
  (`FINITE (cplist_vars wl)`,
   CHEAT_TAC);;
+add_simp FINITE_cplist_vars;;
 
-let _ = size_thms "infer_t";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let PFLAT_def,PFLAT_ind = define_wf
@@ -1044,11 +1048,12 @@ let PFLAT_def,PFLAT_ind = define_wf
       BAG_INSERT (encode_infer_t j) (PFLAT (CONS ([],js) ps))`;
    `PFLAT (CONS (CONS i is,js) ps) =
       BAG_INSERT (encode_infer_t i) (PFLAT (CONS (is,js) ps))`];;
+add_simp PFLAT_def;;
 
-(* [simp] *)
 let FINITE_BAG_PFLAT = prove
  (`!ps. FINITE_BAG (PFLAT ps)`,
   CHEAT_TAC);;
+add_simp FINITE_BAG_PFLAT;;
 
 let kcunifywlR_def = new_definition
   `kcunifywlR ((s:infer_t spt),(wl:(infer_t list#infer_t list) list))
@@ -1068,11 +1073,11 @@ let WF_kcunifywlR = prove
  (`WF kcunifywlR`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let PFLAT_CONS2 = prove
  (`PFLAT (CONS (l1,CONS h2 t2) rest) =
    BAG_INSERT (encode_infer_t h2) (PFLAT (CONS (l1,t2) rest))`,
   CHEAT_TAC);;
+add_simp PFLAT_CONS2;;
 
 let mlt_BAG_INSERT2 = prove
  (`FINITE_BAG b ==>
@@ -1115,12 +1120,12 @@ let vars_encode_infer_ts = prove
  (`vars (encode_infer_ts is) = isvars is`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let PFLAT_NIL1 = prove
  (`PFLAT (CONS ([],l2) rest) =
    (BAG_UNION) ((FOLDR BAG_INSERT EMPTY_BAG) (MAP encode_infer_t
      l2)) (PFLAT rest)`,
   CHEAT_TAC);;
+add_simp PFLAT_NIL1;;
 
 let PFLAT_eqn = prove
  (`!l1 l2.
@@ -1255,7 +1260,6 @@ let t_unify_def = new_definition
        (unify (encode_infer_t o_f s) (encode_infer_t t1)
          (encode_infer_t t2))`;;
 
-let _ = size_thms "infer_t";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ts_unify_def,ts_unify_ind = define_wf
@@ -1694,7 +1698,3 @@ let t_compat_eqs_t_unify = prove
       t_compat s sx /\ (t_walkstar sx t1 = t_walkstar sx t2) ==>
       (?si. (t_unify s t1 t2 = SOME si) /\ t_compat si sx)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

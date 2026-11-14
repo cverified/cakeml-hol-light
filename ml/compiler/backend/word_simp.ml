@@ -16,11 +16,8 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_simp"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_simp"
   ["asm"; "wordLang"];;
 
 let _ = do_list hide_constant ["pmatch"];;
@@ -181,7 +178,6 @@ let strip_const_def,strip_const_ind = define_wf
           -> NONE)
         | _8 -> NONE`];;
 
-let _ = size_thms "wordLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let const_fp_exp_def,const_fp_exp_ind = define_wf
@@ -214,7 +210,7 @@ let const_fp_move_cs_def,const_fp_move_cs_ind = define_rec
         (let v = FST m in
         let nncs =
           (match sptree_lookup (SND m) ocs with SOME c ->
-            sptree_insert v c ncs | _15 -> sptree_delete v ncs) in
+              sptree_insert v c ncs | _15 -> sptree_delete v ncs) in
             const_fp_move_cs ms ocs nncs)`];;
 
 let const_fp_inst_cs_def = new_definition
@@ -255,6 +251,7 @@ let is_gc_const_def = new_definition
 
 let all_names_def = new_definition
   `all_names (n,m) = sptree_union n m`;;
+add_simp all_names_def;;
 
 (* HOL4 word_simpScript.sml:262: the overload delete_all, which the
    port expands *)
@@ -264,10 +261,9 @@ let drop_consts_def,drop_consts_ind = define_rec
   [`drop_consts cs [] = wordLang_Skip`;
    `drop_consts cs (CONS n ns) =
       (match sptree_lookup n cs with NONE -> drop_consts cs ns
-        | SOME w -> SmartSeq (drop_consts cs ns) (wordLang_Assign n
-        (wordLang_Const w)))`];;
+          | SOME w -> SmartSeq (drop_consts cs ns) (wordLang_Assign
+          n (wordLang_Const w)))`];;
 
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let const_fp_loop_def,const_fp_loop_ind = define_wf
@@ -443,7 +439,6 @@ let try_if_hoist1_def = new_definition
      try_if_hoist2 rewrite_duplicate_if_max_reassoc p1
        wordLang_Skip dummy' p2))`;;
 
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let simp_duplicate_if_def,simp_duplicate_if_ind = define_wf
@@ -471,7 +466,6 @@ let simp_duplicate_if_def,simp_duplicate_if_ind = define_wf
 the flag is T when its known to halt and F otherwise
 
 *)
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let push_out_if_aux_def,push_out_if_aux_ind = define_wf
@@ -509,10 +503,6 @@ let word_simp_compile_exp_def = new_definition
      let e = push_out_if e in
        e)`;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -19,11 +19,8 @@ needs "lib/ternaryComparisons.ml";;
 needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "mlstring"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "mlstring"
   ["misc"; "mllist"];;
 
 let _ = do_list hide_constant ["Equal"; "Greater"; "Less"];;
@@ -34,7 +31,8 @@ let _ = do_list hide_constant ["Equal"; "Greater"; "Less"];;
    moved into HOL, either as its own theory, or as an addendum to stringTheory *)
 
 let mlstring_INDUCT,mlstring_RECURSION = define_datatype
-  "mlstring = implode (string)";;
+  "mlstring =
+     implode string";;
 (* HOL4 mlstringScript.sml:22: the ML values that the definitions
    below antiquote *)
 
@@ -45,9 +43,11 @@ let mlstring_INDUCT,mlstring_RECURSION = define_datatype
 
 let strlen_def = define_general
   [`strlen (implode s) = LENGTH s`];;
+add_simp strlen_def;;
 
 let strsub_def = define_general
   [`strsub (implode s) n = EL n s`];;
+add_simp strsub_def;;
 
 (* the test here is because underspecification is annoying (and SEG is underspecified) *)
 (* the underlying primitive (CopyStrStr) raises an exception if the test is false *)
@@ -60,10 +60,10 @@ let concat_def = new_definition
   `mlstring_concat l = implode (FLAT (MAP (\s. match s with implode x
   -> x) l))`;;
 
-(* [simp] *)
 let concat_nil = prove
  (`mlstring_concat [] = (implode "")`,
   (REWRITE_TAC[concat_def; MAP; FLAT]));;
+add_simp concat_nil;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -71,7 +71,8 @@ let explode_aux_def,explode_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   [`explode_aux s n 0 = []`;
    `explode_aux s n (SUC len) = CONS (strsub s n) (explode_aux s (n
-  + 1) len)`];;
+    + 1) len)`];;
+add_simp explode_aux_def;;
 
 let explode_aux_thm = prove
  (`!max' n ls.
@@ -82,26 +83,26 @@ let explode_aux_thm = prove
 let explode_def = new_definition
   `explode s = explode_aux s 0 (strlen s)`;;
 
-(* [simp] *)
 let explode_thm = prove
  (`explode (implode ls) = ls`,
   (REWRITE_TAC[explode_def; strlen_def] THEN
    SIMP_TAC[explode_aux_thm; ADD_CLAUSES; DROP_0]));;
+add_simp explode_thm;;
 
-(* [simp] *)
 let explode_implode = prove
  (`!x. explode (implode x) = x`,
   (REWRITE_TAC[explode_thm]));;
+add_simp explode_implode;;
 
-(* [simp] *)
 let implode_explode = prove
  (`!x. implode (explode x) = x`,
   (MATCH_MP_TAC mlstring_INDUCT THEN REWRITE_TAC[explode_thm]));;
+add_simp implode_explode;;
 
-(* [simp] *)
 let explode_11 = prove
  (`!s1 s2. (explode s1 = explode s2) <=> (s1 = s2)`,
   (MESON_TAC[implode_explode]));;
+add_simp explode_11;;
 
 let implode_BIJ = prove
  (`BIJ implode UNIV UNIV`,
@@ -113,20 +114,20 @@ let explode_BIJ = prove
   (REWRITE_TAC[BIJ; INJ; SURJ; IN_UNIV] THEN
    MESON_TAC[explode_implode; implode_explode]));;
 
-(* [simp] *)
 let LENGTH_explode = prove
  (`LENGTH (explode s) = strlen s`,
   (MP_TAC(SPEC `s:mlstring` (cases "mlstring")) THEN STRIP_TAC THEN
    ASM_REWRITE_TAC[explode_thm; strlen_def]));;
+add_simp LENGTH_explode;;
 
 let concat_thm = prove
  (`mlstring_concat l = implode (FLAT (MAP explode l))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let strlen_implode = prove
  (`strlen (implode s) = LENGTH s`,
   (REWRITE_TAC[strlen_def]));;
+add_simp strlen_implode;;
 
 let strlen_substring = prove
  (`strlen (substring s i j) = (if i + j <= strlen s then j else if i
@@ -147,10 +148,10 @@ let strsub_substring_0_thm = prove
  (`!m n l. m < n ==> strsub (substring l 0 n) m = strsub l m`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let substring_full = prove
  (`substring s 0 (strlen s) = s`,
   CHEAT_TAC);;
+add_simp substring_full;;
 
 let substring_too_long = prove
  (`strlen s <= i ==> substring s i j = (implode "")`,
@@ -170,41 +171,41 @@ let strcat_thm = prove
  (`strcat s1 s2 = implode (APPEND (explode s1) (explode s2))`,
   (REWRITE_TAC[strcat_def; concat_thm; MAP; FLAT; APPEND_NIL]));;
 
-(* [simp] *)
 let strcat_assoc = prove
  (`!s1 s2 s3. strcat s1 (strcat s2 s3) = strcat (strcat s1 s2) s3`,
   (REWRITE_TAC[strcat_thm; explode_thm; APPEND_ASSOC]));;
+add_simp strcat_assoc;;
 
 let strcat_o = prove
  (`strcat x o strcat y = strcat (strcat x y)`,
   (REWRITE_TAC[FUN_EQ_THM; o_THM; strcat_assoc]));;
 
-(* [simp] *)
 let strcat_nil = prove
  (`(strcat (implode "") s = s) /\
    (strcat s (implode "") = s)`,
   (REWRITE_TAC[strcat_thm; explode_thm; APPEND; APPEND_NIL;
     implode_explode]));;
+add_simp strcat_nil;;
 
-(* [simp] *)
 let mlstring_common_prefix = prove
  (`!s t1 t2. strcat s t1 = strcat s t2 <=> t1 = t2`,
   (REWRITE_TAC[strcat_thm; injectivity "mlstring"; APPEND_LCANCEL;
     explode_11]));;
+add_simp mlstring_common_prefix;;
 
-(* [simp] *)
 let mlstring_common_char_prefix = prove
  (`!c1 s1 s2 t2 t2. (strcat (implode (CONS c1 s1)) t1) = (strcat
   (implode (CONS c2 s2)) t2) <=>
      c1 = c2 /\ strcat (implode s1) t1 = strcat (implode s2) t2`,
   (REWRITE_TAC[strcat_thm; injectivity "mlstring"; explode_thm;
     APPEND; CONS_11]));;
+add_simp mlstring_common_char_prefix;;
 
-(* [simp] *)
 let mlstring_common_suffix = prove
  (`!s t1 t2. strcat t1 s = strcat t2 s <=> t1 = t2`,
   (REWRITE_TAC[strcat_thm; injectivity "mlstring"; APPEND_RCANCEL;
     explode_11]));;
+add_simp mlstring_common_suffix;;
 
 let concat_append = prove
  (`mlstring_concat (APPEND xs ys) = strcat (mlstring_concat xs)
@@ -216,16 +217,16 @@ let implode_STRCAT = prove
     implode (APPEND l1 l2) = strcat (implode l1) (implode l2)`,
   (REWRITE_TAC[strcat_thm; explode_thm]));;
 
-(* [simp] *)
 let explode_strcat = prove
  (`explode (strcat s1 s2) = APPEND (explode s1) (explode s2)`,
   (REWRITE_TAC[strcat_thm; explode_thm]));;
+add_simp explode_strcat;;
 
-(* [simp] *)
 let strlen_strcat = prove
  (`strlen (strcat s1 s2) = strlen s1 + strlen s2`,
   (REWRITE_TAC[strcat_thm; strlen_def; LENGTH_APPEND;
     LENGTH_explode]));;
+add_simp strlen_strcat;;
 
 let concatWith_def = new_definition
   `concatWith s l = mlstring_concat (intersperse s l)`;;
@@ -236,15 +237,15 @@ let chr_to_str_def = new_definition
 (* HOL4 mlstringScript.sml:270: the overload toString, which the port
    expands *)
 
-(* [simp] *)
 let explode_toString = prove
  (`explode (integer_word_toString c) = [c]`,
   CHEAT_TAC);;
+add_simp explode_toString;;
 
-(* [simp] *)
 let strlen_toString = prove
  (`strlen (integer_word_toString c) = 1`,
   CHEAT_TAC);;
+add_simp strlen_toString;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -252,7 +253,7 @@ let translate_aux_def,translate_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`translate_aux f s n 0 = []`;
    `translate_aux f s n (SUC len) = CONS (f (strsub s n))
-  (translate_aux f s (n + 1) len)`];;
+    (translate_aux f s (n + 1) len)`];;
 
 let translate_def = new_definition
   `translate f s = implode (translate_aux f s 0 (strlen s))`;;
@@ -300,11 +301,11 @@ let tokens_aux_def,tokens_aux_ind = define_wf
    `tokens_aux f s (CONS h t) n 0 = [implode (REVERSE (CONS h t))]`;
    `tokens_aux f s [] n (SUC len) =
         (if f (strsub s n) then tokens_aux f s [] (n + 1) len
-          else tokens_aux f s [strsub s n] (n + 1) len)`;
+            else tokens_aux f s [strsub s n] (n + 1) len)`;
    `tokens_aux f s (CONS h t) n (SUC len) =
         (if f (strsub s n) then CONS (implode (REVERSE (CONS h
-          t))) (tokens_aux f s [] (n + 1) len) else tokens_aux f s
-          (CONS (strsub s n) (CONS h t)) (n + 1) len)`];;
+            t))) (tokens_aux f s [] (n + 1) len) else tokens_aux f
+            s (CONS (strsub s n) (CONS h t)) (n + 1) len)`];;
 
 (* HOL4 mlstringScript.sml:384: ML code, not ported *)
 
@@ -378,10 +379,10 @@ let substring_1_strsub = prove
    substring s i 1 = integer_word_toString (strsub s i)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let substring_0 = prove
  (`substring s i 0 = (implode "")`,
   CHEAT_TAC);;
+add_simp substring_0;;
 
 let substring_add = prove
  (`i + x + y <= strlen s ==>
@@ -413,8 +414,8 @@ let fields_aux_def,fields_aux_ind = define_wf
   [`fields_aux f s ss n 0 = [implode (REVERSE ss)]`;
    `fields_aux f s ss n (SUC len) =
         (if f (strsub s n) then CONS (implode (REVERSE ss))
-          (fields_aux f s [] (n + 1) len) else fields_aux f s (CONS
-          (strsub s n) ss) (n + 1) len)`];;
+            (fields_aux f s [] (n + 1) len) else fields_aux f s
+            (CONS (strsub s n) ss) (n + 1) len)`];;
 
 
 let fields_def = new_definition
@@ -515,7 +516,7 @@ let isStringThere_aux_def,isStringThere_aux_ind = define_wf
   [`isStringThere_aux s1 s2 s1i s2i 0 = T`;
    `isStringThere_aux s1 s2 s1i s2i (SUC len) =
         (if strsub s1 s1i = strsub s2 s2i then
-          isStringThere_aux s1 s2 (s1i + 1) (s2i + 1) len else F)`];;
+            isStringThere_aux s1 s2 (s1i + 1) (s2i + 1) len else F)`];;
 
 
 (* HOL4 mlstringScript.sml:771-781: code that the source has in a
@@ -560,7 +561,7 @@ let isSubstring_aux_def,isSubstring_aux_ind = define_wf
   [`isSubstring_aux s1 s2 lens1 n 0 = F`;
    `isSubstring_aux s1 s2 lens1 n (SUC len) =
         (if (isStringThere_aux s1 s2 0 n lens1) then T else
-          isSubstring_aux s1 s2 lens1 (n + 1) len)`];;
+            isSubstring_aux s1 s2 lens1 (n + 1) len)`];;
 
 let isSubstring_def = new_definition
   `isSubstring s1 s2 =
@@ -925,8 +926,8 @@ let collate_aux_def,collate_aux_ind = define_wf
   [`mlstring_collate_aux f (s1:mlstring) s2 ord n 0 = ord`;
    `mlstring_collate_aux f (s1:mlstring) s2 ord n (SUC len) =
         (if f (strsub s1 n) (strsub s2 n) = EQUAL then
-          mlstring_collate_aux f s1 s2 ord (n + 1) len else f
-          (strsub s1 n) (strsub s2 n))`];;
+            mlstring_collate_aux f s1 s2 ord (n + 1) len else f
+            (strsub s1 n) (strsub s2 n))`];;
 
 let mlstring_collate_def = new_definition
   `mlstring_collate f s1 s2 =
@@ -992,21 +993,23 @@ let escape_char_def = new_definition
   `escape_char c = implode (APPEND (APPEND "#\"" (char_escaped c))
   "\"")`;;
 
-(* [simp] *)
 let ALL_DISTINCT_MAP_implode = prove
  (`ALL_DISTINCT ls ==> ALL_DISTINCT (MAP implode ls)`,
   CHEAT_TAC);;
+add_simp ALL_DISTINCT_MAP_implode;;
 
-(* [simp] *)
 let ALL_DISTINCT_MAP_explode = prove
  (`!ls. ALL_DISTINCT (MAP explode ls) <=> ALL_DISTINCT ls`,
   CHEAT_TAC);;
+add_simp ALL_DISTINCT_MAP_explode;;
 
 (* optimising mlstring app_list *)
 
 let app_list_ann_INDUCT,app_list_ann_RECURSION = define_datatype
-  "app_list_ann = BigList ('a list) | BigAppend (app_list_ann) \
-   (app_list_ann) | Small ('a app_list)";;
+  "app_list_ann =
+     BigList ('a list)
+   | BigAppend app_list_ann app_list_ann
+   | Small ('a app_list)";;
 
 let sum_sizes_def,sum_sizes_ind = define_rec
   [`sum_sizes [] k = k`;
@@ -1016,7 +1019,6 @@ let sum_sizes_def,sum_sizes_ind = define_rec
    port expands *)
 
 let _ = size_thms "app_list";;
-let _ = size_thms "mlstring";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let make_app_list_ann_def,make_app_list_ann_ind = define_wf
@@ -1057,16 +1059,18 @@ let str_app_list_opt_thm = prove
   (append l)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let concat_sing = prove
  (`mlstring_concat [x] = x`,
   (REWRITE_TAC[concat_cons; concat_nil; strcat_nil]));;
+add_simp concat_sing;;
 
 let char_to_word8_def = new_definition
   `char_to_word8 (c:char) = (n2w (ORD c):word8)`;;
+add_simp char_to_word8_def;;
 
 let word8_to_char_def = new_definition
   `word8_to_char (w:word8) = (CHR (w2n w):char)`;;
+add_simp word8_to_char_def;;
 
 (* The translator turns each `empty_ffi s` into a call to the FFI with
    an empty name and passing `s` as the argument. The empty FFI is
@@ -1074,12 +1078,8 @@ let word8_to_char_def = new_definition
 let empty_ffi_def = new_definition
   `empty_ffi (s:mlstring) = one`;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["Equal";
    "Greater";
    "Less"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -25,11 +25,8 @@ needs "lib/ternaryComparisons.ml";;
 needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_cseProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_cseProof"
   ["reg_alloc"; "wordConvs"; "wordLang"; "wordProps"; "wordSem";
    "word_cse"; "word_simp"];;
 
@@ -140,58 +137,58 @@ let data_inv_def = new_definition
   `data_inv (data:knowledge) (s:('a,'c,'ffi)wordSem_state) <=>
      wf_data (:'a) data /\ sem_inv data s`;;
 
-(* [simp] *)
 let canonicalRegs_correct = prove
  (`!data r s. data_inv data s ==> wordSem_get_var (canonicalRegs data
   r) s = wordSem_get_var r s`,
   CHEAT_TAC);;
+add_simp canonicalRegs_correct;;
 
-(* [simp] *)
 let canonicalRegs'_correct = prove
  (`!a data r s. data_inv data s ==> wordSem_get_var (canonicalRegs' a
   data r) s = wordSem_get_var r s`,
   CHEAT_TAC);;
+add_simp canonicalRegs'_correct;;
 
-(* [simp] *)
 let canonicalRegs_correct_bis = prove
  (`!data r s. data_inv data s ==> balanced_map_lookup (canonicalRegs
   data r) (wordSem_state_locals s) = balanced_map_lookup r
   (wordSem_state_locals s)`,
   CHEAT_TAC);;
+add_simp canonicalRegs_correct_bis;;
 
-(* [simp] *)
 let canonicalArith_correct = prove
  (`!data s a. data_inv data s ==> wordSem_inst (asm_Arith
   (canonicalArith data a)) s = wordSem_inst (asm_Arith a) s`,
   CHEAT_TAC);;
+add_simp canonicalArith_correct;;
 
-(* [simp] *)
 let wordToNum_unique = prove
  (`!c1 c2. wordToNum c1 = wordToNum c2 <=> c1 = c2`,
   CHEAT_TAC);;
+add_simp wordToNum_unique;;
 
-(* [simp] *)
 let arithOpToNum_eq = prove
  (`!op1 op2. arithOpToNum op1 = arithOpToNum op2 <=> op1 = op2`,
   CHEAT_TAC);;
+add_simp arithOpToNum_eq;;
 
-(* [simp] *)
 let memOpToNum_eq = prove
  (`!op1 op2. memOpToNum op1 = memOpToNum op2 <=> op1 = op2`,
   CHEAT_TAC);;
+add_simp memOpToNum_eq;;
 
-(* [simp] *)
 let firstRegOfArith_canonicalArith = prove
  (`!data a. firstRegOfArith (canonicalArith data a) = firstRegOfArith
   a`,
   CHEAT_TAC);;
+add_simp firstRegOfArith_canonicalArith;;
 
 (* Some usefull proofs to automize *)
 
-(* [simp] *)
 let data_inv_locals = prove
  (`!s. wordSem_state_locals_fupd (K (wordSem_state_locals s)) s = s`,
   CHEAT_TAC);;
+add_simp data_inv_locals;;
 
 let insert_eq = prove
  (`!(n1:num) n2 v1 v2 l. balanced_map_insert n1 v1 l =
@@ -333,7 +330,6 @@ let data_inv_unset_var = prove
      data_inv data (wordSem_unset_var n s) = data_inv data s`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let not_seen_data_inv_alist_insert = prove
  (`!data s l r v.
      sptree_lookup r (knowledge_to_canonical data) = NONE ==>
@@ -341,6 +337,7 @@ let not_seen_data_inv_alist_insert = prove
      data_inv data (wordSem_state_locals_fupd (K
        (balanced_map_insert r v l)) s)`,
   CHEAT_TAC);;
+add_simp not_seen_data_inv_alist_insert;;
 
 let listCmpEq_correct = prove
  (`!L1 L2. listCmp L1 L2 = asm_Equal <=> L1 = L2`,
@@ -355,30 +352,30 @@ let transit_listCmp = prove
   listCmp x z = asm_Less`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let TotOrd_listCmp = prove
  (`TotOrd listCmp`,
   CHEAT_TAC);;
+add_simp TotOrd_listCmp;;
 
-(* [simp] *)
 let good_cmp_listCmp = prove
  (`good_cmp listCmp`,
   CHEAT_TAC);;
+add_simp good_cmp_listCmp;;
 
-(* [simp] *)
 let lookup_listCmp_empty = prove
  (`balanced_map_lookup listCmp k balanced_map_empty = NONE`,
   CHEAT_TAC);;
+add_simp lookup_listCmp_empty;;
 
-(* [simp] *)
 let data_inv_empty = prove
  (`!s. data_inv empty_data s`,
   CHEAT_TAC);;
+add_simp data_inv_empty;;
 
-(* [simp] *)
 let invariant_listCmp_empty = prove
  (`balanced_map_invariant listCmp balanced_map_empty`,
   CHEAT_TAC);;
+add_simp invariant_listCmp_empty;;
 
 (* The loads-wipe transport: a pure memory write preserves the whole
    invariant once the load facts are wiped — every other clause reads only
@@ -505,7 +502,6 @@ let lookup_insert_listCmp = prove
      (if k = i then SOME v else balanced_map_lookup listCmp k m)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let register_read_simps = prove
  (`knowledge_instrs_mem
      (register_read data r) = knowledge_instrs_mem data /\
@@ -516,8 +512,8 @@ let register_read_simps = prove
        knowledge_loads_mem
      (register_read data r) = knowledge_loads_mem data`,
   CHEAT_TAC);;
+add_simp register_read_simps;;
 
-(* [simp] *)
 let register_reads_simps = prove
  (`!rs data. knowledge_instrs_mem
      (register_reads data rs) = knowledge_instrs_mem data /\
@@ -528,6 +524,7 @@ let register_reads_simps = prove
        knowledge_loads_mem
      (register_reads data rs) = knowledge_loads_mem data`,
   CHEAT_TAC);;
+add_simp register_reads_simps;;
 
 let lookup_register_read = prove
  (`sptree_lookup x (knowledge_to_canonical (register_read data r)) =
@@ -633,16 +630,16 @@ let data_inv_reinsert_canonical = prove
                    data))) data) s`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let empty_data_loads_wipe = prove
  (`knowledge_loads_mem_fupd (K balanced_map_empty)
      empty_data = empty_data`,
   CHEAT_TAC);;
+add_simp empty_data_loads_wipe;;
 
-(* [simp] *)
 let lookup_empty_data = prove
  (`sptree_lookup r (knowledge_to_canonical empty_data) = NONE`,
   CHEAT_TAC);;
+add_simp lookup_empty_data;;
 
 let data_inv_register_read = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) r.
@@ -678,11 +675,11 @@ let data_inv_invalidate_regs = prove
   CHEAT_TAC);;
 
 (* The invariant never reads the fp registers. *)
-(* [simp] *)
 let data_inv_set_fp_var = prove
  (`!data v x (s:('a,'c,'ffi)wordSem_state).
      data_inv data (wordSem_set_fp_var v x s) = data_inv data s`,
   CHEAT_TAC);;
+add_simp data_inv_set_fp_var;;
 
 (* [local] *)
 let with_locals_insert = prove
@@ -716,10 +713,10 @@ let evaluate_Move1 = prove
        (NONE,wordSem_set_var r w s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let shiftToNum_eq = prove
  (`!s1 s2. shiftToNum s1 = shiftToNum s2 <=> s1 = s2`,
   CHEAT_TAC);;
+add_simp shiftToNum_eq;;
 
 (* The instruction-map key of a can_mem_arith instruction determines its
    operation and reads (but not its destination), hence also the value it
@@ -1127,10 +1124,11 @@ let canonicalMoveRegs_lemma = prove
    case's proof.
    ------------------------------------------------------------------------ *)
 
-(* [local,simp] *)
+(* [local] *)
 let if_eq_rw = prove
  (`(if x = y then y else x) = x`,
   CHEAT_TAC);;
+add_simp if_eq_rw;;
 
 (* The stored evaluation equations are insensitive to the clock and termdep
    fields — clones of the memory transports for the Tick/MustTerminate
@@ -1179,10 +1177,10 @@ let data_inv_clock = prove
    their wf_data content, and culminate in word_cse_wf_data.
    ------------------------------------------------------------------------ *)
 
-(* [simp] *)
 let wf_data_empty = prove
  (`wf_data (:'a) empty_data`,
   CHEAT_TAC);;
+add_simp wf_data_empty;;
 
 (* Wiping the load facts only removes obligations. *)
 let wf_data_loads_wipe = prove
@@ -1635,10 +1633,6 @@ let full_inst_ok_less_word_common_subexp_elim = prove
    full_inst_ok_less ac (word_common_subexp_elim p)`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["Greater"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

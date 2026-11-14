@@ -17,11 +17,8 @@ needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "typeSysProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "typeSysProps"
   ["ast"; "namespace"; "namespaceProps"; "semanticPrimitivesProps";
    "typeSoundInvariants"; "typeSystem"];;
 
@@ -35,42 +32,42 @@ let _ = do_list hide_constant ["id"];;
 
 (* ----------- Basic stuff ----------- *)
 
-(* [simp] *)
 let unchanged_tenv = prove
  (`!(tenv:type_env).
    mk_type_env (type_env_v tenv) (type_env_c tenv) (type_env_t
      tenv) = tenv`,
   CHEAT_TAC);;
+add_simp unchanged_tenv;;
 
 (* HOL4 typeSysPropsScript.sml:48-78: code that the source has in a
    comment *)
 
-(* [simp] *)
 let extend_dec_tenv_assoc = prove
  (`!tenv1 tenv2 tenv3.
     extend_dec_tenv tenv1 (extend_dec_tenv tenv2 tenv3) =
     extend_dec_tenv (extend_dec_tenv tenv1 tenv2) tenv3`,
   CHEAT_TAC);;
+add_simp extend_dec_tenv_assoc;;
 
-(* [simp] *)
 let tenv_val_ok_nsEmpty = prove
  (`tenv_val_ok nsEmpty`,
   CHEAT_TAC);;
+add_simp tenv_val_ok_nsEmpty;;
 
-(* [simp] *)
 let tenv_ctor_ok_nsEmpty = prove
  (`tenv_ctor_ok nsEmpty`,
   CHEAT_TAC);;
+add_simp tenv_ctor_ok_nsEmpty;;
 
-(* [simp] *)
 let tenv_abbrev_ok_nsEmpty = prove
  (`tenv_abbrev_ok nsEmpty`,
   CHEAT_TAC);;
+add_simp tenv_abbrev_ok_nsEmpty;;
 
-(* [simp] *)
 let tenv_ok_empty = prove
  (`tenv_ok (mk_type_env nsEmpty nsEmpty nsEmpty)`,
   CHEAT_TAC);;
+add_simp tenv_ok_empty;;
 
 let type_pes_def = new_definition
   `type_pes tvs tvs' tenv tenvE pes t1 t2 <=>
@@ -358,12 +355,12 @@ let type_ctor_long = prove
  (`!ctMap mn id'. type_ctor ctMap (Long mn id') = type_ctor ctMap id'`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let tenv_ctor_ok_merge = prove
  (`!tenvC1 tenvC2.
     tenv_ctor_ok tenvC1 /\ tenv_ctor_ok tenvC2 ==>
     tenv_ctor_ok (nsAppend tenvC1 tenvC2)`,
   CHEAT_TAC);;
+add_simp tenv_ctor_ok_merge;;
 
 let tenv_ctor_ok_lookup = prove
  (`!tenvC cn tvs ts tn.
@@ -375,24 +372,23 @@ let tenv_ctor_ok_lookup = prove
 
 let deBruijn_subst_tenvE_def,deBruijn_subst_tenvE_ind = define_rec
   [`deBruijn_subst_tenvE targs (typeSystem_Empty:tenv_val_exp) =
-  (typeSystem_Empty:tenv_val_exp)`;
+    (typeSystem_Empty:tenv_val_exp)`;
    `deBruijn_subst_tenvE targs (typeSystem_Bind_tvar tvs env) =
       typeSystem_Bind_tvar tvs (deBruijn_subst_tenvE targs env)`;
    `deBruijn_subst_tenvE targs (typeSystem_Bind_name x tvs t env) =
       typeSystem_Bind_name x tvs (deBruijn_subst (tvs + num_tvs env)
                               (MAP (deBruijn_inc 0 (tvs + num_tvs
-                                env)) targs)
+                                  env)) targs)
                               t)
            (deBruijn_subst_tenvE targs env)`];;
 
 let db_merge_def,db_merge_ind = define_rec
   [`db_merge (typeSystem_Empty:tenv_val_exp) e = e`;
    `db_merge (typeSystem_Bind_tvar tvs e1) e2 = typeSystem_Bind_tvar
-  tvs (db_merge e1 e2)`;
+    tvs (db_merge e1 e2)`;
    `db_merge (typeSystem_Bind_name x tvs t e1) e2 =
-  typeSystem_Bind_name x tvs t (db_merge e1 e2)`];;
+    typeSystem_Bind_name x tvs t (db_merge e1 e2)`];;
 
-(* [simp] *)
 let bind_tvar_rewrites = prove
  (`(!tvs e1 e2. db_merge (bind_tvar tvs e1) e2 = bind_tvar tvs (db_merge
   e1 e2)) /\
@@ -410,11 +406,12 @@ let bind_tvar_rewrites = prove
      deBruijn_subst_tenvE targs (bind_tvar tvs e) =
      bind_tvar tvs (deBruijn_subst_tenvE targs e))`,
   CHEAT_TAC);;
+add_simp bind_tvar_rewrites;;
 
-(* [simp] *)
 let bind_tvar0 = prove
  (`!x. bind_tvar 0 x = x`,
   CHEAT_TAC);;
+add_simp bind_tvar0;;
 
 let tveLookup_subst_none = prove
  (`!n inc e.
@@ -456,11 +453,11 @@ let bind_var_list_append = prove
       (bind_var_list n te2 te3)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let num_tvs_bind_var_list = prove
  (`!tvs env tenvE. num_tvs (bind_var_list tvs env tenvE) = num_tvs
   tenvE`,
   CHEAT_TAC);;
+add_simp num_tvs_bind_var_list;;
 
 let tenv_val_exp_ok_bvl = prove
  (`!tenvE env.
@@ -477,16 +474,16 @@ let tveLookup_subst_some = prove
         (deBruijn_inc 0 (tvs + inc + num_tvs e)) targs) t)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let num_tvs_db_merge = prove
  (`!e1 e2. num_tvs (db_merge e1 e2) = num_tvs e1 + num_tvs e2`,
   CHEAT_TAC);;
+add_simp num_tvs_db_merge;;
 
-(* [simp] *)
 let num_tvs_deBruijn_subst_tenvE = prove
  (`!targs tenvE. num_tvs (deBruijn_subst_tenvE targs tenvE) = num_tvs
   tenvE`,
   CHEAT_TAC);;
+add_simp num_tvs_deBruijn_subst_tenvE;;
 
 let tveLookup_inc_some = prove
  (`!n inc e tvs t inc2.
@@ -819,11 +816,11 @@ let type_def_to_ctMap_def,type_def_to_ctMap_ind = define_wf
   ast_t_size1))))      x2)`
   [`type_def_to_ctMap tenvT next_stamp [] [] = []`;
    `type_def_to_ctMap tenvT next_stamp (CONS (tvs,tn,ctors) tds) (CONS
-  id' ids) = APPEND (type_def_to_ctMap tenvT (next_stamp + 1) tds ids)
+    id' ids) = APPEND (type_def_to_ctMap tenvT (next_stamp + 1) tds ids)
         (REVERSE
           (MAP (\(cn,ts).
             (TypeStamp cn next_stamp,(tvs,MAP (type_name_subst
-              tenvT) ts,id')))
+                tenvT) ts,id')))
             ctors))`];;
 
 let mem_type_def_to_ctMap = prove
@@ -1043,18 +1040,18 @@ let type_d_tenv_ok = prove
 
 (* ---------- type_ds ---------- *)
 
-(* [simp] *)
 let type_ds_empty = prove
  (`!check tenv decls r.
    type_ds check tenv [] decls r <=>
    decls = {} /\ r = mk_type_env nsEmpty nsEmpty nsEmpty`,
   CHEAT_TAC);;
+add_simp type_ds_empty;;
 
-(* [simp] *)
 let type_ds_sing = prove
  (`!check tenv d decls r.
    type_ds check tenv [d] decls r <=> type_d check tenv d decls r`,
   CHEAT_TAC);;
+add_simp type_ds_sing;;
 
 (* HOL4 typeSysPropsScript.sml:2595-2617: code that the source has in
    a comment *)
@@ -1076,10 +1073,6 @@ let type_ds_sing = prove
 (* HOL4 typeSysPropsScript.sml:3384-3408: code that the source has in
    a comment *)
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

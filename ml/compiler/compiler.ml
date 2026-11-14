@@ -48,11 +48,8 @@ needs "semantics/ast.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "compiler"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "compiler"
   ["ag32_config"; "arm7_config"; "arm8_config"; "backend";
    "backend_passes"; "cmlParse"; "evaluateProps"; "export_ag32";
    "export_arm7"; "export_arm8"; "export_mips"; "export_riscv";
@@ -276,8 +273,12 @@ let help_string_def = new_definition
    "\n"))));;
 
 let compile_error_INDUCT,compile_error_RECURSION = define_datatype
-  "compile_error = ParseError (mlstring) | TypeError (mlstring) | \
-   AssembleError | ConfigError (mlstring) | StaticError (staterr)";;
+  "compile_error =
+     ParseError mlstring
+   | TypeError mlstring
+   | AssembleError
+   | ConfigError mlstring
+   | StaticError staterr";;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -411,27 +412,27 @@ let compile_pancake_def = new_definition
 let error_to_str_def = define_cases
   [`error_to_str (ParseError s) =
          mlstring_concat [(implode "### ERROR: parse error\n");
-           s; (implode "\n")]`;
+             s; (implode "\n")]`;
    `error_to_str (TypeError s) =
          // if the first char in the message is a newline char then it isn't an error
          (if (if strlen s = 0 then T else
              if strsub s 0 = (CHR 10) then F else T) then
            mlstring_concat [(implode "### ERROR: type error\n");
-             s; (implode "\n")] else s)`;
+               s; (implode "\n")] else s)`;
    `error_to_str (ConfigError s) = mlstring_concat [(implode
-  "### ERROR: config error\n"); s; (implode "\n")]`;
+    "### ERROR: config error\n"); s; (implode "\n")]`;
    `error_to_str AssembleError = (implode
-  "### ERROR: assembly error\n")`;
+    "### ERROR: assembly error\n")`;
    `error_to_str (StaticError e) =
         (match e with
           ScopeErr s -> mlstring_concat [(implode
-            "### ERROR: scope error\n"); s; (implode "\n")] |
-            WarningErr s -> mlstring_concat [(implode
-            "# WARNING:\n"); s; (implode "\n")] | GenErr s ->
-            mlstring_concat [(implode "### ERROR: static error\n");
-            s; (implode "\n")] | ShapeErr s -> mlstring_concat
-            [(implode "### ERROR: shape error\n"); s; (implode
-            "\n")])`];;
+              "### ERROR: scope error\n"); s; (implode "\n")] |
+              WarningErr s -> mlstring_concat [(implode
+              "# WARNING:\n"); s; (implode "\n")] | GenErr s ->
+              mlstring_concat [(implode
+              "### ERROR: static error\n"); s; (implode "\n")] |
+              ShapeErr s -> mlstring_concat [(implode
+              "### ERROR: shape error\n"); s; (implode "\n")])`];;
 
 let is_error_msg_def = new_definition
   `is_error_msg x = isPrefix (implode "###") x`;;
@@ -464,7 +465,7 @@ let find_strs_def,find_strs_ind = define_rec
   [`find_strs flag [] = []`;
    `find_strs flag (CONS x xs) =
         (if isPrefix flag x then CONS (mlstring_extract x (strlen
-          flag) NONE) (find_strs flag xs) else
+            flag) NONE) (find_strs flag xs) else
           find_strs flag xs)`];;
 
 (* If flag is not present then F, else if it is present then
@@ -499,17 +500,17 @@ let parse_num_list_def,parse_num_list_ind = define_rec
    `parse_num_list (CONS x xs) =
          (match parse_num x with
            NONE -> INR (mlstring_concat [(implode
-             "Unable to parse as num: "); x]) | SOME n ->
+               "Unable to parse as num: "); x]) | SOME n ->
            (match parse_num_list xs with
              INR s -> INR s | INL ns -> INL (CONS n ns)))`];;
 
 let comma_tokens_def,comma_tokens_ind = define_rec
   [`comma_tokens acc (xs:string) [] = (if NULL xs then acc else
-  APPEND acc [implode xs])`;
+    APPEND acc [implode xs])`;
    `comma_tokens acc (xs:string) (CONS c (cs:string)) =
         (if c = (CHR 44) then
           comma_tokens (APPEND acc (if NULL xs then [] else [implode
-            xs])) [] cs else
+              xs])) [] cs else
           comma_tokens acc (APPEND xs [c]) cs)`];;
 
 
@@ -954,9 +955,9 @@ let format_compiler_result_def = define_cases
   [`format_compiler_result bytes_export (M_failure err) =
       ((misc_List []:mlstring app_list),error_to_str err)`;
    `format_compiler_result bytes_export (M_success ((bytes:word8
-  list),(data:('a word) list),(c:backend_config))) =
+    list),(data:('a word) list),(c:backend_config))) =
       (bytes_export (the [] (lab_to_target_config_ffi_names
-        (backend_config_lab_conf c))) bytes data,implode "")`];;
+          (backend_config_lab_conf c))) bytes data,implode "")`];;
 
 (* FIXME TODO: this is an awful workaround to avoid implementing a file writer
    right now. *)
@@ -1101,7 +1102,3 @@ let compile_pancake_32_def = new_definition
 (* PENDING: the file system of the basis library, which the port does
    not have (add_stdout, add_stderr, fastForwardFD) *)
 (* HOL4 compilerScript.sml:835-849: the definition *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

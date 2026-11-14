@@ -18,11 +18,8 @@ needs "misc/misc.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/tokens.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "lexer_impl"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "lexer_impl"
   ["lexer_fun"; "misc"; "tokens"];;
 
 let _ = do_list hide_constant ["val"];;
@@ -163,29 +160,29 @@ let next_sym_alt_def,next_sym_alt_ind = define_guess
            // read number
            if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 119) then
              if TL str = "" then SOME (ErrorS,Locs loc loc,"") else
-               if isDigit (HD (TL str)) then
+                 if isDigit (HD (TL str)) then
                let (n,rest) = read_while isDigit (TL str) [] in
                  SOME (WordS (num_from_dec_string_alt n),
                        Locs loc (next_loc (LENGTH n + 1) loc),
                        rest) else if HD (TL str) = (CHR 120) then
                let (n,rest) = read_while isHexDigit (TL (TL str)) []
-                 in
+                   in
                  SOME (WordS (num_from_hex_string_alt n),
                        Locs loc (next_loc (LENGTH n + 2) loc),
                        rest) else SOME (ErrorS,Locs loc loc,TL str)
-                         else
+                           else
              if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 120)
-               then
+                 then
                let (n,rest) = read_while isHexDigit (TL str) [] in
                  SOME (NumberS (&(num_from_hex_string_alt n)),
                        Locs loc (next_loc (LENGTH n) loc),
                        rest) else
                let (n,rest) = read_while isDigit str [] in
                  SOME (NumberS (&(num_from_dec_string_alt (CONS c
-                   n))),
+                     n))),
                        Locs loc (next_loc (LENGTH n) loc),
                        rest) else if c = (CHR 126) /\ ~(str = "") /\
-                         isDigit (HD str) then
+                           isDigit (HD str) then
            // read negative number
            let (n,rest) = read_while isDigit str [] in
              SOME (NumberS ((&0) - &(num_from_dec_string_alt n)),
@@ -198,25 +195,25 @@ let next_sym_alt_def,next_sym_alt_ind = define_guess
                    rest) else if c = (CHR 34) then
            // read string
            let (t,loc',rest) = lexer_fun_read_string str ""
-             (next_loc 1 loc) in
+               (next_loc 1 loc) in
              SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (CONS
-               c str) then
+                 c str) then
            SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
-             isPREFIX "#\"" (CONS c str) then
+               isPREFIX "#\"" (CONS c str) then
            let (t,loc',rest) = lexer_fun_read_string (TL str) ""
-             (next_loc 2 loc) in
+               (next_loc 2 loc) in
              SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX
-               "#(" (CONS c str) then
+                 "#(" (CONS c str) then
            let (t,loc',rest) =
                  read_FFIcall (TL str) "" (next_loc 2 loc) in
              SOME (t,Locs loc loc',rest) else if isPREFIX "(*" (CONS
-               c str) then
+                 c str) then
            match skip_comment (TL str) (0:num) (next_loc 2 loc) with
-             NONE -> SOME (ErrorS,Locs loc (next_loc 2 loc),"") | SOME
-             (rest,loc') -> next_sym_alt rest loc' else if c = (CHR 95)
-             then SOME (OtherS "_",Locs loc loc,str) else
+               NONE -> SOME (ErrorS,Locs loc (next_loc 2 loc),"") | SOME
+               (rest,loc') -> next_sym_alt rest loc' else if c = (CHR
+               95) then SOME (OtherS "_",Locs loc loc,str) else
            let (tok',end_loc,rest) = read_Ident (CONS c str) loc []
-             in
+               in
              SOME (tok',Locs loc end_loc,rest))`];;
 
 (* [local] *)
@@ -496,10 +493,6 @@ let lexer_correct = prove
   input l`,
   (REWRITE_TAC[lex_impl_all_tokens_thm; split_top_level_semi_thm]));;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["val"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

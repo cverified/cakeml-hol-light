@@ -11,11 +11,8 @@
 
 needs "compiler/backend/bvl.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvl_jump"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvl_jump"
   ["bvl"];;
 
 (* the termination relation that HOL4 gives is
@@ -44,7 +41,3 @@ let JumpList_def,JumpList_ind = define_guess_cheat
 
 let jump_def = new_definition
   `bvl_jump_Jump x xs = bvl_Let [x] (JumpList 0 xs)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

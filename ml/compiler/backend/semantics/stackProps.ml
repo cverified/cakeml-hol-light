@@ -18,11 +18,8 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "stackProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "stackProps"
   ["backendProps"; "stackSem"; "stack_names"];;
 
 (* this file reads the name of a record field as a variable and
@@ -36,7 +33,7 @@ let _ = hide_overloads
 (* HOL4 stackPropsScript.sml:11-18: a theorem that HOL4 states as the
    value of an ML expression: case_eq_thms *)
 
-(* set_store_const[simp] *)
+(* set_store_const *)
 let stackProps_set_store_const = prove
  (`state_ffi
       (stackSem_set_store x y z) = state_ffi z /\ state_clock
@@ -68,14 +65,16 @@ let stackProps_set_store_const = prove
         stack
       (stackSem_set_store x y z) = stack z`,
   CHEAT_TAC);;
+add_simp stackProps_set_store_const;;
 
-(* set_store_with_const[simp] *)
+(* set_store_with_const *)
 let stackProps_set_store_with_const = prove
  (`stackSem_set_store x y (state_clock_fupd (K a) z) =
   state_clock_fupd (K a) (stackSem_set_store x y z)`,
   CHEAT_TAC);;
+add_simp stackProps_set_store_with_const;;
 
-(* set_var_const[simp] *)
+(* set_var_const *)
 let stackProps_set_var_const = prove
  (`state_ffi
       (stackSem_set_var x y z) = state_ffi z /\ state_clock
@@ -106,8 +105,9 @@ let stackProps_set_var_const = prove
         stackSem_state_stack_space
       (stackSem_set_var x y z) = stackSem_state_stack_space z`,
   CHEAT_TAC);;
+add_simp stackProps_set_var_const;;
 
-(* set_var_with_const[simp] *)
+(* set_var_with_const *)
 let stackProps_set_var_with_const = prove
  (`stackSem_set_var x y (state_clock_fupd (K clk) z) = state_clock_fupd
   (K clk) (stackSem_set_var x y z) /\
@@ -121,14 +121,16 @@ let stackProps_set_var_with_const = prove
      stk_space) z) = stackSem_state_stack_space_fupd (K stk_space)
      (stackSem_set_var x y z)`,
   CHEAT_TAC);;
+add_simp stackProps_set_var_with_const;;
 
-(* set_fp_var_with_const[local,simp] *)
+(* set_fp_var_with_const[local] *)
 let stackProps_set_fp_var_with_const = prove
  (`stackSem_set_fp_var x y (state_clock_fupd (K k) z) =
   state_clock_fupd (K k) (stackSem_set_fp_var x y z)`,
   CHEAT_TAC);;
+add_simp stackProps_set_fp_var_with_const;;
 
-(* set_fp_var_const[local,simp] *)
+(* set_fp_var_const[local] *)
 let stackProps_set_fp_var_const = prove
  (`state_ffi
       (stackSem_set_fp_var x y z) = state_ffi z /\ state_clock
@@ -155,14 +157,16 @@ let stackProps_set_fp_var_const = prove
         stackSem_state_stack_space
       (stackSem_set_fp_var x y z) = stackSem_state_stack_space z`,
   CHEAT_TAC);;
+add_simp stackProps_set_fp_var_const;;
 
-(* get_fp_var_with_const[local,simp] *)
+(* get_fp_var_with_const[local] *)
 let stackProps_get_fp_var_with_const = prove
  (`stackSem_get_fp_var x (state_clock_fupd (K k) y) =
   stackSem_get_fp_var x y`,
   CHEAT_TAC);;
+add_simp stackProps_get_fp_var_with_const;;
 
-(* get_var_with_const[simp] *)
+(* get_var_with_const *)
 let stackProps_get_var_with_const = prove
  (`stackSem_get_var r (state_clock_fupd (K clk) t) =
    (stackSem_get_var r t) /\
@@ -170,14 +174,16 @@ let stackProps_get_var_with_const = prove
      t) =
    (stackSem_get_var r t)`,
   CHEAT_TAC);;
+add_simp stackProps_get_var_with_const;;
 
-(* get_vars_with_const[local,simp] *)
+(* get_vars_with_const[local] *)
 let stackProps_get_vars_with_const = prove
  (`stackSem_get_vars xs (state_clock_fupd (K k) y) = stackSem_get_vars
   xs y`,
   CHEAT_TAC);;
+add_simp stackProps_get_vars_with_const;;
 
-(* get_var_imm_with_const[simp] *)
+(* get_var_imm_with_const *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let stackProps_get_var_imm_with_const = prove
@@ -185,16 +191,17 @@ let stackProps_get_var_imm_with_const = prove
     `stackSem_get_var_imm x (state_clock_fupd (K k) y) =
   stackSem_get_var_imm x y`),
   CHEAT_TAC);;
+add_simp stackProps_get_var_imm_with_const;;
 
-(* set_fp_var_const[simp] *)
+(* set_fp_var_const *)
 let stackProps_set_fp_var_const = prove
  (`stackSem_state_stack_space
      (stackSem_set_fp_var x y z) = stackSem_state_stack_space z /\
        stack
      (stackSem_set_fp_var x y z) = stack z`,
   CHEAT_TAC);;
+add_simp stackProps_set_fp_var_const;;
 
-(* [simp] *)
 let empty_env_const = prove
  (`state_ffi
       (stackSem_empty_env x) = state_ffi x /\ state_clock
@@ -220,12 +227,13 @@ let empty_env_const = prove
       (stackSem_empty_env z) = compile z /\ compile_oracle
       (stackSem_empty_env z) = compile_oracle z`,
   CHEAT_TAC);;
+add_simp empty_env_const;;
 
-(* [simp] *)
 let empty_env_with_const = prove
  (`stackSem_empty_env (state_clock_fupd (K y) x) = state_clock_fupd (K
   y) (stackSem_empty_env x)`,
   CHEAT_TAC);;
+add_simp empty_env_with_const;;
 
 (* alloc_const *)
 let stackProps_alloc_const = prove
@@ -267,13 +275,14 @@ let store_const_sem_const = prove
     t = compile_oracle s`,
   CHEAT_TAC);;
 
-(* gc_with_const[simp] *)
+(* gc_with_const *)
 let stackProps_gc_with_const = prove
  (`stackSem_gc (state_clock_fupd (K k) x) = OPTION_MAP (\s.
   state_clock_fupd (K k) s) (stackSem_gc x)`,
   CHEAT_TAC);;
+add_simp stackProps_gc_with_const;;
 
-(* alloc_with_const[simp] *)
+(* alloc_with_const *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let stackProps_alloc_with_const = prove
@@ -281,84 +290,97 @@ let stackProps_alloc_with_const = prove
     `stackSem_alloc x (state_clock_fupd (K z) y) = (I ## (\s.
   state_clock_fupd (K z) s)) (stackSem_alloc x y)`),
   CHEAT_TAC);;
+add_simp stackProps_alloc_with_const;;
 
-(* [simp] *)
 let store_const_sem_with_const = prove
  (`store_const_sem t1 t2 (state_clock_fupd (K z) y) =
    (I ## (\s. state_clock_fupd (K z) s)) (store_const_sem t1 t2 y)`,
   CHEAT_TAC);;
+add_simp store_const_sem_with_const;;
 
-(* mem_load_with_const[simp] *)
+(* mem_load_with_const *)
 let stackProps_mem_load_with_const = prove
  (`stackSem_mem_store x y (state_clock_fupd (K k) z) = OPTION_MAP (\s.
   state_clock_fupd (K k) s) (stackSem_mem_store x y z)`,
   CHEAT_TAC);;
+add_simp stackProps_mem_load_with_const;;
 
-(* sh_mem_load_with_const[simp] *)
+(* sh_mem_load_with_const *)
 let stackProps_sh_mem_load_with_const = prove
  (`(stackSem_sh_mem_load r x (state_clock_fupd (K k) y)) = (I ## (\s.
   state_clock_fupd (K k) s)) (stackSem_sh_mem_load r x y)`,
   CHEAT_TAC);;
+add_simp stackProps_sh_mem_load_with_const;;
 
-(* sh_mem_store_with_const[simp] *)
+(* sh_mem_store_with_const *)
 let stackProps_sh_mem_store_with_const = prove
  (`(stackSem_sh_mem_store x y (state_clock_fupd (K k) z)) = (I ## (\s.
   state_clock_fupd (K k) s)) (stackSem_sh_mem_store x y z)`,
   CHEAT_TAC);;
+add_simp stackProps_sh_mem_store_with_const;;
 
-(* sh_mem_load32_with_const[simp] *)
+(* sh_mem_load32_with_const *)
 let stackProps_sh_mem_load32_with_const = prove
  (`(stackSem_sh_mem_load32 r x (state_clock_fupd (K k) y)) = (I ##
   (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_load32 r x y)`,
   CHEAT_TAC);;
+add_simp stackProps_sh_mem_load32_with_const;;
 
-(* sh_mem_store32_with_const[simp] *)
+(* sh_mem_store32_with_const *)
 let stackProps_sh_mem_store32_with_const = prove
  (`(stackSem_sh_mem_store32 x y (state_clock_fupd (K k) z)) = (I ##
   (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_store32 x y z)`,
   CHEAT_TAC);;
+add_simp stackProps_sh_mem_store32_with_const;;
 
-(* sh_mem_load16_with_const[simp] *)
+(* sh_mem_load16_with_const *)
 let stackProps_sh_mem_load16_with_const = prove
  (`(stackSem_sh_mem_load16 r x (state_clock_fupd (K k) y)) = (I ##
   (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_load16 r x y)`,
   CHEAT_TAC);;
+add_simp stackProps_sh_mem_load16_with_const;;
 
-(* sh_mem_store16_with_const[simp] *)
+(* sh_mem_store16_with_const *)
 let stackProps_sh_mem_store16_with_const = prove
  (`(stackSem_sh_mem_store16 x y (state_clock_fupd (K k) z)) = (I ##
   (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_store16 x y z)`,
   CHEAT_TAC);;
+add_simp stackProps_sh_mem_store16_with_const;;
 
-(* sh_mem_load_byte_with_const[simp] *)
+(* sh_mem_load_byte_with_const *)
 let stackProps_sh_mem_load_byte_with_const = prove
  (`(stackSem_sh_mem_load_byte r x (state_clock_fupd (K k) y)) = (I ##
   (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_load_byte r x y)`,
   CHEAT_TAC);;
+add_simp stackProps_sh_mem_load_byte_with_const;;
 
-(* sh_mem_store_byte_with_const[simp] *)
+(* sh_mem_store_byte_with_const *)
 let stackProps_sh_mem_store_byte_with_const = prove
  (`(stackSem_sh_mem_store_byte x y (state_clock_fupd (K k) z)) = (I ##
   (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_store_byte x y z)`,
   CHEAT_TAC);;
+add_simp stackProps_sh_mem_store_byte_with_const;;
 
-(* [local,simp] *)
+(* [local] *)
 let sh_mem_op_with_const = prove
  (`(sh_mem_op op x y (state_clock_fupd (K k) z)) = (I ## (\s.
   state_clock_fupd (K k) s)) (sh_mem_op op x y z)`,
   CHEAT_TAC);;
+add_simp sh_mem_op_with_const;;
 
-(* word_exp_with_const[simp] *)
+(* word_exp_with_const *)
 let stackProps_word_exp_with_const = prove
  (`!s y k. stackSem_word_exp (state_clock_fupd (K k) s) y =
   stackSem_word_exp s y`,
   CHEAT_TAC);;
+add_simp stackProps_word_exp_with_const;;
 
-(* assign_with_const[simp] *)
+(* assign_with_const *)
 let stackProps_assign_with_const = prove
  (`stackSem_assign x y (state_clock_fupd (K k) s) = OPTION_MAP (\s.
   state_clock_fupd (K k) s) (stackSem_assign x y s)`,
   CHEAT_TAC);;
+add_simp stackProps_assign_with_const;;
 
 
 (* inst_const *)
@@ -379,13 +401,14 @@ let stackProps_inst_const = prove
     t = compile_oracle s`,
   CHEAT_TAC);;
 
-(* inst_with_const[simp] *)
+(* inst_with_const *)
 let stackProps_inst_with_const = prove
  (`stackSem_inst i (state_clock_fupd (K k) s) = OPTION_MAP (\s.
   state_clock_fupd (K k) s) (stackSem_inst i s)`,
   CHEAT_TAC);;
+add_simp stackProps_inst_with_const;;
 
-(* dec_clock_const[simp] *)
+(* dec_clock_const *)
 let stackProps_dec_clock_const = prove
  (`state_ffi
       (stackSem_dec_clock s) = state_ffi s /\
@@ -415,9 +438,9 @@ let stackProps_dec_clock_const = prove
       (stackSem_dec_clock z) = compile z /\ compile_oracle
       (stackSem_dec_clock z) = compile_oracle z`,
   CHEAT_TAC);;
+add_simp stackProps_dec_clock_const;;
 
 
-(* [simp] *)
 let sh_mem_op_const = prove
  (`sh_mem_op op a r s = (res,t) ==> state_clock
     t = state_clock s /\ stackSem_state_use_alloc
@@ -433,6 +456,7 @@ let sh_mem_op_const = prove
     t = compile s /\ compile_oracle
     t = compile_oracle s`,
   CHEAT_TAC);;
+add_simp sh_mem_op_const;;
 
 (* evaluate_consts *)
 let stackProps_evaluate_consts = prove
@@ -628,7 +652,6 @@ let addr_ok_def = define_general
 
 (* TODO: This is not updated for Install, CBW and DBW *)
 (* asm_ok out of stack_names *)
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_asm_ok_def,stack_asm_ok_ind = define_wf
@@ -729,12 +752,12 @@ let fp_name_def = define_cases
           reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
    `fp_name (FPAbs d1 d2) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\
-            fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+              fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
    `fp_name (FPNeg d1 d2) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\
-            fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+              fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
    `fp_name (FPSqrt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\
-  fp_reg_ok d2 c`;
+    fp_reg_ok d2 c`;
    `fp_name (FPAdd d1 d2 d3) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
@@ -752,19 +775,19 @@ let fp_name_def = define_cases
           2 < asm_config_fp_reg_count c /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
    `fp_name (FPMov d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\
-  fp_reg_ok d2 c`;
+    fp_reg_ok d2 c`;
    `fp_name (FPMovToReg r1 r2 d) (c:'a asm_config) <=>
           reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
-            reg_name r2 c) /\
+              reg_name r2 c) /\
           fp_reg_ok d c`;
    `fp_name (FPMovFromReg d r1 r2) (c:'a asm_config) <=>
           reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
-            reg_name r2 c) /\
+              reg_name r2 c) /\
           fp_reg_ok d c`;
    `fp_name (FPToInt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\
-  fp_reg_ok d2 c`;
+    fp_reg_ok d2 c`;
    `fp_name (FPFromInt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
-  /\ fp_reg_ok d2 c`];;
+    /\ fp_reg_ok d2 c`];;
 
 let addr_name_def = define_general
   [`addr_name m (Addr r w) c <=>
@@ -784,7 +807,6 @@ let inst_name_def = new_definition
         | (asm_FP f) -> fp_name f c
         | _20 -> T`;;
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_asm_name_def,stack_asm_name_ind = define_wf
@@ -823,7 +845,6 @@ let fixed_names_def = new_definition
      tlookup names 4 = 1 /\
      tlookup names 0 = 0 else T)`;;
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_asm_remove_def,stack_asm_remove_ind = define_wf
@@ -867,7 +888,6 @@ let stack_asm_remove_def,stack_asm_remove_ind = define_wf
    TODO: this can also be a semantic check...
 *)
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let alloc_arg_def,alloc_arg_ind = define_wf
@@ -889,7 +909,6 @@ let alloc_arg_def,alloc_arg_ind = define_wf
 
 (* stack_remove requires that all register arguments are bounded by k *)
 
-let _ = size_thms "wordLang_exp";;
 (* the termination relation that HOL4 gives is
      MEASURE ((wordLang_exp_size ARB) o FST)
    which is not one that HOL Light takes here; the one
@@ -907,6 +926,7 @@ let reg_bound_exp_def,reg_bound_exp_ind = define_wf
         | (wordLang_Lookup _46) -> F
         | (wordLang_Op _47 es) -> ALL (\e. reg_bound_exp e k) es
         | _48 -> T`];;
+add_simp reg_bound_exp_def;;
 
 let reg_bound_inst_def = new_definition
   `reg_bound_inst x1 k =
@@ -935,8 +955,8 @@ let reg_bound_inst_def = new_definition
         | (asm_FP (FPMovToReg r1 r2 d)) -> r1 < k /\ r2 < k
         | (asm_FP (FPMovFromReg d r1 r2)) -> r1 < k /\ r2 < k
         | _56 -> T`;;
+add_simp reg_bound_inst_def;;
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let reg_bound_def,reg_bound_ind = define_wf
@@ -1023,7 +1043,6 @@ let call_args_def,call_args_ind = assume_definition_rec
 
 (* TODO: remove "stack_" prefix from these functions *)
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_get_handler_labels_def,stack_get_handler_labels_ind =
@@ -1044,8 +1063,8 @@ let stack_get_handler_labels_def,stack_get_handler_labels_ind =
           n p2
         | (wordLang_Loop p) -> stack_get_handler_labels n p
         | _82 -> {}`];;
+add_simp stack_get_handler_labels_def;;
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stackProps_get_code_labels_def,stackProps_get_code_labels_ind =
@@ -1070,6 +1089,7 @@ let stackProps_get_code_labels_def,stackProps_get_code_labels_ind =
         | (stackLang_LocValue _95 l1 l2) -> {(l1,l2)}
         | (stackLang_StoreConsts _96 _97 (SOME l)) -> {(l,0)}
         | _98 -> {}`];;
+add_simp stackProps_get_code_labels_def;;
 
 (* elabs gives a set of existing code labels *)
 let stack_good_code_labels_def = new_definition
@@ -1091,7 +1111,6 @@ let stack_good_handler_labels_def = new_definition
      p)) UNION
    IMAGE (\n. n,1) (set_of_list (MAP FST p))`;;
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stackProps_no_install_def,stackProps_no_install_ind = define_wf
@@ -1111,7 +1130,6 @@ let stackProps_no_install_def,stackProps_no_install_ind = define_wf
         | (wordLang_Install _108 _109 _110 _111 _112) -> F
         | _113 -> T`];;
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let no_shmemop_def,no_shmemop_ind = define_wf
@@ -1129,7 +1147,3 @@ let no_shmemop_def,no_shmemop_ind = define_wf
         | (stackLang_Loop p) -> no_shmemop p
         | (stackLang_ShMemOp _123 _124 _125) -> F
         | _126 -> T`];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

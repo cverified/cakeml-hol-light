@@ -8,9 +8,8 @@
 needs "lib/peg.ml";;
 needs "lib/simpleSexp.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 
 let tokeq_def = new_definition
   `simpleSexpPEG_tokeq t = peg_tok ((=) t) (K (SX_SYM [t]))`;;
@@ -32,10 +31,11 @@ let replace_nil_def,replace_nil_ind = define_shaped_rec
 let sumID_def = define_cases
   [`simpleSexpPEG_sumID (INL x) = x`;
    `simpleSexpPEG_sumID (INR y) = y`];;
+add_simp sumID_def;;
 let simpleSexpPEG_choicel_def,simpleSexpPEG_choicel_ind = define_rec
   [`simpleSexpPEG_choicel [] = peg_not (peg_empty arb_sexp) arb_sexp`;
    `simpleSexpPEG_choicel (CONS h t) = peg_choice h
-  (simpleSexpPEG_choicel t) simpleSexpPEG_sumID`];;
+    (simpleSexpPEG_choicel t) simpleSexpPEG_sumID`];;
 
 let simpleSexpPEG_pegf_def = new_definition
   `simpleSexpPEG_pegf sym f = peg_seq sym (peg_empty arb_sexp) (\l1

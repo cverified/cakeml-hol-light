@@ -15,11 +15,8 @@ needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
 needs "semantics/tokens.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "lexer_fun"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "lexer_fun"
   ["tokens"];;
 (* HOL4 ancestors outside the port: string list *)
 
@@ -32,10 +29,16 @@ let _ = hol4_ancestors "lexer_fun"
 (* intermediate symbols *)
 
 let lexer_fun_symbol_INDUCT,lexer_fun_symbol_RECURSION = define_datatype
-  "lexer_fun_symbol = StringS (string) | CharS (char) | NumberS (int) \
-   | WordS (num) | LongS (string list) (string) \
-   // [\"Foo\";\"Bar\"] \"<\" is Foo.Bar.<\n\
-   | FFIS (string) | OtherS (string) | ErrorS";;
+  "lexer_fun_symbol =
+     StringS string
+   | CharS char
+   | NumberS int
+   | WordS num
+   | LongS (string list) string
+     // [\"Foo\";\"Bar\"] \"<\" is Foo.Bar.<
+   | FFIS string
+   | OtherS string
+   | ErrorS";;
 
 (* helper functions *)
 let mkCharS_def = new_definition
@@ -151,11 +154,11 @@ let skip_comment_def,skip_comment_ind = define_wf
    `skip_comment (CONS x (CONS y xs)) d loc =
         (if [x; y] = "(*" then
           skip_comment xs (d + (1:num)) (next_loc 2 loc) else if [x;
-            y] = "*)" then
+              y] = "*)" then
           (if d = 0 then SOME (xs,next_loc 2 loc) else skip_comment
-            xs (d - 1) (next_loc 2 loc)) else if ORD x = 10 then
+              xs (d - 1) (next_loc 2 loc)) else if ORD x = 10 then
           skip_comment (CONS y xs) d (next_line loc) else
-            skip_comment (CONS y xs) d (next_loc 1 loc))`];;
+              skip_comment (CONS y xs) d (next_loc 1 loc))`];;
 
 let skip_comment_thm = prove
  (`!xs d l l' str. (skip_comment xs d l = SOME (str,l')) ==> LENGTH
@@ -167,7 +170,7 @@ let read_FFIcall_def,read_FFIcall_ind = define_rec
    `read_FFIcall (CONS c s0) acc loc =
           (if c = (CHR 41) then
             (FFIS (REVERSE acc),next_loc 2 loc,s0) else if c = (CHR
-              10) then (ErrorS,loc,s0) else if isSpace c then
+                10) then (ErrorS,loc,s0) else if isSpace c then
             read_FFIcall s0 acc (next_loc 1 loc) else
             read_FFIcall s0 (CONS c acc) (next_loc 1 loc))`];;
 
@@ -181,12 +184,12 @@ let read_REPLcommand_def,read_REPLcommand_ind = define_rec
    `read_REPLcommand (CONS c s0) acc loc =
           (if c = (CHR 125) then
             (FFIS (REVERSE acc),locn_colupdate ((+) 2) loc,s0) else
-              if c = (CHR 10) then (ErrorS,loc,s0) else if isSpace c
-              then
+                if c = (CHR 10) then (ErrorS,loc,s0) else if isSpace c
+                then
             read_REPLcommand s0 acc (locn_colupdate ((+) 1) loc)
-              else
+                else
             read_REPLcommand s0 (CONS c acc) (locn_colupdate
-              ((+) 1) loc))`];;
+                ((+) 1) loc))`];;
 
 let read_REPLcommand_reduces_input = prove
  (`!s0 a l0 t l s.
@@ -226,9 +229,9 @@ let read_Ident_def,read_Ident_ind = define_guess_cheat
         let (n,rest) = read_while isAlphaNumPrime str [c] in
         let new_loc = next_loc (LENGTH n) loc in
           match rest with [] -> read_Ident_ret acc n new_loc rest |
-            CONS c1 rest1 ->
+              CONS c1 rest1 ->
             (if c1 = (CHR 46) then read_Ident rest1 new_loc (CONS n
-              acc) else read_Ident_ret acc n new_loc rest) else
+                acc) else read_Ident_ret acc n new_loc rest) else
         (
          // input not recognised
          ErrorS,loc,str))`];;
@@ -251,19 +254,19 @@ let next_sym_def,next_sym_ind = define_guess
            // read number
            if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 119) then
              if TL str = "" then SOME (ErrorS,Locs loc loc,"") else
-               if isDigit (HD (TL str)) then
+                 if isDigit (HD (TL str)) then
                let (n,rest) = read_while isDigit (TL str) [] in
                  SOME (WordS (num_from_dec_string n),
                        Locs loc (next_loc (LENGTH n + 1) loc),
                        rest) else if HD (TL str) = (CHR 120) then
                let (n,rest) = read_while isHexDigit (TL (TL str)) []
-                 in
+                   in
                  SOME (WordS (num_from_hex_string n),
                        Locs loc (next_loc (LENGTH n + 2) loc),
                        rest) else SOME (ErrorS,Locs loc loc,TL str)
-                         else
+                           else
              if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 120)
-               then
+                 then
                let (n,rest) = read_while isHexDigit (TL str) [] in
                  SOME (NumberS (&(num_from_hex_string n)),
                        Locs loc (next_loc (LENGTH n) loc),
@@ -272,7 +275,7 @@ let next_sym_def,next_sym_ind = define_guess
                  SOME (NumberS (&(num_from_dec_string (CONS c n))),
                        Locs loc (next_loc (LENGTH n) loc),
                        rest) else if c = (CHR 126) /\ ~(str = "") /\
-                         isDigit (HD str) then
+                           isDigit (HD str) then
            // read negative number
            let (n,rest) = read_while isDigit str [] in
              SOME (NumberS ((&0) - &(num_from_dec_string n)),
@@ -284,25 +287,25 @@ let next_sym_def,next_sym_ind = define_guess
                    rest) else if c = (CHR 34) then
            // read string
            let (t,loc',rest) = lexer_fun_read_string str ""
-             (next_loc 1 loc) in
+               (next_loc 1 loc) in
              SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (CONS
-               c str) then
+                 c str) then
            SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
-             isPREFIX "#\"" (CONS c str) then
+               isPREFIX "#\"" (CONS c str) then
            let (t,loc',rest) = lexer_fun_read_string (TL str) ""
-             (next_loc 2 loc) in
+               (next_loc 2 loc) in
              SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX
-               "#(" (CONS c str) then
+                 "#(" (CONS c str) then
            let (t,loc',rest) = read_FFIcall (TL str) "" (next_loc 2
-             loc) in
+               loc) in
              SOME (t,Locs loc loc',rest) else if isPREFIX "(*" (CONS
-               c str) then
+                 c str) then
            match skip_comment (TL str) 0 (next_loc 2 loc) with NONE
-             -> SOME (ErrorS,Locs loc (next_loc 2 loc),"") | SOME
-             (rest,loc') -> next_sym rest loc' else if c = (CHR 95) then
-             SOME (OtherS "_",Locs loc loc,str) else
+               -> SOME (ErrorS,Locs loc (next_loc 2 loc),"") | SOME
+               (rest,loc') -> next_sym rest loc' else if c = (CHR 95)
+               then SOME (OtherS "_",Locs loc loc,str) else
            let (tok',end_loc,rest) = read_Ident (CONS c str) loc []
-             in
+               in
              SOME (tok',Locs loc end_loc,rest))`];;
 
 (* EVAL “next_sym "  Foo.Bar.<  " (POSN 0 0)” *)
@@ -482,14 +485,15 @@ let toplevel_semi_dex_def,toplevel_semi_dex_ind = define_rec
   [`toplevel_semi_dex (i:num) (d:num) [] = NONE`;
    `toplevel_semi_dex (i:num) (d:num) (CONS (h,l) t) =
         (if h = tokens_SemicolonT /\ (d = 0) then SOME (i + 1)
-          else if h = tokens_LetT then toplevel_semi_dex (i + 1) (d
-          + 1) t else if h = tokens_StructT then toplevel_semi_dex
-          (i + 1) (d + 1) t else if h = tokens_SigT then
-          toplevel_semi_dex (i + 1) (d + 1) t else if h =
-          tokens_LparT then toplevel_semi_dex (i + 1) (d + 1) t
-          else if h = tokens_EndT then toplevel_semi_dex (i + 1) (d
-          - 1) t else if h = tokens_RparT then toplevel_semi_dex (i
-          + 1) (d - 1) t else toplevel_semi_dex (i + 1) d t)`];;
+            else if h = tokens_LetT then toplevel_semi_dex (i + 1)
+            (d + 1) t else if h = tokens_StructT then
+            toplevel_semi_dex (i + 1) (d + 1) t else if h =
+            tokens_SigT then toplevel_semi_dex (i + 1) (d + 1) t
+            else if h = tokens_LparT then toplevel_semi_dex (i + 1)
+            (d + 1) t else if h = tokens_EndT then
+            toplevel_semi_dex (i + 1) (d - 1) t else if h =
+            tokens_RparT then toplevel_semi_dex (i + 1) (d - 1) t
+            else toplevel_semi_dex (i + 1) d t)`];;
 
 (* [local] *)
 let toplevel_semi_dex_non0 = prove
@@ -509,7 +513,3 @@ let split_top_level_semi_def,split_top_level_semi_ind =
   [`(split_top_level_semi toks =
     (match toplevel_semi_dex 0 0 toks with NONE -> [] | SOME i
       -> CONS (TAKE i toks) (split_top_level_semi (DROP i toks))))`];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

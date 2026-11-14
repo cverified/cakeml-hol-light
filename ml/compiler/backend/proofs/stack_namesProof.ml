@@ -16,11 +16,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "stack_namesProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "stack_namesProof"
   ["stackProps"; "stackSem"; "stack_names"];;
 
 (* this file reads the name of a record field as a variable and
@@ -52,7 +49,6 @@ let rename_state_with_clock = prove
   state_clock_fupd (K k) (rename_state c f s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let rename_state_const = prove
  (`state_memory
       (rename_state c f s) = stackSem_state_memory s /\ be
@@ -68,6 +64,7 @@ let rename_state_const = prove
       (rename_state c f s) = stackSem_state_use_stack s /\ fp_regs
       (rename_state c f s) = stackSem_state_fp_regs s`,
   CHEAT_TAC);;
+add_simp rename_state_const;;
 
 let rename_state_with_memory = prove
  (`rename_state c f (stackSem_state_memory_fupd (K k) s) =
@@ -79,116 +76,115 @@ let dec_clock_rename_state = prove
   (stackSem_dec_clock y)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let mem_load_rename_state = prove
  (`stackSem_mem_load x (rename_state c f s) = stackSem_mem_load x s`,
   CHEAT_TAC);;
+add_simp mem_load_rename_state;;
 
-(* [simp] *)
 let mem_store_rename_state = prove
  (`stackSem_mem_store x y (rename_state c f s) = OPTION_MAP
   (rename_state c f) (stackSem_mem_store x y s)`,
   CHEAT_TAC);;
+add_simp mem_store_rename_state;;
 
-(* [simp] *)
 let get_var_find_name = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
     stackSem_get_var (tlookup f v) (rename_state c f s) =
       stackSem_get_var v s`,
   CHEAT_TAC);;
+add_simp get_var_find_name;;
 
-(* [simp] *)
 let get_var_imm_find_name = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    stackSem_get_var_imm (ri_find_name f ri) (rename_state c f s) =
    stackSem_get_var_imm ri s`,
   CHEAT_TAC);;
+add_simp get_var_imm_find_name;;
 
-(* [simp] *)
 let FLOOKUP_rename_state_find_name = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    FLOOKUP (stackSem_state_regs (rename_state c f s)) (tlookup f k)
      = FLOOKUP (stackSem_state_regs s) k`,
   CHEAT_TAC);;
+add_simp FLOOKUP_rename_state_find_name;;
 
-(* [simp] *)
 let sh_mem_load_rename_state = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    stackSem_sh_mem_load (tlookup f x) y (rename_state c f s) =
    (FST (stackSem_sh_mem_load x y s),(rename_state c f) (SND
      (stackSem_sh_mem_load x y s)))`,
   CHEAT_TAC);;
+add_simp sh_mem_load_rename_state;;
 
-(* [simp] *)
 let sh_mem_store_rename_state = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    stackSem_sh_mem_store (tlookup f x) y (rename_state c f s) =
    ((FST (stackSem_sh_mem_store x y s):('a stackSem_result)
      option),(rename_state c f) (SND (stackSem_sh_mem_store x y s)))`,
   CHEAT_TAC);;
+add_simp sh_mem_store_rename_state;;
 
-(* [simp] *)
 let sh_mem_load_byte_rename_state = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    stackSem_sh_mem_load_byte (tlookup f x) y (rename_state c f s) =
    (FST (stackSem_sh_mem_load_byte x y s),(rename_state c f) (SND
      (stackSem_sh_mem_load_byte x y s)))`,
   CHEAT_TAC);;
+add_simp sh_mem_load_byte_rename_state;;
 
-(* [simp] *)
 let sh_mem_store_byte_rename_state = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    stackSem_sh_mem_store_byte (tlookup f x) y (rename_state c f s) =
    (FST (stackSem_sh_mem_store_byte x y s),(rename_state c f) (SND
      (stackSem_sh_mem_store_byte x y s)))`,
   CHEAT_TAC);;
+add_simp sh_mem_store_byte_rename_state;;
 
-(* [simp] *)
 let sh_mem_load16_rename_state = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    stackSem_sh_mem_load16 (tlookup f x) y (rename_state c f s) =
    (FST (stackSem_sh_mem_load16 x y s),(rename_state c f) (SND
      (stackSem_sh_mem_load16 x y s)))`,
   CHEAT_TAC);;
+add_simp sh_mem_load16_rename_state;;
 
-(* [simp] *)
 let sh_mem_store16_rename_state = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    stackSem_sh_mem_store16 (tlookup f x) y (rename_state c f s) =
    (FST (stackSem_sh_mem_store16 x y s),(rename_state c f) (SND
      (stackSem_sh_mem_store16 x y s)))`,
   CHEAT_TAC);;
+add_simp sh_mem_store16_rename_state;;
 
-(* [simp] *)
 let sh_mem_load32_rename_state = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    stackSem_sh_mem_load32 (tlookup f x) y (rename_state c f s) =
    (FST (stackSem_sh_mem_load32 x y s),(rename_state c f) (SND
      (stackSem_sh_mem_load32 x y s)))`,
   CHEAT_TAC);;
+add_simp sh_mem_load32_rename_state;;
 
-(* [simp] *)
 let sh_mem_store32_rename_state = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    stackSem_sh_mem_store32 (tlookup f x) y (rename_state c f s) =
    (FST (stackSem_sh_mem_store32 x y s),(rename_state c f) (SND
      (stackSem_sh_mem_store32 x y s)))`,
   CHEAT_TAC);;
+add_simp sh_mem_store32_rename_state;;
 
-(* [simp] *)
 let sh_mem_op_rename_store = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    sh_mem_op op (tlookup f r) a (rename_state c f s) =
    (FST (sh_mem_op op r a s),(rename_state c f) (SND (sh_mem_op op
      r a s)))`,
   CHEAT_TAC);;
+add_simp sh_mem_op_rename_store;;
 
 (* prog_comp_eta[local] *)
 let stack_namesProof_prog_comp_eta = prove
  (`stack_names_prog_comp f = (\(x,y). (x,stack_names_comp f y))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let find_code_rename_state = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    stackSem_find_code (dest_find_name f dest) (stackSem_state_regs
@@ -196,6 +192,7 @@ let find_code_rename_state = prove
    OPTION_MAP (stack_names_comp f) (stackSem_find_code dest
      (stackSem_state_regs s) (stackSem_state_code s))`,
   CHEAT_TAC);;
+add_simp find_code_rename_state;;
 
 let set_var_find_name = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
@@ -214,16 +211,17 @@ let inst_rename = prove
    OPTION_MAP (rename_state c f) (stackSem_inst i s)`,
   CHEAT_TAC);;
 
-(* MAP_FST_compile[simp] *)
+(* MAP_FST_compile *)
 let stack_namesProof_MAP_FST_compile = prove
  (`MAP FST (stack_names_compile f c) = MAP FST c`,
   CHEAT_TAC);;
+add_simp stack_namesProof_MAP_FST_compile;;
 
-(* [simp] *)
 let domain_rename_state_code = prove
  (`domain (state_code (rename_state c f s)) = domain
   (stackSem_state_code s)`,
   CHEAT_TAC);;
+add_simp domain_rename_state_code;;
 
 (* [local] *)
 let comp_STOP_Loop = prove
@@ -359,7 +357,3 @@ let stack_names_call_args = prove
                           (tlookup f 4)
                           (tlookup f 0)) (MAP SND p')`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

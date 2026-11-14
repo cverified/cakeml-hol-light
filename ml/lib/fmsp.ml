@@ -7,9 +7,8 @@
 
 needs "lib/sptree.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: finite_map transfer pred_set *)
 
 let sp2fm_def = new_definition

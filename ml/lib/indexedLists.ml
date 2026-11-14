@@ -7,19 +7,19 @@
 
 (* this file needs nothing of the port *)
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: list rich_list *)
 
 let FOLDRi_def,FOLDRi_ind = define_rec
   [`FOLDRi f a [] = a`;
    `FOLDRi f a (CONS h t) = f 0 h (FOLDRi (f o SUC) a t)`];;
+add_simp FOLDRi_def;;
 
 let findi_def,findi_ind = define_rec
   [`indexedLists_findi x [] = 0`;
    `indexedLists_findi x (CONS h t) = (if x = h then 0 else 1 +
-  indexedLists_findi x t)`];;
+    indexedLists_findi x t)`];;
 
 let LIST_RELi_rules = cake_inductive
   `LIST_RELi R [] [] /\

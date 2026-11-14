@@ -24,11 +24,8 @@ needs "compiler/backend/word_unreach.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_to_word"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_to_word"
   ["asm"; "mlstring"; "wordLang"; "word_alloc"; "word_copy";
    "word_cse"; "word_inst"; "word_remove"; "word_simp";
    "word_unreach"];;
@@ -152,7 +149,3 @@ let compile_alt = prove
    let _22 = empty_ffi (implode "finished: word_remove") in
    (col,ZIP names (ZIP args rmt_ps)))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

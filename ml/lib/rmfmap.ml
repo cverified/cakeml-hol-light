@@ -12,9 +12,8 @@ needs "lib/unifDef.ml";;
 needs "lib/walk.ml";;
 needs "lib/walkstar.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: transfer pred_set finite_map *)
 
 let swfs_def = new_definition

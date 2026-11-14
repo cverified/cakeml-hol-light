@@ -16,11 +16,8 @@ needs "lib/state_transformer.ml";;
 needs "misc/misc.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "reg_alloc"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "reg_alloc"
   ["ml_monadBase"; "mllist"];;
 
 (*
@@ -47,7 +44,10 @@ let _ = hol4_ancestors "reg_alloc"
   Stemp   : only allowed to be mapped to k, k+1, ... (stack positions)
 *)
 let reg_alloc_tag_INDUCT,reg_alloc_tag_RECURSION = define_datatype
-  "reg_alloc_tag = Fixed (num) | Atemp | Stemp";;
+  "reg_alloc_tag =
+     Fixed num
+   | Atemp
+   | Stemp";;
 
 (*
   Inputs are tagged with Fixed, Atemp , Stemp
@@ -204,7 +204,9 @@ let set_stack_def = new_definition
 
 (* Data type for the exceptions *)
 let state_exn_INDUCT,state_exn_RECURSION = define_datatype
-  "state_exn = reg_alloc_Fail (string) | reg_alloc_Subscript";;
+  "state_exn =
+     reg_alloc_Fail string
+   | reg_alloc_Subscript";;
 
 (* Monadic functions to handle the exceptions *)
 (* HOL4 makes the functions of the exception type state_exn with ML
@@ -390,14 +392,14 @@ let sorted_insert_def,sorted_insert_ind = define_rec
   [`sorted_insert (x:num) acc [] = REVERSE (CONS x acc)`;
    `sorted_insert (x:num) acc (CONS y ys) =
         (if x = y then APPEND (REVERSE acc) (CONS y ys) else if
-          x > y then APPEND (REVERSE acc) (CONS x (CONS y ys)) else
-          sorted_insert x (CONS y acc) ys)`];;
+            x > y then APPEND (REVERSE acc) (CONS x (CONS y ys))
+            else sorted_insert x (CONS y acc) ys)`];;
 
 let sorted_mem_def,sorted_mem_ind = define_rec
   [`sorted_mem (x:num) [] = F`;
    `sorted_mem (x:num) (CONS y ys) =
         (if x = y then T else if x > y then F else sorted_mem x
-          ys)`];;
+            ys)`];;
 
 let insert_edge_def = new_definition
   `insert_edge x y =
@@ -795,7 +797,7 @@ let st_ex_FIRST_def,st_ex_FIRST_ind = define_wf
             optb2.
             match optb2 with
               NONE -> st_ex_FIRST P Q ms (CONS (p,(x,y)) unavail) |
-                SOME pr ->
+                  SOME pr ->
               st_ex_return (SOME ((x,y),pr,ms),unavail)))))))`];;
 
 let respill_def = new_definition
@@ -917,7 +919,7 @@ let st_ex_list_MIN_cost_def,st_ex_list_MIN_cost_ind = define_wf
       (if x < d then
         st_ex_bind (degrees_sub x) (\
           xv. st_ex_bind (st_ex_return (safe_div (lookup_any x scost
-            0) xv)) (\
+              0) xv)) (\
           cost.
           if v > cost then
             st_ex_list_MIN_cost scost xs d x cost (CONS k acc) else
@@ -1110,8 +1112,8 @@ let first_match_col_def,first_match_col_ind = define_wf
           match c with
             Fixed m ->
               (if MEM m ks then st_ex_return (SOME m) else
-                first_match_col ks xs) | _12 -> first_match_col ks
-                xs)`];;
+                  first_match_col ks xs) | _12 -> first_match_col
+                  ks xs)`];;
 
 (* Clash tree representation of a program -- this is designed as an interface:
   wordLang program -> clash tree -> reg alloc
@@ -1127,19 +1129,21 @@ let first_match_col_def,first_match_col_ind = define_wf
 *)
 
 let clash_tree_INDUCT,clash_tree_RECURSION = define_datatype
-  "clash_tree = reg_alloc_Delta (num list) (num list) \
-   // (Writes list, Reads list)\n\
-   | reg_alloc_Set (1 spt) \
-   // Fixed set\n\
-   | reg_alloc_Branch ((1 spt) option) (clash_tree) (clash_tree) | \
-   reg_alloc_Seq (clash_tree) (clash_tree) \
-   // Binary branch, with an optional liveset at the head";;
+  "clash_tree =
+     reg_alloc_Delta (num list) (num list)
+     // (Writes list, Reads list)
+   | reg_alloc_Set misc_num_set
+     // Fixed set
+   | reg_alloc_Branch (misc_num_set option) clash_tree clash_tree
+   | reg_alloc_Seq clash_tree clash_tree
+     // Binary branch, with an optional liveset at the head
+  ";;
 
 (* --- clash_tree oracle checks --- *)
 let numset_list_delete_def,numset_list_delete_ind = define_rec
   [`numset_list_delete [] (t:'a spt) = t`;
    `numset_list_delete (CONS x xs) (t:'a spt) = numset_list_delete
-  xs (sptree_delete x t)`];;
+    xs (sptree_delete x t)`];;
 
 (*Check that a numset is injective over the clash sets in an interpreted tree*)
 let check_col_def = new_definition
@@ -1155,7 +1159,7 @@ let check_partial_col_def,check_partial_col_ind = define_rec
           SOME one -> check_partial_col f xs t ft | NONE ->
         (match sptree_lookup (f x) ft with
           NONE -> check_partial_col f xs (sptree_insert x one
-            t) (sptree_insert (f x) one ft) | SOME one -> NONE))`];;
+              t) (sptree_insert (f x) one ft) | SOME one -> NONE))`];;
 
 (* The checking function, used by oracle, and also used as part of the correctness proof *)
 (* live = the liveset, flive = the liveset with f applied over it*)
@@ -1167,9 +1171,9 @@ let check_clash_tree_def,check_clash_tree_ind = define_rec
         let fdel_w = (numset_list_delete (MAP f w) flive) in
         check_partial_col f r del_w fdel_w))`;
    `check_clash_tree f (reg_alloc_Set t:clash_tree) live flive =
-  check_col f t`;
+    check_col f t`;
    `check_clash_tree f (reg_alloc_Branch topt t1 t2:clash_tree) live
-  flive =
+    flive =
         (match check_clash_tree f t1 live flive with
           NONE -> NONE | SOME (t1_out,ft1_out) ->
         (match check_clash_tree f t2 live flive with
@@ -1178,8 +1182,8 @@ let check_clash_tree_def,check_clash_tree_ind = define_rec
           NONE ->
             // This check can be done in either direction
             check_partial_col f (MAP FST (toAList (difference
-              t2_out t1_out))) t1_out ft1_out | SOME t -> check_col f
-              t)))`;
+                t2_out t1_out))) t1_out ft1_out | SOME t -> check_col
+                f t)))`;
    `check_clash_tree f (reg_alloc_Seq t1 t2:clash_tree) live flive =
         (match check_clash_tree f t2 live flive with
           NONE -> NONE | SOME (t2_out,ft2_out) ->
@@ -1207,7 +1211,7 @@ let list_remap_def,list_remap_ind = define_wf
         (match sptree_lookup x ta with
           SOME v -> list_remap xs (ta,fa,nv) | NONE ->
           list_remap xs (sptree_insert x nv ta,sptree_insert nv
-            x fa,nv + 1))`];;
+              x fa,nv + 1))`];;
 
 let mk_bij_aux_def,mk_bij_aux_ind = define_rec
   [`mk_bij_aux (reg_alloc_Delta writes reads) tfn =
@@ -1218,7 +1222,7 @@ let mk_bij_aux_def,mk_bij_aux_ind = define_rec
          (let tfn' = mk_bij_aux t2 (mk_bij_aux t1 tfn) in
          match topt with
            NONE -> tfn' | SOME ts -> list_remap (MAP FST (toAList
-             ts)) tfn')`;
+               ts)) tfn')`;
    `mk_bij_aux (reg_alloc_Seq t1 t2:clash_tree) tfn =
         mk_bij_aux t1 (mk_bij_aux t2 tfn)`];;
 
@@ -1274,7 +1278,7 @@ let mk_graph_def,mk_graph_ind = define_wf
           wta. st_ex_bind (st_ex_return (MAP ta r)) (\
           rta. st_ex_bind (extend_clique wta liveout) (\
           live. st_ex_bind (st_ex_return (FILTER (\x. ~(MEM x wta))
-            live)) (\
+              live)) (\
           live. st_ex_bind (extend_clique rta live) (\
           livein.
           st_ex_return livein)))))`;
@@ -1293,7 +1297,7 @@ let mk_graph_def,mk_graph_ind = define_wf
               livein.
               st_ex_return livein) | SOME t ->
             st_ex_bind (st_ex_return (MAP ta (MAP FST (toAList t))))
-              (\
+                (\
               clashes. st_ex_ignore_bind
               (clique_insert_edge clashes) (
               st_ex_return clashes)))))`;
@@ -1417,7 +1421,9 @@ let resort_moves_def = new_definition
    sptree_map (\ls. MAP SND (reg_alloc_sort_moves ls)) acc`;;
 
 let algorithm_INDUCT,algorithm_RECURSION = define_datatype
-  "algorithm = reg_alloc_Simple | reg_alloc_IRC";;
+  "algorithm =
+     reg_alloc_Simple
+   | reg_alloc_IRC";;
 
 (* Read-only version of coalesce_parent: follows the coalesce chain
    to the root without path compression. Safe for use in biased_pref
@@ -1491,8 +1497,8 @@ let neg_first_match_col_def,neg_first_match_col_ind = define_wf
           match c with
             Fixed m ->
               (if MEM m bads \/ m < k then neg_first_match_col
-                k bads xs else st_ex_return (SOME m)) | _17 ->
-                neg_first_match_col k bads xs)`];;
+                  k bads xs else st_ex_return (SOME m)) | _17 ->
+                  neg_first_match_col k bads xs)`];;
 
 let neg_biased_pref_def = new_definition
   `neg_biased_pref k mtable n bads =
@@ -1571,7 +1577,3 @@ let reg_alloc_aux_def = new_definition
 let reg_alloc_def = new_definition
   `reg_alloc alg scost k moves ct forced fs =
      reg_alloc_aux alg scost k moves ct forced fs (mk_bij ct)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

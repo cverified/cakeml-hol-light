@@ -8,22 +8,26 @@
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: rich_list *)
 
 let kont_INDUCT,kont_RECURSION = define_datatype
-  "kont = pegexec_ksym (('atok,'bnt,'cvalue,'err)pegsym) (kont) \
-   (kont) | pegexec_appf1 ('cvalue->'cvalue) (kont) | pegexec_appf2 \
-   ('cvalue->'cvalue->'cvalue) (kont) | pegexec_dropErr (kont) | \
-   pegexec_addErr (locs) ('err) (kont) | pegexec_cmpErrs (kont) | \
-   pegexec_cmpEO ((locs#'err) option) (kont) | pegexec_returnTo \
-   (('atok#locs) list) (('cvalue option) list) (kont) | \
-   pegexec_restoreEO ((locs#'err) option) (kont) | pegexec_poplist \
-   ('cvalue list->'cvalue) (kont) | pegexec_listsym \
-   (('atok,'bnt,'cvalue,'err)pegsym) ('cvalue list->'cvalue) (kont) | \
-   pegexec_done | pegexec_failed";;
+  "kont =
+     pegexec_ksym (('atok,'bnt,'cvalue,'err)pegsym) kont kont
+   | pegexec_appf1 ('cvalue->'cvalue) kont
+   | pegexec_appf2 ('cvalue->'cvalue->'cvalue) kont
+   | pegexec_dropErr kont
+   | pegexec_addErr locs ('err) kont
+   | pegexec_cmpErrs kont
+   | pegexec_cmpEO ((locs#'err) option) kont
+   | pegexec_returnTo (('atok#locs) list) (('cvalue option) list) kont
+   | pegexec_restoreEO ((locs#'err) option) kont
+   | pegexec_poplist ('cvalue list->'cvalue) kont
+   | pegexec_listsym (('atok,'bnt,'cvalue,'err)pegsym) ('cvalue
+       list->'cvalue) kont
+   | pegexec_done
+   | pegexec_failed";;
 
 let poplist_aux_def,poplist_aux_ind = define_shaped_rec
   "cases"
@@ -37,14 +41,14 @@ let poplistval_def = new_definition
   (SOME (f values)) rest)`;;
 
 let evalcase_INDUCT,evalcase_RECURSION = define_datatype
-  "evalcase = pegexec_EV (('atok,'bnt,'cvalue,'err)pegsym) \
-   (('atok#locs) list) (('cvalue option) list) ((locs#'err) option) \
-   ((locs#'err) list) (('atok,'bnt,'cvalue,'err)kont) \
-   (('atok,'bnt,'cvalue,'err)kont) | pegexec_AP \
-   (('atok,'bnt,'cvalue,'err)kont) (('atok#locs) list) (('cvalue \
-   option) list) ((locs#'err) option) ((locs#'err) list) | \
-   pegexec_Result ((('atok#locs) list,'cvalue,'err)pegresult) | \
-   pegexec_Looped";;
+  "evalcase =
+     pegexec_EV (('atok,'bnt,'cvalue,'err)pegsym) (('atok#locs) list)
+       (('cvalue option) list) ((locs#'err) option) ((locs#'err) list)
+       (('atok,'bnt,'cvalue,'err)kont) (('atok,'bnt,'cvalue,'err)kont)
+   | pegexec_AP (('atok,'bnt,'cvalue,'err)kont) (('atok#locs) list)
+       (('cvalue option) list) ((locs#'err) option) ((locs#'err) list)
+   | pegexec_Result ((('atok#locs) list,'cvalue,'err)pegresult)
+   | pegexec_Looped";;
 
 (* HOL4 pegexecScript.sml:55: the overload OME, which the port
    expands *)
@@ -175,6 +179,7 @@ let peg_exec_def = new_definition
 
 let destResult_def = define_general
   [`pegexec_destResult (pegexec_Result r) = r`];;
+add_simp destResult_def;;
 
 let pegparse_def = new_definition
   `pegparse G s =

@@ -14,11 +14,8 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvi_tailrec"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvi_tailrec"
   ["backend_common"; "bvi"];;
 
 let _ = do_list hide_constant ["pmatch"];;
@@ -46,6 +43,7 @@ let is_const_def = new_definition
         match x1 with
           closLang_IntOp (closLang_Const i) -> small_enough_int i
         | _7 -> F`;;
+add_simp is_const_def;;
 
 let is_const_PMATCH = prove
  (`!op. bvi_tailrec_is_const op =
@@ -55,11 +53,17 @@ let is_const_PMATCH = prove
   CHEAT_TAC);;
 
 let assoc_op_INDUCT,assoc_op_RECURSION = define_datatype
-  "assoc_op = bvi_tailrec_Plus | bvi_tailrec_Times | \
-   bvi_tailrec_Append | bvi_tailrec_Noop";;
+  "assoc_op =
+     bvi_tailrec_Plus
+   | bvi_tailrec_Times
+   | bvi_tailrec_Append
+   | bvi_tailrec_Noop";;
 
 let v_ty_INDUCT,v_ty_RECURSION = define_datatype
-  "v_ty = bvi_tailrec_Int | bvi_tailrec_List | bvi_tailrec_Any";;
+  "v_ty =
+     bvi_tailrec_Int
+   | bvi_tailrec_List
+   | bvi_tailrec_Any";;
 
 let op_type_def = new_definition
   `op_type x1 =
@@ -72,7 +76,7 @@ let to_op_def = define_cases
   [`to_op bvi_tailrec_Plus = closLang_IntOp closLang_Add`;
    `to_op bvi_tailrec_Times = closLang_IntOp closLang_Mult`;
    `to_op (bvi_tailrec_Append:assoc_op) = closLang_BlockOp
-  closLang_ListAppend`;
+    closLang_ListAppend`;
    `to_op bvi_tailrec_Noop = closLang_IntOp closLang_Mod`];;
 
 let from_op_def = new_definition
@@ -119,23 +123,23 @@ let op_eq_PMATCH = prove
                closLang_ListAppend | _13 -> F) | _14 -> F)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let op_eq_to_op = prove
  (`!iop op xs.
       op_eq iop (bvi_Op op xs:bvi_exp) <=>
       op = to_op iop /\ ~(iop = bvi_tailrec_Noop)`,
   CHEAT_TAC);;
+add_simp op_eq_to_op;;
 
 let apply_op_def = new_definition
   `apply_op op e1 e2 = bvi_Op (to_op op) [e1; e2]`;;
 
 let id_from_op_def = define_cases
   [`id_from_op bvi_tailrec_Plus = bvi_Op (closLang_IntOp
-  (closLang_Const (&0))) []`;
+    (closLang_Const (&0))) []`;
    `id_from_op bvi_tailrec_Times = bvi_Op (closLang_IntOp
-  (closLang_Const (&1))) []`;
+    (closLang_Const (&1))) []`;
    `id_from_op (bvi_tailrec_Append:assoc_op) = bvi_Op
-  (closLang_BlockOp (closLang_Cons nil_tag)) []`;
+    (closLang_BlockOp (closLang_Cons nil_tag)) []`;
    `id_from_op bvi_tailrec_Noop = dummy`];;
 
 let index_of_def = new_definition
@@ -177,6 +181,7 @@ let get_bin_args_PMATCH = prove
          bvi_Op _21 [e1; e2] -> SOME (e1,e2) | _22 -> NONE)`,
   CHEAT_TAC);;
 
+let _ = size_thms "bvi_exp";;
 let exp_size_get_bin_args = prove
  (`!x x1 x2.
      get_bin_args x = SOME (x1,x2) ==>
@@ -192,7 +197,7 @@ let try_update_def = define_cases
    `try_update vty (SOME n) ts =
         (if n < LENGTH ts then
           if EL n ts = bvi_tailrec_Any then APPEND (APPEND
-            (TAKE n ts) [vty]) (DROP (n + 1) ts) else ts else ts)`];;
+              (TAKE n ts) [vty]) (DROP (n + 1) ts) else ts else ts)`];;
 
 (* --- Checking termination guarantees --- *)
 
@@ -250,7 +255,6 @@ let exp_size_get_bin_args_term = prove
 cake_term_facts := exp_size_get_bin_args_term ::
   (!cake_term_facts);;
 
-let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvi_tailrecScript.sml:280-284: the tactic that proves the
@@ -269,7 +273,6 @@ let term_ok_int_def,term_ok_int_ind = define_wf
 (* HOL4 bvi_tailrecScript.sml:286: a theorem that HOL4 states as the
    value of an ML expression: term_ok_int_ind *)
 
-let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvi_tailrecScript.sml:303-307: the tactic that proves the
@@ -356,6 +359,7 @@ let decide_ty_def = new_definition
             bvi_tailrec_Int
         | (bvi_tailrec_List,bvi_tailrec_List) -> bvi_tailrec_List
         | (_28,_29) -> bvi_tailrec_Any`;;
+add_simp decide_ty_def;;
 
 let decide_ty_PMATCH = prove
  (`!ty1 ty2.
@@ -461,10 +465,10 @@ let scan_expr_def,scan_expr_ind = assume_definition_rec
   [`scan_expr ts loc [] = []`;
    `scan_expr ts loc (CONS x (CONS y xs)) =
         (let (tx,ty,r,op) = HD (scan_expr ts loc [x]) in CONS
-          (tx,ty,r,op) (scan_expr tx loc (CONS y xs)))`;
+            (tx,ty,r,op) (scan_expr tx loc (CONS y xs)))`;
    `scan_expr ts loc [(bvi_Var n:bvi_exp)] =
         (let ty = (if n < LENGTH ts then EL n ts else
-          bvi_tailrec_Any) in
+            bvi_tailrec_Any) in
           [(ts,ty,F,NONE)])`;
    `scan_expr ts loc [(bvi_If xi xt xe:bvi_exp)] =
         (let (ti,tyi,_43,oi) = HD (scan_expr ts loc [xi]) in
@@ -473,32 +477,32 @@ let scan_expr_def,scan_expr_ind = assume_definition_rec
         let op = (match ot with NONE -> oe | _46 -> ot) in
         let ty = (match op with
                    NONE -> decide_ty ty1 ty2 | SOME opr -> decide_ty
-                     ty1 (decide_ty ty2 (op_type opr))) in
+                       ty1 (decide_ty ty2 (op_type opr))) in
           [(MAP2 decide_ty tt te,ty,IS_SOME oe,op)])`;
    `scan_expr ts loc [(bvi_Let xs x:bvi_exp)] =
         (let ys = scan_expr ts loc xs in
         let tt = MAP (FST o SND) ys in
         let tr = (match LAST1 ys with SOME c -> FST c | NONE -> ts)
-          in
+            in
         let (tu,ty,_49,op) = HD (scan_expr (APPEND tt tr) loc [x])
-          in
+            in
           [(DROP (LENGTH ys) tu,ty,F,op)])`;
    `scan_expr ts loc [(bvi_Raise x:bvi_exp)] =
-  [(ts,bvi_tailrec_Any,F,NONE)]`;
+    [(ts,bvi_tailrec_Any,F,NONE)]`;
    `scan_expr ts loc [(bvi_Tick x:bvi_exp)] = scan_expr ts loc [x]`;
    `scan_expr ts loc [(bvi_Force _51 n:bvi_exp)] =
         (let ty = (if n < LENGTH ts then EL n ts else
-          bvi_tailrec_Any) in
+            bvi_tailrec_Any) in
           [(ts,ty,F,NONE)])`;
    `scan_expr ts loc [(bvi_Call t d xs h:bvi_exp)] =
-  [(ts,bvi_tailrec_Any,F,NONE)]`;
+    [(ts,bvi_tailrec_Any,F,NONE)]`;
    `// multi-value calls/returns decline the tail-rec optimisation. TODO(multiret):
     // to optimise them, is_rec/has_rec/scan_expr/rewrite must recognise LetCall
     // self-calls and Return-based accumulation.
     scan_expr ts loc [(bvi_Return xs:bvi_exp)] =
-      [(ts,bvi_tailrec_Any,F,NONE)]`;
+        [(ts,bvi_tailrec_Any,F,NONE)]`;
    `scan_expr ts loc [bvi_LetCall rets t d xs y] =
-  [(ts,bvi_tailrec_Any,F,NONE)]`;
+    [(ts,bvi_tailrec_Any,F,NONE)]`;
    `scan_expr ts loc [(bvi_Op op xs:bvi_exp)] =
         (let opr = from_op op in
         let opt = op_type opr in
@@ -513,10 +517,10 @@ let scan_expr_def,scan_expr_ind = assume_definition_rec
                       [(ts,bvi_tailrec_Any,F,NONE)]) | SOME (x,y) ->
                     (if ~(bvi_tailrec_is_const op) then
                       [(update_context bvi_tailrec_Int ts x
-                        y,bvi_tailrec_Any,F,NONE)] else
+                          y,bvi_tailrec_Any,F,NONE)] else
                       [(ts,bvi_tailrec_Any,F,NONE)]) else if op =
-                        closLang_BlockOp (closLang_Cons 0) /\ xs = []
-                        then
+                          closLang_BlockOp (closLang_Cons 0) /\ xs = []
+                          then
                 [(
                   // list nil
                   ts,bvi_tailrec_List,F,NONE)] else
@@ -524,17 +528,17 @@ let scan_expr_def,scan_expr_ind = assume_definition_rec
               // Things we can optimize
               (if IS_SOME (check_op ts opr loc (bvi_Op op xs)) then
                 [(ts,opt,F,SOME opr)] else if term_ok ts opt (bvi_Op
-                  op xs) then
+                    op xs) then
                 match get_bin_args (bvi_Op op xs) with
                   NONE -> [(ts,bvi_tailrec_Any,F,NONE)] | SOME (x,y)
-                    ->
+                      ->
                     [(update_context opt ts x y,opt,F,NONE)] else
                 [(ts,bvi_tailrec_Any,F,NONE)]))`];;
 
-let scan_expr_sing_def,scan_expr_sing_ind = define_mutual_rec
+let scan_expr_sing_def,scan_expr_sing_ind = define_rec
   [`scan_expr_sing ts loc (bvi_Var n:bvi_exp) =
         (let ty = (if n < LENGTH ts then EL n ts else
-          bvi_tailrec_Any) in
+            bvi_tailrec_Any) in
           (ts,ty,F,NONE))`;
    `scan_expr_sing ts loc (bvi_If xi xt xe:bvi_exp) =
         (let (ti,tyi,_63,oi) = scan_expr_sing ts loc xi in
@@ -543,29 +547,29 @@ let scan_expr_sing_def,scan_expr_sing_ind = define_mutual_rec
         let op = (match ot with NONE -> oe | _66 -> ot) in
         let ty = (match op with
                    NONE -> decide_ty ty1 ty2 | SOME opr -> decide_ty
-                     ty1 (decide_ty ty2 (op_type opr))) in
+                       ty1 (decide_ty ty2 (op_type opr))) in
           (MAP2 decide_ty tt te,ty,IS_SOME oe,op))`;
    `scan_expr_sing ts loc (bvi_Let xs x:bvi_exp) =
         (let ys = scan_expr_list ts loc xs in
         let tt = MAP (FST o SND) ys in
         let tr = (match LAST1 ys with SOME c -> FST c | NONE -> ts)
-          in
+            in
         let (tu,ty,_69,op) = scan_expr_sing (APPEND tt tr) loc x in
           (DROP (LENGTH ys) tu,ty,F,op))`;
    `scan_expr_sing ts loc (bvi_Raise x:bvi_exp) =
-  (ts,bvi_tailrec_Any,F,NONE)`;
+    (ts,bvi_tailrec_Any,F,NONE)`;
    `scan_expr_sing ts loc (bvi_Tick x:bvi_exp) = scan_expr_sing ts
-  loc x`;
+    loc x`;
    `scan_expr_sing ts loc (bvi_Force _71 n:bvi_exp) =
         (let ty = (if n < LENGTH ts then EL n ts else
-          bvi_tailrec_Any) in
+            bvi_tailrec_Any) in
           (ts,ty,F,NONE))`;
    `scan_expr_sing ts loc (bvi_Call t d xs h:bvi_exp) =
-  (ts,bvi_tailrec_Any,F,NONE)`;
+    (ts,bvi_tailrec_Any,F,NONE)`;
    `scan_expr_sing ts loc (bvi_Return xs:bvi_exp) =
-  (ts,bvi_tailrec_Any,F,NONE)`;
+    (ts,bvi_tailrec_Any,F,NONE)`;
    `scan_expr_sing ts loc (bvi_LetCall rets t d xs y) =
-  (ts,bvi_tailrec_Any,F,NONE)`;
+    (ts,bvi_tailrec_Any,F,NONE)`;
    `scan_expr_sing ts loc (bvi_Op op xs:bvi_exp) =
         (let opr = from_op op in
         let opt = op_type opr in
@@ -580,10 +584,10 @@ let scan_expr_sing_def,scan_expr_sing_ind = define_mutual_rec
                       (ts,bvi_tailrec_Any,F,NONE)) | SOME (x,y) ->
                     (if ~(bvi_tailrec_is_const op) then
                       (update_context bvi_tailrec_Int ts x
-                        y,bvi_tailrec_Any,F,NONE) else
+                          y,bvi_tailrec_Any,F,NONE) else
                       (ts,bvi_tailrec_Any,F,NONE)) else if op =
-                        closLang_BlockOp (closLang_Cons 0) /\ xs = []
-                        then
+                          closLang_BlockOp (closLang_Cons 0) /\ xs = []
+                          then
                 (
                  // list nil
                  ts,bvi_tailrec_List,F,NONE) else
@@ -591,16 +595,16 @@ let scan_expr_sing_def,scan_expr_sing_ind = define_mutual_rec
               // Things we can optimize
               (if IS_SOME (check_op ts opr loc (bvi_Op op xs)) then
                 (ts,opt,F,SOME opr) else if term_ok ts opt (bvi_Op
-                  op xs) then
+                    op xs) then
                 match get_bin_args (bvi_Op op xs) with
                   NONE -> (ts,bvi_tailrec_Any,F,NONE) | SOME (x,y)
-                    ->
+                      ->
                     (update_context opt ts x y,opt,F,NONE) else
                 (ts,bvi_tailrec_Any,F,NONE)))`;
    `scan_expr_list ts loc [] = []`;
    `scan_expr_list ts loc (CONS x xs) =
         (let (tx,ty,r,op) = scan_expr_sing ts loc x in CONS
-          (tx,ty,r,op) (scan_expr_list tx loc xs))`];;
+            (tx,ty,r,op) (scan_expr_list tx loc xs))`];;
 
 let scan_expr_eq = prove
  (`(!e ts loc. scan_expr ts loc [e] = [scan_expr_sing ts loc e]) /\
@@ -714,7 +718,7 @@ let has_rec_sing_def,has_rec_sing_ind = assume_definition_rec
    `has_rec_sing loc (bvi_Tick x:bvi_exp) = has_rec_sing loc x`;
    `has_rec_sing loc (bvi_Op op xs:bvi_exp) =
         (if EX (bvi_tailrec_is_rec loc) xs then T else
-          has_rec_list loc xs)`;
+            has_rec_list loc xs)`;
    `has_rec_sing loc x = F`;
    `has_rec_list loc [] = F`;
    `has_rec_list loc (CONS x xs) =
@@ -774,41 +778,40 @@ let compile_each_def,compile_each_ind = define_rec
   [`bvi_tailrec_compile_each next' [] = (next',[])`;
    `bvi_tailrec_compile_each next' (CONS (loc,arity,exp) xs) =
         (match bvi_tailrec_compile_exp loc next' arity exp with NONE
-          ->
+            ->
             (let (n,ys) = bvi_tailrec_compile_each next' xs in
               (n,CONS (loc,arity,exp) ys)) | SOME (exp_aux,exp_opt)
-                ->
+                  ->
             (let (n,ys) = bvi_tailrec_compile_each (next' +
-              bvl_to_bvi_namespaces) xs in
+                bvl_to_bvi_namespaces) xs in
             (n,CONS (loc,arity,exp_aux) (CONS (next',arity +
-              1,exp_opt) ys))))`];;
+                1,exp_opt) ys))))`];;
 
 let bvi_tailrec_compile_prog_def = new_definition
   `bvi_tailrec_compile_prog do_it next' xs =
      (if do_it then bvi_tailrec_compile_each next' xs else
        (next',xs))`;;
 
-(* [simp] *)
 let scan_expr_not_nil = prove
  (`!x. ~(scan_expr ts loc [x] = [])`,
   (REWRITE_TAC[CONJUNCT1 scan_expr_eq; NOT_CONS_NIL]));;
+add_simp scan_expr_not_nil;;
 
-(* [simp] *)
 let LENGTH_scan_expr = prove
  (`!ts loc xs. LENGTH (scan_expr ts loc xs) = LENGTH xs`,
   CHEAT_TAC);;
+add_simp LENGTH_scan_expr;;
 
-(* [simp] *)
 let scan_expr_SING = prove
  (`[HD (scan_expr ts loc [x])] = scan_expr ts loc [x]`,
   (REWRITE_TAC[CONJUNCT1 scan_expr_eq; HD]));;
+add_simp scan_expr_SING;;
 
-(* [simp] *)
 let scan_expr_HD_SING = prove
  (`HD (scan_expr ts loc [x]) = y <=> scan_expr ts loc [x] = [y]`,
   (REWRITE_TAC[CONJUNCT1 scan_expr_eq; HD; CONS_11]));;
+add_simp scan_expr_HD_SING;;
 
-(* [simp] *)
 let check_exp_SOME_simp = prove
  (`check_exp loc arity expr = SOME op <=>
      (?ts ty r.
@@ -817,6 +820,7 @@ let check_exp_SOME_simp = prove
          [expr] = [(ts,ty,r,SOME op)] /\
        ty = op_type op)`,
   CHEAT_TAC);;
+add_simp check_exp_SOME_simp;;
 
 (* --- Test rewriting --- *)
 
@@ -944,10 +948,6 @@ let rev_compile_exp = prove
                  NONE))))))`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

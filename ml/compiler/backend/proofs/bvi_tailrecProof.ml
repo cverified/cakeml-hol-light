@@ -19,11 +19,8 @@ needs "compiler/backend/semantics/bviSem.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvi_tailrecProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvi_tailrecProof"
   ["bviProps"; "bviSem"; "bvi_tailrec"];;
 
 let _ = do_list hide_constant ["all"];;
@@ -39,39 +36,38 @@ let _ = do_list hide_constant ["all"];;
 
 (* HOL4 bvi_tailrecProofScript.sml:22-25: ML code, not ported *)
 
-(* [simp] *)
 let get_bin_args_SOME = prove
  (`!exp q.
     get_bin_args exp = SOME q <=>
     (?e1 e2 op. q = (e1,e2) /\ exp = bvi_Op op [e1; e2])`,
   CHEAT_TAC);;
+add_simp get_bin_args_SOME;;
 
-(* [simp] *)
 let opbinargs_SOME = prove
  (`!exp opr.
    opbinargs opr exp = SOME q <=> ~(opr = bvi_tailrec_Noop) /\ (?x
      y. q = (x,y) /\ exp = bvi_Op (to_op opr) [x; y])`,
   CHEAT_TAC);;
+add_simp opbinargs_SOME;;
 
-(* [simp] *)
 let decide_ty_simp1 = prove
  (`(decide_ty ty1 ty2 = bvi_tailrec_Int <=> ty1 = bvi_tailrec_Int /\ ty2
   = bvi_tailrec_Int) /\
    (decide_ty ty1 ty2 = bvi_tailrec_List <=> ty1 = bvi_tailrec_List
      /\ ty2 = bvi_tailrec_List)`,
   CHEAT_TAC);;
+add_simp decide_ty_simp1;;
 
-(* [simp] *)
 let list_to_v_simp = prove
  (`!xs. bvlSem_v_to_list (bvlSem_list_to_v xs) = SOME xs`,
   CHEAT_TAC);;
+add_simp list_to_v_simp;;
 
-(* [simp] *)
 let to_op_11 = prove
  (`to_op op1 = to_op op2 <=> op1 = op2`,
   CHEAT_TAC);;
+add_simp to_op_11;;
 
-(* [simp] *)
 let to_op_eq_simp = prove
  (`(to_op x = closLang_IntOp closLang_Add <=> (x = bvi_tailrec_Plus)) /\
    (to_op x = closLang_IntOp closLang_Mult <=> (x =
@@ -89,8 +85,8 @@ let to_op_eq_simp = prove
    (closLang_IntOp closLang_Mod = to_op x <=> (x =
      bvi_tailrec_Noop))`,
   CHEAT_TAC);;
+add_simp to_op_eq_simp;;
 
-(* [simp] *)
 let op_eq_simp = prove
  (`(op_eq bvi_tailrec_Plus x <=> (?xs. x = bvi_Op (closLang_IntOp
   closLang_Add) xs)) /\
@@ -99,27 +95,28 @@ let op_eq_simp = prove
    (op_eq bvi_tailrec_Append x <=> (?xs. x = bvi_Op
      (closLang_BlockOp closLang_ListAppend) xs))`,
   CHEAT_TAC);;
+add_simp op_eq_simp;;
 
-(* [simp] *)
 let scan_expr_EVERY_SING = prove
  (`ALL P (scan_expr ts loc [x]) <=> P (HD (scan_expr ts loc [x]))`,
   CHEAT_TAC);;
+add_simp scan_expr_EVERY_SING;;
 
-(* [simp] *)
 let try_update_LENGTH = prove
  (`LENGTH (try_update ty idx ts) = LENGTH ts`,
   CHEAT_TAC);;
+add_simp try_update_LENGTH;;
 
-(* [simp] *)
 let update_context_LENGTH = prove
  (`LENGTH (update_context ty ts x y) = LENGTH ts`,
   CHEAT_TAC);;
+add_simp update_context_LENGTH;;
 
-(* [simp] *)
 let decide_ty_simp = prove
  (`decide_ty ty1 ty2 = ty3 /\ ~(ty3 = bvi_tailrec_Any) <=>
    ty1 = ty3 /\ ty2 = ty3 /\ ~(ty3 = bvi_tailrec_Any)`,
   CHEAT_TAC);;
+add_simp decide_ty_simp;;
 
 let ty_rel_def = new_definition
   `ty_rel = ALL2
@@ -245,6 +242,7 @@ let evaluate_let_wrap = prove
      bviSem_evaluate ([x],APPEND (APPEND vs [op_id_val op]) vs,s)`,
   CHEAT_TAC);;
 
+let _ = size_thms "bvi_exp";;
 let evaluate_complete_ind = prove
  (`!P.
     (!xs s.
@@ -311,10 +309,10 @@ let try_update_twice = prove
            bvi_tailrec_Any then ty else EL n ts))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let index_of_simp = prove
  (`index_of exp = SOME n <=> exp = db_vars_Var n`,
   CHEAT_TAC);;
+add_simp index_of_simp;;
 
 let scan_expr_ty_rel = prove
  (`!ts loc xs env ys s vs t.
@@ -641,10 +639,10 @@ let scan_expr_check_op = prove
      IS_SOME (check_op ts opr loc (bvi_Op op xs))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let from_op_to_op = prove
  (`from_op (to_op opr) = opr`,
   CHEAT_TAC);;
+add_simp from_op_to_op;;
 
 let scan_expr_op_same = prove
  (`scan_expr ts loc [bvi_Op op xs] = [(tt,ty,r,SOME opr)] ==>
@@ -692,10 +690,10 @@ let is_rec_term_ok = prove
      (term_ok ts ty exp ==> ~(bvi_tailrec_is_rec loc exp))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let op_type_lem = prove
  (`~(op = bvi_tailrec_Noop) <=> ~(op_type op = bvi_tailrec_Any)`,
   CHEAT_TAC);;
+add_simp op_type_lem;;
 
 let evaluate_rewrite_tail = prove
  (`!xs ((s:(num#'c,'ffi)bviSem_state)) env1 r t opt s' acc env2 loc ts
@@ -855,11 +853,11 @@ let get_code_labels_rewrite = prove
       bviProps_get_code_labels exp`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let get_code_labels_let_wrap = prove
  (`!a b c. bviProps_get_code_labels (let_wrap a b c) =
   bviProps_get_code_labels b UNION bviProps_get_code_labels c`,
   CHEAT_TAC);;
+add_simp get_code_labels_let_wrap;;
 
 let get_code_labels_compile_exp = prove
  (`!loc next' arity exp exp_aux exp_opt.
@@ -892,10 +890,6 @@ let bvi_tailrecProof_compile_prog_good_code_labels = prove
      c2)) SUBSET all`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["all"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

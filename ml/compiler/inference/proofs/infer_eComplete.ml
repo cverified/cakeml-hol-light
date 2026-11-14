@@ -23,11 +23,8 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "infer_eComplete"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "infer_eComplete"
   ["ast"; "envRel"; "infer"; "inferProps"; "infer_t"; "namespace";
    "namespaceProps"; "semanticPrimitives"; "typeSysProps";
    "typeSystem"; "unify"];;
@@ -730,10 +727,6 @@ let infer_e_complete = prove
         MAP SND env = MAP (convert_t o t_walkstar s') env')))`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

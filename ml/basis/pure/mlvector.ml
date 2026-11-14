@@ -17,11 +17,8 @@ needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "mlvector"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "mlvector"
   ["misc"; "mllist"];;
 
 let _ = do_list hide_constant ["Equal"; "Greater"; "Less"];;
@@ -68,20 +65,20 @@ let length_toList = prove
  (`LENGTH (mlvector_toList vec) = length vec`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let toList_11 = prove
  (`(mlvector_toList l = mlvector_toList l') = (l = l')`,
   CHEAT_TAC);;
+add_simp toList_11;;
 
 let EL_toList = prove
  (`EL n (mlvector_toList l) = sub l n`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let toList_fromList = prove
  (`(mlvector_toList (fromList l) = l) /\ (fromList (mlvector_toList v)
   = v)`,
   CHEAT_TAC);;
+add_simp toList_fromList;;
 
 let update_def = new_definition
   `update vec i x = Vector (LUPDATE x i (mlvector_toList (vec)))`;;
@@ -114,7 +111,7 @@ let mlvector_foldli_aux_def,mlvector_foldli_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
   [`mlvector_foldli_aux f e vec n 0 = e`;
    `mlvector_foldli_aux f e vec n (SUC len) = mlvector_foldli_aux f
-  (f n (sub vec n) e) vec (n + 1) len`];;
+    (f n (sub vec n) e) vec (n + 1) len`];;
 
 let mlvector_foldli_def = new_definition
   `mlvector_foldli f e vec = mlvector_foldli_aux f e vec 0 (length
@@ -139,7 +136,7 @@ let foldl_aux_def,foldl_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
   [`foldl_aux f e vec n 0 = e`;
    `foldl_aux f e vec n (SUC len) = foldl_aux f (f e (sub vec n))
-  vec (n + 1) len`];;
+    vec (n + 1) len`];;
 
 let mlvector_foldl_def = new_definition
   `mlvector_foldl f e vec = foldl_aux f e vec 0 (length vec)`;;
@@ -162,7 +159,7 @@ let foldri_aux_def,foldri_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`foldri_aux f e vec 0 = e`;
    `foldri_aux f e vec (SUC len) = foldri_aux f (f len (sub vec
-  len) e) vec len`];;
+    len) e) vec len`];;
 
 let foldri_def = new_definition
   `foldri f e vec = foldri_aux f e vec (length vec)`;;
@@ -186,7 +183,7 @@ let foldr_aux_def,foldr_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
   [`foldr_aux f e vec 0 = e`;
    `foldr_aux f e vec (SUC len) = foldr_aux f (f (sub vec len) e)
-  vec len`];;
+    vec len`];;
 
 let foldr_def = new_definition
   `foldr f e vec = foldr_aux f e vec (length vec)`;;
@@ -210,7 +207,7 @@ let findi_aux_def,findi_aux_ind = define_wf
   [`findi_aux f vec n 0 = NONE`;
    `findi_aux f vec n (SUC len) =
       (if f n (sub vec n) then SOME (n,(sub vec n)) else
-        findi_aux f vec (n + 1) len)`];;
+          findi_aux f vec (n + 1) len)`];;
 
 let mlvector_findi_def = new_definition
   `mlvector_findi f vec = findi_aux f vec 0 (length vec)`;;
@@ -223,7 +220,7 @@ let find_aux_def,find_aux_ind = define_wf
   [`find_aux f vec n 0 = NONE`;
    `find_aux f vec n (SUC len) =
       (if f (sub vec n) then SOME (sub vec n) else find_aux f
-        vec (n + 1) len)`];;
+          vec (n + 1) len)`];;
 
 let find_def = new_definition
   `find f vec = find_aux f vec 0 (length vec)`;;
@@ -246,7 +243,7 @@ let exists_aux_def,exists_aux_ind = define_wf
   [`exists_aux f vec n 0 = F`;
    `exists_aux f vec n (SUC len) =
         (if f (sub vec n) then T else exists_aux f vec (n + 1)
-          len)`];;
+            len)`];;
 
 let mlvector_exists_def = new_definition
   `mlvector_exists f vec = exists_aux f vec 0 (length vec)`;;
@@ -269,7 +266,7 @@ let all_aux_def,all_aux_ind = define_wf
   [`all_aux f vec n 0 = T`;
    `all_aux f vec n (SUC len) =
         (if f (sub vec n) then all_aux f vec (n + 1) len else
-          F)`];;
+            F)`];;
 
 let all_def = new_definition
   `all f vec = all_aux f vec 0 (length vec)`;;
@@ -292,8 +289,8 @@ let mlvector_collate_aux_def,mlvector_collate_aux_ind = define_wf
   [`mlvector_collate_aux f vec1 vec2 n ord 0 = ord`;
    `mlvector_collate_aux f vec1 vec2 n ord (SUC len) =
         (if f (sub vec1 n) (sub vec2 n) = EQUAL then
-          mlvector_collate_aux f vec1 vec2 (n + 1) ord len else f
-          (sub vec1 n) (sub vec2 n))`];;
+            mlvector_collate_aux f vec1 vec2 (n + 1) ord len else f
+            (sub vec1 n) (sub vec2 n))`];;
 
 let mlvector_collate_def = new_definition
   `mlvector_collate f vec1 vec2 =
@@ -337,12 +334,8 @@ let mlvector_collate_thm = prove
        (mlvector_toList vec1) (mlvector_toList vec2)`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["Equal";
    "Greater";
    "Less"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -19,11 +19,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_fvsProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_fvsProof"
   ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_fvs"];;
 
 (* LENGTH_remove_fvs *)
@@ -35,10 +32,10 @@ let remove_fvs_SING = prove
  (`!x. ?y. remove_fvs fvs [x] = [y]`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let HD_remove_fvs_SING = prove
  (`!x. [HD (remove_fvs fvs [x])] = remove_fvs fvs [x]`,
   CHEAT_TAC);;
+add_simp HD_remove_fvs_SING;;
 
 let EVERY_remove_fvs_SING = prove
  (`ALL P (remove_fvs fvs [x]) <=> P (HD (remove_fvs fvs [x]))`,
@@ -323,10 +320,10 @@ let clos_fvsProof_semantics_compile = prove
 
 (* syntactic properties *)
 
-(* [simp] *)
 let code_locs_remove_fvs = prove
  (`!fvs xs. code_locs (remove_fvs fvs xs) = code_locs xs`,
   CHEAT_TAC);;
+add_simp code_locs_remove_fvs;;
 
 let fv_max_remove_fvs = prove
  (`!fvs xs.
@@ -334,40 +331,40 @@ let fv_max_remove_fvs = prove
     (!v. fv v (remove_fvs fvs xs) ==> v < fvs)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let remove_fvs_every_Fn_SOME = prove
  (`!fvs es. every_Fn_SOME (remove_fvs fvs es) <=> every_Fn_SOME es`,
   CHEAT_TAC);;
+add_simp remove_fvs_every_Fn_SOME;;
 
-(* [simp] *)
 let remove_fvs_every_Fn_vs_NONE = prove
  (`!fvs es. every_Fn_vs_NONE (remove_fvs fvs es) <=> every_Fn_vs_NONE
   es`,
   CHEAT_TAC);;
+add_simp remove_fvs_every_Fn_vs_NONE;;
 
-(* [simp] *)
 let remove_fvs_set_globals = prove
  (`!fvs x. MAP closProps_set_globals (remove_fvs fvs x) = MAP
   closProps_set_globals x`,
   CHEAT_TAC);;
+add_simp remove_fvs_set_globals;;
 
-(* [simp] *)
 let set_globals_HD_remove_fvs_SING = prove
  (`closProps_set_globals (HD (remove_fvs fvs [x])) =
   closProps_set_globals x`,
   CHEAT_TAC);;
+add_simp set_globals_HD_remove_fvs_SING;;
 
-(* [simp] *)
 let remove_fvs_esgc_free = prove
  (`!fvs x. ALL closProps_esgc_free (remove_fvs fvs x) <=> ALL
   closProps_esgc_free x`,
   CHEAT_TAC);;
+add_simp remove_fvs_esgc_free;;
 
-(* [simp] *)
 let remove_fvs_elist_globals = prove
  (`closProps_elist_globals (remove_fvs fvs xs) =
   closProps_elist_globals xs`,
   CHEAT_TAC);;
+add_simp remove_fvs_elist_globals;;
 
 let EVERY_remove_fvs_sing = prove
  (`ALL f (remove_fvs n [y]) <=> f (HD (remove_fvs n [y]))`,
@@ -382,12 +379,8 @@ let remove_fvs_obeys_max_app = prove
   k) xs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let get_code_labels_remove_fvs = prove
  (`!n es. MAP closProps_get_code_labels (remove_fvs n es) = MAP
   closProps_get_code_labels es`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;
+add_simp get_code_labels_remove_fvs;;

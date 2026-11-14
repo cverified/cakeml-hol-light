@@ -25,11 +25,8 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_to_stack"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_to_stack"
   ["asm"; "mlstring"; "parmove"; "stackLang"; "wordLang";
    "word_alloc"];;
 
@@ -71,12 +68,12 @@ let wRegWrite2_def = new_definition
 let wStackLoad_def,wStackLoad_ind = define_rec
   [`wStackLoad [] x = x`;
    `wStackLoad (CONS (r,i) ps) x = wordLang_Seq
-  (stackLang_StackLoad r i) (wStackLoad ps x)`];;
+    (stackLang_StackLoad r i) (wStackLoad ps x)`];;
 
 let wStackStore_def,wStackStore_ind = define_rec
   [`wStackStore [] x = x`;
    `wStackStore (CONS (r,i) ps) x = wordLang_Seq (wStackStore ps x)
-  (stackLang_StackStore r i)`];;
+    (stackLang_StackStore r i)`];;
 
 let wMoveSingle_def = new_definition
   `wMoveSingle (x,y) (k,f,(f':num)) =
@@ -103,7 +100,7 @@ let wMoveAux_def,wMoveAux_ind = define_wf
 let format_var_def = define_cases
   [`format_var (k:num) NONE = INL (k + 1)`;
    `format_var (k:num) (SOME x) = (if x < (k:num) then INL x else
-  INR x)`];;
+    INR x)`];;
 
 let wMove_def = new_definition
   `wMove xs (k,(f:num),(f':num)) =
@@ -334,7 +331,7 @@ let stack_move_def,stack_move_ind = define_wf
    `stack_move (SUC n) start' offset i p =
          wordLang_Seq (stack_move n (start' + 1) offset i p)
              (wordLang_Seq (stackLang_StackLoad i (start' +
-               offset)) (stackLang_StackStore i start'))`];;
+                 offset)) (stackLang_StackStore i start'))`];;
 
 let StackArgs_def = new_definition
   `StackArgs dest arg_count (k,f,(f':num)) =
@@ -664,12 +661,12 @@ let word_to_stack_compile_prog_def = new_definition
 
 let compile_word_to_stack_def,compile_word_to_stack_ind = define_rec
   [`compile_word_to_stack asm_conf perf k [] bitmaps =
-  ([],[],bitmaps)`;
+    ([],[],bitmaps)`;
    `compile_word_to_stack asm_conf perf k (CONS (i,n,p) progs) bitmaps =
          (let (prog,f,bitmaps) = word_to_stack_compile_prog asm_conf
-           perf p n k bitmaps in
+             perf p n k bitmaps in
          let (progs,fs,bitmaps) = compile_word_to_stack asm_conf
-           perf k progs bitmaps in
+             perf k progs bitmaps in
            (CONS (i,prog) progs,CONS f fs,bitmaps))`];;
 
 let word_to_stack_compile_def = new_definition
@@ -694,7 +691,3 @@ let word_to_stack_stub_names_def = new_definition
   `word_to_stack_stub_names one = [
      (raise_stub_location,implode "_Raise");
      (wordLang_store_consts_stub_location,implode "_StoreConsts")]`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

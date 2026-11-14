@@ -17,11 +17,8 @@ needs "lib/grammar.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "gramProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "gramProps"
   ["gram"];;
 (* HOL4 ancestors outside the port: pred_set *)
 
@@ -155,10 +152,10 @@ let fringe_length_not_nullable = prove
                0 < LENGTH (ptree_fringe pt))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let derives_singleTOK = prove
  (`(\G. RTC (derive G)) G [grammar_TOK t] l <=> (l = [grammar_TOK t])`,
   CHEAT_TAC);;
+add_simp derives_singleTOK;;
 
 let fringe_lengths_V = prove
  (`fringe_lengths cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nV)] =
@@ -167,7 +164,3 @@ let fringe_lengths_V = prove
 
 (* HOL4 gramPropsScript.sml:340-350: a theorem that HOL4 states as
    the value of an ML expression: parsing_ind *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

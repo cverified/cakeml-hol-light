@@ -15,11 +15,8 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_inst"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_inst"
   ["stackLang"; "wordLang"];;
 
 let _ = do_list hide_constant ["pmatch"];;
@@ -40,8 +37,8 @@ let pull_ops_def,pull_ops_ind = define_rec
   [`pull_ops op [] acc = acc`;
    `pull_ops op (CONS x xs) acc =
         (match x with (wordLang_Op op' ls) -> (if op = op' then
-          pull_ops op xs (APPEND ls acc) else pull_ops op xs (CONS
-          x acc)) | _2 -> pull_ops op xs (CONS x acc))`];;
+            pull_ops op xs (APPEND ls acc) else pull_ops op xs
+            (CONS x acc)) | _2 -> pull_ops op xs (CONS x acc))`];;
 
 let word_inst_is_const_def = new_definition
   `word_inst_is_const x1 =
@@ -110,7 +107,6 @@ let optimize_consts_def = new_definition
 
 (* If this expression contains a constant it should
     be head of the output operation list *)
-let _ = size_thms "wordLang_exp";;
 (* the termination relation that HOL4 gives is
      MEASURE (wordLang_exp_size ARB)
    which is not one that HOL Light takes here; the one
@@ -162,7 +158,6 @@ let pull_exp_pmatch = prove
  /\
 c d
 *)
-let _ = size_thms "wordLang_exp";;
 (* the termination relation that HOL4 gives is
      MEASURE (wordLang_exp_size ARB)
    which is not one that HOL Light takes here; the one
@@ -214,7 +209,6 @@ let is_Lookup_CurrHeap_pmatch = prove
   in temp and the value of the whole expression must be saved in tar
 *)
 
-let _ = size_thms "wordLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 word_instScript.sml:294-300: the tactic that proves the
@@ -500,7 +494,6 @@ let inst_select_pmatch = prove
 (*
   Convert all 3 register instructions to 2 register instructions
 *)
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let three_to_two_reg_def,three_to_two_reg_ind = define_wf
@@ -594,10 +587,6 @@ let three_to_two_reg_prog_def = new_definition
   `three_to_two_reg_prog b prog =
      (if b then three_to_two_reg prog else prog)`;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

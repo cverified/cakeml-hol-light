@@ -18,11 +18,8 @@ needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/proofs/typeSysProps.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "type_dCanon"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "type_dCanon"
   ["ast"; "inferProps"; "namespace"; "namespaceProps";
    "typeSoundInvariants"; "typeSysProps"; "typeSystem"];;
 
@@ -39,10 +36,10 @@ let tenv_equiv_def = new_definition
       nsAll2 (\i v1 v2. v1 = v2) (type_env_v tenv1) (type_env_v
         tenv2)`;;
 
-(* [simp] *)
 let tenv_equiv_refl = prove
  (`tenv_equiv tenv tenv`,
   CHEAT_TAC);;
+add_simp tenv_equiv_refl;;
 
 let tenv_equiv_sym = prove
  (`tenv_equiv t1 t2 ==> tenv_equiv t2 t1`,
@@ -259,11 +256,11 @@ let extend_bij_def = new_definition
 (* HOL4 type_dCanonScript.sml:334-344: code that the source has in a
    comment *)
 
-(* [simp] *)
 let extend_bij_id = prove
  (`(extend_bij f f s 0 = f) /\
    (extend_bij f g {} n = f)`,
   CHEAT_TAC);;
+add_simp extend_bij_id;;
 
 let extend_bij_compose = prove
  (`extend_bij (extend_bij f g ids n) h jds (n + m) =
@@ -381,11 +378,11 @@ let type_op_ts_tid_rename = prove
 
 let remap_tenvE_def,remap_tenvE_ind = define_rec
   [`remap_tenvE f (typeSystem_Empty:tenv_val_exp) =
-  (typeSystem_Empty:tenv_val_exp)`;
+    (typeSystem_Empty:tenv_val_exp)`;
    `remap_tenvE f (typeSystem_Bind_tvar n e) = typeSystem_Bind_tvar n
-  (remap_tenvE f e)`;
+    (remap_tenvE f e)`;
    `remap_tenvE f (typeSystem_Bind_name s n t e) =
-  typeSystem_Bind_name s n (ts_tid_rename f t) (remap_tenvE f e)`];;
+    typeSystem_Bind_name s n (ts_tid_rename f t) (remap_tenvE f e)`];;
 
 (* [local] *)
 let num_tvs_remap_tenvE = prove
@@ -673,11 +670,7 @@ let type_d_canon_tenv_ok = prove
     tenv_ok tenv')`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["all";
    "id"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

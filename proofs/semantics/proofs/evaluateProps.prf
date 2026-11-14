@@ -59,21 +59,25 @@
 
 ### list_result_eq_Rerr
   (GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
-   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
-     "result"])
+   REWRITE_TAC[list_result_def;
+               injectivity "semanticPrimitives_result";
+               distinctness "semanticPrimitives_result"])
 
 ### list_result_eq_Rval
   (GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
-   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
-     "result"] THEN
+   REWRITE_TAC[list_result_def;
+               injectivity "semanticPrimitives_result";
+               distinctness "semanticPrimitives_result"] THEN
    MESON_TAC[])
 
 ### list_result_inj
   (GEN_TAC THEN GEN_TAC THEN CASES_ON_TAC
     `x:(A,B)semanticPrimitives_result` THEN CASES_ON_TAC
     `y:(A,B)semanticPrimitives_result` THEN
-   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
-     "result"; CONS_11] THEN
+   REWRITE_TAC[list_result_def;
+               injectivity "semanticPrimitives_result";
+               distinctness "semanticPrimitives_result";
+               CONS_11] THEN
    MESON_TAC[])
 
 ### result_rel_list_result

@@ -23,11 +23,8 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "source_evalProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "source_evalProof"
   ["ast"; "evaluate"; "evaluateProps"; "namespaceProps";
    "semanticPrimitives"; "semanticPrimitivesProps"; "semantics"];;
 
@@ -671,12 +668,12 @@ let abort_def = new_definition
   `source_evalProof_abort r <=> (match r with Rerr (Rabort a) -> T |
   _9 -> F)`;;
 
-(* [simp] *)
 let abort_simps = prove
  (`source_evalProof_abort (Rerr (Rabort a)) = T /\
    source_evalProof_abort (Rerr (Rraise e)) = F /\
    source_evalProof_abort (Rval v) = F`,
   CHEAT_TAC);;
+add_simp abort_simps;;
 
 (* [local] *)
 let abort_imp_intro = prove
@@ -1352,11 +1349,7 @@ let adjust_oracle_semantics_prog = prove
      semanticPrimitives_state))) env prog outcome`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["compile_decs";
    "id"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -22,11 +22,8 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "flat_elimProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "flat_elimProof"
   ["ast"; "ffi"; "flatLang"; "flatProps"; "flatSem"; "flat_elim";
    "misc"];;
 
@@ -74,22 +71,23 @@ let find_loc_EVERY_isEmpty = prove
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let find_v_globals_def,find_v_globals_ind = define_mutual_guess_cheat
+let find_v_globals_def,find_v_globals_ind = define_guess_cheat
   [`find_v_globals (flatSem_Conv _2 vl:flatSem_v) = ((find_v_globalsL
-  vl):1 spt)`;
+    vl):1 spt)`;
    `find_v_globals (flatSem_Closure env _4 e:flatSem_v) =
             ((sptree_union (find_v_globalsL (MAP SND
-              (flatSem_environment_v env))) (find_lookups e)):1 spt)`;
+                (flatSem_environment_v env))) (find_lookups e)):1
+                spt)`;
    `find_v_globals (flatSem_Recclosure env vves _6:flatSem_v) =
             ((sptree_union (find_v_globalsL (MAP SND
-              (flatSem_environment_v env)))
+                (flatSem_environment_v env)))
                 (find_lookupsL (MAP (SND o SND) vves))):1 spt)`;
    `find_v_globals (flatSem_Vectorv vl:flatSem_v) = ((find_v_globalsL
-  vl):1 spt)`;
+    vl):1 spt)`;
    `find_v_globals _7 = ((LN):1 spt)`;
    `find_v_globalsL [] = LN`;
    `find_v_globalsL (CONS h t) = sptree_union (find_v_globals h)
-  (find_v_globalsL t)`];;
+    (find_v_globalsL t)`];;
 
 (* HOL4 flat_elimProofScript.sml:128: ML code, not ported *)
 
@@ -156,7 +154,6 @@ let find_v_globals_list_to_v = prove
         domain reachable`,
   CHEAT_TAC);;
 
-let _ = size_thms "flatSem_v";;
 let _ = size_thms "store_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -244,7 +241,7 @@ let find_result_globals_def = new_definition
 
 let find_sem_prim_res_globals_def = define_cases
   [`find_sem_prim_res_globals (Rerr e:(flatSem_v
-  list,flatSem_v)semanticPrimitives_result) =
+    list,flatSem_v)semanticPrimitives_result) =
             find_result_globals (SOME e)`;
    `find_sem_prim_res_globals (Rval e) = find_v_globalsL e`];;
 
@@ -362,10 +359,10 @@ let find_v_globals_list_to_v_APPEND = prove
         SUBSET domain reachable`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let find_v_globals_Unitv = prove
  (`find_v_globals Unitv = LN`,
   (REWRITE_TAC[unitv_def; find_v_globals_def]));;
+add_simp find_v_globals_Unitv;;
 
 let EVERY_EL_IMP = prove
  (`ALL P xs /\ n < LENGTH xs ==> P (EL n xs)`,
@@ -428,11 +425,12 @@ let flat_elimProof_pair_lam_lem = prove
    as the value of an ML expression: do_app_cases *)
 
 
-(* [local,simp] *)
+(* [local] *)
 let fvg_v_to_flat = prove
  (`domain (find_v_globals (v_to_flat v)) SUBSET domain reachable /\
    ~(v_has_Eval (v_to_flat v))`,
   CHEAT_TAC);;
+add_simp fvg_v_to_flat;;
 
 let do_app_SOME_flat_state_rel = prove
  (`!reachable state removed_state op l new_state result
@@ -707,7 +705,3 @@ let remove_flat_prog_distinct_globals = prove
  (`BAG_ALL_DISTINCT (flatProps_elist_globals ds) ==>
    BAG_ALL_DISTINCT (flatProps_elist_globals (remove_flat_prog ds))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

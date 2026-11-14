@@ -18,11 +18,8 @@ needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "flat_elim"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "flat_elim"
   ["flatLang"; "misc"];;
 
 (**************************** ANALYSIS FUNCTIONS *****************************)
@@ -69,12 +66,12 @@ let is_hidden_def,is_hidden_ind = define_wf
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let total_pat_def,total_pat_ind = define_mutual_shaped_rec_cheat
+let total_pat_def,total_pat_ind = define_shaped_rec_cheat
   "maplist>measure"
   [`total_pat (flatLang_Pany:flatLang_pat) = T`;
    `total_pat (flatLang_Pvar _3:flatLang_pat) = T`;
    `total_pat (flatLang_Pcon NONE xs:flatLang_pat) = total_pat_list
-  xs`;
+    xs`;
    `total_pat (flatLang_Pas p _5:flatLang_pat) = total_pat p`;
    `total_pat _6 = F`;
    `total_pat_list [] = T`;
@@ -82,7 +79,6 @@ let total_pat_def,total_pat_ind = define_mutual_shaped_rec_cheat
 
 (* check if expression is pure in that it does not make any visible changes
     (other than writing to globals) *)
-let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 flat_elimScript.sml:75-80: the tactic that proves the
@@ -115,30 +111,30 @@ let flat_elim_is_pure_def,flat_elim_is_pure_ind = define_wf
 let has_Eval_def,has_Eval_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`has_Eval (flatLang_App t op es:flatLang_exp) <=> op =
-  flatLang_Src ast_Eval \/ has_Eval_list es`;
+    flatLang_Src ast_Eval \/ has_Eval_list es`;
    `has_Eval (flatLang_Mat _9 e pes:flatLang_exp) <=> has_Eval e \/
-  has_Eval_pats pes`;
+    has_Eval_pats pes`;
    `has_Eval (flatLang_Letrec _11 funs e:flatLang_exp) <=> has_Eval e
-  \/ has_Eval_funs funs`;
+    \/ has_Eval_funs funs`;
    `has_Eval (flatLang_Raise _13 e:flatLang_exp) <=> has_Eval e`;
    `has_Eval (flatLang_Handle _15 e pes:flatLang_exp) <=> has_Eval e
-  \/ has_Eval_pats pes`;
+    \/ has_Eval_pats pes`;
    `has_Eval (flatLang_Con _18 _19 es:flatLang_exp) <=> has_Eval_list
-  es`;
+    es`;
    `has_Eval (flatLang_Fun _22 _23 e:flatLang_exp) <=> has_Eval e`;
    `has_Eval (flatLang_If _25 e1 e2 e3:flatLang_exp) <=> has_Eval e1
-  \/ has_Eval e2 \/ has_Eval e3`;
+    \/ has_Eval e2 \/ has_Eval e3`;
    `has_Eval (flatLang_Let _28 _29 e1 e2:flatLang_exp) <=> has_Eval
-  e1 \/ has_Eval e2`;
+    e1 \/ has_Eval e2`;
    `has_Eval _30 <=> F`;
    `has_Eval_list [] <=> F`;
    `has_Eval_list (CONS e es) <=> has_Eval e \/ has_Eval_list es`;
    `has_Eval_pats [] <=> F`;
    `has_Eval_pats (CONS (p,e) pes) <=> has_Eval e \/ has_Eval_pats
-  pes`;
+    pes`;
    `has_Eval_funs [] <=> F`;
    `has_Eval_funs (CONS (_31,_32,e) fs) <=> has_Eval e \/
-  has_Eval_funs fs`];;
+    has_Eval_funs fs`];;
 
 let dest_GlobalVarInit_def = new_definition
   `dest_GlobalVarInit x1 =
@@ -161,65 +157,65 @@ let dest_GlobalVarLookup_def = new_definition
 let find_loc_def,find_loc_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`find_loc ((flatLang_Raise _35 er):flatLang_exp) = ((find_loc
-  er):1 spt)`;
+    er):1 spt)`;
    `find_loc (flatLang_Handle _37 eh p_es:flatLang_exp) =
             ((sptree_union (find_loc eh) (find_locL (MAP SND
-              p_es))):1 spt)`;
+                p_es))):1 spt)`;
    `find_loc (flatLang_Lit _40 _41:flatLang_exp) = (LN:1 spt)`;
    `find_loc (flatLang_Con _44 _45 es:flatLang_exp) = ((find_locL
-  es):1 spt)`;
+    es):1 spt)`;
    `find_loc (flatLang_Var_local _46 _47) = ((LN):1 spt)`;
    `find_loc (flatLang_Fun _50 _51 ef:flatLang_exp) = ((find_loc
-  ef):1 spt)`;
+    ef):1 spt)`;
    `find_loc (flatLang_App _53 op es:flatLang_exp) = (((match
-  (dest_GlobalVarInit op) with SOME n -> (sptree_insert n one
-  (find_locL es)) | NONE -> find_locL es)):1 spt)`;
+    (dest_GlobalVarInit op) with SOME n -> (sptree_insert n one
+    (find_locL es)) | NONE -> find_locL es)):1 spt)`;
    `find_loc (flatLang_If _55 ei1 ei2 ei3:flatLang_exp) =
             ((sptree_union (find_loc ei1) (sptree_union (find_loc
-              ei2) (find_loc ei3))):1 spt)`;
+                ei2) (find_loc ei3))):1 spt)`;
    `find_loc (flatLang_Mat _57 em p_es:flatLang_exp) =
             ((sptree_union (find_loc em) (find_locL (MAP SND
-              p_es))):1 spt)`;
+                p_es))):1 spt)`;
    `find_loc (flatLang_Let _60 _61 el1 el2:flatLang_exp) =
-  ((sptree_union (find_loc el1) (find_loc el2)):1 spt)`;
+    ((sptree_union (find_loc el1) (find_loc el2)):1 spt)`;
    `find_loc (flatLang_Letrec _63 vv_es elr1:flatLang_exp) =
             ((sptree_union (find_locL (MAP (SND o SND) vv_es))
-              (find_loc elr1)):1 spt)`;
+                (find_loc elr1)):1 spt)`;
    `find_locL [] = LN`;
    `find_locL (CONS e es) = sptree_union (find_loc e) (find_locL
-  es)`];;
+    es)`];;
 
 let find_lookups_def,find_lookups_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`find_lookups (flatLang_Raise _65 er:flatLang_exp) = find_lookups
-  er`;
+    er`;
    `find_lookups (flatLang_Handle _67 eh p_es:flatLang_exp) =
             sptree_union (find_lookups eh) (find_lookupsL (MAP
-              SND p_es))`;
+                SND p_es))`;
    `find_lookups (flatLang_Lit _70 _71:flatLang_exp) = LN`;
    `find_lookups (flatLang_Con _74 _75 es:flatLang_exp) =
-  find_lookupsL es`;
+    find_lookupsL es`;
    `find_lookups (flatLang_Var_local _76 _77) = LN`;
    `find_lookups (flatLang_Fun _80 _81 ef:flatLang_exp) =
-  find_lookups ef`;
+    find_lookups ef`;
    `find_lookups (flatLang_App _83 op es:flatLang_exp) = (match
-  (dest_GlobalVarLookup op) with SOME n -> (sptree_insert n one
-  (find_lookupsL es)) | NONE -> find_lookupsL es)`;
+    (dest_GlobalVarLookup op) with SOME n -> (sptree_insert n one
+    (find_lookupsL es)) | NONE -> find_lookupsL es)`;
    `find_lookups (flatLang_If _85 ei1 ei2 ei3:flatLang_exp) =
             sptree_union (find_lookups ei1)
                 (sptree_union (find_lookups ei2) (find_lookups
-                  ei3))`;
+                    ei3))`;
    `find_lookups (flatLang_Mat _87 em p_es:flatLang_exp) =
             sptree_union (find_lookups em) (find_lookupsL (MAP
-              SND p_es))`;
+                SND p_es))`;
    `find_lookups (flatLang_Let _90 _91 el1 el2:flatLang_exp) =
             sptree_union (find_lookups el1) (find_lookups el2)`;
    `find_lookups (flatLang_Letrec _93 vv_es elr1:flatLang_exp) =
             sptree_union (find_lookupsL (MAP (SND o SND) vv_es))
-              (find_lookups elr1)`;
+                (find_lookups elr1)`;
    `find_lookupsL [] = LN`;
    `find_lookupsL (CONS e es) = sptree_union (find_lookups e)
-  (find_lookupsL es)`];;
+    (find_lookupsL es)`];;
 
 let analyse_exp_def = new_definition
   `analyse_exp e = (let locs = (find_loc e) in let lookups =
@@ -264,7 +260,3 @@ let remove_flat_prog_def = new_definition
        let (r,t) = analyse_code code in
        let reachable = closure_spt r t in
        remove_unreachable reachable code)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

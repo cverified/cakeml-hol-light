@@ -17,16 +17,13 @@ needs "compiler/backend/semantics/bvlProps.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bviProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bviProps"
   ["backendProps"; "bviSem"; "bvlProps"];;
 
 let _ = do_list hide_constant ["error"];;
 
-(* initial_state_simp[simp] *)
+(* initial_state_simp *)
 let bviProps_initial_state_simp = prove
  (`state_code
       (bviSem_initial_state f c co cc k) = c /\ state_ffi
@@ -38,8 +35,9 @@ let bviProps_initial_state_simp = prove
         bviSem_state_global
       (bviSem_initial_state f c co cc k) = NONE`,
   CHEAT_TAC);;
+add_simp bviProps_initial_state_simp;;
 
-(* initial_state_with_simp[simp] *)
+(* initial_state_with_simp *)
 let bviProps_initial_state_with_simp = prove
  (`state_clock_fupd (K k1)
       (bviSem_initial_state f c co cc k) = bviSem_initial_state f c
@@ -47,6 +45,7 @@ let bviProps_initial_state_with_simp = prove
       (bviSem_initial_state f c co cc k) = bviSem_initial_state f
         c1 co cc k`,
   CHEAT_TAC);;
+add_simp bviProps_initial_state_with_simp;;
 
 let bvl_to_bvi_id = prove
  (`bvl_to_bvi (bvi_to_bvl s) s = s`,
@@ -67,51 +66,51 @@ let bvl_to_bvi_with_ffi = prove
   (bvl_to_bvi x z)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let bvl_to_bvi_code = prove
  (`state_code
       (bvl_to_bvi x y) = state_code y`,
   CHEAT_TAC);;
+add_simp bvl_to_bvi_code;;
 
-(* [simp] *)
 let bvl_to_bvi_clock = prove
  (`state_clock
       (bvl_to_bvi x y) = state_clock x`,
   CHEAT_TAC);;
+add_simp bvl_to_bvi_clock;;
 
-(* [simp] *)
 let bvi_to_bvl_refs = prove
  (`state_refs
       (bvi_to_bvl x) = state_refs x`,
   CHEAT_TAC);;
+add_simp bvi_to_bvl_refs;;
 
-(* [simp] *)
 let bvi_to_bvl_code = prove
  (`state_code
       (bvi_to_bvl x) = sptree_map (K ARB) (state_code x)`,
   CHEAT_TAC);;
+add_simp bvi_to_bvl_code;;
 
-(* [simp] *)
 let bvi_to_bvl_clock = prove
  (`state_clock
       (bvi_to_bvl x) = state_clock x`,
   CHEAT_TAC);;
+add_simp bvi_to_bvl_clock;;
 
-(* [simp] *)
 let bvi_to_bvl_ffi = prove
  (`state_ffi
       (bvi_to_bvl x) = state_ffi x`,
   CHEAT_TAC);;
+add_simp bvi_to_bvl_ffi;;
 
 let bvi_to_bvl_to_bvi_with_ffi = prove
  (`bvl_to_bvi (state_ffi_fupd (K f) (bvi_to_bvl x)) x = state_ffi_fupd
   (K f) x`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let domain_bvi_to_bvl_code = prove
  (`domain (state_code (bvi_to_bvl s)) = domain (state_code s)`,
   CHEAT_TAC);;
+add_simp domain_bvi_to_bvl_code;;
 
 (* HOL4 bviPropsScript.sml:103-108: ML code, not ported *)
 
@@ -183,65 +182,73 @@ let inc_clock_ADD = prove
   (n + m) s`,
   CHEAT_TAC);;
 
-(* inc_clock_refs[simp] *)
+(* inc_clock_refs *)
 let bviProps_inc_clock_refs = prove
  (`state_refs
       (bviProps_inc_clock n s) = state_refs s`,
   CHEAT_TAC);;
+add_simp bviProps_inc_clock_refs;;
 
-(* inc_clock_code[simp] *)
+(* inc_clock_code *)
 let bviProps_inc_clock_code = prove
  (`state_code
       (bviProps_inc_clock n s) = state_code s`,
   CHEAT_TAC);;
+add_simp bviProps_inc_clock_code;;
 
-(* [simp] *)
 let inc_clock_global = prove
  (`bviSem_state_global
       (bviProps_inc_clock n s) = bviSem_state_global s`,
   CHEAT_TAC);;
+add_simp inc_clock_global;;
 
-(* inc_clock_ffi[simp] *)
+(* inc_clock_ffi *)
 let bviProps_inc_clock_ffi = prove
  (`state_ffi
       (bviProps_inc_clock n s) = state_ffi s`,
   CHEAT_TAC);;
+add_simp bviProps_inc_clock_ffi;;
 
-(* inc_clock_clock[simp] *)
+(* inc_clock_clock *)
 let bviProps_inc_clock_clock = prove
  (`state_clock
       (bviProps_inc_clock n s) = state_clock s + n`,
   CHEAT_TAC);;
+add_simp bviProps_inc_clock_clock;;
 
-(* [simp] *)
 let dec_clock_global = prove
  (`bviSem_state_global
       (bviSem_dec_clock n s) = bviSem_state_global s`,
   CHEAT_TAC);;
+add_simp dec_clock_global;;
 
-(* dec_clock_ffi[simp] *)
+(* dec_clock_ffi *)
 let bviProps_dec_clock_ffi = prove
  (`state_ffi
       (bviSem_dec_clock n s) = state_ffi s`,
   CHEAT_TAC);;
+add_simp bviProps_dec_clock_ffi;;
 
-(* dec_clock_refs[simp] *)
+(* dec_clock_refs *)
 let bviProps_dec_clock_refs = prove
  (`state_refs
       (bviSem_dec_clock n s) = state_refs s`,
   CHEAT_TAC);;
+add_simp bviProps_dec_clock_refs;;
 
-(* dec_clock_with_code[simp] *)
+(* dec_clock_with_code *)
 let bviProps_dec_clock_with_code = prove
  (`bviSem_dec_clock n (state_code_fupd (K c) s) = state_code_fupd (K
   c) (bviSem_dec_clock n s)`,
   CHEAT_TAC);;
+add_simp bviProps_dec_clock_with_code;;
 
-(* dec_clock_code[simp] *)
+(* dec_clock_code *)
 let bviProps_dec_clock_code = prove
  (`state_code
       (bviSem_dec_clock n s) = state_code s`,
   CHEAT_TAC);;
+add_simp bviProps_dec_clock_code;;
 
 let dec_clock_inv_clock = prove
  (`~(state_clock t1 < ticks + 1) ==>
@@ -256,10 +263,11 @@ let dec_clock_inv_clock1 = prove
          bviProps_inc_clock c (bviSem_dec_clock 1 t1))`,
   CHEAT_TAC);;
 
-(* dec_clock0[simp] *)
+(* dec_clock0 *)
 let bviProps_dec_clock0 = prove
  (`!n (s:('c,'ffi)bviSem_state). bviSem_dec_clock 0 s = s`,
   CHEAT_TAC);;
+add_simp bviProps_dec_clock0;;
 
 (* [local] *)
 let do_app_inv_clock = prove
@@ -445,12 +453,12 @@ let bviProps_dec_clock_inc_clock = prove
   s) = bviProps_inc_clock x (bviSem_dec_clock n s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let inc_clock_eq_0 = prove
  (`state_clock
       (bviProps_inc_clock extra s) = 0 <=> state_clock s = 0 /\
         extra = 0`,
   CHEAT_TAC);;
+add_simp inc_clock_eq_0;;
 
 (* evaluate_add_to_clock_io_events_mono *)
 let bviProps_evaluate_add_to_clock_io_events_mono = prove
@@ -483,29 +491,29 @@ let bviProps_get_code_labels_def,bviProps_get_code_labels_ind =
   "termination (CHEAT_TAC)"
   [`bviProps_get_code_labels (bvi_Var _2:bvi_exp) = {}`;
    `bviProps_get_code_labels (bvi_If e1 e2 e3:bvi_exp) =
-  bviProps_get_code_labels e1 UNION bviProps_get_code_labels e2 UNION
-  bviProps_get_code_labels e3`;
+    bviProps_get_code_labels e1 UNION bviProps_get_code_labels e2
+    UNION bviProps_get_code_labels e3`;
    `bviProps_get_code_labels (bvi_Let es e:bvi_exp) = UNIONS
-  (set_of_list (MAP bviProps_get_code_labels es)) UNION
-  bviProps_get_code_labels e`;
+    (set_of_list (MAP bviProps_get_code_labels es)) UNION
+    bviProps_get_code_labels e`;
    `bviProps_get_code_labels (bvi_Raise e:bvi_exp) =
-  bviProps_get_code_labels e`;
+    bviProps_get_code_labels e`;
    `bviProps_get_code_labels (bvi_Tick e:bvi_exp) =
-  bviProps_get_code_labels e`;
+    bviProps_get_code_labels e`;
    `bviProps_get_code_labels (bvi_Force loc v:bvi_exp) = {loc}`;
    `bviProps_get_code_labels (bvi_Call _4 d es h:bvi_exp) =
         (match d with NONE -> {} | SOME n -> {n}) UNION
         (match h with NONE -> {} | SOME e ->
-          bviProps_get_code_labels e) UNION
+            bviProps_get_code_labels e) UNION
         UNIONS (set_of_list (MAP bviProps_get_code_labels es))`;
    `bviProps_get_code_labels (bvi_Op op es:bvi_exp) =
-  assign_get_code_label op UNION UNIONS (set_of_list (MAP
-  bviProps_get_code_labels es))`;
+    assign_get_code_label op UNION UNIONS (set_of_list (MAP
+    bviProps_get_code_labels es))`;
    `bviProps_get_code_labels (bvi_Return es:bvi_exp) = UNIONS
-  (set_of_list (MAP bviProps_get_code_labels es))`;
+    (set_of_list (MAP bviProps_get_code_labels es))`;
    `bviProps_get_code_labels (bvi_LetCall _5 _6 d es y) =
         {d} UNION bviProps_get_code_labels y UNION UNIONS
-          (set_of_list (MAP bviProps_get_code_labels es))`];;
+            (set_of_list (MAP bviProps_get_code_labels es))`];;
 
 (* HOL4 bviPropsScript.sml:720-721: a theorem that HOL4 states as the
    value of an ML expression: get_code_labels_def *)
@@ -697,10 +705,6 @@ let semantics_CURRY_I = prove
        bviSem_semantics ffi code (state_co (CURRY I) co) cc start`),
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["error"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

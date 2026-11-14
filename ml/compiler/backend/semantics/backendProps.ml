@@ -13,11 +13,8 @@
 needs "misc/misc.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "backendProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "backendProps"
   ["misc"];;
 
 let state_cc_def = new_definition
@@ -60,15 +57,15 @@ let the_F_eq = prove
 let pure_co_def = new_definition
   `pure_co f = I ## f`;;
 
-(* [simp] *)
 let SND_pure_co = prove
  (`SND (pure_co co x) = co (SND x)`,
   CHEAT_TAC);;
+add_simp SND_pure_co;;
 
-(* [simp] *)
 let FST_pure_co = prove
  (`FST (pure_co co x) = FST x`,
   CHEAT_TAC);;
+add_simp FST_pure_co;;
 
 let pure_co_comb_pure_co = prove
  (`pure_co f o pure_co g o co = pure_co (f o g) o co`,
@@ -312,16 +309,17 @@ let option_le_def = new_definition
         (_1,NONE) -> T
       | (NONE,(SOME _2)) -> F
       | ((SOME n1),(SOME n2)) -> (n1 <= (n2:num))`;;
+add_simp option_le_def;;
 
-(* [simp] *)
 let option_le_refl = prove
  (`!x. option_le x x`,
   CHEAT_TAC);;
+add_simp option_le_refl;;
 
-(* [simp] *)
 let option_le_SOME_0 = prove
  (`option_le (SOME 0) x`,
   CHEAT_TAC);;
+add_simp option_le_SOME_0;;
 
 let option_le_trans = prove
  (`!x y z. option_le x y /\ option_le y z ==> option_le x z`,
@@ -380,7 +378,3 @@ let OPTION_MAP2_MAX_ASSOC = prove
  (`OPTION_MAP2 MAX x (OPTION_MAP2 MAX y z) =
    OPTION_MAP2 MAX (OPTION_MAP2 MAX x y) z`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

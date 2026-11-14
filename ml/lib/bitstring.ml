@@ -8,12 +8,11 @@
 
 needs "lib/numposrep.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: bit words *)
 
-new_type_abbrev("bitstring",`: bool list`);;
+new_type_abbrev("bitstring",`:bool list`);;
 
 let boolify_def,boolify_ind = define_rec
   [`boolify a [] = a`;

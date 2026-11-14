@@ -25,11 +25,8 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "inferSound"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "inferSound"
   ["ast"; "envRel"; "infer"; "inferProps"; "infer_eComplete";
    "infer_eSound"; "infer_t"; "namespaceProps"; "semanticPrimitives";
    "typeSysProps"; "typeSystem"; "type_eDeterm"; "unify"];;
@@ -98,10 +95,10 @@ let set_ids_eq = prove
    set_of_list (list_of_seq (\x. x + n1) (n2 - n1))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let set_ids_same = prove
  (`set_ids x x = {}`,
   CHEAT_TAC);;
+add_simp set_ids_same;;
 
 let set_ids_eq_union = prove
  (`x <= y /\ y <= z ==> set_ids x z = set_ids x y UNION set_ids y z`,
@@ -158,7 +155,3 @@ let db_subst_infer_subst_swap2 = prove
 
 (* HOL4 inferSoundScript.sml:754-1137: code that the source has in a
    comment *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

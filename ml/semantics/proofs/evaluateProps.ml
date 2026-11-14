@@ -19,11 +19,8 @@ needs "semantics/proofs/namespaceProps.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "evaluateProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "evaluateProps"
   ["ast"; "evaluate"; "namespace"; "namespaceProps";
    "semanticPrimitives"; "semanticPrimitivesProps"];;
 
@@ -46,16 +43,17 @@ let RTC_call_FFI_rel_consts = prove
 
 let dest_IO_event_def = define_general
   [`dest_IO_event (IO_event s c b) = (s,c,b)`];;
+add_simp dest_IO_event_def;;
 
 let io_events_mono_def = new_definition
   `io_events_mono s1 s2 <=> ffi_state_io_events
      s1 <<= ffi_state_io_events s2 /\
      (ffi_state_io_events s2 = ffi_state_io_events s1 ==> s2 = s1)`;;
 
-(* [simp] *)
 let io_events_mono_refl = prove
  (`io_events_mono ffi ffi`,
   CHEAT_TAC);;
+add_simp io_events_mono_refl;;
 
 let io_events_mono_trans = prove
  (`io_events_mono ffi1 ffi2 /\ io_events_mono ffi2 ffi3 ==>
@@ -331,22 +329,23 @@ let evaluate_match_add_to_clock = prove
         (semanticPrimitives_state_clock s' + extra)) s',r)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let list_result_eq_Rval = prove
  (`list_result r = Rval r' <=> (?v. r' = [v] /\ r = Rval v)`,
   (GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
-   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
-     "result"] THEN
+   REWRITE_TAC[list_result_def;
+               injectivity "semanticPrimitives_result";
+               distinctness "semanticPrimitives_result"] THEN
    MESON_TAC[]));;
+add_simp list_result_eq_Rval;;
 
-(* [simp] *)
 let list_result_eq_Rerr = prove
  (`list_result r = Rerr e <=> r = Rerr e`,
   (GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
-   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
-     "result"]));;
+   REWRITE_TAC[list_result_def;
+               injectivity "semanticPrimitives_result";
+               distinctness "semanticPrimitives_result"]));;
+add_simp list_result_eq_Rerr;;
 
-(* [simp] *)
 let result_rel_list_result = prove
  (`semanticPrimitivesProps_result_rel (ALL2 R) Q (list_result r1)
   (list_result r2) <=>
@@ -355,14 +354,17 @@ let result_rel_list_result = prove
     `r1:(A,C)semanticPrimitives_result` THEN CASES_ON_TAC
     `r2:(B,D)semanticPrimitives_result` THEN
    REWRITE_TAC[list_result_def; result_rel_def; ALL2]));;
+add_simp result_rel_list_result;;
 
 let list_result_inj = prove
  (`list_result x = list_result y ==> x = y`,
   (GEN_TAC THEN GEN_TAC THEN CASES_ON_TAC
     `x:(A,B)semanticPrimitives_result` THEN CASES_ON_TAC
     `y:(A,B)semanticPrimitives_result` THEN
-   REWRITE_TAC[list_result_def; injectivity "result"; distinctness
-     "result"; CONS_11] THEN
+   REWRITE_TAC[list_result_def;
+               injectivity "semanticPrimitives_result";
+               distinctness "semanticPrimitives_result";
+               CONS_11] THEN
    MESON_TAC[]));;
 
 let evaluate_length = prove
@@ -375,11 +377,11 @@ let evaluate_length = prove
      evaluate_evaluate_decs s e ds = (s',Rval r) ==> T)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let evaluate_nil = prove
  (`!(s:'ffi semanticPrimitives_state) env. evaluate s env [] = (s,Rval
   [])`,
   (REWRITE_TAC[evaluate_def]));;
+add_simp evaluate_nil;;
 
 let evaluate_sing = prove
  (`!(s:'ffi semanticPrimitives_state) env e s' vs. evaluate s env [e]
@@ -406,12 +408,12 @@ let evaluate_append = prove
          (APPEND vs vs')) | err -> err) | err -> err)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let evaluate_decs_nil = prove
  (`!(s:'ffi semanticPrimitives_state) env.
     evaluate_evaluate_decs s env [] = (s,Rval (mk_sem_env nsEmpty
       nsEmpty))`,
   CHEAT_TAC);;
+add_simp evaluate_decs_nil;;
 
 let evaluate_decs_cons = prove
  (`!(s:'ffi semanticPrimitives_state) env d ds.
@@ -985,7 +987,3 @@ let evaluate_Apps = prove
          (sem_env_v_fupd (K (nsAppend (alist_to_ns (ZIP (REVERSE
            ns) (BUTLAST vs))) (sem_env_v env1))) env1) [e])`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

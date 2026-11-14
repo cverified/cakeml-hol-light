@@ -14,11 +14,8 @@
 needs "compiler/backend/closLang.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_number"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_number"
   ["closLang"];;
 
 (* add fresh code locations *)
@@ -32,7 +29,7 @@ let renumber_code_locs_def,renumber_code_locs_ind =
          let (n,xs) = renumber_code_locs_list n xs in
          (n,CONS x xs))`;
    `renumber_code_locs n (closLang_Var t v:closLang_exp) =
-  (n,((closLang_Var t v:closLang_exp)))`;
+    (n,((closLang_Var t v:closLang_exp)))`;
    `renumber_code_locs n (closLang_If t x1 x2 x3:closLang_exp) =
          (let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs n x2 in
@@ -59,11 +56,11 @@ let renumber_code_locs_def,renumber_code_locs_ind =
          (let (n,x1) = renumber_code_locs n x1 in
            (n + 2,closLang_Fn t (SOME n) vs num_args x1))`;
    `renumber_code_locs n (closLang_Letrec t loc vs fns x1:closLang_exp)
-  =
+    =
          (let (m,fns') = renumber_code_locs_list n (MAP SND fns) in
          let (n,x1) = renumber_code_locs (m + 2 * LENGTH fns') x1 in
            (n,closLang_Letrec t (SOME m) vs (ZIP (MAP FST fns)
-             fns') x1))`;
+               fns') x1))`;
    `renumber_code_locs n (closLang_Handle t x1 x2:closLang_exp) =
          (let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs n x2 in
@@ -94,7 +91,3 @@ let clos_number_compile_inc_def = new_definition
 let ignore_table_def = new_definition
   `ignore_table f st (code,aux) = (let (st',code') = f st code in
   (st',(code',aux)))`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

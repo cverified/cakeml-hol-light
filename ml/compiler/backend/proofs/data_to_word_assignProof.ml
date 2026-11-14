@@ -44,11 +44,8 @@ needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "data_to_word_assignProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "data_to_word_assignProof"
   ["backendProps"; "backend_common"; "bvi_to_data"; "copying_gc";
    "dataProps"; "dataSem"; "data_to_word"; "data_to_word_bignumProof";
    "data_to_word_gcProof"; "data_to_word_memoryProof"; "gc_shared";
@@ -1491,7 +1488,6 @@ let state_rel_upd_safe_pkheap = prove
 (* HOL4 data_to_word_assignProofScript.sml:9704-9705: ML code, not
    ported *)
 
-(* [simp] *)
 let state_rel_ignore_safe_for_space = prove
  (`data_to_word_gcProof_state_rel c l1 l2
   (dataSem_state_safe_for_space_fupd (K m) (dataSem_state_space_fupd (K
@@ -1499,8 +1495,8 @@ let state_rel_ignore_safe_for_space = prove
    data_to_word_gcProof_state_rel c l1 l2 (dataSem_state_space_fupd
      (K s) (state_locals_fupd (K l) x)) r t locs`,
   CHEAT_TAC);;
+add_simp state_rel_ignore_safe_for_space;;
 
-(* [simp] *)
 let state_rel_peak_heap_length = prove
  (`data_to_word_gcProof_state_rel c l1 l2
   (dataSem_state_peak_heap_length_fupd (K m) (dataSem_state_space_fupd
@@ -1508,17 +1504,19 @@ let state_rel_peak_heap_length = prove
    data_to_word_gcProof_state_rel c l1 l2 (dataSem_state_space_fupd
      (K s) (state_locals_fupd (K l) x)) r t locs`,
   CHEAT_TAC);;
+add_simp state_rel_peak_heap_length;;
 
-(* opt_map_plus_zero_id[simp] *)
+(* opt_map_plus_zero_id *)
 let data_to_word_assignProof_opt_map_plus_zero_id = prove
  (`!n. OPTION_MAP2 (+) (SOME 0) n = (n:num option)`,
   CHEAT_TAC);;
+add_simp data_to_word_assignProof_opt_map_plus_zero_id;;
 
-(* [simp] *)
 let small_num_small_int = prove
  (`good_dimindex (:'a) ==>
    small_num (dimindex (:'a) = 64) = small_int (:'a)`,
   CHEAT_TAC);;
+add_simp small_num_small_int;;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -1550,10 +1548,11 @@ let small_int_w2i_Smallnum_add = prove
   CHEAT_TAC);;
 
 (* TODO: move? *)
-(* OPTION_MAP2_NONE[simp] *)
+(* OPTION_MAP2_NONE *)
 let data_to_word_assignProof_OPTION_MAP2_NONE = prove
  (`(OPTION_MAP2 f NONE n = NONE) /\ (OPTION_MAP2 f n NONE = NONE)`,
   CHEAT_TAC);;
+add_simp data_to_word_assignProof_OPTION_MAP2_NONE;;
 
 let state_rel_IMP_arch_64_bit = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s
@@ -2293,12 +2292,8 @@ let join_lemma = prove
    whose statement HOL Light does not read (tools/unstated.py):
    assign_thm *)
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["free";
    "parts";
    "vars"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

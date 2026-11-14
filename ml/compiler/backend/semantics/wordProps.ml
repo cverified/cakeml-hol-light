@@ -25,11 +25,8 @@ needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "wordProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "wordProps"
   ["asm"; "backendProps"; "mllist"; "reg_alloc"; "wordConvs";
    "wordLang"; "wordSem"];;
 
@@ -129,7 +126,6 @@ let ALL_DISTINCT_MEM_IMP_ALOOKUP_SOME = prove
 (*TODO does not work when given a goal like
 ?k'. (s with <|locals := l; clock := k|>) = (s with <|locals := l, clock := k |>)
 *)
-(* [simp] *)
 let state_const = prove
  (`((wordSem_state_locals_fupd (K l) s) = (wordSem_state_locals_fupd (K
   l') s) <=> l = l') /\
@@ -140,20 +136,22 @@ let state_const = prove
    ((wordSem_state_stack_fupd (K xs) s) = (wordSem_state_stack_fupd
      (K xs') s) <=> xs = xs')`,
   CHEAT_TAC);;
+add_simp state_const;;
 
-(* [simp] *)
 let PAIR_MAP_EQ_PAIR = prove
  (`(f ## g) p = (a,b) <=> (?x y. p = (x,y) /\ f x = a /\ g y = b)`,
   CHEAT_TAC);;
+add_simp PAIR_MAP_EQ_PAIR;;
 
 (*TODO Weaken this simplification
 What that is needed to be pulled down is when
 f is a record update like (λs. s with clock := k)
 *)
-(* OPTION_CASE_OPTION_MAP[simp] *)
+(* OPTION_CASE_OPTION_MAP *)
 let wordProps_OPTION_CASE_OPTION_MAP = prove
  (`(option_CASE (OPTION_MAP f a) e g) = option_CASE a e (\x. g (f x))`,
   CHEAT_TAC);;
+add_simp wordProps_OPTION_CASE_OPTION_MAP;;
 
 (*USEFUL to clean up proofs with the previous lemma*)
 let OPTION_CASE_MAP = prove
@@ -161,7 +159,6 @@ let OPTION_CASE_MAP = prove
   CHEAT_TAC);;
 
 (******CONST LEMMAS *****)
-(* [simp] *)
 let get_var_with_const = prove
  (`wordSem_get_var x (wordSem_state_locals_size_fupd (K ls) y) =
   wordSem_get_var x y /\
@@ -207,8 +204,8 @@ let get_var_with_const = prove
    wordSem_get_var x (state_ffi_fupd (K ffi) y) = wordSem_get_var x
      y`,
   CHEAT_TAC);;
+add_simp get_var_with_const;;
 
-(* [simp] *)
 let get_vars_with_const = prove
  (`wordSem_get_vars x (wordSem_state_locals_size_fupd (K ls) y) =
   wordSem_get_vars x y /\
@@ -254,8 +251,9 @@ let get_vars_with_const = prove
    wordSem_get_vars x (state_ffi_fupd (K ffi) y) = wordSem_get_vars
      x y`,
   CHEAT_TAC);;
+add_simp get_vars_with_const;;
 
-(* set_var_const[simp] *)
+(* set_var_const *)
 let wordProps_set_var_const = prove
  (`wordSem_state_locals_size
       (wordSem_set_var x y z) = wordSem_state_locals_size z /\
@@ -299,8 +297,9 @@ let wordProps_set_var_const = prove
       (wordSem_set_var x y z) = wordSem_state_be z /\ state_ffi
       (wordSem_set_var x y z) = state_ffi z`,
   CHEAT_TAC);;
+add_simp wordProps_set_var_const;;
 
-(* set_var_with_const[simp] *)
+(* set_var_with_const *)
 let wordProps_set_var_with_const = prove
  (`wordSem_set_var x y (wordSem_state_locals_size_fupd (K ls) z) =
   wordSem_state_locals_size_fupd (K ls) (wordSem_set_var x y z) /\
@@ -347,8 +346,8 @@ let wordProps_set_var_with_const = prove
    wordSem_set_var x y (state_ffi_fupd (K ffi) z) = state_ffi_fupd
      (K ffi) (wordSem_set_var x y z)`,
   CHEAT_TAC);;
+add_simp wordProps_set_var_with_const;;
 
-(* [simp] *)
 let unset_var_const = prove
  (`wordSem_state_locals_size
       (wordSem_unset_var x z) = wordSem_state_locals_size z /\
@@ -392,8 +391,8 @@ let unset_var_const = prove
       (wordSem_unset_var x z) = wordSem_state_be z /\ state_ffi
       (wordSem_unset_var x z) = state_ffi z`,
   CHEAT_TAC);;
+add_simp unset_var_const;;
 
-(* [simp] *)
 let unset_var_with_const = prove
  (`wordSem_unset_var x (wordSem_state_locals_size_fupd (K ls) z) =
   wordSem_state_locals_size_fupd (K ls) (wordSem_unset_var x z) /\
@@ -440,8 +439,9 @@ let unset_var_with_const = prove
    wordSem_unset_var x (state_ffi_fupd (K ffi) z) = state_ffi_fupd
      (K ffi) (wordSem_unset_var x z)`,
   CHEAT_TAC);;
+add_simp unset_var_with_const;;
 
-(* set_vars_const[simp] *)
+(* set_vars_const *)
 let wordProps_set_vars_const = prove
  (`wordSem_state_locals_size
       (wordSem_set_vars x y z) = wordSem_state_locals_size z /\
@@ -485,8 +485,9 @@ let wordProps_set_vars_const = prove
       (wordSem_set_vars x y z) = wordSem_state_be z /\ state_ffi
       (wordSem_set_vars x y z) = state_ffi z`,
   CHEAT_TAC);;
+add_simp wordProps_set_vars_const;;
 
-(* set_vars_with_const[simp] *)
+(* set_vars_with_const *)
 let wordProps_set_vars_with_const = prove
  (`wordSem_set_vars x y (wordSem_state_locals_size_fupd (K ls) z) =
   wordSem_state_locals_size_fupd (K ls) (wordSem_set_vars x y z) /\
@@ -534,8 +535,8 @@ let wordProps_set_vars_with_const = prove
    wordSem_set_vars x y (state_ffi_fupd (K ffi) z) = state_ffi_fupd
      (K ffi) (wordSem_set_vars x y z)`,
   CHEAT_TAC);;
+add_simp wordProps_set_vars_with_const;;
 
-(* [simp] *)
 let get_store_with_const = prove
  (`wordSem_get_store x (wordSem_state_locals_fupd (K l) y) =
   wordSem_get_store x y /\
@@ -582,8 +583,8 @@ let get_store_with_const = prove
    wordSem_get_store x (state_ffi_fupd (K ffi) y) =
      wordSem_get_store x y`,
   CHEAT_TAC);;
+add_simp get_store_with_const;;
 
-(* [simp] *)
 let set_store_const = prove
  (`wordSem_state_locals
       (wordSem_set_store x y z) = wordSem_state_locals z /\
@@ -628,8 +629,8 @@ let set_store_const = prove
       (wordSem_set_store x y z) = wordSem_state_be z /\ state_ffi
       (wordSem_set_store x y z) = state_ffi z`,
   CHEAT_TAC);;
+add_simp set_store_const;;
 
-(* [simp] *)
 let set_store_with_const = prove
  (`wordSem_set_store x y (wordSem_state_locals_fupd (K l) z) =
   wordSem_state_locals_fupd (K l) (wordSem_set_store x y z) /\
@@ -678,9 +679,10 @@ let set_store_with_const = prove
    wordSem_set_store x y (state_ffi_fupd (K ffi) z) =
      state_ffi_fupd (K ffi) (wordSem_set_store x y z)`,
   CHEAT_TAC);;
+add_simp set_store_with_const;;
 
 
-(* push_env_const[simp] *)
+(* push_env_const *)
 let wordProps_push_env_const = prove
  (`state_clock
       (wordSem_push_env x y z) = state_clock z /\
@@ -718,8 +720,9 @@ let wordProps_push_env_const = prove
         wordSem_state_stack_size
       (wordSem_push_env x y z) = wordSem_state_stack_size z`,
   CHEAT_TAC);;
+add_simp wordProps_push_env_const;;
 
-(* push_env_with_const[simp] *)
+(* push_env_with_const *)
 let wordProps_push_env_with_const = prove
  (`(wordSem_push_env x y (state_clock_fupd (K k) z) = state_clock_fupd
   (K k) (wordSem_push_env x y z)) /\
@@ -735,6 +738,7 @@ let wordProps_push_env_with_const = prove
    (wordSem_push_env x y (wordSem_state_locals_fupd (K l) z) =
      wordSem_state_locals_fupd (K l) (wordSem_push_env x y z))`,
   CHEAT_TAC);;
+add_simp wordProps_push_env_with_const;;
 
 (* pop_env_const *)
 let wordProps_pop_env_const = prove
@@ -760,7 +764,7 @@ let wordProps_pop_env_const = prove
    y = wordSem_state_stack_size x`,
   CHEAT_TAC);;
 
-(* pop_env_with_const[simp] *)
+(* pop_env_with_const *)
 let wordProps_pop_env_with_const = prove
  (`wordSem_pop_env (state_clock_fupd (K k) z) = OPTION_MAP (\s.
   wordSem_state_clock_fupd (K k) s) (wordSem_pop_env z) /\
@@ -782,6 +786,7 @@ let wordProps_pop_env_with_const = prove
    wordSem_pop_env (wordSem_state_locals_size_fupd (K ls) z) =
      wordSem_pop_env z`,
   CHEAT_TAC);;
+add_simp wordProps_pop_env_with_const;;
 
 (*FIXME dupe*)
 (*code and gc_fun are unchanged across eval*)
@@ -802,7 +807,7 @@ let pop_env_code_gc_fun_clock = prove
    r = wordSem_state_stack_size x`,
   CHEAT_TAC);;
 
-(* call_env_const[simp] *)
+(* call_env_const *)
 let wordProps_call_env_const = prove
  (`wordSem_state_store
       (wordSem_call_env x ss y) = wordSem_state_store y /\
@@ -838,8 +843,9 @@ let wordProps_call_env_const = prove
         wordSem_state_stack_size
       (wordSem_call_env x ss y) = wordSem_state_stack_size y`,
   CHEAT_TAC);;
+add_simp wordProps_call_env_const;;
 
-(* call_env_with_const[simp] *)
+(* call_env_with_const *)
 let wordProps_call_env_with_const = prove
  (`wordSem_call_env x ss (wordSem_state_locals_fupd (K l) y) =
   wordSem_call_env x ss y /\
@@ -859,8 +865,8 @@ let wordProps_call_env_with_const = prove
    wordSem_call_env x ss (wordSem_state_permute_fupd (K perm) y) =
      wordSem_state_permute_fupd (K perm) (wordSem_call_env x ss y)`,
   CHEAT_TAC);;
+add_simp wordProps_call_env_with_const;;
 
-(* [simp] *)
 let flush_state_const = prove
  (`state_clock
       (wordSem_flush_state b y) = state_clock y /\
@@ -884,8 +890,8 @@ let flush_state_const = prove
       (wordSem_flush_state b y) = wordSem_state_stack_size y /\ stack
       (wordSem_flush_state F y) = stack y`,
   CHEAT_TAC);;
+add_simp flush_state_const;;
 
-(* [simp] *)
 let flush_state_with_const = prove
  (`wordSem_flush_state b (wordSem_state_locals_fupd (K l) y) =
   wordSem_flush_state b y /\
@@ -900,8 +906,8 @@ let flush_state_with_const = prove
    wordSem_flush_state b (state_clock_fupd (K k) y) =
      state_clock_fupd (K k) (wordSem_flush_state b y)`,
   CHEAT_TAC);;
+add_simp flush_state_with_const;;
 
-(* [simp] *)
 let has_space_with_const = prove
  (`wordSem_has_space x (state_clock_fupd (K k) y) = wordSem_has_space x
   y /\
@@ -920,6 +926,7 @@ let has_space_with_const = prove
    wordSem_has_space x (stack_fupd (K xs) y) = wordSem_has_space x
      y`,
   CHEAT_TAC);;
+add_simp has_space_with_const;;
 
 let gc_const = prove
  (`wordSem_gc x = SOME y ==> state_clock
@@ -938,7 +945,6 @@ let gc_const = prove
    y = wordSem_state_stack_size x`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let gc_with_const = prove
  (`wordSem_gc (state_clock_fupd (K k) x) = OPTION_MAP (\s.
   wordSem_state_clock_fupd (K k) s) (wordSem_gc x) /\
@@ -959,6 +965,7 @@ let gc_with_const = prove
      OPTION_MAP (\s. wordSem_state_locals_size_fupd (K ls) s)
      (wordSem_gc x)`,
   CHEAT_TAC);;
+add_simp gc_with_const;;
 
 let alloc_const = prove
  (`wordSem_alloc c names s = (r,s') ==> state_clock
@@ -991,7 +998,6 @@ let alloc_code_gc_fun_const = prove
    t = wordSem_state_stack_size s`,
   CHEAT_TAC);;
 
-(* [simp] *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let alloc_with_const = prove
@@ -1011,8 +1017,8 @@ let alloc_with_const = prove
        s) = (I ## (\s. wordSem_state_compile_fupd (K comp) s))
        (wordSem_alloc c names s)`),
   CHEAT_TAC);;
+add_simp alloc_with_const;;
 
-(* [simp] *)
 let get_fp_var_with_const = prove
  (`wordSem_get_fp_var x (wordSem_state_locals_fupd (K l) y) =
   wordSem_get_fp_var x y /\
@@ -1059,8 +1065,8 @@ let get_fp_var_with_const = prove
    wordSem_get_fp_var x (state_ffi_fupd (K ffi) y) =
      wordSem_get_fp_var x y`,
   CHEAT_TAC);;
+add_simp get_fp_var_with_const;;
 
-(* [simp] *)
 let set_fp_var_const = prove
  (`wordSem_state_locals
       (wordSem_set_fp_var x y z) = wordSem_state_locals z /\
@@ -1105,8 +1111,8 @@ let set_fp_var_const = prove
       (wordSem_set_fp_var x y z) = wordSem_state_be z /\ state_ffi
       (wordSem_set_fp_var x y z) = state_ffi z`,
   CHEAT_TAC);;
+add_simp set_fp_var_const;;
 
-(* [simp] *)
 let set_fp_var_with_const = prove
  (`wordSem_set_fp_var x y (wordSem_state_locals_fupd (K l) z) =
   wordSem_state_locals_fupd (K l) (wordSem_set_fp_var x y z) /\
@@ -1155,8 +1161,8 @@ let set_fp_var_with_const = prove
    wordSem_set_fp_var x y (state_ffi_fupd (K ffi) z) =
      state_ffi_fupd (K ffi) (wordSem_set_fp_var x y z)`,
   CHEAT_TAC);;
+add_simp set_fp_var_with_const;;
 
-(* [simp] *)
 let mem_load_with_const = prove
  (`wordSem_mem_load x (wordSem_state_locals_fupd (K l) y) =
   wordSem_mem_load x y /\
@@ -1174,6 +1180,7 @@ let mem_load_with_const = prove
    wordSem_mem_load x (wordSem_state_compile_fupd (K cc) y) =
      wordSem_mem_load x y`,
   CHEAT_TAC);;
+add_simp mem_load_with_const;;
 
 let mem_store_const = prove
  (`wordSem_mem_store x y z = SOME a ==> wordSem_state_locals
@@ -1198,7 +1205,6 @@ let mem_store_const = prove
   CHEAT_TAC);;
 
 
-(* [simp] *)
 let mem_store_with_const = prove
  (`wordSem_mem_store x z (wordSem_state_locals_fupd (K l) y) =
   OPTION_MAP (\s. wordSem_state_locals_fupd (K l) s) (wordSem_mem_store
@@ -1220,8 +1226,8 @@ let mem_store_with_const = prove
    wordSem_mem_store x z (stack_fupd (K xs) y) = OPTION_MAP (\s.
      wordSem_state_stack_fupd (K xs) s) (wordSem_mem_store x z y)`,
   CHEAT_TAC);;
+add_simp mem_store_with_const;;
 
-(* [simp] *)
 let word_exp_with_const = prove
  (`!x y.
    wordSem_word_exp (state_clock_fupd (K k) x) y = wordSem_word_exp x
@@ -1238,6 +1244,7 @@ let word_exp_with_const = prove
    wordSem_word_exp (wordSem_state_compile_fupd (K cc) x) y =
      wordSem_word_exp x y`,
   CHEAT_TAC);;
+add_simp word_exp_with_const;;
 
 let assign_const_full = prove
  (`wordSem_assign x y z = SOME a ==> wordSem_state_code
@@ -1262,7 +1269,6 @@ let assign_const = prove
    a = state_ffi z`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let assign_with_const = prove
  (`wordSem_assign x y (state_clock_fupd (K k) z) = OPTION_MAP (\s.
   wordSem_state_clock_fupd (K k) s) (wordSem_assign x y z) /\
@@ -1281,8 +1287,8 @@ let assign_with_const = prove
    wordSem_assign x y (stack_fupd (K xs) z) = OPTION_MAP (\s.
      wordSem_state_stack_fupd (K xs) s) (wordSem_assign x y z)`,
   CHEAT_TAC);;
+add_simp assign_with_const;;
 
-(* [simp] *)
 let inst_with_const = prove
  (`wordSem_inst i (wordSem_state_clock_fupd (K k) s) = OPTION_MAP (\s.
   wordSem_state_clock_fupd (K k) s) (wordSem_inst i s) /\
@@ -1299,6 +1305,7 @@ let inst_with_const = prove
    wordSem_inst i (wordSem_state_stack_fupd (K xs) s) = OPTION_MAP
      (\s. wordSem_state_stack_fupd (K xs) s) (wordSem_inst i s)`,
   CHEAT_TAC);;
+add_simp inst_with_const;;
 
 let inst_const_full = prove
  (`wordSem_inst i s = SOME s' ==> wordSem_state_code
@@ -1355,7 +1362,7 @@ let jump_exc_const = prove
    s' = wordSem_state_stack_size s`,
   CHEAT_TAC);;
 
-(* jump_exc_with_const[simp] *)
+(* jump_exc_with_const *)
 let wordProps_jump_exc_with_const = prove
  (`wordSem_jump_exc (wordSem_state_clock_fupd (K k) s) = OPTION_MAP
   (\(s,t). (wordSem_state_clock_fupd (K k) s,t)) (wordSem_jump_exc s) /\
@@ -1363,8 +1370,8 @@ let wordProps_jump_exc_with_const = prove
      OPTION_MAP (\(s,t). (wordSem_state_permute_fupd (K perm) s,t))
      (wordSem_jump_exc s)`,
   CHEAT_TAC);;
+add_simp wordProps_jump_exc_with_const;;
 
-(* [simp] *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let get_var_imm_with_const = prove
@@ -1384,8 +1391,9 @@ let get_var_imm_with_const = prove
      wordSem_get_var_imm x (wordSem_state_permute_fupd (K perm)
        y) = wordSem_get_var_imm x y`),
   CHEAT_TAC);;
+add_simp get_var_imm_with_const;;
 
-(* dec_clock_const[simp] *)
+(* dec_clock_const *)
 let wordProps_dec_clock_const = prove
  (`wordSem_state_locals
       (wordSem_dec_clock s) = wordSem_state_locals s /\
@@ -1434,6 +1442,7 @@ let wordProps_dec_clock_const = prove
       (wordSem_dec_clock (wordSem_state_permute_fupd (K p) s)) =
         state_clock (wordSem_dec_clock s)`,
   CHEAT_TAC);;
+add_simp wordProps_dec_clock_const;;
 
 let sh_mem_set_var_const = prove
  (`sh_mem_set_var r v s = (x,s') ==> state_clock
@@ -1607,7 +1616,6 @@ let share_inst_const = prove
   CHEAT_TAC);;
 
 (*TODO use PAIRMAP and deal with breakage*)
-(* [simp] *)
 let sh_mem_set_var_with_const = prove
  (`sh_mem_set_var res v (wordSem_state_permute_fupd (K p) s) =
    (I ## (\s. wordSem_state_permute_fupd (K p) s)) (sh_mem_set_var
@@ -1616,8 +1624,8 @@ let sh_mem_set_var_with_const = prove
    (I ## (\s. wordSem_state_clock_fupd (K k) s)) (sh_mem_set_var
      res v s)`,
   CHEAT_TAC);;
+add_simp sh_mem_set_var_with_const;;
 
-(* [simp] *)
 let sh_mem_load_with_const = prove
  (`wordSem_sh_mem_load a (wordSem_state_locals_fupd (K l) s) =
   wordSem_sh_mem_load a s /\
@@ -1628,8 +1636,8 @@ let sh_mem_load_with_const = prove
    wordSem_sh_mem_load a (wordSem_state_stack_fupd (K xs) s) =
      wordSem_sh_mem_load a s`,
   CHEAT_TAC);;
+add_simp sh_mem_load_with_const;;
 
-(* [simp] *)
 let sh_mem_load_byte_with_const = prove
  (`wordSem_sh_mem_load_byte a (wordSem_state_locals_fupd (K l) s) =
   wordSem_sh_mem_load_byte a s /\
@@ -1640,8 +1648,8 @@ let sh_mem_load_byte_with_const = prove
    wordSem_sh_mem_load_byte a (wordSem_state_stack_fupd (K xs) s) =
      wordSem_sh_mem_load_byte a s`,
   CHEAT_TAC);;
+add_simp sh_mem_load_byte_with_const;;
 
-(* [simp] *)
 let sh_mem_load16_with_const = prove
  (`wordSem_sh_mem_load16 a (wordSem_state_locals_fupd (K l) s) =
   wordSem_sh_mem_load16 a s /\
@@ -1652,8 +1660,8 @@ let sh_mem_load16_with_const = prove
    wordSem_sh_mem_load16 a (wordSem_state_stack_fupd (K xs) s) =
      wordSem_sh_mem_load16 a s`,
   CHEAT_TAC);;
+add_simp sh_mem_load16_with_const;;
 
-(* [simp] *)
 let sh_mem_load32_with_const = prove
  (`wordSem_sh_mem_load32 a (wordSem_state_locals_fupd (K l) s) =
   wordSem_sh_mem_load32 a s /\
@@ -1664,8 +1672,8 @@ let sh_mem_load32_with_const = prove
    wordSem_sh_mem_load32 a (wordSem_state_stack_fupd (K xs) s) =
      wordSem_sh_mem_load32 a s`,
   CHEAT_TAC);;
+add_simp sh_mem_load32_with_const;;
 
-(* [simp] *)
 let sh_mem_store_with_const = prove
  (`wordSem_sh_mem_store a w (wordSem_state_permute_fupd (K p) s) =
    (I ## (\s. wordSem_state_permute_fupd (K p) s))
@@ -1674,8 +1682,8 @@ let sh_mem_store_with_const = prove
    (I ## (\s. wordSem_state_clock_fupd (K k) s))
      (wordSem_sh_mem_store a w s)`,
   CHEAT_TAC);;
+add_simp sh_mem_store_with_const;;
 
-(* [simp] *)
 let sh_mem_store_byte_with_const = prove
  (`wordSem_sh_mem_store_byte a w (wordSem_state_permute_fupd (K p) s) =
    (I ## (\s. wordSem_state_permute_fupd (K p) s))
@@ -1684,8 +1692,8 @@ let sh_mem_store_byte_with_const = prove
    (I ## (\s. wordSem_state_clock_fupd (K k) s))
      (wordSem_sh_mem_store_byte a w s)`,
   CHEAT_TAC);;
+add_simp sh_mem_store_byte_with_const;;
 
-(* [simp] *)
 let sh_mem_store16_with_const = prove
  (`wordSem_sh_mem_store16 a w (wordSem_state_permute_fupd (K p) s) =
    (I ## (\s. wordSem_state_permute_fupd (K p) s))
@@ -1694,8 +1702,8 @@ let sh_mem_store16_with_const = prove
    (I ## (\s. wordSem_state_clock_fupd (K k) s))
      (wordSem_sh_mem_store16 a w s)`,
   CHEAT_TAC);;
+add_simp sh_mem_store16_with_const;;
 
-(* [simp] *)
 let sh_mem_store32_with_const = prove
  (`wordSem_sh_mem_store32 a w (wordSem_state_permute_fupd (K p) s) =
    (I ## (\s. wordSem_state_permute_fupd (K p) s))
@@ -1704,8 +1712,8 @@ let sh_mem_store32_with_const = prove
    (I ## (\s. wordSem_state_clock_fupd (K k) s))
      (wordSem_sh_mem_store32 a w s)`,
   CHEAT_TAC);;
+add_simp sh_mem_store32_with_const;;
 
-(* [simp] *)
 let share_inst_with_const = prove
  (`share_inst op v c (wordSem_state_permute_fupd (K p) s) =
    (I ## (\s. wordSem_state_permute_fupd (K p) s)) (share_inst op v c
@@ -1714,8 +1722,8 @@ let share_inst_with_const = prove
    (I ## (\s. wordSem_state_clock_fupd (K k) s)) (share_inst op v c
      s)`,
   CHEAT_TAC);;
+add_simp share_inst_with_const;;
 
-(* [simp] *)
 let cut_state_with_const = prove
  (`wordSem_cut_state x (state_clock_fupd (K k) z) = OPTION_MAP (\s.
   wordSem_state_clock_fupd (K k) s) (wordSem_cut_state x z) /\
@@ -1734,6 +1742,7 @@ let cut_state_with_const = prove
    wordSem_cut_state x (stack_fupd (K xs) z) = OPTION_MAP (\s.
      wordSem_state_stack_fupd (K xs) s) (wordSem_cut_state x z)`,
   CHEAT_TAC);;
+add_simp cut_state_with_const;;
 
 let cut_state_const = prove
  (`wordSem_cut_state x s = SOME s' ==>
@@ -1757,17 +1766,17 @@ let cut_state_const = prove
 (******CONST LEMMAS END *****)
 
 (*TODO complete for all get set variaents *)
-(* [simp] *)
 let get_var_set_store = prove
  (`wordSem_get_var v1 (wordSem_set_store v2 x s) = wordSem_get_var v1
   s`,
   CHEAT_TAC);;
+add_simp get_var_set_store;;
 
-(* [simp] *)
 let get_var_set_fp_var = prove
  (`wordSem_get_var v1 (wordSem_set_fp_var v2 x s) = wordSem_get_var v1
   s`,
   CHEAT_TAC);;
+add_simp get_var_set_fp_var;;
 
 let get_var_set_var = prove
  (`wordSem_get_var v1 (wordSem_set_var v2 x s) = (if v1 = v2 then SOME
@@ -1804,13 +1813,13 @@ let wordProps_evaluate_add_clock = prove
 
    The number of clock ticks is fixed for any program, and can be characterized by st.clock - rst.clock *)
 
-(* [simp] *)
 let with_locals_same_clock = prove
  (`wordSem_state_clock_fupd (K (wordSem_state_clock s))
   (wordSem_state_locals_fupd (K l)
      s) = wordSem_state_locals_fupd (K l)
      s`,
   CHEAT_TAC);;
+add_simp with_locals_same_clock;;
 
 (* [local] *)
 let cont_loop_not_timeout = prove
@@ -1952,7 +1961,6 @@ let s_frame_key_eq_def2 = prove
         /\ n = n')`,
   CHEAT_TAC);;
 
-let _ = size_thms "stack_frame";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let s_key_eq_def,s_key_eq_ind = define_wf
@@ -2709,16 +2717,16 @@ let wordProps_inc_clock_def = new_definition
   `wordProps_inc_clock n (t:('a,'c,'ffi)wordSem_state) =
   wordSem_state_clock_fupd (K (wordSem_state_clock t + n)) t`;;
 
-(* [simp] *)
 let inc_clock_0 = prove
  (`!t. wordProps_inc_clock 0 t = t`,
   CHEAT_TAC);;
+add_simp inc_clock_0;;
 
-(* [simp] *)
 let inc_clock_inc_clock = prove
  (`!t. wordProps_inc_clock n (wordProps_inc_clock m t) =
   wordProps_inc_clock (n + m) t`,
   CHEAT_TAC);;
+add_simp inc_clock_inc_clock;;
 
 let evaluate_call_push_dec_option_le_stack_max = prove
  (`!p args sz env handler s res t ck.
@@ -2886,18 +2894,14 @@ let permute_swap_lemma3 = prove
                                 env)) stack' (stack rst))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let word_cmp_Word_Word = prove
  (`wordSem_word_cmp cmp (wordLang_Word c) (wordLang_Word c') = SOME
   (wordSem_word_cmp cmp c c')`,
   CHEAT_TAC);;
+add_simp word_cmp_Word_Word;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["Term";
    "comp";
    "precondition"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

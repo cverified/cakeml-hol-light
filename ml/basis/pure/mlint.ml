@@ -15,11 +15,8 @@ needs "lib/ASCIInumbers.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/ternaryComparisons.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "mlint"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "mlint"
   ["mlstring"];;
 (* HOL4 ancestors outside the port: gcd *)
 
@@ -58,12 +55,12 @@ let maxSmall_DEC_def1 = new_definition
 let num_to_chars_def,num_to_chars_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x0)`
   [`num_to_chars i 0 k acc = num_to_chars (i DIV (10 EXP
-  exp_for_dec_enc))
+    exp_for_dec_enc))
           exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k)
-            acc`;
+              acc`;
    `num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then CONS
-  (toChar k) acc else num_to_chars i j (k DIV 10) (CONS (toChar (k
-  MOD 10)) acc))`];;
+    (toChar k) acc else num_to_chars i j (k DIV 10) (CONS (toChar
+    (k MOD 10)) acc))`];;
 
 (* [local] *)
 let add_lt_divisible_iff = prove
@@ -138,7 +135,7 @@ let fromChars_range_unsafe_def,fromChars_range_unsafe_ind = define_wf
   [`fromChars_range_unsafe l 0 str = 0`;
    `fromChars_range_unsafe l (SUC n) str =
       fromChars_range_unsafe l n str * 10 + fromChar_unsafe
-        (strsub str (l + n))`];;
+          (strsub str (l + n))`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -148,7 +145,7 @@ let fromChars_range_def,fromChars_range_ind = define_wf
    `fromChars_range l (SUC n) str =
       (let rest = OPTION_MAP ((*) 10) (fromChars_range l n str) and
           head = fromChar (strsub str (l + n)) in OPTION_MAP2
-            (+) rest head)`];;
+              (+) rest head)`];;
 
 let fromChars_range_eq_unsafe = prove
  (`!str l r. ALL isDigit str /\ l + r <= LENGTH str ==>
@@ -329,21 +326,21 @@ let toString_len_1 = prove
    ~(HD (mlint_toString (i:num)) = (CHR 43))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let fromString_int_to_string = prove
  (`neg_char = (CHR 126) \/ neg_char = (CHR 45) ==>
    mlint_fromString (int_to_string neg_char i) = SOME i`,
   CHEAT_TAC);;
+add_simp fromString_int_to_string;;
 
-(* [simp] *)
 let fromString_toString = prove
  (`!(i:int). mlint_fromString (mlint_toString i) = SOME i`,
   (SIMP_TAC[toString_def1; fromString_int_to_string]));;
+add_simp fromString_toString;;
 
-(* [simp] *)
 let fromNatString_toString = prove
  (`!(n:num). fromNatString (mlint_toString n) = SOME n`,
   CHEAT_TAC);;
+add_simp fromNatString_toString;;
 
 let fromChar_IS_SOME_IFF = prove
  (`IS_SOME (fromChar c) <=> isDigit c`,
@@ -424,7 +421,3 @@ let num_to_str_APPEND_11 = prove
    ~(48 <= ORD x2 /\ ORD x2 <= 57) ==>
    n1 = n2 /\ CONS x1 xs1 = CONS x2 xs2`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

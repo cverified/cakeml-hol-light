@@ -13,11 +13,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "asmProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "asmProps"
   ["asmSem"];;
 
 (* this file reads the name of a record field as a variable and
@@ -122,7 +119,7 @@ let asserts_def,asserts_ind = define_wf
   [`asserts 0 next' ms _1 Q <=> Q (next' 0 ms)`;
    `asserts (SUC n) next' ms P Q <=>
          (let ms' = next' (SUC n) ms in P ms' /\ asserts n
-           next' ms' P Q)`];;
+             next' ms' P Q)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -236,7 +233,6 @@ let asserts2_every = prove
    P (ITER j (f o g) ms) (g (ITER j (f o g) ms))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let upd_pc_simps = prove
  (`(asm_state_align (asmSem_upd_pc x s) = asm_state_align s) /\
    (asm_state_mem_domain (asmSem_upd_pc x s) = asm_state_mem_domain
@@ -249,6 +245,7 @@ let upd_pc_simps = prove
    (asm_state_lr (asmSem_upd_pc x s) = asm_state_lr s) /\
    (asm_state_pc (asmSem_upd_pc x s) = x)`,
   CHEAT_TAC);;
+add_simp upd_pc_simps;;
 
 let asm_failed_ignore_new_pc = prove
  (`!i v w s. asm_state_failed (asmSem_asm i w s) <=> asm_state_failed
@@ -283,7 +280,6 @@ let write_mem_word_consts = prove
                  asm_state_mem_domain s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let binop_upd_consts = prove
  (`(asm_state_mem_domain (asmSem_binop_upd a b c d x) =
   asm_state_mem_domain x) /\
@@ -295,8 +291,8 @@ let binop_upd_consts = prove
    (asm_state_lr (asmSem_binop_upd a b c d x) = asm_state_lr x) /\
    (asm_state_be (asmSem_binop_upd a b c d x) = asm_state_be x)`,
   CHEAT_TAC);;
+add_simp binop_upd_consts;;
 
-(* [simp] *)
 let arith_upd_consts = prove
  (`(asm_state_mem_domain (asmSem_arith_upd a x) = asm_state_mem_domain
   x) /\
@@ -305,8 +301,8 @@ let arith_upd_consts = prove
    (asm_state_lr (asmSem_arith_upd a x) = asm_state_lr x) /\
    (asm_state_be (asmSem_arith_upd a x) = asm_state_be x)`,
   CHEAT_TAC);;
+add_simp arith_upd_consts;;
 
-(* [simp] *)
 let fp_upd_consts = prove
  (`(asm_state_mem_domain (asmSem_fp_upd a x) = asm_state_mem_domain x)
   /\
@@ -315,8 +311,8 @@ let fp_upd_consts = prove
    (asm_state_lr (asmSem_fp_upd a x) = asm_state_lr x) /\
    (asm_state_be (asmSem_fp_upd a x) = asm_state_be x)`,
   CHEAT_TAC);;
+add_simp fp_upd_consts;;
 
-(* [simp] *)
 let asm_consts = prove
  (`!i w s. (asm_state_be (asmSem_asm i w s) = asm_state_be s) /\
             (asm_state_lr (asmSem_asm i w s) = asm_state_lr s) /\
@@ -325,6 +321,7 @@ let asm_consts = prove
             (asm_state_mem_domain (asmSem_asm i w s) =
               asm_state_mem_domain s)`,
   CHEAT_TAC);;
+add_simp asm_consts;;
 
 let RTC_asm_step_consts = prove
  (`RTC (\s1 s2. ?i. asm_step c s1 i s2) s1 s2 ==> (asm_state_mem_domain
@@ -386,7 +383,3 @@ let RTC_asm_step_outside_mem_domain = prove
      asm_state_mem_domain s1) ==> (asm_state_mem s2 a = asm_state_mem
      s1 a))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

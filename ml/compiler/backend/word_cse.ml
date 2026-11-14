@@ -20,11 +20,8 @@ needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_cse"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_cse"
   ["wordLang"];;
 (* HOL4 ancestors outside the port: words bool *)
 
@@ -111,7 +108,7 @@ let invalidate_data_def = new_definition
 let invalidate_regs_def,invalidate_regs_ind = define_rec
   [`invalidate_regs data [] = data`;
    `invalidate_regs data (CONS r rs) = invalidate_regs
-  (invalidate_data data r) rs`];;
+    (invalidate_data data r) rs`];;
 
 (* Enter an odd register that a stored fact reads into the tracked set as a
   self-mapping, so that a later write to it resets the data. Registers
@@ -125,7 +122,7 @@ let register_read_def = new_definition
 let register_reads_def,register_reads_ind = define_rec
   [`register_reads data [] = data`;
    `register_reads data (CONS r rs) = register_reads (register_read
-  data r) rs`];;
+    data r) rs`];;
 
 (* REGISTER TRANSFORMATIONS *)
 
@@ -144,7 +141,7 @@ let canonicalImmReg_def = define_cases
 
 let canonicalImmReg'_def = define_cases
   [`canonicalImmReg' avoid data (Reg r) = Reg (canonicalRegs' avoid
-  data r)`;
+    data r)`;
    `canonicalImmReg' avoid data (Imm w) = Imm w`];;
 
 let canonicalMultRegs_def = new_definition
@@ -176,34 +173,34 @@ let canonicalMoveRegs_def = new_definition
 let canonicalArith_def = define_cases
   [`canonicalArith data (asm_Binop op r1 r2 r3) =
       asm_Binop op r1 (canonicalRegs' r1 data r2)
-        (canonicalImmReg' r1 data r3)`;
+          (canonicalImmReg' r1 data r3)`;
    `canonicalArith data (asm_Shift s r1 r2 ri) =
       asm_Shift s r1 (canonicalRegs' r1 data r2)
-        (canonicalImmReg' r1 data ri)`;
+          (canonicalImmReg' r1 data ri)`;
    `canonicalArith data (asm_Div r1 r2 r3) =
       asm_Div r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
    `canonicalArith data (asm_LongMul r1 r2 r3 r4) =
       asm_LongMul r1 r2 (canonicalRegs data r3) (canonicalRegs
-        data r4)`;
+          data r4)`;
    `canonicalArith data (asm_LongDiv r1 r2 r3 r4 r5) =
       asm_LongDiv r1 r2 (canonicalRegs data r3) (canonicalRegs
-        data r4) (canonicalRegs data r5)`;
+          data r4) (canonicalRegs data r5)`;
    `canonicalArith data (asm_AddCarry r1 r2 r3 r4) =
       asm_AddCarry r1 (canonicalRegs' r1 data r2) (canonicalRegs'
-        r1 data r3) r4`;
+          r1 data r3) r4`;
    `canonicalArith data (asm_AddOverflow r1 r2 r3 r4) =
       asm_AddOverflow r1 (canonicalRegs' r1 data r2)
-        (canonicalRegs' r1 data r3) r4`;
+          (canonicalRegs' r1 data r3) r4`;
    `canonicalArith data (asm_SubOverflow r1 r2 r3 r4) =
       asm_SubOverflow r1 (canonicalRegs' r1 data r2)
-        (canonicalRegs' r1 data r3) r4`];;
+          (canonicalRegs' r1 data r3) r4`];;
 
 let canonicalFp_def = define_cases
   [`canonicalFp data (FPLess r1 r2 r3) =
       FPLess r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
    `canonicalFp data (FPLessEqual r1 r2 r3) =
       FPLessEqual r1 (canonicalRegs data r2) (canonicalRegs data
-        r3)`;
+          r3)`;
    `canonicalFp data (FPEqual r1 r2 r3) =
       FPEqual r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
    `canonicalFp data (FPAbs r1 r2) =
@@ -226,10 +223,10 @@ let canonicalFp_def = define_cases
       FPMov r1 (canonicalRegs data r2)`;
    `canonicalFp data (FPMovToReg r1 r2 r3) =
       FPMovToReg r1 (canonicalRegs data r2) (canonicalRegs data
-        r3)`;
+          r3)`;
    `canonicalFp data (FPMovFromReg r1 r2 r3) =
       FPMovFromReg r1 (canonicalRegs data r2) (canonicalRegs data
-        r3)`;
+          r3)`;
    `canonicalFp data (FPToInt r1 r2) =
       FPToInt r1 (canonicalRegs data r2)`;
    `canonicalFp data (FPFromInt r1 r2) =
@@ -259,20 +256,20 @@ let regImmToNumList_def = define_cases
 
 let arithToNumList_def = define_cases
   [`arithToNumList (asm_Binop op r1 r2 ri) = APPEND [25; arithOpToNum
-  op; r2 + 100] (regImmToNumList ri)`;
+    op; r2 + 100] (regImmToNumList ri)`;
    `arithToNumList (asm_LongMul r1 r2 r3 r4) = [26; r3 + 100; r4 +
-  100]`;
+    100]`;
    `arithToNumList (asm_LongDiv r1 r2 r3 r4 r5) = [27; r3 + 100; r4 +
-  100; r5 + 100]`;
+    100; r5 + 100]`;
    `arithToNumList (asm_Shift s r1 r2 ri) = APPEND [28; shiftToNum s;
-  r2 + 100] (regImmToNumList ri)`;
+    r2 + 100] (regImmToNumList ri)`;
    `arithToNumList (asm_Div r1 r2 r3) = [29; r2 + 100; r3 + 100]`;
    `arithToNumList (asm_AddCarry r1 r2 r3 r4) = [30; r2 + 100; r3 +
-  100]`;
+    100]`;
    `arithToNumList (asm_AddOverflow r1 r2 r3 r4) = [31; r2 + 100; r3
-  + 100]`;
+    + 100]`;
    `arithToNumList (asm_SubOverflow r1 r2 r3 r4) = [32; r2 + 100;
-  r3 + 100]`];;
+    r3 + 100]`];;
 
 let memOpToNum_def = define_cases
   [`memOpToNum (asm_Load:memop) = (21:num)`;
@@ -530,7 +527,7 @@ let bm_inter_eq_acc_def,bm_inter_eq_acc_ind = define_rec
       bm_inter_eq_acc m2 l
         (bm_inter_eq_acc m2 r
           (if balanced_map_lookup listCmp k m2 = SOME v then
-            balanced_map_insert listCmp k v acc else acc))`];;
+              balanced_map_insert listCmp k v acc else acc))`];;
 
 let bm_inter_eq_def = new_definition
   `bm_inter_eq m1 m2 = bm_inter_eq_acc m2 m1 balanced_map_empty`;;
@@ -576,42 +573,43 @@ let word_cse_def,word_cse_ind = define_rec
    `word_cse data (wordLang_Get r x) =
         (let data = invalidate_data data r in
           match ALOOKUP (knowledge_gets_mem data) x with NONE -> (if
-            EVEN r then (data,wordLang_Get r x) else
+              EVEN r then (data,wordLang_Get r x) else
                       (knowledge_to_latest_fupd (K
-                        (balanced_map_insert r r (knowledge_to_latest
-                        data))) (knowledge_to_canonical_fupd (K
-                        (balanced_map_insert r r (knowledge_to_canonical
-                        data))) (knowledge_gets_mem_fupd (K (CONS (x,r)
-                        (knowledge_gets_mem data))) data)),
+                          (balanced_map_insert r r (knowledge_to_latest
+                          data))) (knowledge_to_canonical_fupd (K
+                          (balanced_map_insert r r
+                          (knowledge_to_canonical data)))
+                          (knowledge_gets_mem_fupd (K (CONS (x,r)
+                          (knowledge_gets_mem data))) data)),
                        wordLang_Get r x)) | SOME k -> (if EVEN r
-                         then (data,wordLang_Move 1 [(r,lookup_any k
-                         (knowledge_to_latest data) k)]) else
+                           then (data,wordLang_Move 1 [(r,lookup_any k
+                           (knowledge_to_latest data) k)]) else
                       (knowledge_to_latest_fupd (K
-                        (balanced_map_insert k r (knowledge_to_latest
-                        data))) (knowledge_to_canonical_fupd (K
-                        (balanced_map_insert r k (knowledge_to_canonical
-                        data))) data),
+                          (balanced_map_insert k r (knowledge_to_latest
+                          data))) (knowledge_to_canonical_fupd (K
+                          (balanced_map_insert r k
+                          (knowledge_to_canonical data))) data),
                        wordLang_Move 1 [(r,lookup_any k
-                         (knowledge_to_latest data) k)])))`;
+                           (knowledge_to_latest data) k)])))`;
    `word_cse data (wordLang_Set x e) =
         (if x = CurrHeap then
           (empty_data,wordLang_Set x e) else
           let new_gets_mem = FILTER (\(m,n). ~(m = x))
-            (knowledge_gets_mem data) in
+              (knowledge_gets_mem data) in
             match dest_Var e with NONE -> (knowledge_gets_mem_fupd
-              (K new_gets_mem) data,wordLang_Set x e) |
+                (K new_gets_mem) data,wordLang_Set x e) |
               // Only ODD source registers are tracked; storing a fact about a
               // pre-allocated (EVEN) register would later reset all knowledge on
               // any write to it, for a fact of little value.
               SOME v -> (if EVEN v then (knowledge_gets_mem_fupd (K
-                new_gets_mem) data,wordLang_Set x e) else
+                  new_gets_mem) data,wordLang_Set x e) else
                           (knowledge_to_canonical_fupd (K
-                            (balanced_map_insert v (lookup_any v
-                            (knowledge_to_canonical data) v)
-                            (knowledge_to_canonical
+                              (balanced_map_insert v (lookup_any v
+                              (knowledge_to_canonical data) v)
+                              (knowledge_to_canonical
                               data))) (knowledge_gets_mem_fupd (K
-                                (CONS (x,canonicalRegs data v)
-                                new_gets_mem)) data),
+                                  (CONS (x,canonicalRegs data v)
+                                  new_gets_mem)) data),
                            wordLang_Set x e)))`;
    `word_cse data (wordLang_MustTerminate p) =
                 (let (data',p') = word_cse data p in
@@ -631,11 +629,11 @@ let word_cse_def,word_cse_ind = define_rec
           // r2 = r1 reads the register the instruction overwrites; such a fact
           // would not describe the post-state, so it is not stored.
           if EVEN r2 \/ r2 = r1 then (data,wordLang_OpCurrHeap b r1
-            r2) else
+              r2) else
             let r2' = canonicalRegs' r1 data r2 in
             let pL = OpCurrHeapToNumList b r2' in
               add_to_data_aux (register_read data r2') r1 pL
-                (wordLang_OpCurrHeap b r1 r2))`;
+                  (wordLang_OpCurrHeap b r1 r2))`;
    `word_cse data (wordLang_LocValue r l) =
         // Loc l 0 is a constant determined by l, so CSE it like an immediate.
         // Tag 48 is distinct from every other stored hash head (0, 2, 3).
@@ -645,38 +643,38 @@ let word_cse_def,word_cse_ind = define_rec
    `// Store cannot occur in flat code, but it writes memory, so be sound:
     // drop the load facts, keep the register-only facts.
     word_cse data (wordLang_Store e r) =
-      (knowledge_loads_mem_fupd (K balanced_map_empty)
-      data,wordLang_Store e r)`;
+        (knowledge_loads_mem_fupd (K balanced_map_empty)
+        data,wordLang_Store e r)`;
    `word_cse data (wordLang_Assign r e) = (data,(wordLang_Assign r
-  e:'a wordLang_prog))`;
+    e:'a wordLang_prog))`;
    `word_cse data (wordLang_Raise r) = (data,wordLang_Raise r)`;
    `word_cse data (wordLang_Return r1 r2) = (data,wordLang_Return r1
-  r2)`;
+    r2)`;
    `word_cse data wordLang_Tick = (data,wordLang_Tick)`;
    `word_cse data (wordLang_Alloc r m) = (empty_data,wordLang_Alloc r
-  m)`;
+    m)`;
    `word_cse data (wordLang_Install p l dp dl m) =
-  (empty_data,wordLang_Install p l dp dl m)`;
+    (empty_data,wordLang_Install p l dp dl m)`;
    `// Buffer writes touch only the code/data buffers, nothing we track.
     word_cse data (wordLang_CodeBufferWrite r1 r2) =
-      (data,wordLang_CodeBufferWrite r1 r2)`;
+        (data,wordLang_CodeBufferWrite r1 r2)`;
    `word_cse data (wordLang_DataBufferWrite r1 r2) =
-  (data,wordLang_DataBufferWrite r1 r2)`;
+    (data,wordLang_DataBufferWrite r1 r2)`;
    `// FFI cuts the local environment, so all knowledge is stale.
     word_cse data (wordLang_FFI s p1 l1 p2 l2 m) =
-      (empty_data,wordLang_FFI s p1 l1 p2 l2 m)`;
+        (empty_data,wordLang_FFI s p1 l1 p2 l2 m)`;
    `// StoreConsts writes (or unsets) only its four register args and memory;
     // the memory writes invalidate the load facts.
     word_cse data (wordLang_StoreConsts r1 r2 r3 r4 payload) =
       (let data = invalidate_regs data [r1; r2; r3; r4] in
          (knowledge_loads_mem_fupd (K balanced_map_empty)
-           data,wordLang_StoreConsts r1 r2 r3 r4 payload))`;
+             data,wordLang_StoreConsts r1 r2 r3 r4 payload))`;
    `// Shared-memory op: a load writes its var; a store writes no register.
     // Shared memory (sh_mdomain) is disjoint from the heap memory that load
     // facts describe, so loads_mem survives both.
     word_cse data (wordLang_ShareInst op r exp) =
       (let data = (if is_store op then data else invalidate_data
-        data r) in
+          data r) in
         (data,wordLang_ShareInst op r exp))`;
    `// Conservative: optimise the loop body from empty state.
     word_cse data (wordLang_Loop names c exit_names) =
@@ -684,7 +682,7 @@ let word_cse_def,word_cse_ind = define_rec
         (empty_data,wordLang_Loop names c' exit_names))`;
    `word_cse data (wordLang_Break k) = (data,wordLang_Break k)`;
    `word_cse data (wordLang_Continue k) = (data,wordLang_Continue
-  k)`];;
+    k)`];;
 
 let word_common_subexp_elim_def = new_definition
   `word_common_subexp_elim prog =
@@ -701,7 +699,7 @@ let word_cse_Seqs_def,word_cse_Seqs_ind = define_wf
   [`word_cse_Seqs [] = wordLang_Skip`;
    `word_cse_Seqs [x] = x`;
    `word_cse_Seqs (CONS x (CONS y xs)) = wordLang_Seq x
-  (word_cse_Seqs (CONS y xs))`];;
+    (word_cse_Seqs (CONS y xs))`];;
 
 (* [local] *)
 let test_latest_name_used = prove
@@ -981,7 +979,3 @@ let test_if_merge_clobber = prove
   CHEAT_TAC);;
 
 (* HOL4 word_cseScript.sml:905: ML code, not ported *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

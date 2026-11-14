@@ -35,11 +35,8 @@ needs "semantics/namespace.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvl_to_bviProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvl_to_bviProof"
   ["backendProps"; "bviProps"; "bviSem"; "bvi_inlineProof";
    "bvi_letProof"; "bvi_tailrecProof"; "bvi_tmcProof"; "bvlProps";
    "bvlSem"; "bvl_constProof"; "bvl_handleProof"; "bvl_inlineProof";
@@ -69,21 +66,21 @@ let adjust_bv_def,adjust_bv_ind = define_shaped_rec
    `adjust_bv b (bvlSem_Word64 w:bvlSem_v) = bvlSem_Word64 w`;
    `adjust_bv b (bvlSem_RefPtr l r:bvlSem_v) = bvlSem_RefPtr l (b r)`;
    `adjust_bv b (bvlSem_CodePtr c:bvlSem_v) = bvlSem_CodePtr
-  (bvl_num_stubs + bvl_to_bvi_namespaces * c)`;
+    (bvl_num_stubs + bvl_to_bvi_namespaces * c)`;
    `adjust_bv b (bvlSem_Block tag vs:bvlSem_v) = bvlSem_Block tag
-  (MAP (adjust_bv b) vs)`];;
+    (MAP (adjust_bv b) vs)`];;
 
 (* HOL4 bvl_to_bviProofScript.sml:40: ML code, not ported *)
 
-(* [simp] *)
 let adjust_bv_Unit = prove
  (`adjust_bv x bvlSem_Unit = bvlSem_Unit`,
   CHEAT_TAC);;
+add_simp adjust_bv_Unit;;
 
-(* [simp] *)
 let adjust_bv_Boolv = prove
  (`adjust_bv x (bvlSem_Boolv b) = bvlSem_Boolv b`,
   CHEAT_TAC);;
+add_simp adjust_bv_Boolv;;
 
 let aux_code_installed_def,aux_code_installed_ind = define_rec
   [`aux_code_installed [] t <=> T`;
@@ -206,7 +203,6 @@ let state_rel_FLOOKUP_Thunk = prove
        (adjust_bv b v))`,
   CHEAT_TAC);;
 
-let _ = size_thms "bvlSem_v";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvl_to_bviProofScript.sml:172-176: the tactic that proves the
@@ -229,15 +225,15 @@ let bv_ok_SUBSET_IMP = prove
          x`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let bv_ok_Unit = prove
  (`bv_ok refs bvlSem_Unit`,
   CHEAT_TAC);;
+add_simp bv_ok_Unit;;
 
-(* [simp] *)
 let bv_ok_Boolv = prove
  (`bv_ok refs (bvlSem_Boolv b)`,
   CHEAT_TAC);;
+add_simp bv_ok_Boolv;;
 
 (* [local] *)
 let bv_ok_IMP_adjust_bv_eq = prove
@@ -604,6 +600,7 @@ let do_app_adjust = prove
        bvl_to_bviProof_state_rel b2 r t3)`,
   CHEAT_TAC);;
 
+let _ = size_thms "bvl_exp";;
 let eval_ind_alt = prove
  (`!P.
      (!env s. P ([],env,s)) /\
@@ -775,25 +772,25 @@ let compile_exps_aux_sorted = prove
 let in_ns_def = new_definition
   `in_ns k n <=> n MOD bvl_to_bvi_namespaces = k`;;
 
-(* [simp] *)
 let nss_in_ns = prove
  (`in_ns k bvl_to_bvi_namespaces <=> k = 0`,
   CHEAT_TAC);;
+add_simp nss_in_ns;;
 
-(* [simp] *)
 let mult_nss_in_ns = prove
  (`in_ns k (m * bvl_to_bvi_namespaces) <=> k = 0`,
   CHEAT_TAC);;
+add_simp mult_nss_in_ns;;
 
-(* [simp] *)
 let mult_nss_in_ns_1 = prove
  (`in_ns k (m * bvl_to_bvi_namespaces + 1) <=> k = 1`,
   CHEAT_TAC);;
+add_simp mult_nss_in_ns_1;;
 
-(* [simp] *)
 let mult_nss_in_ns_2 = prove
  (`in_ns k (m * bvl_to_bvi_namespaces + 2) <=> k = 2`,
   CHEAT_TAC);;
+add_simp mult_nss_in_ns_2;;
 
 let in_ns_1_add_1 = prove
  (`in_ns 0 x ==> in_ns 1 (x + 1)`,
@@ -802,10 +799,10 @@ let in_ns_1_add_1 = prove
 (* HOL4 bvl_to_bviProofScript.sml:2007: the ML values that the
    definitions below antiquote *)
 
-(* [simp] *)
 let in_ns_add_num_stubs = prove
  (`in_ns k (bvl_num_stubs + x) <=> in_ns k x`,
   CHEAT_TAC);;
+add_simp in_ns_add_num_stubs;;
 
 (* [local] *)
 let compile_list_imp = prove
@@ -1153,10 +1150,11 @@ let bvi_let_compile_exp_no_mutcons = prove
 
 (* no_mutcons preservation: bvl_to_bvi compile *)
 
-(* [local,simp] *)
+(* [local] *)
 let compile_int_no_mutcons = prove
  (`no_mutcons (compile_int i)`,
   CHEAT_TAC);;
+add_simp compile_int_no_mutcons;;
 
 (* [local] *)
 let compile_op_no_mutcons = prove
@@ -1216,25 +1214,29 @@ let compile_prog_no_mutcons = prove
 
 (* no_mutcons preservation: bvi_tailrec *)
 
-(* [local,simp] *)
+(* [local] *)
 let to_op_no_mutcons = prove
  (`no_mutcons_op (to_op op)`,
   CHEAT_TAC);;
+add_simp to_op_no_mutcons;;
 
-(* [local,simp] *)
+(* [local] *)
 let apply_op_no_mutcons = prove
  (`no_mutcons (apply_op op e1 e2) <=> no_mutcons e1 /\ no_mutcons e2`,
   CHEAT_TAC);;
+add_simp apply_op_no_mutcons;;
 
-(* [local,simp] *)
+(* [local] *)
 let id_from_op_no_mutcons = prove
  (`no_mutcons (id_from_op op)`,
   CHEAT_TAC);;
+add_simp id_from_op_no_mutcons;;
 
-(* [local,simp] *)
+(* [local] *)
 let let_wrap_no_mutcons = prove
  (`no_mutcons (let_wrap arity id x) <=> no_mutcons id /\ no_mutcons x`,
   CHEAT_TAC);;
+add_simp let_wrap_no_mutcons;;
 
 (* [local] *)
 let get_bin_args_no_mutcons = prove
@@ -1379,10 +1381,10 @@ let destLet_code_labels = prove
       bviProps_get_code_labels z SUBSET bviProps_get_code_labels x`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let compile_int_code_labels = prove
  (`!i. bviProps_get_code_labels (compile_int i) = {}`,
   CHEAT_TAC);;
+add_simp compile_int_code_labels;;
 
 let compile_op_code_labels = prove
  (`bviProps_get_code_labels (bvl_to_bvi_compile_op op c) SUBSET
@@ -1489,12 +1491,8 @@ let compile_prog_code_labels_domain = prove
      set_of_list (MAP FST (bvl_to_bvi_stubs x y))`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id";
    "parts";
    "str"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

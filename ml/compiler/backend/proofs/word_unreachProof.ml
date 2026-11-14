@@ -16,11 +16,8 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_unreach.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_unreachProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_unreachProof"
   ["wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_unreach"];;
 
 (* HOL4 word_unreachProofScript.sml:10: the ML values that the
@@ -55,7 +52,7 @@ let word_unreachProof_copy_vars_def,word_unreachProof_copy_vars_ind =
   [`word_unreachProof_copy_vars [] from to = to`;
    `word_unreachProof_copy_vars (CONS (l,r) rest) from to =
       sptree_insert l (THE (sptree_lookup r from))
-        (word_unreachProof_copy_vars rest from to)`];;
+          (word_unreachProof_copy_vars rest from to)`];;
 
 let copy_vars_append = prove
  (`!xs ys from to.
@@ -181,7 +178,3 @@ let evaluate_remove_unreach = prove
        ==>
      wordSem_evaluate (remove_unreach p,s) = (res,s1)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

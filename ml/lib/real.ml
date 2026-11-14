@@ -33,19 +33,6 @@ let define_shaped_rec_tac = real_define_shaped_rec_tac;;
 let define_shaped_wf = real_define_shaped_wf;;
 let define_shaped_wf_cheat = real_define_shaped_wf_cheat;;
 let define_shaped_wf_tac = real_define_shaped_wf_tac;;
-let define_mutual_rec = real_define_mutual_rec;;
-let define_mutual_guess = real_define_mutual_guess;;
-let define_mutual_guess_cheat = real_define_mutual_guess_cheat;;
-let define_mutual_wf = real_define_mutual_wf;;
-let define_mutual_wf_cheat = real_define_mutual_wf_cheat;;
-let define_mutual_wf_tac = real_define_mutual_wf_tac;;
-let define_mutual_shaped_rec = real_define_mutual_shaped_rec;;
-let define_mutual_shaped_rec_tac = real_define_mutual_shaped_rec_tac;;
-let define_mutual_shaped_rec_cheat =
-  real_define_mutual_shaped_rec_cheat;;
-let define_mutual_shaped_wf = real_define_mutual_shaped_wf;;
-let define_mutual_shaped_wf_tac = real_define_mutual_shaped_wf_tac;;
-let define_mutual_shaped_wf_cheat = real_define_mutual_shaped_wf_cheat;;
 let assume_definition_rec = real_assume_definition_rec;;
 let prove = real_prove;;
 

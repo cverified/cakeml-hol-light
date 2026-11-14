@@ -12,7 +12,7 @@
 # ISSUES.md "A statement that means another theory's constant" says
 # what a finding of this means; since 2026-11-05 every file takes
 # the overloads of the theories out of its scope out of the
-# interface while it loads (ml/lib/theorem.ml, hol4_ancestors), so
+# interface while it loads (ml/lib/theorem.ml, cake_theory), so
 # what this reports should stay at nothing.
 B=/home/freek/claude/hol-light
 PATH=$B/bin:$B/cakeml/tools/bin:$PATH

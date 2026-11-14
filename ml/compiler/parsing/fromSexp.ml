@@ -25,11 +25,8 @@ needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "fromSexp"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "fromSexp"
   ["ast"; "fpSem"; "mlstring"];;
 
 let _ = do_list hide_constant ["assert"];;
@@ -75,6 +72,7 @@ let strip_sxcons_11 = prove
   s1 = s2`,
   CHEAT_TAC);;
 
+let _ = size_thms "simpleSexp_sexp";;
 let dstrip_sexp_size = prove
  (`!s sym args. dstrip_sexp s = SOME (sym,args) ==>
                  (!e. MEM e args ==> simpleSexp_sexp_size e <
@@ -89,16 +87,16 @@ let dstrip_sexp_SOME = prove
      (x = (sym,args)))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let strip_sxcons_SOME_NIL = prove
  (`strip_sxcons s = SOME [] <=> s = (SX_SYM "nil")`,
   CHEAT_TAC);;
+add_simp strip_sxcons_SOME_NIL;;
 
-(* [simp] *)
 let strip_sxcons_EQ_CONS = prove
  (`strip_sxcons s = SOME (CONS h t) <=>
      (?s0. s = SX_CONS h s0 /\ strip_sxcons s0 = SOME t)`,
   CHEAT_TAC);;
+add_simp strip_sxcons_EQ_CONS;;
 
 (* HOL4 fromSexpScript.sml:103-108: ML code, not ported *)
 
@@ -114,10 +112,10 @@ let encode_control_def,encode_control_ind = define_rec
   [`encode_control "" = ""`;
    `encode_control (CONS c cs) =
         (if c = (CHR 92) then CONS c (CONS c (encode_control cs))
-          else if isPrint c then CONS c (encode_control cs) else
+            else if isPrint c then CONS c (encode_control cs) else
              APPEND (CONS (CHR 92) (APPEND (if ORD c < 16 then
-               "0" else "") (num_to_hex_string (ORD c))))
-               (encode_control cs))`];;
+                 "0" else "") (num_to_hex_string (ORD c))))
+                 (encode_control cs))`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -127,26 +125,26 @@ let decode_control_def,decode_control_ind = define_wf
    `decode_control (CONS c cs) =
          (if c = (CHR 92) then
          match cs with CONS (CHR 92) cs -> OPTION_MAP (CONS c)
-           (decode_control cs) | CONS d1 (CONS d2 cs) ->
+             (decode_control cs) | CONS d1 (CONS d2 cs) ->
            OPTION_IGNORE_BIND (OPTION_GUARD
              (isHexDigit d1 /\
               isHexDigit d2 /\
               (isAlpha d1 ==> isUpper d1) /\
               (isAlpha d2 ==> isUpper d2) /\ ~(isPrint (CHR
-                (num_from_hex_string [d1; d2])))))
+                  (num_from_hex_string [d1; d2])))))
            (OPTION_MAP (CONS (CHR (num_from_hex_string [d1;
-             d2]))) (decode_control cs)) | _2 -> NONE else
-             OPTION_IGNORE_BIND (OPTION_GUARD (isPrint c))
-             (OPTION_MAP (CONS c) (decode_control cs)))`];;
+               d2]))) (decode_control cs)) | _2 -> NONE else
+               OPTION_IGNORE_BIND (OPTION_GUARD (isPrint c))
+               (OPTION_MAP (CONS c) (decode_control cs)))`];;
 
 let EVERY_isPrint_encode_control = prove
  (`!ls. ALL isPrint (encode_control ls)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let decode_encode_control = prove
  (`!ls. decode_control (encode_control ls) = SOME ls`,
   CHEAT_TAC);;
+add_simp decode_encode_control;;
 
 (* [local] *)
 let isHexDigit_alt = prove
@@ -173,25 +171,26 @@ let encode_decode_control = prove
 let SEXSTR_def = new_definition
   `SEXSTR s = SX_STR (encode_control s)`;;
 
-(* [simp] *)
 let SEXSTR_11 = prove
  (`SEXSTR s1 = SEXSTR s2 <=> s1 = s2`,
   (REWRITE_TAC[SEXSTR_def; injectivity "simpleSexp_sexp"] THEN
    MESON_TAC[decode_encode_control; option_INJ]));;
+add_simp SEXSTR_11;;
 
-(* [simp] *)
 let SEXSTR_distinct = prove
  (`(~(SEXSTR s = SX_SYM sym)) /\
    (~(SEXSTR s = SX_NUM num)) /\
    (~(SEXSTR s = SX_CONS a d)) /\
    ((SEXSTR s = SX_STR s') <=> s' = encode_control s)`,
   CHEAT_TAC);;
+add_simp SEXSTR_distinct;;
 
 let odestSEXSTR_def = new_definition
   `odestSEXSTR x1 =
         match x1 with
           SX_STR s -> OPTION_MAP implode (decode_control s)
         | _3 -> NONE`;;
+add_simp odestSEXSTR_def;;
 
 let encode_control_remove = prove
  (`!s. ALL isPrint s /\ ~((CHR 92) IN set_of_list s) ==>
@@ -208,23 +207,26 @@ let odestSXSTR_def = new_definition
         match x1 with
           SX_STR s -> SOME (implode s)
         | _4 -> NONE`;;
+add_simp odestSXSTR_def;;
 
 let odestSXSYM_def = new_definition
   `odestSXSYM x1 =
         match x1 with
           SX_SYM s -> SOME (implode s)
         | _5 -> NONE`;;
+add_simp odestSXSYM_def;;
 
 let odestSXNUM_def = new_definition
   `odestSXNUM x1 =
         match x1 with
           SX_NUM n -> SOME n
         | _6 -> NONE`;;
+add_simp odestSXNUM_def;;
 
-(* [simp] *)
 let odestSXNUM_SEXSTR = prove
  (`odestSXNUM (SEXSTR str) = NONE`,
   CHEAT_TAC);;
+add_simp odestSXNUM_SEXSTR;;
 
 let sexpopt_def = new_definition
   `sexpopt p s = OPTION_CHOICE (OPTION_BIND (odestSXSYM s) (\
@@ -247,7 +249,6 @@ let sexplist_def,sexplist_ind = define_shaped_rec
            SOME (CONS ph pt))) | SX_SYM s -> (if s = "nil" then
              SOME [] else NONE) | _7 -> NONE)`];;
 
-(* [simp] *)
 let sexplist_thm = prove
  (`sexplist p (SX_CONS h t) =
      OPTION_BIND (p h) (\ph. OPTION_BIND (sexplist p t) (\pt. SOME
@@ -256,6 +257,7 @@ let sexplist_thm = prove
    sexplist p (&n) = NONE /\
    sexplist p (SX_STR str) = NONE`,
   CHEAT_TAC);;
+add_simp sexplist_thm;;
 
 let sexppair_def = new_definition
   `sexppair p1 p2 s =
@@ -288,7 +290,6 @@ let monad_unitbind_CONG = prove
       OPTION_IGNORE_BIND m11 m21 = OPTION_IGNORE_BIND m12 m22`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let strip_sxcons_thm = prove
  (`strip_sxcons (SX_CONS (h) (t)) = OPTION_MAP (CONS h) (strip_sxcons t)
   /\
@@ -296,6 +297,7 @@ let strip_sxcons_thm = prove
    strip_sxcons (SX_STR str) = NONE /\
    strip_sxcons (SX_SYM s) = (if s = "nil" then SOME [] else NONE)`,
   CHEAT_TAC);;
+add_simp strip_sxcons_thm;;
 
 (* [defncong] *)
 let sexplist_CONG = prove
@@ -365,25 +367,25 @@ let sexptype_def,sexptype_ind = define_guess_cheat
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexptype_alt_def,sexptype_alt_ind = define_mutual_guess_cheat
+let sexptype_alt_def,sexptype_alt_ind = define_guess_cheat
   [`sexptype_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Atvar" /\ LENGTH args = 1 then
             OPTION_MAP Atvar (odestSEXSTR (EL 0 args)) else if nm =
-              "Atfun" /\ LENGTH args = 2 then
+                "Atfun" /\ LENGTH args = 2 then
             OPTION_MAP2 Atfun (sexptype_alt (EL 0 args))
-              (sexptype_alt (EL 1 args)) else if nm = "Attup" /\ LENGTH
-              args = 1 then
+                (sexptype_alt (EL 1 args)) else if nm = "Attup" /\
+                LENGTH args = 1 then
             OPTION_MAP Attup (sexptype_list (EL 0 args)) else if nm
-              = "Atapp" /\ LENGTH args = 2 then
+                = "Atapp" /\ LENGTH args = 2 then
             OPTION_MAP2 Atapp (sexptype_list (EL 0 args)) (sexpid
-              odestSEXSTR (EL 1 args)) else NONE))`;
+                odestSEXSTR (EL 1 args)) else NONE))`;
    `sexptype_list s =
         (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
-          NONE) | SX_CONS a d ->
+            NONE) | SX_CONS a d ->
           (match sexptype_alt a with NONE -> NONE | SOME h ->
            (match sexptype_list d with NONE -> NONE | SOME t ->
-             SOME (CONS h t))) | _9 -> NONE)`];;
+               SOME (CONS h t))) | _9 -> NONE)`];;
 
 let sexptype_alt_intro = prove
  (`(!s. sexptype s = sexptype_alt s) /\
@@ -475,31 +477,31 @@ let sexppat_def,sexppat_ind = define_guess_cheat
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexppat_alt_def,sexppat_alt_ind = define_mutual_guess_cheat
+let sexppat_alt_def,sexppat_alt_ind = define_guess_cheat
   [`sexppat_alt s = OPTION_CHOICE (OPTION_MAP ast_Pvar (odestSEXSTR s))
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Pany" /\ LENGTH args = 0 then
             SOME ast_Pany else if nm = "Plit" /\ LENGTH args = 1
-              then
+                then
             OPTION_MAP ast_Plit (sexplit (EL 0 args)) else if nm =
-              "Pcon" /\ LENGTH args = 2 then
+                "Pcon" /\ LENGTH args = 2 then
             OPTION_MAP2 ast_Pcon (sexpopt (sexpid odestSEXSTR) (EL 0
-              args))
+                args))
               (sexppat_list (EL 1 args)) else if nm = "Pas" /\
-                LENGTH args = 2 then
+                  LENGTH args = 2 then
             OPTION_MAP2 ast_Pas (sexppat_alt (EL 0 args))
                             (odestSEXSTR (EL 1 args)) else if nm =
-                              "Pref" /\ LENGTH args = 1 then
+                                "Pref" /\ LENGTH args = 1 then
             OPTION_MAP ast_Pref (sexppat_alt (EL 0 args)) else if nm
-              = "Ptannot" /\ LENGTH args = 2 then
+                = "Ptannot" /\ LENGTH args = 2 then
             OPTION_MAP2 ast_Ptannot (sexppat_alt (EL 0 args))
-              (sexptype_alt (EL 1 args)) else NONE))`;
+                (sexptype_alt (EL 1 args)) else NONE))`;
    `sexppat_list s =
         (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
-          NONE) | SX_CONS a d ->
+            NONE) | SX_CONS a d ->
           (match sexppat_alt a with NONE -> NONE | SOME h ->
            (match sexppat_list d with NONE -> NONE | SOME t ->
-             SOME (CONS h t))) | _10 -> NONE)`];;
+               SOME (CONS h t))) | _10 -> NONE)`];;
 
 (* HOL4 fromSexpScript.sml:635: ML code, not ported *)
 
@@ -770,11 +772,11 @@ let sexpexp_alt_def,sexpexp_alt_ind = assume_definition_rec
                  OPTION_MAP ast_Lit (sexplit (EL 0 args)) else
               if nm = "Con" /\ LENGTH args = 2 then
                  OPTION_MAP2 ast_Con (sexpopt (sexpid odestSEXSTR)
-                   (EL 0 args))
+                     (EL 0 args))
                    (sexpexp_list (EL 1 args)) else
               if nm = "Var" /\ LENGTH args = 1 then
                  OPTION_MAP ast_Var (sexpid odestSEXSTR (EL 0 args))
-                   else
+                     else
               if nm = "Fun" /\ LENGTH args = 2 then
                  OPTION_MAP2 ast_Fun (odestSEXSTR (EL 0 args))
                    (sexpexp_alt (EL 1 args)) else
@@ -782,21 +784,21 @@ let sexpexp_alt_def,sexpexp_alt_ind = assume_definition_rec
                  OPTION_MAP2 ast_App (sexpop (EL 0 args))
                    (sexpexp_list (EL 1 args)) else
               if nm = "Log" /\ LENGTH args = 3 then OPTION_APPLY
-                (OPTION_APPLY (OPTION_MAP ast_Log (sexplog (EL 0 args)))
-                (sexpexp_alt (EL 1 args)))
+                  (OPTION_APPLY (OPTION_MAP ast_Log (sexplog (EL 0
+                  args))) (sexpexp_alt (EL 1 args)))
                  (sexpexp_alt (EL 2 args)) else
               if nm = "If" /\ LENGTH args = 3 then OPTION_APPLY
-                (OPTION_APPLY (OPTION_MAP ast_If (sexpexp_alt (EL 0
-                args))) (sexpexp_alt (EL 1 args)))
+                  (OPTION_APPLY (OPTION_MAP ast_If (sexpexp_alt (EL 0
+                  args))) (sexpexp_alt (EL 1 args)))
                  (sexpexp_alt (EL 2 args)) else
               if nm = "Mat" /\ LENGTH args = 2 then
                  OPTION_MAP2 ast_Mat (sexpexp_alt (EL 0 args))
                    (sexppes (EL 1 args)) else
               if nm = "Let" /\ LENGTH args = 3 then OPTION_APPLY
-                (OPTION_APPLY (OPTION_MAP ast_Let (sexpopt odestSEXSTR
-                (EL 0 args)))
+                  (OPTION_APPLY (OPTION_MAP ast_Let (sexpopt odestSEXSTR
+                  (EL 0 args)))
                  (sexpexp_alt (EL 1 args))) (sexpexp_alt (EL 2
-                   args)) else
+                     args)) else
               if nm = "Letrec" /\ LENGTH args = 2 then
                  OPTION_MAP2 ast_Letrec
                    (sexpfuns (EL 0 args))
@@ -809,32 +811,32 @@ let sexpexp_alt_def,sexpexp_alt_ind = assume_definition_rec
                   (sexplocn (EL 1 args)) else NONE))`;
    `sexpexp_list s =
           (match s with SX_SYM nm -> (if nm = "nil" then SOME []
-            else NONE) | SX_CONS a d ->
+              else NONE) | SX_CONS a d ->
             (match sexpexp_alt a with NONE -> NONE | SOME h ->
              (match sexpexp_list d with NONE -> NONE | SOME t ->
-               SOME (CONS h t))) | _19 -> NONE)`;
+                 SOME (CONS h t))) | _19 -> NONE)`;
    `sexppes s =
        (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
-         NONE) | SX_CONS a d ->
+           NONE) | SX_CONS a d ->
          (match sexppatexp a with NONE -> NONE | SOME h ->
           (match sexppes d with NONE -> NONE | SOME t -> SOME
-            (CONS h t))) | _20 -> NONE)`;
+              (CONS h t))) | _20 -> NONE)`;
    `sexpfuns s =
        (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
-         NONE) | SX_CONS a d ->
+           NONE) | SX_CONS a d ->
          (match sexpfun a with NONE -> NONE | SOME h ->
           (match sexpfuns d with NONE -> NONE | SOME t -> SOME
-            (CONS h t))) | _21 -> NONE)`;
+              (CONS h t))) | _21 -> NONE)`;
    `sexppatexp s =
         (match s with SX_CONS a d ->
           (match (sexppat_alt a,sexpexp_alt d) with (SOME p,SOME
-            e) -> SOME (p,e) | _22 -> NONE) | _23 -> NONE)`;
+              e) -> SOME (p,e) | _22 -> NONE) | _23 -> NONE)`;
    `sexpfun s =
          (match s with SX_CONS a d ->
            (match d with SX_CONS b d ->
            (match (odestSEXSTR a,odestSEXSTR b,sexpexp_alt d)
-             with (SOME x,SOME y,SOME z) -> SOME (x,y,z) | _24 ->
-             NONE) | _25 -> NONE) | _26 -> NONE)`];;
+               with (SOME x,SOME y,SOME z) -> SOME (x,y,z) | _24 ->
+               NONE) | _25 -> NONE) | _26 -> NONE)`];;
 
 let sexpexp_alt_intro = prove
  (`(!s. sexpexp s = sexpexp_alt s) /\
@@ -924,12 +926,12 @@ let sexpdec_def,sexpdec_ind = define_guess_cheat
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpdec_alt_def,sexpdec_alt_ind = define_mutual_guess_cheat
+let sexpdec_alt_def,sexpdec_alt_ind = define_guess_cheat
   [`sexpdec_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Dlet" /\ LENGTH args = 3 then
               (OPTION_APPLY (OPTION_APPLY (OPTION_MAP Dlet (sexplocn
-                (HD args)))
+                  (HD args)))
                            (sexppat_alt (EL 1 args)))
                            (sexpexp_alt (EL 2 args))) else
           if nm = "Dletrec" /\ LENGTH args = 2 then
@@ -937,10 +939,10 @@ let sexpdec_alt_def,sexpdec_alt_ind = define_mutual_guess_cheat
                               (sexpfuns (EL 1 args))) else
           if nm = "Dtype" /\ LENGTH args = 2 then
                 (OPTION_MAP2 Dtype (sexplocn (HD args))
-                  (sexptype_def (EL 1 args))) else
+                    (sexptype_def (EL 1 args))) else
           if nm = "Dtabbrev" /\ LENGTH args = 4 then
                 (OPTION_APPLY (OPTION_APPLY (OPTION_APPLY
-                  (OPTION_MAP Dtabbrev (sexplocn (EL 0 args)))
+                    (OPTION_MAP Dtabbrev (sexplocn (EL 0 args)))
                               (sexplist odestSEXSTR (EL 1 args)))
                               (odestSEXSTR (EL 2 args)))
                               (sexptype_alt (EL 3 args))) else
@@ -948,7 +950,7 @@ let sexpdec_alt_def,sexpdec_alt_ind = define_mutual_guess_cheat
                 (OPTION_MAP Denv (odestSEXSTR (EL 0 args))) else
           if nm = "Dexn" /\ LENGTH args = 3 then
                 (OPTION_APPLY (OPTION_APPLY (OPTION_MAP Dexn
-                  (sexplocn (EL 0 args)))
+                    (sexplocn (EL 0 args)))
                            (odestSEXSTR (EL 1 args)))
                            (sexptype_list (EL 2 args))) else
           if nm = "Dmod" /\ LENGTH args = 2 then
@@ -957,13 +959,13 @@ let sexpdec_alt_def,sexpdec_alt_ind = define_mutual_guess_cheat
           if nm = "Dlocal" /\ LENGTH args = 2 then
                 (OPTION_MAP2 Dlocal (sexpdec_list (EL 0 args))
                             (sexpdec_list (EL 1 args))) else
-                              NONE))`;
+                                NONE))`;
    `sexpdec_list s =
           (match s with SX_SYM nm -> (if nm = "nil" then SOME []
-            else NONE) | SX_CONS a d ->
+              else NONE) | SX_CONS a d ->
             (match sexpdec_alt a with NONE -> NONE | SOME h ->
              (match sexpdec_list d with NONE -> NONE | SOME t
-               -> SOME (CONS h t))) | _27 -> NONE)`];;
+                 -> SOME (CONS h t))) | _27 -> NONE)`];;
 
 (* HOL4 fromSexpScript.sml:1162: ML code, not ported *)
 
@@ -982,35 +984,35 @@ let sexpdec_alt_intro1 = prove
 let listsexp_def = new_definition
   `listsexp = FOLDR SX_CONS (SX_SYM "nil")`;;
 
-(* [simp] *)
 let listsexp_thm = prove
  (`listsexp [] = (SX_SYM "nil") /\ listsexp (CONS h t) = SX_CONS h
   (listsexp t)`,
   (REWRITE_TAC[listsexp_def; ITLIST]));;
+add_simp listsexp_thm;;
 
-(* [simp] *)
 let listsexp_11 = prove
  (`!l1 l2. listsexp l1 = listsexp l2 <=> l1 = l2`,
   (REWRITE_TAC[listsexp_def; FOLDR_SX_CONS_INJ]));;
+add_simp listsexp_11;;
 
 let optsexp_def = define_cases
   [`optsexp NONE = SX_SYM "NONE"`;
    `optsexp (SOME x) = listsexp [SX_SYM "SOME"; x]`];;
 
-(* [simp] *)
 let optsexp_11 = prove
  (`optsexp o1 = optsexp o2 <=> o1 = o2`,
   CHEAT_TAC);;
+add_simp optsexp_11;;
 
 let idsexp_def,idsexp_ind = define_rec
   [`idsexp (Short n) = listsexp [SX_SYM "Short"; SEXSTR (explode n)]`;
    `idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode
-  ns); idsexp n]`];;
+    ns); idsexp n]`];;
 
-(* [simp] *)
 let idsexp_11 = prove
  (`!i1 i2. idsexp i1 = idsexp i2 <=> i1 = i2`,
   CHEAT_TAC);;
+add_simp idsexp_11;;
 
 (* the termination relation that HOL4 gives is
      MEASURE ast_t_size
@@ -1021,35 +1023,35 @@ let idsexp_11 = prove
 let typesexp_def,typesexp_ind = define_shaped_rec
   "nested"
   [`typesexp (Atvar s) = listsexp [SX_SYM "Atvar"; SEXSTR (explode
-  s)]`;
+    s)]`;
    `typesexp (Atfun t1 t2) = listsexp [SX_SYM "Atfun"; typesexp t1;
-  typesexp t2]`;
+    typesexp t2]`;
    `typesexp (Attup ts) = listsexp [SX_SYM "Attup"; listsexp (MAP
-  typesexp ts)]`;
+    typesexp ts)]`;
    `typesexp (Atapp ts tc) = listsexp [SX_SYM "Atapp"; listsexp
-  (MAP typesexp ts); idsexp tc]`];;
+    (MAP typesexp ts); idsexp tc]`];;
 
-(* [simp] *)
 let typesexp_11 = prove
  (`!t1 t2. typesexp t1 = typesexp t2 <=> t1 = t2`,
   CHEAT_TAC);;
+add_simp typesexp_11;;
 
 let litsexp_def = define_cases
   [`litsexp (ast_IntLit i) =
        (if i < (&0) then listsexp [SX_SYM "-"; SX_NUM (num_of_int
-         (--i))] else SX_NUM (num_of_int i))`;
+           (--i))] else SX_NUM (num_of_int i))`;
    `litsexp (ast_Char c) = listsexp [SX_SYM "char"; SEXSTR [c]]`;
    `litsexp (ast_StrLit s) = SEXSTR (explode s)`;
    `litsexp (ast_Word8 w) = listsexp [SX_SYM "word8"; SX_NUM (w2n w)]`;
    `litsexp (ast_Word64 w:lit) = listsexp [SX_SYM "word64"; SX_NUM
-  (w2n w)]`;
+    (w2n w)]`;
    `litsexp (ast_Float64 w) = listsexp [SX_SYM "float64"; SX_NUM
-  (w2n w)]`];;
+    (w2n w)]`];;
 
-(* [simp] *)
 let litsexp_11 = prove
  (`!l1 l2. litsexp l1 = litsexp l2 <=> l1 = l2`,
   CHEAT_TAC);;
+add_simp litsexp_11;;
 
 (* the termination relation that HOL4 gives is
      MEASURE ast_pat_size
@@ -1062,20 +1064,20 @@ let patsexp_def,patsexp_ind = define_shaped_rec
   [`patsexp (ast_Pany:ast_pat) = listsexp [SX_SYM "Pany"]`;
    `patsexp (ast_Pvar s:ast_pat) = SEXSTR (explode s)`;
    `patsexp (ast_Plit l:ast_pat) = listsexp [SX_SYM "Plit"; litsexp
-  l]`;
+    l]`;
    `patsexp (ast_Pcon cn ps:ast_pat) = listsexp [SX_SYM "Pcon";
-  optsexp (OPTION_MAP idsexp cn); listsexp (MAP patsexp ps)]`;
+    optsexp (OPTION_MAP idsexp cn); listsexp (MAP patsexp ps)]`;
    `patsexp (ast_Pas p i:ast_pat) = listsexp [SX_SYM "Pas"; patsexp
-  p; SEXSTR (explode i)]`;
+    p; SEXSTR (explode i)]`;
    `patsexp (ast_Pref p:ast_pat) = listsexp [SX_SYM "Pref"; patsexp
-  p]`;
+    p]`;
    `patsexp (ast_Ptannot p t) = listsexp [SX_SYM "Ptannot"; patsexp
-  p; typesexp t]`];;
+    p; typesexp t]`];;
 
-(* [simp] *)
 let patsexp_11 = prove
  (`!p1 p2. patsexp p1 = patsexp p2 <=> p1 = p2`,
   CHEAT_TAC);;
+add_simp patsexp_11;;
 
 let testsexp_def = new_definition
   `testsexp x1 =
@@ -1090,15 +1092,15 @@ let testsexp_def = new_definition
       | (ast_AltCompare ast_Gt) -> SX_SYM "AltGreater"
       | (ast_AltCompare ast_Geq) -> SX_SYM "AltGreaterEq"`;;
 
-(* [simp] *)
 let testsexp_11 = prove
  (`!l1 l2. testsexp l1 = testsexp l2 <=> l1 = l2`,
   CHEAT_TAC);;
+add_simp testsexp_11;;
 
-(* [simp] *)
 let sexptest_testsexp = prove
  (`!x. fromSexp_decode_test (testsexp x) = SOME x`,
   CHEAT_TAC);;
+add_simp sexptest_testsexp;;
 
 let arithsexp_def = define_cases
   [`arithsexp (ast_Add:ast_arith) = SX_SYM "Add"`;
@@ -1115,7 +1117,6 @@ let arithsexp_def = define_cases
    `arithsexp ast_Sqrt = SX_SYM "Sqrt"`;
    `arithsexp ast_FMA = SX_SYM "FMA"`];;
 
-(* [simp] *)
 let arithsexp_11 = prove
  (`!l1 l2. arithsexp l1 = arithsexp l2 <=> l1 = l2`,
   (SUBGOAL_THEN `!x. sexparith (arithsexp x) = SOME x` MP_TAC THENL
@@ -1123,13 +1124,14 @@ let arithsexp_11 = prove
     REWRITE_TAC[arithsexp_def; sexparith_def] THEN
     CONV_TAC(DEPTH_CONV STRING_EQ_CONV) THEN REWRITE_TAC[];
     MESON_TAC[option_INJ]]));;
+add_simp arithsexp_11;;
 
-(* [simp] *)
 let arithsexp_sexparith = prove
  (`!x. sexparith (arithsexp x) = SOME x`,
   (GEN_TAC THEN CASES_ON_TAC `x:ast_arith` THEN
    REWRITE_TAC[arithsexp_def; sexparith_def] THEN
    CONV_TAC(DEPTH_CONV STRING_EQ_CONV) THEN REWRITE_TAC[]));;
+add_simp arithsexp_sexparith;;
 
 let prim_typesexp_def = new_definition
   `prim_typesexp x1 =
@@ -1147,104 +1149,103 @@ let sexplist_listsexp_matchable = prove
    sexplist f (listsexp gl) = SOME l`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let dstrip_sexp_SX_STR = prove
  (`dstrip_sexp (SX_STR s) = NONE`,
   (REWRITE_TAC[dstrip_sexp_def]));;
+add_simp dstrip_sexp_SX_STR;;
 
-(* [simp] *)
 let dstrip_sexp_SEXSTR = prove
  (`dstrip_sexp (SEXSTR s) = NONE`,
   (REWRITE_TAC[SEXSTR_def; dstrip_sexp_def]));;
+add_simp dstrip_sexp_SEXSTR;;
 
-(* [simp] *)
 let odestSXSTR_SOME = prove
  (`(odestSXSTR s = SOME y <=> s = SX_STR (explode y)) /\
    (SOME y = odestSXSTR s <=> s = SX_STR (explode y))`,
   CHEAT_TAC);;
+add_simp odestSXSTR_SOME;;
 
-(* [simp] *)
 let odestSEXSTR_SOME = prove
  (`(odestSEXSTR s = SOME y <=> s = SEXSTR (explode y)) /\
    (SOME y = odestSEXSTR s <=> s = SEXSTR (explode y))`,
   CHEAT_TAC);;
+add_simp odestSEXSTR_SOME;;
 
-(* [simp] *)
 let odestSXNUM_SOME = prove
  (`(odestSXNUM s = SOME n <=> s = &n) /\
    (SOME n = odestSXNUM s <=> s = &n)`,
   CHEAT_TAC);;
+add_simp odestSXNUM_SOME;;
 
-(* [simp] *)
 let odestSXSTR_SX_STR = prove
  (`(odestSXSTR (SX_STR s) = SOME (implode s))`,
   CHEAT_TAC);;
+add_simp odestSXSTR_SX_STR;;
 
-(* [simp] *)
 let odestSEXSTR_SEXSTR = prove
  (`odestSEXSTR (SEXSTR s) = SOME (implode s)`,
   CHEAT_TAC);;
+add_simp odestSEXSTR_SEXSTR;;
 
-(* [simp] *)
 let odestSXNUM_SX_NUM = prove
  (`odestSXNUM (SX_NUM n) = SOME n`,
   CHEAT_TAC);;
+add_simp odestSXNUM_SX_NUM;;
 
-(* [simp] *)
 let odestSXSYM_SX_SYM = prove
  (`odestSXSYM (SX_SYM s) = SOME (implode s)`,
   CHEAT_TAC);;
+add_simp odestSXSYM_SX_SYM;;
 
-(* [simp] *)
 let odestSXSTR_listsexp = prove
  (`odestSXSTR (listsexp l) = NONE`,
   CHEAT_TAC);;
+add_simp odestSXSTR_listsexp;;
 
-(* [simp] *)
 let odestSEXSTR_listsexp = prove
  (`odestSEXSTR (listsexp l) = NONE`,
   CHEAT_TAC);;
+add_simp odestSEXSTR_listsexp;;
 
-(* [simp] *)
 let odestSXNUM_listsexp = prove
  (`odestSXNUM (listsexp l) = NONE`,
   CHEAT_TAC);;
+add_simp odestSXNUM_listsexp;;
 
-(* [simp] *)
 let strip_sxcons_listsexp = prove
  (`strip_sxcons (listsexp ls) = SOME ls`,
   CHEAT_TAC);;
+add_simp strip_sxcons_listsexp;;
 
-(* [simp] *)
 let dstrip_sexp_listsexp = prove
  (`(dstrip_sexp (listsexp ls) =
     (match ls with (CONS (SX_SYM x) xs) -> SOME (x,xs) | _28 ->
       NONE))`,
   CHEAT_TAC);;
+add_simp dstrip_sexp_listsexp;;
 
-(* [simp] *)
 let sexplist_listsexp_rwt = prove
  (`(!x. MEM x l ==> f (g x) = SOME x) ==>
    (sexplist f (listsexp (MAP g l)) = SOME l)`,
   (MESON_TAC[sexplist_listsexp_matchable]));;
+add_simp sexplist_listsexp_rwt;;
 
 let sexplist_listsexp_imp = prove
  (`sexplist f (listsexp l1) = SOME l2 ==>
    (!n. n < LENGTH l1 ==> f (EL n l1) = SOME (EL n l2))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let sexpopt_optsexp = prove
  (`(!y. (x = SOME y) ==> (f (g y) = x)) ==>
    (sexpopt f (optsexp (OPTION_MAP g x)) = SOME x)`,
   CHEAT_TAC);;
+add_simp sexpopt_optsexp;;
 
-(* [simp] *)
 let sexpid_odestSEXSTR_idsexp = prove
  (`sexpid odestSEXSTR (idsexp i) = SOME i`,
   CHEAT_TAC);;
+add_simp sexpid_odestSEXSTR_idsexp;;
 
-(* [simp] *)
 let dstrip_sexp_thm = prove
  (`dstrip_sexp (SX_CONS (SX_SYM s) (args)) = OPTION_MAP (\t. (s,t))
   (strip_sxcons args) /\
@@ -1255,21 +1256,22 @@ let dstrip_sexp_thm = prove
    dstrip_sexp (SX_SYM s) = NONE /\
    dstrip_sexp (SX_STR str) = NONE`,
   CHEAT_TAC);;
+add_simp dstrip_sexp_thm;;
 
-(* [simp] *)
 let sexptype_typesexp = prove
  (`sexptype (typesexp t) = SOME t`,
   CHEAT_TAC);;
+add_simp sexptype_typesexp;;
 
-(* [simp] *)
 let sexpprim_type_testsexp = prove
  (`!x. decode_prim_type (prim_typesexp x) = SOME x`,
   CHEAT_TAC);;
+add_simp sexpprim_type_testsexp;;
 
-(* [simp] *)
 let prim_typesexp_11 = prove
  (`!l1 l2. prim_typesexp l1 = prim_typesexp l2 <=> l1 = l2`,
   (MESON_TAC[sexpprim_type_testsexp; option_INJ]));;
+add_simp prim_typesexp_11;;
 
 let opsexp_def = new_definition
   `opsexp x1 =
@@ -1346,96 +1348,96 @@ let opsexp_def = new_definition
        (SX_CONS (testsexp test)
                (prim_typesexp prim_type))`;;
 
-(* [simp] *)
 let sexpop_opsexp = prove
  (`sexpop (opsexp op) = SOME op`,
   CHEAT_TAC);;
+add_simp sexpop_opsexp;;
 
-(* [simp] *)
 let opsexp_11 = prove
  (`!o1 o2. opsexp o1 = opsexp o2 <=> o1 = o2`,
   CHEAT_TAC);;
+add_simp opsexp_11;;
 
 let logsexp_def = define_cases
   [`logsexp Andalso = SX_SYM "Andalso"`;
    `logsexp Orelse = SX_SYM "Orelse"`];;
 
-(* [simp] *)
 let logsexp_11 = prove
  (`!l1 l2. logsexp l1 = logsexp l2 <=> l1 = l2`,
   CHEAT_TAC);;
+add_simp logsexp_11;;
 
 let locnsexp_def = define_cases
   [`locnsexp (POSN n1 n2) = listsexp (MAP SX_NUM [n1; n2])`;
    `locnsexp UNKNOWNpt = SX_SYM "unk"`;
    `locnsexp EOFpt = SX_SYM "eof"`];;
 
-(* [simp] *)
 let locnsexp_11 = prove
  (`locnsexp p1 = locnsexp p2 <=> p1 = p2`,
   CHEAT_TAC);;
+add_simp locnsexp_11;;
 
 let locssexp_def = define_general
   [`locssexp (Locs p1 p2) = listsexp (MAP locnsexp [p1; p2])`];;
 
-(* [simp] *)
 let locssexp_11 = prove
  (`!l1 l2. locssexp l1 = locssexp l2 <=> l1 = l2`,
   CHEAT_TAC);;
+add_simp locssexp_11;;
 
 let expsexp_def,expsexp_ind = define_shaped_rec
   "nested"
   [`expsexp (ast_Raise e:ast_exp) = (SX_CONS (SX_SYM "Raise")
-  (SX_CONS (expsexp e) (SX_SYM "nil")))`;
+    (SX_CONS (expsexp e) (SX_SYM "nil")))`;
    `expsexp (ast_Handle e pes:ast_exp) =
       (SX_CONS (SX_SYM "Handle") (SX_CONS (expsexp e) (SX_CONS (
        listsexp (MAP (\(p,e). SX_CONS (patsexp p) (expsexp e))
-         pes)) (SX_SYM "nil"))))`;
+           pes)) (SX_SYM "nil"))))`;
    `expsexp (ast_Lit l:ast_exp) = listsexp [SX_SYM "Lit"; litsexp l]`;
    `expsexp (ast_Con cn es:ast_exp) =
       listsexp [SX_SYM "Con"; optsexp (OPTION_MAP idsexp cn);
                 listsexp (MAP expsexp es)]`;
    `expsexp (ast_Var id':ast_exp) = listsexp [SX_SYM "Var"; idsexp
-  id']`;
+    id']`;
    `expsexp (ast_Fun x e:ast_exp) = listsexp [SX_SYM "Fun"; SEXSTR
-  (explode x); expsexp e]`;
+    (explode x); expsexp e]`;
    `expsexp (ast_App op es:ast_exp) =
       listsexp [SX_SYM "App"; opsexp op; listsexp (MAP expsexp
-        es)]`;
+          es)]`;
    `expsexp (ast_Log lop e1 e2) = (SX_CONS (SX_SYM "Log") (SX_CONS
-  (logsexp lop) (SX_CONS (expsexp e1) (SX_CONS (expsexp e2) (SX_SYM
-  "nil")))))`;
+    (logsexp lop) (SX_CONS (expsexp e1) (SX_CONS (expsexp e2) (SX_SYM
+    "nil")))))`;
    `expsexp (ast_If e1 e2 e3:ast_exp) = (SX_CONS (SX_SYM "If")
-  (SX_CONS (expsexp e1) (SX_CONS (expsexp e2) (SX_CONS (expsexp e3)
-  (SX_SYM "nil")))))`;
+    (SX_CONS (expsexp e1) (SX_CONS (expsexp e2) (SX_CONS (expsexp e3)
+    (SX_SYM "nil")))))`;
    `expsexp (ast_Mat e pes:ast_exp) =
       (SX_CONS (SX_SYM "Mat") (SX_CONS (expsexp e) (SX_CONS (
        listsexp (MAP (\(p,e). SX_CONS (patsexp p) (expsexp e))
-         pes)) (SX_SYM "nil"))))`;
+           pes)) (SX_SYM "nil"))))`;
    `expsexp (ast_Let so e1 e2:ast_exp) =
       (SX_CONS (SX_SYM "Let") (SX_CONS (optsexp (OPTION_MAP
-        (SEXSTR o explode) so)) (SX_CONS (expsexp e1) (SX_CONS
-        (expsexp e2) (SX_SYM "nil")))))`;
+          (SEXSTR o explode) so)) (SX_CONS (expsexp e1) (SX_CONS
+          (expsexp e2) (SX_SYM "nil")))))`;
    `expsexp (ast_Letrec funs e:ast_exp) =
     (SX_CONS (SX_SYM "Letrec") (SX_CONS (
      listsexp (MAP (\(x,y,z). SX_CONS (SEXSTR (explode x))
                               (SX_CONS (SEXSTR (explode y)) (expsexp
-                                z))) funs)) (SX_CONS (
+                                  z))) funs)) (SX_CONS (
      expsexp e) (SX_SYM "nil"))))`;
    `expsexp (ast_Tannot e t) = (SX_CONS (SX_SYM "Tannot") (SX_CONS
-  (expsexp e) (SX_CONS (typesexp t) (SX_SYM "nil"))))`;
+    (expsexp e) (SX_CONS (typesexp t) (SX_SYM "nil"))))`;
    `expsexp (ast_Lannot e loc) = (SX_CONS (SX_SYM "Lannot")
-  (SX_CONS (expsexp e) (SX_CONS (locssexp loc) (SX_SYM "nil"))))`];;
+    (SX_CONS (expsexp e) (SX_CONS (locssexp loc) (SX_SYM "nil"))))`];;
 
 (* [local] *)
 let SEXSTR_explode_11 = prove
  (`(SEXSTR o explode) s1 = (SEXSTR o explode) s2 ==> s1 = s2`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let expsexp_11 = prove
  (`!e1 e2. expsexp e1 = expsexp e2 ==> e1 = e2`,
   CHEAT_TAC);;
+add_simp expsexp_11;;
 
 let type_defsexp_def = new_definition
   `type_defsexp = listsexp o
@@ -1445,10 +1447,10 @@ let type_defsexp_def = new_definition
            (listsexp (MAP (\(y,ts). SX_CONS (SEXSTR (explode y))
              (listsexp (MAP typesexp ts))) ls))))`;;
 
-(* [simp] *)
 let type_defsexp_11 = prove
  (`!t1 t2. type_defsexp t1 = type_defsexp t2 <=> t1 = t2`,
   CHEAT_TAC);;
+add_simp type_defsexp_11;;
 
 (* HOL4 fromSexpScript.sml:1737-1741: a theorem whose statement the
    port cannot state yet: dec1_size_eq *)
@@ -1461,88 +1463,88 @@ let decsexp_def,decsexp_ind = define_shaped_rec
   "nested"
   [`decsexp (Dlet locs p e) =
       (SX_CONS (SX_SYM "Dlet") (SX_CONS (locssexp locs) (SX_CONS
-        (patsexp p) (SX_CONS (expsexp e) (SX_SYM "nil")))))`;
+          (patsexp p) (SX_CONS (expsexp e) (SX_SYM "nil")))))`;
    `decsexp (Dletrec locs funs) =
        listsexp [
            SX_SYM "Dletrec";
            locssexp locs;
            listsexp
              (MAP (\(f,x,e). SX_CONS (SEXSTR (explode f)) (SX_CONS
-               (SEXSTR (explode x)) (expsexp e)))
+                 (SEXSTR (explode x)) (expsexp e)))
               funs)]`;
    `decsexp (Dtype locs td) = (SX_CONS (SX_SYM "Dtype") (SX_CONS
-  (locssexp locs) (SX_CONS (type_defsexp td) (SX_SYM "nil"))))`;
+    (locssexp locs) (SX_CONS (type_defsexp td) (SX_SYM "nil"))))`;
    `decsexp (Dtabbrev locs ns x t) = (SX_CONS (SX_SYM "Dtabbrev")
-  (SX_CONS (locssexp locs) (SX_CONS (listsexp (MAP (SEXSTR o explode)
-  ns)) (SX_CONS (SEXSTR (explode x)) (SX_CONS (typesexp t) (SX_SYM
-  "nil"))))))`;
+    (SX_CONS (locssexp locs) (SX_CONS (listsexp (MAP (SEXSTR o
+    explode) ns)) (SX_CONS (SEXSTR (explode x)) (SX_CONS (typesexp t)
+    (SX_SYM "nil"))))))`;
    `decsexp (Denv name) = (SX_CONS (SX_SYM "Denv") (SX_CONS (SEXSTR
-  (explode name)) (SX_SYM "nil")))`;
+    (explode name)) (SX_SYM "nil")))`;
    `decsexp (Dexn locs x ts) =
       (SX_CONS (SX_SYM "Dexn") (SX_CONS (locssexp locs) (SX_CONS
-        (SEXSTR (explode x)) (SX_CONS (listsexp (MAP typesexp ts))
-        (SX_SYM "nil")))))`;
+          (SEXSTR (explode x)) (SX_CONS (listsexp (MAP typesexp ts))
+          (SX_SYM "nil")))))`;
    `decsexp (Dmod name decs) =
       (SX_CONS (SX_SYM "Dmod") (SX_CONS (SEXSTR (explode name))
-        (SX_CONS (listsexp (MAP decsexp decs)) (SX_SYM "nil"))))`;
+          (SX_CONS (listsexp (MAP decsexp decs)) (SX_SYM "nil"))))`;
    `decsexp (Dlocal ldecs decs) =
       listsexp [SX_SYM "Dlocal"; listsexp (MAP decsexp ldecs);
                 listsexp (MAP decsexp decs)]`];;
 
-(* [simp] *)
 let decsexp_11 = prove
  (`!d1 d2. decsexp d1 = decsexp d2 <=> d1 = d2`,
   CHEAT_TAC);;
+add_simp decsexp_11;;
 
 (* round trip *)
 
 (* HOL4 fromSexpScript.sml:1784-1789: ML code, not ported *)
 
-(* [simp] *)
 let sexptype_def_type_defsexp = prove
  (`sexptype_def (type_defsexp l) = SOME l`,
   CHEAT_TAC);;
+add_simp sexptype_def_type_defsexp;;
 
-(* [simp] *)
 let sexplit_litsexp = prove
  (`sexplit (litsexp l) = SOME l`,
   CHEAT_TAC);;
+add_simp sexplit_litsexp;;
 
-(* [simp] *)
 let sexppat_patsexp = prove
  (`sexppat (patsexp p) = SOME p`,
   CHEAT_TAC);;
+add_simp sexppat_patsexp;;
 
-(* [simp] *)
 let sexplocpt_locnsexp = prove
  (`sexplocpt (locnsexp p) = SOME p`,
   CHEAT_TAC);;
+add_simp sexplocpt_locnsexp;;
 
-(* [simp] *)
 let sexplocn_locnsexp = prove
  (`sexplocn (locssexp l) = SOME l`,
   CHEAT_TAC);;
+add_simp sexplocn_locnsexp;;
 
-(* [simp] *)
 let sexplog_logsexp = prove
  (`sexplog (logsexp l) = SOME l`,
   CHEAT_TAC);;
+add_simp sexplog_logsexp;;
 
-(* [simp] *)
 let sexpexp_expsexp = prove
  (`sexpexp (expsexp e) = SOME e`,
   CHEAT_TAC);;
+add_simp sexpexp_expsexp;;
 
-(* [simp] *)
 let sexpdec_decsexp = prove
  (`!d. sexpdec (decsexp d) = SOME d`,
   CHEAT_TAC);;
+add_simp sexpdec_decsexp;;
 
-(* [simp] *)
 let odestSXSYM_EQ_SOME = prove
  (`(odestSXSYM s = SOME str <=> s = SX_SYM (explode str)) /\
    (SOME str = odestSXSYM s <=> s = SX_SYM (explode str))`,
   CHEAT_TAC);;
+add_simp odestSXSYM_EQ_SOME;;
 
 let sexpopt_SOME = prove
  (`sexpopt f s = SOME opt <=>
@@ -1570,11 +1572,11 @@ let sexppair_SOME = prove
 
 let OPTION_CHOICE_EQ_SOME = OPTION_CHOICE_EQUALS_OPTION;;
 
-(* [simp] *)
 let odestSXNUM_EQ_SOME = prove
  (`(odestSXNUM s = SOME n <=> s = &n) /\
    (SOME n = odestSXNUM s <=> s = &n)`,
   CHEAT_TAC);;
+add_simp odestSXNUM_EQ_SOME;;
 
 let litsexp_sexplit = prove
  (`(sexplit s = SOME l <=> litsexp l = s) /\
@@ -1585,11 +1587,11 @@ let idsexp_sexpid_odestSEXSTR = prove
  (`!y x. sexpid odestSEXSTR x = SOME y <=> x = idsexp y`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let idsexp_sexpid_odestSEXSTR' = prove
  (`(sexpid odestSEXSTR x = SOME y <=> x = idsexp y) /\
    (SOME y = sexpid odestSEXSTR x <=> x = idsexp y)`,
   (MESON_TAC[idsexp_sexpid_odestSEXSTR]));;
+add_simp idsexp_sexpid_odestSEXSTR';;
 
 let typesexp_sexptype = prove
  (`!s t. (sexptype s = SOME t <=> typesexp t = s) /\
@@ -1639,11 +1641,11 @@ let locnsexp_sexplocpt0 = prove
  (`sexplocpt s = SOME z ==> locnsexp z = s`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let locnsexp_sexplocpt = prove
  (`(sexplocpt s = SOME z <=> locnsexp z = s) /\
    (SOME z = sexplocpt s <=> locnsexp z = s)`,
   (MESON_TAC[locnsexp_sexplocpt0; sexplocpt_locnsexp]));;
+add_simp locnsexp_sexplocpt;;
 
 let locnsexp_sexplocn = prove
  (`(sexplocn s = SOME z <=> locssexp z = s) /\
@@ -1681,89 +1683,87 @@ let decsexp_sexpdec = prove
 
 (* valid sexps *)
 
-(* [simp] *)
 let SEXSTR_valid = prove
  (`valid_sexp (SEXSTR s)`,
   (REWRITE_TAC[SEXSTR_def; valid_sexp_def;
     EVERY_isPrint_encode_control]));;
+add_simp SEXSTR_valid;;
 
 let listsexp_valid = prove
  (`!ls. ALL valid_sexp ls ==> valid_sexp (listsexp ls)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let idsexp_valid = prove
  (`!i. valid_sexp (idsexp i)`,
   CHEAT_TAC);;
+add_simp idsexp_valid;;
 
-(* [simp] *)
 let typesexp_valid = prove
  (`!t. valid_sexp (typesexp t)`,
   CHEAT_TAC);;
+add_simp typesexp_valid;;
 
-(* [simp] *)
 let litsexp_valid = prove
  (`!l. valid_sexp (litsexp l)`,
   CHEAT_TAC);;
+add_simp litsexp_valid;;
 
 let optsexp_valid = prove
  (`!x. (!y. x = SOME y ==> valid_sexp y) ==> valid_sexp (optsexp x)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let patsexp_valid = prove
  (`!p. valid_sexp (patsexp p)`,
   CHEAT_TAC);;
+add_simp patsexp_valid;;
 
-(* [simp] *)
 let type_defsexp_valid = prove
  (`!t. valid_sexp (type_defsexp t)`,
   CHEAT_TAC);;
+add_simp type_defsexp_valid;;
 
-(* [simp] *)
 let valid_sexp_prim_typesexp = prove
  (`!t. valid_sexp (prim_typesexp t)`,
   CHEAT_TAC);;
+add_simp valid_sexp_prim_typesexp;;
 
-(* [local,simp] *)
+(* [local] *)
 let valid_sexp_arithsexp = prove
  (`valid_sexp (arithsexp a)`,
   CHEAT_TAC);;
+add_simp valid_sexp_arithsexp;;
 
-(* [local,simp] *)
+(* [local] *)
 let valid_sexp_logsexp = prove
  (`valid_sexp (logsexp a)`,
   CHEAT_TAC);;
+add_simp valid_sexp_logsexp;;
 
-(* [simp] *)
 let opsexp_valid = prove
  (`!op. valid_sexp (opsexp op)`,
   CHEAT_TAC);;
+add_simp opsexp_valid;;
 
-(* [simp] *)
 let locnsexp_valid = prove
  (`!p. valid_sexp (locnsexp p)`,
   CHEAT_TAC);;
+add_simp locnsexp_valid;;
 
-(* [simp] *)
 let locssexp_valid = prove
  (`!l. valid_sexp (locssexp l)`,
   CHEAT_TAC);;
+add_simp locssexp_valid;;
 
-(* [simp] *)
 let expsexp_valid = prove
  (`!e. valid_sexp (expsexp e)`,
   CHEAT_TAC);;
+add_simp expsexp_valid;;
 
-(* [simp] *)
 let decsexp_valid = prove
  (`!d. valid_sexp (decsexp d)`,
   CHEAT_TAC);;
+add_simp decsexp_valid;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["assert"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

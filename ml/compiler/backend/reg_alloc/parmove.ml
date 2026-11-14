@@ -16,11 +16,8 @@
 needs "lib/sorting.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "parmove"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "parmove"
   ["misc"];;
 
 (* Non-deterministic algorithm *)
@@ -76,6 +73,7 @@ let path_def,path_ind = define_wf
    `parmove_path [_1] <=> T`;
    `parmove_path (CONS (c,b') (CONS (b,a) p)) <=>
          (b = b') /\ parmove_path (CONS (b,a) p)`];;
+add_simp path_def;;
 
 let path_change_start = prove
  (`!y z x. parmove_path (SNOC x y) /\ FST x = FST z ==> parmove_path
@@ -139,11 +137,11 @@ let parsem_def = new_definition
   `parsem mu rho = UPDATE_LIST rho (ZIP (MAP FST mu) (MAP (rho o SND)
   mu))`;;
 
-(* [simp] *)
 let parsem_nil = prove
  (`parsem [] = I`,
   (REWRITE_TAC[FUN_EQ_THM; parsem_def; MAP; ZIP; UPDATE_LIST_THM;
     I_THM]));;
+add_simp parsem_nil;;
 
 let parsem_cons = prove
  (`~(MEM x (MAP FST mu)) ==>
@@ -378,6 +376,7 @@ let not_use_temp_before_assign_def,not_use_temp_before_assign_ind =
         | CONS (d,NONE) ls -> F
         | (CONS (NONE,s) ls) -> T
         | (CONS (d,s) ls) -> not_use_temp_before_assign ls`];;
+add_simp not_use_temp_before_assign_def;;
 
 let not_use_temp_before_assign_append = prove
  (`!l1 l2.
@@ -541,7 +540,3 @@ let parmove_MAP_INJ = prove
    parmove (MAP (f ## f) ls) = MAP (OPTION_MAP f ## OPTION_MAP f)
      (parmove ls)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

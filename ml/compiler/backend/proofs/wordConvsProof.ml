@@ -25,11 +25,8 @@ needs "compiler/backend/word_to_word.ml";;
 needs "compiler/backend/word_unreach.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "wordConvsProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "wordConvsProof"
   ["wordConvs"; "wordLang"; "word_alloc"; "word_copy"; "word_cse";
    "word_elim"; "word_inst"; "word_remove"; "word_simp";
    "word_to_word"; "word_unreach"];;
@@ -214,11 +211,12 @@ let extract_labels_drop_consts_1 = prove
  (`wordConvs_extract_labels (drop_consts cs ls) = []`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let extract_labels_drop_consts = prove
  (`wordConvs_extract_labels (SmartSeq (drop_consts cs ls) p) =
   wordConvs_extract_labels p`,
   CHEAT_TAC);;
+add_simp extract_labels_drop_consts;;
 
 (* [local] *)
 let extract_labels_const_fp_loop = prove
@@ -322,11 +320,12 @@ let every_inst_SmartSeq = prove
    (every_inst P p /\ every_inst P q)`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let every_inst_drop_consts = prove
  (`every_inst P (SmartSeq (drop_consts cs ls) p) =
    every_inst P p`,
   CHEAT_TAC);;
+add_simp every_inst_drop_consts;;
 
 (* [local] *)
 let every_inst_const_fp = prove
@@ -373,11 +372,12 @@ let not_created_subprogs_Seq_assoc = prove
    (not_created_subprogs P p1 /\ not_created_subprogs P p2)`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let not_created_subprogs_drop_consts = prove
  (`not_created_subprogs P (SmartSeq (drop_consts cs ls) p) =
    not_created_subprogs P p`,
   CHEAT_TAC);;
+add_simp not_created_subprogs_drop_consts;;
 
 (* [local] *)
 let not_created_subprogs_const_fp_loop = prove
@@ -421,17 +421,19 @@ let compile_exp_not_created_subprogs = prove
    not_created_subprogs P (word_simp_compile_exp p)`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let word_get_code_labels_SmartSeq = prove
  (`wordConvs_get_code_labels (SmartSeq p q) =
    wordConvs_get_code_labels p UNION wordConvs_get_code_labels q`,
   CHEAT_TAC);;
+add_simp word_get_code_labels_SmartSeq;;
 
-(* [local,simp] *)
+(* [local] *)
 let word_get_code_labels_drop_consts = prove
  (`!args.
    wordConvs_get_code_labels (drop_consts l args) = {}`,
   CHEAT_TAC);;
+add_simp word_get_code_labels_drop_consts;;
 
 (* [local] *)
 let word_get_code_labels_const_fp_loop = prove
@@ -440,18 +442,20 @@ let word_get_code_labels_const_fp_loop = prove
      wordConvs_get_code_labels p`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let word_good_handlers_SmartSeq = prove
  (`good_handlers n (SmartSeq p q) <=>
    good_handlers n p /\
    good_handlers n q`,
   CHEAT_TAC);;
+add_simp word_good_handlers_SmartSeq;;
 
-(* [local,simp] *)
+(* [local] *)
 let word_good_handlers_drop_consts = prove
  (`!args.
    good_handlers n (drop_consts l args)`,
   CHEAT_TAC);;
+add_simp word_good_handlers_drop_consts;;
 
 (* [local] *)
 let word_good_handlers_const_fp_loop = prove
@@ -1525,12 +1529,8 @@ let word_good_code_labels_word_to_word = prove
      progs)) elabs`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C";
    "comp";
    "dummy"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

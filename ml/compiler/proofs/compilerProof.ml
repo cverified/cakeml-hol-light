@@ -34,11 +34,8 @@ needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/semantics.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "compilerProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "compilerProof"
   ["backendProof"; "compiler"; "envRel"; "evaluateProps"; "infer";
    "inferComplete"; "inferProps"; "inferSound"; "lab_to_targetProof";
    "pegComplete"; "pegSound"; "semantics"; "targetSem"; "typeSound";
@@ -244,7 +241,3 @@ let type_config_ok = prove
  (`envRel_env_rel prim_tenv infer_init_config /\
    inf_set_tids_ienv prim_type_ids infer_init_config`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

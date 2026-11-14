@@ -80,19 +80,6 @@ let real_define_shaped_rec_tac = define_shaped_rec_tac;;
 let real_define_shaped_wf = define_shaped_wf;;
 let real_define_shaped_wf_cheat = define_shaped_wf_cheat;;
 let real_define_shaped_wf_tac = define_shaped_wf_tac;;
-let real_define_mutual_rec = define_mutual_rec;;
-let real_define_mutual_guess = define_mutual_guess;;
-let real_define_mutual_guess_cheat = define_mutual_guess_cheat;;
-let real_define_mutual_wf = define_mutual_wf;;
-let real_define_mutual_wf_cheat = define_mutual_wf_cheat;;
-let real_define_mutual_wf_tac = define_mutual_wf_tac;;
-let real_define_mutual_shaped_rec = define_mutual_shaped_rec;;
-let real_define_mutual_shaped_rec_tac = define_mutual_shaped_rec_tac;;
-let real_define_mutual_shaped_rec_cheat =
-  define_mutual_shaped_rec_cheat;;
-let real_define_mutual_shaped_wf = define_mutual_shaped_wf;;
-let real_define_mutual_shaped_wf_tac = define_mutual_shaped_wf_tac;;
-let real_define_mutual_shaped_wf_cheat = define_mutual_shaped_wf_cheat;;
 let real_assume_definition_rec = assume_definition_rec;;
 let real_prove = prove;;
 
@@ -135,30 +122,6 @@ let define_shaped_wf shape rel cls = fast_pair cls;;
 let define_shaped_wf_cheat shape rel cls = fast_pair cls;;
 
 let define_shaped_wf_tac shape rel tac cls = fast_pair cls;;
-
-let define_mutual_rec cls = fast_pair cls;;
-
-let define_mutual_guess cls = fast_pair cls;;
-
-let define_mutual_guess_cheat cls = fast_pair cls;;
-
-let define_mutual_wf rel cls = fast_pair cls;;
-
-let define_mutual_wf_cheat rel cls = fast_pair cls;;
-
-let define_mutual_wf_tac rel tac cls = fast_pair cls;;
-
-let define_mutual_shaped_rec shape cls = fast_pair cls;;
-
-let define_mutual_shaped_rec_tac shape tac cls = fast_pair cls;;
-
-let define_mutual_shaped_rec_cheat shape cls = fast_pair cls;;
-
-let define_mutual_shaped_wf shape rel cls = fast_pair cls;;
-
-let define_mutual_shaped_wf_tac shape rel tac cls = fast_pair cls;;
-
-let define_mutual_shaped_wf_cheat shape rel cls = fast_pair cls;;
 
 let assume_definition_rec why cls = fast_pair cls;;
 

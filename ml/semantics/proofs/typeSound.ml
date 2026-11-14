@@ -26,11 +26,8 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "typeSound"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "typeSound"
   ["ast"; "evaluate"; "evaluateProps"; "fpSem"; "namespaceProps";
    "primSemEnv"; "semanticPrimitives"; "semanticPrimitivesProps";
    "semantics"; "typeSoundInvariants"; "typeSysProps"; "typeSystem";
@@ -61,10 +58,10 @@ let EVERY_LIST_REL = prove
  (`ALL (\x. f x y) l = ALL2 (\x y. f x y) l (REPLICATE (LENGTH l) y)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let v_unchanged = prove
  (`!tenv x. type_env_v_fupd (K (type_env_v tenv)) tenv = tenv`,
   CHEAT_TAC);;
+add_simp v_unchanged;;
 
 let check_dup_ctors_thm = prove
  (`check_dup_ctors (tvs,tn,condefs) = ALL_DISTINCT (MAP FST condefs)`,
@@ -590,7 +587,3 @@ let semantics_type_sound = prove
     type_sound_invariant st env ctMap tenvS tids tenv ==> ~(r =
       ffi_Fail)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

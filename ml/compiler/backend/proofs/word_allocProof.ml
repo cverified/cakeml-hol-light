@@ -26,11 +26,8 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_allocProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_allocProof"
   ["backend_common"; "linear_scan"; "linear_scanProof"; "mllist";
    "reg_alloc"; "reg_allocProof"; "wordConvs"; "wordLang";
    "wordProps"; "wordSem"; "word_alloc"];;
@@ -1148,7 +1145,7 @@ let strong_locals_rel_I_insert_insert = prove
      v' B)`,
   CHEAT_TAC);;
 
-(* [simp,local] *)
+(* [local] *)
 let st_eq = prove
  (`wordSem_state_store_fupd (K tstore) (wordSem_state_locals_fupd (K t)
      rst) = wordSem_state_store_fupd (K tstore')
@@ -1156,29 +1153,34 @@ let st_eq = prove
      rst) <=>
      t = t' /\ tstore = tstore'`,
   CHEAT_TAC);;
+add_simp st_eq;;
 
-(* [simp,local] *)
+(* [local] *)
 let live_store_rel_NIL = prove
  (`live_store_rel [] sstore tstore <=>
    sstore = tstore`,
   CHEAT_TAC);;
+add_simp live_store_rel_NIL;;
 
-(* [simp,local] *)
+(* [local] *)
 let live_store_rel_refl = prove
  (`live_store_rel ls sstore sstore`,
   CHEAT_TAC);;
+add_simp live_store_rel_refl;;
 
-(* [simp,local] *)
+(* [local] *)
 let with_same_store = prove
  (`wordSem_state_store_fupd (K (wordSem_state_store st))
      st = st`,
   CHEAT_TAC);;
+add_simp with_same_store;;
 
-(* with_same_locals[simp,local] *)
+(* with_same_locals[local] *)
 let word_allocProof_with_same_locals = prove
  (`wordSem_state_locals_fupd (K (wordSem_state_locals st))
      st = st`,
   CHEAT_TAC);;
+add_simp word_allocProof_with_same_locals;;
 
 (* [local] *)
 let evaluate_remove_dead_Loop_helper = prove
@@ -2882,14 +2884,10 @@ let word_alloc_full_inst_ok_less = prove
    full_inst_ok_less c (word_alloc fc c alg k prog col_opt)`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C";
    "mem";
    "not";
    "sloc";
    "val"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

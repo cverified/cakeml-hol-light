@@ -27,11 +27,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvlSem"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvlSem"
   ["backendProps"; "bvl"; "closSem"; "clos_to_bvl"];;
 
 let _ = do_list hide_constant ["str"];;
@@ -39,29 +36,32 @@ let _ = do_list hide_constant ["str"];;
 (* --- Semantics of BVL --- *)
 
 let bvlSem_ref_INDUCT,bvlSem_ref_RECURSION = define_datatype
-  "bvlSem_ref = bvlSem_ValueArray ('a list) | bvlSem_ByteArray (bool) \
-   (word8 list) | \
-   // T = compare-by-contents, immutable\n\
-   // F = compare-by-pointer, mutable\n\
-   // in closLang all are ByteArray F,\n\
-   // ByteArray T introduced in BVL to implement ByteVector\n\
-   bvlSem_Thunk (thunk_mode) ('a) | bvlSem_MutBlock (num) (bool) ('a \
-   list) ('a) ('a list)";;
+  "bvlSem_ref =
+     bvlSem_ValueArray ('a list)
+   | bvlSem_ByteArray bool (word8 list)
+     // T = compare-by-contents, immutable
+     // F = compare-by-pointer, mutable
+     // in closLang all are ByteArray F,
+     // ByteArray T introduced in BVL to implement ByteVector
+   | bvlSem_Thunk thunk_mode ('a)
+   | bvlSem_MutBlock num bool ('a list) ('a) ('a list)";;
 
 (* these parts are shared by bytecode and, if bytecode is to be supported, need
    to move to a common ancestor *)
 
 let bvlSem_v_INDUCT,bvlSem_v_RECURSION = define_datatype
-  "bvlSem_v = bvlSem_Number (int) \
-   // integer\n\
-   | bvlSem_Word64 (word64) \
-   // 64-bit word\n\
-   | bvlSem_Block (num) (bvlSem_v list) \
-   // cons block: tag and payload\n\
-   | bvlSem_CodePtr (num) \
-   // code pointer\n\
-   | bvlSem_RefPtr (bool) (num) \
-   // pointer to ref cell, bool is T if Eq test is allows";;
+  "bvlSem_v =
+     bvlSem_Number int
+     // integer
+   | bvlSem_Word64 word64
+     // 64-bit word
+   | bvlSem_Block num (bvlSem_v list)
+     // cons block: tag and payload
+   | bvlSem_CodePtr num
+     // code pointer
+   | bvlSem_RefPtr bool num
+     // pointer to ref cell, bool is T if Eq test is allows
+  ";;
 
 let bvlSem_Boolv_def = new_definition
   `bvlSem_Boolv b = bvlSem_Block (bool_to_tag b) []`;;
@@ -99,13 +99,12 @@ let bvlSem_v_to_list_def,bvlSem_v_to_list_ind = define_wf
 let bvlSem_list_to_v_def,bvlSem_list_to_v_ind = define_rec
   [`bvlSem_list_to_v [] = bvlSem_Block nil_tag []`;
    `bvlSem_list_to_v (CONS v vs) = bvlSem_Block cons_tag [v;
-  bvlSem_list_to_v vs]`];;
+    bvlSem_list_to_v vs]`];;
 
 let isClos_def = new_definition
   `bvlSem_isClos t1 l1 = (((t1 = closure_tag) \/ (t1 =
   partial_app_tag)) /\ ~(l1 = []))`;;
 
-let _ = size_thms "bvlSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 (* the clauses of the source overlap -- a later one says
@@ -114,7 +113,7 @@ let _ = size_thms "bvlSem_v";;
    writes them as a match, which takes the first arm (see
    ml/lib/define.ml, "A definition whose clauses overlap").  As a
    list of clauses they would be inconsistent. *)
-let bvlSem_do_eq_def,bvlSem_do_eq_ind = define_mutual_wf
+let bvlSem_do_eq_def,bvlSem_do_eq_ind = define_wf
   `MEASURE (sum_measure (\(x0,x1,x2). (\x. 0) x0 + bvlSem_v_size x1 +
   bvlSem_v_size x2) (\(x0,x1,x2). (\x. 0) x0 + bvlSem_v_size1 x1 +
   bvlSem_v_size1 x2))`
@@ -123,36 +122,38 @@ let bvlSem_do_eq_def,bvlSem_do_eq_ind = define_mutual_wf
            ((bvlSem_CodePtr _4:bvlSem_v),_5) -> Eq_type_error
          | (_6,(bvlSem_CodePtr _7)) -> Eq_type_error
          | ((bvlSem_Number n1),(bvlSem_Number n2)) -> (Eq_val (n1 =
-           n2))
+             n2))
          | ((bvlSem_Number _8),_9) -> Eq_type_error
          | (_10,(bvlSem_Number _11)) -> Eq_type_error
          | ((bvlSem_Word64 w1),(bvlSem_Word64 w2)) -> (Eq_val (w1 =
-           w2))
+             w2))
          | ((bvlSem_Word64 _12),_13) -> Eq_type_error
          | (_14,(bvlSem_Word64 _15)) -> Eq_type_error
          | ((bvlSem_RefPtr b1 n1),(bvlSem_RefPtr b2 n2)) ->
         (if b1 /\ b2 then
          (match (FLOOKUP refs n1,FLOOKUP refs n2) with
             (SOME (bvlSem_ByteArray T bs1),SOME (bvlSem_ByteArray T
-              bs2)) -> Eq_val (bs1 = bs2) | (SOME (bvlSem_ByteArray T
-              bs1),_16) -> Eq_type_error | (_17,SOME (bvlSem_ByteArray T
-              bs2)) -> Eq_type_error | _18 -> Eq_val (n1 = n2)) else
-              Eq_type_error)
+                bs2)) -> Eq_val (bs1 = bs2) | (SOME (bvlSem_ByteArray T
+                bs1),_16) -> Eq_type_error | (_17,SOME (bvlSem_ByteArray
+                T bs2)) -> Eq_type_error | _18 -> Eq_val (n1 = n2)) else
+                Eq_type_error)
          | ((bvlSem_RefPtr _19 _20),_21) -> Eq_type_error
          | (_22,(bvlSem_RefPtr _23 _24)) -> Eq_type_error
          | ((bvlSem_Block t1 l1),(bvlSem_Block t2 l2)) ->
        (if bvlSem_isClos t1 l1 \/ bvlSem_isClos t2 l2 then if
-         bvlSem_isClos t1 l1 /\ bvlSem_isClos t2 l2 then Eq_val T
-         else Eq_type_error else if (t1 = t2) /\ (LENGTH l1 = LENGTH
-         l2) then bvlSem_do_eq_list refs l1 l2 else Eq_val F)`;
+           bvlSem_isClos t1 l1 /\ bvlSem_isClos t2 l2 then Eq_val T
+           else Eq_type_error else if (t1 = t2) /\ (LENGTH l1 =
+           LENGTH l2) then bvlSem_do_eq_list refs l1 l2 else Eq_val
+           F)`;
    `bvlSem_do_eq_list refs x2 x3 =
          match (x2,x3) with
            ([],[]) -> Eq_val T
          | ((CONS v1 vs1),(CONS v2 vs2)) ->
        (match bvlSem_do_eq refs v1 v2 with Eq_val T ->
-         bvlSem_do_eq_list refs vs1 vs2 | Eq_val F -> Eq_val F | bad ->
-         bad)
+           bvlSem_do_eq_list refs vs1 vs2 | Eq_val F -> Eq_val F | bad
+           -> bad)
          | (_25,_26) -> Eq_val F`];;
+add_simp bvlSem_do_eq_def;;
 
 (* HOL4 bvlSemScript.sml:116: the overload Error, which the port
    expands *)
@@ -198,16 +199,16 @@ let bvlSem_do_install_def = new_definition
 
 let do_part_def = define_cases
   [`bvlSem_do_part m (closLang_Int i:const_part) refs =
-  (bvlSem_Number i,refs)`;
+    (bvlSem_Number i,refs)`;
    `bvlSem_do_part m (closLang_W64 w:const_part) refs =
-  (bvlSem_Word64 w,refs)`;
+    (bvlSem_Word64 w,refs)`;
    `bvlSem_do_part m (closLang_Con t ns:const_part) refs =
-  (bvlSem_Block t (MAP m ns),refs)`;
+    (bvlSem_Block t (MAP m ns),refs)`;
    `bvlSem_do_part m (closLang_Str t:const_part) refs =
       (let ptr = (minimal ptr. ~(ptr IN FDOM refs)) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (bvlSem_RefPtr T ptr,refs |+ (ptr,((bvlSem_ByteArray T
-          bytes):bvlSem_v bvlSem_ref))))`];;
+            bytes):bvlSem_v bvlSem_ref))))`];;
 
 let do_build_def,do_build_ind = define_rec
   [`bvlSem_do_build m i [] refs = (m (i - 1),refs)`;
@@ -338,8 +339,10 @@ let bvlSem_do_word_app_def = new_definition
 
 let bvlSem_dest_thunk_ret_INDUCT,bvlSem_dest_thunk_ret_RECURSION =
   define_datatype
-  "bvlSem_dest_thunk_ret = bvlSem_BadRef | bvlSem_NotThunk | \
-   bvlSem_IsThunk (thunk_mode) (bvlSem_v)";;
+  "bvlSem_dest_thunk_ret =
+     bvlSem_BadRef
+   | bvlSem_NotThunk
+   | bvlSem_IsThunk thunk_mode bvlSem_v";;
 
 let bvlSem_dest_thunk_def = new_definition
   `bvlSem_dest_thunk x1 refs =
@@ -787,15 +790,15 @@ let bvlSem_dec_clock_def = new_definition
 let bvlSem_find_code_def = define_cases
   [`bvlSem_find_code (SOME p) args code =
          (match sptree_lookup p code with NONE -> NONE | SOME
-           (arity,exp) -> (if LENGTH args = arity then SOME
-           (args,exp) else NONE))`;
+             (arity,exp) -> (if LENGTH args = arity then SOME
+             (args,exp) else NONE))`;
    `bvlSem_find_code NONE args code =
          (if args = [] then NONE else
            match LAST args with bvlSem_CodePtr loc ->
                (match sptree_lookup loc code with NONE -> NONE
-                 | SOME (arity,exp) -> (if LENGTH args = arity + 1
-                 then SOME (BUTLAST args,exp) else NONE)) | other
-                 -> NONE)`];;
+                   | SOME (arity,exp) -> (if LENGTH args = arity +
+                   1 then SOME (BUTLAST args,exp) else NONE)) |
+                   other -> NONE)`];;
 
 (* The evaluation is defined as a clocked functional version of
    a conventional big-step operational semantics. *)
@@ -924,7 +927,6 @@ let bvlSem_do_app_const = prove
                        s2 = bvlSem_state_compile_oracle s1)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let bvl_do_app_Ref = prove
  (`bvlSem_do_app (closLang_MemOp closLang_Ref) vs s = Rval
      (bvlSem_RefPtr T (minimal ptr. ~(ptr IN FDOM (bvlSem_state_refs
@@ -933,12 +935,13 @@ let bvl_do_app_Ref = prove
           s))),bvlSem_ValueArray vs)))
       s)`,
   CHEAT_TAC);;
+add_simp bvl_do_app_Ref;;
 
-(* [simp] *)
 let bvl_do_app_Cons = prove
  (`bvlSem_do_app (closLang_BlockOp (closLang_Cons tag)) vs s = Rval
   (bvlSem_Block tag vs,s)`,
   CHEAT_TAC);;
+add_simp bvl_do_app_Cons;;
 
 (* evaluate_clock *)
 let bvlSem_evaluate_clock = prove
@@ -991,10 +994,6 @@ let bvlSem_semantics_def = new_definition
 
 (* HOL4 bvlSemScript.sml:774: ML code, not ported *)
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["str"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

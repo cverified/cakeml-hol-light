@@ -14,25 +14,34 @@ needs "lib/machine_ieee.ml";;
 needs "semantics/ast.ml";;
 (* order important because of FP_Add in ast & binary_ieee *)
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "fpSem"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "fpSem"
   ["ast"];;
 
 let fp_cmp_INDUCT,fp_cmp_RECURSION = define_datatype
-  "fp_cmp = FP_Less | FP_LessEqual | FP_Greater | FP_GreaterEqual | \
-   FP_Equal";;
+  "fp_cmp =
+     FP_Less
+   | FP_LessEqual
+   | FP_Greater
+   | FP_GreaterEqual
+   | FP_Equal";;
 
 let fp_uop_INDUCT,fp_uop_RECURSION = define_datatype
-  "fp_uop = fpSem_FP_Abs | fpSem_FP_Neg | fpSem_FP_Sqrt";;
+  "fp_uop =
+     fpSem_FP_Abs
+   | fpSem_FP_Neg
+   | fpSem_FP_Sqrt";;
 
 let fp_bop_INDUCT,fp_bop_RECURSION = define_datatype
-  "fp_bop = fpSem_FP_Add | fpSem_FP_Sub | fpSem_FP_Mul | fpSem_FP_Div";;
+  "fp_bop =
+     fpSem_FP_Add
+   | fpSem_FP_Sub
+   | fpSem_FP_Mul
+   | fpSem_FP_Div";;
 
 let fp_top_INDUCT,fp_top_RECURSION = define_datatype
-  "fp_top = FP_Fma";;
+  "fp_top =
+     FP_Fma";;
 
 let fp_cmp_def = new_definition
   `fp_cmp cmp =
@@ -65,7 +74,3 @@ let fpfma_def = new_definition
 
 let fp_top_comp_def = new_definition
   `fp_top_comp fop = fpfma`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

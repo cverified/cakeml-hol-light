@@ -12,6 +12,15 @@ needs "Library/words.ml";;
 (* HOL4's FUNPOW f n x is this ITER n f x *)
 needs "Library/iter.ml";;
 
+(* The two files of tactics/ are about HOL Light and know nothing of
+   CakeML: case analysis and induction on a term of any inductive
+   type, and a simp set with the tactics that use it.  HOL4 has both
+   and the port leans on them, so they come before everything else --
+   the library layer below uses them as the theories do. *)
+
+needs (cakeml_dir ^ "/../tactics/induct.ml");;
+needs (cakeml_dir ^ "/../tactics/simpset.ml");;
+
 needs "lib/fastdef.ml";;
 needs "lib/hol4.ml";;
 needs "lib/define.ml";;

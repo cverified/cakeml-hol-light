@@ -39,11 +39,8 @@ needs "compiler/backend/pattern_matching/pattern_common.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "semantics/ast.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "pattern_exh"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "pattern_exh"
   ["ast"; "pattern_common"; "pattern_semantics"];;
 
 
@@ -58,12 +55,14 @@ let _ = hol4_ancestors "pattern_exh"
  * -------------------------------------------------------------------- *)
 
 let ctor_INDUCT,ctor_RECURSION = define_datatype
-  "ctor = TagC (num) (num) \
-   // tag and arity of a Term (SOME tag)\n\
-   | TupC (num) \
-   // arity of a Term NONE\n\
-   | RefC \
-   // a RefPtr";;
+  "ctor =
+     TagC num num
+     // tag and arity of a Term (SOME tag)
+   | TupC num
+     // arity of a Term NONE
+   | RefC
+     // a RefPtr
+  ";;
 
 let ctor_arity_def = define_cases
   [`ctor_arity (TagC t a) = a`;
@@ -93,34 +92,34 @@ let add_head_def,add_head_ind = define_rec
 let mk_prods_def,mk_prods_ind = define_rec
   [`mk_prods [] ys = []`;
    `mk_prods (CONS x xs) ys = APPEND (add_head x ys) (mk_prods xs
-  ys)`];;
+    ys)`];;
 
 let mk_refs_def,mk_refs_ind = define_rec
   [`mk_refs [] = []`;
    `mk_refs (CONS p ps) = CONS (pattern_semantics_Ref p) (mk_refs
-  ps)`];;
+    ps)`];;
 
 let mk_conses_def,mk_conses_ind = define_rec
   [`mk_conses t [] = []`;
    `mk_conses t (CONS ps pss) = CONS (pattern_semantics_Cons t ps)
-  (mk_conses t pss)`];;
+    (mk_conses t pss)`];;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
        INR ps -> list_size pattern_semantics_pat_size ps)
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
-let expand_def,expand_ind = define_mutual_rec
+let expand_def,expand_ind = define_rec
   [`expand (pattern_semantics_Any:pattern_semantics_pat) =
-  [(pattern_semantics_Any:pattern_semantics_pat)]`;
+    [(pattern_semantics_Any:pattern_semantics_pat)]`;
    `expand (pattern_semantics_Lit l:pattern_semantics_pat) =
-  [(pattern_semantics_Lit l:pattern_semantics_pat)]`;
+    [(pattern_semantics_Lit l:pattern_semantics_pat)]`;
    `expand (pattern_semantics_Or p q:pattern_semantics_pat) = APPEND
-  (expand p) (expand q)`;
+    (expand p) (expand q)`;
    `expand (pattern_semantics_Ref p:pattern_semantics_pat) = mk_refs
-  (expand p)`;
+    (expand p)`;
    `expand (pattern_semantics_Cons t ps:pattern_semantics_pat) =
-  mk_conses t (expand_list ps)`;
+    mk_conses t (expand_list ps)`;
    `expand_list [] = [[]]`;
    `expand_list (CONS p ps) = mk_prods (expand p) (expand_list ps)`];;
 
@@ -131,7 +130,7 @@ let mk_rows_def,mk_rows_ind = define_rec
 let or_rows_def,or_rows_ind = define_rec
   [`or_rows [] = []`;
    `or_rows (CONS (p,e) rows) = APPEND (mk_rows (expand p))
-  (or_rows rows)`];;
+    (or_rows rows)`];;
 
 
 (* -------------------------------------------------------------------- *
@@ -150,7 +149,7 @@ let tag_ctors_def,tag_ctors_ind = define_rec
 let ctor_nub_def,ctor_nub_ind = define_rec
   [`ctor_nub [] = []`;
    `ctor_nub (CONS x xs) = (if MEM x xs then ctor_nub xs else CONS
-  x (ctor_nub xs))`];;
+    x (ctor_nub xs))`];;
 
 let ctors_of_def = new_definition
   `ctors_of x1 =
@@ -168,7 +167,7 @@ let ctor_keep_def,ctor_keep_ind = define_rec
   [`ctor_keep [] ys = []`;
    `ctor_keep (CONS x xs) ys =
       (if MEM x ys then CONS x (ctor_keep xs ys) else ctor_keep
-        xs ys)`];;
+          xs ys)`];;
 
 let ctor_inter_def = new_definition
   `ctor_inter xs ys =
@@ -177,7 +176,6 @@ let ctor_inter_def = new_definition
       | (xs,NONE) -> xs
       | ((SOME xs),(SOME ys)) -> SOME (ctor_keep xs ys)`;;
 
-let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let col_ctors_def,col_ctors_ind = define_wf
@@ -185,7 +183,7 @@ let col_ctors_def,col_ctors_ind = define_wf
   [`col_ctors [] = NONE`;
    `col_ctors (CONS [] rows) = col_ctors rows`;
    `col_ctors (CONS (CONS p _5) rows) = ctor_inter (ctors_of p)
-  (col_ctors rows)`];;
+    (col_ctors rows)`];;
 
 
 (* -------------------------------------------------------------------- *
@@ -215,12 +213,12 @@ let spec_row_def = new_definition
 let spec_mat_def,spec_mat_ind = define_rec
   [`spec_mat c [] = []`;
    `spec_mat c (CONS r rows) = APPEND (spec_row c r) (spec_mat c
-  rows)`];;
+    rows)`];;
 
 let spec_mats_def,spec_mats_ind = define_rec
   [`spec_mats [] rows = []`;
    `spec_mats (CONS c cs) rows = CONS (spec_mat c rows) (spec_mats
-  cs rows)`];;
+    cs rows)`];;
 
 let default_row_def = new_definition
   `default_row x1 =
@@ -232,7 +230,7 @@ let default_row_def = new_definition
 let default_mat_def,default_mat_ind = define_rec
   [`default_mat [] = []`;
    `default_mat (CONS r rows) = APPEND (default_row r) (default_mat
-  rows)`];;
+    rows)`];;
 
 
 (* -------------------------------------------------------------------- *
@@ -250,17 +248,17 @@ let default_mat_def,default_mat_ind = define_rec
        INR ps -> list_size pattern_semantics_pat_size ps)
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
-let pat_weight_def,pat_weight_ind = define_mutual_rec
+let pat_weight_def,pat_weight_ind = define_rec
   [`pat_weight (pattern_semantics_Any:pattern_semantics_pat) =
-  (0:num)`;
+    (0:num)`;
    `pat_weight (pattern_semantics_Lit l:pattern_semantics_pat) =
-  ((0):num)`;
+    ((0):num)`;
    `pat_weight (pattern_semantics_Or p q:pattern_semantics_pat) = ((1
-  + pat_weight p + pat_weight q):num)`;
+    + pat_weight p + pat_weight q):num)`;
    `pat_weight (pattern_semantics_Ref p:pattern_semantics_pat) = ((1
-  + pat_weight p):num)`;
+    + pat_weight p):num)`;
    `pat_weight (pattern_semantics_Cons t ps:pattern_semantics_pat) =
-  ((1 + pats_weight ps):num)`;
+    ((1 + pats_weight ps):num)`;
    `pats_weight [] = 0`;
    `pats_weight (CONS p ps) = pat_weight p + pats_weight ps`];;
 
@@ -368,14 +366,14 @@ let mat_len_default_mat_less = prove
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_matrix_def,exh_matrix_ind = define_mutual_shaped_rec_cheat
+let exh_matrix_def,exh_matrix_ind = define_shaped_rec_cheat
   "maplist>measure"
   [`exh_matrix [] = F`;
    `exh_matrix (CONS r rows) =
       (if NULL r then T else
          match col_ctors (CONS r rows) with NONE -> exh_matrix
-           (default_mat (CONS r rows)) | SOME cs -> exh_mats
-           (spec_mats cs (CONS r rows)))`;
+             (default_mat (CONS r rows)) | SOME cs -> exh_mats
+             (spec_mats cs (CONS r rows)))`;
    `exh_mats [] = T`;
    `exh_mats (CONS m ms) = (exh_matrix m /\ exh_mats ms)`];;
 
@@ -409,13 +407,13 @@ let exh_rows_def = new_definition
    termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_steps_def,exh_steps_ind = define_mutual_guess_cheat
+let exh_steps_def,exh_steps_ind = define_guess_cheat
   [`exh_steps [] = (1:num)`;
    `exh_steps (CONS r rows) =
       (((if NULL r then 1 else
          match col_ctors (CONS r rows) with NONE -> 1 + exh_steps
-           (default_mat (CONS r rows)) | SOME cs -> 1 +
-           exh_steps_list (spec_mats cs (CONS r rows)))):num)`;
+             (default_mat (CONS r rows)) | SOME cs -> 1 +
+             exh_steps_list (spec_mats cs (CONS r rows)))):num)`;
    `exh_steps_list [] = 0`;
    `exh_steps_list (CONS m ms) = exh_steps m + exh_steps_list ms`];;
 
@@ -440,8 +438,8 @@ let exh_all_def,exh_all_ind = define_guess_cheat
    `exh_all (CONS (CONS r rows) ms) =
       (if NULL r then exh_all ms else
          match col_ctors (CONS r rows) with NONE -> exh_all
-           (CONS (default_mat (CONS r rows)) ms) | SOME cs ->
-           exh_all (APPEND (spec_mats cs (CONS r rows)) ms))`];;
+             (CONS (default_mat (CONS r rows)) ms) | SOME cs ->
+             exh_all (APPEND (spec_mats cs (CONS r rows)) ms))`];;
 
 (* [local] *)
 let exh_mats_append = prove
@@ -484,27 +482,30 @@ let exh_rows_eq = prove
 let pand_def = define_cases
   [`pand PMatchSuccess y = y`;
    `pand PMatchFailure y = (if y = PTypeFailure then PTypeFailure
-  else PMatchFailure)`;
+    else PMatchFailure)`;
    `pand PTypeFailure y = PTypeFailure`];;
 
-(* [local,simp] *)
+(* [local] *)
 let pand_simps = prove
  (`pand PMatchSuccess y = y /\
    pand x PMatchSuccess = x /\
    pand PTypeFailure y = PTypeFailure /\
    pand x PTypeFailure = PTypeFailure`,
   CHEAT_TAC);;
+add_simp pand_simps;;
 
-(* [local,simp] *)
+(* [local] *)
 let pand_eq_PTypeFailure = prove
  (`(pand x y = PTypeFailure) <=> x = PTypeFailure \/ y = PTypeFailure`,
   CHEAT_TAC);;
+add_simp pand_eq_PTypeFailure;;
 
-(* [local,simp] *)
+(* [local] *)
 let pand_eq_PMatchSuccess = prove
  (`(pand x y = PMatchSuccess) <=> x = PMatchSuccess /\ y =
   PMatchSuccess`,
   CHEAT_TAC);;
+add_simp pand_eq_PMatchSuccess;;
 
 (* [local] *)
 let pand_assoc = prove
@@ -516,26 +517,29 @@ let pand_assoc = prove
    would compete with pmatch_list_cons and leave case expressions
    behind. *)
 
-(* [local,simp] *)
+(* [local] *)
 let pmatch_Any = prove
  (`pattern_semantics_pmatch refs
   (pattern_semantics_Any:pattern_semantics_pat) v = PMatchSuccess`,
   (REWRITE_TAC[pattern_semantics_pmatch_def]));;
+add_simp pmatch_Any;;
 
-(* [local,simp] *)
+(* [local] *)
 let pmatch_list_nil = prove
  (`pattern_semantics_pmatch_list refs [] [] = PMatchSuccess /\
    pattern_semantics_pmatch_list refs [] (CONS v vs) = PTypeFailure
      /\
    pattern_semantics_pmatch_list refs (CONS p ps) [] = PTypeFailure`,
   (REWRITE_TAC[pattern_semantics_pmatch_def]));;
+add_simp pmatch_list_nil;;
 
-(* [local,simp] *)
+(* [local] *)
 let pmatch_list_cons = prove
  (`pattern_semantics_pmatch_list refs (CONS p ps) (CONS v vs) =
    pand (pattern_semantics_pmatch refs p v)
      (pattern_semantics_pmatch_list refs ps vs)`,
   CHEAT_TAC);;
+add_simp pmatch_list_cons;;
 
 (* [local] *)
 let pmatch_list_LENGTH = prove
@@ -553,38 +557,42 @@ let pmatch_list_append = prove
        (pattern_semantics_pmatch_list refs qs ws)`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let LENGTH_anys = prove
  (`!n. LENGTH (anys n) = n`,
   (INDUCT_TAC THEN ASM_REWRITE_TAC[anys_def; LENGTH]));;
+add_simp LENGTH_anys;;
 
 (* Stated with the width as an argument rather than as LENGTH as, so that
    it also rewrites the anys (ctor_arity c) that spec_row produces. *)
-(* [local,simp] *)
+(* [local] *)
 let pmatch_list_anys = prove
  (`!n as refs.
      pattern_semantics_pmatch_list refs (anys n) as =
      (if LENGTH as = n then PMatchSuccess else PTypeFailure)`,
   CHEAT_TAC);;
+add_simp pmatch_list_anys;;
 
 
 (* ---------------------------------------------------------------------- *
    What the first-order list-building helpers put into their results.
  * ---------------------------------------------------------------------- *)
 
-(* [local,simp] *)
+(* [local] *)
 let MEM_ctor_nub = prove
  (`!l x. MEM x (ctor_nub l) <=> MEM x l`,
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ctor_nub_def; MEM] THEN
    GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[MEM] THEN
      ASM_MESON_TAC[]));;
+add_simp MEM_ctor_nub;;
 
-(* [local,simp] *)
+(* [local] *)
 let MEM_ctor_keep = prove
  (`!xs ys x. MEM x (ctor_keep xs ys) <=> MEM x xs /\ MEM x ys`,
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ctor_keep_def; MEM] THEN
    REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[MEM] THEN
    ASM_MESON_TAC[]));;
+add_simp MEM_ctor_keep;;
 
 (* [local] *)
 let MEM_tag_ctors = prove
@@ -597,40 +605,45 @@ let MEM_spec_mats = prove
   (LIST_INDUCT_TAC THEN REWRITE_TAC[spec_mats_def; MEM] THEN
    REPEAT STRIP_TAC THEN ASM_SIMP_TAC[]));;
 
-(* [local,simp] *)
+(* [local] *)
 let MEM_add_head = prove
  (`!yss x ys. MEM ys (add_head x yss) <=> (?zs. MEM zs yss /\ ys =
   CONS x zs)`,
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[add_head_def; MEM] THEN
     MESON_TAC[]));;
+add_simp MEM_add_head;;
 
-(* [local,simp] *)
+(* [local] *)
 let MEM_mk_prods = prove
  (`!xs yss zs. MEM zs (mk_prods xs yss) <=>
                (?x ys. MEM x xs /\ MEM ys yss /\ zs = CONS x ys)`,
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_prods_def; MEM;
     MEM_APPEND; MEM_add_head] THEN
    MESON_TAC[]));;
+add_simp MEM_mk_prods;;
 
-(* [local,simp] *)
+(* [local] *)
 let MEM_mk_refs = prove
  (`!ps q. MEM q (mk_refs ps) <=> (?p. MEM p ps /\ q =
   pattern_semantics_Ref p)`,
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_refs_def; MEM] THEN
     MESON_TAC[]));;
+add_simp MEM_mk_refs;;
 
-(* [local,simp] *)
+(* [local] *)
 let MEM_mk_conses = prove
  (`!pss t q. MEM q (mk_conses t pss) <=> (?ps. MEM ps pss /\ q =
   pattern_semantics_Cons t ps)`,
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_conses_def; MEM] THEN
     MESON_TAC[]));;
+add_simp MEM_mk_conses;;
 
-(* [local,simp] *)
+(* [local] *)
 let MEM_mk_rows = prove
  (`!ps r. MEM r (mk_rows ps) <=> (?p. MEM p ps /\ r = [p])`,
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_rows_def; MEM] THEN
     MESON_TAC[]));;
+add_simp MEM_mk_rows;;
 
 
 (* ---------------------------------------------------------------------- *
@@ -851,7 +864,3 @@ let exh_rows_thm = prove
  (`~(pattern_semantics_match refs rows v = NONE) /\ exh_rows rows ==>
   ~(pattern_semantics_match refs rows v = SOME MatchFailure)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

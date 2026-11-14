@@ -22,11 +22,8 @@ needs "lib/regexp_compiler.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/proofs/gramProps.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "pegComplete"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "pegComplete"
   ["cmlNTProps"; "cmlPEG"; "gram"; "gramProps"; "pegSound"];;
 
 let _ = do_list hide_constant ["C"; "sub"];;
@@ -106,21 +103,21 @@ let choicel_cons_NONE = prove
        UNCURRY peg_Failure (MAXerr (fl1,fe1) (fl2,fe2)))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let peg_eval_tok_CONS_NONE = prove
  (`peg_eval G (CONS h t,peg_tok P f) (peg_Failure fl fe) <=>
      (?tk l. h = (tk,l) /\ fl = l /\ fe = peg_tokFALSE G /\ ~(P
        tk))`,
   CHEAT_TAC);;
+add_simp peg_eval_tok_CONS_NONE;;
 
 (* HOL4 pegCompleteScript.sml:153-155: a theorem that HOL4 states as
    the value of an ML expression: peg_eval_tok *)
 
-(* [simp] *)
 let peg_eval_tok_NIL = prove
  (`peg_eval G ([],peg_tok P f) r <=> r = peg_Failure (Locs EOFpt
   EOFpt) (peg_tokEOF G)`,
   CHEAT_TAC);;
+add_simp peg_eval_tok_NIL;;
 
 (* HOL4 pegCompleteScript.sml:163-166: ML code, not ported *)
 
@@ -129,7 +126,6 @@ let peg_eval_tok_NIL = prove
 (* HOL4 pegCompleteScript.sml:171-173: the ML values that the
    definitions below antiquote *)
 
-(* [simp] *)
 let peg_eval_tokSymP_NONE = prove
  (`peg_eval G (i,tokSymP P) (peg_Failure fl fe) <=>
      (!l tk t. i = CONS (tk,l) t ==>
@@ -139,6 +135,7 @@ let peg_eval_tokSymP_NONE = prove
                  peg_tokFALSE G)) /\
      (i = [] ==> fl = Locs EOFpt EOFpt /\ fe = peg_tokEOF G)`,
   CHEAT_TAC);;
+add_simp peg_eval_tokSymP_NONE;;
 
 (* disjImpI[local] *)
 let pegComplete_disjImpI = prove
@@ -269,8 +266,8 @@ let left_insert1_def,left_insert1_ind = define_wf
    `left_insert1 pt (Nd (n,l0) subs) =
          (match subs with
              [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] |
-               [x] -> mkNd n [mkNd n [pt]; x] | CONS x xs -> mkNd n
-               (CONS (left_insert1 pt x) xs))`];;
+                 [x] -> mkNd n [mkNd n [pt]; x] | CONS x xs -> mkNd
+                 n (CONS (left_insert1 pt x) xs))`];;
 
 let left_insert1_FOLDL = prove
  (`left_insert1 pt (FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) P) [a;
@@ -281,10 +278,10 @@ let left_insert1_FOLDL = prove
 
 (* HOL4 pegCompleteScript.sml:341: ML code, not ported *)
 
-(* [simp] *)
 let ptree_loc_mkNd = prove
  (`ptree_loc (mkNd n subs) = ptree_list_loc subs`,
   (REWRITE_TAC[mkNd_def; ptree_loc_def]));;
+add_simp ptree_loc_mkNd;;
 
 let merge_list_locs_HDLAST = prove
  (`!h. merge_list_locs (CONS h t) = merge_locs h (LAST (CONS h t))`,
@@ -308,8 +305,10 @@ let ptree_loc_left_insert1 = prove
 
 let leftLoc_def = define_general
   [`leftLoc (Locs l1 _1) = l1`];;
+add_simp leftLoc_def;;
 let rightLoc_def = define_general
   [`rightLoc (Locs _2 l2) = l2`];;
+add_simp rightLoc_def;;
 
 let merge_locs_LR = prove
  (`merge_locs l1 l2 = Locs (leftLoc l1) (rightLoc l2)`,
@@ -318,15 +317,15 @@ let merge_locs_LR = prove
      [`l1:locs`; `l2:locs`] THEN
    REWRITE_TAC[merge_locs_def; leftLoc_def; rightLoc_def]));;
 
-(* [simp] *)
 let leftLoc_merge_locs = prove
  (`leftLoc (merge_locs l1 l2) = leftLoc l1`,
   (REWRITE_TAC[merge_locs_LR; leftLoc_def]));;
+add_simp leftLoc_merge_locs;;
 
-(* [simp] *)
 let rightLoc_merge_locs = prove
  (`rightLoc (merge_locs l1 l2) = rightLoc l2`,
   (REWRITE_TAC[merge_locs_LR; rightLoc_def]));;
+add_simp rightLoc_merge_locs;;
 
 (* two valid parse-trees with the same head, and the same fringes, which
    are all tokens, must be identical. *)
@@ -379,7 +378,6 @@ let eapp_reassociated = prove
   CHEAT_TAC);;
 
 let _ = size_thms "MMLnonT";;
-let _ = size_thms "parsetree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let leftmost_def,leftmost_ind = define_wf
@@ -387,13 +385,11 @@ let leftmost_def,leftmost_ind = define_wf
   [`leftmost (Lf s) = Lf s`;
    `leftmost (Nd (n,l) args) =
       (if ~(args = []) /\ n = (INL:MMLnonT->MMLnonT+num) nTbase then
-        HD args else
+          HD args else
         match args with
             [] -> Nd (n,l) args | CONS h _4 -> leftmost h)`];;
 
 (* pt is a Tbase, and n will be DType all the way down *)
-let _ = size_thms "locs";;
-let _ = size_thms "parsetree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let left_insert2_def,left_insert2_ind = define_wf
@@ -402,10 +398,11 @@ let left_insert2_def,left_insert2_ind = define_wf
    `left_insert2 pt (Nd (n,l0) subs) =
          (match subs with
              [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] | [Nd _6
-               [
+                 [
                   // nTbase
                   tyop]] -> mkNd n [mkNd n [pt]; tyop] | CONS x
-                    ys -> mkNd n (CONS (left_insert2 pt x) ys))`];;
+                      ys -> mkNd n (CONS (left_insert2 pt x) ys))`];;
+add_simp left_insert2_def;;
 
 let ptree_loc_left_insert2 = prove
  (`!bpt dpt.
@@ -491,30 +488,28 @@ let dtype_reassociated = prove
 *)
 
 
-let _ = size_thms "locs";;
-let _ = size_thms "parsetree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let left_insert_def,left_insert_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). parsetree_size locs_size (\x. 0) (\x. 0)
   x0)`
   [`left_insert (Lf (tk,l)) p sep c = Lf (tk,merge_locs (ptree_loc c)
-  l)`;
+    l)`;
    `left_insert (Nd (n,l) subs) p sep c =
          (if ~(n = p) then Nd (n,merge_locs (ptree_loc c) l) subs
-           else
+             else
            match subs with
                [c0] -> mkNd p [mkNd p [c]; sep; c0] | [p'; s';
-                 c'] -> mkNd p [left_insert p' p sep c; s'; c'] |
-                 _8 -> Nd (n,merge_locs (ptree_loc c) l) subs)`];;
+                   c'] -> mkNd p [left_insert p' p sep c; s'; c'] |
+                   _8 -> Nd (n,merge_locs (ptree_loc c) l) subs)`];;
 
 
-(* [simp] *)
 let left_insert_mkNd = prove
  (`(left_insert (mkNd n [c0]) n sep c = mkNd n [mkNd n [c]; sep; c0]) /\
    (left_insert (mkNd n [p'; s'; c']) n sep c =
       mkNd n [left_insert p' n sep c; s'; c'])`,
   CHEAT_TAC);;
+add_simp left_insert_mkNd;;
 
 let ptree_loc_left_insert = prove
  (`!bpt n sep c.
@@ -1056,11 +1051,12 @@ let nTyOplist_input_monotone = prove
          sfx,pts,res'))`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let peg_eval_TyOp_LparT = prove
  (`peg_eval cmlPEG (CONS (tokens_LparT,loc) i0,peg_nt
   ((INL:MMLnonT->MMLnonT+num) nTyOp) I) (peg_Success i r eo) <=> F`,
   CHEAT_TAC);;
+add_simp peg_eval_TyOp_LparT;;
 
 (* HOL4 pegCompleteScript.sml:1137: the overload RANK, which the port
    expands *)
@@ -1179,16 +1175,16 @@ let papp_complete = prove
                 (FLAT bpts)))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let leftmost_mkNd_DType = prove
  (`leftmost (mkNd ((INL:MMLnonT->MMLnonT+num) nDType) (CONS c cs)) =
   leftmost c`,
   CHEAT_TAC);;
+add_simp leftmost_mkNd_DType;;
 
-(* [simp] *)
 let leftmost_mkNd_Tbase = prove
  (`leftmost (mkNd ((INL:MMLnonT->MMLnonT+num) nTbase) (CONS x xs)) = x`,
   CHEAT_TAC);;
+add_simp leftmost_mkNd_Tbase;;
 
 let leftmost_FOLDL = prove
  (`leftmost (FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) nDType) [a;
@@ -1196,13 +1192,13 @@ let leftmost_FOLDL = prove
     leftmost acc`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let left_insert2_mkNd = prove
  (`left_insert2 bpt (mkNd ((INL:MMLnonT->MMLnonT+num) nDType) [mkNd n
   [sub]]) =
    mkNd ((INL:MMLnonT->MMLnonT+num) nDType) [mkNd
      ((INL:MMLnonT->MMLnonT+num) nDType) [bpt]; sub]`,
   CHEAT_TAC);;
+add_simp left_insert2_mkNd;;
 
 let dtype_complete = prove
  (`(!pt' pfx' sfx' N.
@@ -1309,12 +1305,12 @@ let peg_linfix_complete = prove
 
 (* HOL4 pegCompleteScript.sml:2038-2041: a proof *)
 
-(* [simp] *)
 let pmap_EQ = prove
  (`(x,y) = (f ## g) p <=> (?x0 y0. p = (x0,y0) /\ x = f x0 /\ y = g
   y0)`,
   (REWRITE_TAC[FORALL_PAIR_THM; PAIR_MAP_THM; PAIR_EQ] THEN
     MESON_TAC[]));;
+add_simp pmap_EQ;;
 
 let ptPapply0_FOLDL = prove
  (`!l a pt.
@@ -1324,20 +1320,20 @@ let ptPapply0_FOLDL = prove
                      pt]]`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let FST_EQ = prove
  (`FST p = x <=> (?y. p = (x,y))`,
   (MESON_TAC[PAIR; FST; SND]));;
+add_simp FST_EQ;;
 
-(* [simp] *)
 let FST_NEQ = prove
  (`~(FST p = x) <=> (?x0 y. p = (x0,y) /\ ~(x0 = x))`,
   (MESON_TAC[PAIR; FST; SND]));;
+add_simp FST_NEQ;;
 
-(* [simp] *)
 let ALL_FST_NEQ = prove
  (`(!y. ~(p = (x,y))) <=> (?x0 y. p = (x0,y) /\ ~(x0 = x))`,
   (MESON_TAC[PAIR; FST; SND]));;
+add_simp ALL_FST_NEQ;;
 
 let FST_IN = prove
  (`FST p IN s <=> (?tk l. p = (tk,l) /\ tk IN s)`,
@@ -1375,11 +1371,7 @@ let cmlG_unambiguous = prove
      pt1 = pt2`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C";
    "sub"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

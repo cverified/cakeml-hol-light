@@ -31,12 +31,24 @@
    time it is asked; a development that splits on a type a thousand
    times should pay for that once *)
 
+(* The case theorem of a family of types is the conjunction of the
+   theorems of its members, so the one of a type is the conjunct
+   whose variable has that type at its head.  A pair has no case
+   theorem of its own: it has one constructor and the store holds
+   the surjective pairing theorem for it. *)
+
 let cases_of,induction_of =
   let cases_cache = ref ([]:(string*thm)list) in
   let cases_of ty =
     let s = fst(dest_type ty) in
     try assoc s (!cases_cache) with Failure _ ->
-    let th = if s = "prod" then PAIR_SURJECTIVE else cases s in
+    let th =
+      if s = "prod" then PAIR_SURJECTIVE else
+      let ths = CONJUNCTS (cases s) in
+      try find (fun th ->
+                  fst(dest_type(type_of(fst(dest_forall(concl th)))))
+                  = s) ths
+      with Failure _ -> hd ths in
     cases_cache := (s,th)::(!cases_cache); th
   and induction_of ty =
     let s = fst(dest_type ty) in
@@ -91,7 +103,7 @@ let CASES_ON_TAC t =
    one, for a goal that says something about every type of the
    family at once. *)
 
-let induction_for =
+let induction_for_type =
   let t_tm = `T` in
   fun ty ith ->
     let ps,body = strip_forall (concl ith) in
@@ -119,11 +131,12 @@ let induction_shape ith =
                 length vs, length (fst (splitlist dest_imp b)))
       (conjuncts (lhand (snd (strip_forall (concl ith)))));;
 
-let INDUCT_ON_TAC t =
-  fun (asl,w as g) ->
+let INDUCT_ON_TAC : term -> tactic =
+  fun t (asl,w as g) ->
     if not (is_var t) then
       failwith "INDUCT_ON_TAC: not a variable" else
-    let ith = induction_for (type_of t) (induction_of (type_of t)) in
+    let ty = type_of t in
+    let ith = induction_for_type ty (induction_of ty) in
     let rec ntac n tac = if n <= 0 then ALL_TAC
                          else tac THEN ntac (n-1) tac in
     let intro (n,m) = ntac n GEN_TAC THEN ntac m STRIP_TAC in
@@ -152,7 +165,7 @@ let INDUCT_ON_TAC t =
    with `Scheme ... with ...` and HOL4 calls it Induct_on with the
    conjunction already there. *)
 
-let INDUCT_FAMILY_TAC =
+let INDUCT_FAMILY_TAC : tactic =
   fun (asl,w as g) ->
     let vs = map (fun c -> fst (dest_forall c)) (conjuncts w) in
     let ith = induction_of (type_of (hd vs)) in

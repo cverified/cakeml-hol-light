@@ -22,11 +22,8 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "infer_eSound"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "infer_eSound"
   ["ast"; "envRel"; "infer"; "inferProps"; "infer_t"; "ml_monadBase";
    "namespaceProps"; "semanticPrimitives"; "typeSoundInvariants";
    "typeSysProps"; "typeSystem"; "unify"];;
@@ -264,7 +261,3 @@ let infer_e_sound = prove
       type_funs tenv tenvE funs (MAP2 (\(x,y,z) t. (x,(convert_t o
         t_walkstar s) t)) funs ts))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

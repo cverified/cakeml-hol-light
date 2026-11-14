@@ -1953,7 +1953,6 @@ let the_thy_loading = ref "";;
    would go down as that theory and come out of the interface of
    every file that cannot see it. *)
 
-let hol4_lib () = the_thy_loading := "";;
 
 let the_overload_thy =
   ref ([]:((string * string) * string list) list);;
@@ -3257,12 +3256,8 @@ let LIST_SPLIT_TAC (asl,w as gl) =
   if vs = [] then failwith "LIST_SPLIT_TAC" else
   MAP_EVERY (fun v -> STRUCT_CASES_TAC (ISPEC v list_CASES)) vs gl;;
 
-(* the cases theorem of a type of a family of them *)
-
-let cases_of ty =
-  let ths = CONJUNCTS (cases (fst(dest_type ty))) in
-  try find (fun th -> type_of(fst(dest_forall(concl th))) = ty) ths
-  with Failure _ -> hd ths;;
+(* the cases theorem of a type of a family of them is cases_of, of
+   tactics/induct.ml, which the preamble loads before this file *)
 
 (* the scrutinee of a match of the goal that is not a variable:
    the arm of a destructor may look at the value of another

@@ -26,11 +26,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "flat_patternProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "flat_patternProof"
   ["backendProps"; "backend_common"; "ffi"; "flatLang"; "flatProps";
    "flatSem"; "flat_pattern"; "misc"; "mlstring"; "pattern_semantics";
    "semanticPrimitives"; "semanticPrimitivesProps"];;
@@ -373,13 +370,13 @@ let match_rel_def = new_definition
         | (Match_type_error,Match_type_error) -> T
         | (_3,_4) -> F`;;
 
-(* [simp] *)
 let match_rel_thms = prove
  (`(match_rel N Match_type_error e <=> e = Match_type_error) /\
    (match_rel N e Match_type_error <=> e = Match_type_error) /\
    (match_rel N No_match e <=> e = No_match) /\
    (match_rel N e No_match <=> e = No_match)`,
   CHEAT_TAC);;
+add_simp match_rel_thms;;
 
 let match_rel_IMP = prove
  (`match_rel N e e' ==>
@@ -503,7 +500,6 @@ let max_dec_name_LESS_EVERY = prove
   ns)`,
   CHEAT_TAC);;
 
-let _ = size_thms "flatSem_v";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 flat_patternProofScript.sml:974-978: the tactic that proves
@@ -1006,7 +1002,3 @@ let compile_exp_no_Mat = prove
 let compile_decs_no_Mat = prove
  (`!decs. no_Mat_decs (MAP (compile_dec cfg) decs)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

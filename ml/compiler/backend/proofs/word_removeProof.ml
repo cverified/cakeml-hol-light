@@ -15,11 +15,8 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/word_remove.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_removeProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_removeProof"
   ["wordConvs"; "wordProps"; "wordSem"; "word_remove"];;
 
 (* this file reads the name of a record field as a variable and
@@ -66,7 +63,6 @@ let compile_state_def = new_definition
   (state_clock_fupd (K (state_clock s + clk))
      s))))`;;
 
-(* [simp] *)
 let compile_state_const = prove
  (`wordSem_state_locals
       (compile_state clk c s) = wordSem_state_locals s /\
@@ -112,15 +108,15 @@ let compile_state_const = prove
         wordSem_state_stack_limit
       (compile_state clk c s) = wordSem_state_stack_limit s`,
   CHEAT_TAC);;
+add_simp compile_state_const;;
 
-(* [simp] *)
 let find_code_map_I = prove
  (`wordSem_find_code d l (sptree_map (I ## f) t) lsz = OPTION_MAP (I
   ## f ## I) (wordSem_find_code d l t lsz)`,
   CHEAT_TAC);;
+add_simp find_code_map_I;;
 
 
-(* [simp] *)
 let compile_state_update = prove
  (`stack_fupd (K f1)
       (compile_state clk c s) = compile_state clk c (stack_fupd (K
@@ -165,134 +161,135 @@ let compile_state_update = prove
       (compile_state clk c s) = compile_state clk c
         (wordSem_state_stack_limit_fupd (K f15) s)`,
   CHEAT_TAC);;
+add_simp compile_state_update;;
 
-(* [simp] *)
 let get_var_compile_state = prove
  (`wordSem_get_var x (compile_state clk c s) = wordSem_get_var x s`,
   CHEAT_TAC);;
+add_simp get_var_compile_state;;
 
-(* [simp] *)
 let get_fp_var_compile_state = prove
  (`wordSem_get_fp_var x (compile_state clk c s) = wordSem_get_fp_var x
   s`,
   CHEAT_TAC);;
+add_simp get_fp_var_compile_state;;
 
-(* [simp] *)
 let get_vars_compile_state = prove
  (`wordSem_get_vars xs (compile_state clk c s) = wordSem_get_vars xs s`,
   CHEAT_TAC);;
+add_simp get_vars_compile_state;;
 
-(* [simp] *)
 let set_var_compile_state = prove
  (`wordSem_set_var x y (compile_state clk c s) = compile_state clk c
   (wordSem_set_var x y s)`,
   CHEAT_TAC);;
+add_simp set_var_compile_state;;
 
-(* [simp] *)
 let unset_var_compile_state = prove
  (`wordSem_unset_var x (compile_state clk c s) = compile_state clk c
   (wordSem_unset_var x s)`,
   CHEAT_TAC);;
+add_simp unset_var_compile_state;;
 
-(* [simp] *)
 let set_fp_var_compile_state = prove
  (`wordSem_set_fp_var x y (compile_state clk c s) = compile_state clk
   c (wordSem_set_fp_var x y s)`,
   CHEAT_TAC);;
+add_simp set_fp_var_compile_state;;
 
-(* [simp] *)
 let set_vars_compile_state = prove
  (`wordSem_set_vars xs ys (compile_state clk c s) = compile_state clk
   c (wordSem_set_vars xs ys s)`,
   CHEAT_TAC);;
+add_simp set_vars_compile_state;;
 
-(* [simp] *)
 let get_store_compile_state = prove
  (`wordSem_get_store x (compile_state clk c s) = (wordSem_get_store x
   s)`,
   CHEAT_TAC);;
+add_simp get_store_compile_state;;
 
-(* [simp] *)
 let set_store_compile_state = prove
  (`wordSem_set_store x y (compile_state clk c s) = compile_state clk c
   (wordSem_set_store x y s)`,
   CHEAT_TAC);;
+add_simp set_store_compile_state;;
 
-(* [simp] *)
 let push_env_compile_state = prove
  (`wordSem_push_env env h (compile_state clk c s) = compile_state clk
   c (wordSem_push_env env h s)`,
   CHEAT_TAC);;
+add_simp push_env_compile_state;;
 
-(* [simp] *)
 let pop_env_compile_state = prove
  (`wordSem_pop_env (compile_state clk c s) = OPTION_MAP (compile_state
   clk c) (wordSem_pop_env s)`,
   CHEAT_TAC);;
+add_simp pop_env_compile_state;;
 
-(* [simp] *)
 let call_env_compile_state = prove
  (`wordSem_call_env x lsz (compile_state clk c z) = compile_state clk
   c (wordSem_call_env x lsz z)`,
   CHEAT_TAC);;
+add_simp call_env_compile_state;;
 
-(* [simp] *)
 let flush_state_compile_state = prove
  (`wordSem_flush_state x (compile_state clk c z) = compile_state clk c
   (wordSem_flush_state x z)`,
   CHEAT_TAC);;
+add_simp flush_state_compile_state;;
 
-(* [simp] *)
 let has_space_compile_state = prove
  (`wordSem_has_space n (compile_state clk c s) = wordSem_has_space n s`,
   CHEAT_TAC);;
+add_simp has_space_compile_state;;
 
-(* [simp] *)
 let gc_compile_state = prove
  (`wordSem_gc (compile_state clk c s) = OPTION_MAP (compile_state clk
   c) (wordSem_gc s)`,
   CHEAT_TAC);;
+add_simp gc_compile_state;;
 
-(* [simp] *)
 let alloc_compile_state = prove
  (`wordSem_alloc w names (compile_state clk c s) = (I ## compile_state
   clk c) (wordSem_alloc w names s)`,
   CHEAT_TAC);;
+add_simp alloc_compile_state;;
 
-(* [simp] *)
 let mem_load_compile_state = prove
  (`wordSem_mem_load w (compile_state clk c s) = wordSem_mem_load w s`,
   CHEAT_TAC);;
+add_simp mem_load_compile_state;;
 
-(* [simp] *)
 let mem_store_compile_state = prove
  (`wordSem_mem_store x y (compile_state clk c s) = OPTION_MAP
   (compile_state clk c) (wordSem_mem_store x y s)`,
   CHEAT_TAC);;
+add_simp mem_store_compile_state;;
 
-(* [simp] *)
 let word_exp_compile_state = prove
  (`!s y. wordSem_word_exp (compile_state clk c s) y = wordSem_word_exp
   s y`,
   CHEAT_TAC);;
+add_simp word_exp_compile_state;;
 
-(* [simp] *)
 let assign_compile_state = prove
  (`wordSem_assign x y (compile_state clk c s) = OPTION_MAP
   (compile_state clk c) (wordSem_assign x y s)`,
   CHEAT_TAC);;
+add_simp assign_compile_state;;
 
-(* [simp] *)
 let inst_compile_state = prove
  (`wordSem_inst i (compile_state clk c s) = OPTION_MAP (compile_state
   clk c) (wordSem_inst i s)`,
   CHEAT_TAC);;
+add_simp inst_compile_state;;
 
-(* [simp] *)
 let cut_state_compile_state = prove
  (`wordSem_cut_state names (compile_state clk c s) =
    OPTION_MAP (compile_state clk c) (wordSem_cut_state names s)`,
   CHEAT_TAC);;
+add_simp cut_state_compile_state;;
 
 (* [local] *)
 let evaluate_add_clock_compile_state = prove
@@ -302,31 +299,31 @@ let evaluate_add_clock_compile_state = prove
            (res,compile_state extra c s'))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let compile_state_dec_clock = prove
  (`~(state_clock
       s = 0) ==> (compile_state clk c (wordSem_dec_clock s) =
         wordSem_dec_clock (compile_state clk c s))`,
   CHEAT_TAC);;
+add_simp compile_state_dec_clock;;
 
-(* [simp] *)
 let jump_exc_compile_state = prove
  (`wordSem_jump_exc (compile_state clk c s) = OPTION_MAP
   (compile_state clk c ## I) (wordSem_jump_exc s)`,
   CHEAT_TAC);;
+add_simp jump_exc_compile_state;;
 
-(* [simp] *)
 let get_var_imm_compile_state = prove
  (`wordSem_get_var_imm x (compile_state clk c s) = wordSem_get_var_imm
   x s`,
   CHEAT_TAC);;
+add_simp get_var_imm_compile_state;;
 
-(* [simp] *)
 let push_env_case_handler = prove
  (`wordSem_push_env x (match handler with NONE -> NONE | SOME
   (v,prog,l1,l2) -> SOME (v,f prog,l1,l2)) = wordSem_push_env x
   handler`,
   CHEAT_TAC);;
+add_simp push_env_case_handler;;
 
 (* [local] *)
 let pair_map_I = prove
@@ -348,7 +345,3 @@ let word_remove_correct = prove
 (* HOL4 word_removeProofScript.sml:401-428: a proof *)
 
 (* HOL4 word_removeProofScript.sml:430: a proof *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

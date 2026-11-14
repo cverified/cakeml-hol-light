@@ -16,11 +16,8 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_constantProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_constantProof"
   ["closLang"; "closSem"; "clos_to_bvl"];;
 
 (* HOL4 clos_constantProofScript.sml:11-23: code that the source has
@@ -33,7 +30,7 @@ let make_part_def = new_definition
      (match ALOOKUP aux p with SOME k -> (n,k,aux) | NONE -> (n +
        1,n,CONS (p,n) aux))`;;
 
-let parts_def,parts_ind = define_mutual_rec
+let parts_def,parts_ind = define_rec
   [`parts (ConstInt i) n aux = make_part n (closLang_Int i) aux /\
    parts (ConstStr s) n aux = make_part n (closLang_Str s) aux /\
    parts (ConstWord64 w) n aux = make_part n (closLang_W64 w) aux /\
@@ -61,12 +58,12 @@ let build_part_def = define_cases
    `build_part mem' (closLang_Str s:const_part) = ConstStr s`;
    `build_part mem' (closLang_W64 w:const_part) = ConstWord64 w`;
    `build_part mem' (closLang_Con t ns:const_part) = ConstCons t
-  (MAP mem' ns)`];;
+    (MAP mem' ns)`];;
 
 let build_def,build_ind = define_rec
   [`build mem' i [] = mem' (i - 1)`;
    `build mem' i (CONS p rest) = build ((i =+ build_part mem' p)
-  mem') (i + 1) rest`];;
+    mem') (i + 1) rest`];;
 
 let build_const_def = new_definition
   `build_const xs = build (\x. ConstInt (&0)) 0 xs`;;
@@ -80,7 +77,7 @@ let build_map_def,build_map_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size const_part_size x2)`
   [`build_map mem' i [] = mem'`;
    `build_map mem' i (CONS p rest) = build_map ((i =+ build_part
-  mem' p) mem') (i + 1) rest`];;
+    mem' p) mem') (i + 1) rest`];;
 
 let build_mem_thm = prove
  (`!mem' i xs y.
@@ -232,7 +229,7 @@ let build_part'_def = define_cases
 let build'_def,build'_ind = define_rec
   [`build' mem' i [] = mem' (i - 1)`;
    `build' mem' i (CONS p rest) = build' ((i =+ build_part' mem' p)
-  mem') (i + 1) rest`];;
+    mem') (i + 1) rest`];;
 
 let build_const'_def = new_definition
   `build_const' xs = build' (\x. closSem_Number (&0)) 0 xs`;;
@@ -240,7 +237,3 @@ let build_const'_def = new_definition
 let make_const_thm = prove
  (`make_const c = build_const' (to_parts c)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

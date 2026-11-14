@@ -16,11 +16,8 @@ needs "compiler/backend/semantics/closSem.ml";;
 needs "misc/misc.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_opProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_opProof"
   ["closLang"; "closProps"; "closSem"; "clos_op"];;
 
 
@@ -436,7 +433,3 @@ let eq_op_fv = prove
 let fv1_SmartOp = prove
  (`fv1 n (clos_op_SmartOp t op xs) ==> fv1 n (closLang_Op t op xs)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

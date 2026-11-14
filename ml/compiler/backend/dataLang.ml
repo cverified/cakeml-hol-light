@@ -36,11 +36,8 @@ needs "compiler/backend/closLang.ml";;
 needs "misc/misc.ml";;
 (* for num_set *)
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "dataLang"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "dataLang"
   ["closLang"; "misc"];;
 
 
@@ -79,22 +76,23 @@ let op_requires_names_def = new_definition
                           (op = closLang_Install))`;;
 
 let dataLang_prog_INDUCT,dataLang_prog_RECURSION = define_datatype
-  "dataLang_prog = dataLang_Skip | dataLang_Move (num) (num) | \
-   dataLang_Call ((num list#1 spt) option) (num option) (num list) \
-   ((num#dataLang_prog) option) \
-   // return var, cut-set\n\
-   // target of call\n\
-   // arguments\n\
-   // handler: varname, handler code\n\
-   | dataLang_Assign (num) (closLang_op) (num list) ((1 spt) option) \
-   | dataLang_Seq (dataLang_prog) (dataLang_prog) | dataLang_If (num) \
-   (dataLang_prog) (dataLang_prog) | dataLang_MakeSpace (num) (1 spt) \
-   | dataLang_Raise (num) | dataLang_Return (num list) | \
-   dataLang_Tick | dataLang_Force ((num#1 spt) option) (num) (num)";;
+  "dataLang_prog =
+     dataLang_Skip
+   | dataLang_Move num num
+   | dataLang_Call ((num list#misc_num_set) option) (num option) (num
+       list) ((num#dataLang_prog) option)
+     // return var, cut-set
+     // target of call
+     // arguments
+     // handler: varname, handler code
+   | dataLang_Assign num closLang_op (num list) (misc_num_set option)
+   | dataLang_Seq dataLang_prog dataLang_prog
+   | dataLang_If num dataLang_prog dataLang_prog
+   | dataLang_MakeSpace num misc_num_set
+   | dataLang_Raise num
+   | dataLang_Return (num list)
+   | dataLang_Tick
+   | dataLang_Force ((num#misc_num_set) option) num num";;
 
 let mk_ticks_def = new_definition
   `mk_ticks n e = ITER n (dataLang_Seq dataLang_Tick) e`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

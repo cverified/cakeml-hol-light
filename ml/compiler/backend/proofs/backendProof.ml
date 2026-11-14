@@ -71,11 +71,8 @@ needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "backendProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "backendProof"
   ["backend"; "backendProps"; "backend_common"; "backend_passes";
    "bvi_inlineProof"; "bvi_to_dataProof"; "bvl_jumpProof";
    "bvl_to_bviProof"; "clos_annotateProof"; "clos_callProof";
@@ -169,7 +166,6 @@ let backend_config_ok_def = new_definition
           asm_conf (INL backend_common_Add) (n2w (n * (dimindex
             (:'a) DIV 8))))`;;
 
-(* [simp] *)
 let backend_config_ok_with_bvl_conf_updated = prove
  (`bvl_to_bvi_config_next_name2
       (f (backend_config_bvl_conf cc)) = bvl_to_bvi_config_next_name2
@@ -177,19 +173,20 @@ let backend_config_ok_with_bvl_conf_updated = prove
       (backend_config_ok asm_conf (backend_config_bvl_conf_fupd f
         cc) <=> backend_config_ok asm_conf cc)`,
   CHEAT_TAC);;
+add_simp backend_config_ok_with_bvl_conf_updated;;
 
-(* [simp] *)
 let backend_config_ok_with_word_to_word_conf_updated = prove
  (`backend_config_ok asm_conf (backend_config_word_to_word_conf_fupd f
   cc) <=> backend_config_ok asm_conf cc`,
   CHEAT_TAC);;
+add_simp backend_config_ok_with_word_to_word_conf_updated;;
 
-(* [simp] *)
 let backend_config_ok_call_empty_ffi = prove
  (`backend_config_ok asm_conf (backend_config_data_conf_fupd (\c.
   data_to_word_config_call_empty_ffi_fupd x c) cc) =
     backend_config_ok asm_conf cc`,
   CHEAT_TAC);;
+add_simp backend_config_ok_call_empty_ffi;;
 
 let mc_init_ok_def = new_definition
   `mc_init_ok asm_conf c mc <=>
@@ -226,26 +223,25 @@ let mc_init_ok_def = new_definition
      mc)) /\
     asm_conf = target_config (machine_config_target mc)`;;
 
-(* [simp] *)
 let mc_init_ok_with_bvl_conf_updated = prove
  (`mc_init_ok asm_conf (backend_config_bvl_conf_fupd f cc) mc <=>
    mc_init_ok asm_conf cc mc`,
   CHEAT_TAC);;
+add_simp mc_init_ok_with_bvl_conf_updated;;
 
-(* [simp] *)
 let mc_init_ok_with_word_to_word_conf_updated = prove
  (`mc_init_ok asm_conf (backend_config_word_to_word_conf_fupd f cc) mc
   <=>
    mc_init_ok asm_conf cc mc`,
   CHEAT_TAC);;
+add_simp mc_init_ok_with_word_to_word_conf_updated;;
 
-(* [simp] *)
 let mc_init_ok_with_clos_conf_updated = prove
  (`mc_init_ok asm_conf (backend_config_clos_conf_fupd f cc) mc <=>
    mc_init_ok asm_conf cc mc`,
   CHEAT_TAC);;
+add_simp mc_init_ok_with_clos_conf_updated;;
 
-(* [simp] *)
 let set_oracle_simp = prove
  (`backend_config_ok asm_conf (set_oracle c x) = backend_config_ok
   asm_conf c /\
@@ -253,13 +249,14 @@ let set_oracle_simp = prove
      backend_config_stack_conf
    (set_oracle c x) = backend_config_stack_conf c`,
   CHEAT_TAC);;
+add_simp set_oracle_simp;;
 
-(* [simp] *)
 let mc_init_ok_call_empty_ffi = prove
  (`mc_init_ok asm_conf (backend_config_data_conf_fupd (\c.
   data_to_word_config_call_empty_ffi_fupd x c) cc) =
     mc_init_ok asm_conf cc`,
   CHEAT_TAC);;
+add_simp mc_init_ok_call_empty_ffi;;
 
 let heap_regs_def = new_definition
   `heap_regs reg_names =
@@ -849,16 +846,18 @@ let is_state_oracle_cake_orac_to_comp = prove
    is_state_oracle g_inc (adj o cake_orac asm_conf c' syntax g h)`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let BAG_ALL_DISTINCT_BAG_IMAGE_SUC = prove
  (`BAG_ALL_DISTINCT s ==> BAG_ALL_DISTINCT (BAG_IMAGE SUC s)`,
   CHEAT_TAC);;
+add_simp BAG_ALL_DISTINCT_BAG_IMAGE_SUC;;
 
-(* [local,simp] *)
+(* [local] *)
 let BAG_ALL_DISTINCT_BAG_IMAGE_SUC' = prove
  (`BAG_ALL_DISTINCT s ==> BAG_ALL_DISTINCT ((BAG_UNION) (BAG_INSERT 0
   (EMPTY_BAG)) (BAG_IMAGE SUC s))`,
   CHEAT_TAC);;
+add_simp BAG_ALL_DISTINCT_BAG_IMAGE_SUC';;
 
 let cake_orac_clos_syntax_oracle_ok = prove
  (`backend_compile asm_conf (c:backend_config) prog = SOME (b,bm,c') /\
@@ -1130,28 +1129,28 @@ let inline_compile_inc_names = prove
    MAP FST prog3 = MAP FST prog`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let bvi_inline_state_co_MAP_FST = prove
  (`MAP FST (SND (state_co bvi_inline_compile_inc co n)) =
    MAP FST (SND (co n))`,
   CHEAT_TAC);;
+add_simp bvi_inline_state_co_MAP_FST;;
 
-(* [simp] *)
 let oracle_monotonic_bvi_inline = prove
  (`oracle_monotonic (set_of_list o MAP FST o SND) R init (state_co
   bvi_inline_compile_inc co) =
    oracle_monotonic (set_of_list o MAP FST o SND) R init co`,
   CHEAT_TAC);;
+add_simp oracle_monotonic_bvi_inline;;
 
 (* bvi_inline is name preserving, so the namespace-sliced projection used
    by monotonic_labels_bvl_to_bvi cannot see it either. *)
-(* [simp] *)
 let oracle_monotonic_bvi_inline_inter = prove
  (`oracle_monotonic (\x. set_of_list (MAP FST (SND x)) INTER s) R init
   (state_co bvi_inline_compile_inc co) =
    oracle_monotonic (\x. set_of_list (MAP FST (SND x)) INTER s) R
      init co`,
   CHEAT_TAC);;
+add_simp oracle_monotonic_bvi_inline_inter;;
 
 let oracle_monotonic_subset_inject = prove
  (`!g. (!x y. R (g x) (g y) ==> R' x y) /\
@@ -1449,8 +1448,8 @@ let state_co_inc_compile_has_flat_comp = prove
 let add_eval_state_def = define_cases
   [`add_eval_state NONE s0 = s0`;
    `add_eval_state (SOME ci) s0 =
-  semanticPrimitives_state_eval_state_fupd (K (SOME (mk_init_eval_state
-  ci)))
+    semanticPrimitives_state_eval_state_fupd (K (SOME
+    (mk_init_eval_state ci)))
       s0`];;
 
 let add_eval_state_ffi = prove
@@ -1461,10 +1460,10 @@ let add_eval_state_ffi = prove
 
 let opt_eval_config_wf_def = define_cases
   [`opt_eval_config_wf asm_conf c' (SOME ci) =
-  (compiler_instance_compiler_fun
+    (compiler_instance_compiler_fun
       ci = compile_inc_progs_for_eval asm_conf /\
       INJ (compiler_instance_config_v ci) UNIV UNIV /\
-        compiler_instance_init_state ci = c')`;
+          compiler_instance_init_state ci = c')`;
    `opt_eval_config_wf asm_conf c' NONE = T`];;
 
 let backend_from_data_tuple_cc_def = new_definition
@@ -1864,10 +1863,6 @@ let compile_correct_eval = prove
         (semantics_prog (add_eval_state ev s0) env prog))`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["done"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -16,11 +16,8 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "data_live"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "data_live"
   ["dataLang"];;
 
 let _ = do_list hide_constant ["pmatch"];;
@@ -105,69 +102,65 @@ let is_pure_pmatch = prove
 let compile_def,compile_ind = define_shaped_rec
   "cases"
   [`data_live_compile (dataLang_Skip:dataLang_prog) live =
-  ((dataLang_Skip:dataLang_prog),live)`;
+    ((dataLang_Skip:dataLang_prog),live)`;
    `data_live_compile (dataLang_Return ns:dataLang_prog) live =
-  ((dataLang_Return ns:dataLang_prog),list_insert ns LN)`;
+    ((dataLang_Return ns:dataLang_prog),list_insert ns LN)`;
    `data_live_compile (dataLang_Raise n:dataLang_prog) live =
-  ((dataLang_Raise n:dataLang_prog),sptree_insert n one LN)`;
+    ((dataLang_Raise n:dataLang_prog),sptree_insert n one LN)`;
    `data_live_compile (dataLang_Move n1 n2:dataLang_prog) live =
         ((dataLang_Move n1 n2:dataLang_prog),sptree_insert n2 one
-          (sptree_delete n1 live))`;
+            (sptree_delete n1 live))`;
    `data_live_compile (dataLang_Seq c1 c2:dataLang_prog) live =
          (let (d2,l2) = data_live_compile c2 live in
          let (d1,l1) = data_live_compile c1 l2 in
            (dataLang_Seq d1 d2,l1))`;
    `data_live_compile (dataLang_Tick:dataLang_prog) live =
-  ((dataLang_Tick:dataLang_prog),live)`;
+    ((dataLang_Tick:dataLang_prog),live)`;
    `data_live_compile (dataLang_MakeSpace k names) live =
          (let l1 = inter names live in (dataLang_MakeSpace k
-           l1,l1))`;
+             l1,l1))`;
    `data_live_compile (dataLang_Assign v op vs NONE:dataLang_prog) live
-  =
+    =
          (if IS_NONE (sptree_lookup v live) /\ data_live_is_pure op
-           then (dataLang_Skip,live) else
+             then (dataLang_Skip,live) else
            let l1 = list_insert vs (sptree_delete v live) in
              ((dataLang_Assign v op vs NONE:dataLang_prog),l1))`;
    `data_live_compile (dataLang_Assign v op vs (SOME
-  names):dataLang_prog) live =
+    names):dataLang_prog) live =
          (let l1 = inter names (sptree_delete v live) in
            (dataLang_Assign v op vs (SOME l1),list_insert vs l1))`;
    `data_live_compile (dataLang_If n c2 c3:dataLang_prog) live =
          (let (d3,l3) = data_live_compile c3 live in
          let (d2,l2) = data_live_compile c2 live in
            (dataLang_If n d2 d3,sptree_insert n one (sptree_union
-             l2 l3)))`;
+               l2 l3)))`;
    `data_live_compile (dataLang_Force NONE loc src:dataLang_prog) live =
          ((dataLang_Force NONE loc
-           src:dataLang_prog),sptree_insert src one LN)`;
+             src:dataLang_prog),sptree_insert src one LN)`;
    `data_live_compile (dataLang_Force (SOME (n,names)) loc
-  src:dataLang_prog) live =
+    src:dataLang_prog) live =
          (let l1 = inter names (sptree_delete n live) in
          let l2 = sptree_insert src one l1 in
            (dataLang_Force (SOME (n,l1)) loc src,l2))`;
    `data_live_compile (dataLang_Call NONE dest vs handler:dataLang_prog)
-  live =
+    live =
          ((dataLang_Call NONE dest vs
-           handler:dataLang_prog),list_to_num_set vs)`;
+             handler:dataLang_prog),list_to_num_set vs)`;
    `data_live_compile (dataLang_Call (SOME (ns,names)) dest vs
-  NONE:dataLang_prog) live =
+    NONE:dataLang_prog) live =
          (let l1 = inter names (list_delete ns live) in
          let l2 = list_insert vs l1 in
            (dataLang_Call (SOME (ns,l1)) dest vs NONE,l2))`;
    `data_live_compile (dataLang_Call (SOME (ns,names)) dest vs (SOME
-  (v,c)):dataLang_prog) live =
+    (v,c)):dataLang_prog) live =
          (let (d,l3) = data_live_compile c live in
          let l0 = sptree_union (list_delete ns live) (sptree_delete
-           v l3) in
+             v l3) in
          let l1 = inter names l0 in
          let l2 = list_insert vs l1 in
            (dataLang_Call (SOME (ns,l1)) dest vs (SOME
-             (v,d)),l2))`];;
+               (v,d)),l2))`];;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

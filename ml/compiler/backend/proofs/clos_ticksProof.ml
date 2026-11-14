@@ -19,11 +19,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_ticksProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_ticksProof"
   ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_ticks"];;
 
 (* HOL4 clos_ticksProofScript.sml:10-11: ML code, not ported *)
@@ -41,12 +38,12 @@ let clos_ticksProof_remove_ticks_SING = prove
  (`!e. ?e'. clos_ticks_remove_ticks [e] = [e']`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let HD_remove_ticks_SING = prove
  (`!x. [HD (clos_ticks_remove_ticks [x])] = clos_ticks_remove_ticks [x]
   /\
        LENGTH (clos_ticks_remove_ticks [x]) = 1`,
   CHEAT_TAC);;
+add_simp HD_remove_ticks_SING;;
 
 (* code relation *)
 
@@ -155,7 +152,7 @@ let clos_ticksProof_mk_Ticks_def,clos_ticksProof_mk_Ticks_ind =
   define_rec
   [`clos_ticksProof_mk_Ticks [] (e:closLang_exp) = e`;
    `clos_ticksProof_mk_Ticks (CONS t tr) (e:closLang_exp) =
-  closLang_Tick t (clos_ticksProof_mk_Ticks tr e)`];;
+    closLang_Tick t (clos_ticksProof_mk_Ticks tr e)`];;
 
 let remove_ticks_Tick = prove
  (`!x t e. ~([closLang_Tick t e] = clos_ticks_remove_ticks [x])`,
@@ -447,17 +444,17 @@ let code_locs_remove_ticks = prove
  (`!xs. code_locs (clos_ticks_remove_ticks xs) = code_locs xs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let remove_ticks_every_Fn_SOME = prove
  (`!ls. every_Fn_SOME (clos_ticks_remove_ticks ls) <=> every_Fn_SOME
   ls`,
   CHEAT_TAC);;
+add_simp remove_ticks_every_Fn_SOME;;
 
-(* [simp] *)
 let remove_ticks_every_Fn_vs_NONE = prove
  (`!ls. every_Fn_vs_NONE (clos_ticks_remove_ticks ls) <=>
   every_Fn_vs_NONE ls`,
   CHEAT_TAC);;
+add_simp remove_ticks_every_Fn_vs_NONE;;
 
 let EVERY_remove_ticks_sing = prove
  (`ALL f (clos_ticks_remove_ticks [x]) = f (HD
@@ -474,18 +471,15 @@ let remove_ticks_no_Labels = prove
   xs)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let remove_ticks_app_call_dests = prove
  (`!es. app_call_dests x (clos_ticks_remove_ticks es) = app_call_dests
   x es`,
   CHEAT_TAC);;
+add_simp remove_ticks_app_call_dests;;
 
-(* remove_ticks_code_labels[simp] *)
+(* remove_ticks_code_labels *)
 let clos_ticksProof_remove_ticks_code_labels = prove
  (`!es. MAP closProps_get_code_labels (clos_ticks_remove_ticks es) =
   MAP closProps_get_code_labels es`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;
+add_simp clos_ticksProof_remove_ticks_code_labels;;

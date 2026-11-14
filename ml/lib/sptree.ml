@@ -8,18 +8,21 @@
 
 needs "lib/indexedLists.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: arithmetic logroot list alist
    pred_set rich_list *)
 
 let spt_INDUCT,spt_RECURSION = define_datatype
-  "spt = LN | LS ('a) | BN (spt) (spt) | BS (spt) ('a) (spt)";;
+  "spt =
+     LN
+   | LS ('a)
+   | BN spt spt
+   | BS spt ('a) spt";;
 
 (* HOL4 sptreeScript.sml:34: the type abbreviation num_map, which the
    port expands *)
-new_type_abbrev("sptree_num_set",`: 1 spt`);;
+new_type_abbrev("sptree_num_set",`:1 spt`);;
 
 (* HOL4 sptreeScript.sml:37: the overload isEmpty, which the port
    expands *)
@@ -28,9 +31,9 @@ let wf_def,wf_ind = define_rec
   [`sptree_wf LN <=> T`;
    `sptree_wf (LS a) <=> T`;
    `sptree_wf (BN t1 t2) <=> sptree_wf t1 /\ sptree_wf t2 /\ ~((\t. t
-  = LN) t1 /\ (\t. t = LN) t2)`;
+    = LN) t1 /\ (\t. t = LN) t2)`;
    `sptree_wf (BS t1 a t2) <=> sptree_wf t1 /\ sptree_wf t2 /\
-  ~((\t. t = LN) t1 /\ (\t. t = LN) t2)`];;
+    ~((\t. t = LN) t1 /\ (\t. t = LN) t2)`];;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -42,10 +45,10 @@ let lookup_def,lookup_ind = define_wf
    `sptree_lookup k (LS a) = (if k = 0 then SOME a else NONE)`;
    `sptree_lookup k (BN t1 t2) =
          (if k = 0 then NONE else sptree_lookup ((k - 1) DIV 2)
-           (if EVEN k then t1 else t2))`;
+             (if EVEN k then t1 else t2))`;
    `sptree_lookup k (BS t1 a t2) =
          (if k = 0 then SOME a else sptree_lookup ((k - 1) DIV
-           2) (if EVEN k then t1 else t2))`];;
+             2) (if EVEN k then t1 else t2))`];;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -54,20 +57,20 @@ let lookup_def,lookup_ind = define_wf
 let insert_def,insert_ind = define_wf
   `MEASURE FST`
   [`sptree_insert k a LN = (if k = 0 then LS a else if EVEN k then BN
-  (sptree_insert ((k - 1) DIV 2) a LN) LN else BN LN (sptree_insert
-  ((k - 1) DIV 2) a LN))`;
+    (sptree_insert ((k - 1) DIV 2) a LN) LN else BN LN (sptree_insert
+    ((k - 1) DIV 2) a LN))`;
    `sptree_insert k a (LS a') =
          (if k = 0 then LS a else if EVEN k then BS
-           (sptree_insert ((k - 1) DIV 2) a LN) a' LN else BS LN a'
-           (sptree_insert ((k - 1) DIV 2) a LN))`;
+             (sptree_insert ((k - 1) DIV 2) a LN) a' LN else BS LN a'
+             (sptree_insert ((k - 1) DIV 2) a LN))`;
    `sptree_insert k a (BN t1 t2) =
          (if k = 0 then BS t1 a t2 else if EVEN k then BN
-           (sptree_insert ((k - 1) DIV 2) a t1) t2 else BN t1
-           (sptree_insert ((k - 1) DIV 2) a t2))`;
+             (sptree_insert ((k - 1) DIV 2) a t1) t2 else BN t1
+             (sptree_insert ((k - 1) DIV 2) a t2))`;
    `sptree_insert k a (BS t1 a' t2) =
          (if k = 0 then BS t1 a t2 else if EVEN k then BS
-           (sptree_insert ((k - 1) DIV 2) a t1) a' t2 else BS t1 a'
-           (sptree_insert ((k - 1) DIV 2) a t2))`];;
+             (sptree_insert ((k - 1) DIV 2) a t1) a' t2 else BS t1
+             a' (sptree_insert ((k - 1) DIV 2) a t2))`];;
 
 let mk_BN_def = new_definition
   `mk_BN t1 t2 =
@@ -102,70 +105,72 @@ let size_def,size_ind = define_rec
    `sptree_size (LS a) = 1`;
    `sptree_size (BN t1 t2) = sptree_size t1 + sptree_size t2`;
    `sptree_size (BS t1 a t2) = sptree_size t1 + sptree_size t2 + 1`];;
+add_simp size_def;;
 
 let union_def,union_ind = define_rec
   [`sptree_union LN t = t`;
    `sptree_union (LS a) t =
          (match t with LN -> LS a | LS b -> LS a | BN t1 t2 -> BS
-           t1 a t2 | BS t1 _2 t2 -> BS t1 a t2)`;
+             t1 a t2 | BS t1 _2 t2 -> BS t1 a t2)`;
    `sptree_union (BN t1 t2) t =
          (match t with LN -> BN t1 t2 | LS a -> BS t1 a t2 | BN
-           t1' t2' -> BN (sptree_union t1 t1') (sptree_union t2 t2')
-           | BS t1' a t2' -> BS (sptree_union t1 t1') a (sptree_union
-           t2 t2'))`;
+             t1' t2' -> BN (sptree_union t1 t1') (sptree_union t2
+             t2') | BS t1' a t2' -> BS (sptree_union t1 t1') a
+             (sptree_union t2 t2'))`;
    `sptree_union (BS t1 a t2) t =
          (match t with LN -> BS t1 a t2 | LS a' -> BS t1 a t2 |
-           BN t1' t2' -> BS (sptree_union t1 t1') a (sptree_union
-           t2 t2') | BS t1' a' t2' -> BS (sptree_union t1 t1') a
-           (sptree_union t2 t2'))`];;
+             BN t1' t2' -> BS (sptree_union t1 t1') a (sptree_union
+             t2 t2') | BS t1' a' t2' -> BS (sptree_union t1 t1') a
+             (sptree_union t2 t2'))`];;
 
 let inter_def,inter_ind = define_rec
   [`inter LN t = LN`;
    `inter (LS a) t =
          (match t with LN -> LN | LS b -> LS a | BN t1 t2 -> LN |
-           BS t1 _4 t2 -> LS a)`;
+             BS t1 _4 t2 -> LS a)`;
    `inter (BN t1 t2) t =
          (match t with LN -> LN | LS a -> LN | BN t1' t2' ->
-           mk_BN (inter t1 t1') (inter t2 t2') | BS t1' a t2' ->
-           mk_BN (inter t1 t1') (inter t2 t2'))`;
+             mk_BN (inter t1 t1') (inter t2 t2') | BS t1' a t2' ->
+             mk_BN (inter t1 t1') (inter t2 t2'))`;
    `inter (BS t1 a t2) t =
          (match t with LN -> LN | LS a' -> LS a | BN t1' t2' ->
-           mk_BN (inter t1 t1') (inter t2 t2') | BS t1' a' t2' ->
-           mk_BS (inter t1 t1') a (inter t2 t2'))`];;
+             mk_BN (inter t1 t1') (inter t2 t2') | BS t1' a' t2' ->
+             mk_BS (inter t1 t1') a (inter t2 t2'))`];;
 
 let inter_eq_def,inter_eq_ind = define_rec
   [`inter_eq LN t = LN`;
    `inter_eq (LS a) t =
          (match t with LN -> LN | LS b -> (if a = b then LS a
-           else LN) | BN t1 t2 -> LN | BS t1 b t2 -> (if a = b then
-           LS a else LN))`;
+             else LN) | BN t1 t2 -> LN | BS t1 b t2 -> (if a = b then
+             LS a else LN))`;
    `inter_eq (BN t1 t2) t =
          (match t with LN -> LN | LS a -> LN | BN t1' t2' ->
-           mk_BN (inter_eq t1 t1') (inter_eq t2 t2') | BS t1' a t2'
-           -> mk_BN (inter_eq t1 t1') (inter_eq t2 t2'))`;
+             mk_BN (inter_eq t1 t1') (inter_eq t2 t2') | BS t1' a t2'
+             -> mk_BN (inter_eq t1 t1') (inter_eq t2 t2'))`;
    `inter_eq (BS t1 a t2) t =
          (match t with LN -> LN | LS a' -> (if a' = a then LS a else
-           LN) | BN t1' t2' -> mk_BN (inter_eq t1 t1') (inter_eq t2 t2')
-           | BS t1' a' t2' ->
+             LN) | BN t1' t2' -> mk_BN (inter_eq t1 t1') (inter_eq t2
+             t2') | BS t1' a' t2' ->
                (if a' = a then
                  mk_BS (inter_eq t1 t1') a (inter_eq t2 t2')
-                   else mk_BN (inter_eq t1 t1') (inter_eq t2 t2')))`];;
+                     else mk_BN (inter_eq t1 t1') (inter_eq t2
+                     t2')))`];;
 
 let difference_def,difference_ind = define_rec
   [`difference LN t = LN`;
    `difference (LS a) t =
          (match t with LN -> LS a | LS b -> LN | BN t1 t2 -> LS a
-           | BS t1 b t2 -> LN)`;
+             | BS t1 b t2 -> LN)`;
    `difference (BN t1 t2) t =
          (match t with LN -> BN t1 t2 | LS a -> BN t1 t2 | BN t1'
-           t2' -> mk_BN (difference t1 t1') (difference t2 t2') | BS
-           t1' a t2' -> mk_BN (difference t1 t1') (difference t2
-           t2'))`;
+             t2' -> mk_BN (difference t1 t1') (difference t2 t2') |
+             BS t1' a t2' -> mk_BN (difference t1 t1') (difference t2
+             t2'))`;
    `difference (BS t1 a t2) t =
          (match t with LN -> BS t1 a t2 | LS a' -> BN t1 t2 |
-           BN t1' t2' -> mk_BS (difference t1 t1') a (difference t2
-           t2') | BS t1' a' t2' -> mk_BN (difference t1 t1')
-           (difference t2 t2'))`];;
+             BN t1' t2' -> mk_BS (difference t1 t1') a (difference
+             t2 t2') | BS t1' a' t2' -> mk_BN (difference t1 t1')
+             (difference t2 t2'))`];;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -188,6 +193,7 @@ let domain_def,domain_ind = define_wf
    `domain (BS t1 _6 t2) =
        {0} UNION IMAGE (\n. 2 * n + 2) (domain t1) UNION
        IMAGE (\n. 2 * n + 1) (domain t2)`];;
+add_simp domain_def;;
 
 let foldi_def,foldi_ind = define_rec
   [`foldi f i acc LN = acc`;
@@ -198,7 +204,7 @@ let foldi_def,foldi_ind = define_rec
    `foldi f i acc (BS t1 a t2) =
          (let inc = lrnext i in
            foldi f (i + inc) (f i a (foldi f (i + 2 * inc) acc
-             t1)) t2)`];;
+               t1)) t2)`];;
 
 let mapi0_def,mapi0_ind = define_rec
   [`mapi0 f i LN = LN`;
@@ -209,7 +215,8 @@ let mapi0_def,mapi0_ind = define_rec
    `mapi0 f i (BS t1 a t2) =
        (let inc = lrnext i in
          mk_BS (mapi0 f (i + 2 * inc) t1) (f i a) (mapi0 f (i +
-           inc) t2))`];;
+             inc) t2))`];;
+add_simp mapi0_def;;
 
 let mapi_def = new_definition
   `sptree_mapi f pt = mapi0 f 0 pt`;;
@@ -235,13 +242,15 @@ let mk_wf_def,mk_wf_ind = define_rec
 let fromAList_def,fromAList_ind = define_rec
   [`fromAList [] = LN`;
    `fromAList (CONS (x,y) xs) = sptree_insert x y (fromAList xs)`];;
+add_simp fromAList_def;;
 
 let map_def,map_ind = define_rec
   [`sptree_map f LN = LN`;
    `sptree_map f (LS a) = (LS (f a))`;
    `sptree_map f (BN t1 t2) = BN (sptree_map f t1) (sptree_map f t2)`;
    `sptree_map f (BS t1 a t2) = BS (sptree_map f t1) (f a)
-  (sptree_map f t2)`];;
+    (sptree_map f t2)`];;
+add_simp map_def;;
 
 let spt_left_def = define_cases
   [`spt_left LN = LN`;
@@ -277,24 +286,24 @@ let filter_v_def,filter_v_ind = define_rec
    `filter_v f (BN l r) = mk_BN (filter_v f l) (filter_v f r)`;
    `filter_v f (BS l x r) =
         (if f x then mk_BS (filter_v f l) x (filter_v f r) else
-          mk_BN (filter_v f l) (filter_v f r))`];;
+            mk_BN (filter_v f l) (filter_v f r))`];;
 
 let spt_fold_def,spt_fold_ind = define_rec
   [`spt_fold f acc LN = acc`;
    `spt_fold f acc (LS a) = f a acc`;
    `spt_fold f acc (BN t1 t2) = spt_fold f (spt_fold f acc t1) t2`;
    `spt_fold f acc (BS t1 a t2) = spt_fold f (f a (spt_fold f acc
-  t1)) t2`];;
+    t1)) t2`];;
 
 let list_to_num_set_def,list_to_num_set_ind = define_rec
   [`list_to_num_set [] = LN`;
    `list_to_num_set (CONS n ns) = sptree_insert n one
-  (list_to_num_set ns)`];;
+    (list_to_num_set ns)`];;
 
 let list_insert_def,list_insert_ind = define_rec
   [`list_insert [] t = t`;
    `list_insert (CONS n ns) t = list_insert ns (sptree_insert n one
-  t)`];;
+    t)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)

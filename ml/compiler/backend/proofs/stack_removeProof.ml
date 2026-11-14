@@ -26,11 +26,8 @@ needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "stack_removeProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "stack_removeProof"
   ["semanticsProps"; "stackLang"; "stackProps"; "stackSem";
    "stack_remove"];;
 
@@ -85,23 +82,25 @@ let stack_removeProof_call_FFI_LENGTH = prove
   xs)`,
   CHEAT_TAC);;
 
-(* with_same_clock[simp] *)
+(* with_same_clock *)
 let stack_removeProof_with_same_clock = prove
  (`!(x:('a,'c,'ffi)stackSem_state). stackSem_state_clock_fupd (K
   (stackSem_state_clock x))
      x = x`,
   CHEAT_TAC);;
+add_simp stack_removeProof_with_same_clock;;
 
-(* set_var_set_var[simp] *)
+(* set_var_set_var *)
 let stack_removeProof_set_var_set_var = prove
  (`stackSem_set_var x y (stackSem_set_var x z w) = stackSem_set_var x
   y w`,
   CHEAT_TAC);;
+add_simp stack_removeProof_set_var_set_var;;
 
-(* [simp] *)
 let get_var_set_var_same = prove
  (`stackSem_get_var x (stackSem_set_var x y z) = SOME y`,
   CHEAT_TAC);;
+add_simp get_var_set_var_same;;
 
 (* get_var_set_var *)
 let stack_removeProof_get_var_set_var = prove
@@ -127,7 +126,7 @@ let word_list_rev_def,word_list_rev_ind = define_guess
   [`word_list_rev a [] = emp`;
    `word_list_rev a (CONS x xs) =
          set_sep_one (a - bytes_in_word,x) * word_list_rev (a -
-           bytes_in_word) xs`];;
+             bytes_in_word) xs`];;
 
 let word_store_def = new_definition
   `word_store base store =
@@ -277,12 +276,12 @@ let find_code_lemma2 = prove
        reg_bound x k`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let state_rel_set_var = prove
  (`stack_removeProof_state_rel jump off k s t1 /\ v < k ==>
     stack_removeProof_state_rel jump off k (stackSem_set_var v x s)
       (stackSem_set_var v x t1)`,
   CHEAT_TAC);;
+add_simp state_rel_set_var;;
 
 (* [local] *)
 let word_store_CurrHeap = prove
@@ -835,7 +834,7 @@ let stack_removeProof_read_mem_def,stack_removeProof_read_mem_ind =
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   [`stack_removeProof_read_mem a m 0 = []`;
    `stack_removeProof_read_mem a m (SUC n) = CONS (m a)
-  (stack_removeProof_read_mem (a + bytes_in_word) m n)`];;
+    (stack_removeProof_read_mem (a + bytes_in_word) m n)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -1519,10 +1518,10 @@ let make_init_any_compile_oracle = prove
 
 (* Syntactic *)
 
-(* [simp] *)
 let FST_prog_comp = prove
  (`FST (stack_remove_prog_comp jump off k pp) = FST pp`,
   CHEAT_TAC);;
+add_simp FST_prog_comp;;
 
 let stack_remove_lab_pres = prove
  (`!jump off k p.
@@ -1590,13 +1589,9 @@ let stack_remove_call_args = prove
     ALL (\p. call_args p 1 2 3 4 0) (MAP SND p')`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C";
    "gen_gc";
    "num_stubs";
    "shift"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

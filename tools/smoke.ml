@@ -383,7 +383,7 @@ print_string (Printf.sprintf
    overload with constants of the same type is the one of the
    theory that registered it last, and a file that says which
    theories its source has in its ancestry reads the one of those
-   (ml/lib/theorem.ml, hol4_ancestors) *)
+   (ml/lib/theorem.ml, cake_theory) *)
 
 let smoke_ovl_a_def = new_definition
   `smoke_ovl_a (n:num) = n + 1`;;
@@ -391,10 +391,10 @@ let smoke_ovl_a_def = new_definition
 let smoke_ovl_b_def = new_definition
   `smoke_ovl_b (n:num) = n + 2`;;
 
-let _ = hol4_ancestors "smoke_thy_a" [];;
+let _ = cake_theory "smoke_thy_a" [];;
 hol4_overload "smoke_ovl" "smoke_ovl_a";;
 
-let _ = hol4_ancestors "smoke_thy_b" [];;
+let _ = cake_theory "smoke_thy_b" [];;
 hol4_overload "smoke_ovl" "smoke_ovl_b";;
 
 let smoke_ovl_of () =
@@ -402,11 +402,11 @@ let smoke_ovl_of () =
 
 let smoke_ovl_last = smoke_ovl_of ();;
 
-let _ = hol4_ancestors "smoke_thy_c" ["smoke_thy_a"];;
+let _ = cake_theory "smoke_thy_c" ["smoke_thy_a"];;
 let smoke_ovl_in_a = smoke_ovl_of ();;
 let _ = unhide_overloads ();;
 
-let _ = hol4_ancestors "smoke_thy_d" ["smoke_thy_b"];;
+let _ = cake_theory "smoke_thy_d" ["smoke_thy_b"];;
 let smoke_ovl_in_b = smoke_ovl_of ();;
 let _ = unhide_overloads ();;
 
@@ -432,11 +432,11 @@ the_thy_loading := "";;
 hol4_overload "smoke_ovl" "smoke_ovl_lib";;
 
 (* and a file of the port brings the name to the front again *)
-let _ = hol4_ancestors "smoke_thy_e" [];;
+let _ = cake_theory "smoke_thy_e" [];;
 hol4_overload "smoke_ovl" "smoke_ovl_lib";;
 let _ = unhide_overloads ();;
 
-let _ = hol4_ancestors "smoke_thy_f" [];;
+let _ = cake_theory "smoke_thy_f" [];;
 let smoke_ovl_still = smoke_ovl_of ();;
 let _ = unhide_overloads ();;
 
@@ -457,12 +457,12 @@ the_thy_loading := "";;
 hol4_overload "smoke_only" "smoke_ovl_lib";;
 hol4_only "smoke_only" "smoke_ovl_a";;
 
-let _ = hol4_ancestors "smoke_thy_g" [];;
+let _ = cake_theory "smoke_thy_g" [];;
 hol4_overload "smoke_only" "smoke_ovl_lib";;
 let smoke_only_in_g = smoke_only_of ();;
 let _ = unhide_overloads ();;
 
-let _ = hol4_ancestors "smoke_thy_h" [];;
+let _ = cake_theory "smoke_thy_h" [];;
 let smoke_only_in_h = smoke_only_of ();;
 let _ = unhide_overloads ();;
 
@@ -476,15 +476,15 @@ print_string (Printf.sprintf
 let smoke_twice_of () =
   fst(dest_const(fst(strip_comb(parse_term "smoke_twice 1"))));;
 
-let _ = hol4_ancestors "smoke_thy_i" [];;
+let _ = cake_theory "smoke_thy_i" [];;
 hol4_overload "smoke_twice" "smoke_ovl_a";;
 let _ = unhide_overloads ();;
 
-let _ = hol4_ancestors "smoke_thy_j" [];;
+let _ = cake_theory "smoke_thy_j" [];;
 hol4_overload "smoke_twice" "smoke_ovl_a";;
 let _ = unhide_overloads ();;
 
-let _ = hol4_ancestors "smoke_thy_k" ["smoke_thy_j"];;
+let _ = cake_theory "smoke_thy_k" ["smoke_thy_j"];;
 let smoke_twice_in_k = can smoke_twice_of ();;
 let _ = unhide_overloads ();;
 
@@ -504,13 +504,13 @@ let smoke_back_of () =
 the_thy_loading := "";;
 hol4_only "smoke_back" "smoke_ovl_a";;
 
-let _ = hol4_ancestors "smoke_thy_l" [];;
+let _ = cake_theory "smoke_thy_l" [];;
 hol4_overload "smoke_back" "smoke_ovl_b";;
 let smoke_back_in_l = smoke_back_of ();;
 hol4_only "smoke_back" "smoke_ovl_a";;
 let _ = unhide_overloads ();;
 
-let _ = hol4_ancestors "smoke_thy_m" [];;
+let _ = cake_theory "smoke_thy_m" [];;
 let smoke_back_in_m = smoke_back_of ();;
 let _ = unhide_overloads ();;
 

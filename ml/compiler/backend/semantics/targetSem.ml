@@ -27,18 +27,17 @@ needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "targetSem"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "targetSem"
   ["asmProps"; "evaluateProps"; "ffi"; "lab_to_target"; "wordSem"];;
 
 (* -- execute target machine with interference from environment -- *)
 
 let machine_result_INDUCT,machine_result_RECURSION = define_datatype
-  "machine_result = targetSem_Halt (outcome) | targetSem_Error | \
-   targetSem_TimeOut";;
+  "machine_result =
+     targetSem_Halt outcome
+   | targetSem_Error
+   | targetSem_TimeOut";;
 
 let machine_config_FIELDS = define_record "machine_config"
   ["prog_addresses","'a word->bool";
@@ -274,19 +273,19 @@ let machine_sem_def = define_cases
   [`machine_sem mc st ms (ffi_Terminate t io_list) <=>
          (?k ms' st'.
            targetSem_evaluate mc st k ms = (targetSem_Halt
-             t,ms',st') /\ ffi_state_io_events
+               t,ms',st') /\ ffi_state_io_events
            st' = io_list)`;
    `machine_sem mc st ms (ffi_Diverge io_trace) <=>
          (!k. ?ms' st'. targetSem_evaluate mc st k ms =
-           (targetSem_TimeOut,ms',st')) /\
+             (targetSem_TimeOut,ms',st')) /\
          lprefix_lub
            (IMAGE
              (\k. fromList (ffi_state_io_events (SND (SND
-               (targetSem_evaluate mc st k ms))))) UNIV)
+                 (targetSem_evaluate mc st k ms))))) UNIV)
            io_trace`;
    `machine_sem mc st ms (ffi_Fail:behaviour) <=>
          (?k. FST (targetSem_evaluate mc st k ms) =
-           targetSem_Error)`];;
+             targetSem_Error)`];;
 
 (* define what it means for code to be loaded and ready to run *)
 
@@ -627,7 +626,3 @@ let installed_def = new_definition
                               shmem_extra) /\
      cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword
        (:'a)))`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

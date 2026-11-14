@@ -17,11 +17,8 @@ needs "lib/peg.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/proofs/gramProps.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "pegSound"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "pegSound"
   ["cmlPEG"; "gram"; "gramProps"];;
 
 (* Set up ML bindings *)
@@ -31,17 +28,17 @@ let _ = hol4_ancestors "pegSound"
 (* HOL4 pegSoundScript.sml:18-19: the overload choicel, which the
    port expands *)
 
-(* [simp] *)
 let Success_COND_Failure = prove
  (`~(peg_Success i r opt = (if P then peg_Failure fl1 fe1 else
   peg_Failure fl2 fe2))`,
   CHEAT_TAC);;
+add_simp Success_COND_Failure;;
 
-(* [simp] *)
 let peg_eval_choicel_NIL = prove
  (`peg_eval G (i0,cmlPEG_choicel []) x <=> x = peg_Failure (sloc i0)
   (peg_notFAIL G)`,
   CHEAT_TAC);;
+add_simp peg_eval_choicel_NIL;;
 
 let peg_TF = prove
  (`(?i' r eopt. peg_eval G (i,e) (peg_Success i' r eopt)) ==>
@@ -68,10 +65,10 @@ let peg_eval_choicel_CONS = prove
              x = UNCURRY peg_Failure (MAXerr (fl1,fe1) (fl2,fe2))))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let peg_eval_seql_NIL = prove
  (`peg_eval G (i0,seql [] f) x <=> x = peg_Success i0 (f []) NONE`,
   CHEAT_TAC);;
+add_simp peg_eval_seql_NIL;;
 
 let peg_eval_try = prove
  (`!x. peg_eval G (i0,cmlPEG_try s) x <=>
@@ -106,18 +103,19 @@ let not_peg0_LENGTH_decreases = prove
 
 (* HOL4 pegSoundScript.sml:115-118: ML code, not ported *)
 
-(* [simp] *)
 let peg_eval_tokSymP = prove
  (`peg_eval G (i0,tokSymP P) (peg_Success i r eo) <=>
    (?h s. FST h = tokens_SymbolT s /\ P s /\ i0 = CONS h i /\ r =
      mktokLf h /\ eo = NONE)`,
   CHEAT_TAC);;
+add_simp peg_eval_tokSymP;;
 
-(* [simp,local] *)
+(* [local] *)
 let FADISJ_EQ_IMP' = prove
  (`((!x. P x) \/ Q <=> (!x. ~(P x) ==> Q)) /\
    ((Q \/ (!x. P x)) <=> (!x. ~(P x) ==> Q))`,
   (MESON_TAC[]));;
+add_simp FADISJ_EQ_IMP';;
 
 let peg_eval_TypeDec_wrongtok = prove
  (`~(FST tk = tokens_DatatypeT) ==>
@@ -175,10 +173,10 @@ let peg_eval_nFQV_wrongtok = prove
      nFQV) f) (peg_Success i' r eo))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let peg_eval_rpt_never_NONE = prove
  (`~(peg_eval G (i,peg_rpt sym f) (peg_Failure fl fe))`,
   CHEAT_TAC);;
+add_simp peg_eval_rpt_never_NONE;;
 
 let pegsym_to_sym_def = new_definition
   `pegsym_to_sym x1 =
@@ -189,34 +187,34 @@ let pegsym_to_sym_def = new_definition
         | (peg_nt N f) -> {grammar_NT N}
         | _1 -> {}`;;
 
-(* [simp] *)
 let valid_ptree_mkNd = prove
  (`valid_ptree G (mkNd N subs) <=>
      N IN FDOM (rules G) /\ MAP ptree_head subs IN FAPPLY (rules G) N
        /\
      (!pt. MEM pt subs ==> valid_ptree G pt)`,
   (REWRITE_TAC[mkNd_def; valid_ptree_def; IN_SET_OF_LIST]));;
+add_simp valid_ptree_mkNd;;
 
-(* [simp] *)
 let ptree_head_mkNd = prove
  (`ptree_head (mkNd N subs) = grammar_NT N`,
   (REWRITE_TAC[mkNd_def; ptree_head_def]));;
+add_simp ptree_head_mkNd;;
 
 (* HOL4 pegSoundScript.sml:233: ML code, not ported *)
-(* [simp] *)
 let ptree_list_loc_SING = prove
  (`ptree_list_loc [pt] = ptree_loc pt`,
   CHEAT_TAC);;
+add_simp ptree_list_loc_SING;;
 
-(* [simp] *)
 let ptree_fringemkNd = prove
  (`ptree_fringe (mkNd N subs) = FLAT (MAP ptree_fringe subs)`,
   (REWRITE_TAC[mkNd_def; ptree_fringe_def]));;
+add_simp ptree_fringemkNd;;
 
-(* [simp] *)
 let valid_locs_mkNd = prove
  (`valid_locs (mkNd N subs) <=> (!pt. MEM pt subs ==> valid_locs pt)`,
   (REWRITE_TAC[mkNd_def; valid_locs_def; ptree_list_loc_def]));;
+add_simp valid_locs_mkNd;;
 
 let rfringe_length_not_nullable = prove
  (`!G s. ~(nullable G [s]) ==>
@@ -224,18 +222,18 @@ let rfringe_length_not_nullable = prove
               0 < LENGTH (real_fringe pt))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let valid_lptree_mkNd = prove
  (`valid_lptree G (mkNd n children) <=>
       n IN FDOM (rules G) /\ MAP ptree_head children IN FAPPLY (rules
         G) n /\
       (!pt. MEM pt children ==> valid_lptree G pt)`,
   CHEAT_TAC);;
+add_simp valid_lptree_mkNd;;
 
-(* [simp] *)
 let real_fringe_mkNd = prove
  (`real_fringe (mkNd n subs) = FLAT (MAP real_fringe subs)`,
   (REWRITE_TAC[mkNd_def; real_fringe_def]));;
+add_simp real_fringe_mkNd;;
 
 let ptree_head_NT_mkNd = prove
  (`ptree_head pt = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) n
@@ -246,10 +244,10 @@ let ptree_head_NT_mkNd = prove
    (?subs. pt = mkNd ((INL:MMLnonT->MMLnonT+num) n) subs)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let mkNd_11 = prove
  (`mkNd n1 sub1 = mkNd n2 sub2 <=> n1 = n2 /\ sub1 = sub2`,
   CHEAT_TAC);;
+add_simp mkNd_11;;
 
 let peg_linfix_correct_lemma = prove
  (`!UpperN sym sepsym i0 i pts eo.
@@ -300,13 +298,13 @@ let length_no_greater = prove
  (`peg_eval G (i0,sym) (peg_Success i r eo) ==> LENGTH i <= LENGTH i0`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let MAP_TK_11 = prove
  (`MAP
   (grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) x =
   MAP (grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol)
   y <=> x = y`,
   CHEAT_TAC);;
+add_simp MAP_TK_11;;
 
 let peg_eval_nTyOp_wrongtok = prove
  (`FST tk = tokens_LparT ==>
@@ -335,10 +333,11 @@ let peg_EbaseParen_sound = prove
           (grammar_TOK ## I) i))`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let PAIR_MAP_I = prove
  (`(f ## I) x = (f (FST x),SND x) <=> T`,
   CHEAT_TAC);;
+add_simp PAIR_MAP_I;;
 
 (* HOL4 pegSoundScript.sml:443: a theorem that HOL4 states as the
    value of an ML expression: bindNT0_lemma *)
@@ -382,19 +381,21 @@ let ptPapply_lemma = prove
 
 (* HOL4 pegSoundScript.sml:479-482: a proof *)
 
-(* [simp,local] *)
+(* [local] *)
 let pmap_EQ_pair = prove
  (`(f ## g) p = (a,b) <=> (?c d. p = (c,d) /\ f c = a /\ g d = b)`,
   (REWRITE_TAC[FORALL_PAIR_THM; PAIR_MAP_THM; PAIR_EQ] THEN
     MESON_TAC[]));;
+add_simp pmap_EQ_pair;;
 
-(* [simp,local] *)
+(* [local] *)
 let pair_EQ_components = prove
  (`(p = (x,SND p) <=> FST p = x) /\
    ((x,SND p) = p <=> FST p = x) /\
    (p = (FST p,y) <=> SND p = y) /\
    ((FST p,y) = p <=> SND p = y)`,
   (MESON_TAC[PAIR; FST; SND]));;
+add_simp pair_EQ_components;;
 
 let peg_sound = prove
  (`!N i0 i pts eo.
@@ -404,7 +405,3 @@ let peg_sound = prove
             MAP (grammar_TOK ## I) i0 = APPEND (real_fringe pt)
               (MAP (grammar_TOK ## I) i))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -34,11 +34,8 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "source_to_flatProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "source_to_flatProof"
   ["backendProps"; "backend_common"; "ffi"; "flatLang"; "flatProps";
    "flatSem"; "flat_elimProof"; "flat_patternProof"; "misc";
    "namespaceProps"; "semanticPrimitives"; "semanticPrimitivesProps";
@@ -842,11 +839,11 @@ let do_opapp = prove
           (source_to_flat_environment_v comp_map))) comp_map) e))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let pat_bindings_compile_pat = prove
  (`!comp_map (p:ast_pat). flatLang_pat_bindings (compile_pat comp_map
   p) = flatLang_pat_bindings p`,
   CHEAT_TAC);;
+add_simp pat_bindings_compile_pat;;
 
 (* [local] *)
 let eta2 = prove
@@ -999,7 +996,10 @@ let idx_prev_trans = prove
   CHEAT_TAC);;
 
 let idx_types_INDUCT,idx_types_RECURSION = define_datatype
-  "idx_types = Idx_Var | Idx_Type | Idx_Exn";;
+  "idx_types =
+     Idx_Var
+   | Idx_Type
+   | Idx_Exn";;
 
 let idx_types_FORALL = prove
  (`(!x. P x) = (P Idx_Var /\ P Idx_Type /\ P Idx_Exn)`,
@@ -1292,10 +1292,10 @@ let orac_forward_rel_trans = prove
    orac_forward_rel interp es1 es3`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let orac_forward_rel_refl = prove
  (`orac_forward_rel interp es1 es1`,
   CHEAT_TAC);;
+add_simp orac_forward_rel_refl;;
 
 let can_pmatch_all_IMP_pmatch_rows = prove
  (`can_pmatch_all (sem_env_c env) (state_refs st) (MAP FST pes) v /\
@@ -1835,12 +1835,13 @@ let not_abort_IMP_cases = prove
      P))`,
   CHEAT_TAC);;
 
-(* abort_simps[simp] *)
+(* abort_simps *)
 let source_to_flatProof_abort_simps = prove
  (`source_to_flatProof_abort (Rerr (Rabort a)) = T /\
    source_to_flatProof_abort (Rerr (Rraise e)) = F /\
    source_to_flatProof_abort (Rval v) = F`,
   CHEAT_TAC);;
+add_simp source_to_flatProof_abort_simps;;
 
 (* compile_correct *)
 let source_to_flatProof_compile_correct = prove
@@ -2378,7 +2379,6 @@ let source_to_flatProof_mem_size_lemma = prove
  (`list_size sz xs < N ==> (MEM x xs ==> sz x < N)`,
   CHEAT_TAC);;
 
-let _ = size_thms "dec";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 let num_bindings_def,num_bindings_ind = define_wf
@@ -2394,6 +2394,7 @@ let num_bindings_def,num_bindings_ind = define_wf
            SUM (MAP num_bindings lds) + SUM (MAP num_bindings ds)
         | (Denv _32) -> 1
         | _33 -> 0`];;
+add_simp num_bindings_def;;
 
 let compile_decs_num_bindings = prove
  (`!t n next' env envs' decs n' next' env' envs' decs'.
@@ -2457,13 +2458,9 @@ let monotonic_globals_state_co_compile = prove
        orac)`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["gc";
    "id";
    "path";
    "vars"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

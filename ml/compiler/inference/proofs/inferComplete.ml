@@ -29,11 +29,8 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "inferComplete"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "inferComplete"
   ["ast"; "envRel"; "infer"; "inferProps"; "infer_eComplete";
    "infer_eSound"; "infer_t"; "namespaceProps"; "semanticPrimitives";
    "typeSysProps"; "typeSystem"; "type_dCanon"; "type_eDeterm";
@@ -198,7 +195,3 @@ let infer_ds_complete = prove
 
 (* HOL4 inferCompleteScript.sml:1446-1788: code that the source has
    in a comment *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

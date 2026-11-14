@@ -18,20 +18,20 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "wordLang"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "wordLang"
   ["stackLang"];;
 
-new_type_abbrev("wordLang_shift",`: ast_shift`);;
+new_type_abbrev("wordLang_shift",`:ast_shift`);;
 
 let wordLang_exp_INDUCT,wordLang_exp_RECURSION = define_datatype
-  "wordLang_exp = wordLang_Const ('a word) | wordLang_Var (num) | \
-   wordLang_Lookup (store_name) | wordLang_Load (wordLang_exp) | \
-   wordLang_Op (binop) (wordLang_exp list) | wordLang_Shift \
-   (ast_shift) (wordLang_exp) (wordLang_exp)";;
+  "wordLang_exp =
+     wordLang_Const ('a word)
+   | wordLang_Var num
+   | wordLang_Lookup store_name
+   | wordLang_Load wordLang_exp
+   | wordLang_Op binop (wordLang_exp list)
+   | wordLang_Shift wordLang_shift wordLang_exp wordLang_exp";;
 
 (* HOL4 wordLangScript.sml:23: the overload ShiftN, which the port
    expands *)
@@ -39,45 +39,52 @@ let wordLang_exp_INDUCT,wordLang_exp_RECURSION = define_datatype
 (* HOL4 wordLangScript.sml:25-31: a theorem whose statement the port
    cannot state yet: MEM_IMP_exp_size *)
 
-new_type_abbrev("cutsets",`: 1 spt#1 spt`);;
+new_type_abbrev("cutsets",`:misc_num_set#misc_num_set`);;
 (* non-GCed cutset, GCed cutset *)
 
 let wordLang_prog_INDUCT,wordLang_prog_RECURSION = define_datatype
-  "wordLang_prog = wordLang_Skip | wordLang_Move (num) ((num#num) \
-   list) | wordLang_Inst ('a asm_inst) | wordLang_Assign (num) ('a \
-   wordLang_exp) | wordLang_Get (num) (store_name) | wordLang_Set \
-   (store_name) ('a wordLang_exp) | wordLang_Store ('a wordLang_exp) \
-   (num) | wordLang_MustTerminate (wordLang_prog) | wordLang_Call \
-   ((num list#(1 spt#1 spt)#wordLang_prog#num#num) option) (num \
-   option) (num list) ((num#wordLang_prog#num#num) option) \
-   // target of call\n\
-   // arguments\n\
-   | \
-   // return vars, cut-set, return-handler code, labels l1,l2\n\
-   // handler: varname, exception-handler code, labels l1,l2\n\
-   wordLang_Seq (wordLang_prog) (wordLang_prog) | wordLang_If (cmp) \
-   (num) ('a asm_reg_imm) (wordLang_prog) (wordLang_prog) | \
-   wordLang_Loop (1 spt) (wordLang_prog) (1 spt) | wordLang_Alloc \
-   (num) (1 spt#1 spt) | wordLang_StoreConsts (num) (num) (num) (num) \
-   ((bool#'a word) list) | wordLang_Raise (num) | wordLang_Return \
-   (num) (num list) \
-   // return lab, return values\n\
-   | wordLang_Break (num) | wordLang_Continue (num) | wordLang_Tick | \
-   wordLang_OpCurrHeap (binop) (num) (num) \
-   // special case compiled well in stackLang\n\
-   | wordLang_LocValue (num) (num) \
-   // assign v1 := Loc v2 0\n\
-   | wordLang_Install (num) (num) (num) (num) (1 spt#1 spt) \
-   // code buffer start, length of new code,\n\
-   // data buffer start, length of new data, cut-set\n\
-   | wordLang_CodeBufferWrite (num) (num) \
-   // code buffer address, byte to write\n\
-   | wordLang_DataBufferWrite (num) (num) \
-   // data buffer address, word to write\n\
-   | wordLang_FFI (mlstring) (num) (num) (num) (num) (1 spt#1 spt) \
-   // FFI name, conf_ptr, conf_len, array_ptr, array_len, cut-set\n\
-   | wordLang_ShareInst (memop) (num) ('a wordLang_exp) \
-   // memory operation, varname, expression for memory address";;
+  "wordLang_prog =
+     wordLang_Skip
+   | wordLang_Move num ((num#num) list)
+   | wordLang_Inst ('a asm_inst)
+   | wordLang_Assign num ('a wordLang_exp)
+   | wordLang_Get num store_name
+   | wordLang_Set store_name ('a wordLang_exp)
+   | wordLang_Store ('a wordLang_exp) num
+   | wordLang_MustTerminate wordLang_prog
+   | wordLang_Call ((num list#cutsets#wordLang_prog#num#num) option)
+       (num option) (num list) ((num#wordLang_prog#num#num) option)
+     // target of call
+     // arguments
+     // return vars, cut-set, return-handler code, labels l1,l2
+     // handler: varname, exception-handler code, labels l1,l2
+   | wordLang_Seq wordLang_prog wordLang_prog
+   | wordLang_If cmp num ('a asm_reg_imm) wordLang_prog wordLang_prog
+   | wordLang_Loop misc_num_set wordLang_prog misc_num_set
+   | wordLang_Alloc num cutsets
+   | wordLang_StoreConsts num num num num ((bool#'a word) list)
+   | wordLang_Raise num
+   | wordLang_Return num (num list)
+     // return lab, return values
+   | wordLang_Break num
+   | wordLang_Continue num
+   | wordLang_Tick
+   | wordLang_OpCurrHeap binop num num
+     // special case compiled well in stackLang
+   | wordLang_LocValue num num
+     // assign v1 := Loc v2 0
+   | wordLang_Install num num num num cutsets
+     // code buffer start, length of new code,
+     // data buffer start, length of new data, cut-set
+   | wordLang_CodeBufferWrite num num
+     // code buffer address, byte to write
+   | wordLang_DataBufferWrite num num
+     // data buffer address, word to write
+   | wordLang_FFI mlstring num num num num cutsets
+     // FFI name, conf_ptr, conf_len, array_ptr, array_len, cut-set
+   | wordLang_ShareInst memop num ('a wordLang_exp)
+     // memory operation, varname, expression for memory address
+  ";;
 
 let raise_stub_location_def = new_definition
   `raise_stub_location = word_num_stubs - 2`;;
@@ -210,7 +217,6 @@ let every_var_def,every_var_ind = define_wf
         | p -> T`];;
 
 (*Recursor for stack variables*)
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let every_stack_var_def,every_stack_var_ind = define_wf
@@ -243,7 +249,6 @@ let every_stack_var_def,every_stack_var_ind = define_wf
         | p -> T`];;
 
 (*Find the maximum variable*)
-let _ = size_thms "wordLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let max_var_exp_def,max_var_exp_ind = define_wf
@@ -296,8 +301,8 @@ let cutsets_max_def = new_definition
   `cutsets_max (c:1 spt#1 spt) =
      MAX (MAX_LIST (MAP FST (toAList (FST c)))) (MAX_LIST (MAP FST
        (toAList (SND c))))`;;
+add_simp cutsets_max_def;;
 
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let max_var_def,max_var_ind = define_wf
@@ -378,8 +383,6 @@ let exp_to_addr_def = new_definition
    expands *)
 
 let word_loc_INDUCT,word_loc_RECURSION = define_datatype
-  "word_loc = wordLang_Word ('a word) | wordLang_Loc (num) (num)";;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;
+  "word_loc =
+     wordLang_Word ('a word)
+   | wordLang_Loc num num";;

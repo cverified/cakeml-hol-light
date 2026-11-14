@@ -17,29 +17,29 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_depth.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_depthProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_depthProof"
   ["backendProps"; "wordLang"; "wordProps"; "wordSem"; "word_depth"];;
 
-(* [local,simp] *)
+(* [local] *)
 let option_le_X_MAX_X = prove
  (`option_le x (OPTION_MAP2 MAX m x) /\
    option_le x (OPTION_MAP2 MAX x m)`,
   CHEAT_TAC);;
+add_simp option_le_X_MAX_X;;
 
-(* [local,simp] *)
+(* [local] *)
 let OPTION_MAP2_MAX_IDEMPOT = prove
  (`OPTION_MAP2 MAX x x = x`,
   CHEAT_TAC);;
+add_simp OPTION_MAP2_MAX_IDEMPOT;;
 
-(* [local,simp] *)
+(* [local] *)
 let OPTION_MAP2_SOME_0 = prove
  (`OPTION_MAP2 (+) x (SOME 0) = x /\
    OPTION_MAP2 MAX x (SOME 0) = x`,
   CHEAT_TAC);;
+add_simp OPTION_MAP2_SOME_0;;
 
 let max_depth_mk_Branch = prove
  (`!t1 t2. max_depth s (mk_Branch t1 t2) = max_depth s
@@ -160,7 +160,3 @@ let max_depth_Call_NONE = prove
          (max_depth (wordSem_state_stack_size s) (full_call_graph
            dest funs))))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

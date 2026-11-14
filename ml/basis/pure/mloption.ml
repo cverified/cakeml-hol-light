@@ -11,11 +11,8 @@
 
 needs "lib/ternaryComparisons.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "mloption" [];;
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "mloption" [];;
 
 let getOpt_def = assume_definition
   "termination (CHEAT_TAC)"
@@ -41,7 +38,3 @@ let mloption_compare_def = new_definition
      (match x with NONE -> (match y with NONE -> EQUAL | _1 ->
        LESS) | SOME vx -> (match y with NONE -> GREATER | SOME vy ->
        f vx vy))`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

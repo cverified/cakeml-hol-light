@@ -12,18 +12,17 @@
 
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "ml_monadBase"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "ml_monadBase"
   ["semanticPrimitives"];;
 
 (* 'a is the type of the state, 'b is the type of successful computations, and
  * 'c is the type of exceptions *)
 
 let exc_INDUCT,exc_RECURSION = define_datatype
-  "exc = M_success ('a) | M_failure ('b)";;
+  "exc =
+     M_success ('a)
+   | M_failure ('b)";;
 
 (* HOL4 ml_monadBaseScript.sml:21: the type abbreviation M, which the
    port expands *)
@@ -99,7 +98,8 @@ let can_def = new_definition
 
 (* Dynamic allocation of references *)
 let store_ref_INDUCT,store_ref_RECURSION = define_datatype
-  "store_ref = StoreRef (num)";;
+  "store_ref =
+     StoreRef num";;
 
 (* Arrays *)
 
@@ -398,7 +398,3 @@ let marray_alloc_success = prove
 (* Run *)
 let run_def = new_definition
   `run (x:'a->('b,'c)exc#'a) state = FST (x state)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

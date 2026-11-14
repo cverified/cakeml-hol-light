@@ -17,11 +17,8 @@ needs "compiler/backend/semantics/labSem.ml";;
 needs "lib/pegexec.ml";;
 needs "semantics/ffi/ffi.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "lab_filterProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "lab_filterProof"
   ["labProps"; "labSem"; "lab_filter"];;
 
 (* this file reads the name of a record field as a variable and
@@ -264,7 +261,3 @@ let sec_ends_with_label_filter_skip = prove
    ALL sec_ends_with_label code ==>
    ALL sec_ends_with_label (filter_skip code)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

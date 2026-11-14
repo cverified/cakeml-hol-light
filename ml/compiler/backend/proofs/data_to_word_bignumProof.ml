@@ -43,11 +43,8 @@ needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "data_to_word_bignumProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "data_to_word_bignumProof"
   ["backend_common"; "copying_gc"; "dataProps"; "dataSem";
    "data_to_word"; "data_to_word_gcProof"; "data_to_word_memoryProof";
    "gc_shared"; "gen_gc"; "gen_gc_partial"; "mllist";
@@ -196,10 +193,11 @@ let b2n_not = prove
    statement HOL Light does not read (tools/unstated.py):
    LongDiv1_thm *)
 
-(* [local,simp] *)
+(* [local] *)
 let lt_dimindex_MOD_dimword = prove
  (`n < dimindex (:'a) ==> n MOD dimword (:'a) = n`,
   CHEAT_TAC);;
+add_simp lt_dimindex_MOD_dimword;;
 
 let get_real_addr_lemma = prove
  (`shift_length c < dimindex (:'a) /\
@@ -272,11 +270,11 @@ let single_div_pre_IMP_single_div_full = prove
     single_div x1 x2 y = single_div_full x1 x2 y`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let IMP_LESS_MustTerminate_limit = prove
  (`i < dimword (:'a) ==>
     i < MustTerminate_limit (:'a) - 1`,
   CHEAT_TAC);;
+add_simp IMP_LESS_MustTerminate_limit;;
 
 (* HOL4 data_to_word_bignumProofScript.sml:814-863: a theorem whose
    statement HOL Light does not read (tools/unstated.py):
@@ -299,11 +297,11 @@ let IMP_bignum_code_rel = prove
     data_to_word_gcProof_code_rel (xx4,xx5) (state_code t)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let TWO_LESS_MustTerminate_limit = prove
  (`2 < MustTerminate_limit (:'a) /\
     ~(MustTerminate_limit (:'a) <= 1)`,
   CHEAT_TAC);;
+add_simp TWO_LESS_MustTerminate_limit;;
 
 let arith_location_def = new_definition
   `Arith_location index =
@@ -407,7 +405,3 @@ let structure_le_IMP_option_le = prove
 (* HOL4 data_to_word_bignumProofScript.sml:2455-2583: a theorem whose
    statement HOL Light does not read (tools/unstated.py):
    eval_Call_Arith *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

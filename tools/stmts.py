@@ -12,8 +12,11 @@ they are not the binding itself (tools/port.py):
 and a theorem that a source states as the value of another one
 (HOL4's Theorem foo = bar) is a binding of that other theorem:
 
-    (* [simp] *)
     let bar = baz;;
+
+HOL4's [simp] is the one attribute that the port does act on: it
+is a call after the theorem (`add_simp bar;;`), not a comment, and
+this gives it back as an attribute all the same.
 
 so this reads a file of the port and gives, of every theorem, the
 binding, the name of the source, the attributes, the line and the
@@ -41,6 +44,16 @@ ALIAS = re.compile(r"(?m)^let ([A-Za-z_][A-Za-z_0-9']*) =\n?"
 # line
 NOTE = re.compile(r"^\(\* ([A-Za-z_][A-Za-z_0-9']*)?"
                   r"(\[[A-Za-z_,]*\])? \*\)$")
+
+
+# the call that puts a theorem in the simp set, which the port
+# writes right after it where HOL4 writes [simp] over it
+SIMP = re.compile(r"(?m)^add_simp ([A-Za-z_][A-Za-z_0-9']*);;$")
+
+
+def simped(text):
+  """the bindings of a file of the port that are in the simp set"""
+  return set(SIMP.findall(text))
 
 
 def strip_dslash(text):
@@ -82,6 +95,7 @@ def theorems(text):
      the binding, the name of the source, the attributes, the line
      and the statement"""
   out = []
+  sp = simped(text)
   for m in HEAD.finditer(text):
     bind = m.group(1)
     i = text.find('`', m.end())
@@ -89,7 +103,8 @@ def theorems(text):
     j = text.find('`', i + 1)
     if j < 0: continue
     nm, at = note_of(text, m.start())
-    out.append((bind, nm or bind, at or [],
+    at = (at or []) + (['simp'] if bind in sp else [])
+    out.append((bind, nm or bind, at,
                 text[:m.start()].count('\n') + 1,
                 strip_dslash(text[i + 1:j])))
   return out
@@ -100,8 +115,10 @@ def aliases(text):
      one: the binding, the name of the source, the attributes and
      the line"""
   out = []
+  sp = simped(text)
   for m in ALIAS.finditer(text):
     nm, at = note_of(text, m.start())
-    out.append((m.group(1), nm or m.group(1), at or [],
+    at = (at or []) + (['simp'] if m.group(1) in sp else [])
+    out.append((m.group(1), nm or m.group(1), at,
                 text[:m.start()].count('\n') + 1, m.group(2)))
   return out

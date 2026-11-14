@@ -22,11 +22,8 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "dataProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "dataProps"
   ["backendProps"; "dataLang"; "dataSem"; "semanticsProps"];;
 
 let _ = do_list hide_constant ["vars"];;
@@ -81,29 +78,29 @@ let size_of_approx_of = prove
 (* HOL4 dataPropsScript.sml:85: the ML values that the definitions
    below antiquote *)
 
-(* [simp] *)
 let OPTION_MAP2_ADD_SOME_0 = prove
  (`OPTION_MAP2 (+) x (SOME 0) = x`,
   CHEAT_TAC);;
+add_simp OPTION_MAP2_ADD_SOME_0;;
 
-(* [simp] *)
 let OPTION_MAP2_MAX_CANCEL = prove
  (`OPTION_MAP2 MAX (OPTION_MAP2 MAX x y) y = OPTION_MAP2 MAX x y`,
   CHEAT_TAC);;
+add_simp OPTION_MAP2_MAX_CANCEL;;
 
 (* ops that are not allowed_op have stack_consumed = NONE, which has to
    propagate through do_stack's safe_for_space computation *)
-(* [simp] *)
 let OPTION_MAP2_NONE = prove
  (`OPTION_MAP2 f NONE y = NONE /\ OPTION_MAP2 f x NONE = NONE`,
   CHEAT_TAC);;
+add_simp OPTION_MAP2_NONE;;
 
-(* [simp] *)
 let the_NONE = prove
  (`the x NONE = x`,
   CHEAT_TAC);;
+add_simp the_NONE;;
 
-(* initial_state_simp[simp] *)
+(* initial_state_simp *)
 let dataProps_initial_state_simp = prove
  (`state_clock
      (dataSem_initial_state f c co cc ts l ss k) = k /\
@@ -118,8 +115,9 @@ let dataProps_initial_state_simp = prove
        dataSem_state_peak_heap_length
      (dataSem_initial_state f c co cc ts l ss k) = 0`,
   CHEAT_TAC);;
+add_simp dataProps_initial_state_simp;;
 
-(* initial_state_with_simp[simp] *)
+(* initial_state_with_simp *)
 let dataProps_initial_state_with_simp = prove
  (`(state_clock_fupd (K k') (dataSem_initial_state f c co cc ts l ss k)
   = dataSem_initial_state f c co cc ts l ss k') /\
@@ -128,9 +126,9 @@ let dataProps_initial_state_with_simp = prove
    (dataSem_state_locals_fupd (K LN) (dataSem_initial_state f c co
      cc ts l ss k) = dataSem_initial_state f c co cc ts l ss k)`,
   CHEAT_TAC);;
+add_simp dataProps_initial_state_with_simp;;
 (* HOL4 dataPropsScript.sml:133-153: code that the source has in a
    comment *)
-(* [simp] *)
 let do_stack_const = prove
  (`dataSem_state_locals
      (do_stack op vs s) = dataSem_state_locals s /\
@@ -157,11 +155,13 @@ let do_stack_const = prove
      dataSem_state_peak_heap_length s /\ compile_oracle (do_stack op
      vs s) = compile_oracle s`,
   CHEAT_TAC);;
+add_simp do_stack_const;;
 
-(* Boolv_11[simp] *)
+(* Boolv_11 *)
 let dataProps_Boolv_11 = prove
  (`dataSem_Boolv b1 = dataSem_Boolv b2 <=> b1 = b2`,
   CHEAT_TAC);;
+add_simp dataProps_Boolv_11;;
 
 let with_same_locals = prove
  (`(dataSem_state_locals_fupd (K (dataSem_state_locals s)) s) = s`,
@@ -765,7 +765,6 @@ let same_stack_size_size_of_stack = prove
    size_of_stack xs = size_of_stack ys`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let s_peak_heap = prove
  (`dataSem_state_peak_heap_length_fupd (K
   (dataSem_state_peak_heap_length s))
@@ -786,6 +785,7 @@ let s_peak_heap = prove
      s)) = dataSem_state_peak_heap_length_fupd (K plnnew)
        (dataSem_state_safe_for_space_fupd (K ssnew) s)`,
   CHEAT_TAC);;
+add_simp s_peak_heap;;
 
 let evaluate_stack_and_locals_swap = prove
  (`!c (s:('c,'ffi)dataSem_state).
@@ -1042,7 +1042,6 @@ let evaluate_mk_ticks = prove
       dataSem_evaluate (p,ITER n dataSem_dec_clock s))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let FUNPOW_dec_clock_code = prove
  (`(state_code (ITER n dataSem_dec_clock t) = state_code t) /\
    (stack (ITER n dataSem_dec_clock t) = stack t) /\
@@ -1067,6 +1066,7 @@ let FUNPOW_dec_clock_code = prove
      dataSem_state_locals_size t) /\
    (state_clock (ITER n dataSem_dec_clock t) = state_clock t - n)`,
   CHEAT_TAC);;
+add_simp FUNPOW_dec_clock_code;;
 
 let jump_exc_NONE = prove
  (`(dataSem_jump_exc (dataSem_state_locals_fupd (K x) t) = NONE <=>
@@ -1139,44 +1139,43 @@ let cut_state_eq_some = prove
   (K z) s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let set_var_const = prove
  (`state_ffi
       (dataSem_set_var x y z) = state_ffi z /\ state_clock
       (dataSem_set_var x y z) = state_clock z`,
   CHEAT_TAC);;
+add_simp set_var_const;;
 
 let set_var_with_const = prove
  (`(dataSem_set_var x y (state_clock_fupd (K k) z)) = state_clock_fupd
   (K k) (dataSem_set_var x y z)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let set_vars_const = prove
  (`state_ffi
       (dataSem_set_vars xs ys z) = state_ffi z /\ state_clock
       (dataSem_set_vars xs ys z) = state_clock z`,
   CHEAT_TAC);;
+add_simp set_vars_const;;
 
-(* [simp] *)
 let set_vars_with_const = prove
  (`(dataSem_set_vars xs ys (state_clock_fupd (K k) z)) =
   state_clock_fupd (K k) (dataSem_set_vars xs ys z)`,
   CHEAT_TAC);;
+add_simp set_vars_with_const;;
 
-(* [simp] *)
 let call_env_const = prove
  (`state_ffi
       (dataSem_call_env x s y) = state_ffi y /\ state_clock
       (dataSem_call_env x s y) = state_clock y`,
   CHEAT_TAC);;
+add_simp call_env_const;;
 
 let call_env_with_const = prove
  (`(dataSem_call_env x s (state_clock_fupd (K z) y)) =
   state_clock_fupd (K z) (dataSem_call_env x s y)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let push_env_const = prove
  (`state_ffi
       (dataSem_push_env x y z) = state_ffi z /\ state_clock
@@ -1187,6 +1186,7 @@ let push_env_const = prove
       (dataSem_push_env x y z) = state_refs z /\ dataSem_state_global
       (dataSem_push_env x y z) = dataSem_state_global z`,
   CHEAT_TAC);;
+add_simp push_env_const;;
 
 let push_env_with_const = prove
  (`(dataSem_push_env x y (state_clock_fupd (K k) z)) =
@@ -1210,11 +1210,12 @@ let cut_state_eq_none = prove
   (dataSem_state_locals s) = NONE`,
   CHEAT_TAC);;
 
-(* with_same_clock[simp] *)
+(* with_same_clock *)
 let dataProps_with_same_clock = prove
  (`dataSem_state_clock_fupd (K (dataSem_state_clock s))
      (s:('c,'ffi)dataSem_state) = s`,
   CHEAT_TAC);;
+add_simp dataProps_with_same_clock;;
 
 (* evaluate_add_clock *)
 let dataProps_evaluate_add_clock = prove
@@ -1238,7 +1239,6 @@ let dataProps_do_app_io_events_mono = prove
    z) <<= ffi_state_io_events (state_ffi b)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let dec_clock_const = prove
  (`state_ffi
       (dataSem_dec_clock s) = state_ffi s /\ state_code
@@ -1248,12 +1248,13 @@ let dec_clock_const = prove
       (dataSem_dec_clock s) = state_refs s /\ dataSem_state_global
       (dataSem_dec_clock s) = dataSem_state_global s`,
   CHEAT_TAC);;
+add_simp dec_clock_const;;
 
-(* [simp] *)
 let add_space_const = prove
  (`state_ffi
       (add_space s k) = state_ffi s`,
   CHEAT_TAC);;
+add_simp add_space_const;;
 
 (* evaluate_io_events_mono *)
 let dataProps_evaluate_io_events_mono = prove
@@ -1331,6 +1332,7 @@ let dataProps_get_code_labels_def,dataProps_get_code_labels_ind =
         | (dataLang_Assign _15 op _16 _17) -> assign_get_code_label
           op
         | _18 -> {}`];;
+add_simp dataProps_get_code_labels_def;;
 
 let dataProps_good_code_labels_def = new_definition
   `dataProps_good_code_labels p elabs <=>
@@ -1661,10 +1663,6 @@ let evaluate_stack_max_le_stack_limit = prove
        (limits_stack_limit (dataSem_state_limits s1)))`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["vars"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

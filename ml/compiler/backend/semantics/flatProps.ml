@@ -21,11 +21,8 @@ needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "flatProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "flatProps"
   ["ast"; "evaluateProps"; "flatLang"; "flatSem";
    "semanticPrimitivesProps"];;
 
@@ -119,7 +116,6 @@ let pmatch_list_pairwise = prove
         env') ps vs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let pmatch_list_snoc_nil = prove
  (`!p ps v vs (s:('c,'ffi)flatSem_state) env.
        (flatSem_pmatch_list s [] (SNOC v vs) env = Match_type_error)
@@ -127,6 +123,7 @@ let pmatch_list_snoc_nil = prove
        (flatSem_pmatch_list s (SNOC p ps) [] env =
          Match_type_error)`,
   CHEAT_TAC);;
+add_simp pmatch_list_snoc_nil;;
 
 (* pmatch_list_append *)
 let flatProps_pmatch_list_append = prove
@@ -174,7 +171,6 @@ let pmatch_ignore_clock = prove
      flatSem_pmatch_list s ps vs env`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let pmatch_rows_ignore_clock = prove
  (`!pes s v c.
      pmatch_rows pes (state_clock_fupd (K c) s) v = pmatch_rows pes
@@ -183,6 +179,7 @@ let pmatch_rows_ignore_clock = prove
    REWRITE_TAC[FORALL_PAIR_THM; pmatch_rows_def; pmatch_ignore_clock]
      THEN
    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[]));;
+add_simp pmatch_rows_ignore_clock;;
 
 let pmatch_rows_IMP_pmatch = prove
  (`pmatch_rows pes s v = Match (env',p',e') ==>
@@ -479,34 +476,34 @@ let flatProps_set_globals_def,flatProps_set_globals_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
   [`flatProps_set_globals (flatLang_Raise t e:flatLang_exp) =
-  flatProps_set_globals e`;
+    flatProps_set_globals e`;
    `flatProps_set_globals (flatLang_Handle t e pes:flatLang_exp) =
-  (BAG_UNION) (flatProps_set_globals e) (flatProps_elist_globals (MAP
-  SND pes))`;
+    (BAG_UNION) (flatProps_set_globals e) (flatProps_elist_globals
+    (MAP SND pes))`;
    `flatProps_set_globals (flatLang_Con t id' es:flatLang_exp) =
-  flatProps_elist_globals es`;
+    flatProps_elist_globals es`;
    `flatProps_set_globals (flatLang_Fun t v e:flatLang_exp) =
-  flatProps_set_globals e`;
+    flatProps_set_globals e`;
    `flatProps_set_globals (flatLang_App t op es:flatLang_exp) =
-  (BAG_UNION) (flatProps_elist_globals es) (flatProps_op_gbag op)`;
+    (BAG_UNION) (flatProps_elist_globals es) (flatProps_op_gbag op)`;
    `flatProps_set_globals (flatLang_If t e1 e2 e3:flatLang_exp) =
-  (BAG_UNION) ((BAG_UNION) (flatProps_set_globals e1)
-  (flatProps_set_globals e2)) (flatProps_set_globals e3)`;
+    (BAG_UNION) ((BAG_UNION) (flatProps_set_globals e1)
+    (flatProps_set_globals e2)) (flatProps_set_globals e3)`;
    `flatProps_set_globals (flatLang_Mat t e pes:flatLang_exp) =
-  (BAG_UNION) (flatProps_set_globals e) (flatProps_elist_globals (MAP
-  SND pes))`;
+    (BAG_UNION) (flatProps_set_globals e) (flatProps_elist_globals
+    (MAP SND pes))`;
    `flatProps_set_globals (flatLang_Let t v e1 e2:flatLang_exp) =
-  (BAG_UNION) (flatProps_set_globals e1) (flatProps_set_globals e2)`;
+    (BAG_UNION) (flatProps_set_globals e1) (flatProps_set_globals e2)`;
    `flatProps_set_globals (flatLang_Letrec t fs e:flatLang_exp) =
-  (BAG_UNION) (flatProps_set_globals e) (flatProps_elist_globals (MAP
-  (SND o SND) fs))`;
+    (BAG_UNION) (flatProps_set_globals e) (flatProps_elist_globals
+    (MAP (SND o SND) fs))`;
    `flatProps_set_globals _5 = EMPTY_BAG`;
    `flatProps_elist_globals [] = EMPTY_BAG`;
    `flatProps_elist_globals (CONS e es) = (BAG_UNION)
-  (flatProps_set_globals e) (flatProps_elist_globals es)`];;
+    (flatProps_set_globals e) (flatProps_elist_globals es)`];;
+add_simp flatProps_set_globals_def;;
 
 
-let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 flatPropsScript.sml:850-856: the tactic that proves the
@@ -598,16 +595,17 @@ let isClosure_def = new_definition
 
 let simple_basic_val_rel_def = define_cases
   [`simple_basic_val_rel (flatSem_Litv l:flatSem_v) v = (v =
-  (flatSem_Litv l:flatSem_v))`;
+    (flatSem_Litv l:flatSem_v))`;
    `simple_basic_val_rel (flatSem_Loc b i:flatSem_v) v = (v =
-  (flatSem_Loc b i:flatSem_v))`;
+    (flatSem_Loc b i:flatSem_v))`;
    `simple_basic_val_rel (flatSem_Conv stmp vs1:flatSem_v) v = (?vs2.
-  v = flatSem_Conv stmp vs2)`;
+    v = flatSem_Conv stmp vs2)`;
    `simple_basic_val_rel (flatSem_Vectorv vs1:flatSem_v) v = (?vs2. v
-  = flatSem_Vectorv vs2)`;
+    = flatSem_Vectorv vs2)`;
    `simple_basic_val_rel (flatSem_Closure vs nm exp:flatSem_v) v = F`;
    `simple_basic_val_rel (flatSem_Recclosure vs exps nm:flatSem_v)
-  v = F`];;
+    v = F`];;
+add_simp simple_basic_val_rel_def;;
 
 let v_container_xs_def = define_cases
   [`v_container_xs (flatSem_Litv _8:flatSem_v) = []`;
@@ -616,6 +614,7 @@ let v_container_xs_def = define_cases
    `v_container_xs (flatSem_Vectorv vs:flatSem_v) = vs`;
    `v_container_xs (flatSem_Closure vs nm exp:flatSem_v) = []`;
    `v_container_xs (flatSem_Recclosure vs exps nm:flatSem_v) = []`];;
+add_simp v_container_xs_def;;
 
 let flatProps_simple_val_rel_def = new_definition
   `flatProps_simple_val_rel vr = (
@@ -809,6 +808,7 @@ let flatProps_store_v_vs_def = define_cases
    `flatProps_store_v_vs (semanticPrimitives_Refv v) = [v]`;
    `flatProps_store_v_vs (semanticPrimitives_Thunk m v) = [v]`;
    `flatProps_store_v_vs (semanticPrimitives_W8array xs) = []`];;
+add_simp flatProps_store_v_vs_def;;
 
 let result_vs_def = new_definition
   `result_vs x1 =
@@ -816,6 +816,7 @@ let result_vs_def = new_definition
         Rval xs -> xs
       | (Rerr (Rraise x)) -> [x]
       | (Rerr (Rabort y)) -> []`;;
+add_simp result_vs_def;;
 
 (* HOL4 flatPropsScript.sml:1463-1469: a theorem whose statement the
    port cannot state yet: v_size_aux *)
@@ -829,29 +830,27 @@ let no_Mat_def,no_Mat_ind = assume_definition_rec
    `no_Mat (flatLang_App t op es:flatLang_exp) <=> ALL no_Mat es`;
    `no_Mat (flatLang_Fun t v e:flatLang_exp) <=> no_Mat e`;
    `no_Mat (flatLang_If t x1 x2 x3:flatLang_exp) <=> no_Mat x1 /\
-  no_Mat x2 /\ no_Mat x3`;
+    no_Mat x2 /\ no_Mat x3`;
    `no_Mat (flatLang_Let t vo e1 e2:flatLang_exp) <=> no_Mat e1 /\
-  no_Mat e2`;
+    no_Mat e2`;
    `no_Mat (flatLang_Mat t e pes:flatLang_exp) <=> F`;
    `no_Mat (flatLang_Handle t e pes:flatLang_exp) <=> no_Mat e /\ ALL
-  no_Mat (MAP SND pes) /\
+    no_Mat (MAP SND pes) /\
         (match pes with [(flatLang_Pvar _24,_25)] -> T | _26 ->
-          F)`;
+            F)`;
    `no_Mat (flatLang_Letrec t funs e:flatLang_exp) <=> ALL no_Mat
-  (MAP (SND o SND) funs) /\ no_Mat e`];;
+    (MAP (SND o SND) funs) /\ no_Mat e`];;
+add_simp no_Mat_def;;
 
 let no_Mat_decs_def,no_Mat_decs_ind = define_rec
   [`no_Mat_decs [] = T`;
    `no_Mat_decs (CONS e xs) = (no_Mat e /\ no_Mat_decs xs)`];;
+add_simp no_Mat_decs_def;;
 
 let mk_flat_install_conf_def = new_definition
   `flatProps_mk_flat_install_conf cc co =
      (mk_install_config cc co:'c install_config)`;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

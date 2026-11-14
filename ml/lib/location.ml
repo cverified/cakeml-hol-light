@@ -7,12 +7,14 @@
 
 (* this file needs nothing of the port *)
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 
 let locn_INDUCT,locn_RECURSION = define_datatype
-  "locn = UNKNOWNpt | EOFpt | POSN (num) (num)";;
+  "locn =
+     UNKNOWNpt
+   | EOFpt
+   | POSN num num";;
 
 let locnrow_def = define_general
   [`locnrow (POSN r c) = r`];;
@@ -26,7 +28,8 @@ let locn_colupdate_def = define_general
   [`locn_colupdate f (POSN r c) = POSN r (f c)`];;
 
 let locs_INDUCT,locs_RECURSION = define_datatype
-  "locs = Locs (locn) (locn)";;
+  "locs =
+     Locs locn locn";;
 
 (* HOL4 locationScript.sml:35: the overload end_locn, which the port
    expands *)
@@ -51,6 +54,7 @@ let locnle_def = new_definition
 
 let locsle_def = define_general
   [`locsle (Locs l1 _1) (Locs l2 _2) <=> locnle l1 l2`];;
+add_simp locsle_def;;
 
 let merge_locs_def = define_general
   [`merge_locs (Locs l1 l2) (Locs l3 l4) = Locs l1 l4`];;

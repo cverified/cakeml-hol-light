@@ -314,22 +314,15 @@ let define_shaped shape cls =
    family one function on the sum of the arguments of its members
    and the members of it by projection), and the induction
    theorem is read off the clauses and proved the same way, with
-   a predicate for each member.  The names are here because a
-   file that says define_mutual_wf says something a reader wants
-   to know, and nothing searches for what kind of definition it
-   is at the call site. *)
+   a predicate for each member.  So a definition of several
+   functions is made the way one of them is, and there is no
+   second name for it: the clauses say that it is mutual. *)
 
-let define_mutual_wf_tac = define_wf_tac;;
 
-let define_mutual_wf = define_wf;;
 
-let define_mutual_wf_cheat = define_wf_cheat;;
 
-let define_mutual_rec = define_rec;;
 
-let define_mutual_guess = define_guess;;
 
-let define_mutual_guess_cheat = define_guess_cheat;;
 
 (* the definition the port cannot make at all *)
 
@@ -344,17 +337,11 @@ let assume_definition_rec why cls =
 
 (* and a family whose clauses need a rewriting as well *)
 
-let define_mutual_shaped_wf_tac = define_shaped_wf_tac;;
 
-let define_mutual_shaped_wf = define_shaped_wf;;
 
-let define_mutual_shaped_wf_cheat = define_shaped_wf_cheat;;
 
-let define_mutual_shaped_rec_tac = define_shaped_rec_tac;;
 
-let define_mutual_shaped_rec = define_shaped_rec;;
 
-let define_mutual_shaped_rec_cheat = define_shaped_rec_cheat;;
 
 (* ------------------------------------------------------------------ *)
 (* Which way a definition needs.                                      *)

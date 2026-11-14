@@ -18,16 +18,15 @@ needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "infer_t"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "infer_t"
   ["ast"; "mlint"; "mlstring"; "semanticPrimitives"; "typeSystem"];;
 
 let infer_t_INDUCT,infer_t_RECURSION = define_datatype
-  "infer_t = Infer_Tvar_db (num) | Infer_Tapp (infer_t list) (num) | \
-   Infer_Tuvar (num)";;
+  "infer_t =
+     Infer_Tvar_db num
+   | Infer_Tapp (infer_t list) type_ident
+   | Infer_Tuvar num";;
 
 (* HOL4 infer_tScript.sml:19-20: a theorem that HOL4 states as the
    value of an ML expression: infer_t_ind *)
@@ -56,8 +55,8 @@ let get_tyname_def,get_tyname_ind = define_wf
   [`get_tyname n (Bind [] []) = NONE`;
    `get_tyname n (Bind [] (CONS (m,ys) xs)) =
       (match get_tyname n ys with NONE -> get_tyname n (Bind []
-        xs) | SOME x -> SOME ((\x y. strcat x y) ((\x y. strcat x y)
-        m (implode ".")) x))`;
+          xs) | SOME x -> SOME ((\x y. strcat x y) ((\x y. strcat x
+          y) m (implode ".")) x))`;
    `get_tyname n (Bind (CONS (tyname,_1,t) xs) m) =
       (if (match t with Tapp _2 m -> m = n | _3 -> F) then
         SOME tyname else get_tyname n (Bind xs m))`];;
@@ -100,14 +99,13 @@ let add_parens_def = new_definition
      (if threshold' < (n:num) then mlstring_concat [(implode "(");
        x; (implode ")")] else x)`;;
 
-let _ = size_thms "infer_t";;
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL (_7,t) -> infer_t_size t | INR (_8,ts)
        -> list_size infer_t_size ts)
    which is not one that HOL Light takes here; the one
    below is what the port found for it *)
 let inf_type_to_string_rec_def,inf_type_to_string_rec_ind =
-  define_mutual_shaped_wf
+  define_shaped_wf
   "maplist>measure"
   `MEASURE (\(x0,x1). infer_t_size x1)`
   [`inf_type_to_string_rec tys (Infer_Tuvar n) =
@@ -118,35 +116,31 @@ let inf_type_to_string_rec_def,inf_type_to_string_rec_ind =
         (if ti = Tfn_num then
          (match ts with [t1; t2] ->
             (mlstring_concat [add_parens 2 (inf_type_to_string_rec
-              tys t1); (implode " -> ");
+                tys t1); (implode " -> ");
                      add_parens 3 (inf_type_to_string_rec tys
-                       t2)],3) | _4 -> (implode
-                       "<bad function type>",0)) else if ti = Ttup_num
-                       then
+                         t2)],3) | _4 -> (implode
+                         "<bad function type>",0)) else if ti = Ttup_num
+                         then
          (match ts with [] -> ((implode "unit"),0) | [t] ->
-           inf_type_to_string_rec tys t | _5 -> (mlstring_concat
-           (infer_t_commas (implode " * ")
+             inf_type_to_string_rec tys t | _5 -> (mlstring_concat
+             (infer_t_commas (implode " * ")
                    (MAP (add_parens 1) (inf_type_to_string_rec_list
-                     tys ts))),2)) else
+                       tys ts))),2)) else
           match ts with [] -> (type_ident_to_string tys ti,0) | [t]
-            ->
+              ->
             (mlstring_concat [add_parens 1 (inf_type_to_string_rec
-              tys t); (implode " ");
+                tys t); (implode " ");
                      type_ident_to_string tys ti],1) | _6 ->
             (mlstring_concat (APPEND (APPEND [(implode "(")]
                      (infer_t_commas (implode ", ")
                        (MAP (add_parens 5)
-                         (inf_type_to_string_rec_list tys ts))))
+                           (inf_type_to_string_rec_list tys ts))))
                      [(implode ") "); type_ident_to_string tys
-                       ti]),1))`;
+                         ti]),1))`;
    `inf_type_to_string_rec_list tys [] = []`;
    `inf_type_to_string_rec_list tys (CONS t ts) = CONS
-  (inf_type_to_string_rec tys t)
+    (inf_type_to_string_rec tys t)
       (inf_type_to_string_rec_list tys ts)`];;
 
 let inf_type_to_string_def = new_definition
   `inf_type_to_string tys t = FST (inf_type_to_string_rec tys t)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -16,11 +16,8 @@ needs "lib/grammar.ml";;
 needs "lib/location.ml";;
 needs "semantics/tokens.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "gram"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "gram"
   ["tokens"];;
 
 
@@ -295,13 +292,13 @@ let cmlG_def = new_definition
   nNonETopLevelDecs)]} UNION {[grammar_TOK (tokens_SemicolonT);
   grammar_NT (INL nTopLevelDecs)]}) UNION {[]})))`;;
 
-new_type_abbrev("gram_NT",`: MMLnonT+num`);;
+new_type_abbrev("gram_NT",`:MMLnonT+num`);;
 
 (* HOL4 gramScript.sml:234: the overload mkNT, which the port expands *)
 (* HOL4 gramScript.sml:235: the overload NN, which the port expands *)
 (* HOL4 gramScript.sml:236: the overload TK, which the port expands *)
 
-new_type_abbrev("mlptree",`: (tokens_token,MMLnonT,locs)parsetree`);;
+new_type_abbrev("mlptree",`:(tokens_token,MMLnonT,locs)parsetree`);;
 
 (* HOL4 gramScript.sml:240-252: a theorem that HOL4 states as the
    value of an ML expression: nt_distinct_ths *)
@@ -318,7 +315,3 @@ let lfl_def = new_definition
 (* HOL4 gramScript.sml:277-282: ML code, not ported *)
 
 (* HOL4 gramScript.sml:284-285: ML code, not ported *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

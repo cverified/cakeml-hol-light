@@ -16,11 +16,8 @@ needs "compiler/backend/semantics/dataSem.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "data_liveProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "data_liveProof"
   ["dataProps"; "dataSem"; "data_live"];;
 
 (* HOL4 data_liveProofScript.sml:12-13: an overload that the source
@@ -233,7 +230,3 @@ let get_code_labels_compile = prove
  (`!x y. dataProps_get_code_labels (FST (data_live_compile x y))
   SUBSET dataProps_get_code_labels x`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

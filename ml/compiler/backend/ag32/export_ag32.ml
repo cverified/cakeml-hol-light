@@ -13,11 +13,8 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/export.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "export_ag32"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "export_ag32"
   ["export"; "mlstring"];;
 
 let ag32_export_def = new_definition
@@ -28,7 +25,3 @@ let ag32_export_def = new_definition
         data)
       (split16 (words_line (implode ".code_byte ") byte_to_string)
         bytes)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

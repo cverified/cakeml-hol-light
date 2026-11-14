@@ -31,20 +31,19 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "data_to_word"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "data_to_word"
   ["backend_common"; "dataLang"; "wordLang"; "word_bignum";
    "word_depth"; "word_to_word"];;
 
 let gc_kind_INDUCT,gc_kind_RECURSION = define_datatype
-  "gc_kind = \
-   // this configuration is used in data_to_wordProof and stack_alloc\n\
-   data_to_word_None | data_to_word_Simple | \
-   data_to_word_Generational (num list) \
-   // sizes of generations, smallest first";;
+  "gc_kind =
+     // this configuration is used in data_to_wordProof and stack_alloc
+     data_to_word_None
+   | data_to_word_Simple
+   | data_to_word_Generational (num list)
+     // sizes of generations, smallest first
+  ";;
 
 let data_to_word_config_FIELDS = define_record "data_to_word_config"
   ["tag_bits","num";
@@ -129,7 +128,7 @@ let StoreEach_def,StoreEach_ind = define_rec
   [`StoreEach v [] (offset:'a word) = wordLang_Skip`;
    `StoreEach v (CONS x xs) (offset:'a word) =
          wordLang_Seq (wordLang_Store (wordLang_Op asm_Add
-           [wordLang_Var v; wordLang_Const offset]) x)
+             [wordLang_Var v; wordLang_Const offset]) x)
              (StoreEach v xs (offset + bytes_in_word))`];;
 
 let small_shift_length_def = new_definition
@@ -201,15 +200,18 @@ let real_byte_offset_def = new_definition
                n))) Lsr (wordLang_Var r) 2]`;;
 
 let word_op_type_INDUCT,word_op_type_RECURSION = define_datatype
-  "word_op_type = Bitwise (binop) | Carried (binop)";;
+  "word_op_type =
+     Bitwise binop
+   | Carried binop";;
 
 let lookup_word_op_def = define_cases
   [`lookup_word_op backend_common_Andw = Bitwise asm_And`;
    `lookup_word_op backend_common_Orw = Bitwise asm_Or`;
    `lookup_word_op (backend_common_Xor:opw) = Bitwise
-  backend_common_Xor`;
+    backend_common_Xor`;
    `lookup_word_op (backend_common_Add:opw) = Carried asm_Add`;
    `lookup_word_op (backend_common_Sub:opw) = Carried asm_Sub`];;
+add_simp lookup_word_op_def;;
 
 let FromList_location_def = new_definition
   `FromList_location = word_num_stubs`;;
@@ -1451,20 +1453,21 @@ let smallnum_def = new_definition
 
 let MemEqList_def,MemEqList_ind = define_rec
   [`MemEqList a [] = (word_bignum_Assign 1 (word_depth_Const (n2w
-  18:'a word)):'a wordLang_prog)`;
+    18:'a word)):'a wordLang_prog)`;
    `MemEqList a (CONS w ws) =
          ((word_bignum_Seq (word_bignum_Assign 5 (wordLang_Load
-           (wordLang_Op asm_Add [wordLang_Var 3; word_depth_Const a])))
+             (wordLang_Op asm_Add [wordLang_Var 3; word_depth_Const
+             a])))
              (word_bignum_If asm_Equal 5 (Imm w) (MemEqList (a
-               + bytes_in_word) ws) word_bignum_Skip)):'a
-               wordLang_prog)`];;
+                 + bytes_in_word) ws) word_bignum_Skip)):'a
+                 wordLang_prog)`];;
 
 let get_gen_size_def = define_cases
   [`get_gen_size [] = bytes_in_word * ((--(n2w 1)):'a word)`;
    `get_gen_size (CONS x xs) =
          (if w2n (bytes_in_word:'a word) * x < dimword (:'a)
-           then bytes_in_word * n2w x else bytes_in_word * (--(n2w
-           1)))`];;
+             then bytes_in_word * n2w x else bytes_in_word *
+             (--(n2w 1)))`];;
 
 let fp_cmp_inst_def = define_cases
   [`fp_cmp_inst FP_Less = FPLess 3 0 1`;
@@ -1704,7 +1707,7 @@ let getWords_def,getWords_ind = define_rec
   [`getWords [] aux = (REVERSE aux,[])`;
    `getWords (CONS c cs) aux =
       (match c with (b,wordLang_Word w) -> getWords cs (CONS
-        (b,w) aux) | _11 -> (REVERSE aux,CONS c cs))`];;
+          (b,w) aux) | _11 -> (REVERSE aux,CONS c cs))`];;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)
@@ -1718,20 +1721,20 @@ let StoreAnyConsts_def,StoreAnyConsts_ind = define_guess_cheat
   [`StoreAnyConsts r1 r2 r3 [] v =
       word_bignum_Seq (wordLang_Set NextFree (wordLang_Var r2))
           (match SND v with wordLang_Loc n _15 ->
-            wordLang_LocValue r1 n | wordLang_Word w ->
-            word_bignum_Assign r1 (if FST v then wordLang_Op asm_Add
-            [word_depth_Const w; wordLang_Var r3] else
-            (word_depth_Const w)))`;
+              wordLang_LocValue r1 n | wordLang_Word w ->
+              word_bignum_Assign r1 (if FST v then wordLang_Op
+              asm_Add [word_depth_Const w; wordLang_Var r3] else
+              (word_depth_Const w)))`;
    `StoreAnyConsts r1 r2 r3 (CONS v vs) w =
       (match ((SND v):'a word_loc) with wordLang_Loc n _16 ->
-        data_to_word_list_Seq [wordLang_LocValue r1 n;
+          data_to_word_list_Seq [wordLang_LocValue r1 n;
                              word_bignum_Store (wordLang_Var r2) r1;
                              word_bignum_Assign r2 (wordLang_Op
-                               asm_Add [wordLang_Var r2;
-                               word_depth_Const bytes_in_word]);
+                                 asm_Add [wordLang_Var r2;
+                                 word_depth_Const bytes_in_word]);
                              StoreAnyConsts r1 r2 r3 vs w] | _17 ->
-                               (let (ws,vs1) = getWords (CONS v vs) []
-                               in
+                                 (let (ws,vs1) = getWords (CONS v vs) []
+                                 in
                word_bignum_Seq (wordLang_StoreConsts r2 r3 r2 r3 ws)
                    (StoreAnyConsts r1 r2 r3 vs1 w)))`];;
 
@@ -1778,7 +1781,7 @@ let write_bytes_def,write_bytes_ind = define_rec
    `write_bytes bs (CONS (w:'a word) ws) be' =
          (let k = dimindex (:'a) DIV 8 in
               CONS (bytes_to_word k (n2w 0) bs w be')
-                (write_bytes (DROP k bs) ws be'))`];;
+                  (write_bytes (DROP k bs) ws be'))`];;
 
 let small_int_def = new_definition
   `small_int (:'a) i <=>
@@ -1788,54 +1791,54 @@ let small_int_def = new_definition
 let part_to_words_def = define_cases
   [`part_to_words c m (closLang_Int i:const_part) (offset:'a word) =
       (if small_int (:'a) i then SOME ((F,wordLang_Word (Smallnum
-        i)),[]) else let (sign,ws) = i2mw i in
+          i)),[]) else let (sign,ws) = i2mw i in
               match encode_header c (if sign then 7 else 3) (LENGTH
-                ws) with NONE -> NONE | SOME hd -> SOME ((T,(make_ptr c
-                offset ((n2w 0):'a word) (LENGTH ws))),
+                  ws) with NONE -> NONE | SOME hd -> SOME ((T,(make_ptr
+                  c offset ((n2w 0):'a word) (LENGTH ws))),
                               MAP (\w. (F,wordLang_Word w)) (CONS
-                                hd ws)))`;
+                                  hd ws)))`;
    `part_to_words c m (closLang_Con t ns) (offset:'a word) =
       (if NULL ns then
          if t < dimword (:'a) DIV 16 then SOME ((F,wordLang_Word
-           (n2w (16 * t + 2))),[]) else NONE else
+             (n2w (16 * t + 2))),[]) else NONE else
          match encode_header c (4 * t) (LENGTH ns) with NONE -> NONE
-           | SOME hd -> SOME ((T,wordLang_Word
+             | SOME hd -> SOME ((T,wordLang_Word
                               (offset << (shift_length c -
-                                backend_common_word_shift (:'a)) +
+                                  backend_common_word_shift (:'a)) +
                               (ptr_bits c t (LENGTH ns) || (n2w
-                                1)))),CONS (F,wordLang_Word hd) (MAP
-                                (lookup_mem m) ns)))`;
+                                  1)))),CONS (F,wordLang_Word hd)
+                                  (MAP (lookup_mem m) ns)))`;
    `part_to_words c m (closLang_W64 w:const_part) (offset:'a word) =
       (let ws = (if dimindex (:'a) < 64 then [((63 >< 32) w); ((31
-        >< 0) w)] else [((63 >< 0) w):'a word]) in
+          >< 0) w)] else [((63 >< 0) w):'a word]) in
          match encode_header c 3 (LENGTH ws) with NONE -> NONE |
-           SOME hd -> SOME ((T,(make_ptr c offset ((n2w 0):'a word)
-           (LENGTH ws))),
+             SOME hd -> SOME ((T,(make_ptr c offset ((n2w 0):'a word)
+             (LENGTH ws))),
                             MAP (\w. (F,wordLang_Word w)) (CONS
-                              hd ws)))`;
+                                hd ws)))`;
    `part_to_words c m (closLang_Str s:const_part) (offset:'a word) =
       (let bytes = MAP (n2w o ORD) (explode s) in
        let n = LENGTH bytes in
        let hd = make_byte_header c T n in
        let k = byte_len (:'a) n in
        let ws = write_bytes bytes (REPLICATE k (n2w 0))
-         (data_to_word_config_be c) in
+           (data_to_word_config_be c) in
          if k < 2 EXP (dimindex (:'a) - 4) /\ k < 2 EXP
-           data_to_word_config_len_size c then SOME ((T,(make_ptr c
-           offset ((n2w 0):'a word) k)),
+             data_to_word_config_len_size c then SOME ((T,(make_ptr c
+             offset ((n2w 0):'a word) k)),
                     MAP (\w. (F,wordLang_Word w)) (CONS hd ws))
-                      else NONE)`];;
+                        else NONE)`];;
 
 let parts_to_words_def,parts_to_words_ind = define_rec
   [`parts_to_words c m i [] (off:'a word) = SOME (lookup_mem m (i -
-  (1:num)),[])`;
+    (1:num)),[])`;
    `parts_to_words c m i (CONS x parts') (off:'a word) =
       (match part_to_words c m x off with NONE -> NONE | SOME (w,xs)
-        ->
+          ->
         (match parts_to_words c (sptree_insert i w m) (i + 1) parts'
                  (off + bytes_in_word * n2w (LENGTH xs)) with
-                   NONE -> NONE | SOME (r,ys) -> SOME (r,APPEND xs
-                   ys)))`];;
+                     NONE -> NONE | SOME (r,ys) -> SOME (r,APPEND
+                     xs ys)))`];;
 
 let const_parts_to_words_def = new_definition
   `const_parts_to_words c parts' =
@@ -1846,6 +1849,7 @@ let get_Word_def = new_definition
       match x1 with
         wordLang_Word w -> w
       | _19 -> (n2w 0)`;;
+add_simp get_Word_def;;
 
 let assign_Build_def = new_definition
   `assign_Build (c:data_to_word_config) (secn:num) (l:num) (dest:num)
@@ -2016,13 +2020,13 @@ let SetBool_def = new_definition
 
 let AssignCmp_def = define_cases
   [`AssignCmp dest (ast_Lt:opb) v1 v2 = (SetBool dest asm_Lower v1
-  (Reg v2):'a wordLang_prog)`;
+    (Reg v2):'a wordLang_prog)`;
    `AssignCmp dest (ast_Gt:opb) v1 v2 = ((SetBool dest asm_Lower v2
-  (Reg v1)):'a wordLang_prog)`;
+    (Reg v1)):'a wordLang_prog)`;
    `AssignCmp dest (ast_Leq:opb) v1 v2 = ((SetBool dest asm_NotLower
-  v2 (Reg v1)):'a wordLang_prog)`;
+    v2 (Reg v1)):'a wordLang_prog)`;
    `AssignCmp dest (ast_Geq:opb) v1 v2 = ((SetBool dest
-  asm_NotLower v1 (Reg v2)):'a wordLang_prog)`];;
+    asm_NotLower v1 (Reg v2)):'a wordLang_prog)`];;
 
 let assign_StringCmp_def = new_definition
   `assign_StringCmp (c:data_to_word_config) (secn:num) (l:num)
@@ -3747,7 +3751,3 @@ let AnyArith_call_tree_thm = prove
        (data_to_word_stubs (:'a) (data_conf))))
      AnyArith_call_tree`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

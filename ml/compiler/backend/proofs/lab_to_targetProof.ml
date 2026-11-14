@@ -32,11 +32,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "lab_to_targetProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "lab_to_targetProof"
   ["asm"; "asmProps"; "asmSem"; "ffi"; "labProps"; "labSem";
    "lab_filterProof"; "lab_to_target"; "stack_removeProof";
    "targetProps"; "targetSem"; "wordSem"];;
@@ -142,11 +139,11 @@ let upd_pc_with_pc = prove
  (`labSem_upd_pc (asm_state_pc s1) s1 = (s1:'a asm_state)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let shift_interfer_twice = prove
  (`shift_interfer l' (shift_interfer l c) =
     shift_interfer (l + l') c`,
   CHEAT_TAC);;
+add_simp shift_interfer_twice;;
 
 (* [local] *)
 let evaluate_nop_steps = prove
@@ -235,10 +232,10 @@ let lab_lookup_IMP = prove
 let labs_domain_def = new_definition
   `labs_domain labs = {(n1,n2) | ~(lab_lookup n1 n2 labs = NONE)}`;;
 
-(* [simp] *)
 let labs_domain_LN = prove
  (`labs_domain LN = {}`,
   CHEAT_TAC);;
+add_simp labs_domain_LN;;
 
 let labs_domain_insert = prove
  (`~(k IN domain labs) ==>
@@ -254,7 +251,7 @@ let has_odd_inst_def,has_odd_inst_ind = define_guess_cheat
    `has_odd_inst (CONS (Section k []) xs) = has_odd_inst xs`;
    `has_odd_inst (CONS (Section k (CONS y ys)) xs) <=>
          ~(EVEN (line_length y)) \/ has_odd_inst (CONS (Section
-           k ys) xs)`];;
+             k ys) xs)`];;
 
 let line_similar_def = new_definition
   `line_similar x1 x2 =
@@ -294,15 +291,15 @@ let code_similar_sym = prove
  (`!code1 code2. code_similar code1 code2 ==> code_similar code2 code1`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let line_similar_refl = prove
  (`!l. line_similar l l`,
   CHEAT_TAC);;
+add_simp line_similar_refl;;
 
-(* [simp] *)
 let code_similar_refl = prove
  (`!code. code_similar code code`,
   CHEAT_TAC);;
+add_simp code_similar_refl;;
 
 (* [local] *)
 let line_similar_trans = prove
@@ -360,7 +357,7 @@ let word_loc_val_def = define_cases
   [`word_loc_val p labs (wordLang_Word w) = SOME w`;
    `word_loc_val p labs (wordLang_Loc k1 k2) =
          (match lab_lookup k1 k2 labs with NONE -> NONE | SOME
-           q -> SOME (p + n2w q))`];;
+             q -> SOME (p + n2w q))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -370,7 +367,7 @@ let has_io_name_def,has_io_name_ind = define_guess_cheat
    `has_io_name index (CONS (Section k (CONS y ys)) xs) <=>
          has_io_name index (CONS (Section k ys) xs) \/
          (match y with labLang_LabAsm (labLang_CallFFI i) _5 _6
-           _7 -> (i = index) | _8 -> F)`];;
+             _7 -> (i = index) | _8 -> F)`];;
 
 (* HOL4 lab_to_targetProofScript.sml:532: ML code, not ported *)
 
@@ -431,7 +428,7 @@ let all_enc_ok_def,all_enc_ok_ind = define_guess_cheat
    `all_enc_ok c labs ffis pos (CONS (Section k (CONS y ys)) xs) <=>
          line_ok c labs ffis pos y /\
          all_enc_ok c labs ffis (pos + line_length y) (CONS
-           (Section k ys) xs)`];;
+             (Section k ys) xs)`];;
 
 (* HOL4 lab_to_targetProofScript.sml:589: ML code, not ported *)
 
@@ -443,19 +440,18 @@ let all_enc_ok_cons = prove
    lines_ok c labs ffis pos ls`,
   CHEAT_TAC);;
 
-let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let pos_val_def,pos_val_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (sec_size (\x. 0)) x2)`
   [`pos_val i (pos:num) [] = (pos:num)`;
    `pos_val i (pos:num) (CONS (Section k []) xs) = ((pos_val i pos
-  xs):num)`;
+    xs):num)`;
    `pos_val i (pos:num) (CONS (Section k (CONS y ys)) xs) =
          ((if is_Label y then pos_val i (pos + line_length y)
-           (CONS (Section k ys) xs) else if i = (0:num) then pos
-           else pos_val (i - 1) (pos + line_length y) (CONS
-           (Section k ys) xs)):num)`];;
+             (CONS (Section k ys) xs) else if i = (0:num) then pos
+             else pos_val (i - 1) (pos + line_length y) (CONS
+             (Section k ys) xs)):num)`];;
 
 (* HOL4 lab_to_targetProofScript.sml:612: ML code, not ported *)
 
@@ -469,8 +465,8 @@ let sec_pos_val_def,sec_pos_val_ind = define_rec
    `sec_pos_val i pos (CONS y ys) =
        (if is_Label y then
          sec_pos_val i (pos + line_length y) ys else if i = 0
-           then SOME pos else sec_pos_val (i - 1) (pos +
-           line_length y) ys)`];;
+             then SOME pos else sec_pos_val (i - 1) (pos +
+             line_length y) ys)`];;
 
 let sec_pos_val_too_big = prove
  (`!i pos lines.
@@ -518,8 +514,8 @@ let num_pcs_def,num_pcs_ind = define_guess_cheat
   [`num_pcs [] = (0:num)`;
    `num_pcs (CONS (Section _13 []) rest) = ((num_pcs rest):num)`;
    `num_pcs (CONS (Section k (CONS x xs)) rest) = ((if is_Label x
-  then num_pcs (CONS (Section k xs) rest) else 1 + num_pcs (CONS
-  (Section k xs) rest)):num)`];;
+    then num_pcs (CONS (Section k xs) rest) else 1 + num_pcs (CONS
+    (Section k xs) rest)):num)`];;
 
 let share_mem_domain_code_rel_def = new_definition
   `share_mem_domain_code_rel mc_conf p code2 (s1_shared_mem_domain:'a
@@ -1702,11 +1698,11 @@ let byte_align_64_IMP = prove
    arith_upd_lemma *)
 
 (* The lab and asm versions should be in their individual props *)
-(* [simp] *)
 let arith_upd_fp_regs = prove
  (`(fp_regs (labSem_arith_upd a s) = fp_regs s /\ fp_regs
    (labSem_arith_upd a (t:'a asm_state)) = asm_state_fp_regs t)`,
   CHEAT_TAC);;
+add_simp arith_upd_fp_regs;;
 
 (* HOL4 lab_to_targetProofScript.sml:2068-2096: a theorem whose
    statement HOL Light does not read (tools/unstated.py):
@@ -1859,6 +1855,7 @@ let line_len_def = define_cases
   [`line_len (labLang_Label _20 _21 l) = l`;
    `line_len (labLang_Asm _22 _23 l) = l`;
    `line_len (labLang_LabAsm _24 _25 _26 l) = l`];;
+add_simp line_len_def;;
 
 (* annotated section length *)
 
@@ -1873,34 +1870,33 @@ let sec_length_sum_line_len = prove
 
 (* simple syntactic properties of compiler functions *)
 
-let _ = size_thms "line";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let enc_lines_again_simp_def,enc_lines_again_simp_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). list_size (line_size (\x. 0)) x4)`
   [`enc_lines_again_simp labs ffis pos enc [] = ([],T)`;
    `enc_lines_again_simp labs ffis pos enc (CONS (labLang_LabAsm a w
-  bytes l) xs) =
+    bytes l) xs) =
         (let w1 = get_jump_offset a ffis labs pos in
           if w = w1 then
             let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
-              enc xs in
+                enc xs in
               (CONS (labLang_LabAsm a w bytes l) rest,ok) else
             let bs = enc (lab_inst w1 a) in
             let l1 = MAX (LENGTH bs) l in
             let (rest,ok) = enc_lines_again_simp labs ffis (pos +
-              l1) enc xs in
+                l1) enc xs in
               (CONS (labLang_LabAsm a w1 bs l1) rest,(l1 = l /\
-                ok)))`;
+                  ok)))`;
    `enc_lines_again_simp labs ffis pos enc (CONS (labLang_Label k1 k2 l)
-  xs) =
+    xs) =
         (let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
-          enc xs in
+            enc xs in
         (CONS (labLang_Label k1 k2 l:'a line) rest,ok))`;
    `enc_lines_again_simp labs ffis pos enc (CONS (labLang_Asm x1 x2 l)
-  xs) =
+    xs) =
         (let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
-          enc xs in
+            enc xs in
         (CONS (labLang_Asm x1 x2 l) rest,ok))`];;
 
 (* HOL4 lab_to_targetProofScript.sml:3172: ML code, not ported *)
@@ -1968,18 +1964,18 @@ let add_nop_append = prove
       (add_nop nop l2) else APPEND (add_nop nop l1) l2)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let EXISTS_not_Label_add_nop = prove
  (`!nop acc.
      EX ((~) o is_Label) (add_nop nop acc) <=> EX ((~) o is_Label)
        acc`,
   CHEAT_TAC);;
+add_simp EXISTS_not_Label_add_nop;;
 
-(* [simp] *)
 let EVERY_is_Label_add_nop_preserved = prove
  (`!nop acc.
      ALL is_Label (add_nop nop acc) <=> ALL is_Label acc`,
   CHEAT_TAC);;
+add_simp EVERY_is_Label_add_nop_preserved;;
 
 let EVERY_is_Label_add_nop = prove
  (`!nop ls. ALL is_Label ls ==> add_nop nop ls = ls`,
@@ -2020,12 +2016,12 @@ let LIST_REL_enc_line = prove
    ALL2 line_similar (MAP (enc_line enc len) ls) ls'`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let code_similar_enc_sec_list = prove
  (`!code1 code2 n.
      code_similar (enc_sec_list n code1) code2 <=>
      code_similar code1 code2`,
   CHEAT_TAC);;
+add_simp code_similar_enc_sec_list;;
 
 (* [local] *)
 let enc_lines_again_IMP_similar = prove
@@ -2141,11 +2137,11 @@ let pad_code_sec_labels_ok = prove
     ALL sec_labels_ok (pad_code nop code)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let sec_labels_ok_filter_skip = prove
  (`!code. ALL sec_labels_ok (filter_skip code) <=> ALL sec_labels_ok
   code`,
   CHEAT_TAC);;
+add_simp sec_labels_ok_filter_skip;;
 
 (* invariant: lines are encoded and non-label lengths annotated *)
 
@@ -2161,6 +2157,7 @@ let line_encd0_def = new_definition
 
 let sec_encd0_def = define_general
   [`sec_encd0 enc (Section _28 ls) = ALL (line_encd0 enc) ls`];;
+add_simp sec_encd0_def;;
 
 (* HOL4 lab_to_targetProofScript.sml:3628: the overload all_encd0,
    which the port expands *)
@@ -2211,9 +2208,11 @@ let line_length_leq_def = new_definition
         | (labLang_Asm _31 bytes l) ->
        LENGTH bytes <= l
         | _32 -> T`;;
+add_simp line_length_leq_def;;
 
 let sec_length_leq_def = define_general
   [`sec_length_leq (Section _33 ls) = ALL line_length_leq ls`];;
+add_simp sec_length_leq_def;;
 
 (* HOL4 lab_to_targetProofScript.sml:3713: the overload
    all_length_leq, which the port expands *)
@@ -2225,9 +2224,11 @@ let label_one_def = new_definition
         match x1 with
           labLang_Label _36 _37 n -> n <= 1
         | _38 -> T`;;
+add_simp label_one_def;;
 
 let sec_label_one_def = define_general
   [`sec_label_one (Section _39 ls) = ALL label_one ls`];;
+add_simp sec_label_one_def;;
 
 (* establishing label_one *)
 
@@ -2322,7 +2323,6 @@ let lines_encd_def,lines_encd_ind = define_rec
        line_encd enc labs ffis pos l /\
        lines_encd enc labs ffis (pos + line_len l) ls`];;
 
-let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let all_encd_def,all_encd_ind = define_wf
@@ -2390,6 +2390,7 @@ let label_zero_def = new_definition
         match x1 with
           labLang_Label _51 _52 n -> n = 0
         | _53 -> T`;;
+add_simp label_zero_def;;
 
 let sec_label_zero_def = define_general
   [`sec_label_zero (Section _54 ls) = ALL label_zero ls`];;
@@ -2401,17 +2402,17 @@ let EVERY_label_zero_add_nop = prove
  (`!xs. ALL label_zero (add_nop nop xs) = ALL label_zero xs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let EVERY_label_zero_pad_section = prove
  (`!nop xs aux.
      ALL label_zero aux ==>
      ALL label_zero (pad_section nop xs aux)`,
   CHEAT_TAC);;
+add_simp EVERY_label_zero_pad_section;;
 
-(* [simp] *)
 let EVERY_sec_label_zero_pad_code = prove
  (`!nop ls. ALL sec_label_zero (pad_code nop ls)`,
   CHEAT_TAC);;
+add_simp EVERY_sec_label_zero_pad_code;;
 
 let enc_lines_again_simp_label_zero = prove
  (`!labs ffis pos enc ls res ok.
@@ -2491,6 +2492,7 @@ let line_aligned_def = new_definition
 let sec_aligned_def = define_general
   [`sec_aligned noplen (Section _55 ls) = ALL (line_aligned noplen)
   ls`];;
+add_simp sec_aligned_def;;
 
 (* establishing aligned *)
 
@@ -2529,6 +2531,7 @@ let label_prefix_zero_def = new_definition
 
 let sec_label_prefix_zero_def = define_general
   [`sec_label_prefix_zero (Section k ls) <=> label_prefix_zero ls`];;
+add_simp sec_label_prefix_zero_def;;
 
 let label_prefix_zero_cons = prove
  (`(label_prefix_zero (CONS (labLang_Label l1 l2 len) ls) <=> ((len = 0)
@@ -2644,7 +2647,7 @@ let lines_enc_with_nop_def,lines_enc_with_nop_ind = define_rec
    `lines_enc_with_nop enc labs ffis pos (CONS l ls) <=>
        line_enc_with_nop enc labs ffis pos l /\
        lines_enc_with_nop enc labs ffis (pos + line_length l)
-         ls`];;
+           ls`];;
 
 let lines_enc_with_nop_append = prove
  (`!enc labs ffis pos l1 l2.
@@ -2661,10 +2664,10 @@ let all_enc_with_nop_def,all_enc_with_nop_ind = define_guess_cheat
    `all_enc_with_nop enc labs ffis pos (CONS (Section k []) xs) <=>
        all_enc_with_nop enc labs ffis pos xs`;
    `all_enc_with_nop enc labs ffis pos (CONS (Section k (CONS y ys)) xs)
-  <=>
+    <=>
        line_enc_with_nop enc labs ffis pos y /\
        all_enc_with_nop enc labs ffis (pos + line_length y)
-         (CONS (Section k ys) xs)`];;
+           (CONS (Section k ys) xs)`];;
 
 (* HOL4 lab_to_targetProofScript.sml:4384: ML code, not ported *)
 
@@ -2819,7 +2822,6 @@ let lab_len_pos_ok_append = prove
    lab_len_pos_ok (pos + SUM (MAP line_len l1)) l2`,
   CHEAT_TAC);;
 
-let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let all_lab_len_pos_ok_def,all_lab_len_pos_ok_ind = define_wf
@@ -2915,7 +2917,6 @@ let lines_offset_ok_append = prove
     lines_offset_ok labs ffis (pos + SUM (MAP line_len l1)) l2`,
   CHEAT_TAC);;
 
-let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let lab_to_targetProof_offset_ok_def,lab_to_targetProof_offset_ok_ind =
@@ -2923,10 +2924,10 @@ let lab_to_targetProof_offset_ok_def,lab_to_targetProof_offset_ok_ind =
   `MEASURE (\(x0,x1,x2,x3). list_size (sec_size (\x. 0)) x3)`
   [`lab_to_targetProof_offset_ok labs ffis pos [] <=> T`;
    `lab_to_targetProof_offset_ok labs ffis pos (CONS (Section k ls) ss)
-  <=>
+    <=>
        lines_offset_ok labs ffis pos ls /\
        lab_to_targetProof_offset_ok labs ffis (pos + SUM (MAP
-         line_len ls)) ss`];;
+           line_len ls)) ss`];;
 
 (* HOL4 lab_to_targetProofScript.sml:4892: ML code, not ported *)
 
@@ -2976,12 +2977,14 @@ let line_labs_exist_def = new_definition
        (!n1 n2. (n1,n2) IN labs_of a ==> ~(lab_lookup n1 n2 labs =
          NONE))
         | _77 -> T`;;
+add_simp line_labs_exist_def;;
 
 (* HOL4 lab_to_targetProofScript.sml:4998: ML code, not ported *)
 
 let sec_labs_exist_def = define_general
   [`sec_labs_exist labs (Section _78 ls) <=> ALL (line_labs_exist
   labs) ls`];;
+add_simp sec_labs_exist_def;;
 
 (* HOL4 lab_to_targetProofScript.sml:5004: the overload
    all_labs_exist, which the port expands *)
@@ -3029,12 +3032,12 @@ let code_similar_all_labs_exist = prove
   labs c2)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let all_labs_exist_pad_code = prove
  (`!nop code. (\labs code. ALL (sec_labs_exist labs) code) labs
   (pad_code nop code) <=> (\labs code. ALL (sec_labs_exist labs) code)
   labs code`,
   CHEAT_TAC);;
+add_simp all_labs_exist_pad_code;;
 
 let enc_lines_again_line_labs_exist = prove
  (`!labs ffis pos enc lines acc ok res ok' k.
@@ -3094,11 +3097,11 @@ let code_similar_get_labels = prove
   labProps_get_labels c2`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let get_labels_upd_lab_len = prove
  (`labProps_get_labels (upd_lab_len pos code) = labProps_get_labels
   code`,
   CHEAT_TAC);;
+add_simp get_labels_upd_lab_len;;
 
 let section_labels_line_get_code_labels = prove
  (`!pos lines aux new_pos labs. section_labels pos lines aux =
@@ -3151,7 +3154,7 @@ let even_labels_strong_def,even_labels_strong_ind = define_guess_cheat
    `even_labels_strong pos (CONS (Section k (CONS y ys)) ls) <=>
        (is_Label y ==> EVEN pos) /\
        even_labels_strong (pos + line_len y) (CONS (Section k
-         ys) ls)`];;
+           ys) ls)`];;
 
 let even_labels_ends_imp_strong = prove
  (`!pos code.
@@ -3498,11 +3501,11 @@ let remove_labels_loop_thm = prove
        lab_lookup l1 l2 labs = SOME (pos_val x2 init_pos code2))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let loc_to_pc_enc_sec_list = prove
  (`!l1 l2 code.
      loc_to_pc l1 l2 (enc_sec_list e code) = loc_to_pc l1 l2 code`,
   CHEAT_TAC);;
+add_simp loc_to_pc_enc_sec_list;;
 
 (* [local] *)
 let all_enc_ok_pre_enc_sec_list = prove
@@ -3698,22 +3701,22 @@ let all_enc_ok_aligned_pos_val = prove
       word)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let read_ffi_bytearrays_with_next_interfer = prove
  (`read_ffi_bytearrays (machine_config_next_interfer_fupd (K foo) mc) =
    read_ffi_bytearrays mc`,
   CHEAT_TAC);;
+add_simp read_ffi_bytearrays_with_next_interfer;;
 
-(* [simp] *)
 let read_ffi_bytearrays_shift_interfer = prove
  (`read_ffi_bytearrays (shift_interfer x y) = read_ffi_bytearrays y`,
   CHEAT_TAC);;
+add_simp read_ffi_bytearrays_shift_interfer;;
 
-(* [simp] *)
 let read_ffi_bytearrays_ffi_interfer = prove
  (`read_ffi_bytearrays (machine_config_ffi_interfer_fupd (K ffi) mc) =
   read_ffi_bytearrays mc`,
   CHEAT_TAC);;
+add_simp read_ffi_bytearrays_ffi_interfer;;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -4169,7 +4172,7 @@ let init_ok_def = new_definition
 let set_bytes_def,set_bytes_ind = define_rec
   [`set_bytes a be' [] = (n2w 0)`;
    `set_bytes a be' (CONS b bs) = set_byte a b (set_bytes (a + (n2w
-  1)) be' bs) be'`];;
+    1)) be' bs) be'`];;
 
 let make_word_def = new_definition
   `make_word be' m (a:'a word) =
@@ -4593,7 +4596,6 @@ let IMP_state_rel_make_init = prove
 
 (* HOL4 lab_to_targetProofScript.sml:10514: a proof *)
 
-(* [simp] *)
 let make_init_simp = prove
  (`state_ffi
      (lab_to_targetProof_make_init a b f g h i j k l m n p) = b /\ pc
@@ -4601,6 +4603,7 @@ let make_init_simp = prove
        state_code
      (lab_to_targetProof_make_init a b f g h i j k l m n p) = k`,
   CHEAT_TAC);;
+add_simp make_init_simp;;
 
 (* HOL4 lab_to_targetProofScript.sml:10524-10538: a theorem that HOL4
    states as the value of an ML expression: semantics_make_init *)
@@ -4621,29 +4624,29 @@ let all_enc_ok_pre_filter_skip = prove
    (\c ls. ALL (sec_ok_pre c) ls) c (filter_skip code)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let MAP_Section_num_filter_skip = prove
  (`!code. MAP Section_num (filter_skip code) = MAP Section_num code`,
   CHEAT_TAC);;
+add_simp MAP_Section_num_filter_skip;;
 
-(* [simp] *)
 let filter_skip_extract_labels = prove
  (`!code. MAP (labProps_extract_labels o Section_lines) (filter_skip
   code) =
    MAP (labProps_extract_labels o Section_lines) code`,
   CHEAT_TAC);;
+add_simp filter_skip_extract_labels;;
 
-(* [simp] *)
 let get_code_labels_filter_skip = prove
  (`!code. labProps_get_code_labels (filter_skip code) =
   labProps_get_code_labels code`,
   CHEAT_TAC);;
+add_simp get_code_labels_filter_skip;;
 
-(* [simp] *)
 let get_labels_filter_skip = prove
  (`!code. labProps_get_labels (filter_skip code) = labProps_get_labels
   code`,
   CHEAT_TAC);;
+add_simp get_labels_filter_skip;;
 
 let implements_intro_gen = prove
  (`(b /\ ~(x = ffi_Fail) ==> y = {x}) ==> b ==> implements' T y {x}`,
@@ -4723,12 +4726,8 @@ let find_ffi_names_EVERY = prove
    statement HOL Light does not read (tools/unstated.py):
    semantics_compile *)
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["contain";
    "invariant";
    "not"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -17,11 +17,8 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvi_inline"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvi_inline"
   ["backend_common"; "bvi"];;
 
 let bvi_mk_tick_def = new_definition
@@ -57,7 +54,7 @@ let inline_exp_def,inline_exp_ind = assume_definition_rec
   [`inline_exp cs (bvi_Var n) = bvi_Var n`;
    `inline_exp cs (bvi_If x y z) =
          bvi_If (inline_exp cs x) (inline_exp cs y) (inline_exp
-           cs z)`;
+             cs z)`;
    `inline_exp cs (bvi_Let xs y) =
          bvi_Let (inline_exps cs xs) (inline_exp cs y)`;
    `inline_exp cs (bvi_Raise x) = bvi_Raise (inline_exp cs x)`;
@@ -65,25 +62,25 @@ let inline_exp_def,inline_exp_ind = assume_definition_rec
    `inline_exp cs (bvi_Call ticks dest xs handler) =
          (let xs = inline_exps cs xs in
            match handler with SOME h -> bvi_Call ticks dest xs (SOME
-             (inline_exp cs h)) | NONE ->
+               (inline_exp cs h)) | NONE ->
                (match dest with NONE -> bvi_Call ticks NONE xs NONE
-                 | SOME name ->
+                   | SOME name ->
                    (match sptree_lookup name cs with NONE ->
-                     bvi_Call ticks (SOME name) xs NONE | SOME
-                     (arity,body) ->
+                       bvi_Call ticks (SOME name) xs NONE | SOME
+                       (arity,body) ->
                        (if LENGTH xs = arity then
                          bvi_Let xs (bvi_mk_tick (SUC ticks)
-                           body) else bvi_Call ticks (SOME name) xs
-                           NONE))))`;
+                             body) else bvi_Call ticks (SOME name) xs
+                             NONE))))`;
    `inline_exp cs (bvi_Force loc n) = bvi_Force loc n`;
    `inline_exp cs (bvi_Op op xs) = bvi_Op op (inline_exps cs xs)`;
    `inline_exp cs (bvi_LetCall rets ticks dest xs y) =
          bvi_LetCall rets ticks dest (inline_exps cs xs)
-           (inline_exp cs y)`;
+             (inline_exp cs y)`;
    `inline_exp cs (bvi_Return xs) = bvi_Return (inline_exps cs xs)`;
    `inline_exps cs [] = []`;
    `inline_exps cs (CONS x xs) = CONS (inline_exp cs x)
-  (inline_exps cs xs)`];;
+    (inline_exps cs xs)`];;
 
 let inline_all_def,inline_all_ind = define_rec
   [`inline_all cs [] = (cs,[])`;
@@ -94,7 +91,6 @@ let inline_all_def,inline_all_ind = define_rec
          let (cs2,prog2) = inline_all cs1 prog in
            (cs2,CONS (name,arity,body) prog2))`];;
 
-let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL e -> bvi_exp_size e | INR es ->
        list_size bvi_exp_size es)
@@ -102,7 +98,7 @@ let _ = size_thms "bvi_exp";;
    below is what the port found for it *)
 (* HOL4 bvi_inlineScript.sml:115-120: the tactic that proves the
    termination *)
-let remove_ticks_exp_def,remove_ticks_exp_ind = define_mutual_shaped_wf
+let remove_ticks_exp_def,remove_ticks_exp_ind = define_shaped_wf
   "maplist>measure"
   `MEASURE (\x0. bvi_exp_size x0)`
   [`remove_ticks_exp (bvi_Var n) = bvi_Var n`;
@@ -118,7 +114,7 @@ let remove_ticks_exp_def,remove_ticks_exp_ind = define_mutual_shaped_wf
            (OPTION_MAP remove_ticks_exp handler)`;
    `remove_ticks_exp (bvi_Force loc n) = bvi_Force loc n`;
    `remove_ticks_exp (bvi_Op op xs) = bvi_Op op (remove_ticks_exps
-  xs)`;
+    xs)`;
    `remove_ticks_exp (bvi_LetCall rets ticks dest xs y) =
          bvi_LetCall rets 0 dest (remove_ticks_exps xs)
            (remove_ticks_exp y)`;
@@ -126,7 +122,7 @@ let remove_ticks_exp_def,remove_ticks_exp_ind = define_mutual_shaped_wf
          bvi_Return (remove_ticks_exps xs)`;
    `remove_ticks_exps [] = []`;
    `remove_ticks_exps (CONS x xs) = CONS (remove_ticks_exp x)
-  (remove_ticks_exps xs)`];;
+    (remove_ticks_exps xs)`];;
 
 let compile_inc_def = new_definition
   `bvi_inline_compile_inc cs prog =
@@ -199,7 +195,3 @@ let final_tick_cleanup_example = prove
        (SOME (bvi_LetCall 1 0 11 [bvi_Var 1] (bvi_Return [bvi_Var
          0])))`,
   (REWRITE_TAC[remove_ticks_exp_def; OPTION_MAP]));;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -19,11 +19,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_mtiProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_mtiProof"
   ["backendProps"; "closProps"; "closSem"; "clos_mti"];;
 
 (* HOL4 clos_mtiProofScript.sml:18: ML code, not ported *)
@@ -42,10 +39,10 @@ let clos_mtiProof_code_rel_IMP_LENGTH = prove
  (`clos_mtiProof_code_rel max_app xs ys ==> LENGTH ys = LENGTH xs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let HD_intro_multi = prove
  (`[HD (intro_multi max_app [e2])] = intro_multi max_app [e2]`,
   CHEAT_TAC);;
+add_simp HD_intro_multi;;
 
 let intro_multi_cons = prove
  (`!xs x. intro_multi m (CONS x xs) = CONS (HD (intro_multi m [x]))
@@ -148,10 +145,10 @@ let clos_mtiProof_FMAP_REL_def = new_definition
 
 (* state relation *)
 
-(* [simp] *)
 let SND_compile_inc = prove
  (`SND (clos_mti_compile_inc max_app p) = []`,
   CHEAT_TAC);;
+add_simp SND_compile_inc;;
 
 let clos_mtiProof_state_rel_def = new_definition
   `clos_mtiProof_state_rel (s:('c,'ffi)closSem_state)
@@ -234,7 +231,7 @@ let collect_apps_cons = prove
 let mk_Apps_def,mk_Apps_ind = define_rec
   [`mk_Apps e [] = e`;
    `mk_Apps e (CONS (t,other) ts) = flatLang_App t NONE (mk_Apps e
-  ts) [other]`];;
+    ts) [other]`];;
 
 let collect_apps_IMP_mk_Apps = prove
  (`!e max_app (acc:closLang_exp list) other e3.
@@ -284,7 +281,7 @@ let evaluate_apps_def,evaluate_apps_ind = define_rec
   [`evaluate_apps f [] s = (Rval [f],s)`;
    `evaluate_apps f (CONS x xs) s =
       (match evaluate_apps f xs s with (Rval [v],s1) ->
-        evaluate_app NONE v [x] s1 | res -> res)`];;
+          evaluate_app NONE v [x] s1 | res -> res)`];;
 
 (* [local] *)
 let evaluate_mk_Apps_ok = prove
@@ -465,10 +462,10 @@ let clos_mtiProof_do_install_lemma = prove
                                 exps2,t1)))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let intro_multi_EQ_NIL = prove
  (`!max_app es. intro_multi max_app es = [] <=> es = []`,
   CHEAT_TAC);;
+add_simp intro_multi_EQ_NIL;;
 
 let intro_multi_nil = prove
  (`intro_multi x [] = []`,
@@ -538,17 +535,17 @@ let contains_App_SOME_collect_apps = prove
        contains_App_SOME max_app [b])`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let contains_App_SOME_intro_multi = prove
  (`!max_app es. contains_App_SOME max_app (intro_multi max_app es) <=>
   contains_App_SOME max_app es`,
   CHEAT_TAC);;
+add_simp contains_App_SOME_intro_multi;;
 
-(* [simp] *)
 let contains_App_SOME_compile = prove
  (`!do_mti es. contains_App_SOME max_app (clos_mti_compile do_mti
   max_app es) <=> contains_App_SOME max_app es`,
   CHEAT_TAC);;
+add_simp contains_App_SOME_compile;;
 
 let collect_args_preserves_esgc_free = prove
  (`!max_app n e n' e'. collect_args max_app n e = (n',e') /\
@@ -569,21 +566,22 @@ let every_Fn_vs_NONE_collect_args = prove
      (every_Fn_vs_NONE [y] <=> every_Fn_vs_NONE [e])`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let every_Fn_vs_NONE_intro_multi = prove
  (`!max_app es. every_Fn_vs_NONE (intro_multi max_app es) =
   every_Fn_vs_NONE es`,
   CHEAT_TAC);;
+add_simp every_Fn_vs_NONE_intro_multi;;
 
-(* [simp] *)
 let compile_EQ_NIL = prove
  (`!do_mti es. clos_mti_compile do_mti max_app es = [] <=> es = []`,
   CHEAT_TAC);;
+add_simp compile_EQ_NIL;;
 
-(* compile_length[simp] *)
+(* compile_length *)
 let clos_mtiProof_compile_length = prove
  (`LENGTH (clos_mti_compile do_mti max_app es) = LENGTH es`,
   CHEAT_TAC);;
+add_simp clos_mtiProof_compile_length;;
 
 (* [local] *)
 let EVERY_HD = prove
@@ -690,7 +688,3 @@ let clos_mtiProof_semantics_compile = prove
         do_mti max_app xs) =
       closSem_semantics ffi max_app FEMPTY co cc1 xs`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

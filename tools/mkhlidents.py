@@ -12,8 +12,9 @@ all.
 
 This writes the list of those names: the top level bindings of the
 files that HOL Light's hol_lib.ml loads, of help.ml, database.ml
-and Library/words.ml (what ml/lib/preamble.ml adds), and of the
-hand written files of ml/lib.  Run it again when the switch is
+Library/words.ml and Library/iter.ml (what ml/lib/preamble.ml
+adds), of the files of tactics/ and of the hand written files of
+ml/lib.  Run it again when the switch is
 upgraded or a hand written library file gains a binding.
 """
 import os, re, sys, glob
@@ -21,9 +22,13 @@ import os, re, sys, glob
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 HL = os.environ.get('HOLLIGHT',
                     os.path.expanduser('~/.opam/hol-light/lib/hol_light'))
-HAND = ['bag', 'define', 'fastdef', 'finite_map', 'hol4', 'lemmas',
-        'llist', 'mc_tailrec', 'path', 'preamble', 'records',
-        'relation', 'string4', 'tactics', 'theorem', 'words4']
+HAND = ['bag', 'define', 'definition', 'fastdef', 'finite_map',
+        'hol4', 'induction', 'lemmas', 'llist', 'mc_tailrec', 'path',
+        'preamble', 'records', 'relation', 'string4', 'tactics',
+        'theorem', 'words4']
+# and the files of tactics/, which add to HOL Light itself and
+# which the preamble loads before anything of the port
+TACTICS = ['induct', 'simpset']
 # a top level binding of OCaml, in the shapes HOL Light writes
 # one: `let foo =', `let rec foo =', `and foo =', a binding with
 # its type in brackets (`let (ASM_REWRITE_TAC:thm list->tactic)')
@@ -60,7 +65,8 @@ def names_of(text, module=False):
 
 
 def main():
-  files = ['help.ml', 'database.ml', 'Library/words.ml']
+  files = ['help.ml', 'database.ml', 'Library/words.ml',
+           'Library/iter.ml']
   files += re.findall(r'^loads "([a-z_0-9]+\.ml)"',
                       open(HL + '/hol_lib.ml').read(), re.M)
   names = set()
@@ -70,9 +76,13 @@ def main():
     except OSError: print('no %s/%s' % (HL, f), file=sys.stderr)
   for h in HAND:
     names |= names_of(open(T + '../ml/lib/%s.ml' % h).read())
+  for h in TACTICS:
+    names |= names_of(open(T + '../tactics/%s.ml' % h).read())
   for n in sorted(names): print(n)
-  print('%d identifiers of %d files of HOL Light and %d of ml/lib'
-        % (len(names), len(files), len(HAND)), file=sys.stderr)
+  print('%d identifiers of %d files of HOL Light, %d of tactics/ '
+        'and %d of ml/lib'
+        % (len(names), len(files), len(TACTICS), len(HAND)),
+        file=sys.stderr)
 
 
 if __name__ == '__main__':

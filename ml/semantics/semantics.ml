@@ -20,11 +20,8 @@ needs "semantics/primTypes.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "semantics"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "semantics"
   ["cmlPtreeConversion"; "lexer_fun"; "primTypes"];;
 
 let semantics_parse_def = new_definition
@@ -65,7 +62,7 @@ let semantics_prog_def = define_cases
           evaluate_prog_with_clock st env k prog = (ffi,r) /\
           (match r with Rerr (Rabort (Rffi_error outcome')) ->
              outcome = ffi_FFI_outcome (outcome') | r -> ~(r = Rerr
-               (Rabort Rtimeout_error)) /\ outcome = ffi_Success) /\
+                 (Rabort Rtimeout_error)) /\ outcome = ffi_Success) /\
           (io_list = ffi_state_io_events ffi) /\
           (~(r = Rerr (Rabort Rtype_error))))`;
    `semantics_prog st env prog (ffi_Diverge io_trace) <=>
@@ -79,17 +76,20 @@ let semantics_prog_def = define_cases
          lprefix_lub
            (IMAGE
              (\k. fromList (ffi_state_io_events (FST
-               (evaluate_prog_with_clock st env k prog))))
+                 (evaluate_prog_with_clock st env k prog))))
              UNIV)
            io_trace`;
    `semantics_prog st env prog (ffi_Fail:behaviour) <=>
         // there is a clock for which evaluation produces a runtime type error
         (?k.
           SND (evaluate_prog_with_clock st env k prog) = Rerr
-            (Rabort Rtype_error))`];;
+              (Rabort Rtype_error))`];;
 
 let semantics_INDUCT,semantics_RECURSION = define_datatype
-  "semantics = CannotParse | IllTyped | Execute (behaviour->bool)";;
+  "semantics =
+     CannotParse
+   | IllTyped
+   | Execute (behaviour->bool)";;
 
 let semantics_semantics_def = new_definition
   `semantics_semantics state prelude input =
@@ -105,7 +105,3 @@ let semantics_init_def = new_definition
      semantics_semantics (mk_semantics_state prim_tenv
        prim_type_ids (FST (THE (prim_sem_env ffi))) (SND (THE
        (prim_sem_env ffi))))`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

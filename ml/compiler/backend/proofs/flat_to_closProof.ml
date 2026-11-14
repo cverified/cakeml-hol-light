@@ -28,11 +28,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "flat_to_closProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "flat_to_closProof"
   ["ast"; "backendProps"; "backend_common"; "closLang"; "closProps";
    "closSem"; "clos_interpProof"; "ffi"; "flatLang"; "flatProps";
    "flatSem"; "flat_to_clos"; "misc"; "semanticPrimitives";
@@ -214,13 +211,14 @@ let initial_state'_def = new_definition
                               clos_interpreter else closSem_Unit)]
                               FEMPTY ffi k cc co code ma`;;
 
-(* [simp,local] *)
+(* [local] *)
 let initate_state'_clock = prove
  (`(state_clock_fupd (K k) (initial_state' b ffi max_app FEMPTY co cc
   k')) =
    initial_state' b ffi max_app FEMPTY co cc k /\ state_clock
    (initial_state' b ffi max_app FEMPTY co cc k) = k`,
   CHEAT_TAC);;
+add_simp initate_state'_clock;;
 
 let state_rel_initial_state = prove
  (`0 < max_app /\ install_config_rel' ec co cc ==>
@@ -386,15 +384,16 @@ let compile_op_evaluates_args = prove
      (Rerr err,t1)`,
   CHEAT_TAC);;
 
-(* v_rel_Boolv[simp] *)
+(* v_rel_Boolv *)
 let flat_to_closProof_v_rel_Boolv = prove
  (`flat_to_closProof_v_rel (flatSem_Boolv b) v = (v = flatSem_Boolv b)`,
   CHEAT_TAC);;
+add_simp flat_to_closProof_v_rel_Boolv;;
 
-(* [simp] *)
 let v_rel_Unitv = prove
  (`flat_to_closProof_v_rel Unitv v = (v = closSem_Block 0 [])`,
   CHEAT_TAC);;
+add_simp v_rel_Unitv;;
 
 (* HOL4 flat_to_closProofScript.sml:634-643: the ML values that the
    definitions below antiquote *)
@@ -954,17 +953,17 @@ let esgc_free_SmartCons = prove
   xs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let flat_FINITE_BAG_set_globals = prove
  (`(!e. FINITE_BAG (flatProps_set_globals e)) /\
    (!e. FINITE_BAG (flatProps_elist_globals e))`,
   CHEAT_TAC);;
+add_simp flat_FINITE_BAG_set_globals;;
 
-(* [simp] *)
 let clos_FINITE_BAG_set_globals = prove
  (`(!e. FINITE_BAG (closProps_set_globals e)) /\
    (!e. FINITE_BAG (closProps_elist_globals e))`,
   CHEAT_TAC);;
+add_simp clos_FINITE_BAG_set_globals;;
 
 (* [local] *)
 let BAG_IMAGE_FOLDR_lemma = prove
@@ -1094,7 +1093,3 @@ let FST_inc_compile_esgc_free = prove
    no_Mat_decs decs ==>
    ALL closProps_esgc_free (FST (inc_compile_decs decs))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

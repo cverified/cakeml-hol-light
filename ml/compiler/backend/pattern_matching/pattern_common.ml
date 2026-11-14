@@ -12,11 +12,8 @@
 
 (* this file needs nothing of the port *)
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "pattern_common" [];;
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "pattern_common" [];;
 (* HOL4 ancestors outside the port: num list arithmetic *)
 
 
@@ -24,11 +21,16 @@ let _ = hol4_ancestors "pattern_common" [];;
 A position describes a path to a sub-term in a term
 *)
 let position_INDUCT,position_RECURSION = define_datatype
-  "position = EmptyPos | Pos (num) (position)";;
+  "position =
+     EmptyPos
+   | Pos num position";;
 
 (* Results of a pattern match or a multiple pattern match *)
 let pmatchResult_INDUCT,pmatchResult_RECURSION = define_datatype
-  "pmatchResult = PMatchSuccess | PMatchFailure | PTypeFailure";;
+  "pmatchResult =
+     PMatchSuccess
+   | PMatchFailure
+   | PTypeFailure";;
 
 (*
   Pattern matching can return three results :
@@ -38,8 +40,6 @@ let pmatchResult_INDUCT,pmatchResult_RECURSION = define_datatype
       to be matched and the patterns
 *)
 let matchResult_INDUCT,matchResult_RECURSION = define_datatype
-  "matchResult = MatchSuccess (num) | MatchFailure";;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;
+  "matchResult =
+     MatchSuccess num
+   | MatchFailure";;

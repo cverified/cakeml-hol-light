@@ -15,11 +15,8 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "stack_names"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "stack_names"
   ["stackLang"];;
 
 (* HOL4 stack_namesScript.sml:14: the overload find_name, which the
@@ -125,7 +122,3 @@ let names_ok_def = new_definition
        avoid_regs) in
        ALL_DISTINCT xs /\
        ALL (\x. x < reg_count /\ ~(MEM x avoid_regs)) xs)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

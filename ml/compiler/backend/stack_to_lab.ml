@@ -23,11 +23,8 @@ needs "compiler/backend/word_to_stack.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "stack_to_lab"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "stack_to_lab"
   ["bvl_to_bvi"; "labLang"; "stackLang"; "stack_alloc"; "stack_names";
    "stack_rawcall"; "stack_remove"; "word_to_stack"];;
 
@@ -36,9 +33,9 @@ let _ = hol4_ancestors "stack_to_lab"
 
 let compile_jump_def = define_cases
   [`compile_jump (INL n) = labLang_LabAsm (labLang_Jump (labLang_Lab
-  n 0)) (n2w 0) [] 0`;
+    n 0)) (n2w 0) [] 0`;
    `compile_jump (INR r) = (\a. labLang_Asm (Asmi a)) (asm_JumpReg
-  r) [] 0`];;
+    r) [] 0`];;
 
 let negate_def = define_cases
   [`negate (asm_Less:cmp) = asm_NotLess`;
@@ -49,6 +46,7 @@ let negate_def = define_cases
    `negate asm_NotEqual = asm_Equal`;
    `negate asm_NotLower = asm_Lower`;
    `negate asm_NotTest = asm_Test`];;
+add_simp negate_def;;
 
 let find_lab_def = new_definition
   `find_lab n labs =
@@ -220,7 +218,3 @@ let compile_no_stubs_def = new_definition
      (stack_names_compile f
        (MAP (stack_remove_prog_comp jump offset sp)
          (MAP stack_alloc_prog_comp prog)))`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -22,22 +22,19 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "inferProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "inferProps"
   ["ast"; "infer"; "infer_t"; "ml_monadBase"; "namespaceProps";
    "semanticPrimitives"; "typeSysProps"; "typeSystem"; "unify"];;
 
 let _ = do_list hide_constant ["C"; "id"; "inst"];;
 
-(* [simp] *)
 let ienv_unchanged = prove
  (`(inf_env_inf_v_fupd (K (inf_env_inf_v ienv)) ienv) = ienv /\
    (inf_env_inf_c_fupd (K (inf_env_inf_c ienv)) ienv) = ienv /\
    (inf_env_inf_t_fupd (K (inf_env_inf_t ienv)) ienv) = ienv`,
   CHEAT_TAC);;
+add_simp ienv_unchanged;;
 
 let extend_dec_ienv_empty = prove
  (`!ienv.
@@ -1019,7 +1016,6 @@ let inferProps_fst_lem = prove
    the value of an ML expression: t_ind *)
 
 (* Rename (type_system) type identifiers with a function *)
-let _ = size_thms "t";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 inferPropsScript.sml:2474-2481: the tactic that proves the
@@ -1033,13 +1029,12 @@ let ts_tid_rename_def,ts_tid_rename_ind = define_wf
 
 (* HOL4 inferPropsScript.sml:2483: ML code, not ported *)
 
-(* [simp] *)
 let ts_tid_rename_I = prove
  (`ts_tid_rename I = I`,
   CHEAT_TAC);;
+add_simp ts_tid_rename_I;;
 
 (* All type ids in a type belonging to a set *)
-let _ = size_thms "t";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 inferPropsScript.sml:2497-2504: the tactic that proves the
@@ -1083,7 +1078,6 @@ let unconvert_t_def,unconvert_t_ind = define_shaped_rec
 (* HOL4 inferPropsScript.sml:2555: ML code, not ported *)
 
 (* Properties about inferencer type identifiers *)
-let _ = size_thms "infer_t";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 inferPropsScript.sml:2561-2568: the tactic that proves the
@@ -1168,27 +1162,27 @@ let init_infer_state_wfs = prove
     check_s 0 {} (infer_st_subst (init_infer_state st))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let init_infer_state_next_uvar = prove
  (`infer_st_next_uvar
       (init_infer_state st) = 0`,
   CHEAT_TAC);;
+add_simp init_infer_state_next_uvar;;
 
-(* [simp] *)
 let init_infer_state_subst = prove
  (`infer_st_subst
       (init_infer_state st) = FEMPTY`,
   CHEAT_TAC);;
+add_simp init_infer_state_subst;;
 
-(* [simp] *)
 let t_wfs_FEMPTY = prove
  (`t_wfs FEMPTY`,
   CHEAT_TAC);;
+add_simp t_wfs_FEMPTY;;
 
-(* [simp] *)
 let t_wfs_init_infer_state = prove
  (`t_wfs (infer_st_subst (init_infer_state s))`,
   CHEAT_TAC);;
+add_simp t_wfs_init_infer_state;;
 
 (* HOL4 inferPropsScript.sml:2902-2940: a proof *)
 
@@ -1418,10 +1412,10 @@ let remap_tenv_def = new_definition
      tid)) (type_env_c tenv)) (nsMap (\(ls,t). (ls,ts_tid_rename f
      t)) (type_env_t tenv))`;;
 
-(* [simp] *)
 let remap_tenv_I = prove
  (`remap_tenv I = I`,
   CHEAT_TAC);;
+add_simp remap_tenv_I;;
 
 let t_vwalk_set_tids = prove
  (`!s. t_wfs s ==>
@@ -1548,10 +1542,10 @@ let start_type_id_prim_tids_count = prove
  (`start_type_id <= n ==> prim_tids T (count n)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let inf_set_tids_subst_FEMPTY = prove
  (`inf_set_tids_subst tids FEMPTY`,
   CHEAT_TAC);;
+add_simp inf_set_tids_subst_FEMPTY;;
 
 let build_ctor_tenv_FOLDR = prove
  (`!tenvT tds ids.
@@ -1611,12 +1605,8 @@ let infer_d_wfs = prove
      t_wfs (infer_st_subst st'))`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C";
    "id";
    "inst"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

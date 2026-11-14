@@ -8,9 +8,8 @@
 
 needs "lib/grammar.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: list pred_set *)
 
 let nullable_def = new_definition
@@ -32,8 +31,8 @@ let nullableML_def,nullableML_ind = define_guess_cheat
    `nullableML G seen (CONS (grammar_NT n) rest) =
         (if n IN FDOM (grammar_rules G) /\ ~(n IN seen) then
           if FAPPLY (grammar_rules G) n INTER {r | nullableML G
-            (n INSERT seen) r} = {} then F else nullableML G seen
-            rest else F)`];;
+              (n INSERT seen) r} = {} then F else nullableML G seen
+              rest else F)`];;
 
 let firstSet_def = new_definition
   `firstSet G sf = {t | ?rest. (\G. RTC (derive G)) G sf (CONS
@@ -48,6 +47,6 @@ let firstSetML_def,firstSetML_ind = assume_definition_rec
         (if ~(n IN seen) then
           UNIONS (IMAGE (firstSetML G (n INSERT seen))
                           (FAPPLY (grammar_rules G) n)) else {})
-                            UNION
+                              UNION
         (if nullable G [grammar_NT n] then firstSetML G seen
-          rest else {}) else {})`];;
+            rest else {}) else {})`];;

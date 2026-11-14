@@ -19,90 +19,110 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 (* for binop and cmp *)
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "panLang"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "panLang"
   ["asm"; "backend_common"; "mlstring"];;
 
 
 (* for overloading the shift operation *)
 
-new_type_abbrev("panLang_shift",`: ast_shift`);;
+new_type_abbrev("panLang_shift",`:ast_shift`);;
 
-new_type_abbrev("stcname",`: mlstring`);;
+new_type_abbrev("stcname",`:mlstring`);;
 
-new_type_abbrev("fldname",`: mlstring`);;
+new_type_abbrev("fldname",`:mlstring`);;
 
-new_type_abbrev("varname",`: mlstring`);;
+new_type_abbrev("varname",`:mlstring`);;
 
-new_type_abbrev("funname",`: mlstring`);;
+new_type_abbrev("funname",`:mlstring`);;
 
-new_type_abbrev("eid",`: mlstring`);;
+new_type_abbrev("eid",`:mlstring`);;
 
-new_type_abbrev("decname",`: mlstring`);;
+new_type_abbrev("decname",`:mlstring`);;
 
-new_type_abbrev("index",`: num`);;
+new_type_abbrev("index",`:num`);;
 
 let shape_INDUCT,shape_RECURSION = define_datatype
-  "shape = One | Comb (shape list) | Named (mlstring)";;
+  "shape =
+     One
+   | Comb (shape list)
+   | Named stcname";;
 
 let panop_INDUCT,panop_RECURSION = define_datatype
-  "panop = \
-   // Div |\n\
-   panLang_Mul \
-   // | Mod";;
+  "panop =
+     // Div |
+     panLang_Mul
+     // | Mod
+  ";;
 
 let varkind_INDUCT,varkind_RECURSION = define_datatype
-  "varkind = panLang_Local | panLang_Global";;
+  "varkind =
+     panLang_Local
+   | panLang_Global";;
 
 let panLang_exp_INDUCT,panLang_exp_RECURSION = define_datatype
-  "panLang_exp = panLang_Const ('a word) | panLang_Var (varkind) \
-   (mlstring) | panLang_RStruct (panLang_exp list) | panLang_RField \
-   (num) (panLang_exp) | panLang_NStruct (mlstring) \
-   ((mlstring#panLang_exp) list) | panLang_NField (mlstring) \
-   (panLang_exp) | panLang_Load (shape) (panLang_exp) \
-   // exp: start addr of value with given shape\n\
-   | panLang_Load32 (panLang_exp) | panLang_LoadByte (panLang_exp) | \
-   panLang_Op (binop) (panLang_exp list) | panLang_Panop (panop) \
-   (panLang_exp list) | panLang_Cmp (cmp) (panLang_exp) (panLang_exp) \
-   | panLang_Shift (ast_shift) (panLang_exp) (panLang_exp) | \
-   panLang_BaseAddr | panLang_TopAddr | panLang_BytesInWord";;
+  "panLang_exp =
+     panLang_Const ('a word)
+   | panLang_Var varkind varname
+   | panLang_RStruct (panLang_exp list)
+   | panLang_RField index panLang_exp
+   | panLang_NStruct stcname ((fldname#panLang_exp) list)
+   | panLang_NField fldname panLang_exp
+   | panLang_Load shape panLang_exp
+     // exp: start addr of value with given shape
+   | panLang_Load32 panLang_exp
+   | panLang_LoadByte panLang_exp
+   | panLang_Op binop (panLang_exp list)
+   | panLang_Panop panop (panLang_exp list)
+   | panLang_Cmp cmp panLang_exp panLang_exp
+   | panLang_Shift panLang_shift panLang_exp panLang_exp
+   | panLang_BaseAddr
+   | panLang_TopAddr
+   | panLang_BytesInWord";;
 
 let opsize_INDUCT,opsize_RECURSION = define_datatype
-  "opsize = Op8 | OpW | Op32 | Op16";;
+  "opsize =
+     Op8
+   | OpW
+   | Op32
+   | Op16";;
 
 let primop_INDUCT,primop_RECURSION = define_datatype
-  "primop = panLang_AddCarry";;
+  "primop =
+     panLang_AddCarry";;
 
 let panLang_prog_INDUCT,panLang_prog_RECURSION = define_datatype
-  "panLang_prog = panLang_Skip | panLang_Dec (mlstring) (shape) ('a \
-   panLang_exp) (panLang_prog) | panLang_Assign (varkind) (mlstring) \
-   ('a panLang_exp) \
-   // dest, source\n\
-   | panLang_Primitive (mlstring) (primop) (('a panLang_exp) list) | \
-   // Primitives directly target constructs in wordLang.\n\
-   panLang_Store ('a panLang_exp) ('a panLang_exp) \
-   // dest, source\n\
-   | panLang_Store32 ('a panLang_exp) ('a panLang_exp) \
-   // dest, source\n\
-   | panLang_StoreByte ('a panLang_exp) ('a panLang_exp) \
-   // dest, source\n\
-   | panLang_Seq (panLang_prog) (panLang_prog) | panLang_If ('a \
-   panLang_exp) (panLang_prog) (panLang_prog) | panLang_While ('a \
-   panLang_exp) (panLang_prog) | panLang_Break | panLang_Continue | \
-   panLang_Call (((varkind#mlstring) \
-   option#(mlstring#mlstring#panLang_prog) option) option) (mlstring) \
-   (('a panLang_exp) list) | panLang_DecCall (mlstring) (shape) \
-   (mlstring) (('a panLang_exp) list) (panLang_prog) | \
-   panLang_ExtCall (mlstring) ('a panLang_exp) ('a panLang_exp) ('a \
-   panLang_exp) ('a panLang_exp) | \
-   // FFI name, conf_ptr, conf_len, array_ptr, array_len\n\
-   panLang_Raise (mlstring) ('a panLang_exp) | panLang_Return ('a \
-   panLang_exp) | panLang_ShMemLoad (opsize) (varkind) (mlstring) ('a \
-   panLang_exp) | panLang_ShMemStore (opsize) ('a panLang_exp) ('a \
-   panLang_exp) | panLang_Tick | panLang_Annot (mlstring) (mlstring)";;
+  "panLang_prog =
+     panLang_Skip
+   | panLang_Dec varname shape ('a panLang_exp) panLang_prog
+   | panLang_Assign varkind varname ('a panLang_exp)
+     // dest, source
+   | panLang_Primitive varname primop (('a panLang_exp) list)
+     // Primitives directly target constructs in wordLang.
+   | panLang_Store ('a panLang_exp) ('a panLang_exp)
+     // dest, source
+   | panLang_Store32 ('a panLang_exp) ('a panLang_exp)
+     // dest, source
+   | panLang_StoreByte ('a panLang_exp) ('a panLang_exp)
+     // dest, source
+   | panLang_Seq panLang_prog panLang_prog
+   | panLang_If ('a panLang_exp) panLang_prog panLang_prog
+   | panLang_While ('a panLang_exp) panLang_prog
+   | panLang_Break
+   | panLang_Continue
+   | panLang_Call (((varkind#varname) option#(eid#varname#panLang_prog)
+       option) option) funname (('a panLang_exp) list)
+   | panLang_DecCall varname shape funname (('a panLang_exp) list)
+       panLang_prog
+   | panLang_ExtCall funname ('a panLang_exp) ('a panLang_exp) ('a
+       panLang_exp) ('a panLang_exp)
+     // FFI name, conf_ptr, conf_len, array_ptr, array_len
+   | panLang_Raise eid ('a panLang_exp)
+   | panLang_Return ('a panLang_exp)
+   | panLang_ShMemLoad opsize varkind varname ('a panLang_exp)
+   | panLang_ShMemStore opsize ('a panLang_exp) ('a panLang_exp)
+   | panLang_Tick
+   | panLang_Annot mlstring mlstring";;
 
 let fun_decl_FIELDS = define_record "fun_decl"
   ["name","mlstring";
@@ -113,9 +133,11 @@ let fun_decl_FIELDS = define_record "fun_decl"
    "return","shape"];;
 
 let decl_INDUCT,decl_RECURSION = define_datatype
-  "decl = Function ('a fun_decl) | Decl (shape) (mlstring) ('a \
-   panLang_exp) | ExnDecl (mlstring) (shape) | Name (mlstring) \
-   ((mlstring#shape) list)";;
+  "decl =
+     Function ('a fun_decl)
+   | Decl shape mlstring ('a panLang_exp)
+   | ExnDecl eid shape
+   | Name stcname ((fldname#shape) list)";;
 
 let struct_info_FIELDS = define_record "struct_info"
   ["fields","(mlstring#shape) list";
@@ -151,16 +173,15 @@ let is_wf_ctxt_def,is_wf_ctxt_ind = define_rec
       (is_wf_ctxt ctxt'))`];;
 
 (* For passes with Nameds *)
-let _ = size_thms "struct_info";;
 let size_of_sh_with_ctxt_def,size_of_sh_with_ctxt_ind =
   define_shaped_rec
   "nested"
   [`size_of_sh_with_ctxt ctxt One = 1`;
    `size_of_sh_with_ctxt ctxt (Comb shapes) = SUM (MAP
-  (size_of_sh_with_ctxt ctxt) shapes)`;
+    (size_of_sh_with_ctxt ctxt) shapes)`;
    `size_of_sh_with_ctxt ctxt (Named name) =
       (match ALOOKUP ctxt name with SOME info ->
-        struct_info_size info | NONE -> 1)
+          struct_info_size info | NONE -> 1)
     // should not happen`];;
 
 (* For passes after Nameds are compiled away eg pan_to_crep *)
@@ -181,13 +202,13 @@ let shape_to_str_def,shape_to_str_ind = define_wf
    `// should never happen
     shape_to_str (Comb (CONS x xs)) =
       mlstring_concat (APPEND (CONS (implode "{") (CONS
-        (shape_to_str x)
+          (shape_to_str x)
               (MAP (\x. (\x y. strcat x y) (implode ",") x) (MAP
-                shape_to_str xs))))
+                  shape_to_str xs))))
               [implode "}"])`;
    `shape_to_str (Named nm) = nm`];;
 
-let shape_val_def,shape_val_ind = define_mutual_rec
+let shape_val_def,shape_val_ind = define_rec
   [`shape_val One = panLang_Const (n2w 0)`;
    `shape_val (Comb shapes) = panLang_RStruct (shape_vals shapes)`;
    `shape_val (Named nm) = panLang_Const (n2w 0)`;
@@ -206,7 +227,7 @@ let nested_seq_def,nested_seq_ind = define_rec
 let with_shape_def,with_shape_ind = define_rec
   [`with_shape [] _1 = []`;
    `with_shape (CONS sh shs) e = CONS (TAKE (size_of_shape sh) e)
-  (with_shape shs (DROP (size_of_shape sh) e))`];;
+    (with_shape shs (DROP (size_of_shape sh) e))`];;
 
 let exp_ids_def,exp_ids_ind = define_shaped_rec
   "match"
@@ -250,22 +271,22 @@ let var_exp_def,var_exp_ind = assume_definition_rec
    `var_exp (panLang_Var panLang_Local v) = (([v]):mlstring list)`;
    `var_exp (panLang_Var panLang_Global v) = (([]):mlstring list)`;
    `var_exp (panLang_RStruct es) = ((FLAT (MAP var_exp es)):mlstring
-  list)`;
+    list)`;
    `var_exp (panLang_RField i e) = ((var_exp e):mlstring list)`;
    `var_exp (panLang_NStruct sn fes) = ((FLAT (MAP var_exp (MAP SND
-  fes))):mlstring list)`;
+    fes))):mlstring list)`;
    `var_exp (panLang_NField fld e) = ((var_exp e):mlstring list)`;
    `var_exp (panLang_Load sh e) = ((var_exp e):mlstring list)`;
    `var_exp (panLang_Load32 e) = ((var_exp e):mlstring list)`;
    `var_exp (panLang_LoadByte e) = ((var_exp e):mlstring list)`;
    `var_exp (panLang_Op bop es) = ((FLAT (MAP var_exp es)):mlstring
-  list)`;
+    list)`;
    `var_exp (panLang_Panop op es) = ((FLAT (MAP var_exp es)):mlstring
-  list)`;
+    list)`;
    `var_exp (panLang_Cmp c e1 e2) = ((APPEND (var_exp e1) (var_exp
-  e2)):mlstring list)`;
+    e2)):mlstring list)`;
    `var_exp (panLang_Shift sh e1 e2) = ((APPEND (var_exp e1) (var_exp
-  e2)):mlstring list)`;
+    e2)):mlstring list)`;
    `var_exp panLang_BaseAddr = (([]):mlstring list)`;
    `var_exp panLang_TopAddr = (([]):mlstring list)`;
    `var_exp panLang_BytesInWord = (([]):mlstring list)`];;
@@ -274,29 +295,29 @@ let global_var_exp_def,global_var_exp_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`global_var_exp (panLang_Const w) = ([]:mlstring list)`;
    `global_var_exp (panLang_Var panLang_Local v) = (([]):mlstring
-  list)`;
+    list)`;
    `global_var_exp (panLang_Var panLang_Global v) = (([v]):mlstring
-  list)`;
+    list)`;
    `global_var_exp (panLang_RStruct es) = ((FLAT (MAP global_var_exp
-  es)):mlstring list)`;
+    es)):mlstring list)`;
    `global_var_exp (panLang_RField i e) = ((global_var_exp
-  e):mlstring list)`;
+    e):mlstring list)`;
    `global_var_exp (panLang_NStruct sn fes) = ((FLAT (MAP
-  (global_var_exp o SND) fes)):mlstring list)`;
+    (global_var_exp o SND) fes)):mlstring list)`;
    `global_var_exp (panLang_NField fld e) = ((global_var_exp
-  e):mlstring list)`;
+    e):mlstring list)`;
    `global_var_exp (panLang_Load sh e) = ((global_var_exp e):mlstring
-  list)`;
+    list)`;
    `global_var_exp (panLang_LoadByte e) = ((global_var_exp
-  e):mlstring list)`;
+    e):mlstring list)`;
    `global_var_exp (panLang_Op bop es) = ((FLAT (MAP global_var_exp
-  es)):mlstring list)`;
+    es)):mlstring list)`;
    `global_var_exp (panLang_Panop op es) = ((FLAT (MAP global_var_exp
-  es)):mlstring list)`;
+    es)):mlstring list)`;
    `global_var_exp (panLang_Cmp c e1 e2) = ((APPEND (global_var_exp
-  e1) (global_var_exp e2)):mlstring list)`;
+    e1) (global_var_exp e2)):mlstring list)`;
    `global_var_exp (panLang_Shift sh e1 e2) = ((APPEND
-  (global_var_exp e1) (global_var_exp e2)):mlstring list)`];;
+    (global_var_exp e1) (global_var_exp e2)):mlstring list)`];;
 
 let load_op_def = define_cases
   [`load_op Op8 = asm_Load8 /\
@@ -323,13 +344,12 @@ let functions_def,functions_ind = define_wf
   `MEASURE (\x0. list_size (decl_size (\x. 0)) x0)`
   [`functions [] = []`;
    `functions (CONS (Function fi) fs) = CONS (fun_decl_name
-  fi,fun_decl_params fi,fun_decl_body fi,fun_decl_return fi)
-  (functions fs)`;
+    fi,fun_decl_params fi,fun_decl_body fi,fun_decl_return fi)
+    (functions fs)`;
    `functions (CONS (Decl _24 _25 _26) fs) = functions fs`;
    `functions (CONS (ExnDecl _27 _28) fs) = functions fs`;
    `functions (CONS (Name _29 _30) fs) = functions fs`];;
 
-let _ = size_thms "decl";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let exceptions_def,exceptions_ind = define_wf
@@ -338,7 +358,7 @@ let exceptions_def,exceptions_ind = define_wf
    `exceptions (CONS (Function fi) fs) = exceptions fs`;
    `exceptions (CONS (Decl _31 _32 _33) fs) = exceptions fs`;
    `exceptions (CONS (ExnDecl eid sh) fs) = CONS (eid,sh) (exceptions
-  fs)`;
+    fs)`;
    `exceptions (CONS (Name _34 _35) fs) = exceptions fs`];;
 
 let fun_ids_def,fun_ids_ind = define_shaped_rec
@@ -407,7 +427,3 @@ let inlinable_def = new_definition
       match x1 with
         Function fi -> fun_decl_inline fi
       | _64 -> F`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

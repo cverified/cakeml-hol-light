@@ -21,11 +21,8 @@ needs "lib/sptree.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvl_inlineProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvl_inlineProof"
   ["backendProps"; "bvlProps"; "bvlSem"; "bvl_handleProof";
    "bvl_inline"];;
 
@@ -443,10 +440,10 @@ let let_state_rel_def = new_definition
 
 (* HOL4 bvl_inlineProofScript.sml:1434-1435: ML code, not ported *)
 
-(* [simp] *)
 let HD_let_op = prove
  (`[HD (bvl_inline_let_op [x:bvl_exp])] = bvl_inline_let_op [x]`,
   CHEAT_TAC);;
+add_simp HD_let_op;;
 
 let let_op_sing_thm = prove
  (`bvl_inline_let_op_sing (x:bvl_exp) = HD (bvl_inline_let_op [x])`,
@@ -677,10 +674,10 @@ let compile_prog_handle_ok = prove
     handle_ok (MAP (SND o SND) prog3)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let MAP_FST_MAP_optimise = prove
  (`MAP FST (MAP (bvl_inline_optimise x y) z) = MAP FST z`,
   CHEAT_TAC);;
+add_simp MAP_FST_MAP_optimise;;
 
 let compile_prog_names = prove
  (`bvl_inline_compile_prog l b i prog = (inlines,prog3) ==>
@@ -698,11 +695,11 @@ let let_op_code_labels = prove
   bvlProps_get_code_labels x))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let let_op_sing_code_labels = prove
  (`bvlProps_get_code_labels (bvl_inline_let_op_sing x) =
   bvlProps_get_code_labels x`,
   CHEAT_TAC);;
+add_simp let_op_sing_code_labels;;
 
 let remove_ticks_code_labels = prove
  (`!x.
@@ -747,7 +744,3 @@ let compile_prog_get_code_labels = prove
    UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND)
      p))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

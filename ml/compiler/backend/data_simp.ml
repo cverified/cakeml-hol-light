@@ -26,11 +26,8 @@
 
 needs "compiler/backend/dataLang.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "data_simp"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "data_simp"
   ["dataLang"];;
 
 let pSeq_def = new_definition
@@ -52,7 +49,3 @@ let simp_def,simp_ind = define_shaped_rec
         pSeq (dataLang_Call ret dest args (SOME (v,simp handler
           dataLang_Skip))) c
         | c1 -> pSeq c1 c`];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

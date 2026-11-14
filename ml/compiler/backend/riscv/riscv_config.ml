@@ -13,11 +13,8 @@ needs "compiler/backend/backend.ml";;
 needs "compiler/backend/presLang.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "riscv_config"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "riscv_config"
   ["asmProps"; "asmSem"; "backend"];;
 (* HOL4 ancestors outside the port: riscv_target *)
 
@@ -72,7 +69,3 @@ let riscv_backend_config_def = new_definition
                 (mk_stack_to_lab_config riscv_names F F)
                 (mk_lab_to_target_config LN [] 0 5 NONE [] 104729) []
                 default_tap_config []`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

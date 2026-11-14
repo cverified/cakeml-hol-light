@@ -30,11 +30,8 @@ needs "compiler/backend/word_unreach.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_to_wordProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_to_wordProof"
   ["wordConvs"; "wordConvsProof"; "wordProps"; "wordSem";
    "word_allocProof"; "word_copyProof"; "word_cseProof"; "word_elim";
    "word_elimProof"; "word_instProof"; "word_removeProof";
@@ -46,10 +43,10 @@ let _ = hol4_ancestors "word_to_wordProof"
 
 (* HOL4 word_to_wordProofScript.sml:19-23: a proof *)
 
-(* [simp] *)
 let FST_compile_single = prove
  (`FST (word_to_word_compile_single a b c d e) = FST (FST e)`,
   CHEAT_TAC);;
+add_simp FST_compile_single;;
 
 (*Chains up compile_single theorems*)
 let compile_single_lem = prove
@@ -520,7 +517,3 @@ let word_to_word_compile_semantics = prove
      wordSem_semantics s start =
      wordSem_semantics (t:('a,'b,'ffi)wordSem_state) start`),
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

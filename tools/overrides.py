@@ -11574,3 +11574,25 @@ let fp64_mul_add_def = new_definition
                                             (fp64_to_float c)))`;;
 ''',
 }
+
+
+# HOL4's auxiliary size functions of a datatype family (exp1_size,
+# exp2_size, ...) number the types of the family in an order of
+# HOL4's own, so a name of one says nothing about which type it is
+# the size of.  What the statements of the source do with it says
+# that, and this is the term HOL Light writes for it: the size of
+# a list is list_size of the size of its elements, and the size of
+# a pair is pair_size of the sizes of its halves (ml/lib/hol4.ml).
+AUX_SIZE = {
+  ('flatLang', 'exp1_size'):
+    'list_size (pair_size mlstring_size\n'
+    '             (pair_size mlstring_size flatLang_exp_size))',
+  ('flatLang', 'exp2_size'):
+    'pair_size mlstring_size (pair_size mlstring_size'
+    ' flatLang_exp_size)',
+  ('flatLang', 'exp3_size'):
+    'list_size (pair_size flatLang_pat_size flatLang_exp_size)',
+  ('flatLang', 'exp5_size'):
+    'pair_size flatLang_pat_size flatLang_exp_size',
+  ('flatLang', 'exp6_size'): 'list_size flatLang_exp_size',
+}

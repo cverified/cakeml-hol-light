@@ -25,11 +25,8 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_alloc"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_alloc"
   ["asm"; "linear_scan"; "misc"; "mllist"; "reg_alloc"; "wordLang"];;
 
 let _ = do_list hide_constant ["inst"];;
@@ -43,6 +40,7 @@ let _ = do_list hide_constant ["inst"];;
 let apply_nummap_key_def = new_definition
   `apply_nummap_key f names =
    fromAList (MAP (\(x,y). f x,y) (toAList names))`;;
+add_simp apply_nummap_key_def;;
 
 let apply_nummaps_key_def = new_definition
   `apply_nummaps_key f names =
@@ -76,7 +74,7 @@ let fake_move_def = new_definition
 (*Do the merging moves only*)
 let merge_moves_def,merge_moves_ind = define_rec
   [`word_alloc_merge_moves [] ssa_L ssa_R (na:num) =
-  ([],[],na,ssa_L,ssa_R)`;
+    ([],[],na,ssa_L,ssa_R)`;
    `word_alloc_merge_moves (CONS x xs) ssa_L ssa_R (na:num) =
         (let (seqL,seqR,na',ssa_L',ssa_R') =
           word_alloc_merge_moves xs ssa_L ssa_R na in
@@ -90,9 +88,9 @@ let merge_moves_def,merge_moves_ind = define_rec
             let Rmove = (na',Ly) in
             (CONS Lmove seqL,CONS Rmove seqR,na' + 4,
                               sptree_insert x na'
-                                ssa_L',sptree_insert x na' ssa_R'))
-                                | _2 ->
-                                (seqL,seqR,na',ssa_L',ssa_R'))`];;
+                                  ssa_L',sptree_insert x na'
+                                  ssa_R')) | _2 ->
+                                  (seqL,seqR,na',ssa_L',ssa_R'))`];;
 
 (* tracking priority of moves
   0 = unprioritized
@@ -114,7 +112,7 @@ let priority_def = new_definition
 (*Separately do the fake moves*)
 let fake_moves_def,fake_moves_ind = define_rec
   [`fake_moves prio [] ssa_L ssa_R (na:num) = ((wordLang_Skip:'a
-  wordLang_prog),(wordLang_Skip:'a wordLang_prog),na,ssa_L,ssa_R)`;
+    wordLang_prog),(wordLang_Skip:'a wordLang_prog),na,ssa_L,ssa_R)`;
    `fake_moves prio (CONS x xs) ssa_L ssa_R (na:num) =
         (let (seqL,seqR,na',ssa_L',ssa_R') =
           fake_moves prio xs ssa_L ssa_R na in
@@ -124,15 +122,15 @@ let fake_moves_def,fake_moves_ind = define_rec
           (NONE,SOME Ly) ->
             (let Lmove = linear_scan_Seq seqL (fake_move na') in
             let Rmove = linear_scan_Seq seqR (wordLang_Move
-              (priority prio F) [(na',Ly)]) in
+                (priority prio F) [(na',Ly)]) in
             (Lmove,Rmove,na' + 4,sptree_insert x na'
-              ssa_L',sptree_insert x na' ssa_R')) | (SOME Lx,NONE) ->
+                ssa_L',sptree_insert x na' ssa_R')) | (SOME Lx,NONE) ->
             (let Lmove = linear_scan_Seq seqL (wordLang_Move
-              (priority prio T) [(na',Lx)]) in
+                (priority prio T) [(na',Lx)]) in
             let Rmove = linear_scan_Seq seqR (fake_move na') in
             (Lmove,Rmove,na' + 4,sptree_insert x na'
-              ssa_L',sptree_insert x na' ssa_R')) | _4 ->
-              (seqL,seqR,na',ssa_L',ssa_R'))`];;
+                ssa_L',sptree_insert x na' ssa_R')) | _4 ->
+                (seqL,seqR,na',ssa_L',ssa_R'))`];;
 
 let fix_inconsistencies_def = new_definition
   `fix_inconsistencies prio ssa_L ssa_R na =
@@ -387,7 +385,7 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
         let force =
           FILTER (\(x,y). ~(MEM x ls_1)) (ZIP ls_2 ren_ls1) in
           (wordLang_Move pri (ZIP ren_ls1 ren_ls2),force_rename
-            force ssa',na'))`;
+              force ssa',na'))`;
    `ssa_cc_trans (wordLang_StoreConsts a b c d ws) ssa na lt =
         (let c1 = option_lookup ssa c in
         let d1 = option_lookup ssa d in
@@ -423,7 +421,7 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
     ssa_cc_trans (wordLang_If cmp r1 ri e2 e3) ssa na lt =
      (let r1' = option_lookup ssa r1 in
      let ri' = (match ri with Reg r -> Reg (option_lookup ssa r) |
-       Imm v -> Imm v) in
+         Imm v -> Imm v) in
      // ssa is the copy for both branches,
      // however, we can use new na2 and ns2
      let (e2',ssa2,na2) = ssa_cc_trans e2 ssa na lt in
@@ -436,7 +434,7 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
      let (e2_cons,e3_cons,na_fin,ssa_fin) =
        fix_inconsistencies prio ssa2 ssa3 na3 in
      (wordLang_If cmp r1' ri' (wordLang_Seq e2' e2_cons)
-       (wordLang_Seq e3' e3_cons),ssa_fin,na_fin))`;
+         (wordLang_Seq e3' e3_cons),ssa_fin,na_fin))`;
    `// For cutsets, we must restart the ssa mapping to maintain consistency
     ssa_cc_trans (wordLang_Alloc num' numset) ssa na lt =
      (let all_names' = sptree_union (FST numset) (SND numset) in
@@ -445,10 +443,10 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
      // simply starting from the next available stack location
      // Assuming na is an alloc var of course..
      let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na +
-       2) ls in
+         2) ls in
      let num' = option_lookup ssa' num' in
      let stack_set = apply_nummaps_key (option_lookup ssa') numset
-       in
+         in
      // Restart the ssa map
      let ssa_cut = inter ssa' all_names' in
      let (ret_mov,ssa'',na'') =
@@ -456,7 +454,7 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
      let prog = (wordLang_Seq (stack_mov)
                 (wordLang_Seq ((wordLang_Move 1) [(2,num')])
                 (wordLang_Seq (wordLang_Alloc 2 stack_set)
-                  (ret_mov)))) in
+                    (ret_mov)))) in
      (prog,ssa'',na''))`;
    `ssa_cc_trans (wordLang_Raise num') ssa na lt =
         (let num' = option_lookup ssa num' in
@@ -483,25 +481,25 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
         (let all_names' = sptree_union (FST numset) (SND numset) in
         let ls = MAP FST (toAList all_names') in
         let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
-          + 2) ls in
+            + 2) ls in
         let stack_set = apply_nummaps_key (option_lookup ssa')
-          numset in
+            numset in
         let ptr' = option_lookup ssa' ptr in
         let len' = option_lookup ssa' len in
         let dptr' = option_lookup ssa' dptr in
         let dlen' = option_lookup ssa' dlen in
         let ssa_cut = inter ssa' all_names' in
         let (ptr'',ssa'',na'') = next_var_rename ptr ssa_cut (na' +
-          2) in
+            2) in
         let (ret_mov,ssa''',na''') =
           list_next_var_rename_move ssa'' na'' ls in
         let prog = (wordLang_Seq (stack_mov)
                    (wordLang_Seq ((wordLang_Move 1) [(2,ptr');
-                     (4,len')])
+                       (4,len')])
                    (wordLang_Seq (wordLang_Install 2 4 dptr' dlen'
-                     stack_set)
+                       stack_set)
                    (wordLang_Seq ((wordLang_Move 1) [(ptr'',2)])
-                     ret_mov)))) in
+                       ret_mov)))) in
         (prog,ssa''',na'''))`;
    `ssa_cc_trans (wordLang_CodeBufferWrite r1 r2) ssa na lt =
         (let r1' = option_lookup ssa r1 in
@@ -512,13 +510,13 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
         let r2' = option_lookup ssa r2 in
         (wordLang_DataBufferWrite r1' r2',ssa,na))`;
    `ssa_cc_trans (wordLang_FFI ffi_index ptr1 len1 ptr2 len2 numset) ssa
-  na lt =
+    na lt =
         (let all_names' = sptree_union (FST numset) (SND numset) in
         let ls = MAP FST (toAList all_names') in
         let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
-          + 2) ls in
+            + 2) ls in
         let stack_set = apply_nummaps_key (option_lookup ssa')
-          numset in
+            numset in
         let cptr1 = option_lookup ssa' ptr1 in
         let clen1 = option_lookup ssa' len1 in
         let cptr2 = option_lookup ssa' ptr2 in
@@ -528,28 +526,28 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
           list_next_var_rename_move ssa_cut (na' + 2) ls in
         let prog = (wordLang_Seq (stack_mov)
                    (wordLang_Seq ((wordLang_Move 1) [(2,cptr1);
-                     (4,clen1); (6,cptr2); (8,clen2)])
+                       (4,clen1); (6,cptr2); (8,clen2)])
                    (wordLang_Seq (wordLang_FFI ffi_index 2 4 6 8
-                     stack_set) (ret_mov)))) in
+                       stack_set) (ret_mov)))) in
         (prog,ssa'',na''))`;
    `ssa_cc_trans (wordLang_Call NONE dest args h) ssa na lt =
         (let names = MAP (option_lookup ssa) args in
         let conv_args = list_of_seq (\x. 2 * x) (LENGTH names) in
         let move_args = ((wordLang_Move 1) (ZIP conv_args names)) in
         let prog = wordLang_Seq move_args (wordLang_Call NONE dest
-          conv_args h) in
+            conv_args h) in
           (prog,ssa,na))`;
    `ssa_cc_trans (wordLang_Call (SOME (ret,numset,ret_handler,l1,l2))
-  dest args h) ssa na lt =
+    dest args h) ssa na lt =
         (let all_names' = sptree_union (FST numset) (SND numset) in
         let ls = MAP FST (toAList all_names') in
         let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
-          + 2) ls in
+            + 2) ls in
         let stack_set = apply_nummaps_key (option_lookup ssa')
-          numset in
+            numset in
         let names = MAP (option_lookup ssa) args in
         let conv_args = list_of_seq (\x. 2 * (x + 1)) (LENGTH names)
-          in
+            in
         let move_args = ((wordLang_Move 1) (ZIP conv_args names)) in
         let ssa_cut = inter ssa' all_names' in
         let (ret_mov,ssa'',na'') =
@@ -557,48 +555,48 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
         // ret_mov restores the cutset
         // This recurses on the returning handler
         let (ret',ssa_2_p,na_2_p) = list_next_var_rename ret ssa''
-          na'' in
+            na'' in
         let (ren_ret_handler,ssa_2,na_2) =
           ssa_cc_trans ret_handler ssa_2_p na_2_p lt in
         let regs' = list_of_seq (\x. 2 * (x + 1)) (LENGTH ret) in
         let mov_ret_handler =
             (wordLang_Seq ret_mov (wordLang_Seq ((wordLang_Move 1)
-              (ZIP ret' regs')) (ren_ret_handler))) in
+                (ZIP ret' regs')) (ren_ret_handler))) in
         (match h with
           NONE ->
             (let prog =
               (wordLang_Seq stack_mov (wordLang_Seq move_args
               (wordLang_Call (SOME
-                (regs',stack_set,mov_ret_handler,l1,l2))
+                  (regs',stack_set,mov_ret_handler,l1,l2))
                     dest conv_args NONE))) in
             (prog,ssa_2,na_2)) | SOME (n,h,l1',l2') ->
             (let (n',ssa_3_p,na_3_p) = next_var_rename n ssa'' na_2
-              in
+                in
             let (ren_exc_handler,ssa_3,na_3) =
                 (ssa_cc_trans h ssa_3_p na_3_p lt) in
             let mov_exc_handler =
                 (wordLang_Seq ret_mov (wordLang_Seq ((wordLang_Move
-                  1) [n',2]) (ren_exc_handler))) in
+                    1) [n',2]) (ren_exc_handler))) in
             let prio = mk_prio mov_ret_handler mov_exc_handler in
             let (ret_cons,exc_cons,na_fin,ssa_fin) =
                 fix_inconsistencies prio ssa_2 ssa_3 na_3 in
             let cons_ret_handler = wordLang_Seq mov_ret_handler
-              ret_cons in
+                ret_cons in
             let cons_exc_handler = wordLang_Seq mov_exc_handler
-              exc_cons in
+                exc_cons in
             let prog =
                 (wordLang_Seq stack_mov (wordLang_Seq move_args
                 (wordLang_Call (SOME
-                  (regs',stack_set,cons_ret_handler,l1,l2))
+                    (regs',stack_set,cons_ret_handler,l1,l2))
                    dest conv_args (SOME
-                     (2,cons_exc_handler,l1',l2'))))) in
+                       (2,cons_exc_handler,l1',l2'))))) in
             (prog,ssa_fin,na_fin))))`;
    `ssa_cc_trans (wordLang_ShareInst op v exp) ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
           if op = asm_Store \/ op = asm_Store8 \/ op = asm_Store16
-            \/ op = asm_Store32 then
+              \/ op = asm_Store32 then
             (wordLang_ShareInst op (option_lookup ssa v)
-              exp',ssa,na) else
+                exp',ssa,na) else
             let (v',ssa',na') = next_var_rename v ssa na in
               (wordLang_ShareInst op v' exp',ssa',na'))`;
    `// Loop: use loop_setup to refresh ssa for (names ∪ exit_names) before
@@ -609,39 +607,39 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec
      (let (setup_prog,ssa_refreshed,na_refreshed) =
        loop_setup names exit_names ssa na in
      let ssa_names = apply_nummap_key (option_lookup ssa_refreshed)
-       names in
+         names in
      let ssa_exit = apply_nummap_key (option_lookup ssa_refreshed)
-       exit_names in
+         exit_names in
      let ssa_body = inter ssa_refreshed names in
      let (body',ssa',na') =
        ssa_cc_trans body ssa_body na_refreshed
          (CONS (ssa_refreshed,names,exit_names) lt) in
      let back_moves = ssa_reconcile ssa' ssa_refreshed names in
      let body_final = (if back_moves = wordLang_Skip then body' else
-       wordLang_Seq body' back_moves) in
+         wordLang_Seq body' back_moves) in
      (wordLang_Seq setup_prog (wordLang_Loop ssa_names body_final
-       ssa_exit),
+         ssa_exit),
       inter ssa_refreshed exit_names,na'))`;
    `// Break n: reconcile current ssa with target exit ssa
     ssa_cc_trans (wordLang_Break n) ssa na lt =
      (match oEL n lt with
        NONE -> (wordLang_Break n,ssa,na) | SOME
-         (tgt_ssa,names,exit_names) ->
+           (tgt_ssa,names,exit_names) ->
          (let moves = ssa_reconcile ssa tgt_ssa exit_names in
          ((if moves = wordLang_Skip then wordLang_Break n else
-           wordLang_Seq moves (wordLang_Break n)),ssa,na)))`;
+             wordLang_Seq moves (wordLang_Break n)),ssa,na)))`;
    `// Continue n: reconcile current ssa with target entry ssa
     ssa_cc_trans (wordLang_Continue n) ssa na lt =
      (match oEL n lt with
        NONE -> (wordLang_Continue n,ssa,na) | SOME
-         (tgt_ssa,names,exit_names) ->
+           (tgt_ssa,names,exit_names) ->
          (let moves = ssa_reconcile ssa tgt_ssa names in
          ((if moves = wordLang_Skip then wordLang_Continue n
-           else wordLang_Seq moves (wordLang_Continue n)),ssa,na)))`];;
+             else wordLang_Seq moves (wordLang_Continue
+             n)),ssa,na)))`];;
 
 (*Recursively applying colours to a program*)
 
-let _ = size_thms "wordLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let apply_colour_exp_def,apply_colour_exp_ind = define_wf
@@ -656,12 +654,14 @@ let apply_colour_exp_def,apply_colour_exp_ind = define_wf
         | (wordLang_Shift sh exp nexp) -> wordLang_Shift sh
           (apply_colour_exp f exp) (apply_colour_exp f nexp)
         | expr -> expr`];;
+add_simp apply_colour_exp_def;;
 
 let apply_colour_imm_def = new_definition
   `apply_colour_imm f x =
         match x with
           Reg n -> Reg (f n)
         | x -> x`;;
+add_simp apply_colour_imm_def;;
 
 let apply_colour_inst_def = new_definition
   `apply_colour_inst f x =
@@ -707,6 +707,7 @@ let apply_colour_inst_def = new_definition
         | (asm_FP (FPMovFromReg d r1 r2)) -> asm_FP (FPMovFromReg d
           (f r1) (f r2))
         | x -> x`;;
+add_simp apply_colour_inst_def;;
 (*Catchall -- for future instructions to be added*)
 
 let _ = size_thms "wordLang_prog";;
@@ -772,6 +773,7 @@ let apply_colour_def,apply_colour_ind = define_wf
        wordLang_Loop (apply_nummap_key f names) (apply_colour f
          body) (apply_nummap_key f exit_names)
         | p -> p`];;
+add_simp apply_colour_def;;
 
 
 (* Liveness Analysis*)
@@ -868,7 +870,6 @@ let get_live_inst_def = new_definition
 let big_union_def = new_definition
   `big_union ls = ITLIST (\x y. sptree_union x y) ls LN`;;
 
-let _ = size_thms "wordLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_live_exp_def,get_live_exp_ind = define_wf
@@ -888,7 +889,7 @@ let word_alloc_numset_list_insert_def,
   define_rec
   [`word_alloc_numset_list_insert [] t = t`;
    `word_alloc_numset_list_insert (CONS x xs) t = sptree_insert x
-  one (word_alloc_numset_list_insert xs t)`];;
+    one (word_alloc_numset_list_insert xs t)`];;
 
 let get_live_def,get_live_ind = define_shaped_rec
   "match"
@@ -1240,7 +1241,6 @@ let get_delta_inst_def = new_definition
         // Catchall -- for future instructions to be added
         | x -> reg_alloc_Delta [] []`;;
 
-let _ = size_thms "wordLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_reads_exp_def,get_reads_exp_ind = define_wf
@@ -1262,96 +1262,95 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec
         reg_alloc_Delta (MAP FST ls) (MAP SND ls)`;
    `get_clash_tree (wordLang_Inst i) lt = get_delta_inst i`;
    `get_clash_tree (wordLang_Assign num' exp) lt = reg_alloc_Delta
-  [num'] (get_reads_exp exp)`;
+    [num'] (get_reads_exp exp)`;
    `get_clash_tree (wordLang_Get num' store) lt = reg_alloc_Delta
-  [num'] []`;
+    [num'] []`;
    `get_clash_tree (wordLang_Store exp num') lt = reg_alloc_Delta []
-  (CONS num' (get_reads_exp exp))`;
+    (CONS num' (get_reads_exp exp))`;
    `get_clash_tree (wordLang_Seq s1 s2) lt = reg_alloc_Seq
-  (get_clash_tree s1 lt) (get_clash_tree s2 lt)`;
+    (get_clash_tree s1 lt) (get_clash_tree s2 lt)`;
    `get_clash_tree (wordLang_If cmp r1 ri e2 e3) lt =
         (let e2t = get_clash_tree e2 lt in
         let e3t = get_clash_tree e3 lt in
         match ri with
           Reg r2 -> reg_alloc_Seq (reg_alloc_Delta [] [r1; r2])
-            (reg_alloc_Branch NONE e2t e3t) | _41 -> reg_alloc_Seq
-            (reg_alloc_Delta [] [r1]) (reg_alloc_Branch NONE e2t
-            e3t))`;
+              (reg_alloc_Branch NONE e2t e3t) | _41 -> reg_alloc_Seq
+              (reg_alloc_Delta [] [r1]) (reg_alloc_Branch NONE e2t
+              e3t))`;
    `get_clash_tree (wordLang_MustTerminate s) lt =
         get_clash_tree s lt`;
    `get_clash_tree (wordLang_Alloc num' numset) lt =
         reg_alloc_Seq (reg_alloc_Delta [] [num']) (reg_alloc_Set
-          (sptree_union (FST numset) (SND numset)))`;
+            (sptree_union (FST numset) (SND numset)))`;
    `get_clash_tree (wordLang_Install r1 r2 r3 r4 numset) lt =
         reg_alloc_Seq (reg_alloc_Delta [] [r4; r3; r2; r1])
-          (reg_alloc_Seq (reg_alloc_Set (sptree_union (FST numset)
-          (SND numset))) (reg_alloc_Delta [r1] []))`;
+            (reg_alloc_Seq (reg_alloc_Set (sptree_union (FST numset)
+            (SND numset))) (reg_alloc_Delta [r1] []))`;
    `get_clash_tree (wordLang_CodeBufferWrite r1 r2) lt =
         reg_alloc_Delta [] [r2; r1]`;
    `get_clash_tree (wordLang_DataBufferWrite r1 r2) lt =
         reg_alloc_Delta [] [r2; r1]`;
    `get_clash_tree (wordLang_FFI ffi_index ptr1 len1 ptr2 len2 numset)
-  lt =
+    lt =
         reg_alloc_Seq (reg_alloc_Delta [] [ptr1; len1; ptr2;
-          len2]) (reg_alloc_Set (sptree_union (FST numset) (SND
-          numset)))`;
+            len2]) (reg_alloc_Set (sptree_union (FST numset) (SND
+            numset)))`;
    `get_clash_tree (wordLang_Raise num') lt = reg_alloc_Delta []
-  [num']`;
+    [num']`;
    `get_clash_tree (wordLang_Return num1 nums) lt = reg_alloc_Delta
-  [] (CONS num1 nums)`;
+    [] (CONS num1 nums)`;
    `get_clash_tree wordLang_Tick lt = reg_alloc_Delta [] []`;
    `get_clash_tree (wordLang_LocValue r l1) lt = reg_alloc_Delta [r]
-  []`;
+    []`;
    `get_clash_tree (wordLang_Set n exp) lt = reg_alloc_Delta []
-  (get_reads_exp exp)`;
+    (get_reads_exp exp)`;
    `get_clash_tree (wordLang_OpCurrHeap b dst src) lt =
-  reg_alloc_Delta [dst] [src]`;
+    reg_alloc_Delta [dst] [src]`;
    `get_clash_tree (wordLang_StoreConsts a b c d ws) lt =
-  reg_alloc_Delta [a; b; c; d] [c; d]`;
+    reg_alloc_Delta [a; b; c; d] [c; d]`;
    `get_clash_tree (wordLang_ShareInst op v exp) lt = (if op =
-  wordLang_Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op =
-  asm_Store32 then reg_alloc_Delta [] (CONS v (get_reads_exp exp))
-  else reg_alloc_Delta [v] (get_reads_exp exp))`;
+    wordLang_Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op =
+    asm_Store32 then reg_alloc_Delta [] (CONS v (get_reads_exp exp))
+    else reg_alloc_Delta [v] (get_reads_exp exp))`;
    `get_clash_tree (wordLang_Loop names body exit_names) lt =
         reg_alloc_Seq (reg_alloc_Set names)
           (reg_alloc_Seq (reg_alloc_Set exit_names)
             (reg_alloc_Seq (get_clash_tree body (CONS
-              (names,exit_names) lt))
+                (names,exit_names) lt))
               (reg_alloc_Set names)))`;
    `// Break n: exit_names vars must all be live
     get_clash_tree (wordLang_Break n) lt =
      (match oEL n lt with
        NONE -> reg_alloc_Set LN | SOME (names,exit_names) ->
-         reg_alloc_Set exit_names)`;
+           reg_alloc_Set exit_names)`;
    `// Continue n: names vars must all be live
     get_clash_tree (wordLang_Continue n) lt =
      (match oEL n lt with
        NONE -> reg_alloc_Set LN | SOME (names,exit_names) ->
-         reg_alloc_Set names)`;
+           reg_alloc_Set names)`;
    `get_clash_tree (wordLang_Call ret dest args h) lt =
         (let args_set = word_alloc_numset_list_insert args LN in
         match ret with
           NONE -> reg_alloc_Set args_set | SOME
-            (vs,cutsets,ret_handler,_58,_59) ->
+              (vs,cutsets,ret_handler,_58,_59) ->
           (let cutset = sptree_union (FST cutsets) (SND cutsets) in
           let live_set = sptree_union cutset args_set in
           // Might be inefficient..
           let ret_tree = reg_alloc_Seq (reg_alloc_Set
-            (word_alloc_numset_list_insert vs cutset)) (get_clash_tree
-            ret_handler lt) in
+              (word_alloc_numset_list_insert vs cutset)) (get_clash_tree
+              ret_handler lt) in
           match h with
             NONE -> reg_alloc_Seq (reg_alloc_Set live_set) ret_tree
-              | SOME (v',prog,_60,_61) ->
+                | SOME (v',prog,_60,_61) ->
             (let handler_tree =
               reg_alloc_Seq (reg_alloc_Set (sptree_insert v' one
-                cutset)) (get_clash_tree prog lt) in
+                  cutset)) (get_clash_tree prog lt) in
             reg_alloc_Branch (SOME live_set) ret_tree
-              handler_tree)))`];;
+                handler_tree)))`];;
 
 (* Preference edges
   The allocator tries hard to coalesce these edges
 *)
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_prefs_def,get_prefs_ind = define_wf
@@ -1405,7 +1404,7 @@ let get_prefs_pmatch = prove
 
 *)
 
-new_type_abbrev("heu_data",`: num#num#num#num#num`);;
+new_type_abbrev("heu_data",`:num#num#num#num#num`);;
 
 let _ = do_list hide_constant ["mem"];;
 
@@ -1616,7 +1615,6 @@ let get_heu_def,get_heu_ind = assume_definition_rec
 
 (* Forced edges for certain instructions *)
 let _ = size_thms "asm_config";;
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_forced_def,get_forced_ind = define_wf
@@ -1763,12 +1761,12 @@ let oracle_colour_ok_def = new_definition
 *)
 let canonize_moves_aux_def,canonize_moves_aux_ind = define_rec
   [`canonize_moves_aux curp curm ctr [] acc = CONS (ctr,curp,curm)
-  acc`;
+    acc`;
    `canonize_moves_aux curp curm ctr (CONS (p,m) xs) acc =
         (if curm = m then
           canonize_moves_aux (MAX curp p) m (ctr + 1) xs acc else
           canonize_moves_aux p m 1 xs (CONS (ctr,curp,curm)
-            acc))`];;
+              acc))`];;
 
 let canonize_moves_def = new_definition
   `canonize_moves ls =
@@ -1939,11 +1937,7 @@ let full_ssa_cc_trans_def = new_definition
      let (prog',ssa',na') = ssa_cc_trans prog ssa na [] in
        wordLang_Seq mov prog')`;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["inst";
    "mem"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

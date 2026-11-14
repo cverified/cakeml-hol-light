@@ -19,11 +19,8 @@ needs "lib/regexp_compiler.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "export"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "export"
   ["mlint"; "mlstring"; "mlvector"];;
 
 (* the termination relation that HOL4 gives is
@@ -216,7 +213,3 @@ let emit_symbol_def = new_definition
 let emit_symbols_def = new_definition
   `emit_symbols lsyms =
      FOLDL emit_symbol misc_Nil lsyms`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

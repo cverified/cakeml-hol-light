@@ -20,11 +20,8 @@ needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "cmlParse"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "cmlParse"
   ["cmlPEG"; "cmlPtreeConversion"];;
 
 (* HOL4 cmlParseScript.sml:13: the overload cmlpegexec, which the
@@ -76,8 +73,8 @@ let pegresult_guard_def = new_definition
 
 let optlift_def = define_general
   [`(optlift NONE:(tokens_token#locs) list->((tokens_token#locs)
-  list,'a,string)pegresult) = (\toks. peg_Failure (toks_to_loc toks)
-  "Option = NONE")`;
+    list,'a,string)pegresult) = (\toks. peg_Failure (toks_to_loc
+    toks) "Option = NONE")`;
    `optlift (SOME a) = (\toks. peg_Success toks a NONE)`];;
 
 let cmlParseExpr_def = new_definition
@@ -96,7 +93,3 @@ let parse_prog_def = new_definition
        pts. pegresult_bind (optlift (oHD pts)) (\
        pt.
        optlift (ptree_TopLevelDecs pt)))`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

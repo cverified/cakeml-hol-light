@@ -37,11 +37,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_to_bvlProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_to_bvlProof"
   ["backendProps"; "bvlProps"; "bvlSem"; "closProps"; "closSem";
    "clos_to_bvl"; "ffi"];;
 
@@ -717,21 +714,23 @@ let add_args_F = prove
   (closSem_ByteVector bs))`,
   CHEAT_TAC);;
 
-(* v_rel_Unit[simp] *)
+(* v_rel_Unit *)
 let clos_to_bvlProof_v_rel_Unit = prove
  (`(clos_to_bvlProof_v_rel max_app f refs code bvlSem_Unit y <=> (y =
   bvlSem_Unit)) /\
    (clos_to_bvlProof_v_rel max_app f refs code x bvlSem_Unit <=> (x
      = bvlSem_Unit))`,
   CHEAT_TAC);;
+add_simp clos_to_bvlProof_v_rel_Unit;;
 
-(* v_rel_Boolv[simp] *)
+(* v_rel_Boolv *)
 let clos_to_bvlProof_v_rel_Boolv = prove
  (`(clos_to_bvlProof_v_rel max_app f refs code (bvlSem_Boolv b) y <=> (y
   = bvlSem_Boolv b)) /\
    (clos_to_bvlProof_v_rel max_app f refs code x (bvlSem_Boolv b)
      <=> (x = bvlSem_Boolv b))`,
   CHEAT_TAC);;
+add_simp clos_to_bvlProof_v_rel_Boolv;;
 
 (* HOL4 clos_to_bvlProofScript.sml:984-995: a theorem that HOL4
    states as the value of an ML expression: v_rel_SIMP *)
@@ -800,7 +799,7 @@ let clos_to_bvlProof_nth_code_def,clos_to_bvlProof_nth_code_ind =
   [`clos_to_bvlProof_nth_code t_co 0 = LN`;
    `clos_to_bvlProof_nth_code t_co (SUC n) =
       sptree_union (fromAList (SND (t_co 0)))
-        (clos_to_bvlProof_nth_code (misc_shift_seq 1 t_co) n)`];;
+          (clos_to_bvlProof_nth_code (misc_shift_seq 1 t_co) n)`];;
 
 let compile_oracle_inv_def = new_definition
   `compile_oracle_inv max_app s_code s_cc s_co t_code t_cc t_co <=>
@@ -829,8 +828,9 @@ let clos_to_bvlProof_ref_rel_def = new_definition
         | ((bvlSem_ByteArray as),(bvlSem_ByteArray g bs)) -> ~g /\ as
           = bs
         | (_3,_4) -> F`;;
+add_simp clos_to_bvlProof_ref_rel_def;;
 
-(* ref_rel_simp[simp] *)
+(* ref_rel_simp *)
 let clos_to_bvlProof_ref_rel_simp = prove
  (`(clos_to_bvlProof_ref_rel R (closSem_ValueArray vs) y <=> (?ws. y =
   closSem_ValueArray ws /\ ALL2 R vs ws)) /\
@@ -839,6 +839,7 @@ let clos_to_bvlProof_ref_rel_simp = prove
    (clos_to_bvlProof_ref_rel R (closSem_ByteArray bs) y <=> y =
      closSem_ByteArray F bs)`,
   CHEAT_TAC);;
+add_simp clos_to_bvlProof_ref_rel_simp;;
 
 let clos_to_bvlProof_state_rel_def = new_definition
   `clos_to_bvlProof_state_rel f (s:('c,'ffi)closSem_state)
@@ -896,13 +897,14 @@ let clos_to_bvlProof_state_rel_globals = prove
        num_added_globals (state_globals t))`,
   CHEAT_TAC);;
 
-(* state_rel_clock[simp] *)
+(* state_rel_clock *)
 let clos_to_bvlProof_state_rel_clock = prove
  (`(!f s t. clos_to_bvlProof_state_rel f s (state_clock_fupd (K x) t) =
   clos_to_bvlProof_state_rel f s t) /\
    (!f s t. clos_to_bvlProof_state_rel f (state_clock_fupd (K x) s)
      t = clos_to_bvlProof_state_rel f s t)`,
   CHEAT_TAC);;
+add_simp clos_to_bvlProof_state_rel_clock;;
 
 let state_rel_refs_lookup = prove
  (`clos_to_bvlProof_state_rel f s1 s2 /\
@@ -1118,6 +1120,7 @@ let eq_res_def = new_definition
       match x1 with
         Eq_val b -> Rval [bvlSem_Boolv b]
       | _5 -> Rerr (Rabort Rtype_error)`;;
+add_simp eq_res_def;;
 
 (* [local] *)
 let eq_res_not_timeout = prove
@@ -1418,7 +1421,7 @@ let check_loc'_def = define_cases
   [`check_loc' NONE loc num_params num_args so_far <=> T`;
    `check_loc' (SOME p) loc num_params num_args so_far <=>
         (num_params = num_args) /\ (so_far = (0:num)) /\ (SOME
-          p = loc)`];;
+            p = loc)`];;
 
 let dest_closure'_def = new_definition
   `dest_closure' loc_opt f args =
@@ -1640,11 +1643,11 @@ let env_rel_subspt = prove
        code' e1 e2)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let clos_tag_shift_eq_nil_tag = prove
  (`(clos_tag_shift tag = nil_tag <=> tag = nil_tag) /\
     (clos_tag_shift tag = cons_tag <=> tag = cons_tag)`,
   CHEAT_TAC);;
+add_simp clos_tag_shift_eq_nil_tag;;
 
 (* v_rel_IMP_v_to_words_lemma[local] *)
 let clos_to_bvlProof_v_rel_IMP_v_to_words_lemma = prove
@@ -2046,15 +2049,15 @@ let MAP_FST_chain_exps_any = prove
   (LENGTH ls))))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let chain_exps_code_locs = prove
  (`!n es. code_locs (MAP (SND o SND) (chain_exps n es)) = code_locs es`,
   CHEAT_TAC);;
+add_simp chain_exps_code_locs;;
 
-(* [simp] *)
 let chain_exps_ALL_DISTINCT = prove
  (`ALL_DISTINCT (MAP FST (chain_exps i ls))`,
   CHEAT_TAC);;
+add_simp chain_exps_ALL_DISTINCT;;
 
 let chain_exps_LE = prove
  (`!n xs. ALL ((<=) n) (MAP FST (chain_exps n xs))`,
@@ -2083,11 +2086,11 @@ let clos_init_def = new_definition
    s = [] /\ state_refs s = FEMPTY /\ state_code s = FEMPTY /\
      closSem_state_max_app s = max_app`;;
 
-(* [simp] *)
 let clos_init_with_clock = prove
  (`clos_init max_app (state_clock_fupd (K k) s) <=> clos_init max_app
   s`,
   CHEAT_TAC);;
+add_simp clos_init_with_clock;;
 
 (* actually, this can be made even stronger *)
 (* [local] *)
@@ -2322,11 +2325,11 @@ let elist_globals_SND_renumber_code_locs_list = prove
   closProps_elist_globals y`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let elist_globals_SND_ncompile_inc = prove
  (`closProps_elist_globals (SND (clos_number_compile_inc x y)) =
   closProps_elist_globals y`,
   CHEAT_TAC);;
+add_simp elist_globals_SND_ncompile_inc;;
 
 let collect_apps_fv1 = prove
  (`!x y z v. fv v (FST (collect_apps x y z)) \/ fv1 v (SND
@@ -2401,11 +2404,11 @@ let renumber_code_locs_list_csyntax_ok = prove
    clos_callProof_syntax_ok es'`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let compile_every_Fn_vs_NONE = prove
  (`every_Fn_vs_NONE (clos_mti_compile do_mti max_app es) <=>
    every_Fn_vs_NONE es`,
   CHEAT_TAC);;
+add_simp compile_every_Fn_vs_NONE;;
 
 let compile_code_locs_ALL_DISTINCT = prove
  (`clos_call_compile do_call es = (xs,g,aux) /\
@@ -2438,11 +2441,11 @@ let every_Fn_SOME_collect_apps = prove
        every_Fn_SOME es /\ every_Fn_SOME [e])`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let every_Fn_SOME_intro_multi = prove
  (`!max_app es. every_Fn_SOME (intro_multi max_app es) <=>
   every_Fn_SOME es`,
   CHEAT_TAC);;
+add_simp every_Fn_SOME_intro_multi;;
 
 let set_code_locs_collect_apps = prove
  (`!max_app es e es' e'.
@@ -2453,31 +2456,31 @@ let set_code_locs_collect_apps = prove
          es))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let every_Fn_SOME_ncompile_inc = prove
  (`every_Fn_SOME (SND (clos_number_compile_inc x y))`,
   CHEAT_TAC);;
+add_simp every_Fn_SOME_ncompile_inc;;
 
-(* [simp] *)
 let every_Fn_vs_NONE_ncompile_inc = prove
  (`every_Fn_vs_NONE (SND (clos_number_compile_inc x y)) <=>
   every_Fn_vs_NONE y`,
   CHEAT_TAC);;
+add_simp every_Fn_vs_NONE_ncompile_inc;;
 
-(* [simp] *)
 let ncompile_inc_code_locs_distinct = prove
  (`ALL_DISTINCT (code_locs (SND (clos_number_compile_inc x y)))`,
   CHEAT_TAC);;
+add_simp ncompile_inc_code_locs_distinct;;
 
-(* [simp] *)
 let code_locs_FST_letop_compile_inc = prove
  (`code_locs (FST (clos_letop_compile_inc x)) = code_locs (FST x)`,
   CHEAT_TAC);;
+add_simp code_locs_FST_letop_compile_inc;;
 
-(* [simp] *)
 let code_locs_FST_ticks_compile_inc = prove
  (`code_locs (FST (clos_ticks_compile_inc x)) = code_locs (FST x)`,
   CHEAT_TAC);;
+add_simp code_locs_FST_ticks_compile_inc;;
 
 let code_locs_FST_SND_kcompile_inc = prove
  (`LIST_TO_BAG (code_locs (FST (SND (clos_known_compile_inc x y z)))) <=
@@ -2824,10 +2827,11 @@ let compile_common_semantics = prove
      (compile_common_inc c cc) es1`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let REPLICATE_1 = prove
  (`REPLICATE 1 x = [x]`,
   CHEAT_TAC);;
+add_simp REPLICATE_1;;
 
 (* compile_prog_semantics *)
 (* the names of record fields that this statement uses for
@@ -3479,7 +3483,7 @@ let clos_to_bvlProof_chain_exps_every_Fn_SOME = prove
            every_Fn_SOME (MAP (SND o SND) (chain_exps l es))`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C";
    "all";
@@ -3490,7 +3494,3 @@ let _ = do_list unhide_constant
    "parts";
    "syntax_ok";
    "update_tag"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

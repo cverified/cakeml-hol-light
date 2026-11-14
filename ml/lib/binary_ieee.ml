@@ -7,9 +7,8 @@
 
 needs "lib/integer_word.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: words real intreal pred_set
    set_relation arithmetic *)
 
@@ -26,7 +25,10 @@ let float_FIELDS = define_record "float"
    expands *)
 
 let float_value_INDUCT,float_value_RECURSION = define_datatype
-  "float_value = Float (real) | Infinity | NaN";;
+  "float_value =
+     Float real
+   | Infinity
+   | NaN";;
 
 (* HOL4 binary_ieeeScript.sml:44: the overload precision, which the
    port expands *)
@@ -123,8 +125,11 @@ let dividezero_flags_def = new_definition
   `dividezero_flags = flags_DivideByZero_fupd (K T) clear_flags`;;
 
 let rounding_INDUCT,rounding_RECURSION = define_datatype
-  "rounding = roundTiesToEven | roundTowardPositive | \
-   roundTowardNegative | roundTowardZero";;
+  "rounding =
+     roundTiesToEven
+   | roundTowardPositive
+   | roundTowardNegative
+   | roundTowardZero";;
 
 let is_closest_def = new_definition
   `is_closest s x a <=>
@@ -177,14 +182,16 @@ let round_def = new_definition
             float_is_finite a /\ float_to_real a <= x} x))`;;
 
 let fp_op_INDUCT,fp_op_RECURSION = define_datatype
-  "fp_op = binary_ieee_FP_Sqrt (rounding) (('t,'w)float) | \
-   binary_ieee_FP_Add (rounding) (('t,'w)float) (('t,'w)float) | \
-   binary_ieee_FP_Sub (rounding) (('t,'w)float) (('t,'w)float) | \
-   binary_ieee_FP_Mul (rounding) (('t,'w)float) (('t,'w)float) | \
-   binary_ieee_FP_Div (rounding) (('t,'w)float) (('t,'w)float) | \
-   binary_ieee_FP_MulAdd (rounding) (('t,'w)float) (('t,'w)float) \
-   (('t,'w)float) | binary_ieee_FP_MulSub (rounding) (('t,'w)float) \
-   (('t,'w)float) (('t,'w)float)";;
+  "fp_op =
+     binary_ieee_FP_Sqrt rounding (('t,'w)float)
+   | binary_ieee_FP_Add rounding (('t,'w)float) (('t,'w)float)
+   | binary_ieee_FP_Sub rounding (('t,'w)float) (('t,'w)float)
+   | binary_ieee_FP_Mul rounding (('t,'w)float) (('t,'w)float)
+   | binary_ieee_FP_Div rounding (('t,'w)float) (('t,'w)float)
+   | binary_ieee_FP_MulAdd rounding (('t,'w)float) (('t,'w)float)
+       (('t,'w)float)
+   | binary_ieee_FP_MulSub rounding (('t,'w)float) (('t,'w)float)
+       (('t,'w)float)";;
 
 let float_some_qnan_def = new_definition
   `float_some_qnan (fp_op:('t,'w)fp_op) =
@@ -387,7 +394,11 @@ let float_mul_add_def = new_definition
                r)`;;
 
 let float_compare_INDUCT,float_compare_RECURSION = define_datatype
-  "float_compare = LT | EQ | GT | UN";;
+  "float_compare =
+     LT
+   | EQ
+   | GT
+   | UN";;
 
 let float_compare_def = new_definition
   `float_compare (x:('t,'w)float) (y:('t,'w)float) =

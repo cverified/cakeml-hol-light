@@ -21,50 +21,47 @@ needs "compiler/encoders/asm/asmProps.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvi_inlineProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvi_inlineProof"
   ["backendProps"; "bviProps"; "bviSem"; "bvi_inline"];;
 
 let _ = do_list hide_constant ["error"];;
 
-(* [simp] *)
 let inline_exps_LENGTH = prove
  (`!cs es. LENGTH (inline_exps cs es) = LENGTH es`,
   CHEAT_TAC);;
+add_simp inline_exps_LENGTH;;
 
-(* [simp] *)
 let remove_ticks_exps_LENGTH = prove
  (`!es. LENGTH (remove_ticks_exps es) = LENGTH es`,
   CHEAT_TAC);;
+add_simp remove_ticks_exps_LENGTH;;
 
-(* [simp] *)
 let inline_exps_CONS = prove
  (`inline_exps cs (CONS x xs) = CONS (inline_exp cs x) (inline_exps cs
   xs)`,
   CHEAT_TAC);;
+add_simp inline_exps_CONS;;
 
 let inline_exps_MAP = prove
  (`!cs es. inline_exps cs es = MAP (inline_exp cs) es`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let inline_exps_REVERSE = prove
  (`!cs es. inline_exps cs (REVERSE es) = REVERSE (inline_exps cs es)`,
   CHEAT_TAC);;
+add_simp inline_exps_REVERSE;;
 
-(* [simp] *)
 let inline_exps_MAP_Var = prove
  (`!cs ns. inline_exps cs (MAP bvi_Var ns) = MAP bvi_Var ns`,
   CHEAT_TAC);;
+add_simp inline_exps_MAP_Var;;
 
-(* [simp] *)
 let inline_exps_GENLIST_Var = prove
  (`!cs n. inline_exps cs (list_of_seq bvi_Var n) = list_of_seq bvi_Var
   n`,
   CHEAT_TAC);;
+add_simp inline_exps_GENLIST_Var;;
 
 let incremental_wrapper_example = prove
  (`?cs p1 p2.
@@ -89,21 +86,21 @@ let canonical_wrapper_thm = prove
                 (REVERSE (list_of_seq bvi_Var rets))))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let wrapper_ok_inline_exp = prove
  (`wrapper_ok name arity body ==> inline_exp cs body = body`,
   CHEAT_TAC);;
+add_simp wrapper_ok_inline_exp;;
 
 let inline_all_MAP_FST = prove
  (`!cs prog. MAP FST (SND (inline_all cs prog)) = MAP FST prog`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let MAP_FST_remove_ticks_prog = prove
  (`!prog.
      MAP FST (MAP (\(name,arity,body).
        (name,arity,remove_ticks_exp body)) prog) = MAP FST prog`,
   CHEAT_TAC);;
+add_simp MAP_FST_remove_ticks_prog;;
 
 let compile_inc_MAP_FST = prove
  (`bvi_inline_compile_inc cs prog = (cs1,prog1) ==> MAP FST prog1 =
@@ -157,11 +154,11 @@ let cache_code_labels_insert = prove
        bviProps_get_code_labels body UNION cache_code_labels cs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let bvi_mk_tick_get_code_labels = prove
  (`!n e. bviProps_get_code_labels (bvi_mk_tick n e) =
   bviProps_get_code_labels e`,
   CHEAT_TAC);;
+add_simp bvi_mk_tick_get_code_labels;;
 
 let inline_exp_code_labels = prove
  (`(!cs e.
@@ -272,10 +269,10 @@ let exp_rel_evaluate_mono = prove
       ALL2 (bvi_inlineProof_exp_rel (state_code t1)) xs ys)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let exp_rel_refl = prove
  (`!c x. bvi_inlineProof_exp_rel c x x`,
   CHEAT_TAC);;
+add_simp exp_rel_refl;;
 
 let inline_call_none_exp_rel = prove
  (`subspt cs c /\ ALL2 (bvi_inlineProof_exp_rel c) es (inline_exps cs
@@ -485,7 +482,7 @@ let in_do_app_lemma = prove
 
 (* Inversion of [exp_rel] on each source constructor. [~inline] is why the
    Call clause has a second disjunct. *)
-(* [local,simp] *)
+(* [local] *)
 let exp_rel_inv = prove
  (`(bvi_inlineProof_exp_rel c (bvi_Var n:bvi_exp) y <=> y = (bvi_Var
   n:bvi_exp)) /\
@@ -524,6 +521,7 @@ let exp_rel_inv = prove
            = SOME (arity,body) /\
          LENGTH ys = arity))`,
   CHEAT_TAC);;
+add_simp exp_rel_inv;;
 
 (* The inlined form of a Call evaluates exactly like the Call it replaces:
    the extra environment entries are unreachable, and the two differ on a
@@ -610,10 +608,10 @@ let remove_state_rel_def = new_definition
        bviSem_state_compile_oracle s /\ bviSem_state_compile
      s = bvi_inlineProof_remove_ticks_cc (bviSem_state_compile t)`;;
 
-(* [simp] *)
 let remove_ticks_exps_NIL = prove
  (`remove_ticks_exps [] = []`,
   CHEAT_TAC);;
+add_simp remove_ticks_exps_NIL;;
 
 (* [local] *)
 let remove_state_rel_find_code_eq = prove
@@ -641,19 +639,21 @@ let evaluate_add_extra_clock = prove
        (res,state_clock_fupd (K (extra' + state_clock s1)) s1)`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let clean_prog_CONS = prove
  (`clean_prog [] = [] /\
    clean_prog (CONS p ps) = CONS ((I ## I ## remove_ticks_exp) p)
      (clean_prog ps)`,
   CHEAT_TAC);;
+add_simp clean_prog_CONS;;
 
-(* [local,simp] *)
+(* [local] *)
 let clean_prog_simps = prove
  (`MAP FST (clean_prog prog) = MAP FST prog /\
    sptree_map (I ## remove_ticks_exp) (fromAList prog) = fromAList
      (clean_prog prog)`,
   CHEAT_TAC);;
+add_simp clean_prog_simps;;
 
 (* [local] *)
 let remove_state_rel_do_install = prove
@@ -896,10 +896,6 @@ let compile_prog_semantics = prove
        bvi_inline_compile_inc cc) start`),
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["error"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

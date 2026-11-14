@@ -12,11 +12,8 @@
 needs "basis/pure/mlstring.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "ffi"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "ffi"
   ["misc"; "mlstring"];;
 
 (*
@@ -25,17 +22,24 @@ let _ = hol4_ancestors "ffi"
 *)
 
 let ffi_outcome_INDUCT,ffi_outcome_RECURSION = define_datatype
-  "ffi_outcome = FFI_failed | FFI_diverged";;
+  "ffi_outcome =
+     FFI_failed
+   | FFI_diverged";;
 
 let oracle_result_INDUCT,oracle_result_RECURSION = define_datatype
-  "oracle_result = Oracle_return ('ffi) (word8 list) | Oracle_final \
-   (ffi_outcome)";;
+  "oracle_result =
+     Oracle_return ('ffi) (word8 list)
+   | Oracle_final ffi_outcome";;
 
 let shmem_op_INDUCT,shmem_op_RECURSION = define_datatype
-  "shmem_op = MappedRead | MappedWrite";;
+  "shmem_op =
+     MappedRead
+   | MappedWrite";;
 
 let ffiname_INDUCT,ffiname_RECURSION = define_datatype
-  "ffiname = ffi_ExtCall (mlstring) | ffi_SharedMem (shmem_op)";;
+  "ffiname =
+     ffi_ExtCall mlstring
+   | ffi_SharedMem shmem_op";;
 
 (* HOL4 ffiScript.sml:31: the type abbreviation oracle_function,
    which the port expands *)
@@ -47,11 +51,12 @@ let ffiname_INDUCT,ffiname_RECURSION = define_datatype
  * returning map snd bytes2 in the mutable array. *)
 
 let io_event_INDUCT,io_event_RECURSION = define_datatype
-  "io_event = IO_event (ffiname) (word8 list) ((word8#word8) list)";;
+  "io_event =
+     IO_event ffiname (word8 list) ((word8#word8) list)";;
 
 let final_event_INDUCT,final_event_RECURSION = define_datatype
-  "final_event = Final_event (ffiname) (word8 list) (word8 list) \
-   (ffi_outcome)";;
+  "final_event =
+     Final_event ffiname (word8 list) (word8 list) ffi_outcome";;
 
 let ffi_state_FIELDS = define_record "ffi_state"
   ["oracle","ffiname->'ffi->word8 list->word8 list->'ffi oracle_result";
@@ -63,8 +68,9 @@ let initial_ffi_state_def = new_definition
      mk_ffi_state oc' ffi []`;;
 
 let ffi_result_INDUCT,ffi_result_RECURSION = define_datatype
-  "ffi_result = FFI_return ('ffi ffi_state) (word8 list) | FFI_final \
-   (final_event)";;
+  "ffi_result =
+     FFI_return ('ffi ffi_state) (word8 list)
+   | FFI_final final_event";;
 
 let call_FFI_def = new_definition
   `call_FFI (st:'ffi ffi_state) s conf bytes =
@@ -84,25 +90,27 @@ let call_FFI_def = new_definition
            FFI_return st bytes)`;;
 
 let outcome_INDUCT,outcome_RECURSION = define_datatype
-  "outcome = ffi_Success | ffi_Resource_limit_hit | ffi_FFI_outcome \
-   (final_event)";;
+  "outcome =
+     ffi_Success
+   | ffi_Resource_limit_hit
+   | ffi_FFI_outcome final_event";;
 
 (* A program can Diverge, Terminate, or Fail. We prove that Fail is
    avoided. For Diverge and Terminate, we keep track of what I/O
    events are valid I/O events for this behaviour. *)
 let behaviour_INDUCT,behaviour_RECURSION = define_datatype
-  "behaviour = \
-   // There cannot be any non-returning FFI calls in a diverging\n\
-   // exeuction. The list of I/O events can be finite or infinite,\n\
-   // hence the llist (lazy list) type.\n\
-   ffi_Diverge (io_event llist) | \
-   // Terminating executions can only perform a finite number of\n\
-   // FFI calls. The execution can be terminated by a non-returning\n\
-   // FFI call.\n\
-   ffi_Terminate (outcome) (io_event list) | \
-   // Failure is a behaviour which we prove cannot occur for any\n\
-   // well-typed program.\n\
-   ffi_Fail";;
+  "behaviour =
+     // There cannot be any non-returning FFI calls in a diverging
+     // exeuction. The list of I/O events can be finite or infinite,
+     // hence the llist (lazy list) type.
+     ffi_Diverge (io_event llist)
+     // Terminating executions can only perform a finite number of
+     // FFI calls. The execution can be terminated by a non-returning
+     // FFI call.
+   | ffi_Terminate outcome (io_event list)
+     // Failure is a behaviour which we prove cannot occur for any
+     // well-typed program.
+   | ffi_Fail";;
 
 (* trace-based semantics can be recovered as an instance of oracle-based
  * semantics as follows. *)
@@ -114,7 +122,3 @@ let trace_oracle_def = new_definition
        (if s = s' /\ MAP FST bytes2 = input /\ conf = conf' then
          Oracle_return (THE (LTL io_trace)) (MAP SND bytes2) else
            Oracle_final FFI_failed))`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -19,11 +19,8 @@ needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_gcFunctions"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_gcFunctions"
   ["data_to_word"; "gc_shared"; "wordSem"; "word_simpProof"];;
 
 let _ = do_list hide_constant ["shift"];;
@@ -44,12 +41,12 @@ let word_or_eq_0 = prove
 (* HOL4 word_gcFunctionsScript.sml:30: the ML values that the
    definitions below antiquote *)
 
-(* [simp] *)
 let shift_length_has_fp_ops = prove
  (`shift_length (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) = shift_length
   conf`,
   CHEAT_TAC);;
+add_simp shift_length_has_fp_ops;;
 
 (* -------------------------------------------------------
     definition and verification of GC functions
@@ -80,37 +77,37 @@ let decode_length_def = new_definition
 
 let word_gc_move_def = define_general
   [`word_gc_move conf (wordLang_Loc l1 l2,i,pa,old,m,dm) =
-  ((wordLang_Loc l1 l2:'a word_loc),i,pa,m,(l2 = 0))`;
+    ((wordLang_Loc l1 l2:'a word_loc),i,pa,m,(l2 = 0))`;
    `word_gc_move conf (wordLang_Word w,i,pa,old,m,dm) =
          (if (w && (n2w 1)) = (n2w 0) then ((wordLang_Word w:'a
-           word_loc),i,pa,m,T) else
+             word_loc),i,pa,m,T) else
            let c = (ptr_to_addr conf old w IN dm) in
            let v = m (ptr_to_addr conf old w) in
              if is_fwd_ptr v then
                (wordLang_Word (update_addr conf (theWord v >>> 2)
-                 w),i,pa,m,c) else
+                   w),i,pa,m,c) else
                let header_addr = ptr_to_addr conf old w in
                let c = (c /\ header_addr IN dm /\ isWord (m
-                 header_addr)) in
+                   header_addr)) in
                let len = decode_length conf (theWord (m
-                 header_addr)) in
+                   header_addr)) in
                let v = i + len + (n2w 1) in
                let (pa1,m1,c1) = memcpy (len + (n2w 1)) header_addr
-                 pa m dm in
+                   pa m dm in
                let c = (c /\ header_addr IN dm /\ c1) in
                let m1 = (header_addr =+ wordLang_Word (i << 2)) m1
-                 in
+                   in
                  (wordLang_Word (update_addr conf i
-                   w),v,pa1,m1,c))`];;
+                     w),v,pa1,m1,c))`];;
 
 let word_gen_gc_partial_move_def = define_general
   [`word_gen_gc_partial_move conf (wordLang_Loc l1
-  l2,i,pa,old,m,dm,gs,rs) = ((wordLang_Loc l1 l2:'a
-  word_loc),i,pa,m,(l2 = 0))`;
+    l2,i,pa,old,m,dm,gs,rs) = ((wordLang_Loc l1 l2:'a
+    word_loc),i,pa,m,(l2 = 0))`;
    `word_gen_gc_partial_move conf (wordLang_Word w,i,pa,old,m,dm,gs,rs)
-  =
+    =
        (if (w && (n2w 1)) = (n2w 0) then (wordLang_Word w,i,pa,m,T)
-         else
+           else
          let header_addr = ptr_to_addr conf old w in
          let tmp = header_addr - old in
            if tmp <+ gs \/ rs <=+ tmp then
@@ -119,19 +116,19 @@ let word_gen_gc_partial_move_def = define_general
              let v = m (ptr_to_addr conf old w) in
                if is_fwd_ptr v then
                  (wordLang_Word (update_addr conf (theWord v >>> 2)
-                   w),i,pa,m,c) else
+                     w),i,pa,m,c) else
                  let c = (c /\ header_addr IN dm /\ isWord (m
-                   header_addr)) in
+                     header_addr)) in
                  let len = decode_length conf (theWord (m
-                   header_addr)) in
+                     header_addr)) in
                  let v = i + len + (n2w 1) in
                  let (pa1,m1,c1) = memcpy (len + (n2w 1))
-                   header_addr pa m dm in
+                     header_addr pa m dm in
                  let c = (c /\ header_addr IN dm /\ c1) in
                  let m1 = (header_addr =+ wordLang_Word (i << 2)) m1
-                   in
+                     in
                    (wordLang_Word (update_addr conf i
-                     w),v,pa1,m1,c))`];;
+                       w),v,pa1,m1,c))`];;
 
 let _ = size_thms "word_loc";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -143,9 +140,9 @@ let word_gc_move_roots_def,word_gc_move_roots_ind = define_wf
   [`word_gc_move_roots conf ([],i,pa,old,m,dm) = ([],i,pa,m,T)`;
    `word_gc_move_roots conf (CONS w ws,i,pa,old,m,dm) =
          (let (w1,i1,pa1,m1,c1) = word_gc_move conf
-           (w,i,pa,old,m,dm) in
+             (w,i,pa,old,m,dm) in
          let (ws2,i2,pa2,m2,c2) = word_gc_move_roots conf
-           (ws,i1,pa1,old,m1,dm) in
+             (ws,i1,pa1,old,m1,dm) in
            (CONS w1 ws2,i2,pa2,m2,(c1 /\ c2)))`];;
 
 (* the first pass assumes the termination:
@@ -161,7 +158,6 @@ let word_gc_move_list_def,word_gc_move_list_ind = define_guess_cheat
         bytes_in_word,l - (n2w 1),i1,pa1,old,m1,dm) in
         (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2)))`];;
 
-let _ = size_thms "word_loc";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_gen_gc_partial_move_roots_def,
@@ -172,13 +168,13 @@ let word_gen_gc_partial_move_roots_def,
   (\x. 0)      (pair_size (\x. 0) (pair_size (\x. 0) (pair_size (\x. 0)
   (\x. 0)))))))      x1)`
   [`word_gen_gc_partial_move_roots conf ([],i,pa,old,m,dm,gs,rs) =
-  ([],i,pa,m,T)`;
+    ([],i,pa,m,T)`;
    `word_gen_gc_partial_move_roots conf (CONS w ws,i,pa,old,m,dm,gs,rs)
-  =
+    =
          (let (w1,i1,pa1,m1,c1) = word_gen_gc_partial_move conf
-           (w,i,pa,old,m,dm,gs,rs) in
+             (w,i,pa,old,m,dm,gs,rs) in
          let (ws2,i2,pa2,m2,c2) = word_gen_gc_partial_move_roots
-           conf (ws,i1,pa1,old,m1,dm,gs,rs) in
+             conf (ws,i1,pa1,old,m1,dm,gs,rs) in
            (CONS w1 ws2,i2,pa2,m2,(c1 /\ c2)))`];;
 
 (* the first pass assumes the termination:
@@ -396,38 +392,37 @@ let word_gen_gc_move_def = define_general
          ((wordLang_Loc l1 l2:'a word_loc),i,pa,ib,pb,m,(l2 = 0))`;
    `word_gen_gc_move conf (wordLang_Word w,i,pa,ib,pb,old,m,dm) =
          (if ((n2w 1) && w) = (n2w 0) then ((wordLang_Word w:'a
-           word_loc),i,pa,ib,pb,m,T) else
+             word_loc),i,pa,ib,pb,m,T) else
            let c = (ptr_to_addr conf old w IN dm) in
            let v = m (ptr_to_addr conf old w) in
            let c = (c /\ isWord v) in
              if is_fwd_ptr v then
                (wordLang_Word (update_addr conf (theWord v >>> 2)
-                 w),i,pa,ib,pb,m,c) else
+                   w),i,pa,ib,pb,m,c) else
                let header_addr = ptr_to_addr conf old w in
                let c = (c /\ header_addr IN dm /\ isWord (m
-                 header_addr)) in
+                   header_addr)) in
                let len = decode_length conf (theWord (m
-                 header_addr)) in
+                   header_addr)) in
                  if is_ref_header (theWord v) then
                    let v = ib - (len + (n2w 1)) in
                    let pb1 = pb - (len + (n2w 1)) * bytes_in_word in
                    let (_7,m1,c1) = memcpy (len + (n2w 1))
-                     header_addr pb1 m dm in
+                       header_addr pb1 m dm in
                    let c = (c /\ header_addr IN dm /\ c1) in
                    let m1 = (header_addr =+ wordLang_Word (v << 2))
-                     m1 in
+                       m1 in
                      (wordLang_Word (update_addr conf v
-                       w),i,pa,v,pb1,m1,c) else
+                         w),i,pa,v,pb1,m1,c) else
                   let v = i + len + (n2w 1) in
                   let (pa1,m1,c1) = memcpy (len + (n2w 1))
-                    header_addr pa m dm in
+                      header_addr pa m dm in
                   let c = (c /\ header_addr IN dm /\ c1) in
                   let m1 = (header_addr =+ wordLang_Word (i << 2))
-                    m1 in
+                      m1 in
                     (wordLang_Word (update_addr conf i
-                      w),v,pa1,ib,pb,m1,c))`];;
+                        w),v,pa1,ib,pb,m1,c))`];;
 
-let _ = size_thms "word_loc";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_gen_gc_move_roots_def,word_gen_gc_move_roots_ind = define_wf
@@ -436,12 +431,12 @@ let word_gen_gc_move_roots_def,word_gen_gc_move_roots_ind = define_wf
   (\x. 0)      (pair_size (\x. 0) (pair_size (\x. 0) (pair_size (\x. 0)
   (\x. 0)))))))      x1)`
   [`word_gen_gc_move_roots conf ([],i,pa,ib,pb,old,m,dm) =
-  ([],i,pa,ib,pb,m,T)`;
+    ([],i,pa,ib,pb,m,T)`;
    `word_gen_gc_move_roots conf (CONS w ws,i,pa,ib,pb,old,m,dm) =
          (let (w1,i1,pa1,ib,pb,m1,c1) = word_gen_gc_move conf
-           (w,i,pa,ib,pb,old,m,dm) in
+             (w,i,pa,ib,pb,old,m,dm) in
          let (ws2,i2,pa2,ib,pb,m2,c2) = word_gen_gc_move_roots conf
-           (ws,i1,pa1,ib,pb,old,m1,dm) in
+             (ws,i1,pa1,ib,pb,old,m1,dm) in
            (CONS w1 ws2,i2,pa2,ib,pb,m2,(c1 /\ c2)))`];;
 
 (* the first pass assumes the termination:
@@ -660,164 +655,160 @@ let word_gc_fun_LENGTH = prove
   CHEAT_TAC);;
 
 (* lemmas about has_fp_ops *)
-(* [simp] *)
 let word_gc_fun_assum_has_fp_ops = prove
  (`word_gc_fun_assum (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) s =
     word_gc_fun_assum conf s`,
   CHEAT_TAC);;
+add_simp word_gc_fun_assum_has_fp_ops;;
 
-(* [simp] *)
 let word_gc_move_has_fp_ops = prove
  (`!x. word_gc_move (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
         word_gc_move conf x`,
   CHEAT_TAC);;
+add_simp word_gc_move_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_move_has_fp_ops = prove
  (`!x. word_gen_gc_move (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
         word_gen_gc_move conf x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_move_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_partial_move_has_fp_ops = prove
  (`!x. word_gen_gc_partial_move (data_to_word_config_has_fp_tern_fupd (K
   b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
         word_gen_gc_partial_move conf x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_partial_move_has_fp_ops;;
 
-(* [simp] *)
 let word_gc_move_list_has_fp_ops = prove
  (`!conf x. word_gc_move_list (data_to_word_config_has_fp_tern_fupd (K
   b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
              word_gc_move_list conf x`,
   CHEAT_TAC);;
+add_simp word_gc_move_list_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_move_list_has_fp_ops = prove
  (`!conf x. word_gen_gc_move_list (data_to_word_config_has_fp_tern_fupd
   (K b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
              word_gen_gc_move_list conf x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_move_list_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_partial_move_list_has_fp_ops = prove
  (`!conf x. word_gen_gc_partial_move_list
   (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
              word_gen_gc_partial_move_list conf x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_partial_move_list_has_fp_ops;;
 
-(* [simp] *)
 let word_gc_move_roots_has_fp_ops = prove
  (`!conf x. word_gc_move_roots (data_to_word_config_has_fp_tern_fupd (K
   b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
              word_gc_move_roots conf x`,
   CHEAT_TAC);;
+add_simp word_gc_move_roots_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_move_roots_has_fp_ops = prove
  (`!conf x. word_gen_gc_move_roots (data_to_word_config_has_fp_tern_fupd
   (K b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
              word_gen_gc_move_roots conf x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_move_roots_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_partial_move_roots_has_fp_ops = prove
  (`!conf x. word_gen_gc_partial_move_roots
   (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
              word_gen_gc_partial_move_roots conf x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_partial_move_roots_has_fp_ops;;
 
-(* [simp] *)
 let word_gc_move_loop_has_fp_ops = prove
  (`!n conf x. word_gc_move_loop n (data_to_word_config_has_fp_tern_fupd
   (K b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
                word_gc_move_loop n conf x`,
   CHEAT_TAC);;
+add_simp word_gc_move_loop_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_partial_move_data_has_fp_ops = prove
  (`!n conf x. word_gen_gc_partial_move_data
   (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
                word_gen_gc_partial_move_data conf n x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_partial_move_data_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_move_data_has_fp_ops = prove
  (`!n conf x. word_gen_gc_move_data
   (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
                word_gen_gc_move_data conf n x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_move_data_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_move_refs_has_fp_ops = prove
  (`!n conf x. word_gen_gc_move_refs
   (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
                word_gen_gc_move_refs conf n x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_move_refs_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_partial_move_ref_list_has_fp_ops = prove
  (`!n conf x. word_gen_gc_partial_move_ref_list n
   (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
                word_gen_gc_partial_move_ref_list n conf x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_partial_move_ref_list_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_move_loop_has_fp_ops = prove
  (`!n conf x. word_gen_gc_move_loop
   (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
                word_gen_gc_move_loop conf n x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_move_loop_has_fp_ops;;
 
-(* [simp] *)
 let word_full_gc_has_fp_ops = prove
  (`!x. word_full_gc (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
         word_full_gc conf x`,
   CHEAT_TAC);;
+add_simp word_full_gc_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_partial_full_has_fp_ops = prove
  (`!x. word_gen_gc_partial_full (data_to_word_config_has_fp_tern_fupd (K
   b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
         word_gen_gc_partial_full conf x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_partial_full_has_fp_ops;;
 
-(* [simp] *)
 let word_gen_gc_has_fp_ops = prove
  (`!x. word_gen_gc (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
         word_gen_gc conf x`,
   CHEAT_TAC);;
+add_simp word_gen_gc_has_fp_ops;;
 
-(* [simp] *)
 let glob_real_has_fp_ops = prove
  (`glob_real (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x y =
    glob_real conf x y`,
   CHEAT_TAC);;
+add_simp glob_real_has_fp_ops;;
 
-(* [simp] *)
 let word_gc_fun_has_fp_ops = prove
  (`word_gc_fun (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) = word_gc_fun
   conf`,
   CHEAT_TAC);;
+add_simp word_gc_fun_has_fp_ops;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["shift"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

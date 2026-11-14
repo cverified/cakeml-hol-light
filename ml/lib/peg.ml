@@ -8,17 +8,21 @@
 needs "lib/grammar.ml";;
 needs "lib/location.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: finite_map list rich_list *)
 
 let pegsym_INDUCT,pegsym_RECURSION = define_datatype
-  "pegsym = peg_empty ('c) | peg_any ('a#locs->'c) | peg_tok \
-   ('a->bool) ('a#locs->'c) | peg_nt ('b+num) ('c->'c) | peg_seq \
-   (pegsym) (pegsym) ('c->'c->'c) | peg_choice (pegsym) (pegsym) \
-   ('c+'c->'c) | peg_rpt (pegsym) ('c list->'c) | peg_not (pegsym) \
-   ('c) | peg_error ('e)";;
+  "pegsym =
+     peg_empty ('c)
+   | peg_any ('a#locs->'c)
+   | peg_tok ('a->bool) ('a#locs->'c)
+   | peg_nt ('b+num) ('c->'c)
+   | peg_seq pegsym pegsym ('c->'c->'c)
+   | peg_choice pegsym pegsym ('c+'c->'c)
+   | peg_rpt pegsym ('c list->'c)
+   | peg_not pegsym ('c)
+   | peg_error ('e)";;
 
 let peg_FIELDS = define_record "peg"
   ["start","('a,'b,'c,'e)pegsym";
@@ -29,18 +33,22 @@ let peg_FIELDS = define_record "peg"
    "rules","('b+num,('a,'b,'c,'e)pegsym)fmap"];;
 
 let pegresult_INDUCT,pegresult_RECURSION = define_datatype
-  "pegresult = peg_Success ('a) ('c) ((locs#'e) option) | peg_Failure \
-   (locs) ('e)";;
+  "pegresult =
+     peg_Success ('a) ('c) ((locs#'e) option)
+   | peg_Failure locs ('e)";;
 let isSuccess_def = define_cases
   [`isSuccess (peg_Success _4 _5 _6) = T`;
    `isSuccess (peg_Failure _7 _8) = F`];;
+add_simp isSuccess_def;;
 let isFailure_def = define_cases
   [`isFailure (peg_Success _12 _13 _14) = F`;
    `isFailure (peg_Failure _15 _16) = T`];;
+add_simp isFailure_def;;
 
 let resultmap_def = define_cases
   [`resultmap f (peg_Success a c eo) = peg_Success a (f c) eo`;
    `resultmap f (peg_Failure fl fe) = peg_Failure fl fe`];;
+add_simp resultmap_def;;
 
 let MAXerr_def = new_definition
   `MAXerr (fl1,fe1) (fl2,fe2) =
@@ -200,11 +208,12 @@ let subexprs_def,subexprs_ind = define_wf
    `subexprs (peg_nt s f) = {peg_nt s f}`;
    `subexprs (peg_not e c) = peg_not e c INSERT subexprs e`;
    `subexprs (peg_seq e1 e2 f3) = peg_seq e1 e2 f3 INSERT (subexprs
-  e1 UNION subexprs e2)`;
+    e1 UNION subexprs e2)`;
    `subexprs (peg_choice e1 e2 f4) =
         peg_choice e1 e2 f4 INSERT (subexprs e1 UNION subexprs
-          e2)`;
+            e2)`;
    `subexprs (peg_rpt e f5) = peg_rpt e f5 INSERT subexprs e`];;
+add_simp subexprs_def;;
 
 let gexprs_def = new_definition
   `Gexprs G = UNIONS (IMAGE subexprs (peg_start G INSERT FRANGE
@@ -224,4 +233,4 @@ let ignoreR_def = new_definition
 let choicel_def,choicel_ind = define_rec
   [`peg_choicel [] = peg_not (peg_empty ARB) ARB`;
    `peg_choicel (CONS h t) = peg_choice h (peg_choicel t) (\s.
-  sum_CASE s I I)`];;
+    sum_CASE s I I)`];;

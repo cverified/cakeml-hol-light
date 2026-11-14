@@ -8,9 +8,8 @@
 
 (* this file needs nothing of the port *)
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: rich_list combin pair relation
    list arithmetic pred_set *)
 
@@ -21,7 +20,8 @@ let SORTED_DEF,SORTED_DEF_ind = define_guess
   [`SORTED R [] = T`;
    `SORTED R [x] = T`;
    `SORTED R (CONS x (CONS y rst)) <=> R x y /\ SORTED R (CONS y
-  rst)`];;
+    rst)`];;
+add_simp SORTED_DEF;;
 
 let SORTS_DEF = new_definition
   `SORTS f R <=> (!l. PERM l (f R l) /\ SORTED R (f R l))`;;
@@ -30,7 +30,7 @@ let PART_DEF,PART_DEF_ind = define_rec
   [`PART P [] l1 l2 = (l1,l2)`;
    `PART P (CONS h rst) l1 l2 =
               (if P h then PART P rst (CONS h l1) l2 else PART
-                P rst l1 (CONS h l2))`];;
+                  P rst l1 (CONS h l2))`];;
 
 let PARTITION_DEF = new_definition
   `PARTITION P l = PART P l [] []`;;

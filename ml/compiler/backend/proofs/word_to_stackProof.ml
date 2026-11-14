@@ -34,11 +34,8 @@ needs "misc/misc.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 (* for extend_with_resource_limit *)
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_to_stackProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_to_stackProof"
   ["backend_common"; "mllist"; "semanticsProps"; "stackLang";
    "stackProps"; "stackSem"; "wordProps"; "wordSem"; "word_to_stack"];;
 
@@ -132,16 +129,17 @@ let set_var_cancel_word = prove
   b s`,
   CHEAT_TAC);;
 
-(* get_var_set_var[simp] *)
+(* get_var_set_var *)
 let word_to_stackProof_get_var_set_var = prove
  (`stackSem_get_var k (stackSem_set_var k v st) = SOME v`,
   CHEAT_TAC);;
+add_simp word_to_stackProof_get_var_set_var;;
 
-(* [simp] *)
 let state_with_const = prove
  (`(stackSem_state_clock_fupd (K (stackSem_state_clock t)) t) =
   (t:('a,'c,'ffi)stackSem_state)`,
   CHEAT_TAC);;
+add_simp state_with_const;;
 
 let set_store_set_var = prove
  (`stackSem_set_store a b (stackSem_set_var c d e) = stackSem_set_var
@@ -267,7 +265,7 @@ let LLOOKUP_TAKE = prove
 let index_list_def,index_list_ind = define_rec
   [`index_list [] n = []`;
    `index_list (CONS x xs) n = CONS (n + LENGTH xs,x) (index_list
-  xs n)`];;
+    xs n)`];;
 
 let LENGTH_index_list = prove
  (`!l n. LENGTH (index_list l n) = LENGTH l`,
@@ -377,10 +375,10 @@ let filter_bitmap_MEM = prove
    MEM x ls' ==> MEM x ls`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let TAKE_LUPDATE = prove
  (`!xs n x i. TAKE n (LUPDATE x i xs) = LUPDATE x i (TAKE n xs)`,
   CHEAT_TAC);;
+add_simp TAKE_LUPDATE;;
 
 (* [local] *)
 let DROP_LUPDATE_lemma1 = prove
@@ -409,18 +407,18 @@ let word_to_stackProof_MIN_ADD = prove
 let list_LUPDATE_def,list_LUPDATE_ind = define_rec
   [`list_LUPDATE [] n ys = ys`;
    `list_LUPDATE (CONS x xs) n ys = list_LUPDATE xs (n + 1)
-  (LUPDATE x n ys)`];;
+    (LUPDATE x n ys)`];;
 
-(* [simp] *)
 let LENGTH_list_LUPDATE = prove
  (`!xs n ys. LENGTH (list_LUPDATE xs n ys) = LENGTH ys`,
   CHEAT_TAC);;
+add_simp LENGTH_list_LUPDATE;;
 
-(* [simp] *)
 let TAKE_list_LUPDATE = prove
  (`!ys xs n i. TAKE n (list_LUPDATE ys i xs) = list_LUPDATE ys i (TAKE
   n xs)`,
   CHEAT_TAC);;
+add_simp TAKE_list_LUPDATE;;
 
 (* [local] *)
 let LLOOKUP_list_LUPDATE_IGNORE = prove
@@ -445,10 +443,10 @@ let DROP_list_LUPDATE_IGNORE = prove
        DROP n (list_LUPDATE xs i ys) = DROP n ys`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let list_LUPDATE_NIL = prove
  (`!xs i. list_LUPDATE xs i [] = []`,
   CHEAT_TAC);;
+add_simp list_LUPDATE_NIL;;
 
 (* [local] *)
 let LUPDATE_TAKE_LEMMA = prove
@@ -462,11 +460,11 @@ let list_LUPDATE_TAKE_DROP = prove
          (DROP n ys))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let list_LUPDATE_0_CONS = prove
  (`!xs x ys y. list_LUPDATE (CONS x xs) 0 (CONS y ys) = CONS x
   (list_LUPDATE xs 0 ys)`,
   CHEAT_TAC);;
+add_simp list_LUPDATE_0_CONS;;
 
 let list_LUPDATE_APPEND = prove
  (`!xs ys zs.
@@ -1338,11 +1336,12 @@ let compile_result_def = define_cases
    `compile_result (wordSem_Exception w1 w2) = stackSem_Exception w1`;
    `compile_result wordSem_TimeOut = stackSem_TimeOut`;
    `compile_result wordSem_NotEnoughSpace = stackSem_Halt
-  (wordLang_Word (n2w 1))`;
+    (wordLang_Word (n2w 1))`;
    `compile_result (wordSem_FinalFFI f) = stackSem_FinalFFI f`;
    `compile_result (wordSem_Break k) = stackSem_Break k`;
    `compile_result (wordSem_Continue k) = stackSem_Continue k`;
    `compile_result wordSem_Error = stackSem_Error`];;
+add_simp compile_result_def;;
 
 (* [local] *)
 let Halt_EQ_compile_result = prove
@@ -1557,7 +1556,6 @@ let state_rel_get_var_imp2 = prove
      t) = v)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let state_rel_set_var_k = prove
  (`(word_to_stackProof_state_rel ac k f f' s (stackSem_set_var (k + 1) v
   t) lens extra <=>
@@ -1566,6 +1564,7 @@ let state_rel_set_var_k = prove
      lens extra <=>
     word_to_stackProof_state_rel ac k f f' s t lens extra)`,
   CHEAT_TAC);;
+add_simp state_rel_set_var_k;;
 
 (* state_rel_set_var *)
 let word_to_stackProof_state_rel_set_var = prove
@@ -1923,11 +1922,12 @@ let map_var_def,map_var_ind = define_shaped_rec
   [`map_var f (wordLang_Var num') = wordLang_Var (f num')`;
    `map_var f (wordLang_Load exp) = wordLang_Load (map_var f exp)`;
    `map_var f (wordLang_Op wop ls) = wordLang_Op wop (MAP (map_var f)
-  ls)`;
+    ls)`;
    `map_var f (wordLang_Shift sh e1 e2) = wordLang_Shift sh (map_var
-  f e1) (map_var f e2)`;
+    f e1) (map_var f e2)`;
    `map_var f (wordLang_Const c) = (wordLang_Const c:'a wordLang_exp)`;
    `map_var f (wordLang_Lookup v) = wordLang_Lookup v`];;
+add_simp map_var_def;;
 
 let the_words_EVERY_IS_SOME_Word = prove
  (`!ls x. the_words ls = SOME x ==> (!a. MEM a ls ==> (?w. a = SOME
@@ -3122,29 +3122,33 @@ let stack_move_no_labs = prove
    stackProps_extract_labels (stack_move n a b c p) = []`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let extract_labels_copy_ret_aux = prove
  (`!k f n. stackProps_extract_labels (copy_ret_aux k f n) = []`,
   CHEAT_TAC);;
+add_simp extract_labels_copy_ret_aux;;
 
-(* [local,simp] *)
+(* [local] *)
 let extract_labels_copy_ret = prove
  (`stackProps_extract_labels (copy_ret perf b kf vs kont) =
   stackProps_extract_labels kont`,
   CHEAT_TAC);;
+add_simp extract_labels_copy_ret;;
 
-(* [local,simp] *)
+(* [local] *)
 let extract_labels_wStackLoad_Skip = prove
  (`stackProps_extract_labels (wStackLoad xs wordLang_Skip) = []`,
   CHEAT_TAC);;
+add_simp extract_labels_wStackLoad_Skip;;
 
 
-(* [local,simp] *)
+(* [local] *)
 let extract_labels_stack_move_StackAlloc = prove
  (`!n start' offset i.
      stackProps_extract_labels (stack_move n start' offset i
        (stackLang_StackAlloc k)) = []`,
   CHEAT_TAC);;
+add_simp extract_labels_stack_move_StackAlloc;;
 
 let word_to_stack_lab_pres = prove
  (`!ac perf p bs kf.
@@ -3204,23 +3208,26 @@ let wLive_stack_asm_name = prove
    stack_asm_name c q1`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let stack_move_stack_asm_name = prove
  (`!n start' offset i p.
    stack_asm_name c (stack_move n start' offset i p) <=>
      stack_asm_name c p`,
   CHEAT_TAC);;
+add_simp stack_move_stack_asm_name;;
 
-(* [local,simp] *)
+(* [local] *)
 let copy_ret_aux_stack_asm_name = prove
  (`!k f n. stack_asm_name c (copy_ret_aux k f n)`,
   CHEAT_TAC);;
+add_simp copy_ret_aux_stack_asm_name;;
 
-(* [local,simp] *)
+(* [local] *)
 let copy_ret_stack_asm_name = prove
  (`stack_asm_name c (copy_ret perf b kf vs kont) <=> stack_asm_name c
   kont`,
   CHEAT_TAC);;
+add_simp copy_ret_stack_asm_name;;
 
 let word_to_stack_stack_asm_name_lem = prove
  (`!c perf p bs kf.
@@ -3307,10 +3314,11 @@ let alloc_arg_copy_ret_aux = prove
    alloc_arg (copy_ret_aux k f n)`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let alloc_arg_copy_ret = prove
  (`(alloc_arg (copy_ret perf b kf vs kont) <=> alloc_arg kont)`,
   CHEAT_TAC);;
+add_simp alloc_arg_copy_ret;;
 
 let word_to_stack_alloc_arg = prove
  (`!c perf p n args.
@@ -3357,11 +3365,12 @@ let copy_ret_aux_call_args = prove
    call_args (copy_ret_aux k f n) 1 2 3 4 0`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let copy_ret_call_args = prove
  (`call_args (copy_ret perf b kf vs kont) 1 2 3 4 0 <=>
    call_args kont 1 2 3 4 0`,
   CHEAT_TAC);;
+add_simp copy_ret_call_args;;
 
 let word_to_stack_call_args = prove
  (`!c perf p n args.
@@ -3440,13 +3449,14 @@ let get_code_handler_labels_copy_ret_aux = prove
    stack_get_handler_labels m (copy_ret_aux k f n) = {}`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let get_code_handler_labels_copy_ret = prove
  (`stackProps_get_code_labels (copy_ret perf b kf vs kont) =
    stackProps_get_code_labels kont /\
    stack_get_handler_labels m (copy_ret perf b kf vs kont) =
    stack_get_handler_labels m kont`,
   CHEAT_TAC);;
+add_simp get_code_handler_labels_copy_ret;;
 
 let word_to_stack_comp_code_labels = prove
  (`!c perf prog bs kf n.
@@ -3546,11 +3556,12 @@ let copy_ret_aux_no_install = prove
    stackProps_no_install (copy_ret_aux k f n)`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let copy_ret_no_install = prove
  (`stackProps_no_install (copy_ret perf b kf vs kont) <=>
    stackProps_no_install kont`,
   CHEAT_TAC);;
+add_simp copy_ret_no_install;;
 
 let comp_no_install = prove
  (`!ac perf prog bs kf prog' bs'.
@@ -3602,11 +3613,12 @@ let copy_ret_aux_no_shmemop = prove
    no_shmemop (copy_ret_aux k f n)`,
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let copy_ret_no_shmemop = prove
  (`no_shmemop (copy_ret perf b kf vs kont) <=>
    no_shmemop kont`,
   CHEAT_TAC);;
+add_simp copy_ret_no_shmemop;;
 
 (* [local] *)
 let perf_call_prefix_no_shmemop = prove
@@ -3661,11 +3673,7 @@ let word_to_stack_compile_no_install = prove
    ALL (\(n,x). stackProps_no_install x) p`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["every";
    "fv"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

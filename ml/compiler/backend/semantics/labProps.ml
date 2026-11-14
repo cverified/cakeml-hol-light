@@ -21,11 +21,8 @@ needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "labProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "labProps"
   ["ffi"; "labSem"; "lab_to_target"; "semanticsProps"; "wordSem"];;
 
 (* this file reads the name of a record field as a variable and
@@ -48,6 +45,7 @@ let labProps_extract_labels_def,labProps_extract_labels_ind = define_wf
         | CONS (labLang_Label l1 l2 _2) xs -> CONS (l1,l2)
           (labProps_extract_labels xs)
         | (CONS x xs) -> labProps_extract_labels xs`];;
+add_simp labProps_extract_labels_def;;
 
 (* HOL4 labPropsScript.sml:18: ML code, not ported *)
 
@@ -64,6 +62,7 @@ let labs_of_def = new_definition
       | (labLang_Jump (labLang_Lab n1 n2)) -> {(n1,n2)}
       | (labLang_JumpCmp _5 _6 _7 (labLang_Lab n1 n2)) -> {(n1,n2)}
       | _8 -> {}`;;
+add_simp labs_of_def;;
 
 let line_get_labels_def = new_definition
   `line_get_labels x1 =
@@ -89,6 +88,7 @@ let line_get_code_labels_def = new_definition
       match x1 with
         labLang_Label _16 l _17 -> {l}
       | _18 -> {}`;;
+add_simp line_get_code_labels_def;;
 
 let sec_get_code_labels_def = define_general
   [`sec_get_code_labels (Section n1 lines) =
@@ -100,10 +100,10 @@ let labProps_get_code_labels_def = new_definition
   `labProps_get_code_labels code = UNIONS (IMAGE sec_get_code_labels
   (set_of_list code))`;;
 
-(* [simp] *)
 let get_code_labels_nil = prove
  (`labProps_get_code_labels [] = {}`,
   CHEAT_TAC);;
+add_simp get_code_labels_nil;;
 
 let get_code_labels_cons = prove
  (`labProps_get_code_labels (CONS s secs) = sec_get_code_labels s
@@ -114,32 +114,32 @@ let sec_ends_with_label_def = define_general
   [`sec_ends_with_label (Section _19 ls) <=>
      ~(NULL ls) /\ is_Label (LAST ls)`];;
 
-(* [simp] *)
 let reg_imm_with_clock = prove
  (`labSem_reg_imm r (state_clock_fupd (K z) s) = labSem_reg_imm r s`,
   CHEAT_TAC);;
+add_simp reg_imm_with_clock;;
 
-(* [simp] *)
 let asm_inst_with_clock = prove
  (`asm_inst i (state_clock_fupd (K z) s) = state_clock_fupd (K z)
   (asm_inst i s)`,
   CHEAT_TAC);;
+add_simp asm_inst_with_clock;;
 
-(* [simp] *)
 let read_reg_inc_pc = prove
  (`regs (inc_pc s) r = regs s r`,
   CHEAT_TAC);;
+add_simp read_reg_inc_pc;;
 
-(* with_same_clock[simp] *)
+(* with_same_clock *)
 let labProps_with_same_clock = prove
  (`(state_clock_fupd (K (state_clock s)) s) = s`,
   CHEAT_TAC);;
+add_simp labProps_with_same_clock;;
 
 let inc_pc_dec_clock = prove
  (`inc_pc (labSem_dec_clock x) = labSem_dec_clock (inc_pc x)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let update_simps = prove
  (`(state_ffi (labSem_upd_pc x s) = state_ffi s) /\
     (state_ffi (labSem_dec_clock s) = state_ffi s) /\
@@ -198,8 +198,9 @@ let update_simps = prove
     (pc (inc_pc s) = pc s + 1) /\
     (state_ffi (inc_pc s) = state_ffi s)`,
   CHEAT_TAC);;
+add_simp update_simps;;
 
-(* binop_upd_consts[simp] *)
+(* binop_upd_consts *)
 let labProps_binop_upd_consts = prove
  (`labSem_state_mem_domain
       (labSem_binop_upd a b c d x) = labSem_state_mem_domain x /\
@@ -230,8 +231,9 @@ let labProps_binop_upd_consts = prove
       (labSem_binop_upd a b c d x) = pc x /\ state_ffi
       (labSem_binop_upd a b c d x) = state_ffi x`,
   CHEAT_TAC);;
+add_simp labProps_binop_upd_consts;;
 
-(* arith_upd_consts[simp] *)
+(* arith_upd_consts *)
 let labProps_arith_upd_consts = prove
  (`labSem_state_mem_domain
       (labSem_arith_upd a x) = labSem_state_mem_domain x /\
@@ -260,8 +262,9 @@ let labProps_arith_upd_consts = prove
       (labSem_arith_upd a x) = pc x /\ state_ffi
       (labSem_arith_upd a x) = state_ffi x`,
   CHEAT_TAC);;
+add_simp labProps_arith_upd_consts;;
 
-(* fp_upd_consts[simp] *)
+(* fp_upd_consts *)
 let labProps_fp_upd_consts = prove
  (`labSem_state_mem_domain
       (labSem_fp_upd f x) = labSem_state_mem_domain x /\
@@ -290,16 +293,17 @@ let labProps_fp_upd_consts = prove
       (labSem_fp_upd f x) = pc x /\ state_ffi
       (labSem_fp_upd f x) = state_ffi x`,
   CHEAT_TAC);;
+add_simp labProps_fp_upd_consts;;
 
 let line_length_def = define_cases
   [`line_length (labLang_Label k1 k2 l) = (if l = 0 then 0 else 1)`;
    `line_length (labLang_Asm b bytes l) = LENGTH bytes`;
    `line_length (labLang_LabAsm a w bytes l) = LENGTH bytes`];;
 
-(* [simp] *)
 let LENGTH_line_bytes = prove
  (`!x2. ~(is_Label x2) ==> (LENGTH (line_bytes x2) = line_length x2)`,
   CHEAT_TAC);;
+add_simp LENGTH_line_bytes;;
 
 (* HOL4 labPropsScript.sml:271-277: a theorem that HOL4 states as the
    value of an ML expression: case_eq_thms *)
@@ -340,7 +344,6 @@ let align_dm_def = new_definition
      (labSem_state_mem_domain_fupd (K (labSem_state_mem_domain s
        INTER byte_aligned)) s)`;;
 
-(* [simp] *)
 let align_dm_const = prove
  (`state_clock
       (align_dm s) = state_clock s /\ pc
@@ -364,47 +367,48 @@ let align_dm_const = prove
       (align_dm s) = state_ffi s /\ failed
       (align_dm s) = failed s`,
   CHEAT_TAC);;
+add_simp align_dm_const;;
 
 let align_dm_with_clock = prove
  (`align_dm (state_clock_fupd (K k) s) = state_clock_fupd (K k)
   (align_dm s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let asm_fetch_align_dm = prove
  (`asm_fetch (align_dm s) = asm_fetch s`,
   CHEAT_TAC);;
+add_simp asm_fetch_align_dm;;
 
-(* [simp] *)
 let read_reg_align_dm = prove
  (`regs (align_dm s) n = regs s n`,
   CHEAT_TAC);;
+add_simp read_reg_align_dm;;
 
-(* [simp] *)
 let upd_reg_align_dm = prove
  (`labSem_upd_reg x y (align_dm s) = align_dm (labSem_upd_reg x y s)`,
   CHEAT_TAC);;
+add_simp upd_reg_align_dm;;
 
-(* [simp] *)
 let upd_mem_align_dm = prove
  (`labSem_upd_mem x y (align_dm s) = align_dm (labSem_upd_mem x y s)`,
   CHEAT_TAC);;
+add_simp upd_mem_align_dm;;
 
-(* [simp] *)
 let binop_upd_align_dm = prove
  (`labSem_binop_upd x y z w (align_dm s) = align_dm (labSem_binop_upd
   x y z w s)`,
   CHEAT_TAC);;
+add_simp binop_upd_align_dm;;
 
-(* [simp] *)
 let reg_imm_align_dm = prove
  (`labSem_reg_imm r (align_dm s) = labSem_reg_imm r s`,
   CHEAT_TAC);;
+add_simp reg_imm_align_dm;;
 
-(* [simp] *)
 let assert_align_dm = prove
  (`labSem_assert b (align_dm s) = align_dm (labSem_assert b s)`,
   CHEAT_TAC);;
+add_simp assert_align_dm;;
 
 (* HOL4 labPropsScript.sml:517-522: a theorem whose statement HOL
    Light does not read (tools/unstated.py): arith_upd_align_dm *)
@@ -495,27 +499,26 @@ let asm_inst_align_dm = prove
 (* HOL4 labPropsScript.sml:728-732: a theorem whose statement HOL
    Light does not read (tools/unstated.py): dec_clock_align_dm *)
 
-(* [simp] *)
 let inc_pc_align_dm = prove
  (`inc_pc (align_dm s) = align_dm (inc_pc s)`,
   CHEAT_TAC);;
+add_simp inc_pc_align_dm;;
 
-(* [simp] *)
 let upd_pc_align_dm = prove
  (`labSem_upd_pc p (align_dm s) = align_dm (labSem_upd_pc p s)`,
   CHEAT_TAC);;
+add_simp upd_pc_align_dm;;
 
-(* [simp] *)
 let get_pc_value_align_dm = prove
  (`get_pc_value x (align_dm s) = get_pc_value x s`,
   CHEAT_TAC);;
+add_simp get_pc_value_align_dm;;
 
-(* [simp] *)
 let get_ret_Loc_align_dm = prove
  (`get_ret_Loc (align_dm s) = get_ret_Loc s`,
   CHEAT_TAC);;
+add_simp get_ret_Loc_align_dm;;
 
-(* [simp] *)
 let read_bytearray_mem_load_byte_aux_align_dm = prove
  (`!y x.
     read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
@@ -523,16 +526,16 @@ let read_bytearray_mem_load_byte_aux_align_dm = prove
    read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
      (labSem_state_mem_domain s) (be s))`,
   CHEAT_TAC);;
+add_simp read_bytearray_mem_load_byte_aux_align_dm;;
 
-(* [simp] *)
 let write_bytearray_align_dm = prove
  (`!y x. write_bytearray x y (labSem_state_mem s)
   (labSem_state_mem_domain (align_dm s)) (be s) =
    write_bytearray x y (labSem_state_mem s)
      (labSem_state_mem_domain s) (be s)`,
   CHEAT_TAC);;
+add_simp write_bytearray_align_dm;;
 
-(* [simp] *)
 let share_mem_op_align_dm_simp = prove
  (`(share_mem_op m r a s = NONE ==> share_mem_op m r a (align_dm s) =
   NONE) /\
@@ -543,6 +546,7 @@ let share_mem_op_align_dm_simp = prove
    share_mem_op m r a (align_dm s) = SOME (FFI_return fs l,align_dm
      s'))`,
   CHEAT_TAC);;
+add_simp share_mem_op_align_dm_simp;;
 
 (* HOL4 labPropsScript.sml:803-849: a theorem whose statement HOL
    Light does not read (tools/unstated.py): evaluate_align_dm *)
@@ -557,7 +561,6 @@ let align_sdm_def = new_definition
      (labSem_state_shared_mem_domain_fupd (K
        (labSem_state_shared_mem_domain s INTER byte_aligned)) s)`;;
 
-(* [simp] *)
 let align_sdm_const = prove
  (`state_clock
       (align_sdm s) = state_clock s /\ pc
@@ -580,47 +583,48 @@ let align_sdm_const = prove
       (align_sdm s) = state_ffi s /\ failed
       (align_sdm s) = failed s`,
   CHEAT_TAC);;
+add_simp align_sdm_const;;
 
 let align_sdm_with_clock = prove
  (`align_sdm (state_clock_fupd (K k) s) = state_clock_fupd (K k)
   (align_sdm s)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let asm_fetch_align_sdm = prove
  (`asm_fetch (align_sdm s) = asm_fetch s`,
   CHEAT_TAC);;
+add_simp asm_fetch_align_sdm;;
 
-(* [simp] *)
 let read_reg_align_sdm = prove
  (`regs (align_sdm s) n = regs s n`,
   CHEAT_TAC);;
+add_simp read_reg_align_sdm;;
 
-(* [simp] *)
 let upd_reg_align_sdm = prove
  (`labSem_upd_reg x y (align_sdm s) = align_sdm (labSem_upd_reg x y s)`,
   CHEAT_TAC);;
+add_simp upd_reg_align_sdm;;
 
-(* [simp] *)
 let upd_mem_align_sdm = prove
  (`labSem_upd_mem x y (align_sdm s) = align_sdm (labSem_upd_mem x y s)`,
   CHEAT_TAC);;
+add_simp upd_mem_align_sdm;;
 
-(* [simp] *)
 let binop_upd_align_sdm = prove
  (`labSem_binop_upd x y z w (align_sdm s) = align_sdm
   (labSem_binop_upd x y z w s)`,
   CHEAT_TAC);;
+add_simp binop_upd_align_sdm;;
 
-(* [simp] *)
 let reg_imm_align_sdm = prove
  (`labSem_reg_imm r (align_sdm s) = labSem_reg_imm r s`,
   CHEAT_TAC);;
+add_simp reg_imm_align_sdm;;
 
-(* [simp] *)
 let assert_align_sdm = prove
  (`labSem_assert b (align_sdm s) = align_sdm (labSem_assert b s)`,
   CHEAT_TAC);;
+add_simp assert_align_sdm;;
 
 (* HOL4 labPropsScript.sml:946-951: a theorem whose statement HOL
    Light does not read (tools/unstated.py): arith_upd_align_sdm *)
@@ -667,27 +671,26 @@ let asm_inst_align_sdm = prove
 (* HOL4 labPropsScript.sml:1023-1027: a theorem whose statement HOL
    Light does not read (tools/unstated.py): dec_clock_align_sdm *)
 
-(* [simp] *)
 let inc_pc_align_sdm = prove
  (`inc_pc (align_sdm s) = align_sdm (inc_pc s)`,
   CHEAT_TAC);;
+add_simp inc_pc_align_sdm;;
 
-(* [simp] *)
 let upd_pc_align_sdm = prove
  (`labSem_upd_pc p (align_sdm s) = align_sdm (labSem_upd_pc p s)`,
   CHEAT_TAC);;
+add_simp upd_pc_align_sdm;;
 
-(* [simp] *)
 let get_pc_value_align_sdm = prove
  (`get_pc_value x (align_sdm s) = get_pc_value x s`,
   CHEAT_TAC);;
+add_simp get_pc_value_align_sdm;;
 
-(* [simp] *)
 let get_ret_Loc_align_sdm = prove
  (`get_ret_Loc (align_sdm s) = get_ret_Loc s`,
   CHEAT_TAC);;
+add_simp get_ret_Loc_align_sdm;;
 
-(* [simp] *)
 let read_bytearray_mem_load_byte_aux_align_sdm = prove
  (`!y x.
     read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
@@ -695,14 +698,15 @@ let read_bytearray_mem_load_byte_aux_align_sdm = prove
    read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
      (labSem_state_mem_domain s) (be s))`,
   CHEAT_TAC);;
+add_simp read_bytearray_mem_load_byte_aux_align_sdm;;
 
-(* [simp] *)
 let write_bytearray_align_sdm = prove
  (`!y x. write_bytearray x y (labSem_state_mem s)
   (labSem_state_mem_domain (align_sdm s)) (be s) =
    write_bytearray x y (labSem_state_mem s)
      (labSem_state_mem_domain s) (be s)`,
   CHEAT_TAC);;
+add_simp write_bytearray_align_sdm;;
 
 let align_sdm_aligned = prove
  (`good_dimindex (:'a) ==>
@@ -727,7 +731,6 @@ let share_mem_store_align_sdm = prove
     share_mem_store r ad (align_sdm s) n = SOME (res,align_sdm s'))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let share_mem_op_align_sdm_simp = prove
  (`good_dimindex (:'a) ==>
    (share_mem_op m r (a:'a asm_addr) s = NONE <=> share_mem_op m r a
@@ -735,6 +738,7 @@ let share_mem_op_align_sdm_simp = prove
    (share_mem_op m r a s = SOME (res,s') ==>
    share_mem_op m r a (align_sdm s) = SOME (res,align_sdm s'))`,
   CHEAT_TAC);;
+add_simp share_mem_op_align_sdm_simp;;
 
 (* HOL4 labPropsScript.sml:1174-1226: a theorem whose statement HOL
    Light does not read (tools/unstated.py): evaluate_align_sdm *)
@@ -754,6 +758,7 @@ let line_ok_pre_def = new_definition
 let sec_ok_pre_def = define_general
   [`sec_ok_pre c (Section k ls) <=>
      ALL (line_ok_pre c) ls`];;
+add_simp sec_ok_pre_def;;
 
 (* HOL4 labPropsScript.sml:1257: the overload all_enc_ok_pre, which
    the port expands *)
@@ -765,9 +770,11 @@ let sec_label_ok_def = new_definition
         match x2 with
           labLang_Label l1 l2 len -> l1 = k /\ ~(l2 = 0)
         | _21 -> T`;;
+add_simp sec_label_ok_def;;
 
 let sec_labels_ok_def = define_general
   [`sec_labels_ok (Section k ls) <=> ALL (sec_label_ok k) ls`];;
+add_simp sec_labels_ok_def;;
 
 let sec_label_ok_extract_labels = prove
  (`ALL (sec_label_ok n1) lines /\
@@ -807,10 +814,6 @@ let no_share_mem_inst_def = new_definition
    (!p op re a inst' len. ~(asm_fetch_aux p code =
        SOME (labLang_Asm (ShareMem op re a) inst' len)))`;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["mem"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

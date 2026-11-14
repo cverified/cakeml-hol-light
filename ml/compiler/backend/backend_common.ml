@@ -12,16 +12,17 @@
 needs "lib/sptree.ml";;
 (* for delete *)
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "backend_common" [];;
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "backend_common" [];;
 (* HOL4 ancestors outside the port: arithmetic integer words *)
 
 let opw_INDUCT,opw_RECURSION = define_datatype
-  "opw = backend_common_Andw | backend_common_Orw | \
-   backend_common_Xor | backend_common_Add | backend_common_Sub";;
+  "opw =
+     backend_common_Andw
+   | backend_common_Orw
+   | backend_common_Xor
+   | backend_common_Add
+   | backend_common_Sub";;
 
 (* Small general definition *)
 let small_enough_int_def = new_definition
@@ -66,14 +67,17 @@ let clos_tag_shift_def = new_definition
 
 (* Trace of an expression through the compiler, for exploring transformations *)
 let tra_INDUCT,tra_RECURSION = define_datatype
-  "tra = backend_common_SourceLoc (num) (num) (num) (num) \
-   // start-row\n\
-   // start-col\n\
-   // end-row\n\
-   // end-col\n\
-   | backend_common_Cons (tra) (num) | backend_common_Union (tra) \
-   (tra) | backend_common_None \
-   // Dead trace, do not make traces at all";;
+  "tra =
+     backend_common_SourceLoc num num num num
+     // start-row
+     // start-col
+     // end-row
+     // end-col
+   | backend_common_Cons tra num
+   | backend_common_Union tra tra
+   | backend_common_None
+     // Dead trace, do not make traces at all
+  ";;
 
 (* The code below replaces "Cons" in hol output with the chosen symbol *)
 (* HOL4 backend_commonScript.sml:83: ML code, not ported *)
@@ -179,7 +183,3 @@ let lookup_list_delete = prove
  (`!xs l n. sptree_lookup n (list_delete xs l) =
             (if MEM n xs then NONE else sptree_lookup n l)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -16,11 +16,8 @@ needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "reg_allocProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "reg_allocProof"
   ["ml_monadBase"; "mllist"; "reg_alloc"];;
 
 (* this file reads the name of a record field as a variable and
@@ -125,55 +122,56 @@ let list_case_st = prove
   ---*)
 
 (* Rewriting lemmas for array "sub" *)
-(* Msub_eqn[simp] *)
+(* Msub_eqn *)
 let msub_eqn = prove
  (`!e n ls v.
    Msub e n ls =
    (if n < LENGTH ls then M_success (EL n ls) else M_failure e)`,
   CHEAT_TAC);;
+add_simp msub_eqn;;
 
-(* [simp] *)
 let adj_ls_sub_eqn = prove
  (`adj_ls_sub n s =
    (if n < LENGTH (ra_state_adj_ls s) then
    (M_success (EL n (ra_state_adj_ls s)),s) else
    (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp adj_ls_sub_eqn;;
 
-(* [simp] *)
 let node_tag_sub_eqn = prove
  (`node_tag_sub n s =
    (if n < LENGTH (ra_state_node_tag s) then
    (M_success (EL n (ra_state_node_tag s)),s) else
    (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp node_tag_sub_eqn;;
 
-(* [simp] *)
 let degrees_sub_eqn = prove
  (`degrees_sub n s =
    (if n < LENGTH (ra_state_degrees s) then
    (M_success (EL n (ra_state_degrees s)),s) else
    (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp degrees_sub_eqn;;
 
-(* [simp] *)
 let coalesced_sub = prove
  (`coalesced_sub n s =
    (if n < LENGTH (ra_state_coalesced s) then
    (M_success (EL n (ra_state_coalesced s)),s) else
    (M_failure reg_alloc_Subscript,s))`,
   CHEAT_TAC);;
+add_simp coalesced_sub;;
 
-(* [simp] *)
 let move_related_sub = prove
  (`move_related_sub n s =
    (if n < LENGTH (ra_state_move_related s) then
    (M_success (EL n (ra_state_move_related s)),s) else
    (M_failure reg_alloc_Subscript,s))`,
   CHEAT_TAC);;
+add_simp move_related_sub;;
 
 (* Rewriting lemmas for array "update" *)
-(* Mupdate_eqn[simp] *)
+(* Mupdate_eqn *)
 let mupdate_eqn = prove
  (`!e x n ls.
    Mupdate e x n ls =
@@ -181,8 +179,8 @@ let mupdate_eqn = prove
    M_success (LUPDATE x n ls) else
    M_failure e)`,
   CHEAT_TAC);;
+add_simp mupdate_eqn;;
 
-(* [simp] *)
 let update_adj_ls_eqn = prove
  (`update_adj_ls n t s =
    (if n < LENGTH (ra_state_adj_ls s) then
@@ -190,8 +188,8 @@ let update_adj_ls_eqn = prove
       (ra_state_adj_ls s))) s) else
     (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp update_adj_ls_eqn;;
 
-(* [simp] *)
 let update_node_tag_eqn = prove
  (`update_node_tag n t s =
    (if n < LENGTH (ra_state_node_tag s) then
@@ -199,8 +197,8 @@ let update_node_tag_eqn = prove
       (ra_state_node_tag s))) s) else
     (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp update_node_tag_eqn;;
 
-(* [simp] *)
 let update_degrees_eqn = prove
  (`update_degrees n t s =
    (if n < LENGTH (ra_state_degrees s) then
@@ -208,8 +206,8 @@ let update_degrees_eqn = prove
       (ra_state_degrees s))) s) else
     (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp update_degrees_eqn;;
 
-(* [simp] *)
 let update_coalesced_eqn = prove
  (`update_coalesced n t s =
    (if n < LENGTH (ra_state_coalesced s) then
@@ -217,8 +215,8 @@ let update_coalesced_eqn = prove
       (ra_state_coalesced s))) s) else
     (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp update_coalesced_eqn;;
 
-(* [simp] *)
 let update_move_related_eqn = prove
  (`update_move_related n t s =
    (if n < LENGTH (ra_state_move_related s) then
@@ -226,6 +224,7 @@ let update_move_related_eqn = prove
       (ra_state_move_related s))) s) else
     (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp update_move_related_eqn;;
 
 (* --- *)
 
@@ -455,14 +454,14 @@ let good_pref_biased_pref = prove
 let in_clash_tree_def,in_clash_tree_ind = define_rec
   [`in_clash_tree (reg_alloc_Delta w r) x <=> MEM x w \/ MEM x r`;
    `in_clash_tree (reg_alloc_Set names:clash_tree) x <=> x IN domain
-  names`;
+    names`;
    `in_clash_tree (reg_alloc_Branch name_opt t1 t2:clash_tree) x <=>
         in_clash_tree t1 x \/
         in_clash_tree t2 x \/
         (match name_opt with
           SOME names -> x IN domain names | NONE -> F)`;
    `in_clash_tree (reg_alloc_Seq t t':clash_tree) x <=>
-  in_clash_tree t x \/ in_clash_tree t' x`];;
+    in_clash_tree t x \/ in_clash_tree t' x`];;
 
 (*g inverts f as an sptree *)
 let sp_inverts_def = new_definition
@@ -1491,7 +1490,3 @@ let reg_alloc_correct = prove
        = y) forced)`,
   CHEAT_TAC);;
 (* --- --- *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

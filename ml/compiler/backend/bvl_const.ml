@@ -22,11 +22,8 @@
 needs "compiler/backend/bvl.ml";;
 needs "lib/set_sep.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvl_const"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvl_const"
   ["bvl"];;
 
 let _ = do_list hide_constant ["pmatch"];;
@@ -37,6 +34,7 @@ let dest_simple_def = new_definition
           bvl_Op (closLang_IntOp (closLang_Const i)) xs -> (if NULL
             xs then SOME i else NONE)
         | _1 -> NONE`;;
+add_simp dest_simple_def;;
 
 let dest_simple_pmatch = prove
  (`!op. dest_simple op =
@@ -265,7 +263,7 @@ let extract_pmatch = prove
 let bvl_const_extract_list_def,bvl_const_extract_list_ind = define_rec
   [`bvl_const_extract_list [] = []`;
    `bvl_const_extract_list (CONS x xs) = CONS (bvl_const_extract x
-  xs) (bvl_const_extract_list xs)`];;
+    xs) (bvl_const_extract_list xs)`];;
 
 let bvl_const_delete_var_def = new_definition
   `bvl_const_delete_var x =
@@ -290,11 +288,11 @@ let bvl_const_compile_def,bvl_const_compile_ind = define_wf_cheat
   `MEASURE (list_size bvl_exp_size o SND)`
   [`bvl_const_compile env [] = []`;
    `bvl_const_compile env (CONS x (CONS y xs)) = APPEND
-  (bvl_const_compile env [x]) (bvl_const_compile env (CONS y xs))`;
+    (bvl_const_compile env [x]) (bvl_const_compile env (CONS y xs))`;
    `bvl_const_compile env [(bvl_Var v:bvl_exp)] =
          (match (\l n. oEL n l) env v with NONE -> [bvl_Var v] |
-           SOME NONE -> [bvl_Var v] | SOME (SOME (bvl_Var i)) ->
-           [bvl_Var (v + i)] | SOME (SOME x) -> [x])`;
+             SOME NONE -> [bvl_Var v] | SOME (SOME (bvl_Var i)) ->
+             [bvl_Var (v + i)] | SOME (SOME x) -> [x])`;
    `bvl_const_compile env [(bvl_If x1 x2 x3:bvl_exp)] =
          (let y1 = HD (bvl_const_compile env [x1]) in
          let y2 = HD (bvl_const_compile env [x2]) in
@@ -306,30 +304,29 @@ let bvl_const_compile_def,bvl_const_compile_ind = define_wf_cheat
          (let ys = bvl_const_compile env xs in
            [bvl_Let (MAP bvl_const_delete_var ys)
                 (HD (bvl_const_compile (APPEND
-                  (bvl_const_extract_list ys) env) [x2]))])`;
+                    (bvl_const_extract_list ys) env) [x2]))])`;
    `bvl_const_compile env [(bvl_Handle x1 x2:bvl_exp)] =
          [bvl_Handle (HD (bvl_const_compile env [x1])) (HD
-           (bvl_const_compile (CONS NONE env) [x2]))]`;
+             (bvl_const_compile (CONS NONE env) [x2]))]`;
    `bvl_const_compile env [(bvl_Raise x1:bvl_exp)] =
          [bvl_Raise (HD (bvl_const_compile env [x1]))]`;
    `bvl_const_compile env [(bvl_Op op xs:bvl_exp)] =
-  [bvl_const_SmartOp op (bvl_const_compile env xs)]`;
+    [bvl_const_SmartOp op (bvl_const_compile env xs)]`;
    `bvl_const_compile env [(bvl_Tick x:bvl_exp)] = [bvl_Tick (HD
-  (bvl_const_compile env [x]))]`;
+    (bvl_const_compile env [x]))]`;
    `bvl_const_compile env [(bvl_Force loc v:bvl_exp)] =
          (match (\l n. oEL n l) env v with NONE -> [bvl_Force loc
-           v] | SOME NONE -> [bvl_Force loc v] | SOME (SOME (bvl_Var
-           i)) -> [bvl_Force loc (v + i)] | SOME (SOME x) ->
-           [bvl_Force loc v])`;
+             v] | SOME NONE -> [bvl_Force loc v] | SOME (SOME
+             (bvl_Var i)) -> [bvl_Force loc (v + i)] | SOME (SOME x)
+             -> [bvl_Force loc v])`;
    `bvl_const_compile env [(bvl_Call t dest xs:bvl_exp)] =
-  [bvl_Call t dest (bvl_const_compile env xs)]`];;
+    [bvl_Call t dest (bvl_const_compile env xs)]`];;
 
-let bvl_const_compile_sing_def,bvl_const_compile_sing_ind =
-  define_mutual_rec
+let bvl_const_compile_sing_def,bvl_const_compile_sing_ind = define_rec
   [`bvl_const_compile_sing env (bvl_Var v:bvl_exp) =
          (match (\l n. oEL n l) env v with NONE -> bvl_Var v |
-           SOME NONE -> bvl_Var v | SOME (SOME (bvl_Var i)) ->
-           bvl_Var (v + i) | SOME (SOME x) -> x)`;
+             SOME NONE -> bvl_Var v | SOME (SOME (bvl_Var i)) ->
+             bvl_Var (v + i) | SOME (SOME x) -> x)`;
    `bvl_const_compile_sing env (bvl_If x1 x2 x3:bvl_exp) =
          (let y1 = bvl_const_compile_sing env x1 in
          let y2 = bvl_const_compile_sing env x2 in
@@ -341,26 +338,26 @@ let bvl_const_compile_sing_def,bvl_const_compile_sing_ind =
          (let ys = bvl_const_compile_list env xs in
            bvl_Let (MAP bvl_const_delete_var ys)
                (bvl_const_compile_sing (APPEND
-                 (bvl_const_extract_list ys) env) x2))`;
+                   (bvl_const_extract_list ys) env) x2))`;
    `bvl_const_compile_sing env (bvl_Handle x1 x2:bvl_exp) =
          bvl_Handle (bvl_const_compile_sing env x1)
-           (bvl_const_compile_sing (CONS NONE env) x2)`;
+             (bvl_const_compile_sing (CONS NONE env) x2)`;
    `bvl_const_compile_sing env (bvl_Raise x1:bvl_exp) =
          bvl_Raise (bvl_const_compile_sing env x1)`;
    `bvl_const_compile_sing env (bvl_Op op xs:bvl_exp) =
-  bvl_const_SmartOp op (bvl_const_compile_list env xs)`;
+    bvl_const_SmartOp op (bvl_const_compile_list env xs)`;
    `bvl_const_compile_sing env (bvl_Tick x:bvl_exp) = bvl_Tick
-  (bvl_const_compile_sing env x)`;
+    (bvl_const_compile_sing env x)`;
    `bvl_const_compile_sing env (bvl_Force loc v:bvl_exp) =
          (match (\l n. oEL n l) env v with NONE -> bvl_Force loc
-           v | SOME NONE -> bvl_Force loc v | SOME (SOME (bvl_Var i))
-           -> bvl_Force loc (v + i) | SOME (SOME x) -> bvl_Force loc
-           v)`;
+             v | SOME NONE -> bvl_Force loc v | SOME (SOME (bvl_Var
+             i)) -> bvl_Force loc (v + i) | SOME (SOME x) ->
+             bvl_Force loc v)`;
    `bvl_const_compile_sing env (bvl_Call t dest xs:bvl_exp) =
-  bvl_Call t dest (bvl_const_compile_list env xs)`;
+    bvl_Call t dest (bvl_const_compile_list env xs)`;
    `bvl_const_compile_list env [] = []`;
    `bvl_const_compile_list env (CONS x xs) = CONS
-  (bvl_const_compile_sing env x) (bvl_const_compile_list env xs)`];;
+    (bvl_const_compile_sing env x) (bvl_const_compile_list env xs)`];;
 
 let compile_eq = prove
  (`(!e env. bvl_const_compile env [e] = [bvl_const_compile_sing env e])
@@ -487,7 +484,7 @@ let compile_eq = prove
    INDUCT_TAC THENL
    [sing_base; CONJ_TAC THENL [part1; part2]]));;
 
-(* compile_length[simp] *)
+(* compile_length *)
 let bvl_const_compile_length = prove
  (`!n xs. LENGTH (bvl_const_compile n xs) = LENGTH xs`,
   (let cp = bvl_const_compile_def in
@@ -542,6 +539,7 @@ let bvl_const_compile_length = prove
       [single_case; cons_cons_case]] in
    MEASURE_INDUCT_TAC `list_size bvl_exp_size` THENL
    [base_case; step_case]));;
+add_simp bvl_const_compile_length;;
 
 (* compile_HD_SING *)
 let bvl_const_compile_HD_SING = prove
@@ -571,10 +569,6 @@ let bvl_const_compile_exp_eq = prove
    GEN_TAC THEN REWRITE_TAC[ce; CONJUNCT1 compile_eq] THEN
    MATCH_REDUCE_TAC THEN REWRITE_TAC[]));;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

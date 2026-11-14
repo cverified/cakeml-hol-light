@@ -18,11 +18,8 @@ needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "stack_rawcall"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "stack_rawcall"
   ["data_to_word"; "stackLang"];;
 
 (* collect stack allocation information *)
@@ -42,7 +39,7 @@ let collect_info_def,collect_info_ind = define_rec
   [`collect_info [] f = f`;
    `collect_info (CONS (n,(b:'a stackLang_prog)) xs) f =
          collect_info xs (match seq_stack_alloc b with NONE ->
-           f | SOME k -> sptree_insert n k f)`];;
+             f | SOME k -> sptree_insert n k f)`];;
 
 (* optimise based on stack allocation information *)
 
@@ -109,7 +106,3 @@ let stack_rawcall_compile_def = new_definition
   `stack_rawcall_compile prog =
      (let i = collect_info prog LN in
        MAP (\(n,(b:'a stackLang_prog)). (n,comp_top i b)) prog)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

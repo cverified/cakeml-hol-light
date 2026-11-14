@@ -30,11 +30,8 @@ needs "compiler/backend/dataLang.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvl_to_bvi"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvl_to_bvi"
   ["backend_common"; "bvi"; "bvi_inline"; "bvi_let"; "bvi_tailrec";
    "bvi_tmc"; "bvl"; "bvl_const"; "bvl_handle"; "bvl_inline";
    "dataLang"];;
@@ -92,12 +89,11 @@ let alloc_glob_count_def,alloc_glob_count_ind = define_wf
         | [_6] -> 0
         // Impossible`];;
 
-let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvl_to_bviScript.sml:88-93: the tactic that proves the
    termination *)
-let global_count_sing_def,global_count_sing_ind = define_mutual_rec
+let global_count_sing_def,global_count_sing_ind = define_rec
   [`global_count_sing ((bvl_Var _7):bvl_exp) = 0`;
    `global_count_sing (bvl_If x y z:bvl_exp) =
          global_count_sing x +
@@ -112,10 +108,10 @@ let global_count_sing_def,global_count_sing_ind = define_mutual_rec
    `global_count_sing (bvl_Let xs x:bvl_exp) =
          global_count_sing x + global_count_list xs`;
    `global_count_sing (bvl_Call _10 _11 xs:bvl_exp) =
-  global_count_list xs`;
+    global_count_list xs`;
    `global_count_sing (bvl_Op op xs:bvl_exp) =
          (if op = closLang_GlobOp closLang_AllocGlobal then 1 +
-           global_count_list xs else global_count_list xs)`;
+             global_count_list xs else global_count_list xs)`;
    `global_count_list [] = (0:num)`;
    `global_count_list (CONS x xs) = ((
          global_count_sing x + global_count_list xs):num)`];;
@@ -402,7 +398,6 @@ let compile_aux_def = new_definition
      bvi_tailrec_List [(bvl_num_stubs + bvl_to_bvi_namespaces * k
        + 1,args,bvi_let_compile_exp p)]`;;
 
-let _ = size_thms "bvl_exp";;
 let compile_exps_def,compile_exps_ind = assume_definition_rec
   "the port cannot make this definition"
   [`(bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)) /\
@@ -460,7 +455,6 @@ let compile_exps_def,compile_exps_ind = assume_definition_rec
                  (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
                  NONE],aux1,n1)))`];;
 
-let _ = size_thms "bvl_exp";;
 let compile_exps_sing_def,compile_exps_sing_ind = assume_definition_rec
   "the port cannot make this definition"
   [`(compile_exps_sing n (bvl_Var v:bvl_exp) = (((bvl_Var
@@ -667,11 +661,7 @@ let bvl_to_bvi_compile_inc_all_def = new_definition
      let c = bvl_to_bvi_config_bvi_inlines_fupd (K bvi_inlines) c in
        (c,p))`;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["num_stubs";
    "pmatch"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

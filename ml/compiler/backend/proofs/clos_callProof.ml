@@ -21,11 +21,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_callProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_callProof"
   ["backendProps"; "closProps"; "closSem"; "clos_call"; "db_vars"];;
 
 let _ = do_list hide_constant ["C"; "vars"];;
@@ -58,10 +55,10 @@ let _ = do_list hide_constant ["C"; "vars"];;
 (* HOL4 clos_callProofScript.sml:34-39: a theorem whose statement the
    port cannot state yet: v_size_lemma *)
 
-(* [simp] *)
 let code_locs_GENLIST_Var = prove
  (`!n t i. code_locs (GENLIST_Var t i n) = []`,
   CHEAT_TAC);;
+add_simp code_locs_GENLIST_Var;;
 
 let fv_GENLIST_Var_tra = prove
  (`!n tra i. fv v (GENLIST_Var tra i n) <=> v < n`,
@@ -81,6 +78,7 @@ let is_Recclosure_def = new_definition
       match x1 with
         (closSem_Recclosure _6 _7 _8 _9 _10:closSem_v) -> T
       | _11 -> F`;;
+add_simp is_Recclosure_def;;
 
 let every_refv_def = new_definition
   `every_refv P x2 =
@@ -88,6 +86,7 @@ let every_refv_def = new_definition
           closSem_ValueArray vs -> ALL P vs
         | (closSem_Thunk m v) -> P v
         | _12 -> T`;;
+add_simp every_refv_def;;
 
 (* [local] *)
 let IMP_EXISTS_IFF = prove
@@ -233,38 +232,37 @@ let clos_callProof_v_rel_def,clos_callProof_v_rel_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
   [`clos_callProof_v_rel g l code (closSem_Number i:closSem_v) v <=>
-  v = (closSem_Number i:closSem_v)`;
+    v = (closSem_Number i:closSem_v)`;
    `clos_callProof_v_rel g l code (closSem_Word64 w:closSem_v) v <=>
-  v = (closSem_Word64 w:closSem_v)`;
+    v = (closSem_Word64 w:closSem_v)`;
    `clos_callProof_v_rel g l code (closSem_Block n vs:closSem_v) v <=>
         (?vs'. v = closSem_Block n vs' /\ ALL2
-          (clos_callProof_v_rel g l code) vs vs')`;
+            (clos_callProof_v_rel g l code) vs vs')`;
    `clos_callProof_v_rel g l code (closSem_ByteVector ws) v <=> v =
-  closSem_ByteVector ws`;
+    closSem_ByteVector ws`;
    `clos_callProof_v_rel g l code (closSem_RefPtr b n:closSem_v) v
-  <=> v = (closSem_RefPtr b n:closSem_v)`;
+    <=> v = (closSem_RefPtr b n:closSem_v)`;
    `clos_callProof_v_rel g l code (closSem_Closure loco vs1 env1 n
-  bod1:closSem_v) v <=>
+    bod1:closSem_v) v <=>
          (?loc vs2 env2 bod2.
            recclosure_rel g l code loc [(n,bod1)] [(n,bod2)] /\
            v = closSem_Closure (SOME loc) vs2 env2 n bod2 /\ loco =
-             SOME loc /\
+               SOME loc /\
            ALL2 (clos_callProof_v_rel g l code) vs1 vs2 /\
            clos_callProof_env_rel (clos_callProof_v_rel g l code)
-             env1 env2 0 [(n,bod2)])`;
+               env1 env2 0 [(n,bod2)])`;
    `clos_callProof_v_rel g l code (closSem_Recclosure loco vs1 env1 fns1
-  i:closSem_v) v <=>
+    i:closSem_v) v <=>
          (?loc vs2 env2 fns2.
            recclosure_rel g l code loc fns1 fns2 /\
            v = closSem_Recclosure (SOME loc) vs2 env2 fns2 i /\ loco
-             = SOME loc /\
+               = SOME loc /\
            ALL2 (clos_callProof_v_rel g l code) vs1 vs2 /\
            clos_callProof_env_rel (clos_callProof_v_rel g l
-             code) env1 env2 (LENGTH fns2) fns2)`];;
+               code) env1 env2 (LENGTH fns2) fns2)`];;
 
 (* HOL4 clos_callProofScript.sml:335: ML code, not ported *)
 
-let _ = size_thms "closSem_v";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 clos_callProofScript.sml:350-353: the tactic that proves the
@@ -285,6 +283,7 @@ let wfv_def,wfv_ind = define_wf
        recclosure_rel g l code loc fns fns2)
         | (closSem_Block _26 vs) -> ALL (wfv g l code) vs
         | _27 -> T`];;
+add_simp wfv_def;;
 
 (* HOL4 clos_callProofScript.sml:355: ML code, not ported *)
 
@@ -295,8 +294,9 @@ let wfv_state_def = new_definition
        closSem_state_code
      s = FEMPTY`;;
 
-new_type_abbrev("calls_state",`: 1 spt#(num#num#closLang_exp) list`);;
-new_type_abbrev("abs_calls_state",`: 1 spt`);;
+new_type_abbrev("calls_state",`:misc_num_set#(num#num#closLang_exp)
+   list`);;
+new_type_abbrev("abs_calls_state",`:misc_num_set`);;
 
 let clos_callProof_state_rel_def = new_definition
   `clos_callProof_state_rel g l (s:(1 spt#'c,'ffi)closSem_state)
@@ -336,25 +336,25 @@ let state_rel_flookup_refs = prove
 
 (* syntactic properties of compiler *)
 
-(* [simp] *)
 let FST_code_list = prove
  (`!loc fns g. FST (code_list loc fns g) = FST g`,
   CHEAT_TAC);;
+add_simp FST_code_list;;
 
-(* [simp] *)
 let SND_insert_each = prove
  (`!p n g. SND (insert_each p n g) = SND g`,
   CHEAT_TAC);;
+add_simp SND_insert_each;;
 
 let calls_list_MAPi = prove
  (`!loc tra n. calls_list t n loc = MAPi (\i p. (FST p,closLang_Call t
   0 (loc + 2 * i + 1) (GENLIST_Var t 1 (FST p))))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let calls_list_length = prove
  (`LENGTH (calls_list t n p fns) = LENGTH fns`,
   CHEAT_TAC);;
+add_simp calls_list_length;;
 
 let domain_FST_insert_each = prove
  (`!p n g. domain (FST (insert_each p n g)) = set_of_list (list_of_seq
@@ -529,7 +529,7 @@ let insert_each'_def,insert_each'_ind = define_wf
   [`insert_each' gt p 0 g = g`;
    `insert_each' gt p (SUC n) (g1,g2) =
        insert_each' gt (p + 2) n (sptree_insert p one g1,(CONS
-         (p + 1,THE (ALOOKUP gt (p + 1))) g2))`];;
+           (p + 1,THE (ALOOKUP gt (p + 1))) g2))`];;
 
 (* HOL4 clos_callProofScript.sml:965: ML code, not ported *)
 
@@ -793,10 +793,11 @@ let env_rel_subg = prove
 
 (* semantic functions respect relation *)
 
-(* v_rel_Unit[simp] *)
+(* v_rel_Unit *)
 let clos_callProof_v_rel_Unit = prove
  (`clos_callProof_v_rel g1 l1 code closSem_Unit closSem_Unit`,
   CHEAT_TAC);;
+add_simp clos_callProof_v_rel_Unit;;
 
 let v_to_list_thm = prove
  (`!h h' x.
@@ -912,11 +913,12 @@ let NOT_IN_domain_FST_g = prove
       domain (FST g))`,
   CHEAT_TAC);;
 
-(* v_rel_Boolv[simp] *)
+(* v_rel_Boolv *)
 let clos_callProof_v_rel_Boolv = prove
  (`clos_callProof_v_rel g1 l1 code (closSem_Boolv b) v <=> (v =
   closSem_Boolv b)`,
   CHEAT_TAC);;
+add_simp clos_callProof_v_rel_Boolv;;
 
 (* [local] *)
 let env_rel_Op_Install = prove
@@ -1303,9 +1305,9 @@ let nth_code_def,nth_code_ind = define_wf
    `clos_callProof_nth_code code co (SUC k) =
       (let (cfg,exp,aux) = co 0 in
       let (g',exp',aux') = clos_call_compile_inc (FST cfg) (exp,aux)
-        in
+          in
         clos_callProof_nth_code (code |++ aux') (misc_shift_seq
-          1 co) k)`];;
+            1 co) k)`];;
 
 (* TODO: move *)
 let FUNION_FEMPTY_FUPDATE_LIST = prove
@@ -1407,11 +1409,7 @@ let calls_no_Labels = prove
 (* HOL4 clos_callProofScript.sml:4766-4909: code that the source has
    in a comment *)
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C";
    "vars"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

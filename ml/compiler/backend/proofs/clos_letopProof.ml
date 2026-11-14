@@ -19,11 +19,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_letopProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_letopProof"
   ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_letop"];;
 
 
@@ -38,11 +35,11 @@ let let_op_SING = prove
  (`!x. ?y. clos_letop_let_op [x] = [y]`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let HD_let_op_SING = prove
  (`!x. [HD (clos_letop_let_op [x])] = clos_letop_let_op [x] /\
        LENGTH (clos_letop_let_op [x]) = 1`,
   CHEAT_TAC);;
+add_simp HD_let_op_SING;;
 
 let clos_letopProof_code_rel_def = new_definition
   `clos_letopProof_code_rel e1 e2 <=>
@@ -383,16 +380,16 @@ let code_locs_let_op = prove
  (`!xs. code_locs (clos_letop_let_op xs) = code_locs xs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let let_op_every_Fn_SOME = prove
  (`!es. every_Fn_SOME (clos_letop_let_op es) <=> every_Fn_SOME es`,
   CHEAT_TAC);;
+add_simp let_op_every_Fn_SOME;;
 
-(* [simp] *)
 let let_op_every_Fn_vs_NONE = prove
  (`!es. every_Fn_vs_NONE (clos_letop_let_op es) <=> every_Fn_vs_NONE
   es`,
   CHEAT_TAC);;
+add_simp let_op_every_Fn_vs_NONE;;
 
 let EVERY_let_op_sing = prove
  (`ALL f (clos_letop_let_op [x]) = f (HD (clos_letop_let_op [x]))`,
@@ -416,10 +413,10 @@ let var_list_app_call_dests = prove
  (`!x y z. clos_letop_var_list x y z ==> app_call_dests a y = {}`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let let_op_app_call_dests = prove
  (`!es. app_call_dests x (clos_letop_let_op es) = app_call_dests x es`,
   CHEAT_TAC);;
+add_simp let_op_app_call_dests;;
 
 (* var_list_code_labels_imp *)
 let clos_letopProof_var_list_code_labels_imp = prove
@@ -427,12 +424,8 @@ let clos_letopProof_var_list_code_labels_imp = prove
   closProps_get_code_labels x)) = {}`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let let_op_get_code_labels = prove
  (`!es. MAP closProps_get_code_labels (clos_letop_let_op es) = MAP
   closProps_get_code_labels es`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;
+add_simp let_op_get_code_labels;;

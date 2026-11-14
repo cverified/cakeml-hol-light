@@ -21,11 +21,8 @@ needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_elimProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_elimProof"
   ["mllist"; "wordConvs"; "wordLang"; "wordProps"; "wordSem";
    "word_elim"];;
 
@@ -76,14 +73,14 @@ let get_locals_def,get_locals_ind = define_rec
   [`// locals : ('a word_loc) num_map
     get_locals (LN:('a word_loc) spt) = LN`;
    `get_locals (LS a) = (match (dest_word_loc a) with SOME n ->
-  sptree_insert n one LN | NONE -> LN)`;
+    sptree_insert n one LN | NONE -> LN)`;
    `get_locals (BN t1 t2) = sptree_union (get_locals t1) (get_locals
-  t2)`;
+    t2)`;
    `get_locals (BS t1 a t2) =
             (let t = (sptree_union (get_locals t1) (get_locals t2))
-              in
+                in
                 match (dest_word_loc a) with SOME n ->
-                  sptree_insert n one t | NONE -> t)`];;
+                    sptree_insert n one t | NONE -> t)`];;
 
 let domain_get_locals_lookup = prove
  (`!n t. n IN domain (get_locals t) <=> (?k n1. sptree_lookup k t =
@@ -158,8 +155,8 @@ let word_elimProof_get_stack_def,word_elimProof_get_stack_ind =
     word_elimProof_get_stack [] = (LN:1 spt)`;
    `word_elimProof_get_stack (CONS (StackFrame lsz e0 e _5) xs) =
             ((sptree_union (sptree_union (get_num_wordloc_alist
-              e0) (get_num_wordloc_alist e))
-              (word_elimProof_get_stack xs)):1 spt)`];;
+                e0) (get_num_wordloc_alist e))
+                (word_elimProof_get_stack xs)):1 spt)`];;
 
 (* HOL4 word_elimProofScript.sml:210: ML code, not ported *)
 
@@ -631,11 +628,7 @@ let word_removal_thm = prove
               state) = (result,s))`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["addr";
    "mem"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

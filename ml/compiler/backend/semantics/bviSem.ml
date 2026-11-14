@@ -21,21 +21,21 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bviSem"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bviSem"
   ["backendProps"; "backend_common"; "bvi"; "bvlSem"];;
 
 (* HOL4 bviSemScript.sml:13: the overload num_stubs, which the port
    expands *)
 
 let exn_or_ret_INDUCT,exn_or_ret_RECURSION = define_datatype
-  "exn_or_ret = Exn (bvlSem_v) | Ret (bvlSem_v list) \
-   // exception or multi-value return";;
+  "exn_or_ret =
+     Exn bvlSem_v
+   | Ret (bvlSem_v list)
+     // exception or multi-value return
+  ";;
 
-new_type_abbrev("bvi_result",`: (bvlSem_v
+new_type_abbrev("bvi_result",`:(bvlSem_v
    list,exn_or_ret)semanticPrimitives_result`);;
 
 let bviSem_state_FIELDS = define_record "bviSem_state"
@@ -217,8 +217,10 @@ let bviSem_do_app_def = new_definition
 
 let bviSem_dest_thunk_ret_INDUCT,bviSem_dest_thunk_ret_RECURSION =
   define_datatype
-  "bviSem_dest_thunk_ret = bviSem_BadRef | bviSem_NotThunk | \
-   bviSem_IsThunk (thunk_mode) (bvlSem_v)";;
+  "bviSem_dest_thunk_ret =
+     bviSem_BadRef
+   | bviSem_NotThunk
+   | bviSem_IsThunk thunk_mode bvlSem_v";;
 
 let bviSem_dest_thunk_def = new_definition
   `bviSem_dest_thunk vs refs =
@@ -270,107 +272,109 @@ if concl bviSem_fix_clock_IMP <> `T` then
 let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
-  list,exn_or_ret)semanticPrimitives_result),s)`;
+    list,exn_or_ret)semanticPrimitives_result),s)`;
    `bviSem_evaluate (CONS x (CONS y xs),env,s) =
          (match bviSem_fix_clock s (bviSem_evaluate ([x],env,s))
-           with (Rval v1,s1) ->
+             with (Rval v1,s1) ->
              (match bviSem_evaluate (CONS y xs,env,s1) with (Rval
-               vs,s2) -> (Rval (CONS (HD v1) vs),s2) | res -> res) |
-               res -> res)`;
+                 vs,s2) -> (Rval (CONS (HD v1) vs),s2) | res -> res)
+                 | res -> res)`;
    `bviSem_evaluate ([(bvi_Var n:bvi_exp)],env,s) =
          (if n < LENGTH env then (Rval [EL n env],s) else (Rerr
-           (Rabort Rtype_error),s))`;
+             (Rabort Rtype_error),s))`;
    `bviSem_evaluate ([(bvi_If x1 x2 x3:bvi_exp)],env,s) =
          (match bviSem_fix_clock s (bviSem_evaluate ([x1],env,s))
-           with (Rval vs,s1) ->
+             with (Rval vs,s1) ->
               (if bvlSem_Boolv T = HD vs then bviSem_evaluate
-                ([x2],env,s1) else
+                  ([x2],env,s1) else
               if bvlSem_Boolv F = HD vs then bviSem_evaluate
-                ([x3],env,s1) else
+                  ([x3],env,s1) else
                 (Rerr (Rabort Rtype_error),s1)) | res -> res)`;
    `bviSem_evaluate ([(bvi_Let xs x2:bvi_exp)],env,s) =
          (match bviSem_fix_clock s (bviSem_evaluate (xs,env,s))
-           with (Rval vs,s1) -> bviSem_evaluate ([x2],APPEND vs
-           env,s1) | res -> res)`;
+             with (Rval vs,s1) -> bviSem_evaluate ([x2],APPEND vs
+             env,s1) | res -> res)`;
    `bviSem_evaluate ([(bvi_Raise x1:bvi_exp)],env,s) =
          (match bviSem_evaluate ([x1],env,s) with (Rval vs,s) ->
-           (Rerr (Rraise (Exn (HD vs))),s) | res -> res)`;
+             (Rerr (Rraise (Exn (HD vs))),s) | res -> res)`;
    `bviSem_evaluate ([(bvi_Return xs:bvi_exp)],env,s) =
          (match bviSem_evaluate (xs,env,s) with (Rval vs,s) ->
-           (Rerr (Rraise (Ret vs)),s) | res -> res)`;
+             (Rerr (Rraise (Ret vs)),s) | res -> res)`;
    `bviSem_evaluate ([(bvi_Op op xs:bvi_exp)],env,s) =
          (match bviSem_fix_clock s (bviSem_evaluate (xs,env,s)) with
-           (Rval vs,s) ->
+             (Rval vs,s) ->
              (match bviSem_do_app op (REVERSE vs) s with Rerr e
-               -> (Rerr e,s) | Rval (v,s) -> (Rval [v],s)) | res ->
-               res)`;
+                 -> (Rerr e,s) | Rval (v,s) -> (Rval [v],s)) | res ->
+                 res)`;
    `bviSem_evaluate ([(bvi_Tick x:bvi_exp)],env,s) =
          (if bviSem_state_clock s = 0 then (Rerr (Rabort
-           Rtimeout_error),s) else
+             Rtimeout_error),s) else
            bviSem_evaluate ([x],env,bviSem_dec_clock 1 s))`;
    `bviSem_evaluate ([(bvi_Force force_loc n:bvi_exp)],env,s) =
          (if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s)
-           else
+             else
            let thunk_v = EL n env in
              match bviSem_dest_thunk thunk_v (bviSem_state_refs s)
-               with bviSem_BadRef -> (Rerr (Rabort Rtype_error),s) |
-               bviSem_NotThunk -> (Rerr (Rabort Rtype_error),s) |
-               bviSem_IsThunk Evaluated v -> (Rval [v],s) |
-               bviSem_IsThunk NotEvaluated f ->
+                 with bviSem_BadRef -> (Rerr (Rabort Rtype_error),s) |
+                 bviSem_NotThunk -> (Rerr (Rabort Rtype_error),s) |
+                 bviSem_IsThunk Evaluated v -> (Rval [v],s) |
+                 bviSem_IsThunk NotEvaluated f ->
                  (match bvlSem_find_code (SOME force_loc) [thunk_v;
-                   f] (bviSem_state_code s) with NONE -> (Rerr (Rabort
-                   Rtype_error),s) | SOME (args,exp) ->
+                     f] (bviSem_state_code s) with NONE -> (Rerr (Rabort
+                     Rtype_error),s) | SOME (args,exp) ->
                       (if bviSem_state_clock s = 0 then
                         (Rerr (Rabort
-                          Rtimeout_error),bviSem_state_clock_fupd (K 0)
-                          s) else
+                            Rtimeout_error),bviSem_state_clock_fupd (K
+                            0) s) else
                         (match bviSem_evaluate
-                          ([exp],args,bviSem_dec_clock 1 s) with
-                          (Rerr (Rraise (Ret _30)),s1) -> (Rerr
-                          (Rabort Rtype_error),s1) | res -> res))))`;
+                            ([exp],args,bviSem_dec_clock 1 s) with
+                            (Rerr (Rraise (Ret _30)),s1) -> (Rerr
+                            (Rabort Rtype_error),s1) | res -> res))))`;
    `bviSem_evaluate ([(bvi_Call ticks dest xs handler:bvi_exp)],env,s1)
-  =
+    =
          (if IS_NONE dest /\ IS_SOME handler then (Rerr (Rabort
-           Rtype_error),s1) else
+             Rtype_error),s1) else
          match bviSem_fix_clock s1 (bviSem_evaluate (xs,env,s1))
-           with (Rval vs,s) ->
+             with (Rval vs,s) ->
              (match bvlSem_find_code dest vs (bviSem_state_code s)
-               with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
-               (args,exp) ->
+                 with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
+                 (args,exp) ->
                   (if (bviSem_state_clock s < ticks + 1) then (Rerr
-                    (Rabort Rtimeout_error),bviSem_state_clock_fupd (K
-                    0) s) else
+                      (Rabort Rtimeout_error),bviSem_state_clock_fupd (K
+                      0) s) else
                     match bviSem_fix_clock (bviSem_dec_clock (ticks
-                      + 1) s) (bviSem_evaluate
-                      ([exp],args,bviSem_dec_clock (ticks + 1) s)) with
-                      (Rerr (Rraise (Exn v)),s) ->
+                        + 1) s) (bviSem_evaluate
+                        ([exp],args,bviSem_dec_clock (ticks + 1) s))
+                        with (Rerr (Rraise (Exn v)),s) ->
                          (match handler with SOME x ->
                               (match bviSem_evaluate ([x],CONS v
-                                env,s) with (Rerr (Rraise (Ret
-                                _42)),s1) -> (Rerr (Rabort
-                                Rtype_error),s1) | res -> res) | NONE
-                                -> (Rerr (Rraise (Exn v)),s)) | (Rerr
-                                (Rraise _43),s) -> (Rerr (Rabort
-                                Rtype_error),s) | res -> res)) | res
-                                -> res)`;
+                                  env,s) with (Rerr (Rraise (Ret
+                                  _42)),s1) -> (Rerr (Rabort
+                                  Rtype_error),s1) | res -> res) |
+                                  NONE -> (Rerr (Rraise (Exn v)),s))
+                                  | (Rerr (Rraise _43),s) -> (Rerr
+                                  (Rabort Rtype_error),s) | res ->
+                                  res)) | res -> res)`;
    `bviSem_evaluate ([bvi_LetCall rets ticks dest xs y],env,s1) =
          (match bviSem_fix_clock s1 (bviSem_evaluate (xs,env,s1))
-           with (Rval vs,s) ->
+             with (Rval vs,s) ->
              (match bvlSem_find_code (SOME dest) vs
-               (bviSem_state_code s) with NONE -> (Rerr (Rabort
-               Rtype_error),s) | SOME (args,exp) ->
+                 (bviSem_state_code s) with NONE -> (Rerr (Rabort
+                 Rtype_error),s) | SOME (args,exp) ->
                   (if (bviSem_state_clock s < ticks + 1) then (Rerr
-                    (Rabort Rtimeout_error),bviSem_state_clock_fupd (K
-                    0) s) else
+                      (Rabort Rtimeout_error),bviSem_state_clock_fupd (K
+                      0) s) else
                     match bviSem_fix_clock (bviSem_dec_clock (ticks
-                      + 1) s) (bviSem_evaluate
-                      ([exp],args,bviSem_dec_clock (ticks + 1) s)) with
-                      (Rval _44,s) -> (Rerr (Rabort Rtype_error),s) |
-                      (Rerr (Rraise (Ret ret_vs)),s) ->
+                        + 1) s) (bviSem_evaluate
+                        ([exp],args,bviSem_dec_clock (ticks + 1) s))
+                        with (Rval _44,s) -> (Rerr (Rabort
+                        Rtype_error),s) | (Rerr (Rraise (Ret ret_vs)),s)
+                        ->
                         (if LENGTH ret_vs = rets then
-                          bviSem_evaluate ([y],APPEND ret_vs env,s)
-                          else (Rerr (Rabort Rtype_error),s)) | res
-                          -> res)) | res -> res)`];;
+                            bviSem_evaluate ([y],APPEND ret_vs
+                            env,s) else (Rerr (Rabort
+                            Rtype_error),s)) | res -> res)) | res
+                            -> res)`];;
 
 (* HOL4 bviSemScript.sml:349: ML code, not ported *)
 
@@ -434,7 +438,3 @@ let bviSem_semantics_def = new_definition
 (* clean up *)
 
 (* HOL4 bviSemScript.sml:437: ML code, not ported *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

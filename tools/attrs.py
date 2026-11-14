@@ -5,12 +5,19 @@
 A theorem of a HOL4 source can carry attributes ([simp],
 [compute], [local], [allow_rebind]), which are part of what the
 source says, so the port keeps them in the name that it gives the
-statement (CLAUDE.md).  They are not load bearing -- phase three
-does not replay HOL4's automation -- but a statement that loses
-one does not read the same as the source any more.
+statement (CLAUDE.md).  All but one are not load bearing -- phase
+three does not replay HOL4's automation -- but a statement that
+loses one does not read the same as the source any more.
+
+The one that is load bearing is [simp]: the port has a simp set
+of its own (tactics/simpset.ml), so a theorem that HOL4 puts in
+it the port puts in it too, with a call after the theorem.  A
+definition can carry it as well, and then it is the equations of
+the definition that go in.
 
 This says which statements of the port have other attributes than
-the theorem of the source has.
+the theorem of the source has, and which definitions of a source
+that are in HOL4's simp set are not in the port's.
 """
 import sys, os, re
 
@@ -25,12 +32,32 @@ def main():
   want = set(sys.argv[1:])
   db = dbmod.Db()
   n = bad = own = 0
+  nd = badd = 0
   for thy, path, kind in dbmod.load_order():
     if kind != 'cakeml' or (want and thy not in want): continue
     try:
       text = open(ML + db.mlpath_of(thy)).read()
     except OSError:
       continue
+    # a definition that HOL4 puts in its simp set: the port puts
+    # the binding it gives the definition in its own, and that
+    # binding is the name of the source or that name with the
+    # theory in front of it (tools/port.py's bindname)
+    sp = stmts.simped(text)
+    for b in hol4.parse(path):
+      if b.kind != 'Definition' or not b.name: continue
+      if 'simp' not in (b.attrs or []): continue
+      nd += 1
+      if b.name in sp or '%s_%s' % (thy, b.name) in sp: continue
+      # a definition that the port does not make has no binding
+      # to put in the set
+      if ('let %s =' % b.name not in text and
+          'let %s,' % b.name not in text and
+          'let %s_%s' % (thy, b.name) not in text): continue
+      badd += 1
+      if badd <= 20:
+        print('%s$%s: the source has it in the simp set and the '
+              'port has not' % (thy, b.name))
     # the attributes that the port gives every name it states,
     # out of the comment over the statement (tools/stmts.py); a
     # theorem that the source states as the value of another one
@@ -83,7 +110,9 @@ def main():
         'the source gives the theorem' % (n, bad))
   print('%d lemmas of the port\'s own, which no theorem of a '
         'source names' % own)
-  return bad
+  print('%d definitions of a source in HOL4\'s simp set, %d of '
+        'them not in the port\'s' % (nd, badd))
+  return bad + badd
 
 
 if __name__ == '__main__':

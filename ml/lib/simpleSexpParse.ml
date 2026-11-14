@@ -12,9 +12,8 @@ needs "lib/pegexec.ml";;
 needs "lib/simpleSexp.ml";;
 needs "lib/simpleSexpPEG.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: list pair string *)
 
 let parse_sexp_def = new_definition
@@ -49,7 +48,8 @@ let strip_dot_def,strip_dot_ind = define_rec
    `strip_dot (SX_SYM s) =
       (if s = "nil" then ([],NONE) else ([],SOME (SX_SYM s)))`;
    `strip_dot (SX_CONS a d) = (let (ls,n) = strip_dot d in (CONS a
-  ls,n))`];;
+    ls,n))`];;
+add_simp strip_dot_def;;
 
 (* the termination relation that HOL4 gives is
      MEASURE simpleSexp_sexp_size

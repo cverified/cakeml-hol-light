@@ -13,11 +13,8 @@ needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/semantics/dataProps.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "data_simpProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "data_simpProof"
   ["dataProps"; "dataSem"; "data_simp"];;
 
 (* [local] *)
@@ -55,7 +52,3 @@ let get_code_labels_simp = prove
  (`!x y. dataProps_get_code_labels (simp x y) SUBSET
   dataProps_get_code_labels x UNION dataProps_get_code_labels y`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

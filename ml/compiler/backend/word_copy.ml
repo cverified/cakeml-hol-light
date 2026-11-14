@@ -16,11 +16,8 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_copy"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_copy"
   ["reg_alloc"; "wordLang"];;
 
 (*
@@ -379,7 +376,3 @@ let copy_prop_prog_def,copy_prop_prog_ind = define_shaped_rec
 let copy_prop_def = new_definition
   `copy_prop (e:'a wordLang_prog) =
      FST (copy_prop_prog e empty_eq)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

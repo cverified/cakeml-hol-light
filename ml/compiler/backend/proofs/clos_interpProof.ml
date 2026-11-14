@@ -21,11 +21,8 @@ needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_interpProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_interpProof"
   ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_interp"];;
 
 (* ------------------------------------------------------------------------- *
@@ -111,12 +108,13 @@ let interp_assum_leq = prove
   (:'ffi) d`,
   CHEAT_TAC);;
 
-(* [simp,local] *)
+(* [local] *)
 let evaluate_Constant = prove
  (`closSem_evaluate ([(closLang_Op t (closLang_BlockOp
   (closLang_Constant c)) []:closLang_exp)],env,s) = (Rval [make_const
   c],s)`,
   CHEAT_TAC);;
+add_simp evaluate_Constant;;
 
 let evaluate_Cons_nil = prove
  (`closSem_evaluate ([(closLang_Op t (closLang_BlockOp (closLang_Cons
@@ -338,6 +336,7 @@ let v_ok_def,v_ok_ind = define_shaped_rec
    `v_ok (closSem_Recclosure loco vs1 env1 fns1 i:closSem_v) <=>
         ALL v_ok env1 /\ ALL v_ok vs1 /\ i < LENGTH fns1 /\
         ALL ((~) o has_install o SND) fns1`];;
+add_simp v_ok_def;;
 
 let res_ok_def = new_definition
   `res_ok x1 =
@@ -345,6 +344,7 @@ let res_ok_def = new_definition
         Rerr (Rabort _2) -> T
       | (Rerr (Rraise v)) -> v_ok v
       | (Rval v) -> ALL v_ok v`;;
+add_simp res_ok_def;;
 
 let state_rel'_def = new_definition
   `state_rel' (s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state) <=>
@@ -473,7 +473,3 @@ let insert_interp_esgc_free = prove
  (`ALL closProps_esgc_free (insert_interp xs) = ALL
   closProps_esgc_free xs`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

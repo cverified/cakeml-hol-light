@@ -152,13 +152,16 @@ def lay(pre, words, width=68):
   return lines
 
 
-def fill(pre, words, width=70):
+def fill(pre, words, width=70, tight=False):
   """lay out the words in lines of at most width characters, the
-     first line starting with pre and the others indented by 3"""
+     first line starting with pre and the others indented by 3.
+     With tight the first word follows pre with no space, which is
+     what a quotation wants (`:num, not `: num)"""
   lines = []
   cur = pre
   for w in words:
-    if cur == pre and (pre.endswith('"') or pre.endswith(' ')):
+    if cur == pre and (tight or pre.endswith('"') or
+                       pre.endswith(' ')):
       cur += w
     elif len(cur) + 1 + len(w) <= width:
       cur += ' ' + w
@@ -294,7 +297,11 @@ class Porter:
     self.amb = amb
     flds = {f: t for f, t in fields.items() if t}
     flds.update(overrides.FIELD_OF.get(thy, {}))
-    self.abbrevs = db.abbrevs_for(thy)
+    # the type abbreviations in scope, and the ones of them that
+    # the port declares with new_type_abbrev: a type is written
+    # with those rather than expanded, as the source writes it
+    # (flatLang's pat has (ctor_id # type_group_id) option)
+    self.abbrevs, self.declared_abbrevs = db.abbrevs_for(thy)
     # the names that the port gives the constants, so that a size
     # function is not made for a name that is one of them
     self.constnames = set(db.names_for(thy).values())
@@ -310,6 +317,12 @@ class Porter:
                          ambfields=db.ambiguous_fields(),
                          con_argty=db.con_argty_for(thy),
                          defnames=db.defnames_for(thy))
+    # HOL4's auxiliary size functions of a datatype family
+    # (exp1_size, exp2_size, ...), as the term the port writes
+    # for each (overrides.AUX_SIZE)
+    self.ctx.auxsize = dict(
+      (nm, txt) for (t2, nm), txt in overrides.AUX_SIZE.items()
+      if t2 == thy)
     # a name HOL4 overloads is written out as the constant it
     # means in this theory, so that HOL Light has one name per
     # constant and nothing is resolved while a file loads
@@ -332,6 +345,8 @@ class Porter:
       db.types_in_scope(thy) |
       dbmod.hl_types() | set(overrides.TYPE_MAP))
     self.out = []
+    # the size functions this file has made (size_prelude)
+    self.sizes_made = set()
     self.warn = []
     # the proofs of phase three: a theorem of proofs/<path>.prf
     # gets the tactic that stands there, one that is not in it
@@ -491,6 +506,14 @@ class Porter:
            ' (tools/unstated.py): %s' % nm))
       return
     name = self.bindname(nm)
+    # HOL4's [simp] says the theorem belongs to the set that its
+    # simplifier reaches for.  HOL Light says that with a call,
+    # after the theorem, as Isabelle's [simp] and Lean's @[simp]
+    # do (tactics/simpset.ml); the attributes that HOL Light has
+    # no counterpart for stay in the comment that records what
+    # the source said
+    simp = 'simp' in at
+    at = [a for a in at if a != 'simp']
     attrs = ('[' + ','.join(at) + ']') if at else ''
     self.ctx.defining = set()
     self.ctx.intnums = False
@@ -631,9 +654,13 @@ class Porter:
     # the source where the binding is not that name itself (two
     # files that state a theorem of one name: the later one has
     # the name of its theory in front of it)
-    head = ''
+    # a statement that uses the size function of a datatype needs
+    # it to be there: the port makes the size functions when a
+    # definition first needs one, and a theorem may be the first
+    # (flatLang's exp6_size_APPEND, right after the datatype)
+    head = self.size_prelude(stmt)
     if attrs or name != nm:
-      head = ('(* %s%s *)\n'
+      head += ('(* %s%s *)\n'
               % (nm if name != nm else '', attrs)).replace('(*  *)',
                                                            '')
     if vars_read:
@@ -653,6 +680,7 @@ class Porter:
       self.out.append('%s%s\n (`%s`,\n%s);;'
                       % (head, self.prove_head(name), stmt,
                          tac or '  CHEAT_TAC'))
+    if simp: self.out.append('add_simp %s;;' % name)
     # the binding is there, so a source that states a theorem as
     # the value of this one (Theorem foo = bar) can use it
     self.db.thmbind[nm] = name
@@ -1055,9 +1083,41 @@ class Porter:
             any(k not in ('type', 'tyabbrev')
                 for _, k in self.db.defs.get(n, [])))
 
-  def typ(self, text):
+  def size_prelude(self, text):
+    """a measure that uses the size function of a datatype needs
+       it to be there; the port makes the size functions when a
+       definition first needs one, which is too late for the
+       measure itself"""
+    anc = self.db.scope(self.thy) | {self.thy}
+    # the name that the port gives the type of that theory, not
+    # the one that the name means in this theory's scope
+    types = set(self.tnm(t2 + '$' + ty)
+                for (t2, ty) in self.db.datatypes if t2 in anc)
+    out = ''
+    for ty in sorted(set(re.findall(r"([A-Za-z0-9_']+?)_size\d*\b",
+                                    text))):
+      # a constant whose name happens to end in _size is not the
+      # size function of a datatype (sptree's size is sptree_size
+      # in the port)
+      # the size function of a type of the library layer is in
+      # ml/lib/hol4.ml, and making one here would be a second
+      # constant that no lemma is about
+      if ty not in types: continue
+      # a constant of the port that happens to be called after
+      # the size of a type is not that size function
+      # (balanced_map's size is balanced_map_size in the port)
+      if ty + '_size' in self.constnames: continue
+      # and a file says it once: a theorem that uses a size
+      # function stands after the one that made it
+      if ty in self.sizes_made: continue
+      self.sizes_made.add(ty)
+      out += 'let _ = size_thms "%s";;\n' % ty
+    return out
+
+  def typ(self, text, keep=False):
     ty = hterm.parse_type_text(text)
-    ty = hterm.expand_type(ty, self.abbrevs)
+    ty = hterm.expand_type(ty, self.abbrevs,
+                           self.declared_abbrevs if keep else None)
     return hterm.print_type(ty, self.ctx)
 
   # -- the blocks ------------------------------------------------
@@ -1181,8 +1241,8 @@ class Porter:
     # added to (bvlSem hides str and labProps mem, and neither has
     # a list of its own)
     if hide or self.hidmore:
-      text += ('\n(* and the names that this file reads as'
-               ' variables are constants again *)\n'
+      text += ('\n(* and the names it reads as variables are'
+               ' constants again *)\n'
                'let _ = do_list unhide_constant\n  [' +
                ';\n   '.join('"%s"' % n for n in
                               sorted(set(hide) | self.hidnames)) +
@@ -1190,10 +1250,9 @@ class Porter:
     # every file that said which theories it can see puts the
     # interface back, a file whose source has no CakeML ancestor as
     # well: it cut the interface down to nothing of the port
-    if self.hideconsts or self.kind != 'lib':
-      text += ('\n(* and the overloads that this file cannot see are'
-               ' back in the\n   interface *)\n'
-               'let _ = unhide_overloads ();;\n')
+    # the interface goes back where the next file says which
+    # theory it is (cake_theory, cake_library), so there is
+    # nothing for a file to take back at the end of itself
     # the lemmas that the port adds to this theory, which a proof
     # of phase three asks for and the source has not: they are in
     # tools/extra/<theory>.ml, so that a re-port keeps them (a
@@ -1234,7 +1293,7 @@ class Porter:
     # while the file loads, so that a name that no type pins down
     # is the constant that HOL4 reads there and not the one of the
     # theory that the load order registered last (ml/lib/theorem.ml,
-    # hol4_ancestors; ISSUES.md "A statement that means another
+    # cake_theory; ISSUES.md "A statement that means another
     # theory's constant")
     # every file of the port says it, a file whose source has no
     # ancestor of its own as well: the line is what says which
@@ -1246,9 +1305,9 @@ class Porter:
       # a HOL4 library theory is of no theory of the port: the
       # overloads it registers are in the scope of every file, and
       # a needs of it stands inside a file that is a theory
-      head += ('\n\n(* this file is of no theory of the port: the'
-               ' overloads it\n   registers are in the scope of'
-               ' every file *)\nlet _ = hol4_lib ();;')
+      head += ('\n\n(* of no theory of the port: what it registers'
+               ' is in the scope of every file *)\n'
+               'let _ = cake_library ();;')
     if self.kind != 'lib':
       lines = ['  ["' + self.anc_scope[0] + '"'] if self.anc_scope \
               else []
@@ -1258,11 +1317,8 @@ class Porter:
           lines.append('   "' + n + '"')
         else:
           lines[-1] += '; "' + n + '"'
-      head += ('\n\n(* the theories whose names the Ancestors blocks'
-               ' of the source\n   bring, which are the ones that its'
-               ' statements read: the\n   overloads of every other'
-               ' theory come out of the interface\n   while this file'
-               ' loads *)\nlet _ = hol4_ancestors "%s"'
+      head += ('\n\n(* the theory of this file, and the ones its'
+               ' statements read *)\nlet _ = cake_theory "%s"'
                % self.thy
                + ('\n' + ';\n'.join(lines) + '];;' if lines
                   else ' [];;'))
@@ -1439,13 +1495,15 @@ class Porter:
       alias = hol4.thmvalue_alias(b.text)
       if alias and b.name and alias in self.db.thmbind:
         nm = self.bindname(b.name)
-        at = ('[' + ','.join(b.attrs) + ']') if b.attrs else ''
+        simp = 'simp' in b.attrs
+        ats = [a for a in b.attrs if a != 'simp']
+        at = ('[' + ','.join(ats) + ']') if ats else ''
         text = (('(* %s *)\n' % at) if at else '') + \
                ('let %s = %s;;' % (nm, self.db.thmbind[alias]))
         if max(len(l) for l in text.split('\n')) > 72:
           text = (('(* %s *)\n' % at) if at else '') + \
                  ('let %s =\n  %s;;' % (nm, self.db.thmbind[alias]))
-        self.out.append(text)
+        self.out.append(text + ('\nadd_simp %s;;' % nm if simp else ''))
         self.db.thmbind[b.name] = nm
         return
       # a theorem that HOL4 binds to the value of an ML
@@ -1597,59 +1655,75 @@ class Porter:
         cons[-1] = (c0, a0, cs0, sm0 + carry)
       parts.append((ty, cons))
     if not parts: return
-    def alt(c, args, cs, after):
-      t = ' '.join([self.nm(c)] +
-                   ['(%s)' % self.typ_ast(a) for a in args])
-      return (''.join('@@' + l + '@@' for cm in cs for l in cm) + t +
-              ''.join('@@' + l + '@@' for cm in after for l in cm))
-    spec = ';\n   '.join(
+    def argstr(a):
+      # an argument that is one identifier needs no brackets: the
+      # parser of a type takes an identifier after it for an
+      # operator only where that one is a type of arity above
+      # zero (parser.ml's type_constructor), which no argument of
+      # a constructor is
+      s = self.typ_ast(a, keep=True)
+      return s if re.match(r"^[A-Za-z_][A-Za-z0-9_']*$", s) \
+             else '(%s)' % s
+
+    def esc(l):
+      """a quote or a backslash of a comment of the source, which
+         stands in an OCaml string here: what OCaml reads is the
+         text of the source unaltered (lexer_fun's symbol has
+         '["Foo";"Bar"] "<" is Foo.Bar.<')"""
+      return l.replace('\\', '\\\\').replace('"', '\\"')
+
+    # the specification without its comments, for the type
+    # variables of it.  HOL Light gives the type the type
+    # variables of the whole specification, in the order in which
+    # it sorts them, so the port knows how to write the type of a
+    # constructor; the apostrophe of a comment ("the function's
+    # name" of ast's exp) is not one of them
+    spec = ';\n'.join(
       '%s = %s' % (self.tnm(ty),
-                   ' | '.join(alt(c, args, cs, af)
-                              for c, args, cs, af in cons))
+                   ' | '.join(' '.join([self.nm(c)] +
+                                       [argstr(a) for a in args])
+                              for c, args, _, _ in cons))
       for ty, cons in parts)
-    # HOL Light gives the type the type variables of the whole
-    # specification, in the order in which it sorts them, so the
-    # port knows how to write the type of a constructor.  A
-    # comment of the source is no part of the specification: the
-    # apostrophe of one ("the function's name" of ast's exp) is
-    # not a type variable
-    params = sorted(set(re.findall(r"'[A-Za-z][A-Za-z0-9_']*",
-                                   re.sub(r'@@.*?@@', '', spec))))
+    params = sorted(set(re.findall(r"'[A-Za-z][A-Za-z0-9_']*", spec)))
     for ty, _ in parts:
       self.db.ty_params[(self.thy, self.tnm(ty))] = params
     names = [ocaml_name(self.tnm(ty)) for ty, _ in parts]
     lhs = ','.join('%s_INDUCT' % n for n in names[:1]) + ',' + \
           ','.join('%s_RECURSION' % n for n in names[:1])
-    # the specification is laid out in lines of at most 72
-    # characters; a line that is continued ends in a backslash,
-    # which OCaml leaves out of the string
-    # a line that is continued ends in a backslash, which OCaml
-    # leaves out of the string; after a comment of the source the
-    # line break has to stay, or the rest of the specification
-    # would be in the comment, so that one ends in \n and a
-    # backslash
+
+    # the specification is laid out as the source lays it out: the
+    # name of the type, then one constructor to a line under it,
+    # and a comment of the source on its own line before the
+    # constructor it belongs to.  An OCaml string holds the line
+    # breaks themselves -- a break is a space to the parser of the
+    # specification, and it is what ends a // comment of it
+    # (ml/lib/define.ml's strip_dslash)
+    def lay(head, t):
+      out, cur = [], head
+      for w in t.split(' '):
+        if cur == head: cur += w
+        elif len(cur) + 1 + len(w) <= 72: cur += ' ' + w
+        else:
+          out.append(cur)
+          cur = '       ' + w
+      out.append(cur)
+      return out
+
     lines = []
-    for k, part in enumerate(spec.split('\n')):
-      pre = '  "' if k == 0 else '   '
-      first = True
-      for i, seg in enumerate(re.split(r'@@(.*?)@@', part)):
-        if i % 2:
-          # the specification is an OCaml string, so a quote or a
-          # backslash of the comment is escaped: what OCaml reads
-          # is the text of the source unaltered (lexer_fun's
-          # symbol has '["Foo";"Bar"] "<" is Foo.Bar.<')
-          cm = seg.strip().replace('\\', '\\\\').replace('"', '\\"')
-          lines.append(('   ' if not first else pre) + '// ' +
-                       cm + '\\n\\')
-          first = False
-          continue
-        if not seg.split(): continue
-        ls = fill(pre if first else '   ', seg.split(), 69)
-        lines += [l + ' \\' for l in ls]
-        first = False
+    for pi, (ty, cons) in enumerate(parts):
+      if pi: lines[-1] += ';'
+      lines.append(('  "' if not pi else '   ') + self.tnm(ty) + ' =')
+      for ci, (c, args, cs, af) in enumerate(cons):
+        for cm in cs:
+          lines += ['     // ' + esc(l) for l in cm]
+        lines += lay('     ' if not ci else '   | ',
+                     ' '.join([self.nm(c)] + [argstr(a) for a in args]))
+        for cm in af:
+          lines += ['     // ' + esc(l) for l in cm]
+    # a comment is ended by the line break, so the quote that ends
+    # the specification cannot stand on the line of one
+    if lines[-1].lstrip().startswith('//'): lines.append('  ')
     text = '\n'.join(lines)
-    for end in (' \\', '\\n\\'):
-      if text.endswith(end): text = text[:-len(end)]
     overloads = self.overloads_of(
       [c for _, cons in parts for c, _, _, _ in cons])
     head = 'let %s = define_datatype' % lhs
@@ -1741,8 +1815,9 @@ class Porter:
     self.out.append('%slet %s = define_datatype\n%s";;'
                     % (pre, lhs, text))
 
-  def typ_ast(self, ty):
-    ty = hterm.expand_type(ty, self.abbrevs)
+  def typ_ast(self, ty, keep=False):
+    ty = hterm.expand_type(ty, self.abbrevs,
+                           self.declared_abbrevs if keep else None)
     return hterm.print_type(ty, self.ctx)
 
   def record(self, ty, rhs):
@@ -2068,38 +2143,12 @@ class Porter:
                    self.at(b, 'the tactic that proves the'
                               ' termination', 'Termination') + '\n'
 
-    def size_prelude(text):
-      """a measure that uses the size function of a datatype needs
-         it to be there; the port makes the size functions when a
-         definition first needs one, which is too late for the
-         measure itself"""
-      anc = self.db.scope(self.thy) | {self.thy}
-      # the name that the port gives the type of that theory, not
-      # the one that the name means in this theory's scope
-      types = set(self.tnm(t2 + '$' + ty)
-                  for (t2, ty) in self.db.datatypes if t2 in anc)
-      out = ''
-      for ty in sorted(set(re.findall(r"([A-Za-z0-9_']+?)_size\d*\b",
-                                      text))):
-        # a constant whose name happens to end in _size is not the
-        # size function of a datatype (sptree's size is sptree_size
-        # in the port)
-        # the size function of a type of the library layer is in
-        # ml/lib/hol4.ml, and making one here would be a second
-        # constant that no lemma is about
-        if ty not in types: continue
-        # a constant of the port that happens to be called after
-        # the size of a type is not that size function
-        # (balanced_map's size is balanced_map_size in the port)
-        if ty + '_size' in self.constnames: continue
-        out += 'let _ = size_thms "%s";;\n' % ty
-      return out
 
     # the size function of a datatype that the definition itself
     # uses has to be there as well (closSem's exp_alt_size adds the
     # size of the op of closLang)
-    sizes = size_prelude((rel or '') + ' ' +
-                         (term if term else clauses))
+    sizes = self.size_prelude((rel or '') + ' ' +
+                              (term if term else clauses))
     # where the source gives a termination its text is kept, as
     # it is for a relation that the port takes from it
     relnote = ('(* the termination relation is not in the HOL4 '
@@ -2188,7 +2237,6 @@ class Porter:
     elif head in NOT_RECURSIVE: recursive = False
     elif head in RECURSIVE: recursive = True
     else: recursive = recursive_text(body, names)
-    mutual = len(self.ctx.defining) > 1
     # the induction theorem that a recursive definition gives, under
     # the name HOL4 gives it (foo_def comes with foo_ind)
     indbind = (bind[:-4] if bind.endswith('_def') else bind) + '_ind'
@@ -2218,8 +2266,8 @@ class Porter:
       # a measure that uses the size function of a datatype needs
       # it to be there, and this relation was not there when the
       # prelude was made
-      sizes = size_prelude((rel or '') + ' ' +
-                           (term if term else clauses))
+      sizes = self.size_prelude((rel or '') + ' ' +
+                                (term if term else clauses))
       def inset(r):
         return '\n'.join('     ' + l for l in r.split('\n')).lstrip()
       if rel is not None and hol4rel is None:
@@ -2284,8 +2332,11 @@ class Porter:
       if not shape and kind == '_rec': suffix = ''
       elif kind == '_guess': suffix = '_cheat' if cheat else ''
       else: suffix = '_tac' if tac else ('_cheat' if cheat else '')
-      how = ('define_mutual' if mutual else 'define') + \
-            ('_shaped' if shape else '') + kind + suffix
+      # a definition of several functions that recurse through
+      # one another is made the way one of them is: the clauses
+      # say which it is, and a name that only said `mutual' said
+      # nothing the clauses do not
+      how = 'define' + ('_shaped' if shape else '') + kind + suffix
       args = ('"%s"\n  ' % shape) if shape else ''
       if rel is not None: args += '`%s`\n  ' % rel
       if suffix == '_tac': args += tactext + '\n  '
@@ -2304,6 +2355,12 @@ class Porter:
       EMITTED_DEFS.append((self.thy,
                            self.ctx.names.get((self.thy, c), c),
                            bind))
+    # HOL4's [simp] on a definition says that its equations belong
+    # to the set that its simplifier reaches for, which the port
+    # says with a call after the definition, as it does for a
+    # theorem (tactics/simpset.ml)
+    if 'simp' in (b.attrs or []):
+      text += '\nadd_simp %s;;' % bind
     self.out.append(text if not overloads else
                     text + '\n' + '\n'.join(overloads))
     # a definition that the port writes by hand and that goes
@@ -3228,7 +3285,7 @@ class Porter:
       for i, (cl, mt) in enumerate(groups):
         last = 5 if i == len(groups) - 1 else 3
         if mt is not None:
-          cls.append(fmt(mt, indent=4, last=last))
+          cls.append(fmt(mt, indent=4, last=last, extra=4))
           continue
         q = hterm.pop_quoted_comments(cl)
         if q: qcs[i] = q
@@ -3237,7 +3294,7 @@ class Porter:
         self.ctx.intvars = self.int_vars_node(cl) | self.intargs
         cls.append(fmt(self.pr_clause(p,
                          self.annotate(cl, True, atys)),
-                       indent=4, last=last))
+                       indent=4, last=last, extra=4))
       # a comment that has no token of the clause to stand before
       # (one at the end of it) goes at the end of that clause
       starts = [(hterm.first_tok(cl).pos
@@ -3581,12 +3638,14 @@ class Porter:
            % b.name))
     else:
       # the type may be too long for one line
-      body = self.typ(txt)
+      body = self.typ(txt, keep=True)
       head = 'new_type_abbrev("%s",`:' % self.tnm(b.name)
-      text = '\n'.join(fill(head, body.split(' '), 69)) + '`);;'
+      text = ('\n'.join(fill(head, body.split(' '), 69, tight=True))
+              + '`);;')
       if max(len(l) for l in text.split('\n')) > 72:
         text = ('new_type_abbrev("%s",\n' % self.tnm(b.name) +
-                '\n'.join(fill('  `:', body.split(' '), 69)) + '`);;')
+                '\n'.join(fill('  `:', body.split(' '), 69,
+                                tight=True)) + '`);;')
       # the comment stands after the phrase, on its line where the
       # source has it there and the line is not too long
       for c in cs:
@@ -3918,6 +3977,12 @@ class Porter:
     # the relations that the block defines are overloads of HOL4
     # as the constants of a Definition are
     overloads = self.overloads_of(defined)
+    # HOL4's [simp] on a definition says that its equations belong
+    # to the set that its simplifier reaches for, which the port
+    # says with a call after the definition, as it does for a
+    # theorem (tactics/simpset.ml)
+    if 'simp' in (b.attrs or []):
+      text += '\nadd_simp %s;;' % bind
     self.out.append(text if not overloads else
                     text + '\n' + '\n'.join(overloads))
 
@@ -4114,10 +4179,13 @@ def letline(binding, how, rest):
   return 'let %s,\n    %s =\n  %s\n  %s;;' % (a, b, how, rest)
 
 
-def fmt(text, indent=3, width=72, last=3):
+def fmt(text, indent=3, width=72, last=3, extra=2):
   """the layout of a translated term in the HOL Light source; the
      last line of the term is followed by a quote and a ;; (last
-     characters), so it has to be that much shorter"""
+     characters), so it has to be that much shorter.  A line that
+     is too long is broken and the rest of it indented by extra,
+     which is what lines the rest up under the start of the term
+     where the term stands in a list of quotations"""
   lines = [l.rstrip() for l in text.split('\n') if l.strip()]
   if not lines: return ''
   base = len(lines[0]) - len(lines[0].lstrip())
@@ -4126,7 +4194,7 @@ def fmt(text, indent=3, width=72, last=3):
     k = len(l) - len(l.lstrip())
     out.append(' ' * min(indent + max(0, k - base), 30) + l.lstrip())
   return '\n'.join(
-    wrap(l, indent, width - (last if i == len(out) - 1 else 0))
+    wrap(l, indent, width - (last if i == len(out) - 1 else 0), extra)
     for i, l in enumerate(out))
 
 

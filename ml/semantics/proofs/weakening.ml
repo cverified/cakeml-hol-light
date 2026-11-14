@@ -18,11 +18,8 @@ needs "semantics/proofs/typeSysProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "weakening"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "weakening"
   ["ast"; "namespaceProps"; "semanticPrimitives";
    "typeSoundInvariants"; "typeSysProps"; "typeSystem"];;
 (* HOL4 ancestors outside the port: option rich_list alist *)
@@ -297,7 +294,3 @@ let type_d_weakening = prove
 
 (* HOL4 weakeningScript.sml:879-913: code that the source has in a
    comment *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

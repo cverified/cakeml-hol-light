@@ -7,9 +7,8 @@
 
 needs "lib/ASCIInumbers.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: pred_set res_quan arithmetic
    words bit pair list rich_list relation pair integer fcp *)
 
@@ -65,7 +64,7 @@ let mw_shift_def,mw_shift_ind = assume_definition_rec
   [`mw_shift [] = []`;
    `mw_shift [w] = [w >>> 1]`;
    `mw_shift (CONS (w:'a word) (CONS x xs)) = CONS (w >>> 1 || x <<
-  (dimindex (:'a) - 1)) (mw_shift (CONS x xs))`];;
+    (dimindex (:'a) - 1)) (mw_shift (CONS x xs))`];;
 
 (* the termination relation that HOL4 gives is
      MEASURE (LENGTH o FST)
@@ -85,27 +84,33 @@ let single_div_def = new_definition
     (n2w ((w2n x1 * dimword (:'a) + w2n x2) MOD w2n y):'a word)))`;;
 
 let mw_op_INDUCT,mw_op_RECURSION = define_datatype
-  "mw_op = multiword_Add | multiword_Sub | multiword_Mul | \
-   multiword_Div | multiword_Mod | multiword_Lt | multiword_Eq | \
-   multiword_Dec";;
+  "mw_op =
+     multiword_Add
+   | multiword_Sub
+   | multiword_Mul
+   | multiword_Div
+   | multiword_Mod
+   | multiword_Lt
+   | multiword_Eq
+   | multiword_Dec";;
 
 let int_op_def = define_cases
   [`multiword_int_op (multiword_Add:mw_op) (i:int) (j:int) = ((i +
-  j):int)`;
+    j):int)`;
    `multiword_int_op (multiword_Sub:mw_op) (i:int) (j:int) = ((i -
-  j):int)`;
+    j):int)`;
    `multiword_int_op (multiword_Mul:mw_op) (i:int) (j:int) = ((i *
-  j):int)`;
+    j):int)`;
    `multiword_int_op (multiword_Div:mw_op) (i:int) (j:int) = ((i /
-  j):int)`;
+    j):int)`;
    `multiword_int_op (multiword_Mod:mw_op) (i:int) (j:int) = ((i %
-  j):int)`;
+    j):int)`;
    `multiword_int_op (multiword_Lt:mw_op) (i:int) (j:int) = ((if i <
-  j then (&1) else (&0)):int)`;
+    j then (&1) else (&0)):int)`;
    `multiword_int_op multiword_Eq (i:int) (j:int) = ((if i = j then
-  (&1) else (&0):int):int)`;
+    (&1) else (&0):int):int)`;
    `multiword_int_op (multiword_Dec:mw_op) (i:int) (j:int) =
-  ((&0):int)`];;
+    ((&0):int)`];;
 
 let single_div_loop_def,single_div_loop_ind = define_guess
   [`single_div_loop ((k:'a word),(ns:('a word) list),(m:'a word),(is:('a

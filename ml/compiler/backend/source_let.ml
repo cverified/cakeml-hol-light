@@ -14,11 +14,8 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "source_let"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "source_let"
   ["ast"; "evaluate"; "misc"];;
 
 
@@ -30,6 +27,7 @@ let dest_Let_def = new_definition
       match x1 with
         (ast_Let opt x y:ast_exp) -> SOME (opt,x,y)
       | _1 -> NONE`;;
+add_simp dest_Let_def;;
 
 let dest_Let_SOME = prove
  (`dest_Let z = SOME (opt,x,y) <=> z = ast_Let opt x y`,
@@ -44,6 +42,7 @@ let dest_Letrec_def = new_definition
       match x1 with
         (ast_Letrec funs x:ast_exp) -> SOME (funs,x)
       | _2 -> NONE`;;
+add_simp dest_Letrec_def;;
 
 let dest_Letrec_SOME = prove
  (`dest_Letrec z = SOME (funs,x) <=> z = ast_Letrec funs x`,
@@ -77,7 +76,6 @@ let lift_lets_def,lift_lets_ind = define_guess
            sofar,d)) | SOME (d1,d2) -> lift_lets (CONS d1 sofar)
            d2)`];;
 
-let _ = size_thms "dec";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 let source_let_compile_decs_def,source_let_compile_decs_ind = define_wf
@@ -85,14 +83,14 @@ let source_let_compile_decs_def,source_let_compile_decs_ind = define_wf
   [`source_let_compile_decs [] = []`;
    `source_let_compile_decs (CONS d ds) =
         (match lift_lets [] d with SOME (pre,d) -> CONS (Dlocal pre
-          [d]) (source_let_compile_decs ds) | NONE ->
+            [d]) (source_let_compile_decs ds) | NONE ->
             (match d with Dmod mn ds1 -> CONS (Dmod mn
-              (source_let_compile_decs ds1))
-              (source_let_compile_decs ds) | Dlocal ds1 ds2 -> CONS
-              (Dlocal (source_let_compile_decs ds1)
-              (source_let_compile_decs ds2))
-              (source_let_compile_decs ds) | _6 -> CONS d
-              (source_let_compile_decs ds)))`];;
+                (source_let_compile_decs ds1))
+                (source_let_compile_decs ds) | Dlocal ds1 ds2 ->
+                CONS (Dlocal (source_let_compile_decs ds1)
+                (source_let_compile_decs ds2))
+                (source_let_compile_decs ds) | _6 -> CONS d
+                (source_let_compile_decs ds)))`];;
 
 (*
 val test3 = EVAL “
@@ -112,7 +110,3 @@ val test5 = EVAL “
     Dlet l (Pvar "foo") (Var (Short "bar"))
     ]”;
  *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

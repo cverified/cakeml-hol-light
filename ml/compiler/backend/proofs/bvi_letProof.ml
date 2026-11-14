@@ -26,11 +26,8 @@ needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvi_letProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvi_letProof"
   ["bviProps"; "bviSem"; "bvi_let"];;
 
 (* HOL4 bvi_letProofScript.sml:10: an overload that the source brings
@@ -390,6 +387,7 @@ let IMP_COMM = prove
  (`(b1 ==> b2 ==> b3) <=> (b2 ==> b1 ==> b3)`,
   (MESON_TAC[]));;
 
+let _ = size_thms "bvi_exp";;
 let exp_size_APPEND = prove
  (`!xs ys. bvi_exp_size1 (APPEND xs ys) = bvi_exp_size1 xs +
   bvi_exp_size1 ys`,
@@ -955,7 +953,6 @@ let evaluate_compile_exp = prove
        ACCEPT_TAC(SPEC_ALL(MATCH_MP evaluate_env_rel
          (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne))))))));;
 
-(* [simp] *)
 let dest_var_code_labels = prove
  (`!x. bviProps_get_code_labels (bvi_let_delete_var x) =
   bviProps_get_code_labels x`,
@@ -970,6 +967,7 @@ let dest_var_code_labels = prove
    MATCH_REDUCE_TAC THEN
    REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                UNION_EMPTY; EMPTY_UNION]));;
+add_simp dest_var_code_labels;;
 
 let compile_code_labels = prove
  (`!x y z. UNIONS (set_of_list (MAP bviProps_get_code_labels
@@ -1125,7 +1123,6 @@ let compile_code_labels = prove
         REWRITE_TAC[LE_REFL]) THEN
    INDUCT_TAC THENL [base_case; step_case]));;
 
-(* [simp] *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let compile_exp_code_labels = prove
@@ -1153,7 +1150,4 @@ let compile_exp_code_labels = prove
    REWRITE_TAC[compile_code_labels] THEN
    REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
                UNION_EMPTY]));;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;
+add_simp compile_exp_code_labels;;

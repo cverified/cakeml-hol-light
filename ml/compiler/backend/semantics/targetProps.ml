@@ -20,11 +20,8 @@ needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "targetProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "targetProps"
   ["asm"; "asmProps"; "asmSem"; "ffi"; "misc"; "targetSem"];;
 
 (* this file reads the name of a record field as a variable and
@@ -65,16 +62,19 @@ let ffi_entry_pcs_disjoint_def = new_definition
 (* -- the interference-application trace of a machine run -- *)
 
 let interference_app_INDUCT,interference_app_RECURSION = define_datatype
-  "interference_app = FfiApp (num) (word8 list) ('state) ('state) | \
-   CcApp ('a word) ('a word) ('state) ('state)";;
+  "interference_app =
+     FfiApp num (word8 list) ('state) ('state)
+   | CcApp ('a word) ('a word) ('state) ('state)";;
 
 let is_ffi_app_def = define_cases
   [`is_ffi_app (FfiApp index new_bytes ms_pre ms_post) = T`;
    `is_ffi_app (CcApp a1 a2 ms_pre ms_post) = F`];;
+add_simp is_ffi_app_def;;
 
 let app_post_def = define_cases
   [`app_post (FfiApp index new_bytes ms_pre ms_post) = ms_post`;
    `app_post (CcApp a1 a2 ms_pre ms_post) = ms_post`];;
+add_simp app_post_def;;
 
 (* clocked clone of evaluate that stops at the first interference
    application (FFI, shared-memory or cache-clear) and returns its data
@@ -224,8 +224,8 @@ let interference_app_seq_def,interference_app_seq_ind = define_wf
   [`interference_app_seq mc ffi ms 0 = next_interference mc ffi ms`;
    `interference_app_seq mc ffi ms (SUC n) =
          (match next_interference mc ffi ms with NONE -> NONE |
-           SOME (app,mc',ffi') -> interference_app_seq mc' ffi'
-           (app_post app) n)`];;
+             SOME (app,mc',ffi') -> interference_app_seq mc' ffi'
+             (app_post app) n)`];;
 
 (* number of applications satisfying P among the first n applications *)
 (* the termination relation is not in the HOL4 source; this one is
@@ -236,7 +236,8 @@ let interference_count_def,interference_count_ind = define_wf
    `interference_count P mc ffi ms (SUC n) =
          interference_count P mc ffi ms n +
          (match interference_app_seq mc ffi ms n with SOME
-           (app,mc',ffi') -> (if P app then 1 else 0) | NONE -> 0)`];;
+             (app,mc',ffi') -> (if P app then 1 else 0) | NONE ->
+             0)`];;
 
 (* position in the application sequence of the k-th application
    satisfying P *)
@@ -881,7 +882,3 @@ let ccache_interfer_ok_post_ccache_asm = prove
          mc_conf k (a1,a2,ms2)))
        (machine_config_ccache_interfer mc_conf k (a1,a2,ms2))`),
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

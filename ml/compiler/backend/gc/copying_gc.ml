@@ -12,11 +12,8 @@
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "lib/integer_word.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "copying_gc"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "copying_gc"
   ["gc_shared"];;
 (* HOL4 ancestors outside the port: words *)
 
@@ -24,29 +21,29 @@ let _ = hol4_ancestors "copying_gc"
 
 let gc_move_def = define_general
   [`copying_gc_gc_move (gc_shared_Data d,h2,a,n,heap,c,limit') =
-  ((gc_shared_Data d:'a heap_address),h2,a,n,heap,c)`;
+    ((gc_shared_Data d:'a heap_address),h2,a,n,heap,c)`;
    `copying_gc_gc_move (gc_shared_Pointer ptr d,h2,a,n,heap,c,limit') =
          (match heap_lookup ptr heap with SOME (DataElement xs l dd)
-           ->
+             ->
              (let c = (c /\ l + 1 <= n /\ (a + n = limit')) in
              let n = n - (l + 1) in
              let h2 = APPEND h2 [DataElement xs l dd] in
              let (heap,c) = gc_forward_ptr ptr heap a d c in
                (gc_shared_Pointer a d,h2,a + (l + 1),n,heap,c))
-                 | SOME (ForwardPointer ptr _3 l) ->
-                 (gc_shared_Pointer ptr d,h2,a,n,heap,c) | _4 ->
-                 (ARB,h2,a,n,heap,F))`];;
+                   | SOME (ForwardPointer ptr _3 l) ->
+                   (gc_shared_Pointer ptr d,h2,a,n,heap,c) | _4 ->
+                   (ARB,h2,a,n,heap,F))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_list_def,gc_move_list_ind = define_guess_cheat
   [`copying_gc_gc_move_list ([],h2,a,n,heap,c,limit') =
-  ([],h2,a,n,heap,c)`;
+    ([],h2,a,n,heap,c)`;
    `copying_gc_gc_move_list (CONS x xs,h2,a,n,heap,c,limit') =
          (let (x,h2,a,n,heap,c) = copying_gc_gc_move
-           (x,h2,a,n,heap,c,limit') in
+             (x,h2,a,n,heap,c,limit') in
          let (xs,h2,a,n,heap,c) = copying_gc_gc_move_list
-           (xs,h2,a,n,heap,c,limit') in
+             (xs,h2,a,n,heap,c,limit') in
            (CONS x xs,h2,a,n,heap,c))`];;
 
 (* the termination relation that HOL4 gives is
@@ -59,19 +56,19 @@ let gc_move_list_def,gc_move_list_ind = define_guess_cheat
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_loop_def,gc_move_loop_ind = define_guess_cheat
   [`copying_gc_gc_move_loop (h1,[],a,n,heap,c,limit') =
-  (h1,a,n,heap,c)`;
+    (h1,a,n,heap,c)`;
    `copying_gc_gc_move_loop (h1,CONS h h2,a,n,heap,c,limit') =
          (if limit' < heap_length (APPEND h1 (CONS h h2)) then
-           (h1,a,n,heap,F) else
+             (h1,a,n,heap,F) else
            match h with DataElement xs l d ->
               (let (xs,h2,a,n,heap,c) = copying_gc_gc_move_list
-                (xs,CONS h h2,a,n,heap,c,limit') in
+                  (xs,CONS h h2,a,n,heap,c,limit') in
               let c = (c /\ ~(h2 = []) /\ (HD h2 = h)) in
               let h2 = TL h2 in
               let h1 = APPEND h1 [DataElement xs l d] in
                 copying_gc_gc_move_loop
-                  (h1,h2,a,n,heap,c,limit')) | _6 ->
-                  (h1,a,n,heap,F))`];;
+                    (h1,h2,a,n,heap,c,limit')) | _6 ->
+                    (h1,a,n,heap,F))`];;
 
 let full_gc_def = new_definition
   `full_gc (roots,heap,limit') =
@@ -345,7 +342,3 @@ let full_gc_IMP_isDataElement = prove
  (`(full_gc (roots,heap,limit) = (roots1,heap1,a,T)) ==>
     ALL isDataElement heap1`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

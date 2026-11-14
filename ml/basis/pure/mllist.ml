@@ -15,11 +15,8 @@ needs "lib/sorting.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "lib/toto.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "mllist" [];;
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "mllist" [];;
 
 let _ = do_list hide_constant ["length"; "negate"];;
 
@@ -100,28 +97,28 @@ let sort_SORTED = prove
  (`!R L. transitive R /\ total R ==> SORTED R (sort R L)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let sort_MEM = prove
  (`!R L. MEM x (sort R L) <=> MEM x L`,
   (REWRITE_TAC[sort_def; mergesort_tail_MEM]));;
+add_simp sort_MEM;;
 
 let sort_PERM = prove
  (`!R L. PERM L (sort R L)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let sort_LENGTH = prove
  (`!R l. LENGTH (sort R l) = LENGTH l`,
   CHEAT_TAC);;
+add_simp sort_LENGTH;;
 
 let sort_SORTS = prove
  (`!R. (transitive R /\ total R) ==> SORTS sort R`,
   (SIMP_TAC[SORTS_DEF; sort_PERM; sort_SORTED]));;
 
-(* [simp] *)
 let sort_set = prove
  (`set_of_list (sort R ls) = set_of_list ls`,
   (REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; sort_MEM]));;
+add_simp sort_set;;
 
 let getItem_def = define_cases
   [`getItem [] = NONE`;
@@ -139,17 +136,17 @@ let drop_def = new_definition
 let takeUntil_def,takeUntil_ind = define_rec
   [`takeUntil p [] = []`;
    `takeUntil p (CONS x xs) = (if p x then [] else CONS x
-  (takeUntil p xs))`];;
+    (takeUntil p xs))`];;
 
 let dropUntil_def,dropUntil_ind = define_rec
   [`dropUntil p [] = []`;
    `dropUntil p (CONS x xs) = (if p x then CONS x xs else dropUntil
-  p xs)`];;
+    p xs)`];;
 
 let mllist_mapi_def,mllist_mapi_ind = define_rec
   [`mllist_mapi f (n:num) [] = []`;
    `mllist_mapi f (n:num) (CONS h t) = (let y = f n h in (CONS y
-  (mllist_mapi f (n + 1) t)))`];;
+    (mllist_mapi f (n + 1) t)))`];;
 
 (* [local] *)
 let MAPI_thm_gen = prove
@@ -173,7 +170,7 @@ let mapPartial_def,mapPartial_ind = define_rec
   [`mllist_mapPartial f [] = []`;
    `mllist_mapPartial f (CONS h t) = (match (f h) with
         NONE -> mllist_mapPartial f t | (SOME x) -> CONS x
-          (mllist_mapPartial f t))`];;
+            (mllist_mapPartial f t))`];;
 
 let mapPartial_thm = prove
  (`!f l. mllist_mapPartial f l = MAP THE (FILTER IS_SOME (MAP f l))`,
@@ -193,7 +190,7 @@ let partition_aux_def,partition_aux_ind = define_rec
   [`partition_aux f [] pos neg =
         (REVERSE pos,REVERSE neg)`;
    `partition_aux f (CONS h t) pos neg = (if f h then partition_aux
-  f t (CONS h pos) neg else partition_aux f t pos (CONS h neg))`];;
+    f t (CONS h pos) neg else partition_aux f t pos (CONS h neg))`];;
 
 let partition_def = new_definition
   `partition (f:'a->bool) l = partition_aux f l [] []`;;
@@ -224,7 +221,7 @@ let foldl_def,foldl_ind = define_rec
 let foldli_aux_def,foldli_aux_ind = define_rec
   [`mllist_foldli_aux f e n [] = e`;
    `mllist_foldli_aux f e n (CONS h t) = mllist_foldli_aux f (f n h
-  e) (SUC n) t`];;
+    e) (SUC n) t`];;
 
 let foldli_def = new_definition
   `mllist_foldli f e l = mllist_foldli_aux f e 0 l`;;
@@ -283,7 +280,7 @@ let collate_def,collate_ind = define_guess
    `mllist_collate f (CONS h t) [] = GREATER`;
    `mllist_collate f (CONS h1 t1) (CONS h2 t2) =
         (if f h1 h2 = EQUAL then mllist_collate f t1 t2 else f
-          h1 h2)`];;
+            h1 h2)`];;
 
 let collate_equal_thm = prove
  (`!l. (!x. MEM x l ==> (f x x = EQUAL)) ==> (mllist_collate f l l =
@@ -359,7 +356,7 @@ let map_rev_thm = prove
 let filter_rev'_def,filter_rev'_ind = define_rec
   [`filter_rev' P [] acc = acc`;
    `filter_rev' P (CONS h t) acc = (if P h then filter_rev' P t
-  (CONS h acc) else filter_rev' P t acc)`];;
+    (CONS h acc) else filter_rev' P t acc)`];;
 
 let filter_rev_def = new_definition
   `filter_rev P xs = filter_rev' P xs []`;;
@@ -409,11 +406,7 @@ let flat_rev_thm = prove
  (`flat_rev xs = REVERSE (FLAT xs)`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["length";
    "negate"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

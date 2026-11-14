@@ -19,11 +19,8 @@ needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "export_arm7"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "export_arm7"
   ["export"];;
 
 (*
@@ -212,7 +209,3 @@ let arm7_export_def = new_definition
       "     .p2align 4";
       ""]))) (export_arm7_export_funcs lsyms exp)) else misc_List
         [])))))`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

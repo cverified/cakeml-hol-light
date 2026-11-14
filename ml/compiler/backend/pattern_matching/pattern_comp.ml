@@ -19,11 +19,8 @@ needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "pattern_comp"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "pattern_comp"
   ["ast"; "pattern_common"; "pattern_exh"; "pattern_semantics";
    "semanticPrimitives"];;
 
@@ -54,7 +51,7 @@ let take_until_Any_def,take_until_Any_ind = define_rec
   [`take_until_Any [] = []`;
    `take_until_Any (CONS (p,x) xs) =
       (if is_Any p then [(p,x)] else CONS (p,x) (take_until_Any
-        xs))`];;
+          xs))`];;
 
 let move_const_up_def = new_definition
   `move_const_up rows =
@@ -184,43 +181,43 @@ let get_pos_def,get_pos_ind = define_rec
    port lets its own machinery find one *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let pat_to_guard_def,pat_to_guard_ind = define_mutual_guess_cheat
+let pat_to_guard_def,pat_to_guard_ind = define_guess_cheat
   [`pat_to_guard l (pattern_semantics_Any:pattern_semantics_pat) =
-  pattern_semantics_True`;
+    pattern_semantics_True`;
    `pat_to_guard l (pattern_semantics_Lit r:pattern_semantics_pat) =
-  pattern_semantics_PosTest (get_pos (REVERSE l))
-  (pattern_semantics_LitEq r)`;
+    pattern_semantics_PosTest (get_pos (REVERSE l))
+    (pattern_semantics_LitEq r)`;
    `pat_to_guard l (pattern_semantics_Cons NONE
-  pats:pattern_semantics_pat) = pats_to_guard l 0 pats`;
+    pats:pattern_semantics_pat) = pats_to_guard l 0 pats`;
    `pat_to_guard l (pattern_semantics_Cons (SOME (t,_10))
-  pats:pattern_semantics_pat) =
+    pats:pattern_semantics_pat) =
       mk_Conj (pattern_semantics_PosTest (get_pos (REVERSE l))
         (pattern_semantics_TagLenEq t (LENGTH pats)))
-          (pats_to_guard l 0 pats)`;
+            (pats_to_guard l 0 pats)`;
    `pat_to_guard l (pattern_semantics_Or p1 p2:pattern_semantics_pat)
-  = mk_Disj (pat_to_guard l p1) (pat_to_guard l p2)`;
+    = mk_Disj (pat_to_guard l p1) (pat_to_guard l p2)`;
    `pat_to_guard l (pattern_semantics_Ref p:pattern_semantics_pat) =
-  pat_to_guard (CONS 0 l) p`;
+    pat_to_guard (CONS 0 l) p`;
    `pats_to_guard l k [] = pattern_semantics_True`;
    `pats_to_guard l k [p] = pat_to_guard (CONS k l) p`;
    `pats_to_guard l k (CONS p ps) = mk_Conj (pat_to_guard (CONS k
-  l) p) (pats_to_guard l (k + 1) ps)`];;
+    l) p) (pats_to_guard l (k + 1) ps)`];;
 
 let pats_to_code_def,pats_to_code_ind = define_rec
   [`pats_to_code [] = pattern_semantics_Fail`;
    `pats_to_code (CONS (p,x) rows) =
       mk_If (pat_to_guard [] p) (pattern_semantics_Leaf x)
-        (pats_to_code rows)`];;
+          (pats_to_code rows)`];;
 
 let pattern_comp_walk_def,pattern_comp_walk_ind = define_rec
   [`pattern_comp_walk [] x refs = SOME x`;
    `pattern_comp_walk (CONS n ns) x refs =
       (match x with (pattern_semantics_Term t xs) -> (if n < LENGTH
-        xs then pattern_comp_walk ns (EL n xs) refs else NONE) |
-        (pattern_semantics_RefPtr p) -> (if ~(n = 0) then NONE else
+          xs then pattern_comp_walk ns (EL n xs) refs else NONE) |
+          (pattern_semantics_RefPtr p) -> (if ~(n = 0) then NONE else
                         match FLOOKUP refs p with SOME y ->
-                          pattern_comp_walk ns y refs | _15 ->
-                          NONE) | _16 -> NONE)`];;
+                            pattern_comp_walk ns y refs | _15 ->
+                            NONE) | _16 -> NONE)`];;
 
 let walk_list_def = new_definition
   `walk_list ns x refs =
@@ -299,7 +296,3 @@ let comp_thm = prove
      dt_eval refs v (pattern_comp_comp rows) =
        pattern_semantics_match refs rows v`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

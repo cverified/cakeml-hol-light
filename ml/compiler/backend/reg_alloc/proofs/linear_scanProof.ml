@@ -19,11 +19,8 @@ needs "misc/misc.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "linear_scanProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "linear_scanProof"
   ["linear_scan"; "ml_monadBase"; "mllist"; "reg_alloc";
    "reg_allocProof"];;
 
@@ -637,15 +634,14 @@ let get_intervals_ct_eq = prove
    (!r. sptree_lookup r int_end1 = sptree_lookup r int_end2)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let colors_sub_eqn = prove
  (`colors_sub n s =
    (if n < LENGTH (linear_scan_hidden_state_colors s) then
    (M_success (EL n (linear_scan_hidden_state_colors s)),s) else
    (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp colors_sub_eqn;;
 
-(* [simp] *)
 let update_colors_eqn = prove
  (`update_colors n t s =
    (if n < LENGTH (linear_scan_hidden_state_colors s) then
@@ -653,16 +649,16 @@ let update_colors_eqn = prove
       n (linear_scan_hidden_state_colors s))) s) else
     (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp update_colors_eqn;;
 
-(* [simp] *)
 let int_beg_sub_eqn = prove
  (`int_beg_sub n s =
    (if n < LENGTH (linear_scan_hidden_state_int_beg s) then
     (M_success (EL n (linear_scan_hidden_state_int_beg s)),s) else
     (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp int_beg_sub_eqn;;
 
-(* [simp] *)
 let update_int_beg_eqn = prove
  (`update_int_beg n t s =
    (if n < LENGTH (linear_scan_hidden_state_int_beg s) then
@@ -670,16 +666,16 @@ let update_int_beg_eqn = prove
        t n (linear_scan_hidden_state_int_beg s))) s) else
      (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp update_int_beg_eqn;;
 
-(* [simp] *)
 let int_end_sub_eqn = prove
  (`int_end_sub n s =
    (if n < LENGTH (linear_scan_hidden_state_int_end s) then
     (M_success (EL n (linear_scan_hidden_state_int_end s)),s) else
     (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp int_end_sub_eqn;;
 
-(* [simp] *)
 let update_int_end_eqn = prove
  (`update_int_end n t s =
    (if n < LENGTH (linear_scan_hidden_state_int_end s) then
@@ -687,8 +683,8 @@ let update_int_end_eqn = prove
        t n (linear_scan_hidden_state_int_end s))) s) else
      (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp update_int_end_eqn;;
 
-(* [simp] *)
 let sorted_regs_sub_eqn = prove
  (`sorted_regs_sub n s =
    (if n < LENGTH (linear_scan_hidden_state_sorted_regs s) then
@@ -696,8 +692,8 @@ let sorted_regs_sub_eqn = prove
       else
     (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp sorted_regs_sub_eqn;;
 
-(* [simp] *)
 let update_sorted_regs_eqn = prove
  (`update_sorted_regs n t s =
    (if n < LENGTH (linear_scan_hidden_state_sorted_regs s) then
@@ -705,8 +701,8 @@ let update_sorted_regs_eqn = prove
        (LUPDATE t n (linear_scan_hidden_state_sorted_regs s))) s) else
      (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp update_sorted_regs_eqn;;
 
-(* [simp] *)
 let sorted_moves_sub_eqn = prove
  (`sorted_moves_sub n s =
    (if n < LENGTH (linear_scan_hidden_state_sorted_moves s) then
@@ -714,8 +710,8 @@ let sorted_moves_sub_eqn = prove
       else
     (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp sorted_moves_sub_eqn;;
 
-(* [simp] *)
 let update_sorted_moves_eqn = prove
  (`update_sorted_moves n t s =
    (if n < LENGTH (linear_scan_hidden_state_sorted_moves s) then
@@ -723,6 +719,7 @@ let update_sorted_moves_eqn = prove
        (LUPDATE t n (linear_scan_hidden_state_sorted_moves s))) s) else
      (M_failure (reg_alloc_Subscript),s))`,
   CHEAT_TAC);;
+add_simp update_sorted_moves_eqn;;
 
 (* HOL4 linear_scanProofScript.sml:2130: ML code, not ported *)
 
@@ -1030,7 +1027,7 @@ let IS_SPARSE_SUBLIST_def,IS_SPARSE_SUBLIST_ind = define_guess
    `IS_SPARSE_SUBLIST (CONS x xs) [] = F`;
    `IS_SPARSE_SUBLIST (CONS x xs) (CONS y ys) =
       ((x = y /\ IS_SPARSE_SUBLIST xs ys) \/ IS_SPARSE_SUBLIST
-        (CONS x xs) ys)`];;
+          (CONS x xs) ys)`];;
 
 let FILTER_IS_SPARSE_SUBLIST = prove
  (`!l. IS_SPARSE_SUBLIST (FILTER P l) l`,
@@ -2236,7 +2233,3 @@ let linear_scan_reg_alloc_correct = prove
      ALL (\(r1,r2). (sp_default col) r1 = (sp_default col) r2 ==>
        r1 = r2) forced)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

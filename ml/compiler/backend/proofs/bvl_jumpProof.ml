@@ -15,11 +15,8 @@ needs "compiler/backend/semantics/bvlSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvl_jumpProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvl_jumpProof"
   ["bvlProps"; "bvlSem"; "bvl_jump"];;
 
 (* [local] *)
@@ -43,7 +40,3 @@ let bvl_get_code_labels_JumpList = prove
  (`!n xs. bvlProps_get_code_labels (JumpList n xs) = UNIONS
   (set_of_list (MAP bvlProps_get_code_labels xs))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

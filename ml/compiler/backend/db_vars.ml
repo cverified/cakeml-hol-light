@@ -12,15 +12,15 @@
 
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "db_vars" [];;
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "db_vars" [];;
 
 let db_var_set_INDUCT,db_var_set_RECURSION = define_datatype
-  "db_var_set = db_vars_Empty | db_vars_Var (num) | db_vars_Shift \
-   (num) (db_var_set) | db_vars_Union (db_var_set) (db_var_set)";;
+  "db_var_set =
+     db_vars_Empty
+   | db_vars_Var num
+   | db_vars_Shift num db_var_set
+   | db_vars_Union db_var_set db_var_set";;
 
 let mk_Union_def = new_definition
   `mk_Union t1 t2 =
@@ -28,11 +28,11 @@ let mk_Union_def = new_definition
      if t2 = db_vars_Empty then t1 else
        db_vars_Union t1 t2)`;;
 
-(* [simp] *)
 let mk_Union_Empty = prove
  (`mk_Union (db_vars_Empty:db_var_set) A = A /\ mk_Union A
   db_vars_Empty = A`,
   CHEAT_TAC);;
+add_simp mk_Union_Empty;;
 
 let list_mk_Union_def,list_mk_Union_ind = define_rec
   [`list_mk_Union [] = db_vars_Empty`;
@@ -49,7 +49,7 @@ let db_to_set_acc_def,db_to_set_acc_ind = define_rec
    `db_to_set_acc (n:num) (db_vars_Var v:db_var_set) s =
          (if v < n then s else sptree_insert (v - n) one s)`;
    `db_to_set_acc (n:num) (db_vars_Shift k d:db_var_set) s =
-  db_to_set_acc (n + k) d s`;
+    db_to_set_acc (n + k) d s`;
    `db_to_set_acc (n:num) (db_vars_Union v1 v2:db_var_set) s =
          db_to_set_acc n v1 (db_to_set_acc n v2 s)`];;
 
@@ -79,17 +79,18 @@ let has_var_def,has_var_ind = define_rec
    `has_var n (db_vars_Var v:db_var_set) <=> (n = v)`;
    `has_var n (db_vars_Shift k d:db_var_set) <=> has_var (n + k) d`;
    `has_var n (db_vars_Union d1 d2:db_var_set) <=> has_var n d1 \/
-  has_var n d2`];;
+    has_var n d2`];;
+add_simp has_var_def;;
 
-(* [simp] *)
 let has_var_mk_Union = prove
  (`has_var n (mk_Union l1 l2) <=> has_var n l1 \/ has_var n l2`,
   CHEAT_TAC);;
+add_simp has_var_mk_Union;;
 
-(* [simp] *)
 let has_var_list_mk_Union = prove
  (`!ls. has_var n (list_mk_Union ls) <=> EX (has_var n) ls`,
   CHEAT_TAC);;
+add_simp has_var_list_mk_Union;;
 
 let lookup_db_to_set_acc = prove
  (`!d n k s.
@@ -139,16 +140,12 @@ let MEM_vars_from_list = prove
  (`!vs n. has_var n (vars_from_list vs) <=> MEM n vs`,
   (REWRITE_TAC[vars_from_list_def; has_var_FOLDL_Union; has_var_def]));;
 
-(* [simp] *)
 let has_var_vars_flatten = prove
  (`has_var n (vars_flatten d) = has_var n d`,
   (REWRITE_TAC[vars_flatten_def; MEM_vars_from_list;
     MEM_vars_to_list]));;
+add_simp has_var_vars_flatten;;
 
 let ALL_DISTINCT_vars_to_list = prove
  (`ALL_DISTINCT (vars_to_list d)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

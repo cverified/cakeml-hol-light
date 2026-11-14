@@ -19,25 +19,22 @@ needs "lib/indexedLists.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvl_handle"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvl_handle"
   ["bvl"; "bvl_const"; "db_vars"];;
 
 let _ = do_list hide_constant ["pmatch"];;
 
-let can_raise_def,can_raise_ind = define_mutual_rec
+let can_raise_def,can_raise_ind = define_rec
   [`can_raise (bvl_Var v:bvl_exp) = F`;
    `can_raise (bvl_If x1 x2 x3:bvl_exp) = (can_raise x1 \/ can_raise
-  x2 \/ can_raise x3)`;
+    x2 \/ can_raise x3)`;
    `can_raise (bvl_Let xs x2:bvl_exp) = (can_raise x2 \/ can_raise1
-  xs)`;
+    xs)`;
    `can_raise (bvl_Handle x1 x2:bvl_exp) = can_raise x2`;
    `can_raise (bvl_Raise x1:bvl_exp) = T`;
    `can_raise (bvl_Op op xs:bvl_exp) = (op = closLang_ThunkOp
-  ForceThunk \/ can_raise1 xs)`;
+    ForceThunk \/ can_raise1 xs)`;
    `can_raise (bvl_Tick x:bvl_exp) = can_raise x`;
    `can_raise (bvl_Force m n:bvl_exp) = T`;
    `can_raise (bvl_Call t dest xs:bvl_exp) = T`;
@@ -70,7 +67,7 @@ let dest_handle_If_def = new_definition
         NONE)
       | _3 -> NONE`;;
 
-let handle_adj_vars_def,handle_adj_vars_ind = define_mutual_rec
+let handle_adj_vars_def,handle_adj_vars_ind = define_rec
   [`(handle_adj_vars l d (bvl_Var v:bvl_exp) = bvl_Var (if v < l then v
   else v + d)) /\
    (handle_adj_vars l d (bvl_If x1 x2 x3) =
@@ -96,14 +93,14 @@ let handle_adj_vars_def,handle_adj_vars_ind = define_mutual_rec
    (handle_adj_vars1 l d (CONS x xs) = CONS (handle_adj_vars l d
      x) (handle_adj_vars1 l d xs))`];;
 
-let handle_size_def,handle_size_ind = define_mutual_rec
+let handle_size_def,handle_size_ind = define_rec
   [`handle_size (bvl_Var v:bvl_exp) = 1`;
    `handle_size (bvl_If x1 x2 x3:bvl_exp) = 1 + handle_size x1 +
-  handle_size x2 + handle_size x3`;
+    handle_size x2 + handle_size x3`;
    `handle_size (bvl_Let xs x2:bvl_exp) = 1 + handle_size x2 +
-  handle_size1 xs`;
+    handle_size1 xs`;
    `handle_size (bvl_Handle x1 x2:bvl_exp) = 1 + 5 * (handle_size x1
-  + handle_size x2)`;
+    + handle_size x2)`;
    `handle_size (bvl_Raise x1:bvl_exp) = 1 + handle_size x1`;
    `handle_size (bvl_Op op xs:bvl_exp) = 1 + handle_size1 xs`;
    `handle_size (bvl_Tick x:bvl_exp) = 1 + handle_size x`;
@@ -111,7 +108,7 @@ let handle_size_def,handle_size_ind = define_mutual_rec
    `handle_size (bvl_Call t dest xs:bvl_exp) = 1 + handle_size1 xs`;
    `handle_size1 [] = (1:num)`;
    `handle_size1 (CONS x xs) = ((1 + handle_size x + handle_size1
-  xs):num)`];;
+    xs):num)`];;
 
 (* [local] *)
 let handle_size_non_zero = prove
@@ -123,35 +120,35 @@ let handle_simp_def,handle_simp_ind = assume_definition_rec
   [`handle_simp (bvl_Handle x1 x2:bvl_exp) = make_handle x1 x2 0`;
    `handle_simp (bvl_Var v:bvl_exp) = (bvl_Var v:bvl_exp)`;
    `handle_simp (bvl_If x1 x2 x3:bvl_exp) = bvl_If (handle_simp x1)
-  (handle_simp x2) (handle_simp x3)`;
+    (handle_simp x2) (handle_simp x3)`;
    `handle_simp (bvl_Let xs x2:bvl_exp) = bvl_Let (handle_simp_list
-  xs) (handle_simp x2)`;
+    xs) (handle_simp x2)`;
    `handle_simp (bvl_Raise x1:bvl_exp) = bvl_Raise (handle_simp x1)`;
    `handle_simp (bvl_Op op xs:bvl_exp) = bvl_Op op (handle_simp_list
-  xs)`;
+    xs)`;
    `handle_simp (bvl_Tick x:bvl_exp) = bvl_Tick (handle_simp x)`;
    `handle_simp (bvl_Force m n:bvl_exp) = (bvl_Force m n:bvl_exp)`;
    `handle_simp (bvl_Call t dest xs:bvl_exp) = bvl_Call t dest
-  (handle_simp_list xs)`;
+    (handle_simp_list xs)`;
    `handle_simp_list [] = ([]:bvl_exp list)`;
    `handle_simp_list (CONS x xs) = ((CONS (handle_simp x)
-  (handle_simp_list xs)):bvl_exp list)`;
+    (handle_simp_list xs)):bvl_exp list)`;
    `make_handle x1 x2 l =
          (match dest_handle_Raise x1 with SOME r -> bvl_Let [r]
-           (handle_adj_vars 1 l (handle_simp x2)) | NONE ->
+             (handle_adj_vars 1 l (handle_simp x2)) | NONE ->
          (match dest_handle_Let x1 with SOME (xs,x) -> bvl_Let
-           (handle_simp_list xs) (make_handle x x2 (l + LENGTH xs)) |
-           NONE ->
+             (handle_simp_list xs) (make_handle x x2 (l + LENGTH xs)) |
+             NONE ->
          (match dest_handle_If x1 with SOME (INR (b1,b2,b3)) ->
-           bvl_If (handle_simp b1)
+             bvl_If (handle_simp b1)
                               (handle_simp b2)
                               (make_handle b3 x2 l) | SOME (INL
-                                (b1,b2,b3)) -> bvl_If (handle_simp b1)
+                                  (b1,b2,b3)) -> bvl_If (handle_simp b1)
                               (make_handle b2 x2 l)
                               (handle_simp b3) | NONE ->
-                                (bvl_Handle (handle_simp x1)
-                                (handle_adj_vars 1 l (handle_simp
-                                x2))))))`];;
+                                  (bvl_Handle (handle_simp x1)
+                                  (handle_adj_vars 1 l (handle_simp
+                                  x2))))))`];;
 
 let SmartLet_def = new_definition
   `SmartLet xs x = (if NULL xs then x else bvl_Let xs x)`;;
@@ -197,8 +194,8 @@ let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
          let (dy,ly,s2,nr2) = bvl_handle_compile l n (CONS y xs) in
            (APPEND dx dy,mk_Union lx ly,s1 + s2,(nr1 /\ nr2)))`;
    `bvl_handle_compile l n [(bvl_Var v:bvl_exp)] = (if v < n then
-  ([bvl_Var v],bvl_Var v,1,T) else ([bvl_Op (closLang_IntOp
-  (closLang_Const (&0))) []],db_vars_Empty,1,T))`;
+    ([bvl_Var v],bvl_Var v,1,T) else ([bvl_Op (closLang_IntOp
+    (closLang_Const (&0))) []],db_vars_Empty,1,T))`;
    `bvl_handle_compile l n [(bvl_If x1 x2 x3:bvl_exp)] =
          (let (x1,l1,s1,nr1) = bvl_handle_compile l n [x1] in
          let (x2,l2,s2,nr2) = bvl_handle_compile l n [x2] in
@@ -214,14 +211,14 @@ let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
            let (x2,l2,s2,nr2) = bvl_handle_compile l (n + k) [x2] in
              OptionalLetLet (bvl_Let xs (HD x2)) n
                (mk_Union l1 (db_vars_Shift k l2)) (s1 + s2 + 1) l
-                 (nr1 /\ nr2))`;
+                   (nr1 /\ nr2))`;
    `bvl_handle_compile l n [(bvl_Handle x1 x2:bvl_exp)] =
          (let (y1,l1,s1,nr1) = bvl_handle_compile l n [x1] in
            if nr1 then (y1,l1,s1,T) else
              let (y2,l2,s2,nr2) = bvl_handle_compile l (n + 1) [x2]
-               in
+                 in
                ([bvl_Handle (LetLet n (db_to_set l1) (HD y1)) (HD
-                 y2)],
+                   y2)],
                 mk_Union l1 (db_vars_Shift 1 l2),
                 s2,
                    // s1 intentionally left out because
@@ -239,20 +236,19 @@ let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
          (let (y,lx,s1,nr1) = bvl_handle_compile l n [x] in
            ([bvl_Tick (HD y)],lx,s1,nr1))`;
    `bvl_handle_compile l n [(bvl_Force m v:bvl_exp)] = (if v < n then
-  ([(bvl_Force m v:bvl_exp)],bvl_Var v,1,F) else ([bvl_Op
-  (closLang_IntOp (closLang_Const (&0))) []],db_vars_Empty,1,T))`;
+    ([(bvl_Force m v:bvl_exp)],bvl_Var v,1,F) else ([bvl_Op
+    (closLang_IntOp (closLang_Const (&0))) []],db_vars_Empty,1,T))`;
    `bvl_handle_compile l n [(bvl_Call t dest xs:bvl_exp)] =
          (let (ys,lx,s1,nr1) = bvl_handle_compile l n xs in
            OptionalLetLet (bvl_Call t dest ys) n lx (s1 + 1) l
-             F)`];;
+               F)`];;
 
 (* HOL4 bvl_handleScript.sml:214: ML code, not ported *)
 
-let bvl_handle_compile_sing_def,bvl_handle_compile_sing_ind =
-  define_mutual_rec
+let bvl_handle_compile_sing_def,bvl_handle_compile_sing_ind = define_rec
   [`bvl_handle_compile_sing l n (bvl_Var v:bvl_exp) = (if v < n then
-  (bvl_Var v,bvl_Var v,1,T) else (bvl_Op (closLang_IntOp
-  (closLang_Const (&0))) [],db_vars_Empty,1,T))`;
+    (bvl_Var v,bvl_Var v,1,T) else (bvl_Op (closLang_IntOp
+    (closLang_Const (&0))) [],db_vars_Empty,1,T))`;
    `bvl_handle_compile_sing l n (bvl_If x1 x2 x3:bvl_exp) =
          (let (x1,l1,s1,nr1) = bvl_handle_compile_sing l n x1 in
          let (x2,l2,s2,nr2) = bvl_handle_compile_sing l n x2 in
@@ -266,15 +262,15 @@ let bvl_handle_compile_sing_def,bvl_handle_compile_sing_ind =
            let k = LENGTH xs in
            let (xs,l1,s1,nr1) = bvl_handle_compile_list l n xs in
            let (x2,l2,s2,nr2) = bvl_handle_compile_sing l (n + k) x2
-             in
+               in
              OptionalLetLet_sing ((bvl_Let xs x2:bvl_exp)) n
                (mk_Union l1 (db_vars_Shift k l2)) (s1 + s2 + 1) l
-                 (nr1 /\ nr2))`;
+                   (nr1 /\ nr2))`;
    `bvl_handle_compile_sing l n (bvl_Handle x1 x2:bvl_exp) =
          (let (y1,l1,s1,nr1) = bvl_handle_compile_sing l n x1 in
            if nr1 then (y1,l1,s1,T) else
              let (y2,l2,s2,nr2) = bvl_handle_compile_sing l (n + 1)
-               x2 in
+                 x2 in
                (bvl_Handle (LetLet n (db_to_set l1) y1) y2,
                 mk_Union l1 (db_vars_Shift 1 l2),
                 s2,
@@ -289,19 +285,19 @@ let bvl_handle_compile_sing_def,bvl_handle_compile_sing_ind =
            if op = closLang_ThunkOp ForceThunk then
              (bvl_Op op ys,lx,s1 + 1,F) else
              OptionalLetLet_sing (bvl_Op op ys) n lx (s1 + 1) l
-               nr1)`;
+                 nr1)`;
    `bvl_handle_compile_sing l n (bvl_Tick x:bvl_exp) =
          (let (y,lx,s1,nr1) = bvl_handle_compile_sing l n x in
            (bvl_Tick y,lx,s1,nr1))`;
    `bvl_handle_compile_sing l n (bvl_Force m v:bvl_exp) = (if v < n
-  then ((bvl_Force m v:bvl_exp),bvl_Var v,1,F) else (bvl_Op
-  (closLang_IntOp (closLang_Const (&0))) [],db_vars_Empty,1,T))`;
+    then ((bvl_Force m v:bvl_exp),bvl_Var v,1,F) else (bvl_Op
+    (closLang_IntOp (closLang_Const (&0))) [],db_vars_Empty,1,T))`;
    `bvl_handle_compile_sing l n (bvl_Call t dest xs:bvl_exp) =
          (let (ys,lx,s1,nr1) = bvl_handle_compile_list l n xs in
            OptionalLetLet_sing (bvl_Call t dest ys) n lx (s1 + 1)
-             l F)`;
+               l F)`;
    `bvl_handle_compile_list l n [] = (([]:bvl_exp
-  list),db_vars_Empty,0,T)`;
+    list),db_vars_Empty,0,T)`;
    `bvl_handle_compile_list l n (CONS x xs) =
          (let (dx,lx,s1,nr1) = bvl_handle_compile_sing l n x in
          let (dy,ly,s2,nr2) = bvl_handle_compile_list l n xs in
@@ -340,7 +336,6 @@ let dest_Seq_pmatch = prove
        bvl_Let [e1; e2] (bvl_Var 1) -> SOME (e1,e2) | _6 -> NONE)`,
   CHEAT_TAC);;
 
-let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvl_handleScript.sml:316-320: the tactic that proves the
@@ -362,10 +357,11 @@ let compile_any_def = new_definition
        compile_seqs cut_size e NONE else
        bvl_handle_compile_exp cut_size arity e)`;;
 
-(* compile_length[simp] *)
+(* compile_length *)
 let bvl_handle_compile_length = prove
  (`!l n xs. LENGTH (FST (bvl_handle_compile l n xs)) = LENGTH xs`,
   CHEAT_TAC);;
+add_simp bvl_handle_compile_length;;
 
 (* compile_sing *)
 let bvl_handle_compile_sing = prove
@@ -375,10 +371,6 @@ let bvl_handle_compile_sing = prove
 (* HOL4 bvl_handleScript.sml:346-353: a theorem that HOL4 states as
    the value of an ML expression: compile_seqs_compute *)
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -40,11 +40,8 @@ needs "misc/misc.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "data_to_word_gcProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "data_to_word_gcProof"
   ["backendProps"; "copying_gc"; "dataProps"; "dataSem";
    "data_to_word"; "data_to_word_memoryProof"; "gc_shared"; "gen_gc";
    "gen_gc_partial"; "mllist"; "semanticsProps"; "wordLang";
@@ -117,34 +114,35 @@ let word_index_0 = prove
  (`!w. FAPPLY w 0 <=> ~(((n2w 1) && w) = (n2w 0))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let ABS_w2n = prove
  (`abs (&(w2n w)) = &(w2n w)`,
   CHEAT_TAC);;
+add_simp ABS_w2n;;
 
 let n2mw_w2n = prove
  (`!w. n2mw (w2n w) = (if w = (n2w 0) then [] else [w])`,
   CHEAT_TAC);;
 
-(* get_var_set_var[simp] *)
+(* get_var_set_var *)
 let data_to_word_gcProof_get_var_set_var = prove
  (`wordSem_get_var n (wordSem_set_var n w s) = SOME w`,
   CHEAT_TAC);;
+add_simp data_to_word_gcProof_get_var_set_var;;
 
-(* [simp] *)
 let set_var_set_var = prove
  (`wordSem_set_var n v (wordSem_set_var n w s) = wordSem_set_var n v s`,
   CHEAT_TAC);;
+add_simp set_var_set_var;;
 
-(* [simp] *)
 let toAList_LN = prove
  (`toAList LN = []`,
   CHEAT_TAC);;
+add_simp toAList_LN;;
 
-(* [simp] *)
 let adjust_set_LN = prove
  (`adjust_set LN = LN`,
   CHEAT_TAC);;
+add_simp adjust_set_LN;;
 
 let push_env_termdep = prove
  (`wordSem_state_termdep
@@ -282,28 +280,28 @@ let EVEN_adjust_var = prove
  (`EVEN (adjust_var n)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let adjust_var_eq_numeral = prove
  (`adjust_var n = NUMERAL k <=>
     EVEN (NUMERAL k) /\ ~(NUMERAL k = 0) /\ n = (NUMERAL k - 2) DIV
       2`,
   CHEAT_TAC);;
+add_simp adjust_var_eq_numeral;;
 
-(* [simp] *)
 let adjust_var_NEQ_0 = prove
  (`~(adjust_var n = 0)`,
   CHEAT_TAC);;
+add_simp adjust_var_NEQ_0;;
 
 let adjust_var_NEQ_1 = prove
  (`~(adjust_var n = 1)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let adjust_var_NEQ = prove
  (`~(adjust_var n = 0) /\ ~(adjust_var n = 1) /\ ~(adjust_var n = 3)
   /\ ~(adjust_var n = 5) /\ ~(adjust_var n = 7) /\ ~(adjust_var n = 9)
   /\ ~(adjust_var n = 11) /\ ~(adjust_var n = 13)`,
   CHEAT_TAC);;
+add_simp adjust_var_NEQ;;
 
 let unit_opt_eq = prove
  (`(x = (y:1 option)) <=> (IS_SOME x <=> IS_SOME y)`,
@@ -455,10 +453,10 @@ let ODD_not_zero = prove
  (`ODD n ==> ~(n2w n = (n2w 0))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let three_not_0 = prove
  (`~((n2w 3) = (n2w 0))`,
   CHEAT_TAC);;
+add_simp three_not_0;;
 
 (* HOL4 data_to_word_gcProofScript.sml:583: the ML values that the
    definitions below antiquote *)
@@ -480,10 +478,10 @@ let select_shift_out = prove
   (word_bits (n - 1) 0) w)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let shift_length_NOT_ZERO = prove
  (`~(shift_length conf = 0)`,
   CHEAT_TAC);;
+add_simp shift_length_NOT_ZERO;;
 
 let get_addr_and_1_not_0 = prove
  (`~(((n2w 1) && get_addr conf k a) = (n2w 0))`,
@@ -2053,11 +2051,11 @@ let code_oracle_rel_def = new_definition
      (!n. ALL (\(n,_21). data_num_stubs <= n) (SND
        (s_compile_oracle n)))`;;
 
-(* [simp] *)
 let code_oracle_rel_NextFree = prove
  (`code_oracle_rel c scc sco (ts |+ (NextFree,x)) tcc tco cb db <=>
    code_oracle_rel c scc sco ts tcc tco cb db`,
   CHEAT_TAC);;
+add_simp code_oracle_rel_NextFree;;
 
 let limits_inv_def = new_definition
   `limits_inv (lims:limits) heaplength t_stack_limit c_len_size
@@ -2243,10 +2241,10 @@ let state_rel_init = prove
     compiler proof
    ------------------------------------------------------- *)
 
-(* [simp] *)
 let adjust_var_NOT_0 = prove
  (`~(adjust_var n = 0)`,
   CHEAT_TAC);;
+add_simp adjust_var_NOT_0;;
 
 let state_rel_get_var_IMP = prove
  (`data_to_word_gcProof_state_rel c l1 l2 ((s:('c,'ffi)dataSem_state)) t
@@ -2674,23 +2672,25 @@ let data_to_word_gcProof_inc_clock_def = new_definition
   `data_to_word_gcProof_inc_clock n (t:('a,'c,'ffi)wordSem_state) =
   wordSem_state_clock_fupd (K (wordSem_state_clock t + n)) t`;;
 
-(* inc_clock_0[simp] *)
+(* inc_clock_0 *)
 let data_to_word_gcProof_inc_clock_0 = prove
  (`!t. data_to_word_gcProof_inc_clock 0 t = t`,
   CHEAT_TAC);;
+add_simp data_to_word_gcProof_inc_clock_0;;
 
-(* inc_clock_inc_clock[simp] *)
+(* inc_clock_inc_clock *)
 let data_to_word_gcProof_inc_clock_inc_clock = prove
  (`!t. data_to_word_gcProof_inc_clock n
   (data_to_word_gcProof_inc_clock m t) =
   data_to_word_gcProof_inc_clock (n + m) t`,
   CHEAT_TAC);;
+add_simp data_to_word_gcProof_inc_clock_inc_clock;;
 
-(* [simp] *)
 let mk_loc_jmup_exc_inc_clock = prove
  (`mk_loc (wordSem_jump_exc (data_to_word_gcProof_inc_clock ck t)) =
   mk_loc (wordSem_jump_exc t)`,
   CHEAT_TAC);;
+add_simp mk_loc_jmup_exc_inc_clock;;
 
 let jump_exc_inc_clock_EQ_NONE = prove
  (`wordSem_jump_exc (data_to_word_gcProof_inc_clock n s) = NONE <=>
@@ -2915,6 +2915,7 @@ let loc_ok_def = new_definition
       match x1 with
         wordLang_Loc m n -> (n = 0)
       | _24 -> T`;;
+add_simp loc_ok_def;;
 
 let loc_ok_word_addr = prove
  (`loc_ok (word_addr c w)`,
@@ -2969,11 +2970,11 @@ let loc_merge_def,loc_merge_ind = define_wf
   list_size (word_loc_size (\x. 0)) x1)`
   [`loc_merge [] ys = []`;
    `loc_merge (CONS (wordLang_Loc l1 l2) xs) ys = CONS (wordLang_Loc
-  l1 l2:'a word_loc) (loc_merge xs ys)`;
+    l1 l2:'a word_loc) (loc_merge xs ys)`;
    `loc_merge (CONS (wordLang_Word w) xs) (CONS y ys) = CONS y
-  (loc_merge xs ys)`;
+    (loc_merge xs ys)`;
    `loc_merge (CONS (wordLang_Word w) xs) [] = CONS (wordLang_Word
-  w:'a word_loc) xs`];;
+    w:'a word_loc) xs`];;
 
 let LENGTH_loc_merge = prove
  (`!xs ys. LENGTH (loc_merge xs ys) = LENGTH xs`,
@@ -3933,35 +3934,34 @@ let inter_delete_ODD_adjust_set_alt = prove
       inter s (adjust_set t)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let get_vars_termdep = prove
  (`!xs. wordSem_get_vars xs (wordSem_state_termdep_fupd (K
   (wordSem_state_termdep t - 1)) t) = wordSem_get_vars xs t`,
   CHEAT_TAC);;
+add_simp get_vars_termdep;;
 
 let join_env_locals_def = new_definition
   `join_env_locals sl tl =
      join_env sl (toAList (inter tl (adjust_set sl)))`;;
 
-(* [simp] *)
 let join_env_locals_insert_odd = prove
  (`ODD n ==> join_env_locals sl (sptree_insert n v ls) =
   join_env_locals sl ls`,
   CHEAT_TAC);;
+add_simp join_env_locals_insert_odd;;
 
-(* [simp] *)
 let join_env_locals_insert_dest_odd = prove
  (`ODD n ==> join_env_locals sl (sptree_insert (adjust_var dest) w
   (sptree_insert n v ls)) = join_env_locals sl (sptree_insert
   (adjust_var dest) w ls)`,
   CHEAT_TAC);;
+add_simp join_env_locals_insert_dest_odd;;
 
-(* [simp] *)
 let MustTerminate_limit_NOT_0 = prove
  (`~(MustTerminate_limit (:'a) = 0)`,
   CHEAT_TAC);;
+add_simp MustTerminate_limit_NOT_0;;
 
-(* [simp] *)
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let memory_rel_Temp = prove
@@ -3969,11 +3969,12 @@ let memory_rel_Temp = prove
     `memory_rel c be ts refs sp (st |+ (Temp i,w)) m dm vars <=>
       memory_rel c be ts refs sp st m dm vars`),
   CHEAT_TAC);;
+add_simp memory_rel_Temp;;
 
-(* [simp] *)
 let adjust_var_not_15 = prove
  (`~(adjust_var a2 = 15)`,
   CHEAT_TAC);;
+add_simp adjust_var_not_15;;
 
 let get_vars_sing = prove
  (`wordSem_get_vars [n] t = SOME x <=> (?x1. wordSem_get_vars [n] t =
@@ -3983,11 +3984,7 @@ let get_vars_sing = prove
 (* HOL4 data_to_word_gcProofScript.sml:8846-8850: a theorem that HOL4
    states as the value of an ML expression: word_ml_inv_get_var_IMP *)
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["stack_alloc";
    "vars"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

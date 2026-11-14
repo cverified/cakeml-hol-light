@@ -14,19 +14,19 @@
 
 needs "compiler/backend/wordLang.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_depth"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_depth"
   ["wordLang"];;
 
 (* representation of acyclic call graph, i.e. call tree *)
 
 let call_tree_INDUCT,call_tree_RECURSION = define_datatype
-  "call_tree = word_depth_Leaf | word_depth_Unknown | \
-   word_depth_Const (num) (call_tree) | word_depth_Call (num) \
-   (call_tree) | word_depth_Branch (call_tree) (call_tree)";;
+  "call_tree =
+     word_depth_Leaf
+   | word_depth_Unknown
+   | word_depth_Const num call_tree
+   | word_depth_Call num call_tree
+   | word_depth_Branch call_tree call_tree";;
 
 (* computing the max stack depth *)
 
@@ -37,10 +37,10 @@ let max_depth_def,max_depth_ind = define_rec
       OPTION_MAP ((+) n) (max_depth frame_sizes t)`;
    `max_depth frame_sizes (word_depth_Branch t1 t2:call_tree) =
       OPTION_MAP2 MAX (max_depth frame_sizes t1) (max_depth
-        frame_sizes t2)`;
+          frame_sizes t2)`;
    `max_depth frame_sizes (word_depth_Call n t:call_tree) =
       OPTION_MAP2 (+) (sptree_lookup n frame_sizes) (max_depth
-        frame_sizes t)`];;
+          frame_sizes t)`];;
 
 (* computing the call graph *)
 
@@ -111,13 +111,9 @@ let max_depth_graphs_def,max_depth_graphs_ind = define_rec
   [`max_depth_graphs ss [] all' funs all_funs = SOME 0`;
    `max_depth_graphs ss (CONS n ns) all' funs all_funs =
       (match sptree_lookup n all_funs with NONE -> NONE | SOME
-        (a,body) ->
+          (a,body) ->
           OPTION_MAP2 MAX (sptree_lookup n ss)
          (OPTION_MAP2 MAX (max_depth ss (call_graph funs n all'
-           (sptree_size all_funs) body))
+             (sptree_size all_funs) body))
                           (max_depth_graphs ss ns all' funs
-                            all_funs)))`];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;
+                              all_funs)))`];;

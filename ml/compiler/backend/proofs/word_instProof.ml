@@ -19,11 +19,8 @@ needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_instProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_instProof"
   ["asm"; "wordConvs"; "wordLang"; "wordProps"; "wordSem";
    "word_inst"];;
 
@@ -85,9 +82,9 @@ let pull_ops_simp_def,pull_ops_simp_ind = define_rec
   [`pull_ops_simp op [] = []`;
    `pull_ops_simp op (CONS x xs) =
         (match x with (wordLang_Op op' ls) -> (if op = op' then
-          APPEND ls (pull_ops_simp op xs) else CONS x
-          (pull_ops_simp op xs)) | _2 -> CONS x (pull_ops_simp op
-          xs))`];;
+            APPEND ls (pull_ops_simp op xs) else CONS x
+            (pull_ops_simp op xs)) | _2 -> CONS x (pull_ops_simp op
+            xs))`];;
 
 (* [local] *)
 let pull_ops_simp_pull_ops_perm = prove
@@ -222,7 +219,6 @@ let flatten_exp_ok = prove
   CHEAT_TAC);;
 
 (*All ops are 2 args. Technically, we should probably check that Sub has 2 args. However, the semantics already checks that and it will get removed later*)
-let _ = size_thms "wordLang_exp";;
 (* the termination relation that HOL4 gives is
      MEASURE (wordLang_exp_size ARB)
    which is not one that HOL Light takes here; the one
@@ -399,10 +395,6 @@ let evaluate_three_to_two_reg_prog = prove
    wordSem_evaluate (three_to_two_reg_prog t prog,s) = (res,s')`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -12,11 +12,8 @@
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "lib/integer_word.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "gen_gc"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "gen_gc"
   ["gc_shared"];;
 (* HOL4 ancestors outside the port: words *)
 
@@ -31,38 +28,38 @@ let gen_gc_conf_FIELDS = define_record "gen_gc_conf"
 
 let gen_gc_gc_move_def = define_cases
   [`gen_gc_gc_move conf state (gc_shared_Data d) = ((gc_shared_Data
-  d:'a heap_address),state)`;
+    d:'a heap_address),state)`;
    `gen_gc_gc_move conf state (gc_shared_Pointer ptr d) =
          (match heap_lookup ptr (gc_state_heap state) with SOME
-           (ForwardPointer ptr _3 l) -> (gc_shared_Pointer ptr d,state)
-           | SOME (DataElement xs l dd) ->
+             (ForwardPointer ptr _3 l) -> (gc_shared_Pointer ptr
+             d,state) | SOME (DataElement xs l dd) ->
            (let ok = (gc_state_ok state /\ l + 1 <= gc_state_n
-             state) in
+               state) in
            let n = gc_state_n state - (l + 1) in
             if gen_gc_conf_isRef conf dd then
               // put refs in r4
               let r4 = CONS (DataElement xs l dd) (gc_state_r4
-                state) in
+                  state) in
               let (heap,ok) = gc_forward_ptr ptr (gc_state_heap
-                state) (gc_state_a state + n) d ok in
+                  state) (gc_state_a state + n) d ok in
                 (
                 gc_shared_Pointer (gc_state_a state + n)
-                  d,gc_state_ok_fupd (K ok) (gc_state_heap_fupd (K heap)
-                  (gc_state_n_fupd (K n) (gc_state_r4_fupd (K r4)
-                  state)))) else
+                    d,gc_state_ok_fupd (K ok) (gc_state_heap_fupd (K
+                    heap) (gc_state_n_fupd (K n) (gc_state_r4_fupd (K
+                    r4) state)))) else
               // put data in h2
               let h2 = APPEND (gc_state_h2 state) [DataElement xs l
-                dd] in
+                  dd] in
               let (heap,ok) = gc_forward_ptr ptr (gc_state_heap
-                state) (gc_state_a state) d ok in
+                  state) (gc_state_a state) d ok in
               let a = gc_state_a state + l + 1 in
                 (
                 gc_shared_Pointer (gc_state_a state)
-                  d,gc_state_ok_fupd (K ok) (gc_state_heap_fupd (K
-                  heap) (gc_state_a_fupd (K a) (gc_state_n_fupd (K
-                  n) (gc_state_h2_fupd (K h2) state)))))) | _4 ->
-                  (gc_shared_Pointer ptr d,gc_state_ok_fupd (K F)
-                  state))`];;
+                    d,gc_state_ok_fupd (K ok) (gc_state_heap_fupd
+                    (K heap) (gc_state_a_fupd (K a)
+                    (gc_state_n_fupd (K n) (gc_state_h2_fupd (K h2)
+                    state)))))) | _4 -> (gc_shared_Pointer ptr
+                    d,gc_state_ok_fupd (K F) state))`];;
 
 
 (* [local] *)
@@ -754,7 +751,3 @@ let gen_gc_a = prove
     roots_ok xs heap /\ heap_ok heap (gen_gc_conf_limit c) ==>
     (gc_state_a s1 = heap_length (gc_state_h1 s1))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

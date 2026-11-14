@@ -21,11 +21,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_annotateProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_annotateProof"
   ["backendProps"; "closProps"; "closSem"; "clos_annotate"; "db_vars"];;
 
 
@@ -85,10 +82,10 @@ let alt_fv = prove
       xs] <=> alt_fv n xs)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let alt_fv_nil = prove
  (`alt_fv v [] <=> F`,
   CHEAT_TAC);;
+add_simp alt_fv_nil;;
 
 let alt_fv1_def = new_definition
   `alt_fv1 v e = alt_fv v [e]`;;
@@ -98,15 +95,15 @@ let alt_fv1_def = new_definition
 (* HOL4 clos_annotateProofScript.sml:83-84: a theorem that HOL4
    states as the value of an ML expression: alt_fv1_thm *)
 
-(* [simp] *)
 let alt_fv_cons = prove
  (`alt_fv v (CONS x xs) <=> alt_fv1 v x \/ alt_fv v xs`,
   CHEAT_TAC);;
+add_simp alt_fv_cons;;
 
-(* [simp] *)
 let alt_fv_REPLICATE = prove
  (`alt_fv n (REPLICATE m e) <=> 0 < m /\ alt_fv1 n e`,
   CHEAT_TAC);;
+add_simp alt_fv_REPLICATE;;
 
 (* value relation *)
 
@@ -160,20 +157,20 @@ let clos_annotateProof_v_rel = cake_inductive
 (* HOL4 clos_annotateProofScript.sml:148-164: a theorem that HOL4
    states as the value of an ML expression: v_rel_simp *)
 
-(* [simp] *)
 let v_rel_Boolv = prove
  (`(clos_annotateProof_v_rel x (closSem_Boolv b) <=> (x = closSem_Boolv
   b)) /\
     (clos_annotateProof_v_rel (closSem_Boolv b) x <=> (x =
       closSem_Boolv b))`,
   CHEAT_TAC);;
+add_simp v_rel_Boolv;;
 
-(* [simp] *)
 let v_rel_Unit = prove
  (`(clos_annotateProof_v_rel x closSem_Unit <=> (x = closSem_Unit)) /\
     (clos_annotateProof_v_rel closSem_Unit x <=> (x =
       closSem_Unit))`,
   CHEAT_TAC);;
+add_simp v_rel_Unit;;
 
 (* HOL4 clos_annotateProofScript.sml:180: ML code, not ported *)
 
@@ -233,10 +230,10 @@ let state_rel_max_app = prove
 
 (* some syntactic properties of the compiler *)
 
-(* [simp] *)
 let MAP_FST_compile = prove
  (`MAP FST (clos_annotate_compile p) = MAP FST p`,
   CHEAT_TAC);;
+add_simp MAP_FST_compile;;
 
 let REVERSE_compile = prove
  (`REVERSE (clos_annotate_compile ls) = clos_annotate_compile (REVERSE
@@ -379,12 +376,12 @@ let FOLDR_mk_Union = prove
 (* HOL4 clos_annotateProofScript.sml:533-539: code that the source
    has in a comment *)
 
-(* [simp] *)
 let evaluate_shift_REPLICATE_const_0 = prove
  (`closSem_evaluate (clos_annotate_shift (REPLICATE n (const_0 v8)) m l
   i,env,t1) =
       (Rval (REPLICATE n (closSem_Number (&0))),t1)`,
   CHEAT_TAC);;
+add_simp evaluate_shift_REPLICATE_const_0;;
 
 (* [local] *)
 let no_overlap_has_var_IMP = prove
@@ -481,26 +478,26 @@ let env_set_default = prove
 
 (* more correctness properties *)
 
-(* [simp] *)
 let every_Fn_vs_SOME_shift = prove
  (`!a b c d. every_Fn_vs_SOME (clos_annotate_shift a b c d)`,
   CHEAT_TAC);;
+add_simp every_Fn_vs_SOME_shift;;
 
-(* [simp] *)
 let every_Fn_vs_SOME_annotate = prove
  (`every_Fn_vs_SOME (clos_annotate_annotate n es)`,
   CHEAT_TAC);;
+add_simp every_Fn_vs_SOME_annotate;;
 
-(* [simp] *)
 let every_Fn_SOME_shift = prove
  (`!a b c d. every_Fn_SOME (clos_annotate_shift a b c d) <=>
   every_Fn_SOME a`,
   CHEAT_TAC);;
+add_simp every_Fn_SOME_shift;;
 
-(* [simp] *)
 let every_Fn_SOME_const_0 = prove
  (`every_Fn_SOME [const_0 t]`,
   CHEAT_TAC);;
+add_simp every_Fn_SOME_const_0;;
 
 let every_Fn_SOME_alt_free = prove
  (`!es. every_Fn_SOME es ==> every_Fn_SOME (FST (alt_free es))`,
@@ -518,10 +515,10 @@ let shift_code_locs = prove
   code_locs xs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let code_locs_const_0 = prove
  (`code_locs [const_0 t] = []`,
   CHEAT_TAC);;
+add_simp code_locs_const_0;;
 
 (* [local] *)
 let alt_free_code_locs = prove
@@ -621,11 +618,11 @@ let semantics_annotate = prove
 
 (* more syntactic properties *)
 
-(* [simp] *)
 let call_dests_shift = prove
  (`!a b c d. app_call_dests opt (clos_annotate_shift a b c d) =
   app_call_dests opt a`,
   CHEAT_TAC);;
+add_simp call_dests_shift;;
 
 let no_Labels_ann = prove
  (`!xs.
@@ -649,7 +646,3 @@ let every_Fn_SOME_ann = prove
       every_Fn_SOME (MAP (SND o SND) xs) ==>
       every_Fn_SOME (MAP (SND o SND) (clos_annotate_compile xs))`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

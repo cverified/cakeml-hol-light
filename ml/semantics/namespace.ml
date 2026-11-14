@@ -12,11 +12,8 @@
 
 (* this file needs nothing of the port *)
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "namespace" [];;
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "namespace" [];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* HOL4 namespaceScript.sml:11: the type abbreviation alist, which
@@ -24,7 +21,9 @@ let _ = hol4_ancestors "namespace" [];;
 
 (* Identifiers *)
 let namespace_id_INDUCT,namespace_id_RECURSION = define_datatype
-  "namespace_id = Short ('n) | Long ('m) (namespace_id)";;
+  "namespace_id =
+     Short ('n)
+   | Long ('m) namespace_id";;
 
 let mk_id_def,mk_id_ind = define_rec
   [`mk_id [] n = Short n`;
@@ -39,7 +38,8 @@ let id_to_mods_def,id_to_mods_ind = define_rec
    `id_to_mods (Long mn id') = CONS mn (id_to_mods id')`];;
 
 let namespace_INDUCT,namespace_RECURSION = define_datatype
-  "namespace = Bind (('n#'v) list) (('m#namespace) list)";;
+  "namespace =
+     Bind (('n#'v) list) (('m#namespace) list)";;
 
 let _ = size_thms "namespace_id";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -50,14 +50,14 @@ let nsLookup_def,nsLookup_ind = define_wf
       ALOOKUP v n`;
    `nsLookup (Bind v m) (Long mn id') =
       (match ALOOKUP m mn with NONE -> NONE | SOME env ->
-        nsLookup env id')`];;
+          nsLookup env id')`];;
 
 let nsLookupMod_def,nsLookupMod_ind = define_guess
   [`nsLookupMod (e:('m,'n,'v)namespace) [] = SOME
-  (e:('m,'n,'v)namespace)`;
+    (e:('m,'n,'v)namespace)`;
    `nsLookupMod (Bind v m) (CONS mn path') =
     (match ALOOKUP m mn with NONE -> NONE | SOME env ->
-      nsLookupMod env path')`];;
+        nsLookupMod env path')`];;
 
 let nsEmpty_def = new_definition
   `nsEmpty = Bind [] []`;;
@@ -116,7 +116,3 @@ let nsMap_def,nsMap_ind = define_shaped_rec
   [`nsMap (f:'v->'w) ((Bind v m):('m,'n,'v)namespace) =
      Bind (MAP (\(n,x). (n,f x)) v) (MAP (\(mn,e). (mn,nsMap f
        e)) m)`];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

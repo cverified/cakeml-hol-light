@@ -25,11 +25,8 @@ needs "lib/byte.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "stack_allocProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "stack_allocProof"
   ["stackLang"; "stackProps"; "stackSem"; "stack_alloc"; "wordSem";
    "word_gcFunctions"];;
 
@@ -78,10 +75,11 @@ let prog_comp_lemma = prove
   (next_lab p 2) p)))`,
   CHEAT_TAC);;
 
-(* FST_prog_comp[simp] *)
+(* FST_prog_comp *)
 let stack_allocProof_FST_prog_comp = prove
  (`FST (stack_alloc_prog_comp pp) = FST pp`,
   CHEAT_TAC);;
+add_simp stack_allocProof_FST_prog_comp;;
 
 (* [local] *)
 let lookup_IMP_lookup_compile = prove
@@ -243,10 +241,11 @@ let bytes_in_word_word_shift_n2w = prove
       ((n2w n):'a word)`,
   CHEAT_TAC);;
 
-(* lt_dimindex_MOD_dimword[local,simp] *)
+(* lt_dimindex_MOD_dimword[local] *)
 let stack_allocProof_lt_dimindex_MOD_dimword = prove
  (`n < dimindex (:'a) ==> n MOD dimword (:'a) = n`,
   CHEAT_TAC);;
+add_simp stack_allocProof_lt_dimindex_MOD_dimword;;
 
 (* HOL4 stack_allocProofScript.sml:372-377: a proof *)
 
@@ -2812,19 +2811,15 @@ let stack_alloc_call_args = prove
      prog1))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let compile_has_fp_ops = prove
  (`stack_alloc_compile (data_to_word_config_has_fp_tern_fupd (K b2)
   (data_to_word_config_has_fp_ops_fupd (K b1) dconf)) code =
    stack_alloc_compile dconf code`,
   CHEAT_TAC);;
+add_simp compile_has_fp_ops;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["not";
    "shift";
    "stack_alloc"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

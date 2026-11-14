@@ -8,12 +8,14 @@
 
 (* this file needs nothing of the port *)
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 
 let ordering_INDUCT,ordering_RECURSION = define_datatype
-  "ordering = LESS | EQUAL | GREATER";;
+  "ordering =
+     LESS
+   | EQUAL
+   | GREATER";;
 let pair_compare_def = new_definition
   `pair_compare c1 c2 (a,b) (x,y) =
       (match c1 a x with
@@ -40,6 +42,7 @@ let invert_comparison_def = define_cases
   [`invert_comparison GREATER = LESS`;
    `invert_comparison LESS = GREATER`;
    `invert_comparison EQUAL = EQUAL`];;
+add_simp invert_comparison_def;;
 
 (* ================================================================ *)
 (*  The theorems of ternaryComparisonsTheory that LightCake proves and this*)

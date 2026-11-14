@@ -8,14 +8,16 @@
 
 needs "lib/peg.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: string *)
 
 let simpleSexp_sexp_INDUCT,simpleSexp_sexp_RECURSION = define_datatype
-  "simpleSexp_sexp = SX_CONS (simpleSexp_sexp) (simpleSexp_sexp) | \
-   SX_SYM (string) | SX_NUM (num) | SX_STR (string)";;
+  "simpleSexp_sexp =
+     SX_CONS simpleSexp_sexp simpleSexp_sexp
+   | SX_SYM string
+   | SX_NUM num
+   | SX_STR string";;
 
 hol4_numeral_form "SX_NUM";;
 (* HOL4 simpleSexpScript.sml:23-34: the overload nil, which the port
@@ -25,15 +27,18 @@ let valid_first_symchar_def = new_definition
   `valid_first_symchar c <=>
      isGraph c /\ ~(c IN {(CHR 39),(CHR 40),(CHR 41),(CHR 46),(CHR
        34)}) /\ ~(isDigit c)`;;
+add_simp valid_first_symchar_def;;
 
 let valid_symchar_def = new_definition
   `valid_symchar c <=> isGraph c /\ ~(c IN {(CHR 39),(CHR 40),(CHR
   41)})`;;
+add_simp valid_symchar_def;;
 
 let valid_symbol_def = define_cases
   [`valid_symbol "" <=> F`;
    `valid_symbol (CONS c cs) <=> valid_first_symchar c /\ ALL
-  valid_symchar cs`];;
+    valid_symchar cs`];;
+add_simp valid_symbol_def;;
 
 let valid_sexp_def,valid_sexp_ind = define_shaped_rec
   "match"
@@ -43,6 +48,7 @@ let valid_sexp_def,valid_sexp_ind = define_shaped_rec
         | (SX_CONS s1 s2) -> valid_sexp s1 /\ valid_sexp s2
         | (SX_STR s) -> ALL isPrint s
         | s -> T`];;
+add_simp valid_sexp_def;;
 
 let arb_sexp_def = new_definition
   `arb_sexp = SX_NUM 0`;;

@@ -22,11 +22,8 @@ needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "primTypes"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "primTypes"
   ["evaluate"; "semanticPrimitives"; "typeSystem"];;
 
 
@@ -101,7 +98,3 @@ let prim_tenv_def = new_definition
 let prim_type_ids_def = new_definition
   `prim_type_ids = set_of_list (CONS Tlist_num (CONS Tbool_num
   prim_type_nums))`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

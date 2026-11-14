@@ -21,11 +21,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/byte.ml";;
 needs "semantics/ast.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "stack_alloc"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "stack_alloc"
   ["data_to_word"; "stackLang"];;
 
 let memcpy_code_def = new_definition
@@ -1058,7 +1055,3 @@ let prog_comp_def = new_definition
 let stack_alloc_compile_def = new_definition
   `stack_alloc_compile c prog = APPEND (stack_alloc_stubs c) (MAP
   stack_alloc_prog_comp prog)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

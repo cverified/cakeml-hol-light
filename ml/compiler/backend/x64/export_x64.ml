@@ -18,11 +18,8 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "export_x64"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "export_x64"
   ["export"];;
 
 (*
@@ -125,7 +122,7 @@ let ffi_asm_def,ffi_asm_ind = define_rec
            (implode "cake_ffi"); ffi; (implode ":\n");
            (implode "     pushq   %rax\n");
            (implode "     jmp     wcdecl(ffi"); ffi; (implode
-             ")\n");
+               ")\n");
            (implode "     .p2align 4\n");
            (implode "\n")]) (export_x64_ffi_asm ffis)`];;
 
@@ -352,7 +349,3 @@ let x64_export_def = new_definition
   |> concl |> rand |> listSyntax.dest_list |> fst |> map rand
   |> map stringSyntax.fromHOLstring |> concat |> print
 *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

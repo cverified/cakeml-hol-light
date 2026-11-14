@@ -18,11 +18,8 @@ needs "lib/indexedLists.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvl_handleProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvl_handleProof"
   ["bvlProps"; "bvlSem"; "bvl_constProof"; "bvl_handle"];;
 
 let can_raise_thm = prove
@@ -34,11 +31,11 @@ let can_raise_thm = prove
        can_raise1 es)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let handle_adj_vars_0 = prove
  (`(!x l. handle_adj_vars l 0 x = x) /\
    (!x l. handle_adj_vars1 l 0 x = x)`,
   CHEAT_TAC);;
+add_simp handle_adj_vars_0;;
 
 let evaluate_handle_adj_vars_lemma = prove
  (`(!x xs a env (r:('a,'b)bvlSem_state).
@@ -81,11 +78,11 @@ let evaluate_handle_simp = prove
         x2)],env,s))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let evaluate_SmartLet = prove
  (`bvlSem_evaluate ([SmartLet xs x],env,s) = bvlSem_evaluate
   ([flatLang_Let xs x],env,s)`,
   CHEAT_TAC);;
+add_simp evaluate_SmartLet;;
 
 let let_ok_def = new_definition
   `let_ok x1 =
@@ -112,7 +109,7 @@ let handle_ok_def,handle_ok_ind = define_wf_cheat
    `handle_ok [(bvl_Let xs x2:bvl_exp)] <=>
          (if LENGTH xs = 0 then
            let_ok x2 /\ (!ys y. x2 = bvl_Let ys y ==> handle_ok [y])
-             else
+               else
            handle_ok xs /\ handle_ok [x2])`;
    `handle_ok [(bvl_Raise x1:bvl_exp)] <=> handle_ok [x1]`;
    `handle_ok [(bvl_Tick x1:bvl_exp)] <=> handle_ok [x1]`;
@@ -274,10 +271,10 @@ let ALOOKUP_MAPi = prove
       ALOOKUP (MAPi (\i x. (x,i)) xs) n = SOME x ==> x < LENGTH xs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let bVarBound_SmartLet = prove
  (`bVarBound m [SmartLet x xs] = bVarBound m [flatLang_Let x xs]`,
   CHEAT_TAC);;
+add_simp bVarBound_SmartLet;;
 
 let bVarBound_LetLet = prove
  (`bVarBound m [y] /\ n <= m ==> bVarBound m [LetLet n (l1:1 spt) y]`,
@@ -353,11 +350,11 @@ let handle_ok_EVERY = prove
  (`!xs. handle_ok xs <=> ALL (\x. handle_ok [x]) xs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let LetLet_code_labels = prove
  (`bvlProps_get_code_labels (LetLet x y z) = bvlProps_get_code_labels
   z`,
   CHEAT_TAC);;
+add_simp LetLet_code_labels;;
 
 (* compile_code_labels *)
 let bvl_handleProof_compile_code_labels = prove
@@ -407,7 +404,3 @@ let compile_seqs_code_labels = prove
      (match acc with NONE -> {} | SOME r ->
        bvlProps_get_code_labels r)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

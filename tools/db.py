@@ -136,6 +136,7 @@ class Db:
     self.rectys = {}           # (thy,ty) -> {field: type text}
     self._fldtoks = None
     self.abbrevs = {}          # (thy,name) -> (params, type text)
+    self.abbrev_blocks = set() # the ones the port declares
     self.overloads = {}        # (thy,name) -> term text
     self.con_argty = {}        # (constructor,index) -> {type texts}
     self.con_argty_thy = {}    # (thy,constructor,index) -> type text
@@ -312,6 +313,11 @@ class Db:
           if not b.name: continue
           params = hterm.type_vars_of(ty)
           self.abbrevs[(thy, b.name)] = (params, txt)
+          # an abbreviation of a Type block with no parameters is
+          # one the port declares with new_type_abbrev, so a type
+          # may be written with it rather than expanded
+          # (tools/port.py's declared_abbrevs)
+          if not params: self.abbrev_blocks.add((thy, b.name))
           self.defs[b.name].append((thy, 'tyabbrev'))
         elif b.kind == 'ML':
           for nm, flds in hol4.monad_decls(b.text):
@@ -592,7 +598,7 @@ class Db:
 
   def announce(self, thy):
     """the theories that a file of the port says its source can see
-       (ml/lib/theorem.ml, hol4_ancestors), so that the overloads
+       (ml/lib/theorem.ml, cake_theory), so that the overloads
        of every other theory come out of the interface while it
        loads: the ancestors of its own Ancestors blocks whose
        grammar it has.  The library closes that over the lists that
@@ -948,11 +954,14 @@ class Db:
     rank = {t: i for i, (t, _, _) in enumerate(self.order)}
     # HOL4's 'a set is HOL Light's A->bool
     out = {'set': (["'a"], hterm.parse_type_text("'a -> bool"))}
+    decl = set()
     for (t, nm), (params, txt) in self.abbrevs.items():
       if t not in anc: continue
       ty = hterm.parse_type_text(txt)
       # a CakeML source may qualify the name (sptree$num_map)
       out[t + '$' + nm] = (params, ty)
+      if (t, nm) in self.abbrev_blocks:
+        decl.add(t + '$' + nm)
       # a theory that comes after the one of the abbreviation and
       # has a datatype of that name means its own type, not the
       # abbreviation (data_to_word_memoryProof's tag is a
@@ -961,7 +970,8 @@ class Db:
              for (t2, ty2) in self.datatypes if ty2 == nm):
         continue
       out[nm] = (params, ty)
-    return out
+      if (t, nm) in self.abbrev_blocks: decl.add(nm)
+    return out, decl
 
 
 def definition_names(body, name=None):

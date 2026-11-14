@@ -15,11 +15,8 @@ needs "compiler/backend/semantics/dataSem.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "data_spaceProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "data_spaceProof"
   ["dataProps"; "dataSem"; "data_space"];;
 
 let _ = do_list hide_constant ["vars"];;
@@ -125,16 +122,13 @@ let get_code_labels_space = prove
      dataProps_get_code_labels x)`,
   CHEAT_TAC);;
 
-(* get_code_labels_compile[simp] *)
+(* get_code_labels_compile *)
 let data_spaceProof_get_code_labels_compile = prove
  (`!x. dataProps_get_code_labels (data_space_compile x) =
   dataProps_get_code_labels x`,
   CHEAT_TAC);;
+add_simp data_spaceProof_get_code_labels_compile;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["vars"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

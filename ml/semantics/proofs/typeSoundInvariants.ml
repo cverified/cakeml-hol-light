@@ -18,19 +18,19 @@ needs "semantics/proofs/namespaceProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "typeSoundInvariants"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "typeSoundInvariants"
   ["ast"; "namespace"; "namespaceProps"; "semanticPrimitives";
    "typeSystem"];;
 
 let store_t_INDUCT,store_t_RECURSION = define_datatype
-  "store_t = Ref_t (t) | W8array_t | Varray_t (t)";;
+  "store_t =
+     Ref_t t
+   | W8array_t
+   | Varray_t t";;
 
 (* Store typing *)
-new_type_abbrev("tenv_store",`: (num,store_t)fmap`);;
+new_type_abbrev("tenv_store",`:(num,store_t)fmap`);;
 
 (* Check that the type names map to valid types *)
 let tenv_abbrev_ok_def = new_definition
@@ -54,7 +54,7 @@ let tenv_ok_def = new_definition
 let tenv_val_exp_ok_def,tenv_val_exp_ok_ind = define_rec
   [`tenv_val_exp_ok (typeSystem_Empty:tenv_val_exp) <=> T`;
    `tenv_val_exp_ok (typeSystem_Bind_tvar n tenv) <=> tenv_val_exp_ok
-  tenv`;
+    tenv`;
    `tenv_val_exp_ok (typeSystem_Bind_name x tvs t tenv) <=>
         check_freevars (tvs + num_tvs tenv) [] t /\
         tenv_val_exp_ok tenv`];;
@@ -62,7 +62,7 @@ let tenv_val_exp_ok_def,tenv_val_exp_ok_ind = define_rec
 (* Global constructor type environments keyed by constructor name and type
  * stamp. Contains the type variables, the type of the arguments, and
  * the identity of the type. *)
-new_type_abbrev("ctMap",`: (stamp,mlstring list#t list#num)fmap`);;
+new_type_abbrev("ctMap",`:(stamp,tvarN list#t list#type_ident)fmap`);;
 
 let ctMap_ok_def = new_definition
   `ctMap_ok ctMap <=>
@@ -97,9 +97,9 @@ let type_ctor_def = new_definition
 let add_tenvE_def,add_tenvE_ind = define_rec
   [`add_tenvE (typeSystem_Empty:tenv_val_exp) tenvV = tenvV`;
    `add_tenvE (typeSystem_Bind_tvar _3 tenvE) tenvV = add_tenvE tenvE
-  tenvV`;
+    tenvV`;
    `add_tenvE (typeSystem_Bind_name x tvs t tenvE) tenvV = nsBind x
-  (tvs,t) (add_tenvE tenvE tenvV)`];;
+    (tvs,t) (add_tenvE tenvE tenvV)`];;
 
 let type_v = cake_inductive
   `(!tvs ctMap tenvS n.
@@ -264,7 +264,3 @@ let type_sound_invariant_def = new_definition
      consistent_ctMap st type_idents ctMap /\
      type_all_env ctMap tenvS env tenv /\
      type_s ctMap (semanticPrimitives_state_refs st) tenvS`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

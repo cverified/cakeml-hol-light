@@ -22,11 +22,8 @@ needs "semantics/proofs/typeSysProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "envRel"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "envRel"
   ["ast"; "infer"; "inferProps"; "infer_t"; "namespaceProps";
    "semanticPrimitives"; "typeSysProps"; "typeSystem"; "unify"];;
 
@@ -395,10 +392,10 @@ let envRel_env_rel_def = new_definition
     env_rel_sound FEMPTY ienv tenv typeSystem_Empty /\
     env_rel_complete FEMPTY ienv tenv typeSystem_Empty`;;
 
-(* [simp] *)
 let lookup_varE_empty = prove
  (`!x. lookup_varE x (typeSystem_Empty:tenv_val_exp) = NONE`,
   CHEAT_TAC);;
+add_simp lookup_varE_empty;;
 
 let env_rel_extend = prove
  (`!tenv1 ienv1 tenv2 ienv2.
@@ -408,11 +405,11 @@ let env_rel_extend = prove
       ienv1 ienv2)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let env_rel_empty = prove
  (`envRel_env_rel (mk_type_env nsEmpty nsEmpty nsEmpty)
            (mk_inf_env nsEmpty nsEmpty nsEmpty)`,
   CHEAT_TAC);;
+add_simp env_rel_empty;;
 
 let env_rel_lift = prove
  (`!tenv ienv mn. envRel_env_rel tenv ienv ==> envRel_env_rel
@@ -460,10 +457,6 @@ let tenv_to_ienv_lift = prove
   (tenv_to_ienv tenv)`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

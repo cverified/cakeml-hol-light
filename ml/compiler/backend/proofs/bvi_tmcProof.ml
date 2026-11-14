@@ -21,11 +21,8 @@ needs "lib/sptree.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvi_tmcProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvi_tmcProof"
   ["backend_common"; "bviProps"; "bviSem"; "bvi_tmc"; "bvlSem";
    "semanticPrimitivesProps"];;
 
@@ -78,27 +75,27 @@ let no_mutcons_op_def = new_definition
   `no_mutcons_op op <=> (!tag i. ~(op = closLang_MemOp
   (closLang_MutCons tag i)))`;;
 
-let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 let no_mutcons_def,no_mutcons_ind = define_wf
   `MEASURE bvi_exp_size`
   [`no_mutcons (bvi_Var n:bvi_exp) <=> T`;
    `no_mutcons (bvi_If x1 x2 x3:bvi_exp) <=> no_mutcons x1 /\
-  no_mutcons x2 /\ no_mutcons x3`;
+    no_mutcons x2 /\ no_mutcons x3`;
    `no_mutcons (bvi_Let xs x:bvi_exp) <=> ALL no_mutcons xs /\
-  no_mutcons x`;
+    no_mutcons x`;
    `no_mutcons (bvi_Raise x:bvi_exp) <=> no_mutcons x`;
    `no_mutcons (bvi_Tick x:bvi_exp) <=> no_mutcons x`;
    `no_mutcons (bvi_Call ticks dest xs handler:bvi_exp) <=>
          ALL no_mutcons xs /\ (match handler with NONE -> T |
-           SOME x -> no_mutcons x)`;
+             SOME x -> no_mutcons x)`;
    `no_mutcons (bvi_Force loc n:bvi_exp) <=> T`;
    `no_mutcons (bvi_LetCall rets ticks dest xs y) <=> ALL no_mutcons
-  xs /\ no_mutcons y`;
+    xs /\ no_mutcons y`;
    `no_mutcons (bvi_Return xs:bvi_exp) <=> ALL no_mutcons xs`;
    `no_mutcons (bvi_Op op xs:bvi_exp) <=> no_mutcons_op op /\ ALL
-  no_mutcons xs`];;
+    no_mutcons xs`];;
+add_simp no_mutcons_def;;
 
 let bvi_tmcProof_code_rel_def = new_definition
   `bvi_tmcProof_code_rel c1 c2 <=>
@@ -158,10 +155,10 @@ let fmap_inj_def = new_definition
      (!p1 p2 q. FLOOKUP f p1 = SOME q /\ FLOOKUP f p2 = SOME q ==>
        p1 = p2)`;;
 
-(* [simp] *)
 let fmap_inj_FEMPTY = prove
  (`fmap_inj FEMPTY`,
   CHEAT_TAC);;
+add_simp fmap_inj_FEMPTY;;
 
 let fmap_inj_update = prove
  (`!f k v.
@@ -221,21 +218,24 @@ let bvi_tmcProof_EVERY_free_names_thm = prove
      bvi_tmcProof_free_names next loc`),
   CHEAT_TAC);;
 
-(* [local,simp] *)
+(* [local] *)
 let free_names_mult_F = prove
  (`bvi_tmcProof_free_names n (n + k * bvl_to_bvi_namespaces) <=> F`,
   CHEAT_TAC);;
+add_simp free_names_mult_F;;
 
-(* [local,simp] *)
+(* [local] *)
 let free_names_refl_F = prove
  (`bvi_tmcProof_free_names n n <=> F`,
   CHEAT_TAC);;
+add_simp free_names_refl_F;;
 
-(* [local,simp] *)
+(* [local] *)
 let free_names_succ_F = prove
  (`bvi_tmcProof_free_names n (n + (bvl_to_bvi_namespaces + k *
   bvl_to_bvi_namespaces)) <=> F`,
   CHEAT_TAC);;
+add_simp free_names_succ_F;;
 
 (* [local] *)
 let rewrite_wrapper_NONE_irrel = prove
@@ -397,6 +397,7 @@ let eor_rel_def = new_definition
         | ((Ret vs1),(Ret vs2)) -> ALL2 (bvi_tmcProof_v_rel f) vs1
           vs2
         | (_1,_2) -> F`;;
+add_simp eor_rel_def;;
 
 let opt_res_rel_def = new_definition
   `opt_res_rel f (r1:(bvlSem_v
@@ -1992,11 +1993,12 @@ let bvi_tmcProof_compile_prog_semantics = prove
    the names strictly below the final next-name.
    ------------------------------------------------------------------------- *)
 
-(* [local,simp] *)
+(* [local] *)
 let get_code_labels_MAP_Var = prove
  (`UNIONS (set_of_list (MAP bviProps_get_code_labels (MAP (\n.
   db_vars_Var n) vs))) = {}`,
   CHEAT_TAC);;
+add_simp get_code_labels_MAP_Var;;
 
 (* [local] *)
 let cb_to_bvi_worker_aux_code_labels = prove
@@ -2105,12 +2107,8 @@ let bvi_tmcProof_compile_prog_keeps_names = prove
      MEM x (MAP FST ys)`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["all";
    "parts";
    "vars"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

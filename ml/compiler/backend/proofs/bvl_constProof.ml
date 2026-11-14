@@ -29,11 +29,8 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvl_constProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvl_constProof"
   ["bvlProps"; "bvlSem"; "bvl_const"];;
 
 let bvl_constProof_v_rel_def = new_definition
@@ -1683,7 +1680,6 @@ let bvl_constProof_evaluate_compile_exp = prove
      ACCEPT_TAC(SPEC_ALL(MATCH_MP bvl_constProof_compile_thm
        (CONJ ev_th ne)))))));;
 
-(* [simp] *)
 let delete_var_code_labels = prove
  (`!x. bvlProps_get_code_labels (bvl_const_delete_var x) =
   bvlProps_get_code_labels x`,
@@ -1696,6 +1692,7 @@ let delete_var_code_labels = prove
    REWRITE_TAC[gcl; agcl] THEN MATCH_REDUCE_TAC THEN
    REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                UNION_EMPTY; EMPTY_UNION]));;
+add_simp delete_var_code_labels;;
 
 let dest_simple_SOME_code_labels = prove
  (`!x y. dest_simple x = SOME y ==> bvlProps_get_code_labels x = {}`,
@@ -1707,7 +1704,6 @@ let dest_simple_SOME_code_labels = prove
    REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                UNION_EMPTY; EMPTY_UNION]));;
 
-(* [simp] *)
 let SmartOp2_code_labels = prove
  (`bvlProps_get_code_labels (SmartOp2 (op,x1,x2)) =
     assign_get_code_label op UNION bvlProps_get_code_labels x1
@@ -1779,6 +1775,7 @@ let SmartOp2_code_labels = prove
    REWRITE_TAC[so2; LET_DEF; LET_END_DEF] THEN
    CONV_TAC(DEPTH_CONV BETA_CONV) THEN dispatch THEN
    closer THEN closer THEN closer));;
+add_simp SmartOp2_code_labels;;
 
 let SmartOp1_code_labels = prove
  (`bvlProps_get_code_labels (SmartOp1 op x) = bvlProps_get_code_labels
@@ -1814,7 +1811,6 @@ let SmartOp1_code_labels = prove
      REWRITE_TAC[MATCH_MP dest_simple_SOME_code_labels th]) THEN
    REWRITE_TAC set_rws));;
 
-(* [simp] *)
 let SmartOp_code_labels = prove
  (`bvlProps_get_code_labels (bvl_const_SmartOp op xs) =
    assign_get_code_label op UNION UNIONS (set_of_list (MAP
@@ -1860,6 +1856,7 @@ let SmartOp_code_labels = prove
      TRY(ASM_REWRITE_TAC[]) THEN TRY(REWRITE_TAC[UNION_ACI]) in
    REWRITE_TAC[so] THEN EVERY_CASE_TAC THEN
    flip_tac THEN flip_tac THEN flip_tac));;
+add_simp SmartOp_code_labels;;
 
 let MEM_extract_list_code_labels = prove
  (`!xs x. MEM (SOME x) (bvl_const_extract_list xs) ==>
@@ -2141,7 +2138,3 @@ let bvl_constProof_compile_exp_code_labels = prove
             bvl_constProof_compile_code_labels) THEN
    REWRITE_TAC[FILTER; MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                UNION_EMPTY]));;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

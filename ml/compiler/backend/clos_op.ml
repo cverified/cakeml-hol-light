@@ -16,11 +16,8 @@ needs "compiler/backend/closLang.ml";;
 needs "lib/indexedLists.ml";;
 needs "misc/misc.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_op"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_op"
   ["backend_common"; "closLang"; "misc"];;
 
 let _ = do_list hide_constant ["pmatch"];;
@@ -242,7 +239,6 @@ let eq_direct_def = new_definition
        -> (match eq_direct_constant x y with SOME res -> SOME res |
        NONE -> eq_direct_nil x y))`;;
 
-let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 clos_opScript.sml:261-268: the tactic that proves the
@@ -294,7 +290,6 @@ let eq_pure_list_def,eq_pure_list_ind = define_guess_cheat
       | (CONS xy xys) -> misc_Append (eq_pure_list [xy])
         (eq_pure_list xys)`];;
 
-let _ = size_thms "closLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ConjList_def,ConjList_ind = define_wf
@@ -338,7 +333,6 @@ let dont_lift_def = new_definition
          (match (dest_Op_Nil clos_op_dest_Constant) x with SOME t
            -> T | NONE -> F)))`;;
 
-let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 clos_opScript.sml:368-373: the tactic that proves the
@@ -350,16 +344,16 @@ let lift_exps_def,lift_exps_ind = define_wf
       (if dont_lift x then
         (let (xs,n,binds) = lift_exps xs n binds in
            (CONS x xs,n,binds)) else match (dest_Op
-             clos_op_dest_Cons) x with SOME (t,ys) ->
+               clos_op_dest_Cons) x with SOME (t,ys) ->
               (let (ys,n,binds) = lift_exps ys n binds in
                let (xs,n,binds) = lift_exps xs n binds in
                  (CONS (closLang_Op backend_common_None
-                   (closLang_BlockOp (closLang_Cons t)) ys) xs,n,binds))
-                   | NONE ->
+                     (closLang_BlockOp (closLang_Cons t)) ys)
+                     xs,n,binds)) | NONE ->
               (let (xs,n1,binds) = lift_exps xs (n + 1) (APPEND
-                binds [x]) in
+                  binds [x]) in
                 (CONS (closLang_Var backend_common_None n)
-                  xs,n1,binds)))`];;
+                    xs,n1,binds)))`];;
 
 let eq_any_def = new_definition
   `eq_any x y =
@@ -389,10 +383,6 @@ let clos_op_SmartOp_def = new_definition
      (match SmartOp' tra op xs with NONE -> closLang_Op tra op xs
        | SOME x -> x)`;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

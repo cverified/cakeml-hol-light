@@ -1165,6 +1165,7 @@ class Ctx:
     self.cons = cons or set()          # the constructor names
     self.tyops = set()                 # the type names in scope
     self.abbrevs = abbrevs or {}       # type abbreviation -> type
+    self.auxsize = {}                  # HOL4's expN_size -> term
     self.intnums = False               # are numerals integers here?
     self.intneg = False                # is $~ the negation of an int?
     self.intvars = set()               # variables holding integers
@@ -1961,7 +1962,16 @@ class Printer:
       # variable where HOL4 has a constant
       if (AUXSIZE.match(n2) and n2 not in self.ctx.defnames
           and n2 not in self.ctx.names.values()):
-        raise SyntaxError('the auxiliary size function ' + n2)
+        # unless the port says what that one is: the type it is
+        # the size of is read off the statements that use it, and
+        # the term is the one HOL Light writes for the size of
+        # that type (overrides.AUX_SIZE)
+        t = self.ctx.auxsize.get(n2) or self.ctx.auxsize.get(n)
+        if t is None:
+          raise SyntaxError('the auxiliary size function ' + n2)
+        # where it is applied it is the head of the application
+        # and needs no brackets: list_size f x, not (list_size f) x
+        return self.paren(t, PRE_APP, prec)
       return n2
     if k == 'num':
       t = e.text
@@ -2662,16 +2672,19 @@ def type_subst(ty, sub):
   return ('op', ty[1], [type_subst(a, sub) for a in ty[2]])
 
 
-def expand_type(ty, abbrevs):
-  """expand the type abbreviations of the port"""
+def expand_type(ty, abbrevs, keep=None):
+  """expand the type abbreviations of the port.  The ones in
+     `keep` are the ones the port declares with new_type_abbrev,
+     which a type may be written with rather than expanded"""
   if ty[0] == 'v': return ty
-  args = [expand_type(a, abbrevs) for a in ty[2]]
+  args = [expand_type(a, abbrevs, keep) for a in ty[2]]
   name = ty[1]
+  if keep and name in keep: return ('op', name, args)
   if name in abbrevs:
     params, body = abbrevs[name]
     if len(params) == len(args):
       return expand_type(type_subst(body, dict(zip(params, args))),
-                         abbrevs)
+                         abbrevs, keep)
   return ('op', name, args)
 
 

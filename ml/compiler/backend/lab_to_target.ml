@@ -20,11 +20,8 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "lab_to_target"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "lab_to_target"
   ["ffi"; "labLang"; "lab_filter"];;
 
 (* Number of bytes per FFI *)
@@ -49,14 +46,15 @@ let cbw_to_asm_def = new_definition
      Asmi a -> a | Cbw r1 r2 -> asm_Inst (asm_Mem asm_Store8 r2
        (Addr r1 (n2w 0))) | ShareMem m r ad -> asm_Inst (asm_Mem m r
        ad))`;;
+add_simp cbw_to_asm_def;;
 
 
 let enc_line_def = define_cases
   [`enc_line enc skip_len (labLang_Label n1 n2 n3) = labLang_Label n1
-  n2 skip_len`;
+    n2 skip_len`;
    `enc_line enc skip_len (labLang_Asm a _6 _7) =
          (let bs = enc (cbw_to_asm a) in labLang_Asm a bs (LENGTH
-           bs))`;
+             bs))`;
    `enc_line enc skip_len (labLang_LabAsm l _8 _9 _10) =
          (let bs = enc (lab_inst (n2w 0) l) in
            labLang_LabAsm l (n2w 0) bs (LENGTH bs))`];;
@@ -83,7 +81,7 @@ let section_labels_def,section_labels_ind = define_wf
          (if l2 = 0 then
            section_labels (pos + len) xs labs else
            section_labels (pos + len) xs (CONS (l2,pos + len)
-             labs))`;
+               labs))`;
    `section_labels pos (CONS (labLang_Asm _13 _14 len) xs) labs =
          section_labels (pos + len) xs labs`;
    `section_labels pos (CONS (labLang_LabAsm _15 _16 _17 len) xs) labs =
@@ -99,7 +97,7 @@ let compute_labels_alt_def,compute_labels_alt_ind = define_wf
         (let (new_pos,sec_labs) = section_labels pos lines [] in
         compute_labels_alt new_pos rest
           (sptree_insert k (fromAList (CONS (0,pos) sec_labs))
-            labs))`];;
+              labs))`];;
 
 (* update code, but not label lengths *)
 
@@ -138,35 +136,33 @@ let get_jump_offset_def = new_definition
         | a ->
         n2w (find_pos (get_label a) labs) - n2w pos`;;
 
-let _ = size_thms "line";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let enc_lines_again_def,enc_lines_again_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4,x5).      list_size (line_size (\x. 0)) x4
   +      pair_size (list_size (line_size (\x. 0))) (\x. 0) x5)`
   [`enc_lines_again labs ffis pos enc [] (acc,ok) = (REVERSE
-  acc,pos,(ok:bool))`;
+    acc,pos,(ok:bool))`;
    `enc_lines_again labs ffis pos enc (CONS (labLang_Label k1 k2 l) xs)
-  (acc,ok) =
+    (acc,ok) =
          enc_lines_again labs ffis (pos + l) enc xs (CONS
-           ((labLang_Label k1 k2 l:'a line)) acc,ok)`;
+             ((labLang_Label k1 k2 l:'a line)) acc,ok)`;
    `enc_lines_again labs ffis pos enc (CONS (labLang_Asm x1 x2 l) xs)
-  (acc,ok) =
+    (acc,ok) =
          enc_lines_again labs ffis (pos + l) enc xs (CONS
-           (labLang_Asm x1 x2 l) acc,ok)`;
+             (labLang_Asm x1 x2 l) acc,ok)`;
    `enc_lines_again labs ffis pos enc (CONS (labLang_LabAsm a w bytes l)
-  xs) (acc,ok) =
+    xs) (acc,ok) =
          (let w1 = get_jump_offset a ffis labs pos in
            if w = w1 then
              enc_lines_again labs ffis (pos + l) enc xs (CONS
-               (labLang_LabAsm a w bytes l) acc,ok) else
+                 (labLang_LabAsm a w bytes l) acc,ok) else
              let bs = enc (lab_inst w1 a) in
              let l1 = MAX (LENGTH bs) l in
                enc_lines_again labs ffis (pos + l1) enc xs
                  (CONS (labLang_LabAsm a w1 bs l1) acc,(ok /\
-                   (l1 = l))))`];;
+                     (l1 = l))))`];;
 
-let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let enc_secs_again_def,enc_secs_again_ind = define_wf
@@ -174,13 +170,12 @@ let enc_secs_again_def,enc_secs_again_ind = define_wf
   [`enc_secs_again pos labs ffis enc [] = ([],T)`;
    `enc_secs_again pos labs ffis enc (CONS (Section s lines) rest) =
          (let (lines1,pos1,ok) = enc_lines_again labs ffis pos enc
-           lines ([],T) in
+             lines ([],T) in
          let (rest1,ok1) = enc_secs_again pos1 labs ffis enc rest in
            (CONS (Section s lines1) rest1,(ok /\ ok1)))`];;
 
 (* update labels *)
 
-let _ = size_thms "line";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let lines_upd_lab_len_def,lines_upd_lab_len_ind = define_wf
@@ -189,15 +184,14 @@ let lines_upd_lab_len_def,lines_upd_lab_len_ind = define_wf
    `lines_upd_lab_len pos (CONS (labLang_Label k1 k2 l) xs) acc =
          (let l1 = (if EVEN pos then 0 else 1) in
            lines_upd_lab_len (pos + l1) xs ((CONS (labLang_Label
-             k1 k2 l1) acc)))`;
+               k1 k2 l1) acc)))`;
    `lines_upd_lab_len pos (CONS (labLang_Asm x1 x2 l) xs) acc =
          lines_upd_lab_len (pos + l) xs (CONS (labLang_Asm x1 x2
-           l) acc)`;
+             l) acc)`;
    `lines_upd_lab_len pos (CONS (labLang_LabAsm a w bytes l) xs) acc =
          lines_upd_lab_len (pos + l) xs (CONS (labLang_LabAsm a
-           w bytes l) acc)`];;
+             w bytes l) acc)`];;
 
-let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let upd_lab_len_def,upd_lab_len_ind = define_wf
@@ -206,7 +200,7 @@ let upd_lab_len_def,upd_lab_len_ind = define_wf
    `upd_lab_len pos (CONS (Section s lines) rest) =
          (let (lines1,pos1) = lines_upd_lab_len pos lines [] in
          let rest1 = upd_lab_len pos1 rest in CONS (Section s
-           lines1) rest1)`];;
+             lines1) rest1)`];;
 
 (* checking that all labelled asm instructions are asm_ok *)
 
@@ -230,6 +224,7 @@ let line_ok_light_def = new_definition
 let sec_ok_light_def = define_general
   [`sec_ok_light c (Section k ls) <=>
      ALL (line_ok_light c) ls`];;
+add_simp sec_ok_light_def;;
 
 (* HOL4 lab_to_targetScript.sml:188: the overload all_enc_ok_light,
    which the port expands *)
@@ -242,20 +237,18 @@ let pad_bytes_def = new_definition
        if len <= len_bytes then bytes else
          TAKE len (APPEND bytes (FLAT (REPLICATE len nop))))`;;
 
-let _ = size_thms "line";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let add_nop_def,add_nop_ind = define_wf
   `MEASURE (\(x0,x1). list_size (line_size (\x. 0)) x1)`
   [`add_nop nop [] = []`;
    `add_nop nop (CONS (labLang_Label l1 l2 len) xs) = CONS
-  ((labLang_Label l1 l2 len:'a line)) (add_nop nop xs)`;
+    ((labLang_Label l1 l2 len:'a line)) (add_nop nop xs)`;
    `add_nop nop (CONS (labLang_Asm x bytes len) xs) = CONS
-  (labLang_Asm x (APPEND bytes nop) (len + 1)) xs`;
+    (labLang_Asm x (APPEND bytes nop) (len + 1)) xs`;
    `add_nop nop (CONS (labLang_LabAsm y w bytes len) xs) = CONS
-  (labLang_LabAsm y w (APPEND bytes nop) (len + 1)) xs`];;
+    (labLang_LabAsm y w (APPEND bytes nop) (len + 1)) xs`];;
 
-let _ = size_thms "line";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let pad_section_def,pad_section_ind = define_wf
@@ -266,19 +259,18 @@ let pad_section_def,pad_section_ind = define_wf
          (if len = 0 then aux else add_nop nop aux))`;
    `pad_section nop (CONS (labLang_Asm x bytes len) xs) aux =
          pad_section nop xs (CONS (labLang_Asm x (pad_bytes bytes
-           len nop) len) aux)`;
+             len nop) len) aux)`;
    `pad_section nop (CONS (labLang_LabAsm y w bytes len) xs) aux =
          pad_section nop xs (CONS (labLang_LabAsm y w
-           (pad_bytes bytes len nop) len) aux)`];;
+             (pad_bytes bytes len nop) len) aux)`];;
 
-let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let pad_code_def,pad_code_ind = define_wf
   `MEASURE (\(x0,x1). list_size (sec_size (\x. 0)) x1)`
   [`pad_code nop [] = []`;
    `pad_code nop (CONS (Section n xs) ys) = CONS (Section n
-  (pad_section nop xs [])) (pad_code nop ys)`];;
+    (pad_section nop xs [])) (pad_code nop ys)`];;
 
 let pad_code_MAP = prove
  (`pad_code nop =
@@ -286,20 +278,18 @@ let pad_code_MAP = prove
       (Section_lines x) []))`,
   CHEAT_TAC);;
 
-let _ = size_thms "line";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let sec_length_def,sec_length_ind = define_wf
   `MEASURE (\(x0,x1). list_size (line_size (\x. 0)) x0)`
   [`sec_length [] k = k`;
    `sec_length (CONS (labLang_Label _25 _26 l) xs) k = sec_length xs
-  (k + l)`;
+    (k + l)`;
    `sec_length (CONS (labLang_Asm x1 x2 l) xs) k = sec_length xs (k +
-  l)`;
+    l)`;
    `sec_length (CONS (labLang_LabAsm a w bytes l) xs) k =
-  sec_length xs (k + l)`];;
+    sec_length xs (k + l)`];;
 
-let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_symbols_def,get_symbols_ind = define_wf
@@ -307,7 +297,7 @@ let get_symbols_def,get_symbols_ind = define_wf
   [`get_symbols pos [] = []`;
    `get_symbols pos (CONS (Section k l) secs) =
         (let len = sec_length l 0 in CONS (k,pos,len)
-          (get_symbols (pos + len) secs))`];;
+            (get_symbols (pos + len) secs))`];;
 
 (* Compute the labels whose second part is 0 *)
 let zero_labs_acc_of_def = new_definition
@@ -320,6 +310,7 @@ let zero_labs_acc_of_def = new_definition
         | (labLang_JumpCmp _29 _30 _31 (labLang_Lab n1 n2)) ->
        (if n2 = 0 then sptree_insert n1 one acc else acc)
         | _32 -> acc`;;
+add_simp zero_labs_acc_of_def;;
 
 
 let line_get_zero_labs_acc_def = new_definition
@@ -401,7 +392,7 @@ let prog_to_bytes_def,prog_to_bytes_ind = define_guess_cheat
   [`prog_to_bytes [] = []`;
    `prog_to_bytes (CONS (Section k []) xs) = prog_to_bytes xs`;
    `prog_to_bytes (CONS (Section k (CONS y ys)) xs) = APPEND
-  (line_bytes y) (prog_to_bytes (CONS (Section k ys) xs))`];;
+    (line_bytes y) (prog_to_bytes (CONS (Section k ys) xs))`];;
 
 (* HOL4 lab_to_targetScript.sml:339: ML code, not ported *)
 
@@ -432,7 +423,7 @@ let list_add_if_fresh_def,list_add_if_fresh_ind = define_rec
   [`list_add_if_fresh e [] = [e]`;
    `list_add_if_fresh e (CONS f r) =
         (if e = f then CONS f r else CONS f (list_add_if_fresh
-          e r))`];;
+            e r))`];;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -442,10 +433,10 @@ let find_ffi_names_def,find_ffi_names_ind = define_guess_cheat
          find_ffi_names rest`;
    `find_ffi_names (CONS (Section k (CONS x xs)) rest) =
        (match x with labLang_LabAsm (labLang_CallFFI s) _50 _51 _52
-         ->
+           ->
            list_add_if_fresh (ffi_ExtCall s) (find_ffi_names
-             (CONS (Section k xs) rest)) | _53 -> find_ffi_names
-             (CONS (Section k xs) rest))`];;
+               (CONS (Section k xs) rest)) | _53 -> find_ffi_names
+               (CONS (Section k xs) rest))`];;
 
 let get_memop_info_def = define_cases
   [`get_memop_info (asm_Load:memop) = (MappedRead,((n2w 0):word8))`;
@@ -459,7 +450,6 @@ let get_memop_info_def = define_cases
 
 (* produce a list of ffi_names for shared memory instructions and
   a list of shmem_infos (e.g. pc of the shared memory instruction) *)
-let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_shmem_info_def,get_shmem_info_ind = define_wf
@@ -528,7 +518,3 @@ let compile_lab_def = new_definition
 let lab_to_target_compile_def = new_definition
   `lab_to_target_compile asm_conf c sec_list = compile_lab asm_conf c
   (filter_skip sec_list)`;;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

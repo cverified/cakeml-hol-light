@@ -9,9 +9,8 @@ needs "lib/comparison.ml";;
 needs "lib/sorting.ml";;
 needs "lib/ternaryComparisons.ml";;
 
-(* this file is of no theory of the port: the overloads it
-   registers are in the scope of every file *)
-let _ = hol4_lib ();;
+(* of no theory of the port: what it registers is in the scope of every file *)
+let _ = cake_library ();;
 (* HOL4 ancestors outside the port: option pair string arithmetic
    pred_set list finite_map alist *)
 
@@ -19,8 +18,9 @@ let key_set_def = new_definition
   `key_set cmp k = {k' | cmp k k' = EQUAL}`;;
 
 let balanced_map_INDUCT,balanced_map_RECURSION = define_datatype
-  "balanced_map = Tip | Bin (num) ('k) ('v) (balanced_map) \
-   (balanced_map)";;
+  "balanced_map =
+     Tip
+   | Bin num ('k) ('v) balanced_map balanced_map";;
 
 let ratio_def = new_definition
   `ratio = (2:num)`;;
@@ -40,7 +40,8 @@ let balanced_map_lookup_def,balanced_map_lookup_ind = define_rec
   [`balanced_map_lookup cmp k Tip = NONE`;
    `balanced_map_lookup cmp k (Bin s k' v l r) =
       (match cmp k k' with LESS -> balanced_map_lookup cmp k l
-        | GREATER -> balanced_map_lookup cmp k r | EQUAL -> SOME v)`];;
+          | GREATER -> balanced_map_lookup cmp k r | EQUAL -> SOME
+          v)`];;
 
 let empty_def = new_definition
   `balanced_map_empty = Tip`;;
@@ -128,26 +129,26 @@ let balanced_map_insert_def,balanced_map_insert_ind = define_rec
   [`balanced_map_insert cmp k v Tip = singleton k v`;
    `balanced_map_insert cmp k v (Bin s k' v' l r) =
       (match cmp k k' with LESS -> balanceL k' v'
-        (balanced_map_insert cmp k v l) r | GREATER -> balanceR k'
-        v' l (balanced_map_insert cmp k v r) | EQUAL -> Bin s k v l
-        r)`];;
+          (balanced_map_insert cmp k v l) r | GREATER -> balanceR
+          k' v' l (balanced_map_insert cmp k v r) | EQUAL -> Bin s
+          k v l r)`];;
 
 let insertR_def,insertR_ind = define_rec
   [`insertR cmp k v Tip = singleton k v`;
    `insertR cmp k v (Bin s k' v' l r) =
       (match cmp k k' with LESS -> balanceL k' v' (insertR cmp
-        k v l) r | GREATER -> balanceR k' v' l (insertR cmp k v r)
-        | EQUAL -> Bin s k' v' l r)`];;
+          k v l) r | GREATER -> balanceR k' v' l (insertR cmp k v
+          r) | EQUAL -> Bin s k' v' l r)`];;
 
 let insertMax_def,insertMax_ind = define_rec
   [`insertMax k v Tip = singleton k v`;
    `insertMax k v (Bin s k' v' l r) = balanceR k' v' l (insertMax k
-  v r)`];;
+    v r)`];;
 
 let insertMin_def,insertMin_ind = define_rec
   [`insertMin k v Tip = singleton k v`;
    `insertMin k v (Bin s k' v' l r) = balanceL k' v' (insertMin k v
-  l) r`];;
+    l) r`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -191,8 +192,8 @@ let balanced_map_delete_def,balanced_map_delete_ind = define_rec
   [`balanced_map_delete cmp k Tip = Tip`;
    `balanced_map_delete cmp k (Bin s k' v l r) =
       (match cmp k k' with LESS -> balanceR k' v
-        (balanced_map_delete cmp k l) r | GREATER -> balanceL k' v
-        l (balanced_map_delete cmp k r) | Eq' -> glue l r)`];;
+          (balanced_map_delete cmp k l) r | GREATER -> balanceL k'
+          v l (balanced_map_delete cmp k r) | Eq' -> glue l r)`];;
 
 let trim_help_greater_def,trim_help_greater_ind = define_rec
   [`trim_help_greater cmp lo (Bin s' k v' l' r) =
@@ -212,7 +213,7 @@ let trim_help_middle_def,trim_help_middle_ind = define_rec
   [`trim_help_middle cmp lo hi (Bin s' k v' l r) =
       (if cmp k lo = LESS \/ cmp k lo = EQUAL then
         trim_help_middle cmp lo hi r else if cmp k hi = GREATER \/
-          cmp k hi = EQUAL then
+            cmp k hi = EQUAL then
         trim_help_middle cmp lo hi l else
         Bin s' k v' l r)`;
    `trim_help_middle lo cmp hi Tip = Tip`];;
@@ -245,7 +246,8 @@ let filterLt_help_def,filterLt_help_ind = define_rec
   [`filterLt_help cmp b Tip = Tip`;
    `filterLt_help cmp b' (Bin s kx x l r) =
       (match cmp kx b' with LESS -> link kx x l (filterLt_help
-        cmp b' r) | EQUAL -> l | GREATER -> filterLt_help cmp b' l)`];;
+          cmp b' r) | EQUAL -> l | GREATER -> filterLt_help cmp b'
+          l)`];;
 
 let filterLt_def = define_cases
   [`filterLt cmp NONE t = t`;
@@ -255,8 +257,8 @@ let filterGt_help_def,filterGt_help_ind = define_rec
   [`filterGt_help cmp b Tip = Tip`;
    `filterGt_help cmp b' (Bin s kx x l r) =
       (match cmp b' kx with LESS -> link kx x (filterGt_help
-        cmp b' l) r | EQUAL -> r | GREATER -> filterGt_help cmp b'
-        r)`];;
+          cmp b' l) r | EQUAL -> r | GREATER -> filterGt_help cmp
+          b' r)`];;
 
 let filterGt_def = define_cases
   [`filterGt cmp NONE t = t`;
@@ -309,7 +311,7 @@ let to_fmap_def,to_fmap_ind = define_rec
   [`to_fmap cmp Tip = FEMPTY`;
    `to_fmap cmp (Bin s k v l r) =
       (FUNION (to_fmap cmp l) (to_fmap cmp r)) |+ (key_set cmp
-        k,v)`];;
+          k,v)`];;
 
 let balanced_def = new_definition
   `balanced l r <=> l + r <= 1 \/ MAX l r <= delta * MIN l r`;;
@@ -317,7 +319,7 @@ let balanced_def = new_definition
 let structure_size_def,structure_size_ind = define_rec
   [`structure_size Tip = 0`;
    `structure_size (Bin n k v l r) = 1 + structure_size l +
-  structure_size r`];;
+    structure_size r`];;
 
 let key_ordered_def,key_ordered_ind = define_rec
   [`key_ordered cmp k Tip res <=> T`;

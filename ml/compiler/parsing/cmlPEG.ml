@@ -20,11 +20,8 @@ needs "semantics/ast.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/tokenUtils.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "cmlPEG"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "cmlPEG"
   ["gram"; "tokenUtils"];;
 
 (* HOL4 cmlPEGScript.sml:14: the overload monad_bind, which the port
@@ -64,8 +61,6 @@ let mk_linfix_def,mk_linfix_ind = define_wf
    `mk_linfix tgt acc (CONS opt (CONS t rest)) =
      mk_linfix tgt (mkNd tgt [acc; opt; t]) rest`];;
 
-let _ = size_thms "locs";;
-let _ = size_thms "parsetree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let mk_rinfix_def,mk_rinfix_ind = define_wf
@@ -73,7 +68,7 @@ let mk_rinfix_def,mk_rinfix_ind = define_wf
   [`mk_rinfix tgt [] = mkNd tgt []`;
    `mk_rinfix tgt [t] = mkNd tgt [t]`;
    `mk_rinfix tgt (CONS t (CONS opt rest)) = mkNd tgt [t; opt;
-  mk_rinfix tgt rest]`];;
+    mk_rinfix tgt rest]`];;
 
 let peg_linfix_def = new_definition
   `peg_linfix tgtnt rptsym opsym =
@@ -90,7 +85,7 @@ let peg_linfix_def = new_definition
 let cmlPEG_choicel_def,cmlPEG_choicel_ind = define_rec
   [`cmlPEG_choicel [] = peg_not (peg_empty []) []`;
    `cmlPEG_choicel (CONS h t) = peg_choice h (cmlPEG_choicel t)
-  cmlPEG_sumID`];;
+    cmlPEG_sumID`];;
 
 let cmlPEG_pegf_def = new_definition
   `cmlPEG_pegf sym f = peg_seq sym (peg_empty []) (\l1 l2. f l1)`;;
@@ -193,8 +188,6 @@ let peg_StructName_def = new_definition
          (bindNT nStructName o mktokLf)`;;
 
 let _ = size_thms "MMLnonT";;
-let _ = size_thms "locs";;
-let _ = size_thms "parsetree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ptPapply0_def,ptPapply0_ind = define_wf
@@ -713,33 +706,33 @@ let frange_image = prove
 
 (* HOL4 cmlPEGScript.sml:644-647: ML code, not ported *)
 
-(* [simp] *)
 let peg0_pegf = prove
  (`peg0 G (cmlPEG_pegf s f) = peg0 G s`,
   CHEAT_TAC);;
+add_simp peg0_pegf;;
 
-(* [simp] *)
 let peg0_seql = prove
  (`(peg0 G (seql [] f) <=> T) /\
    (peg0 G (seql (CONS h t) f) <=> peg0 G h /\ peg0 G (seql t I))`,
   CHEAT_TAC);;
+add_simp peg0_seql;;
 
-(* [simp] *)
 let peg0_tokeq = prove
  (`peg0 G (cmlPEG_tokeq t) = F`,
   CHEAT_TAC);;
+add_simp peg0_tokeq;;
 
-(* [simp] *)
 let peg0_tokSymP = prove
  (`peg0 G (tokSymP P) <=> F`,
   CHEAT_TAC);;
+add_simp peg0_tokSymP;;
 
-(* [simp] *)
 let peg0_choicel = prove
  (`(peg0 G (cmlPEG_choicel []) = F) /\
    (peg0 G (cmlPEG_choicel (CONS h t)) <=> peg0 G h \/ pegfail G h
      /\ peg0 G (cmlPEG_choicel t))`,
   CHEAT_TAC);;
+add_simp peg0_choicel;;
 
 (* HOL4 cmlPEGScript.sml:681-695: a theorem that HOL4 states as the
    value of an ML expression: th *)
@@ -769,10 +762,10 @@ let subexprs_pnt = prove
 (* HOL4 cmlPEGScript.sml:774-783: a theorem that HOL4 states as the
    value of an ML expression: PEG_exprs *)
 
-(* [simp] *)
 let PEG_wellformed = prove
  (`wfG cmlPEG`,
   CHEAT_TAC);;
+add_simp PEG_wellformed;;
 
 (* HOL4 cmlPEGScript.sml:797-799: a theorem that HOL4 states as the
    value of an ML expression: parse_TopLevelDecs_total *)
@@ -794,7 +787,3 @@ let PEG_wellformed = prove
    value of an ML expression: NTS_in_PEG_exprs *)
 
 (* HOL4 cmlPEGScript.sml:844: ML code, not ported *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -15,11 +15,8 @@
 needs "compiler/backend/closLang.ml";;
 (* for op *)
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvi"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvi"
   ["closLang"];;
 
 (* BVI = bytecode-value intermediate language *)
@@ -52,18 +49,22 @@ let _ = hol4_ancestors "bvi"
 (* --- Syntax of BVI --- *)
 
 let bvi_exp_INDUCT,bvi_exp_RECURSION = define_datatype
-  "bvi_exp = bvi_Var (num) | bvi_If (bvi_exp) (bvi_exp) (bvi_exp) | \
-   bvi_Let (bvi_exp list) (bvi_exp) | bvi_Raise (bvi_exp) | bvi_Tick \
-   (bvi_exp) | bvi_Call (num) (num option) (bvi_exp list) (bvi_exp \
-   option) | bvi_Force (num) (num) \
-   // loc to call for evaluation of unevaluated thunk\n\
-   // var holding thunk\n\
-   | bvi_Op (closLang_op) (bvi_exp list) | \
-   // multi-value call and return:\n\
-   // let-and-call: num of return values, ticks, call target, args, body of let\n\
-   bvi_LetCall (num) (num) (num) (bvi_exp list) (bvi_exp) | \
-   // return-multi-value: returns values of given expressions\n\
-   bvi_Return (bvi_exp list)";;
+  "bvi_exp =
+     bvi_Var num
+   | bvi_If bvi_exp bvi_exp bvi_exp
+   | bvi_Let (bvi_exp list) bvi_exp
+   | bvi_Raise bvi_exp
+   | bvi_Tick bvi_exp
+   | bvi_Call num (num option) (bvi_exp list) (bvi_exp option)
+   | bvi_Force num num
+     // loc to call for evaluation of unevaluated thunk
+     // var holding thunk
+   | bvi_Op closLang_op (bvi_exp list)
+     // multi-value call and return:
+     // let-and-call: num of return values, ticks, call target, args, body of let
+   | bvi_LetCall num num num (bvi_exp list) bvi_exp
+     // return-multi-value: returns values of given expressions
+   | bvi_Return (bvi_exp list)";;
 
 (* HOL4 bviScript.sml:59: the overload mk_unit, which the port
    expands *)
@@ -73,7 +74,3 @@ let bvi_exp_INDUCT,bvi_exp_RECURSION = define_datatype
 
 (* HOL4 bviScript.sml:63-64: the overload TailCall, which the port
    expands *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

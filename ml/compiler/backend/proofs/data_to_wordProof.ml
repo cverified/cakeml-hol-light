@@ -45,11 +45,8 @@ needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "data_to_wordProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "data_to_wordProof"
   ["backend"; "copying_gc"; "dataLang"; "dataProps"; "dataSem";
    "data_to_word"; "data_to_word_assignProof";
    "data_to_word_bignumProof"; "data_to_word_gcProof";
@@ -74,7 +71,6 @@ let _ = hide_overloads
 
 (* HOL4 data_to_wordProofScript.sml:29-35: ML code, not ported *)
 
-(* [simp] *)
 let state_rel_with_locals_sfs = prove
  (`data_to_word_gcProof_state_rel c l1 l2
   (dataSem_state_safe_for_space_fupd (K m) (state_locals_fupd (K l) x))
@@ -82,6 +78,7 @@ let state_rel_with_locals_sfs = prove
    data_to_word_gcProof_state_rel c l1 l2 (state_locals_fupd (K l)
      x) r t locs`,
   CHEAT_TAC);;
+add_simp state_rel_with_locals_sfs;;
 
 let do_space_code_const = prove
  (`do_space op vs (s:('a,'b)dataSem_state) = SOME s1 ==> state_code
@@ -382,10 +379,10 @@ let option_le_SOME = prove
 
 (* HOL4 data_to_wordProofScript.sml:1919: ML code, not ported *)
 
-(* [simp] *)
 let extract_labels_MemEqList = prove
  (`!a x. wordConvs_extract_labels (MemEqList a x) = []`,
   CHEAT_TAC);;
+add_simp extract_labels_MemEqList;;
 
 let extract_labels_StoreEach = prove
  (`!xs a d. wordConvs_extract_labels (StoreEach a xs d) = []`,
@@ -445,17 +442,17 @@ let stub_labels = prove
    (data_to_word_stubs (:'a) data_conf)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let stubs_with_has_fp_ops = prove
  (`data_to_word_stubs (:'a) (has_fp_ops_fupd (K b) data_conf) =
   data_to_word_stubs (:'a) data_conf`,
   CHEAT_TAC);;
+add_simp stubs_with_has_fp_ops;;
 
-(* [simp] *)
 let stubs_with_has_fp_tern = prove
  (`data_to_word_stubs (:'a) (data_to_word_config_has_fp_tern_fupd (K
   b) data_conf) = data_to_word_stubs (:'a) data_conf`,
   CHEAT_TAC);;
+add_simp stubs_with_has_fp_tern;;
 
 (* no ShareInst in the compiled program *)
 
@@ -621,16 +618,17 @@ let MAP_FST_stubs_bound = prove
  (`MEM n (MAP FST (data_to_word_stubs a c)) ==> n < data_num_stubs`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let max_heap_limit_has_fp_ops = prove
  (`max_heap_limit (:'a) (has_fp_ops_fupd (K b) conf) =
     max_heap_limit (:'a) conf`,
   CHEAT_TAC);;
+add_simp max_heap_limit_has_fp_ops;;
 
-(* FST_compile_part[simp] *)
+(* FST_compile_part *)
 let data_to_wordProof_FST_compile_part = prove
  (`FST (data_to_word_compile_part a b) = (FST b)`,
   CHEAT_TAC);;
+add_simp data_to_wordProof_FST_compile_part;;
 
 (* HOL4 data_to_wordProofScript.sml:2482: the overload
    data_get_code_labels, which the port expands *)
@@ -790,11 +788,7 @@ let data_to_word_good_handlers_incr = prove
   dc) progs)`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["all";
    "vars"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

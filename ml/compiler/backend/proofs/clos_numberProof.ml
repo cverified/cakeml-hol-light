@@ -20,11 +20,8 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "clos_numberProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "clos_numberProof"
   ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_number"];;
 
 (* HOL4 clos_numberProofScript.sml:12-16: an overload that the source
@@ -190,21 +187,23 @@ let state_rel_code = prove
 (* HOL4 clos_numberProofScript.sml:246-262: a theorem that HOL4
    states as the value of an ML expression: v_rel_simp *)
 
-(* v_rel_Boolv[simp] *)
+(* v_rel_Boolv *)
 let clos_numberProof_v_rel_Boolv = prove
  (`(clos_numberProof_v_rel max_app x (closSem_Boolv b) <=> (x =
   closSem_Boolv b)) /\
     (clos_numberProof_v_rel max_app (closSem_Boolv b) x <=> (x =
       closSem_Boolv b))`,
   CHEAT_TAC);;
+add_simp clos_numberProof_v_rel_Boolv;;
 
-(* v_rel_Unit[simp] *)
+(* v_rel_Unit *)
 let clos_numberProof_v_rel_Unit = prove
  (`(clos_numberProof_v_rel max_app x closSem_Unit <=> (x =
   closSem_Unit)) /\
     (clos_numberProof_v_rel max_app closSem_Unit x <=> (x =
       closSem_Unit))`,
   CHEAT_TAC);;
+add_simp clos_numberProof_v_rel_Unit;;
 
 (* semantic functions respect relation *)
 
@@ -512,7 +511,3 @@ let semantics_number = prove
       closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
         co (state_cc (ignore_table clos_number_compile_inc) cc) xs`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

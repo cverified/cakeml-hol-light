@@ -21,11 +21,8 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "primSemEnv"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "primSemEnv"
   ["ast"; "evaluate"; "namespace"; "namespaceProps"; "primTypes";
    "semanticPrimitives"; "semanticPrimitivesProps"; "semantics";
    "typeSoundInvariants"; "typeSysProps"; "typeSystem"];;
@@ -42,7 +39,3 @@ let prim_type_sound_invariants = prove
          prim_tenv /\
        FRANGE ((SND o SND) o_f ctMap) SUBSET prim_type_ids)`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

@@ -14,26 +14,23 @@ needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "typeSystem"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "typeSystem"
   ["ast"; "namespace"; "semanticPrimitives"];;
 
-new_type_abbrev("type_ident",`: num`);;
+new_type_abbrev("type_ident",`:num`);;
 
 (* Types *)
 let t_INDUCT,t_RECURSION = define_datatype
-  "t = \
-   // Type variables that the user writes down ('a, 'b, etc.)\n\
-   Tvar (mlstring) | \
-   // deBruijn indexed type variables.\n\
-   Tvar_db (num) | \
-   // The two numbers represent the identity of the type constructor. The first\n\
-   // is the identity of the compilation unit that it was defined in, and the\n\
-   // second is its identity inside of that unit\n\
-   Tapp (t list) (num)";;
+  "t =
+     // Type variables that the user writes down ('a, 'b, etc.)
+     Tvar tvarN
+     // deBruijn indexed type variables.
+   | Tvar_db num
+     // The two numbers represent the identity of the type constructor. The first
+     // is the identity of the compilation unit that it was defined in, and the
+     // second is its identity inside of that unit
+   | Tapp (t list) type_ident";;
 
 
 (* Some abbreviations *)
@@ -143,10 +140,10 @@ let check_freevars_def,check_freevars_ind = define_shaped_rec
   [`(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar tv) =
        (MEM tv tvs)`;
    `(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tapp ts tn)
-  =
+    =
        (ALL (check_freevars dbmax tvs) ts)`;
    `(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar_db
-  n) = (n < dbmax)`];;
+    n) = (n < dbmax)`];;
 
 let check_freevars_ast_def,check_freevars_ast_ind = define_shaped_rec
   "nested"
@@ -179,7 +176,7 @@ let deBruijn_inc_def,deBruijn_inc_ind = define_shaped_rec
         Tvar_db m else
         Tvar_db (m + n))`;
    `(deBruijn_inc:num->num->t->t) skip n (Tapp ts tn) = (Tapp (MAP
-  (deBruijn_inc skip n) ts) tn)`];;
+    (deBruijn_inc skip n) ts) tn)`];;
 
 (* skip the lowest given indices and replace the next (LENGTH ts) with the given types and reduce all the higher ones *)
 let deBruijn_subst_def,deBruijn_subst_ind = define_shaped_rec
@@ -195,11 +192,12 @@ let deBruijn_subst_def,deBruijn_subst_ind = define_shaped_rec
 
 (* Type environments *)
 let tenv_val_exp_INDUCT,tenv_val_exp_RECURSION = define_datatype
-  "tenv_val_exp = typeSystem_Empty | \
-   // Binds several de Bruijn type variables\n\
-   typeSystem_Bind_tvar (num) (tenv_val_exp) | \
-   // The number is how many de Bruijn type variables the typescheme binds\n\
-   typeSystem_Bind_name (mlstring) (num) (t) (tenv_val_exp)";;
+  "tenv_val_exp =
+     typeSystem_Empty
+     // Binds several de Bruijn type variables
+   | typeSystem_Bind_tvar num tenv_val_exp
+     // The number is how many de Bruijn type variables the typescheme binds
+   | typeSystem_Bind_name varN num t tenv_val_exp";;
 
 
 (*val bind_tvar : nat -> tenv_val_exp -> tenv_val_exp*)
@@ -220,21 +218,21 @@ let opt_bind_name_def = new_definition
 (*val tveLookup : varN -> nat -> tenv_val_exp -> maybe (nat * t)*)
 let tveLookup_def,tveLookup_ind = define_rec
   [`(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-  (typeSystem_Empty:tenv_val_exp) = NONE`;
+    (typeSystem_Empty:tenv_val_exp) = NONE`;
    `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-  (typeSystem_Bind_tvar tvs tenvE) = (tveLookup n (inc + tvs) tenvE)`;
+    (typeSystem_Bind_tvar tvs tenvE) = (tveLookup n (inc + tvs)
+    tenvE)`;
    `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-  (typeSystem_Bind_name n' tvs t tenvE) =
+    (typeSystem_Bind_name n' tvs t tenvE) =
        (if n' = n then
         SOME (tvs,deBruijn_inc tvs inc t) else
         tveLookup n inc tenvE)`];;
 
 
-new_type_abbrev("tenv_abbrev",`: (mlstring,mlstring,mlstring
-   list#t)namespace`);;
-new_type_abbrev("tenv_ctor",`: (mlstring,mlstring,mlstring list#t
-   list#num)namespace`);;
-new_type_abbrev("tenv_val",`: (mlstring,mlstring,num#t)namespace`);;
+new_type_abbrev("tenv_abbrev",`:(modN,typeN,tvarN list#t)namespace`);;
+new_type_abbrev("tenv_ctor",`:(modN,conN,tvarN list#t
+   list#type_ident)namespace`);;
+new_type_abbrev("tenv_val",`:(modN,varN,num#t)namespace`);;
 
 let type_env_FIELDS = define_record "type_env"
   ["v","(mlstring,mlstring,num#t)namespace";
@@ -270,21 +268,21 @@ let lookup_var_def = new_definition
 (*val num_tvs : tenv_val_exp -> nat*)
 let num_tvs_def,num_tvs_ind = define_rec
   [`(num_tvs:tenv_val_exp->num) (typeSystem_Empty:tenv_val_exp) =
-  ((0:num))`;
+    ((0:num))`;
    `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_tvar tvs tenvE) =
-  (tvs + num_tvs tenvE)`;
+    (tvs + num_tvs tenvE)`;
    `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_name n tvs t
-  tenvE) = (num_tvs tenvE)`];;
+    tenvE) = (num_tvs tenvE)`];;
 
 
 (*val bind_var_list : nat -> list (varN * t) -> tenv_val_exp -> tenv_val_exp*)
 let bind_var_list_def,bind_var_list_ind = define_rec
   [`(bind_var_list:num->(mlstring#t)
-  list->tenv_val_exp->tenv_val_exp) tvs [] tenvE = tenvE`;
+    list->tenv_val_exp->tenv_val_exp) tvs [] tenvE = tenvE`;
    `(bind_var_list:num->(mlstring#t) list->tenv_val_exp->tenv_val_exp)
-  tvs (CONS (n,t) binds) tenvE =
+    tvs (CONS (n,t) binds) tenvE =
      (typeSystem_Bind_name n tvs t (bind_var_list tvs binds
-       tenvE))`];;
+         tenvE))`];;
 
 
 (* A pattern matches values of a certain type and extends the type environment
@@ -321,6 +319,7 @@ let t_of_def = new_definition
       | (ast_WordT ast_W8) -> Tword8
       | (ast_WordT ast_W64) -> Tword64
       | ast_Float64T -> Tdouble`;;
+add_simp t_of_def;;
 
 let supported_test_def = new_definition
   `supported_test x1 ty =
@@ -329,6 +328,7 @@ let supported_test_def = new_definition
       | (ast_Compare _2) -> MEM ty [ast_IntT; ast_CharT; ast_WordT
         ast_W8; ast_Float64T; ast_StrT]
       | _3 -> (ty = ast_StrT)`;;
+add_simp supported_test_def;;
 
 let supported_arith_def = new_definition
   `supported_arith a x2 =
@@ -347,6 +347,7 @@ let supported_arith_def = new_definition
         | ast_BoolT ->
         (if MEM a [ast_Not] then SOME 1 else NONE)
         | (ty:prim_type) -> NONE`;;
+add_simp supported_arith_def;;
 
 let supported_conversion_def = new_definition
   `supported_conversion x1 x2 =
@@ -367,6 +368,7 @@ let supported_conversion_def = new_definition
         | (ast_Float64T,(ast_WordT ast_W64)) -> T
         | ((ast_WordT ast_W64),ast_Float64T) -> T
         | ((from_ty:prim_type),(to_ty:prim_type)) -> F`;;
+add_simp supported_conversion_def;;
 
 (* Check that the operator can have type (t1 -> ... -> tn -> t) *)
 (*val type_op : op -> list t -> t -> bool*)
@@ -433,16 +435,16 @@ let type_op_def = new_definition
 let check_type_names_def,check_type_names_ind = define_shaped_rec
   "nested"
   [`(check_type_names:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->bool) tenvT (Atvar tv) =
+    list#t)namespace->ast_t->bool) tenvT (Atvar tv) =
        T`;
    `(check_type_names:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->bool) tenvT (Attup ts) =
+    list#t)namespace->ast_t->bool) tenvT (Attup ts) =
        (ALL (check_type_names tenvT) ts)`;
    `(check_type_names:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->bool) tenvT (Atfun t1 t2) =
+    list#t)namespace->ast_t->bool) tenvT (Atfun t1 t2) =
        (check_type_names tenvT t1 /\ check_type_names tenvT t2)`;
    `(check_type_names:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->bool) tenvT (Atapp ts tn) =
+    list#t)namespace->ast_t->bool) tenvT (Atapp ts tn) =
        ((match nsLookup tenvT tn with
         SOME (tvs,_10) -> LENGTH tvs = LENGTH ts | NONE -> F) /\
       ALL (check_type_names tenvT) ts)`];;
@@ -451,20 +453,20 @@ let check_type_names_def,check_type_names_ind = define_shaped_rec
 let type_name_subst_def,type_name_subst_ind = define_shaped_rec
   "nested"
   [`(type_name_subst:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->t) tenvT (Atvar tv) = (Tvar tv)`;
+    list#t)namespace->ast_t->t) tenvT (Atvar tv) = (Tvar tv)`;
    `(type_name_subst:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->t) tenvT (Attup ts) =
+    list#t)namespace->ast_t->t) tenvT (Attup ts) =
        (Ttup (MAP (type_name_subst tenvT) ts))`;
    `(type_name_subst:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->t) tenvT (Atfun t1 t2) =
+    list#t)namespace->ast_t->t) tenvT (Atfun t1 t2) =
        (Tfn (type_name_subst tenvT t1) (type_name_subst tenvT
-         t2))`;
+           t2))`;
    `(type_name_subst:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->t) tenvT (Atapp ts tc) =
+    list#t)namespace->ast_t->t) tenvT (Atapp ts tc) =
        (let args = (MAP (type_name_subst tenvT) ts) in
       (match nsLookup tenvT tc with
         SOME (tvs,t) -> type_subst (alist_to_fmap (ZIP tvs
-          args)) t | NONE -> Ttup args))
+            args)) t | NONE -> Ttup args))
     // can't happen, for a type that passes the check`];;
 
 (* Check that a type definition defines no already defined types or duplicate
@@ -474,16 +476,16 @@ let type_name_subst_def,type_name_subst_ind = define_shaped_rec
 (*val check_ctor_tenv : tenv_abbrev -> list (list tvarN * typeN * list (conN * list ast_t)) -> bool*)
 let check_ctor_tenv_def,check_ctor_tenv_ind = define_rec
   [`(check_ctor_tenv:(mlstring,mlstring,mlstring
-  list#t)namespace->(mlstring list#mlstring#(mlstring#ast_t list)
-  list) list->bool) tenvT [] = T`;
+    list#t)namespace->(mlstring list#mlstring#(mlstring#ast_t list)
+    list) list->bool) tenvT [] = T`;
    `(check_ctor_tenv:(mlstring,mlstring,mlstring
-  list#t)namespace->(mlstring list#mlstring#(mlstring#ast_t list) list)
-  list->bool) tenvT (CONS (tvs,tn,ctors) tds) =
+    list#t)namespace->(mlstring list#mlstring#(mlstring#ast_t list)
+    list) list->bool) tenvT (CONS (tvs,tn,ctors) tds) =
        (check_dup_ctors (tvs,tn,ctors) /\
       ALL_DISTINCT tvs /\
       ALL
         (\(cn,ts). ALL (check_freevars_ast tvs) ts /\ ALL
-          (check_type_names tenvT) ts)
+            (check_type_names tenvT) ts)
         ctors /\
       ~(MEM tn (MAP (\p.
       (match (p) with ((_13,tn,_14)) -> tn)) tds)) /\
@@ -994,7 +996,3 @@ type_prog extra_checks (union_decls decls1 decls) (extend_dec_tenv tenv1 tenv) t
 type_prog extra_checks decls tenv (top :: tops)
   (union_decls decls2 decls1) (extend_dec_tenv tenv2 tenv1)
   *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

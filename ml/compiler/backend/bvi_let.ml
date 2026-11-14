@@ -49,11 +49,8 @@
 needs "compiler/backend/bvi.ml";;
 needs "lib/set_sep.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvi_let"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvi_let"
   ["bvi"];;
 
 let bvi_let_extract_def = new_definition
@@ -65,7 +62,7 @@ let bvi_let_extract_def = new_definition
 let extract_list_def,extract_list_ind = define_rec
   [`bvi_let_extract_list [] = []`;
    `bvi_let_extract_list (CONS x xs) = CONS (bvi_let_extract x xs)
-  (bvi_let_extract_list xs)`];;
+    (bvi_let_extract_list xs)`];;
 
 let delete_var_def = new_definition
   `bvi_let_delete_var x =
@@ -74,6 +71,7 @@ let delete_var_def = new_definition
             (closLang_Const (&0))) []
         | x -> x`;;
 
+let _ = size_thms "bvi_exp";;
 let exp2_size_APPEND = prove
  (`!xs ys. bvi_exp_size1 (APPEND xs ys) = bvi_exp_size1 xs +
   bvi_exp_size1 ys`,
@@ -96,7 +94,6 @@ cake_term_facts := list_size_BUTLAST :: list_size_LAST ::
                    (!cake_term_facts);;
 cake_cheat_budget := 300;;
 
-let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvi_letScript.sml:110-116: the tactic that proves the
@@ -107,10 +104,10 @@ let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat
   `MEASURE (list_size bvi_exp_size o SND o SND)`
   [`bvi_let_compile env d [] = []`;
    `bvi_let_compile env d (CONS x (CONS y xs)) = APPEND
-  (bvi_let_compile env d [x]) (bvi_let_compile env d (CONS y xs))`;
+    (bvi_let_compile env d [x]) (bvi_let_compile env d (CONS y xs))`;
    `bvi_let_compile env d [(bvi_Var v):bvi_exp] =
          (match (\l n. oEL n l) env v with SOME n -> [bvi_Var (v
-           + n)] | _2 -> [bvi_Var (v + d)])`;
+             + n)] | _2 -> [bvi_Var (v + d)])`;
    `bvi_let_compile env d [(bvi_If x1 x2 x3:bvi_exp)] =
          [bvi_If (HD (bvi_let_compile env d [x1]))
              (HD (bvi_let_compile env d [x2]))
@@ -123,35 +120,34 @@ let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat
                  // moves the last exp into tail-position if the body is a Var
                  let ys = bvi_let_compile env d (BUTLAST xs) in
                    [bvi_Let ys (HD (bvi_let_compile (MAP ((+) k)
-                     env) (d + k) [LAST xs]))] else
+                       env) (d + k) [LAST xs]))] else
                  let ys = bvi_let_compile env d xs in
                    [bvi_Let (MAP bvi_let_delete_var ys)
                      (HD (bvi_let_compile (APPEND
-                       (bvi_let_extract_list ys) env) d [x2]))])`;
+                         (bvi_let_extract_list ys) env) d [x2]))])`;
    `bvi_let_compile env d [(bvi_Raise x1:bvi_exp)] =
          [bvi_Raise (HD (bvi_let_compile env d [x1]))]`;
    `bvi_let_compile env d [(bvi_Op op xs:bvi_exp)] = [bvi_Op op
-  (bvi_let_compile env d xs)]`;
+    (bvi_let_compile env d xs)]`;
    `bvi_let_compile env d [(bvi_Tick x:bvi_exp)] = [bvi_Tick (HD
-  (bvi_let_compile env d [x]))]`;
+    (bvi_let_compile env d [x]))]`;
    `bvi_let_compile env d [(bvi_Force loc v:bvi_exp)] =
          (match (\l n. oEL n l) env v with SOME n -> [bvi_Force
-           loc (v + n)] | _5 -> [bvi_Force loc (v + d)])`;
+             loc (v + n)] | _5 -> [bvi_Force loc (v + d)])`;
    `bvi_let_compile env d [(bvi_Call t dest xs h:bvi_exp)] =
          [bvi_Call t dest (bvi_let_compile env d xs)
              (match h with NONE -> NONE | SOME e -> SOME (HD
-               (bvi_let_compile (CONS 0 env) d [e])))]`;
+                 (bvi_let_compile (CONS 0 env) d [e])))]`;
    (* Return/LetCall are pass-through (only nested Lets are optimised). TODO(multiret):
       no optimisation specific to them yet -- e.g. the Let tail-position move could
       extend to `Let xs (Return (GENLIST Var n))`. *)
    `bvi_let_compile env d [(bvi_Return xs:bvi_exp)] = [bvi_Return
-  (bvi_let_compile env d xs)]`;
+    (bvi_let_compile env d xs)]`;
    `bvi_let_compile env d [bvi_LetCall rets t dest xs y] =
          [bvi_LetCall rets t dest (bvi_let_compile env d xs)
             (HD (bvi_let_compile (APPEND (REPLICATE rets 0)
-              env) d [y]))]`];;
+                env) d [y]))]`];;
 
-let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL (_10,_11,e) -> bvi_exp_size e | INR
        (_12,_13,es) -> list_size bvi_exp_size es)
@@ -160,13 +156,13 @@ let _ = size_thms "bvi_exp";;
 (* HOL4 bvi_letScript.sml:158-168: the tactic that proves the
    termination *)
 let bvi_let_compile_sing_def,bvi_let_compile_sing_ind =
-  define_mutual_shaped_wf_tac
+  define_shaped_wf_tac
   "maplist>measure"
   `MEASURE (\(x0,x1,x2). bvi_exp_size x2)`
   TERM_TAC
   [`bvi_let_compile_sing env d ((bvi_Var v):bvi_exp) =
          (match (\l n. oEL n l) env v with SOME n -> bvi_Var (v +
-           n) | _6 -> bvi_Var (v + d))`;
+             n) | _6 -> bvi_Var (v + d))`;
    `bvi_let_compile_sing env d (bvi_If x1 x2 x3:bvi_exp) =
          (bvi_If (bvi_let_compile_sing env d x1)
              (bvi_let_compile_sing env d x2)
@@ -179,33 +175,33 @@ let bvi_let_compile_sing_def,bvi_let_compile_sing_ind =
                  // moves the last exp into tail-position if the body is a Var
                  let ys = bvi_let_compile_list env d (BUTLAST xs) in
                    (bvi_Let ys ((bvi_let_compile_sing (MAP ((+) k)
-                     env) (d + k) (LAST xs)))) else
+                       env) (d + k) (LAST xs)))) else
                  let ys = bvi_let_compile_list env d xs in
                    (bvi_Let (MAP bvi_let_delete_var ys)
                      ((bvi_let_compile_sing (APPEND
-                       (bvi_let_extract_list ys) env) d x2))))`;
+                         (bvi_let_extract_list ys) env) d x2))))`;
    `bvi_let_compile_sing env d (bvi_Raise x1:bvi_exp) =
          (bvi_Raise ((bvi_let_compile_sing env d x1)))`;
    `bvi_let_compile_sing env d (bvi_Op op xs:bvi_exp) = (bvi_Op op
-  (bvi_let_compile_list env d xs))`;
+    (bvi_let_compile_list env d xs))`;
    `bvi_let_compile_sing env d (bvi_Tick x:bvi_exp) = (bvi_Tick
-  (bvi_let_compile_sing env d x))`;
+    (bvi_let_compile_sing env d x))`;
    `bvi_let_compile_sing env d (bvi_Force loc v:bvi_exp) =
          (match (\l n. oEL n l) env v with SOME n -> bvi_Force
-           loc (v + n) | _9 -> bvi_Force loc (v + d))`;
+             loc (v + n) | _9 -> bvi_Force loc (v + d))`;
    `bvi_let_compile_sing env d (bvi_Call t dest xs h:bvi_exp) =
          (bvi_Call t dest (bvi_let_compile_list env d xs)
              (match h with NONE -> NONE | SOME e -> SOME
-               ((bvi_let_compile_sing (CONS 0 env) d e))))`;
+                 ((bvi_let_compile_sing (CONS 0 env) d e))))`;
    `bvi_let_compile_sing env d (bvi_Return xs:bvi_exp) = bvi_Return
-  (bvi_let_compile_list env d xs)`;
+    (bvi_let_compile_list env d xs)`;
    `bvi_let_compile_sing env d (bvi_LetCall rets t dest xs y) =
          bvi_LetCall rets t dest (bvi_let_compile_list env d xs)
             (bvi_let_compile_sing (APPEND (REPLICATE rets 0) env)
-              d y)`;
+                d y)`;
    `bvi_let_compile_list env d [] = []`;
    `bvi_let_compile_list env d (CONS x xs) = CONS
-  (bvi_let_compile_sing env d x) (bvi_let_compile_list env d xs)`];;
+    (bvi_let_compile_sing env d x) (bvi_let_compile_list env d xs)`];;
 
 cake_term_facts := bvi_let_term_facts;;
 cake_cheat_budget := bvi_let_budget;;
@@ -340,7 +336,6 @@ let compile_sing = prove
    INDUCT_TAC THENL
    [sing_base; CONJ_TAC THENL [part1; part2]]));;
 
-(* [simp] *)
 let compile_length = prove
  (`!n d xs. LENGTH (bvi_let_compile n d xs) = LENGTH xs`,
   (let cp = bvi_let_compile_def in
@@ -394,6 +389,7 @@ let compile_length = prove
       [single_case; cons_cons_case]] in
    MEASURE_INDUCT_TAC `list_size bvi_exp_size` THENL
    [base_case; step_case]));;
+add_simp compile_length;;
 
 let compile_HD_SING = prove
  (`[HD (bvi_let_compile n d [x])] = bvi_let_compile n d [x]`,
@@ -420,7 +416,3 @@ let bvi_let_compile_exp_eq = prove
   (let ce = bvi_let_compile_exp_def in
    GEN_TAC THEN REWRITE_TAC[ce; CONJUNCT1 compile_sing] THEN
    MATCH_REDUCE_TAC THEN REWRITE_TAC[]));;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

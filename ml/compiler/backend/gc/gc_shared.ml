@@ -11,21 +11,22 @@
 
 needs "lib/integer_word.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "gc_shared" [];;
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "gc_shared" [];;
 (* HOL4 ancestors outside the port: finite_map words *)
 
 (* The ML heap is represented as a list of heap_elements. *)
 
 let heap_address_INDUCT,heap_address_RECURSION = define_datatype
-  "heap_address = gc_shared_Pointer (num) ('a) | gc_shared_Data ('a)";;
+  "heap_address =
+     gc_shared_Pointer num ('a)
+   | gc_shared_Data ('a)";;
 
 let heap_element_INDUCT,heap_element_RECURSION = define_datatype
-  "heap_element = Unused (num) | ForwardPointer (num) ('a) (num) | \
-   DataElement (('a heap_address) list) (num) ('b)";;
+  "heap_element =
+     Unused num
+   | ForwardPointer num ('a) num
+   | DataElement (('a heap_address) list) num ('b)";;
 
 
 let gc_state_FIELDS = define_record "gc_state"
@@ -78,10 +79,10 @@ let el_length_GT_0 = prove
 let heap_length_def = new_definition
   `heap_length heap = SUM (MAP el_length heap)`;;
 
-(* [simp] *)
 let heap_length_NIL = prove
  (`heap_length [] = 0`,
   CHEAT_TAC);;
+add_simp heap_length_NIL;;
 
 let heap_length_GTE = prove
  (`!heap. 0 <= heap_length heap`,
@@ -96,7 +97,7 @@ let heap_lookup_def,heap_lookup_ind = define_rec
    `heap_lookup a (CONS x xs) =
          (if a = 0 then SOME x else
          if a < el_length x then NONE else heap_lookup (a -
-           el_length x) xs)`];;
+             el_length x) xs)`];;
 
 let heap_lookup_MEM = prove
  (`!heap n x. (heap_lookup n heap = SOME x) ==> MEM x heap`,
@@ -116,7 +117,7 @@ let heap_split_def,heap_split_ind = define_rec
         (if a = 0 then SOME ([],CONS el heap) else
         if a < el_length el then NONE else
         match heap_split (a - el_length el) heap with NONE -> NONE |
-          SOME (h1,h2) ->
+            SOME (h1,h2) ->
           SOME (CONS el h1,h2))`];;
 
 let heap_lookup_SPLIT = prove
@@ -209,10 +210,10 @@ let gc_forward_ptr_def,gc_forward_ptr_ind = define_rec
    `gc_forward_ptr a (CONS x xs) ptr d ok =
          (if a = 0 then
            (CONS (ForwardPointer ptr d ((el_length x) - 1))
-             xs,(isDataElement x /\ ok)) else
+               xs,(isDataElement x /\ ok)) else
          if a < el_length x then (CONS x xs,F) else
            let (xs,ok) = gc_forward_ptr (a - el_length x) xs ptr d
-             ok in
+               ok in
              (CONS x xs,ok))`];;
 
 let gc_forward_ptr_ok = prove
@@ -246,14 +247,13 @@ let heap_map_def,heap_map_ind = define_wf
 let heap_map1_def = new_definition
   `heap_map1 heap = (\a. FAPPLY (heap_map 0 heap) a)`;;
 
-let _ = size_thms "heap_element";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let heap_addresses_def,heap_addresses_ind = define_wf
   `MEASURE (\(x0,x1). list_size (heap_element_size (\x. 0) (\x. 0)) x1)`
   [`heap_addresses a [] = {}`;
    `heap_addresses a (CONS x xs) = a INSERT heap_addresses (a +
-  el_length x) xs`];;
+    el_length x) xs`];;
 
 let _ = size_thms "heap_address";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -262,9 +262,9 @@ let ADDR_MAP_def,ADDR_MAP_ind = define_wf
   `MEASURE (\(x0,x1). list_size (heap_address_size (\x. 0)) x1)`
   [`ADDR_MAP f [] = []`;
    `ADDR_MAP f (CONS (gc_shared_Data x) xs) = CONS (gc_shared_Data
-  x:'a heap_address) (ADDR_MAP f xs)`;
+    x:'a heap_address) (ADDR_MAP f xs)`;
    `ADDR_MAP f (CONS (gc_shared_Pointer a d) xs) = CONS
-  (gc_shared_Pointer (f a) d) (ADDR_MAP f xs)`];;
+    (gc_shared_Pointer (f a) d) (ADDR_MAP f xs)`];;
 
 let ADDR_MAP_EQ = prove
  (`!xs. (!p d. MEM (gc_shared_Pointer p d) xs ==> (f p = g p)) ==>
@@ -284,7 +284,7 @@ let ADDR_MAP_APPEND = prove
 let ADDR_APPLY_def = define_cases
   [`ADDR_APPLY f (gc_shared_Pointer x d) = gc_shared_Pointer (f x) d`;
    `ADDR_APPLY f (gc_shared_Data y) = (gc_shared_Data y:'a
-  heap_address)`];;
+    heap_address)`];;
 
 (* HOL4 gc_sharedScript.sml:383-395: a theorem that HOL4 states as
    the value of an ML expression: heap_lookup_FLOOKUP *)
@@ -428,10 +428,10 @@ let heap_split_APPEND_if = prove
         NONE -> NONE | SOME (h1',h2') -> SOME (APPEND h1 h1',h2'))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let heap_split_0 = prove
  (`heap_split 0 h = SOME ([],h)`,
   CHEAT_TAC);;
+add_simp heap_split_0;;
 
 (* --- *)
 
@@ -482,7 +482,7 @@ let CARD_heap_addresses = prove
 let heap_filter_aux_def,heap_filter_aux_ind = define_rec
   [`heap_filter_aux n P [] = []`;
    `heap_filter_aux n P (CONS x xs) = APPEND (if n IN P then [x]
-  else []) (heap_filter_aux (n + el_length x) P xs)`];;
+    else []) (heap_filter_aux (n + el_length x) P xs)`];;
 
 let heap_filter_def = new_definition
   `heap_filter = heap_filter_aux 0`;;
@@ -553,7 +553,3 @@ let heap_filter_aux_APPEND = prove
 let heap_filter_aux_heap_addresses_UNION = prove
  (`!xs n s. heap_filter_aux n (heap_addresses n xs UNION s) xs = xs`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

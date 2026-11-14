@@ -24,11 +24,8 @@ needs "semantics/fpSem.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "flatSem"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "flatSem"
   ["evaluate"; "flatLang"; "fpSem"; "semanticPrimitivesProps"];;
 
 (* The values of flatLang differ from source semantic values in that
@@ -52,12 +49,14 @@ let flatSem_environment_FIELDS = define_record "flatSem_environment"
   ["v","(mlstring#'v) list"];;
 
 let flatSem_v_INDUCT,flatSem_v_RECURSION = define_datatype
-  "flatSem_v = flatSem_Litv (lit) | flatSem_Conv ((num#num option) \
-   option) (flatSem_v list) | flatSem_Closure (flatSem_v \
-   flatSem_environment) (mlstring) (flatLang_exp) | \
-   flatSem_Recclosure (flatSem_v flatSem_environment) \
-   ((mlstring#mlstring#flatLang_exp) list) (mlstring) | flatSem_Loc \
-   (bool) (num) | flatSem_Vectorv (flatSem_v list)";;
+  "flatSem_v =
+     flatSem_Litv lit
+   | flatSem_Conv ((ctor_id#type_id) option) (flatSem_v list)
+   | flatSem_Closure (flatSem_v flatSem_environment) varN flatLang_exp
+   | flatSem_Recclosure (flatSem_v flatSem_environment)
+       ((varN#varN#flatLang_exp) list) varN
+   | flatSem_Loc bool num
+   | flatSem_Vectorv (flatSem_v list)";;
 
 let install_config_FIELDS = define_record "install_config"
   ["compile","'c->flatLang_exp list->(word8 list#word64 list#'c) \
@@ -119,39 +118,39 @@ let flatSem_ctor_same_type_def = new_definition
 let flatSem_do_eq_def,flatSem_do_eq_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`flatSem_do_eq (flatSem_Litv l1:flatSem_v) (flatSem_Litv
-  l2:flatSem_v) =
+    l2:flatSem_v) =
        (if lit_same_type l1 l2 then Eq_val (l1 = l2) else
-         Eq_type_error)`;
+           Eq_type_error)`;
    `flatSem_do_eq (flatSem_Loc b1 l1:flatSem_v) (flatSem_Loc b2
-  l2:flatSem_v) =
+    l2:flatSem_v) =
         (if b1 /\ b2 then Eq_val (l1 = l2) else Eq_type_error)`;
    `flatSem_do_eq (flatSem_Conv cn1 vs1:flatSem_v) (flatSem_Conv cn2
-  vs2:flatSem_v) =
+    vs2:flatSem_v) =
        (if (cn1 = cn2) /\ (LENGTH vs1 = LENGTH vs2) then
          flatSem_do_eq_list vs1 vs2 else if flatSem_ctor_same_type
-           cn1 cn2 then
+             cn1 cn2 then
          Eq_val F else
          Eq_type_error)`;
    `flatSem_do_eq (flatSem_Vectorv vs1:flatSem_v) (flatSem_Vectorv
-  vs2:flatSem_v) =
+    vs2:flatSem_v) =
        (if LENGTH vs1 = LENGTH vs2 then
          flatSem_do_eq_list vs1 vs2 else
          Eq_val F)`;
    `flatSem_do_eq (flatSem_Closure _13 _14 _15:flatSem_v)
-  (flatSem_Closure _16 _17 _18:flatSem_v) = Eq_val T`;
+    (flatSem_Closure _16 _17 _18:flatSem_v) = Eq_val T`;
    `flatSem_do_eq (flatSem_Closure _25 _26 _27:flatSem_v)
-  (flatSem_Recclosure _28 _29 _30:flatSem_v) = Eq_val T`;
+    (flatSem_Recclosure _28 _29 _30:flatSem_v) = Eq_val T`;
    `flatSem_do_eq (flatSem_Recclosure _37 _38 _39:flatSem_v)
-  (flatSem_Closure _40 _41 _42:flatSem_v) = Eq_val T`;
+    (flatSem_Closure _40 _41 _42:flatSem_v) = Eq_val T`;
    `flatSem_do_eq (flatSem_Recclosure _49 _50 _51:flatSem_v)
-  (flatSem_Recclosure _52 _53 _54:flatSem_v) = Eq_val T`;
+    (flatSem_Recclosure _52 _53 _54:flatSem_v) = Eq_val T`;
    `flatSem_do_eq _55 _56 = Eq_type_error`;
    `flatSem_do_eq_list x1 x2 =
          match (x1,x2) with
            ([],[]) -> Eq_val T
          | ((CONS v1 vs1),(CONS v2 vs2)) ->
        (match flatSem_do_eq v1 v2 with Eq_type_error ->
-         Eq_type_error | Eq_val r ->
+           Eq_type_error | Eq_val r ->
           (if r then
             flatSem_do_eq_list vs1 vs2 else
             Eq_val F))
@@ -187,12 +186,11 @@ let flatSem_v_to_list_def,flatSem_v_to_list_ind = define_wf
 
 let flatSem_list_to_v_def,flatSem_list_to_v_ind = define_rec
   [`flatSem_list_to_v [] = flatSem_Conv (SOME (nil_tag,SOME list_id))
-  []`;
+    []`;
    `flatSem_list_to_v (CONS x xs) =
         flatSem_Conv (SOME (cons_tag,SOME list_id)) [x;
-          flatSem_list_to_v xs]`];;
+            flatSem_list_to_v xs]`];;
 
-let _ = size_thms "flatSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let flatSem_v_to_char_list_def,flatSem_v_to_char_list_ind = define_wf
@@ -209,7 +207,6 @@ let flatSem_v_to_char_list_def,flatSem_v_to_char_list_ind = define_wf
          cs) | NONE -> NONE) else NONE)
         | _59 -> NONE`];;
 
-let _ = size_thms "flatSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let flatSem_vs_to_string_def,flatSem_vs_to_string_ind = define_wf
@@ -255,24 +252,24 @@ let flatSem_do_test_def = define_cases
   [`flatSem_do_test (ast_Equal:test) ty v1 v2 =
       (if flatSem_check_type ty v1 /\ flatSem_check_type ty v2 then
          (if ty = ast_Float64T then Eq_val (fp64_equal
-           (flatSem_the_Litv_Float64 v1) (flatSem_the_Litv_Float64
-           v2)) else flatSem_do_eq v1 v2) else Eq_type_error)`;
+             (flatSem_the_Litv_Float64 v1) (flatSem_the_Litv_Float64
+             v2)) else flatSem_do_eq v1 v2) else Eq_type_error)`;
    `flatSem_do_test (ast_Compare cmp) ty v1 v2 =
       (match (ty,flatSem_dest_Litv v1,flatSem_dest_Litv v2) with
-        (ast_IntT,SOME (ast_IntLit i),SOME (ast_IntLit j)) -> Eq_val
-        (semanticPrimitives_int_cmp cmp i j) | (ast_CharT,SOME
-        (ast_Char c),SOME (ast_Char d)) -> Eq_val
-        (semanticPrimitives_num_cmp cmp (ORD c) (ORD d)) | (ast_WordT
-        ast_W8,SOME (ast_Word8 w),SOME (ast_Word8 v)) -> Eq_val
-        (semanticPrimitives_num_cmp cmp (w2n w) (w2n v)) |
-        (ast_Float64T,SOME (ast_Float64 w),SOME (ast_Float64 v)) ->
-        Eq_val (fp_cmp cmp w v) | (ast_StrT,SOME (ast_StrLit s),SOME
-        (ast_StrLit t)) -> Eq_val (str_cmp F cmp s t) | _65 ->
-        Eq_type_error)`;
+          (ast_IntT,SOME (ast_IntLit i),SOME (ast_IntLit j)) ->
+          Eq_val (semanticPrimitives_int_cmp cmp i j) |
+          (ast_CharT,SOME (ast_Char c),SOME (ast_Char d)) -> Eq_val
+          (semanticPrimitives_num_cmp cmp (ORD c) (ORD d)) |
+          (ast_WordT ast_W8,SOME (ast_Word8 w),SOME (ast_Word8 v)) ->
+          Eq_val (semanticPrimitives_num_cmp cmp (w2n w) (w2n v)) |
+          (ast_Float64T,SOME (ast_Float64 w),SOME (ast_Float64 v)) ->
+          Eq_val (fp_cmp cmp w v) | (ast_StrT,SOME (ast_StrLit
+          s),SOME (ast_StrLit t)) -> Eq_val (str_cmp F cmp s t) | _65
+          -> Eq_type_error)`;
    `flatSem_do_test (ast_AltCompare cmp) ty v1 v2 =
       (match (ty,flatSem_dest_Litv v1,flatSem_dest_Litv v2)
-        with (ast_StrT,SOME (ast_StrLit s),SOME (ast_StrLit t)) ->
-        Eq_val (str_cmp T cmp s t) | _66 -> Eq_type_error)`];;
+          with (ast_StrT,SOME (ast_StrLit s),SOME (ast_StrLit t))
+          -> Eq_val (str_cmp T cmp s t) | _66 -> Eq_type_error)`];;
 
 let v_to_flat_def = new_definition
   `v_to_flat x1 =
@@ -297,8 +294,10 @@ let flat_to_v_def = new_definition
 
 let flatSem_dest_thunk_ret_INDUCT,flatSem_dest_thunk_ret_RECURSION =
   define_datatype
-  "flatSem_dest_thunk_ret = flatSem_BadRef | flatSem_NotThunk | \
-   flatSem_IsThunk (thunk_mode) (flatSem_v)";;
+  "flatSem_dest_thunk_ret =
+     flatSem_BadRef
+   | flatSem_NotThunk
+   | flatSem_IsThunk thunk_mode flatSem_v";;
 
 let flatSem_dest_thunk_def = new_definition
   `flatSem_dest_thunk vs st =
@@ -678,45 +677,46 @@ let flatSem_pmatch_def,flatSem_pmatch_ind = assume_definition_rec
         (Match (CONS (x,v') bindings))`;
    `flatSem_pmatch s flatLang_Pany v' bindings = Match bindings`;
    `flatSem_pmatch s (flatLang_Plit l:flatLang_pat) (flatSem_Litv
-  l':flatSem_v) bindings =
+    l':flatSem_v) bindings =
         (if l = l' then
           Match bindings else if lit_same_type l l' then
           No_match else
           Match_type_error)`;
    `flatSem_pmatch s (flatLang_Pcon stmp ps:flatLang_pat) (flatSem_Conv
-  stmp' vs:flatSem_v) bindings =
+    stmp' vs:flatSem_v) bindings =
         (if ~(pmatch_stamps_ok stmp stmp' (LENGTH ps) (LENGTH vs))
-          then
+            then
           Match_type_error else if OPTION_MAP FST stmp = OPTION_MAP
-            FST stmp' /\
+              FST stmp' /\
            LENGTH ps = LENGTH vs then
           flatSem_pmatch_list s ps vs bindings else
           No_match)`;
    `flatSem_pmatch s (flatLang_Pas p i:flatLang_pat) v bindings =
         flatSem_pmatch s p v (CONS (i,v) bindings)`;
    `flatSem_pmatch s (flatLang_Pref p:flatLang_pat) (flatSem_Loc _124
-  lnum:flatSem_v) bindings =
+    lnum:flatSem_v) bindings =
         (match store_lookup lnum (flatSem_state_refs s) with SOME
-          (semanticPrimitives_Refv v) -> flatSem_pmatch s p v
-          bindings | _125 -> Match_type_error)`;
+            (semanticPrimitives_Refv v) -> flatSem_pmatch s p v
+            bindings | _125 -> Match_type_error)`;
    `flatSem_pmatch _126 _127 _128 bindings = Match_type_error`;
    `flatSem_pmatch_list s [] [] bindings = Match bindings`;
    `flatSem_pmatch_list s (CONS p ps) (CONS v vs) bindings =
         (match flatSem_pmatch s p v bindings with Match_type_error
-          -> Match_type_error | Match bindings' -> flatSem_pmatch_list s
-          ps vs bindings' | No_match ->
+            -> Match_type_error | Match bindings' -> flatSem_pmatch_list
+            s ps vs bindings' | No_match ->
           (match flatSem_pmatch_list s ps vs bindings with
-            Match_type_error -> Match_type_error | _129 -> No_match))`;
+              Match_type_error -> Match_type_error | _129 ->
+              No_match))`;
    `flatSem_pmatch_list s _130 _131 bindings = Match_type_error`];;
 
 let pmatch_rows_def,pmatch_rows_ind = define_rec
   [`pmatch_rows [] s v = No_match`;
    `pmatch_rows (CONS (p,e) pes) s v =
       (match flatSem_pmatch s p v [] with Match_type_error ->
-        Match_type_error | No_match -> pmatch_rows pes s v | Match env
-        ->
+          Match_type_error | No_match -> pmatch_rows pes s v | Match env
+          ->
          (match pmatch_rows pes s v with Match_type_error ->
-           Match_type_error | _133 -> Match (env,p,e)))`];;
+             Match_type_error | _133 -> Match (env,p,e)))`];;
 
 let flatSem_dec_clock_def = new_definition
   `flatSem_dec_clock s = flatSem_state_clock_fupd (K
@@ -754,63 +754,58 @@ let flatSem_AppUnit_def = new_definition
   `flatSem_AppUnit x = flatLang_App backend_common_None (flatLang_Src
   ast_Opapp) [x; flatLang_Con backend_common_None NONE []]`;;
 
-let _ = size_thms "flatLang_op";;
-let _ = size_thms "flatLang_pat";;
-let _ = size_thms "lit";;
-let _ = size_thms "mlstring";;
-let _ = size_thms "tra";;
-let flatSem_exp_alt_size_def,flatSem_exp_alt_size_ind =
-  define_mutual_rec
+let flatSem_exp_alt_size_def,flatSem_exp_alt_size_ind = define_rec
   [`flatSem_exp_alt_size (flatLang_Raise a0 a1:flatLang_exp) = 1 +
-  (tra_size a0 + flatSem_exp_alt_size a1)`;
+    (tra_size a0 + flatSem_exp_alt_size a1)`;
    `flatSem_exp_alt_size (flatLang_Handle a0 a1 a2:flatLang_exp) =
     1 + (tra_size a0 + (flatSem_exp_alt_size a1 +
-      flatSem_exp3_alt_size a2))`;
+        flatSem_exp3_alt_size a2))`;
    `flatSem_exp_alt_size (flatLang_Lit a0 a1:flatLang_exp) = 1 +
-  (tra_size a0 + lit_size a1)`;
+    (tra_size a0 + lit_size a1)`;
    `flatSem_exp_alt_size (flatLang_Con a0 a1 a2:flatLang_exp) =
     1 +
     (tra_size a0 +
      (option_size (pair_size (\x. x) (option_size (\x. x))) a1 +
       exp6_alt_size a2))`;
    `flatSem_exp_alt_size (flatLang_Var_local a0 a1) = 1 + (tra_size
-  a0 + mlstring_size a1)`;
+    a0 + mlstring_size a1)`;
    `flatSem_exp_alt_size (flatLang_Fun a0 a1 a2:flatLang_exp) =
     1 + (mlstring_size a0 + (mlstring_size a1 +
-      flatSem_exp_alt_size a2))`;
+        flatSem_exp_alt_size a2))`;
    `flatSem_exp_alt_size (flatLang_App a0 a1 a2:flatLang_exp) =
     1 + (tra_size a0 + (flatLang_op_size a1 + exp6_alt_size a2))
-      + (if a1 = flatLang_Src (ast_ThunkOp ForceThunk) then 100 else
-      0)`;
+        + (if a1 = flatLang_Src (ast_ThunkOp ForceThunk) then 100
+        else 0)`;
    `flatSem_exp_alt_size (flatLang_If a0 a1 a2 a3:flatLang_exp) =
     1 + (tra_size a0 + (flatSem_exp_alt_size a1 +
-      (flatSem_exp_alt_size a2 + flatSem_exp_alt_size a3)))`;
+        (flatSem_exp_alt_size a2 + flatSem_exp_alt_size a3)))`;
    `flatSem_exp_alt_size (flatLang_Mat a0 a1 a2:flatLang_exp) =
     1 + (tra_size a0 + (flatSem_exp_alt_size a1 +
-      flatSem_exp3_alt_size a2))`;
+        flatSem_exp3_alt_size a2))`;
    `flatSem_exp_alt_size (flatLang_Let a0 a1 a2 a3:flatLang_exp) =
     1 +
     (tra_size a0 +
      (option_size mlstring_size a1 + (flatSem_exp_alt_size a2 +
-       flatSem_exp_alt_size a3)))`;
+         flatSem_exp_alt_size a3)))`;
    `flatSem_exp_alt_size (flatLang_Letrec a0 a1 a2:flatLang_exp) =
     1 + (mlstring_size a0 + (flatSem_exp1_alt_size a1 +
-      flatSem_exp_alt_size a2))`;
+        flatSem_exp_alt_size a2))`;
    `flatSem_exp1_alt_size [] = 0`;
    `flatSem_exp1_alt_size (CONS a0 a1) = 1 + (flatSem_exp2_alt_size
-  a0 + flatSem_exp1_alt_size a1)`;
+    a0 + flatSem_exp1_alt_size a1)`;
    `flatSem_exp2_alt_size (a0,a1) = 1 + (mlstring_size a0 +
-  exp4_alt_size a1)`;
+    exp4_alt_size a1)`;
    `flatSem_exp3_alt_size [] = 0`;
    `flatSem_exp3_alt_size (CONS a0 a1) = 1 + (exp5_alt_size a0 +
-  flatSem_exp3_alt_size a1)`;
+    flatSem_exp3_alt_size a1)`;
    `exp4_alt_size (a0,a1) = 1 + (mlstring_size a0 +
-  flatSem_exp_alt_size a1)`;
+    flatSem_exp_alt_size a1)`;
    `exp5_alt_size (a0,a1) = 1 + (flatLang_pat_size a0 +
-  flatSem_exp_alt_size a1)`;
+    flatSem_exp_alt_size a1)`;
    `exp6_alt_size [] = 0`;
    `exp6_alt_size (CONS a0 a1) = 1 + (flatSem_exp_alt_size a0 +
-  exp6_alt_size a1)`];;
+    exp6_alt_size a1)`];;
+add_simp flatSem_exp_alt_size_def;;
 
 let exp6_alt_size = prove
  (`exp6_alt_size xs = LENGTH xs + SUM (MAP flatSem_exp_alt_size xs)`,
@@ -824,6 +819,7 @@ let pmatch_rows_Match_exp_alt_size = prove
 
 let dec_alt_size_def = new_definition
   `dec_alt_size a = 1 + flatSem_exp_alt_size a`;;
+add_simp dec_alt_size_def;;
 
 let flatSem_fix_clock_IMP =
   try prove
@@ -845,142 +841,144 @@ if concl flatSem_fix_clock_IMP <> `T` then
 let flatSem_evaluate_def,flatSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) ([]:flatLang_exp list) =
+    (s:('c,'ffi)flatSem_state) ([]:flatLang_exp list) =
         (s,Rval [])`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) (CONS e1 (CONS e2 es)) =
+    (s:('c,'ffi)flatSem_state) (CONS e1 (CONS e2 es)) =
         (match flatSem_fix_clock s (flatSem_evaluate env s [e1])
-          with (s,Rval v) ->
+            with (s,Rval v) ->
             (match flatSem_evaluate env s (CONS e2 es) with
-              (s,Rval vs) -> (s,Rval (CONS (HD v) vs)) | res -> res)
-              | res -> res)`;
+                (s,Rval vs) -> (s,Rval (CONS (HD v) vs)) | res ->
+                res) | res -> res)`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [(flatLang_Lit _138 l:flatLang_exp)] =
-  (s,Rval [flatSem_Litv l])`;
+    (s:('c,'ffi)flatSem_state) [(flatLang_Lit _138 l:flatLang_exp)] =
+    (s,Rval [flatSem_Litv l])`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [(flatLang_Raise _140 e:flatLang_exp)] =
+    (s:('c,'ffi)flatSem_state) [(flatLang_Raise _140 e:flatLang_exp)] =
        (match flatSem_evaluate env s [e] with (s,Rval v) ->
-         (s,Rerr (Rraise (HD v))) | res -> res)`;
+           (s,Rerr (Rraise (HD v))) | res -> res)`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [(flatLang_Handle _142 e pes:flatLang_exp)]
-  =
+    (s:('c,'ffi)flatSem_state) [(flatLang_Handle _142 e
+    pes:flatLang_exp)] =
        (match flatSem_fix_clock s (flatSem_evaluate env s [e]) with
-         (s,Rerr (Rraise v)) ->
+           (s,Rerr (Rraise v)) ->
            (match pmatch_rows pes s v with Match_type_error ->
-             (s,Rerr (Rabort Rtype_error)) | No_match -> (s,Rerr (Rraise
-             v)) | Match (env',p',e') ->
+               (s,Rerr (Rabort Rtype_error)) | No_match -> (s,Rerr
+               (Rraise v)) | Match (env',p',e') ->
                (if ALL_DISTINCT (flatLang_pat_bindings p') then
-                 flatSem_evaluate (flatSem_environment_v_fupd (K
-                 (APPEND env' (flatSem_environment_v env))) env) s
-                 [e'] else (s,Rerr (Rabort Rtype_error)))) | res ->
-                 res)`;
+                   flatSem_evaluate (flatSem_environment_v_fupd (K
+                   (APPEND env' (flatSem_environment_v env))) env) s
+                   [e'] else (s,Rerr (Rabort Rtype_error)))) | res ->
+                   res)`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [(flatLang_Con _144 NONE es:flatLang_exp)]
-  =
+    (s:('c,'ffi)flatSem_state) [(flatLang_Con _144 NONE
+    es:flatLang_exp)] =
         (match flatSem_evaluate env s (REVERSE es) with (s,Rval
-          vs) -> (s,Rval [flatSem_Conv NONE (REVERSE vs)]) | res ->
-          res)`;
+            vs) -> (s,Rval [flatSem_Conv NONE (REVERSE vs)]) | res ->
+            res)`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [(flatLang_Con _146 (SOME cn)
-  es:flatLang_exp)] =
+    (s:('c,'ffi)flatSem_state) [(flatLang_Con _146 (SOME cn)
+    es:flatLang_exp)] =
         (match flatSem_evaluate env s (REVERSE es) with (s,Rval
-          vs) -> (s,Rval [flatSem_Conv (SOME cn) (REVERSE vs)]) | res
-          -> res)`;
+            vs) -> (s,Rval [flatSem_Conv (SOME cn) (REVERSE vs)]) |
+            res -> res)`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [flatLang_Var_local _147 n] = (s,
+    (s:('c,'ffi)flatSem_state) [flatLang_Var_local _147 n] = (s,
        (match ALOOKUP (flatSem_environment_v env) n with SOME v
-         -> Rval [v] | NONE -> Rerr (Rabort Rtype_error)))`;
+           -> Rval [v] | NONE -> Rerr (Rabort Rtype_error)))`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [(flatLang_Fun _149 n e:flatLang_exp)] =
-  (s,Rval [flatSem_Closure env n e])`;
+    (s:('c,'ffi)flatSem_state) [(flatLang_Fun _149 n e:flatLang_exp)]
+    = (s,Rval [flatSem_Closure env n e])`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [(flatLang_App _151 op es:flatLang_exp)] =
+    (s:('c,'ffi)flatSem_state) [(flatLang_App _151 op es:flatLang_exp)]
+    =
        (match flatSem_fix_clock s (flatSem_evaluate env s (REVERSE
-         es)) with (s,Rval vs) ->
+           es)) with (s,Rval vs) ->
            (if op = flatLang_Src ast_Opapp then
              (match flatSem_do_opapp (REVERSE vs) with SOME (env',e)
-               ->
+                 ->
                 (if flatSem_state_clock s = 0 then
                   (s,Rerr (Rabort Rtimeout_error)) else
                   flatSem_evaluate env' (flatSem_dec_clock s) [e]) |
-                    NONE -> (s,Rerr (Rabort Rtype_error))) else if op =
-                    flatLang_Src ast_Eval then
+                      NONE -> (s,Rerr (Rabort Rtype_error))) else if op
+                      = flatLang_Src ast_Eval then
              (match flatSem_do_eval (REVERSE vs)
-               (flatSem_state_eval_config s) with SOME
-               (decs,eval_config,retv) ->
+                 (flatSem_state_eval_config s) with SOME
+                 (decs,eval_config,retv) ->
                   (let s = flatSem_state_eval_config_fupd (K
-                    eval_config) s in
+                      eval_config) s in
                   if flatSem_state_clock s = 0 then
                     (s,Rerr (Rabort Rtimeout_error)) else (match
-                      flatSem_evaluate_decs (flatSem_dec_clock s) decs
-                      with (s,NONE) -> (s,Rval [retv]) | (s,SOME e) ->
-                      (s,Rerr e))) | NONE -> (s,Rerr (Rabort
-                      Rtype_error))) else if op = flatLang_Src
-                      (ast_ThunkOp ForceThunk) then
+                        flatSem_evaluate_decs (flatSem_dec_clock s) decs
+                        with (s,NONE) -> (s,Rval [retv]) | (s,SOME e) ->
+                        (s,Rerr e))) | NONE -> (s,Rerr (Rabort
+                        Rtype_error))) else if op = flatLang_Src
+                        (ast_ThunkOp ForceThunk) then
              (match flatSem_dest_thunk vs (flatSem_state_refs s)
-               with flatSem_BadRef -> (s,Rerr (Rabort Rtype_error)) |
-               flatSem_NotThunk -> (s,Rerr (Rabort Rtype_error)) |
-               flatSem_IsThunk Evaluated v -> (s,Rval [v]) |
-               flatSem_IsThunk NotEvaluated f ->
+                 with flatSem_BadRef -> (s,Rerr (Rabort Rtype_error)) |
+                 flatSem_NotThunk -> (s,Rerr (Rabort Rtype_error)) |
+                 flatSem_IsThunk Evaluated v -> (s,Rval [v]) |
+                 flatSem_IsThunk NotEvaluated f ->
                  (match flatSem_evaluate (mk_flatSem_environment
-                   [((implode "f"),f)]) s
+                     [((implode "f"),f)]) s
                         [flatSem_AppUnit (flatLang_Var_local
-                          backend_common_None (implode "f"))] with
-                          (s,Rval vs2) ->
+                            backend_common_None (implode "f"))] with
+                            (s,Rval vs2) ->
                       (match flatSem_update_thunk vs
-                        (flatSem_state_refs s) vs2 with NONE -> (s,Rerr
-                        (Rabort Rtype_error)) | SOME refs ->
-                        (flatSem_state_refs_fupd (K refs) s,Rval vs2)) |
-                        (s,Rerr e) -> (s,Rerr e))) else
+                          (flatSem_state_refs s) vs2 with NONE ->
+                          (s,Rerr (Rabort Rtype_error)) | SOME refs ->
+                          (flatSem_state_refs_fupd (K refs) s,Rval vs2))
+                          | (s,Rerr e) -> (s,Rerr e))) else
             (match (flatSem_do_app s op (REVERSE vs)) with NONE
-              -> (s,Rerr (Rabort Rtype_error)) | SOME (s',r) ->
-              (s',list_result r))) | res -> res)`;
+                -> (s,Rerr (Rabort Rtype_error)) | SOME (s',r) ->
+                (s',list_result r))) | res -> res)`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [(flatLang_If _153 e1 e2 e3:flatLang_exp)]
-  =
+    (s:('c,'ffi)flatSem_state) [(flatLang_If _153 e1 e2
+    e3:flatLang_exp)] =
        (match flatSem_fix_clock s (flatSem_evaluate env s [e1]) with
-         (s,Rval vs) ->
+           (s,Rval vs) ->
          (match flatSem_do_if (HD vs) e2 e3 with SOME e ->
-           flatSem_evaluate env s [e] | NONE -> (s,Rerr (Rabort
-           Rtype_error))) | res -> res)`;
+             flatSem_evaluate env s [e] | NONE -> (s,Rerr (Rabort
+             Rtype_error))) | res -> res)`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [(flatLang_Mat _155 e pes:flatLang_exp)] =
+    (s:('c,'ffi)flatSem_state) [(flatLang_Mat _155 e pes:flatLang_exp)]
+    =
        (match flatSem_fix_clock s (flatSem_evaluate env s [e]) with
-         (s,Rval v) ->
+           (s,Rval v) ->
            (match pmatch_rows pes s (HD v) with Match_type_error ->
-             (s,Rerr (Rabort Rtype_error)) | No_match -> (s,Rerr (Rraise
-             flatSem_bind_exn_v)) | Match (env',p',e') ->
+               (s,Rerr (Rabort Rtype_error)) | No_match -> (s,Rerr
+               (Rraise flatSem_bind_exn_v)) | Match (env',p',e') ->
                (if ALL_DISTINCT (flatLang_pat_bindings p') then
-                 flatSem_evaluate (flatSem_environment_v_fupd (K
-                 (APPEND env' (flatSem_environment_v env))) env) s
-                 [e'] else (s,Rerr (Rabort Rtype_error)))) | res ->
-                 res)`;
+                   flatSem_evaluate (flatSem_environment_v_fupd (K
+                   (APPEND env' (flatSem_environment_v env))) env) s
+                   [e'] else (s,Rerr (Rabort Rtype_error)))) | res ->
+                   res)`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [(flatLang_Let _157 n e1 e2:flatLang_exp)]
-  =
+    (s:('c,'ffi)flatSem_state) [(flatLang_Let _157 n e1
+    e2:flatLang_exp)] =
        (match flatSem_fix_clock s (flatSem_evaluate env s [e1])
-         with (s,Rval vs) -> flatSem_evaluate
-         (flatSem_environment_v_fupd (opt_bind n (HD vs)) env) s [e2]
-         | res -> res)`;
+           with (s,Rval vs) -> flatSem_evaluate
+           (flatSem_environment_v_fupd (opt_bind n (HD vs)) env) s
+           [e2] | res -> res)`;
    `flatSem_evaluate (env:flatSem_v flatSem_environment)
-  (s:('c,'ffi)flatSem_state) [(flatLang_Letrec _159 funs
-  e:flatLang_exp)] =
+    (s:('c,'ffi)flatSem_state) [(flatLang_Letrec _159 funs
+    e:flatLang_exp)] =
        (if ALL_DISTINCT (MAP FST funs) then flatSem_evaluate
-         (flatSem_environment_v_fupd (K (flatSem_build_rec_env funs
-         env (flatSem_environment_v env))) env) s [e] else (s,Rerr
-         (Rabort Rtype_error)))`;
+           (flatSem_environment_v_fupd (K (flatSem_build_rec_env funs
+           env (flatSem_environment_v env))) env) s [e] else (s,Rerr
+           (Rabort Rtype_error)))`;
    `evaluate_dec (s:('c,'ffi)flatSem_state) e =
        (match flatSem_evaluate (mk_flatSem_environment []) s [e]
-         with (s,Rval x) ->
+           with (s,Rval x) ->
          (if x = [Unitv] then
            (s,NONE) else
            (s,SOME (Rabort Rtype_error))) | (s,Rerr e) -> (s,SOME
-             e))`;
+               e))`;
    `flatSem_evaluate_decs (s:('c,'ffi)flatSem_state) [] = (s,NONE)`;
    `flatSem_evaluate_decs (s:('c,'ffi)flatSem_state) (CONS d ds) =
        (match flatSem_fix_clock s (evaluate_dec s d) with
-         (s,NONE) -> flatSem_evaluate_decs s ds | (s,SOME e) ->
-         (s,SOME e))`];;
+           (s,NONE) -> flatSem_evaluate_decs s ds | (s,SOME e) ->
+           (s,SOME e))`];;
 
 (* HOL4 flatSemScript.sml:947-950: ML code, not ported *)
 
@@ -1045,7 +1043,3 @@ let flatSem_semantics_def = new_definition
                 UNIV)))`;;
 
 (* HOL4 flatSemScript.sml:1025-1027: ML code, not ported *)
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

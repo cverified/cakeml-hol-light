@@ -19,11 +19,8 @@ needs "compiler/backend/dataLang.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "data_space"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "data_space"
   ["dataLang"];;
 
 let _ = do_list hide_constant ["pmatch"];;
@@ -50,7 +47,7 @@ let part_space_req_def = define_cases
   [`part_space_req (closLang_W64 s:const_part) = 3`;
    `part_space_req (closLang_Int i:const_part) =
       (if num_of_int (abs i) < 2 EXP 29 then 0 else
-        data_space_num_size (num_of_int (abs i)))`;
+          data_space_num_size (num_of_int (abs i)))`;
    `part_space_req (closLang_Str s:const_part) = strlen s DIV 4 + 2`;
    `part_space_req (closLang_Con t ns:const_part) =
       (let l = LENGTH ns in if l = 0 then 0 else l + 1)`];;
@@ -81,7 +78,7 @@ let op_space_req_def = new_definition
 let pMakeSpace_def = define_cases
   [`pMakeSpace (INL c) = c`;
    `pMakeSpace (INR (k,names,c)) = dataLang_Seq (dataLang_MakeSpace
-  k names) c`];;
+    k names) c`];;
 
 let space_def,space_ind = define_shaped_rec
   "match"
@@ -142,10 +139,6 @@ let space_pmatch = prove
 let data_space_compile_def = new_definition
   `data_space_compile c = pMakeSpace (space c)`;;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

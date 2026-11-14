@@ -43,11 +43,8 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "stack_to_labProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "stack_to_labProof"
   ["data_to_word_gcProof"; "labProps"; "labSem"; "semanticsProps";
    "stackProps"; "stackSem"; "stack_alloc"; "stack_allocProof";
    "stack_namesProof"; "stack_rawcallProof"; "stack_removeProof";
@@ -76,10 +73,10 @@ let word_sh_word_shift = prove
   backend_common_word_shift a b c`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let assert_T = prove
  (`labSem_assert T s = s`,
   CHEAT_TAC);;
+add_simp assert_T;;
 
 let asm_fetch_aux_no_label = prove
  (`!pc' code.
@@ -105,27 +102,27 @@ let find_code_lookup = prove
       (!r. dest = INR r ==> r IN FDOM regs)`),
   CHEAT_TAC);;
 
-(* [simp] *)
 let not_is_Label_compile_jump = prove
  (`is_Label (compile_jump dest) <=> F`,
   CHEAT_TAC);;
+add_simp not_is_Label_compile_jump;;
 
-(* [simp] *)
 let word_cmp_not_NONE = prove
  (`~(wordSem_word_cmp cmp (wordLang_Word w1) (wordLang_Word w2) =
   NONE)`,
   CHEAT_TAC);;
+add_simp word_cmp_not_NONE;;
 
-(* [simp] *)
 let word_cmp_negate_alt = prove
  (`asm_word_cmp (negate cmp) w1 w2 <=> ~(wordSem_word_cmp cmp w1 w2)`,
   CHEAT_TAC);;
+add_simp word_cmp_negate_alt;;
 
-(* [simp] *)
 let word_cmp_negate = prove
  (`wordSem_word_cmp (negate cmp) w1 w2 =
    OPTION_MAP (~) (wordSem_word_cmp cmp (w1) (w2))`,
   CHEAT_TAC);;
+add_simp word_cmp_negate;;
 
 (* -- Lemmas about code_installed, loc_to_pc and asm_fetch_aux -- *)
 
@@ -136,7 +133,7 @@ let stack_to_labProof_code_installed_def,
    `stack_to_labProof_code_installed n (CONS x xs) code <=>
        (if is_Label x then
          (match x with labLang_Label l1 l2 _4 -> loc_to_pc l1 l2
-           code = SOME n) /\
+             code = SOME n) /\
          stack_to_labProof_code_installed n xs code else
          asm_fetch_aux n code = SOME x /\
          stack_to_labProof_code_installed (n + 1) xs code)`];;
@@ -257,8 +254,8 @@ let code_installed'_def,code_installed'_ind = define_rec
   [`code_installed' n [] code <=> T`;
    `code_installed' n (CONS x xs) code <=>
          (if is_Label x then code_installed' n xs code else
-           asm_fetch_aux n code = SOME x /\ code_installed' (n + 1)
-           xs code)`];;
+             asm_fetch_aux n code = SOME x /\ code_installed' (n +
+             1) xs code)`];;
 
 let code_installed'_cons_label = prove
  (`!lines pos.
@@ -295,8 +292,8 @@ let labs_correct_def,labs_correct_ind = define_rec
    `labs_correct n (CONS x xs) code <=>
          (if is_Label x then labs_correct n xs code /\
            (match x with labLang_Label l1 l2 v2 -> loc_to_pc l1
-             l2 code = SOME n | _6 -> T) else labs_correct (n + 1)
-             xs code)`];;
+               l2 code = SOME n | _6 -> T) else labs_correct (n +
+               1) xs code)`];;
 
 (* HOL4 stack_to_labProofScript.sml:391: ML code, not ported *)
 
@@ -475,12 +472,12 @@ let set_var_upd_reg = prove
      (labSem_upd_reg a b t)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let set_var_Word_upd_reg = prove
  (`stack_to_labProof_state_rel s t ==>
    stack_to_labProof_state_rel (stackSem_set_var a (wordLang_Word
      b) s) (labSem_upd_reg a (wordLang_Word b) t)`,
   CHEAT_TAC);;
+add_simp set_var_Word_upd_reg;;
 
 (* HOL4 stack_to_labProofScript.sml:690-696: a theorem whose
    statement HOL Light does not read (tools/unstated.py):
@@ -540,8 +537,11 @@ let no_ret_correct = prove
    compile_jump_correct *)
 
 let result_view_INDUCT,result_view_RECURSION = define_datatype
-  "result_view = Vloc (num) (num) | Vcont (num) (num) | Vtimeout | \
-   Verr";;
+  "result_view =
+     Vloc num num
+   | Vcont num num
+   | Vtimeout
+   | Verr";;
 
 let result_view_def = new_definition
   `result_view x1 l cs bs =
@@ -552,6 +552,7 @@ let result_view_def = new_definition
         | (word_bignum_Continue n) -> Vcont l (find_lab n cs)
         | (stackSem_Break n) -> Vloc l (find_lab n bs)
         | _11 -> Verr`;;
+add_simp result_view_def;;
 
 let halt_word_view_def = new_definition
   `halt_word_view x1 =
@@ -560,6 +561,7 @@ let halt_word_view_def = new_definition
         | (wordLang_Word _12) -> targetSem_Halt
           ffi_Resource_limit_hit
         | _13 -> targetSem_Error`;;
+add_simp halt_word_view_def;;
 
 let halt_view_def = new_definition
   `halt_view x1 =
@@ -568,6 +570,7 @@ let halt_view_def = new_definition
         | (SOME (stackSem_FinalFFI outcome)) -> SOME (stackSem_Halt
           (ffi_FFI_outcome outcome))
         | _14 -> NONE`;;
+add_simp halt_view_def;;
 
 (* HOL4 stack_to_labProofScript.sml:966-1017: a proof *)
 
@@ -902,10 +905,10 @@ let contain_def = new_definition
 (* HOL4 stack_to_labProofScript.sml:3617-3618: a theorem that HOL4
    states as the value of an ML expression: full_make_init_semantics *)
 
-(* [simp] *)
 let EVERY_sec_ends_with_label_MAP_prog_to_section = prove
  (`!prog. ALL sec_ends_with_label (MAP prog_to_section prog)`,
   CHEAT_TAC);;
+add_simp EVERY_sec_ends_with_label_MAP_prog_to_section;;
 
 (* HOL4 stack_to_labProofScript.sml:3627: ML code, not ported *)
 
@@ -993,7 +996,6 @@ let IMP_init_state_ok = prove
      init_state_ok ac kkk fmis word_oracle`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let full_make_init_has_fp_ops = prove
  (`full_make_init stack_conf (data_to_word_config_has_fp_tern_fupd (K
   b2) (has_fp_ops_fupd (K b1) dconf))
@@ -1001,6 +1003,7 @@ let full_make_init_has_fp_ops = prove
      full_make_init stack_conf dconf
        mheap sp offset bitmaps code s save_regs dsp cor`,
   CHEAT_TAC);;
+add_simp full_make_init_has_fp_ops;;
 
 let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -1024,6 +1027,7 @@ let complex_get_code_labels_def,complex_get_code_labels_ind = define_wf
         | (stackLang_RawCall l) -> {(l,1)}
         | (stackLang_JumpLower n m l) -> {(l,0)}
         | _24 -> {}`];;
+add_simp complex_get_code_labels_def;;
 
 (* [local] *)
 let complex_flatten_labels = prove
@@ -1395,25 +1399,25 @@ let stack_alloc_compile_no_shmemop = prove
    ALL (\(a,p). no_shmemop p) (stack_alloc_compile data prog)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let upshift_no_shmemop = prove
  (`!k n. no_shmemop (upshift k n)`,
   CHEAT_TAC);;
+add_simp upshift_no_shmemop;;
 
-(* [simp] *)
 let downshift_no_shmemop = prove
  (`!k n. no_shmemop (downshift k n)`,
   CHEAT_TAC);;
+add_simp downshift_no_shmemop;;
 
-(* [simp] *)
 let stack_free_no_shmemop = prove
  (`!k n. no_shmemop (word_to_stack_stack_free k n)`,
   CHEAT_TAC);;
+add_simp stack_free_no_shmemop;;
 
-(* [simp] *)
 let stack_alloc_no_shmemop = prove
  (`!jump k n. no_shmemop (stack_alloc jump k n)`,
   CHEAT_TAC);;
+add_simp stack_alloc_no_shmemop;;
 
 let stack_remove_comp_no_shmemop = prove
  (`!jump off k p. no_shmemop p ==> no_shmemop (stack_alloc_comp jump
@@ -1523,25 +1527,25 @@ let stack_alloc_compile_no_install = prove
      prog)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let upshift_no_install = prove
  (`!k n. stackProps_no_install (upshift k n)`,
   CHEAT_TAC);;
+add_simp upshift_no_install;;
 
-(* [simp] *)
 let downshift_no_install = prove
  (`!k n. stackProps_no_install (downshift k n)`,
   CHEAT_TAC);;
+add_simp downshift_no_install;;
 
-(* [simp] *)
 let stack_free_no_install = prove
  (`!k n. stackProps_no_install (word_to_stack_stack_free k n)`,
   CHEAT_TAC);;
+add_simp stack_free_no_install;;
 
-(* [simp] *)
 let stack_alloc_no_install = prove
  (`!jump k n. stackProps_no_install (stack_alloc jump k n)`,
   CHEAT_TAC);;
+add_simp stack_alloc_no_install;;
 
 let stack_remove_comp_no_install = prove
  (`!jump off k p. stackProps_no_install p ==> stackProps_no_install
@@ -1605,7 +1609,3 @@ let stack_to_lab_compile_no_install = prove
      = prog' ==>
    labProps_no_install prog'`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

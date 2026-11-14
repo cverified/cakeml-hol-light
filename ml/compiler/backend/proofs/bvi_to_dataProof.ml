@@ -24,11 +24,8 @@ needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "bvi_to_dataProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "bvi_to_dataProof"
   ["bviProps"; "bviSem"; "bvi_to_data"; "dataProps"; "dataSem";
    "data_liveProof"; "data_simpProof"; "data_spaceProof"];;
 
@@ -63,31 +60,33 @@ let data_to_bvi_v_def,data_to_bvi_v_ind = define_shaped_rec
    `data_to_bvi_v (dataSem_CodePtr p:dataSem_v) = bvlSem_CodePtr p`;
    `data_to_bvi_v (dataSem_RefPtr b r:dataSem_v) = bvlSem_RefPtr b r`;
    `data_to_bvi_v (dataSem_Block _2 tag l:dataSem_v) = bvlSem_Block
-  tag (MAP data_to_bvi_v l)`];;
+    tag (MAP data_to_bvi_v l)`];;
+add_simp data_to_bvi_v_def;;
 
 (* Projection for Unit constant *)
-(* [simp] *)
 let data_to_bvi_v_Unit = prove
  (`data_to_bvi_v dataSem_Unit = dataSem_Unit`,
   CHEAT_TAC);;
+add_simp data_to_bvi_v_Unit;;
 
 (* Projection for Boolv constant *)
-(* [simp] *)
 let data_to_bvi_v_Boolv = prove
  (`!b. data_to_bvi_v (dataSem_Boolv b) = (dataSem_Boolv b)`,
   CHEAT_TAC);;
+add_simp data_to_bvi_v_Boolv;;
 
 (* Projection for references, non-injective for value arrays *)
 let data_to_bvi_ref_def = define_cases
   [`data_to_bvi_ref (bvlSem_ValueArray l) = bvlSem_ValueArray (MAP
-  data_to_bvi_v l)`;
+    data_to_bvi_v l)`;
    `data_to_bvi_ref (bvlSem_ByteArray b bl) = (bvlSem_ByteArray b
-  bl:'a bvlSem_ref)`;
+    bl:'a bvlSem_ref)`;
    `data_to_bvi_ref (bvlSem_Thunk m v) = bvlSem_Thunk m
-  (data_to_bvi_v v)`;
+    (data_to_bvi_v v)`;
    `data_to_bvi_ref (bvlSem_MutBlock tg fin ls c rs) =
         bvlSem_MutBlock tg fin (MAP data_to_bvi_v ls)
-          (data_to_bvi_v c) (MAP data_to_bvi_v rs)`];;
+            (data_to_bvi_v c) (MAP data_to_bvi_v rs)`];;
+add_simp data_to_bvi_ref_def;;
 
 (* State relation *)
 let bvi_to_dataProof_state_rel_def = new_definition
@@ -172,6 +171,7 @@ let data_to_bvi_result_def = new_definition
         Rval vs -> Rval (MAP data_to_bvi_v vs)
       | (Rerr (Rraise v)) -> Rerr (Rraise (Exn (data_to_bvi_v v)))
       | (Rerr (Rabort err)) -> Rerr (Rabort err)`;;
+add_simp data_to_bvi_result_def;;
 
 (* All the `dataSem$v` values project to `bvlSem$Boolv b` satisfy `isBool` *)
 let isBool_eq = prove
@@ -179,11 +179,11 @@ let isBool_eq = prove
   CHEAT_TAC);;
 
 (* Lifting `data_to_bvi_v` projection to work over `bvlSem$v list` *)
-(* [simp] *)
 let v_to_list_eq = prove
  (`!x. dataSem_v_to_list (data_to_bvi_v x) = OPTION_MAP (MAP
   data_to_bvi_v) (dataSem_v_to_list x)`,
   CHEAT_TAC);;
+add_simp v_to_list_eq;;
 
 (* Special bijection for `data_to_bvi_v` with `dataSem$Number` + `MAP` *)
 let data_to_bvi_number_eq = prove
@@ -212,16 +212,16 @@ let MAP_data_to_bvi_Word64 = prove
   CHEAT_TAC);;
 
 (* `data_to_bvi_v_def` is idempotent over `v_to_bytes` *)
-(* [simp] *)
 let v_to_bytes_eq = prove
  (`!x. dataSem_v_to_bytes (data_to_bvi_v x) = dataSem_v_to_bytes x`,
   CHEAT_TAC);;
+add_simp v_to_bytes_eq;;
 
 (* `data_to_bvi_v_def` is idempotent over `v_to_words` *)
-(* [simp] *)
 let v_to_words_eq = prove
  (`!x. dataSem_v_to_words (data_to_bvi_v x) = dataSem_v_to_words x`,
   CHEAT_TAC);;
+add_simp v_to_words_eq;;
 
 (* isBool simplifications *)
 let isBool_simps = prove
@@ -244,11 +244,11 @@ let var_corr_inter = prove
  (`!t p vs z. var_corr z vs (inter p t) ==> var_corr z vs p`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let get_vars_mk_wf = prove
  (`!vs t z. dataSem_get_vars vs (mk_wf t) = SOME z <=>
   dataSem_get_vars vs t = SOME z`,
   CHEAT_TAC);;
+add_simp get_vars_mk_wf;;
 
 let get_vars_inter = prove
  (`!vs p t z. dataSem_get_vars vs (inter p t) = SOME z ==>
@@ -264,7 +264,6 @@ let var_corr_map = prove
 (* Construction of the pre-image of `data_to_bvi_v`,
    wich in all cases except `Block` is bijective
  *)
-(* [simp] *)
 let data_to_bvi_v_eq = prove
  (`(!v n i. data_to_bvi_v v = dataSem_Number i <=> v = dataSem_Number i)
   /\
@@ -278,13 +277,13 @@ let data_to_bvi_v_eq = prove
      data_to_bvi_v v = dataSem_Block n l <=> (?ts l'. v =
        dataSem_Block ts n l' /\ l = MAP data_to_bvi_v l'))`,
   CHEAT_TAC);;
+add_simp data_to_bvi_v_eq;;
 (*flip LHS equalities*)
 (* HOL4 bvi_to_dataProofScript.sml:351-353: a theorem that HOL4
    states as the value of an ML expression: data_to_bvi_v_eq' *)
 
 (* HOL4 bvi_to_dataProofScript.sml:355-361: ML code, not ported *)
 
-(* [simp] *)
 let data_to_bvi_ref_eq = prove
  (`(!v fl ds. data_to_bvi_ref v = bvlSem_ByteArray fl ds <=> v =
   bvlSem_ByteArray fl ds) /\
@@ -301,6 +300,7 @@ let data_to_bvi_ref_eq = prove
                         c' /\
                       rs = MAP data_to_bvi_v rs'))`,
   CHEAT_TAC);;
+add_simp data_to_bvi_ref_eq;;
 
 (* HOL4 bvi_to_dataProofScript.sml:377-379: a theorem that HOL4
    states as the value of an ML expression: data_to_bvi_ref_eq' *)
@@ -308,12 +308,12 @@ let data_to_bvi_ref_eq = prove
 (* HOL4 bvi_to_dataProofScript.sml:381-385: ML code, not ported *)
 
 (* Construction of the pre-image of `data_to_bvi_result` *)
-(* [simp] *)
 let data_to_bvi_result_eq = prove
  (`!x v.
     data_to_bvi_result x = Rerr (Rraise v) <=> (?z. x = Rerr
       (Rraise z) /\ Exn (data_to_bvi_v z) = v)`,
   CHEAT_TAC);;
+add_simp data_to_bvi_result_eq;;
 
 let data_to_bvi_v_list_to_v_Nil = prove
  (`!z ts.
@@ -465,11 +465,12 @@ let domain_list_to_num_set2 = prove
  (`domain (list_to_num_set xs) = set_of_list xs`,
   CHEAT_TAC);;
 
-(* [simp,local] *)
+(* [local] *)
 let list_insert_list_to_num_set = prove
  (`list_insert xs (list_to_num_set (APPEND (APPEND xs ys) zs)) =
    list_to_num_set (APPEND (APPEND xs ys) zs)`,
   CHEAT_TAC);;
+add_simp list_insert_list_to_num_set;;
 
 (* [local] *)
 let state_rel_do_app_FFI_err = prove
@@ -606,10 +607,10 @@ let compile_part_evaluate = prove
           = res)`),
   CHEAT_TAC);;
 
-(* [simp] *)
 let MAP_FST_compile_prog = prove
  (`!prog. MAP FST (bvi_to_data_compile_prog prog) = MAP FST prog`,
   CHEAT_TAC);;
+add_simp MAP_FST_compile_prog;;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -630,10 +631,10 @@ let compile_prog_evaluate = prove
              r2 = r)`),
   CHEAT_TAC);;
 
-(* [simp] *)
 let FST_compile_part = prove
  (`FST (bvi_to_data_compile_part a) = (FST a)`,
   CHEAT_TAC);;
+add_simp FST_compile_part;;
 
 (* observational semantics *)
 
@@ -655,11 +656,11 @@ let bvi_to_dataProof_compile_prog_semantics = prove
                    prog)) start`),
   CHEAT_TAC);;
 
-(* [simp] *)
 let get_code_labels_iAssign = prove
  (`!a b c d e. dataProps_get_code_labels (iAssign a b c d e) =
   assign_get_code_label b`,
   CHEAT_TAC);;
+add_simp get_code_labels_iAssign;;
 
 (* get_code_labels_compile *)
 let bvi_to_dataProof_get_code_labels_compile = prove
@@ -673,12 +674,8 @@ let compile_prog_good_code_labels = prove
   dataProps_good_code_labels (bvi_to_data_compile_prog p) elabs`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["isException";
    "isResult";
    "parts"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

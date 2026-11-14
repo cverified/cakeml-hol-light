@@ -12,29 +12,26 @@
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "namespaceProps"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "namespaceProps"
   ["ast"; "namespace"];;
 
 let _ = do_list hide_constant ["id"; "path"];;
 
-(* [simp] *)
 let mk_id_11 = prove
  (`!a b c d. mk_id a b = mk_id c d <=> (a = c) /\ (b = d)`,
   CHEAT_TAC);;
+add_simp mk_id_11;;
 
-(* [simp] *)
 let id_to_mods_mk_id = prove
  (`!mn x. id_to_mods (mk_id mn x) = mn`,
   CHEAT_TAC);;
+add_simp id_to_mods_mk_id;;
 
-(* [simp] *)
 let id_to_namemods_mk_id = prove
  (`!mn x. id_to_n (mk_id mn x) = x`,
   CHEAT_TAC);;
+add_simp id_to_namemods_mk_id;;
 
 let mk_id_surj = prove
  (`!id'. ?p n. id' = mk_id p n`,
@@ -70,60 +67,60 @@ let nsAll2_mono = prove
 
 (* ---------- Automatic simps involving empty envs -------------- *)
 
-(* [simp] *)
 let nsLookup_nsEmpty = prove
  (`!id'. nsLookup nsEmpty id' = NONE`,
   CHEAT_TAC);;
+add_simp nsLookup_nsEmpty;;
 
-(* [simp] *)
 let nsLookupMod_nsEmpty = prove
  (`!x y. nsLookupMod nsEmpty (CONS x y) = NONE`,
   CHEAT_TAC);;
+add_simp nsLookupMod_nsEmpty;;
 
-(* [simp] *)
 let nsAppend_nsEmpty = prove
  (`!env. nsAppend env nsEmpty = env /\ nsAppend nsEmpty env = env`,
   CHEAT_TAC);;
+add_simp nsAppend_nsEmpty;;
 
-(* [simp] *)
 let alist_to_ns_nil = prove
  (`alist_to_ns [] = nsEmpty`,
   CHEAT_TAC);;
+add_simp alist_to_ns_nil;;
 
-(* [simp] *)
 let nsSub_nsEmpty = prove
  (`!r env. nsSub r nsEmpty env`,
   CHEAT_TAC);;
+add_simp nsSub_nsEmpty;;
 
-(* [simp] *)
 let nsAll_nsEmpty = prove
  (`!f. nsAll f nsEmpty`,
   CHEAT_TAC);;
+add_simp nsAll_nsEmpty;;
 
-(* [simp] *)
 let nsAll2_nsEmpty = prove
  (`!f. nsAll2 f nsEmpty nsEmpty`,
   CHEAT_TAC);;
+add_simp nsAll2_nsEmpty;;
 
-(* [simp] *)
 let nsDom_nsEmpty = prove
  (`nsDom nsEmpty = {}`,
   CHEAT_TAC);;
+add_simp nsDom_nsEmpty;;
 
-(* [simp] *)
 let nsDomMod_nsEmpty = prove
  (`nsDomMod nsEmpty = {[]}`,
   CHEAT_TAC);;
+add_simp nsDomMod_nsEmpty;;
 
-(* [simp] *)
 let nsMap_nsEmpty = prove
  (`!f. nsMap f nsEmpty = nsEmpty`,
   CHEAT_TAC);;
+add_simp nsMap_nsEmpty;;
 
-(* [simp] *)
 let nsBind_nsEmpty = prove
  (`!x y env. ~(nsBind x y env = nsEmpty)`,
   CHEAT_TAC);;
+add_simp nsBind_nsEmpty;;
 
 let nsLookup_Bind_v_some = prove
  (`nsLookup (Bind v []) k = SOME x <=>
@@ -132,104 +129,104 @@ let nsLookup_Bind_v_some = prove
 
 (* ------------- Other simple automatic theorems --------- *)
 
-(* [simp] *)
 let alist_to_ns_cons = prove
  (`!k v l. alist_to_ns (CONS (k,v) l) = nsBind k v (alist_to_ns l)`,
   CHEAT_TAC);;
+add_simp alist_to_ns_cons;;
 
-(* [simp] *)
 let nsAppend_nsBind = prove
  (`!k v e1 e2. nsAppend (nsBind k v e1) e2 = nsBind k v (nsAppend e1
   e2)`,
   CHEAT_TAC);;
+add_simp nsAppend_nsBind;;
 
-(* [simp] *)
 let nsAppend_alist_to_ns = prove
  (`!al1 al2. nsAppend (alist_to_ns al1) (alist_to_ns al2) =
   alist_to_ns (APPEND al1 al2)`,
   CHEAT_TAC);;
+add_simp nsAppend_alist_to_ns;;
 
-(* [simp] *)
 let nsAppend_assoc = prove
  (`!e1 e2 e3. nsAppend e1 (nsAppend e2 e3) = nsAppend (nsAppend e1 e2)
   e3`,
   CHEAT_TAC);;
+add_simp nsAppend_assoc;;
 
-(* [simp] *)
 let nsLookup_nsBind = prove
  (`(!n v e. nsLookup (nsBind n v e) (Short n) = SOME v) /\
    (!n n' v e. ~(n = Short n') ==> nsLookup (nsBind n' v e) n =
      nsLookup e n)`,
   CHEAT_TAC);;
+add_simp nsLookup_nsBind;;
 
-(* [simp] *)
 let nsAppend_nsSing = prove
  (`!n x e. nsAppend (nsSing n x) e = nsBind n x e`,
   CHEAT_TAC);;
+add_simp nsAppend_nsSing;;
 
-(* [simp] *)
 let nsLookup_nsSing = prove
  (`!n v id'. nsLookup (nsSing n v) id' = (if id' = Short n then SOME v
   else NONE)`,
   CHEAT_TAC);;
+add_simp nsLookup_nsSing;;
 
-(* [simp] *)
 let nsAll_nsSing = prove
  (`!R n v. nsAll R (nsSing n v) <=> R (Short n) v`,
   CHEAT_TAC);;
+add_simp nsAll_nsSing;;
 
-(* [simp] *)
 let nsAll2_nsSing = prove
  (`!R n1 v1 n2 v2. nsAll2 R (nsSing n1 v1) (nsSing n2 v2) <=> n1 = n2
   /\ R (Short n1) v1 v2`,
   CHEAT_TAC);;
+add_simp nsAll2_nsSing;;
 
-(* [simp] *)
 let nsMap_nsSing = prove
  (`!f x v. nsMap f (nsSing x v) = nsSing x (f v)`,
   CHEAT_TAC);;
+add_simp nsMap_nsSing;;
 
-(* [simp] *)
 let nsLookupMod_nsSing = prove
  (`!n1 n2 v. nsLookupMod (nsSing n2 v) n1 = (if n1 = [] then SOME
   (nsSing n2 v) else NONE)`,
   CHEAT_TAC);;
+add_simp nsLookupMod_nsSing;;
 
-(* [simp] *)
 let nsBind_11 = prove
  (`!x y n x' y' n'. nsBind x y n = nsBind x' y' n' <=> x = x' /\ y =
   y' /\ n = n'`,
   CHEAT_TAC);;
+add_simp nsBind_11;;
 
-(* [simp] *)
 let nsDom_nsBind = prove
  (`!x y n. nsDom (nsBind x y n) = Short x INSERT nsDom n`,
   CHEAT_TAC);;
+add_simp nsDom_nsBind;;
 
-(* [simp] *)
 let nsDom_nsSing = prove
  (`!x y. nsDom (nsSing x y) = {Short x}`,
   CHEAT_TAC);;
+add_simp nsDom_nsSing;;
 
-(* [simp] *)
 let nsDomMod_nsBind = prove
  (`!x y n. nsDomMod (nsBind x y n) = nsDomMod n`,
   CHEAT_TAC);;
+add_simp nsDomMod_nsBind;;
 
-(* [simp] *)
 let nsDomMod_nsSing = prove
  (`!x y. nsDomMod (nsSing x y) = {[]}`,
   CHEAT_TAC);;
+add_simp nsDomMod_nsSing;;
 
-(* [simp] *)
 let nsLookupMod_alist_to_ns = prove
  (`!l x y. nsLookupMod (alist_to_ns l) (CONS x y) = NONE`,
   CHEAT_TAC);;
+add_simp nsLookupMod_alist_to_ns;;
 
-(* [simp] *)
 let alist_to_ns_11 = prove
  (`!l1 l2. alist_to_ns l1 = alist_to_ns l2 <=> l1 = l2`,
   CHEAT_TAC);;
+add_simp alist_to_ns_11;;
 
 (* -------------- nsLookup ------------------ *)
 
@@ -252,10 +249,10 @@ let nsLookup_alist_to_ns_none = prove
   x' ==> ALOOKUP l x' = NONE)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let nsDom_alist_to_ns = prove
  (`!l. nsDom (alist_to_ns l) = set_of_list (MAP (Short o FST) l)`,
   CHEAT_TAC);;
+add_simp nsDom_alist_to_ns;;
 
 (* -------------- nsLift --------------- *)
 
@@ -277,7 +274,6 @@ let nsLookupMod_nsLift = prove
         NONE))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let nsLookup_nsLift_append = prove
  (`!m ns ns' m' id' n.
    nsLookup (nsAppend (nsLift m ns) ns') (Short n) = nsLookup ns'
@@ -286,6 +282,7 @@ let nsLookup_nsLift_append = prove
      (if m = m' then nsLookup ns id' else nsLookup ns' (Long m'
        id'))`,
   CHEAT_TAC);;
+add_simp nsLookup_nsLift_append;;
 
 (* --------------- nsAppend ------------- *)
 
@@ -331,18 +328,18 @@ let nsLookupMod_nsAppend_some = prove
         e1 p1 = NONE))))`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let nsDom_nsAppend_alist = prove
  (`!x y. nsDom (nsAppend (alist_to_ns x) y) = set_of_list (MAP (Short
   o FST) x) UNION nsDom y`,
   CHEAT_TAC);;
+add_simp nsDom_nsAppend_alist;;
 
 (* -------------- nsAll ---------------- *)
 
-(* [simp] *)
 let eALL_T = prove
  (`!e. nsAll (\n x. T) e`,
   CHEAT_TAC);;
+add_simp eALL_T;;
 
 let nsLookup_nsAll = prove
  (`!env x P v. nsAll P env /\ nsLookup env x = SOME v ==> P x v`,
@@ -365,10 +362,10 @@ let nsAll_alist_to_ns = prove
  (`!R l. ALL (\(n,v). R (Short n) v) l ==> nsAll R (alist_to_ns l)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let nsAll_nsLift = prove
  (`!R mn e. nsAll R (nsLift mn e) <=> nsAll (\id'. R (Long mn id')) e`,
   CHEAT_TAC);;
+add_simp nsAll_nsLift;;
 
 let nsAll_nsAppend_left = prove
  (`!P n1 n2. nsAll P (nsAppend n1 n2) ==> nsAll P n1`,
@@ -410,7 +407,7 @@ let alist_rel_restr_def,alist_rel_restr_ind = define_rec
    `alist_rel_restr R l1 l2 (CONS k1 keys) <=>
         (match ALOOKUP l1 k1 with NONE -> F | SOME v1 ->
           (match ALOOKUP l2 k1 with NONE -> F | SOME v2 -> R k1
-            v1 v2 /\ alist_rel_restr R l1 l2 keys))`];;
+              v1 v2 /\ alist_rel_restr R l1 l2 keys))`];;
 
 let alist_rel_restr_thm = prove
  (`!R e1 e2 keys.
@@ -519,28 +516,28 @@ let nsAll2_alist_to_ns = prove
   ==> nsAll2 R (alist_to_ns l1) (alist_to_ns l2)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let nsAll2_nsLift = prove
  (`!R mn e1 e2. nsAll2 R (nsLift mn e1) (nsLift mn e2) <=> nsAll2
   (\id'. R (Long mn id')) e1 e2`,
   CHEAT_TAC);;
+add_simp nsAll2_nsLift;;
 
 (* -------------- nsMap --------------- *)
 
-(* [simp] *)
 let nsMap_alist_to_ns = prove
  (`!f l. nsMap f (alist_to_ns l) = alist_to_ns (MAP (\(k,v). (k,f v))
   l)`,
   CHEAT_TAC);;
+add_simp nsMap_alist_to_ns;;
 
 let nsMap_compose = prove
  (`!g e f. nsMap f (nsMap g e) = nsMap (f o g) e`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let nsMap_I = prove
  (`!ns. nsMap I ns = ns`,
   CHEAT_TAC);;
+add_simp nsMap_I;;
 
 let nsMap_nsAppend = prove
  (`!n1 n2 f. nsMap f (nsAppend n1 n2) = nsAppend (nsMap f n1) (nsMap f
@@ -575,10 +572,10 @@ let nsLookup_nsDom = prove
  (`!x n. x IN nsDom n <=> (?v. nsLookup n x = SOME v)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let nsDomMod_alist_to_ns = prove
  (`!l. nsDomMod (alist_to_ns l) = {[]}`,
   CHEAT_TAC);;
+add_simp nsDomMod_alist_to_ns;;
 
 (* [local] *)
 let lemma = prove
@@ -614,11 +611,7 @@ let nsDomMod_nsAppend_flat = prove
   n2`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id";
    "path"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

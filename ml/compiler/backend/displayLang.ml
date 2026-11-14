@@ -19,17 +19,16 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/jsonLang.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "displayLang"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "displayLang"
   ["backend_common"; "jsonLang"; "mlint"; "mlsexp"];;
 
 let sExp_INDUCT,sExp_RECURSION = define_datatype
-  "sExp = displayLang_Item (tra option) (mlstring) (sExp list) | \
-   displayLang_String (mlstring) | displayLang_Tuple (sExp list) | \
-   displayLang_List (sExp list)";;
+  "sExp =
+     displayLang_Item (tra option) mlstring (sExp list)
+   | displayLang_String mlstring
+   | displayLang_Tuple (sExp list)
+   | displayLang_List (sExp list)";;
 
 (* HOL4 displayLangScript.sml:21: ML code, not ported *)
 
@@ -37,19 +36,19 @@ let sExp_INDUCT,sExp_RECURSION = define_datatype
 let trace_to_json_def,trace_to_json_ind = define_rec
   [`trace_to_json (backend_common_Cons tra num') =
         jsonLang_Object [((implode "name"),displayLang_String
-          (implode "Cons"));
+            (implode "Cons"));
           ((implode "num"),displayLang_String (mlint_toString
-            num'));
+              num'));
           ((implode "trace"),trace_to_json tra)]`;
    `trace_to_json (backend_common_Union tra1 tra2:tra) =
         jsonLang_Object [((implode "name"),displayLang_String
-          (implode "Union"));
+            (implode "Union"));
           ((implode "trace1"),trace_to_json tra1);
           ((implode "trace2"),trace_to_json tra2)]`;
    `trace_to_json (backend_common_SourceLoc sr scc er ec) =
         (let arr = MAP jsonLang_Int (MAP (&) [sr; scc; er; ec]) in
           jsonLang_Object [((implode "name"),displayLang_String
-            (implode "SourcePos"));
+              (implode "SourcePos"));
             ((implode "pos"),jsonLang_Array arr)])`;
    `// TODO: cancel entire trace when None, or verify that None will always be at
     // * the top level of a trace.
@@ -77,22 +76,18 @@ let display_to_json_def,display_to_json_ind = define_shaped_rec
     (display_to_json (displayLang_List es) = jsonLang_Array (MAP
       display_to_json es))`];;
 
-let display_to_str_tree_def,display_to_str_tree_ind = define_mutual_rec
+let display_to_str_tree_def,display_to_str_tree_ind = define_rec
   [`display_to_str_tree (displayLang_Item tra name es) =
          mlsexp_Trees (CONS (mlsexp_Str name)
-           (display_to_str_tree_list es))`;
+             (display_to_str_tree_list es))`;
    `display_to_str_tree (displayLang_String s:sExp) = mlsexp_Str s`;
    `display_to_str_tree (displayLang_Tuple es:sExp) =
          (if NULL es then mlsexp_Str (implode "()") else
-           mlsexp_Trees (display_to_str_tree_list es))`;
+             mlsexp_Trees (display_to_str_tree_list es))`;
    `display_to_str_tree (displayLang_List es:sExp) =
          (if NULL es then mlsexp_Str (implode "()") else
-           mlsexp_Trees (MAP mlsexp_GrabLine
-           (display_to_str_tree_list es)))`;
+             mlsexp_Trees (MAP mlsexp_GrabLine
+             (display_to_str_tree_list es)))`;
    `display_to_str_tree_list [] = []`;
    `display_to_str_tree_list (CONS x xs) = CONS
-  (display_to_str_tree x) (display_to_str_tree_list xs)`];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;
+    (display_to_str_tree x) (display_to_str_tree_list xs)`];;

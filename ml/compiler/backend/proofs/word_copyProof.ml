@@ -18,11 +18,8 @@ needs "compiler/backend/word_copy.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "word_copyProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "word_copyProof"
   ["wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_copy"];;
 
 let _ = do_list hide_constant ["addr"; "val"];;
@@ -216,7 +213,6 @@ let CPstate_models_def = new_definition
      FLOOKUP (wordSem_state_store S) s = sptree_lookup vrep
        (wordSem_state_locals S))`;;
 
-(* [simp] *)
 let CPstate_models_with_const = prove
  (`CPstate_models cs (wordSem_state_locals_size_fupd (K ls) s) =
   (CPstate_models cs s) /\
@@ -260,6 +256,7 @@ let CPstate_models_with_const = prove
    CPstate_models cs (state_ffi_fupd (K ffi) s) = CPstate_models cs
      s`,
   CHEAT_TAC);;
+add_simp CPstate_models_with_const;;
 
 let CPstate_model = prove
  (`CPstate_models cs st ==>
@@ -344,11 +341,11 @@ let merge_eqs_model2 = prove
    CPstate_models (merge_eqs cs1 cs2) st`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let set_eq_store_to_eq = prove
  (`copy_state_store_to_eq
      (set_eq cs t s) = copy_state_store_to_eq cs`,
   CHEAT_TAC);;
+add_simp set_eq_store_to_eq;;
 
 let lookup_eq_remove_eq_t = prove
  (`CPstate_inv cs /\
@@ -609,10 +606,10 @@ let lookup_store_eq_SOME = prove
      (wordSem_state_locals st)`,
   CHEAT_TAC);;
 
-(* [simp] *)
 let lookup_remove_eq = prove
  (`sptree_lookup n (copy_state_to_eq (remove_eq cs n)) = NONE`,
   CHEAT_TAC);;
+add_simp lookup_remove_eq;;
 
 let lookup_eq_set_store_eq = prove
  (`CPstate_inv cs /\
@@ -697,11 +694,7 @@ let evaluate_copy_prop = prove
      wordSem_evaluate (copy_prop e,s) = wordSem_evaluate (e,s)`,
   CHEAT_TAC);;
 
-(* and the names that this file reads as variables are constants again *)
+(* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["addr";
    "val"];;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;

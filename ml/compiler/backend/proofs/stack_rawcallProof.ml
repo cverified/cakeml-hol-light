@@ -17,11 +17,8 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_rawcall.ml";;
 needs "lib/sptree.ml";;
 
-(* the theories whose names the Ancestors blocks of the source
-   bring, which are the ones that its statements read: the
-   overloads of every other theory come out of the interface
-   while this file loads *)
-let _ = hol4_ancestors "stack_rawcallProof"
+(* the theory of this file, and the ones its statements read *)
+let _ = cake_theory "stack_rawcallProof"
   ["labProps"; "stackLang"; "stackProps"; "stackSem"; "stack_rawcall";
    "wordSem"];;
 
@@ -231,7 +228,3 @@ let stack_get_handler_labels_comp = prove
      stack_get_handler_labels k (comp_top i p) =
      stack_get_handler_labels k p`,
   CHEAT_TAC);;
-
-(* and the overloads that this file cannot see are back in the
-   interface *)
-let _ = unhide_overloads ();;
