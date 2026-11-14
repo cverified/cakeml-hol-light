@@ -19,3 +19,4 @@ lightcake-src/
 tmp/
 tools/deps.json
 tools/__pycache__/
+compare/
