@@ -387,6 +387,14 @@ SIZE_OF = {
   'dataSem': {'prog_size': 'dataLang'},
 }
 
+# the constructors of a wordLang program and of the expressions
+# in it, for a definition that builds one and nothing else
+WORDLANG_PROG = dict((c, 'wordLang') for c in
+                     ['Skip', 'Assign', 'Seq', 'If', 'Call', 'Var',
+                      'Op', 'Const', 'Lookup', 'Load', 'Shift',
+                      'Move', 'Get', 'Set', 'Store', 'Raise',
+                      'Return', 'Tick', 'MustTerminate'])
+
 # the constructors of a stackLang program, for a definition that
 # reads another language and builds one
 STACKLANG_PROG = dict((c, 'stackLang') for c in
@@ -452,6 +460,10 @@ CON_BODY = {
   ('word_to_stack', 'wInst_def'): {'Inst': 'stackLang'},
   ('word_to_stack', 'comp_def'): STACKLANG_PROG,
   ('word_to_stack', 'comp_sing_def'): STACKLANG_PROG,
+  # word_bignum's compile reads its mini language and builds a
+  # wordLang program, and the two share Skip, Seq, If, Call and
+  # the rest
+  ('word_bignum', 'compile_def'): WORDLANG_PROG,
   # line_ok_light asks asm_ok of the asm instruction that a
   # labelled one stands for, so the Jump, the JumpCmp, the Call
   # and the Loc of its bodies are asm's
@@ -1632,14 +1644,6 @@ ONE_QUOTATION = set([
 # three of the names of as binops
 OPW = dict((c, 'backend_common') for c in
            ['Andw', 'Orw', 'Xor', 'Add', 'Sub'])
-
-# the constructors of a wordLang program and of the expressions
-# in it, for a definition that builds one and nothing else
-WORDLANG_PROG = dict((c, 'wordLang') for c in
-                     ['Skip', 'Assign', 'Seq', 'If', 'Call', 'Var',
-                      'Op', 'Const', 'Lookup', 'Load', 'Shift',
-                      'Move', 'Get', 'Set', 'Store', 'Raise',
-                      'Return', 'Tick', 'MustTerminate'])
 
 # the constructors of a bvi expression and of a bvl one, for the
 # definitions that build nothing else
