@@ -509,6 +509,11 @@ FIELD_VAR_DEF = {
   # bvl_to_bvi takes the refs, the clock and the ffi of a state of
   # bvlSem and puts them in one of bviSem
   ('bviSem', 'bvl_to_bvi_def'): {'s': 'bvlSem_state'},
+  # the envs that compile_decs carries is the generation store,
+  # and source_to_flat has an environment_store as well
+  ('source_to_flat', 'compile_decs_def'):
+    {'envs': 'environment_generation_store',
+     "envs'": 'environment_generation_store'},
   # and the x of these is the state of bviSem that bvi_to_bvl
   # reads, where the field on the left of the equation is the one
   # of the state of bvlSem that it gives
