@@ -3579,6 +3579,11 @@ class Porter:
       # with a match: the run of clauses of that constant becomes
       # one entry of the list, whose text match_form writes
       groups = []
+      # which clauses of the source each entry of the list covers,
+      # so that the grouping of clause_clash can be read as a
+      # grouping of the entries (a match entry covers a run of
+      # them)
+      covers = []
       i = 0
       while i < len(all):
         h = self.clause_head(all[i])
@@ -3590,9 +3595,11 @@ class Porter:
           try: mt = self.match_form(body, only=h)
           finally: self.ctx.vars = was
           groups.append((all[i], mt))
+          covers.append(list(range(i, j + 1)))
           i = j + 1
         else:
           groups.append((all[i], None))
+          covers.append([i])
           i += 1
       cls = []
       # a comment with a quote in it cannot stand in the
@@ -3680,11 +3687,30 @@ class Porter:
       return '`' + out + '`'
     if self.clause_list and self.clause_split is None:
       groups2 = [[i] for i in range(len(cls))]
+    elif self.clause_list:
+      # the grouping of the clauses, as a grouping of the entries:
+      # an entry that covers clauses of two groups joins them
+      ent = {}
+      for ei, idxs in enumerate(covers):
+        for i in idxs: ent[i] = ei
+      pos = {}
+      for gi, g in enumerate(self.clause_split):
+        for i in g:
+          e = ent.get(i)
+          if e is None: continue
+          pos.setdefault(e, []).append(gi)
+      merge = {}
+      def root(x):
+        while merge.get(x, x) != x: x = merge[x]
+        return x
+      for gs in pos.values():
+        for gi in gs[1:]: merge[root(gi)] = root(gs[0])
+      out = {}
+      for e, gs in sorted(pos.items()):
+        out.setdefault(root(gs[0]), []).append(e)
+      groups2 = [sorted(v) for _, v in sorted(out.items())]
     else:
-      groups2 = (self.clause_split
-                 if self.clause_list and
-                    max(max(g) for g in self.clause_split) < len(cls)
-                 else [list(range(len(cls)))])
+      groups2 = [list(range(len(cls)))]
     if len(groups2) < 2:
       self.clause_list = False
       return quot(groups2[0])

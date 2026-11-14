@@ -398,43 +398,43 @@ let eq_result_INDUCT,eq_result_RECURSION = define_datatype
      Eq_val bool
    | Eq_type_error";;
 
+(* the clauses in two quotations: l1 is lit and num; l2 is lit and num; vs1
+   is (v list) and (_)list; vs2 is (v list) and (_)list, which one quotation
+   cannot typecheck *)
 (* the clauses of do_eq_list overlap -- the last one says Eq_val F
    of the two lists that the first two have already given a value
    -- and HOL4 takes the first that matches, so the port writes
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let do_eq_def,do_eq_ind = assume_definition_rec
+let do_eq_def,do_eq_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  `(semanticPrimitives_do_eq (semanticPrimitives_Litv l1)
+  [`(semanticPrimitives_do_eq (semanticPrimitives_Litv l1)
     (semanticPrimitives_Litv l2) =
       (if lit_same_type l1 l2 then Eq_val (l1 = l2) else Eq_type_error)) /\
-   (semanticPrimitives_do_eq (semanticPrimitives_Loc b1 l1)
-    (semanticPrimitives_Loc b2 l2) =
-      (if b1 /\ b2 then Eq_val (l1 = l2) else Eq_type_error)) /\
-   (semanticPrimitives_do_eq (semanticPrimitives_Conv cn1 vs1)
+    (semanticPrimitives_do_eq (semanticPrimitives_Conv cn1 vs1)
     (semanticPrimitives_Conv cn2 vs2) =
       (if cn1 = cn2 /\ LENGTH vs1 = LENGTH vs2 then
           semanticPrimitives_do_eq_list vs1 vs2
        else if semanticPrimitives_ctor_same_type cn1 cn2 then Eq_val F
        else Eq_type_error)) /\
-   (semanticPrimitives_do_eq (semanticPrimitives_Vectorv vs1)
+    (semanticPrimitives_do_eq (semanticPrimitives_Vectorv vs1)
     (semanticPrimitives_Vectorv vs2) =
       (if LENGTH vs1 = LENGTH vs2 then semanticPrimitives_do_eq_list
           vs1 vs2 else Eq_val F)) /\
-   (semanticPrimitives_do_eq (semanticPrimitives_Closure v0 v3 v4)
+    (semanticPrimitives_do_eq (semanticPrimitives_Closure v0 v3 v4)
     (semanticPrimitives_Closure v5 v6 v7) = Eq_val T) /\
-   (semanticPrimitives_do_eq (semanticPrimitives_Closure v8 v9 v10)
+    (semanticPrimitives_do_eq (semanticPrimitives_Closure v8 v9 v10)
     (semanticPrimitives_Recclosure v11 v12 v13) = Eq_val T) /\
-   (semanticPrimitives_do_eq (semanticPrimitives_Recclosure v14 v15 v16)
+    (semanticPrimitives_do_eq (semanticPrimitives_Recclosure v14 v15 v16)
     (semanticPrimitives_Closure v17 v18 v19) = Eq_val T) /\
-   (semanticPrimitives_do_eq (semanticPrimitives_Recclosure v20 v21 v22)
+    (semanticPrimitives_do_eq (semanticPrimitives_Recclosure v20 v21 v22)
     (semanticPrimitives_Recclosure v23 v24 v25) = Eq_val T) /\
-   (semanticPrimitives_do_eq (semanticPrimitives_Env v26 (gen1,id1))
+    (semanticPrimitives_do_eq (semanticPrimitives_Env v26 (gen1,id1))
     (semanticPrimitives_Env v27 (gen2,id2)) =
       Eq_val (gen1 = gen2 /\ id1 = id2)) /\
-   (semanticPrimitives_do_eq _ _ = Eq_type_error) /\
-   (semanticPrimitives_do_eq_list x1 x2 =
+    (semanticPrimitives_do_eq _ _ = Eq_type_error) /\
+    (semanticPrimitives_do_eq_list x1 x2 =
     match (x1,x2) with
       ([],[]) -> Eq_val T
     | (CONS v1 vs1,CONS v2 vs2) ->
@@ -442,7 +442,10 @@ let do_eq_def,do_eq_ind = assume_definition_rec
          Eq_val r -> if ~r then Eq_val F else semanticPrimitives_do_eq_list
              vs1 vs2
        | Eq_type_error -> Eq_type_error)
-    | (_,_) -> Eq_val F)`;;
+    | (_,_) -> Eq_val F)`;
+   `semanticPrimitives_do_eq (semanticPrimitives_Loc b1 l1)
+    (semanticPrimitives_Loc b2 l2) =
+      (if b1 /\ b2 then Eq_val (l1 = l2) else Eq_type_error)`];;
 
 (* Do an application *)
 let do_opapp_def = new_definition

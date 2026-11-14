@@ -108,39 +108,40 @@ let flatSem_ctor_same_type_def = new_definition
      | (NONE,NONE) -> T
      | (_,_) -> F`;;
 
+(* the clauses in two quotations: l1 is lit and num; l2 is lit and num; vs1
+   is (v list) and (_)list; vs2 is (v list) and (_)list, which one quotation
+   cannot typecheck *)
 (* the clauses of do_eq_list overlap -- the last one says Eq_val F
    of the two lists that the first two have already given a value
    -- and HOL4 takes the first that matches, so the port writes
    them as a match, which takes the first arm (see ml/lib/define.ml,
    "A definition whose clauses overlap").  As a list of clauses they
    would be inconsistent. *)
-let flatSem_do_eq_def,flatSem_do_eq_ind = assume_definition_rec
+let flatSem_do_eq_def,flatSem_do_eq_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  `(flatSem_do_eq (flatSem_Litv l1) (flatSem_Litv l2) =
+  [`(flatSem_do_eq (flatSem_Litv l1) (flatSem_Litv l2) =
        (if lit_same_type l1 l2 then Eq_val (l1 = l2)
        else Eq_type_error)) /\
-   (flatSem_do_eq (flatSem_Loc b1 l1) (flatSem_Loc b2 l2) =
-        (if b1 /\ b2 then Eq_val (l1 = l2) else Eq_type_error)) /\
-   (flatSem_do_eq (flatSem_Conv cn1 vs1) (flatSem_Conv cn2 vs2) =
+    (flatSem_do_eq (flatSem_Conv cn1 vs1) (flatSem_Conv cn2 vs2) =
        if (cn1 = cn2) /\ (LENGTH vs1 = LENGTH vs2) then
          flatSem_do_eq_list vs1 vs2
        else if semanticPrimitives_ctor_same_type cn1 cn2 then
          Eq_val F
        else Eq_type_error) /\
-   (flatSem_do_eq (flatSem_Vectorv vs1) (flatSem_Vectorv vs2) =
+    (flatSem_do_eq (flatSem_Vectorv vs1) (flatSem_Vectorv vs2) =
        if LENGTH vs1 = LENGTH vs2 then
          flatSem_do_eq_list vs1 vs2
        else Eq_val F) /\
-   (flatSem_do_eq (flatSem_Closure _ _ _) (flatSem_Closure _ _ _) = Eq_val
+    (flatSem_do_eq (flatSem_Closure _ _ _) (flatSem_Closure _ _ _) = Eq_val
     T) /\
-   (flatSem_do_eq (flatSem_Closure _ _ _) (flatSem_Recclosure _ _ _) =
+    (flatSem_do_eq (flatSem_Closure _ _ _) (flatSem_Recclosure _ _ _) =
     Eq_val T) /\
-   (flatSem_do_eq (flatSem_Recclosure _ _ _) (flatSem_Closure _ _ _) =
+    (flatSem_do_eq (flatSem_Recclosure _ _ _) (flatSem_Closure _ _ _) =
     Eq_val T) /\
-   (flatSem_do_eq (flatSem_Recclosure _ _ _) (flatSem_Recclosure _ _ _) =
+    (flatSem_do_eq (flatSem_Recclosure _ _ _) (flatSem_Recclosure _ _ _) =
     Eq_val T) /\
-   (flatSem_do_eq _ _ = Eq_type_error) /\
-   (flatSem_do_eq_list x1 x2 =
+    (flatSem_do_eq _ _ = Eq_type_error) /\
+    (flatSem_do_eq_list x1 x2 =
       match (x1,x2) with
         ([],[]) -> Eq_val T
       | (CONS v1 vs1,CONS v2 vs2) ->
@@ -149,7 +150,9 @@ let flatSem_do_eq_def,flatSem_do_eq_ind = assume_definition_rec
           if r then
             flatSem_do_eq_list vs1 vs2
           else Eq_val F)
-      | (_,_) -> Eq_val F)`;;
+      | (_,_) -> Eq_val F)`;
+   `flatSem_do_eq (flatSem_Loc b1 l1) (flatSem_Loc b2 l2) =
+        (if b1 /\ b2 then Eq_val (l1 = l2) else Eq_type_error)`];;
 
 (* Do an application *)
 let flatSem_do_opapp_def = new_definition

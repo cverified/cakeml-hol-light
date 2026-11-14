@@ -147,7 +147,7 @@ semanticPrimitives	ML code skipped: val _ = set_fixity "+++" (Infixl 480);
 semanticPrimitives	line 26 is 87 characters
 semanticPrimitives	line 44 is 86 characters
 semanticPrimitives	line 375 is 80 characters
-semanticPrimitives	line 760 is 80 characters
+semanticPrimitives	line 763 is 80 characters
 ml_monadBase	ML code skipped: DefnBase.export_cong "st_ex_ignore_bind_CONG";
 ml_monadBase	ML code skipped: DefnBase.export_cong "st_ex_bind_CONG";
 ml_monadBase	ML code skipped: val _ = add_infix ("otherwise", 400, HOLgrammars.RIGHT);
