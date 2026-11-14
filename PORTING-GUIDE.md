@@ -4522,20 +4522,21 @@ INT_ARITH_TAC
 
 ## 98. The name a term is printed with is not its constant
 
-`hd_is` tests the *constant's* name, and three of the names this
-file prints are not constant names at all:
+`hd_is` tests the *constant's* name, and a name a term is printed
+with need not be one.  `FAPPLY f x` prints that way and the
+constant is `fmap_apply`, so `hd_is "FAPPLY" gl` is false of
+every goal, and a dispatch over the parts of an invariant that
+asks it takes the wrong arm without a word (the `tryfind` of a
+`FIRST_ASSUM` at the end of the chain is all that is seen).
+`fst (dest_const (fst (strip_comb t)))` in the REPL settles what
+the name is.
 
-| printed      | constant       |
-|--------------|----------------|
-| `EVERY2`     | `ALL2`         |
-| `FAPPLY f x` | `fmap_apply`   |
-| `LIST_REL`   | `ALL2`         |
-
-So `hd_is "EVERY2" gl` is false of every goal, and a dispatch
-over the parts of an invariant that asks it takes the wrong arm
-without a word (the `tryfind` of a `FIRST_ASSUM` at the end of
-the chain is all that is seen).  `fst (dest_const (fst (strip_comb
-t)))` in the REPL settles what the name is.
+This used to bite over `EVERY2` and `LIST_REL` as well, which
+were `ALL2` under an `override_interface`.  They are gone: the
+port writes the HOL Light name (entry 117), so what `ALL2` prints
+as is `ALL2`.  `overload_interface` is still what makes `FAPPLY`
+print, because `<` and `FAPPLY` really do stand for two constants
+each.
 
 The same for a term that is *built*: `` mk_icomb (`FAPPLY`, fm) ``
 fails with `type_match`, because a bare `` `FAPPLY` `` is a
@@ -5346,3 +5347,75 @@ scratch session and never in a file.  `tools/bin/strategies`
 harvests the same thing from a whole run, which is where
 `tools/strategies.py` comes from and how `tools/port.py` knows
 what to write.
+
+## 117. The shape is HOL4's and the vocabulary is HOL Light's
+
+A file of the port is read next to its HOL4 source, and it is
+also read as a HOL Light development.  Those two pull against
+each other, and the line between them is: the **shape** follows
+HOL4 -- the same blocks in the same order under the same names,
+with the source's comments in place -- and the **vocabulary**
+follows HOL Light.
+
+So where the two systems have one notion under two names, a
+statement of the port writes HOL Light's:
+
+| HOL4 | the port |
+| --- | --- |
+| `STRCAT`, `++` | `APPEND` |
+| `STRING`, `::` | `CONS` |
+| `EMPTYSTRING` | `NIL` |
+| `STRLEN` | `LENGTH` |
+| `EVERY`, `EXISTS` | `ALL`, `EX` |
+| `EVERY2`, `LIST_REL` | `ALL2` |
+| `FRONT` | `BUTLAST` |
+| `CONCAT` | `FLAT` |
+| `GENLIST` | `list_of_seq` |
+| `LIST_TO_SET`, `set` | `set_of_list` |
+| `BIGUNION` | `UNIONS` |
+| `FOLDR f e l` | `ITLIST f l e` |
+| `FUNPOW f n x` | `ITER n f x` |
+| `LEAST` | `minimal` |
+| `Num` | `num_of_int` |
+| `flip` | `C` |
+| `measure` | `MEASURE` |
+| `INT_MINw`, `INT_MAXw`, `UINT_MAXw` | `word_L`, `word_H`, `word_T` |
+
+`NAME_MAP` in `tools/overrides.py` is the dictionary; the
+translation applies it to every quotation, and a hand-written
+proof and a hand-written lemma of `ml/lib/` follow it too.  What
+is *not* in it keeps the HOL4 name, which is all of CakeML's own
+vocabulary and most of the library layer.
+
+Three things follow from this and each has cost a round:
+
+- **A theorem's name is not its statement.**  Names follow HOL4,
+  so `EVERY2_LUPDATE_same`, `implode_STRCAT` and
+  `EVERY2_IMP_EVERY` keep those names while their statements say
+  `ALL2` and `APPEND`.  Searching the port for `EVERY2` finds
+  names and comments, not terms.
+- **Notation goes the same way.**  HOL Light has no `::` and no
+  `++` -- its `++` is `realax`'s `nadd_add`, which `realax.ml`
+  removes again -- so the port has neither, and a list is
+  `CONS x xs` and an append is `APPEND xs ys`.  The one exception
+  is a CakeML source that overloads `++` with an append of its
+  own (`misc_Append` of `jsonLang`, for instance): there the port
+  writes that constant, and `PLAIN_APPEND` in
+  `tools/overrides.py` says which occurrences in such a file are
+  the list append after all.
+- **A convention is not a name.**  HOL4 writes a case split with
+  a case constant (`option_CASE`, `spt_CASE`) and HOL Light
+  writes `match`, so the port writes `match` and does not acquire
+  the case constants to go with the names.  The same for HOL4's
+  tactic style: what the port adds is support for a kind of
+  reasoning HOL Light is thin on -- the induction theorem of a
+  recursive definition is the big one -- and that is what makes
+  HOL4's tactics unnecessary rather than a way in for them.
+
+What this buys is that HOL Light's own theorems apply to the
+port's statements without a bridge: `APPEND_ASSOC`, `ALL_MEM`,
+`LENGTH_APPEND` and the rest of `lists.ml` are about the port's
+terms, and `ITER` brings `Library/iter.ml` with it.  What it
+costs is that a statement of the port is not the HOL4 statement
+character for character -- which is why the two files are read
+block by block and not diffed.

@@ -1,0 +1,5 @@
+decode_left_inverse	PROOF Failure("TAC_PROOF: Unsolved goals")
+decode_left_inverse_I	PROOF Failure("TAC_PROOF: Unsolved goals")
+decode_right_inverse	PROOF Failure("solve_goal: Too deep")
+no_vars_lem	PROOF Failure("solve_goal: Too deep")
+t_compat_eqs_t_unify	PROOF Failure("SPECL")

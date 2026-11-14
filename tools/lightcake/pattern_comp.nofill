@@ -1,0 +1,3 @@
+EVERY_take_until_Any	PROOF Failure("POP_ASSUM: No assumption to pop")
+app_pos_Pos	PROOF Stack overflow
+comp_thm	PROOF Failure("find_term")

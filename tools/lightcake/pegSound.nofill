@@ -1,0 +1,2 @@
+pair_EQ_components	PROOF Failure("solve_goal: Too deep")
+ptree_list_loc_SING	PROOF Stack overflow

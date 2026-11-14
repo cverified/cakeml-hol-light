@@ -1,0 +1,2 @@
+BIGUNION_singletons	PROOF Failure("X_GEN_TAC: expected type :?1808774 but got :B")
+IMAGE_GSPEC1	PROOF Failure("solve_goal: Too deep")

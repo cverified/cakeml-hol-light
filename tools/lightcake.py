@@ -896,6 +896,20 @@ def our_cheats(path):
   return our_thms(path, True)
 
 
+def nofill(nm):
+  """the proofs of LightCake's that a check has shown this port
+     cannot use, with the reason: tools/lightcake/<theory>.nofill
+     is to a fill what <theory>.bad is to an import"""
+  p = T + 'lightcake/' + nm + '.nofill'
+  d = {}
+  if os.path.exists(p):
+    for l in open(p):
+      if not l.strip(): continue
+      f = l.rstrip('\n').split('\t')
+      d[f[0]] = f[1] if len(f) > 1 else ''
+  return d
+
+
 def fill(argv):
   """the proofs of LightCake's that this port can use for a
      theorem it states and cheats, into proofs/<path>.prf"""
@@ -914,9 +928,11 @@ def fill(argv):
   for ns, body in bindings(c.b):
     if ' = prove' not in body.split('\n')[0]: continue
     theirs[h4.get(ns[0], ns[0])] = (ns[0], body)
-  took, left = [], []
+  nf = nofill(nm)
+  took, left, bad = [], [], []
   for n, bind in sorted(our_cheats(c.a).items()):
     if n in there or n not in theirs: continue
+    if n in nf: bad.append(n); continue
     k, body = theirs[n]
     need = c.missing([k], body)
     if need: left.append((n, need)); continue
@@ -935,8 +951,10 @@ def fill(argv):
       old + '\n\n'.join('### %s\n%s' % (n, t) for n, t in took)
       + '\n')
   print('%s: %d proofs of %d cheats LightCake has, %d of them '
-        'with a name this port has not got'
-        % (nm, len(took), len(took) + len(left), len(left)))
+        'with a name this port has not got%s'
+        % (nm, len(took), len(took) + len(left) + len(bad), len(left),
+           (', %d that a check has taken out' % len(bad))
+           if bad else ''))
   return 0
 
 
@@ -963,6 +981,26 @@ def drop(argv):
       if not keep: gone.append(m.group(1))
     if keep: out.append(l)
   open(pp, 'w').write('\n'.join(out).strip('\n') + '\n')
+  # so that the next fill does not put them back: what a check
+  # has shown does not go through is remembered with the reason
+  # it gave, which tmp/unstated.txt holds under the name this
+  # port binds the theorem to
+  if gone:
+    why = {}
+    up = ML + '../tmp/unstated.txt'
+    if os.path.exists(up):
+      for l in open(up):
+        f = l.rstrip('\n').split('\t')
+        # a message can run to a page (the term an ARITH_RULE
+        # could not do), and one line of it is enough to say why
+        if len(f) >= 3: why[f[1]] = ' '.join(f[2].split())[:160]
+    ours = our_thms(a)
+    nf = nofill(nm)
+    for n in gone:
+      nf[n] = why.get(ours.get(n, n),
+                      nf.get(n) or 'a check of the fill')
+    open(T + 'lightcake/' + nm + '.nofill', 'w').write(
+      ''.join('%s\t%s\n' % (n, w) for n, w in sorted(nf.items())))
   print('%s: %d sections taken out%s'
         % (nm, len(gone), (': ' + ' '.join(gone)) if gone else ''))
   return 0

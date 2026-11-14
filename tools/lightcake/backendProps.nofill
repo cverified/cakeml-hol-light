@@ -1,0 +1,3 @@
+is_state_oracle_k	PROOF Failure("EXISTS_TAC: expected type :?814376 but got :S")
+oracle_monotonic_shift_seq	PROOF Failure("tryfind")
+state_orac_states_inv	PROOF Failure("EXISTS_TAC: expected type :?814861 but got :S")

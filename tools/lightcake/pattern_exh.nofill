@@ -1,0 +1,2 @@
+exh_rows_thm	PROOF Failure("TAC_PROOF: Unsolved goals")
+or_rows_ok	PROOF Failure("X_GEN_TAC: Not universally quantified")

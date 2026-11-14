@@ -1,0 +1,6 @@
+ALL_FST_NEQ	PROOF Failure("solve_goal: Too deep")
+FST_EQ	PROOF Failure("solve_goal: Too deep")
+FST_IN	PROOF Failure("solve_goal: Too deep")
+FST_NEQ	PROOF Failure("solve_goal: Too deep")
+FST_NOTIN	PROOF Failure("solve_goal: Too deep")
+ptPapply0_FOLDL	PROOF Stdlib.Sys.Break

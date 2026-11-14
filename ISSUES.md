@@ -69,6 +69,60 @@ sources, and why.
   variables are called after, have a default record type instead
   (`FIELD_DEFAULT` of `tools/overrides.py`).
 
+## The vocabulary: a notion HOL Light has keeps its HOL Light name
+
+The port follows the shape of its source -- the same blocks in the
+same order under the same names, with the source's comments in
+place -- and the vocabulary of HOL Light.  Where HOL4 and HOL
+Light have one notion under two names, a statement of the port
+writes the HOL Light one, so what the port says is not what the
+source says character for character:
+
+| HOL4 | the port |
+| --- | --- |
+| `STRCAT`, `++` | `APPEND` |
+| `STRING`, `::` | `CONS` |
+| `EMPTYSTRING` | `NIL` |
+| `STRLEN` | `LENGTH` |
+| `EVERY`, `EXISTS` | `ALL`, `EX` |
+| `EVERY2`, `LIST_REL` | `ALL2` |
+| `FRONT` | `BUTLAST` |
+| `CONCAT` | `FLAT` |
+| `GENLIST` | `list_of_seq` |
+| `LIST_TO_SET`, `set` | `set_of_list` |
+| `BIGUNION` | `UNIONS` |
+| `FOLDR f e l` | `ITLIST f l e` |
+| `FUNPOW f n x` | `ITER n f x` |
+| `LEAST` | `minimal` |
+| `Num` | `num_of_int` |
+| `flip` | `C` |
+| `measure` | `MEASURE` |
+| `INT_MINw`, `INT_MAXw`, `UINT_MAXw` | `word_L`, `word_H`, `word_T` |
+
+`NAME_MAP` in `tools/overrides.py` is the dictionary.  Three of
+these change the *arguments* as well, because HOL Light's constant
+takes them in another order: `FOLDR f e l` is `ITLIST f l e` and
+`FUNPOW f n x` is `ITER n f x` (`ARGPERM` in `tools/hterm.py`),
+and `LEAST P` is the binder `minimal n. P n`.
+
+Notation goes the same way.  HOL Light has no `::` and no `++`
+(its `++` is `realax`'s `nadd_add`, which `realax.ml` removes
+again), so the port writes `CONS x xs` and `APPEND xs ys`.  The
+exception is a CakeML source that overloads `++` with an append
+of its own -- `misc$Append` of the `app_list` type, which
+fourteen files use -- where the port writes that constant;
+`PLAIN_APPEND` in `tools/overrides.py` names the occurrences in
+such a file that are the list append after all.
+
+A HOL4 *convention* that HOL Light does not share is not taken
+over to keep a name company: HOL4 writes a case split with a case
+constant (`option_CASE`, `spt_CASE`, `list_CASE`) and HOL Light
+writes `match`, so the port writes `match`.
+
+A theorem's **name** is not touched by any of this, because names
+follow the source: `EVERY2_LUPDATE_same` and `implode_STRCAT` keep
+those names while their statements say `ALL2` and `APPEND`.
+
 ## The statements of the theorems (phase two)
 
 - A **definition** of a source is a binding as well, and the

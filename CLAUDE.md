@@ -89,6 +89,32 @@ cheat, and a cheat that another cheat depends on is fine.
   same file names (`fooScript.sml` becomes `foo.ml`), same
   order of the blocks, same names of constants and of theorems,
   and the original comments kept in place.
+- The port is **read next to its HOL4 source and written in
+  HOL Light**, and those two pull against each other.  Where
+  they do: the _shape_ follows HOL4 -- the same blocks in the
+  same order under the same names, so that the two files read
+  side by side and it is plain what matches what -- and the
+  _vocabulary_ follows HOL Light.  Where the two systems have
+  one notion under two names, the port writes HOL Light's:
+  `APPEND` not `STRCAT`, `CONS` not `::`, `ALL` not `EVERY`,
+  `ALL2` not `LIST_REL`, `BUTLAST` not `FRONT`, `FLAT` not
+  `CONCAT`, `ITER` not `FUNPOW`, `minimal` not `LEAST`,
+  `set_of_list` not `LIST_TO_SET`, `UNIONS` not `BIGUNION`.
+  `NAME_MAP` in `tools/overrides.py` is the whole list, and it
+  is what the translation applies and what a hand-written proof
+  follows too.  A HOL4 convention that HOL Light does not share
+  does not come across to keep a name company: HOL4's case
+  constants (`option_CASE`, `spt_CASE`) are how HOL4 writes a
+  case split and HOL Light writes `match`, so the port writes
+  `match`.  Notation goes the same way -- HOL Light has no `::`
+  and no `++`, so neither has the port.
+
+  What the port may **add** is support for a kind of reasoning
+  HOL Light is thin on, so that it can say what HOL4 says: the
+  induction theorem of a recursive definition is the big one,
+  and `ml/lib/` is where such support lives.  That is not a
+  licence to bring HOL4's names or HOL4's tactics across; it is
+  the opposite, the thing that makes them unnecessary.
 - A comment of a source is kept **unaltered**, whatever it is
   about -- a comment about HOL4 is a comment of the source and
   stays as it stands.  It is not reflowed and not shortened, so

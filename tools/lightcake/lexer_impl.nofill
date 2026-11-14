@@ -1,0 +1,1 @@
+EVERY_isHexDigit_imp	PROOF Failure("MATCH_MP_TAC: No match")

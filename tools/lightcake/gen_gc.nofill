@@ -1,0 +1,2 @@
+BIJ_IMP_FLOOKUP_SOME	PROOF Stdlib.Sys.Break
+heap_lookup_IMP_heap_addresses_GEN	PROOF Failure("tryfind")

@@ -59,6 +59,54 @@ heap, so load the closure of what you care about instead.
 You do **not** need HOL4, and you do not need the HOL4 sources, to
 load the port or to read it.
 
+## The names it writes
+
+The port is read next to its HOL4 source and written in HOL Light,
+and those two pull against each other.  Where they do, the *shape*
+follows HOL4 and the *vocabulary* follows HOL Light.
+
+Shape is blocks in the order of the source, under the names of the
+source, with its comments in place, so that the two files read side
+by side and it is plain what matches what.  Vocabulary is the other
+half: where the two systems have one notion under two names, the
+port writes the HOL Light one.
+
+| HOL4 | the port |
+| --- | --- |
+| `STRCAT`, `++` | `APPEND` |
+| `STRING`, `::` | `CONS` |
+| `EMPTYSTRING` | `NIL` |
+| `STRLEN` | `LENGTH` |
+| `EVERY`, `EXISTS` | `ALL`, `EX` |
+| `EVERY2`, `LIST_REL` | `ALL2` |
+| `FRONT` | `BUTLAST` |
+| `CONCAT` | `FLAT` |
+| `GENLIST` | `list_of_seq` |
+| `LIST_TO_SET` | `set_of_list` |
+| `BIGUNION` | `UNIONS` |
+| `FUNPOW f n x` | `ITER n f x` |
+| `LEAST` | `minimal` |
+
+`NAME_MAP` in `tools/overrides.py` is the whole list -- it has a
+dozen more, among them `Num` for `num_of_int`, `flip` for `C`,
+`measure` for `MEASURE` and `INT_MINw`, `INT_MAXw`, `UINT_MAXw` for
+`word_L`, `word_H`, `word_T` -- and it is what the translation
+applies and what a hand-written proof follows too.  A HOL4 name
+that HOL Light has no counterpart for keeps its own name, which is
+most of CakeML.
+
+A convention goes the same way as a name.  HOL4 writes a case split
+with a case constant (`option_CASE`, `spt_CASE`) and HOL Light
+writes `match`, so the port writes `match`, and LightCake's blocks
+that are about those constants stay out.  HOL Light has no `::` and
+no `++`, so neither has the port: a list is `CONS x xs` and an
+append is `APPEND xs ys`, which is also how `Lists/lists.ml` reads.
+
+The cost of this is that a statement of the port is not the HOL4
+statement character for character, and the gain is that it is a HOL
+Light statement -- HOL Light's own theorems about `APPEND` apply to
+it, and a proof of it reads like a proof of HOL Light.
+
 ## The shape of a definition
 
 A definition of the port says how it is made, and nothing is

@@ -1,0 +1,2 @@
+alloc_defs_append	PROOF Failure("MATCH_MP_TAC: No match")
+fst_alloc_defs	PROOF Failure("MATCH_MP_TAC: No match")

@@ -1,0 +1,1 @@
+resource_limit_hit_implements_semantics	PROOF Failure("mk_goalstate: Non-boolean goal")

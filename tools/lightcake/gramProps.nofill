@@ -1,0 +1,2 @@
+GSPEC_INTER	PROOF Failure("solve_goal: Too deep")
+paireq	PROOF Failure("TAC_PROOF: Unsolved goals")

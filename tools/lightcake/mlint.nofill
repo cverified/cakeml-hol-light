@@ -1,0 +1,1 @@
+int_to_string_thm	PROOF Failure("typechecking error (initial type assignment): num_to_chars has type num->num->num->(char)list->(char)list, it cannot be used with type int")
