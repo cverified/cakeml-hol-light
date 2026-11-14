@@ -1635,15 +1635,28 @@ OWN_INFIX = set()      # the infixes a CakeML source declares itself
 # the constants that the library layer of the port declares as
 # infixes of HOL Light: where one of them is applied to its
 # arguments the port writes its name in parentheses
-HL_INFIX = {'BAG_UNION', 'LEX', 'o_f', 'SUBMAP'}
+HL_INFIX = {'BAG_UNION', 'f_o_f', 'LEX', 'o_f', 'PERMUTES',
+            'SUBMAP'}
+
+# the infixes of HOL Light whose name is a word: one of
+# these standing where a function stands needs its brackets,
+# or the parser reads what follows as the right operand
+# (MAPi (o (o FST) f) l is unparsed input).  A symbolic
+# infix needs them too and is caught by its first character.
+# The list is HOL Light's own parse_as_infix calls.
+HL_WORD_INFIX = set("""
+  CROSS DELETE DIFF div DIV divides DIV EXP has_inf
+  HAS_SIZE has_sup IN INSERT INTER INTERSECTION_OF MOD o
+  PCROSS pow PSUBSET rem SUBSET treal_add treal_eq
+  treal_le treal_mul UNION UNION_OF zpow""".split())
 
 
 def as_function(nm):
   """a name that stands where a function stands, with the
      brackets round it only where HOL Light would otherwise read
      it as an infix or a binder: (APPEND) is noise, (o) is not"""
-  if nm in HL_INFIX or nm in BINDERS or not re.match(r"^[A-Za-z_]",
-                                                     nm):
+  if (nm in HL_INFIX or nm in HL_WORD_INFIX or nm in BINDERS
+      or not re.match(r"^[A-Za-z_]", nm)):
     return '(' + nm + ')'
   return nm
 
