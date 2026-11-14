@@ -591,83 +591,83 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
         | (word_bignum_Loop rec_calls vs body) ->
         (match has_compiled body cs with INL existing_index ->
             (wordLang_Call (SOME ([i],(LS
-              one,LN),word_bignum_Skip,n,l)) (SOME existing_index) []
+              one,LN),wordLang_Skip,n,l)) (SOME existing_index) []
               NONE,l + 1,i + 1,cs) | INR new_index ->
             (let (new_code,a,b,cs) = word_bignum_compile new_index 2
               1 (code_acc_next cs) body in
               (wordLang_Call (SOME ([i],(LS
-                one,LN),word_bignum_Skip,n,l)) (SOME new_index) []
-                NONE,l + 1,i + 1,
+                one,LN),wordLang_Skip,n,l)) (SOME new_index) [] NONE,l
+                + 1,i + 1,
                install (body,new_index,new_code) cs)))
         | (word_bignum_LoopBody b) -> word_bignum_compile n l i cs b
         | (word_bignum_Seq p1 p2) ->
         (let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
         let (p2,l,i,cs) = word_bignum_compile n l i cs p2 in
-          (word_bignum_Seq p1 p2,l,i,cs))
+          (wordLang_Seq p1 p2,l,i,cs))
         | (word_bignum_If t r ri p1 p2) ->
         (let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
         let (p2,l,i,cs) = word_bignum_compile n l i cs p2 in
           match ri with Reg r2 -> (SeqTemp i r (SeqTemp (i + 1) r2
-            (word_bignum_If t i (Reg (i + 1)) p1 p2)),
+            (wordLang_If t i (Reg (i + 1)) p1 p2)),
                        l,i + 2,cs) | Imm im -> (SeqTemp i r
-                         (word_bignum_If t i ri p1 p2),l,i + 1,cs))
+                         (wordLang_If t i ri p1 p2),l,i + 1,cs))
         | (word_bignum_Assign j e) ->
-        (word_bignum_Seq (word_bignum_Assign i
-          (word_bignum_compile_exp e)) (wordLang_Set (Temp (n2w j))
-          (wordLang_Var i)),l,i + 1,cs)
+        (wordLang_Seq (wordLang_Assign i (word_bignum_compile_exp
+          e)) (wordLang_Set (Temp (n2w j)) (wordLang_Var i)),l,i +
+          1,cs)
         | (word_bignum_Delete _2) -> ((wordLang_Skip:'a
           wordLang_prog),l,i,cs)
         | word_bignum_Swap ->
-        (word_bignum_Seq (word_bignum_Assign i (wordLang_Lookup
+        (wordLang_Seq (wordLang_Assign i (wordLang_Lookup
           (TempIn1)))
-        (word_bignum_Seq (wordLang_Set (TempIn1) (wordLang_Lookup
+        (wordLang_Seq (wordLang_Set (TempIn1) (wordLang_Lookup
           (TempIn2)))
              (wordLang_Set (TempIn2) (wordLang_Var i))),l,i + 1,cs)
         | (word_bignum_Store r1 r2) ->
         (SeqTemp i r1
         (SeqIndex (i + 1) r2 Out
-           (word_bignum_Store (wordLang_Var (i + 1)) i)),l,i + 2,cs)
+           (wordLang_Store (wordLang_Var (i + 1)) i)),l,i + 2,cs)
         | (word_bignum_Load r1 r2 arr) ->
         (SeqIndex i r2 arr
-        (word_bignum_Seq (word_bignum_Assign (i + 1) (wordLang_Load
+        (wordLang_Seq (wordLang_Assign (i + 1) (wordLang_Load
           (wordLang_Var i)))
              (wordLang_Set (Temp (n2w r1)) (wordLang_Var (i +
                1)))),l,i + 2,cs)
         | (word_bignum_Add r0 r1 r2 r3 r4) ->
         (SeqTempImm (i + 4) r4 (SeqTempImm (i + 3) r3 (SeqTemp (i +
           2) r2
-        (word_bignum_Seq (wordLang_Inst (asm_Arith (asm_AddCarry (i
-          + 1) (i + 2) (i + 3) (i + 4))))
-        (word_bignum_Seq (wordLang_Set (Temp (n2w r0)) (wordLang_Var
-          (i + 1)))
+        (wordLang_Seq (wordLang_Inst (asm_Arith (asm_AddCarry (i +
+          1) (i + 2) (i + 3) (i + 4))))
+        (wordLang_Seq (wordLang_Set (Temp (n2w r0)) (wordLang_Var (i
+          + 1)))
              (wordLang_Set (Temp (n2w r1)) (wordLang_Var (i +
                4))))))),l,i + 5,cs)
         | (word_bignum_Sub r0 r1 r2 r3 r4) ->
         (SeqTempImm (i + 4) r4 (SeqTempImmNot (i + 3) r3 (SeqTemp (i
           + 2) r2
-        (word_bignum_Seq (wordLang_Inst (asm_Arith (asm_AddCarry (i
-          + 1) (i + 2) (i + 3) (i + 4))))
-        (word_bignum_Seq (wordLang_Set (Temp (n2w r0)) (wordLang_Var
-          (i + 1)))
+        (wordLang_Seq (wordLang_Inst (asm_Arith (asm_AddCarry (i +
+          1) (i + 2) (i + 3) (i + 4))))
+        (wordLang_Seq (wordLang_Set (Temp (n2w r0)) (wordLang_Var (i
+          + 1)))
              (wordLang_Set (Temp (n2w r1)) (wordLang_Var (i +
                4))))))),l,i + 5,cs)
         | (word_bignum_Mul r0 r1 r2 r3) ->
         (SeqTemp (i + 3) r3 (SeqTemp (i + 2) r2
-        (word_bignum_Seq (wordLang_Inst (asm_Arith (asm_LongMul (i +
-          0) (i + 1) (i + 2) (i + 3))))
-        (word_bignum_Seq (wordLang_Set (Temp (n2w r1)) (wordLang_Var
-          (i + 0)))
+        (wordLang_Seq (wordLang_Inst (asm_Arith (asm_LongMul (i + 0)
+          (i + 1) (i + 2) (i + 3))))
+        (wordLang_Seq (wordLang_Set (Temp (n2w r1)) (wordLang_Var (i
+          + 0)))
              (wordLang_Set (Temp (n2w r0)) (wordLang_Var (i +
                1)))))),l,i + 4,cs)
         | (word_bignum_Div r0 r1 r2 r3 r4) ->
         (SeqTemp (i + 4) r4 (SeqTemp (i + 3) r3 (SeqTemp (i + 2) r2
-        (word_bignum_Seq (DivCode n l (i + 0) (i + 1) (i + 2) (i +
-          3) (i + 4))
-        (word_bignum_Seq (wordLang_Set (Temp (n2w r0)) (wordLang_Var
-          (i + 0)))
+        (wordLang_Seq (DivCode n l (i + 0) (i + 1) (i + 2) (i + 3)
+          (i + 4))
+        (wordLang_Seq (wordLang_Set (Temp (n2w r0)) (wordLang_Var (i
+          + 0)))
              (wordLang_Set (Temp (n2w r1)) (wordLang_Var (i +
                1))))))),l + 1,i + 5,cs)
-        | _3 -> (word_bignum_Skip,l,i,cs)`];;
+        | _3 -> (wordLang_Skip,l,i,cs)`];;
 
 (* HOL4 word_bignumScript.sml:568: ML code, not ported *)
 

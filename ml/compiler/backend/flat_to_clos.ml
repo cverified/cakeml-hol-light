@@ -275,102 +275,102 @@ let flat_to_clos_compile_op_def = new_definition
             ast_Aw8length -> closLang_Op t (closLang_MemOp
             closLang_LengthByte) xs | flatLang_Src ast_AallocFixed ->
             closLang_Op t (closLang_MemOp closLang_Ref) xs |
-            flatLang_Src ast_Aalloc -> closLang_Let t xs (flatLang_If t
+            flatLang_Src ast_Aalloc -> closLang_Let t xs (closLang_If t
             (closLang_Op t (closLang_IntOp closLang_Less) [closLang_Op t
             (closLang_IntOp (closLang_Const (&0))) []; closLang_Var t
             1])
-                              (flatLang_Raise t (closLang_Op t
+                              (closLang_Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 subscript_tag)) []))
                               (closLang_Op t (closLang_MemOp
                                 closLang_RefArray) [closLang_Var t 0;
                                 closLang_Var t 1])) | flatLang_Src
                                 ast_Aw8alloc -> closLang_Let t xs
-                                (flatLang_If t (closLang_Op t
+                                (closLang_If t (closLang_Op t
                                 (closLang_IntOp closLang_Less)
                                 [closLang_Op t (closLang_IntOp
                                 (closLang_Const (&0))) []; closLang_Var
                                 t 1])
-                              (flatLang_Raise t (closLang_Op t
+                              (closLang_Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 subscript_tag)) []))
                               (closLang_Op t (closLang_MemOp
                                 (closLang_RefByte F)) [closLang_Var t 0;
                                 closLang_Var t 1])) | flatLang_Src
                                 ast_Vsub -> closLang_Let t xs
-                                (flatLang_If t (closLang_Op t
+                                (closLang_If t (closLang_Op t
                                 (closLang_BlockOp
                                 closLang_BoundsCheckBlock) [closLang_Var
                                 t 0; closLang_Var t 1])
                               (closLang_Op t (closLang_MemOp
                                 closLang_El) [closLang_Var t 0;
                                 closLang_Var t 1])
-                              (flatLang_Raise t (closLang_Op t
+                              (closLang_Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 subscript_tag)) []))) | flatLang_Src
                                 ast_Vsub_unsafe -> closLang_Op t
                                 (closLang_MemOp closLang_El) xs |
                                 flatLang_Src ast_Asub -> closLang_Let t
-                                xs (flatLang_If t (closLang_Op t
+                                xs (closLang_If t (closLang_Op t
                                 (closLang_MemOp
                                 closLang_BoundsCheckArray) [closLang_Var
                                 t 0; closLang_Var t 1])
                               (closLang_Op t (closLang_MemOp
                                 closLang_El) [closLang_Var t 0;
                                 closLang_Var t 1])
-                              (flatLang_Raise t (closLang_Op t
+                              (closLang_Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 subscript_tag)) []))) | flatLang_Src
                                 ast_Asub_unsafe -> closLang_Op t
                                 (closLang_MemOp closLang_El) xs |
                                 flatLang_Src ast_Aupdate -> closLang_Let
-                                t xs (flatLang_If t (closLang_Op t
+                                t xs (closLang_If t (closLang_Op t
                                 (closLang_MemOp
                                 closLang_BoundsCheckArray) [closLang_Var
                                 t 1; closLang_Var t 2])
                               (closLang_Op t (closLang_MemOp
                                 closLang_Update) [closLang_Var t 0;
                                 closLang_Var t 1; closLang_Var t 2])
-                              (flatLang_Raise t (closLang_Op t
+                              (closLang_Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 subscript_tag)) []))) | flatLang_Src
                                 ast_Aupdate_unsafe -> closLang_Op t
                                 (closLang_MemOp closLang_Update) xs |
                                 flatLang_Src ast_Aw8sub -> closLang_Let
-                                t xs (flatLang_If t (closLang_Op t
+                                t xs (closLang_If t (closLang_Op t
                                 (closLang_MemOp
                                 (closLang_BoundsCheckByte F))
                                 [closLang_Var t 0; closLang_Var t 1])
                               (closLang_Op t (closLang_MemOp
                                 closLang_DerefByte) [closLang_Var t 0;
                                 closLang_Var t 1])
-                              (flatLang_Raise t (closLang_Op t
+                              (closLang_Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 subscript_tag)) []))) | flatLang_Src
                                 ast_Aw8sub_unsafe -> closLang_Op t
                                 (closLang_MemOp closLang_DerefByte) xs |
                                 flatLang_Src ast_Aw8update ->
-                                closLang_Let t xs (flatLang_If t
+                                closLang_Let t xs (closLang_If t
                                 (closLang_Op t (closLang_MemOp
                                 (closLang_BoundsCheckByte F))
                                 [closLang_Var t 1; closLang_Var t 2])
                               (closLang_Op t (closLang_MemOp
                                 closLang_UpdateByte) [closLang_Var t 0;
                                 closLang_Var t 1; closLang_Var t 2])
-                              (flatLang_Raise t (closLang_Op t
+                              (closLang_Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 subscript_tag)) []))) | flatLang_Src
                                 ast_Aw8update_unsafe -> closLang_Op t
                                 (closLang_MemOp closLang_UpdateByte) xs
                                 | flatLang_Src ast_Strsub ->
-                                closLang_Let t xs (flatLang_If t
+                                closLang_Let t xs (closLang_If t
                                 (closLang_Op t (closLang_MemOp
                                 (closLang_BoundsCheckByte F))
                                 [closLang_Var t 0; closLang_Var t 1])
                               (closLang_Op t (closLang_MemOp
                                 closLang_DerefByteVec) [closLang_Var t
                                 0; closLang_Var t 1])
-                              (flatLang_Raise t (closLang_Op t
+                              (closLang_Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 subscript_tag)) []))) | flatLang_Src
                                 (ast_Shift x1 x2 x3) -> closLang_Op t
@@ -396,20 +396,20 @@ let flat_to_clos_compile_op_def = new_definition
                                 closLang_Op t (closLang_WordOp
                                 WordFromInt) xs | flatLang_Src
                                 (ast_FromTo ast_IntT ast_CharT) ->
-                                closLang_Let t xs (flatLang_If t
+                                closLang_Let t xs (closLang_If t
                                 (closLang_Op t (closLang_IntOp
                                 closLang_Less) [closLang_Op
                                 backend_common_None (closLang_IntOp
                                 (closLang_Const (&0))) []; closLang_Var
                                 t 0])
-                         (flatLang_Raise t (closLang_Op t
+                         (closLang_Raise t (closLang_Op t
                            (closLang_BlockOp (closLang_Cons chr_tag))
                            []))
-                         (flatLang_If t (closLang_Op t
+                         (closLang_If t (closLang_Op t
                            (closLang_IntOp closLang_Less) [closLang_Var
                            t 0; closLang_Op backend_common_None
                            (closLang_IntOp (closLang_Const (&255))) []])
-                           (flatLang_Raise t (closLang_Op t
+                           (closLang_Raise t (closLang_Op t
                              (closLang_BlockOp (closLang_Cons chr_tag))
                              []))
                            (closLang_Var t 0))) | flatLang_Src

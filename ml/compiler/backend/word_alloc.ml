@@ -956,7 +956,7 @@ let get_live_def,get_live_ind = define_shaped_rec
           (sptree_delete n1 live)
         | (wordLang_ShareInst mop v exp) ->
        (let sub' = get_live_exp exp in
-         if mop = wordLang_Store \/ mop = asm_Store8 \/ mop =
+         if mop = asm_Store \/ mop = asm_Store8 \/ mop =
            asm_Store16 \/ mop = asm_Store32 then sptree_union sub'
            (sptree_insert v one live) else sptree_union sub'
            (sptree_delete v live))

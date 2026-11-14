@@ -1340,14 +1340,12 @@ let WordOp64_on_32_def = new_definition
                            backend_common_Xor -> data_to_word_list_Seq
                            [wordLang_Assign 29 (wordLang_Const (n2w 0));
                          wordLang_Assign 27 (wordLang_Const (n2w 0));
-                         wordLang_Assign 33 (wordLang_Op
-                           backend_common_Xor [wordLang_Var 13;
-                           wordLang_Var 23]);
-                         wordLang_Assign 31 (wordLang_Op
-                           backend_common_Xor [wordLang_Var 11;
-                           wordLang_Var 21])] | backend_common_Add ->
-                           data_to_word_list_Seq [wordLang_Assign 29
-                           (wordLang_Const (n2w 0));
+                         wordLang_Assign 33 (wordLang_Op asm_Xor
+                           [wordLang_Var 13; wordLang_Var 23]);
+                         wordLang_Assign 31 (wordLang_Op asm_Xor
+                           [wordLang_Var 11; wordLang_Var 21])] |
+                           backend_common_Add -> data_to_word_list_Seq
+                           [wordLang_Assign 29 (wordLang_Const (n2w 0));
                          wordLang_Assign 27 (wordLang_Const (n2w 0));
                          wordLang_Inst (asm_Arith (asm_AddCarry 33 13
                            23 29));
@@ -1355,14 +1353,14 @@ let WordOp64_on_32_def = new_definition
                            21 29))] | backend_common_Sub ->
                            data_to_word_list_Seq [wordLang_Assign 29
                            (wordLang_Const (n2w 1));
-                         wordLang_Assign 27 (wordLang_Op
-                           backend_common_Xor [wordLang_Const (--(n2w
-                           1)); wordLang_Var 23]);
+                         wordLang_Assign 27 (wordLang_Op asm_Xor
+                           [wordLang_Const (--(n2w 1)); wordLang_Var
+                           23]);
                          wordLang_Inst (asm_Arith (asm_AddCarry 33 13
                            27 29));
-                         wordLang_Assign 27 (wordLang_Op
-                           backend_common_Xor [wordLang_Const (--(n2w
-                           1)); wordLang_Var 21]);
+                         wordLang_Assign 27 (wordLang_Op asm_Xor
+                           [wordLang_Const (--(n2w 1)); wordLang_Var
+                           21]);
                          wordLang_Inst (asm_Arith (asm_AddCarry 31
                            11 27 29))])`;;
 

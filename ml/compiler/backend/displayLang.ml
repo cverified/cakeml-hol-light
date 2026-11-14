@@ -59,21 +59,20 @@ let trace_to_json_def,trace_to_json_ind = define_rec
 (* Converts a display expression to JSON *)
 let display_to_json_def,display_to_json_ind = define_shaped_rec
   "nested"
-  [`(display_to_json (displayLang_Item tra name es) =
-     (let es' = MAP display_to_json es in
-     let props = [((implode "name"),displayLang_String name);
-       ((implode "args"),jsonLang_Array es')] in
-     let props' = (match tra with NONE -> props | SOME t -> CONS
-       ((implode "trace"),trace_to_json t) props) in
-       jsonLang_Object props')) /\
-   (display_to_json (displayLang_String s:sExp) = displayLang_String
-     s) /\
-   (display_to_json (displayLang_Tuple es) =
-     (let es' = MAP display_to_json es in
-       jsonLang_Object [((implode "isTuple"),jsonLang_Bool T);
-         ((implode "elements"),jsonLang_Array es')])) /\
-    (display_to_json (displayLang_List es) = jsonLang_Array (MAP
-      display_to_json es))`];;
+  [`display_to_json (displayLang_Item tra name es) =
+        (let es' = MAP display_to_json es in
+        let props = [((implode "name"),jsonLang_String name);
+            ((implode "args"),jsonLang_Array es')] in
+        let props' = (match tra with NONE -> props | SOME t -> CONS
+            ((implode "trace"),trace_to_json t) props) in
+          jsonLang_Object props')`;
+   `display_to_json (displayLang_String s:sExp) = jsonLang_String s`;
+   `display_to_json (displayLang_Tuple es:sExp) =
+        (let es' = MAP display_to_json es in
+          jsonLang_Object [((implode "isTuple"),jsonLang_Bool T);
+              ((implode "elements"),jsonLang_Array es')])`;
+   `display_to_json (displayLang_List es:sExp) = jsonLang_Array
+    (MAP display_to_json es)`];;
 
 let display_to_str_tree_def,display_to_str_tree_ind = define_rec
   [`display_to_str_tree (displayLang_Item tra name es) =

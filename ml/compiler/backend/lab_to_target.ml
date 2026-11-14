@@ -210,11 +210,11 @@ let line_ok_light_def = new_definition
           ((c:'a asm_config),labLang_Label _21 _22 l) -> T
         | (c,(labLang_Asm b bytes l)) -> T
         | (c,(labLang_LabAsm labLang_Halt w bytes l)) ->
-        asm_ok (labLang_Jump w) c
+        asm_ok (asm_Jump w) c
         | (c,(labLang_LabAsm labLang_Install w bytes l)) ->
-        asm_ok (labLang_Jump w) c
+        asm_ok (asm_Jump w) c
         | (c,(labLang_LabAsm (labLang_CallFFI index) w bytes l)) ->
-        asm_ok (labLang_Jump w) c
+        asm_ok (asm_Jump w) c
         | (c,(labLang_LabAsm (labLang_Call v24) w bytes l)) ->
         F
         // Call not yet supported
