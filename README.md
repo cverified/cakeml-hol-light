@@ -302,10 +302,32 @@ so and lets those proofs in: `SPTAUX_CASES_TAC` is LightCake's
 case split, and HOL Light's is `STRUCT_CASES_TAC` with
 `cases_of`.
 
+`KIT_MAP` in `tools/overrides.py` is the same thing said once for
+the whole port: the handful of kit names that this port, or HOL
+Light itself, has a tactic for, and what the import writes in
+their place -- `CASES_ON` becomes this port's `CASES_ON_TAC`,
+HOL4's `rveq` becomes `REPEAT VAR_EQ_TAC`, and `EVERY_CASE_TAC`,
+`PAIRARG_TAC`, `IMP_RES_TAC` and `RES_TAC` are names both have.
+What is deliberately not in it is HOL4's stateful simpset (`rw`,
+`fs`, `simp`, `gvs`), which this port writes out instead, and the
+case constants, which are how HOL4 writes a case split where HOL
+Light writes `match`.  So a proof of LightCake's that rests on
+either of those is one this port does not take, and that is a
+decision and not an omission.
+
+The other half of the join is the names of the two ports.  A
+theorem or a definition that both have under different bindings
+(LightCake's `asm_upd_reg_def` is this port's `upd_reg_def`) is
+one name, because the HOL4 name underneath is the same and the
+import writes this port's.
+
 `lightcake-check`, which the loop runs, loads the blocks one at
 a time and writes the ones that do not go through into
 `tools/lightcake/<theory>.bad`, which the next import leaves
-out, with the reason.
+out, with the reason.  A fill has the same memory in
+`tools/lightcake/<theory>.nofill`, which `drop` writes and `fill`
+reads, so that running the loop again does not put back a proof
+that a check has already shown does not go through.
 
 A theorem this port **states and cheats** is the other half:
 

@@ -19,8 +19,15 @@ f=$(python3 -I $C/tools/lightcake.py where "$t") || exit 1
 python3 -I $C/tools/lightcake.py fill "$t" || exit 1
 python3 -I $C/tools/portall.py > /dev/null || exit 1
 : > $C/tmp/unstated.txt
-TOLERANT=1 tryfile "$f" $s
-bad=$(cut -f2 $C/tmp/unstated.txt 2>/dev/null | sort -u)
+TOLERANT=1 tryfile "$f" $s > $C/tmp/lcf_$t.out 2>&1
+cat $C/tmp/lcf_$t.out
+# a proof that raises is logged by the tolerant load; one that
+# names a value this port has not got does not even compile, so
+# the try round it never runs and the marker of the phrase is
+# all there is to go by
+bad=$( { cut -f2 $C/tmp/unstated.txt 2>/dev/null
+         sed -n 's/.*\[at [0-9]*: let \([A-Za-z0-9_'"'"']*\) = .*/\1/p' \
+           $C/tmp/lcf_$t.out; } | sort -u )
 if [ -n "$bad" ]; then
   python3 -I $C/tools/lightcake.py drop "$t" $bad || exit 1
   python3 -I $C/tools/portall.py > /dev/null || exit 1

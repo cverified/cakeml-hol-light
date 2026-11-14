@@ -5,7 +5,8 @@
      python3 -I tools/lightcake.py deps <theory>
      python3 -I tools/lightcake.py import <theory>
      python3 -I tools/lightcake.py fill <theory>
-     python3 -I tools/lightcake.py drop <theory> <name>...
+     python3 -I tools/lightcake.py drop [-q] <theory> <name>...
+     python3 -I tools/lightcake.py redo <theory>
      python3 -I tools/lightcake.py where <theory>
 
 LightCake (`lightcake-src/`, see README.md) is the other port of
@@ -35,8 +36,13 @@ blocks found does not go through
 
 `fill` writes the proofs LightCake has for the theorems this
 port states and cheats into `proofs/<path>.prf`, which a re-port
-splices into the file; `drop` takes a proof of the store out
-again, under either name it goes by.  `tools/bin/lightcake-take`
+splices into the file, and notes what it took in
+`tools/lightcake/<theory>.filled`; `drop` takes a proof of the
+store out again, under either name it goes by, and writes why
+into `<theory>.nofill`, which the next fill reads.  `redo` takes
+out every proof a fill took, and no other, so that a fill can be
+run again when the import has got better -- a proof this port
+wrote by hand is not in the list and is never touched.  `tools/bin/lightcake-take`
 and `tools/bin/lightcake-fill` are the two loops that do it with
 the check in them, and nothing of either reaches `ml/` until
 every block of it has been run.
@@ -716,6 +722,17 @@ class Ctx:
         m.setdefault(k, obyc[o])
         if k.endswith('_def') and obyc[o].endswith('_def'):
           m.setdefault(k[:-4] + '_ind', obyc[o][:-4] + '_ind')
+    # and the same for a theorem: this port prefixes the name of
+    # one that two theories state
+    # (evaluateProps_evaluate_io_events_mono), while LightCake
+    # names it as HOL4 does, so a proof of LightCake's that cites
+    # it has to be written with this port's binding
+    obyt = {}
+    for p in [self.a] + ours_files(nm, self.rank):
+      for k, v in our_thms(p).items(): obyt.setdefault(k, v)
+    for k, h in lc_thm_names().items():
+      if k not in self.kit and h in obyt and k != obyt[h]:
+        m.setdefault(k, obyt[h])
     self.m, self.gm = m, gm
     # a name of LightCake's is there to be used once this port
     # has the thing it names: a block before it in the file, a
@@ -966,6 +983,11 @@ def fill(argv):
     open(pp, 'w').write(
       old + '\n\n'.join('### %s\n%s' % (n, t) for n, t in took)
       + '\n')
+    # what came from LightCake, so that `redo` can take it out
+    # again and fill once more when the import has got better:
+    # a proof this port wrote by hand is not in the list and is
+    # never touched
+    note_filled(nm, [n for n, _ in took])
   print('%s: %d proofs of %d cheats LightCake has, %d of them '
         'with a name this port has not got%s'
         % (nm, len(took), len(took) + len(left) + len(bad), len(left),
@@ -974,10 +996,69 @@ def fill(argv):
   return 0
 
 
+def filled_path(nm):
+  return T + 'lightcake/' + nm + '.filled'
+
+
+def filled(nm):
+  """the proofs of a theory's store that came from LightCake"""
+  p = filled_path(nm)
+  if not os.path.exists(p): return []
+  return [l.strip() for l in open(p) if l.strip()]
+
+
+def note_filled(nm, ns, drop=()):
+  out = [n for n in filled(nm) if n not in drop]
+  out += [n for n in ns if n not in out]
+  if out:
+    open(filled_path(nm), 'w').write(
+      ''.join(n + '\n' for n in sorted(out)))
+  elif os.path.exists(filled_path(nm)):
+    os.remove(filled_path(nm))
+
+
+def cut_sections(pp, names):
+  """the sections of a proof store that <names> names, taken
+     out; what is left is written back"""
+  out, keep, gone = [], True, []
+  for l in open(pp).read().split('\n'):
+    m = re.match(r'^###[ \t]+(\S+)[ \t]*$', l)
+    if m:
+      keep = m.group(1) not in names
+      if not keep: gone.append(m.group(1))
+    if keep: out.append(l)
+  open(pp, 'w').write('\n'.join(out).strip('\n') + '\n')
+  return gone
+
+
+def redo(argv):
+  """every proof a fill took from LightCake, out of the store
+     again, so that the next fill writes it as the import says
+     now: a proof this port wrote by hand stays"""
+  if not argv: print('redo <theory>'); return 1
+  nm = argv[0]
+  a = ours_of(nm)
+  if not a: print('no file for %s' % nm); return 1
+  sys.path.insert(0, T)
+  import proofstore
+  pp = proofstore.path_of(re.sub(r'^.*/ml/', '', a))
+  ns = filled(nm)
+  if not ns or not os.path.exists(pp):
+    print('%s: nothing a fill took' % nm); return 0
+  gone = cut_sections(pp, set(ns))
+  note_filled(nm, [], drop=gone)
+  print('%s: %d sections a fill took, out again' % (nm, len(gone)))
+  return 0
+
+
 def drop(argv):
   """the sections of a proof store that a check says do not go
-     through, taken out again"""
-  if len(argv) < 2: print('drop <theory> <name>...'); return 1
+     through, taken out again.  With -q in front, without the
+     record of why: the proof is to be filled again, not left
+     out"""
+  quiet = bool(argv) and argv[0] == '-q'
+  if quiet: argv = argv[1:]
+  if len(argv) < 2: print('drop [-q] <theory> <name>...'); return 1
   nm = argv[0]
   a = ours_of(nm)
   if not a: print('no file for %s' % nm); return 1
@@ -989,19 +1070,13 @@ def drop(argv):
   import proofstore
   pp = proofstore.path_of(re.sub(r'^.*/ml/', '', a))
   if not os.path.exists(pp): print('no store for %s' % nm); return 1
-  out, keep, gone = [], True, []
-  for l in open(pp).read().split('\n'):
-    m = re.match(r'^###[ \t]+(\S+)[ \t]*$', l)
-    if m:
-      keep = m.group(1) not in names
-      if not keep: gone.append(m.group(1))
-    if keep: out.append(l)
-  open(pp, 'w').write('\n'.join(out).strip('\n') + '\n')
+  gone = cut_sections(pp, names)
+  note_filled(nm, [], drop=gone)
   # so that the next fill does not put them back: what a check
   # has shown does not go through is remembered with the reason
   # it gave, which tmp/unstated.txt holds under the name this
   # port binds the theorem to
-  if gone:
+  if gone and not quiet:
     why = {}
     up = ML + '../tmp/unstated.txt'
     if os.path.exists(up):
@@ -1041,6 +1116,7 @@ def main(argv):
   if argv[0] == 'deps': return deps(argv[1:])
   if argv[0] == 'fill': return fill(argv[1:])
   if argv[0] == 'drop': return drop(argv[1:])
+  if argv[0] == 'redo': return redo(argv[1:])
   print(__doc__); return 1
 
 
