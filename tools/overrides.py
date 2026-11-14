@@ -462,6 +462,9 @@ CON_BODY = {
   # wordLang program, and the two share Skip, Seq, If, Call and
   # the rest
   ('word_bignum', 'compile_def'): WORDLANG_PROG,
+  # data_to_word's comp reads a dataLang program and builds a
+  # wordLang one, and the two share If, Seq, Call, Skip and more
+  ('data_to_word', 'comp_def'): WORDLANG_PROG,
   # line_ok_light asks asm_ok of the asm instruction that a
   # labelled one stands for, so the Jump, the JumpCmp, the Call
   # and the Loc of its bodies are asm's
@@ -1671,6 +1674,9 @@ BVL_EXP = dict((c, 'bvl') for c in
                 'Call', 'Force', 'Op'])
 
 CON_OF = {
+  # the word code that an assignment compiles to is a wordLang
+  # program, and dataLang has an If as well
+  ('data_to_word', 'assign_BoundsCheckByte_def'): {'If': 'wordLang'},
   # the stubs that generated_bignum_stubs gives are wordLang
   # programs, so its Seq and its Return are wordLang's
   ('word_bignum', 'generated_bignum_stubs_def'): WORDLANG_PROG,
