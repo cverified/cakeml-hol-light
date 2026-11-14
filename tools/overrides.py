@@ -12130,6 +12130,10 @@ DEF_NAMES = {
   ('infer', 'type_name_check_subst_def'):
     {'toString': 'num_to_str'},
   ('export', 'word_to_string_def'): {'toString': 'num_to_str'},
+  # the label is the concat of a list of mlstrings and the
+  # toString of a number
+  ('export', 'get_sym_label_def'):
+    {'concat': 'mlstring_concat', 'toString': 'num_to_str'},
   ('presLang', 'num_to_display_def'): {'toString': 'num_to_str'},
   ('jsonLang', 'encode_str_def'): {'toString': 'num_to_str'},
 }
