@@ -20,6 +20,11 @@ KINDS = ('Datatype', 'Definition', 'Inductive', 'CoInductive')
 # the source in the comment over it.
 THMKINDS = ('Theorem', 'Triviality', 'ThmValue')
 
+# how many of each kind the sources have and how many the port
+# does not state, for the table of PENDING.md
+KINDTOT = dict((k, [0, 0])
+               for k in THMKINDS + ('ML',))
+
 
 def names_of(b, p):
   """the names that a block defines, as (name, is a type)"""
@@ -90,12 +95,14 @@ def main():
       elif b.kind in THMKINDS:
         if not p.wanted(b): continue
         twant += 1
+        KINDTOT[b.kind][0] += 1
         if b.name and (
             bound(text, thy, b.name) or
             re.search(r'\(\* %s[][\s*]' % re.escape(b.name), raw)):
           thave += 1
         else:
           tmissing.append('%s %s' % (b.kind, b.name or '(a value)'))
+          KINDTOT[b.kind][1] += 1
           if not pointed(flat, b.name): nopoint += 1
         continue
       elif b.kind == 'ML':
@@ -105,11 +112,13 @@ def main():
         if p.kind == 'lib': continue
         for nm, _, _ in hol4.ml_theorems(b.text or ''):
           twant += 1
+          KINDTOT['ML'][0] += 1
           if (bound(text, thy, nm) or
               re.search(r'\(\* %s[][\s*]' % re.escape(nm), raw)):
             thave += 1
           else:
             tmissing.append('ML %s' % nm)
+            KINDTOT['ML'][1] += 1
             if not pointed(flat, nm): nopoint += 1
         continue
       elif b.kind not in KINDS or not p.wanted(b):
@@ -137,9 +146,14 @@ def main():
     if want != have or twant != thave or '-v' in sys.argv:
       print('%-28s %6d %6d %8d %6d' % (thy, want, have, twant, thave))
       for m in missing: print('        missing:', m)
-      for m in tmissing[:4]: print('        not stated:', m)
-      if len(tmissing) > 4:
-        print('        not stated: and %d more' % (len(tmissing) - 4))
+      lim = 10000 if os.environ.get("CAKE_ALL") else 4
+      for m in tmissing[:lim]: print("        not stated:", m)
+      if len(tmissing) > lim:
+        print("        not stated: and %d more" % (len(tmissing) - lim))
+  if os.environ.get('CAKE_KINDS'):
+    for k in THMKINDS + ('ML',):
+      w, m = KINDTOT[k]
+      print('%-28s %6d stated, %d with a pointer' % (k, w - m, m))
   print('%-28s %6d %6d %8d %6d  (%d blocks, %d theorems missing)'
         % ('TOTAL', tot[0], tot[1], tot[3], tot[4], tot[2], tot[5]))
   print('%d of the %d theorems that the port does not state have no '

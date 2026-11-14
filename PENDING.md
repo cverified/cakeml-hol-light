@@ -2,18 +2,27 @@
 
 Phase two states every theorem of the sources with its name, its
 attributes and its statement (`CLAUDE.md`).  Of the 10,688
-theorems of the 270 sources the port states 10,152 and points at
-536 with a comment that names them:
+theorems of the 270 sources the port states 9,973 and points at
+715 with a comment that names them
+(`CAKE_KINDS=1 python3 -I tools/coverage.py`):
 
 | | stated | a pointer |
 |---|---|---|
-| `Theorem` (and `Triviality`) | 10,088 | 46 |
-| `ThmValue` (the value of an ML expression) | 29 | 450 |
+| `Theorem` (and `Triviality`) | 9,900 | 234 |
+| `ThmValue` (the value of an ML expression) | 38 | 441 |
 | a theorem that ML code states (`Q.prove`) | 35 | 40 |
 
-What the 540 are, and why the port cannot state them:
+The `Theorem` row grew as the harvest got more honest, not as the
+port got worse: 188 of its 234 are statements that HOL Light's
+parser rejects, and a run finds one only when the file it is in
+loads far enough to reach it.  `tools/unstated.py` is that list,
+and every entry of it is a statement to win back -- 104 of them
+are in `data_to_word_assignProof` alone, so one cause may account
+for most of them.
 
-- **450 theorems that HOL4 states as the value of an ML
+What the 715 are, and why the port cannot state them:
+
+- **441 theorems that HOL4 states as the value of an ML
   expression** (`Theorem foo[simp] = CONV_RULE (RAND_CONV EVAL)
   foo_def`, `Theorem bar = SIMP_RULE bool_ss [] baz`, `Theorem
   baz = theorem"baz_ind"`).  The statement is not in the source:
@@ -28,7 +37,7 @@ What the 540 are, and why the port cannot state them:
   guessed: `overrides.THM_VALUE` holds the statement in HOL4's
   notation, `tools/port.py` translates it like any other statement
   of the source, and the proof is a section of the file's proof
-  store.  Four of the 454 are in that way:
+  store.  Four of the 479 are in that way:
 
   | theorem | the ML expression, and what it computes |
   |---|---|
@@ -51,14 +60,16 @@ What the 540 are, and why the port cannot state them:
 
 Where the value is a `prove` of a quotation and nothing but
 `SPEC_ALL`, `GEN_ALL` or `check_thm` is applied to it, the
-quotation is the statement and the port states it: seventeen of
+quotation is the statement and the port states it: thirty-four of
 the theorems above are these, and the theorem that HOL4 binds is
 the one of the quotation with its variables free or closed, which
 says the same.
 
 Everything else of the sources is in: `tools/coverage.py` counts
 the blocks and the theorems of every source against its port, and
-what it reports missing is the two blocks below and these 494.
+what it reports missing is the two blocks below, the 481 that
+this section is about, and the 234 `Theorem` statements that HOL
+Light's parser rejects.
 
 **Forty-two statements use an auxiliary size function of a
 datatype family** (`exp1_size`, `exp3_size`, `v1_size`, ...).  HOL4's
