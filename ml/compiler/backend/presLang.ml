@@ -362,46 +362,47 @@ let pat_to_display_def,pat_to_display_ind = assume_definition_rec
 let exp_to_display_def,exp_to_display_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`exp_to_display (c:ast_exp) =
-      (match c with flatLang_Lit l -> displayLang_Item NONE (implode
-          "Lit") [lit_to_display l] | flatLang_Raise e ->
+      (match c with pattern_semantics_Lit l -> displayLang_Item NONE
+          (implode "Lit") [lit_to_display l] | wordLang_Raise e ->
           displayLang_Item NONE (implode "Raise") [exp_to_display e] |
-          flatLang_Con opt_id es -> displayLang_Item NONE (implode
+          closLang_Con opt_id es -> displayLang_Item NONE (implode
           "Con") [(\f opt. match opt with NONE -> empty_item (implode
           "none") | SOME opt' -> displayLang_Item NONE (implode "some")
           [f opt']) id_to_display opt_id;
                               displayLang_Tuple (exp_to_display_list
                                   es)] | db_vars_Var id' ->
                                   displayLang_Item NONE (implode "Var")
-                                  [id_to_display id'] | flatLang_Fun n e
-                                  -> displayLang_Item NONE (implode
-                                  "Fun") [displayLang_String n;
-                                  exp_to_display e] | flatLang_App op es
-                                  -> displayLang_Item NONE (implode
-                                  "App") (CONS (op_to_display op)
+                                  [id_to_display id'] | ast_Fun n e ->
+                                  displayLang_Item NONE (implode "Fun")
+                                  [displayLang_String n; exp_to_display
+                                  e] | ast_App op es -> displayLang_Item
+                                  NONE (implode "App") (CONS
+                                  (op_to_display op)
                               (exp_to_display_list es)) | ast_Log
                                   lop e1 e2 -> displayLang_Item NONE
                                   (implode "Log") [lop_to_display lop;
                               exp_to_display e1;
-                              exp_to_display e2] | flatLang_If e1 e2
-                                  e3 -> displayLang_Item NONE (implode
-                                  "If") [exp_to_display e1;
+                              exp_to_display e2] |
+                                  pattern_semantics_If e1 e2 e3 ->
+                                  displayLang_Item NONE (implode "If")
+                                  [exp_to_display e1;
                               exp_to_display e2;
-                              exp_to_display e3] | flatLang_Let
+                              exp_to_display e3] | closLang_Let
                                   n_opt e1 e2 -> displayLang_Item NONE
                                   (implode "Let")
           [(\f opt. match opt with NONE -> empty_item (implode
               "none") | SOME opt' -> displayLang_Item NONE (implode
               "some") [f opt']) displayLang_String n_opt;
            exp_to_display e1;
-           exp_to_display e2] | flatLang_Mat e pats ->
+           exp_to_display e2] | ast_Mat e pats ->
           displayLang_Item NONE (implode "Mat")
           [exp_to_display e;
            displayLang_Tuple (pat_exp_to_display_list pats)] |
-               flatLang_Handle e pats ->
+               bvl_Handle e pats ->
           displayLang_Item NONE (implode "Handle")
           [exp_to_display e;
            displayLang_Tuple (pat_exp_to_display_list pats)] |
-               flatLang_Letrec fns e ->
+               ast_Letrec fns e ->
           displayLang_Item NONE (implode "Letrec")
           [displayLang_Tuple (fun_to_display_list fns);
            exp_to_display e] | ast_Tannot e _1 ->
@@ -1048,8 +1049,8 @@ let _ = size_thms "dataLang_prog";;
 let data_seqs_def,data_seqs_ind = define_wf
   `MEASURE (\x0. dataLang_prog_size x0)`
   [`data_seqs z =
-     (match z with dataLang_Seq x y -> mlsexp_Append (data_seqs
-       x) (data_seqs y) | _19 -> displayLang_List [z])`];;
+     (match z with dataLang_Seq x y -> misc_Append (data_seqs x)
+       (data_seqs y) | _19 -> displayLang_List [z])`];;
 
 (* [local] *)
 let MEM_append_data_seqs = prove
@@ -1074,7 +1075,7 @@ let data_prog_to_display_def,data_prog_to_display_ind = define_wf
           (match prog with dataLang_Skip -> empty_item (implode
               "skip") | dataLang_Move x y -> displayLang_Tuple
             [num_to_display x; displayLang_String (implode ":=");
-                num_to_display y] | labLang_Call rets target args NONE
+                num_to_display y] | wordLang_Call rets target args NONE
                 -> displayLang_Item NONE (implode "call")
             [(\f opt. match opt with NONE -> empty_item (implode
                 "none") | SOME opt' -> displayLang_Item NONE (implode
@@ -1085,7 +1086,7 @@ let data_prog_to_display_def,data_prog_to_display_ind = define_wf
                 displayLang_String (attach_name ns target);
                 (\f xs. displayLang_Tuple (MAP f xs)) num_to_display
                     args;
-                empty_item (implode "none")] | labLang_Call rets
+                empty_item (implode "none")] | wordLang_Call rets
                     target args (SOME (v,handler)) -> displayLang_Item
                     NONE (implode "call")
             [(\f opt. match opt with NONE -> empty_item (implode
@@ -1099,15 +1100,15 @@ let data_prog_to_display_def,data_prog_to_display_ind = define_wf
                     args;
                 displayLang_Item NONE (implode "some")
                     [displayLang_Tuple [num_to_display v;
-                    data_prog_to_display k ns handler]]] | ast_Force
-                        ret loc src -> displayLang_Item NONE (implode
-                        "force")
+                    data_prog_to_display k ns handler]]] |
+                        dataLang_Force ret loc src -> displayLang_Item
+                        NONE (implode "force")
             [(\f opt. match opt with NONE -> empty_item (implode
                 "none") | SOME opt' -> displayLang_Item NONE (implode
                 "some") [f opt']) (\(x,y). displayLang_Tuple
                     [num_to_display x; num_set_to_display y]) ret;
              num_to_display loc;
-             num_to_display src] | wordLang_Assign n op args n_set
+             num_to_display src] | dataLang_Assign n op args n_set
                  -> displayLang_Tuple
             [num_to_display n;
              displayLang_String (implode ":=");
@@ -1118,17 +1119,18 @@ let data_prog_to_display_def,data_prog_to_display_ind = define_wf
                     "none") | SOME opt' -> displayLang_Item NONE
                     (implode "some") [f opt']) num_set_to_display n_set]
                     | wordLang_Seq x y ->
-            (let xs = append (mlsexp_Append (data_seqs x) (data_seqs
+            (let xs = append (misc_Append (data_seqs x) (data_seqs
                 y)) in
                separate_lines (implode "seq")
-                   (data_prog_to_display_list k ns xs)) | flatLang_If n
-                   x y -> displayLang_Item NONE (implode "if")
+                   (data_prog_to_display_list k ns xs)) |
+                   pattern_semantics_If n x y -> displayLang_Item NONE
+                   (implode "if")
             [num_to_display n; data_prog_to_display k ns x;
                 data_prog_to_display k ns y] | dataLang_MakeSpace n ns
                 -> displayLang_Item NONE (implode "make_space")
             [num_to_display n; num_set_to_display ns] |
-                flatLang_Raise n -> displayLang_Item NONE (implode
-                "raise") [num_to_display n] | wordLang_Return ns ->
+                wordLang_Raise n -> displayLang_Item NONE (implode
+                "raise") [num_to_display n] | stackLang_Return ns ->
                 displayLang_Item NONE (implode "return") [(\f xs.
                 displayLang_Tuple (MAP f xs)) num_to_display ns] |
                 wordLang_Tick -> empty_item (implode "tick"))`;
@@ -1168,7 +1170,7 @@ let asm_arith_to_display_def = new_definition
          [shift_to_display sh;
           num_to_display n1;
           num_to_display n2;
-          asm_reg_imm_to_display n3] | closLang_Div n1 n2 n3 ->
+          asm_reg_imm_to_display n3] | asm_Div n1 n2 n3 ->
             item_with_nums (implode "Div") [n1; n2; n3] | asm_LongMul
             n1 n2 n3 n4 -> item_with_nums (implode "LongMul") [n1;
             n2; n3; n4] | asm_LongDiv n1 n2 n3 n4 n5 ->
@@ -1223,8 +1225,8 @@ let asm_fp_to_display_def = new_definition
 
 let asm_inst_to_display_def = new_definition
   `asm_inst_to_display inst' = (match inst' with asm_Skip -> empty_item
-  (implode "Skip") | closLang_Const reg w -> displayLang_Item NONE
-  (implode "Const") [num_to_display reg;
+  (implode "Skip") | asm_Const reg w -> displayLang_Item NONE (implode
+  "Const") [num_to_display reg;
                               word_to_display w] | asm_Arith a ->
                                 displayLang_Item NONE (implode "Arith")
                                 [asm_arith_to_display a] | asm_Mem mop r
@@ -1272,8 +1274,8 @@ let _ = size_thms "stackLang_prog";;
 let stack_seqs_def,stack_seqs_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
   [`stack_seqs z =
-     (match z with stackLang_Seq x y -> mlsexp_Append
-       (stack_seqs x) (stack_seqs y) | _24 -> displayLang_List [z])`];;
+     (match z with stackLang_Seq x y -> misc_Append (stack_seqs
+       x) (stack_seqs y) | _24 -> displayLang_List [z])`];;
 
 (* [local] *)
 let MEM_append_stack_seqs = prove
@@ -1329,7 +1331,7 @@ let stack_prog_to_display_def,stack_prog_to_display_ind =
                       num_to_display l2;
                       stack_prog_to_display k ns p])]`;
    `stack_prog_to_display (SUC k) ns (stackLang_Seq x y) =
-         (let xs = append (mlsexp_Append (stack_seqs x) (stack_seqs
+         (let xs = append (misc_Append (stack_seqs x) (stack_seqs
              y)) in
             separate_lines (implode "seq")
                 (stack_prog_to_display_list k ns xs))`;
@@ -1446,11 +1448,10 @@ let lab_asm_to_display_def = new_definition
              r;
                    asm_reg_imm_to_display ri];
             displayLang_String (attach_name ns (SOME s));
-              num_to_display n] | stackLang_Call (labLang_Lab s n) ->
+              num_to_display n] | labLang_Call (labLang_Lab s n) ->
          displayLang_Item NONE (implode "call")
            [displayLang_String (attach_name ns (SOME s));
-             num_to_display n] | stackLang_LocValue r (labLang_Lab s n)
-             ->
+             num_to_display n] | labLang_LocValue r (labLang_Lab s n) ->
          displayLang_Item NONE (implode "loc_value")
            [num_to_display r; displayLang_String (attach_name ns
              (SOME s)); num_to_display n] | labLang_CallFFI name ->
@@ -1488,8 +1489,8 @@ let _ = size_thms "wordLang_prog";;
 let word_seqs_def,word_seqs_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
   [`word_seqs z =
-     (match z with wordLang_Seq x y -> mlsexp_Append (word_seqs
-       x) (word_seqs y) | _31 -> displayLang_List [z])`];;
+     (match z with wordLang_Seq x y -> misc_Append (word_seqs x)
+       (word_seqs y) | _31 -> displayLang_List [z])`];;
 
 (* [local] *)
 let MEM_append_word_seqs = prove
@@ -1593,7 +1594,7 @@ let word_prog_to_display_def,word_prog_to_display_ind =
             displayLang_String (implode "CurrHeap");
          asm_binop_to_display b; num_to_display n2]`;
    `word_prog_to_display (SUC k) ns (wordLang_Seq prog1 prog2) =
-        (let xs = append (mlsexp_Append (word_seqs prog1) (word_seqs
+        (let xs = append (misc_Append (word_seqs prog1) (word_seqs
             prog2)) in
            separate_lines (implode "seq")
                (word_prog_to_display_list k ns xs))`;
@@ -1691,7 +1692,7 @@ let default_tap_config_def = new_definition
 
 let map_to_append_def,map_to_append_ind = define_rec
   [`map_to_append f [] = misc_Nil`;
-   `map_to_append f (CONS x xs) = mlsexp_Append (misc_List (f x))
+   `map_to_append f (CONS x xs) = misc_Append (misc_List (f x))
     (map_to_append f xs)`];;
 
 let source_to_strs_def = new_definition
@@ -1710,8 +1711,8 @@ let clos_to_strs_def = new_definition
   `clos_to_strs (decs,funs) =
      (let names = get_src_names (APPEND decs (MAP (SND o SND) funs))
        LN in
-       mlsexp_Append (map_to_append (str_tree_to_strs (implode
-         "\n\n") o
+       misc_Append (map_to_append (str_tree_to_strs (implode "\n\n")
+         o
                               display_to_str_tree o
                               clos_dec_to_display names) decs)
               (map_to_append (str_tree_to_strs (implode "\n\n") o

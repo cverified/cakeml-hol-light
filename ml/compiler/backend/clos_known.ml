@@ -155,7 +155,7 @@ let clos_known_free_def,clos_known_free_ind = assume_definition_rec
          let (c2,l2) = clos_known_free (CONS y xs) in
            (APPEND c1 c2,mk_Union l1 l2))`;
    `clos_known_free [(closLang_Var t v:closLang_exp)] =
-    ([(closLang_Var t v:closLang_exp)],closLang_Var v)`;
+    ([(closLang_Var t v:closLang_exp)],db_vars_Var v)`;
    `clos_known_free [(closLang_If t x1 x2 x3:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
          let (c2,l2) = clos_known_free [x2] in

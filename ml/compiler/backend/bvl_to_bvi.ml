@@ -172,7 +172,7 @@ let AllocGlobal_code_def = new_definition
             (closLang_IntOp closLang_Add) [bvl_Var 2; bvl_Var 2]]] (
            bvl_Let [bvl_Op (closLang_GlobOp closLang_SetGlobalsPtr)
              [bvl_Var 0]]
-             (bvl_Call 0 (SOME CopyGlobals_location)
+             (dataLang_Call 0 (SOME CopyGlobals_location)
                [bvl_Var 1; bvl_Var 6; bvl_Op (closLang_IntOp
                  closLang_Sub) [bvl_Op (closLang_IntOp
                  (closLang_Const (&1))) []; bvl_Var 3]] NONE)))))))))`;;
@@ -186,7 +186,7 @@ let CopyGlobals_code_def = new_definition
        (bvl_If (bvl_Op (closLang_BlockOp closLang_Equal) [bvl_Op
          (closLang_IntOp (closLang_Const (&0))) []; bvl_Var 3]) (bvl_Var
          0)
-         (bvl_Call 0 (SOME CopyGlobals_location) [bvl_Var 1;
+         (dataLang_Call 0 (SOME CopyGlobals_location) [bvl_Var 1;
            bvl_Var 2; bvl_Op (closLang_IntOp closLang_Sub) [bvl_Op
            (closLang_IntOp (closLang_Const (&1))) []; bvl_Var 3]]
            NONE)))`;;
@@ -205,14 +205,15 @@ let InitGlobals_code_def = new_definition
            (closLang_IntOp (closLang_Const (&0))) []; bvl_Var 0]]
            (bvl_Let [bvl_Op (closLang_GlobOp closLang_SetGlobalsPtr)
              [bvl_Var 1]]
-              (bvl_Call 0 (SOME start') [] (SOME (bvl_Var 0)))))))`;;
+              (dataLang_Call 0 (SOME start') [] (SOME (bvl_Var
+                0)))))))`;;
 
 let ListLength_code_def = new_definition
   `ListLength_code = (2,
      // ptr to array, accumulated length
      bvl_If (bvl_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0))
        [bvl_Var 0])
-       (bvl_Var 1) (bvl_Call 0 (SOME ListLength_location)
+       (bvl_Var 1) (dataLang_Call 0 (SOME ListLength_location)
                  [bvl_Op (closLang_MemOp closLang_El) [bvl_Op
                    (closLang_IntOp (closLang_Const (&1))) []; bvl_Var
                    0];
@@ -228,7 +229,7 @@ let FromListByte_code_def = new_definition
        (bvl_Let [bvl_Op (closLang_MemOp closLang_UpdateByte) [bvl_Op
          (closLang_MemOp closLang_El) [bvl_Op (closLang_IntOp
          (closLang_Const (&0))) []; bvl_Var 0]; bvl_Var 1; bvl_Var 2]]
-         (bvl_Call 0 (SOME FromListByte_location)
+         (dataLang_Call 0 (SOME FromListByte_location)
            [bvl_Op (closLang_MemOp closLang_El) [bvl_Op
              (closLang_IntOp (closLang_Const (&1))) []; bvl_Var 1];
             bvl_Op (closLang_IntOp closLang_Add) [bvl_Var 2; bvl_Op
@@ -244,7 +245,7 @@ let ToListByte_code_def = new_definition
          (closLang_IntOp (closLang_Const (&1))) []; bvl_Var 1]]
        (bvl_Let [bvl_Op (closLang_MemOp closLang_DerefByte) [bvl_Var
          0; bvl_Var 3]]
-         (bvl_Call 0 (SOME ToListByte_location)
+         (dataLang_Call 0 (SOME ToListByte_location)
            [bvl_Op (closLang_BlockOp (closLang_Cons 0)) [bvl_Var 2;
              bvl_Var 0];
             bvl_Var 1;
@@ -256,7 +257,7 @@ let SumListLength_code_def = new_definition
      bvl_If (bvl_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0))
        [bvl_Var 0])
        (bvl_Var 1)
-       (bvl_Call 0 (SOME SumListLength_location)
+       (dataLang_Call 0 (SOME SumListLength_location)
           [bvl_Op (closLang_MemOp closLang_El) [bvl_Op
             (closLang_IntOp (closLang_Const (&1))) []; bvl_Var 0];
            bvl_Op (closLang_IntOp closLang_Add) [bvl_Var 1; bvl_Op
@@ -278,7 +279,7 @@ let ConcatByte_code_def = new_definition
                    [bvl_Var 3; bvl_Var 4; bvl_Var 0; bvl_Op
                      (closLang_IntOp (closLang_Const (&0))) []; bvl_Var
                      1]]
-             (bvl_Call 0 (SOME ConcatByte_location)
+             (dataLang_Call 0 (SOME ConcatByte_location)
                [bvl_Op (closLang_MemOp closLang_El) [bvl_Op
                  (closLang_IntOp (closLang_Const (&1))) []; bvl_Var 3];
                 bvl_Op (closLang_IntOp closLang_Add) [bvl_Var 4;
@@ -311,41 +312,41 @@ let compile_op_def = new_definition
          bvl_Op (closLang_GlobOp closLang_GlobalsPtr) []])) |
            closLang_GlobOp (closLang_SetGlobal n) -> bvl_Op
            (closLang_GlobOp (closLang_SetGlobal (n + 1))) c1 |
-           closLang_GlobOp closLang_AllocGlobal -> bvl_Call 0 (SOME
+           closLang_GlobOp closLang_AllocGlobal -> dataLang_Call 0 (SOME
            AllocGlobal_location) c1 NONE | closLang_BlockOp
            (closLang_FromList n) -> bvl_Let
          (if NULL c1 then [bvl_Op (closLang_IntOp (closLang_Const
            (&0))) []] else c1)
          (bvl_Op (closLang_BlockOp (closLang_FromList n))
-         [bvl_Var 0; bvl_Call 0 (SOME ListLength_location) [bvl_Var
-           0; bvl_Op (closLang_IntOp (closLang_Const (&0))) []] NONE]) |
-           closLang_Install -> bvl_Let
+         [bvl_Var 0; dataLang_Call 0 (SOME ListLength_location)
+           [bvl_Var 0; bvl_Op (closLang_IntOp (closLang_Const (&0))) []]
+           NONE]) | closLang_Install -> bvl_Let
        (if ~(LENGTH c1 = 2) then [bvl_Let c1 (bvl_Op (closLang_IntOp
          (closLang_Const (&0))) []); bvl_Op (closLang_IntOp
          (closLang_Const (&0))) []] else c1)
        (bvl_Op closLang_Install
-        [bvl_Call 0 (SOME ListLength_location)
+        [dataLang_Call 0 (SOME ListLength_location)
            [bvl_Var 0; bvl_Op (closLang_IntOp (closLang_Const (&0)))
              []] NONE;
-         bvl_Call 0 (SOME ListLength_location)
+         dataLang_Call 0 (SOME ListLength_location)
            [bvl_Var 1; bvl_Op (closLang_IntOp (closLang_Const (&0)))
              []] NONE;
          bvl_Var 0; bvl_Var 1]) | closLang_MemOp
            closLang_FromListByte ->
          bvl_Let (if NULL c1 then [bvl_Op (closLang_IntOp
            (closLang_Const (&0))) []] else c1)
-           (bvl_Call 0 (SOME FromListByte_location)
+           (dataLang_Call 0 (SOME FromListByte_location)
               [bvl_Var 0;
                bvl_Op (closLang_IntOp (closLang_Const (&0))) [];
                bvl_Op (closLang_MemOp (closLang_RefByte T))
                  [bvl_Op (closLang_IntOp (closLang_Const (&0))) [];
-                  bvl_Call 0 (SOME ListLength_location)
+                  dataLang_Call 0 (SOME ListLength_location)
                     [bvl_Var 0; bvl_Op (closLang_IntOp
                       (closLang_Const (&0))) []] NONE]]
               NONE) | closLang_MemOp closLang_ToListByte ->
          bvl_Let (if NULL c1 then [bvl_Op (closLang_IntOp
            (closLang_Const (&0))) []] else c1)
-           (bvl_Call 0 (SOME ToListByte_location)
+           (dataLang_Call 0 (SOME ToListByte_location)
               [bvl_Op (closLang_BlockOp (closLang_Cons 0)) [];
                bvl_Op (closLang_MemOp closLang_LengthByte) [bvl_Var
                  0];
@@ -353,12 +354,12 @@ let compile_op_def = new_definition
               NONE) | closLang_MemOp closLang_ConcatByteVec ->
          bvl_Let (if NULL c1 then [bvl_Op (closLang_IntOp
            (closLang_Const (&0))) []] else c1)
-           (bvl_Call 0 (SOME ConcatByte_location)
+           (dataLang_Call 0 (SOME ConcatByte_location)
              [bvl_Var 0;
               bvl_Op (closLang_IntOp (closLang_Const (&0))) [];
               bvl_Op (closLang_MemOp (closLang_RefByte T))
                 [bvl_Op (closLang_IntOp (closLang_Const (&0))) [];
-                 bvl_Call 0 (SOME SumListLength_location)
+                 dataLang_Call 0 (SOME SumListLength_location)
                    [bvl_Var 0; bvl_Op (closLang_IntOp (closLang_Const
                      (&0))) []] NONE]] NONE) | closLang_MemOp
                      (closLang_CopyByte T) ->
@@ -395,8 +396,8 @@ let compile_op_def = new_definition
 
 let compile_aux_def = new_definition
   `compile_aux (k,args,p) =
-     bvi_tailrec_List [(bvl_num_stubs + bvl_to_bvi_namespaces * k
-       + 1,args,bvi_let_compile_exp p)]`;;
+     misc_List [(bvl_num_stubs + bvl_to_bvi_namespaces * k +
+       1,args,bvi_let_compile_exp p)]`;;
 
 let compile_exps_def,compile_exps_ind = assume_definition_rec
   "the port cannot make this definition"
@@ -420,9 +421,10 @@ let compile_exps_def,compile_exps_ind = assume_definition_rec
         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
         let n3 = n2 + 1 in
-          ([bvl_Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces
-            * n2 + 1)) c1 NONE],SmartAppend (SmartAppend aux1 aux2)
-            (compile_aux (n2,LENGTH args,HD c2)),n3) else
+          ([dataLang_Call 0 (SOME (bvl_num_stubs +
+            bvl_to_bvi_namespaces * n2 + 1)) c1 NONE],SmartAppend
+            (SmartAppend aux1 aux2) (compile_aux (n2,LENGTH args,HD
+            c2)),n3) else
         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
           ([bvl_Let c1 (HD c2)],SmartAppend aux1 aux2,n2))) /\
@@ -445,12 +447,13 @@ let compile_exps_def,compile_exps_ind = assume_definition_rec
       let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x2] in
       let aux4 = compile_aux (n3,LENGTH args,HD c2) in
       let n4 = n3 + 1 in
-        ([bvl_Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
-          n3 + 1)) c1 (SOME (HD c3))],SmartAppend (SmartAppend
-          (SmartAppend aux1 aux2) aux3) aux4,n4))) /\
+        ([dataLang_Call 0 (SOME (bvl_num_stubs +
+          bvl_to_bvi_namespaces * n3 + 1)) c1 (SOME (HD
+          c3))],SmartAppend (SmartAppend (SmartAppend aux1 aux2) aux3)
+          aux4,n4))) /\
    (bvl_to_bvi_compile_exps n [bvl_Call ticks dest xs] =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-        ([bvl_Call ticks
+        ([dataLang_Call ticks
                (match dest with NONE -> NONE | SOME n -> SOME
                  (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
                  NONE],aux1,n1)))`];;
@@ -472,9 +475,10 @@ let compile_exps_sing_def,compile_exps_sing_ind = assume_definition_rec
         let (c1,aux1,n1) = compile_exps_list n args in
         let (c2,aux2,n2) = compile_exps_sing n1 x0 in
         let n3 = n2 + 1 in
-          ((bvl_Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces
-            * n2 + 1)) c1 NONE),SmartAppend (SmartAppend aux1 aux2)
-            (compile_aux (n2,LENGTH args,c2)),n3) else
+          ((dataLang_Call 0 (SOME (bvl_num_stubs +
+            bvl_to_bvi_namespaces * n2 + 1)) c1 NONE),SmartAppend
+            (SmartAppend aux1 aux2) (compile_aux (n2,LENGTH
+            args,c2)),n3) else
         let (c1,aux1,n1) = compile_exps_list n xs in
         let (c2,aux2,n2) = compile_exps_sing n1 x2 in
           ((bvl_Let c1 (c2)),SmartAppend aux1 aux2,n2))) /\
@@ -497,12 +501,12 @@ let compile_exps_sing_def,compile_exps_sing_ind = assume_definition_rec
       let (c3,aux3,n3) = compile_exps_sing n2 x2 in
       let aux4 = compile_aux (n3,LENGTH args,c2) in
       let n4 = n3 + 1 in
-        ((bvl_Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
-          n3 + 1)) c1 (SOME c3)),SmartAppend (SmartAppend (SmartAppend
-          aux1 aux2) aux3) aux4,n4))) /\
+        ((dataLang_Call 0 (SOME (bvl_num_stubs +
+          bvl_to_bvi_namespaces * n3 + 1)) c1 (SOME c3)),SmartAppend
+          (SmartAppend (SmartAppend aux1 aux2) aux3) aux4,n4))) /\
    (compile_exps_sing n (bvl_Call ticks dest xs) =
       (let (c1,aux1,n1) = compile_exps_list n xs in
-        ((bvl_Call ticks
+        ((dataLang_Call ticks
                (match dest with NONE -> NONE | SOME n -> SOME
                  (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
                  NONE),aux1,n1))) /\
@@ -543,7 +547,7 @@ let compile_single_def = new_definition
   `bvl_to_bvi_compile_single n (name,arg_count,exp) =
      (let (c,aux,n1) = bvl_to_bvi_compile_exps n [exp] in
        (
-         SmartAppend (bvi_tailrec_List [(bvl_num_stubs +
+         SmartAppend (misc_List [(bvl_num_stubs +
            bvl_to_bvi_namespaces * name,arg_count,bvi_let_compile_exp
            (HD c))]) aux,n1))`;;
 
@@ -551,13 +555,13 @@ let compile_single_eq = prove
  (`bvl_to_bvi_compile_single n (name,arg_count,exp) =
      (let (c,aux,n1) = compile_exps_sing n exp in
        (
-         SmartAppend (bvi_tailrec_List [(bvl_num_stubs +
+         SmartAppend (misc_List [(bvl_num_stubs +
            bvl_to_bvi_namespaces * name,arg_count,bvi_let_compile_exp
            c)]) aux,n1))`,
   CHEAT_TAC);;
 
 let compile_list_def,compile_list_ind = define_rec
-  [`bvl_to_bvi_compile_list n [] = (bvi_tailrec_List [],n)`;
+  [`bvl_to_bvi_compile_list n [] = (misc_List [],n)`;
    `bvl_to_bvi_compile_list n (CONS p progs) =
          (let (code1,n1) = bvl_to_bvi_compile_single n p in
          let (code2,n2) = bvl_to_bvi_compile_list n1 progs in

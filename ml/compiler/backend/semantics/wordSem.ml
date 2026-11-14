@@ -765,7 +765,7 @@ let set_fp_var_def = new_definition
 
 let wordSem_inst_def = new_definition
   `wordSem_inst i (s:('a,'c,'ffi)wordSem_state) =
-     (match i with wordLang_Skip -> SOME s | wordLang_Const reg w ->
+     (match i with wordLang_Skip -> SOME s | asm_Const reg w ->
        wordSem_assign reg (wordLang_Const w) s | asm_Arith (asm_Binop
        bop r1 r2 ri) ->
          wordSem_assign r1

@@ -549,7 +549,7 @@ let result_view_def = new_definition
           stackSem_Result (wordLang_Loc n1 n2) -> Vloc n1 n2
         | (stackSem_Exception (wordLang_Loc n1 n2)) -> Vloc n1 n2
         | targetSem_TimeOut -> Vtimeout
-        | (word_bignum_Continue n) -> Vcont l (find_lab n cs)
+        | (stackSem_Continue n) -> Vcont l (find_lab n cs)
         | (stackSem_Break n) -> Vloc l (find_lab n bs)
         | _11 -> Verr`;;
 add_simp result_view_def;;
@@ -655,7 +655,7 @@ let halt_assum_def = new_definition
     (!(s:('a,'c,'ffi)stackSem_state).
       subspt code (stackSem_state_code s) /\ ~(stackSem_state_clock s
         = 0) ==>
-      (?t. stackSem_evaluate (labLang_Call NONE (INL 1) NONE,s) =
+      (?t. stackSem_evaluate (stackLang_Call NONE (INL 1) NONE,s) =
         (SOME (targetSem_Halt (wordLang_Word (n2w 0))),t) /\
         stackSem_state_ffi
           t = stackSem_state_ffi s /\ stackSem_state_clock t =

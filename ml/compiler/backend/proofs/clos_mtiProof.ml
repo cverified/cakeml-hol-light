@@ -230,7 +230,7 @@ let collect_apps_cons = prove
 
 let mk_Apps_def,mk_Apps_ind = define_rec
   [`mk_Apps e [] = e`;
-   `mk_Apps e (CONS (t,other) ts) = flatLang_App t NONE (mk_Apps e
+   `mk_Apps e (CONS (t,other) ts) = closLang_App t NONE (mk_Apps e
     ts) [other]`];;
 
 let collect_apps_IMP_mk_Apps = prove

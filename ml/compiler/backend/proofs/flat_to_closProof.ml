@@ -77,7 +77,7 @@ let flat_to_closProof_v_rel = cake_inductive
    (!env m db n e.
       flat_to_closProof_env_rel env m db /\ no_Mat e ==>
       flat_to_closProof_v_rel (flatSem_Closure env n e)
-            (flatSem_Closure NONE [] db 1 (HD (flat_to_clos_compile
+            (closSem_Closure NONE [] db 1 (HD (flat_to_clos_compile
               (CONS (SOME n) m) [e])))) /\
    (!funs n env m db.
      n < LENGTH funs /\ flat_to_closProof_env_rel env m db /\
@@ -85,7 +85,7 @@ let flat_to_closProof_v_rel = cake_inductive
      ALL no_Mat (MAP (SND o SND) funs) ==>
       flat_to_closProof_v_rel (flatSem_Recclosure env funs (FST (EL n
         funs)))
-       (flatSem_Recclosure NONE [] db (MAP
+       (closSem_Recclosure NONE [] db (MAP
              (\(f,v,x). (1,HD (flat_to_clos_compile
                         (CONS (SOME v) (APPEND (MAP (\n. SOME (FST
                           n)) funs) m))
@@ -207,7 +207,7 @@ let flat_to_closProof_env_rel_APPEND = prove
 let initial_state'_def = new_definition
   `initial_state' b ffi ma code co cc k =
      mk_closSem_state [SOME (if b then
-                            flatSem_Closure NONE [] [] 1
+                            closSem_Closure NONE [] [] 1
                               clos_interpreter else closSem_Unit)]
                               FEMPTY ffi k cc co code ma`;;
 
@@ -368,7 +368,7 @@ let state_rel_LEAST = prove
 
 let evaluate_Let_error = prove
  (`flatSem_evaluate (es,env,s) = (Rerr err,s') ==>
-   flatSem_evaluate ([flatLang_Let t es e],env,s) = (Rerr err,s')`,
+   flatSem_evaluate ([closLang_Let t es e],env,s) = (Rerr err,s')`,
   CHEAT_TAC);;
 
 let evaluate_Op_error = prove

@@ -1409,7 +1409,7 @@ let dataSem_do_app_aux_def = new_definition
          (match dataSem_do_word_app wordop vs with SOME res -> Rval
            (res,s) | _177 -> ((Rerr (Rabort
            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
-           ,dataSem_v)semanticPrimitives_result)) | (wordLang_FFI
+           ,dataSem_v)semanticPrimitives_result)) | (closLang_FFI
            n,[dataSem_RefPtr _178 cptr; dataSem_RefPtr _179 ptr]) ->
          (match (sptree_lookup cptr (dataSem_state_refs
            s),sptree_lookup ptr (dataSem_state_refs s)) with (SOME

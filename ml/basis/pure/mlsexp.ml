@@ -395,12 +395,12 @@ let sexp2tree_def,sexp2tree_ind = define_rec
 let sexp_to_app_list_def,sexp_to_app_list_ind = define_rec
   [`sexp_to_app_list (Atom s) = misc_List [make_str_safe s]`;
    `sexp_to_app_list (Expr l) =
-      mlsexp_Append (misc_List [(implode "(")])
+      misc_Append (misc_List [(implode "(")])
              (misc_Append (sexps_to_app_list l) (misc_List
                  [(implode ")")]))`;
    `sexps_to_app_list [] = misc_List []`;
    `sexps_to_app_list (CONS v vs) =
-      (if NULL vs then sexp_to_app_list v else mlsexp_Append
+      (if NULL vs then sexp_to_app_list v else misc_Append
           (sexp_to_app_list v)
                   (misc_Append (misc_List [(implode " ")])
                       (sexps_to_app_list vs)))`];;

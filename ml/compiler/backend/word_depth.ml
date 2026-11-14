@@ -81,10 +81,10 @@ let call_graph_def,call_graph_ind = assume_definition_rec
                               (call_graph funs n ns total'
                                 ret_prog)) | SOME (_8,p,_9,_10) ->
                                 word_depth_Branch (Call n
-                                (wordLang_Const 3 (Call d
+                                (word_depth_Const 3 (Call d
                                 word_depth_Leaf)))
-                   (mk_Branch (Call n (wordLang_Const 3 (call_graph
-                     new_funs d [d] total' body)))
+                   (mk_Branch (Call n (word_depth_Const 3
+                     (call_graph new_funs d [d] total' body)))
                    (mk_Branch (call_graph funs n ns total' p)
                               (call_graph funs n ns total'
                                 ret_prog)))))))

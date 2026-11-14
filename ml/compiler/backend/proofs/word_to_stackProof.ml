@@ -72,19 +72,19 @@ let PushHandler_F = prove
      reg_alloc_Seq (stackLang_StackAlloc 3)
     (reg_alloc_Seq (wordLang_Inst (asm_Const k (n2w 1)))
     (reg_alloc_Seq (stackLang_StackStore k 0)
-    (reg_alloc_Seq (wordLang_LocValue k l1 l2)
+    (reg_alloc_Seq (stackLang_LocValue k l1 l2)
     (reg_alloc_Seq (stackLang_StackStore k 1)
     (reg_alloc_Seq (wordLang_Get k Handler)
     (reg_alloc_Seq (stackLang_StackStore k 2)
     (reg_alloc_Seq wordLang_Skip
     (reg_alloc_Seq (stackLang_StackGetSize k)
-         (reg_alloc_Set Handler k)))))))))`,
+         (wordLang_Set Handler k)))))))))`,
   CHEAT_TAC);;
 
 let PopHandler_F = prove
  (`PopHandler F (k,f,f') prog =
      reg_alloc_Seq (stackLang_StackLoad k 2)
-    (reg_alloc_Seq (reg_alloc_Set Handler k)
+    (reg_alloc_Seq (wordLang_Set Handler k)
     (reg_alloc_Seq (stackLang_StackFree 3) prog))`,
   CHEAT_TAC);;
 
@@ -94,7 +94,7 @@ let raise_stub_F = prove
     (reg_alloc_Seq (stackLang_StackSetSize k)
     (reg_alloc_Seq wordLang_Skip
     (reg_alloc_Seq (stackLang_StackLoad k 2)
-    (reg_alloc_Seq (reg_alloc_Set Handler k)
+    (reg_alloc_Seq (wordLang_Set Handler k)
     (reg_alloc_Seq (stackLang_StackLoad k 1)
     (reg_alloc_Seq (stackLang_StackFree 3)
          (wordLang_Raise k)))))))`,
@@ -3015,7 +3015,7 @@ let word_Call_NONE_not_Break_Continue = prove
 
 (* [local] *)
 let stack_Call_NONE_not_Break_Continue = prove
- (`stackSem_evaluate (wordLang_Call NONE dest handler,s) = (res,s') ==>
+ (`stackSem_evaluate (stackLang_Call NONE dest handler,s) = (res,s') ==>
    (!n. ~(res = SOME (wordLang_Break n))) /\ (!n. ~(res = SOME
      (wordLang_Continue n)))`,
   CHEAT_TAC);;

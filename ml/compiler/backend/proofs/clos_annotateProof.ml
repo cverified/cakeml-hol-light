@@ -49,12 +49,12 @@ let alt_fv = prove
  (`(!n. alt_fv n [] <=> F) /\
     (!y xs x n. alt_fv n (CONS x (CONS y xs)) <=> alt_fv n [x] \/
       alt_fv n (CONS y xs)) /\
-    (!v0 v n. alt_fv n [db_vars_Var v0 v] <=> n = v) /\
+    (!v0 v n. alt_fv n [closLang_Var v0 v] <=> n = v) /\
     (!x3 x2 x1 v1 n.
       alt_fv n [flatLang_If v1 x1 x2 x3] <=> alt_fv n [x1] \/ alt_fv
         n [x2] \/ alt_fv n [x3]) /\
     (!xs x2 v2 n.
-      alt_fv n [flatLang_Let v2 xs x2] <=>
+      alt_fv n [closLang_Let v2 xs x2] <=>
         (if no_overlap (LENGTH xs) (SND (alt_free [x2])) /\ ALL pure
           xs then
           alt_fv (n + LENGTH xs) [x2] else
@@ -63,13 +63,13 @@ let alt_fv = prove
     (!x1 v4 n. alt_fv n [closLang_Tick v4 x1] <=> alt_fv n [x1]) /\
     (!xs v5 op n. alt_fv n [closLang_Op v5 op xs] <=> alt_fv n xs) /\
     (!x2 x1 v6 n loc_opt.
-       alt_fv n [flatLang_App v6 loc_opt x1 x2] <=> alt_fv n [x1] \/
+       alt_fv n [closLang_App v6 loc_opt x1 x2] <=> alt_fv n [x1] \/
          alt_fv n x2) /\
     (!x1 vs v7 num_args n loc.
        alt_fv n [closLang_Fn v7 loc vs num_args x1] <=> alt_fv (n +
          num_args) [x1]) /\
     (!x1 vs v8 n loc fns.
-       alt_fv n [flatLang_Letrec v8 loc vs fns x1] <=>
+       alt_fv n [closLang_Letrec v8 loc vs fns x1] <=>
          // if clos_annotate$no_overlap (LENGTH fns) (SND (alt_free [x1])) then
          // alt_fv (n + LENGTH fns) [x1]
          // else

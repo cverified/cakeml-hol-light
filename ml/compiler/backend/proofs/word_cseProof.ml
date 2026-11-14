@@ -100,8 +100,8 @@ let sem_inv_def = new_definition
         balanced_map_lookup r (knowledge_to_latest data) = SOME v ==>
         wordSem_get_var r s = wordSem_get_var v s) /\
      (!n c v.
-        balanced_map_lookup listCmp (instToNumList (wordLang_Const n
-          c)) (knowledge_instrs_mem data) = SOME v ==>
+        balanced_map_lookup listCmp (instToNumList (asm_Const n c))
+          (knowledge_instrs_mem data) = SOME v ==>
         balanced_map_lookup v (wordSem_state_locals s) = SOME
           (wordLang_Word c)) /\
      (!(a:'a asm_arith) v.
@@ -746,8 +746,8 @@ let data_inv_insert_instrs_Const = prove
        (wordLang_Word w) ==>
      data_inv (knowledge_instrs_mem_fupd (K
                  (balanced_map_insert listCmp (instToNumList
-                   (wordLang_Const n w)) r (knowledge_instrs_mem
-                   data))) data) s`,
+                   (asm_Const n w)) r (knowledge_instrs_mem data)))
+                   data) s`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1240,7 +1240,7 @@ let wf_data_insert_instrs_Const = prove
      sptree_lookup r (knowledge_to_canonical data) = SOME r ==>
      wf_data (:'a) (knowledge_instrs_mem_fupd (K
                       (balanced_map_insert listCmp (instToNumList
-                        (wordLang_Const n w)) r (knowledge_instrs_mem
+                        (asm_Const n w)) r (knowledge_instrs_mem
                         data))) data)`,
   CHEAT_TAC);;
 

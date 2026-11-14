@@ -153,7 +153,8 @@ let bvi_to_data_compile_def,bvi_to_data_compile_ind =
          (let var = any_el v env 0 in
          let ret = (if tail then NONE else SOME (n,list_to_num_set
              (APPEND live env))) in
-           (bvi_Force ret loc var,[n],MAX (n + 1) (var + 1)))`;
+           (dataLang_Force ret loc var,[n],MAX (n + 1) (var +
+               1)))`;
    `bvi_to_data_compile (n:num) (env:num list) tail live [(bvi_Call
     ticks dest xs NONE:bvi_exp)] =
          (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
@@ -243,7 +244,7 @@ let compile_sing_def,compile_sing_ind = assume_definition_rec
          (let var = any_el v env 0 in
          let ret = (if tail then NONE else SOME (n,list_to_num_set
              (APPEND live env))) in
-           (bvi_Force ret loc var,n,MAX (n + 1) (var + 1)))`;
+           (dataLang_Force ret loc var,n,MAX (n + 1) (var + 1)))`;
    `bvi_to_data_compile_sing (n:num) (env:num list) tail live (bvi_Call
     ticks dest xs NONE:bvi_exp) =
          (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in

@@ -125,14 +125,14 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind =
                     [labLang_LabAsm (asm_Jump (labLang_Lab n (find_lab
                     k conts))) (n2w 0) [] 0],T,m) | stackLang_RawCall n
                     -> (misc_List [labLang_LabAsm (asm_Jump
-                    (labLang_Lab n 1)) (n2w 0) [] 0],T,m) | asm_Call
-                    NONE dest handler -> (misc_List [compile_jump
-                    dest],T,m) | asm_Call (SOME (p1,lr,l1,l2)) dest
-                    handler ->
+                    (labLang_Lab n 1)) (n2w 0) [] 0],T,m) |
+                    stackLang_Call NONE dest handler -> (misc_List
+                    [compile_jump dest],T,m) | stackLang_Call (SOME
+                    (p1,lr,l1,l2)) dest handler ->
          (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts
            breaks in
          let prefix = misc_Append (misc_List [labLang_LabAsm
-           (stackLang_LocValue lr (labLang_Lab l1 l2)) (n2w 0) [] 0;
+           (labLang_LocValue lr (labLang_Lab l1 l2)) (n2w 0) [] 0;
                   compile_jump dest; labLang_Label l1 l2 0]) xs in
          (match handler with NONE -> (prefix,nr1,m) | SOME
            (p2,k1,k2) ->
@@ -146,18 +146,18 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind =
          (misc_List [labLang_LabAsm (asm_JumpCmp asm_Lower r1 (Reg
            r2) (labLang_Lab target 0)) (n2w 0) [] 0],F,m) |
            stackLang_FFI ffi_index _3 _4 _5 _6 lr -> (misc_List
-           [labLang_LabAsm (stackLang_LocValue lr (labLang_Lab n m))
-           (n2w 0) [] 0;
+           [labLang_LabAsm (labLang_LocValue lr (labLang_Lab n m)) (n2w
+           0) [] 0;
                               labLang_LabAsm (labLang_CallFFI
                                 ffi_index) (n2w 0) [] 0;
                               labLang_Label n m 0],F,m + 1) |
                                 stackLang_LocValue i l1 l2 ->
                                 (misc_List [labLang_LabAsm
-                                (stackLang_LocValue i (labLang_Lab l1
+                                (labLang_LocValue i (labLang_Lab l1
                                 l2)) (n2w 0) [] 0],F,m) |
                                 stackLang_Install _7 _8 _9 _10 ret ->
-       (misc_List [labLang_LabAsm (stackLang_LocValue ret
-         (labLang_Lab n m)) (n2w 0) [] 0;
+       (misc_List [labLang_LabAsm (labLang_LocValue ret (labLang_Lab
+         n m)) (n2w 0) [] 0;
        labLang_LabAsm stackLang_Install (n2w 0) [] 0;
        labLang_Label n m 0],F,m + 1) | stackLang_ShMemOp op r ad ->
          (misc_List [labLang_Asm (ShareMem op r ad) [] 0],F,m) |
@@ -177,7 +177,7 @@ let prog_to_section_def = new_definition
   `prog_to_section (n,p) =
      (let (lines,_13,m) = (stack_to_lab_flatten T p n (next_lab p 2)
        [] []) in
-       Section n (append (bvi_tailrec_Append lines
+       Section n (append (misc_Append lines
          (misc_List [labLang_Label n (if is_Seq p then m else 1)
            0]))))`;;
 

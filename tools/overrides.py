@@ -11725,6 +11725,15 @@ MAIN_THEORY = {
 # this says the exceptions: a proof about bvl that names asm's Xor
 # or backend_common's word_shift wants that one wherever it stands.
 CON_FILE = {
+  # the deep embedding that clos_interp builds is closLang, and
+  # the ML code of the source applies its constructors a part at
+  # a time, so the number of arguments at a place says nothing
+  'clos_interp': {'Var': 'closLang', 'If': 'closLang',
+                  'Handle': 'closLang', 'Op': 'closLang',
+                  'App': 'closLang', 'Let': 'closLang',
+                  'Fn': 'closLang', 'Letrec': 'closLang',
+                  'Raise': 'closLang', 'Tick': 'closLang',
+                  'Call': 'closLang'},
   'bvi_inlineProof': {'Force': 'bvi'},
   'bvl_handleProof': {'Let': 'bvl', 'Var': 'bvl', 'Op': 'bvl'},
   'clos_opProof': {'If': 'closLang', 'Op': 'closLang',

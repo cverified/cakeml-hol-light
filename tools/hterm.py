@@ -1166,6 +1166,7 @@ class Ctx:
     self.tyops = set()                 # the type names in scope
     self.abbrevs = abbrevs or {}       # type abbreviation -> type
     self.auxsize = {}                  # HOL4's expN_size -> term
+    self.head_for = None               # a head already resolved
     self.intnums = False               # are numerals integers here?
     self.intneg = False                # is $~ the negation of an int?
     self.intvars = set()               # variables holding integers
@@ -1946,7 +1947,12 @@ class Printer:
           return c
         return c if re.match(r"^[A-Za-z_][A-Za-z0-9_']*$", c) \
                else '(' + c + ')'
-      n2 = self.ctx.name(n)
+      hf = self.ctx.head_for
+      if hf and hf[0] == id(e):
+        n2 = hf[1]
+        self.ctx.head_for = None
+      else:
+        n2 = self.ctx.name(n)
       # a constant that the library layer declares as an infix of
       # HOL Light needs its parentheses where it stands on its own
       # (misc's FOLDR BAG_UNION b0 ls)
@@ -2060,6 +2066,18 @@ class Printer:
         self.ctx.arity = len(args)
         n = self.ctx.name(hop.name)
         self.ctx.arity = None
+        # the head was resolved with the number of arguments it
+        # has here, which is what says which constant it is where
+        # several theories have the name (closLang's Var takes two
+        # and db_vars' takes one).  Printing the head again on the
+        # way down would resolve it with no arguments at all, so
+        # the answer is kept for that one node
+        # the outermost application has all the arguments, and it
+        # is entered first: an inner one of the same head (the
+        # `Var t' of `Var t n') must not take its place
+        if not (self.ctx.head_for and
+                self.ctx.head_for[0] == id(hop)):
+          self.ctx.head_for = (id(hop), n)
         if n in ARGPERM:
           # a permutation of a prefix of the arguments holds for
           # a partial application of that many as well (FUNPOW f

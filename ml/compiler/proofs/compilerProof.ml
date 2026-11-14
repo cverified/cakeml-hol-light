@@ -91,7 +91,7 @@ let initial_condition_def = new_definition
 
 let parse_prog_correct = prove
  (`(parse_prog s = peg_Failure y1 y2 ==> semantics_parse s = NONE) /\
-   (parse_prog s = ffi_Success x1 a x2 ==> semantics_parse s = SOME
+   (parse_prog s = peg_Success x1 a x2 ==> semantics_parse s = SOME
      a)`,
   CHEAT_TAC);;
 

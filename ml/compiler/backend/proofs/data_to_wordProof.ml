@@ -254,13 +254,13 @@ let data_compile_correct = prove
 
 let compile_correct_lemma = prove
  (`!s c l1 l2 res s1 (t:('a,'c,'ffi)wordSem_state) start'.
-      (dataSem_evaluate (word_depth_Call NONE (SOME start') []
-        NONE,s) = (res,s1)) /\ ~(res = SOME (Rerr (Rabort Rtype_error)))
-        /\ wordSem_state_termdep
+      (dataSem_evaluate (wordLang_Call NONE (SOME start') [] NONE,s)
+        = (res,s1)) /\ ~(res = SOME (Rerr (Rabort Rtype_error))) /\
+        wordSem_state_termdep
       t > 1 /\
       data_to_word_gcProof_state_rel c l1 l2 s t NONE [] ==>
       (?t1 res1.
-        (wordSem_evaluate (word_depth_Call NONE (SOME start') [0]
+        (wordSem_evaluate (wordLang_Call NONE (SOME start') [0]
           NONE,t) = (res1,t1)) /\
         option_le (state_stack_max t1) (state_stack_max s1) /\
         (res1 = SOME wordSem_NotEnoughSpace ==> ffi_state_io_events
@@ -314,13 +314,11 @@ let state_rel_ext_def = new_definition
 (* compile_correct *)
 let data_to_wordProof_compile_correct = prove
  (`!x s l1 l2 res s1 (t:('a,'c,'ffi)wordSem_state) start'.
-      (dataSem_evaluate (word_depth_Call NONE (SOME start') []
-        NONE,s) = (res,s1)) /\ ~(res = SOME (Rerr (Rabort Rtype_error)))
-        /\
+      (dataSem_evaluate (wordLang_Call NONE (SOME start') [] NONE,s)
+        = (res,s1)) /\ ~(res = SOME (Rerr (Rabort Rtype_error))) /\
       state_rel_ext x l1 l2 s t ==>
       (?ck t1 res1.
-        (wordSem_evaluate (word_depth_Call NONE (SOME start') [0]
-          NONE,
+        (wordSem_evaluate (wordLang_Call NONE (SOME start') [0] NONE,
            (wordProps_inc_clock ck t)) = (res1,t1)) /\
         option_le (state_stack_max t1) (state_stack_max s1) /\
         (res1 = SOME wordSem_NotEnoughSpace ==> ffi_state_io_events

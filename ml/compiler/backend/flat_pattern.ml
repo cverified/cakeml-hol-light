@@ -129,8 +129,8 @@ let decode_test_def = define_cases
   [`flat_pattern_decode_test t (pattern_semantics_TagLenEq tag
     l:dTest) v = flatLang_App t (flatLang_TagLenEq tag l) [v]`;
    `flat_pattern_decode_test t (pattern_semantics_LitEq lit) v =
-    flatLang_App t (flatLang_Src ast_Equality) [v;
-    pattern_semantics_Lit t lit]`];;
+    flatLang_App t (flatLang_Src ast_Equality) [v; flatLang_Lit t
+    lit]`];;
 
 let simp_guard_def,simp_guard_ind = define_shaped_rec
   "match"
@@ -205,7 +205,7 @@ let encode_pat_def,encode_pat_ind = define_wf
   [`encode_pat x1 =
       match x1 with
         flatLang_Pany -> pattern_semantics_Any
-      | (flatLang_Plit l) -> flatLang_Lit l
+      | (flatLang_Plit l) -> pattern_semantics_Lit l
       | (flatLang_Pvar _42) -> pattern_semantics_Any
       | (flatLang_Pcon stmp ps) -> pattern_semantics_Cons
      (match stmp with NONE -> NONE | SOME (i,NONE) -> SOME (i,NONE)

@@ -388,7 +388,7 @@ let do_app_with_locals = prove
 let do_app_aux_err = prove
  (`dataSem_do_app_aux op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = wordLang_FFI i /\ e =
+                             (?i x. op = closLang_FFI i /\ e =
                                Rabort (Rffi_error x))`,
   CHEAT_TAC);;
 
@@ -404,7 +404,7 @@ let dataProps_do_app_aux_const = prove
 let dataProps_do_app_err = prove
  (`dataSem_do_app op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = wordLang_FFI i /\ e =
+                             (?i x. op = closLang_FFI i /\ e =
                                Rabort (Rffi_error x))`,
   CHEAT_TAC);;
 
@@ -1094,7 +1094,7 @@ let jump_exc_IMP = prove
 let do_app_Rerr = prove
  (`dataSem_do_app op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = wordLang_FFI i /\ e =
+                             (?i x. op = closLang_FFI i /\ e =
                                Rabort (Rffi_error x))`,
   CHEAT_TAC);;
 

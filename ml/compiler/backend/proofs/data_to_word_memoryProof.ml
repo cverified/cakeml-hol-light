@@ -330,7 +330,7 @@ let v_inv_ck = cake_inductive
    (vs = [] /\
      n < dimword (:'a) DIV 16 /\
      ts = 0 ==>
-       v_inv_ck ck conf (bvlSem_Block ts n vs) refs
+       v_inv_ck ck conf (dataSem_Block ts n vs) refs
                   (gc_shared_Data (wordLang_Word (BlockNil
                     n)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
@@ -340,7 +340,7 @@ let v_inv_ck = cake_inductive
        (x,f,tf,heap)) vs xs) /\
      FLOOKUP tf ts = SOME ptr /\
      heap_lookup ptr heap = SOME (BlockRep n xs) ==>
-       v_inv_ck ck conf (bvlSem_Block ts n vs) refs
+       v_inv_ck ck conf (dataSem_Block ts n vs) refs
                   (gc_shared_Pointer ptr (wordLang_Word (ptr_bits
                     conf n (LENGTH xs))),
                    f,tf,(heap:(('a
@@ -62552,7 +62552,7 @@ let PW_SPLIT_CALL_TAC n =
   TRY SAFE_MATCH_REDUCE_ASM_TAC;;
 
 let part_to_words_add = prove
- (`!part m off a w ws m1.
+ (`!part m off a w ws clos_annotate_shift.
      byte_aligned off /\ byte_aligned a /\
      good_dimindex (:'a) /\ backend_common_word_shift (:'a) <=
        shift_length c ==>

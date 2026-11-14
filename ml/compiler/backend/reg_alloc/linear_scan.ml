@@ -53,8 +53,8 @@ let get_live_tree_def,get_live_tree_ind = define_rec
       match optcutset with SOME cutset ->
           (let cutlist = MAP FST (toAList cutset) in
           reg_alloc_Seq (linear_scan_Reads cutlist)
-              (reg_alloc_Branch lt1 lt2)) | NONE -> (reg_alloc_Branch
-              lt1 lt2))`;
+              (linear_scan_Branch lt1 lt2)) | NONE ->
+              (linear_scan_Branch lt1 lt2))`;
    `get_live_tree (reg_alloc_Seq ct1 ct2) =
       (let lt2 = get_live_tree ct2 in
       let lt1 = get_live_tree ct1 in

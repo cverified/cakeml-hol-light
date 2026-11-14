@@ -139,7 +139,7 @@ let unique_set_globals_subexps = prove
    (unique_set_globals [flatLang_If t x1 x2 x3] co ==>
       unique_set_globals [x1] co /\ unique_set_globals [x2] co /\
         unique_set_globals [x3] co) /\
-   (unique_set_globals [flatLang_Let t xs x2] co ==>
+   (unique_set_globals [closLang_Let t xs x2] co ==>
       unique_set_globals xs co /\ unique_set_globals [x2] co) /\
    (unique_set_globals [flatLang_Raise t x1] co ==>
       unique_set_globals [x1] co) /\
@@ -152,11 +152,11 @@ let unique_set_globals_subexps = prove
     unique_set_globals [closLang_Fn src_name loc_opt vsopt num_args
       x1] co ==>
       unique_set_globals [x1] co) /\
-   (unique_set_globals [flatLang_Letrec src_names loc_opt vsopt fns
+   (unique_set_globals [closLang_Letrec src_names loc_opt vsopt fns
      x1] co ==>
       unique_set_globals [x1] co /\ unique_set_globals (MAP SND fns)
         co) /\
-   (unique_set_globals [flatLang_App t loc_opt x1 xs] co ==>
+   (unique_set_globals [closLang_App t loc_opt x1 xs] co ==>
       unique_set_globals [x1] co /\ unique_set_globals xs co) /\
    (unique_set_globals [closLang_Tick t x1] co ==>
       unique_set_globals [x1] co) /\
@@ -387,19 +387,19 @@ let fv_max_rw = prove
  (`(fv_max n [] <=> T) /\
    (fv_max n (CONS x (CONS y xs)) <=> fv_max n [x] /\ fv_max n (CONS
      y xs)) /\
-   (fv_max n [db_vars_Var tr v] <=> v < n) /\
+   (fv_max n [closLang_Var tr v] <=> v < n) /\
    (fv_max n [flatLang_If tr x1 x2 x3] <=> fv_max n [x1] /\ fv_max n
      [x2] /\ fv_max n [x3]) /\
-   (fv_max n [flatLang_Let tr xs x1] <=> fv_max n xs /\ fv_max (n +
+   (fv_max n [closLang_Let tr xs x1] <=> fv_max n xs /\ fv_max (n +
      LENGTH xs) [x1]) /\
    (fv_max n [flatLang_Raise tr x1] <=> fv_max n [x1]) /\
    (fv_max n [closLang_Tick tr x1] <=> fv_max n [x1]) /\
    (fv_max n [closLang_Op tr opn xs] <=> fv_max n xs) /\
-   (fv_max n [flatLang_App tr lopt x1 xs] <=> fv_max n [x1] /\ fv_max
+   (fv_max n [closLang_App tr lopt x1 xs] <=> fv_max n [x1] /\ fv_max
      n xs) /\
    (fv_max n [closLang_Fn src_name loc vs num_args x1] <=> fv_max (n
      + num_args) [x1]) /\
-   (fv_max n [flatLang_Letrec src_names loc vs fns x1] <=>
+   (fv_max n [closLang_Letrec src_names loc vs fns x1] <=>
       ALL (\(num_args,x). fv_max (n + num_args + LENGTH fns) [x]) fns
         /\
       fv_max (n + LENGTH fns) [x1]) /\
@@ -780,7 +780,7 @@ let mglobals_disjoint_def = new_definition
 let mglobals_disjoint_rw = prove
  (`(mglobals_disjoint s (CONS x (CONS y xs)) <=>
       mglobals_disjoint s [x] /\ mglobals_disjoint s (CONS y xs)) /\
-   (mglobals_disjoint s [flatLang_Let tr xs x] <=>
+   (mglobals_disjoint s [closLang_Let tr xs x] <=>
       mglobals_disjoint s xs /\ mglobals_disjoint s [x]) /\
    (mglobals_disjoint s [flatLang_Handle tr x1 x2] <=>
       mglobals_disjoint s [x1] /\ mglobals_disjoint s [x2]) /\
@@ -796,9 +796,9 @@ let mglobals_disjoint_rw = prove
    (mglobals_disjoint s [closLang_Op tr opn xs] <=>
       mglobals_disjoint s xs /\ DISJOINT (mapped_globals s)
         (SET_OF_BAG (closProps_op_gbag opn))) /\
-   (mglobals_disjoint s [flatLang_App tr lopt x1 xs] <=>
+   (mglobals_disjoint s [closLang_App tr lopt x1 xs] <=>
       mglobals_disjoint s [x1] /\ mglobals_disjoint s xs) /\
-   (mglobals_disjoint s [flatLang_Letrec src_names lopt vs fns x1]
+   (mglobals_disjoint s [closLang_Letrec src_names lopt vs fns x1]
      <=>
       mglobals_disjoint s (MAP SND fns) /\ mglobals_disjoint s
         [x1])`,

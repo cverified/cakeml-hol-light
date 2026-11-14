@@ -124,7 +124,7 @@ bvi	Overload TailCall
 bvi	line 22 is 73 characters
 bvi	line 33 is 73 characters
 bvi	line 62 is 81 characters
-bvi_to_data	line 339 is 77 characters
+bvi_to_data	line 340 is 77 characters
 bvi_inline	a MEASURE override that a run does not bear out: remove_ticks_exp_def
 bvi_inline	line 10 is 73 characters
 bvi_inline	line 48 is 73 characters
@@ -169,8 +169,8 @@ bvl_handle	ML code skipped: val compile_ind = theorem"compile_ind";
 bvl_to_bvi	ML code skipped: val large_int = ``268435457:int``; (* 2**28-1 *)
 bvl_to_bvi	Overload num_stubs
 bvl_to_bvi	Overload nss
-bvl_to_bvi	line 363 is 92 characters
-bvl_to_bvi	line 378 is 84 characters
+bvl_to_bvi	line 364 is 92 characters
+bvl_to_bvi	line 379 is 84 characters
 clos_annotate	line 22 is 90 characters
 clos_call	ML code skipped: val free_ind = theorem "free_ind";
 clos_call	Theorem exp3_size_MAP_SND: the auxiliary size function exp3_size
@@ -420,10 +420,10 @@ data_to_word	Overload TRUE_CONST
 data_to_word	ML code skipped: val assign_defs = ref ([]:thm list); fun assign_Define q = l
 data_to_word	ML code skipped: val th_FF = EVAL ``full_call_graph AnyArith_location        
 data_to_word	line 1060 is 76 characters
-data_to_word	line 2472 is 76 characters
-data_to_word	line 2476 is 81 characters
-data_to_word	line 2495 is 76 characters
-data_to_word	line 2499 is 81 characters
+data_to_word	line 2477 is 76 characters
+data_to_word	line 2481 is 81 characters
+data_to_word	line 2501 is 76 characters
+data_to_word	line 2505 is 81 characters
 clos_interp	Overload V
 clos_interp	Overload IsCase
 clos_interp	Overload GetEl
@@ -514,7 +514,7 @@ pattern_exh	line 857 is 75 characters
 pattern_exh	line 859 is 76 characters
 flat_pattern	Theorem pat1_size: the auxiliary size function pat1_size
 source_to_flat	Theorem ast_pat1_size: the auxiliary size function pat1_size
-source_to_flat	line 593 is 73 characters
+source_to_flat	line 594 is 73 characters
 presLang	Overload list_to_display
 presLang	Overload option_to_display
 presLang	Theorem MEM_pat_size: the auxiliary size function pat1_size
@@ -528,7 +528,7 @@ presLang	ML code skipped: val bvl_test =   “concat $ append $ bvl_to_strs     
 presLang	ML code skipped: val bvi_test =   “concat $ append $ bvi_to_strs      (insert
 presLang	ML code skipped: val data_test =   “concat $ append $ data_to_strs      (inse
 presLang	ML code skipped: val lab_test =   “concat $ append $ lab_to_strs      (insert
-presLang	line 630 is 73 characters
+presLang	line 631 is 73 characters
 typeSystem	line 28 is 81 characters
 typeSystem	line 29 is 79 characters
 typeSystem	line 133 is 75 characters
@@ -1318,7 +1318,7 @@ clos_to_bvlProof	ML code skipped: val known_co_req_intros = UNDISCH_ALL known_co
 clos_to_bvlProof	ML code skipped: val known_co_req_oracle = mk_to_oracle     ``\orac. clos_kno
 clos_to_bvlProof	ML code skipped: val number_compile_inc_req_intros = number_compile_inc_req  
 clos_to_bvlProof	ML code skipped: fun abbrev_adj_tac f = first_assum (fn t => if not     (mark
-clos_to_bvlProof	line 1417 is 74 characters
+clos_to_bvlProof	line 1416 is 74 characters
 wordProps	ML code skipped: val GENLIST_I =   GENLIST_EL |> Q.SPECL [`xs`,`\i. EL i xs`,
 wordProps	ML code skipped: val ALL_DISTINCT_EL = ``ALL_DISTINCT xs``   |> ONCE_REWRITE_
 wordProps	ML code skipped: fun drulel tl = FIRST (map (drule) tl)
@@ -2846,4 +2846,4 @@ pegComplete	line 342 is 76 characters
 pegComplete	line 478 is 76 characters
 pegComplete	line 483 is 75 characters
 pegComplete	line 484 is 76 characters
-pegComplete	line 1240 is 77 characters
+pegComplete	line 1238 is 77 characters

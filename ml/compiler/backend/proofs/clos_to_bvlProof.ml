@@ -330,8 +330,7 @@ let evaluate_partial_app_fn_location_code = prove
         ([partial_app_fn_location_code max_app
                 ((\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
                   [b]) (db_vars_Var (LENGTH args + 1)) 1)
-                (closLang_Op (closLang_IntOp (closLang_Const (&n)))
-                  [])],
+                (bvl_Op (closLang_IntOp (closLang_Const (&n))) [])],
          (CONS x (APPEND args [bvlSem_Block tag (CONS ptr (CONS
            (bvlSem_Number (&total_args)) fvs))])),
          st) =
@@ -583,7 +582,7 @@ let cl_rel = cake_inductive
      (clos_to_bvl_compile_exps max_app [x] aux = ([c],aux1)) /\
      clos_to_bvlProof_code_installed aux1 code /\
      (sptree_lookup (p + (num_stubs max_app)) code =
-       SOME (num_args + (1:num),flatLang_Let (APPEND (list_of_seq
+       SOME (num_args + (1:num),bvl_Let (APPEND (list_of_seq
          db_vars_Var num_args) (free_let (db_vars_Var num_args) (LENGTH
          env))) c)) ==>
     cl_rel max_app fs refs code
@@ -599,7 +598,7 @@ let cl_rel = cake_inductive
      clos_to_bvl_compile_exps max_app [x] aux = ([c],aux1) /\
      clos_to_bvlProof_code_installed aux1 code /\
      sptree_lookup (p + (num_stubs max_app)) code =
-       SOME (num_args + (1:num),flatLang_Let (APPEND (list_of_seq
+       SOME (num_args + (1:num),bvl_Let (APPEND (list_of_seq
          db_vars_Var (num_args + 1)) (free_let (db_vars_Var num_args)
          (LENGTH env))) c) ==>
      cl_rel max_app fs refs code (env,ys)
@@ -658,8 +657,8 @@ let clos_to_bvlProof_v_rel = cake_inductive
      list) ==>
     clos_to_bvlProof_v_rel max_app f refs code (closSem_Block t xs)
       (closSem_Block (clos_tag_shift t) ys)) /\
-   (FLOOKUP refs p = SOME (closSem_ByteArray T bs) /\ ~(p IN FRANGE
-     f) ==>
+   (FLOOKUP refs p = SOME (bvlSem_ByteArray T bs) /\ ~(p IN FRANGE f)
+     ==>
     clos_to_bvlProof_v_rel max_app f refs code (closSem_ByteVector
       bs) (closSem_RefPtr T p)) /\
    ((FLOOKUP f r1 = SOME r2) ==>
@@ -825,8 +824,8 @@ let clos_to_bvlProof_ref_rel_def = new_definition
             ws
         | ((closSem_Thunk m1 v),(bvlSem_Thunk m2 w)) -> m1 = m2 /\ R
           v w
-        | ((bvlSem_ByteArray as),(bvlSem_ByteArray g bs)) -> ~g /\ as
-          = bs
+        | ((closSem_ByteArray as),(bvlSem_ByteArray g bs)) -> ~g /\
+          as = bs
         | (_3,_4) -> F`;;
 add_simp clos_to_bvlProof_ref_rel_def;;
 
@@ -1235,10 +1234,10 @@ let evaluate_app_helper = prove
  (`(!x. ~(r = Rval x)) /\ bvlSem_evaluate (c8,env,s) = (r,s') ==>
      bvlSem_evaluate
             ([match loc with
-               NONE -> flatLang_Let (APPEND c8 [c7]) (mk_cl_call
+               NONE -> bvl_Let (APPEND c8 [c7]) (mk_cl_call
                  (db_vars_Var (LENGTH c8)) (list_of_seq db_vars_Var
-                 (LENGTH c8))) | SOME loc -> closLang_Call (LENGTH c8
-                 - 1) (SOME (loc + num_stubs max_app)) (APPEND c8
+                 (LENGTH c8))) | SOME loc -> bvl_Call (LENGTH c8 - 1)
+                 (SOME (loc + num_stubs max_app)) (APPEND c8
                  [c7])],env,s) = (r,s')`,
   CHEAT_TAC);;
 
@@ -1247,10 +1246,10 @@ let evaluate_app_helper2 = prove
  (`(!x. ~(r = Rval x)) /\ bvlSem_evaluate (c8,env,s) = (Rval x,s') /\
   bvlSem_evaluate ([c7],env,s') = (r,s'') ==>
      bvlSem_evaluate ([match loc with
-               NONE -> flatLang_Let (APPEND c8 [c7]) (mk_cl_call
+               NONE -> bvl_Let (APPEND c8 [c7]) (mk_cl_call
                  (db_vars_Var (LENGTH c8)) (list_of_seq db_vars_Var
-                 (LENGTH c8))) | SOME loc -> closLang_Call (LENGTH c8
-                 - 1) (SOME (loc + num_stubs max_app)) (APPEND c8
+                 (LENGTH c8))) | SOME loc -> bvl_Call (LENGTH c8 - 1)
+                 (SOME (loc + num_stubs max_app)) (APPEND c8
                  [c7])],env,s) = (r,s'')`,
   CHEAT_TAC);;
 
@@ -2110,7 +2109,7 @@ let evaluate_init1 = prove
    (!n. n < mapp2 ==>
    partial_app_fn_location mapp1 tot n IN domain (state_code st)) ==>
    bvlSem_evaluate (REVERSE
-   (list_of_seq (\prev. closLang_Op (closLang_Label
+   (list_of_seq (\prev. bvl_Op (closLang_Label
      (partial_app_fn_location mapp1 tot prev)) [])
      mapp2),[bvlSem_Unit],st) =
    (Rval (REVERSE
@@ -2125,8 +2124,8 @@ let evaluate_init = prove
    partial_app_fn_location mapp1 m n IN domain (state_code st)) ==>
    bvlSem_evaluate (REVERSE
    (FLAT (list_of_seq (\tot. list_of_seq
-   (\prev. closLang_Op (closLang_Label (partial_app_fn_location mapp1
-     tot prev)) []) tot) mapp2)),[bvlSem_Unit],st) =
+   (\prev. bvl_Op (closLang_Label (partial_app_fn_location mapp1 tot
+     prev)) []) tot) mapp2)),[bvlSem_Unit],st) =
      (Rval (REVERSE
      (FLAT (list_of_seq (\tot. list_of_seq
      (\prev. bvlSem_CodePtr (partial_app_fn_location mapp1 tot
@@ -2151,7 +2150,7 @@ let clos_to_bvlProof_eval_sim_def = new_definition
          /\
        rel code1 co1 cc1 es1 code2 co2 cc2 start' ==>
        (?ck res2 t2.
-         bvlSem_evaluate ([closLang_Call 0 (SOME start') []],[],
+         bvlSem_evaluate ([bvl_Call 0 (SOME start') []],[],
            bvlSem_initial_state ffi code2 co2 cc2 (k + ck)) =
              (res2,t2) /\
          semanticPrimitivesProps_result_rel (\x y. T) (\x y. T)
@@ -2212,7 +2211,7 @@ let chain_installed_def = new_definition
   `chain_installed start' (es:closLang_exp list) code <=>
      (!i. i < LENGTH es ==> closSem_find_code (start' + i)
        ([]:closSem_v list) code =
-          SOME ([],(if i + 1 < LENGTH es then flatLang_Let
+          SOME ([],(if i + 1 < LENGTH es then closLang_Let
             backend_common_None [EL i es] (closLang_Call
             backend_common_None 0 (start' + i + 1) []) else EL i
             es)))`;;
@@ -2223,7 +2222,7 @@ let chain_installed_cons = prove
  (cake_as_vars (fun () ->
     `chain_installed start (CONS e es) code <=>
      bvlSem_find_code start ([]:closSem_v list) code = SOME ([],(if
-       es = [] then e else flatLang_Let backend_common_None [e]
+       es = [] then e else closLang_Let backend_common_None [e]
        (closLang_Call backend_common_None 0 (start + 1) []))) /\
      chain_installed (start + 1) es code`),
   CHEAT_TAC);;

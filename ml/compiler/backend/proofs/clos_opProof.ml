@@ -139,7 +139,7 @@ let lift_exps_thm = prove
 let lift_exps_Let = prove
  (`lift_exps [x] 0 [] = ([y],n,binds) /\
    closSem_evaluate ([x],env,s1) = (res,s2) ==>
-   closSem_evaluate ([flatLang_Let backend_common_None binds
+   closSem_evaluate ([closLang_Let backend_common_None binds
      y],env,s1) = (res,s2)`,
   CHEAT_TAC);;
 
@@ -275,7 +275,7 @@ let red_rel = cake_inductive
        red_rel (CONS x (CONS y zs)) (APPEND x1 x2))) /\
    ((!xs x x1 t.
        red_rel xs x1 /\ red_rel [x] [] ==>
-       red_rel [flatLang_Let t xs x] x1)) /\
+       red_rel [closLang_Let t xs x] x1)) /\
    ((!x y z x1 x2 x3.
        red_rel [x] x1 /\ red_rel [y] x2 /\ red_rel [z] x3 ==>
        red_rel [closLang_If t x y z] (APPEND (APPEND x1 x2) x3)))`;;

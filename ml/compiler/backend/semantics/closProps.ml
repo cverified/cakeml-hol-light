@@ -507,7 +507,7 @@ let fv_MAPi = prove
   CHEAT_TAC);;
 
 let fv_GENLIST_Var = prove
- (`!n. fv v (list_of_seq (closLang_Var tra) n) <=> v < n`,
+ (`!n. fv v (list_of_seq (ast_Var tra) n) <=> v < n`,
   CHEAT_TAC);;
 
 let fv_REPLICATE = prove
@@ -886,7 +886,7 @@ let closProps_evaluate_append = prove
 
 let evaluate_GENLIST_Var = prove
  (`!n env s.
-   closSem_evaluate (list_of_seq (closLang_Var tra) n,env,s) =
+   closSem_evaluate (list_of_seq (ast_Var tra) n,env,s) =
    (if n <= LENGTH env then
      (Rval (TAKE n env),s) else
      (Rerr (Rabort Rtype_error),s))`,

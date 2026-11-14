@@ -460,7 +460,7 @@ let evaluate_SumListLength_code = prove
    sptree_lookup SumListLength_location (state_code s) = SOME (2,SND
      SumListLength_code) /\
    bvlSem_v_to_list lv = SOME (MAP (bvlSem_RefPtr T) ps) /\
-   MAP (FLOOKUP (state_refs s)) ps = MAP (SOME o bvlSem_ByteArray T)
+   MAP (FLOOKUP (state_refs s)) ps = MAP (SOME o closSem_ByteArray T)
      wss ==>
    (?c.
      bviSem_evaluate
@@ -478,7 +478,7 @@ let evaluate_ConcatByte_code = prove
    bvlSem_v_to_list lv = SOME (MAP (bvlSem_RefPtr T) ps) /\ ~(dst IN
      set_of_list ps) /\
    MAP (FLOOKUP (bviSem_state_refs s)) ps = MAP (SOME o
-     bvlSem_ByteArray T) wss /\
+     closSem_ByteArray T) wss /\
    FLOOKUP (bviSem_state_refs s) dst = SOME (bvlSem_ByteArray T
      (APPEND ds1 ds2)) /\
    n = LENGTH ds1 /\ LENGTH (FLAT wss) = LENGTH ds2 ==>
@@ -951,7 +951,7 @@ let compile_single_evaluate = prove
        (bviSem_state_global t1) /\ bvl_to_bviProof_state_ok s1 /\ ~(res
        = Rerr (Rabort Rtype_error)) ==>
      (?ck b2 t2.
-       bviSem_evaluate ([bvl_Call 0 (SOME (bvl_num_stubs +
+       bviSem_evaluate ([dataLang_Call 0 (SOME (bvl_num_stubs +
          bvl_to_bvi_namespaces * start)) [] NONE],[],bviProps_inc_clock
          ck t1) =
          (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2
@@ -976,11 +976,11 @@ let bvi_stubs_evaluate = prove
                     (bvlSem_Number (&0)))))) k (SOME 0) cc co (fromAList
                     (APPEND (bvl_to_bvi_stubs start' kk) code))
                     ffi0:('c,'ffi)bviSem_state) in
-      bviSem_evaluate ([bvl_Call 0 (SOME InitGlobals_location) []
-        NONE],[],
+      bviSem_evaluate ([dataLang_Call 0 (SOME InitGlobals_location)
+        [] NONE],[],
         bviSem_initial_state ffi0 (fromAList (APPEND
           (bvl_to_bvi_stubs start' kk) code)) co cc (k + 1)) =
-   (let (r,s) = bviSem_evaluate ([bvl_Call 0 (SOME start') []
+   (let (r,s) = bviSem_evaluate ([dataLang_Call 0 (SOME start') []
      NONE],[],t0) in
      ((match r with Rerr (Rraise (Exn v)) -> Rval [v] | _5 ->
        r),s)))`,
@@ -1022,7 +1022,7 @@ let bvl_to_bviProof_compile_prog_evaluate = prove
      n' <= (FST (FST (co 0))) /\ ~(r = Rerr (Rabort Rtype_error))
        ==>
      (?ck b2 s2.
-     bviSem_evaluate ([bvl_Call 0 (SOME start') [] NONE],[],
+     bviSem_evaluate ([dataLang_Call 0 (SOME start') [] NONE],[],
                bviSem_initial_state ffi0 (fromAList prog')
                  (state_co bvl_to_bvi_compile_inc co) cc (k + ck)) =
        (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2 v))

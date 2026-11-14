@@ -274,7 +274,7 @@ let data_to_bvi_v_eq = prove
    (!v n r b. data_to_bvi_v v = dataSem_RefPtr b r <=> v =
      dataSem_RefPtr b r) /\
    (!v n l.
-     data_to_bvi_v v = dataSem_Block n l <=> (?ts l'. v =
+     data_to_bvi_v v = bvlSem_Block n l <=> (?ts l'. v =
        dataSem_Block ts n l' /\ l = MAP data_to_bvi_v l'))`,
   CHEAT_TAC);;
 add_simp data_to_bvi_v_eq;;
@@ -476,9 +476,9 @@ add_simp list_insert_list_to_num_set;;
 let state_rel_do_app_FFI_err = prove
  (`!i z r t x.
      bvi_to_dataProof_state_rel r t /\
-     dataSem_do_app (wordLang_FFI i) (MAP data_to_bvi_v z) r = Rerr
+     dataSem_do_app (closLang_FFI i) (MAP data_to_bvi_v z) r = Rerr
        (Rabort (Rffi_error x)) ==>
-     dataSem_do_app (wordLang_FFI i) z t = Rerr (Rabort (Rffi_error
+     dataSem_do_app (closLang_FFI i) z t = Rerr (Rabort (Rffi_error
        x))`,
   CHEAT_TAC);;
 

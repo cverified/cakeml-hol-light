@@ -539,7 +539,7 @@ let bvlSem_do_app_def = new_definition
                bvlSem_v_to_list lv = SOME (MAP (bvlSem_RefPtr T) ps)
                  /\
                MAP (FLOOKUP (bvlSem_state_refs s)) ps = MAP (SOME o
-                 bvlSem_ByteArray T) wss)) with SOME wss ->
+                 closSem_ByteArray T) wss)) with SOME wss ->
              (let ptr = (minimal ptr. ~(ptr IN FDOM
                (bvlSem_state_refs s))) in
                Rval (bvlSem_RefPtr T ptr,bvlSem_state_refs_fupd (K

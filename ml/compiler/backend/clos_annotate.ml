@@ -43,7 +43,7 @@ let alt_free_def,alt_free_ind = assume_definition_rec
          let (c2,l2) = alt_free (CONS y xs) in
            (APPEND c1 c2,mk_Union l1 l2))`;
    `alt_free [(closLang_Var t v:closLang_exp)] = ([(closLang_Var t
-    v:closLang_exp)],closLang_Var v)`;
+    v:closLang_exp)],db_vars_Var v)`;
    `alt_free [(closLang_If t x1 x2 x3:closLang_exp)] =
          (let (c1,l1) = alt_free [x1] in
          let (c2,l2) = alt_free [x2] in
@@ -103,7 +103,7 @@ let alt_free_def,alt_free_ind = assume_definition_rec
 let alt_free_sing_def,alt_free_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`alt_free_sing (closLang_Var t v:closLang_exp) = ((closLang_Var t
-    v:closLang_exp),closLang_Var v)`;
+    v:closLang_exp),db_vars_Var v)`;
    `alt_free_sing (closLang_If t x1 x2 x3:closLang_exp) =
          (let (c1,l1) = alt_free_sing x1 in
          let (c2,l2) = alt_free_sing x2 in

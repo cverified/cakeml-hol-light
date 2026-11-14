@@ -30,7 +30,7 @@ let free_def,free_ind = assume_definition_rec
          let (c2,l2) = clos_call_free (CONS y xs) in
            (APPEND c1 c2,mk_Union l1 l2))`;
    `clos_call_free [(closLang_Var t v:closLang_exp)] =
-    ([(closLang_Var t v:closLang_exp)],closLang_Var v)`;
+    ([(closLang_Var t v:closLang_exp)],db_vars_Var v)`;
    `clos_call_free [(closLang_If t x1 x2 x3:closLang_exp)] =
          (let (c1,l1) = clos_call_free [x1] in
          let (c2,l2) = clos_call_free [x2] in
@@ -85,7 +85,7 @@ let free_def,free_ind = assume_definition_rec
 let free_sing_def,free_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`free_sing (closLang_Var t v:closLang_exp) = ((closLang_Var t
-    v:closLang_exp),closLang_Var v)`;
+    v:closLang_exp),db_vars_Var v)`;
    `free_sing (closLang_If t x1 x2 x3:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
          let (c2,l2) = free_sing x2 in
@@ -206,7 +206,7 @@ let GENLIST_Var_def,GENLIST_Var_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   [`GENLIST_Var t (i:num) n =
      (if n = 0 then [] else APPEND (GENLIST_Var t (i + 1) (n -
-       (1:num))) [db_vars_Var t (n - 1)])`];;
+       (1:num))) [closLang_Var t (n - 1)])`];;
 
 let calls_list_def,calls_list_ind = define_rec
   [`calls_list t (i:num) loc [] = []`;

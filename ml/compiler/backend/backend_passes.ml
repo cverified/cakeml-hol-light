@@ -549,7 +549,7 @@ let pp_with_title_def = new_definition
   `pp_with_title pp (title,p) acc =
      mlsexp_Append (displayLang_List [(implode "# "); title; (implode
        "\n\n")])
-     (mlsexp_Append (pp p) acc)`;;
+     (misc_Append (pp p) acc)`;;
 
 let compile_tap_def = new_definition
   `compile_tap asm_conf (c:backend_config) p =

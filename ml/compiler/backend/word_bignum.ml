@@ -537,8 +537,8 @@ let SeqTempImm_def = define_cases
 let SeqTempImmNot_def = define_cases
   [`SeqTempImmNot i (Reg r) p =
       SeqTemp i r (word_bignum_Seq (word_bignum_Assign i
-          (wordLang_Op asm_Xor [wordLang_Var i; asm_Const (word_not
-          (n2w 0))])) p)`;
+          (wordLang_Op asm_Xor [wordLang_Var i; wordLang_Const
+          (word_not (n2w 0))])) p)`;
    `SeqTempImmNot i (Imm w) p = word_bignum_Seq (wordLang_Assign i
     (wordLang_Const (word_not w))) p`];;
 
@@ -636,7 +636,7 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
         | (word_bignum_Add r0 r1 r2 r3 r4) ->
         (SeqTempImm (i + 4) r4 (SeqTempImm (i + 3) r3 (SeqTemp (i +
           2) r2
-        (word_bignum_Seq (wordLang_Inst (ast_Arith (asm_AddCarry (i
+        (word_bignum_Seq (wordLang_Inst (asm_Arith (asm_AddCarry (i
           + 1) (i + 2) (i + 3) (i + 4))))
         (word_bignum_Seq (wordLang_Set (Temp (n2w r0)) (wordLang_Var
           (i + 1)))
@@ -645,7 +645,7 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
         | (word_bignum_Sub r0 r1 r2 r3 r4) ->
         (SeqTempImm (i + 4) r4 (SeqTempImmNot (i + 3) r3 (SeqTemp (i
           + 2) r2
-        (word_bignum_Seq (wordLang_Inst (ast_Arith (asm_AddCarry (i
+        (word_bignum_Seq (wordLang_Inst (asm_Arith (asm_AddCarry (i
           + 1) (i + 2) (i + 3) (i + 4))))
         (word_bignum_Seq (wordLang_Set (Temp (n2w r0)) (wordLang_Var
           (i + 1)))
@@ -653,7 +653,7 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
                4))))))),l,i + 5,cs)
         | (word_bignum_Mul r0 r1 r2 r3) ->
         (SeqTemp (i + 3) r3 (SeqTemp (i + 2) r2
-        (word_bignum_Seq (wordLang_Inst (ast_Arith (asm_LongMul (i +
+        (word_bignum_Seq (wordLang_Inst (asm_Arith (asm_LongMul (i +
           0) (i + 1) (i + 2) (i + 3))))
         (word_bignum_Seq (wordLang_Set (Temp (n2w r1)) (wordLang_Var
           (i + 0)))
