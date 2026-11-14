@@ -394,8 +394,39 @@ SIZE_OF = {
 # and gives the ones of its own result type; '*' stands for every
 # constructor name of the theory.
 CON_BODY = {
+  # trace_to_json builds a json object, so its String is
+  # jsonLang's and not the one of a display expression
+  ('displayLang', 'trace_to_json_def'): {'String': 'jsonLang'},
+  # compile_pat reads an ast pattern and builds a flatLang one,
+  # and the two have Pany, Pvar, Plit, Pcon, Pas and Pref
+  ('source_to_flat', 'compile_pat_def'): {'*': 'flatLang'},
+  # call_graph matches on a wordLang program and builds a
+  # call_tree, and both have Call
+  ('word_depth', 'call_graph_def'): {'Call': 'word_depth'},
   ('wordSem', 'evaluate_def'): {'*': 'wordSem'},
   ('stackSem', 'evaluate_def'): {'*': 'stackSem'},
+  # bvi_to_data's compile matches on a bvi expression and builds a
+  # dataLang program, and the two languages share the names Call
+  # and Return with the same number of arguments, so nothing but
+  # this says which is which
+  ('bvi_to_data', 'compile_def'):
+    {'Call': 'dataLang', 'Return': 'dataLang'},
+  ('bvi_to_data', 'compile_sing_def'):
+    {'Call': 'dataLang', 'Return': 'dataLang'},
+}
+
+# CON_CLAUSE: the theory of a constructor in the body of _one_
+# clause of a definition, where the rest of the body means
+# another theory's.  The clause is named by a name of its
+# pattern, not by a number, which would move with every clause
+# added before it.  The compile of bvi_to_data builds dataLang
+# programs, so its Return is dataLang's everywhere -- except in
+# the clause for LetCall, which compares the y of its pattern
+# with the Return of bvi that y may be.
+CON_CLAUSE = {
+  ('bvi_to_data', 'compile_def'): {('LetCall', 'Return'): 'bvi'},
+  ('bvi_to_data', 'compile_sing_def'):
+    {('LetCall', 'Return'): 'bvi'},
 }
 
 # FIELD_VAR_DEF: the same for one definition, where the theory
@@ -470,9 +501,12 @@ FIELD_VAR_DEF = {
 }
 
 FIELD_OF = {
-  # both grammar and peg have a field rules
-  'pegexec': {'rules': 'peg'},
-  'peg': {'rules': 'peg'},
+  # both grammar and peg have the fields rules and start
+  'pegexec': {'rules': 'peg', 'start': 'peg'},
+  'peg': {'rules': 'peg', 'start': 'peg'},
+  'pegSound': {'rules': 'peg', 'start': 'peg'},
+  'pegComplete': {'rules': 'peg', 'start': 'peg'},
+  'NTproperties': {'rules': 'grammar', 'start': 'grammar'},
   # source_to_flat's environment has the fields of sem_env
   'source_to_flat': {'v': 'source_to_flat_environment',
                      'c': 'source_to_flat_environment'},
@@ -1132,6 +1166,11 @@ WORD_NOT = set([
 # clauses as separate quotations
 CLAUSE_FORM = set([
   ('ast', 'every_exp_def'),
+  # compile_pat reads an ast pattern and builds a flatLang one,
+  # and the two have the same constructor names: the clause form
+  # is what lets CON_BODY say that the right hand side is the
+  # flatLang one
+  ('source_to_flat', 'compile_pat_def'),
   # a variable of these has one type in the clauses of one of the
   # functions and another in those of the next, which only shows
   # in the right hand sides, where clause_clash does not look
@@ -1480,6 +1519,19 @@ ONE_QUOTATION = set([
 # stackLang, and the port is loaded in one namespace, where the
 # Inst of wordLang comes later)
 CON_OF = {
+  # flatten gives an app_list of lab programs, so its List and
+  # its Append are misc's (the match is on a variable, so the
+  # patterns of its arms have neither)
+  ('stack_to_lab', 'flatten_def'):
+    {'List': 'misc', 'Append': 'misc'},
+  # the register names of a target are a num_map, so the insert
+  # that builds them is sptree's and not balanced_map's
+  ('x64_config', 'x64_names_def'): {'insert': 'sptree'},
+  ('arm8_config', 'arm8_names_def'): {'insert': 'sptree'},
+  ('arm7_config', 'arm7_names_def'): {'insert': 'sptree'},
+  ('mips_config', 'mips_names_def'): {'insert': 'sptree'},
+  ('riscv_config', 'riscv_names_def'): {'insert': 'sptree'},
+  ('ag32_config', 'ag32_names_def'): {'insert': 'sptree'},
   ('stack_remove', 'single_stack_free_def'): {'Inst': 'stackLang'},
   # the Int of a Build is the const of closLang, not the assoc_op
   # that bvi_tailrec has of the name
@@ -11600,4 +11652,33 @@ AUX_SIZE = {
   ('flatLang', 'exp5_size'):
     'pair_size flatLang_pat_size flatLang_exp_size',
   ('flatLang', 'exp6_size'): 'list_size flatLang_exp_size',
+}
+
+
+# MAIN_THEORY: the language a file is about.  A pass of the
+# compiler is named after the language it reads and builds terms
+# of one language above all, and several theories in scope have
+# the names Seq, Call, Move, Load and the rest.  Where the name
+# of the file does not say which theory a constructor is of
+# (word_alloc does not start with wordLang), this does.
+MAIN_THEORY = {
+  'word_alloc': 'wordLang',
+  'word_copy': 'wordLang',
+  'word_cse': 'wordLang',
+  'word_inst': 'wordLang',
+  'word_remove': 'wordLang',
+  'word_simp': 'wordLang',
+  'word_unreach': 'wordLang',
+  'word_to_word': 'wordLang',
+  'word_bignum': 'word_bignum',
+  'word_depth': 'word_depth',
+  'stack_alloc': 'stackLang',
+  'stack_names': 'stackLang',
+  'stack_rawcall': 'stackLang',
+  'stack_remove': 'stackLang',
+  'data_live': 'dataLang',
+  'data_simp': 'dataLang',
+  'data_space': 'dataLang',
+  'flat_elim': 'flatLang',
+  'flat_pattern': 'flatLang',
 }

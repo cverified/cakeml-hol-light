@@ -366,6 +366,7 @@ class Porter:
     self.conof_arities = {}  # the theory per number of arguments
     self.conof_wild = False  # did the override use the wildcard?
     self.conbody = {}      # the constructors of the body only
+    self.defkey = None     # the definition that is being ported
     self.rec_src = {}      # record type -> [(field, type)]
     self.annotated = {}    # the terms a pattern resolved
     self.intargs = set()   # arguments that hold an integer
@@ -2054,6 +2055,7 @@ class Porter:
         for c in cons:
           if c in self.ctx.overloaded: conbody.setdefault(c, t)
     self.conbody = conbody
+    self.defkey = key
     self.conof_wild = '*' in conof
     self.conof_arities = {k: v for k, v in conof.items()
                           if isinstance(v, dict)}
@@ -2478,6 +2480,19 @@ class Porter:
     if kinds == ('con',) and self.contys:
       ts = [x for x in ts if x in self.contys] or ts
     if not ts: return None
+    # a file is about a language and its name says which one:
+    # CakeML calls a pass after the language it reads (bvl_const,
+    # clos_annotate, word_alloc), so a constructor that several
+    # theories have is that language's.  A pass that builds
+    # another language says so for its bodies
+    # (overrides.CON_BODY), and where the name of the file does
+    # not say it the override does (overrides.MAIN_THEORY:
+    # word_alloc is about wordLang)
+    pref = [x for x in ts
+            if x == self.thy or self.thy.startswith(x + '_')]
+    if pref: ts = pref
+    main = overrides.MAIN_THEORY.get(self.thy)
+    if main and len(ts) > 1 and main in ts: ts = [main]
     # a constructor of a datatype whose name several theories have
     # is the one of the type that the theory means by that name:
     # the v of data_to_word_memoryProof is dataSem's, so its
@@ -3194,10 +3209,34 @@ class Porter:
         if old[nm]: self.ctx.overloaded.add(nm)
         self.ctx.names.pop((self.thy, nm), None)
 
+  def clause_names(self, cl):
+    """the names that the pattern of a clause uses, which is what
+       says which clause an entry of overrides.CON_CLAUSE is
+       about: a constructor of the pattern names its clause, where
+       a number would move with every clause added before it"""
+    e = cl
+    while e.kind == 'paren': e = e.e
+    if not (e.kind == 'infix' and e.op in ('=', '<=>')): return set()
+    out = set()
+    def go(x):
+      if not isinstance(x, hterm.Node): return
+      if x.kind == 'id': out.add(x.name.split('$')[-1])
+      for k, v in list(x.__dict__.items()):
+        if k == 'tok': continue
+        if isinstance(v, hterm.Node): go(v)
+        elif isinstance(v, (list, tuple)):
+          for y in v:
+            if isinstance(y, hterm.Node): go(y)
+            elif isinstance(y, (list, tuple)):
+              for z in y:
+                if isinstance(z, hterm.Node): go(z)
+    go(e.l)
+    return out
+
   def pr_clause(self, p, cl):
     """a clause, with the right hand side printed with the
        constructors that CON_OF says this definition means"""
-    if not self.conof: return p.pr(cl, 0)
+    if not self.conof and not self.conbody: return p.pr(cl, 0)
     e = cl
     while e.kind == 'paren': e = e.e
     if not (e.kind == 'infix' and e.op in ('=', '<=>')):
@@ -3292,9 +3331,23 @@ class Porter:
         # every clause has its own variables, so also its own ones
         # that hold an integer
         self.ctx.intvars = self.int_vars_node(cl) | self.intargs
-        cls.append(fmt(self.pr_clause(p,
-                         self.annotate(cl, True, atys)),
-                       indent=4, last=last, extra=4))
+        # a constructor that this clause means another theory's
+        # than the rest of the body does (bvi_to_data's LetCall
+        # clause compares its y with bvi's Return, where every
+        # other Return of the definition is dataLang's)
+        was = self.conbody
+        per = overrides.CON_CLAUSE.get(self.defkey, {})
+        if per:
+          pats = self.clause_names(cl)
+          self.conbody = dict(was)
+          self.conbody.update(
+            dict((n, t) for (c, n), t in per.items() if c in pats))
+        try:
+          cls.append(fmt(self.pr_clause(p,
+                           self.annotate(cl, True, atys)),
+                         indent=4, last=last, extra=4))
+        finally:
+          self.conbody = was
       # a comment that has no token of the clause to stand before
       # (one at the end of it) goes at the end of that clause
       starts = [(hterm.first_tok(cl).pos
@@ -3544,6 +3597,7 @@ class Porter:
     # (word_elimProof's dest_word_loc matches on the Loc of
     # wordLang's word_loc, which only its catchall says)
     atys = {}
+    qual = set()
     for _, args, _ in cls:
       for i in pats:
         a = args[i]
@@ -3555,10 +3609,24 @@ class Porter:
         except Exception:
           continue
         if ty[0] != 'op': continue
-        nm = ty[1].split('$')[-1]
-        ts = {t for (t, ty2) in self.db.datatypes if ty2 == nm}
+        # a type that the source qualifies (bvl$exp) says the
+        # theory itself, and that is the whole point of writing it
+        # there: without it every theory that has a type of the
+        # name is taken, and a constructor that several of them
+        # have is resolved by nothing
+        if '$' in ty[1]:
+          ts = {ty[1].split('$')[0]}
+          qual |= ts
+        else:
+          nm = ty[1]
+          ts = {t for (t, ty2) in self.db.datatypes if ty2 == nm}
         if ts: atys[i] = ts | atys.get(i, set())
-    base = self.contys
+    # the scrutinee of the match has one type, so a type that one
+    # arm says is the type of every arm: the Op of the arm under
+    # ((Var n):bvl$exp) is bvl's too.  A constructor that bvl has
+    # not got (the IntOp of its argument) falls back on the
+    # theories that have it, as it does everywhere
+    base = qual or self.contys
     arms = []
     done = False
     for hd_, args, r in cls:
@@ -3587,6 +3655,8 @@ class Porter:
       vs = set()
       for i in pats: vs |= self.int_vars_node(args[i])
       self.ctx.intvars = iv | vs
+      wasc = self.contys
+      self.contys = base
       try:
         # a comment of the source before the clause goes before
         # the arm that the port makes of it
@@ -3599,6 +3669,7 @@ class Porter:
                      self.pr_body(pr, hterm.rename_ast(r, sub))))
       finally:
         self.ctx.intvars = iv
+        self.contys = wasc
     scrut = ','.join(names[i] for i in pats)
     if len(pats) > 1: scrut = '(' + scrut + ')'
     head = pr.pr(hop, 0) + ' ' + ' '.join(names)
