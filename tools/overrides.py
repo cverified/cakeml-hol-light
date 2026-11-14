@@ -11957,6 +11957,11 @@ DEF_PATCH = {
   # the second component of the result is a db_var_set and the
   # first a list of bvl expressions; bvl's Var and db_vars' Var
   # both take one argument, so only the place says which it is
+  ('bvl_handle', 'compile_sing_def'): [
+    ('(bvl_Var v,bvl_Var v,1,T)', '(bvl_Var v,db_vars_Var v,1,T)'),
+    ('((bvl_Force m v:bvl_exp),bvl_Var v,1,F)',
+     '((bvl_Force m v:bvl_exp),db_vars_Var v,1,F)'),
+  ],
   ('bvl_handle', 'compile_def'): [
     ('([bvl_Var v],bvl_Var v,1,T)', '([bvl_Var v],db_vars_Var v,1,T)'),
     ('([(bvl_Force m v:bvl_exp)],bvl_Var v,1,F)',
