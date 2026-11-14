@@ -5193,6 +5193,12 @@ have the two files without moving anything, copy them into
 
 ## 115. The theory that an overloaded name means
 
+**The port no longer overloads a name at all** (entry 117,
+entry 118): every constant is written out, and which theory
+a shared name is of is settled when the file is written and
+not when it is read.  What follows is why that had to
+change.
+
 A name that several theories of CakeML define is one name in the
 port: the constants get the name of their theory in front
 (`bvlSem_evaluate`, `bviSem_evaluate`, `dataSem_evaluate`, ...) and
@@ -5419,3 +5425,81 @@ terms, and `ITER` brings `Library/iter.ml` with it.  What it
 costs is that a statement of the port is not the HOL4 statement
 character for character -- which is why the two files are read
 block by block and not diffed.
+
+## 118. Which theory a shared constructor name is of
+
+Every constant of the port has its own name now (entry 117): the
+`Var` of `closLang` is `closLang_Var` and the `Var` of `bvl` is
+`bvl_Var`, and there is no overloading left to let HOL Light pick
+between them by type.  So the port has to pick, and in sixty files
+it picked wrong -- a pass of the compiler reads one language and
+builds another, and the two share `Var`, `Op`, `Call`, `Seq`,
+`Skip`, `If`, `Let`, `Move`, `Load`, `Inst`, `Equal` and more.
+
+Five things say which theory a name is of, in this order
+(`tools/port.py`, `con_thy`), and each is a statement about the
+source that a reader can check:
+
+1. **A qualified name or a qualified type.**  Where the source
+   writes `bvl$exp` or `((Var n):bvl$exp)` it has said it itself.
+   A type on the pattern of one arm says it for every arm of that
+   match: the scrutinee has one type.  This is free and always
+   right, and it is why the first thing to look at is whether
+   HOL4 wrote an annotation.
+2. **The number of arguments.**  `closLang$Var` takes a trace and
+   a number, `bvl$Var` takes a number, `db_vars$Var` takes a
+   number: two of the three are told apart by the arguments that
+   are there.  The port resolves the head of an application with
+   that number -- and the one trap is that an application is
+   printed from the outside in, so the *outermost* node has all
+   the arguments and an inner one must not resolve the head
+   again (`Ctx.head_for`).
+3. **The patterns of the match.**  The heads of the arms are
+   constructors of one theory, so a name that several theories
+   have is the one of the theory that has them all: `closSem`
+   matches a `word_test` on `Equal` and on `Compare`, and only
+   `ast` has both.  It holds for the patterns and not for the
+   bodies -- `bvi_tailrec` matches a `bvi` expression and gives
+   the `Int` of its own `v_ty`.
+4. **The file.**  CakeML names a pass after the language it
+   reads, so `bvl_const`'s `Var` is `bvl`'s; where the name does
+   not say it, `overrides.MAIN_THEORY` does (`word_alloc` is
+   about `wordLang`, `bvlProps` about `bvl`).
+5. **The override, from the widest to the narrowest.**
+   `MAIN_THEORY` for a file's language, `CON_FILE` for a name
+   that means one theory's constant everywhere in a file,
+   `CON_OF` for a definition, `CON_BODY` for the bodies of its
+   clauses, `CON_CLAUSE` for one clause (named by a name of its
+   pattern, not by a number, which moves when a clause is added),
+   `DEF_NAMES` for a name that one definition means another
+   constant by, and `DEF_PATCH` for the spots that none of those
+   reach.
+
+Two things to know before reaching for an override:
+
+- `CON_BODY` and a wildcard `CON_OF` only reach a definition that
+  the port prints **as clauses**.  A definition that comes out as
+  one quotation or one `match` goes through `self.term`, where
+  only the names written out in `CON_OF` are installed.  Where an
+  override seems to do nothing, that is the first thing to check.
+- The place can carry the answer where no rule does.  The second
+  component of what `bvl_handle`'s `compile` gives is a
+  `db_var_set` and the first is a list of `bvl` expressions, and
+  `bvl$Var` and `db_vars$Var` both take one argument: nothing but
+  the position says which is which.  `DEF_PATCH` says it as two
+  string replacements, and the port **raises** where a patch does
+  not apply, so a patch cannot go quietly stale.
+
+The same question for a record field is entry 11 and
+`overrides.FIELD_OF` (`pegexec` reads the `start` of a `peg`, and
+`grammar` has a `start` as well), and for a name that HOL4
+overloads on the type of its argument it is `DEF_NAMES`
+(`toString` is `mlint$toString` of an integer and `num_to_str` of
+a number, and `presLang` has a definition of each).
+
+What makes this bearable is that a wrong answer is almost always
+a **type error** and not a quiet change of meaning: HOL Light
+rejects the statement and the run names the file, the phrase and
+the two types.  A run is the only authority -- a name that looks
+wrong in the file may be right, and one that looks right may be
+the only thing the typechecker rejects.
