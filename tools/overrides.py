@@ -12076,6 +12076,12 @@ DEF_NAMES = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # compile_exp reads an ast expression; pattern_semantics has an
+  # If of its own, and the pattern of this one clause resolved to
+  # it (the annotation that the port writes says ast_exp)
+  ('source_to_flat', 'compile_exp_def'): [
+    ('(pattern_semantics_If e1 e2', '(ast_If e1 e2'),
+  ],
   # the mop of the ShMemOp arm is a memop of asm, where every
   # other Store of get_live is the one of a wordLang program
   ('word_alloc', 'get_live_def'): [
