@@ -3948,20 +3948,20 @@ class Porter:
     # a comment of the source before a clause stands before the
     # arm that the port makes of it, as it does in the source
     def pre(cs):
-      return ''.join('// ' + l + '\n     '
+      return ''.join('// ' + l + '\n  '
                      for cm in cs for l in cm)
     body = pre(arms[0][0]) + '%s -> %s' % arms[0][1:]
     for cs, p, b in arms[1:]:
-      body += '\n     ' + pre(cs) + '| %s -> %s' % (p, b)
+      body += '\n  ' + pre(cs) + '| %s -> %s' % (p, b)
     self.ctx.vars = {}
-    text = '%s =\n     match %s with\n       %s' % (head, scrut, body)
+    text = '%s =\n  match %s with\n    %s' % (head, scrut, body)
     # a comment that no clause of this definition has taken goes at
     # the end of the match -- but with `only' the other clauses of
     # the definition are still to come, and the caller puts the
     # comments of those where they belong
     if only is None:
       for l in self.left_comments(toks, text):
-        text += '\n     // ' + l
+        text += '\n  // ' + l
     self.ctx.vars = {}
     return text
 

@@ -2237,6 +2237,12 @@ class Printer:
       return ('(' + self.cname('strlit') + ' ' +
               hl_string(e.text) + ')')
     if k == 'paren':
+      # an annotation brings its own brackets, so the ones of the
+      # source round it would be a second pair
+      if e.e.kind in ('typed', 'rawtyped'):
+        s = self.pr(e.e, 1)
+        return s if s.startswith('(') and s.endswith(')') \
+               else '(' + s + ')'
       return '(' + self.pr(e.e, 0) + ')'
     if k == 'rawtyped':
       # a variable whose type the port says itself, in HOL Light's
