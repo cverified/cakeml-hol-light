@@ -3863,8 +3863,16 @@ class Porter:
         seen.extend(ks)
       byclass = {}
       for x in seen: byclass.setdefault(find(x), set()).add(x)
-      return any(len([x for x in c if isinstance(x, str)]) > 1
-                 for c in byclass.values())
+      for c in byclass.values():
+        if len([x for x in c if isinstance(x, str)]) > 1: return True
+        # two arguments of one function that a variable makes one
+        # type: the source means two types and gets away with it
+        # because HOL4 typechecks every clause on its own
+        # (balanced_map's trim_help_middle has its comparison and
+        # its low bound the other way round in its second clause)
+        args = [x[1:] for x in c if not isinstance(x, str)]
+        if len(set(args)) > len(set(f for f, _ in args)): return True
+      return False
     groups = []
     for i in range(len(cls)):
       for g in groups:

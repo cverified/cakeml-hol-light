@@ -104,24 +104,24 @@ let handle_size_non_zero = prove
  (`0 < handle_size x`,
   CHEAT_TAC);;
 
-let handle_simp_def,handle_simp_ind = assume_definition_rec
+let handle_simp_def,handle_simp_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  `(handle_simp (bvl_Handle x1 x2) = make_handle x1 x2 0) /\
-   (handle_simp (bvl_Var v) = (bvl_Var v:bvl_exp)) /\
-   (handle_simp (bvl_If x1 x2 x3) = bvl_If (handle_simp x1) (handle_simp
+  [`(handle_simp (bvl_Handle x1 x2) = make_handle x1 x2 0) /\
+    (handle_simp (bvl_Var v) = (bvl_Var v:bvl_exp)) /\
+    (handle_simp (bvl_If x1 x2 x3) = bvl_If (handle_simp x1) (handle_simp
     x2) (handle_simp x3)) /\
-   (handle_simp (bvl_Let xs x2) = bvl_Let (handle_simp_list xs)
+    (handle_simp (bvl_Let xs x2) = bvl_Let (handle_simp_list xs)
     (handle_simp x2)) /\
-   (handle_simp (bvl_Raise x1) = bvl_Raise (handle_simp x1)) /\
-   (handle_simp (bvl_Op op xs) = bvl_Op op (handle_simp_list xs)) /\
-   (handle_simp (bvl_Tick x) = bvl_Tick (handle_simp x)) /\
-   (handle_simp (bvl_Force m n) = (bvl_Force m n:bvl_exp)) /\
-   (handle_simp (bvl_Call t dest xs) = bvl_Call t dest (handle_simp_list
+    (handle_simp (bvl_Raise x1) = bvl_Raise (handle_simp x1)) /\
+    (handle_simp (bvl_Op op xs) = bvl_Op op (handle_simp_list xs)) /\
+    (handle_simp (bvl_Tick x) = bvl_Tick (handle_simp x)) /\
+    (handle_simp (bvl_Force m n) = (bvl_Force m n:bvl_exp)) /\
+    (handle_simp (bvl_Call t dest xs) = bvl_Call t dest (handle_simp_list
     xs)) /\
-   (handle_simp_list [] = ([]:bvl_exp list)) /\
-   (handle_simp_list (CONS x xs) = ((CONS (handle_simp x) (handle_simp_list
-    xs)):bvl_exp list)) /\
-   (make_handle x1 x2 l =
+    (handle_simp_list [] = ([]:bvl_exp list)) /\
+    (handle_simp_list (CONS x xs) = ((CONS (handle_simp x) (handle_simp_list
+    xs)):bvl_exp list))`;
+   `make_handle x1 x2 l =
          match dest_handle_Raise x1 with SOME r -> bvl_Let [r]
              (handle_adj_vars 1 l (handle_simp x2))
          | NONE ->
@@ -136,7 +136,7 @@ let handle_simp_def,handle_simp_ind = assume_definition_rec
                               (make_handle b2 x2 l)
                               (handle_simp b3)
          | NONE -> (bvl_Handle (handle_simp x1) (handle_adj_vars 1 l
-             (handle_simp x2))))))`;;
+             (handle_simp x2)))))`];;
 
 let SmartLet_def = new_definition
   `SmartLet xs x = if NULL xs then x else bvl_Let xs x`;;
