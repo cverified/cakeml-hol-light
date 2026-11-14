@@ -28,10 +28,6 @@ let _ = hol4_ancestors "gen_gc"
 let gen_gc_conf_FIELDS = define_record "gen_gc_conf"
   ["limit","num";
    "isRef","'a->bool"];;
-hol4_field_overload "limit" "gen_gc_conf_limit";;
-hol4_field_overload "limit_fupd" "gen_gc_conf_limit_fupd";;
-hol4_field_overload "isRef" "gen_gc_conf_isRef";;
-hol4_field_overload "isRef_fupd" "gen_gc_conf_isRef_fupd";;
 
 let gen_gc_gc_move_def = define_cases
   [`gen_gc_gc_move conf state (gc_shared_Data d) = ((gc_shared_Data

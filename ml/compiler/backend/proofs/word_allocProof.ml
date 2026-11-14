@@ -2196,8 +2196,8 @@ let foldr_insert_const_swap = prove
 (* [local] *)
 let evaluate_fake_const_chain = prove
  (`!rs (cst:('a,'b,'c)wordSem_state).
-     wordSem_evaluate (ITLIST linear_scan_Seq (MAP (\r. (fake_move
-       r):'a wordLang_prog) rs) wordLang_Skip,cst) =
+     wordSem_evaluate (ITLIST wordLang_Seq (MAP (\r. (fake_move r):'a
+       wordLang_prog) rs) wordLang_Skip,cst) =
        (NONE,wordSem_state_locals_fupd (K (ITLIST (\r loc.
          sptree_insert r (wordLang_Word (n2w 0)) loc) rs
          (wordSem_state_locals cst))) cst)`,

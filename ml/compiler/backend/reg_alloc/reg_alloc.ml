@@ -92,8 +92,6 @@ let ra_state_FIELDS = define_record "ra_state"
    "move_related","bool list";
    (* fast check if a node is still move related -- arr *)
    "stack","num list"];;
-hol4_field_overload "stack" "ra_state_stack";;
-hol4_field_overload "stack_fupd" "ra_state_stack_fupd";;
 
 (* HOL4 makes the monadic accessors of ra_state with ML code
    (define_monad_access_funs of ml_monadBaseLib); these are

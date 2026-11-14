@@ -521,8 +521,8 @@ let TempOut_def = new_definition
   `TempOut = Temp (n2w 29)`;;
 
 let SeqTemp_def = new_definition
-  `SeqTemp i r p = word_bignum_Seq (wordLang_Assign i
-  (wordLang_Lookup (Temp (n2w r)))) p`;;
+  `SeqTemp i r p = wordLang_Seq (wordLang_Assign i (wordLang_Lookup
+  (Temp (n2w r)))) p`;;
 
 let SeqTempImm_def = define_cases
   [`SeqTempImm i (Reg r) p = SeqTemp i r p`;
@@ -532,8 +532,8 @@ let SeqTempImm_def = define_cases
 let SeqTempImmNot_def = define_cases
   [`SeqTempImmNot i (Reg r) p =
       SeqTemp i r (word_bignum_Seq (word_bignum_Assign i
-        (wordLang_Op ast_Xor [wordLang_Var i; wordLang_Const
-        (word_not (n2w 0))])) p)`;
+        (wordLang_Op asm_Xor [wordLang_Var i; asm_Const (word_not
+        (n2w 0))])) p)`;
    `SeqTempImmNot i (Imm w) p = word_bignum_Seq (wordLang_Assign i
   (wordLang_Const (word_not w))) p`];;
 
@@ -555,8 +555,7 @@ let DivCode_def = new_definition
   `DivCode l1 l2 n1 n2 n3 n4 n5 =
      wordLang_MustTerminate
        (wordLang_Seq (wordLang_Call (SOME ([n1],(LS
-         one,LN),word_bignum_Skip,l1,l2)) (SOME div_location) [n3; n4;
-         n5] NONE)
+         one,LN),asm_Skip,l1,l2)) (SOME div_location) [n3; n4; n5] NONE)
             (wordLang_Assign n2 (wordLang_Lookup (Temp (n2w
               28)))))`;;
 

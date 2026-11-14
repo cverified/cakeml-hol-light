@@ -49,7 +49,7 @@ let get_size_sc_aux_def,get_size_sc_aux_ind = assume_definition_rec
          (if n = 0 then n else
            let n = get_size_sc_aux n [x] in if n = 0 then n else
              get_size_sc_aux n (CONS y xs))`;
-   `get_size_sc_aux n [(db_vars_Var t v:closLang_exp)] = n - 1`;
+   `get_size_sc_aux n [(closLang_Var t v:closLang_exp)] = n - 1`;
    `get_size_sc_aux n [(closLang_If t x1 x2 x3:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
@@ -103,7 +103,7 @@ let get_size_aux_def,get_size_aux_ind = define_wf
   [`get_size_aux [] = 0`;
    `get_size_aux (CONS x (CONS y xs)) =
          get_size_aux [x] + get_size_aux (CONS y xs)`;
-   `get_size_aux [(db_vars_Var t v:closLang_exp)] = 1`;
+   `get_size_aux [(closLang_Var t v:closLang_exp)] = 1`;
    `get_size_aux [(closLang_If t x1 x2 x3:closLang_exp)] =
          1 + get_size_aux [x1] + get_size_aux [x2] + get_size_aux
            [x3]`;
@@ -158,8 +158,8 @@ let clos_known_free_def,clos_known_free_ind = assume_definition_rec
          (let (c1,l1) = clos_known_free [x] in
          let (c2,l2) = clos_known_free (CONS y xs) in
            (APPEND c1 c2,mk_Union l1 l2))`;
-   `clos_known_free [(db_vars_Var t v:closLang_exp)] = ([(db_vars_Var
-  t v:closLang_exp)],db_vars_Var v)`;
+   `clos_known_free [(closLang_Var t v:closLang_exp)] =
+  ([(closLang_Var t v:closLang_exp)],closLang_Var v)`;
    `clos_known_free [(closLang_If t x1 x2 x3:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
          let (c2,l2) = clos_known_free [x2] in
@@ -225,7 +225,7 @@ let contains_closures_def,contains_closures_ind = define_wf
    `contains_closures (CONS x (CONS y xs)) =
         (if contains_closures [x] then T else
           contains_closures (CONS y xs))`;
-   `contains_closures [(db_vars_Var t v:closLang_exp)] = F`;
+   `contains_closures [(closLang_Var t v:closLang_exp)] = F`;
    `contains_closures [(closLang_If t x1 x2 x3:closLang_exp)] =
          (if contains_closures [x1] then T else
          if contains_closures [x2] then T else
@@ -357,9 +357,9 @@ let known_op_def = new_definition
             g)))
         | (closLang_BlockOp (closLang_Cons tg)) -> (clos_known_Tuple
           tg as,g)
-        | (closLang_IntOp (closLang_Const i)) -> (clos_known_Int i,g)
+        | (closLang_IntOp (closLang_Const i)) -> (closLang_Int i,g)
         | (closLang_MemOp closLang_El) ->
-        (match as with [clos_known_Tuple _8 xs; clos_known_Int i] ->
+        (match as with [clos_known_Tuple _8 xs; closLang_Int i] ->
             (if (&0) <= i /\ i < &(LENGTH xs) then (EL (num_of_int i)
               xs,g) else (clos_known_Other,g)) | CONS
               clos_known_Impossible xs -> (clos_known_Impossible,g) |
@@ -507,8 +507,8 @@ let known_def,known_ind = assume_definition_rec
          (let (eas1,g) = known c [x] vs g in
          let (eas2,g) = known c (CONS y xs) vs g in
            (APPEND eas1 eas2,g))`;
-   `known c [(db_vars_Var t v:closLang_exp)] vs (g:val_approx spt) =
-         ([((db_vars_Var t v:closLang_exp),any_el v vs
+   `known c [(closLang_Var t v:closLang_exp)] vs (g:val_approx spt) =
+         ([((closLang_Var t v:closLang_exp),any_el v vs
            clos_known_Other)],g)`;
    `known c [(closLang_If t x1 x2 x3:closLang_exp)] vs (g:val_approx
   spt) =

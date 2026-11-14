@@ -53,22 +53,10 @@ let environment_generation_store_FIELDS =
   ["next","num";
    "generation","num";
    "envs","source_to_flat_environment spt"];;
-hol4_field_overload "next" "environment_generation_store_next";;
-hol4_field_overload "next_fupd"
-  "environment_generation_store_next_fupd";;
-hol4_field_overload "generation"
-  "environment_generation_store_generation";;
-hol4_field_overload "generation_fupd"
-  "environment_generation_store_generation_fupd";;
-hol4_field_overload "envs" "environment_generation_store_envs";;
-hol4_field_overload "envs_fupd"
-  "environment_generation_store_envs_fupd";;
 
 let environment_store_FIELDS = define_record "environment_store"
   ["next","num";
    "env_gens","(source_to_flat_environment spt) spt"];;
-hol4_field_overload "next" "environment_store_next";;
-hol4_field_overload "next_fupd" "environment_store_next_fupd";;
 
 let compile_var_def = define_cases
   [`compile_var t (source_to_flat_Glob _1 i) = flatLang_App t
@@ -88,17 +76,16 @@ let compile_var_def = define_cases
 let compile_pat_def,compile_pat_ind = define_shaped_rec
   "nested"
   [`(compile_pat env (ast_Pvar v) = flatLang_Pvar v) /\
-   (compile_pat env flatLang_Pany = flatLang_Pany) /\
-   (compile_pat env (flatLang_Plit l) = flatLang_Plit l) /\
+   (compile_pat env ast_Pany = ast_Pany) /\
+   (compile_pat env (ast_Plit l) = ast_Plit l) /\
    (compile_pat env (ast_Pcon id' ps) =
      flatLang_Pcon
        (OPTION_JOIN (OPTION_MAP (nsLookup
          (source_to_flat_environment_c env)) id'))
        (MAP (compile_pat env) ps)) /\
-   (compile_pat env (flatLang_Pref p) = flatLang_Pref (compile_pat
-     env p)) /\
-   (compile_pat env (flatLang_Pas p i) = flatLang_Pas (compile_pat
-     env p) i) /\
+   (compile_pat env (ast_Pref p) = ast_Pref (compile_pat env p)) /\
+   (compile_pat env (ast_Pas p i) = ast_Pas (compile_pat env p) i)
+     /\
    (compile_pat env (ast_Ptannot p t) = compile_pat env p)`];;
 
 let pat_tups_def,pat_tups_ind = define_rec
@@ -435,7 +422,7 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
                mk_source_to_flat_environment nsEmpty (alist_to_ns
                  (alloc_defs n' (next_indices_vidx next') xs)),
                envs',
-               [flatLang_Mat backend_common_None e'
+               [ast_Mat backend_common_None e'
                   [(compile_pat env p,make_varls 0
                     backend_common_None (next_indices_vidx next')
                     xs)]])))
@@ -491,13 +478,18 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
           1)) next',
            mk_source_to_flat_environment nsEmpty (nsBind nenv
              (source_to_flat_Glob backend_common_None
-             (next_indices_vidx next')) nsEmpty),envs_fupd (K
-             (sptree_insert (next envs') env (envs envs'))) (next_fupd
-             (K (next envs' + 1))
+             (next_indices_vidx next'))
+             nsEmpty),environment_generation_store_envs_fupd (K
+             (sptree_insert (environment_store_next envs') env
+             (environment_generation_store_envs envs')))
+             (environment_store_next_fupd (K (environment_store_next
+             envs' + 1))
            envs'),
-           [(flatLang_App backend_common_None
-             (flatLang_GlobalVarInit (next_indices_vidx next'))
-               [env_id_tuple (generation envs') (next envs')])])
+           [(ast_App backend_common_None (flatLang_GlobalVarInit
+             (next_indices_vidx next'))
+               [env_id_tuple
+                 (environment_generation_store_generation envs')
+                 (environment_store_next envs')])])
         | (t,[]) ->
        (n,next',source_to_flat_empty_env,envs',[])
         | (t,(CONS d ds)) ->
@@ -514,10 +506,6 @@ let source_to_flat_config_FIELDS = define_record "source_to_flat_config"
    "mod_env","source_to_flat_environment";
    "pattern_cfg","flat_pattern_config";
    "envs","environment_store"];;
-hol4_field_overload "next" "source_to_flat_config_next";;
-hol4_field_overload "next_fupd" "source_to_flat_config_next_fupd";;
-hol4_field_overload "envs" "source_to_flat_config_envs";;
-hol4_field_overload "envs_fupd" "source_to_flat_config_envs_fupd";;
 
 let empty_config_def = new_definition
   `empty_config =
@@ -531,32 +519,36 @@ let compile_flat_def = new_definition
 
 let glob_alloc_def = new_definition
   `glob_alloc next' c =
-       (flatLang_Let om_tra NONE
-         (flatLang_App om_tra
+       (ast_Let om_tra NONE
+         (ast_App om_tra
            (flatLang_GlobalVarAlloc (next_indices_vidx next' -
-             next_indices_vidx (next c))) [])
+             next_indices_vidx (source_to_flat_config_next c))) [])
          (flatLang_Con om_tra NONE []))`;;
 
 let alloc_env_ref_def = new_definition
-  `alloc_env_ref = (flatLang_App backend_common_None
-  (flatLang_GlobalVarInit 0)
-     [flatLang_App backend_common_None (flatLang_Src ast_Opref)
-       [flatLang_Con backend_common_None NONE []]])`;;
+  `alloc_env_ref = (ast_App backend_common_None (flatLang_GlobalVarInit
+  0)
+     [ast_App backend_common_None (flatLang_Src ast_Opref)
+       [ast_Con backend_common_None NONE []]])`;;
 
 let source_to_flat_compile_prog_def = new_definition
   `source_to_flat_compile_prog c p =
-     (let next' = next_indices_vidx_fupd (K (next_indices_vidx (next
-       c) + 1)) (next c) in
-     let envs' = mk_environment_generation_store 0 (next (envs c)) LN
-       in
+     (let next' = next_indices_vidx_fupd (K (next_indices_vidx
+       (source_to_flat_config_next c) + 1)) (source_to_flat_config_next
+       c) in
+     let envs' = mk_environment_generation_store 0
+       (source_to_flat_config_next (source_to_flat_config_envs c)) LN in
      let (_18,next',e,gen,p') = source_to_flat_compile_decs [] 1
        next' (source_to_flat_config_mod_env c) envs' p in
-     let envs2 = mk_environment_store (next (envs c) + 1)
-       (sptree_insert (next (envs c)) (envs gen)
-       (environment_store_env_gens (envs c))) in
-     (source_to_flat_config_mod_env_fupd (K e) (envs_fupd (K
-       envs2) (next_fupd (K next') c)),CONS (glob_alloc next' c)
-       (CONS alloc_env_ref p')))`;;
+     let envs2 = mk_environment_store (source_to_flat_config_next
+       (source_to_flat_config_envs c) + 1) (sptree_insert
+       (source_to_flat_config_next (source_to_flat_config_envs c))
+       (source_to_flat_config_envs gen) (environment_store_env_gens
+       (source_to_flat_config_envs c))) in
+     (source_to_flat_config_mod_env_fupd (K e)
+       (source_to_flat_config_envs_fupd (K envs2)
+       (source_to_flat_config_next_fupd (K next') c)),CONS
+       (glob_alloc next' c) (CONS alloc_env_ref p')))`;;
 
 let lookup_env_id_def = new_definition
   `lookup_env_id env_id envs' = (match sptree_lookup (FST env_id)
@@ -567,28 +559,32 @@ let lookup_env_id_def = new_definition
 
 let store_env_id_def = new_definition
   `store_env_id gen id' =
-     flatLang_Let backend_common_None (SOME (implode "r"))
-       (flatLang_App backend_common_None (flatLang_GlobalVarLookup 0)
-       [])
-       (flatLang_App backend_common_None (flatLang_Src
-         ast_Opassign) [flatLang_Var_local backend_common_None
-         (implode "r"); env_id_tuple gen id'])`;;
+     ast_Let backend_common_None (SOME (implode "r")) (flatLang_App
+       backend_common_None (flatLang_GlobalVarLookup 0) [])
+       (ast_App backend_common_None (flatLang_Src ast_Opassign)
+         [flatLang_Var_local backend_common_None (implode "r");
+         env_id_tuple gen id'])`;;
 
 let inc_compile_prog_def = new_definition
   `inc_compile_prog env_id c p =
-     (let env = lookup_env_id env_id (envs c) in
-     let envs' = mk_environment_generation_store 0 (next (envs c)) LN
+     (let env = lookup_env_id env_id (source_to_flat_config_envs c)
        in
+     let envs' = mk_environment_generation_store 0
+       (source_to_flat_config_next (source_to_flat_config_envs c)) LN in
      let (_19,next',e,gen,p') = source_to_flat_compile_decs [] 1
-       (next c) env envs' p in
-     let gen_envs = sptree_insert (next gen) (extend_env e env) (envs
-       gen) in
-     let envs2 = mk_environment_store (next (envs c) + 1)
-       (sptree_insert (next (envs c)) gen_envs
-       (environment_store_env_gens (envs c))) in
-     (envs_fupd (K envs2) (next_fupd (K next') c),APPEND (CONS
-       (glob_alloc next' c) p') [store_env_id (generation gen) (next
-       gen)]))`;;
+       (source_to_flat_config_next c) env envs' p in
+     let gen_envs = sptree_insert (source_to_flat_config_next gen)
+       (extend_env e env) (source_to_flat_config_envs gen) in
+     let envs2 = mk_environment_store (source_to_flat_config_next
+       (source_to_flat_config_envs c) + 1) (sptree_insert
+       (source_to_flat_config_next (source_to_flat_config_envs c))
+       gen_envs (environment_store_env_gens (source_to_flat_config_envs
+       c))) in
+     (source_to_flat_config_envs_fupd (K envs2)
+       (source_to_flat_config_next_fupd (K next') c),APPEND (CONS
+       (glob_alloc next' c) p') [store_env_id
+       (environment_generation_store_generation gen)
+       (source_to_flat_config_next gen)]))`;;
 
 let source_to_flat_compile_def = new_definition
   `source_to_flat_compile c p =

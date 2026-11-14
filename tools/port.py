@@ -314,6 +314,7 @@ class Porter:
     # means in this theory, so that HOL Light has one name per
     # constant and nothing is resolved while a file loads
     self.ctx.resolve = self.resolve_overload
+    self.ctx.accessor_names = {}
     self.ctx.fieldvar = self.fieldvar
     self.ctx.recdflt = dict(overrides.FIELD_DEFAULT)
     # a name that LOCAL_NAMES gives this theory is written as that
@@ -1825,11 +1826,12 @@ class Porter:
         # statement that reads such a field through it would lose
         # it with the others (stack_to_labProof's
         # flatten_call_correct has the ffi of a state of stackSem)
-        fn = 'hol4_field_overload' if n == c else 'hol4_overload'
-        text = ('%s "%s" "%s_%s";;' % (fn, n, self.tnm(ty), c))
-        if len(text) > 72:
-          text = ('%s "%s"\n  "%s_%s";;' % (fn, n, self.tnm(ty), c))
-        self.out.append(text)
+        # the port writes the accessor out wherever its name
+        # stands, so this is a resolution of that name from here
+        # on and not a declaration of HOL Light's.  A field name
+        # that HOL4 has no constant of (there r.stack is syntax)
+        # is in the same map: what it means is the accessor
+        self.ctx.accessor_names[n] = '%s_%s' % (self.tnm(ty), c)
 
   PARSE_HIDE = re.compile(r'Parse\.hide\s*"([^"]+)"')
 
@@ -2448,9 +2450,20 @@ class Porter:
        works out.  None where this port cannot tell, and the
        name is then left as it stands"""
     try:
-      t = self.con_thy(nm, ('con', 'def', 'rel'))
+      # a constructor first, and only that, so that con_thy can
+      # narrow by the types the block is about (its contys): with
+      # the wider set that filter is off and Var of db_vars wins
+      # over the Var of bvl that the clause means
+      ar = self.ctx.arity
+      t = self.con_thy(nm, arity=ar)
+      if t is None:
+        t = self.con_thy(nm, ('con', 'def', 'rel'))
     except Exception:
       t = None
+    # the accessor of a record field, which the record block of
+    # the theory that defines the record put in the map
+    if nm in self.ctx.accessor_names:
+      return self.ctx.accessor_names[nm]
     if not t: return None
     # the map keys a name of this theory itself without the
     # theory in front of it, as hterm.Ctx.name reads it

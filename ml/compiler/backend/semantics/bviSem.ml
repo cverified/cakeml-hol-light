@@ -47,42 +47,29 @@ let bviSem_state_FIELDS = define_record "bviSem_state"
    "compile_oracle","num->'c#(num#num#bvi_exp) list";
    "code","(num#bvi_exp) spt";
    "ffi","'ffi ffi_state"];;
-hol4_overload "state_refs" "bviSem_state_refs";;
-hol4_overload "state_refs_fupd" "bviSem_state_refs_fupd";;
-hol4_overload "state_clock" "bviSem_state_clock";;
-hol4_overload "state_clock_fupd" "bviSem_state_clock_fupd";;
-hol4_overload "state_global" "bviSem_state_global";;
-hol4_overload "state_global_fupd" "bviSem_state_global_fupd";;
-hol4_field_overload "compile" "bviSem_state_compile";;
-hol4_field_overload "compile_fupd" "bviSem_state_compile_fupd";;
-hol4_field_overload "compile_oracle" "bviSem_state_compile_oracle";;
-hol4_field_overload "compile_oracle_fupd"
-  "bviSem_state_compile_oracle_fupd";;
-hol4_overload "state_code" "bviSem_state_code";;
-hol4_overload "state_code_fupd" "bviSem_state_code_fupd";;
-hol4_overload "state_ffi" "bviSem_state_ffi";;
-hol4_overload "state_ffi_fupd" "bviSem_state_ffi_fupd";;
 
 let bviSem_dec_clock_def = new_definition
-  `bviSem_dec_clock x s = state_clock_fupd (K (state_clock s - x)) s`;;
+  `bviSem_dec_clock x s = bviSem_state_clock_fupd (K
+  (bviSem_state_clock s - x)) s`;;
 
 (* LESS_EQ_dec_clock[local] *)
 let bviSem_LESS_EQ_dec_clock = prove
- (`state_clock
-     r <= state_clock (bviSem_dec_clock x s) ==> state_clock r <=
-       state_clock s`,
+ (`bviSem_state_clock
+     r <= bviSem_state_clock (bviSem_dec_clock x s) ==>
+       bviSem_state_clock r <= bviSem_state_clock s`,
   CHEAT_TAC);;
 
 let bvi_to_bvl_def = new_definition
   `(bvi_to_bvl:('c,'ffi)bviSem_state->('c,'ffi)bvlSem_state) s =
-     mk_bvlSem_state ARB (state_refs s) (state_clock s) ARB ARB
-       (sptree_map (K ARB) (state_code s)) (state_ffi s)`;;
+     mk_bvlSem_state ARB (bviSem_state_refs s) (bviSem_state_clock
+       s) ARB ARB (sptree_map (K ARB) (bviSem_state_code s))
+       (bviSem_state_ffi s)`;;
 
 let bvl_to_bvi_def = new_definition
   `(bvl_to_bvi:('c,'ffi)bvlSem_state->('c,'ffi)bviSem_state->('c
-  ,'ffi)bviSem_state) s t = state_ffi_fupd (K (state_ffi s))
-  (state_clock_fupd (K (state_clock s)) (state_refs_fupd (K (state_refs
-  s))
+  ,'ffi)bviSem_state) s t = bviSem_state_ffi_fupd (K (bviSem_state_ffi
+  s)) (bviSem_state_clock_fupd (K (bviSem_state_clock s))
+  (bviSem_state_refs_fupd (K (bviSem_state_refs s))
      t))`;;
 
 (* the termination relation that HOL4 gives is
@@ -237,25 +224,26 @@ let bviSem_dest_thunk_def = new_definition
   `bviSem_dest_thunk vs refs =
       match vs with
         (bvlSem_RefPtr b ptr:bvlSem_v) ->
-     (match FLOOKUP refs ptr with NONE -> bviSem_BadRef | SOME
+     (match FLOOKUP refs ptr with NONE -> bvlSem_BadRef | SOME
        (bvlSem_Thunk Evaluated v) ->
-          (if b then bviSem_BadRef else bviSem_IsThunk Evaluated v) |
+          (if b then bvlSem_BadRef else bvlSem_IsThunk Evaluated v) |
             SOME (bvlSem_Thunk NotEvaluated v) ->
-          (if b then bviSem_BadRef else bviSem_IsThunk NotEvaluated
-            v) | SOME _23 -> bviSem_NotThunk)
-      | vs -> bviSem_NotThunk`;;
+          (if b then bvlSem_BadRef else bvlSem_IsThunk NotEvaluated
+            v) | SOME _23 -> bvlSem_NotThunk)
+      | vs -> bvlSem_NotThunk`;;
 
 
 (* The evaluation is defined as a clocked functional version of
    a conventional big-step operational semantics. *)
 
 let bviSem_fix_clock_def = new_definition
-  `bviSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
-  (state_clock s) (state_clock s1))) s1)`;;
+  `bviSem_fix_clock s (res,s1) = (res,bviSem_state_clock_fupd (K (MIN
+  (bviSem_state_clock s) (bviSem_state_clock s1))) s1)`;;
 
 (* fix_clock_IMP[local] *)
 let bviSem_fix_clock_IMP = prove
- (`bviSem_fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock s`,
+ (`bviSem_fix_clock s x = (res,s1) ==> bviSem_state_clock s1 <=
+  bviSem_state_clock s`,
   CHEAT_TAC);;
 
 (* The semantics of expression evaluation is defined next. For
@@ -317,24 +305,25 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec
                -> (Rerr e,s) | Rval (v,s) -> (Rval [v],s)) | res ->
                res)`;
    `bviSem_evaluate ([(bvi_Tick x:bvi_exp)],env,s) =
-         (if state_clock s = 0 then (Rerr (Rabort Rtimeout_error),s)
-           else
+         (if bviSem_state_clock s = 0 then (Rerr (Rabort
+           Rtimeout_error),s) else
            bviSem_evaluate ([x],env,bviSem_dec_clock 1 s))`;
    `bviSem_evaluate ([(bvi_Force force_loc n:bvi_exp)],env,s) =
          (if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s)
            else
            let thunk_v = EL n env in
-             match bviSem_dest_thunk thunk_v (state_refs s) with
-               bviSem_BadRef -> (Rerr (Rabort Rtype_error),s) |
+             match bviSem_dest_thunk thunk_v (bviSem_state_refs s)
+               with bviSem_BadRef -> (Rerr (Rabort Rtype_error),s) |
                bviSem_NotThunk -> (Rerr (Rabort Rtype_error),s) |
                bviSem_IsThunk Evaluated v -> (Rval [v],s) |
                bviSem_IsThunk NotEvaluated f ->
                  (match bvlSem_find_code (SOME force_loc) [thunk_v;
-                   f] (state_code s) with NONE -> (Rerr (Rabort
+                   f] (bviSem_state_code s) with NONE -> (Rerr (Rabort
                    Rtype_error),s) | SOME (args,exp) ->
-                      (if state_clock s = 0 then
+                      (if bviSem_state_clock s = 0 then
                         (Rerr (Rabort
-                          Rtimeout_error),state_clock_fupd (K 0) s) else
+                          Rtimeout_error),bviSem_state_clock_fupd (K 0)
+                          s) else
                         (match bviSem_evaluate
                           ([exp],args,bviSem_dec_clock 1 s) with
                           (Rerr (Rraise (Ret _30)),s1) -> (Rerr
@@ -345,11 +334,12 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec
            Rtype_error),s1) else
          match bviSem_fix_clock s1 (bviSem_evaluate (xs,env,s1))
            with (Rval vs,s) ->
-             (match bvlSem_find_code dest vs (state_code s) with
-               NONE -> (Rerr (Rabort Rtype_error),s) | SOME (args,exp)
-               ->
-                  (if (state_clock s < ticks + 1) then (Rerr (Rabort
-                    Rtimeout_error),state_clock_fupd (K 0) s) else
+             (match bvlSem_find_code dest vs (bviSem_state_code s)
+               with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
+               (args,exp) ->
+                  (if (bviSem_state_clock s < ticks + 1) then (Rerr
+                    (Rabort Rtimeout_error),bviSem_state_clock_fupd (K
+                    0) s) else
                     match bviSem_fix_clock (bviSem_dec_clock (ticks
                       + 1) s) (bviSem_evaluate
                       ([exp],args,bviSem_dec_clock (ticks + 1) s)) with
@@ -366,11 +356,12 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec
    `bviSem_evaluate ([bvi_LetCall rets ticks dest xs y],env,s1) =
          (match bviSem_fix_clock s1 (bviSem_evaluate (xs,env,s1))
            with (Rval vs,s) ->
-             (match bvlSem_find_code (SOME dest) vs (state_code s)
-               with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
-               (args,exp) ->
-                  (if (state_clock s < ticks + 1) then (Rerr (Rabort
-                    Rtimeout_error),state_clock_fupd (K 0) s) else
+             (match bvlSem_find_code (SOME dest) vs
+               (bviSem_state_code s) with NONE -> (Rerr (Rabort
+               Rtype_error),s) | SOME (args,exp) ->
+                  (if (bviSem_state_clock s < ticks + 1) then (Rerr
+                    (Rabort Rtimeout_error),bviSem_state_clock_fupd (K
+                    0) s) else
                     match bviSem_fix_clock (bviSem_dec_clock (ticks
                       + 1) s) (bviSem_evaluate
                       ([exp],args,bviSem_dec_clock (ticks + 1) s)) with
@@ -388,14 +379,14 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec
 (* do_app_const *)
 let bviSem_do_app_const = prove
  (`(bviSem_do_app op args s1 = Rval (res,s2)) ==>
-    (state_clock s2 = state_clock s1)`,
+    (bviSem_state_clock s2 = bviSem_state_clock s1)`,
   CHEAT_TAC);;
 
 (* evaluate_clock *)
 let bviSem_evaluate_clock = prove
  (`!xs env s1 vs s2.
-     (bviSem_evaluate (xs,env,s1) = (vs,s2)) ==> state_clock s2 <=
-       state_clock s1`,
+     (bviSem_evaluate (xs,env,s1) = (vs,s2)) ==> bviSem_state_clock
+       s2 <= bviSem_state_clock s1`,
   CHEAT_TAC);;
 
 (* fix_clock_evaluate *)
@@ -432,11 +423,12 @@ let bviSem_semantics_def = new_definition
          (match r with Rerr (Rabort (Rffi_error e)) -> outcome =
            ffi_FFI_outcome e | Rval _45 -> outcome = ffi_Success | _46
            -> F) /\
-         res = ffi_Terminate outcome (ffi_state_io_events (state_ffi
-           s))) with SOME res -> res | NONE ->
+         res = ffi_Terminate outcome (ffi_state_io_events
+           (bviSem_state_ffi s))) with SOME res -> res | NONE ->
         ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi (SND
+            (IMAGE (\k. fromList (ffi_state_io_events
+              (bviSem_state_ffi (SND
                (bviSem_evaluate (es,[],init k)))))) UNIV)))`;;
 
 (* clean up *)

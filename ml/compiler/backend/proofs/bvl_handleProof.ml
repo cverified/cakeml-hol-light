@@ -77,21 +77,21 @@ let evaluate_handle_simp = prove
    (!x1 x2 l env (s:('a,'b)bvlSem_state).
       l <= LENGTH env ==>
       bvlSem_evaluate ([make_handle x1 x2 l],env,s) =
-      bvlSem_evaluate ([bvl_Handle x1 (handle_adj_vars 1 l
+      bvlSem_evaluate ([flatLang_Handle x1 (handle_adj_vars 1 l
         x2)],env,s))`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let evaluate_SmartLet = prove
- (`bvlSem_evaluate ([SmartLet xs x],env,s) = bvlSem_evaluate ([bvl_Let
-  xs x],env,s)`,
+ (`bvlSem_evaluate ([SmartLet xs x],env,s) = bvlSem_evaluate
+  ([flatLang_Let xs x],env,s)`,
   CHEAT_TAC);;
 
 let let_ok_def = new_definition
   `let_ok x1 =
         match x1 with
-          (bvl_Let xs b:bvl_exp) -> ALL isVar xs /\ bVarBound (LENGTH
-            xs) [b]
+          (flatLang_Let xs b:bvl_exp) -> ALL isVar xs /\ bVarBound
+            (LENGTH xs) [b]
         | _1 -> F`;;
 
 let _ = size_thms "bvl_exp";;
@@ -106,7 +106,7 @@ let handle_ok_def,handle_ok_ind = define_wf_cheat
   [`handle_ok [] <=> T`;
    `handle_ok (CONS (x:bvl_exp) (CONS y xs)) <=>
          handle_ok [x] /\ handle_ok (CONS y xs)`;
-   `handle_ok [(db_vars_Var v:bvl_exp)] <=> T`;
+   `handle_ok [(bvl_Var v:bvl_exp)] <=> T`;
    `handle_ok [(bvl_If x1 x2 x3:bvl_exp)] <=>
          handle_ok [x1] /\ handle_ok [x2] /\ handle_ok [x3]`;
    `handle_ok [(bvl_Let xs x2:bvl_exp)] <=>
@@ -226,7 +226,7 @@ let bvl_handleProof_compile_correct = prove
 
 let dest_Seq_thm = prove
  (`!x. bvl_handle_dest_Seq x = SOME (y0,y1) <=>
-        x = bvl_Let [y0; y1] (bvl_Var 1)`,
+        x = flatLang_Let [y0; y1] (bvl_Var 1)`,
   CHEAT_TAC);;
 
 let compile_seqs_correct = prove
@@ -276,7 +276,7 @@ let ALOOKUP_MAPi = prove
 
 (* [simp] *)
 let bVarBound_SmartLet = prove
- (`bVarBound m [SmartLet x xs] = bVarBound m [bvl_Let x xs]`,
+ (`bVarBound m [SmartLet x xs] = bVarBound m [flatLang_Let x xs]`,
   CHEAT_TAC);;
 
 let bVarBound_LetLet = prove

@@ -239,7 +239,7 @@ let consume_space_with_locals = prove
 let do_app_with_stack = prove
  (`dataSem_do_app op vs (stack_fupd (K z) s) =
     map_result (\(x,y). (x,dataSem_state_peak_heap_length_fupd (K (if
-      op = closLang_Install then dataSem_state_peak_heap_length
+      op = wordLang_Install then dataSem_state_peak_heap_length
       (stack_fupd (K z) s) else if MEM op [closLang_IntOp
       closLang_Greater; closLang_IntOp closLang_GreaterEq] then
       dataSem_state_peak_heap_length (stack_fupd (K z) s) else (\op vs
@@ -281,7 +281,7 @@ let do_app_with_stack_and_locals = prove
  (`dataSem_do_app op vs (stack_fupd (K z)
   (dataSem_state_locals_size_fupd (K lsz) s)) =
    map_result (\(x,y). (x,dataSem_state_peak_heap_length_fupd (K (if
-     op = closLang_Install then dataSem_state_peak_heap_length
+     op = wordLang_Install then dataSem_state_peak_heap_length
      (stack_fupd (K z) (dataSem_state_locals_size_fupd (K lsz) s)) else
      if MEM op [closLang_IntOp closLang_Greater; closLang_IntOp
      closLang_GreaterEq] then dataSem_state_peak_heap_length (stack_fupd
@@ -347,7 +347,7 @@ let do_app_aux_with_locals = prove
 let do_app_with_locals = prove
  (`dataSem_do_app op vs (dataSem_state_locals_fupd (K z) s) =
    map_result (\(x,y). (x,dataSem_state_peak_heap_length_fupd (K (if
-     op = closLang_Install then dataSem_state_peak_heap_length
+     op = wordLang_Install then dataSem_state_peak_heap_length
      (dataSem_state_locals_fupd (K z) s) else if MEM op [closLang_IntOp
      closLang_Greater; closLang_IntOp closLang_GreaterEq] then
      dataSem_state_peak_heap_length (dataSem_state_locals_fupd (K z) s)
@@ -388,7 +388,7 @@ let do_app_with_locals = prove
 let do_app_aux_err = prove
  (`dataSem_do_app_aux op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = closLang_FFI i /\ e =
+                             (?i x. op = wordLang_FFI i /\ e =
                                Rabort (Rffi_error x))`,
   CHEAT_TAC);;
 
@@ -404,7 +404,7 @@ let dataProps_do_app_aux_const = prove
 let dataProps_do_app_err = prove
  (`dataSem_do_app op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = closLang_FFI i /\ e =
+                             (?i x. op = wordLang_FFI i /\ e =
                                Rabort (Rffi_error x))`,
   CHEAT_TAC);;
 
@@ -420,7 +420,7 @@ let do_app_locals = prove
  (`(dataSem_do_app op x s = Rval (q,r)) ==>
    (dataSem_do_app op x (dataSem_state_locals_fupd (K extra) s) =
          Rval (q,dataSem_state_peak_heap_length_fupd (K (if op =
-           closLang_Install then dataSem_state_peak_heap_length
+           wordLang_Install then dataSem_state_peak_heap_length
            (dataSem_state_locals_fupd (K extra) s) else if MEM op
            [closLang_IntOp closLang_Greater; closLang_IntOp
            closLang_GreaterEq] then dataSem_state_peak_heap_length
@@ -625,7 +625,7 @@ let do_app_lss_stk_stfrm_swap_aux = prove
          (dataSem_state_safe_for_space_fupd (K ss)
          (dataSem_state_stack_max_fupd (K smx)
          (dataSem_state_stack_frame_sizes_fupd (K (if op =
-         closLang_Install then LN else stfrm)) (stack_fupd (K stk)
+         wordLang_Install then LN else stfrm)) (stack_fupd (K stk)
          (dataSem_state_locals_size_fupd (K lss) s')))))))`,
   CHEAT_TAC);;
 
@@ -1094,7 +1094,7 @@ let jump_exc_IMP = prove
 let do_app_Rerr = prove
  (`dataSem_do_app op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = closLang_FFI i /\ e =
+                             (?i x. op = wordLang_FFI i /\ e =
                                Rabort (Rffi_error x))`,
   CHEAT_TAC);;
 
@@ -1574,7 +1574,7 @@ let do_app_cc_co_only_diff_rval = prove
 (* HOL4 dataPropsScript.sml:3027: code that the source has in a
    comment *)
 let do_app_cc_co_only_diff_rerr = prove
- (`dataSem_do_app op vs s = Rerr r /\ ~(op = closLang_Install) /\
+ (`dataSem_do_app op vs s = Rerr r /\ ~(op = wordLang_Install) /\
   cc_co_only_diff s t ==>
    dataSem_do_app op vs t = Rerr r`,
   CHEAT_TAC);;

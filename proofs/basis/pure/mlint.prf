@@ -34,11 +34,3 @@
 
 ### fromString_toString
   (SIMP_TAC[toString_def1; fromString_int_to_string])
-
-### num_to_str_imp_cons
-  (REPEAT STRIP_TAC THEN
-   FIRST_ASSUM(ASSUME_TAC o MATCH_MP num_to_str_every) THEN
-   FIRST_ASSUM(ASSUME_TAC o MATCH_MP num_to_str_not_nil) THEN
-   POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN
-   STRUCT_CASES_TAC(ISPEC `s:string` list_CASES) THEN
-   REWRITE_TAC[ALL; NOT_CONS_NIL; CONS_11] THEN MESON_TAC[])

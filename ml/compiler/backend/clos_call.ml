@@ -32,8 +32,8 @@ let free_def,free_ind = assume_definition_rec
          (let (c1,l1) = clos_call_free [x] in
          let (c2,l2) = clos_call_free (CONS y xs) in
            (APPEND c1 c2,mk_Union l1 l2))`;
-   `clos_call_free [(db_vars_Var t v:closLang_exp)] = ([(db_vars_Var
-  t v:closLang_exp)],db_vars_Var v)`;
+   `clos_call_free [(closLang_Var t v:closLang_exp)] =
+  ([(closLang_Var t v:closLang_exp)],closLang_Var v)`;
    `clos_call_free [(closLang_If t x1 x2 x3:closLang_exp)] =
          (let (c1,l1) = clos_call_free [x1] in
          let (c2,l2) = clos_call_free [x2] in
@@ -87,8 +87,8 @@ let free_def,free_ind = assume_definition_rec
 
 let free_sing_def,free_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`free_sing (db_vars_Var t v:closLang_exp) = ((db_vars_Var t
-  v:closLang_exp),db_vars_Var v)`;
+  [`free_sing (closLang_Var t v:closLang_exp) = ((closLang_Var t
+  v:closLang_exp),closLang_Var v)`;
    `free_sing (closLang_If t x1 x2 x3:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
          let (c2,l2) = free_sing x2 in
@@ -228,8 +228,8 @@ let calls_def,calls_ind = assume_definition_rec
          (let (e1,g) = calls [x] g in
          let (e2,g) = calls (CONS y xs) g in
            (APPEND e1 e2,g))`;
-   `calls [(db_vars_Var t v:closLang_exp)] g =
-         ([(db_vars_Var t v:closLang_exp)],g)`;
+   `calls [(closLang_Var t v:closLang_exp)] g =
+         ([(closLang_Var t v:closLang_exp)],g)`;
    `calls [(closLang_If t x1 x2 x3:closLang_exp)] g =
          (let (e1,g) = calls [x1] g in
          let (e2,g) = calls [x2] g in
@@ -315,8 +315,8 @@ let calls_def,calls_ind = assume_definition_rec
 
 let calls_sing_def,calls_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`calls_sing (db_vars_Var t v:closLang_exp) g =
-         ((db_vars_Var t v:closLang_exp),g)`;
+  [`calls_sing (closLang_Var t v:closLang_exp) g =
+         ((closLang_Var t v:closLang_exp),g)`;
    `calls_sing (closLang_If t x1 x2 x3:closLang_exp) g =
          (let (e1,g) = calls_sing x1 g in
          let (e2,g) = calls_sing x2 g in

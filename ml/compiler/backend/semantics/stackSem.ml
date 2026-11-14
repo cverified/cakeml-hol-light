@@ -9,7 +9,6 @@
   The formal semantics of stackLang
 *)
 
-needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 (* for word_loc and word_cmp *)
 needs "compiler/backend/stackLang.ml";;
@@ -121,41 +120,6 @@ let stackSem_state_FIELDS = define_record "stackSem_state"
    "be","bool"
    (* is big-endian *)
   ];;
-hol4_field_overload "regs" "stackSem_state_regs";;
-hol4_field_overload "regs_fupd" "stackSem_state_regs_fupd";;
-hol4_field_overload "fp_regs" "stackSem_state_fp_regs";;
-hol4_field_overload "fp_regs_fupd" "stackSem_state_fp_regs_fupd";;
-hol4_overload "state_store" "stackSem_state_store";;
-hol4_overload "state_store_fupd" "stackSem_state_store_fupd";;
-hol4_field_overload "stack" "stackSem_state_stack";;
-hol4_field_overload "stack_fupd" "stackSem_state_stack_fupd";;
-hol4_overload "state_memory" "stackSem_state_memory";;
-hol4_overload "state_memory_fupd" "stackSem_state_memory_fupd";;
-hol4_overload "state_mdomain" "stackSem_state_mdomain";;
-hol4_overload "state_mdomain_fupd" "stackSem_state_mdomain_fupd";;
-hol4_overload "state_sh_mdomain" "stackSem_state_sh_mdomain";;
-hol4_overload "state_sh_mdomain_fupd" "stackSem_state_sh_mdomain_fupd";;
-hol4_field_overload "compile" "stackSem_state_compile";;
-hol4_field_overload "compile_fupd" "stackSem_state_compile_fupd";;
-hol4_field_overload "compile_oracle" "stackSem_state_compile_oracle";;
-hol4_field_overload "compile_oracle_fupd"
-  "stackSem_state_compile_oracle_fupd";;
-hol4_overload "state_code_buffer" "stackSem_state_code_buffer";;
-hol4_overload "state_code_buffer_fupd"
-  "stackSem_state_code_buffer_fupd";;
-hol4_overload "state_data_buffer" "stackSem_state_data_buffer";;
-hol4_overload "state_data_buffer_fupd"
-  "stackSem_state_data_buffer_fupd";;
-hol4_overload "state_gc_fun" "stackSem_state_gc_fun";;
-hol4_overload "state_gc_fun_fupd" "stackSem_state_gc_fun_fupd";;
-hol4_overload "state_clock" "stackSem_state_clock";;
-hol4_overload "state_clock_fupd" "stackSem_state_clock_fupd";;
-hol4_overload "state_code" "stackSem_state_code";;
-hol4_overload "state_code_fupd" "stackSem_state_code_fupd";;
-hol4_overload "state_ffi" "stackSem_state_ffi";;
-hol4_overload "state_ffi_fupd" "stackSem_state_ffi_fupd";;
-hol4_field_overload "be" "stackSem_state_be";;
-hol4_field_overload "be_fupd" "stackSem_state_be_fupd";;
 
 let stackSem_mem_store_def = new_definition
   `stackSem_mem_store (addr':'a word) (w:'a word_loc)
@@ -186,7 +150,7 @@ let stackSem_word_exp_def,stackSem_word_exp_ind = define_shaped_rec
          (match FLOOKUP (stackSem_state_regs s) v with SOME
            (wordLang_Word w) -> SOME w | _12 -> NONE)`;
    `stackSem_word_exp s (wordLang_Lookup name) =
-         (match FLOOKUP (state_store s) name with SOME
+         (match FLOOKUP (stackSem_state_store s) name with SOME
            (wordLang_Word w) -> SOME w | _13 -> NONE)`;
    `stackSem_word_exp s (wordLang_Load addr') =
          (match stackSem_word_exp s addr' with SOME w -> (match
@@ -361,10 +325,10 @@ let stackSem_sh_mem_load32_def = new_definition
            s))) else (SOME stackSem_Error,s))`;;
 
 let sh_mem_op_def = define_cases
-  [`sh_mem_op (wordLang_Load:memop) r ad
-  (s:('a,'c,'ffi)stackSem_state) = stackSem_sh_mem_load r ad s`;
-   `sh_mem_op (wordLang_Store:memop) r ad
-  (s:('a,'c,'ffi)stackSem_state) = stackSem_sh_mem_store r ad s`;
+  [`sh_mem_op (asm_Load:memop) r ad (s:('a,'c,'ffi)stackSem_state) =
+  stackSem_sh_mem_load r ad s`;
+   `sh_mem_op (asm_Store:memop) r ad (s:('a,'c,'ffi)stackSem_state) =
+  stackSem_sh_mem_store r ad s`;
    `sh_mem_op asm_Load8 r ad (s:('a,'c,'ffi)stackSem_state) =
   stackSem_sh_mem_load_byte r ad s`;
    `sh_mem_op asm_Store8 r ad (s:('a,'c,'ffi)stackSem_state) =
@@ -430,22 +394,26 @@ let stackSem_dec_stack_def,stackSem_dec_stack_ind = define_guess_cheat
 
 let stackSem_gc_def = new_definition
   `stackSem_gc s =
-     (if LENGTH (stack s) < stackSem_state_stack_space s then NONE
-       else
-       let unused = TAKE (stackSem_state_stack_space s) (stack s) in
-       let stack' = DROP (stackSem_state_stack_space s) (stack s) in
+     (if LENGTH (stackSem_state_stack s) < stackSem_state_stack_space
+       s then NONE else
+       let unused = TAKE (stackSem_state_stack_space s)
+         (stackSem_state_stack s) in
+       let stack' = DROP (stackSem_state_stack_space s)
+         (stackSem_state_stack s) in
          match stackSem_enc_stack (stackSem_state_bitmaps s) (DROP
-           (stackSem_state_stack_space s) (stack s)) with NONE -> NONE |
-           SOME wl_list ->
-           (match state_gc_fun s (wl_list,state_memory
-             s,state_mdomain s,state_store s) with NONE -> NONE | SOME
+           (stackSem_state_stack_space s) (stackSem_state_stack s)) with
+           NONE -> NONE | SOME wl_list ->
+           (match stackSem_state_gc_fun s
+             (wl_list,stackSem_state_memory s,stackSem_state_mdomain
+             s,stackSem_state_store s) with NONE -> NONE | SOME
              (wl,m,st) ->
             (match stackSem_dec_stack (stackSem_state_bitmaps s) wl
               stack' with NONE -> NONE | SOME stack' ->
-                 SOME (state_memory_fupd (K m)
+                 SOME (stackSem_state_memory_fupd (K m)
                    (stackSem_state_regs_fupd (K FEMPTY)
-                   (state_store_fupd (K st) (stack_fupd (K (APPEND
-                   unused stack')) s)))))))`;;
+                   (stackSem_state_store_fupd (K st)
+                   (stackSem_state_stack_fupd (K (APPEND unused
+                   stack')) s)))))))`;;
 
 let stackSem_has_space_def = new_definition
   `stackSem_has_space wl store =
@@ -483,7 +451,7 @@ let stackSem_assign_def = new_definition
 
 let stackSem_inst_def = new_definition
   `stackSem_inst i (s:('a,'c,'ffi)stackSem_state) =
-     (match i with stackLang_Skip -> SOME s | wordLang_Const reg w ->
+     (match i with wordLang_Skip -> SOME s | wordLang_Const reg w ->
        stackSem_assign reg (wordLang_Const w) s | asm_Arith (asm_Binop
        bop r1 r2 ri) ->
          (if bop = asm_Or /\ ri = Reg r2 then
@@ -693,13 +661,13 @@ let stackSem_find_code_def = define_cases
              | other -> NONE)`];;
 
 let stackSem_fix_clock_def = new_definition
-  `stackSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
-  (state_clock s) (state_clock s1))) s1)`;;
+  `stackSem_fix_clock s (res,s1) = (res,stackSem_state_clock_fupd (K
+  (MIN (stackSem_state_clock s) (stackSem_state_clock s1))) s1)`;;
 
 (* fix_clock_IMP[local] *)
 let stackSem_fix_clock_IMP = prove
- (`stackSem_fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock
-  s`,
+ (`stackSem_fix_clock s x = (res,s1) ==> stackSem_state_clock s1 <=
+  stackSem_state_clock s`,
   CHEAT_TAC);;
 
 let stackSem_STOP_def = new_definition
@@ -722,7 +690,7 @@ let get_labels_def,get_labels_ind = define_wf
           INSERT (stackSem_get_labels r UNION
              (match handler with NONE -> {} | SOME (r,l1,l2) ->
                (l1,l2) INSERT stackSem_get_labels r)))
-        | (stackSem_Halt _66) -> {}
+        | (stackLang_Halt _66) -> {}
         | _67 -> {}`];;
 
 let loc_check_def = new_definition
@@ -798,8 +766,8 @@ let store_const_sem_def = new_definition
 let check_store_consts_opt_def = define_cases
   [`check_store_consts_opt t1 t2 NONE _69 = T`;
    `check_store_consts_opt t1 t2 (SOME n) c =
-      (sptree_lookup n c = SOME (stackLang_Seq
-        (stackLang_StoreConsts t1 t2 NONE) (stackLang_Return 0)))`];;
+      (sptree_lookup n c = SOME (wordLang_Seq
+        (wordLang_StoreConsts t1 t2 NONE) (wordLang_Return 0)))`];;
 
 let stackSem_dest_Seq_def = new_definition
   `stackSem_dest_Seq x1 =
@@ -850,7 +818,7 @@ if concl stackSem_fix_clock_IMP <> `T` then
 
 let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`stackSem_evaluate ((stackLang_Skip:'a stackLang_prog),s) =
+  [`stackSem_evaluate ((wordLang_Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
    `stackSem_evaluate (stackLang_Halt v,s) =
          (match stackSem_get_var v s with SOME w -> (SOME (Halt
@@ -863,16 +831,16 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
          (if ~(stackSem_state_use_store s) then (SOME Error,s) else
          if ~(stackSem_state_use_alloc s) /\ IS_SOME stub_opt then
            (SOME Error,s) else
-         if ~(check_store_consts_opt t1 t2 stub_opt (state_code s))
-           then (SOME Error,s) else
+         if ~(check_store_consts_opt t1 t2 stub_opt
+           (stackSem_state_code s)) then (SOME Error,s) else
            store_const_sem t1 t2 s)`;
    `stackSem_evaluate (stackLang_Inst i,s) =
          (match stackSem_inst i s with SOME s1 -> (NONE,s1) |
            NONE -> (SOME Error,s))`;
    `stackSem_evaluate (stackLang_Get v name,s) =
          (if ~(stackSem_state_use_store s) then (SOME Error,s) else
-         match FLOOKUP (state_store s) name with SOME x ->
-           (NONE,stackSem_set_var v x s) | NONE -> (SOME Error,s))`;
+         match FLOOKUP (stackSem_state_store s) name with SOME x
+           -> (NONE,stackSem_set_var v x s) | NONE -> (SOME Error,s))`;
    `stackSem_evaluate (stackLang_Set name v,s) =
          (if ~(stackSem_state_use_store s) then (SOME Error,s) else
          match stackSem_get_var v s with SOME w ->
@@ -885,7 +853,7 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
            -> (NONE,stackSem_set_var v (wordLang_Word w) s) | _82 ->
            (SOME Error,s))`;
    `stackSem_evaluate (stackLang_Tick,s) =
-         (if state_clock s = 0 then (SOME
+         (if stackSem_state_clock s = 0 then (SOME
            TimeOut,stackSem_empty_env s) else
            (NONE,stackSem_dec_clock s))`;
    `stackSem_evaluate (stackLang_Seq c1 c2,s) =
@@ -914,9 +882,9 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
         (let (res,s1) = stackSem_fix_clock s (stackSem_evaluate
           (c1,s)) in
            if stackSem_cont_loop res then
-             (if state_clock s1 = 0 then (SOME
+             (if stackSem_state_clock s1 = 0 then (SOME
                TimeOut,stackSem_empty_env s1) else
-                stackSem_evaluate (stackSem_STOP ((stackLang_Loop
+                stackSem_evaluate (stackSem_STOP ((wordLang_Loop
                   c1:'a stackLang_prog)),stackSem_dec_clock s1)) else
                   (stackSem_exit_loop res,s1))`;
    `stackSem_evaluate (stackLang_JumpLower r1 r2 dest,s) =
@@ -924,9 +892,9 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
           (SOME (wordLang_Word x),SOME (wordLang_Word y)) ->
           (if wordSem_word_cmp asm_Lower x y then
            (match stackSem_find_code (INL dest) (stackSem_state_regs
-             s) (state_code s) with NONE -> (SOME Error,s) | SOME prog
-             ->
-               (if state_clock s = 0 then (SOME
+             s) (stackSem_state_code s) with NONE -> (SOME Error,s) |
+             SOME prog ->
+               (if stackSem_state_clock s = 0 then (SOME
                  TimeOut,stackSem_empty_env s) else
                  (match stackSem_evaluate
                    (prog,stackSem_dec_clock s) with (res,s) -> (if
@@ -934,10 +902,10 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
                    else (res,s))))) else (NONE,s)) | _92 -> (SOME
                    Error,s))`;
    `stackSem_evaluate (stackLang_RawCall dest,s) =
-        (match sptree_lookup dest (state_code s) with NONE -> (SOME
-          Error,s) | SOME prog ->
+        (match sptree_lookup dest (stackSem_state_code s) with NONE
+          -> (SOME Error,s) | SOME prog ->
            (match stackSem_dest_Seq prog with SOME (_93,body) ->
-               (if state_clock s = 0 then (SOME
+               (if stackSem_state_clock s = 0 then (SOME
                  TimeOut,stackSem_empty_env s) else
                  (match stackSem_evaluate
                    (body,stackSem_dec_clock s) with (res,s) -> (if
@@ -949,9 +917,10 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
            // tail call
            NONE ->
            (match stackSem_find_code dest (stackSem_state_regs s)
-             (state_code s) with NONE -> (SOME Error,s) | SOME prog ->
+             (stackSem_state_code s) with NONE -> (SOME Error,s) | SOME
+             prog ->
                (if ~(handler = NONE) then (SOME Error,s) else
-               if state_clock s = 0 then (SOME
+               if stackSem_state_clock s = 0 then (SOME
                  TimeOut,stackSem_empty_env s) else
                  (match stackSem_fix_clock (stackSem_dec_clock s)
                    (stackSem_evaluate (prog,stackSem_dec_clock s)) with
@@ -960,9 +929,9 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
            // returning call, returns into var n
            SOME (ret_handler,link_reg',l1,l2) ->
            (match stackSem_find_code dest (stackSem_state_regs s \\
-             link_reg') (state_code s) with NONE -> (SOME Error,s) |
-             SOME prog ->
-               (if state_clock s = 0 then (SOME
+             link_reg') (stackSem_state_code s) with NONE -> (SOME
+             Error,s) | SOME prog ->
+               (if stackSem_state_clock s = 0 then (SOME
                  TimeOut,stackSem_empty_env s) else
                  (match stackSem_fix_clock (stackSem_dec_clock
                    (stackSem_set_var link_reg' (wordLang_Loc l1 l2) s))
@@ -988,24 +957,29 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
           s,stackSem_get_var dptr s,stackSem_get_var dlen s) with (SOME
           (wordLang_Word w1),SOME (wordLang_Word w2),SOME (wordLang_Word
           w3),SOME (wordLang_Word w4)) ->
-            (let (cfg,progs,bm) = compile_oracle s 0 in
-           (match (buffer_flush (state_code_buffer s) w1 w2,
+            (let (cfg,progs,bm) = stackSem_state_compile_oracle s 0
+              in
+           (match (buffer_flush (stackSem_state_code_buffer s) w1
+             w2,
                   (if stackSem_state_use_stack s then buffer_flush
-                    (state_data_buffer s) w3 w4 else SOME
-                    (bm,state_data_buffer s))) with (
+                    (stackSem_state_data_buffer s) w3 w4 else SOME
+                    (bm,stackSem_state_data_buffer s))) with (
              SOME (bytes,cb),SOME (data,db)) ->
-            (let new_oracle = misc_shift_seq 1 (compile_oracle s) in
-            (match (compile s cfg progs,progs) with (SOME
-              (bytes',cfg'),CONS (k,prog) _116) ->
+            (let new_oracle = misc_shift_seq 1
+              (stackSem_state_compile_oracle s) in
+            (match (stackSem_state_compile s cfg progs,progs) with
+              (SOME (bytes',cfg'),CONS (k,prog) _116) ->
                 (if bytes = bytes' /\ data = bm /\ FST (new_oracle
                   0) = cfg' then
-                let s' = compile_oracle_fupd (K new_oracle)
-                  (fp_regs_fupd (K FEMPTY) (stackSem_state_regs_fupd (K
-                  ((DRESTRICT (stackSem_state_regs s)
-                  (stackSem_state_ffi_save_regs s)) |+ (ptr,wordLang_Loc
-                  k 0))) (state_code_fupd (K (sptree_union (state_code
-                  s) (fromAList progs))) (state_data_buffer_fupd (K db)
-                  (state_code_buffer_fupd (K cb)
+                let s' = stackSem_state_compile_oracle_fupd (K
+                  new_oracle) (stackSem_state_fp_regs_fupd (K FEMPTY)
+                  (stackSem_state_regs_fupd (K ((DRESTRICT
+                  (stackSem_state_regs s) (stackSem_state_ffi_save_regs
+                  s)) |+ (ptr,wordLang_Loc k 0)))
+                  (stackSem_state_code_fupd (K (sptree_union
+                  (stackSem_state_code s) (fromAList progs)))
+                  (stackSem_state_data_buffer_fupd (K db)
+                  (stackSem_state_code_buffer_fupd (K cb)
                   (stackSem_state_bitmaps_fupd (K (APPEND
                   (stackSem_state_bitmaps s) bm))
                     s)))))) in
@@ -1017,25 +991,27 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
    `stackSem_evaluate (stackLang_ShMemOp op r (Addr a w),s) =
         (match stackSem_word_exp s (wordLang_Op asm_Add
           [wordLang_Var a; wordLang_Const w]) with SOME a ->
-             (if state_clock s = 0 then (SOME
+             (if stackSem_state_clock s = 0 then (SOME
                TimeOut,stackSem_empty_env s) else
                sh_mem_op op r a (stackSem_dec_clock s)) | _120 ->
                  (SOME Error,s))`;
    `stackSem_evaluate (stackLang_CodeBufferWrite r1 r2,s) =
         (match (stackSem_get_var r1 s,stackSem_get_var r2 s) with
           (SOME (wordLang_Word w1),SOME (wordLang_Word w2)) ->
-              (match buffer_write (state_code_buffer s) w1 (w2w w2)
-                with SOME new_cb ->
-                (NONE,state_code_buffer_fupd (K new_cb) s) | _125
-                  -> (SOME Error,s)) | _126 -> (SOME Error,s))`;
+              (match buffer_write (stackSem_state_code_buffer s) w1
+                (w2w w2) with SOME new_cb ->
+                (NONE,stackSem_state_code_buffer_fupd (K new_cb)
+                  s) | _125 -> (SOME Error,s)) | _126 -> (SOME
+                  Error,s))`;
    `stackSem_evaluate (stackLang_DataBufferWrite r1 r2,s) =
         (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
         (match (stackSem_get_var r1 s,stackSem_get_var r2 s) with
           (SOME (wordLang_Word w1),SOME (wordLang_Word w2)) ->
-              (match buffer_write (state_data_buffer s) w1 w2 with
-                SOME new_db ->
-                (NONE,state_data_buffer_fupd (K new_db) s) | _131
-                  -> (SOME Error,s)) | _132 -> (SOME Error,s)))`;
+              (match buffer_write (stackSem_state_data_buffer s) w1
+                w2 with SOME new_db ->
+                (NONE,stackSem_state_data_buffer_fupd (K new_db)
+                  s) | _131 -> (SOME Error,s)) | _132 -> (SOME
+                  Error,s)))`;
    `stackSem_evaluate (stackLang_FFI ffi_index ptr len ptr2 len2 ret,s)
   =
        (match (stackSem_get_var len s,stackSem_get_var ptr
@@ -1043,25 +1019,30 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
          (wordLang_Word w),SOME (wordLang_Word w2),SOME (wordLang_Word
          w3),SOME (wordLang_Word w4)) ->
              (match (read_bytearray w2 (w2n w) (mem_load_byte_aux
-               (state_memory s) (state_mdomain s) (be s)),
+               (stackSem_state_memory s) (stackSem_state_mdomain s)
+               (stackSem_state_be s)),
                     read_bytearray w4 (w2n w3) (mem_load_byte_aux
-                      (state_memory s) (state_mdomain s) (be s))) with
-                      (SOME bytes,SOME bytes2) ->
-                 (match call_FFI (state_ffi s) (ffi_ExtCall
+                      (stackSem_state_memory s) (stackSem_state_mdomain
+                      s) (stackSem_state_be s))) with (SOME bytes,SOME
+                      bytes2) ->
+                 (match call_FFI (stackSem_state_ffi s) (ffi_ExtCall
                    ffi_index) bytes bytes2 with FFI_final outcome ->
                    (SOME (FinalFFI outcome),s) | FFI_return new_ffi
                    new_bytes ->
                       (let new_m = write_bytearray w4 new_bytes
-                        (state_memory s) (state_mdomain s) (be s) in
-                        (NONE,state_ffi_fupd (K new_ffi)
-                          (fp_regs_fupd (K FEMPTY)
+                        (stackSem_state_memory s)
+                        (stackSem_state_mdomain s) (stackSem_state_be s)
+                        in
+                        (NONE,stackSem_state_ffi_fupd (K new_ffi)
+                          (stackSem_state_fp_regs_fupd (K FEMPTY)
                           (stackSem_state_regs_fupd (K (DRESTRICT
                           (stackSem_state_regs s)
                           (stackSem_state_ffi_save_regs s)))
-                          (state_memory_fupd (K new_m) s)))))) | _135
-                          -> (SOME Error,s)) | res -> (SOME Error,s))`;
+                          (stackSem_state_memory_fupd (K new_m)
+                          s)))))) | _135 -> (SOME Error,s)) | res ->
+                          (SOME Error,s))`;
    `stackSem_evaluate (stackLang_LocValue r l1 l2,s) =
-         (if loc_check (state_code s) (l1,l2) then
+         (if loc_check (stackSem_state_code s) (l1,l2) then
            (NONE,stackSem_set_var r (wordLang_Loc l1 l2) s) else
              (SOME Error,s))`;
    `stackSem_evaluate (stackLang_StackAlloc n,s) =
@@ -1072,35 +1053,39 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
              (stackSem_state_stack_space s - n)) s))`;
    `stackSem_evaluate (stackLang_StackFree n,s) =
          (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
-         if LENGTH (stack s) < stackSem_state_stack_space s + n then
-           (SOME Error,stackSem_empty_env s) else
+         if LENGTH (stackSem_state_stack s) <
+           stackSem_state_stack_space s + n then (SOME
+           Error,stackSem_empty_env s) else
            (NONE,stackSem_state_stack_space_fupd (K
              (stackSem_state_stack_space s + n)) s))`;
    `stackSem_evaluate (stackLang_StackLoad r n,s) =
          (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
-         if stackSem_state_stack_space s + n < LENGTH (stack s)
-           then (NONE,stackSem_set_var r (EL
-           (stackSem_state_stack_space s + n) (stack s)) s) else
-           (SOME Error,stackSem_empty_env s))`;
+         if stackSem_state_stack_space s + n < LENGTH
+           (stackSem_state_stack s) then (NONE,stackSem_set_var r (EL
+           (stackSem_state_stack_space s + n) (stackSem_state_stack
+           s)) s) else (SOME Error,stackSem_empty_env s))`;
    `stackSem_evaluate (stackLang_StackLoadAny r rn,s) =
          (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
            match stackSem_get_var rn s with SOME (wordLang_Word
              (w:'a word)) ->
              (let i = stackSem_state_stack_space s + w2n (w >>>
                backend_common_word_shift (:'a)) in
-               if i < LENGTH (stack s) /\
+               if i < LENGTH (stackSem_state_stack s) /\
                   ((w >>> backend_common_word_shift (:'a)) <<
                     backend_common_word_shift (:'a) = w) then
-                    (NONE,stackSem_set_var r (EL i (stack s)) s) else
-                    (SOME Error,stackSem_empty_env s)) | _136 ->
-                    (SOME Error,stackSem_empty_env s))`;
+                    (NONE,stackSem_set_var r (EL i
+                    (stackSem_state_stack s)) s) else (SOME
+                    Error,stackSem_empty_env s)) | _136 -> (SOME
+                    Error,stackSem_empty_env s))`;
    `stackSem_evaluate (stackLang_StackStore r n,s) =
          (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
-         if LENGTH (stack s) <= stackSem_state_stack_space s + n
-           then (SOME Error,stackSem_empty_env s) else
+         if LENGTH (stackSem_state_stack s) <=
+           stackSem_state_stack_space s + n then (SOME
+           Error,stackSem_empty_env s) else
            match stackSem_get_var r s with NONE -> (SOME
-             Error,stackSem_empty_env s) | SOME v -> (NONE,stack_fupd
-             (K (LUPDATE v (stackSem_state_stack_space s + n) (stack
+             Error,stackSem_empty_env s) | SOME v ->
+             (NONE,stackSem_state_stack_fupd (K (LUPDATE v
+             (stackSem_state_stack_space s + n) (stackSem_state_stack
              s))) s))`;
    `stackSem_evaluate (stackLang_StackStoreAny r rn,s) =
          (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
@@ -1108,12 +1093,13 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
              (SOME v,SOME (wordLang_Word (w:'a word))) ->
              (let i = stackSem_state_stack_space s + w2n (w >>>
                backend_common_word_shift (:'a)) in
-               if i < LENGTH (stack s) /\
+               if i < LENGTH (stackSem_state_stack s) /\
                   ((w >>> backend_common_word_shift (:'a)) <<
                     backend_common_word_shift (:'a) = w) then
-                    (NONE,stack_fupd (K (LUPDATE v i (stack s))) s)
-                    else (SOME Error,stackSem_empty_env s)) | _137 ->
-                    (SOME Error,stackSem_empty_env s))`;
+                    (NONE,stackSem_state_stack_fupd (K (LUPDATE v i
+                    (stackSem_state_stack s))) s) else (SOME
+                    Error,stackSem_empty_env s)) | _137 -> (SOME
+                    Error,stackSem_empty_env s))`;
    `stackSem_evaluate (stackLang_StackGetSize r,s) =
          (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
          (NONE,stackSem_set_var r (wordLang_Word (n2w
@@ -1122,7 +1108,7 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
          (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
          match stackSem_get_var r s with SOME (wordLang_Word (w:'a
            word)) ->
-             (if LENGTH (stack s) <= w2n w then (SOME
+             (if LENGTH (stackSem_state_stack s) <= w2n w then (SOME
                Error,stackSem_empty_env s) else (NONE,stackSem_set_var r
                (wordLang_Word (w << backend_common_word_shift (:'a)))
                            (stackSem_state_stack_space_fupd (K
@@ -1140,35 +1126,37 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
 
 (* gc_clock *)
 let stackSem_gc_clock = prove
- (`!s1 s2. (stackSem_gc s1 = SOME s2) ==> state_clock s2 <=
-  state_clock s1`,
+ (`!s1 s2. (stackSem_gc s1 = SOME s2) ==> stackSem_state_clock s2 <=
+  stackSem_state_clock s1`,
   CHEAT_TAC);;
 
 (* alloc_clock *)
 let stackSem_alloc_clock = prove
- (`!xs s1 vs s2. (stackSem_alloc x s1 = (vs,s2)) ==> state_clock s2 <=
-  state_clock s1`,
+ (`!xs s1 vs s2. (stackSem_alloc x s1 = (vs,s2)) ==>
+  stackSem_state_clock s2 <= stackSem_state_clock s1`,
   CHEAT_TAC);;
 
 let store_const_sem_clock = prove
- (`!s1 v s2. (store_const_sem t1 t2 s1 = (v,s2)) ==> state_clock s2 <=
-  state_clock s1`,
+ (`!s1 v s2. (store_const_sem t1 t2 s1 = (v,s2)) ==>
+  stackSem_state_clock s2 <= stackSem_state_clock s1`,
   CHEAT_TAC);;
 
 (* inst_clock[local] *)
 let stackSem_inst_clock = prove
- (`stackSem_inst i s = SOME s2 ==> state_clock s2 <= state_clock s`,
+ (`stackSem_inst i s = SOME s2 ==> stackSem_state_clock s2 <=
+  stackSem_state_clock s`,
   CHEAT_TAC);;
 
 (* [local] *)
 let sh_mem_op_clock = prove
- (`sh_mem_op op r a s = (res,s') ==> state_clock s' <= state_clock s`,
+ (`sh_mem_op op r a s = (res,s') ==> stackSem_state_clock s' <=
+  stackSem_state_clock s`,
   CHEAT_TAC);;
 
 (* evaluate_clock *)
 let stackSem_evaluate_clock = prove
- (`!xs s1 vs s2. (stackSem_evaluate (xs,s1) = (vs,s2)) ==> state_clock
-  s2 <= state_clock s1`,
+ (`!xs s1 vs s2. (stackSem_evaluate (xs,s1) = (vs,s2)) ==>
+  stackSem_state_clock s2 <= stackSem_state_clock s1`,
   CHEAT_TAC);;
 
 (* fix_clock_evaluate *)
@@ -1187,29 +1175,30 @@ let stackSem_fix_clock_evaluate = prove
 
 let stackSem_semantics_def = new_definition
   `stackSem_semantics start' s =
-   (let prog = stackLang_Call NONE (INL start') NONE in
-   if ?k. let res = FST (stackSem_evaluate (prog,state_clock_fupd (K
-     k) s)) in ~(res = SOME stackSem_TimeOut) /\ ~(res = SOME
-     (stackSem_Result (wordLang_Loc 1 0))) /\
+   (let prog = wordLang_Call NONE (INL start') NONE in
+   if ?k. let res = FST (stackSem_evaluate
+     (prog,stackSem_state_clock_fupd (K k) s)) in ~(res = SOME
+     stackSem_TimeOut) /\ ~(res = SOME (stackSem_Result (wordLang_Loc 1
+     0))) /\
             (!w. ~(res = SOME (stackSem_Halt (wordLang_Word w)))) /\
               (!f. ~(res = SOME (stackSem_FinalFFI f))) then ffi_Fail
               else
      match some (\res.
        ?k t r outcome.
-         stackSem_evaluate (prog,state_clock_fupd (K k) s) = (SOME
-           r,t) /\
+         stackSem_evaluate (prog,stackSem_state_clock_fupd (K k) s) =
+           (SOME r,t) /\
          (match r with stackSem_FinalFFI e -> outcome =
            ffi_FFI_outcome e | stackSem_Halt w -> outcome = (if w =
            wordLang_Word (n2w 0) then ffi_Success else
            ffi_Resource_limit_hit) | stackSem_Result _140 -> outcome =
            ffi_Success | _141 -> F) /\
-         res = ffi_Terminate outcome (ffi_state_io_events (state_ffi
-           t))) with SOME res -> res | NONE ->
+         res = ffi_Terminate outcome (ffi_state_io_events
+           (stackSem_state_ffi t))) with SOME res -> res | NONE ->
        ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
-              (SND (stackSem_evaluate (prog,state_clock_fupd (K k)
-              s)))))) UNIV)))`;;
+            (IMAGE (\k. fromList (ffi_state_io_events
+              (stackSem_state_ffi (SND (stackSem_evaluate
+              (prog,stackSem_state_clock_fupd (K k) s)))))) UNIV)))`;;
 
 (* record accessors *)
 

@@ -13,7 +13,6 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
 (* for closure_tag and num_added_globals *)
 needs "compiler/backend/semantics/backendProps.ml";;
@@ -81,21 +80,6 @@ let bvlSem_state_FIELDS = define_record "bvlSem_state"
    "compile_oracle","num->'c#(num#num#bvl_exp) list";
    "code","(num#bvl_exp) spt";
    "ffi","'ffi ffi_state"];;
-hol4_overload "state_globals" "bvlSem_state_globals";;
-hol4_overload "state_globals_fupd" "bvlSem_state_globals_fupd";;
-hol4_overload "state_refs" "bvlSem_state_refs";;
-hol4_overload "state_refs_fupd" "bvlSem_state_refs_fupd";;
-hol4_overload "state_clock" "bvlSem_state_clock";;
-hol4_overload "state_clock_fupd" "bvlSem_state_clock_fupd";;
-hol4_field_overload "compile" "bvlSem_state_compile";;
-hol4_field_overload "compile_fupd" "bvlSem_state_compile_fupd";;
-hol4_field_overload "compile_oracle" "bvlSem_state_compile_oracle";;
-hol4_field_overload "compile_oracle_fupd"
-  "bvlSem_state_compile_oracle_fupd";;
-hol4_overload "state_code" "bvlSem_state_code";;
-hol4_overload "state_code_fupd" "bvlSem_state_code_fupd";;
-hol4_overload "state_ffi" "bvlSem_state_ffi";;
-hol4_overload "state_ffi_fupd" "bvlSem_state_ffi_fupd";;
 
 let _ = size_thms "bvlSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -213,11 +197,11 @@ let bvlSem_do_install_def = new_definition
                              Rtype_error))`;;
 
 let do_part_def = define_cases
-  [`bvlSem_do_part m (clos_known_Int i:const_part) refs =
+  [`bvlSem_do_part m (closLang_Int i:const_part) refs =
   (bvlSem_Number i,refs)`;
    `bvlSem_do_part m (closLang_W64 w:const_part) refs =
   (bvlSem_Word64 w,refs)`;
-   `bvlSem_do_part m (flatLang_Con t ns:const_part) refs =
+   `bvlSem_do_part m (closLang_Con t ns:const_part) refs =
   (bvlSem_Block t (MAP m ns),refs)`;
    `bvlSem_do_part m (closLang_Str t:const_part) refs =
       (let ptr = (minimal ptr. ~(ptr IN FDOM refs)) in
@@ -795,7 +779,8 @@ let bvlSem_do_app_def = new_definition
                     ,bvlSem_v)semanticPrimitives_result))`;;
 
 let bvlSem_dec_clock_def = new_definition
-  `bvlSem_dec_clock n s = state_clock_fupd (K (state_clock s - n)) s`;;
+  `bvlSem_dec_clock n s = bvlSem_state_clock_fupd (K
+  (bvlSem_state_clock s - n)) s`;;
 
 (* Functions for looking up function definitions *)
 
@@ -821,12 +806,13 @@ let bvlSem_find_code_def = define_cases
    of fix_clock. *)
 
 let bvlSem_fix_clock_def = new_definition
-  `bvlSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
-  (state_clock s) (state_clock s1))) s1)`;;
+  `bvlSem_fix_clock s (res,s1) = (res,bvlSem_state_clock_fupd (K (MIN
+  (bvlSem_state_clock s) (bvlSem_state_clock s1))) s1)`;;
 
 (* fix_clock_IMP[local] *)
 let bvlSem_fix_clock_IMP = prove
- (`bvlSem_fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock s`,
+ (`bvlSem_fix_clock s x = (res,s1) ==> bvlSem_state_clock s1 <=
+  bvlSem_state_clock s`,
   CHEAT_TAC);;
 
 (* The semantics of expression evaluation is defined next. For
@@ -930,19 +916,20 @@ let bvlSem_evaluate_def,bvlSem_evaluate_ind = assume_definition_rec
 (* do_app_const *)
 let bvlSem_do_app_const = prove
  (`(bvlSem_do_app op args s1 = Rval (res,s2)) ==>
-    (state_clock s2 = state_clock s1) /\
-    (~(op = closLang_Install) ==> state_code s2 = state_code s1 /\
-      compile
-                       s2 = compile s1 /\ compile_oracle
-                       s2 = compile_oracle s1)`,
+    (bvlSem_state_clock s2 = bvlSem_state_clock s1) /\
+    (~(op = closLang_Install) ==> bvlSem_state_code s2 =
+      bvlSem_state_code s1 /\ bvlSem_state_compile
+                       s2 = bvlSem_state_compile s1 /\
+                         bvlSem_state_compile_oracle
+                       s2 = bvlSem_state_compile_oracle s1)`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let bvl_do_app_Ref = prove
  (`bvlSem_do_app (closLang_MemOp closLang_Ref) vs s = Rval
-     (bvlSem_RefPtr T (minimal ptr. ~(ptr IN FDOM (state_refs
-       s))),state_refs_fupd (K (state_refs
-        s |+ ((minimal ptr. ~(ptr IN FDOM (state_refs
+     (bvlSem_RefPtr T (minimal ptr. ~(ptr IN FDOM (bvlSem_state_refs
+       s))),bvlSem_state_refs_fupd (K (bvlSem_state_refs
+        s |+ ((minimal ptr. ~(ptr IN FDOM (bvlSem_state_refs
           s))),bvlSem_ValueArray vs)))
       s)`,
   CHEAT_TAC);;
@@ -956,8 +943,8 @@ let bvl_do_app_Cons = prove
 (* evaluate_clock *)
 let bvlSem_evaluate_clock = prove
  (`!xs env s1 vs s2.
-     (bvlSem_evaluate (xs,env,s1) = (vs,s2)) ==> state_clock s2 <=
-       state_clock s1`,
+     (bvlSem_evaluate (xs,env,s1) = (vs,s2)) ==> bvlSem_state_clock
+       s2 <= bvlSem_state_clock s1`,
   CHEAT_TAC);;
 
 (* fix_clock_evaluate *)
@@ -992,11 +979,12 @@ let bvlSem_semantics_def = new_definition
          (match r with Rerr (Rabort Rtimeout_error) -> F | Rerr
            (Rabort (Rffi_error e)) -> outcome = ffi_FFI_outcome e | _109
            -> outcome = ffi_Success) /\
-         res = ffi_Terminate outcome (ffi_state_io_events (state_ffi
-           s))) with SOME res -> res | NONE ->
+         res = ffi_Terminate outcome (ffi_state_io_events
+           (bvlSem_state_ffi s))) with SOME res -> res | NONE ->
         ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
+            (IMAGE (\k. fromList (ffi_state_io_events
+              (bvlSem_state_ffi
                (SND (bvlSem_evaluate (es,[],init k)))))) UNIV)))`;;
 
 (* clean up *)

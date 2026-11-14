@@ -221,14 +221,14 @@ let contains_App_SOME_def,contains_App_SOME_ind = define_guess_cheat
         contains_App_SOME max_app [x] \/
         contains_App_SOME max_app (CONS y xs)
         | [(closLang_Var _25 v:closLang_exp)] -> F
-        | [closLang_If _26 x1 x2 x3] ->
+        | [flatLang_If _26 x1 x2 x3] ->
         contains_App_SOME max_app [x1] \/
         contains_App_SOME max_app [x2] \/
         contains_App_SOME max_app [x3]
-        | [closLang_Let _27 xs x2] ->
+        | [flatLang_Let _27 xs x2] ->
         contains_App_SOME max_app [x2] \/
         contains_App_SOME max_app xs
-        | [closLang_Raise _28 x1] ->
+        | [flatLang_Raise _28 x1] ->
         contains_App_SOME max_app [x1]
         | [closLang_Tick _29 x1] ->
         contains_App_SOME max_app [x1]
@@ -237,16 +237,16 @@ let contains_App_SOME_def,contains_App_SOME_ind = define_guess_cheat
         contains_App_SOME max_app xs
         | [closLang_Op _31 op xs] ->
         contains_App_SOME max_app xs
-        | [closLang_App _32 loc_opt x1 x2] ->
+        | [flatLang_App _32 loc_opt x1 x2] ->
         IS_SOME loc_opt \/ max_app < LENGTH x2 \/
         contains_App_SOME max_app [x1] \/
         contains_App_SOME max_app x2
         | [closLang_Fn _33 loc vs num_args x1] ->
         contains_App_SOME max_app [x1]
-        | [closLang_Letrec _34 loc vs fns x1] ->
+        | [flatLang_Letrec _34 loc vs fns x1] ->
         contains_App_SOME max_app (MAP SND fns) \/
         contains_App_SOME max_app [x1]
-        | [closLang_Handle _35 x1 x2] ->
+        | [flatLang_Handle _35 x1 x2] ->
         contains_App_SOME max_app [x1] \/
         contains_App_SOME max_app [x2]
         | [closLang_Call _36 ticks dest xs] ->

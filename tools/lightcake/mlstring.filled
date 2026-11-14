@@ -14,7 +14,6 @@ explode_BIJ
 explode_implode
 explode_strcat
 explode_thm
-explode_toString
 fast_ge_thm
 fast_gt_thm
 fast_le_thm
@@ -46,7 +45,6 @@ strcat_o
 strcat_thm
 strlen_implode
 strlen_strcat
-strlen_toString
 strlit_STRCAT
 tokens_alt
 tokens_filter

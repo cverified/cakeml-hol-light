@@ -63,35 +63,35 @@ let call_graph_def,call_graph_ind = assume_definition_rec
         | (wordLang_If _1 _2 _3 p1 p2) ->
         mk_Branch (call_graph funs n ns total' p1) (call_graph funs
           n ns total' p2)
-        | (word_depth_Call ret dest args handler) ->
+        | (wordLang_Call ret dest args handler) ->
         (match dest with NONE -> word_depth_Unknown | SOME d ->
           (if MEM d ns /\ ret = NONE then word_depth_Leaf else
           match sptree_lookup d funs with NONE -> word_depth_Unknown
             | SOME ((a:num),body) ->
             (match ret with NONE ->
               (if LENGTH ns < total' then
-                 mk_Branch (word_depth_Call d (word_depth_Leaf))
+                 mk_Branch (wordLang_Call d (word_depth_Leaf))
                    (call_graph funs d (CONS d ns) total' body) else
                      word_depth_Leaf) | SOME (_4,_5,ret_prog,_6,_7) ->
               (let new_funs = sptree_delete d funs in
                 match handler with NONE -> word_depth_Branch
                   (word_depth_Call n (word_depth_Call d
                   word_depth_Leaf))
-                      (mk_Branch (word_depth_Call n (call_graph
+                      (mk_Branch (wordLang_Call n (call_graph
                         new_funs d [d] total' body))
                               (call_graph funs n ns total'
                                 ret_prog)) | SOME (_8,p,_9,_10) ->
                                 word_depth_Branch (word_depth_Call n
-                                (word_depth_Const 3 (word_depth_Call d
+                                (wordLang_Const 3 (word_depth_Call d
                                 word_depth_Leaf)))
-                   (mk_Branch (word_depth_Call n (word_depth_Const 3
+                   (mk_Branch (wordLang_Call n (wordLang_Const 3
                      (call_graph new_funs d [d] total' body)))
                    (mk_Branch (call_graph funs n ns total' p)
                               (call_graph funs n ns total'
                                 ret_prog)))))))
         | (wordLang_MustTerminate p) -> call_graph funs n ns total'
           p
-        | (wordLang_Alloc _11 _12) -> word_depth_Call n
+        | (wordLang_Alloc _11 _12) -> wordLang_Call n
           word_depth_Leaf
         | (wordLang_Install _13 _14 _15 _16 _17) ->
           word_depth_Unknown

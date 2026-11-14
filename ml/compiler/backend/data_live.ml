@@ -2,7 +2,7 @@
 (*  data_live: ported from HOL4's
     compiler/backend/data_liveScript.sml
     A definition theory, with 2 definitions and 1 theorem.  Needed
-    by 8 files of the port.  *)
+    by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*

@@ -88,7 +88,7 @@ let clos_tag_shift_inj = prove
    expands *)
 
 let part_hash_def = define_cases
-  [`part_hash (clos_known_Int i:const_part) = num_of_int (abs i) MOD
+  [`part_hash (closLang_Int i:const_part) = num_of_int (abs i) MOD
   (999983:num)`;
    `part_hash (closLang_Str s:const_part) =
       (strlen s + 3 * SUM (MAP ORD (explode s))) MOD (999983:num)`;
@@ -107,7 +107,7 @@ let add_part_def = new_definition
              | SOME k -> (n,k,aux,acc)))`;;
 
 let add_parts_def,add_parts_ind = define_mutual_rec
-  [`add_parts (ConstInt i) n aux acc = add_part n (clos_known_Int i)
+  [`add_parts (ConstInt i) n aux acc = add_part n (closLang_Int i)
   aux acc`;
    `add_parts (ConstStr s) n aux acc = add_part n (closLang_Str s)
   aux acc`;
@@ -510,42 +510,43 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
          let (c2,aux2) = clos_to_bvl_compile_exps max_app (CONS y
            xs) aux1 in
            (APPEND c1 c2,aux2))`;
-   `clos_to_bvl_compile_exps max_app [(bvl_Var t v:closLang_exp)] aux
-  = ([(bvl_Var v):bvl_exp],aux)`;
-   `clos_to_bvl_compile_exps max_app [(bvl_If t x1 x2 x3:closLang_exp)]
-  aux =
+   `clos_to_bvl_compile_exps max_app [(closLang_Var t
+  v:closLang_exp)] aux = ([(closLang_Var v):bvl_exp],aux)`;
+   `clos_to_bvl_compile_exps max_app [(closLang_If t x1 x2
+  x3:closLang_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
            in
          let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1
            in
          let (c3,aux3) = clos_to_bvl_compile_exps max_app [x3] aux2
            in
-           ([bvl_If (HD c1) (HD c2) (HD c3)],aux3))`;
-   `clos_to_bvl_compile_exps max_app [(bvl_Let t xs x2:closLang_exp)]
-  aux =
+           ([closLang_If (HD c1) (HD c2) (HD c3)],aux3))`;
+   `clos_to_bvl_compile_exps max_app [(closLang_Let t xs
+  x2:closLang_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
          let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1
            in
-           ([bvl_Let c1 (HD c2)],aux2))`;
-   `clos_to_bvl_compile_exps max_app [(bvl_Raise t x1:closLang_exp)] aux
-  =
+           ([closLang_Let c1 (HD c2)],aux2))`;
+   `clos_to_bvl_compile_exps max_app [(closLang_Raise t
+  x1:closLang_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
            in
-           ([bvl_Raise (HD c1)],aux1))`;
-   `clos_to_bvl_compile_exps max_app [(bvl_Tick t x1:closLang_exp)] aux
-  =
+           ([closLang_Raise (HD c1)],aux1))`;
+   `clos_to_bvl_compile_exps max_app [(closLang_Tick t x1:closLang_exp)]
+  aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
            in
-           ([bvl_Tick (HD c1)],aux1))`;
-   `clos_to_bvl_compile_exps max_app [(bvl_Op t op xs:closLang_exp)] aux
-  =
+           ([closLang_Tick (HD c1)],aux1))`;
+   `clos_to_bvl_compile_exps max_app [(closLang_Op t op
+  xs:closLang_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
          (
          [if op = closLang_Install then
-             bvl_Call 0 NONE [bvl_Op closLang_Install c1] else if op
-               = closLang_ThunkOp ForceThunk then
-             bvl_Let c1 (bvl_Force (num_stubs max_app - 2) 0) else
-             bvl_Op (clos_to_bvl_compile_op op) c1],aux1))`;
+             closLang_Call 0 NONE [closLang_Op closLang_Install c1]
+               else if op = closLang_ThunkOp ForceThunk then
+             closLang_Let c1 (bvl_Force (num_stubs max_app - 2) 0)
+               else
+             closLang_Op (clos_to_bvl_compile_op op) c1],aux1))`;
    `clos_to_bvl_compile_exps max_app [(closLang_App t loc_opt x1
   xs2:closLang_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
@@ -553,10 +554,11 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
          let (c2,aux2) = clos_to_bvl_compile_exps max_app xs2 aux1
            in
            ([match loc_opt with NONE ->
-                 bvl_Let (APPEND c2 c1) (mk_cl_call (bvl_Var (LENGTH
-                   c2)) (list_of_seq bvl_Var (LENGTH c2))) | SOME loc ->
-                 (bvl_Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
-                   max_app))) (APPEND c2 c1))],
+                 closLang_Let (APPEND c2 c1) (mk_cl_call
+                   (closLang_Var (LENGTH c2)) (list_of_seq closLang_Var
+                   (LENGTH c2))) | SOME loc ->
+                 (closLang_Call (LENGTH c2 - 1) (SOME (loc +
+                   (num_stubs max_app))) (APPEND c2 c1))],
             aux2))`;
    `clos_to_bvl_compile_exps max_app [closLang_Fn t loc_opt vs_opt
   num_args x1] aux =
@@ -565,13 +567,14 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
          let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
            in
          let c2 =
-           bvl_Let (APPEND (list_of_seq bvl_Var num_args) (free_let
-             (bvl_Var num_args) (LENGTH vs)))
+           closLang_Let (APPEND (list_of_seq closLang_Var num_args)
+             (free_let (closLang_Var num_args) (LENGTH vs)))
                (HD c1) in
-           ([bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
+           ([closLang_Op (closLang_BlockOp (closLang_Cons
+             closure_tag))
                 (REVERSE (CONS (mk_label (loc + num_stubs
                   max_app)) (CONS (mk_const (num_args - 1)) (MAP
-                  bvl_Var vs))))],CONS (loc + (num_stubs
+                  closLang_Var vs))))],CONS (loc + (num_stubs
                   max_app),num_args + 1,c2) aux1))`;
    `clos_to_bvl_compile_exps max_app [(closLang_Letrec t loc_opt vsopt
   fns x1:closLang_exp)] aux =
@@ -581,18 +584,19 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
            aux | [(num_args,exp)] ->
              (let (c1,aux1) = clos_to_bvl_compile_exps max_app [exp]
                aux in
-             let c3 = bvl_Let (APPEND (APPEND (list_of_seq bvl_Var
-               num_args) [bvl_Var num_args]) (free_let (bvl_Var
-               num_args) (LENGTH vs))) (HD c1) in
+             let c3 = closLang_Let (APPEND (APPEND (list_of_seq
+               closLang_Var num_args) [closLang_Var num_args]) (free_let
+               (closLang_Var num_args) (LENGTH vs))) (HD c1) in
              let (c2,aux2) = clos_to_bvl_compile_exps max_app [x1]
                (CONS (loc + (num_stubs max_app),num_args + 1,c3) aux1)
                in
              let c4 =
-               bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
+               closLang_Op (closLang_BlockOp (closLang_Cons
+                 closure_tag))
                   (REVERSE (CONS (mk_label (loc + (num_stubs
                     max_app))) (CONS (mk_const (num_args - 1)) (MAP
-                    bvl_Var vs)))) in
-               ([bvl_Let [c4] (HD c2)],aux2)) | _3 ->
+                    closLang_Var vs)))) in
+               ([closLang_Let [c4] (HD c2)],aux2)) | _3 ->
              (let fns_l = LENGTH fns in
              let l = fns_l + LENGTH vs in
              let (cs,aux1) = clos_to_bvl_compile_exps max_app (MAP
@@ -606,18 +610,18 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
              let c4 = build_recc_lets (MAP FST fns) vs (loc +
                (num_stubs max_app)) fns_l (HD c3) in
                ([c4],aux3)))`;
-   `clos_to_bvl_compile_exps max_app [(bvl_Handle t x1 x2:closLang_exp)]
-  aux =
+   `clos_to_bvl_compile_exps max_app [(closLang_Handle t x1
+  x2:closLang_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
            in
          let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1
            in
-           ([bvl_Handle (HD c1) (HD c2)],aux2))`;
-   `clos_to_bvl_compile_exps max_app [(bvl_Call t ticks dest
+           ([closLang_Handle (HD c1) (HD c2)],aux2))`;
+   `clos_to_bvl_compile_exps max_app [(closLang_Call t ticks dest
   xs:closLang_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
-           ([bvl_Call ticks (SOME (dest + (num_stubs max_app)))
-             c1],aux1))`];;
+           ([closLang_Call ticks (SOME (dest + (num_stubs
+             max_app))) c1],aux1))`];;
 
 (* HOL4 clos_to_bvlScript.sml:495: ML code, not ported *)
 
@@ -625,40 +629,41 @@ let _ = size_thms "bvl_exp";;
 let _ = size_thms "closLang_exp";;
 let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`compile_exp_sing max_app (bvl_Var t v:closLang_exp) aux =
-  (((bvl_Var v):bvl_exp),aux)`;
-   `compile_exp_sing max_app (bvl_If t x1 x2 x3:closLang_exp) aux =
+  [`compile_exp_sing max_app (closLang_Var t v:closLang_exp) aux =
+  (((closLang_Var v):bvl_exp),aux)`;
+   `compile_exp_sing max_app (closLang_If t x1 x2 x3:closLang_exp) aux =
          (let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
          let (c3,aux3) = compile_exp_sing max_app x3 aux2 in
-           (bvl_If c1 c2 c3,aux3))`;
-   `compile_exp_sing max_app (bvl_Let t xs x2:closLang_exp) aux =
+           (closLang_If c1 c2 c3,aux3))`;
+   `compile_exp_sing max_app (closLang_Let t xs x2:closLang_exp) aux =
          (let (c1,aux1) = compile_exp_list max_app xs aux in
          let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
-           (bvl_Let c1 c2,aux2))`;
-   `compile_exp_sing max_app (bvl_Raise t x1:closLang_exp) aux =
+           (closLang_Let c1 c2,aux2))`;
+   `compile_exp_sing max_app (closLang_Raise t x1:closLang_exp) aux =
          (let (c1,aux1) = compile_exp_sing max_app x1 aux in
-           (bvl_Raise c1,aux1))`;
-   `compile_exp_sing max_app (bvl_Tick t x1:closLang_exp) aux =
+           (closLang_Raise c1,aux1))`;
+   `compile_exp_sing max_app (closLang_Tick t x1:closLang_exp) aux =
          (let (c1,aux1) = compile_exp_sing max_app x1 aux in
-           (bvl_Tick c1,aux1))`;
-   `compile_exp_sing max_app (bvl_Op t op xs:closLang_exp) aux =
+           (closLang_Tick c1,aux1))`;
+   `compile_exp_sing max_app (closLang_Op t op xs:closLang_exp) aux =
          (let (c1,aux1) = compile_exp_list max_app xs aux in
          (
-         (if op = closLang_Install then bvl_Call 0 NONE [bvl_Op
-           closLang_Install c1] else if op = closLang_ThunkOp
-           ForceThunk then bvl_Let c1 (bvl_Force (num_stubs max_app -
-           2) 0) else bvl_Op (clos_to_bvl_compile_op op) c1),aux1))`;
+         (if op = closLang_Install then closLang_Call 0 NONE
+           [closLang_Op closLang_Install c1] else if op =
+           closLang_ThunkOp ForceThunk then closLang_Let c1
+           (bvl_Force (num_stubs max_app - 2) 0) else closLang_Op
+           (clos_to_bvl_compile_op op) c1),aux1))`;
    `compile_exp_sing max_app (closLang_App t loc_opt x1
   xs2:closLang_exp) aux =
          (let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let (c2,aux2) = compile_exp_list max_app xs2 aux1 in
            ((match loc_opt with NONE ->
-                 bvl_Let (APPEND c2 [c1]) (mk_cl_call (bvl_Var
-                   (LENGTH c2)) (list_of_seq bvl_Var (LENGTH c2))) |
-                   SOME loc ->
-                 (bvl_Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
-                   max_app))) (APPEND c2 [c1]))),
+                 closLang_Let (APPEND c2 [c1]) (mk_cl_call
+                   (closLang_Var (LENGTH c2)) (list_of_seq closLang_Var
+                   (LENGTH c2))) | SOME loc ->
+                 (closLang_Call (LENGTH c2 - 1) (SOME (loc +
+                   (num_stubs max_app))) (APPEND c2 [c1]))),
             aux2))`;
    `compile_exp_sing max_app (closLang_Fn t loc_opt vs_opt num_args x1)
   aux =
@@ -666,12 +671,13 @@ let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec
          let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let c2 =
-           bvl_Let (APPEND (list_of_seq bvl_Var num_args) (free_let
-             (bvl_Var num_args) (LENGTH vs))) c1 in
-           (bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
+           closLang_Let (APPEND (list_of_seq closLang_Var num_args)
+             (free_let (closLang_Var num_args) (LENGTH vs))) c1 in
+           (closLang_Op (closLang_BlockOp (closLang_Cons
+             closure_tag))
                (REVERSE (CONS (mk_label (loc + num_stubs
                  max_app)) (CONS (mk_const (num_args - 1)) (MAP
-                 bvl_Var vs)))),CONS (loc + (num_stubs
+                 closLang_Var vs)))),CONS (loc + (num_stubs
                  max_app),num_args + 1,c2) aux1))`;
    `compile_exp_sing max_app (closLang_Letrec t loc_opt vsopt fns
   x1:closLang_exp) aux =
@@ -680,16 +686,17 @@ let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec
          match fns with [] -> compile_exp_sing max_app x1 aux |
            [(num_args,exp)] ->
              (let (c1,aux1) = compile_exp_sing max_app exp aux in
-             let c3 = bvl_Let (APPEND (APPEND (list_of_seq bvl_Var
-               num_args) [bvl_Var num_args]) (free_let (bvl_Var
-               num_args) (LENGTH vs))) c1 in
+             let c3 = closLang_Let (APPEND (APPEND (list_of_seq
+               closLang_Var num_args) [closLang_Var num_args]) (free_let
+               (closLang_Var num_args) (LENGTH vs))) c1 in
              let (c2,aux2) = compile_exp_sing max_app x1 (CONS (loc
                + (num_stubs max_app),num_args + 1,c3) aux1) in
              let c4 =
-               bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
+               closLang_Op (closLang_BlockOp (closLang_Cons
+                 closure_tag))
                   (REVERSE (CONS (mk_label (loc + (num_stubs
                     max_app))) (CONS (mk_const (num_args - 1)) (MAP
-                    bvl_Var vs)))) in
+                    closLang_Var vs)))) in
                (bvl_Let [c4] c2,aux2)) | _6 ->
              (let fns_l = LENGTH fns in
              let l = fns_l + LENGTH vs in
@@ -703,15 +710,16 @@ let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec
              let c4 = build_recc_lets (MAP FST fns) vs (loc +
                (num_stubs max_app)) fns_l c3 in
                (c4,aux3)))`;
-   `compile_exp_sing max_app (bvl_Handle t x1 x2:closLang_exp) aux =
+   `compile_exp_sing max_app (closLang_Handle t x1 x2:closLang_exp) aux
+  =
          (let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
-           (bvl_Handle c1 c2,aux2))`;
-   `compile_exp_sing max_app (bvl_Call t ticks dest xs:closLang_exp) aux
-  =
+           (closLang_Handle c1 c2,aux2))`;
+   `compile_exp_sing max_app (closLang_Call t ticks dest
+  xs:closLang_exp) aux =
          (let (c1,aux1) = compile_exp_list max_app xs aux in
-           (bvl_Call ticks (SOME (dest + (num_stubs max_app)))
-             c1,aux1))`;
+           (closLang_Call ticks (SOME (dest + (num_stubs
+             max_app))) c1,aux1))`;
    `compile_exp_list max_app [] aux = ([],aux)`;
    `compile_exp_list max_app (CONS (x:closLang_exp) xs) aux =
          (let (c1,aux1) = compile_exp_sing max_app x aux in
@@ -787,8 +795,6 @@ let clos_to_bvl_config_FIELDS = define_record "clos_to_bvl_config"
    "do_call","bool";
    "call_state","1 spt#(num#num#closLang_exp) list";
    "max_app","num"];;
-hol4_field_overload "start" "clos_to_bvl_config_start";;
-hol4_field_overload "start_fupd" "clos_to_bvl_config_start_fupd";;
 
 let clos_to_bvl_default_config_def = new_definition
   `clos_to_bvl_default_config = mk_clos_to_bvl_config 0 1 T (SOME
@@ -890,15 +896,15 @@ let get_src_names_def,get_src_names_ind = assume_definition_rec
    `get_src_names [closLang_Var _11 _12] l = l`;
    `get_src_names [closLang_Let _13 xs x] l = get_src_names (CONS x
   xs) l`;
-   `get_src_names [(bvl_Raise _15 x:closLang_exp)] l = get_src_names
-  [x] l`;
-   `get_src_names [(bvl_Handle _17 x y:closLang_exp)] l =
+   `get_src_names [(closLang_Raise _15 x:closLang_exp)] l =
+  get_src_names [x] l`;
+   `get_src_names [(closLang_Handle _17 x y:closLang_exp)] l =
   get_src_names [x] (get_src_names [y] l)`;
-   `get_src_names [(bvl_Tick _19 x:closLang_exp)] l = get_src_names
-  [x] l`;
-   `get_src_names [(bvl_Call _23 _24 _25 xs:closLang_exp)] l =
+   `get_src_names [(closLang_Tick _19 x:closLang_exp)] l =
+  get_src_names [x] l`;
+   `get_src_names [(closLang_Call _23 _24 _25 xs:closLang_exp)] l =
   get_src_names xs l`;
-   `get_src_names [(bvl_Op _28 _29 xs:closLang_exp)] l =
+   `get_src_names [(closLang_Op _28 _29 xs:closLang_exp)] l =
   get_src_names xs l`;
    `get_src_names [(closLang_App _32 _33 x xs:closLang_exp)] l =
   get_src_names (CONS x xs) l`;
@@ -923,15 +929,15 @@ let get_src_names_sing_def,get_src_names_sing_ind =
    `get_src_names_sing (closLang_Var _39 _40) l = l`;
    `get_src_names_sing (closLang_Let _41 xs x) l =
       get_src_names_list xs (get_src_names_sing x l)`;
-   `get_src_names_sing (bvl_Raise _43 x:closLang_exp) l =
+   `get_src_names_sing (closLang_Raise _43 x:closLang_exp) l =
   get_src_names_sing x l`;
-   `get_src_names_sing (bvl_Handle _45 x y:closLang_exp) l =
+   `get_src_names_sing (closLang_Handle _45 x y:closLang_exp) l =
   get_src_names_sing x (get_src_names_sing y l)`;
-   `get_src_names_sing (bvl_Tick _47 x:closLang_exp) l =
+   `get_src_names_sing (closLang_Tick _47 x:closLang_exp) l =
   get_src_names_sing x l`;
-   `get_src_names_sing (bvl_Call _51 _52 _53 xs:closLang_exp) l =
-  get_src_names_list xs l`;
-   `get_src_names_sing (bvl_Op _56 _57 xs:closLang_exp) l =
+   `get_src_names_sing (closLang_Call _51 _52 _53 xs:closLang_exp) l
+  = get_src_names_list xs l`;
+   `get_src_names_sing (closLang_Op _56 _57 xs:closLang_exp) l =
   get_src_names_list xs l`;
    `get_src_names_sing (closLang_App _60 _61 x xs:closLang_exp) l =
       get_src_names_list xs (get_src_names_sing x l)`;

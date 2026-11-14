@@ -188,8 +188,8 @@ let inst_ok_less_def = new_definition
          ==> ~(r1 = r3))
         | (c,(asm_Mem m r (Addr r' w))) ->
         (if m IN
-          {wordLang_Load,wordLang_Store,asm_Load16,asm_Store16
-          ,asm_Load32,asm_Store32} then (\c. asm_offset_ok 0
+          {asm_Load,asm_Store,asm_Load16,asm_Store16,asm_Load32
+          ,asm_Store32} then (\c. asm_offset_ok 0
           (asm_config_addr_offset c)) c w else if m IN
           {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
           (asm_config_hw_offset c)) c w else (\c. asm_offset_ok 0
@@ -270,7 +270,7 @@ let every_inst_def,every_inst_ind = define_wf
   [`every_inst P prog =
         match prog with
           wordLang_Inst i -> P i
-        | (reg_alloc_Seq p1 p2) -> (every_inst P p1 /\ every_inst P
+        | (wordLang_Seq p1 p2) -> (every_inst P p1 /\ every_inst P
           p2)
         | (wordLang_Loop names c exit_names) ->
        every_inst P c
@@ -295,7 +295,7 @@ let full_inst_ok_less_def,full_inst_ok_less_ind = define_wf
   [`full_inst_ok_less c prog =
         match prog with
           wordLang_Inst i -> inst_ok_less c i
-        | (reg_alloc_Seq p1 p2) ->
+        | (wordLang_Seq p1 p2) ->
        (full_inst_ok_less c p1 /\ full_inst_ok_less c p2)
         | (wordLang_Loop names p exit_names) ->
        (full_inst_ok_less c p)
@@ -341,7 +341,7 @@ let wf_cutsets_def,wf_cutsets_ind = define_wf
            wf_cutsets prog))
         | (wordLang_FFI x1 y1 x2 y2 z args) -> wf_names args
         | (wordLang_MustTerminate s) -> wf_cutsets s
-        | (reg_alloc_Seq s1 s2) ->
+        | (wordLang_Seq s1 s2) ->
        (wf_cutsets s1 /\ wf_cutsets s2)
         | (wordLang_Loop names p exit_names) ->
        sptree_wf names /\ sptree_wf exit_names /\ wf_cutsets p
@@ -400,7 +400,7 @@ let call_arg_convention_def,call_arg_convention_ind = define_wf
          (v = 2) /\ call_arg_convention prog))
         | (wordLang_MustTerminate s1) ->
        call_arg_convention s1
-        | (reg_alloc_Seq s1 s2) ->
+        | (wordLang_Seq s1 s2) ->
        (call_arg_convention s1 /\ call_arg_convention s2)
         | (wordLang_Loop names p exit_names) ->
        call_arg_convention p
@@ -440,7 +440,7 @@ let extract_labels_def,extract_labels_ind = define_wf
          (let h_rest = wordConvs_extract_labels prog in APPEND
            (APPEND [(l1,l2); (l1',l2')] ret_rest) h_rest))))
         | (wordLang_MustTerminate s1) -> wordConvs_extract_labels s1
-        | (reg_alloc_Seq s1 s2) -> APPEND (wordConvs_extract_labels
+        | (wordLang_Seq s1 s2) -> APPEND (wordConvs_extract_labels
           s1) (wordConvs_extract_labels s2)
         | (wordLang_Loop names p exit_names) ->
        wordConvs_extract_labels p
@@ -477,8 +477,8 @@ let get_code_labels_def,get_code_labels_ind = define_wf
          wordConvs_get_code_labels x | _27 -> {}) UNION
        (match h with SOME (_28,x,l1,l2) -> wordConvs_get_code_labels
          x | _29 -> {})
-        | (reg_alloc_Seq p1 p2) -> wordConvs_get_code_labels p1
-          UNION wordConvs_get_code_labels p2
+        | (wordLang_Seq p1 p2) -> wordConvs_get_code_labels p1 UNION
+          wordConvs_get_code_labels p2
         | (wordLang_Loop names p exit_names) ->
           wordConvs_get_code_labels p
         | (wordLang_If _30 _31 _32 p1 p2) ->
@@ -504,7 +504,7 @@ let good_handlers_def,good_handlers_ind = define_wf
            /\
        (match h with SOME (_39,x,l1,_40) -> l1 = n /\ good_handlers
          n x | _41 -> T))
-        | (reg_alloc_Seq p1 p2) -> good_handlers n p1 /\
+        | (wordLang_Seq p1 p2) -> good_handlers n p1 /\
           good_handlers n p2
         | (wordLang_Loop names p exit_names) -> good_handlers n p
         | (wordLang_If _42 _43 _44 p1 p2) -> good_handlers n p1 /\
@@ -533,7 +533,7 @@ let not_created_subprogs_def,not_created_subprogs_ind = define_wf
         (wordLang_MustTerminate p:'a wordLang_prog) ->
      (P (wordLang_MustTerminate (wordLang_Skip:'a wordLang_prog)) /\
        not_created_subprogs P p)
-      | (reg_alloc_Seq p1 p2) -> (not_created_subprogs P p1 /\
+      | (wordLang_Seq p1 p2) -> (not_created_subprogs P p1 /\
      not_created_subprogs P p2)
       | (wordLang_Loop names c exit_names) ->
      (not_created_subprogs P c)

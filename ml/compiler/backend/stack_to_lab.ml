@@ -63,53 +63,53 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind =
   define_guess_cheat
   [`stack_to_lab_flatten t p n m conts breaks =
      (match p with stackLang_Tick -> (bvi_tailrec_List [(\a.
-       labLang_Asm (Asmi a)) (stackLang_Inst (asm_Skip)) [] 0],F,m) |
-       stackLang_Inst a -> (bvi_tailrec_List [(\a. labLang_Asm (Asmi
-       a)) (stackLang_Inst a) [] 0],F,m) | labLang_Halt _1 ->
-       (bvi_tailrec_List [labLang_LabAsm labLang_Halt (n2w 0) []
-       0],T,m) | stackLang_Seq p1 p2 ->
+       labLang_Asm (Asmi a)) (asm_Inst (asm_Skip)) [] 0],F,m) |
+       asm_Inst a -> (bvi_tailrec_List [(\a. labLang_Asm (Asmi a))
+       (asm_Inst a) [] 0],F,m) | labLang_Halt _1 -> (bvi_tailrec_List
+       [labLang_LabAsm labLang_Halt (n2w 0) [] 0],T,m) |
+       linear_scan_Seq p1 p2 ->
          (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts
            breaks in
          let (ys,nr2,m) = stack_to_lab_flatten F p2 n m conts breaks
            in
            if t then (misc_Append (misc_Append xs (bvi_tailrec_List
              [labLang_Label n 1 0])) ys,(nr1 \/ nr2),m) else
-             (misc_Append xs ys,(nr1 \/ nr2),m)) | stackLang_If c r ri
-             p1 p2 ->
+             (misc_Append xs ys,(nr1 \/ nr2),m)) | word_bignum_If c r
+             ri p1 p2 ->
          (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts
            breaks in
          let (ys,nr2,m) = stack_to_lab_flatten F p2 n m conts breaks
            in
-           if (p1 = stackLang_Skip) /\ (p2 = stackLang_Skip) then
-             (bvi_tailrec_List [],F,m) else if p1 = stackLang_Skip then
+           if (p1 = asm_Skip) /\ (p2 = asm_Skip) then
+             (bvi_tailrec_List [],F,m) else if p1 = asm_Skip then
              (misc_Append (misc_Append (bvi_tailrec_List
-               [labLang_LabAsm (labLang_JumpCmp c r ri (labLang_Lab n
-               m)) (n2w 0) [] 0]) ys)
+               [labLang_LabAsm (asm_JumpCmp c r ri (labLang_Lab n m))
+               (n2w 0) [] 0]) ys)
               (bvi_tailrec_List [labLang_Label n m 0]),F,m + 1) else
-                if p2 = stackLang_Skip then
+                if p2 = asm_Skip then
              (misc_Append (misc_Append (bvi_tailrec_List
-               [labLang_LabAsm (labLang_JumpCmp (negate c) r ri
+               [labLang_LabAsm (asm_JumpCmp (negate c) r ri
                (labLang_Lab n m)) (n2w 0) [] 0]) xs)
               (bvi_tailrec_List [labLang_Label n m 0]),F,m + 1) else
                 if nr1 then
              (misc_Append (misc_Append (misc_Append
-               (bvi_tailrec_List [labLang_LabAsm (labLang_JumpCmp
-               (negate c) r ri (labLang_Lab n m)) (n2w 0) [] 0]) xs)
+               (bvi_tailrec_List [labLang_LabAsm (asm_JumpCmp (negate
+               c) r ri (labLang_Lab n m)) (n2w 0) [] 0]) xs)
               (bvi_tailrec_List [labLang_Label n m 0])) ys,nr2,m +
                 1) else if nr2 then
              (misc_Append (misc_Append (misc_Append
-               (bvi_tailrec_List [labLang_LabAsm (labLang_JumpCmp c r
-               ri (labLang_Lab n m)) (n2w 0) [] 0]) ys)
+               (bvi_tailrec_List [labLang_LabAsm (asm_JumpCmp c r ri
+               (labLang_Lab n m)) (n2w 0) [] 0]) ys)
               (bvi_tailrec_List [labLang_Label n m 0])) xs,nr1,m +
                 1) else
              (misc_Append (misc_Append (misc_Append (misc_Append
-               (bvi_tailrec_List [labLang_LabAsm (labLang_JumpCmp c r
-               ri (labLang_Lab n m)) (n2w 0) [] 0]) ys)
-              (bvi_tailrec_List [labLang_LabAsm (labLang_Jump
+               (bvi_tailrec_List [labLang_LabAsm (asm_JumpCmp c r ri
+               (labLang_Lab n m)) (n2w 0) [] 0]) ys)
+              (bvi_tailrec_List [labLang_LabAsm (asm_Jump
                 (labLang_Lab n (m + 1))) (n2w 0) [] 0; labLang_Label n
                 m 0])) xs)
               (bvi_tailrec_List [labLang_Label n (m + 1) 0]),(nr1 /\
-                nr2),m + 2)) | stackLang_Loop p1 ->
+                nr2),m + 2)) | word_bignum_Loop p1 ->
          (let cont_lab = m in
          let break_lab = m + 1 in
          let (xs,_2,m) = stack_to_lab_flatten F p1 n (m + 2) (CONS
@@ -117,24 +117,24 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind =
            (misc_Append (misc_Append (bvi_tailrec_List
              [labLang_Label n cont_lab 0])
             xs)
-            (bvi_tailrec_List [labLang_LabAsm (labLang_Jump
-              (labLang_Lab n cont_lab)) (n2w 0) [] 0;
+            (bvi_tailrec_List [labLang_LabAsm (asm_Jump (labLang_Lab
+              n cont_lab)) (n2w 0) [] 0;
                   labLang_Label n break_lab 0]),F,m)) |
                     stackLang_Raise r -> (bvi_tailrec_List [(\a.
                     labLang_Asm (Asmi a)) (asm_JumpReg r) [] 0],T,m) |
                     stackLang_Return r -> (bvi_tailrec_List [(\a.
                     labLang_Asm (Asmi a)) (asm_JumpReg r) [] 0],T,m) |
                     stackLang_Break k -> (bvi_tailrec_List
-                    [labLang_LabAsm (labLang_Jump (labLang_Lab n
-                    (find_lab k breaks))) (n2w 0) [] 0],T,m) |
-                    stackLang_Continue k -> (bvi_tailrec_List
-                    [labLang_LabAsm (labLang_Jump (labLang_Lab n
-                    (find_lab k conts))) (n2w 0) [] 0],T,m) |
-                    stackLang_RawCall n -> (bvi_tailrec_List
-                    [labLang_LabAsm (labLang_Jump (labLang_Lab n 1))
-                    (n2w 0) [] 0],T,m) | labLang_Call NONE dest handler
-                    -> (bvi_tailrec_List [compile_jump dest],T,m) |
-                    labLang_Call (SOME (p1,lr,l1,l2)) dest handler ->
+                    [labLang_LabAsm (asm_Jump (labLang_Lab n (find_lab
+                    k breaks))) (n2w 0) [] 0],T,m) |
+                    word_bignum_Continue k -> (bvi_tailrec_List
+                    [labLang_LabAsm (asm_Jump (labLang_Lab n (find_lab
+                    k conts))) (n2w 0) [] 0],T,m) | stackLang_RawCall n
+                    -> (bvi_tailrec_List [labLang_LabAsm (asm_Jump
+                    (labLang_Lab n 1)) (n2w 0) [] 0],T,m) | asm_Call
+                    NONE dest handler -> (bvi_tailrec_List
+                    [compile_jump dest],T,m) | asm_Call (SOME
+                    (p1,lr,l1,l2)) dest handler ->
          (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts
            breaks in
          let prefix = misc_Append (bvi_tailrec_List [labLang_LabAsm
@@ -145,16 +145,16 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind =
              (let (ys,nr2,m) = stack_to_lab_flatten F p2 n m conts
                breaks in
                (misc_Append prefix (misc_Append (misc_Append
-                 (bvi_tailrec_List [labLang_LabAsm (labLang_Jump
+                 (bvi_tailrec_List [labLang_LabAsm (asm_Jump
                  (labLang_Lab n m)) (n2w 0) [] 0; labLang_Label k1 k2
                  0])
                ys) (bvi_tailrec_List [labLang_Label n m 0])),(nr1 /\
                  nr2),m + 1)))) | stackLang_JumpLower r1 r2 target ->
-         (bvi_tailrec_List [labLang_LabAsm (labLang_JumpCmp
-           asm_Lower r1 (Reg r2) (labLang_Lab target 0)) (n2w 0) []
-           0],F,m) | stackLang_FFI ffi_index _3 _4 _5 _6 lr ->
-           (bvi_tailrec_List [labLang_LabAsm (labLang_LocValue lr
-           (labLang_Lab n m)) (n2w 0) [] 0;
+         (bvi_tailrec_List [labLang_LabAsm (asm_JumpCmp asm_Lower r1
+           (Reg r2) (labLang_Lab target 0)) (n2w 0) [] 0],F,m) |
+           closLang_FFI ffi_index _3 _4 _5 _6 lr -> (bvi_tailrec_List
+           [labLang_LabAsm (labLang_LocValue lr (labLang_Lab n m)) (n2w
+           0) [] 0;
                               labLang_LabAsm (labLang_CallFFI
                                 ffi_index) (n2w 0) [] 0;
                               labLang_Label n m 0],F,m + 1) |

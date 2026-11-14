@@ -473,7 +473,7 @@ let bviProps_take_drop_lem = prove
 let bviProps_evaluate_genlist_vars = prove
  (`!skip env n (st:('c,'ffi)bviSem_state).
     n + skip <= LENGTH env ==>
-    bviSem_evaluate (list_of_seq (\arg. bvl_Var (arg + skip))
+    bviSem_evaluate (list_of_seq (\arg. db_vars_Var (arg + skip))
       n,env,st) =
     (Rval (TAKE n (DROP skip env)),st)`,
   CHEAT_TAC);;
@@ -481,24 +481,24 @@ let bviProps_evaluate_genlist_vars = prove
 let bviProps_get_code_labels_def,bviProps_get_code_labels_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`bviProps_get_code_labels (bvl_Var _2:bvi_exp) = {}`;
-   `bviProps_get_code_labels (bvl_If e1 e2 e3:bvi_exp) =
+  [`bviProps_get_code_labels (bvi_Var _2:bvi_exp) = {}`;
+   `bviProps_get_code_labels (bvi_If e1 e2 e3:bvi_exp) =
   bviProps_get_code_labels e1 UNION bviProps_get_code_labels e2 UNION
   bviProps_get_code_labels e3`;
-   `bviProps_get_code_labels (bvl_Let es e:bvi_exp) = UNIONS
+   `bviProps_get_code_labels (bvi_Let es e:bvi_exp) = UNIONS
   (set_of_list (MAP bviProps_get_code_labels es)) UNION
   bviProps_get_code_labels e`;
-   `bviProps_get_code_labels (bvl_Raise e:bvi_exp) =
+   `bviProps_get_code_labels (bvi_Raise e:bvi_exp) =
   bviProps_get_code_labels e`;
-   `bviProps_get_code_labels (bvl_Tick e:bvi_exp) =
+   `bviProps_get_code_labels (bvi_Tick e:bvi_exp) =
   bviProps_get_code_labels e`;
-   `bviProps_get_code_labels (bvl_Force loc v:bvi_exp) = {loc}`;
-   `bviProps_get_code_labels (bvl_Call _4 d es h:bvi_exp) =
+   `bviProps_get_code_labels (bvi_Force loc v:bvi_exp) = {loc}`;
+   `bviProps_get_code_labels (bvi_Call _4 d es h:bvi_exp) =
         (match d with NONE -> {} | SOME n -> {n}) UNION
         (match h with NONE -> {} | SOME e ->
           bviProps_get_code_labels e) UNION
         UNIONS (set_of_list (MAP bviProps_get_code_labels es))`;
-   `bviProps_get_code_labels (bvl_Op op es:bvi_exp) =
+   `bviProps_get_code_labels (bvi_Op op es:bvi_exp) =
   assign_get_code_label op UNION UNIONS (set_of_list (MAP
   bviProps_get_code_labels es))`;
    `bviProps_get_code_labels (bvi_Return es:bvi_exp) = UNIONS

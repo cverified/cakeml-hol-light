@@ -1476,6 +1476,9 @@ ONE_QUOTATION = set([
 # Inst of wordLang comes later)
 CON_OF = {
   ('stack_remove', 'single_stack_free_def'): {'Inst': 'stackLang'},
+  # the Int of a Build is the const of closLang, not the assoc_op
+  # that bvi_tailrec has of the name
+  ('bvl_to_bvi', 'compile_int_def'): {'Int': 'closLang'},
   # the get_var of this one is dataSem's, which takes the map of
   # the locals itself (the get_var of wordSem and of stackSem take
   # a state, so the port gave var_corr a state as its third

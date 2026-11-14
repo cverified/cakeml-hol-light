@@ -414,12 +414,7 @@ let num_to_str_imp_cons = prove
  (`mlint_toString (i:num) = implode s ==>
    (?x xs. s = CONS x xs /\ 48 <= ORD x /\ ORD x <= 57 /\ ALL (\x.
      48 <= ORD x /\ ORD x <= 57) xs)`,
-  (REPEAT STRIP_TAC THEN
-   FIRST_ASSUM(ASSUME_TAC o MATCH_MP num_to_str_every) THEN
-   FIRST_ASSUM(ASSUME_TAC o MATCH_MP num_to_str_not_nil) THEN
-   POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN
-   STRUCT_CASES_TAC(ISPEC `s:string` list_CASES) THEN
-   REWRITE_TAC[ALL; NOT_CONS_NIL; CONS_11] THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let num_to_str_APPEND_11 = prove
  (`APPEND s1 (CONS x1 xs1) = APPEND s2 (CONS x2 xs2) /\

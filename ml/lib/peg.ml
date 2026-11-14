@@ -27,10 +27,6 @@ let peg_FIELDS = define_record "peg"
    "tokEOF","'e";
    "notFAIL","'e";
    "rules","('b+num,('a,'b,'c,'e)pegsym)fmap"];;
-hol4_field_overload "start" "peg_start";;
-hol4_field_overload "start_fupd" "peg_start_fupd";;
-hol4_field_overload "rules" "peg_rules";;
-hol4_field_overload "rules_fupd" "peg_rules_fupd";;
 
 let pegresult_INDUCT,pegresult_RECURSION = define_datatype
   "pegresult = peg_Success ('a) ('c) ((locs#'e) option) | peg_Failure \
@@ -211,7 +207,7 @@ let subexprs_def,subexprs_ind = define_wf
    `subexprs (peg_rpt e f5) = peg_rpt e f5 INSERT subexprs e`];;
 
 let gexprs_def = new_definition
-  `Gexprs G = UNIONS (IMAGE subexprs (start G INSERT FRANGE
+  `Gexprs G = UNIONS (IMAGE subexprs (peg_start G INSERT FRANGE
   (peg_rules G)))`;;
 
 let wfG_def = new_definition

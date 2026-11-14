@@ -575,12 +575,12 @@ let SmartIf_thm = prove
  (`SmartIf t e p q =
      (if ?t. e = flatLang_Bool t T then p else
      if ?t. e = flatLang_Bool t F then q else
-     pattern_semantics_If t e p q)`,
+     flatLang_If t e p q)`,
   CHEAT_TAC);;
 
 let evaluate_SmartIf = prove
  (`flatSem_evaluate env s [SmartIf t x y z] = flatSem_evaluate env s
-  [pattern_semantics_If t x y z]`,
+  [flatLang_If t x y z]`,
   CHEAT_TAC);;
 
 let decode_guard_simulation = prove

@@ -1,3 +1,4 @@
 int_to_string_thm	PROOF Failure("typechecking error (initial type assignment): num_to_chars has type num->num->num->(char)list->(char)list, it cannot be used with type int")
+num_to_str_imp_cons	NO Failure("typechecking error (initial type assignment): i cannot have type int and num simultaneously") / typechecking error (initial type assignment): i cann
 num_to_str_thm	PROOF Failure("TAC_PROOF: Unsolved goals")
 toString_thm	PROOF Failure("GEN_TAC")

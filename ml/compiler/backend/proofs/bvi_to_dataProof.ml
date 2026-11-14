@@ -485,7 +485,7 @@ let state_rel_do_app_FFI_err = prove
 let evaluate_Return_GENLIST_Var = prove
  (`!rets ret_vs env s'.
      LENGTH ret_vs = rets ==>
-     bviSem_evaluate ([dataLang_Return (list_of_seq bvi_Var
+     bviSem_evaluate ([wordLang_Return (list_of_seq db_vars_Var
        rets)],APPEND ret_vs env,s') =
      (Rerr (Rraise (Ret ret_vs)),s')`,
   CHEAT_TAC);;
@@ -595,12 +595,12 @@ let state_rel_dec_clock = prove
    variables of its own are read as variables *)
 let compile_part_evaluate = prove
  (cake_as_vars (fun () ->
-    `dataSem_evaluate ([dataLang_Call 0 (SOME start) [] NONE],[],s1) =
+    `dataSem_evaluate ([word_depth_Call 0 (SOME start) [] NONE],[],s1) =
   (res,s2) /\ ~(res = Rerr (Rabort Rtype_error)) /\
   bvi_to_dataProof_state_rel s1 t1 /\
      (\t. t = LN) (dataSem_state_locals t1) /\ (!x. res = Rerr
        (Rraise x) ==> ~(dataSem_jump_exc t1 = NONE)) ==> (?r t2.
-        dataSem_evaluate ((dataLang_Call NONE (SOME start) []
+        dataSem_evaluate ((word_depth_Call NONE (SOME start) []
           NONE),t1) = (SOME r,t2) /\
         bvi_to_dataProof_state_rel s2 t2 /\ data_to_bvi_result r
           = res)`),
@@ -615,12 +615,13 @@ let MAP_FST_compile_prog = prove
    variables of its own are read as variables *)
 let compile_prog_evaluate = prove
  (cake_as_vars (fun () ->
-    `dataSem_evaluate ([dataLang_Call 0 (SOME start) [] NONE],[],
+    `dataSem_evaluate ([word_depth_Call 0 (SOME start) [] NONE],[],
        dataSem_initial_state ffi0 (fromAList prog) co (\cfg prog.
          cc cfg (bvi_to_data_compile_prog prog)) k) = (r,s) /\ ~(r =
          Rerr (Rabort Rtype_error)) /\ (!x. ~(r = Rerr (Rraise x))) ==>
          (?r2 s2.
-         dataSem_evaluate (dataLang_Call NONE (SOME start) [] NONE,
+         dataSem_evaluate (word_depth_Call NONE (SOME start) []
+           NONE,
            dataSem_initial_state ffi0 (fromAList
              (bvi_to_data_compile_prog prog)) ((I ##
              bvi_to_data_compile_prog) o co) cc T lims ss k) = (SOME

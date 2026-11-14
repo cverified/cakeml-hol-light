@@ -261,7 +261,7 @@ let max_var_inst_def = new_definition
   `max_var_inst x1 =
         match x1 with
           asm_Skip -> 0
-        | (wordLang_Const reg w) -> reg
+        | (asm_Const reg w) -> reg
         | (asm_Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with Reg r -> max3 r1 r2 r | _8 -> MAX r1 r2)
         | (asm_Arith (asm_Shift shift' r1 r2 n)) ->

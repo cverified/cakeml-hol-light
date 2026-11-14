@@ -86,10 +86,6 @@ let limits_FIELDS = define_record "limits"
    "has_fp_tops","bool"
    (* the arch supports float ops *)
   ];;
-hol4_field_overload "stack_limit" "limits_stack_limit";;
-hol4_field_overload "stack_limit_fupd" "limits_stack_limit_fupd";;
-hol4_field_overload "has_fp_ops" "limits_has_fp_ops";;
-hol4_field_overload "has_fp_ops_fupd" "limits_has_fp_ops_fupd";;
 
 let dataSem_state_FIELDS = define_record "dataSem_state"
   ["locals","dataSem_v spt";
@@ -114,32 +110,6 @@ let dataSem_state_FIELDS = define_record "dataSem_state"
    "safe_for_space","bool";
    "peak_heap_length","num";
    "compile_oracle","num->'c#(num#num#dataLang_prog) list"];;
-hol4_overload "state_locals" "dataSem_state_locals";;
-hol4_overload "state_locals_fupd" "dataSem_state_locals_fupd";;
-hol4_overload "state_locals_size" "dataSem_state_locals_size";;
-hol4_overload "state_locals_size_fupd"
-  "dataSem_state_locals_size_fupd";;
-hol4_field_overload "stack" "dataSem_state_stack";;
-hol4_field_overload "stack_fupd" "dataSem_state_stack_fupd";;
-hol4_overload "state_stack_max" "dataSem_state_stack_max";;
-hol4_overload "state_stack_max_fupd" "dataSem_state_stack_max_fupd";;
-hol4_overload "state_global" "dataSem_state_global";;
-hol4_overload "state_global_fupd" "dataSem_state_global_fupd";;
-hol4_overload "state_handler" "dataSem_state_handler";;
-hol4_overload "state_handler_fupd" "dataSem_state_handler_fupd";;
-hol4_overload "state_refs" "dataSem_state_refs";;
-hol4_overload "state_refs_fupd" "dataSem_state_refs_fupd";;
-hol4_field_overload "compile" "dataSem_state_compile";;
-hol4_field_overload "compile_fupd" "dataSem_state_compile_fupd";;
-hol4_overload "state_clock" "dataSem_state_clock";;
-hol4_overload "state_clock_fupd" "dataSem_state_clock_fupd";;
-hol4_overload "state_code" "dataSem_state_code";;
-hol4_overload "state_code_fupd" "dataSem_state_code_fupd";;
-hol4_overload "state_ffi" "dataSem_state_ffi";;
-hol4_overload "state_ffi_fupd" "dataSem_state_ffi_fupd";;
-hol4_field_overload "compile_oracle" "dataSem_state_compile_oracle";;
-hol4_field_overload "compile_oracle_fupd"
-  "dataSem_state_compile_oracle_fupd";;
 
 (* HOL4 dataSemScript.sml:76-77: the ML values that the definitions
    below antiquote *)
@@ -838,16 +808,16 @@ let lim_safe_def = new_definition
       (1 < limits_length_limit lims)
         | ((closLang_WordOp (WordFromWord _93)),_94) ->
       (1 < limits_length_limit lims)
-        | ((closLang_WordOp (FP_cmp _95)),_96) -> has_fp_ops
+        | ((closLang_WordOp (FP_cmp _95)),_96) -> limits_has_fp_ops
       lims
         | ((closLang_WordOp (FP_uop _97)),_98) ->
-      (has_fp_ops lims /\ (limits_arch_64_bit lims \/ 1 <
+      (limits_has_fp_ops lims /\ (limits_arch_64_bit lims \/ 1 <
         limits_length_limit lims))
         | ((closLang_WordOp (FP_bop _99)),_100) ->
-      (has_fp_ops lims /\ (limits_arch_64_bit lims \/ 1 <
+      (limits_has_fp_ops lims /\ (limits_arch_64_bit lims \/ 1 <
         limits_length_limit lims))
         | ((closLang_WordOp (FP_top _101)),_102) ->
-      (has_fp_ops lims /\ limits_has_fp_tops lims /\
+      (limits_has_fp_ops lims /\ limits_has_fp_tops lims /\
         (limits_arch_64_bit lims \/ 1 < limits_length_limit lims))
         | (_103,_104) -> T`;;
 
@@ -1555,29 +1525,31 @@ let set_var_def = new_definition
   (sptree_insert v x (dataSem_state_locals s))) s)`;;
 
 let dataSem_dec_clock_def = new_definition
-  `dataSem_dec_clock s = state_clock_fupd (K (state_clock s - 1)) s`;;
+  `dataSem_dec_clock s = dataSem_state_clock_fupd (K
+  (dataSem_state_clock s - 1)) s`;;
 
 let dataSem_fix_clock_def = new_definition
-  `dataSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
-  (state_clock s) (state_clock s1))) s1)`;;
+  `dataSem_fix_clock s (res,s1) = (res,dataSem_state_clock_fupd (K
+  (MIN (dataSem_state_clock s) (dataSem_state_clock s1))) s1)`;;
 
 (* fix_clock_IMP[local] *)
 let dataSem_fix_clock_IMP = prove
- (`dataSem_fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock
-  s`,
+ (`dataSem_fix_clock s x = (res,s1) ==> dataSem_state_clock s1 <=
+  dataSem_state_clock s`,
   CHEAT_TAC);;
 
 (* LESS_EQ_dec_clock[local] *)
 let dataSem_LESS_EQ_dec_clock = prove
- (`state_clock
-     r <= state_clock (dataSem_dec_clock s) ==> state_clock r <=
-       state_clock s`,
+ (`dataSem_state_clock
+     r <= dataSem_state_clock (dataSem_dec_clock s) ==>
+       dataSem_state_clock r <= dataSem_state_clock s`,
   CHEAT_TAC);;
 
 let flush_state_def = define_general
   [`dataSem_flush_state T (s:('c,'ffi)dataSem_state) =
-  dataSem_state_locals_size_fupd (K (SOME 0)) (stack_fupd (K [])
-  (dataSem_state_locals_fupd (K LN) s))`;
+  dataSem_state_locals_size_fupd (K (SOME 0))
+  (dataSem_state_stack_fupd (K []) (dataSem_state_locals_fupd (K LN)
+  s))`;
    `dataSem_flush_state F (s:('c,'ffi)dataSem_state) =
   dataSem_state_locals_size_fupd (K (SOME 0))
   (dataSem_state_locals_fupd (K LN) s)`];;
@@ -1599,27 +1571,28 @@ let call_env_def = new_definition
 let push_env_def = define_general
   [`dataSem_push_env env F (s:('c,'ffi)dataSem_state) =
         (let stack' = CONS (dataSem_Env (dataSem_state_locals_size
-          s) env) (stack s) in let
+          s) env) (dataSem_state_stack s) in let
             stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
               (size_of_stack stack') in let
             stack_safe = the F (OPTION_MAP ((>)
               (limits_stack_limit (dataSem_state_limits s)))
               stack_max) in dataSem_state_safe_for_space_fupd (K
               (dataSem_state_safe_for_space s /\ stack_safe))
-              (dataSem_state_stack_max_fupd (K stack_max) (stack_fupd
-              (K stack') s)))`;
+              (dataSem_state_stack_max_fupd (K stack_max)
+              (dataSem_state_stack_fupd (K stack') s)))`;
    `dataSem_push_env env T (s:('c,'ffi)dataSem_state) =
        (let stack' = CONS (dataSem_Exc (dataSem_state_locals_size s)
-         env (dataSem_state_handler s)) (stack s) in let
+         env (dataSem_state_handler s)) (dataSem_state_stack s) in let
            stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
              (size_of_stack stack') in let
            stack_safe = the F (OPTION_MAP ((>)
              (limits_stack_limit (dataSem_state_limits s)))
              stack_max) in dataSem_state_safe_for_space_fupd (K
              (dataSem_state_safe_for_space s /\ stack_safe))
-             (dataSem_state_handler_fupd (K (LENGTH (stack s)))
+             (dataSem_state_handler_fupd (K (LENGTH
+             (dataSem_state_stack s)))
              (dataSem_state_stack_max_fupd (K stack_max)
-             (stack_fupd (K stack') s))))`];;
+             (dataSem_state_stack_fupd (K stack') s))))`];;
 
 let pop_env_def = new_definition
   `dataSem_pop_env (s:('c,'ffi)dataSem_state) =
@@ -1663,13 +1636,14 @@ let cut_state_opt_def = new_definition
 
 (* [local] *)
 let pop_env_clock = prove
- (`(dataSem_pop_env s = SOME s1) ==> (state_clock s1 = state_clock s)`,
+ (`(dataSem_pop_env s = SOME s1) ==> (dataSem_state_clock s1 =
+  dataSem_state_clock s)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let push_env_clock = prove
- (`state_clock
-     (dataSem_push_env env b s) = state_clock s`,
+ (`dataSem_state_clock
+     (dataSem_push_env env b s) = dataSem_state_clock s`,
   CHEAT_TAC);;
 
 let dataSem_find_code_def = define_cases
@@ -1743,7 +1717,7 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
                        (NONE,dataSem_set_var dest v (install_sfs
                          op s)))))`;
    `dataSem_evaluate ((dataLang_Tick:dataLang_prog),s) =
-         (if state_clock s = 0 then (SOME (Rerr (Rabort
+         (if dataSem_state_clock s = 0 then (SOME (Rerr (Rabort
            Rtimeout_error)),dataSem_flush_state T s) else
            (NONE,dataSem_dec_clock s))`;
    `dataSem_evaluate (dataLang_MakeSpace k names,s) =
@@ -1778,10 +1752,10 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
          (match dataSem_get_var src (dataSem_state_locals s) with
            NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME thunk_v
            ->
-           (match dataSem_dest_thunk thunk_v (state_refs s) with
-             dataSem_BadRef -> (SOME (Rerr (Rabort Rtype_error)),s) |
-             dataSem_NotThunk -> (SOME (Rerr (Rabort Rtype_error)),s) |
-             dataSem_IsThunk Evaluated v ->
+           (match dataSem_dest_thunk thunk_v (dataSem_state_refs s)
+             with dataSem_BadRef -> (SOME (Rerr (Rabort Rtype_error)),s)
+             | dataSem_NotThunk -> (SOME (Rerr (Rabort Rtype_error)),s)
+             | dataSem_IsThunk Evaluated v ->
               (match ret with NONE -> (SOME (Rval
                 [v]),dataSem_flush_state F s) | SOME (dest,names) ->
                  (match dataSem_cut_env names (dataSem_state_locals
@@ -1790,14 +1764,14 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
                    (dataSem_state_locals_fupd (K env) s)))) |
                    dataSem_IsThunk NotEvaluated f ->
                (match dataSem_find_code (SOME loc) [thunk_v; f]
-                 (state_code s) (dataSem_state_stack_frame_sizes s) with
-                 NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME
-                 (args1,prog,ss) ->
+                 (dataSem_state_code s) (dataSem_state_stack_frame_sizes
+                 s) with NONE -> (SOME (Rerr (Rabort Rtype_error)),s) |
+                 SOME (args1,prog,ss) ->
                   (match ret with NONE ->
-                      (if state_clock s = 0 then
+                      (if dataSem_state_clock s = 0 then
                          (SOME (Rerr (Rabort
                            Rtimeout_error)),dataSem_state_locals_fupd (K
-                           LN) (stack_fupd (K [])
+                           LN) (dataSem_state_stack_fupd (K [])
                               s)) else
                          (match dataSem_evaluate
                            (prog,dataSem_call_env args1 ss
@@ -1810,11 +1784,11 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
                           (let s1 = dataSem_call_env args1 ss
                             (dataSem_push_env env F (dataSem_dec_clock
                             s)) in
-                            if state_clock s = 0 then
+                            if dataSem_state_clock s = 0 then
                               (SOME (Rerr (Rabort
                                 Rtimeout_error))
                                 ,dataSem_state_locals_fupd (K LN)
-                                (stack_fupd (K [])
+                                (dataSem_state_stack_fupd (K [])
                               s1)) else
                               (match dataSem_fix_clock s1
                                 (dataSem_evaluate (prog,s1)) with (SOME
@@ -1832,14 +1806,14 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
   handler:dataLang_prog),s) =
          (match dataSem_get_vars args (dataSem_state_locals s) with
            NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
-           (match dataSem_find_code dest xs (state_code s)
+           (match dataSem_find_code dest xs (dataSem_state_code s)
              (dataSem_state_stack_frame_sizes s) with NONE -> (SOME
              (Rerr (Rabort Rtype_error)),s) | SOME (args1,prog,ss) ->
               (match ret with NONE ->
                  // tail call
                  (if handler = NONE then
-                   if state_clock s = 0 then (SOME (Rerr (Rabort
-                     Rtimeout_error)),
+                   if dataSem_state_clock s = 0 then (SOME (Rerr
+                     (Rabort Rtimeout_error)),
                          dataSem_flush_state T s) else
                      (match dataSem_evaluate (prog,dataSem_call_env
                        args1 ss (dataSem_dec_clock s)) with (NONE,s) ->
@@ -1854,10 +1828,11 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
                    | SOME env ->
                     (let s1 = dataSem_call_env args1 ss
                             (dataSem_push_env env (IS_SOME handler)
-                              (dataSem_dec_clock s)) in if state_clock s
-                              = 0 then (SOME (Rerr (Rabort
+                              (dataSem_dec_clock s)) in if
+                              dataSem_state_clock s = 0 then (SOME (Rerr
+                              (Rabort
                               Rtimeout_error)),dataSem_state_locals_fupd
-                              (K LN) (stack_fupd (K [])
+                              (K LN) (dataSem_state_stack_fupd (K [])
                             s1)) else (match dataSem_fix_clock s1
                               (dataSem_evaluate (prog,s1)) with (SOME
                               (Rval xs),s2) ->
@@ -1894,25 +1869,25 @@ let evaluate_peak_def = new_definition
    the value of an ML expression: case_eq_thms *)
 
 let do_stack_clock = prove
- (`state_clock
-      (do_stack op args s1) = state_clock s1`,
+ (`dataSem_state_clock
+      (do_stack op args s1) = dataSem_state_clock s1`,
   CHEAT_TAC);;
 
 let do_app_clock = prove
- (`(dataSem_do_app op args s1 = Rval (res,s2)) ==> state_clock s2 <=
-  state_clock s1`,
+ (`(dataSem_do_app op args s1 = Rval (res,s2)) ==> dataSem_state_clock
+  s2 <= dataSem_state_clock s1`,
   CHEAT_TAC);;
 
 (* [local,simp] *)
 let set_vars_clock = prove
- (`state_clock
-     (dataSem_set_vars ns vs s) = state_clock s`,
+ (`dataSem_state_clock
+     (dataSem_set_vars ns vs s) = dataSem_state_clock s`,
   CHEAT_TAC);;
 
 (* evaluate_clock *)
 let dataSem_evaluate_clock = prove
- (`!xs s1 vs s2. (dataSem_evaluate (xs,s1) = (vs,s2)) ==> state_clock
-  s2 <= state_clock s1`,
+ (`!xs s1 vs s2. (dataSem_evaluate (xs,s1) = (vs,s2)) ==>
+  dataSem_state_clock s2 <= dataSem_state_clock s1`,
   CHEAT_TAC);;
 
 (* fix_clock_evaluate *)
@@ -1939,7 +1914,7 @@ let dataSem_initial_state_def = new_definition
 
 let dataSem_semantics_def = new_definition
   `dataSem_semantics init_ffi code coracle cc lims ss start' =
-   (let p = dataLang_Call NONE (SOME start') [] NONE in
+   (let p = word_depth_Call NONE (SOME start') [] NONE in
    let init = dataSem_initial_state init_ffi code coracle cc T lims
      ss in
      if ?k. match FST (dataSem_evaluate (p,init k)) with SOME (Rerr
@@ -1951,19 +1926,19 @@ let dataSem_semantics_def = new_definition
          (match r with Rerr (Rabort (Rffi_error e)) -> outcome =
            ffi_FFI_outcome e | Rval _202 -> outcome = ffi_Success | _203
            -> F) /\
-         res = ffi_Terminate outcome (ffi_state_io_events (state_ffi
-           s))) with SOME res -> res | NONE ->
+         res = ffi_Terminate outcome (ffi_state_io_events
+           (dataSem_state_ffi s))) with SOME res -> res | NONE ->
         ffi_Diverge
           (build_lprefix_lub
             (IMAGE (\k. sptree_fromList (ffi_state_io_events
-              (state_ffi (SND (dataSem_evaluate (p,init k))))))
-              UNIV)))`;;
+              (dataSem_state_ffi (SND (dataSem_evaluate (p,init
+              k)))))) UNIV)))`;;
 
 let data_lang_safe_for_space_def = new_definition
   `data_lang_safe_for_space init_ffi code (lims:limits) (ss:num spt)
   start' =
      (!ck.
-       let p = dataLang_Call NONE (SOME start') [] NONE in
+       let p = word_depth_Call NONE (SOME start') [] NONE in
        let init = dataSem_initial_state init_ffi code ARB ARB T lims
          ss in
        let (res,s) = dataSem_evaluate (p,((init

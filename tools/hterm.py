@@ -1143,6 +1143,8 @@ class Ctx:
     self.con_argty = con_argty or {}  # (con,index) -> type text
     self.overloaded = overloaded or set()  # names HOL4 overloads
     self.resolve = None    # what such a name means here
+    self.accessor_names = {}   # and what a record accessor means
+    self.arity = None      # how many arguments a name has here
     self.defnames = defnames or set()  # the constants in scope
     self.defining = set()        # the names of the block being made
     self.fields = fields or {}   # field name -> record type name
@@ -1247,6 +1249,10 @@ class Ctx:
         and n not in self.names and n not in self.defnames):
       cs = self.case_name(n)
       if cs: return cs
+    # the accessor of a record field, which HOL4 calls after the
+    # record (state_clock of a state) and several theories have:
+    # the record block of the theory that defines it says which
+    if n in self.accessor_names: return self.accessor_names[n]
     return self.names.get((self.thy, n), self.names.get(n, n))
 
   def tyname(self, n):
@@ -1288,7 +1294,11 @@ class Ctx:
     if (f in self.ambfields and f not in self.fields
         and self.ambfields[f] not in self.hidden):
       AMBUSE.append((self.thy, f, self.ambfields[f]))
-      return self.ambfields[f]
+      # HOL4 calls the accessor after the record (state_clock of
+      # a state) and several theories have a record of the name;
+      # the port writes the one this theory means
+      a = self.ambfields[f]
+      return self.accessor_names.get(a, a)
     if f in self.fields: return self.fields[f] + '_' + f
     self.warn.append(f'unknown record field {f}')
     return '?_' + f
@@ -2034,7 +2044,12 @@ class Printer:
       elif hop.kind == 'id':
         self.numctx = False
       if hop.kind == 'id':
+        # how many arguments the name has here says which
+        # constant it is where several theories have the name
+        # (word_depth's Call takes two and wordLang's four)
+        self.ctx.arity = len(args)
         n = self.ctx.name(hop.name)
+        self.ctx.arity = None
         if n in ARGPERM:
           # a permutation of a prefix of the arguments holds for
           # a partial application of that many as well (FUNPOW f

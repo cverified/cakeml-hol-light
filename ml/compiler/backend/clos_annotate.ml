@@ -2,7 +2,7 @@
 (*  clos_annotate: ported from HOL4's
     compiler/backend/clos_annotateScript.sml
     A definition theory, with 13 definitions and 15 theorems.
-    Needed by bvlSem.ml, clos_annotateProof.ml and clos_to_bvl.ml.  *)
+    Needed by clos_annotateProof.ml and clos_to_bvl.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -45,8 +45,8 @@ let alt_free_def,alt_free_ind = assume_definition_rec
          (let (c1,l1) = alt_free [x] in
          let (c2,l2) = alt_free (CONS y xs) in
            (APPEND c1 c2,mk_Union l1 l2))`;
-   `alt_free [(db_vars_Var t v:closLang_exp)] = ([(db_vars_Var t
-  v:closLang_exp)],db_vars_Var v)`;
+   `alt_free [(closLang_Var t v:closLang_exp)] = ([(closLang_Var t
+  v:closLang_exp)],closLang_Var v)`;
    `alt_free [(closLang_If t x1 x2 x3:closLang_exp)] =
          (let (c1,l1) = alt_free [x1] in
          let (c2,l2) = alt_free [x2] in
@@ -105,8 +105,8 @@ let alt_free_def,alt_free_ind = assume_definition_rec
 
 let alt_free_sing_def,alt_free_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`alt_free_sing (db_vars_Var t v:closLang_exp) = ((db_vars_Var t
-  v:closLang_exp),db_vars_Var v)`;
+  [`alt_free_sing (closLang_Var t v:closLang_exp) = ((closLang_Var t
+  v:closLang_exp),closLang_Var v)`;
    `alt_free_sing (closLang_If t x1 x2 x3:closLang_exp) =
          (let (c1,l1) = alt_free_sing x1 in
          let (c2,l2) = alt_free_sing x2 in
@@ -229,9 +229,9 @@ let shift_def,shift_ind = assume_definition_rec
          (let c1 = clos_annotate_shift [x] m l i in
          let c2 = clos_annotate_shift (CONS y xs) m l i in
            (APPEND c1 (c2:closLang_exp list)))`;
-   `clos_annotate_shift [(db_vars_Var t v:closLang_exp)] (m:num) (l:num)
-  (i:num spt) =
-         [db_vars_Var t (clos_annotate_get_var m l i v)]`;
+   `clos_annotate_shift [(closLang_Var t v:closLang_exp)] (m:num)
+  (l:num) (i:num spt) =
+         [closLang_Var t (clos_annotate_get_var m l i v)]`;
    `clos_annotate_shift [(closLang_If t x1 x2 x3:closLang_exp)] (m:num)
   (l:num) (i:num spt) =
          (let c1 = clos_annotate_shift [x1] m l i in
@@ -294,9 +294,9 @@ let shift_def,shift_ind = assume_definition_rec
 
 let shift_sing_def,shift_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`shift_sing (db_vars_Var t v:closLang_exp) (m:num) (l:num) (i:num
+  [`shift_sing (closLang_Var t v:closLang_exp) (m:num) (l:num) (i:num
   spt) =
-         db_vars_Var t (clos_annotate_get_var m l i v)`;
+         closLang_Var t (clos_annotate_get_var m l i v)`;
    `shift_sing (closLang_If t x1 x2 x3:closLang_exp) (m:num) (l:num)
   (i:num spt) =
          (let c1 = shift_sing x1 m l i in

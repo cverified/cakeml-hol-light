@@ -253,51 +253,6 @@ let wordSem_state_FIELDS = define_record "wordSem_state"
    "be","bool";
    (*is big-endian*)
    "ffi","'ffi ffi_state"];;
-hol4_overload "state_locals" "wordSem_state_locals";;
-hol4_overload "state_locals_fupd" "wordSem_state_locals_fupd";;
-hol4_overload "state_locals_size" "wordSem_state_locals_size";;
-hol4_overload "state_locals_size_fupd"
-  "wordSem_state_locals_size_fupd";;
-hol4_field_overload "fp_regs" "wordSem_state_fp_regs";;
-hol4_field_overload "fp_regs_fupd" "wordSem_state_fp_regs_fupd";;
-hol4_overload "state_store" "wordSem_state_store";;
-hol4_overload "state_store_fupd" "wordSem_state_store_fupd";;
-hol4_field_overload "stack" "wordSem_state_stack";;
-hol4_field_overload "stack_fupd" "wordSem_state_stack_fupd";;
-hol4_field_overload "stack_limit" "wordSem_state_stack_limit";;
-hol4_field_overload "stack_limit_fupd"
-  "wordSem_state_stack_limit_fupd";;
-hol4_overload "state_stack_max" "wordSem_state_stack_max";;
-hol4_overload "state_stack_max_fupd" "wordSem_state_stack_max_fupd";;
-hol4_overload "state_memory" "wordSem_state_memory";;
-hol4_overload "state_memory_fupd" "wordSem_state_memory_fupd";;
-hol4_overload "state_mdomain" "wordSem_state_mdomain";;
-hol4_overload "state_mdomain_fupd" "wordSem_state_mdomain_fupd";;
-hol4_overload "state_sh_mdomain" "wordSem_state_sh_mdomain";;
-hol4_overload "state_sh_mdomain_fupd" "wordSem_state_sh_mdomain_fupd";;
-hol4_field_overload "compile" "wordSem_state_compile";;
-hol4_field_overload "compile_fupd" "wordSem_state_compile_fupd";;
-hol4_field_overload "compile_oracle" "wordSem_state_compile_oracle";;
-hol4_field_overload "compile_oracle_fupd"
-  "wordSem_state_compile_oracle_fupd";;
-hol4_overload "state_code_buffer" "wordSem_state_code_buffer";;
-hol4_overload "state_code_buffer_fupd"
-  "wordSem_state_code_buffer_fupd";;
-hol4_overload "state_data_buffer" "wordSem_state_data_buffer";;
-hol4_overload "state_data_buffer_fupd"
-  "wordSem_state_data_buffer_fupd";;
-hol4_overload "state_gc_fun" "wordSem_state_gc_fun";;
-hol4_overload "state_gc_fun_fupd" "wordSem_state_gc_fun_fupd";;
-hol4_overload "state_handler" "wordSem_state_handler";;
-hol4_overload "state_handler_fupd" "wordSem_state_handler_fupd";;
-hol4_overload "state_clock" "wordSem_state_clock";;
-hol4_overload "state_clock_fupd" "wordSem_state_clock_fupd";;
-hol4_overload "state_code" "wordSem_state_code";;
-hol4_overload "state_code_fupd" "wordSem_state_code_fupd";;
-hol4_field_overload "be" "wordSem_state_be";;
-hol4_field_overload "be_fupd" "wordSem_state_be_fupd";;
-hol4_overload "state_ffi" "wordSem_state_ffi";;
-hol4_overload "state_ffi_fupd" "wordSem_state_ffi_fupd";;
 
 let stack_size_frame_def = new_definition
   `stack_size_frame x1 =
@@ -537,7 +492,7 @@ let sh_mem_set_var_def = new_definition
         | (_40,s) -> (SOME wordSem_Error,s)`;;
 
 let share_inst_def = define_cases
-  [`share_inst (wordLang_Load:memop) v ad s = sh_mem_set_var
+  [`share_inst (asm_Load:memop) v ad s = sh_mem_set_var
   (wordSem_sh_mem_load ad s) v s`;
    `share_inst asm_Load8 v ad s = sh_mem_set_var
   (wordSem_sh_mem_load_byte ad s) v s`;
@@ -545,9 +500,9 @@ let share_inst_def = define_cases
   (wordSem_sh_mem_load16 ad s) v s`;
    `share_inst (asm_Load32:memop) v ad s = sh_mem_set_var
   (wordSem_sh_mem_load32 ad s) v s`;
-   `share_inst (wordLang_Store:memop) v ad s = (match wordSem_get_var
-  v s with SOME (wordLang_Word v) -> wordSem_sh_mem_store ad v s |
-  _47 -> (SOME wordSem_Error,s))`;
+   `share_inst (asm_Store:memop) v ad s = (match wordSem_get_var v s
+  with SOME (wordLang_Word v) -> wordSem_sh_mem_store ad v s | _47 ->
+  (SOME wordSem_Error,s))`;
    `share_inst asm_Store8 v ad s = (match wordSem_get_var v s with
   SOME (wordLang_Word v) -> wordSem_sh_mem_store_byte ad v s | _48 ->
   (SOME wordSem_Error,s))`;
@@ -586,9 +541,8 @@ let key_val_compare_def = new_definition
        (a = a' /\
          (match b with
            wordLang_Word x -> (match b' with wordLang_Word y -> x
-             <= y | _53 -> T) | wordLang_Loc a b -> (match b' with
-             wordLang_Loc a' b' -> (a > a') \/ (a = a' /\ b >= b') |
-             _54 -> F))))`;;
+             <= y | _53 -> T) | asm_Loc a b -> (match b' with asm_Loc
+             a' b' -> (a > a') \/ (a = a' /\ b >= b') | _54 -> F))))`;;
 
 (*
 EVAL ``key_val_compare (1,Loc 3 4) (1,Loc 1 2)``
@@ -1184,10 +1138,10 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
            (match wordSem_jump_exc s with NONE -> (SOME
              wordSem_Error,s) | SOME (s,l1,l2) -> (SOME
              (wordSem_Exception (wordLang_Loc l1 l2) w)),s))`;
-   `wordSem_evaluate (wordLang_Break k,s) = (SOME (wordSem_Break
+   `wordSem_evaluate (wordLang_Break k,s) = (SOME (wordLang_Break
   k),s)`;
    `wordSem_evaluate (wordLang_Continue k,s) = (SOME
-  (wordSem_Continue k),s)`;
+  (wordLang_Continue k),s)`;
    `wordSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
         (match (wordSem_get_var r1 s,wordSem_get_var_imm ri s) with
           (SOME x,SOME y) ->
@@ -1206,7 +1160,7 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
                     wordSem_evaluate (wordSem_STOP ((wordLang_Loop
                       names c exit_names:'a
                       wordLang_prog)),wordSem_dec_clock s1)) else if res
-                      = SOME (wordSem_Break 0) then
+                      = SOME (wordLang_Break 0) then
                  match wordSem_cut_state (exit_names,LN) s1 with
                    NONE -> (SOME wordSem_Error,s1) | SOME s2 ->
                    (NONE,s2) else (wordSem_exit_loop res,s1)))`;
@@ -1368,10 +1322,10 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
                                 n y s2) else (SOME
                                 wordSem_Error,s2)))) | (NONE,s) ->
                                 (SOME wordSem_Error,s) | (SOME
-                                (wordSem_Break _157),s) -> (SOME
+                                (wordLang_Break _157),s) -> (SOME
                                 wordSem_Error,s) | (SOME
-                                (wordSem_Continue _158),s) -> (SOME
-                                wordSem_Error,s) | res ->
+                                (wordLang_Continue _158),s) ->
+                                (SOME wordSem_Error,s) | res ->
                                 res)))))))`];;
 
 (* We prove that the clock never increases and that termdep is constant. *)

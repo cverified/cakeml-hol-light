@@ -427,9 +427,6 @@ let lab_to_target_config_FIELDS = define_record "lab_to_target_config"
    "ffi_names","(ffiname list) option";
    "shmem_extra","shmem_info_num list";
    "hash_size","num"];;
-hol4_field_overload "ffi_names" "lab_to_target_config_ffi_names";;
-hol4_field_overload "ffi_names_fupd"
-  "lab_to_target_config_ffi_names_fupd";;
 
 let list_add_if_fresh_def,list_add_if_fresh_ind = define_rec
   [`list_add_if_fresh e [] = [e]`;

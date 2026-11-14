@@ -313,7 +313,7 @@ let try_update_twice = prove
 
 (* [simp] *)
 let index_of_simp = prove
- (`index_of exp = SOME n <=> exp = bvi_Var n`,
+ (`index_of exp = SOME n <=> exp = db_vars_Var n`,
   CHEAT_TAC);;
 
 let scan_expr_ty_rel = prove
@@ -721,7 +721,7 @@ let evaluate_rewrite_tail = prove
                (let (lr,x) = rewrite loc n op acc ts (HD xs) in
                  ?rrr t1 t2.
                  bviSem_evaluate ([x],env2,s') = (rrr,t1) /\
-                 bviSem_evaluate ([apply_op op (bvi_Var acc) (HD
+                 bviSem_evaluate ([apply_op op (db_vars_Var acc) (HD
                    xs)],
                    env2,s') = (rrr,t2) /\
                  bvi_tailrecProof_state_rel t t1 /\

@@ -280,7 +280,7 @@ let evaluate_genlist_prev_args = prove
  (`!prev_args z x tag arg_list st.
      bvlSem_evaluate (REVERSE (list_of_seq (\prev_arg.
        (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
-         (closLang_Var (LENGTH x)) (prev_arg + LENGTH z)) (LENGTH
+         (db_vars_Var (LENGTH x)) (prev_arg + LENGTH z)) (LENGTH
          prev_args)),APPEND x (CONS (bvlSem_Block tag (APPEND z
          prev_args)) arg_list),
             st) =
@@ -292,7 +292,7 @@ let evaluate_genlist_prev_args1_simpl = prove
  (`!prev_args x y tag p n cl a st.
      bvlSem_evaluate (REVERSE (list_of_seq (\prev_arg.
        (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
-         (closLang_Var 3) (prev_arg + 3)) (LENGTH prev_args)),
+         (db_vars_Var 3) (prev_arg + 3)) (LENGTH prev_args)),
             [x; y; a; (bvlSem_Block tag (CONS p (CONS n (CONS cl
               prev_args))):bvlSem_v)],
             st) =
@@ -304,7 +304,7 @@ let evaluate_genlist_prev_args_no_rev = prove
  (`!prev_args z x tag arg_list st.
      bvlSem_evaluate (list_of_seq (\prev_arg.
        (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
-         (closLang_Var (LENGTH x)) (prev_arg + LENGTH z)) (LENGTH
+         (db_vars_Var (LENGTH x)) (prev_arg + LENGTH z)) (LENGTH
          prev_args),APPEND x (CONS (bvlSem_Block tag (APPEND z
          prev_args)) arg_list),
             st) =
@@ -316,7 +316,7 @@ let evaluate_genlist_prev_args1_no_rev = prove
  (`!prev_args x tag p n cl args st.
      bvlSem_evaluate (list_of_seq (\prev_arg.
        (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
-         (closLang_Var (LENGTH args + 1)) (prev_arg + 3)) (LENGTH
+         (db_vars_Var (LENGTH args + 1)) (prev_arg + 3)) (LENGTH
          prev_args),CONS x (APPEND args [bvlSem_Block tag (CONS p (CONS
          n (CONS cl prev_args)))]),
             st) =
@@ -332,7 +332,7 @@ let evaluate_partial_app_fn_location_code = prove
       bvlSem_evaluate
         ([partial_app_fn_location_code max_app
                 ((\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
-                  [b]) (closLang_Var (LENGTH args + 1)) 1)
+                  [b]) (db_vars_Var (LENGTH args + 1)) 1)
                 (closLang_Op (closLang_IntOp (closLang_Const (&n)))
                   [])],
          (CONS x (APPEND args [bvlSem_Block tag (CONS ptr (CONS
@@ -466,9 +466,9 @@ let evaluate_generic_app_full = prove
                         [v],st') ->
              (match
                 bvlSem_evaluate
-                  ([mk_cl_call (closLang_Var 0) (list_of_seq (\n.
-                    closLang_Var (n + 3)) (n - rem_args))],APPEND (CONS
-                    v (CONS (bvlSem_Number (&rem_args)) (CONS
+                  ([mk_cl_call (db_vars_Var 0) (list_of_seq (\n.
+                    db_vars_Var (n + 3)) (n - rem_args))],APPEND (CONS v
+                    (CONS (bvlSem_Number (&rem_args)) (CONS
                     (bvlSem_Number (&rem_args - &(LENGTH args)))
                        args))) [bvlSem_Block tag (CONS
                          (bvlSem_CodePtr l) (CONS (bvlSem_Number
@@ -480,21 +480,21 @@ let evaluate_generic_app_full = prove
 (* [local] *)
 let mk_cl_lem = prove
  (`l < LENGTH env ==>
-    bvlSem_evaluate (list_of_seq (\n. closLang_Var (n + 3)) l,CONS a
+    bvlSem_evaluate (list_of_seq (\n. db_vars_Var (n + 3)) l,CONS a
       (CONS b (CONS c env)),st) =
-    bvlSem_evaluate (list_of_seq (\n. closLang_Var (n + 1)) l,CONS
-      a env,st)`,
+    bvlSem_evaluate (list_of_seq (\n. db_vars_Var (n + 1)) l,CONS a
+      env,st)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_mk_cl_simpl = prove
- (`bvlSem_evaluate ([mk_cl_call (closLang_Var 0) (list_of_seq (\n.
-  closLang_Var (n + 3)) (LENGTH args' - (n + 1)))],CONS v (CONS a (CONS
-  b (APPEND args' [bvlSem_Block tag (CONS (bvlSem_CodePtr p) (CONS
+ (`bvlSem_evaluate ([mk_cl_call (db_vars_Var 0) (list_of_seq (\n.
+  db_vars_Var (n + 3)) (LENGTH args' - (n + 1)))],CONS v (CONS a (CONS b
+  (APPEND args' [bvlSem_Block tag (CONS (bvlSem_CodePtr p) (CONS
   (bvlSem_Number (&n)) xs))]))),
                               st') =
-    bvlSem_evaluate ([mk_cl_call (closLang_Var 0) (list_of_seq (\n.
-      closLang_Var (n + 1)) (LENGTH args' - (n + 1)))],CONS v (APPEND
+    bvlSem_evaluate ([mk_cl_call (db_vars_Var 0) (list_of_seq (\n.
+      db_vars_Var (n + 1)) (LENGTH args' - (n + 1)))],CONS v (APPEND
       args' [bvlSem_Block tag (CONS (bvlSem_CodePtr p) (CONS
       (bvlSem_Number (&n)) xs))]),
                               st')`,
@@ -527,8 +527,8 @@ let evaluate_mk_cl_call = prove
             (CONS (bvlSem_Number (&n)) xs))],
                       bvlSem_dec_clock (n + 2) s) with (Rval [v],st')
                         ->
-                 (match bvlSem_evaluate ([mk_cl_call (closLang_Var 0)
-                   (list_of_seq (\n. closLang_Var (n + 1)) (LENGTH args'
+                 (match bvlSem_evaluate ([mk_cl_call (db_vars_Var 0)
+                   (list_of_seq (\n. db_vars_Var (n + 1)) (LENGTH args'
                    - (n + 1)))],CONS v (APPEND args' [bvlSem_Block tag
                    (CONS (bvlSem_CodePtr p) (CONS (bvlSem_Number (&n))
                    xs))]),
@@ -586,9 +586,9 @@ let cl_rel = cake_inductive
      (clos_to_bvl_compile_exps max_app [x] aux = ([c],aux1)) /\
      clos_to_bvlProof_code_installed aux1 code /\
      (sptree_lookup (p + (num_stubs max_app)) code =
-       SOME (num_args + (1:num),closLang_Let (APPEND (list_of_seq
-         closLang_Var num_args) (free_let (closLang_Var num_args)
-         (LENGTH env))) c)) ==>
+       SOME (num_args + (1:num),flatLang_Let (APPEND (list_of_seq
+         db_vars_Var num_args) (free_let (db_vars_Var num_args) (LENGTH
+         env))) c)) ==>
     cl_rel max_app fs refs code
            (env,ys)
            (closSem_Closure (SOME p) [] env num_args x)
@@ -602,8 +602,8 @@ let cl_rel = cake_inductive
      clos_to_bvl_compile_exps max_app [x] aux = ([c],aux1) /\
      clos_to_bvlProof_code_installed aux1 code /\
      sptree_lookup (p + (num_stubs max_app)) code =
-       SOME (num_args + (1:num),closLang_Let (APPEND (list_of_seq
-         closLang_Var (num_args + 1)) (free_let (closLang_Var num_args)
+       SOME (num_args + (1:num),flatLang_Let (APPEND (list_of_seq
+         db_vars_Var (num_args + 1)) (free_let (db_vars_Var num_args)
          (LENGTH env))) c) ==>
      cl_rel max_app fs refs code (env,ys)
             (closSem_Recclosure (SOME p) [] env [(num_args,x)] 0)
@@ -653,28 +653,28 @@ let get_num_args_def = new_definition
         | _2 -> NONE`;;
 
 let clos_to_bvlProof_v_rel = cake_inductive
-  `(clos_to_bvlProof_v_rel max_app f refs code (bvlSem_Number n)
-  (bvlSem_Number n)) /\
-   (clos_to_bvlProof_v_rel max_app f refs code (bvlSem_Word64 w)
-     (bvlSem_Word64 w)) /\
+  `(clos_to_bvlProof_v_rel max_app f refs code (closSem_Number n)
+  (closSem_Number n)) /\
+   (clos_to_bvlProof_v_rel max_app f refs code (closSem_Word64 w)
+     (closSem_Word64 w)) /\
    (ALL2 (clos_to_bvlProof_v_rel max_app f refs code) xs (ys:bvlSem_v
      list) ==>
-    clos_to_bvlProof_v_rel max_app f refs code (bvlSem_Block t xs)
-      (bvlSem_Block (clos_tag_shift t) ys)) /\
-   (FLOOKUP refs p = SOME (bvlSem_ByteArray T bs) /\ ~(p IN FRANGE f)
-     ==>
+    clos_to_bvlProof_v_rel max_app f refs code (closSem_Block t xs)
+      (closSem_Block (clos_tag_shift t) ys)) /\
+   (FLOOKUP refs p = SOME (closSem_ByteArray T bs) /\ ~(p IN FRANGE
+     f) ==>
     clos_to_bvlProof_v_rel max_app f refs code (closSem_ByteVector
-      bs) (bvlSem_RefPtr T p)) /\
+      bs) (closSem_RefPtr T p)) /\
    ((FLOOKUP f r1 = SOME r2) ==>
-    clos_to_bvlProof_v_rel max_app f refs code (bvlSem_RefPtr b r1)
-      (bvlSem_RefPtr b r2)) /\
+    clos_to_bvlProof_v_rel max_app f refs code (closSem_RefPtr b r1)
+      (closSem_RefPtr b r2)) /\
    (
     ALL2 (clos_to_bvlProof_v_rel max_app f refs code) env fvs /\
-    cl_rel max_app (FRANGE f) refs code (env,fvs) cl (bvlSem_Block
-      closure_tag (CONS (bvlSem_CodePtr p) (CONS (bvlSem_Number n) ys)))
-      ==>
-    clos_to_bvlProof_v_rel max_app f refs code cl (bvlSem_Block
-      closure_tag (CONS (bvlSem_CodePtr p) (CONS (bvlSem_Number n)
+    cl_rel max_app (FRANGE f) refs code (env,fvs) cl (closSem_Block
+      closure_tag (CONS (bvlSem_CodePtr p) (CONS (closSem_Number n)
+      ys))) ==>
+    clos_to_bvlProof_v_rel max_app f refs code cl (closSem_Block
+      closure_tag (CONS (bvlSem_CodePtr p) (CONS (closSem_Number n)
       ys)))) /\
    (
     ALL2 (clos_to_bvlProof_v_rel max_app f refs code) env fvs /\
@@ -690,11 +690,11 @@ let clos_to_bvlProof_v_rel = cake_inductive
     get_num_args cl = SOME num_args /\
     cl_rel max_app (FRANGE f) refs code (env,fvs) cl cl' ==>
     clos_to_bvlProof_v_rel max_app f refs code cl_app
-                        (bvlSem_Block partial_app_tag
+                        (closSem_Block partial_app_tag
                               (CONS (bvlSem_CodePtr
                                 (partial_app_fn_location max_app
                                 (num_args - 1) (LENGTH ys - 1)))
-                                (CONS (bvlSem_Number (&(num_args - 1
+                                (CONS (closSem_Number (&(num_args - 1
                                 - LENGTH arg_env))) (CONS cl' ys)))))`;;
 
 (* [local] *)
@@ -1152,7 +1152,7 @@ let lookup_vars_IMP = prove
  (`!vs env xs env2.
        (lookup_vars vs env = SOME xs) /\
        clos_to_bvlProof_env_rel max_app f refs code env env2 ==>
-       (?ys. (bvlSem_evaluate (MAP closLang_Var vs,env2,t1) = (Rval
+       (?ys. (bvlSem_evaluate (MAP db_vars_Var vs,env2,t1) = (Rval
          ys,(t1:('c,'ffi)bvlSem_state))) /\
             ALL2 (clos_to_bvlProof_v_rel max_app f refs code) xs ys
               /\
@@ -1232,8 +1232,8 @@ let evaluate_app_helper = prove
  (`(!x. ~(r = Rval x)) /\ bvlSem_evaluate (c8,env,s) = (r,s') ==>
      bvlSem_evaluate
             ([match loc with
-               NONE -> closLang_Let (APPEND c8 [c7]) (mk_cl_call
-                 (closLang_Var (LENGTH c8)) (list_of_seq closLang_Var
+               NONE -> flatLang_Let (APPEND c8 [c7]) (mk_cl_call
+                 (db_vars_Var (LENGTH c8)) (list_of_seq db_vars_Var
                  (LENGTH c8))) | SOME loc -> closLang_Call (LENGTH c8
                  - 1) (SOME (loc + num_stubs max_app)) (APPEND c8
                  [c7])],env,s) = (r,s')`,
@@ -1244,8 +1244,8 @@ let evaluate_app_helper2 = prove
  (`(!x. ~(r = Rval x)) /\ bvlSem_evaluate (c8,env,s) = (Rval x,s') /\
   bvlSem_evaluate ([c7],env,s') = (r,s'') ==>
      bvlSem_evaluate ([match loc with
-               NONE -> closLang_Let (APPEND c8 [c7]) (mk_cl_call
-                 (closLang_Var (LENGTH c8)) (list_of_seq closLang_Var
+               NONE -> flatLang_Let (APPEND c8 [c7]) (mk_cl_call
+                 (db_vars_Var (LENGTH c8)) (list_of_seq db_vars_Var
                  (LENGTH c8))) | SOME loc -> closLang_Call (LENGTH c8
                  - 1) (SOME (loc + num_stubs max_app)) (APPEND c8
                  [c7])],env,s) = (r,s'')`,
@@ -1255,7 +1255,7 @@ let evaluate_app_helper2 = prove
 let evaluate_simple_genlist_vars = prove
  (`!env1 env2 s.
      0 < LENGTH env1 ==>
-     bvlSem_evaluate (list_of_seq closLang_Var (LENGTH env1),APPEND
+     bvlSem_evaluate (list_of_seq db_vars_Var (LENGTH env1),APPEND
        env1 env2,s) = (Rval env1,s)`,
   CHEAT_TAC);;
 
@@ -1379,8 +1379,8 @@ let evaluate_mk_cl_call_spec = prove
          args - 1)) /\
      LENGTH args - 1 >= n /\
      n < max_app /\ ~(LENGTH args = 0) ==>
-     bvlSem_evaluate ([mk_cl_call (closLang_Var (LENGTH args))
-       (list_of_seq closLang_Var (LENGTH args))],APPEND (APPEND args
+     bvlSem_evaluate ([mk_cl_call (db_vars_Var (LENGTH args))
+       (list_of_seq db_vars_Var (LENGTH args))],APPEND (APPEND args
        [bvlSem_Block tag (CONS (bvlSem_CodePtr p) (CONS (bvlSem_Number
        (&n)) xs))]) env,s) =
       (if n = LENGTH args - 1 then
@@ -1396,9 +1396,9 @@ let evaluate_mk_cl_call_spec = prove
             (bvlSem_Number (&n)) xs))],
                       bvlSem_dec_clock (n + 2) s) with (Rval [v],st')
                         ->
-                 (match bvlSem_evaluate ([mk_cl_call (closLang_Var 0)
-                   (list_of_seq (\n. closLang_Var (n + 1)) (LENGTH args
-                   - (n + 1)))],CONS v (APPEND args [bvlSem_Block tag
+                 (match bvlSem_evaluate ([mk_cl_call (db_vars_Var 0)
+                   (list_of_seq (\n. db_vars_Var (n + 1)) (LENGTH args -
+                   (n + 1)))],CONS v (APPEND args [bvlSem_Block tag
                    (CONS (bvlSem_CodePtr p) (CONS (bvlSem_Number (&n))
                    xs))]),
                               st') with (Rval v,s2) -> (Rval [HD
@@ -1463,7 +1463,7 @@ let dest_cl_imp_dest_cl' = prove
 (* [local] *)
 let cl_rel_run_lemma1 = prove
  (`num_args <= LENGTH args' ==>
-    bvlSem_evaluate (list_of_seq closLang_Var num_args,APPEND (DROP
+    bvlSem_evaluate (list_of_seq db_vars_Var num_args,APPEND (DROP
       (LENGTH args' - num_args) args') stuff,t1) =
     (Rval (DROP (LENGTH args' - num_args) args'),t1)`,
   CHEAT_TAC);;
@@ -1490,7 +1490,7 @@ let genlist_el = prove
        xs)) /\
      skip = LENGTH ys ==>
      bvlSem_evaluate (list_of_seq (\i. (\b i. bvl_Op
-       (closLang_BlockOp (closLang_ElemAt i)) [b]) (closLang_Var 0) (i +
+       (closLang_BlockOp (closLang_ElemAt i)) [b]) (db_vars_Var 0) (i +
        skip)) (LENGTH xs),CONS (bvlSem_RefPtr T r) (APPEND args (CONS
        (bvlSem_Block closure_tag [bvlSem_CodePtr p; bvlSem_Number (&n);
        bvlSem_RefPtr T r]) env)),
@@ -1896,8 +1896,8 @@ let clos_to_bvlProof_compile_exps_correct = prove
        (~(LENGTH args' = 0) ==>
          (match loc_opt with NONE ->
               bvlSem_evaluate
-                    ([mk_cl_call (closLang_Var (LENGTH args'))
-                      (list_of_seq closLang_Var (LENGTH args'))],APPEND
+                    ([mk_cl_call (db_vars_Var (LENGTH args'))
+                      (list_of_seq db_vars_Var (LENGTH args'))],APPEND
                       (APPEND args' [func']) env,bvlSem_state_clock_fupd
                       (K (closSem_state_clock s1 + ck))
                       t1) =
@@ -2209,7 +2209,7 @@ let chain_installed_def = new_definition
   `chain_installed start' (es:closLang_exp list) code <=>
      (!i. i < LENGTH es ==> closSem_find_code (start' + i)
        ([]:closSem_v list) code =
-          SOME ([],(if i + 1 < LENGTH es then closLang_Let
+          SOME ([],(if i + 1 < LENGTH es then flatLang_Let
             backend_common_None [EL i es] (closLang_Call
             backend_common_None 0 (start' + i + 1) []) else EL i
             es)))`;;
@@ -2220,7 +2220,7 @@ let chain_installed_cons = prove
  (cake_as_vars (fun () ->
     `chain_installed start (CONS e es) code <=>
      bvlSem_find_code start ([]:closSem_v list) code = SOME ([],(if
-       es = [] then e else closLang_Let backend_common_None [e]
+       es = [] then e else flatLang_Let backend_common_None [e]
        (closLang_Call backend_common_None 0 (start + 1) []))) /\
      chain_installed (start + 1) es code`),
   CHEAT_TAC);;

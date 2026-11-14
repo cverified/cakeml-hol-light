@@ -502,7 +502,7 @@ let evaluate_ConcatByte_code = prove
 (* [local] *)
 let compile_exps_Var_list = prove
  (`!l n. ALL isVar l ==> (?aux. bvl_to_bvi_compile_exps n l = (MAP
-  (bvl_Var o destVar) l,aux,n) /\ append aux = [])`,
+  (db_vars_Var o destVar) l,aux,n) /\ append aux = [])`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -611,7 +611,7 @@ let eval_ind_alt = prove
         (!v3 s1 v1.
            bviSem_evaluate ([x],env,s) = (v3,s1) /\ v3 = Rval v1 ==>
            P (CONS y xs,env,s1)) /\ P ([x],env,s) ==>
-        P (CONS x (CONS y xs),env,s)) /\ (!n env s. P ([bvl_Var
+        P (CONS x (CONS y xs),env,s)) /\ (!n env s. P ([db_vars_Var
           n],env,s)) /\
      (!x1 x2 x3 env s.
         (!v2 s1 vs.
@@ -622,7 +622,7 @@ let eval_ind_alt = prove
            bviSem_evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs /\
            bvlSem_Boolv T = HD vs ==>
            P ([x2],env,s1)) /\ P ([x1],env,s) ==>
-        P ([bvl_If x1 x2 x3],env,s)) /\
+        P ([dataLang_If x1 x2 x3],env,s)) /\
      (!xs x2 env s.
         (!ys v2 s1 vs.
            list_size bvl_exp_size ys <= bvl_exp_size x2 /\
@@ -634,8 +634,8 @@ let eval_ind_alt = prove
            bviSem_evaluate (xs,env,s) = (v2,s1) /\ v2 = Rval vs ==>
            P ([x2],APPEND vs env,s1)) /\
         P (xs,env,s) ==>
-        P ([bvl_Let xs x2],env,s)) /\
-     (!x1 env s. P ([x1],env,s) ==> P ([bvl_Raise x1],env,s)) /\
+        P ([flatLang_Let xs x2],env,s)) /\
+     (!x1 env s. P ([x1],env,s) ==> P ([dataLang_Raise x1],env,s)) /\
      (!op xs env s. P (xs,env,s) ==> P ([bvl_Op op xs],env,s)) /\
      (!x1 x2 env s1.
         (!v3 s v8 v.
@@ -644,7 +644,7 @@ let eval_ind_alt = prove
            P ([x2],CONS v env,s)) /\
         (!xs env. list_size bvl_exp_size xs <= bvl_exp_size x1 ==> P
           (xs,env,s1)) ==>
-        P ([bvl_Handle x1 x2],env,s1)) /\
+        P ([flatLang_Handle x1 x2],env,s1)) /\
      (!force_loc n env s.
         (!thunk_v v1 v v' args exp.
            n < LENGTH env /\ thunk_v = EL n env /\
@@ -655,11 +655,11 @@ let eval_ind_alt = prove
              s) = SOME v' /\
            v' = (args,exp) /\ ~(state_clock s = 0) ==>
            P ([exp],args,bviSem_dec_clock 1 s)) ==>
-        P ([bvl_Force force_loc n],env,s)) /\
+        P ([dataLang_Force force_loc n],env,s)) /\
      (!x env s.
         (~(state_clock s = 0) ==> P ([x],env,bviSem_dec_clock 1 s))
           ==>
-        P ([bvl_Tick x],env,s)) /\
+        P ([dataLang_Tick x],env,s)) /\
      (!ticks dest xs env s1.
         (!v2 s vs v args exp.
            bviSem_evaluate (xs,env,s1) = (v2,s) /\ v2 = Rval vs /\
@@ -668,7 +668,7 @@ let eval_ind_alt = prove
            ~(state_clock s < ticks + 1) ==>
            P ([exp],args,bviSem_dec_clock (ticks + 1) s)) /\ P
              (xs,env,s1) ==>
-        P ([bvl_Call ticks dest xs],env,s1)) ==>
+        P ([dataLang_Call ticks dest xs],env,s1)) ==>
      (!v v1 v2. P (v,v1,(v2:('c,'ffi)bvlSem_state)))`,
   CHEAT_TAC);;
 
@@ -949,12 +949,13 @@ let compile_exps_correct = prove
    variables of its own are read as variables *)
 let compile_single_evaluate = prove
  (cake_as_vars (fun () ->
-    `bviSem_evaluate ([bvl_Call 0 (SOME start) []],[],s1) = (res,s2) /\
+    `bviSem_evaluate ([dataLang_Call 0 (SOME start) []],[],s1) =
+  (res,s2) /\
      bvl_to_bviProof_state_rel b1 s1 t1 /\ IS_SOME
        (bviSem_state_global t1) /\ bvl_to_bviProof_state_ok s1 /\ ~(res
        = Rerr (Rabort Rtype_error)) ==>
      (?ck b2 t2.
-       bviSem_evaluate ([bvl_Call 0 (SOME (bvl_num_stubs +
+       bviSem_evaluate ([dataLang_Call 0 (SOME (bvl_num_stubs +
          bvl_to_bvi_namespaces * start)) [] NONE],[],bviProps_inc_clock
          ck t1) =
          (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2
@@ -979,11 +980,11 @@ let bvi_stubs_evaluate = prove
                     (bvlSem_Number (&0)))))) k (SOME 0) cc co (fromAList
                     (APPEND (bvl_to_bvi_stubs start' kk) code))
                     ffi0:('c,'ffi)bviSem_state) in
-      bviSem_evaluate ([bvl_Call 0 (SOME InitGlobals_location) []
-        NONE],[],
+      bviSem_evaluate ([dataLang_Call 0 (SOME InitGlobals_location)
+        [] NONE],[],
         bviSem_initial_state ffi0 (fromAList (APPEND
           (bvl_to_bvi_stubs start' kk) code)) co cc (k + 1)) =
-   (let (r,s) = bviSem_evaluate ([bvl_Call 0 (SOME start') []
+   (let (r,s) = bviSem_evaluate ([dataLang_Call 0 (SOME start') []
      NONE],[],t0) in
      ((match r with Rerr (Rraise (Exn v)) -> Rval [v] | _5 ->
        r),s)))`,
@@ -1015,7 +1016,7 @@ let compile_list_distinct_locs = prove
 let bvl_to_bviProof_compile_prog_evaluate = prove
  (cake_as_vars (fun () ->
     `bvl_to_bvi_compile_prog start n prog = (start',prog',n') /\
-     bviSem_evaluate ([bvl_Call 0 (SOME start) []],[],
+     bviSem_evaluate ([dataLang_Call 0 (SOME start) []],[],
                bviSem_initial_state ffi0 (fromAList prog) co
                  (state_cc bvl_to_bvi_compile_inc cc) k) = (r,s) /\
      0 < k /\
@@ -1025,7 +1026,7 @@ let bvl_to_bviProof_compile_prog_evaluate = prove
      n' <= (FST (FST (co 0))) /\ ~(r = Rerr (Rabort Rtype_error))
        ==>
      (?ck b2 s2.
-     bviSem_evaluate ([bvl_Call 0 (SOME start') [] NONE],[],
+     bviSem_evaluate ([dataLang_Call 0 (SOME start') [] NONE],[],
                bviSem_initial_state ffi0 (fromAList prog')
                  (state_co bvl_to_bvi_compile_inc co) cc (k + ck)) =
        (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2 v))
@@ -1277,11 +1278,11 @@ let push_call_no_mutcons = prove
 let rewrite_catchall_no_mutcons = prove
  (cake_as_vars (fun () ->
     `(match check_op ts opr loc exp with
-        NONE -> (F,apply_op opr (bvl_Var acc) exp) | SOME v1 ->
+        NONE -> (F,apply_op opr (db_vars_Var acc) exp) | SOME v1 ->
           (match opbinargs opr v1 with
-            NONE -> (F,apply_op opr (bvl_Var acc) v1) | SOME (xs,f)
-              -> (T,push_call next opr acc xs (args_from f)))) = (r,y)
-              /\
+            NONE -> (F,apply_op opr (db_vars_Var acc) v1) | SOME
+              (xs,f) -> (T,push_call next opr acc xs (args_from f)))) =
+              (r,y) /\
      no_mutcons exp ==>
      no_mutcons y`),
   CHEAT_TAC);;

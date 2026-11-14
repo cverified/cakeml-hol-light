@@ -29,12 +29,12 @@ let _ = hol4_ancestors "stack_rawcall"
 
 let seq_stack_alloc_def = new_definition
   `seq_stack_alloc (p:'a stackLang_prog) =
-     (match p with stackLang_Seq (stackLang_StackAlloc k) _1 ->
+     (match p with word_bignum_Seq (stackLang_StackAlloc k) _1 ->
        SOME k | _2 -> NONE)`;;
 
 let seq_stack_alloc_pmatch = prove
  (`seq_stack_alloc (p:'a stackLang_prog) =
-     (match p with stackLang_Seq (stackLang_StackAlloc k) _3 ->
+     (match p with word_bignum_Seq (stackLang_StackAlloc k) _3 ->
        SOME k | _4 -> NONE)`,
   CHEAT_TAC);;
 
@@ -49,13 +49,13 @@ let collect_info_def,collect_info_ind = define_rec
 let dest_case_def = new_definition
   `dest_case (p1:'a stackLang_prog) (p2:'a stackLang_prog) =
      (match p1 with stackLang_StackFree k -> (match p2 with
-       stackLang_Call NONE (INL d) NONE -> SOME (k,d) | _5 -> NONE) |
-       _6 -> NONE)`;;
+       word_depth_Call NONE (INL d) NONE -> SOME (k,d) | _5 -> NONE)
+       | _6 -> NONE)`;;
 
 let dest_case_pmatch = prove
  (`dest_case (p1:'a stackLang_prog) (p2:'a stackLang_prog) =
      (match p1 with stackLang_StackFree k -> (match p2 with
-       stackLang_Call NONE (INL d) NONE -> SOME (k,d) | _7 -> NONE) |
+       word_depth_Call NONE (INL d) NONE -> SOME (k,d) | _7 -> NONE) |
        _8 -> NONE)`,
   CHEAT_TAC);;
 
@@ -65,9 +65,9 @@ let comp_seq_def = new_definition
    (match dest_case p1 p2 with SOME (k,dest) ->
        (match sptree_lookup dest i with NONE -> default | SOME l ->
             (if l = k then stackLang_RawCall dest else
-            if l < k then stackLang_Seq (stackLang_StackFree (k - l))
-              (stackLang_RawCall dest) else
-                stackLang_Seq stackLang_Tick (stackLang_Seq
+            if l < k then word_bignum_Seq (stackLang_StackFree (k -
+              l)) (stackLang_RawCall dest) else
+                word_bignum_Seq wordLang_Tick (word_bignum_Seq
                   (stackLang_StackAlloc (l - k)) (stackLang_RawCall
                   dest)))) | _9 -> default)`;;
 
@@ -77,16 +77,16 @@ let _ = size_thms "stackLang_prog";;
 let stack_rawcall_comp_def,stack_rawcall_comp_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
   [`stack_rawcall_comp i (p:'a stackLang_prog) =
-     (match p with stackLang_Seq p1 p2 -> comp_seq p1 p2 i
-       (stackLang_Seq (stack_rawcall_comp i p1) (stack_rawcall_comp i
-       p2)) | stackLang_If c r ri p1 p2 -> stackLang_If c r ri
+     (match p with word_bignum_Seq p1 p2 -> comp_seq p1 p2 i
+       (word_bignum_Seq (stack_rawcall_comp i p1) (stack_rawcall_comp i
+       p2)) | word_bignum_If c r ri p1 p2 -> word_bignum_If c r ri
        (stack_rawcall_comp i p1) (stack_rawcall_comp i p2) |
-       stackLang_Loop p1 -> stackLang_Loop (stack_rawcall_comp i p1) |
-       stackLang_Call (SOME (p1,lr,l1,l2)) dest NONE ->
-         stackLang_Call (SOME (stack_rawcall_comp i p1,lr,l1,l2))
-           dest NONE | stackLang_Call (SOME (p1,lr,l1,l2)) dest (SOME
+       word_bignum_Loop p1 -> word_bignum_Loop (stack_rawcall_comp i
+       p1) | word_depth_Call (SOME (p1,lr,l1,l2)) dest NONE ->
+         word_depth_Call (SOME (stack_rawcall_comp i p1,lr,l1,l2))
+           dest NONE | word_depth_Call (SOME (p1,lr,l1,l2)) dest (SOME
            (p2,k1,k2)) ->
-         stackLang_Call (SOME (stack_rawcall_comp i
+         word_depth_Call (SOME (stack_rawcall_comp i
            p1,lr,l1,l2)) dest (SOME (stack_rawcall_comp i
            p2,k1,k2)) | _10 -> p)`];;
 (* HOL4 stack_rawcallScript.sml:85-93: a theorem that HOL4 states as
@@ -94,13 +94,13 @@ let stack_rawcall_comp_def,stack_rawcall_comp_ind = define_wf
 
 let comp_top_def = new_definition
   `comp_top i (p:'a stackLang_prog) =
-     (match p with stackLang_Seq p1 p2 -> stackLang_Seq
+     (match p with word_bignum_Seq p1 p2 -> word_bignum_Seq
        (stack_rawcall_comp i p1) (stack_rawcall_comp i p2) | _11 ->
        stack_rawcall_comp i p)`;;
 
 let comp_top_pmatch = prove
  (`comp_top i (p:'a stackLang_prog) =
-     (match p with stackLang_Seq p1 p2 -> stackLang_Seq
+     (match p with word_bignum_Seq p1 p2 -> word_bignum_Seq
        (stack_rawcall_comp i p1) (stack_rawcall_comp i p2) | _12 ->
        stack_rawcall_comp i p)`,
   CHEAT_TAC);;

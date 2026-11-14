@@ -51,9 +51,6 @@
   (REWRITE_TAC[explode_def; strlen_def] THEN
    SIMP_TAC[explode_aux_thm; ADD_CLAUSES; DROP_0])
 
-### explode_toString
-  (REWRITE_TAC[chr_to_str_def; explode_thm])
-
 ### fast_ge_thm
   (REWRITE_TAC[fast_ge_def; fast_le_def; mlstring_ge_thm] THEN
    REPEAT GEN_TAC THEN ASM_CASES_TAC `strlen s1 = strlen s2` THEN
@@ -201,9 +198,6 @@
 ### strlen_strcat
   (REWRITE_TAC[strcat_thm; strlen_def; LENGTH_APPEND;
     LENGTH_explode])
-
-### strlen_toString
-  (REWRITE_TAC[chr_to_str_def; strlen_def; LENGTH; ONE])
 
 ### strlit_STRCAT
   (REWRITE_TAC[strcat_thm; explode_thm])

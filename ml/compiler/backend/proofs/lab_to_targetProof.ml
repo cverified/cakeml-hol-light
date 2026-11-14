@@ -389,18 +389,21 @@ let line_ok_def = new_definition
         (LENGTH bytes = l) /\ asm_ok (cbw_to_asm b) c
         | (c,(labLang_LabAsm labLang_Halt w bytes l)) ->
         (let w1 = ((n2w 0):'a word) - n2w (pos + ffi_offset) in
-          enc_with_nop (asm_config_encode c) (asm_Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (asm_Jump w1) c)
+          enc_with_nop (asm_config_encode c) (labLang_Jump w1) bytes
+            /\
+          (LENGTH bytes = l) /\ asm_ok (labLang_Jump w1) c)
         | (c,(labLang_LabAsm labLang_Install w bytes l)) ->
         (let w1 = ((n2w 0):'a word) - n2w (pos + 2 * ffi_offset) in
-          enc_with_nop (asm_config_encode c) (asm_Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (asm_Jump w1) c)
+          enc_with_nop (asm_config_encode c) (labLang_Jump w1) bytes
+            /\
+          (LENGTH bytes = l) /\ asm_ok (labLang_Jump w1) c)
         | (c,(labLang_LabAsm (labLang_CallFFI index) w bytes l)) ->
         (let w1 = ((n2w 0):'a word) - n2w (pos + (3 + get_ffi_index
           ffis (ffi_ExtCall index)) * ffi_offset) in
-          enc_with_nop (asm_config_encode c) (asm_Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (asm_Jump w1) c)
-        | (c,(labLang_LabAsm (asm_Call v24) w bytes l)) ->
+          enc_with_nop (asm_config_encode c) (labLang_Jump w1) bytes
+            /\
+          (LENGTH bytes = l) /\ asm_ok (labLang_Jump w1) c)
+        | (c,(labLang_LabAsm (labLang_Call v24) w bytes l)) ->
         F
         // Call not yet supported
         | (c,(labLang_LabAsm a w bytes l)) ->
@@ -2284,30 +2287,30 @@ let line_encd_def = new_definition
           labLang_Asm b bytes len ->
        enc (cbw_to_asm b) = bytes /\ len = LENGTH bytes
         | (labLang_LabAsm labLang_Halt _40 bytes len) ->
-       enc (asm_Jump (--(n2w (pos + ffi_offset)))) = bytes /\
+       enc (labLang_Jump (--(n2w (pos + ffi_offset)))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm labLang_Install _41 bytes len) ->
-       enc (asm_Jump (--(n2w (pos + 2 * ffi_offset)))) = bytes /\
+       enc (labLang_Jump (--(n2w (pos + 2 * ffi_offset)))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm (labLang_CallFFI s) _42 bytes len) ->
-       enc (asm_Jump (--(n2w (pos + (get_ffi_index ffis (ffi_ExtCall
-         s) + 3) * ffi_offset)))) = bytes /\
+       enc (labLang_Jump (--(n2w (pos + (get_ffi_index ffis
+         (ffi_ExtCall s) + 3) * ffi_offset)))) = bytes /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (asm_Jump l) _43 bytes len) ->
-       enc (asm_Jump (n2w (find_pos l labs) + --(n2w pos))) = bytes
-         /\
+        | (labLang_LabAsm (labLang_Jump l) _43 bytes len) ->
+       enc (labLang_Jump (n2w (find_pos l labs) + --(n2w pos))) =
+         bytes /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (asm_JumpCmp a b c l) _44 bytes len) ->
-       enc (asm_JumpCmp a b c (n2w (find_pos l labs) + --(n2w pos)))
-         = bytes /\
+        | (labLang_LabAsm (labLang_JumpCmp a b c l) _44 bytes len) ->
+       enc (labLang_JumpCmp a b c (n2w (find_pos l labs) + --(n2w
+         pos))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm (labLang_LocValue k l) _45 bytes len) ->
        enc (asm_Loc k (n2w (find_pos l labs) + --(n2w pos))) = bytes
          /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (asm_Call l) _46 bytes len) ->
-       enc (asm_Call (n2w (find_pos l labs) + --(n2w pos))) = bytes
-         /\
+        | (labLang_LabAsm (labLang_Call l) _46 bytes len) ->
+       enc (labLang_Call (n2w (find_pos l labs) + --(n2w pos))) =
+         bytes /\
        LENGTH bytes <= len
         | _47 -> T`;;
 
@@ -2608,24 +2611,24 @@ let line_enc_with_nop_def = new_definition
           labLang_Asm b bytes len ->
        enc_with_nop enc (cbw_to_asm b) bytes /\ LENGTH bytes = len
         | (labLang_LabAsm labLang_Halt _56 bytes len) ->
-       enc_with_nop enc (asm_Jump (--(n2w (pos + ffi_offset)))) bytes
-         /\
-       LENGTH bytes = len
-        | (labLang_LabAsm labLang_Install _57 bytes len) ->
-       enc_with_nop enc (asm_Jump (--(n2w (pos + 2 * ffi_offset))))
+       enc_with_nop enc (labLang_Jump (--(n2w (pos + ffi_offset))))
          bytes /\
        LENGTH bytes = len
-        | (labLang_LabAsm (labLang_CallFFI s) _58 bytes len) ->
-       enc_with_nop enc (asm_Jump (--(n2w (pos + (get_ffi_index ffis
-         (ffi_ExtCall s) + 3) * ffi_offset)))) bytes /\
+        | (labLang_LabAsm labLang_Install _57 bytes len) ->
+       enc_with_nop enc (labLang_Jump (--(n2w (pos + 2 *
+         ffi_offset)))) bytes /\
        LENGTH bytes = len
-        | (labLang_LabAsm (asm_Jump l) _59 bytes len) ->
-       enc_with_nop enc (asm_Jump (n2w (find_pos l labs) + --(n2w
+        | (labLang_LabAsm (labLang_CallFFI s) _58 bytes len) ->
+       enc_with_nop enc (labLang_Jump (--(n2w (pos + (get_ffi_index
+         ffis (ffi_ExtCall s) + 3) * ffi_offset)))) bytes /\
+       LENGTH bytes = len
+        | (labLang_LabAsm (labLang_Jump l) _59 bytes len) ->
+       enc_with_nop enc (labLang_Jump (n2w (find_pos l labs) + --(n2w
          pos))) bytes /\
        LENGTH bytes = len
-        | (labLang_LabAsm (asm_JumpCmp a b c l) _60 bytes len) ->
-       enc_with_nop enc (asm_JumpCmp a b c (n2w (find_pos l labs) +
-         --(n2w pos))) bytes /\
+        | (labLang_LabAsm (labLang_JumpCmp a b c l) _60 bytes len) ->
+       enc_with_nop enc (labLang_JumpCmp a b c (n2w (find_pos l labs)
+         + --(n2w pos))) bytes /\
        LENGTH bytes = len
         | (labLang_LabAsm (labLang_LocValue k l) _61 bytes len) ->
        enc_with_nop enc (asm_Loc k (n2w (find_pos l labs) + --(n2w

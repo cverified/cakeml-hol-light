@@ -18,7 +18,6 @@ needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
-needs "lib/pegexec.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -67,43 +66,6 @@ let labSem_state_FIELDS = define_record "labSem_state"
    "ptr2_reg","num";
    "len2_reg","num";
    "link_reg","num"];;
-hol4_field_overload "regs" "labSem_state_regs";;
-hol4_field_overload "regs_fupd" "labSem_state_regs_fupd";;
-hol4_field_overload "fp_regs" "labSem_state_fp_regs";;
-hol4_field_overload "fp_regs_fupd" "labSem_state_fp_regs_fupd";;
-hol4_field_overload "mem" "labSem_state_mem";;
-hol4_field_overload "mem_fupd" "labSem_state_mem_fupd";;
-hol4_field_overload "mem_domain" "labSem_state_mem_domain";;
-hol4_field_overload "mem_domain_fupd" "labSem_state_mem_domain_fupd";;
-hol4_field_overload "pc" "labSem_state_pc";;
-hol4_field_overload "pc_fupd" "labSem_state_pc_fupd";;
-hol4_field_overload "be" "labSem_state_be";;
-hol4_field_overload "be_fupd" "labSem_state_be_fupd";;
-hol4_overload "state_ffi" "labSem_state_ffi";;
-hol4_overload "state_ffi_fupd" "labSem_state_ffi_fupd";;
-hol4_overload "state_code" "labSem_state_code";;
-hol4_overload "state_code_fupd" "labSem_state_code_fupd";;
-hol4_field_overload "compile" "labSem_state_compile";;
-hol4_field_overload "compile_fupd" "labSem_state_compile_fupd";;
-hol4_field_overload "compile_oracle" "labSem_state_compile_oracle";;
-hol4_field_overload "compile_oracle_fupd"
-  "labSem_state_compile_oracle_fupd";;
-hol4_overload "state_code_buffer" "labSem_state_code_buffer";;
-hol4_overload "state_code_buffer_fupd" "labSem_state_code_buffer_fupd";;
-hol4_overload "state_clock" "labSem_state_clock";;
-hol4_overload "state_clock_fupd" "labSem_state_clock_fupd";;
-hol4_field_overload "failed" "labSem_state_failed";;
-hol4_field_overload "failed_fupd" "labSem_state_failed_fupd";;
-hol4_field_overload "ptr_reg" "labSem_state_ptr_reg";;
-hol4_field_overload "ptr_reg_fupd" "labSem_state_ptr_reg_fupd";;
-hol4_field_overload "len_reg" "labSem_state_len_reg";;
-hol4_field_overload "len_reg_fupd" "labSem_state_len_reg_fupd";;
-hol4_field_overload "ptr2_reg" "labSem_state_ptr2_reg";;
-hol4_field_overload "ptr2_reg_fupd" "labSem_state_ptr2_reg_fupd";;
-hol4_field_overload "len2_reg" "labSem_state_len2_reg";;
-hol4_field_overload "len2_reg_fupd" "labSem_state_len2_reg_fupd";;
-hol4_field_overload "link_reg" "labSem_state_link_reg";;
-hol4_field_overload "link_reg_fupd" "labSem_state_link_reg_fupd";;
 
 let is_Label_def = new_definition
   `is_Label x1 =
@@ -124,20 +86,24 @@ let asm_fetch_aux_def,asm_fetch_aux_ind = define_wf
            asm_fetch_aux (pos - 1) (CONS (Section k ys) xs))`];;
 
 let asm_fetch_def = new_definition
-  `asm_fetch s = asm_fetch_aux (pc s) (state_code s)`;;
+  `asm_fetch s = asm_fetch_aux (labSem_state_pc s) (labSem_state_code
+  s)`;;
 
 let labSem_upd_pc_def = new_definition
-  `labSem_upd_pc pc' s = pc_fupd (K pc') s`;;
+  `labSem_upd_pc pc' s = labSem_state_pc_fupd (K pc') s`;;
 let labSem_upd_reg_def = new_definition
-  `labSem_upd_reg r w s = regs_fupd (K ((r =+ w) (regs s))) s`;;
+  `labSem_upd_reg r w s = labSem_state_regs_fupd (K ((r =+ w)
+  (labSem_state_regs s))) s`;;
 let labSem_upd_mem_def = new_definition
-  `labSem_upd_mem a w s = mem_fupd (K ((a =+ w) (mem s))) s`;;
+  `labSem_upd_mem a w s = labSem_state_mem_fupd (K ((a =+ w)
+  (labSem_state_mem s))) s`;;
 
 (* HOL4 labSemScript.sml:77: the overload read_reg, which the port
    expands *)
 
 let labSem_assert_def = new_definition
-  `labSem_assert b s = failed_fupd (K (~b \/ failed s)) s`;;
+  `labSem_assert b s = labSem_state_failed_fupd (K (~b \/
+  labSem_state_failed s)) s`;;
 
 let labSem_reg_imm_def = define_cases
   [`labSem_reg_imm (Reg r) s = (\r s. labSem_state_regs s r) r s`;
@@ -224,10 +190,10 @@ let labSem_arith_upd_def = define_cases
                   | _29 -> labSem_assert F s)`];;
 
 let labSem_upd_fp_reg_def = new_definition
-  `labSem_upd_fp_reg r v s = fp_regs_fupd (K ((r =+ v) (fp_regs s)))
-  s`;;
+  `labSem_upd_fp_reg r v s = labSem_state_fp_regs_fupd (K ((r =+ v)
+  (labSem_state_fp_regs s))) s`;;
 let labSem_read_fp_reg_def = new_definition
-  `labSem_read_fp_reg r s = fp_regs s r`;;
+  `labSem_read_fp_reg r s = labSem_state_fp_regs s r`;;
 
 let labSem_fp_upd_def = define_cases
   [`labSem_fp_upd (FPLess r d1 d2) (s:('a,'c,'ffi)labSem_state) =
@@ -376,9 +342,9 @@ let mem_store_byte_def = new_definition
               NONE -> labSem_assert F s) | _43 -> labSem_assert F s))`;;
 
 let labSem_mem_op_def = define_general
-  [`labSem_mem_op (wordLang_Load:memop) r (a:'a asm_addr) =
+  [`labSem_mem_op (asm_Load:memop) r (a:'a asm_addr) =
   labSem_mem_load r a`;
-   `labSem_mem_op (wordLang_Store:memop) r (a:'a asm_addr) =
+   `labSem_mem_op (asm_Store:memop) r (a:'a asm_addr) =
   labSem_mem_store r a`;
    `labSem_mem_op (asm_Load32:memop) r (a:'a asm_addr) = mem_load32 r
   a`;
@@ -402,10 +368,11 @@ let asm_inst_def = define_cases
   ((labSem_fp_upd fp s):('a,'c,'ffi)labSem_state)`];;
 
 let labSem_dec_clock_def = new_definition
-  `labSem_dec_clock s = state_clock_fupd (K (state_clock s - 1)) s`;;
+  `labSem_dec_clock s = labSem_state_clock_fupd (K
+  (labSem_state_clock s - 1)) s`;;
 
 let inc_pc_def = new_definition
-  `inc_pc s = pc_fupd (K (pc s + 1)) s`;;
+  `inc_pc s = labSem_state_pc_fupd (K (labSem_state_pc s + 1)) s`;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -418,8 +385,8 @@ let asm_code_length_def,asm_code_length_ind = define_guess_cheat
 
 (* [local] *)
 let asm_fetch_IMP = prove
- (`(asm_fetch s = SOME x) ==> pc
-     s < asm_code_length (state_code s)`,
+ (`(asm_fetch s = SOME x) ==> labSem_state_pc
+     s < asm_code_length (labSem_state_code s)`,
   CHEAT_TAC);;
 
 let lab_to_loc_def = define_general
@@ -441,21 +408,23 @@ let loc_to_pc_def,loc_to_pc_ind = define_guess_cheat
                    (1:num))))`];;
 
 let asm_inst_consts = prove
- (`(pc (asm_inst i s) = pc s) /\
-   (state_code (asm_inst i s) = state_code s) /\
-   (state_clock (asm_inst i s) = state_clock s) /\
-   (state_ffi (asm_inst i s) = state_ffi s) /\
+ (`(labSem_state_pc (asm_inst i s) = labSem_state_pc s) /\
+   (labSem_state_code (asm_inst i s) = labSem_state_code s) /\
+   (labSem_state_clock (asm_inst i s) = labSem_state_clock s) /\
+   (labSem_state_ffi (asm_inst i s) = labSem_state_ffi s) /\
    (labSem_state_io_regs (asm_inst i s) = labSem_state_io_regs s) /\
    (labSem_state_io_fp_regs (asm_inst i s) = labSem_state_io_fp_regs
      s) /\
    (labSem_state_cc_regs (asm_inst i s) = labSem_state_cc_regs s) /\
    (labSem_state_cc_fp_regs (asm_inst i s) = labSem_state_cc_fp_regs
      s) /\
-   (ptr_reg (asm_inst i s) = ptr_reg s) /\
-   (len_reg (asm_inst i s) = len_reg s) /\
-   (ptr2_reg (asm_inst i s) = ptr2_reg s) /\
-   (len2_reg (asm_inst i s) = len2_reg s) /\
-   (link_reg (asm_inst i s) = link_reg s)`,
+   (labSem_state_ptr_reg (asm_inst i s) = labSem_state_ptr_reg s) /\
+   (labSem_state_len_reg (asm_inst i s) = labSem_state_len_reg s) /\
+   (labSem_state_ptr2_reg (asm_inst i s) = labSem_state_ptr2_reg s)
+     /\
+   (labSem_state_len2_reg (asm_inst i s) = labSem_state_len2_reg s)
+     /\
+   (labSem_state_link_reg (asm_inst i s) = labSem_state_link_reg s)`,
   CHEAT_TAC);;
 
 let get_pc_value_def = new_definition
@@ -491,7 +460,8 @@ let get_lab_after_def,get_lab_after_ind = define_wf
            (Section k ys) xs))`];;
 
 let get_ret_Loc_def = new_definition
-  `get_ret_Loc s = get_lab_after (pc s) (state_code s)`;;
+  `get_ret_Loc s = get_lab_after (labSem_state_pc s)
+  (labSem_state_code s)`;;
 
 let share_mem_load_def = new_definition
   `share_mem_load r ad (s:('a,'c,'ffi)labSem_state) n =
@@ -535,15 +505,14 @@ let share_mem_store_def = new_definition
                       NONE)) | _45 -> NONE)`;;
 
 let share_mem_op_def = define_cases
-  [`share_mem_op (wordLang_Load:memop) r ad (s:('a,'c,'ffi)labSem_state)
-  =
+  [`share_mem_op (asm_Load:memop) r ad (s:('a,'c,'ffi)labSem_state) =
         share_mem_load r ad s 0`;
    `share_mem_op asm_Load8 r ad (s:('a,'c,'ffi)labSem_state) =
   share_mem_load r ad s 1`;
    `share_mem_op asm_Load16 r ad (s:('a,'c,'ffi)labSem_state) =
   share_mem_load r ad s 2`;
-   `share_mem_op (wordLang_Store:memop) r ad
-  (s:('a,'c,'ffi)labSem_state) = share_mem_store r ad s 0`;
+   `share_mem_op (asm_Store:memop) r ad (s:('a,'c,'ffi)labSem_state)
+  = share_mem_store r ad s 0`;
    `share_mem_op asm_Store8 r ad (s:('a,'c,'ffi)labSem_state) =
   share_mem_store r ad s 1`;
    `share_mem_op asm_Store16 r ad (s:('a,'c,'ffi)labSem_state) =
@@ -558,13 +527,13 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
   [`labSem_evaluate (s:('a,'c,'ffi)labSem_state) =
      (if labSem_state_clock s = 0 then (targetSem_TimeOut,s) else
      match asm_fetch s with SOME (labLang_Asm (Asmi a) _46 _47) ->
-         (match a with wordLang_Inst i ->
+         (match a with asm_Inst i ->
              (let s1 = asm_inst i s in
-                if failed s1 then (targetSem_Error,s) else
-                  labSem_evaluate (inc_pc (labSem_dec_clock s1))) |
-                  asm_JumpReg r ->
-             (match (\r s. labSem_state_regs s r) r s with
-               wordLang_Loc n1 n2 ->
+                if labSem_state_failed s1 then (targetSem_Error,s)
+                  else labSem_evaluate (inc_pc (labSem_dec_clock s1)))
+                  | asm_JumpReg r ->
+             (match (\r s. labSem_state_regs s r) r s with asm_Loc
+               n1 n2 ->
                   (match loc_to_pc n1 n2 (labSem_state_code s) with
                     NONE -> (targetSem_Error,s) | SOME p ->
                        labSem_evaluate (labSem_upd_pc p
@@ -598,19 +567,19 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
         (if get_pc_value lab s = NONE then (targetSem_Error,s) else
            let s1 = labSem_upd_reg r (lab_to_loc lab) s in
              labSem_evaluate (inc_pc (labSem_dec_clock s1))) | SOME
-               (labLang_LabAsm (labLang_Jump l) _66 _67 _68) ->
+               (labLang_LabAsm (asm_Jump l) _66 _67 _68) ->
         (match get_pc_value l s with NONE -> (targetSem_Error,s) |
           SOME p -> labSem_evaluate (labSem_upd_pc p (labSem_dec_clock
-          s))) | SOME (labLang_LabAsm (labLang_JumpCmp c r ri l) _69
-          _70 _71) ->
+          s))) | SOME (labLang_LabAsm (asm_JumpCmp c r ri l) _69 _70
+          _71) ->
         (match wordSem_word_cmp c ((\r s. labSem_state_regs s r) r
           s) (labSem_reg_imm ri s) with NONE -> (targetSem_Error,s) |
           SOME F -> labSem_evaluate (inc_pc (labSem_dec_clock s)) |
           SOME T ->
           (match get_pc_value l s with NONE -> (targetSem_Error,s) |
             SOME p -> labSem_evaluate (labSem_upd_pc p
-            (labSem_dec_clock s)))) | SOME (labLang_LabAsm
-            (labLang_Call l) _72 _73 _74) ->
+            (labSem_dec_clock s)))) | SOME (labLang_LabAsm (asm_Call l)
+            _72 _73 _74) ->
         (match get_pc_value l s with NONE -> (targetSem_Error,s) |
           SOME p ->
           (match get_ret_Loc s with NONE -> (targetSem_Error,s) |
@@ -623,7 +592,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
         (match (labSem_state_regs s (labSem_state_ptr_reg
           s),labSem_state_regs s (labSem_state_len_reg
           s),labSem_state_regs s (labSem_state_link_reg s)) with
-          (wordLang_Word w1,wordLang_Word w2,wordLang_Loc n1 n2) ->
+          (wordLang_Word w1,wordLang_Word w2,asm_Loc n1 n2) ->
             (match (buffer_flush (labSem_state_code_buffer s) w1
               w2,loc_to_pc n1 n2 (labSem_state_code s)) with (SOME
               (bytes,cb),SOME new_pc) ->
@@ -643,7 +612,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                           new_oracle) (labSem_state_fp_regs_fupd (K
                           (\n. labSem_state_cc_fp_regs s 0 n))
                           (labSem_state_regs_fupd (K
-                          ((labSem_state_ptr_reg s =+ wordLang_Loc k 0)
+                          ((labSem_state_ptr_reg s =+ asm_Loc k 0)
                               (\a. get_reg_value
                                 (labSem_state_cc_regs s 0 a)
                               (labSem_state_regs s a)
@@ -670,7 +639,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                  (labSem_state_ptr2_reg s),labSem_state_regs s
                  (labSem_state_link_reg s)) with (wordLang_Word
                  w,wordLang_Word w2,wordLang_Word w3,wordLang_Word
-                 w4,wordLang_Loc n1 n2) ->
+                 w4,asm_Loc n1 n2) ->
           (match (read_bytearray w2 (w2n w) (mem_load_byte_aux
             (labSem_state_mem s) (labSem_state_mem_domain s)
             (labSem_state_be s)),
@@ -712,19 +681,19 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
 
 let labSem_semantics_def = new_definition
   `labSem_semantics s =
-   (if ?k. FST (labSem_evaluate (state_clock_fupd (K k) s)) =
+   (if ?k. FST (labSem_evaluate (labSem_state_clock_fupd (K k) s)) =
      targetSem_Error then ffi_Fail else
      match some (\res.
        ?k t outcome.
-         labSem_evaluate (state_clock_fupd (K k) s) = (targetSem_Halt
-           outcome,t) /\
-         res = ffi_Terminate outcome (ffi_state_io_events (state_ffi
-           t))) with SOME res -> res | NONE ->
+         labSem_evaluate (labSem_state_clock_fupd (K k) s) =
+           (targetSem_Halt outcome,t) /\
+         res = ffi_Terminate outcome (ffi_state_io_events
+           (labSem_state_ffi t))) with SOME res -> res | NONE ->
        ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
-              (SND (labSem_evaluate (state_clock_fupd (K k) s))))))
-              UNIV)))`;;
+            (IMAGE (\k. fromList (ffi_state_io_events
+              (labSem_state_ffi (SND (labSem_evaluate
+              (labSem_state_clock_fupd (K k) s)))))) UNIV)))`;;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

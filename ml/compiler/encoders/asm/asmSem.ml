@@ -37,20 +37,6 @@ let asm_state_FIELDS = define_record "asm_state"
    "align","num";
    "be","bool";
    "failed","bool"];;
-hol4_field_overload "regs" "asm_state_regs";;
-hol4_field_overload "regs_fupd" "asm_state_regs_fupd";;
-hol4_field_overload "fp_regs" "asm_state_fp_regs";;
-hol4_field_overload "fp_regs_fupd" "asm_state_fp_regs_fupd";;
-hol4_field_overload "mem" "asm_state_mem";;
-hol4_field_overload "mem_fupd" "asm_state_mem_fupd";;
-hol4_field_overload "mem_domain" "asm_state_mem_domain";;
-hol4_field_overload "mem_domain_fupd" "asm_state_mem_domain_fupd";;
-hol4_field_overload "pc" "asm_state_pc";;
-hol4_field_overload "pc_fupd" "asm_state_pc_fupd";;
-hol4_field_overload "be" "asm_state_be";;
-hol4_field_overload "be_fupd" "asm_state_be_fupd";;
-hol4_field_overload "failed" "asm_state_failed";;
-hol4_field_overload "failed_fupd" "asm_state_failed_fupd";;
 
 let upd_pc_def = new_definition
   `asmSem_upd_pc pc' s = asm_state_pc_fupd (K pc') s`;;

@@ -2451,7 +2451,7 @@ let alloc_correct = prove
      FLOOKUP l 1 = SOME (wordLang_Word w) ==>
      (?ck l2.
         stackSem_evaluate
-           (stackLang_Call (SOME (stackLang_Skip,0,n',m)) (INL
+           (wordLang_Call (SOME (wordLang_Skip,0,n',m)) (INL
              gc_stub_location) NONE,stackSem_state_code_fupd (K
              (fromAList (stack_alloc_compile c (toAList
              (stackSem_state_code s))))) (stackSem_state_gc_fun_fupd (K
@@ -2741,13 +2741,13 @@ let MAX_SIMP = prove
 let next_lab_thm = prove
  (`!p.
       next_lab (p:'a stackLang_prog) 2 =
-      (match p with stackLang_Seq p1 p2 -> MAX (next_lab p1 2)
-        (next_lab p2 2) | stackLang_If _1 _2 _3 p1 p2 -> MAX (next_lab
-        p1 2) (next_lab p2 2) | stackLang_Loop p -> next_lab p 2 |
-        stackLang_Call NONE _4 NONE -> 2 | stackLang_Call NONE _5 (SOME
-        (_6,_7,l2)) -> MAX (l2 + 2) 2 | stackLang_Call (SOME
+      (match p with wordLang_Seq p1 p2 -> MAX (next_lab p1 2)
+        (next_lab p2 2) | wordLang_If _1 _2 _3 p1 p2 -> MAX (next_lab p1
+        2) (next_lab p2 2) | wordLang_Loop p -> next_lab p 2 |
+        wordLang_Call NONE _4 NONE -> 2 | wordLang_Call NONE _5 (SOME
+        (_6,_7,l2)) -> MAX (l2 + 2) 2 | wordLang_Call (SOME
         (p,_8,_9,l2)) _10 NONE -> MAX (next_lab p 2) (l2 + 2) |
-        stackLang_Call (SOME (p,_11,_12,l2)) _13 (SOME (p',_14,l3)) ->
+        wordLang_Call (SOME (p,_11,_12,l2)) _13 (SOME (p',_14,l3)) ->
            MAX (MAX (next_lab p 2) (next_lab p' 2)) (MAX l2 l3 + 2)
              | _15 -> 2)`,
   CHEAT_TAC);;

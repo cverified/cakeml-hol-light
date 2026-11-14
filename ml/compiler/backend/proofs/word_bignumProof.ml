@@ -48,10 +48,6 @@ let word_bignumProof_state_FIELDS =
   ["regs","(num,'a word)fmap";
    "arrays","address->('a word) list";
    "clock","num"];;
-hol4_field_overload "regs" "word_bignumProof_state_regs";;
-hol4_field_overload "regs_fupd" "word_bignumProof_state_regs_fupd";;
-hol4_overload "state_clock" "word_bignumProof_state_clock";;
-hol4_overload "state_clock_fupd" "word_bignumProof_state_clock_fupd";;
 
 let _ = size_thms "wordLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -65,7 +61,7 @@ let eval_exp_def,eval_exp_ind = define_wf
      eval_exp s x2 /\
    eval_exp s (wordLang_Op asm_Sub [x1; x2]) = eval_exp s x1 -
      eval_exp s x2 /\
-   eval_exp s (wordLang_Op ast_And [x1; x2]) = word_and (eval_exp s
+   eval_exp s (wordLang_Op asm_And [x1; x2]) = word_and (eval_exp s
      x1) (eval_exp s x2) /\
    eval_exp s (wordLang_Op asm_Or [x1; x2]) = word_or (eval_exp s
      x1) (eval_exp s x2) /\
@@ -110,8 +106,8 @@ let eval_ri_def = define_cases
    `eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w`];;
 
 let word_bignumProof_dec_clock_def = new_definition
-  `word_bignumProof_dec_clock s = state_clock_fupd (K (state_clock s
-  - 1)) s`;;
+  `word_bignumProof_dec_clock s = word_bignumProof_state_clock_fupd
+  (K (word_bignumProof_state_clock s - 1)) s`;;
 
 let reg_write_def = define_cases
   [`reg_write v NONE (s:'a word_bignumProof_state) =
@@ -130,7 +126,7 @@ let array_write_def = new_definition
   v) (word_bignumProof_state_arrays s))) s`;;
 
 let clock_write_def = new_definition
-  `clock_write l s = state_clock_fupd (K l) s`;;
+  `clock_write l s = word_bignumProof_state_clock_fupd (K l) s`;;
 
 let copy_vars_def,copy_vars_ind = define_rec
   [`word_bignumProof_copy_vars [] s t = SOME t`;
@@ -225,8 +221,8 @@ let eval = cake_inductive
    (!r s1 p vs s2 rec.
       word_bignumProof_Eval (if rec then SOME p else NONE)
         (delete_vars vs (word_bignumProof_dec_clock s1))
-        (word_bignum_LoopBody p) (INR s2) /\ ~(state_clock s1 = 0)
-          ==>
+        (word_bignum_LoopBody p) (INR s2) /\
+          ~(word_bignumProof_state_clock s1 = 0) ==>
       word_bignumProof_Eval r s1 (word_bignum_Loop rec vs p) (INR
         s2)) /\
    (!s1 save_regs vs p s2 s3.
@@ -234,7 +230,8 @@ let eval = cake_inductive
         (word_bignumProof_dec_clock s1)) (word_bignum_LoopBody p) (INR
         s2) /\
       word_bignumProof_copy_vars save_regs
-        (word_bignumProof_state_regs s1) s2 = SOME s3 /\ ~(state_clock
+        (word_bignumProof_state_regs s1) s2 = SOME s3 /\
+        ~(word_bignumProof_state_clock
       s1 = 0) ==>
       word_bignumProof_Eval (SOME p) s1 (word_bignum_Rec save_regs
         vs) (INR s3)) /\
@@ -243,8 +240,8 @@ let eval = cake_inductive
       word_bignumProof_Eval r s1 (word_bignum_LoopBody p) (INR s2))
         /\
    (!r s1 s2 s3 p.
-      word_bignumProof_Eval r s1 p (INL s2) /\ ~(state_clock s2 = 0)
-        /\
+      word_bignumProof_Eval r s1 p (INL s2) /\
+        ~(word_bignumProof_state_clock s2 = 0) /\
       word_bignumProof_Eval r (word_bignumProof_dec_clock s2)
         (word_bignum_LoopBody p) (INR s3) ==>
       word_bignumProof_Eval r s1 (word_bignum_LoopBody p) (INR
@@ -324,7 +321,7 @@ let div_code_assum_def = new_definition
 
 let word_bignumProof_state_rel_def = new_definition
   `word_bignumProof_state_rel s (t:('a,'c,'ffi)wordSem_state) cs t0
-  frame <=> state_clock
+  frame <=> word_bignumProof_state_clock
      // clock related
      s = wordSem_state_clock t /\
      // array related
@@ -369,8 +366,9 @@ let word_bignumProof_state_rel_def = new_definition
 (* [local] *)
 let state_rel_delete_vars = prove
  (`word_bignumProof_state_arrays
-       s1 = word_bignumProof_state_arrays s2 /\ state_clock s1 =
-         state_clock s2 /\ word_bignumProof_state_regs
+       s1 = word_bignumProof_state_arrays s2 /\
+         word_bignumProof_state_clock s1 = word_bignumProof_state_clock
+         s2 /\ word_bignumProof_state_regs
        s2 SUBMAP word_bignumProof_state_regs s1 ==>
        word_bignumProof_state_rel s1 t1 cs t0 frame ==>
        word_bignumProof_state_rel s2 t1 cs t0 frame`,
@@ -436,9 +434,8 @@ let word_bignumProof_syntax_ok_def = new_definition
 
 let evaluate_Seq_Seq = prove
  (`!p1 p2 p3 t1.
-      wordSem_evaluate (wordLang_Seq p1 (word_bignum_Seq p2 p3),t1)
-        = wordSem_evaluate (word_bignum_Seq (word_bignum_Seq p1 p2)
-        p3,t1)`,
+      wordSem_evaluate (wordLang_Seq p1 (wordLang_Seq p2 p3),t1) =
+        wordSem_evaluate (wordLang_Seq (wordLang_Seq p1 p2) p3,t1)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -637,8 +634,10 @@ let FLOOKUP_list_store_ignore = prove
 let copy_vars_const = prove
  (`!save_regs s2 s3.
      word_bignumProof_copy_vars save_regs
-       (word_bignumProof_state_regs s1) s2 = SOME s3 ==> state_clock
-     s3 = state_clock s2 /\ word_bignumProof_state_arrays s3 =
+       (word_bignumProof_state_regs s1) s2 = SOME s3 ==>
+       word_bignumProof_state_clock
+     s3 = word_bignumProof_state_clock s2 /\
+       word_bignumProof_state_arrays s3 =
        word_bignumProof_state_arrays s2`,
   CHEAT_TAC);;
 
@@ -904,7 +903,8 @@ let Corr_If = prove
 let loop_app_def = new_definition
   `loop_app f g x =
      (match f x with INL s -> (INL (word_bignumProof_dec_clock
-       s),(g x /\ ~(state_clock s = 0))) | INR s -> (INR s,g x))`;;
+       s),(g x /\ ~(word_bignumProof_state_clock s = 0))) | INR s ->
+       (INR s,g x))`;;
 
 (* [local] *)
 let Corr_LoopBody = prove
@@ -916,8 +916,8 @@ let Corr_LoopBody = prove
 
 let tick_before_def = new_definition
   `tick_before vs f s =
-     (if state_clock s = 0 then (s,F) else f (delete_vars vs
-       (word_bignumProof_dec_clock s)))`;;
+     (if word_bignumProof_state_clock s = 0 then (s,F) else f
+       (delete_vars vs (word_bignumProof_dec_clock s)))`;;
 
 (* [local] *)
 let Corr_Loop_lemma = prove
@@ -925,7 +925,7 @@ let Corr_Loop_lemma = prove
    Corr (word_bignum_Loop F vs p) s (INR (f (delete_vars vs
      (word_bignumProof_dec_clock s))))
      (q (delete_vars vs (word_bignumProof_dec_clock s)) /\
-       ~(state_clock s = 0))`,
+       ~(word_bignumProof_state_clock s = 0))`,
   CHEAT_TAC);;
 
 (* HOL4 word_bignumProofScript.sml:1514: ML code, not ported *)
@@ -943,7 +943,8 @@ let Corr_STRENGTHEN_TERM = prove
 
 (* [local] *)
 let dec_clock_thm = prove
- (`word_bignumProof_dec_clock s = clock_write (state_clock s - 1) s`,
+ (`word_bignumProof_dec_clock s = clock_write
+  (word_bignumProof_state_clock s - 1) s`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -961,8 +962,8 @@ let reg_write_cancel = prove
 
 (* [local] *)
 let state_eq_lemma = prove
- (`(s0 = s1) <=> state_clock
-   s0 = state_clock s1 /\
+ (`(s0 = s1) <=> word_bignumProof_state_clock
+   s0 = word_bignumProof_state_clock s1 /\
    FDOM (word_bignumProof_state_regs s0) = FDOM
      (word_bignumProof_state_regs s1) /\
    (!n. n IN FDOM (word_bignumProof_state_regs s0) ==> FAPPLY
@@ -978,7 +979,7 @@ let clock_write_simp = prove
       (clock_write n s) = word_bignumProof_state_regs s /\
         word_bignumProof_state_arrays
        (clock_write n s) = word_bignumProof_state_arrays s /\
-         state_clock
+         word_bignumProof_state_clock
        (clock_write n s) = n`,
   CHEAT_TAC);;
 
@@ -988,8 +989,9 @@ let dec_clock_write_simp = prove
       (word_bignumProof_dec_clock s) = word_bignumProof_state_regs s
         /\ word_bignumProof_state_arrays
        (word_bignumProof_dec_clock s) = word_bignumProof_state_arrays
-         s /\ state_clock
-       (word_bignumProof_dec_clock s) = state_clock s - 1`,
+         s /\ word_bignumProof_state_clock
+       (word_bignumProof_dec_clock s) =
+         word_bignumProof_state_clock s - 1`,
   CHEAT_TAC);;
 
 (* [simp] *)
@@ -1000,8 +1002,8 @@ let reg_write_simp = prove
        (reg_write n (SOME w) s) = word_bignumProof_state_regs s |+
          (n,w) /\ word_bignumProof_state_arrays
        (reg_write n v s) = word_bignumProof_state_arrays s /\
-         state_clock
-       (reg_write n v s) = state_clock s`,
+         word_bignumProof_state_clock
+       (reg_write n v s) = word_bignumProof_state_clock s`,
   CHEAT_TAC);;
 
 let reg_write_simp_alt = prove
@@ -1023,14 +1025,14 @@ let array_write_simp = prove
       (array_write n w s) = word_bignumProof_state_regs s /\
         word_bignumProof_state_arrays
        (array_write n w s) = (n =+ w) (word_bignumProof_state_arrays
-         s) /\ state_clock
-       (array_write n w s) = state_clock s`,
+         s) /\ word_bignumProof_state_clock
+       (array_write n w s) = word_bignumProof_state_clock s`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let delete_vars_simp = prove
- (`!vs. state_clock
-      (delete_vars vs s) = state_clock s /\
+ (`!vs. word_bignumProof_state_clock
+      (delete_vars vs s) = word_bignumProof_state_clock s /\
         word_bignumProof_state_arrays
       (delete_vars vs s) = word_bignumProof_state_arrays s /\
       (FLOOKUP (word_bignumProof_state_regs (delete_vars vs s)) n =
@@ -1112,8 +1114,8 @@ let array_read_lemma = prove
 
 (* [local] *)
 let clock_read_lemma = prove
- (`state_clock
-       s = l ==> state_clock s = l`,
+ (`word_bignumProof_state_clock
+       s = l ==> word_bignumProof_state_clock s = l`,
   CHEAT_TAC);;
 
 (* HOL4 word_bignumProofScript.sml:1808-1809: ML code, not ported *)
@@ -1138,7 +1140,7 @@ let loop_app_EQ = prove
  (`(loop_app f g x = (INR t,T) <=> f x = INR t /\ g x) /\
    (loop_app f g x = (INL t,T) <=>
       (?x'. f x = INL x' /\ word_bignumProof_dec_clock x' = t /\ g
-        x /\ ~(state_clock x' = 0)))`,
+        x /\ ~(word_bignumProof_state_clock x' = 0)))`,
   CHEAT_TAC);;
 
 (* [local] *)

@@ -75,8 +75,6 @@ let target_FIELDS = define_record "target"
    "get_byte","'b->'a word->word8";
    "state_ok","'b->bool";
    "proj","('a word->bool)->'b->'c"];;
-hol4_field_overload "next" "target_next";;
-hol4_field_overload "next_fupd" "target_next_fupd";;
 
 let target_state_rel_def = new_definition
   `target_state_rel t s ms <=> target_state_ok

@@ -208,7 +208,7 @@ let encode_pat_def,encode_pat_ind = define_wf
   [`encode_pat x1 =
       match x1 with
         flatLang_Pany -> pattern_semantics_Any
-      | (flatLang_Plit l) -> pattern_semantics_Lit l
+      | (flatLang_Plit l) -> flatLang_Lit l
       | (flatLang_Pvar _42) -> pattern_semantics_Any
       | (flatLang_Pcon stmp ps) -> pattern_semantics_Cons
      (match stmp with NONE -> NONE | SOME (i,NONE) -> SOME (i,NONE)
@@ -235,9 +235,8 @@ let naive_pattern_match_def,naive_pattern_match_ind = define_guess_cheat
       | (CONS (flatLang_Pvar _44,_45) mats) -> naive_pattern_match t
         mats
       | (CONS (flatLang_Plit l,v) mats) -> SmartIf t
-     (flatLang_App t (flatLang_Src ast_Equality) [v;
-       pattern_semantics_Lit t l]) (naive_pattern_match t mats)
-       (flatLang_Bool t F)
+     (flatLang_App t (flatLang_Src ast_Equality) [v; flatLang_Lit t
+       l]) (naive_pattern_match t mats) (flatLang_Bool t F)
       | (CONS (flatLang_Pcon NONE ps,v) mats) ->
      naive_pattern_match t (APPEND (MAPi (\i p. (p,flatLang_App t
        (flatLang_El i) [v])) ps) mats)
@@ -339,8 +338,7 @@ let flat_pattern_compile_exp_def,flat_pattern_compile_exp_ind =
         let sgfs = EX (\(_52,_53,(_54,sg,_55)). sg) ys in
         let fs2 = MAP (\(a,b,(_56,_57,exp)). (a,b,exp)) ys in
         (MAX i j,(sgfs \/ sgx),flatLang_Letrec t fs2 y))`;
-   `flat_pattern_compile_exp cfg (pattern_semantics_If t x1 x2
-  x3:flatLang_exp) =
+   `flat_pattern_compile_exp cfg (flatLang_If t x1 x2 x3:flatLang_exp) =
         (let (i,sg1,y1) = flat_pattern_compile_exp cfg x1 in
         let (j,sg2,y2) = flat_pattern_compile_exp cfg x2 in
         let (k,sg3,y3) = flat_pattern_compile_exp cfg x3 in

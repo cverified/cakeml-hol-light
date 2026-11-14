@@ -226,7 +226,7 @@ let to_data_all_def = new_definition
      let p = MAP (\(a,n,e). (a,n,FST (data_live_compile e LN))) p in
      let ps = APPEND ps [((implode
        "after data_live"),backend_passes_Data p names)] in
-     let p = MAP (\(a,n,e). (a,n,simp e wordLang_Skip)) p in
+     let p = MAP (\(a,n,e). (a,n,simp e word_bignum_Skip)) p in
      let ps = APPEND ps [((implode
        "after data_simp"),backend_passes_Data p names)] in
      let p = MAP (\(a,n,e). (a,n,data_space_compile e)) p in

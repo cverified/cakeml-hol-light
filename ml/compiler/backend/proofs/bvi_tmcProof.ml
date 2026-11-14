@@ -83,21 +83,21 @@ let _ = size_thms "bvi_exp";;
    the names that the port gives the constants *)
 let no_mutcons_def,no_mutcons_ind = define_wf
   `MEASURE bvi_exp_size`
-  [`no_mutcons (bvl_Var n:bvi_exp) <=> T`;
-   `no_mutcons (bvl_If x1 x2 x3:bvi_exp) <=> no_mutcons x1 /\
+  [`no_mutcons (bvi_Var n:bvi_exp) <=> T`;
+   `no_mutcons (bvi_If x1 x2 x3:bvi_exp) <=> no_mutcons x1 /\
   no_mutcons x2 /\ no_mutcons x3`;
-   `no_mutcons (bvl_Let xs x:bvi_exp) <=> ALL no_mutcons xs /\
+   `no_mutcons (bvi_Let xs x:bvi_exp) <=> ALL no_mutcons xs /\
   no_mutcons x`;
-   `no_mutcons (bvl_Raise x:bvi_exp) <=> no_mutcons x`;
-   `no_mutcons (bvl_Tick x:bvi_exp) <=> no_mutcons x`;
-   `no_mutcons (bvl_Call ticks dest xs handler:bvi_exp) <=>
+   `no_mutcons (bvi_Raise x:bvi_exp) <=> no_mutcons x`;
+   `no_mutcons (bvi_Tick x:bvi_exp) <=> no_mutcons x`;
+   `no_mutcons (bvi_Call ticks dest xs handler:bvi_exp) <=>
          ALL no_mutcons xs /\ (match handler with NONE -> T |
            SOME x -> no_mutcons x)`;
-   `no_mutcons (bvl_Force loc n:bvi_exp) <=> T`;
+   `no_mutcons (bvi_Force loc n:bvi_exp) <=> T`;
    `no_mutcons (bvi_LetCall rets ticks dest xs y) <=> ALL no_mutcons
   xs /\ no_mutcons y`;
    `no_mutcons (bvi_Return xs:bvi_exp) <=> ALL no_mutcons xs`;
-   `no_mutcons (bvl_Op op xs:bvi_exp) <=> no_mutcons_op op /\ ALL
+   `no_mutcons (bvi_Op op xs:bvi_exp) <=> no_mutcons_op op /\ ALL
   no_mutcons xs`];;
 
 let bvi_tmcProof_code_rel_def = new_definition
@@ -1097,26 +1097,26 @@ let do_app_op_err_rel = prove
   CHEAT_TAC);;
 
 let wrapper_strip_if_then = prove
- (`rewrite_wrapper loc loc_opt n (bvl_If x1 x2 x3) = SOME w ==>
+ (`rewrite_wrapper loc loc_opt n (flatLang_If x1 x2 x3) = SOME w ==>
    (?w2 w3.
-     w = bvl_If x1 w2 w3 /\
+     w = flatLang_If x1 w2 w3 /\
      (rewrite_wrapper loc loc_opt n x2 = SOME w2 \/
       w2 = x2))`,
   CHEAT_TAC);;
 
 let wrapper_strip_if_else = prove
- (`rewrite_wrapper loc loc_opt n (bvl_If x1 x2 x3) = SOME w ==>
+ (`rewrite_wrapper loc loc_opt n (flatLang_If x1 x2 x3) = SOME w ==>
    (?w2 w3.
-     w = bvl_If x1 w2 w3 /\
+     w = flatLang_If x1 w2 w3 /\
      (rewrite_wrapper loc loc_opt n x3 = SOME w3 \/
       w3 = x3))`,
   CHEAT_TAC);;
 
 let wrapper_strip_let = prove
  (`!n loc loc_opt xs x w.
-     rewrite_wrapper loc loc_opt n (bvl_Let xs x) = SOME w ==>
+     rewrite_wrapper loc loc_opt n (flatLang_Let xs x) = SOME w ==>
      (?w'.
-       w = bvl_Let xs w' /\
+       w = flatLang_Let xs w' /\
        rewrite_wrapper loc loc_opt (n + LENGTH xs) x = SOME w')`,
   CHEAT_TAC);;
 
@@ -1250,37 +1250,38 @@ let evaluate_fill_hole_val = prove
 let evaluate_vars_source = prove
  (`!vs env (s:(num#'c,'ffi)bviSem_state).
      wf_vars (LENGTH env) vs ==>
-     bviSem_evaluate (MAP (\n. bvl_Var n) vs,env,s) = (Rval (MAP
-       (\n. EL n env) vs),s)`,
+     bviSem_evaluate (MAP (\n. db_vars_Var n) vs,env,s) = (Rval
+       (MAP (\n. EL n env) vs),s)`,
   CHEAT_TAC);;
 
 let evaluate_vars_target = prove
  (`!vs n env (s:('c,'ffi)bviSem_state).
      wf_vars n vs /\
      LENGTH env >= n ==>
-     bviSem_evaluate (MAP (\n. bvl_Var n) vs,env,s) = (Rval (MAP
-       (\n. EL n env) vs),s)`,
+     bviSem_evaluate (MAP (\n. db_vars_Var n) vs,env,s) = (Rval
+       (MAP (\n. EL n env) vs),s)`,
   CHEAT_TAC);;
 
 let evaluate_vars_expand_env = prove
  (`!vs env s v extras.
-     bviSem_evaluate (MAP (\n. bvl_Var n) vs,env,s) = (Rval v,s) ==>
-     bviSem_evaluate (MAP (\n. bvl_Var n) vs,APPEND env extras,s) =
-       (Rval v,s)`,
+     bviSem_evaluate (MAP (\n. db_vars_Var n) vs,env,s) = (Rval v,s)
+       ==>
+     bviSem_evaluate (MAP (\n. db_vars_Var n) vs,APPEND env
+       extras,s) = (Rval v,s)`,
   CHEAT_TAC);;
 
 let evaluate_var_list = prove
  (`!ns env s t r.
-     bviSem_evaluate (MAP (\n. bvl_Var n) ns,env,s) = (r,t) /\ ~(r =
-       Rerr (Rabort Rtype_error)) ==>
+     bviSem_evaluate (MAP (\n. db_vars_Var n) ns,env,s) = (r,t) /\
+       ~(r = Rerr (Rabort Rtype_error)) ==>
      (r,t) = (Rval (MAP (\n. EL n env) ns),s)`,
   CHEAT_TAC);;
 
 let evaluate_var_list_binders = prove
  (`!ns extras env s r t.
-     bviSem_evaluate (MAP (\n. bvl_Var n) ns,env,s) = (r,t) /\ ~(r =
-       Rerr (Rabort Rtype_error)) ==>
-     bviSem_evaluate (MAP (\n. bvl_Var (n + LENGTH extras))
+     bviSem_evaluate (MAP (\n. db_vars_Var n) ns,env,s) = (r,t) /\
+       ~(r = Rerr (Rabort Rtype_error)) ==>
+     bviSem_evaluate (MAP (\n. db_vars_Var (n + LENGTH extras))
        ns,APPEND extras env,s) = (r,t)`,
   CHEAT_TAC);;
 
@@ -1290,22 +1291,22 @@ let evaluate_binders = prove
      bvi_tmc_bind next' args = (vs,next') ==>
      (!ys.
        LENGTH ys = next' ==>
-       bviSem_evaluate (MAP (\n. bvl_Var n) vs,APPEND ys as,t) =
-         (Rval as,t))`,
+       bviSem_evaluate (MAP (\n. db_vars_Var n) vs,APPEND ys as,t)
+         = (Rval as,t))`,
   CHEAT_TAC);;
 
 let evaluate_shift_vars = prove
  (`!vs env s bs.
-     bviSem_evaluate (MAP (\n. bvl_Var n) (shift_vars (LENGTH bs)
+     bviSem_evaluate (MAP (\n. db_vars_Var n) (shift_vars (LENGTH bs)
        vs),APPEND bs env,s) =
-     bviSem_evaluate (MAP (\n. bvl_Var n) vs,env,s)`,
+     bviSem_evaluate (MAP (\n. db_vars_Var n) vs,env,s)`,
   CHEAT_TAC);;
 
 let evaluate_shift_vars_sing = prove
  (`!vs env s b.
-     bviSem_evaluate (MAP (\n. bvl_Var n) (shift_vars 1 vs),CONS b
-       env,s) =
-     bviSem_evaluate (MAP (\n. bvl_Var n) vs,env,s)`,
+     bviSem_evaluate (MAP (\n. db_vars_Var n) (shift_vars 1 vs),CONS
+       b env,s) =
+     bviSem_evaluate (MAP (\n. db_vars_Var n) vs,env,s)`,
   CHEAT_TAC);;
 
 let evaluate_shift_cb = prove
@@ -1358,7 +1359,7 @@ let evaluate_bvi_to_cb_aux_inl_lemma = prove
         (?v.
           !(s:('c,'ffi)bviSem_state).
             bviSem_evaluate ([exp],env,s) = (Rval v,s) /\
-            bviSem_evaluate (MAP (\n. bvl_Var n) vs,v,s) = (Rval
+            bviSem_evaluate (MAP (\n. db_vars_Var n) vs,v,s) = (Rval
               v,s)))) /\
    (!n loc tag args bs vs.
       bvi_to_cb_aux n loc tag args = SOME (bs,INL vs) ==>
@@ -1368,8 +1369,8 @@ let evaluate_bvi_to_cb_aux_inl_lemma = prove
         (?v.
           !(s:('c,'ffi)bviSem_state).
             bviSem_evaluate (args,env,s) = (Rval v,s) /\
-            bviSem_evaluate (MAP (\n. bvl_Var n) vs,v,s) = (Rval
-              v,s))))`,
+            bviSem_evaluate (MAP (\n. db_vars_Var n) vs,v,s) =
+              (Rval v,s))))`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_tmcProofScript.sml:2708: a theorem that HOL4 states as
@@ -1421,7 +1422,7 @@ let evaluate_bvi_to_cb = prove
      bviSem_evaluate ([x],env,s) = (r,t) /\
      bvi_to_cb n loc x = SOME (bs,cb) /\
      n <= LENGTH env ==>
-     bviSem_evaluate ([bvl_Let bs (cb_to_bvi loc cb)],env,s) =
+     bviSem_evaluate ([flatLang_Let bs (cb_to_bvi loc cb)],env,s) =
        (r,t)`,
   CHEAT_TAC);;
 
@@ -1993,8 +1994,8 @@ let bvi_tmcProof_compile_prog_semantics = prove
 
 (* [local,simp] *)
 let get_code_labels_MAP_Var = prove
- (`UNIONS (set_of_list (MAP bviProps_get_code_labels (MAP (\n. bvl_Var
-  n) vs))) = {}`,
+ (`UNIONS (set_of_list (MAP bviProps_get_code_labels (MAP (\n.
+  db_vars_Var n) vs))) = {}`,
   CHEAT_TAC);;
 
 (* [local] *)

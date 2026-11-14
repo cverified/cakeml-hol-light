@@ -61,7 +61,7 @@ let compile_int_def = new_definition
   `compile_int (i:int) =
      bvi_Op (if --((&268435457):int) <= i /\ i <=
        ((&268435457):int) then closLang_IntOp (closLang_Const i) else
-       closLang_BlockOp (closLang_Build [bvi_tailrec_Int i])) []`;;
+       closLang_BlockOp (closLang_Build [closLang_Int i])) []`;;
 
 let _ = size_thms "bvl_exp";;
 (* the termination relation is not in the HOL4 source; this one is

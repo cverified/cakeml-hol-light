@@ -23,10 +23,6 @@ let destTOK_def = new_definition
 let grammar_FIELDS = define_record "grammar"
   ["start","'b+num";
    "rules","('b+num,((('a,'b)grammar_symbol) list->bool))fmap"];;
-hol4_field_overload "start" "grammar_start";;
-hol4_field_overload "start_fupd" "grammar_start_fupd";;
-hol4_field_overload "rules" "grammar_rules";;
-hol4_field_overload "rules_fupd" "grammar_rules_fupd";;
 
 let parsetree_INDUCT,parsetree_RECURSION = define_datatype
   "parsetree = Lf (('a,'b)grammar_symbol#'locs) | Nd (('b+num)#'locs) \

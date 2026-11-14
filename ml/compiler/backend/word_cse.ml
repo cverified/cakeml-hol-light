@@ -275,11 +275,11 @@ let arithToNumList_def = define_cases
   r3 + 100]`];;
 
 let memOpToNum_def = define_cases
-  [`memOpToNum (wordLang_Load:memop) = (21:num)`;
+  [`memOpToNum (asm_Load:memop) = (21:num)`;
    `memOpToNum asm_Load8 = ((22):num)`;
    `memOpToNum asm_Load16 = ((46):num)`;
    `memOpToNum (asm_Load32:memop) = ((44):num)`;
-   `memOpToNum (wordLang_Store:memop) = ((23):num)`;
+   `memOpToNum (asm_Store:memop) = ((23):num)`;
    `memOpToNum asm_Store8 = ((47):num)`;
    `memOpToNum asm_Store16 = ((24):num)`;
    `memOpToNum (asm_Store32:memop) = ((45):num)`];;
@@ -358,8 +358,8 @@ let arithReads_def = new_definition
       match x1 with
         asm_Binop _60 _61 r2 (Reg r3) -> [r2; r3]
       | (asm_Binop _62 _63 r2 (Imm _64)) -> [r2]
-      | (wordLang_Shift _65 _66 r2 (Reg r3)) -> [r2; r3]
-      | (wordLang_Shift _67 _68 r2 (Imm _69)) -> [r2]
+      | (asm_Shift _65 _66 r2 (Reg r3)) -> [r2; r3]
+      | (asm_Shift _67 _68 r2 (Imm _69)) -> [r2]
       | (asm_Div _70 r2 r3) -> [r2; r3]
       | (asm_LongMul _71 _72 r3 r4) -> [r3; r4]
       | (asm_LongDiv _73 _74 r3 r4 r5) -> [r3; r4; r5]
@@ -405,7 +405,7 @@ let add_to_data_aux_def = new_definition
 let add_to_data_def = new_definition
   `add_to_data data r adjusted x =
      (let i = instToNumList adjusted in
-       add_to_data_aux data r i (wordLang_Inst x))`;;
+       add_to_data_aux data r i (asm_Inst x))`;;
 
 (* As add_to_data, but for constants: a constant is rematerialisable for free,
    so a repeated Const is NOT replaced by a Move (which would only extend the
@@ -414,13 +414,13 @@ let add_to_data_def = new_definition
    guards ODD r. *)
 let add_to_data_const_def = new_definition
   `add_to_data_const data r w =
-     (let i = instToNumList (wordLang_Const r w) in
+     (let i = instToNumList (asm_Const r w) in
        match balanced_map_lookup listCmp i (knowledge_instrs_mem
          data) with SOME r' -> (knowledge_to_latest_fupd (K
          (balanced_map_insert r' r (knowledge_to_latest data)))
          (knowledge_to_canonical_fupd (K (balanced_map_insert r r'
          (knowledge_to_canonical data))) data),
-                     wordLang_Inst (asm_Const r w)) | NONE ->
+                     asm_Inst (asm_Const r w)) | NONE ->
                        (knowledge_to_latest_fupd (K (balanced_map_insert
                        r r (knowledge_to_latest data)))
                        (knowledge_to_canonical_fupd (K
@@ -428,7 +428,7 @@ let add_to_data_const_def = new_definition
                        data))) (knowledge_instrs_mem_fupd (K
                        (balanced_map_insert listCmp i r
                        (knowledge_instrs_mem data))) data)),
-                     wordLang_Inst (asm_Const r w)))`;;
+                     asm_Inst (asm_Const r w)))`;;
 
 (* As add_to_data_aux, but for the load-fact map. *)
 let add_to_load_aux_def = new_definition
@@ -461,15 +461,15 @@ let can_mem_arith_def = new_definition
         asm_Binop _88 _89 r1 (Reg r2) -> (ODD r1 /\ ODD r2)
       | (asm_Binop _90 _91 r1 (Imm _92)) -> ODD r1
       | (asm_Div _93 r1 r2) -> (ODD r1 /\ ODD r2)
-      | (wordLang_Shift _94 _95 r (Imm _96)) -> ODD r
+      | (asm_Shift _94 _95 r (Imm _96)) -> ODD r
       | _97 -> F`;;
 
 let is_store_def = define_cases
-  [`is_store (wordLang_Load:memop) = F`;
+  [`is_store (asm_Load:memop) = F`;
    `is_store asm_Load8 = F`;
    `is_store asm_Load16 = F`;
    `is_store (asm_Load32:memop) = F`;
-   `is_store (wordLang_Store:memop) = T`;
+   `is_store (asm_Store:memop) = T`;
    `is_store asm_Store8 = T`;
    `is_store asm_Store16 = T`;
    `is_store (asm_Store32:memop) = T`];;
@@ -477,11 +477,10 @@ let is_store_def = define_cases
 let word_cseInst_def = new_definition
   `word_cseInst data x2 =
         match (data,x2) with
-          ((data:knowledge),asm_Skip) -> (data,wordLang_Inst
-            asm_Skip)
-        | (data,(wordLang_Const r w)) ->
+          ((data:knowledge),asm_Skip) -> (data,asm_Inst asm_Skip)
+        | (data,(asm_Const r w)) ->
         (let data = invalidate_data data r in
-          if EVEN r then (data,wordLang_Inst (asm_Const r w)) else
+          if EVEN r then (data,asm_Inst (asm_Const r w)) else
             add_to_data_const data r w)
         | (data,(asm_Arith a)) ->
         (let r = firstRegOfArith a in
@@ -493,26 +492,24 @@ let word_cseInst_def = new_definition
           if can_mem_arith a' /\ ~(MEM r rds) then
             add_to_data (register_reads data rds) r (asm_Arith a')
               (asm_Arith a) else
-            (data,wordLang_Inst (asm_Arith a)))
+            (data,asm_Inst (asm_Arith a)))
         | (data,(asm_Mem op r (Addr a ofs))) ->
         (if is_store op then
           (knowledge_loads_mem_fupd (K balanced_map_empty)
            // A store writes no register, but it writes memory: all load facts
            // are invalidated. Register-only facts survive.
-           data,wordLang_Inst (asm_Mem op r (Addr a ofs))) else
+           data,asm_Inst (asm_Mem op r (Addr a ofs))) else
           let data = invalidate_data data r in
             // A load fact whose address is the written register (a = r) would
             // not describe the post-state; EVEN names are never tracked.
-            if EVEN r \/ EVEN a \/ a = r then (data,wordLang_Inst
-              (asm_Mem op r (Addr a ofs))) else
+            if EVEN r \/ EVEN a \/ a = r then (data,asm_Inst (asm_Mem
+              op r (Addr a ofs))) else
               let a' = canonicalRegs' r data a in
                 add_to_load_aux (register_read data a') r
                   (loadToNumList op a' ofs)
-                              (wordLang_Inst (asm_Mem op r (Addr a
-                                ofs))))
+                              (asm_Inst (asm_Mem op r (Addr a ofs))))
         | (data,(asm_FP fp:'a asm_inst)) ->
-        (invalidate_regs data (fpWrites fp),wordLang_Inst (asm_FP
-          fp))`;;
+        (invalidate_regs data (fpWrites fp),asm_Inst (asm_FP fp))`;;
 
 let dest_Var_def = new_definition
   `dest_Var x1 =

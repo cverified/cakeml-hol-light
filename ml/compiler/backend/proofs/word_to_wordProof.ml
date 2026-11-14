@@ -66,8 +66,8 @@ let compile_single_lem = prove
      res = res' /\
      word_state_eq_rel rst rcst /\
      (match res with
-       NONE -> T | SOME (wordSem_Break _3) -> T | SOME
-         (wordSem_Continue _4) -> T | SOME _5 -> wordSem_state_locals
+       NONE -> T | SOME (wordLang_Break _3) -> T | SOME
+         (wordLang_Continue _4) -> T | SOME _5 -> wordSem_state_locals
          rst = wordSem_state_locals rcst))`,
   CHEAT_TAC);;
 

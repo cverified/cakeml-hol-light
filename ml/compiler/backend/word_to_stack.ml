@@ -113,120 +113,119 @@ let wMove_def = new_definition
 let wInst_def = new_definition
   `wInst x1 kf =
         match x1 with
-          ((wordLang_Const n c):'a asm_inst) ->
-       wRegWrite1 (\n. wordLang_Inst (asm_Const n c)) n kf
+          ((asm_Const n c):'a asm_inst) ->
+       wRegWrite1 (\n. asm_Inst (asm_Const n c)) n kf
         | (asm_Arith (asm_Binop bop n1 n2 (Imm imm))) ->
        (let (l,n2) = wReg1 n2 kf in
        wStackLoad l
-         (wRegWrite1 (\n1. wordLang_Inst (asm_Arith (asm_Binop bop n1
-           n2 (Imm imm)))) n1 kf))
+         (wRegWrite1 (\n1. asm_Inst (asm_Arith (asm_Binop bop n1 n2
+           (Imm imm)))) n1 kf))
         | (asm_Arith (asm_Binop bop n1 n2 (Reg n3))) ->
        (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (APPEND l l')
-         (wRegWrite1 (\n1. wordLang_Inst (asm_Arith (asm_Binop bop n1
-           n2 (Reg n3)))) n1 kf))
+         (wRegWrite1 (\n1. asm_Inst (asm_Arith (asm_Binop bop n1 n2
+           (Reg n3)))) n1 kf))
         | (asm_Arith (asm_Shift sh n1 n2 (Imm imm))) ->
        (let (l,n2) = wReg1 n2 kf in
        wStackLoad l
-         (wRegWrite1 (\n1. wordLang_Inst (asm_Arith (asm_Shift sh n1
-           n2 (Imm imm)))) n1 kf))
+         (wRegWrite1 (\n1. asm_Inst (asm_Arith (asm_Shift sh n1 n2
+           (Imm imm)))) n1 kf))
         | (asm_Arith (asm_Shift sh n1 n2 (Reg n3))) ->
        (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (APPEND l l')
-         (wRegWrite1 (\n1. wordLang_Inst (asm_Arith (asm_Shift sh n1
-           n2 (Reg n3)))) n1 kf))
+         (wRegWrite1 (\n1. asm_Inst (asm_Arith (asm_Shift sh n1 n2
+           (Reg n3)))) n1 kf))
         | (asm_Arith (asm_Div n1 n2 n3)) ->
        (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (APPEND l l')
-         (wRegWrite1 (\n1. wordLang_Inst (asm_Arith (asm_Div n1 n2
-           n3))) n1 kf))
+         (wRegWrite1 (\n1. asm_Inst (asm_Arith (asm_Div n1 n2 n3)))
+           n1 kf))
         | (asm_Arith (asm_AddCarry n1 n2 n3 n4)) ->
        (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (APPEND l l')
-         (wRegWrite1 (\n1. wordLang_Inst (asm_Arith (asm_AddCarry n1
-           n2 n3 n4))) n1 kf))
+         (wRegWrite1 (\n1. asm_Inst (asm_Arith (asm_AddCarry n1 n2 n3
+           n4))) n1 kf))
         | (asm_Arith (asm_AddOverflow n1 n2 n3 n4)) ->
        (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (APPEND l l')
-         (wRegWrite1 (\n1. wordLang_Inst (asm_Arith (asm_AddOverflow
-           n1 n2 n3 n4))) n1 kf))
+         (wRegWrite1 (\n1. asm_Inst (asm_Arith (asm_AddOverflow n1 n2
+           n3 n4))) n1 kf))
         | (asm_Arith (asm_SubOverflow n1 n2 n3 n4)) ->
        (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (APPEND l l')
-         (wRegWrite1 (\n1. wordLang_Inst (asm_Arith (asm_SubOverflow
-           n1 n2 n3 n4))) n1 kf))
+         (wRegWrite1 (\n1. asm_Inst (asm_Arith (asm_SubOverflow n1 n2
+           n3 n4))) n1 kf))
         | (asm_Arith (asm_LongMul n1 n2 n3 n4)) ->
          (
           // n1 = 2, n2 = 0, n3 = 0, n4 = 1 no spills necessary
-          wordLang_Inst (asm_Arith (asm_LongMul 3 0 0 2)))
+          asm_Inst (asm_Arith (asm_LongMul 3 0 0 2)))
         | (asm_Arith (asm_LongDiv n1 n2 n3 n4 n5)) ->
        // n1 = 0, n2 = 2, n3 = 2, n4 = 0 no spills necessary
        (let (l,n5) = wReg1 n5 kf in
        wStackLoad l
-         (wordLang_Inst (asm_Arith (asm_LongDiv 0 3 3 0 n5))))
+         (asm_Inst (asm_Arith (asm_LongDiv 0 3 3 0 n5))))
         | (asm_Mem asm_Load n1 (Addr n2 offset)) ->
        (let (l,n2) = wReg1 n2 kf in
        wStackLoad l
-         (wRegWrite1 (\n1. wordLang_Inst (asm_Mem asm_Load n1 (Addr
-           n2 offset))) n1 kf))
+         (wRegWrite1 (\n1. asm_Inst (asm_Mem asm_Load n1 (Addr n2
+           offset))) n1 kf))
         | (asm_Mem asm_Store n1 (Addr n2 offset)) ->
        (let (l1,n2) = wReg1 n2 kf in
        let (l2,n1) = wReg2 n1 kf in
          wStackLoad (APPEND l1 l2)
-           (wordLang_Inst (asm_Mem asm_Store n1 (Addr n2 offset))))
+           (asm_Inst (asm_Mem asm_Store n1 (Addr n2 offset))))
         | (asm_Mem asm_Load8 n1 (Addr n2 offset)) ->
        (let (l,n2) = wReg1 n2 kf in
        wStackLoad l
-         (wRegWrite1 (\n1. wordLang_Inst (asm_Mem asm_Load8 n1 (Addr
-           n2 offset))) n1 kf))
+         (wRegWrite1 (\n1. asm_Inst (asm_Mem asm_Load8 n1 (Addr n2
+           offset))) n1 kf))
         | (asm_Mem asm_Store8 n1 (Addr n2 offset)) ->
        (let (l1,n2) = wReg1 n2 kf in
        let (l2,n1) = wReg2 n1 kf in
          wStackLoad (APPEND l1 l2)
-           (wordLang_Inst (asm_Mem asm_Store8 n1 (Addr n2 offset))))
+           (asm_Inst (asm_Mem asm_Store8 n1 (Addr n2 offset))))
         | (asm_Mem asm_Load32 n1 (Addr n2 offset)) ->
        (let (l,n2) = wReg1 n2 kf in
        wStackLoad l
-         (wRegWrite1 (\n1. wordLang_Inst (asm_Mem asm_Load32 n1 (Addr
-           n2 offset))) n1 kf))
+         (wRegWrite1 (\n1. asm_Inst (asm_Mem asm_Load32 n1 (Addr n2
+           offset))) n1 kf))
         | (asm_Mem asm_Store32 n1 (Addr n2 offset)) ->
        (let (l1,n2) = wReg1 n2 kf in
        let (l2,n1) = wReg2 n1 kf in
          wStackLoad (APPEND l1 l2)
-           (wordLang_Inst (asm_Mem asm_Store32 n1 (Addr n2 offset))))
+           (asm_Inst (asm_Mem asm_Store32 n1 (Addr n2 offset))))
         | (asm_FP (FPLess r f1 f2)) ->
-       wRegWrite1 (\r. wordLang_Inst (asm_FP (FPLess r f1 f2))) r kf
+       wRegWrite1 (\r. asm_Inst (asm_FP (FPLess r f1 f2))) r kf
         | (asm_FP (FPLessEqual r f1 f2)) ->
-       wRegWrite1 (\r. wordLang_Inst (asm_FP (FPLessEqual r f1 f2)))
-         r kf
+       wRegWrite1 (\r. asm_Inst (asm_FP (FPLessEqual r f1 f2))) r kf
         | (asm_FP (FPEqual r f1 f2)) ->
-       wRegWrite1 (\r. wordLang_Inst (asm_FP (FPEqual r f1 f2))) r kf
+       wRegWrite1 (\r. asm_Inst (asm_FP (FPEqual r f1 f2))) r kf
         | (asm_FP (FPMovToReg r1 r2 d)) ->
        (if dimindex (:'a) = 64 then
-         wRegWrite1 (\r1. wordLang_Inst (asm_FP (FPMovToReg r1 0 d)))
-           r1 kf else
-         wRegWrite2 (\r2. wRegWrite1 (\r1. wordLang_Inst (asm_FP
+         wRegWrite1 (\r1. asm_Inst (asm_FP (FPMovToReg r1 0 d))) r1
+           kf else
+         wRegWrite2 (\r2. wRegWrite1 (\r1. asm_Inst (asm_FP
            (FPMovToReg r1 r2 d))) r1 kf) r2 kf)
         | (asm_FP (FPMovFromReg d r1 r2)) ->
        (let (l,n1) = wReg1 r1 kf in
        let (l',n2) =
          (if dimindex (:'a) = 64 then ([],0) else wReg2 r2 kf) in
        wStackLoad (APPEND l l')
-         (wordLang_Inst (asm_FP (FPMovFromReg d n1 n2))))
-        | (asm_FP f) -> wordLang_Inst (asm_FP f)
+         (asm_Inst (asm_FP (FPMovFromReg d n1 n2))))
+        | (asm_FP f) -> asm_Inst (asm_FP f)
         // pass through the ones that don't use int registers
-        | _1 -> wordLang_Inst asm_Skip`;;
+        | _1 -> asm_Inst asm_Skip`;;
 
 let wShareInst_def = new_definition
   `wShareInst x1 v x3 kf =
         match (x1,x3) with
-          ((wordLang_Load:memop),Addr ad offset) ->
+          ((asm_Load:memop),Addr ad offset) ->
        (let (l,n2) = wReg1 ad kf in
        wStackLoad l
          (wRegWrite1 (\r. stackLang_ShMemOp asm_Load r (Addr n2
@@ -246,7 +245,7 @@ let wShareInst_def = new_definition
        wStackLoad l
          (wRegWrite1 (\r. stackLang_ShMemOp asm_Load32 r (Addr n2
            offset)) v kf))
-        | (wordLang_Store,(Addr ad offset)) ->
+        | (asm_Store,(Addr ad offset)) ->
        (let (l1,n2) = wReg1 ad kf in
        let (l2,n1) = wReg2 v kf in
        wStackLoad (APPEND l1 l2)

@@ -151,21 +151,21 @@ let fix_inconsistencies_def = new_definition
 let ssa_cc_trans_inst_def = new_definition
   `ssa_cc_trans_inst x ssa na =
         match x with
-          asm_Skip -> (wordLang_Skip,ssa,na)
-        | (wordLang_Const reg w) ->
+          asm_Skip -> (asm_Skip,ssa,na)
+        | (asm_Const reg w) ->
        (let (reg',ssa',na') = next_var_rename reg ssa na in
-         (wordLang_Inst (asm_Const reg' w),ssa',na'))
+         (asm_Inst (asm_Const reg' w),ssa',na'))
         | (asm_Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with
          Reg r3 ->
          (let r3' = option_lookup ssa r3 in
          let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (wordLang_Inst (asm_Arith (asm_Binop bop r1' r2' (Reg
+           (asm_Inst (asm_Arith (asm_Binop bop r1' r2' (Reg
              r3'))),ssa',na')) | _5 ->
          (let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (wordLang_Inst (asm_Arith (asm_Binop bop r1' r2'
+           (asm_Inst (asm_Arith (asm_Binop bop r1' r2'
              ri)),ssa',na')))
         | (asm_Arith (asm_Shift shift' r1 r2 ri)) ->
        (match ri with Reg r3 ->
@@ -173,17 +173,17 @@ let ssa_cc_trans_inst_def = new_definition
          let r2' = option_lookup ssa r2 in
          let mov_in = (wordLang_Move 1) [(8,r3')] in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (linear_scan_Seq mov_in (wordLang_Inst (asm_Arith
-             (asm_Shift shift' r1' r2' (Reg 8)))),ssa',na')) | _6 ->
+           (linear_scan_Seq mov_in (asm_Inst (asm_Arith (asm_Shift
+             shift' r1' r2' (Reg 8)))),ssa',na')) | _6 ->
          (let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (wordLang_Inst (asm_Arith (asm_Shift shift' r1' r2'
+           (asm_Inst (asm_Arith (asm_Shift shift' r1' r2'
              ri)),ssa',na')))
         | (asm_Arith (asm_Div r1 r2 r3)) ->
        (let r2' = option_lookup ssa r2 in
        let r3' = option_lookup ssa r3 in
        let (r1',ssa',na') = next_var_rename r1 ssa na in
-       (wordLang_Inst (asm_Arith (asm_Div r1' r2' r3')),ssa',na'))
+       (asm_Inst (asm_Arith (asm_Div r1' r2' r3')),ssa',na'))
         | (asm_Arith (asm_AddCarry r1 r2 r3 r4)) ->
        (let r2' = option_lookup ssa r2 in
        let r3' = option_lookup ssa r3 in
@@ -192,7 +192,7 @@ let ssa_cc_trans_inst_def = new_definition
        let mov_in = (wordLang_Move 1) [(0,r4')] in
        let (r4'',ssa'',na'') = next_var_rename r4 ssa' na' in
        let mov_out = (wordLang_Move 1) [(r4'',0)] in
-         (linear_scan_Seq mov_in (linear_scan_Seq (wordLang_Inst
+         (linear_scan_Seq mov_in (linear_scan_Seq (asm_Inst
            (asm_Arith (asm_AddCarry r1' r2' r3' 0)))
            mov_out),ssa'',na''))
         // Note: for AddOverflow and SubOverflow, setting r4 to 0 is not necessary
@@ -205,16 +205,16 @@ let ssa_cc_trans_inst_def = new_definition
        let (r1',ssa',na') = next_var_rename r1 ssa na in
        let (r4'',ssa'',na'') = next_var_rename r4 ssa' na' in
        let mov_out = (wordLang_Move 1) [(r4'',0)] in
-         (linear_scan_Seq (wordLang_Inst (asm_Arith (asm_AddOverflow
-           r1' r2' r3' 0))) mov_out,ssa'',na''))
+         (linear_scan_Seq (asm_Inst (asm_Arith (asm_AddOverflow r1'
+           r2' r3' 0))) mov_out,ssa'',na''))
         | (asm_Arith (asm_SubOverflow r1 r2 r3 r4)) ->
        (let r2' = option_lookup ssa r2 in
        let r3' = option_lookup ssa r3 in
        let (r1',ssa',na') = next_var_rename r1 ssa na in
        let (r4'',ssa'',na'') = next_var_rename r4 ssa' na' in
        let mov_out = (wordLang_Move 1) [(r4'',0)] in
-         (linear_scan_Seq (wordLang_Inst (asm_Arith (asm_SubOverflow
-           r1' r2' r3' 0))) mov_out,ssa'',na''))
+         (linear_scan_Seq (asm_Inst (asm_Arith (asm_SubOverflow r1'
+           r2' r3' 0))) mov_out,ssa'',na''))
         | (asm_Arith (asm_LongMul r1 r2 r3 r4)) ->
        (let r3' = option_lookup ssa r3 in
        let r4' = option_lookup ssa r4 in
@@ -222,7 +222,7 @@ let ssa_cc_trans_inst_def = new_definition
        let (r1',ssa',na') = next_var_rename r1 ssa na in
        let (r2',ssa'',na'') = next_var_rename r2 ssa' na' in
        let mov_out = (wordLang_Move 1) [(r2',0); (r1',6)] in
-         (linear_scan_Seq mov_in (linear_scan_Seq (wordLang_Inst
+         (linear_scan_Seq mov_in (linear_scan_Seq (asm_Inst
            (asm_Arith (asm_LongMul 6 0 0 4))) mov_out),ssa'',na''))
         | (asm_Arith (asm_LongDiv r1 r2 r3 r4 r5)) ->
        (let r3' = option_lookup ssa r3 in
@@ -232,68 +232,64 @@ let ssa_cc_trans_inst_def = new_definition
        let (r2',ssa',na') = next_var_rename r2 ssa na in
        let (r1',ssa'',na'') = next_var_rename r1 ssa' na' in
        let mov_out = (wordLang_Move 1) [(r2',6); (r1',0)] in
-         (linear_scan_Seq mov_in (linear_scan_Seq (wordLang_Inst
+         (linear_scan_Seq mov_in (linear_scan_Seq (asm_Inst
            (asm_Arith (asm_LongDiv 0 6 6 0 r5'))) mov_out),ssa'',na''))
         | (asm_Mem asm_Load r (Addr a w)) ->
        (let a' = option_lookup ssa a in
        let (r',ssa',na') = next_var_rename r ssa na in
-         (wordLang_Inst (asm_Mem asm_Load r' (Addr a' w)),ssa',na'))
+         (asm_Inst (asm_Mem asm_Load r' (Addr a' w)),ssa',na'))
         | (asm_Mem asm_Store r (Addr a w)) ->
        (let a' = option_lookup ssa a in
        let r' = option_lookup ssa r in
-         (wordLang_Inst (asm_Mem asm_Store r' (Addr a' w)),ssa,na))
+         (asm_Inst (asm_Mem asm_Store r' (Addr a' w)),ssa,na))
         | (asm_Mem asm_Load32 r (Addr a w)) ->
        (let a' = option_lookup ssa a in
        let (r',ssa',na') = next_var_rename r ssa na in
-         (wordLang_Inst (asm_Mem asm_Load32 r' (Addr a'
-           w)),ssa',na'))
+         (asm_Inst (asm_Mem asm_Load32 r' (Addr a' w)),ssa',na'))
         | (asm_Mem asm_Store32 r (Addr a w)) ->
        (let a' = option_lookup ssa a in
        let r' = option_lookup ssa r in
-         (wordLang_Inst (asm_Mem asm_Store32 r' (Addr a' w)),ssa,na))
+         (asm_Inst (asm_Mem asm_Store32 r' (Addr a' w)),ssa,na))
         | (asm_Mem asm_Load8 r (Addr a w)) ->
        (let a' = option_lookup ssa a in
        let (r',ssa',na') = next_var_rename r ssa na in
-         (wordLang_Inst (asm_Mem asm_Load8 r' (Addr a' w)),ssa',na'))
+         (asm_Inst (asm_Mem asm_Load8 r' (Addr a' w)),ssa',na'))
         | (asm_Mem asm_Store8 r (Addr a w)) ->
        (let a' = option_lookup ssa a in
        let r' = option_lookup ssa r in
-         (wordLang_Inst (asm_Mem asm_Store8 r' (Addr a' w)),ssa,na))
+         (asm_Inst (asm_Mem asm_Store8 r' (Addr a' w)),ssa,na))
         | (asm_FP (FPLess r f1 f2)) ->
        (let (r',ssa',na') = next_var_rename r ssa na in
-         (wordLang_Inst (asm_FP (FPLess r' f1 f2)),ssa',na'))
+         (asm_Inst (asm_FP (FPLess r' f1 f2)),ssa',na'))
         | (asm_FP (FPLessEqual r f1 f2)) ->
        (let (r',ssa',na') = next_var_rename r ssa na in
-         (wordLang_Inst (asm_FP (FPLessEqual r' f1 f2)),ssa',na'))
+         (asm_Inst (asm_FP (FPLessEqual r' f1 f2)),ssa',na'))
         | (asm_FP (FPEqual r f1 f2)) ->
        (let (r',ssa',na') = next_var_rename r ssa na in
-         (wordLang_Inst (asm_FP (FPEqual r' f1 f2)),ssa',na'))
+         (asm_Inst (asm_FP (FPEqual r' f1 f2)),ssa',na'))
         | (asm_FP (FPMovToReg r1 r2 d):'a asm_inst) ->
        (if dimindex (:'a) = 64 then
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (wordLang_Inst (asm_FP (FPMovToReg r1' r2 d)),ssa',na')
-             else
+           (asm_Inst (asm_FP (FPMovToReg r1' r2 d)),ssa',na') else
          let (r1',ssa',na') = next_var_rename r1 ssa na in
          let (r2',ssa'',na'') = next_var_rename r2 ssa' na' in
-           (wordLang_Inst (asm_FP (FPMovToReg r1' r2'
-             d)),ssa'',na''))
+           (asm_Inst (asm_FP (FPMovToReg r1' r2' d)),ssa'',na''))
         | (asm_FP (FPMovFromReg d r1 r2)) ->
        (if dimindex (:'a) = 64 then
          let r1' = option_lookup ssa r1 in
-           (wordLang_Inst (asm_FP (FPMovFromReg d r1' 0)),ssa,na)
-             else
+           (asm_Inst (asm_FP (FPMovFromReg d r1' 0)),ssa,na) else
          let r1' = option_lookup ssa r1 in
          let r2' = option_lookup ssa r2 in
          if r1' = r2' then
            // force distinct with an extra Move
            let (r2'',ssa',na') = next_var_rename r2 ssa na in
            let mov_in = (wordLang_Move 0) [(r2'',r2')] in
-           (linear_scan_Seq mov_in (wordLang_Inst (asm_FP
-             (FPMovFromReg d r1' r2''))),
+           (linear_scan_Seq mov_in (asm_Inst (asm_FP (FPMovFromReg d
+             r1' r2''))),
            ssa',na') else
-           (wordLang_Inst (asm_FP (FPMovFromReg d r1' r2')),ssa,na))
+           (asm_Inst (asm_FP (FPMovFromReg d r1' r2')),ssa,na))
         // Catchall -- for future instructions to be added, and all other FP
-        | x -> (wordLang_Inst x,ssa,na)`;;
+        | x -> (asm_Inst x,ssa,na)`;;
 
 (*Expressions only ever need to lookup a variable's current ssa map
   so it doesn't need the other parts *)
@@ -670,8 +666,8 @@ let apply_colour_imm_def = new_definition
 let apply_colour_inst_def = new_definition
   `apply_colour_inst f x =
         match x with
-          asm_Skip -> wordLang_Skip
-        | (wordLang_Const reg w) -> wordLang_Const (f reg) w
+          asm_Skip -> asm_Skip
+        | (asm_Const reg w) -> asm_Const (f reg) w
         | (asm_Arith (asm_Binop bop r1 r2 ri)) ->
        asm_Arith (asm_Binop bop (f r1) (f r2) (apply_colour_imm f
          ri))
@@ -739,8 +735,8 @@ let apply_colour_def,apply_colour_ind = define_wf
        let h = (match h with NONE -> NONE | SOME (v,prog,l1,l2) ->
          SOME (f v,apply_colour f prog,l1,l2)) in
          wordLang_Call ret dest args h)
-        | (linear_scan_Seq s1 s2) -> wordLang_Seq (apply_colour f
-          s1) (apply_colour f s2)
+        | (wordLang_Seq s1 s2) -> wordLang_Seq (apply_colour f s1)
+          (apply_colour f s2)
         | (wordLang_MustTerminate s1) -> wordLang_MustTerminate
           (apply_colour f s1)
         | (wordLang_If cmp r1 ri e2 e3) ->
@@ -766,8 +762,8 @@ let apply_colour_def,apply_colour_ind = define_wf
         | (wordLang_Return num1 nums) -> wordLang_Return (f num1)
           (MAP f nums)
         | wordLang_Tick -> wordLang_Tick
-        | (reg_alloc_Set n exp) -> wordLang_Set n (apply_colour_exp
-          f exp)
+        | (wordLang_Set n exp) -> wordLang_Set n (apply_colour_exp f
+          exp)
         | (wordLang_OpCurrHeap b n1 n2) -> wordLang_OpCurrHeap b (f
           n1) (f n2)
         | (wordLang_ShareInst op v exp) -> wordLang_ShareInst op (f
@@ -817,7 +813,7 @@ let get_live_inst_def = new_definition
   `get_live_inst x live =
         match x with
           asm_Skip -> live
-        | (wordLang_Const reg w) -> sptree_delete reg live
+        | (asm_Const reg w) -> sptree_delete reg live
         | (asm_Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with Reg r3 -> sptree_insert r2 one (sptree_insert
          r3 one (sptree_delete r1 live)) | _7 -> sptree_insert r2 one
@@ -913,7 +909,7 @@ let get_live_def,get_live_ind = define_shaped_rec
         | (wordLang_Store exp num') ->
        sptree_insert num' one (sptree_union (get_live_exp exp) live)
         // Find liveset just before s2 which is the input liveset to s1
-        | (linear_scan_Seq s1 s2) ->
+        | (wordLang_Seq s1 s2) ->
        get_live s1 (get_live s2 live lt) lt
         | (wordLang_MustTerminate s1) ->
        get_live s1 live lt
@@ -950,7 +946,7 @@ let get_live_def,get_live_ind = define_shaped_rec
           (word_alloc_numset_list_insert nums live)
         | wordLang_Tick -> live
         | (wordLang_LocValue r l1) -> sptree_delete r live
-        | (reg_alloc_Set n exp) -> sptree_union (get_live_exp exp)
+        | (wordLang_Set n exp) -> sptree_union (get_live_exp exp)
           live
         | (wordLang_OpCurrHeap b n1 n2) -> sptree_insert n2 one
           (sptree_delete n1 live)
@@ -988,8 +984,7 @@ let remove_dead_inst_def = new_definition
   `remove_dead_inst x live =
         match (x,live) with
           (asm_Skip,(live:1 spt)) -> T
-        | ((wordLang_Const reg w),live) -> (sptree_lookup reg live =
-          NONE)
+        | ((asm_Const reg w),live) -> (sptree_lookup reg live = NONE)
         | ((asm_Arith (asm_Binop bop r1 r2 ri)),live) ->
           (sptree_lookup r1 live = NONE)
         | ((asm_Arith (asm_Shift shift' r1 r2 n)),live) ->
@@ -1062,23 +1057,23 @@ let remove_dead_def,remove_dead_ind = assume_definition_rec
        (if sptree_lookup r live = NONE then
          (wordLang_Skip,live,nlive) else (wordLang_LocValue r
            l1,sptree_delete r live,nlive))
-        | (reg_alloc_Set store_name exp) ->
+        | (wordLang_Set store_name exp) ->
        (match exp with
          wordLang_Var r ->
          (if MEM store_name nlive then
            (wordLang_Skip,live,nlive) else
-           (reg_alloc_Set store_name (wordLang_Var r),sptree_insert
-             r one live,CONS store_name nlive)) | _12 ->
-         (let prog = reg_alloc_Set store_name exp in
+           (wordLang_Set store_name (wordLang_Var r),sptree_insert r
+             one live,CONS store_name nlive)) | _12 ->
+         (let prog = wordLang_Set store_name exp in
            (prog,get_live prog live lt,[])))
-        | (linear_scan_Seq s1 s2) ->
+        | (wordLang_Seq s1 s2) ->
        (let (s2,s2live,s2nlive) = remove_dead s2 live nlive lt in
        let (s1,s1live,s1nlive) = remove_dead s1 s2live s2nlive lt in
        let prog =
          (if s1 = wordLang_Skip then
            s2 else
-           if s2 = wordLang_Skip then s1 else linear_scan_Seq s1 s2)
-             in (prog,s1live,s1nlive))
+           if s2 = wordLang_Skip then s1 else wordLang_Seq s1 s2) in
+             (prog,s1live,s1nlive))
         | (wordLang_MustTerminate s1) ->
        // This can technically be optimized away if it was a Skip,
        // but we should never use MustTerminate to wrap completely dead code
@@ -1204,7 +1199,7 @@ let get_delta_inst_def = new_definition
   `get_delta_inst x =
         match x with
           asm_Skip -> reg_alloc_Delta [] []
-        | (wordLang_Const reg w) -> reg_alloc_Delta [reg] []
+        | (asm_Const reg w) -> reg_alloc_Delta [reg] []
         | (asm_Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _37
          -> reg_alloc_Delta [r1] [r2])
@@ -1367,7 +1362,7 @@ let get_prefs_def,get_prefs_ind = define_wf
             ls) acc
         | (wordLang_MustTerminate s1) ->
        get_prefs s1 acc
-        | (linear_scan_Seq s1 s2) ->
+        | (wordLang_Seq s1 s2) ->
        get_prefs s1 (get_prefs s2 acc)
         | (wordLang_If cmp num' rimm e2 e3) ->
        get_prefs e2 (get_prefs e3 acc)
@@ -1453,7 +1448,7 @@ let get_heu_inst_def = new_definition
   `get_heu_inst x tup =
         match x with
           asm_Skip -> tup
-        | (wordLang_Const reg w) ->
+        | (asm_Const reg w) ->
        (add1_lhs_const reg tup)
         | (asm_Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with
@@ -1659,7 +1654,7 @@ let get_forced_def,get_forced_ind = define_wf
               acc | _85 -> acc)
         | (c,(wordLang_MustTerminate s1)) ->
        get_forced c s1 acc
-        | (c,(linear_scan_Seq s1 s2)) ->
+        | (c,(wordLang_Seq s1 s2)) ->
        get_forced c s1 (get_forced c s2 acc)
         | (c,(wordLang_If cmp num' rimm e2 e3)) ->
        get_forced c e2 (get_forced c e3 acc)
@@ -1865,7 +1860,7 @@ let get_stack_only_aux_def,get_stack_only_aux_ind = define_guess_cheat
         match prog with
           wordLang_Move pri ls ->
        ITLIST merge_stack_only ls tfs
-        | (linear_scan_Seq s1 s2) ->
+        | (wordLang_Seq s1 s2) ->
        get_stack_only_aux (get_stack_only_aux tfs s2) s1
         | (wordLang_If cmp r1 ri e2 e3) ->
        (let tfsL = get_stack_only_aux tfs e2 in
@@ -1942,7 +1937,7 @@ let full_ssa_cc_trans_def = new_definition
      (let lim = limit_var prog in
      let (mov,ssa,na) = setup_ssa n lim prog in
      let (prog',ssa',na') = ssa_cc_trans prog ssa na [] in
-       linear_scan_Seq mov prog')`;;
+       wordLang_Seq mov prog')`;;
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant

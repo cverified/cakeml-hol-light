@@ -43,7 +43,7 @@ let numset_list_insert_nottailrec_def,
 
 let get_live_tree_def,get_live_tree_ind = define_rec
   [`get_live_tree (reg_alloc_Delta wr rd) =
-      linear_scan_Seq (linear_scan_Reads rd) (linear_scan_Writes
+      reg_alloc_Seq (linear_scan_Reads rd) (linear_scan_Writes
         wr)`;
    `get_live_tree (reg_alloc_Set cutset) =
       (let cutlist = MAP FST (toAList cutset) in
@@ -53,13 +53,13 @@ let get_live_tree_def,get_live_tree_ind = define_rec
       let lt2 = get_live_tree ct2 in
       match optcutset with SOME cutset ->
           (let cutlist = MAP FST (toAList cutset) in
-          linear_scan_Seq (linear_scan_Reads cutlist)
-            (linear_scan_Branch lt1 lt2)) | NONE ->
-            (linear_scan_Branch lt1 lt2))`;
+          reg_alloc_Seq (linear_scan_Reads cutlist)
+            (reg_alloc_Branch lt1 lt2)) | NONE -> (reg_alloc_Branch
+            lt1 lt2))`;
    `get_live_tree (reg_alloc_Seq ct1 ct2) =
       (let lt2 = get_live_tree ct2 in
       let lt1 = get_live_tree ct1 in
-      linear_scan_Seq lt1 lt2)`];;
+      reg_alloc_Seq lt1 lt2)`];;
 
 let check_live_tree_def,check_live_tree_ind = define_rec
   [`check_live_tree f (linear_scan_Writes l) live flive =
@@ -1066,15 +1066,14 @@ let find_bijection_clash_tree_def,find_bijection_clash_tree_ind =
         rd) wr`;
    `find_bijection_clash_tree state (reg_alloc_Set cutset:clash_tree) =
       foldi (\r v acc. find_bijection_step acc r) 0 state cutset`;
-   `find_bijection_clash_tree state (linear_scan_Branch optcutset ct1
+   `find_bijection_clash_tree state (reg_alloc_Branch optcutset ct1
   ct2:clash_tree) =
       (let state1 = find_bijection_clash_tree state ct1 in
       let state2 = find_bijection_clash_tree state1 ct2 in
         match optcutset with NONE -> state2 | SOME cutset ->
           foldi (\r v acc. find_bijection_step acc r) 0 state2
             cutset)`;
-   `find_bijection_clash_tree state (linear_scan_Seq ct1 ct2:clash_tree)
-  =
+   `find_bijection_clash_tree state (reg_alloc_Seq ct1 ct2:clash_tree) =
       (let state1 = find_bijection_clash_tree state ct1 in
       find_bijection_clash_tree state1 ct2)`];;
 
@@ -1123,11 +1122,11 @@ let size_of_clash_tree_def,size_of_clash_tree_ind = define_rec
       ((&2:int):int)`;
    `size_of_clash_tree (reg_alloc_Set cutset:clash_tree) =
       ((&1:int):int)`;
-   `size_of_clash_tree (linear_scan_Branch optcutset ct1 ct2:clash_tree)
-  = ((
+   `size_of_clash_tree (reg_alloc_Branch optcutset ct1 ct2:clash_tree) =
+  ((
       (if IS_SOME optcutset then (&1) else (&0)) +
         size_of_clash_tree ct1 + size_of_clash_tree ct2):int)`;
-   `size_of_clash_tree (linear_scan_Seq ct1 ct2:clash_tree) = ((
+   `size_of_clash_tree (reg_alloc_Seq ct1 ct2:clash_tree) = ((
       size_of_clash_tree ct1 + size_of_clash_tree ct2):int)`];;
 
 let run_linear_reg_alloc_intervals_def = new_definition
@@ -1147,13 +1146,13 @@ let apply_bij_on_clash_tree_def,apply_bij_on_clash_tree_ind = define_rec
    `apply_bij_on_clash_tree (reg_alloc_Set cutset:clash_tree) bij =
       reg_alloc_Set (foldi (\r _18 acc. sptree_insert (the 0
         (sptree_lookup r bij)) one acc) 0 LN cutset)`;
-   `apply_bij_on_clash_tree (linear_scan_Branch optcutset ct1
+   `apply_bij_on_clash_tree (reg_alloc_Branch optcutset ct1
   ct2:clash_tree) bij =
       reg_alloc_Branch (OPTION_MAP (foldi (\r _34 acc.
         sptree_insert (the 0 (sptree_lookup r bij)) one acc) 0 LN)
         optcutset) (apply_bij_on_clash_tree ct1 bij)
         (apply_bij_on_clash_tree ct2 bij)`;
-   `apply_bij_on_clash_tree (linear_scan_Seq ct1 ct2:clash_tree) bij =
+   `apply_bij_on_clash_tree (reg_alloc_Seq ct1 ct2:clash_tree) bij =
       reg_alloc_Seq (apply_bij_on_clash_tree ct1 bij)
         (apply_bij_on_clash_tree ct2 bij)`];;
 

@@ -795,25 +795,25 @@ let IN_domain_adjust_set_inter = prove
 
 let get_var_to_word_exp = prove
  (`wordSem_get_var r s = SOME (wordLang_Word w) ==>
-   wordSem_word_exp s (wordLang_Op word_bignum_Add [wordLang_Var r;
-     wordLang_Const (n2w 0)]) = SOME (wordLang_Word (w + (n2w 0))) /\
-   wordSem_word_exp s (wordLang_Op word_bignum_Add [wordLang_Var r;
-     wordLang_Const (n2w 1)]) = SOME (wordLang_Word (w + (n2w 1))) /\
-   wordSem_word_exp s (wordLang_Op word_bignum_Add [wordLang_Var r;
-     wordLang_Const (n2w 2)]) = SOME (wordLang_Word (w + (n2w 2))) /\
-   wordSem_word_exp s (wordLang_Op word_bignum_Add [wordLang_Var r;
-     wordLang_Const (n2w 3)]) = SOME (wordLang_Word (w + (n2w 3)))`,
+   wordSem_word_exp s (wordLang_Op word_bignum_Add [db_vars_Var r;
+     word_depth_Const (n2w 0)]) = SOME (wordLang_Word (w + (n2w 0))) /\
+   wordSem_word_exp s (wordLang_Op word_bignum_Add [db_vars_Var r;
+     word_depth_Const (n2w 1)]) = SOME (wordLang_Word (w + (n2w 1))) /\
+   wordSem_word_exp s (wordLang_Op word_bignum_Add [db_vars_Var r;
+     word_depth_Const (n2w 2)]) = SOME (wordLang_Word (w + (n2w 2))) /\
+   wordSem_word_exp s (wordLang_Op word_bignum_Add [db_vars_Var r;
+     word_depth_Const (n2w 3)]) = SOME (wordLang_Word (w + (n2w 3)))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let word_exp_set = prove
- (`(wordSem_word_exp s (wordLang_Op word_bignum_Add [wordLang_Var n;
-  wordLang_Const c]) =
+ (`(wordSem_word_exp s (wordLang_Op backend_common_Add [wordLang_Var n;
+  asm_Const c]) =
    (match wordSem_get_var n s with
      SOME (wordLang_Word w) -> SOME (wordLang_Word (w + c)) | _3 ->
        NONE)) /\
-   (wordSem_word_exp s (wordLang_Op word_bignum_Sub [wordLang_Var n;
-     wordLang_Const c]) =
+   (wordSem_word_exp s (wordLang_Op backend_common_Sub [wordLang_Var
+     n; asm_Const c]) =
    (match wordSem_get_var n s with
      SOME (wordLang_Word w) -> SOME (wordLang_Word (w - c)) | _4 ->
        NONE))`,
@@ -1689,13 +1689,13 @@ let IN_adjust_set_IN = prove
 let assign_LessConstSmall = prove
  (`wordSem_assign c secn l dest (closLang_IntOp (closLang_LessConstSmall
   i)) args names =
-      (match args with [v1] -> (word_bignum_If asm_Less (adjust_var
-        v1) (Imm (n2w (4 * i)))
-                  (word_bignum_Assign (adjust_var dest)
-                    (wordLang_Const (n2w 18:'a word)))
-                  (word_bignum_Assign (adjust_var dest)
-                    (wordLang_Const (n2w 2:'a word))),l) | _5 ->
-                    ((word_bignum_Skip:'a wordLang_prog),l))`,
+      (match args with [v1] -> (wordLang_If asm_Less (adjust_var v1)
+        (Imm (n2w (4 * i)))
+                  (wordLang_Assign (adjust_var dest)
+                    (word_depth_Const (n2w 18:'a word)))
+                  (wordLang_Assign (adjust_var dest)
+                    (word_depth_Const (n2w 2:'a word))),l) | _5 ->
+                    ((asm_Skip:'a wordLang_prog),l))`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:11464-11503: a theorem

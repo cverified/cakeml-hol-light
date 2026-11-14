@@ -548,17 +548,18 @@ let result_view_def = new_definition
         match x1 with
           stackSem_Result (wordLang_Loc n1 n2) -> Vloc n1 n2
         | (stackSem_Exception (wordLang_Loc n1 n2)) -> Vloc n1 n2
-        | stackSem_TimeOut -> Vtimeout
-        | (stackSem_Continue n) -> Vcont l (find_lab n cs)
+        | targetSem_TimeOut -> Vtimeout
+        | (word_bignum_Continue n) -> Vcont l (find_lab n cs)
         | (stackSem_Break n) -> Vloc l (find_lab n bs)
         | _11 -> Verr`;;
 
 let halt_word_view_def = new_definition
   `halt_word_view x1 =
         match x1 with
-          wordLang_Word (n2w 0) -> stackSem_Halt ffi_Success
-        | (wordLang_Word _12) -> stackSem_Halt ffi_Resource_limit_hit
-        | _13 -> stackSem_Error`;;
+          wordLang_Word (n2w 0) -> targetSem_Halt ffi_Success
+        | (wordLang_Word _12) -> targetSem_Halt
+          ffi_Resource_limit_hit
+        | _13 -> targetSem_Error`;;
 
 let halt_view_def = new_definition
   `halt_view x1 =
@@ -652,7 +653,7 @@ let halt_assum_def = new_definition
       subspt code (stackSem_state_code s) /\ ~(stackSem_state_clock s
         = 0) ==>
       (?t. stackSem_evaluate (labLang_Call NONE (INL 1) NONE,s) =
-        (SOME (stackSem_Halt (wordLang_Word (n2w 0))),t) /\
+        (SOME (targetSem_Halt (wordLang_Word (n2w 0))),t) /\
         stackSem_state_ffi
           t = stackSem_state_ffi s /\ stackSem_state_clock t =
             stackSem_state_clock s - 1))`;;
@@ -1010,16 +1011,16 @@ let complex_get_code_labels_def,complex_get_code_labels_ind = define_wf
         match x1 with
           stackLang_Seq p1 p2 -> complex_get_code_labels p1 UNION
             complex_get_code_labels p2
-        | (word_bignum_If _19 _20 _21 p1 p2) ->
+        | (stackLang_If _19 _20 _21 p1 p2) ->
           complex_get_code_labels p1 UNION complex_get_code_labels p2
-        | (labLang_Call ret dest handler) ->
+        | (stackLang_Call ret dest handler) ->
         (match dest with INL x -> {(x,0)} | _22 -> {}) UNION
         (match ret with NONE -> {} | SOME (r,_23,l1,l2) -> (l1,l2)
           INSERT (complex_get_code_labels r UNION
              (match handler with NONE -> {} | SOME (r,l1,l2) ->
                (l1,l2) INSERT complex_get_code_labels r)))
-        | (word_bignum_Loop p) -> complex_get_code_labels p
-        | (labLang_LocValue i l1 l2) -> {(l1,l2)}
+        | (stackLang_Loop p) -> complex_get_code_labels p
+        | (stackLang_LocValue i l1 l2) -> {(l1,l2)}
         | (stackLang_RawCall l) -> {(l,1)}
         | (stackLang_JumpLower n m l) -> {(l,0)}
         | _24 -> {}`];;

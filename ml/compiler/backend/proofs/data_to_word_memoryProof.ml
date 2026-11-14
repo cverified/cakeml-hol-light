@@ -278,7 +278,7 @@ let ref_ptr_annot_def = new_definition
 
 let v_inv_ck = cake_inductive
   `(small_int (:'a) i ==>
-       v_inv_ck ck conf (dataSem_Number i) (refs:(dataSem_v
+       v_inv_ck ck conf (bvlSem_Number i) (refs:(dataSem_v
          bvlSem_ref) spt)
                   (gc_shared_Data (wordLang_Word (Smallnum
                     i)),f,tf,(heap:(('a
@@ -286,16 +286,16 @@ let v_inv_ck = cake_inductive
                     list)heap_element) list))) /\
    (~(small_int (:'a) i) /\
      heap_lookup ptr heap = SOME (Bignum i) ==>
-       v_inv_ck ck conf (dataSem_Number i) refs (gc_shared_Pointer
-         ptr (wordLang_Word (n2w 0)),f,tf,(heap:(('a
+       v_inv_ck ck conf (bvlSem_Number i) refs (gc_shared_Pointer ptr
+         (wordLang_Word (n2w 0)),f,tf,(heap:(('a
          word_loc,data_to_word_memoryProof_tag#('a word_loc)
          list)heap_element) list))) /\
    (heap_lookup ptr heap = SOME (Word64Rep (:'a) w) ==>
-       v_inv_ck ck conf (dataSem_Word64 w) refs (gc_shared_Pointer
-         ptr (wordLang_Word (n2w 0)),f,tf,(heap:(('a
+       v_inv_ck ck conf (bvlSem_Word64 w) refs (gc_shared_Pointer ptr
+         (wordLang_Word (n2w 0)),f,tf,(heap:(('a
          word_loc,data_to_word_memoryProof_tag#('a word_loc)
          list)heap_element) list))) /\
-   (v_inv_ck ck conf (dataSem_CodePtr n) refs (gc_shared_Data
+   (v_inv_ck ck conf (bvlSem_CodePtr n) refs (gc_shared_Data
      (wordLang_Loc n 0),f,tf,(heap:(('a
      word_loc,data_to_word_memoryProof_tag#('a word_loc)
      list)heap_element) list))) /\
@@ -303,34 +303,34 @@ let v_inv_ck = cake_inductive
      (!ev v. ~(sptree_lookup n refs = SOME (bvlSem_Thunk ev v))) /\
      (!tg fin l c r. sptree_lookup n refs = SOME (bvlSem_MutBlock tg
        fin l c r) ==> ~b) ==>
-       v_inv_ck ck conf (dataSem_RefPtr b n) refs
+       v_inv_ck ck conf (bvlSem_RefPtr b n) refs
                   (gc_shared_Pointer (FAPPLY f n) (ref_ptr_annot conf
                     (sptree_lookup n refs)),
                    f,tf,(heap:(('a
                      word_loc,data_to_word_memoryProof_tag#('a word_loc)
                      list)heap_element) list))) /\
    (sptree_lookup n refs = SOME (bvlSem_Thunk ev v) /\
-     (ev = Evaluated ==> dataSem_dest_thunk v refs =
-       dataSem_NotThunk) /\
+     (ev = Evaluated ==> dataSem_dest_thunk v refs = bvlSem_NotThunk)
+       /\
      n IN FDOM f /\
      heap_lookup (FAPPLY f n) heap = SOME (ThunkBlock ev x) /\
      (~(ck = (0:num)) ==> v_inv_ck (ck - 1) conf v refs
        (x,f,tf,heap)) ==>
-       v_inv_ck ck conf (dataSem_RefPtr F n) refs
+       v_inv_ck ck conf (bvlSem_RefPtr F n) refs
                   (gc_shared_Pointer (FAPPLY f n) (wordLang_Word (n2w
                     0)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
                     list)heap_element) list))) /\
    (sptree_lookup n refs = SOME (bvlSem_Thunk Evaluated v) /\
-     dataSem_dest_thunk v refs = dataSem_NotThunk /\
+     dataSem_dest_thunk v refs = bvlSem_NotThunk /\
      (~(ck = 0) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap)) ==>
-       v_inv_ck ck conf (dataSem_RefPtr F n) refs (x,f,tf,(heap:(('a
+       v_inv_ck ck conf (bvlSem_RefPtr F n) refs (x,f,tf,(heap:(('a
          word_loc,data_to_word_memoryProof_tag#('a word_loc)
          list)heap_element) list))) /\
    (vs = [] /\
      n < dimword (:'a) DIV 16 /\
      ts = 0 ==>
-       v_inv_ck ck conf (dataSem_Block ts n vs) refs
+       v_inv_ck ck conf (bvlSem_Block ts n vs) refs
                   (gc_shared_Data (wordLang_Word (BlockNil
                     n)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
@@ -340,7 +340,7 @@ let v_inv_ck = cake_inductive
        (x,f,tf,heap)) vs xs) /\
      FLOOKUP tf ts = SOME ptr /\
      heap_lookup ptr heap = SOME (BlockRep n xs) ==>
-       v_inv_ck ck conf (dataSem_Block ts n vs) refs
+       v_inv_ck ck conf (bvlSem_Block ts n vs) refs
                   (gc_shared_Pointer ptr (wordLang_Word (ptr_bits
                     conf n (LENGTH xs))),
                    f,tf,(heap:(('a

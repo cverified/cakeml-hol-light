@@ -322,7 +322,7 @@ let arith_code_def = new_definition
   `Arith_code index =
      word_bignum_Seq (word_bignum_Assign 6 (wordLang_Const (n2w (4 *
        index))))
-       (wordLang_Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
+       (word_depth_Call NONE (SOME AnyArith_location) [0; 2; 4; 6]
          NONE)`;;
 
 let lookup_Arith_location = prove

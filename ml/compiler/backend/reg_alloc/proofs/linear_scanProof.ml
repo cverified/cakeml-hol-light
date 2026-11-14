@@ -1920,12 +1920,12 @@ let in_clash_tree_set_eq = prove
   set_of_list r) /\
    (!names. in_clash_tree (reg_alloc_Set names) = domain names) /\
    (!name_opt t1 t2.
-    in_clash_tree (linear_scan_Branch name_opt t1 t2) =
+    in_clash_tree (reg_alloc_Branch name_opt t1 t2) =
     (match name_opt with SOME names -> domain names UNION
       in_clash_tree t1 UNION in_clash_tree t2 | NONE -> in_clash_tree t1
       UNION in_clash_tree t2)) /\
-   (!t1 t2. in_clash_tree (linear_scan_Seq t1 t2) = in_clash_tree
-     t1 UNION in_clash_tree t2)`,
+   (!t1 t2. in_clash_tree (reg_alloc_Seq t1 t2) = in_clash_tree t1
+     UNION in_clash_tree t2)`,
   CHEAT_TAC);;
 
 let find_bijection_clash_tree_invariants = prove

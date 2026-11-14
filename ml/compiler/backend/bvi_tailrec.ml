@@ -381,16 +381,16 @@ let arg_ty_def = new_definition
   `arg_ty x1 =
       match x1 with
         closLang_IntOp (closLang_Const i) -> (if small_enough_int i
-          then bvi_tailrec_Int else bvi_tailrec_Any)
-      | (closLang_IntOp closLang_Add) -> bvi_tailrec_Int
-      | (closLang_IntOp closLang_Sub) -> bvi_tailrec_Int
-      | (closLang_IntOp closLang_Mult) -> bvi_tailrec_Int
-      | (closLang_IntOp closLang_Div) -> bvi_tailrec_Int
-      | (closLang_IntOp closLang_Mod) -> bvi_tailrec_Int
-      | (closLang_IntOp closLang_LessEq) -> bvi_tailrec_Int
-      | (closLang_IntOp closLang_Less) -> bvi_tailrec_Int
-      | (closLang_IntOp closLang_Greater) -> bvi_tailrec_Int
-      | (closLang_IntOp closLang_GreaterEq) -> bvi_tailrec_Int
+          then closLang_Int else bvi_tailrec_Any)
+      | (closLang_IntOp closLang_Add) -> closLang_Int
+      | (closLang_IntOp closLang_Sub) -> closLang_Int
+      | (closLang_IntOp closLang_Mult) -> closLang_Int
+      | (closLang_IntOp closLang_Div) -> closLang_Int
+      | (closLang_IntOp closLang_Mod) -> closLang_Int
+      | (closLang_IntOp closLang_LessEq) -> closLang_Int
+      | (closLang_IntOp closLang_Less) -> closLang_Int
+      | (closLang_IntOp closLang_Greater) -> closLang_Int
+      | (closLang_IntOp closLang_GreaterEq) -> closLang_Int
       | (closLang_BlockOp closLang_ListAppend) -> bvi_tailrec_List
       | _31 -> bvi_tailrec_Any`;;
 
@@ -416,16 +416,16 @@ let arg_ty_PMATCH = prove
 let op_ty_def = new_definition
   `op_ty x1 =
         match x1 with
-          closLang_IntOp closLang_Add -> bvi_tailrec_Int
-        | (closLang_IntOp closLang_Sub) -> bvi_tailrec_Int
-        | (closLang_IntOp closLang_Mult) -> bvi_tailrec_Int
-        | (closLang_IntOp closLang_Div) -> bvi_tailrec_Int
-        | (closLang_IntOp closLang_Mod) -> bvi_tailrec_Int
+          closLang_IntOp closLang_Add -> closLang_Int
+        | (closLang_IntOp closLang_Sub) -> closLang_Int
+        | (closLang_IntOp closLang_Mult) -> closLang_Int
+        | (closLang_IntOp closLang_Div) -> closLang_Int
+        | (closLang_IntOp closLang_Mod) -> closLang_Int
         | (closLang_BlockOp closLang_ListAppend) -> bvi_tailrec_List
         | (closLang_BlockOp (closLang_Cons tag)) -> (if tag = nil_tag
           \/ tag = cons_tag then bvi_tailrec_List else bvi_tailrec_Any)
         | (closLang_IntOp (closLang_Const i)) -> (if small_enough_int
-          i then bvi_tailrec_Int else bvi_tailrec_Any)
+          i then closLang_Int else bvi_tailrec_Any)
         | _33 -> bvi_tailrec_Any`;;
 
 let op_ty_PMATCH = prove

@@ -1,2 +1,4 @@
 compare_aux_refl	PROOF Failure("typechecking error (overload resolution)")
+explode_toString	PROOF Failure("TAC_PROOF: Unsolved goals")
 splitl_SPLITL	PROOF Failure("AP_THM_TAC")
+strlen_toString	PROOF Failure("TAC_PROOF: Unsolved goals")

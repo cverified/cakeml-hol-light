@@ -58,9 +58,9 @@ let flat_to_closProof_v_rel = cake_inductive
    (!b. flat_to_closProof_v_rel (flatSem_Litv (ast_Word8 b))
      (closSem_Number (&(w2n b)))) /\
    (!w. flat_to_closProof_v_rel (flatSem_Litv (ast_Word64 w))
-     (closSem_Word64 w)) /\
+     (ast_Word64 w)) /\
    (!f. flat_to_closProof_v_rel (flatSem_Litv (ast_Float64 f))
-     (closSem_Word64 f)) /\
+     (ast_Word64 f)) /\
    (!vs ws. ALL2 flat_to_closProof_v_rel vs ws ==>
      flat_to_closProof_v_rel (flatSem_Conv NONE vs) (closSem_Block 0
      ws)) /\

@@ -72,41 +72,41 @@ let StackHandlerArgs_F = prove
 
 let PushHandler_F = prove
  (`PushHandler F l1 l2 (k,f,f') =
-     stackLang_Seq (stackLang_StackAlloc 3)
-    (stackLang_Seq (stackLang_Inst (asm_Const k (n2w 1)))
-    (stackLang_Seq (stackLang_StackStore k 0)
-    (stackLang_Seq (stackLang_LocValue k l1 l2)
-    (stackLang_Seq (stackLang_StackStore k 1)
-    (stackLang_Seq (stackLang_Get k Handler)
-    (stackLang_Seq (stackLang_StackStore k 2)
-    (stackLang_Seq stackLang_Skip
-    (stackLang_Seq (stackLang_StackGetSize k)
-         (stackLang_Set Handler k)))))))))`,
+     reg_alloc_Seq (stackLang_StackAlloc 3)
+    (reg_alloc_Seq (wordLang_Inst (asm_Const k (n2w 1)))
+    (reg_alloc_Seq (stackLang_StackStore k 0)
+    (reg_alloc_Seq (wordLang_LocValue k l1 l2)
+    (reg_alloc_Seq (stackLang_StackStore k 1)
+    (reg_alloc_Seq (wordLang_Get k Handler)
+    (reg_alloc_Seq (stackLang_StackStore k 2)
+    (reg_alloc_Seq wordLang_Skip
+    (reg_alloc_Seq (stackLang_StackGetSize k)
+         (reg_alloc_Set Handler k)))))))))`,
   CHEAT_TAC);;
 
 let PopHandler_F = prove
  (`PopHandler F (k,f,f') prog =
-     stackLang_Seq (stackLang_StackLoad k 2)
-    (stackLang_Seq (stackLang_Set Handler k)
-    (stackLang_Seq (stackLang_StackFree 3) prog))`,
+     reg_alloc_Seq (stackLang_StackLoad k 2)
+    (reg_alloc_Seq (reg_alloc_Set Handler k)
+    (reg_alloc_Seq (stackLang_StackFree 3) prog))`,
   CHEAT_TAC);;
 
 let raise_stub_F = prove
  (`raise_stub F k =
-     stackLang_Seq (stackLang_Get k Handler)
-    (stackLang_Seq (stackLang_StackSetSize k)
-    (stackLang_Seq stackLang_Skip
-    (stackLang_Seq (stackLang_StackLoad k 2)
-    (stackLang_Seq (stackLang_Set Handler k)
-    (stackLang_Seq (stackLang_StackLoad k 1)
-    (stackLang_Seq (stackLang_StackFree 3)
-         (stackLang_Raise k)))))))`,
+     reg_alloc_Seq (wordLang_Get k Handler)
+    (reg_alloc_Seq (stackLang_StackSetSize k)
+    (reg_alloc_Seq wordLang_Skip
+    (reg_alloc_Seq (stackLang_StackLoad k 2)
+    (reg_alloc_Seq (reg_alloc_Set Handler k)
+    (reg_alloc_Seq (stackLang_StackLoad k 1)
+    (reg_alloc_Seq (stackLang_StackFree 3)
+         (wordLang_Raise k)))))))`,
   CHEAT_TAC);;
 
 let copy_ret_F = prove
  (`copy_ret F is_handle (k,f,f') vs kont =
      (let n = num_stack_ret k vs in
-     if n = 0 then kont else stackLang_Seq (copy_ret_aux k (if
+     if n = 0 then kont else reg_alloc_Seq (copy_ret_aux k (if
        is_handle then f + 3 else f) n)
               (SeqStackFree n kont))`,
   CHEAT_TAC);;
@@ -797,7 +797,7 @@ let evaluate_SeqStackFree = prove
  (`stackSem_state_use_stack
      t /\ stackSem_state_stack_space t <= LENGTH (stack t) ==>
        stackSem_evaluate (SeqStackFree f p,t) =
-       stackSem_evaluate (stackLang_Seq (stackLang_StackFree f)
+       stackSem_evaluate (reg_alloc_Seq (stackLang_StackFree f)
          p,t)`,
   CHEAT_TAC);;
 
@@ -1530,7 +1530,7 @@ let compile_word_to_stack_isPREFIX = prove
 let wMoveAux_thm = prove
  (`stackSem_evaluate (wMoveAux [] kf,s) = (NONE,s) /\
    stackSem_evaluate (wMoveAux (CONS x xs) kf,s) =
-   stackSem_evaluate (stackLang_Seq (wMoveSingle x kf) (wMoveAux xs
+   stackSem_evaluate (wordLang_Seq (wMoveSingle x kf) (wMoveAux xs
      kf),s)`,
   CHEAT_TAC);;
 
@@ -1656,7 +1656,7 @@ let word_to_stackProof_evaluate_SeqStackFree = prove
  (`stackSem_state_use_stack
       s /\ stackSem_state_stack_space s <= LENGTH (stack s) ==>
        stackSem_evaluate (SeqStackFree n p,s) = stackSem_evaluate
-         (stackLang_Seq (stackLang_StackFree n) p,s)`,
+         (reg_alloc_Seq (stackLang_StackFree n) p,s)`,
   CHEAT_TAC);;
 
 (* get_vars_eq[local] *)
@@ -1979,7 +1979,7 @@ let evaluate_wStackLoad_wReg1 = prove
    stackSem_get_var r (s:('a,num#'c,'ffi)wordSem_state) = SOME c /\
    word_to_stackProof_state_rel ac k f f' s t lens 0 ==>
    (?(t':('a,'c,'ffi)stackSem_state).
-   stackSem_evaluate (wStackLoad x stackLang_Skip,t) = (NONE,t') /\
+   stackSem_evaluate (wStackLoad x wordLang_Skip,t) = (NONE,t') /\
      state_clock
    t = stackSem_state_clock t' /\
    word_to_stackProof_state_rel ac k f f' s t' lens 0 /\
@@ -2001,7 +2001,7 @@ let evaluate_wStackLoad_wReg1_with_const = prove
    wordLang_Word w) /\
    word_to_stackProof_state_rel ac k f f' s t lens 0 ==>
    (?(t':('a,'c,'ffi)stackSem_state).
-   stackSem_evaluate (wStackLoad x stackLang_Skip,t) = (NONE,t') /\
+   stackSem_evaluate (wStackLoad x wordLang_Skip,t) = (NONE,t') /\
      state_clock
    t = stackSem_state_clock t' /\
    word_to_stackProof_state_rel ac k f f' s t' lens 0 /\
@@ -2015,10 +2015,10 @@ let evaluate_wStackLoad_wReg1_with_const = prove
 (* [local] *)
 let evaluate_wStackLoad_clock = prove
  (`!x t.
-   stackSem_evaluate (wStackLoad x stackLang_Skip,state_clock_fupd (K
+   stackSem_evaluate (wStackLoad x wordLang_Skip,state_clock_fupd (K
      clk) t) =
    (I ## (\s. state_clock_fupd (K clk) s)) (stackSem_evaluate
-     (wStackLoad x stackLang_Skip,t))`,
+     (wStackLoad x wordLang_Skip,t))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2028,7 +2028,7 @@ let evaluate_wStackLoad_wReg2 = prove
    stackSem_get_var r (s:('a,num#'c,'ffi)wordSem_state) = SOME c /\
    word_to_stackProof_state_rel ac k f f' s t lens 0 ==>
    (?(t':('a,'c,'ffi)stackSem_state).
-   stackSem_evaluate (wStackLoad x stackLang_Skip,t) = (NONE,t') /\
+   stackSem_evaluate (wStackLoad x wordLang_Skip,t) = (NONE,t') /\
      state_clock
    t = stackSem_state_clock t' /\ stackSem_state_bitmaps
    t = stackSem_state_bitmaps t' /\
@@ -2047,7 +2047,7 @@ let evaluate_wStackLoad_wReg2 = prove
 let evaluate_wStackLoad_seq = prove
  (`!ls prog s.
    stackSem_evaluate (wStackLoad ls prog,s) =
-   stackSem_evaluate (stackLang_Seq (wStackLoad ls stackLang_Skip)
+   stackSem_evaluate (wordLang_Seq (wStackLoad ls wordLang_Skip)
      prog,s)`,
   CHEAT_TAC);;
 
@@ -2065,7 +2065,7 @@ let evaluate_wStackStore_wReg1 = prove
      stackSem_state_stack_space
    t = t_stack_space ==>
    (?(t':('a,'c,'ffi)stackSem_state).
-   stackSem_evaluate (wStackStore x stackLang_Skip,(stackSem_set_var
+   stackSem_evaluate (wStackStore x wordLang_Skip,(stackSem_set_var
      r' c t)) = (NONE,t') /\
    word_to_stackProof_state_rel ac k f f' (stackSem_set_var r c s) t'
      lens 0 /\
@@ -2082,7 +2082,7 @@ let evaluate_wStackStore_wReg1_strong = prove
      (s:('a,num#'c,'ffi)wordSem_state) (t:('a,'c,'ffi)stackSem_state)
      lens 0 ==>
    (?(t':('a,'c,'ffi)stackSem_state).
-   stackSem_evaluate (wStackStore x stackLang_Skip,(stackSem_set_var
+   stackSem_evaluate (wStackStore x wordLang_Skip,(stackSem_set_var
      r' c t)) = (NONE,stackSem_set_var r' c t') /\
    word_to_stackProof_state_rel ac k f f' (stackSem_set_var r c s)
      (stackSem_set_var r' c t') lens 0 /\
@@ -2103,8 +2103,8 @@ let evaluate_wStackStore_wReg1_new = prove
    LENGTH (stackSem_state_stack t') = LENGTH_t_stack /\
      stackSem_state_stack_space t' = t_stack_space) ==>
    (?(t':('a,'c,'ffi)stackSem_state).
-   stackSem_evaluate (stackLang_Seq kont (wStackStore x
-     stackLang_Skip),t) = (NONE,t') /\
+   stackSem_evaluate (reg_alloc_Seq kont (wStackStore x
+     wordLang_Skip),t) = (NONE,t') /\
    word_to_stackProof_state_rel ac k f f' (stackSem_set_var r c s) t'
      lens 0 /\
    LENGTH (stackSem_state_stack t') = LENGTH_t_stack /\
@@ -2122,8 +2122,8 @@ let evaluate_wStackStore_wReg2_new = prove
    LENGTH (stackSem_state_stack t') = LENGTH_t_stack /\
      stackSem_state_stack_space t' = t_stack_space) ==>
    (?(t':('a,'c,'ffi)stackSem_state).
-   stackSem_evaluate (stackLang_Seq kont (wStackStore x
-     stackLang_Skip),t) = (NONE,t') /\
+   stackSem_evaluate (reg_alloc_Seq kont (wStackStore x
+     wordLang_Skip),t) = (NONE,t') /\
    word_to_stackProof_state_rel ac k f f' (stackSem_set_var r c s) t'
      lens 0 /\
    LENGTH (stackSem_state_stack t') = LENGTH_t_stack /\
@@ -2142,8 +2142,8 @@ let evaluate_wStackStore_wReg1_0 = prove
      stackSem_state_stack_space
    t = t_stack_space ==>
    (?(t':('a,'c,'ffi)stackSem_state).
-   stackSem_evaluate (wStackStore x stackLang_Skip,(stackSem_set_var
-     0 c1 (stackSem_set_var r' c t))) = (NONE,t') /\
+   stackSem_evaluate (wStackStore x wordLang_Skip,(stackSem_set_var 0
+     c1 (stackSem_set_var r' c t))) = (NONE,t') /\
    word_to_stackProof_state_rel ac k f f' (stackSem_set_var 0 c1
      (stackSem_set_var r c s)) t' lens 0 /\
    LENGTH (stackSem_state_stack t') = LENGTH_t_stack /\
@@ -2153,15 +2153,15 @@ let evaluate_wStackStore_wReg1_0 = prove
 let evaluate_wRegWrite1_seq = prove
  (`stackSem_evaluate (wRegWrite1 g r (k,f,f'),t) =
    (let (l,n) = wReg1 r (k,f,f') in
-   stackSem_evaluate ((stackLang_Seq (g n) (wStackStore l
-     stackLang_Skip)),t))`,
+   stackSem_evaluate ((wordLang_Seq (g n) (wStackStore l
+     wordLang_Skip)),t))`,
   CHEAT_TAC);;
 
 let evaluate_wRegWrite2_seq = prove
  (`stackSem_evaluate (wRegWrite2 g r (k,f,f'),t) =
    (let (l,n) = wReg2 r (k,f,f') in
-   stackSem_evaluate ((stackLang_Seq (g n) (wStackStore l
-     stackLang_Skip)),t))`,
+   stackSem_evaluate ((wordLang_Seq (g n) (wStackStore l
+     wordLang_Skip)),t))`,
   CHEAT_TAC);;
 
 (* HOL4 word_to_stackProofScript.sml:4688-5130: a theorem whose
@@ -2239,7 +2239,7 @@ let evaluate_stack_move = prove
    t + tar + n + offset <= LENGTH (stack t) /\
    n <= offset ==>
    (?t'.
-   stackSem_evaluate (stack_move n tar offset k stackLang_Skip,t) =
+   stackSem_evaluate (stack_move n tar offset k wordLang_Skip,t) =
      (NONE,t') /\
    (?t'_stack t'_regs.
    t' = stackSem_state_regs_fupd (K t'_regs) (stack_fupd (K t'_stack)
@@ -2266,13 +2266,13 @@ let evaluate_stack_move = prove
 let evaluate_stack_move_seq = prove
  (`!a b c d prog (t:('a,'c,'ffi)stackSem_state).
    stackSem_evaluate (stack_move a b c d prog,t) =
-   stackSem_evaluate (stackLang_Seq prog (stack_move a b c d
-     stackLang_Skip),t)`,
+   stackSem_evaluate (wordLang_Seq prog (stack_move a b c d
+     wordLang_Skip),t)`,
   CHEAT_TAC);;
 
 let evaluate_stack_move_clock = prove
  (`!a b c d (t:('a,'c,'ffi)stackSem_state).
-     let prog = stack_move a b c d stackLang_Skip in
+     let prog = stack_move a b c d wordLang_Skip in
      stackSem_evaluate (prog,stackSem_state_clock_fupd (K clk) t) =
      (FST (stackSem_evaluate (prog,(t:('a,'c,'ffi)stackSem_state))),
       (state_clock_fupd (K clk) (SND (stackSem_evaluate
@@ -2398,7 +2398,7 @@ let evaluate_PushHandler_clock = prove
 (* [local] *)
 let evaluate_PopHandler_clock = prove
  (`!(t:('a,'c,'ffi)stackSem_state).
-   let prog = PopHandler F (k,(f:num),(f':num)) stackLang_Skip in
+   let prog = PopHandler F (k,(f:num),(f':num)) wordLang_Skip in
    stackSem_evaluate (prog,stackSem_state_clock_fupd (K clk) t) =
    (FST (stackSem_evaluate (prog,(t:('a,'c,'ffi)stackSem_state))),
     (state_clock_fupd (K clk) (SND (stackSem_evaluate (prog,t)))))`,
@@ -2408,8 +2408,8 @@ let evaluate_PopHandler_clock = prove
 let evaluate_PopHandler_seq = prove
  (`!prog (t:('a,'c,'ffi)stackSem_state).
    stackSem_evaluate (PopHandler F (k,f,f') prog,t) =
-   stackSem_evaluate (stackLang_Seq (PopHandler F (k,f,f')
-     stackLang_Skip) prog,t)`,
+   stackSem_evaluate (wordLang_Seq (PopHandler F (k,f,f')
+     wordLang_Skip) prog,t)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2646,7 +2646,7 @@ let abs_stack_empty' = prove
 let evaluate_const_inst = prove
  (`word_to_stackProof_state_rel ac k f f' s t lens extra ==>
    (?(t':('a,'c,'ffi)stackSem_state).
-   stackSem_evaluate ((\r w. stackLang_Inst (asm_Const r w)) (k + 1)
+   stackSem_evaluate ((\r w. wordLang_Inst (asm_Const r w)) (k + 1)
      i,t) = (NONE,t') /\ state_clock
    t = stackSem_state_clock t' /\
    word_to_stackProof_state_rel ac k f f' s t' lens extra /\
@@ -2657,10 +2657,10 @@ let evaluate_const_inst = prove
 
 (* [local] *)
 let evaluate_const_inst_clock = prove
- (`stackSem_evaluate ((\r w. stackLang_Inst (asm_Const r w)) k
+ (`stackSem_evaluate ((\r w. wordLang_Inst (asm_Const r w)) k
   i,state_clock_fupd (K clk) t) =
    (I ## (\t. state_clock_fupd (K clk) t)) (stackSem_evaluate ((\r
-     w. stackLang_Inst (asm_Const r w)) k i,t))`,
+     w. wordLang_Inst (asm_Const r w)) k i,t))`,
   CHEAT_TAC);;
 
 (* HOL4 word_to_stackProofScript.sml:6767-6773: a proof *)
@@ -2821,7 +2821,7 @@ let MAX_LE = prove
 
 (* [local] *)
 let copy_ret_aux_thm = prove
- (`(copy_ret_aux k f 0 = stackLang_Skip) /\
+ (`(copy_ret_aux k f 0 = wordLang_Skip) /\
    (copy_ret_aux k f (SUC n) =
    stackLang_list_Seq [stackLang_StackLoad k n;
      stackLang_StackStore k (n + f); copy_ret_aux k f n])`,
@@ -2829,14 +2829,14 @@ let copy_ret_aux_thm = prove
 
 let evaluate_copy_ret_Seq = prove
  (`stackSem_evaluate (copy_ret perf b kf vs k0,t) =
-   stackSem_evaluate (stackLang_Seq (copy_ret perf b kf vs
-     stackLang_Skip) k0,t)`,
+   stackSem_evaluate (wordLang_Seq (copy_ret perf b kf vs
+     wordLang_Skip) k0,t)`,
   CHEAT_TAC);;
 
 let evaluate_copy_ret_Seq' = prove
  (`stackSem_evaluate (copy_ret F is_handle (k,f,f') vs k0,t) =
    (let n = num_stack_ret k vs in
-   stackSem_evaluate (stackLang_Seq (copy_ret_aux k (if is_handle
+   stackSem_evaluate (wordLang_Seq (copy_ret_aux k (if is_handle
      then f + 3 else f) n) (SeqStackFree n k0),t))`,
   CHEAT_TAC);;
 
@@ -3007,17 +3007,17 @@ let word_to_stackProof_state_rel_with_clock = prove
 
 (* [local] *)
 let word_Call_NONE_not_Break_Continue = prove
- (`wordSem_evaluate (stackLang_Call NONE dest args handler,s) = (res,s')
+ (`wordSem_evaluate (wordLang_Call NONE dest args handler,s) = (res,s')
   ==>
-   (!n. ~(res = SOME (stackSem_Break n))) /\ (!n. ~(res = SOME
-     (stackSem_Continue n)))`,
+   (!n. ~(res = SOME (wordLang_Break n))) /\ (!n. ~(res = SOME
+     (wordLang_Continue n)))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let stack_Call_NONE_not_Break_Continue = prove
- (`stackSem_evaluate (stackLang_Call NONE dest handler,s) = (res,s') ==>
-   (!n. ~(res = SOME (stackSem_Break n))) /\ (!n. ~(res = SOME
-     (stackSem_Continue n)))`,
+ (`stackSem_evaluate (wordLang_Call NONE dest handler,s) = (res,s') ==>
+   (!n. ~(res = SOME (wordLang_Break n))) /\ (!n. ~(res = SOME
+     (wordLang_Continue n)))`,
   CHEAT_TAC);;
 
 (* HOL4 word_to_stackProofScript.sml:10154-10371: a theorem whose
@@ -3135,7 +3135,7 @@ let extract_labels_copy_ret = prove
 
 (* [local,simp] *)
 let extract_labels_wStackLoad_Skip = prove
- (`stackProps_extract_labels (wStackLoad xs stackLang_Skip) = []`,
+ (`stackProps_extract_labels (wStackLoad xs wordLang_Skip) = []`,
   CHEAT_TAC);;
 
 

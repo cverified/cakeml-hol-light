@@ -142,7 +142,7 @@ let ptree_TyvarN_def = define_cases
 
 let Long_Short_def,Long_Short_ind = define_rec
   [`Long_Short tokens_End (s:mlstring) = Short s`;
-   `Long_Short (ast_Mod x xs:tokens_path) (s:mlstring) = Long x
+   `Long_Short (tokens_Mod x xs:tokens_path) (s:mlstring) = Long x
   (Long_Short xs s)`];;
 
 let ptree_Tyop_def = define_cases

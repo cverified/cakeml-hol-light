@@ -1262,10 +1262,9 @@ let make_init_opt_def = new_definition
 
 let init_pre_def = new_definition
   `init_pre gen_gc' max_heap bitmaps data_sp k start' s <=>
-     sptree_lookup 0 (state_code s) = SOME (stackLang_Seq
+     sptree_lookup 0 (state_code s) = SOME (wordLang_Seq
        (stack_remove_init_code gen_gc' max_heap k)
-                              (stackLang_Call NONE (INL start')
-                                NONE)) /\
+                              (asm_Call NONE (INL start') NONE)) /\
      init_code_pre k bitmaps data_sp s /\ max_stack_alloc <=
        max_heap`;;
 

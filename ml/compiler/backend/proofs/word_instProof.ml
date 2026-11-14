@@ -297,8 +297,8 @@ let inst_select_thm = prove
      (res,wordSem_state_locals_fupd (K loc') rst) /\
    (match res with
      NONE -> locals_rel temp (wordSem_state_locals rst) loc' | SOME
-       (wordSem_Break _3) -> locals_rel temp (wordSem_state_locals
-       rst) loc' | SOME (wordSem_Continue _4) -> locals_rel temp
+       (wordLang_Break _3) -> locals_rel temp (wordSem_state_locals
+       rst) loc' | SOME (wordLang_Continue _4) -> locals_rel temp
        (wordSem_state_locals rst) loc' | SOME _5 ->
        wordSem_state_locals rst = loc'))`,
   CHEAT_TAC);;
@@ -343,8 +343,8 @@ let inst_select_Loop_helper = prove
             (res,wordSem_state_locals_fupd (K loc') rst) /\
           (match res with
             NONE -> locals_rel temp (wordSem_state_locals rst) loc' |
-              SOME (wordSem_Break _6) -> locals_rel temp
-              (wordSem_state_locals rst) loc' | SOME (wordSem_Continue
+              SOME (wordLang_Break _6) -> locals_rel temp
+              (wordSem_state_locals rst) loc' | SOME (wordLang_Continue
               _7) -> locals_rel temp (wordSem_state_locals rst) loc' |
               SOME _8 -> wordSem_state_locals rst = loc'))) /\
      wordSem_evaluate (wordLang_Loop names prog exit_names,s) =
@@ -359,8 +359,8 @@ let inst_select_Loop_helper = prove
                  s) = (res,wordSem_state_locals_fupd (K loc') rst) /\
        (match res with
          NONE -> locals_rel temp (wordSem_state_locals rst) loc' |
-           SOME (wordSem_Break _9) -> locals_rel temp
-           (wordSem_state_locals rst) loc' | SOME (wordSem_Continue
+           SOME (wordLang_Break _9) -> locals_rel temp
+           (wordSem_state_locals rst) loc' | SOME (wordLang_Continue
            _10) -> locals_rel temp (wordSem_state_locals rst) loc' |
            SOME _11 -> wordSem_state_locals rst = loc'))`,
   CHEAT_TAC);;

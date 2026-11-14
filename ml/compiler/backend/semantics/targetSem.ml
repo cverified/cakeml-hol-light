@@ -65,16 +65,6 @@ let machine_config_FIELDS = define_record "machine_config"
    "target","('a,'b,'c)target";
    (* ffi_index -> byte_size, address, register to be updated/ stored, new pc value *)
    "mmio_info","(num#word8#'a asm_addr#num#'a word) list"];;
-hol4_field_overload "ffi_names" "machine_config_ffi_names";;
-hol4_field_overload "ffi_names_fupd" "machine_config_ffi_names_fupd";;
-hol4_field_overload "ptr_reg" "machine_config_ptr_reg";;
-hol4_field_overload "ptr_reg_fupd" "machine_config_ptr_reg_fupd";;
-hol4_field_overload "len_reg" "machine_config_len_reg";;
-hol4_field_overload "len_reg_fupd" "machine_config_len_reg_fupd";;
-hol4_field_overload "ptr2_reg" "machine_config_ptr2_reg";;
-hol4_field_overload "ptr2_reg_fupd" "machine_config_ptr2_reg_fupd";;
-hol4_field_overload "len2_reg" "machine_config_len2_reg";;
-hol4_field_overload "len2_reg_fupd" "machine_config_len2_reg_fupd";;
 
 let apply_oracle_def = new_definition
   `apply_oracle oracle' x =
@@ -110,32 +100,32 @@ let is_valid_mapped_read_def = new_definition
   `is_valid_mapped_read pc' (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
        (bytes_in_memory pc' (asm_config_encode (target_config t)
-         (wordLang_Inst (asm_Mem asm_Load8 r ad)))
+         (asm_Inst (asm_Mem asm_Load8 r ad)))
          (target_get_byte t ms) md) else if nb = (n2w 0) then
        (bytes_in_memory pc' (asm_config_encode (target_config t)
-         (wordLang_Inst (asm_Mem asm_Load r ad)))
+         (asm_Inst (asm_Mem asm_Load r ad)))
          (target_get_byte t ms) md) else if nb = (n2w 2) then
        (bytes_in_memory pc' (asm_config_encode (target_config t)
-         (wordLang_Inst (asm_Mem asm_Load16 r ad)))
+         (asm_Inst (asm_Mem asm_Load16 r ad)))
          (target_get_byte t ms) md) else if nb = (n2w 4) then
        (bytes_in_memory pc' (asm_config_encode (target_config t)
-         (wordLang_Inst (asm_Mem asm_Load32 r ad)))
+         (asm_Inst (asm_Mem asm_Load32 r ad)))
          (target_get_byte t ms) md) else F)`;;
 
 let is_valid_mapped_write_def = new_definition
   `is_valid_mapped_write pc' (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
          (bytes_in_memory pc' (asm_config_encode (target_config t)
-           (wordLang_Inst (asm_Mem asm_Store8 r ad)))
+           (asm_Inst (asm_Mem asm_Store8 r ad)))
            (target_get_byte t ms) md) else if nb = (n2w 0) then
          (bytes_in_memory pc' (asm_config_encode (target_config t)
-           (wordLang_Inst (asm_Mem asm_Store r ad)))
+           (asm_Inst (asm_Mem asm_Store r ad)))
            (target_get_byte t ms) md) else if nb = (n2w 2) then
          (bytes_in_memory pc' (asm_config_encode (target_config t)
-           (wordLang_Inst (asm_Mem asm_Store16 r ad)))
+           (asm_Inst (asm_Mem asm_Store16 r ad)))
            (target_get_byte t ms) md) else if nb = (n2w 4) then
          (bytes_in_memory pc' (asm_config_encode (target_config t)
-           (wordLang_Inst (asm_Mem asm_Store32 r ad)))
+           (asm_Inst (asm_Mem asm_Store32 r ad)))
            (target_get_byte t ms) md) else F)`;;
 
 let targetSem_evaluate_def,targetSem_evaluate_ind =
@@ -355,7 +345,8 @@ let start_pc_ok_def = new_definition
      pc' - n2w ffi_offset = machine_config_halt_pc mc_conf /\
      pc' - n2w (2 * ffi_offset) = machine_config_ccache_pc mc_conf /\
      ((n2w 1) && pc') = (n2w 0) /\
-     (?i. mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
+     (?i. mmio_pcs_min_index (machine_config_ffi_names mc_conf) =
+       SOME i /\
      (!index.
         index < i ==> ~(pc' - n2w ((3 + index) * ffi_offset) IN
           machine_config_prog_addresses
@@ -371,13 +362,13 @@ let start_pc_ok_def = new_definition
             (machine_config_ffi_entry_pcs
           mc_conf) 0 = SOME index) /\
      (!index.
-       index < LENGTH (ffi_names mc_conf) /\ i <= index ==>
-         ~(machine_config_halt_pc
+       index < LENGTH (machine_config_ffi_names mc_conf) /\ i <=
+         index ==> ~(machine_config_halt_pc
        mc_conf = (EL index (machine_config_ffi_entry_pcs mc_conf)))
          /\ ~(machine_config_ccache_pc
        mc_conf = (EL index (machine_config_ffi_entry_pcs mc_conf))))
          /\
-     LENGTH (ffi_names mc_conf) = LENGTH
+     LENGTH (machine_config_ffi_names mc_conf) = LENGTH
        (machine_config_ffi_entry_pcs mc_conf))`;;
 
 (* ffi_interfer_ok: the FFI interference oracle is ok:
@@ -391,16 +382,16 @@ let start_pc_ok_def = new_definition
 let ffi_interfer_ok_def = new_definition
   `ffi_interfer_ok pc' mc_conf <=>
      (!ms2 k index new_bytes t1 bytes bytes2 i.
-        index < LENGTH (ffi_names mc_conf) /\
-        mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
-          machine_config_prog_addresses
+        index < LENGTH (machine_config_ffi_names mc_conf) /\
+        mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
+          i /\ machine_config_prog_addresses
         mc_conf = asm_state_mem_domain t1 ==>
           (index < i ==>
             read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME
               bytes2) /\
             LENGTH new_bytes = LENGTH bytes2 /\
-            (EL index (ffi_names mc_conf) = ffi_ExtCall (implode "")
-              ==> new_bytes = bytes2) /\
+            (EL index (machine_config_ffi_names mc_conf) =
+              ffi_ExtCall (implode "") ==> new_bytes = bytes2) /\
             target_state_rel (machine_config_target mc_conf)
               (asm_state_pc_fupd (K (--(n2w ((3 + index) *
                 ffi_offset)) + pc')) t1) ms2 /\
@@ -436,8 +427,8 @@ let ffi_interfer_ok_def = new_definition
                (machine_config_ffi_entry_pcs mc_conf))) t1) ms2 ==>
                (?info. ALOOKUP (machine_config_mmio_info mc_conf)
                  index = SOME info /\
-                (EL index (ffi_names mc_conf) = ffi_SharedMem
-                  MappedRead ==>
+                (EL index (machine_config_ffi_names mc_conf) =
+                  ffi_SharedMem MappedRead ==>
                 (!new_bytes.
                 target_state_rel (machine_config_target mc_conf)
                   (asm_state_regs_fupd (K (\n. if n = FST (SND (SND
@@ -447,8 +438,8 @@ let ffi_interfer_ok_def = new_definition
                          (SND (SND (SND info)))) t1))
                    (machine_config_ffi_interfer mc_conf k
                      (index,new_bytes,ms2)))) /\
-                (EL index (ffi_names mc_conf) = ffi_SharedMem
-                  MappedWrite ==>
+                (EL index (machine_config_ffi_names mc_conf) =
+                  ffi_SharedMem MappedWrite ==>
                 target_state_rel (machine_config_target mc_conf)
                   (asm_state_pc_fupd (K (SND (SND (SND info)))) t1)
                   (machine_config_ffi_interfer mc_conf k
