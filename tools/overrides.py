@@ -414,6 +414,9 @@ CON_BODY = {
   # that it is
   ('data_to_word', 'lookup_word_op_def'):
     {'Xor': 'asm', 'Add': 'asm', 'Sub': 'asm'},
+  # wInst matches on an asm instruction and wraps it in the Inst
+  # of a stackLang program
+  ('word_to_stack', 'wInst_def'): {'Inst': 'stackLang'},
   ('wordSem', 'evaluate_def'): {'*': 'wordSem'},
   ('stackSem', 'evaluate_def'): {'*': 'stackSem'},
   # bvi_to_data's compile matches on a bvi expression and builds a
@@ -697,6 +700,9 @@ RENAME_CONST = {
 # fromList of data_to_word and flat_pattern is sptree's, the one
 # of the semantics theories is llist's)
 LOCAL_NAMES = {
+  # compile_pes reads the patterns of an ast expression, so the
+  # pat_bindings it takes of one is ast's and not flatLang's
+  ('source_to_flat', 'pat_bindings'): 'pat_bindings',
   # listCmp gives an ordering of ternaryComparisons, and asm has
   # a Less and an Equal of its own
   ('word_cse', 'Less'): 'LESS',
@@ -11797,6 +11803,12 @@ MAIN_THEORY = {
 # this says the exceptions: a proof about bvl that names asm's Xor
 # or backend_common's word_shift wants that one wherever it stands.
 CON_FILE = {
+  # the instructions that stack_alloc builds are asm's, which is
+  # what the Inst of a stackLang program takes
+  'stack_alloc': {'Load': 'asm', 'Store': 'asm',
+                  'Load8': 'asm', 'Store8': 'asm'},
+  # the reference cells of bvlSem are its own
+  'bvlSem': {'ByteArray': 'bvlSem', 'ValueArray': 'bvlSem'},
   # the word operations that data_to_word builds are the binops
   # of asm, which is what wordLang's Op takes
   'data_to_word': {'Xor': 'asm', 'And': 'asm', 'Or': 'asm'},
@@ -11836,6 +11848,17 @@ DEF_NAMES = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # flatten compares the two halves of a stackLang If with Skip,
+  # and the Inst of its first arm is asm's Skip: the definition
+  # is printed as one term, where a rule for the bodies cannot
+  # reach one and not the other
+  ('stack_to_lab', 'flatten_def'): [
+    ('(p1 = asm_Skip) /\\ (p2 = asm_Skip)',
+     '(p1 = stackLang_Skip) /\\ (p2 = stackLang_Skip)'),
+    ('else if p1 = asm_Skip then',
+     'else if p1 = stackLang_Skip then'),
+    ('= asm_Skip then', '= stackLang_Skip then'),
+  ],
   # lookup_word_op matches on an opw, whose constructors the port
   # calls after backend_common, and gives the binop of asm that
   # it is: the body says asm (CON_BODY) and the pattern is this

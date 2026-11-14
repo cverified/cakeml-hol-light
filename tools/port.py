@@ -2549,6 +2549,8 @@ class Porter:
             if x == self.thy or self.thy.startswith(x + '_')]
     if pref: ts = pref
     main = overrides.MAIN_THEORY.get(self.thy)
+    if os.environ.get('CONDBG') == n:
+      print('CONDBG', self.thy, n, arity, ts, main, file=sys.stderr)
     if main and len(ts) > 1 and main in ts: ts = [main]
     # a constructor of a datatype whose name several theories have
     # is the one of the type that the theory means by that name:
