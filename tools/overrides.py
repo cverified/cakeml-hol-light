@@ -425,7 +425,7 @@ CON_BODY = {
   ('bvl_to_bvi', 'compile_exps_sing_def'): {'*': 'bvi'},
   # clos_to_bvl reads closLang and builds bvl
   ('clos_to_bvl', 'compile_exps_def'): {'*': 'bvl'},
-  ('clos_to_bvl', 'compile_exps_sing_def'): {'*': 'bvl'},
+  ('clos_to_bvl', 'compile_exp_sing_def'): {'*': 'bvl'},
   # lookup_word_op matches on an opw and gives the binop of asm
   # that it is, and WordOp64_on_32 builds wordLang Ops of them
   ('data_to_word', 'lookup_word_op_def'):
