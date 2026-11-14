@@ -129,7 +129,7 @@ let _ = size_thms "wordLang_prog";;
    what the port found for it *)
 let flat_exp_conventions_def,flat_exp_conventions_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
-  [`flat_exp_conventions x1 =
+  `flat_exp_conventions x1 =
      match x1 with
        // These should be converted to Insts
      wordLang_Assign v exp -> F
@@ -156,7 +156,7 @@ let flat_exp_conventions_def,flat_exp_conventions_ind = define_wf
        (match h with
          NONE -> T
        | SOME (v,prog,l1,l2) -> flat_exp_conventions prog))
-     | _ -> T`];;
+     | _ -> T`;;
 
 (*** Well-formed instructions. This also includes the FP conditions since we do not allocate them ***)
 let inst_ok_less_def = new_definition
@@ -224,7 +224,7 @@ let inst_ok_less_def = new_definition
          ((dimindex (:'a) = 32) ==> ~(r1 = r2)) /\ fp_reg_ok d c
      | (c,asm_FP (FPToInt d1 d2)) -> fp_reg_ok d1 c /\ fp_reg_ok d2 c
      | (c,asm_FP (FPFromInt d1 d2)) -> fp_reg_ok d1 c /\ fp_reg_ok d2 c
-     | (_1,_2) -> T`;;
+     | (_,_) -> T`;;
 
 (*** Instructions have distinct targets and read vars -- set by SSA form ***)
 let distinct_tar_reg_def = new_definition
@@ -255,7 +255,7 @@ let two_reg_inst_def = new_definition
    what the port found for it *)
 let every_inst_def,every_inst_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x1)`
-  [`every_inst P prog =
+  `every_inst P prog =
      match prog with
        wordLang_Inst i -> P i
      | wordLang_Seq p1 p2 -> (every_inst P p1 /\ every_inst P p2)
@@ -271,14 +271,14 @@ let every_inst_def,every_inst_ind = define_wf
          (match handler with
            NONE -> T
          | SOME (n,h,l1,l2) -> every_inst P h))
-     | prog -> T`];;
+     | prog -> T`;;
 
 (*** Every instruction is well-formed ***)
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let full_inst_ok_less_def,full_inst_ok_less_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x1)`
-  [`full_inst_ok_less c prog =
+  `full_inst_ok_less c prog =
      match prog with
        wordLang_Inst i -> inst_ok_less c i
      | wordLang_Seq p1 p2 ->
@@ -297,13 +297,13 @@ let full_inst_ok_less_def,full_inst_ok_less_ind = define_wf
          | SOME (n,h,l1,l2) -> full_inst_ok_less c h))
      | wordLang_ShareInst op r ad ->
        (match exp_to_addr ad with SOME (Addr _ w) ->
-         if op IN {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32}
-           then (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
+         if op IN {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32} then
+           (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
          else if op IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
            (asm_config_hw_offset c)) c w
          else (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w
        | NONE -> F)
-     | prog -> T`];;
+     | prog -> T`;;
 
 (*** All cutsets are well-formed ***)
 let wf_names_def = new_definition
@@ -314,10 +314,10 @@ let wf_names_def = new_definition
    what the port found for it *)
 let wf_cutsets_def,wf_cutsets_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
-  [`wf_cutsets x1 =
+  `wf_cutsets x1 =
      match x1 with
        wordLang_Alloc n s -> wf_names s
-     | wordLang_Install _3 _4 _5 _6 s -> wf_names s
+     | wordLang_Install _ _ _ _ s -> wf_names s
      | wordLang_Call ret dest args h ->
        (match ret with
          NONE -> T
@@ -337,14 +337,14 @@ let wf_cutsets_def,wf_cutsets_ind = define_wf
      | wordLang_If cmp r1 ri e2 e3 ->
        (wf_cutsets e2 /\
         wf_cutsets e3)
-     | _ -> T`];;
+     | _ -> T`;;
 
 (*** Conventions for args to instructions ***)
 let inst_arg_convention_def = new_definition
   `inst_arg_convention x1 =
      match x1 with
        asm_Arith (asm_AddCarry r1 r2 r3 r4) -> r4 = 0
-     | asm_Arith (asm_Shift _7 _8 _9 (Reg r)) -> r = 8
+     | asm_Arith (asm_Shift _ _ _ (Reg r)) -> r = 8
      // Note: these are not necessary
      | asm_Arith (asm_AddOverflow r1 r2 r3 r4) -> r4 = 0
      | asm_Arith (asm_SubOverflow r1 r2 r3 r4) -> r4 = 0
@@ -360,14 +360,14 @@ let inst_arg_convention_def = new_definition
    what the port found for it *)
 let call_arg_convention_def,call_arg_convention_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
-  [`call_arg_convention p =
+  `call_arg_convention p =
      match p with
        wordLang_Inst i ->
        inst_arg_convention i
      | wordLang_Return x ys -> (ys = list_of_seq (\x. 2 * (x + 1)) (LENGTH
        ys))
      | wordLang_Raise y -> (y = 2)
-     | wordLang_Install ptr len _10 _11 _12 -> (ptr = 2 /\ len = 4)
+     | wordLang_Install ptr len _ _ _ -> (ptr = 2 /\ len = 4)
      | wordLang_FFI x ptr len ptr2 len2 args -> (ptr = 2 /\ len = 4 /\
                               ptr2 = 6 /\ len2 = 8)
      | wordLang_Alloc n s -> (n = 2)
@@ -394,7 +394,7 @@ let call_arg_convention_def,call_arg_convention_ind = define_wf
      | wordLang_If cmp r1 ri e2 e3 ->
        (call_arg_convention e2 /\
         call_arg_convention e3)
-     | p -> T`];;
+     | p -> T`;;
 
 (*** Before allocation, generated by SSA CC ***)
 let pre_alloc_conventions_def = new_definition
@@ -414,7 +414,7 @@ let post_alloc_conventions_def = new_definition
    what the port found for it *)
 let extract_labels_def,extract_labels_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
-  [`wordConvs_extract_labels x1 =
+  `wordConvs_extract_labels x1 =
      match x1 with
        wordLang_Call ret dest args h ->
        (match ret with
@@ -433,7 +433,7 @@ let extract_labels_def,extract_labels_ind = define_wf
        wordConvs_extract_labels p
      | wordLang_If cmp r1 ri e2 e3 ->
        (APPEND (wordConvs_extract_labels e2) (wordConvs_extract_labels e3))
-     | _ -> []`];;
+     | _ -> []`;;
 
 (*** Property on max_var ***)
 (* [local] *)
@@ -454,22 +454,22 @@ let max_var_intro = prove
    what the port found for it *)
 let get_code_labels_def,get_code_labels_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
-  [`wordConvs_get_code_labels x1 =
+  `wordConvs_get_code_labels x1 =
      match x1 with
        wordLang_Call r d a h ->
        (match d with SOME x -> {x} | _ -> {}) UNION
-       (match r with SOME (_13,_14,x,_15,_16) -> wordConvs_get_code_labels
-         x | _ -> {}) UNION
+       (match r with SOME (_,_,x,_,_) -> wordConvs_get_code_labels x | _ ->
+         {}) UNION
        (match h with SOME (_,x,l1,l2) -> wordConvs_get_code_labels x | _ ->
          {})
      | wordLang_Seq p1 p2 -> wordConvs_get_code_labels p1 UNION
        wordConvs_get_code_labels p2
      | wordLang_Loop names p exit_names -> wordConvs_get_code_labels p
-     | wordLang_If _17 _18 _19 p1 p2 -> wordConvs_get_code_labels p1 UNION
+     | wordLang_If _ _ _ p1 p2 -> wordConvs_get_code_labels p1 UNION
        wordConvs_get_code_labels p2
      | wordLang_MustTerminate p -> wordConvs_get_code_labels p
      | wordLang_LocValue _ l1 -> {l1}
-     | _ -> {}`];;
+     | _ -> {}`;;
 add_simp get_code_labels_def;;
 
 (*** TODO: This seems like it must have been established before
@@ -479,20 +479,19 @@ add_simp get_code_labels_def;;
    what the port found for it *)
 let good_handlers_def,good_handlers_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x1)`
-  [`good_handlers n x2 =
+  `good_handlers n x2 =
      match x2 with
        wordLang_Call r d a h ->
        (match r with
          NONE -> T
-       | SOME (_20,_21,x,_22,_23) -> good_handlers n x /\
-       (match h with SOME (_24,x,l1,_25) -> l1 = n /\ good_handlers n x | _
-         -> T))
+       | SOME (_,_,x,_,_) -> good_handlers n x /\
+       (match h with SOME (_,x,l1,_) -> l1 = n /\ good_handlers n x | _ ->
+         T))
      | wordLang_Seq p1 p2 -> good_handlers n p1 /\ good_handlers n p2
      | wordLang_Loop names p exit_names -> good_handlers n p
-     | wordLang_If _26 _27 _28 p1 p2 -> good_handlers n p1 /\ good_handlers
-       n p2
+     | wordLang_If _ _ _ p1 p2 -> good_handlers n p1 /\ good_handlers n p2
      | wordLang_MustTerminate p -> good_handlers n p
-     | _ -> T`];;
+     | _ -> T`;;
 add_simp good_handlers_def;;
 
 let good_code_labels_def = new_definition
@@ -510,7 +509,7 @@ let good_code_labels_def = new_definition
    what the port found for it *)
 let not_created_subprogs_def,not_created_subprogs_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x1)`
-  [`not_created_subprogs P x2 =
+  `not_created_subprogs P x2 =
    match x2 with
      (wordLang_MustTerminate p:'a wordLang_prog) ->
      (P (wordLang_MustTerminate (wordLang_Skip:'a wordLang_prog))
@@ -519,22 +518,21 @@ let not_created_subprogs_def,not_created_subprogs_ind = define_wf
      not_created_subprogs P p2)
    | wordLang_Loop names c exit_names ->
      (not_created_subprogs P c)
-   | wordLang_If _29 _30 _31 p1 p2 -> (not_created_subprogs P p1 /\
+   | wordLang_If _ _ _ p1 p2 -> (not_created_subprogs P p1 /\
      not_created_subprogs P p2)
    | wordLang_Call r dest args h ->
      (P (wordLang_Call NONE dest [] NONE) /\
-     (match r with NONE -> T | SOME (_32,_33,p,_34) -> not_created_subprogs
-       P p) /\
-     (match h with NONE -> T | SOME (_35,p,h1,_36) ->
+     (match r with NONE -> T | SOME (_,_,p,_) -> not_created_subprogs P p)
+       /\
+     (match h with NONE -> T | SOME (_,p,h1,_) ->
          P (wordLang_Call NONE NONE [] (SOME (0,wordLang_Skip,h1,0))) /\
          not_created_subprogs P p))
-   | wordLang_Alloc _37 _38 -> P (wordLang_Alloc 0 (LN,LN))
+   | wordLang_Alloc _ _ -> P (wordLang_Alloc 0 (LN,LN))
    | wordLang_LocValue _ l -> P (wordLang_LocValue 0 l)
-   | wordLang_ShareInst _39 _40 _41 -> P (wordLang_ShareInst ARB 0
-     (wordLang_Var 0))
-   | wordLang_Install _42 _43 _44 _45 _46 -> P (wordLang_Install 0 0 0 0
-     (LN,LN))
-   | _ -> T`];;
+   | wordLang_ShareInst _ _ _ -> P (wordLang_ShareInst ARB 0 (wordLang_Var
+     0))
+   | wordLang_Install _ _ _ _ _ -> P (wordLang_Install 0 0 0 0 (LN,LN))
+   | _ -> T`;;
 
 (* HOL4 wordConvsScript.sml:558-562: a theorem that HOL4 states as the value
    of an ML expression: not_created_subprogs_P_def *)

@@ -166,11 +166,11 @@ let store_v_INDUCT,store_v_RECURSION = define_datatype
 let store_v_same_type_def = new_definition
   `store_v_same_type v1 v2 =
      match ((v1:'a store_v),(v2:'a store_v)) with (semanticPrimitives_Refv
-       _1,semanticPrimitives_Refv _2) -> T
-     | (semanticPrimitives_W8array _3,semanticPrimitives_W8array _4) -> T
-     | (semanticPrimitives_Varray _5,semanticPrimitives_Varray _6) -> T
-     | (semanticPrimitives_Thunk NotEvaluated _7,semanticPrimitives_Thunk _8
-       _9) -> T
+       _,semanticPrimitives_Refv _) -> T
+     | (semanticPrimitives_W8array _,semanticPrimitives_W8array _) -> T
+     | (semanticPrimitives_Varray _,semanticPrimitives_Varray _) -> T
+     | (semanticPrimitives_Thunk NotEvaluated _,semanticPrimitives_Thunk _
+       _) -> T
      | _ -> F`;;
 
 (* The nth item in the list is the value at location n *)
@@ -268,12 +268,12 @@ let build_conv_def = new_definition
 
 let lit_same_type_def = new_definition
   `lit_same_type l1 l2 <=>
-      (match (l1,l2) with (ast_IntLit _10,ast_IntLit _11) -> T
-      | (ast_Char _12,ast_Char _13) -> T
-      | (ast_StrLit _14,ast_StrLit _15) -> T
-      | (ast_Word8 _16,ast_Word8 _17) -> T
-      | (ast_Word64 _18,ast_Word64 _19) -> T
-      | (ast_Float64 _20,ast_Float64 _21) -> T
+      (match (l1,l2) with (ast_IntLit _,ast_IntLit _) -> T
+      | (ast_Char _,ast_Char _) -> T
+      | (ast_StrLit _,ast_StrLit _) -> T
+      | (ast_Word8 _,ast_Word8 _) -> T
+      | (ast_Word64 _,ast_Word64 _) -> T
+      | (ast_Float64 _,ast_Float64 _) -> T
       | _ -> F)`;;
 
 let match_result_INDUCT,match_result_RECURSION = define_datatype
@@ -287,7 +287,7 @@ let same_type_def = new_definition
      match (x1,x2) with
        (TypeStamp v0 n1,TypeStamp v1 n2) -> n1 = n2
      | (ExnStamp v2,ExnStamp v3) -> T
-     | (_22,_23) -> F`;;
+     | (_,_) -> F`;;
 
 let same_ctor_def = new_definition
   `same_ctor stamp1 stamp2 <=> stamp1 = (stamp2:stamp)`;;
@@ -316,15 +316,15 @@ let boolv_def = new_definition
  * when one of these conditions is violated *)
 let pmatch_def,pmatch_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`semanticPrimitives_pmatch envC s ast_Pany v' env = Match env`;
-   `semanticPrimitives_pmatch envC s (ast_Pvar x) v' env = Match (CONS
-    (x,v') env)`;
-   `semanticPrimitives_pmatch envC s (ast_Plit l) (semanticPrimitives_Litv l')
+  `(semanticPrimitives_pmatch envC s ast_Pany v' env = Match env) /\
+   (semanticPrimitives_pmatch envC s (ast_Pvar x) v' env = Match (CONS
+    (x,v') env)) /\
+   (semanticPrimitives_pmatch envC s (ast_Plit l) (semanticPrimitives_Litv l')
     env =
     (if l = l' then Match env
      else if lit_same_type l l' then No_match
-     else Match_type_error)`;
-   `semanticPrimitives_pmatch envC s (ast_Pcon (SOME n) ps)
+     else Match_type_error)) /\
+   (semanticPrimitives_pmatch envC s (ast_Pcon (SOME n) ps)
     (semanticPrimitives_Conv (SOME stamp') vs) env =
     (match nsLookup envC n with
        NONE -> Match_type_error
@@ -335,26 +335,26 @@ let pmatch_def,pmatch_ind = assume_definition_rec
                  vs env
              else Match_type_error
            else No_match
-         else Match_type_error)`;
-   `semanticPrimitives_pmatch envC s (ast_Pcon NONE ps)
+         else Match_type_error)) /\
+   (semanticPrimitives_pmatch envC s (ast_Pcon NONE ps)
     (semanticPrimitives_Conv NONE vs) env =
     (if LENGTH ps = LENGTH vs then semanticPrimitives_pmatch_list envC s ps
         vs env
-     else Match_type_error)`;
-   `semanticPrimitives_pmatch envC s (ast_Pref p) (semanticPrimitives_Loc _29
+     else Match_type_error)) /\
+   (semanticPrimitives_pmatch envC s (ast_Pref p) (semanticPrimitives_Loc _
     lnum) env =
     (match store_lookup lnum s with
        NONE -> Match_type_error
      | SOME (semanticPrimitives_Refv v) -> semanticPrimitives_pmatch envC s
          p v env
-     | SOME _ -> Match_type_error)`;
-   `semanticPrimitives_pmatch envC s (ast_Pas p i) v env =
-    semanticPrimitives_pmatch envC s p v (CONS (i,v) env)`;
-   `semanticPrimitives_pmatch envC s (ast_Ptannot p t) v env =
-    semanticPrimitives_pmatch envC s p v env`;
-   `semanticPrimitives_pmatch envC s _30 _31 env = Match_type_error`;
-   `semanticPrimitives_pmatch_list envC s [] [] env = Match env`;
-   `semanticPrimitives_pmatch_list envC s (CONS p ps) (CONS v vs) env =
+     | SOME _ -> Match_type_error)) /\
+   (semanticPrimitives_pmatch envC s (ast_Pas p i) v env =
+    semanticPrimitives_pmatch envC s p v (CONS (i,v) env)) /\
+   (semanticPrimitives_pmatch envC s (ast_Ptannot p t) v env =
+    semanticPrimitives_pmatch envC s p v env) /\
+   (semanticPrimitives_pmatch envC s _ _ env = Match_type_error) /\
+   (semanticPrimitives_pmatch_list envC s [] [] env = Match env) /\
+   (semanticPrimitives_pmatch_list envC s (CONS p ps) (CONS v vs) env =
     (match semanticPrimitives_pmatch envC s p v env with
        No_match ->
          (match semanticPrimitives_pmatch_list envC s ps vs env with
@@ -362,15 +362,15 @@ let pmatch_def,pmatch_ind = assume_definition_rec
           | Match_type_error -> Match_type_error
           | Match v1 -> No_match)
      | Match_type_error -> Match_type_error
-     | Match env' -> semanticPrimitives_pmatch_list envC s ps vs env')`;
-   `semanticPrimitives_pmatch_list envC s _32 _33 env = Match_type_error`];;
+     | Match env' -> semanticPrimitives_pmatch_list envC s ps vs env')) /\
+   (semanticPrimitives_pmatch_list envC s _ _ env = Match_type_error)`;;
 
 let can_pmatch_all_def,can_pmatch_all_ind = define_rec
-  [`can_pmatch_all envC refs [] v <=> T`;
-   `can_pmatch_all envC refs (CONS p ps) v <=>
+  `(can_pmatch_all envC refs [] v <=> T) /\
+   (can_pmatch_all envC refs (CONS p ps) v <=>
          (if semanticPrimitives_pmatch envC refs p v [] = Match_type_error
              then F
-         else can_pmatch_all envC refs ps v)`];;
+         else can_pmatch_all envC refs ps v))`;;
 
 (* Bind each function of a mutually recursive set of functions to its closure *)
 let build_rec_env_def = new_definition
@@ -385,11 +385,11 @@ let build_rec_env_def = new_definition
 (* Lookup in the list of mutually recursive functions *)
 let find_recfun_def,find_recfun_ind = define_shaped_rec
   "match"
-  [`(find_recfun:mlstring->(mlstring#'a#'b) list->('a#'b) option) n funs =
+  `(find_recfun:mlstring->(mlstring#'a#'b) list->('a#'b) option) n funs =
    match funs with
      [] -> NONE
    | CONS (f,x,e) funs' -> if f = n then SOME (x,e) else find_recfun n
-     funs'`];;
+     funs'`;;
 
 let eq_result_INDUCT,eq_result_RECURSION = define_datatype
   "eq_result =
@@ -404,35 +404,35 @@ let eq_result_INDUCT,eq_result_RECURSION = define_datatype
    would be inconsistent. *)
 let do_eq_def,do_eq_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`semanticPrimitives_do_eq (semanticPrimitives_Litv l1)
+  `(semanticPrimitives_do_eq (semanticPrimitives_Litv l1)
     (semanticPrimitives_Litv l2) =
-      (if lit_same_type l1 l2 then Eq_val (l1 = l2) else Eq_type_error)`;
-   `semanticPrimitives_do_eq (semanticPrimitives_Loc b1 l1)
+      (if lit_same_type l1 l2 then Eq_val (l1 = l2) else Eq_type_error)) /\
+   (semanticPrimitives_do_eq (semanticPrimitives_Loc b1 l1)
     (semanticPrimitives_Loc b2 l2) =
-      (if b1 /\ b2 then Eq_val (l1 = l2) else Eq_type_error)`;
-   `semanticPrimitives_do_eq (semanticPrimitives_Conv cn1 vs1)
+      (if b1 /\ b2 then Eq_val (l1 = l2) else Eq_type_error)) /\
+   (semanticPrimitives_do_eq (semanticPrimitives_Conv cn1 vs1)
     (semanticPrimitives_Conv cn2 vs2) =
       (if cn1 = cn2 /\ LENGTH vs1 = LENGTH vs2 then
           semanticPrimitives_do_eq_list vs1 vs2
        else if semanticPrimitives_ctor_same_type cn1 cn2 then Eq_val F
-       else Eq_type_error)`;
-   `semanticPrimitives_do_eq (semanticPrimitives_Vectorv vs1)
+       else Eq_type_error)) /\
+   (semanticPrimitives_do_eq (semanticPrimitives_Vectorv vs1)
     (semanticPrimitives_Vectorv vs2) =
-      (if LENGTH vs1 = LENGTH vs2 then semanticPrimitives_do_eq_list vs1
-          vs2 else Eq_val F)`;
-   `semanticPrimitives_do_eq (semanticPrimitives_Closure v0 v3 v4)
-    (semanticPrimitives_Closure v5 v6 v7) = Eq_val T`;
-   `semanticPrimitives_do_eq (semanticPrimitives_Closure v8 v9 v10)
-    (semanticPrimitives_Recclosure v11 v12 v13) = Eq_val T`;
-   `semanticPrimitives_do_eq (semanticPrimitives_Recclosure v14 v15 v16)
-    (semanticPrimitives_Closure v17 v18 v19) = Eq_val T`;
-   `semanticPrimitives_do_eq (semanticPrimitives_Recclosure v20 v21 v22)
-    (semanticPrimitives_Recclosure v23 v24 v25) = Eq_val T`;
-   `semanticPrimitives_do_eq (semanticPrimitives_Env v26 (gen1,id1))
+      (if LENGTH vs1 = LENGTH vs2 then semanticPrimitives_do_eq_list
+          vs1 vs2 else Eq_val F)) /\
+   (semanticPrimitives_do_eq (semanticPrimitives_Closure v0 v3 v4)
+    (semanticPrimitives_Closure v5 v6 v7) = Eq_val T) /\
+   (semanticPrimitives_do_eq (semanticPrimitives_Closure v8 v9 v10)
+    (semanticPrimitives_Recclosure v11 v12 v13) = Eq_val T) /\
+   (semanticPrimitives_do_eq (semanticPrimitives_Recclosure v14 v15 v16)
+    (semanticPrimitives_Closure v17 v18 v19) = Eq_val T) /\
+   (semanticPrimitives_do_eq (semanticPrimitives_Recclosure v20 v21 v22)
+    (semanticPrimitives_Recclosure v23 v24 v25) = Eq_val T) /\
+   (semanticPrimitives_do_eq (semanticPrimitives_Env v26 (gen1,id1))
     (semanticPrimitives_Env v27 (gen2,id2)) =
-      Eq_val (gen1 = gen2 /\ id1 = id2)`;
-   `semanticPrimitives_do_eq _36 _37 = Eq_type_error`;
-   `semanticPrimitives_do_eq_list x1 x2 =
+      Eq_val (gen1 = gen2 /\ id1 = id2)) /\
+   (semanticPrimitives_do_eq _ _ = Eq_type_error) /\
+   (semanticPrimitives_do_eq_list x1 x2 =
     match (x1,x2) with
       ([],[]) -> Eq_val T
     | (CONS v1 vs1,CONS v2 vs2) ->
@@ -440,7 +440,7 @@ let do_eq_def,do_eq_ind = assume_definition_rec
          Eq_val r -> if ~r then Eq_val F else semanticPrimitives_do_eq_list
              vs1 vs2
        | Eq_type_error -> Eq_type_error)
-    | (_34,_35) -> Eq_val F`];;
+    | (_,_) -> Eq_val F)`;;
 
 (* Do an application *)
 let do_opapp_def = new_definition
@@ -464,65 +464,65 @@ let do_opapp_def = new_definition
    what the port found for it *)
 let v_to_list_def,v_to_list_ind = define_wf
   `MEASURE (\x0. semanticPrimitives_v_size x0)`
-  [`semanticPrimitives_v_to_list x1 =
+  `semanticPrimitives_v_to_list x1 =
    match x1 with
      semanticPrimitives_Conv (SOME stamp) [] ->
      (if stamp = TypeStamp (implode "[]") list_type_num then SOME [] else
        NONE)
    | semanticPrimitives_Conv (SOME stamp) [v1; v2] ->
      (if stamp = TypeStamp (implode "::") list_type_num then
-        match semanticPrimitives_v_to_list v2 with NONE -> NONE | SOME vs
-          -> SOME (CONS v1 vs)
+        match semanticPrimitives_v_to_list v2 with NONE -> NONE | SOME vs ->
+          SOME (CONS v1 vs)
       else NONE)
-   | _ -> NONE`];;
+   | _ -> NONE`;;
 
 let list_to_v_def,list_to_v_ind = define_rec
-  [`semanticPrimitives_list_to_v [] = semanticPrimitives_Conv (SOME
-    (TypeStamp (implode "[]") list_type_num)) []`;
-   `semanticPrimitives_list_to_v (CONS x xs) = semanticPrimitives_Conv
+  `(semanticPrimitives_list_to_v [] = semanticPrimitives_Conv (SOME
+    (TypeStamp (implode "[]") list_type_num)) []) /\
+   (semanticPrimitives_list_to_v (CONS x xs) = semanticPrimitives_Conv
     (SOME (TypeStamp (implode "::") list_type_num)) [x;
-    semanticPrimitives_list_to_v xs]`];;
+    semanticPrimitives_list_to_v xs])`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let v_to_char_list_def,v_to_char_list_ind = define_wf
   `MEASURE (\x0. semanticPrimitives_v_size x0)`
-  [`semanticPrimitives_v_to_char_list x1 =
+  `semanticPrimitives_v_to_char_list x1 =
    match x1 with
      semanticPrimitives_Conv (SOME stamp) [] ->
      (if stamp = TypeStamp (implode "[]") list_type_num then SOME "" else
        NONE)
-   | semanticPrimitives_Conv (SOME stamp) [semanticPrimitives_Litv
-     (ast_Char c); v] ->
+   | semanticPrimitives_Conv (SOME stamp) [semanticPrimitives_Litv (ast_Char
+     c); v] ->
      (if stamp = TypeStamp (implode "::") list_type_num then
         match semanticPrimitives_v_to_char_list v with NONE -> NONE | SOME
           cs -> SOME (CONS c cs)
       else NONE)
-   | _ -> NONE`];;
+   | _ -> NONE`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let vs_to_string_def,vs_to_string_ind = define_wf
   `MEASURE (\x0. semanticPrimitives_v_size3 x0)`
-  [`semanticPrimitives_vs_to_string x1 =
+  `semanticPrimitives_vs_to_string x1 =
    match x1 with
      [] -> SOME (implode "")
    | CONS (semanticPrimitives_Litv (ast_StrLit s1)) vs ->
      (match semanticPrimitives_vs_to_string vs with NONE -> NONE | SOME s2
        -> SOME (strcat s1 s2))
-   | CONS _ v1 -> NONE`];;
+   | CONS _ v1 -> NONE`;;
 
 let maybe_to_v_def = define_cases
-  [`maybe_to_v NONE = semanticPrimitives_Conv (SOME (TypeStamp (implode
-    "None") option_type_num)) []`;
-   `maybe_to_v (SOME v) = semanticPrimitives_Conv (SOME (TypeStamp
-    (implode "Some") option_type_num)) [v]`];;
+  `(maybe_to_v NONE = semanticPrimitives_Conv (SOME (TypeStamp (implode
+    "None") option_type_num)) []) /\
+   (maybe_to_v (SOME v) = semanticPrimitives_Conv (SOME (TypeStamp
+    (implode "Some") option_type_num)) [v])`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let v_to_id_def,v_to_id_ind = define_wf
   `MEASURE (\x0. semanticPrimitives_v_size x0)`
-  [`v_to_id x1 =
+  `v_to_id x1 =
    match x1 with
      semanticPrimitives_Conv (SOME stamp) [semanticPrimitives_Litv
        (ast_StrLit s)] ->
@@ -534,20 +534,20 @@ let v_to_id_def,v_to_id_ind = define_wf
       (if stamp = TypeStamp (implode "Long") id_type_num then
          match v_to_id v with NONE -> NONE | SOME id' -> SOME (Long s id')
        else NONE)
-   | _ -> NONE`];;
+   | _ -> NONE`;;
 
 let nat_to_v_def = new_definition
   `nat_to_v n = semanticPrimitives_Litv (ast_IntLit (&n))`;;
 
 let maybe_all_list_def,maybe_all_list_ind = define_shaped_rec
   "match"
-  [`maybe_all_list v =
+  `maybe_all_list v =
      match v with
        [] -> SOME []
      | CONS NONE vs -> NONE
      | CONS (SOME x) vs ->
          (match maybe_all_list vs with NONE -> NONE | SOME xs -> SOME
-           (CONS x xs))`];;
+           (CONS x xs))`;;
 
 let v_to_word8_def = new_definition
   `v_to_word8 v =
@@ -616,14 +616,14 @@ let declare_env_def = new_definition
    are unchanged by many compiler phases. *)
 let concrete_v_def,concrete_v_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`concrete_v v <=>
-         (match v with semanticPrimitives_Loc _38 _39 -> T
+  `(concrete_v v <=>
+         (match v with semanticPrimitives_Loc _ _ -> T
          | semanticPrimitives_Litv _ -> T
          | semanticPrimitives_Conv v_ vs -> concrete_v_list vs
          | semanticPrimitives_Vectorv vs -> concrete_v_list vs
-         | _ -> F)`;
-   `concrete_v_list [] <=> T`;
-   `concrete_v_list (CONS v vs) <=> concrete_v v /\ concrete_v_list vs`];;
+         | _ -> F)) /\
+   (concrete_v_list [] <=> T) /\
+   (concrete_v_list (CONS v vs) <=> concrete_v v /\ concrete_v_list vs)`;;
 
 let compiler_agrees_def = new_definition
   `compiler_agrees (f:(num#num)#semanticPrimitives_v#dec
@@ -745,13 +745,13 @@ let exp_or_val_INDUCT,exp_or_val_RECURSION = define_datatype
    port expands *)
 
 let xor_bytes_def,xor_bytes_ind = define_guess
-  [`xor_bytes bs1 bs2 =
+  `xor_bytes bs1 bs2 =
    match (bs1,bs2) with
      ([],bs2) -> SOME (bs2:word8 list)
    | (bs1,[]) -> NONE
    | (CONS b1 bs1,CONS b2 bs2) ->
      (match xor_bytes bs1 bs2 with NONE -> NONE
-     | SOME rest -> SOME (CONS (word_xor b1 b2) rest))`];;
+     | SOME rest -> SOME (CONS (word_xor b1 b2) rest))`;;
 
 (* With `dest_thunk` we check 3 things:
      - The values contain exactly one reference
@@ -791,7 +791,7 @@ let update_thunk_def = new_definition
        semanticPrimitives_NotThunk -> store_assign n (semanticPrimitives_Thunk
        Evaluated v) st
       | _ -> NONE)
-   | (_40,_41) -> NONE`;;
+   | (_,_) -> NONE`;;
 
 let bad_thunk_update_def = new_definition
   `semanticPrimitives_bad_thunk_update m v st <=>
@@ -832,24 +832,24 @@ let dest_Litv_def = new_definition
 add_simp dest_Litv_def;;
 
 let the_Litv_IntLit_def = define_general
-  [`the_Litv_IntLit (semanticPrimitives_Litv (ast_IntLit i)) = i`];;
+  `the_Litv_IntLit (semanticPrimitives_Litv (ast_IntLit i)) = i`;;
 add_simp the_Litv_IntLit_def;;
 
 let the_Litv_Word8_def = define_general
-  [`the_Litv_Word8 (semanticPrimitives_Litv (ast_Word8 w)) = w`];;
+  `the_Litv_Word8 (semanticPrimitives_Litv (ast_Word8 w)) = w`;;
 add_simp the_Litv_Word8_def;;
 
 let the_Litv_Word64_def = define_general
-  [`the_Litv_Word64 (semanticPrimitives_Litv (ast_Word64 w)) = w`];;
+  `the_Litv_Word64 (semanticPrimitives_Litv (ast_Word64 w)) = w`;;
 add_simp the_Litv_Word64_def;;
 
 let the_Litv_Float64_def = define_general
-  [`semanticPrimitives_the_Litv_Float64 (semanticPrimitives_Litv
-  (ast_Float64 w)) = w`];;
+  `semanticPrimitives_the_Litv_Float64 (semanticPrimitives_Litv
+  (ast_Float64 w)) = w`;;
 add_simp the_Litv_Float64_def;;
 
 let the_Litv_Char_def = define_general
-  [`the_Litv_Char (semanticPrimitives_Litv (ast_Char c)) = c`];;
+  `the_Litv_Char (semanticPrimitives_Litv (ast_Char c)) = c`;;
 add_simp the_Litv_Char_def;;
 
 let the_Boolv_def = new_definition
@@ -857,17 +857,17 @@ let the_Boolv_def = new_definition
 add_simp the_Boolv_def;;
 
 let num_cmp_def = define_cases
-  [`semanticPrimitives_num_cmp ast_Lt i (j:num) = (i < (j:num))`;
-   `semanticPrimitives_num_cmp ast_Leq i (j:num) = (i <= j)`;
-   `semanticPrimitives_num_cmp ast_Gt i (j:num) = (i > j)`;
-   `semanticPrimitives_num_cmp ast_Geq i (j:num) = (i >= j)`];;
+  `(semanticPrimitives_num_cmp ast_Lt i (j:num) = (i < (j:num))) /\
+   (semanticPrimitives_num_cmp ast_Leq i (j:num) = (i <= j)) /\
+   (semanticPrimitives_num_cmp ast_Gt i (j:num) = (i > j)) /\
+   (semanticPrimitives_num_cmp ast_Geq i (j:num) = (i >= j))`;;
 add_simp num_cmp_def;;
 
 let int_cmp_def = define_cases
-  [`semanticPrimitives_int_cmp ast_Lt i (j:int) = (i < (j:int))`;
-   `semanticPrimitives_int_cmp ast_Leq i (j:int) = (i <= j)`;
-   `semanticPrimitives_int_cmp ast_Gt i (j:int) = (i > j)`;
-   `semanticPrimitives_int_cmp ast_Geq i (j:int) = (i >= j)`];;
+  `(semanticPrimitives_int_cmp ast_Lt i (j:int) = (i < (j:int))) /\
+   (semanticPrimitives_int_cmp ast_Leq i (j:int) = (i <= j)) /\
+   (semanticPrimitives_int_cmp ast_Gt i (j:int) = (i > j)) /\
+   (semanticPrimitives_int_cmp ast_Geq i (j:int) = (i >= j))`;;
 add_simp int_cmp_def;;
 
 let str_cmp_def = new_definition
@@ -884,16 +884,16 @@ let str_cmp_def = new_definition
 add_simp str_cmp_def;;
 
 let do_test_def = define_cases
-  [`// TODO: extend with more cases
-    semanticPrimitives_do_test ast_Equal ty v1 v2 =
+  `// TODO: extend with more cases
+   (semanticPrimitives_do_test ast_Equal ty v1 v2 =
       (if semanticPrimitives_check_type ty v1
           /\ semanticPrimitives_check_type ty v2 then
          (if ty = ast_Float64T then Eq_val (fp64_equal
              (semanticPrimitives_the_Litv_Float64 v1)
              (semanticPrimitives_the_Litv_Float64 v2))
           else semanticPrimitives_do_eq v1 v2)
-       else Eq_type_error)`;
-   `semanticPrimitives_do_test (ast_Compare cmp) ty v1 v2 =
+       else Eq_type_error)) /\
+   (semanticPrimitives_do_test (ast_Compare cmp) ty v1 v2 =
       (match (ty,semanticPrimitives_dest_Litv
           v1,semanticPrimitives_dest_Litv v2) with (ast_IntT,SOME (ast_IntLit
           i),SOME (ast_IntLit j)) -> Eq_val (semanticPrimitives_int_cmp cmp i
@@ -906,12 +906,12 @@ let do_test_def = define_cases
            (fp_cmp cmp w v)
        | (ast_StrT,SOME (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val
            (str_cmp F cmp s t)
-       | _ -> Eq_type_error)`;
-   `semanticPrimitives_do_test (ast_AltCompare cmp) ty v1 v2 =
+       | _ -> Eq_type_error)) /\
+   (semanticPrimitives_do_test (ast_AltCompare cmp) ty v1 v2 =
       (match (ty,semanticPrimitives_dest_Litv
           v1,semanticPrimitives_dest_Litv v2) with (ast_StrT,SOME (ast_StrLit
           s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T cmp s t)
-       | _ -> Eq_type_error)`];;
+       | _ -> Eq_type_error))`;;
 
 let do_arith_def = new_definition
   `do_arith a x2 vals =
@@ -1020,7 +1020,7 @@ let do_conversion_def = new_definition
      | (ast_WordT ast_W64,ast_Float64T) ->
         SOME (INR (semanticPrimitives_Litv (ast_Float64 (the_Litv_Word64
           v))))
-     | (_42,_43) -> NONE`;;
+     | (_,_) -> NONE`;;
 
 let do_app_def = new_definition
   `semanticPrimitives_do_app ((s:(semanticPrimitives_v store_v) list),(t:'ffi
@@ -1159,10 +1159,10 @@ let do_app_def = new_definition
                 | SOME ws -> Rval (semanticPrimitives_Litv (ast_StrLit
                   (implode (ws_to_chars ws))))))
         | _ -> NONE)
-     | (ast_CopyAw8Aw8,[semanticPrimitives_Loc _44 src;
+     | (ast_CopyAw8Aw8,[semanticPrimitives_Loc _ src;
        semanticPrimitives_Litv (ast_IntLit off); semanticPrimitives_Litv
        (ast_IntLit len);
-                     semanticPrimitives_Loc _45 dst; semanticPrimitives_Litv
+                     semanticPrimitives_Loc _ dst; semanticPrimitives_Litv
                        (ast_IntLit dstoff)]) ->
        (match (store_lookup src s,store_lookup dst s) with
          (SOME (semanticPrimitives_W8array ws),SOME
@@ -1382,13 +1382,13 @@ let build_constrs_def = new_definition
 
 (* Build a constructor environment for the type definition tds *)
 let build_tdefs_def,build_tdefs_ind = define_rec
-  [`build_tdefs next_stamp ([]:(mlstring list#mlstring#(mlstring#ast_t list)
+  `(build_tdefs next_stamp ([]:(mlstring list#mlstring#(mlstring#ast_t list)
     list) list) =
-      ((alist_to_ns []):(mlstring,mlstring,num#stamp)namespace)`;
-   `build_tdefs next_stamp (CONS (tvs,tn,condefs) tds) =
+      ((alist_to_ns []):(mlstring,mlstring,num#stamp)namespace)) /\
+   (build_tdefs next_stamp (CONS (tvs,tn,condefs) tds) =
       ((nsAppend (build_tdefs (next_stamp + 1) tds)
         (alist_to_ns (REVERSE (build_constrs next_stamp
-            condefs)))):(mlstring,mlstring,num#stamp)namespace)`];;
+            condefs)))):(mlstring,mlstring,num#stamp)namespace))`;;
 
 (* Checks that no constructor is defined twice in a type *)
 let check_dup_ctors_def = new_definition

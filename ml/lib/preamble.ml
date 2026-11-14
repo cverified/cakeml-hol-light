@@ -26,6 +26,12 @@ needs (cakeml_dir ^ "/../tactics/simpset.ml");;
 
 help_path := (cakeml_dir ^ "/../tactics/Help") :: (!help_path);;
 
+(* every _ of a quotation is a variable of its own from here on,
+   as HOL4 reads it; it comes before the library layer because the
+   layer writes wildcards itself *)
+
+needs "lib/wildcard.ml";;
+
 needs "lib/fastdef.ml";;
 needs "lib/hol4.ml";;
 needs "lib/define.ml";;

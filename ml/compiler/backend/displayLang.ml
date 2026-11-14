@@ -34,24 +34,24 @@ let sExp_INDUCT,sExp_RECURSION = define_datatype
 
 (* display_to_json *)
 let trace_to_json_def,trace_to_json_ind = define_rec
-  [`trace_to_json (backend_common_Cons tra num') =
+  `(trace_to_json (backend_common_Cons tra num') =
         jsonLang_Object [((implode "name"),jsonLang_String (implode
             "Cons"));
           ((implode "num"),jsonLang_String (num_to_str num'));
-          ((implode "trace"),trace_to_json tra)]`;
-   `trace_to_json (backend_common_Union tra1 tra2) =
+          ((implode "trace"),trace_to_json tra)]) /\
+   (trace_to_json (backend_common_Union tra1 tra2) =
         jsonLang_Object [((implode "name"),jsonLang_String (implode
             "Union"));
           ((implode "trace1"),trace_to_json tra1);
-          ((implode "trace2"),trace_to_json tra2)]`;
-   `trace_to_json (backend_common_SourceLoc sr scc er ec) =
+          ((implode "trace2"),trace_to_json tra2)]) /\
+   (trace_to_json (backend_common_SourceLoc sr scc er ec) =
         let arr = MAP jsonLang_Int (MAP (&) [sr; scc; er; ec]) in
           jsonLang_Object [((implode "name"),jsonLang_String (implode
               "SourcePos"));
-            ((implode "pos"),jsonLang_Array arr)]`;
-   `// TODO: cancel entire trace when None, or verify that None will always be at
-    // * the top level of a trace.
-    trace_to_json backend_common_None = jsonLang_Null`];;
+            ((implode "pos"),jsonLang_Array arr)]) /\
+   // TODO: cancel entire trace when None, or verify that None will always be at
+   // * the top level of a trace.
+   (trace_to_json backend_common_None = jsonLang_Null)`;;
 
 let _ = size_thms "sExp";;
 let MEM_sExp_size = prove
@@ -61,37 +61,37 @@ let MEM_sExp_size = prove
 (* Converts a display expression to JSON *)
 let display_to_json_def,display_to_json_ind = define_shaped_rec
   "nested"
-  [`display_to_json (displayLang_Item tra name es) =
+  `(display_to_json (displayLang_Item tra name es) =
         let es' = MAP display_to_json es in
         let props = [((implode "name"),jsonLang_String name); ((implode
             "args"),jsonLang_Array es')] in
         let props' = (match tra with NONE -> props
                        | SOME t -> CONS ((implode "trace"),trace_to_json t)
                            props) in
-          jsonLang_Object props'`;
-   `display_to_json (displayLang_String s:sExp) = jsonLang_String s`;
-   `display_to_json (displayLang_Tuple es) =
+          jsonLang_Object props') /\
+   (display_to_json (displayLang_String s:sExp) = jsonLang_String s) /\
+   (display_to_json (displayLang_Tuple es) =
         let es' = MAP display_to_json es in
           jsonLang_Object [((implode "isTuple"),jsonLang_Bool T);
-              ((implode "elements"),jsonLang_Array es')]`;
-   `display_to_json (displayLang_List es) = jsonLang_Array (MAP
-    display_to_json es)`];;
+              ((implode "elements"),jsonLang_Array es')]) /\
+   (display_to_json (displayLang_List es) = jsonLang_Array (MAP
+    display_to_json es))`;;
 
 let display_to_str_tree_def,display_to_str_tree_ind = define_rec
-  [`display_to_str_tree (displayLang_Item tra name es) =
+  `(display_to_str_tree (displayLang_Item tra name es) =
          mlsexp_Trees (CONS (mlsexp_Str name) (display_to_str_tree_list
-             es))`;
-   `display_to_str_tree (displayLang_String s:sExp) = mlsexp_Str s`;
-   `display_to_str_tree (displayLang_Tuple es) =
+             es))) /\
+   (display_to_str_tree (displayLang_String s:sExp) = mlsexp_Str s) /\
+   (display_to_str_tree (displayLang_Tuple es) =
          if NULL es then mlsexp_Str (implode "()")
-         else mlsexp_Trees (display_to_str_tree_list es)`;
-   `display_to_str_tree (displayLang_List es) =
+         else mlsexp_Trees (display_to_str_tree_list es)) /\
+   (display_to_str_tree (displayLang_List es) =
          if NULL es then mlsexp_Str (implode "()")
          else mlsexp_Trees (MAP mlsexp_GrabLine
-             (display_to_str_tree_list es))`;
-   `display_to_str_tree_list [] = []`;
-   `display_to_str_tree_list (CONS x xs) = CONS (display_to_str_tree x)
-    (display_to_str_tree_list xs)`];;
+             (display_to_str_tree_list es))) /\
+   (display_to_str_tree_list [] = []) /\
+   (display_to_str_tree_list (CONS x xs) = CONS (display_to_str_tree x)
+    (display_to_str_tree_list xs))`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

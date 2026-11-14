@@ -60,9 +60,9 @@ let bvi_let_extract_def = new_definition
      | _ -> 0`;;
 
 let extract_list_def,extract_list_ind = define_rec
-  [`bvi_let_extract_list [] = []`;
-   `bvi_let_extract_list (CONS x xs) = CONS (bvi_let_extract x xs)
-    (bvi_let_extract_list xs)`];;
+  `(bvi_let_extract_list [] = []) /\
+   (bvi_let_extract_list (CONS x xs) = CONS (bvi_let_extract x xs)
+    (bvi_let_extract_list xs))`;;
 
 let delete_var_def = new_definition
   `bvi_let_delete_var x =
@@ -93,24 +93,29 @@ cake_term_facts := list_size_BUTLAST :: list_size_LAST ::
                    (!cake_term_facts);;
 cake_cheat_budget := 300;;
 
+(* Return/LetCall are pass-through (only nested Lets are optimised).
+  TODO(multiret):
+   no optimisation specific to them yet -- e.g. the Let tail-position move
+     could
+   extend to `Let xs (Return (GENLIST Var n))`. *)
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvi_letScript.sml:110-116: the tactic that proves the termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat
+let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat_clauses
   `MEASURE (list_size bvi_exp_size o SND o SND)`
-  [`bvi_let_compile env d [] = []`;
-   `bvi_let_compile env d (CONS x (CONS y xs)) = APPEND (bvi_let_compile env
-    d [x]) (bvi_let_compile env d (CONS y xs))`;
-   `bvi_let_compile env d [(bvi_Var v):bvi_exp] =
+  [`(bvi_let_compile env d [] = []) /\
+    (bvi_let_compile env d (CONS x (CONS y xs)) = APPEND (bvi_let_compile
+    env d [x]) (bvi_let_compile env d (CONS y xs))) /\
+    (bvi_let_compile env d [(bvi_Var v):bvi_exp] =
          match (\l n. oEL n l) env v with SOME n -> [bvi_Var (v + n)]
-         | _ -> [bvi_Var (v + d)]`;
-   `bvi_let_compile env d [bvi_If x1 x2 x3] =
+         | _ -> [bvi_Var (v + d)]) /\
+    (bvi_let_compile env d [bvi_If x1 x2 x3] =
          [bvi_If (HD (bvi_let_compile env d [x1]))
              (HD (bvi_let_compile env d [x2]))
-             (HD (bvi_let_compile env d [x3]))]`;
-   `bvi_let_compile env d [bvi_Let xs x2] =
+             (HD (bvi_let_compile env d [x3]))]) /\
+    (bvi_let_compile env d [bvi_Let xs x2] =
          let l = LENGTH xs in
            if l = 0 then bvi_let_compile env d [x2] else let k = l - 1 in
                if x2 = bvi_Var k then
@@ -121,52 +126,47 @@ let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat
                else let ys = bvi_let_compile env d xs in
                    [bvi_Let (MAP bvi_let_delete_var ys)
                      (HD (bvi_let_compile (APPEND (bvi_let_extract_list
-                         ys) env) d [x2]))]`;
-   `bvi_let_compile env d [bvi_Raise x1] =
-         [bvi_Raise (HD (bvi_let_compile env d [x1]))]`;
-   `bvi_let_compile env d [bvi_Op op xs] = [bvi_Op op (bvi_let_compile env d
-    xs)]`;
-   `bvi_let_compile env d [bvi_Tick x] = [bvi_Tick (HD (bvi_let_compile env
-    d [x]))]`;
-   `bvi_let_compile env d [bvi_Force loc v] =
+                         ys) env) d [x2]))]) /\
+    (bvi_let_compile env d [bvi_Raise x1] =
+         [bvi_Raise (HD (bvi_let_compile env d [x1]))]) /\
+    (bvi_let_compile env d [bvi_Op op xs] = [bvi_Op op (bvi_let_compile env
+    d xs)]) /\
+    (bvi_let_compile env d [bvi_Tick x] = [bvi_Tick (HD (bvi_let_compile env
+    d [x]))]) /\
+    (bvi_let_compile env d [bvi_Force loc v] =
          match (\l n. oEL n l) env v with SOME n -> [bvi_Force loc (v + n)]
-         | _ -> [bvi_Force loc (v + d)]`;
-   `bvi_let_compile env d [bvi_Call t dest xs h] =
+         | _ -> [bvi_Force loc (v + d)]) /\
+    (bvi_let_compile env d [bvi_Call t dest xs h] =
          [bvi_Call t dest (bvi_let_compile env d xs)
              (match h with NONE -> NONE
-                      | SOME e -> SOME (HD (bvi_let_compile (CONS 0 env)
-                          d [e])))]`;
-   (* Return/LetCall are pass-through (only nested Lets are optimised).
-     TODO(multiret):
-      no optimisation specific to them yet -- e.g. the Let tail-position move
-        could
-      extend to `Let xs (Return (GENLIST Var n))`. *)
-   `bvi_let_compile env d [bvi_Return xs] = [bvi_Return (bvi_let_compile env
-    d xs)]`;
-   `bvi_let_compile env d [bvi_LetCall rets t dest xs y] =
+                      | SOME e -> SOME (HD (bvi_let_compile (CONS 0
+                          env) d [e])))]) /\
+    (bvi_let_compile env d [bvi_Return xs] = [bvi_Return (bvi_let_compile
+    env d xs)])`;
+   `(bvi_let_compile env d [bvi_LetCall rets t dest xs y] =
          [bvi_LetCall rets t dest (bvi_let_compile env d xs)
             (HD (bvi_let_compile (APPEND (REPLICATE rets 0) env) d
-                [y]))]`];;
+                [y]))])`];;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (\x. match x with INL (_1,_2,e) -> bvi_exp_size e
-                                   | INR (_3,_4,es) -> list_size bvi_exp_size
-                                     es)
+     MEASURE (\x. match x with INL (_,_,e) -> bvi_exp_size e
+                                   | INR (_,_,es) -> list_size bvi_exp_size es)
    which is not one that HOL Light takes here; the one
    below is what the port found for it *)
 (* HOL4 bvi_letScript.sml:158-168: the tactic that proves the termination *)
-let bvi_let_compile_sing_def,bvi_let_compile_sing_ind = define_shaped_wf_tac
+let bvi_let_compile_sing_def,bvi_let_compile_sing_ind =
+  define_shaped_wf_tac_clauses
   "maplist>measure"
   `MEASURE (\(x0,x1,x2). bvi_exp_size x2)`
   TERM_TAC
-  [`bvi_let_compile_sing env d ((bvi_Var v):bvi_exp) =
+  [`(bvi_let_compile_sing env d ((bvi_Var v):bvi_exp) =
          match (\l n. oEL n l) env v with SOME n -> bvi_Var (v + n)
-         | _ -> bvi_Var (v + d)`;
-   `bvi_let_compile_sing env d (bvi_If x1 x2 x3) =
+         | _ -> bvi_Var (v + d)) /\
+    (bvi_let_compile_sing env d (bvi_If x1 x2 x3) =
          (bvi_If (bvi_let_compile_sing env d x1)
              (bvi_let_compile_sing env d x2)
-             (bvi_let_compile_sing env d x3))`;
-   `bvi_let_compile_sing env d (bvi_Let xs x2) =
+             (bvi_let_compile_sing env d x3))) /\
+    (bvi_let_compile_sing env d (bvi_Let xs x2) =
          let l = LENGTH xs in
            if l = 0 then bvi_let_compile_sing env d x2 else let k = l - 1
                in
@@ -178,29 +178,29 @@ let bvi_let_compile_sing_def,bvi_let_compile_sing_ind = define_shaped_wf_tac
                else let ys = bvi_let_compile_list env d xs in
                    (bvi_Let (MAP bvi_let_delete_var ys)
                      ((bvi_let_compile_sing (APPEND
-                         (bvi_let_extract_list ys) env) d x2)))`;
-   `bvi_let_compile_sing env d (bvi_Raise x1) =
-         (bvi_Raise ((bvi_let_compile_sing env d x1)))`;
-   `bvi_let_compile_sing env d (bvi_Op op xs) = (bvi_Op op
-    (bvi_let_compile_list env d xs))`;
-   `bvi_let_compile_sing env d (bvi_Tick x) = (bvi_Tick
-    (bvi_let_compile_sing env d x))`;
-   `bvi_let_compile_sing env d (bvi_Force loc v) =
+                         (bvi_let_extract_list ys) env) d x2)))) /\
+    (bvi_let_compile_sing env d (bvi_Raise x1) =
+         (bvi_Raise ((bvi_let_compile_sing env d x1)))) /\
+    (bvi_let_compile_sing env d (bvi_Op op xs) = (bvi_Op op
+    (bvi_let_compile_list env d xs))) /\
+    (bvi_let_compile_sing env d (bvi_Tick x) = (bvi_Tick
+    (bvi_let_compile_sing env d x))) /\
+    (bvi_let_compile_sing env d (bvi_Force loc v) =
          match (\l n. oEL n l) env v with SOME n -> bvi_Force loc (v + n)
-         | _ -> bvi_Force loc (v + d)`;
-   `bvi_let_compile_sing env d (bvi_Call t dest xs h) =
+         | _ -> bvi_Force loc (v + d)) /\
+    (bvi_let_compile_sing env d (bvi_Call t dest xs h) =
          (bvi_Call t dest (bvi_let_compile_list env d xs)
              (match h with NONE -> NONE
                       | SOME e -> SOME ((bvi_let_compile_sing (CONS 0
-                          env) d e))))`;
-   `bvi_let_compile_sing env d (bvi_Return xs) = bvi_Return
-    (bvi_let_compile_list env d xs)`;
-   `bvi_let_compile_sing env d (bvi_LetCall rets t dest xs y) =
+                          env) d e))))) /\
+    (bvi_let_compile_sing env d (bvi_Return xs) = bvi_Return
+    (bvi_let_compile_list env d xs)) /\
+    (bvi_let_compile_list env d [] = []) /\
+    (bvi_let_compile_list env d (CONS x xs) = CONS (bvi_let_compile_sing
+    env d x) (bvi_let_compile_list env d xs))`;
+   `(bvi_let_compile_sing env d (bvi_LetCall rets t dest xs y) =
          bvi_LetCall rets t dest (bvi_let_compile_list env d xs)
-            (bvi_let_compile_sing (APPEND (REPLICATE rets 0) env) d y)`;
-   `bvi_let_compile_list env d [] = []`;
-   `bvi_let_compile_list env d (CONS x xs) = CONS (bvi_let_compile_sing
-    env d x) (bvi_let_compile_list env d xs)`];;
+            (bvi_let_compile_sing (APPEND (REPLICATE rets 0) env) d y))`];;
 
 cake_term_facts := bvi_let_term_facts;;
 cake_cheat_budget := bvi_let_budget;;

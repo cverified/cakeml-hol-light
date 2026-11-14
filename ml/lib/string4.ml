@@ -58,12 +58,12 @@ cake_term_facts :=
 
 let TOKENS_aux,TOKENS_ind = define_wf
   `MEASURE (LENGTH o SND)`
-  [`(TOKENS P ([]:(A)list) = []) /\
+  `((TOKENS P ([]:(A)list) = []) /\
    (TOKENS P (CONS h t) =
       if NULL (FST (SPLITP P (CONS h t)))
       then TOKENS P (TL (SND (SPLITP P (CONS h t))))
       else CONS (FST (SPLITP P (CONS h t))) (TOKENS P (SND (SPLITP P
-        (CONS h t)))))`];;
+        (CONS h t))))))`;;
 
 let TOKENS_def = prove
  (`(TOKENS P ([]:(A)list) = []) /\
@@ -81,14 +81,14 @@ let TOKENS_def = prove
 
 let FIELDS_aux,FIELDS_ind = define_wf
   `MEASURE (LENGTH o SND)`
-  [`(FIELDS P ([]:(A)list) = [[]]) /\
+  `((FIELDS P ([]:(A)list) = [[]]) /\
    (FIELDS P (CONS h t) =
       if NULL (FST (SPLITP P (CONS h t)))
       then CONS [] (FIELDS P (TL (SND (SPLITP P (CONS h t)))))
       else if NULL (SND (SPLITP P (CONS h t)))
            then [FST (SPLITP P (CONS h t))]
            else CONS (FST (SPLITP P (CONS h t))) (FIELDS P (TL (SND
-             (SPLITP P (CONS h t))))))`];;
+             (SPLITP P (CONS h t)))))))`;;
 
 let FIELDS_def = prove
  (`(FIELDS P ([]:(A)list) = [[]]) /\

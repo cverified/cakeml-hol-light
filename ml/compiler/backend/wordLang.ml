@@ -106,14 +106,13 @@ let wordLang_store_consts_stub_location_def = new_definition
    what the port found for it *)
 let every_var_exp_def,every_var_exp_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
-  [`every_var_exp P expr =
+  `every_var_exp P expr =
      match expr with
        wordLang_Var num' -> P num'
      | wordLang_Load exp -> every_var_exp P exp
      | wordLang_Op wop ls -> ALL (every_var_exp P) ls
-     | wordLang_Shift sh e1 e2 -> (every_var_exp P e1 /\ every_var_exp P
-       e2)
-     | expr -> T`];;
+     | wordLang_Shift sh e1 e2 -> (every_var_exp P e1 /\ every_var_exp P e2)
+     | expr -> T`;;
 
 let every_var_imm_def = new_definition
   `every_var_imm P x2 =
@@ -167,7 +166,7 @@ let _ = size_thms "wordLang_prog";;
    what the port found for it *)
 let every_var_def,every_var_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x1)`
-  [`wordLang_every_var P p =
+  `wordLang_every_var P p =
      match p with
        (wordLang_Skip:'a wordLang_prog) -> T
      | wordLang_Move pri ls -> (ALL P (MAP FST ls) /\ ALL P (MAP SND ls))
@@ -213,18 +212,18 @@ let every_var_def,every_var_ind = define_wf
      | wordLang_Loop names body exit_names ->
        (ALL P (MAP FST (toAList names)) /\ wordLang_every_var P body /\
         ALL P (MAP FST (toAList exit_names)))
-     | p -> T`];;
+     | p -> T`;;
 
 (*Recursor for stack variables*)
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let every_stack_var_def,every_stack_var_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x1)`
-  [`every_stack_var P p =
+  `every_stack_var P p =
      match p with
        wordLang_FFI ffi_index cptr clen ptr len names ->
        every_name P names
-     | wordLang_Install _1 _2 _3 _4 names ->
+     | wordLang_Install _ _ _ _ names ->
        every_name P names
      | wordLang_Call ret dest args h ->
        (match ret with
@@ -247,21 +246,21 @@ let every_stack_var_def,every_stack_var_ind = define_wf
        (every_stack_var P e2 /\ every_stack_var P e3)
      | wordLang_Loop names body exit_names ->
        every_stack_var P body
-     | p -> T`];;
+     | p -> T`;;
 
 (*Find the maximum variable*)
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let max_var_exp_def,max_var_exp_ind = define_wf
   `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
-  [`max_var_exp exp =
+  `max_var_exp exp =
      match exp with
        wordLang_Var num' -> num'
      | wordLang_Load exp -> max_var_exp exp
      | wordLang_Op wop ls -> MAX_LIST (MAP (max_var_exp) ls)
      | wordLang_Shift sh exp1 exp2 -> MAX (max_var_exp exp1) (max_var_exp
        exp2)
-     | exp -> (0:num)`];;
+     | exp -> (0:num)`;;
 
 let max_var_inst_def = new_definition
   `max_var_inst x1 =
@@ -308,7 +307,7 @@ add_simp cutsets_max_def;;
    what the port found for it *)
 let max_var_def,max_var_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
-  [`max_var p =
+  `max_var p =
      match p with
        wordLang_Skip -> 0
      | wordLang_Move pri ls ->
@@ -323,8 +322,7 @@ let max_var_def,max_var_ind = define_wf
          NONE -> n
        | SOME (v,cutset,ret_handler,l1,l2) ->
          let cutset_max = MAX n (cutsets_max cutset) in
-         let ret_max = max3 (MAX_LIST v) cutset_max (max_var ret_handler)
-           in
+         let ret_max = max3 (MAX_LIST v) cutset_max (max_var ret_handler) in
          (match h with
            NONE -> ret_max
          | SOME (v,prog,l1,l2) ->
@@ -357,7 +355,7 @@ let max_var_def,max_var_ind = define_wf
        max3 (MAX_LIST (MAP FST (toAList names)))
             (max_var body)
             (MAX_LIST (MAP FST (toAList exit_names)))
-     | p -> 0`];;
+     | p -> 0`;;
 
 let word_op_def = new_definition
   `wordLang_word_op op (ws:('a word) list) =

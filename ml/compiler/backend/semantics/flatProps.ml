@@ -467,29 +467,31 @@ let flatProps_op_gbag_def = new_definition
      flatLang_GlobalVarInit n -> BAG_INSERT n EMPTY_BAG
    | _ -> EMPTY_BAG`;;
 
-let flatProps_set_globals_def,flatProps_set_globals_ind = assume_definition_rec
+let flatProps_set_globals_def,flatProps_set_globals_ind =
+  assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`flatProps_set_globals (flatLang_Raise t e) = flatProps_set_globals e`;
-   `flatProps_set_globals (flatLang_Handle t e pes) = (BAG_UNION)
-    (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))`;
-   `flatProps_set_globals (flatLang_Con t id' es) = flatProps_elist_globals
-    es`;
-   `flatProps_set_globals (flatLang_Fun t v e) = flatProps_set_globals e`;
-   `flatProps_set_globals (flatLang_App t op es) = (BAG_UNION)
-    (flatProps_elist_globals es) (flatProps_op_gbag op)`;
-   `flatProps_set_globals (flatLang_If t e1 e2 e3) = (BAG_UNION)
+  [`(flatProps_set_globals (flatLang_Raise t e) = flatProps_set_globals e) /\
+    (flatProps_set_globals (flatLang_Handle t e pes) = (BAG_UNION)
+    (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))) /\
+    (flatProps_set_globals (flatLang_Con t id' es) = flatProps_elist_globals
+    es) /\
+    (flatProps_set_globals (flatLang_App t op es) = (BAG_UNION)
+    (flatProps_elist_globals es) (flatProps_op_gbag op)) /\
+    (flatProps_set_globals (flatLang_If t e1 e2 e3) = (BAG_UNION)
     ((BAG_UNION) (flatProps_set_globals e1) (flatProps_set_globals e2))
-    (flatProps_set_globals e3)`;
-   `flatProps_set_globals (flatLang_Mat t e pes) = (BAG_UNION)
-    (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))`;
-   `flatProps_set_globals (flatLang_Let t v e1 e2) = (BAG_UNION)
-    (flatProps_set_globals e1) (flatProps_set_globals e2)`;
-   `flatProps_set_globals (flatLang_Letrec t fs e) = (BAG_UNION)
-    (flatProps_set_globals e) (flatProps_elist_globals (MAP (SND o SND) fs))`;
-   `flatProps_set_globals _ = EMPTY_BAG`;
-   `flatProps_elist_globals [] = EMPTY_BAG`;
-   `flatProps_elist_globals (CONS e es) = (BAG_UNION)
-    (flatProps_set_globals e) (flatProps_elist_globals es)`];;
+    (flatProps_set_globals e3)) /\
+    (flatProps_set_globals (flatLang_Mat t e pes) = (BAG_UNION)
+    (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))) /\
+    (flatProps_set_globals (flatLang_Let t v e1 e2) = (BAG_UNION)
+    (flatProps_set_globals e1) (flatProps_set_globals e2)) /\
+    (flatProps_set_globals _ = EMPTY_BAG) /\
+    (flatProps_elist_globals [] = EMPTY_BAG) /\
+    (flatProps_elist_globals (CONS e es) = (BAG_UNION)
+    (flatProps_set_globals e) (flatProps_elist_globals es))`;
+   `(flatProps_set_globals (flatLang_Fun t v e) = flatProps_set_globals e) /\
+    (flatProps_set_globals (flatLang_Letrec t fs e) = (BAG_UNION)
+    (flatProps_set_globals e) (flatProps_elist_globals (MAP (SND o SND)
+    fs)))`];;
 add_simp flatProps_set_globals_def;;
 
 
@@ -498,7 +500,7 @@ add_simp flatProps_set_globals_def;;
 (* HOL4 flatPropsScript.sml:850-856: the tactic that proves the termination *)
 let flatProps_esgc_free_def,flatProps_esgc_free_ind = define_wf
   `MEASURE flatLang_exp_size`
-  [`flatProps_esgc_free x1 =
+  `flatProps_esgc_free x1 =
      match x1 with
        flatLang_Raise t e -> flatProps_esgc_free e
      | flatLang_Handle t e pes ->
@@ -514,9 +516,9 @@ let flatProps_esgc_free_def,flatProps_esgc_free_ind = define_wf
      | flatLang_Let t v e1 e2 -> flatProps_esgc_free e1
        /\ flatProps_esgc_free e2
      | flatLang_Letrec t fs e ->
-       flatProps_esgc_free e /\ flatProps_elist_globals (MAP (SND o SND)
-         fs) = EMPTY_BAG
-     | _ -> T`];;
+       flatProps_esgc_free e /\ flatProps_elist_globals (MAP (SND o SND) fs)
+         = EMPTY_BAG
+     | _ -> T`;;
 
 (* HOL4 flatPropsScript.sml:858-859: a theorem that HOL4 states as the value
    of an ML expression: esgc_free_def *)
@@ -579,25 +581,25 @@ let isClosure_def = new_definition
    of an ML expression: isClosure_simps *)
 
 let simple_basic_val_rel_def = define_cases
-  [`simple_basic_val_rel (flatSem_Litv l) v = (v = (flatSem_Litv
-    l:flatSem_v))`;
-   `simple_basic_val_rel (flatSem_Loc b i) v = (v = (flatSem_Loc b
-    i:flatSem_v))`;
-   `simple_basic_val_rel (flatSem_Conv stmp vs1) v = (?vs2. v = flatSem_Conv
-    stmp vs2)`;
-   `simple_basic_val_rel (flatSem_Vectorv vs1) v = (?vs2. v =
-    flatSem_Vectorv vs2)`;
-   `simple_basic_val_rel (flatSem_Closure vs nm exp) v = F`;
-   `simple_basic_val_rel (flatSem_Recclosure vs exps nm) v = F`];;
+  `(simple_basic_val_rel (flatSem_Litv l) v = (v = (flatSem_Litv
+    l:flatSem_v))) /\
+   (simple_basic_val_rel (flatSem_Loc b i) v = (v = (flatSem_Loc b
+    i:flatSem_v))) /\
+   (simple_basic_val_rel (flatSem_Conv stmp vs1) v = (?vs2. v =
+    flatSem_Conv stmp vs2)) /\
+   (simple_basic_val_rel (flatSem_Vectorv vs1) v = (?vs2. v =
+    flatSem_Vectorv vs2)) /\
+   (simple_basic_val_rel (flatSem_Closure vs nm exp) v = F) /\
+   (simple_basic_val_rel (flatSem_Recclosure vs exps nm) v = F)`;;
 add_simp simple_basic_val_rel_def;;
 
-let v_container_xs_def = define_cases
-  [`v_container_xs (flatSem_Litv _) = []`;
-   `v_container_xs (flatSem_Loc _3 _4) = []`;
-   `v_container_xs (flatSem_Conv _ vs) = vs`;
-   `v_container_xs (flatSem_Vectorv vs) = vs`;
-   `v_container_xs (flatSem_Closure vs nm exp) = []`;
-   `v_container_xs (flatSem_Recclosure vs exps nm) = []`];;
+let v_container_xs_def = define_cases_clauses
+  [`(v_container_xs (flatSem_Litv _) = []) /\
+    (v_container_xs (flatSem_Loc _ _) = []) /\
+    (v_container_xs (flatSem_Conv _ vs) = vs) /\
+    (v_container_xs (flatSem_Vectorv vs) = vs)`;
+   `(v_container_xs (flatSem_Closure vs nm exp) = []) /\
+    (v_container_xs (flatSem_Recclosure vs exps nm) = [])`];;
 add_simp v_container_xs_def;;
 
 let flatProps_simple_val_rel_def = new_definition
@@ -789,10 +791,10 @@ let evaluate_match_CONS = prove
    an ML expression: flat_evaluate_def *)
 
 let flatProps_store_v_vs_def = define_cases
-  [`flatProps_store_v_vs (semanticPrimitives_Varray vs) = vs`;
-   `flatProps_store_v_vs (semanticPrimitives_Refv v) = [v]`;
-   `flatProps_store_v_vs (semanticPrimitives_Thunk m v) = [v]`;
-   `flatProps_store_v_vs (semanticPrimitives_W8array xs) = []`];;
+  `(flatProps_store_v_vs (semanticPrimitives_Varray vs) = vs) /\
+   (flatProps_store_v_vs (semanticPrimitives_Refv v) = [v]) /\
+   (flatProps_store_v_vs (semanticPrimitives_Thunk m v) = [v]) /\
+   (flatProps_store_v_vs (semanticPrimitives_W8array xs) = [])`;;
 add_simp flatProps_store_v_vs_def;;
 
 let result_vs_def = new_definition
@@ -806,27 +808,28 @@ add_simp result_vs_def;;
 (* HOL4 flatPropsScript.sml:1463-1469: a theorem whose statement the port
    cannot state yet: v_size_aux *)
 
-let no_Mat_def,no_Mat_ind = assume_definition_rec
+let no_Mat_def,no_Mat_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;
-   `no_Mat (flatLang_Lit t l) <=> T`;
-   `no_Mat (flatLang_Var_local t v) <=> T`;
-   `no_Mat (flatLang_Con t n es) <=> ALL no_Mat es`;
-   `no_Mat (flatLang_App t op es) <=> ALL no_Mat es`;
-   `no_Mat (flatLang_Fun t v e) <=> no_Mat e`;
-   `no_Mat (flatLang_If t x1 x2 x3) <=> no_Mat x1 /\ no_Mat x2 /\ no_Mat x3`;
-   `no_Mat (flatLang_Let t vo e1 e2) <=> no_Mat e1 /\ no_Mat e2`;
-   `no_Mat (flatLang_Mat t e pes) <=> F`;
-   `no_Mat (flatLang_Handle t e pes) <=> no_Mat e /\ ALL no_Mat (MAP SND pes)
+  [`(no_Mat (flatLang_Raise t e) <=> no_Mat e) /\
+    (no_Mat (flatLang_Lit t l) <=> T) /\
+    (no_Mat (flatLang_Var_local t v) <=> T) /\
+    (no_Mat (flatLang_Con t n es) <=> ALL no_Mat es) /\
+    (no_Mat (flatLang_App t op es) <=> ALL no_Mat es) /\
+    (no_Mat (flatLang_If t x1 x2 x3) <=> no_Mat x1 /\ no_Mat x2 /\ no_Mat x3)
+      /\
+    (no_Mat (flatLang_Let t vo e1 e2) <=> no_Mat e1 /\ no_Mat e2) /\
+    (no_Mat (flatLang_Mat t e pes) <=> F) /\
+    (no_Mat (flatLang_Handle t e pes) <=> no_Mat e /\ ALL no_Mat (MAP SND pes)
     /\
-        (match pes with [(flatLang_Pvar _13,_14)] -> T | _ -> F)`;
-   `no_Mat (flatLang_Letrec t funs e) <=> ALL no_Mat (MAP (SND o SND)
-    funs) /\ no_Mat e`];;
+        (match pes with [(flatLang_Pvar _,_)] -> T | _ -> F))`;
+   `(no_Mat (flatLang_Fun t v e) <=> no_Mat e) /\
+    (no_Mat (flatLang_Letrec t funs e) <=> ALL no_Mat (MAP (SND o SND)
+    funs) /\ no_Mat e)`];;
 add_simp no_Mat_def;;
 
 let no_Mat_decs_def,no_Mat_decs_ind = define_rec
-  [`no_Mat_decs [] = T`;
-   `no_Mat_decs (CONS e xs) = (no_Mat e /\ no_Mat_decs xs)`];;
+  `(no_Mat_decs [] = T) /\
+   (no_Mat_decs (CONS e xs) = (no_Mat e /\ no_Mat_decs xs))`;;
 add_simp no_Mat_decs_def;;
 
 let mk_flat_install_conf_def = new_definition

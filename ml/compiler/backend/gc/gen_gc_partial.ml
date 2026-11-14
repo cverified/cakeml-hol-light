@@ -31,9 +31,9 @@ let gen_gc_partial_conf_FIELDS = define_record "gen_gc_partial_conf"
   ];;
 
 let gen_gc_partial_gc_move_def = define_cases
-  [`gen_gc_partial_gc_move conf state (gc_shared_Data d) = ((gc_shared_Data
-    d:'a heap_address),state)`;
-   `gen_gc_partial_gc_move conf state (gc_shared_Pointer ptr d) =
+  `(gen_gc_partial_gc_move conf state (gc_shared_Data d) = ((gc_shared_Data
+    d:'a heap_address),state)) /\
+   (gen_gc_partial_gc_move conf state (gc_shared_Pointer ptr d) =
          let ok = (gc_state_ok state /\ (ptr < heap_length (gc_state_heap
              state))) in
          (if ptr < gen_gc_partial_conf_gen_start conf \/
@@ -56,7 +56,7 @@ let gen_gc_partial_gc_move_def = define_cases
             | SOME (ForwardPointer ptr _ l) -> (gc_shared_Pointer ptr
                 d,state)
             | _ -> (gc_shared_Pointer ptr d,gc_state_ok_fupd (K F)
-                state))`];;
+                state)))`;;
 
 (* gc_move_IMP *)
 let gen_gc_partial_gc_move_IMP = prove
@@ -72,11 +72,11 @@ let gen_gc_partial_gc_move_IMP = prove
 
 let gen_gc_partial_gc_move_list_def,gen_gc_partial_gc_move_list_ind =
   define_rec
-  [`gen_gc_partial_gc_move_list conf state [] = ([],state)`;
-   `gen_gc_partial_gc_move_list conf state (CONS x xs) =
+  `(gen_gc_partial_gc_move_list conf state [] = ([],state)) /\
+   (gen_gc_partial_gc_move_list conf state (CONS x xs) =
         let (x,state) = gen_gc_partial_gc_move conf state x in
         let (xs,state) = gen_gc_partial_gc_move_list conf state xs in
-          (CONS x xs,state)`];;
+          (CONS x xs,state))`;;
 
 (* gc_move_list_IMP *)
 let gen_gc_partial_gc_move_list_IMP = prove
@@ -102,7 +102,7 @@ let gen_gc_partial_gc_move_list_IMP = prove
    replacing the CHEAT_TAC is all that is left *)
 let gen_gc_partial_gc_move_data_def,gen_gc_partial_gc_move_data_ind =
   define_guess_cheat
-  [`(gen_gc_partial_gc_move_data conf state =
+  `(gen_gc_partial_gc_move_data conf state =
      match gc_state_h2 state with [] -> state
      | CONS h h2 ->
        if gen_gc_partial_conf_limit conf < heap_length (APPEND (gc_state_h1
@@ -115,7 +115,7 @@ let gen_gc_partial_gc_move_data_def,gen_gc_partial_gc_move_data_ind =
             (gc_state_h2 state) = h)) in
             gen_gc_partial_gc_move_data conf (gc_state_ok_fupd (K ok)
               (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1) state)))
-        | _ -> gc_state_ok_fupd (K F) state)`];;
+        | _ -> gc_state_ok_fupd (K F) state)`;;
 
 let gc_move_data_IMP = prove
  (`!conf state state1.
@@ -132,14 +132,14 @@ let _ = size_thms "heap_element";;
    what the port found for it *)
 let gc_move_ref_list_def,gc_move_ref_list_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (heap_element_size (\x. 0) (\x. 0)) x2)`
-  [`gc_move_ref_list conf state x3 =
+  `gc_move_ref_list conf state x3 =
      match x3 with
        [] -> ([],state)
      | CONS (DataElement ptrs l d) xs ->
        let (ptrs',state) = gen_gc_partial_gc_move_list conf state ptrs in
        let (xs,state) = gc_move_ref_list conf state xs in
          (CONS (DataElement ptrs' l d) xs,state)
-     | CONS x xs -> (CONS x xs,gc_state_ok_fupd (K F) state)`];;
+     | CONS x xs -> (CONS x xs,gc_state_ok_fupd (K F) state)`;;
 
 (* [local] *)
 let gc_move_ref_list_IMP = prove
@@ -230,14 +230,14 @@ let data_sort_INDUCT,data_sort_RECURSION = define_datatype
   ";;
 
 let to_gen_heap_address_def = define_cases
-  [`to_gen_heap_address conf (gc_shared_Data a) = gc_shared_Data (Real a)`;
-   `to_gen_heap_address conf (gc_shared_Pointer ptr a) =
+  `(to_gen_heap_address conf (gc_shared_Data a) = gc_shared_Data (Real a)) /\
+   (to_gen_heap_address conf (gc_shared_Pointer ptr a) =
         if ptr < gen_gc_partial_conf_gen_start conf then
           gc_shared_Data (Protected (gc_shared_Pointer ptr a))
         else if gen_gc_partial_conf_refs_start conf <= ptr then
           gc_shared_Data (Protected (gc_shared_Pointer ptr a))
         else gc_shared_Pointer (ptr - gen_gc_partial_conf_gen_start
-            conf) (Real a)`];;
+            conf) (Real a))`;;
 
 let to_gen_conf_def = new_definition
   `to_gen_conf (conf:'a gen_gc_partial_conf) =
@@ -247,12 +247,12 @@ let to_gen_conf_def = new_definition
        conf):'a gen_gc_conf)`;;
 
 let to_gen_heap_element_def = define_cases
-  [`to_gen_heap_element conf (Unused n) = Unused n`;
-   `to_gen_heap_element conf (ForwardPointer ptr a l) =
+  `(to_gen_heap_element conf (Unused n) = Unused n) /\
+   (to_gen_heap_element conf (ForwardPointer ptr a l) =
         ForwardPointer (ptr - gen_gc_partial_conf_gen_start conf) (Real
-            a) l`;
-   `to_gen_heap_element conf (DataElement ptrs l d) =
-        DataElement (MAP (to_gen_heap_address conf) ptrs) l d`];;
+            a) l) /\
+   (to_gen_heap_element conf (DataElement ptrs l d) =
+        DataElement (MAP (to_gen_heap_address conf) ptrs) l d)`;;
 
 let to_gen_heap_list_def = new_definition
   `to_gen_heap_list conf heap =
@@ -289,12 +289,12 @@ let to_gen_roots_def = new_definition
    what the port found for it *)
 let refs_to_roots_def,refs_to_roots_ind = define_wf
   `MEASURE (\(x0,x1). list_size (heap_element_size (\x. 0) (\x. 0)) x1)`
-  [`refs_to_roots conf x2 =
+  `refs_to_roots conf x2 =
      match x2 with
        [] -> []
-     | CONS (DataElement ptrs _1 _2) refs -> APPEND (MAP
-       (to_gen_heap_address conf) ptrs) (refs_to_roots conf refs)
-     | CONS _ refs -> refs_to_roots conf refs`];;
+     | CONS (DataElement ptrs _ _) refs -> APPEND (MAP (to_gen_heap_address
+       conf) ptrs) (refs_to_roots conf refs)
+     | CONS _ refs -> refs_to_roots conf refs`;;
 
 let RootsRefs = cake_inductive
   `(RootsRefs [] []) /\
@@ -314,7 +314,7 @@ let RootsRefs = cake_inductive
       RootsRefs (CONS (Unused n) refs) roots) /\
    (!refs roots.
       RootsRefs refs roots ==>
-      RootsRefs (CONS (ForwardPointer _3 _4 _5) refs) roots)`;;
+      RootsRefs (CONS (ForwardPointer _ _ _) refs) roots)`;;
 
 (* HOL4 gen_gc_partialScript.sml:346: ML code, not ported *)
 

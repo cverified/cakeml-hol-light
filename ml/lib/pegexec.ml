@@ -31,10 +31,10 @@ let kont_INDUCT,kont_RECURSION = define_datatype
 
 let poplist_aux_def,poplist_aux_ind = define_shaped_rec
   "cases"
-  [`poplist_aux acc (CONS (SOME h) t) = poplist_aux (CONS h acc) t`;
-   `poplist_aux acc (CONS NONE t) = (acc,t)`;
-   `poplist_aux acc [] = (acc,[])
-    // should never happen`];;
+  `(poplist_aux acc (CONS (SOME h) t) = poplist_aux (CONS h acc) t) /\
+   (poplist_aux acc (CONS NONE t) = (acc,t)) /\
+   (poplist_aux acc [] = (acc,[])
+    // should never happen)`;;
 
 let poplistval_def = new_definition
   `poplistval f l = let (values,rest) = poplist_aux [] l in CONS (SOME (f
@@ -114,15 +114,15 @@ let coreloop_def = new_definition
                       let err = (sloc i,err) in
                         pegexec_AP fk i r ((optmax MAXerr) eo (SOME err))
                           (CONS err errs)
-                  | pegexec_AP pegexec_done i [] _1 _2 -> pegexec_Looped
-                  | pegexec_AP pegexec_done i (CONS NONE t) _3 _4 ->
+                  | pegexec_AP pegexec_done i [] _ _ -> pegexec_Looped
+                  | pegexec_AP pegexec_done i (CONS NONE t) _ _ ->
                     pegexec_Looped
-                  | pegexec_AP pegexec_done i (CONS (SOME rv) _5) eo _6 ->
+                  | pegexec_AP pegexec_done i (CONS (SOME rv) _) eo _ ->
                     pegexec_Result (peg_Success i rv eo)
                   | pegexec_AP pegexec_failed i r _ [] -> pegexec_Looped
-                  | pegexec_AP pegexec_failed i r _7 (CONS (l,e) _8) ->
+                  | pegexec_AP pegexec_failed i r _ (CONS (l,e) _) ->
                     pegexec_Result (peg_Failure l e)
-                  | pegexec_AP (pegexec_dropErr _9) i r _10 [] ->
+                  | pegexec_AP (pegexec_dropErr _) i r _ [] ->
                     pegexec_Looped
                   | pegexec_AP (pegexec_dropErr k) i r eo (CONS _ t) ->
                     pegexec_AP k i r eo t
@@ -131,7 +131,7 @@ let coreloop_def = new_definition
                         (CONS (l,e) errs)
                   | pegexec_AP (pegexec_cmpErrs k) i r _ [] ->
                     pegexec_Looped
-                  | pegexec_AP (pegexec_cmpErrs k) i r _11 [_12] ->
+                  | pegexec_AP (pegexec_cmpErrs k) i r _ [_] ->
                     pegexec_Looped
                   | pegexec_AP (pegexec_cmpErrs k) i r eo (CONS (l2,er2)
                     (CONS (l1,er1) rest)) ->
@@ -149,13 +149,11 @@ let coreloop_def = new_definition
                   | pegexec_AP (pegexec_appf1 f1 k) i (CONS (SOME v) r) eo
                     errs ->
                       pegexec_AP k i (CONS (SOME (f1 v)) r) eo errs
-                  | pegexec_AP (pegexec_appf1 _13 _14) _15 _16 _17 _18 ->
-                    pegexec_Looped
+                  | pegexec_AP (pegexec_appf1 _ _) _ _ _ _ -> pegexec_Looped
                   | pegexec_AP (pegexec_appf2 f2 k) i (CONS (SOME v1) (CONS
                     (SOME v2) r)) eo errs ->
                       pegexec_AP k i (CONS (SOME (f2 v2 v1)) r) eo errs
-                  | pegexec_AP (pegexec_appf2 _19 _20) _21 _22 _23 _24 ->
-                    pegexec_Looped
+                  | pegexec_AP (pegexec_appf2 _ _) _ _ _ _ -> pegexec_Looped
                   | pegexec_AP (pegexec_returnTo i r k) i' r' eo errs ->
                     pegexec_AP k i r eo errs
                   | pegexec_AP (pegexec_restoreEO eo k) i r eo' errs ->
@@ -177,7 +175,7 @@ let peg_exec_def = new_definition
        | NONE -> pegexec_Looped`;;
 
 let destResult_def = define_general
-  [`pegexec_destResult (pegexec_Result r) = r`];;
+  `pegexec_destResult (pegexec_Result r) = r`;;
 add_simp destResult_def;;
 
 let pegparse_def = new_definition

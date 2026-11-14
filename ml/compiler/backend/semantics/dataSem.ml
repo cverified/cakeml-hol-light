@@ -134,9 +134,9 @@ let small_num_def = new_definition
    what the port found for it *)
 let bignum_digits_def,bignum_digits_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`bignum_digits arch64 n =
+  `bignum_digits arch64 n =
      if n = 0 then 0 else let d = (if arch64 then 64 else 32) in
-         1 + bignum_digits arch64 (n DIV 2 EXP d)`];;
+         1 + bignum_digits arch64 (n DIV 2 EXP d)`;;
 
 let bignum_size_def = new_definition
   `bignum_size arch64 i =
@@ -144,18 +144,18 @@ let bignum_size_def = new_definition
 
 let size_of_def,size_of_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`size_of lims [] refs seen = (0,refs,seen)`;
-   `size_of lims (CONS x (CONS y ys)) refs seen =
+  `(size_of lims [] refs seen = (0,refs,seen)) /\
+   (size_of lims (CONS x (CONS y ys)) refs seen =
         let (n1,refs1,seen1) = check_res refs (size_of lims (CONS y ys)
             refs seen) in
         let (n2,refs2,seen2) = size_of lims [x] refs1 seen1 in
-          (n1 + n2,refs2,seen2)`;
-   `size_of lims [dataSem_Word64 _] refs seen = (3,refs,seen)`;
-   `size_of lims [dataSem_Number i] refs seen =
+          (n1 + n2,refs2,seen2)) /\
+   (size_of lims [dataSem_Word64 _] refs seen = (3,refs,seen)) /\
+   (size_of lims [dataSem_Number i] refs seen =
         ((if small_num (limits_arch_64_bit lims) i then 0 else
-            bignum_size (limits_arch_64_bit lims) i),refs,seen)`;
-   `size_of lims [dataSem_CodePtr _] refs seen = (0,refs,seen)`;
-   `size_of lims [dataSem_RefPtr _14 r] refs seen =
+            bignum_size (limits_arch_64_bit lims) i),refs,seen)) /\
+   (size_of lims [dataSem_CodePtr _] refs seen = (0,refs,seen)) /\
+   (size_of lims [dataSem_RefPtr _ r] refs seen =
          match sptree_lookup r refs with NONE -> (0,refs,seen)
          | SOME (bvlSem_ByteArray _ bs) -> (LENGTH bs DIV (arch_size lims
              DIV 8) + 2,sptree_delete r refs,seen)
@@ -168,13 +168,13 @@ let size_of_def,size_of_ind = assume_definition_rec
          | SOME (bvlSem_MutBlock tg fin ls c rs) ->
              let (n,refs,seen) = size_of lims (APPEND (APPEND ls [c]) rs)
                  (sptree_delete r refs) seen in
-               (n + LENGTH ls + LENGTH rs + 2,refs,seen)`;
-   `(size_of lims [dataSem_Block ts tag []]) refs seen = (0,refs,seen)`;
-   `size_of lims [dataSem_Block ts tag vs] refs seen =
+               (n + LENGTH ls + LENGTH rs + 2,refs,seen)) /\
+   ((size_of lims [dataSem_Block ts tag []]) refs seen = (0,refs,seen)) /\
+   (size_of lims [dataSem_Block ts tag vs] refs seen =
          if IS_SOME (sptree_lookup ts seen) then (0,refs,seen) else let
              (n,refs,seen) = size_of lims vs refs (sptree_insert ts one seen)
              in
-             (n + LENGTH vs + 1,refs,seen)`];;
+             (n + LENGTH vs + 1,refs,seen))`;;
 
 (* [local] *)
 let check_res_size_of = prove
@@ -187,12 +187,12 @@ let check_res_size_of = prove
    ML expression: size_of_ind *)
 
 let extract_stack_def = define_cases
-  [`extract_stack (dataSem_Env _ env) = sptree_toList env`;
-   `extract_stack (dataSem_Exc _15 env _16) = sptree_toList env`];;
+  `(extract_stack (dataSem_Env _ env) = sptree_toList env) /\
+   (extract_stack (dataSem_Exc _ env _) = sptree_toList env)`;;
 
 let global_to_vs_def = define_cases
-  [`global_to_vs NONE = []`;
-   `global_to_vs (SOME n) = [dataSem_RefPtr T n]`];;
+  `(global_to_vs NONE = []) /\
+   (global_to_vs (SOME n) = [dataSem_RefPtr T n])`;;
 
 let stack_to_vs_def = new_definition
   `stack_to_vs (s:('c,'ffi)dataSem_state) = APPEND (APPEND (sptree_toList
@@ -203,7 +203,7 @@ let stack_to_vs_def = new_definition
    to fit in wordLang memory (over-approximation) *)
 let size_of_heap_def = new_definition
   `size_of_heap (s:('c,'ffi)dataSem_state) =
-     let (n,_17,_18) = size_of (dataSem_state_limits s) (stack_to_vs
+     let (n,_,_) = size_of (dataSem_state_limits s) (stack_to_vs
        ((s:('c,'ffi)dataSem_state))) (dataSem_state_refs
        ((s:('c,'ffi)dataSem_state))) LN in
        n`;;
@@ -234,7 +234,7 @@ let add_space_def = new_definition
    evaluator hands the state to do_app, is the NARROW cut without args). *)
 let size_of_heap_args_def = new_definition
   `size_of_heap_args op_args (s:('c,'ffi)dataSem_state) =
-     let (n,_19,_20) = size_of (dataSem_state_limits s) (APPEND op_args
+     let (n,_,_) = size_of (dataSem_state_limits s) (APPEND op_args
        (stack_to_vs ((s:('c,'ffi)dataSem_state)))) (dataSem_state_refs
        ((s:('c,'ffi)dataSem_state))) LN in
        n`;;
@@ -259,7 +259,7 @@ let allowed_op_def = new_definition
    what the port found for it *)
 let dataSem_v_to_list_def,dataSem_v_to_list_ind = define_wf
   `MEASURE (\x0. dataSem_v_size x0)`
-  [`dataSem_v_to_list x1 =
+  `dataSem_v_to_list x1 =
      match x1 with
        dataSem_Block ts tag [] ->
         if tag = nil_tag then SOME [] else NONE
@@ -268,7 +268,7 @@ let dataSem_v_to_list_def,dataSem_v_to_list_ind = define_wf
           (match dataSem_v_to_list bt with SOME t -> SOME (CONS h t)
            | _ -> NONE)
         else NONE
-     | _ -> NONE`];;
+     | _ -> NONE`;;
 
 (* HOL4 dataSemScript.sml:243-247: the overload bignum_limit, which the port
    expands *)
@@ -278,14 +278,14 @@ let space_consumed_def = new_definition
   `space_consumed s x2 x3 =
      match (s,x2,x3) with
        ((s:('c,'ffi)dataSem_state),closLang_BlockOp (closLang_ConsExtend
-         tag),CONS (dataSem_Block _23 _24 xs') (CONS (dataSem_Number lower)
-         (CONS (dataSem_Number len) (CONS (dataSem_Number tot) xs)))) ->
+         tag),CONS (dataSem_Block _ _ xs') (CONS (dataSem_Number lower) (CONS
+         (dataSem_Number len) (CONS (dataSem_Number tot) xs)))) ->
       LENGTH (APPEND xs (TAKE (num_of_int len) (DROP (num_of_int lower)
         xs'))) + 1
      | (s,closLang_MemOp closLang_RefArray,[dataSem_Number len; _]) ->
        num_of_int len + 1
-     | (s,closLang_MemOp (closLang_RefByte _25),[dataSem_Number len; _26])
-       -> num_of_int len DIV (arch_size (dataSem_state_limits s) DIV 8) + 2
+     | (s,closLang_MemOp (closLang_RefByte _),[dataSem_Number len; _]) ->
+       num_of_int len DIV (arch_size (dataSem_state_limits s) DIV 8) + 2
      | (s,closLang_BlockOp (closLang_FromList n),[dataSem_Number len; lv])
        -> num_of_int len + 1
      | (s,closLang_IntOp closLang_Add,[dataSem_Number i1; dataSem_Number
@@ -359,10 +359,10 @@ let space_consumed_def = new_definition
    what the port found for it *)
 let vb_size_def,vb_size_ind = define_wf
   `MEASURE (\x0. dataSem_v_size x0)`
-  [`vb_size x1 =
+  `vb_size x1 =
      match x1 with
        dataSem_Block ts t ls -> 1 + t + SUM (MAP vb_size ls) + LENGTH ls
-     | _ -> 1`];;
+     | _ -> 1`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -374,12 +374,12 @@ let vb_size_def,vb_size_ind = define_wf
    would be inconsistent. *)
 let vs_depth_def,vs_depth_ind = define_wf
   `MEASURE (sum_measure (\x0. dataSem_v_size x0) (\x0. dataSem_v_size1 x0))`
-  [`vs_depth x1 =
+  `(vs_depth x1 =
       match x1 with
         dataSem_Block ts t ls -> vs_depth_list ls
-      | _ -> 0`;
-   `vs_depth_list [] = 0`;
-   `vs_depth_list (CONS x xs) = MAX (1 + vs_depth x) (vs_depth_list xs)`];;
+      | _ -> 0) /\
+   (vs_depth_list [] = 0) /\
+   (vs_depth_list (CONS x xs) = MAX (1 + vs_depth x) (vs_depth_list xs))`;;
 
 let eq_code_stack_max_def = new_definition
   `eq_code_stack_max n tsz =
@@ -506,8 +506,8 @@ let do_space_def = new_definition
           else consume_space (op_space_req op (LENGTH vs)) s`;;
 
 let size_of_stack_frame_def = define_cases
-  [`size_of_stack_frame (dataSem_Env n _) = n`;
-   `size_of_stack_frame (dataSem_Exc n _27 _28) = OPTION_MAP ((+) 3) n`];;
+  `(size_of_stack_frame (dataSem_Env n _) = n) /\
+   (size_of_stack_frame (dataSem_Exc n _ _) = OPTION_MAP ((+) 3) n)`;;
 
 let size_of_stack_def = new_definition
   `size_of_stack = FOLDR (OPTION_MAP2 (+) o size_of_stack_frame) (SOME 1)`;;
@@ -555,16 +555,16 @@ let dataSem_do_eq_def,dataSem_do_eq_ind = define_wf
   0)) x0 +       dataSem_v_size x1 +       dataSem_v_size x2) (\(x0,x1,x2).
     spt_size (bvlSem_ref_size (\x. 0)) x0 +      dataSem_v_size1 x1 +
   dataSem_v_size1 x2))`
-  [`dataSem_do_eq refs x2 x3 =
+  `(dataSem_do_eq refs x2 x3 =
       match (x2,x3) with
-        (dataSem_CodePtr _30,_31) -> Eq_type_error
-      | (_32,dataSem_CodePtr _33) -> Eq_type_error
+        (dataSem_CodePtr _,_) -> Eq_type_error
+      | (_,dataSem_CodePtr _) -> Eq_type_error
       | (dataSem_Number n1,dataSem_Number n2) -> (Eq_val (n1 = n2))
-      | (dataSem_Number _34,_35) -> Eq_type_error
-      | (_36,dataSem_Number _37) -> Eq_type_error
+      | (dataSem_Number _,_) -> Eq_type_error
+      | (_,dataSem_Number _) -> Eq_type_error
       | (dataSem_Word64 w1,dataSem_Word64 w2) -> (Eq_val (w1 = w2))
-      | (dataSem_Word64 _38,_39) -> Eq_type_error
-      | (_40,dataSem_Word64 _41) -> Eq_type_error
+      | (dataSem_Word64 _,_) -> Eq_type_error
+      | (_,dataSem_Word64 _) -> Eq_type_error
       | (dataSem_RefPtr b1 n1,dataSem_RefPtr b2 n2) ->
         if b1 /\ b2 then
          (match (sptree_lookup n1 refs,sptree_lookup n2 refs) with
@@ -574,17 +574,17 @@ let dataSem_do_eq_def,dataSem_do_eq_ind = define_wf
           | (_,SOME (bvlSem_ByteArray T bs2)) -> Eq_type_error
           | _ -> Eq_val (n1 = n2))
         else Eq_type_error
-      | (dataSem_RefPtr _42 _43,_44) -> Eq_type_error
-      | (_45,dataSem_RefPtr _46 _47) -> Eq_type_error
+      | (dataSem_RefPtr _ _,_) -> Eq_type_error
+      | (_,dataSem_RefPtr _ _) -> Eq_type_error
       // TODO: How time-stamps impact equality between blocks?
-      | (dataSem_Block _48 t1 l1,dataSem_Block _49 t2 l2) ->
+      | (dataSem_Block _ t1 l1,dataSem_Block _ t2 l2) ->
        if dataSem_isClos t1 l1 \/ dataSem_isClos t2 l2 then if
            dataSem_isClos t1 l1 /\ dataSem_isClos t2 l2 then Eq_val T else
            Eq_type_error
        else if (t1 = t2) /\ (LENGTH l1 = LENGTH l2) then dataSem_do_eq_list
            refs l1 l2
-            else Eq_val F`;
-   `dataSem_do_eq_list refs x2 x3 =
+            else Eq_val F) /\
+   (dataSem_do_eq_list refs x2 x3 =
       match (x2,x3) with
         ([],[]) -> Eq_val T
       | (CONS v1 vs1,CONS v2 vs2) ->
@@ -592,7 +592,7 @@ let dataSem_do_eq_def,dataSem_do_eq_ind = define_wf
            refs vs1 vs2
        | Eq_val F -> Eq_val F
        | bad -> bad)
-      | (_50,_51) -> Eq_val F`];;
+      | (_,_) -> Eq_val F)`;;
 add_simp dataSem_do_eq_def;;
 
 (* HOL4 dataSemScript.sml:499-500: the overload Error, which the port
@@ -625,9 +625,9 @@ let dataSem_do_install_def = new_definition
         | _ -> Rerr (Rabort Rtype_error))`;;
 
 let dataSem_list_to_v_def,dataSem_list_to_v_ind = define_rec
-  [`dataSem_list_to_v ts t [] = t`;
-   `dataSem_list_to_v ts t (CONS h l) = dataSem_Block ts cons_tag [h;
-    dataSem_list_to_v (ts + 1) t l]`];;
+  `(dataSem_list_to_v ts t [] = t) /\
+   (dataSem_list_to_v ts t (CONS h l) = dataSem_Block ts cons_tag [h;
+    dataSem_list_to_v (ts + 1) t l])`;;
 
 (* HOL4 dataSemScript.sml:534: the overload Block_nil, which the port
    expands *)
@@ -640,26 +640,26 @@ let with_fresh_ts_def = new_definition
                           | NONE -> f 0 s`;;
 
 let lim_safe_part_def = define_cases
-  [`lim_safe_part lims (closLang_Con tag xs) <=> (if xs = [] then tag < 2 EXP
+  `(lim_safe_part lims (closLang_Con tag xs) <=> (if xs = [] then tag < 2 EXP
     (arch_size lims) DIV 16
                               else LENGTH xs < 2 EXP limits_length_limit
                                   lims /\
                               LENGTH xs < 2 EXP (arch_size lims - 4) /\
                               4 * tag < 2 EXP (arch_size lims) DIV 16 /\
                               4 * tag < 2 EXP (arch_size lims -
-                                  limits_length_limit lims - 2))`;
-   `lim_safe_part lims (closLang_Int i) <=>
+                                  limits_length_limit lims - 2))) /\
+   (lim_safe_part lims (closLang_Int i) <=>
          (if small_num (limits_arch_64_bit lims) i then T else let il =
              bignum_size (limits_arch_64_bit lims) i in
-              il <= 2 EXP limits_length_limit lims)`;
-   `lim_safe_part lims (closLang_Str s) <=>
+              il <= 2 EXP limits_length_limit lims)) /\
+   (lim_safe_part lims (closLang_Str s) <=>
          (let i = strlen s in
             i DIV (arch_size lims DIV 8) < 2 EXP (arch_size lims) DIV
                 arch_size lims /\
             i DIV (arch_size lims DIV 8) + 1 < 2 EXP limits_length_limit
                 lims /\
-            small_num (limits_arch_64_bit lims) (&i))`;
-   `lim_safe_part lims (closLang_W64 w) <=> 1 < limits_length_limit lims`];;
+            small_num (limits_arch_64_bit lims) (&i))) /\
+   (lim_safe_part lims (closLang_W64 w) <=> 1 < limits_length_limit lims)`;;
 add_simp lim_safe_part_def;;
 
 let lim_safe_def = new_definition
@@ -695,8 +695,8 @@ let lim_safe_def = new_definition
            1 < limits_length_limit lims /\
            3 * (SUC (LENGTH xs)) < 2 EXP (arch_size lims) DIV 8
        | _ -> T)
-     | (closLang_BlockOp (closLang_ConsExtend tag),CONS (dataSem_Block _52
-       _53 xs') (CONS (dataSem_Number lower) (CONS (dataSem_Number len) (CONS
+     | (closLang_BlockOp (closLang_ConsExtend tag),CONS (dataSem_Block _ _
+       xs') (CONS (dataSem_Number lower) (CONS (dataSem_Number len) (CONS
        (dataSem_Number tot) xs)))) ->
            if lower < (&0) \/ len < (&0) \/ lower + len > &(LENGTH xs') \/
               tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then T
@@ -767,24 +767,24 @@ let lim_safe_def = new_definition
       (1 < limits_length_limit lims)
      | (closLang_WordOp WordFromInt,_) ->
       (1 < limits_length_limit lims)
-     | (closLang_WordOp (WordOpw ast_W64 _54),_55) ->
+     | (closLang_WordOp (WordOpw ast_W64 _),_) ->
       (1 < limits_length_limit lims)
-     | (closLang_WordOp (WordShift ast_W64 _56 _57),_58) ->
+     | (closLang_WordOp (WordShift ast_W64 _ _),_) ->
       (1 < limits_length_limit lims)
-     | (closLang_WordOp (WordFromWord _59),_60) ->
+     | (closLang_WordOp (WordFromWord _),_) ->
       (1 < limits_length_limit lims)
-     | (closLang_WordOp (FP_cmp _61),_62) -> limits_has_fp_ops
+     | (closLang_WordOp (FP_cmp _),_) -> limits_has_fp_ops
       lims
-     | (closLang_WordOp (FP_uop _63),_64) ->
+     | (closLang_WordOp (FP_uop _),_) ->
       (limits_has_fp_ops lims /\ (limits_arch_64_bit lims \/ 1 <
         limits_length_limit lims))
-     | (closLang_WordOp (FP_bop _65),_66) ->
+     | (closLang_WordOp (FP_bop _),_) ->
       (limits_has_fp_ops lims /\ (limits_arch_64_bit lims \/ 1 <
         limits_length_limit lims))
-     | (closLang_WordOp (FP_top _67),_68) ->
+     | (closLang_WordOp (FP_top _),_) ->
       (limits_has_fp_ops lims /\ limits_has_fp_tops lims
         /\ (limits_arch_64_bit lims \/ 1 < limits_length_limit lims))
-     | (_69,_70) -> T`;;
+     | (_,_) -> T`;;
 add_simp lim_safe_def;;
 
 let do_lim_safe = new_definition
@@ -802,26 +802,26 @@ let check_lim_def = new_definition
                               s))
       s`;;
 
-let dataSem_do_part_def = define_cases
-  [`dataSem_do_part m (closLang_Int i) s ts = (dataSem_Number i,s,ts)`;
-   `dataSem_do_part m (closLang_W64 w) s ts = (dataSem_Word64 w,s,ts)`;
-   `dataSem_do_part m (closLang_Con t ns) s ts =
+let dataSem_do_part_def = define_cases_clauses
+  [`(dataSem_do_part m (closLang_Int i) s ts = (dataSem_Number i,s,ts)) /\
+    (dataSem_do_part m (closLang_W64 w) s ts = (dataSem_Word64 w,s,ts)) /\
+    (dataSem_do_part m (closLang_Con t ns) s ts =
       (if ns = [] then (dataSem_Block 0 t [],s,ts)
                   else match ts with NONE -> (dataSem_Block 0 t (MAP m
                       ns),s,ts)
                        | SOME n -> (dataSem_Block n t (MAP m ns),s,SOME
-                           (n + (1:num))))`;
-   `dataSem_do_part m (closLang_Str t) s ts =
+                           (n + (1:num)))))`;
+   `(dataSem_do_part m (closLang_Str t) s ts =
       let ptr = (minimal ptr. ~(ptr IN domain s)) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (dataSem_RefPtr T ptr,sptree_insert ptr (bvlSem_ByteArray T
-            bytes) s,ts)`];;
+            bytes) s,ts))`];;
 
 let dataSem_do_build_def,dataSem_do_build_ind = define_rec
-  [`dataSem_do_build m i [] s ts = (m (i - 1),s,ts)`;
-   `dataSem_do_build m i (CONS p rest) s ts =
+  `(dataSem_do_build m i [] s ts = (m (i - 1),s,ts)) /\
+   (dataSem_do_build m i (CONS p rest) s ts =
       let (x,s1,ts1) = dataSem_do_part m p s ts in
-        dataSem_do_build ((i =+ x) m) (i + 1) rest s1 ts1`];;
+        dataSem_do_build ((i =+ x) m) (i + 1) rest s1 ts1)`;;
 
 let dataSem_do_build_const_def = new_definition
   `dataSem_do_build_const xs s ts = dataSem_do_build (\x. dataSem_Number
@@ -946,14 +946,14 @@ let dataSem_bad_thunk_update_def = new_definition
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let dataSem_finalise_cons_def,dataSem_finalise_cons_ind = define_guess_cheat
-  [`dataSem_finalise_cons v refs ts =
+  `dataSem_finalise_cons v refs ts =
      match v with
        dataSem_RefPtr b ptr ->
        (match sptree_lookup ptr refs with SOME (bvlSem_MutBlock tag
          finalised l c r) ->
            if ~finalised then
-             (match dataSem_finalise_cons c (sptree_delete ptr refs) ts
-               with SOME (c',refs',ts') ->
+             (match dataSem_finalise_cons c (sptree_delete ptr refs) ts with
+               SOME (c',refs',ts') ->
                   SOME (dataSem_Block (match ts' with NONE -> 0 | SOME n ->
                     n) tag (APPEND (APPEND l [c']) r),
                         sptree_insert ptr (bvlSem_MutBlock tag T l c r)
@@ -963,7 +963,7 @@ let dataSem_finalise_cons_def,dataSem_finalise_cons_ind = define_guess_cheat
            else NONE
        | SOME res -> SOME (dataSem_RefPtr b ptr,refs,ts)
        | NONE -> NONE)
-     | v -> SOME (v,refs,ts)`];;
+     | v -> SOME (v,refs,ts)`;;
 
 let dataSem_do_app_aux_def = new_definition
   `dataSem_do_app_aux op (vs:dataSem_v list) (s:('c,'ffi)dataSem_state) =
@@ -1205,8 +1205,8 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_XorByte,[dataSem_RefPtr _72 dst;
-       dataSem_RefPtr _73 src]) ->
+     | (closLang_MemOp closLang_XorByte,[dataSem_RefPtr _ dst;
+       dataSem_RefPtr _ src]) ->
          (match (sptree_lookup src (dataSem_state_refs s),sptree_lookup dst
            (dataSem_state_refs s)) with (SOME (bvlSem_ByteArray _ ws),SOME
            (bvlSem_ByteArray f ds)) ->
@@ -1219,19 +1219,19 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_StringCmp b cmp),[dataSem_RefPtr _74 s1;
-       dataSem_RefPtr _75 s2]) ->
+     | (closLang_MemOp (closLang_StringCmp b cmp),[dataSem_RefPtr _ s1;
+       dataSem_RefPtr _ s2]) ->
          (match (sptree_lookup s1 (dataSem_state_refs s),sptree_lookup s2
-           (dataSem_state_refs s)) with (SOME (bvlSem_ByteArray _76 ws1),SOME
-           (bvlSem_ByteArray _77 ws2)) ->
+           (dataSem_state_refs s)) with (SOME (bvlSem_ByteArray _ ws1),SOME
+           (bvlSem_ByteArray _ ws2)) ->
               (let s1 = implode (MAP (CHR o w2n) ws1) in
                let s2 = implode (MAP (CHR o w2n) ws2) in
                  Rval (dataSem_Boolv (str_cmp b cmp s1 s2),s))
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_CopyByte F),[dataSem_RefPtr _78 src;
-       dataSem_Number srcoff; dataSem_Number len; dataSem_RefPtr _79 dst;
+     | (closLang_MemOp (closLang_CopyByte F),[dataSem_RefPtr _ src;
+       dataSem_Number srcoff; dataSem_Number len; dataSem_RefPtr _ dst;
        dataSem_Number dstoff]) ->
          (match (sptree_lookup src (dataSem_state_refs s),sptree_lookup dst
            (dataSem_state_refs s)) with (SOME (bvlSem_ByteArray _ ws),SOME
@@ -1344,7 +1344,7 @@ let dataSem_do_app_aux_def = new_definition
          | _ -> ((Rerr (Rabort
            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
            ,dataSem_v)semanticPrimitives_result))
-     | (closLang_FFI n,[dataSem_RefPtr _80 cptr; dataSem_RefPtr _81 ptr]) ->
+     | (closLang_FFI n,[dataSem_RefPtr _ cptr; dataSem_RefPtr _ ptr]) ->
          (match (sptree_lookup cptr (dataSem_state_refs s),sptree_lookup ptr
            (dataSem_state_refs s)) with SOME (bvlSem_ByteArray T cws),SOME
            (bvlSem_ByteArray F ws) ->
@@ -1388,8 +1388,8 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_ConfigGC,[dataSem_Number _82; dataSem_Number
-       _83]) -> (Rval (dataSem_Unit,s))
+     | (closLang_MemOp closLang_ConfigGC,[dataSem_Number _; dataSem_Number
+       _]) -> (Rval (dataSem_Unit,s))
      | (closLang_ThunkOp th_op,vs) ->
          (match (th_op,vs) with (AllocThunk m,[v]) ->
               (if dataSem_bad_thunk_update m v (dataSem_state_refs s) then
@@ -1446,11 +1446,11 @@ let dataSem_get_var_def = new_definition
   `dataSem_get_var v = sptree_lookup v`;;
 
 let get_vars_def,get_vars_ind = define_rec
-  [`dataSem_get_vars [] s = SOME []`;
-   `dataSem_get_vars (CONS v vs) s =
+  `(dataSem_get_vars [] s = SOME []) /\
+   (dataSem_get_vars (CONS v vs) s =
          match dataSem_get_var v s with NONE -> NONE
          | SOME x -> (match dataSem_get_vars vs s with NONE -> NONE
-                      | SOME xs -> SOME (CONS x xs))`];;
+                      | SOME xs -> SOME (CONS x xs)))`;;
 
 let set_var_def = new_definition
   `dataSem_set_var v x s = (dataSem_state_locals_fupd (K (sptree_insert v x
@@ -1478,12 +1478,12 @@ let dataSem_LESS_EQ_dec_clock = prove
   CHEAT_TAC);;
 
 let flush_state_def = define_general
-  [`dataSem_flush_state T (s:('c,'ffi)dataSem_state) =
-    dataSem_state_locals_size_fupd (K (SOME 0)) (dataSem_state_stack_fupd (K
-    []) (dataSem_state_locals_fupd (K LN) s))`;
-   `dataSem_flush_state F (s:('c,'ffi)dataSem_state) =
+  `(dataSem_flush_state T (s:('c,'ffi)dataSem_state) =
+    dataSem_state_locals_size_fupd (K (SOME 0)) (dataSem_state_stack_fupd
+    (K []) (dataSem_state_locals_fupd (K LN) s))) /\
+   (dataSem_flush_state F (s:('c,'ffi)dataSem_state) =
     dataSem_state_locals_size_fupd (K (SOME 0)) (dataSem_state_locals_fupd
-    (K LN) s)`];;
+    (K LN) s))`;;
 
 let call_env_def = new_definition
   `dataSem_call_env args size' (s:('c,'ffi)dataSem_state) =
@@ -1499,7 +1499,7 @@ let call_env_def = new_definition
        s)))`;;
 
 let push_env_def = define_general
-  [`dataSem_push_env env F (s:('c,'ffi)dataSem_state) =
+  `(dataSem_push_env env F (s:('c,'ffi)dataSem_state) =
         let stack' = CONS (dataSem_Env (dataSem_state_locals_size s) env)
             (dataSem_state_stack s) in let
             stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
@@ -1509,8 +1509,8 @@ let push_env_def = define_general
                 dataSem_state_safe_for_space_fupd (K
                 (dataSem_state_safe_for_space s /\ stack_safe))
                 (dataSem_state_stack_max_fupd (K stack_max)
-                (dataSem_state_stack_fupd (K stack') s))`;
-   `dataSem_push_env env T (s:('c,'ffi)dataSem_state) =
+                (dataSem_state_stack_fupd (K stack') s))) /\
+   (dataSem_push_env env T (s:('c,'ffi)dataSem_state) =
        let stack' = CONS (dataSem_Exc (dataSem_state_locals_size s) env
            (dataSem_state_handler s)) (dataSem_state_stack s) in let
            stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
@@ -1521,7 +1521,7 @@ let push_env_def = define_general
                (dataSem_state_safe_for_space s /\ stack_safe))
                (dataSem_state_handler_fupd (K (LENGTH (dataSem_state_stack
                s))) (dataSem_state_stack_max_fupd (K stack_max)
-               (dataSem_state_stack_fupd (K stack') s)))`];;
+               (dataSem_state_stack_fupd (K stack') s))))`;;
 
 let pop_env_def = new_definition
   `dataSem_pop_env (s:('c,'ffi)dataSem_state) =
@@ -1575,13 +1575,13 @@ let push_env_clock = prove
   CHEAT_TAC);;
 
 let dataSem_find_code_def = define_cases
-  [`dataSem_find_code (SOME p) args code ssize =
+  `(dataSem_find_code (SOME p) args code ssize =
          match sptree_lookup p code with NONE -> NONE
          | SOME (arity,exp) ->
             if LENGTH args = arity then SOME (args,exp,sptree_lookup p
                 ssize)
-            else NONE`;
-   `dataSem_find_code NONE args code ssize =
+            else NONE) /\
+   (dataSem_find_code NONE args code ssize =
          if args = [] then NONE else match LAST args with dataSem_CodePtr
              loc ->
                (match sptree_lookup loc code with NONE -> NONE
@@ -1589,7 +1589,7 @@ let dataSem_find_code_def = define_cases
                    if LENGTH args = arity + 1 then SOME (BUTLAST
                        args,exp,sptree_lookup loc ssize)
                    else NONE)
-           | other -> NONE`];;
+           | other -> NONE)`;;
 
 let isBool_def = new_definition
   `isBool b x2 =
@@ -1624,14 +1624,14 @@ let dataSem_fix_clock_IMP =
 if concl dataSem_fix_clock_IMP <> `T` then
   cake_term_facts := dataSem_fix_clock_IMP :: (!cake_term_facts);;
 
-let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
+let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`dataSem_evaluate (dataLang_Skip,(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
-   `dataSem_evaluate (dataLang_Move dest src,s) =
+  [`(dataSem_evaluate (dataLang_Skip,(s:('c,'ffi)dataSem_state)) = (NONE,s)) /\
+    (dataSem_evaluate (dataLang_Move dest src,s) =
          match dataSem_get_var src (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
-         | SOME v -> (NONE,dataSem_set_var dest v s)`;
-   `dataSem_evaluate (dataLang_Assign dest op args names_opt,s) =
+         | SOME v -> (NONE,dataSem_set_var dest v s)) /\
+    (dataSem_evaluate (dataLang_Assign dest op args names_opt,s) =
          if op_requires_names op = IS_NONE names_opt then
            (SOME (Rerr (Rabort Rtype_error)),s)
          else match dataSem_get_vars args (dataSem_state_locals s) with
@@ -1644,39 +1644,39 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
                        e),dataSem_flush_state T (install_sfs op s))
                    | Rval (v,s) ->
                        (NONE,dataSem_set_var dest v (install_sfs op
-                           s))))`;
-   `dataSem_evaluate (dataLang_Tick,s) =
+                           s))))) /\
+    (dataSem_evaluate (dataLang_Tick,s) =
          if dataSem_state_clock s = 0 then (SOME (Rerr (Rabort
              Rtimeout_error)),dataSem_flush_state T s)
-                        else (NONE,dataSem_dec_clock s)`;
-   `dataSem_evaluate (dataLang_MakeSpace k names,s) =
+                        else (NONE,dataSem_dec_clock s)) /\
+    (dataSem_evaluate (dataLang_MakeSpace k names,s) =
          match dataSem_cut_env names (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          | SOME env -> (NONE,add_space (dataSem_state_locals_fupd (K
-             env) s) k)`;
-   `dataSem_evaluate (dataLang_Raise n,s) =
+             env) s) k)) /\
+    (dataSem_evaluate (dataLang_Raise n,s) =
          match dataSem_get_var n (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          | SOME x ->
            (match dataSem_jump_exc s with NONE -> (SOME (Rerr (Rabort
                Rtype_error)),s)
-            | SOME s -> (SOME (Rerr (Rraise x)),s))`;
-   `dataSem_evaluate (dataLang_Return ns,s) =
+            | SOME s -> (SOME (Rerr (Rraise x)),s))) /\
+    (dataSem_evaluate (dataLang_Return ns,s) =
          match dataSem_get_vars ns (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
-         | SOME xs -> (SOME (Rval xs),dataSem_flush_state F s)`;
-   `dataSem_evaluate (dataLang_Seq c1 c2,s) =
+         | SOME xs -> (SOME (Rval xs),dataSem_flush_state F s)) /\
+    (dataSem_evaluate (dataLang_Seq c1 c2,s) =
          let (res,s1) = dataSem_fix_clock s (dataSem_evaluate (c1,s)) in
-           if res = NONE then dataSem_evaluate (c2,s1) else (res,s1)`;
-   `dataSem_evaluate (dataLang_If n c1 c2,s) =
+           if res = NONE then dataSem_evaluate (c2,s1) else (res,s1)) /\
+    (dataSem_evaluate (dataLang_If n c1 c2,s) =
          match dataSem_get_var n (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          |
            // no time stamp
            SOME x -> if isBool T x then dataSem_evaluate (c1,s) else if
                isBool F x then dataSem_evaluate (c2,s) else (SOME (Rerr
-               (Rabort Rtype_error)),s)`;
-   `dataSem_evaluate (dataLang_Force ret loc src,s) =
+               (Rabort Rtype_error)),s)) /\
+    (dataSem_evaluate (dataLang_Force ret loc src,s) =
          match dataSem_get_var src (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          | SOME thunk_v ->
@@ -1728,8 +1728,8 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
                               else (SOME (Rerr (Rabort Rtype_error)),s2))
                               | (NONE,s) -> (SOME (Rerr (Rabort
                                   Rtype_error)),s)
-                              | res -> res)))))`;
-   `dataSem_evaluate (dataLang_Call ret dest args handler,s) =
+                              | res -> res))))))`;
+   `(dataSem_evaluate (dataLang_Call ret dest args handler,s) =
          match dataSem_get_vars args (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          | SOME xs ->
@@ -1780,7 +1780,7 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec
                                   (h,dataSem_set_var n x s2))
                              | (NONE,s) -> (SOME (Rerr (Rabort
                                  Rtype_error)),s)
-                             | res -> res))))`];;
+                             | res -> res)))))`];;
 
 (* HOL4 dataSemScript.sml:1497: ML code, not ported *)
 

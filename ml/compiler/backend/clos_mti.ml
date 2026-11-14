@@ -24,13 +24,13 @@ let _ = size_thms "closLang_exp";;
    what the port found for it *)
 let collect_args_def,collect_args_ind = define_wf
   `MEASURE (\(x0,x1,x2). closLang_exp_size x2)`
-  [`collect_args max_app num_args e =
+  `collect_args max_app num_args e =
      match e with
        closLang_Fn t NONE NONE num_args' e ->
        if num_args + num_args' <= max_app then
          collect_args max_app (num_args + num_args') e
        else (num_args,closLang_Fn t NONE NONE num_args' e)
-     | e -> (num_args,e)`];;
+     | e -> (num_args,e)`;;
 
 (* HOL4 clos_mtiScript.sml:22: ML code, not ported *)
 
@@ -57,13 +57,13 @@ let collect_args_zero = prove
    what the port found for it *)
 let collect_apps_def,collect_apps_ind = define_wf
   `MEASURE (\(x0,x1,x2). closLang_exp_size x2)`
-  [`collect_apps max_app args e =
+  `collect_apps max_app args e =
      match e with
        closLang_App tra NONE e es ->
        if LENGTH args + LENGTH es <= max_app then
          collect_apps max_app (APPEND args es) e
        else (args,closLang_App tra NONE e es)
-     | e -> (args,e)`];;
+     | e -> (args,e)`;;
 
 (* HOL4 clos_mtiScript.sml:70: ML code, not ported *)
 
@@ -95,7 +95,7 @@ let collect_apps_size = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let intro_multi_def,intro_multi_ind = define_guess_cheat
-  [`intro_multi max_app x2 =
+  `intro_multi max_app x2 =
      match x2 with
        [] -> []
      | CONS e1 (CONS e2 es) -> CONS (HD (intro_multi max_app [e1])) (CONS
@@ -126,8 +126,7 @@ let intro_multi_def,intro_multi_ind = define_guess_cheat
          max_app es)]
      | [closLang_Fn t NONE NONE num_args e] ->
        let (num_args',e') = collect_args max_app num_args e in
-         [closLang_Fn t NONE NONE num_args' (HD (intro_multi max_app
-           [e']))]
+         [closLang_Fn t NONE NONE num_args' (HD (intro_multi max_app [e']))]
      | [closLang_Fn t loc fvs num_args e] ->
          [closLang_Fn t loc fvs num_args (HD (intro_multi max_app [e]))]
      | [closLang_Letrec t NONE NONE funs e] ->
@@ -144,7 +143,7 @@ let intro_multi_def,intro_multi_ind = define_guess_cheat
         [closLang_Letrec t NONE (SOME fvs) funs (HD (intro_multi max_app
           [e]))]
      | [closLang_Op t op es] ->
-       [closLang_Op t op (intro_multi max_app es)]`];;
+       [closLang_Op t op (intro_multi max_app es)]`;;
 
 (* HOL4 clos_mtiScript.sml:155: ML code, not ported *)
 
@@ -183,8 +182,8 @@ let intro_multi_idem = prove
   CHEAT_TAC);;
 
 let clos_mti_compile_def = define_general
-  [`clos_mti_compile F max_app exps = exps`;
-   `clos_mti_compile T max_app exps = intro_multi max_app exps`];;
+  `(clos_mti_compile F max_app exps = exps) /\
+   (clos_mti_compile T max_app exps = intro_multi max_app exps)`;;
 
 let clos_mti_compile_inc_def = new_definition
   `clos_mti_compile_inc max_app (e,es) =

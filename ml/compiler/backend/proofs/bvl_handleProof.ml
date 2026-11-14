@@ -95,26 +95,26 @@ let _ = size_thms "bvl_exp";;
    replacing the CHEAT_TAC is all that is left *)
 let handle_ok_def,handle_ok_ind = define_wf_cheat
   `MEASURE (list_size bvl_exp_size)`
-  [`handle_ok [] <=> T`;
-   `handle_ok (CONS (x:bvl_exp) (CONS y xs)) <=>
-         handle_ok [x] /\ handle_ok (CONS y xs)`;
-   `handle_ok [bvl_Var v] <=> T`;
-   `handle_ok [bvl_If x1 x2 x3] <=>
-         handle_ok [x1] /\ handle_ok [x2] /\ handle_ok [x3]`;
-   `handle_ok [bvl_Let xs x2] <=>
+  `(handle_ok [] <=> T) /\
+   (handle_ok (CONS (x:bvl_exp) (CONS y xs)) <=>
+         handle_ok [x] /\ handle_ok (CONS y xs)) /\
+   (handle_ok [bvl_Var v] <=> T) /\
+   (handle_ok [bvl_If x1 x2 x3] <=>
+         handle_ok [x1] /\ handle_ok [x2] /\ handle_ok [x3]) /\
+   (handle_ok [bvl_Let xs x2] <=>
          (if LENGTH xs = 0 then
            let_ok x2 /\ (!ys y. x2 = bvl_Let ys y ==> handle_ok [y])
-         else handle_ok xs /\ handle_ok [x2])`;
-   `handle_ok [bvl_Raise x1] <=> handle_ok [x1]`;
-   `handle_ok [bvl_Tick x1] <=> handle_ok [x1]`;
-   `handle_ok [bvl_Op op xs] <=> handle_ok xs`;
-   `handle_ok [bvl_Handle x1 x2] <=>
+         else handle_ok xs /\ handle_ok [x2])) /\
+   (handle_ok [bvl_Raise x1] <=> handle_ok [x1]) /\
+   (handle_ok [bvl_Tick x1] <=> handle_ok [x1]) /\
+   (handle_ok [bvl_Op op xs] <=> handle_ok xs) /\
+   (handle_ok [bvl_Handle x1 x2] <=>
          (match x1 with bvl_Let xs b ->
              ALL isVar xs /\ bVarBound (LENGTH xs) [b] /\
              handle_ok [b] /\ handle_ok [x2]
-         | _ -> F)`;
-   `handle_ok [bvl_Force loc n] <=> T`;
-   `handle_ok [bvl_Call ticks dest xs] <=> handle_ok xs`];;
+         | _ -> F)) /\
+   (handle_ok [bvl_Force loc n] <=> T) /\
+   (handle_ok [bvl_Call ticks dest xs] <=> handle_ok xs)`;;
 
 (* HOL4 bvl_handleProofScript.sml:192-195: a theorem that HOL4 states as the
    value of an ML expression: evaluate_GENLIST *)

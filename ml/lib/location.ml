@@ -17,15 +17,15 @@ let locn_INDUCT,locn_RECURSION = define_datatype
    | POSN num num";;
 
 let locnrow_def = define_general
-  [`locnrow (POSN r c) = r`];;
+  `locnrow (POSN r c) = r`;;
 
 let locn_rowupdate_def = define_general
-  [`locn_rowupdate f (POSN r c) = POSN (f r) c`];;
+  `locn_rowupdate f (POSN r c) = POSN (f r) c`;;
 
 let locncol_def = define_general
-  [`locncol (POSN r c) = c`];;
+  `locncol (POSN r c) = c`;;
 let locn_colupdate_def = define_general
-  [`locn_colupdate f (POSN r c) = POSN r (f c)`];;
+  `locn_colupdate f (POSN r c) = POSN r (f c)`;;
 
 let locs_INDUCT,locs_RECURSION = define_datatype
   "locs =
@@ -52,20 +52,20 @@ let locnle_def = new_definition
        locncol l2)`;;
 
 let locsle_def = define_general
-  [`locsle (Locs l1 _1) (Locs l2 _2) <=> locnle l1 l2`];;
+  `locsle (Locs l1 _) (Locs l2 _) <=> locnle l1 l2`;;
 add_simp locsle_def;;
 
 let merge_locs_def = define_general
-  [`merge_locs (Locs l1 l2) (Locs l3 l4) = Locs l1 l4`];;
+  `merge_locs (Locs l1 l2) (Locs l3 l4) = Locs l1 l4`;;
 
 let _ = size_thms "locs";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let merge_list_locs_def,merge_list_locs_ind = define_wf
   `MEASURE (\x0. list_size locs_size x0)`
-  [`merge_list_locs x1 =
+  `merge_list_locs x1 =
      match x1 with
        [] -> unknown_loc
      | CONS h [] -> h
      | CONS h1 (CONS h2 []) -> merge_locs h1 h2
-     | CONS h1 (CONS h2 t) -> merge_list_locs (CONS h1 t)`];;
+     | CONS h1 (CONS h2 t) -> merge_list_locs (CONS h1 t)`;;

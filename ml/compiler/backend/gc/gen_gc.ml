@@ -27,9 +27,9 @@ let gen_gc_conf_FIELDS = define_record "gen_gc_conf"
    "isRef","'a->bool"];;
 
 let gen_gc_gc_move_def = define_cases
-  [`gen_gc_gc_move conf state (gc_shared_Data d) = ((gc_shared_Data d:'a
-    heap_address),state)`;
-   `gen_gc_gc_move conf state (gc_shared_Pointer ptr d) =
+  `(gen_gc_gc_move conf state (gc_shared_Data d) = ((gc_shared_Data d:'a
+    heap_address),state)) /\
+   (gen_gc_gc_move conf state (gc_shared_Pointer ptr d) =
          match heap_lookup ptr (gc_state_heap state) with SOME
              (ForwardPointer ptr _ l) -> (gc_shared_Pointer ptr d,state)
          | SOME (DataElement xs l dd) ->
@@ -54,7 +54,7 @@ let gen_gc_gc_move_def = define_cases
                 gc_shared_Pointer (gc_state_a state) d,gc_state_ok_fupd (K
                     ok) (gc_state_heap_fupd (K heap) (gc_state_a_fupd (K a)
                     (gc_state_n_fupd (K n) (gc_state_h2_fupd (K h2) state)))))
-         | _ -> (gc_shared_Pointer ptr d,gc_state_ok_fupd (K F) state)`];;
+         | _ -> (gc_shared_Pointer ptr d,gc_state_ok_fupd (K F) state))`;;
 
 
 (* [local] *)
@@ -70,11 +70,11 @@ let gc_move_IMP = prove
   CHEAT_TAC);;
 
 let gen_gc_gc_move_list_def,gen_gc_gc_move_list_ind = define_rec
-  [`gen_gc_gc_move_list conf state [] = ([],state)`;
-   `gen_gc_gc_move_list conf state (CONS x xs) =
+  `(gen_gc_gc_move_list conf state [] = ([],state)) /\
+   (gen_gc_gc_move_list conf state (CONS x xs) =
         let (x,state) = gen_gc_gc_move conf state x in
         let (xs,state) = gen_gc_gc_move_list conf state xs in
-          (CONS x xs,state)`];;
+          (CONS x xs,state))`;;
 
 let gc_move_list_IMP = prove
  (`!xs xs' state state'.
@@ -96,7 +96,7 @@ let gc_move_list_IMP = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_data_def,gc_move_data_ind = define_guess_cheat
-  [`(gen_gc_gc_move_data conf state =
+  `(gen_gc_gc_move_data conf state =
      match gc_state_h2 state with [] -> state
      | CONS h h2 ->
        if gen_gc_conf_limit conf < heap_length (APPEND (gc_state_h1 state)
@@ -109,7 +109,7 @@ let gc_move_data_def,gc_move_data_ind = define_guess_cheat
             (gc_state_h2 state) = h)) in
             gen_gc_gc_move_data conf (gc_state_ok_fupd (K ok)
               (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1) state)))
-        | _ -> gc_state_ok_fupd (K F) state)`];;
+        | _ -> gc_state_ok_fupd (K F) state)`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(conf,state). heap_length (gc_state_r2 state))
@@ -119,7 +119,7 @@ let gc_move_data_def,gc_move_data_ind = define_guess_cheat
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_refs_def,gc_move_refs_ind = define_guess_cheat
-  [`// maybe more refs (r4 could have more)
+  `// maybe more refs (r4 could have more)
    gc_move_refs conf state =
      match gc_state_r2 state with [] -> gc_state_r1_fupd (K (APPEND
        (gc_state_r3 state) (gc_state_r1 state))) (gc_state_r3_fupd (K [])
@@ -130,7 +130,7 @@ let gc_move_refs_def,gc_move_refs_ind = define_guess_cheat
          let r3 = APPEND (gc_state_r3 state) [DataElement xs l d] in
            gc_move_refs conf (gc_state_r3_fupd (K r3) (gc_state_r2_fupd (K
              r2) state))
-       | _ -> gc_state_ok_fupd (K F) state)`];;
+       | _ -> gc_state_ok_fupd (K F) state)`;;
 
 (* The main gc loop *)
 (* Runs a clock to simplify the termination argument *)
@@ -138,7 +138,7 @@ let gc_move_refs_def,gc_move_refs_ind = define_guess_cheat
    what the port found for it *)
 let gen_gc_gc_move_loop_def,gen_gc_gc_move_loop_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
-  [`gen_gc_gc_move_loop conf state (clock:num) =
+  `gen_gc_gc_move_loop conf state (clock:num) =
      match gc_state_r4 state with [] ->
        (match gc_state_h2 state with [] -> state
         | (CONS h h2) ->
@@ -149,7 +149,7 @@ let gen_gc_gc_move_loop_def,gen_gc_gc_move_loop_ind = define_wf
        let state = gc_move_refs conf (gc_state_r4_fupd (K [])
          (gc_state_r2_fupd (K (gc_state_r4 state)) state)) in
        if clock = 0 then gc_state_ok_fupd (K F) state
-       else gen_gc_gc_move_loop conf state (clock - 1)`];;
+       else gen_gc_gc_move_loop conf state (clock - 1)`;;
 
 let gen_gc_def = new_definition
   `gen_gc conf (roots,heap) =

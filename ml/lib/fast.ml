@@ -45,6 +45,8 @@ let fast_definition tm =
 
 let fast_clauses cls = fast_definition (definition_of_clauses cls);;
 
+let fast_one tm = fast_clauses [tm];;
+
 (* the statement is read off the clauses, and a real load reads it
    the same way; where it cannot be read off, a real load binds
    nothing either (ISSUES.md) *)
@@ -55,6 +57,8 @@ let fast_induction th =
 
 let fast_pair cls =
   let th = fast_clauses cls in th,fast_induction th;;
+
+let fast_pair_one tm = fast_pair [tm];;
 
 (* what the ways are before this file takes their names: an
    abstract is turned back into a session that proves by
@@ -81,6 +85,24 @@ let real_define_shaped_wf = define_shaped_wf;;
 let real_define_shaped_wf_cheat = define_shaped_wf_cheat;;
 let real_define_shaped_wf_tac = define_shaped_wf_tac;;
 let real_assume_definition_rec = assume_definition_rec;;
+let real_define_cases_clauses = define_cases_clauses;;
+let real_define_general_clauses = define_general_clauses;;
+let real_define_general_cheat_clauses = define_general_cheat_clauses;;
+let real_define_shaped_clauses = define_shaped_clauses;;
+let real_assume_definition_clauses = assume_definition_clauses;;
+let real_define_rec_clauses = define_rec_clauses;;
+let real_define_wf_clauses = define_wf_clauses;;
+let real_define_wf_cheat_clauses = define_wf_cheat_clauses;;
+let real_define_wf_tac_clauses = define_wf_tac_clauses;;
+let real_define_guess_clauses = define_guess_clauses;;
+let real_define_guess_cheat_clauses = define_guess_cheat_clauses;;
+let real_define_shaped_rec_clauses = define_shaped_rec_clauses;;
+let real_define_shaped_rec_cheat_clauses = define_shaped_rec_cheat_clauses;;
+let real_define_shaped_rec_tac_clauses = define_shaped_rec_tac_clauses;;
+let real_define_shaped_wf_clauses = define_shaped_wf_clauses;;
+let real_define_shaped_wf_cheat_clauses = define_shaped_wf_cheat_clauses;;
+let real_define_shaped_wf_tac_clauses = define_shaped_wf_tac_clauses;;
+let real_assume_definition_rec_clauses = assume_definition_rec_clauses;;
 let real_prove = prove;;
 
 (* the ways of making a definition, and the proofs: the
@@ -88,42 +110,59 @@ let real_prove = prove;;
 
 let new_definition tm = fast_definition tm;;
 
-let define_cases cls = fast_clauses cls;;
+let define_cases tm = fast_one tm;;
+let define_cases_clauses cls = fast_clauses cls;;
 
-let define_general cls = fast_clauses cls;;
+let define_general tm = fast_one tm;;
+let define_general_clauses cls = fast_clauses cls;;
 
-let define_general_cheat cls = fast_clauses cls;;
+let define_general_cheat tm = fast_one tm;;
+let define_general_cheat_clauses cls = fast_clauses cls;;
 
-let define_shaped shape cls = fast_clauses cls;;
+let define_shaped shape tm = fast_one tm;;
+let define_shaped_clauses shape cls = fast_clauses cls;;
 
-let assume_definition why cls = fast_clauses cls;;
+let assume_definition why tm = fast_one tm;;
+let assume_definition_clauses why cls = fast_clauses cls;;
 
+let define_rec tm = fast_pair_one tm;;
+let define_rec_clauses cls = fast_pair cls;;
 
-let define_rec cls = fast_pair cls;;
+let define_wf rel tm = fast_pair_one tm;;
+let define_wf_clauses rel cls = fast_pair cls;;
 
-let define_wf rel cls = fast_pair cls;;
+let define_wf_cheat rel tm = fast_pair_one tm;;
+let define_wf_cheat_clauses rel cls = fast_pair cls;;
 
-let define_wf_cheat rel cls = fast_pair cls;;
+let define_wf_tac rel tac tm = fast_pair_one tm;;
+let define_wf_tac_clauses rel tac cls = fast_pair cls;;
 
-let define_wf_tac rel tac cls = fast_pair cls;;
+let define_guess tm = fast_pair_one tm;;
+let define_guess_clauses cls = fast_pair cls;;
 
-let define_guess cls = fast_pair cls;;
+let define_guess_cheat tm = fast_pair_one tm;;
+let define_guess_cheat_clauses cls = fast_pair cls;;
 
-let define_guess_cheat cls = fast_pair cls;;
+let define_shaped_rec shape tm = fast_pair_one tm;;
+let define_shaped_rec_clauses shape cls = fast_pair cls;;
 
-let define_shaped_rec shape cls = fast_pair cls;;
+let define_shaped_rec_cheat shape tm = fast_pair_one tm;;
+let define_shaped_rec_cheat_clauses shape cls = fast_pair cls;;
 
-let define_shaped_rec_cheat shape cls = fast_pair cls;;
+let define_shaped_rec_tac shape tac tm = fast_pair_one tm;;
+let define_shaped_rec_tac_clauses shape tac cls = fast_pair cls;;
 
-let define_shaped_rec_tac shape tac cls = fast_pair cls;;
+let define_shaped_wf shape rel tm = fast_pair_one tm;;
+let define_shaped_wf_clauses shape rel cls = fast_pair cls;;
 
-let define_shaped_wf shape rel cls = fast_pair cls;;
+let define_shaped_wf_cheat shape rel tm = fast_pair_one tm;;
+let define_shaped_wf_cheat_clauses shape rel cls = fast_pair cls;;
 
-let define_shaped_wf_cheat shape rel cls = fast_pair cls;;
+let define_shaped_wf_tac shape rel tac tm = fast_pair_one tm;;
+let define_shaped_wf_tac_clauses shape rel tac cls = fast_pair cls;;
 
-let define_shaped_wf_tac shape rel tac cls = fast_pair cls;;
-
-let assume_definition_rec why cls = fast_pair cls;;
+let assume_definition_rec why tm = fast_pair_one tm;;
+let assume_definition_rec_clauses why cls = fast_pair cls;;
 
 let prove (tm,tac) = mk_thm([],tm);;
 

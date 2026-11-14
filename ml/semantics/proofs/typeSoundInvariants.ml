@@ -50,11 +50,11 @@ let tenv_ok_def = new_definition
      tenv_abbrev_ok (type_env_t tenv)`;;
 
 let tenv_val_exp_ok_def,tenv_val_exp_ok_ind = define_rec
-  [`tenv_val_exp_ok typeSystem_Empty <=> T`;
-   `tenv_val_exp_ok (typeSystem_Bind_tvar n tenv) <=> tenv_val_exp_ok tenv`;
-   `tenv_val_exp_ok (typeSystem_Bind_name x tvs t tenv) <=>
+  `(tenv_val_exp_ok typeSystem_Empty <=> T) /\
+   (tenv_val_exp_ok (typeSystem_Bind_tvar n tenv) <=> tenv_val_exp_ok tenv) /\
+   (tenv_val_exp_ok (typeSystem_Bind_name x tvs t tenv) <=>
         check_freevars (tvs + num_tvs tenv) [] t /\
-        tenv_val_exp_ok tenv`];;
+        tenv_val_exp_ok tenv)`;;
 
 (* Global constructor type environments keyed by constructor name and type
  * stamp. Contains the type variables, the type of the arguments, and
@@ -89,10 +89,10 @@ let type_ctor_def = new_definition
      LENGTH ts = n`;;
 
 let add_tenvE_def,add_tenvE_ind = define_rec
-  [`add_tenvE typeSystem_Empty tenvV = tenvV`;
-   `add_tenvE (typeSystem_Bind_tvar _ tenvE) tenvV = add_tenvE tenvE tenvV`;
-   `add_tenvE (typeSystem_Bind_name x tvs t tenvE) tenvV = nsBind x
-    (tvs,t) (add_tenvE tenvE tenvV)`];;
+  `(add_tenvE typeSystem_Empty tenvV = tenvV) /\
+   (add_tenvE (typeSystem_Bind_tvar _ tenvE) tenvV = add_tenvE tenvE tenvV) /\
+   (add_tenvE (typeSystem_Bind_name x tvs t tenvE) tenvV = nsBind x
+    (tvs,t) (add_tenvE tenvE tenvV))`;;
 
 let type_v = cake_inductive
   `(!tvs ctMap tenvS n.
@@ -172,7 +172,7 @@ let type_sv_def = new_definition
      | (semanticPrimitives_W8array v,W8array_t) -> T
      | (semanticPrimitives_Varray vs,Varray_t t) ->
        ALL (\v. type_v 0 ctMap tenvS v t) vs
-     | (_1,_2) -> F`;;
+     | (_,_) -> F`;;
 
 
 (* The type of the store *)

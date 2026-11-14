@@ -20,52 +20,54 @@ let _ = cake_theory "clos_number"
 
 (* add fresh code locations *)
 
-let renumber_code_locs_def,renumber_code_locs_ind = assume_definition_rec
+let renumber_code_locs_def,renumber_code_locs_ind =
+  assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`renumber_code_locs_list n [] = (n,[])`;
-   `renumber_code_locs_list n (CONS x xs) =
+  [`(renumber_code_locs_list n [] = (n,[])) /\
+    (renumber_code_locs_list n (CONS x xs) =
          let (n,x) = renumber_code_locs n x in
          let (n,xs) = renumber_code_locs_list n xs in
-         (n,CONS x xs)`;
-   `renumber_code_locs n (closLang_Var t v) = (n,((closLang_Var t
-    v:closLang_exp)))`;
-   `renumber_code_locs n (closLang_If t x1 x2 x3) =
+         (n,CONS x xs)) /\
+    (renumber_code_locs n (closLang_Var t v) = (n,((closLang_Var t
+    v:closLang_exp)))) /\
+    (renumber_code_locs n (closLang_If t x1 x2 x3) =
          let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs n x2 in
          let (n,x3) = renumber_code_locs n x3 in
-           (n,(closLang_If t x1 x2 x3:closLang_exp))`;
-   `renumber_code_locs n (closLang_Let t xs x2) =
+           (n,(closLang_If t x1 x2 x3:closLang_exp))) /\
+    (renumber_code_locs n (closLang_Let t xs x2) =
          let (n,xs) = renumber_code_locs_list n xs in
          let (n,x2) = renumber_code_locs n x2 in
-           (n,(closLang_Let t xs x2:closLang_exp))`;
-   `renumber_code_locs n (closLang_Raise t x1) =
+           (n,(closLang_Let t xs x2:closLang_exp))) /\
+    (renumber_code_locs n (closLang_Raise t x1) =
          let (n,x1) = renumber_code_locs n x1 in
-           (n,(closLang_Raise t x1:closLang_exp))`;
-   `renumber_code_locs n (closLang_Tick t x1) =
+           (n,(closLang_Raise t x1:closLang_exp))) /\
+    (renumber_code_locs n (closLang_Tick t x1) =
          let (n,x1) = renumber_code_locs n x1 in
-           (n,(closLang_Tick t x1:closLang_exp))`;
-   `renumber_code_locs n (closLang_Op t op xs) =
+           (n,(closLang_Tick t x1:closLang_exp))) /\
+    (renumber_code_locs n (closLang_Op t op xs) =
          let (n,xs) = renumber_code_locs_list n xs in
-           (n,(closLang_Op t op xs:closLang_exp))`;
-   `renumber_code_locs n (closLang_App t loc_opt x1 x2) =
-         let (n,x1) = renumber_code_locs n x1 in
-         let (n,x2) = renumber_code_locs_list n x2 in
-           (n,closLang_App t NONE x1 x2)`;
-   `renumber_code_locs n (closLang_Fn t loc vs num_args x1) =
-         let (n,x1) = renumber_code_locs n x1 in
-           (n + 2,closLang_Fn t (SOME n) vs num_args x1)`;
-   `renumber_code_locs n (closLang_Letrec t loc vs fns x1) =
-         let (m,fns') = renumber_code_locs_list n (MAP SND fns) in
-         let (n,x1) = renumber_code_locs (m + 2 * LENGTH fns') x1 in
-           (n,closLang_Letrec t (SOME m) vs (ZIP (MAP FST fns) fns') x1)`;
-   `renumber_code_locs n (closLang_Handle t x1 x2) =
+           (n,(closLang_Op t op xs:closLang_exp))) /\
+    (renumber_code_locs n (closLang_Handle t x1 x2) =
          let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs n x2 in
-           (n,(closLang_Handle t x1 x2:closLang_exp))`;
-   `renumber_code_locs n (closLang_Call t ticks dest xs) =
+           (n,(closLang_Handle t x1 x2:closLang_exp))) /\
+    (renumber_code_locs n (closLang_Call t ticks dest xs) =
          let (n,xs) = renumber_code_locs_list n xs in
            (n,closLang_Op t (closLang_IntOp closLang_Add) xs)
-    // this case cannot occur`];;
+    // this case cannot occur)`;
+   `(renumber_code_locs n (closLang_App t loc_opt x1 x2) =
+         let (n,x1) = renumber_code_locs n x1 in
+         let (n,x2) = renumber_code_locs_list n x2 in
+           (n,closLang_App t NONE x1 x2))`;
+   `(renumber_code_locs n (closLang_Fn t loc vs num_args x1) =
+         let (n,x1) = renumber_code_locs n x1 in
+           (n + 2,closLang_Fn t (SOME n) vs num_args x1))`;
+   `(renumber_code_locs n (closLang_Letrec t loc vs fns x1) =
+         let (m,fns') = renumber_code_locs_list n (MAP SND fns) in
+         let (n,x1) = renumber_code_locs (m + 2 * LENGTH fns') x1 in
+           (n,closLang_Letrec t (SOME m) vs (ZIP (MAP FST fns) fns')
+               x1))`];;
 
 (* HOL4 clos_numberScript.sml:66: ML code, not ported *)
 

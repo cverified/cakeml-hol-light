@@ -184,12 +184,12 @@ let nil_unique_set_globals = prove
    the names that the port gives the constants *)
 let val_approx_sgc_free_def,val_approx_sgc_free_ind = define_wf
   `MEASURE val_approx_size`
-  [`val_approx_sgc_free x1 =
+  `val_approx_sgc_free x1 =
      match x1 with
        clos_known_ClosNoInline m n -> T
      | clos_known_Clos m n e s -> closProps_set_globals e = EMPTY_BAG
      | clos_known_Tuple tag vas -> ALL val_approx_sgc_free vas
-     | _ -> T`];;
+     | _ -> T`;;
 
 (* HOL4 clos_knownProofScript.sml:257-258: a theorem that HOL4 states as the
    value of an ML expression: val_approx_sgc_free_def *)
@@ -682,12 +682,12 @@ let letrec_case_eq = prove
   CHEAT_TAC);;
 
 let clos_knownProof_every_var_def,clos_knownProof_every_var_ind = define_rec
-  [`clos_knownProof_every_var P db_vars_Empty = T`;
-   `clos_knownProof_every_var P (db_vars_Var v) <=> P v`;
-   `clos_knownProof_every_var P (db_vars_Shift k d) <=>
-    clos_knownProof_every_var (\v. k <= v ==> P (v - k)) d`;
-   `clos_knownProof_every_var P (db_vars_Union d1 d2) <=>
-    clos_knownProof_every_var P d1 /\ clos_knownProof_every_var P d2`];;
+  `(clos_knownProof_every_var P db_vars_Empty = T) /\
+   (clos_knownProof_every_var P (db_vars_Var v) <=> P v) /\
+   (clos_knownProof_every_var P (db_vars_Shift k d) <=>
+    clos_knownProof_every_var (\v. k <= v ==> P (v - k)) d) /\
+   (clos_knownProof_every_var P (db_vars_Union d1 d2) <=>
+    clos_knownProof_every_var P d1 /\ clos_knownProof_every_var P d2)`;;
 
 let every_var_mk_Union = prove
  (`clos_knownProof_every_var P (mk_Union d1 d2) <=> clos_knownProof_every_var
@@ -986,20 +986,21 @@ let v1_size_append = prove
   xs + list_size closSem_v_size ys`,
   CHEAT_TAC);;
 
-let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind = assume_definition_rec
+let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind =
+  assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`clos_knownProof_v_rel c g (closSem_Number i) v <=> v = (closSem_Number
-    i:closSem_v)`;
-   `clos_knownProof_v_rel c g (closSem_Word64 w) v <=> v = (closSem_Word64
-    w:closSem_v)`;
-   `clos_knownProof_v_rel c g (closSem_ByteVector ws) v <=> v =
-    closSem_ByteVector ws`;
-   `clos_knownProof_v_rel c g (closSem_RefPtr b n) v <=> v = (closSem_RefPtr
-    b n:closSem_v)`;
-   `clos_knownProof_v_rel c g (closSem_Block n xs) v <=>
+  [`(clos_knownProof_v_rel c g (closSem_Number i) v <=> v = (closSem_Number
+    i:closSem_v)) /\
+    (clos_knownProof_v_rel c g (closSem_Word64 w) v <=> v = (closSem_Word64
+    w:closSem_v)) /\
+    (clos_knownProof_v_rel c g (closSem_ByteVector ws) v <=> v =
+    closSem_ByteVector ws) /\
+    (clos_knownProof_v_rel c g (closSem_RefPtr b n) v <=> v =
+    (closSem_RefPtr b n:closSem_v)) /\
+    (clos_knownProof_v_rel c g (closSem_Block n xs) v <=>
          (?ys. v = closSem_Block n ys /\ ALL2 (clos_knownProof_v_rel c
-             g) xs ys)`;
-   `clos_knownProof_v_rel c g (closSem_Closure loc_opt args1 env1 num_args e1)
+             g) xs ys)) /\
+    (clos_knownProof_v_rel c g (closSem_Closure loc_opt args1 env1 num_args e1)
     v <=>
          every_Fn_vs_NONE [e1] /\
          (?aenv env1a env1b args2 env2a env2b e2.
@@ -1011,8 +1012,9 @@ let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind = assume_definition_rec
            clos_knownProof_exp_rel c (APPEND (REPLICATE num_args
                clos_known_Other) aenv) g e1 e2 /\
            v = closSem_Closure loc_opt args2 (APPEND env2a env2b)
-               num_args e2 else F)`;
-   `clos_knownProof_v_rel c g (closSem_Recclosure loc_opt args1 env1 funs1 i) v
+               num_args e2 else F))`;
+   `(clos_knownProof_v_rel c g (closSem_Recclosure loc_opt args1 env1 funs1 i)
+     v
     <=>
          ALL (\(n,e). every_Fn_vs_NONE [e]) funs1 /\
          (let clos = (match loc_opt with NONE -> REPLICATE (LENGTH funs1)
@@ -1028,25 +1030,26 @@ let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind = assume_definition_rec
            ALL2 (clos_knownProof_f_rel c (APPEND clos aenv) g) funs1 funs2
                /\
            v = closSem_Recclosure loc_opt args2 (APPEND env2a env2b)
-               funs2 i else F)`];;
+               funs2 i else F))`];;
 
 (* HOL4 clos_knownProofScript.sml:2619-2620: a theorem that HOL4 states as
    the value of an ML expression: v_rel_def *)
 
 (* HOL4 clos_knownProofScript.sml:2622: ML code, not ported *)
 
-let v_rel_app_def = define_cases
-  [`v_rel_app c g (closSem_Number i) v args1 <=> clos_knownProof_v_rel c g
-    ((closSem_Number i:closSem_v)) v`;
-   `v_rel_app c g (closSem_Word64 w) v args1 <=> clos_knownProof_v_rel c g
-    ((closSem_Word64 w:closSem_v)) v`;
-   `v_rel_app c g (closSem_ByteVector ws) v args1 <=> clos_knownProof_v_rel
-    c g (closSem_ByteVector ws) v`;
-   `v_rel_app c g (closSem_RefPtr b n) v args1 <=> clos_knownProof_v_rel c g
-    ((closSem_RefPtr b n:closSem_v)) v`;
-   `v_rel_app c g (closSem_Block n xs) v args1 <=> clos_knownProof_v_rel c g
-    ((closSem_Block n xs:closSem_v)) v`;
-   `v_rel_app c g (closSem_Closure loc_opt pargs1 env1 num_args e1) v args1 <=>
+let v_rel_app_def = define_cases_clauses
+  [`(v_rel_app c g (closSem_Number i) v args1 <=> clos_knownProof_v_rel c g
+    ((closSem_Number i:closSem_v)) v) /\
+    (v_rel_app c g (closSem_Word64 w) v args1 <=> clos_knownProof_v_rel c g
+    ((closSem_Word64 w:closSem_v)) v) /\
+    (v_rel_app c g (closSem_ByteVector ws) v args1 <=> clos_knownProof_v_rel
+    c g (closSem_ByteVector ws) v) /\
+    (v_rel_app c g (closSem_RefPtr b n) v args1 <=> clos_knownProof_v_rel c
+    g ((closSem_RefPtr b n:closSem_v)) v) /\
+    (v_rel_app c g (closSem_Block n xs) v args1 <=> clos_knownProof_v_rel c
+    g ((closSem_Block n xs:closSem_v)) v) /\
+    (v_rel_app c g (closSem_Closure loc_opt pargs1 env1 num_args e1) v args1
+      <=>
          every_Fn_vs_NONE [e1] /\
          (?aenv env1a env1b pargs2 env2a env2b e2 aargs.
            env1 = APPEND env1a env1b /\
@@ -1060,10 +1063,10 @@ let v_rel_app_def = define_cases
                               pargs1 = []) /\
            clos_knownProof_exp_rel c (APPEND aargs aenv) g e1 e2 /\
            v = closSem_Closure loc_opt pargs2 (APPEND env2a env2b)
-               num_args e2)`;
-   `v_rel_app c g (closSem_Recclosure loc_opt pargs1 env1 funs1 i) v args1 <=>
+               num_args e2))`;
+   `(v_rel_app c g (closSem_Recclosure loc_opt pargs1 env1 funs1 i) v args1 <=>
          clos_knownProof_v_rel c g ((closSem_Recclosure loc_opt pargs1
-             env1 funs1 i:closSem_v)) v`];;
+             env1 funs1 i:closSem_v)) v)`];;
 
 let v_rel_app_NONE = prove
  (`v_rel_app c g v1 v2 NONE = clos_knownProof_v_rel c g v1 v2`,
@@ -1634,11 +1637,11 @@ let every_Fn_vs_NONE_mk_Ticks = prove
    termination *)
 let val_approx_every_Fn_SOME_def,val_approx_every_Fn_SOME_ind = define_wf
   `MEASURE val_approx_size`
-  [`val_approx_every_Fn_SOME x1 =
+  `val_approx_every_Fn_SOME x1 =
      match x1 with
        clos_known_Tuple _ vs -> ALL val_approx_every_Fn_SOME vs
-     | clos_known_Clos _2 _3 b _4 -> every_Fn_SOME [b]
-     | _ -> T`];;
+     | clos_known_Clos _ _ b _ -> every_Fn_SOME [b]
+     | _ -> T`;;
 add_simp val_approx_every_Fn_SOME_def;;
 
 let val_approx_every_Fn_SOME_merge = prove
@@ -1682,11 +1685,11 @@ let known_every_Fn_SOME = prove
    termination *)
 let val_approx_every_Fn_vs_NONE_def,val_approx_every_Fn_vs_NONE_ind = define_wf
   `MEASURE val_approx_size`
-  [`val_approx_every_Fn_vs_NONE x1 =
+  `val_approx_every_Fn_vs_NONE x1 =
      match x1 with
        clos_known_Tuple _ vs -> ALL val_approx_every_Fn_vs_NONE vs
-     | clos_known_Clos _6 _7 b _8 -> every_Fn_vs_NONE [b]
-     | _ -> T`];;
+     | clos_known_Clos _ _ b _ -> every_Fn_vs_NONE [b]
+     | _ -> T`;;
 add_simp val_approx_every_Fn_vs_NONE_def;;
 
 let val_approx_every_Fn_vs_NONE_merge = prove
@@ -1731,12 +1734,12 @@ let known_every_Fn_vs_NONE = prove
    the names that the port gives the constants *)
 let val_approx_no_Labels_def,val_approx_no_Labels_ind = define_wf
   `MEASURE val_approx_size`
-  [`val_approx_no_Labels x1 =
+  `val_approx_no_Labels x1 =
      match x1 with
        clos_known_ClosNoInline m n -> T
      | clos_known_Clos m n e s -> no_Labels e
      | clos_known_Tuple tag vas -> ALL val_approx_no_Labels vas
-     | _ -> T`];;
+     | _ -> T`;;
 (* HOL4 clos_knownProofScript.sml:5516-5522: ML code, not ported *)
 
 (* HOL4 clos_knownProofScript.sml:5524-5527: a theorem that HOL4 states as
@@ -1793,12 +1796,12 @@ let compile_no_Labels = prove
    the names that the port gives the constants *)
 let val_approx_obeys_max_app_def,val_approx_obeys_max_app_ind = define_wf
   `MEASURE (val_approx_size o SND)`
-  [`val_approx_obeys_max_app k x2 =
+  `val_approx_obeys_max_app k x2 =
      match x2 with
        clos_known_ClosNoInline m n -> T
      | clos_known_Clos m n e s -> obeys_max_app k e
      | clos_known_Tuple tag vas -> ALL (val_approx_obeys_max_app k) vas
-     | _ -> T`];;
+     | _ -> T`;;
 
 let decide_inline_obeys_max_app = prove
  (`val_approx_obeys_max_app k b /\ decide_inline a b c d = inlD_LetInline e ==>

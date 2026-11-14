@@ -37,17 +37,17 @@ let pegresult_INDUCT,pegresult_RECURSION = define_datatype
      peg_Success ('a) ('c) ((locs#'e) option)
    | peg_Failure locs ('e)";;
 let isSuccess_def = define_cases
-  [`isSuccess (peg_Success _4 _5 _6) = T`;
-   `isSuccess (peg_Failure _7 _8) = F`];;
+  `(isSuccess (peg_Success _ _ _) = T) /\
+   (isSuccess (peg_Failure _ _) = F)`;;
 add_simp isSuccess_def;;
 let isFailure_def = define_cases
-  [`isFailure (peg_Success _12 _13 _14) = F`;
-   `isFailure (peg_Failure _15 _16) = T`];;
+  `(isFailure (peg_Success _ _ _) = F) /\
+   (isFailure (peg_Failure _ _) = T)`;;
 add_simp isFailure_def;;
 
 let resultmap_def = define_cases
-  [`resultmap f (peg_Success a c eo) = peg_Success a (f c) eo`;
-   `resultmap f (peg_Failure fl fe) = peg_Failure fl fe`];;
+  `(resultmap f (peg_Success a c eo) = peg_Success a (f c) eo) /\
+   (resultmap f (peg_Failure fl fe) = peg_Failure fl fe)`;;
 add_simp resultmap_def;;
 
 let MAXerr_def = new_definition
@@ -64,8 +64,8 @@ let optmax_def = new_definition
 
 (* HOL4 pegScript.sml:84: the overload EOF, which the port expands *)
 let sloc_def = define_cases
-  [`sloc [] = (Locs EOFpt EOFpt)`;
-   `sloc (CONS h t) = SND h`];;
+  `(sloc [] = (Locs EOFpt EOFpt)) /\
+   (sloc (CONS h t) = SND h)`;;
 let peg_eval = cake_inductive
   `((!s c. peg_eval G (s,peg_empty c) (peg_Success s c NONE))) /\
    ((!n s f res.
@@ -193,19 +193,19 @@ let wfpeg = cake_inductive
 let _ = size_thms "pegsym";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let subexprs_def,subexprs_ind = define_wf
+let subexprs_def,subexprs_ind = define_wf_clauses
   `MEASURE (\x0. pegsym_size (\x. 0) (\x. 0) (\x. 0) (\x. 0) x0)`
-  [`subexprs (peg_any f1) = {peg_any f1}`;
-   `subexprs (peg_empty c) = {peg_empty c}`;
-   `subexprs (peg_tok t f2) = {peg_tok t f2}`;
-   `subexprs (peg_error e) = {(peg_error e:('a,'b,'c,'e)pegsym)}`;
-   `subexprs (peg_nt s f) = {peg_nt s f}`;
-   `subexprs (peg_not e c) = peg_not e c INSERT subexprs e`;
-   `subexprs (peg_seq e1 e2 f3) = peg_seq e1 e2 f3 INSERT (subexprs e1 UNION
-    subexprs e2)`;
-   `subexprs (peg_choice e1 e2 f4) =
-        peg_choice e1 e2 f4 INSERT (subexprs e1 UNION subexprs e2)`;
-   `subexprs (peg_rpt e f5) = peg_rpt e f5 INSERT subexprs e`];;
+  [`(subexprs (peg_any f1) = {peg_any f1}) /\
+    (subexprs (peg_empty c) = {peg_empty c}) /\
+    (subexprs (peg_tok t f2) = {peg_tok t f2}) /\
+    (subexprs (peg_error e) = {(peg_error e:('a,'b,'c,'e)pegsym)}) /\
+    (subexprs (peg_nt s f) = {peg_nt s f}) /\
+    (subexprs (peg_seq e1 e2 f3) = peg_seq e1 e2 f3 INSERT (subexprs e1
+    UNION subexprs e2)) /\
+    (subexprs (peg_choice e1 e2 f4) =
+        peg_choice e1 e2 f4 INSERT (subexprs e1 UNION subexprs e2))`;
+   `(subexprs (peg_not e c) = peg_not e c INSERT subexprs e) /\
+    (subexprs (peg_rpt e f5) = peg_rpt e f5 INSERT subexprs e)`];;
 add_simp subexprs_def;;
 
 let gexprs_def = new_definition
@@ -224,6 +224,6 @@ let ignoreR_def = new_definition
   `ignoreR s1 s2 = peg_seq s1 s2 (\a b. a)`;;
 
 let choicel_def,choicel_ind = define_rec
-  [`peg_choicel [] = peg_not (peg_empty ARB) ARB`;
-   `peg_choicel (CONS h t) = peg_choice h (peg_choicel t) (\s. sum_CASE s
-    I I)`];;
+  `(peg_choicel [] = peg_not (peg_empty ARB) ARB) /\
+   (peg_choicel (CONS h t) = peg_choice h (peg_choicel t) (\s. sum_CASE s
+    I I))`;;

@@ -444,11 +444,11 @@ let flat_to_clos_dest_Constant_pmatch = prove
   CHEAT_TAC);;
 
 let dest_Constants_def,dest_Constants_ind = define_rec
-  [`dest_Constants [] = SOME []`;
-   `dest_Constants (CONS c cs) =
+  `(dest_Constants [] = SOME []) /\
+   (dest_Constants (CONS c cs) =
       match flat_to_clos_dest_Constant c with NONE -> NONE
       | SOME x -> (match dest_Constants cs with NONE -> NONE
-                  | SOME xs -> SOME (CONS x xs))`];;
+                  | SOME xs -> SOME (CONS x xs)))`;;
 
 let SmartCons_def = new_definition
   `SmartCons t tag xs =
@@ -459,52 +459,53 @@ let SmartCons_def = new_definition
        (ConstCons tag (REVERSE cs)))) []`;;
 
 let _ = size_thms "flatLang_exp";;
-let flat_to_clos_compile_def,flat_to_clos_compile_ind = assume_definition_rec
+let flat_to_clos_compile_def,flat_to_clos_compile_ind =
+  assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`flat_to_clos_compile m [] = []`;
-   `flat_to_clos_compile m (CONS x (CONS y xs)) = APPEND
-    (flat_to_clos_compile m [x]) (flat_to_clos_compile m (CONS y xs))`;
-   `flat_to_clos_compile m [flatLang_Raise t e] = [closLang_Raise t (HD
-    (flat_to_clos_compile m [e]))]`;
-   `flat_to_clos_compile m [flatLang_Lit t l] = [compile_lit t l]`;
-   `flat_to_clos_compile m [flatLang_Var_local t v] = [closLang_Var t
-    (indexedLists_findi (SOME v) m)]`;
-   `flat_to_clos_compile m [flatLang_Con t n es] =
+  [`(flat_to_clos_compile m [] = []) /\
+    (flat_to_clos_compile m (CONS x (CONS y xs)) = APPEND
+    (flat_to_clos_compile m [x]) (flat_to_clos_compile m (CONS y xs))) /\
+    (flat_to_clos_compile m [flatLang_Raise t e] = [closLang_Raise t (HD
+    (flat_to_clos_compile m [e]))]) /\
+    (flat_to_clos_compile m [flatLang_Lit t l] = [compile_lit t l]) /\
+    (flat_to_clos_compile m [flatLang_Var_local t v] = [closLang_Var t
+    (indexedLists_findi (SOME v) m)]) /\
+    (flat_to_clos_compile m [flatLang_Con t n es] =
          let tag = (match n with SOME (t,_) -> t | _ -> 0) in
-           [SmartCons t tag (flat_to_clos_compile m (REVERSE es))]`;
-   `flat_to_clos_compile m [flatLang_App t op es] =
+           [SmartCons t tag (flat_to_clos_compile m (REVERSE es))]) /\
+    (flat_to_clos_compile m [flatLang_App t op es] =
          match dest_nop op es with SOME e -> flat_to_clos_compile m [e]
-         | NONE -> [flat_to_clos_compile_op t op (flat_to_clos_compile m
-             (REVERSE es))]`;
-   `flat_to_clos_compile m [flatLang_Fun t v e] =
-         [closLang_Fn t NONE NONE 1 (HD (flat_to_clos_compile (CONS
-             (SOME v) m) [e]))]`;
-   `flat_to_clos_compile m [flatLang_If t x1 x2 x3] =
+         | NONE -> [flat_to_clos_compile_op t op (flat_to_clos_compile
+             m (REVERSE es))]) /\
+    (flat_to_clos_compile m [flatLang_If t x1 x2 x3] =
          [closLang_If t (HD (flat_to_clos_compile m [x1]))
                (HD (flat_to_clos_compile m [x2]))
-               (HD (flat_to_clos_compile m [x3]))]`;
-   `flat_to_clos_compile m [flatLang_Let t vo e1 e2] =
+               (HD (flat_to_clos_compile m [x3]))]) /\
+    (flat_to_clos_compile m [flatLang_Let t vo e1 e2] =
          [closLang_Let t (flat_to_clos_compile m [e1]) (HD
-             (flat_to_clos_compile (CONS vo m) [e2]))]`;
-   `flat_to_clos_compile m [flatLang_Mat t e pes] = [closLang_Op t
-    (closLang_IntOp (closLang_Const (&0))) []]`;
-   `flat_to_clos_compile m [flatLang_Handle t e pes] =
+             (flat_to_clos_compile (CONS vo m) [e2]))]) /\
+    (flat_to_clos_compile m [flatLang_Mat t e pes] = [closLang_Op t
+    (closLang_IntOp (closLang_Const (&0))) []]) /\
+    (flat_to_clos_compile m [flatLang_Handle t e pes] =
          match dest_pat pes with SOME (v,h) -> [closLang_Handle t (HD
              (flat_to_clos_compile m [e])) (HD (flat_to_clos_compile (CONS
              (SOME v) m) [h]))]
-         | _ -> flat_to_clos_compile m [e]`;
-   `flat_to_clos_compile m [flatLang_Letrec t funs e] =
+         | _ -> flat_to_clos_compile m [e])`;
+   `(flat_to_clos_compile m [flatLang_Fun t v e] =
+         [closLang_Fn t NONE NONE 1 (HD (flat_to_clos_compile (CONS
+             (SOME v) m) [e]))]) /\
+    (flat_to_clos_compile m [flatLang_Letrec t funs e] =
          let new_m = APPEND (MAP (\n. SOME (FST n)) funs) m in
            [closLang_Letrec (MAP (\n. join_strings t (FST n)) funs) NONE
                NONE
               (MAP (\(f,v,x). (1,HD (flat_to_clos_compile (CONS (SOME v)
                   new_m) [x]))) funs)
-              (HD (flat_to_clos_compile new_m [e]))]`];;
+              (HD (flat_to_clos_compile new_m [e]))])`];;
 
 let compile_decs_def,compile_decs_ind = define_rec
-  [`flat_to_clos_compile_decs [] = []`;
-   `flat_to_clos_compile_decs (CONS e xs) = APPEND (flat_to_clos_compile
-    [] [e]) (flat_to_clos_compile_decs xs)`];;
+  `(flat_to_clos_compile_decs [] = []) /\
+   (flat_to_clos_compile_decs (CONS e xs) = APPEND (flat_to_clos_compile
+    [] [e]) (flat_to_clos_compile_decs xs))`;;
 
 let flat_to_clos_compile_prog_def = new_definition
   `flat_to_clos_compile_prog xs =

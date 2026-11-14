@@ -38,8 +38,8 @@ let _ = do_list hide_constant ["id"];;
 (* HOL4 envRelScript.sml:16-23: the tactic that proves the termination *)
 let convert_t_def,convert_t_ind = define_shaped_rec
   "nested"
-  [`convert_t (Infer_Tvar_db n) = Tvar_db n`;
-   `convert_t (Infer_Tapp ts tc) = Tapp (MAP convert_t ts) tc`];;
+  `(convert_t (Infer_Tvar_db n) = Tvar_db n) /\
+   (convert_t (Infer_Tapp ts tc) = Tapp (MAP convert_t ts) tc)`;;
 
 let convert_env_def = new_definition
   `convert_env s env = MAP (\(x,t). (x,convert_t (t_walkstar s t))) env`;;

@@ -50,12 +50,12 @@ let mkCharS_def = new_definition
 
 let read_while_def,read_while_ind = define_shaped_rec
   "match"
-  [`read_while P x2 s =
+  `read_while P x2 s =
      match x2 with
        "" -> (IMPLODE (REVERSE s),"")
      | CONS c cs ->
         if P c then read_while P cs (CONS c s)
-               else (IMPLODE (REVERSE s),CONS c cs)`];;
+               else (IMPLODE (REVERSE s),CONS c cs)`;;
 
 let read_while_thm = prove
  (`!cs s cs' s'.
@@ -112,7 +112,7 @@ let read_char_as_3digits_reduces = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lexer_fun_read_string_def,lexer_fun_read_string_ind = define_guess_cheat
-  [`lexer_fun_read_string str s (loc:locn) =
+  `lexer_fun_read_string str s (loc:locn) =
      if str = "" then (ErrorS,loc,"") else if HD str = (CHR 34) then
        (StringS s,loc,TL str) else if HD str = (CHR 10) then (ErrorS,next_line
        loc,TL str) else if ~(HD str = (CHR 92)) then
@@ -142,7 +142,7 @@ let lexer_fun_read_string_def,lexer_fun_read_string_ind = define_guess_cheat
                       [c])
                               (next_loc 4 loc)
                   else (ErrorS,loc,TL str)
-       | _ -> (ErrorS,loc,TL str)`];;
+       | _ -> (ErrorS,loc,TL str)`;;
 
 let read_string_thm = prove
  (`!s t l l' x1 x2. (lexer_fun_read_string s t l = (x1,l',x2)) ==>
@@ -153,9 +153,9 @@ let read_string_thm = prove
    what the port found for it *)
 let skip_comment_def,skip_comment_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size char_size x0)`
-  [`skip_comment "" d _ = NONE`;
-   `skip_comment [x] d _ = NONE`;
-   `skip_comment (CONS x (CONS y xs)) d loc =
+  `(skip_comment "" d _ = NONE) /\
+   (skip_comment [x] d _ = NONE) /\
+   (skip_comment (CONS x (CONS y xs)) d loc =
         if [x; y] = "(*" then
           skip_comment xs (d + (1:num)) (next_loc 2 loc)
         else if [x; y] = "*)" then
@@ -163,7 +163,7 @@ let skip_comment_def,skip_comment_ind = define_wf
            else skip_comment xs (d - 1) (next_loc 2 loc))
         else if ORD x = 10 then
           skip_comment (CONS y xs) d (next_line loc)
-        else skip_comment (CONS y xs) d (next_loc 1 loc)`];;
+        else skip_comment (CONS y xs) d (next_loc 1 loc))`;;
 
 let skip_comment_thm = prove
  (`!xs d l l' str. (skip_comment xs d l = SOME (str,l')) ==> LENGTH str <=
@@ -171,14 +171,14 @@ let skip_comment_thm = prove
   CHEAT_TAC);;
 
 let read_FFIcall_def,read_FFIcall_ind = define_rec
-  [`read_FFIcall "" acc loc = (ErrorS,loc,"")`;
-   `read_FFIcall (CONS c s0) acc loc =
+  `(read_FFIcall "" acc loc = (ErrorS,loc,"")) /\
+   (read_FFIcall (CONS c s0) acc loc =
           if c = (CHR 41) then
             (FFIS (REVERSE acc),next_loc 2 loc,s0)
           else if c = (CHR 10) then (ErrorS,loc,s0)
           else if isSpace c then
             read_FFIcall s0 acc (next_loc 1 loc)
-          else read_FFIcall s0 (CONS c acc) (next_loc 1 loc)`];;
+          else read_FFIcall s0 (CONS c acc) (next_loc 1 loc))`;;
 
 let read_FFIcall_reduces_input = prove
  (`!s0 a l0 t l s.
@@ -186,15 +186,15 @@ let read_FFIcall_reduces_input = prove
   CHEAT_TAC);;
 
 let read_REPLcommand_def,read_REPLcommand_ind = define_rec
-  [`read_REPLcommand "" acc loc = (ErrorS,loc,"")`;
-   `read_REPLcommand (CONS c s0) acc loc =
+  `(read_REPLcommand "" acc loc = (ErrorS,loc,"")) /\
+   (read_REPLcommand (CONS c s0) acc loc =
           if c = (CHR 125) then
             (FFIS (REVERSE acc),locn_colupdate ((+) 2) loc,s0)
           else if c = (CHR 10) then (ErrorS,loc,s0)
           else if isSpace c then
             read_REPLcommand s0 acc (locn_colupdate ((+) 1) loc)
           else read_REPLcommand s0 (CONS c acc) (locn_colupdate ((+)
-              1) loc)`];;
+              1) loc))`;;
 
 let read_REPLcommand_reduces_input = prove
  (`!s0 a l0 t l s.
@@ -218,8 +218,8 @@ let read_Ident_ret_def = new_definition
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let read_Ident_def,read_Ident_ind = define_guess_cheat
-  [`read_Ident [] loc acc = (ErrorS,loc,[])`;
-   `read_Ident (CONS c str) loc acc =
+  `(read_Ident [] loc acc = (ErrorS,loc,[])) /\
+   (read_Ident (CONS c str) loc acc =
       if is_single_char_symbol c then
         // single character tokens, i.e. delimiters
         if NULL acc then
@@ -238,7 +238,7 @@ let read_Ident_def,read_Ident_ind = define_guess_cheat
             else read_Ident_ret acc n new_loc rest
       else (
          // input not recognised
-         ErrorS,loc,str)`];;
+         ErrorS,loc,str))`;;
 
 (* next_sym reads the next symbol from a string, returning NONE if at eof *)
 (* the termination relation that HOL4 gives is
@@ -247,8 +247,8 @@ let read_Ident_def,read_Ident_ind = define_guess_cheat
    port lets its own machinery find one *)
 (* HOL4 lexer_funScript.sml:314-320: the tactic that proves the termination *)
 let next_sym_def,next_sym_ind = define_guess
-  [`next_sym "" _ = NONE`;
-   `next_sym (CONS c str) loc =
+  `(next_sym "" _ = NONE) /\
+   (next_sym (CONS c str) loc =
          if c = (CHR 10) then
             // skip new line
             next_sym str (next_line loc)
@@ -310,7 +310,7 @@ let next_sym_def,next_sym_ind = define_guess
            | SOME (rest,loc') -> next_sym rest loc'
          else if c = (CHR 95) then SOME (OtherS "_",Locs loc loc,str)
          else let (tok',end_loc,rest) = read_Ident (CONS c str) loc [] in
-             SOME (tok',Locs loc end_loc,rest)`];;
+             SOME (tok',Locs loc end_loc,rest))`;;
 
 (* EVAL “next_sym "  Foo.Bar.<  " (POSN 0 0)” *)
 
@@ -404,8 +404,8 @@ let get_token_def = new_definition
        then tokens_TyvarT (implode s) else processIdent s`;;
 
 let to_path_def,to_path_ind = define_rec
-  [`to_path [] = tokens_End`;
-   `to_path (CONS x xs) = tokens_Mod x (to_path xs)`];;
+  `(to_path [] = tokens_End) /\
+   (to_path (CONS x xs) = tokens_Mod x (to_path xs))`;;
 
 let token_of_sym_def = new_definition
   `token_of_sym s =
@@ -439,11 +439,11 @@ let next_token_LESS = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lexer_fun_aux_def,lexer_fun_aux_ind = define_guess_cheat
-  [`lexer_fun_aux input loc =
+  `lexer_fun_aux input loc =
      match next_token input loc with NONE -> []
      | SOME (token,Locs loc' loc'',rest_of_input) -> CONS (token,Locs loc'
        loc'')
-             (lexer_fun_aux rest_of_input (next_loc 1 loc''))`];;
+             (lexer_fun_aux rest_of_input (next_loc 1 loc''))`;;
 
 let lexer_fun_def = new_definition
   `lexer_fun input = lexer_fun_aux input init_loc`;;
@@ -465,8 +465,8 @@ let lexer_fun_def = new_definition
 (* split a list of tokens at top-level semicolons *)
 
 let toplevel_semi_dex_def,toplevel_semi_dex_ind = define_rec
-  [`toplevel_semi_dex (i:num) (d:num) [] = NONE`;
-   `toplevel_semi_dex (i:num) (d:num) (CONS (h,l) t) =
+  `(toplevel_semi_dex (i:num) (d:num) [] = NONE) /\
+   (toplevel_semi_dex (i:num) (d:num) (CONS (h,l) t) =
         if h = tokens_SemicolonT /\ (d = 0) then SOME (i + 1)
         else if h = tokens_LetT then toplevel_semi_dex (i + 1) (d + 1) t
         else if h = tokens_StructT then toplevel_semi_dex (i + 1) (d + 1) t
@@ -474,7 +474,7 @@ let toplevel_semi_dex_def,toplevel_semi_dex_ind = define_rec
         else if h = tokens_LparT then toplevel_semi_dex (i + 1) (d + 1) t
         else if h = tokens_EndT then toplevel_semi_dex (i + 1) (d - 1) t
         else if h = tokens_RparT then toplevel_semi_dex (i + 1) (d - 1) t
-        else toplevel_semi_dex (i + 1) d t`];;
+        else toplevel_semi_dex (i + 1) d t)`;;
 
 (* [local] *)
 let toplevel_semi_dex_non0 = prove
@@ -489,10 +489,9 @@ let toplevel_semi_dex_non0 = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let split_top_level_semi_def,split_top_level_semi_ind = define_guess_cheat
-  [`(split_top_level_semi toks =
+  `(split_top_level_semi toks =
     match toplevel_semi_dex 0 0 toks with NONE -> []
-    | SOME i -> CONS (TAKE i toks) (split_top_level_semi (DROP i
-      toks)))`];;
+    | SOME i -> CONS (TAKE i toks) (split_top_level_semi (DROP i toks)))`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

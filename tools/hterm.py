@@ -1214,9 +1214,6 @@ class Ctx:
                                        # not place in one
     self.recpick = {}                  # field -> the record of it
                                        # that the block settles on
-    self.lone_wild = False             # is the pattern that is
-                                       # printed now one with a
-                                       # single wildcard in it?
     self.loose_rhs = False             # may the right hand side
                                        # of the equation that the
                                        # whole quotation is stand
@@ -2158,13 +2155,9 @@ class Printer:
     k = e.kind
     if k == 'id':
       n = e.name
-      # a wildcard of a pattern is a variable of HOL Light, so two
-      # of them in one pattern would be the same variable and the
-      # pattern would say that the two places are equal: the port
-      # numbers them, and leaves the one of a pattern that has a
-      # single wildcard as the _ that the source writes
-      if n == '_':
-        return '_' if self.ctx.lone_wild else self.ctx.fresh()
+      # a wildcard is the _ that the source writes: every _ of a
+      # quotation is a variable of its own (ml/lib/wildcard.ml)
+      if n == '_': return '_'
       if n in self.ctx.vars: return self.ctx.vars[n]
       if n in self.ctx.overloads:
         c = eta_contract(self.ctx.overloads[n])
@@ -2578,15 +2571,12 @@ class Printer:
           # Int of its own v_ty)
           oldt = self.ctx.armtys
           self.ctx.armtys = armts
-          oldw = self.ctx.lone_wild
-          self.ctx.lone_wild = count_wild(p) == 1
           try:
             # a pattern is a constructor under its arguments, and
             # HOL Light reads one without parentheses round it
             ps = self.pr(p, 2)
           finally:
             self.ctx.armtys = oldt
-            self.ctx.lone_wild = oldw
           # the body of an arm is printed with the theories that
           # CON_BODY names, as the body of a clause is: a match
           # in a definition that the port prints as one term is
@@ -2827,7 +2817,7 @@ class Printer:
       # rest does not use, as HOL4's monad_unitbind does
       if MONAD[0] and not MONAD[0].get('ignorebind'):
         return (nl + self.mname('bind') + ' ' + body +
-                ' (\\' + self.ctx.fresh() + '. ' + rest + ')')
+                ' (\\_. ' + rest + ')')
       return (nl + self.mname('ignorebind') + ' ' + body +
               ' (' + rest + ')')
     return (nl + self.mname('bind') + ' ' + body + ' (\\' +

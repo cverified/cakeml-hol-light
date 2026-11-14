@@ -27,7 +27,7 @@ let _ = size_thms "wordLang_prog";;
    what the port found for it *)
 let remove_must_terminate_def,remove_must_terminate_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
-  [`remove_must_terminate prog =
+  `remove_must_terminate prog =
      match prog with
        wordLang_Seq p0 p1 -> wordLang_Seq (remove_must_terminate p0)
          (remove_must_terminate p1)
@@ -46,7 +46,7 @@ let remove_must_terminate_def,remove_must_terminate_ind = define_wf
          wordLang_Call ret dest args h
      | wordLang_Loop names body exit_names ->
        wordLang_Loop names (remove_must_terminate body) exit_names
-     | prog -> prog`];;
+     | prog -> prog`;;
 
 let remove_must_terminate_pmatch = prove
  (`!prog.

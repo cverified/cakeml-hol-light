@@ -526,7 +526,7 @@ let source_to_flatProof_match_result_rel_def = new_definition
           (alist_to_ns env'') env_i1)
      | (No_match,No_match) -> T
      | (Match_type_error,_) -> T
-     | (_1,_2) -> F`;;
+     | (_,_) -> F`;;
 
 let match_result_rel_imp = prove
  (`source_to_flatProof_match_result_rel genv env m1 m2 ==>
@@ -1673,7 +1673,7 @@ let do_eval = prove
        (K eval_config') t)) /\
    env_gen_rel (mk_environment_generation_store 0 (environment_store_next
      (source_to_flat_config_envs c)) LN) eval_state /\
-   (let (_3,_4,_5,gen,_6) = source_to_flat_compile_decs [] 1
+   (let (_,_,_,gen,_) = source_to_flat_compile_decs [] 1
      (source_to_flat_config_next c)
      (lookup_env_id env_id (source_to_flat_config_envs c))
      (mk_environment_generation_store 0 (environment_store_next
@@ -2346,7 +2346,7 @@ let source_to_flatProof_mem_size_lemma = prove
    the names that the port gives the constants *)
 let num_bindings_def,num_bindings_ind = define_wf
   `MEASURE dec_size`
-  [`num_bindings x1 =
+  `num_bindings x1 =
      match x1 with
        Dlet _ p e ->
         (match simple_dlet p e with SOME _ -> 0 | _ -> LENGTH
@@ -2356,7 +2356,7 @@ let num_bindings_def,num_bindings_ind = define_wf
      | Dlocal lds ds ->
            SUM (MAP num_bindings lds) + SUM (MAP num_bindings ds)
      | Denv _ -> 1
-     | _ -> 0`];;
+     | _ -> 0`;;
 add_simp num_bindings_def;;
 
 let compile_decs_num_bindings = prove

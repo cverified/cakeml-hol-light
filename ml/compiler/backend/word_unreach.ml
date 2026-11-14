@@ -37,7 +37,7 @@ let SimpSeq_def = new_definition
      let default = wordLang_Seq p1 p2 in
        if p2 = wordLang_Skip then p1 else match p1 with wordLang_Skip -> p2
          | wordLang_Raise _ -> p1
-         | wordLang_Return _1 _2 -> p1
+         | wordLang_Return _ _ -> p1
          | wordLang_Break _ -> p1
          | wordLang_Continue _ -> p1
          | wordLang_Move n1 l1 ->
@@ -55,7 +55,7 @@ let _ = size_thms "wordLang_prog";;
    what the port found for it *)
 let seq_assoc_right_def,seq_assoc_right_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_prog_size (\x. 0) x0)`
-  [`Seq_assoc_right p1 acc =
+  `Seq_assoc_right p1 acc =
      match p1 with
        wordLang_Skip -> acc
      | wordLang_Seq q1 q2 ->
@@ -79,7 +79,7 @@ let seq_assoc_right_def,seq_assoc_right_ind = define_wf
      | wordLang_Loop names body exit_names ->
         SimpSeq (wordLang_Loop names (Seq_assoc_right body wordLang_Skip)
           exit_names) acc
-     | p1 -> SimpSeq p1 acc`];;
+     | p1 -> SimpSeq p1 acc`;;
 
 let remove_unreach_def = new_definition
   `remove_unreach (e:'a wordLang_prog) =

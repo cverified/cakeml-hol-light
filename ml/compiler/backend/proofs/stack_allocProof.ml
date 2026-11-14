@@ -2577,13 +2577,13 @@ let next_lab_thm = prove
       next_lab (p:'a stackLang_prog) 2 =
       match p with stackLang_Seq p1 p2 -> MAX (next_lab p1 2) (next_lab p2
         2)
-      | stackLang_If _1 _2 _3 p1 p2 -> MAX (next_lab p1 2) (next_lab p2 2)
+      | stackLang_If _ _ _ p1 p2 -> MAX (next_lab p1 2) (next_lab p2 2)
       | stackLang_Loop p -> next_lab p 2
       | stackLang_Call NONE _ NONE -> 2
-      | stackLang_Call NONE _4 (SOME (_5,_6,l2)) -> MAX (l2 + 2) 2
-      | stackLang_Call (SOME (p,_7,_8,l2)) _9 NONE -> MAX (next_lab p 2) (l2
-        + 2)
-      | stackLang_Call (SOME (p,_10,_11,l2)) _12 (SOME (p',_13,l3)) ->
+      | stackLang_Call NONE _ (SOME (_,_,l2)) -> MAX (l2 + 2) 2
+      | stackLang_Call (SOME (p,_,_,l2)) _ NONE -> MAX (next_lab p 2) (l2 +
+        2)
+      | stackLang_Call (SOME (p,_,_,l2)) _ (SOME (p',_,l3)) ->
            MAX (MAX (next_lab p 2) (next_lab p' 2)) (MAX l2 l3 + 2)
       | _ -> 2`,
   CHEAT_TAC);;

@@ -283,9 +283,9 @@ let compile_error_INDUCT,compile_error_RECURSION = define_datatype
    the names that the port gives the constants *)
 let find_next_newline_def,find_next_newline_ind = define_wf
   `MEASURE (\(n,s). strlen s - n)`
-  [`find_next_newline n s =
+  `find_next_newline n s =
      if strlen s <= n then n else if strsub s n = (CHR 10) then n else
-       find_next_newline (n + 1) s`];;
+       find_next_newline (n + 1) s`;;
 
 let safe_substring_def = new_definition
   `safe_substring s n l =
@@ -298,11 +298,11 @@ let safe_substring_def = new_definition
    what the port found for it *)
 let get_nth_line_def,get_nth_line_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x0)`
-  [`get_nth_line k s n =
+  `get_nth_line k s n =
      if k = 0 then
        let n1 = find_next_newline n s in
          safe_substring s n (n1 - n)
-     else get_nth_line (k - (1:num)) s (find_next_newline n s + 1)`];;
+     else get_nth_line (k - (1:num)) s (find_next_newline n s + 1)`;;
 
 let locs_to_string_def = new_definition
   `locs_to_string input x2 =
@@ -341,17 +341,17 @@ let parse_cml_input_def = new_definition
      match parse_prog (lexer_fun input) with peg_Failure l _ -> INL (strcat
        (implode "Parsing failed at ") (locs_to_string (implode input) (SOME
        l)))
-     | peg_Success _1 x _2 -> INR x`;;
+     | peg_Success _ x _ -> INR x`;;
 
 let compiler_compile_def = new_definition
   `compiler_compile c prelude input =
-     let _3 = empty_ffi (implode "finished: start up") in
+     let _ = empty_ffi (implode "finished: start up") in
      match
        (if compiler_config_input_is_sexp c then parse_sexp_input input
        else parse_cml_input input) with INL msg -> (M_failure (ParseError
          msg),misc_Nil)
      | INR prog ->
-        let _4 = empty_ffi (implode "finished: lexing and parsing") in
+        let _ = empty_ffi (implode "finished: lexing and parsing") in
         let full_prog = (if compiler_config_exclude_prelude c then prog else
           APPEND prelude prog) in
         match
@@ -362,7 +362,7 @@ let compiler_compile_def = new_definition
             (M_failure (TypeError (mlstring_concat [msg; (implode " at ");
                 locs_to_string (implode input) locs])),misc_Nil)
         | M_success ic ->
-           let _5 = empty_ffi (implode "finished: type inference") in
+           let _ = empty_ffi (implode "finished: type inference") in
            if compiler_config_only_print_types c then
              (M_failure (TypeError (mlstring_concat (APPEND (APPEND
                [(implode "\n")]
@@ -388,7 +388,7 @@ cake_declare "pan_compile_tap"
 
 let compile_pancake_def = new_definition
   `compile_pancake asm_conf c input =
-   let _6 = empty_ffi (implode "finished: start up") in
+   let _ = empty_ffi (implode "finished: start up") in
    match parse_topdecs_to_ast input with INR errs ->
      ((M_failure (ParseError (mlstring_concat
         (MAP (\(msg,loc). mlstring_concat [msg; (implode " at ");
@@ -399,7 +399,7 @@ let compile_pancake_def = new_definition
        (match static_check funs with (errorMonad_error e,warns) ->
          (M_failure (StaticError e),misc_Nil,MAP StaticError warns)
        | (errorMonad_return one,warns) ->
-           let _7 = empty_ffi (implode "finished: lexing and parsing") in
+           let _ = empty_ffi (implode "finished: lexing and parsing") in
            match pan_compile_tap asm_conf c funs with (NONE,td) ->
              (M_failure AssembleError,td,MAP StaticError warns)
            | (SOME (bytes,data,c),td) -> (M_success (bytes,data,c),td,MAP
@@ -407,20 +407,20 @@ let compile_pancake_def = new_definition
 
 (* The top-level compiler *)
 let error_to_str_def = define_cases
-  [`error_to_str (ParseError s) =
+  `(error_to_str (ParseError s) =
          mlstring_concat [(implode "### ERROR: parse error\n"); s;
-             (implode "\n")]`;
-   `error_to_str (TypeError s) =
+             (implode "\n")]) /\
+   (error_to_str (TypeError s) =
          // if the first char in the message is a newline char then it isn't an error
          if (if strlen s = 0 then T else if strsub s 0 = (CHR 10) then F
              else T) then
            mlstring_concat [(implode "### ERROR: type error\n"); s;
                (implode "\n")]
-         else s`;
-   `error_to_str (ConfigError s) = mlstring_concat [(implode
-    "### ERROR: config error\n"); s; (implode "\n")]`;
-   `error_to_str AssembleError = (implode "### ERROR: assembly error\n")`;
-   `error_to_str (StaticError e) =
+         else s) /\
+   (error_to_str (ConfigError s) = mlstring_concat [(implode
+    "### ERROR: config error\n"); s; (implode "\n")]) /\
+   (error_to_str AssembleError = (implode "### ERROR: assembly error\n")) /\
+   (error_to_str (StaticError e) =
         match e with
           ScopeErr s -> mlstring_concat [(implode
               "### ERROR: scope error\n"); s; (implode "\n")]
@@ -429,7 +429,7 @@ let error_to_str_def = define_cases
         | GenErr s -> mlstring_concat [(implode
             "### ERROR: static error\n"); s; (implode "\n")]
         | ShapeErr s -> mlstring_concat [(implode
-            "### ERROR: shape error\n"); s; (implode "\n")]`];;
+            "### ERROR: shape error\n"); s; (implode "\n")])`;;
 
 let is_error_msg_def = new_definition
   `is_error_msg x = isPrefix (implode "###") x`;;
@@ -452,20 +452,20 @@ let parse_bool_def = new_definition
 (* Finds the first occurence of the flag and
   returns the rest of the string after it *)
 let find_str_def,find_str_ind = define_rec
-  [`find_str flag [] = NONE`;
-   `find_str flag (CONS x xs) =
+  `(find_str flag [] = NONE) /\
+   (find_str flag (CONS x xs) =
         if isPrefix flag x then
           SOME (mlstring_extract x (strlen flag) NONE)
-        else find_str flag xs`];;
+        else find_str flag xs)`;;
 
 (* Finds all occurences of the flag as a prefix, returning
    the remainder in each occurence. *)
 let find_strs_def,find_strs_ind = define_rec
-  [`find_strs flag [] = []`;
-   `find_strs flag (CONS x xs) =
+  `(find_strs flag [] = []) /\
+   (find_strs flag (CONS x xs) =
         if isPrefix flag x then CONS (mlstring_extract x (strlen flag)
             NONE) (find_strs flag xs)
-        else find_strs flag xs`];;
+        else find_strs flag xs)`;;
 
 (* If flag is not present then F, else if it is present then
    we should not get any config string afterwards *)
@@ -492,29 +492,29 @@ let find_num_def = new_definition
      rest; (implode " for flag: "); flag]))`;;
 
 let get_err_str_def = define_cases
-  [`get_err_str (INL n) = (implode "")`;
-   `get_err_str (INR n) = mlstring_concat [n; (implode "\n")]`];;
+  `(get_err_str (INL n) = (implode "")) /\
+   (get_err_str (INR n) = mlstring_concat [n; (implode "\n")])`;;
 
 (* All the numbers must parse *)
 let parse_num_list_def,parse_num_list_ind = define_rec
-  [`parse_num_list [] = INL []`;
-   `parse_num_list (CONS x xs) =
+  `(parse_num_list [] = INL []) /\
+   (parse_num_list (CONS x xs) =
          match parse_num x with
            NONE -> INR (mlstring_concat [(implode
                "Unable to parse as num: "); x])
          | SOME n ->
            (match parse_num_list xs with
              INR s -> INR s
-           | INL ns -> INL (CONS n ns))`];;
+           | INL ns -> INL (CONS n ns)))`;;
 
 let comma_tokens_def,comma_tokens_ind = define_rec
-  [`comma_tokens acc (xs:string) [] = if NULL xs then acc else APPEND acc
-    [implode xs]`;
-   `comma_tokens acc (xs:string) (CONS c (cs:string)) =
+  `(comma_tokens acc (xs:string) [] = if NULL xs then acc else APPEND acc
+    [implode xs]) /\
+   (comma_tokens acc (xs:string) (CONS c (cs:string)) =
         if c = (CHR 44) then
           comma_tokens (APPEND acc (if NULL xs then [] else [implode xs]))
               [] cs
-        else comma_tokens acc (APPEND xs [c]) cs`];;
+        else comma_tokens acc (APPEND xs [c]) cs)`;;
 
 
 let parse_nums_def = new_definition
@@ -955,12 +955,12 @@ let has_pancake_flag_def = new_definition
   `has_pancake_flag ls = MEM (implode "--pancake") ls`;;
 
 let format_compiler_result_def = define_cases
-  [`format_compiler_result bytes_export (M_failure err) =
-      ((misc_List []:mlstring app_list),error_to_str err)`;
-   `format_compiler_result bytes_export (M_success ((bytes:word8
+  `(format_compiler_result bytes_export (M_failure err) =
+      ((misc_List []:mlstring app_list),error_to_str err)) /\
+   (format_compiler_result bytes_export (M_success ((bytes:word8
     list),(data:('a word) list),(c:backend_config))) =
       (bytes_export (the [] (lab_to_target_config_ffi_names
-          (backend_config_lab_conf c))) bytes data,implode "")`];;
+          (backend_config_lab_conf c))) bytes data,implode ""))`;;
 
 (* FIXME TODO: this is an awful workaround to avoid implementing a file writer
    right now. *)

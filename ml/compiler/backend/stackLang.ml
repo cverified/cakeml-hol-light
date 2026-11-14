@@ -142,10 +142,10 @@ let _ = size_thms "stackLang_prog";;
    what the port found for it *)
 let list_Seq_def,list_Seq_ind = define_wf
   `MEASURE (\x0. list_size (stackLang_prog_size (\x. 0)) x0)`
-  [`stackLang_list_Seq [] = stackLang_Skip`;
-   `stackLang_list_Seq [x] = x`;
-   `stackLang_list_Seq (CONS x (CONS y xs)) = stackLang_Seq x
-    (stackLang_list_Seq (CONS y xs))`];;
+  `(stackLang_list_Seq [] = stackLang_Skip) /\
+   (stackLang_list_Seq [x] = x) /\
+   (stackLang_list_Seq (CONS x (CONS y xs)) = stackLang_Seq x
+    (stackLang_list_Seq (CONS y xs)))`;;
 
 let gc_stub_location_def = new_definition
   `gc_stub_location = stack_num_stubs - 1`;;

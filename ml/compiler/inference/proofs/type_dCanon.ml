@@ -364,11 +364,11 @@ let type_op_ts_tid_rename = prove
   CHEAT_TAC);;
 
 let remap_tenvE_def,remap_tenvE_ind = define_rec
-  [`remap_tenvE f typeSystem_Empty = (typeSystem_Empty:tenv_val_exp)`;
-   `remap_tenvE f (typeSystem_Bind_tvar n e) = typeSystem_Bind_tvar n
-    (remap_tenvE f e)`;
-   `remap_tenvE f (typeSystem_Bind_name s n t e) = typeSystem_Bind_name s
-    n (ts_tid_rename f t) (remap_tenvE f e)`];;
+  `(remap_tenvE f typeSystem_Empty = (typeSystem_Empty:tenv_val_exp)) /\
+   (remap_tenvE f (typeSystem_Bind_tvar n e) = typeSystem_Bind_tvar n
+    (remap_tenvE f e)) /\
+   (remap_tenvE f (typeSystem_Bind_name s n t e) = typeSystem_Bind_name s
+    n (ts_tid_rename f t) (remap_tenvE f e))`;;
 
 (* [local] *)
 let num_tvs_remap_tenvE = prove

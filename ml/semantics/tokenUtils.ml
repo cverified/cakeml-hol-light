@@ -85,7 +85,7 @@ add_simp isWordT_def;;
 let isLongidT_def = new_definition
   `isLongidT x1 =
      match x1 with
-       tokens_LongidT _3 _4 -> T
+       tokens_LongidT _ _ -> T
      | _ -> F`;;
 add_simp isLongidT_def;;
 

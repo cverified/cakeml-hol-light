@@ -30,7 +30,7 @@ let num_compare_def = new_definition
        LESS
      else GREATER`;;
 let list_compare_def,list_compare_ind = define_guess
-  [`list_compare cmp l1 l2 =
+  `list_compare cmp l1 l2 =
      match (l1,l2) with
        ([],[]) -> EQUAL
      | ([],l2) -> LESS
@@ -39,12 +39,12 @@ let list_compare_def,list_compare_ind = define_guess
         (match cmp (x:'a) y with
           LESS -> LESS
         | EQUAL -> list_compare cmp l1 l2
-        | GREATER -> GREATER)`];;
+        | GREATER -> GREATER)`;;
 
 let invert_comparison_def = define_cases
-  [`invert_comparison GREATER = LESS`;
-   `invert_comparison LESS = GREATER`;
-   `invert_comparison EQUAL = EQUAL`];;
+  `(invert_comparison GREATER = LESS) /\
+   (invert_comparison LESS = GREATER) /\
+   (invert_comparison EQUAL = EQUAL)`;;
 add_simp invert_comparison_def;;
 
 (* ================================================================ *)

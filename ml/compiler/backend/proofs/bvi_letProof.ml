@@ -40,13 +40,13 @@ let v_rel_def = new_definition
    what the port found for it *)
 let env_rel_def,env_rel_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). list_size (\n. n) x0)`
-  [`bvi_letProof_env_rel x1 d e1 e2 =
+  `bvi_letProof_env_rel x1 d e1 e2 =
      match (x1,e1,e2) with
        ([],e1,e2) -> (e1 = DROP d e2)
      | (CONS a rest,CONS x e1,CONS y e2) ->
         bvi_letProof_v_rel a x y (CONS x e1) (CONS y e2)
           /\ bvi_letProof_env_rel rest d e1 e2
-     | (_1,_2,_3) -> F`];;
+     | (_,_,_) -> F`;;
 
 let env_rel_length = prove
  (`!ax env env2. bvi_letProof_env_rel ax d env env2 ==> LENGTH env <= LENGTH

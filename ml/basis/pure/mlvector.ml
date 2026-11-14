@@ -30,8 +30,8 @@ let _ = do_list hide_constant ["Equal"; "Greater"; "Less"];;
    an ML expression: sub_def *)
 
 let sub_unsafe_def = define_general
-  [`// same as sub_def, but translator targets Vsub_unsafe
-   sub_unsafe (Vector l) n = EL n l`];;
+  `// same as sub_def, but translator targets Vsub_unsafe
+   sub_unsafe (Vector l) n = EL n l`;;
 
 (* HOL4 mlvectorScript.sml:20-21: a theorem that HOL4 states as the value of
    an ML expression: length_def *)
@@ -43,9 +43,9 @@ let mlvector_tabulate_def = new_definition
    the names that the port gives the constants *)
 let toList_aux_def,toList_aux_ind = define_wf
   `MEASURE (\(vec,n). length vec - n)`
-  [`toList_aux vec n =
+  `toList_aux vec n =
    if length (vec) <= n then []
-   else CONS (sub vec n) (toList_aux vec (n + 1))`];;
+   else CONS (sub vec n) (toList_aux vec (n + 1))`;;
 
 (* HOL4 mlvectorScript.sml:36: ML code, not ported *)
 
@@ -108,9 +108,9 @@ let less_than_length_thm = prove
    what the port found for it *)
 let mlvector_foldli_aux_def,mlvector_foldli_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
-  [`mlvector_foldli_aux f e vec n 0 = e`;
-   `mlvector_foldli_aux f e vec n (SUC len) = mlvector_foldli_aux f (f n
-    (sub vec n) e) vec (n + 1) len`];;
+  `(mlvector_foldli_aux f e vec n 0 = e) /\
+   (mlvector_foldli_aux f e vec n (SUC len) = mlvector_foldli_aux f (f n
+    (sub vec n) e) vec (n + 1) len)`;;
 
 let mlvector_foldli_def = new_definition
   `mlvector_foldli f e vec = mlvector_foldli_aux f e vec 0 (length vec)`;;
@@ -132,9 +132,9 @@ let mlvector_foldli_thm = prove
    what the port found for it *)
 let foldl_aux_def,foldl_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
-  [`foldl_aux f e vec n 0 = e`;
-   `foldl_aux f e vec n (SUC len) = foldl_aux f (f e (sub vec n)) vec (n +
-    1) len`];;
+  `(foldl_aux f e vec n 0 = e) /\
+   (foldl_aux f e vec n (SUC len) = foldl_aux f (f e (sub vec n)) vec (n +
+    1) len)`;;
 
 let mlvector_foldl_def = new_definition
   `mlvector_foldl f e vec = foldl_aux f e vec 0 (length vec)`;;
@@ -154,9 +154,9 @@ let foldl_thm = prove
    what the port found for it *)
 let foldri_aux_def,foldri_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
-  [`foldri_aux f e vec 0 = e`;
-   `foldri_aux f e vec (SUC len) = foldri_aux f (f len (sub vec len) e)
-    vec len`];;
+  `(foldri_aux f e vec 0 = e) /\
+   (foldri_aux f e vec (SUC len) = foldri_aux f (f len (sub vec len) e)
+    vec len)`;;
 
 let foldri_def = new_definition
   `foldri f e vec = foldri_aux f e vec (length vec)`;;
@@ -178,8 +178,8 @@ let foldri_thm = prove
    what the port found for it *)
 let foldr_aux_def,foldr_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
-  [`foldr_aux f e vec 0 = e`;
-   `foldr_aux f e vec (SUC len) = foldr_aux f (f (sub vec len) e) vec len`];;
+  `(foldr_aux f e vec 0 = e) /\
+   (foldr_aux f e vec (SUC len) = foldr_aux f (f (sub vec len) e) vec len)`;;
 
 let foldr_def = new_definition
   `foldr f e vec = foldr_aux f e vec (length vec)`;;
@@ -199,10 +199,10 @@ let foldr_thm = prove
    what the port found for it *)
 let findi_aux_def,findi_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
-  [`findi_aux f vec n 0 = NONE`;
-   `findi_aux f vec n (SUC len) =
+  `(findi_aux f vec n 0 = NONE) /\
+   (findi_aux f vec n (SUC len) =
       if f n (sub vec n) then SOME (n,(sub vec n))
-      else findi_aux f vec (n + 1) len`];;
+      else findi_aux f vec (n + 1) len)`;;
 
 let mlvector_findi_def = new_definition
   `mlvector_findi f vec = findi_aux f vec 0 (length vec)`;;
@@ -212,10 +212,10 @@ let mlvector_findi_def = new_definition
    what the port found for it *)
 let find_aux_def,find_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
-  [`find_aux f vec n 0 = NONE`;
-   `find_aux f vec n (SUC len) =
+  `(find_aux f vec n 0 = NONE) /\
+   (find_aux f vec n (SUC len) =
       if f (sub vec n) then SOME (sub vec n)
-      else find_aux f vec (n + 1) len`];;
+      else find_aux f vec (n + 1) len)`;;
 
 let find_def = new_definition
   `find f vec = find_aux f vec 0 (length vec)`;;
@@ -235,10 +235,10 @@ let find_thm = prove
    what the port found for it *)
 let exists_aux_def,exists_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
-  [`exists_aux f vec n 0 = F`;
-   `exists_aux f vec n (SUC len) =
+  `(exists_aux f vec n 0 = F) /\
+   (exists_aux f vec n (SUC len) =
         if f (sub vec n) then T
-        else exists_aux f vec (n + 1) len`];;
+        else exists_aux f vec (n + 1) len)`;;
 
 let mlvector_exists_def = new_definition
   `mlvector_exists f vec = exists_aux f vec 0 (length vec)`;;
@@ -258,10 +258,10 @@ let exists_thm = prove
    what the port found for it *)
 let all_aux_def,all_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
-  [`all_aux f vec n 0 = T`;
-   `all_aux f vec n (SUC len) =
+  `(all_aux f vec n 0 = T) /\
+   (all_aux f vec n (SUC len) =
         if f (sub vec n) then all_aux f vec (n + 1) len
-        else F`];;
+        else F)`;;
 
 let all_def = new_definition
   `all f vec = all_aux f vec 0 (length vec)`;;
@@ -281,11 +281,11 @@ let all_thm = prove
    what the port found for it *)
 let mlvector_collate_aux_def,mlvector_collate_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4,x5). (\n. n) x5)`
-  [`mlvector_collate_aux f vec1 vec2 n ord 0 = ord`;
-   `mlvector_collate_aux f vec1 vec2 n ord (SUC len) =
+  `(mlvector_collate_aux f vec1 vec2 n ord 0 = ord) /\
+   (mlvector_collate_aux f vec1 vec2 n ord (SUC len) =
         if f (sub vec1 n) (sub vec2 n) = EQUAL then mlvector_collate_aux f
             vec1 vec2 (n + 1) ord len
-        else f (sub vec1 n) (sub vec2 n)`];;
+        else f (sub vec1 n) (sub vec2 n))`;;
 
 let mlvector_collate_def = new_definition
   `mlvector_collate f vec1 vec2 =

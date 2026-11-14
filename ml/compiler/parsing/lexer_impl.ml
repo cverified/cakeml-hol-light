@@ -130,8 +130,8 @@ let num_from_hex_string_alt_def = new_definition
    port lets its own machinery find one *)
 (* HOL4 lexer_implScript.sml:239-245: the tactic that proves the termination *)
 let next_sym_alt_def,next_sym_alt_ind = define_guess
-  [`next_sym_alt "" _ = NONE`;
-   `next_sym_alt (CONS c str) loc =
+  `(next_sym_alt "" _ = NONE) /\
+   (next_sym_alt (CONS c str) loc =
          if c = (CHR 10) then
             // skip new line
             next_sym_alt str (next_line loc)
@@ -195,7 +195,7 @@ let next_sym_alt_def,next_sym_alt_ind = define_guess
            | SOME (rest,loc') -> next_sym_alt rest loc'
          else if c = (CHR 95) then SOME (OtherS "_",Locs loc loc,str) else
              let (tok',end_loc,rest) = read_Ident (CONS c str) loc [] in
-             SOME (tok',Locs loc end_loc,rest)`];;
+             SOME (tok',Locs loc end_loc,rest))`;;
 
 (* [local] *)
 let EVERY_isDigit_imp = prove
@@ -256,7 +256,7 @@ let next_sym_eq = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lexer_impl_lex_aux_def,lexer_impl_lex_aux_ind = define_guess_cheat
-  [`lexer_impl_lex_aux acc (d:num) input loc =
+  `lexer_impl_lex_aux acc (d:num) input loc =
      match next_token input loc with
        // case: end of input
        NONE -> NONE
@@ -273,13 +273,13 @@ let lexer_impl_lex_aux_def,lexer_impl_lex_aux_ind = define_guess_cheat
                (d + 1) rest newloc
              else if token = tokens_SigT then lexer_impl_lex_aux new_acc (d
                + 1) rest newloc
-             else if token = tokens_LparT then lexer_impl_lex_aux new_acc
-               (d + 1) rest newloc
+             else if token = tokens_LparT then lexer_impl_lex_aux new_acc (d
+               + 1) rest newloc
              else if token = tokens_EndT then lexer_impl_lex_aux new_acc (d
                - 1) rest newloc
-             else if token = tokens_RparT then lexer_impl_lex_aux new_acc
-               (d - 1) rest newloc
-             else lexer_impl_lex_aux new_acc d rest newloc`];;
+             else if token = tokens_RparT then lexer_impl_lex_aux new_acc (d
+               - 1) rest newloc
+             else lexer_impl_lex_aux new_acc d rest newloc`;;
 
 let lex_until_toplevel_semicolon_def = new_definition
   `lex_until_toplevel_semicolon input = lexer_impl_lex_aux [] 0 input`;;
@@ -309,7 +309,7 @@ let lex_until_toplevel_semicolon_LESS = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lex_aux_alt_def,lex_aux_alt_ind = define_guess_cheat
-  [`lex_aux_alt acc (d:num) input l =
+  `lex_aux_alt acc (d:num) input l =
      match next_sym input l with
        // case: end of input
        NONE -> NONE
@@ -325,7 +325,7 @@ let lex_aux_alt_def,lex_aux_alt_ind = define_guess_cheat
              lex_aux_alt new_acc (d + 1) rest newloc
            else if MEM token [OtherS ")"; OtherS "end"] then
              lex_aux_alt new_acc (d - 1) rest newloc
-           else lex_aux_alt new_acc d rest newloc`];;
+           else lex_aux_alt new_acc d rest newloc`;;
 
 let lex_until_top_semicolon_alt_def = new_definition
   `lex_until_top_semicolon_alt input = lex_aux_alt [] 0 input`;;
@@ -382,13 +382,13 @@ let lex_until_top_semicolon_alt_thm = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lex_impl_all_def,lex_impl_all_ind = define_guess_cheat
-  [`lex_impl_all input l =
+  `lex_impl_all input l =
      match lex_until_toplevel_semicolon input l with NONE -> []
-       | SOME (t,loc,input') -> CONS t (lex_impl_all input' loc)`];;
+       | SOME (t,loc,input') -> CONS t (lex_impl_all input' loc)`;;
 
 let lex_aux_tokens_def,lex_aux_tokens_ind = define_shaped_rec
   "match"
-  [`lex_aux_tokens acc (d:num) input =
+  `lex_aux_tokens acc (d:num) input =
       match input with
         [] -> NONE
       | CONS (token,locs) rest ->
@@ -407,7 +407,7 @@ let lex_aux_tokens_def,lex_aux_tokens_ind = define_shaped_rec
                 lex_aux_tokens new_acc (d - 1) rest
               else if token = tokens_RparT then
                 lex_aux_tokens new_acc (d - 1) rest
-              else lex_aux_tokens new_acc d rest`];;
+              else lex_aux_tokens new_acc d rest`;;
 
 let lex_until_toplevel_semicolon_tokens_def = new_definition
   `lex_until_toplevel_semicolon_tokens input = lex_aux_tokens [] 0 input`;;
@@ -428,10 +428,10 @@ let lex_aux_tokens_LESS = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lex_impl_all_tokens_def,lex_impl_all_tokens_ind = define_guess_cheat
-  [`lex_impl_all_tokens input =
+  `lex_impl_all_tokens input =
       match lex_until_toplevel_semicolon_tokens input with
         NONE -> []
-      | SOME (t,input) -> CONS t (lex_impl_all_tokens input)`];;
+      | SOME (t,input) -> CONS t (lex_impl_all_tokens input)`;;
 
 (* [local] *)
 let lex_aux_tokens_thm_1 = prove

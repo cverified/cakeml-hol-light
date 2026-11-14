@@ -69,7 +69,7 @@ let labSem_state_FIELDS = define_record "labSem_state"
 let is_Label_def = new_definition
   `is_Label x1 =
      match x1 with
-       labLang_Label _4 _5 _6 -> T
+       labLang_Label _ _ _ -> T
      | _ -> F`;;
 add_simp is_Label_def;;
 
@@ -78,12 +78,12 @@ let _ = size_thms "sec";;
    what the port found for it *)
 let asm_fetch_aux_def,asm_fetch_aux_ind = define_wf
   `MEASURE (\(x0,x1). list_size (sec_size (\x. 0)) x1)`
-  [`asm_fetch_aux pos [] = NONE`;
-   `asm_fetch_aux pos (CONS (Section k []) xs) = asm_fetch_aux pos xs`;
-   `asm_fetch_aux pos (CONS (Section k (CONS y ys)) xs) =
+  `(asm_fetch_aux pos [] = NONE) /\
+   (asm_fetch_aux pos (CONS (Section k []) xs) = asm_fetch_aux pos xs) /\
+   (asm_fetch_aux pos (CONS (Section k (CONS y ys)) xs) =
          if is_Label y then asm_fetch_aux pos (CONS (Section k ys) xs)
          else if pos = (0:num) then SOME y
-              else asm_fetch_aux (pos - 1) (CONS (Section k ys) xs)`];;
+              else asm_fetch_aux (pos - 1) (CONS (Section k ys) xs))`;;
 
 let asm_fetch_def = new_definition
   `asm_fetch s = asm_fetch_aux (labSem_state_pc s) (labSem_state_code s)`;;
@@ -104,42 +104,42 @@ let labSem_assert_def = new_definition
   labSem_state_failed s)) s`;;
 
 let labSem_reg_imm_def = define_cases
-  [`labSem_reg_imm (Reg r) s = (\r s. labSem_state_regs s r) r s`;
-   `labSem_reg_imm (Imm w) s = wordLang_Word w`];;
+  `(labSem_reg_imm (Reg r) s = (\r s. labSem_state_regs s r) r s) /\
+   (labSem_reg_imm (Imm w) s = wordLang_Word w)`;;
 add_simp labSem_reg_imm_def;;
 
 let labSem_binop_upd_def = define_general
-  [`labSem_binop_upd r asm_Add w1 w2 = labSem_upd_reg r (wordLang_Word (w1 +
-    w2))`;
-   `labSem_binop_upd r asm_Sub w1 w2 = labSem_upd_reg r (wordLang_Word (w1 -
-    w2))`;
-   `labSem_binop_upd r asm_And w1 w2 = labSem_upd_reg r (wordLang_Word
-    (word_and w1 w2))`;
-   `labSem_binop_upd r asm_Or w1 w2 = labSem_upd_reg r (wordLang_Word
-    (word_or w1 w2))`;
-   `labSem_binop_upd r asm_Xor w1 w2 = labSem_upd_reg r (wordLang_Word
-    (word_xor w1 w2))`];;
+  `(labSem_binop_upd r asm_Add w1 w2 = labSem_upd_reg r (wordLang_Word (w1
+    + w2))) /\
+   (labSem_binop_upd r asm_Sub w1 w2 = labSem_upd_reg r (wordLang_Word (w1
+    - w2))) /\
+   (labSem_binop_upd r asm_And w1 w2 = labSem_upd_reg r (wordLang_Word
+    (word_and w1 w2))) /\
+   (labSem_binop_upd r asm_Or w1 w2 = labSem_upd_reg r (wordLang_Word
+    (word_or w1 w2))) /\
+   (labSem_binop_upd r asm_Xor w1 w2 = labSem_upd_reg r (wordLang_Word
+    (word_xor w1 w2)))`;;
 
 let labSem_arith_upd_def = define_cases
-  [`labSem_arith_upd (asm_Binop b r1 r2 (ri:'a asm_reg_imm)) s =
+  `(labSem_arith_upd (asm_Binop b r1 r2 (ri:'a asm_reg_imm)) s =
          match ((\r s. labSem_state_regs s r) r2 s,labSem_reg_imm ri s)
              with (wordLang_Word w1,wordLang_Word w2) -> labSem_binop_upd r1 b
              w1 w2 s
          | (x,_) -> if b = asm_Or /\ ri = Reg r2 then labSem_upd_reg r1
-             x s else labSem_assert F s`;
-   `labSem_arith_upd (asm_Shift l r1 r2 ri) s =
+             x s else labSem_assert F s) /\
+   (labSem_arith_upd (asm_Shift l r1 r2 ri) s =
          match ((\r s. labSem_state_regs s r) r2 s,labSem_reg_imm ri s)
              with (wordLang_Word w1,wordLang_Word w2) ->
              labSem_assert (w2n w2 < dimindex (:'a)) (labSem_upd_reg r1
                  (wordLang_Word (asmSem_word_shift l w1 (w2n w2))) s)
-         | _ -> labSem_assert F s`;
-   `labSem_arith_upd (asm_Div r1 r2 r3) s =
+         | _ -> labSem_assert F s) /\
+   (labSem_arith_upd (asm_Div r1 r2 r3) s =
          match ((\r s. labSem_state_regs s r) r3 s,(\r s. labSem_state_regs
              s r) r2 s) with (wordLang_Word q,wordLang_Word w2) ->
            labSem_assert (~(q = (n2w 0))) (labSem_upd_reg r1 (wordLang_Word
                (w2 / q)) s)
-         | _ -> labSem_assert F s`;
-   `labSem_arith_upd (asm_AddCarry r1 r2 r3 r4) s =
+         | _ -> labSem_assert F s) /\
+   (labSem_arith_upd (asm_AddCarry r1 r2 r3 r4) s =
          match ((\r s. labSem_state_regs s r) r2 s,(\r s. labSem_state_regs
              s r) r3 s,(\r s. labSem_state_regs s r) r4 s) with (wordLang_Word
              w2,wordLang_Word w3,wordLang_Word w4) ->
@@ -147,16 +147,16 @@ let labSem_arith_upd_def = define_cases
              labSem_upd_reg r4 (wordLang_Word (if dimword (:'a) <= r then
                  (n2w 1) else (n2w 0)))
                 (labSem_upd_reg r1 (wordLang_Word (n2w r)) s)
-         | _ -> labSem_assert F s`;
-   `labSem_arith_upd (asm_LongMul r1 r2 r3 r4) s =
+         | _ -> labSem_assert F s) /\
+   (labSem_arith_upd (asm_LongMul r1 r2 r3 r4) s =
          match ((\r s. labSem_state_regs s r) r3 s,(\r s. labSem_state_regs
              s r) r4 s) with (wordLang_Word w3,wordLang_Word w4) ->
            let r = w2n w3 * w2n w4 in
           labSem_upd_reg r2 (wordLang_Word (n2w r))
            (labSem_upd_reg r1 (wordLang_Word (n2w (r DIV dimword (:'a))))
                s)
-         | _ -> labSem_assert F s`;
-   `labSem_arith_upd (asm_LongDiv r1 r2 r3 r4 r5) s =
+         | _ -> labSem_assert F s) /\
+   (labSem_arith_upd (asm_LongDiv r1 r2 r3 r4 r5) s =
          match ((\r s. labSem_state_regs s r) r3 s,(\r s. labSem_state_regs
              s r) r4 s,(\r s. labSem_state_regs s r) r5 s) with (wordLang_Word
              w3,wordLang_Word w4,wordLang_Word w5) ->
@@ -166,21 +166,21 @@ let labSem_arith_upd_def = define_cases
            labSem_assert (~(d = 0) /\ q < dimword (:'a))
              (labSem_upd_reg r1 (wordLang_Word (n2w q)) (labSem_upd_reg r2
                  (wordLang_Word (n2w (n MOD d))) s))
-         | _ -> labSem_assert F s`;
-   `labSem_arith_upd (asm_AddOverflow r1 r2 r3 r4) s =
+         | _ -> labSem_assert F s) /\
+   (labSem_arith_upd (asm_AddOverflow r1 r2 r3 r4) s =
          match ((\r s. labSem_state_regs s r) r2 s,(\r s. labSem_state_regs
              s r) r3 s) with (wordLang_Word w2,wordLang_Word w3) ->
              labSem_upd_reg r4 (wordLang_Word (if ~(w2i (w2 + w3) = w2i w2
                  + w2i w3) then (n2w 1) else (n2w 0)))
                 (labSem_upd_reg r1 (wordLang_Word (w2 + w3)) s)
-         | _ -> labSem_assert F s`;
-   `labSem_arith_upd (asm_SubOverflow r1 r2 r3 r4) s =
+         | _ -> labSem_assert F s) /\
+   (labSem_arith_upd (asm_SubOverflow r1 r2 r3 r4) s =
          match ((\r s. labSem_state_regs s r) r2 s,(\r s. labSem_state_regs
              s r) r3 s) with (wordLang_Word w2,wordLang_Word w3) ->
              labSem_upd_reg r4 (wordLang_Word (if ~(w2i (w2 - w3) = w2i w2
                  - w2i w3) then (n2w 1) else (n2w 0)))
                 (labSem_upd_reg r1 (wordLang_Word (w2 - w3)) s)
-         | _ -> labSem_assert F s`];;
+         | _ -> labSem_assert F s)`;;
 add_simp labSem_arith_upd_def;;
 
 let labSem_upd_fp_reg_def = new_definition
@@ -190,55 +190,55 @@ let labSem_read_fp_reg_def = new_definition
   `labSem_read_fp_reg r s = labSem_state_fp_regs s r`;;
 
 let labSem_fp_upd_def = define_cases
-  [`labSem_fp_upd (FPLess r d1 d2) (s:('a,'c,'ffi)labSem_state) =
+  `(labSem_fp_upd (FPLess r d1 d2) (s:('a,'c,'ffi)labSem_state) =
          labSem_upd_reg r (wordLang_Word (if fp64_lessThan
              (labSem_read_fp_reg d1 s) (labSem_read_fp_reg d2 s) then (n2w 1)
-                          else (n2w 0))) s`;
-   `labSem_fp_upd (FPLessEqual r d1 d2) (s:('a,'c,'ffi)labSem_state) =
+                          else (n2w 0))) s) /\
+   (labSem_fp_upd (FPLessEqual r d1 d2) (s:('a,'c,'ffi)labSem_state) =
          labSem_upd_reg r (wordLang_Word (if fp64_lessEqual
              (labSem_read_fp_reg d1 s) (labSem_read_fp_reg d2 s) then (n2w 1)
-                          else (n2w 0))) s`;
-   `labSem_fp_upd (FPEqual r d1 d2) (s:('a,'c,'ffi)labSem_state) =
+                          else (n2w 0))) s) /\
+   (labSem_fp_upd (FPEqual r d1 d2) (s:('a,'c,'ffi)labSem_state) =
          labSem_upd_reg r (wordLang_Word (if fp64_equal (labSem_read_fp_reg
              d1 s) (labSem_read_fp_reg d2 s) then (n2w 1)
-                          else (n2w 0))) s`;
-   `labSem_fp_upd (FPMov d1 d2) (s:('a,'c,'ffi)labSem_state) =
-    labSem_upd_fp_reg d1 (labSem_read_fp_reg d2 s) s`;
-   `labSem_fp_upd (FPAbs d1 d2) (s:('a,'c,'ffi)labSem_state) =
-    labSem_upd_fp_reg d1 (fp64_abs (labSem_read_fp_reg d2 s)) s`;
-   `labSem_fp_upd (FPNeg d1 d2) (s:('a,'c,'ffi)labSem_state) =
-    labSem_upd_fp_reg d1 (fp64_negate (labSem_read_fp_reg d2 s)) s`;
-   `labSem_fp_upd (FPSqrt d1 d2) (s:('a,'c,'ffi)labSem_state) =
+                          else (n2w 0))) s) /\
+   (labSem_fp_upd (FPMov d1 d2) (s:('a,'c,'ffi)labSem_state) =
+    labSem_upd_fp_reg d1 (labSem_read_fp_reg d2 s) s) /\
+   (labSem_fp_upd (FPAbs d1 d2) (s:('a,'c,'ffi)labSem_state) =
+    labSem_upd_fp_reg d1 (fp64_abs (labSem_read_fp_reg d2 s)) s) /\
+   (labSem_fp_upd (FPNeg d1 d2) (s:('a,'c,'ffi)labSem_state) =
+    labSem_upd_fp_reg d1 (fp64_negate (labSem_read_fp_reg d2 s)) s) /\
+   (labSem_fp_upd (FPSqrt d1 d2) (s:('a,'c,'ffi)labSem_state) =
          labSem_upd_fp_reg d1 (fp64_sqrt roundTiesToEven
-             (labSem_read_fp_reg d2 s)) s`;
-   `labSem_fp_upd (FPAdd d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
+             (labSem_read_fp_reg d2 s)) s) /\
+   (labSem_fp_upd (FPAdd d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
          labSem_upd_fp_reg d1
            (fp64_add roundTiesToEven (labSem_read_fp_reg d2 s)
-               (labSem_read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPSub d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
+               (labSem_read_fp_reg d3 s)) s) /\
+   (labSem_fp_upd (FPSub d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
          labSem_upd_fp_reg d1
            (fp64_sub roundTiesToEven (labSem_read_fp_reg d2 s)
-               (labSem_read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPMul d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
+               (labSem_read_fp_reg d3 s)) s) /\
+   (labSem_fp_upd (FPMul d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
          labSem_upd_fp_reg d1
            (fp64_mul roundTiesToEven (labSem_read_fp_reg d2 s)
-               (labSem_read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPDiv d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
+               (labSem_read_fp_reg d3 s)) s) /\
+   (labSem_fp_upd (FPDiv d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
          labSem_upd_fp_reg d1
            (fp64_div roundTiesToEven (labSem_read_fp_reg d2 s)
-               (labSem_read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPFma d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
+               (labSem_read_fp_reg d3 s)) s) /\
+   (labSem_fp_upd (FPFma d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
          labSem_upd_fp_reg d1
            (fpfma (labSem_read_fp_reg d1 s) (labSem_read_fp_reg d2 s)
-               (labSem_read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPMovToReg r1 r2 d) (s:('a,'c,'ffi)labSem_state) =
+               (labSem_read_fp_reg d3 s)) s) /\
+   (labSem_fp_upd (FPMovToReg r1 r2 d) (s:('a,'c,'ffi)labSem_state) =
          if dimindex (:'a) = 64 then
            labSem_upd_reg r1 (wordLang_Word (w2w (labSem_read_fp_reg d s)))
                s
          else let v = labSem_read_fp_reg d s in
            labSem_upd_reg r2 (wordLang_Word ((63 >< 32) v))
-               (labSem_upd_reg r1 (wordLang_Word ((31 >< 0) v)) s)`;
-   `labSem_fp_upd (FPMovFromReg d r1 r2) (s:('a,'c,'ffi)labSem_state) =
+               (labSem_upd_reg r1 (wordLang_Word ((31 >< 0) v)) s)) /\
+   (labSem_fp_upd (FPMovFromReg d r1 r2) (s:('a,'c,'ffi)labSem_state) =
          if dimindex (:'a) = 64 then
            match (\r s. labSem_state_regs s r) r1 s with
              wordLang_Word w1 -> labSem_upd_fp_reg d (w2w w1) s
@@ -247,8 +247,8 @@ let labSem_fp_upd_def = define_cases
              labSem_state_regs s r) r2 s) with
              (wordLang_Word w1,wordLang_Word w2) -> labSem_upd_fp_reg d (w2
                  @@ w1) s
-           | _ -> labSem_assert F s`;
-   `labSem_fp_upd (FPToInt d1 d2) (s:('a,'c,'ffi)labSem_state) =
+           | _ -> labSem_assert F s) /\
+   (labSem_fp_upd (FPToInt d1 d2) (s:('a,'c,'ffi)labSem_state) =
          match fp64_to_int roundTiesToEven (labSem_read_fp_reg d2 s) with
              SOME i ->
                let w = (i2w i:word32) in
@@ -259,26 +259,26 @@ let labSem_fp_upd_def = define_cases
                            (bit_field_insert h l w (labSem_read_fp_reg (d1
                                DIV 2) s)))
                     (labSem_assert (w2i w = i) s)
-          | _ -> labSem_assert F s`;
-   `labSem_fp_upd (FPFromInt d1 d2) (s:('a,'c,'ffi)labSem_state) =
+          | _ -> labSem_assert F s) /\
+   (labSem_fp_upd (FPFromInt d1 d2) (s:('a,'c,'ffi)labSem_state) =
          let i = (if dimindex (:'a) = 64 then
                    w2i ((31 >< 0) (labSem_read_fp_reg d2 s):word32)
                  else let v = labSem_read_fp_reg (d2 DIV 2) s in
                    w2i (if ODD d2 then (63 >< 32) v else (31 >< 0) v:'a
                        word)) in
-           labSem_upd_fp_reg d1 (int_to_fp64 roundTiesToEven i) s`];;
+           labSem_upd_fp_reg d1 (int_to_fp64 roundTiesToEven i) s)`;;
 add_simp labSem_fp_upd_def;;
 
 let labSem_addr_def = define_general
-  [`labSem_addr (Addr r offset) s =
-     match (\r s. labSem_state_regs s r) r s with wordLang_Word w -> SOME
-       (w + offset)
-     | _ -> NONE`];;
+  `labSem_addr (Addr r offset) s =
+     match (\r s. labSem_state_regs s r) r s with wordLang_Word w -> SOME (w
+       + offset)
+     | _ -> NONE`;;
 
 let is_Loc_def = new_definition
   `is_Loc x1 =
      match x1 with
-       wordLang_Loc _9 _10 -> T
+       wordLang_Loc _ _ -> T
      | _ -> F`;;
 
 let labSem_mem_store_def = new_definition
@@ -337,27 +337,27 @@ let mem_store_byte_def = new_definition
          | _ -> labSem_assert F s)`;;
 
 let labSem_mem_op_def = define_general
-  [`labSem_mem_op asm_Load r (a:'a asm_addr) = labSem_mem_load r a`;
-   `labSem_mem_op asm_Store r (a:'a asm_addr) = labSem_mem_store r a`;
-   `labSem_mem_op asm_Load32 r (a:'a asm_addr) = mem_load32 r a`;
-   `labSem_mem_op asm_Store32 r (a:'a asm_addr) = mem_store32 r a`;
-   `labSem_mem_op asm_Load8 r (a:'a asm_addr) = mem_load_byte r a`;
-   `labSem_mem_op asm_Store8 r (a:'a asm_addr) = mem_store_byte r a`;
-   `labSem_mem_op asm_Load16 r (a:'a asm_addr) = labSem_assert F`;
-   `labSem_mem_op asm_Store16 r (a:'a asm_addr) = labSem_assert F`];;
+  `(labSem_mem_op asm_Load r (a:'a asm_addr) = labSem_mem_load r a) /\
+   (labSem_mem_op asm_Store r (a:'a asm_addr) = labSem_mem_store r a) /\
+   (labSem_mem_op asm_Load32 r (a:'a asm_addr) = mem_load32 r a) /\
+   (labSem_mem_op asm_Store32 r (a:'a asm_addr) = mem_store32 r a) /\
+   (labSem_mem_op asm_Load8 r (a:'a asm_addr) = mem_load_byte r a) /\
+   (labSem_mem_op asm_Store8 r (a:'a asm_addr) = mem_store_byte r a) /\
+   (labSem_mem_op asm_Load16 r (a:'a asm_addr) = labSem_assert F) /\
+   (labSem_mem_op asm_Store16 r (a:'a asm_addr) = labSem_assert F)`;;
 add_simp labSem_mem_op_def;;
 
 let asm_inst_def = define_cases
-  [`asm_inst asm_Skip (s:('a,'c,'ffi)labSem_state) =
-    (s:('a,'c,'ffi)labSem_state)`;
-   `asm_inst (asm_Const r imm) (s:('a,'c,'ffi)labSem_state) =
-    ((labSem_upd_reg r (wordLang_Word imm) s):('a,'c,'ffi)labSem_state)`;
-   `asm_inst (asm_Arith x) (s:('a,'c,'ffi)labSem_state) = ((labSem_arith_upd
-    x s):('a,'c,'ffi)labSem_state)`;
-   `asm_inst (asm_Mem m r a) (s:('a,'c,'ffi)labSem_state) = ((labSem_mem_op
-    m r a s):('a,'c,'ffi)labSem_state)`;
-   `asm_inst (asm_FP fp) (s:('a,'c,'ffi)labSem_state) = ((labSem_fp_upd fp
-    s):('a,'c,'ffi)labSem_state)`];;
+  `(asm_inst asm_Skip (s:('a,'c,'ffi)labSem_state) =
+    (s:('a,'c,'ffi)labSem_state)) /\
+   (asm_inst (asm_Const r imm) (s:('a,'c,'ffi)labSem_state) =
+    ((labSem_upd_reg r (wordLang_Word imm) s):('a,'c,'ffi)labSem_state)) /\
+   (asm_inst (asm_Arith x) (s:('a,'c,'ffi)labSem_state) =
+    ((labSem_arith_upd x s):('a,'c,'ffi)labSem_state)) /\
+   (asm_inst (asm_Mem m r a) (s:('a,'c,'ffi)labSem_state) = ((labSem_mem_op
+    m r a s):('a,'c,'ffi)labSem_state)) /\
+   (asm_inst (asm_FP fp) (s:('a,'c,'ffi)labSem_state) = ((labSem_fp_upd fp
+    s):('a,'c,'ffi)labSem_state))`;;
 add_simp asm_inst_def;;
 
 let labSem_dec_clock_def = new_definition
@@ -370,11 +370,11 @@ let inc_pc_def = new_definition
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let asm_code_length_def,asm_code_length_ind = define_guess_cheat
-  [`asm_code_length [] = 0`;
-   `asm_code_length (CONS (Section k []) xs) = asm_code_length xs`;
-   `asm_code_length (CONS (Section k (CONS y ys)) xs) =
+  `(asm_code_length [] = 0) /\
+   (asm_code_length (CONS (Section k []) xs) = asm_code_length xs) /\
+   (asm_code_length (CONS (Section k (CONS y ys)) xs) =
          asm_code_length (CONS (Section k ys) xs) + (if is_Label y
-             then 0 else 1:num)`];;
+             then 0 else 1:num))`;;
 
 (* [local] *)
 let asm_fetch_IMP = prove
@@ -383,13 +383,13 @@ let asm_fetch_IMP = prove
   CHEAT_TAC);;
 
 let lab_to_loc_def = define_general
-  [`lab_to_loc (labLang_Lab n1 n2) = wordLang_Loc n1 n2`];;
+  `lab_to_loc (labLang_Lab n1 n2) = wordLang_Loc n1 n2`;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let loc_to_pc_def,loc_to_pc_ind = define_guess_cheat
-  [`loc_to_pc n1 n2 [] = NONE`;
-   `loc_to_pc n1 n2 (CONS (Section k xs) ys) =
+  `(loc_to_pc n1 n2 [] = NONE) /\
+   (loc_to_pc n1 n2 (CONS (Section k xs) ys) =
          if (k = n1) /\ (n2 = 0) then SOME (0:num) else match xs with [] ->
              loc_to_pc n1 n2 ys
            | (CONS z zs) ->
@@ -398,7 +398,7 @@ let loc_to_pc_def,loc_to_pc_ind = define_guess_cheat
                  ys)
                else match loc_to_pc n1 n2 (CONS (Section k zs) ys) with
                    NONE -> NONE
-                 | SOME pos -> SOME (pos + (1:num))`];;
+                 | SOME pos -> SOME (pos + (1:num)))`;;
 
 let asm_inst_consts = prove
  (`(labSem_state_pc (asm_inst i s) = labSem_state_pc s) /\
@@ -425,25 +425,25 @@ let get_pc_value_def = new_definition
    what the port found for it *)
 let next_label_def,next_label_ind = define_wf
   `MEASURE (\x0. list_size (sec_size (\x. 0)) x0)`
-  [`next_label x1 =
+  `next_label x1 =
      match x1 with
        [] -> NONE
      | CONS (Section k []) xs -> next_label xs
      | CONS (Section k (CONS (labLang_Label n1 n2 _) ys)) xs -> SOME
        (wordLang_Loc n1 n2)
      | CONS (Section k (CONS y ys)) xs -> next_label (CONS (Section k
-       ys) xs)`];;
+       ys) xs)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_lab_after_def,get_lab_after_ind = define_wf
   `MEASURE (\(x0,x1). list_size (sec_size (\x. 0)) x1)`
-  [`get_lab_after pos [] = NONE`;
-   `get_lab_after pos (CONS (Section k []) xs) = get_lab_after pos xs`;
-   `get_lab_after pos (CONS (Section k (CONS y ys)) xs) =
+  `(get_lab_after pos [] = NONE) /\
+   (get_lab_after pos (CONS (Section k []) xs) = get_lab_after pos xs) /\
+   (get_lab_after pos (CONS (Section k (CONS y ys)) xs) =
          if is_Label y then get_lab_after pos (CONS (Section k ys) xs)
          else if pos = (0:num) then next_label (CONS (Section k ys) xs)
-              else get_lab_after (pos - 1) (CONS (Section k ys) xs)`];;
+              else get_lab_after (pos - 1) (CONS (Section k ys) xs))`;;
 
 let get_ret_Loc_def = new_definition
   `get_ret_Loc s = get_lab_after (labSem_state_pc s) (labSem_state_code s)`;;
@@ -492,28 +492,28 @@ let share_mem_store_def = new_definition
      | _ -> NONE`;;
 
 let share_mem_op_def = define_cases
-  [`share_mem_op asm_Load r ad (s:('a,'c,'ffi)labSem_state) =
-        share_mem_load r ad s 0`;
-   `share_mem_op asm_Load8 r ad (s:('a,'c,'ffi)labSem_state) =
-    share_mem_load r ad s 1`;
-   `share_mem_op asm_Load16 r ad (s:('a,'c,'ffi)labSem_state) =
-    share_mem_load r ad s 2`;
-   `share_mem_op asm_Store r ad (s:('a,'c,'ffi)labSem_state) =
-    share_mem_store r ad s 0`;
-   `share_mem_op asm_Store8 r ad (s:('a,'c,'ffi)labSem_state) =
-    share_mem_store r ad s 1`;
-   `share_mem_op asm_Store16 r ad (s:('a,'c,'ffi)labSem_state) =
-    share_mem_store r ad s 2`;
-   `share_mem_op asm_Load32 r ad (s:('a,'c,'ffi)labSem_state) =
-    share_mem_load r ad s 4`;
-   `share_mem_op asm_Store32 r ad (s:('a,'c,'ffi)labSem_state) =
-    share_mem_store r ad s 4`];;
+  `(share_mem_op asm_Load r ad (s:('a,'c,'ffi)labSem_state) =
+        share_mem_load r ad s 0) /\
+   (share_mem_op asm_Load8 r ad (s:('a,'c,'ffi)labSem_state) =
+    share_mem_load r ad s 1) /\
+   (share_mem_op asm_Load16 r ad (s:('a,'c,'ffi)labSem_state) =
+    share_mem_load r ad s 2) /\
+   (share_mem_op asm_Store r ad (s:('a,'c,'ffi)labSem_state) =
+    share_mem_store r ad s 0) /\
+   (share_mem_op asm_Store8 r ad (s:('a,'c,'ffi)labSem_state) =
+    share_mem_store r ad s 1) /\
+   (share_mem_op asm_Store16 r ad (s:('a,'c,'ffi)labSem_state) =
+    share_mem_store r ad s 2) /\
+   (share_mem_op asm_Load32 r ad (s:('a,'c,'ffi)labSem_state) =
+    share_mem_load r ad s 4) /\
+   (share_mem_op asm_Store32 r ad (s:('a,'c,'ffi)labSem_state) =
+    share_mem_store r ad s 4)`;;
 
 let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`labSem_evaluate (s:('a,'c,'ffi)labSem_state) =
+  `labSem_evaluate (s:('a,'c,'ffi)labSem_state) =
      if labSem_state_clock s = 0 then (targetSem_TimeOut,s) else match
-       asm_fetch s with SOME (labLang_Asm (Asmi a) _11 _12) ->
+       asm_fetch s with SOME (labLang_Asm (Asmi a) _ _) ->
          (match a with asm_Inst i ->
              (let s1 = asm_inst i s in
                 if labSem_state_failed s1 then (targetSem_Error,s)
@@ -528,38 +528,37 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                          s)))
               | _ -> (targetSem_Error,s))
           | _ -> (targetSem_Error,s))
-     | SOME (labLang_Asm (Cbw r1 r2) _13 _14) ->
-       (match ((\r s. labSem_state_regs s r) r1 s,(\r s. labSem_state_regs
-         s r) r2 s) with (wordLang_Word w1,wordLang_Word w2) ->
+     | SOME (labLang_Asm (Cbw r1 r2) _ _) ->
+       (match ((\r s. labSem_state_regs s r) r1 s,(\r s. labSem_state_regs s
+         r) r2 s) with (wordLang_Word w1,wordLang_Word w2) ->
          (match buffer_write (labSem_state_code_buffer s) w1 (w2w w2) with
            SOME new_cb ->
            labSem_evaluate (inc_pc (labSem_dec_clock
              (labSem_state_code_buffer_fupd (K new_cb) s)))
          | _ -> (targetSem_Error,s))
        | _ -> (targetSem_Error,s))
-     | SOME (labLang_Asm (ShareMem m r ad) _15 _16) ->
+     | SOME (labLang_Asm (ShareMem m r ad) _ _) ->
         (match share_mem_op m r ad s with SOME (FFI_final outcome,s') ->
           (targetSem_Halt (ffi_FFI_outcome outcome),s')
-         | SOME (FFI_return _17 _18,s') ->
+         | SOME (FFI_return _ _,s') ->
              labSem_evaluate (labSem_state_io_fp_regs_fupd (K
                (misc_shift_seq 1 (labSem_state_io_fp_regs s')))
                (labSem_state_io_regs_fupd (K (misc_shift_seq 1
                (labSem_state_io_regs s'))) s'))
          | NONE -> (targetSem_Error,s))
-     | SOME (labLang_LabAsm labLang_Halt _19 _20 _21) ->
+     | SOME (labLang_LabAsm labLang_Halt _ _ _) ->
         (match labSem_state_regs s (labSem_state_ptr_reg s) with
           wordLang_Word (n2w 0) -> (targetSem_Halt ffi_Success,s)
          | wordLang_Word _ -> (targetSem_Halt ffi_Resource_limit_hit,s)
          | _ -> (targetSem_Error,s))
-     | SOME (labLang_LabAsm (labLang_LocValue r lab) _22 _23 _24) ->
-        (if get_pc_value lab s = NONE then (targetSem_Error,s) else let s1
-          = labSem_upd_reg r (lab_to_loc lab) s in
+     | SOME (labLang_LabAsm (labLang_LocValue r lab) _ _ _) ->
+        (if get_pc_value lab s = NONE then (targetSem_Error,s) else let s1 =
+          labSem_upd_reg r (lab_to_loc lab) s in
              labSem_evaluate (inc_pc (labSem_dec_clock s1)))
-     | SOME (labLang_LabAsm (labLang_Jump l) _25 _26 _27) ->
+     | SOME (labLang_LabAsm (labLang_Jump l) _ _ _) ->
         (match get_pc_value l s with NONE -> (targetSem_Error,s)
-         | SOME p -> labSem_evaluate (labSem_upd_pc p (labSem_dec_clock
-           s)))
-     | SOME (labLang_LabAsm (labLang_JumpCmp c r ri l) _28 _29 _30) ->
+         | SOME p -> labSem_evaluate (labSem_upd_pc p (labSem_dec_clock s)))
+     | SOME (labLang_LabAsm (labLang_JumpCmp c r ri l) _ _ _) ->
         (match wordSem_word_cmp c ((\r s. labSem_state_regs s r) r s)
           (labSem_reg_imm ri s) with NONE -> (targetSem_Error,s)
          | SOME F -> labSem_evaluate (inc_pc (labSem_dec_clock s))
@@ -567,14 +566,14 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
           (match get_pc_value l s with NONE -> (targetSem_Error,s)
            | SOME p -> labSem_evaluate (labSem_upd_pc p (labSem_dec_clock
              s))))
-     | SOME (labLang_LabAsm (labLang_Call l) _31 _32 _33) ->
+     | SOME (labLang_LabAsm (labLang_Call l) _ _ _) ->
         (match get_pc_value l s with NONE -> (targetSem_Error,s)
          | SOME p ->
           (match get_ret_Loc s with NONE -> (targetSem_Error,s)
            | SOME k ->
               let s1 = labSem_upd_reg (labSem_state_link_reg s) k s in
                 labSem_evaluate (labSem_upd_pc p (labSem_dec_clock s1))))
-     | SOME (labLang_LabAsm labLang_Install _34 _35 _36) ->
+     | SOME (labLang_LabAsm labLang_Install _ _ _) ->
         (match (labSem_state_regs s (labSem_state_ptr_reg
           s),labSem_state_regs s (labSem_state_len_reg s),labSem_state_regs s
           (labSem_state_link_reg s)) with (wordLang_Word w1,wordLang_Word
@@ -587,7 +586,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                let new_oracle = misc_shift_seq 1
                  (labSem_state_compile_oracle s) in
                  (match (labSem_state_compile s cfg prog,prog) with (SOME
-                   (bytes',cfg'),CONS (Section k _37) _38) ->
+                   (bytes',cfg'),CONS (Section k _) _) ->
                     if bytes = bytes' /\ FST (new_oracle 0) = cfg' then
                       // the oracle was correct
                       labSem_evaluate
@@ -601,9 +600,9 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                                 a)
                               (labSem_state_regs s a) wordLang_Word)))
                                 (labSem_state_cc_fp_regs_fupd (K
-                                (misc_shift_seq 1 (labSem_state_cc_fp_regs
-                                s))) (labSem_state_cc_regs_fupd (K
-                                (misc_shift_seq 1 (labSem_state_cc_regs s)))
+                                (misc_shift_seq 1 (labSem_state_cc_fp_regs s)))
+                                (labSem_state_cc_regs_fupd (K (misc_shift_seq 1
+                                (labSem_state_cc_regs s)))
                                 (labSem_state_code_fupd (K (APPEND
                                 (labSem_state_code s) prog))
                                 (labSem_state_code_buffer_fupd (K cb)
@@ -612,14 +611,13 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                   | _ -> (targetSem_Error,s))
                   | _ -> (targetSem_Error,s))
          | _ -> (targetSem_Error,s))
-     | SOME (labLang_LabAsm (labLang_CallFFI ffi_index) _39 _40 _41) ->
+     | SOME (labLang_LabAsm (labLang_CallFFI ffi_index) _ _ _) ->
         (match (labSem_state_regs s (labSem_state_len_reg
           s),labSem_state_regs s (labSem_state_ptr_reg s),labSem_state_regs
                s (labSem_state_len2_reg s),labSem_state_regs s
                  (labSem_state_ptr2_reg s),labSem_state_regs s
-                 (labSem_state_link_reg s)) with (wordLang_Word
-                 w,wordLang_Word w2,wordLang_Word w3,wordLang_Word
-                 w4,wordLang_Loc n1 n2) ->
+                 (labSem_state_link_reg s)) with (wordLang_Word w,wordLang_Word
+                 w2,wordLang_Word w3,wordLang_Word w4,wordLang_Loc n1 n2) ->
           (match (read_bytearray w2 (w2n w) (mem_load_byte_aux
             (labSem_state_mem s) (labSem_state_mem_domain s) (labSem_state_be
             s)),
@@ -648,12 +646,11 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                               (labSem_state_regs s a) wordLang_Word))
                                 (labSem_state_io_fp_regs_fupd (K
                                 new_io_fp_regs) (labSem_state_io_regs_fupd (K
-                                new_io_regs) (labSem_state_ffi_fupd (K
-                                new_ffi) (labSem_state_mem_fupd (K new_m)
-                                s)))))))))
+                                new_io_regs) (labSem_state_ffi_fupd (K new_ffi)
+                                (labSem_state_mem_fupd (K new_m) s)))))))))
            | _ -> (targetSem_Error,s))
         | _ -> (targetSem_Error,s))
-     | _ -> (targetSem_Error,s)`];;
+     | _ -> (targetSem_Error,s)`;;
 
 let labSem_semantics_def = new_definition
   `labSem_semantics s =

@@ -485,28 +485,28 @@ let bviProps_evaluate_genlist_vars = prove
   CHEAT_TAC);;
 
 let bviProps_get_code_labels_def,bviProps_get_code_labels_ind =
-  assume_definition_rec
+  assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`bviProps_get_code_labels (bvi_Var _) = {}`;
-   `bviProps_get_code_labels (bvi_If e1 e2 e3) = bviProps_get_code_labels e1
-    UNION bviProps_get_code_labels e2 UNION bviProps_get_code_labels e3`;
-   `bviProps_get_code_labels (bvi_Let es e) = UNIONS (set_of_list (MAP
-    bviProps_get_code_labels es)) UNION bviProps_get_code_labels e`;
-   `bviProps_get_code_labels (bvi_Raise e) = bviProps_get_code_labels e`;
-   `bviProps_get_code_labels (bvi_Tick e) = bviProps_get_code_labels e`;
-   `bviProps_get_code_labels (bvi_Force loc v) = {loc}`;
-   `bviProps_get_code_labels (bvi_Call _ d es h) =
+  [`(bviProps_get_code_labels (bvi_Var _) = {}) /\
+    (bviProps_get_code_labels (bvi_If e1 e2 e3) = bviProps_get_code_labels
+    e1 UNION bviProps_get_code_labels e2 UNION bviProps_get_code_labels e3) /\
+    (bviProps_get_code_labels (bvi_Let es e) = UNIONS (set_of_list (MAP
+    bviProps_get_code_labels es)) UNION bviProps_get_code_labels e) /\
+    (bviProps_get_code_labels (bvi_Raise e) = bviProps_get_code_labels e) /\
+    (bviProps_get_code_labels (bvi_Tick e) = bviProps_get_code_labels e) /\
+    (bviProps_get_code_labels (bvi_Force loc v) = {loc}) /\
+    (bviProps_get_code_labels (bvi_Call _ d es h) =
         (match d with NONE -> {} | SOME n -> {n}) UNION
         (match h with NONE -> {} | SOME e -> bviProps_get_code_labels e)
             UNION
-        UNIONS (set_of_list (MAP bviProps_get_code_labels es))`;
-   `bviProps_get_code_labels (bvi_Op op es) = assign_get_code_label op UNION
-    UNIONS (set_of_list (MAP bviProps_get_code_labels es))`;
-   `bviProps_get_code_labels (bvi_Return es) = UNIONS (set_of_list (MAP
-    bviProps_get_code_labels es))`;
-   `bviProps_get_code_labels (bvi_LetCall _1 _2 d es y) =
+        UNIONS (set_of_list (MAP bviProps_get_code_labels es))) /\
+    (bviProps_get_code_labels (bvi_Op op es) = assign_get_code_label op
+    UNION UNIONS (set_of_list (MAP bviProps_get_code_labels es))) /\
+    (bviProps_get_code_labels (bvi_Return es) = UNIONS (set_of_list (MAP
+    bviProps_get_code_labels es)))`;
+   `(bviProps_get_code_labels (bvi_LetCall _ _ d es y) =
         {d} UNION bviProps_get_code_labels y UNION UNIONS (set_of_list
-            (MAP bviProps_get_code_labels es))`];;
+            (MAP bviProps_get_code_labels es)))`];;
 
 (* HOL4 bviPropsScript.sml:720-721: a theorem that HOL4 states as the value
    of an ML expression: get_code_labels_def *)

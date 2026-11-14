@@ -106,10 +106,10 @@ let store_ref_INDUCT,store_ref_RECURSION = define_datatype
 (* Msub *)
 let msub_def,msub_ind = define_shaped_rec
   "match"
-  [`Msub e (n:num) l =
+  `Msub e (n:num) l =
      match l with
        [] -> M_failure e
-     | CONS x l' -> if n = 0 then M_success x else Msub e (n - 1) l'`];;
+     | CONS x l' -> if n = 0 then M_success x else Msub e (n - 1) l'`;;
 
 (* Msub_eq *)
 let msub_eq = prove
@@ -124,7 +124,7 @@ let msub_exn_eq = prove
 (* Mupdate *)
 let mupdate_def,mupdate_ind = define_shaped_rec
   "match"
-  [`Mupdate e x (n:num) l =
+  `Mupdate e x (n:num) l =
      match l with
        [] -> M_failure e
      | CONS x' l' ->
@@ -132,7 +132,7 @@ let mupdate_def,mupdate_ind = define_shaped_rec
            M_success (CONS x l')
          else (match Mupdate e x (n - 1) l' with
               M_success l'' -> M_success (CONS x' l'')
-            | other -> other)`];;
+            | other -> other)`;;
 
 (* Mupdate_eq *)
 let mupdate_eq = prove
@@ -149,12 +149,12 @@ let mupdate_exn_eq = prove
    what the port found for it *)
 let array_resize_def,array_resize_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x0)`
-  [`array_resize (n:num) x a =
+  `array_resize (n:num) x a =
      if n = 0 then
        []
      else match a with
          [] -> CONS x (array_resize (n - 1) x a)
-       | CONS x' a' -> CONS x' (array_resize (n - 1) x a')`];;
+       | CONS x' a' -> CONS x' (array_resize (n - 1) x a')`;;
 
 let array_resize_eq = prove
  (`!a n x. array_resize n x a = APPEND (TAKE n a) (REPLICATE (n - LENGTH a)
@@ -195,15 +195,15 @@ let dref_def = new_definition
    what the port found for it *)
 let mdref_aux_def,mdref_aux_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`Mdref_aux e (n:num) =
+  `Mdref_aux e (n:num) =
      (\s. match s with
            [] -> M_failure e
          | CONS x s -> if n = 0 then M_success x else Mdref_aux e (n -
-           1) s)`];;
+           1) s)`;;
 
 let mdref_def = define_general
-  [`Mdref e (StoreRef n) =
-     (\s. (Mdref_aux e (LENGTH s - n - 1) s,s))`];;
+  `Mdref e (StoreRef n) =
+     (\s. (Mdref_aux e (LENGTH s - n - 1) s,s))`;;
 
 let mpop_ref_def = new_definition
   `Mpop_ref e =
@@ -214,20 +214,20 @@ let mpop_ref_def = new_definition
    what the port found for it *)
 let mref_assign_aux_def,mref_assign_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
-  [`Mref_assign_aux e (n:num) x =
+  `Mref_assign_aux e (n:num) x =
      (\s. match s with CONS x' s ->
              if n = 0 then
                M_success (CONS x s)
              else (match Mref_assign_aux e (n - 1) x s with
                   M_success s -> M_success (CONS x' s)
                 | other -> other)
-         | [] -> M_failure e)`];;
+         | [] -> M_failure e)`;;
 
 let mref_assign_def = define_general
-  [`Mref_assign e (StoreRef n) x =
+  `Mref_assign e (StoreRef n) x =
      (\s. match Mref_assign_aux e (LENGTH s - n - 1) x s with
            M_success s -> (M_success one,s)
-         | M_failure e -> (M_failure e,s))`];;
+         | M_failure e -> (M_failure e,s))`;;
 
 let ref_assign_def = new_definition
   `ref_assign n x = (\s. LUPDATE x (LENGTH s - n - 1) s)`;;

@@ -33,19 +33,19 @@ let valid_symchar_def = new_definition
 add_simp valid_symchar_def;;
 
 let valid_symbol_def = define_cases
-  [`valid_symbol "" <=> F`;
-   `valid_symbol (CONS c cs) <=> valid_first_symchar c /\ ALL
-    valid_symchar cs`];;
+  `(valid_symbol "" <=> F) /\
+   (valid_symbol (CONS c cs) <=> valid_first_symchar c /\ ALL
+    valid_symchar cs)`;;
 add_simp valid_symbol_def;;
 
 let valid_sexp_def,valid_sexp_ind = define_shaped_rec
   "match"
-  [`valid_sexp s =
+  `valid_sexp s =
      match s with
        SX_SYM s -> valid_symbol s
      | SX_CONS s1 s2 -> valid_sexp s1 /\ valid_sexp s2
      | SX_STR s -> ALL isPrint s
-     | s -> T`];;
+     | s -> T`;;
 add_simp valid_sexp_def;;
 
 let arb_sexp_def = new_definition
@@ -71,12 +71,12 @@ let destSXCONS_def = new_definition
 
 let strip_sxcons_def,strip_sxcons_ind = define_shaped_rec
   "match"
-  [`strip_sxcons s =
+  `strip_sxcons s =
      match s with
          SX_CONS h t -> OPTION_MAP (CONS h) (strip_sxcons t)
        | SX_SYM s -> if s = "nil" then SOME []
                      else NONE
-       | _ -> NONE`];;
+       | _ -> NONE`;;
 
 let sxMEM_def = new_definition
   `sxMEM e s <=> (?l. strip_sxcons s = SOME l /\ MEM e l)`;;

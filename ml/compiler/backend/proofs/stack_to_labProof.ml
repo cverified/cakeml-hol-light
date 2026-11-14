@@ -126,14 +126,14 @@ add_simp word_cmp_negate;;
 
 let stack_to_labProof_code_installed_def,stack_to_labProof_code_installed_ind =
   define_rec
-  [`stack_to_labProof_code_installed n [] code = T`;
-   `stack_to_labProof_code_installed n (CONS x xs) code <=>
+  `(stack_to_labProof_code_installed n [] code = T) /\
+   (stack_to_labProof_code_installed n (CONS x xs) code <=>
        (if is_Label x then
          (match x with labLang_Label l1 l2 _ -> loc_to_pc l1 l2 code = SOME
              n) /\
          stack_to_labProof_code_installed n xs code
        else asm_fetch_aux n code = SOME x /\
-         stack_to_labProof_code_installed (n + 1) xs code)`];;
+         stack_to_labProof_code_installed (n + 1) xs code))`;;
 
 let code_installed_append_imp = prove
  (`!l1 pc' l2 code. stack_to_labProof_code_installed pc' (APPEND l1 l2) code
@@ -247,11 +247,11 @@ let ALOOKUP_PARTITION = prove
   CHEAT_TAC);;
 
 let code_installed'_def,code_installed'_ind = define_rec
-  [`code_installed' n [] code <=> T`;
-   `code_installed' n (CONS x xs) code <=>
+  `(code_installed' n [] code <=> T) /\
+   (code_installed' n (CONS x xs) code <=>
          (if is_Label x then code_installed' n xs code
          else asm_fetch_aux n code = SOME x /\ code_installed' (n + 1)
-             xs code)`];;
+             xs code))`;;
 
 let code_installed'_cons_label = prove
  (`!lines pos.
@@ -282,13 +282,13 @@ let asm_fetch_aux_add = prove
   CHEAT_TAC);;
 
 let labs_correct_def,labs_correct_ind = define_rec
-  [`labs_correct n [] code <=> T`;
-   `labs_correct n (CONS x xs) code <=>
+  `(labs_correct n [] code <=> T) /\
+   (labs_correct n (CONS x xs) code <=>
          (if is_Label x then labs_correct n xs code /\
            (match x with labLang_Label l1 l2 v2 -> loc_to_pc l1 l2 code =
                SOME n
             | _ -> T)
-         else labs_correct (n + 1) xs code)`];;
+         else labs_correct (n + 1) xs code))`;;
 
 (* HOL4 stack_to_labProofScript.sml:391: ML code, not ported *)
 
@@ -416,10 +416,10 @@ let stack_to_labProof_state_rel_def = new_definition
        8) = 0) /\ stackSem_state_code_buffer
      s = labSem_state_code_buffer t /\ stackSem_state_compile
      s = (\c p. labSem_state_compile t c (MAP prog_to_section p)) /\
-     (labSem_state_compile_oracle t = (\n. let (c,p,_1) =
+     (labSem_state_compile_oracle t = (\n. let (c,p,_) =
        stackSem_state_compile_oracle s n in
                             (c,MAP prog_to_section p))) /\
-     (!k. let (c,ps,_2) = stackSem_state_compile_oracle s k in
+     (!k. let (c,ps,_) = stackSem_state_compile_oracle s k in
        ALL (\(n,p).
          call_args p (labSem_state_ptr_reg t) (labSem_state_len_reg t)
            (labSem_state_ptr2_reg t) (labSem_state_len2_reg t)
@@ -779,9 +779,9 @@ let state_rel_make_init = prove
            (labSem_state_code s) /\
          loc_to_pc n 0 (labSem_state_code s) = SOME pc'))
            /\ ~(labSem_state_failed s) /\ labSem_state_compile_oracle
-      s = (\n. (\(c,p,_5). (c,MAP prog_to_section p)) (coracle n)) /\
+      s = (\n. (\(c,p,_). (c,MAP prog_to_section p)) (coracle n)) /\
       (!k.
-        (\(c,ps,_6).
+        (\(c,ps,_).
            ALL
              (\(n,p).
                 call_args p (labSem_state_ptr_reg s) (labSem_state_len_reg
@@ -974,11 +974,11 @@ let _ = size_thms "stackLang_prog";;
    what the port found for it *)
 let complex_get_code_labels_def,complex_get_code_labels_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`complex_get_code_labels x1 =
+  `complex_get_code_labels x1 =
      match x1 with
        stackLang_Seq p1 p2 -> complex_get_code_labels p1 UNION
          complex_get_code_labels p2
-     | stackLang_If _7 _8 _9 p1 p2 -> complex_get_code_labels p1 UNION
+     | stackLang_If _ _ _ p1 p2 -> complex_get_code_labels p1 UNION
        complex_get_code_labels p2
      | stackLang_Call ret dest handler ->
         (match dest with INL x -> {(x,0)} | _ -> {}) UNION
@@ -992,7 +992,7 @@ let complex_get_code_labels_def,complex_get_code_labels_ind = define_wf
      | stackLang_LocValue i l1 l2 -> {(l1,l2)}
      | stackLang_RawCall l -> {(l,1)}
      | stackLang_JumpLower n m l -> {(l,0)}
-     | _ -> {}`];;
+     | _ -> {}`;;
 add_simp complex_get_code_labels_def;;
 
 (* [local] *)

@@ -446,12 +446,12 @@ let evaluate_refs_SUBSET = prove
   CHEAT_TAC);;
 
 let bvlProps_get_vars_def,bvlProps_get_vars_ind = define_rec
-  [`bvlProps_get_vars [] env = SOME []`;
-   `bvlProps_get_vars (CONS n ns) env =
+  `(bvlProps_get_vars [] env = SOME []) /\
+   (bvlProps_get_vars (CONS n ns) env =
          if n < LENGTH env then
            (match bvlProps_get_vars ns env with NONE -> NONE
             | SOME vs -> SOME (CONS (EL n env) vs))
-         else NONE`];;
+         else NONE)`;;
 
 let isVar_def = new_definition
   `isVar x1 =
@@ -460,7 +460,7 @@ let isVar_def = new_definition
      | _ -> F`;;
 
 let destVar_def = define_general
-  [`(destVar ((bvl_Var n):bvl_exp) = n)`];;
+  `(destVar ((bvl_Var n):bvl_exp) = n)`;;
 
 let evaluate_Var_list = prove
  (`!l. ALL isVar l ==>
@@ -475,21 +475,21 @@ let evaluate_Var_list = prove
 (* HOL4 bvlPropsScript.sml:836-840: the tactic that proves the termination *)
 let bVarBound_def,bVarBound_ind = define_wf
   `MEASURE (list_size bvl_exp_size o SND)`
-  [`bVarBound n [] <=> T`;
-   `bVarBound n (CONS (x:bvl_exp) (CONS y xs)) <=>
-         bVarBound n [x] /\ bVarBound n (CONS y xs)`;
-   `bVarBound n [bvl_Var v] <=> v < n`;
-   `bVarBound n [bvl_If x1 x2 x3] <=>
-         bVarBound n [x1] /\ bVarBound n [x2] /\ bVarBound n [x3]`;
-   `bVarBound n [bvl_Let xs x2] <=>
-         bVarBound n xs /\ bVarBound (n + LENGTH xs) [x2]`;
-   `bVarBound n [bvl_Raise x1] <=> bVarBound n [x1]`;
-   `bVarBound n [bvl_Tick x1] <=> bVarBound n [x1]`;
-   `bVarBound n [bvl_Op op xs] <=> bVarBound n xs`;
-   `bVarBound n [bvl_Force loc v] <=> v < n`;
-   `bVarBound n [bvl_Handle x1 x2] <=>
-         bVarBound n [x1] /\ bVarBound (n + 1) [x2]`;
-   `bVarBound n [bvl_Call ticks dest xs] <=> bVarBound n xs`];;
+  `(bVarBound n [] <=> T) /\
+   (bVarBound n (CONS (x:bvl_exp) (CONS y xs)) <=>
+         bVarBound n [x] /\ bVarBound n (CONS y xs)) /\
+   (bVarBound n [bvl_Var v] <=> v < n) /\
+   (bVarBound n [bvl_If x1 x2 x3] <=>
+         bVarBound n [x1] /\ bVarBound n [x2] /\ bVarBound n [x3]) /\
+   (bVarBound n [bvl_Let xs x2] <=>
+         bVarBound n xs /\ bVarBound (n + LENGTH xs) [x2]) /\
+   (bVarBound n [bvl_Raise x1] <=> bVarBound n [x1]) /\
+   (bVarBound n [bvl_Tick x1] <=> bVarBound n [x1]) /\
+   (bVarBound n [bvl_Op op xs] <=> bVarBound n xs) /\
+   (bVarBound n [bvl_Force loc v] <=> v < n) /\
+   (bVarBound n [bvl_Handle x1 x2] <=>
+         bVarBound n [x1] /\ bVarBound (n + 1) [x2]) /\
+   (bVarBound n [bvl_Call ticks dest xs] <=> bVarBound n xs)`;;
 add_simp bVarBound_def;;
 
 (* the termination relation that HOL4 gives, with
@@ -497,22 +497,22 @@ add_simp bVarBound_def;;
 (* HOL4 bvlPropsScript.sml:858-862: the tactic that proves the termination *)
 let bEvery_def,bEvery_ind = define_wf
   `MEASURE (list_size bvl_exp_size o SND)`
-  [`bEvery P [] <=> T`;
-   `bEvery P (CONS (x:bvl_exp) (CONS y xs)) <=>
-         bEvery P [x] /\ bEvery P (CONS y xs)`;
-   `bEvery P [bvl_Var v] <=> P ((bvl_Var v:bvl_exp))`;
-   `bEvery P [bvl_If x1 x2 x3] <=> P ((bvl_If x1 x2 x3:bvl_exp)) /\
-         bEvery P [x1] /\ bEvery P [x2] /\ bEvery P [x3]`;
-   `bEvery P [bvl_Let xs x2] <=> P ((bvl_Let xs x2:bvl_exp)) /\
-         bEvery P xs /\ bEvery P [x2]`;
-   `bEvery P [bvl_Raise x1] <=> P ((bvl_Raise x1:bvl_exp)) /\ bEvery P [x1]`;
-   `bEvery P [bvl_Tick x1] <=> P ((bvl_Tick x1:bvl_exp)) /\ bEvery P [x1]`;
-   `bEvery P [bvl_Force m n] <=> P ((bvl_Force m n:bvl_exp))`;
-   `bEvery P [bvl_Op op xs] <=> P ((bvl_Op op xs:bvl_exp)) /\ bEvery P xs`;
-   `bEvery P [bvl_Handle x1 x2] <=> P ((bvl_Handle x1 x2:bvl_exp)) /\
-         bEvery P [x1] /\ bEvery P [x2]`;
-   `bEvery P [bvl_Call ticks dest xs] <=> P ((bvl_Call ticks dest
-    xs:bvl_exp)) /\ bEvery P xs`];;
+  `(bEvery P [] <=> T) /\
+   (bEvery P (CONS (x:bvl_exp) (CONS y xs)) <=>
+         bEvery P [x] /\ bEvery P (CONS y xs)) /\
+   (bEvery P [bvl_Var v] <=> P ((bvl_Var v:bvl_exp))) /\
+   (bEvery P [bvl_If x1 x2 x3] <=> P ((bvl_If x1 x2 x3:bvl_exp)) /\
+         bEvery P [x1] /\ bEvery P [x2] /\ bEvery P [x3]) /\
+   (bEvery P [bvl_Let xs x2] <=> P ((bvl_Let xs x2:bvl_exp)) /\
+         bEvery P xs /\ bEvery P [x2]) /\
+   (bEvery P [bvl_Raise x1] <=> P ((bvl_Raise x1:bvl_exp)) /\ bEvery P [x1]) /\
+   (bEvery P [bvl_Tick x1] <=> P ((bvl_Tick x1:bvl_exp)) /\ bEvery P [x1]) /\
+   (bEvery P [bvl_Force m n] <=> P ((bvl_Force m n:bvl_exp))) /\
+   (bEvery P [bvl_Op op xs] <=> P ((bvl_Op op xs:bvl_exp)) /\ bEvery P xs) /\
+   (bEvery P [bvl_Handle x1 x2] <=> P ((bvl_Handle x1 x2:bvl_exp)) /\
+         bEvery P [x1] /\ bEvery P [x2]) /\
+   (bEvery P [bvl_Call ticks dest xs] <=> P ((bvl_Call ticks dest
+    xs:bvl_exp)) /\ bEvery P xs)`;;
 add_simp bEvery_def;;
 
 let bVarBound_EVERY = prove
@@ -530,21 +530,21 @@ let bEvery_EVERY = prove
 (* HOL4 bvlPropsScript.sml:888-895: the tactic that proves the termination *)
 let bvlProps_get_code_labels_def,bvlProps_get_code_labels_ind = define_wf
   `MEASURE (\x0. bvl_exp_size x0)`
-  [`bvlProps_get_code_labels (bvl_Var _) = {}`;
-   `bvlProps_get_code_labels (bvl_If e1 e2 e3) = bvlProps_get_code_labels e1
-    UNION bvlProps_get_code_labels e2 UNION bvlProps_get_code_labels e3`;
-   `bvlProps_get_code_labels (bvl_Let es e) = UNIONS (set_of_list (MAP
-    bvlProps_get_code_labels es)) UNION bvlProps_get_code_labels e`;
-   `bvlProps_get_code_labels (bvl_Raise e) = bvlProps_get_code_labels e`;
-   `bvlProps_get_code_labels (bvl_Handle e1 e2) = bvlProps_get_code_labels
-    e1 UNION bvlProps_get_code_labels e2`;
-   `bvlProps_get_code_labels (bvl_Tick e) = bvlProps_get_code_labels e`;
-   `bvlProps_get_code_labels (bvl_Force loc v) = {loc}`;
-   `bvlProps_get_code_labels (bvl_Call _ d es) = (match d with NONE -> {} |
+  `(bvlProps_get_code_labels (bvl_Var _) = {}) /\
+   (bvlProps_get_code_labels (bvl_If e1 e2 e3) = bvlProps_get_code_labels
+    e1 UNION bvlProps_get_code_labels e2 UNION bvlProps_get_code_labels e3) /\
+   (bvlProps_get_code_labels (bvl_Let es e) = UNIONS (set_of_list (MAP
+    bvlProps_get_code_labels es)) UNION bvlProps_get_code_labels e) /\
+   (bvlProps_get_code_labels (bvl_Raise e) = bvlProps_get_code_labels e) /\
+   (bvlProps_get_code_labels (bvl_Handle e1 e2) = bvlProps_get_code_labels
+    e1 UNION bvlProps_get_code_labels e2) /\
+   (bvlProps_get_code_labels (bvl_Tick e) = bvlProps_get_code_labels e) /\
+   (bvlProps_get_code_labels (bvl_Force loc v) = {loc}) /\
+   (bvlProps_get_code_labels (bvl_Call _ d es) = (match d with NONE -> {} |
     SOME n -> {n}) UNION UNIONS (set_of_list (MAP bvlProps_get_code_labels
-    es))`;
-   `bvlProps_get_code_labels (bvl_Op op es) = assign_get_code_label op
-    UNION UNIONS (set_of_list (MAP bvlProps_get_code_labels es))`];;
+    es))) /\
+   (bvlProps_get_code_labels (bvl_Op op es) = assign_get_code_label op
+    UNION UNIONS (set_of_list (MAP bvlProps_get_code_labels es)))`;;
 
 (* HOL4 bvlPropsScript.sml:897-898: a theorem that HOL4 states as the value
    of an ML expression: get_code_labels_def *)

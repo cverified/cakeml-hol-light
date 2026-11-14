@@ -364,23 +364,23 @@ let tenv_ctor_ok_lookup = prove
 (* ---------- tenv_val_exp stuff ---------- *)
 
 let deBruijn_subst_tenvE_def,deBruijn_subst_tenvE_ind = define_rec
-  [`deBruijn_subst_tenvE targs typeSystem_Empty =
-    (typeSystem_Empty:tenv_val_exp)`;
-   `deBruijn_subst_tenvE targs (typeSystem_Bind_tvar tvs env) =
-      typeSystem_Bind_tvar tvs (deBruijn_subst_tenvE targs env)`;
-   `deBruijn_subst_tenvE targs (typeSystem_Bind_name x tvs t env) =
+  `(deBruijn_subst_tenvE targs typeSystem_Empty =
+    (typeSystem_Empty:tenv_val_exp)) /\
+   (deBruijn_subst_tenvE targs (typeSystem_Bind_tvar tvs env) =
+      typeSystem_Bind_tvar tvs (deBruijn_subst_tenvE targs env)) /\
+   (deBruijn_subst_tenvE targs (typeSystem_Bind_name x tvs t env) =
       typeSystem_Bind_name x tvs (deBruijn_subst (tvs + num_tvs env)
                               (MAP (deBruijn_inc 0 (tvs + num_tvs env))
                                   targs)
                               t)
-           (deBruijn_subst_tenvE targs env)`];;
+           (deBruijn_subst_tenvE targs env))`;;
 
 let db_merge_def,db_merge_ind = define_rec
-  [`db_merge typeSystem_Empty e = e`;
-   `db_merge (typeSystem_Bind_tvar tvs e1) e2 = typeSystem_Bind_tvar tvs
-    (db_merge e1 e2)`;
-   `db_merge (typeSystem_Bind_name x tvs t e1) e2 = typeSystem_Bind_name x
-    tvs t (db_merge e1 e2)`];;
+  `(db_merge typeSystem_Empty e = e) /\
+   (db_merge (typeSystem_Bind_tvar tvs e1) e2 = typeSystem_Bind_tvar tvs
+    (db_merge e1 e2)) /\
+   (db_merge (typeSystem_Bind_name x tvs t e1) e2 = typeSystem_Bind_name x
+    tvs t (db_merge e1 e2))`;;
 
 let bind_tvar_rewrites = prove
  (`(!tvs e1 e2. db_merge (bind_tvar tvs e1) e2 = bind_tvar tvs (db_merge e1
@@ -797,14 +797,14 @@ let type_def_to_ctMap_def,type_def_to_ctMap_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3).      list_size      (pair_size (\x. 0)
   (pair_size (\x. 0) (list_size (pair_size mlstring_size ast_t_size1))))
   x2)`
-  [`type_def_to_ctMap tenvT next_stamp [] [] = []`;
-   `type_def_to_ctMap tenvT next_stamp (CONS (tvs,tn,ctors) tds) (CONS id' ids)
+  `(type_def_to_ctMap tenvT next_stamp [] [] = []) /\
+   (type_def_to_ctMap tenvT next_stamp (CONS (tvs,tn,ctors) tds) (CONS id' ids)
     = APPEND (type_def_to_ctMap tenvT (next_stamp + 1) tds ids)
         (REVERSE
           (MAP (\(cn,ts).
             (TypeStamp cn next_stamp,(tvs,MAP (type_name_subst tenvT)
                 ts,id')))
-            ctors))`];;
+            ctors)))`;;
 
 let mem_type_def_to_ctMap = prove
  (`!tenvT next' tds ids stamp x.

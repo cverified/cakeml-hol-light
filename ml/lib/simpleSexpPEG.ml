@@ -22,20 +22,20 @@ let pnt_def = new_definition
 
 let replace_nil_def,replace_nil_ind = define_shaped_rec
   "match"
-  [`replace_nil x z =
+  `replace_nil x z =
      match x with
        SX_SYM s -> if s = "nil" then z else SX_SYM s
      | SX_CONS x y -> SX_CONS x (replace_nil y z)
-     | x -> x`];;
+     | x -> x`;;
 
 let sumID_def = define_cases
-  [`simpleSexpPEG_sumID (INL x) = x`;
-   `simpleSexpPEG_sumID (INR y) = y`];;
+  `(simpleSexpPEG_sumID (INL x) = x) /\
+   (simpleSexpPEG_sumID (INR y) = y)`;;
 add_simp sumID_def;;
 let simpleSexpPEG_choicel_def,simpleSexpPEG_choicel_ind = define_rec
-  [`simpleSexpPEG_choicel [] = peg_not (peg_empty arb_sexp) arb_sexp`;
-   `simpleSexpPEG_choicel (CONS h t) = peg_choice h (simpleSexpPEG_choicel
-    t) simpleSexpPEG_sumID`];;
+  `(simpleSexpPEG_choicel [] = peg_not (peg_empty arb_sexp) arb_sexp) /\
+   (simpleSexpPEG_choicel (CONS h t) = peg_choice h (simpleSexpPEG_choicel
+    t) simpleSexpPEG_sumID)`;;
 
 let simpleSexpPEG_pegf_def = new_definition
   `simpleSexpPEG_pegf sym f = peg_seq sym (peg_empty arb_sexp) (\l1 l2. f

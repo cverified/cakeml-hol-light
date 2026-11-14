@@ -41,20 +41,20 @@ let mlstring_INDUCT,mlstring_RECURSION = define_datatype
 (* HOL4 mlstringScript.sml:26: the overload strlit, which the port expands *)
 
 let strlen_def = define_general
-  [`strlen (implode s) = LENGTH s`];;
+  `strlen (implode s) = LENGTH s`;;
 add_simp strlen_def;;
 
 let strsub_def = define_general
-  [`strsub (implode s) n = EL n s`];;
+  `strsub (implode s) n = EL n s`;;
 add_simp strsub_def;;
 
 (* the test here is because underspecification is annoying (and SEG is underspecified) *)
 (* the underlying primitive (CopyStrStr) raises an exception if the test is false *)
 let substring_def = define_general
-  [`substring (implode s) off len = implode (if off + len <= LENGTH s then SEG
+  `substring (implode s) off len = implode (if off + len <= LENGTH s then SEG
   len off s
                               else if off <= LENGTH s then DROP off s
-                              else "")`];;
+                              else "")`;;
 
 let concat_def = new_definition
   `mlstring_concat l = implode (FLAT (MAP (\s. match s with implode x -> x)
@@ -69,9 +69,9 @@ add_simp concat_nil;;
    what the port found for it *)
 let explode_aux_def,explode_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
-  [`explode_aux s n 0 = []`;
-   `explode_aux s n (SUC len) = CONS (strsub s n) (explode_aux s (n + 1)
-    len)`];;
+  `(explode_aux s n 0 = []) /\
+   (explode_aux s n (SUC len) = CONS (strsub s n) (explode_aux s (n + 1)
+    len))`;;
 add_simp explode_aux_def;;
 
 let explode_aux_thm = prove
@@ -253,9 +253,9 @@ add_simp strlen_toString;;
    what the port found for it *)
 let translate_aux_def,translate_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
-  [`translate_aux f s n 0 = []`;
-   `translate_aux f s n (SUC len) = CONS (f (strsub s n)) (translate_aux f
-    s (n + 1) len)`];;
+  `(translate_aux f s n 0 = []) /\
+   (translate_aux f s n (SUC len) = CONS (f (strsub s n)) (translate_aux f
+    s (n + 1) len))`;;
 
 let translate_def = new_definition
   `translate f s = implode (translate_aux f s 0 (strlen s))`;;
@@ -274,10 +274,10 @@ let translate_thm = prove
    the names that the port gives the constants *)
 let splitl_aux_def,splitl_aux_ind = define_wf
   `inv_image (<) (\(x,s,i). strlen s - i)`
-  [`splitl_aux P s i =
+  `splitl_aux P s i =
      if i < strlen s /\ P (strsub s i) then
          splitl_aux P s (i + 1)
-     else (mlstring_extract s 0 (SOME i),mlstring_extract s i NONE)`];;
+     else (mlstring_extract s 0 (SOME i),mlstring_extract s i NONE)`;;
 
 (* HOL4 mlstringScript.sml:316: ML code, not ported *)
 
@@ -299,15 +299,15 @@ let splitl_SPLITL = prove
    what the port found for it *)
 let tokens_aux_def,tokens_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
-  [`tokens_aux f s [] n 0 = []`;
-   `tokens_aux f s (CONS h t) n 0 = [implode (REVERSE (CONS h t))]`;
-   `tokens_aux f s [] n (SUC len) =
+  `(tokens_aux f s [] n 0 = []) /\
+   (tokens_aux f s (CONS h t) n 0 = [implode (REVERSE (CONS h t))]) /\
+   (tokens_aux f s [] n (SUC len) =
         if f (strsub s n) then tokens_aux f s [] (n + 1) len
-        else tokens_aux f s [strsub s n] (n + 1) len`;
-   `tokens_aux f s (CONS h t) n (SUC len) =
+        else tokens_aux f s [strsub s n] (n + 1) len) /\
+   (tokens_aux f s (CONS h t) n (SUC len) =
         if f (strsub s n) then CONS (implode (REVERSE (CONS h t)))
             (tokens_aux f s [] (n + 1) len)
-        else tokens_aux f s (CONS (strsub s n) (CONS h t)) (n + 1) len`];;
+        else tokens_aux f s (CONS (strsub s n) (CONS h t)) (n + 1) len)`;;
 
 (* HOL4 mlstringScript.sml:384: ML code, not ported *)
 
@@ -365,7 +365,7 @@ let tokens_append = prove
 (* HOL4 mlstringScript.sml:520-522: the tactic that proves the termination *)
 let tokens_alt_aux_def,tokens_alt_aux_ind = define_wf
   `MEASURE (\(f,s,i,j,n). n - j)`
-  [`(tokens_alt_aux f s i j n =
+  `(tokens_alt_aux f s i j n =
    if j < n then
      (if f (strsub s j) then
        (if i = j then tokens_alt_aux f s (i + 1) (j + 1) n
@@ -373,7 +373,7 @@ let tokens_alt_aux_def,tokens_alt_aux_ind = define_wf
          (tokens_alt_aux f s (j + 1) (j + 1) n))
      else tokens_alt_aux f s i (j + 1) n)
    else if i = j then []
-     else [substring s i (j - i)])`];;
+     else [substring s i (j - i)])`;;
 
 let substring_1_strsub = prove
  (`i < strlen s ==>
@@ -412,11 +412,11 @@ let tokens_alt = prove
    what the port found for it *)
 let fields_aux_def,fields_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
-  [`fields_aux f s ss n 0 = [implode (REVERSE ss)]`;
-   `fields_aux f s ss n (SUC len) =
+  `(fields_aux f s ss n 0 = [implode (REVERSE ss)]) /\
+   (fields_aux f s ss n (SUC len) =
         if f (strsub s n) then CONS (implode (REVERSE ss)) (fields_aux f s
             [] (n + 1) len)
-        else fields_aux f s (CONS (strsub s n) ss) (n + 1) len`];;
+        else fields_aux f s (CONS (strsub s n) ss) (n + 1) len)`;;
 
 
 let fields_def = new_definition
@@ -454,12 +454,12 @@ let fields_length = prove
 (* HOL4 mlstringScript.sml:677-679: the tactic that proves the termination *)
 let fields_alt_aux_def,fields_alt_aux_ind = define_wf
   `MEASURE (\(f,s,i,j,n). n - j)`
-  [`(fields_alt_aux f s i j n =
+  `(fields_alt_aux f s i j n =
    if j < n then
      (if f (strsub s j) then CONS (substring s i (j - i))
          (fields_alt_aux f s (j + 1) (j + 1) n)
      else fields_alt_aux f s i (j + 1) n)
-   else [substring s i (j - i)])`];;
+   else [substring s i (j - i)])`;;
 
 let fields_alt_fields_alt_aux = prove
  (`!l acc j i.
@@ -483,9 +483,9 @@ let fields_alt = prove
    the names that the port gives the constants *)
 let str_findi_def,str_findi_ind = define_wf
   `MEASURE (\(P,i,s). strlen s - i)`
-  [`str_findi P i s = if i < strlen s then if P (strsub s i) then SOME i else
+  `str_findi P i s = if i < strlen s then if P (strsub s i) then SOME i else
   str_findi P (i + 1) s
-     else NONE`];;
+     else NONE`;;
 
 let str_findi_range = prove
  (`!P i s. str_findi P i s = SOME j ==> i <= j /\ j < strlen s`,
@@ -514,11 +514,11 @@ let str_findi_OLEAST = prove
    what the port found for it *)
 let isStringThere_aux_def,isStringThere_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
-  [`isStringThere_aux s1 s2 s1i s2i 0 = T`;
-   `isStringThere_aux s1 s2 s1i s2i (SUC len) =
+  `(isStringThere_aux s1 s2 s1i s2i 0 = T) /\
+   (isStringThere_aux s1 s2 s1i s2i (SUC len) =
         if strsub s1 s1i = strsub s2 s2i then isStringThere_aux s1 s2 (s1i
             + 1) (s2i + 1) len
-        else F`];;
+        else F)`;;
 
 
 (* HOL4 mlstringScript.sml:771-781: code that the source has in a comment *)
@@ -559,10 +559,10 @@ let isSuffix_def = new_definition
    what the port found for it *)
 let isSubstring_aux_def,isSubstring_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
-  [`isSubstring_aux s1 s2 lens1 n 0 = F`;
-   `isSubstring_aux s1 s2 lens1 n (SUC len) =
+  `(isSubstring_aux s1 s2 lens1 n 0 = F) /\
+   (isSubstring_aux s1 s2 lens1 n (SUC len) =
         if (isStringThere_aux s1 s2 0 n lens1) then T
-        else isSubstring_aux s1 s2 lens1 (n + 1) len`];;
+        else isSubstring_aux s1 s2 lens1 (n + 1) len)`;;
 
 let isSubstring_def = new_definition
   `isSubstring s1 s2 =
@@ -626,12 +626,12 @@ let _ = size_thms "mlstring";;
    what the port found for it *)
 let compare_aux_def,compare_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). mlstring_size x0)`
-  [`compare_aux (s1:mlstring) s2 ord start' len =
+  `compare_aux (s1:mlstring) s2 ord start' len =
      if len = 0 then
        ord
      else if strsub s2 start' < strsub s1 start' then GREATER
      else if strsub s1 start' < strsub s2 start' then LESS
-     else compare_aux s1 s2 ord (start' + 1) (len - 1)`];;
+     else compare_aux s1 s2 ord (start' + 1) (len - 1)`;;
 
 let mlstring_compare_def = new_definition
   `mlstring_compare s1 s2 = if (strlen s1) < (strlen s2) then compare_aux s1 s2
@@ -927,11 +927,11 @@ let StrongLinearOrder_fast_lt = prove
    what the port found for it *)
 let collate_aux_def,collate_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4,x5). (\n. n) x5)`
-  [`mlstring_collate_aux f (s1:mlstring) s2 ord n 0 = ord`;
-   `mlstring_collate_aux f (s1:mlstring) s2 ord n (SUC len) =
+  `(mlstring_collate_aux f (s1:mlstring) s2 ord n 0 = ord) /\
+   (mlstring_collate_aux f (s1:mlstring) s2 ord n (SUC len) =
         if f (strsub s1 n) (strsub s2 n) = EQUAL then mlstring_collate_aux
             f s1 s2 ord (n + 1) len
-        else f (strsub s1 n) (strsub s2 n)`];;
+        else f (strsub s1 n) (strsub s2 n))`;;
 
 let mlstring_collate_def = new_definition
   `mlstring_collate f s1 s2 =
@@ -1018,8 +1018,8 @@ let app_list_ann_INDUCT,app_list_ann_RECURSION = define_datatype
    | Small ('a app_list)";;
 
 let sum_sizes_def,sum_sizes_ind = define_rec
-  [`sum_sizes [] k = k`;
-   `sum_sizes (CONS l ls) k = sum_sizes ls (strlen l + k)`];;
+  `(sum_sizes [] k = k) /\
+   (sum_sizes (CONS l ls) k = sum_sizes ls (strlen l + k))`;;
 
 (* HOL4 mlstringScript.sml:1502: the overload size_limit, which the port
    expands *)
@@ -1029,7 +1029,7 @@ let _ = size_thms "app_list";;
    what the port found for it *)
 let make_app_list_ann_def,make_app_list_ann_ind = define_wf
   `MEASURE (\x0. app_list_size mlstring_size x0)`
-  [`make_app_list_ann input =
+  `make_app_list_ann input =
      match input with misc_Nil -> (Small input,0)
      | misc_Append l1 l2 ->
          (let (x1,n1) = make_app_list_ann l1 in
@@ -1042,12 +1042,12 @@ let make_app_list_ann_def,make_app_list_ann_ind = define_wf
          (let n = sum_sizes ls 0 in
             if n < (2048:num) then
               (Small input,n)
-            else (BigList ls,n))`];;
+            else (BigList ls,n))`;;
 
 let shrink_def,shrink_ind = define_rec
-  [`shrink (Small t) = misc_List [mlstring_concat (append t)]`;
-   `shrink (BigList ls) = misc_List ls`;
-   `shrink (BigAppend l1 l2) = misc_Append (shrink l1) (shrink l2)`];;
+  `(shrink (Small t) = misc_List [mlstring_concat (append t)]) /\
+   (shrink (BigList ls) = misc_List ls) /\
+   (shrink (BigAppend l1 l2) = misc_Append (shrink l1) (shrink l2))`;;
 
 let str_app_list_opt_def = new_definition
   `str_app_list_opt l =

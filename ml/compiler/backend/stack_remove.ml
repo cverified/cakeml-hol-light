@@ -100,11 +100,11 @@ let single_stack_alloc_def = new_definition
 (* HOL4 stack_removeScript.sml:85-87: the tactic that proves the termination *)
 let stack_alloc_def,stack_alloc_ind = define_wf
   `MEASURE (SND o SND)`
-  [`stack_alloc jump k n =
+  `stack_alloc jump k n =
      if n = 0 then stackLang_Skip else if n <= max_stack_alloc then
        single_stack_alloc jump k n else stackLang_Seq (single_stack_alloc jump
        k max_stack_alloc)
-           (stack_alloc jump k (n - max_stack_alloc))`];;
+           (stack_alloc jump k (n - max_stack_alloc))`;;
 
 let single_stack_free_def = new_definition
   `single_stack_free k n =
@@ -117,11 +117,11 @@ let single_stack_free_def = new_definition
    termination *)
 let stack_free_def,stack_free_ind = define_wf
   `MEASURE SND`
-  [`stack_remove_stack_free k n =
+  `stack_remove_stack_free k n =
      if n = 0 then stackLang_Skip else if n <= max_stack_alloc then
        single_stack_free k n else stackLang_Seq (single_stack_free k
        max_stack_alloc)
-           (stack_remove_stack_free k (n - max_stack_alloc))`];;
+           (stack_remove_stack_free k (n - max_stack_alloc))`;;
 
 (* upshift the stack pointer *)
 (* the termination relation that HOL4 gives, with
@@ -130,13 +130,13 @@ let stack_free_def,stack_free_ind = define_wf
    termination *)
 let upshift_def,upshift_ind = define_wf
   `MEASURE SND`
-  [`upshift r n =
+  `upshift r n =
      if n <= max_stack_alloc then
        (stackLang_Inst (asm_Arith (asm_Binop asm_Add r r (Imm (word_offset
          n))))):'a stackLang_prog
      else stackLang_Seq (stackLang_Inst (asm_Arith (asm_Binop asm_Add r r
        (Imm (word_offset max_stack_alloc)))))
-       (upshift r (n - max_stack_alloc))`];;
+       (upshift r (n - max_stack_alloc))`;;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -144,13 +144,13 @@ let upshift_def,upshift_ind = define_wf
    termination *)
 let downshift_def,downshift_ind = define_wf
   `MEASURE SND`
-  [`downshift r n =
+  `downshift r n =
      if n <= max_stack_alloc then
        (stackLang_Inst (asm_Arith (asm_Binop asm_Sub r r (Imm (word_offset
          n))))):'a stackLang_prog
      else stackLang_Seq (stackLang_Inst (asm_Arith (asm_Binop asm_Sub r r
        (Imm (word_offset max_stack_alloc)))))
-       (downshift r (n - max_stack_alloc))`];;
+       (downshift r (n - max_stack_alloc))`;;
 
 (* Shifts k up and down to store r into n*)
 let stack_store_def = new_definition
@@ -202,14 +202,14 @@ let _ = size_thms "stackLang_prog";;
    what the port found for it *)
 let stack_remove_comp_def,stack_remove_comp_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). stackLang_prog_size (\x. 0) x3)`
-  [`stack_remove_comp jump off k (p:'a stackLang_prog) =
+  `stack_remove_comp jump off k (p:'a stackLang_prog) =
      match p with
        // remove store accesses
        stackLang_Get r name ->
          if name = CurrHeap then (\dest src. stackLang_Inst (asm_Arith
            (asm_Binop asm_Or dest src (Reg src)))) r (k + 2)
-         else stackLang_Inst (asm_Mem asm_Load r (Addr (k + 1)
-           (store_offset name)))
+         else stackLang_Inst (asm_Mem asm_Load r (Addr (k + 1) (store_offset
+           name)))
      | stackLang_Set name r ->
          if name = CurrHeap then (\dest src. stackLang_Inst (asm_Arith
            (asm_Binop asm_Or dest src (Reg src)))) (k + 2) r
@@ -237,21 +237,21 @@ let stack_remove_comp_def,stack_remove_comp_ind = define_wf
      |
        // remove data buffer
        stackLang_StackLoadAny r i -> stackLang_Seq (stackLang_Seq ((\dest
-         src. stackLang_Inst (asm_Arith (asm_Binop asm_Or dest src (Reg
-         src)))) r i) ((\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
-         r1 r1 (Reg r2)))) r k))
+         src. stackLang_Inst (asm_Arith (asm_Binop asm_Or dest src (Reg src))))
+         r i) ((\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Reg
+         r2)))) r k))
                               (stackLang_Inst (asm_Mem asm_Load r (Addr r
                                 (n2w 0))))
      | stackLang_StackStoreAny r i -> stackLang_Seq (stackLang_Inst
        (asm_Arith (asm_Binop asm_Add k k (Reg i))))
-                           (stackLang_Seq (stackLang_Inst (asm_Mem
-                             asm_Store r (Addr k (n2w 0))))
+                           (stackLang_Seq (stackLang_Inst (asm_Mem asm_Store
+                             r (Addr k (n2w 0))))
                               (stackLang_Inst (asm_Arith (asm_Binop asm_Sub
                                 k k (Reg i)))))
-     | stackLang_StackGetSize r -> stackLang_Seq (stackLang_Seq ((\dest
-       src. stackLang_Inst (asm_Arith (asm_Binop asm_Or dest src (Reg src))))
-       r k) ((\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-       r2)))) r (k + 1)))
+     | stackLang_StackGetSize r -> stackLang_Seq (stackLang_Seq ((\dest src.
+       stackLang_Inst (asm_Arith (asm_Binop asm_Or dest src (Reg src)))) r k)
+       ((\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg r2))))
+       r (k + 1)))
                              ((\r v. stackLang_Inst (asm_Arith (asm_Shift
                                Lsr r r (Imm (n2w v))))) r
                                (backend_common_word_shift (:'a)))
@@ -289,8 +289,7 @@ let stack_remove_comp_def,stack_remove_comp_ind = define_wf
          p1) (stack_remove_comp jump off k p2)
      | stackLang_If c r ri p1 p2 -> stackLang_If c r ri (stack_remove_comp
        jump off k p1) (stack_remove_comp jump off k p2)
-     | stackLang_Loop p1 -> stackLang_Loop (stack_remove_comp jump off k
-       p1)
+     | stackLang_Loop p1 -> stackLang_Loop (stack_remove_comp jump off k p1)
      | stackLang_Call ret dest exc ->
          stackLang_Call (match ret with NONE -> NONE
                | SOME (p1,lr,l1,l2) -> SOME (stack_remove_comp jump off k
@@ -298,7 +297,7 @@ let stack_remove_comp_def,stack_remove_comp_ind = define_wf
            dest (match exc with NONE -> NONE
                  | SOME (p2,l1,l2) -> SOME (stack_remove_comp jump off k
                    p2,l1,l2))
-     | p -> p`];;
+     | p -> p`;;
 
 let stack_remove_prog_comp_def = new_definition
   `stack_remove_prog_comp jump off k (n,p) = (n,stack_remove_comp jump off k
@@ -310,18 +309,18 @@ let stack_remove_prog_comp_def = new_definition
    what the port found for it *)
 let store_list_code_def,store_list_code_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (sum_size (\n. n) (\x. 0)) x2)`
-  [`(store_list_code a t [] = stackLang_Skip) /\
+  `(store_list_code a t [] = stackLang_Skip) /\
    (store_list_code a t (CONS (INL w) xs) =
      stackLang_Seq (stackLang_list_Seq [(\r w. stackLang_Inst (asm_Const r
-       w)) t w; (\r a. stackLang_Inst (asm_Mem asm_Store r (Addr a (n2w 0))))
-       t a; (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Imm
+       w)) t w; (\r a. stackLang_Inst (asm_Mem asm_Store r (Addr a (n2w 0)))) t
+       a; (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Imm
        (bytes_in_word))))) a])
          (store_list_code a t xs)) /\
    (store_list_code a t (CONS (INR i) xs) =
      stackLang_Seq (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem
        asm_Store r (Addr a (n2w 0)))) i a; (\r1. stackLang_Inst (asm_Arith
        (asm_Binop asm_Add r1 r1 (Imm (bytes_in_word))))) a])
-         (store_list_code a t xs))`];;
+         (store_list_code a t xs))`;;
 
 (* k+1 is base, k is stack pointer, discards 0 *)
 let init_memory_def = new_definition

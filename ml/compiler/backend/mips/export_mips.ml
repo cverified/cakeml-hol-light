@@ -76,14 +76,14 @@ let export_mips_startup_def = new_definition
         (implode "\n")]))))`;;
 
 let export_mips_ffi_asm_def,export_mips_ffi_asm_ind = define_rec
-  [`export_mips_ffi_asm [] = misc_Nil`;
-   `export_mips_ffi_asm (CONS ffi ffis) =
+  `(export_mips_ffi_asm [] = misc_Nil) /\
+   (export_mips_ffi_asm (CONS ffi ffis) =
           SmartAppend (misc_List [
            (implode "cake_ffi"); ffi; (implode ":\n");
            (implode "     dla    $t9,cdecl(ffi"); ffi; (implode ")\n");
            (implode "     jr     $t9\n");
            (implode "     .p2align 4\n");
-           (implode "\n")]) (export_mips_ffi_asm ffis)`];;
+           (implode "\n")]) (export_mips_ffi_asm ffis))`;;
 
 (* HOL4 export_mipsScript.sml:66-92: the ML values that the definitions
    below antiquote *)

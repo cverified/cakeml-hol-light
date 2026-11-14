@@ -50,67 +50,65 @@ let _ = size_thms "wordLang_exp";;
    what the port found for it *)
 let eval_exp_def,eval_exp_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
-  [`eval_exp s (wordLang_Const w) = w /\
-   eval_exp s (wordLang_Var v) = FAPPLY (word_bignumProof_state_regs s) v
+  `eval_exp s (wordLang_Const w) = w /\
+   eval_exp s (wordLang_Var v) = FAPPLY (word_bignumProof_state_regs s) v /\
+   eval_exp s (wordLang_Op asm_Add [x1; x2]) = eval_exp s x1 + eval_exp s x2
      /\
-   eval_exp s (wordLang_Op asm_Add [x1; x2]) = eval_exp s x1 + eval_exp s
-     x2 /\
-   eval_exp s (wordLang_Op asm_Sub [x1; x2]) = eval_exp s x1 - eval_exp s
-     x2 /\
+   eval_exp s (wordLang_Op asm_Sub [x1; x2]) = eval_exp s x1 - eval_exp s x2
+     /\
    eval_exp s (wordLang_Op asm_And [x1; x2]) = word_and (eval_exp s x1)
      (eval_exp s x2) /\
    eval_exp s (wordLang_Op asm_Or [x1; x2]) = word_or (eval_exp s x1)
      (eval_exp s x2) /\
    eval_exp s (wordLang_Op asm_Xor [x1; x2]) = word_xor (eval_exp s x1)
      (eval_exp s x2) /\
-   eval_exp s (wordLang_Shift Lsl x1 x2) = eval_exp s x1 << (w2n (eval_exp
-     s x2)) /\
-   eval_exp s (wordLang_Shift Asr x1 x2) = eval_exp s x1 >> (w2n (eval_exp
-     s x2)) /\
+   eval_exp s (wordLang_Shift Lsl x1 x2) = eval_exp s x1 << (w2n (eval_exp s
+     x2)) /\
+   eval_exp s (wordLang_Shift Asr x1 x2) = eval_exp s x1 >> (w2n (eval_exp s
+     x2)) /\
    eval_exp s (wordLang_Shift Lsr x1 x2) = eval_exp s x1 >>> (w2n (eval_exp
      s x2)) /\
-   eval_exp s (wordLang_Shift Ror x1 x2) = word_ror (eval_exp s x1)
-     (w2n (eval_exp s x2))`];;
+   eval_exp s (wordLang_Shift Ror x1 x2) = word_ror (eval_exp s x1) (w2n
+     (eval_exp s x2))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let eval_exp_pre_def,eval_exp_pre_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
-  [`eval_exp_pre s x2 =
+  `eval_exp_pre s x2 =
      match x2 with
        wordLang_Const w -> T
      | wordLang_Var v -> v IN FDOM (word_bignumProof_state_regs s)
      | wordLang_Op _ [x; y] -> eval_exp_pre s x /\ eval_exp_pre s y
      | wordLang_Shift sh x1 x2 ->
-        eval_exp_pre s x1 /\ eval_exp_pre s x2 /\ (w2n (eval_exp s x2) <
-          32)
-     | _ -> F`];;
+        eval_exp_pre s x1 /\ eval_exp_pre s x2 /\ (w2n (eval_exp s x2) < 32)
+     | _ -> F`;;
 
 let eval_ri_pre_def = define_cases
-  [`eval_ri_pre (s:'a word_bignumProof_state) (Reg r) <=> eval_exp_pre (s:'a
-    word_bignumProof_state) ((wordLang_Var r):'a wordLang_exp)`;
-   `eval_ri_pre (s:'a word_bignumProof_state) (Imm (w:'a word)) <=> T`];;
+  `(eval_ri_pre (s:'a word_bignumProof_state) (Reg r) <=> eval_exp_pre
+    (s:'a word_bignumProof_state) ((wordLang_Var r):'a wordLang_exp)) /\
+   (eval_ri_pre (s:'a word_bignumProof_state) (Imm (w:'a word)) <=> T)`;;
 
 let eval_ri_def = define_cases
-  [`eval_ri (s:'a word_bignumProof_state) (Reg r) =
-      eval_exp s ((Var r):'a wordLang_exp)`;
-   `eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w`];;
+  `(eval_ri (s:'a word_bignumProof_state) (Reg r) =
+      eval_exp s ((Var r):'a wordLang_exp)) /\
+   (eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w)`;;
 
 let word_bignumProof_dec_clock_def = new_definition
   `word_bignumProof_dec_clock s = word_bignumProof_state_clock_fupd (K
   (word_bignumProof_state_clock s - 1)) s`;;
 
 let reg_write_def = define_cases
-  [`reg_write v NONE (s:'a word_bignumProof_state) =
+  `(reg_write v NONE (s:'a word_bignumProof_state) =
     word_bignumProof_state_regs_fupd (K (word_bignumProof_state_regs s
-    \\ v)) s`;
-   `reg_write n (SOME v) (s:'a word_bignumProof_state) =
+    \\ v)) s) /\
+   (reg_write n (SOME v) (s:'a word_bignumProof_state) =
     word_bignumProof_state_regs_fupd (K (word_bignumProof_state_regs s |+
-    (n,v))) s`];;
+    (n,v))) s)`;;
 
 let delete_vars_def,delete_vars_ind = define_rec
-  [`delete_vars [] s = s`;
-   `delete_vars (CONS v vs) s = reg_write v NONE (delete_vars vs s)`];;
+  `(delete_vars [] s = s) /\
+   (delete_vars (CONS v vs) s = reg_write v NONE (delete_vars vs s))`;;
 
 let array_write_def = new_definition
   `array_write n v s = word_bignumProof_state_arrays_fupd (K ((n =+ v)
@@ -120,11 +118,11 @@ let clock_write_def = new_definition
   `clock_write l s = word_bignumProof_state_clock_fupd (K l) s`;;
 
 let copy_vars_def,copy_vars_ind = define_rec
-  [`word_bignumProof_copy_vars [] s t = SOME t`;
-   `word_bignumProof_copy_vars (CONS n ns) s t =
+  `(word_bignumProof_copy_vars [] s t = SOME t) /\
+   (word_bignumProof_copy_vars (CONS n ns) s t =
          match FLOOKUP s n with NONE -> NONE
          | SOME x -> word_bignumProof_copy_vars ns s (reg_write n
-             (SOME x) t)`];;
+             (SOME x) t))`;;
 
 let eval = cake_inductive
   `(!r s. word_bignumProof_Eval r s word_bignum_Skip (INR (s:'a
@@ -362,17 +360,17 @@ let word_bignumProof_state_rel_delete_vars = prove
    what the port found for it *)
 let exp_ok_def,exp_ok_ind = define_wf
   `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
-  [`exp_ok x1 =
+  `exp_ok x1 =
      match x1 with
        wordLang_Const _ -> T
      | wordLang_Var i -> i < (25)
      | wordLang_Op _ [x; y] -> exp_ok x /\ exp_ok y
      | wordLang_Shift sh e n -> exp_ok e
-     | _ -> F`];;
+     | _ -> F`;;
 
 let syntax_ok_aux_def,syntax_ok_aux_ind = define_shaped_rec
   "match"
-  [`syntax_ok_aux x1 =
+  `syntax_ok_aux x1 =
    match x1 with
      word_bignum_Loop r vs body -> syntax_ok_aux body
    | word_bignum_LoopBody body -> F
@@ -399,7 +397,7 @@ let syntax_ok_aux_def,syntax_ok_aux_ind = define_shaped_rec
       n3 < (25) /\ n4 < (25) /\ n5 < (25)
    | word_bignum_Rec save_regs _ ->
       ALL (\n. n < (25)) save_regs /\ ALL_DISTINCT save_regs
-   | _ -> T`];;
+   | _ -> T`;;
 
 let word_bignumProof_syntax_ok_def = new_definition
   `word_bignumProof_syntax_ok p =
@@ -533,11 +531,11 @@ let b2n_if = prove
    what the port found for it *)
 let list_update_def,list_update_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x0)`
-  [`list_update [] ys t = t`;
-   `list_update (CONS x xs) (CONS y ys) t = sptree_insert x y (list_update
-    xs ys t)`;
-   `list_update (CONS x xs) [] t = sptree_insert x ARB (list_update xs []
-    t)`];;
+  `(list_update [] ys t = t) /\
+   (list_update (CONS x xs) (CONS y ys) t = sptree_insert x y (list_update
+    xs ys t)) /\
+   (list_update (CONS x xs) [] t = sptree_insert x ARB (list_update xs []
+    t))`;;
 
 let list_update_alist_insert = prove
  (`!xs ys t.
@@ -565,9 +563,9 @@ let domain_list_update = prove
   CHEAT_TAC);;
 
 let list_store_def,list_store_ind = define_rec
-  [`list_store [] ys s = s`;
-   `list_store (CONS x xs) ys s = (list_store xs (TL ys) s) |+ (Temp (n2w
-    x),HD ys)`];;
+  `(list_store [] ys s = s) /\
+   (list_store (CONS x xs) ys s = (list_store xs (TL ys) s) |+ (Temp (n2w
+    x),HD ys))`;;
 
 (* [local] *)
 let list_store_FUPDATE = prove

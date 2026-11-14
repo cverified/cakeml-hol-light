@@ -81,12 +81,12 @@ let knowledge_FIELDS = define_record "knowledge"
    what the port found for it *)
 let listCmp_def,listCmp_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0 + list_size (\n. n) x1)`
-  [`(listCmp (CONS (hd1:num) tl1) (CONS (hd2:num) tl2) =
+  `(listCmp (CONS (hd1:num) tl1) (CONS (hd2:num) tl2) =
     (if hd1 = hd2 then listCmp tl1 tl2
       else if hd1 > hd2 then GREATER else LESS)) /\
    (listCmp [] [] = EQUAL) /\
    (listCmp (CONS hd1 tl1) [] = GREATER) /\
-   (listCmp [] (CONS hd2 tl2) = LESS)`];;
+   (listCmp [] (CONS hd2 tl2) = LESS)`;;
 
 let empty_data_def = new_definition
   `empty_data = mk_knowledge LN LN [] balanced_map_empty balanced_map_empty`;;
@@ -105,9 +105,9 @@ let invalidate_data_def = new_definition
 (* Invalidate after writing each register in a list (e.g. multi-output
   instructions); empties the data if any of them is tracked. *)
 let invalidate_regs_def,invalidate_regs_ind = define_rec
-  [`invalidate_regs data [] = data`;
-   `invalidate_regs data (CONS r rs) = invalidate_regs (invalidate_data
-    data r) rs`];;
+  `(invalidate_regs data [] = data) /\
+   (invalidate_regs data (CONS r rs) = invalidate_regs (invalidate_data
+    data r) rs)`;;
 
 (* Enter an odd register that a stored fact reads into the tracked set as a
   self-mapping, so that a later write to it resets the data. Registers
@@ -120,9 +120,9 @@ let register_read_def = new_definition
      else data`;;
 
 let register_reads_def,register_reads_ind = define_rec
-  [`register_reads data [] = data`;
-   `register_reads data (CONS r rs) = register_reads (register_read data
-    r) rs`];;
+  `(register_reads data [] = data) /\
+   (register_reads data (CONS r rs) = register_reads (register_read data
+    r) rs)`;;
 
 (* REGISTER TRANSFORMATIONS *)
 
@@ -136,21 +136,21 @@ let canonicalRegs'_def = new_definition
        if n = avoid then r else n`;;
 
 let canonicalImmReg_def = define_cases
-  [`canonicalImmReg data (Reg r) = Reg (canonicalRegs data r)`;
-   `canonicalImmReg data (Imm w) = Imm w`];;
+  `(canonicalImmReg data (Reg r) = Reg (canonicalRegs data r)) /\
+   (canonicalImmReg data (Imm w) = Imm w)`;;
 
 let canonicalImmReg'_def = define_cases
-  [`canonicalImmReg' avoid data (Reg r) = Reg (canonicalRegs' avoid data r)`;
-   `canonicalImmReg' avoid data (Imm w) = Imm w`];;
+  `(canonicalImmReg' avoid data (Reg r) = Reg (canonicalRegs' avoid data r)) /\
+   (canonicalImmReg' avoid data (Imm w) = Imm w)`;;
 
 let canonicalMultRegs_def = new_definition
   `canonicalMultRegs (data:knowledge) (regs':num list) = MAP (canonicalRegs
   data) regs'`;;
 
 let map_insert_def,map_insert_ind = define_rec
-  [`map_insert [] m = m`;
-   `map_insert (CONS (x,y) xs) m =
-      sptree_insert x y (map_insert xs m)`];;
+  `(map_insert [] m = m) /\
+   (map_insert (CONS (x,y) xs) m =
+      sptree_insert x y (map_insert xs m))`;;
 
 let canonicalMoveRegs_def = new_definition
   `canonicalMoveRegs data moves =
@@ -168,63 +168,63 @@ let canonicalMoveRegs_def = new_definition
        data)
    else empty_data`;;
 
-let canonicalArith_def = define_cases
-  [`canonicalArith data (asm_Binop op r1 r2 r3) =
+let canonicalArith_def = define_cases_clauses
+  [`(canonicalArith data (asm_Binop op r1 r2 r3) =
       asm_Binop op r1 (canonicalRegs' r1 data r2) (canonicalImmReg' r1
-          data r3)`;
-   `canonicalArith data (asm_Shift s r1 r2 ri) =
+          data r3)) /\
+    (canonicalArith data (asm_Shift s r1 r2 ri) =
       asm_Shift s r1 (canonicalRegs' r1 data r2) (canonicalImmReg' r1
-          data ri)`;
-   `canonicalArith data (asm_Div r1 r2 r3) =
-      asm_Div r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalArith data (asm_LongMul r1 r2 r3 r4) =
-      asm_LongMul r1 r2 (canonicalRegs data r3) (canonicalRegs data r4)`;
-   `canonicalArith data (asm_LongDiv r1 r2 r3 r4 r5) =
+          data ri))`;
+   `(canonicalArith data (asm_Div r1 r2 r3) =
+      asm_Div r1 (canonicalRegs data r2) (canonicalRegs data r3)) /\
+    (canonicalArith data (asm_LongMul r1 r2 r3 r4) =
+      asm_LongMul r1 r2 (canonicalRegs data r3) (canonicalRegs data r4)) /\
+    (canonicalArith data (asm_LongDiv r1 r2 r3 r4 r5) =
       asm_LongDiv r1 r2 (canonicalRegs data r3) (canonicalRegs data r4)
-          (canonicalRegs data r5)`;
-   `canonicalArith data (asm_AddCarry r1 r2 r3 r4) =
+          (canonicalRegs data r5)) /\
+    (canonicalArith data (asm_AddCarry r1 r2 r3 r4) =
       asm_AddCarry r1 (canonicalRegs' r1 data r2) (canonicalRegs' r1
-          data r3) r4`;
-   `canonicalArith data (asm_AddOverflow r1 r2 r3 r4) =
+          data r3) r4) /\
+    (canonicalArith data (asm_AddOverflow r1 r2 r3 r4) =
       asm_AddOverflow r1 (canonicalRegs' r1 data r2) (canonicalRegs' r1
-          data r3) r4`;
-   `canonicalArith data (asm_SubOverflow r1 r2 r3 r4) =
+          data r3) r4) /\
+    (canonicalArith data (asm_SubOverflow r1 r2 r3 r4) =
       asm_SubOverflow r1 (canonicalRegs' r1 data r2) (canonicalRegs'
-          r1 data r3) r4`];;
+          r1 data r3) r4)`];;
 
-let canonicalFp_def = define_cases
-  [`canonicalFp data (FPLess r1 r2 r3) =
-      FPLess r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPLessEqual r1 r2 r3) =
-      FPLessEqual r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPEqual r1 r2 r3) =
-      FPEqual r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPAbs r1 r2) =
-      FPAbs r1 (canonicalRegs data r2)`;
-   `canonicalFp data (FPNeg r1 r2) =
-      FPNeg r1 (canonicalRegs data r2)`;
-   `canonicalFp data (FPSqrt r1 r2) =
-      FPSqrt r1 (canonicalRegs data r2)`;
-   `canonicalFp data (FPAdd r1 r2 r3) =
-      FPAdd r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPSub r1 r2 r3) =
-      FPSub r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPMul r1 r2 r3) =
-      FPMul r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPDiv r1 r2 r3) =
-      FPDiv r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPFma r1 r2 r3) =
-      FPFma r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPMov r1 r2) =
-      FPMov r1 (canonicalRegs data r2)`;
-   `canonicalFp data (FPMovToReg r1 r2 r3) =
-      FPMovToReg r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPMovFromReg r1 r2 r3) =
-      FPMovFromReg r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPToInt r1 r2) =
-      FPToInt r1 (canonicalRegs data r2)`;
-   `canonicalFp data (FPFromInt r1 r2) =
-      FPFromInt r1 (canonicalRegs data r2)`];;
+let canonicalFp_def = define_cases_clauses
+  [`(canonicalFp data (FPLess r1 r2 r3) =
+      FPLess r1 (canonicalRegs data r2) (canonicalRegs data r3)) /\
+    (canonicalFp data (FPLessEqual r1 r2 r3) =
+      FPLessEqual r1 (canonicalRegs data r2) (canonicalRegs data r3)) /\
+    (canonicalFp data (FPEqual r1 r2 r3) =
+      FPEqual r1 (canonicalRegs data r2) (canonicalRegs data r3))`;
+   `(canonicalFp data (FPAbs r1 r2) =
+      FPAbs r1 (canonicalRegs data r2)) /\
+    (canonicalFp data (FPNeg r1 r2) =
+      FPNeg r1 (canonicalRegs data r2)) /\
+    (canonicalFp data (FPSqrt r1 r2) =
+      FPSqrt r1 (canonicalRegs data r2)) /\
+    (canonicalFp data (FPAdd r1 r2 r3) =
+      FPAdd r1 (canonicalRegs data r2) (canonicalRegs data r3)) /\
+    (canonicalFp data (FPSub r1 r2 r3) =
+      FPSub r1 (canonicalRegs data r2) (canonicalRegs data r3)) /\
+    (canonicalFp data (FPMul r1 r2 r3) =
+      FPMul r1 (canonicalRegs data r2) (canonicalRegs data r3)) /\
+    (canonicalFp data (FPDiv r1 r2 r3) =
+      FPDiv r1 (canonicalRegs data r2) (canonicalRegs data r3)) /\
+    (canonicalFp data (FPFma r1 r2 r3) =
+      FPFma r1 (canonicalRegs data r2) (canonicalRegs data r3)) /\
+    (canonicalFp data (FPMov r1 r2) =
+      FPMov r1 (canonicalRegs data r2)) /\
+    (canonicalFp data (FPToInt r1 r2) =
+      FPToInt r1 (canonicalRegs data r2)) /\
+    (canonicalFp data (FPFromInt r1 r2) =
+      FPFromInt r1 (canonicalRegs data r2))`;
+   `(canonicalFp data (FPMovToReg r1 r2 r3) =
+      FPMovToReg r1 (canonicalRegs data r2) (canonicalRegs data r3))`;
+   `(canonicalFp data (FPMovFromReg r1 r2 r3) =
+      FPMovFromReg r1 (canonicalRegs data r2) (canonicalRegs data r3))`];;
 
 (* SEEN INSTRUCTIONS MEMORY *)
 
@@ -232,45 +232,45 @@ let wordToNum_def = new_definition
   `wordToNum w = w2n w`;;
 
 let shiftToNum_def = define_cases
-  [`shiftToNum Lsl = (40:num)`;
-   `shiftToNum Lsr = ((41):num)`;
-   `shiftToNum Asr = ((42):num)`;
-   `shiftToNum Ror = ((43):num)`];;
+  `(shiftToNum Lsl = (40:num)) /\
+   (shiftToNum Lsr = ((41):num)) /\
+   (shiftToNum Asr = ((42):num)) /\
+   (shiftToNum Ror = ((43):num))`;;
 
 let arithOpToNum_def = define_cases
-  [`arithOpToNum asm_Add = (35:num)`;
-   `arithOpToNum asm_Sub = ((36):num)`;
-   `arithOpToNum asm_And = ((37):num)`;
-   `arithOpToNum asm_Or = ((38):num)`;
-   `arithOpToNum asm_Xor = ((39):num)`];;
+  `(arithOpToNum asm_Add = (35:num)) /\
+   (arithOpToNum asm_Sub = ((36):num)) /\
+   (arithOpToNum asm_And = ((37):num)) /\
+   (arithOpToNum asm_Or = ((38):num)) /\
+   (arithOpToNum asm_Xor = ((39):num))`;;
 
 let regImmToNumList_def = define_cases
-  [`regImmToNumList (Reg r) = [33; r + 100]`;
-   `regImmToNumList (Imm w) = [34; wordToNum w]`];;
+  `(regImmToNumList (Reg r) = [33; r + 100]) /\
+   (regImmToNumList (Imm w) = [34; wordToNum w])`;;
 
 let arithToNumList_def = define_cases
-  [`arithToNumList (asm_Binop op r1 r2 ri) = APPEND [25; arithOpToNum op; r2
-    + 100] (regImmToNumList ri)`;
-   `arithToNumList (asm_LongMul r1 r2 r3 r4) = [26; r3 + 100; r4 + 100]`;
-   `arithToNumList (asm_LongDiv r1 r2 r3 r4 r5) = [27; r3 + 100; r4 + 100;
-    r5 + 100]`;
-   `arithToNumList (asm_Shift s r1 r2 ri) = APPEND [28; shiftToNum s; r2 +
-    100] (regImmToNumList ri)`;
-   `arithToNumList (asm_Div r1 r2 r3) = [29; r2 + 100; r3 + 100]`;
-   `arithToNumList (asm_AddCarry r1 r2 r3 r4) = [30; r2 + 100; r3 + 100]`;
-   `arithToNumList (asm_AddOverflow r1 r2 r3 r4) = [31; r2 + 100; r3 + 100]`;
-   `arithToNumList (asm_SubOverflow r1 r2 r3 r4) = [32; r2 + 100; r3 +
-    100]`];;
+  `(arithToNumList (asm_Binop op r1 r2 ri) = APPEND [25; arithOpToNum op;
+    r2 + 100] (regImmToNumList ri)) /\
+   (arithToNumList (asm_LongMul r1 r2 r3 r4) = [26; r3 + 100; r4 + 100]) /\
+   (arithToNumList (asm_LongDiv r1 r2 r3 r4 r5) = [27; r3 + 100; r4 + 100;
+    r5 + 100]) /\
+   (arithToNumList (asm_Shift s r1 r2 ri) = APPEND [28; shiftToNum s; r2 +
+    100] (regImmToNumList ri)) /\
+   (arithToNumList (asm_Div r1 r2 r3) = [29; r2 + 100; r3 + 100]) /\
+   (arithToNumList (asm_AddCarry r1 r2 r3 r4) = [30; r2 + 100; r3 + 100]) /\
+   (arithToNumList (asm_AddOverflow r1 r2 r3 r4) = [31; r2 + 100; r3 + 100]) /\
+   (arithToNumList (asm_SubOverflow r1 r2 r3 r4) = [32; r2 + 100; r3 +
+    100])`;;
 
 let memOpToNum_def = define_cases
-  [`memOpToNum asm_Load = (21:num)`;
-   `memOpToNum asm_Load8 = ((22):num)`;
-   `memOpToNum asm_Load16 = ((46):num)`;
-   `memOpToNum asm_Load32 = ((44):num)`;
-   `memOpToNum asm_Store = ((23):num)`;
-   `memOpToNum asm_Store8 = ((47):num)`;
-   `memOpToNum asm_Store16 = ((24):num)`;
-   `memOpToNum asm_Store32 = ((45):num)`];;
+  `(memOpToNum asm_Load = (21:num)) /\
+   (memOpToNum asm_Load8 = ((22):num)) /\
+   (memOpToNum asm_Load16 = ((46):num)) /\
+   (memOpToNum asm_Load32 = ((44):num)) /\
+   (memOpToNum asm_Store = ((23):num)) /\
+   (memOpToNum asm_Store8 = ((47):num)) /\
+   (memOpToNum asm_Store16 = ((24):num)) /\
+   (memOpToNum asm_Store32 = ((45):num))`;;
 
 (* Key for a load fact (kept in the separate loads_mem map): the memop head
    distinguishes the load widths; the address register is stored
@@ -278,24 +278,24 @@ let memOpToNum_def = define_cases
 let loadToNumList_def = new_definition
   `loadToNumList op (a:num) ofs = [memOpToNum op; a + 100; wordToNum ofs]`;;
 
-let fpToNumList_def = define_cases
-  [`fpToNumList (FPLess r1 r2 r3) = [5; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPLessEqual r1 r2 r3) = [6; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPEqual r1 r2 r3) = [7; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPAbs r1 r2) = [8; r2 + 100]`;
-   `fpToNumList (FPNeg r1 r2) = [9; r2 + 100]`;
-   `fpToNumList (FPSqrt r1 r2) = [10; r2 + 100]`;
-   `fpToNumList (FPAdd r1 r2 r3) = [11; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPSub r1 r2 r3) = [12; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPMul r1 r2 r3) = [13; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPDiv r1 r2 r3) = [14; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPFma r1 r2 r3) = [15; r1 + 100; r2 + 100; r3 + 100]`;
-   `// List never matched again
-    fpToNumList (FPMov r1 r2) = [16; r2 + 100]`;
-   `fpToNumList (FPMovToReg r1 r2 r3) = [17; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPMovFromReg r1 r2 r3) = [18; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPToInt r1 r2) = [19; r2 + 100]`;
-   `fpToNumList (FPFromInt r1 r2) = [20; r2 + 100]`];;
+let fpToNumList_def = define_cases_clauses
+  [`(fpToNumList (FPLess r1 r2 r3) = [5; r2 + 100; r3 + 100]) /\
+    (fpToNumList (FPLessEqual r1 r2 r3) = [6; r2 + 100; r3 + 100]) /\
+    (fpToNumList (FPEqual r1 r2 r3) = [7; r2 + 100; r3 + 100])`;
+   `(fpToNumList (FPAbs r1 r2) = [8; r2 + 100]) /\
+    (fpToNumList (FPNeg r1 r2) = [9; r2 + 100]) /\
+    (fpToNumList (FPSqrt r1 r2) = [10; r2 + 100]) /\
+    (fpToNumList (FPAdd r1 r2 r3) = [11; r2 + 100; r3 + 100]) /\
+    (fpToNumList (FPSub r1 r2 r3) = [12; r2 + 100; r3 + 100]) /\
+    (fpToNumList (FPMul r1 r2 r3) = [13; r2 + 100; r3 + 100]) /\
+    (fpToNumList (FPDiv r1 r2 r3) = [14; r2 + 100; r3 + 100]) /\
+    (fpToNumList (FPFma r1 r2 r3) = [15; r1 + 100; r2 + 100; r3 + 100]) /\
+    // List never matched again
+    (fpToNumList (FPMov r1 r2) = [16; r2 + 100]) /\
+    (fpToNumList (FPToInt r1 r2) = [19; r2 + 100]) /\
+    (fpToNumList (FPFromInt r1 r2) = [20; r2 + 100])`;
+   `(fpToNumList (FPMovToReg r1 r2 r3) = [17; r2 + 100; r3 + 100])`;
+   `(fpToNumList (FPMovFromReg r1 r2 r3) = [18; r2 + 100; r3 + 100])`];;
 
 let instToNumList_def = new_definition
   `instToNumList x1 =
@@ -317,51 +317,51 @@ let OpCurrHeapToNumList_def = new_definition
 (* WORD CSE FUNCTIONS *)
 
 let firstRegOfArith_def = define_cases
-  [`firstRegOfArith (asm_Binop _1 r _2 _3) = r`;
-   `firstRegOfArith (asm_Shift _7 r _8 _9) = r`;
-   `firstRegOfArith (asm_Div r _12 _13) = r`;
-   `firstRegOfArith (asm_LongMul r _14 _15 _16) = r`;
-   `firstRegOfArith (asm_LongDiv r _17 _18 _19 _20) = r`;
-   `firstRegOfArith (asm_AddCarry r _24 _25 _26) = r`;
-   `firstRegOfArith (asm_AddOverflow r _27 _28 _29) = r`;
-   `firstRegOfArith (asm_SubOverflow r _30 _31 _32) = r`];;
+  `(firstRegOfArith (asm_Binop _ r _ _) = r) /\
+   (firstRegOfArith (asm_Shift _ r _ _) = r) /\
+   (firstRegOfArith (asm_Div r _ _) = r) /\
+   (firstRegOfArith (asm_LongMul r _ _ _) = r) /\
+   (firstRegOfArith (asm_LongDiv r _ _ _ _) = r) /\
+   (firstRegOfArith (asm_AddCarry r _ _ _) = r) /\
+   (firstRegOfArith (asm_AddOverflow r _ _ _) = r) /\
+   (firstRegOfArith (asm_SubOverflow r _ _ _) = r)`;;
 
 (* All registers an arith instruction writes (multi-output ops write two), so
   that every written register is invalidated. *)
 let arithWrites_def = define_cases
-  [`arithWrites (asm_Binop _33 r _34 _35) = [r]`;
-   `arithWrites (asm_Shift _39 r _40 _41) = [r]`;
-   `arithWrites (asm_Div r _44 _45) = [r]`;
-   `arithWrites (asm_LongMul r1 r2 _46 _47) = [r1; r2]`;
-   `arithWrites (asm_LongDiv r1 r2 _48 _49 _50) = [r1; r2]`;
-   `arithWrites (asm_AddCarry r1 _53 _54 r4) = [r1; r4]`;
-   `arithWrites (asm_AddOverflow r1 _55 _56 r4) = [r1; r4]`;
-   `arithWrites (asm_SubOverflow r1 _57 _58 r4) = [r1; r4]`];;
+  `(arithWrites (asm_Binop _ r _ _) = [r]) /\
+   (arithWrites (asm_Shift _ r _ _) = [r]) /\
+   (arithWrites (asm_Div r _ _) = [r]) /\
+   (arithWrites (asm_LongMul r1 r2 _ _) = [r1; r2]) /\
+   (arithWrites (asm_LongDiv r1 r2 _ _ _) = [r1; r2]) /\
+   (arithWrites (asm_AddCarry r1 _ _ r4) = [r1; r4]) /\
+   (arithWrites (asm_AddOverflow r1 _ _ r4) = [r1; r4]) /\
+   (arithWrites (asm_SubOverflow r1 _ _ r4) = [r1; r4])`;;
 
 (* All registers an arith instruction reads (AddCarry also reads the
   carry-flag register r4). *)
 let arithReads_def = new_definition
   `arithReads x1 =
    match x1 with
-     asm_Binop _59 _60 r2 (Reg r3) -> [r2; r3]
-   | asm_Binop _61 _62 r2 (Imm _63) -> [r2]
-   | asm_Shift _64 _65 r2 (Reg r3) -> [r2; r3]
-   | asm_Shift _66 _67 r2 (Imm _68) -> [r2]
+     asm_Binop _ _ r2 (Reg r3) -> [r2; r3]
+   | asm_Binop _ _ r2 (Imm _) -> [r2]
+   | asm_Shift _ _ r2 (Reg r3) -> [r2; r3]
+   | asm_Shift _ _ r2 (Imm _) -> [r2]
    | asm_Div _ r2 r3 -> [r2; r3]
-   | asm_LongMul _69 _70 r3 r4 -> [r3; r4]
-   | asm_LongDiv _71 _72 r3 r4 r5 -> [r3; r4; r5]
+   | asm_LongMul _ _ r3 r4 -> [r3; r4]
+   | asm_LongDiv _ _ r3 r4 r5 -> [r3; r4; r5]
    | asm_AddCarry _ r2 r3 r4 -> [r2; r3; r4]
-   | asm_AddOverflow _73 r2 r3 _74 -> [r2; r3]
-   | asm_SubOverflow _75 r2 r3 _76 -> [r2; r3]`;;
+   | asm_AddOverflow _ r2 r3 _ -> [r2; r3]
+   | asm_SubOverflow _ r2 r3 _ -> [r2; r3]`;;
 
 (* The general-purpose registers an fp instruction writes. Most write only
   fp-registers (disjoint from the tracked state), hence []. *)
 let fpWrites_def = new_definition
   `fpWrites x1 =
    match x1 with
-     FPLess r _77 _78 -> [r]
-   | FPLessEqual r _79 _80 -> [r]
-   | FPEqual r _81 _82 -> [r]
+     FPLess r _ _ -> [r]
+   | FPLessEqual r _ _ -> [r]
+   | FPEqual r _ _ -> [r]
    | FPMovToReg r1 r2 _ -> [r1; r2]
    | _ -> []`;;
 
@@ -432,21 +432,21 @@ let add_to_load_aux_def = new_definition
 let can_mem_arith_def = new_definition
   `can_mem_arith x1 =
    match x1 with
-     asm_Binop _83 _84 r1 (Reg r2) -> (ODD r1 /\ ODD r2)
-   | asm_Binop _85 _86 r1 (Imm _87) -> ODD r1
+     asm_Binop _ _ r1 (Reg r2) -> (ODD r1 /\ ODD r2)
+   | asm_Binop _ _ r1 (Imm _) -> ODD r1
    | asm_Div _ r1 r2 -> (ODD r1 /\ ODD r2)
-   | asm_Shift _88 _89 r (Imm _90) -> ODD r
+   | asm_Shift _ _ r (Imm _) -> ODD r
    | _ -> F`;;
 
 let is_store_def = define_cases
-  [`is_store asm_Load = F`;
-   `is_store asm_Load8 = F`;
-   `is_store asm_Load16 = F`;
-   `is_store asm_Load32 = F`;
-   `is_store asm_Store = T`;
-   `is_store asm_Store8 = T`;
-   `is_store asm_Store16 = T`;
-   `is_store asm_Store32 = T`];;
+  `(is_store asm_Load = F) /\
+   (is_store asm_Load8 = F) /\
+   (is_store asm_Load16 = F) /\
+   (is_store asm_Load32 = F) /\
+   (is_store asm_Store = T) /\
+   (is_store asm_Store8 = T) /\
+   (is_store asm_Store16 = T) /\
+   (is_store asm_Store32 = T)`;;
 
 let word_cseInst_def = new_definition
   `word_cseInst data x2 =
@@ -499,13 +499,13 @@ let dest_Var_def = new_definition
 (* First-order equality-intersection for the instruction map (written
   without higher-order functions so it can be translated by cv_trans). *)
 let bm_inter_eq_acc_def,bm_inter_eq_acc_ind = define_rec
-  [`bm_inter_eq_acc m2 Tip acc = acc`;
-   `bm_inter_eq_acc m2 (Bin n k v l r) acc =
+  `(bm_inter_eq_acc m2 Tip acc = acc) /\
+   (bm_inter_eq_acc m2 (Bin n k v l r) acc =
       bm_inter_eq_acc m2 l
         (bm_inter_eq_acc m2 r
           (if balanced_map_lookup listCmp k m2 = SOME v then
               balanced_map_insert listCmp k v acc
-           else acc))`];;
+           else acc)))`;;
 
 let bm_inter_eq_def = new_definition
   `bm_inter_eq m1 m2 = bm_inter_eq_acc m2 m1 balanced_map_empty`;;
@@ -540,14 +540,14 @@ Signification of the terms:
     b -> binop
     s -> string
 *)
-let word_cse_def,word_cse_ind = define_rec
-  [`word_cse data (wordLang_Move r rs) =
+let word_cse_def,word_cse_ind = define_rec_clauses
+  [`(word_cse data (wordLang_Move r rs) =
         let data' = canonicalMoveRegs data rs in
-          (data',(wordLang_Move r rs:'a wordLang_prog))`;
-   `word_cse data (wordLang_Inst i) =
+          (data',(wordLang_Move r rs:'a wordLang_prog))) /\
+    (word_cse data (wordLang_Inst i) =
         let (data',p) = word_cseInst data i in
-          (data',p)`;
-   `word_cse data (wordLang_Get r x) =
+          (data',p)) /\
+    (word_cse data (wordLang_Get r x) =
         let data = invalidate_data data r in
           match ALOOKUP (knowledge_gets_mem data) x with NONE -> if EVEN r
               then (data,wordLang_Get r x) else (knowledge_to_latest_fupd (K
@@ -562,8 +562,8 @@ let word_cse_def,word_cse_ind = define_rec
               (knowledge_to_canonical_fupd (K (balanced_map_insert r k
               (knowledge_to_canonical data))) data),
                        wordLang_Move 1 [(r,lookup_any k
-                           (knowledge_to_latest data) k)])`;
-   `word_cse data (wordLang_Set x e) =
+                           (knowledge_to_latest data) k)])) /\
+    (word_cse data (wordLang_Set x e) =
         if x = CurrHeap then
           (empty_data,wordLang_Set x e)
         else let new_gets_mem = FILTER (\(m,n). ~(m = x))
@@ -583,21 +583,44 @@ let word_cse_def,word_cse_ind = define_rec
                               data))) (knowledge_gets_mem_fupd (K (CONS
                                   (x,canonicalRegs data v) new_gets_mem))
                                   data),
-                           wordLang_Set x e)`;
-   `word_cse data (wordLang_MustTerminate p) =
+                           wordLang_Set x e)) /\
+    (word_cse data (wordLang_MustTerminate p) =
                 let (data',p') = word_cse data p in
-                    (data',wordLang_MustTerminate p')`;
-   `word_cse data (wordLang_Call ret dest args handler) =
-                (empty_data,wordLang_Call ret dest args handler)`;
-   `word_cse data (wordLang_Seq p1 p2) =
+                    (data',wordLang_MustTerminate p')) /\
+    (word_cse data (wordLang_Call ret dest args handler) =
+                (empty_data,wordLang_Call ret dest args handler)) /\
+    (word_cse data (wordLang_Seq p1 p2) =
         let (data1,p1') = word_cse data p1 in
         let (data2,p2') = word_cse data1 p2 in
-          (data2,wordLang_Seq p1' p2')`;
-   `word_cse data (wordLang_If c r1 r2 p1 p2) =
+          (data2,wordLang_Seq p1' p2')) /\
+    (word_cse data (wordLang_If c r1 r2 p1 p2) =
         let (data1,p1') = word_cse data p1 in
         let (data2,p2') = word_cse data p2 in
-          (merge_data data1 data2,wordLang_If c r1 r2 p1' p2')`;
-   `word_cse data ((wordLang_OpCurrHeap b r1 r2):'a wordLang_prog) =
+          (merge_data data1 data2,wordLang_If c r1 r2 p1' p2')) /\
+    (word_cse data (wordLang_LocValue r l) =
+        // Loc l 0 is a constant determined by l, so CSE it like an immediate.
+        // Tag 48 is distinct from every other stored hash head (0, 2, 3).
+        let data = invalidate_data data r in
+          add_to_data_aux data r [48; l] (wordLang_LocValue r l)) /\
+    (word_cse data wordLang_Skip = (data,wordLang_Skip)) /\
+    // Store cannot occur in flat code, but it writes memory, so be sound:
+    // drop the load facts, keep the register-only facts.
+    (word_cse data (wordLang_Store e r) = (knowledge_loads_mem_fupd (K
+        balanced_map_empty) data,wordLang_Store e r)) /\
+    (word_cse data (wordLang_Assign r e) = (data,(wordLang_Assign r e:'a
+    wordLang_prog))) /\
+    (word_cse data (wordLang_Raise r) = (data,wordLang_Raise r)) /\
+    (word_cse data wordLang_Tick = (data,wordLang_Tick)) /\
+    (word_cse data (wordLang_Alloc r m) = (empty_data,wordLang_Alloc r m)) /\
+    // Shared-memory op: a load writes its var; a store writes no register.
+    // Shared memory (sh_mdomain) is disjoint from the heap memory that load
+    // facts describe, so loads_mem survives both.
+    (word_cse data (wordLang_ShareInst op r exp) =
+      let data = (if is_store op then data else invalidate_data data r) in
+        (data,wordLang_ShareInst op r exp)) /\
+    (word_cse data (wordLang_Break k) = (data,wordLang_Break k)) /\
+    (word_cse data (wordLang_Continue k) = (data,wordLang_Continue k))`;
+   `(word_cse data ((wordLang_OpCurrHeap b r1 r2):'a wordLang_prog) =
         let data = invalidate_data data r1 in
           // r2 = r1 reads the register the instruction overwrites; such a fact
           // would not describe the post-state, so it is not stored.
@@ -605,51 +628,28 @@ let word_cse_def,word_cse_ind = define_rec
               else let r2' = canonicalRegs' r1 data r2 in
             let pL = OpCurrHeapToNumList b r2' in
               add_to_data_aux (register_read data r2') r1 pL
-                  (wordLang_OpCurrHeap b r1 r2)`;
-   `word_cse data (wordLang_LocValue r l) =
-        // Loc l 0 is a constant determined by l, so CSE it like an immediate.
-        // Tag 48 is distinct from every other stored hash head (0, 2, 3).
-        let data = invalidate_data data r in
-          add_to_data_aux data r [48; l] (wordLang_LocValue r l)`;
-   `word_cse data wordLang_Skip = (data,wordLang_Skip)`;
-   `// Store cannot occur in flat code, but it writes memory, so be sound:
-    // drop the load facts, keep the register-only facts.
-    word_cse data (wordLang_Store e r) = (knowledge_loads_mem_fupd (K
-        balanced_map_empty) data,wordLang_Store e r)`;
-   `word_cse data (wordLang_Assign r e) = (data,(wordLang_Assign r e:'a
-    wordLang_prog))`;
-   `word_cse data (wordLang_Raise r) = (data,wordLang_Raise r)`;
-   `word_cse data (wordLang_Return r1 r2) = (data,wordLang_Return r1 r2)`;
-   `word_cse data wordLang_Tick = (data,wordLang_Tick)`;
-   `word_cse data (wordLang_Alloc r m) = (empty_data,wordLang_Alloc r m)`;
-   `word_cse data (wordLang_Install p l dp dl m) =
-    (empty_data,wordLang_Install p l dp dl m)`;
-   `// Buffer writes touch only the code/data buffers, nothing we track.
-    word_cse data (wordLang_CodeBufferWrite r1 r2) =
-        (data,wordLang_CodeBufferWrite r1 r2)`;
-   `word_cse data (wordLang_DataBufferWrite r1 r2) =
-    (data,wordLang_DataBufferWrite r1 r2)`;
-   `// FFI cuts the local environment, so all knowledge is stale.
-    word_cse data (wordLang_FFI s p1 l1 p2 l2 m) =
-        (empty_data,wordLang_FFI s p1 l1 p2 l2 m)`;
-   `// StoreConsts writes (or unsets) only its four register args and memory;
+                  (wordLang_OpCurrHeap b r1 r2)) /\
+    (word_cse data (wordLang_Install p l dp dl m) =
+    (empty_data,wordLang_Install p l dp dl m)) /\
+    // Buffer writes touch only the code/data buffers, nothing we track.
+    (word_cse data (wordLang_CodeBufferWrite r1 r2) =
+        (data,wordLang_CodeBufferWrite r1 r2)) /\
+    (word_cse data (wordLang_DataBufferWrite r1 r2) =
+    (data,wordLang_DataBufferWrite r1 r2)) /\
+    // FFI cuts the local environment, so all knowledge is stale.
+    (word_cse data (wordLang_FFI s p1 l1 p2 l2 m) =
+        (empty_data,wordLang_FFI s p1 l1 p2 l2 m)) /\
+    // StoreConsts writes (or unsets) only its four register args and memory;
     // the memory writes invalidate the load facts.
-    word_cse data (wordLang_StoreConsts r1 r2 r3 r4 payload) =
+    (word_cse data (wordLang_StoreConsts r1 r2 r3 r4 payload) =
       (let data = invalidate_regs data [r1; r2; r3; r4] in
          (knowledge_loads_mem_fupd (K balanced_map_empty)
-             data,wordLang_StoreConsts r1 r2 r3 r4 payload))`;
-   `// Shared-memory op: a load writes its var; a store writes no register.
-    // Shared memory (sh_mdomain) is disjoint from the heap memory that load
-    // facts describe, so loads_mem survives both.
-    word_cse data (wordLang_ShareInst op r exp) =
-      let data = (if is_store op then data else invalidate_data data r) in
-        (data,wordLang_ShareInst op r exp)`;
-   `// Conservative: optimise the loop body from empty state.
-    word_cse data (wordLang_Loop names c exit_names) =
+             data,wordLang_StoreConsts r1 r2 r3 r4 payload))) /\
+    // Conservative: optimise the loop body from empty state.
+    (word_cse data (wordLang_Loop names c exit_names) =
       let (_,c') = word_cse empty_data c in
-        (empty_data,wordLang_Loop names c' exit_names)`;
-   `word_cse data (wordLang_Break k) = (data,wordLang_Break k)`;
-   `word_cse data (wordLang_Continue k) = (data,wordLang_Continue k)`];;
+        (empty_data,wordLang_Loop names c' exit_names))`;
+   `(word_cse data (wordLang_Return r1 r2) = (data,wordLang_Return r1 r2))`];;
 
 let word_common_subexp_elim_def = new_definition
   `word_common_subexp_elim prog =
@@ -663,10 +663,10 @@ let _ = size_thms "wordLang_prog";;
    what the port found for it *)
 let word_cse_Seqs_def,word_cse_Seqs_ind = define_wf
   `MEASURE (\x0. list_size (wordLang_prog_size (\x. 0)) x0)`
-  [`word_cse_Seqs [] = wordLang_Skip`;
-   `word_cse_Seqs [x] = x`;
-   `word_cse_Seqs (CONS x (CONS y xs)) = wordLang_Seq x (word_cse_Seqs
-    (CONS y xs))`];;
+  `(word_cse_Seqs [] = wordLang_Skip) /\
+   (word_cse_Seqs [x] = x) /\
+   (word_cse_Seqs (CONS x (CONS y xs)) = wordLang_Seq x (word_cse_Seqs
+    (CONS y xs)))`;;
 
 (* [local] *)
 let test_latest_name_used = prove

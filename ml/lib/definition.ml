@@ -43,8 +43,12 @@
 (* axiom; ml/CHEATS.md lists them and length (axioms ()) counts them. *)
 (* ================================================================== *)
 
-(* the clauses are written as separate terms because HOL4
-   typechecks each of them on its own *)
+(* A definition is one quotation with /\ between its clauses, as
+   HOL4 writes it and as HOL Light's own define does.  The ways
+   whose name ends in _clauses take the clauses as separate terms
+   instead, which is for a definition whose clauses do not
+   typecheck together: the type that each of them gives the
+   constant is unified afterwards (cake_conj_list). *)
 
 let definition_of_clauses cls =
   match cls with
@@ -209,9 +213,11 @@ let induction_by_measure tac th tm =
 
 (* several clauses and no recursion *)
 
-let define_cases cls =
+let define_cases_clauses cls =
   let tm = definition_of_clauses cls in
   defining tm; noted (fst (define_prim_rec tm));;
+
+let define_cases tm = define_cases_clauses [tm];;
 
 (* several clauses and no recursion that neither new_definition
    nor the recursion theorem of the type takes: HOL Light's own
@@ -234,79 +240,113 @@ let general_made tm =
                           (clause_of f))) @ l)
                 fs []);;
 
-let define_general cls = general_made (definition_of_clauses cls);;
+let define_general_clauses cls =
+  general_made (definition_of_clauses cls);;
 
-let define_general_cheat cls =
+let define_general tm = define_general_clauses [tm];;
+
+let define_general_cheat_clauses cls =
   with_cheat general_made (definition_of_clauses cls);;
+
+let define_general_cheat tm = define_general_cheat_clauses [tm];;
 
 (* structural recursion: the same theorem makes it, and the
    induction goes by the measure of what is matched on *)
 
-let define_rec cls =
+let define_rec_clauses cls =
   let tm = definition_of_clauses cls in
   defining tm;
   let th = noted (fst (define_prim_rec tm)) in
   th,induction_by_measure TERM_TAC th tm;;
 
+let define_rec tm = define_rec_clauses [tm];;
+
 (* recursion with the relation written out *)
 
-let define_wf_tac rel tac cls =
+let define_wf_tac_clauses rel tac cls =
   let th = definition_made [(rel,tac)] (definition_of_clauses cls) in
   th,induction_for rel tac th;;
 
-let define_wf rel cls = define_wf_tac rel TERM_TAC cls;;
+let define_wf_tac rel tac tm = define_wf_tac_clauses rel tac [tm];;
 
-let define_wf_cheat rel cls =
+let define_wf_clauses rel cls = define_wf_tac_clauses rel TERM_TAC cls;;
+
+let define_wf rel tm = define_wf_tac_clauses rel TERM_TAC [tm];;
+
+let define_wf_cheat_clauses rel cls =
   let th = definition_made [(rel,CHEAT_TAC)]
              (definition_of_clauses cls) in
   th,assumed_induction (concl th)
        "the termination of the definition is assumed";;
 
+let define_wf_cheat rel tm = define_wf_cheat_clauses rel [tm];;
+
 (* recursion whose termination argument HOL Light finds by itself *)
 
-let define_guess cls =
+let define_guess_clauses cls =
   let tm = definition_of_clauses cls in
   let th = definition_made [] tm in
   th,induction_by_measure TERM_TAC th tm;;
 
-let define_guess_cheat cls =
+let define_guess tm = define_guess_clauses [tm];;
+
+let define_guess_cheat_clauses cls =
   let tm = definition_of_clauses cls in
   let th = with_cheat (definition_made []) tm in
   th,assumed_induction (concl th)
        "the termination of the definition is assumed";;
 
+let define_guess_cheat tm = define_guess_cheat_clauses [tm];;
+
 (* clauses of a shape HOL Light cannot take as they stand *)
 
-let define_shaped_wf_tac shape rel tac cls =
+let define_shaped_wf_tac_clauses shape rel tac cls =
   let th = shaped_made shape [(rel,tac)]
              (definition_of_clauses cls) in
   th,induction_for rel tac th;;
 
-let define_shaped_wf shape rel cls =
-  define_shaped_wf_tac shape rel TERM_TAC cls;;
+let define_shaped_wf_tac shape rel tac tm =
+  define_shaped_wf_tac_clauses shape rel tac [tm];;
 
-let define_shaped_wf_cheat shape rel cls =
+let define_shaped_wf shape rel tm =
+  define_shaped_wf_tac_clauses shape rel TERM_TAC [tm];;
+
+let define_shaped_wf_cheat_clauses shape rel cls =
   let th = shaped_made shape [(rel,CHEAT_TAC)]
              (definition_of_clauses cls) in
   th,assumed_induction (concl th)
        "the termination of the definition is assumed";;
 
-let define_shaped_rec_tac shape tac cls =
+let define_shaped_wf_cheat shape rel tm =
+  define_shaped_wf_cheat_clauses shape rel [tm];;
+
+let define_shaped_rec_tac_clauses shape tac cls =
   let tm = definition_of_clauses cls in
   let th = shaped_made shape [] tm in
   th,induction_by_measure tac th tm;;
 
-let define_shaped_rec shape cls =
-  define_shaped_rec_tac shape TERM_TAC cls;;
+let define_shaped_rec_tac shape tac tm =
+  define_shaped_rec_tac_clauses shape tac [tm];;
 
-let define_shaped_rec_cheat shape cls =
+let define_shaped_rec_clauses shape cls =
+  define_shaped_rec_tac_clauses shape TERM_TAC cls;;
+
+let define_shaped_rec shape tm =
+  define_shaped_rec_tac_clauses shape TERM_TAC [tm];;
+
+let define_shaped_rec_cheat_clauses shape cls =
   let tm = definition_of_clauses cls in
   let th = with_cheat (shaped_made shape []) tm in
   th,assumed_induction (concl th)
        "the termination of the definition is assumed";;
 
-let define_shaped shape cls =
+let define_shaped_rec_cheat shape tm =
+  define_shaped_rec_cheat_clauses shape [tm];;
+
+let define_shaped_clauses shape cls =
   shaped_made shape [] (definition_of_clauses cls);;
+
+let define_shaped shape tm = define_shaped_clauses shape [tm];;
 
 (* a family of functions that recurse through one another.  The
    way is the same one as for a definition of one function: what
@@ -326,14 +366,19 @@ let define_shaped shape cls =
 
 (* the definition the port cannot make at all *)
 
-let assume_definition why cls =
+let assume_definition_clauses why cls =
   cheat_why := why;
   let th = cake_cheat (definition_of_clauses cls) in
   cake_note_def th; th;;
 
-let assume_definition_rec why cls =
-  let th = assume_definition why cls in
+let assume_definition why tm = assume_definition_clauses why [tm];;
+
+let assume_definition_rec_clauses why cls =
+  let th = assume_definition_clauses why cls in
   th,assumed_induction (concl th) why;;
+
+let assume_definition_rec why tm =
+  assume_definition_rec_clauses why [tm];;
 
 (* and a family whose clauses need a rewriting as well *)
 
@@ -371,8 +416,8 @@ let find_definition_way cls =
    with Failure _ | Noparse -> !the_relation);;
 
 (* the same, as the line that a file would write for it, which is
-   what there is to copy into one.  The clauses stand for
-   themselves. *)
+   what there is to copy into one.  The clauses of it are one
+   quotation with /\ between them. *)
 
 let the_shapes =
   ["nested"; "maplist"; "cond_bool"; "sing"; "cases"; "match";
@@ -413,8 +458,7 @@ let definition_way_call cls =
   let binding =
     if recursive && how <> "assume_definition"
     then name ^ "_def," ^ name ^ "_ind" else name ^ "_def" in
-  "let " ^ binding ^ " = " ^ how ^ "\n  " ^ args ^
-  (if how = "new_definition" then "`...`;;" else "[`...`];;");;
+  "let " ^ binding ^ " = " ^ how ^ "\n  " ^ args ^ "`...`;;";;
 
 let print_definition_way cls =
   print_string ("\n" ^ definition_way_call cls ^ "\n");

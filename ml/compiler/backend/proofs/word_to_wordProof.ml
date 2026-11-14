@@ -55,7 +55,7 @@ let compile_single_lem = prove
    (?perm'.
    let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd (K
      perm') st) in
-   let (_1,_2,cprog) = (word_to_word_compile_single t k a c
+   let (_,_,cprog) = (word_to_word_compile_single t k a c
      ((name,n,prog),col)) in
    if (res = SOME wordSem_Error) then T else let (res',rcst) =
      wordSem_evaluate (cprog,st) in
@@ -286,8 +286,8 @@ let full_compile_single_no_share_inst = prove
 
 (* syntax going into stackLang *)
 let compile_to_word_conventions = prove
- (`ALL (\(_3,_4,prg). no_share_inst prg \/ ~(asm_config_ISA ac = Ag32)) p ==>
-   (let (_5,progs) = word_to_word_compile wc ac p in
+ (`ALL (\(_,_,prg). no_share_inst prg \/ ~(asm_config_ISA ac = Ag32)) p ==>
+   (let (_,progs) = word_to_word_compile wc ac p in
    MAP FST progs = MAP FST p /\
    ALL2 labels_rel (MAP (wordConvs_extract_labels o SND o SND) p)
                      (MAP (wordConvs_extract_labels o SND o SND) progs) /\

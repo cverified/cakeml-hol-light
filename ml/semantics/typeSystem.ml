@@ -137,59 +137,59 @@ let tdouble_def = new_definition
  * indices are permitted. *)
 let check_freevars_def,check_freevars_ind = define_shaped_rec
   "nested"
-  [`(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar tv) =
-       (MEM tv tvs)`;
-   `(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tapp ts tn) =
-       (ALL (check_freevars dbmax tvs) ts)`;
-   `(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar_db n) =
-    (n < dbmax)`];;
+  `((check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar tv) =
+       (MEM tv tvs)) /\
+   ((check_freevars:num->mlstring list->t->bool) dbmax tvs (Tapp ts tn) =
+       (ALL (check_freevars dbmax tvs) ts)) /\
+   ((check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar_db n) =
+    (n < dbmax))`;;
 
 let check_freevars_ast_def,check_freevars_ast_ind = define_shaped_rec
   "nested"
-  [`(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atvar tv) =
-       (MEM tv tvs)`;
-   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Attup ts) =
-       (ALL (check_freevars_ast tvs) ts)`;
-   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atfun t1 t2) =
-       (check_freevars_ast tvs t1 /\ check_freevars_ast tvs t2)`;
-   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atapp ts tn) =
-       (ALL (check_freevars_ast tvs) ts)`];;
+  `((check_freevars_ast:mlstring list->ast_t->bool) tvs (Atvar tv) =
+       (MEM tv tvs)) /\
+   ((check_freevars_ast:mlstring list->ast_t->bool) tvs (Attup ts) =
+       (ALL (check_freevars_ast tvs) ts)) /\
+   ((check_freevars_ast:mlstring list->ast_t->bool) tvs (Atfun t1 t2) =
+       (check_freevars_ast tvs t1 /\ check_freevars_ast tvs t2)) /\
+   ((check_freevars_ast:mlstring list->ast_t->bool) tvs (Atapp ts tn) =
+       (ALL (check_freevars_ast tvs) ts))`;;
 
 (* Simultaneous substitution of types for type variables in a type *)
 let type_subst_def,type_subst_ind = define_shaped_rec
   "nested"
-  [`(type_subst:(mlstring,t)fmap->t->t) s (Tvar tv) =
+  `((type_subst:(mlstring,t)fmap->t->t) s (Tvar tv) =
        ((match FLOOKUP s tv with
           NONE -> Tvar tv
-        | SOME (t) -> t))`;
-   `(type_subst:(mlstring,t)fmap->t->t) s (Tapp ts tn) =
-       (Tapp (MAP (type_subst s) ts) tn)`;
-   `(type_subst:(mlstring,t)fmap->t->t) s (Tvar_db n) = (Tvar_db n)`];;
+        | SOME (t) -> t))) /\
+   ((type_subst:(mlstring,t)fmap->t->t) s (Tapp ts tn) =
+       (Tapp (MAP (type_subst s) ts) tn)) /\
+   ((type_subst:(mlstring,t)fmap->t->t) s (Tvar_db n) = (Tvar_db n))`;;
 
 (* Increment the deBruijn indices in a type by n levels, skipping all levels
  * less than skip. *)
 let deBruijn_inc_def,deBruijn_inc_ind = define_shaped_rec
   "nested"
-  [`(deBruijn_inc:num->num->t->t) skip n (Tvar tv) = (Tvar tv)`;
-   `(deBruijn_inc:num->num->t->t) skip n (Tvar_db m) =
+  `((deBruijn_inc:num->num->t->t) skip n (Tvar tv) = (Tvar tv)) /\
+   ((deBruijn_inc:num->num->t->t) skip n (Tvar_db m) =
        (if m < skip then
         Tvar_db m
-      else Tvar_db (m + n))`;
-   `(deBruijn_inc:num->num->t->t) skip n (Tapp ts tn) = (Tapp (MAP
-    (deBruijn_inc skip n) ts) tn)`];;
+      else Tvar_db (m + n))) /\
+   ((deBruijn_inc:num->num->t->t) skip n (Tapp ts tn) = (Tapp (MAP
+    (deBruijn_inc skip n) ts) tn))`;;
 
 (* skip the lowest given indices and replace the next (LENGTH ts) with the given types and reduce all the higher ones *)
 let deBruijn_subst_def,deBruijn_subst_ind = define_shaped_rec
   "nested"
-  [`(deBruijn_subst:num->t list->t->t) skip ts (Tvar tv) = (Tvar tv)`;
-   `(deBruijn_subst:num->t list->t->t) skip ts (Tvar_db n) =
+  `((deBruijn_subst:num->t list->t->t) skip ts (Tvar tv) = (Tvar tv)) /\
+   ((deBruijn_subst:num->t list->t->t) skip ts (Tvar_db n) =
        (if ~(n < skip) /\ (n < (LENGTH ts + skip)) then
         EL (n - skip) ts
       else if ~(n < skip) then
         Tvar_db (n - LENGTH ts)
-      else Tvar_db n)`;
-   `(deBruijn_subst:num->t list->t->t) skip ts (Tapp ts' tn) =
-       (Tapp (MAP (deBruijn_subst skip ts) ts') tn)`];;
+      else Tvar_db n)) /\
+   ((deBruijn_subst:num->t list->t->t) skip ts (Tapp ts' tn) =
+       (Tapp (MAP (deBruijn_subst skip ts) ts') tn))`;;
 
 (* Type environments *)
 let tenv_val_exp_INDUCT,tenv_val_exp_RECURSION = define_datatype
@@ -218,15 +218,15 @@ let opt_bind_name_def = new_definition
 
 (*val tveLookup : varN -> nat -> tenv_val_exp -> maybe (nat * t)*)
 let tveLookup_def,tveLookup_ind = define_rec
-  [`(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-    typeSystem_Empty = NONE`;
-   `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-    (typeSystem_Bind_tvar tvs tenvE) = (tveLookup n (inc + tvs) tenvE)`;
-   `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
+  `((tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
+    typeSystem_Empty = NONE) /\
+   ((tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
+    (typeSystem_Bind_tvar tvs tenvE) = (tveLookup n (inc + tvs) tenvE)) /\
+   ((tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
     (typeSystem_Bind_name n' tvs t tenvE) =
        (if n' = n then
         SOME (tvs,deBruijn_inc tvs inc t)
-      else tveLookup n inc tenvE)`];;
+      else tveLookup n inc tenvE))`;;
 
 
 new_type_abbrev("tenv_abbrev",`:(modN,typeN,tvarN list#t)namespace`);;
@@ -268,20 +268,20 @@ let lookup_var_def = new_definition
 
 (*val num_tvs : tenv_val_exp -> nat*)
 let num_tvs_def,num_tvs_ind = define_rec
-  [`(num_tvs:tenv_val_exp->num) typeSystem_Empty = ((0:num))`;
-   `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_tvar tvs tenvE) = (tvs +
-    num_tvs tenvE)`;
-   `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_name n tvs t tenvE) =
-    (num_tvs tenvE)`];;
+  `((num_tvs:tenv_val_exp->num) typeSystem_Empty = ((0:num))) /\
+   ((num_tvs:tenv_val_exp->num) (typeSystem_Bind_tvar tvs tenvE) = (tvs +
+    num_tvs tenvE)) /\
+   ((num_tvs:tenv_val_exp->num) (typeSystem_Bind_name n tvs t tenvE) =
+    (num_tvs tenvE))`;;
 
 
 (*val bind_var_list : nat -> list (varN * t) -> tenv_val_exp -> tenv_val_exp*)
 let bind_var_list_def,bind_var_list_ind = define_rec
-  [`(bind_var_list:num->(mlstring#t) list->tenv_val_exp->tenv_val_exp) tvs
-    [] tenvE = tenvE`;
-   `(bind_var_list:num->(mlstring#t) list->tenv_val_exp->tenv_val_exp) tvs
+  `((bind_var_list:num->(mlstring#t) list->tenv_val_exp->tenv_val_exp) tvs
+    [] tenvE = tenvE) /\
+   ((bind_var_list:num->(mlstring#t) list->tenv_val_exp->tenv_val_exp) tvs
     (CONS (n,t) binds) tenvE =
-     (typeSystem_Bind_name n tvs t (bind_var_list tvs binds tenvE))`];;
+     (typeSystem_Bind_name n tvs t (bind_var_list tvs binds tenvE)))`;;
 
 
 (* A pattern matches values of a certain type and extends the type environment
@@ -374,8 +374,8 @@ let type_op_def = new_definition
   `(type_op:ast_op->t list->t->bool) op ts t =
      match (op,ts) with
         (ast_Opapp,[t1; t2]) -> t1 = Tfn t2 t
-      | (ast_Shift ast_W8 _1 _2,[t1]) -> (t1 = Tword8) /\ (t = Tword8)
-      | (ast_Shift ast_W64 _3 _4,[t1]) -> (t1 = Tword64) /\ (t = Tword64)
+      | (ast_Shift ast_W8 _ _,[t1]) -> (t1 = Tword8) /\ (t = Tword8)
+      | (ast_Shift ast_W64 _ _,[t1]) -> (t1 = Tword64) /\ (t = Tword64)
       | (ast_Equality,[t1; t2]) -> (t1 = t2) /\ (t = Tbool)
       | (ast_Arith a ty,ts) -> ALL (\arg. arg = t_of ty) ts /\ (t = t_of ty)
         /\
@@ -431,40 +431,40 @@ let type_op_def = new_definition
 
 let check_type_names_def,check_type_names_ind = define_shaped_rec
   "nested"
-  [`(check_type_names:(mlstring,mlstring,mlstring
+  `((check_type_names:(mlstring,mlstring,mlstring
     list#t)namespace->ast_t->bool) tenvT (Atvar tv) =
-       T`;
-   `(check_type_names:(mlstring,mlstring,mlstring
+       T) /\
+   ((check_type_names:(mlstring,mlstring,mlstring
     list#t)namespace->ast_t->bool) tenvT (Attup ts) =
-       (ALL (check_type_names tenvT) ts)`;
-   `(check_type_names:(mlstring,mlstring,mlstring
+       (ALL (check_type_names tenvT) ts)) /\
+   ((check_type_names:(mlstring,mlstring,mlstring
     list#t)namespace->ast_t->bool) tenvT (Atfun t1 t2) =
-       (check_type_names tenvT t1 /\ check_type_names tenvT t2)`;
-   `(check_type_names:(mlstring,mlstring,mlstring
+       (check_type_names tenvT t1 /\ check_type_names tenvT t2)) /\
+   ((check_type_names:(mlstring,mlstring,mlstring
     list#t)namespace->ast_t->bool) tenvT (Atapp ts tn) =
        ((match nsLookup tenvT tn with
         SOME (tvs,_) -> LENGTH tvs = LENGTH ts
       | NONE -> F) /\
-      ALL (check_type_names tenvT) ts)`];;
+      ALL (check_type_names tenvT) ts))`;;
 
 (* Substitution of type names for the type they abbreviate *)
 let type_name_subst_def,type_name_subst_ind = define_shaped_rec
   "nested"
-  [`(type_name_subst:(mlstring,mlstring,mlstring list#t)namespace->ast_t->t)
-    tenvT (Atvar tv) = (Tvar tv)`;
-   `(type_name_subst:(mlstring,mlstring,mlstring list#t)namespace->ast_t->t)
+  `((type_name_subst:(mlstring,mlstring,mlstring
+    list#t)namespace->ast_t->t) tenvT (Atvar tv) = (Tvar tv)) /\
+   ((type_name_subst:(mlstring,mlstring,mlstring list#t)namespace->ast_t->t)
     tenvT (Attup ts) =
-       (Ttup (MAP (type_name_subst tenvT) ts))`;
-   `(type_name_subst:(mlstring,mlstring,mlstring list#t)namespace->ast_t->t)
+       (Ttup (MAP (type_name_subst tenvT) ts))) /\
+   ((type_name_subst:(mlstring,mlstring,mlstring list#t)namespace->ast_t->t)
     tenvT (Atfun t1 t2) =
-       (Tfn (type_name_subst tenvT t1) (type_name_subst tenvT t2))`;
-   `(type_name_subst:(mlstring,mlstring,mlstring list#t)namespace->ast_t->t)
+       (Tfn (type_name_subst tenvT t1) (type_name_subst tenvT t2))) /\
+   ((type_name_subst:(mlstring,mlstring,mlstring list#t)namespace->ast_t->t)
     tenvT (Atapp ts tc) =
        (let args = (MAP (type_name_subst tenvT) ts) in
       (match nsLookup tenvT tc with
         SOME (tvs,t) -> type_subst (alist_to_fmap (ZIP tvs args)) t
       | NONE -> Ttup args))
-    // can't happen, for a type that passes the check`];;
+    // can't happen, for a type that passes the check)`;;
 
 (* Check that a type definition defines no already defined types or duplicate
  * constructors, and that the free type variables of each constructor argument
@@ -472,9 +472,10 @@ let type_name_subst_def,type_name_subst_ind = define_shaped_rec
  * types mentioned are in scope. *)
 (*val check_ctor_tenv : tenv_abbrev -> list (list tvarN * typeN * list (conN * list ast_t)) -> bool*)
 let check_ctor_tenv_def,check_ctor_tenv_ind = define_rec
-  [`(check_ctor_tenv:(mlstring,mlstring,mlstring list#t)namespace->(mlstring
-    list#mlstring#(mlstring#ast_t list) list) list->bool) tenvT [] = T`;
-   `(check_ctor_tenv:(mlstring,mlstring,mlstring list#t)namespace->(mlstring
+  `((check_ctor_tenv:(mlstring,mlstring,mlstring
+    list#t)namespace->(mlstring list#mlstring#(mlstring#ast_t list) list)
+    list->bool) tenvT [] = T) /\
+   ((check_ctor_tenv:(mlstring,mlstring,mlstring list#t)namespace->(mlstring
     list#mlstring#(mlstring#ast_t list) list) list->bool) tenvT (CONS
     (tvs,tn,ctors) tds) =
        (check_dup_ctors (tvs,tn,ctors) /\
@@ -484,8 +485,8 @@ let check_ctor_tenv_def,check_ctor_tenv_ind = define_rec
             tenvT) ts)
         ctors /\
       ~(MEM tn (MAP (\p.
-      (match (p) with ((_7,tn,_8)) -> tn)) tds)) /\
-      check_ctor_tenv tenvT tds)`];;
+      (match (p) with ((_,tn,_)) -> tn)) tds)) /\
+      check_ctor_tenv tenvT tds))`;;
 
 
 (*val build_ctor_tenv : tenv_abbrev -> list (list tvarN * typeN * list (conN * list ast_t)) -> list nat -> tenv_ctor*)
@@ -495,7 +496,7 @@ let _ = size_thms "ast_t";;
 let build_ctor_tenv_def,build_ctor_tenv_ind = define_wf
   `MEASURE (\(x0,x1,x2).      list_size      (pair_size (\x. 0)
   (pair_size (\x. 0) (list_size (pair_size (\x. 0) ast_t_size1))))      x1)`
-  [`build_ctor_tenv tenvT x2 x3 =
+  `build_ctor_tenv tenvT x2 x3 =
      match (x2,x3) with
        ([],[]) -> (alist_to_ns [])
      | (CONS (tvs,tn,ctors) tds,CONS id' ids) ->
@@ -506,7 +507,7 @@ let build_ctor_tenv_def,build_ctor_tenv_ind = define_wf
            (MAP
              (\(cn,ts). (cn,(tvs,MAP (type_name_subst tenvT) ts,id')))
              ctors))))
-     | (_9,_10) -> (alist_to_ns [])`];;
+     | (_,_) -> (alist_to_ns [])`;;
 
 
 (* For the value restriction on let-based polymorphism *)
@@ -515,15 +516,15 @@ let _ = size_thms "ast_exp";;
    what the port found for it *)
 let is_value_def,is_value_ind = define_wf
   `MEASURE (\x0. ast_exp_size x0)`
-  [`is_value x1 =
+  `is_value x1 =
      match x1 with
        ast_Lit _ -> T
      | ast_Con _ es -> (ALL is_value es)
      | ast_Var _ -> T
-     | ast_Fun _12 _13 -> T
+     | ast_Fun _ _ -> T
      | ast_Tannot e _ -> (is_value e)
      | ast_Lannot e _ -> (is_value e)
-     | _ -> F`];;
+     | _ -> F`;;
 
 let type_p = cake_inductive
   `(!tvs tenv t.

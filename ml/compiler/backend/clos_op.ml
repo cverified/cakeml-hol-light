@@ -191,11 +191,11 @@ let cons_op_def = new_definition
 let is_Var_def = new_definition
   `is_Var x1 =
    match x1 with
-     closLang_Var _3 _4 -> T
+     closLang_Var _ _ -> T
    | _ -> F`;;
 
 let is_Var_pmatch = prove
- (`is_Var x = match x with closLang_Var _5 _6 -> T | _ -> F`,
+ (`is_Var x = match x with closLang_Var _ _ -> T | _ -> F`,
   CHEAT_TAC);;
 
 let eq_direct_nil_def = new_definition
@@ -248,9 +248,9 @@ let eq_direct_def = new_definition
 (* HOL4 clos_opScript.sml:261-268: the tactic that proves the termination *)
 let cons_measure_def,cons_measure_ind = define_wf
   `MEASURE closLang_exp_size`
-  [`cons_measure x =
+  `cons_measure x =
      match (dest_Op clos_op_dest_Cons) x with NONE -> 0
-     | SOME (_,xs) -> SUM (MAP cons_measure xs) + LENGTH xs + 1`];;
+     | SOME (_,xs) -> SUM (MAP cons_measure xs) + LENGTH xs + 1`;;
 
 let cons_measure_lemma = prove
  (`((dest_Op clos_op_dest_Cons) x = SOME (t,xs) ==> cons_measure x = SUM (MAP
@@ -270,7 +270,7 @@ let cons_measure_lemma = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let eq_pure_list_def,eq_pure_list_ind = define_guess_cheat
-  [`eq_pure_list x1 =
+  `eq_pure_list x1 =
    match x1 with
      [] -> misc_Nil
    | [x,y] ->
@@ -287,21 +287,21 @@ let eq_pure_list_def,eq_pure_list_ind = define_guess_cheat
             misc_Append (misc_List [closLang_Op backend_common_None
               (closLang_BlockOp (closLang_TagLenEq t1 (LENGTH xs))) [y]])
                    (eq_pure_list (MAPi (\i x. (x,closLang_Op
-                     backend_common_None (closLang_BlockOp (closLang_ElemAt
-                     i)) [y])) (REVERSE xs)))
+                     backend_common_None (closLang_BlockOp (closLang_ElemAt i))
+                     [y])) (REVERSE xs)))
        | (NONE,SOME (t1,ys)) -> eq_pure_list [(y,x)]))
-   | CONS xy xys -> misc_Append (eq_pure_list [xy]) (eq_pure_list xys)`];;
+   | CONS xy xys -> misc_Append (eq_pure_list [xy]) (eq_pure_list xys)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ConjList_def,ConjList_ind = define_wf
   `MEASURE (\x0. closLang_exp_size1 x0)`
-  [`ConjList x1 =
+  `ConjList x1 =
    match x1 with
      [] -> MakeBool T
    | [x] -> x
    | CONS x xs -> closLang_If backend_common_None x (ConjList xs)
-     (MakeBool F)`];;
+     (MakeBool F)`;;
 
 let eq_pure_def = new_definition
   `eq_pure x y = ConjList (append (eq_pure_list [(x,y)]))`;;
@@ -339,8 +339,8 @@ let dont_lift_def = new_definition
 (* HOL4 clos_opScript.sml:368-373: the tactic that proves the termination *)
 let lift_exps_def,lift_exps_ind = define_wf
   `MEASURE (\(xs,n,binds). list_size closLang_exp_size xs)`
-  [`lift_exps [] n binds = ([],n,binds)`;
-   `lift_exps (CONS x xs) n binds =
+  `(lift_exps [] n binds = ([],n,binds)) /\
+   (lift_exps (CONS x xs) n binds =
       if dont_lift x then
         (let (xs,n,binds) = lift_exps xs n binds in
            (CONS x xs,n,binds))
@@ -353,11 +353,11 @@ let lift_exps_def,lift_exps_ind = define_wf
               (let (xs,n1,binds) = lift_exps xs (n + 1) (APPEND binds [x])
                   in
                 (CONS (closLang_Var backend_common_None n)
-                    xs,n1,binds))`];;
+                    xs,n1,binds)))`;;
 
 let eq_any_def = new_definition
   `eq_any x y =
-     match lift_exps [x; y] 0 [] with (CONS x (CONS y _7),_8,binds) -> SOME
+     match lift_exps [x; y] 0 [] with (CONS x (CONS y _),_,binds) -> SOME
        (closLang_Let backend_common_None binds (eq_pure x y))
      | _ -> NONE`;;
 

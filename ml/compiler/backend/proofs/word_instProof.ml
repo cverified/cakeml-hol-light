@@ -78,11 +78,11 @@ let word_exp_op_permute_lem = prove
 
 (*Remove tail recursion to make proof easier...*)
 let pull_ops_simp_def,pull_ops_simp_ind = define_rec
-  [`pull_ops_simp op [] = []`;
-   `pull_ops_simp op (CONS x xs) =
+  `(pull_ops_simp op [] = []) /\
+   (pull_ops_simp op (CONS x xs) =
         match x with (wordLang_Op op' ls) -> if op = op' then APPEND ls
             (pull_ops_simp op xs) else CONS x (pull_ops_simp op xs)
-        | _ -> CONS x (pull_ops_simp op xs)`];;
+        | _ -> CONS x (pull_ops_simp op xs))`;;
 
 (* [local] *)
 let pull_ops_simp_pull_ops_perm = prove
@@ -224,14 +224,14 @@ let flatten_exp_ok = prove
    termination *)
 let binary_branch_exp_def,binary_branch_exp_ind = define_wf
   `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
-  [`binary_branch_exp exp =
+  `binary_branch_exp exp =
      match exp with
        wordLang_Op asm_Sub exps -> ALL (binary_branch_exp) exps
      | wordLang_Op op xs -> (LENGTH xs = 2 /\ ALL (binary_branch_exp) xs)
      | wordLang_Load exp -> binary_branch_exp exp
      | wordLang_Shift shift' exp nexp -> (binary_branch_exp exp
        /\ binary_branch_exp nexp)
-     | exp -> T`];;
+     | exp -> T`;;
 
 (* flatten_exp syntax *)
 (* [local] *)

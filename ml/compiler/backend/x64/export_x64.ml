@@ -113,14 +113,14 @@ let startup_def = new_definition
         (implode "#endif\n")]))))`;;
 
 let ffi_asm_def,ffi_asm_ind = define_rec
-  [`export_x64_ffi_asm [] = misc_Nil`;
-   `export_x64_ffi_asm (CONS ffi ffis) =
+  `(export_x64_ffi_asm [] = misc_Nil) /\
+   (export_x64_ffi_asm (CONS ffi ffis) =
           SmartAppend (misc_List [
            (implode "cake_ffi"); ffi; (implode ":\n");
            (implode "     pushq   %rax\n");
            (implode "     jmp     wcdecl(ffi"); ffi; (implode ")\n");
            (implode "     .p2align 4\n");
-           (implode "\n")]) (export_x64_ffi_asm ffis)`];;
+           (implode "\n")]) (export_x64_ffi_asm ffis))`;;
 
 (* HOL4 export_x64Script.sml:87-115: the ML values that the definitions
    below antiquote *)
@@ -132,8 +132,8 @@ let ffi_asm_def,ffi_asm_ind = define_rec
    below antiquote *)
 
 let windows_ffi_asm_def,windows_ffi_asm_ind = define_rec
-  [`windows_ffi_asm [] = misc_Nil`;
-   `windows_ffi_asm (CONS ffi ffis) =
+  `(windows_ffi_asm [] = misc_Nil) /\
+   (windows_ffi_asm (CONS ffi ffis) =
           SmartAppend (misc_List [
            (implode "windows_ffi"); ffi; (implode ":\n");
            (implode "     movq    %rcx, %r9\n");
@@ -141,7 +141,7 @@ let windows_ffi_asm_def,windows_ffi_asm_ind = define_rec
            (implode "     movq    %rsi, %rdx\n");
            (implode "     movq    %rdi, %rcx\n");
            (implode "     jmp     cdecl(ffi"); ffi; (implode ")\n");
-           (implode "\n")]) (windows_ffi_asm ffis)`];;
+           (implode "\n")]) (windows_ffi_asm ffis))`;;
 
 (* HOL4 export_x64Script.sml:137-160: the ML values that the definitions
    below antiquote *)

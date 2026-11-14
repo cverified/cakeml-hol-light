@@ -933,17 +933,17 @@ let _ = size_thms "stackLang_prog";;
    what the port found for it *)
 let next_lab_def,next_lab_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x0)`
-  [`next_lab (p:'a stackLang_prog) aux =
+  `next_lab (p:'a stackLang_prog) aux =
      match p with stackLang_Seq p1 p2 -> next_lab p1 (next_lab p2 aux)
-     | stackLang_If _1 _2 _3 p1 p2 -> next_lab p1 (next_lab p2 aux)
+     | stackLang_If _ _ _ p1 p2 -> next_lab p1 (next_lab p2 aux)
      | stackLang_Loop p -> next_lab p aux
      | stackLang_Call NONE _ NONE -> aux
-     | stackLang_Call NONE _4 (SOME (_5,_6,l2)) -> MAX aux (l2 + 2)
-     | stackLang_Call (SOME (p,_7,_8,l2)) _9 NONE -> next_lab p (MAX aux
-       (l2 + 2))
-     | stackLang_Call (SOME (p,_10,_11,l2)) _12 (SOME (p',_13,l3)) ->
+     | stackLang_Call NONE _ (SOME (_,_,l2)) -> MAX aux (l2 + 2)
+     | stackLang_Call (SOME (p,_,_,l2)) _ NONE -> next_lab p (MAX aux (l2 +
+       2))
+     | stackLang_Call (SOME (p,_,_,l2)) _ (SOME (p',_,l3)) ->
            next_lab p (next_lab p' ((MAX (MAX l2 l3 + 2) aux)))
-     | _ -> aux`];;
+     | _ -> aux`;;
 
 (* HOL4 stack_allocScript.sml:664-674: a theorem that HOL4 states as the
    value of an ML expression: next_lab_pmatch *)
@@ -951,7 +951,7 @@ let next_lab_def,next_lab_ind = define_wf
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let stack_alloc_comp_def,stack_alloc_comp_ind = define_guess_cheat
-  [`stack_alloc_comp n m p =
+  `stack_alloc_comp n m p =
      match p with stackLang_Seq p1 p2 ->
          let (q1,m) = stack_alloc_comp n m p1 in
          let (q2,m) = stack_alloc_comp n m p2 in
@@ -976,7 +976,7 @@ let stack_alloc_comp_def,stack_alloc_comp_ind = define_guess_cheat
        (INL gc_stub_location) NONE,m + 1)
      | stackLang_StoreConsts k1 k2 (SOME loc) -> (stackLang_Call (SOME
        (stackLang_Skip,0,n,m)) (INL loc) NONE,m + 1)
-     | _ -> (p,m)`];;
+     | _ -> (p,m)`;;
 
 (* HOL4 stack_allocScript.sml:705-714: a theorem that HOL4 states as the
    value of an ML expression: comp_pmatch *)

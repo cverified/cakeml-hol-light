@@ -36,10 +36,10 @@ let seq_stack_alloc_pmatch = prove
   CHEAT_TAC);;
 
 let collect_info_def,collect_info_ind = define_rec
-  [`collect_info [] f = f`;
-   `collect_info (CONS (n,(b:'a stackLang_prog)) xs) f =
+  `(collect_info [] f = f) /\
+   (collect_info (CONS (n,(b:'a stackLang_prog)) xs) f =
          collect_info xs (match seq_stack_alloc b with NONE -> f
-                          | SOME k -> sptree_insert n k f)`];;
+                          | SOME k -> sptree_insert n k f))`;;
 
 (* optimise based on stack allocation information *)
 
@@ -73,7 +73,7 @@ let _ = size_thms "stackLang_prog";;
    what the port found for it *)
 let stack_rawcall_comp_def,stack_rawcall_comp_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  [`stack_rawcall_comp i (p:'a stackLang_prog) =
+  `stack_rawcall_comp i (p:'a stackLang_prog) =
      match p with stackLang_Seq p1 p2 -> comp_seq p1 p2 i (stackLang_Seq
        (stack_rawcall_comp i p1) (stack_rawcall_comp i p2))
      | stackLang_If c r ri p1 p2 -> stackLang_If c r ri (stack_rawcall_comp
@@ -82,9 +82,9 @@ let stack_rawcall_comp_def,stack_rawcall_comp_ind = define_wf
      | stackLang_Call (SOME (p1,lr,l1,l2)) dest NONE ->
          stackLang_Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest NONE
      | stackLang_Call (SOME (p1,lr,l1,l2)) dest (SOME (p2,k1,k2)) ->
-         stackLang_Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest
-           (SOME (stack_rawcall_comp i p2,k1,k2))
-     | _ -> p`];;
+         stackLang_Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest (SOME
+           (stack_rawcall_comp i p2,k1,k2))
+     | _ -> p`;;
 (* HOL4 stack_rawcallScript.sml:85-93: a theorem that HOL4 states as the
    value of an ML expression: comp_pmatch *)
 

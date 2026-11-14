@@ -13,22 +13,22 @@ let _ = cake_library ();;
    pair list rich_list relation pair integer fcp *)
 
 let b2n_def = define_general
-  [`b2n T = ((1):num)`;
-   `b2n F = (0:num)`];;
+  `(b2n T = ((1):num)) /\
+   (b2n F = (0:num))`;;
 let b2w_def = new_definition
   `b2w c = n2w (b2n c)`;;
 
 let mw2n_def,mw2n_ind = define_rec
-  [`mw2n [] = 0`;
-   `mw2n (CONS x xs) = w2n (x:'a word) + dimword (:'a) * mw2n xs`];;
+  `(mw2n [] = 0) /\
+   (mw2n (CONS x xs) = w2n (x:'a word) + dimword (:'a) * mw2n xs)`;;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 multiwordScript.sml:69-74: the tactic that proves the termination *)
 let n2mw_def,n2mw_ind = define_wf
   `MEASURE I`
-  [`n2mw n = if n = 0 then []:('a word) list else CONS (n2w (n MOD dimword
-  (:'a))) (n2mw (n DIV dimword (:'a)))`];;
+  `n2mw n = if n = 0 then []:('a word) list else CONS (n2w (n MOD dimword
+  (:'a))) (n2mw (n DIV dimword (:'a)))`;;
 
 let i2mw_def = new_definition
   `i2mw i = ((i < (&0)),n2mw (num_of_int (abs i)))`;;
@@ -45,13 +45,13 @@ let single_sub_def = new_definition
      single_add x (word_1comp y) c`;;
 
 let mw_sub_def,mw_sub_ind = define_guess
-  [`mw_sub [] ys c = ([],c)`;
-   `mw_sub (CONS x xs) [] c =
+  `(mw_sub [] ys c = ([],c)) /\
+   (mw_sub (CONS x xs) [] c =
         let (z,c1) = single_sub x (n2w 0) c in
-        let (zs,c2) = mw_sub xs [] c1 in (CONS z zs,c2)`;
-   `mw_sub (CONS x xs) (CONS y ys) c =
+        let (zs,c2) = mw_sub xs [] c1 in (CONS z zs,c2)) /\
+   (mw_sub (CONS x xs) (CONS y ys) c =
         let (z,c1) = single_sub x y c in
-        let (zs,c2) = mw_sub xs ys c1 in (CONS z zs,c2)`];;
+        let (zs,c2) = mw_sub xs ys c1 in (CONS z zs,c2))`;;
 
 let single_mul_def = new_definition
   `single_mul (x:'a word) (y:'a word) (c:'a word) =
@@ -60,10 +60,10 @@ let single_mul_def = new_definition
 
 let mw_shift_def,mw_shift_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`mw_shift [] = []`;
-   `mw_shift [w] = [w >>> 1]`;
-   `mw_shift (CONS (w:'a word) (CONS x xs)) = CONS (w >>> 1 || x <<
-    (dimindex (:'a) - 1)) (mw_shift (CONS x xs))`];;
+  `(mw_shift [] = []) /\
+   (mw_shift [w] = [w >>> 1]) /\
+   (mw_shift (CONS (w:'a word) (CONS x xs)) = CONS (w >>> 1 || x <<
+    (dimindex (:'a) - 1)) (mw_shift (CONS x xs)))`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (LENGTH o FST)
@@ -72,9 +72,9 @@ let mw_shift_def,mw_shift_ind = assume_definition_rec
 (* HOL4 multiwordScript.sml:1070-1076: the tactic that proves the
    termination *)
 let mw_cmp_def,mw_cmp_ind = define_guess
-  [`mw_cmp xs ys = if xs = [] then NONE else if LAST xs = LAST ys then
+  `mw_cmp xs ys = if xs = [] then NONE else if LAST xs = LAST ys then
                     mw_cmp (BUTLAST xs) (BUTLAST ys)
-                  else SOME (LAST xs <+ LAST ys)`];;
+                  else SOME (LAST xs <+ LAST ys)`;;
 
 let single_div_def = new_definition
   `(single_div (x1:'a word) (x2:'a word) (y:'a word) =
@@ -93,19 +93,19 @@ let mw_op_INDUCT,mw_op_RECURSION = define_datatype
    | multiword_Dec";;
 
 let int_op_def = define_cases
-  [`multiword_int_op multiword_Add (i:int) (j:int) = ((i + j):int)`;
-   `multiword_int_op multiword_Sub (i:int) (j:int) = ((i - j):int)`;
-   `multiword_int_op multiword_Mul (i:int) (j:int) = ((i * j):int)`;
-   `multiword_int_op multiword_Div (i:int) (j:int) = ((i / j):int)`;
-   `multiword_int_op multiword_Mod (i:int) (j:int) = ((i % j):int)`;
-   `multiword_int_op multiword_Lt (i:int) (j:int) = ((if i < j then (&1)
-    else (&0)):int)`;
-   `multiword_int_op multiword_Eq (i:int) (j:int) = ((if i = j then (&1)
-    else (&0):int):int)`;
-   `multiword_int_op multiword_Dec (i:int) (j:int) = ((&0):int)`];;
+  `(multiword_int_op multiword_Add (i:int) (j:int) = ((i + j):int)) /\
+   (multiword_int_op multiword_Sub (i:int) (j:int) = ((i - j):int)) /\
+   (multiword_int_op multiword_Mul (i:int) (j:int) = ((i * j):int)) /\
+   (multiword_int_op multiword_Div (i:int) (j:int) = ((i / j):int)) /\
+   (multiword_int_op multiword_Mod (i:int) (j:int) = ((i % j):int)) /\
+   (multiword_int_op multiword_Lt (i:int) (j:int) = ((if i < j then (&1)
+    else (&0)):int)) /\
+   (multiword_int_op multiword_Eq (i:int) (j:int) = ((if i = j then (&1)
+    else (&0):int):int)) /\
+   (multiword_int_op multiword_Dec (i:int) (j:int) = ((&0):int))`;;
 
 let single_div_loop_def,single_div_loop_ind = define_guess
-  [`single_div_loop ((k:'a word),(ns:('a word) list),(m:'a word),(is:('a word)
+  `single_div_loop ((k:'a word),(ns:('a word) list),(m:'a word),(is:('a word)
   list)) =
      if k = (n2w 0) then (m,is) else let ns = mw_shift ns in
        let m = m << 1 in
@@ -113,7 +113,7 @@ let single_div_loop_def,single_div_loop_ind = define_guess
            single_div_loop (k - (n2w 1),ns,m,is)
          else let m = m + (n2w 1) in
            let (is,_) = mw_sub is ns T in
-             single_div_loop (k - (n2w 1),ns,m,is)`];;
+             single_div_loop (k - (n2w 1),ns,m,is)`;;
 
 let single_div_full_def = new_definition
   `single_div_full m2 (m1:'a word) n =

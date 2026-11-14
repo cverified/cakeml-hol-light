@@ -64,9 +64,9 @@ let empty_state_def = new_definition
 (* The heap is accessed using the following lookup function. *)
 
 let el_length_def = define_cases
-  [`el_length (Unused l) = l + 1`;
-   `el_length (ForwardPointer n d l) = l + 1`;
-   `el_length (DataElement xs l data) = l + 1`];;
+  `(el_length (Unused l) = l + 1) /\
+   (el_length (ForwardPointer n d l) = l + 1) /\
+   (el_length (DataElement xs l data) = l + 1)`;;
 
 let el_length_NOT_0 = prove
  (`!el. ~(el_length el = 0)`,
@@ -93,10 +93,10 @@ let heap_length_APPEND = prove
   CHEAT_TAC);;
 
 let heap_lookup_def,heap_lookup_ind = define_rec
-  [`heap_lookup a [] = NONE`;
-   `heap_lookup a (CONS x xs) =
+  `(heap_lookup a [] = NONE) /\
+   (heap_lookup a (CONS x xs) =
          if a = 0 then SOME x else if a < el_length x then NONE else
-             heap_lookup (a - el_length x) xs`];;
+             heap_lookup (a - el_length x) xs)`;;
 
 let heap_lookup_MEM = prove
  (`!heap n x. (heap_lookup n heap = SOME x) ==> MEM x heap`,
@@ -111,13 +111,13 @@ let heap_lookup_LESS = prove
   CHEAT_TAC);;
 
 let heap_split_def,heap_split_ind = define_rec
-  [`heap_split a [] = if a = 0 then SOME ([],[]) else NONE`;
-   `heap_split a (CONS el heap) =
+  `(heap_split a [] = if a = 0 then SOME ([],[]) else NONE) /\
+   (heap_split a (CONS el heap) =
         if a = 0 then SOME ([],CONS el heap) else if a < el_length el then
             NONE else match heap_split (a - el_length el) heap with NONE ->
             NONE
         | SOME (h1,h2) ->
-          SOME (CONS el h1,h2)`];;
+          SOME (CONS el h1,h2))`;;
 
 let heap_lookup_SPLIT = prove
  (`!heap n x. (heap_lookup n heap = SOME x) ==>
@@ -203,15 +203,15 @@ let heap_ok_def = new_definition
                      isSomeDataElement (heap_lookup ptr heap)))`;;
 
 let gc_forward_ptr_def,gc_forward_ptr_ind = define_rec
-  [`// replace cell at a with a forwardpointer to ptr
-    gc_forward_ptr a [] ptr d ok = ([],F)`;
-   `gc_forward_ptr a (CONS x xs) ptr d ok =
+  `// replace cell at a with a forwardpointer to ptr
+   (gc_forward_ptr a [] ptr d ok = ([],F)) /\
+   (gc_forward_ptr a (CONS x xs) ptr d ok =
          if a = 0 then
            (CONS (ForwardPointer ptr d ((el_length x) - 1))
                xs,(isDataElement x /\ ok)) else if a < el_length x then (CONS x
                xs,F) else let (xs,ok) = gc_forward_ptr (a - el_length x) xs ptr
                d ok in
-             (CONS x xs,ok)`];;
+             (CONS x xs,ok))`;;
 
 let gc_forward_ptr_ok = prove
  (`!heap n a c x. (gc_forward_ptr n heap a d c = (x,T)) ==> c`,
@@ -233,12 +233,12 @@ let _ = size_thms "heap_element";;
    what the port found for it *)
 let heap_map_def,heap_map_ind = define_wf
   `MEASURE (\(x0,x1). list_size (heap_element_size (\x. 0) (\x. 0)) x1)`
-  [`heap_map a x2 =
+  `heap_map a x2 =
      match x2 with
        [] -> FEMPTY
      | CONS (ForwardPointer ptr d l) xs ->
         heap_map (a + l + 1) xs |+ (a,ptr)
-     | CONS x xs -> heap_map (a + el_length x) xs`];;
+     | CONS x xs -> heap_map (a + el_length x) xs`;;
 
 let heap_map1_def = new_definition
   `heap_map1 heap = (\a. FAPPLY (heap_map 0 heap) a)`;;
@@ -247,20 +247,20 @@ let heap_map1_def = new_definition
    what the port found for it *)
 let heap_addresses_def,heap_addresses_ind = define_wf
   `MEASURE (\(x0,x1). list_size (heap_element_size (\x. 0) (\x. 0)) x1)`
-  [`heap_addresses a [] = {}`;
-   `heap_addresses a (CONS x xs) = a INSERT heap_addresses (a + el_length
-    x) xs`];;
+  `(heap_addresses a [] = {}) /\
+   (heap_addresses a (CONS x xs) = a INSERT heap_addresses (a + el_length
+    x) xs)`;;
 
 let _ = size_thms "heap_address";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ADDR_MAP_def,ADDR_MAP_ind = define_wf
   `MEASURE (\(x0,x1). list_size (heap_address_size (\x. 0)) x1)`
-  [`ADDR_MAP f [] = []`;
-   `ADDR_MAP f (CONS (gc_shared_Data x) xs) = CONS (gc_shared_Data x:'a
-    heap_address) (ADDR_MAP f xs)`;
-   `ADDR_MAP f (CONS (gc_shared_Pointer a d) xs) = CONS (gc_shared_Pointer
-    (f a) d) (ADDR_MAP f xs)`];;
+  `(ADDR_MAP f [] = []) /\
+   (ADDR_MAP f (CONS (gc_shared_Data x) xs) = CONS (gc_shared_Data x:'a
+    heap_address) (ADDR_MAP f xs)) /\
+   (ADDR_MAP f (CONS (gc_shared_Pointer a d) xs) = CONS (gc_shared_Pointer
+    (f a) d) (ADDR_MAP f xs))`;;
 
 let ADDR_MAP_EQ = prove
  (`!xs. (!p d. MEM (gc_shared_Pointer p d) xs ==> (f p = g p)) ==>
@@ -277,8 +277,8 @@ let ADDR_MAP_APPEND = prove
   CHEAT_TAC);;
 
 let ADDR_APPLY_def = define_cases
-  [`ADDR_APPLY f (gc_shared_Pointer x d) = gc_shared_Pointer (f x) d`;
-   `ADDR_APPLY f (gc_shared_Data y) = (gc_shared_Data y:'a heap_address)`];;
+  `(ADDR_APPLY f (gc_shared_Pointer x d) = gc_shared_Pointer (f x) d) /\
+   (ADDR_APPLY f (gc_shared_Data y) = (gc_shared_Data y:'a heap_address))`;;
 
 (* HOL4 gc_sharedScript.sml:383-395: a theorem that HOL4 states as the value
    of an ML expression: heap_lookup_FLOOKUP *)
@@ -465,9 +465,9 @@ let CARD_heap_addresses = prove
   CHEAT_TAC);;
 
 let heap_filter_aux_def,heap_filter_aux_ind = define_rec
-  [`heap_filter_aux n P [] = []`;
-   `heap_filter_aux n P (CONS x xs) = APPEND (if n IN P then [x] else [])
-    (heap_filter_aux (n + el_length x) P xs)`];;
+  `(heap_filter_aux n P [] = []) /\
+   (heap_filter_aux n P (CONS x xs) = APPEND (if n IN P then [x] else [])
+    (heap_filter_aux (n + el_length x) P xs))`;;
 
 let heap_filter_def = new_definition
   `heap_filter = heap_filter_aux 0`;;

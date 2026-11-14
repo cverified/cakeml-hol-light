@@ -131,7 +131,7 @@ let ref_rel_def = new_definition
        (closSem_ValueArray vs,closSem_ValueArray ws) -> ALL2 R vs ws
      | (closSem_ByteArray as,closSem_ByteArray bs) -> as = bs
      | (closSem_Thunk ma a,closSem_Thunk mb b) -> ma = mb /\ R a b
-     | (_1,_2) -> F`;;
+     | (_,_) -> F`;;
 add_simp ref_rel_def;;
 
 let ref_rel_simp = prove
@@ -146,40 +146,40 @@ add_simp ref_rel_simp;;
 
 let code_locs_def,code_locs_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`code_locs [] = []`;
-   `code_locs (CONS x (CONS y xs)) =
+  `(code_locs [] = []) /\
+   (code_locs (CONS x (CONS y xs)) =
          let c1 = code_locs [x] in
-         let c2 = code_locs (CONS y xs) in APPEND c1 c2`;
-   `code_locs [closLang_Var _ v] = []`;
-   `code_locs [closLang_If _ x1 x2 x3] =
+         let c2 = code_locs (CONS y xs) in APPEND c1 c2) /\
+   (code_locs [closLang_Var _ v] = []) /\
+   (code_locs [closLang_If _ x1 x2 x3] =
          let c1 = code_locs [x1] in
          let c2 = code_locs [x2] in
-         let c3 = code_locs [x3] in APPEND (APPEND c1 c2) c3`;
-   `code_locs [closLang_Let _ xs x2] =
+         let c3 = code_locs [x3] in APPEND (APPEND c1 c2) c3) /\
+   (code_locs [closLang_Let _ xs x2] =
          let c1 = code_locs xs in
-         let c2 = code_locs [x2] in APPEND c1 c2`;
-   `code_locs [closLang_Raise _ x1] =
-         code_locs [x1]`;
-   `code_locs [closLang_Tick _ x1] =
-         code_locs [x1]`;
-   `code_locs [closLang_Op _ op xs] =
-         code_locs xs`;
-   `code_locs [closLang_App _ loc_opt x1 xs] =
+         let c2 = code_locs [x2] in APPEND c1 c2) /\
+   (code_locs [closLang_Raise _ x1] =
+         code_locs [x1]) /\
+   (code_locs [closLang_Tick _ x1] =
+         code_locs [x1]) /\
+   (code_locs [closLang_Op _ op xs] =
+         code_locs xs) /\
+   (code_locs [closLang_App _ loc_opt x1 xs] =
          let c1 = code_locs [x1] in
-         let c2 = code_locs xs in APPEND c1 c2`;
-   `code_locs [closLang_Fn _ loc_opt vs num_args x1] =
+         let c2 = code_locs xs in APPEND c1 c2) /\
+   (code_locs [closLang_Fn _ loc_opt vs num_args x1] =
          let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
-         let c1 = code_locs [x1] in APPEND c1 [loc]`;
-   `code_locs [closLang_Letrec _ loc_opt vs fns x1] =
+         let c1 = code_locs [x1] in APPEND c1 [loc]) /\
+   (code_locs [closLang_Letrec _ loc_opt vs fns x1] =
          let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
          let c1 = code_locs (MAP SND fns) in
          let c2 = code_locs [x1] in APPEND (APPEND c1 (list_of_seq (\n.
-             loc + 2 * n) (LENGTH fns))) c2`;
-   `code_locs [closLang_Handle _ x1 x2] =
+             loc + 2 * n) (LENGTH fns))) c2) /\
+   (code_locs [closLang_Handle _ x1 x2] =
          let c1 = code_locs [x1] in
-         let c2 = code_locs [x2] in APPEND c1 c2`;
-   `code_locs [closLang_Call _ ticks dest xs] =
-         code_locs xs`];;
+         let c2 = code_locs [x2] in APPEND c1 c2) /\
+   (code_locs [closLang_Call _ ticks dest xs] =
+         code_locs xs)`;;
 
 let code_locs_cons = prove
  (`!x xs. code_locs (CONS x xs) = APPEND (code_locs [x]) (code_locs xs)`,
@@ -207,7 +207,7 @@ let BIGUNION_MAP_code_locs_SND_SND = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let contains_App_SOME_def,contains_App_SOME_ind = define_guess_cheat
-  [`contains_App_SOME max_app x2 =
+  `contains_App_SOME max_app x2 =
      match x2 with
        [] -> F
      | CONS x (CONS y xs) ->
@@ -243,48 +243,48 @@ let contains_App_SOME_def,contains_App_SOME_ind = define_guess_cheat
         contains_App_SOME max_app [x1] \/
         contains_App_SOME max_app [x2]
      | [closLang_Call _ ticks dest xs] ->
-        contains_App_SOME max_app xs`];;
+        contains_App_SOME max_app xs`;;
 
 let contains_App_SOME_EXISTS = prove
  (`!ls max_app. contains_App_SOME max_app ls <=> EX (\x. contains_App_SOME
   max_app [x]) ls`,
   CHEAT_TAC);;
 
-let every_Fn_SOME_def,every_Fn_SOME_ind = assume_definition_rec
+let every_Fn_SOME_def,every_Fn_SOME_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`every_Fn_SOME [] <=> T`;
-   `every_Fn_SOME (CONS x (CONS y xs)) <=>
+  [`(every_Fn_SOME [] <=> T) /\
+    (every_Fn_SOME (CONS x (CONS y xs)) <=>
          every_Fn_SOME [x] /\
-         every_Fn_SOME (CONS y xs)`;
-   `every_Fn_SOME [closLang_Var _ v] <=> T`;
-   `every_Fn_SOME [closLang_If _ x1 x2 x3] <=>
+         every_Fn_SOME (CONS y xs)) /\
+    (every_Fn_SOME [closLang_Var _ v] <=> T) /\
+    (every_Fn_SOME [closLang_If _ x1 x2 x3] <=>
          every_Fn_SOME [x1] /\
          every_Fn_SOME [x2] /\
-         every_Fn_SOME [x3]`;
-   `every_Fn_SOME [closLang_Let _ xs x2] <=>
+         every_Fn_SOME [x3]) /\
+    (every_Fn_SOME [closLang_Let _ xs x2] <=>
          every_Fn_SOME [x2] /\
-         every_Fn_SOME xs`;
-   `every_Fn_SOME [closLang_Raise _ x1] <=>
-         every_Fn_SOME [x1]`;
-   `every_Fn_SOME [closLang_Tick _ x1] <=>
-         every_Fn_SOME [x1]`;
-   `every_Fn_SOME [closLang_Op _ op xs] <=>
-         every_Fn_SOME xs`;
-   `every_Fn_SOME [closLang_App _ loc_opt x1 x2] <=>
-         every_Fn_SOME [x1] /\
-         every_Fn_SOME x2`;
-   `every_Fn_SOME [closLang_Fn _ loc_opt vs num_args x1] <=>
+         every_Fn_SOME xs) /\
+    (every_Fn_SOME [closLang_Raise _ x1] <=>
+         every_Fn_SOME [x1]) /\
+    (every_Fn_SOME [closLang_Tick _ x1] <=>
+         every_Fn_SOME [x1]) /\
+    (every_Fn_SOME [closLang_Op _ op xs] <=>
+         every_Fn_SOME xs) /\
+    (every_Fn_SOME [closLang_Fn _ loc_opt vs num_args x1] <=>
          IS_SOME loc_opt /\
-         every_Fn_SOME [x1]`;
-   `every_Fn_SOME [closLang_Letrec _ loc_opt vs fns x1] <=>
+         every_Fn_SOME [x1]) /\
+    (every_Fn_SOME [closLang_Letrec _ loc_opt vs fns x1] <=>
          IS_SOME loc_opt /\
          every_Fn_SOME (MAP SND fns) /\
-         every_Fn_SOME [x1]`;
-   `every_Fn_SOME [closLang_Handle _ x1 x2] <=>
+         every_Fn_SOME [x1]) /\
+    (every_Fn_SOME [closLang_Handle _ x1 x2] <=>
          every_Fn_SOME [x1] /\
-         every_Fn_SOME [x2]`;
-   `every_Fn_SOME [closLang_Call _ ticks dest xs] <=>
-         every_Fn_SOME xs`];;
+         every_Fn_SOME [x2]) /\
+    (every_Fn_SOME [closLang_Call _ ticks dest xs] <=>
+         every_Fn_SOME xs)`;
+   `(every_Fn_SOME [closLang_App _ loc_opt x1 x2] <=>
+         every_Fn_SOME [x1] /\
+         every_Fn_SOME x2)`];;
 add_simp every_Fn_SOME_def;;
 
 let every_Fn_SOME_EVERY = prove
@@ -296,41 +296,41 @@ let every_Fn_SOME_APPEND = prove
   CHEAT_TAC);;
 add_simp every_Fn_SOME_APPEND;;
 
-let every_Fn_vs_NONE_def,every_Fn_vs_NONE_ind = assume_definition_rec
+let every_Fn_vs_NONE_def,every_Fn_vs_NONE_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`every_Fn_vs_NONE [] <=> T`;
-   `every_Fn_vs_NONE (CONS x (CONS y xs)) <=>
+  [`(every_Fn_vs_NONE [] <=> T) /\
+    (every_Fn_vs_NONE (CONS x (CONS y xs)) <=>
          every_Fn_vs_NONE [x] /\
-         every_Fn_vs_NONE (CONS y xs)`;
-   `every_Fn_vs_NONE [closLang_Var _ v] <=> T`;
-   `every_Fn_vs_NONE [closLang_If _ x1 x2 x3] <=>
+         every_Fn_vs_NONE (CONS y xs)) /\
+    (every_Fn_vs_NONE [closLang_Var _ v] <=> T) /\
+    (every_Fn_vs_NONE [closLang_If _ x1 x2 x3] <=>
          every_Fn_vs_NONE [x1] /\
          every_Fn_vs_NONE [x2] /\
-         every_Fn_vs_NONE [x3]`;
-   `every_Fn_vs_NONE [closLang_Let _ xs x2] <=>
+         every_Fn_vs_NONE [x3]) /\
+    (every_Fn_vs_NONE [closLang_Let _ xs x2] <=>
          every_Fn_vs_NONE [x2] /\
-         every_Fn_vs_NONE xs`;
-   `every_Fn_vs_NONE [closLang_Raise _ x1] <=>
-         every_Fn_vs_NONE [x1]`;
-   `every_Fn_vs_NONE [closLang_Tick _ x1] <=>
-         every_Fn_vs_NONE [x1]`;
-   `every_Fn_vs_NONE [closLang_Op _ op xs] <=>
-         every_Fn_vs_NONE xs`;
-   `every_Fn_vs_NONE [closLang_App _ loc_opt x1 x2] <=>
-         every_Fn_vs_NONE [x1] /\
-         every_Fn_vs_NONE x2`;
-   `every_Fn_vs_NONE [closLang_Fn _ loc vs_opt num_args x1] <=>
+         every_Fn_vs_NONE xs) /\
+    (every_Fn_vs_NONE [closLang_Raise _ x1] <=>
+         every_Fn_vs_NONE [x1]) /\
+    (every_Fn_vs_NONE [closLang_Tick _ x1] <=>
+         every_Fn_vs_NONE [x1]) /\
+    (every_Fn_vs_NONE [closLang_Op _ op xs] <=>
+         every_Fn_vs_NONE xs) /\
+    (every_Fn_vs_NONE [closLang_Fn _ loc vs_opt num_args x1] <=>
          IS_NONE vs_opt /\
-         every_Fn_vs_NONE [x1]`;
-   `every_Fn_vs_NONE [closLang_Letrec _ loc vs_opt fns x1] <=>
+         every_Fn_vs_NONE [x1]) /\
+    (every_Fn_vs_NONE [closLang_Letrec _ loc vs_opt fns x1] <=>
          IS_NONE vs_opt /\
          every_Fn_vs_NONE (MAP SND fns) /\
-         every_Fn_vs_NONE [x1]`;
-   `every_Fn_vs_NONE [closLang_Handle _ x1 x2] <=>
+         every_Fn_vs_NONE [x1]) /\
+    (every_Fn_vs_NONE [closLang_Handle _ x1 x2] <=>
          every_Fn_vs_NONE [x1] /\
-         every_Fn_vs_NONE [x2]`;
-   `every_Fn_vs_NONE [closLang_Call _ ticks dest xs] <=>
-         every_Fn_vs_NONE xs`];;
+         every_Fn_vs_NONE [x2]) /\
+    (every_Fn_vs_NONE [closLang_Call _ ticks dest xs] <=>
+         every_Fn_vs_NONE xs)`;
+   `(every_Fn_vs_NONE [closLang_App _ loc_opt x1 x2] <=>
+         every_Fn_vs_NONE [x1] /\
+         every_Fn_vs_NONE x2)`];;
 add_simp every_Fn_vs_NONE_def;;
 
 let every_Fn_vs_NONE_EVERY = prove
@@ -347,41 +347,41 @@ let every_Fn_vs_NONE_APPEND = prove
   CHEAT_TAC);;
 add_simp every_Fn_vs_NONE_APPEND;;
 
-let every_Fn_vs_SOME_def,every_Fn_vs_SOME_ind = assume_definition_rec
+let every_Fn_vs_SOME_def,every_Fn_vs_SOME_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`every_Fn_vs_SOME [] <=> T`;
-   `every_Fn_vs_SOME (CONS x (CONS y xs)) <=>
+  [`(every_Fn_vs_SOME [] <=> T) /\
+    (every_Fn_vs_SOME (CONS x (CONS y xs)) <=>
          every_Fn_vs_SOME [x] /\
-         every_Fn_vs_SOME (CONS y xs)`;
-   `every_Fn_vs_SOME [closLang_Var _ v] <=> T`;
-   `every_Fn_vs_SOME [closLang_If _ x1 x2 x3] <=>
+         every_Fn_vs_SOME (CONS y xs)) /\
+    (every_Fn_vs_SOME [closLang_Var _ v] <=> T) /\
+    (every_Fn_vs_SOME [closLang_If _ x1 x2 x3] <=>
          every_Fn_vs_SOME [x1] /\
          every_Fn_vs_SOME [x2] /\
-         every_Fn_vs_SOME [x3]`;
-   `every_Fn_vs_SOME [closLang_Let _ xs x2] <=>
+         every_Fn_vs_SOME [x3]) /\
+    (every_Fn_vs_SOME [closLang_Let _ xs x2] <=>
          every_Fn_vs_SOME [x2] /\
-         every_Fn_vs_SOME xs`;
-   `every_Fn_vs_SOME [closLang_Raise _ x1] <=>
-         every_Fn_vs_SOME [x1]`;
-   `every_Fn_vs_SOME [closLang_Tick _ x1] <=>
-         every_Fn_vs_SOME [x1]`;
-   `every_Fn_vs_SOME [closLang_Op _ op xs] <=>
-         every_Fn_vs_SOME xs`;
-   `every_Fn_vs_SOME [closLang_App _ loc_opt x1 x2] <=>
-         every_Fn_vs_SOME [x1] /\
-         every_Fn_vs_SOME x2`;
-   `every_Fn_vs_SOME [closLang_Fn _ loc vs_opt num_args x1] <=>
+         every_Fn_vs_SOME xs) /\
+    (every_Fn_vs_SOME [closLang_Raise _ x1] <=>
+         every_Fn_vs_SOME [x1]) /\
+    (every_Fn_vs_SOME [closLang_Tick _ x1] <=>
+         every_Fn_vs_SOME [x1]) /\
+    (every_Fn_vs_SOME [closLang_Op _ op xs] <=>
+         every_Fn_vs_SOME xs) /\
+    (every_Fn_vs_SOME [closLang_Fn _ loc vs_opt num_args x1] <=>
          IS_SOME vs_opt /\
-         every_Fn_vs_SOME [x1]`;
-   `every_Fn_vs_SOME [closLang_Letrec _ loc vs_opt fns x1] <=>
+         every_Fn_vs_SOME [x1]) /\
+    (every_Fn_vs_SOME [closLang_Letrec _ loc vs_opt fns x1] <=>
          IS_SOME vs_opt /\
          every_Fn_vs_SOME (MAP SND fns) /\
-         every_Fn_vs_SOME [x1]`;
-   `every_Fn_vs_SOME [closLang_Handle _ x1 x2] <=>
+         every_Fn_vs_SOME [x1]) /\
+    (every_Fn_vs_SOME [closLang_Handle _ x1 x2] <=>
          every_Fn_vs_SOME [x1] /\
-         every_Fn_vs_SOME [x2]`;
-   `every_Fn_vs_SOME [closLang_Call _ ticks dest xs] <=>
-         every_Fn_vs_SOME xs`];;
+         every_Fn_vs_SOME [x2]) /\
+    (every_Fn_vs_SOME [closLang_Call _ ticks dest xs] <=>
+         every_Fn_vs_SOME xs)`;
+   `(every_Fn_vs_SOME [closLang_App _ loc_opt x1 x2] <=>
+         every_Fn_vs_SOME [x1] /\
+         every_Fn_vs_SOME x2)`];;
 add_simp every_Fn_vs_SOME_def;;
 
 let every_Fn_vs_SOME_EVERY = prove
@@ -412,60 +412,60 @@ add_simp exp1_size_rw;;
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 closPropsScript.sml:446-450: the tactic that proves the termination *)
-let no_mti_def,no_mti_ind = define_shaped_rec
+let no_mti_def,no_mti_ind = define_shaped_rec_clauses
   "nested"
-  [`no_mti (closLang_Var t n) = T`;
-   `no_mti (closLang_If t e1 e2 e3) <=>
+  [`(no_mti (closLang_Var t n) = T) /\
+    (no_mti (closLang_If t e1 e2 e3) <=>
         no_mti e1 /\
         no_mti e2 /\
-        no_mti e3`;
-   `no_mti (closLang_Let t es e) <=>
+        no_mti e3) /\
+    (no_mti (closLang_Let t es e) <=>
         ALL no_mti es /\
-        no_mti e`;
-   `no_mti (closLang_Raise t e) <=>
-        no_mti e`;
-   `no_mti (closLang_Handle t e1 e2) <=>
+        no_mti e) /\
+    (no_mti (closLang_Raise t e) <=>
+        no_mti e) /\
+    (no_mti (closLang_Handle t e1 e2) <=>
         no_mti e1 /\
-        no_mti e2`;
-   `no_mti (closLang_Tick t e) <=>
-        no_mti e`;
-   `no_mti (closLang_Call t ticks n es) = F`;
-   `no_mti (closLang_App t opt e es) <=>
+        no_mti e2) /\
+    (no_mti (closLang_Tick t e) <=>
+        no_mti e) /\
+    (no_mti (closLang_Call t ticks n es) = F) /\
+    (no_mti (closLang_App t opt e es) <=>
         LENGTH es = 1 /\ opt = NONE /\
         ALL no_mti es /\
-        no_mti e`;
-   `no_mti (closLang_Fn t opt1 opt2 num_args e) <=>
+        no_mti e) /\
+    (no_mti (closLang_Op t op es) <=>
+        ALL no_mti es)`;
+   `(no_mti (closLang_Fn t opt1 opt2 num_args e) <=>
         num_args = 1 /\ opt1 = NONE /\ opt2 = NONE /\
-        no_mti e`;
-   `no_mti (closLang_Letrec t opt1 opt2 funs e) <=>
+        no_mti e)`;
+   `(no_mti (closLang_Letrec t opt1 opt2 funs e) <=>
         no_mti e /\ opt1 = NONE /\ opt2 = NONE /\
-        ALL (\x. FST x = 1 /\ no_mti (SND x)) funs`;
-   `no_mti (closLang_Op t op es) <=>
-        ALL no_mti es`];;
+        ALL (\x. FST x = 1 /\ no_mti (SND x)) funs)`];;
 
-let fv_def,fv_ind = assume_definition_rec
+let fv_def,fv_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`fv n [] <=> F`;
-   `fv n (CONS (x:closLang_exp) (CONS y xs)) <=>
-         fv n [x] \/ fv n (CONS y xs)`;
-   `fv n [closLang_Var _ v] <=> (n = v)`;
-   `fv n [closLang_If _ x1 x2 x3] <=>
-         fv n [x1] \/ fv n [x2] \/ fv n [x3]`;
-   `fv n [closLang_Let _ xs x2] <=>
-         fv n xs \/ fv (n + LENGTH xs) [x2]`;
-   `fv n [closLang_Raise _ x1] <=> fv n [x1]`;
-   `fv n [closLang_Tick _ x1] <=> fv n [x1]`;
-   `fv n [closLang_Op _ op xs] <=> fv n xs`;
-   `fv n [closLang_App _ loc_opt x1 x2] <=>
-         fv n [x1] \/ fv n x2`;
-   `fv n [closLang_Fn _ loc vs num_args x1] <=>
-         fv (n + num_args) [x1]`;
-   `fv n [closLang_Letrec _ loc vs fns x1] <=>
+  [`(fv n [] <=> F) /\
+    (fv n (CONS (x:closLang_exp) (CONS y xs)) <=>
+         fv n [x] \/ fv n (CONS y xs)) /\
+    (fv n [closLang_Var _ v] <=> (n = v)) /\
+    (fv n [closLang_If _ x1 x2 x3] <=>
+         fv n [x1] \/ fv n [x2] \/ fv n [x3]) /\
+    (fv n [closLang_Let _ xs x2] <=>
+         fv n xs \/ fv (n + LENGTH xs) [x2]) /\
+    (fv n [closLang_Raise _ x1] <=> fv n [x1]) /\
+    (fv n [closLang_Tick _ x1] <=> fv n [x1]) /\
+    (fv n [closLang_Op _ op xs] <=> fv n xs) /\
+    (fv n [closLang_Fn _ loc vs num_args x1] <=>
+         fv (n + num_args) [x1]) /\
+    (fv n [closLang_Letrec _ loc vs fns x1] <=>
          EX (\(num_args,x). fv (n + num_args + LENGTH fns) [x]) fns \/
-             fv (n + LENGTH fns) [x1]`;
-   `fv n [closLang_Handle _ x1 x2] <=>
-         fv n [x1] \/ fv (n + 1) [x2]`;
-   `fv n [closLang_Call _ ticks dest xs] <=> fv n xs`];;
+             fv (n + LENGTH fns) [x1]) /\
+    (fv n [closLang_Handle _ x1 x2] <=>
+         fv n [x1] \/ fv (n + 1) [x2]) /\
+    (fv n [closLang_Call _ ticks dest xs] <=> fv n xs)`;
+   `(fv n [closLang_App _ loc_opt x1 x2] <=>
+         fv n [x1] \/ fv n x2)`];;
 
 let fv_append = prove
  (`!v l1. fv v (APPEND l1 l2) <=> fv v l1 \/ fv v l2`,
@@ -733,44 +733,42 @@ let dest_closure_none_loc = prove
 let is_closure_def = new_definition
   `is_closure x1 =
      match x1 with
-       closSem_Closure _9 _10 _11 _12 _13 -> T
-     | closSem_Recclosure _14 _15 _16 _17 _18 -> T
+       closSem_Closure _ _ _ _ _ -> T
+     | closSem_Recclosure _ _ _ _ _ -> T
      | _ -> F`;;
 add_simp is_closure_def;;
 
 let clo_to_loc_def = define_cases
-  [`clo_to_loc (closSem_Closure l _23 _24 _25 _26) = l`;
-   `clo_to_loc (closSem_Recclosure l _30 _31 _32 i) = OPTION_MAP ((+) (2 *
-    i)) l`];;
+  `(clo_to_loc (closSem_Closure l _ _ _ _) = l) /\
+   (clo_to_loc (closSem_Recclosure l _ _ _ i) = OPTION_MAP ((+) (2 * i)) l)`;;
 add_simp clo_to_loc_def;;
 
 let clo_to_env_def = define_cases
-  [`clo_to_env (closSem_Closure _37 _38 env _39 _40) = env`;
-   `clo_to_env (closSem_Recclosure loc _43 env fns _44) = APPEND
-    (list_of_seq (closSem_Recclosure loc [] env fns) (LENGTH fns)) env`];;
+  `(clo_to_env (closSem_Closure _ _ env _ _) = env) /\
+   (clo_to_env (closSem_Recclosure loc _ env fns _) = APPEND (list_of_seq
+    (closSem_Recclosure loc [] env fns) (LENGTH fns)) env)`;;
 add_simp clo_to_env_def;;
 
 let clo_to_partial_args_def = define_cases
-  [`clo_to_partial_args (closSem_Closure _49 args _50 _51 _52) = args`;
-   `clo_to_partial_args (closSem_Recclosure _57 args _58 _59 _60) = args`];;
+  `(clo_to_partial_args (closSem_Closure _ args _ _ _) = args) /\
+   (clo_to_partial_args (closSem_Recclosure _ args _ _ _) = args)`;;
 add_simp clo_to_partial_args_def;;
 
-let clo_add_partial_args_def = define_cases
-  [`clo_add_partial_args args (closSem_Closure x1 args' x2 x3 x4) =
-       closSem_Closure x1 (APPEND args args') x2 x3 x4`;
-   `clo_add_partial_args args (closSem_Recclosure x1 args' x2 x3 x4) =
-       closSem_Recclosure x1 (APPEND args args') x2 x3 x4`];;
+let clo_add_partial_args_def = define_cases_clauses
+  [`(clo_add_partial_args args (closSem_Closure x1 args' x2 x3 x4) =
+       closSem_Closure x1 (APPEND args args') x2 x3 x4)`;
+   `(clo_add_partial_args args (closSem_Recclosure x1 args' x2 x3 x4) =
+       closSem_Recclosure x1 (APPEND args args') x2 x3 x4)`];;
 add_simp clo_add_partial_args_def;;
 
 let clo_to_num_params_def = define_cases
-  [`clo_to_num_params (closSem_Closure _65 _66 _67 n _68) = n`;
-   `clo_to_num_params (closSem_Recclosure _72 _73 _74 fns i) = FST (EL i
-    fns)`];;
+  `(clo_to_num_params (closSem_Closure _ _ _ n _) = n) /\
+   (clo_to_num_params (closSem_Recclosure _ _ _ fns i) = FST (EL i fns))`;;
 add_simp clo_to_num_params_def;;
 
 let rec_clo_ok_def = define_cases
-  [`rec_clo_ok (closSem_Recclosure _78 _79 _80 fns i) <=> i < LENGTH fns`;
-   `rec_clo_ok (closSem_Closure _86 _87 _88 _89 _90) <=> T`];;
+  `(rec_clo_ok (closSem_Recclosure _ _ _ fns i) <=> i < LENGTH fns) /\
+   (rec_clo_ok (closSem_Closure _ _ _ _ _) <=> T)`;;
 add_simp rec_clo_ok_def;;
 
 let dest_closure_full_length = prove
@@ -1138,30 +1136,29 @@ add_simp exp2_size_rw;;
 
 let set_globals_def,set_globals_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`closProps_set_globals (closLang_Var _93 _94) = EMPTY_BAG`;
-   `closProps_set_globals (closLang_If _ e1 e2 e3) = (BAG_UNION)
+  `(closProps_set_globals (closLang_Var _ _) = EMPTY_BAG) /\
+   (closProps_set_globals (closLang_If _ e1 e2 e3) = (BAG_UNION)
     ((BAG_UNION) (closProps_set_globals e1) (closProps_set_globals e2))
-    (closProps_set_globals e3)`;
-   `closProps_set_globals (closLang_Let _ binds e) = (BAG_UNION)
-    (closProps_set_globals e) (closProps_elist_globals binds)`;
-   `closProps_set_globals (closLang_Raise _ e) = closProps_set_globals e`;
-   `closProps_set_globals (closLang_Handle _ e1 e2) = (BAG_UNION)
-    (closProps_set_globals e1) (closProps_set_globals e2)`;
-   `closProps_set_globals (closLang_Tick _ e) = closProps_set_globals e`;
-   `closProps_set_globals (closLang_Call _98 _99 _100 args) =
-    closProps_elist_globals args`;
-   `closProps_set_globals (closLang_App _103 _104 f args) = (BAG_UNION)
-    (closProps_set_globals f) (closProps_elist_globals args)`;
-   `closProps_set_globals (closLang_Fn _105 _106 _107 _108 bod) =
-    closProps_set_globals bod`;
-   `closProps_set_globals (closLang_Letrec _112 _113 _114 fbinds bod) =
-    (BAG_UNION) (closProps_set_globals bod) (closProps_elist_globals (MAP
-    SND fbinds))`;
-   `closProps_set_globals (closLang_Op _ opn args) = (BAG_UNION)
-    (closProps_op_gbag opn) (closProps_elist_globals args)`;
-   `closProps_elist_globals [] = EMPTY_BAG`;
-   `closProps_elist_globals (CONS e es) = (BAG_UNION)
-    (closProps_set_globals e) (closProps_elist_globals es)`];;
+    (closProps_set_globals e3)) /\
+   (closProps_set_globals (closLang_Let _ binds e) = (BAG_UNION)
+    (closProps_set_globals e) (closProps_elist_globals binds)) /\
+   (closProps_set_globals (closLang_Raise _ e) = closProps_set_globals e) /\
+   (closProps_set_globals (closLang_Handle _ e1 e2) = (BAG_UNION)
+    (closProps_set_globals e1) (closProps_set_globals e2)) /\
+   (closProps_set_globals (closLang_Tick _ e) = closProps_set_globals e) /\
+   (closProps_set_globals (closLang_Call _ _ _ args) =
+    closProps_elist_globals args) /\
+   (closProps_set_globals (closLang_App _ _ f args) = (BAG_UNION)
+    (closProps_set_globals f) (closProps_elist_globals args)) /\
+   (closProps_set_globals (closLang_Fn _ _ _ _ bod) = closProps_set_globals
+    bod) /\
+   (closProps_set_globals (closLang_Letrec _ _ _ fbinds bod) = (BAG_UNION)
+    (closProps_set_globals bod) (closProps_elist_globals (MAP SND fbinds))) /\
+   (closProps_set_globals (closLang_Op _ opn args) = (BAG_UNION)
+    (closProps_op_gbag opn) (closProps_elist_globals args)) /\
+   (closProps_elist_globals [] = EMPTY_BAG) /\
+   (closProps_elist_globals (CONS e es) = (BAG_UNION)
+    (closProps_set_globals e) (closProps_elist_globals es))`;;
 add_simp set_globals_def;;
 
 (* {foo}sgc_free: foo is free of SetGlobal closures, meaning closures that
@@ -1180,16 +1177,16 @@ let v_size_lemma = prove
    termination *)
 let vsgc_free_def,vsgc_free_ind = define_wf
   `MEASURE closSem_v_size`
-  [`vsgc_free x1 =
+  `vsgc_free x1 =
      match x1 with
-       closSem_Closure _117 VL1 VL2 _118 body ->
+       closSem_Closure _ VL1 VL2 _ body ->
         closProps_set_globals body = EMPTY_BAG /\
         ALL vsgc_free VL1 /\ ALL vsgc_free VL2
-     | closSem_Recclosure _119 VL1 VL2 bods _120 ->
+     | closSem_Recclosure _ VL1 VL2 bods _ ->
         closProps_elist_globals (MAP SND bods) = EMPTY_BAG /\
         ALL vsgc_free VL1 /\ ALL vsgc_free VL2
      | closSem_Block _ VL -> ALL vsgc_free VL
-     | _ -> T`];;
+     | _ -> T`;;
 
 (* HOL4 closPropsScript.sml:1814-1815: a theorem that HOL4 states as the
    value of an ML expression: vsgc_free_def *)
@@ -1219,28 +1216,28 @@ add_simp rsgc_free_def;;
    port lets its own machinery find one *)
 (* HOL4 closPropsScript.sml:1849-1852: the tactic that proves the
    termination *)
-let esgc_free_def,esgc_free_ind = define_shaped_rec
+let esgc_free_def,esgc_free_ind = define_shaped_rec_clauses
   "nested"
-  [`closProps_esgc_free (closLang_Var _123 _124) <=> T`;
-   `closProps_esgc_free (closLang_If _ e1 e2 e3) <=> closProps_esgc_free e1
-    /\ closProps_esgc_free e2 /\ closProps_esgc_free e3`;
-   `closProps_esgc_free (closLang_Let _ binds e) <=> ALL closProps_esgc_free
-    binds /\ closProps_esgc_free e`;
-   `closProps_esgc_free (closLang_Raise _ e) <=> closProps_esgc_free e`;
-   `closProps_esgc_free (closLang_Handle _ e1 e2) <=> closProps_esgc_free e1
-    /\ closProps_esgc_free e2`;
-   `closProps_esgc_free (closLang_Tick _ e) <=> closProps_esgc_free e`;
-   `closProps_esgc_free (closLang_Call _128 _129 _130 args) <=> ALL
-    closProps_esgc_free args`;
-   `closProps_esgc_free (closLang_App _133 _134 e args) <=>
-    closProps_esgc_free e /\ ALL closProps_esgc_free args`;
-   `closProps_esgc_free (closLang_Fn _135 _136 _137 _138 b) <=>
-    closProps_set_globals b = EMPTY_BAG`;
-   `closProps_esgc_free (closLang_Letrec _142 _143 _144 binds bod) <=>
+  [`(closProps_esgc_free (closLang_Var _ _) <=> T) /\
+    (closProps_esgc_free (closLang_If _ e1 e2 e3) <=> closProps_esgc_free e1
+    /\ closProps_esgc_free e2 /\ closProps_esgc_free e3) /\
+    (closProps_esgc_free (closLang_Let _ binds e) <=> ALL
+    closProps_esgc_free binds /\ closProps_esgc_free e) /\
+    (closProps_esgc_free (closLang_Raise _ e) <=> closProps_esgc_free e) /\
+    (closProps_esgc_free (closLang_Handle _ e1 e2) <=> closProps_esgc_free
+    e1 /\ closProps_esgc_free e2) /\
+    (closProps_esgc_free (closLang_Tick _ e) <=> closProps_esgc_free e) /\
+    (closProps_esgc_free (closLang_Call _ _ _ args) <=> ALL
+    closProps_esgc_free args) /\
+    (closProps_esgc_free (closLang_App _ _ e args) <=> closProps_esgc_free e
+    /\ ALL closProps_esgc_free args) /\
+    (closProps_esgc_free (closLang_Fn _ _ _ _ b) <=> closProps_set_globals b
+    = EMPTY_BAG) /\
+    (closProps_esgc_free (closLang_Op _ _ args) <=> ALL closProps_esgc_free
+    args)`;
+   `(closProps_esgc_free (closLang_Letrec _ _ _ binds bod) <=>
         closProps_elist_globals (MAP SND binds) = EMPTY_BAG
-            /\ closProps_esgc_free bod`;
-   `closProps_esgc_free (closLang_Op _147 _148 args) <=> ALL
-    closProps_esgc_free args`];;
+            /\ closProps_esgc_free bod)`];;
 
 (* HOL4 closPropsScript.sml:1854-1855: a theorem that HOL4 states as the
    value of an ML expression: esgc_free_def *)
@@ -1937,94 +1934,90 @@ let evaluate_code_SUBMAP = prove
     SUBMAP_rel s1 s2))`,
   CHEAT_TAC);;
 
-let obeys_max_app_def,obeys_max_app_ind = assume_definition_rec
+let obeys_max_app_def,obeys_max_app_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`obeys_max_app m (closLang_Var _151 _152) <=> T`;
-   `obeys_max_app m (closLang_If _ e1 e2 e3) <=> obeys_max_app m e1
-    /\ obeys_max_app m e2 /\ obeys_max_app m e3`;
-   `obeys_max_app m (closLang_Let _ es e) <=> ALL (obeys_max_app m) es
-    /\ obeys_max_app m e`;
-   `obeys_max_app m (closLang_Raise _ e) <=> obeys_max_app m e`;
-   `obeys_max_app m (closLang_Handle _ e1 e2) <=> obeys_max_app m e1
-    /\ obeys_max_app m e2`;
-   `obeys_max_app m (closLang_Tick _ e) <=> obeys_max_app m e`;
-   `obeys_max_app m (closLang_Call _156 _157 _158 es) <=> ALL (obeys_max_app
-    m) es`;
-   `obeys_max_app m (closLang_App _161 _162 e es) <=> LENGTH es <= m
-    /\ obeys_max_app m e /\ ALL (obeys_max_app m) es`;
-   `obeys_max_app m (closLang_Fn _163 _164 _165 _166 e) <=> obeys_max_app m
-    e`;
-   `obeys_max_app m (closLang_Letrec _170 _171 _172 es e) <=> ALL
-    (obeys_max_app m) (MAP SND es) /\ obeys_max_app m e`;
-   `obeys_max_app m (closLang_Op _175 _176 es) <=> ALL (obeys_max_app m)
-    es`];;
+  [`(obeys_max_app m (closLang_Var _ _) <=> T) /\
+    (obeys_max_app m (closLang_If _ e1 e2 e3) <=> obeys_max_app m e1
+    /\ obeys_max_app m e2 /\ obeys_max_app m e3) /\
+    (obeys_max_app m (closLang_Let _ es e) <=> ALL (obeys_max_app m) es
+    /\ obeys_max_app m e) /\
+    (obeys_max_app m (closLang_Raise _ e) <=> obeys_max_app m e) /\
+    (obeys_max_app m (closLang_Handle _ e1 e2) <=> obeys_max_app m e1
+    /\ obeys_max_app m e2) /\
+    (obeys_max_app m (closLang_Tick _ e) <=> obeys_max_app m e) /\
+    (obeys_max_app m (closLang_Call _ _ _ es) <=> ALL (obeys_max_app m) es) /\
+    (obeys_max_app m (closLang_App _ _ e es) <=> LENGTH es <= m
+    /\ obeys_max_app m e /\ ALL (obeys_max_app m) es) /\
+    (obeys_max_app m (closLang_Fn _ _ _ _ e) <=> obeys_max_app m e) /\
+    (obeys_max_app m (closLang_Op _ _ es) <=> ALL (obeys_max_app m) es)`;
+   `(obeys_max_app m (closLang_Letrec _ _ _ es e) <=> ALL (obeys_max_app m)
+    (MAP SND es) /\ obeys_max_app m e)`];;
 
 (* HOL4 closPropsScript.sml:3562-3564: a theorem that HOL4 states as the
    value of an ML expression: obeys_max_app_def *)
 
-let no_Labels_def,no_Labels_ind = assume_definition_rec
+let no_Labels_def,no_Labels_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`no_Labels (closLang_Var _179 _180) <=> T`;
-   `no_Labels (closLang_If _ e1 e2 e3) <=> no_Labels e1 /\ no_Labels e2
-    /\ no_Labels e3`;
-   `no_Labels (closLang_Let _ es e) <=> ALL no_Labels es /\ no_Labels e`;
-   `no_Labels (closLang_Raise _ e) <=> no_Labels e`;
-   `no_Labels (closLang_Handle _ e1 e2) <=> no_Labels e1 /\ no_Labels e2`;
-   `no_Labels (closLang_Tick _ e) <=> no_Labels e`;
-   `no_Labels (closLang_Call _184 _185 _186 es) <=> ALL no_Labels es`;
-   `no_Labels (closLang_App _189 _190 e es) <=> no_Labels e /\ ALL no_Labels
-    es`;
-   `no_Labels (closLang_Fn _191 _192 _193 _194 e) <=> no_Labels e`;
-   `no_Labels (closLang_Letrec _198 _199 _200 es e) <=> ALL no_Labels (MAP
-    SND es) /\ no_Labels e`;
-   `no_Labels (closLang_Op _ op es) <=> (!n. ~(op = closLang_Label n))
-    /\ ALL no_Labels es`];;
+  [`(no_Labels (closLang_Var _ _) <=> T) /\
+    (no_Labels (closLang_If _ e1 e2 e3) <=> no_Labels e1 /\ no_Labels e2
+    /\ no_Labels e3) /\
+    (no_Labels (closLang_Let _ es e) <=> ALL no_Labels es /\ no_Labels e) /\
+    (no_Labels (closLang_Raise _ e) <=> no_Labels e) /\
+    (no_Labels (closLang_Handle _ e1 e2) <=> no_Labels e1 /\ no_Labels e2) /\
+    (no_Labels (closLang_Tick _ e) <=> no_Labels e) /\
+    (no_Labels (closLang_Call _ _ _ es) <=> ALL no_Labels es) /\
+    (no_Labels (closLang_App _ _ e es) <=> no_Labels e /\ ALL no_Labels es) /\
+    (no_Labels (closLang_Fn _ _ _ _ e) <=> no_Labels e) /\
+    (no_Labels (closLang_Op _ op es) <=> (!n. ~(op = closLang_Label n))
+    /\ ALL no_Labels es)`;
+   `(no_Labels (closLang_Letrec _ _ _ es e) <=> ALL no_Labels (MAP SND es)
+    /\ no_Labels e)`];;
 
 (* HOL4 closPropsScript.sml:3586-3588: a theorem that HOL4 states as the
    value of an ML expression: no_Labels_def *)
 
 let app_call_dests_def,app_call_dests_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`app_call_dests opt [] = {}`;
-   `app_call_dests opt (CONS x (CONS y xs)) =
+  `(app_call_dests opt [] = {}) /\
+   (app_call_dests opt (CONS x (CONS y xs)) =
          let c1 = app_call_dests opt [x] in
          let c2 = app_call_dests opt (CONS y xs) in
-           c1 UNION c2`;
-   `app_call_dests opt [closLang_Var _ v] = {}`;
-   `app_call_dests opt [closLang_If _ x1 x2 x3] =
+           c1 UNION c2) /\
+   (app_call_dests opt [closLang_Var _ v] = {}) /\
+   (app_call_dests opt [closLang_If _ x1 x2 x3] =
          let c1 = app_call_dests opt [x1] in
          let c2 = app_call_dests opt [x2] in
          let c3 = app_call_dests opt [x3] in
-           c1 UNION c2 UNION c3`;
-   `app_call_dests opt [closLang_Let _ xs x2] =
+           c1 UNION c2 UNION c3) /\
+   (app_call_dests opt [closLang_Let _ xs x2] =
          let c1 = app_call_dests opt xs in
          let c2 = app_call_dests opt [x2] in
-           c1 UNION c2`;
-   `app_call_dests opt [closLang_Raise _ x1] =
-         app_call_dests opt [x1]`;
-   `app_call_dests opt [closLang_Tick _ x1] =
-         app_call_dests opt [x1]`;
-   `app_call_dests opt [closLang_Op _ op xs] =
-         app_call_dests opt xs`;
-   `app_call_dests opt [closLang_App _204 loc_opt x1 xs] =
+           c1 UNION c2) /\
+   (app_call_dests opt [closLang_Raise _ x1] =
+         app_call_dests opt [x1]) /\
+   (app_call_dests opt [closLang_Tick _ x1] =
+         app_call_dests opt [x1]) /\
+   (app_call_dests opt [closLang_Op _ op xs] =
+         app_call_dests opt xs) /\
+   (app_call_dests opt [closLang_App _ loc_opt x1 xs] =
          let ll = (if opt = SOME T then {} else match loc_opt with SOME n
              -> {n} | _ -> {}) in
          let c1 = app_call_dests opt [x1] in
          let c2 = app_call_dests opt xs in
-             ll UNION c1 UNION c2`;
-   `app_call_dests opt [closLang_Fn _ loc_opt vs num_args x1] =
-         let c1 = app_call_dests opt [x1] in c1`;
-   `app_call_dests opt [closLang_Letrec _ loc_opt vs fns x1] =
+             ll UNION c1 UNION c2) /\
+   (app_call_dests opt [closLang_Fn _ loc_opt vs num_args x1] =
+         let c1 = app_call_dests opt [x1] in c1) /\
+   (app_call_dests opt [closLang_Letrec _ loc_opt vs fns x1] =
          let c1 = app_call_dests opt (MAP SND fns) in
          let c2 = app_call_dests opt [x1] in
-         c1 UNION c2`;
-   `app_call_dests opt [closLang_Handle _ x1 x2] =
+         c1 UNION c2) /\
+   (app_call_dests opt [closLang_Handle _ x1 x2] =
          let c1 = app_call_dests opt [x1] in
          let c2 = app_call_dests opt [x2] in
-           c1 UNION c2`;
-   `app_call_dests opt [closLang_Call _ ticks dest xs] =
+           c1 UNION c2) /\
+   (app_call_dests opt [closLang_Call _ ticks dest xs] =
          if opt = SOME F then app_call_dests opt xs else dest INSERT
-             app_call_dests opt xs`];;
+             app_call_dests opt xs)`;;
 
 (* HOL4 closPropsScript.sml:3636-3637: a theorem that HOL4 states as the
    value of an ML expression: app_call_dests_def *)
@@ -2073,42 +2066,42 @@ let any_dests_call_dests_app_dests = prove
   CHEAT_TAC);;
 
 let closProps_get_code_labels_def,closProps_get_code_labels_ind =
-  assume_definition_rec
+  assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`closProps_get_code_labels (closLang_Var _207 _208) = {}`;
-   `closProps_get_code_labels (closLang_If _ e1 e2 e3) =
+  [`(closProps_get_code_labels (closLang_Var _ _) = {}) /\
+    (closProps_get_code_labels (closLang_If _ e1 e2 e3) =
         closProps_get_code_labels e1 UNION
         closProps_get_code_labels e2 UNION
-        closProps_get_code_labels e3`;
-   `closProps_get_code_labels (closLang_Let _ es e) =
+        closProps_get_code_labels e3) /\
+    (closProps_get_code_labels (closLang_Let _ es e) =
         UNIONS (set_of_list (MAP closProps_get_code_labels es)) UNION
-        closProps_get_code_labels e`;
-   `closProps_get_code_labels (closLang_Raise _ e) =
-    closProps_get_code_labels e`;
-   `closProps_get_code_labels (closLang_Handle _ e1 e2) =
+        closProps_get_code_labels e) /\
+    (closProps_get_code_labels (closLang_Raise _ e) =
+    closProps_get_code_labels e) /\
+    (closProps_get_code_labels (closLang_Handle _ e1 e2) =
         closProps_get_code_labels e1 UNION
-        closProps_get_code_labels e2`;
-   `closProps_get_code_labels (closLang_Tick _ e) =
-    closProps_get_code_labels e`;
-   `closProps_get_code_labels (closLang_Call _211 _212 l es) =
+        closProps_get_code_labels e2) /\
+    (closProps_get_code_labels (closLang_Tick _ e) =
+    closProps_get_code_labels e) /\
+    (closProps_get_code_labels (closLang_Call _ _ l es) =
         {l} UNION UNIONS (set_of_list (MAP closProps_get_code_labels
-            es))`;
-   `closProps_get_code_labels (closLang_App _ l e es) =
+            es))) /\
+    (closProps_get_code_labels (closLang_Op _ op es) =
+        UNIONS (set_of_list (MAP closProps_get_code_labels es)) UNION
+        assign_get_code_label op)`;
+   `(closProps_get_code_labels (closLang_App _ l e es) =
         (match l with NONE -> {} | SOME n -> {n}) UNION
         closProps_get_code_labels e UNION
-        UNIONS (set_of_list (MAP closProps_get_code_labels es))`;
-   `closProps_get_code_labels (closLang_Fn _213 l _214 _215 e) =
+        UNIONS (set_of_list (MAP closProps_get_code_labels es))) /\
+    (closProps_get_code_labels (closLang_Fn _ l _ _ e) =
        (match l with NONE -> {} | SOME n -> {n}) UNION
-       closProps_get_code_labels e`;
-   `closProps_get_code_labels (closLang_Letrec _218 l _219 es e) =
+       closProps_get_code_labels e)`;
+   `(closProps_get_code_labels (closLang_Letrec _ l _ es e) =
        (match l with NONE -> {} | SOME n ->
          IMAGE (\k. n + 2 * k) (count (LENGTH es))) UNION
         closProps_get_code_labels e UNION
         UNIONS (set_of_list (MAP closProps_get_code_labels (MAP SND
-            es)))`;
-   `closProps_get_code_labels (closLang_Op _ op es) =
-        UNIONS (set_of_list (MAP closProps_get_code_labels es)) UNION
-        assign_get_code_label op`];;
+            es))))`];;
 
 (* HOL4 closPropsScript.sml:3733-3735: a theorem that HOL4 states as the
    value of an ML expression: get_code_labels_def *)

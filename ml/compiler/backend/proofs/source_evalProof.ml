@@ -115,7 +115,7 @@ let v_to_env_id_def = new_definition
 let do_eval_record_def = new_definition
   `do_eval_record ci vs (orac:num->(num#num)#semanticPrimitives_v#dec list) =
   match vs with [env_id_v; st_v; decs_v; st_v2; bs_v; ws_v] ->
-       let ((i,_1),st,_2) = orac 0 in
+       let ((i,_),st,_) = orac 0 in
        (match (v_to_env_id env_id_v,v_fun_abs (compiler_instance_decs_dom
          ci) (compiler_instance_decs_v ci) decs_v) with (SOME env_id,SOME decs)
          ->

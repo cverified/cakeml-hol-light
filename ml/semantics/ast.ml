@@ -280,66 +280,66 @@ let dec_INDUCT,dec_RECURSION = define_datatype
 
 (* Computes the bindings of a pattern *)
 let pat_bindings_def,pat_bindings_ind = define_rec
-  [`ast_pat_bindings ast_Pany = []`;
-   `ast_pat_bindings (ast_Pvar n) = [n]`;
-   `ast_pat_bindings (ast_Plit l) = []`;
-   `ast_pat_bindings (ast_Pcon v0 ps) = ast_pats_bindings ps`;
-   `ast_pat_bindings (ast_Pref p) = ast_pat_bindings p`;
-   `ast_pat_bindings (ast_Pas p i) = APPEND (ast_pat_bindings p) [i]`;
-   `ast_pat_bindings (ast_Ptannot p v1) = ast_pat_bindings p`;
-   `ast_pats_bindings [] = []`;
-   `ast_pats_bindings (CONS p ps) = APPEND (ast_pats_bindings ps)
-    (ast_pat_bindings p)`];;
+  `(ast_pat_bindings ast_Pany = []) /\
+   (ast_pat_bindings (ast_Pvar n) = [n]) /\
+   (ast_pat_bindings (ast_Plit l) = []) /\
+   (ast_pat_bindings (ast_Pcon v0 ps) = ast_pats_bindings ps) /\
+   (ast_pat_bindings (ast_Pref p) = ast_pat_bindings p) /\
+   (ast_pat_bindings (ast_Pas p i) = APPEND (ast_pat_bindings p) [i]) /\
+   (ast_pat_bindings (ast_Ptannot p v1) = ast_pat_bindings p) /\
+   (ast_pats_bindings [] = []) /\
+   (ast_pats_bindings (CONS p ps) = APPEND (ast_pats_bindings ps)
+    (ast_pat_bindings p))`;;
 
-let every_exp_def,every_exp_ind = define_shaped_rec
+let every_exp_def,every_exp_ind = define_shaped_rec_clauses
   "nested"
-  [`every_exp p (ast_Raise e) <=>
-                 p ((ast_Raise e:ast_exp)) /\ every_exp p e`;
-   `every_exp p (ast_Handle e pes) <=>
+  [`(every_exp p (ast_Raise e) <=>
+                 p ((ast_Raise e:ast_exp)) /\ every_exp p e) /\
+    (every_exp p (ast_Handle e pes) <=>
                  p ((ast_Handle e pes:ast_exp)) /\ every_exp p e /\ ALL
-                     (\(pat,e). every_exp p e) pes`;
-   `every_exp p (ast_Lit l) <=>
-                 p (ast_Lit l)`;
-   `every_exp p (ast_Con cn es) <=>
-                 p ((ast_Con cn es:ast_exp)) /\ ALL (every_exp p) es`;
-   `every_exp p (ast_Var v) <=>
-                 p ((ast_Var v:ast_exp))`;
-   `every_exp p (ast_Fun x e) <=>
-                 p ((ast_Fun x e:ast_exp)) /\ every_exp p e`;
-   `every_exp p (ast_App op es) <=>
-                 p ((ast_App op es:ast_exp)) /\ ALL (every_exp p) es`;
-   `every_exp p (ast_Log lop e1 e2) <=>
+                     (\(pat,e). every_exp p e) pes) /\
+    (every_exp p (ast_Lit l) <=>
+                 p (ast_Lit l)) /\
+    (every_exp p (ast_Con cn es) <=>
+                 p ((ast_Con cn es:ast_exp)) /\ ALL (every_exp p) es) /\
+    (every_exp p (ast_Var v) <=>
+                 p ((ast_Var v:ast_exp))) /\
+    (every_exp p (ast_Fun x e) <=>
+                 p ((ast_Fun x e:ast_exp)) /\ every_exp p e) /\
+    (every_exp p (ast_App op es) <=>
+                 p ((ast_App op es:ast_exp)) /\ ALL (every_exp p) es) /\
+    (every_exp p (ast_Log lop e1 e2) <=>
                  p (ast_Log lop e1 e2) /\ every_exp p e1 /\ every_exp p
-                     e2`;
-   `every_exp p (ast_If e1 e2 e3) <=>
+                     e2) /\
+    (every_exp p (ast_If e1 e2 e3) <=>
                  p ((ast_If e1 e2 e3:ast_exp)) /\ every_exp p e1
-                     /\ every_exp p e2 /\ every_exp p e3`;
-   `every_exp p (ast_Mat e pes) <=>
+                     /\ every_exp p e2 /\ every_exp p e3) /\
+    (every_exp p (ast_Mat e pes) <=>
                  p ((ast_Mat e pes:ast_exp)) /\ every_exp p e /\ ALL
-                     (\(pat,e). every_exp p e) pes`;
-   `every_exp p (ast_Let x e1 e2) <=>
-                 p ((ast_Let x e1 e2:ast_exp)) /\ every_exp p e1
-                     /\ every_exp p e2`;
-   `every_exp p (ast_Tannot e a) <=>
-                 p (ast_Tannot e a) /\ every_exp p e`;
-   `every_exp p (ast_Lannot e a) <=>
-                 p (ast_Lannot e a) /\ every_exp p e`;
-   `every_exp p (ast_Letrec funs e) <=>
+                     (\(pat,e). every_exp p e) pes) /\
+    (every_exp p (ast_Tannot e a) <=>
+                 p (ast_Tannot e a) /\ every_exp p e) /\
+    (every_exp p (ast_Letrec funs e) <=>
                  p ((ast_Letrec funs e:ast_exp)) /\ every_exp p e
-                     /\ ALL (\(n,v,e). every_exp p e) funs`];;
+                     /\ ALL (\(n,v,e). every_exp p e) funs)`;
+   `(every_exp p (ast_Let x e1 e2) <=>
+                 p ((ast_Let x e1 e2:ast_exp)) /\ every_exp p e1
+                     /\ every_exp p e2) /\
+    (every_exp p (ast_Lannot e a) <=>
+                 p (ast_Lannot e a) /\ every_exp p e)`];;
 add_simp every_exp_def;;
 
 let seqs_def,seqs_ind = define_rec
-  [`ast_Seqs [] = ast_Con NONE []`;
-   `ast_Seqs (CONS x xs) = ast_Let NONE x (ast_Seqs xs)`];;
+  `(ast_Seqs [] = ast_Con NONE []) /\
+   (ast_Seqs (CONS x xs) = ast_Let NONE x (ast_Seqs xs))`;;
 
 let apps_def,apps_ind = define_rec
-  [`Apps f [] = f`;
-   `Apps f (CONS x xs) = Apps (ast_App ast_Opapp [f; x]) xs`];;
+  `(Apps f [] = f) /\
+   (Apps f (CONS x xs) = Apps (ast_App ast_Opapp [f; x]) xs)`;;
 
 let funs_def,funs_ind = define_rec
-  [`Funs [] e = e`;
-   `Funs (CONS x xs) e = ast_Fun x (Funs xs e)`];;
+  `(Funs [] e = e) /\
+   (Funs (CONS x xs) e = ast_Fun x (Funs xs e))`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

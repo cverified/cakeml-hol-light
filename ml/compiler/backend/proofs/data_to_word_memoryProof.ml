@@ -721,11 +721,11 @@ let MEM_IMP_v_size = prove
    the termination *)
 let get_refs_def,get_refs_ind = define_shaped_rec
   "nested"
-  [`get_refs (dataSem_Number _) = []`;
-   `get_refs (dataSem_Word64 _) = []`;
-   `get_refs (dataSem_CodePtr _) = []`;
-   `get_refs (dataSem_RefPtr _ p) = [p]`;
-   `get_refs (dataSem_Block _3 _4 vs) = FLAT (MAP get_refs vs)`];;
+  `(get_refs (dataSem_Number _) = []) /\
+   (get_refs (dataSem_Word64 _) = []) /\
+   (get_refs (dataSem_CodePtr _) = []) /\
+   (get_refs (dataSem_RefPtr _ p) = [p]) /\
+   (get_refs (dataSem_Block _ _ vs) = FLAT (MAP get_refs vs))`;;
 
 let ref_edge_def = new_definition
   `ref_edge refs x res =
@@ -733,8 +733,8 @@ let ref_edge_def = new_definition
        (get_refs (dataSem_Block 0 ARB ys))
      | SOME (bvlSem_Thunk _ v) -> MEM res (get_refs (dataSem_Block 0 ARB
        [v]))
-     | SOME (bvlSem_MutBlock _5 _6 l c r) -> MEM res (get_refs
-       (dataSem_Block 0 ARB (APPEND (APPEND l [c]) r)))
+     | SOME (bvlSem_MutBlock _ _ l c r) -> MEM res (get_refs (dataSem_Block
+       0 ARB (APPEND (APPEND l [c]) r)))
      | _ -> F`;;
 
 let reachable_refs_def = new_definition
@@ -791,10 +791,10 @@ let bc_ref_inv_def = new_definition
    the termination *)
 let v_all_ts_def,v_all_ts_ind = define_wf
   `MEASURE dataSem_v_size`
-  [`v_all_ts x1 =
+  `v_all_ts x1 =
    match x1 with
      dataSem_Block ts _ xs -> CONS ts (FLAT (MAP v_all_ts xs))
-   | _ -> []`];;
+   | _ -> []`;;
 
 let find_ref_def = new_definition
   `find_ref x1 x =
@@ -818,12 +818,12 @@ let be_ok_def = new_definition
    what the port found for it *)
 let v_all_vs_def,v_all_vs_ind = define_wf
   `MEASURE (\x0. dataSem_v_size1 x0)`
-  [`v_all_vs x1 =
+  `v_all_vs x1 =
    match x1 with
      CONS (dataSem_Block ts tag l) xs -> APPEND (CONS (dataSem_Block ts tag
        l) (v_all_vs l)) (v_all_vs xs)
    | CONS x xs -> CONS x (v_all_vs xs)
-   | [] -> []`];;
+   | [] -> []`;;
 
 let all_vs_def = new_definition
   `all_vs refs stack' =
@@ -891,9 +891,9 @@ let gen_start_ok_def = new_definition
          p < gen_start \/ refs_start <= p))`;;
 
 let gen_state_ok_def = define_general
-  [`gen_state_ok a refs_start heap (GenState _ starts) <=>
+  `gen_state_ok a refs_start heap (GenState _ starts) <=>
      ALL (\s. s <= a) starts /\
-     ALL (gen_start_ok heap refs_start) starts`];;
+     ALL (gen_start_ok heap refs_start) starts`;;
 
 let gc_kind_inv_def = new_definition
   `gc_kind_inv c a sp sp1 (gens:gen_state) heap <=>
@@ -4323,7 +4323,7 @@ let data_to_word_memoryProof_gen_gc_thm = prove
        MATCH_ACCEPT_TAC (CONJUNCT1 (SPEC_ALL RTC_RULES))])));;
 
 let has_gen_def = define_general
-  [`has_gen (GenState _ xs) <=> ~(xs = [])`];;
+  `has_gen (GenState _ xs) <=> ~(xs = [])`;;
 
 let heap_split_heap_split = prove
  (`!heap n1 n2 h1 h2 h3 h4.
@@ -5154,13 +5154,13 @@ let _ = size_thms "heap_element";;
    what the port found for it *)
 let data_pointers_def,data_pointers_ind = define_wf
   `MEASURE (\x0. list_size (heap_element_size (\x. 0) (\x. 0)) x0)`
-  [`data_pointers x1 =
+  `data_pointers x1 =
      match x1 with
        [] -> []
      | CONS (DataElement x y z) rest -> CONS 0 (MAP (\n. n + el_length
        (DataElement x y z)) (data_pointers rest))
      | CONS x rest ->
-        MAP (\n. n + el_length x) (data_pointers rest)`];;
+        MAP (\n. n + el_length x) (data_pointers rest)`;;
 
 let lookup_len_def = new_definition
   `lookup_len heap p =
@@ -5561,12 +5561,12 @@ let gc_combined_thm = prove
 (* Write to unused heap space is fine, e.g. cons *)
 
 let heap_store_def,heap_store_ind = define_rec
-  [`heap_store a y [] = ([],F)`;
-   `heap_store a y (CONS x xs) =
+  `(heap_store a y [] = ([],F)) /\
+   (heap_store a y (CONS x xs) =
         if a = 0 then (APPEND y xs,(el_length x = heap_length y)) else if a
             < el_length x then (CONS x xs,F) else let (xs,c) = heap_store (a -
             el_length x) y xs in
-            (CONS x xs,c)`];;
+            (CONS x xs,c))`;;
 
 let isUnused_def = new_definition
   `isUnused x = (?k. x = Unused k)`;;
@@ -7041,14 +7041,14 @@ add_simp isDataElement_lemmas;;
 (* --- Allocating multiple cons-elements in one go --- *)
 
 let list_to_BlockReps_def,list_to_BlockReps_ind = define_rec
-  [`list_to_BlockReps conf t a [] = ARB`;
-   `list_to_BlockReps conf t a (CONS h l) =
+  `(list_to_BlockReps conf t a [] = ARB) /\
+   (list_to_BlockReps conf t a (CONS h l) =
       match l with
         [] -> [BlockRep cons_tag [h; t]]
       | _ -> CONS (BlockRep cons_tag
             [h; gc_shared_Pointer (a + 3) (wordLang_Word (ptr_bits conf
                 cons_tag 2))])
-              (list_to_BlockReps conf t (a + 3) l)`];;
+              (list_to_BlockReps conf t (a + 3) l))`;;
 
 let list_to_BlockReps_heap_length = prove
  (`!xs len.
@@ -7365,9 +7365,9 @@ let v_inv_LIST_REL = prove
    what the port found for it *)
 let bind_each_def,bind_each_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
-  [`bind_each tf ts (k:num) i 0 = tf`;
-   `bind_each tf ts (k:num) i (SUC n) = bind_each tf (ts + 1) (k + i) i n
-    |+ (ts,k)`];;
+  `(bind_each tf ts (k:num) i 0 = tf) /\
+   (bind_each tf ts (k:num) i (SUC n) = bind_each tf (ts + 1) (k + i) i n
+    |+ (ts,k))`;;
 
 let bind_each_MONO = prove
  (`!n t1 t2 tf k i.
@@ -20163,9 +20163,8 @@ let deref_thm = prove
   (roots,heap,be,a,sp,sp1,gens) limit ts ==>
       (?r roots2.
         (roots = CONS r roots2) /\ ptr IN (domain refs) /\
-        (match THE (sptree_lookup ptr refs) with bvlSem_ByteArray _15 _16
-          -> T
-        | bvlSem_MutBlock _17 _18 _19 _20 _21 -> T
+        (match THE (sptree_lookup ptr refs) with bvlSem_ByteArray _ _ -> T
+        | bvlSem_MutBlock _ _ _ _ _ -> T
         | bvlSem_ValueArray vs ->
         (!n. n < LENGTH vs ==>
             (?y. (heap_el r n heap = (y,T)) /\
@@ -22378,38 +22377,38 @@ let data_to_word_memoryProof_b2w_def = prove
   (REWRITE_TAC[b2w_def; b2n_def]));;
 
 let thunk_tag_to_bits_def = define_cases
-  [`thunk_tag_to_bits Evaluated = (n2w 1)`;
-   `thunk_tag_to_bits NotEvaluated = (n2w 0)`];;
+  `(thunk_tag_to_bits Evaluated = (n2w 1)) /\
+   (thunk_tag_to_bits NotEvaluated = (n2w 0))`;;
 
 let word_payload_def = define_cases
-  [`word_payload ys l (BlockTag n) qs conf =
+  `(word_payload ys l (BlockTag n) qs conf =
          (
           // header: ...00[11] here i in ...i[11] must be 0 for the GC
           make_header conf (n2w n << 2) (LENGTH ys),
           MAP (word_addr conf) ys,(
           (qs = []) /\ (LENGTH ys = l) /\
           encode_header conf (n * 4) (LENGTH ys) =
-            SOME (make_header conf (n2w n << 2) (LENGTH ys):'a word)))`;
-   `word_payload ys l RefTag qs conf =
+            SOME (make_header conf (n2w n << 2) (LENGTH ys):'a word)))) /\
+   (word_payload ys l RefTag qs conf =
          (
           // header: ...010[11] here i in ...i[11] must be 0 for the GC
           make_header conf (n2w 2) (LENGTH ys),
           MAP (word_addr conf) ys,(
-          (qs = []) /\ (LENGTH ys = l)))`;
-   `word_payload ys l (ThunkTag e) qs conf =
+          (qs = []) /\ (LENGTH ys = l)))) /\
+   (word_payload ys l (ThunkTag e) qs conf =
          (
           // header: ...e110[11] here i in ...i[11] must be 0 for the GC
           make_header conf (thunk_tag_to_bits e << 3 || (n2w 6)) (LENGTH
               ys),
           MAP (word_addr conf) ys,(
-          (qs = []) /\ (LENGTH ys = 1) /\ l = 1))`;
-   `word_payload ys l Word64Tag qs conf =
+          (qs = []) /\ (LENGTH ys = 1) /\ l = 1))) /\
+   (word_payload ys l Word64Tag qs conf =
          (
           // header: ...011[11] here i in ...i[11] must be 1 for the GC
           make_header conf (n2w 3) l,
           qs,((ys = []) /\ (LENGTH qs = l) /\
-              IS_SOME ((encode_header conf 3 l):('a word) option)))`;
-   `word_payload ys l (NumTag b) qs conf =
+              IS_SOME ((encode_header conf 3 l):('a word) option)))) /\
+   (word_payload ys l (NumTag b) qs conf =
          (
           // header: ...111[11] or ...011[11]
           // here i in ...i[11] must be 1 for GC
@@ -22417,8 +22416,8 @@ let word_payload_def = define_cases
           qs,((ys = []) /\ (LENGTH qs = l) /\
               IS_SOME ((encode_header conf (w2n (b2w b << 2 || ((n2w 3):'a
                   word)))
-                          (LENGTH qs)):('a word) option)))`;
-   `word_payload ys l (BytesTag fl n) qs conf =
+                          (LENGTH qs)):('a word) option)))) /\
+   (word_payload ys l (BytesTag fl n) qs conf =
          (((
            // header: ...101[11] or ...001[11] (compare-by-contents)
            // here i in ...i[11] must be 1 for the GC
@@ -22426,7 +22425,7 @@ let word_payload_def = define_cases
           qs,((ys = []) /\ (LENGTH qs = l) /\
               (let k = (if dimindex (:'a) = 32 then 2 else 3) in
               n + 2 EXP k < 2 EXP (data_to_word_config_len_size conf +
-                  k))))`];;
+                  k)))))`;;
 
 let word_payload_T_IMP = prove
  (`word_payload l5 n5 tag r conf = ((h:'a word),ts,T) /\
@@ -22482,16 +22481,16 @@ let word_payload_T_IMP = prove
    CONV_TAC NUM_REDUCE_CONV THEN ASM_REWRITE_TAC[]));;
 
 let word_el_def = define_general
-  [`word_el (a:'a word) (Unused l) conf = word_list_exists (a:'a word) (l +
-    1)`;
-   `word_el (a:'a word) (ForwardPointer n d l) conf =
+  `(word_el (a:'a word) (Unused l) conf = word_list_exists (a:'a word) (l +
+    1)) /\
+   (word_el (a:'a word) (ForwardPointer n d l) conf =
          set_sep_one (a,wordLang_Word (n2w n << 2)) *
-         word_list_exists (a + bytes_in_word) l`;
-   `word_el (a:'a word) (DataElement ys l (tag,qs)) conf =
+         word_list_exists (a + bytes_in_word) l) /\
+   (word_el (a:'a word) (DataElement ys l (tag,qs)) conf =
          let (h,ts,c) = word_payload ys l tag qs conf in
            misc_word_list a (CONS (wordLang_Word h) ts) *
            cond (LENGTH ts < 2 EXP (dimindex (:'a) - 4) /\
-                 decode_length conf h = n2w (LENGTH ts) /\ c)`];;
+                 decode_length conf h = n2w (LENGTH ts) /\ c))`;;
 
 let _ = size_thms "data_to_word_memoryProof_tag";;
 let _ = size_thms "word_loc";;
@@ -22501,11 +22500,11 @@ let word_heap_def,word_heap_ind = define_wf
   `MEASURE (\(x0,x1,x2).      list_size      (heap_element_size
   (pair_size data_to_word_memoryProof_tag_size       (list_size (word_loc_size
   (\x. 0))))      (word_loc_size (\x. 0)))      x1)`
-  [`word_heap a ([]:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
-    list)heap_element) list) conf = emp`;
-   `word_heap a (CONS x xs) conf =
+  `(word_heap a ([]:(('a word_loc,data_to_word_memoryProof_tag#('a
+    word_loc) list)heap_element) list) conf = emp) /\
+   (word_heap a (CONS x xs) conf =
          word_el a x conf *
-         word_heap (a + bytes_in_word * n2w (el_length x)) xs conf`];;
+         word_heap (a + bytes_in_word * n2w (el_length x)) xs conf)`;;
 
 let gen_starts_in_store_def = new_definition
   `gen_starts_in_store c x2 x3 =
@@ -22516,7 +22515,7 @@ let gen_starts_in_store_def = new_definition
         LENGTH gen_starts = LENGTH gen_sizes /\
         (!x xs. gen_starts = CONS x xs ==>
                w = (bytes_in_word * n2w x)))
-   | (_22,_23) -> F`;;
+   | (_,_) -> F`;;
 
 let gen_starts_in_store_IMP = prove
  (`gen_starts_in_store c gens x ==> (?w. x = SOME (wordLang_Word w))`,
@@ -26538,14 +26537,14 @@ let memory_rel_UpdateCons = prove
 let data_to_word_memoryProof_store_list_def,
     data_to_word_memoryProof_store_list_ind =
   define_rec
-  [`data_to_word_memoryProof_store_list a [] (m:'a word->'a word_loc) dm =
-    SOME m`;
-   `data_to_word_memoryProof_store_list a (CONS w ws) (m:'a word->'a word_loc)
+  `(data_to_word_memoryProof_store_list a [] (m:'a word->'a word_loc) dm =
+    SOME m) /\
+   (data_to_word_memoryProof_store_list a (CONS w ws) (m:'a word->'a word_loc)
     dm =
          if a IN dm then
            data_to_word_memoryProof_store_list (a + bytes_in_word) ws ((a
                =+ w) m) dm
-         else NONE`];;
+         else NONE)`;;
 
 let store_list_append = prove
  (`!xs ys a dm m m1.
@@ -34834,9 +34833,9 @@ let write_bytes_change_extra = prove
    what the port found for it *)
 let last_bytes_def,last_bytes_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
-  [`last_bytes k b a w be' =
+  `last_bytes k b a w be' =
      if k = 0 then w else set_byte a b (last_bytes (k - 1) b (a + (n2w
-       1)) w be') be'`];;
+       1)) w be') be'`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:10399-10403: a theorem that HOL4
    states as the value of an ML expression: last_bytes_simp *)
@@ -36929,18 +36928,18 @@ let memory_rel_El_any = prove
    what the port found for it *)
 let copy_list_def,copy_list_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x2)`
-  [`copy_list c' st k (a,x,(b:'a word),(m:'a word->'a word_loc),dm) =
+  `copy_list c' st k (a,x,(b:'a word),(m:'a word->'a word_loc),dm) =
      let c = (b IN dm) in
      let m = (b =+ x) m in
      let b = b + bytes_in_word in
        if k = 0 then (if c then SOME (b,m) else NONE) else match a with
-         wordLang_Loc _24 _25 -> NONE | wordLang_Word a ->
+         wordLang_Loc _ _ -> NONE | wordLang_Word a ->
          (match get_real_addr c' st a with NONE -> NONE | SOME a ->
            let c = (c /\ a + (n2w 2) * bytes_in_word IN dm /\ a +
              bytes_in_word IN dm) in
            let x = m (a + bytes_in_word) in
            let a = m (a + (n2w 2) * bytes_in_word) in
-             if c then copy_list c' st (k - 1) (a,x,b,m,dm) else NONE)`];;
+             if c then copy_list c' st (k - 1) (a,x,b,m,dm) else NONE)`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:10872-10965: a theorem that HOL4
    states as the value of an ML expression: copy_list_thm *)
@@ -41395,7 +41394,7 @@ let memory_rel_RefPtr_gen_IMP = prove
      |
        // a MutBlock carries a BlockTag header, for which the bit pattern below
        // does not hold; this theorem has no users, so the case is left trivial
-       bvlSem_MutBlock _31 _32 _33 _34 _35 -> T
+       bvlSem_MutBlock _ _ _ _ _ -> T
      | _ ->
        (?w a x.
          v = wordLang_Word w /\ FAPPLY w 0 /\
@@ -43619,7 +43618,7 @@ let word_cmp_res_def = new_definition
 let word_cmp_loop_def,word_cmp_loop_ind = define_wf_tac
   `MEASURE (w2n o FST)`
   TERM_TAC
-  [`word_cmp_loop (l:'a word) (a1:'a word) a2 dm (m:'a word->'a word_loc) =
+  `word_cmp_loop (l:'a word) (a1:'a word) a2 dm (m:'a word->'a word_loc) =
      if l = (n2w 0) then SOME (n2w 1) else if a1 IN dm /\ a2 IN dm then
          match (m a1,m a2) with (wordLang_Word w1,wordLang_Word w2) ->
              if w1 = w2 then
@@ -43627,7 +43626,7 @@ let word_cmp_loop_def,word_cmp_loop_ind = define_wf_tac
                  (a2 - bytes_in_word) dm m
              else if w1 <+ w2 then SOME (n2w 0) else SOME ((n2w 2):'a word)
          | _ -> NONE
-       else NONE`];;
+       else NONE`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13106: ML code, not ported *)
 
@@ -44568,15 +44567,15 @@ let _ = admissible_extra :=
 let v_same_type_def,v_same_type_ind = define_wf_tac
   `MEASURE (dataSem_v_size o FST)`
   TERM_TAC
-  [`v_same_type x1 x2 =
+  `v_same_type x1 x2 =
      match (x1,x2) with
-       (dataSem_Number _38,dataSem_Number _39) -> T
-     | (dataSem_Word64 _40,dataSem_Word64 _41) -> T
-     | (dataSem_Block _42 t1 l1,dataSem_Block _43 t2 l2) -> (t1 = t2
-       /\ LENGTH l1 = LENGTH l2 ==> ALL2 v_same_type l1 l2)
-     | (dataSem_CodePtr _44,dataSem_CodePtr _45) -> T
-     | (dataSem_RefPtr _46 _47,dataSem_RefPtr _48 _49) -> T
-     | (_50,_51) -> F`];;
+       (dataSem_Number _,dataSem_Number _) -> T
+     | (dataSem_Word64 _,dataSem_Word64 _) -> T
+     | (dataSem_Block _ t1 l1,dataSem_Block _ t2 l2) -> (t1 = t2 /\ LENGTH
+       l1 = LENGTH l2 ==> ALL2 v_same_type l1 l2)
+     | (dataSem_CodePtr _,dataSem_CodePtr _) -> T
+     | (dataSem_RefPtr _ _,dataSem_RefPtr _ _) -> T
+     | (_,_) -> F`;;
 add_simp v_same_type_def;;
 
 (* the names of record fields that this statement uses for
@@ -44804,11 +44803,11 @@ let v1_size_map = prove
    proves the termination *)
 let v_depth_def,v_depth_ind = define_wf
   `MEASURE dataSem_v_size`
-  [`v_depth x1 =
+  `v_depth x1 =
      match x1 with
-       dataSem_Block _54 _55 ls -> (if NULL ls then 0 else 1) + MAX_LIST
-         (MAP v_depth ls)
-     | _ -> 0`];;
+       dataSem_Block _ _ ls -> (if NULL ls then 0 else 1) + MAX_LIST (MAP
+         v_depth ls)
+     | _ -> 0`;;
 add_simp v_depth_def;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13427: ML code, not ported *)
@@ -44880,13 +44879,13 @@ let v_inv_Block_tag_limit = prove
    what the port found for it *)
 let elements_list_def,elements_list_ind = define_wf
   `MEASURE (\x0. dataSem_v_size1 x0)`
-  [`elements_list [] = T`;
-   `elements_list [v] = T`;
-   `elements_list (CONS v (CONS w vs)) =
+  `(elements_list [] = T) /\
+   (elements_list [v] = T) /\
+   (elements_list (CONS v (CONS w vs)) =
        (?ts t ls1 ls2.
          w = dataSem_Block ts t (APPEND (APPEND ls1 [v]) ls2) /\
          // EVERY (λe. ∀p. e ≠ RefPtr F p) ls1 ∧
-         elements_list (CONS w vs))`];;
+         elements_list (CONS w vs)))`;;
 add_simp elements_list_def;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13453: ML code, not ported *)
@@ -46071,9 +46070,9 @@ let memory_rel_depth_size_limit = prove
 let vb_eq_size_def,vb_eq_size_ind = define_wf
   `MEASURE (\x.      match x with        INL (refs,v1,v2) -> dataSem_v_size v1
        | INR (refs,l1,l2) -> list_size dataSem_v_size l1)`
-  [`vb_eq_size refs x2 x3 =
+  `(vb_eq_size refs x2 x3 =
       match (x2,x3) with
-        (dataSem_Block _58 t1 l1,dataSem_Block _59 t2 l2) ->
+        (dataSem_Block _ t1 l1,dataSem_Block _ t2 l2) ->
          if dataSem_isClos t1 l1 \/ dataSem_isClos t2 l2 then if
              dataSem_isClos t1 l1 /\ dataSem_isClos t2 l2 then SOME ((1:num),T)
              else NONE
@@ -46091,8 +46090,8 @@ let vb_eq_size_def,vb_eq_size_ind = define_wf
           else NONE
       | (dataSem_Number n1,dataSem_Number n2) -> SOME (1,(n1 = n2))
       | (dataSem_Word64 w1,dataSem_Word64 w2) -> SOME (1,(w1 = w2))
-      | (_60,_61) -> NONE`;
-   `vb_eq_size_list refs x2 x3 =
+      | (_,_) -> NONE) /\
+   (vb_eq_size_list refs x2 x3 =
       match (x2,x3) with
         ([],[]) -> SOME (0,T)
       | ([],_) -> SOME (0,F)
@@ -46102,7 +46101,7 @@ let vb_eq_size_def,vb_eq_size_ind = define_wf
          | SOME (n,F) -> SOME (n + 1,F)
          | SOME (n,T) -> (
            match vb_eq_size_list refs vs1 vs2 with NONE -> NONE
-           | SOME (m,b) -> SOME (m + n + 1,b)))`];;
+           | SOME (m,b) -> SOME (m + n + 1,b))))`;;
 
 (* the port's own: what the two theorems about vb_eq_size go by.
    The definition is the one match that HOL4 means (its clauses
@@ -47434,11 +47433,11 @@ let word_header_def = new_definition
            -> SOME (a1,x1) | _ -> NONE`;;
 
 let data_to_word_memoryProof_fix_clock_def = define_cases
-  [`data_to_word_memoryProof_fix_clock ck (l:num) NONE = NONE`;
-   `data_to_word_memoryProof_fix_clock ck (l:num) (SOME (y,(l1:num),(ck1:num)))
+  `(data_to_word_memoryProof_fix_clock ck (l:num) NONE = NONE) /\
+   (data_to_word_memoryProof_fix_clock ck (l:num) (SOME (y,(l1:num),(ck1:num)))
     =
     let new_ck = (if ck < ck1 then ck else ck1) in let
-        new_l = (if l < l1 then l else l1) in SOME (y,new_l,new_ck)`];;
+        new_l = (if l < l1 then l else l1) in SOME (y,new_l,new_ck))`;;
 
 (* fix_clock_IMP[local] *)
 let data_to_word_memoryProof_fix_clock_IMP = prove
@@ -47488,11 +47487,10 @@ let word_eq_def,word_eq_ind = define_wf_tac
   `MEASURE (\x.      match x with        INL (c,st,dm,m,l1,ck1,w1,w2) -> l1
     | INR (c,st,dm,m,l1,ck1,w,a1,a2) -> l1)`
   TERM_TAC
-  [`(word_eq c st dm m l ck w1 (w2:'a word) =
-      (if w1 = w2 then SOME (((n2w 1):'a word),l,ck) else if ~(word_bit 0
-        w1 /\ word_bit 0 w2) then SOME ((n2w 0),l,ck) else match (word_header
-        c st w1 dm m,word_header c st w2 dm m) with (SOME (a1,h1),SOME
-        (a2,h2)) ->
+  `(word_eq c st dm m l ck w1 (w2:'a word) =
+      (if w1 = w2 then SOME (((n2w 1):'a word),l,ck) else if ~(word_bit 0 w1
+        /\ word_bit 0 w2) then SOME ((n2w 0),l,ck) else match (word_header c st
+        w1 dm m,word_header c st w2 dm m) with (SOME (a1,h1),SOME (a2,h2)) ->
             if (h1 && (n2w 0b1100)) = (n2w 0) then
               // is Block
               if word_is_clos c h1 then
@@ -47519,16 +47517,15 @@ let word_eq_def,word_eq_ind = define_wf_tac
               | SOME res -> SOME (res,l - 1 - w2n (decode_length c h1),ck))
         | _ -> NONE)) /\
    (word_eq_list c st dm m l ck w a1 a2 =
-      (if w = ((n2w 0):'a word) then SOME ((n2w 1),l,ck) else if ~(a1 IN
-        dm) \/ ~(a2 IN dm) \/ (l = 0) \/ (ck = 0) then NONE else match (m a1,m
-        a2) with (wordLang_Word w1,wordLang_Word w2) ->
-         (match data_to_word_memoryProof_fix_clock (ck - 1) (l - 1)
-           (word_eq c st dm m (l - 1) (ck - 1) w1 w2) with NONE -> NONE
-          | SOME (x,l,ck') -> if ~(x = (n2w 1)) then SOME (x,l,ck) else if
-            l = 0 then NONE else word_eq_list c st dm m (l - 1) ck (w - (n2w
-            1))
+      (if w = ((n2w 0):'a word) then SOME ((n2w 1),l,ck) else if ~(a1 IN dm)
+        \/ ~(a2 IN dm) \/ (l = 0) \/ (ck = 0) then NONE else match (m a1,m a2)
+        with (wordLang_Word w1,wordLang_Word w2) ->
+         (match data_to_word_memoryProof_fix_clock (ck - 1) (l - 1) (word_eq
+           c st dm m (l - 1) (ck - 1) w1 w2) with NONE -> NONE
+          | SOME (x,l,ck') -> if ~(x = (n2w 1)) then SOME (x,l,ck) else if l
+            = 0 then NONE else word_eq_list c st dm m (l - 1) ck (w - (n2w 1))
                               (a1 + bytes_in_word) (a2 + bytes_in_word))
-        | _ -> NONE))`];;
+        | _ -> NONE))`;;
 
 (* the budget of the attempt, as it was *)
 let _ = cake_cheat_budget := 8;;
@@ -47970,14 +47967,14 @@ let memory_rel_isClos = prove
    ASM_SIMP_TAC[n2w_11] THEN ARITH_TAC));;
 
 let eq_assum_def,eq_assum_ind = define_rec
-  [`eq_assum a m dm [] = T`;
-   `eq_assum a m dm (CONS v vs) <=>
-         a IN dm /\ eq_assum (a + bytes_in_word) m dm vs`];;
+  `(eq_assum a m dm [] = T) /\
+   (eq_assum a m dm (CONS v vs) <=>
+         a IN dm /\ eq_assum (a + bytes_in_word) m dm vs)`;;
 
 let eq_explode_def,eq_explode_ind = define_rec
-  [`eq_explode a m dm [] = []`;
-   `eq_explode a m dm (CONS v vs) = CONS (v,m a) (eq_explode (a +
-    bytes_in_word) m dm vs)`];;
+  `(eq_explode a m dm [] = []) /\
+   (eq_explode a m dm (CONS v vs) = CONS (v,m a) (eq_explode (a +
+    bytes_in_word) m dm vs))`;;
 
 (* [local] *)
 let eq_explode_APPEND = prove
@@ -51162,11 +51159,11 @@ let word_eq_thm = prove
    STRIP_TAC THEN ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[]));;
 
 let word_mem_eq_def,word_mem_eq_ind = define_rec
-  [`word_mem_eq a [] dm m = SOME T`;
-   `word_mem_eq a (CONS x xs) dm m =
+  `(word_mem_eq a [] dm m = SOME T) /\
+   (word_mem_eq a (CONS x xs) dm m =
          if ~(a IN dm) then NONE else if ~(isWord (m a)) then NONE
              else if ~(m a = wordLang_Word x) then SOME F else word_mem_eq
-             (a + bytes_in_word) xs dm m`];;
+             (a + bytes_in_word) xs dm m)`;;
 
 (* [local] *)
 let word_mem_eq_thm = prove
@@ -52951,25 +52948,23 @@ let memory_rel_ByteArray_IMP_store = prove
 let word_copy_fwd_def,word_copy_fwd_ind = define_wf_tac
   `MEASURE (w2n o FST o SND)`
   TERM_TAC
-  [`word_copy_fwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
+  `word_copy_fwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
      if dimword (:'a) <= 4 then NONE else if n <+ (n2w 4) then
        if n <+ (n2w 2) then
-         if n = (n2w 0) then SOME m else OPTION_BIND (mem_load_byte_aux m
-           dm be' a)
+         if n = (n2w 0) then SOME m else OPTION_BIND (mem_load_byte_aux m dm
+           be' a)
                        (\w. mem_store_byte_aux m dm be' b w)
        else OPTION_BIND (mem_load_byte_aux m dm be' a) (\w1.
          OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 1))) (\w2.
            if n = (n2w 2) then
              OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 1)) w2)
-               (\m. SOME m))
-           else OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 2)))
-             (\w3.
+             OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 1)) w2) (\m.
+               SOME m))
+           else OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 2))) (\w3.
              OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 1)) w2)
-               (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 2)) w3)
-               (\m. SOME m))))))
+             OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 1)) w2) (\m.
+             OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 2)) w3) (\m.
+               SOME m))))))
      else OPTION_BIND (mem_load_byte_aux m dm be' a) (\w1.
        OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 1))) (\w2.
        OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 2))) (\w3.
@@ -52979,19 +52974,19 @@ let word_copy_fwd_def,word_copy_fwd_ind = define_wf_tac
        OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 2)) w3) (\m.
        OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 3)) w4) (\m.
          word_copy_fwd be' (n - (n2w 4)) (a + (n2w 4)) (b + (n2w 4)) m
-           dm))))))))`];;
+           dm))))))))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let list_copy_fwd_def,list_copy_fwd_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
-  [`list_copy_fwd n xp xs yp ys =
+  `list_copy_fwd n xp xs yp ys =
      if xp + n <= LENGTH xs /\ yp + n <= LENGTH ys then
        if n = 0 then SOME ys else if n = 1 then SOME (LUPDATE (EL xp xs) yp
          ys) else if n = 2 then SOME ((LUPDATE (EL (xp + 1) xs) (yp + 1) o
-                            LUPDATE (EL (xp + 0) xs) (yp + 0)) ys) else if
-                              n = 3 then SOME ((LUPDATE (EL (xp + 2) xs) (yp +
-                              2) o
+                            LUPDATE (EL (xp + 0) xs) (yp + 0)) ys) else if n
+                              = 3 then SOME ((LUPDATE (EL (xp + 2) xs) (yp + 2)
+                              o
                             LUPDATE (EL (xp + 1) xs) (yp + 1) o
                             LUPDATE (EL (xp + 0) xs) (yp + 0)) ys) else
                               list_copy_fwd (n - 4) (xp + 4) xs (yp + 4)
@@ -52999,19 +52994,19 @@ let list_copy_fwd_def,list_copy_fwd_ind = define_wf
                             LUPDATE (EL (xp + 2) xs) (yp + 2) o
                             LUPDATE (EL (xp + 1) xs) (yp + 1) o
                             LUPDATE (EL (xp + 0) xs) (yp + 0)) ys)
-     else NONE`];;
+     else NONE`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let list_copy_fwd_alias_def,list_copy_fwd_alias_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x0)`
-  [`list_copy_fwd_alias n xp yp ys =
+  `list_copy_fwd_alias n xp yp ys =
      if xp + n <= LENGTH ys /\ yp + n <= LENGTH ys then
        if n = 0 then SOME ys else if n = 1 then SOME (LUPDATE (EL xp ys) yp
          ys) else if n = 2 then SOME ((LUPDATE (EL (xp + 1) ys) (yp + 1) o
-                            LUPDATE (EL (xp + 0) ys) (yp + 0)) ys) else if
-                              n = 3 then SOME ((LUPDATE (EL (xp + 2) ys) (yp +
-                              2) o
+                            LUPDATE (EL (xp + 0) ys) (yp + 0)) ys) else if n
+                              = 3 then SOME ((LUPDATE (EL (xp + 2) ys) (yp + 2)
+                              o
                             LUPDATE (EL (xp + 1) ys) (yp + 1) o
                             LUPDATE (EL (xp + 0) ys) (yp + 0)) ys) else
                               list_copy_fwd_alias (n - 4) (xp + 4) (yp + 4)
@@ -53019,7 +53014,7 @@ let list_copy_fwd_alias_def,list_copy_fwd_alias_ind = define_wf
                             LUPDATE (EL (xp + 2) ys) (yp + 2) o
                             LUPDATE (EL (xp + 1) ys) (yp + 1) o
                             LUPDATE (EL (xp + 0) ys) (yp + 0)) ys)
-     else NONE`];;
+     else NONE`;;
 
 (* the port's own: what the four lemmas about the copy of a part of
    a byte array share.  The lemmas are three facts about the word
@@ -53460,25 +53455,23 @@ let word_copy_fwd_alias_thm = prove
 let word_copy_bwd_def,word_copy_bwd_ind = define_wf_tac
   `MEASURE (w2n o FST o SND)`
   TERM_TAC
-  [`word_copy_bwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
+  `word_copy_bwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
      if dimword (:'a) <= 4 then NONE else if n <+ (n2w 4) then
        if n <+ (n2w 2) then
-         if n = (n2w 0) then SOME m else OPTION_BIND (mem_load_byte_aux m
-           dm be' a)
+         if n = (n2w 0) then SOME m else OPTION_BIND (mem_load_byte_aux m dm
+           be' a)
                        (\w. mem_store_byte_aux m dm be' b w)
        else OPTION_BIND (mem_load_byte_aux m dm be' a) (\w1.
          OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 1))) (\w2.
            if n = (n2w 2) then
              OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 1)) w2)
-               (\m. SOME m))
-           else OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 2)))
-             (\w3.
+             OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 1)) w2) (\m.
+               SOME m))
+           else OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 2))) (\w3.
              OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 1)) w2)
-               (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 2)) w3)
-               (\m. SOME m))))))
+             OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 1)) w2) (\m.
+             OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 2)) w3) (\m.
+               SOME m))))))
      else OPTION_BIND (mem_load_byte_aux m dm be' a) (\w1.
        OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 1))) (\w2.
        OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 2))) (\w3.
@@ -53488,7 +53481,7 @@ let word_copy_bwd_def,word_copy_bwd_ind = define_wf_tac
        OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 2)) w3) (\m.
        OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 3)) w4) (\m.
          word_copy_bwd be' (n - (n2w 4)) (a - (n2w 4)) (b - (n2w 4)) m
-           dm))))))))`];;
+           dm))))))))`;;
 
 let minus_def = new_definition
   `minus m n = m - (n:num)`;;
@@ -53497,7 +53490,7 @@ let minus_def = new_definition
    what the port found for it *)
 let list_copy_bwd_def,list_copy_bwd_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
-  [`list_copy_bwd (n:num) xp xs yp ys =
+  `list_copy_bwd (n:num) xp xs yp ys =
      if n <= xp + 1 /\ xp < LENGTH xs /\ n <= yp + 1 /\ yp < LENGTH ys then
        if n = 0 then SOME ys else if n = 1 then SOME (LUPDATE (EL xp xs) yp
          ys) else if n = 2 then SOME ((LUPDATE (EL (minus xp 1) xs) (minus yp
@@ -53507,13 +53500,13 @@ let list_copy_bwd_def,list_copy_bwd_ind = define_wf
                               2) xs) (minus yp 2) o
                             LUPDATE (EL (minus xp 1) xs) (minus yp 1) o
                             LUPDATE (EL (minus xp 0) xs) (minus yp 0)) ys)
-                              else list_copy_bwd (n - 4) (minus xp 4) xs
-                              (minus yp 4)
+                              else list_copy_bwd (n - 4) (minus xp 4) xs (minus
+                              yp 4)
                           ((LUPDATE (EL (minus xp 3) xs) (minus yp 3) o
                             LUPDATE (EL (minus xp 2) xs) (minus yp 2) o
                             LUPDATE (EL (minus xp 1) xs) (minus yp 1) o
                             LUPDATE (EL (minus xp 0) xs) (minus yp 0)) ys)
-     else NONE`];;
+     else NONE`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:15598: ML code, not ported *)
 
@@ -53521,7 +53514,7 @@ let list_copy_bwd_def,list_copy_bwd_ind = define_wf
    what the port found for it *)
 let list_copy_bwd_alias_def,list_copy_bwd_alias_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x0)`
-  [`list_copy_bwd_alias n xp yp ys =
+  `list_copy_bwd_alias n xp yp ys =
      if n <= xp + 1 /\ xp < LENGTH ys /\ n <= yp + 1 /\ yp < LENGTH ys then
        if n = 0 then SOME ys else if n = 1 then SOME (LUPDATE (EL xp ys) yp
          ys) else if n = 2 then SOME ((LUPDATE (EL (minus xp 1) ys) (minus yp
@@ -53537,7 +53530,7 @@ let list_copy_bwd_alias_def,list_copy_bwd_alias_ind = define_wf
                             LUPDATE (EL (minus xp 2) ys) (minus yp 2) o
                             LUPDATE (EL (minus xp 1) ys) (minus yp 1) o
                             LUPDATE (EL (minus xp 0) ys) (minus yp 0)) ys)
-     else NONE`];;
+     else NONE`;;
 (* HOL4 data_to_word_memoryProofScript.sml:15617-15618: ML code, not ported *)
 
 (* the names of record fields that this statement uses for
@@ -55626,12 +55619,12 @@ let get_lowerbits_ptrbits = prove
      ASM_ARITH_TAC]));;
 
 let append_writes_def,append_writes_ind = define_rec
-  [`append_writes c ptr (hdr:'a word) [] l = ARB`;
-   `append_writes c ptr (hdr:'a word) (CONS x xs) l = CONS (wordLang_Word hdr)
+  `(append_writes c ptr (hdr:'a word) [] l = ARB) /\
+   (append_writes c ptr (hdr:'a word) (CONS x xs) l = CONS (wordLang_Word hdr)
     (CONS x
         (if xs = [] then [l] else let ptr = ptr + ((n2w 3) << shift_length
             c) in CONS (wordLang_Word ptr)
-            (append_writes c ptr hdr xs l)))`];;
+            (append_writes c ptr hdr xs l))))`;;
 
 let append_writes_LENGTH = prove
  (`!xs ptr. ~(xs = []) ==> LENGTH (append_writes c ptr hdr xs l) = 3 * LENGTH
@@ -58916,16 +58909,16 @@ let memory_rel_append = prove
 let data_to_word_memoryProof_walk_def,data_to_word_memoryProof_walk_ind =
   define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
-  [`data_to_word_memoryProof_walk conf heap ptr n =
+  `data_to_word_memoryProof_walk conf heap ptr n =
      if n = 0 then []
      else if n = 1 then [ptr] else match some (\p.
          ?x y.
          heap_lookup ptr heap = SOME (BlockRep cons_tag [x; y]) /\
-         y = gc_shared_Pointer p (wordLang_Word (ptr_bits conf cons_tag
-           2))) with
+         y = gc_shared_Pointer p (wordLang_Word (ptr_bits conf cons_tag 2)))
+           with
          NONE -> []
        | SOME p -> CONS ptr (data_to_word_memoryProof_walk conf heap p
-         (n - 1))`];;
+         (n - 1))`;;
 
 let v_inv_v_to_list_lemma = prove
  (`v_inv c v refs (y,f,tf,heap) /\
@@ -60228,11 +60221,11 @@ let v_to_list_same_LENGTH = prove
    what the port found for it *)
 let block_drop_def,block_drop_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x0 + dataSem_v_size x1)`
-  [`block_drop x1 v =
+  `block_drop x1 v =
    match (x1,v) with
      (0,v) -> SOME v
    | (SUC n,dataSem_Block ts tag [h; vl]) -> block_drop n vl
-   | (_62,_63) -> NONE`];;
+   | (_,_) -> NONE`;;
 
 let v_to_list_DROP = prove
  (`!vs ptr ps k v ts.
@@ -60817,30 +60810,30 @@ let memory_rel_list_limit = prove
      MATCH_ACCEPT_TAC(MATCH_MP mul_le (CONJ le dw))))));;
 
 let build_part_words_def = define_cases
-  [`build_part_words c m (closLang_Int i) (offset:'a word) =
+  `(build_part_words c m (closLang_Int i) (offset:'a word) =
       (if small_int (:'a) i then SOME (wordLang_Word (Smallnum i),[])
        else let (sign,ws) = i2mw i in
               match encode_header c (w2n (b2w sign << 2 || ((n2w 3):'a
                   word))) (LENGTH ws) with NONE -> NONE
               | SOME hd -> SOME (make_ptr c offset ((n2w 0):'a word)
                   (LENGTH ws),
-                              MAP wordLang_Word (CONS hd ws)))`;
-   `build_part_words c m (closLang_Con t ns) (offset:'a word) =
+                              MAP wordLang_Word (CONS hd ws)))) /\
+   (build_part_words c m (closLang_Con t ns) (offset:'a word) =
       (if NULL ns then
          if t < dimword (:'a) DIV 16 then SOME (wordLang_Word (n2w (16 * t
              + 2)),[]) else NONE
        else match encode_header c (4 * t) (LENGTH ns) with NONE -> NONE
          | SOME hd -> SOME (make_cons_ptr c offset t (LENGTH ns),CONS
-             (wordLang_Word hd) (MAP m ns)))`;
-   `build_part_words c m (closLang_W64 w) (offset:'a word) =
+             (wordLang_Word hd) (MAP m ns)))) /\
+   (build_part_words c m (closLang_W64 w) (offset:'a word) =
       (let ws = (if dimindex (:'a) < 64 then [((63 >< 32) w); ((31 >< 0)
           w)]
                  else [((63 >< 0) w):'a word]) in
          match encode_header c 3 (LENGTH ws) with NONE -> NONE
          | SOME hd -> SOME (make_ptr c offset ((n2w 0):'a word) (LENGTH
              ws),
-                            MAP wordLang_Word (CONS hd ws)))`;
-   `build_part_words c m (closLang_Str s) (offset:'a word) =
+                            MAP wordLang_Word (CONS hd ws)))) /\
+   (build_part_words c m (closLang_Str s) (offset:'a word) =
       (let bytes = MAP (n2w o ORD) (explode s) in
        let n = LENGTH bytes in
        let hd = make_byte_header c T n in
@@ -60850,16 +60843,16 @@ let build_part_words_def = define_cases
             byte_len (:'a) n < 2 EXP data_to_word_config_len_size c then
                 SOME (make_ptr c offset ((n2w 0):'a word) (byte_len (:'a)
                 n),MAP wordLang_Word (CONS hd ws))
-         else NONE)`];;
+         else NONE))`;;
 
 let build_words_def,build_words_ind = define_rec
-  [`build_words c m i [] (off:'a word) = SOME (m (i - (1:num)),[])`;
-   `build_words c m i (CONS x parts') (off:'a word) =
+  `(build_words c m i [] (off:'a word) = SOME (m (i - (1:num)),[])) /\
+   (build_words c m i (CONS x parts') (off:'a word) =
       match build_part_words c m x off with NONE -> NONE
       | SOME (w,xs) ->
         (match build_words c ((i =+ w) m) (i + 1) parts' (off +
             bytes_in_word * n2w (LENGTH xs)) with NONE -> NONE
-        | SOME (r,ys) -> SOME (r,APPEND xs ys))`];;
+        | SOME (r,ys) -> SOME (r,APPEND xs ys)))`;;
 
 let do_part_SOME_IMP_SOME = prove
  (`dataSem_do_part map0 h refs (SOME ts) = (x,s1,ts1) ==> (?ts'. ts1 = SOME
@@ -63068,10 +63061,9 @@ let _ = cake_term_lemmas :=
 let word_xor_bytes_def,word_xor_bytes_ind = define_wf_tac
   `MEASURE (\(a1,a2,len,dm,m). w2n len)`
   TERM_TAC
-  [`word_xor_bytes (a1:'a word) (a2:'a word) (len:'a word) dm m =
+  `word_xor_bytes (a1:'a word) (a2:'a word) (len:'a word) dm m =
      if len <+ (n2w 2) \/ ~(good_dimindex (:'a)) then
-       if len = (n2w 0) then SOME m else let (w1a,c1) = read_word dm m a1
-         in
+       if len = (n2w 0) then SOME m else let (w1a,c1) = read_word dm m a1 in
          let (w2a,c2) = read_word dm m a2 in
          let a = word_xor w1a w2a in
          let m = (a2 =+ wordLang_Word (a:'a word)) m in
@@ -63088,7 +63080,7 @@ let word_xor_bytes_def,word_xor_bytes_ind = define_wf_tac
            word_xor_bytes (a1 + (n2w 2) * bytes_in_word) (a2 + (n2w 2) *
              bytes_in_word)
              (len - (n2w 2)) dm m
-         else NONE`];;
+         else NONE`;;
 
 let make_zeros_def = new_definition
   `make_zeros (vals:word8 list) =
@@ -63096,13 +63088,13 @@ let make_zeros_def = new_definition
        word)`;;
 
 let xor_words_def,xor_words_ind = define_guess
-  [`xor_words xs ys =
+  `xor_words xs ys =
    match (xs,ys) with
      ([],ys) -> SOME ys
    | (xs,[]) -> NONE
    | (CONS x xs,CONS y ys) ->
      (match xor_words xs ys with NONE -> NONE
-     | SOME rest -> SOME (CONS (word_xor (x:'a word) y) rest))`];;
+     | SOME rest -> SOME (CONS (word_xor (x:'a word) y) rest))`;;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -65013,17 +65005,16 @@ let memory_rel_xor_bytes = prove
    what the port found for it *)
 let word_str_cmp_loop_def,word_str_cmp_loop_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4,x5,x6,x7,x8). (\n. n) x8)`
-  [`word_str_cmp_loop (a1:'a word) (a2:'a word) r1 r2 (len:'a word) dm m be' ck
+  `word_str_cmp_loop (a1:'a word) (a2:'a word) r1 r2 (len:'a word) dm m be' ck
   =
      if ck = 0 then NONE else if len = bytes_in_word then
        SOME (r1,r2)
-     else match mem_load_byte_aux m dm be' a1 with NONE -> NONE | SOME b1
-       ->
+     else match mem_load_byte_aux m dm be' a1 with NONE -> NONE | SOME b1 ->
        (match mem_load_byte_aux m dm be' a2 with NONE -> NONE | SOME b2 ->
          if b1 = b2 then
-           word_str_cmp_loop (a1 + (n2w 1)) (a2 + (n2w 1)) r1 r2 (len -
-             (n2w 1)) dm m be' (ck - (1:num))
-         else SOME (w2w b1,w2w b2))`];;
+           word_str_cmp_loop (a1 + (n2w 1)) (a2 + (n2w 1)) r1 r2 (len - (n2w
+             1)) dm m be' (ck - (1:num))
+         else SOME (w2w b1,w2w b2))`;;
 
 let word_str_cmp_def = new_definition
   `word_str_cmp b (a1:'a word) (a2:'a word) dm m be' c =
@@ -65042,9 +65033,9 @@ let word_str_cmp_def = new_definition
        else NONE`;;
 
 let find_diff_def,find_diff_ind = define_guess
-  [`find_diff [] [] r1 r2 = (r1,r2)`;
-   `find_diff (CONS x xs) (CONS y ys) r1 r2 = if x = y then find_diff xs
-    ys r1 r2 else (w2w x,w2w y)`];;
+  `(find_diff [] [] r1 r2 = (r1,r2)) /\
+   (find_diff (CONS x xs) (CONS y ys) r1 r2 = if x = y then find_diff xs
+    ys r1 r2 else (w2w x,w2w y))`;;
 
 (* the port's own: what a loop over the bytes of a string needs.
    Four word equations say where the next byte is and what the

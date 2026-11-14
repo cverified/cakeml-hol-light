@@ -71,18 +71,18 @@ let lift_let_def = new_definition
    port lets its own machinery find one *)
 (* HOL4 source_letScript.sml:68-73: the tactic that proves the termination *)
 let lift_lets_def,lift_lets_ind = define_guess
-  [`lift_lets sofar d =
+  `lift_lets sofar d =
      match lift_let d with NONE ->
          (match sofar with [] -> NONE
          | _ -> SOME (REVERSE sofar,d))
-     | SOME (d1,d2) -> lift_lets (CONS d1 sofar) d2`];;
+     | SOME (d1,d2) -> lift_lets (CONS d1 sofar) d2`;;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 let source_let_compile_decs_def,source_let_compile_decs_ind = define_wf
   `MEASURE (list_size dec_size)`
-  [`source_let_compile_decs [] = []`;
-   `source_let_compile_decs (CONS d ds) =
+  `(source_let_compile_decs [] = []) /\
+   (source_let_compile_decs (CONS d ds) =
         match lift_lets [] d with SOME (pre,d) -> CONS (Dlocal pre [d])
             (source_let_compile_decs ds)
         | NONE ->
@@ -90,7 +90,7 @@ let source_let_compile_decs_def,source_let_compile_decs_ind = define_wf
                 (source_let_compile_decs ds1)) (source_let_compile_decs ds)
             | Dlocal ds1 ds2 -> CONS (Dlocal (source_let_compile_decs ds1)
                 (source_let_compile_decs ds2)) (source_let_compile_decs ds)
-            | _ -> CONS d (source_let_compile_decs ds))`];;
+            | _ -> CONS d (source_let_compile_decs ds)))`;;
 
 (*
 val test3 = EVAL “

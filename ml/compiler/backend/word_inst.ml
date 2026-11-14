@@ -34,11 +34,11 @@ let _ = do_list hide_constant ["pmatch"];;
 
 (*Pull all nested arguments with the same op up*)
 let pull_ops_def,pull_ops_ind = define_rec
-  [`pull_ops op [] acc = acc`;
-   `pull_ops op (CONS x xs) acc =
+  `(pull_ops op [] acc = acc) /\
+   (pull_ops op (CONS x xs) acc =
         match x with (wordLang_Op op' ls) -> if op = op' then pull_ops op
             xs (APPEND ls acc) else pull_ops op xs (CONS x acc)
-        | _ -> pull_ops op xs (CONS x acc)`];;
+        | _ -> pull_ops op xs (CONS x acc))`;;
 
 let word_inst_is_const_def = new_definition
   `word_inst_is_const x1 =
@@ -116,7 +116,7 @@ let optimize_consts_def = new_definition
 (* HOL4 word_instScript.sml:122-129: the tactic that proves the termination *)
 let pull_exp_def,pull_exp_ind = define_wf
   `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
-  [`pull_exp exp =
+  `pull_exp exp =
      match exp with
        wordLang_Op asm_Sub ls ->
        let new_ls = MAP pull_exp ls in
@@ -132,7 +132,7 @@ let pull_exp_def,pull_exp_ind = define_wf
      | wordLang_Load exp -> wordLang_Load (pull_exp exp)
      | wordLang_Shift shift' exp nexp -> wordLang_Shift shift' (pull_exp
        exp) (pull_exp nexp)
-     | exp -> exp`];;
+     | exp -> exp`;;
 
 let pull_exp_pmatch = prove
  (`!(exp:'a wordLang_exp).
@@ -169,7 +169,7 @@ c d
 (* HOL4 word_instScript.sml:171-177: the tactic that proves the termination *)
 let flatten_exp_def,flatten_exp_ind = define_wf
   `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
-  [`flatten_exp exp =
+  `flatten_exp exp =
      match exp with
        wordLang_Op asm_Sub exps -> wordLang_Op asm_Sub (MAP flatten_exp
          exps)
@@ -180,7 +180,7 @@ let flatten_exp_def,flatten_exp_ind = define_wf
      | wordLang_Load exp -> wordLang_Load (flatten_exp exp)
      | wordLang_Shift shift' exp nexp -> wordLang_Shift shift' (flatten_exp
        exp) (flatten_exp nexp)
-     | exp -> exp`];;
+     | exp -> exp`;;
 
 
 (* HOL4 word_instScript.sml:180-197: code that the source has in a comment *)
@@ -215,7 +215,7 @@ let is_Lookup_CurrHeap_pmatch = prove
 (* HOL4 word_instScript.sml:294-300: the tactic that proves the termination *)
 let inst_select_exp_def,inst_select_exp_ind = define_wf
   `MEASURE (wordLang_exp_size ARB o SND o SND o SND)`
-  [`inst_select_exp c tar temp x4 =
+  `inst_select_exp c tar temp x4 =
      match (c,tar,temp,x4) with
        ((c:'a asm_config),(tar:num),(temp:num),wordLang_Load exp) ->
        (match exp with wordLang_Op asm_Add [exp'; wordLang_Const w] ->
@@ -252,8 +252,7 @@ let inst_select_exp_def,inst_select_exp_ind = define_wf
              (Imm w))))
          else
           // t = r + const --> t = r - const
-          if op = asm_Add /\ asm_config_valid_imm c (INL asm_Sub) (--w)
-            then
+          if op = asm_Add /\ asm_config_valid_imm c (INL asm_Sub) (--w) then
            wordLang_Seq p1 (wordLang_Inst (asm_Arith (asm_Binop asm_Sub tar
              temp (Imm (--w)))))
          else
@@ -272,8 +271,8 @@ let inst_select_exp_def,inst_select_exp_ind = define_wf
                (let prog = inst_select_exp c temp temp exp in
                  if n = 0 then
                    wordLang_Seq prog (wordLang_Move 0 [tar,temp])
-                 else wordLang_Seq prog (wordLang_Inst (asm_Arith
-                   (asm_Shift sh tar temp (Imm (n2w n))))))
+                 else wordLang_Seq prog (wordLang_Inst (asm_Arith (asm_Shift
+                   sh tar temp (Imm (n2w n))))))
              else wordLang_Inst (asm_Const tar (n2w 0))
        | _ ->
          let p = inst_select_exp c temp temp exp in
@@ -281,7 +280,7 @@ let inst_select_exp_def,inst_select_exp_ind = define_wf
          wordLang_Seq p (wordLang_Seq p1 (wordLang_Inst (asm_Arith
            (asm_Shift sh tar temp (Reg (temp + 1)))))))
      // Make it total
-     | (_1,_2,_3,_4) -> wordLang_Skip`];;
+     | (_,_,_,_) -> wordLang_Skip`;;
 
 let inst_select_exp_pmatch = prove
  (`!c tar temp exp.
@@ -373,13 +372,13 @@ let _ = size_thms "wordLang_prog";;
    what the port found for it *)
 let inst_select_def,inst_select_ind = define_wf
   `MEASURE (\(x0,x1,x2). wordLang_prog_size (\x. 0) x2)`
-  [`inst_select c temp prog =
+  `inst_select c temp prog =
      match prog with
        wordLang_Assign v exp ->
        (inst_select_exp c v temp o flatten_exp o pull_exp) exp
      | wordLang_Set store exp ->
-       let prog = (inst_select_exp c temp temp o flatten_exp o pull_exp)
-         exp in
+       let prog = (inst_select_exp c temp temp o flatten_exp o pull_exp) exp
+         in
        wordLang_Seq prog (wordLang_Set store (wordLang_Var temp))
      | wordLang_Store exp var ->
        let exp = (flatten_exp o pull_exp) exp in
@@ -411,17 +410,15 @@ let inst_select_def,inst_select_ind = define_wf
              ((op = asm_Load8 \/ op = asm_Store8) /\ (\c. asm_offset_ok 0
                (asm_config_byte_offset c)) c w) then
            let prog = inst_select_exp c temp temp exp' in
-             wordLang_Seq prog (wordLang_ShareInst op v (wordLang_Op
-               asm_Add [wordLang_Var temp; wordLang_Const w]))
+             wordLang_Seq prog (wordLang_ShareInst op v (wordLang_Op asm_Add
+               [wordLang_Var temp; wordLang_Const w]))
          else let prog = inst_select_exp c temp temp exp in
-             wordLang_Seq prog (wordLang_ShareInst op v (wordLang_Var
-               temp))
+             wordLang_Seq prog (wordLang_ShareInst op v (wordLang_Var temp))
        | _ ->
          let prog = inst_select_exp c temp temp exp in
          wordLang_Seq prog (wordLang_ShareInst op v (wordLang_Var temp))
      | wordLang_If cmp r1 ri c1 c2 ->
-       wordLang_If cmp r1 ri (inst_select c temp c1) (inst_select c temp
-         c2)
+       wordLang_If cmp r1 ri (inst_select c temp c1) (inst_select c temp c2)
      | wordLang_Call ret dest args handler ->
        let retsel =
          (match ret with
@@ -435,7 +432,7 @@ let inst_select_def,inst_select_ind = define_wf
        wordLang_Call retsel dest args handlersel
      | wordLang_Loop names body exit_names ->
        wordLang_Loop names (inst_select c temp body) exit_names
-     | prog -> prog`];;
+     | prog -> prog`;;
 
 let inst_select_pmatch = prove
  (`!c temp prog.
@@ -508,7 +505,7 @@ let inst_select_pmatch = prove
    what the port found for it *)
 let three_to_two_reg_def,three_to_two_reg_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
-  [`three_to_two_reg prog =
+  `three_to_two_reg prog =
      match prog with
        wordLang_Inst (asm_Arith (asm_Binop bop r1 r2 ri)) ->
        wordLang_Seq (wordLang_Move 0 [r1,r2]) (wordLang_Inst (asm_Arith
@@ -547,7 +544,7 @@ let three_to_two_reg_def,three_to_two_reg_ind = define_wf
        wordLang_Call retsel dest args handlersel
      | wordLang_Loop names body exit_names ->
        wordLang_Loop names (three_to_two_reg body) exit_names
-     | prog -> prog`];;
+     | prog -> prog`;;
 
 let three_to_two_reg_pmatch = prove
  (`!prog.

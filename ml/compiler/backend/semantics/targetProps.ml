@@ -67,13 +67,13 @@ let interference_app_INDUCT,interference_app_RECURSION = define_datatype
    | CcApp ('a word) ('a word) ('state) ('state)";;
 
 let is_ffi_app_def = define_cases
-  [`is_ffi_app (FfiApp index new_bytes ms_pre ms_post) = T`;
-   `is_ffi_app (CcApp a1 a2 ms_pre ms_post) = F`];;
+  `(is_ffi_app (FfiApp index new_bytes ms_pre ms_post) = T) /\
+   (is_ffi_app (CcApp a1 a2 ms_pre ms_post) = F)`;;
 add_simp is_ffi_app_def;;
 
 let app_post_def = define_cases
-  [`app_post (FfiApp index new_bytes ms_pre ms_post) = ms_post`;
-   `app_post (CcApp a1 a2 ms_pre ms_post) = ms_post`];;
+  `(app_post (FfiApp index new_bytes ms_pre ms_post) = ms_post) /\
+   (app_post (CcApp a1 a2 ms_pre ms_post) = ms_post)`;;
 add_simp app_post_def;;
 
 (* clocked clone of evaluate that stops at the first interference
@@ -83,7 +83,7 @@ add_simp app_post_def;;
    what the port found for it *)
 let find_next_interference_def,find_next_interference_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x2)`
-  [`find_next_interference (mc:('b,'a,'c)machine_config) (ffi:'ffi ffi_state) k
+  `find_next_interference (mc:('b,'a,'c)machine_config) (ffi:'ffi ffi_state) k
   (ms:'a) =
      if k = 0 then NONE
      else if (target_get_pc (machine_config_target mc) ms) IN
@@ -94,8 +94,8 @@ let find_next_interference_def,find_next_interference_ind = define_wf
              (target_get_byte (machine_config_target mc) ms)
                (machine_config_prog_addresses mc) then
            let ms1 = target_next (machine_config_target mc) ms in
-           let (ms2,new_oracle) = apply_oracle
-             (machine_config_next_interfer mc) ms1 in
+           let (ms2,new_oracle) = apply_oracle (machine_config_next_interfer
+             mc) ms1 in
            let mc = machine_config_next_interfer_fupd (K new_oracle) mc in
              if ALL (target_state_ok (machine_config_target mc)) [ms; ms1;
                ms2] /\
@@ -121,8 +121,7 @@ let find_next_interference_def,find_next_interference_ind = define_wf
              (machine_config_ptr_reg mc))
                        (target_get_reg (machine_config_target mc) ms
                          (machine_config_len_reg mc)) ms
-                         ms1,machine_config_ccache_interfer_fupd (K
-                         new_oracle)
+                         ms1,machine_config_ccache_interfer_fupd (K new_oracle)
                  mc,ffi)
        else match find_index (target_get_pc (machine_config_target mc) ms)
          (machine_config_ffi_entry_pcs mc) 0 with NONE -> NONE
@@ -134,20 +133,19 @@ let find_next_interference_def,find_next_interference_ind = define_wf
                    | SOME (nb,a,reg,pc') ->
                        (match op with MappedRead ->
                               (match a with Addr r off ->
-                              let ad = target_get_reg
-                                (machine_config_target mc) ms r + off in
+                              let ad = target_get_reg (machine_config_target
+                                mc) ms r + off in
                               (if (if nb = (n2w 0) then (w2n ad MOD
                                 (dimindex (:'b) DIV 8)) = 0 else T) /\
                               (ad IN machine_config_shared_addresses mc) /\
                               is_valid_mapped_read (target_get_pc
                                 (machine_config_target mc) ms) nb a reg pc'
                                 (machine_config_target
-                              mc) ms (machine_config_prog_addresses mc)
-                                then
+                              mc) ms (machine_config_prog_addresses mc) then
                               (match call_FFI ffi (EL ffi_index
                                 (machine_config_ffi_names mc)) [nb]
-                              (word_to_bytes ad F) with FFI_final outcome
-                                -> NONE
+                              (word_to_bytes ad F) with FFI_final outcome ->
+                                NONE
                               | FFI_return new_ffi new_bytes ->
                               let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
@@ -168,8 +166,7 @@ let find_next_interference_def,find_next_interference_ind = define_wf
                               is_valid_mapped_write (target_get_pc
                                 (machine_config_target mc) ms) nb a reg pc'
                                 (machine_config_target
-                              mc) ms (machine_config_prog_addresses mc)
-                                then
+                              mc) ms (machine_config_prog_addresses mc) then
                               (match call_FFI ffi (EL ffi_index
                                 (machine_config_ffi_names mc)) [nb]
                               (
@@ -177,8 +174,8 @@ let find_next_interference_def,find_next_interference_ind = define_wf
                                 (machine_config_target mc) ms reg in
                               if nb = (n2w 0) then word_to_bytes w F
                               else word_to_bytes_aux (w2n nb) w F)
-                                (word_to_bytes ad F)) with FFI_final outcome
-                                -> NONE
+                                (word_to_bytes ad F)) with FFI_final outcome ->
+                                NONE
                               | FFI_return new_ffi new_bytes ->
                               let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
@@ -207,7 +204,7 @@ let find_next_interference_def,find_next_interference_ind = define_wf
                                 new_oracle)
                               mc,
                               new_ffi))
-                        | _ -> NONE)))`];;
+                        | _ -> NONE)))`;;
 
 (* the limit of find_next_interference over all clocks *)
 let next_interference_def = new_definition
@@ -219,23 +216,23 @@ let next_interference_def = new_definition
    what the port found for it *)
 let interference_app_seq_def,interference_app_seq_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
-  [`interference_app_seq mc ffi ms 0 = next_interference mc ffi ms`;
-   `interference_app_seq mc ffi ms (SUC n) =
+  `(interference_app_seq mc ffi ms 0 = next_interference mc ffi ms) /\
+   (interference_app_seq mc ffi ms (SUC n) =
          match next_interference mc ffi ms with NONE -> NONE
          | SOME (app,mc',ffi') -> interference_app_seq mc' ffi'
-             (app_post app) n`];;
+             (app_post app) n)`;;
 
 (* number of applications satisfying P among the first n applications *)
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let interference_count_def,interference_count_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x4)`
-  [`interference_count P mc ffi ms 0 = 0`;
-   `interference_count P mc ffi ms (SUC n) =
+  `(interference_count P mc ffi ms 0 = 0) /\
+   (interference_count P mc ffi ms (SUC n) =
          interference_count P mc ffi ms n +
          (match interference_app_seq mc ffi ms n with SOME (app,mc',ffi')
              -> if P app then 1 else 0
-         | NONE -> 0)`];;
+         | NONE -> 0))`;;
 
 (* position in the application sequence of the k-th application
    satisfying P *)

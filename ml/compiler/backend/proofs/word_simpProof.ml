@@ -100,8 +100,8 @@ let dest_Seq_Assign_Const_IMP = prove
 (* gc *)
 
 let is_gc_word_const_def = define_cases
-  [`is_gc_word_const (wordLang_Loc _3 _4) = T`;
-   `is_gc_word_const (wordLang_Word w) = is_gc_const w`];;
+  `(is_gc_word_const (wordLang_Loc _ _) = T) /\
+   (is_gc_word_const (wordLang_Word w) = is_gc_const w)`;;
 
 let gc_fun_const_ok_def = new_definition
   `gc_fun_const_ok (f:('a word_loc) list#('a word->'a word_loc)#('a
@@ -112,9 +112,9 @@ let gc_fun_const_ok_def = new_definition
 
 
 let sf_gc_consts_def = define_general
-  [`sf_gc_consts (StackFrame _5 l0 sv h) (StackFrame _6 l0' sw h') =
+  `sf_gc_consts (StackFrame _ l0 sv h) (StackFrame _ l0' sw h') =
    (ALL2 (\(ak,av) (bk,bv). (ak = bk) /\ (is_gc_word_const av ==> bv =
-     av)) sv sw /\ l0 = l0' /\ h = h')`];;
+     av)) sv sw /\ l0 = l0' /\ h = h')`;;
 
 (* HOL4 word_simpProofScript.sml:146-152: code that the source has in a
    comment *)
@@ -357,8 +357,8 @@ let evaluate_gc_fun_const_ok = prove
 
 let get_above_handler_def = new_definition
   `get_above_handler s = (match EL (LENGTH (wordSem_state_stack s) -
-  (wordSem_state_handler s + 1)) (wordSem_state_stack s) with StackFrame _7
-  _8 _9 (SOME (h,_10,_11)) -> h)`;;
+  (wordSem_state_handler s + 1)) (wordSem_state_stack s) with StackFrame _ _
+  _ (SOME (h,_,_)) -> h)`;;
 
 let enc_stack_dec_stack_is_gc_word_const = prove
  (`!s s' s'l.
@@ -464,11 +464,11 @@ let evaluate_sf_gc_consts = prove
        ALL2 sf_gc_consts (wordSem_state_stack s) (wordSem_state_stack s')
          /\ wordSem_state_handler
        s' = wordSem_state_handler s
-     | SOME (wordSem_Result _12 _13) ->
+     | SOME (wordSem_Result _ _) ->
        ALL2 sf_gc_consts (wordSem_state_stack s) (wordSem_state_stack s')
          /\ wordSem_state_handler
        s' = wordSem_state_handler s
-     | SOME (wordSem_Exception _14 _15) -> wordSem_state_handler
+     | SOME (wordSem_Exception _ _) -> wordSem_state_handler
        s < LENGTH (wordSem_state_stack s) ==>
        ALL2 sf_gc_consts (LASTN (wordSem_state_handler s)
          (wordSem_state_stack s)) (wordSem_state_stack s')

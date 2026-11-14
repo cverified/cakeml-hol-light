@@ -985,11 +985,11 @@ let forced_update_stack_color_lemma = prove
 
 (* TODO: this should be part of the standard library, but I couldn't find it *)
 let IS_SPARSE_SUBLIST_def,IS_SPARSE_SUBLIST_ind = define_guess
-  [`IS_SPARSE_SUBLIST [] l2 = T`;
-   `IS_SPARSE_SUBLIST (CONS x xs) [] = F`;
-   `IS_SPARSE_SUBLIST (CONS x xs) (CONS y ys) =
+  `(IS_SPARSE_SUBLIST [] l2 = T) /\
+   (IS_SPARSE_SUBLIST (CONS x xs) [] = F) /\
+   (IS_SPARSE_SUBLIST (CONS x xs) (CONS y ys) =
       ((x = y /\ IS_SPARSE_SUBLIST xs ys) \/ IS_SPARSE_SUBLIST (CONS x
-          xs) ys)`];;
+          xs) ys))`;;
 
 let FILTER_IS_SPARSE_SUBLIST = prove
  (`!l. IS_SPARSE_SUBLIST (FILTER P l) l`,

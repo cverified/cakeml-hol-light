@@ -30,7 +30,7 @@ let _ = size_thms "flatLang_exp";;
    what the port found for it *)
 let is_hidden_def,is_hidden_ind = define_wf
   `MEASURE (\x0. flatLang_exp_size x0)`
-  [`is_hidden x1 =
+  `is_hidden x1 =
      match x1 with
        flatLang_Raise t e -> is_hidden e
      // raise exception
@@ -59,19 +59,19 @@ let is_hidden_def,is_hidden_ind = define_wf
      // let-expression
      | flatLang_Letrec t funs e -> is_hidden e
      // local def of mutually recursive funs
-     | _ -> F`];;
+     | _ -> F`;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let total_pat_def,total_pat_ind = define_shaped_rec_cheat
   "maplist>measure"
-  [`total_pat flatLang_Pany = T`;
-   `total_pat (flatLang_Pvar _) = T`;
-   `total_pat (flatLang_Pcon NONE xs) = total_pat_list xs`;
-   `total_pat (flatLang_Pas p _) = total_pat p`;
-   `total_pat _ = F`;
-   `total_pat_list [] = T`;
-   `total_pat_list (CONS p ps) = (total_pat p /\ total_pat_list ps)`];;
+  `(total_pat flatLang_Pany = T) /\
+   (total_pat (flatLang_Pvar _) = T) /\
+   (total_pat (flatLang_Pcon NONE xs) = total_pat_list xs) /\
+   (total_pat (flatLang_Pas p _) = total_pat p) /\
+   (total_pat _ = F) /\
+   (total_pat_list [] = T) /\
+   (total_pat_list (CONS p ps) = (total_pat p /\ total_pat_list ps))`;;
 
 (* check if expression is pure in that it does not make any visible changes
     (other than writing to globals) *)
@@ -80,15 +80,15 @@ let total_pat_def,total_pat_ind = define_shaped_rec_cheat
 (* HOL4 flat_elimScript.sml:75-80: the tactic that proves the termination *)
 let flat_elim_is_pure_def,flat_elim_is_pure_ind = define_wf
   `MEASURE (\e. flatLang_exp_size e)`
-  [`flat_elim_is_pure x1 =
+  `flat_elim_is_pure x1 =
      match x1 with
        flatLang_Handle t e pes -> flat_elim_is_pure e
      | flatLang_Lit t l -> T
      | flatLang_Con t id_option es -> ALL flat_elim_is_pure es
      | flatLang_Var_local t str -> T
      | flatLang_Fun t name body -> T
-     | flatLang_App t (flatLang_GlobalVarInit g) es -> ALL
-       flat_elim_is_pure es
+     | flatLang_App t (flatLang_GlobalVarInit g) es -> ALL flat_elim_is_pure
+       es
      | flatLang_If t e1 e2 e3 -> (flat_elim_is_pure e1 /\ flat_elim_is_pure
        e2 /\ flat_elim_is_pure e3)
      | flatLang_Mat t e1 pes ->
@@ -97,31 +97,32 @@ let flat_elim_is_pure_def,flat_elim_is_pure_ind = define_wf
      | flatLang_Let t opt e1 e2 -> (flat_elim_is_pure e1
        /\ flat_elim_is_pure e2)
      | flatLang_Letrec t funs e -> flat_elim_is_pure e
-     | _ -> F`];;
+     | _ -> F`;;
 
 (* HOL4 flat_elimScript.sml:82: a theorem that HOL4 states as the value of
    an ML expression: is_pure_def1 *)
 
 let has_Eval_def,has_Eval_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`has_Eval (flatLang_App t op es) <=> op = flatLang_Src ast_Eval \/
-    has_Eval_list es`;
-   `has_Eval (flatLang_Mat _ e pes) <=> has_Eval e \/ has_Eval_pats pes`;
-   `has_Eval (flatLang_Letrec _ funs e) <=> has_Eval e \/ has_Eval_funs funs`;
-   `has_Eval (flatLang_Raise _ e) <=> has_Eval e`;
-   `has_Eval (flatLang_Handle _ e pes) <=> has_Eval e \/ has_Eval_pats pes`;
-   `has_Eval (flatLang_Con _3 _4 es) <=> has_Eval_list es`;
-   `has_Eval (flatLang_Fun _7 _8 e) <=> has_Eval e`;
-   `has_Eval (flatLang_If _ e1 e2 e3) <=> has_Eval e1 \/ has_Eval e2 \/
-    has_Eval e3`;
-   `has_Eval (flatLang_Let _11 _12 e1 e2) <=> has_Eval e1 \/ has_Eval e2`;
-   `has_Eval _ <=> F`;
-   `has_Eval_list [] <=> F`;
-   `has_Eval_list (CONS e es) <=> has_Eval e \/ has_Eval_list es`;
-   `has_Eval_pats [] <=> F`;
-   `has_Eval_pats (CONS (p,e) pes) <=> has_Eval e \/ has_Eval_pats pes`;
-   `has_Eval_funs [] <=> F`;
-   `has_Eval_funs (CONS (_13,_14,e) fs) <=> has_Eval e \/ has_Eval_funs fs`];;
+  `(has_Eval (flatLang_App t op es) <=> op = flatLang_Src ast_Eval \/
+    has_Eval_list es) /\
+   (has_Eval (flatLang_Mat _ e pes) <=> has_Eval e \/ has_Eval_pats pes) /\
+   (has_Eval (flatLang_Letrec _ funs e) <=> has_Eval e \/ has_Eval_funs
+    funs) /\
+   (has_Eval (flatLang_Raise _ e) <=> has_Eval e) /\
+   (has_Eval (flatLang_Handle _ e pes) <=> has_Eval e \/ has_Eval_pats pes) /\
+   (has_Eval (flatLang_Con _ _ es) <=> has_Eval_list es) /\
+   (has_Eval (flatLang_Fun _ _ e) <=> has_Eval e) /\
+   (has_Eval (flatLang_If _ e1 e2 e3) <=> has_Eval e1 \/ has_Eval e2 \/
+    has_Eval e3) /\
+   (has_Eval (flatLang_Let _ _ e1 e2) <=> has_Eval e1 \/ has_Eval e2) /\
+   (has_Eval _ <=> F) /\
+   (has_Eval_list [] <=> F) /\
+   (has_Eval_list (CONS e es) <=> has_Eval e \/ has_Eval_list es) /\
+   (has_Eval_pats [] <=> F) /\
+   (has_Eval_pats (CONS (p,e) pes) <=> has_Eval e \/ has_Eval_pats pes) /\
+   (has_Eval_funs [] <=> F) /\
+   (has_Eval_funs (CONS (_,_,e) fs) <=> has_Eval e \/ has_Eval_funs fs)`;;
 
 let dest_GlobalVarInit_def = new_definition
   `dest_GlobalVarInit x1 =
@@ -150,58 +151,58 @@ let exp_size_map_snd_snd = prove
 
 let find_loc_def,find_loc_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`find_loc ((flatLang_Raise _ er):flatLang_exp) = ((find_loc er):1 spt)`;
-   `find_loc (flatLang_Handle _ eh p_es) =
+  `(find_loc ((flatLang_Raise _ er):flatLang_exp) = ((find_loc er):1 spt)) /\
+   (find_loc (flatLang_Handle _ eh p_es) =
             ((sptree_union (find_loc eh) (find_locL (MAP SND p_es))):1
-                spt)`;
-   `find_loc (flatLang_Lit _17 _18) = (LN:1 spt)`;
-   `find_loc (flatLang_Con _21 _22 es) = ((find_locL es):1 spt)`;
-   `find_loc (flatLang_Var_local _23 _24) = ((LN):1 spt)`;
-   `find_loc (flatLang_Fun _27 _28 ef) = ((find_loc ef):1 spt)`;
-   `find_loc (flatLang_App _ op es) = (((match (dest_GlobalVarInit op) with
+                spt)) /\
+   (find_loc (flatLang_Lit _ _) = (LN:1 spt)) /\
+   (find_loc (flatLang_Con _ _ es) = ((find_locL es):1 spt)) /\
+   (find_loc (flatLang_Var_local _ _) = ((LN):1 spt)) /\
+   (find_loc (flatLang_Fun _ _ ef) = ((find_loc ef):1 spt)) /\
+   (find_loc (flatLang_App _ op es) = (((match (dest_GlobalVarInit op) with
     SOME n -> (sptree_insert n one (find_locL es))
-            | NONE -> find_locL es)):1 spt)`;
-   `find_loc (flatLang_If _ ei1 ei2 ei3) =
+            | NONE -> find_locL es)):1 spt)) /\
+   (find_loc (flatLang_If _ ei1 ei2 ei3) =
             ((sptree_union (find_loc ei1) (sptree_union (find_loc ei2)
-                (find_loc ei3))):1 spt)`;
-   `find_loc (flatLang_Mat _ em p_es) =
+                (find_loc ei3))):1 spt)) /\
+   (find_loc (flatLang_Mat _ em p_es) =
             ((sptree_union (find_loc em) (find_locL (MAP SND p_es))):1
-                spt)`;
-   `find_loc (flatLang_Let _31 _32 el1 el2) = ((sptree_union (find_loc el1)
-    (find_loc el2)):1 spt)`;
-   `find_loc (flatLang_Letrec _ vv_es elr1) =
-            ((sptree_union (find_locL (MAP (SND o SND) vv_es)) (find_loc
-                elr1)):1 spt)`;
-   `find_locL [] = LN`;
-   `find_locL (CONS e es) = sptree_union (find_loc e) (find_locL es)`];;
+                spt)) /\
+   (find_loc (flatLang_Let _ _ el1 el2) = ((sptree_union (find_loc el1)
+    (find_loc el2)):1 spt)) /\
+   (find_loc (flatLang_Letrec _ vv_es elr1) =
+            ((sptree_union (find_locL (MAP (SND o SND) vv_es))
+                (find_loc elr1)):1 spt)) /\
+   (find_locL [] = LN) /\
+   (find_locL (CONS e es) = sptree_union (find_loc e) (find_locL es))`;;
 
 let find_lookups_def,find_lookups_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`find_lookups (flatLang_Raise _ er) = find_lookups er`;
-   `find_lookups (flatLang_Handle _ eh p_es) =
+  `(find_lookups (flatLang_Raise _ er) = find_lookups er) /\
+   (find_lookups (flatLang_Handle _ eh p_es) =
             sptree_union (find_lookups eh) (find_lookupsL (MAP SND
-                p_es))`;
-   `find_lookups (flatLang_Lit _35 _36) = LN`;
-   `find_lookups (flatLang_Con _39 _40 es) = find_lookupsL es`;
-   `find_lookups (flatLang_Var_local _41 _42) = LN`;
-   `find_lookups (flatLang_Fun _45 _46 ef) = find_lookups ef`;
-   `find_lookups (flatLang_App _ op es) = (match (dest_GlobalVarLookup op) with
+                p_es))) /\
+   (find_lookups (flatLang_Lit _ _) = LN) /\
+   (find_lookups (flatLang_Con _ _ es) = find_lookupsL es) /\
+   (find_lookups (flatLang_Var_local _ _) = LN) /\
+   (find_lookups (flatLang_Fun _ _ ef) = find_lookups ef) /\
+   (find_lookups (flatLang_App _ op es) = (match (dest_GlobalVarLookup op) with
     SOME n -> (sptree_insert n one (find_lookupsL es))
-            | NONE -> find_lookupsL es)`;
-   `find_lookups (flatLang_If _ ei1 ei2 ei3) =
+            | NONE -> find_lookupsL es)) /\
+   (find_lookups (flatLang_If _ ei1 ei2 ei3) =
             sptree_union (find_lookups ei1)
-                (sptree_union (find_lookups ei2) (find_lookups ei3))`;
-   `find_lookups (flatLang_Mat _ em p_es) =
+                (sptree_union (find_lookups ei2) (find_lookups ei3))) /\
+   (find_lookups (flatLang_Mat _ em p_es) =
             sptree_union (find_lookups em) (find_lookupsL (MAP SND
-                p_es))`;
-   `find_lookups (flatLang_Let _49 _50 el1 el2) =
-            sptree_union (find_lookups el1) (find_lookups el2)`;
-   `find_lookups (flatLang_Letrec _ vv_es elr1) =
+                p_es))) /\
+   (find_lookups (flatLang_Let _ _ el1 el2) =
+            sptree_union (find_lookups el1) (find_lookups el2)) /\
+   (find_lookups (flatLang_Letrec _ vv_es elr1) =
             sptree_union (find_lookupsL (MAP (SND o SND) vv_es))
-                (find_lookups elr1)`;
-   `find_lookupsL [] = LN`;
-   `find_lookupsL (CONS e es) = sptree_union (find_lookups e)
-    (find_lookupsL es)`];;
+                (find_lookups elr1)) /\
+   (find_lookupsL [] = LN) /\
+   (find_lookupsL (CONS e es) = sptree_union (find_lookups e)
+    (find_lookupsL es))`;;
 
 let analyse_exp_def = new_definition
   `analyse_exp e = let locs = (find_loc e) in let lookups = (find_lookups e) in
@@ -216,9 +217,9 @@ let code_analysis_union_def = new_definition
        ((sptree_union r1 r2),(num_set_tree_union t1 t2))`;;
 
 let analyse_code_def,analyse_code_ind = define_rec
-  [`analyse_code [] = (LN,LN)`;
-   `analyse_code (CONS e cs) =
-        code_analysis_union (analyse_exp e) (analyse_code cs)`];;
+  `(analyse_code [] = (LN,LN)) /\
+   (analyse_code (CONS e cs) =
+        code_analysis_union (analyse_exp e) (analyse_code cs))`;;
 
 
 (**************************** REMOVAL FUNCTIONS *****************************)

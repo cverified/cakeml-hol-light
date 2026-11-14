@@ -54,11 +54,11 @@ let maxSmall_DEC_def1 = new_definition
 (* HOL4 mlintScript.sml:45-54: the tactic that proves the termination *)
 let num_to_chars_def,num_to_chars_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x0)`
-  [`num_to_chars i 0 k acc = num_to_chars (i DIV (10 EXP exp_for_dec_enc))
-          exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k) acc`;
-   `num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then CONS (toChar k) acc
+  `(num_to_chars i 0 k acc = num_to_chars (i DIV (10 EXP exp_for_dec_enc))
+          exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k) acc) /\
+   (num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then CONS (toChar k) acc
           else num_to_chars i j (k DIV 10) (CONS (toChar (k MOD 10))
-              acc))`];;
+              acc)))`;;
 
 (* [local] *)
 let add_lt_divisible_iff = prove
@@ -135,20 +135,20 @@ let fromChar_eq_unsafe = prove
    what the port found for it *)
 let fromChars_range_unsafe_def,fromChars_range_unsafe_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
-  [`fromChars_range_unsafe l 0 str = 0`;
-   `fromChars_range_unsafe l (SUC n) str =
+  `(fromChars_range_unsafe l 0 str = 0) /\
+   (fromChars_range_unsafe l (SUC n) str =
       fromChars_range_unsafe l n str * 10 + fromChar_unsafe (strsub
-          str (l + n))`];;
+          str (l + n)))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let fromChars_range_def,fromChars_range_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
-  [`fromChars_range l 0 str = SOME 0`;
-   `fromChars_range l (SUC n) str =
+  `(fromChars_range l 0 str = SOME 0) /\
+   (fromChars_range l (SUC n) str =
       let rest = OPTION_MAP ((*) 10) (fromChars_range l n str) and
           head = fromChar (strsub str (l + n)) in OPTION_MAP2 (+) rest
-              head`];;
+              head)`;;
 
 let fromChars_range_eq_unsafe = prove
  (`!str l r. ALL isDigit str /\ l + r <= LENGTH str ==>
@@ -161,7 +161,7 @@ let fromChars_range_eq_unsafe = prove
 (* HOL4 mlintScript.sml:188-190: the tactic that proves the termination *)
 let fromChars_unsafe_def,fromChars_unsafe_ind = define_wf
   `MEASURE FST`
-  [`fromChars_unsafe n str =
+  `fromChars_unsafe n str =
    match n with
      0 -> 0
    // Shouldn't happend
@@ -169,8 +169,8 @@ let fromChars_unsafe_def,fromChars_unsafe_ind = define_wf
      if n <= padLen_DEC then fromChars_range_unsafe 0 n str
      else let n' = n - padLen_DEC in let
               front = fromChars_unsafe n' str * maxSmall_DEC in let
-              back = fromChars_range_unsafe n' padLen_DEC str in front
-                + back`];;
+              back = fromChars_range_unsafe n' padLen_DEC str in front +
+                back`;;
 (* HOL4 mlintScript.sml:191: ML code, not ported *)
 
 (* the termination relation that HOL4 gives, with
@@ -178,7 +178,7 @@ let fromChars_unsafe_def,fromChars_unsafe_ind = define_wf
 (* HOL4 mlintScript.sml:202-204: the tactic that proves the termination *)
 let fromChars_def,fromChars_ind = define_wf
   `MEASURE FST`
-  [`fromChars n str =
+  `fromChars n str =
    match n with
      0 -> NONE
    // Shouldn't happend
@@ -188,7 +188,7 @@ let fromChars_def,fromChars_ind = define_wf
               front = OPTION_MAP ((*) maxSmall_DEC) (fromChars n' str) in
                 let
               back = fromChars_range n' padLen_DEC str in OPTION_MAP2
-                (+) front back`];;
+                (+) front back`;;
 (* HOL4 mlintScript.sml:205: ML code, not ported *)
 
 let fromChars_eq_unsafe = prove
@@ -371,7 +371,7 @@ let mlint_int_cmp_def = new_definition
    what the port found for it *)
 let num_gcd_def,num_gcd_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x0)`
-  [`mlint_num_gcd a b = if a = 0 then b else mlint_num_gcd (b MOD a) a`];;
+  `mlint_num_gcd a b = if a = 0 then b else mlint_num_gcd (b MOD a) a`;;
 
 let num_gcd_eq_gcd = prove
  (`mlint_num_gcd = hol4_gcd`,

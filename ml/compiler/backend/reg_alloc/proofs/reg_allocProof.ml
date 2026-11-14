@@ -455,16 +455,16 @@ let good_pref_biased_pref = prove
 (* Checking that the bijection produced is correct *)
 
 let in_clash_tree_def,in_clash_tree_ind = define_rec
-  [`in_clash_tree (reg_alloc_Delta w r) x <=> MEM x w \/ MEM x r`;
-   `in_clash_tree (reg_alloc_Set names) x <=> x IN domain names`;
-   `in_clash_tree (reg_alloc_Branch name_opt t1 t2) x <=>
+  `(in_clash_tree (reg_alloc_Delta w r) x <=> MEM x w \/ MEM x r) /\
+   (in_clash_tree (reg_alloc_Set names) x <=> x IN domain names) /\
+   (in_clash_tree (reg_alloc_Branch name_opt t1 t2) x <=>
         in_clash_tree t1 x \/
         in_clash_tree t2 x \/
         (match name_opt with
           SOME names -> x IN domain names
-        | NONE -> F)`;
-   `in_clash_tree (reg_alloc_Seq t t') x <=> in_clash_tree t x \/
-    in_clash_tree t' x`];;
+        | NONE -> F)) /\
+   (in_clash_tree (reg_alloc_Seq t t') x <=> in_clash_tree t x \/
+    in_clash_tree t' x)`;;
 
 (*g inverts f as an sptree *)
 let sp_inverts_def = new_definition

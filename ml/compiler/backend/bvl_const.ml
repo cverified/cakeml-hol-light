@@ -283,9 +283,9 @@ let extract_pmatch = prove
    EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
 
 let bvl_const_extract_list_def,bvl_const_extract_list_ind = define_rec
-  [`bvl_const_extract_list [] = []`;
-   `bvl_const_extract_list (CONS x xs) = CONS (bvl_const_extract x xs)
-    (bvl_const_extract_list xs)`];;
+  `(bvl_const_extract_list [] = []) /\
+   (bvl_const_extract_list (CONS x xs) = CONS (bvl_const_extract x xs)
+    (bvl_const_extract_list xs))`;;
 
 let bvl_const_delete_var_def = new_definition
   `bvl_const_delete_var x =
@@ -308,78 +308,78 @@ let _ = size_thms "bvl_exp";;
    replacing the CHEAT_TAC is all that is left *)
 let bvl_const_compile_def,bvl_const_compile_ind = define_wf_cheat
   `MEASURE (list_size bvl_exp_size o SND)`
-  [`bvl_const_compile env [] = []`;
-   `bvl_const_compile env (CONS x (CONS y xs)) = APPEND (bvl_const_compile
-    env [x]) (bvl_const_compile env (CONS y xs))`;
-   `bvl_const_compile env [bvl_Var v] =
+  `(bvl_const_compile env [] = []) /\
+   (bvl_const_compile env (CONS x (CONS y xs)) = APPEND (bvl_const_compile
+    env [x]) (bvl_const_compile env (CONS y xs))) /\
+   (bvl_const_compile env [bvl_Var v] =
          match (\l n. oEL n l) env v with NONE -> [bvl_Var v]
          | SOME NONE -> [bvl_Var v]
          | SOME (SOME (bvl_Var i)) -> [bvl_Var (v + i)]
-         | SOME (SOME x) -> [x]`;
-   `bvl_const_compile env [bvl_If x1 x2 x3] =
+         | SOME (SOME x) -> [x]) /\
+   (bvl_const_compile env [bvl_If x1 x2 x3] =
          let y1 = HD (bvl_const_compile env [x1]) in
          let y2 = HD (bvl_const_compile env [x2]) in
          let y3 = HD (bvl_const_compile env [x3]) in
            if y1 = bvl_Bool T then [y2] else if y1 = bvl_Bool F then
-               [y3] else [bvl_If y1 y2 y3]`;
-   `bvl_const_compile env [bvl_Let xs x2] =
+               [y3] else [bvl_If y1 y2 y3]) /\
+   (bvl_const_compile env [bvl_Let xs x2] =
          let ys = bvl_const_compile env xs in
            [bvl_Let (MAP bvl_const_delete_var ys)
                 (HD (bvl_const_compile (APPEND (bvl_const_extract_list
-                    ys) env) [x2]))]`;
-   `bvl_const_compile env [bvl_Handle x1 x2] =
+                    ys) env) [x2]))]) /\
+   (bvl_const_compile env [bvl_Handle x1 x2] =
          [bvl_Handle (HD (bvl_const_compile env [x1])) (HD
-             (bvl_const_compile (CONS NONE env) [x2]))]`;
-   `bvl_const_compile env [bvl_Raise x1] =
-         [bvl_Raise (HD (bvl_const_compile env [x1]))]`;
-   `bvl_const_compile env [bvl_Op op xs] = [bvl_const_SmartOp op
-    (bvl_const_compile env xs)]`;
-   `bvl_const_compile env [bvl_Tick x] = [bvl_Tick (HD (bvl_const_compile
-    env [x]))]`;
-   `bvl_const_compile env [bvl_Force loc v] =
+             (bvl_const_compile (CONS NONE env) [x2]))]) /\
+   (bvl_const_compile env [bvl_Raise x1] =
+         [bvl_Raise (HD (bvl_const_compile env [x1]))]) /\
+   (bvl_const_compile env [bvl_Op op xs] = [bvl_const_SmartOp op
+    (bvl_const_compile env xs)]) /\
+   (bvl_const_compile env [bvl_Tick x] = [bvl_Tick (HD (bvl_const_compile
+    env [x]))]) /\
+   (bvl_const_compile env [bvl_Force loc v] =
          match (\l n. oEL n l) env v with NONE -> [bvl_Force loc v]
          | SOME NONE -> [bvl_Force loc v]
          | SOME (SOME (bvl_Var i)) -> [bvl_Force loc (v + i)]
-         | SOME (SOME x) -> [bvl_Force loc v]`;
-   `bvl_const_compile env [bvl_Call t dest xs] = [bvl_Call t dest
-    (bvl_const_compile env xs)]`];;
+         | SOME (SOME x) -> [bvl_Force loc v]) /\
+   (bvl_const_compile env [bvl_Call t dest xs] = [bvl_Call t dest
+    (bvl_const_compile env xs)])`;;
 
 let bvl_const_compile_sing_def,bvl_const_compile_sing_ind = define_rec
-  [`bvl_const_compile_sing env (bvl_Var v) =
+  `(bvl_const_compile_sing env (bvl_Var v) =
          match (\l n. oEL n l) env v with NONE -> bvl_Var v
          | SOME NONE -> bvl_Var v
          | SOME (SOME (bvl_Var i)) -> bvl_Var (v + i)
-         | SOME (SOME x) -> x`;
-   `bvl_const_compile_sing env (bvl_If x1 x2 x3) =
+         | SOME (SOME x) -> x) /\
+   (bvl_const_compile_sing env (bvl_If x1 x2 x3) =
          let y1 = bvl_const_compile_sing env x1 in
          let y2 = bvl_const_compile_sing env x2 in
          let y3 = bvl_const_compile_sing env x3 in
            if y1 = bvl_Bool T then y2 else if y1 = bvl_Bool F then y3
-               else bvl_If y1 y2 y3`;
-   `bvl_const_compile_sing env (bvl_Let xs x2) =
+               else bvl_If y1 y2 y3) /\
+   (bvl_const_compile_sing env (bvl_Let xs x2) =
          let ys = bvl_const_compile_list env xs in
            bvl_Let (MAP bvl_const_delete_var ys)
                (bvl_const_compile_sing (APPEND (bvl_const_extract_list
-                   ys) env) x2)`;
-   `bvl_const_compile_sing env (bvl_Handle x1 x2) =
+                   ys) env) x2)) /\
+   (bvl_const_compile_sing env (bvl_Handle x1 x2) =
          bvl_Handle (bvl_const_compile_sing env x1)
-             (bvl_const_compile_sing (CONS NONE env) x2)`;
-   `bvl_const_compile_sing env (bvl_Raise x1) =
-         bvl_Raise (bvl_const_compile_sing env x1)`;
-   `bvl_const_compile_sing env (bvl_Op op xs) = bvl_const_SmartOp op
-    (bvl_const_compile_list env xs)`;
-   `bvl_const_compile_sing env (bvl_Tick x) = bvl_Tick
-    (bvl_const_compile_sing env x)`;
-   `bvl_const_compile_sing env (bvl_Force loc v) =
+             (bvl_const_compile_sing (CONS NONE env) x2)) /\
+   (bvl_const_compile_sing env (bvl_Raise x1) =
+         bvl_Raise (bvl_const_compile_sing env x1)) /\
+   (bvl_const_compile_sing env (bvl_Op op xs) = bvl_const_SmartOp op
+    (bvl_const_compile_list env xs)) /\
+   (bvl_const_compile_sing env (bvl_Tick x) = bvl_Tick
+    (bvl_const_compile_sing env x)) /\
+   (bvl_const_compile_sing env (bvl_Force loc v) =
          match (\l n. oEL n l) env v with NONE -> bvl_Force loc v
          | SOME NONE -> bvl_Force loc v
          | SOME (SOME (bvl_Var i)) -> bvl_Force loc (v + i)
-         | SOME (SOME x) -> bvl_Force loc v`;
-   `bvl_const_compile_sing env (bvl_Call t dest xs) = bvl_Call t dest
-    (bvl_const_compile_list env xs)`;
-   `bvl_const_compile_list env [] = []`;
-   `bvl_const_compile_list env (CONS x xs) = CONS (bvl_const_compile_sing
-    env x) (bvl_const_compile_list env xs)`];;
+         | SOME (SOME x) -> bvl_Force loc v) /\
+   (bvl_const_compile_sing env (bvl_Call t dest xs) = bvl_Call t dest
+    (bvl_const_compile_list env xs)) /\
+   (bvl_const_compile_list env [] = []) /\
+   (bvl_const_compile_list env (CONS x xs) = CONS (bvl_const_compile_sing
+    env x) (bvl_const_compile_list env xs))`;;
 
 let compile_eq = prove
  (`(!e env. bvl_const_compile env [e] = [bvl_const_compile_sing env e]) /\

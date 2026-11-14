@@ -487,7 +487,7 @@ let exp_type_sound = prove
 let build_tdefs_build_tenv = prove
  (`!tenvT (tds:(mlstring list#mlstring#(mlstring#ast_t list) list) list)
   (tids:num list) next' (ctMap:(stamp,mlstring list#t list#num)fmap).
-     ALL (\(_1,_2,ctors). ALL_DISTINCT (MAP FST ctors)) tds /\
+     ALL (\(_,_,ctors). ALL_DISTINCT (MAP FST ctors)) tds /\
      LENGTH tds = LENGTH tids ==>
      nsAll2
        (type_ctor (ctMap |++ REVERSE (type_def_to_ctMap tenvT next' tds

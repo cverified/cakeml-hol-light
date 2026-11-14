@@ -31,16 +31,16 @@ let call_tree_INDUCT,call_tree_RECURSION = define_datatype
 (* computing the max stack depth *)
 
 let max_depth_def,max_depth_ind = define_rec
-  [`max_depth frame_sizes word_depth_Leaf = SOME 0`;
-   `max_depth frame_sizes word_depth_Unknown = NONE`;
-   `max_depth frame_sizes (word_depth_Const n t) =
-      OPTION_MAP ((+) n) (max_depth frame_sizes t)`;
-   `max_depth frame_sizes (word_depth_Branch t1 t2) =
+  `(max_depth frame_sizes word_depth_Leaf = SOME 0) /\
+   (max_depth frame_sizes word_depth_Unknown = NONE) /\
+   (max_depth frame_sizes (word_depth_Const n t) =
+      OPTION_MAP ((+) n) (max_depth frame_sizes t)) /\
+   (max_depth frame_sizes (word_depth_Branch t1 t2) =
       OPTION_MAP2 MAX (max_depth frame_sizes t1) (max_depth frame_sizes
-          t2)`;
-   `max_depth frame_sizes (word_depth_Call n t) =
+          t2)) /\
+   (max_depth frame_sizes (word_depth_Call n t) =
       OPTION_MAP2 (+) (sptree_lookup n frame_sizes) (max_depth
-          frame_sizes t)`];;
+          frame_sizes t))`;;
 
 (* computing the call graph *)
 
@@ -52,12 +52,12 @@ let mk_Branch_def = new_definition
 
 let call_graph_def,call_graph_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`call_graph funs n ns total' x5 =
+  `call_graph funs n ns total' x5 =
      match x5 with
        wordLang_Seq p1 p2 ->
         mk_Branch (call_graph funs n ns total' p1) (call_graph funs n ns
           total' p2)
-     | wordLang_If _1 _2 _3 p1 p2 ->
+     | wordLang_If _ _ _ p1 p2 ->
         mk_Branch (call_graph funs n ns total' p1) (call_graph funs n ns
           total' p2)
      | wordLang_Call ret dest args handler ->
@@ -71,24 +71,24 @@ let call_graph_def,call_graph_ind = assume_definition_rec
                  mk_Branch (word_depth_Call d (word_depth_Leaf))
                    (call_graph funs d (CONS d ns) total' body)
                else word_depth_Leaf)
-            | SOME (_4,_5,ret_prog,_6,_7) ->
+            | SOME (_,_,ret_prog,_,_) ->
               let new_funs = sptree_delete d funs in
                 match handler with NONE -> word_depth_Branch
                   (word_depth_Call n (word_depth_Call d word_depth_Leaf))
                       (mk_Branch (word_depth_Call n (call_graph new_funs d
                         [d] total' body))
                               (call_graph funs n ns total' ret_prog))
-                | SOME (_8,p,_9,_10) -> word_depth_Branch (word_depth_Call
-                  n (word_depth_Const 3 (word_depth_Call d word_depth_Leaf)))
+                | SOME (_,p,_,_) -> word_depth_Branch (word_depth_Call n
+                  (word_depth_Const 3 (word_depth_Call d word_depth_Leaf)))
                    (mk_Branch (word_depth_Call n (word_depth_Const 3
                      (call_graph new_funs d [d] total' body)))
                    (mk_Branch (call_graph funs n ns total' p)
                               (call_graph funs n ns total' ret_prog)))))
      | wordLang_MustTerminate p -> call_graph funs n ns total' p
-     | wordLang_Alloc _11 _12 -> word_depth_Call n word_depth_Leaf
-     | wordLang_Install _13 _14 _15 _16 _17 -> word_depth_Unknown
-     | wordLang_Loop _18 body _19 -> call_graph funs n ns total' body
-     | _ -> word_depth_Leaf`];;
+     | wordLang_Alloc _ _ -> word_depth_Call n word_depth_Leaf
+     | wordLang_Install _ _ _ _ _ -> word_depth_Unknown
+     | wordLang_Loop _ body _ -> call_graph funs n ns total' body
+     | _ -> word_depth_Leaf`;;
 
 let full_call_graph_def = new_definition
   `full_call_graph n funs =
@@ -99,14 +99,14 @@ let full_call_graph_def = new_definition
                                 prog)`;;
 
 let max_depth_graphs_def,max_depth_graphs_ind = define_rec
-  [`max_depth_graphs ss [] all' funs all_funs = SOME 0`;
-   `max_depth_graphs ss (CONS n ns) all' funs all_funs =
+  `(max_depth_graphs ss [] all' funs all_funs = SOME 0) /\
+   (max_depth_graphs ss (CONS n ns) all' funs all_funs =
       match sptree_lookup n all_funs with NONE -> NONE
       | SOME (a,body) ->
           OPTION_MAP2 MAX (sptree_lookup n ss)
          (OPTION_MAP2 MAX (max_depth ss (call_graph funs n all'
              (sptree_size all_funs) body))
-                          (max_depth_graphs ss ns all' funs all_funs))`];;
+                          (max_depth_graphs ss ns all' funs all_funs)))`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

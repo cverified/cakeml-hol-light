@@ -399,12 +399,12 @@ let nsSub_nsAppend_lift = prove
   CHEAT_TAC);;
 
 let alist_rel_restr_def,alist_rel_restr_ind = define_rec
-  [`alist_rel_restr R l1 l2 [] <=> T`;
-   `alist_rel_restr R l1 l2 (CONS k1 keys) <=>
+  `(alist_rel_restr R l1 l2 [] <=> T) /\
+   (alist_rel_restr R l1 l2 (CONS k1 keys) <=>
         (match ALOOKUP l1 k1 with NONE -> F
         | SOME v1 ->
           (match ALOOKUP l2 k1 with NONE -> F
-          | SOME v2 -> R k1 v1 v2 /\ alist_rel_restr R l1 l2 keys))`];;
+          | SOME v2 -> R k1 v1 v2 /\ alist_rel_restr R l1 l2 keys)))`;;
 
 let alist_rel_restr_thm = prove
  (`!R e1 e2 keys.
@@ -434,9 +434,9 @@ let alistSub_cong = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let nsSub_compute_def,nsSub_compute_ind = define_guess_cheat
-  [`nsSub_compute path' R (Bind e1V e1M) (Bind e2V e2M) <=>
+  `nsSub_compute path' R (Bind e1V e1M) (Bind e2V e2M) <=>
      alistSub (\k v1 v2. R (mk_id (REVERSE path') k) v1 v2) e1V e2V /\
-     alistSub (\k v1 v2. nsSub_compute (CONS k path') R v1 v2) e1M e2M`];;
+     alistSub (\k v1 v2. nsSub_compute (CONS k path') R v1 v2) e1M e2M`;;
 
 let nsLookup_FOLDR_nsLift = prove
  (`!e p k. nsLookup (ITLIST nsLift p e) (mk_id p k) = nsLookup e (Short k)`,

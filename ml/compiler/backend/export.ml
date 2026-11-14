@@ -31,13 +31,13 @@ let _ = cake_theory "export"
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let split16_def,split16_ind = define_guess_cheat
-  [`split16 f xs =
+  `split16 f xs =
      match xs with
        [] -> misc_Nil
      | xs ->
         let xs1 = TAKE 16 xs in
         let xs2 = DROP 16 xs in
-          SmartAppend (f xs1) (split16 f xs2)`];;
+          SmartAppend (f xs1) (split16 f xs2)`;;
 
 (* HOL4 exportScript.sml:22-72: the ML values that the definitions below
    antiquote *)
@@ -144,10 +144,10 @@ let newl_strlit_def = new_definition
   `newl_strlit = (implode "\n")`;;
 
 let comma_cat_def,comma_cat_ind = define_guess
-  [`comma_cat f x =
+  `comma_cat f x =
      match x with [] -> [newl_strlit]
      | [x] -> [f x; newl_strlit]
-     | (CONS x xs) -> CONS (f x) (CONS comm_strlit (comma_cat f xs))`];;
+     | (CONS x xs) -> CONS (f x) (CONS comm_strlit (comma_cat f xs))`;;
 
 let words_line_def = new_definition
   `words_line word_directive to_string ls =

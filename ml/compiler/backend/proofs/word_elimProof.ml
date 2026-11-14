@@ -69,17 +69,17 @@ let dest_result_loc_def = new_definition
 (* TODO could do alt def using toAList -
     not necessary though, may not be cleaner *)
 let get_locals_def,get_locals_ind = define_rec
-  [`// locals : ('a word_loc) num_map
-    get_locals (LN:('a word_loc) spt) = LN`;
-   `get_locals (LS a) = match (dest_word_loc a) with SOME n -> sptree_insert n
+  `// locals : ('a word_loc) num_map
+   (get_locals (LN:('a word_loc) spt) = LN) /\
+   (get_locals (LS a) = match (dest_word_loc a) with SOME n -> sptree_insert n
     one LN
-            | NONE -> LN`;
-   `get_locals (BN t1 t2) = sptree_union (get_locals t1) (get_locals t2)`;
-   `get_locals (BS t1 a t2) =
+            | NONE -> LN) /\
+   (get_locals (BN t1 t2) = sptree_union (get_locals t1) (get_locals t2)) /\
+   (get_locals (BS t1 a t2) =
             let t = (sptree_union (get_locals t1) (get_locals t2)) in
                 match (dest_word_loc a) with SOME n -> sptree_insert n one
                     t
-                    | NONE -> t`];;
+                    | NONE -> t)`;;
 
 let domain_get_locals_lookup = prove
  (`!n t. n IN domain (get_locals t) <=> (?k n1. sptree_lookup k t = SOME
@@ -147,12 +147,12 @@ let _ = size_thms "stack_frame";;
    what the port found for it *)
 let word_elimProof_get_stack_def,word_elimProof_get_stack_ind = define_wf
   `MEASURE (\x0. list_size (stack_frame_size (\x. 0)) x0)`
-  [`// stack : ('a stack_frame) list
-    word_elimProof_get_stack [] = (LN:1 spt)`;
-   `word_elimProof_get_stack (CONS (StackFrame lsz e0 e _) xs) =
+  `// stack : ('a stack_frame) list
+   (word_elimProof_get_stack [] = (LN:1 spt)) /\
+   (word_elimProof_get_stack (CONS (StackFrame lsz e0 e _) xs) =
             ((sptree_union (sptree_union (get_num_wordloc_alist e0)
                 (get_num_wordloc_alist e)) (word_elimProof_get_stack
-                xs)):1 spt)`];;
+                xs)):1 spt))`;;
 
 (* HOL4 word_elimProofScript.sml:210: ML code, not ported *)
 

@@ -92,9 +92,9 @@ let remove_eq_def = new_definition
         cs with to_eq := to_eq) *)
 
 let remove_eqs_def,remove_eqs_ind = define_rec
-  [`remove_eqs cs [] = cs`;
-   `remove_eqs cs (CONS v vs) =
-        remove_eqs (remove_eq cs v) vs`];;
+  `(remove_eqs cs [] = cs) /\
+   (remove_eqs cs (CONS v vs) =
+        remove_eqs (remove_eq cs v) vs)`;;
 
 let copy_prop_inst_def = new_definition
   `copy_prop_inst x1 cs =
@@ -270,12 +270,12 @@ let merge_eqs_def = new_definition
 
 (* shouldn't matter whether we put y or y' in set_eq? *)
 let copy_prop_move_def,copy_prop_move_ind = define_rec
-  [`copy_prop_move [] cs = ([],cs)`;
-   `copy_prop_move (CONS (x,y) xs) cs =
+  `(copy_prop_move [] cs = ([],cs)) /\
+   (copy_prop_move (CONS (x,y) xs) cs =
         let y' = lookup_eq cs y in
         let (ms,cs') = copy_prop_move xs cs in
         let cs'' = set_eq (remove_eq cs' x) x y in
-        (CONS (x,y') ms,cs'')`];;
+        (CONS (x,y') ms,cs''))`;;
 
 let copy_prop_share_def = new_definition
   `copy_prop_share exp cs =
@@ -287,7 +287,7 @@ let copy_prop_share_def = new_definition
 
 let copy_prop_prog_def,copy_prop_prog_ind = define_shaped_rec
   "match"
-  [`copy_prop_prog prog cs =
+  `copy_prop_prog prog cs =
      match prog with
        (wordLang_Skip:'a wordLang_prog) ->
        (wordLang_Skip,cs)
@@ -374,12 +374,12 @@ let copy_prop_prog_def,copy_prop_prog_ind = define_shaped_rec
      // Conservative: optimizes body from empty state. Could be smarter by
      // tracking copy facts across iterations via Break/Continue flow.
      | wordLang_Loop names c exit_names ->
-        let (c',_1) = copy_prop_prog c empty_eq in
+        let (c',_) = copy_prop_prog c empty_eq in
           (wordLang_Loop names c' exit_names,empty_eq)
      | wordLang_Break k -> (wordLang_Break k,cs)
      | wordLang_Continue k -> (wordLang_Continue k,cs)
      | prog -> (prog,empty_eq)
-     // impossible?`];;
+     // impossible?`;;
 
 let copy_prop_def = new_definition
   `copy_prop (e:'a wordLang_prog) =

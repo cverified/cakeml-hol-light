@@ -79,7 +79,7 @@ let evaluate_GENLIST_Var_tra = prove
 let is_Recclosure_def = new_definition
   `is_Recclosure x1 =
    match x1 with
-     closSem_Recclosure _6 _7 _8 _9 _10 -> T
+     closSem_Recclosure _ _ _ _ _ -> T
    | _ -> F`;;
 add_simp is_Recclosure_def;;
 
@@ -230,28 +230,29 @@ let env_rel_cong = prove
   env2 a es`,
   CHEAT_TAC);;
 
-let clos_callProof_v_rel_def,clos_callProof_v_rel_ind = assume_definition_rec
+let clos_callProof_v_rel_def,clos_callProof_v_rel_ind =
+  assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`clos_callProof_v_rel g l code (closSem_Number i) v <=> v =
-    (closSem_Number i:closSem_v)`;
-   `clos_callProof_v_rel g l code (closSem_Word64 w) v <=> v =
-    (closSem_Word64 w:closSem_v)`;
-   `clos_callProof_v_rel g l code (closSem_Block n vs) v <=>
-        (?vs'. v = closSem_Block n vs' /\ ALL2 (clos_callProof_v_rel g l
-            code) vs vs')`;
-   `clos_callProof_v_rel g l code (closSem_ByteVector ws) v <=> v =
-    closSem_ByteVector ws`;
-   `clos_callProof_v_rel g l code (closSem_RefPtr b n) v <=> v =
-    (closSem_RefPtr b n:closSem_v)`;
-   `clos_callProof_v_rel g l code (closSem_Closure loco vs1 env1 n bod1) v <=>
+  [`(clos_callProof_v_rel g l code (closSem_Number i) v <=> v =
+    (closSem_Number i:closSem_v)) /\
+    (clos_callProof_v_rel g l code (closSem_Word64 w) v <=> v =
+    (closSem_Word64 w:closSem_v)) /\
+    (clos_callProof_v_rel g l code (closSem_Block n vs) v <=>
+        (?vs'. v = closSem_Block n vs' /\ ALL2 (clos_callProof_v_rel g
+            l code) vs vs')) /\
+    (clos_callProof_v_rel g l code (closSem_ByteVector ws) v <=> v =
+    closSem_ByteVector ws) /\
+    (clos_callProof_v_rel g l code (closSem_RefPtr b n) v <=> v =
+    (closSem_RefPtr b n:closSem_v)) /\
+    (clos_callProof_v_rel g l code (closSem_Closure loco vs1 env1 n bod1) v <=>
          (?loc vs2 env2 bod2.
            recclosure_rel g l code loc [(n,bod1)] [(n,bod2)] /\
            v = closSem_Closure (SOME loc) vs2 env2 n bod2 /\ loco = SOME
                loc /\
            ALL2 (clos_callProof_v_rel g l code) vs1 vs2 /\
            clos_callProof_env_rel (clos_callProof_v_rel g l code) env1
-               env2 0 [(n,bod2)])`;
-   `clos_callProof_v_rel g l code (closSem_Recclosure loco vs1 env1 fns1 i) v
+               env2 0 [(n,bod2)]))`;
+   `(clos_callProof_v_rel g l code (closSem_Recclosure loco vs1 env1 fns1 i) v
     <=>
          (?loc vs2 env2 fns2.
            recclosure_rel g l code loc fns1 fns2 /\
@@ -259,7 +260,7 @@ let clos_callProof_v_rel_def,clos_callProof_v_rel_ind = assume_definition_rec
                loc /\
            ALL2 (clos_callProof_v_rel g l code) vs1 vs2 /\
            clos_callProof_env_rel (clos_callProof_v_rel g l code) env1
-               env2 (LENGTH fns2) fns2)`];;
+               env2 (LENGTH fns2) fns2))`];;
 
 (* HOL4 clos_callProofScript.sml:335: ML code, not ported *)
 
@@ -269,10 +270,10 @@ let clos_callProof_v_rel_def,clos_callProof_v_rel_ind = assume_definition_rec
    termination *)
 let wfv_def,wfv_ind = define_wf
   `MEASURE (closSem_v_size o SND o SND o SND)`
-  [`wfv g l code x4 =
+  `wfv g l code x4 =
      match x4 with
-       closSem_Closure NONE _15 _16 _17 _18 -> F
-     | closSem_Recclosure NONE _19 _20 _21 _22 -> F
+       closSem_Closure NONE _ _ _ _ -> F
+     | closSem_Recclosure NONE _ _ _ _ -> F
      | closSem_Closure (SOME loc) vs env n bod ->
        ALL (wfv g l code) vs /\ ALL (wfv g l code) env /\
        (?fns2.
@@ -282,7 +283,7 @@ let wfv_def,wfv_ind = define_wf
        (?fns2.
        recclosure_rel g l code loc fns fns2)
      | closSem_Block _ vs -> ALL (wfv g l code) vs
-     | _ -> T`];;
+     | _ -> T`;;
 add_simp wfv_def;;
 
 (* HOL4 clos_callProofScript.sml:355: ML code, not ported *)
@@ -522,10 +523,10 @@ let calls_replace_SND = prove
    what the port found for it *)
 let insert_each'_def,insert_each'_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). list_size (pair_size (\n. n) (\x. 0)) x0)`
-  [`insert_each' gt p 0 g = g`;
-   `insert_each' gt p (SUC n) (g1,g2) =
+  `(insert_each' gt p 0 g = g) /\
+   (insert_each' gt p (SUC n) (g1,g2) =
        insert_each' gt (p + 2) n (sptree_insert p one g1,(CONS (p +
-           1,THE (ALOOKUP gt (p + 1))) g2))`];;
+           1,THE (ALOOKUP gt (p + 1))) g2)))`;;
 
 (* HOL4 clos_callProofScript.sml:965: ML code, not ported *)
 
@@ -918,20 +919,20 @@ let syntax_ok_def = new_definition
    what the port found for it *)
 let co_ok_def,co_ok_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
-  [`co_ok code co full_gs k <=>
+  `co_ok code co full_gs k <=>
      (if k = 0 then T else let g = FST (FST (co 0)) in
        let (cfg,exp,aux) = co 0 in
        let (g',exp',aux1) = clos_call_compile_inc g (exp,aux) in
          FST (FST (co 1)) = g' /\
          make_g g code = SOME (full_gs 0) /\
          (!i. subg (full_gs 0) (full_gs i)) /\
-         (!x i. MEM x (code_locs exp) /\ ~(x IN domain g') ==> ~(x IN
-           domain (FST (FST (co i))))) /\
+         (!x i. MEM x (code_locs exp) /\ ~(x IN domain g') ==> ~(x IN domain
+           (FST (FST (co i))))) /\
          DISJOINT (set_of_list (code_locs exp)) (domain g) /\
          DISJOINT (FDOM code) (set_of_list (MAP FST aux1)) /\
          ALL_DISTINCT (MAP FST aux1) /\
          co_ok (code |++ aux1) (misc_shift_seq 1 co) (misc_shift_seq 1
-           full_gs) (k - 1))`];;
+           full_gs) (k - 1))`;;
 
 let co_ok_IMP_full_gs_eq_shift_seq = prove
  (`!k code co g full_gs.
@@ -1271,12 +1272,12 @@ let semantics_compile = prove
    what the port found for it *)
 let nth_code_def,nth_code_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
-  [`clos_callProof_nth_code code co 0 = code`;
-   `clos_callProof_nth_code code co (SUC k) =
+  `(clos_callProof_nth_code code co 0 = code) /\
+   (clos_callProof_nth_code code co (SUC k) =
       let (cfg,exp,aux) = co 0 in
       let (g',exp',aux') = clos_call_compile_inc (FST cfg) (exp,aux) in
         clos_callProof_nth_code (code |++ aux') (misc_shift_seq 1 co)
-            k`];;
+            k)`;;
 
 (* TODO: move *)
 let FUNION_FEMPTY_FUPDATE_LIST = prove

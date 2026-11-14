@@ -219,25 +219,25 @@ let closLang_exp_INDUCT,closLang_exp_RECURSION = define_datatype
 (* HOL4 closLangScript.sml:159-168: the tactic that proves the termination *)
 let has_install_def,has_install_ind = define_shaped_rec
   "nested"
-  [`has_install ((closLang_Var t n):closLang_exp) = F`;
-   `has_install (closLang_If t e1 e2 e3) = (has_install e1 \/ has_install e2
-    \/ has_install e3)`;
-   `has_install (closLang_Let t es e) = (has_install e \/ has_install_list
-    es)`;
-   `has_install (closLang_Op t p es) = (p = closLang_Install \/
-    has_install_list es)`;
-   `has_install (closLang_Raise t e) = has_install e`;
-   `has_install (closLang_Tick t e) = has_install e`;
-   `has_install (closLang_Fn _1 _2 _3 _4 e) = has_install e`;
-   `has_install (closLang_Handle t e1 e2) = (has_install e1 \/ has_install
-    e2)`;
-   `has_install (closLang_Call _8 _9 _10 es) = has_install_list es`;
-   `has_install (closLang_App _13 _14 e es) = (has_install e \/
-    has_install_list es)`;
-   `has_install (closLang_Letrec _18 _19 _20 fns e) = (has_install_list (MAP
-    SND fns) \/ has_install e)`;
-   `has_install_list [] = F`;
-   `has_install_list (CONS x xs) = (has_install x \/ has_install_list xs)`];;
+  `(has_install ((closLang_Var t n):closLang_exp) = F) /\
+   (has_install (closLang_If t e1 e2 e3) = (has_install e1 \/ has_install
+    e2 \/ has_install e3)) /\
+   (has_install (closLang_Let t es e) = (has_install e \/ has_install_list
+    es)) /\
+   (has_install (closLang_Op t p es) = (p = closLang_Install \/
+    has_install_list es)) /\
+   (has_install (closLang_Raise t e) = has_install e) /\
+   (has_install (closLang_Tick t e) = has_install e) /\
+   (has_install (closLang_Fn _ _ _ _ e) = has_install e) /\
+   (has_install (closLang_Handle t e1 e2) = (has_install e1 \/ has_install
+    e2)) /\
+   (has_install (closLang_Call _ _ _ es) = has_install_list es) /\
+   (has_install (closLang_App _ _ e es) = (has_install e \/
+    has_install_list es)) /\
+   (has_install (closLang_Letrec _ _ _ fns e) = (has_install_list (MAP SND
+    fns) \/ has_install e)) /\
+   (has_install_list [] = F) /\
+   (has_install_list (CONS x xs) = (has_install x \/ has_install_list xs))`;;
 
 let exp1_size_lemma = prove
  (`!fns n x. MEM (n,x) fns ==> closLang_exp_size x < list_size (pair_size
@@ -264,17 +264,17 @@ let pure_op_def = new_definition
 (* pure e means e can neither raise an exception nor side-effect the state *)
 let pure_def,pure_ind = define_shaped_rec
   "nested"
-  [`pure (closLang_Var _23 _24) <=> T`;
-   `pure (closLang_If _ e1 e2 e3) <=> pure e1 /\ pure e2 /\ pure e3`;
-   `pure (closLang_Let _ es e2) <=> ALL pure es /\ pure e2`;
-   `pure (closLang_Raise _27 _28) <=> F`;
-   `pure (closLang_Handle _ e1 e2) <=> pure e1`;
-   `pure (closLang_Tick _31 _32) <=> F`;
-   `pure (closLang_Call _37 _38 _39 _40) <=> F`;
-   `pure (closLang_App _45 _46 _47 _48) <=> F`;
-   `pure (closLang_Fn _49 _50 _51 _52 _53) <=> T`;
-   `pure (closLang_Letrec _58 _59 _60 _61 x) <=> pure x`;
-   `pure (closLang_Op _ opn es) <=> ALL pure es /\ closLang_pure_op opn`];;
+  `(pure (closLang_Var _ _) <=> T) /\
+   (pure (closLang_If _ e1 e2 e3) <=> pure e1 /\ pure e2 /\ pure e3) /\
+   (pure (closLang_Let _ es e2) <=> ALL pure es /\ pure e2) /\
+   (pure (closLang_Raise _ _) <=> F) /\
+   (pure (closLang_Handle _ e1 e2) <=> pure e1) /\
+   (pure (closLang_Tick _ _) <=> F) /\
+   (pure (closLang_Call _ _ _ _) <=> F) /\
+   (pure (closLang_App _ _ _ _) <=> F) /\
+   (pure (closLang_Fn _ _ _ _ _) <=> T) /\
+   (pure (closLang_Letrec _ _ _ _ x) <=> pure x) /\
+   (pure (closLang_Op _ opn es) <=> ALL pure es /\ closLang_pure_op opn)`;;
 
 (* used in proofs about closLang, BVL, BVI and dataLang *)
 let assign_get_code_label_def = new_definition

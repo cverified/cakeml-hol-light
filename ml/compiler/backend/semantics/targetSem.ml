@@ -136,7 +136,7 @@ let is_valid_mapped_write_def = new_definition
 
 let targetSem_evaluate_def,targetSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`targetSem_evaluate (mc:('b,'a,'c)machine_config) (ffi:'ffi ffi_state) k
+  `targetSem_evaluate (mc:('b,'a,'c)machine_config) (ffi:'ffi ffi_state) k
   (ms:'a) =
      if k = 0 then (targetSem_TimeOut,ms,ffi)
      else if (target_get_pc (machine_config_target mc) ms) IN
@@ -147,8 +147,8 @@ let targetSem_evaluate_def,targetSem_evaluate_ind = assume_definition_rec
              (target_get_byte (machine_config_target mc) ms)
                (machine_config_prog_addresses mc) then
            let ms1 = target_next (machine_config_target mc) ms in
-           let (ms2,new_oracle) = apply_oracle
-             (machine_config_next_interfer mc) ms1 in
+           let (ms2,new_oracle) = apply_oracle (machine_config_next_interfer
+             mc) ms1 in
            let mc = machine_config_next_interfer_fupd (K new_oracle) mc in
              if ALL (target_state_ok (machine_config_target mc)) [ms; ms1;
                ms2] /\
@@ -186,20 +186,18 @@ let targetSem_evaluate_def,targetSem_evaluate_ind = assume_definition_rec
                    | SOME (nb,a,reg,pc') ->
                        (match op with MappedRead ->
                               (match a with Addr r off ->
-                              let ad = target_get_reg
-                                (machine_config_target mc) ms r + off in
+                              let ad = target_get_reg (machine_config_target
+                                mc) ms r + off in
                               (if (if nb = (n2w 0) then (w2n ad MOD
                                 (dimindex (:'b) DIV 8)) = 0 else T) /\
                               (ad IN machine_config_shared_addresses mc) /\
                               is_valid_mapped_read (target_get_pc
                                 (machine_config_target mc) ms) nb a reg pc'
                                 (machine_config_target
-                              mc) ms (machine_config_prog_addresses mc)
-                                then
+                              mc) ms (machine_config_prog_addresses mc) then
                               (match call_FFI ffi (EL ffi_index
                                 (machine_config_ffi_names mc)) [nb]
-                              (word_to_bytes ad F) with FFI_final outcome
-                                ->
+                              (word_to_bytes ad F) with FFI_final outcome ->
                               (targetSem_Halt (ffi_FFI_outcome
                                 outcome),ms,ffi)
                               | FFI_return new_ffi new_bytes ->
@@ -221,8 +219,7 @@ let targetSem_evaluate_def,targetSem_evaluate_ind = assume_definition_rec
                               is_valid_mapped_write (target_get_pc
                                 (machine_config_target mc) ms) nb a reg pc'
                                 (machine_config_target
-                              mc) ms (machine_config_prog_addresses mc)
-                                then
+                              mc) ms (machine_config_prog_addresses mc) then
                               (match call_FFI ffi (EL ffi_index
                                 (machine_config_ffi_names mc)) [nb]
                               (
@@ -230,8 +227,7 @@ let targetSem_evaluate_def,targetSem_evaluate_ind = assume_definition_rec
                                 (machine_config_target mc) ms reg in
                               if nb = (n2w 0) then word_to_bytes w F
                               else word_to_bytes_aux (w2n nb) w F)
-                                (word_to_bytes ad F)) with FFI_final outcome
-                                ->
+                                (word_to_bytes ad F)) with FFI_final outcome ->
                               (targetSem_Halt (ffi_FFI_outcome
                                 outcome),ms,ffi)
                               | FFI_return new_ffi new_bytes ->
@@ -261,24 +257,24 @@ let targetSem_evaluate_def,targetSem_evaluate_ind = assume_definition_rec
                                 new_oracle) mc in
                               targetSem_evaluate mc new_ffi (k - (1:num))
                                 ms1)
-                        | _ -> (targetSem_Error,ms,ffi))))`];;
+                        | _ -> (targetSem_Error,ms,ffi))))`;;
 
 let machine_sem_def = define_cases
-  [`machine_sem mc st ms (ffi_Terminate t io_list) <=>
+  `(machine_sem mc st ms (ffi_Terminate t io_list) <=>
          (?k ms' st'.
            targetSem_evaluate mc st k ms = (targetSem_Halt t,ms',st')
                /\ ffi_state_io_events
-           st' = io_list)`;
-   `machine_sem mc st ms (ffi_Diverge io_trace) <=>
+           st' = io_list)) /\
+   (machine_sem mc st ms (ffi_Diverge io_trace) <=>
          (!k. ?ms' st'. targetSem_evaluate mc st k ms =
              (targetSem_TimeOut,ms',st')) /\
          lprefix_lub
            (IMAGE
              (\k. fromList (ffi_state_io_events (SND (SND
                  (targetSem_evaluate mc st k ms))))) UNIV)
-           io_trace`;
-   `machine_sem mc st ms ffi_Fail <=>
-         (?k. FST (targetSem_evaluate mc st k ms) = targetSem_Error)`];;
+           io_trace) /\
+   (machine_sem mc st ms ffi_Fail <=>
+         (?k. FST (targetSem_evaluate mc st k ms) = targetSem_Error))`;;
 
 (* define what it means for code to be loaded and ready to run *)
 
@@ -310,8 +306,8 @@ let target_configured_def = new_definition
         mc_conf)) with NONE -> T | SOME r -> asm_state_lr t = r)`;;
 
 let get_reg_value_def = define_cases
-  [`get_reg_value NONE w f = w`;
-   `get_reg_value (SOME v) _ f = f v`];;
+  `(get_reg_value NONE w f = w) /\
+   (get_reg_value (SOME v) _ f = f v)`;;
 
 let mmio_pcs_min_index_def = new_definition
   `mmio_pcs_min_index ffi_names' =

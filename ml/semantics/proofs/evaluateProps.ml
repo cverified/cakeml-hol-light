@@ -43,7 +43,7 @@ let RTC_call_FFI_rel_consts = prove
   CHEAT_TAC);;
 
 let dest_IO_event_def = define_general
-  [`dest_IO_event (IO_event s c b) = (s,c,b)`];;
+  `dest_IO_event (IO_event s c b) = (s,c,b)`;;
 add_simp dest_IO_event_def;;
 
 let io_events_mono_def = new_definition

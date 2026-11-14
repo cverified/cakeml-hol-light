@@ -38,12 +38,12 @@ let _ = size_thms "line";;
    what the port found for it *)
 let labProps_extract_labels_def,labProps_extract_labels_ind = define_wf
   `MEASURE (\x0. list_size (line_size (\x. 0)) x0)`
-  [`labProps_extract_labels x1 =
+  `labProps_extract_labels x1 =
      match x1 with
        [] -> []
      | CONS (labLang_Label l1 l2 _) xs -> CONS (l1,l2)
        (labProps_extract_labels xs)
-     | CONS x xs -> labProps_extract_labels xs`];;
+     | CONS x xs -> labProps_extract_labels xs`;;
 add_simp labProps_extract_labels_def;;
 
 (* HOL4 labPropsScript.sml:18: ML code, not ported *)
@@ -59,19 +59,19 @@ let labs_of_def = new_definition
    match x1 with
      labLang_LocValue _ (labLang_Lab n1 n2) -> {(n1,n2)}
    | labLang_Jump (labLang_Lab n1 n2) -> {(n1,n2)}
-   | labLang_JumpCmp _3 _4 _5 (labLang_Lab n1 n2) -> {(n1,n2)}
+   | labLang_JumpCmp _ _ _ (labLang_Lab n1 n2) -> {(n1,n2)}
    | _ -> {}`;;
 add_simp labs_of_def;;
 
 let line_get_labels_def = new_definition
   `line_get_labels x1 =
    match x1 with
-     labLang_LabAsm a _6 _7 _8 -> labs_of a
+     labLang_LabAsm a _ _ _ -> labs_of a
    | _ -> {}`;;
 
 let sec_get_labels_def = define_general
-  [`sec_get_labels (Section _ lines) =
-     UNIONS (IMAGE line_get_labels (set_of_list lines))`];;
+  `sec_get_labels (Section _ lines) =
+     UNIONS (IMAGE line_get_labels (set_of_list lines))`;;
 
 let labProps_get_labels_def = new_definition
   `labProps_get_labels code = UNIONS (IMAGE sec_get_labels (set_of_list
@@ -85,15 +85,15 @@ let get_labels_cons = prove
 let line_get_code_labels_def = new_definition
   `line_get_code_labels x1 =
    match x1 with
-     labLang_Label _11 l _12 -> {l}
+     labLang_Label _ l _ -> {l}
    | _ -> {}`;;
 add_simp line_get_code_labels_def;;
 
 let sec_get_code_labels_def = define_general
-  [`sec_get_code_labels (Section n1 lines) =
+  `sec_get_code_labels (Section n1 lines) =
      (n1,0) INSERT
      IMAGE (\n2. (n1,n2)) (UNIONS (IMAGE line_get_code_labels
-       (set_of_list lines)))`];;
+       (set_of_list lines)))`;;
 
 let labProps_get_code_labels_def = new_definition
   `labProps_get_code_labels code = UNIONS (IMAGE sec_get_code_labels
@@ -110,8 +110,8 @@ let get_code_labels_cons = prove
   CHEAT_TAC);;
 
 let sec_ends_with_label_def = define_general
-  [`sec_ends_with_label (Section _ ls) <=>
-     ~(NULL ls) /\ is_Label (LAST ls)`];;
+  `sec_ends_with_label (Section _ ls) <=>
+     ~(NULL ls) /\ is_Label (LAST ls)`;;
 
 let reg_imm_with_clock = prove
  (`labSem_reg_imm r (labSem_state_clock_fupd (K z) s) = labSem_reg_imm r s`,
@@ -310,9 +310,9 @@ let labProps_fp_upd_consts = prove
 add_simp labProps_fp_upd_consts;;
 
 let line_length_def = define_cases
-  [`line_length (labLang_Label k1 k2 l) = if l = 0 then 0 else 1`;
-   `line_length (labLang_Asm b bytes l) = LENGTH bytes`;
-   `line_length (labLang_LabAsm a w bytes l) = LENGTH bytes`];;
+  `(line_length (labLang_Label k1 k2 l) = if l = 0 then 0 else 1) /\
+   (line_length (labLang_Asm b bytes l) = LENGTH bytes) /\
+   (line_length (labLang_LabAsm a w bytes l) = LENGTH bytes)`;;
 
 let LENGTH_line_bytes = prove
  (`!x2. ~(is_Label x2) ==> (LENGTH (line_bytes x2) = line_length x2)`,
@@ -759,8 +759,8 @@ let line_ok_pre_def = new_definition
      | (c,_) -> T`;;
 
 let sec_ok_pre_def = define_general
-  [`sec_ok_pre c (Section k ls) <=>
-     ALL (line_ok_pre c) ls`];;
+  `sec_ok_pre c (Section k ls) <=>
+     ALL (line_ok_pre c) ls`;;
 add_simp sec_ok_pre_def;;
 
 (* HOL4 labPropsScript.sml:1257: the overload all_enc_ok_pre, which the port
@@ -776,7 +776,7 @@ let sec_label_ok_def = new_definition
 add_simp sec_label_ok_def;;
 
 let sec_labels_ok_def = define_general
-  [`sec_labels_ok (Section k ls) <=> ALL (sec_label_ok k) ls`];;
+  `sec_labels_ok (Section k ls) <=> ALL (sec_label_ok k) ls`;;
 add_simp sec_labels_ok_def;;
 
 let sec_label_ok_extract_labels = prove

@@ -140,7 +140,7 @@ let _ = size_thms "wordLang_prog";;
    what the port found for it *)
 let colouring_ok_def,colouring_ok_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). wordLang_prog_size (\x. 0) x1)`
-  [`colouring_ok f prog live lt =
+  `colouring_ok f prog live lt =
      match prog with
        wordLang_Seq s1 s2 ->
        // Normal live sets
@@ -183,7 +183,7 @@ let colouring_ok_def,colouring_ok_ind = define_wf
        // live before must be fine, and clash set must be fine
        let lset = get_live prog live lt in
        let iset = sptree_union (get_writes prog) live in
-         INJ f (domain lset) UNIV /\ INJ f (domain iset) UNIV`];;
+         INJ f (domain lset) UNIV /\ INJ f (domain iset) UNIV`;;
 
 (*Equivalence on everything except permutation and locals*)
 (* should we add local_size here? may be no, as locals are not included *)
@@ -1048,7 +1048,7 @@ let _ = size_thms "wordLang_exp";;
    what the port found for it *)
 let nlive_store_def,nlive_store_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
-  [`nlive_store nlive x2 =
+  `nlive_store nlive x2 =
      match x2 with
        wordLang_Op _ ls ->
          ALL (nlive_store nlive) ls
@@ -1057,7 +1057,7 @@ let nlive_store_def,nlive_store_ind = define_wf
        nlive_store nlive e
      | wordLang_Shift _ e1 e2 ->
        nlive_store nlive e1 /\ nlive_store nlive e2
-     | _ -> T`];;
+     | _ -> T`;;
 
 (* [local] *)
 let strong_locals_rel_I_get_var = prove

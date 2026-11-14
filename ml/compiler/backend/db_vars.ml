@@ -33,8 +33,8 @@ let mk_Union_Empty = prove
 add_simp mk_Union_Empty;;
 
 let list_mk_Union_def,list_mk_Union_ind = define_rec
-  [`list_mk_Union [] = db_vars_Empty`;
-   `list_mk_Union (CONS x xs) = mk_Union x (list_mk_Union xs)`];;
+  `(list_mk_Union [] = db_vars_Empty) /\
+   (list_mk_Union (CONS x xs) = mk_Union x (list_mk_Union xs))`;;
 
 let FOLDR_mk_Union_UNZIP = prove
  (`ITLIST (\(x,l) (ts,frees). (CONS x ts,mk_Union l frees)) l ([],A) =
@@ -43,12 +43,12 @@ let FOLDR_mk_Union_UNZIP = prove
   CHEAT_TAC);;
 
 let db_to_set_acc_def,db_to_set_acc_ind = define_rec
-  [`db_to_set_acc (n:num) (db_vars_Empty:db_var_set) s = s`;
-   `db_to_set_acc (n:num) (db_vars_Var v) s =
-         if v < n then s else sptree_insert (v - n) one s`;
-   `db_to_set_acc (n:num) (db_vars_Shift k d) s = db_to_set_acc (n + k) d s`;
-   `db_to_set_acc (n:num) (db_vars_Union v1 v2) s =
-         db_to_set_acc n v1 (db_to_set_acc n v2 s)`];;
+  `(db_to_set_acc (n:num) (db_vars_Empty:db_var_set) s = s) /\
+   (db_to_set_acc (n:num) (db_vars_Var v) s =
+         if v < n then s else sptree_insert (v - n) one s) /\
+   (db_to_set_acc (n:num) (db_vars_Shift k d) s = db_to_set_acc (n + k) d s) /\
+   (db_to_set_acc (n:num) (db_vars_Union v1 v2) s =
+         db_to_set_acc n v1 (db_to_set_acc n v2 s))`;;
 
 let wf_db_to_set_acc = prove
  (`!s n a. sptree_wf a ==> sptree_wf (db_to_set_acc n s a)`,
@@ -72,10 +72,10 @@ let vars_flatten_def = new_definition
   `vars_flatten db = vars_from_list (vars_to_list db)`;;
 
 let has_var_def,has_var_ind = define_rec
-  [`has_var n db_vars_Empty <=> F`;
-   `has_var n (db_vars_Var v) <=> (n = v)`;
-   `has_var n (db_vars_Shift k d) <=> has_var (n + k) d`;
-   `has_var n (db_vars_Union d1 d2) <=> has_var n d1 \/ has_var n d2`];;
+  `(has_var n db_vars_Empty <=> F) /\
+   (has_var n (db_vars_Var v) <=> (n = v)) /\
+   (has_var n (db_vars_Shift k d) <=> has_var (n + k) d) /\
+   (has_var n (db_vars_Union d1 d2) <=> has_var n d1 \/ has_var n d2)`;;
 add_simp has_var_def;;
 
 let has_var_mk_Union = prove

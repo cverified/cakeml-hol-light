@@ -22,7 +22,7 @@ let regexp_compiler_vector_INDUCT,regexp_compiler_vector_RECURSION =
      Vector ('a list)";;
 
 let sub_def = define_general
-  [`sub (Vector l) n = EL n l`];;
+  `sub (Vector l) n = EL n l`;;
 
 let length_def = define_general
-  [`length (Vector l) = LENGTH l`];;
+  `length (Vector l) = LENGTH l`;;

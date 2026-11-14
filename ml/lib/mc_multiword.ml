@@ -1290,20 +1290,20 @@ let mc_fac_final_def,mc_fac_final_pre_def =
    termination *)
 let mc_fac_def,mc_fac_ind = define_wf
   `MEASURE FST`
-  [`mc_fac ((l:num),(r1:'a word)) =
+  `mc_fac ((l:num),(r1:'a word)) =
      let l0 = l in
      let (l,r0,r1,r2,r3) = mc_fac_init ((l:num),(r1:'a word)) in
      let l = MIN l l0 in
        if r0 = (n2w 0) then (l,r1) else let r1 = r2 in
-         if l = 0 then (l,r1) else let ((r2,r3),(l,r1)) = ((r2,r3),mc_fac
-           (l - 1,r1)) in
+         if l = 0 then (l,r1) else let ((r2,r3),(l,r1)) = ((r2,r3),mc_fac (l
+           - 1,r1)) in
          let l = MIN l l0 in
          let r2 = r1 in
          let r1 = r3 in
          if l = 0 then (l,r1) else let (r2,(l,r1)) = (r2,mc_fac (l - 1,r1))
            in
          let (l,r1) = mc_fac_final (l,r1,r2) in
-           (l,r1)`];;
+           (l,r1)`;;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -1311,7 +1311,7 @@ let mc_fac_def,mc_fac_ind = define_wf
    termination *)
 let mc_fac_pre_def,mc_fac_pre_ind = define_wf
   `MEASURE FST`
-  [`mc_fac_pre ((l:num),(r1:'a word)) =
+  `mc_fac_pre ((l:num),(r1:'a word)) =
      let l0 = l in
      let cond' = mc_fac_init_pre ((l:num),(r1:'a word)) in
      let (l,r0,r1,r2,r3) = mc_fac_init ((l:num),(r1:'a word)) in
@@ -1327,7 +1327,7 @@ let mc_fac_pre_def,mc_fac_pre_ind = define_wf
            in
          let cond' = (mc_fac_final_pre (l,r1,r2) /\ cond') in
          let (l,r1) = mc_fac_final (l,r1,r2) in
-           cond'`];;
+           cond'`;;
 
 let mc_use_fac_def,mc_use_fac_pre_def =
   tailrec_define "mc_use_fac"

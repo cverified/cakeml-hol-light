@@ -55,10 +55,10 @@ let extend_dec_env_assoc = prove
 add_simp extend_dec_env_assoc;;
 
 let shift_lookup_def = define_general
-  [`shift_lookup Lsl = word_lsl`;
-   `shift_lookup Lsr = word_lsr`;
-   `shift_lookup Asr = word_asr`;
-   `shift_lookup Ror = word_ror`];;
+  `(shift_lookup Lsl = word_lsl) /\
+   (shift_lookup Lsr = word_lsr) /\
+   (shift_lookup Asr = word_asr) /\
+   (shift_lookup Ror = word_ror)`;;
 add_simp shift_lookup_def;;
 
 let do_shift_def = new_definition
@@ -66,7 +66,7 @@ let do_shift_def = new_definition
      match (x3,x4) with
        (ast_W8,ast_Word8 w) -> SOME (ast_Word8 (shift_lookup sh w n))
      | (ast_W64,ast_Word64 w) -> SOME (ast_Word64 (shift_lookup sh w n))
-     | (_1,_2) -> NONE`;;
+     | (_,_) -> NONE`;;
 add_simp do_shift_def;;
 
 (* HOL4 semanticPrimitivesPropsScript.sml:58-75: code that the source has in
@@ -261,8 +261,8 @@ let do_con_check_build_conv = prove
   CHEAT_TAC);;
 
 let map_error_result_def = define_cases
-  [`map_error_result f (Rraise e) = Rraise (f e)`;
-   `map_error_result f (Rabort a) = Rabort a`];;
+  `(map_error_result f (Rraise e) = Rraise (f e)) /\
+   (map_error_result f (Rabort a) = Rabort a)`;;
 add_simp map_error_result_def;;
 
 let map_error_result_Rtype_error = prove
@@ -276,8 +276,8 @@ let map_error_result_I = prove
 add_simp map_error_result_I;;
 
 let map_result_def = define_cases
-  [`map_result f1 f2 (Rval v) = Rval (f1 v)`;
-   `map_result f1 f2 (Rerr e) = Rerr (map_error_result f2 e)`];;
+  `(map_result f1 f2 (Rval v) = Rval (f1 v)) /\
+   (map_result f1 f2 (Rerr e) = Rerr (map_error_result f2 e))`;;
 add_simp map_result_def;;
 
 let map_result_Rval = prove
@@ -296,7 +296,7 @@ let exc_rel_def = new_definition
      match (x2,x3) with
        (Rraise v1,Rraise v2) -> R v1 v2
      | (Rabort a1,Rabort a2) -> a1 = a2
-     | (_3,_4) -> F`;;
+     | (_,_) -> F`;;
 add_simp exc_rel_def;;
 
 let exc_rel_raise1 = prove
@@ -331,7 +331,7 @@ let result_rel_def = new_definition
      match (x3,x4) with
        (Rval v1,Rval v2) -> R1 v1 v2
      | (Rerr e1,Rerr e2) -> exc_rel R2 e1 e2
-     | (_5,_6) -> F`;;
+     | (_,_) -> F`;;
 add_simp result_rel_def;;
 
 let result_rel_Rval = prove
@@ -364,26 +364,27 @@ let result_rel_trans = prove
   CHEAT_TAC);;
 
 let every_error_result_def = define_cases
-  [`every_error_result P (Rraise e) = P e`;
-   `every_error_result P (Rabort a) = T`];;
+  `(every_error_result P (Rraise e) = P e) /\
+   (every_error_result P (Rabort a) = T)`;;
 add_simp every_error_result_def;;
 
 let every_result_def = define_cases
-  [`every_result P1 P2 (Rval v) = (P1 v)`;
-   `every_result P1 P2 (Rerr e) = (every_error_result P2 e)`];;
+  `(every_result P1 P2 (Rval v) = (P1 v)) /\
+   (every_result P1 P2 (Rerr e) = (every_error_result P2 e))`;;
 add_simp every_result_def;;
 
 let map_sv_def = define_cases
-  [`map_sv f (semanticPrimitives_Refv v) = semanticPrimitives_Refv (f v)`;
-   `map_sv _ (semanticPrimitives_W8array w) = (semanticPrimitives_W8array w)`;
-   `map_sv f (semanticPrimitives_Varray vs) = (semanticPrimitives_Varray
-    (MAP f vs))`;
-   `map_sv f (semanticPrimitives_Thunk m v) = (semanticPrimitives_Thunk m
-    (f v))`];;
+  `(map_sv f (semanticPrimitives_Refv v) = semanticPrimitives_Refv (f v)) /\
+   (map_sv _ (semanticPrimitives_W8array w) = (semanticPrimitives_W8array
+    w)) /\
+   (map_sv f (semanticPrimitives_Varray vs) = (semanticPrimitives_Varray
+    (MAP f vs))) /\
+   (map_sv f (semanticPrimitives_Thunk m v) = (semanticPrimitives_Thunk m
+    (f v)))`;;
 add_simp map_sv_def;;
 
 let dest_Refv_def = define_general
-  [`dest_Refv (semanticPrimitives_Refv v) = v`];;
+  `dest_Refv (semanticPrimitives_Refv v) = v`;;
 add_simp dest_Refv_def;;
 let is_Refv_def = new_definition
   `is_Refv x1 =
@@ -411,7 +412,7 @@ let sv_rel_def = new_definition
      vs1 vs2
    | (semanticPrimitives_Thunk m1 v1,semanticPrimitives_Thunk m2 v2) -> (m1
      = m2 /\ R v1 v2)
-   | (_7,_8) -> F`;;
+   | (_,_) -> F`;;
 add_simp sv_rel_def;;
 
 let sv_rel_refl = prove
@@ -449,11 +450,11 @@ let sv_rel_mono = prove
   CHEAT_TAC);;
 
 let store_v_vs_def = define_cases
-  [`semanticPrimitivesProps_store_v_vs (semanticPrimitives_Refv v) = [v]`;
-   `semanticPrimitivesProps_store_v_vs (semanticPrimitives_Varray vs) = vs`;
-   `semanticPrimitivesProps_store_v_vs (semanticPrimitives_W8array _) = []`;
-   `semanticPrimitivesProps_store_v_vs (semanticPrimitives_Thunk _ v) =
-    [v]`];;
+  `(semanticPrimitivesProps_store_v_vs (semanticPrimitives_Refv v) = [v]) /\
+   (semanticPrimitivesProps_store_v_vs (semanticPrimitives_Varray vs) = vs) /\
+   (semanticPrimitivesProps_store_v_vs (semanticPrimitives_W8array _) = []) /\
+   (semanticPrimitivesProps_store_v_vs (semanticPrimitives_Thunk _ v) =
+    [v])`;;
 add_simp store_v_vs_def;;
 
 let store_vs_def = new_definition
@@ -501,7 +502,7 @@ let find_recfun_el = prove
   CHEAT_TAC);;
 
 let ctors_of_tdef_def = new_definition
-  `ctors_of_tdef (_9,_10,condefs) = MAP FST condefs`;;
+  `ctors_of_tdef (_,_,condefs) = MAP FST condefs`;;
 add_simp ctors_of_tdef_def;;
 
 let ctors_of_dec_def = new_definition
@@ -516,31 +517,31 @@ add_simp ctors_of_dec_def;;
 
 let FV_def,FV_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`FV (ast_Raise e) = FV e`;
-   `FV (ast_Handle e pes) = FV e UNION FV_pes pes`;
-   `FV (ast_Lit _) = {}`;
-   `FV (ast_Con _ ls) = FV_list ls`;
-   `FV (ast_Var id') = {id'}`;
-   `FV (ast_Fun x e) = FV e DIFF {Short x}`;
-   `FV (ast_App _ es) = FV_list es`;
-   `FV (ast_Log _ e1 e2) = FV e1 UNION FV e2`;
-   `FV (ast_If e1 e2 e3) = FV e1 UNION FV e2 UNION FV e3`;
-   `FV (ast_Mat e pes) = FV e UNION FV_pes pes`;
-   `FV (ast_Let xo e b) = FV e UNION (FV b DIFF (match xo with NONE -> {} |
-    SOME x -> {Short x}))`;
-   `FV (ast_Letrec defs b) = (FV_defs defs UNION FV b) DIFF set_of_list (MAP
-    (Short o FST) defs)`;
-   `FV (ast_Tannot e t) = FV e`;
-   `FV (ast_Lannot e l) = FV e`;
-   `FV_list [] = {}`;
-   `FV_list (CONS e es) = FV e UNION FV_list es`;
-   `FV_pes [] = {}`;
-   `FV_pes (CONS (p,e) pes) =
+  `(FV (ast_Raise e) = FV e) /\
+   (FV (ast_Handle e pes) = FV e UNION FV_pes pes) /\
+   (FV (ast_Lit _) = {}) /\
+   (FV (ast_Con _ ls) = FV_list ls) /\
+   (FV (ast_Var id') = {id'}) /\
+   (FV (ast_Fun x e) = FV e DIFF {Short x}) /\
+   (FV (ast_App _ es) = FV_list es) /\
+   (FV (ast_Log _ e1 e2) = FV e1 UNION FV e2) /\
+   (FV (ast_If e1 e2 e3) = FV e1 UNION FV e2 UNION FV e3) /\
+   (FV (ast_Mat e pes) = FV e UNION FV_pes pes) /\
+   (FV (ast_Let xo e b) = FV e UNION (FV b DIFF (match xo with NONE -> {} |
+    SOME x -> {Short x}))) /\
+   (FV (ast_Letrec defs b) = (FV_defs defs UNION FV b) DIFF set_of_list
+    (MAP (Short o FST) defs)) /\
+   (FV (ast_Tannot e t) = FV e) /\
+   (FV (ast_Lannot e l) = FV e) /\
+   (FV_list [] = {}) /\
+   (FV_list (CONS e es) = FV e UNION FV_list es) /\
+   (FV_pes [] = {}) /\
+   (FV_pes (CONS (p,e) pes) =
          (FV e DIFF (IMAGE Short (set_of_list (ast_pat_bindings p))))
-             UNION FV_pes pes`;
-   `FV_defs [] = {}`;
-   `FV_defs (CONS (_,x,e) defs) =
-         (FV e DIFF {Short x}) UNION FV_defs defs`];;
+             UNION FV_pes pes) /\
+   (FV_defs [] = {}) /\
+   (FV_defs (CONS (_,x,e) defs) =
+         (FV e DIFF {Short x}) UNION FV_defs defs)`;;
 add_simp FV_def;;
 
 (* HOL4 semanticPrimitivesPropsScript.sml:663: the overload SFV, which the
@@ -557,11 +558,11 @@ let FV_defs_MAP = prove
   CHEAT_TAC);;
 
 let FV_dec_def = define_general
-  [`FV_dec (Dlet locs p e) = FV (ast_Mat e [(p,ast_Lit ARB)])`;
-   `FV_dec (Dletrec locs defs) = FV (ast_Letrec defs (ast_Lit ARB))`;
-   `FV_dec (Dtype _11 _12) = {}`;
-   `FV_dec (Dtabbrev _13 _14 _15 _16) = {}`;
-   `FV_dec (Dexn _17 _18 _19) = {}`];;
+  `(FV_dec (Dlet locs p e) = FV (ast_Mat e [(p,ast_Lit ARB)])) /\
+   (FV_dec (Dletrec locs defs) = FV (ast_Letrec defs (ast_Lit ARB))) /\
+   (FV_dec (Dtype _ _) = {}) /\
+   (FV_dec (Dtabbrev _ _ _ _) = {}) /\
+   (FV_dec (Dexn _ _ _) = {})`;;
 add_simp FV_dec_def;;
 
 let nat_to_v_11 = prove

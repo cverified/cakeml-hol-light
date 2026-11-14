@@ -25,16 +25,16 @@ let gen_state_INDUCT,gen_state_RECURSION = define_datatype
      GenState num (num list)";;
 
 let make_partial_conf_def = define_general
-  [`make_partial_conf (conf:'a gen_gc_conf) (GenState _ gen_starts) rs =
+  `make_partial_conf (conf:'a gen_gc_conf) (GenState _ gen_starts) rs =
      mk_gen_gc_partial_conf (gen_gc_conf_limit conf) (gen_gc_conf_isRef
-       conf) (HD gen_starts) rs`];;
+       conf) (HD gen_starts) rs`;;
 
 let gc_combined_def = new_definition
   `gc_combined conf x2 x3 =
    match (x2,x3) with
-     (data_to_word_None,roots,heap,(gs:gen_state),_1,_2) ->
+     (data_to_word_None,roots,heap,(gs:gen_state),_,_) ->
      (roots,heap,0,0,gs,T)
-   | (data_to_word_Simple,roots,heap,gs,_3,_4) ->
+   | (data_to_word_Simple,roots,heap,gs,_,_) ->
      (let (roots,heap,a,c) = full_gc (roots,heap,gen_gc_conf_limit conf) in
         (roots,APPEND heap (heap_expand (gen_gc_conf_limit conf -
           a)),a,gen_gc_conf_limit conf - a,gs,c))

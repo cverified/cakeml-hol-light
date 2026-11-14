@@ -70,22 +70,22 @@ let no_mutcons_op_def = new_definition
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let no_mutcons_def,no_mutcons_ind = define_wf
+let no_mutcons_def,no_mutcons_ind = define_wf_clauses
   `MEASURE bvi_exp_size`
-  [`no_mutcons (bvi_Var n) <=> T`;
-   `no_mutcons (bvi_If x1 x2 x3) <=> no_mutcons x1 /\ no_mutcons x2
-    /\ no_mutcons x3`;
-   `no_mutcons (bvi_Let xs x) <=> ALL no_mutcons xs /\ no_mutcons x`;
-   `no_mutcons (bvi_Raise x) <=> no_mutcons x`;
-   `no_mutcons (bvi_Tick x) <=> no_mutcons x`;
-   `no_mutcons (bvi_Call ticks dest xs handler) <=>
+  [`(no_mutcons (bvi_Var n) <=> T) /\
+    (no_mutcons (bvi_If x1 x2 x3) <=> no_mutcons x1 /\ no_mutcons x2
+    /\ no_mutcons x3) /\
+    (no_mutcons (bvi_Let xs x) <=> ALL no_mutcons xs /\ no_mutcons x) /\
+    (no_mutcons (bvi_Raise x) <=> no_mutcons x) /\
+    (no_mutcons (bvi_Tick x) <=> no_mutcons x) /\
+    (no_mutcons (bvi_Call ticks dest xs handler) <=>
          ALL no_mutcons xs /\ (match handler with NONE -> T | SOME x ->
-             no_mutcons x)`;
-   `no_mutcons (bvi_Force loc n) <=> T`;
-   `no_mutcons (bvi_LetCall rets ticks dest xs y) <=> ALL no_mutcons xs
-    /\ no_mutcons y`;
-   `no_mutcons (bvi_Return xs) <=> ALL no_mutcons xs`;
-   `no_mutcons (bvi_Op op xs) <=> no_mutcons_op op /\ ALL no_mutcons xs`];;
+             no_mutcons x)) /\
+    (no_mutcons (bvi_Force loc n) <=> T) /\
+    (no_mutcons (bvi_Return xs) <=> ALL no_mutcons xs) /\
+    (no_mutcons (bvi_Op op xs) <=> no_mutcons_op op /\ ALL no_mutcons xs)`;
+   `(no_mutcons (bvi_LetCall rets ticks dest xs y) <=> ALL no_mutcons xs
+    /\ no_mutcons y)`];;
 add_simp no_mutcons_def;;
 
 let bvi_tmcProof_code_rel_def = new_definition
@@ -383,7 +383,7 @@ let eor_rel_def = new_definition
      match (x2,x3) with
        (Exn v1,Exn v2) -> bvi_tmcProof_v_rel f v1 v2
      | (Ret vs1,Ret vs2) -> ALL2 (bvi_tmcProof_v_rel f) vs1 vs2
-     | (_1,_2) -> F`;;
+     | (_,_) -> F`;;
 add_simp eor_rel_def;;
 
 let opt_res_rel_def = new_definition
@@ -718,7 +718,7 @@ let flookup_com_neq = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let mb_rel_def,mb_rel_ind = define_guess_cheat
-  [`mb_rel f x2 refs v1 v2 =
+  `mb_rel f x2 refs v1 v2 =
      match (x2,v1,v2) with
        ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),bvlSem_Block tag
          xs,bvlSem_RefPtr b ptr) ->
@@ -733,7 +733,7 @@ let mb_rel_def,mb_rel_ind = define_guess_cheat
                mb_rel f refs_old (refs \\ ptr) child child' /\
                ALL2 (bvi_tmcProof_v_rel f) right right'))
         | _ -> F
-     | (_,v1,v2) -> bvi_tmcProof_v_rel f v1 v2`];;
+     | (_,v1,v2) -> bvi_tmcProof_v_rel f v1 v2`;;
 
 let mb_rel_cons = prove
  (`!refs_old refs ptr f tag left left' v v' right right'.

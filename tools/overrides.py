@@ -2165,15 +2165,14 @@ let run_linear_reg_alloc_intervals_def = new_definition
          ((nmax + 1,&1):num#int) ((nmax + 1,&1):num#int)
          (nmax + 1,0) (LENGTH moves,(0,(0,0))))`;;
 ''',
-  # the word of the immediate is the one of the state, which HOL4
-  # ties by typechecking the clauses together where the port
-  # typechecks each of them on its own (the pre version of the
-  # source says the types, and this says the same ones)
+  # the word of the immediate is the one of the state, which
+  # nothing in the clauses says: the types are written out, as the
+  # pre version of the source writes them
   ('word_bignumProof', 'eval_ri_def'): r'''
 let eval_ri_def = define_cases
-  [`eval_ri (s:'a word_bignumProof_state) (Reg r) =
-      eval_exp s ((Var r):'a wordLang_exp)`;
-   `eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w`];;
+  `(eval_ri (s:'a word_bignumProof_state) (Reg r) =
+      eval_exp s ((Var r):'a wordLang_exp)) /\
+   (eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w)`;;
 ''',
   # the ~ of HOL4 is the complement of a word as well as the
   # negation of a truth value, which the port can only tell from
@@ -2273,7 +2272,7 @@ overload_interface("*",
   ('mergesort', 'mergesortN_def'): '''
 let mergesortN_def,mergesortN_ind = define_wf
   `MEASURE (\\(R,n,l). n)`
-  [`mergesortN R n l =
+  `(mergesortN R n l =
      if n = 0 then [] else
      if n = 1 then (match l with [] -> [] | CONS x l -> [x]) else
      if n = 2 then
@@ -2290,12 +2289,12 @@ let mergesortN_def,mergesortN_ind = define_wf
      let len1 = DIV2 n in
        mergesort_merge R
          (mergesortN R (DIV2 n) l)
-         (mergesortN R (n - len1) (DROP len1 l))`];;
+         (mergesortN R (n - len1) (DROP len1 l)))`;;
 ''',
   ('mergesort', 'mergesortN_tail_def'): '''
 let mergesortN_tail_def,mergesortN_tail_ind = define_wf
   `MEASURE (\\(negate,R,n,l). n)`
-  [`mergesortN_tail negate R n l =
+  `(mergesortN_tail negate R n l =
      if n = 0 then [] else
      if n = 1 then (match l with [] -> [] | CONS x l -> [x]) else
      if n = 2 then
@@ -2314,7 +2313,7 @@ let mergesortN_tail_def,mergesortN_tail_ind = define_wf
        merge_tail neg R (mergesortN_tail neg R (DIV2 n) l)
                         (mergesortN_tail neg R (n - len1)
                                          (DROP len1 l))
-                        []`];;
+                        [])`;;
 ''',
 }
 

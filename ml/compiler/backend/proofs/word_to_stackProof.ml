@@ -260,8 +260,8 @@ let LLOOKUP_TAKE = prove
 (* HOL4 word_to_stackProofScript.sml:317: ML code, not ported *)
 
 let index_list_def,index_list_ind = define_rec
-  [`index_list [] n = []`;
-   `index_list (CONS x xs) n = CONS (n + LENGTH xs,x) (index_list xs n)`];;
+  `(index_list [] n = []) /\
+   (index_list (CONS x xs) n = CONS (n + LENGTH xs,x) (index_list xs n))`;;
 
 let LENGTH_index_list = prove
  (`!l n. LENGTH (index_list l n) = LENGTH l`,
@@ -396,9 +396,9 @@ let word_to_stackProof_MIN_ADD = prove
   CHEAT_TAC);;
 
 let list_LUPDATE_def,list_LUPDATE_ind = define_rec
-  [`list_LUPDATE [] n ys = ys`;
-   `list_LUPDATE (CONS x xs) n ys = list_LUPDATE xs (n + 1) (LUPDATE x n
-    ys)`];;
+  `(list_LUPDATE [] n ys = ys) /\
+   (list_LUPDATE (CONS x xs) n ys = list_LUPDATE xs (n + 1) (LUPDATE x n
+    ys))`;;
 
 let LENGTH_list_LUPDATE = prove
  (`!xs n ys. LENGTH (list_LUPDATE xs n ys) = LENGTH ys`,
@@ -491,7 +491,7 @@ let list_rearrange_I = prove
   Note: requires assumption on dimindex(:'a) stated in state_rel *)
 let abs_stack_def,abs_stack_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`abs_stack bitmaps x2 stack' x4 =
+  `abs_stack bitmaps x2 stack' x4 =
      match (bitmaps,x2,stack',x4) with
        ((bitmaps:('a word) list),[],stack',[]) ->
        if stack' = [wordLang_Word ((n2w 0):'a word)] then SOME [] else NONE
@@ -528,10 +528,9 @@ let abs_stack_def,abs_stack_ind = assume_definition_rec
                    let frame = TAKE len stack' in
                    let rest = DROP len stack' in
                      match abs_stack bitmaps xs rest lens with NONE -> NONE
-                     | SOME ys -> SOME (CONS (SOME (loc,hv),bits,frame)
-                       ys))
+                     | SOME ys -> SOME (CONS (SOME (loc,hv),bits,frame) ys))
          | _ -> NONE)
-     | (bitmaps,_1,_2,_3) -> NONE`];;
+     | (bitmaps,_,_,_) -> NONE`;;
 
 (* HOL4 word_to_stackProofScript.sml:742: ML code, not ported *)
 
@@ -569,14 +568,14 @@ let adjust_names_def = new_definition
 (*handler_val counts the total number of words in the list of frames*)
 let handler_val_def,handler_val_ind = define_shaped_rec
   "cases"
-  [`handler_val [] = 1`;
-   `handler_val (CONS (NONE,_,frame) stack') =
-        1 + LENGTH frame + handler_val stack'`;
-   `handler_val (CONS (SOME _4,_5,frame) stack') =
+  `(handler_val [] = 1) /\
+   (handler_val (CONS (NONE,_,frame) stack') =
+        1 + LENGTH frame + handler_val stack') /\
+   (handler_val (CONS (SOME _,_,frame) stack') =
         // 1 for handler bitmaps pointer
         // + 2 more for the pointer and locs
         // + 1 for the next bitmap pointer
-        4 + LENGTH frame + handler_val stack'`];;
+        4 + LENGTH frame + handler_val stack')`;;
 
 let is_handler_frame_def = new_definition
   `is_handler_frame x1 =
@@ -594,7 +593,7 @@ let stack_rel_aux_def,stack_rel_aux_ind = define_wf
    list_size      (pair_size       (option_size       (pair_size
   (word_loc_size (\x. 0)) (word_loc_size (\x. 0))))      (pair_size (list_size
   (\x. 0)) (list_size (word_loc_size (\x. 0)))))      x3)`
-  [`stack_rel_aux k len x3 x4 =
+  `stack_rel_aux k len x3 x4 =
      match (x3,x4) with
        ([],[]) -> T
      | (CONS (StackFrame n l0 l NONE) xs,CONS (NONE,bits,frame) stack') ->
@@ -611,8 +610,8 @@ let stack_rel_aux_def,stack_rel_aux_ind = define_wf
        (loc,hv),bits,frame) stack') ->
        (h1 < LENGTH stack' /\
        is_handler_frame (EL (LENGTH stack' - (h1 + 1)) xs) ==>
-       hv = wordLang_Word (n2w (len - handler_val (LASTN (h1 + 1)
-         stack')))) /\
+       hv = wordLang_Word (n2w (len - handler_val (LASTN (h1 + 1) stack'))))
+         /\
        loc = wordLang_Loc l1 l2 /\
        (!n v.
          ALOOKUP l0 n = SOME v /\ ALOOKUP l n = NONE ==>
@@ -623,10 +622,10 @@ let stack_rel_aux_def,stack_rel_aux_ind = define_wf
          l,[]) /\
        the (LENGTH frame + 1) n = LENGTH frame + 1 /\
        stack_rel_aux k len xs stack'
-     | (_6,_7) -> F`];;
+     | (_,_) -> F`;;
 
 let sorted_env_def = define_general
-  [`sorted_env (StackFrame n l0 l _) = SORTED (\x y. FST x > FST y) l`];;
+  `sorted_env (StackFrame n l0 l _) = SORTED (\x y. FST x > FST y) l`;;
 
 let word_to_stackProof_stack_rel_def = new_definition
   `word_to_stackProof_stack_rel k s_handler s_stack t_handler t_rest_of_stack
@@ -1301,16 +1300,16 @@ let alloc_IMP_alloc2 = prove
          stackSem_state_ffi t1))`,
   CHEAT_TAC);;
 
-let compile_result_def = define_cases
-  [`compile_result (wordSem_Result w1 w2) = stackSem_Result w1`;
-   `compile_result (wordSem_Exception w1 w2) = stackSem_Exception w1`;
-   `compile_result wordSem_TimeOut = stackSem_TimeOut`;
-   `compile_result wordSem_NotEnoughSpace = stackSem_Halt (wordLang_Word
-    (n2w 1))`;
-   `compile_result (wordSem_FinalFFI f) = stackSem_FinalFFI f`;
-   `compile_result (wordSem_Break k) = stackSem_Break k`;
-   `compile_result (wordSem_Continue k) = stackSem_Continue k`;
-   `compile_result wordSem_Error = stackSem_Error`];;
+let compile_result_def = define_cases_clauses
+  [`(compile_result (wordSem_Result w1 w2) = stackSem_Result w1) /\
+    (compile_result wordSem_TimeOut = stackSem_TimeOut) /\
+    (compile_result wordSem_NotEnoughSpace = stackSem_Halt (wordLang_Word
+    (n2w 1))) /\
+    (compile_result (wordSem_FinalFFI f) = stackSem_FinalFFI f) /\
+    (compile_result (wordSem_Break k) = stackSem_Break k) /\
+    (compile_result (wordSem_Continue k) = stackSem_Continue k) /\
+    (compile_result wordSem_Error = stackSem_Error)`;
+   `(compile_result (wordSem_Exception w1 w2) = stackSem_Exception w1)`];;
 add_simp compile_result_def;;
 
 (* [local] *)
@@ -1874,13 +1873,13 @@ Theorem wStackLoad_thm3 =
    termination *)
 let map_var_def,map_var_ind = define_shaped_rec
   "nested"
-  [`map_var f (wordLang_Var num') = wordLang_Var (f num')`;
-   `map_var f (wordLang_Load exp) = wordLang_Load (map_var f exp)`;
-   `map_var f (wordLang_Op wop ls) = wordLang_Op wop (MAP (map_var f) ls)`;
-   `map_var f (wordLang_Shift sh e1 e2) = wordLang_Shift sh (map_var f e1)
-    (map_var f e2)`;
-   `map_var f (wordLang_Const c) = (wordLang_Const c:'a wordLang_exp)`;
-   `map_var f (wordLang_Lookup v) = wordLang_Lookup v`];;
+  `(map_var f (wordLang_Var num') = wordLang_Var (f num')) /\
+   (map_var f (wordLang_Load exp) = wordLang_Load (map_var f exp)) /\
+   (map_var f (wordLang_Op wop ls) = wordLang_Op wop (MAP (map_var f) ls)) /\
+   (map_var f (wordLang_Shift sh e1 e2) = wordLang_Shift sh (map_var f e1)
+    (map_var f e2)) /\
+   (map_var f (wordLang_Const c) = (wordLang_Const c:'a wordLang_exp)) /\
+   (map_var f (wordLang_Lookup v) = wordLang_Lookup v)`;;
 add_simp map_var_def;;
 
 let the_words_EVERY_IS_SOME_Word = prove

@@ -323,10 +323,10 @@ let update_move_related_def = new_definition
 
 (* Monadic list functions -- doesn't care about order *)
 let st_ex_FOREACH_def,st_ex_FOREACH_ind = define_guess
-  [`st_ex_FOREACH [] a = st_ex_return one`;
-   `st_ex_FOREACH (CONS x xs) a =
+  `(st_ex_FOREACH [] a = st_ex_return one) /\
+   (st_ex_FOREACH (CONS x xs) a =
         st_ex_ignore_bind (a x) (
-        st_ex_FOREACH xs a)`];;
+        st_ex_FOREACH xs a))`;;
 
 (* HOL4 reg_allocScript.sml: the case constant that its Datatype
    makes for the tag of a register *)
@@ -340,47 +340,47 @@ let reg_alloc_tag_CASE =
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_MAP_def,st_ex_MAP_ind = define_guess_cheat
-  [`st_ex_MAP f [] = st_ex_return []`;
-   `st_ex_MAP f (CONS x xs) =
+  `(st_ex_MAP f [] = st_ex_return []) /\
+   (st_ex_MAP f (CONS x xs) =
       st_ex_bind (f x) (\fx. st_ex_bind (st_ex_MAP f xs) (\fxs.
-        st_ex_return (CONS fx fxs)))`];;
+        st_ex_return (CONS fx fxs))))`;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_PARTITION_def,st_ex_PARTITION_ind = define_guess_cheat
-  [`st_ex_PARTITION P [] tt ff = st_ex_return (tt,ff)`;
-   `st_ex_PARTITION P (CONS x xs) tt ff =
+  `(st_ex_PARTITION P [] tt ff = st_ex_return (tt,ff)) /\
+   (st_ex_PARTITION P (CONS x xs) tt ff =
       st_ex_bind (P x) (\Px.
         if Px then
           st_ex_PARTITION P xs (CONS x tt) ff
-        else st_ex_PARTITION P xs tt (CONS x ff))`];;
+        else st_ex_PARTITION P xs tt (CONS x ff)))`;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_FILTER_def,st_ex_FILTER_ind = define_guess_cheat
-  [`st_ex_FILTER P [] acc = st_ex_return acc`;
-   `st_ex_FILTER P (CONS x xs) acc =
+  `(st_ex_FILTER P [] acc = st_ex_return acc) /\
+   (st_ex_FILTER P (CONS x xs) acc =
       st_ex_bind (P x) (\Px.
         if Px then
           st_ex_FILTER P xs (CONS x acc)
-        else st_ex_FILTER P xs acc)`];;
+        else st_ex_FILTER P xs acc))`;;
 
 (* Keep adjacency lists sorted by > *)
 
 (* Insert an undirect edge into the adj list representation *)
 let sorted_insert_def,sorted_insert_ind = define_rec
-  [`sorted_insert (x:num) acc [] = REVERSE (CONS x acc)`;
-   `sorted_insert (x:num) acc (CONS y ys) =
+  `(sorted_insert (x:num) acc [] = REVERSE (CONS x acc)) /\
+   (sorted_insert (x:num) acc (CONS y ys) =
         if x = y then APPEND (REVERSE acc) (CONS y ys)
         else if x > y then APPEND (REVERSE acc) (CONS x (CONS y ys))
-        else sorted_insert x (CONS y acc) ys`];;
+        else sorted_insert x (CONS y acc) ys)`;;
 
 let sorted_mem_def,sorted_mem_ind = define_rec
-  [`sorted_mem (x:num) [] = F`;
-   `sorted_mem (x:num) (CONS y ys) =
+  `(sorted_mem (x:num) [] = F) /\
+   (sorted_mem (x:num) (CONS y ys) =
         if x = y then T
         else if x > y then F
-        else sorted_mem x ys`];;
+        else sorted_mem x ys)`;;
 
 let insert_edge_def = new_definition
   `insert_edge x y =
@@ -393,19 +393,19 @@ let insert_edge_def = new_definition
    what the port found for it *)
 let list_insert_edge_def,list_insert_edge_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x1)`
-  [`list_insert_edge x [] = st_ex_return one`;
-   `list_insert_edge x (CONS y ys) =
+  `(list_insert_edge x [] = st_ex_return one) /\
+   (list_insert_edge x (CONS y ys) =
           st_ex_ignore_bind (insert_edge x y) (
-          list_insert_edge x ys)`];;
+          list_insert_edge x ys))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let clique_insert_edge_def,clique_insert_edge_ind = define_wf
   `MEASURE (\x0. list_size (\n. n) x0)`
-  [`clique_insert_edge [] = st_ex_return one`;
-   `clique_insert_edge (CONS x xs) =
+  `(clique_insert_edge [] = st_ex_return one) /\
+   (clique_insert_edge (CONS x xs) =
         st_ex_ignore_bind (list_insert_edge x xs) (
-        clique_insert_edge xs)`];;
+        clique_insert_edge xs))`;;
 
 (* assuming vertices in cli already forms a clique,
    extend it with new members
@@ -414,13 +414,13 @@ let clique_insert_edge_def,clique_insert_edge_ind = define_wf
    what the port found for it *)
 let extend_clique_def,extend_clique_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0)`
-  [`extend_clique [] cli = st_ex_return cli`;
-   `extend_clique (CONS x xs) cli =
+  `(extend_clique [] cli = st_ex_return cli) /\
+   (extend_clique (CONS x xs) cli =
         if MEM x cli then
           extend_clique xs cli
         else
           st_ex_ignore_bind (list_insert_edge x cli) (
-          extend_clique xs (CONS x cli))`];;
+          extend_clique xs (CONS x cli)))`;;
 
 (* The allocator heuristics, designed to minimize proof at the
    cost of some extra computation *)
@@ -497,13 +497,13 @@ let sort_moves_def = new_definition
 let smerge_def,smerge_ind = define_wf
   `MEASURE (\(x0,x1).      list_size (pair_size (\n. n) (\x. 0)) x0 +
   list_size (pair_size (\n. n) (\x. 0)) x1)`
-  [`smerge xs ys =
+  `smerge xs ys =
      match (xs,ys) with
        ([],ys) -> ys
      | (xs,[]) -> xs
      | (CONS ((p:num),m) xs,CONS (p',m') ys) ->
        if p >= p' then CONS (p,m) (smerge xs (CONS (p',m') ys))
-       else CONS (p',m') (smerge (CONS (p,m) xs) ys)`];;
+       else CONS (p',m') (smerge (CONS (p,m) xs) ys)`;;
 
 (*
   revive the unavailable moves that touch each neighbor
@@ -693,7 +693,7 @@ let consistency_ok_def = new_definition
    what the port found for it *)
 let coalesce_parent_def,coalesce_parent_ind = define_wf
   `MEASURE (\x0. (\n. n) x0)`
-  [`coalesce_parent x =
+  `coalesce_parent x =
    st_ex_bind (coalesced_sub x) (\xt. st_ex_bind (is_Fixed xt) (\bx.
      // Special case where x is coalesced to a fixed color already
      if bx then
@@ -702,7 +702,7 @@ let coalesce_parent_def,coalesce_parent_ind = define_wf
          st_ex_return x
        else st_ex_bind (coalesce_parent xt) (\anc.
          st_ex_ignore_bind (update_coalesced x anc) (
-         st_ex_return anc))))`];;
+         st_ex_return anc))))`;;
 
 let canonize_move_def = new_definition
   `canonize_move x y =
@@ -723,8 +723,8 @@ let canonize_move_def = new_definition
 let st_ex_FIRST_def,st_ex_FIRST_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3).      list_size (pair_size (\x. 0) (pair_size (\n.
   n) (\n. n))) x2)`
-  [`st_ex_FIRST P Q [] unavail = st_ex_return (NONE,unavail)`;
-   `st_ex_FIRST P Q (CONS m ms) unavail =
+  `(st_ex_FIRST P Q [] unavail = st_ex_return (NONE,unavail)) /\
+   (st_ex_FIRST P Q (CONS m ms) unavail =
         let (p,(x,y)) = m in
         st_ex_bind (coalesce_parent x) (\x. st_ex_bind (coalesce_parent y)
             (\y. st_ex_bind (P x y) (\b1.
@@ -735,7 +735,7 @@ let st_ex_FIRST_def,st_ex_FIRST_ind = define_wf
             match optb2 with
               NONE -> st_ex_FIRST P Q ms (CONS (p,(x,y)) unavail)
             | SOME pr ->
-              st_ex_return (SOME ((x,y),pr,ms),unavail))))))`];;
+              st_ex_return (SOME ((x,y),pr,ms),unavail)))))))`;;
 
 let respill_def = new_definition
   `respill k x =
@@ -836,28 +836,28 @@ let safe_div_def = new_definition
    what the port found for it *)
 let st_ex_list_MIN_cost_def,st_ex_list_MIN_cost_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4,x5). list_size (\n. n) x1)`
-  [`st_ex_list_MIN_cost scost [] d k v acc = st_ex_return (k,acc)`;
-   `st_ex_list_MIN_cost scost (CONS x xs) d k v acc =
+  `(st_ex_list_MIN_cost scost [] d k v acc = st_ex_return (k,acc)) /\
+   (st_ex_list_MIN_cost scost (CONS x xs) d k v acc =
       if x < d then
         st_ex_bind (degrees_sub x) (\xv. st_ex_bind (st_ex_return (safe_div
             (lookup_any x scost 0) xv)) (\cost.
           if v > cost then
             st_ex_list_MIN_cost scost xs d x cost (CONS k acc)
           else st_ex_list_MIN_cost scost xs d k v (CONS x acc)))
-      else st_ex_list_MIN_cost scost xs d k v acc`];;
+      else st_ex_list_MIN_cost scost xs d k v acc)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let st_ex_list_MAX_deg_def,st_ex_list_MAX_deg_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). list_size (\n. n) x0)`
-  [`st_ex_list_MAX_deg [] d k v acc = st_ex_return (k,acc)`;
-   `st_ex_list_MAX_deg (CONS x xs) d k v acc =
+  `(st_ex_list_MAX_deg [] d k v acc = st_ex_return (k,acc)) /\
+   (st_ex_list_MAX_deg (CONS x xs) d k v acc =
       if x < d then
         st_ex_bind (degrees_sub x) (\xv.
           if v < xv then
             st_ex_list_MAX_deg xs d x xv (CONS k acc)
           else st_ex_list_MAX_deg xs d k v (CONS x acc))
-      else st_ex_list_MAX_deg xs d k v acc`];;
+      else st_ex_list_MAX_deg xs d k v acc)`;;
 
 let do_spill_def = new_definition
   `do_spill scostopt k =
@@ -893,10 +893,10 @@ let do_step_def = new_definition
    what the port found for it *)
 let rpt_do_step_def,rpt_do_step_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
-  [`rpt_do_step scost k 0 = st_ex_return one`;
-   `rpt_do_step scost k (SUC c) =
+  `(rpt_do_step scost k 0 = st_ex_return one) /\
+   (rpt_do_step scost k (SUC c) =
       st_ex_bind (do_step scost k) (\b.
-        if b then rpt_do_step scost k c else st_ex_return one)`];;
+        if b then rpt_do_step scost k c else st_ex_return one))`;;
 
 (*
   The coloring functions
@@ -907,7 +907,7 @@ let rpt_do_step_def,rpt_do_step_ind = define_wf
    what the port found for it *)
 let remove_colours_def,remove_colours_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0)`
-  [`remove_colours x1 ks =
+  `remove_colours x1 ks =
      match (x1,ks) with
        // No more available colours
      ((ls:num list),[]) -> st_ex_return []
@@ -921,7 +921,7 @@ let remove_colours_def,remove_colours_ind = define_wf
              remove_colours xs (FILTER (\x. ~(x = c)) ks)
          | _ ->
              remove_colours xs ks) (\r.
-         st_ex_return r))`];;
+         st_ex_return r))`;;
 
 (* First colouring -- turns all Atemps into Fixeds or Stemps drawing from colors in ks *)
 (* Assign a tag to an Atemp node, skipping if it is not actually an Atemp *)
@@ -970,13 +970,13 @@ let tag_col_def = new_definition
    assuming input is sorted
 *)
 let unbound_colour_def,unbound_colour_ind = define_rec
-  [`unbound_colour col [] = col`;
-   `unbound_colour col (CONS (x:num) xs) =
+  `(unbound_colour col [] = col) /\
+   (unbound_colour col (CONS (x:num) xs) =
         if col < x then
           col
         else if x = col then
           unbound_colour (col + 1) xs
-        else unbound_colour col xs`];;
+        else unbound_colour col xs)`;;
 
 (* Second colouring -- turns all Stemps into Fixed ≥ k *)
 let assign_Stemp_tag_def = new_definition
@@ -1008,14 +1008,14 @@ let assign_Stemps_def = new_definition
    what the port found for it *)
 let first_match_col_def,first_match_col_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x1)`
-  [`first_match_col ks [] = st_ex_return NONE`;
-   `first_match_col ks (CONS x xs) =
+  `(first_match_col ks [] = st_ex_return NONE) /\
+   (first_match_col ks (CONS x xs) =
         st_ex_bind (node_tag_sub x) (\c.
           match c with
             Fixed m ->
               if MEM m ks then st_ex_return (SOME m) else first_match_col
                   ks xs
-          | _ -> first_match_col ks xs)`];;
+          | _ -> first_match_col ks xs))`;;
 
 (* Clash tree representation of a program -- this is designed as an interface:
   wordLang program -> clash tree -> reg alloc
@@ -1043,9 +1043,9 @@ let clash_tree_INDUCT,clash_tree_RECURSION = define_datatype
 
 (* --- clash_tree oracle checks --- *)
 let numset_list_delete_def,numset_list_delete_ind = define_rec
-  [`numset_list_delete [] (t:'a spt) = t`;
-   `numset_list_delete (CONS x xs) (t:'a spt) = numset_list_delete xs
-    (sptree_delete x t)`];;
+  `(numset_list_delete [] (t:'a spt) = t) /\
+   (numset_list_delete (CONS x xs) (t:'a spt) = numset_list_delete xs
+    (sptree_delete x t))`;;
 
 (*Check that a numset is injective over the clash sets in an interpreted tree*)
 let check_col_def = new_definition
@@ -1056,28 +1056,28 @@ let check_col_def = new_definition
      else NONE`;;
 
 let check_partial_col_def,check_partial_col_ind = define_rec
-  [`check_partial_col f [] t ft = SOME (t,ft)`;
-   `check_partial_col f (CONS x xs) t ft =
+  `(check_partial_col f [] t ft = SOME (t,ft)) /\
+   (check_partial_col f (CONS x xs) t ft =
         match sptree_lookup x t with
           SOME one -> check_partial_col f xs t ft
         | NONE ->
         (match sptree_lookup (f x) ft with
           NONE -> check_partial_col f xs (sptree_insert x one t)
               (sptree_insert (f x) one ft)
-        | SOME one -> NONE)`];;
+        | SOME one -> NONE))`;;
 
 (* The checking function, used by oracle, and also used as part of the correctness proof *)
 (* live = the liveset, flive = the liveset with f applied over it*)
 let check_clash_tree_def,check_clash_tree_ind = define_rec
-  [`check_clash_tree f (reg_alloc_Delta w r) live flive =
+  `(check_clash_tree f (reg_alloc_Delta w r) live flive =
         match check_partial_col f w live flive with
           NONE -> NONE
         | SOME _ ->
         let del_w = (numset_list_delete w live) in
         let fdel_w = (numset_list_delete (MAP f w) flive) in
-        check_partial_col f r del_w fdel_w`;
-   `check_clash_tree f (reg_alloc_Set t) live flive = check_col f t`;
-   `check_clash_tree f (reg_alloc_Branch topt t1 t2) live flive =
+        check_partial_col f r del_w fdel_w) /\
+   (check_clash_tree f (reg_alloc_Set t) live flive = check_col f t) /\
+   (check_clash_tree f (reg_alloc_Branch topt t1 t2) live flive =
         match check_clash_tree f t1 live flive with
           NONE -> NONE
         | SOME (t1_out,ft1_out) ->
@@ -1089,12 +1089,12 @@ let check_clash_tree_def,check_clash_tree_ind = define_rec
             // This check can be done in either direction
             check_partial_col f (MAP FST (toAList (difference t2_out
                 t1_out))) t1_out ft1_out
-        | SOME t -> check_col f t))`;
-   `check_clash_tree f (reg_alloc_Seq t1 t2) live flive =
+        | SOME t -> check_col f t))) /\
+   (check_clash_tree f (reg_alloc_Seq t1 t2) live flive =
         match check_clash_tree f t2 live flive with
           NONE -> NONE
         | SOME (t2_out,ft2_out) ->
-          check_clash_tree f t1 t2_out ft2_out`];;
+          check_clash_tree f t1 t2_out ft2_out)`;;
 
 (* --
 compile clash_trees into a register allocator state
@@ -1113,26 +1113,26 @@ The second remap is probably not necessary?
    what the port found for it *)
 let list_remap_def,list_remap_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0)`
-  [`list_remap [] (ta,fa,nv) = (ta,fa,nv)`;
-   `list_remap (CONS x xs) (ta,fa,nv) =
+  `(list_remap [] (ta,fa,nv) = (ta,fa,nv)) /\
+   (list_remap (CONS x xs) (ta,fa,nv) =
         match sptree_lookup x ta with
           SOME v -> list_remap xs (ta,fa,nv)
         | NONE ->
           list_remap xs (sptree_insert x nv ta,sptree_insert nv x
-              fa,nv + 1)`];;
+              fa,nv + 1))`;;
 
 let mk_bij_aux_def,mk_bij_aux_ind = define_rec
-  [`mk_bij_aux (reg_alloc_Delta writes reads) tfn =
-        list_remap writes (list_remap reads tfn)`;
-   `mk_bij_aux (reg_alloc_Set t) tfn =
-        list_remap (MAP FST (toAList t)) tfn`;
-   `mk_bij_aux (reg_alloc_Branch topt t1 t2) tfn =
+  `(mk_bij_aux (reg_alloc_Delta writes reads) tfn =
+        list_remap writes (list_remap reads tfn)) /\
+   (mk_bij_aux (reg_alloc_Set t) tfn =
+        list_remap (MAP FST (toAList t)) tfn) /\
+   (mk_bij_aux (reg_alloc_Branch topt t1 t2) tfn =
          let tfn' = mk_bij_aux t2 (mk_bij_aux t1 tfn) in
          match topt with
            NONE -> tfn'
-         | SOME ts -> list_remap (MAP FST (toAList ts)) tfn'`;
-   `mk_bij_aux (reg_alloc_Seq t1 t2) tfn =
-        mk_bij_aux t1 (mk_bij_aux t2 tfn)`];;
+         | SOME ts -> list_remap (MAP FST (toAList ts)) tfn') /\
+   (mk_bij_aux (reg_alloc_Seq t1 t2) tfn =
+        mk_bij_aux t1 (mk_bij_aux t2 tfn))`;;
 
 let mk_bij_def = new_definition
   `mk_bij t =
@@ -1181,17 +1181,17 @@ let _ = size_thms "clash_tree";;
    what the port found for it *)
 let mk_graph_def,mk_graph_ind = define_wf
   `MEASURE (\(x0,x1,x2). clash_tree_size x1)`
-  [`mk_graph ta (reg_alloc_Delta w r) liveout =
+  `(mk_graph ta (reg_alloc_Delta w r) liveout =
         st_ex_bind (st_ex_return (MAP ta w)) (\wta. st_ex_bind
             (st_ex_return (MAP ta r)) (\rta. st_ex_bind (extend_clique wta
             liveout) (\live. st_ex_bind (st_ex_return (FILTER (\x. ~(MEM x
             wta)) live)) (\live. st_ex_bind (extend_clique rta live) (\livein.
-          st_ex_return livein)))))`;
-   `mk_graph ta (reg_alloc_Set t) liveout =
+          st_ex_return livein)))))) /\
+   (mk_graph ta (reg_alloc_Set t) liveout =
         st_ex_bind (st_ex_return (MAP ta (MAP FST (toAList t)))) (\live.
           st_ex_ignore_bind (clique_insert_edge live) (
-          st_ex_return live))`;
-   `mk_graph ta (reg_alloc_Branch topt t1 t2) liveout =
+          st_ex_return live))) /\
+   (mk_graph ta (reg_alloc_Branch topt t1 t2) liveout =
         st_ex_bind (mk_graph ta t1 liveout) (\t1_live. st_ex_bind (mk_graph
             ta t2 liveout) (\t2_live.
           (match topt with
@@ -1202,10 +1202,10 @@ let mk_graph_def,mk_graph_ind = define_wf
             st_ex_bind (st_ex_return (MAP ta (MAP FST (toAList t))))
                 (\clashes.
               st_ex_ignore_bind (clique_insert_edge clashes) (
-              st_ex_return clashes)))))`;
-   `mk_graph ta (reg_alloc_Seq t1 t2) liveout =
+              st_ex_return clashes)))))) /\
+   (mk_graph ta (reg_alloc_Seq t1 t2) liveout =
         st_ex_bind (mk_graph ta t2 liveout) (\live.
-          mk_graph ta t1 live)`];;
+          mk_graph ta t1 live))`;;
 
 let sp_default_def = new_definition
   `sp_default t i =
@@ -1216,10 +1216,10 @@ let sp_default_def = new_definition
    what the port found for it *)
 let extend_graph_def,extend_graph_ind = define_wf
   `MEASURE (\(x0,x1). list_size (pair_size (\x. 0) (\x. 0)) x1)`
-  [`extend_graph ta [] = st_ex_return one`;
-   `extend_graph ta (CONS (x,y) xs) =
+  `(extend_graph ta [] = st_ex_return one) /\
+   (extend_graph ta (CONS (x,y) xs) =
         st_ex_ignore_bind (insert_edge (ta x) (ta y)) (
-        extend_graph ta xs)`];;
+        extend_graph ta xs))`;;
 
 (* sets up the register allocator init state with the clash_tree input
   TODO: should the sptrees be hidden right away?
@@ -1303,10 +1303,10 @@ let undir_move_insert_def = new_definition
      pri_move_insert p x y (pri_move_insert p y x acc)`;;
 
 let moves_to_sp_def,moves_to_sp_ind = define_rec
-  [`moves_to_sp [] acc = acc`;
-   `moves_to_sp (CONS move' xs) acc =
+  `(moves_to_sp [] acc = acc) /\
+   (moves_to_sp (CONS move' xs) acc =
         let (p,x,y) = move' in
-        moves_to_sp xs (undir_move_insert p x y acc)`];;
+        moves_to_sp xs (undir_move_insert p x y acc))`;;
 
 (*Do a consistency sort after setting up the sptree of moves*)
 let resort_moves_def = new_definition
@@ -1325,13 +1325,13 @@ let algorithm_INDUCT,algorithm_RECURSION = define_datatype
    what the port found for it *)
 let coalesce_root_def,coalesce_root_ind = define_wf
   `MEASURE (\x0. (\n. n) x0)`
-  [`coalesce_root x =
+  `coalesce_root x =
    st_ex_bind (coalesced_sub x) (\xt. st_ex_bind (is_Fixed xt) (\bx.
      if bx then
        st_ex_return xt
      else if x <= xt then
          st_ex_return x
-       else coalesce_root xt))`];;
+       else coalesce_root xt))`;;
 
 (* mtable is an sptree lookup for the moves *)
 let biased_pref_def = new_definition
@@ -1374,14 +1374,14 @@ let update_move_def = new_definition
    what the port found for it *)
 let neg_first_match_col_def,neg_first_match_col_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x2)`
-  [`neg_first_match_col k bads [] = st_ex_return NONE`;
-   `neg_first_match_col k bads (CONS x xs) =
+  `(neg_first_match_col k bads [] = st_ex_return NONE) /\
+   (neg_first_match_col k bads (CONS x xs) =
         st_ex_bind (node_tag_sub x) (\c.
           match c with
             Fixed m ->
               if MEM m bads \/ m < k then neg_first_match_col k bads xs
               else st_ex_return (SOME m)
-          | _ -> neg_first_match_col k bads xs)`];;
+          | _ -> neg_first_match_col k bads xs))`;;
 
 let neg_biased_pref_def = new_definition
   `neg_biased_pref k mtable n bads =

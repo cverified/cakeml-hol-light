@@ -61,13 +61,13 @@ let _ = do_list hide_constant ["str"];;
    termination *)
 let adjust_bv_def,adjust_bv_ind = define_shaped_rec
   "nested"
-  [`adjust_bv b (bvlSem_Number i) = bvlSem_Number i`;
-   `adjust_bv b (bvlSem_Word64 w) = bvlSem_Word64 w`;
-   `adjust_bv b (bvlSem_RefPtr l r) = bvlSem_RefPtr l (b r)`;
-   `adjust_bv b (bvlSem_CodePtr c) = bvlSem_CodePtr (bvl_num_stubs +
-    bvl_to_bvi_namespaces * c)`;
-   `adjust_bv b (bvlSem_Block tag vs) = bvlSem_Block tag (MAP (adjust_bv
-    b) vs)`];;
+  `(adjust_bv b (bvlSem_Number i) = bvlSem_Number i) /\
+   (adjust_bv b (bvlSem_Word64 w) = bvlSem_Word64 w) /\
+   (adjust_bv b (bvlSem_RefPtr l r) = bvlSem_RefPtr l (b r)) /\
+   (adjust_bv b (bvlSem_CodePtr c) = bvlSem_CodePtr (bvl_num_stubs +
+    bvl_to_bvi_namespaces * c)) /\
+   (adjust_bv b (bvlSem_Block tag vs) = bvlSem_Block tag (MAP (adjust_bv
+    b) vs))`;;
 
 (* HOL4 bvl_to_bviProofScript.sml:40: ML code, not ported *)
 
@@ -82,10 +82,10 @@ let adjust_bv_Boolv = prove
 add_simp adjust_bv_Boolv;;
 
 let aux_code_installed_def,aux_code_installed_ind = define_rec
-  [`aux_code_installed [] t <=> T`;
-   `aux_code_installed (CONS (name,arg_count,body) rest) t <=>
+  `(aux_code_installed [] t <=> T) /\
+   (aux_code_installed (CONS (name,arg_count,body) rest) t <=>
          (sptree_lookup name t = SOME (arg_count,body)) /\
-         aux_code_installed rest t`];;
+         aux_code_installed rest t)`;;
 
 (* [local] *)
 let aux_code_installed_APPEND = prove
@@ -206,12 +206,12 @@ let state_rel_FLOOKUP_Thunk = prove
    termination *)
 let bv_ok_def,bv_ok_ind = define_wf
   `MEASURE (bvlSem_v_size o SND)`
-  [`bv_ok refs x2 =
+  `bv_ok refs x2 =
      match (refs,x2) with
-       ((refs:(num,bvlSem_v bvlSem_ref)fmap),bvlSem_RefPtr l r) -> r IN
-         FDOM refs
+       ((refs:(num,bvlSem_v bvlSem_ref)fmap),bvlSem_RefPtr l r) -> r IN FDOM
+         refs
      | (refs,bvlSem_Block tag vs) -> ALL (bv_ok refs) vs
-     | (refs,_) -> T`];;
+     | (refs,_) -> T`;;
 
 (* HOL4 bvl_to_bviProofScript.sml:178: ML code, not ported *)
 

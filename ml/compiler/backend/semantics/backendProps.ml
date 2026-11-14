@@ -170,9 +170,9 @@ let syntax_to_full_oracle_def = new_definition
    what the port found for it *)
 let state_orac_states_def,state_orac_states_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x3)`
-  [`state_orac_states f st progs 0 = st`;
-   `state_orac_states f st progs (SUC n) =
-      FST (f (state_orac_states f st progs n) (progs n))`];;
+  `(state_orac_states f st progs 0 = st) /\
+   (state_orac_states f st progs (SUC n) =
+      FST (f (state_orac_states f st progs n) (progs n)))`;;
 
 let state_co_progs_def = new_definition
   `state_co_progs f st orac = let

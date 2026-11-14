@@ -100,10 +100,10 @@ let interference_ok_def = new_definition
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let all_pcs_def,all_pcs_ind = define_guess_cheat
-  [`all_pcs n a k =
+  `all_pcs n a k =
      match n with
        0 -> {}
-     | n -> a INSERT all_pcs (n - (2 EXP k)) (a + n2w (2 EXP k)) k`];;
+     | n -> a INSERT all_pcs (n - (2 EXP k)) (a + n2w (2 EXP k)) k`;;
 
 let all_pcs_thm = prove
  (`all_pcs n a k = {a + n2w (i * (2 EXP k)) | i | i * (2 EXP k) < n}`,
@@ -113,18 +113,18 @@ let all_pcs_thm = prove
    what the port found for it *)
 let asserts_def,asserts_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
-  [`asserts 0 next' ms _ Q <=> Q (next' 0 ms)`;
-   `asserts (SUC n) next' ms P Q <=>
+  `(asserts 0 next' ms _ Q <=> Q (next' 0 ms)) /\
+   (asserts (SUC n) next' ms P Q <=>
          (let ms' = next' (SUC n) ms in P ms' /\ asserts n next' ms' P
-             Q)`];;
+             Q))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let asserts2_def,asserts2_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
-  [`(asserts2 n fi fc ms P =
+  `(asserts2 n fi fc ms P =
     if n = 0 then T else P ms (fc ms) /\
-      asserts2 (n - 1) fi fc (fi n (fc ms)) P)`];;
+      asserts2 (n - 1) fi fc (fi n (fc ms)) P)`;;
 
 let encoder_correct_def = new_definition
   `encoder_correct t <=>

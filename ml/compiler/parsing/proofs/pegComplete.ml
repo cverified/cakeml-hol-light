@@ -235,8 +235,8 @@ let not_nullable_seql_input_CONS = prove
    MESON_TAC[LE_TRANS]));;
 
 let sym2peg_def = define_cases
-  [`sym2peg (grammar_TOK tk) = cmlPEG_tokeq tk`;
-   `sym2peg (grammar_NT N) = peg_nt N I`];;
+  `(sym2peg (grammar_TOK tk) = cmlPEG_tokeq tk) /\
+   (sym2peg (grammar_NT N) = peg_nt N I)`;;
 
 let not_peg0_peg_eval_NIL_NONE = prove
  (`~(peg0 G sym) /\ sym IN Gexprs G /\ wfG G ==>
@@ -256,12 +256,12 @@ let _ = size_thms "parsetree";;
    what the port found for it *)
 let left_insert1_def,left_insert1_ind = define_wf
   `MEASURE (\(x0,x1). parsetree_size locs_size (\x. 0) (\x. 0) x1)`
-  [`left_insert1 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l)`;
-   `left_insert1 pt (Nd (n,l0) subs) =
+  `(left_insert1 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l)) /\
+   (left_insert1 pt (Nd (n,l0) subs) =
          match subs with
              [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt]
            | [x] -> mkNd n [mkNd n [pt]; x]
-           | CONS x xs -> mkNd n (CONS (left_insert1 pt x) xs)`];;
+           | CONS x xs -> mkNd n (CONS (left_insert1 pt x) xs))`;;
 
 let left_insert1_FOLDL = prove
  (`left_insert1 pt (FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) P) [a; b])
@@ -298,10 +298,10 @@ let ptree_loc_left_insert1 = prove
   CHEAT_TAC);;
 
 let leftLoc_def = define_general
-  [`leftLoc (Locs l1 _) = l1`];;
+  `leftLoc (Locs l1 _) = l1`;;
 add_simp leftLoc_def;;
 let rightLoc_def = define_general
-  [`rightLoc (Locs _ l2) = l2`];;
+  `rightLoc (Locs _ l2) = l2`;;
 add_simp rightLoc_def;;
 
 let merge_locs_LR = prove
@@ -376,26 +376,26 @@ let _ = size_thms "MMLnonT";;
    what the port found for it *)
 let leftmost_def,leftmost_ind = define_wf
   `MEASURE (\x0. parsetree_size (\x. 0) MMLnonT_size (\x. 0) x0)`
-  [`leftmost (Lf s) = Lf s`;
-   `leftmost (Nd (n,l) args) =
+  `(leftmost (Lf s) = Lf s) /\
+   (leftmost (Nd (n,l) args) =
       if ~(args = []) /\ n = (INL:MMLnonT->MMLnonT+num) nTbase then HD args
       else match args with
             [] -> Nd (n,l) args
-          | CONS h _ -> leftmost h`];;
+          | CONS h _ -> leftmost h)`;;
 
 (* pt is a Tbase, and n will be DType all the way down *)
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let left_insert2_def,left_insert2_ind = define_wf
   `MEASURE (\(x0,x1). parsetree_size locs_size (\x. 0) (\x. 0) x1)`
-  [`left_insert2 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l)`;
-   `left_insert2 pt (Nd (n,l0) subs) =
+  `(left_insert2 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l)) /\
+   (left_insert2 pt (Nd (n,l0) subs) =
          match subs with
              [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt]
            | [Nd _ [
                   // nTbase
                   tyop]] -> mkNd n [mkNd n [pt]; tyop]
-           | CONS x ys -> mkNd n (CONS (left_insert2 pt x) ys)`];;
+           | CONS x ys -> mkNd n (CONS (left_insert2 pt x) ys))`;;
 add_simp left_insert2_def;;
 
 let ptree_loc_left_insert2 = prove
@@ -486,13 +486,13 @@ let dtype_reassociated = prove
    what the port found for it *)
 let left_insert_def,left_insert_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). parsetree_size locs_size (\x. 0) (\x. 0) x0)`
-  [`left_insert (Lf (tk,l)) p sep c = Lf (tk,merge_locs (ptree_loc c) l)`;
-   `left_insert (Nd (n,l) subs) p sep c =
+  `(left_insert (Lf (tk,l)) p sep c = Lf (tk,merge_locs (ptree_loc c) l)) /\
+   (left_insert (Nd (n,l) subs) p sep c =
          if ~(n = p) then Nd (n,merge_locs (ptree_loc c) l) subs
          else match subs with
                [c0] -> mkNd p [mkNd p [c]; sep; c0]
              | [p'; s'; c'] -> mkNd p [left_insert p' p sep c; s'; c']
-             | _ -> Nd (n,merge_locs (ptree_loc c) l) subs`];;
+             | _ -> Nd (n,merge_locs (ptree_loc c) l) subs)`;;
 
 
 let left_insert_mkNd = prove

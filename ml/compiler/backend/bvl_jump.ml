@@ -23,7 +23,7 @@ let _ = cake_theory "bvl_jump"
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let JumpList_def,JumpList_ind = define_guess_cheat
-  [`(JumpList n xs =
+  `(JumpList n xs =
       let l = LENGTH xs in
         if l = 0 then bvl_Op (closLang_IntOp (closLang_Const (&0))) [] else
           if l = 1 then HD xs else let k = l DIV 2 in
@@ -34,7 +34,7 @@ let JumpList_def,JumpList_ind = define_guess_cheat
                     else bvl_Op (closLang_IntOp closLang_Less) [bvl_Op
                       (closLang_IntOp (closLang_Const (&(n + k)))) []; bvl_Var
                       0]) in
-            bvl_If lt (JumpList n ys) (JumpList (n + k) zs))`];;
+            bvl_If lt (JumpList n ys) (JumpList (n + k) zs))`;;
 
 let jump_def = new_definition
   `bvl_jump_Jump x xs = bvl_Let [x] (JumpList 0 xs)`;;

@@ -22,8 +22,8 @@ let _ = cake_theory "stack_names"
    expands *)
 
 let ri_find_name_def = define_cases
-  [`ri_find_name f (Reg r) = Reg (tlookup f r)`;
-   `ri_find_name f (Imm w) = Imm w`];;
+  `(ri_find_name f (Reg r) = Reg (tlookup f r)) /\
+   (ri_find_name f (Imm w) = Imm w)`;;
 
 let inst_find_name_def = new_definition
   `inst_find_name f i =
@@ -75,7 +75,7 @@ let _ = size_thms "stackLang_prog";;
    what the port found for it *)
 let stack_names_comp_def,stack_names_comp_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  [`stack_names_comp f p =
+  `stack_names_comp f p =
      match p with stackLang_Halt r -> stackLang_Halt (tlookup f r)
      | stackLang_Raise r -> stackLang_Raise (tlookup f r)
      | stackLang_Break n -> stackLang_Break n
@@ -91,8 +91,8 @@ let stack_names_comp_def,stack_names_comp_ind = define_wf
      | stackLang_Loop p1 -> stackLang_Loop (stack_names_comp f p1)
      | stackLang_Call ret dest exc ->
          stackLang_Call (match ret with NONE -> NONE
-               | SOME (p1,lr,l1,l2) -> SOME (stack_names_comp f p1,tlookup
-                 f lr,l1,l2))
+               | SOME (p1,lr,l1,l2) -> SOME (stack_names_comp f p1,tlookup f
+                 lr,l1,l2))
               (dest_find_name f dest)
               (match exc with NONE -> NONE
                | SOME (p2,l1,l2) -> SOME (stack_names_comp f p2,l1,l2))
@@ -101,14 +101,14 @@ let stack_names_comp_def,stack_names_comp_ind = define_wf
        (tlookup f r3) (tlookup f r4) (tlookup f r5)
      | stackLang_ShMemOp op r (Addr a w) -> stackLang_ShMemOp op (tlookup f
        r) (Addr (tlookup f a) w)
-     | stackLang_CodeBufferWrite r1 r2 -> stackLang_CodeBufferWrite
-       (tlookup f r1) (tlookup f r2)
+     | stackLang_CodeBufferWrite r1 r2 -> stackLang_CodeBufferWrite (tlookup
+       f r1) (tlookup f r2)
      | stackLang_FFI i r1 r2 r3 r4 r5 -> stackLang_FFI i (tlookup f r1)
        (tlookup f r2) (tlookup f r3)
                               (tlookup f r4) (tlookup f r5)
      | stackLang_JumpLower r1 r2 dest -> stackLang_JumpLower (tlookup f r1)
        (tlookup f r2) dest
-     | p -> p`];;
+     | p -> p`;;
 
 (* HOL4 stack_namesScript.sml:89-99: a theorem that HOL4 states as the value
    of an ML expression: comp_pmatch *)

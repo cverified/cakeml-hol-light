@@ -713,7 +713,7 @@ let _ = size_thms "closSem_v";;
    what the port found for it *)
 let clos_to_bvlProof_env_rel_def,clos_to_bvlProof_env_rel_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4,x5). closSem_v_size1 x4 + bvlSem_v_size1 x5)`
-  [`clos_to_bvlProof_env_rel max_app f refs code x5 ys =
+  `clos_to_bvlProof_env_rel max_app f refs code x5 ys =
      match (x5,ys) with
        ([],[]) -> T
      | ([],ys) -> T
@@ -721,7 +721,7 @@ let clos_to_bvlProof_env_rel_def,clos_to_bvlProof_env_rel_ind = define_wf
      | (CONS x xs,[]) -> F
      | (CONS x xs,CONS y ys) ->
         clos_to_bvlProof_v_rel max_app f refs code x y
-          /\ clos_to_bvlProof_env_rel max_app f refs code xs ys`];;
+          /\ clos_to_bvlProof_env_rel max_app f refs code xs ys`;;
 
 (* [local] *)
 let env_rel_APPEND = prove
@@ -764,10 +764,10 @@ let LESS_LENGTH_env_rel_IMP = prove
    what the port found for it *)
 let clos_to_bvlProof_nth_code_def,clos_to_bvlProof_nth_code_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`clos_to_bvlProof_nth_code t_co 0 = LN`;
-   `clos_to_bvlProof_nth_code t_co (SUC n) =
+  `(clos_to_bvlProof_nth_code t_co 0 = LN) /\
+   (clos_to_bvlProof_nth_code t_co (SUC n) =
       sptree_union (fromAList (SND (t_co 0)))
-          (clos_to_bvlProof_nth_code (misc_shift_seq 1 t_co) n)`];;
+          (clos_to_bvlProof_nth_code (misc_shift_seq 1 t_co) n))`;;
 
 let compile_oracle_inv_def = new_definition
   `compile_oracle_inv max_app s_code s_cc s_co t_code t_cc t_co <=>
@@ -792,7 +792,7 @@ let clos_to_bvlProof_ref_rel_def = new_definition
        (closSem_ValueArray vs,bvlSem_ValueArray ws) -> ALL2 R vs ws
      | (closSem_Thunk m1 v,bvlSem_Thunk m2 w) -> m1 = m2 /\ R v w
      | (closSem_ByteArray as,bvlSem_ByteArray g bs) -> ~g /\ as = bs
-     | (_1,_2) -> F`;;
+     | (_,_) -> F`;;
 add_simp clos_to_bvlProof_ref_rel_def;;
 
 (* ref_rel_simp *)
@@ -1357,10 +1357,10 @@ let cl_rel_get_loc = prove
 
 (* Differs from check_loc and dest_closure by not checking that max_app *)
 let check_loc'_def = define_cases
-  [`check_loc' NONE loc num_params num_args so_far <=> T`;
-   `check_loc' (SOME p) loc num_params num_args so_far <=>
+  `(check_loc' NONE loc num_params num_args so_far <=> T) /\
+   (check_loc' (SOME p) loc num_params num_args so_far <=>
         (num_params = num_args) /\ (so_far = (0:num)) /\ (SOME p =
-            loc)`];;
+            loc))`;;
 
 let dest_closure'_def = new_definition
   `dest_closure' loc_opt f args =
@@ -2751,7 +2751,7 @@ let clos_to_bvlProof_compile_prog_semantics = prove
 
 let clos_to_bvlProof_syntax_oracle_ok_def = assume_definition
   "free: known_co:(clos_known_config)option->(num->((val_approx"
-  [`clos_to_bvlProof_syntax_oracle_ok c c' es co <=>
+  `clos_to_bvlProof_syntax_oracle_ok c c' es co <=>
     (!n. SND (SND (co n)) = []) /\
     (clos_to_bvl_config_do_mti c ==> 1 <= clos_to_bvl_config_max_app c
       /\ ALL no_mti es /\
@@ -2764,8 +2764,8 @@ let clos_to_bvlProof_syntax_oracle_ok_def = assume_definition
             (known_co (clos_to_bvl_config_known_conf c)
                 (state_co (ignore_table clos_number_compile_inc)
                     (pure_co (cond_mti_compile_inc
-                      (clos_to_bvl_config_do_mti c)
-                      (clos_to_bvl_config_max_app c)) o co)))) /\
+                      (clos_to_bvl_config_do_mti c) (clos_to_bvl_config_max_app
+                      c)) o co)))) /\
     (IS_SOME (clos_to_bvl_config_known_conf c) ==>
         1 <= clos_to_bvl_config_max_app c /\ every_Fn_vs_NONE es /\
         oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND)
@@ -2778,10 +2778,10 @@ let clos_to_bvlProof_syntax_oracle_ok_def = assume_definition
               list#(num#num#closLang_exp) list) o
                 state_co (ignore_table clos_number_compile_inc)
                     (pure_co (cond_mti_compile_inc
-                      (clos_to_bvl_config_do_mti c)
-                      (clos_to_bvl_config_max_app c)) o co)) /\
-        (!n'. BAG_ALL_DISTINCT (closProps_elist_globals (FST (SND (co
-          n')))) /\
+                      (clos_to_bvl_config_do_mti c) (clos_to_bvl_config_max_app
+                      c)) o co)) /\
+        (!n'. BAG_ALL_DISTINCT (closProps_elist_globals (FST (SND (co n'))))
+          /\
                 ALL closProps_esgc_free (FST (SND (co n'))))) /\
     ~(contains_App_SOME (clos_to_bvl_config_max_app c) es)
       /\ clos_knownProof_syntax_ok es /\
@@ -2790,7 +2790,7 @@ let clos_to_bvlProof_syntax_oracle_ok_def = assume_definition
             every_Fn_vs_NONE (FST (SND (co n)))) /\
     is_state_oracle (ignore_table clos_number_compile_inc)
         (pure_co (cond_mti_compile_inc (clos_to_bvl_config_do_mti c)
-          (clos_to_bvl_config_max_app c)) o co)`];;
+          (clos_to_bvl_config_max_app c)) o co)`;;
 
 let compile_exps_IMP_acc = prove
  (`clos_to_bvl_compile_exps max_app xs aux = (c,aux1) ==>

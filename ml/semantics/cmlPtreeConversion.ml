@@ -45,14 +45,14 @@ let mpushPC_scope_def = new_definition
 
 let fixity_lookup_def,fixity_lookup_ind = define_shaped_rec
   "match"
-  [`fixity_lookup nm pcs =
+  `fixity_lookup nm pcs =
      match pcs with
          [] -> NONE
        | CONS pc0 rest ->
            (match FLOOKUP (PCstate0_fixities pc0) nm with
                NONE -> fixity_lookup nm rest
              | SOME NONE -> NONE
-             | SOME r -> r)`];;
+             | SOME r -> r)`;;
 
 (* mfixity_lookup : mlstring -> num M
     'fails' if the mlstring has no fixity, even though it is perfectly
@@ -121,30 +121,30 @@ let tokcheck_def = new_definition
   pt) = SOME tok')`;;
 
 let ptree_UQTyop_def = define_cases
-  [`ptree_UQTyop (Lf _) = NONE`;
-   `ptree_UQTyop (Nd nt' args) =
+  `(ptree_UQTyop (Lf _) = NONE) /\
+   (ptree_UQTyop (Nd nt' args) =
       if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nUQTyOp) then NONE
       else match args with
             [pt] ->
             OPTION_BIND (destLf pt) (\lf. OPTION_BIND (tokenUtils_destTOK
                 lf) (\tk. OPTION_CHOICE (destSymbolT tk) (destAlphaT tk)))
-          | _ -> NONE`];;
+          | _ -> NONE)`;;
 
 let ptree_TyvarN_def = define_cases
-  [`ptree_TyvarN (Lf _) = NONE`;
-   `ptree_TyvarN (Nd nt' args) =
+  `(ptree_TyvarN (Lf _) = NONE) /\
+   (ptree_TyvarN (Nd nt' args) =
       if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTyvarN) then NONE
       else match args with
             [tyv] -> destTyvarPT tyv
-          | _ -> NONE`];;
+          | _ -> NONE)`;;
 
 let Long_Short_def,Long_Short_ind = define_rec
-  [`Long_Short tokens_End (s:mlstring) = Short s`;
-   `Long_Short (tokens_Mod x xs) (s:mlstring) = Long x (Long_Short xs s)`];;
+  `(Long_Short tokens_End (s:mlstring) = Short s) /\
+   (Long_Short (tokens_Mod x xs) (s:mlstring) = Long x (Long_Short xs s))`;;
 
 let ptree_Tyop_def = define_cases
-  [`ptree_Tyop (Lf _) = NONE`;
-   `ptree_Tyop (Nd nt' args) =
+  `(ptree_Tyop (Lf _) = NONE) /\
+   (ptree_Tyop (Nd nt' args) =
       if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTyOp) then NONE
       else match args with
             [pt] -> OPTION_CHOICE (OPTION_BIND ((\f a. OPTION_BIND a f)
@@ -153,19 +153,19 @@ let ptree_Tyop_def = define_cases
               SOME (Long_Short xs s)))
             (OPTION_BIND (ptree_UQTyop pt) (\nm.
               SOME (Short nm)))
-          | _ -> NONE`];;
+          | _ -> NONE)`;;
 
 let _ = size_thms "parsetree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let tokcheckl_def,tokcheckl_ind = define_wf
   `MEASURE (\(x0,x1). parsetree_size1 (\x. 0) (\x. 0) (\x. 0) x0)`
-  [`tokcheckl pts toks <=>
+  `tokcheckl pts toks <=>
      (match (pts,toks) with
        ([],[]) -> T
      | (CONS pt prest,CONS tok' tokrest) -> tokcheck pt tok' /\ tokcheckl
        prest tokrest
-     | _ -> F)`];;
+     | _ -> F)`;;
 
 let _ = size_thms "MMLnonT";;
 let _ = size_thms "locs";;
@@ -175,7 +175,7 @@ let _ = size_thms "tokens_token";;
 let ptree_linfix_def,ptree_linfix_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). parsetree_size locs_size MMLnonT_size
   tokens_token_size x3)`
-  [`ptree_linfix topnt opn elnt (pt:(tokens_token,MMLnonT,locs)parsetree) =
+  `ptree_linfix topnt opn elnt (pt:(tokens_token,MMLnonT,locs)parsetree) =
      match pt with
          Lf _ -> NONE
        | Nd nt' args ->
@@ -188,7 +188,7 @@ let ptree_linfix_def,ptree_linfix_ind = define_wf
                    OPTION_BIND (elnt pt) (\last.
                  SOME (APPEND front [last]))))
              | _ -> NONE
-         else NONE`];;
+         else NONE`;;
 
 let tuplify_def = new_definition
   `tuplify tys =
@@ -205,8 +205,8 @@ let ptree_Type_def,ptree_Type_ind = define_wf
   tokens_token_size x0) (sum_measure (\x0. parsetree_size (\x. 0) MMLnonT_size
   tokens_token_size x0) (\x0. parsetree_size (\x. 0) MMLnonT_size
   tokens_token_size x0))))`
-  [`(ptree_Type nt' (Lf _):ast_t option) = NONE`;
-   `ptree_Type nm (Nd nt' args) =
+  `((ptree_Type nt' (Lf _):ast_t option) = NONE) /\
+   (ptree_Type nm (Nd nt' args) =
          if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nm) then NONE
          else if nm = nType then
            match args with
@@ -242,8 +242,8 @@ let ptree_Type_def,ptree_Type_ind = define_wf
                       (ptree_Tyop opn) (\opname.
                   SOME (Atapp tylist opname))))
              | _ -> NONE
-         else NONE`;
-   `(ptree_Typelist2 ptree:(ast_t list) option) =
+         else NONE) /\
+   ((ptree_Typelist2 ptree:(ast_t list) option) =
          match ptree with
            Lf _ -> NONE
          | Nd nt' args ->
@@ -253,8 +253,8 @@ let ptree_Type_def,ptree_Type_ind = define_wf
                        tokens_CommaT)) (OPTION_BIND (ptree_Type nType dt) (\ty.
                        OPTION_BIND (ptree_TypeList1 tl') (\tylist.
                    SOME (CONS ty tylist))))
-               | _ -> NONE`;
-   `(ptree_TypeList1 ptree:(ast_t list) option) =
+               | _ -> NONE) /\
+   ((ptree_TypeList1 ptree:(ast_t list) option) =
         match ptree with
             Lf _ -> NONE
           | Nd nt' args ->
@@ -268,8 +268,8 @@ let ptree_Type_def,ptree_Type_ind = define_wf
                         tokens_CommaT)) (OPTION_BIND (ptree_Type nType dt)
                         (\ty. OPTION_BIND (ptree_TypeList1 tl) (\tl.
                     SOME (CONS ty tl))))
-                | _ -> NONE`;
-   `(ptree_PType ptree:(ast_t list) option) =
+                | _ -> NONE) /\
+   ((ptree_PType ptree:(ast_t list) option) =
          match ptree with
              Lf _ -> NONE
            | Nd nt' args ->
@@ -283,7 +283,7 @@ let ptree_Type_def,ptree_Type_ind = define_wf
                          tokens_StarT)) (OPTION_BIND (ptree_Type nDType dty_pt)
                          (\dty. OPTION_BIND (ptree_PType pty_pt) (\ptys.
                      SOME (CONS dty ptys))))
-                 | _ -> NONE`];;
+                 | _ -> NONE)`;;
 
 let ptree_TypeName_def = new_definition
   `(ptree_TypeName ptree:(mlstring list#mlstring) option) =
@@ -306,14 +306,14 @@ let ptree_TypeName_def = new_definition
        else NONE`;;
 
 let ptree_UQConstructorName_def = define_cases
-  [`ptree_UQConstructorName (Lf _) = NONE`;
-   `ptree_UQConstructorName (Nd nm args) =
+  `(ptree_UQConstructorName (Lf _) = NONE) /\
+   (ptree_UQConstructorName (Nd nm args) =
       if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nUQConstructorName) then
           NONE
       else match args with
             [pt] -> (\f a. OPTION_BIND a f) destAlphaT ((\f a. OPTION_BIND
                 a f) tokenUtils_destTOK (destLf pt))
-          | _ -> NONE`];;
+          | _ -> NONE)`;;
 
 let ptree_ConstructorName_def = new_definition
   `ptree_ConstructorName ast =
@@ -365,7 +365,7 @@ let ptree_PTbase_def = new_definition
    what the port found for it *)
 let ptree_TbaseList_def,ptree_TbaseList_ind = define_wf
   `MEASURE (\x0. parsetree_size (\x. 0) MMLnonT_size tokens_token_size x0)`
-  [`ptree_TbaseList ast =
+  `ptree_TbaseList ast =
      match ast with
          Lf _ -> NONE
        | Nd nt' args ->
@@ -376,7 +376,7 @@ let ptree_TbaseList_def,ptree_TbaseList_ind = define_wf
                OPTION_BIND (ptree_TbaseList rest_pt) (\rest.
                  SOME (CONS b rest)))
              | _ -> NONE
-         else NONE`];;
+         else NONE`;;
 
 let ptree_Dconstructor_def = new_definition
   `ptree_Dconstructor ast =
@@ -452,8 +452,8 @@ let singleSymP_def = new_definition
    | _ -> NONE`;;
 
 let ptree_Op_def = define_general
-  [`ptree_Op (Lf _) = NONE`;
-   `ptree_Op (Nd nt' subs) =
+  `(ptree_Op (Lf _) = NONE) /\
+   (ptree_Op (Nd nt' subs) =
       if FST nt' = (INL:MMLnonT->MMLnonT+num) nMultOps then
         if tokcheckl subs [tokens_StarT] then SOME (Short (implode "*"))
         else if tokcheckl subs [tokens_AlphaT (implode "mod")] then SOME
@@ -475,22 +475,22 @@ let ptree_Op_def = define_general
         else if tokcheckl subs [tokens_AlphaT (implode "o")] then SOME
             (Short (implode "o"))
         else NONE
-      else NONE`];;
+      else NONE)`;;
 
 let ptree_V_def = define_cases
-  [`ptree_V (Lf _) = NONE`;
-   `ptree_V (Nd nt' subs) =
+  `(ptree_V (Lf _) = NONE) /\
+   (ptree_V (Nd nt' subs) =
            OPTION_IGNORE_BIND (OPTION_GUARD (FST nt' =
                (INL:MMLnonT->MMLnonT+num) nV)) (
            match subs with
               [pt] -> OPTION_BIND ((\f a. OPTION_BIND a f)
                   tokenUtils_destTOK (destLf pt)) (\t. OPTION_CHOICE
                   (destAlphaT t) (destSymbolT t))
-            | _ -> NONE)`];;
+            | _ -> NONE))`;;
 
 let ptree_FQV_def = define_cases
-  [`ptree_FQV (Lf _) = NONE`;
-   `ptree_FQV (Nd nt' args) =
+  `(ptree_FQV (Lf _) = NONE) /\
+   (ptree_FQV (Nd nt' args) =
       if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nFQV) then NONE
       else match args with
             [pt] -> OPTION_CHOICE (OPTION_MAP Short (ptree_V pt))
@@ -498,7 +498,7 @@ let ptree_FQV_def = define_cases
                         a. OPTION_BIND a f) tokenUtils_destTOK (destLf pt)))
                         (\(xs,s).
                       SOME (Long_Short xs s)))
-          | _ -> NONE`];;
+          | _ -> NONE)`;;
 
 let isSymbolicConstructor_def = new_definition
   `isSymbolicConstructor s =
@@ -524,8 +524,8 @@ let EtoPat_def = new_definition
      | _ -> NONE`;;
 
 let ptree_OpID_def = define_cases
-  [`ptree_OpID (Lf _) = NONE`;
-   `ptree_OpID (Nd nt' subs) =
+  `(ptree_OpID (Lf _) = NONE) /\
+   (ptree_OpID (Nd nt' subs) =
       if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nOpID) then NONE
       else match subs with
             [Lf ((grammar_TOK:tokens_token->(tokens_token
@@ -549,7 +549,7 @@ let ptree_OpID_def = define_cases
              else if tk = tokens_EqualsT then SOME (ast_Var (Short (implode
                  "=")))
              else NONE)
-          | _ -> NONE`];;
+          | _ -> NONE)`;;
 
 let papply_def = new_definition
   `Papply pat arg =
@@ -569,8 +569,8 @@ let ptree_Pattern_def,ptree_Pattern_ind = define_wf
   `MEASURE (sum_measure  (\(x0,x1). parsetree_size (\x. 0) MMLnonT_size
   tokens_token_size x1) (\x0. parsetree_size (\x. 0) MMLnonT_size
   tokens_token_size x0))`
-  [`ptree_Pattern nt' (Lf _) = NONE`;
-   `ptree_Pattern nt' (Nd nm args) =
+  `(ptree_Pattern nt' (Lf _) = NONE) /\
+   (ptree_Pattern nt' (Nd nm args) =
         if ~((INL:MMLnonT->MMLnonT+num) nt' = FST nm) then NONE
         else if FST nm = (INL:MMLnonT->MMLnonT+num) nPbase then
           match args with
@@ -664,9 +664,9 @@ let ptree_Pattern_def,ptree_Pattern_ind = define_wf
                   | [p] -> SOME p
                   | _ -> SOME (ast_Pcon NONE pl)))
             | _ -> NONE
-        else NONE`;
-   `ptree_Plist (Lf _) = NONE`;
-   `ptree_Plist (Nd nm args) =
+        else NONE) /\
+   (ptree_Plist (Lf _) = NONE) /\
+   (ptree_Plist (Nd nm args) =
          if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nPatternList) then NONE
          else match args with
                [p_pt] ->
@@ -677,7 +677,7 @@ let ptree_Pattern_def,ptree_Pattern_ind = define_wf
                      tokens_CommaT)) (OPTION_BIND (ptree_Pattern nPattern p)
                      (\hdpat. OPTION_BIND (ptree_Plist pl) (\tlpats.
                  SOME (CONS hdpat tlpats))))
-             | _ -> NONE`];;
+             | _ -> NONE)`;;
 
 new_type_abbrev("ptree",`:(tokens_token,MMLnonT,locs)parsetree`);;
 
@@ -691,8 +691,8 @@ new_type_abbrev("ptree",`:(tokens_token,MMLnonT,locs)parsetree`);;
    what the port found for it *)
 let ptree_PbaseList1_def,ptree_PbaseList1_ind = define_wf
   `MEASURE (\x0. parsetree_size (\x. 0) MMLnonT_size tokens_token_size x0)`
-  [`ptree_PbaseList1 (Lf _) = NONE`;
-   `ptree_PbaseList1 (Nd nm args) =
+  `(ptree_PbaseList1 (Lf _) = NONE) /\
+   (ptree_PbaseList1 (Nd nm args) =
          if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nPbaseList1) then NONE
          else match args with
                [p_pt] -> OPTION_MAP SINGL (ptree_Pattern nPbase p_pt)
@@ -700,20 +700,20 @@ let ptree_PbaseList1_def,ptree_PbaseList1_ind = define_wf
                    OPTION_MAP2 CONS
                          (ptree_Pattern nPbase p_pt)
                          (ptree_PbaseList1 pl_pt)
-             | _ -> NONE`];;
+             | _ -> NONE)`;;
 
 let _ = size_thms "ast_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let eseq_encode_def,eseq_encode_ind = define_wf
   `MEASURE (\x0. ast_exp_size3 x0)`
-  [`Eseq_encode x1 =
+  `Eseq_encode x1 =
      match x1 with
        [] -> NONE
      | [e] -> SOME e
      | CONS e es ->
       OPTION_BIND (Eseq_encode es) (\body.
-        SOME (ast_Let NONE e body))`];;
+        SOME (ast_Let NONE e body))`;;
 
 let dest_Conk_def = new_definition
   `dest_Conk x1 k v =
@@ -730,22 +730,22 @@ add_simp destFFIop_def;;
 
 let strip_loc_expr_def,strip_loc_expr_ind = define_shaped_rec
   "match"
-  [`strip_loc_expr e =
+  `strip_loc_expr e =
      match e with
        ast_Lannot e l ->
        (match (strip_loc_expr e) with
          (e0,_) -> (e0,SOME l))
-     | e -> (e,NONE)`];;
+     | e -> (e,NONE)`;;
 
 let merge_locsopt_def = new_definition
   `merge_locsopt x1 x2 =
    match (x1,x2) with
      (SOME l1,SOME l2) -> SOME (merge_locs l1 l2)
-   | (_1,_2) -> NONE`;;
+   | (_,_) -> NONE`;;
 
 let optLannot_def = define_cases
-  [`optLannot NONE e = e`;
-   `optLannot (SOME l) e = ast_Lannot e l`];;
+  `(optLannot NONE e = e) /\
+   (optLannot (SOME l) e = ast_Lannot e l)`;;
 
 let mkAst_App_def = new_definition
   `mkAst_App a1 a2 =
@@ -774,8 +774,8 @@ let mkFun_def = new_definition
   `mkFun p b = UNCURRY ast_Fun (dePat p b)`;;
 
 let ptree_Eliteral_def = define_cases
-  [`ptree_Eliteral (Lf _) = NONE`;
-   `ptree_Eliteral (Nd nt' subs) =
+  `(ptree_Eliteral (Lf _) = NONE) /\
+   (ptree_Eliteral (Nd nt' subs) =
         OPTION_IGNORE_BIND (OPTION_GUARD (LENGTH subs = 1 /\ FST nt' =
             (INL:MMLnonT->MMLnonT+num) nEliteral)) (OPTION_BIND (destLf (HD
             subs)) (\lf. OPTION_BIND (tokenUtils_destTOK lf) (\t.
@@ -786,7 +786,7 @@ let ptree_Eliteral_def = define_cases
          (OPTION_BIND (destWordT t) (\n. SOME (ast_Lit (ast_Word64 (n2w
              n))))))
          (OPTION_BIND (destFFIT t) (\s. SOME (ast_App (ast_FFI s)
-             [])))))))`];;
+             []))))))))`;;
 
 let bind_loc_def = new_definition
   `bind_loc e l' =
@@ -803,8 +803,8 @@ let letFromPat_def = new_definition
 
 let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
   "the port cannot make this definition"
-  [`ptree_Expr ent (Lf _) = NONE`;
-   `ptree_Expr ent (Nd (nt',loc) subs) =
+  `(ptree_Expr ent (Lf _) = NONE) /\
+   (ptree_Expr ent (Nd (nt',loc) subs) =
     OPTION_BIND (if (INL:MMLnonT->MMLnonT+num) ent = nt' then
         if nt' = (INL:MMLnonT->MMLnonT+num) nEbase then
           match subs with
@@ -973,8 +973,8 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
             | _ -> NONE
         else NONE
       else NONE) (\e.
-      SOME (bind_loc e loc))`;
-   `ptree_Exprlist nm ast =
+      SOME (bind_loc e loc))) /\
+   (ptree_Exprlist nm ast =
          match ast with
              Lf _ -> NONE
            | Nd (nt',_) subs ->
@@ -998,8 +998,8 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
                          (\back.
                      SOME (CONS front back))))
                  | _ -> NONE
-             else NONE`;
-   `ptree_AndFDecls ast =
+             else NONE) /\
+   (ptree_AndFDecls ast =
       (match ast with
           Lf _ -> NONE
         | Nd (nt',_) subs ->
@@ -1013,8 +1013,8 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
                       (\fdecs. OPTION_BIND (ptree_FDecl fdecpt) (\fdec.
                   SOME (APPEND fdecs [fdec]))))
               | _ -> NONE
-          else NONE)`;
-   `ptree_FDecl ast =
+          else NONE)) /\
+   (ptree_FDecl ast =
         match ast with
             Lf _ -> NONE
           | Nd (nt',_) subs ->
@@ -1028,8 +1028,8 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
                         body_pt) (\body0.
                     SOME (fname,dePat p1 (ITLIST mkFun (TL ps) body0)))))))
                 | _ -> NONE
-            else NONE`;
-   `ptree_LetDecs ptree =
+            else NONE) /\
+   (ptree_LetDecs ptree =
         match ptree with
             Lf _ -> NONE
           | Nd (nt',_) args ->
@@ -1042,8 +1042,8 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
                   else OPTION_BIND (ptree_LetDec ld_pt) (\ld. OPTION_BIND
                       (ptree_LetDecs lds_pt) (\lds.
                       SOME (CONS ld lds)))
-                | _ -> NONE`;
-   `ptree_LetDec ptree =
+                | _ -> NONE) /\
+   (ptree_LetDec ptree =
         match ptree with
             Lf _ -> NONE
           | Nd (nt',_) args ->
@@ -1060,9 +1060,9 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
                         (ptree_Pattern nPattern p_pt) (\p. OPTION_BIND
                         (ptree_Expr nE e_pt) (\e.
                     SOME (INL (p,e)))))
-                | _ -> NONE`;
-   `ptree_PEs (Lf _) = (NONE:((ast_pat#ast_exp) list) option)`;
-   `ptree_PEs (Nd (nt',_3) args) =
+                | _ -> NONE) /\
+   (ptree_PEs (Lf _) = (NONE:((ast_pat#ast_exp) list) option)) /\
+   (ptree_PEs (Nd (nt',_) args) =
         ((if ~(nt' = (INL:MMLnonT->MMLnonT+num) nPEs) then NONE
         else match args with
               [pattern_pt; arrow_pt; pe_pt] ->
@@ -1070,9 +1070,9 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
                     tokens_DarrowT)) (OPTION_BIND (ptree_Pattern nPattern
                     pattern_pt) (\pat. OPTION_BIND (ptree_PE pe_pt) (\(e,pes).
                 SOME (CONS (pat,e) pes))))
-            | _ -> NONE):((ast_pat#ast_exp) list) option)`;
-   `ptree_PE (Lf _) = NONE`;
-   `ptree_PE (Nd (nt',_4) args) =
+            | _ -> NONE):((ast_pat#ast_exp) list) option)) /\
+   (ptree_PE (Lf _) = NONE) /\
+   (ptree_PE (Nd (nt',_) args) =
          if ~(nt' = (INL:MMLnonT->MMLnonT+num) nPE) then NONE
          else match args with
                [eorraise_pt; pesfx_pt] -> OPTION_CHOICE (OPTION_IGNORE_BIND
@@ -1101,9 +1101,9 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
                      OPTION_BIND (ptree_Expr nE then_pt) (\te. OPTION_BIND
                      (ptree_PE else_pt) (\(ee,rest).
                  SOME (ast_If ge te ee,rest)))))
-             | _ -> NONE`;
-   `(ptree_PEsfx (Lf _):(bool#(ast_pat#ast_exp) list) option) = NONE`;
-   `ptree_PEsfx (Nd (nt',_5) args) =
+             | _ -> NONE) /\
+   ((ptree_PEsfx (Lf _):(bool#(ast_pat#ast_exp) list) option) = NONE) /\
+   (ptree_PEsfx (Nd (nt',_) args) =
          if ~(nt' = (INL:MMLnonT->MMLnonT+num) nPEsfx) then NONE
          else match args with
                [] -> SOME (F,[])
@@ -1114,9 +1114,9 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
                  OPTION_IGNORE_BIND (OPTION_GUARD (tokcheck handlebar_tok
                      tokens_BarT)) (OPTION_BIND (ptree_PEs pes_pt) (\pes.
                  SOME (F,pes))))
-             | _ -> NONE`;
-   `ptree_Eseq (Lf _) = NONE`;
-   `ptree_Eseq (Nd (nt',_6) args) =
+             | _ -> NONE) /\
+   (ptree_Eseq (Lf _) = NONE) /\
+   (ptree_Eseq (Nd (nt',_) args) =
         if ~(nt' = (INL:MMLnonT->MMLnonT+num) nEseq) then NONE
         else match args with
               [single] ->
@@ -1127,7 +1127,7 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
                     tokens_SemicolonT)) (OPTION_BIND (ptree_Expr nE e_pt) (\e.
                     OPTION_BIND (ptree_Eseq seq_pt) (\seq'.
                 SOME (CONS e seq'))))
-            | _ -> NONE`];;
+            | _ -> NONE)`;;
 
 (* [local] *)
 let dumb1 = prove
@@ -1147,17 +1147,17 @@ let dumb2 = prove
    as the value of an ML expression: ptree_Expr_others *)
 
 let ptree_StructName_def = define_cases
-  [`ptree_StructName (Lf _) = NONE`;
-   `ptree_StructName (Nd nm args) =
+  `(ptree_StructName (Lf _) = NONE) /\
+   (ptree_StructName (Nd nm args) =
       if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nStructName) then NONE
       else match args with
             [pt] -> (\f a. OPTION_BIND a f) destAlphaT ((\f a. OPTION_BIND
                 a f) tokenUtils_destTOK (destLf pt))
-          | _ -> NONE`];;
+          | _ -> NONE)`;;
 
 let ptree_OptTypEqn_def = define_cases
-  [`ptree_OptTypEqn (Lf _) = (NONE:(ast_t option) option)`;
-   `ptree_OptTypEqn (Nd nt' args) =
+  `(ptree_OptTypEqn (Lf _) = (NONE:(ast_t option) option)) /\
+   (ptree_OptTypEqn (Nd nt' args) =
       ((if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nOptTypEqn) then NONE
       else match args with
             [] -> SOME NONE
@@ -1166,11 +1166,11 @@ let ptree_OptTypEqn_def = define_cases
                   tokens_EqualsT)) (OPTION_BIND (ptree_Type nType typ_pt)
                   (\typ.
               SOME (SOME typ)))
-          | _ -> NONE):(ast_t option) option)`];;
+          | _ -> NONE):(ast_t option) option))`;;
 
 let ptree_SpecLine_def = define_cases
-  [`ptree_SpecLine (Lf _) = NONE`;
-   `ptree_SpecLine (Nd nt' args) =
+  `(ptree_SpecLine (Lf _) = NONE) /\
+   (ptree_SpecLine (Nd nt' args) =
       if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSpecLine) then NONE
       else match args with
             [td_pt] ->
@@ -1198,14 +1198,14 @@ let ptree_SpecLine_def = define_cases
     // (case opteqn of
     // NONE => Stype_opq vs nm
     // | SOME ty => Stabbrev vs nm ty)
-    // (SDefinition vname ty)`];;
+    // (SDefinition vname ty))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ptree_SpeclineList_def,ptree_SpeclineList_ind = define_wf
   `MEASURE (\x0. parsetree_size locs_size MMLnonT_size tokens_token_size x0)`
-  [`ptree_SpeclineList (Lf _) = NONE`;
-   `ptree_SpeclineList (Nd nt' args) =
+  `(ptree_SpeclineList (Lf _) = NONE) /\
+   (ptree_SpeclineList (Nd nt' args) =
       if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSpecLineList) then NONE
       else match args with
             [] -> SOME one
@@ -1218,18 +1218,18 @@ let ptree_SpeclineList_def,ptree_SpeclineList_ind = define_wf
                 (ptree_SpeclineList sll_pt) (\sll.
                 SOME one))
           | _ -> NONE
-    // (sl::sll)`];;
+    // (sl::sll))`;;
 
 let ptree_SignatureValue_def = define_cases
-  [`ptree_SignatureValue (Lf _) = NONE`;
-   `ptree_SignatureValue (Nd nt' args) =
+  `(ptree_SignatureValue (Lf _) = NONE) /\
+   (ptree_SignatureValue (Nd nt' args) =
       if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSignatureValue) then NONE
       else match args with
             [sigtok; sll_pt; endtok] ->
               OPTION_IGNORE_BIND (OPTION_GUARD (tokcheckl [sigtok; endtok]
                   [tokens_SigT; tokens_EndT])) (
               ptree_SpeclineList sll_pt)
-          | _ -> NONE`];;
+          | _ -> NONE)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -1238,7 +1238,7 @@ let ptree_Decl_def,ptree_Decl_ind = define_wf
   tokens_token_size x0) (sum_measure  (\x0. parsetree_size locs_size
   MMLnonT_size tokens_token_size x0) (\x0. parsetree_size locs_size
   MMLnonT_size tokens_token_size x0)))`
-  [`(ptree_Decl pt:dec option) =
+  `((ptree_Decl pt:dec option) =
         match pt with
            Lf _ -> NONE
          | Nd (nt',locs) args ->
@@ -1270,9 +1270,9 @@ let ptree_Decl_def,ptree_Decl_ind = define_wf
                        tokens_EndT])) (OPTION_BIND (ptree_Decls decls1_pt)
                        (\decls1. OPTION_BIND (ptree_Decls decls2_pt) (\decls2.
                    SOME (Dlocal decls1 decls2))))
-               | _ -> NONE`;
-   `ptree_Decls (Lf _) = NONE`;
-   `ptree_Decls (Nd (nt',_7) args) =
+               | _ -> NONE) /\
+   (ptree_Decls (Lf _) = NONE) /\
+   (ptree_Decls (Nd (nt',_) args) =
         if ~(nt' = (INL:MMLnonT->MMLnonT+num) nDecls) then NONE
         else match args with
               [] -> SOME []
@@ -1281,9 +1281,9 @@ let ptree_Decl_def,ptree_Decl_ind = define_wf
               else OPTION_BIND (ptree_Decl d_pt) (\d. OPTION_BIND
                   (ptree_Decls ds_pt) (\ds.
                   SOME (CONS d ds)))
-            | _ -> NONE`;
-   `ptree_Structure (Lf _) = NONE`;
-   `ptree_Structure (Nd nt' args) =
+            | _ -> NONE) /\
+   (ptree_Structure (Lf _) = NONE) /\
+   (ptree_Structure (Nd nt' args) =
       if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nStructure) then NONE
       else match args with
             [structuretok; sname_pt; asc_opt; eqtok; structtok; ds_pt;
@@ -1311,7 +1311,7 @@ let ptree_Decl_def,ptree_Decl_ind = define_wf
               SOME (Dmod sname
                   // asc
                   ds)))))
-          | _ -> NONE`];;
+          | _ -> NONE)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -1319,8 +1319,8 @@ let ptree_TopLevelDecs_def,ptree_TopLevelDecs_ind = define_wf
   `MEASURE (sum_measure  (\x0. parsetree_size locs_size MMLnonT_size
   tokens_token_size x0) (\x0. parsetree_size locs_size MMLnonT_size
   tokens_token_size x0))`
-  [`ptree_TopLevelDecs (Lf _) = NONE`;
-   `ptree_TopLevelDecs (Nd nt' args) =
+  `(ptree_TopLevelDecs (Lf _) = NONE) /\
+   (ptree_TopLevelDecs (Nd nt' args) =
          if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTopLevelDecs) then NONE
          else match args with
                [] -> SOME []
@@ -1336,9 +1336,9 @@ let ptree_TopLevelDecs_def,ptree_TopLevelDecs_ind = define_wf
                      OPTION_BIND (ptree_TopLevelDecs tds_pt) (\tds.
                  SOME (CONS (Dlet (SND nt') (ast_Pvar (implode "it")) e)
                      tds))))
-             | _ -> NONE`;
-   `ptree_NonETopLevelDecs (Lf _) = NONE`;
-   `ptree_NonETopLevelDecs (Nd nt' args) =
+             | _ -> NONE) /\
+   (ptree_NonETopLevelDecs (Lf _) = NONE) /\
+   (ptree_NonETopLevelDecs (Nd nt' args) =
          if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nNonETopLevelDecs) then
              NONE
          else match args with
@@ -1348,7 +1348,7 @@ let ptree_TopLevelDecs_def,ptree_TopLevelDecs_ind = define_wf
              else OPTION_BIND (ptree_Decl pt1) (\td. OPTION_BIND
                  (ptree_NonETopLevelDecs pt2) (\tds.
                  SOME (CONS td tds)))
-           | _ -> NONE`];;
+           | _ -> NONE)`;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

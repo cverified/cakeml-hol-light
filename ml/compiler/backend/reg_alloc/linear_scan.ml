@@ -29,68 +29,68 @@ let live_tree_INDUCT,live_tree_RECURSION = define_datatype
 
 
 let numset_list_insert_def,numset_list_insert_ind = define_rec
-  [`linear_scan_numset_list_insert [] t = t`;
-   `linear_scan_numset_list_insert (CONS x xs) t =
-    linear_scan_numset_list_insert xs (sptree_insert x one t)`];;
+  `(linear_scan_numset_list_insert [] t = t) /\
+   (linear_scan_numset_list_insert (CONS x xs) t =
+    linear_scan_numset_list_insert xs (sptree_insert x one t))`;;
 
 let numset_list_insert_nottailrec_def,numset_list_insert_nottailrec_ind =
   define_rec
-  [`numset_list_insert_nottailrec [] t = t`;
-   `numset_list_insert_nottailrec (CONS x xs) t = sptree_insert x one
-    (numset_list_insert_nottailrec xs t)`];;
+  `(numset_list_insert_nottailrec [] t = t) /\
+   (numset_list_insert_nottailrec (CONS x xs) t = sptree_insert x one
+    (numset_list_insert_nottailrec xs t))`;;
 
 let get_live_tree_def,get_live_tree_ind = define_rec
-  [`get_live_tree (reg_alloc_Delta wr rd) =
-      linear_scan_Seq (linear_scan_Reads rd) (linear_scan_Writes wr)`;
-   `get_live_tree (reg_alloc_Set cutset) =
+  `(get_live_tree (reg_alloc_Delta wr rd) =
+      linear_scan_Seq (linear_scan_Reads rd) (linear_scan_Writes wr)) /\
+   (get_live_tree (reg_alloc_Set cutset) =
       let cutlist = MAP FST (toAList cutset) in
-      linear_scan_Reads cutlist`;
-   `get_live_tree (reg_alloc_Branch optcutset ct1 ct2) =
+      linear_scan_Reads cutlist) /\
+   (get_live_tree (reg_alloc_Branch optcutset ct1 ct2) =
       let lt1 = get_live_tree ct1 in
       let lt2 = get_live_tree ct2 in
       match optcutset with SOME cutset ->
           let cutlist = MAP FST (toAList cutset) in
           linear_scan_Seq (linear_scan_Reads cutlist) (linear_scan_Branch
               lt1 lt2)
-      | NONE -> (linear_scan_Branch lt1 lt2)`;
-   `get_live_tree (reg_alloc_Seq ct1 ct2) =
+      | NONE -> (linear_scan_Branch lt1 lt2)) /\
+   (get_live_tree (reg_alloc_Seq ct1 ct2) =
       let lt2 = get_live_tree ct2 in
       let lt1 = get_live_tree ct1 in
-      linear_scan_Seq lt1 lt2`];;
+      linear_scan_Seq lt1 lt2)`;;
 
 let check_live_tree_def,check_live_tree_ind = define_rec
-  [`check_live_tree f (linear_scan_Writes l) live flive =
+  `(check_live_tree f (linear_scan_Writes l) live flive =
       match check_partial_col f l live flive with NONE -> NONE
       | SOME _ ->
       let livein = numset_list_delete l live in
       let flivein = numset_list_delete (MAP f l) flive in
-      SOME (livein,flivein)`;
-   `check_live_tree f (linear_scan_Reads l) live flive =
-      check_partial_col f l live flive`;
-   `check_live_tree f (linear_scan_Branch lt1 lt2) live flive =
+      SOME (livein,flivein)) /\
+   (check_live_tree f (linear_scan_Reads l) live flive =
+      check_partial_col f l live flive) /\
+   (check_live_tree f (linear_scan_Branch lt1 lt2) live flive =
       match check_live_tree f lt1 live flive with NONE -> NONE
       | SOME (livein1,flivein1) ->
       (match check_live_tree f lt2 live flive with NONE -> NONE
       | SOME (livein2,flivein2) ->
       check_partial_col f (MAP FST (toAList (difference livein2
-          livein1))) livein1 flivein1)`;
-   `check_live_tree f (linear_scan_Seq lt1 lt2) live flive =
+          livein1))) livein1 flivein1)) /\
+   (check_live_tree f (linear_scan_Seq lt1 lt2) live flive =
       match check_live_tree f lt2 live flive with NONE -> NONE
       | SOME (livein2,flivein2) ->
-        check_live_tree f lt1 livein2 flivein2`];;
+        check_live_tree f lt1 livein2 flivein2)`;;
 
 let get_live_backward_def,get_live_backward_ind = define_rec
-  [`get_live_backward (linear_scan_Writes l) live =
-      numset_list_delete l live`;
-   `get_live_backward (linear_scan_Reads l) live =
-      linear_scan_numset_list_insert l live`;
-   `get_live_backward (linear_scan_Branch lt1 lt2) live =
+  `(get_live_backward (linear_scan_Writes l) live =
+      numset_list_delete l live) /\
+   (get_live_backward (linear_scan_Reads l) live =
+      linear_scan_numset_list_insert l live) /\
+   (get_live_backward (linear_scan_Branch lt1 lt2) live =
       let live1 = get_live_backward lt1 live in
       let live2 = get_live_backward lt2 live in
-      linear_scan_numset_list_insert (MAP FST (toAList (difference live2
-          live1))) live1`;
-   `get_live_backward (linear_scan_Seq lt1 lt2) live =
-      get_live_backward lt1 (get_live_backward lt2 live)`];;
+      linear_scan_numset_list_insert (MAP FST (toAList (difference
+          live2 live1))) live1) /\
+   (get_live_backward (linear_scan_Seq lt1 lt2) live =
+      get_live_backward lt1 (get_live_backward lt2 live))`;;
 
 let fix_domination_def = new_definition
   `fix_domination lt =
@@ -100,13 +100,13 @@ let fix_domination_def = new_definition
          lt`;;
 
 let numset_list_add_if_def,numset_list_add_if_ind = define_rec
-  [`numset_list_add_if [] (v:int) s P = s`;
-   `numset_list_add_if (CONS x xs) (v:int) s P =
+  `(numset_list_add_if [] (v:int) s P = s) /\
+   (numset_list_add_if (CONS x xs) (v:int) s P =
       match sptree_lookup x s with (SOME v') ->
           if P v v' then numset_list_add_if xs v (sptree_insert x v s) P
           else numset_list_add_if xs v s P
       | NONE ->
-          numset_list_add_if xs v (sptree_insert x v s) P`];;
+          numset_list_add_if xs v (sptree_insert x v s) P)`;;
 
 let numset_list_add_if_lt_def = new_definition
   `numset_list_add_if_lt l (v:int) s = numset_list_add_if l v s (<=)`;;
@@ -116,7 +116,7 @@ let numset_list_add_if_gt_def = new_definition
   a)`;;
 
 let size_of_live_tree_def,size_of_live_tree_ind = define_rec
-  [`(
+  `(
      size_of_live_tree (linear_scan_Writes l) =
        ((&1):int)) /\ (
      size_of_live_tree (linear_scan_Reads l) =
@@ -124,128 +124,128 @@ let size_of_live_tree_def,size_of_live_tree_ind = define_rec
      size_of_live_tree (linear_scan_Branch lt1 lt2) =
        size_of_live_tree lt1 + size_of_live_tree lt2) /\ (
      size_of_live_tree (linear_scan_Seq lt1 lt2) =
-       size_of_live_tree lt1 + size_of_live_tree lt2)`];;
+       size_of_live_tree lt1 + size_of_live_tree lt2)`;;
 
 let get_intervals_def,get_intervals_ind = define_rec
-  [`get_intervals (linear_scan_Writes l) (n:int) int_beg int_end =
+  `(get_intervals (linear_scan_Writes l) (n:int) int_beg int_end =
       (n - (&1),numset_list_add_if_lt l n int_beg,numset_list_add_if_gt
-          l n int_end)`;
-   `get_intervals (linear_scan_Reads l) (n:int) int_beg int_end =
-      (n - (&1),int_beg,numset_list_add_if_gt l n int_end)`;
-   `get_intervals (linear_scan_Branch lt1 lt2) (n:int) int_beg int_end =
+          l n int_end)) /\
+   (get_intervals (linear_scan_Reads l) (n:int) int_beg int_end =
+      (n - (&1),int_beg,numset_list_add_if_gt l n int_end)) /\
+   (get_intervals (linear_scan_Branch lt1 lt2) (n:int) int_beg int_end =
       let (n2,int_beg2,int_end2) = get_intervals lt2 n int_beg int_end in
-      get_intervals lt1 n2 int_beg2 int_end2`;
-   `get_intervals (linear_scan_Seq lt1 lt2) (n:int) int_beg int_end =
+      get_intervals lt1 n2 int_beg2 int_end2) /\
+   (get_intervals (linear_scan_Seq lt1 lt2) (n:int) int_beg int_end =
       let (n2,int_beg2,int_end2) = get_intervals lt2 n int_beg int_end in
-      get_intervals lt1 n2 int_beg2 int_end2`];;
+      get_intervals lt1 n2 int_beg2 int_end2)`;;
 
 (* compute the same thing as `get_intervals` (as says the `get_intervals_withlive_beg_eq_get_intervals_beg` theorem),
  * but has the following invariant: !r. r IN domain live ==> r NOTIN domain beg_in (as stated by the `get_intervals_withlive_live_intbeg` theorem *)
 let get_intervals_withlive_def,get_intervals_withlive_ind = define_rec
-  [`get_intervals_withlive (linear_scan_Writes l) (n:int) int_beg int_end live
+  `(get_intervals_withlive (linear_scan_Writes l) (n:int) int_beg int_end live
     =
       (n - (&1),numset_list_add_if_lt l n int_beg,numset_list_add_if_gt
-          l n int_end)`;
-   `get_intervals_withlive (linear_scan_Reads l) (n:int) int_beg int_end live =
+          l n int_end)) /\
+   (get_intervals_withlive (linear_scan_Reads l) (n:int) int_beg int_end live =
       (n - (&1),numset_list_delete l int_beg,numset_list_add_if_gt l n
-          int_end)`;
-   `get_intervals_withlive (linear_scan_Branch lt1 lt2) (n:int) int_beg int_end
+          int_end)) /\
+   (get_intervals_withlive (linear_scan_Branch lt1 lt2) (n:int) int_beg int_end
     live =
       let (n2,int_beg2,int_end2) = get_intervals_withlive lt2 n int_beg
           int_end live in
       let (n1,int_beg1,int_end1) = get_intervals_withlive lt1 n2
           (difference int_beg2 live) int_end2 live in
-      (n1,difference int_beg1 (sptree_union (get_live_backward lt1 live)
-          (get_live_backward lt2 live)),int_end1)`;
-   `get_intervals_withlive (linear_scan_Seq lt1 lt2) (n:int) int_beg int_end
+      (n1,difference int_beg1 (sptree_union (get_live_backward lt1
+          live) (get_live_backward lt2 live)),int_end1)) /\
+   (get_intervals_withlive (linear_scan_Seq lt1 lt2) (n:int) int_beg int_end
     live =
       let (n2,int_beg2,int_end2) = get_intervals_withlive lt2 n int_beg
           int_end live in
       let (n1,int_beg1,int_end1) = get_intervals_withlive lt1 n2 int_beg2
           int_end2 (get_live_backward lt2 live) in
-      (n1,int_beg1,int_end1)`];;
+      (n1,int_beg1,int_end1))`;;
 
 let check_number_property_def,check_number_property_ind = define_rec
-  [`check_number_property (P:int->1 spt->bool) (linear_scan_Writes l) (n:int)
+  `(check_number_property (P:int->1 spt->bool) (linear_scan_Writes l) (n:int)
     live =
         let n_out = n - (&1) in
         let live_out = numset_list_delete l live in
-        P n_out live_out`;
-   `check_number_property (P:int->1 spt->bool) (linear_scan_Reads l) (n:int)
+        P n_out live_out) /\
+   (check_number_property (P:int->1 spt->bool) (linear_scan_Reads l) (n:int)
     live =
         let n_out = n - (&1) in
         let live_out = linear_scan_numset_list_insert l live in
-        P n_out live_out`;
-   `check_number_property (P:int->1 spt->bool) (linear_scan_Branch lt1 lt2)
+        P n_out live_out) /\
+   (check_number_property (P:int->1 spt->bool) (linear_scan_Branch lt1 lt2)
     (n:int) live =
         let r2 = check_number_property P lt2 n live in
         let r1 = check_number_property P lt1 (n - (size_of_live_tree lt2))
             live in
-        r1 /\ r2`;
-   `check_number_property (P:int->1 spt->bool) (linear_scan_Seq lt1 lt2)
+        r1 /\ r2) /\
+   (check_number_property (P:int->1 spt->bool) (linear_scan_Seq lt1 lt2)
     (n:int) live =
         let r2 = check_number_property P lt2 n live in
         let r1 = check_number_property P lt1 (n - size_of_live_tree lt2)
             (get_live_backward lt2 live) in
-        r1 /\ r2`];;
+        r1 /\ r2)`;;
 
 let check_number_property_strong_def,check_number_property_strong_ind =
   define_rec
-  [`check_number_property_strong (P:int->1 spt->bool) (linear_scan_Writes l)
+  `(check_number_property_strong (P:int->1 spt->bool) (linear_scan_Writes l)
     (n:int) live =
         let n_out = n - (&1) in
         let live_out = numset_list_delete l live in
-        P n_out live_out`;
-   `check_number_property_strong (P:int->1 spt->bool) (linear_scan_Reads l)
+        P n_out live_out) /\
+   (check_number_property_strong (P:int->1 spt->bool) (linear_scan_Reads l)
     (n:int) live =
         let n_out = n - (&1) in
         let live_out = linear_scan_numset_list_insert l live in
-        P n_out live_out`;
-   `check_number_property_strong (P:int->1 spt->bool) (linear_scan_Branch lt1
+        P n_out live_out) /\
+   (check_number_property_strong (P:int->1 spt->bool) (linear_scan_Branch lt1
     lt2) (n:int) live =
         let r2 = check_number_property_strong P lt2 n live in
         let r1 = check_number_property_strong P lt1 (n - (size_of_live_tree
             lt2)) live in
         r1 /\ r2 /\ P (n - (size_of_live_tree (linear_scan_Branch lt1
-            lt2))) (get_live_backward (linear_scan_Branch lt1 lt2) live)`;
-   `check_number_property_strong (P:int->1 spt->bool) (linear_scan_Seq lt1 lt2)
+            lt2))) (get_live_backward (linear_scan_Branch lt1 lt2) live)) /\
+   (check_number_property_strong (P:int->1 spt->bool) (linear_scan_Seq lt1 lt2)
     (n:int) live =
         let r2 = check_number_property_strong P lt2 n live in
         let r1 = check_number_property_strong P lt1 (n - size_of_live_tree
             lt2) (get_live_backward lt2 live) in
-        r1 /\ r2`];;
+        r1 /\ r2)`;;
 
 let check_startlive_prop_def,check_startlive_prop_ind = define_rec
-  [`(
+  `(
      check_startlive_prop (linear_scan_Writes l) n beg end ndef =
-         (!r. MEM r l ==> (option_CASE (sptree_lookup r beg) ndef (\x. x)
-           <= n /\
+         (!r. MEM r l ==> (option_CASE (sptree_lookup r beg) ndef (\x. x) <=
+           n /\
                          (?v. sptree_lookup r end = SOME v /\ n <= v))))
                            /\ (
      check_startlive_prop (linear_scan_Reads l) n beg end ndef =
          T) /\ (
      check_startlive_prop (linear_scan_Branch lt1 lt2) n beg end ndef =
          (let r2 = check_startlive_prop lt2 n beg end ndef in
-         let r1 = check_startlive_prop lt1 (n - (size_of_live_tree lt2))
-           beg end ndef in
+         let r1 = check_startlive_prop lt1 (n - (size_of_live_tree lt2)) beg
+           end ndef in
          r1 /\ r2)) /\ (
      check_startlive_prop (linear_scan_Seq lt1 lt2) n beg end ndef =
          (let r2 = check_startlive_prop lt2 n beg end ndef in
          let r1 = check_startlive_prop lt1 (n - size_of_live_tree lt2) beg
            end ndef in
-         r1 /\ r2))`];;
+         r1 /\ r2))`;;
 
 let _ = size_thms "live_tree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let live_tree_registers_def,live_tree_registers_ind = define_wf
   `MEASURE (\x0. live_tree_size x0)`
-  [`live_tree_registers (linear_scan_Writes l) = set_of_list l`;
-   `live_tree_registers (linear_scan_Reads l) = set_of_list l`;
-   `live_tree_registers (linear_scan_Branch lt1 lt2) = live_tree_registers
-    lt1 UNION live_tree_registers lt2`;
-   `live_tree_registers (linear_scan_Seq lt1 lt2) = live_tree_registers
-    lt1 UNION live_tree_registers lt2`];;
+  `(live_tree_registers (linear_scan_Writes l) = set_of_list l) /\
+   (live_tree_registers (linear_scan_Reads l) = set_of_list l) /\
+   (live_tree_registers (linear_scan_Branch lt1 lt2) = live_tree_registers
+    lt1 UNION live_tree_registers lt2) /\
+   (live_tree_registers (linear_scan_Seq lt1 lt2) = live_tree_registers
+    lt1 UNION live_tree_registers lt2)`;;
 
 let interval_intersect_def = new_definition
   `interval_intersect ((l1:int),(r1:int)) (l2,r2) = (l1 <= r2 /\ l2 <= r1)`;;
@@ -263,15 +263,16 @@ let check_intervals_def = new_definition
      r1 = r2)`;;
 
 let get_intervals_ct_aux_def,get_intervals_ct_aux_ind = define_rec
-  [`get_intervals_ct_aux (reg_alloc_Delta wr rd) (n:int) int_beg int_end live =
-      (n - (&2),numset_list_add_if_lt wr n int_beg,numset_list_add_if_gt
-          rd (n - (&1)) (numset_list_add_if_gt wr n
+  `(get_intervals_ct_aux (reg_alloc_Delta wr rd) (n:int) int_beg int_end live =
+      (n - (&2),numset_list_add_if_lt wr n
+          int_beg,numset_list_add_if_gt rd (n - (&1))
+          (numset_list_add_if_gt wr n
           int_end),linear_scan_numset_list_insert rd (numset_list_delete wr
-          live))`;
-   `get_intervals_ct_aux (reg_alloc_Set cutset) (n:int) int_beg int_end live =
-      (n - (&1),int_beg,numset_list_add_if_gt (MAP FST (toAList cutset))
-          n int_end,sptree_union cutset live)`;
-   `get_intervals_ct_aux (reg_alloc_Branch optcutset ct1 ct2) (n:int) int_beg
+          live))) /\
+   (get_intervals_ct_aux (reg_alloc_Set cutset) (n:int) int_beg int_end live =
+      (n - (&1),int_beg,numset_list_add_if_gt (MAP FST (toAList
+          cutset)) n int_end,sptree_union cutset live)) /\
+   (get_intervals_ct_aux (reg_alloc_Branch optcutset ct1 ct2) (n:int) int_beg
     int_end live =
       let (n2,int_beg2,int_end2,live2) = get_intervals_ct_aux ct2 n int_beg
           int_end live in
@@ -281,11 +282,11 @@ let get_intervals_ct_aux_def,get_intervals_ct_aux_ind = define_rec
           live2)
       | SOME cutset -> (n1 - (&1),int_beg1,numset_list_add_if_gt (MAP
           FST (toAList cutset)) n1 int_end1,sptree_union cutset
-          (sptree_union live1 live2))`;
-   `get_intervals_ct_aux (reg_alloc_Seq ct1 ct2) (n:int) int_beg int_end live =
+          (sptree_union live1 live2))) /\
+   (get_intervals_ct_aux (reg_alloc_Seq ct1 ct2) (n:int) int_beg int_end live =
       let (n2,int_beg2,int_end2,live2) = get_intervals_ct_aux ct2 n int_beg
           int_end live in
-      get_intervals_ct_aux ct1 n2 int_beg2 int_end2 live2`];;
+      get_intervals_ct_aux ct1 n2 int_beg2 int_end2 live2)`;;
 
 let get_intervals_ct_def = new_definition
   `get_intervals_ct ct =
@@ -479,9 +480,9 @@ let update_sorted_moves_def = new_definition
    what the port found for it *)
 let numset_list_add_if_lt_monad_def,numset_list_add_if_lt_monad_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0)`
-  [`numset_list_add_if_lt_monad [] (v:int) =
-      st_ex_return one`;
-   `numset_list_add_if_lt_monad (CONS r rs) (v:int) =
+  `(numset_list_add_if_lt_monad [] (v:int) =
+      st_ex_return one) /\
+   (numset_list_add_if_lt_monad (CONS r rs) (v:int) =
       st_ex_bind (int_beg_sub r) (\begr.
         if (&0) < begr then
             st_ex_ignore_bind (update_int_beg r v) (
@@ -489,15 +490,15 @@ let numset_list_add_if_lt_monad_def,numset_list_add_if_lt_monad_ind = define_wf
         else if v <= begr then
             st_ex_ignore_bind (update_int_beg r v) (
             numset_list_add_if_lt_monad rs v)
-        else numset_list_add_if_lt_monad rs v)`];;
+        else numset_list_add_if_lt_monad rs v))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let numset_list_add_if_gt_monad_def,numset_list_add_if_gt_monad_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0)`
-  [`numset_list_add_if_gt_monad [] (v:int) =
-      st_ex_return one`;
-   `numset_list_add_if_gt_monad (CONS r rs) (v:int) =
+  `(numset_list_add_if_gt_monad [] (v:int) =
+      st_ex_return one) /\
+   (numset_list_add_if_gt_monad (CONS r rs) (v:int) =
       st_ex_bind (int_end_sub r) (\begr.
         if (&0) < begr then
             st_ex_ignore_bind (update_int_end r v) (
@@ -505,24 +506,24 @@ let numset_list_add_if_gt_monad_def,numset_list_add_if_gt_monad_ind = define_wf
         else if begr <= v then
             st_ex_ignore_bind (update_int_end r v) (
             numset_list_add_if_gt_monad rs v)
-        else numset_list_add_if_gt_monad rs v)`];;
+        else numset_list_add_if_gt_monad rs v))`;;
 
 let _ = size_thms "clash_tree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_intervals_ct_monad_aux_def,get_intervals_ct_monad_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2). clash_tree_size x0)`
-  [`get_intervals_ct_monad_aux (reg_alloc_Delta wr rd) (n:int) live =
+  `(get_intervals_ct_monad_aux (reg_alloc_Delta wr rd) (n:int) live =
         st_ex_ignore_bind (numset_list_add_if_lt_monad wr n) (
         st_ex_ignore_bind (numset_list_add_if_gt_monad wr n) (
         st_ex_ignore_bind (numset_list_add_if_gt_monad rd (n - (&1))) (
         st_ex_return (n - (&2),linear_scan_numset_list_insert rd
-            (numset_list_delete wr live)))))`;
-   `get_intervals_ct_monad_aux (reg_alloc_Set cutset) (n:int) live =
+            (numset_list_delete wr live)))))) /\
+   (get_intervals_ct_monad_aux (reg_alloc_Set cutset) (n:int) live =
         st_ex_ignore_bind (numset_list_add_if_gt_monad (MAP FST (toAList
             cutset)) n) (
-        st_ex_return (n - (&1),sptree_union cutset live))`;
-   `get_intervals_ct_monad_aux (reg_alloc_Branch optcutset ct1 ct2) (n:int)
+        st_ex_return (n - (&1),sptree_union cutset live))) /\
+   (get_intervals_ct_monad_aux (reg_alloc_Branch optcutset ct1 ct2) (n:int)
     live =
       st_ex_bind (get_intervals_ct_monad_aux ct2 n live) (\(n2,live2).
           st_ex_bind (get_intervals_ct_monad_aux ct1 n2 live) (\(n1,live1).
@@ -532,10 +533,10 @@ let get_intervals_ct_monad_aux_def,get_intervals_ct_monad_aux_ind = define_wf
             st_ex_ignore_bind (numset_list_add_if_gt_monad (MAP FST
                 (toAList cutset)) n1) (
             st_ex_return (n1 - (&1),sptree_union cutset (sptree_union
-                live1 live2)))))`;
-   `get_intervals_ct_monad_aux (reg_alloc_Seq ct1 ct2) (n:int) live =
+                live1 live2)))))) /\
+   (get_intervals_ct_monad_aux (reg_alloc_Seq ct1 ct2) (n:int) live =
       st_ex_bind (get_intervals_ct_monad_aux ct2 n live) (\(n2,live2).
-        get_intervals_ct_monad_aux ct1 n2 live2)`];;
+        get_intervals_ct_monad_aux ct1 n2 live2))`;;
 
 let get_intervals_ct_monad_def = new_definition
   `get_intervals_ct_monad ct =
@@ -556,7 +557,7 @@ let get_intervals_ct_monad_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let remove_inactive_intervals_def,remove_inactive_intervals_ind =
   define_guess_cheat
-  [`remove_inactive_intervals beg st =
+  `remove_inactive_intervals beg st =
      match linear_scan_state_active st with [] -> st_ex_return st
      | CONS (e,r) activetail -> (
        if e < beg then
@@ -564,21 +565,21 @@ let remove_inactive_intervals_def,remove_inactive_intervals_ind =
            let st' = linear_scan_state_colorpool_fupd (\l. CONS col l)
              (linear_scan_state_active_fupd (K activetail) st) in
            remove_inactive_intervals beg st')
-       else st_ex_return st)`];;
+       else st_ex_return st)`;;
 
 let add_active_interval_def,add_active_interval_ind = define_rec
-  [`add_active_interval v [] = [v]`;
-   `add_active_interval (v1:int#num) (CONS v2 tail) =
+  `(add_active_interval v [] = [v]) /\
+   (add_active_interval (v1:int#num) (CONS v2 tail) =
         if FST v1 <= FST v2 then CONS v1 (CONS v2 tail)
-        else CONS v2 (add_active_interval v1 tail)`];;
+        else CONS v2 (add_active_interval v1 tail))`;;
 
 let find_color_in_list_def,find_color_in_list_ind = define_rec
-  [`find_color_in_list [] (forbidden:1 spt) = NONE`;
-   `find_color_in_list (CONS r rs) (forbidden:1 spt) =
+  `(find_color_in_list [] (forbidden:1 spt) = NONE) /\
+   (find_color_in_list (CONS r rs) (forbidden:1 spt) =
         if sptree_lookup r forbidden = NONE then
           SOME (r,rs)
         else match find_color_in_list rs forbidden with NONE -> NONE
-          | SOME (col,rest) -> SOME (col,CONS r rest)`];;
+          | SOME (col,rest) -> SOME (col,CONS r rest))`;;
 
 let find_color_in_colornum_def = new_definition
   `find_color_in_colornum st (forbidden:1 spt) =
@@ -615,9 +616,9 @@ let color_register_def = new_definition
    what the port found for it *)
 let find_last_stealable_def,find_last_stealable_ind = define_wf
   `MEASURE (\(x0,x1). list_size (pair_size (\x. 0) (\n. n)) x0)`
-  [`find_last_stealable [] (forbidden:1 spt) =
-        st_ex_return NONE`;
-   `find_last_stealable (CONS x xs) (forbidden:1 spt) =
+  `(find_last_stealable [] (forbidden:1 spt) =
+        st_ex_return NONE) /\
+   (find_last_stealable (CONS x xs) (forbidden:1 spt) =
       st_ex_bind (find_last_stealable xs forbidden) (\recursion.
         match recursion with SOME (steal,rest) -> st_ex_return (SOME
             (steal,CONS x rest))
@@ -626,7 +627,7 @@ let find_last_stealable_def,find_last_stealable_ind = define_wf
               if ~(is_phy_var (SND x)) /\ (sptree_lookup xcol forbidden =
                   NONE) then
                 st_ex_return (SOME (x,xs))
-              else st_ex_return NONE)))`];;
+              else st_ex_return NONE))))`;;
 
 let find_spill_def = new_definition
   `find_spill st (forbidden:1 spt) reg rend force =
@@ -704,8 +705,8 @@ let linear_reg_alloc_pass2_initial_state_def = new_definition
    what the port found for it *)
 let find_reg_exchange_def,find_reg_exchange_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x0)`
-  [`find_reg_exchange [] exch invexch = st_ex_return (exch,invexch)`;
-   `find_reg_exchange (CONS r rs) exch invexch =
+  `(find_reg_exchange [] exch invexch = st_ex_return (exch,invexch)) /\
+   (find_reg_exchange (CONS r rs) exch invexch =
       st_ex_bind (colors_sub r) (\col1.
         let fcol1 = r DIV 2 in
         let col2 = option_CASE (sptree_lookup fcol1 invexch) fcol1 (\x. x)
@@ -713,17 +714,17 @@ let find_reg_exchange_def,find_reg_exchange_ind = define_wf
         let fcol2 = option_CASE (sptree_lookup col1 exch) col1 (\x. x) in
         find_reg_exchange rs (sptree_insert col1 fcol1 (sptree_insert
             col2 fcol2 exch)) (sptree_insert fcol1 col1 (sptree_insert
-            fcol2 col2 invexch)))`];;
+            fcol2 col2 invexch))))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let MAP_colors_def,MAP_colors_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`MAP_colors f 0 = st_ex_return one`;
-   `MAP_colors f (SUC n) =
+  `(MAP_colors f 0 = st_ex_return one) /\
+   (MAP_colors f (SUC n) =
       st_ex_bind (colors_sub n) (\col.
         st_ex_ignore_bind (update_colors n (f col)) (
-        MAP_colors f n))`];;
+        MAP_colors f n)))`;;
 
 let apply_reg_exchange_def = new_definition
   `apply_reg_exchange phyregs =
@@ -735,29 +736,29 @@ let apply_reg_exchange_def = new_definition
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_FOLDL_def,st_ex_FOLDL_ind = define_guess_cheat
-  [`st_ex_FOLDL f e [] = st_ex_return e`;
-   `st_ex_FOLDL f e (CONS x xs) =
+  `(st_ex_FOLDL f e [] = st_ex_return e) /\
+   (st_ex_FOLDL f e (CONS x xs) =
       st_ex_bind (f e x) (\e'.
-        st_ex_FOLDL f e' xs)`];;
+        st_ex_FOLDL f e' xs))`;;
 
 (* like st_ex_FILTER, but preserve the order *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_FILTER_good_def,st_ex_FILTER_good_ind = define_guess_cheat
-  [`st_ex_FILTER_good P [] = st_ex_return []`;
-   `st_ex_FILTER_good P (CONS x xs) =
+  `(st_ex_FILTER_good P [] = st_ex_return []) /\
+   (st_ex_FILTER_good P (CONS x xs) =
       st_ex_bind (P x) (\Px.
         if Px then
           st_ex_bind (st_ex_FILTER_good P xs) (\filter_xs.
             st_ex_return (CONS x filter_xs))
-        else st_ex_FILTER_good P xs)`];;
+        else st_ex_FILTER_good P xs))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let edges_to_adjlist_def,edges_to_adjlist_ind = define_wf
   `MEASURE (\(x0,x1). list_size (pair_size (\n. n) (\n. n)) x0)`
-  [`edges_to_adjlist [] acc = st_ex_return acc`;
-   `edges_to_adjlist (CONS (a,b) abs') acc =
+  `(edges_to_adjlist [] acc = st_ex_return acc) /\
+   (edges_to_adjlist (CONS (a,b) abs') acc =
       if a = b then
         edges_to_adjlist abs' acc
       else st_ex_bind (int_beg_sub a) (\bega. st_ex_bind (int_beg_sub b)
@@ -766,7 +767,7 @@ let edges_to_adjlist_def,edges_to_adjlist_ind = define_wf
             edges_to_adjlist abs' (sptree_insert b (CONS a (the []
                 (sptree_lookup b acc))) acc)
           else edges_to_adjlist abs' (sptree_insert a (CONS b (the []
-              (sptree_lookup a acc))) acc)))`];;
+              (sptree_lookup a acc))) acc))))`;;
 
 let sort_moves_rev_def = new_definition
   `sort_moves_rev ls =
@@ -783,16 +784,16 @@ let swap_regs_def = new_definition
    the names that the port gives the constants *)
 let partition_regs_def,partition_regs_ind = define_wf
   `MEASURE (\(l,rpiv,begrpiv,r). r - l)`
-  [`partition_regs l rpiv begrpiv r =
+  `partition_regs l rpiv begrpiv r =
      if r <= l then
        st_ex_return l
-     else st_ex_bind (sorted_regs_sub l) (\reg. st_ex_bind (int_beg_sub
-       reg) (\begreg.
+     else st_ex_bind (sorted_regs_sub l) (\reg. st_ex_bind (int_beg_sub reg)
+       (\begreg.
          if begreg < begrpiv \/ (begreg = begrpiv /\ reg <= rpiv) then
              partition_regs (l + 1) rpiv begrpiv r
          else
              st_ex_ignore_bind (swap_regs l (r - 1)) (
-             partition_regs l rpiv begrpiv (r - 1))))`];;
+             partition_regs l rpiv begrpiv (r - 1))))`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(l,r). r - l)
@@ -801,40 +802,39 @@ let partition_regs_def,partition_regs_ind = define_wf
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sort_regs_def,sort_regs_ind = define_guess_cheat
-  [`sort_regs l r =
+  `sort_regs l r =
      if r <= l + 1 then
        st_ex_return one
      else st_ex_bind (sorted_regs_sub l) (\rpiv. st_ex_bind (int_beg_sub
-       rpiv) (\begrpiv. st_ex_bind (partition_regs (l + 1) rpiv begrpiv r)
-       (\m.
+       rpiv) (\begrpiv. st_ex_bind (partition_regs (l + 1) rpiv begrpiv r) (\m.
          st_ex_ignore_bind (swap_regs l (m - 1)) (
          // TODO: this condition is necessary for the termination argument, but useless in practice
          if m <= l \/ r < m then
            st_ex_return one
          else
              st_ex_ignore_bind (sort_regs l (m - 1)) (
-             sort_regs m r)))))`];;
+             sort_regs m r)))))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let list_to_sorted_regs_def,list_to_sorted_regs_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0)`
-  [`list_to_sorted_regs [] n =
-        st_ex_return one`;
-   `list_to_sorted_regs (CONS r rs) n =
+  `(list_to_sorted_regs [] n =
+        st_ex_return one) /\
+   (list_to_sorted_regs (CONS r rs) n =
         st_ex_ignore_bind (update_sorted_regs n r) (
-        list_to_sorted_regs rs (n + 1))`];;
+        list_to_sorted_regs rs (n + 1)))`;;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 let sorted_regs_to_list_def,sorted_regs_to_list_ind = define_wf
   `MEASURE (\(n,last). last - n)`
-  [`sorted_regs_to_list n last =
+  `sorted_regs_to_list n last =
      if last <= n then
        st_ex_return []
      else st_ex_bind (sorted_regs_sub n) (\r. st_ex_bind
        (sorted_regs_to_list (n + 1) last) (\l.
-         st_ex_return (CONS r l)))`];;
+         st_ex_return (CONS r l)))`;;
 
 let swap_moves_def = new_definition
   `swap_moves i1 i2 =
@@ -847,7 +847,7 @@ let swap_moves_def = new_definition
    the names that the port gives the constants *)
 let partition_moves_def,partition_moves_ind = define_wf
   `MEASURE (\(l,piv,r). r - l)`
-  [`partition_moves l ppiv r =
+  `partition_moves l ppiv r =
      if r <= l then
        st_ex_return l
      else st_ex_bind (sorted_moves_sub l) (\move'.
@@ -855,7 +855,7 @@ let partition_moves_def,partition_moves_ind = define_wf
            partition_moves (l + 1) ppiv r
          else
              st_ex_ignore_bind (swap_moves l (r - 1)) (
-             partition_moves l ppiv (r - 1)))`];;
+             partition_moves l ppiv (r - 1)))`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(l,r). r - l)
@@ -864,18 +864,18 @@ let partition_moves_def,partition_moves_ind = define_wf
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let linear_scan_sort_moves_def,linear_scan_sort_moves_ind = define_guess_cheat
-  [`linear_scan_sort_moves l r =
+  `linear_scan_sort_moves l r =
      if r <= l + 1 then
        st_ex_return one
-     else st_ex_bind (sorted_moves_sub l) (\piv. st_ex_bind
-       (partition_moves (l + 1) (FST piv) r) (\m.
+     else st_ex_bind (sorted_moves_sub l) (\piv. st_ex_bind (partition_moves
+       (l + 1) (FST piv) r) (\m.
          st_ex_ignore_bind (swap_moves l (m - 1)) (
          // TODO: this condition is necessary for the termination argument, but useless in practice
          if m <= l \/ r < m then
            st_ex_return one
          else
              st_ex_ignore_bind (linear_scan_sort_moves l (m - 1)) (
-             linear_scan_sort_moves m r))))`];;
+             linear_scan_sort_moves m r))))`;;
 
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -883,22 +883,22 @@ let linear_scan_sort_moves_def,linear_scan_sort_moves_ind = define_guess_cheat
 let list_to_sorted_moves_def,list_to_sorted_moves_ind = define_wf
   `MEASURE (\(x0,x1). list_size (pair_size (\n. n) (pair_size (\n. n) (\n.
   n))) x0)`
-  [`list_to_sorted_moves [] n =
-        st_ex_return one`;
-   `list_to_sorted_moves (CONS r rs) n =
+  `(list_to_sorted_moves [] n =
+        st_ex_return one) /\
+   (list_to_sorted_moves (CONS r rs) n =
         st_ex_ignore_bind (update_sorted_moves n r) (
-        list_to_sorted_moves rs (n + 1))`];;
+        list_to_sorted_moves rs (n + 1)))`;;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 let sorted_moves_to_list_def,sorted_moves_to_list_ind = define_wf
   `MEASURE (\(n,len). len - n)`
-  [`sorted_moves_to_list n len =
+  `sorted_moves_to_list n len =
      if len <= n then
        st_ex_return []
      else st_ex_bind (sorted_moves_sub n) (\r. st_ex_bind
        (sorted_moves_to_list (n + 1) len) (\l.
-         st_ex_return (CONS r l)))`];;
+         st_ex_return (CONS r l)))`;;
 
 let linear_reg_alloc_intervals_def = new_definition
   `linear_reg_alloc_intervals k forced moves reglist_unsorted =
@@ -938,11 +938,11 @@ let linear_reg_alloc_intervals_def = new_definition
    what the port found for it *)
 let extract_coloration_def,extract_coloration_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x1)`
-  [`extract_coloration invbij [] acc = st_ex_return acc`;
-   `extract_coloration invbij (CONS r rs) acc =
+  `(extract_coloration invbij [] acc = st_ex_return acc) /\
+   (extract_coloration invbij (CONS r rs) acc =
       st_ex_bind (colors_sub r) (\col.
         extract_coloration invbij rs (sptree_insert (the 0
-            (sptree_lookup r invbij)) col acc))`];;
+            (sptree_lookup r invbij)) col acc)))`;;
 
 let bijection_state_FIELDS = define_record "bijection_state"
   ["bij","num spt";
@@ -982,19 +982,19 @@ let find_bijection_step_def = new_definition
        state)))`;;
 
 let find_bijection_clash_tree_def,find_bijection_clash_tree_ind = define_rec
-  [`find_bijection_clash_tree state (reg_alloc_Delta wr rd) =
-      FOLDL find_bijection_step (FOLDL find_bijection_step state rd) wr`;
-   `find_bijection_clash_tree state (reg_alloc_Set cutset) =
-      foldi (\r v acc. find_bijection_step acc r) 0 state cutset`;
-   `find_bijection_clash_tree state (reg_alloc_Branch optcutset ct1 ct2) =
+  `(find_bijection_clash_tree state (reg_alloc_Delta wr rd) =
+      FOLDL find_bijection_step (FOLDL find_bijection_step state rd) wr) /\
+   (find_bijection_clash_tree state (reg_alloc_Set cutset) =
+      foldi (\r v acc. find_bijection_step acc r) 0 state cutset) /\
+   (find_bijection_clash_tree state (reg_alloc_Branch optcutset ct1 ct2) =
       let state1 = find_bijection_clash_tree state ct1 in
       let state2 = find_bijection_clash_tree state1 ct2 in
         match optcutset with NONE -> state2
         | SOME cutset ->
-          foldi (\r v acc. find_bijection_step acc r) 0 state2 cutset`;
-   `find_bijection_clash_tree state (reg_alloc_Seq ct1 ct2) =
+          foldi (\r v acc. find_bijection_step acc r) 0 state2 cutset) /\
+   (find_bijection_clash_tree state (reg_alloc_Seq ct1 ct2) =
       let state1 = find_bijection_clash_tree state ct1 in
-      find_bijection_clash_tree state1 ct2`];;
+      find_bijection_clash_tree state1 ct2)`;;
 
 let apply_bijection_def = new_definition
   `apply_bijection bij (interval:int spt) =
@@ -1037,15 +1037,15 @@ let linear_reg_alloc_and_extract_coloration_def = new_definition
        extract_coloration invbij reglist_unsorted LN))`;;
 
 let size_of_clash_tree_def,size_of_clash_tree_ind = define_rec
-  [`size_of_clash_tree (reg_alloc_Delta wr rd) =
-      ((&2:int):int)`;
-   `size_of_clash_tree (reg_alloc_Set cutset) =
-      ((&1:int):int)`;
-   `size_of_clash_tree (reg_alloc_Branch optcutset ct1 ct2) = ((
+  `(size_of_clash_tree (reg_alloc_Delta wr rd) =
+      ((&2:int):int)) /\
+   (size_of_clash_tree (reg_alloc_Set cutset) =
+      ((&1:int):int)) /\
+   (size_of_clash_tree (reg_alloc_Branch optcutset ct1 ct2) = ((
       (if IS_SOME optcutset then (&1) else (&0)) + size_of_clash_tree
-          ct1 + size_of_clash_tree ct2):int)`;
-   `size_of_clash_tree (reg_alloc_Seq ct1 ct2) = ((
-      size_of_clash_tree ct1 + size_of_clash_tree ct2):int)`];;
+          ct1 + size_of_clash_tree ct2):int)) /\
+   (size_of_clash_tree (reg_alloc_Seq ct1 ct2) = ((
+      size_of_clash_tree ct1 + size_of_clash_tree ct2):int))`;;
 
 let run_linear_reg_alloc_intervals_def = new_definition
   `run_linear_reg_alloc_intervals ct k forced moves
@@ -1058,20 +1058,20 @@ let run_linear_reg_alloc_intervals_def = new_definition
          (nmax + 1,0) (LENGTH moves,(0,(0,0))))`;;
 
 let apply_bij_on_clash_tree_def,apply_bij_on_clash_tree_ind = define_rec
-  [`apply_bij_on_clash_tree (reg_alloc_Delta wr rd) bij =
+  `(apply_bij_on_clash_tree (reg_alloc_Delta wr rd) bij =
       reg_alloc_Delta (MAP (\r. the 0 (sptree_lookup r bij)) wr) (MAP
-          (\r. the 0 (sptree_lookup r bij)) rd)`;
-   `apply_bij_on_clash_tree (reg_alloc_Set cutset) bij =
+          (\r. the 0 (sptree_lookup r bij)) rd)) /\
+   (apply_bij_on_clash_tree (reg_alloc_Set cutset) bij =
       reg_alloc_Set (foldi (\r _ acc. sptree_insert (the 0
-          (sptree_lookup r bij)) one acc) 0 LN cutset)`;
-   `apply_bij_on_clash_tree (reg_alloc_Branch optcutset ct1 ct2) bij =
+          (sptree_lookup r bij)) one acc) 0 LN cutset)) /\
+   (apply_bij_on_clash_tree (reg_alloc_Branch optcutset ct1 ct2) bij =
       reg_alloc_Branch (OPTION_MAP (foldi (\r _ acc. sptree_insert (the
           0 (sptree_lookup r bij)) one acc) 0 LN) optcutset)
           (apply_bij_on_clash_tree ct1 bij) (apply_bij_on_clash_tree ct2
-          bij)`;
-   `apply_bij_on_clash_tree (reg_alloc_Seq ct1 ct2) bij =
+          bij)) /\
+   (apply_bij_on_clash_tree (reg_alloc_Seq ct1 ct2) bij =
       reg_alloc_Seq (apply_bij_on_clash_tree ct1 bij)
-          (apply_bij_on_clash_tree ct2 bij)`];;
+          (apply_bij_on_clash_tree ct2 bij))`;;
 
 
 let linear_scan_reg_alloc_def = new_definition

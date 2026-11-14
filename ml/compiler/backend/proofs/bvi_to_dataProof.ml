@@ -55,12 +55,12 @@ let code_rel_def = new_definition
    termination *)
 let data_to_bvi_v_def,data_to_bvi_v_ind = define_shaped_rec
   "nested"
-  [`data_to_bvi_v (dataSem_Number i) = bvlSem_Number i`;
-   `data_to_bvi_v (dataSem_Word64 w) = bvlSem_Word64 w`;
-   `data_to_bvi_v (dataSem_CodePtr p) = bvlSem_CodePtr p`;
-   `data_to_bvi_v (dataSem_RefPtr b r) = bvlSem_RefPtr b r`;
-   `data_to_bvi_v (dataSem_Block _ tag l) = bvlSem_Block tag (MAP
-    data_to_bvi_v l)`];;
+  `(data_to_bvi_v (dataSem_Number i) = bvlSem_Number i) /\
+   (data_to_bvi_v (dataSem_Word64 w) = bvlSem_Word64 w) /\
+   (data_to_bvi_v (dataSem_CodePtr p) = bvlSem_CodePtr p) /\
+   (data_to_bvi_v (dataSem_RefPtr b r) = bvlSem_RefPtr b r) /\
+   (data_to_bvi_v (dataSem_Block _ tag l) = bvlSem_Block tag (MAP
+    data_to_bvi_v l))`;;
 add_simp data_to_bvi_v_def;;
 
 (* Projection for Unit constant *)
@@ -77,14 +77,14 @@ add_simp data_to_bvi_v_Boolv;;
 
 (* Projection for references, non-injective for value arrays *)
 let data_to_bvi_ref_def = define_cases
-  [`data_to_bvi_ref (bvlSem_ValueArray l) = bvlSem_ValueArray (MAP
-    data_to_bvi_v l)`;
-   `data_to_bvi_ref (bvlSem_ByteArray b bl) = (bvlSem_ByteArray b bl:'a
-    bvlSem_ref)`;
-   `data_to_bvi_ref (bvlSem_Thunk m v) = bvlSem_Thunk m (data_to_bvi_v v)`;
-   `data_to_bvi_ref (bvlSem_MutBlock tg fin ls c rs) =
+  `(data_to_bvi_ref (bvlSem_ValueArray l) = bvlSem_ValueArray (MAP
+    data_to_bvi_v l)) /\
+   (data_to_bvi_ref (bvlSem_ByteArray b bl) = (bvlSem_ByteArray b bl:'a
+    bvlSem_ref)) /\
+   (data_to_bvi_ref (bvlSem_Thunk m v) = bvlSem_Thunk m (data_to_bvi_v v)) /\
+   (data_to_bvi_ref (bvlSem_MutBlock tg fin ls c rs) =
         bvlSem_MutBlock tg fin (MAP data_to_bvi_v ls) (data_to_bvi_v
-            c) (MAP data_to_bvi_v rs)`];;
+            c) (MAP data_to_bvi_v rs))`;;
 add_simp data_to_bvi_ref_def;;
 
 (* State relation *)

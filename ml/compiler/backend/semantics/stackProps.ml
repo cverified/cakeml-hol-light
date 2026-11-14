@@ -577,15 +577,15 @@ let stackProps_evaluate_add_clock_io_events_mono = prove
 
 let clock_neutral_def,clock_neutral_ind = define_shaped_rec
   "match"
-  [`clock_neutral r =
+  `clock_neutral r =
      match r with
        stackLang_Seq p1 p2 -> clock_neutral p1 /\ clock_neutral p2
-     | stackLang_LocValue _1 _2 _3 -> T
+     | stackLang_LocValue _ _ _ -> T
      | stackLang_Halt _ -> T
      | stackLang_Inst _ -> T
      | stackLang_Skip -> T
-     | stackLang_If _4 _5 _6 p1 p2 -> clock_neutral p1 /\ clock_neutral p2
-     | r -> F`];;
+     | stackLang_If _ _ _ p1 p2 -> clock_neutral p1 /\ clock_neutral p2
+     | r -> F`;;
 
 (* [local] *)
 let inst_clock_neutral = prove
@@ -651,7 +651,7 @@ let _ = size_thms "stackLang_prog";;
    what the port found for it *)
 let stackProps_extract_labels_def,stackProps_extract_labels_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`stackProps_extract_labels x1 =
+  `stackProps_extract_labels x1 =
      match x1 with
        stackLang_Call ret dest h ->
        (match ret with
@@ -669,7 +669,7 @@ let stackProps_extract_labels_def,stackProps_extract_labels_ind = define_wf
      | stackLang_If cmp r1 ri e2 e3 ->
        (APPEND (stackProps_extract_labels e2) (stackProps_extract_labels
          e3))
-     | _ -> []`];;
+     | _ -> []`;;
 
 let find_code_IMP_get_labels = prove
  (`stackSem_find_code d r code = SOME e ==>
@@ -677,13 +677,13 @@ let find_code_IMP_get_labels = prove
   CHEAT_TAC);;
 
 let addr_ok_def = define_general
-  [`addr_ok op (Addr a w) c <=>
+  `addr_ok op (Addr a w) c <=>
    (reg_ok a c /\
     (if op IN {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32} then
       (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
     else if op IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
-      (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32) else
-      (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w))`];;
+      (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32) else (\c.
+      asm_offset_ok 0 (asm_config_byte_offset c)) c w))`;;
 
 (* TODO: This is not updated for Install, CBW and DBW *)
 (* asm_ok out of stack_names *)
@@ -691,13 +691,13 @@ let addr_ok_def = define_general
    what the port found for it *)
 let stack_asm_ok_def,stack_asm_ok_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  [`stack_asm_ok c x2 =
+  `stack_asm_ok c x2 =
      match x2 with
        ((stackLang_Inst i):'a stackLang_prog) -> inst_ok i c
      | stackLang_ShMemOp op r ad -> reg_ok r c /\ addr_ok op ad c
      | stackLang_CodeBufferWrite r1 r2 -> r1 < asm_config_reg_count c /\ r2
-       < asm_config_reg_count c /\ ~(MEM r1 (asm_config_avoid_regs c))
-       /\ ~(MEM r2 (asm_config_avoid_regs c))
+       < asm_config_reg_count c /\ ~(MEM r1 (asm_config_avoid_regs c)) /\ ~(MEM
+       r2 (asm_config_avoid_regs c))
      | stackLang_Seq p1 p2 -> stack_asm_ok c p1 /\ stack_asm_ok c p2
      | stackLang_If cmp n r p p' -> stack_asm_ok c p /\ stack_asm_ok c p'
      | stackLang_Loop p -> stack_asm_ok c p
@@ -708,12 +708,12 @@ let stack_asm_ok_def,stack_asm_ok_ind = define_wf
      | stackLang_Call r tar h ->
        (match tar with INR r -> r < asm_config_reg_count c /\ ~(MEM r
          (asm_config_avoid_regs c)) | _ -> T) /\
-       (match r with SOME (p,_7,_8,_9) -> stack_asm_ok c p /\
+       (match r with SOME (p,_,_,_) -> stack_asm_ok c p /\
          (match h with
-         SOME (p',_10,_11) -> stack_asm_ok c p'
+         SOME (p',_,_) -> stack_asm_ok c p'
          | _ -> T)
        | _ -> T)
-     | _ -> T`];;
+     | _ -> T`;;
 
 let reg_name_def = new_definition
   `reg_name r c <=>
@@ -722,8 +722,8 @@ let reg_name_def = new_definition
 (* inst requirements just before stack_names *)
 
 let reg_imm_name_def = define_cases
-  [`reg_imm_name b (Reg r) c <=> reg_name r c`;
-   `reg_imm_name b (Imm w) c <=> asm_config_valid_imm c b w`];;
+  `(reg_imm_name b (Reg r) c <=> reg_name r c) /\
+   (reg_imm_name b (Imm w) c <=> asm_config_valid_imm c b w)`;;
 
 let arith_name_def = new_definition
   `arith_name x1 c =
@@ -773,59 +773,59 @@ let arith_name_def = new_definition
 (* We could actually almost use fp_ok, except this needs to check reg_ok for
    some registers as well *)
 let fp_name_def = define_cases
-  [`fp_name (FPLess r d1 d2) (c:'a asm_config) <=>
-          reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPLessEqual r d1 d2) (c:'a asm_config) <=>
-          reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPEqual r d1 d2) (c:'a asm_config) <=>
-          reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPAbs d1 d2) (c:'a asm_config) <=>
+  `(fp_name (FPLess r d1 d2) (c:'a asm_config) <=>
+          reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c) /\
+   (fp_name (FPLessEqual r d1 d2) (c:'a asm_config) <=>
+          reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c) /\
+   (fp_name (FPEqual r d1 d2) (c:'a asm_config) <=>
+          reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c) /\
+   (fp_name (FPAbs d1 d2) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
-              c /\ fp_reg_ok d2 c`;
-   `fp_name (FPNeg d1 d2) (c:'a asm_config) <=>
+              c /\ fp_reg_ok d2 c) /\
+   (fp_name (FPNeg d1 d2) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
-              c /\ fp_reg_ok d2 c`;
-   `fp_name (FPSqrt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\ fp_reg_ok
-    d2 c`;
-   `fp_name (FPAdd d1 d2 d3) (c:'a asm_config) <=>
+              c /\ fp_reg_ok d2 c) /\
+   (fp_name (FPSqrt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
+    /\ fp_reg_ok d2 c) /\
+   (fp_name (FPAdd d1 d2 d3) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
-          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPSub d1 d2 d3) (c:'a asm_config) <=>
+          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c) /\
+   (fp_name (FPSub d1 d2 d3) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
-          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPMul d1 d2 d3) (c:'a asm_config) <=>
+          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c) /\
+   (fp_name (FPMul d1 d2 d3) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
-          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPDiv d1 d2 d3) (c:'a asm_config) <=>
+          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c) /\
+   (fp_name (FPDiv d1 d2 d3) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
-          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPFma d1 d2 d3) (c:'a asm_config) <=>
+          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c) /\
+   (fp_name (FPFma d1 d2 d3) (c:'a asm_config) <=>
           (asm_config_ISA c = ARMv7) /\
           2 < asm_config_fp_reg_count c /\
-          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPMov d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\ fp_reg_ok
-    d2 c`;
-   `fp_name (FPMovToReg r1 r2 d) (c:'a asm_config) <=>
+          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c) /\
+   (fp_name (FPMov d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\ fp_reg_ok
+    d2 c) /\
+   (fp_name (FPMovToReg r1 r2 d) (c:'a asm_config) <=>
           reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2)
               /\ reg_name r2 c) /\
-          fp_reg_ok d c`;
-   `fp_name (FPMovFromReg d r1 r2) (c:'a asm_config) <=>
+          fp_reg_ok d c) /\
+   (fp_name (FPMovFromReg d r1 r2) (c:'a asm_config) <=>
           reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2)
               /\ reg_name r2 c) /\
-          fp_reg_ok d c`;
-   `fp_name (FPToInt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
-    /\ fp_reg_ok d2 c`;
-   `fp_name (FPFromInt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
-    /\ fp_reg_ok d2 c`];;
+          fp_reg_ok d c) /\
+   (fp_name (FPToInt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
+    /\ fp_reg_ok d2 c) /\
+   (fp_name (FPFromInt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
+    /\ fp_reg_ok d2 c)`;;
 
 let addr_name_def = define_general
-  [`addr_name m (Addr r w) c <=>
+  `addr_name m (Addr r w) c <=>
    reg_name r c /\
    (if m IN {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32} then (\c.
      asm_offset_ok 0 (asm_config_addr_offset c)) c w
     else if m IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
       (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32)
-    else (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w)`];;
+    else (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w)`;;
 
 let inst_name_def = new_definition
   `inst_name c x2 =
@@ -840,12 +840,12 @@ let inst_name_def = new_definition
    what the port found for it *)
 let stack_asm_name_def,stack_asm_name_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  [`stack_asm_name c x2 =
+  `stack_asm_name c x2 =
      match x2 with
        ((stackLang_Inst i):'a stackLang_prog) -> inst_name c i
      | stackLang_OpCurrHeap b r1 r2 ->
-       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c
-         /\ reg_name r2 c
+       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\ reg_name
+         r2 c
      | stackLang_ShMemOp op r a -> reg_name r c /\ addr_name op a c
      | stackLang_CodeBufferWrite r1 r2 -> reg_name r1 c /\ reg_name r2 c
      | stackLang_DataBufferWrite r1 r2 -> reg_name r1 c /\ reg_name r2 c
@@ -857,12 +857,12 @@ let stack_asm_name_def,stack_asm_name_ind = define_wf
      | stackLang_Return n -> reg_name n c
      | stackLang_Call r tar h ->
        (match tar with INR r -> reg_name r c | _ -> T) /\
-       (match r with SOME (p,_12,_13,_14) -> stack_asm_name c p /\
+       (match r with SOME (p,_,_,_) -> stack_asm_name c p /\
          (match h with
-         SOME (p',_15,_16) -> stack_asm_name c p'
+         SOME (p',_,_) -> stack_asm_name c p'
          | _ -> T)
        | _ -> T)
-     | _ -> T`];;
+     | _ -> T`;;
 
 let fixed_names_def = new_definition
   `fixed_names names c =
@@ -876,7 +876,7 @@ let fixed_names_def = new_definition
    what the port found for it *)
 let stack_asm_remove_def,stack_asm_remove_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  [`stack_asm_remove c x2 =
+  `stack_asm_remove c x2 =
      match x2 with
        ((stackLang_Get n s):'a stackLang_prog) -> reg_name n c
      | stackLang_OpCurrHeap binop v src -> reg_name v c /\ reg_name src c
@@ -889,18 +889,17 @@ let stack_asm_remove_def,stack_asm_remove_ind = define_wf
      | stackLang_StackSetSize n -> reg_name n c
      | stackLang_BitmapLoad n n0 -> reg_name n c /\ reg_name n0 c
      | stackLang_StoreConsts n n0 _ -> reg_name n c /\ reg_name n0 c
-     | stackLang_Seq p1 p2 -> stack_asm_remove c p1 /\ stack_asm_remove c
-       p2
-     | stackLang_If cmp n r p p' -> stack_asm_remove c p
-       /\ stack_asm_remove c p'
+     | stackLang_Seq p1 p2 -> stack_asm_remove c p1 /\ stack_asm_remove c p2
+     | stackLang_If cmp n r p p' -> stack_asm_remove c p /\ stack_asm_remove
+       c p'
      | stackLang_Loop p -> stack_asm_remove c p
      | stackLang_Call r tar h ->
-       (match r with SOME (p,_17,_18,_19) -> stack_asm_remove c p /\
+       (match r with SOME (p,_,_,_) -> stack_asm_remove c p /\
          (match h with
-         SOME (p',_20,_21) -> stack_asm_remove c p'
+         SOME (p',_,_) -> stack_asm_remove c p'
          | _ -> T)
        | _ -> T)
-     | _ -> T`];;
+     | _ -> T`;;
 
 (* Various syntactic properties required for correctness of the stackLang passes
   All of these are trivially preserved from word_to_stack until the pass that
@@ -915,7 +914,7 @@ let stack_asm_remove_def,stack_asm_remove_ind = define_wf
    what the port found for it *)
 let alloc_arg_def,alloc_arg_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`alloc_arg x1 =
+  `alloc_arg x1 =
      match x1 with
        stackLang_Alloc v -> (v = 1)
      | ((stackLang_Seq p1 p2):'a stackLang_prog) ->
@@ -925,9 +924,9 @@ let alloc_arg_def,alloc_arg_ind = define_wf
      | stackLang_Loop p1 ->
         alloc_arg p1
      | stackLang_Call x1 _ x2 ->
-        (match x1 with SOME (y,r,_22,_23) -> alloc_arg y | NONE -> T) /\
-        (match x2 with SOME (y,_24,_25) -> alloc_arg y | NONE -> T)
-     | _ -> T`];;
+        (match x1 with SOME (y,r,_,_) -> alloc_arg y | NONE -> T) /\
+        (match x2 with SOME (y,_,_) -> alloc_arg y | NONE -> T)
+     | _ -> T`;;
 
 (* stack_remove requires that all register arguments are bounded by k *)
 
@@ -939,20 +938,20 @@ let alloc_arg_def,alloc_arg_ind = define_wf
    termination *)
 let reg_bound_exp_def,reg_bound_exp_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x0)`
-  [`reg_bound_exp x1 k =
+  `reg_bound_exp x1 k =
      match x1 with
        wordLang_Var n -> n < k
      | wordLang_Load e -> reg_bound_exp e k
      | wordLang_Shift _ e1 e2 -> reg_bound_exp e1 k /\ reg_bound_exp e2 k
      | wordLang_Lookup _ -> F
      | wordLang_Op _ es -> ALL (\e. reg_bound_exp e k) es
-     | _ -> T`];;
+     | _ -> T`;;
 add_simp reg_bound_exp_def;;
 
 let reg_bound_inst_def = new_definition
   `reg_bound_inst x1 k =
      match x1 with
-       asm_Mem _26 n (Addr a _27) -> n < k /\ a < k
+       asm_Mem _ n (Addr a _) -> n < k /\ a < k
      | asm_Const n _ -> n < k
      | asm_Arith (asm_Shift _ n r2 ri) -> r2 < k /\ n < k /\ (match ri with
        Reg r -> r < k | _ -> T)
@@ -981,7 +980,7 @@ add_simp reg_bound_inst_def;;
    what the port found for it *)
 let reg_bound_def,reg_bound_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x0)`
-  [`reg_bound x1 k =
+  `reg_bound x1 k =
      match x1 with
        stackLang_Halt v1 ->
         v1 < k
@@ -1014,9 +1013,9 @@ let reg_bound_def,reg_bound_ind = define_wf
      | stackLang_Call x1 dest x2 ->
         (match dest with INR i -> i < k | _ -> T) /\
         (match x1 with NONE -> T
-         | SOME (y,r,_28,_29) -> reg_bound y k /\ r < k /\
-                             (match x2 with SOME (y,_30,_31) -> reg_bound y
-                               k | NONE -> T))
+         | SOME (y,r,_,_) -> reg_bound y k /\ r < k /\
+                             (match x2 with SOME (y,_,_) -> reg_bound y k |
+                               NONE -> T))
      | stackLang_Install ptr len dptr dlen ret ->
        ptr < k /\ len < k /\ dptr < k /\ dlen < k /\ ret < k
      | stackLang_ShMemOp op r (Addr a _) -> r < k /\ a < k
@@ -1033,12 +1032,12 @@ let reg_bound_def,reg_bound_ind = define_wf
      | stackLang_StackLoadAny r r2 -> r < k /\ r2 < k
      | stackLang_StackStore r n -> r < k
      | stackLang_StackStoreAny r r2 -> r < k /\ r2 < k
-     | _ -> T`];;
+     | _ -> T`;;
 
 (* Finally, stack_to_lab requires correct arguments for Call/FFI/Install calls *)
 let call_args_def,call_args_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`call_args x1 ptr len ptr2 len2 ret =
+  `call_args x1 ptr len ptr2 len2 ret =
      match x1 with
        ((stackLang_Seq p1 p2):'a stackLang_prog) ->
         call_args p1 ptr len ptr2 len2 ret /\
@@ -1054,13 +1053,13 @@ let call_args_def,call_args_ind = assume_definition_rec
           ret
      | stackLang_Call x1 _ x2 ->
         (match x1 with NONE -> T
-         | SOME (y,r,_32,_33) ->
+         | SOME (y,r,_,_) ->
              call_args y ptr len ptr2 len2 ret /\ r = ret /\
-             (match x2 with SOME (y,_34,_35) -> call_args y ptr len ptr2
-               len2 ret | NONE -> T))
-     | stackLang_Install ptr' len' _36 _37 ret' ->
+             (match x2 with SOME (y,_,_) -> call_args y ptr len ptr2 len2
+               ret | NONE -> T))
+     | stackLang_Install ptr' len' _ _ ret' ->
         ptr' = ptr /\ len' = len /\ ret' = ret
-     | _ -> T`];;
+     | _ -> T`;;
 
 (* TODO: remove "stack_" prefix from these functions *)
 
@@ -1068,43 +1067,42 @@ let call_args_def,call_args_ind = assume_definition_rec
    what the port found for it *)
 let stack_get_handler_labels_def,stack_get_handler_labels_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  [`stack_get_handler_labels n x2 =
+  `stack_get_handler_labels n x2 =
      match x2 with
        stackLang_Call r d h ->
-       (match r with SOME (x,_38,_39) -> stack_get_handler_labels n x UNION
+       (match r with SOME (x,_,_) -> stack_get_handler_labels n x UNION
          (match h with SOME (x,l1,l2) -> (if l1 = n then {(l1,l2)} else {})
            UNION (stack_get_handler_labels n x) | _ -> {})
        | _ -> {})
      | stackLang_Seq p1 p2 -> stack_get_handler_labels n p1 UNION
        stack_get_handler_labels n p2
-     | stackLang_If _40 _41 _42 p1 p2 -> stack_get_handler_labels n p1
-       UNION stack_get_handler_labels n p2
+     | stackLang_If _ _ _ p1 p2 -> stack_get_handler_labels n p1 UNION
+       stack_get_handler_labels n p2
      | stackLang_Loop p -> stack_get_handler_labels n p
-     | _ -> {}`];;
+     | _ -> {}`;;
 add_simp stack_get_handler_labels_def;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stackProps_get_code_labels_def,stackProps_get_code_labels_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`stackProps_get_code_labels x1 =
+  `stackProps_get_code_labels x1 =
      match x1 with
        stackLang_Call r d h ->
        (match d with INL x -> {(x,0)} | _ -> {}) UNION
-       (match r with SOME (x,_43,_44) -> stackProps_get_code_labels x | _
-         -> {}) UNION
-       (match h with SOME (x,_45,_46) -> stackProps_get_code_labels x | _
-         -> {})
+       (match r with SOME (x,_,_) -> stackProps_get_code_labels x | _ -> {})
+         UNION
+       (match h with SOME (x,_,_) -> stackProps_get_code_labels x | _ -> {})
      | stackLang_Seq p1 p2 -> stackProps_get_code_labels p1 UNION
        stackProps_get_code_labels p2
-     | stackLang_If _47 _48 _49 p1 p2 -> stackProps_get_code_labels p1
-       UNION stackProps_get_code_labels p2
+     | stackLang_If _ _ _ p1 p2 -> stackProps_get_code_labels p1 UNION
+       stackProps_get_code_labels p2
      | stackLang_Loop p -> stackProps_get_code_labels p
-     | stackLang_JumpLower _50 _51 t -> {(t,0)}
+     | stackLang_JumpLower _ _ t -> {(t,0)}
      | stackLang_RawCall t -> {(t,1)}
      | stackLang_LocValue _ l1 l2 -> {(l1,l2)}
-     | stackLang_StoreConsts _52 _53 (SOME l) -> {(l,0)}
-     | _ -> {}`];;
+     | stackLang_StoreConsts _ _ (SOME l) -> {(l,0)}
+     | _ -> {}`;;
 add_simp stackProps_get_code_labels_def;;
 
 (* elabs gives a set of existing code labels *)
@@ -1130,35 +1128,33 @@ let stack_good_handler_labels_def = new_definition
    what the port found for it *)
 let stackProps_no_install_def,stackProps_no_install_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`stackProps_no_install x1 =
+  `stackProps_no_install x1 =
      match x1 with
        stackLang_Call r d h ->
-       ((match r with SOME (x,_54,_55) -> stackProps_no_install x | _ -> T)
-         /\
-        (match h with SOME (x,_56,_57) -> stackProps_no_install x | _ ->
-          T))
+       ((match r with SOME (x,_,_) -> stackProps_no_install x | _ -> T) /\
+        (match h with SOME (x,_,_) -> stackProps_no_install x | _ -> T))
      | stackLang_Seq p1 p2 -> (stackProps_no_install p1
        /\ stackProps_no_install p2)
-     | stackLang_If _58 _59 _60 p1 p2 -> (stackProps_no_install p1
+     | stackLang_If _ _ _ p1 p2 -> (stackProps_no_install p1
        /\ stackProps_no_install p2)
      | stackLang_Loop p -> stackProps_no_install p
-     | stackLang_Install _61 _62 _63 _64 _65 -> F
-     | _ -> T`];;
+     | stackLang_Install _ _ _ _ _ -> F
+     | _ -> T`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let no_shmemop_def,no_shmemop_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  [`no_shmemop x1 =
+  `no_shmemop x1 =
      match x1 with
        stackLang_Call r d h ->
-       ((match r with SOME (x,_66,_67) -> no_shmemop x | _ -> T) /\
-        (match h with SOME (x,_68,_69) -> no_shmemop x | _ -> T))
+       ((match r with SOME (x,_,_) -> no_shmemop x | _ -> T) /\
+        (match h with SOME (x,_,_) -> no_shmemop x | _ -> T))
      | stackLang_Seq p1 p2 -> (no_shmemop p1 /\ no_shmemop p2)
-     | stackLang_If _70 _71 _72 p1 p2 -> (no_shmemop p1 /\ no_shmemop p2)
+     | stackLang_If _ _ _ p1 p2 -> (no_shmemop p1 /\ no_shmemop p2)
      | stackLang_Loop p -> no_shmemop p
-     | stackLang_ShMemOp _73 _74 _75 -> F
-     | _ -> T`];;
+     | stackLang_ShMemOp _ _ _ -> F
+     | _ -> T`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

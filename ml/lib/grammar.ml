@@ -32,43 +32,43 @@ let parsetree_INDUCT,parsetree_RECURSION = define_datatype
    | Nd (('b+num)#'locs) (parsetree list)";;
 
 let ptree_loc_def = define_cases
-  [`ptree_loc (Lf (_,l)) = l`;
-   `ptree_loc (Nd (_1,l) _2) = l`];;
+  `(ptree_loc (Lf (_,l)) = l) /\
+   (ptree_loc (Nd (_,l) _) = l)`;;
 
 let ptree_list_loc_def = new_definition
   `ptree_list_loc l = merge_list_locs (MAP ptree_loc l)`;;
 
 let ptree_head_def = define_cases
-  [`ptree_head (Lf (tok',l)) = tok'`;
-   `ptree_head (Nd (nt',l) children) = grammar_NT nt'`];;
+  `(ptree_head (Lf (tok',l)) = tok') /\
+   (ptree_head (Nd (nt',l) children) = grammar_NT nt')`;;
 add_simp ptree_head_def;;
 
 let valid_ptree_def,valid_ptree_ind = define_shaped_rec
   "nested"
-  [`valid_ptree G (Lf _) <=> T`;
-   `valid_ptree G (Nd (nt',l) children) <=>
+  `(valid_ptree G (Lf _) <=> T) /\
+   (valid_ptree G (Nd (nt',l) children) <=>
         nt' IN FDOM (grammar_rules G) /\ MAP ptree_head children IN FAPPLY
             (grammar_rules G) nt' /\
-        (!pt. pt IN set_of_list children ==> valid_ptree G pt)`];;
+        (!pt. pt IN set_of_list children ==> valid_ptree G pt))`;;
 add_simp valid_ptree_def;;
 
 let ptree_fringe_def,ptree_fringe_ind = define_shaped_rec
   "nested"
-  [`ptree_fringe (Lf (t,_)) = [t]`;
-   `ptree_fringe (Nd _ children) = FLAT (MAP ptree_fringe children)`];;
+  `(ptree_fringe (Lf (t,_)) = [t]) /\
+   (ptree_fringe (Nd _ children) = FLAT (MAP ptree_fringe children))`;;
 
 let real_fringe_def,real_fringe_ind = define_shaped_rec
   "nested"
-  [`real_fringe (Lf t) = [t]`;
-   `real_fringe (Nd n ptl) = FLAT (MAP real_fringe ptl)`];;
+  `(real_fringe (Lf t) = [t]) /\
+   (real_fringe (Nd n ptl) = FLAT (MAP real_fringe ptl))`;;
 add_simp real_fringe_def;;
 
 let valid_locs_def,valid_locs_ind = define_shaped_rec
   "nested"
-  [`valid_locs (Lf _) <=> T`;
-   `valid_locs (Nd (_,l) children) <=>
+  `(valid_locs (Lf _) <=> T) /\
+   (valid_locs (Nd (_,l) children) <=>
          l = merge_list_locs (MAP ptree_loc children) /\
-         (!pt. MEM pt children ==> valid_locs pt)`];;
+         (!pt. MEM pt children ==> valid_locs pt))`;;
 add_simp valid_locs_def;;
 
 let valid_lptree_def = new_definition

@@ -68,10 +68,10 @@ let windmill_cons = prove
    what the port found for it *)
 let path_def,path_ind = define_wf
   `MEASURE (\x0. list_size (pair_size (\x. 0) (\x. 0)) x0)`
-  [`parmove_path [] <=> T`;
-   `parmove_path [_] <=> T`;
-   `parmove_path (CONS (c,b') (CONS (b,a) p)) <=>
-         (b = b') /\ parmove_path (CONS (b,a) p)`];;
+  `(parmove_path [] <=> T) /\
+   (parmove_path [_] <=> T) /\
+   (parmove_path (CONS (c,b') (CONS (b,a) p)) <=>
+         (b = b') /\ parmove_path (CONS (b,a) p))`;;
 add_simp path_def;;
 
 let path_change_start = prove
@@ -183,8 +183,8 @@ let parsem_MAP_INJ = prove
    what the port found for it *)
 let seqsem_def,seqsem_ind = define_wf
   `MEASURE (\(x0,x1). list_size (pair_size (\x. 0) (\x. 0)) x0)`
-  [`seqsem [] rho = rho`;
-   `seqsem (CONS (d,s) tau) rho = seqsem tau ((d =+ rho s) rho)`];;
+  `(seqsem [] rho = rho) /\
+   (seqsem (CONS (d,s) tau) rho = seqsem tau ((d =+ rho s) rho))`;;
 
 (* HOL4 parmoveScript.sml:323: ML code, not ported *)
 
@@ -311,8 +311,8 @@ let fstep_dstep = prove
    port lets its own machinery find one *)
 (* HOL4 parmoveScript.sml:610-638: the tactic that proves the termination *)
 let pmov_def,pmov_ind = define_guess
-  [`pmov s = match s with ([],[],_) -> s
-     | _ -> pmov (fstep s)`];;
+  `pmov s = match s with ([],[],_) -> s
+     | _ -> pmov (fstep s)`;;
 
 (* HOL4 parmoveScript.sml:640: ML code, not ported *)
 
@@ -367,12 +367,12 @@ let MEM_MAP_SND_parmove = prove
 let not_use_temp_before_assign_def,not_use_temp_before_assign_ind = define_wf
   `MEASURE (\x0. list_size (pair_size (option_size (\x. 0)) (option_size (\x.
   0))) x0)`
-  [`not_use_temp_before_assign x1 =
+  `not_use_temp_before_assign x1 =
      match x1 with
        [] -> T
      | CONS (d,NONE) ls -> F
      | CONS (NONE,s) ls -> T
-     | CONS (d,s) ls -> not_use_temp_before_assign ls`];;
+     | CONS (d,s) ls -> not_use_temp_before_assign ls`;;
 add_simp not_use_temp_before_assign_def;;
 
 let not_use_temp_before_assign_append = prove

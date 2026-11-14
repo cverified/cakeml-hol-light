@@ -31,7 +31,7 @@ let cmlParse_destResult_def = new_definition
   `cmlParse_destResult x1 =
    match x1 with
      pegexec_Result (peg_Success [] x eo) -> peg_Success [] x eo
-   | pegexec_Result (peg_Success (CONS (_1,l) _2) _3 _4) ->
+   | pegexec_Result (peg_Success (CONS (_,l) _) _ _) ->
    peg_Failure l "Expected to be at EOF"
    | pegexec_Result (peg_Failure fl fe) -> peg_Failure fl fe
    | _ -> peg_Failure unknown_loc "Something catastrophic happened"`;;
@@ -59,8 +59,8 @@ let pegresult_choice_def = new_definition
      | _ -> g toks)`;;
 
 let toks_to_loc_def = define_cases
-  [`toks_to_loc [] = unknown_loc`;
-   `toks_to_loc (CONS (h,L) _) = L`];;
+  `(toks_to_loc [] = unknown_loc) /\
+   (toks_to_loc (CONS (h,L) _) = L)`;;
 
 let pegresult_guard_def = new_definition
   `(pegresult_guard b:(tokens_token#locs) list->((tokens_token#locs)
@@ -69,10 +69,10 @@ let pegresult_guard_def = new_definition
           else peg_Failure (toks_to_loc toks) "Assert failure")`;;
 
 let optlift_def = define_general
-  [`(optlift NONE:(tokens_token#locs) list->((tokens_token#locs)
+  `((optlift NONE:(tokens_token#locs) list->((tokens_token#locs)
     list,'a,string)pegresult) = (\toks. peg_Failure (toks_to_loc toks)
-    "Option = NONE")`;
-   `optlift (SOME a) = (\toks. peg_Success toks a NONE)`];;
+    "Option = NONE")) /\
+   (optlift (SOME a) = (\toks. peg_Success toks a NONE))`;;
 
 let cmlParseExpr_def = new_definition
   `cmlParseExpr = pegresult_bind (cmlParse_destResult o (\n t. peg_exec cmlPEG

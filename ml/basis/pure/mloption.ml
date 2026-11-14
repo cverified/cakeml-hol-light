@@ -16,8 +16,8 @@ let _ = cake_theory "mloption" [];;
 
 let getOpt_def = assume_definition
   "termination (CHEAT_TAC)"
-  [`getOpt (SOME v) a = v`;
-   `getOpt NONE a = a`];;
+  `(getOpt (SOME v) a = v) /\
+   (getOpt NONE a = a)`;;
 
 let filter_def = new_definition
   `mloption_filter f a = if f a then SOME (a) else NONE`;;

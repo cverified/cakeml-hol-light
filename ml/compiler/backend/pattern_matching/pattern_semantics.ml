@@ -69,60 +69,60 @@ let pattern_semantics_term_INDUCT,pattern_semantics_term_RECURSION =
 
 (* semantics of input *)
 let is_sibling_def = define_cases
-  [`is_sibling x NONE = T`;
-   `is_sibling x (SOME l) = MEM x l`];;
+  `(is_sibling x NONE = T) /\
+   (is_sibling x (SOME l) = MEM x l)`;;
 
 let pattern_semantics_pmatch_def,pattern_semantics_pmatch_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`pattern_semantics_pmatch refs pattern_semantics_Any t = PMatchSuccess`;
-   `pattern_semantics_pmatch refs (pattern_semantics_Lit l)
+  `(pattern_semantics_pmatch refs pattern_semantics_Any t = PMatchSuccess) /\
+   (pattern_semantics_pmatch refs (pattern_semantics_Lit l)
     (pattern_semantics_Litv l') =
          if ~(lit_same_type l l') then PTypeFailure else if l = l' then
-             PMatchSuccess else PMatchFailure`;
-   `pattern_semantics_pmatch refs (pattern_semantics_Cons (SOME (tag,siblings))
+             PMatchSuccess else PMatchFailure) /\
+   (pattern_semantics_pmatch refs (pattern_semantics_Cons (SOME (tag,siblings))
     pargs) (pattern_semantics_Term (SOME t) targs) =
         if tag = t /\ LENGTH pargs = LENGTH targs then
             pattern_semantics_pmatch_list refs pargs targs else if
             is_sibling (t,LENGTH targs) siblings then PMatchFailure else
-            PTypeFailure`;
-   `pattern_semantics_pmatch refs (pattern_semantics_Cons NONE pargs)
+            PTypeFailure) /\
+   (pattern_semantics_pmatch refs (pattern_semantics_Cons NONE pargs)
     (pattern_semantics_Term NONE targs) =
-        pattern_semantics_pmatch_list refs pargs targs`;
-   `pattern_semantics_pmatch refs (pattern_semantics_Ref p)
+        pattern_semantics_pmatch_list refs pargs targs) /\
+   (pattern_semantics_pmatch refs (pattern_semantics_Ref p)
     (pattern_semantics_RefPtr r) =
         match FLOOKUP refs r with NONE -> PTypeFailure
-        | SOME v -> pattern_semantics_pmatch refs p v`;
-   `pattern_semantics_pmatch refs (pattern_semantics_Or p1 p2) t =
+        | SOME v -> pattern_semantics_pmatch refs p v) /\
+   (pattern_semantics_pmatch refs (pattern_semantics_Or p1 p2) t =
         match pattern_semantics_pmatch refs p1 t with
            PMatchSuccess -> (match pattern_semantics_pmatch refs p2 t with
                               PTypeFailure -> PTypeFailure
                              | _ -> PMatchSuccess)
          | PMatchFailure -> pattern_semantics_pmatch refs p2 t
-         | PTypeFailure -> PTypeFailure`;
-   `pattern_semantics_pmatch refs _1 _2 = PTypeFailure`;
-   `pattern_semantics_pmatch_list refs [] [] = PMatchSuccess`;
-   `pattern_semantics_pmatch_list refs [] ts = PTypeFailure`;
-   `pattern_semantics_pmatch_list refs ps [] = PTypeFailure`;
-   `pattern_semantics_pmatch_list refs (CONS p ps) (CONS t ts) =
+         | PTypeFailure -> PTypeFailure) /\
+   (pattern_semantics_pmatch refs _ _ = PTypeFailure) /\
+   (pattern_semantics_pmatch_list refs [] [] = PMatchSuccess) /\
+   (pattern_semantics_pmatch_list refs [] ts = PTypeFailure) /\
+   (pattern_semantics_pmatch_list refs ps [] = PTypeFailure) /\
+   (pattern_semantics_pmatch_list refs (CONS p ps) (CONS t ts) =
         match pattern_semantics_pmatch refs p t with
           PMatchSuccess -> pattern_semantics_pmatch_list refs ps ts
         | PMatchFailure -> (match pattern_semantics_pmatch_list refs ps ts
             with
                               PTypeFailure -> PTypeFailure
                              | _ -> PMatchFailure)
-        | PTypeFailure -> PTypeFailure`];;
+        | PTypeFailure -> PTypeFailure)`;;
 
 let match_def,match_ind = define_rec
-  [`pattern_semantics_match refs [] v = SOME MatchFailure`;
-   `pattern_semantics_match refs (CONS (p,e) rows) v =
+  `(pattern_semantics_match refs [] v = SOME MatchFailure) /\
+   (pattern_semantics_match refs (CONS (p,e) rows) v =
         match pattern_semantics_pmatch refs p v with
            PMatchSuccess ->
              (match pattern_semantics_match refs rows v with
                NONE -> NONE
              | SOME _ -> SOME (MatchSuccess e))
          | PMatchFailure -> pattern_semantics_match refs rows v
-         | PTypeFailure -> NONE`];;
+         | PTypeFailure -> NONE)`;;
 
 (* semantics of output *)
 
@@ -134,14 +134,14 @@ let dt_test_def = new_definition
      SOME (t = c /\ l = LENGTH args)
    | (pattern_semantics_LitEq l1,pattern_semantics_Litv l2) ->
      (if lit_same_type l1 l2 then SOME (l1 = l2) else NONE)
-   | (_3,_4) -> NONE`;;
+   | (_,_) -> NONE`;;
 
 let _ = size_thms "position";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let app_pos_def,app_pos_ind = define_wf
   `MEASURE (\(x0,x1,x2). position_size x1)`
-  [`app_pos refs x2 v =
+  `app_pos refs x2 v =
      match (x2,v) with
        (EmptyPos,v) -> SOME v
      | (Pos 0 pos,pattern_semantics_RefPtr r) ->
@@ -151,37 +151,37 @@ let app_pos_def,app_pos_ind = define_wf
        x
      | (Pos (SUC n) pos,pattern_semantics_Term c (CONS x xs)) ->
        app_pos refs (Pos n pos) (pattern_semantics_Term c xs)
-     | (Pos _5 _6,_7) -> NONE`];;
+     | (Pos _ _,_) -> NONE`;;
 
 let dt_eval_guard_def,dt_eval_guard_ind = define_rec
-  [`dt_eval_guard refs v pattern_semantics_True =
-         SOME T`;
-   `dt_eval_guard refs v (pattern_semantics_PosTest pos test) =
+  `(dt_eval_guard refs v pattern_semantics_True =
+         SOME T) /\
+   (dt_eval_guard refs v (pattern_semantics_PosTest pos test) =
          match app_pos refs pos v with NONE -> NONE
-         | SOME x -> dt_test test x`;
-   `dt_eval_guard refs v (pattern_semantics_Not g) =
+         | SOME x -> dt_test test x) /\
+   (dt_eval_guard refs v (pattern_semantics_Not g) =
          match dt_eval_guard refs v g with NONE -> NONE
-         | SOME b -> SOME (~b)`;
-   `dt_eval_guard refs v (pattern_semantics_Conj g1 g2) =
+         | SOME b -> SOME (~b)) /\
+   (dt_eval_guard refs v (pattern_semantics_Conj g1 g2) =
          match dt_eval_guard refs v g1 with NONE -> NONE
          | SOME T -> dt_eval_guard refs v g2
-         | SOME F -> SOME F`;
-   `dt_eval_guard refs v (pattern_semantics_Disj g1 g2) =
+         | SOME F -> SOME F) /\
+   (dt_eval_guard refs v (pattern_semantics_Disj g1 g2) =
          match dt_eval_guard refs v g1 with NONE -> NONE
          | SOME T -> SOME T
-         | SOME F -> dt_eval_guard refs v g2`];;
+         | SOME F -> dt_eval_guard refs v g2)`;;
 
 let _ = size_thms "dTree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let dt_eval_def,dt_eval_ind = define_wf
   `MEASURE (\(x0,x1,x2). dTree_size x2)`
-  [`dt_eval refs _ (pattern_semantics_Leaf k) = SOME (MatchSuccess k)`;
-   `dt_eval refs _ pattern_semantics_Fail = SOME (MatchFailure)`;
-   `dt_eval refs _ pattern_semantics_TypeFail = NONE`;
-   `dt_eval refs v (pattern_semantics_If guard' dt1 dt2) =
+  `(dt_eval refs _ (pattern_semantics_Leaf k) = SOME (MatchSuccess k)) /\
+   (dt_eval refs _ pattern_semantics_Fail = SOME (MatchFailure)) /\
+   (dt_eval refs _ pattern_semantics_TypeFail = NONE) /\
+   (dt_eval refs v (pattern_semantics_If guard' dt1 dt2) =
          match dt_eval_guard refs v guard' with NONE -> NONE
-         | SOME b -> dt_eval refs v (if b then dt1 else dt2)`];;
+         | SOME b -> dt_eval refs v (if b then dt1 else dt2))`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

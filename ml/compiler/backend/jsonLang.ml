@@ -39,11 +39,11 @@ let _ = size_thms "app_list";;
    what the port found for it *)
 let concat_with_def,concat_with_ind = define_wf
   `MEASURE (\(x0,x1). list_size (app_list_size (\x. 0)) x0)`
-  [`concat_with x1 c =
+  `concat_with x1 c =
      match x1 with
        [] -> misc_List []
      | [s] -> s
-     | CONS s ss -> misc_Append s (misc_Append c (concat_with ss c))`];;
+     | CONS s ss -> misc_Append s (misc_Append c (concat_with ss c))`;;
 
 let printable_def = new_definition
   `printable c <=> ORD c >= 32 /\ ORD c < 127 /\ ~(c = (CHR 34)) /\ ~(c =
@@ -58,9 +58,9 @@ let num_to_hex_digit_def = new_definition
    what the port found for it *)
 let n_rev_hex_digs,n_rev_hex_digs_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x0)`
-  [`n_rev_hex_digs 0 x = []`;
-   `n_rev_hex_digs (SUC n) x = (APPEND (num_to_hex_digit (x MOD 16))
-      (n_rev_hex_digs n (x DIV 16)))`];;
+  `(n_rev_hex_digs 0 x = []) /\
+   (n_rev_hex_digs (SUC n) x = (APPEND (num_to_hex_digit (x MOD 16))
+      (n_rev_hex_digs n (x DIV 16))))`;;
 
 let encode_str_def = new_definition
   `encode_str unicode s =
@@ -76,7 +76,7 @@ let _ = size_thms "obj";;
    what the port found for it *)
 let json_to_mlstring_def,json_to_mlstring_ind = define_wf
   `MEASURE (sum_measure (\x0. obj_size x0) (\x0. obj_size3 x0))`
-  [`json_to_mlstring obj =
+  `(json_to_mlstring obj =
         match obj with jsonLang_Object mems -> misc_Append (misc_Append
             (misc_List [(implode "{")])
                     (concat_with (MAP mem_to_string mems) (misc_List
@@ -92,9 +92,9 @@ let json_to_mlstring_def,json_to_mlstring_ind = define_wf
            | jsonLang_Int i -> misc_List [mlint_toString i]
            | jsonLang_Bool b -> if b then misc_List [(implode "true")] else
                misc_List [(implode "false")]
-           | jsonLang_Null -> misc_List [(implode "null")]`;
-   `mem_to_string n_obj = let (n,obj) = n_obj in misc_Append (misc_List
-    [implode "\""; n; implode "\":"]) (json_to_mlstring obj)`];;
+           | jsonLang_Null -> misc_List [(implode "null")]) /\
+   (mem_to_string n_obj = let (n,obj) = n_obj in misc_Append (misc_List
+    [implode "\""; n; implode "\":"]) (json_to_mlstring obj))`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

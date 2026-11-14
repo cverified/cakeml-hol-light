@@ -156,63 +156,63 @@ let MEM_IMP_shape_size = prove
 
 let is_wf_shape_def,is_wf_shape_ind = define_shaped_rec
   "nested"
-  [`is_wf_shape ctxt One = T`;
-   `is_wf_shape ctxt (Comb shs) = ALL (is_wf_shape ctxt) shs`;
-   `is_wf_shape ctxt (Named nm) =
+  `(is_wf_shape ctxt One = T) /\
+   (is_wf_shape ctxt (Comb shs) = ALL (is_wf_shape ctxt) shs) /\
+   (is_wf_shape ctxt (Named nm) =
       match ALOOKUP ctxt nm with SOME flds -> T
-      | NONE -> F`];;
+      | NONE -> F)`;;
 
 let is_wf_flds_def,is_wf_flds_ind = define_rec
-  [`is_wf_flds ctxt [] = T`;
-   `is_wf_flds ctxt (CONS (fld,sh) flds) =
-      (is_wf_shape ctxt sh /\ is_wf_flds ctxt flds)`];;
+  `(is_wf_flds ctxt [] = T) /\
+   (is_wf_flds ctxt (CONS (fld,sh) flds) =
+      (is_wf_shape ctxt sh /\ is_wf_flds ctxt flds))`;;
 
 let is_wf_ctxt_def,is_wf_ctxt_ind = define_rec
-  [`is_wf_ctxt [] = T`;
-   `is_wf_ctxt (CONS (nm,info) ctxt') = (
+  `(is_wf_ctxt [] = T) /\
+   (is_wf_ctxt (CONS (nm,info) ctxt') = (
       (ALOOKUP ctxt' nm = NONE) /\
       (is_wf_flds ctxt' (struct_info_fields info)) /\
-      (is_wf_ctxt ctxt'))`];;
+      (is_wf_ctxt ctxt')))`;;
 
 (* For passes with Nameds *)
 let size_of_sh_with_ctxt_def,size_of_sh_with_ctxt_ind = define_shaped_rec
   "nested"
-  [`size_of_sh_with_ctxt ctxt One = 1`;
-   `size_of_sh_with_ctxt ctxt (Comb shapes) = SUM (MAP (size_of_sh_with_ctxt
-    ctxt) shapes)`;
-   `size_of_sh_with_ctxt ctxt (Named name) =
+  `(size_of_sh_with_ctxt ctxt One = 1) /\
+   (size_of_sh_with_ctxt ctxt (Comb shapes) = SUM (MAP
+    (size_of_sh_with_ctxt ctxt) shapes)) /\
+   (size_of_sh_with_ctxt ctxt (Named name) =
       match ALOOKUP ctxt name with SOME info -> struct_info_size info
       | NONE -> 1
-    // should not happen`];;
+    // should not happen)`;;
 
 (* For passes after Nameds are compiled away eg pan_to_crep *)
 let size_of_shape_def,size_of_shape_ind = define_shaped_rec
   "nested"
-  [`size_of_shape One = 1`;
-   `size_of_shape (Comb shapes) = SUM (MAP size_of_shape shapes)`;
-   `size_of_shape (Named name) = 1
-    // should not happen`];;
+  `(size_of_shape One = 1) /\
+   (size_of_shape (Comb shapes) = SUM (MAP size_of_shape shapes)) /\
+   (size_of_shape (Named name) = 1
+    // should not happen)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let shape_to_str_def,shape_to_str_ind = define_wf
   `MEASURE (\x0. shape_size x0)`
-  [`shape_to_str One = implode "1"`;
-   `shape_to_str (Comb []) = implode "{}"`;
-   `// should never happen
-    shape_to_str (Comb (CONS x xs)) =
+  `(shape_to_str One = implode "1") /\
+   (shape_to_str (Comb []) = implode "{}") /\
+   // should never happen
+   (shape_to_str (Comb (CONS x xs)) =
       mlstring_concat (APPEND (CONS (implode "{") (CONS (shape_to_str x)
               (MAP (\x. strcat (implode ",") x) (MAP shape_to_str xs))))
-              [implode "}"])`;
-   `shape_to_str (Named nm) = nm`];;
+              [implode "}"])) /\
+   (shape_to_str (Named nm) = nm)`;;
 
 let shape_val_def,shape_val_ind = define_rec
-  [`shape_val One = panLang_Const (n2w 0)`;
-   `shape_val (Comb shapes) = panLang_RStruct (shape_vals shapes)`;
-   `shape_val (Named nm) = panLang_Const (n2w 0)`;
-   `// should never happen
-    shape_vals [] = []`;
-   `shape_vals (CONS sh shs) = CONS (shape_val sh) (shape_vals shs)`];;
+  `(shape_val One = panLang_Const (n2w 0)) /\
+   (shape_val (Comb shapes) = panLang_RStruct (shape_vals shapes)) /\
+   (shape_val (Named nm) = panLang_Const (n2w 0)) /\
+   // should never happen
+   (shape_vals [] = []) /\
+   (shape_vals (CONS sh shs) = CONS (shape_val sh) (shape_vals shs))`;;
 
 let _ = size_thms "mlstring";;
 let _ = size_thms "panLang_exp";;
@@ -225,28 +225,27 @@ let MEM_IMP_exp_size = prove
 
 
 let nested_seq_def,nested_seq_ind = define_rec
-  [`nested_seq [] = panLang_Skip`;
-   `nested_seq (CONS e es) = panLang_Seq e (nested_seq es)`];;
+  `(nested_seq [] = panLang_Skip) /\
+   (nested_seq (CONS e es) = panLang_Seq e (nested_seq es))`;;
 
 let with_shape_def,with_shape_ind = define_rec
-  [`with_shape [] _ = []`;
-   `with_shape (CONS sh shs) e = CONS (TAKE (size_of_shape sh) e)
-    (with_shape shs (DROP (size_of_shape sh) e))`];;
+  `(with_shape [] _ = []) /\
+   (with_shape (CONS sh shs) e = CONS (TAKE (size_of_shape sh) e)
+    (with_shape shs (DROP (size_of_shape sh) e)))`;;
 
 let exp_ids_def,exp_ids_ind = define_shaped_rec
   "match"
-  [`exp_ids x1 =
+  `exp_ids x1 =
      match x1 with
        panLang_Skip -> ([]:mlstring list)
      | panLang_Raise e _ -> [e]
-     | panLang_Dec _1 _2 _3 p -> exp_ids p
+     | panLang_Dec _ _ _ p -> exp_ids p
      | panLang_Seq p q -> APPEND (exp_ids p) (exp_ids q)
      | panLang_If _ p q -> APPEND (exp_ids p) (exp_ids q)
      | panLang_While _ p -> exp_ids p
-     | panLang_Call (SOME (_4,(SOME (e,_5,ep)))) _6 _7 -> CONS e (exp_ids
-       ep)
-     | panLang_DecCall _8 _9 _10 _11 p -> exp_ids p
-     | _ -> []`];;
+     | panLang_Call (SOME (_,(SOME (e,_,ep)))) _ _ -> CONS e (exp_ids ep)
+     | panLang_DecCall _ _ _ _ p -> exp_ids p
+     | _ -> []`;;
 
 let is_decl_def = new_definition
   `is_decl x1 =
@@ -263,69 +262,73 @@ let is_exn_decl_def = new_definition
 let is_name_def = new_definition
   `is_name x1 =
    match x1 with
-     Name _12 _13 -> T
+     Name _ _ -> T
    | _ -> F`;;
 
 let size_of_eids_def = new_definition
   `size_of_eids prog = LENGTH (FILTER is_exn_decl prog)`;;
 
-let var_exp_def,var_exp_ind = assume_definition_rec
+let var_exp_def,var_exp_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`var_exp (panLang_Const w) = ([]:mlstring list)`;
-   `var_exp (panLang_Var panLang_Local v) = (([v]):mlstring list)`;
-   `var_exp (panLang_Var panLang_Global v) = (([]):mlstring list)`;
-   `var_exp (panLang_RStruct es) = ((FLAT (MAP var_exp es)):mlstring list)`;
-   `var_exp (panLang_RField i e) = ((var_exp e):mlstring list)`;
-   `var_exp (panLang_NStruct sn fes) = ((FLAT (MAP var_exp (MAP SND
-    fes))):mlstring list)`;
-   `var_exp (panLang_NField fld e) = ((var_exp e):mlstring list)`;
-   `var_exp (panLang_Load sh e) = ((var_exp e):mlstring list)`;
-   `var_exp (panLang_Load32 e) = ((var_exp e):mlstring list)`;
-   `var_exp (panLang_LoadByte e) = ((var_exp e):mlstring list)`;
-   `var_exp (panLang_Op bop es) = ((FLAT (MAP var_exp es)):mlstring list)`;
-   `var_exp (panLang_Panop op es) = ((FLAT (MAP var_exp es)):mlstring list)`;
-   `var_exp (panLang_Cmp c e1 e2) = ((APPEND (var_exp e1) (var_exp
-    e2)):mlstring list)`;
-   `var_exp (panLang_Shift sh e1 e2) = ((APPEND (var_exp e1) (var_exp
-    e2)):mlstring list)`;
-   `var_exp panLang_BaseAddr = (([]):mlstring list)`;
-   `var_exp panLang_TopAddr = (([]):mlstring list)`;
-   `var_exp panLang_BytesInWord = (([]):mlstring list)`];;
+  [`(var_exp (panLang_Const w) = ([]:mlstring list)) /\
+    (var_exp (panLang_Var panLang_Local v) = (([v]):mlstring list)) /\
+    (var_exp (panLang_Var panLang_Global v) = (([]):mlstring list)) /\
+    (var_exp (panLang_RStruct es) = ((FLAT (MAP var_exp es)):mlstring list)) /\
+    (var_exp (panLang_RField i e) = ((var_exp e):mlstring list)) /\
+    (var_exp (panLang_NStruct sn fes) = ((FLAT (MAP var_exp (MAP SND
+    fes))):mlstring list)) /\
+    (var_exp (panLang_NField fld e) = ((var_exp e):mlstring list)) /\
+    (var_exp (panLang_Load sh e) = ((var_exp e):mlstring list)) /\
+    (var_exp (panLang_Load32 e) = ((var_exp e):mlstring list)) /\
+    (var_exp (panLang_LoadByte e) = ((var_exp e):mlstring list)) /\
+    (var_exp (panLang_Op bop es) = ((FLAT (MAP var_exp es)):mlstring list)) /\
+    (var_exp (panLang_Panop op es) = ((FLAT (MAP var_exp es)):mlstring list))
+      /\
+    (var_exp (panLang_Cmp c e1 e2) = ((APPEND (var_exp e1) (var_exp
+    e2)):mlstring list)) /\
+    (var_exp panLang_BaseAddr = (([]):mlstring list)) /\
+    (var_exp panLang_TopAddr = (([]):mlstring list)) /\
+    (var_exp panLang_BytesInWord = (([]):mlstring list))`;
+   `(var_exp (panLang_Shift sh e1 e2) = ((APPEND (var_exp e1) (var_exp
+    e2)):mlstring list))`];;
 
-let global_var_exp_def,global_var_exp_ind = assume_definition_rec
+let global_var_exp_def,global_var_exp_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`global_var_exp (panLang_Const w) = ([]:mlstring list)`;
-   `global_var_exp (panLang_Var panLang_Local v) = (([]):mlstring list)`;
-   `global_var_exp (panLang_Var panLang_Global v) = (([v]):mlstring list)`;
-   `global_var_exp (panLang_RStruct es) = ((FLAT (MAP global_var_exp
-    es)):mlstring list)`;
-   `global_var_exp (panLang_RField i e) = ((global_var_exp e):mlstring list)`;
-   `global_var_exp (panLang_NStruct sn fes) = ((FLAT (MAP (global_var_exp o
-    SND) fes)):mlstring list)`;
-   `global_var_exp (panLang_NField fld e) = ((global_var_exp e):mlstring
-    list)`;
-   `global_var_exp (panLang_Load sh e) = ((global_var_exp e):mlstring list)`;
-   `global_var_exp (panLang_LoadByte e) = ((global_var_exp e):mlstring list)`;
-   `global_var_exp (panLang_Op bop es) = ((FLAT (MAP global_var_exp
-    es)):mlstring list)`;
-   `global_var_exp (panLang_Panop op es) = ((FLAT (MAP global_var_exp
-    es)):mlstring list)`;
-   `global_var_exp (panLang_Cmp c e1 e2) = ((APPEND (global_var_exp e1)
-    (global_var_exp e2)):mlstring list)`;
-   `global_var_exp (panLang_Shift sh e1 e2) = ((APPEND (global_var_exp e1)
-    (global_var_exp e2)):mlstring list)`];;
+  [`(global_var_exp (panLang_Const w) = ([]:mlstring list)) /\
+    (global_var_exp (panLang_Var panLang_Local v) = (([]):mlstring list)) /\
+    (global_var_exp (panLang_Var panLang_Global v) = (([v]):mlstring list)) /\
+    (global_var_exp (panLang_RStruct es) = ((FLAT (MAP global_var_exp
+    es)):mlstring list)) /\
+    (global_var_exp (panLang_RField i e) = ((global_var_exp e):mlstring
+    list)) /\
+    (global_var_exp (panLang_NStruct sn fes) = ((FLAT (MAP (global_var_exp o
+    SND) fes)):mlstring list)) /\
+    (global_var_exp (panLang_NField fld e) = ((global_var_exp e):mlstring
+    list)) /\
+    (global_var_exp (panLang_Load sh e) = ((global_var_exp e):mlstring list))
+      /\
+    (global_var_exp (panLang_LoadByte e) = ((global_var_exp e):mlstring
+    list)) /\
+    (global_var_exp (panLang_Op bop es) = ((FLAT (MAP global_var_exp
+    es)):mlstring list)) /\
+    (global_var_exp (panLang_Panop op es) = ((FLAT (MAP global_var_exp
+    es)):mlstring list)) /\
+    (global_var_exp (panLang_Cmp c e1 e2) = ((APPEND (global_var_exp e1)
+    (global_var_exp e2)):mlstring list))`;
+   `(global_var_exp (panLang_Shift sh e1 e2) = ((APPEND (global_var_exp e1)
+    (global_var_exp e2)):mlstring list))`];;
 
 let load_op_def = define_cases
-  [`load_op Op8 = asm_Load8 /\
+  `load_op Op8 = asm_Load8 /\
    load_op Op16 = asm_Load16 /\
    load_op OpW = asm_Load /\
-   load_op Op32 = asm_Load32`];;
+   load_op Op32 = asm_Load32`;;
 
 let store_op_def = define_cases
-  [`store_op Op8 = asm_Store8 /\
+  `store_op Op8 = asm_Store8 /\
    store_op Op16 = asm_Store16 /\
    store_op OpW = asm_Store /\
-   store_op Op32 = asm_Store32`];;
+   store_op Op32 = asm_Store32`;;
 
 let is_function_def = new_definition
   `is_function x1 =
@@ -338,44 +341,43 @@ let _ = size_thms "decl";;
    what the port found for it *)
 let functions_def,functions_ind = define_wf
   `MEASURE (\x0. list_size (decl_size (\x. 0)) x0)`
-  [`functions [] = []`;
-   `functions (CONS (Function fi) fs) = CONS (fun_decl_name
+  `(functions [] = []) /\
+   (functions (CONS (Function fi) fs) = CONS (fun_decl_name
     fi,fun_decl_params fi,fun_decl_body fi,fun_decl_return fi) (functions
-    fs)`;
-   `functions (CONS (Decl _14 _15 _16) fs) = functions fs`;
-   `functions (CONS (ExnDecl _17 _18) fs) = functions fs`;
-   `functions (CONS (Name _19 _20) fs) = functions fs`];;
+    fs)) /\
+   (functions (CONS (Decl _ _ _) fs) = functions fs) /\
+   (functions (CONS (ExnDecl _ _) fs) = functions fs) /\
+   (functions (CONS (Name _ _) fs) = functions fs)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let exceptions_def,exceptions_ind = define_wf
   `MEASURE (\x0. list_size (decl_size (\x. 0)) x0)`
-  [`exceptions [] = []`;
-   `exceptions (CONS (Function fi) fs) = exceptions fs`;
-   `exceptions (CONS (Decl _21 _22 _23) fs) = exceptions fs`;
-   `exceptions (CONS (ExnDecl eid sh) fs) = CONS (eid,sh) (exceptions fs)`;
-   `exceptions (CONS (Name _24 _25) fs) = exceptions fs`];;
+  `(exceptions [] = []) /\
+   (exceptions (CONS (Function fi) fs) = exceptions fs) /\
+   (exceptions (CONS (Decl _ _ _) fs) = exceptions fs) /\
+   (exceptions (CONS (ExnDecl eid sh) fs) = CONS (eid,sh) (exceptions fs)) /\
+   (exceptions (CONS (Name _ _) fs) = exceptions fs)`;;
 
 let fun_ids_def,fun_ids_ind = define_shaped_rec
   "match"
-  [`fun_ids x1 =
+  `fun_ids x1 =
      match x1 with
-       panLang_Dec _29 _30 _31 p -> fun_ids p
+       panLang_Dec _ _ _ p -> fun_ids p
      | panLang_Seq p q -> APPEND (fun_ids p) (fun_ids q)
      | panLang_If _ p q -> APPEND (fun_ids p) (fun_ids q)
      | panLang_While _ p -> fun_ids p
-     | panLang_Call (SOME (_32,(SOME (_33,_34,ep)))) nm _35 -> CONS nm
-       (fun_ids ep)
-     | panLang_Call _36 nm _37 -> [nm]
-     | panLang_DecCall _38 _39 nm _40 p -> CONS nm (fun_ids p)
-     | _ -> []`];;
+     | panLang_Call (SOME (_,(SOME (_,_,ep)))) nm _ -> CONS nm (fun_ids ep)
+     | panLang_Call _ nm _ -> [nm]
+     | panLang_DecCall _ _ nm _ p -> CONS nm (fun_ids p)
+     | _ -> []`;;
 
 let free_var_ids_def,free_var_ids_ind = define_shaped_rec
   "match"
-  [`free_var_ids x1 =
+  `free_var_ids x1 =
      match x1 with
-       panLang_Dec vn sh e p -> APPEND (var_exp e) (FILTER ((\x y. ~(x =
-         y)) vn) (free_var_ids p))
+       panLang_Dec vn sh e p -> APPEND (var_exp e) (FILTER ((\x y. ~(x = y))
+         vn) (free_var_ids p))
      | panLang_Seq p q -> APPEND (free_var_ids p) (free_var_ids q)
      | panLang_If g p q -> APPEND (APPEND (var_exp g) (free_var_ids p))
        (free_var_ids q)
@@ -389,18 +391,18 @@ let free_var_ids_def,free_var_ids_ind = define_shaped_rec
      | panLang_StoreByte e1 e2 -> APPEND (var_exp e1) (var_exp e2)
      | panLang_Raise eid e -> var_exp e
      | panLang_Return e -> var_exp e
-     | panLang_ExtCall fn e1 e2 e3 e4 -> APPEND (APPEND (APPEND (var_exp
-       e1) (var_exp e2)) (var_exp e3)) (var_exp e4)
+     | panLang_ExtCall fn e1 e2 e3 e4 -> APPEND (APPEND (APPEND (var_exp e1)
+       (var_exp e2)) (var_exp e3)) (var_exp e4)
      | panLang_ShMemLoad os vk v e ->
       if vk = panLang_Local then CONS v (var_exp e)
       else var_exp e
      | panLang_ShMemStore os e1 e2 -> APPEND (var_exp e1) (var_exp e2)
-     | panLang_Call (SOME (NONE,SOME (_41,vn,ep))) _42 args -> APPEND (CONS
-       vn (free_var_ids ep))
+     | panLang_Call (SOME (NONE,SOME (_,vn,ep))) _ args -> APPEND (CONS vn
+       (free_var_ids ep))
       (FLAT (MAP var_exp args))
-     | panLang_Call (SOME (SOME (vk,vn),SOME (_43,en,ep))) _44 args ->
-       APPEND (APPEND (if vk = panLang_Local then [vn] else []) (CONS en
-       (free_var_ids ep)))
+     | panLang_Call (SOME (SOME (vk,vn),SOME (_,en,ep))) _ args -> APPEND
+       (APPEND (if vk = panLang_Local then [vn] else []) (CONS en (free_var_ids
+       ep)))
       (FLAT (MAP var_exp args))
      | panLang_Call (SOME (SOME (vk,vn),NONE)) _ args -> APPEND (if vk =
        panLang_Local then [vn] else [])
@@ -408,9 +410,9 @@ let free_var_ids_def,free_var_ids_ind = define_shaped_rec
      | panLang_Call (SOME (NONE,NONE)) _ args ->
       FLAT (MAP var_exp args)
      | panLang_Call NONE _ args -> FLAT (MAP var_exp args)
-     | panLang_DecCall vn _45 _46 args p -> APPEND (CONS vn (free_var_ids
-       p)) (FLAT (MAP var_exp args))
-     | _ -> []`];;
+     | panLang_DecCall vn _ _ args p -> APPEND (CONS vn (free_var_ids p))
+       (FLAT (MAP var_exp args))
+     | _ -> []`;;
 
 let inlinable_def = new_definition
   `inlinable x1 =

@@ -39,8 +39,8 @@ let _ = do_list hide_constant ["C"; "num_cmp"];;
 
 (* Total version of THE *)
 let the_def = define_cases
-  [`the _ (SOME x) = x`;
-   `the x NONE = x`];;
+  `(the _ (SOME x) = x) /\
+   (the x NONE = x)`;;
 
 let opt_bind_def = new_definition
   `opt_bind n v e =
@@ -100,12 +100,12 @@ let SORTED_GENLIST_TIMES = prove
    what the port found for it *)
 let read_bytearray_def,read_bytearray_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
-  [`read_bytearray a 0 get_byte' = SOME []`;
-   `read_bytearray a (SUC n) get_byte' =
+  `(read_bytearray a 0 get_byte' = SOME []) /\
+   (read_bytearray a (SUC n) get_byte' =
          match get_byte' a with NONE -> NONE
          | SOME b -> (match read_bytearray (a + (n2w 1)) n get_byte' with
              NONE -> NONE
-                     | SOME bs -> SOME (CONS b bs))`];;
+                     | SOME bs -> SOME (CONS b bs)))`;;
 
 (* HOL to have OPT_MMAP f l1 = SOME l2 ==> (LENGTH l2 = LENGTH l1) *)
 let read_bytearray_LENGTH = prove
@@ -170,9 +170,9 @@ let app_list_INDUCT,app_list_RECURSION = define_datatype
    | misc_Nil";;
 
 let append_aux_def,append_aux_ind = define_rec
-  [`append_aux misc_Nil aux = aux`;
-   `append_aux (misc_List xs) aux = APPEND xs aux`;
-   `append_aux (misc_Append l1 l2) aux = append_aux l1 (append_aux l2 aux)`];;
+  `(append_aux misc_Nil aux = aux) /\
+   (append_aux (misc_List xs) aux = APPEND xs aux) /\
+   (append_aux (misc_Append l1 l2) aux = append_aux l1 (append_aux l2 aux))`;;
 
 let append_def = new_definition
   `append l = append_aux l []`;;
@@ -391,9 +391,9 @@ let tlookup_bij_iff = prove
 
 (* should be composition of oEL and as-yet-undefined "THE default" *)
 let any_el_def,any_el_ind = define_rec
-  [`any_el n [] d = d`;
-   `any_el n (CONS x xs) d = if n = 0 then x else any_el (n - (1:num)) xs
-    d`];;
+  `(any_el n [] d = d) /\
+   (any_el n (CONS x xs) d = if n = 0 then x else any_el (n - (1:num)) xs
+    d)`;;
 
 let update_resize_def = new_definition
   `update_resize ls default v n =
@@ -462,10 +462,10 @@ let MEM_ALOOKUP = prove
 (* TODO - candidate for move to HOL, but in simpler form without accumulator *)
 (* only used in inferProg *)
 let anub_def,anub_ind = define_rec
-  [`anub [] acc = []`;
-   `anub (CONS (k,v) ls) acc =
+  `(anub [] acc = []) /\
+   (anub (CONS (k,v) ls) acc =
        if MEM k acc then anub ls acc else CONS (k,v) (anub ls (CONS k
-           acc))`];;
+           acc)))`;;
 
 (* HOL4 miscScript.sml:691: ML code, not ported *)
 
@@ -608,9 +608,9 @@ let APPLY_UPDATE_LIST_ALOOKUP = prove
 
 (* should be using indexedLists$findi, or INDEX_OF *)
 let find_index_def,find_index_ind = define_rec
-  [`find_index _1 [] _2 = NONE`;
-   `find_index y (CONS x xs) n = if x = y then SOME n else find_index y xs
-    (n + 1)`];;
+  `(find_index _ [] _ = NONE) /\
+   (find_index y (CONS x xs) n = if x = y then SOME n else find_index y xs
+    (n + 1))`;;
 
 let INDEX_FIND_CONS_EQ_SOME = prove
  (`(INDEX_FIND n f (CONS x xs) = SOME y) <=>
@@ -1016,9 +1016,9 @@ let LIST_REL_MAP_FILTER_NEQ = prove
 (* move into HOL? *)
 
 let word_list_def,word_list_ind = define_guess
-  [`misc_word_list a [] = emp`;
-   `misc_word_list a (CONS x xs) = set_sep_one (a,x) * misc_word_list (a +
-    bytes_in_word) xs`];;
+  `(misc_word_list a [] = emp) /\
+   (misc_word_list a (CONS x xs) = set_sep_one (a,x) * misc_word_list (a +
+    bytes_in_word) xs)`;;
 
 let word_list_exists_def = new_definition
   `word_list_exists a n =
@@ -1026,13 +1026,13 @@ let word_list_exists_def = new_definition
 
 (* lookup_vars vs env = OPT_MMAP (\i. oEL i env) vs *)
 let lookup_vars_def,lookup_vars_ind = define_rec
-  [`lookup_vars [] env = SOME []`;
-   `lookup_vars (CONS v vs) env =
+  `(lookup_vars [] env = SOME []) /\
+   (lookup_vars (CONS v vs) env =
          if v < LENGTH env then
            match lookup_vars vs env with SOME xs -> SOME (CONS (EL v env)
                xs)
            | NONE -> NONE
-         else NONE`];;
+         else NONE)`;;
 
 let EVERY_lookup_vars = prove
  (`!vs env env'. ALL P env /\ lookup_vars vs env = SOME env' ==> ALL P env'`,
@@ -1080,8 +1080,8 @@ add_simp MAPi_ID;;
      enumerate i0 l = MAPi (λx i. (i + i0, x)) l
 *)
 let enumerate_def,enumerate_ind = define_rec
-  [`enumerate n [] = []`;
-   `enumerate n (CONS x xs) = CONS (n,x) (enumerate (n + 1) xs)`];;
+  `(enumerate n [] = []) /\
+   (enumerate n (CONS x xs) = CONS (n,x) (enumerate (n + 1) xs))`;;
 
 (* TODO - candidate for move to HOL *)
 let LENGTH_enumerate = prove
@@ -1284,8 +1284,8 @@ let MOD_MINUS = prove
   CHEAT_TAC);;
 
 let option_fold_def = define_cases
-  [`option_fold f x NONE = x`;
-   `option_fold f x (SOME y) = f y x`];;
+  `(option_fold f x NONE = x) /\
+   (option_fold f x (SOME y) = f y x)`;;
 
 let SPLITP_CONS_IMP = prove
  (`!ls l' r. (SPLITP P ls = (l',r)) /\ (~(r = [])) ==> (EX P ls)`,
@@ -1479,13 +1479,13 @@ let MAP_K_REPLICATE = prove
    what the port found for it *)
 let shift_left_def,shift_left_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`shift_left (a:'a word) n =
+  `shift_left (a:'a word) n =
    if n = 0 then a
    else if (a = (n2w 0)) \/ n > dimindex (:'a) then (n2w 0)
    else if n > 32 then shift_left (a << 32) (n - 32)
    else if n > 16 then shift_left (a << 16) (n - 16)
    else if n > 8 then shift_left (a << 8) (n - 8)
-   else shift_left (a << 1) (n - 1)`];;
+   else shift_left (a << 1) (n - 1)`;;
 
 let shift_left_rwt = prove
  (`!a n. a << n = shift_left a n`,
@@ -1495,13 +1495,13 @@ let shift_left_rwt = prove
    what the port found for it *)
 let shift_right_def,shift_right_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`shift_right (a:'a word) n =
+  `shift_right (a:'a word) n =
    if n = 0 then a
    else if (a = (n2w 0)) \/ n > dimindex (:'a) then (n2w 0)
    else if n > 32 then shift_right (a >>> 32) (n - 32)
    else if n > 16 then shift_right (a >>> 16) (n - 16)
    else if n > 8 then shift_right (a >>> 8) (n - 8)
-   else shift_right (a >>> 1) (n - 1)`];;
+   else shift_right (a >>> 1) (n - 1)`;;
 
 let shift_right_rwt = prove
  (`!a n. a >>> n = shift_right a n`,
@@ -1511,16 +1511,15 @@ let shift_right_rwt = prove
    what the port found for it *)
 let arith_shift_right_def,arith_shift_right_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`arith_shift_right (a:'a word) n =
+  `arith_shift_right (a:'a word) n =
    if n = 0 then a
-   else if (a = (n2w 0)) \/ n > dimindex (:'a) /\ ~(word_msb a) then (n2w
-     0)
+   else if (a = (n2w 0)) \/ n > dimindex (:'a) /\ ~(word_msb a) then (n2w 0)
    else if (a = --(n2w 1)) \/ n > dimindex (:'a) /\ word_msb a then --(n2w
      1)
    else if n > 32 then arith_shift_right (a >> 32) (n - 32)
    else if n > 16 then arith_shift_right (a >> 16) (n - 16)
    else if n > 8 then arith_shift_right (a >> 8) (n - 8)
-   else arith_shift_right (a >> 1) (n - 1)`];;
+   else arith_shift_right (a >> 1) (n - 1)`;;
 
 let arith_shift_right_rwt = prove
  (`!a n. a >> n = arith_shift_right a n`,
@@ -1530,14 +1529,14 @@ let arith_shift_right_rwt = prove
    what the port found for it *)
 let any_word64_ror_def,any_word64_ror_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`any_word64_ror (w:word64) (n:num) =
+  `any_word64_ror (w:word64) (n:num) =
      if 64 <= n then any_word64_ror w (n - 64) else if 32 <= n then
        any_word64_ror (word_ror w 32) (n - 32) else if 16 <= n then
        any_word64_ror (word_ror w 16) (n - 16) else if 8 <= n then
        any_word64_ror (word_ror w 8) (n - 8) else if 4 <= n then
        any_word64_ror (word_ror w 4) (n - 4) else if 2 <= n then
-       any_word64_ror (word_ror w 2) (n - 2) else if 1 <= n then word_ror
-       w 1 else w`];;
+       any_word64_ror (word_ror w 2) (n - 2) else if 1 <= n then word_ror w
+       1 else w`;;
 
 let word_ror_eq_any_word64_ror = prove
  (`!a n. word_ror a n = any_word64_ror a n`,
@@ -1892,11 +1891,11 @@ let BAG_ALL_DISTINCT_FOLDR_BAG_UNION = prove
 (* TODO - candidate for move to HOL *)
 (* N.B.: there is a different is_subsequence defined in lcsTheory; these should be merged *)
 let is_subseq_def,is_subseq_ind = define_guess
-  [`is_subseq ls [] <=> T`;
-   `is_subseq [] (CONS x xs) <=> F`;
-   `is_subseq (CONS y ys) (CONS x xs) <=>
+  `(is_subseq ls [] <=> T) /\
+   (is_subseq [] (CONS x xs) <=> F) /\
+   (is_subseq (CONS y ys) (CONS x xs) <=>
        (x = y /\ is_subseq ys xs) \/
-       (is_subseq ys (CONS x xs))`];;
+       (is_subseq ys (CONS x xs)))`;;
 
 (* TODO - candidate for move to HOL *)
 (* HOL4 miscScript.sml:3413: ML code, not ported *)
@@ -2044,17 +2043,17 @@ let toPath_fromList = prove
   CHEAT_TAC);;
 
 let steps_def,steps_ind = define_rec
-  [`steps f x [] = []`;
-   `steps f x (CONS j js) =
+  `(steps f x [] = []) /\
+   (steps f x (CONS j js) =
        let y = f x j in
        let tr = steps f y js in
-         (CONS (j,y) tr)`];;
+         (CONS (j,y) tr))`;;
 
 let steps_rel_def,steps_rel_ind = define_rec
-  [`steps_rel R x [] <=> T`;
-   `steps_rel R x (CONS (j,y) tr) <=>
+  `(steps_rel R x [] <=> T) /\
+   (steps_rel R x (CONS (j,y) tr) <=>
         R x j y /\
-        steps_rel R y tr`];;
+        steps_rel R y tr)`;;
 
 (* HOL4 miscScript.sml:3681: ML code, not ported *)
 
@@ -2078,8 +2077,8 @@ let LAST_MAP_SND_steps_FOLDL = prove
    what the port found for it *)
 let all_words_def,all_words_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`all_words base 0 = {}`;
-   `all_words base (SUC n) = base INSERT (all_words (base + (n2w 1)) n)`];;
+  `(all_words base 0 = {}) /\
+   (all_words base (SUC n) = base INSERT (all_words (base + (n2w 1)) n))`;;
 
 let IN_all_words = prove
  (`x IN all_words base n <=> (?i. i < n /\ x = base + n2w i)`,
@@ -2100,9 +2099,9 @@ let read_bytearray_no_wrap = prove
   CHEAT_TAC);;
 
 let asm_write_bytearray_def,asm_write_bytearray_ind = define_guess
-  [`asm_write_bytearray a [] (m:'a word->word8) = m`;
-   `asm_write_bytearray a (CONS x xs) (m:'a word->word8) = (a =+ x)
-    (asm_write_bytearray (a + (n2w 1)) xs m)`];;
+  `(asm_write_bytearray a [] (m:'a word->word8) = m) /\
+   (asm_write_bytearray a (CONS x xs) (m:'a word->word8) = (a =+ x)
+    (asm_write_bytearray (a + (n2w 1)) xs m))`;;
 
 let mem_eq_imp_asm_write_bytearray_eq = prove
  (`!a bs.
@@ -2155,13 +2154,13 @@ let _ = size_thms "spt";;
    what the port found for it *)
 let eq_shape_def,eq_shape_ind = define_wf
   `MEASURE (\(x0,x1). spt_size (\x. 0) x0 + spt_size (\x. 0) x1)`
-  [`eq_shape x1 x2 =
+  `eq_shape x1 x2 =
    match (x1,x2) with
      (LN,LN) -> T
-   | (LS _3,LS _4) -> T
+   | (LS _,LS _) -> T
    | (BN t1 t2,BN u1 u2) -> (eq_shape t1 u1 /\ eq_shape t2 u2)
-   | (BS t1 _5 t2,BS u1 _6 u2) -> (eq_shape t1 u1 /\ eq_shape t2 u2)
-   | (_7,_8) -> F`];;
+   | (BS t1 _ t2,BS u1 _ u2) -> (eq_shape t1 u1 /\ eq_shape t2 u2)
+   | (_,_) -> F`;;
 
 let spt_eq = prove
  (`!t1 t2.
@@ -2182,27 +2181,27 @@ let eq_shape_IMP_domain = prove
    what the port found for it *)
 let copy_shape_def,copy_shape_ind = define_wf
   `MEASURE (\(x0,x1). spt_size (\x. 0) x0 + spt_size (\x. 0) x1)`
-  [`copy_shape LN LN = LN`;
-   `copy_shape LN (LS y) = LN`;
-   `copy_shape LN (BN t1 t2) = BN (copy_shape LN t1) (copy_shape LN t2)`;
-   `copy_shape LN (BS t1 y t2) = LN`;
-   `copy_shape (LS x) LN = LS x`;
-   `copy_shape (LS x) (LS y) = LS x`;
-   `copy_shape (LS x) (BN t1 t2) = LS x`;
-   `copy_shape (LS x) (BS t1 y t2) = BS (copy_shape LN t1) x (copy_shape LN
-    t2)`;
-   `copy_shape (BN u1 u2) LN = (if domain (BN u1 u2) = {} then LN else BN u1
-    u2)`;
-   `copy_shape (BN u1 u2) (LS y) = BN u1 u2`;
-   `copy_shape (BN u1 u2) (BN t1 t2) = BN (copy_shape u1 t1) (copy_shape u2
-    t2)`;
-   `copy_shape (BN u1 u2) (BS t1 y t2) = BN u1 u2`;
-   `copy_shape (BS u1 x u2) LN = BS u1 x u2`;
-   `copy_shape (BS u1 x u2) (LS y) =
-       (if domain (BN u1 u2) = {} then LS x else BS u1 x u2)`;
-   `copy_shape (BS u1 x u2) (BN t1 t2) = BS u1 x u2`;
-   `copy_shape (BS u1 x u2) (BS t1 y t2) = BS (copy_shape u1 t1) x
-    (copy_shape u2 t2)`];;
+  `(copy_shape LN LN = LN) /\
+   (copy_shape LN (LS y) = LN) /\
+   (copy_shape LN (BN t1 t2) = BN (copy_shape LN t1) (copy_shape LN t2)) /\
+   (copy_shape LN (BS t1 y t2) = LN) /\
+   (copy_shape (LS x) LN = LS x) /\
+   (copy_shape (LS x) (LS y) = LS x) /\
+   (copy_shape (LS x) (BN t1 t2) = LS x) /\
+   (copy_shape (LS x) (BS t1 y t2) = BS (copy_shape LN t1) x (copy_shape LN
+    t2)) /\
+   (copy_shape (BN u1 u2) LN = (if domain (BN u1 u2) = {} then LN else BN
+    u1 u2)) /\
+   (copy_shape (BN u1 u2) (LS y) = BN u1 u2) /\
+   (copy_shape (BN u1 u2) (BN t1 t2) = BN (copy_shape u1 t1) (copy_shape u2
+    t2)) /\
+   (copy_shape (BN u1 u2) (BS t1 y t2) = BN u1 u2) /\
+   (copy_shape (BS u1 x u2) LN = BS u1 x u2) /\
+   (copy_shape (BS u1 x u2) (LS y) =
+       (if domain (BN u1 u2) = {} then LS x else BS u1 x u2)) /\
+   (copy_shape (BS u1 x u2) (BN t1 t2) = BS u1 x u2) /\
+   (copy_shape (BS u1 x u2) (BS t1 y t2) = BS (copy_shape u1 t1) x
+    (copy_shape u2 t2))`;;
 
 (* [local] *)
 let eq_shape_copy_shape = prove
@@ -2333,9 +2332,9 @@ let word_sub_lt = prove
 (* see #521 *)
 
 let bytes_in_memory_def,bytes_in_memory_ind = define_rec
-  [`bytes_in_memory a [] m dm <=> T`;
-   `bytes_in_memory a (CONS (x:word8) xs) m dm <=>
-         (m a = x) /\ a IN dm /\ bytes_in_memory (a + (n2w 1)) xs m dm`];;
+  `(bytes_in_memory a [] m dm <=> T) /\
+   (bytes_in_memory a (CONS (x:word8) xs) m dm <=>
+         (m a = x) /\ a IN dm /\ bytes_in_memory (a + (n2w 1)) xs m dm)`;;
 
 let bytes_in_memory_APPEND = prove
  (`!l1 l2 pc' mem' mem_domain'.
@@ -2369,10 +2368,10 @@ let bytes_in_memory_in_domain = prove
   CHEAT_TAC);;
 
 let bytes_in_mem_def,bytes_in_mem_ind = define_rec
-  [`bytes_in_mem a [] m md k <=> T`;
-   `bytes_in_mem a (CONS b bs) m md k <=>
+  `(bytes_in_mem a [] m md k <=> T) /\
+   (bytes_in_mem a (CONS b bs) m md k <=>
          a IN md /\ ~(a IN k) /\ (m a = b) /\
-         bytes_in_mem (a + (n2w 1)) bs m md k`];;
+         bytes_in_mem (a + (n2w 1)) bs m md k)`;;
 
 let bytes_in_mem_IMP = prove
  (`!xs p. bytes_in_mem p xs m dm dm1 ==> bytes_in_memory p xs m dm`,

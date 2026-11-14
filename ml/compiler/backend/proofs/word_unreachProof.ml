@@ -49,10 +49,10 @@ let ALL_DISTINCT_merge_moves = prove
 
 let word_unreachProof_copy_vars_def,word_unreachProof_copy_vars_ind =
   define_rec
-  [`word_unreachProof_copy_vars [] from to = to`;
-   `word_unreachProof_copy_vars (CONS (l,r) rest) from to =
+  `(word_unreachProof_copy_vars [] from to = to) /\
+   (word_unreachProof_copy_vars (CONS (l,r) rest) from to =
       sptree_insert l (THE (sptree_lookup r from))
-          (word_unreachProof_copy_vars rest from to)`];;
+          (word_unreachProof_copy_vars rest from to))`;;
 
 let copy_vars_append = prove
  (`!xs ys from to.

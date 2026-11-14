@@ -143,9 +143,9 @@ let clos_ticksProof_state_rel_def = new_definition
 (* eval remove ticks *)
 
 let clos_ticksProof_mk_Ticks_def,clos_ticksProof_mk_Ticks_ind = define_rec
-  [`clos_ticksProof_mk_Ticks [] (e:closLang_exp) = e`;
-   `clos_ticksProof_mk_Ticks (CONS t tr) (e:closLang_exp) = closLang_Tick
-    t (clos_ticksProof_mk_Ticks tr e)`];;
+  `(clos_ticksProof_mk_Ticks [] (e:closLang_exp) = e) /\
+   (clos_ticksProof_mk_Ticks (CONS t tr) (e:closLang_exp) = closLang_Tick
+    t (clos_ticksProof_mk_Ticks tr e))`;;
 
 let remove_ticks_Tick = prove
  (`!x t e. ~([closLang_Tick t e] = clos_ticks_remove_ticks [x])`,

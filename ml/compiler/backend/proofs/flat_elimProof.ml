@@ -76,19 +76,19 @@ let SUM_MAP_v3_size = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let find_v_globals_def,find_v_globals_ind = define_guess_cheat
-  [`find_v_globals (flatSem_Conv _ vl) = ((find_v_globalsL vl):1 spt)`;
-   `find_v_globals (flatSem_Closure env _ e) =
+  `(find_v_globals (flatSem_Conv _ vl) = ((find_v_globalsL vl):1 spt)) /\
+   (find_v_globals (flatSem_Closure env _ e) =
             ((sptree_union (find_v_globalsL (MAP SND
-                (flatSem_environment_v env))) (find_lookups e)):1 spt)`;
-   `find_v_globals (flatSem_Recclosure env vves _) =
+                (flatSem_environment_v env))) (find_lookups e)):1 spt)) /\
+   (find_v_globals (flatSem_Recclosure env vves _) =
             ((sptree_union (find_v_globalsL (MAP SND (flatSem_environment_v
                 env)))
-                (find_lookupsL (MAP (SND o SND) vves))):1 spt)`;
-   `find_v_globals (flatSem_Vectorv vl) = ((find_v_globalsL vl):1 spt)`;
-   `find_v_globals _ = ((LN):1 spt)`;
-   `find_v_globalsL [] = LN`;
-   `find_v_globalsL (CONS h t) = sptree_union (find_v_globals h)
-    (find_v_globalsL t)`];;
+                (find_lookupsL (MAP (SND o SND) vves))):1 spt)) /\
+   (find_v_globals (flatSem_Vectorv vl) = ((find_v_globalsL vl):1 spt)) /\
+   (find_v_globals _ = ((LN):1 spt)) /\
+   (find_v_globalsL [] = LN) /\
+   (find_v_globalsL (CONS h t) = sptree_union (find_v_globals h)
+    (find_v_globalsL t))`;;
 
 (* HOL4 flat_elimProofScript.sml:128: ML code, not ported *)
 
@@ -160,7 +160,7 @@ let _ = size_thms "store_v";;
    what the port found for it *)
 let find_refs_globals_def,find_refs_globals_ind = define_wf
   `MEASURE (\x0. list_size (store_v_size flatSem_v_size) x0)`
-  [`find_refs_globals x1 =
+  `find_refs_globals x1 =
      match x1 with
        CONS (semanticPrimitives_Refv a) t ->
            sptree_union (find_v_globals a) (find_refs_globals t)
@@ -169,7 +169,7 @@ let find_refs_globals_def,find_refs_globals_ind = define_wf
      | CONS (semanticPrimitives_Thunk _ a) t ->
            sptree_union (find_v_globals a) (find_refs_globals t)
      | CONS _ t -> find_refs_globals t
-     | [] -> LN`];;
+     | [] -> LN`;;
 
 (* HOL4 flat_elimProofScript.sml:225: ML code, not ported *)
 
@@ -237,11 +237,11 @@ let find_result_globals_def = new_definition
 
 (* HOL4 flat_elimProofScript.sml:294: ML code, not ported *)
 
-let find_sem_prim_res_globals_def = define_cases
-  [`find_sem_prim_res_globals (Rerr e:(flatSem_v
+let find_sem_prim_res_globals_def = define_cases_clauses
+  [`(find_sem_prim_res_globals (Rerr e:(flatSem_v
     list,flatSem_v)semanticPrimitives_result) =
-            find_result_globals (SOME e)`;
-   `find_sem_prim_res_globals (Rval e) = find_v_globalsL e`];;
+            find_result_globals (SOME e))`;
+   `(find_sem_prim_res_globals (Rval e) = find_v_globalsL e)`];;
 
 (* HOL4 flat_elimProofScript.sml:303-306: the ML values that the definitions
    below antiquote *)
@@ -255,7 +255,7 @@ let find_sem_prim_res_globals_def = define_cases
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let v_has_Eval_def1,v_has_Eval_def1_ind = define_guess_cheat
-  [`v_has_Eval x1 =
+  `v_has_Eval x1 =
      match x1 with
        flatSem_Closure env _ e -> (has_Eval e \/
        EX v_has_Eval (MAP SND (flatSem_environment_v env)))
@@ -264,7 +264,7 @@ let v_has_Eval_def1,v_has_Eval_def1_ind = define_guess_cheat
        (EX v_has_Eval (MAP SND (flatSem_environment_v env)) \/
          EX has_Eval (MAP (SND o SND) nm_es))
      | flatSem_Vectorv vl -> EX v_has_Eval vl
-     | _ -> F`];;
+     | _ -> F`;;
 
 (* HOL4 flat_elimProofScript.sml:326: a theorem that HOL4 states as the
    value of an ML expression: v_has_Eval_def *)
@@ -487,22 +487,22 @@ let pmatch_not_has_Eval = prove
 
 (* has_Eval_def[local] *)
 let flat_elimProof_has_Eval_def = prove
- (`(has_Eval (flatLang_Handle _3 e pes) = (has_Eval e \/ EX has_Eval (MAP SND
+ (`(has_Eval (flatLang_Handle _ e pes) = (has_Eval e \/ EX has_Eval (MAP SND
   pes))) /\
-   (has_Eval (flatLang_Con _4 _5 es) = EX has_Eval es) /\
-   (has_Eval (flatLang_Fun _6 _7 e) = has_Eval e) /\
+   (has_Eval (flatLang_Con _ _ es) = EX has_Eval es) /\
+   (has_Eval (flatLang_Fun _ _ e) = has_Eval e) /\
    (has_Eval (flatLang_App t op es) = (op = flatLang_Src ast_Eval \/ EX
      has_Eval es)) /\
    (has_Eval (flatLang_If t e1 e2 e3) = (has_Eval e1 \/ has_Eval e2 \/
      has_Eval e3)) /\
    (has_Eval (flatLang_Mat t e pes) = (has_Eval e \/ EX has_Eval (MAP SND
      pes))) /\
-   (has_Eval (flatLang_Let _8 opt e1 e2) = (has_Eval e1 \/ has_Eval e2)) /\
-   (has_Eval (flatLang_Letrec _9 funs e) = (has_Eval e \/ EX has_Eval (MAP
+   (has_Eval (flatLang_Let _ opt e1 e2) = (has_Eval e1 \/ has_Eval e2)) /\
+   (has_Eval (flatLang_Letrec _ funs e) = (has_Eval e \/ EX has_Eval (MAP
      (SND o SND) funs))) /\
-   (has_Eval (flatLang_Raise _10 e) = has_Eval e) /\
-   (has_Eval (flatLang_Var_local _11 _12) = F) /\
-   (has_Eval (flatLang_Lit _13 v) = F)`,
+   (has_Eval (flatLang_Raise _ e) = has_Eval e) /\
+   (has_Eval (flatLang_Var_local _ _) = F) /\
+   (has_Eval (flatLang_Lit _ v) = F)`,
   CHEAT_TAC);;
 
 (******** EVALUATE INDUCTION ********)

@@ -52,7 +52,7 @@ let evaluate_prog_with_clock_def = new_definition
          st) env prog in (semanticPrimitives_state_ffi st',r)`;;
 
 let semantics_prog_def = define_cases
-  [`semantics_prog st env prog (ffi_Terminate outcome io_list) <=>
+  `(semantics_prog st env prog (ffi_Terminate outcome io_list) <=>
         (
          // there is a clock for which evaluation terminates, either internally or via
          // FFI, and the accumulated io events match the given io_list
@@ -63,8 +63,8 @@ let semantics_prog_def = define_cases
            | r -> ~(r = Rerr (Rabort Rtimeout_error)) /\ outcome =
                ffi_Success) /\
           (io_list = ffi_state_io_events ffi) /\
-          (~(r = Rerr (Rabort Rtype_error))))`;
-   `semantics_prog st env prog (ffi_Diverge io_trace) <=>
+          (~(r = Rerr (Rabort Rtype_error))))) /\
+   (semantics_prog st env prog (ffi_Diverge io_trace) <=>
         (
          // for all clocks, evaluation times out
          !k. ?ffi.
@@ -77,12 +77,12 @@ let semantics_prog_def = define_cases
              (\k. fromList (ffi_state_io_events (FST
                  (evaluate_prog_with_clock st env k prog))))
              UNIV)
-           io_trace`;
-   `semantics_prog st env prog ffi_Fail <=>
+           io_trace) /\
+   (semantics_prog st env prog ffi_Fail <=>
         // there is a clock for which evaluation produces a runtime type error
         (?k.
           SND (evaluate_prog_with_clock st env k prog) = Rerr (Rabort
-              Rtype_error))`];;
+              Rtype_error)))`;;
 
 let semantics_INDUCT,semantics_RECURSION = define_datatype
   "semantics =

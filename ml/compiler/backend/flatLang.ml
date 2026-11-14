@@ -65,16 +65,16 @@ let flatLang_pat_INDUCT,flatLang_pat_RECURSION = define_datatype
    | flatLang_Pref flatLang_pat";;
 
 let flatLang_pat_bindings_def,flatLang_pat_bindings_ind = define_rec
-  [`flatLang_pat_bindings flatLang_Pany = []`;
-   `flatLang_pat_bindings (flatLang_Pvar n) = [n]`;
-   `flatLang_pat_bindings (flatLang_Plit l) = []`;
-   `flatLang_pat_bindings (flatLang_Pcon _ ps) = flatLang_pats_bindings ps`;
-   `flatLang_pat_bindings (flatLang_Pas p i) = APPEND (flatLang_pat_bindings
-    p) [i]`;
-   `flatLang_pat_bindings (flatLang_Pref p) = flatLang_pat_bindings p`;
-   `flatLang_pats_bindings [] = []`;
-   `flatLang_pats_bindings (CONS p ps) = APPEND (flatLang_pats_bindings
-    ps) (flatLang_pat_bindings p)`];;
+  `(flatLang_pat_bindings flatLang_Pany = []) /\
+   (flatLang_pat_bindings (flatLang_Pvar n) = [n]) /\
+   (flatLang_pat_bindings (flatLang_Plit l) = []) /\
+   (flatLang_pat_bindings (flatLang_Pcon _ ps) = flatLang_pats_bindings ps) /\
+   (flatLang_pat_bindings (flatLang_Pas p i) = APPEND
+    (flatLang_pat_bindings p) [i]) /\
+   (flatLang_pat_bindings (flatLang_Pref p) = flatLang_pat_bindings p) /\
+   (flatLang_pats_bindings [] = []) /\
+   (flatLang_pats_bindings (CONS p ps) = APPEND (flatLang_pats_bindings
+    ps) (flatLang_pat_bindings p))`;;
 
 let flatLang_exp_INDUCT,flatLang_exp_RECURSION = define_datatype
   "flatLang_exp =

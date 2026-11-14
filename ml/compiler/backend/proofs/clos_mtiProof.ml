@@ -59,8 +59,8 @@ let clos_mtiProof_code_rel_CONS_CONS = prove
 (* value relation *)
 
 let mk_Fns_def,mk_Fns_ind = define_rec
-  [`mk_Fns [] e = e`;
-   `mk_Fns (CONS t ts) e = closLang_Fn t NONE NONE 1 (mk_Fns ts e)`];;
+  `(mk_Fns [] e = e) /\
+   (mk_Fns (CONS t ts) e = closLang_Fn t NONE NONE 1 (mk_Fns ts e))`;;
 
 let clos_mtiProof_f_rel_def = new_definition
   `clos_mtiProof_f_rel max_app (a1,e1) (a2,e2) <=>
@@ -117,7 +117,7 @@ let v_rel_opt_def = new_definition
      match (x2,x3) with
        (NONE,NONE) -> T
      | (SOME x,SOME y) -> clos_mtiProof_v_rel max_app x y
-     | (_1,_2) -> F`;;
+     | (_,_) -> F`;;
 
 let clos_mtiProof_ref_rel = cake_inductive
   `(!bs. clos_mtiProof_ref_rel max_app (closSem_ByteArray bs)
@@ -225,9 +225,9 @@ let collect_apps_cons = prove
   CHEAT_TAC);;
 
 let mk_Apps_def,mk_Apps_ind = define_rec
-  [`mk_Apps e [] = e`;
-   `mk_Apps e (CONS (t,other) ts) = closLang_App t NONE (mk_Apps e ts)
-    [other]`];;
+  `(mk_Apps e [] = e) /\
+   (mk_Apps e (CONS (t,other) ts) = closLang_App t NONE (mk_Apps e ts)
+    [other])`;;
 
 let collect_apps_IMP_mk_Apps = prove
  (`!e max_app (acc:closLang_exp list) other e3.
@@ -271,11 +271,11 @@ let evaluate_mk_Apps_err = prove
   CHEAT_TAC);;
 
 let evaluate_apps_def,evaluate_apps_ind = define_rec
-  [`evaluate_apps f [] s = (Rval [f],s)`;
-   `evaluate_apps f (CONS x xs) s =
+  `(evaluate_apps f [] s = (Rval [f],s)) /\
+   (evaluate_apps f (CONS x xs) s =
       match evaluate_apps f xs s with (Rval [v],s1) -> evaluate_app NONE v
           [x] s1
-      | res -> res`];;
+      | res -> res)`;;
 
 (* [local] *)
 let evaluate_mk_Apps_ok = prove

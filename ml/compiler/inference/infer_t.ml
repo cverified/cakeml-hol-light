@@ -32,9 +32,9 @@ let infer_t_INDUCT,infer_t_RECURSION = define_datatype
    an ML expression: infer_t_ind *)
 
 let id_to_string_def,id_to_string_ind = define_rec
-  [`id_to_string (Short s) = s`;
-   `id_to_string (Long x id') =
-        mlstring_concat [x; implode "."; id_to_string id']`];;
+  `(id_to_string (Short s) = s) /\
+   (id_to_string (Long x id') =
+        mlstring_concat [x; implode "."; id_to_string id'])`;;
 
 (* HOL4 infer_tScript.sml: the case constant that its Datatype
    makes *)
@@ -52,14 +52,14 @@ let _ = size_thms "t";;
 let get_tyname_def,get_tyname_ind = define_wf
   `MEASURE (\(x0,x1).      namespace_size (pair_size (\x. 0) t_size)
   mlstring_size mlstring_size x1)`
-  [`get_tyname n (Bind [] []) = NONE`;
-   `get_tyname n (Bind [] (CONS (m,ys) xs)) =
+  `(get_tyname n (Bind [] []) = NONE) /\
+   (get_tyname n (Bind [] (CONS (m,ys) xs)) =
       (match get_tyname n ys with NONE -> get_tyname n (Bind [] xs)
-       | SOME x -> SOME (strcat (strcat m (implode ".")) x))`;
-   `get_tyname n (Bind (CONS (tyname,_1,t) xs) m) =
+       | SOME x -> SOME (strcat (strcat m (implode ".")) x))) /\
+   (get_tyname n (Bind (CONS (tyname,_,t) xs) m) =
       if (match t with Tapp _ m -> m = n | _ -> F) then
         SOME tyname
-      else get_tyname n (Bind xs m)`];;
+      else get_tyname n (Bind xs m))`;;
 
 let type_ident_to_string_def = new_definition
   `type_ident_to_string tys ti =
@@ -98,11 +98,11 @@ let ty_var_name_def = new_definition
        mlstring_concat [implode "'"; mlint_toString (&n)]`;;
 
 let infer_t_commas_def,infer_t_commas_ind = define_guess
-  [`infer_t_commas c x2 =
+  `infer_t_commas c x2 =
    match x2 with
      [] -> []
    | [x] -> [x]
-   | CONS x ys -> CONS x (CONS c (infer_t_commas c ys))`];;
+   | CONS x ys -> CONS x (CONS c (infer_t_commas c ys))`;;
 
 let add_parens_def = new_definition
   `add_parens threshold' (x,n) =
@@ -117,11 +117,11 @@ let add_parens_def = new_definition
 let inf_type_to_string_rec_def,inf_type_to_string_rec_ind = define_shaped_wf
   "maplist>measure"
   `MEASURE (\(x0,x1). infer_t_size x1)`
-  [`inf_type_to_string_rec tys (Infer_Tuvar n) =
-        (mlstring_concat [(implode "_"); mlint_toString (&n)],0)`;
-   `inf_type_to_string_rec tys (Infer_Tvar_db n) =
-        (mlstring_concat [ty_var_name n],0)`;
-   `inf_type_to_string_rec tys (Infer_Tapp ts ti) =
+  `(inf_type_to_string_rec tys (Infer_Tuvar n) =
+        (mlstring_concat [(implode "_"); mlint_toString (&n)],0)) /\
+   (inf_type_to_string_rec tys (Infer_Tvar_db n) =
+        (mlstring_concat [ty_var_name n],0)) /\
+   (inf_type_to_string_rec tys (Infer_Tapp ts ti) =
         if ti = Tfn_num then
          (match ts with [t1; t2] ->
             (mlstring_concat [add_parens 2 (inf_type_to_string_rec tys t1);
@@ -144,11 +144,11 @@ let inf_type_to_string_rec_def,inf_type_to_string_rec_ind = define_shaped_wf
                      (infer_t_commas (implode ", ")
                        (MAP (add_parens 5) (inf_type_to_string_rec_list tys
                            ts))))
-                     [(implode ") "); type_ident_to_string tys ti]),1)`;
-   `inf_type_to_string_rec_list tys [] = []`;
-   `inf_type_to_string_rec_list tys (CONS t ts) = CONS (inf_type_to_string_rec
+                     [(implode ") "); type_ident_to_string tys ti]),1)) /\
+   (inf_type_to_string_rec_list tys [] = []) /\
+   (inf_type_to_string_rec_list tys (CONS t ts) = CONS (inf_type_to_string_rec
     tys t)
-      (inf_type_to_string_rec_list tys ts)`];;
+      (inf_type_to_string_rec_list tys ts))`;;
 
 let inf_type_to_string_def = new_definition
   `inf_type_to_string tys t = FST (inf_type_to_string_rec tys t)`;;

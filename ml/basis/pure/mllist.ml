@@ -21,11 +21,11 @@ let _ = cake_theory "mllist" [];;
 let _ = do_list hide_constant ["length"; "negate"];;
 
 let intersperse_def,intersperse_ind = define_guess
-  [`intersperse sep x2 =
+  `intersperse sep x2 =
    match x2 with
      [] -> []
    | [x] -> [x]
-   | CONS x xs -> CONS x (CONS sep (intersperse sep xs))`];;
+   | CONS x xs -> CONS x (CONS sep (intersperse sep xs))`;;
 
 (* ===== TODO: TO BE PORTED TO HOL (better theorems for mergesort_tail) ===== *)
 let merge_tail_MEM = prove
@@ -121,8 +121,8 @@ let sort_set = prove
 add_simp sort_set;;
 
 let getItem_def = define_cases
-  [`getItem [] = NONE`;
-   `getItem (CONS h t) = SOME (h,t)`];;
+  `(getItem [] = NONE) /\
+   (getItem (CONS h t) = SOME (h,t))`;;
 
 let nth_def = new_definition
   `nth l i = EL i l`;;
@@ -134,17 +134,17 @@ let drop_def = new_definition
   `drop l i = DROP i l`;;
 
 let takeUntil_def,takeUntil_ind = define_rec
-  [`takeUntil p [] = []`;
-   `takeUntil p (CONS x xs) = if p x then [] else CONS x (takeUntil p xs)`];;
+  `(takeUntil p [] = []) /\
+   (takeUntil p (CONS x xs) = if p x then [] else CONS x (takeUntil p xs))`;;
 
 let dropUntil_def,dropUntil_ind = define_rec
-  [`dropUntil p [] = []`;
-   `dropUntil p (CONS x xs) = if p x then CONS x xs else dropUntil p xs`];;
+  `(dropUntil p [] = []) /\
+   (dropUntil p (CONS x xs) = if p x then CONS x xs else dropUntil p xs)`;;
 
 let mllist_mapi_def,mllist_mapi_ind = define_rec
-  [`mllist_mapi f (n:num) [] = []`;
-   `mllist_mapi f (n:num) (CONS h t) = (let y = f n h in (CONS y
-    (mllist_mapi f (n + 1) t)))`];;
+  `(mllist_mapi f (n:num) [] = []) /\
+   (mllist_mapi f (n:num) (CONS h t) = (let y = f n h in (CONS y
+    (mllist_mapi f (n + 1) t))))`;;
 
 (* [local] *)
 let MAPI_thm_gen = prove
@@ -165,10 +165,10 @@ let MAPI_thm = prove
     ETA_AX]));;
 
 let mapPartial_def,mapPartial_ind = define_rec
-  [`mllist_mapPartial f [] = []`;
-   `mllist_mapPartial f (CONS h t) = match (f h) with
+  `(mllist_mapPartial f [] = []) /\
+   (mllist_mapPartial f (CONS h t) = match (f h) with
         NONE -> mllist_mapPartial f t
-        | (SOME x) -> CONS x (mllist_mapPartial f t)`];;
+        | (SOME x) -> CONS x (mllist_mapPartial f t))`;;
 
 let mapPartial_thm = prove
  (`!f l. mllist_mapPartial f l = MAP THE (FILTER IS_SOME (MAP f l))`,
@@ -185,11 +185,11 @@ let FIND_thm = prove
   CHEAT_TAC);;
 
 let partition_aux_def,partition_aux_ind = define_rec
-  [`partition_aux f [] pos neg =
-        (REVERSE pos,REVERSE neg)`;
-   `partition_aux f (CONS h t) pos neg = if f h then partition_aux f t (CONS h
+  `(partition_aux f [] pos neg =
+        (REVERSE pos,REVERSE neg)) /\
+   (partition_aux f (CONS h t) pos neg = if f h then partition_aux f t (CONS h
     pos) neg
-          else partition_aux f t pos (CONS h neg)`];;
+          else partition_aux f t pos (CONS h neg))`;;
 
 let partition_def = new_definition
   `partition (f:'a->bool) l = partition_aux f l [] []`;;
@@ -214,13 +214,13 @@ let partition_neg_thm = prove
   (REWRITE_TAC[partition_def; partition_aux_thm; REVERSE; APPEND]));;
 
 let foldl_def,foldl_ind = define_rec
-  [`mllist_foldl f e [] = e`;
-   `mllist_foldl f e (CONS h t) = mllist_foldl f (f h e) t`];;
+  `(mllist_foldl f e [] = e) /\
+   (mllist_foldl f e (CONS h t) = mllist_foldl f (f h e) t)`;;
 
 let foldli_aux_def,foldli_aux_ind = define_rec
-  [`mllist_foldli_aux f e n [] = e`;
-   `mllist_foldli_aux f e n (CONS h t) = mllist_foldli_aux f (f n h e)
-    (SUC n) t`];;
+  `(mllist_foldli_aux f e n [] = e) /\
+   (mllist_foldli_aux f e n (CONS h t) = mllist_foldli_aux f (f n h e)
+    (SUC n) t)`;;
 
 let foldli_def = new_definition
   `mllist_foldli f e l = mllist_foldli_aux f e 0 l`;;
@@ -245,17 +245,19 @@ let foldli_thm = prove
    (in addition to the translator-generated ones)
    (the CF specs allow more general arguments f) *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(n,m,_,_). m - n)
+   which is not one that HOL Light takes here; the one
+   below is what the port found for it *)
 let tabulate_aux_def,tabulate_aux_ind = define_wf
   `MEASURE (\(n,m,_1,_2). m - n)`
-  [`tabulate_aux n m f acc =
+  `tabulate_aux n m f acc =
      let b = (n >= m) in
      if b then REVERSE acc
      else let v = f n in
        let n = n + 1 in
        let acc = CONS v acc in
-       tabulate_aux n m f acc`];;
+       tabulate_aux n m f acc`;;
 
 let tabulate_def = new_definition
   `mllist_tabulate n f = let l = [] in tabulate_aux 0 n f l`;;
@@ -274,12 +276,12 @@ let tabulate_GENLIST = prove
    REWRITE_TAC[FUN_EQ_THM; o_THM; ADD_CLAUSES]));;
 
 let collate_def,collate_ind = define_guess
-  [`mllist_collate f [] [] = EQUAL`;
-   `mllist_collate f [] (CONS h t) = LESS`;
-   `mllist_collate f (CONS h t) [] = GREATER`;
-   `mllist_collate f (CONS h1 t1) (CONS h2 t2) =
+  `(mllist_collate f [] [] = EQUAL) /\
+   (mllist_collate f [] (CONS h t) = LESS) /\
+   (mllist_collate f (CONS h t) [] = GREATER) /\
+   (mllist_collate f (CONS h1 t1) (CONS h2 t2) =
         if f h1 h2 = EQUAL then mllist_collate f t1 t2
-        else f h1 h2`];;
+        else f h1 h2)`;;
 
 let collate_equal_thm = prove
  (`!l. (!x. MEM x l ==> (f x x = EQUAL)) ==> (mllist_collate f l l = EQUAL)`,
@@ -308,8 +310,8 @@ let collate_cpn_reln_thm = prove
 
 (* from std_preludeLib *)
 let LENGTH_AUX_def,LENGTH_AUX_ind = define_rec
-  [`LENGTH_AUX [] (n:num) = (n:num)`;
-   `LENGTH_AUX (CONS x xs) (n:num) = ((LENGTH_AUX xs (n + 1)):num)`];;
+  `(LENGTH_AUX [] (n:num) = (n:num)) /\
+   (LENGTH_AUX (CONS x xs) (n:num) = ((LENGTH_AUX xs (n + 1)):num))`;;
 
 (* HOL4 mllistScript.sml:572-575: a theorem that HOL4 states as the value of
    an ML expression: LENGTH_AUX_THM *)
@@ -320,8 +322,8 @@ let LENGTH_AUX_def,LENGTH_AUX_ind = define_rec
 (* tail-recursive MAP *)
 
 let map_rev'_def,map_rev'_ind = define_rec
-  [`map_rev' f [] acc = acc`;
-   `map_rev' f (CONS x xs) acc = map_rev' f xs (CONS (f x) acc)`];;
+  `(map_rev' f [] acc = acc) /\
+   (map_rev' f (CONS x xs) acc = map_rev' f xs (CONS (f x) acc))`;;
 
 let map_rev_def = new_definition
   `map_rev f xs = map_rev' f xs []`;;
@@ -352,9 +354,9 @@ let map_rev_thm = prove
 (* tail-recursive FILTER *)
 
 let filter_rev'_def,filter_rev'_ind = define_rec
-  [`filter_rev' P [] acc = acc`;
-   `filter_rev' P (CONS h t) acc = if P h then filter_rev' P t (CONS h
-    acc) else filter_rev' P t acc`];;
+  `(filter_rev' P [] acc = acc) /\
+   (filter_rev' P (CONS h t) acc = if P h then filter_rev' P t (CONS h
+    acc) else filter_rev' P t acc)`;;
 
 let filter_rev_def = new_definition
   `filter_rev P xs = filter_rev' P xs []`;;
@@ -389,8 +391,8 @@ let filter_rev_thm = prove
 (* tail-recursive FLAT *)
 
 let flat_rev'_def,flat_rev'_ind = define_rec
-  [`flat_rev' [] acc = acc`;
-   `flat_rev' (CONS x xs) acc = flat_rev' xs (REV x acc)`];;
+  `(flat_rev' [] acc = acc) /\
+   (flat_rev' (CONS x xs) acc = flat_rev' xs (REV x acc))`;;
 
 let flat_rev_def = new_definition
   `flat_rev xs = flat_rev' xs []`;;

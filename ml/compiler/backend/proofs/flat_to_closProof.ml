@@ -276,7 +276,7 @@ let flat_to_closProof_compile_correct = prove
 (* HOL4 flat_to_closProofScript.sml:332-338: a proof *)
 
 let dest_pat_from_case = prove
- (`(match pes with [(flatLang_Pvar _1,_2)] -> T | _ -> F) ==>
+ (`(match pes with [(flatLang_Pvar _,_)] -> T | _ -> F) ==>
    (?nm rhs. dest_pat pes = SOME (nm,rhs))`,
   CHEAT_TAC);;
 

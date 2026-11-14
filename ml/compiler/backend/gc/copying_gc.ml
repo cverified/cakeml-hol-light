@@ -20,9 +20,9 @@ let _ = cake_theory "copying_gc"
 (* The GC is a copying collector which moves elements *)
 
 let gc_move_def = define_general
-  [`copying_gc_gc_move (gc_shared_Data d,h2,a,n,heap,c,limit') =
-    ((gc_shared_Data d:'a heap_address),h2,a,n,heap,c)`;
-   `copying_gc_gc_move (gc_shared_Pointer ptr d,h2,a,n,heap,c,limit') =
+  `(copying_gc_gc_move (gc_shared_Data d,h2,a,n,heap,c,limit') =
+    ((gc_shared_Data d:'a heap_address),h2,a,n,heap,c)) /\
+   (copying_gc_gc_move (gc_shared_Pointer ptr d,h2,a,n,heap,c,limit') =
          match heap_lookup ptr heap with SOME (DataElement xs l dd) ->
              let c = (c /\ l + 1 <= n /\ (a + n = limit')) in
              let n = n - (l + 1) in
@@ -31,18 +31,18 @@ let gc_move_def = define_general
                (gc_shared_Pointer a d,h2,a + (l + 1),n,heap,c)
          | SOME (ForwardPointer ptr _ l) -> (gc_shared_Pointer ptr
              d,h2,a,n,heap,c)
-         | _ -> (ARB,h2,a,n,heap,F)`];;
+         | _ -> (ARB,h2,a,n,heap,F))`;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_list_def,gc_move_list_ind = define_guess_cheat
-  [`copying_gc_gc_move_list ([],h2,a,n,heap,c,limit') = ([],h2,a,n,heap,c)`;
-   `copying_gc_gc_move_list (CONS x xs,h2,a,n,heap,c,limit') =
+  `(copying_gc_gc_move_list ([],h2,a,n,heap,c,limit') = ([],h2,a,n,heap,c)) /\
+   (copying_gc_gc_move_list (CONS x xs,h2,a,n,heap,c,limit') =
          let (x,h2,a,n,heap,c) = copying_gc_gc_move
              (x,h2,a,n,heap,c,limit') in
          let (xs,h2,a,n,heap,c) = copying_gc_gc_move_list
              (xs,h2,a,n,heap,c,limit') in
-           (CONS x xs,h2,a,n,heap,c)`];;
+           (CONS x xs,h2,a,n,heap,c))`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(h1,h2,a,n,heap,c,limit'). limit' - heap_length h1)
@@ -52,8 +52,8 @@ let gc_move_list_def,gc_move_list_ind = define_guess_cheat
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_loop_def,gc_move_loop_ind = define_guess_cheat
-  [`copying_gc_gc_move_loop (h1,[],a,n,heap,c,limit') = (h1,a,n,heap,c)`;
-   `copying_gc_gc_move_loop (h1,CONS h h2,a,n,heap,c,limit') =
+  `(copying_gc_gc_move_loop (h1,[],a,n,heap,c,limit') = (h1,a,n,heap,c)) /\
+   (copying_gc_gc_move_loop (h1,CONS h h2,a,n,heap,c,limit') =
          if limit' < heap_length (APPEND h1 (CONS h h2)) then
              (h1,a,n,heap,F) else match h with DataElement xs l d ->
               let (xs,h2,a,n,heap,c) = copying_gc_gc_move_list (xs,CONS h
@@ -62,7 +62,7 @@ let gc_move_loop_def,gc_move_loop_ind = define_guess_cheat
               let h2 = TL h2 in
               let h1 = APPEND h1 [DataElement xs l d] in
                 copying_gc_gc_move_loop (h1,h2,a,n,heap,c,limit')
-           | _ -> (h1,a,n,heap,F)`];;
+           | _ -> (h1,a,n,heap,F))`;;
 
 let full_gc_def = new_definition
   `full_gc (roots,heap,limit') =

@@ -34,11 +34,11 @@ let is_const_row_def = new_definition
 
 let is_Any_def,is_Any_ind = define_shaped_rec
   "match"
-  [`is_Any x1 =
+  `is_Any x1 =
    match x1 with
      pattern_semantics_Any -> T
    | pattern_semantics_Or p1 p2 -> (is_Any p1 \/ is_Any p2)
-   | _ -> F`];;
+   | _ -> F`;;
 
 let is_Or_row_def = new_definition
   `is_Or_row x1 =
@@ -47,9 +47,9 @@ let is_Or_row_def = new_definition
    | _ -> F`;;
 
 let take_until_Any_def,take_until_Any_ind = define_rec
-  [`take_until_Any [] = []`;
-   `take_until_Any (CONS (p,x) xs) =
-      if is_Any p then [(p,x)] else CONS (p,x) (take_until_Any xs)`];;
+  `(take_until_Any [] = []) /\
+   (take_until_Any (CONS (p,x) xs) =
+      if is_Any p then [(p,x)] else CONS (p,x) (take_until_Any xs))`;;
 
 let move_const_up_def = new_definition
   `move_const_up rows =
@@ -132,11 +132,11 @@ let _ = size_thms "pattern_semantics_pat";;
    what the port found for it *)
 let insert_Any_def,insert_Any_ind = define_wf
   `MEASURE (\x0. list_size (pair_size pattern_semantics_pat_size (\x. 0)) x0)`
-  [`insert_Any x1 =
+  `insert_Any x1 =
    match x1 with
      [] -> []
    | [p,x] -> [(pattern_semantics_Any,x)]
-   | CONS x xs -> CONS x (insert_Any xs)`];;
+   | CONS x xs -> CONS x (insert_Any xs)`;;
 
 let match_insert_Any = prove
  (`!rows. ~(pattern_semantics_match refs rows v = NONE) ==>
@@ -168,8 +168,8 @@ let mk_If_def = new_definition
   `mk_If g p q = if is_True g then p else pattern_semantics_If g p q`;;
 
 let get_pos_def,get_pos_ind = define_rec
-  [`get_pos [] = EmptyPos`;
-   `get_pos (CONS n ns) = Pos n (get_pos ns)`];;
+  `(get_pos [] = EmptyPos) /\
+   (get_pos (CONS n ns) = Pos n (get_pos ns))`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL (_,p) -> pattern_semantics_pat_size p
@@ -180,38 +180,38 @@ let get_pos_def,get_pos_ind = define_rec
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let pat_to_guard_def,pat_to_guard_ind = define_guess_cheat
-  [`pat_to_guard l pattern_semantics_Any = pattern_semantics_True`;
-   `pat_to_guard l (pattern_semantics_Lit r) = pattern_semantics_PosTest
-    (get_pos (REVERSE l)) (pattern_semantics_LitEq r)`;
-   `pat_to_guard l (pattern_semantics_Cons NONE pats) = pats_to_guard l 0
-    pats`;
-   `pat_to_guard l (pattern_semantics_Cons (SOME (t,_)) pats) =
+  `(pat_to_guard l pattern_semantics_Any = pattern_semantics_True) /\
+   (pat_to_guard l (pattern_semantics_Lit r) = pattern_semantics_PosTest
+    (get_pos (REVERSE l)) (pattern_semantics_LitEq r)) /\
+   (pat_to_guard l (pattern_semantics_Cons NONE pats) = pats_to_guard l 0
+    pats) /\
+   (pat_to_guard l (pattern_semantics_Cons (SOME (t,_)) pats) =
       mk_Conj (pattern_semantics_PosTest (get_pos (REVERSE l))
-        (pattern_semantics_TagLenEq t (LENGTH pats))) (pats_to_guard l 0
-            pats)`;
-   `pat_to_guard l (pattern_semantics_Or p1 p2) = mk_Disj (pat_to_guard l
-    p1) (pat_to_guard l p2)`;
-   `pat_to_guard l (pattern_semantics_Ref p) = pat_to_guard (CONS 0 l) p`;
-   `pats_to_guard l k [] = pattern_semantics_True`;
-   `pats_to_guard l k [p] = pat_to_guard (CONS k l) p`;
-   `pats_to_guard l k (CONS p ps) = mk_Conj (pat_to_guard (CONS k l) p)
-    (pats_to_guard l (k + 1) ps)`];;
+        (pattern_semantics_TagLenEq t (LENGTH pats))) (pats_to_guard l
+            0 pats)) /\
+   (pat_to_guard l (pattern_semantics_Or p1 p2) = mk_Disj (pat_to_guard l
+    p1) (pat_to_guard l p2)) /\
+   (pat_to_guard l (pattern_semantics_Ref p) = pat_to_guard (CONS 0 l) p) /\
+   (pats_to_guard l k [] = pattern_semantics_True) /\
+   (pats_to_guard l k [p] = pat_to_guard (CONS k l) p) /\
+   (pats_to_guard l k (CONS p ps) = mk_Conj (pat_to_guard (CONS k l) p)
+    (pats_to_guard l (k + 1) ps))`;;
 
 let pats_to_code_def,pats_to_code_ind = define_rec
-  [`pats_to_code [] = pattern_semantics_Fail`;
-   `pats_to_code (CONS (p,x) rows) =
+  `(pats_to_code [] = pattern_semantics_Fail) /\
+   (pats_to_code (CONS (p,x) rows) =
       mk_If (pat_to_guard [] p) (pattern_semantics_Leaf x)
-          (pats_to_code rows)`];;
+          (pats_to_code rows))`;;
 
 let pattern_comp_walk_def,pattern_comp_walk_ind = define_rec
-  [`pattern_comp_walk [] x refs = SOME x`;
-   `pattern_comp_walk (CONS n ns) x refs =
+  `(pattern_comp_walk [] x refs = SOME x) /\
+   (pattern_comp_walk (CONS n ns) x refs =
       (match x with (pattern_semantics_Term t xs) -> (if n < LENGTH xs then
           pattern_comp_walk ns (EL n xs) refs else NONE)
        | (pattern_semantics_RefPtr p) -> (if ~(n = 0) then NONE else match
            FLOOKUP refs p with SOME y -> pattern_comp_walk ns y refs | _ ->
            NONE)
-       | _ -> NONE)`];;
+       | _ -> NONE))`;;
 
 let walk_list_def = new_definition
   `walk_list ns x refs =

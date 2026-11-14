@@ -19,9 +19,9 @@ let term_INDUCT,term_RECURSION = define_datatype
    | term_Const ('a)";;
 
 let pair_count_def,pair_count_ind = define_rec
-  [`pair_count (term_Var v) = 0`;
-   `pair_count (term_Const c) = 0`;
-   `pair_count (term_Pair t1 t2) = 1 + pair_count t1 + pair_count t2`];;
+  `(pair_count (term_Var v) = 0) /\
+   (pair_count (term_Const c) = 0) /\
+   (pair_count (term_Pair t1 t2) = 1 + pair_count t1 + pair_count t2)`;;
 add_simp pair_count_def;;
 
 (* HOL4 termScript.sml: the case constant that its Datatype makes *)
@@ -36,16 +36,16 @@ let _ = size_thms "term";;
    what the port found for it *)
 let vars_def,vars_ind = define_wf
   `MEASURE (\x0. term_size (\x. 0) x0)`
-  [`vars (term_Var x) = {x}`;
-   `vars (term_Pair t1 t2) = vars t1 UNION vars t2`;
-   `vars (term_Const _) = {}`];;
+  `(vars (term_Var x) = {x}) /\
+   (vars (term_Pair t1 t2) = vars t1 UNION vars t2) /\
+   (vars (term_Const _) = {})`;;
 add_simp vars_def;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let varb_def,varb_ind = define_wf
   `MEASURE (\x0. term_size (\x. 0) x0)`
-  [`varb (term_Var s) = BAG_INSERT s (EMPTY_BAG)`;
-   `varb (term_Pair t1 t2) = (BAG_UNION) (varb t1) (varb t2)`;
-   `varb (term_Const c) = EMPTY_BAG`];;
+  `(varb (term_Var s) = BAG_INSERT s (EMPTY_BAG)) /\
+   (varb (term_Pair t1 t2) = (BAG_UNION) (varb t1) (varb t2)) /\
+   (varb (term_Const c) = EMPTY_BAG)`;;
 add_simp varb_def;;

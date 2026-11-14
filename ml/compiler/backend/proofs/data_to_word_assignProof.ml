@@ -1900,11 +1900,11 @@ let IMP = prove
    what the port found for it *)
 let memcopy_def,memcopy_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
-  [`memcopy k a1 a2 m dm =
+  `memcopy k a1 a2 m dm =
      if k = 0 then SOME m else if a1 IN dm /\ a2 IN dm then
-         memcopy (k - 1) (a1 + bytes_in_word) (a2 + bytes_in_word) ((a2 =+
-           m a1) m) dm
-       else NONE`];;
+         memcopy (k - 1) (a1 + bytes_in_word) (a2 + bytes_in_word) ((a2 =+ m
+           a1) m) dm
+       else NONE`;;
 
 (* HOL4 data_to_word_assignProofScript.sml:15279-15315: a theorem whose
    statement HOL Light does not read (tools/unstated.py): MemCopy_thm *)

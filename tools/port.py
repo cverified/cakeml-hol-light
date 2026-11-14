@@ -863,8 +863,6 @@ class Porter:
       if nm is None or nm in seen: continue
       seen.add(nm)
       self.annotate(cl, not annotate)
-    oldwild = self.ctx.lone_wild
-    self.ctx.lone_wild = hterm.count_wild(e) == 1
     oldloose = self.ctx.loose_rhs
     self.ctx.loose_rhs = hterm.lone_eqn(e)
     try:
@@ -877,7 +875,6 @@ class Porter:
       self.ctx.vars = old
       self.ctx.intvars = oldint
       self.ctx.fieldvar = oldfv
-      self.ctx.lone_wild = oldwild
       self.ctx.loose_rhs = oldloose
 
   def two_pass(self, f):
@@ -2415,12 +2412,9 @@ class Porter:
     # may have been for something else
     if way is not None and not tac and not assumed:
       cheat = assumed_term
-    # the clauses, as the list that every way but new_definition
-    # takes (HOL4 typechecks each of them on its own).  A term in
-    # the list ends in `];; and not in `;;, so its last line has
-    # one character less to go on
+    # the clauses, as the one quotation that every way takes
     body = (clauses if term is None
-            else '[`%s`]' % fmt(rawterm, width=78, last=4))
+            else '`%s`' % fmt(rawterm, last=4))
     head = head_way(strat)
     if assumed: recursive = recursive_text(body, names)
     elif head in NOT_RECURSIVE: recursive = False
@@ -2475,25 +2469,34 @@ class Porter:
                    'takes here, so the\n   port lets its own '
                    'machinery find one *)\n' % inset(hol4rel))
     binding = '%s,%s' % (bind, indbind) if recursive else bind
+    # a comment of the source that cannot stand in the quotation
+    sizes += getattr(self, 'clause_pre', '') or ''
+    self.clause_pre = ''
+    # where the clauses are separate quotations, the way that makes
+    # the definition is the one whose name ends in _clauses
+    listed = term is None and getattr(self, 'clause_list', False)
+    def way(how):
+      return how + '_clauses' if listed else how
     if assumed:
       how = 'assume_definition_rec' if recursive \
             else 'assume_definition'
-      text = sizes + matchnote + letline(binding, how,
+      text = sizes + matchnote + letline(binding, way(how),
                                          '"%s"\n  %s' % (why, body))
     elif not recursive:
       if head in SHAPES:
         text = sizes + matchnote + letline(
-                 bind, 'define_shaped', '"%s"\n  %s' % (strat, body))
+                 bind, way('define_shaped'),
+                 '"%s"\n  %s' % (strat, body))
       elif head in ('define_single', 'general'):
         text = sizes + matchnote + letline(
-                   bind, 'define_general%s'
-                         % ('_cheat' if cheat else ''), body)
+                   bind, way('define_general%s'
+                             % ('_cheat' if cheat else '')), body)
       elif term is not None and key not in overrides.ONE_QUOTATION \
            and strat != 'new_recursive_definition':
         text = sizes + 'let %s = new_definition\n  `%s`;;' % (bind,
                                                               term)
       else:
-        text = sizes + matchnote + letline(bind, 'define_cases',
+        text = sizes + matchnote + letline(bind, way('define_cases'),
                                            body)
     else:
       # {one function, a family} x {a rewriting of the clauses or
@@ -2525,7 +2528,8 @@ class Porter:
       # one another is made the way one of them is: the clauses
       # say which it is, and a name that only said `mutual' said
       # nothing the clauses do not
-      how = 'define' + ('_shaped' if shape else '') + kind + suffix
+      how = way('define' + ('_shaped' if shape else '') +
+                kind + suffix)
       args = ('"%s"\n  ' % shape) if shape else ''
       if rel is not None: args += '`%s`\n  ' % rel
       if suffix == '_tac': args += tactext + '\n  '
@@ -3514,13 +3518,17 @@ class Porter:
     return e
 
   def clause_form(self, body, matchcons=()):
-    """the clauses of a definition as separate quotations: HOL4
-       typechecks every clause of a definition on its own, so the
-       same variable name can have different types in two clauses,
-       which one HOL Light quotation cannot.  The clauses of a
-       constant of `matchcons' are one quotation with a match in it,
-       where they overlap and HOL4 takes the first that matches
-       (overrides.MATCH_CLAUSES)"""
+    """the clauses of a definition, as one quotation with /\\
+       between them -- which is how HOL4 writes them and how HOL
+       Light's own define takes them.  Where a variable of the
+       definition stands in two clauses in places whose types have
+       nothing in common (clause_clash), one quotation cannot
+       typecheck: those clauses are separate quotations and the way
+       that makes the definition is the one whose name ends in
+       _clauses.  The clauses of a constant of `matchcons' are one
+       quotation with a match in it, where they overlap and HOL4
+       takes the first that matches (overrides.MATCH_CLAUSES)"""
+    self.clause_list = self.clause_clash(body)
     # the comments of the body are kept: the tokenizer gives
     # every one of them to the token after it, and the printer
     # writes it there again
@@ -3563,7 +3571,10 @@ class Porter:
       # (bvi_let's compile)
       qcs = {}
       for i, (cl, mt) in enumerate(groups):
-        last = 5 if i == len(groups) - 1 else 3
+        # the last line of a clause has to leave room for the
+        # bracket that closes it and for the /\ after it, or for
+        # the quote and the ;; that end the phrase
+        last = 5 if i == len(groups) - 1 else 4
         if mt is not None:
           cls.append(fmt(mt, indent=4, last=last, extra=4))
           continue
@@ -3583,10 +3594,8 @@ class Porter:
           self.conbody = dict(was)
           self.conbody.update(
             dict((n, t) for (c, n), t in per.items() if c in pats))
-        # a clause of the list is a quotation of its own, so a
-        # single wildcard in it is the _ that the source writes
-        oldw = self.ctx.lone_wild
-        self.ctx.lone_wild = hterm.count_wild(cl) == 1
+        # a clause stands in brackets of its own, which end it, so
+        # a conditional, a let or a match on its right needs none
         oldl = self.ctx.loose_rhs
         self.ctx.loose_rhs = hterm.lone_eqn(cl)
         try:
@@ -3595,7 +3604,6 @@ class Porter:
                          indent=4, last=last, extra=4))
         finally:
           self.conbody = was
-          self.ctx.lone_wild = oldw
           self.ctx.loose_rhs = oldl
       # a comment that has no token of the clause to stand before
       # (one at the end of it) goes at the end of that clause
@@ -3607,13 +3615,40 @@ class Porter:
         cls[k] += '\n    // ' + l
     finally:
       self.ctx.vars = old
-    text = '['
-    for i, c in enumerate(cls):
-      if i: text += ';\n   '
-      for cm in qcs.get(i, []):
-        text += ('(* ' + '\n      '.join(cm) + ' *)\n   ')
-      text += '`' + c + '`'
-    return text + ']'
+    # the clauses of a definition are one quotation with /\ between
+    # them, as HOL4 writes them and as HOL Light's own define takes
+    # them.  A comment with a quote in it cannot stand in a
+    # quotation, so it stands before the whole phrase, as a comment
+    # of OCaml (self.clause_pre, which the caller writes out)
+    self.clause_pre = ''
+    # the clauses of a quotation, joined with /\\; a quotation
+    # that stands in a list is one column further in
+    def quot(idx, ind='   '):
+      out = ''
+      for k, i in enumerate(idx):
+        for cm in qcs.get(i, []):
+          self.clause_pre += '(* ' + '\n   '.join(cm) + ' *)\n'
+        if k: out += ' /\\\n' + ind
+        # a comment of the source that stands before the clause
+        # stands before its bracket too, or the bracket would be
+        # alone at the end of a line of comment
+        lines = cls[i].split('\n')
+        j = 0
+        while j < len(lines) and lines[j].lstrip().startswith('//'):
+          out += lines[j].lstrip() + '\n' + ind
+          j += 1
+        rest = '\n'.join(lines[j:])
+        out += '(' + (rest.lstrip() if j else rest) + ')'
+      return '`' + out + '`'
+    groups2 = (self.clause_split
+               if self.clause_list and
+                  max(max(g) for g in self.clause_split) < len(cls)
+               else [list(range(len(cls)))])
+    if len(groups2) < 2:
+      self.clause_list = False
+      return quot(groups2[0])
+    return ('[' + ';\n   '.join(quot(g, '    ') for g in groups2)
+            + ']')
 
   def clause_head(self, cl):
     """the name of the constant that a clause of a definition
@@ -3705,6 +3740,7 @@ class Porter:
         if out: return out
       return self.db.con_argty.get((nm, j))
     where = {}
+    clause = [0]
     def walk(p, tys):
       while p.kind in ('paren', 'typed'): p = p.e
       if p.kind == 'id':
@@ -3712,7 +3748,7 @@ class Porter:
         # a position whose type is not known says nothing
         if (p.name == '_' or not tys or iscon(p.name) or
             p.name.split('$')[-1] in hterm.HLCONS): return
-        where.setdefault(p.name, []).append(tys)
+        where.setdefault(p.name, []).append((clause[0], tys))
         return
       if p.kind == 'app':
         h, args = hterm.strip_app(p)
@@ -3725,12 +3761,55 @@ class Porter:
         return
       if p.kind == 'infix':
         walk(p.l, None); walk(p.r, None)
+    # the type of each argument of the function, as a pattern of
+    # some clause says it: without that, a variable at argument 1
+    # of one clause and at argument 2 of another would look like a
+    # clash, where HOL Light unifies the two argument types
+    # (mergesort's merge has 'merge R [] l' and 'merge R l []')
+    def pat_ty(a):
+      while a.kind in ('paren', 'typed', 'rawtyped'): a = a.e
+      if a.kind == 'list': return '(A)list'
+      if a.kind == 'app':
+        h, args0 = hterm.strip_app(a)
+        if h.kind == 'id' and iscon(h.name):
+          return self.con_type(h.name, len(args0))
+      elif a.kind == 'id' and iscon(a.name):
+        return self.con_type(a.name, 0)
+      return None
+    argtys = {}
     for _, args, _ in cls:
-      for i, a in enumerate(args): walk(a, {('arg', i)})
-    # the clause form is needed where the places of a variable have
-    # no type in common
-    return any(not set.intersection(*map(set, v))
-               for v in where.values() if len(v) > 1)
+      for i, a in enumerate(args):
+        t = pat_ty(a)
+        if t: argtys.setdefault(i, t)
+    for n, (_, args, _) in enumerate(cls):
+      clause[0] = n
+      for i, a in enumerate(args):
+        walk(a, {argtys[i]} if i in argtys else None)
+    # two clauses cannot stand in one quotation where a variable of
+    # both has no type in common between them; the clauses are
+    # grouped into as few quotations as that allows, which is one
+    # for most definitions and two for the rest (a clause of
+    # bviSem's evaluate has a dest that is a number where the
+    # clause for Call has one that is an option)
+    def clash(i, j):
+      for v in where.values():
+        a = [t for (n, t) in v if n == i]
+        b = [t for (n, t) in v if n == j]
+        if a and b and not (set.intersection(*map(set, a + b))):
+          return True
+      return False
+    groups = []
+    for i in range(len(cls)):
+      for g in groups:
+        if not any(clash(i, j) for j in g):
+          g.append(i); break
+      else:
+        groups.append([i])
+    self.clause_split = groups
+    if len(groups) > 1 and os.environ.get('CLASHDBG'):
+      print('CLASH %s %s: %s' % (self.thy, self.defkey, groups),
+            file=sys.stderr)
+    return len(groups) > 1
 
   def multi_pattern(self, body):
     """does a definition that is not recursive match on more than
@@ -3912,21 +3991,15 @@ class Porter:
         cs = hterm.pop_comments(hd_)
         # a pattern is a constructor under its arguments, and HOL
         # Light reads one without parentheses round it; the
-        # patterns of several arguments are a tuple and need theirs
-        wasw = self.ctx.lone_wild
-        self.ctx.lone_wild = sum(
-          hterm.count_wild(args[i]) for i in pats) == 1
-        try:
-          # the brackets that the source puts round the pattern of
-          # a clause are the ones that its application needs
-          # (is_pure (IntOp Add) = F), and the match that the port
-          # writes of the clauses needs none
-          def bare(a):
-            while a.kind == 'paren': a = a.e
-            return a
-          pat = ','.join(pr.pr(bare(args[i]), 2) for i in pats)
-        finally:
-          self.ctx.lone_wild = wasw
+        # brackets that the source puts round the pattern of a
+        # clause are the ones that its application needs
+        # (is_pure (IntOp Add) = F), and the match that the port
+        # writes of the clauses needs none.  The patterns of
+        # several arguments are a tuple and need theirs
+        def bare(a):
+          while a.kind == 'paren': a = a.e
+          return a
+        pat = ','.join(pr.pr(bare(args[i]), 2) for i in pats)
         if len(pats) > 1: pat = '(' + pat + ')'
         # a conditional or a let of an arm needs no parentheses, as
         # HOL Light reads the arm to the end of it; a match does,

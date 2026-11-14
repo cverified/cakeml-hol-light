@@ -30,8 +30,8 @@ let _ = cake_theory "cmlPEG"
 (* HOL4 cmlPEGScript.sml:17-29: ML code, not ported *)
 
 let cmlPEG_sumID_def = define_cases
-  [`cmlPEG_sumID (INL x) = x`;
-   `cmlPEG_sumID (INR y) = y`];;
+  `(cmlPEG_sumID (INL x) = x) /\
+   (cmlPEG_sumID (INR y) = y)`;;
 
 let mktokLf_def = new_definition
   `mktokLf t = [Lf
@@ -53,19 +53,19 @@ let _ = size_thms "parsetree";;
    what the port found for it *)
 let mk_linfix_def,mk_linfix_ind = define_wf
   `MEASURE (\(x0,x1,x2). parsetree_size1 locs_size (\x. 0) (\x. 0) x2)`
-  [`mk_linfix tgt acc [] = acc`;
-   `mk_linfix tgt acc [t] = acc`;
-   `mk_linfix tgt acc (CONS opt (CONS t rest)) =
-     mk_linfix tgt (mkNd tgt [acc; opt; t]) rest`];;
+  `(mk_linfix tgt acc [] = acc) /\
+   (mk_linfix tgt acc [t] = acc) /\
+   (mk_linfix tgt acc (CONS opt (CONS t rest)) =
+     mk_linfix tgt (mkNd tgt [acc; opt; t]) rest)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let mk_rinfix_def,mk_rinfix_ind = define_wf
   `MEASURE (\(x0,x1). parsetree_size1 locs_size (\x. 0) (\x. 0) x1)`
-  [`mk_rinfix tgt [] = mkNd tgt []`;
-   `mk_rinfix tgt [t] = mkNd tgt [t]`;
-   `mk_rinfix tgt (CONS t (CONS opt rest)) = mkNd tgt [t; opt; mk_rinfix
-    tgt rest]`];;
+  `(mk_rinfix tgt [] = mkNd tgt []) /\
+   (mk_rinfix tgt [t] = mkNd tgt [t]) /\
+   (mk_rinfix tgt (CONS t (CONS opt rest)) = mkNd tgt [t; opt; mk_rinfix
+    tgt rest])`;;
 
 let peg_linfix_def = new_definition
   `peg_linfix tgtnt rptsym opsym =
@@ -80,9 +80,9 @@ let peg_linfix_def = new_definition
    translator
 *)
 let cmlPEG_choicel_def,cmlPEG_choicel_ind = define_rec
-  [`cmlPEG_choicel [] = peg_not (peg_empty []) []`;
-   `cmlPEG_choicel (CONS h t) = peg_choice h (cmlPEG_choicel t)
-    cmlPEG_sumID`];;
+  `(cmlPEG_choicel [] = peg_not (peg_empty []) []) /\
+   (cmlPEG_choicel (CONS h t) = peg_choice h (cmlPEG_choicel t)
+    cmlPEG_sumID)`;;
 
 let cmlPEG_pegf_def = new_definition
   `cmlPEG_pegf sym f = peg_seq sym (peg_empty []) (\l1 l2. f l1)`;;
@@ -188,12 +188,12 @@ let _ = size_thms "MMLnonT";;
    what the port found for it *)
 let ptPapply0_def,ptPapply0_ind = define_wf
   `MEASURE (\(x0,x1). parsetree_size1 locs_size MMLnonT_size (\x. 0) x1)`
-  [`ptPapply0 c x2 =
+  `ptPapply0 c x2 =
    match x2 with
      [] -> []
    // can't happen
    | [pb_pt] -> bindNT nPapp [c; pb_pt]
-   | CONS pb pbs -> ptPapply0 (bindNT0 nPConApp [c; pb]) pbs`];;
+   | CONS pb pbs -> ptPapply0 (bindNT0 nPConApp [c; pb]) pbs`;;
 
 let ptPapply_def = new_definition
   `ptPapply x1 =

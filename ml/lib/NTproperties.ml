@@ -25,14 +25,14 @@ let nullable_def = new_definition
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let nullableML_def,nullableML_ind = define_guess_cheat
-  [`nullableML G seen [] = T`;
-   `nullableML G seen (CONS (grammar_TOK t) _) = F`;
-   `nullableML G seen (CONS (grammar_NT n) rest) =
+  `(nullableML G seen [] = T) /\
+   (nullableML G seen (CONS (grammar_TOK t) _) = F) /\
+   (nullableML G seen (CONS (grammar_NT n) rest) =
         if n IN FDOM (grammar_rules G) /\ ~(n IN seen) then
           if FAPPLY (grammar_rules G) n INTER {r | nullableML G (n INSERT
               seen) r} = {} then F
           else nullableML G seen rest
-        else F`];;
+        else F)`;;
 
 let firstSet_def = new_definition
   `firstSet G sf = {t | ?rest. (\G. RTC (derive G)) G sf (CONS (grammar_TOK
@@ -40,9 +40,9 @@ let firstSet_def = new_definition
 
 let firstSetML_def,firstSetML_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`firstSetML G seen [] = {}`;
-   `firstSetML G seen (CONS (grammar_TOK t) _) = {t}`;
-   `firstSetML G seen (CONS (grammar_NT n) rest) =
+  `(firstSetML G seen [] = {}) /\
+   (firstSetML G seen (CONS (grammar_TOK t) _) = {t}) /\
+   (firstSetML G seen (CONS (grammar_NT n) rest) =
       if n IN FDOM (grammar_rules G) then
         (if ~(n IN seen) then
           UNIONS (IMAGE (firstSetML G (n INSERT seen))
@@ -50,4 +50,4 @@ let firstSetML_def,firstSetML_ind = assume_definition_rec
          else {}) UNION
         (if nullable G [grammar_NT n] then firstSetML G seen rest
          else {})
-      else {}`];;
+      else {})`;;

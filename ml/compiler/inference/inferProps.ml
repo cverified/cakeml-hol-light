@@ -979,10 +979,10 @@ let inferProps_fst_lem = prove
    termination *)
 let ts_tid_rename_def,ts_tid_rename_ind = define_wf
   `MEASURE (\(_2,y). t_size y)`
-  [`ts_tid_rename f t =
+  `ts_tid_rename f t =
      match t with
        Tapp ts tn -> Tapp (MAP (ts_tid_rename f) ts) (f tn)
-     | t -> t`];;
+     | t -> t`;;
 
 (* HOL4 inferPropsScript.sml:2483: ML code, not ported *)
 
@@ -998,10 +998,10 @@ add_simp ts_tid_rename_I;;
    termination *)
 let set_tids_def,set_tids_ind = define_wf
   `MEASURE t_size`
-  [`set_tids x1 =
+  `set_tids x1 =
      match x1 with
        Tapp ts tn -> tn INSERT (UNIONS (set_of_list (MAP set_tids ts)))
-     | _ -> {}`];;
+     | _ -> {}`;;
 
 (* HOL4 inferPropsScript.sml:2506: ML code, not ported *)
 
@@ -1027,9 +1027,9 @@ let set_tids_subset_type_subst = prove
    termination *)
 let unconvert_t_def,unconvert_t_ind = define_shaped_rec
   "nested"
-  [`unconvert_t (Tvar_db n) = Infer_Tvar_db n`;
-   `unconvert_t (Tapp ts tc) = Infer_Tapp (MAP unconvert_t ts) tc`;
-   `unconvert_t (Tvar v) = Infer_Tuvar ARB`];;
+  `(unconvert_t (Tvar_db n) = Infer_Tvar_db n) /\
+   (unconvert_t (Tapp ts tc) = Infer_Tapp (MAP unconvert_t ts) tc) /\
+   (unconvert_t (Tvar v) = Infer_Tuvar ARB)`;;
 
 (* HOL4 inferPropsScript.sml:2555: ML code, not ported *)
 
@@ -1040,11 +1040,11 @@ let unconvert_t_def,unconvert_t_ind = define_shaped_rec
    termination *)
 let inf_set_tids_def,inf_set_tids_ind = define_wf
   `MEASURE infer_t_size`
-  [`inf_set_tids x1 =
+  `inf_set_tids x1 =
      match x1 with
        Infer_Tapp ts tn -> tn INSERT (UNIONS (set_of_list (MAP inf_set_tids
          ts)))
-     | _ -> {}`];;
+     | _ -> {}`;;
 
 let inf_set_tids_subset_def = new_definition
   `inf_set_tids_subset tids t <=> inf_set_tids t SUBSET tids`;;

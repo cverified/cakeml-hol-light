@@ -260,7 +260,7 @@ let compile_pat_bindings_simulation = prove
    flatSem_pmatch_list s (MAP FST n_bindings) vs pre_bindings = Match
      bindings /\
    flatSem_evaluate env s [exp2] = (s2,res) /\
-   ALL2 (\(_1,k,v_exp) v. !env2.
+   ALL2 (\(_,k,v_exp) v. !env2.
          k IN domain spt /\
          ALOOKUP_rel ((\k. k > j /\ k < i) o dec_name_to_num) (=)
            (flatSem_environment_v env2) (flatSem_environment_v env) ==>
@@ -271,7 +271,7 @@ let compile_pat_bindings_simulation = prove
    ALOOKUP_rel ((\k. k < j) o dec_name_to_num) (=) (flatSem_environment_v
      env)
      (APPEND pre_bindings base_vs) /\
-   ALL (\(p,k,_2). ALL (\nm. dec_name_to_num nm < j) (flatLang_pat_bindings
+   ALL (\(p,k,_). ALL (\nm. dec_name_to_num nm < j) (flatLang_pat_bindings
      p) /\
          j < k /\ k < i) n_bindings ==>
    (?env2. flatSem_evaluate env2 s [exp] = (s2,res) /\
@@ -359,7 +359,7 @@ let match_rel_def = new_definition
          N) flat_patternProof_v_rel) N env1 env2
      | (No_match,No_match) -> T
      | (Match_type_error,Match_type_error) -> T
-     | (_3,_4) -> F`;;
+     | (_,_) -> F`;;
 
 let match_rel_thms = prove
  (`(match_rel N Match_type_error e <=> e = Match_type_error) /\
@@ -494,14 +494,14 @@ let max_dec_name_LESS_EVERY = prove
    termination *)
 let encode_val_def,encode_val_ind = define_wf
   `MEASURE flatSem_v_size`
-  [`encode_val others =
+  `encode_val others =
    match others with
      flatSem_Litv l -> flatSem_Litv l
    | flatSem_Conv stmp xs -> pattern_semantics_Term
      (match stmp with NONE -> NONE | SOME (i,_) -> SOME i)
      (MAP encode_val xs)
    | flatSem_Loc _ n -> pattern_semantics_RefPtr n
-   | others -> pattern_semantics_Other`];;
+   | others -> pattern_semantics_Other`;;
 
 let decode_test_simulation = prove
  (`dt_test test enc_v = SOME b /\
@@ -605,7 +605,7 @@ let pmatch_rows_encode = prove
  (`!pats j_offs.
    ~(pmatch_rows pats s v = Match_type_error) ==>
    (match (pattern_semantics_match (encode_refs s)
-     (MAPi (\j (p,_5). (encode_pat p,j + j_offs)) pats)
+     (MAPi (\j (p,_). (encode_pat p,j + j_offs)) pats)
          (encode_val v)) with NONE -> F
      | SOME (MatchSuccess n) -> (?i env. n = i + j_offs /\ i < LENGTH pats
        /\
@@ -631,7 +631,7 @@ let naive_pattern_matches_correct = prove
    naive_pattern_matches t x mats dflt = exp /\
    pure_eval_to s env x v /\
    pmatch_rows mats s v = res /\ ~(res = Match_type_error) ==>
-   flatSem_evaluate env s [exp] = (match res with Match (_6,_7,exp) ->
+   flatSem_evaluate env s [exp] = (match res with Match (_,_,exp) ->
        flatSem_evaluate env s [exp]
      | _ -> flatSem_evaluate env s [dflt])`,
   CHEAT_TAC);;
@@ -799,7 +799,7 @@ let inv_on_FOLDR = prove
 
 let set_globals_compile_pat_bindings = prove
  (`!t i n_bindings exp.
-   ALL (\(_8,_9,v_exp). flatProps_set_globals v_exp = EMPTY_BAG) n_bindings
+   ALL (\(_,_,v_exp). flatProps_set_globals v_exp = EMPTY_BAG) n_bindings
      ==>
    flatProps_set_globals (SND (compile_pat_bindings t i n_bindings exp)) =
    flatProps_set_globals exp`,
@@ -878,7 +878,7 @@ let esgc_free_decode_dtree = prove
 let esgc_free_compile_pat_bindings = prove
  (`!t i n_bindings exp.
    flatProps_esgc_free exp /\
-   ALL (\(_10,_11,v_exp). flatProps_esgc_free v_exp) n_bindings ==>
+   ALL (\(_,_,v_exp). flatProps_esgc_free v_exp) n_bindings ==>
    flatProps_esgc_free (SND (compile_pat_bindings t i n_bindings exp))`,
   CHEAT_TAC);;
 
@@ -933,7 +933,7 @@ let naive_pattern_matches_no_Mat = prove
 let compile_pat_bindings_no_Mat = prove
  (`!t i n_bindings exp.
    no_Mat exp /\
-   ALL (\(_12,_13,v_exp). no_Mat v_exp) n_bindings ==>
+   ALL (\(_,_,v_exp). no_Mat v_exp) n_bindings ==>
    no_Mat (SND (compile_pat_bindings t i n_bindings exp))`,
   CHEAT_TAC);;
 

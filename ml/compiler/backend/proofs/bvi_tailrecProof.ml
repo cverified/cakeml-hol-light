@@ -168,10 +168,10 @@ let term_ok_SING = prove
   CHEAT_TAC);;
 
 let op_id_val_def = define_cases
-  [`op_id_val bvi_tailrec_Plus = bvlSem_Number (&0)`;
-   `op_id_val bvi_tailrec_Times = bvlSem_Number (&1)`;
-   `op_id_val bvi_tailrec_Append = bvlSem_Block nil_tag []`;
-   `op_id_val bvi_tailrec_Noop = bvlSem_Number (&6333)`];;
+  `(op_id_val bvi_tailrec_Plus = bvlSem_Number (&0)) /\
+   (op_id_val bvi_tailrec_Times = bvlSem_Number (&1)) /\
+   (op_id_val bvi_tailrec_Append = bvlSem_Block nil_tag []) /\
+   (op_id_val bvi_tailrec_Noop = bvlSem_Number (&6333))`;;
 
 let scan_expr_not_Noop = prove
  (`!exp ts loc tt ty r ok op.

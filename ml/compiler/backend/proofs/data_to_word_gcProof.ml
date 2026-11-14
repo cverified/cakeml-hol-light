@@ -247,13 +247,13 @@ let _ = size_thms "stack_frame";;
 let flat_def,flat_ind = define_wf
   `MEASURE (\(x0,x1).      list_size dataSem_stack_size x0 +      list_size
   (stack_frame_size (\x. 0)) x1)`
-  [`flat x1 x2 =
+  `flat x1 x2 =
      match (x1,x2) with
-       (CONS (dataSem_Env _2 env) xs,CONS (StackFrame _3 _4 vs _5) ys) ->
-         APPEND (join_env env vs) (flat xs ys)
-     | (CONS (dataSem_Exc _6 env _7) xs,CONS (StackFrame _8 _9 vs _10) ys)
-       -> APPEND (join_env env vs) (flat xs ys)
-     | (_11,_12) -> []`];;
+       (CONS (dataSem_Env _ env) xs,CONS (StackFrame _ _ vs _) ys) -> APPEND
+         (join_env env vs) (flat xs ys)
+     | (CONS (dataSem_Exc _ env _) xs,CONS (StackFrame _ _ vs _) ys) ->
+       APPEND (join_env env vs) (flat xs ys)
+     | (_,_) -> []`;;
 
 let flat_APPEND = prove
  (`!xs ys xs1 ys1.
@@ -855,14 +855,14 @@ let word_gen_gc_move_roots_thm = prove
 
 let word_heap_parts_def = assume_definition
   "free: word_heap:(?1655030)word->((?1655018,?1655019)heap_ele"
-  [`word_heap_parts conf p s xs =
+  `word_heap_parts conf p s xs =
      word_heap p (APPEND (gc_state_h1 s) (gc_state_h2 s)) conf *
      misc_word_list (p + bytes_in_word * n2w (heap_length (APPEND
        (gc_state_h1 s) (gc_state_h2 s)))) xs *
-     word_heap (p + bytes_in_word * n2w (heap_length (APPEND (gc_state_h1
-       s) (gc_state_h2 s)) + LENGTH xs))
+     word_heap (p + bytes_in_word * n2w (heap_length (APPEND (gc_state_h1 s)
+       (gc_state_h2 s)) + LENGTH xs))
        (APPEND (APPEND (APPEND (gc_state_r4 s) (gc_state_r3 s))
-         (gc_state_r2 s)) (gc_state_r1 s)) conf`];;
+         (gc_state_r2 s)) (gc_state_r1 s)) conf`;;
 
 let gc_move_const = prove
  (`!l s xs' s'.
@@ -961,10 +961,10 @@ let word_heap_IMP_limit = prove
 
 let muttag_header_def = assume_definition
   "free: thunk_tag_to_bits:thunk_mode->(?1655824)word"
-  [`muttag_header x1 =
+  `muttag_header x1 =
    match x1 with
      ThunkTag e -> (thunk_tag_to_bits e << 3 || (n2w 6))
-   | _ -> (n2w 2)`];;
+   | _ -> (n2w 2)`;;
 
 let isMutTag_word_payload_IMP = prove
  (`!x1 x2 x3.
@@ -1904,7 +1904,7 @@ let data_to_word_gcProof_code_rel_def = new_definition
          (data_to_word_comp c n 2 prog))))`;;
 
 let stack_rel_def,stack_rel_ind = define_guess
-  [`data_to_word_gcProof_stack_rel x1 x2 =
+  `data_to_word_gcProof_stack_rel x1 x2 =
      match (x1,x2) with
        (dataSem_Env s1 env,StackFrame s2 ws vs NONE) ->
         ALL (\(x1,x2). ~(x1 = 0) /\ EVEN x1) vs /\ s1 = s2 /\
@@ -1915,15 +1915,15 @@ let stack_rel_def,stack_rel_ind = define_guess
      | (dataSem_Exc s1 env n,StackFrame s2 ws vs (SOME (x1,x2,x3))) ->
         data_to_word_gcProof_stack_rel (dataSem_Env s1 env) (StackFrame s2
           ws vs NONE) /\ (x1 = n)
-     | (_13,_14) -> F`];;
+     | (_,_) -> F`;;
 
 let the_global_def = new_definition
   `the_global g = the (dataSem_Number (&0)) (OPTION_MAP (dataSem_RefPtr T)
   g)`;;
 
 let contains_loc_def = define_general
-  [`contains_loc (StackFrame _15 vs _16 _17) (l1,l2) = (ALOOKUP vs 0 = SOME
-  (wordLang_Loc l1 l2))`];;
+  `contains_loc (StackFrame _ vs _ _) (l1,l2) = (ALOOKUP vs 0 = SOME
+  (wordLang_Loc l1 l2))`;;
 
 let code_oracle_rel_def = new_definition
   `code_oracle_rel c (s_compile:'c->(num#num#dataLang_prog) list->(word8
@@ -1974,7 +1974,7 @@ let limits_inv_def = new_definition
 
 let state_rel_thm = assume_definition
   "free: memory_rel:data_to_word_config->bool->num->((dataSem_v"
-  [`data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
+  `data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
   (t:('a,'c,'ffi)wordSem_state) v1 locs <=>
      (wordSem_state_ffi
       // I/O, clock and handler are the same, GC is fixed, code is compiled
@@ -2022,9 +2022,9 @@ let state_rel_thm = assume_definition
        (APPEND (APPEND (APPEND (match v1 with NONE -> [] | SOME vs -> vs)
         (join_env (dataSem_state_locals s) (toAList (inter
           (wordSem_state_locals t) (adjust_set (dataSem_state_locals s))))))
-        [(the_global (dataSem_state_global s),FAPPLY (wordSem_state_store
-          t) Globals)])
-        (flat (dataSem_state_stack s) (wordSem_state_stack t)))`];;
+        [(the_global (dataSem_state_global s),FAPPLY (wordSem_state_store t)
+          Globals)])
+        (flat (dataSem_state_stack s) (wordSem_state_stack t)))`;;
 
 (* HOL4 data_to_word_gcProofScript.sml:4538-4539: a theorem that HOL4 states
    as the value of an ML expression: state_rel_thm *)
@@ -2183,7 +2183,7 @@ let get_var_isT_OR_isF = prove
   CHEAT_TAC);;
 
 let mk_loc_def = define_general
-  [`mk_loc (SOME (t1,d1,d2)) = wordLang_Loc d1 d2`];;
+  `mk_loc (SOME (t1,d1,d2)) = wordLang_Loc d1 d2`;;
 
 let cut_env_IMP_cut_env = prove
  (`data_to_word_gcProof_state_rel c l1 l2 ((s:('c,'ffi)dataSem_state)) t NONE
@@ -2842,13 +2842,13 @@ let _ = size_thms "word_loc";;
 let loc_merge_def,loc_merge_ind = define_wf
   `MEASURE (\(x0,x1).      list_size (word_loc_size (\x. 0)) x0 +
   list_size (word_loc_size (\x. 0)) x1)`
-  [`loc_merge [] ys = []`;
-   `loc_merge (CONS (wordLang_Loc l1 l2) xs) ys = CONS (wordLang_Loc l1
-    l2:'a word_loc) (loc_merge xs ys)`;
-   `loc_merge (CONS (wordLang_Word w) xs) (CONS y ys) = CONS y (loc_merge xs
-    ys)`;
-   `loc_merge (CONS (wordLang_Word w) xs) [] = CONS (wordLang_Word w:'a
-    word_loc) xs`];;
+  `(loc_merge [] ys = []) /\
+   (loc_merge (CONS (wordLang_Loc l1 l2) xs) ys = CONS (wordLang_Loc l1
+    l2:'a word_loc) (loc_merge xs ys)) /\
+   (loc_merge (CONS (wordLang_Word w) xs) (CONS y ys) = CONS y (loc_merge
+    xs ys)) /\
+   (loc_merge (CONS (wordLang_Word w) xs) [] = CONS (wordLang_Word w:'a
+    word_loc) xs)`;;
 
 let LENGTH_loc_merge = prove
  (`!xs ys. LENGTH (loc_merge xs ys) = LENGTH xs`,

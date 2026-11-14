@@ -1866,9 +1866,9 @@ let get_vars_length_lemma = prove
    variables of its own are read as variables *)
 let stack_size_eq = prove
  (cake_as_vars (fun () ->
-    `(stack_size (CONS (StackFrame n _5 _6 NONE) stack) = OPTION_MAP2 (+) n
+    `(stack_size (CONS (StackFrame n _ _ NONE) stack) = OPTION_MAP2 (+) n
   (stack_size stack)) /\
-     (stack_size (CONS (StackFrame n _7 _8 (SOME handler)) stack) =
+     (stack_size (CONS (StackFrame n _ _ (SOME handler)) stack) =
         OPTION_MAP2 (+) (OPTION_MAP ((+) 3) n) (stack_size stack)) /\
      (stack_size [] = SOME 1)`),
   CHEAT_TAC);;
@@ -1892,7 +1892,7 @@ let s_frame_val_eq_def = new_definition
         MAP SND ls = MAP SND ls' /\ n = n'
      | (StackFrame n ls1 ls (SOME y),StackFrame n' ls1' ls' (SOME y')) ->
         MAP SND ls = MAP SND ls' /\ y = y' /\ n = n'
-     | (_9,_10) -> F`;;
+     | (_,_) -> F`;;
 
 let s_frame_val_eq_def2 = prove
  (`(
@@ -1906,12 +1906,12 @@ let _ = size_thms "stack_frame";;
 let s_val_eq_def,s_val_eq_ind = define_wf
   `MEASURE (\(x0,x1).      list_size (stack_frame_size (\x. 0)) x0 +
   list_size (stack_frame_size (\x. 0)) x1)`
-  [`s_val_eq x1 x2 =
+  `s_val_eq x1 x2 =
      match (x1,x2) with
        ([],[]) -> T
      | (CONS x xs,CONS y ys) -> (s_val_eq xs ys /\
                               s_frame_val_eq x y)
-     | (_11,_12) -> F`];;
+     | (_,_) -> F`;;
 
 (*Stacks look the same except for the values of the GC-ed cutsets (e.g. result of gc)*)
 let s_frame_key_eq_def = new_definition
@@ -1921,7 +1921,7 @@ let s_frame_key_eq_def = new_definition
          = MAP FST ls' /\ ls0 = ls0' /\ n = n'
      | (StackFrame n ls0 ls (SOME y),StackFrame n' ls0' ls' (SOME y')) ->
        MAP FST ls = MAP FST ls' /\ y = y' /\ ls0 = ls0' /\ n = n'
-     | (_13,_14) -> F`;;
+     | (_,_) -> F`;;
 
 let s_frame_key_eq_def2 = prove
  (`(
@@ -1934,12 +1934,12 @@ let s_frame_key_eq_def2 = prove
 let s_key_eq_def,s_key_eq_ind = define_wf
   `MEASURE (\(x0,x1).      list_size (stack_frame_size (\x. 0)) x0 +
   list_size (stack_frame_size (\x. 0)) x1)`
-  [`s_key_eq x1 x2 =
+  `s_key_eq x1 x2 =
      match (x1,x2) with
        ([],[]) -> T
      | (CONS x xs,CONS y ys) -> (s_key_eq xs ys /\
                               s_frame_key_eq x y)
-     | (_15,_16) -> F`];;
+     | (_,_) -> F`;;
 
 let s_key_eq_def2 = prove
  (`!l1 l2.
@@ -2829,8 +2829,8 @@ let permute_swap_lemma3 = prove
      ~(res = SOME wordSem_Error) /\ no_alloc_code (wordSem_state_code st)
        /\ no_alloc prog /\
      no_install_code (wordSem_state_code st) /\ wordConvs_no_install prog /\
-     ALL (\st. match st with StackFrame _17 _18 vs handler -> ALL_DISTINCT
-       (MAP FST vs)) (wordSem_state_stack st) ==>
+     ALL (\st. match st with StackFrame _ _ vs handler -> ALL_DISTINCT (MAP
+       FST vs)) (wordSem_state_stack st) ==>
      (?perm' stack'.
        wordSem_evaluate (prog,wordSem_state_permute_fupd (K perm) st) =
          (res,wordSem_state_stack_fupd (K stack') (wordSem_state_permute_fupd

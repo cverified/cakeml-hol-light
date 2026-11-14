@@ -74,13 +74,13 @@ let export_riscv_startup_def = new_definition
        [(implode "\n")]))))`;;
 
 let export_riscv_ffi_asm_def,export_riscv_ffi_asm_ind = define_rec
-  [`export_riscv_ffi_asm [] = misc_Nil`;
-   `export_riscv_ffi_asm (CONS ffi ffis) =
+  `(export_riscv_ffi_asm [] = misc_Nil) /\
+   (export_riscv_ffi_asm (CONS ffi ffis) =
           SmartAppend (misc_List [
            (implode "cake_ffi"); ffi; (implode ":\n");
            (implode "     tail cdecl(ffi"); ffi; (implode ")\n");
            (implode "     .p2align 4\n");
-           (implode "\n")]) (export_riscv_ffi_asm ffis)`];;
+           (implode "\n")]) (export_riscv_ffi_asm ffis))`;;
 
 (* HOL4 export_riscvScript.sml:65-89: the ML values that the definitions
    below antiquote *)

@@ -57,9 +57,9 @@ let environment_store_FIELDS = define_record "environment_store"
    "env_gens","(source_to_flat_environment spt) spt"];;
 
 let compile_var_def = define_cases
-  [`compile_var t (source_to_flat_Glob _ i) = flatLang_App t
-    (flatLang_GlobalVarLookup i) []`;
-   `compile_var t (source_to_flat_Local _ s) = flatLang_Var_local t s`];;
+  `(compile_var t (source_to_flat_Glob _ i) = flatLang_App t
+    (flatLang_GlobalVarLookup i) []) /\
+   (compile_var t (source_to_flat_Local _ s) = flatLang_Var_local t s)`;;
 
 let _ = size_thms "ast_pat";;
 let _ = size_thms "pattern_semantics_pat";;
@@ -76,23 +76,23 @@ let ast_pat1_size = prove
    termination *)
 let compile_pat_def,compile_pat_ind = define_shaped_rec
   "nested"
-  [`compile_pat env (ast_Pvar v) = flatLang_Pvar v`;
-   `compile_pat env ast_Pany = flatLang_Pany`;
-   `compile_pat env (ast_Plit l) = flatLang_Plit l`;
-   `compile_pat env (ast_Pcon id' ps) =
+  `(compile_pat env (ast_Pvar v) = flatLang_Pvar v) /\
+   (compile_pat env ast_Pany = flatLang_Pany) /\
+   (compile_pat env (ast_Plit l) = flatLang_Plit l) /\
+   (compile_pat env (ast_Pcon id' ps) =
         flatLang_Pcon
           (OPTION_JOIN (OPTION_MAP (nsLookup (source_to_flat_environment_c
               env)) id'))
-          (MAP (compile_pat env) ps)`;
-   `compile_pat env (ast_Pref p) = flatLang_Pref (compile_pat env p)`;
-   `compile_pat env (ast_Pas p i) = flatLang_Pas (compile_pat env p) i`;
-   `compile_pat env (ast_Ptannot p t) = compile_pat env p`];;
+          (MAP (compile_pat env) ps)) /\
+   (compile_pat env (ast_Pref p) = flatLang_Pref (compile_pat env p)) /\
+   (compile_pat env (ast_Pas p i) = flatLang_Pas (compile_pat env p) i) /\
+   (compile_pat env (ast_Ptannot p t) = compile_pat env p)`;;
 
 let pat_tups_def,pat_tups_ind = define_rec
-  [`pat_tups t [] = []`;
-   `pat_tups t (CONS x xs) =
+  `(pat_tups t [] = []) /\
+   (pat_tups t (CONS x xs) =
        let t' = mk_cons t ((LENGTH xs) + 1) in CONS
-           (x,source_to_flat_Local t' x) (pat_tups t xs)`];;
+           (x,source_to_flat_Local t' x) (pat_tups t xs))`;;
 
 let astOp_to_flatOp_def = new_definition
   `(astOp_to_flatOp (op:ast_op):flatLang_op) =
@@ -114,10 +114,10 @@ let str_sep_def = new_definition
   `str_sep = (implode "_")`;;
 
 let join_all_names_aux_def,join_all_names_aux_ind = define_rec
-  [`join_all_names_aux [] ys = ys`;
-   `join_all_names_aux (CONS x xs) ys =
+  `(join_all_names_aux [] ys = ys) /\
+   (join_all_names_aux (CONS x xs) ys =
       match ys with [] -> join_all_names_aux xs (CONS x ys)
-      | _ -> join_all_names_aux xs (CONS x (CONS str_sep ys))`];;
+      | _ -> join_all_names_aux xs (CONS x (CONS str_sep ys)))`;;
 
 let join_all_names_def = new_definition
   `join_all_names xs =
@@ -127,40 +127,33 @@ let join_all_names_def = new_definition
 let _ = size_thms "ast_exp";;
 let _ = size_thms "mlstring";;
 let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
-  assume_definition_rec
+  assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`source_to_flat_compile_exp (t:mlstring list)
+  [`(source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Raise e) =
-        flatLang_Raise backend_common_None (source_to_flat_compile_exp t
-            env e)`;
-   `source_to_flat_compile_exp (t:mlstring list)
+        flatLang_Raise backend_common_None (source_to_flat_compile_exp
+            t env e)) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Handle e pes) =
         flatLang_Handle backend_common_None (source_to_flat_compile_exp
-            t env e) (compile_pes t env pes)`;
-   `source_to_flat_compile_exp (t:mlstring list)
+            t env e) (compile_pes t env pes)) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Lit l) = flatLang_Lit
-    backend_common_None l`;
-   `source_to_flat_compile_exp (t:mlstring list)
+    backend_common_None l) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Con cn es) =
         flatLang_Con backend_common_None (OPTION_JOIN (OPTION_MAP
             (type_group_id_type o nsLookup (source_to_flat_environment_c env))
             cn))
-              (source_to_flat_compile_exps t env es)`;
-   `source_to_flat_compile_exp (t:mlstring list)
+              (source_to_flat_compile_exps t env es)) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Var x) =
         match nsLookup (source_to_flat_environment_v env) x with NONE ->
             flatLang_Var_local backend_common_None (implode "")
         |
           // Can't happen
-          SOME x -> compile_var backend_common_None x`;
-   `source_to_flat_compile_exp (t:mlstring list)
-    (env:source_to_flat_environment) (ast_Fun x e) =
-        flatLang_Fun (join_all_names t) x
-          (source_to_flat_compile_exp t
-              (source_to_flat_environment_v_fupd (K (nsBind x
-              (source_to_flat_Local backend_common_None x)
-              (source_to_flat_environment_v env))) env) e)`;
-   `source_to_flat_compile_exp (t:mlstring list)
+          SOME x -> compile_var backend_common_None x) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_App op es) =
         if op = ast_AallocEmpty then
           ITLIST (flatLang_Let backend_common_None NONE)
@@ -195,8 +188,8 @@ let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
             _ -> flatLang_App backend_common_None (flatLang_El 0)
                 (source_to_flat_compile_exps t env es))
         else flatLang_App backend_common_None (astOp_to_flatOp op)
-            (source_to_flat_compile_exps t env es)`;
-   `source_to_flat_compile_exp (t:mlstring list)
+            (source_to_flat_compile_exps t env es)) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Log lop e1 e2) =
           match lop with Andalso ->
             flatLang_If backend_common_None
@@ -207,31 +200,31 @@ let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
             flatLang_If backend_common_None
                (source_to_flat_compile_exp t env e1)
                (flatLang_Bool backend_common_None T)
-               (source_to_flat_compile_exp t env e2)`;
-   `source_to_flat_compile_exp (t:mlstring list)
+               (source_to_flat_compile_exp t env e2)) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_If e1 e2 e3) =
         flatLang_If backend_common_None
            (source_to_flat_compile_exp t env e1)
            (source_to_flat_compile_exp t env e2)
-           (source_to_flat_compile_exp t env e3)`;
-   `source_to_flat_compile_exp (t:mlstring list)
+           (source_to_flat_compile_exp t env e3)) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Mat e pes) =
         flatLang_Mat backend_common_None (source_to_flat_compile_exp t
-            env e) (compile_pes t env pes)`;
-   `source_to_flat_compile_exp (t:mlstring list)
+            env e) (compile_pes t env pes)) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Let (SOME x) e1 e2) =
           flatLang_Let backend_common_None (SOME x)
               (source_to_flat_compile_exp (CONS x t) env e1)
             (source_to_flat_compile_exp t
                 (source_to_flat_environment_v_fupd (K (nsBind x
                 (source_to_flat_Local backend_common_None x)
-                (source_to_flat_environment_v env))) env) e2)`;
-   `source_to_flat_compile_exp (t:mlstring list)
+                (source_to_flat_environment_v env))) env) e2)) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Let NONE e1 e2) =
         flatLang_Let backend_common_None NONE
             (source_to_flat_compile_exp t env e1)
-            (source_to_flat_compile_exp t env e2)`;
-   `source_to_flat_compile_exp (t:mlstring list)
+            (source_to_flat_compile_exp t env e2)) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Letrec funs e) =
         let fun_names = MAP FST funs in
         let new_env = nsBindList (MAP (\x. (x,source_to_flat_Local
@@ -241,35 +234,43 @@ let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
               (source_to_flat_environment_v_fupd (K new_env) env) funs)
                    (source_to_flat_compile_exp t
                        (source_to_flat_environment_v_fupd (K new_env) env)
-                       e)`;
-   `source_to_flat_compile_exp (t:mlstring list)
+                       e)) /\
+    (source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Tannot e _) =
-    source_to_flat_compile_exp t env e`;
-   `// When encountering a Lannot, we update the trace we are passing
-    source_to_flat_compile_exp (t:mlstring list)
+    source_to_flat_compile_exp t env e) /\
+    // When encountering a Lannot, we update the trace we are passing
+    (source_to_flat_compile_exp (t:mlstring list)
         (env:source_to_flat_environment) (ast_Lannot e (Locs st en)) =
-        source_to_flat_compile_exp t env e`;
-   `source_to_flat_compile_exps (t:mlstring list)
-    (env:source_to_flat_environment) [] = []`;
-   `source_to_flat_compile_exps (t:mlstring list)
+        source_to_flat_compile_exp t env e) /\
+    (source_to_flat_compile_exps (t:mlstring list)
+    (env:source_to_flat_environment) [] = []) /\
+    (source_to_flat_compile_exps (t:mlstring list)
     (env:source_to_flat_environment) (CONS e es) = CONS
     (source_to_flat_compile_exp t env e) (source_to_flat_compile_exps t env
-    es)`;
-   `compile_pes (t:mlstring list) (env:source_to_flat_environment) [] = []`;
-   `compile_pes (t:mlstring list) (env:source_to_flat_environment) (CONS (p,e)
+    es)) /\
+    (compile_pes (t:mlstring list) (env:source_to_flat_environment) [] = []) /\
+    (compile_pes (t:mlstring list) (env:source_to_flat_environment) (CONS (p,e)
     pes) =
         let pbs = pat_bindings p in
         let pts = pat_tups backend_common_None pbs in
         CONS (compile_pat env p,source_to_flat_compile_exp t
             (source_to_flat_environment_v_fupd (K (nsBindList pts
             (source_to_flat_environment_v env))) env) e) (compile_pes t env
-            pes)`;
-   `compile_funs (t:mlstring list) (env:source_to_flat_environment) [] = []`;
-   `compile_funs (t:mlstring list) (env:source_to_flat_environment) (CONS
+            pes)) /\
+    (compile_funs (t:mlstring list) (env:source_to_flat_environment) [] = [])
+      /\
+    (compile_funs (t:mlstring list) (env:source_to_flat_environment) (CONS
     (f,x,e) funs) = CONS (f,x,source_to_flat_compile_exp (CONS f t)
     (source_to_flat_environment_v_fupd (K (nsBind x (source_to_flat_Local
     backend_common_None x) (source_to_flat_environment_v env))) env) e)
-        (compile_funs t env funs)`];;
+        (compile_funs t env funs))`;
+   `(source_to_flat_compile_exp (t:mlstring list)
+    (env:source_to_flat_environment) (ast_Fun x e) =
+        flatLang_Fun (join_all_names t) x
+          (source_to_flat_compile_exp t
+              (source_to_flat_environment_v_fupd (K (nsBind x
+              (source_to_flat_Local backend_common_None x)
+              (source_to_flat_environment_v env))) env) e))`];;
 
 let compile_exps_append = prove
  (`!env es es'.
@@ -307,9 +308,9 @@ let om_tra_def = new_definition
   `om_tra = backend_common_Cons orphan_trace 1`;;
 
 let alloc_defs_def,alloc_defs_ind = define_rec
-  [`alloc_defs n next' [] = []`;
-   `alloc_defs n next' (CONS x xs) = CONS (x,source_to_flat_Glob om_tra
-    next') (alloc_defs (n + 1) (next' + 1) xs)`];;
+  `(alloc_defs n next' [] = []) /\
+   (alloc_defs n next' (CONS x xs) = CONS (x,source_to_flat_Glob om_tra
+    next') (alloc_defs (n + 1) (next' + 1) xs))`;;
 
 let fst_alloc_defs = prove
  (`!n next' l. MAP FST (alloc_defs n next' l) = l`,
@@ -326,17 +327,17 @@ let _ = size_thms "tra";;
    what the port found for it *)
 let make_varls_def,make_varls_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). tra_size x1 + list_size mlstring_size x3)`
-  [`make_varls n t idx x4 =
+  `make_varls n t idx x4 =
      match (t,x4) with
        (t,[]) -> flatLang_Con backend_common_None NONE []
      | (t,[x]) -> flatLang_App backend_common_None (flatLang_GlobalVarInit
        idx) [flatLang_Var_local backend_common_None x]
      | ((t:tra),CONS x xs) ->
          (flatLang_Let backend_common_None NONE (flatLang_App
-           backend_common_None (flatLang_GlobalVarInit idx)
-           [flatLang_Var_local backend_common_None x])
+           backend_common_None (flatLang_GlobalVarInit idx) [flatLang_Var_local
+           backend_common_None x])
            (make_varls (n + 1) backend_common_None (idx + 1)
-             xs):flatLang_exp)`];;
+             xs):flatLang_exp)`;;
 
 let empty_env_def = new_definition
   `source_to_flat_empty_env = mk_source_to_flat_environment nsEmpty nsEmpty`;;
@@ -364,12 +365,12 @@ let lookup_inc_def = new_definition
      | SOME n -> (n,sptree_insert i (n + 1) t)`;;
 
 let alloc_tags1_def,alloc_tags1_ind = define_rec
-  [`alloc_tags1 [] = (nsEmpty,LN,[])`;
-   `alloc_tags1 (CONS (cn,ts) ctors) =
+  `(alloc_tags1 [] = (nsEmpty,LN,[])) /\
+   (alloc_tags1 (CONS (cn,ts) ctors) =
         let (ns,cids,tag_list) = alloc_tags1 ctors in
         let arity = LENGTH ts in
         let (tag,new_cids) = lookup_inc arity cids in
-          (nsBind cn tag ns,new_cids,CONS (tag,arity) tag_list)`];;
+          (nsBind cn tag ns,new_cids,CONS (tag,arity) tag_list))`;;
 
 let alloc_tags_def = new_definition
   `alloc_tags tid ctors =
@@ -391,7 +392,7 @@ let simple_dlet_def = new_definition
 let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
   assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`source_to_flat_compile_decs t n next' env envs' x6 =
+  `source_to_flat_compile_decs t n next' env envs' x6 =
      match (t,x6) with
        ((t:mlstring list),[Dlet locs p e]) ->
         (match simple_dlet p e with SOME (pv,v) ->
@@ -407,8 +408,8 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
             let e' = source_to_flat_compile_exp (APPEND xs t) env e in
             let l = LENGTH xs in
             let n'' = n' + l in
-              (n'',(next_indices_vidx_fupd (K (next_indices_vidx next' +
-                l)) next'),
+              (n'',(next_indices_vidx_fupd (K (next_indices_vidx next' + l))
+                next'),
                mk_source_to_flat_environment nsEmpty (alist_to_ns
                  (alloc_defs n' (next_indices_vidx next') xs)),
                envs',
@@ -418,10 +419,10 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
      | (t,[Dletrec locs funs]) ->
         let fun_names = MAP FST funs in
         let new_env = nsBindList (MAP (\x. (x,source_to_flat_Local
-          backend_common_None x)) fun_names) (source_to_flat_environment_v
-          env) in
-        let flat_funs = compile_funs t (source_to_flat_environment_v_fupd
-          (K new_env) env) funs in
+          backend_common_None x)) fun_names) (source_to_flat_environment_v env)
+          in
+        let flat_funs = compile_funs t (source_to_flat_environment_v_fupd (K
+          new_env) env) funs in
         let n' = n + 1 in
         let env' = mk_source_to_flat_environment nsEmpty (alist_to_ns
           (alloc_defs n' (next_indices_vidx next') (REVERSE fun_names))) in
@@ -432,8 +433,8 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
               (make_varls 0 backend_common_None (next_indices_vidx next')
                 (REVERSE fun_names)))])
      | (t,[Dtype locs type_def]) ->
-       let new_env = MAPi (\tid (_1,_2,constrs). alloc_tags
-         (next_indices_tidx next' + tid) constrs) type_def in
+       let new_env = MAPi (\tid (_,_,constrs). alloc_tags (next_indices_tidx
+         next' + tid) constrs) type_def in
         (n,(next_indices_tidx_fupd (K (next_indices_tidx next' + LENGTH
           type_def)) next'),
          mk_source_to_flat_environment (FOLDL (\ns (l,cids). nsAppend l ns)
@@ -443,19 +444,18 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
      | (_,[Dtabbrev locs tvs tn t]) ->
         (n,next',source_to_flat_empty_env,envs',[])
      | (t,[Dexn locs cn ts]) ->
-        (n,(next_indices_eidx_fupd (K (next_indices_eidx next' + 1))
-          next'),
+        (n,(next_indices_eidx_fupd (K (next_indices_eidx next' + 1)) next'),
          mk_source_to_flat_environment (nsSing cn (next_indices_eidx
            next',NONE)) nsEmpty,
          envs',
          [])
      | (t,[Dmod mn ds]) ->
-        let (n',next',new_env,envs',ds') = source_to_flat_compile_decs
-          (CONS mn t) n next' env envs' ds in
+        let (n',next',new_env,envs',ds') = source_to_flat_compile_decs (CONS
+          mn t) n next' env envs' ds in
           (n',next',(lift_env mn new_env),envs',ds')
      | (t,[Dlocal lds ds]) ->
-        let (n',next1,new_env1,envs',lds') = source_to_flat_compile_decs t
-          n next' env envs' lds in
+        let (n',next1,new_env1,envs',lds') = source_to_flat_compile_decs t n
+          next' env envs' lds in
         let (n'',next2,new_env2,envs'',ds') = source_to_flat_compile_decs t
           n' next1
            (extend_env new_env1 env) envs' ds in
@@ -473,8 +473,8 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
            envs'),
            [(flatLang_App backend_common_None (flatLang_GlobalVarInit
              (next_indices_vidx next'))
-               [env_id_tuple (environment_generation_store_generation
-                 envs') (environment_generation_store_next envs')])])
+               [env_id_tuple (environment_generation_store_generation envs')
+                 (environment_generation_store_next envs')])])
      | (t,[]) ->
        (n,next',source_to_flat_empty_env,envs',[])
      | (t,CONS d ds) ->
@@ -483,7 +483,7 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
         let (n'',next2,new_env2,envs2,ds') =
           source_to_flat_compile_decs t n' next1 (extend_env new_env1 env)
             envs1 ds in
-          (n'',next2,extend_env new_env2 new_env1,envs2,APPEND d' ds')`];;
+          (n'',next2,extend_env new_env2 new_env1,envs2,APPEND d' ds')`;;
 
 let source_to_flat_config_FIELDS = define_record "source_to_flat_config"
   ["next","next_indices";

@@ -34,6 +34,24 @@ let define_shaped_wf = real_define_shaped_wf;;
 let define_shaped_wf_cheat = real_define_shaped_wf_cheat;;
 let define_shaped_wf_tac = real_define_shaped_wf_tac;;
 let assume_definition_rec = real_assume_definition_rec;;
+let define_cases_clauses = real_define_cases_clauses;;
+let define_general_clauses = real_define_general_clauses;;
+let define_general_cheat_clauses = real_define_general_cheat_clauses;;
+let define_shaped_clauses = real_define_shaped_clauses;;
+let assume_definition_clauses = real_assume_definition_clauses;;
+let define_rec_clauses = real_define_rec_clauses;;
+let define_wf_clauses = real_define_wf_clauses;;
+let define_wf_cheat_clauses = real_define_wf_cheat_clauses;;
+let define_wf_tac_clauses = real_define_wf_tac_clauses;;
+let define_guess_clauses = real_define_guess_clauses;;
+let define_guess_cheat_clauses = real_define_guess_cheat_clauses;;
+let define_shaped_rec_clauses = real_define_shaped_rec_clauses;;
+let define_shaped_rec_cheat_clauses = real_define_shaped_rec_cheat_clauses;;
+let define_shaped_rec_tac_clauses = real_define_shaped_rec_tac_clauses;;
+let define_shaped_wf_clauses = real_define_shaped_wf_clauses;;
+let define_shaped_wf_cheat_clauses = real_define_shaped_wf_cheat_clauses;;
+let define_shaped_wf_tac_clauses = real_define_shaped_wf_tac_clauses;;
+let assume_definition_rec_clauses = real_assume_definition_rec_clauses;;
 let prove = real_prove;;
 
 print_string

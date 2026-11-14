@@ -41,7 +41,7 @@ let OPTION_CASE_OPTION_MAP = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let approx_of_def,approx_of_ind = define_guess_cheat
-  [`approx_of lims x2 refs =
+  `approx_of lims x2 refs =
      match x2 with
        [] -> 0
      | CONS x (CONS y ys) ->
@@ -65,7 +65,7 @@ let approx_of_def,approx_of_ind = define_guess_cheat
             LENGTH ls + LENGTH rs + 2)
      | [dataSem_Block ts tag []] -> 0
      | [dataSem_Block ts tag vs] ->
-       approx_of lims vs refs + LENGTH vs + 1`];;
+       approx_of lims vs refs + LENGTH vs + 1`;;
 
 let size_of_approx_of = prove
  (`!lims xs refs seen n1 refs1 seen1.
@@ -1298,18 +1298,18 @@ let _ = size_thms "dataLang_prog";;
    what the port found for it *)
 let dataProps_get_code_labels_def,dataProps_get_code_labels_ind = define_wf
   `MEASURE (\x0. dataLang_prog_size x0)`
-  [`dataProps_get_code_labels x1 =
+  `dataProps_get_code_labels x1 =
      match x1 with
        dataLang_Call r d a h ->
        (match d with SOME x -> {x} | _ -> {}) UNION
        (match h with SOME (n,p) -> dataProps_get_code_labels p | _ -> {})
-     | dataLang_Force _2 loc _3 -> {loc}
+     | dataLang_Force _ loc _ -> {loc}
      | dataLang_Seq p1 p2 -> dataProps_get_code_labels p1 UNION
        dataProps_get_code_labels p2
      | dataLang_If _ p1 p2 -> dataProps_get_code_labels p1 UNION
        dataProps_get_code_labels p2
-     | dataLang_Assign _4 op _5 _6 -> assign_get_code_label op
-     | _ -> {}`];;
+     | dataLang_Assign _ op _ _ -> assign_get_code_label op
+     | _ -> {}`;;
 add_simp dataProps_get_code_labels_def;;
 
 let dataProps_good_code_labels_def = new_definition
@@ -1394,7 +1394,7 @@ let stack_frame_size_rel_def = new_definition
        spt = spt' /\ num' = num'
      | (dataSem_Env opt spt,dataSem_Env opt' spt') ->
        spt = spt'
-     | (_7,_8) -> F`;;
+     | (_,_) -> F`;;
 
 let find_code_upto_size = prove
  (`(dataSem_find_code dest x code sizes = foo) ==>

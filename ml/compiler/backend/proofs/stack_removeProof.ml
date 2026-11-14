@@ -117,10 +117,10 @@ let memory_def = new_definition
   `memory m dm = (\s. s = fun2set (m,dm))`;;
 
 let word_list_rev_def,word_list_rev_ind = define_guess
-  [`word_list_rev a [] = emp`;
-   `word_list_rev a (CONS x xs) =
+  `(word_list_rev a [] = emp) /\
+   (word_list_rev a (CONS x xs) =
          set_sep_one (a - bytes_in_word,x) * word_list_rev (a -
-             bytes_in_word) xs`];;
+             bytes_in_word) xs)`;;
 
 let word_store_def = new_definition
   `word_store base store =
@@ -144,7 +144,7 @@ let is_SOME_Word_def = new_definition
      | _ -> F`;;
 
 let the_SOME_Word_def = define_general
-  [`(the_SOME_Word (SOME (wordLang_Word w)) = w)`];;
+  `(the_SOME_Word (SOME (wordLang_Word w)) = w)`;;
 
 let stack_removeProof_state_rel_def = new_definition
   `stack_removeProof_state_rel jump off k (s1:('a,'c,'ffi)stackSem_state)
@@ -779,8 +779,8 @@ let stack_removeProof_compile_semantics = prove
 (* HOL4 stack_removeProofScript.sml:2624-2629: a proof *)
 
 let mem_val_def = define_cases
-  [`mem_val (regs':(num,'a word_loc)fmap) (INL w) = wordLang_Word w`;
-   `mem_val (regs':(num,'a word_loc)fmap) (INR n) = FAPPLY regs' n`];;
+  `(mem_val (regs':(num,'a word_loc)fmap) (INL w) = wordLang_Word w) /\
+   (mem_val (regs':(num,'a word_loc)fmap) (INR n) = FAPPLY regs' n)`;;
 
 let store_list_code_thm = prove
  (`!xs s w frame ys m dm.
@@ -816,16 +816,16 @@ let star_move_lemma = prove
    what the port found for it *)
 let stack_removeProof_read_mem_def,stack_removeProof_read_mem_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
-  [`stack_removeProof_read_mem a m 0 = []`;
-   `stack_removeProof_read_mem a m (SUC n) = CONS (m a)
-    (stack_removeProof_read_mem (a + bytes_in_word) m n)`];;
+  `(stack_removeProof_read_mem a m 0 = []) /\
+   (stack_removeProof_read_mem a m (SUC n) = CONS (m a)
+    (stack_removeProof_read_mem (a + bytes_in_word) m n))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let addresses_def,addresses_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  [`addresses a 0 = {}`;
-   `addresses a (SUC n) = a INSERT addresses (a + bytes_in_word) n`];;
+  `(addresses a 0 = {}) /\
+   (addresses a (SUC n) = a INSERT addresses (a + bytes_in_word) n)`;;
 
 let LENGTH_read_mem = prove
  (`!n a m. LENGTH (stack_removeProof_read_mem a m n) = n`,

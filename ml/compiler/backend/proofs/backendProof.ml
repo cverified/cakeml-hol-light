@@ -736,8 +736,8 @@ let is_state_oracle_cake_orac_comp = prove
  (`(!i ps'.
      let (c'',ps) = compile_inc_progs T asm_conf (cake_configs asm_conf c'
        syntax i) (syntax i) in
-     let ((f_c,_1),f_p) = f (g (cake_configs asm_conf c' syntax i),h ps) in
-     let ((f_c',_2),_3) = f (g c'',ps') in
+     let ((f_c,_),f_p) = f (g (cake_configs asm_conf c' syntax i),h ps) in
+     let ((f_c',_),_) = f (g c'',ps') in
      f_c' = FST (f_inc f_c f_p)) ==>
    is_state_oracle f_inc (f o cake_orac asm_conf c' syntax g h)`,
   CHEAT_TAC);;
@@ -794,9 +794,9 @@ let is_state_oracle_cake_orac_to_comp = prove
                c,backend_config_bvl_conf c,backend_config_data_conf
                c,word_to_word_config_reg_alg (backend_config_word_to_word_conf
                c),backend_config_stack_conf c,(asm_conf:'a asm_config)))) c ==>
-     (let (f_c',_4) = f_inc (FST (st_f c'')) (ps_f ps) in
-     let ((g_c,_5),g_p) = adj (g c'',h ps) in
-     let (g_c',_6) = g_inc g_c g_p in
+     (let (f_c',_) = f_inc (FST (st_f c'')) (ps_f ps) in
+     let ((g_c,_),g_p) = adj (g c'',h ps) in
+     let (g_c',_) = g_inc g_c g_p in
      // for some c''', if f step agrees, g step should agree
      f_c' = FST (st_f c''') ==> g_c' = FST (FST (adj (g c''',g_p'))))) ==>
    is_state_oracle g_inc (adj o cake_orac asm_conf c' syntax g h)`,
@@ -866,9 +866,8 @@ let MAP_full_compile_single_to_compile = prove
   CHEAT_TAC);;
 
 let compile_to_word_conventions2 = prove
- (`backend_compile wc ac p = (_7,ps) /\
-   ALL (\(_8,_9,prg). no_share_inst prg \/ ~(asm_config_ISA ac = Ag32)) p
-     ==>
+ (`backend_compile wc ac p = (_,ps) /\
+   ALL (\(_,_,prg). no_share_inst prg \/ ~(asm_config_ISA ac = Ag32)) p ==>
    MAP FST ps = MAP FST p /\
    ALL2 labels_rel
      (MAP (wordConvs_extract_labels o SND o SND) p)
@@ -937,7 +936,7 @@ let MAP_Section_num_stack_to_lab_SUBSET = prove
 let to_data_labels_ok = prove
  (`backend_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==>
-   (let (_10,p,_11) = to_data c prog in
+   (let (_,p,_) = to_data c prog in
    ALL (\n. data_num_stubs <= n) (MAP FST p) /\ ALL_DISTINCT (MAP FST p))`,
   CHEAT_TAC);;
 
@@ -949,7 +948,7 @@ let data_to_word_stubs_above_store_consts_stub = prove
 let to_word_labels_ok = prove
  (`backend_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==>
-   (let (_12,p,_13) = to_word asm_conf c prog in
+   (let (_,p,_) = to_word asm_conf c prog in
    ALL_DISTINCT (MAP FST p) /\
    ALL (\n. n > wordLang_store_consts_stub_location) (MAP FST p) /\
    ALL (\(n,m,p).
@@ -1376,10 +1375,10 @@ let state_co_inc_compile_has_flat_comp = prove
   CHEAT_TAC);;
 
 let add_eval_state_def = define_cases
-  [`add_eval_state NONE s0 = s0`;
-   `add_eval_state (SOME ci) s0 = semanticPrimitives_state_eval_state_fupd (K
+  `(add_eval_state NONE s0 = s0) /\
+   (add_eval_state (SOME ci) s0 = semanticPrimitives_state_eval_state_fupd (K
     (SOME (mk_init_eval_state ci)))
-      s0`];;
+      s0)`;;
 
 let add_eval_state_ffi = prove
  (`labSem_state_ffi
@@ -1388,11 +1387,11 @@ let add_eval_state_ffi = prove
 
 
 let opt_eval_config_wf_def = define_cases
-  [`opt_eval_config_wf asm_conf c' (SOME ci) = (compiler_instance_compiler_fun
+  `(opt_eval_config_wf asm_conf c' (SOME ci) = (compiler_instance_compiler_fun
       ci = compile_inc_progs_for_eval asm_conf /\
       INJ (compiler_instance_config_v ci) UNIV UNIV
-          /\ compiler_instance_init_state ci = c')`;
-   `opt_eval_config_wf asm_conf c' NONE = T`];;
+          /\ compiler_instance_init_state ci = c')) /\
+   (opt_eval_config_wf asm_conf c' NONE = T)`;;
 
 let backend_from_data_tuple_cc_def = new_definition
   `backend_from_data_tuple_cc asm_conf (c:backend_config) cfg =
@@ -1755,7 +1754,7 @@ let compile_correct_is_safe_for_space = prove
   CHEAT_TAC);;
 
 let the_EvalDecs_def = define_general
-  [`the_EvalDecs (EvalDecs x) = x`];;
+  `the_EvalDecs (EvalDecs x) = x`;;
 
 let compile_correct_eval = prove
  (`backend_compile asm_conf c prog = SOME (bytes,bitmaps,c') ==>

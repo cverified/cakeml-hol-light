@@ -36,7 +36,7 @@ let _ = cake_theory "bvl_constProof"
 let bvl_constProof_v_rel_def = new_definition
   `bvl_constProof_v_rel (:'c) (:'ffi) a x y xs ys =
      match a with bvl_Var n -> (\l n. oEL n l) ys n = SOME x
-     | bvl_Op _1 _2 ->
+     | bvl_Op _ _ ->
        (x = y) /\
        (!(s:('c,'ffi)bvlSem_state) env. bvlSem_evaluate ([a],env,s) = (Rval
          [x],s))
@@ -50,7 +50,7 @@ let bvl_constProof_env_rel_def,bvl_constProof_env_rel_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4).      (\x. 0) x0 +      (\x. 0) x1 +
   list_size (option_size bvl_exp_size) x2 +      bvlSem_v_size1 x3 +
   bvlSem_v_size1 x4)`
-  [`bvl_constProof_env_rel x1 x2 x3 e1 e2 =
+  `bvl_constProof_env_rel x1 x2 x3 e1 e2 =
      match (x1,x2,x3,e1,e2) with
        ((:'c),(:'ffi),[],e1,e2) -> (e1 = e2)
      | ((:'c),(:'ffi),CONS NONE rest,CONS x e1,CONS y e2) ->
@@ -58,7 +58,7 @@ let bvl_constProof_env_rel_def,bvl_constProof_env_rel_ind = define_wf
      | ((:'c),(:'ffi),CONS (SOME a) rest,CONS x e1,CONS y e2) ->
         bvl_constProof_v_rel (:'c) (:'ffi) a x y (CONS x e1) (CONS y e2)
           /\ bvl_constProof_env_rel (:'c) (:'ffi) rest e1 e2
-     | (_3,_4,_5,_6,_7) -> F`];;
+     | (_,_,_,_,_) -> F`;;
 
 (* env_rel_length *)
 let bvl_constProof_env_rel_length = prove

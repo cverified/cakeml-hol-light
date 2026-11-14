@@ -28,7 +28,7 @@ let _ = hide_overloads
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let adjust_pc_def,adjust_pc_ind = define_guess_cheat
-  [`adjust_pc p xs =
+  `adjust_pc p xs =
      if p = 0 then 0 else match xs with [] -> p
        | (CONS (Section n []) rest) -> adjust_pc p rest
        | (CONS (Section n (CONS l lines)) rest) ->
@@ -36,7 +36,7 @@ let adjust_pc_def,adjust_pc_ind = define_guess_cheat
              adjust_pc p (CONS (Section n lines) rest)
            else if not_skip l then
              adjust_pc (p - 1) (CONS (Section n lines) rest) + 1
-           else adjust_pc (p - 1) (CONS (Section n lines) rest)`];;
+           else adjust_pc (p - 1) (CONS (Section n lines) rest)`;;
 
 (*All skips for the next k*)
 let all_skips_def = new_definition

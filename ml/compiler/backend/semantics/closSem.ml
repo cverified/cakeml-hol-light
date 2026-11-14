@@ -119,7 +119,7 @@ let _ = size_thms "closSem_v";;
 let closSem_do_eq_def,closSem_do_eq_ind = define_wf
   `MEASURE (sum_measure (\(x0,x1). closSem_v_size x0 + closSem_v_size x1)
   (\(x0,x1). closSem_v_size1 x0 + closSem_v_size1 x1))`
-  [`closSem_do_eq x y =
+  `(closSem_do_eq x y =
          match x with closSem_Number i ->
              (match y with closSem_Number j -> Eq_val (i = j)
               | _ -> Eq_type_error)
@@ -142,23 +142,23 @@ let closSem_do_eq_def,closSem_do_eq_ind = define_wf
          | _ ->
              (match y with closSem_Number _ -> Eq_type_error
               | closSem_Word64 _ -> Eq_type_error
-              | closSem_Block _3 _4 -> Eq_type_error
+              | closSem_Block _ _ -> Eq_type_error
               | closSem_ByteVector _ -> Eq_type_error
-              | closSem_RefPtr _5 _6 -> Eq_type_error
-              | _ -> Eq_val T)`;
-   `closSem_do_eq_list x1 x2 =
+              | closSem_RefPtr _ _ -> Eq_type_error
+              | _ -> Eq_val T)) /\
+   (closSem_do_eq_list x1 x2 =
       match (x1,x2) with
         ([],[]) -> Eq_val T
       | (CONS x xs,CONS y ys) ->
          (match closSem_do_eq x y with Eq_val T -> closSem_do_eq_list xs ys
          | res -> res)
-      | (_1,_2) -> Eq_val F`];;
+      | (_,_) -> Eq_val F)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let closSem_v_to_list_def,closSem_v_to_list_ind = define_wf
   `MEASURE (\x0. closSem_v_size x0)`
-  [`closSem_v_to_list x1 =
+  `closSem_v_to_list x1 =
      match x1 with
        closSem_Block tag [] ->
         if tag = nil_tag then SOME [] else NONE
@@ -167,12 +167,12 @@ let closSem_v_to_list_def,closSem_v_to_list_ind = define_wf
           (match closSem_v_to_list bt with SOME t -> SOME (CONS h t)
            | _ -> NONE)
         else NONE
-     | _ -> NONE`];;
+     | _ -> NONE`;;
 
 let closSem_list_to_v_def,closSem_list_to_v_ind = define_rec
-  [`closSem_list_to_v [] = closSem_Block nil_tag []`;
-   `closSem_list_to_v (CONS x xs) = closSem_Block cons_tag [x;
-    closSem_list_to_v xs]`];;
+  `(closSem_list_to_v [] = closSem_Block nil_tag []) /\
+   (closSem_list_to_v (CONS x xs) = closSem_Block cons_tag [x;
+    closSem_list_to_v xs])`;;
 
 let closSem_Unit_def = new_definition
   `closSem_Unit = closSem_Block tuple_tag []`;;
@@ -230,11 +230,11 @@ let do_install_def = new_definition
 (* HOL4 closSemScript.sml:170-175: the tactic that proves the termination *)
 let make_const_def,make_const_ind = define_shaped_rec
   "nested"
-  [`make_const (ConstInt i) = closSem_Number i`;
-   `make_const (ConstStr s) = closSem_ByteVector (MAP (n2w o ORD) (explode
-    s))`;
-   `make_const (ConstWord64 w) = closSem_Word64 w`;
-   `make_const (ConstCons t cs) = closSem_Block t (MAP make_const cs)`];;
+  `(make_const (ConstInt i) = closSem_Number i) /\
+   (make_const (ConstStr s) = closSem_ByteVector (MAP (n2w o ORD) (explode
+    s))) /\
+   (make_const (ConstWord64 w) = closSem_Word64 w) /\
+   (make_const (ConstCons t cs) = closSem_Block t (MAP make_const cs))`;;
 
 let do_int_app_def = new_definition
   `closSem_do_int_app x1 x2 =
@@ -264,11 +264,11 @@ let do_int_app_def = new_definition
    | ((op:closLang_int_op),(vs:closSem_v list)) -> NONE`;;
 
 let opw_lookup_def = define_general
-  [`opw_lookup backend_common_Andw = word_and`;
-   `opw_lookup backend_common_Orw = word_or`;
-   `opw_lookup backend_common_Xor = word_xor`;
-   `opw_lookup backend_common_Add = word_add`;
-   `opw_lookup backend_common_Sub = word_sub`];;
+  `(opw_lookup backend_common_Andw = word_and) /\
+   (opw_lookup backend_common_Orw = word_or) /\
+   (opw_lookup backend_common_Xor = word_xor) /\
+   (opw_lookup backend_common_Add = word_add) /\
+   (opw_lookup backend_common_Sub = word_sub)`;;
 add_simp opw_lookup_def;;
 
 let do_word_app_def = new_definition
@@ -353,7 +353,7 @@ let closSem_update_thunk_def = new_definition
      (match closSem_dest_thunk [v] refs with closSem_NotThunk -> store_thunk
        ptr (closSem_Thunk Evaluated v) refs
       | _ -> NONE)
-   | (_7,_8) -> NONE`;;
+   | (_,_) -> NONE`;;
 
 let closSem_bad_thunk_update_def = new_definition
   `closSem_bad_thunk_update m v refs <=>
@@ -561,8 +561,8 @@ let closSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
             ,closSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_CopyByte F),[closSem_RefPtr _9 src;
-       closSem_Number srcoff; closSem_Number len; closSem_RefPtr _10 dst;
+     | (closLang_MemOp (closLang_CopyByte F),[closSem_RefPtr _ src;
+       closSem_Number srcoff; closSem_Number len; closSem_RefPtr _ dst;
        closSem_Number dstoff]) ->
          (match (FLOOKUP (closSem_state_refs s) src,FLOOKUP
            (closSem_state_refs s) dst) with (SOME (closSem_ByteArray ws),SOME
@@ -710,8 +710,8 @@ let closSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
             ,closSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_ConfigGC,[closSem_Number _11; closSem_Number
-       _12]) -> (Rval (closSem_Unit,s))
+     | (closLang_MemOp closLang_ConfigGC,[closSem_Number _; closSem_Number
+       _]) -> (Rval (closSem_Unit,s))
      | (closLang_ThunkOp th_op,vs) ->
          (match (th_op,vs) with (AllocThunk m,[v]) ->
               (if closSem_bad_thunk_update m v (closSem_state_refs s) then
@@ -780,10 +780,10 @@ let closSem_fix_clock_IMP = prove
    defined to evaluate a list of clos_exp expressions. *)
 
 let check_loc_def = define_cases
-  [`check_loc (max_app:num) NONE loc num_params num_args so_far <=>
-        num_args <= max_app`;
-   `check_loc (max_app:num) (SOME p) loc num_params num_args so_far <=>
-        num_params = num_args /\ so_far = (0:num) /\ SOME p = loc`];;
+  `(check_loc (max_app:num) NONE loc num_params num_args so_far <=>
+        num_args <= max_app) /\
+   (check_loc (max_app:num) (SOME p) loc num_params num_args so_far <=>
+        num_params = num_args /\ so_far = (0:num) /\ SOME p = loc)`;;
 
 let app_kind_INDUCT,app_kind_RECURSION = define_datatype
   "app_kind =
@@ -861,49 +861,49 @@ let AppUnit_def = new_definition
   `closSem_AppUnit x = closLang_App backend_common_None NONE x [closLang_Op
   backend_common_None (closLang_BlockOp (closLang_Cons 0)) []]`;;
 
-let exp_alt_size_def,exp_alt_size_ind = define_rec
-  [`closSem_exp_alt_size (closLang_Var a0 a1) = 1 + (tra_size a0 + a1)`;
-   `closSem_exp_alt_size (closLang_If a0 a1 a2 a3) =
+let exp_alt_size_def,exp_alt_size_ind = define_rec_clauses
+  [`(closSem_exp_alt_size (closLang_Var a0 a1) = 1 + (tra_size a0 + a1)) /\
+    (closSem_exp_alt_size (closLang_Call a0 a1 a2 a3) =
+    1 + (tra_size a0 + (a1 + (a2 + closSem_exp3_alt_size a3)))) /\
+    (closSem_exp1_alt_size [] = 0) /\
+    (closSem_exp1_alt_size (CONS a0 a1) = 1 + (closSem_exp2_alt_size a0 +
+    closSem_exp1_alt_size a1)) /\
+    (closSem_exp2_alt_size (a0,a1) = 1 + (a0 + closSem_exp_alt_size a1)) /\
+    (closSem_exp3_alt_size [] = 0) /\
+    (closSem_exp3_alt_size (CONS a0 a1) = 1 + (closSem_exp_alt_size a0 +
+    closSem_exp3_alt_size a1))`;
+   `(closSem_exp_alt_size (closLang_If a0 a1 a2 a3) =
     1 + (tra_size a0 + (closSem_exp_alt_size a1 + (closSem_exp_alt_size
-        a2 + closSem_exp_alt_size a3)))`;
-   `closSem_exp_alt_size (closLang_Let a0 a1 a2) =
-    1 + (tra_size a0 + (closSem_exp3_alt_size a1 + closSem_exp_alt_size
-        a2))`;
-   `closSem_exp_alt_size (closLang_Raise a0 a1) = 1 + (tra_size a0 +
-    closSem_exp_alt_size a1)`;
-   `closSem_exp_alt_size (closLang_Handle a0 a1 a2) =
+        a2 + closSem_exp_alt_size a3)))) /\
+    (closSem_exp_alt_size (closLang_Raise a0 a1) = 1 + (tra_size a0 +
+    closSem_exp_alt_size a1)) /\
+    (closSem_exp_alt_size (closLang_Handle a0 a1 a2) =
     1 + (tra_size a0 + (closSem_exp_alt_size a1 + closSem_exp_alt_size
-        a2))`;
-   `closSem_exp_alt_size (closLang_Tick a0 a1) = 1 + (tra_size a0 +
-    closSem_exp_alt_size a1)`;
-   `closSem_exp_alt_size (closLang_Call a0 a1 a2 a3) =
-    1 + (tra_size a0 + (a1 + (a2 + closSem_exp3_alt_size a3)))`;
-   `closSem_exp_alt_size (closLang_App a0 a1 a2 a3) =
+        a2))) /\
+    (closSem_exp_alt_size (closLang_Tick a0 a1) = 1 + (tra_size a0 +
+    closSem_exp_alt_size a1))`;
+   `(closSem_exp_alt_size (closLang_Let a0 a1 a2) =
+    1 + (tra_size a0 + (closSem_exp3_alt_size a1 + closSem_exp_alt_size
+        a2)))`;
+   `(closSem_exp_alt_size (closLang_App a0 a1 a2 a3) =
     1 +
     (tra_size a0 + (option_size (\x. x) a1 + (closSem_exp_alt_size a2 +
-        closSem_exp3_alt_size a3)))`;
-   `closSem_exp_alt_size (closLang_Fn a0 a1 a2 a3 a4) =
+        closSem_exp3_alt_size a3))))`;
+   `(closSem_exp_alt_size (closLang_Fn a0 a1 a2 a3 a4) =
     1 +
     (mlstring_size a0 +
      (option_size (\x. x) a1 +
       (option_size (list_size (\x. x)) a2 + (a3 + closSem_exp_alt_size
-          a4))))`;
-   `closSem_exp_alt_size (closLang_Letrec a0 a1 a2 a3 a4) =
+          a4)))))`;
+   `(closSem_exp_alt_size (closLang_Letrec a0 a1 a2 a3 a4) =
     1 +
     (list_size mlstring_size a0 +
      (option_size (\x. x) a1 +
       (option_size (list_size (\x. x)) a2 + (closSem_exp1_alt_size a3 +
-          closSem_exp_alt_size a4))))`;
-   `closSem_exp_alt_size (closLang_Op a0 a1 a2) =
+          closSem_exp_alt_size a4)))))`;
+   `(closSem_exp_alt_size (closLang_Op a0 a1 a2) =
       1 + (tra_size a0 + (closLang_op_size a1 + closSem_exp3_alt_size
-          a2)) + (if a1 = closLang_ThunkOp ForceThunk then 100 else 0)`;
-   `closSem_exp1_alt_size [] = 0`;
-   `closSem_exp1_alt_size (CONS a0 a1) = 1 + (closSem_exp2_alt_size a0 +
-    closSem_exp1_alt_size a1)`;
-   `closSem_exp2_alt_size (a0,a1) = 1 + (a0 + closSem_exp_alt_size a1)`;
-   `closSem_exp3_alt_size [] = 0`;
-   `closSem_exp3_alt_size (CONS a0 a1) = 1 + (closSem_exp_alt_size a0 +
-    closSem_exp3_alt_size a1)`];;
+          a2)) + (if a1 = closLang_ThunkOp ForceThunk then 100 else 0))`];;
 add_simp exp_alt_size_def;;
 
 (* [local] *)
@@ -929,41 +929,41 @@ let closSem_fix_clock_IMP =
 if concl closSem_fix_clock_IMP <> `T` then
   cake_term_facts := closSem_fix_clock_IMP :: (!cake_term_facts);;
 
-let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
+let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`closSem_evaluate ([],(env:closSem_v list),(s:('c,'ffi)closSem_state)) =
-    (Rval [],s)`;
-   `closSem_evaluate (CONS x (CONS y xs),env,s) =
+  [`(closSem_evaluate ([],(env:closSem_v list),(s:('c,'ffi)closSem_state)) =
+    (Rval [],s)) /\
+    (closSem_evaluate (CONS x (CONS y xs),env,s) =
          match closSem_fix_clock s (closSem_evaluate ([x],env,s)) with
              (Rval v1,s1) ->
              (match closSem_evaluate (CONS y xs,env,s1) with (Rval vs,s2)
                  -> (Rval (CONS (HD v1) vs),s2)
               | res -> res)
-         | res -> res`;
-   `closSem_evaluate ([closLang_Var _ n],env,s) =
+         | res -> res) /\
+    (closSem_evaluate ([closLang_Var _ n],env,s) =
          if n < LENGTH env then (Rval [EL n env],s) else (Rerr (Rabort
-             Rtype_error),s)`;
-   `closSem_evaluate ([closLang_If _ x1 x2 x3],env,s) =
+             Rtype_error),s)) /\
+    (closSem_evaluate ([closLang_If _ x1 x2 x3],env,s) =
          match closSem_fix_clock s (closSem_evaluate ([x1],env,s)) with
              (Rval vs,s1) ->
               if closSem_Boolv T = HD vs then closSem_evaluate
                   ([x2],env,s1) else if closSem_Boolv F = HD vs then
                   closSem_evaluate ([x3],env,s1) else (Rerr (Rabort
                   Rtype_error),s1)
-         | res -> res`;
-   `closSem_evaluate ([closLang_Let _ xs x2],env,s) =
+         | res -> res) /\
+    (closSem_evaluate ([closLang_Let _ xs x2],env,s) =
          match closSem_fix_clock s (closSem_evaluate (xs,env,s)) with (Rval
              vs,s1) -> closSem_evaluate ([x2],APPEND vs env,s1)
-         | res -> res`;
-   `closSem_evaluate ([closLang_Raise _ x1],env,s) =
+         | res -> res) /\
+    (closSem_evaluate ([closLang_Raise _ x1],env,s) =
          match closSem_evaluate ([x1],env,s) with (Rval vs,s) -> (Rerr
              (Rraise (HD vs)),s)
-         | res -> res`;
-   `closSem_evaluate ([closLang_Handle _ x1 x2],env,s1) =
+         | res -> res) /\
+    (closSem_evaluate ([closLang_Handle _ x1 x2],env,s1) =
          match closSem_fix_clock s1 (closSem_evaluate ([x1],env,s1)) with
              (Rerr (Rraise v),s) -> closSem_evaluate ([x2],CONS v env,s)
-         | res -> res`;
-   `closSem_evaluate ([closLang_Op _ op xs],env,s) =
+         | res -> res) /\
+    (closSem_evaluate ([closLang_Op _ op xs],env,s) =
          match closSem_fix_clock s (closSem_evaluate (xs,env,s)) with (Rval
              vs,s) ->
            if op = closLang_Install then
@@ -988,8 +988,8 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
            else (match closSem_do_app op (REVERSE vs) s with Rerr err ->
                (Rerr err,s)
             | Rval (v,s) -> (Rval [v],s))
-         | res -> res`;
-   `closSem_evaluate ([closLang_Fn _ loc vsopt num_args exp],env,s) =
+         | res -> res) /\
+    (closSem_evaluate ([closLang_Fn _ loc vsopt num_args exp],env,s) =
          if num_args <= closSem_state_max_app s /\ ~(num_args = 0) then
            match vsopt with NONE -> (Rval [closSem_Closure loc [] env
                num_args exp],s)
@@ -998,8 +998,8 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                    Rtype_error),s)
                   | SOME env' -> (Rval [closSem_Closure loc [] env'
                       num_args exp],s))
-         else (Rerr (Rabort Rtype_error),s)`;
-   `closSem_evaluate ([closLang_Letrec _ loc namesopt fns exp],env,s) =
+         else (Rerr (Rabort Rtype_error),s)) /\
+    (closSem_evaluate ([closLang_Letrec _ loc namesopt fns exp],env,s) =
          if ALL (\(num_args,e). num_args <= closSem_state_max_app s
              /\ ~(num_args = 0)) fns then
            let
@@ -1013,8 +1013,8 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
              match envdelta with
                  NONE -> (Rerr (Rabort Rtype_error),s)
                | SOME ed -> closSem_evaluate ([exp],APPEND ed env,s)
-         else (Rerr (Rabort Rtype_error),s)`;
-   `closSem_evaluate ([closLang_App _ loc_opt x1 args],env,s) =
+         else (Rerr (Rabort Rtype_error),s)) /\
+    (closSem_evaluate ([closLang_App _ loc_opt x1 args],env,s) =
          if LENGTH args > 0 then
            (match closSem_fix_clock s (closSem_evaluate (args,env,s)) with
                (Rval y2,s1) ->
@@ -1022,12 +1022,12 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                   with (Rval y1,s2) -> evaluate_app loc_opt (HD y1) y2 s2
                | res -> res)
             | res -> res)
-         else (Rerr (Rabort Rtype_error),s)`;
-   `closSem_evaluate ([closLang_Tick _ x],env,s) =
+         else (Rerr (Rabort Rtype_error),s)) /\
+    (closSem_evaluate ([closLang_Tick _ x],env,s) =
          if closSem_state_clock s = 0 then (Rerr (Rabort
              Rtimeout_error),s) else closSem_evaluate
-             ([x],env,closSem_dec_clock 1 s)`;
-   `closSem_evaluate ([closLang_Call _ ticks dest xs],env,s1) =
+             ([x],env,closSem_dec_clock 1 s)) /\
+    (closSem_evaluate ([closLang_Call _ ticks dest xs],env,s1) =
          match closSem_fix_clock s1 (closSem_evaluate (xs,env,s1)) with
              (Rval vs,s) ->
              (match closSem_find_code dest vs (closSem_state_code s) with
@@ -1037,9 +1037,9 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                       Rtimeout_error),closSem_state_clock_fupd (K 0) s) else
                       closSem_evaluate ([exp],args,closSem_dec_clock (ticks +
                       1) s))
-         | res -> res`;
-   `evaluate_app loc_opt f [] (s:('c,'ffi)closSem_state) = (Rval [f],s)`;
-   `evaluate_app loc_opt f args (s:('c,'ffi)closSem_state) =
+         | res -> res) /\
+    (evaluate_app loc_opt f [] (s:('c,'ffi)closSem_state) = (Rval [f],s))`;
+   `(evaluate_app loc_opt f args (s:('c,'ffi)closSem_state) =
          match dest_closure (closSem_state_max_app s) loc_opt f args with
              NONE -> (Rerr (Rabort Rtype_error),s)
          | SOME (Partial_app v) ->
@@ -1056,7 +1056,7 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                             (LENGTH args - LENGTH rest_args) s)) with (Rval
                             [v],s1) ->
                    evaluate_app loc_opt v rest_args s1
-               | res -> res`];;
+               | res -> res)`];;
 
 (* HOL4 closSemScript.sml:845-846: a theorem that HOL4 states as the value
    of an ML expression: evaluate_app_NIL *)

@@ -313,18 +313,18 @@ let evaluate_interp_thm = prove
    port lets its own machinery find one *)
 (* HOL4 clos_interpProofScript.sml:1097-1099: the tactic that proves the
    termination *)
-let v_ok_def,v_ok_ind = define_shaped_rec
+let v_ok_def,v_ok_ind = define_shaped_rec_clauses
   "nested"
-  [`v_ok (closSem_Number i) <=> T`;
-   `v_ok (closSem_Word64 w) <=> T`;
-   `v_ok (closSem_Block n vs) <=> ALL v_ok vs`;
-   `v_ok (closSem_ByteVector ws) <=> T`;
-   `v_ok (closSem_RefPtr b n) <=> T`;
-   `v_ok (closSem_Closure loco vs1 env1 n bod1) <=>
-        ~(has_install bod1) /\ ALL v_ok env1 /\ ALL v_ok vs1`;
-   `v_ok (closSem_Recclosure loco vs1 env1 fns1 i) <=>
+  [`(v_ok (closSem_Number i) <=> T) /\
+    (v_ok (closSem_Word64 w) <=> T) /\
+    (v_ok (closSem_Block n vs) <=> ALL v_ok vs) /\
+    (v_ok (closSem_ByteVector ws) <=> T) /\
+    (v_ok (closSem_RefPtr b n) <=> T) /\
+    (v_ok (closSem_Closure loco vs1 env1 n bod1) <=>
+        ~(has_install bod1) /\ ALL v_ok env1 /\ ALL v_ok vs1)`;
+   `(v_ok (closSem_Recclosure loco vs1 env1 fns1 i) <=>
         ALL v_ok env1 /\ ALL v_ok vs1 /\ i < LENGTH fns1 /\
-        ALL ((~) o has_install o SND) fns1`];;
+        ALL ((~) o has_install o SND) fns1)`];;
 add_simp v_ok_def;;
 
 let res_ok_def = new_definition
