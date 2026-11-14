@@ -9,6 +9,8 @@ let cakeml_dir = "/home/freek/claude/hol-light/cakeml/ml";;
 load_path := cakeml_dir :: (!load_path);;
 
 needs "Library/words.ml";;
+(* HOL4's FUNPOW f n x is this ITER n f x *)
+needs "Library/iter.ml";;
 
 needs "lib/fastdef.ml";;
 needs "lib/hol4.ml";;

@@ -27,7 +27,7 @@ let _ = hol4_ancestors "bvi_inline"
   ["backend_common"; "bvi"];;
 
 let bvi_mk_tick_def = new_definition
-  `bvi_mk_tick n e = FUNPOW bvi_Tick n e`;;
+  `bvi_mk_tick n e = ITER n bvi_Tick e`;;
 
 (* First-order form for cv_compute, which has no [FUNPOW]. *)
 let bvi_mk_tick_eq = prove

@@ -344,8 +344,8 @@ let data_to_bvi_v_list_to_v_APPEND = prove
 let refs_rel_LEAST_eq = prove
  (`!s1 s2.
     (!n. FLOOKUP s1 n = lookup n (map data_to_bvi_ref s2)) ==>
-      (LEAST (\ptr. ~(ptr IN FDOM s1))) = LEAST (\ptr. ~(ptr IN domain
-      s2))`,
+      (minimal (\ptr. ~(ptr IN FDOM s1))) = minimal (\ptr. ~(ptr IN
+      domain s2))`,
   CHEAT_TAC);;
 
 let do_build_thm = prove

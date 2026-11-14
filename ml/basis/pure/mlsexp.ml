@@ -454,7 +454,7 @@ let read_symbol_thm = prove
 
 let read_string_aux_thm = prove
  (`!xs s acc.
-     read_string_aux (APPEND (APPEND (CONCAT (MAP char_escaped xs))
+     read_string_aux (APPEND (APPEND (FLAT (MAP char_escaped xs))
        "\"") s) acc =
      INR (implode (APPEND (REVERSE acc) xs),s)`,
   CHEAT_TAC);;

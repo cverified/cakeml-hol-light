@@ -63,7 +63,7 @@ let bool_def = new_definition
 hol4_overload "Bool" "bvl_Bool";;
 
 let mk_tick_def = new_definition
-  `mk_tick n e = (FUNPOW Tick n e:bvl_exp)`;;
+  `mk_tick n e = (ITER n Tick e:bvl_exp)`;;
 
 (* HOL4 bvlScript.sml:50: the overload mk_unit, which the port
    expands *)

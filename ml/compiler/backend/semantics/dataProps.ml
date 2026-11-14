@@ -1024,7 +1024,7 @@ let evaluate_locals = prove
   CHEAT_TAC);;
 
 let funpow_dec_clock_clock = prove
- (`!n s. FUNPOW dataSem_dec_clock n s = (state_clock_fupd (K
+ (`!n s. ITER n dataSem_dec_clock s = (state_clock_fupd (K
   (state_clock s - n)) s)`,
   CHEAT_TAC);;
 
@@ -1037,32 +1037,32 @@ let evaluate_mk_ticks = prove
         (stack_fupd (K []) (dataSem_state_locals_fupd (K (fromList []))
         (state_clock_fupd (K 0)
        s)))) else
-      evaluate (p,FUNPOW dec_clock n s))`,
+      evaluate (p,ITER n dec_clock s))`,
   CHEAT_TAC);;
 
 (* [simp] *)
 let FUNPOW_dec_clock_code = prove
- (`(state_code (FUNPOW dec_clock n t) = state_code t) /\
-   (stack (FUNPOW dec_clock n t) = stack t) /\
-   (dataSem_state_handler (FUNPOW dec_clock n t) =
+ (`(state_code (ITER n dec_clock t) = state_code t) /\
+   (stack (ITER n dec_clock t) = stack t) /\
+   (dataSem_state_handler (ITER n dec_clock t) =
      dataSem_state_handler t) /\
-   (state_refs (FUNPOW dec_clock n t) = state_refs t) /\
-   (state_ffi (FUNPOW dec_clock n t) = state_ffi t) /\
-   (dataSem_state_safe_for_space (FUNPOW dec_clock n t) =
+   (state_refs (ITER n dec_clock t) = state_refs t) /\
+   (state_ffi (ITER n dec_clock t) = state_ffi t) /\
+   (dataSem_state_safe_for_space (ITER n dec_clock t) =
      dataSem_state_safe_for_space t) /\
-   (dataSem_state_global (FUNPOW dec_clock n t) =
-     dataSem_state_global t) /\
-   (dataSem_state_locals (FUNPOW dec_clock n t) =
-     dataSem_state_locals t) /\
-   (compile (FUNPOW dec_clock n t) = compile t) /\
-   (compile_oracle (FUNPOW dec_clock n t) = compile_oracle t) /\
-   (dataSem_state_peak_heap_length (FUNPOW dec_clock n t) =
+   (dataSem_state_global (ITER n dec_clock t) = dataSem_state_global
+     t) /\
+   (dataSem_state_locals (ITER n dec_clock t) = dataSem_state_locals
+     t) /\
+   (compile (ITER n dec_clock t) = compile t) /\
+   (compile_oracle (ITER n dec_clock t) = compile_oracle t) /\
+   (dataSem_state_peak_heap_length (ITER n dec_clock t) =
      dataSem_state_peak_heap_length t) /\
-   (dataSem_state_stack_frame_sizes (FUNPOW dec_clock n t) =
+   (dataSem_state_stack_frame_sizes (ITER n dec_clock t) =
      dataSem_state_stack_frame_sizes t) /\
-   (dataSem_state_locals_size (FUNPOW dec_clock n t) =
+   (dataSem_state_locals_size (ITER n dec_clock t) =
      dataSem_state_locals_size t) /\
-   (state_clock (FUNPOW dec_clock n t) = state_clock t - n)`,
+   (state_clock (ITER n dec_clock t) = state_clock t - n)`,
   CHEAT_TAC);;
 
 let jump_exc_NONE = prove

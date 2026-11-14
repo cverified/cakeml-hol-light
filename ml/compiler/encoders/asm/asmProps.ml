@@ -233,7 +233,7 @@ let asserts2_first = prove
 let asserts2_every = prove
  (`!n ms j.
    asserts2 n (\k. f) g ms P /\ j < n ==>
-   P (FUNPOW (f o g) j ms) (g (FUNPOW (f o g) j ms))`,
+   P (ITER j (f o g) ms) (g (ITER j (f o g) ms))`,
   CHEAT_TAC);;
 
 (* [simp] *)

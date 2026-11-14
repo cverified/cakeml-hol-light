@@ -868,7 +868,7 @@ let dataSem_do_part_def = define_cases
         NONE -> (Block 0 t (MAP m ns),s,ts) | SOME n -> (Block n t
         (MAP m ns),s,SOME (n + (1:num))))`;
    `dataSem_do_part m (closLang_Str t:const_part) s ts =
-      (let ptr = (LEAST (\ptr. ~(ptr IN domain s))) in
+      (let ptr = (minimal (\ptr. ~(ptr IN domain s))) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (RefPtr T ptr,insert ptr (ByteArray T bytes) s,ts))`];;
 hol4_overload "do_part" "dataSem_do_part";;
@@ -1122,7 +1122,7 @@ let dataSem_do_app_aux_def = new_definition
                                 ->
          (match xs with [Number i; Number b] ->
              (if (&0) <= i /\ (?(w:word8). b = &(w2n w)) then
-               let ptr = (LEAST (\ptr. ~(ptr IN domain
+               let ptr = (minimal (\ptr. ~(ptr IN domain
                  (dataSem_state_refs s)))) in
                  Rval (RefPtr T ptr,dataSem_state_refs_fupd (K
                    (insert ptr
@@ -1238,7 +1238,7 @@ let dataSem_do_app_aux_def = new_definition
                  ,dataSem_v)semanticPrimitives_result)) |
                  (closLang_MemOp closLang_RefArray,[Number i; v]) ->
          (if (&0) <= i then
-           let ptr = (LEAST (\ptr. ~(ptr IN domain
+           let ptr = (minimal (\ptr. ~(ptr IN domain
              (dataSem_state_refs s)))) in
              Rval (RefPtr T ptr,dataSem_state_refs_fupd (K (insert
                ptr
@@ -1351,8 +1351,8 @@ let dataSem_do_app_aux_def = new_definition
            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
            ,dataSem_v)semanticPrimitives_result)) | (closLang_MemOp
            closLang_Ref,xs) ->
-         (let ptr = (LEAST (\ptr. ~(ptr IN domain (dataSem_state_refs
-           s)))) in
+         (let ptr = (minimal (\ptr. ~(ptr IN domain
+           (dataSem_state_refs s)))) in
            Rval (RefPtr T ptr,dataSem_state_refs_fupd (K (insert ptr
              (ValueArray xs) (dataSem_state_refs s))) s)) |
              (closLang_MemOp closLang_Update,[RefPtr _172 ptr; Number i;
@@ -1373,8 +1373,8 @@ let dataSem_do_app_aux_def = new_definition
                                 ,dataSem_v)semanticPrimitives_result)) |
                                 (closLang_MemOp (closLang_MutCons tag
                                 i),xs) ->
-         (let ptr = (LEAST (\ptr. ~(ptr IN domain (dataSem_state_refs
-           s)))) in
+         (let ptr = (minimal (\ptr. ~(ptr IN domain
+           (dataSem_state_refs s)))) in
             if i >= LENGTH xs then ((Rerr (Rabort
               Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
               ,dataSem_v)semanticPrimitives_result) else
@@ -1465,7 +1465,7 @@ let dataSem_do_app_aux_def = new_definition
                 ((Rerr (Rabort
                 Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
                 ,dataSem_v)semanticPrimitives_result) else
-               let ptr = (LEAST (\ptr. ~(ptr IN domain
+               let ptr = (minimal (\ptr. ~(ptr IN domain
                  (dataSem_state_refs s)))) in
                  Rval (RefPtr F ptr,dataSem_state_refs_fupd (K
                    (insert ptr (Thunk m v) (dataSem_state_refs s)))

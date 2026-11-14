@@ -272,7 +272,7 @@ hol4_overload "tabulate" "mllist_tabulate";;
 
 let tabulate_aux_GENLIST = prove
  (`!n m f acc. tabulate_aux n m f acc = APPEND (REVERSE acc)
-  (list_of_seq (f o FUNPOW SUC n) (m - n))`,
+  (list_of_seq (f o ITER n SUC) (m - n))`,
   CHEAT_TAC);;
 
 let tabulate_GENLIST = prove

@@ -19,7 +19,8 @@
 (*    FRONT = BUTLAST, BIGUNION = UNIONS,                             *)
 (*    LIST_TO_SET = set_of_list, GENLIST f n = list_of_seq f n,       *)
 (*    STRING = CONS, STRCAT = APPEND, STRLEN = LENGTH,                *)
-(*    EXPLODE and IMPLODE are the identity,                           *)
+(*    CONCAT = FLAT, LEAST P = minimal n. P n,                        *)
+(*    FUNPOW f n x = ITER n f x (Library/iter.ml),                    *)
 (*    FOLDR f e l = ITLIST f l e                                      *)
 (* ================================================================== *)
 
@@ -129,9 +130,8 @@ let C_DEF = new_definition
 let W_DEF = new_definition
   `W (f:A->A->B) x = f x x`;;
 
-let FUNPOW = new_recursive_definition num_RECURSION
-  `(FUNPOW (f:A->A) 0 x = x) /\
-   (FUNPOW f (SUC n) x = FUNPOW f n (f x))`;;
+(* HOL4's FUNPOW f n x is the ITER n f x of Library/iter.ml,
+   which the port writes *)
 
 let FLIP_DEF = new_definition
   `FLIP (f:A->B->C) x y = f y x`;;
@@ -652,9 +652,16 @@ overload_interface("<=",`string_le:string->string->bool`);;
 overload_interface(">",`string_gt:string->string->bool`);;
 overload_interface(">=",`string_ge:string->string->bool`);;
 
-(* HOL4's STRCAT, STRLEN, EXPLODE and IMPLODE are HOL Light's
-   APPEND and LENGTH and the identity, because a string is a
-   list of characters in both, so the port writes those *)
+(* HOL4's STRCAT and STRLEN are HOL Light's APPEND and LENGTH,
+   because a string is a list of characters in both, and the
+   port writes those.  Its EXPLODE and IMPLODE are constants of
+   their own, as in HOL4, and are the identity here. *)
+
+let EXPLODE = new_definition
+  `EXPLODE (s:string) = s`;;
+
+let IMPLODE = new_definition
+  `IMPLODE (l:char list) = l`;;
 
 let isLower = new_definition
   `isLower c <=> 97 <= ORD c /\ ORD c <= 122`;;
@@ -950,10 +957,8 @@ let UPDATE = new_definition
 parse_as_infix("=+",(23,"right"));;
 override_interface("=+",`UPDATE:A->B->(A->B)->A->B`);;
 
-(* HOL4's LEAST, which HOL Light has as the binder minimal *)
-
-let LEAST = new_definition
-  `LEAST (P:num->bool) = minimal n. P n`;;
+(* HOL4's LEAST is HOL Light's binder minimal, which the port
+   writes: minimal n. P n *)
 
 (* HOL4's ## of pairTheory, the map of a pair *)
 

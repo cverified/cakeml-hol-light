@@ -75,6 +75,9 @@ NAME_MAP = {
   'BIGUNION': 'UNIONS',
   'STRCAT': 'APPEND',
   'STRLEN': 'LENGTH',
+  'CONCAT': 'FLAT',
+  # HOL Light has HOL4's LEAST as the binder minimal
+  'LEAST': 'minimal',
   'measure': 'MEASURE',
   'set': 'set_of_list',
   '()': 'one',

@@ -501,8 +501,8 @@ let closSem_do_app_def = new_definition
                  (closLang_MemOp (closLang_RefByte F),[closSem_Number i;
                  closSem_Number b]) ->
           (if (&0) <= i /\ (?(w:word8). b = &(w2n w)) then
-            let ptr = (LEAST (\ptr. ~(ptr IN FDOM (closSem_state_refs
-              s)))) in
+            let ptr = (minimal (\ptr. ~(ptr IN FDOM
+              (closSem_state_refs s)))) in
               Rval (closSem_RefPtr T ptr,closSem_state_refs_fupd (K
                 (closSem_state_refs s |+
                 (ptr,closSem_ByteArray (REPLICATE (num_of_int i) (i2w
@@ -512,8 +512,8 @@ let closSem_do_app_def = new_definition
                   (closLang_MemOp closLang_RefArray,[closSem_Number i;
                   v]) ->
          (if (&0) <= i then
-           let ptr = (LEAST (\ptr. ~(ptr IN FDOM (closSem_state_refs
-             s)))) in
+           let ptr = (minimal (\ptr. ~(ptr IN FDOM
+             (closSem_state_refs s)))) in
              Rval (closSem_RefPtr T ptr,closSem_state_refs_fupd (K
                (closSem_state_refs s |+
                (ptr,closSem_ValueArray (REPLICATE (num_of_int i)
@@ -669,7 +669,7 @@ let closSem_do_app_def = new_definition
            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
            ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
            closLang_Ref,xs) ->
-         (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (closSem_state_refs
+         (let ptr = (minimal (\ptr. ~(ptr IN FDOM (closSem_state_refs
            s)))) in
            Rval (closSem_RefPtr T ptr,closSem_state_refs_fupd (K
              (closSem_state_refs s |+ (ptr,closSem_ValueArray xs))) s))
@@ -744,7 +744,7 @@ let closSem_do_app_def = new_definition
                 ((Rerr (Rabort
                 Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                 ,closSem_v)semanticPrimitives_result) else
-               let ptr = (LEAST (\ptr. ~(ptr IN FDOM
+               let ptr = (minimal (\ptr. ~(ptr IN FDOM
                  (closSem_state_refs s)))) in
                  Rval (closSem_RefPtr F ptr,closSem_state_refs_fupd
                    (K (closSem_state_refs s |+ (ptr,Thunk m v))) s)) |

@@ -105,7 +105,7 @@ hol4_overload "Tick" "dataLang_Tick";;
 hol4_overload "Force" "dataLang_Force";;
 
 let mk_ticks_def = new_definition
-  `mk_ticks n e = FUNPOW (dataLang_Seq dataLang_Tick) n e`;;
+  `mk_ticks n e = ITER n (dataLang_Seq dataLang_Tick) e`;;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

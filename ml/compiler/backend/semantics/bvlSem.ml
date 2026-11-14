@@ -236,7 +236,7 @@ let do_part_def = define_cases
    `bvlSem_do_part m (Con t ns:const_part) refs = (Block t (MAP m
   ns),refs)`;
    `bvlSem_do_part m (closLang_Str t:const_part) refs =
-      (let ptr = (LEAST (\ptr. ~(ptr IN FDOM refs))) in
+      (let ptr = (minimal (\ptr. ~(ptr IN FDOM refs))) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (RefPtr T ptr,refs |+ (ptr,((ByteArray T
           bytes):bvlSem_v bvlSem_ref))))`];;
@@ -505,8 +505,8 @@ let bvlSem_do_app_def = new_definition
                  ,bvlSem_v)semanticPrimitives_result)) | (closLang_MemOp
                  (closLang_RefByte F),[Number i; Number b]) ->
           (if (&0) <= i /\ (?(w:word8). b = &(w2n w)) then
-            let ptr = (LEAST (\ptr. ~(ptr IN FDOM (bvlSem_state_refs
-              s)))) in
+            let ptr = (minimal (\ptr. ~(ptr IN FDOM
+              (bvlSem_state_refs s)))) in
               Rval (RefPtr T ptr,bvlSem_state_refs_fupd (K
                 (bvlSem_state_refs s |+
                 (ptr,ByteArray F (REPLICATE (num_of_int i) (i2w
@@ -515,7 +515,7 @@ let bvlSem_do_app_def = new_definition
                   ,bvlSem_v)semanticPrimitives_result)) |
                   (closLang_MemOp closLang_RefArray,[Number i; v]) ->
          (if (&0) <= i then
-           let ptr = (LEAST (\ptr. ~(ptr IN FDOM (bvlSem_state_refs
+           let ptr = (minimal (\ptr. ~(ptr IN FDOM (bvlSem_state_refs
              s)))) in
              Rval (RefPtr T ptr,bvlSem_state_refs_fupd (K
                (bvlSem_state_refs s |+
@@ -554,7 +554,7 @@ let bvlSem_do_app_def = new_definition
                v_to_list lv = SOME (MAP (RefPtr T) ps) /\
                MAP (FLOOKUP (bvlSem_state_refs s)) ps = MAP (SOME o
                  ByteArray T) wss)) with SOME wss ->
-             (let ptr = (LEAST (\ptr. ~(ptr IN FDOM
+             (let ptr = (minimal (\ptr. ~(ptr IN FDOM
                (bvlSem_state_refs s)))) in
                Rval (RefPtr T ptr,bvlSem_state_refs_fupd (K
                  (bvlSem_state_refs s |+
@@ -571,7 +571,7 @@ let bvlSem_do_app_def = new_definition
            closLang_FromListByte,[lv]) ->
          (match some (\ns. v_to_list lv = SOME (MAP (Number o (&))
            ns) /\ ALL (\n. n < 256) ns) with SOME ns -> (let ptr =
-           (LEAST (\ptr. ~(ptr IN FDOM (bvlSem_state_refs s)))) in
+           (minimal (\ptr. ~(ptr IN FDOM (bvlSem_state_refs s)))) in
                           Rval (RefPtr T ptr,bvlSem_state_refs_fupd
                             (K (bvlSem_state_refs s |+
                             (ptr,ByteArray T (MAP n2w ns)))) s)) |
@@ -606,7 +606,7 @@ let bvlSem_do_app_def = new_definition
         (match (FLOOKUP (bvlSem_state_refs s) src) with SOME
           (ByteArray _69 ws) ->
             (match copy_array (ws,srcoff) len NONE with SOME ds ->
-               (let ptr = (LEAST (\ptr. ~(ptr IN FDOM
+               (let ptr = (minimal (\ptr. ~(ptr IN FDOM
                  (bvlSem_state_refs s)))) in
                Rval (RefPtr T ptr,bvlSem_state_refs_fupd (K
                  (bvlSem_state_refs s |+ (ptr,ByteArray T ds))) s)) |
@@ -678,7 +678,7 @@ let bvlSem_do_app_def = new_definition
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result)) | (closLang_MemOp
            closLang_Ref,xs) ->
-         (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (bvlSem_state_refs
+         (let ptr = (minimal (\ptr. ~(ptr IN FDOM (bvlSem_state_refs
            s)))) in
            Rval (RefPtr T ptr,bvlSem_state_refs_fupd (K
              (bvlSem_state_refs s |+ (ptr,ValueArray xs))) s)) |
@@ -762,7 +762,7 @@ let bvlSem_do_app_def = new_definition
                 ((Rerr (Rabort
                 Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                 ,bvlSem_v)semanticPrimitives_result) else
-               let ptr = (LEAST (\ptr. ~(ptr IN FDOM
+               let ptr = (minimal (\ptr. ~(ptr IN FDOM
                  (bvlSem_state_refs s)))) in
                  Rval (RefPtr F ptr,bvlSem_state_refs_fupd (K
                    (bvlSem_state_refs s |+ (ptr,Thunk m v))) s)) |
@@ -934,9 +934,9 @@ let bvlSem_do_app_const = prove
 (* [simp] *)
 let bvl_do_app_Ref = prove
  (`do_app (closLang_MemOp closLang_Ref) vs s = Rval
-     (RefPtr T (LEAST (\ptr. ~(ptr IN FDOM (state_refs
+     (RefPtr T (minimal (\ptr. ~(ptr IN FDOM (state_refs
        s)))),state_refs_fupd (K (state_refs
-        s |+ ((LEAST (\ptr. ~(ptr IN FDOM (state_refs
+        s |+ ((minimal (\ptr. ~(ptr IN FDOM (state_refs
           s)))),ValueArray vs)))
       s)`,
   CHEAT_TAC);;

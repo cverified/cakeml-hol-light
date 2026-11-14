@@ -806,19 +806,19 @@ let encoder_correct_asm_step_target_state_rel = prove
    target_state_rel t s1 ms /\
    asm_step (target_config t) s1 i s2 ==>
    (?n.
-   target_state_rel t s2 (FUNPOW (target_next t) n ms) /\
+   target_state_rel t s2 (ITER n (target_next t) ms) /\
    (!j. j < n ==>
      (!pc'. pc' IN all_pcs (LENGTH (asm_config_encode (target_config
        t) i)) (asm_state_pc s1) 0 ==>
-             (target_get_byte t (FUNPOW (target_next t) j ms) pc' =
+             (target_get_byte t (ITER j (target_next t) ms) pc' =
                target_get_byte t ms pc')) /\
-     (target_get_pc t (FUNPOW (target_next t) j ms) IN
+     (target_get_pc t (ITER j (target_next t) ms) IN
        all_pcs (LENGTH (asm_config_encode (target_config t) i))
          (asm_state_pc s1) (asm_config_code_alignment (target_config
          t))) /\
-     (target_state_ok t (FUNPOW (target_next t) j ms))) /\
+     (target_state_ok t (ITER j (target_next t) ms))) /\
    (!j x. j <= n /\ ~(x IN asm_state_mem_domain s1) ==>
-     (target_get_byte t (FUNPOW (target_next t) j ms) x =
+     (target_get_byte t (ITER j (target_next t) ms) x =
      target_get_byte t ms x)))`,
   CHEAT_TAC);;
 
@@ -826,7 +826,7 @@ let encoder_correct_RTC_asm_step_target_state_rel = prove
  (`encoder_correct t /\
    target_state_rel t s1 ms /\
    RTC (\s1 s2. ?i. asm_step (target_config t) s1 i s2) s1 s2 ==>
-   (?n. target_state_rel t s2 (FUNPOW (target_next t) n ms))`,
+   (?n. target_state_rel t s2 (ITER n (target_next t) ms))`,
   CHEAT_TAC);;
 
 (* -- interface lemmas for the interference contracts -- *)

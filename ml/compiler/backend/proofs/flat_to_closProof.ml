@@ -358,7 +358,7 @@ let IMP_PAIR = prove
 
 let state_rel_LEAST = prove
  (`state_rel s1 t1 ==>
-   (LEAST (\ptr. ~(ptr IN FDOM (state_refs t1)))) = LENGTH
+   (minimal (\ptr. ~(ptr IN FDOM (state_refs t1)))) = LENGTH
      (state_refs s1)`,
   CHEAT_TAC);;
 

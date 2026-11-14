@@ -567,11 +567,11 @@ let BIT_num_from_bin_list_leading = prove
   CHEAT_TAC);;
 
 let least_from_def = new_definition
-  `least_from P n = (if (?x. P x /\ n <= x) then LEAST (\x. P x /\ n
-  <= x) else LEAST P)`;;
+  `least_from P n = (if (?x. P x /\ n <= x) then minimal (\x. P x /\
+  n <= x) else minimal P)`;;
 
 let LEAST_thm = prove
- (`LEAST P = least_from P 0`,
+ (`minimal P = least_from P 0`,
   CHEAT_TAC);;
 
 let least_from_thm = prove
@@ -582,11 +582,11 @@ let FUNPOW_mono = prove
  (`(!x y. R1 x y ==> R2 x y) /\
     (!R1 R2. (!x y. R1 x y ==> R2 x y) ==> (!x y. f R1 x y ==> f R2 x
       y)) ==>
-    (!n x y. FUNPOW f n R1 x y ==> FUNPOW f n R2 x y)`,
+    (!n x y. ITER n f R1 x y ==> ITER n f R2 x y)`,
   CHEAT_TAC);;
 
 let FUNPOW_SUC_PLUS = prove
- (`!n a. FUNPOW SUC n = (+) n`,
+ (`!n a. ITER n SUC = (+) n`,
   CHEAT_TAC);;
 
 (* used just once; better as
@@ -646,7 +646,7 @@ let find_index_MEM = prove
   CHEAT_TAC);;
 
 let find_index_LEAST_EL = prove
- (`!ls x n. find_index x ls n = (if MEM x ls then SOME (n + (LEAST
+ (`!ls x n. find_index x ls n = (if MEM x ls then SOME (n + (minimal
   (\n. x = EL n ls))) else NONE)`,
   CHEAT_TAC);;
 
@@ -810,7 +810,7 @@ let IN_between = prove
 
 (* never used *)
 let SUC_LEAST = prove
- (`!x. P x ==> (SUC (LEAST P) = LEAST (\x. 0 < x /\ P (PRE x)))`,
+ (`!x. P x ==> (SUC (minimal P) = minimal (\x. 0 < x /\ P (PRE x)))`,
   CHEAT_TAC);;
 
 (* never used *)
@@ -1590,7 +1590,7 @@ let FIELDS_NEQ_NIL = prove
   CHEAT_TAC);;
 
 let CONCAT_FIELDS = prove
- (`!ls. CONCAT (FIELDS P ls) = FILTER ((~) o P) ls`,
+ (`!ls. FLAT (FIELDS P ls) = FILTER ((~) o P) ls`,
   CHEAT_TAC);;
 
 let FIELDS_next = prove
@@ -2033,13 +2033,13 @@ let v2w_sing = prove
   CHEAT_TAC);;
 
 let FOLDR_FUNPOW = prove
- (`ITLIST (\x. f) ls x = FUNPOW f (LENGTH ls) x`,
+ (`ITLIST (\x. f) ls x = ITER (LENGTH ls) f x`,
   CHEAT_TAC);;
 
 let FUNPOW_refl_trans_chain = prove
  (`transitive P /\ reflexive P ==>
-   (!n x. (!j. j < n ==> P (FUNPOW f j x) (f (FUNPOW f j x))) ==>
-     P x (FUNPOW f n x))`,
+   (!n x. (!j. j < n ==> P (ITER j f x) (f (ITER j f x))) ==>
+     P x (ITER n f x))`,
   CHEAT_TAC);;
 
 let byte_align_extract = prove

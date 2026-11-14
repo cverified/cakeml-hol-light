@@ -716,12 +716,12 @@ let non_fresh_not_in_frange = prove
   CHEAT_TAC);;
 
 let fresh_ptr_fresh = prove
- (`!refs. ~((LEAST (\ptr. ~(ptr IN FDOM refs))) IN FDOM refs)`,
+ (`!refs. ~((minimal (\ptr. ~(ptr IN FDOM refs))) IN FDOM refs)`,
   CHEAT_TAC);;
 
 let fresh_not_in_range_f = prove
  (`!f s_refs t_refs.
-     state_ref_rel f s_refs t_refs ==> ~((LEAST (\ptr. ~(ptr IN
+     state_ref_rel f s_refs t_refs ==> ~((minimal (\ptr. ~(ptr IN
        FDOM t_refs))) IN FRANGE f)`,
   CHEAT_TAC);;
 

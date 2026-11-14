@@ -61157,7 +61157,7 @@ let LENGTH_n2mw_LE_num_size = prove
      DISCH_THEN ACCEPT_TAC]));;
 
 let least_notin_domain = prove
- (`~((LEAST (\ptr. ~(ptr IN domain refs))) IN domain (refs:'a spt))`,
+ (`~((minimal (\ptr. ~(ptr IN domain refs))) IN domain (refs:'a spt))`,
   (* the domain of a tree is finite, so some number is not in it,
      and the least number that is not in it is one of those *)
   (let fin = prove
@@ -61173,10 +61173,9 @@ let least_notin_domain = prove
      FIRST_X_ASSUM(MP_TAC o SPEC `a + 1`) THEN
      ASM_REWRITE_TAC[] THEN ARITH_TAC) in
    let least_lemma = prove
-    (`!s:num->bool. FINITE s ==> ~((LEAST (\n. ~(n IN s))) IN s)`,
+    (`!s:num->bool. FINITE s ==> ~((minimal n. ~(n IN s)) IN s)`,
      GEN_TAC THEN DISCH_TAC THEN
      MP_TAC(ISPEC `\n:num. ~(n IN s)` MINIMAL) THEN
-     REWRITE_TAC[LEAST] THEN
      ASM_SIMP_TAC[notin] THEN
      DISCH_THEN(fun th -> REWRITE_TAC[CONJUNCT1 th])) in
    MATCH_ACCEPT_TAC (MATCH_MP least_lemma (SPEC_ALL fin))));;

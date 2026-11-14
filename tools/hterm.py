@@ -1001,8 +1001,13 @@ NAME_MAP = {}          # set by the porter, from tools/overrides.py
 TYPE_MAP = {}          # the same, for the type names
 
 
+# a HOL4 function whose HOL Light counterpart takes the same
+# arguments in another order: the arity, the permutation and the
+# name, longest arity first
 ARGPERM = {
-  'FOLDR': (3, [0, 2, 1], 'ITLIST'),
+  'FOLDR': [(3, [0, 2, 1], 'ITLIST')],
+  # HOL4's FUNPOW f n x is the ITER n f x of Library/iter.ml
+  'FUNPOW': [(2, [1, 0], 'ITER')],
 }
 
 # HOL4 functions that take a pair where HOL Light's take two
@@ -1996,10 +2001,15 @@ class Printer:
           return self.paren(n + ' ' + vs + '. ' +
                             self.pr(args[0].body, 0), 1, prec)
         if n in ARGPERM:
-          ar, perm, newname = ARGPERM[n]
-          if len(args) == ar:
-            s = newname + ' ' + ' '.join(self.pr(args[i], APP)
-                                         for i in perm)
+          # a permutation of a prefix of the arguments holds for
+          # a partial application of that many as well (FUNPOW f
+          # n is ITER n f), so the rules of a name are tried from
+          # the longest
+          for ar, perm, newname in ARGPERM[n]:
+            if len(args) < ar: continue
+            s = ' '.join([newname] +
+                         [self.pr(args[i], APP) for i in perm] +
+                         [self.pr(a, APP) for a in args[ar:]])
             self.numctx = old
             return self.paren(s, PRE_APP, prec)
       # HOL4's ZIP takes the two lists as a pair

@@ -15,9 +15,9 @@ let _ = hol4_lib ();;
 
 let TAILREC_PRE_def = new_definition
   `TAILREC_PRE f1 guard' precondition' (x:'a) <=>
-     (!k. (!m. m < k ==> guard' (FUNPOW f1 m x)) ==> precondition'
-       (FUNPOW f1 k x)) /\
-     (?n. ~(guard' (FUNPOW f1 n x)))`;;
+     (!k. (!m. m < k ==> guard' (ITER m f1 x)) ==> precondition'
+       (ITER k f1 x)) /\
+     (?n. ~(guard' (ITER n f1 x)))`;;
 
 let TAILREC_def = new_definition
   `tailrec_TAILREC f1 (f2:'a->'b) g x = f2 (WHILE g f1 x)`;;
