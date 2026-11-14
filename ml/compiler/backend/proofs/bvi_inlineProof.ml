@@ -72,8 +72,8 @@ let incremental_wrapper_example = prove
      bvi_inline_compile_inc cs
        [(12,0,bvi_Call 0 (SOME 10) [] NONE)] = (cs,p2) /\
      p2 = [(12,0,
-       flatLang_Let [] (bvi_LetCall 0 0 11 [] (bvi_Op
-         (closLang_BlockOp (closLang_Cons 7)) [])))]`,
+       bvi_Let [] (bvi_LetCall 0 0 11 [] (bvi_Op (closLang_BlockOp
+         (closLang_Cons 7)) [])))]`,
   CHEAT_TAC);;
 
 let canonical_wrapper_thm = prove
@@ -208,23 +208,20 @@ let inline_all_cache_subspt = prove
    phase, where [c] is the transformed target code table.
    [exp_rel_inline] is the only rule that removes a Call boundary. *)
 let exp_rel = cake_inductive
-  `((!c n. bvi_inlineProof_exp_rel c (db_vars_Var n) (db_vars_Var n)))
-  /\
-   ((!c loc n. bvi_inlineProof_exp_rel c (ast_Force loc n) (ast_Force
+  `((!c n. bvi_inlineProof_exp_rel c (bvi_Var n) (bvi_Var n))) /\
+   ((!c loc n. bvi_inlineProof_exp_rel c (bvi_Force loc n) (bvi_Force
      loc n))) /\
    ((!c x1 x2 x3 y1 y2 y3.
         bvi_inlineProof_exp_rel c x1 y1 /\ bvi_inlineProof_exp_rel c
           x2 y2 /\ bvi_inlineProof_exp_rel c x3 y3 ==>
-        bvi_inlineProof_exp_rel c (flatLang_If x1 x2 x3) (flatLang_If
-          y1 y2 y3))) /\
+        bvi_inlineProof_exp_rel c (bvi_If x1 x2 x3) (bvi_If y1 y2
+          y3))) /\
    ((!c xs ys x y.
         ALL2 (bvi_inlineProof_exp_rel c) xs ys /\
           bvi_inlineProof_exp_rel c x y ==>
-        bvi_inlineProof_exp_rel c (flatLang_Let xs x) (flatLang_Let
-          ys y))) /\
+        bvi_inlineProof_exp_rel c (bvi_Let xs x) (bvi_Let ys y))) /\
    ((!c x y. bvi_inlineProof_exp_rel c x y ==>
-     bvi_inlineProof_exp_rel c (flatLang_Raise x) (flatLang_Raise y)))
-     /\
+     bvi_inlineProof_exp_rel c (bvi_Raise x) (bvi_Raise y))) /\
    ((!c x y. bvi_inlineProof_exp_rel c x y ==>
      bvi_inlineProof_exp_rel c (bvi_Tick x) (bvi_Tick y))) /\
    ((!c op xs ys. ALL2 (bvi_inlineProof_exp_rel c) xs ys ==>
@@ -247,7 +244,7 @@ let exp_rel = cake_inductive
           SOME (arity,body) /\
         LENGTH ys = arity ==>
         bvi_inlineProof_exp_rel c (bvi_Call ticks (SOME n) xs NONE)
-          (flatLang_Let ys (bvi_mk_tick (SUC ticks) body))))`;;
+          (bvi_Let ys (bvi_mk_tick (SUC ticks) body))))`;;
 
 let exp_rel_mono = prove
  (`!c x y. bvi_inlineProof_exp_rel c x y ==> (!c1. subspt c c1 ==>
@@ -531,7 +528,7 @@ let evaluate_inlined_call = prove
  (`sptree_lookup n (state_code t) = SOME (LENGTH ys,body) /\ ~(FST
   (bviSem_evaluate ([bvi_Call ticks (SOME n) ys NONE],env,t)) =
      Rerr (Rabort Rtype_error)) ==>
-   bviSem_evaluate ([flatLang_Let ys (bvi_mk_tick (SUC ticks)
+   bviSem_evaluate ([bvi_Let ys (bvi_mk_tick (SUC ticks)
      body)],env,t) =
    bviSem_evaluate ([bvi_Call ticks (SOME n) ys NONE],env,t)`,
   CHEAT_TAC);;

@@ -35,7 +35,7 @@ let _ = cake_theory "bvl_constProof"
 
 let bvl_constProof_v_rel_def = new_definition
   `bvl_constProof_v_rel (:'c) (:'ffi) a x y xs ys =
-     (match a with db_vars_Var n -> (\l n. oEL n l) ys n = SOME x |
+     (match a with bvl_Var n -> (\l n. oEL n l) ys n = SOME x |
        bvl_Op _1 _2 ->
        (x = y) /\
        (!(s:('c,'ffi)bvlSem_state) env. bvlSem_evaluate

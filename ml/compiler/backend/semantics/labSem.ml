@@ -556,8 +556,8 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
              (targetSem_Error,s)) | _53 -> (targetSem_Error,s)) | SOME
              (labLang_Asm (ShareMem m r ad) _54 _55) ->
         (match share_mem_op m r ad s with SOME (FFI_final
-          outcome,s') -> (targetSem_Halt (ffi_FFI_outcome outcome),s')
-          | SOME (FFI_return _56 _57,s') ->
+          outcome,s') -> (labLang_Halt (ffi_FFI_outcome outcome),s') |
+          SOME (FFI_return _56 _57,s') ->
              labSem_evaluate (labSem_state_io_fp_regs_fupd (K
                (misc_shift_seq 1 (labSem_state_io_fp_regs s')))
                (labSem_state_io_regs_fupd (K (misc_shift_seq 1
@@ -565,10 +565,10 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                (targetSem_Error,s)) | SOME (labLang_LabAsm labLang_Halt
                _58 _59 _60) ->
         (match labSem_state_regs s (labSem_state_ptr_reg s) with
-          wordLang_Word (n2w 0) -> (targetSem_Halt ffi_Success,s) |
-          wordLang_Word _61 -> (targetSem_Halt
-          ffi_Resource_limit_hit,s) | _62 -> (targetSem_Error,s)) |
-          SOME (labLang_LabAsm (labLang_LocValue r lab) _63 _64 _65) ->
+          wordLang_Word (n2w 0) -> (labLang_Halt ffi_Success,s) |
+          wordLang_Word _61 -> (labLang_Halt ffi_Resource_limit_hit,s)
+          | _62 -> (targetSem_Error,s)) | SOME (labLang_LabAsm
+          (labLang_LocValue r lab) _63 _64 _65) ->
         (if get_pc_value lab s = NONE then (targetSem_Error,s) else
            let s1 = labSem_upd_reg r (lab_to_loc lab) s in
              labSem_evaluate (inc_pc (labSem_dec_clock s1))) | SOME
@@ -655,8 +655,8 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                    bytes,SOME bytes2,SOME new_pc) ->
               (match call_FFI (labSem_state_ffi s) (ffi_ExtCall
                 ffi_index) bytes bytes2 with FFI_final outcome ->
-                (targetSem_Halt (ffi_FFI_outcome outcome),s) |
-                FFI_return new_ffi new_bytes ->
+                (labLang_Halt (ffi_FFI_outcome outcome),s) | FFI_return
+                new_ffi new_bytes ->
                    (let new_io_regs = misc_shift_seq 1
                      (labSem_state_io_regs s) in
                    let new_io_fp_regs = misc_shift_seq 1
@@ -691,7 +691,7 @@ let labSem_semantics_def = new_definition
      match some (\res.
        ?k t outcome.
          labSem_evaluate (labSem_state_clock_fupd (K k) s) =
-           (targetSem_Halt outcome,t) /\
+           (labLang_Halt outcome,t) /\
          res = ffi_Terminate outcome (ffi_state_io_events
            (labSem_state_ffi t))) with SOME res -> res | NONE ->
        ffi_Diverge

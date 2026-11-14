@@ -404,22 +404,22 @@ let take_drop_lem = prove
 let evaluate_genlist_vars = prove
  (`!skip env n st.
     n + skip <= LENGTH env ==>
-    bvlSem_evaluate (list_of_seq (\arg. db_vars_Var (arg + skip))
+    bvlSem_evaluate (list_of_seq (\arg. bvl_Var (arg + skip))
       n,env,st) =
     (Rval (TAKE n (DROP skip env)),st)`,
   CHEAT_TAC);;
 
 let evaluate_var_reverse = prove
  (`!xs env ys (st:('c,'ffi)bvlSem_state).
-   bvlSem_evaluate (MAP db_vars_Var xs,env,st) = (Rval ys,st) ==>
-   bvlSem_evaluate (REVERSE (MAP db_vars_Var xs),env,st) = (Rval
+   bvlSem_evaluate (MAP bvl_Var xs,env,st) = (Rval ys,st) ==>
+   bvlSem_evaluate (REVERSE (MAP bvl_Var xs),env,st) = (Rval
      (REVERSE ys),st)`,
   CHEAT_TAC);;
 
 let evaluate_genlist_vars_rev = prove
  (`!skip env n st.
      n + skip <= LENGTH env ==>
-     bvlSem_evaluate (REVERSE (list_of_seq (\arg. db_vars_Var (arg +
+     bvlSem_evaluate (REVERSE (list_of_seq (\arg. bvl_Var (arg +
        skip)) n),env,st) =
      (Rval (REVERSE (TAKE n (DROP skip env))),st)`,
   CHEAT_TAC);;
@@ -457,11 +457,11 @@ let bvlProps_get_vars_def,bvlProps_get_vars_ind = define_rec
 let isVar_def = new_definition
   `isVar x1 =
         match x1 with
-          ((db_vars_Var n):bvl_exp) -> T
+          ((bvl_Var n):bvl_exp) -> T
         | _1 -> F`;;
 
 let destVar_def = define_general
-  [`(destVar ((db_vars_Var n):bvl_exp) = n)`];;
+  [`(destVar ((bvl_Var n):bvl_exp) = n)`];;
 
 let evaluate_Var_list = prove
  (`!l. ALL isVar l ==>

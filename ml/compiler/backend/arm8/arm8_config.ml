@@ -28,17 +28,17 @@ let arm8_names_def = new_definition
       // source 0 must represent r30 (link register),
       // source 1-4 must be r0-r3 (1st 4 args),
       // top three (26-28) must be callee-saved (in r19-r28)
-      balanced_map_insert 0 30 o
-      balanced_map_insert 1 0 o
-      balanced_map_insert 2 1 o
-      balanced_map_insert 3 2 o
-      balanced_map_insert 4 3 o
-      balanced_map_insert 18 4 o
-      balanced_map_insert 25 29 o
-      balanced_map_insert 26 25 o
+      sptree_insert 0 30 o
+      sptree_insert 1 0 o
+      sptree_insert 2 1 o
+      sptree_insert 3 2 o
+      sptree_insert 4 3 o
+      sptree_insert 18 4 o
+      sptree_insert 25 29 o
+      sptree_insert 26 25 o
       // Next ones are for well-formedness only
-      balanced_map_insert 29 18 o
-      balanced_map_insert 30 26) LN:num spt)`;;
+      sptree_insert 29 18 o
+      sptree_insert 30 26) LN:num spt)`;;
 
 (* HOL4 arm8_configScript.sml:32-33: a theorem that HOL4 states as
    the value of an ML expression: arm8_names_def *)

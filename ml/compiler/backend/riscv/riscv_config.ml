@@ -37,20 +37,20 @@ let riscv_names_def = new_definition
     // the last 3 of these (24, 25, 26) must be mapped to callee saved regs
     // 0 must be mapped to link reg (1)
     // 1-4 must be mapped to 1st-4st args (10-13)
-    balanced_map_insert 0 1 o
-    balanced_map_insert 1 10 o
-    balanced_map_insert 2 11 o
-    balanced_map_insert 3 12 o
-    balanced_map_insert 4 13 o
+    sptree_insert 0 1 o
+    sptree_insert 1 10 o
+    sptree_insert 2 11 o
+    sptree_insert 3 12 o
+    sptree_insert 4 13 o
     // the rest to make the mapping well-formed
-    balanced_map_insert 10 27 o
-    balanced_map_insert 11 28 o
-    balanced_map_insert 12 29 o
-    balanced_map_insert 13 30 o
-    balanced_map_insert 27 0 o
-    balanced_map_insert 28 2 o
-    balanced_map_insert 29 3 o
-    balanced_map_insert 30 4) LN:num spt)`;;
+    sptree_insert 10 27 o
+    sptree_insert 11 28 o
+    sptree_insert 12 29 o
+    sptree_insert 13 30 o
+    sptree_insert 27 0 o
+    sptree_insert 28 2 o
+    sptree_insert 29 3 o
+    sptree_insert 30 4) LN:num spt)`;;
 
 (* HOL4 riscv_configScript.sml:45-46: a theorem that HOL4 states as
    the value of an ML expression: riscv_names_def *)

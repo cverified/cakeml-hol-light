@@ -2470,9 +2470,9 @@ let locals_rel_evaluate_thm = prove
        wordSem_evaluate (prog,wordSem_state_locals_fupd (K loc) st) =
          (res,wordSem_state_locals_fupd (K loc') rst) /\
        (match res with NONE -> locals_rel temp
-         (wordSem_state_locals rst) loc' | SOME (wordSem_Break _17) ->
-         locals_rel temp (wordSem_state_locals rst) loc' | SOME
-         (wordSem_Continue _18) -> locals_rel temp
+         (wordSem_state_locals rst) loc' | SOME (wordLang_Break _17)
+         -> locals_rel temp (wordSem_state_locals rst) loc' | SOME
+         (wordLang_Continue _18) -> locals_rel temp
          (wordSem_state_locals rst) loc' | SOME _19 ->
          wordSem_state_locals rst = loc'))`,
   CHEAT_TAC);;

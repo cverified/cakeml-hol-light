@@ -25,27 +25,27 @@ let evaluate_Seq_Skip = prove
 
 (* [local] *)
 let evaluate_pSeq = prove
- (`dataSem_evaluate (pSeq c1 c2,s) = dataSem_evaluate (word_bignum_Seq
-  c1 c2,s)`,
+ (`dataSem_evaluate (pSeq c1 c2,s) = dataSem_evaluate (dataLang_Seq c1
+  c2,s)`,
   CHEAT_TAC);;
 
 (* The Seq-with-Skip continuation is the identity on a result pair: the
    inner lambda from unfolding `evaluate (Seq _ Skip)` collapses. *)
 (* [local] *)
 let lam_skip_id = prove
- (`(\(res,s1). if res = NONE then dataSem_evaluate
-  (word_bignum_Skip,s1) else (res,s1)) x = x`,
+ (`(\(res,s1). if res = NONE then dataSem_evaluate (dataLang_Skip,s1)
+  else (res,s1)) x = x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_simp = prove
  (`!c1 s c2. dataSem_evaluate (simp c1 c2,s) = dataSem_evaluate
-  (word_bignum_Seq c1 c2,s)`,
+  (dataLang_Seq c1 c2,s)`,
   CHEAT_TAC);;
 
 let simp_correct = prove
- (`!c s. dataSem_evaluate (simp c word_bignum_Skip,s) =
-  dataSem_evaluate (c,s)`,
+ (`!c s. dataSem_evaluate (simp c dataLang_Skip,s) = dataSem_evaluate
+  (c,s)`,
   CHEAT_TAC);;
 
 let get_code_labels_simp = prove

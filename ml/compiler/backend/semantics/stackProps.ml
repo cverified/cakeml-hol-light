@@ -505,12 +505,12 @@ let pair_map_eq = prove
 
 let bad_fun_return_IMP = prove
  (`stackSem_bad_fun_return res ==> res = NONE \/ (?n. res = SOME
-  (stackSem_Break n) \/ res = SOME (stackSem_Continue n))`,
+  (stackLang_Break n) \/ res = SOME (stackLang_Continue n))`,
   CHEAT_TAC);;
 
 let cont_loop_IMP = prove
  (`stackSem_cont_loop res ==> res = NONE \/ res = SOME
-  (stackSem_Continue 0)`,
+  (stackLang_Continue 0)`,
   CHEAT_TAC);;
 
 (* evaluate_add_clock *)
@@ -627,10 +627,10 @@ let stackProps_extract_labels_def,stackProps_extract_labels_ind =
          NONE -> APPEND [(l1,l2)] ret_rest | SOME (prog,l1',l2') ->
          (let h_rest = stackProps_extract_labels prog in APPEND
            (APPEND [(l1,l2); (l1',l2')] ret_rest) h_rest))))
-        | (wordLang_Loop s1) -> stackProps_extract_labels s1
-        | (wordLang_Seq s1 s2) -> APPEND (stackProps_extract_labels
+        | (stackLang_Loop s1) -> stackProps_extract_labels s1
+        | (stackLang_Seq s1 s2) -> APPEND (stackProps_extract_labels
           s1) (stackProps_extract_labels s2)
-        | (wordLang_If cmp r1 ri e2 e3) ->
+        | (stackLang_If cmp r1 ri e2 e3) ->
        (APPEND (stackProps_extract_labels e2)
          (stackProps_extract_labels e3))
         | _10 -> []`];;
@@ -895,13 +895,13 @@ let alloc_arg_def,alloc_arg_ind = define_wf
   [`alloc_arg x1 =
         match x1 with
           stackLang_Alloc v -> (v = 1)
-        | ((wordLang_Seq p1 p2):'a stackLang_prog) ->
+        | ((stackLang_Seq p1 p2):'a stackLang_prog) ->
         alloc_arg p1 /\ alloc_arg p2
-        | ((wordLang_If c r ri p1 p2):'a stackLang_prog) ->
+        | ((stackLang_If c r ri p1 p2):'a stackLang_prog) ->
         alloc_arg p1 /\ alloc_arg p2
-        | (wordLang_Loop p1) ->
+        | (stackLang_Loop p1) ->
         alloc_arg p1
-        | (wordLang_Call x1 _39 x2) ->
+        | (stackLang_Call x1 _39 x2) ->
         (match x1 with SOME (y,r,_40,_41) -> alloc_arg y | NONE ->
           T) /\
         (match x2 with SOME (y,_42,_43) -> alloc_arg y | NONE -> T)
@@ -965,47 +965,47 @@ let reg_bound_def,reg_bound_ind = define_wf
         match x1 with
           stackLang_Halt v1 ->
         v1 < k
-        | (wordLang_Raise v1) ->
+        | (stackLang_Raise v1) ->
         v1 < k
-        | (wordLang_Get v1 n) ->
+        | (stackLang_Get v1 n) ->
         v1 < k
-        | (wordLang_OpCurrHeap op v1 v2) ->
+        | (stackLang_OpCurrHeap op v1 v2) ->
         v1 < k /\ v2 < k
-        | (wordLang_Set n v1) ->
+        | (stackLang_Set n v1) ->
         v1 < k /\ ~(n = BitmapBase)
-        | (wordLang_LocValue v1 l1 l2) ->
+        | (stackLang_LocValue v1 l1 l2) ->
         v1 < k
-        | (wordLang_StoreConsts t1 t2 _57) ->
+        | (stackLang_StoreConsts t1 t2 _57) ->
         3 < k /\ t1 < k /\ t2 < k
-        | (wordLang_Return v1) ->
+        | (stackLang_Return v1) ->
         v1 < k
         | (stackLang_JumpLower v1 v2 dest) ->
         v1 < k /\ v2 < k
-        | ((wordLang_Seq p1 p2):'a stackLang_prog) ->
+        | ((stackLang_Seq p1 p2):'a stackLang_prog) ->
         reg_bound p1 k /\ reg_bound p2 k
-        | ((wordLang_If c r ri p1 p2):'a stackLang_prog) ->
+        | ((stackLang_If c r ri p1 p2):'a stackLang_prog) ->
         r < k /\ (match ri with Reg n -> n < k | _58 -> T) /\
         reg_bound p1 k /\ reg_bound p2 k
-        | (wordLang_Loop p1) ->
+        | (stackLang_Loop p1) ->
         reg_bound p1 k
-        | (stackSem_Halt n) -> n < k
-        | (wordLang_FFI ffi_index ptr' len' ptr2' len2' ret') ->
+        | (stackLang_Halt n) -> n < k
+        | (stackLang_FFI ffi_index ptr' len' ptr2' len2' ret') ->
         ptr' < k /\ len' < k /\ ptr2' < k /\ len2' < k /\ ret' < k
-        | (wordLang_Call x1 dest x2) ->
+        | (stackLang_Call x1 dest x2) ->
         (match dest with INR i -> i < k | _59 -> T) /\
         (match x1 with NONE -> T | SOME (y,r,_60,_61) -> reg_bound y
           k /\ r < k /\
                              (match x2 with SOME (y,_62,_63) ->
                                reg_bound y k | NONE -> T))
-        | (wordLang_Install ptr len dptr dlen ret) ->
+        | (stackLang_Install ptr len dptr dlen ret) ->
        ptr < k /\ len < k /\ dptr < k /\ dlen < k /\ ret < k
         | (stackLang_ShMemOp op r (Addr a _64)) -> r < k /\ a < k
-        | (wordLang_CodeBufferWrite r1 r2) ->
+        | (stackLang_CodeBufferWrite r1 r2) ->
        r1 < k /\ r2 < k
-        | (wordLang_DataBufferWrite r1 r2) ->
+        | (stackLang_DataBufferWrite r1 r2) ->
        r1 < k /\ r2 < k
         | (stackLang_BitmapLoad r v) -> r < k /\ v < k
-        | (wordLang_Inst i) -> reg_bound_inst i k
+        | (stackLang_Inst i) -> reg_bound_inst i k
         | (stackLang_StackStore r _65) -> r < k
         | (stackLang_StackSetSize r) -> r < k
         | (stackLang_StackGetSize r) -> r < k
@@ -1056,12 +1056,12 @@ let stack_get_handler_labels_def,stack_get_handler_labels_ind =
          (match h with SOME (x,l1,l2) -> (if l1 = n then {(l1,l2)}
            else {}) UNION (stack_get_handler_labels n x) | _77 -> {}) |
            _78 -> {})
-        | (wordLang_Seq p1 p2) -> stack_get_handler_labels n p1
+        | (stackLang_Seq p1 p2) -> stack_get_handler_labels n p1
           UNION stack_get_handler_labels n p2
-        | (wordLang_If _79 _80 _81 p1 p2) ->
+        | (stackLang_If _79 _80 _81 p1 p2) ->
           stack_get_handler_labels n p1 UNION stack_get_handler_labels
           n p2
-        | (wordLang_Loop p) -> stack_get_handler_labels n p
+        | (stackLang_Loop p) -> stack_get_handler_labels n p
         | _82 -> {}`];;
 add_simp stack_get_handler_labels_def;;
 
@@ -1122,12 +1122,12 @@ let stackProps_no_install_def,stackProps_no_install_ind = define_wf
          _101 -> T) /\
         (match h with SOME (x,_102,_103) -> stackProps_no_install x
           | _104 -> T))
-        | (wordLang_Seq p1 p2) -> (stackProps_no_install p1 /\
+        | (stackLang_Seq p1 p2) -> (stackProps_no_install p1 /\
           stackProps_no_install p2)
-        | (wordLang_If _105 _106 _107 p1 p2) ->
+        | (stackLang_If _105 _106 _107 p1 p2) ->
           (stackProps_no_install p1 /\ stackProps_no_install p2)
-        | (wordLang_Loop p) -> stackProps_no_install p
-        | (wordLang_Install _108 _109 _110 _111 _112) -> F
+        | (stackLang_Loop p) -> stackProps_no_install p
+        | (stackLang_Install _108 _109 _110 _111 _112) -> F
         | _113 -> T`];;
 
 (* the termination relation is not in the HOL4 source; this one is

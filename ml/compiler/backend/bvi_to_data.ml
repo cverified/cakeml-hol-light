@@ -106,7 +106,7 @@ let bvi_to_data_compile_def,bvi_to_data_compile_ind =
    `bvi_to_data_compile (n:num) (env:num list) tail live [(bvi_Var
     v):bvi_exp] =
          (let var = any_el v env 0 in
-         if tail then (bvi_Return [var],[n],n + 1) else
+         if tail then (dataLang_Return [var],[n],n + 1) else
              (dataLang_Skip,[var],MAX n (var + 1)))`;
    `bvi_to_data_compile (n:num) (env:num list) tail live [(bvi_If x1 x2
     x3:bvi_exp)] =
@@ -159,16 +159,16 @@ let bvi_to_data_compile_def,bvi_to_data_compile_ind =
          (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
          let ret = (if tail then NONE else SOME
              ([n1],list_to_num_set (APPEND live env))) in
-           (dataLang_Seq c1 (mk_ticks ticks (bvi_Call ret dest vs
-               NONE)),[n1],n1 + 1))`;
+           (dataLang_Seq c1 (mk_ticks ticks (dataLang_Call ret
+               dest vs NONE)),[n1],n1 + 1))`;
    `bvi_to_data_compile (n:num) (env:num list) tail live [(bvi_Call
     ticks dest xs (SOME handler):bvi_exp)] =
          (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
          let (c2,v,n2) = bvi_to_data_compile (n1 + 1) (CONS n1 env)
              F live [handler] in
          let ret = SOME ([n2],list_to_num_set (APPEND live env)) in
-         let c3 = (if tail then bvi_Return [n2] else dataLang_Skip)
-             in
+         let c3 = (if tail then dataLang_Return [n2] else
+             dataLang_Skip) in
            (dataLang_Seq c1 (mk_ticks ticks (dataLang_Seq
                (dataLang_Call ret dest vs (SOME (n1,dataLang_Seq c2
                (dataLang_Move n2 (HD v))))) c3)),[n2],n2 + 1))`;
@@ -178,8 +178,8 @@ let bvi_to_data_compile_def,bvi_to_data_compile_ind =
            if y = bvi_Return (list_of_seq bvi_Var rets) then
              (
               // tailcall
-              dataLang_Seq c1 (mk_ticks ticks (bvi_Call NONE (SOME
-                  dest) vs NONE)),[n1],n1 + 1) else
+              dataLang_Seq c1 (mk_ticks ticks (dataLang_Call NONE
+                  (SOME dest) vs NONE)),[n1],n1 + 1) else
              // non-tailcall
              let rs = list_of_seq (\i. n1 + i) rets in
              let (c2,v,n2) = bvi_to_data_compile (n1 + rets) (APPEND
@@ -187,14 +187,15 @@ let bvi_to_data_compile_def,bvi_to_data_compile_ind =
              let ret = (SOME (rs,list_to_num_set (APPEND live env)))
                  in
                (dataLang_Seq (dataLang_Seq c1 (mk_ticks ticks
-                   (bvi_Call ret (SOME dest) vs NONE))) c2,v,n2))`];;
+                   (dataLang_Call ret (SOME dest) vs NONE)))
+                   c2,v,n2))`];;
 
 let compile_sing_def,compile_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`bvi_to_data_compile_sing (n:num) (env:num list) tail live ((bvi_Var
     v):bvi_exp) =
          (let var = any_el v env 0 in
-         if tail then (bvi_Return [var],n,n + 1) else
+         if tail then (dataLang_Return [var],n,n + 1) else
              (dataLang_Skip,var,MAX n (var + 1)))`;
    `bvi_to_data_compile_sing (n:num) (env:num list) tail live (bvi_If x1
     x2 x3:bvi_exp) =
@@ -248,16 +249,16 @@ let compile_sing_def,compile_sing_ind = assume_definition_rec
          (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
          let ret = (if tail then NONE else SOME
              ([n1],list_to_num_set (APPEND live env))) in
-           (dataLang_Seq c1 (mk_ticks ticks (bvi_Call ret dest vs
-               NONE)),n1,n1 + 1))`;
+           (dataLang_Seq c1 (mk_ticks ticks (dataLang_Call ret
+               dest vs NONE)),n1,n1 + 1))`;
    `bvi_to_data_compile_sing (n:num) (env:num list) tail live (bvi_Call
     ticks dest xs (SOME handler):bvi_exp) =
          (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
          let (c2,v,n2) = bvi_to_data_compile_sing (n1 + 1) (CONS n1
              env) F live handler in
          let ret = SOME ([n2],list_to_num_set (APPEND live env)) in
-         let c3 = (if tail then bvi_Return [n2] else dataLang_Skip)
-             in
+         let c3 = (if tail then dataLang_Return [n2] else
+             dataLang_Skip) in
            (dataLang_Seq c1 (mk_ticks ticks
               (dataLang_Seq (dataLang_Call ret dest vs (SOME
                   (n1,dataLang_Seq c2 (dataLang_Move n2 v)))) c3)),
@@ -268,8 +269,8 @@ let compile_sing_def,compile_sing_ind = assume_definition_rec
            if y = bvi_Return (list_of_seq bvi_Var rets) then
              (
               // tailcall
-              dataLang_Seq c1 (mk_ticks ticks (bvi_Call NONE (SOME
-                  dest) vs NONE)),n1,n1 + 1) else
+              dataLang_Seq c1 (mk_ticks ticks (dataLang_Call NONE
+                  (SOME dest) vs NONE)),n1,n1 + 1) else
              // non-tailcall
              let rs = list_of_seq (\i. n1 + i) rets in
              let (c2,v,n2) = bvi_to_data_compile_sing (n1 + rets)
@@ -277,7 +278,8 @@ let compile_sing_def,compile_sing_ind = assume_definition_rec
              let ret = (SOME (rs,list_to_num_set (APPEND live env)))
                  in
                (dataLang_Seq (dataLang_Seq c1 (mk_ticks ticks
-                   (bvi_Call ret (SOME dest) vs NONE))) c2,v,n2))`;
+                   (dataLang_Call ret (SOME dest) vs NONE)))
+                   c2,v,n2))`;
    `bvi_to_data_compile_list (n:num) (env:num list) live [] =
         (dataLang_Skip,([]:num list),n)`;
    `bvi_to_data_compile_list (n:num) (env:num list) live (CONS x xs) =

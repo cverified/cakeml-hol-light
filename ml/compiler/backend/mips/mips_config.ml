@@ -31,17 +31,17 @@ let mips_names_def = new_definition
       // source 0 must represent r31 (link register),
       // source 1-4 must be r4-r7 (1st 4 args),
       // top 3 (21-23) must be callee-saved (in 16-23, 28, 30)
-      balanced_map_insert 0 31 o
-      balanced_map_insert 1 4 o
-      balanced_map_insert 2 5 o
-      balanced_map_insert 3 6 o
-      balanced_map_insert 4 7 o
+      sptree_insert 0 31 o
+      sptree_insert 1 4 o
+      sptree_insert 2 5 o
+      sptree_insert 3 6 o
+      sptree_insert 4 7 o
       // the rest just ensures that the mapping is well-formed
-      balanced_map_insert 7 2 o
-      balanced_map_insert 5 24 o
-      balanced_map_insert 6 3 o
-      balanced_map_insert 24 0 o
-      balanced_map_insert 31 1) LN:num spt)`;;
+      sptree_insert 7 2 o
+      sptree_insert 5 24 o
+      sptree_insert 6 3 o
+      sptree_insert 24 0 o
+      sptree_insert 31 1) LN:num spt)`;;
 
 (* HOL4 mips_configScript.sml:35-36: a theorem that HOL4 states as
    the value of an ML expression: mips_names_def *)

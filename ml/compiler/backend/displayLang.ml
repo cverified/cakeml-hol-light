@@ -35,19 +35,18 @@ let sExp_INDUCT,sExp_RECURSION = define_datatype
 (* display_to_json *)
 let trace_to_json_def,trace_to_json_ind = define_rec
   [`trace_to_json (backend_common_Cons tra num') =
-        jsonLang_Object [((implode "name"),displayLang_String
-            (implode "Cons"));
-          ((implode "num"),displayLang_String (mlint_toString
-              num'));
+        jsonLang_Object [((implode "name"),jsonLang_String (implode
+            "Cons"));
+          ((implode "num"),jsonLang_String (mlint_toString num'));
           ((implode "trace"),trace_to_json tra)]`;
    `trace_to_json (backend_common_Union tra1 tra2:tra) =
-        jsonLang_Object [((implode "name"),displayLang_String
-            (implode "Union"));
+        jsonLang_Object [((implode "name"),jsonLang_String (implode
+            "Union"));
           ((implode "trace1"),trace_to_json tra1);
           ((implode "trace2"),trace_to_json tra2)]`;
    `trace_to_json (backend_common_SourceLoc sr scc er ec) =
         (let arr = MAP jsonLang_Int (MAP (&) [sr; scc; er; ec]) in
-          jsonLang_Object [((implode "name"),displayLang_String
+          jsonLang_Object [((implode "name"),jsonLang_String
               (implode "SourcePos"));
             ((implode "pos"),jsonLang_Array arr)])`;
    `// TODO: cancel entire trace when None, or verify that None will always be at

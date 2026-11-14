@@ -28,17 +28,17 @@ let arm7_names_def = new_definition
       // source 1-4 must be r0-r3 (1st 4 arguments)
       // the top three (source 11-13) must be callee-saved
       // (callee-saved include: r4-r8, r10-11)
-      balanced_map_insert 0 14 o
-      balanced_map_insert 1 0 o
-      balanced_map_insert 2 1 o
-      balanced_map_insert 3 2 o
-      balanced_map_insert 4 3 o
-      balanced_map_insert 12 8 o
-      balanced_map_insert 13 10 o
+      sptree_insert 0 14 o
+      sptree_insert 1 0 o
+      sptree_insert 2 1 o
+      sptree_insert 3 2 o
+      sptree_insert 4 3 o
+      sptree_insert 12 8 o
+      sptree_insert 13 10 o
       // the rest just ensures that the mapping is well-formed
-      balanced_map_insert 8 4 o
-      balanced_map_insert 10 12 o
-      balanced_map_insert 14 13) LN:num spt)`;;
+      sptree_insert 8 4 o
+      sptree_insert 10 12 o
+      sptree_insert 14 13) LN:num spt)`;;
 
 (* HOL4 arm7_configScript.sml:32-33: a theorem that HOL4 states as
    the value of an ML expression: arm7_names_def *)

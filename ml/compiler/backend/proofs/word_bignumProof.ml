@@ -62,8 +62,8 @@ let eval_exp_def,eval_exp_ind = define_wf
      x1) (eval_exp s x2) /\
    eval_exp s (wordLang_Op asm_Or [x1; x2]) = word_or (eval_exp s
      x1) (eval_exp s x2) /\
-   eval_exp s (wordLang_Op backend_common_Xor [x1; x2]) = word_xor
-     (eval_exp s x1) (eval_exp s x2) /\
+   eval_exp s (wordLang_Op asm_Xor [x1; x2]) = word_xor (eval_exp s
+     x1) (eval_exp s x2) /\
    eval_exp s (wordLang_Shift Lsl x1 x2) = eval_exp s x1 << (w2n
      (eval_exp s x2)) /\
    eval_exp s (wordLang_Shift Asr x1 x2) = eval_exp s x1 >> (w2n
@@ -177,7 +177,7 @@ let eval = cake_inductive
         = n2) /\
       (single_add_word (FAPPLY (word_bignumProof_state_regs s) n3)
         (eval_ri s n4) (eval_ri s n5) = (r1,r2)) ==>
-      word_bignumProof_Eval r s (word_bignum_Add n1 n2 n3 n4 n5)
+      word_bignumProof_Eval r s (asm_Add n1 n2 n3 n4 n5)
        (INR (reg_write n1 (SOME r1) (reg_write n2 (SOME r2) s)))) /\
    (!r s n1 n2 n3 n4 n5 r1 r2.
       n3 IN FDOM (word_bignumProof_state_regs s) /\ eval_ri_pre s n4
@@ -186,7 +186,7 @@ let eval = cake_inductive
         = n2) /\
       (single_sub_word (FAPPLY (word_bignumProof_state_regs s) n3)
         (eval_ri s n4) (eval_ri s n5) = (r1,r2)) ==>
-      word_bignumProof_Eval r s (word_bignum_Sub n1 n2 n3 n4 n5)
+      word_bignumProof_Eval r s (asm_Sub n1 n2 n3 n4 n5)
        (INR (reg_write n1 (SOME r1) (reg_write n2 (SOME r2) s)))) /\
    (!r s n1 n2 n3 n4.
       n3 IN FDOM (word_bignumProof_state_regs s) /\ n4 IN FDOM
@@ -403,11 +403,11 @@ let syntax_ok_aux_def,syntax_ok_aux_ind = define_shaped_rec
       | (word_bignum_If t1 t2 t3 p1 p2) ->
       t2 < (25) /\ (!r. t3 = Reg r ==> r < (25)) /\
       syntax_ok_aux p1 /\ syntax_ok_aux p2
-      | (word_bignum_Add n1 n2 n3 n4 n5) ->
+      | (asm_Add n1 n2 n3 n4 n5) ->
       n1 < (25) /\ n2 < (25) /\ n3 < (25) /\
       (!r. n4 = Reg r ==> r < (25)) /\
       (!r. n5 = Reg r ==> r < (25))
-      | (word_bignum_Sub n1 n2 n3 n4 n5) ->
+      | (asm_Sub n1 n2 n3 n4 n5) ->
       n1 < (25) /\ n2 < (25) /\ n3 < (25) /\
       (!r. n4 = Reg r ==> r < (25)) /\
       (!r. n5 = Reg r ==> r < (25))
@@ -818,7 +818,7 @@ let Corr_Swap = prove
 
 (* [local] *)
 let Corr_Add = prove
- (`Corr (word_bignum_Add n1 n2 n3 ri1 ri2) s
+ (`Corr (asm_Add n1 n2 n3 ri1 ri2) s
     (INR (reg_write n1
            (SOME (FST (single_add_word (FAPPLY
              (word_bignumProof_state_regs s) n3) (eval_ri s ri1)
@@ -835,7 +835,7 @@ let Corr_Add = prove
 
 (* [local] *)
 let Corr_Sub = prove
- (`Corr (word_bignum_Sub n1 n2 n3 ri1 ri2) s
+ (`Corr (asm_Sub n1 n2 n3 ri1 ri2) s
     (INR (reg_write n1
            (SOME (FST (single_sub_word (FAPPLY
              (word_bignumProof_state_regs s) n3) (eval_ri s ri1)

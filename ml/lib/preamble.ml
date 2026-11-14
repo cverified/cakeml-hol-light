@@ -21,6 +21,11 @@ needs "Library/iter.ml";;
 needs (cakeml_dir ^ "/../tactics/induct.ml");;
 needs (cakeml_dir ^ "/../tactics/simpset.ml");;
 
+(* and their Help files, so that `help "SIMPS_TAC";;` finds
+   them as it finds HOL Light's own *)
+
+help_path := (cakeml_dir ^ "/../tactics/Help") :: (!help_path);;
+
 needs "lib/fastdef.ml";;
 needs "lib/hol4.ml";;
 needs "lib/define.ml";;

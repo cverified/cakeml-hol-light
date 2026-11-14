@@ -184,7 +184,7 @@ add_simp destResult_def;;
 let pegparse_def = new_definition
   `pegparse G s =
      (if wfG G then
-       match pegexec_destResult (peg_exec G (start G) s [] NONE []
-         pegexec_done pegexec_failed) with
+       match pegexec_destResult (peg_exec G (peg_start G) s [] NONE
+         [] pegexec_done pegexec_failed) with
          peg_Success s v eo -> SOME (s,v,eo) | _30 -> NONE else
            NONE)`;;

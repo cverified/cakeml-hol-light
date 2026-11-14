@@ -480,10 +480,10 @@ let evaluate_sf_gc_consts = prove
        s < LENGTH (stack s) ==>
        ALL2 sf_gc_consts (LASTN (wordSem_state_handler s) (stack s))
          (stack s') /\ wordSem_state_handler
-       s' = get_above_handler s | SOME (wordSem_Break _16) ->
+       s' = get_above_handler s | SOME (wordLang_Break _16) ->
        ALL2 sf_gc_consts (stack s) (stack s') /\
          wordSem_state_handler
-       s' = wordSem_state_handler s | SOME (wordSem_Continue _17) ->
+       s' = wordSem_state_handler s | SOME (wordLang_Continue _17) ->
        ALL2 sf_gc_consts (stack s) (stack s') /\
          wordSem_state_handler
        s' = wordSem_state_handler s | _18 -> T)`,

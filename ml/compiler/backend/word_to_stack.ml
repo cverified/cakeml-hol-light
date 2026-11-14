@@ -56,32 +56,32 @@ let wReg2_def = new_definition
 let wRegWrite1_def = new_definition
   `wRegWrite1 g r (k,f,(f':num)) =
      (let r = r DIV 2 in
-       if r < k then g r else wordLang_Seq (g k)
+       if r < k then g r else stackLang_Seq (g k)
          (stackLang_StackStore k (f - 1 - (r - k))))`;;
 
 let wRegWrite2_def = new_definition
   `wRegWrite2 g r (k,f,(f':num)) =
      (let r = r DIV 2 in
-       if r < k then g r else wordLang_Seq (g (k + 1))
+       if r < k then g r else stackLang_Seq (g (k + 1))
          (stackLang_StackStore (k + 1) (f - 1 - (r - k))))`;;
 
 let wStackLoad_def,wStackLoad_ind = define_rec
   [`wStackLoad [] x = x`;
-   `wStackLoad (CONS (r,i) ps) x = wordLang_Seq
+   `wStackLoad (CONS (r,i) ps) x = stackLang_Seq
     (stackLang_StackLoad r i) (wStackLoad ps x)`];;
 
 let wStackStore_def,wStackStore_ind = define_rec
   [`wStackStore [] x = x`;
-   `wStackStore (CONS (r,i) ps) x = wordLang_Seq (wStackStore ps x)
-    (stackLang_StackStore r i)`];;
+   `wStackStore (CONS (r,i) ps) x = stackLang_Seq (wStackStore ps
+    x) (stackLang_StackStore r i)`];;
 
 let wMoveSingle_def = new_definition
   `wMoveSingle (x,y) (k,f,(f':num)) =
-     (match (x,y) with (INL r1,INL r2) -> wordLang_Inst (asm_Arith
+     (match (x,y) with (INL r1,INL r2) -> stackLang_Inst (asm_Arith
        (asm_Binop asm_Or r1 r2 (Reg r2))) | (INL r1,INR r2) ->
        stackLang_StackLoad r1 (f - 1 - (r2 - k)) | (INR r1,INL r2) ->
        stackLang_StackStore r2 (f - 1 - (r1 - k)) | (INR r1,INR r2) ->
-       wordLang_Seq (stackLang_StackLoad k (f - 1 - (r2 - k)))
+       stackLang_Seq (stackLang_StackLoad k (f - 1 - (r2 - k)))
                               (stackLang_StackStore k (f - 1 - (r1
                                 - k))))`;;
 
@@ -92,9 +92,9 @@ let wMoveAux_def,wMoveAux_ind = define_wf
   (\n. n)) (sum_size (\n. n) (\n. n)))      x0)`
   [`wMoveAux x1 kf =
         match x1 with
-          [] -> wordLang_Skip
+          [] -> stackLang_Skip
         | [xy] -> wMoveSingle xy kf
-        | (CONS xy xys) -> wordLang_Seq (wMoveSingle xy kf)
+        | (CONS xy xys) -> stackLang_Seq (wMoveSingle xy kf)
           (wMoveAux xys kf)`];;
 
 let format_var_def = define_cases
@@ -294,25 +294,25 @@ let insert_bitmap_def = new_definition
 let wLive_def = new_definition
   `wLive (live:1 spt#1 spt) (bitmaps:('a word) app_list#num)
   (k,(f:num),(f':num)) =
-     (if f = 0 then (wordLang_Skip,bitmaps) else
+     (if f = 0 then (stackLang_Skip,bitmaps) else
        let (new_bitmaps,i) = insert_bitmap (write_bitmap (SND live) k
          f') bitmaps in
-         ((wordLang_Seq (wordLang_Inst (asm_Const k (n2w (i +
+         ((stackLang_Seq (stackLang_Inst (asm_Const k (n2w (i +
            1)))) (stackLang_StackStore k 0):'a
            stackLang_prog),new_bitmaps))`;;
 
 let SeqStackFree_def = new_definition
-  `SeqStackFree n p = (if n = 0 then p else wordLang_Seq
+  `SeqStackFree n p = (if n = 0 then p else stackLang_Seq
   (stackLang_StackFree n) p)`;;
 
 let call_dest_def = define_cases
-  [`(call_dest (SOME pos) args kf = (wordLang_Skip,INL pos)) /\
+  [`(call_dest (SOME pos) args kf = (stackLang_Skip,INL pos)) /\
    (call_dest NONE args kf =
-      (if LENGTH args = 0 then (wordLang_Skip,INL
+      (if LENGTH args = 0 then (stackLang_Skip,INL
         raise_stub_location) else
         // this case can never occur, raise_stub_location is convenient
         let (x1,r) = wReg2 (LAST args) kf in
-          (wStackLoad x1 wordLang_Skip,INR r)))`];;
+          (wStackLoad x1 stackLang_Skip,INR r)))`];;
 
 let stack_arg_count_def = new_definition
   `stack_arg_count dest arg_count k =
@@ -329,8 +329,8 @@ let stack_move_def,stack_move_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
   [`stack_move 0 start' offset i p = p`;
    `stack_move (SUC n) start' offset i p =
-         wordLang_Seq (stack_move n (start' + 1) offset i p)
-             (wordLang_Seq (stackLang_StackLoad i (start' +
+         stackLang_Seq (stack_move n (start' + 1) offset i p)
+             (stackLang_Seq (stackLang_StackLoad i (start' +
                  offset)) (stackLang_StackStore i start'))`];;
 
 let StackArgs_def = new_definition
@@ -360,29 +360,29 @@ let perf_call_prefix_def = new_definition
   `perf_call_prefix l1 l2 k =
      stackLang_list_Seq [
        // k := return address
-       wordLang_LocValue k l1 l2;
+       stackLang_LocValue k l1 l2;
        // Write the new frame's slots BELOW perf_rsp first; do not adjust
        // perf_rsp yet, so perf's fp-walker still sees the old (valid) frame
        // while the new one is being built. After the final Sub, the layout
        // will be (perf_rsp)=old_rbp, 8(perf_rsp)=ret_addr.
-       wordLang_Inst (asm_Mem asm_Store k (Addr perf_rsp (--(n2w
+       stackLang_Inst (asm_Mem asm_Store k (Addr perf_rsp (--(n2w
          8))));
-       wordLang_Inst (asm_Mem asm_Store perf_rbp (Addr perf_rsp
+       stackLang_Inst (asm_Mem asm_Store perf_rbp (Addr perf_rsp
          (--(n2w 16))));
        // Atomically commit the new frame, then sync perf_rbp := perf_rsp.
-       wordLang_Inst (asm_Arith (asm_Binop asm_Sub perf_rsp perf_rsp
+       stackLang_Inst (asm_Arith (asm_Binop asm_Sub perf_rsp perf_rsp
          (Imm (n2w 16))));
-       wordLang_Inst (asm_Arith (asm_Binop asm_Or perf_rbp
+       stackLang_Inst (asm_Arith (asm_Binop asm_Or perf_rbp
          perf_rsp (Reg perf_rsp)))]`;;
 
 let perf_call_suffix_def = new_definition
   `perf_call_suffix =
      stackLang_list_Seq [
        // pop saved %rbp
-       wordLang_Inst (asm_Mem asm_Load perf_rbp (Addr perf_rsp (n2w
+       stackLang_Inst (asm_Mem asm_Load perf_rbp (Addr perf_rsp (n2w
          0)));
        // discard both slots (saved-rbp + ret_addr) in one atomic step
-       wordLang_Inst (asm_Arith (asm_Binop asm_Add perf_rsp
+       stackLang_Inst (asm_Arith (asm_Binop asm_Add perf_rsp
          perf_rsp (Imm (n2w 16))))]`;;
 
 let handler_slots_def = new_definition
@@ -395,31 +395,31 @@ let StackHandlerArgs_def = new_definition
 
 let PushHandler_def = new_definition
   `PushHandler perf l1 l2 (k,f,f') =
-     wordLang_Seq (stackLang_StackAlloc (handler_slots perf))
-    (wordLang_Seq (wordLang_Inst (asm_Const k (n2w 1)))
-    (wordLang_Seq (stackLang_StackStore k 0)
-    (wordLang_Seq (wordLang_LocValue k l1 l2)
-    (wordLang_Seq (stackLang_StackStore k 1)
-    (wordLang_Seq (wordLang_Get k Handler)
-    (wordLang_Seq (stackLang_StackStore k 2)
-    (wordLang_Seq (if perf then
+     stackLang_Seq (stackLang_StackAlloc (handler_slots perf))
+    (stackLang_Seq (stackLang_Inst (asm_Const k (n2w 1)))
+    (stackLang_Seq (stackLang_StackStore k 0)
+    (stackLang_Seq (stackLang_LocValue k l1 l2)
+    (stackLang_Seq (stackLang_StackStore k 1)
+    (stackLang_Seq (stackLang_Get k Handler)
+    (stackLang_Seq (stackLang_StackStore k 2)
+    (stackLang_Seq (if perf then
             stackLang_list_Seq [
               // slot 3: saved %rsp
-              wordLang_Inst (asm_Arith (asm_Binop asm_Or k perf_rsp
+              stackLang_Inst (asm_Arith (asm_Binop asm_Or k perf_rsp
                 (Reg perf_rsp)));
               stackLang_StackStore k 3;
               // slot 4: saved %rbp
-              wordLang_Inst (asm_Arith (asm_Binop asm_Or k perf_rbp
+              stackLang_Inst (asm_Arith (asm_Binop asm_Or k perf_rbp
                 (Reg perf_rbp)));
-              stackLang_StackStore k 4] else wordLang_Skip)
-    (wordLang_Seq (stackLang_StackGetSize k)
-         (wordLang_Set Handler k)))))))))`;;
+              stackLang_StackStore k 4] else stackLang_Skip)
+    (stackLang_Seq (stackLang_StackGetSize k)
+         (stackLang_Set Handler k)))))))))`;;
 
 let PopHandler_def = new_definition
   `PopHandler perf (k,f,f') prog =
-    wordLang_Seq (stackLang_StackLoad k 2)
-   (wordLang_Seq (wordLang_Set Handler k)
-   (wordLang_Seq (stackLang_StackFree (handler_slots perf))
+    stackLang_Seq (stackLang_StackLoad k 2)
+   (stackLang_Seq (stackLang_Set Handler k)
+   (stackLang_Seq (stackLang_StackFree (handler_slots perf))
    prog))`;;
 
 let chunk_to_bits_def,chunk_to_bits_ind = define_rec
@@ -468,7 +468,7 @@ let skip_free_def = new_definition
 let copy_ret_aux_def,copy_ret_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   [`(copy_ret_aux k f n =
-     (if n = 0 then wordLang_Skip else
+     (if n = 0 then stackLang_Skip else
        let n' = n - 1 in
        stackLang_list_Seq
        [
@@ -479,7 +479,7 @@ let copy_ret_aux_def,copy_ret_aux_ind = define_wf
 let copy_ret_def = new_definition
   `copy_ret perf is_handle (k,f,f') vs kont =
    (let n = num_stack_ret k vs in
-   if n = 0 then kont else wordLang_Seq
+   if n = 0 then kont else stackLang_Seq
        (copy_ret_aux k (if is_handle then f + handler_slots perf else
          f) n)
        (SeqStackFree n kont))`;;
@@ -527,7 +527,7 @@ let word_to_stack_comp_def,word_to_stack_comp_ind =
                else
              let r = FST kf + 1 in
              (wordLang_Seq
-               ((\r w. wordLang_Inst (wordLang_Const r w)) r i)
+               ((\r w. stackLang_Inst (wordLang_Const r w)) r i)
                (wStackLoad x1 (wordLang_If cmp r' (Reg r) q1
                  q2)),bs)))
         | (wordLang_Loop _5 p1 _6) ->
@@ -587,7 +587,7 @@ let word_to_stack_comp_def,word_to_stack_comp_ind =
           (LENGTH ws)) bs in
           (wordLang_Seq (wordLang_Inst (asm_Const 1 (n2w i)))
                (wordLang_StoreConsts (FST kf) (FST kf + 1) (SOME
-                 wordLang_store_consts_stub_location)),new_bs))
+                 stackLang_store_consts_stub_location)),new_bs))
         | (wordLang_LocValue r l1) -> (wRegWrite1 (\r.
           wordLang_LocValue r l1 0) r kf,bs)
         | (wordLang_Install r1 r2 r3 r4 live) ->
@@ -684,10 +684,11 @@ let word_to_stack_compile_def = new_definition
        (append (FST bitmaps),
         mk_word_to_stack_config (SND bitmaps) sfs,CONS 0 fs,CONS
           (raise_stub_location,raise_stub perf k) (CONS
-          (wordLang_store_consts_stub_location,store_consts_stub k)
+          (stackLang_store_consts_stub_location,store_consts_stub k)
           progs)))`;;
 
 let word_to_stack_stub_names_def = new_definition
   `word_to_stack_stub_names one = [
      (raise_stub_location,implode "_Raise");
-     (wordLang_store_consts_stub_location,implode "_StoreConsts")]`;;
+     (stackLang_store_consts_stub_location,implode
+       "_StoreConsts")]`;;

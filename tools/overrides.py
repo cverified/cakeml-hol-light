@@ -11662,6 +11662,42 @@ AUX_SIZE = {
 # of the file does not say which theory a constructor is of
 # (word_alloc does not start with wordLang), this does.
 MAIN_THEORY = {
+  # the semantics of a language and the properties of it are
+  # about that language above all
+  'bvlSem': 'bvl', 'bvlProps': 'bvl',
+  'bviSem': 'bvi', 'bviProps': 'bvi',
+  'closSem': 'closLang', 'closProps': 'closLang',
+  'dataSem': 'dataLang', 'dataProps': 'dataLang',
+  'flatSem': 'flatLang', 'flatProps': 'flatLang',
+  'labSem': 'labLang', 'labProps': 'labLang',
+  'stackSem': 'stackLang', 'stackProps': 'stackLang',
+  'wordSem': 'wordLang', 'wordProps': 'wordLang',
+  'wordConvs': 'wordLang', 'wordConvsProof': 'wordLang',
+  'word_allocProof': 'wordLang',
+  'word_copyProof': 'wordLang',
+  'word_cseProof': 'wordLang',
+  'word_instProof': 'wordLang',
+  'word_removeProof': 'wordLang',
+  'word_simpProof': 'wordLang',
+  'word_unreachProof': 'wordLang',
+  'word_to_wordProof': 'wordLang',
+  'word_elim': 'wordLang', 'word_elimProof': 'wordLang',
+  'stack_allocProof': 'stackLang',
+  'stack_namesProof': 'stackLang',
+  'stack_rawcallProof': 'stackLang',
+  'stack_removeProof': 'stackLang',
+  'data_liveProof': 'dataLang',
+  'data_simpProof': 'dataLang',
+  'data_spaceProof': 'dataLang',
+  'flat_elimProof': 'flatLang',
+  'flat_patternProof': 'flatLang',
+  # a pass reads one language and builds another: the patterns
+  # are of the language it reads, which is the one here, and the
+  # bodies say so themselves (CON_BODY)
+  'data_to_word': 'wordLang',
+  'lab_to_target': 'labLang',
+  'stack_to_lab': 'stackLang',
+  'word_to_stack': 'stackLang',
   'word_alloc': 'wordLang',
   'word_copy': 'wordLang',
   'word_cse': 'wordLang',
@@ -11681,4 +11717,21 @@ MAIN_THEORY = {
   'data_space': 'dataLang',
   'flat_elim': 'flatLang',
   'flat_pattern': 'flatLang',
+}
+
+
+# CON_FILE: a name that means one theory's constant everywhere in
+# a file.  MAIN_THEORY says which language a file is about, and
+# this says the exceptions: a proof about bvl that names asm's Xor
+# or backend_common's word_shift wants that one wherever it stands.
+CON_FILE = {
+  'bvi_inlineProof': {'Force': 'bvi'},
+  'bvl_handleProof': {'Let': 'bvl', 'Var': 'bvl', 'Op': 'bvl'},
+  'clos_opProof': {'If': 'closLang', 'Op': 'closLang',
+                   'Var': 'closLang'},
+  'word_bignumProof': {'Xor': 'asm', 'And': 'asm', 'Or': 'asm',
+                       'Add': 'asm', 'Sub': 'asm'},
+  'backendProof': {'Add': 'asm', 'Sub': 'asm'},
+  'stackSem': {'Const': 'asm'},
+  'bvl_inlineProof': {'compile_oracle': 'bvl_inline'},
 }

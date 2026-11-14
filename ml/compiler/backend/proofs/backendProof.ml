@@ -139,13 +139,10 @@ let backend_config_ok_def = new_definition
        /\
      (!w. --(n2w 8) <= w /\ w <= (n2w 8) ==> (\c. asm_offset_ok 0
        (asm_config_byte_offset c)) asm_conf w) /\ asm_config_valid_imm
-     asm_conf (INL backend_common_Add) (n2w 8) /\
-       asm_config_valid_imm
-     asm_conf (INL backend_common_Add) (n2w 4) /\
-       asm_config_valid_imm
-     asm_conf (INL backend_common_Add) (n2w 1) /\
-       asm_config_valid_imm
-     asm_conf (INL backend_common_Sub) (n2w 1) /\
+     asm_conf (INL asm_Add) (n2w 8) /\ asm_config_valid_imm
+     asm_conf (INL asm_Add) (n2w 4) /\ asm_config_valid_imm
+     asm_conf (INL asm_Add) (n2w 1) /\ asm_config_valid_imm
+     asm_conf (INL asm_Sub) (n2w 1) /\
      OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s)) (ffi_names
        (backend_config_lab_conf c)) /\
      tlookup (stack_to_lab_config_reg_names
@@ -161,10 +158,10 @@ let backend_config_ok_def = new_definition
        (store_offset s)) /\
      (!n.
           n <= max_stack_alloc ==> asm_config_valid_imm
-          asm_conf (INL backend_common_Sub) (n2w (n * (dimindex (:'a)
-            DIV 8))) /\ asm_config_valid_imm
-          asm_conf (INL backend_common_Add) (n2w (n * (dimindex
-            (:'a) DIV 8))))`;;
+          asm_conf (INL asm_Sub) (n2w (n * (dimindex (:'a) DIV 8)))
+            /\ asm_config_valid_imm
+          asm_conf (INL asm_Add) (n2w (n * (dimindex (:'a) DIV
+            8))))`;;
 
 let backend_config_ok_with_bvl_conf_updated = prove
  (`bvl_to_bvi_config_next_name2

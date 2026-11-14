@@ -29,23 +29,23 @@ let x64_names_def = new_definition
       // the third(3) in rdx(r3), the fourth(4) in rcx(2), the fifth(5)
       // in r8 and the sixth in r9.
       // Callee-saved regs: r12-r15, rbx
-      balanced_map_insert 1 7 o
+      sptree_insert 1 7 o
       // arg 1
-      balanced_map_insert 2 6 o
+      sptree_insert 2 6 o
       // arg 2
-      balanced_map_insert 3 2 o
-      balanced_map_insert 4 1 o
-      balanced_map_insert 5 8 o
-      balanced_map_insert 6 9 o
-      balanced_map_insert 11 14 o
-      balanced_map_insert 12 13 o
-      balanced_map_insert 13 12 o
+      sptree_insert 3 2 o
+      sptree_insert 4 1 o
+      sptree_insert 5 8 o
+      sptree_insert 6 9 o
+      sptree_insert 11 14 o
+      sptree_insert 12 13 o
+      sptree_insert 13 12 o
       // the rest just ensures that the mapping is well-formed
-      balanced_map_insert 7 3 o
-      balanced_map_insert 8 15 o
-      balanced_map_insert 9 11 o
-      balanced_map_insert 14 4 o
-      balanced_map_insert 15 5) LN:num spt)`;;
+      sptree_insert 7 3 o
+      sptree_insert 8 15 o
+      sptree_insert 9 11 o
+      sptree_insert 14 4 o
+      sptree_insert 15 5) LN:num spt)`;;
 
 (* HOL4 x64_configScript.sml:38-39: a theorem that HOL4 states as the
    value of an ML expression: x64_names_def *)

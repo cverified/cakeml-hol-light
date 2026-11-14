@@ -135,13 +135,13 @@ let flat_exp_conventions_def,flat_exp_conventions_ind = define_wf
         wordLang_Assign v exp -> F
         | (wordLang_Store exp num') -> F
         // The only place where top level (expression) vars are allowed
-        | (reg_alloc_Set store_name (wordLang_Var r)) -> T
-        | (reg_alloc_Set store_name _1) -> F
+        | (wordLang_Set store_name (wordLang_Var r)) -> T
+        | (wordLang_Set store_name _1) -> F
         | (wordLang_ShareInst op v (wordLang_Var r)) -> T
         | (wordLang_ShareInst op v (wordLang_Op asm_Add
           [wordLang_Var r; wordLang_Const c])) -> T
         | (wordLang_ShareInst op v _2) -> F
-        | (reg_alloc_Seq p1 p2) ->
+        | (wordLang_Seq p1 p2) ->
        flat_exp_conventions p1 /\ flat_exp_conventions p2
         | (wordLang_Loop names c exit_names) ->
        flat_exp_conventions c

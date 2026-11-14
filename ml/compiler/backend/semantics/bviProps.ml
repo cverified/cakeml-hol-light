@@ -481,7 +481,7 @@ let bviProps_take_drop_lem = prove
 let bviProps_evaluate_genlist_vars = prove
  (`!skip env n (st:('c,'ffi)bviSem_state).
     n + skip <= LENGTH env ==>
-    bviSem_evaluate (list_of_seq (\arg. db_vars_Var (arg + skip))
+    bviSem_evaluate (list_of_seq (\arg. bvi_Var (arg + skip))
       n,env,st) =
     (Rval (TAKE n (DROP skip env)),st)`,
   CHEAT_TAC);;

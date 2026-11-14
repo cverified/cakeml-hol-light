@@ -1686,15 +1686,15 @@ let IN_adjust_set_IN = prove
    assign_BoundsCheckByte *)
 
 let assign_LessConstSmall = prove
- (`wordSem_assign c secn l dest (closLang_IntOp (closLang_LessConstSmall
-  i)) args names =
-      (match args with [v1] -> (wordLang_If asm_Less (adjust_var v1)
-        (Imm (n2w (4 * i)))
-                  (wordLang_Assign (adjust_var dest)
+ (`data_to_word_assign c secn l dest (closLang_IntOp
+  (closLang_LessConstSmall i)) args names =
+      (match args with [v1] -> (word_bignum_If asm_Less (adjust_var
+        v1) (Imm (n2w (4 * i)))
+                  (word_bignum_Assign (adjust_var dest)
                     (word_depth_Const (n2w 18:'a word)))
-                  (wordLang_Assign (adjust_var dest)
+                  (word_bignum_Assign (adjust_var dest)
                     (word_depth_Const (n2w 2:'a word))),l) | _5 ->
-                    ((asm_Skip:'a wordLang_prog),l))`,
+                    ((word_bignum_Skip:'a wordLang_prog),l))`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:11464-11503: a theorem

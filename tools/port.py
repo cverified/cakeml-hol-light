@@ -302,6 +302,9 @@ class Porter:
     # with those rather than expanded, as the source writes it
     # (flatLang's pat has (ctor_id # type_group_id) option)
     self.abbrevs, self.declared_abbrevs = db.abbrevs_for(thy)
+    # the names that mean one theory's constant everywhere in
+    # this file (overrides.CON_FILE)
+    self.con_file = overrides.CON_FILE.get(thy, {})
     # the names that the port gives the constants, so that a size
     # function is not made for a name that is one of them
     self.constnames = set(db.names_for(thy).values())
@@ -2467,6 +2470,9 @@ class Porter:
        overload resolution takes"""
     t, n = nm.split('$') if '$' in nm else (None, nm)
     if n in self.conof_said: return self.conof_said[n]
+    # a name that means one theory's constant everywhere in this
+    # file (overrides.CON_FILE)
+    if n in self.con_file: return self.con_file[n]
     if t: return t
     if n in self.front_thy: return self.front_thy[n]
     anc = self.db.scope(self.thy) | {self.thy}

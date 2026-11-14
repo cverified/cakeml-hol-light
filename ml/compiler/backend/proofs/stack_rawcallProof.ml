@@ -40,7 +40,7 @@ let stack_rawcallProof_state_ok_def = new_definition
   `stack_rawcallProof_state_ok i code <=>
      (!n v.
        sptree_lookup n i = SOME v ==>
-       (?p. sptree_lookup n code = SOME (word_bignum_Seq
+       (?p. sptree_lookup n code = SOME (stackLang_Seq
          (stackLang_StackAlloc v) p)))`;;
 
 let stack_rawcallProof_state_rel_def = new_definition
@@ -75,8 +75,8 @@ let comp_LN = prove
 
 let comp_seq_neq_IMP = prove
  (`~(comp_seq p1 p2 i default = default) ==>
-     (?k dest. p1 = stackLang_StackFree k /\ p2 = asm_Call NONE
-       (INL dest) NONE)`,
+     (?k dest. p1 = stackLang_StackFree k /\ p2 = stackLang_Call
+       NONE (INL dest) NONE)`,
   CHEAT_TAC);;
 
 (* get_labels_comp *)
@@ -90,14 +90,14 @@ let stack_rawcallProof_get_labels_comp = prove
 (* HOL4 stack_rawcallProofScript.sml:107-119: a proof *)
 
 let evaluate_comp_Inst = prove
- (`stackSem_evaluate (asm_Inst i,s) = (r,s1) /\ ~(r = SOME
+ (`stackSem_evaluate (stackLang_Inst i,s) = (r,s1) /\ ~(r = SOME
   stackSem_Error) /\ stack_rawcallProof_state_rel i' s t ==>
    (?ck t1 k1.
      stack_rawcallProof_state_rel i' s1 t1 /\
-     stackSem_evaluate (stack_rawcall_comp i' (asm_Inst
+     stackSem_evaluate (stack_rawcall_comp i' (stackLang_Inst
        i),state_clock_fupd (K (ck + state_clock t)) t) =
      (r,stackSem_state_stack_space_fupd (K k1) t1) /\
-     (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackSem_Halt
+     (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackLang_Halt
        (wordLang_Word (n2w 2)))) ==>
       k1 = stackSem_state_stack_space t1))`,
   CHEAT_TAC);;
@@ -112,7 +112,7 @@ let stack_rawcallProof_comp_correct = prove
         stackSem_evaluate (comp_top i p,state_clock_fupd (K
           (state_clock t + ck)) t) =
           (r,stackSem_state_stack_space_fupd (K k1) t1) /\
-        (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackSem_Halt
+        (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackLang_Halt
           (wordLang_Word (n2w 2)))) ==> k1 = stackSem_state_stack_space
           t1)) /\
      (?ck t1 k1.
@@ -120,7 +120,7 @@ let stack_rawcallProof_comp_correct = prove
         stackSem_evaluate (stack_rawcall_comp i p,state_clock_fupd (K
           (state_clock t + ck)) t) =
           (r,stackSem_state_stack_space_fupd (K k1) t1) /\
-        (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackSem_Halt
+        (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackLang_Halt
           (wordLang_Word (n2w 2)))) ==> k1 =
           stackSem_state_stack_space t1))`,
   CHEAT_TAC);;

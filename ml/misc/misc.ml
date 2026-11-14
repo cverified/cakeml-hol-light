@@ -253,12 +253,13 @@ let LIST_REL_GENLIST_I = prove
 
 (* only used in bvi_to_dataProof *)
 let LIST_REL_lookup_fromList = prove
- (`ALL2 (\v x. sptree_lookup v (fromList args) = SOME x)
+ (`ALL2 (\v x. sptree_lookup v (sptree_fromList args) = SOME x)
      (list_of_seq I (LENGTH args)) args`,
   CHEAT_TAC);;
 
 let LIST_REL_lookup_fromList_MAP = prove
- (`ALL2 (\v x. ?z. sptree_lookup v (fromList args) = SOME z /\ x = f z)
+ (`ALL2 (\v x. ?z. sptree_lookup v (sptree_fromList args) = SOME z /\ x
+  = f z)
     (list_of_seq I (LENGTH args)) (MAP f args)`,
   CHEAT_TAC);;
 

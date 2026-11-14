@@ -189,8 +189,8 @@ let pegsym_to_sym_def = new_definition
 
 let valid_ptree_mkNd = prove
  (`valid_ptree G (mkNd N subs) <=>
-     N IN FDOM (rules G) /\ MAP ptree_head subs IN FAPPLY (rules G) N
-       /\
+     N IN FDOM (peg_rules G) /\ MAP ptree_head subs IN FAPPLY
+       (peg_rules G) N /\
      (!pt. MEM pt subs ==> valid_ptree G pt)`,
   (REWRITE_TAC[mkNd_def; valid_ptree_def; IN_SET_OF_LIST]));;
 add_simp valid_ptree_mkNd;;
@@ -224,8 +224,8 @@ let rfringe_length_not_nullable = prove
 
 let valid_lptree_mkNd = prove
  (`valid_lptree G (mkNd n children) <=>
-      n IN FDOM (rules G) /\ MAP ptree_head children IN FAPPLY (rules
-        G) n /\
+      n IN FDOM (peg_rules G) /\ MAP ptree_head children IN FAPPLY
+        (peg_rules G) n /\
       (!pt. MEM pt children ==> valid_lptree G pt)`,
   CHEAT_TAC);;
 add_simp valid_lptree_mkNd;;
@@ -277,12 +277,12 @@ let peg_linfix_correct_lemma = prove
                 ((grammar_TOK:tokens_token->(tokens_token
                 ,MMLnonT)grammar_symbol) ## I) i))) /\
       ~(peg0 cmlPEG sym) /\
-      UpperN IN FDOM (rules cmlG) /\
-      {[gsym] | gsym IN pegsym_to_sym sym} SUBSET FAPPLY (rules cmlG)
-        UpperN /\
+      UpperN IN FDOM (peg_rules cmlG) /\
+      {[gsym] | gsym IN pegsym_to_sym sym} SUBSET FAPPLY (peg_rules
+        cmlG) UpperN /\
       {[grammar_NT UpperN; gsep; gsym] |
           gsep IN pegsym_to_sym sepsym /\ gsym IN pegsym_to_sym sym}
-            SUBSET FAPPLY (rules
+            SUBSET FAPPLY (peg_rules
         cmlG) UpperN ==>
       (?pt. pts = [pt] /\ ptree_head pt = grammar_NT UpperN /\
         valid_lptree cmlG pt /\

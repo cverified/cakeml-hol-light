@@ -405,7 +405,7 @@ let state_rel_get_var_k = prove
 let evaluate_single_stack_alloc = prove
  (`stack_removeProof_state_rel jump off k s t1 /\
    ((r,s2) = (if stackSem_state_stack_space s < n then (SOME
-     (stackSem_Halt (wordLang_Word (n2w 2))),stackSem_empty_env s) else
+     (stackLang_Halt (wordLang_Word (n2w 2))),stackSem_empty_env s) else
      (NONE,stackSem_state_stack_space_fupd (K
      (stackSem_state_stack_space s - n)) s))) /\ ~(n = 0) /\ n <=
      max_stack_alloc ==>
@@ -425,7 +425,7 @@ let evaluate_stack_alloc = prove
    (?ck t2.
      stackSem_evaluate (stack_alloc jump k n,state_clock_fupd (K (ck
        + state_clock t1)) t1) = (r,t2) /\
-     (if !w. ~(r = SOME (stackSem_Halt w)) then
+     (if !w. ~(r = SOME (stackLang_Halt w)) then
        stack_removeProof_state_rel jump off k s2 t2 else state_ffi t2
        = state_ffi s2))`,
   CHEAT_TAC);;
@@ -769,9 +769,9 @@ let stack_removeProof_comp_correct = prove
         ==>
       (?ck t2. stackSem_evaluate (stack_remove_comp jump off k
         p,state_clock_fupd (K (ck + state_clock t1)) t1) = (r,t2) /\
-              (match r with SOME (stackSem_Halt _3) -> state_ffi t2
-                = state_ffi s2 | SOME stackSem_TimeOut -> state_ffi t2
-                = state_ffi s2 | SOME (stackSem_FinalFFI _4) ->
+              (match r with SOME (stackLang_Halt _3) -> state_ffi
+                t2 = state_ffi s2 | SOME stackSem_TimeOut -> state_ffi
+                t2 = state_ffi s2 | SOME (stackSem_FinalFFI _4) ->
                 state_ffi t2 = state_ffi s2 | _5 ->
                 (stack_removeProof_state_rel jump off k s2 t2)))`,
   CHEAT_TAC);;
@@ -1261,9 +1261,10 @@ let make_init_opt_def = new_definition
 
 let init_pre_def = new_definition
   `init_pre gen_gc' max_heap bitmaps data_sp k start' s <=>
-     sptree_lookup 0 (state_code s) = SOME (wordLang_Seq
+     sptree_lookup 0 (state_code s) = SOME (stackLang_Seq
        (stack_remove_init_code gen_gc' max_heap k)
-                              (asm_Call NONE (INL start') NONE)) /\
+                              (stackLang_Call NONE (INL start')
+                                NONE)) /\
      init_code_pre k bitmaps data_sp s /\ max_stack_alloc <=
        max_heap`;;
 

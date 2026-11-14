@@ -74,21 +74,21 @@ let evaluate_handle_simp = prove
    (!x1 x2 l env (s:('a,'b)bvlSem_state).
       l <= LENGTH env ==>
       bvlSem_evaluate ([make_handle x1 x2 l],env,s) =
-      bvlSem_evaluate ([flatLang_Handle x1 (handle_adj_vars 1 l
+      bvlSem_evaluate ([bvl_Handle x1 (handle_adj_vars 1 l
         x2)],env,s))`,
   CHEAT_TAC);;
 
 let evaluate_SmartLet = prove
- (`bvlSem_evaluate ([SmartLet xs x],env,s) = bvlSem_evaluate
-  ([flatLang_Let xs x],env,s)`,
+ (`bvlSem_evaluate ([SmartLet xs x],env,s) = bvlSem_evaluate ([bvl_Let
+  xs x],env,s)`,
   CHEAT_TAC);;
 add_simp evaluate_SmartLet;;
 
 let let_ok_def = new_definition
   `let_ok x1 =
         match x1 with
-          (flatLang_Let xs b:bvl_exp) -> ALL isVar xs /\ bVarBound
-            (LENGTH xs) [b]
+          (bvl_Let xs b:bvl_exp) -> ALL isVar xs /\ bVarBound (LENGTH
+            xs) [b]
         | _1 -> F`;;
 
 let _ = size_thms "bvl_exp";;
@@ -223,7 +223,7 @@ let bvl_handleProof_compile_correct = prove
 
 let dest_Seq_thm = prove
  (`!x. bvl_handle_dest_Seq x = SOME (y0,y1) <=>
-        x = flatLang_Let [y0; y1] (bvl_Var 1)`,
+        x = bvl_Let [y0; y1] (bvl_Var 1)`,
   CHEAT_TAC);;
 
 let compile_seqs_correct = prove
@@ -272,7 +272,7 @@ let ALOOKUP_MAPi = prove
   CHEAT_TAC);;
 
 let bVarBound_SmartLet = prove
- (`bVarBound m [SmartLet x xs] = bVarBound m [flatLang_Let x xs]`,
+ (`bVarBound m [SmartLet x xs] = bVarBound m [bvl_Let x xs]`,
   CHEAT_TAC);;
 add_simp bVarBound_SmartLet;;
 
@@ -311,7 +311,7 @@ let bEvery_CONS = prove
   CHEAT_TAC);;
 
 let handle_ok_Var_Const_list = prove
- (`ALL (\x. ?v i. x = db_vars_Var v \/ x = bvl_Op (closLang_IntOp
+ (`ALL (\x. ?v i. x = bvl_Var v \/ x = bvl_Op (closLang_IntOp
   (closLang_Const i)) []) xs ==> handle_ok xs`,
   CHEAT_TAC);;
 

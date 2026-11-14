@@ -23046,7 +23046,8 @@ let word_ml_inv_Unit = prove
     `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs ws /\
       good_dimindex (:'a) ==>
       word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-        (CONS (dataSem_Unit,wordLang_Word ((n2w 2):'a word)) ws)`),
+        (CONS (data_to_word_Unit,wordLang_Word ((n2w 2):'a word))
+          ws)`),
   (* Unit is the empty Block of the tuple tag, which cons_thm_EMPTY
      puts on the stack with the root Data (Word (BlockNil 0)), and
      that word is two, whose lowest bit word_addr takes off *)
@@ -23079,7 +23080,7 @@ let memory_rel_Unit = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm xs /\ good_dimindex (:'a) ==>
      memory_rel c be ts refs sp st m dm (CONS
-       (dataSem_Unit,wordLang_Word ((n2w 2):'a word)) xs)`),
+       (data_to_word_Unit,wordLang_Word ((n2w 2):'a word)) xs)`),
   (REWRITE_TAC[memory_rel_def] THEN REPEAT STRIP_TAC THEN
    ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[] THEN
    MATCH_MP_TAC word_ml_inv_Unit THEN ASM_REWRITE_TAC[]));;

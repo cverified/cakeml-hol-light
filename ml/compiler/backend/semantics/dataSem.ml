@@ -863,15 +863,15 @@ let dataSem_do_build_const_def = new_definition
 let dataSem_do_int_app_def = new_definition
   `dataSem_do_int_app x1 x2 =
       match (x1,x2) with
-        ((word_depth_Const n:closLang_int_op),[]) ->
+        ((closLang_Const n:closLang_int_op),[]) ->
      (if small_enough_int n then SOME (dataSem_Number n) else NONE)
-      | ((word_bignum_Add),[dataSem_Number n1; dataSem_Number n2]) ->
+      | ((closLang_Add),[dataSem_Number n1; dataSem_Number n2]) ->
         SOME (dataSem_Number (n1 + n2))
-      | ((word_bignum_Sub),[dataSem_Number n1; dataSem_Number n2]) ->
+      | ((closLang_Sub),[dataSem_Number n1; dataSem_Number n2]) ->
         SOME (dataSem_Number (n1 - n2))
       | ((closLang_Mult),[dataSem_Number n1; dataSem_Number n2]) ->
         SOME (dataSem_Number (n1 * n2))
-      | ((word_bignum_Div),[dataSem_Number n1; dataSem_Number n2]) ->
+      | ((closLang_Div),[dataSem_Number n1; dataSem_Number n2]) ->
        (if n2 = (&0) then NONE else SOME (dataSem_Number (n1 / n2)))
       | ((closLang_Mod),[dataSem_Number n1; dataSem_Number n2]) ->
        (if n2 = (&0) then NONE else SOME (dataSem_Number (n1 % n2)))
@@ -1923,7 +1923,7 @@ let dataSem_initial_state_def = new_definition
 
 let dataSem_semantics_def = new_definition
   `dataSem_semantics init_ffi code coracle cc lims ss start' =
-   (let p = word_depth_Call NONE (SOME start') [] NONE in
+   (let p = dataLang_Call NONE (SOME start') [] NONE in
    let init = dataSem_initial_state init_ffi code coracle cc T lims
      ss in
      if ?k. match FST (dataSem_evaluate (p,init k)) with SOME (Rerr
@@ -1947,7 +1947,7 @@ let data_lang_safe_for_space_def = new_definition
   `data_lang_safe_for_space init_ffi code (lims:limits) (ss:num spt)
   start' =
      (!ck.
-       let p = word_depth_Call NONE (SOME start') [] NONE in
+       let p = dataLang_Call NONE (SOME start') [] NONE in
        let init = dataSem_initial_state init_ffi code ARB ARB T lims
          ss in
        let (res,s) = dataSem_evaluate (p,((init
