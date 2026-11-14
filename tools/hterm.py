@@ -1635,8 +1635,10 @@ OWN_INFIX = set()      # the infixes a CakeML source declares itself
 # the constants that the library layer of the port declares as
 # infixes of HOL Light: where one of them is applied to its
 # arguments the port writes its name in parentheses
-HL_INFIX = {'BAG_UNION', 'f_o_f', 'LEX', 'o_f', 'PERMUTES',
-            'SUBMAP'}
+HL_INFIX = {'BAG_UNION', 'LEX', 'o_f', 'SUBMAP'}
+# (and not PERMUTES or f_o_f, which the port writes as the
+# infixes they are: this set is the names that need their
+# brackets where the port writes them as a function)
 
 # the infixes of HOL Light whose name is a word: one of
 # these standing where a function stands needs its brackets,
