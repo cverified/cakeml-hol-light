@@ -418,9 +418,14 @@ def ours_terms(nm, rank):
     if p not in _OTERMS:
       s = text_of(p)
       if CUT in s: s = s[:s.index(CUT)]
-      _OTERMS[p] = set(w for q in re.findall(r"`[^`]*`", s)
-                       for w in re.findall(r"[A-Za-z_][A-Za-z0-9_']*",
-                                           q))
+      ws = set(w for q in re.findall(r"`[^`]*`", s)
+               for w in re.findall(r"[A-Za-z_][A-Za-z0-9_']*", q))
+      # and a name this port overloads is one it writes: the
+      # files after grammar's hol4_overload "NT" "grammar_NT"
+      # read NT as that constant, as the CakeML sources do
+      ws |= set(re.findall(
+        r'hol4_(?:overload|field_overload|only)\s+"([^"]+)"', s))
+      _OTERMS[p] = ws
     out |= _OTERMS[p]
   return out
 
