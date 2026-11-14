@@ -674,9 +674,9 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
 let generated_bignum_stubs_def = new_definition
   `generated_bignum_stubs n =
      (let (x1,_4,_5,(_6,cs)) = word_bignum_compile n 2 1 (n +
-       1,[]) mc_iop_code in CONS (n,1,word_bignum_Seq x1
-       (wordLang_Return 0 [0])) (MAP (\(x,y,z). (y,1,word_bignum_Seq
-       z (wordLang_Return 0 [0]))) cs))`;;
+       1,[]) mc_iop_code in CONS (n,1,wordLang_Seq x1
+       (wordLang_Return 0 [0])) (MAP (\(x,y,z). (y,1,wordLang_Seq z
+       (wordLang_Return 0 [0]))) cs))`;;
 
 (* HOL4 word_bignumScript.sml:576-577: a theorem that HOL4 states as
    the value of an ML expression: generated_bignum_stubs_eq *)

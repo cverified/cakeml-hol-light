@@ -508,8 +508,8 @@ let word_to_stack_comp_def,word_to_stack_comp_ind =
           (wStackLoad xs (wRegWrite1 (\dst_r. stackLang_OpCurrHeap b
             dst_r src_r) dst kf),bs))
         | (wordLang_Tick) -> (stackLang_Tick,bs)
-        | (wordLang_Break k) -> (wordLang_Break k,bs)
-        | (wordLang_Continue k) -> (wordLang_Continue k,bs)
+        | (wordLang_Break k) -> (stackLang_Break k,bs)
+        | (wordLang_Continue k) -> (stackLang_Continue k,bs)
         | (wordLang_MustTerminate p1) -> word_to_stack_comp conf
           perf p1 bs kf
         | (wordLang_Seq p1 p2) ->

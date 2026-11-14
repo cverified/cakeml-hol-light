@@ -23,8 +23,10 @@ let _ = do_list hide_constant ["pmatch"];;
 let dummy_def = new_definition
   `dummy = bvi_Var 1234567890`;;
 
-(* HOL4 bvi_tailrecScript.sml:21-25: a theorem whose statement the
-   port cannot state yet: MEM_exp_size_imp *)
+let _ = size_thms "bvi_exp";;
+let MEM_exp_size_imp = prove
+ (`!xs a. MEM a xs ==> bvi_exp_size a < list_size bvi_exp_size xs`,
+  CHEAT_TAC);;
 
 let is_rec_def = new_definition
   `bvi_tailrec_is_rec name x2 =
@@ -181,7 +183,6 @@ let get_bin_args_PMATCH = prove
          bvi_Op _21 [e1; e2] -> SOME (e1,e2) | _22 -> NONE)`,
   CHEAT_TAC);;
 
-let _ = size_thms "bvi_exp";;
 let exp_size_get_bin_args = prove
  (`!x x1 x2.
      get_bin_args x = SOME (x1,x2) ==>

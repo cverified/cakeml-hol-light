@@ -253,8 +253,11 @@ let Word64Rep_DataElement = prove
 let ThunkBlock_def = new_definition
   `ThunkBlock ev x = DataElement [x] 1 (ThunkTag ev,[])`;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:176-181: a theorem whose
-   statement the port cannot state yet: v_size_LEMMA *)
+let _ = size_thms "dataSem_v";;
+(* [local] *)
+let v_size_LEMMA = prove
+ (`!vs v. MEM v vs ==> dataSem_v_size v <= list_size dataSem_v_size vs`,
+  CHEAT_TAC);;
 
 (* v_inv conf v refs (x,f,tf,heap)
    v    : the dataSem value
@@ -714,7 +717,6 @@ let v_inv_RefPtr_T = prove
    TRY(DISJ1_TAC THEN ASM_SIMP_TAC[rpa])));;
 
 
-let _ = size_thms "dataSem_v";;
 (* [local] *)
 let MEM_IMP_v_size = prove
  (`!l a. MEM a l ==> dataSem_v_size a < 1 + list_size dataSem_v_size l`,
@@ -44995,8 +44997,10 @@ let memory_rel_rotate3 = prove
    that HOL4 states as the value of an ML expression:
    memory_rel_pointer_eq *)
 
-(* HOL4 data_to_word_memoryProofScript.sml:13412-13416: a theorem
-   whose statement the port cannot state yet: v1_size_map *)
+let v1_size_map = prove
+ (`!ls. list_size dataSem_v_size ls = SUM (MAP dataSem_v_size ls) +
+  LENGTH ls`,
+  CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)

@@ -116,7 +116,7 @@ let invalidate_regs_def,invalidate_regs_ind = define_rec
 let register_read_def = new_definition
   `register_read data (r:num) =
      (if ~(EVEN r) /\ keep_data (knowledge_to_canonical data) r
-       then knowledge_to_canonical_fupd (K (balanced_map_insert r r
+       then knowledge_to_canonical_fupd (K (sptree_insert r r
        (knowledge_to_canonical data))) data else data)`;;
 
 let register_reads_def,register_reads_ind = define_rec

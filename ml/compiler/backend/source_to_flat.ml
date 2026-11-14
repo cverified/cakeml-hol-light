@@ -62,8 +62,12 @@ let compile_var_def = define_cases
    `compile_var t (source_to_flat_Local _3 s:var_name) =
     flatLang_Var_local t s`];;
 
-(* HOL4 source_to_flatScript.sml:51-55: a theorem whose statement the
-   port cannot state yet: ast_pat1_size *)
+let _ = size_thms "ast_pat";;
+let _ = size_thms "pattern_semantics_pat";;
+let ast_pat1_size = prove
+ (`list_size ast_pat_size xs = LENGTH xs + SUM (MAP
+  pattern_semantics_pat_size xs)`,
+  CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
      MEASURE (pattern_semantics_pat_size o SND)
@@ -124,7 +128,6 @@ let join_all_names_def = new_definition
        (join_all_names_aux xs []))`;;
 
 let _ = size_thms "ast_exp";;
-let _ = size_thms "ast_pat";;
 let _ = size_thms "mlstring";;
 let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
   assume_definition_rec
@@ -210,7 +213,7 @@ let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
                (flatLang_Bool backend_common_None T)
                (source_to_flat_compile_exp t env e2))`;
    `source_to_flat_compile_exp (t:mlstring list)
-    (env:source_to_flat_environment) (pattern_semantics_If e1 e2
+    (env:source_to_flat_environment) (ast_If e1 e2
     e3:ast_exp) =
         flatLang_If backend_common_None
            (source_to_flat_compile_exp t env e1)

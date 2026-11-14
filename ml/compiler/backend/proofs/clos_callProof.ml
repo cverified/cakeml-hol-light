@@ -52,8 +52,12 @@ let _ = do_list hide_constant ["C"; "vars"];;
 
 (* HOL4 clos_callProofScript.sml:32: ML code, not ported *)
 
-(* HOL4 clos_callProofScript.sml:34-39: a theorem whose statement the
-   port cannot state yet: v_size_lemma *)
+let _ = size_thms "closSem_v";;
+(* v_size_lemma[local] *)
+let clos_callProof_v_size_lemma = prove
+ (`MEM (v:closSem_v) vl ==> closSem_v_size v < list_size
+  closSem_v_size vl`,
+  CHEAT_TAC);;
 
 let code_locs_GENLIST_Var = prove
  (`!n t i. code_locs (GENLIST_Var t i n) = []`,

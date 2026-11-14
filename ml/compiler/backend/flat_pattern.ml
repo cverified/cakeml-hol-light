@@ -62,8 +62,12 @@ let enc_num_to_name_aux_def,enc_num_to_name_aux_ind = define_wf
 let enc_num_to_name_def = new_definition
   `enc_num_to_name i = implode (enc_num_to_name_aux i [])`;;
 
-(* HOL4 flat_patternScript.sml:48-52: a theorem whose statement the
-   port cannot state yet: pat1_size *)
+let _ = size_thms "flatLang_pat";;
+let _ = size_thms "pattern_semantics_pat";;
+let pat1_size = prove
+ (`list_size flatLang_pat_size xs = LENGTH xs + SUM (MAP
+  pattern_semantics_pat_size xs)`,
+  CHEAT_TAC);;
 
 let MAPi_eq_MAP = prove
  (`MAPi (\n x. f x) xs = MAP f xs`,
@@ -193,7 +197,6 @@ let decode_dtree_def,decode_dtree_ind = define_shaped_rec
      pattern_semantics_Not pattern_semantics_True then dec2 else
      SmartIf t (decode_guard t v guard') dec1 dec2)`];;
 
-let _ = size_thms "flatLang_pat";;
 (* the termination relation that HOL4 gives is
      MEASURE pattern_semantics_pat_size
    which is not one that HOL Light takes here; the one

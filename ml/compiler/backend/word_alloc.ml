@@ -1312,7 +1312,7 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec
    `get_clash_tree (wordLang_StoreConsts a b c d ws) lt =
     reg_alloc_Delta [a; b; c; d] [c; d]`;
    `get_clash_tree (wordLang_ShareInst op v exp) lt = (if op =
-    wordLang_Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op =
+    asm_Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op =
     asm_Store32 then reg_alloc_Delta [] (CONS v (get_reads_exp exp))
     else reg_alloc_Delta [v] (get_reads_exp exp))`;
    `get_clash_tree (wordLang_Loop names body exit_names) lt =

@@ -396,7 +396,7 @@ let inst_select_def,inst_select_ind = define_wf
        (let exp = (flatten_exp o pull_exp) exp in
        match exp with wordLang_Op asm_Add [exp'; wordLang_Const w]
          ->
-         (if ((op = wordLang_Load \/ op = wordLang_Store) /\ (\c.
+         (if ((op = asm_Load \/ op = asm_Store) /\ (\c.
            asm_offset_ok 0 (asm_config_addr_offset c)) c w) \/
              ((op = asm_Load32 \/ op = asm_Store32) /\ (\c.
                asm_offset_ok 0 (asm_config_addr_offset c)) c w) \/

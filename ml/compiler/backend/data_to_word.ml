@@ -2162,9 +2162,9 @@ let assign_BoundsCheckByte_def = new_definition
                                 bytes_in_word]);
                               wordLang_Assign 3 (ShiftVar Ror
                                 (adjust_var v2) 2);
-                              (if leq then dataLang_If asm_NotLower 1
+                              (if leq then wordLang_If asm_NotLower 1
                                 (Reg 3) else
-                              dataLang_If asm_Lower 3 (Reg 1))
+                              wordLang_If asm_Lower 3 (Reg 1))
                               (wordLang_Assign (adjust_var dest)
                                 (wordLang_Const (n2w 18:'a word)))
                               (wordLang_Assign (adjust_var dest)

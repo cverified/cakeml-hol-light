@@ -36,8 +36,12 @@ let wordLang_exp_INDUCT,wordLang_exp_RECURSION = define_datatype
 (* HOL4 wordLangScript.sml:23: the overload ShiftN, which the port
    expands *)
 
-(* HOL4 wordLangScript.sml:25-31: a theorem whose statement the port
-   cannot state yet: MEM_IMP_exp_size *)
+let _ = size_thms "wordLang_exp";;
+(* MEM_IMP_exp_size *)
+let wordLang_MEM_IMP_exp_size = prove
+ (`!xs a. MEM a xs ==> (wordLang_exp_size l a < (list_size o
+  wordLang_exp_size) l xs)`,
+  CHEAT_TAC);;
 
 new_type_abbrev("cutsets",`:misc_num_set#misc_num_set`);;
 (* non-GCed cutset, GCed cutset *)
@@ -100,7 +104,6 @@ let wordLang_store_consts_stub_location_def = new_definition
    comment *)
 
 (* Recursors for variables *)
-let _ = size_thms "wordLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let every_var_exp_def,every_var_exp_ind = define_wf

@@ -243,8 +243,10 @@ let has_install_def,has_install_ind = define_shaped_rec
    `has_install_list (CONS x xs) = (has_install x \/
     has_install_list xs)`];;
 
-(* HOL4 closLangScript.sml:170-175: a theorem whose statement the
-   port cannot state yet: exp1_size_lemma *)
+let exp1_size_lemma = prove
+ (`!fns n x. MEM (n,x) fns ==> closLang_exp_size x < list_size
+  (pair_size (\x. x) closLang_exp_size) fns`,
+  CHEAT_TAC);;
 
 let pure_op_def = new_definition
   `closLang_pure_op op <=>

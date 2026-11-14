@@ -59,8 +59,14 @@ let find_loc_EVERY_isEmpty = prove
 
 (************************** DEFINITIONS ***************************)
 
-(* HOL4 flat_elimProofScript.sml:99-105: a theorem whose statement
-   the port cannot state yet: SUM_MAP_v3_size *)
+let _ = size_thms "flatSem_v";;
+let _ = size_thms "mlstring";;
+let SUM_MAP_v3_size = prove
+ (`!xs. SUM (MAP (pair_size mlstring_size flatSem_v_size) xs) = LENGTH
+  xs +
+     SUM (MAP (mlstring_size o FST) xs) +
+     SUM (MAP (flatSem_v_size o SND) xs)`,
+  CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\e. match e with INL x -> flatSem_v_size x | INR y ->

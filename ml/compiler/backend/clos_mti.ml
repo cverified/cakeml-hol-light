@@ -68,8 +68,11 @@ let collect_apps_def,collect_apps_ind = define_wf
 
 (* HOL4 clos_mtiScript.sml:70: ML code, not ported *)
 
-(* HOL4 clos_mtiScript.sml:72-77: a theorem whose statement the port
-   cannot state yet: exp3_size_append *)
+(* [local] *)
+let exp3_size_append = prove
+ (`!es1 es2. list_size closLang_exp_size (APPEND es1 es2) = list_size
+  closLang_exp_size es1 + list_size closLang_exp_size es2`,
+  CHEAT_TAC);;
 
 (* [local] *)
 let collect_apps_more = prove

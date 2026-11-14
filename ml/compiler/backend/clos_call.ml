@@ -214,10 +214,13 @@ let calls_list_def,calls_list_ind = define_rec
     0 (loc + 1) (GENLIST_Var t 1 n))
               (calls_list t (i + 1) (loc + 2) xs)`];;
 
-(* HOL4 clos_callScript.sml:226-230: a theorem whose statement the
-   port cannot state yet: exp3_size_MAP_SND *)
-
 let _ = size_thms "closLang_exp";;
+(* [local] *)
+let exp3_size_MAP_SND = prove
+ (`!fns. list_size closLang_exp_size (MAP SND fns) <= list_size
+  (pair_size (\x. x) closLang_exp_size) fns`,
+  CHEAT_TAC);;
+
 let calls_def,calls_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`calls [] g = ([],g)`;

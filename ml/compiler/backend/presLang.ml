@@ -471,8 +471,12 @@ let source_to_display_dec_def,source_to_display_dec_ind =
 
 (* flatLang *)
 
-(* HOL4 presLangScript.sml:414-418: a theorem whose statement the
-   port cannot state yet: MEM_pat_size *)
+let _ = size_thms "flatLang_pat";;
+(* [local] *)
+let MEM_pat_size = prove
+ (`!pats a. MEM a (pats:flatLang_pat list) ==>
+  pattern_semantics_pat_size a < list_size flatLang_pat_size pats`,
+  CHEAT_TAC);;
 
 let opt_con_to_display_def = new_definition
   `opt_con_to_display ocon = (match ocon with NONE -> empty_item
@@ -512,14 +516,26 @@ let flat_op_to_display_def = new_definition
   (implode "LenEq") [n1] | flatLang_El n -> item_with_num (implode
   "El") n | flatLang_Id -> empty_item (implode "Id"))`;;
 
-(* HOL4 presLangScript.sml:457-462: a theorem whose statement the
-   port cannot state yet: MEM_funs_size *)
+let _ = size_thms "flatLang_exp";;
+let _ = size_thms "mlstring";;
+(* [local] *)
+let MEM_funs_size = prove
+ (`!fs v1 v2 e. MEM (v1,v2,e) fs ==> flatLang_exp_size e < list_size
+  (pair_size mlstring_size (pair_size mlstring_size
+  flatLang_exp_size)) fs`,
+  CHEAT_TAC);;
 
-(* HOL4 presLangScript.sml:464-469: a theorem whose statement the
-   port cannot state yet: MEM_exps_size *)
+(* [local] *)
+let MEM_exps_size = prove
+ (`!exps e. MEM e exps ==> flatLang_exp_size e < list_size
+  flatLang_exp_size exps`,
+  CHEAT_TAC);;
 
-(* HOL4 presLangScript.sml:471-476: a theorem whose statement the
-   port cannot state yet: MEM_pats_size *)
+(* [local] *)
+let MEM_pats_size = prove
+ (`!pats p e. MEM (p,e) pats ==> flatLang_exp_size e < list_size
+  (pair_size flatLang_pat_size flatLang_exp_size) pats`,
+  CHEAT_TAC);;
 
 let add_name_hint_def = new_definition
   `add_name_hint prefix name_hint =
@@ -783,10 +799,13 @@ let clos_op_to_display_def = new_definition
                                 "Install") | closLang_ThunkOp t ->
                                 thunk_op_to_display t)`;;
 
-(* HOL4 presLangScript.sml:675-680: a theorem whose statement the
-   port cannot state yet: MEM_clos_exps_size *)
+let _ = size_thms "closLang_exp";;
+(* [local] *)
+let MEM_clos_exps_size = prove
+ (`!exps e. MEM e exps ==> closLang_exp_size e < list_size
+  closLang_exp_size exps`,
+  CHEAT_TAC);;
 
-let _ = size_thms "mlstring";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let commas_def,commas_ind = define_wf
@@ -897,10 +916,13 @@ let clos_dec_to_display_def = new_definition
 
 (* bvl to displayLang *)
 
-(* HOL4 presLangScript.sml:769-774: a theorem whose statement the
-   port cannot state yet: MEM_bvl_exps_size *)
-
 let _ = size_thms "bvl_exp";;
+(* [local] *)
+let MEM_bvl_exps_size = prove
+ (`!exps e. MEM e exps ==> bvl_exp_size e < list_size bvl_exp_size
+  exps`,
+  CHEAT_TAC);;
+
 (* the termination relation that HOL4 gives is
      MEASURE (\x.
           match x with
@@ -965,8 +987,12 @@ let bvl_fun_to_display_def = new_definition
 
 (* bvi to displayLang *)
 
-(* HOL4 presLangScript.sml:829-834: a theorem whose statement the
-   port cannot state yet: MEM_bvi_exps_size *)
+let _ = size_thms "bvi_exp";;
+(* [local] *)
+let MEM_bvi_exps_size = prove
+ (`!exps e. MEM e exps ==> bvi_exp_size e < list_size bvi_exp_size
+  exps`,
+  CHEAT_TAC);;
 
 let bvi_to_display_def,bvi_to_display_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -1038,7 +1064,7 @@ let bvi_fun_to_display_def = new_definition
 let num_set_to_display_def = new_definition
   `num_set_to_display ns =
      displayLang_String (mlstring_concat [(implode "{");
-                      presLang_commas (MAP mlint_toString (MAP FST
+                      presLang_commas (MAP num_to_str (MAP FST
                         (toSortedAList ns)));
                       (implode "}")])`;;
 

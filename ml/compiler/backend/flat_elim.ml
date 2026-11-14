@@ -148,11 +148,18 @@ let dest_GlobalVarLookup_def = new_definition
       flatLang_GlobalVarLookup n -> SOME n
     | _34 -> NONE`;;
 
-(* HOL4 flat_elimScript.sml:113-120: a theorem whose statement the
-   port cannot state yet: exp_size_map_snd *)
+let _ = size_thms "flatLang_pat";;
+let exp_size_map_snd = prove
+ (`!p_es. list_size flatLang_exp_size (MAP SND p_es) <= list_size
+  (pair_size flatLang_pat_size flatLang_exp_size) p_es`,
+  CHEAT_TAC);;
 
-(* HOL4 flat_elimScript.sml:122-129: a theorem whose statement the
-   port cannot state yet: exp_size_map_snd_snd *)
+let _ = size_thms "mlstring";;
+let exp_size_map_snd_snd = prove
+ (`!vv_es. list_size flatLang_exp_size (MAP (\x. SND (SND x)) vv_es) <=
+  list_size (pair_size mlstring_size
+           (pair_size mlstring_size flatLang_exp_size)) vv_es`,
+  CHEAT_TAC);;
 
 let find_loc_def,find_loc_ind = assume_definition_rec
   "termination (CHEAT_TAC)"

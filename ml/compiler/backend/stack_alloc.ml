@@ -241,8 +241,8 @@ let word_gen_gc_move_code_def = new_definition
                          data_to_word_config_len_size conf);
                        (\r1. stackLang_Inst (asm_Arith (asm_Binop
                          asm_Add r1 r1 (Imm (n2w 1))))) 1;
-                       (\r w. stackLang_Inst (word_depth_Const r w))
-                         2 (n2w 0b1100);
+                       (\r w. stackLang_Inst (asm_Const r w)) 2 (n2w
+                         0b1100);
                        (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
                          asm_And r1 r1 (Reg r2)))) 6 2;
                        stackLang_If asm_Equal 6 (Imm (n2w 8))
@@ -715,8 +715,8 @@ let word_gc_partial_or_full_def = new_definition
 
 let SetNewTrigger_def = new_definition
   `SetNewTrigger (endh:num) (ib:num) gs =
-     stackLang_list_Seq [(\r w. stackLang_Inst (word_depth_Const r
-       w)) 1 ((get_gen_size gs):'a word);
+     stackLang_list_Seq [(\r w. stackLang_Inst (asm_Const r w)) 1
+       ((get_gen_size gs):'a word);
                stackLang_Get 7 AllocSize;
                (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                  asm_Or dest src (Reg src)))) 4 endh;
@@ -748,14 +748,13 @@ let word_gc_code_def = new_definition
                 stackLang_Set TriggerGC 2;
                 stackLang_Set EndOfHeap 2;
                 stackLang_If asm_Test 1 (Reg 1) stackLang_Skip
-                  (stackLang_Seq ((\r w. stackLang_Inst
-                  (word_depth_Const r w)) 1 (n2w 1)) (stackLang_Halt
-                  1))]) | data_to_word_Simple ->
+                  (stackLang_Seq ((\r w. stackLang_Inst (asm_Const r w))
+                  1 (n2w 1)) (stackLang_Halt 1))]) | data_to_word_Simple
+                  ->
          (stackLang_list_Seq
                [stackLang_Set AllocSize 1;
                 stackLang_Set NextFree 0;
-                (\r w. stackLang_Inst (word_depth_Const r w)) 1 (n2w
-                  0);
+                (\r w. stackLang_Inst (asm_Const r w)) 1 (n2w 0);
                 (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                   asm_Or dest src (Reg src)))) 2 1;
                 stackLang_Get 3 OtherHeap;
@@ -778,8 +777,7 @@ let word_gc_code_def = new_definition
                 (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
                   r1 r1 (Reg r2)))) 7 9;
                 stackLang_Set GlobReal 7;
-                (\r w. stackLang_Inst (word_depth_Const r w)) 7 (n2w
-                  0);
+                (\r w. stackLang_Inst (asm_Const r w)) 7 (n2w 0);
                 stackLang_StackLoadAny 9 8;
                 (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                   asm_Or dest src (Reg src)))) 8 7;
@@ -801,7 +799,7 @@ let word_gc_code_def = new_definition
                 (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
                   r1 r1 (Reg r2)))) 2 8;
                 stackLang_If asm_Lower 2 (Reg 1) (stackLang_Seq ((\r
-                  w. stackLang_Inst (word_depth_Const r w)) 1 (n2w 1))
+                  w. stackLang_Inst (asm_Const r w)) 1 (n2w 1))
                   (stackLang_Halt 1)) stackLang_Skip]) |
                   data_to_word_Generational gen_sizes ->
          ((word_gc_partial_or_full gen_sizes
@@ -835,8 +833,7 @@ let word_gc_code_def = new_definition
                 (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
                   r1 r1 (Reg r2)))) 8 9;
                 stackLang_Set GlobReal 8;
-                (\r w. stackLang_Inst (word_depth_Const r w)) 8 (n2w
-                  0);
+                (\r w. stackLang_Inst (asm_Const r w)) 8 (n2w 0);
                 stackLang_StackLoadAny 9 8;
                 word_gen_gc_partial_move_roots_bitmaps_code conf;
                 stackLang_Get 8 CurrHeap;
@@ -864,8 +861,7 @@ let word_gc_code_def = new_definition
                 stackLang_Get 8 EndOfHeap;
                 stackLang_Get 2 TriggerGC;
                 SetNewTrigger 8 3 gen_sizes;
-                (\r w. stackLang_Inst (word_depth_Const r w)) 1 (n2w
-                  0);
+                (\r w. stackLang_Inst (asm_Const r w)) 1 (n2w 0);
                 stackLang_Set (Temp (n2w 0)) 1;
                 stackLang_Set (Temp (n2w 1)) 1;
                 stackLang_Get 1 AllocSize;
@@ -886,8 +882,8 @@ let word_gc_code_def = new_definition
                 // gen_gc_full
                 stackLang_Set AllocSize 1;
                 stackLang_Set NextFree 0;
-                (\r w. stackLang_Inst (word_depth_Const r w)) 1 ((n2w
-                  0):'a word);
+                (\r w. stackLang_Inst (asm_Const r w)) 1 ((n2w 0):'a
+                  word);
                 (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                   asm_Or dest src (Reg src)))) 2 1;
                 stackLang_Get 3 OtherHeap;
@@ -923,8 +919,7 @@ let word_gc_code_def = new_definition
                 (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
                   r1 r1 (Reg r2)))) 7 9;
                 stackLang_Set GlobReal 7;
-                (\r w. stackLang_Inst (word_depth_Const r w)) 7 (n2w
-                  0);
+                (\r w. stackLang_Inst (asm_Const r w)) 7 (n2w 0);
                 stackLang_StackLoadAny 9 8;
                 (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                   asm_Or dest src (Reg src)))) 8 7;
@@ -957,8 +952,7 @@ let word_gc_code_def = new_definition
                   r1 r1 (Reg r2)))) 8 1;
                 stackLang_Set GenStart 8;
                 SetNewTrigger 2 3 gen_sizes;
-                (\r w. stackLang_Inst (word_depth_Const r w)) 1 (n2w
-                  0);
+                (\r w. stackLang_Inst (asm_Const r w)) 1 (n2w 0);
                 stackLang_Set (Temp (n2w 0)) 1;
                 stackLang_Set (Temp (n2w 1)) 1;
                 stackLang_Set (Temp (n2w 2)) 1;
@@ -971,8 +965,8 @@ let word_gc_code_def = new_definition
                 (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
                   r1 r1 (Reg r2)))) 2 3;
                 stackLang_If asm_Lower 2 (Reg 1) (stackLang_Seq
-                  ((\r w. stackLang_Inst (word_depth_Const r w)) 1
-                  (n2w 1)) (stackLang_Halt 1)) stackLang_Skip]):'a
+                  ((\r w. stackLang_Inst (asm_Const r w)) 1 (n2w 1))
+                  (stackLang_Halt 1)) stackLang_Skip]):'a
                   stackLang_prog))`;;
 
 let stack_alloc_stubs_def = new_definition

@@ -1011,8 +1011,11 @@ let clos_knownProof_f_rel_def = new_definition
       n1 = n2 /\ clos_knownProof_exp_rel c (APPEND (REPLICATE n1
         clos_known_Other) aenv) g e1 e2`;;
 
-(* HOL4 clos_knownProofScript.sml:2578-2582: a theorem whose
-   statement the port cannot state yet: v1_size_append *)
+let _ = size_thms "closSem_v";;
+let v1_size_append = prove
+ (`!xs ys. list_size closSem_v_size (APPEND xs ys) = list_size
+  closSem_v_size xs + list_size closSem_v_size ys`,
+  CHEAT_TAC);;
 
 let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind =
   assume_definition_rec

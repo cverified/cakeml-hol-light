@@ -53,8 +53,10 @@ let trace_to_json_def,trace_to_json_ind = define_rec
     // * the top level of a trace.
     trace_to_json (backend_common_None:tra) = jsonLang_Null`];;
 
-(* HOL4 displayLangScript.sml:45-49: a theorem whose statement the
-   port cannot state yet: MEM_sExp_size *)
+let _ = size_thms "sExp";;
+let MEM_sExp_size = prove
+ (`!es a. MEM a es ==> sExp_size a < list_size sExp_size es`,
+  CHEAT_TAC);;
 
 (* Converts a display expression to JSON *)
 let display_to_json_def,display_to_json_ind = define_shaped_rec
