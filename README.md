@@ -24,17 +24,25 @@ The work has three phases.
    `Definition` and `Inductive` of every ported source file has a
    HOL Light counterpart: 4480 of 4482 blocks, the two exceptions
    and their reasons in `PENDING.md`.
-2. **Statements -- done.**  Every `Theorem`, `Triviality` and
-   ML-bound theorem of the sources, with its name, its statement
-   and its attributes, in the order of the source, with `CHEAT_TAC`
-   where HOL4 has a proof.  715 theorems are not stated but have a
-   comment pointing at the HOL4 lines instead; `tools/coverage.py`
-   is the check.
+2. **Statements -- done but for a list.**  Every `Theorem`,
+   `Triviality` and ML-bound theorem of the sources, with its
+   name, its statement and its attributes, in the order of the
+   source, with `CHEAT_TAC` where HOL4 has a proof: 9,973 of the
+   10,688 theorems.  The other 715 have a comment pointing at the
+   HOL4 lines instead -- 441 are theorems HOL4 states as the value
+   of an ML expression and 40 are stated by ML code, neither of
+   which has a statement in the source to port, and 234 are
+   ordinary `Theorem` blocks, 188 of them statements that HOL
+   Light's parser rejects.  `tools/unstated.py` is that last list,
+   with what the parser said; `tools/coverage.py` is the check
+   (`CAKE_ALL=1` for every name, `CAKE_KINDS=1` for the split) and
+   `PENDING.md` the account.
 3. **Proofs -- under way.**  Every cheat becomes a real proof,
    until `length (axioms ())` is 3 (HOL Light's own three).
-   1262 of the port's 10543 proofs are real: 670 of them in the
-   proof store (`proofs/`), the rest written beside the port in
-   `tools/extra/` or taken from LightCake (see below).
+   1712 of the port's 10572 proofs are real: 1123 in the proof
+   store (`proofs/`), 377 theorems of the HOL4 library layer taken
+   from LightCake (see below), and the rest written beside the
+   port in `tools/extra/` and `tools/overrides.py`.
 
 `ml/CHEATS.md` lists every assumed definition with the reason,
 `ISSUES.md` every place the port knowingly says something other
@@ -257,9 +265,14 @@ credential is delegated.
 
 ## Taking a proof from LightCake
 
-LightCake's HOL4 library layer is proved, and of those theories
-this port has only the definitions that CakeML needs.  What it
-proves of them can be taken:
+LightCake is narrow and deep where this port is wide and shallow:
+188 files and 6,863 proofs, of which 3,541 are the HOL4 library
+layer -- listTheory, sptreeTheory, finite_mapTheory and the rest.
+Of those theories this port has only the definitions that CakeML
+needs, so they are what it has to give.  377 of them are in
+`ml/lib/` now: 229 of `words4`, 91 of `sptree`, 35 of `sorting`,
+9 each of `toto` and `ternaryComparisons`, 4 of `tailrec`.  What
+it proves of a theory can be taken:
 
     tools/bin/lightcake-take sptree
 

@@ -12,7 +12,7 @@
 
 LightCake (`lightcake-src/`, see README.md) is the other port of
 CakeML to HOL Light: narrow and deep where this one is wide and
-shallow.  Its HOL4 library layer is proved -- 3014 theorems of
+shallow.  Its HOL4 library layer is proved -- 3541 theorems of
 listTheory, finite_mapTheory, sptreeTheory and the rest -- and of
 those theories this port has only the definitions that CakeML
 needs.  So they are what it has to give.
