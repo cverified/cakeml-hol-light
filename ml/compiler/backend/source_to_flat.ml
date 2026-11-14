@@ -294,13 +294,17 @@ let compile_exps_append = prove
  (`!env es es'.
     compile_exps t env (APPEND es es') = APPEND (compile_exps t env
       es) (compile_exps t env es')`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[APPEND; source_to_flat_compile_exp_def]));;
 
 let compile_exps_reverse = prove
  (`!env es.
     compile_exps t env (REVERSE es) = REVERSE (compile_exps t env
       es)`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[REVERSE; source_to_flat_compile_exp_def;
+     compile_exps_append;
+                   APPEND]));;
 
 let compile_funs_map = prove
  (`!env funs.

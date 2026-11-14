@@ -1,0 +1,23 @@
+### type_d_tenv_ok
+  (MESON_TAC[extend_dec_tenv_ok; type_d_tenv_ok_helper])
+
+### type_e_subst_lem
+  (REPEAT STRIP_TAC THEN
+   MP_TAC(SPECL [`tenv:type_env`;
+                 `typeSystem_Bind_name x 0 t1 (bind_tvar (LENGTH
+                   (targs:t list)) tenvE)`;
+                 `e:ast_exp`; `t:t`] (CONJUNCT1 (INST
+                   [`tenvE:tenv_val_exp`,`tenvE2:tenv_val_exp`]
+                                             type_e_subst))) THEN
+   ASM_REWRITE_TAC[] THEN
+   DISCH_THEN(MP_TAC o SPECL [`typeSystem_Bind_name x 0 t1
+     typeSystem_Empty`; `targs:t list`; `tvs:num`;
+                              `MAP (deBruijn_inc 0 0) (targs:t
+                                list)`]) THEN
+   ASM_REWRITE_TAC[db_merge_def; deBruijn_subst_tenvE_def;
+     num_tvs_def; ADD_CLAUSES;
+                   deBruijn_inc0; tenv_val_exp_ok_def] THEN
+   ASM_SIMP_TAC[bind_tvar_rewrites; ADD_CLAUSES])
+
+### type_es_length
+  (REWRITE_TAC[type_es_list_rel] THEN MESON_TAC[LIST_REL_LENGTH])

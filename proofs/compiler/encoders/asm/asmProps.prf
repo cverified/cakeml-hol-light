@@ -1,0 +1,16 @@
+### asm_deterministic
+  (REWRITE_TAC[asm_step_def] THEN MESON_TAC[])
+
+### asm_step_outside_mem_domain
+  (REWRITE_TAC[asm_step_def] THEN REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o
+     check (fun th -> is_eq(concl th) && is_var(rhs(concl th)))) THEN
+   MATCH_MP_TAC asm_outside_mem_domain THEN ASM_REWRITE_TAC[])
+
+### asserts2_first
+  (REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[asserts2_def] THEN
+   ASM_CASES_TAC `n = 0` THEN ASM_REWRITE_TAC[] THENL [ARITH_TAC;
+     MESON_TAC[]])
+
+### sym_target_state_rel
+  (REWRITE_TAC[target_state_rel_def] THEN MESON_TAC[])

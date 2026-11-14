@@ -1,0 +1,5 @@
+### GSPEC_applied
+  (REWRITE_TAC[IN])
+
+### RIGHT_INTER_OVER_UNION
+  (SET_TAC[])

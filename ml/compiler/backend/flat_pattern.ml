@@ -362,7 +362,19 @@ let LENGTH_compile_exps_IMP = prove
 let LENGTH_SND_compile_exps = prove
  (`LENGTH (SND (SND (flat_pattern_compile_exps cfg xs))) = LENGTH xs /\
    LENGTH (SND (SND (compile_match cfg ps))) = LENGTH ps`,
-  CHEAT_TAC);;
+  (CONJ_TAC THENL
+    [MATCH_MP_TAC (CONJUNCT1 (CONJUNCT2 LENGTH_compile_exps_IMP))
+      THEN
+     MAP_EVERY EXISTS_TAC
+       [`cfg:flat_pattern_config`; `FST (flat_pattern_compile_exps
+         cfg xs)`;
+        `FST (SND (flat_pattern_compile_exps cfg xs))`];
+     MATCH_MP_TAC (CONJUNCT2 (CONJUNCT2 LENGTH_compile_exps_IMP))
+       THEN
+     MAP_EVERY EXISTS_TAC
+       [`cfg:flat_pattern_config`; `FST (compile_match cfg ps)`;
+        `FST (SND (compile_match cfg ps))`]] THEN
+   REWRITE_TAC[PAIR]));;
 
 let compile_dec_def = new_definition
   `compile_dec cfg exp = SND (SND (flat_pattern_compile_exp cfg exp))`;;

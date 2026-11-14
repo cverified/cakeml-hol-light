@@ -244,7 +244,7 @@ let left_insert1_FOLDL = prove
 (* [simp] *)
 let ptree_loc_mkNd = prove
  (`ptree_loc (mkNd n subs) = ptree_list_loc subs`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[mkNd_def; ptree_loc_def]));;
 
 let merge_list_locs_HDLAST = prove
  (`!h. merge_list_locs (CONS h t) = merge_locs h (LAST (CONS h t))`,
@@ -264,17 +264,20 @@ let rightLoc_def = define_general
 
 let merge_locs_LR = prove
  (`merge_locs l1 l2 = Locs (leftLoc l1) (rightLoc l2)`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN
+   MAP_EVERY (fun t -> STRUCT_CASES_TAC(ISPEC t (cases "locs")))
+     [`l1:locs`; `l2:locs`] THEN
+   REWRITE_TAC[merge_locs_def; leftLoc_def; rightLoc_def]));;
 
 (* [simp] *)
 let leftLoc_merge_locs = prove
  (`leftLoc (merge_locs l1 l2) = leftLoc l1`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[merge_locs_LR; leftLoc_def]));;
 
 (* [simp] *)
 let rightLoc_merge_locs = prove
  (`rightLoc (merge_locs l1 l2) = rightLoc l2`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[merge_locs_LR; rightLoc_def]));;
 
 (* two valid parse-trees with the same head, and the same fringes, which
    are all tokens, must be identical. *)
@@ -499,12 +502,12 @@ let left_insert_mk_linfix = prove
 (* [local] *)
 let elim_disjineq = prove
  (`p \/ ~(x = y) <=> (x = y ==> p)`,
-  CHEAT_TAC);;
+  (MESON_TAC[]));;
 
 (* [local] *)
 let elim_det = prove
  (`(!x. P x <=> (x = y)) ==> P y`,
-  CHEAT_TAC);;
+  (MESON_TAC[]));;
 
 let peg_seql_NONE_det = prove
  (`peg_eval G (i0,seql syms f) (peg_Failure fl fe) ==>

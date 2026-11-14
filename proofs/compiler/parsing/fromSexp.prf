@@ -1,0 +1,50 @@
+### SEXSTR_11
+  (REWRITE_TAC[SEXSTR_def; injectivity "simpleSexp_sexp"] THEN
+   MESON_TAC[decode_encode_control; option_INJ])
+
+### SEXSTR_remove
+  (SIMP_TAC[SEXSTR_def; encode_control_remove])
+
+### SEXSTR_valid
+  (REWRITE_TAC[SEXSTR_def; valid_sexp_def;
+    EVERY_isPrint_encode_control])
+
+### dstrip_sexp_SEXSTR
+  (REWRITE_TAC[SEXSTR_def; dstrip_sexp_def])
+
+### dstrip_sexp_SX_STR
+  (REWRITE_TAC[dstrip_sexp_def])
+
+### idsexp_sexpid_odestSEXSTR'
+  (MESON_TAC[idsexp_sexpid_odestSEXSTR])
+
+### listsexp_11
+  (REWRITE_TAC[listsexp_def; FOLDR_SX_CONS_INJ])
+
+### listsexp_MAP_EQ_f
+  (DISCH_TAC THEN AP_TERM_TAC THEN MATCH_MP_TAC MAP_EQ THEN
+   ASM_SIMP_TAC[GSYM ALL_MEM])
+
+### locnsexp_sexplocpt
+  (MESON_TAC[locnsexp_sexplocpt0; sexplocpt_locnsexp])
+
+### patsexp_sexppat
+  (MESON_TAC[patsexp_sexppat0; sexppat_patsexp])
+
+### prim_typesexp_11
+  (MESON_TAC[sexpprim_type_testsexp; option_INJ])
+
+### sexpdec_alt_intro1
+  (REWRITE_TAC[FUN_EQ_THM; sexpdec_alt_intro])
+
+### sexpexp_alt_intro1
+  (REWRITE_TAC[FUN_EQ_THM; sexpexp_alt_intro])
+
+### sexplist_listsexp_rwt
+  (MESON_TAC[sexplist_listsexp_matchable])
+
+### sexppat_alt_intro1
+  (REWRITE_TAC[FUN_EQ_THM; sexppat_alt_intro])
+
+### sexptype_alt_intro1
+  (REWRITE_TAC[FUN_EQ_THM; sexptype_alt_intro])

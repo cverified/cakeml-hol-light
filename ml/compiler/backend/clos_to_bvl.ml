@@ -79,7 +79,7 @@ let _ = do_list hide_constant ["pmatch"];;
 
 let clos_tag_shift_inj = prove
  (`clos_tag_shift n1 = clos_tag_shift n2 ==> n1 = n2`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[clos_tag_shift_def] THEN ARITH_TAC));;
 
 (* Constant flattening *)
 
@@ -231,7 +231,7 @@ let build_aux_MOVE = prove
 
 let build_aux_acc = prove
  (`!k n aux. ?aux1. SND (build_aux n k aux) = APPEND aux1 aux`,
-  CHEAT_TAC);;
+  (MESON_TAC[build_aux_MOVE; SND; PAIR]));;
 
 let build_aux_MEM = prove
  (`!c n aux n7 aux7.
@@ -708,7 +708,7 @@ let pair_lem1 = prove
 (* [local] *)
 let pair_lem2 = prove
  (`!x y z. (x,y) = z <=> x = FST z /\ y = SND z`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FORALL_PAIR_THM; PAIR_EQ; FST; SND]));;
 
 let compile_exps_acc = prove
  (`!max_app xs aux.

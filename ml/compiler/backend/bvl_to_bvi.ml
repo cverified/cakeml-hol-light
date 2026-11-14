@@ -516,7 +516,10 @@ let compile_exps_LENGTH_lemma = prove
 let compile_exps_LENGTH = prove
  (`(bvl_to_bvi_compile_exps n xs = (ys,aux,n1)) ==> (LENGTH ys =
   LENGTH xs)`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN
+   MP_TAC(SPECL [`n:num`; `xs:bvl_exp list`]
+     compile_exps_LENGTH_lemma) THEN
+   ASM_REWRITE_TAC[FST]));;
 
 let compile_exps_SING = prove
  (`(bvl_to_bvi_compile_exps n [x] = (c,aux,n1)) ==> (?y. c = [y])`,

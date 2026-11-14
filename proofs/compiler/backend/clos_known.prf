@@ -1,0 +1,24 @@
+### EL_MEM_LEMMA
+  (MESON_TAC[MEM_EL])
+
+### get_size_sc_SOME
+  (REWRITE_TAC[get_size_sc_def; get_size_def;
+    get_size_sc_aux_correct;
+               LET_DEF; LET_END_DEF] THEN
+   REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+   REWRITE_TAC[option_DISTINCT; option_INJ] THEN ASM_ARITH_TAC)
+
+### get_size_sc_aux_correct
+  (SUBGOAL_THEN `!xs limit. get_size_sc_aux limit xs = limit -
+    get_size_aux xs`
+     (fun th -> REWRITE_TAC[th]) THEN
+   MATCH_MP_TAC get_size_aux_ind THEN REPEAT STRIP_TAC THEN
+   ONCE_REWRITE_TAC[get_size_sc_aux_def; get_size_aux_def] THEN
+   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+   REPEAT COND_CASES_TAC THEN ASM_ARITH_TAC)
+
+### known_LENGTH_EQ_E
+  (MESON_TAC[FST; known_LENGTH])
+
+### known_sing_EQ_E
+  (MESON_TAC[PAIR_EQ; known_sing])

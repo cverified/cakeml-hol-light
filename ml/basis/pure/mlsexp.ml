@@ -437,7 +437,11 @@ let parse_aux_to_tokens_lemma = prove
 
 let parse_aux_to_tokens_thm = prove
  (`parse_aux (REVERSE (to_tokens x)) [] [] = [x]`,
-  CHEAT_TAC);;
+  (MP_TAC(SPECL [`x:mlsexp_sexp`; `[]:mlsexp_sexp list`;
+    `[]:(mlsexp_sexp list)list`;
+                 `[]:mlsexp_token list`] parse_aux_to_tokens_lemma)
+                   THEN
+   REWRITE_TAC[APPEND_NIL; parse_aux_def]));;
 
 let str_every_thm = prove
  (`!P i m. str_every P i m /\ i <= strlen m ==> (!k. k < i ==> P (EL k
@@ -472,14 +476,28 @@ let lex_aux_make_str_safe = prove
 let flatten_acc = prove
  (`!x indent s. mlsexp_flatten indent x s = APPEND (mlsexp_flatten
   indent x []) s`,
-  CHEAT_TAC);;
+  (MATCH_MP_TAC pretty_INDUCT THEN REPEAT CONJ_TAC THEN REPEAT
+    GEN_TAC THENL
+   [DISCH_TAC THEN REPEAT GEN_TAC THEN REWRITE_TAC[flatten_def] THEN
+    FIRST_X_ASSUM(fun th -> ONCE_REWRITE_TAC[th]) THEN
+    REWRITE_TAC[APPEND; GSYM APPEND_ASSOC];
+    REWRITE_TAC[flatten_def; APPEND];
+    DISCH_THEN(fun th -> REPEAT GEN_TAC THEN REWRITE_TAC[flatten_def]
+      THEN
+                         ONCE_REWRITE_TAC[CONJUNCT1 th] THEN
+                         ONCE_REWRITE_TAC[CONJUNCT2 th]) THEN
+    REWRITE_TAC[APPEND_NIL; APPEND; GSYM APPEND_ASSOC];
+    DISCH_THEN(fun th -> REWRITE_TAC[flatten_def] THEN
+      MATCH_ACCEPT_TAC th)]));;
 
 let lex_aux_spaces = prove
  (`!t rest ts depth.
      ALL isSpace t ==>
      mlsexp_lex_aux depth (APPEND t rest) ts = mlsexp_lex_aux depth
        rest ts`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; APPEND] THEN REPEAT
+    STRIP_TAC THEN
+   ONCE_REWRITE_TAC[lex_aux_def] THEN ASM_SIMP_TAC[]));;
 
 let lex_aux_sexp2tree = prove
  (`(!x s ts depth m n indent.

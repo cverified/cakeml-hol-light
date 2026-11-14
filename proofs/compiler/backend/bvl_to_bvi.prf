@@ -1,0 +1,5 @@
+### compile_exps_LENGTH
+  (REPEAT STRIP_TAC THEN
+   MP_TAC(SPECL [`n:num`; `xs:bvl_exp list`]
+     compile_exps_LENGTH_lemma) THEN
+   ASM_REWRITE_TAC[FST])

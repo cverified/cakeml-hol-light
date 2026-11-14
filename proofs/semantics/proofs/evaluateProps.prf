@@ -1,0 +1,45 @@
+### add_lemma
+  (MESON_TAC[LE_EXISTS; LE_CASES])
+
+### can_pmatch_all_EVERY
+  (GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[can_pmatch_all_def; ALL] THEN GEN_TAC THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[])
+
+### do_app_ffi_unchanged
+  (MESON_TAC[do_app_SOME_ffi_same])
+
+### do_app_io_events_mono
+  (MESON_TAC[do_app_call_FFI_rel; call_FFI_rel_io_events_mono])
+
+### evaluate_call_FFI_rel_imp
+  (MESON_TAC[PAIR; FST; evaluate_call_FFI_rel])
+
+### evaluate_decs_call_FFI_rel
+  (REWRITE_TAC[evaluate_call_FFI_rel])
+
+### evaluate_decs_call_FFI_rel_imp
+  (REWRITE_TAC[evaluate_call_FFI_rel_imp])
+
+### evaluate_io_events_mono
+  (MESON_TAC[evaluate_call_FFI_rel; call_FFI_rel_io_events_mono])
+
+### evaluate_io_events_mono_imp
+  (MESON_TAC[PAIR; FST; evaluate_io_events_mono])
+
+### evaluate_nil
+  (REWRITE_TAC[evaluate_def])
+
+### evaluate_sing
+  (REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o MATCH_MP (CONJUNCT1
+    evaluate_length)) THEN
+   STRUCT_CASES_TAC(ISPEC `vs:v list` list_CASES) THEN
+   REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ; LENGTH_EQ_NIL; CONS_11] THEN
+     MESON_TAC[])
+
+### is_clock_io_mono_acc_safe
+  (REPEAT GEN_TAC THEN STRIP_TAC THEN POP_ASSUM MP_TAC THEN
+   ASM_REWRITE_TAC[is_clock_io_mono_def])
+
+### is_clock_io_mono_evaluate_decs
+  (REWRITE_TAC[is_clock_io_mono_evaluate])

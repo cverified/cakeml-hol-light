@@ -1,0 +1,12 @@
+### gt_0
+  (ARITH_TAC)
+
+### type_e_weakening
+  (MESON_TAC[type_e_weakening_lem])
+
+### weak_tenvE_bind_var_list
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[bind_var_list_def] THEN
+   SPEC_TAC(`h:mlstring#t`,`h:mlstring#t`) THEN
+     REWRITE_TAC[FORALL_PAIR_THM] THEN
+   REWRITE_TAC[bind_var_list_def] THEN
+     ASM_MESON_TAC[weak_tenvE_bind])

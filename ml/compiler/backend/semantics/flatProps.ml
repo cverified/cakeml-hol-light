@@ -10,6 +10,7 @@
   Properties about flatLang and its semantics
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
@@ -77,7 +78,10 @@ let pmatch_length = prove
  (`!(s:('c,'ffi)flatSem_state) p v env r.
       flatSem_pmatch s p v env = Match r ==>
       LENGTH r = LENGTH (pat_bindings p) + LENGTH env`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN
+   FIRST_ASSUM(MP_TAC o AP_TERM `LENGTH:(mlstring)list->num` o
+               MATCH_MP (CONJUNCT1 pmatch_bindings)) THEN
+   REWRITE_TAC[LENGTH_APPEND; LENGTH_MAP]));;
 
 let pmatch_any_match = prove
  (`(!(s:('c,'ffi)flatSem_state) p v env env'. pmatch s p v env = Match
@@ -166,7 +170,10 @@ let pmatch_rows_ignore_clock = prove
  (`!pes s v c.
      pmatch_rows pes (state_clock_fupd (K c) s) v = pmatch_rows pes
        s v`,
-  CHEAT_TAC);;
+  (MATCH_MP_TAC list_INDUCT THEN
+   REWRITE_TAC[FORALL_PAIR_THM; pmatch_rows_def; pmatch_ignore_clock]
+     THEN
+   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[]));;
 
 let pmatch_rows_IMP_pmatch = prove
  (`pmatch_rows pes s v = Match (env',p',e') ==>
@@ -348,7 +355,7 @@ let evaluate_decs_io_events_mono = prove
  (`!ds (s:('c,'ffi)flatSem_state) s' y. evaluate_decs s ds = (s',y) ==>
   ffi_state_io_events (flatSem_state_ffi
     s) <<= ffi_state_io_events (state_ffi s')`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[evaluate_io_events_mono_IMP]));;
 
 (* evaluate_decs_add_to_clock_io_events_mono *)
 let flatProps_evaluate_decs_add_to_clock_io_events_mono = prove
@@ -604,7 +611,7 @@ hol4_overload "simple_val_rel" "flatProps_simple_val_rel";;
 let simple_val_rel_isClosure = prove
  (`flatProps_simple_val_rel vr /\ vr x y ==> (isClosure x = isClosure
   y)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[flatProps_simple_val_rel_def] THEN MESON_TAC[]));;
 
 let flatProps_simple_state_rel_def = new_definition
   `flatProps_simple_state_rel vr sr <=>

@@ -1,0 +1,41 @@
+### add_lt_divisible_iff
+  (REPEAT GEN_TAC THEN DISCH_TAC THEN EQ_TAC THENL
+   [DISCH_TAC THEN SUBGOAL_THEN `y < n:num` ASSUME_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    SUBGOAL_THEN `y = 0` SUBST_ALL_TAC THENL
+     [ASM_MESON_TAC[MOD_LT]; ASM_ARITH_TAC];
+    ARITH_TAC])
+
+### fromChars_range_unsafe_0_substring_thm
+  (GEN_TAC THEN INDUCT_TAC THEN
+    REWRITE_TAC[fromChars_range_unsafe_def] THEN
+   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `s:mlstring`)
+     THEN
+   ANTS_TAC THENL [ASM_ARITH_TAC; DISCH_THEN SUBST1_TAC] THEN
+   REWRITE_TAC[ADD_CLAUSES] THEN
+   ASM_SIMP_TAC[strsub_substring_0_thm; ARITH_RULE `SUC r <= m ==> r
+     < m`])
+
+### fromChars_range_unsafe_split
+  (INDUCT_TAC THEN REWRITE_TAC[] THEN INDUCT_TAC THEN
+   REWRITE_TAC[CONJUNCT1 LT; LT_SUC] THEN
+   REPEAT STRIP_TAC THEN REWRITE_TAC[fromChars_range_unsafe_def;
+     SUB_SUC] THEN
+   ASM_CASES_TAC `m = 0` THENL
+    [ASM_REWRITE_TAC[fromChars_range_unsafe_def; SUB_0; EXP;
+      MULT_CLAUSES;
+                     ADD_CLAUSES] THEN ARITH_TAC;
+     ALL_TAC] THEN
+   FIRST_X_ASSUM(MP_TAC o SPECL [`n:num`; `s:mlstring`]) THEN
+   ANTS_TAC THENL [ASM_ARITH_TAC; DISCH_THEN SUBST1_TAC] THEN
+   SUBGOAL_THEN `(n - m) + m = n` SUBST1_TAC THENL
+    [ASM_ARITH_TAC; REWRITE_TAC[EXP; ADD_CLAUSES] THEN CONV_TAC
+      NUM_RING])
+
+### fromString_toString
+  (SIMP_TAC[toString_def1; fromString_int_to_string])
+
+### num_to_str_thm
+  (REWRITE_TAC[num_to_str_def; toString_thm; INT_ABS_NUM;
+    NUM_OF_INT_OF_NUM;
+   INT_OF_NUM_LT; LT; APPEND])

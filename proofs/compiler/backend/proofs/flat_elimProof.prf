@@ -1,0 +1,44 @@
+### EVERY_EL_IMP
+  (REWRITE_TAC[GSYM ALL_EL] THEN MESON_TAC[])
+
+### find_refs_globals_EL
+  (MESON_TAC[MEM_EL; find_refs_globals_MEM])
+
+### find_v_globalsL_EL_trans
+  (MESON_TAC[find_v_globalsL_EL; SUBSET_TRANS])
+
+### flat_state_rel_trans
+  (REWRITE_TAC[flat_state_rel_def] THEN MESON_TAC[globals_rel_trans])
+
+### globals_rel_trans
+  (REWRITE_TAC[globals_rel_def] THEN MESON_TAC[])
+
+### has_Eval_def
+  (SUBGOAL_THEN `!es. has_Eval_list es <=> EX has_Eval es` ASSUME_TAC
+    THENL
+    [LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[has_Eval_def; EX]; ALL_TAC]
+      THEN
+   SUBGOAL_THEN `!pes. has_Eval_pats pes <=> EX has_Eval (MAP SND
+     pes)` ASSUME_TAC THENL
+    [LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[has_Eval_def; EX; MAP] THEN
+     SPEC_TAC(`h:flatLang_pat#flatLang_exp`,`h:flatLang_pat#flatLang_exp`) THEN
+     ASM_REWRITE_TAC[FORALL_PAIR_THM; has_Eval_def; SND];
+     ALL_TAC] THEN
+   SUBGOAL_THEN `!funs. has_Eval_funs funs <=> EX has_Eval (MAP (SND
+     o SND) funs)`
+     ASSUME_TAC THENL
+    [LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[has_Eval_def; EX; MAP] THEN
+     SPEC_TAC(`h:varN#varN#flatLang_exp`,`h:varN#varN#flatLang_exp`)
+       THEN
+     ASM_REWRITE_TAC[FORALL_PAIR_THM; has_Eval_def; SND; o_THM];
+     ALL_TAC] THEN
+   ASM_REWRITE_TAC[has_Eval_def])
+
+### is_pure_EVERY_aconv
+  (REWRITE_TAC[ETA_AX])
+
+### not_LE_LESS_IMP
+  (ARITH_TAC)
+
+### not_v_has_Eval_EVERY_EL
+  (REWRITE_TAC[GSYM ALL_EL; o_THM] THEN MESON_TAC[])

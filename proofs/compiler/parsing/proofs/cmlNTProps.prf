@@ -1,0 +1,2 @@
+### disjImpI
+  (REPEAT GEN_TAC THEN CONV_TAC TAUT)

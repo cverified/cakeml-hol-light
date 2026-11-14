@@ -89,12 +89,12 @@ let GSPEC_INTER = prove
 (* [local] *)
 let RIGHT_INTER_OVER_UNION = prove
  (`(a UNION b) INTER c = (a INTER c) UNION (b INTER c)`,
-  CHEAT_TAC);;
+  (SET_TAC[]));;
 
 (* [local] *)
 let GSPEC_applied = prove
  (`GSPEC f x <=> x IN GSPEC f`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[IN]));;
 
 (* HOL4 gramPropsScript.sml:162-167: the ML values that the
    definitions below antiquote *)

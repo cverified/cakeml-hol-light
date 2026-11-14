@@ -1,0 +1,5 @@
+### every_name_conj
+  (REWRITE_TAC[every_name_def; GSYM AND_ALL] THEN CONV_TAC TAUT)
+
+### labels_rel_TRANS
+  (REWRITE_TAC[labels_rel_def] THEN MESON_TAC[SUBSET_TRANS])

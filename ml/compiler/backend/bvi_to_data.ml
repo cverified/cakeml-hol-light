@@ -311,7 +311,8 @@ let compile_LESS_EQ = prove
  (`!n env tail live xs c vs new_var.
       (compile n env tail live xs = (c,vs,new_var)) ==> n <=
         new_var`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN MP_TAC (SPEC_ALL compile_LESS_EQ_lemma) THEN
+   ASM_REWRITE_TAC[]));;
 
 (* [local] *)
 let compile_LENGTH_lemma = prove
@@ -324,7 +325,8 @@ let compile_LENGTH = prove
  (`!n env tail live xs c vs new_var.
       (compile n env tail live xs = (c,vs,new_var)) ==> (LENGTH vs
         = LENGTH xs)`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN MP_TAC (SPEC_ALL compile_LENGTH_lemma) THEN
+   ASM_REWRITE_TAC[]));;
 
 let compile_SING_IMP = prove
  (`(compile n env tail live [x] = (c,vs,new_var)) ==> (?t. vs = [t])`,

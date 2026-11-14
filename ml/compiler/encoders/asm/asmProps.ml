@@ -31,7 +31,7 @@ let _ = hide_overloads
 let asm_deterministic = prove
  (`!c i s1 s2 s3. asm_step c s1 i s2 /\ asm_step c s1 i s3 ==> (s2 =
   s3)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[asm_step_def] THEN MESON_TAC[]));;
 
 (* -- well-formedness of encoding -- *)
 
@@ -185,7 +185,7 @@ let sym_target_state_rel = prove
           (asm_state_regs s i = target_get_reg t ms i)) /\
      (!i. i < asm_config_fp_reg_count (target_config t) ==>
        (asm_state_fp_regs s i = target_get_fp_reg t ms i))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[target_state_rel_def] THEN MESON_TAC[]));;
 
 (* HOL4 asmPropsScript.sml:195: a theorem that HOL4 states as the
    value of an ML expression: all_pcs *)
@@ -228,7 +228,9 @@ let asserts2_change_interfer = prove
 
 let asserts2_first = prove
  (`1 <= n /\ asserts2 n fi fc ms P ==> P ms (fc ms)`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[asserts2_def] THEN
+   ASM_CASES_TAC `n = 0` THEN ASM_REWRITE_TAC[] THENL [ARITH_TAC;
+     MESON_TAC[]]));;
 
 let asserts2_every = prove
  (`!n ms j.
@@ -375,7 +377,10 @@ let asm_step_outside_mem_domain = prove
  (`asm_step c s1 i s2 ==>
    (!x. ~(x IN asm_state_mem_domain s1) ==> (asm_state_mem s2 x =
      asm_state_mem s1 x))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[asm_step_def] THEN REPEAT STRIP_TAC THEN
+   FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o
+     check (fun th -> is_eq(concl th) && is_var(rhs(concl th)))) THEN
+   MATCH_MP_TAC asm_outside_mem_domain THEN ASM_REWRITE_TAC[]));;
 
 let RTC_asm_step_outside_mem_domain = prove
  (`!s1 s2.

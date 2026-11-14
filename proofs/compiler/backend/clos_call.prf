@@ -1,0 +1,2 @@
+### EL_MEM_LEMMA
+  (MESON_TAC[MEM_EL])

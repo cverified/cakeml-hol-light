@@ -284,22 +284,26 @@ let mats_len_def,mats_len_ind = define_rec
 let pats_weight_append = prove
  (`!xs ys. pats_weight (APPEND xs ys) = pats_weight xs + pats_weight
   ys`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; pat_weight_def] THEN
+    ARITH_TAC));;
 
 (* [local] *)
 let pats_weight_anys = prove
  (`!n. pats_weight (anys n) = 0`,
-  CHEAT_TAC);;
+  (INDUCT_TAC THEN ASM_REWRITE_TAC[anys_def; pat_weight_def;
+    ADD_CLAUSES]));;
 
 (* [local] *)
 let mat_weight_append = prove
  (`!xs ys. mat_weight (APPEND xs ys) = mat_weight xs + mat_weight ys`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; mat_weight_def] THEN
+    ARITH_TAC));;
 
 (* [local] *)
 let mat_len_append = prove
  (`!xs ys. mat_len (APPEND xs ys) = mat_len xs + mat_len ys`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; mat_len_def] THEN
+    ARITH_TAC));;
 
 (* [local] *)
 let mat_weight_spec_row = prove
@@ -419,7 +423,8 @@ let exh_steps_def,exh_steps_ind = define_mutual_guess_cheat
 let exh_steps_list_append = prove
  (`!xs ys. exh_steps_list (APPEND xs ys) = exh_steps_list xs +
   exh_steps_list ys`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; exh_steps_def] THEN
+    ARITH_TAC));;
 
 (* the termination relation that HOL4 gives is
      MEASURE exh_steps_list
@@ -441,7 +446,8 @@ let exh_all_def,exh_all_ind = define_guess_cheat
 (* [local] *)
 let exh_mats_append = prove
  (`!xs ys. exh_mats (APPEND xs ys) <=> exh_mats xs /\ exh_mats ys`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; exh_matrix_def;
+    CONJ_ASSOC]));;
 
 (* [local] *)
 let exh_all_thm = prove
@@ -450,7 +456,7 @@ let exh_all_thm = prove
 
 let exh_rows_eq = prove
  (`exh_rows rows <=> exh_all [or_rows rows]`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[exh_rows_def; exh_all_thm; exh_matrix_def]));;
 
 
 (* ====================================================================== *
@@ -514,7 +520,7 @@ let pand_assoc = prove
 let pmatch_Any = prove
  (`pmatch refs (pattern_semantics_Any:pattern_semantics_pat) v =
   PMatchSuccess`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[pattern_semantics_pmatch_def]));;
 
 (* [local,simp] *)
 let pmatch_list_nil = prove
@@ -546,7 +552,7 @@ let pmatch_list_append = prove
 (* [local,simp] *)
 let LENGTH_anys = prove
  (`!n. LENGTH (anys n) = n`,
-  CHEAT_TAC);;
+  (INDUCT_TAC THEN ASM_REWRITE_TAC[anys_def; LENGTH]));;
 
 (* Stated with the width as an argument rather than as LENGTH as, so that
    it also rewrites the anys (ctor_arity c) that spec_row produces. *)
@@ -565,12 +571,16 @@ let pmatch_list_anys = prove
 (* [local,simp] *)
 let MEM_ctor_nub = prove
  (`!l x. MEM x (ctor_nub l) <=> MEM x l`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ctor_nub_def; MEM] THEN
+   GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[MEM] THEN
+     ASM_MESON_TAC[]));;
 
 (* [local,simp] *)
 let MEM_ctor_keep = prove
  (`!xs ys x. MEM x (ctor_keep xs ys) <=> MEM x xs /\ MEM x ys`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ctor_keep_def; MEM] THEN
+   REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[MEM] THEN
+   ASM_MESON_TAC[]));;
 
 (* [local] *)
 let MEM_tag_ctors = prove
@@ -580,7 +590,8 @@ let MEM_tag_ctors = prove
 (* [local] *)
 let MEM_spec_mats = prove
  (`!cs c rows. MEM c cs ==> MEM (spec_mat c rows) (spec_mats cs rows)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[spec_mats_def; MEM] THEN
+   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[]));;
 
 (* [local,simp] *)
 let MEM_add_head = prove
@@ -598,18 +609,21 @@ let MEM_mk_prods = prove
 let MEM_mk_refs = prove
  (`!ps q. MEM q (mk_refs ps) <=> (?p. MEM p ps /\ q =
   pattern_semantics_Ref p)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_refs_def; MEM] THEN
+    MESON_TAC[]));;
 
 (* [local,simp] *)
 let MEM_mk_conses = prove
  (`!pss t q. MEM q (mk_conses t pss) <=> (?ps. MEM ps pss /\ q =
   pattern_semantics_Cons t ps)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_conses_def; MEM] THEN
+    MESON_TAC[]));;
 
 (* [local,simp] *)
 let MEM_mk_rows = prove
  (`!ps r. MEM r (mk_rows ps) <=> (?p. MEM p ps /\ r = [p])`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_rows_def; MEM] THEN
+    MESON_TAC[]));;
 
 
 (* ---------------------------------------------------------------------- *
@@ -674,7 +688,8 @@ let dest_val_eq_SOME = prove
 (* [local] *)
 let LENGTH_dest_val = prove
  (`dest_val refs v = SOME (c,as) ==> LENGTH as = ctor_arity c`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[dest_val_eq_SOME] THEN REPEAT STRIP_TAC THEN
+   ASM_REWRITE_TAC[ctor_arity_def; LENGTH; ONE]));;
 
 (* A head pattern that reports a constructor set really does confine a
    value that it does not type-fail on to that set. *)

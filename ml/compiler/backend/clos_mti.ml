@@ -161,7 +161,13 @@ let intro_multi_length = prove
 
 let intro_multi_sing = prove
  (`!e max_app. ?e'. intro_multi max_app [e] = [e']`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN
+   MP_TAC (ISPECL [`max_app:num`; `[e:closLang_exp]`]
+     intro_multi_length) THEN
+   SPEC_TAC (`intro_multi max_app [e]`,`l:closLang_exp list`) THEN
+   LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ;
+     LENGTH_EQ_NIL] THEN
+   MESON_TAC[]));;
 
 let collect_args_idem = prove
  (`!max_app num_args e num_args' e'.

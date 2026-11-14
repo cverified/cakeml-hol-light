@@ -546,7 +546,13 @@ let compile_NOT_NIL = prove
 (* [simp] *)
 let HD_compile = prove
  (`[HD (flat_to_clos_compile m [x])] = flat_to_clos_compile m [x]`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN
+   MP_TAC (SPECL [`m:(mlstring option) list`; `[x:flatLang_exp]`]
+     LENGTH_compile) THEN
+   SPEC_TAC (`flat_to_clos_compile m [x]`,`l:closLang_exp list`) THEN
+   LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ;
+     LENGTH_EQ_NIL] THEN
+   SIMP_TAC[HD]));;
 
 (* and the names that this file reads as variables are constants again *)
 let _ = do_list unhide_constant

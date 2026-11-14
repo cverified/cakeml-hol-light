@@ -1,0 +1,15 @@
+### collate_thm
+  (REPEAT GEN_TAC THEN REWRITE_TAC[mlvector_collate_def] THEN
+   REPEAT COND_CASES_TAC THEN
+   TRY (SUBGOAL_THEN `length (vec1:A vector) = length (vec2:B
+     vector)`
+          ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
+   ASM_SIMP_TAC[mlvector_collate_aux_greater_thm;
+     mlvector_collate_aux_equal_thm;
+                mlvector_collate_aux_less_thm; ADD_CLAUSES; DROP_0])
+
+### find_thm
+  (SIMP_TAC[find_aux_thm; find_def; ADD_CLAUSES; DROP_0])
+
+### foldl_thm
+  (SIMP_TAC[foldl_aux_thm; mlvector_foldl_def; ADD_CLAUSES; DROP_0])

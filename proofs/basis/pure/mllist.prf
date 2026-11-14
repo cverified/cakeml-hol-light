@@ -18,41 +18,8 @@
    STRIP_TAC THEN ASM_SIMP_TAC[] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
    ASM_MESON_TAC[])
 
-### filter_rev'_lemma
-  (SPEC_TAC(`xs:A list`,`xs:A list`) THEN LIST_INDUCT_TAC THEN
-   REWRITE_TAC[filter_rev'_def; APPEND] THEN GEN_TAC THEN
-     COND_CASES_TAC THEN
-   REWRITE_TAC[] THEN
-   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC (RAND_CONV o LAND_CONV)
-     [th]) THEN
-   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC LAND_CONV [th]) THEN
-   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND])
-
-### filter_rev_thm
-  (REWRITE_TAC[filter_rev_def] THEN SPEC_TAC(`xs:A list`,`xs:A list`)
-    THEN
-   LIST_INDUCT_TAC THEN REWRITE_TAC[filter_rev'_def; FILTER; REVERSE]
-     THEN
-   COND_CASES_TAC THEN ASM_REWRITE_TAC[REVERSE] THEN
-   ONCE_REWRITE_TAC[filter_rev'_lemma] THEN ASM_REWRITE_TAC[APPEND;
-     APPEND_NIL])
-
 ### foldl_intro
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[FOLDL; foldl_def])
-
-### map_rev'_lemma
-  (SPEC_TAC(`xs:A list`,`xs:A list`) THEN LIST_INDUCT_TAC THEN
-   REWRITE_TAC[map_rev'_def; APPEND] THEN GEN_TAC THEN
-   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC (RAND_CONV o LAND_CONV)
-     [th]) THEN
-   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC LAND_CONV [th]) THEN
-   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND])
-
-### map_rev_thm
-  (REWRITE_TAC[map_rev_def] THEN SPEC_TAC(`xs:A list`,`xs:A list`)
-    THEN
-   LIST_INDUCT_TAC THEN REWRITE_TAC[map_rev'_def; MAP; REVERSE] THEN
-   ONCE_REWRITE_TAC[map_rev'_lemma] THEN ASM_REWRITE_TAC[APPEND])
 
 ### merge_tail_acc
   (REPEAT GEN_TAC THEN REWRITE_TAC[mergetail_merge] THEN

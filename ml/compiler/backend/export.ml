@@ -176,7 +176,12 @@ let all_bytes_def = new_definition
 
 let byte_to_string_eq = prove
  (`!b. byte_to_string b = sub all_bytes (w2n b)`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN REWRITE_TAC[all_bytes_def; sub_def] THEN
+   SUBGOAL_THEN `val (b:byte) < 256` ASSUME_TAC THENL
+    [MP_TAC(ISPEC `b:byte` VAL_BOUND) THEN REWRITE_TAC[DIMINDEX_8]
+      THEN
+     ARITH_TAC;
+     ASM_SIMP_TAC[EL_LIST_OF_SEQ; WORD_VAL]]));;
 
 (* gas allows 0-9a-zA-Z_$. in labels as long as the first is _A-Za-z *)
 (* we prefix labels and reserve $; . is special *)

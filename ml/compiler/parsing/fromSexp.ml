@@ -178,7 +178,8 @@ let SEXSTR_def = new_definition
 (* [simp] *)
 let SEXSTR_11 = prove
  (`SEXSTR s1 = SEXSTR s2 <=> s1 = s2`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[SEXSTR_def; injectivity "simpleSexp_sexp"] THEN
+   MESON_TAC[decode_encode_control; option_INJ]));;
 
 (* [simp] *)
 let SEXSTR_distinct = prove
@@ -202,7 +203,7 @@ let encode_control_remove = prove
 let SEXSTR_remove = prove
  (`ALL isPrint s /\ ~((CHR 92) IN set_of_list s) ==> SEXSTR s = SX_STR
   s`,
-  CHEAT_TAC);;
+  (SIMP_TAC[SEXSTR_def; encode_control_remove]));;
 
 let odestSXSTR_def = new_definition
   `odestSXSTR x1 =
@@ -392,7 +393,7 @@ let sexptype_alt_intro = prove
 
 let sexptype_alt_intro1 = prove
  (`sexptype = sexptype_alt /\ sexplist sexptype = sexptype_list`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FUN_EQ_THM; sexptype_alt_intro]));;
 
 let sexplit_def = new_definition
   `sexplit s = APPEND (APPEND (OPTION_MAP (ast_IntLit o (&)) (odestSXNUM
@@ -510,7 +511,7 @@ let sexppat_alt_intro = prove
 
 let sexppat_alt_intro1 = prove
  (`sexppat = sexppat_alt /\ sexplist sexppat = sexppat_list`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FUN_EQ_THM; sexppat_alt_intro]));;
 
 let decode_thunk_mode_def = new_definition
   `decode_thunk_mode s =
@@ -851,7 +852,7 @@ let sexpexp_alt_intro1 = prove
  (`sexpexp = sexpexp_alt /\
    sexplist (sexppair odestSEXSTR (sexppair odestSEXSTR sexpexp)) =
      sexpfuns`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FUN_EQ_THM; sexpexp_alt_intro]));;
 
 let sexptype_def_def = new_definition
   `sexptype_def =
@@ -974,7 +975,7 @@ let sexpdec_alt_intro = prove
 let sexpdec_alt_intro1 = prove
  (`sexpdec = sexpdec_alt /\
    sexplist sexpdec = sexpdec_list`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FUN_EQ_THM; sexpdec_alt_intro]));;
 
 (* now the reverse: toSexp *)
 
@@ -990,7 +991,7 @@ let listsexp_thm = prove
 (* [simp] *)
 let listsexp_11 = prove
  (`!l1 l2. listsexp l1 = listsexp l2 <=> l1 = l2`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[listsexp_def; FOLDR_SX_CONS_INJ]));;
 
 let optsexp_def = define_cases
   [`optsexp NONE = SX_SYM "NONE"`;
@@ -1143,12 +1144,12 @@ let sexplist_listsexp_matchable = prove
 (* [simp] *)
 let dstrip_sexp_SX_STR = prove
  (`dstrip_sexp (SX_STR s) = NONE`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[dstrip_sexp_def]));;
 
 (* [simp] *)
 let dstrip_sexp_SEXSTR = prove
  (`dstrip_sexp (SEXSTR s) = NONE`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[SEXSTR_def; dstrip_sexp_def]));;
 
 (* [simp] *)
 let odestSXSTR_SOME = prove
@@ -1219,7 +1220,7 @@ let dstrip_sexp_listsexp = prove
 let sexplist_listsexp_rwt = prove
  (`(!x. MEM x l ==> f (g x) = SOME x) ==>
    (sexplist f (listsexp (MAP g l)) = SOME l)`,
-  CHEAT_TAC);;
+  (MESON_TAC[sexplist_listsexp_matchable]));;
 
 let sexplist_listsexp_imp = prove
  (`sexplist f (listsexp l1) = SOME l2 ==>
@@ -1262,7 +1263,7 @@ let sexpprim_type_testsexp = prove
 (* [simp] *)
 let prim_typesexp_11 = prove
  (`!l1 l2. prim_typesexp l1 = prim_typesexp l2 <=> l1 = l2`,
-  CHEAT_TAC);;
+  (MESON_TAC[sexpprim_type_testsexp; option_INJ]));;
 
 let opsexp_def = new_definition
   `opsexp x1 =
@@ -1547,7 +1548,8 @@ let sexpopt_SOME = prove
 let listsexp_MAP_EQ_f = prove
  (`(!x. MEM x ls ==> f1 x = f2 x) ==>
     listsexp (MAP f1 ls) = listsexp (MAP f2 ls)`,
-  CHEAT_TAC);;
+  (DISCH_TAC THEN AP_TERM_TAC THEN MATCH_MP_TAC MAP_EQ THEN
+   ASM_SIMP_TAC[GSYM ALL_MEM]));;
 
 let sexplist_SOME = prove
  (`sexplist f s = SOME ls <=> (?l. s = listsexp l /\ MAP f l = MAP
@@ -1581,7 +1583,7 @@ let idsexp_sexpid_odestSEXSTR = prove
 let idsexp_sexpid_odestSEXSTR' = prove
  (`(sexpid odestSEXSTR x = SOME y <=> x = idsexp y) /\
    (SOME y = sexpid odestSEXSTR x <=> x = idsexp y)`,
-  CHEAT_TAC);;
+  (MESON_TAC[idsexp_sexpid_odestSEXSTR]));;
 
 let typesexp_sexptype = prove
  (`!s t. (sexptype s = SOME t <=> typesexp t = s) /\
@@ -1595,7 +1597,7 @@ let patsexp_sexppat0 = prove
 let patsexp_sexppat = prove
  (`(sexppat s = SOME p <=> patsexp p = s) /\
    (SOME p = sexppat s <=> patsexp p = s)`,
-  CHEAT_TAC);;
+  (MESON_TAC[patsexp_sexppat0; sexppat_patsexp]));;
 
 let decode_test_testsexp = prove
  (`fromSexp_decode_test s = SOME test ==> testsexp test = s`,
@@ -1622,7 +1624,7 @@ let locnsexp_sexplocpt0 = prove
 let locnsexp_sexplocpt = prove
  (`(sexplocpt s = SOME z <=> locnsexp z = s) /\
    (SOME z = sexplocpt s <=> locnsexp z = s)`,
-  CHEAT_TAC);;
+  (MESON_TAC[locnsexp_sexplocpt0; sexplocpt_locnsexp]));;
 
 let locnsexp_sexplocn = prove
  (`(sexplocn s = SOME z <=> locssexp z = s) /\
@@ -1654,7 +1656,8 @@ let decsexp_sexpdec = prove
 (* [simp] *)
 let SEXSTR_valid = prove
  (`valid_sexp (SEXSTR s)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[SEXSTR_def; valid_sexp_def;
+    EVERY_isPrint_encode_control]));;
 
 let listsexp_valid = prove
  (`!ls. ALL valid_sexp ls ==> valid_sexp (listsexp ls)`,

@@ -364,7 +364,10 @@ let shift_sing_eq = prove
 
 let shift_LENGTH_LEMMA = prove
  (`!xs m l i. LENGTH (clos_annotate_shift xs m l i) = LENGTH xs`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[shift_sing_eq] THEN LIST_INDUCT_TAC THEN
+   REWRITE_TAC[shift_sing_def] THEN CONV_TAC (TOP_DEPTH_CONV
+     let_CONV) THEN
+   ASM_REWRITE_TAC[LENGTH]));;
 
 (* HOL4 clos_annotateScript.sml:383-387: a theorem that HOL4 states
    as the value of an ML expression: shift_SING *)
@@ -425,7 +428,7 @@ let clos_annotate_compile_eq = prove
 let compile_inc_eq = prove
  (`clos_annotate_compile_inc (e,aux) = (annotate_list 0
   e,clos_annotate_compile aux)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[clos_annotate_compile_inc_def; annotate_sing_eq]));;
 
 (* and the overloads that this file cannot see are back in the
    interface *)

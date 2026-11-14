@@ -1,0 +1,10 @@
+### FUN_EQ_THM_state
+  (REWRITE_TAC[FUN_EQ_THM])
+
+### infer_deBruijn_subst_alt
+  (REWRITE_TAC[infer_deBruijn_subst_def] THEN REPEAT GEN_TAC THEN
+    AP_THM_TAC THEN
+   AP_TERM_TAC THEN SPEC_TAC(`ts:infer_t list`,`ts:infer_t list`)
+     THEN
+   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[infer_deBruijn_subst_def;
+     MAP])

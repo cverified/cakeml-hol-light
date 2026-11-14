@@ -1,0 +1,3 @@
+### canonical_four_result_wrapper
+  (REWRITE_TAC[wrapper_ok_def; canonical_wrapper_def] THEN
+   CONV_TAC NUM_REDUCE_CONV)

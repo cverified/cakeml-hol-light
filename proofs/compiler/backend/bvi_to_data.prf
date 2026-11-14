@@ -1,0 +1,7 @@
+### compile_LENGTH
+  (REPEAT STRIP_TAC THEN MP_TAC (SPEC_ALL compile_LENGTH_lemma) THEN
+   ASM_REWRITE_TAC[])
+
+### compile_LESS_EQ
+  (REPEAT STRIP_TAC THEN MP_TAC (SPEC_ALL compile_LESS_EQ_lemma) THEN
+   ASM_REWRITE_TAC[])

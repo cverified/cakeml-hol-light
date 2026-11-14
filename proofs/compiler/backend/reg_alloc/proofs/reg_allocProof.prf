@@ -1,0 +1,69 @@
+### GT_TRANS
+  (ARITH_TAC)
+
+### IMAGE_DIFF
+  (REWRITE_TAC[EXTENSION; INJ; IN_IMAGE; IN_DIFF; IN_UNION; IN_UNIV]
+    THEN MESON_TAC[])
+
+### INJ_COMPOSE_IMAGE
+  (REWRITE_TAC[INJ; IN_IMAGE; o_THM] THEN MESON_TAC[])
+
+### INJ_less
+  (REWRITE_TAC[INJ; SUBSET] THEN MESON_TAC[])
+
+### MEM_MAP_IMAGE
+  (REWRITE_TAC[EXTENSION; IN_IMAGE; IN_SET_OF_LIST; MEM_MAP] THEN
+    REWRITE_TAC[IN] THEN
+   MESON_TAC[])
+
+### TWOxDIV2
+  (GEN_TAC THEN MATCH_MP_TAC DIV_MULT THEN ARITH_TAC)
+
+### UNION_DIFF_3
+  (SET_TAC[])
+
+### check_partial_col_same_dom
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[check_partial_col_def; MEM] THEN
+   REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `(f:num->num) h = g h` SUBST1_TAC THENL
+     [ASM_MESON_TAC[]; ALL_TAC] THEN
+   SUBGOAL_THEN `!(u:1 spt) (fu:1 spt). check_partial_col f t u fu =
+     check_partial_col g t u fu`
+     (fun th -> REWRITE_TAC[th]) THEN
+   REPEAT GEN_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+     ASM_MESON_TAC[])
+
+### colouring_satisfactory_subgraph
+  (REWRITE_TAC[colouring_satisfactory_def; is_subgraph_def;
+    has_edge_def] THEN
+   MESON_TAC[])
+
+### is_clique_FILTER
+  (REWRITE_TAC[is_clique_def; MEM_FILTER] THEN MESON_TAC[])
+
+### is_clique_subgraph
+  (REWRITE_TAC[is_clique_def; is_subgraph_def] THEN MESON_TAC[])
+
+### is_subgraph_refl
+  (REWRITE_TAC[is_subgraph_def])
+
+### is_subgraph_trans
+  (REWRITE_TAC[is_subgraph_def] THEN MESON_TAC[])
+
+### set_FILTER
+  (REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; MEM_FILTER; IN_DIFF] THEN
+   REWRITE_TAC[IN] THEN MESON_TAC[])
+
+### sorted_mem_correct
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[sorted_mem_def; MEM;
+    GT_sorted_eq] THEN
+   REPEAT STRIP_TAC THEN
+   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   ASM_MESON_TAC[ARITH_RULE `~(x:num > y /\ y > x)`])
+
+### sp_inverts_insert
+  (REWRITE_TAC[sp_inverts_def; lookup_insert; domain_lookup] THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_INJ] THENL
+    [DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[];
+     DISCH_TAC THEN COND_CASES_TAC THEN ASM_MESON_TAC[]])

@@ -1,0 +1,3 @@
+### check_init_stubs_length
+  (REWRITE_TAC[init_stubs_def; LENGTH; stack_num_stubs_def] THEN
+    ARITH_TAC)

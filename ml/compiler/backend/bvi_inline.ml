@@ -146,7 +146,8 @@ let canonical_four_result_wrapper = prove
      (bvi_LetCall 4 0 11 (list_of_seq Var 3)
        (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (REVERSE
          (list_of_seq Var 4))))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[wrapper_ok_def; canonical_wrapper_def] THEN
+   CONV_TAC NUM_REDUCE_CONV));;
 
 let malformed_wrappers_rejected = prove
  (`~(wrapper_ok 10 3

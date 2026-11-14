@@ -1,0 +1,8 @@
+### compile_inc_eq
+  (REWRITE_TAC[clos_annotate_compile_inc_def; annotate_sing_eq])
+
+### shift_LENGTH_LEMMA
+  (REWRITE_TAC[shift_sing_eq] THEN LIST_INDUCT_TAC THEN
+   REWRITE_TAC[shift_sing_def] THEN CONV_TAC (TOP_DEPTH_CONV
+     let_CONV) THEN
+   ASM_REWRITE_TAC[LENGTH])

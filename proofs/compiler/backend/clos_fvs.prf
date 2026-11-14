@@ -1,0 +1,2 @@
+### compile_eq
+  (REWRITE_TAC[clos_fvs_compile_def; remove_fvs_sing_eq])

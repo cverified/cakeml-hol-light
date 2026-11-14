@@ -655,7 +655,10 @@ hol4_overload "do_if" "flatSem_do_if";;
 
 let do_if_either_or = prove
  (`do_if v e1 e2 = SOME e ==> e = e1 \/ e = e2`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN REWRITE_TAC[flatSem_do_if_def] THEN
+   REPEAT COND_CASES_TAC THEN REWRITE_TAC[option_INJ;
+     option_DISTINCT] THEN
+   MESON_TAC[]));;
 
 let pmatch_stamps_ok = cake_inductive
   `(

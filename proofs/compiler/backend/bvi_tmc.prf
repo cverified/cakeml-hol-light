@@ -1,0 +1,70 @@
+### cb_to_bvi_worker_aux_alt_thm
+  (MATCH_MP_TAC call_block_INDUCT THEN REPEAT STRIP_TAC THEN
+   ASM_REWRITE_TAC[cb_to_bvi_worker_aux_alt_def;
+     cb_to_bvi_worker_aux_def;
+                   shift_cb_def; LET_DEF; LET_END_DEF;
+                     length_shift_vars;
+                   shift_cb_dist] THEN
+   REWRITE_TAC[ADD_SYM])
+
+### cb_to_bvi_worker_aux_eq
+  (REWRITE_TAC[cb_to_bvi_worker_aux_alt_thm; shift_cb_zero])
+
+### length_shift_vars
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[shift_vars_def; LENGTH])
+
+### pure_exp_eq
+  (REWRITE_TAC[pure_exp_def])
+
+### pure_exps_append
+  (GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_SIMP_TAC[APPEND;
+    pure_exp_def])
+
+### pure_exps_sing
+  (REWRITE_TAC[pure_exp_def])
+
+### shift_cb_dist
+  (MATCH_MP_TAC call_block_INDUCT THEN REPEAT STRIP_TAC THEN
+   ASM_REWRITE_TAC[shift_cb_def; LET_DEF; LET_END_DEF;
+     shift_vars_dist])
+
+### shift_cb_zero
+  (MATCH_MP_TAC call_block_INDUCT THEN REPEAT STRIP_TAC THEN
+   ASM_REWRITE_TAC[shift_cb_def; shift_vars_zero; LET_DEF;
+     LET_END_DEF])
+
+### shift_vars_dist
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[shift_vars_def; CONS_11] THEN
+   ARITH_TAC)
+
+### shift_vars_zero
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[shift_vars_def; ADD_CLAUSES])
+
+### wf_cb_expand
+  (GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC call_block_INDUCT THEN
+   REWRITE_TAC[wf_cb_def] THEN MESON_TAC[wf_vars_expand])
+
+### wf_cb_shift_sing
+  (GEN_TAC THEN MATCH_MP_TAC call_block_INDUCT THEN
+   REWRITE_TAC[wf_cb_def; shift_cb_def; LET_DEF; LET_END_DEF;
+               length_shift_vars] THEN
+   MESON_TAC[wf_vars_shift_sing])
+
+### wf_vars_append
+  (SIMP_TAC[wf_vars_def; ALL_APPEND])
+
+### wf_vars_empty
+  (REWRITE_TAC[wf_vars_def; ALL])
+
+### wf_vars_expand
+  (REWRITE_TAC[wf_vars_def; GSYM ALL_MEM] THEN MESON_TAC[LTE_TRANS])
+
+### wf_vars_shift
+  (GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[wf_vars_def; shift_vars_def; ALL] THEN
+   REWRITE_TAC[GSYM wf_vars_def] THEN ASM_SIMP_TAC[] THEN ARITH_TAC)
+
+### wf_vars_shift_sing
+  (REPEAT STRIP_TAC THEN
+   FIRST_ASSUM(MP_TAC o SPEC `1` o MATCH_MP wf_vars_shift) THEN
+   REWRITE_TAC[ARITH_RULE `1 + n = SUC n`])

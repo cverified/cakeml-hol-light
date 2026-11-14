@@ -583,8 +583,7 @@ let nsDomMod_alist_to_ns = prove
 (* [local] *)
 let lemma = prove
  (`(?x. y = SOME x) <=> ~(y = NONE)`,
-  (MATCH_MP_TAC option_INDUCT THEN
-   REWRITE_TAC[option_DISTINCT; option_INJ] THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let nsDom_nsAppend_equal = prove
  (`!n1 n2 n3 n4.

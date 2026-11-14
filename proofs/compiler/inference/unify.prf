@@ -1,0 +1,33 @@
+### SUBMAP_t_compat
+  (REWRITE_TAC[t_compat_def] THEN MESON_TAC[t_wfs_SUBMAP;
+    t_walkstar_SUBMAP])
+
+### encode_unify
+  (MESON_TAC[encode_unify_lemma])
+
+### t_compat_refl
+  (REWRITE_TAC[t_compat_def] THEN MESON_TAC[t_walkstar_SUBMAP;
+    SUBMAP_REFL])
+
+### t_compat_trans
+  (REWRITE_TAC[t_compat_def] THEN MESON_TAC[])
+
+### t_unify_apply
+  (MESON_TAC[t_unify_unifier])
+
+### t_unify_apply2
+  (REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `t_wfs (s2:(num,infer_t)fmap) /\ s1 SUBMAP s2`
+     STRIP_ASSUME_TAC THENL
+    [ASM_MESON_TAC[t_unify_unifier]; ALL_TAC] THEN
+   MP_TAC(SPECL [`s1:(num,infer_t)fmap`; `s2:(num,infer_t)fmap`]
+     t_walkstar_SUBMAP) THEN
+   ASM_REWRITE_TAC[] THEN DISCH_THEN(fun th -> ONCE_REWRITE_TAC[th])
+     THEN
+   ASM_REWRITE_TAC[])
+
+### t_unify_wfs
+  (MESON_TAC[t_unify_unifier])
+
+### t_wfs_eqn
+  (REWRITE_TAC[t_wfs_def; wfs_def; t_vR_def])

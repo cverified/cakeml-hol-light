@@ -1,0 +1,14 @@
+### LENGTH_SND_compile_exps
+  (CONJ_TAC THENL
+    [MATCH_MP_TAC (CONJUNCT1 (CONJUNCT2 LENGTH_compile_exps_IMP))
+      THEN
+     MAP_EVERY EXISTS_TAC
+       [`cfg:flat_pattern_config`; `FST (flat_pattern_compile_exps
+         cfg xs)`;
+        `FST (SND (flat_pattern_compile_exps cfg xs))`];
+     MATCH_MP_TAC (CONJUNCT2 (CONJUNCT2 LENGTH_compile_exps_IMP))
+       THEN
+     MAP_EVERY EXISTS_TAC
+       [`cfg:flat_pattern_config`; `FST (compile_match cfg ps)`;
+        `FST (SND (compile_match cfg ps))`]] THEN
+   REWRITE_TAC[PAIR])

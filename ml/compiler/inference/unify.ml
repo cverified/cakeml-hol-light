@@ -1316,7 +1316,7 @@ let encode_unify = prove
    (
     unify s t1 t2 =
     OPTION_MAP ((o_f) encode_infer_t) (t_unify s' t1' t2'))`,
-  CHEAT_TAC);;
+  (MESON_TAC[encode_unify_lemma]));;
 
 (* [local] *)
 let wfs_unify = prove
@@ -1498,7 +1498,7 @@ let t_vR_eqn = prove
 
 let t_wfs_eqn = prove
  (`!s. t_wfs s = WF (t_vR s)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[t_wfs_def; wfs_def; t_vR_def]));;
 
 let t_rangevars_def = new_definition
   `t_rangevars s = rangevars (encode_infer_t o_f s)`;;
@@ -1541,7 +1541,7 @@ let t_unify_apply = prove
     t_wfs s1 /\
     (t_unify s1 t1 t2 = SOME s2) ==>
     (t_walkstar s2 t1 = t_walkstar s2 t2)`,
-  CHEAT_TAC);;
+  (MESON_TAC[t_unify_unifier]));;
 
 let t_unify_apply2 = prove
  (`!s1 s2 t1' t2' t1 t2.
@@ -1549,14 +1549,22 @@ let t_unify_apply2 = prove
     (t_unify s1 t1' t2' = SOME s2) /\
     (t_walkstar s1 t1 = t_walkstar s1 t2) ==>
     (t_walkstar s2 t1 = t_walkstar s2 t2)`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `t_wfs (s2:(num,infer_t)fmap) /\ s1 SUBMAP s2`
+     STRIP_ASSUME_TAC THENL
+    [ASM_MESON_TAC[t_unify_unifier]; ALL_TAC] THEN
+   MP_TAC(SPECL [`s1:(num,infer_t)fmap`; `s2:(num,infer_t)fmap`]
+     t_walkstar_SUBMAP) THEN
+   ASM_REWRITE_TAC[] THEN DISCH_THEN(fun th -> ONCE_REWRITE_TAC[th])
+     THEN
+   ASM_REWRITE_TAC[]));;
 
 let t_unify_wfs = prove
  (`!s1 t1 t2 s2.
     t_wfs s1 /\
     (t_unify s1 t1 t2 = SOME s2) ==>
     t_wfs s2`,
-  CHEAT_TAC);;
+  (MESON_TAC[t_unify_unifier]));;
 
 let finite_t_rangevars = prove
  (`!t. FINITE (t_rangevars t)`,
@@ -1646,15 +1654,17 @@ let t_compat_def = new_definition
 
 let t_compat_refl = prove
  (`t_wfs s ==> t_compat s s`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[t_compat_def] THEN MESON_TAC[t_walkstar_SUBMAP;
+    SUBMAP_REFL]));;
 
 let t_compat_trans = prove
  (`t_compat a b /\ t_compat b c ==> t_compat a c`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[t_compat_def] THEN MESON_TAC[]));;
 
 let SUBMAP_t_compat = prove
  (`t_wfs s' /\ s SUBMAP s' ==> t_compat s s'`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[t_compat_def] THEN MESON_TAC[t_wfs_SUBMAP;
+    t_walkstar_SUBMAP]));;
 
 (*t_compat is preserved under certain types of unification
   Proof basically from HOL*)

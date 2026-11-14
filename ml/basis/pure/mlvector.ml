@@ -157,7 +157,7 @@ let foldl_aux_thm = prove
 
 let foldl_thm = prove
  (`!f e vec. foldl f e vec = FOLDL f e (toList vec)`,
-  CHEAT_TAC);;
+  (SIMP_TAC[foldl_aux_thm; mlvector_foldl_def; ADD_CLAUSES; DROP_0]));;
 
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -239,7 +239,7 @@ let find_aux_thm = prove
 
 let find_thm = prove
  (`!f vec. find f vec = FIND f (toList vec)`,
-  CHEAT_TAC);;
+  (SIMP_TAC[find_aux_thm; find_def; ADD_CLAUSES; DROP_0]));;
 
 
 (* the termination relation is not in the HOL4 source; this one is

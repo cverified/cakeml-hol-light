@@ -476,7 +476,11 @@ let sp_inverts_def = new_definition
 let sp_inverts_insert = prove
  (`sp_inverts f g /\ ~(x IN domain f) /\ ~(y IN domain g) ==>
    sp_inverts (sptree_insert x y f) (sptree_insert y x g)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[sp_inverts_def; lookup_insert; domain_lookup] THEN
+   REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_INJ] THENL
+    [DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[];
+     DISCH_TAC THEN COND_CASES_TAC THEN ASM_MESON_TAC[]]));;
 
 (* [local] *)
 let list_remap_domain = prove
@@ -533,13 +537,13 @@ let is_subgraph_def = new_definition
 
 let is_subgraph_refl = prove
  (`is_subgraph s s`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[is_subgraph_def]));;
 
 let is_subgraph_trans = prove
  (`is_subgraph s s' /\
    is_subgraph s' s'' ==>
    is_subgraph s s''`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[is_subgraph_def] THEN MESON_TAC[]));;
 
 (* TODO quick sanity check: move to proof file when done *)
 let hide_def = new_definition
@@ -549,7 +553,7 @@ hol4_overload "hide" "reg_allocProof_hide";;
 (* [local] *)
 let GT_TRANS = prove
  (`(a:num) > b /\ b > c ==> a > c`,
-  CHEAT_TAC);;
+  (ARITH_TAC));;
 
 (* [local] *)
 let GT_sorted_eq = prove
@@ -583,7 +587,11 @@ let sorted_mem_correct = prove
  (`!ls.
    SORTED (>) ls ==>
    (sorted_mem x ls <=> MEM x ls)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[sorted_mem_def; MEM;
+    GT_sorted_eq] THEN
+   REPEAT STRIP_TAC THEN
+   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+   ASM_MESON_TAC[ARITH_RULE `~(x:num > y /\ y > x)`]));;
 
 let insert_edge_succeeds = prove
  (`good_ra_state s /\
@@ -658,7 +666,7 @@ let INJ_less = prove
  (`!f s' t s.
    INJ f s' t /\ s SUBSET s' ==>
    INJ f s t`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[INJ; SUBSET] THEN MESON_TAC[]));;
 
 let check_partial_col_success = prove
  (`!ls live flive col.
@@ -674,7 +682,7 @@ let INJ_COMPOSE_IMAGE = prove
    INJ f a b /\
    INJ g (IMAGE f a) u ==>
    INJ (g o f) a u`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[INJ; IN_IMAGE; o_THM] THEN MESON_TAC[]));;
 
 let colouring_satisfactory_cliques = prove
  (`!ls g (f:num->num).
@@ -694,14 +702,14 @@ let is_clique_FILTER = prove
  (`!ls.
    is_clique ls G ==>
    is_clique (FILTER P ls) G`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[is_clique_def; MEM_FILTER] THEN MESON_TAC[]));;
 
 (* [local] *)
 let is_clique_subgraph = prove
  (`is_clique ls s /\
    is_subgraph s s' ==>
    is_clique ls s'`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[is_clique_def; is_subgraph_def] THEN MESON_TAC[]));;
 
 let domain_numset_list_delete = prove
  (`!l live.
@@ -734,7 +742,9 @@ let colouring_satisfactory_subgraph = prove
  (`colouring_satisfactory f h /\
    is_subgraph g h ==>
    colouring_satisfactory f g`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[colouring_satisfactory_def; is_subgraph_def;
+    has_edge_def] THEN
+   MESON_TAC[]));;
 
 (* [local] *)
 let ALL_DISTINCT_set_INJ = prove
@@ -748,18 +758,22 @@ let IMAGE_DIFF = prove
  (`INJ f (s UNION t) UNIV ==>
    IMAGE f (s DIFF t) =
    (IMAGE f s DIFF IMAGE f t)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[EXTENSION; INJ; IN_IMAGE; IN_DIFF; IN_UNION; IN_UNIV]
+    THEN MESON_TAC[]));;
 
 (* [local] *)
 let set_FILTER = prove
  (`set_of_list (FILTER P live) =
    set_of_list live DIFF (\x. ~(P x))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; MEM_FILTER; IN_DIFF] THEN
+   REWRITE_TAC[IN] THEN MESON_TAC[]));;
 
 (* [local] *)
 let MEM_MAP_IMAGE = prove
  (`(\x. MEM x (MAP f l)) = IMAGE f (set_of_list l)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[EXTENSION; IN_IMAGE; IN_SET_OF_LIST; MEM_MAP] THEN
+    REWRITE_TAC[IN] THEN
+   MESON_TAC[]));;
 
 (* [local] *)
 let domain_difference = prove
@@ -769,7 +783,7 @@ let domain_difference = prove
 (* [local] *)
 let UNION_DIFF_3 = prove
  (`s DIFF t UNION t = s UNION t`,
-  CHEAT_TAC);;
+  (SET_TAC[]));;
 
 let check_partial_col_domain = prove
  (`!ls f live flive v.
@@ -1311,7 +1325,15 @@ let check_partial_col_same_dom = prove
  (`!ls f g t ft.
    (!x. MEM x ls ==> f x = g x) ==>
    check_partial_col f ls t ft = check_partial_col g ls t ft`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[check_partial_col_def; MEM] THEN
+   REPEAT STRIP_TAC THEN
+   SUBGOAL_THEN `(f:num->num) h = g h` SUBST1_TAC THENL
+     [ASM_MESON_TAC[]; ALL_TAC] THEN
+   SUBGOAL_THEN `!(u:1 spt) (fu:1 spt). check_partial_col f t u fu =
+     check_partial_col g t u fu`
+     (fun th -> REWRITE_TAC[th]) THEN
+   REPEAT GEN_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+     ASM_MESON_TAC[]));;
 
 let check_clash_tree_same_dom = prove
  (`!ct f g live flive.

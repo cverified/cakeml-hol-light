@@ -117,7 +117,7 @@ let peg_eval_tokSymP = prove
 let FADISJ_EQ_IMP' = prove
  (`((!x. P x) \/ Q <=> (!x. ~(P x) ==> Q)) /\
    ((Q \/ (!x. P x)) <=> (!x. ~(P x) ==> Q))`,
-  CHEAT_TAC);;
+  (MESON_TAC[]));;
 
 let peg_eval_TypeDec_wrongtok = prove
  (`~(FST tk = tokens_DatatypeT) ==>
@@ -195,7 +195,7 @@ let valid_ptree_mkNd = prove
      N IN FDOM (rules G) /\ MAP ptree_head subs IN FAPPLY (rules G) N
        /\
      (!pt. MEM pt subs ==> valid_ptree G pt)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[mkNd_def; valid_ptree_def; IN_SET_OF_LIST]));;
 
 (* [simp] *)
 let ptree_head_mkNd = prove
@@ -211,12 +211,12 @@ let ptree_list_loc_SING = prove
 (* [simp] *)
 let ptree_fringemkNd = prove
  (`ptree_fringe (mkNd N subs) = FLAT (MAP ptree_fringe subs)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[mkNd_def; ptree_fringe_def]));;
 
 (* [simp] *)
 let valid_locs_mkNd = prove
  (`valid_locs (mkNd N subs) <=> (!pt. MEM pt subs ==> valid_locs pt)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[mkNd_def; valid_locs_def; ptree_list_loc_def]));;
 
 let rfringe_length_not_nullable = prove
  (`!G s. ~(nullable G [s]) ==>
@@ -235,7 +235,7 @@ let valid_lptree_mkNd = prove
 (* [simp] *)
 let real_fringe_mkNd = prove
  (`real_fringe (mkNd n subs) = FLAT (MAP real_fringe subs)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[mkNd_def; real_fringe_def]));;
 
 let ptree_head_NT_mkNd = prove
  (`ptree_head pt = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) n

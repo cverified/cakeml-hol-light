@@ -637,7 +637,7 @@ let type_es_list_rel = prove
 let type_es_length = prove
  (`!tenv tenvE es ts.
     type_es tenv tenvE es ts ==> (LENGTH es = LENGTH ts)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[type_es_list_rel] THEN MESON_TAC[LIST_REL_LENGTH]));;
 
 let type_funs_MAP_FST = prove
  (`!funs tenv tenvE env.
@@ -785,7 +785,22 @@ let type_e_subst_lem = prove
    check_freevars (LENGTH targs) [] t1 ==>
    type_e tenv (typeSystem_Bind_name x 0 (deBruijn_subst 0 targs
      t1) (bind_tvar tvs tenvE)) e (deBruijn_subst 0 targs t)`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN
+   MP_TAC(SPECL [`tenv:type_env`;
+                 `typeSystem_Bind_name x 0 t1 (bind_tvar (LENGTH
+                   (targs:t list)) tenvE)`;
+                 `e:ast_exp`; `t:t`] (CONJUNCT1 (INST
+                   [`tenvE:tenv_val_exp`,`tenvE2:tenv_val_exp`]
+                                             type_e_subst))) THEN
+   ASM_REWRITE_TAC[] THEN
+   DISCH_THEN(MP_TAC o SPECL [`typeSystem_Bind_name x 0 t1
+     typeSystem_Empty`; `targs:t list`; `tvs:num`;
+                              `MAP (deBruijn_inc 0 0) (targs:t
+                                list)`]) THEN
+   ASM_REWRITE_TAC[db_merge_def; deBruijn_subst_tenvE_def;
+     num_tvs_def; ADD_CLAUSES;
+                   deBruijn_inc0; tenv_val_exp_ok_def] THEN
+   ASM_SIMP_TAC[bind_tvar_rewrites; ADD_CLAUSES]));;
 
 
 (* HOL4 typeSysPropsScript.sml:1654-1685: code that the source has in
@@ -1021,7 +1036,7 @@ let type_d_tenv_ok = prove
     type_d check tenv d tdecs tenv' /\
     tenv_ok tenv ==>
     tenv_ok (extend_dec_tenv tenv' tenv)`,
-  CHEAT_TAC);;
+  (MESON_TAC[extend_dec_tenv_ok; type_d_tenv_ok_helper]));;
 
 (* HOL4 typeSysPropsScript.sml:2554-2572: code that the source has in
    a comment *)

@@ -12,6 +12,7 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "lib/ASCIInumbers.ml";;
+needs "lib/binary_ieee.ml";;
 needs "lib/ternaryComparisons.ml";;
 
 (* the theories whose names the Ancestors blocks of the source
@@ -67,7 +68,12 @@ let num_to_chars_def,num_to_chars_ind = define_wf
 (* [local] *)
 let add_lt_divisible_iff = prove
  (`y MOD n = 0 ==> (x + y < n <=> x < n /\ y = 0)`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN DISCH_TAC THEN EQ_TAC THENL
+   [DISCH_TAC THEN SUBGOAL_THEN `y < n:num` ASSUME_TAC THENL
+     [ASM_ARITH_TAC; ALL_TAC] THEN
+    SUBGOAL_THEN `y = 0` SUBST_ALL_TAC THENL
+     [ASM_MESON_TAC[MOD_LT]; ASM_ARITH_TAC];
+    ARITH_TAC]));;
 
 let num_to_chars_thm = prove
  (`!i j k acc.
@@ -106,7 +112,9 @@ hol4_overload "toString" "num_to_str";;
 
 let num_to_str_thm = prove
  (`num_to_str n = implode (num_to_dec_string n)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[num_to_str_def; toString_thm; INT_ABS_NUM;
+    NUM_OF_INT_OF_NUM;
+   INT_OF_NUM_LT; LT; APPEND]));;
 
 (* fromString Definitions *)
 let fromChar_unsafe_def = new_definition
@@ -225,14 +233,34 @@ let fromChars_range_unsafe_0_substring_thm = prove
  (`!m r s. r <= m ==>
     fromChars_range_unsafe 0 r s =
       fromChars_range_unsafe 0 r (substring s 0 m)`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN INDUCT_TAC THEN
+    REWRITE_TAC[fromChars_range_unsafe_def] THEN
+   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `s:mlstring`)
+     THEN
+   ANTS_TAC THENL [ASM_ARITH_TAC; DISCH_THEN SUBST1_TAC] THEN
+   REWRITE_TAC[ADD_CLAUSES] THEN
+   ASM_SIMP_TAC[strsub_substring_0_thm; ARITH_RULE `SUC r <= m ==> r
+     < m`]));;
 
 let fromChars_range_unsafe_split = prove
  (`!m n s.
     ~(m = 0) /\ m < n ==> fromChars_range_unsafe 0 n s =
         10 EXP m * fromChars_range_unsafe 0 (n - m) s +
           fromChars_range_unsafe (n - m) m s`,
-  CHEAT_TAC);;
+  (INDUCT_TAC THEN REWRITE_TAC[] THEN INDUCT_TAC THEN
+   REWRITE_TAC[CONJUNCT1 LT; LT_SUC] THEN
+   REPEAT STRIP_TAC THEN REWRITE_TAC[fromChars_range_unsafe_def;
+     SUB_SUC] THEN
+   ASM_CASES_TAC `m = 0` THENL
+    [ASM_REWRITE_TAC[fromChars_range_unsafe_def; SUB_0; EXP;
+      MULT_CLAUSES;
+                     ADD_CLAUSES] THEN ARITH_TAC;
+     ALL_TAC] THEN
+   FIRST_X_ASSUM(MP_TAC o SPECL [`n:num`; `s:mlstring`]) THEN
+   ANTS_TAC THENL [ASM_ARITH_TAC; DISCH_THEN SUBST1_TAC] THEN
+   SUBGOAL_THEN `(n - m) + m = n` SUBST1_TAC THENL
+    [ASM_ARITH_TAC; REWRITE_TAC[EXP; ADD_CLAUSES] THEN CONV_TAC
+      NUM_RING]));;
 
 (* fromString proofs *)
 let fromChar_unsafe_thm = prove
@@ -313,7 +341,7 @@ let fromString_int_to_string = prove
 (* [simp] *)
 let fromString_toString = prove
  (`!(i:int). fromString (toString i) = SOME i`,
-  CHEAT_TAC);;
+  (SIMP_TAC[toString_def1; fromString_int_to_string]));;
 
 (* [simp] *)
 let fromNatString_toString = prove

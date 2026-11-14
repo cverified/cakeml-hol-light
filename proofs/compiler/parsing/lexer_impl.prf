@@ -1,0 +1,18 @@
+### lex_until_top_semicolon_alt_LESS
+  (REPEAT GEN_TAC THEN REWRITE_TAC[lex_until_top_semicolon_alt_def]
+    THEN
+   DISCH_THEN (MP_TAC o MATCH_MP lex_aux_alt_LESS) THEN
+     REWRITE_TAC[])
+
+### lex_until_toplevel_semicolon_LESS
+  (REPEAT GEN_TAC THEN REWRITE_TAC[lex_until_toplevel_semicolon_def]
+    THEN
+   DISCH_THEN (MP_TAC o MATCH_MP lex_aux_LESS) THEN REWRITE_TAC[])
+
+### lexer_correct
+  (REWRITE_TAC[lex_impl_all_tokens_thm; split_top_level_semi_thm])
+
+### read_while_P
+  (REPEAT STRIP_TAC THEN MATCH_MP_TAC read_while_P_lem THEN
+   MAP_EVERY EXISTS_TAC [`ls:string`; `"":string`; `y:string`] THEN
+   ASM_REWRITE_TAC[ALL])

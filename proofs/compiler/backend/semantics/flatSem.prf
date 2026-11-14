@@ -1,0 +1,5 @@
+### do_if_either_or
+  (REPEAT GEN_TAC THEN REWRITE_TAC[flatSem_do_if_def] THEN
+   REPEAT COND_CASES_TAC THEN REWRITE_TAC[option_INJ;
+     option_DISTINCT] THEN
+   MESON_TAC[])

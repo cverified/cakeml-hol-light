@@ -1,0 +1,62 @@
+### LENGTH_anys
+  (INDUCT_TAC THEN ASM_REWRITE_TAC[anys_def; LENGTH])
+
+### LENGTH_dest_val
+  (REWRITE_TAC[dest_val_eq_SOME] THEN REPEAT STRIP_TAC THEN
+   ASM_REWRITE_TAC[ctor_arity_def; LENGTH; ONE])
+
+### MEM_ctor_keep
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ctor_keep_def; MEM] THEN
+   REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[MEM] THEN
+   ASM_MESON_TAC[])
+
+### MEM_ctor_nub
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ctor_nub_def; MEM] THEN
+   GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[MEM] THEN
+     ASM_MESON_TAC[])
+
+### MEM_mk_conses
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_conses_def; MEM] THEN
+    MESON_TAC[])
+
+### MEM_mk_refs
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_refs_def; MEM] THEN
+    MESON_TAC[])
+
+### MEM_mk_rows
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[mk_rows_def; MEM] THEN
+    MESON_TAC[])
+
+### MEM_spec_mats
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[spec_mats_def; MEM] THEN
+   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[])
+
+### exh_mats_append
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; exh_matrix_def;
+    CONJ_ASSOC])
+
+### exh_rows_eq
+  (REWRITE_TAC[exh_rows_def; exh_all_thm; exh_matrix_def])
+
+### exh_steps_list_append
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; exh_steps_def] THEN
+    ARITH_TAC)
+
+### mat_len_append
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; mat_len_def] THEN
+    ARITH_TAC)
+
+### mat_weight_append
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; mat_weight_def] THEN
+    ARITH_TAC)
+
+### pats_weight_anys
+  (INDUCT_TAC THEN ASM_REWRITE_TAC[anys_def; pat_weight_def;
+    ADD_CLAUSES])
+
+### pats_weight_append
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; pat_weight_def] THEN
+    ARITH_TAC)
+
+### pmatch_Any
+  (REWRITE_TAC[pattern_semantics_pmatch_def])

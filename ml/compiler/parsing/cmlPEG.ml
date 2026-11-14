@@ -752,7 +752,7 @@ set_diff (TypeBase.constructors_of ``:MMLnonT``)
 (* [local] *)
 let subexprs_pnt = prove
  (`subexprs (cmlPEG_pnt n) = {cmlPEG_pnt n}`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[subexprs_def; cmlPEG_pnt_def]));;
 
 (* HOL4 cmlPEGScript.sml:774-783: a theorem that HOL4 states as the
    value of an ML expression: PEG_exprs *)

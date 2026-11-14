@@ -239,7 +239,12 @@ let infer_deBruijn_subst_alt = prove
      Infer_Tapp (MAP (infer_deBruijn_subst s) ts) tn) /\
    (infer_deBruijn_subst s (Infer_Tuvar n) =
      Infer_Tuvar n)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[infer_deBruijn_subst_def] THEN REPEAT GEN_TAC THEN
+    AP_THM_TAC THEN
+   AP_TERM_TAC THEN SPEC_TAC(`ts:infer_t list`,`ts:infer_t list`)
+     THEN
+   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[infer_deBruijn_subst_def;
+     MAP]));;
 
 let _ = size_thms "ast_t";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -1032,7 +1037,7 @@ let infer_e_def,infer_e_ind = assume_definition_rec
 (* [local] *)
 let FUN_EQ_THM_state = prove
  (`f = g <=> (!s. f s = g s)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[FUN_EQ_THM]));;
 
 (* HOL4 inferScript.sml:1033-1038: a theorem that HOL4 states as the
    value of an ML expression: infer_e_expand *)

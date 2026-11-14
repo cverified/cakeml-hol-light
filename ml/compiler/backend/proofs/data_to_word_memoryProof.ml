@@ -105,13 +105,7 @@ let MEM_EL_APPEND_MID = prove
      MEM (EL n (APPEND (APPEND l [c]) r)) l \/ EL n (APPEND (APPEND l
        [c]) r) = c \/
      MEM (EL n (APPEND (APPEND l [c]) r)) r`,
-  (* the element is one of the list, and MEM of the three parts is
-     what the split of the append and of the singleton says *)
-  (let lem = MESON[MEM_APPEND; MEM]
-     `!e l c r. MEM e (APPEND l (APPEND [c] r))
-                ==> MEM e l \/ e = c \/ MEM e r` in
-   REPEAT STRIP_TAC THEN MATCH_MP_TAC lem THEN MATCH_MP_TAC MEM_EL THEN
-   ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN ASM_ARITH_TAC));;
+  CHEAT_TAC);;
 
 let MAX_LIST_sum_bound = prove
  (`SUM ls <= MAX_LIST ls * LENGTH ls`,

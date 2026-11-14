@@ -1,0 +1,17 @@
+### evaluate_decs_io_events_mono
+  (REWRITE_TAC[evaluate_io_events_mono_IMP])
+
+### pmatch_length
+  (REPEAT STRIP_TAC THEN
+   FIRST_ASSUM(MP_TAC o AP_TERM `LENGTH:(mlstring)list->num` o
+               MATCH_MP (CONJUNCT1 pmatch_bindings)) THEN
+   REWRITE_TAC[LENGTH_APPEND; LENGTH_MAP])
+
+### pmatch_rows_ignore_clock
+  (MATCH_MP_TAC list_INDUCT THEN
+   REWRITE_TAC[FORALL_PAIR_THM; pmatch_rows_def; pmatch_ignore_clock]
+     THEN
+   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[])
+
+### simple_val_rel_isClosure
+  (REWRITE_TAC[flatProps_simple_val_rel_def] THEN MESON_TAC[])

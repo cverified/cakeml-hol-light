@@ -285,14 +285,14 @@ let NOT_IN_heap_addresses = prove
 (* [local] *)
 let NOT_IN_heap_addresses_less = prove
  (`!xs m n. (m < n) ==> ~(m IN heap_addresses n xs)`,
-  CHEAT_TAC);;
+  (MESON_TAC[heap_addresses_LESS; NOT_LE]));;
 
 (* [local] *)
 let NOT_IN_heap_addresses_gt = prove
  (`!xs m n p.
    (heap_length xs + p <= m) ==>
    ~(m IN heap_addresses p xs)`,
-  CHEAT_TAC);;
+  (MESON_TAC[heap_addresses_LESS_heap_length; ADD_SYM; NOT_LE]));;
 
 (* [local] *)
 let heap_length_CONS = prove
@@ -316,7 +316,8 @@ let IMP_if_equal = prove
  (`!b1 b2 x1 x2 y1 y2.
    (b1 = b2) /\ (b1 ==> (x1 = x2)) /\ (~b1 ==> (y1 = y2)) ==>
    ((if b1 then x1 else y1) = (if b2 then x2 else y2))`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN BOOL_CASES_TAC `b1:bool` THEN REWRITE_TAC[]
+    THEN MESON_TAC[]));;
 
 (* heap_length_heap_expand[local] *)
 let gen_gc_heap_length_heap_expand = prove
@@ -427,7 +428,7 @@ let heap_addresses_APPEND_IN = prove
      j IN heap_addresses n (APPEND xs ys) ==>
      j IN heap_addresses n xs \/ j IN heap_addresses (n +
        heap_length xs) ys`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[gen_gc_heap_addresses_APPEND; IN_UNION]));;
 
 (* [local] *)
 let GREATER_IMP_heap_lookup = prove
@@ -435,11 +436,12 @@ let GREATER_IMP_heap_lookup = prove
    (heap_length (APPEND xs ys) <= j + heap_length ys) ==>
    (heap_lookup j (APPEND xs ys) = heap_lookup (j - heap_length xs)
      ys)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[heap_length_APPEND] THEN REPEAT STRIP_TAC THEN
+   MATCH_MP_TAC NOT_LESS_IMP_heap_lookup THEN ASM_ARITH_TAC));;
 
 let heap_lookup_IMP_MEM = prove
  (`!x n y. (heap_lookup n x = SOME y) ==> MEM y x`,
-  CHEAT_TAC);;
+  (MESON_TAC[heap_lookup_MEM]));;
 
 (* heaps_similar_lemma *)
 let gen_gc_heaps_similar_lemma = prove
@@ -647,7 +649,8 @@ let MEM_heap_expand_FALSE = prove
 (* [local] *)
 let FILTER_isForward_heap_expand_lemma = prove
  (`!n. FILTER isForwardPointer (heap_expand n) = []`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN REWRITE_TAC[heap_expand_def] THEN COND_CASES_TAC THEN
+   REWRITE_TAC[FILTER; isForwardPointer_def]));;
 
 (* [local] *)
 let heap_lookup_CONS_IMP = prove
@@ -681,7 +684,7 @@ let gen_gc_ok = prove
 let IN_heap_addresses_LESS = prove
  (`!heap n k. n IN heap_addresses k heap ==> k <= n /\ n < k +
   heap_length heap`,
-  CHEAT_TAC);;
+  (MESON_TAC[heap_addresses_LESS; heap_addresses_LESS_heap_length]));;
 
 (* heap_lookup_EXTEND *)
 let gen_gc_heap_lookup_EXTEND = prove

@@ -1,0 +1,7 @@
+### byte_to_string_eq
+  (GEN_TAC THEN REWRITE_TAC[all_bytes_def; sub_def] THEN
+   SUBGOAL_THEN `val (b:byte) < 256` ASSUME_TAC THENL
+    [MP_TAC(ISPEC `b:byte` VAL_BOUND) THEN REWRITE_TAC[DIMINDEX_8]
+      THEN
+     ARITH_TAC;
+     ASM_SIMP_TAC[EL_LIST_OF_SEQ; WORD_VAL]])

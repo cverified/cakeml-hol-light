@@ -1,0 +1,5 @@
+### EVERY_store_vs_intro
+  (REWRITE_TAC[EVERY_sv_every_EVERY_store_vs])
+
+### concrete_v_list
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[concrete_v_def; ALL])

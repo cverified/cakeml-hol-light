@@ -1197,7 +1197,7 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
 (* [local] *)
 let dumb1 = prove
  (`COND (p = q) t e = COND (q = p) t e`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[EQ_SYM_EQ]));;
 (* [local] *)
 let dumb2 = prove
  (`COND gd t NONE = OPTION_IGNORE_BIND (OPTION_GUARD gd) t`,

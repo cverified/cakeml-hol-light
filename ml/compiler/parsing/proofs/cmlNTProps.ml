@@ -25,7 +25,7 @@ let _ = hol4_ancestors "cmlNTProps"
 (* [local] *)
 let disjImpI = prove
  (`~p \/ q <=> p ==> q`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN CONV_TAC TAUT));;
 
 (* [simp] *)
 let firstSet_nUQTyOp = prove

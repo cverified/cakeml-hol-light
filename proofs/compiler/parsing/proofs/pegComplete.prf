@@ -1,0 +1,23 @@
+### disjImpI
+  (MESON_TAC[])
+
+### elim_det
+  (MESON_TAC[])
+
+### elim_disjineq
+  (MESON_TAC[])
+
+### leftLoc_merge_locs
+  (REWRITE_TAC[merge_locs_LR; leftLoc_def])
+
+### merge_locs_LR
+  (REPEAT GEN_TAC THEN
+   MAP_EVERY (fun t -> STRUCT_CASES_TAC(ISPEC t (cases "locs")))
+     [`l1:locs`; `l2:locs`] THEN
+   REWRITE_TAC[merge_locs_def; leftLoc_def; rightLoc_def])
+
+### ptree_loc_mkNd
+  (REWRITE_TAC[mkNd_def; ptree_loc_def])
+
+### rightLoc_merge_locs
+  (REWRITE_TAC[merge_locs_LR; rightLoc_def])

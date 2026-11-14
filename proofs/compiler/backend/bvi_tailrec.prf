@@ -1,0 +1,11 @@
+### has_rec_test1
+  (REWRITE_TAC[has_rec1_def; has_rec_def])
+
+### scan_expr_HD_SING
+  (REWRITE_TAC[CONJUNCT1 scan_expr_eq; HD; CONS_11])
+
+### scan_expr_SING
+  (REWRITE_TAC[CONJUNCT1 scan_expr_eq; HD])
+
+### scan_expr_not_nil
+  (REWRITE_TAC[CONJUNCT1 scan_expr_eq; NOT_CONS_NIL])

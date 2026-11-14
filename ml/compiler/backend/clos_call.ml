@@ -176,7 +176,7 @@ let closed_eq = prove
 (* [local] *)
 let EL_MEM_LEMMA = prove
  (`!xs i x. i < LENGTH xs /\ (x = EL i xs) ==> MEM x xs`,
-  CHEAT_TAC);;
+  (MESON_TAC[MEM_EL]));;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)

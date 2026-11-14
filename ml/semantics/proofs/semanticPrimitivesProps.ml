@@ -488,7 +488,7 @@ let EVERY_sv_every_EVERY_store_vs = prove
 
 let EVERY_store_vs_intro = prove
  (`!P ls. ALL (sv_every P) ls ==> ALL P (store_vs ls)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[EVERY_sv_every_EVERY_store_vs]));;
 
 let map_sv_compose = prove
  (`map_sv f (map_sv g x) = map_sv (f o g) x`,
@@ -580,7 +580,7 @@ let nat_to_v_11 = prove
 (* [simp] *)
 let concrete_v_list = prove
  (`!xs. concrete_v_list xs = ALL concrete_v xs`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[concrete_v_def; ALL]));;
 
 (* [simp] *)
 let concrete_v_simps = prove

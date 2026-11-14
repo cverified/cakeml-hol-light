@@ -1,0 +1,29 @@
+### FILTER_isForward_heap_expand_lemma
+  (GEN_TAC THEN REWRITE_TAC[heap_expand_def] THEN COND_CASES_TAC THEN
+   REWRITE_TAC[FILTER; isForwardPointer_def])
+
+### GREATER_IMP_heap_lookup
+  (REWRITE_TAC[heap_length_APPEND] THEN REPEAT STRIP_TAC THEN
+   MATCH_MP_TAC NOT_LESS_IMP_heap_lookup THEN ASM_ARITH_TAC)
+
+### IMP_if_equal
+  (REPEAT GEN_TAC THEN BOOL_CASES_TAC `b1:bool` THEN REWRITE_TAC[]
+    THEN MESON_TAC[])
+
+### IN_heap_addresses_LESS
+  (MESON_TAC[heap_addresses_LESS; heap_addresses_LESS_heap_length])
+
+### NOT_IN_heap_addresses_gt
+  (MESON_TAC[heap_addresses_LESS_heap_length; ADD_SYM; NOT_LE])
+
+### NOT_IN_heap_addresses_less
+  (MESON_TAC[heap_addresses_LESS; NOT_LE])
+
+### heap_addresses_APPEND_IN
+  (REWRITE_TAC[gen_gc_heap_addresses_APPEND; IN_UNION])
+
+### heap_lookup_IMP_MEM
+  (MESON_TAC[heap_lookup_MEM])
+
+### heaps_similar_lemma
+  (REWRITE_TAC[heap_similar_Data_IMP_DataOrForward])

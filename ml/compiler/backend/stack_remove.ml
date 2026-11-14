@@ -477,7 +477,8 @@ let check_init_stubs_length = prove
     `LENGTH (init_stubs gen_gc max_heap k start) + 2 =
      // gc + dummy
      stack_num_stubs`),
-  CHEAT_TAC);;
+  (REWRITE_TAC[init_stubs_def; LENGTH; stack_num_stubs_def] THEN
+    ARITH_TAC));;
 
 (* -- full compiler -- *)
 

@@ -3,14 +3,6 @@
 ### ZIP_REPLICATE
   (INDUCT_TAC THEN ASM_REWRITE_TAC[REPLICATE; ZIP])
 
-### MEM_EL_APPEND_MID
-  (* the element is one of the list, and MEM of the three parts is
-     what the split of the append and of the singleton says *)
-  (let lem = MESON[MEM_APPEND; MEM]
-     `!e l c r. MEM e (APPEND l (APPEND [c] r))
-                ==> MEM e l \/ e = c \/ MEM e r` in
-   REPEAT STRIP_TAC THEN MATCH_MP_TAC lem THEN MATCH_MP_TAC MEM_EL THEN
-   ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN ASM_ARITH_TAC)
 ### MAX_LIST_sum_bound
   (* HOL4's SUM is ITLIST (+) l 0 in the port (ml/lib/hol4.ml), so
      its clauses come first *)

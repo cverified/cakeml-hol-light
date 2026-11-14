@@ -720,7 +720,7 @@ let has_rec_eq = prove
    below antiquote *)
 let has_rec_test1 = prove
  (`has_rec1 0 (Let [] (bvi_Call 0 (SOME 0) [] NONE):bvi_exp) <=> F`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[has_rec1_def; has_rec_def]));;
 
 (* HOL4 bvi_tailrecScript.sml:751: the ML values that the definitions
    below antiquote *)
@@ -784,7 +784,7 @@ hol4_overload "compile_prog" "bvi_tailrec_compile_prog";;
 (* [simp] *)
 let scan_expr_not_nil = prove
  (`!x. ~(scan_expr ts loc [x] = [])`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[CONJUNCT1 scan_expr_eq; NOT_CONS_NIL]));;
 
 (* [simp] *)
 let LENGTH_scan_expr = prove
@@ -794,12 +794,12 @@ let LENGTH_scan_expr = prove
 (* [simp] *)
 let scan_expr_SING = prove
  (`[HD (scan_expr ts loc [x])] = scan_expr ts loc [x]`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[CONJUNCT1 scan_expr_eq; HD]));;
 
 (* [simp] *)
 let scan_expr_HD_SING = prove
  (`HD (scan_expr ts loc [x]) = y <=> scan_expr ts loc [x] = [y]`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[CONJUNCT1 scan_expr_eq; HD; CONS_11]));;
 
 (* [simp] *)
 let check_exp_SOME_simp = prove

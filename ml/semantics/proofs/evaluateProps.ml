@@ -104,7 +104,7 @@ let evaluate_call_FFI_rel_imp = prove
       evaluate_evaluate_decs s e p = (s',r) ==>
       RTC call_FFI_rel (semanticPrimitives_state_ffi s)
         (semanticPrimitives_state_ffi s'))`,
-  CHEAT_TAC);;
+  (MESON_TAC[PAIR; FST; evaluate_call_FFI_rel]));;
 
 (* [local] *)
 let evaluate_decs_call_FFI_rel = prove
@@ -112,14 +112,14 @@ let evaluate_decs_call_FFI_rel = prove
       RTC call_FFI_rel (semanticPrimitives_state_ffi s)
         (semanticPrimitives_state_ffi (FST (evaluate_evaluate_decs s e
         d)))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[evaluate_call_FFI_rel]));;
 
 let evaluate_decs_call_FFI_rel_imp = prove
  (`!s e p s' r.
      evaluate_evaluate_decs s e p = (s',r) ==>
      RTC call_FFI_rel (semanticPrimitives_state_ffi s)
        (semanticPrimitives_state_ffi s')`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[evaluate_call_FFI_rel_imp]));;
 
 (* do_app_io_events_mono *)
 let evaluateProps_do_app_io_events_mono = prove
@@ -155,7 +155,7 @@ let evaluate_io_events_mono_imp = prove
      evaluate_evaluate_decs s e p = (s',r) ==>
      io_events_mono (semanticPrimitives_state_ffi s)
        (semanticPrimitives_state_ffi s'))`,
-  CHEAT_TAC);;
+  (MESON_TAC[PAIR; FST; evaluate_io_events_mono]));;
 
 let is_clock_io_mono_def = new_definition
   `is_clock_io_mono f s = (match f s with (s',r) ->
@@ -262,7 +262,8 @@ let is_clock_io_mono_acc_safe = prove
    (f st = v \/ ~(f st = v)) /\
    is_clock_io_mono (\st'. g (f st) st') st ==>
    is_clock_io_mono (\st'. g (f st') st') st`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN STRIP_TAC THEN POP_ASSUM MP_TAC THEN
+   ASM_REWRITE_TAC[is_clock_io_mono_def]));;
 
 (* HOL4 evaluatePropsScript.sml:306-308: a theorem that HOL4 states
    as the value of an ML expression: is_clock_io_mono_if_safe *)
@@ -289,7 +290,7 @@ let is_clock_io_mono_evaluate = prove
 
 let is_clock_io_mono_evaluate_decs = prove
  (`!s e p. is_clock_io_mono (\s. evaluate_evaluate_decs s e p) s`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[is_clock_io_mono_evaluate]));;
 
 let is_clock_io_mono_extra = prove
  (`(!s. is_clock_io_mono f s) ==>
@@ -365,12 +366,16 @@ let evaluate_length = prove
 let evaluate_nil = prove
  (`!(s:'ffi semanticPrimitives_state) env. evaluate s env [] = (s,Rval
   [])`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[evaluate_def]));;
 
 let evaluate_sing = prove
  (`!(s:'ffi semanticPrimitives_state) env e s' vs. evaluate s env [e]
   = (s',Rval vs) ==> (?v. vs = [v])`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o MATCH_MP (CONJUNCT1
+    evaluate_length)) THEN
+   STRUCT_CASES_TAC(ISPEC `vs:v list` list_CASES) THEN
+   REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ; LENGTH_EQ_NIL; CONS_11] THEN
+     MESON_TAC[]));;
 
 let evaluate_cons = prove
  (`!(s:'ffi semanticPrimitives_state) env e es.
@@ -435,7 +440,7 @@ let evaluate_decs_add_to_clock = prove
 (* [local] *)
 let add_lemma = prove
  (`!(k:num) k'. ?extra. k = k' + extra \/ k' = k + extra`,
-  CHEAT_TAC);;
+  (MESON_TAC[LE_EXISTS; LE_CASES]));;
 
 (* [local] *)
 let with_clock_ffi = prove
@@ -701,7 +706,9 @@ let can_pmatch_all_EVERY = prove
  (`can_pmatch_all envC refs ps v <=>
    ALL (\p. ~(semanticPrimitives_pmatch envC refs p v [] =
      Match_type_error)) ps`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[can_pmatch_all_def; ALL] THEN GEN_TAC THEN
+   COND_CASES_TAC THEN ASM_REWRITE_TAC[]));;
 
 let same_type_trans = prove
  (`same_type t1 t2 /\ same_type t1 t3 ==> same_type t2 t3`,

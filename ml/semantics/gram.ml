@@ -51,7 +51,7 @@ let validPrefixSym_def = new_definition
 
 let disjneq = prove
  (`~(x = y) \/ P <=> x = y ==> P`,
-  CHEAT_TAC);;
+  (MESON_TAC[]));;
 
 let validSym_incompatibility = prove
  (`~(validAddSym s /\ validRelSym s) /\

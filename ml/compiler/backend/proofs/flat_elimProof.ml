@@ -38,7 +38,7 @@ let _ = hol4_ancestors "flat_elimProof"
 
 let is_pure_EVERY_aconv = prove
  (`!es. ALL (\a. flat_elim_is_pure a) es = ALL flat_elim_is_pure es`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[ETA_AX]));;
 
 let find_lookupsL_MEM = prove
  (`!e es. MEM e es ==> domain (find_lookups e) SUBSET domain
@@ -119,7 +119,7 @@ let find_v_globalsL_EL = prove
 let find_v_globalsL_EL_trans = prove
  (`n < LENGTH vs /\ domain (find_v_globalsL vs) SUBSET R ==>
    domain (find_v_globals (EL n vs)) SUBSET R`,
-  CHEAT_TAC);;
+  (MESON_TAC[find_v_globalsL_EL; SUBSET_TRANS]));;
 
 let find_v_globals_MAP_Recclosure = prove
  (`!funs v l.
@@ -199,7 +199,7 @@ let find_refs_globals_EL = prove
      (!m a.
              EL n refs = semanticPrimitives_Thunk m a ==> domain
                (find_v_globals a) SUBSET R)`,
-  CHEAT_TAC);;
+  (MESON_TAC[MEM_EL; find_refs_globals_MEM]));;
 
 let find_refs_globals_LUPDATE = prove
  (`!(reachable:1 spt) refs n.
@@ -295,7 +295,7 @@ let globals_rel_trans = prove
  (`!reachable s1 s2 s3.
       globals_rel reachable s1 s2 /\ globals_rel reachable s2 s3
         ==> globals_rel reachable s1 s3`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[globals_rel_def] THEN MESON_TAC[]));;
 
 let decs_closed_def = new_definition
   `decs_closed (reachable:1 spt) decs <=> (!r t.
@@ -333,7 +333,7 @@ let flat_state_rel_trans = prove
      flat_state_rel reachable s1 s2 /\
      flat_state_rel reachable s2 s3 ==> flat_state_rel reachable s1
        s3`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[flat_state_rel_def] THEN MESON_TAC[globals_rel_trans]));;
 
 (**************************** FLATLANG LEMMAS *****************************)
 
@@ -369,13 +369,13 @@ let find_v_globals_Unitv = prove
 
 let EVERY_EL_IMP = prove
  (`ALL P xs /\ n < LENGTH xs ==> P (EL n xs)`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[GSYM ALL_EL] THEN MESON_TAC[]));;
 
 (* [local] *)
 let not_v_has_Eval_EVERY_EL = prove
  (`ALL ((~) o v_has_Eval) xs /\ i < LENGTH xs ==> ~(v_has_Eval (EL i
   xs))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[GSYM ALL_EL; o_THM] THEN MESON_TAC[]));;
 
 (* HOL4 flat_elimProofScript.sml:462: the ML values that the
    definitions below antiquote *)
@@ -400,7 +400,7 @@ let fvg_map_char_empty = prove
 (* [local] *)
 let not_LE_LESS_IMP = prove
  (`(~(x >= y)) ==> ((x:num) < y)`,
-  CHEAT_TAC);;
+  (ARITH_TAC));;
 
 (* [local] *)
 let EL_REP_NONE_SOME_trivia = prove
