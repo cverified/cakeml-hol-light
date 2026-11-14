@@ -452,6 +452,12 @@ CON_BODY = {
   ('word_to_stack', 'wInst_def'): {'Inst': 'stackLang'},
   ('word_to_stack', 'comp_def'): STACKLANG_PROG,
   ('word_to_stack', 'comp_sing_def'): STACKLANG_PROG,
+  # line_ok_light asks asm_ok of the asm instruction that a
+  # labelled one stands for, so the Jump, the JumpCmp, the Call
+  # and the Loc of its bodies are asm's
+  ('lab_to_target', 'line_ok_light_def'):
+    {'Jump': 'asm', 'JumpCmp': 'asm', 'Call': 'asm',
+     'Loc': 'asm'},
   ('wordSem', 'evaluate_def'): {'*': 'wordSem'},
   ('stackSem', 'evaluate_def'): {'*': 'stackSem'},
   # bvi_to_data's compile matches on a bvi expression and builds a
