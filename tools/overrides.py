@@ -12075,6 +12075,13 @@ DEF_PATCH = {
   ('word_alloc', 'get_live_def'): [
     ('mop = wordLang_Store \\/', 'mop = asm_Store \\/'),
   ],
+  # the op of a ShareInst is a memop of asm, where every other
+  # Load and Store of the definition is the one of a wordLang
+  # expression or program
+  ('word_inst', 'inst_select_def'): [
+    ('op = wordLang_Load \\/ op = wordLang_Store',
+     'op = asm_Load \\/ op = asm_Store'),
+  ],
   ('word_alloc', 'get_clash_tree_def'): [
     ('    wordLang_Store \\/ op = asm_Store8',
      '    asm_Store \\/ op = asm_Store8'),
