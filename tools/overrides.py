@@ -11985,6 +11985,11 @@ DEF_NAMES = {
   # the canonical registers are a num_map, so the lookup of one is
   # sptree's and takes two arguments; balanced_map's takes three
   ('word_cse', 'keep_data_def'): {'lookup': 'sptree_lookup'},
+  # to_canonical and to_latest are num_maps as well, so the
+  # insert and the delete of them are sptree's
+  ('word_cse', 'add_to_data_aux_def'): {'insert': 'sptree_insert'},
+  ('word_cse', 'add_to_data_const_def'): {'insert': 'sptree_insert'},
+  ('word_cse', 'add_to_load_aux_def'): {'insert': 'sptree_insert'},
   ('displayLang', 'trace_to_json_def'): {'toString': 'num_to_str'},
   ('presLang', 'attach_name_def'): {'toString': 'num_to_str'},
   # the toString of the length of a list is num_to_str, which the
@@ -12004,6 +12009,11 @@ DEF_NAMES = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # the mop of the ShMemOp arm is a memop of asm, where every
+  # other Store of get_live is the one of a wordLang program
+  ('word_alloc', 'get_live_def'): [
+    ('mop = wordLang_Store \\/', 'mop = asm_Store \\/'),
+  ],
   # the toString of a character is mlstring's chr_to_str and the
   # toString of the number of it is num_to_str: one definition,
   # two of HOL4's overload
