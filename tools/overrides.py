@@ -906,6 +906,25 @@ INT_NUMERALS = set([
 # The library layer has them under a name of their own and the
 # statements that mean them say so here.
 THM_NAMES = {
+  # presLang reads five languages, so an auxiliary size function
+  # of one name is a different one in each of its theorems: the
+  # name says the size itself here
+  ('presLang', 'MEM_pat_size'):
+    {'pat1_size': 'list_size flatLang_pat_size'},
+  ('presLang', 'MEM_funs_size'):
+    {'exp1_size': 'list_size (pair_size mlstring_size'
+                  ' (pair_size mlstring_size flatLang_exp_size))'},
+  ('presLang', 'MEM_exps_size'):
+    {'exp6_size': 'list_size flatLang_exp_size'},
+  ('presLang', 'MEM_pats_size'):
+    {'exp3_size': 'list_size (pair_size flatLang_pat_size'
+                  ' flatLang_exp_size)'},
+  ('presLang', 'MEM_clos_exps_size'):
+    {'exp3_size': 'list_size closLang_exp_size'},
+  ('presLang', 'MEM_bvl_exps_size'):
+    {'exp1_size': 'list_size bvl_exp_size'},
+  ('presLang', 'MEM_bvi_exps_size'):
+    {'exp2_size': 'list_size bvi_exp_size'},
   # the toString of a number as a string of characters is
   # ASCIInumbers' num_to_dec_string, not mlint's of an mlstring
   ('mlint', 'fromString_helper'): {'toString': 'num_to_dec_string'},
