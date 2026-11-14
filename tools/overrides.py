@@ -11862,6 +11862,11 @@ let fp64_mul_add_def = new_definition
 # a list is list_size of the size of its elements, and the size of
 # a pair is pair_size of the sizes of its halves (ml/lib/hol4.ml).
 AUX_SIZE = {
+  # closLang's exp1_size is the size of a (num # exp) list, which
+  # the source itself writes out in the measure of pure_op
+  # (closLangScript.sml:163)
+  ('closLang', 'exp1_size'):
+    'list_size (pair_size (\\x. x) closLang_exp_size)',
   ('flatLang', 'exp1_size'):
     'list_size (pair_size mlstring_size\n'
     '             (pair_size mlstring_size flatLang_exp_size))',
@@ -11873,6 +11878,17 @@ AUX_SIZE = {
   ('flatLang', 'exp5_size'):
     'pair_size flatLang_pat_size flatLang_exp_size',
   ('flatLang', 'exp6_size'): 'list_size flatLang_exp_size',
+  # and the files that use them name them too: an auxiliary size
+  # function is a name of the theory that reads it, not of the
+  # one whose datatype it is about
+  ('flat_elim', 'exp6_size'): 'list_size flatLang_exp_size',
+  ('flat_elim', 'exp3_size'):
+    'list_size (pair_size flatLang_pat_size flatLang_exp_size)',
+  ('flat_elim', 'exp1_size'):
+    'list_size (pair_size mlstring_size\n'
+    '             (pair_size mlstring_size flatLang_exp_size))',
+  # closLang's exp3_size is the size of an exp list
+  ('clos_mti', 'exp3_size'): 'list_size closLang_exp_size',
 }
 
 
