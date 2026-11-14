@@ -27,6 +27,7 @@ let _ = cake_theory "word_elim"
 let find_word_loc_def = new_definition
   `(find_word_loc ((name:num),_,_) = name)`;;
 
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let find_word_ref_def,find_word_ref_ind = define_wf

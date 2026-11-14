@@ -1289,6 +1289,7 @@ let resource_limit_hit_implements_semantics = prove
           {dataSem_semantics ffi (fromAList prog) co cc lim ss start}`),
   CHEAT_TAC);;
 
+make_size "data_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let dataProps_get_code_labels_def,dataProps_get_code_labels_ind = define_wf

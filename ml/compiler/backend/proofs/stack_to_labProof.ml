@@ -969,6 +969,7 @@ let full_make_init_has_fp_ops = prove
   CHEAT_TAC);;
 add_simp full_make_init_has_fp_ops;;
 
+make_size "stack_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let complex_get_code_labels_def,complex_get_code_labels_ind = define_wf

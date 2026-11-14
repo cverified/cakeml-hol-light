@@ -63,6 +63,8 @@ let enc_num_to_name_aux_def,enc_num_to_name_aux_ind = define_wf
 let enc_num_to_name_def = new_definition
   `enc_num_to_name i = implode (enc_num_to_name_aux i [])`;;
 
+make_size "flat_pat";;
+make_size "pattern_semantics_pat";;
 let pat1_size = prove
  (`list_size flat_pat_size xs = LENGTH xs + SUM (MAP
   pattern_semantics_pat_size xs)`,

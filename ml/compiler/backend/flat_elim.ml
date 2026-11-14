@@ -25,6 +25,7 @@ let _ = cake_theory "flat_elim"
 (**************************** ANALYSIS FUNCTIONS *****************************)
 
 (* is_hidden exp = T means there is no direct execution of GlobalVarLookup *)
+make_size "flat_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let is_hidden_def,is_hidden_ind = define_wf
@@ -135,11 +136,13 @@ let dest_GlobalVarLookup_def = new_definition
    flat_GlobalVarLookup n -> SOME n
    | _ -> NONE`;;
 
+make_size "flat_pat";;
 let exp_size_map_snd = prove
  (`!p_es. list_size flat_exp_size (MAP SND p_es) <= list_size (pair_size
   flat_pat_size flat_exp_size) p_es`,
   CHEAT_TAC);;
 
+make_size "mlstring";;
 let exp_size_map_snd_snd = prove
  (`!vv_es. list_size flat_exp_size (MAP (\x. SND (SND x)) vv_es) <= list_size
   (pair_size mlstring_size

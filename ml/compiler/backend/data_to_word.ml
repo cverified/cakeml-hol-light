@@ -112,6 +112,7 @@ let encode_header_def = new_definition
           ((make_header conf (n2w tag) len):'a word)
      else NONE`;;
 
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let data_to_word_list_Seq_def,data_to_word_list_Seq_ind = define_wf
@@ -3018,6 +3019,7 @@ let force_thunk_def = new_definition
                               (SOME loc) [adjust_var v1; 5] NONE)]))]),l
                                 + 1):'a word_prog#num)`;;
 
+make_size "data_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let comp_def,comp_ind = define_wf
@@ -3311,6 +3313,7 @@ let AnyArith_call_tree_def = new_definition
           (data_to_word_config_has_longdiv_fupd (K F)
              (data_to_word_config_call_empty_ffi_fupd (K F) ARB))))`;;
 
+make_size "call_tree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let structure_le_def,structure_le_ind = define_wf

@@ -155,6 +155,7 @@ let ptree_Tyop_def = define_cases
               SOME (Short nm)))
           | _ -> NONE)`;;
 
+make_size "parsetree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let tokcheckl_def,tokcheckl_ind = define_wf
@@ -166,6 +167,9 @@ let tokcheckl_def,tokcheckl_ind = define_wf
        prest tokrest
      | _ -> F)`;;
 
+make_size "MMLnonT";;
+make_size "locs";;
+make_size "tokens_token";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ptree_linfix_def,ptree_linfix_ind = define_wf
@@ -699,6 +703,7 @@ let ptree_PbaseList1_def,ptree_PbaseList1_ind = define_wf
                          (ptree_PbaseList1 pl_pt)
              | _ -> NONE)`;;
 
+make_size "ast_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let eseq_encode_def,eseq_encode_ind = define_wf

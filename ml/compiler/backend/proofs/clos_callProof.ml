@@ -52,6 +52,7 @@ let _ = do_list hide_constant ["C"; "vars"];;
 
 (* HOL4 clos_callProofScript.sml:32: ML code, not ported *)
 
+make_size "closSem_v";;
 (* v_size_lemma[local] *)
 let clos_callProof_v_size_lemma = prove
  (`MEM (v:closSem_v) vl ==> closSem_v_size v < list_size closSem_v_size vl`,

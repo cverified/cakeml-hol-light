@@ -196,6 +196,7 @@ let copy_loop_def = new_definition
                               r1 r1 (Imm (bytes_in_word))))) t2]);
                copy_each t1 t2]`;;
 
+make_size "stack_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_remove_comp_def,stack_remove_comp_ind = define_wf

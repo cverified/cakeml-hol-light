@@ -490,6 +490,7 @@ let check_ctor_tenv_def,check_ctor_tenv_ind = define_rec
 
 
 (*val build_ctor_tenv : tenv_abbrev -> list (list tvarN * typeN * list (conN * list ast_t)) -> list nat -> tenv_ctor*)
+make_size "ast_t";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let build_ctor_tenv_def,build_ctor_tenv_ind = define_wf
@@ -510,6 +511,7 @@ let build_ctor_tenv_def,build_ctor_tenv_ind = define_wf
 
 
 (* For the value restriction on let-based polymorphism *)
+make_size "ast_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let is_value_def,is_value_ind = define_wf

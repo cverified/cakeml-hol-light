@@ -19,6 +19,7 @@ needs "compiler/backend/closLang.ml";;
 let _ = cake_theory "clos_mti"
   ["closLang"];;
 
+make_size "clos_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let collect_args_def,collect_args_ind = define_wf

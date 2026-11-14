@@ -37,6 +37,7 @@ let num_set_tree_union_def,num_set_tree_union_ind = define_rec
                 BS (num_set_tree_union t1 t1') (sptree_union a b)
                     (num_set_tree_union t2 t2')):(1 spt) spt))`;;
 
+make_size "spt";;
 (* the termination relation that HOL4 gives is
      MEASURE (\(r,t). sptree_size (difference (spt_fold sptree_union LN t) r))
    which is not one that HOL Light takes here; the one

@@ -168,6 +168,7 @@ let flatSem_do_opapp_def = new_definition
        else NONE
      | _ -> NONE)`;;
 
+make_size "flatSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let flatSem_v_to_list_def,flatSem_v_to_list_ind = define_wf

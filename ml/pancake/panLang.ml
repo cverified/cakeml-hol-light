@@ -147,6 +147,7 @@ let struct_info_FIELDS = define_record "struct_info"
 (* HOL4 panLangScript.sml:129: the overload StandAloneCall, which the port
    expands *)
 
+make_size "shape";;
 let MEM_IMP_shape_size = prove
  (`!shapes a. MEM a shapes ==> (shape_size a < 1 + list_size pan_shape_size
   shapes)`,
@@ -212,6 +213,8 @@ let shape_val_def,shape_val_ind = define_rec
    (shape_vals [] = []) /\
    (shape_vals (CONS sh shs) = CONS (shape_val sh) (shape_vals shs))`;;
 
+make_size "mlstring";;
+make_size "pan_exp";;
 let MEM_IMP_exp_size = prove
  (`(!xs a. MEM a xs ==> (pan_exp_size l a < (list_size o pan_exp_size) l xs))
   /\
@@ -331,6 +334,7 @@ let is_function_def = new_definition
      Function _ -> T
    | _ -> F`;;
 
+make_size "decl";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let functions_def,functions_ind = define_wf

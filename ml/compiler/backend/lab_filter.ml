@@ -21,6 +21,7 @@ let not_skip_def = new_definition
   `not_skip l = match l with lab_Asm (Asmi (asm_Inst asm_Skip)) _ _ -> F | _
   -> T`;;
 
+make_size "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let filter_skip_def,filter_skip_ind = define_wf

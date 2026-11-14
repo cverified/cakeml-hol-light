@@ -361,6 +361,7 @@ EVAL ``(pull_exp (Op And [Const (99w:64 word); Op Add [Op Add [];Op Or []]]))``
 *)
 
 (*Flattens all expressions in program, temp must a fresh var*)
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let inst_select_def,inst_select_ind = define_wf

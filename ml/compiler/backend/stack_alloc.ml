@@ -922,6 +922,7 @@ let stack_alloc_stub_names_def = new_definition
 
 (* compiler *)
 
+make_size "stack_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let next_lab_def,next_lab_ind = define_wf

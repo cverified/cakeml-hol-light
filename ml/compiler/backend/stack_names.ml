@@ -70,6 +70,7 @@ let dest_find_name_def = new_definition
      INR r -> INR (tlookup f r)
    | x -> x`;;
 
+make_size "stack_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_names_comp_def,stack_names_comp_ind = define_wf

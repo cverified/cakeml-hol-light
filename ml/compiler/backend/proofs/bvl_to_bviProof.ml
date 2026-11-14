@@ -589,6 +589,7 @@ let do_app_adjust = prove
        bvl_to_bviProof_state_rel b2 r t3)`,
   CHEAT_TAC);;
 
+make_size "bvl_exp";;
 let eval_ind_alt = prove
  (`!P.
      (!env s. P ([],env,s)) /\

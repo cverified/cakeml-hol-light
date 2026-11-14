@@ -42,6 +42,8 @@ let bvl_constProof_v_rel_def = new_definition
          [x],s))
      | _ -> F`;;
 
+make_size "bvlSem_v";;
+make_size "bvl_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let bvl_constProof_env_rel_def,bvl_constProof_env_rel_ind = define_wf

@@ -213,6 +213,7 @@ let calls_list_def,calls_list_ind = define_rec
     (GENLIST_Var t 1 n))
               (calls_list t (i + 1) (loc + 2) xs))`;;
 
+make_size "clos_exp";;
 (* [local] *)
 let exp3_size_MAP_SND = prove
  (`!fns. list_size clos_exp_size (MAP SND fns) <= list_size (pair_size (\x.

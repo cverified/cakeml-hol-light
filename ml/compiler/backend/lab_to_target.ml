@@ -67,6 +67,7 @@ let enc_sec_list_def = new_definition
 
 (* compute labels *)
 
+make_size "line";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let section_labels_def,section_labels_ind = define_wf
@@ -82,6 +83,7 @@ let section_labels_def,section_labels_ind = define_wf
    (section_labels pos (CONS (lab_LabAsm _ _ _ len) xs) labs =
          section_labels (pos + len) xs labs)`;;
 
+make_size "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let compute_labels_alt_def,compute_labels_alt_ind = define_wf

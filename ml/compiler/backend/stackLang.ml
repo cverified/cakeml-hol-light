@@ -137,6 +137,7 @@ let stack_prog_INDUCT,stack_prog_RECURSION = define_datatype
 (* HOL4 stackLangScript.sml:84: the overload store_inst, which the port
    expands *)
 
+make_size "stack_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let list_Seq_def,list_Seq_ind = define_wf

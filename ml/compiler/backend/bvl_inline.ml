@@ -90,6 +90,7 @@ let tick_inline_sing = prove
   CHEAT_TAC);;
 
 (* This definition is written to exit as soon as possible. *)
+make_size "bvl_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let is_small_aux_def,is_small_aux_ind = define_wf

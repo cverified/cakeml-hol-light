@@ -141,6 +141,7 @@ let get_locals_union_subset = prove
      (get_locals A) (get_locals B)))`,
   CHEAT_TAC);;
 
+make_size "stack_frame";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_elimProof_get_stack_def,word_elimProof_get_stack_ind = define_wf

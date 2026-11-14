@@ -700,6 +700,8 @@ add_simp clos_to_bvlProof_v_rel_Boolv;;
 (* HOL4 clos_to_bvlProofScript.sml:984-995: a theorem that HOL4 states as
    the value of an ML expression: v_rel_SIMP *)
 
+make_size "bvlSem_v";;
+make_size "closSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let clos_to_bvlProof_env_rel_def,clos_to_bvlProof_env_rel_ind = define_wf

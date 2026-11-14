@@ -694,6 +694,7 @@ let stackSem_fix_clock_IMP = prove
 let stackSem_STOP_def = new_definition
   `stackSem_STOP x = x`;;
 
+make_size "stack_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_labels_def,get_labels_ind = define_wf

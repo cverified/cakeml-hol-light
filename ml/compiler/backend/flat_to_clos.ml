@@ -406,6 +406,7 @@ let SmartCons_def = new_definition
      | SOME cs -> clos_Op t (clos_BlockOp (clos_Constant (ConstCons tag
        (REVERSE cs)))) []`;;
 
+make_size "flat_exp";;
 (* the clauses in two quotations: funs is ((varN # varN # exp) list) and
    (_#_#_)list; t is tra and varN, which one quotation cannot typecheck *)
 let flat_to_clos_compile_def,flat_to_clos_compile_ind =

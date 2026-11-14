@@ -502,6 +502,7 @@ let code_acc_next_def = new_definition
 let install_def = new_definition
   `install c (n,code_list') = (n,CONS c code_list')`;;
 
+make_size "word_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_bignum_compile_exp_def,word_bignum_compile_exp_ind = define_wf

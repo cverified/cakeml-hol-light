@@ -47,6 +47,7 @@ let wrapper_ok_def = new_definition
 (* [cs] is a cache of code-table entries.  The correctness invariant
    needed for a hit is that the cached label, arity, and body correspond
    to the code table (up to the expression relation used by the pass). *)
+make_size "bvi_exp";;
 (* the clauses in two quotations: dest is (num option) and num; xs is (exp
    list) and (_)list, which one quotation cannot typecheck *)
 let inline_exp_def,inline_exp_ind = assume_definition_rec_clauses

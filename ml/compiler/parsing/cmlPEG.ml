@@ -47,6 +47,8 @@ let bindNT0_def = new_definition
 let bindNT_def = new_definition
   `bindNT ntnm l = [bindNT0 ntnm l]`;;
 
+make_size "locs";;
+make_size "parsetree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let mk_linfix_def,mk_linfix_ind = define_wf
@@ -181,6 +183,7 @@ let peg_StructName_def = new_definition
                  OPTION_GUARD (~(s = (implode "")))) = SOME one)
          (bindNT nStructName o mktokLf)`;;
 
+make_size "MMLnonT";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ptPapply0_def,ptPapply0_ind = define_wf

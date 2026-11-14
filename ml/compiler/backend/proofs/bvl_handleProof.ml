@@ -86,6 +86,7 @@ let let_ok_def = new_definition
        bvl_Let xs b -> ALL isVar xs /\ bVarBound (LENGTH xs) [b]
      | _ -> F`;;
 
+make_size "bvl_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvl_handleProofScript.sml:186-190: the tactic that proves the

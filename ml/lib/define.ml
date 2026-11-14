@@ -1273,21 +1273,11 @@ let NESTED_LEMMAS =
 
 (* a name for a list function that is not in use yet *)
 
-(* the names that the port will give constants of its own, which a
-   name that the library invents has to keep clear of: the size
-   function of a datatype is made where the type is, before the
-   theory's own constants are there, and balanced_map's size and
-   the size field of panLang's struct_info are names of the
-   theory.  tools/portall.py writes ml/lib/reserved.ml *)
-
-let cake_reserved = ref ([]:string list);;
-
 let fresh_const_name s =
-  let taken s = can get_const_type s || mem s (!cake_reserved) in
-  if not (taken s) then s else
+  if not (can get_const_type s) then s else
   let rec go i =
     let s' = s ^ string_of_int i in
-    if taken s' then go (i + 1) else s' in
+    if can get_const_type s' then go (i + 1) else s' in
   go 1;;
 
 (* a type of pairs, and its two component types *)
@@ -2238,27 +2228,9 @@ let parse_datatype_spec s =
          | _ -> failwith "parse_datatype_spec")
       parts;;
 
-(* the size functions of a datatype are made where the type is,
-   which is the natural place for them: a theorem or a measure
-   that names one (flatLang's exp6_size_APPEND, right after the
-   datatype) comes before any definition that would force it.
-   size_thms is defined below, so it is reached through a
-   reference *)
-
-let size_thms_fwd = ref ((fun (_:string) -> ()):string->unit);;
-
 let define_datatype spec =
   let ith,rth = define_type_raw (parse_datatype_spec spec) in
   register_rec_thm rth;
-  (try
-     let _,bod = strip_forall(concl rth) in
-     let fns,_ = strip_exists bod in
-     do_list
-       (fun fn ->
-          let ty,_ = dest_fun_ty(type_of fn) in
-          if is_type ty then !size_thms_fwd (fst(dest_type ty)))
-       (if fns = [] then [] else [hd fns])
-   with Failure _ -> ());
   ith,rth;;
 
 (* the recursion theorems of the types that HOL Light defines itself *)
@@ -2618,9 +2590,14 @@ let size_thms tyname =
   try let a,b = assoc tyname (!the_size_thms) in a @ b
   with Failure _ -> [];;
 
-(* and this is what define_datatype above makes them with *)
+(* a file of the port says `make_size "flat_exp"' where a theorem
+   or a measure of it names a size function: the port makes them
+   when a definition first needs one, which is too late for a
+   theorem that stands before any such definition.  It is the
+   making that the file is after and not the theorems, so the way
+   it says so gives nothing back *)
 
-size_thms_fwd := (fun s -> ignore (size_thms s : thm list));;
+let make_size tyname = ignore (size_thms tyname : thm list);;
 
 (* The definition functions that the port uses.                       *)
 (* ------------------------------------------------------------------ *)

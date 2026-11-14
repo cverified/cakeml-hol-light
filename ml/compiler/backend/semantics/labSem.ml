@@ -73,6 +73,7 @@ let is_Label_def = new_definition
      | _ -> F`;;
 add_simp is_Label_def;;
 
+make_size "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let asm_fetch_aux_def,asm_fetch_aux_ind = define_wf

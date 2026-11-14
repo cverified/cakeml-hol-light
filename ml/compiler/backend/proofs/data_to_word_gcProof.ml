@@ -240,6 +240,8 @@ let join_env_def = new_definition
      MAP (\(n,v). (THE (sptree_lookup ((n - 2) DIV 2) env),v))
        (FILTER (\(n,v). ~(n = 0) /\ EVEN n) vs)`;;
 
+make_size "dataSem_stack";;
+make_size "stack_frame";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let flat_def,flat_ind = define_wf
@@ -2828,6 +2830,7 @@ let word_gc_fun_IMP_FILTER = prove
      stack1,m1,s1)`,
   CHEAT_TAC);;
 
+make_size "word_loc";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let loc_merge_def,loc_merge_ind = define_wf

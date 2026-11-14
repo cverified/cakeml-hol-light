@@ -116,6 +116,7 @@ let word_gen_gc_partial_move_def = define_general
                  let m1 = (header_addr =+ word_Word (i << 2)) m1 in
                    (word_Word (update_addr conf i w),v,pa1,m1,c))`;;
 
+make_size "word_loc";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_gc_move_roots_def,word_gc_move_roots_ind = define_wf
@@ -270,6 +271,7 @@ let new_trig_def = new_definition
            // very unlikely and a bad choice
            n2w h`;;
 
+make_size "heap_element";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let refs_to_addresses_def,refs_to_addresses_ind = define_wf

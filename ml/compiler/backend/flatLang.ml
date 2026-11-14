@@ -91,6 +91,7 @@ let flat_exp_INDUCT,flat_exp_RECURSION = define_datatype
 
 (* HOL4 flatLangScript.sml:86: ML code, not ported *)
 
+make_size "flat_exp";;
 let exp6_size_APPEND = prove
  (`list_size flat_exp_size (APPEND e e2) = list_size flat_exp_size e +
   list_size flat_exp_size e2`,
@@ -106,6 +107,7 @@ let exp6_size = prove
  (`list_size flat_exp_size xs = LENGTH xs + SUM (MAP flat_exp_size xs)`,
   CHEAT_TAC);;
 
+make_size "mlstring";;
 let exp1_size = prove
  (`list_size (pair_size mlstring_size
               (pair_size mlstring_size flat_exp_size)) xs = LENGTH xs +
@@ -113,6 +115,7 @@ let exp1_size = prove
                 flat_exp_size)) xs)`,
   CHEAT_TAC);;
 
+make_size "flat_pat";;
 let exp3_size = prove
  (`list_size (pair_size flat_pat_size flat_exp_size) xs = LENGTH xs + SUM
   (MAP (pair_size flat_pat_size flat_exp_size) xs)`,

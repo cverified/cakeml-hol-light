@@ -44,6 +44,9 @@ let infer_t_CASE = new_recursive_definition infer_t_RECURSION
    (infer_t_CASE (Infer_Tapp its n) dbf appf uvf = appf its n) /\
    (infer_t_CASE (Infer_Tuvar n) dbf appf uvf = uvf n)`;;
 
+make_size "mlstring";;
+make_size "namespace";;
+make_size "t";;
 (* the clauses in three quotations: xs is (_#_)list, (('m , namespace)
    alist), (_#_#_)list and (('n , 'v) alist), which one quotation cannot
    typecheck *)

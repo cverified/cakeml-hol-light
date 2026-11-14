@@ -70,6 +70,7 @@ let delete_var_def = new_definition
        ((bvi_Var n):bvi_exp) -> bvi_Op (clos_IntOp (clos_Const (&0))) []
      | x -> x`;;
 
+make_size "bvi_exp";;
 let exp2_size_APPEND = prove
  (`!xs ys. bvi_exp_size1 (APPEND xs ys) = bvi_exp_size1 xs + bvi_exp_size1 ys`,
   (* bvi_exp_size1 is HOL4's exp2_size, which the size prelude

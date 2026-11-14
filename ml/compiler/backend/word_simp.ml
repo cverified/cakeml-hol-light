@@ -28,6 +28,7 @@ let SmartSeq_def = new_definition
   `SmartSeq p1 (p2:'a word_prog) =
      if p1 = word_Skip then p2 else word_Seq p1 p2`;;
 
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let seq_assoc_def,seq_assoc_ind = define_wf
@@ -166,6 +167,7 @@ let dest_Seq_Assign_Const_pmatch = prove
   run, so we must throw away all variables mentioned in the handler).
  *)
 
+make_size "word_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let strip_const_def,strip_const_ind = define_wf

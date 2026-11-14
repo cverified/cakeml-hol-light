@@ -60,6 +60,7 @@ let compile_int_def = new_definition
        clos_IntOp (clos_Const i) else clos_BlockOp (clos_Build [clos_Int
        i])) []`;;
 
+make_size "bvl_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let alloc_glob_count_def,alloc_glob_count_ind = define_wf

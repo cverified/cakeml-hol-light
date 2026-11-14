@@ -80,6 +80,7 @@ let bvlSem_state_FIELDS = define_record "bvlSem_state"
    "code","(num#bvl_exp) spt";
    "ffi","'ffi ffi_state"];;
 
+make_size "bvlSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let bvlSem_v_to_list_def,bvlSem_v_to_list_ind = define_wf

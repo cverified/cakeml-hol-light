@@ -135,6 +135,7 @@ let INJ_ALL_DISTINCT_MAP = prove
  *)
 
 (* colouring_ok correctness proof *)
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let colouring_ok_def,colouring_ok_ind = define_wf
@@ -1042,6 +1043,7 @@ let live_store_rel_FLOOKUP_store = prove
    FLOOKUP tstore s = FLOOKUP sstore s`,
   CHEAT_TAC);;
 
+make_size "word_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let nlive_store_def,nlive_store_ind = define_wf

@@ -621,6 +621,7 @@ let isSubString_spec = prove
   CHEAT_TAC);;
 
 (* String orderings *)
+make_size "mlstring";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let compare_aux_def,compare_aux_ind = define_wf
@@ -1023,6 +1024,7 @@ let sum_sizes_def,sum_sizes_ind = define_rec
 (* HOL4 mlstringScript.sml:1502: the overload size_limit, which the port
    expands *)
 
+make_size "app_list";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let make_app_list_ann_def,make_app_list_ann_ind = define_wf

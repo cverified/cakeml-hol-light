@@ -250,6 +250,7 @@ let Word64Rep_DataElement = prove
 let ThunkBlock_def = new_definition
   `ThunkBlock ev x = DataElement [x] 1 (ThunkTag ev,[])`;;
 
+make_size "dataSem_v";;
 (* [local] *)
 let v_size_LEMMA = prove
  (`!vs v. MEM v vs ==> dataSem_v_size v <= list_size dataSem_v_size vs`,
@@ -5144,6 +5145,7 @@ let gen_gc_partial_thm = prove
     (* and that its state is good *)
     FIRST_ASSUM ACCEPT_TAC]));;
 
+make_size "heap_element";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let data_pointers_def,data_pointers_ind = define_wf
@@ -22484,6 +22486,8 @@ let word_el_def = define_general
            cond (LENGTH ts < 2 EXP (dimindex (:'a) - 4) /\
                  decode_length conf h = n2w (LENGTH ts) /\ c))`;;
 
+make_size "data_to_word_memoryProof_tag";;
+make_size "word_loc";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_heap_def,word_heap_ind = define_wf

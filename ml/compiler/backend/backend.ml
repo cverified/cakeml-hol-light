@@ -636,6 +636,7 @@ let compile_inc_progs_for_eval_eq = prove
        OPTION_MAP (\x. (c,FST x,MAP upper_w2w cur_bm)) target)`,
   CHEAT_TAC);;
 
+make_size "ffiname";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ffinames_to_string_list_def,ffinames_to_string_list_ind = define_wf

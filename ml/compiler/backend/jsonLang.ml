@@ -34,6 +34,7 @@ let obj_INDUCT,obj_RECURSION = define_datatype
 (* HOL4 jsonLangScript.sml:24: the overload ++, which the port writes as an
    application of misc_Append *)
 
+make_size "app_list";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let concat_with_def,concat_with_ind = define_wf
@@ -70,6 +71,7 @@ let encode_str_def = new_definition
        (ORD c))))
      else mlstring_concat [(implode "\\"); num_to_str (ORD c)]) s2)`;;
 
+make_size "obj";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let json_to_mlstring_def,json_to_mlstring_ind = define_wf

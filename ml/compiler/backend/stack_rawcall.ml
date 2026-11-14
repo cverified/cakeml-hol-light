@@ -65,6 +65,7 @@ let comp_seq_def = new_definition
               dest)))
    | _ -> default`;;
 
+make_size "stack_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_rawcall_comp_def,stack_rawcall_comp_ind = define_wf

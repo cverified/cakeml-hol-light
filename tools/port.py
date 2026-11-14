@@ -386,6 +386,8 @@ class Porter:
     self.arrflds = []      # the array fields of the monadic state
     self.bound = set()
     self.contys = set()
+    # the size functions this file has made (size_prelude)
+    self.sizes_made = set()
     self._con_ovl = None
     self.conof = {}
     self.iffeq = False
@@ -665,7 +667,7 @@ class Porter:
     # the source where the binding is not that name itself (two
     # files that state a theorem of one name: the later one has
     # the name of its theory in front of it)
-    head = ''
+    head = self.size_prelude(stmt)
     if attrs or name != nm:
       head += ('(* %s%s *)\n'
               % (nm if name != nm else '', attrs)).replace('(*  *)',
@@ -2051,6 +2053,42 @@ class Porter:
         # is in the same map: what it means is the accessor
         self.ctx.accessor_names[n] = '%s_%s' % (self.tnm(ty), c)
 
+  def size_prelude(self, text):
+    """a measure or a theorem that uses the size function of a
+       datatype needs it to be there; the port makes the size
+       functions when a definition first needs one, which is too
+       late for a theorem or a measure that stands before any such
+       definition.  Making them with the datatype instead takes the
+       name that the theory wants (balanced_map calls a constant of
+       its own size) and puts every datatype's size lemmas in the
+       way of every termination proof, so the file asks for them
+       where it needs them"""
+    anc = self.db.scope(self.thy) | {self.thy}
+    # the name that the port gives the type of that theory, not
+    # the one that the name means in this theory's scope
+    types = set(self.tnm(t2 + '$' + ty)
+                for (t2, ty) in self.db.datatypes if t2 in anc)
+    out = ''
+    for ty in sorted(set(re.findall(r"([A-Za-z0-9_']+?)_size\d*\b",
+                                    text))):
+      # a constant whose name happens to end in _size is not the
+      # size function of a datatype (sptree's size is sptree_size
+      # in the port)
+      # the size function of a type of the library layer is in
+      # ml/lib/hol4.ml, and making one here would be a second
+      # constant that no lemma is about
+      if ty not in types: continue
+      # a constant of the port that happens to be called after
+      # the size of a type is not that size function
+      # (balanced_map's size is balanced_map_size in the port)
+      if ty + '_size' in self.constnames: continue
+      # and a file says it once: a theorem that uses a size
+      # function stands after the one that made it
+      if ty in self.sizes_made: continue
+      self.sizes_made.add(ty)
+      out += 'make_size "%s";;\n' % ty
+    return out
+
   PARSE_HIDE = re.compile(r'Parse\.hide\s*"([^"]+)"')
 
   NUMERAL_FORM = re.compile(r'add_numeral_form\s*\(\s*#"."\s*,'
@@ -2309,7 +2347,11 @@ class Porter:
                               ' termination', 'Termination') + '\n'
 
 
-    sizes = ''
+    # the size function of a datatype that the definition itself
+    # uses has to be there as well (closSem's exp_alt_size adds the
+    # size of the op of closLang)
+    sizes = self.size_prelude((rel or '') + ' ' +
+                              (term if term else clauses))
     # where the source gives a termination its text is kept, as
     # it is for a relation that the port takes from it
     relnote = ('(* the termination relation is not in the HOL4 '
@@ -2432,6 +2474,11 @@ class Porter:
         self.warn.append('a MEASURE override that a run does not '
                          'bear out: ' + name)
       rel = fmt(found_rel, last=1) if found_rel else None
+      # a measure that uses the size function of a datatype needs
+      # it to be there, and this relation was not there when the
+      # prelude was made
+      sizes = self.size_prelude((rel or '') + ' ' +
+                                (term if term else clauses))
       def inset(r):
         return '\n'.join('     ' + l for l in r.split('\n')).lstrip()
       if rel is not None and hol4rel is None:

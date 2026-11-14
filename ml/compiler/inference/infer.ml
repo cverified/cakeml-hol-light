@@ -114,6 +114,7 @@ let add_constraint_def = new_definition
        | SOME s ->
            (M_success one,infer_st_subst_fupd (K s) st))`;;
 
+make_size "infer_t";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let add_constraints_def,add_constraints_ind = define_wf
@@ -233,6 +234,7 @@ let infer_deBruijn_subst_alt = prove
    LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[infer_deBruijn_subst_def;
      MAP]));;
 
+make_size "ast_t";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let type_name_check_subst_def,type_name_check_subst_ind = define_wf
@@ -394,6 +396,7 @@ let find_dup_def,find_dup_ind = define_rec
   `(find_dup [] = NONE) /\
    (find_dup (CONS x xs) = if MEM x xs then SOME x else find_dup xs)`;;
 
+make_size "loc_err_info";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let check_dups_def,check_dups_ind = define_wf
@@ -411,6 +414,7 @@ let check_dups_eq_find_dup = prove
          | SOME x -> (M_failure (loc_err_info_loc l,f x),s))`,
   CHEAT_TAC);;
 
+make_size "mlstring";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let check_ctor_types_def,check_ctor_types_ind = define_wf

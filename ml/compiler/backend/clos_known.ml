@@ -258,6 +258,7 @@ let val_approx_INDUCT,val_approx_RECURSION = define_datatype
   ";;
 (* HOL4 clos_knownScript.sml:276: ML code, not ported *)
 
+make_size "val_approx";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let clos_known_merge_def,clos_known_merge_ind = define_wf

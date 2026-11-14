@@ -1177,6 +1177,7 @@ add_simp set_globals_def;;
    include calls to SetGlobal, for
      foo = {(e)xpr, (v)alue, (r)esult, and (s)tate}
 *)
+make_size "closSem_v";;
 let v_size_lemma = prove
  (`MEM (v:closSem_v) vl ==> closSem_v_size v < list_size closSem_v_size vl`,
   CHEAT_TAC);;

@@ -107,6 +107,7 @@ let get_global_def = new_definition
 let closSem_Boolv_def = new_definition
   `(closSem_Boolv b = closSem_Block (if b then true_tag else false_tag) [])`;;
 
+make_size "closSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 (* the clauses of do_eq_list overlap -- the last one says Eq_val F

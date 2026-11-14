@@ -49,6 +49,7 @@ let SimpSeq_def = new_definition
                       else word_Seq (word_Move (MAX n1 n2) l) rest)
          | _ -> default`;;
 
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let seq_assoc_right_def,seq_assoc_right_ind = define_wf

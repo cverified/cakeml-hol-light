@@ -69,6 +69,7 @@ let build_const_def = new_definition
 
 (* proof *)
 
+make_size "const_part";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let build_map_def,build_map_ind = define_wf

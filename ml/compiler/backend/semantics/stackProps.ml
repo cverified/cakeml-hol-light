@@ -646,6 +646,7 @@ let dec_stack_length = prove
    LENGTH orig_stack = LENGTH new_stack`,
   CHEAT_TAC);;
 
+make_size "stack_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stackProps_extract_labels_def,stackProps_extract_labels_ind = define_wf

@@ -138,6 +138,7 @@ let dt_test_def = new_definition
      (if lit_same_type l1 l2 then SOME (l1 = l2) else NONE)
    | (_,_) -> NONE`;;
 
+make_size "position";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let app_pos_def,app_pos_ind = define_wf
@@ -172,6 +173,7 @@ let dt_eval_guard_def,dt_eval_guard_ind = define_rec
          | SOME T -> SOME T
          | SOME F -> dt_eval_guard refs v g2)`;;
 
+make_size "dTree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let dt_eval_def,dt_eval_ind = define_wf

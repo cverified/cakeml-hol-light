@@ -667,6 +667,7 @@ let word_common_subexp_elim_def = new_definition
 
 (* tests *)
 
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_cse_Seqs_def,word_cse_Seqs_ind = define_wf

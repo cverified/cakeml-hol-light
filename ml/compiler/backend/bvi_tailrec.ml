@@ -23,6 +23,7 @@ let _ = do_list hide_constant ["pmatch"];;
 let dummy_def = new_definition
   `dummy = bvi_Var 1234567890`;;
 
+make_size "bvi_exp";;
 let MEM_exp_size_imp = prove
  (`!xs a. MEM a xs ==> bvi_exp_size a < list_size bvi_exp_size xs`,
   CHEAT_TAC);;

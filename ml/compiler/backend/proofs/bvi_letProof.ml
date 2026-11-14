@@ -385,6 +385,7 @@ let IMP_COMM = prove
  (`(b1 ==> b2 ==> b3) <=> (b2 ==> b1 ==> b3)`,
   (MESON_TAC[]));;
 
+make_size "bvi_exp";;
 let exp_size_APPEND = prove
  (`!xs ys. bvi_exp_size1 (APPEND xs ys) = bvi_exp_size1 xs + bvi_exp_size1 ys`,
   (* the same theorem as bvi_let's exp2_size_APPEND, which the

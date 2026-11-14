@@ -300,6 +300,7 @@ let delete_var_pmatch = prove
      | x -> x`,
   (GEN_TAC THEN REWRITE_TAC[bvl_const_delete_var_def]));;
 
+make_size "bvl_exp";;
 (* the termination relation is not in the HOL4 source *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)

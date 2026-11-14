@@ -585,6 +585,8 @@ let is_handler_frame_def = new_definition
      | _ -> T`;;
 
 (*Checks for consistency of the values*)
+make_size "stack_frame";;
+make_size "word_loc";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_rel_aux_def,stack_rel_aux_ind = define_wf

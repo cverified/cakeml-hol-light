@@ -35,6 +35,7 @@ let word_exp_INDUCT,word_exp_RECURSION = define_datatype
 
 (* HOL4 wordLangScript.sml:23: the overload ShiftN, which the port expands *)
 
+make_size "word_exp";;
 (* MEM_IMP_exp_size *)
 let word_MEM_IMP_exp_size = prove
  (`!xs a. MEM a xs ==> (word_exp_size l a < (list_size o word_exp_size) l xs)`,
@@ -159,6 +160,7 @@ let every_name_def = new_definition
    ALL P (MAP FST (toAList (FST t))) /\
    ALL P (MAP FST (toAList (SND t)))`;;
 
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let every_var_def,every_var_ind = define_wf

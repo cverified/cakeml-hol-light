@@ -231,6 +231,7 @@ let evaluate_let_wrap = prove
      bviSem_evaluate ([x],APPEND (APPEND vs [op_id_val op]) vs,s)`,
   CHEAT_TAC);;
 
+make_size "bvi_exp";;
 let evaluate_complete_ind = prove
  (`!P.
     (!xs s.

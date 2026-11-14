@@ -22,6 +22,7 @@ let _ = do_list hide_constant ["pmatch"];;
 
 (*Removes MustTerminate*)
 
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let remove_must_terminate_def,remove_must_terminate_ind = define_wf

@@ -977,6 +977,7 @@ let clos_knownProof_f_rel_def = new_definition
       n1 = n2 /\ clos_knownProof_exp_rel c (APPEND (REPLICATE n1
         clos_known_Other) aenv) g e1 e2`;;
 
+make_size "closSem_v";;
 let v1_size_append = prove
  (`!xs ys. list_size closSem_v_size (APPEND xs ys) = list_size closSem_v_size
   xs + list_size closSem_v_size ys`,

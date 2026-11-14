@@ -789,6 +789,8 @@ let type_e_subst_lem = prove
 (* ---------- ctMap stuff ---------- *)
 
 
+make_size "ast_t";;
+make_size "mlstring";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let type_def_to_ctMap_def,type_def_to_ctMap_ind = define_wf

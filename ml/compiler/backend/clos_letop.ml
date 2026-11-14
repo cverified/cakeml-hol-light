@@ -20,6 +20,7 @@ let _ = cake_theory "clos_letop"
 
 (* let_op -- a function that optimises Let [...] (Op op [Var ...]) *)
 
+make_size "clos_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let clos_letop_var_list_def,clos_letop_var_list_ind = define_wf

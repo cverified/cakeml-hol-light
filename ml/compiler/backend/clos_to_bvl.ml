@@ -466,6 +466,7 @@ let force_thunk_code_def = new_definition
          (bvl_Let [bvl_Op (clos_ThunkOp (UpdateThunk Evaluated)) [bvl_Var
            0; bvl_Var 1]] (bvl_Var 1))):bvl_exp)`;;
 
+make_size "clos_exp";;
 (* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
    t is tra, mlstring and (mlstring list); xs is (_)list and (exp list); xs2
    is (exp list) and (_)list, which one quotation cannot typecheck *)
@@ -566,6 +567,7 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
 
 (* HOL4 clos_to_bvlScript.sml:495: ML code, not ported *)
 
+make_size "bvl_exp";;
 (* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
    t is tra, mlstring and (mlstring list); xs is (exp list) and (_)list; xs2
    is (exp list) and (_)list, which one quotation cannot typecheck *)

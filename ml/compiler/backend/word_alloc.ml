@@ -282,6 +282,7 @@ let ssa_cc_trans_inst_def = new_definition
 
 (*Expressions only ever need to lookup a variable's current ssa map
   so it doesn't need the other parts *)
+make_size "word_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ssa_cc_trans_exp_def,ssa_cc_trans_exp_ind = define_wf
@@ -673,6 +674,7 @@ let apply_colour_inst_def = new_definition
 add_simp apply_colour_inst_def;;
 (*Catchall -- for future instructions to be added*)
 
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let apply_colour_def,apply_colour_ind = define_wf
@@ -1550,6 +1552,7 @@ let get_heu_def,get_heu_ind = assume_definition_rec
      | (f,lrc) -> lrc`;;
 
 (* Forced edges for certain instructions *)
+make_size "asm_config";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_forced_def,get_forced_ind = define_wf

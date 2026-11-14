@@ -51,6 +51,7 @@ let trace_to_json_def,trace_to_json_ind = define_rec
    // * the top level of a trace.
    (trace_to_json backend_common_None = json_Null)`;;
 
+make_size "sExp";;
 let MEM_sExp_size = prove
  (`!es a. MEM a es ==> sExp_size a < list_size sExp_size es`,
   CHEAT_TAC);;

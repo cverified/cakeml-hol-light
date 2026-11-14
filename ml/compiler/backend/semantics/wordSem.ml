@@ -673,6 +673,7 @@ let wordSem_find_code_def = define_cases
                               else NONE)
            | other -> NONE)`;;
 
+make_size "stack_frame";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let enc_stack_def,enc_stack_ind = define_wf

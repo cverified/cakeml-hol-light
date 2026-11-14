@@ -1900,6 +1900,7 @@ let s_frame_val_eq_def2 = prove
         <=> MAP SND ls = MAP SND ls' /\ y = y' /\ n = n')`,
   CHEAT_TAC);;
 
+make_size "stack_frame";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let s_val_eq_def,s_val_eq_ind = define_wf

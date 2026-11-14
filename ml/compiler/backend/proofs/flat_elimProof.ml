@@ -58,6 +58,8 @@ let find_loc_EVERY_isEmpty = prove
 
 (************************** DEFINITIONS ***************************)
 
+make_size "flatSem_v";;
+make_size "mlstring";;
 let SUM_MAP_v3_size = prove
  (`!xs. SUM (MAP (pair_size mlstring_size flatSem_v_size) xs) = LENGTH xs +
      SUM (MAP (mlstring_size o FST) xs) +
@@ -153,6 +155,7 @@ let find_v_globals_list_to_v = prove
         domain reachable`,
   CHEAT_TAC);;
 
+make_size "store_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let find_refs_globals_def,find_refs_globals_ind = define_wf

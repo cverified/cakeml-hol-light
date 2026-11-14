@@ -61,6 +61,8 @@ let compile_var_def = define_cases
     (flat_GlobalVarLookup i) []) /\
    (compile_var t (source_to_flat_Local _ s) = flat_Var_local t s)`;;
 
+make_size "ast_pat";;
+make_size "pattern_semantics_pat";;
 let ast_pat1_size = prove
  (`list_size ast_pat_size xs = LENGTH xs + SUM (MAP
   pattern_semantics_pat_size xs)`,
@@ -122,6 +124,8 @@ let join_all_names_def = new_definition
      match xs with [x] -> x
      | _ -> mlstring_concat (join_all_names_aux xs [])`;;
 
+make_size "ast_exp";;
+make_size "mlstring";;
 let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -314,6 +318,7 @@ let alloc_defs_append = prove
        (alloc_defs (m + LENGTH l1) (n + LENGTH l1) l2)`,
   CHEAT_TAC);;
 
+make_size "tra";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let make_varls_def,make_varls_ind = define_wf

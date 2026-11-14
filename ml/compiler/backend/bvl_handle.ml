@@ -170,6 +170,7 @@ let OptionalLetLet_sing_eq = prove
      (\(d,l,s,nr). ([d],l,s,nr)) (OptionalLetLet_sing e sz lv s lim nr)`,
   CHEAT_TAC);;
 
+make_size "bvl_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf

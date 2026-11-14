@@ -33,6 +33,7 @@ let _ = hide_overloads
 
 let _ = do_list hide_constant ["mem"];;
 
+make_size "line";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let labProps_extract_labels_def,labProps_extract_labels_ind = define_wf

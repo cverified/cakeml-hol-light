@@ -124,6 +124,7 @@ let labels_rel_TRANS = prove
   Expressions in ShareInst must be Var or Op Add;
   No other expressions occur except in Set,
   where it must be a Var expr ***)
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let flat_exp_conventions_def,flat_exp_conventions_ind = define_wf

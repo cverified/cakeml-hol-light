@@ -429,6 +429,7 @@ let source_to_display_dec_def,source_to_display_dec_ind = assume_definition_rec
 
 (* flatLang *)
 
+make_size "flat_pat";;
 (* [local] *)
 let MEM_pat_size = prove
  (`!pats a. MEM a (pats:flat_pat list) ==> pattern_semantics_pat_size a <
@@ -471,6 +472,8 @@ let flat_op_to_display_def = new_definition
      | flat_El n -> item_with_num (implode "El") n
      | flat_Id -> empty_item (implode "Id")`;;
 
+make_size "flat_exp";;
+make_size "mlstring";;
 (* [local] *)
 let MEM_funs_size = prove
  (`!fs v1 v2 e. MEM (v1,v2,e) fs ==> flat_exp_size e < list_size (pair_size
@@ -721,6 +724,7 @@ let clos_op_to_display_def = new_definition
      | clos_Install -> display_String (implode "Install")
      | clos_ThunkOp t -> thunk_op_to_display t`;;
 
+make_size "clos_exp";;
 (* [local] *)
 let MEM_clos_exps_size = prove
  (`!exps e. MEM e exps ==> clos_exp_size e < list_size clos_exp_size exps`,
@@ -833,6 +837,7 @@ let clos_dec_to_display_def = new_definition
 
 (* bvl to displayLang *)
 
+make_size "bvl_exp";;
 (* [local] *)
 let MEM_bvl_exps_size = prove
  (`!exps e. MEM e exps ==> bvl_exp_size e < list_size bvl_exp_size exps`,
@@ -898,6 +903,7 @@ let bvl_fun_to_display_def = new_definition
 
 (* bvi to displayLang *)
 
+make_size "bvi_exp";;
 (* [local] *)
 let MEM_bvi_exps_size = prove
  (`!exps e. MEM e exps ==> bvi_exp_size e < list_size bvi_exp_size exps`,
@@ -974,6 +980,7 @@ let num_set_to_display_def = new_definition
                         ns)));
                       (implode "}")])`;;
 
+make_size "data_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let data_seqs_def,data_seqs_ind = define_wf
@@ -1209,6 +1216,7 @@ let store_name_to_display_def = new_definition
      | BitmapBufferEnd -> empty_item (implode "BitmapBufferEnd")
      | Temp w -> item_with_word (implode "Temp") w`;;
 
+make_size "stack_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_seqs_def,stack_seqs_ind = define_wf
@@ -1404,6 +1412,7 @@ let lab_fun_to_display_def = define_general
 
 (* wordLang *)
 
+make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_seqs_def,word_seqs_ind = define_wf

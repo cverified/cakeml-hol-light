@@ -532,6 +532,8 @@ let dataSem_isClos_def = new_definition
   `dataSem_isClos t1 l1 = (((t1 = closure_tag) \/ (t1 = partial_app_tag))
   /\ ~(l1 = []))`;;
 
+make_size "bvlSem_ref";;
+make_size "spt";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 (* the clauses of the source overlap -- a later one says

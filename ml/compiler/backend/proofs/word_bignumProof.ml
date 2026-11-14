@@ -45,6 +45,7 @@ let word_bignumProof_state_FIELDS = define_record "word_bignumProof_state"
    "arrays","address->('a word) list";
    "clock","num"];;
 
+make_size "word_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let eval_exp_def,eval_exp_ind = define_wf
@@ -683,6 +684,7 @@ let good_code_def = new_definition
          word_bignum_compile n 2 1 cs1 prog = (p2,l2',i2,cs2)
            /\ code_subset cs2 cs3))`;;
 
+make_size "mini";;
 (* [local] *)
 let compile_LESS_mini_size = prove
  (`!k l1 l2 yy5 code xx1 xx2 xx3 xx5.

@@ -56,6 +56,7 @@ let evaluate_ignore_clocks = prove
      (r1,ms1,st1) = (r2,ms2,st2)`,
   CHEAT_TAC);;
 
+make_size "line";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let sec_loc_to_pc_def,sec_loc_to_pc_ind = define_wf
@@ -263,6 +264,7 @@ let line_similar_def = new_definition
 
 (* HOL4 lab_to_targetProofScript.sml:398: ML code, not ported *)
 
+make_size "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let code_similar_def,code_similar_ind = define_wf
