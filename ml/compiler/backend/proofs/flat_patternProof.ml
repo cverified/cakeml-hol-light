@@ -337,8 +337,8 @@ let flat_patternProof_state_rel_def = new_definition
   (t:('c,'ffi)flatSem_state) <=> flatSem_state_clock
      t = flatSem_state_clock s /\
      ALL2 (semanticPrimitivesProps_sv_rel flat_patternProof_v_rel)
-       (flatSem_state_refs s) (flatSem_state_refs t) /\
-       flatSem_state_ffi
+       (flatSem_state_refs s) (flatSem_state_refs t)
+       /\ flatSem_state_ffi
      t = flatSem_state_ffi s /\
      ALL2 (OPTREL flat_patternProof_v_rel) (flatSem_state_globals s)
        (flatSem_state_globals t) /\
@@ -354,8 +354,8 @@ let flat_patternProof_state_rel_initial_state = prove
 
 (* state_rel_IMP_clock[local] *)
 let flat_patternProof_state_rel_IMP_clock = prove
- (`flat_patternProof_state_rel cfg s t ==> state_clock t = state_clock
-  s`,
+ (`flat_patternProof_state_rel cfg s t ==> flatSem_state_clock t =
+  flatSem_state_clock s`,
   CHEAT_TAC);;
 
 (* HOL4 flat_patternProofScript.sml:722-723: the overload nv_rel,
@@ -530,15 +530,15 @@ let app_pos_Term_IMP = prove
   CHEAT_TAC);;
 
 let encode_refs_def = new_definition
-  `encode_refs s = FUN_FMAP (\i. encode_val (match EL i (state_refs s)
-  with semanticPrimitives_Refv v -> v))
-     (count (LENGTH (state_refs s)) INTER {i | ?v. EL i
-       (state_refs s) = semanticPrimitives_Refv v})`;;
+  `encode_refs s = FUN_FMAP (\i. encode_val (match EL i
+  (flatSem_state_refs s) with semanticPrimitives_Refv v -> v))
+     (count (LENGTH (flatSem_state_refs s)) INTER {i | ?v. EL i
+       (flatSem_state_refs s) = semanticPrimitives_Refv v})`;;
 
 let FLOOKUP_encode_refs = prove
- (`FLOOKUP (encode_refs s) n = (if n < LENGTH (state_refs s) then
-  (match EL n (state_refs s) with semanticPrimitives_Refv v -> SOME
-  (encode_val v) | _7 -> NONE) else NONE)`,
+ (`FLOOKUP (encode_refs s) n = (if n < LENGTH (flatSem_state_refs s)
+  then (match EL n (flatSem_state_refs s) with semanticPrimitives_Refv
+  v -> SOME (encode_val v) | _7 -> NONE) else NONE)`,
   CHEAT_TAC);;
 
 let decode_pos_simulation = prove
@@ -755,9 +755,9 @@ let compile_exps_evaluate = prove
  (`(!env1 ((s1:('c,'ffi)flatSem_state)) xs t1 r1 i sg ys N env2 s2 cfg.
      flatSem_evaluate env1 s1 xs = (t1,r1) /\
      flat_pattern_compile_exps cfg xs = (i,sg,ys) /\
-     flat_patternProof_env_rel N env1 env2 /\
-       flat_patternProof_state_rel s_cfg s1 s2 /\ i < N /\ ~(r1 = Rerr
-       (Rabort Rtype_error)) ==>
+     flat_patternProof_env_rel N env1 env2
+       /\ flat_patternProof_state_rel s_cfg s1 s2 /\ i < N /\ ~(r1 =
+       Rerr (Rabort Rtype_error)) ==>
      (?t2 r2.
        semanticPrimitivesProps_result_rel (ALL2
          flat_patternProof_v_rel) flat_patternProof_v_rel r1 r2 /\

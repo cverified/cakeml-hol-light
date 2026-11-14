@@ -40,7 +40,7 @@ add_simp with_same_clock;;
 
 let dec_clock_with_code = prove
  (`bvlSem_dec_clock n (bvlSem_state_code_fupd (K c) s) =
-  state_code_fupd (K c) (bvlSem_dec_clock n s)`,
+  bvlSem_state_code_fupd (K c) (bvlSem_dec_clock n s)`,
   CHEAT_TAC);;
 add_simp dec_clock_with_code;;
 
@@ -81,10 +81,11 @@ let do_app_Rval_swap = prove
         (bvlSem_state_globals_fupd (K (bvlSem_state_globals s1))
         (t1:('a,'b)bvlSem_state))))) =
     Rval
-      (x0,bvlSem_state_ffi_fupd (K (state_ffi x1))
-        (bvlSem_state_clock_fupd (K (state_clock x1))
-        (bvlSem_state_refs_fupd (K (state_refs x1))
-        (bvlSem_state_globals_fupd (K (state_globals x1)) t1))))`,
+      (x0,bvlSem_state_ffi_fupd (K (bvlSem_state_ffi x1))
+        (bvlSem_state_clock_fupd (K (bvlSem_state_clock x1))
+        (bvlSem_state_refs_fupd (K (bvlSem_state_refs x1))
+        (bvlSem_state_globals_fupd (K (bvlSem_state_globals x1))
+        t1))))`,
   CHEAT_TAC);;
 
 let do_app_with_code = prove
@@ -93,8 +94,9 @@ let do_app_with_code = prove
    bvlSem_do_app op vs (bvlSem_state_compile_oracle_fupd (K co)
      (bvlSem_state_compile_fupd (K cc) (bvlSem_state_code_fupd (K c)
      s))) =
-        Rval (r,compile_oracle_fupd (K co) (compile_fupd (K cc)
-          (state_code_fupd (K c) s')))`,
+        Rval (r,bvlSem_state_compile_oracle_fupd (K co)
+          (bvlSem_state_compile_fupd (K cc) (bvlSem_state_code_fupd (K
+          c) s')))`,
   CHEAT_TAC);;
 
 let do_app_Rerr_swap = prove
@@ -127,21 +129,23 @@ let do_app_with_code_err = prove
   CHEAT_TAC);;
 
 let initial_state_simp = prove
- (`state_code
-      (bvlSem_initial_state f c co cc k) = c /\ state_ffi
-      (bvlSem_initial_state f c co cc k) = f /\ state_clock
-      (bvlSem_initial_state f c co cc k) = k /\ compile
-      (bvlSem_initial_state f c co cc k) = cc /\ compile_oracle
-      (bvlSem_initial_state f c co cc k) = co /\ state_refs
-      (bvlSem_initial_state f c co cc k) = FEMPTY /\ state_globals
+ (`bvlSem_state_code
+      (bvlSem_initial_state f c co cc k) = c /\ bvlSem_state_ffi
+      (bvlSem_initial_state f c co cc k) = f /\ bvlSem_state_clock
+      (bvlSem_initial_state f c co cc k) = k /\ bvlSem_state_compile
+      (bvlSem_initial_state f c co cc k) = cc
+        /\ bvlSem_state_compile_oracle
+      (bvlSem_initial_state f c co cc k) = co /\ bvlSem_state_refs
+      (bvlSem_initial_state f c co cc k) = FEMPTY
+        /\ bvlSem_state_globals
       (bvlSem_initial_state f c co cc k) = []`,
   CHEAT_TAC);;
 add_simp initial_state_simp;;
 
 let initial_state_with_simp = prove
- (`state_clock_fupd (K k1)
+ (`bvlSem_state_clock_fupd (K k1)
       (bvlSem_initial_state f c co cc k) = bvlSem_initial_state f c
-        co cc k1 /\ state_code_fupd (K c1)
+        co cc k1 /\ bvlSem_state_code_fupd (K c1)
       (bvlSem_initial_state f c co cc k) = bvlSem_initial_state f
         c1 co cc k`,
   CHEAT_TAC);;
@@ -214,16 +218,18 @@ let evaluate_SING = prove
 let evaluate_code = prove
  (`!xs env s1 vs s2.
      (bvlSem_evaluate (xs,env,s1) = (vs,s2)) ==>
-     (?n. compile_oracle
-       s2 = misc_shift_seq n (compile_oracle s1) /\ state_code
-       s2 = FOLDL sptree_union (state_code s1) (MAP (fromAList o SND)
-         (list_of_seq (compile_oracle s1) n)))`,
+     (?n. bvlSem_state_compile_oracle
+       s2 = misc_shift_seq n (bvlSem_state_compile_oracle s1)
+         /\ bvlSem_state_code
+       s2 = FOLDL sptree_union (bvlSem_state_code s1) (MAP (fromAList
+         o SND)
+         (list_of_seq (bvlSem_state_compile_oracle s1) n)))`,
   CHEAT_TAC);;
 
 let evaluate_mono = prove
  (`!xs env s1 vs s2.
      (bvlSem_evaluate (xs,env,s1) = (vs,s2)) ==>
-     subspt (state_code s1) (state_code s2)`,
+     subspt (bvlSem_state_code s1) (bvlSem_state_code s2)`,
   CHEAT_TAC);;
 
 let evaluate_mk_tick = prove
@@ -261,26 +267,26 @@ let inc_clock_def = new_definition
   (bvlSem_state_clock s + ck)) s`;;
 
 let inc_clock_code = prove
- (`!n ((s:('c,'ffi)bvlSem_state)). state_code (bvlProps_inc_clock n s)
-  = bvlSem_state_code s`,
+ (`!n ((s:('c,'ffi)bvlSem_state)). bvlSem_state_code
+  (bvlProps_inc_clock n s) = bvlSem_state_code s`,
   CHEAT_TAC);;
 add_simp inc_clock_code;;
 
 let inc_clock_refs = prove
- (`!n ((s:('c,'ffi)bvlSem_state)). state_refs (bvlProps_inc_clock n s)
-  = bvlSem_state_refs s`,
+ (`!n ((s:('c,'ffi)bvlSem_state)). bvlSem_state_refs
+  (bvlProps_inc_clock n s) = bvlSem_state_refs s`,
   CHEAT_TAC);;
 add_simp inc_clock_refs;;
 
 let inc_clock_ffi = prove
- (`!n ((s:('c,'ffi)bvlSem_state)). state_ffi (bvlProps_inc_clock n s)
-  = bvlSem_state_ffi s`,
+ (`!n ((s:('c,'ffi)bvlSem_state)). bvlSem_state_ffi
+  (bvlProps_inc_clock n s) = bvlSem_state_ffi s`,
   CHEAT_TAC);;
 add_simp inc_clock_ffi;;
 
 let inc_clock_clock = prove
- (`!n ((s:('c,'ffi)bvlSem_state)). state_clock (bvlProps_inc_clock n
-  s) = bvlSem_state_clock s + n`,
+ (`!n ((s:('c,'ffi)bvlSem_state)). bvlSem_state_clock
+  (bvlProps_inc_clock n s) = bvlSem_state_clock s + n`,
   CHEAT_TAC);;
 add_simp inc_clock_clock;;
 
@@ -295,20 +301,20 @@ let inc_clock_add = prove
   CHEAT_TAC);;
 
 let dec_clock_code = prove
- (`!n ((s:('c,'ffi)bvlSem_state)). state_code (bvlSem_dec_clock n s) =
-  bvlSem_state_code s`,
+ (`!n ((s:('c,'ffi)bvlSem_state)). bvlSem_state_code (bvlSem_dec_clock
+  n s) = bvlSem_state_code s`,
   CHEAT_TAC);;
 add_simp dec_clock_code;;
 
 let dec_clock_refs = prove
- (`!n ((s:('c,'ffi)bvlSem_state)). state_refs (bvlSem_dec_clock n s) =
-  bvlSem_state_refs s`,
+ (`!n ((s:('c,'ffi)bvlSem_state)). bvlSem_state_refs (bvlSem_dec_clock
+  n s) = bvlSem_state_refs s`,
   CHEAT_TAC);;
 add_simp dec_clock_refs;;
 
 let dec_clock_ffi = prove
- (`!n ((s:('c,'ffi)bvlSem_state)). state_ffi (bvlSem_dec_clock n s) =
-  bvlSem_state_ffi s`,
+ (`!n ((s:('c,'ffi)bvlSem_state)). bvlSem_state_ffi (bvlSem_dec_clock
+  n s) = bvlSem_state_ffi s`,
   CHEAT_TAC);;
 add_simp dec_clock_ffi;;
 
@@ -319,13 +325,14 @@ add_simp dec_clock0;;
 
 let do_app_change_clock = prove
  (`(bvlSem_do_app op args s1 = Rval (res,s2)) ==>
-   (bvlSem_do_app op args (state_clock_fupd (K ck) s1) = Rval
-     (res,state_clock_fupd (K ck) s2))`,
+   (bvlSem_do_app op args (bvlSem_state_clock_fupd (K ck) s1) =
+     Rval (res,bvlSem_state_clock_fupd (K ck) s2))`,
   CHEAT_TAC);;
 
 let do_app_change_clock_err = prove
  (`(bvlSem_do_app op args s1 = Rerr e) ==>
-   (bvlSem_do_app op args (state_clock_fupd (K ck) s1) = Rerr e)`,
+   (bvlSem_do_app op args (bvlSem_state_clock_fupd (K ck) s1) =
+     Rerr e)`,
   CHEAT_TAC);;
 
 let evaluate_add_clock = prove
@@ -342,27 +349,28 @@ let evaluate_add_clock_initial_state = prove
     (!extra.
       bvlSem_evaluate (es,env,bvlSem_initial_state ffi code co cc (k
         + extra)) =
-      (r,state_clock_fupd (K (state_clock s' + extra)) s'))`,
+      (r,bvlSem_state_clock_fupd (K (bvlSem_state_clock s' +
+        extra)) s'))`,
   CHEAT_TAC);;
 
 let do_app_io_events_mono = prove
  (`bvlSem_do_app op vs s1 = Rval (x,s2) ==> ffi_state_io_events
-  (state_ffi
-   s1) <<= ffi_state_io_events (state_ffi s2)`,
+  (bvlSem_state_ffi
+   s1) <<= ffi_state_io_events (bvlSem_state_ffi s2)`,
   CHEAT_TAC);;
 
 let evaluate_io_events_mono = prove
  (`!exps env s1 res s2.
      bvlSem_evaluate (exps,env,s1) = (res,s2) ==> ffi_state_io_events
-       (state_ffi
-     s1) <<= ffi_state_io_events (state_ffi s2)`,
+       (bvlSem_state_ffi
+     s1) <<= ffi_state_io_events (bvlSem_state_ffi s2)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_app_inc_clock = prove
  (`bvlSem_do_app op vs (bvlProps_inc_clock x y) =
     map_result (\(v,s). (v,bvlSem_state_clock_fupd (K (x +
-      state_clock y)) s)) I (bvlSem_do_app op vs y)`,
+      bvlSem_state_clock y)) s)) I (bvlSem_do_app op vs y)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -386,9 +394,9 @@ let dec_clock_inc_clock = prove
   CHEAT_TAC);;
 
 let evaluate_add_to_clock_io_events_mono = prove
- (`!exps env s extra. ffi_state_io_events (state_ffi
+ (`!exps env s extra. ffi_state_io_events (bvlSem_state_ffi
     (SND (bvlSem_evaluate (exps,env,s)))) <<= ffi_state_io_events
-      (state_ffi
+      (bvlSem_state_ffi
     (SND (bvlSem_evaluate (exps,env,bvlProps_inc_clock extra s))))`,
   CHEAT_TAC);;
 
@@ -432,19 +440,19 @@ let do_build_SUBSET = prove
   CHEAT_TAC);;
 
 let do_app_refs_SUBSET = prove
- (`(bvlSem_do_app op a r = Rval (q,t)) ==> FDOM (state_refs r) SUBSET
-  FDOM (state_refs t)`,
+ (`(bvlSem_do_app op a r = Rval (q,t)) ==> FDOM (bvlSem_state_refs r)
+  SUBSET FDOM (bvlSem_state_refs t)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_refs_SUBSET_lemma = prove
- (`!xs env s. FDOM (bvlSem_state_refs s) SUBSET FDOM (state_refs (SND
-  (bvlSem_evaluate (xs,env,s))))`,
+ (`!xs env s. FDOM (bvlSem_state_refs s) SUBSET FDOM
+  (bvlSem_state_refs (SND (bvlSem_evaluate (xs,env,s))))`,
   CHEAT_TAC);;
 
 let evaluate_refs_SUBSET = prove
  (`(bvlSem_evaluate (xs,env,s) = (res,t)) ==> FDOM (bvlSem_state_refs
-  s) SUBSET FDOM (state_refs t)`,
+  s) SUBSET FDOM (bvlSem_state_refs t)`,
   CHEAT_TAC);;
 
 let bvlProps_get_vars_def,bvlProps_get_vars_ind = define_rec
@@ -513,8 +521,8 @@ let bEvery_def,bEvery_ind = define_wf
          bEvery P xs /\ bEvery P [x2]`;
    `bEvery P [(bvl_Raise x1:bvl_exp)] <=> P ((bvl_Raise x1:bvl_exp))
     /\ bEvery P [x1]`;
-   `bEvery P [(bvl_Tick x1:bvl_exp)] <=> P ((bvl_Tick x1:bvl_exp)) /\
-    bEvery P [x1]`;
+   `bEvery P [(bvl_Tick x1:bvl_exp)] <=> P ((bvl_Tick x1:bvl_exp))
+    /\ bEvery P [x1]`;
    `bEvery P [(bvl_Force m n:bvl_exp)] <=> P ((bvl_Force m
     n:bvl_exp))`;
    `bEvery P [(bvl_Op op xs:bvl_exp)] <=> P ((bvl_Op op xs:bvl_exp))

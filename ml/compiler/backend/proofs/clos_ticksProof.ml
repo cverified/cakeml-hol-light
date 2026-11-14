@@ -66,9 +66,9 @@ let clos_ticksProof_remove_ticks_CONS = prove
 let clos_ticksProof_code_rel_CONS_CONS = prove
  (`!x1 x2 xs y1 y2 ys. clos_ticksProof_code_rel (CONS x1 (CONS x2 xs))
   (CONS y1 (CONS y2 ys)) <=>
-                        clos_ticksProof_code_rel [x1] [y1] /\
-                          clos_ticksProof_code_rel (CONS x2 xs) (CONS
-                          y2 ys)`,
+                        clos_ticksProof_code_rel [x1] [y1]
+                          /\ clos_ticksProof_code_rel (CONS x2 xs)
+                          (CONS y2 ys)`,
   CHEAT_TAC);;
 
 (* value relation *)
@@ -128,21 +128,21 @@ let clos_ticksProof_FMAP_REL_def = new_definition
 let clos_ticksProof_state_rel_def = new_definition
   `clos_ticksProof_state_rel (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
-     (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
-       closSem_state_code
-     s = FEMPTY /\ closSem_state_code t = FEMPTY /\
-       closSem_state_max_app
-     t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s /\
-       closSem_state_clock
+     (!n. SND (SND (closSem_state_compile_oracle s n)) = [])
+       /\ closSem_state_code
+     s = FEMPTY /\ closSem_state_code t = FEMPTY
+       /\ closSem_state_max_app
+     t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s
+       /\ closSem_state_clock
      t = closSem_state_clock s /\ closSem_state_ffi
      t = closSem_state_ffi s /\
      ALL2 (OPTREL clos_ticksProof_v_rel) (closSem_state_globals s)
        (closSem_state_globals t) /\
      clos_ticksProof_FMAP_REL clos_ticksProof_ref_rel
-       (closSem_state_refs s) (closSem_state_refs t) /\
-       closSem_state_compile
-     s = pure_cc clos_ticks_compile_inc (closSem_state_compile t) /\
-       closSem_state_compile_oracle
+       (closSem_state_refs s) (closSem_state_refs t)
+       /\ closSem_state_compile
+     s = pure_cc clos_ticks_compile_inc (closSem_state_compile t)
+       /\ closSem_state_compile_oracle
      t = pure_co clos_ticks_compile_inc o
        closSem_state_compile_oracle s`;;
 
@@ -250,8 +250,8 @@ let remove_ticks_mk_Ticks = prove
 let evaluate_mk_Ticks = prove
  (`!tr e env s1.
       closSem_evaluate ([clos_ticksProof_mk_Ticks tr e],env,s1) =
-        (if state_clock s1 < LENGTH tr then (Rerr (Rabort
-          Rtimeout_error),state_clock_fupd (K 0) s1) else
+        (if closSem_state_clock s1 < LENGTH tr then (Rerr (Rabort
+          Rtimeout_error),closSem_state_clock_fupd (K 0) s1) else
           closSem_evaluate ([e],env,closSem_dec_clock (LENGTH tr) s1))`,
   CHEAT_TAC);;
 
@@ -272,8 +272,8 @@ let clos_ticksProof_do_app_lemma = prove
      closSem_do_app opp xs s = Rerr err1 /\
                            exc_rel clos_ticksProof_v_rel err1 err2) |
                              Rval (y,t1) -> (?x s1.
-                             clos_ticksProof_v_rel x y /\
-                             clos_ticksProof_state_rel s1 t1 /\
+                             clos_ticksProof_v_rel x y
+                             /\ clos_ticksProof_state_rel s1 t1 /\
                               closSem_do_app opp xs s = Rval
                                 (x,s1)))`,
   CHEAT_TAC);;
@@ -283,8 +283,8 @@ let clos_ticksProof_do_install_lemma = prove
  (`clos_ticksProof_state_rel s t /\ ALL2 clos_ticksProof_v_rel xs ys ==>
    (match closSem_do_install xs s with (Rerr err1,s1) -> (?err2 t1.
      closSem_do_install ys t = (Rerr err2,t1) /\
-                           exc_rel clos_ticksProof_v_rel err1 err2 /\
-                             clos_ticksProof_state_rel s1 t1) | (Rval
+                           exc_rel clos_ticksProof_v_rel err1 err2
+                             /\ clos_ticksProof_state_rel s1 t1) | (Rval
                              exps1,s1) -> (?exps2 t1.
                              clos_ticksProof_state_rel s1 t1 /\ (~(exps1
                              = [])) /\
@@ -297,8 +297,8 @@ let clos_ticksProof_do_install_lemma = prove
 let clos_ticksProof_lookup_vars_lemma = prove
  (`!vs env1 env2. ALL2 clos_ticksProof_v_rel env1 env2 ==>
     (match lookup_vars vs env2 with NONE -> lookup_vars vs env1 =
-      NONE | SOME l2 -> (?l1. ALL2 clos_ticksProof_v_rel l1 l2 /\
-      lookup_vars vs env1 = SOME l1))`,
+      NONE | SOME l2 -> (?l1. ALL2 clos_ticksProof_v_rel l1 l2
+      /\ lookup_vars vs env1 = SOME l1))`,
   CHEAT_TAC);;
 
 let state_rel_IMP_max_app_EQ = prove
@@ -314,9 +314,9 @@ let state_rel_IMP_code_FEMPTY = prove
 
 (* state_rel_clock *)
 let clos_ticksProof_state_rel_clock = prove
- (`!s t k. clos_ticksProof_state_rel (state_clock_fupd (K k) s)
-  (state_clock_fupd (K k) t) <=> clos_ticksProof_state_rel s
-  (state_clock_fupd (K (state_clock s)) t)`,
+ (`!s t k. clos_ticksProof_state_rel (closSem_state_clock_fupd (K k)
+  s) (closSem_state_clock_fupd (K k) t) <=> clos_ticksProof_state_rel
+  s (closSem_state_clock_fupd (K (closSem_state_clock s)) t)`,
   CHEAT_TAC);;
 
 
@@ -343,19 +343,20 @@ let clos_ticksProof_v_rel_IMP_v_to_words = prove
 
 (* state_rel_opt_rel_refs[local] *)
 let clos_ticksProof_state_rel_opt_rel_refs = prove
- (`(clos_ticksProof_state_rel s1 s2 /\ FLOOKUP (state_refs s1) n = r1
-  ==>
-      (?r2. FLOOKUP (state_refs s2) n = r2 /\ OPTREL
+ (`(clos_ticksProof_state_rel s1 s2 /\ FLOOKUP (closSem_state_refs s1) n
+  = r1 ==>
+      (?r2. FLOOKUP (closSem_state_refs s2) n = r2 /\ OPTREL
         clos_ticksProof_ref_rel r1 r2)) /\
-   (clos_ticksProof_state_rel s1 s2 /\ FLOOKUP (state_refs s2) n = r2
-     ==>
-      (?r1. FLOOKUP (state_refs s1) n = r1 /\ OPTREL
+   (clos_ticksProof_state_rel s1 s2 /\ FLOOKUP (closSem_state_refs
+     s2) n = r2 ==>
+      (?r1. FLOOKUP (closSem_state_refs s1) n = r1 /\ OPTREL
         clos_ticksProof_ref_rel r1 r2))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let state_rel_clock_eqs = prove
- (`clos_ticksProof_state_rel s t ==> state_clock s = state_clock t`,
+ (`clos_ticksProof_state_rel s t ==> closSem_state_clock s =
+  closSem_state_clock t`,
   CHEAT_TAC);;
 
 (* state_rel_dec_clock[local] *)
@@ -368,16 +369,17 @@ let clos_ticksProof_state_rel_dec_clock = prove
 let clos_ticksProof_rel_update_thunk = prove
  (`clos_ticksProof_state_rel s1 s2 /\
    ALL2 clos_ticksProof_v_rel vs ys ==>
-     (closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s2) ys
-       = NONE ==>
-        closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1)
-          vs = NONE) /\
-     (closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s2) ys
-       = SOME refs2 ==>
+     (closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs
+       s2) ys = NONE ==>
+        closSem_update_thunk [closSem_RefPtr v ptr]
+          (closSem_state_refs s1) vs = NONE) /\
+     (closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs
+       s2) ys = SOME refs2 ==>
         (?refs1. closSem_update_thunk [closSem_RefPtr v ptr]
-          (state_refs s1) vs = SOME refs1 /\
-                clos_ticksProof_state_rel (state_refs_fupd (K
-                  refs1) s1) (state_refs_fupd (K refs2) s2)))`,
+          (closSem_state_refs s1) vs = SOME refs1 /\
+                clos_ticksProof_state_rel (closSem_state_refs_fupd
+                  (K refs1) s1) (closSem_state_refs_fupd (K refs2)
+                  s2)))`,
   CHEAT_TAC);;
 
 (* evaluate_remove_ticks *)
@@ -388,8 +390,8 @@ let clos_ticksProof_evaluate_remove_ticks = prove
      clos_ticksProof_state_rel s1 t1 /\ clos_ticksProof_code_rel xs
        ys ==>
      (?ck res1 s2.
-        (closSem_evaluate (xs,env1,state_clock_fupd (K (state_clock
-          s1 + ck)) s1) = (res1,s2)) /\
+        (closSem_evaluate (xs,env1,closSem_state_clock_fupd (K
+          (closSem_state_clock s1 + ck)) s1) = (res1,s2)) /\
         semanticPrimitivesProps_result_rel (ALL2
           clos_ticksProof_v_rel) clos_ticksProof_v_rel res1 res2 /\
         clos_ticksProof_state_rel s2 t2)) /\
@@ -400,8 +402,8 @@ let clos_ticksProof_evaluate_remove_ticks = prove
        args2 /\
      clos_ticksProof_state_rel s1 t1 ==>
      (?ck res1 s2.
-       (evaluate_app loc_opt f1 args1 (state_clock_fupd (K
-         (state_clock s1 + ck)) s1) = (res1,s2)) /\
+       (evaluate_app loc_opt f1 args1 (closSem_state_clock_fupd (K
+         (closSem_state_clock s1 + ck)) s1) = (res1,s2)) /\
        semanticPrimitivesProps_result_rel (ALL2
          clos_ticksProof_v_rel) clos_ticksProof_v_rel res1 res2 /\
        clos_ticksProof_state_rel s2 t2))`,
@@ -411,11 +413,11 @@ let remove_ticks_correct = prove
  (`(!xs env2 (t1:('c,'ffi)closSem_state) res2 t2 env1 s1.
      (closSem_evaluate (clos_ticks_remove_ticks xs,env2,t1) =
        (res2,t2)) /\
-     ALL2 clos_ticksProof_v_rel env1 env2 /\
-       clos_ticksProof_state_rel s1 t1 ==>
+     ALL2 clos_ticksProof_v_rel env1 env2
+       /\ clos_ticksProof_state_rel s1 t1 ==>
      (?ck res1 s2.
-        (closSem_evaluate (xs,env1,state_clock_fupd (K (state_clock
-          s1 + ck)) s1) = (res1,s2)) /\
+        (closSem_evaluate (xs,env1,closSem_state_clock_fupd (K
+          (closSem_state_clock s1 + ck)) s1) = (res1,s2)) /\
         semanticPrimitivesProps_result_rel (ALL2
           clos_ticksProof_v_rel) clos_ticksProof_v_rel res1 res2 /\
         clos_ticksProof_state_rel s2 t2))`,

@@ -327,10 +327,10 @@ let find_next_interference_const = prove
  (`!k mc ffi ms app mc' ffi'.
      find_next_interference mc ffi k ms = SOME (app,mc',ffi') ==>
        machine_config_target
-     mc' = machine_config_target mc /\
-       machine_config_callee_saved_regs
-     mc' = machine_config_callee_saved_regs mc /\
-       machine_config_ptr_reg
+     mc' = machine_config_target mc
+       /\ machine_config_callee_saved_regs
+     mc' = machine_config_callee_saved_regs mc
+       /\ machine_config_ptr_reg
      mc' = machine_config_ptr_reg mc`,
   CHEAT_TAC);;
 
@@ -338,8 +338,8 @@ let next_interference_const = prove
  (`next_interference mc ffi ms = SOME (app,mc',ffi') ==>
   machine_config_target
    mc' = machine_config_target mc /\ machine_config_callee_saved_regs
-   mc' = machine_config_callee_saved_regs mc /\
-     machine_config_ptr_reg
+   mc' = machine_config_callee_saved_regs mc
+     /\ machine_config_ptr_reg
    mc' = machine_config_ptr_reg mc`,
   CHEAT_TAC);;
 
@@ -453,12 +453,12 @@ let interference_count_EQ = prove
   CHEAT_TAC);;
 
 let constructed_oracles_EQ = prove
- (`next_interference mc1 ffi1 ms1 = next_interference mc2 ffi2 ms2 /\
-  machine_config_target
-   mc1 = machine_config_target mc2 /\
-     machine_config_callee_saved_regs
-   mc1 = machine_config_callee_saved_regs mc2 /\
-     machine_config_ptr_reg
+ (`next_interference mc1 ffi1 ms1 = next_interference mc2 ffi2 ms2
+  /\ machine_config_target
+   mc1 = machine_config_target mc2
+     /\ machine_config_callee_saved_regs
+   mc1 = machine_config_callee_saved_regs mc2
+     /\ machine_config_ptr_reg
    mc1 = machine_config_ptr_reg mc2 ==>
    target_io_regs mc1 ffi1 ms1 = target_io_regs mc2 ffi2 ms2 /\
    target_io_fp_regs mc1 ffi1 ms1 = target_io_fp_regs mc2 ffi2 ms2 /\
@@ -486,7 +486,7 @@ let next_interference_ExtCall = prove
      mc) ms = machine_config_ccache_pc mc) /\
      find_index (target_get_pc (machine_config_target mc) ms)
        (machine_config_ffi_entry_pcs mc) 0 = SOME index /\
-     EL index (ffi_names mc) = ffi_ExtCall name /\
+     EL index (machine_config_ffi_names mc) = ffi_ExtCall name /\
      ALOOKUP (machine_config_mmio_info mc) index = NONE /\
      read_ffi_bytearrays mc ms = (SOME bytes,SOME bytes2) /\
      call_FFI ffi (ffi_ExtCall name) bytes bytes2 = FFI_return
@@ -673,8 +673,8 @@ let evaluate_EQ_evaluate_lemma = prove
                      init_pc 0 ==> target_get_byte
                      (machine_config_target
                     c) ms' pc' = target_get_byte
-                      (machine_config_target c) ms1 pc') /\
-                      target_get_pc (machine_config_target
+                      (machine_config_target c) ms1 pc')
+                      /\ target_get_pc (machine_config_target
                    c) ms' IN
                      all_pcs (LENGTH (asm_config_encode
                        (target_config (machine_config_target c)) i))

@@ -1016,8 +1016,8 @@ let unspill_success = prove
    (?s' b.
    unspill k s = (M_success one,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\
-     ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
+     /\ ra_state_dim
    s = ra_state_dim s' /\ ra_state_node_tag
    s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1043,8 +1043,8 @@ let do_simplify_success = prove
    (?s' b.
    do_simplify k s = (M_success b,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\
-     ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
+     /\ ra_state_dim
    s = ra_state_dim s' /\ ra_state_node_tag
    s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1170,8 +1170,8 @@ let do_coalesce_real_success = prove
    (?s'.
    do_coalesce_real x y case1 case2 s = (M_success one,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\
-     ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
+     /\ ra_state_dim
    s = ra_state_dim s' /\ ra_state_node_tag
    s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1183,8 +1183,8 @@ let do_coalesce_success = prove
      (?s' b.
       do_coalesce k s = (M_success b,s') /\
       good_ra_state s' /\
-      is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\
-        ra_state_dim
+      is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
+        /\ ra_state_dim
       s = ra_state_dim s' /\ ra_state_node_tag
       s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1217,8 +1217,8 @@ let do_prefreeze_success = prove
    (?s' b.
    do_prefreeze k s = (M_success b,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\
-     ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
+     /\ ra_state_dim
    s = ra_state_dim s' /\ ra_state_node_tag
    s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1231,8 +1231,8 @@ let do_freeze_success = prove
    (?s' b.
    do_freeze k s = (M_success b,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\
-     ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
+     /\ ra_state_dim
    s = ra_state_dim s' /\ ra_state_node_tag
    s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1271,8 +1271,8 @@ let do_spill_success = prove
      (?s' b.
        do_spill scost k s = (M_success b,s') /\
        good_ra_state s' /\
-       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\
-         ra_state_dim
+       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
+         /\ ra_state_dim
        s = ra_state_dim s' /\ ra_state_node_tag
        s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1284,8 +1284,8 @@ let do_step_success = prove
      (?b s'.
        do_step scost k s = (M_success b,s') /\
        good_ra_state s' /\
-       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\
-         ra_state_dim
+       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
+         /\ ra_state_dim
        s = ra_state_dim s' /\ ra_state_node_tag
        s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1298,8 +1298,8 @@ let rpt_do_step_success = prove
      (?s'.
        rpt_do_step scost k n s = (M_success one,s') /\
        good_ra_state s' /\
-       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\
-         ra_state_dim
+       is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
+         /\ ra_state_dim
        s = ra_state_dim s' /\ ra_state_node_tag
        s = ra_state_node_tag s')`,
   CHEAT_TAC);;
@@ -1332,8 +1332,8 @@ let do_alloc1_success = prove
    (?ls s'.
    do_alloc1 moves scost k s = (M_success ls,s') /\
    good_ra_state s' /\
-   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s') /\
-     ra_state_dim
+   is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')
+     /\ ra_state_dim
    // This allows the coalescing phase to modify the adjacency list
    s' = ra_state_dim s /\ ra_state_node_tag
    s' = ra_state_node_tag s)`,

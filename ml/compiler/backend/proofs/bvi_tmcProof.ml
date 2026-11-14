@@ -12,7 +12,6 @@
 needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi_tmc.ml";;
-needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
@@ -80,10 +79,10 @@ let no_mutcons_op_def = new_definition
 let no_mutcons_def,no_mutcons_ind = define_wf
   `MEASURE bvi_exp_size`
   [`no_mutcons (bvi_Var n:bvi_exp) <=> T`;
-   `no_mutcons (bvi_If x1 x2 x3:bvi_exp) <=> no_mutcons x1 /\
-    no_mutcons x2 /\ no_mutcons x3`;
-   `no_mutcons (bvi_Let xs x:bvi_exp) <=> ALL no_mutcons xs /\
-    no_mutcons x`;
+   `no_mutcons (bvi_If x1 x2 x3:bvi_exp) <=> no_mutcons x1
+    /\ no_mutcons x2 /\ no_mutcons x3`;
+   `no_mutcons (bvi_Let xs x:bvi_exp) <=> ALL no_mutcons xs
+    /\ no_mutcons x`;
    `no_mutcons (bvi_Raise x:bvi_exp) <=> no_mutcons x`;
    `no_mutcons (bvi_Tick x:bvi_exp) <=> no_mutcons x`;
    `no_mutcons (bvi_Call ticks dest xs handler:bvi_exp) <=>
@@ -168,22 +167,24 @@ let fmap_inj_update = prove
 
 let bvi_tmcProof_state_rel_def = new_definition
   `bvi_tmcProof_state_rel f s (t:('a,'ffi)bviSem_state) <=>
-     state_ref_rel f (state_refs s) (bviSem_state_refs t) /\
-       bviSem_state_clock
-     t = state_clock s /\
+     state_ref_rel f (bviSem_state_refs s) (bviSem_state_refs t)
+       /\ bviSem_state_clock
+     t = bviSem_state_clock s /\
      OPTREL (\p p'. FLOOKUP f p = SOME p') (bviSem_state_global s)
        (bviSem_state_global t) /\ bviSem_state_ffi
-     t = state_ffi s /\ bviSem_state_compile_oracle
-     t = state_co bvi_tmc_compile_each (compile_oracle s) /\ compile
+     t = bviSem_state_ffi s /\ bviSem_state_compile_oracle
+     t = state_co bvi_tmc_compile_each (bviSem_state_compile_oracle
+       s) /\ bviSem_state_compile
      s = state_cc bvi_tmc_compile_each (bviSem_state_compile t) /\
-     bvi_tmcProof_code_rel (state_code s) (bviSem_state_code t) /\
-     bvi_tmcProof_namespace_rel (state_code s) (bviSem_state_code t)
-       /\
-     (!n. let ((next',cfg),prog) = compile_oracle s n in
+     bvi_tmcProof_code_rel (bviSem_state_code s) (bviSem_state_code
+       t) /\
+     bvi_tmcProof_namespace_rel (bviSem_state_code s)
+       (bviSem_state_code t) /\
+     (!n. let ((next',cfg),prog) = bviSem_state_compile_oracle s n in
              bvi_tmcProof_input_condition next' prog) /\
      (!n. n IN domain (bviSem_state_code t) /\ (\n. n MOD
-       bvl_to_bvi_namespaces = 3) n ==> n < FST (FST (compile_oracle s
-       0))) /\
+       bvl_to_bvi_namespaces = 3) n ==> n < FST (FST
+       (bviSem_state_compile_oracle s 0))) /\
      fmap_inj f`;;
 
 (* Structural facts about compile_each and the namespace allocation.
@@ -333,8 +334,8 @@ let bvi_tmcProof_compile_each_namespace_rel = prove
 
 (* namespace_rel_union *)
 let bvi_tmcProof_namespace_rel_union = prove
- (`bvi_tmcProof_namespace_rel x y /\ bvi_tmcProof_namespace_rel t s /\
-  DISJOINT (domain s) (domain y) ==>
+ (`bvi_tmcProof_namespace_rel x y /\ bvi_tmcProof_namespace_rel t s
+  /\ DISJOINT (domain s) (domain y) ==>
    bvi_tmcProof_namespace_rel (sptree_union x t) (sptree_union y s)`,
   CHEAT_TAC);;
 
@@ -347,8 +348,8 @@ let bvi_tmcProof_code_rel_union = prove
 
 (* state_rel_code_rel *)
 let bvi_tmcProof_state_rel_code_rel = prove
- (`bvi_tmcProof_state_rel f s t ==> bvi_tmcProof_code_rel (state_code
-  s) (state_code t)`,
+ (`bvi_tmcProof_state_rel f s t ==> bvi_tmcProof_code_rel
+  (bviSem_state_code s) (bviSem_state_code t)`,
   CHEAT_TAC);;
 
 (* compile_each_untouched[local] *)
@@ -486,8 +487,8 @@ let env_rel_strip_extras = prove
 
 let state_rel_dec = prove
  (`!n t f s s'.
-     bvi_tmcProof_state_rel f s s' /\ state_clock
-     s = SUC n /\ state_clock
+     bvi_tmcProof_state_rel f s s' /\ bviSem_state_clock
+     s = SUC n /\ bviSem_state_clock
      s' = SUC n /\
      SUC n >= t ==>
      bvi_tmcProof_state_rel f (bviSem_dec_clock t s)
@@ -498,8 +499,8 @@ let state_rel_dec = prove
 let bvi_tmcProof_state_rel_with_clock = prove
  (`!n f s s'.
      bvi_tmcProof_state_rel f s s' ==>
-     bvi_tmcProof_state_rel f (state_clock_fupd (K n) s)
-       (state_clock_fupd (K n) s')`,
+     bvi_tmcProof_state_rel f (bviSem_state_clock_fupd (K n) s)
+       (bviSem_state_clock_fupd (K n) s')`,
   CHEAT_TAC);;
 
 let state_ref_rel_filled = prove
@@ -511,8 +512,8 @@ let state_ref_rel_filled = prove
 let state_rel_filled = prove
  (`!f s s' k v.
      bvi_tmcProof_state_rel f s s' /\ ~(k IN FRANGE f) ==>
-     bvi_tmcProof_state_rel f s (state_refs_fupd (K (state_refs s'
-       |+ (k,v))) s')`,
+     bvi_tmcProof_state_rel f s (bviSem_state_refs_fupd (K
+       (bviSem_state_refs s' |+ (k,v))) s')`,
   CHEAT_TAC);;
 
 let hole_has_val_def = new_definition
@@ -620,8 +621,8 @@ let holes_unchanged_except_del = prove
 
 let holes_unchanged_except_del_SING = prove
  (`!f refs_old refs_new changed ptr v.
-     holes_unchanged_except f (refs_old |+ (ptr,v)) refs_new {ptr} /\
-       ~(ptr IN FDOM refs_old) ==>
+     holes_unchanged_except f (refs_old |+ (ptr,v)) refs_new {ptr}
+       /\ ~(ptr IN FDOM refs_old) ==>
      holes_unchanged_except f refs_old refs_new EMPTY`,
   CHEAT_TAC);;
 
@@ -677,9 +678,11 @@ let hole_has_val_unappend = prove
 
 let hole_has_val_dec = prove
  (`!f env env' s c n.
-     hole_has_val f env env' (state_refs s) c /\ state_clock
+     hole_has_val f env env' (bviSem_state_refs s) c
+       /\ bviSem_state_clock
      s = SUC n ==>
-     hole_has_val f env env' (state_refs (bviSem_dec_clock 1 s)) c`,
+     hole_has_val f env env' (bviSem_state_refs (bviSem_dec_clock 1
+       s)) c`,
   CHEAT_TAC);;
 
 let only_fresh_refl = prove
@@ -780,8 +783,8 @@ let state_ref_rel_update = prove
   CHEAT_TAC);;
 
 let bvl_to_bvi_refs = prove
- (`bvl_to_bvi (state_refs_fupd (K r) (bvi_to_bvl s)) s =
-  state_refs_fupd (K r) s`,
+ (`bvl_to_bvi (bviSem_state_refs_fupd (K r) (bvi_to_bvl s)) s =
+  bviSem_state_refs_fupd (K r) s`,
   CHEAT_TAC);;
 
 let holes_unchanged_except_frange_update = prove
@@ -812,26 +815,28 @@ let state_ref_rel_alloc = prove
 
 let state_rel_alloc = prove
  (`!f s s' src tgt rv rw.
-     bvi_tmcProof_state_rel f s s' /\ ~(src IN FDOM (state_refs s))
-       /\ ~(tgt IN FDOM (state_refs s')) /\ ~(tgt IN FRANGE f) /\
+     bvi_tmcProof_state_rel f s s' /\ ~(src IN FDOM
+       (bviSem_state_refs s)) /\ ~(tgt IN FDOM (bviSem_state_refs s'))
+       /\ ~(tgt IN FRANGE f) /\
      bvi_tmcProof_ref_rel (f |+ (src,tgt)) rv rw ==>
      FLOOKUP (f |+ (src,tgt)) src = SOME tgt /\
      bvi_tmcProof_state_rel (f |+ (src,tgt))
-       (state_refs_fupd (K (state_refs s |+ (src,rv))) s)
-         (state_refs_fupd (K (state_refs s' |+ (tgt,rw))) s') /\
+       (bviSem_state_refs_fupd (K (bviSem_state_refs s |+ (src,rv)))
+         s) (bviSem_state_refs_fupd (K (bviSem_state_refs s' |+
+         (tgt,rw))) s') /\
      f SUBMAP f |+ (src,tgt) /\
-     only_fresh f (f |+ (src,tgt)) (state_refs s') /\
-     holes_unchanged_except f (state_refs s') (state_refs s' |+
-       (tgt,rw)) {} /\
-     holes_still_not_finalised f (state_refs s') (state_refs s' |+
-       (tgt,rw))`,
+     only_fresh f (f |+ (src,tgt)) (bviSem_state_refs s') /\
+     holes_unchanged_except f (bviSem_state_refs s')
+       (bviSem_state_refs s' |+ (tgt,rw)) {} /\
+     holes_still_not_finalised f (bviSem_state_refs s')
+       (bviSem_state_refs s' |+ (tgt,rw))`,
   CHEAT_TAC);;
 
 let state_ref_rel_lookup = prove
  (`!f n m refs t_refs.
      FLOOKUP f n = SOME m /\ state_ref_rel f refs t_refs ==>
-     (?v w. FLOOKUP refs n = SOME v /\ FLOOKUP t_refs m = SOME w /\
-       bvi_tmcProof_ref_rel f v w)`,
+     (?v w. FLOOKUP refs n = SOME v /\ FLOOKUP t_refs m = SOME w
+       /\ bvi_tmcProof_ref_rel f v w)`,
   CHEAT_TAC);;
 
 let fmap_inj_flookup_eq = prove
@@ -856,8 +861,8 @@ let list_to_v_v_rel = prove
 
 let do_eq_v_rel = prove
  (`(!refs x1 x2 t_refs y1 y2.
-      bvi_tmcProof_v_rel f x1 y1 /\ bvi_tmcProof_v_rel f x2 y2 /\
-        state_ref_rel f refs t_refs /\ fmap_inj f ==>
+      bvi_tmcProof_v_rel f x1 y1 /\ bvi_tmcProof_v_rel f x2 y2
+        /\ state_ref_rel f refs t_refs /\ fmap_inj f ==>
       bvlSem_do_eq refs x1 x2 = bvlSem_do_eq t_refs y1 y2) /\
    (!refs x1s x2s t_refs y1s y2s.
       ALL2 (bvi_tmcProof_v_rel f) x1s y1s /\ ALL2 (bvi_tmcProof_v_rel
@@ -929,8 +934,8 @@ let do_build_v_rel = prove
        refs1 refs2 /\
      fmap_inj f /\ (!j. bvi_tmcProof_v_rel f (m j) (m' j)) ==>
      (?f' v' refs2'.
-       bvlSem_do_build m' i parts' refs2 = (v',refs2') /\
-         bvi_tmcProof_v_rel f' v v' /\
+       bvlSem_do_build m' i parts' refs2 = (v',refs2')
+         /\ bvi_tmcProof_v_rel f' v v' /\
        state_ref_rel f' refs1' refs2' /\ fmap_inj f' /\ f SUBMAP f'
          /\
        only_fresh f f' refs2 /\ holes_unchanged_except f refs2 refs2'
@@ -944,8 +949,8 @@ let do_build_const_v_rel = prove
        refs1 refs2 /\
      fmap_inj f ==>
      (?f' v' refs2'.
-       bvlSem_do_build_const l refs2 = (v',refs2') /\
-         bvi_tmcProof_v_rel f' v v' /\
+       bvlSem_do_build_const l refs2 = (v',refs2')
+         /\ bvi_tmcProof_v_rel f' v v' /\
        state_ref_rel f' refs1' refs2' /\ fmap_inj f' /\ f SUBMAP f'
          /\
        only_fresh f f' refs2 /\ holes_unchanged_except f refs2 refs2'
@@ -964,9 +969,11 @@ let do_app_op_rel = prove
        bvi_tmcProof_v_rel f' v v' /\
        bvi_tmcProof_state_rel f' t t' /\
        f SUBMAP f' /\
-       only_fresh f f' (state_refs s') /\
-       holes_unchanged_except f (state_refs s') (state_refs t') {} /\
-       holes_still_not_finalised f (state_refs s') (state_refs t'))`,
+       only_fresh f f' (bviSem_state_refs s') /\
+       holes_unchanged_except f (bviSem_state_refs s')
+         (bviSem_state_refs t') {} /\
+       holes_still_not_finalised f (bviSem_state_refs s')
+         (bviSem_state_refs t'))`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_tmcProofScript.sml:1520-1541: a proof *)
@@ -1015,18 +1022,20 @@ let do_app_op_rel = prove
 
 let do_app_op_finalise_rel = prove
  (`!v1 refs v1' v2 f s s'.
-     bviSem_finalise_cons v1 (state_refs s) = SOME (v2,refs) /\
+     bviSem_finalise_cons v1 (bviSem_state_refs s) = SOME (v2,refs)
+       /\
      bvi_tmcProof_state_rel f s s' /\
      bvi_tmcProof_v_rel f v1 v1' ==>
      (?f' v2' refs'.
-       bviSem_finalise_cons v1' (state_refs s') = SOME (v2',refs') /\
+       bviSem_finalise_cons v1' (bviSem_state_refs s') = SOME
+         (v2',refs') /\
        f SUBMAP f' /\
        bvi_tmcProof_v_rel f' v2 v2' /\
-       bvi_tmcProof_state_rel f' (state_refs_fupd (K refs) s)
-         (state_refs_fupd (K refs') s') /\
-       only_fresh f f' (state_refs s') /\
-       holes_unchanged_except f (state_refs s') refs' {} /\
-       holes_still_not_finalised f (state_refs s') refs')`,
+       bvi_tmcProof_state_rel f' (bviSem_state_refs_fupd (K refs) s)
+         (bviSem_state_refs_fupd (K refs') s') /\
+       only_fresh f f' (bviSem_state_refs s') /\
+       holes_unchanged_except f (bviSem_state_refs s') refs' {} /\
+       holes_still_not_finalised f (bviSem_state_refs s') refs')`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_tmcProofScript.sml:1768-1774: a proof *)
@@ -1136,8 +1145,8 @@ let is_block_op_cons_def = new_definition
 
 (* bvi_to_bvl_refs *)
 let bvi_tmcProof_bvi_to_bvl_refs = prove
- (`state_refs
-      (bvl_to_bvi s t) = state_refs s`,
+ (`bvlSem_state_refs
+      (bvl_to_bvi s t) = bvlSem_state_refs s`,
   CHEAT_TAC);;
 
 let finalise_cons_refs_SUBSET = prove
@@ -1148,15 +1157,15 @@ let finalise_cons_refs_SUBSET = prove
 
 (* do_app_refs_SUBSET *)
 let bvi_tmcProof_do_app_refs_SUBSET = prove
- (`(bviSem_do_app op a r = Rval (q,t)) ==> FDOM (state_refs r) SUBSET
-  FDOM (state_refs t)`,
+ (`(bviSem_do_app op a r = Rval (q,t)) ==> FDOM (bviSem_state_refs r)
+  SUBSET FDOM (bviSem_state_refs t)`,
   CHEAT_TAC);;
 
 (* evaluate_refs_SUBSET *)
 let bvi_tmcProof_evaluate_refs_SUBSET = prove
  (`!xs env s r t.
-     (bviSem_evaluate (xs,env,s) = (r,t)) ==> FDOM (state_refs s)
-       SUBSET FDOM (state_refs t)`,
+     (bviSem_evaluate (xs,env,s) = (r,t)) ==> FDOM
+       (bviSem_state_refs s) SUBSET FDOM (bviSem_state_refs t)`,
   CHEAT_TAC);;
 
 let list_rel_reverse = prove
@@ -1190,11 +1199,13 @@ let evaluate_fill_hole = prove
      f SUBMAP f' /\
      semanticPrimitivesProps_result_rel (ALL2 (bvi_tmcProof_v_rel
        f')) (eor_rel f') r r' /\
-     hole_has_val f env1 env2 (state_refs s') c /\
-     hole_not_finalised (state_refs s') hole_ptr /\
-     holes_unchanged_except f (state_refs s') (state_refs t') {} /\
-     holes_still_not_finalised f (state_refs s') (state_refs t') /\
-     only_fresh f f' (state_refs s') /\
+     hole_has_val f env1 env2 (bviSem_state_refs s') c /\
+     hole_not_finalised (bviSem_state_refs s') hole_ptr /\
+     holes_unchanged_except f (bviSem_state_refs s')
+       (bviSem_state_refs t') {} /\
+     holes_still_not_finalised f (bviSem_state_refs s')
+       (bviSem_state_refs t') /\
+     only_fresh f f' (bviSem_state_refs s') /\
      bvi_tmcProof_state_rel f' t t' /\ EL (LENGTH env1)
      env2 = bvlSem_RefPtr F hole_ptr ==>
      (?r_fill f_fill t_fill.
@@ -1203,17 +1214,18 @@ let evaluate_fill_hole = prove
        opt_res_rel f_fill r r_fill /\
        bvi_tmcProof_state_rel f_fill t t_fill /\
        f SUBMAP f_fill /\
-       only_fresh f f_fill (state_refs s') /\
-       holes_unchanged_except f (state_refs s') (state_refs t_fill)
-         {hole_ptr} /\
-       holes_still_not_finalised f (state_refs s') (state_refs
-         t_fill) /\
+       only_fresh f f_fill (bviSem_state_refs s') /\
+       holes_unchanged_except f (bviSem_state_refs s')
+         (bviSem_state_refs t_fill) {hole_ptr} /\
+       holes_still_not_finalised f (bviSem_state_refs s')
+         (bviSem_state_refs t_fill) /\
        (!v.
          r = Rval [v] ==>
          (?v_fill.
-           mb_rel f_fill (state_refs s') (state_refs t_fill \\
-             hole_ptr) v v_fill /\
-           hole_has_val f env1 env2 (state_refs t_fill) v_fill)))`,
+           mb_rel f_fill (bviSem_state_refs s') (bviSem_state_refs
+             t_fill \\ hole_ptr) v v_fill /\
+           hole_has_val f env1 env2 (bviSem_state_refs t_fill)
+             v_fill)))`,
   CHEAT_TAC);;
 
 let evaluate_fill_hole_val = prove
@@ -1224,11 +1236,13 @@ let evaluate_fill_hole_val = prove
      bvi_tmcProof_state_rel f s s' /\
      f SUBMAP f' /\
      bvi_tmcProof_v_rel f' v v' /\
-     hole_has_val f env1 env2 (state_refs s') c /\
-     hole_not_finalised (state_refs s') hole_ptr /\
-     holes_unchanged_except f (state_refs s') (state_refs t') {} /\
-     holes_still_not_finalised f (state_refs s') (state_refs t') /\
-     only_fresh f f' (state_refs s') /\
+     hole_has_val f env1 env2 (bviSem_state_refs s') c /\
+     hole_not_finalised (bviSem_state_refs s') hole_ptr /\
+     holes_unchanged_except f (bviSem_state_refs s')
+       (bviSem_state_refs t') {} /\
+     holes_still_not_finalised f (bviSem_state_refs s')
+       (bviSem_state_refs t') /\
+     only_fresh f f' (bviSem_state_refs s') /\
      bvi_tmcProof_state_rel f' t t' /\ EL (LENGTH env1)
      env2 = bvlSem_RefPtr F hole_ptr ==>
      (?r_fill f_fill t_fill.
@@ -1237,15 +1251,16 @@ let evaluate_fill_hole_val = prove
        opt_res_rel f_fill (Rval [v]) r_fill /\
        bvi_tmcProof_state_rel f_fill t t_fill /\
        f SUBMAP f_fill /\
-       only_fresh f f_fill (state_refs s') /\
-       holes_unchanged_except f (state_refs s') (state_refs t_fill)
-         {hole_ptr} /\
-       holes_still_not_finalised f (state_refs s') (state_refs
-         t_fill) /\
+       only_fresh f f_fill (bviSem_state_refs s') /\
+       holes_unchanged_except f (bviSem_state_refs s')
+         (bviSem_state_refs t_fill) {hole_ptr} /\
+       holes_still_not_finalised f (bviSem_state_refs s')
+         (bviSem_state_refs t_fill) /\
        (?v_fill.
-         mb_rel f_fill (state_refs s') (state_refs t_fill \\
-           hole_ptr) v v_fill /\
-         hole_has_val f env1 env2 (state_refs t_fill) v_fill))`,
+         mb_rel f_fill (bviSem_state_refs s') (bviSem_state_refs
+           t_fill \\ hole_ptr) v v_fill /\
+         hole_has_val f env1 env2 (bviSem_state_refs t_fill)
+           v_fill))`,
   CHEAT_TAC);;
 
 let evaluate_vars_source = prove
@@ -1455,12 +1470,14 @@ let evaluate_rewrite_tmc = prove
          f')) (eor_rel f') r r' /\
        bvi_tmcProof_state_rel f' t t' /\
        f SUBMAP f' /\
-       only_fresh f f' (state_refs s') /\
-       holes_unchanged_except f (state_refs s') (state_refs t') {} /\
-       holes_still_not_finalised f (state_refs s') (state_refs t') /\
+       only_fresh f f' (bviSem_state_refs s') /\
+       holes_unchanged_except f (bviSem_state_refs s')
+         (bviSem_state_refs t') {} /\
+       holes_still_not_finalised f (bviSem_state_refs s')
+         (bviSem_state_refs t') /\
        (!loc_opt.
           optimised_code loc loc_opt (bviSem_state_code s)
-            (state_code s') ==>
+            (bviSem_state_code s') ==>
           (!wrap.
              LENGTH xs = 1 /\
              rewrite_wrapper loc loc_opt (LENGTH env1) (HD xs) = SOME
@@ -1472,17 +1489,18 @@ let evaluate_rewrite_tmc = prove
                  /\
                bvi_tmcProof_state_rel f_wrap t t_wrap /\
                f SUBMAP f_wrap /\
-               only_fresh f f_wrap (state_refs s') /\
-               holes_unchanged_except f (state_refs s') (state_refs
-                 t_wrap) {} /\
-               holes_still_not_finalised f (state_refs s')
-                 (state_refs t_wrap))) /\
+               only_fresh f f_wrap (bviSem_state_refs s') /\
+               holes_unchanged_except f (bviSem_state_refs s')
+                 (bviSem_state_refs t_wrap) {} /\
+               holes_still_not_finalised f (bviSem_state_refs s')
+                 (bviSem_state_refs t_wrap))) /\
           (opt ==>
            (!i j hole_ptr work.
               i = LENGTH env1 /\
               j = LENGTH env1 + 1 /\
-              (?c. hole_has_val f env1 env2 (state_refs s') c) /\
-              hole_not_finalised (state_refs s') hole_ptr /\
+              (?c. hole_has_val f env1 env2 (bviSem_state_refs s') c)
+                /\
+              hole_not_finalised (bviSem_state_refs s') hole_ptr /\
               rewrite_worker loc loc_opt i j (LENGTH env1) (HD xs) =
                 work /\ EL i
               env2 = bvlSem_RefPtr F hole_ptr ==>
@@ -1491,18 +1509,19 @@ let evaluate_rewrite_tmc = prove
                 opt_res_rel f_work r r_work /\
                 bvi_tmcProof_state_rel f_work t t_work /\
                 f SUBMAP f_work /\
-                only_fresh f f_work (state_refs s') /\
-                holes_unchanged_except f (state_refs s') (state_refs
-                  t_work) {hole_ptr} /\
-                holes_still_not_finalised f (state_refs s')
-                  (state_refs t_work) /\
+                only_fresh f f_work (bviSem_state_refs s') /\
+                holes_unchanged_except f (bviSem_state_refs s')
+                  (bviSem_state_refs t_work) {hole_ptr} /\
+                holes_still_not_finalised f (bviSem_state_refs s')
+                  (bviSem_state_refs t_work) /\
                 (!res_v.
                   r = Rval [res_v] ==>
                   (?res_v'.
-                    mb_rel f_work (state_refs s') (state_refs t_work
-                      \\ hole_ptr) res_v res_v' /\
-                    hole_has_val f env1 env2 (state_refs t_work)
-                      res_v')))))))`,
+                    mb_rel f_work (bviSem_state_refs s')
+                      (bviSem_state_refs t_work \\ hole_ptr) res_v
+                      res_v' /\
+                    hole_has_val f env1 env2 (bviSem_state_refs
+                      t_work) res_v')))))))`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_tmcProofScript.sml:3031-3106: a proof *)
@@ -1522,15 +1541,15 @@ let hypothesis_def = new_definition
                bviSem_evaluate (xs',env2',s'3') = (r'',t'') /\
                semanticPrimitivesProps_result_rel (ALL2
                  (bvi_tmcProof_v_rel f'')) (eor_rel f'') r' r'' /\
-               bvi_tmcProof_state_rel f'' t' t'' /\ f' SUBMAP f'' /\
-                 only_fresh f' f'' (state_refs s'3') /\
-               holes_unchanged_except f' (state_refs s'3')
-                 (state_refs t'') {} /\
-               holes_still_not_finalised f' (state_refs s'3')
-                 (state_refs t'') /\
+               bvi_tmcProof_state_rel f'' t' t'' /\ f' SUBMAP f''
+                 /\ only_fresh f' f'' (bviSem_state_refs s'3') /\
+               holes_unchanged_except f' (bviSem_state_refs s'3')
+                 (bviSem_state_refs t'') {} /\
+               holes_still_not_finalised f' (bviSem_state_refs s'3')
+                 (bviSem_state_refs t'') /\
                (!loc_opt.
                  optimised_code loc' loc_opt (bviSem_state_code s'')
-                   (state_code s'3') ==>
+                   (bviSem_state_code s'3') ==>
                  (!wrap.
                     LENGTH xs' = 1 /\
                     rewrite_wrapper loc' loc_opt (LENGTH env1') (HD
@@ -1542,17 +1561,18 @@ let hypothesis_def = new_definition
                         (bvi_tmcProof_v_rel f_wrap)) (eor_rel f_wrap) r'
                         r_wrap /\ bvi_tmcProof_state_rel f_wrap t'
                           t_wrap /\ f' SUBMAP f_wrap /\
-                      only_fresh f' f_wrap (state_refs s'3') /\
-                      holes_unchanged_except f' (state_refs s'3')
-                        (state_refs t_wrap) {} /\
-                      holes_still_not_finalised f' (state_refs s'3')
-                        (state_refs t_wrap))) /\
+                      only_fresh f' f_wrap (bviSem_state_refs s'3')
+                        /\
+                      holes_unchanged_except f' (bviSem_state_refs
+                        s'3') (bviSem_state_refs t_wrap) {} /\
+                      holes_still_not_finalised f' (bviSem_state_refs
+                        s'3') (bviSem_state_refs t_wrap))) /\
                  (opt' ==>
                   (!hole_ptr.
-                    (?c. hole_has_val f' env1' env2' (state_refs
-                      s'3') c) /\
-                    hole_not_finalised (state_refs s'3') hole_ptr /\
-                      EL (LENGTH env1')
+                    (?c. hole_has_val f' env1' env2'
+                      (bviSem_state_refs s'3') c) /\
+                    hole_not_finalised (bviSem_state_refs s'3')
+                      hole_ptr /\ EL (LENGTH env1')
                     env2' = bvlSem_RefPtr F hole_ptr ==>
                     (?r_work f_work t_work.
                       bviSem_evaluate
@@ -1563,18 +1583,20 @@ let hypothesis_def = new_definition
                         /\
                       bvi_tmcProof_state_rel f_work t' t_work /\ f'
                         SUBMAP f_work /\
-                      only_fresh f' f_work (state_refs s'3') /\
-                      holes_unchanged_except f' (state_refs s'3')
-                        (state_refs t_work) {hole_ptr} /\
-                      holes_still_not_finalised f' (state_refs s'3')
-                        (state_refs t_work) /\
+                      only_fresh f' f_work (bviSem_state_refs s'3')
+                        /\
+                      holes_unchanged_except f' (bviSem_state_refs
+                        s'3') (bviSem_state_refs t_work) {hole_ptr} /\
+                      holes_still_not_finalised f' (bviSem_state_refs
+                        s'3') (bviSem_state_refs t_work) /\
                       (!res_v.
                         r' = Rval [res_v] ==>
                         (?res_v'.
-                          mb_rel f_work (state_refs s'3') (state_refs
-                            t_work \\ hole_ptr) res_v res_v' /\
-                          hole_has_val f' env1' env2' (state_refs
-                            t_work) res_v'))))))))`;;
+                          mb_rel f_work (bviSem_state_refs s'3')
+                            (bviSem_state_refs t_work \\ hole_ptr) res_v
+                            res_v' /\
+                          hole_has_val f' env1' env2'
+                            (bviSem_state_refs t_work) res_v'))))))))`;;
 
 let alloc_hole_has_val_def = new_definition
   `alloc_hole_has_val f refs extras i_ptr c_idx c <=>
@@ -1706,14 +1728,14 @@ let evaluate_cb = prove
           f')) (eor_rel f') r r' /\
         bvi_tmcProof_state_rel f' t t' /\
         f SUBMAP f' /\
-        only_fresh f f' (state_refs s') /\
-        holes_unchanged_except f (state_refs s') (state_refs t') {}
-          /\
-        holes_still_not_finalised f (state_refs s') (state_refs t'))
-          /\
+        only_fresh f f' (bviSem_state_refs s') /\
+        holes_unchanged_except f (bviSem_state_refs s')
+          (bviSem_state_refs t') {} /\
+        holes_still_not_finalised f (bviSem_state_refs s')
+          (bviSem_state_refs t')) /\
      (!loc_opt.
-       optimised_code loc loc_opt (bviSem_state_code s) (state_code
-         s') ==>
+       optimised_code loc loc_opt (bviSem_state_code s)
+         (bviSem_state_code s') ==>
        (!tag left child right.
           cb = CallBlock tag left child right ==>
           (?t_wrap f_wrap r_wrap.
@@ -1723,40 +1745,42 @@ let evaluate_cb = prove
               (bvi_tmcProof_v_rel f_wrap)) (eor_rel f_wrap) r r_wrap /\
             bvi_tmcProof_state_rel f_wrap t t_wrap /\
             f SUBMAP f_wrap /\
-            only_fresh f f_wrap (state_refs s') /\
-            holes_unchanged_except f (state_refs s') (state_refs
-              t_wrap) {} /\
-            holes_still_not_finalised f (state_refs s') (state_refs
-              t_wrap))) /\
+            only_fresh f f_wrap (bviSem_state_refs s') /\
+            holes_unchanged_except f (bviSem_state_refs s')
+              (bviSem_state_refs t_wrap) {} /\
+            holes_still_not_finalised f (bviSem_state_refs s')
+              (bviSem_state_refs t_wrap))) /\
        (!refs extras ptr idx hole_ptr.
           state_ref_rel f (bviSem_state_refs s) refs /\
           (?c. alloc_hole_has_val f refs extras ptr idx c) /\
-          (FDOM (state_refs s')) SUBSET (FDOM refs) /\
+          (FDOM (bviSem_state_refs s')) SUBSET (FDOM refs) /\
           EL ptr extras = bvlSem_RefPtr F hole_ptr ==>
           (?r_aux t_aux f_aux.
             bviSem_evaluate ([cb_to_bvi_worker_aux (shift_cb (LENGTH
               extras) cb) loc_opt ptr idx],APPEND extras
-              env2,state_refs_fupd (K refs) s') = (r_aux,t_aux) /\
+              env2,bviSem_state_refs_fupd (K refs) s') = (r_aux,t_aux)
+              /\
             opt_res_rel f_aux r r_aux /\
             bvi_tmcProof_state_rel f_aux t t_aux /\
             f SUBMAP f_aux /\
             only_fresh f f_aux refs /\
-            holes_unchanged_except f refs (state_refs t_aux)
+            holes_unchanged_except f refs (bviSem_state_refs t_aux)
               {hole_ptr} /\
-            holes_still_not_finalised f refs (state_refs t_aux) /\
+            holes_still_not_finalised f refs (bviSem_state_refs
+              t_aux) /\
             (!res_v.
               r = Rval [res_v] ==>
               (?res_v'.
-                mb_rel f_aux (state_refs s') (state_refs t_aux \\
-                  hole_ptr) res_v res_v' /\
-                alloc_hole_has_val f (state_refs t_aux) extras ptr
-                  idx res_v')))) /\
+                mb_rel f_aux (bviSem_state_refs s')
+                  (bviSem_state_refs t_aux \\ hole_ptr) res_v res_v' /\
+                alloc_hole_has_val f (bviSem_state_refs t_aux) extras
+                  ptr idx res_v')))) /\
        (opt ==>
         (!ptr idx work hole_ptr.
            ptr = LENGTH env /\
            idx = LENGTH env + 1 /\
-           (?c. hole_has_val f env env2 (state_refs s') c) /\
-           hole_not_finalised (state_refs s') hole_ptr /\
+           (?c. hole_has_val f env env2 (bviSem_state_refs s') c) /\
+           hole_not_finalised (bviSem_state_refs s') hole_ptr /\
            EL ptr env2 = bvlSem_RefPtr F hole_ptr ==>
            (?r_work f_work t_work.
              bviSem_evaluate ([cb_to_bvi_worker cb loc_opt ptr
@@ -1764,26 +1788,29 @@ let evaluate_cb = prove
              opt_res_rel f_work r r_work /\
              bvi_tmcProof_state_rel f_work t t_work /\
              f SUBMAP f_work /\
-             only_fresh f f_work (state_refs s') /\
-             holes_unchanged_except f (state_refs s') (state_refs
-               t_work) {hole_ptr} /\
-             holes_still_not_finalised f (state_refs s') (state_refs
-               t_work) /\
+             only_fresh f f_work (bviSem_state_refs s') /\
+             holes_unchanged_except f (bviSem_state_refs s')
+               (bviSem_state_refs t_work) {hole_ptr} /\
+             holes_still_not_finalised f (bviSem_state_refs s')
+               (bviSem_state_refs t_work) /\
              (!res_v.
                r = Rval [res_v] ==>
                (?res_v'.
-                 mb_rel f_work (state_refs s') (state_refs t_work \\
-                   hole_ptr) res_v res_v' /\
-                 hole_has_val f env env2 (state_refs t_work)
+                 mb_rel f_work (bviSem_state_refs s')
+                   (bviSem_state_refs t_work \\ hole_ptr) res_v res_v'
+                   /\
+                 hole_has_val f env env2 (bviSem_state_refs t_work)
                    res_v'))))))`,
   CHEAT_TAC);;
 
 let evaluate_pres_opt_code = prove
  (`!loc loc_opt s1 s2 xs env1 env2 r1 u1 r2 u2.
-     optimised_code loc loc_opt (state_code s1) (state_code s2) /\
+     optimised_code loc loc_opt (bviSem_state_code s1)
+       (bviSem_state_code s2) /\
      bviSem_evaluate (xs,env1,s1) = (r1,u1) /\
      bviSem_evaluate (xs,env2,s2) = (r2,u2) ==>
-     optimised_code loc loc_opt (state_code u1) (state_code u2)`,
+     optimised_code loc loc_opt (bviSem_state_code u1)
+       (bviSem_state_code u2)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1848,19 +1875,20 @@ let bvi_to_cb_no_mutcons = prove
 
 let find_code_rel = prove
  (`!f vs vs' s s' dest args body.
-     bvlSem_find_code dest vs (state_code s) = SOME (args,body) /\
+     bvlSem_find_code dest vs (bviSem_state_code s) = SOME
+       (args,body) /\
      ALL2 (bvi_tmcProof_v_rel f) vs vs' /\
      bvi_tmcProof_state_rel f s s' ==>
      no_mutcons body /\
      (?args' body' loc.
-       bvlSem_find_code dest vs' (state_code s') = SOME (args',body')
-         /\
+       bvlSem_find_code dest vs' (bviSem_state_code s') = SOME
+         (args',body') /\
        bvi_tmcProof_env_rel F f args args' /\
        LENGTH args = LENGTH args' /\
        (~(body = body') ==>
         (?loc_opt.
-          optimised_code loc loc_opt (state_code s) (state_code s')
-            /\
+          optimised_code loc loc_opt (bviSem_state_code s)
+            (bviSem_state_code s') /\
           rewrite_wrapper loc loc_opt (LENGTH args) body = SOME
             body')))`,
   CHEAT_TAC);;
@@ -1893,8 +1921,8 @@ let dest_thunk_rel = prove
      bvi_tmcProof_state_rel f s1 s2 /\
      n < LENGTH env1 ==>
      dest_thunk_ret_rel f (bviSem_dest_thunk (EL n env1)
-       (state_refs s1)) (bviSem_dest_thunk (EL n env2) (state_refs
-       s2))`,
+       (bviSem_state_refs s1)) (bviSem_dest_thunk (EL n env2)
+       (bviSem_state_refs s2))`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_tmcProofScript.sml:5496-5594: a proof *)
@@ -1925,8 +1953,8 @@ let bvi_tmcProof_evaluate_compile_each = prove
        0))) /\
      bviSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],
                bviSem_initial_state ffi0 (fromAList prog) co
-                   (state_cc bvi_tmc_compile_each cc) k) = (r,s) /\
-                     ~(r = Rerr (Rabort Rtype_error)) ==>
+                   (state_cc bvi_tmc_compile_each cc) k) = (r,s)
+                     /\ ~(r = Rerr (Rabort Rtype_error)) ==>
      (?f s2 r2.
        bviSem_evaluate
         ([bvi_Call 0 (SOME start) [] NONE],[],
@@ -1940,11 +1968,11 @@ let bvi_tmcProof_evaluate_compile_each = prove
 
 (* state_rel_const *)
 let bvi_tmcProof_state_rel_const = prove
- (`bvi_tmcProof_state_rel f s t ==> state_clock
+ (`bvi_tmcProof_state_rel f s t ==> bviSem_state_clock
    // t.refs = s.refs ∧
-   t = state_clock s /\ state_ffi
+   t = bviSem_state_clock s /\ bviSem_state_ffi
    // t.global = s.global ∧
-   t = state_ffi s`,
+   t = bviSem_state_ffi s`,
   CHEAT_TAC);;
 
 (* compile_each_semantics *)
@@ -1957,8 +1985,8 @@ let bvi_tmcProof_compile_each_semantics = prove
        bvi_tmcProof_input_condition n prog) /\
      (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
        = 3) k ==> k < FST (FST (co 0))) /\
-     SND (bvi_tmc_compile_each n prog) = prog2 /\
-       ~(bviSem_semantics ffi (fromAList prog) co (state_cc
+     SND (bvi_tmc_compile_each n prog) = prog2
+       /\ ~(bviSem_semantics ffi (fromAList prog) co (state_cc
        bvi_tmc_compile_each cc) start = ffi_Fail) ==>
      bviSem_semantics ffi (fromAList prog) co (state_cc
        bvi_tmc_compile_each cc) start =
@@ -1976,8 +2004,8 @@ let bvi_tmcProof_compile_prog_semantics = prove
        bvi_tmcProof_input_condition n prog) /\
      (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
        = 3) k ==> k < FST (FST (co 0))) /\
-     SND (bvi_tmc_compile_prog b n prog) = prog2 /\
-       ~(bviSem_semantics ffi (fromAList prog) co (state_cc
+     SND (bvi_tmc_compile_prog b n prog) = prog2
+       /\ ~(bviSem_semantics ffi (fromAList prog) co (state_cc
        (bvi_tmc_compile_prog b) cc) start =
        ffi_Fail) ==>
      bviSem_semantics ffi (fromAList prog) co (state_cc

@@ -71,8 +71,8 @@ let initial_condition_def = new_definition
          st) /\
      // TODO: is this OK?
      envRel_env_rel (semantics_state_tenv st)
-       (compiler_config_inferencer_config cc) /\
-       semantics_state_type_ids
+       (compiler_config_inferencer_config cc)
+       /\ semantics_state_type_ids
      // TODO: are these consistent (with the rest)? necessary?
      st = count start_type_id /\
      set_tids_tenv (count start_type_id) (semantics_state_tenv st) /\
@@ -96,8 +96,8 @@ let parse_prog_correct = prove
   CHEAT_TAC);;
 
 let infertype_prog_correct = prove
- (`envRel_env_rel (semantics_state_tenv st) ienv /\
-  semantics_state_type_ids
+ (`envRel_env_rel (semantics_state_tenv st) ienv
+  /\ semantics_state_type_ids
    st = count start_type_id /\
    inf_set_tids_ienv (count start_type_id) ienv /\
    set_tids_tenv (count start_type_id) (semantics_state_tenv st) ==>
@@ -138,8 +138,8 @@ let compile_correct_gen = prove
           /\
         semantics_parse (lexer_fun input) = SOME source_decs /\
         (!ms.
-          installed code cbspace data data_sp (ffi_names
-            (backend_config_lab_conf c))
+          installed code cbspace data data_sp
+            (lab_to_target_config_ffi_names (backend_config_lab_conf c))
             (heap_regs (stack_to_lab_config_reg_names
               (backend_config_stack_conf (compiler_config_backend_config
               cc)))) mc (lab_to_target_config_shmem_extra
@@ -171,12 +171,12 @@ let compilerProof_compile_correct_lemma = prove
          (semantics_init ffi prelude input = Execute behaviours) /\
          semantics_parse (lexer_fun input) = SOME source_decs /\
          (!ms.
-           installed code cbspace data data_sp (ffi_names
-             (backend_config_lab_conf c)) (heap_regs
-             (stack_to_lab_config_reg_names (backend_config_stack_conf
-             (compiler_config_backend_config cc)))) mc
-             (lab_to_target_config_shmem_extra (backend_config_lab_conf
-             c)) ms ==>
+           installed code cbspace data data_sp
+             (lab_to_target_config_ffi_names (backend_config_lab_conf
+             c)) (heap_regs (stack_to_lab_config_reg_names
+             (backend_config_stack_conf (compiler_config_backend_config
+             cc)))) mc (lab_to_target_config_shmem_extra
+             (backend_config_lab_conf c)) ms ==>
              machine_sem mc ffi ms SUBSET
                extend_with_resource_limit'
                  (compilerProof_is_safe_for_space ffi cc
@@ -200,8 +200,9 @@ let compile_correct_safe_for_space = prove
              (
               // cost semantics
               compilerProof_read_limits cc mc ms) /\
-           installed code cbspace data data_sp (ffi_names
-             (backend_config_lab_conf c))
+           installed code cbspace data data_sp
+             (lab_to_target_config_ffi_names (backend_config_lab_conf
+             c))
              (heap_regs (stack_to_lab_config_reg_names
                (backend_config_stack_conf
                (compiler_config_backend_config cc)))) mc
@@ -224,8 +225,9 @@ let compilerProof_compile_correct = prove
          (?behaviours.
            (semantics_init ffi prelude input = Execute behaviours) /\
            (!ms.
-             installed code cbspace data data_sp (ffi_names
-               (backend_config_lab_conf c))
+             installed code cbspace data data_sp
+               (lab_to_target_config_ffi_names (backend_config_lab_conf
+               c))
                (heap_regs (stack_to_lab_config_reg_names
                  (backend_config_stack_conf
                  (compiler_config_backend_config cc)))) mc

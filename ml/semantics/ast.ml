@@ -312,14 +312,14 @@ let every_exp_def,every_exp_ind = define_shaped_rec
                  p ((ast_App op es:ast_exp)) /\ ALL (every_exp p)
                      es`;
    `every_exp p (ast_Log lop e1 e2) <=>
-                 p (ast_Log lop e1 e2) /\ every_exp p e1 /\
-                     every_exp p e2`;
+                 p (ast_Log lop e1 e2) /\ every_exp p e1
+                     /\ every_exp p e2`;
    `every_exp p (ast_If e1 e2 e3:ast_exp) <=>
                  p ((ast_If e1 e2 e3:ast_exp)) /\ every_exp p e1
                      /\ every_exp p e2 /\ every_exp p e3`;
    `every_exp p (ast_Mat e pes:ast_exp) <=>
-                 p ((ast_Mat e pes:ast_exp)) /\ every_exp p e /\
-                     ALL (\(pat,e). every_exp p e) pes`;
+                 p ((ast_Mat e pes:ast_exp)) /\ every_exp p e
+                     /\ ALL (\(pat,e). every_exp p e) pes`;
    `every_exp p (ast_Let x e1 e2:ast_exp) <=>
                  p ((ast_Let x e1 e2:ast_exp)) /\ every_exp p e1
                      /\ every_exp p e2`;

@@ -32,8 +32,8 @@ let wf_def,wf_ind = define_rec
    `sptree_wf (LS a) <=> T`;
    `sptree_wf (BN t1 t2) <=> sptree_wf t1 /\ sptree_wf t2 /\ ~((\t. t
     = LN) t1 /\ (\t. t = LN) t2)`;
-   `sptree_wf (BS t1 a t2) <=> sptree_wf t1 /\ sptree_wf t2 /\
-    ~((\t. t = LN) t1 /\ (\t. t = LN) t2)`];;
+   `sptree_wf (BS t1 a t2) <=> sptree_wf t1 /\ sptree_wf t2
+    /\ ~((\t. t = LN) t1 /\ (\t. t = LN) t2)`];;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)

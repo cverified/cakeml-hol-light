@@ -38,9 +38,10 @@ let gc_combined_def = new_definition
           ,_3)) ->
      (roots,heap,0,0,gs,T)
       | (data_to_word_Simple,(roots,heap,gs,_4,_5)) ->
-     (let (roots,heap,a,c) = full_gc (roots,heap,limit conf) in
-        (roots,APPEND heap (heap_expand (limit conf - a)),a,limit
-          conf - a,gs,c))
+     (let (roots,heap,a,c) = full_gc (roots,heap,gen_gc_conf_limit
+       conf) in
+        (roots,APPEND heap (heap_expand (gen_gc_conf_limit conf -
+          a)),a,gen_gc_conf_limit conf - a,gs,c))
       | ((data_to_word_Generational
         limits),(roots,heap,gs,rs,do_partial')) ->
      (if do_partial' then

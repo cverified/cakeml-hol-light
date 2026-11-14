@@ -123,8 +123,8 @@ let sem_inv_def = new_definition
           (wordLang_Loc l 0)) /\
      (!x v.
         ALOOKUP (knowledge_gets_mem data) x = SOME v ==>
-        (?w. FLOOKUP (wordSem_state_store s) x = SOME w /\
-          wordSem_get_var v s = SOME w)) /\
+        (?w. FLOOKUP (wordSem_state_store s) x = SOME w
+          /\ wordSem_get_var v s = SOME w)) /\
      (!op a ofs v.
         ~(is_store op) /\
         balanced_map_lookup listCmp (loadToNumList op a ofs)
@@ -409,8 +409,8 @@ let evaluate_load_agree = prove
      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s1)
        = (NONE,wordSem_set_var r w s1) /\
      ~(is_store op) /\ wordSem_state_locals s2 = wordSem_state_locals
-       s1 /\ wordSem_state_memory s2 = wordSem_state_memory s1 /\
-       wordSem_state_mdomain
+       s1 /\ wordSem_state_memory s2 = wordSem_state_memory s1
+       /\ wordSem_state_mdomain
      s2 = wordSem_state_mdomain s1 /\ wordSem_state_be s2 =
        wordSem_state_be s1 ==>
      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
@@ -504,24 +504,24 @@ let lookup_insert_listCmp = prove
 
 let register_read_simps = prove
  (`knowledge_instrs_mem
-     (register_read data r) = knowledge_instrs_mem data /\
-       knowledge_to_latest
-     (register_read data r) = knowledge_to_latest data /\
-       knowledge_gets_mem
-     (register_read data r) = knowledge_gets_mem data /\
-       knowledge_loads_mem
+     (register_read data r) = knowledge_instrs_mem data
+       /\ knowledge_to_latest
+     (register_read data r) = knowledge_to_latest data
+       /\ knowledge_gets_mem
+     (register_read data r) = knowledge_gets_mem data
+       /\ knowledge_loads_mem
      (register_read data r) = knowledge_loads_mem data`,
   CHEAT_TAC);;
 add_simp register_read_simps;;
 
 let register_reads_simps = prove
  (`!rs data. knowledge_instrs_mem
-     (register_reads data rs) = knowledge_instrs_mem data /\
-       knowledge_to_latest
-     (register_reads data rs) = knowledge_to_latest data /\
-       knowledge_gets_mem
-     (register_reads data rs) = knowledge_gets_mem data /\
-       knowledge_loads_mem
+     (register_reads data rs) = knowledge_instrs_mem data
+       /\ knowledge_to_latest
+     (register_reads data rs) = knowledge_to_latest data
+       /\ knowledge_gets_mem
+     (register_reads data rs) = knowledge_gets_mem data
+       /\ knowledge_loads_mem
      (register_reads data rs) = knowledge_loads_mem data`,
   CHEAT_TAC);;
 add_simp register_reads_simps;;
@@ -1138,10 +1138,10 @@ let evaluate_arith_clock = prove
  (`!a w s c td.
      can_mem_arith a ==>
      (wordSem_evaluate (wordLang_Inst (asm_Arith
-       a),wordSem_state_termdep_fupd (K td) (state_clock_fupd (K c) s))
-       =
-        (NONE,wordSem_state_termdep_fupd (K td) (state_clock_fupd (K
-          c)
+       a),wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd (K
+       c) s)) =
+        (NONE,wordSem_state_termdep_fupd (K td)
+          (wordSem_state_clock_fupd (K c)
          (wordSem_set_var (firstRegOfArith a) w s))) <=>
       wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
         (NONE,wordSem_set_var (firstRegOfArith a) w s))`,
@@ -1152,10 +1152,11 @@ let evaluate_load_clock = prove
  (`!op r a ofs w s c td.
      ~(is_store op) ==>
      (wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
-       ofs)),wordSem_state_termdep_fupd (K td) (state_clock_fupd (K c)
+       ofs)),wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd
+       (K c)
                 s)) =
-        (NONE,wordSem_state_termdep_fupd (K td) (state_clock_fupd (K
-          c) (wordSem_set_var r w s))) <=>
+        (NONE,wordSem_state_termdep_fupd (K td)
+          (wordSem_state_clock_fupd (K c) (wordSem_set_var r w s))) <=>
       wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
         ofs)),s) = (NONE,wordSem_set_var r w s))`,
   CHEAT_TAC);;
@@ -1164,7 +1165,7 @@ let evaluate_load_clock = prove
 let data_inv_clock = prove
  (`!data s c td.
      data_inv data s ==> data_inv data (wordSem_state_termdep_fupd
-       (K td) (state_clock_fupd (K c) s))`,
+       (K td) (wordSem_state_clock_fupd (K c) s))`,
   CHEAT_TAC);;
 
 (* ------------------------------------------------------------------------
@@ -1521,9 +1522,9 @@ let word_cse_wf_data = prove
 
 let comp_correct = prove
  (`!v v1 res s' data p' data'.
-     wordSem_evaluate (v,v1) = (res,s') /\ flat_exp_conventions v /\
-       data_inv data v1 /\ ~(res = SOME wordSem_Error) /\ word_cse data
-       v = (data',p') ==>
+     wordSem_evaluate (v,v1) = (res,s') /\ flat_exp_conventions v
+       /\ data_inv data v1 /\ ~(res = SOME wordSem_Error) /\ word_cse
+       data v = (data',p') ==>
      wordSem_evaluate (p',v1) = (res,s') /\ (res = NONE ==>
        data_inv data' s')`,
   CHEAT_TAC);;

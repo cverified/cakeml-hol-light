@@ -141,8 +141,8 @@ let generalise_subst = prove
     (generalise m n s t = (tvs,s',t')) ==>
     (s SUBMAP s') /\
     (FDOM s' = FDOM s UNION {uv | uv IN t_vars t /\ m <= uv}) /\
-    (!uv. uv IN FDOM s' DIFF FDOM s ==> (?tv. (FAPPLY s' uv = tv) /\
-      n <= tv /\ tv < tvs + n)) /\
+    (!uv. uv IN FDOM s' DIFF FDOM s ==> (?tv. (FAPPLY s' uv = tv)
+      /\ n <= tv /\ tv < tvs + n)) /\
     (!uv. uv IN t_vars t' ==> uv < m) /\
     (infer_subst s' t = infer_subst s t')) /\
    (!ts m n s tvs s' ts'.
@@ -150,8 +150,8 @@ let generalise_subst = prove
     (s SUBMAP s') /\
     (FDOM s' = FDOM s UNION {uv | uv IN UNIONS (set_of_list (MAP
       t_vars ts)) /\ m <= uv}) /\
-    (!uv. uv IN FDOM s' DIFF FDOM s ==> (?tv. (FAPPLY s' uv = tv) /\
-      n <= tv /\ tv < tvs + n)) /\
+    (!uv. uv IN FDOM s' DIFF FDOM s ==> (?tv. (FAPPLY s' uv = tv)
+      /\ n <= tv /\ tv < tvs + n)) /\
     (!uv. uv IN UNIONS (set_of_list (MAP t_vars ts')) ==> uv < m) /\
     (MAP (infer_subst s') ts = MAP (infer_subst s) ts'))`,
   CHEAT_TAC);;

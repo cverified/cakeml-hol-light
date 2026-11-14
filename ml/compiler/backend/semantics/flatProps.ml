@@ -165,16 +165,17 @@ let flatProps_pmatch_append = prove
    the value of an ML expression: pmatch_nil *)
 
 let pmatch_ignore_clock = prove
- (`flatSem_pmatch (state_clock_fupd (K s') s) p v env = flatSem_pmatch s
-  p v env /\
-   flatSem_pmatch_list (state_clock_fupd (K s') s) ps vs env =
+ (`flatSem_pmatch (flatSem_state_clock_fupd (K s') s) p v env =
+  flatSem_pmatch s p v env /\
+   flatSem_pmatch_list (flatSem_state_clock_fupd (K s') s) ps vs env
+     =
      flatSem_pmatch_list s ps vs env`,
   CHEAT_TAC);;
 
 let pmatch_rows_ignore_clock = prove
  (`!pes s v c.
-     pmatch_rows pes (state_clock_fupd (K c) s) v = pmatch_rows pes
-       s v`,
+     pmatch_rows pes (flatSem_state_clock_fupd (K c) s) v =
+       pmatch_rows pes s v`,
   (MATCH_MP_TAC list_INDUCT THEN
    REWRITE_TAC[FORALL_PAIR_THM; pmatch_rows_def; pmatch_ignore_clock]
      THEN
@@ -249,7 +250,8 @@ let flatProps_do_app_add_to_clock = prove
  (`flatSem_do_app (s:('c,'ffi)flatSem_state) op es = SOME (t,r) ==>
     flatSem_do_app (flatSem_state_clock_fupd (K (flatSem_state_clock
       s + k)) s) op es =
-      SOME (state_clock_fupd (K (state_clock t + k)) t,r)`,
+      SOME (flatSem_state_clock_fupd (K (flatSem_state_clock t +
+        k)) t,r)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -266,98 +268,108 @@ let flatProps_evaluate_add_to_clock = prove
          Rtimeout_error)) ==>
        flatSem_evaluate env (flatSem_state_clock_fupd (K
          (flatSem_state_clock s + extra)) s) es =
-         (state_clock_fupd (K (state_clock s' + extra)) s',r)) /\
+         (flatSem_state_clock_fupd (K (flatSem_state_clock s' +
+           extra)) s',r)) /\
    (!(s:('c,'ffi)flatSem_state) d s' r.
        evaluate_dec s d = (s',r) /\ ~(r = SOME (Rabort
          Rtimeout_error)) ==>
        evaluate_dec (flatSem_state_clock_fupd (K (flatSem_state_clock
          s + extra)) s) d =
-         (state_clock_fupd (K (state_clock s' + extra)) s',r)) /\
+         (flatSem_state_clock_fupd (K (flatSem_state_clock s' +
+           extra)) s',r)) /\
    (!(s:('c,'ffi)flatSem_state) ds s' r.
        flatSem_evaluate_decs s ds = (s',r) /\ ~(r = SOME (Rabort
          Rtimeout_error)) ==>
        flatSem_evaluate_decs (flatSem_state_clock_fupd (K
          (flatSem_state_clock s + extra)) s) ds =
-         (state_clock_fupd (K (state_clock s' + extra)) s',r))`,
+         (flatSem_state_clock_fupd (K (flatSem_state_clock s' +
+           extra)) s',r))`,
   CHEAT_TAC);;
 
 (* evaluate_decs_add_to_clock *)
 let flatProps_evaluate_decs_add_to_clock = prove
  (`!decs s s' r. ~(r = SOME (Rabort Rtimeout_error)) /\
     flatSem_evaluate_decs s decs = (s',r) ==>
-    flatSem_evaluate_decs (state_clock_fupd (K (state_clock s +
-      extra)) s) decs =
-    (state_clock_fupd (K (state_clock s' + extra)) s',r)`,
+    flatSem_evaluate_decs (flatSem_state_clock_fupd (K
+      (flatSem_state_clock s + extra)) s) decs =
+    (flatSem_state_clock_fupd (K (flatSem_state_clock s' + extra))
+      s',r)`,
   CHEAT_TAC);;
 
 (* do_app_io_events_mono *)
 let flatProps_do_app_io_events_mono = prove
  (`flatSem_do_app (s:('c,'ffi)flatSem_state) op vs = SOME (t,r) ==>
   ffi_state_io_events (flatSem_state_ffi
-   s) <<= ffi_state_io_events (state_ffi t)`,
+   s) <<= ffi_state_io_events (flatSem_state_ffi t)`,
   CHEAT_TAC);;
 
 (* evaluate_io_events_mono *)
 let flatProps_evaluate_io_events_mono = prove
  (`(!env (s:('c,'ffi)flatSem_state) es. ffi_state_io_events
   (flatSem_state_ffi
-      s) <<= ffi_state_io_events (state_ffi (FST (flatSem_evaluate
-        env s es)))) /\
+      s) <<= ffi_state_io_events (flatSem_state_ffi (FST
+        (flatSem_evaluate env s es)))) /\
    (!(s:('c,'ffi)flatSem_state) d. ffi_state_io_events
      (flatSem_state_ffi
-      s) <<= ffi_state_io_events (state_ffi (FST (evaluate_dec s
-        d)))) /\
+      s) <<= ffi_state_io_events (flatSem_state_ffi (FST
+        (evaluate_dec s d)))) /\
    (!(s:('c,'ffi)flatSem_state) ds. ffi_state_io_events
      (flatSem_state_ffi
-      s) <<= ffi_state_io_events (state_ffi (FST
+      s) <<= ffi_state_io_events (flatSem_state_ffi (FST
         (flatSem_evaluate_decs s ds))))`,
   CHEAT_TAC);;
 
 let evaluate_io_events_mono_IMP = prove
  (`(flatSem_evaluate env s es = (s',r) ==> ffi_state_io_events
-  (state_ffi
-      s) <<= ffi_state_io_events (state_ffi s')) /\
-   (evaluate_dec s d = (s',r') ==> ffi_state_io_events (state_ffi
-      s) <<= ffi_state_io_events (state_ffi s')) /\
+  (flatSem_state_ffi
+      s) <<= ffi_state_io_events (flatSem_state_ffi s')) /\
+   (evaluate_dec s d = (s',r') ==> ffi_state_io_events
+     (flatSem_state_ffi
+      s) <<= ffi_state_io_events (flatSem_state_ffi s')) /\
    (flatSem_evaluate_decs s ds = (s',r'') ==> ffi_state_io_events
-     (state_ffi
-      s) <<= ffi_state_io_events (state_ffi s'))`,
+     (flatSem_state_ffi
+      s) <<= ffi_state_io_events (flatSem_state_ffi s'))`,
   CHEAT_TAC);;
 
 (* with_clock_ffi *)
 let flatProps_with_clock_ffi = prove
- (`state_ffi
-      (state_clock_fupd (K k) s) = state_ffi s`,
+ (`flatSem_state_ffi
+      (flatSem_state_clock_fupd (K k) s) = flatSem_state_ffi s`,
   CHEAT_TAC);;
 
 (* evaluate_add_to_clock_io_events_mono *)
 let flatProps_evaluate_add_to_clock_io_events_mono = prove
- (`(!env (s:('c,'ffi)flatSem_state) es. ffi_state_io_events (state_ffi
+ (`(!env (s:('c,'ffi)flatSem_state) es. ffi_state_io_events
+  (flatSem_state_ffi
        (FST (flatSem_evaluate env s es))) <<= ffi_state_io_events
-         (state_ffi
+         (flatSem_state_ffi
        (FST (flatSem_evaluate env (flatSem_state_clock_fupd (K
          (flatSem_state_clock s + extra)) s) es)))) /\
-   (!(s:('c,'ffi)flatSem_state) d. ffi_state_io_events (state_ffi
-       (FST (evaluate_dec s d))) <<= ffi_state_io_events (state_ffi
+   (!(s:('c,'ffi)flatSem_state) d. ffi_state_io_events
+     (flatSem_state_ffi
+       (FST (evaluate_dec s d))) <<= ffi_state_io_events
+         (flatSem_state_ffi
        (FST (evaluate_dec (flatSem_state_clock_fupd (K
          (flatSem_state_clock s + extra)) s) d)))) /\
-   (!(s:('c,'ffi)flatSem_state) ds. ffi_state_io_events (state_ffi
+   (!(s:('c,'ffi)flatSem_state) ds. ffi_state_io_events
+     (flatSem_state_ffi
        (FST (flatSem_evaluate_decs s ds))) <<= ffi_state_io_events
-         (state_ffi
+         (flatSem_state_ffi
        (FST (flatSem_evaluate_decs (flatSem_state_clock_fupd (K
          (flatSem_state_clock s + extra)) s) ds))))`,
   CHEAT_TAC);;
 
 let evaluate_dec_io_events_mono = prove
- (`!z y. ffi_state_io_events (state_ffi
-      y) <<= ffi_state_io_events (state_ffi (FST (evaluate_dec y
-        z)))`,
+ (`!z y. ffi_state_io_events (flatSem_state_ffi
+      y) <<= ffi_state_io_events (flatSem_state_ffi (FST
+        (evaluate_dec y z)))`,
   (REWRITE_TAC[flatProps_evaluate_io_events_mono]));;
 
 let evaluate_dec_add_to_clock_io_events_mono = prove
  (`!prog (s:('c,'ffi)flatSem_state) extra. ffi_state_io_events
-  (state_ffi
-    (FST (evaluate_dec s prog))) <<= ffi_state_io_events (state_ffi
+  (flatSem_state_ffi
+    (FST (evaluate_dec s prog))) <<= ffi_state_io_events
+      (flatSem_state_ffi
     (FST (evaluate_dec (flatSem_state_clock_fupd (K
       (flatSem_state_clock s + extra)) s) prog)))`,
   (REWRITE_TAC[flatProps_evaluate_add_to_clock_io_events_mono]));;
@@ -365,14 +377,15 @@ let evaluate_dec_add_to_clock_io_events_mono = prove
 let evaluate_decs_io_events_mono = prove
  (`!ds (s:('c,'ffi)flatSem_state) s' y. flatSem_evaluate_decs s ds =
   (s',y) ==> ffi_state_io_events (flatSem_state_ffi
-    s) <<= ffi_state_io_events (state_ffi s')`,
+    s) <<= ffi_state_io_events (flatSem_state_ffi s')`,
   (REWRITE_TAC[evaluate_io_events_mono_IMP]));;
 
 (* evaluate_decs_add_to_clock_io_events_mono *)
 let flatProps_evaluate_decs_add_to_clock_io_events_mono = prove
- (`!ds (s:('c,'ffi)flatSem_state) extra. ffi_state_io_events (state_ffi
+ (`!ds (s:('c,'ffi)flatSem_state) extra. ffi_state_io_events
+  (flatSem_state_ffi
      (FST (flatSem_evaluate_decs s ds))) <<= ffi_state_io_events
-       (state_ffi
+       (flatSem_state_ffi
      (FST (flatSem_evaluate_decs (flatSem_state_clock_fupd (K
        (flatSem_state_clock s + extra)) s) ds)))`,
   CHEAT_TAC);;
@@ -413,22 +426,24 @@ let evaluate_decs_add_to_clock_initial_state = prove
         (s',r) ==>
       flatSem_evaluate_decs (flatSem_initial_state ffi (ck + k) ec)
         decs =
-      (state_clock_fupd (K (state_clock s' + ck)) s',r)`,
+      (flatSem_state_clock_fupd (K (flatSem_state_clock s' + ck))
+        s',r)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_decs_add_to_clock_initial_state_io_events_mono = prove
  (`flatSem_evaluate_decs (flatSem_initial_state ffi k ec) prog = (s',r)
-  ==> ffi_state_io_events (state_ffi
-    s') <<= ffi_state_io_events (state_ffi
+  ==> ffi_state_io_events (flatSem_state_ffi
+    s') <<= ffi_state_io_events (flatSem_state_ffi
     (FST (flatSem_evaluate_decs (flatSem_initial_state ffi (k + ck)
       ec) prog)))`,
   CHEAT_TAC);;
 
 (* initial_state_with_clock[local] *)
 let flatProps_initial_state_with_clock = prove
- (`(state_clock_fupd (K (state_clock (flatSem_initial_state ffi k ec) +
-  ck)) (flatSem_initial_state ffi k ec)) =
+ (`(flatSem_state_clock_fupd (K (flatSem_state_clock
+  (flatSem_initial_state ffi k ec) + ck)) (flatSem_initial_state ffi k
+  ec)) =
     flatSem_initial_state ffi (k + ck) ec`,
   CHEAT_TAC);;
 
@@ -447,8 +462,8 @@ let flatProps_eval_sim_def = new_definition
        (?ck res2 t2.
          flatSem_evaluate_decs (flatSem_initial_state ffi (k + ck)
            ec2) ds2 =
-           (t2,res2) /\ state_ffi
-         s2 = state_ffi t2 /\
+           (t2,res2) /\ flatSem_state_ffi
+         s2 = flatSem_state_ffi t2 /\
          (res1 = NONE ==> res2 = NONE) /\
          (!v. res1 = SOME (Rraise v) ==> (?v1. res2 = SOME (Rraise
            v1))) /\
@@ -521,12 +536,12 @@ let flatProps_esgc_free_def,flatProps_esgc_free_ind = define_wf
           EMPTY_BAG
         | (flatLang_App t op es) -> ALL flatProps_esgc_free es
         | (flatLang_If t e1 e2 e3) ->
-       flatProps_esgc_free e1 /\ flatProps_esgc_free e2 /\
-         flatProps_esgc_free e3
+       flatProps_esgc_free e1 /\ flatProps_esgc_free e2
+         /\ flatProps_esgc_free e3
         | (flatLang_Mat t e pes) -> flatProps_esgc_free e /\ ALL
           flatProps_esgc_free (MAP SND pes)
-        | (flatLang_Let t v e1 e2) -> flatProps_esgc_free e1 /\
-          flatProps_esgc_free e2
+        | (flatLang_Let t v e1 e2) -> flatProps_esgc_free e1
+          /\ flatProps_esgc_free e2
         | (flatLang_Letrec t fs e) ->
        flatProps_esgc_free e /\ flatProps_elist_globals (MAP (SND o
          SND) fs) = EMPTY_BAG
@@ -558,10 +573,10 @@ let elist_globals_REVERSE = prove
 
 (* initial_state_clock *)
 let flatProps_initial_state_clock = prove
- (`state_clock
+ (`flatSem_state_clock
      (flatSem_initial_state ffi k ec) = k /\
-     ((state_clock_fupd (K k1) (flatSem_initial_state ffi k ec)) =
-       flatSem_initial_state ffi k1 ec)`,
+     ((flatSem_state_clock_fupd (K k1) (flatSem_initial_state ffi k
+       ec)) = flatSem_initial_state ffi k1 ec)`,
   CHEAT_TAC);;
 
 let build_rec_env_eq_MAP = prove
@@ -573,8 +588,8 @@ let evaluate_decs_add_to_clock_io_events_mono_alt = prove
  (`flatSem_evaluate_decs (s:('c,'ffi)flatSem_state) ds = (s1,res) /\
    flatSem_evaluate_decs (flatSem_state_clock_fupd (K
      (flatSem_state_clock s + extra)) s) ds = (s2,res2) ==>
-     ffi_state_io_events (state_ffi
-   s1) <<= ffi_state_io_events (state_ffi s2)`,
+     ffi_state_io_events (flatSem_state_ffi
+   s1) <<= ffi_state_io_events (flatSem_state_ffi s2)`,
   (REPEAT STRIP_TAC THEN
    MP_TAC(ISPECL [`ds:flatLang_exp list`;
      `s:(C,ast_FFI)flatSem_state`; `extra:num`]
@@ -637,21 +652,21 @@ let simple_val_rel_isClosure = prove
 let flatProps_simple_state_rel_def = new_definition
   `flatProps_simple_state_rel vr sr <=>
      (!s t. sr s t ==> ALL2 (semanticPrimitivesProps_sv_rel vr)
-       (state_refs s) (state_refs t)) /\
+       (flatSem_state_refs s) (flatSem_state_refs t)) /\
      (!s t srefs trefs.
          sr s t /\ ALL2 (semanticPrimitivesProps_sv_rel vr) srefs
-           trefs ==> sr (state_refs_fupd (K srefs) s) (state_refs_fupd
-           (K trefs) t)) /\
+           trefs ==> sr (flatSem_state_refs_fupd (K srefs) s)
+           (flatSem_state_refs_fupd (K trefs) t)) /\
      (!s t. sr s t ==> ALL2 (OPTREL vr) (flatSem_state_globals s)
        (flatSem_state_globals t)) /\
      (!s t sglob tglob.
          sr s t /\ ALL2 (OPTREL vr) sglob tglob ==> sr
            (flatSem_state_globals_fupd (K sglob) s)
            (flatSem_state_globals_fupd (K tglob) t)) /\
-     (!s t. sr s t ==> state_ffi s = state_ffi t) /\
+     (!s t. sr s t ==> flatSem_state_ffi s = flatSem_state_ffi t) /\
      (!s t sffi tffi.
-         sr s t /\ sffi = tffi ==> sr (state_ffi_fupd (K sffi) s)
-           (state_ffi_fupd (K tffi) t))`;;
+         sr s t /\ sffi = tffi ==> sr (flatSem_state_ffi_fupd (K
+           sffi) s) (flatSem_state_ffi_fupd (K tffi) t))`;;
 
 let simple_do_eq_thm_ind = prove
  (`(!x1 y1 x2 y2 b.
@@ -671,28 +686,29 @@ let simple_do_eq_thm_ind = prove
 
 let simple_state_rel_store_assign = prove
  (`flatProps_simple_state_rel vr sr /\
-   store_assign lnum x (state_refs s) = SOME srefs' /\
+   store_assign lnum x (flatSem_state_refs s) = SOME srefs' /\
    sr s t /\ semanticPrimitivesProps_sv_rel vr x y ==>
-   (?trefs'. store_assign lnum y (state_refs t) = SOME trefs' /\
-   sr (state_refs_fupd (K srefs') s) (state_refs_fupd (K trefs')
-     t))`,
+   (?trefs'. store_assign lnum y (flatSem_state_refs t) = SOME trefs'
+     /\
+   sr (flatSem_state_refs_fupd (K srefs') s)
+     (flatSem_state_refs_fupd (K trefs') t))`,
   CHEAT_TAC);;
 
 let simple_state_rel_store_alloc = prove
  (`flatProps_simple_state_rel vr sr /\
-   store_alloc x (state_refs s) = (srefs',lnum) /\
+   store_alloc x (flatSem_state_refs s) = (srefs',lnum) /\
    sr s t /\ semanticPrimitivesProps_sv_rel vr x y ==>
-   (?trefs'. store_alloc y (state_refs t) = (trefs',lnum) /\
-   sr (state_refs_fupd (K srefs') s) (state_refs_fupd (K trefs')
-     t))`,
+   (?trefs'. store_alloc y (flatSem_state_refs t) = (trefs',lnum) /\
+   sr (flatSem_state_refs_fupd (K srefs') s)
+     (flatSem_state_refs_fupd (K trefs') t))`,
   CHEAT_TAC);;
 
 let simple_state_rel_store_lookup = prove
  (`flatProps_simple_state_rel vr sr /\
-   store_lookup lnum (state_refs s) = SOME x /\
+   store_lookup lnum (flatSem_state_refs s) = SOME x /\
    sr s t ==>
-   (?y. store_lookup lnum (state_refs t) = SOME y /\
-     semanticPrimitivesProps_sv_rel vr x y)`,
+   (?y. store_lookup lnum (flatSem_state_refs t) = SOME y
+     /\ semanticPrimitivesProps_sv_rel vr x y)`,
   CHEAT_TAC);;
 
 let simple_v_to_char_list_v_rel = prove
@@ -790,8 +806,8 @@ let evaluate_match_CONS = prove
      (match flatSem_pmatch s p v [] with No_match ->
        flatProps_evaluate_match env s v pes err_v | Match_type_error ->
        (s,Rerr (Rabort Rtype_error)) | Match env_v' ->
-         (if ALL_DISTINCT (flatLang_pat_bindings p) /\
-           ~(pmatch_rows pes s v = Match_type_error) then
+         (if ALL_DISTINCT (flatLang_pat_bindings p)
+           /\ ~(pmatch_rows pes s v = Match_type_error) then
            flatSem_evaluate (flatSem_environment_v_fupd (K (APPEND
            env_v' (flatSem_environment_v env))) env) s [e] else
            (s,Rerr (Rabort Rtype_error))))`,
@@ -829,10 +845,10 @@ let no_Mat_def,no_Mat_ind = assume_definition_rec
    `no_Mat (flatLang_Con t n es:flatLang_exp) <=> ALL no_Mat es`;
    `no_Mat (flatLang_App t op es:flatLang_exp) <=> ALL no_Mat es`;
    `no_Mat (flatLang_Fun t v e:flatLang_exp) <=> no_Mat e`;
-   `no_Mat (flatLang_If t x1 x2 x3:flatLang_exp) <=> no_Mat x1 /\
-    no_Mat x2 /\ no_Mat x3`;
-   `no_Mat (flatLang_Let t vo e1 e2:flatLang_exp) <=> no_Mat e1 /\
-    no_Mat e2`;
+   `no_Mat (flatLang_If t x1 x2 x3:flatLang_exp) <=> no_Mat x1
+    /\ no_Mat x2 /\ no_Mat x3`;
+   `no_Mat (flatLang_Let t vo e1 e2:flatLang_exp) <=> no_Mat e1
+    /\ no_Mat e2`;
    `no_Mat (flatLang_Mat t e pes:flatLang_exp) <=> F`;
    `no_Mat (flatLang_Handle t e pes:flatLang_exp) <=> no_Mat e /\ ALL
     no_Mat (MAP SND pes) /\

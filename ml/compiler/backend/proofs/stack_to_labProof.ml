@@ -11,7 +11,6 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
-needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/proofs/data_to_word_gcProof.ml";;
@@ -442,8 +441,8 @@ let stack_to_labProof_state_rel_def = new_definition
      good_dimindex (:'a)`;;
 
 let loc_check_IMP_loc_to_pc = prove
- (`loc_check (stackSem_state_code s) (l1,l2) /\
-  stack_to_labProof_state_rel s t1 ==>
+ (`loc_check (stackSem_state_code s) (l1,l2)
+  /\ stack_to_labProof_state_rel s t1 ==>
     (?v. loc_to_pc l1 l2 (labSem_state_code t1) = SOME v)`,
   CHEAT_TAC);;
 
@@ -656,8 +655,8 @@ let halt_assum_def = new_definition
       subspt code (stackSem_state_code s) /\ ~(stackSem_state_clock s
         = 0) ==>
       (?t. stackSem_evaluate (stackLang_Call NONE (INL 1) NONE,s) =
-        (SOME (targetSem_Halt (wordLang_Word (n2w 0))),t) /\
-        stackSem_state_ffi
+        (SOME (targetSem_Halt (wordLang_Word (n2w 0))),t)
+        /\ stackSem_state_ffi
           t = stackSem_state_ffi s /\ stackSem_state_clock t =
             stackSem_state_clock s - 1))`;;
 
@@ -719,20 +718,21 @@ let full_make_init_def = new_definition
 
 let full_make_init_buffer = prove
  (`buffer_buffer (state_code_buffer
-       (FST (full_make_init a b c d e f g h i j k))) = [] /\
-         buffer_buffer (state_data_buffer
+       (FST (full_make_init a b c d e f g h i j k))) = []
+         /\ buffer_buffer (stackSem_state_data_buffer
      (FST (full_make_init a b c d e f g h i j k))) = []`,
   CHEAT_TAC);;
 
 let full_make_init_ffi = prove
- (`state_ffi
-       (FST (full_make_init a b c d e f g h i j k)) = state_ffi h`,
+ (`labSem_state_ffi
+       (FST (full_make_init a b c d e f g h i j k)) =
+         labSem_state_ffi h`,
   CHEAT_TAC);;
 
 let full_make_init_compile = prove
- (`compile
+ (`labSem_state_compile
       (FST (full_make_init a b c d e f g h i j k)) =
-      (\c. (\p. compile h c (MAP prog_to_section (MAP
+      (\c. (\p. labSem_state_compile h c (MAP prog_to_section (MAP
         (stack_alloc_prog_comp (stack_to_lab_config_reg_names a)) (MAP
         (stack_alloc_prog_comp (stack_to_lab_config_jump a) e d) p))))
         o MAP stack_alloc_prog_comp)`,
@@ -753,11 +753,11 @@ let memory_assumption_def = new_definition
              bitmaps)) /\ labSem_state_mem
        t (ptr2 + (n2w 2) * bytes_in_word) =
            wordLang_Word (bitmap_ptr + bytes_in_word * n2w data_sp +
-                 bytes_in_word * n2w (LENGTH bitmaps)) /\
-                   labSem_state_mem
+                 bytes_in_word * n2w (LENGTH bitmaps))
+                   /\ labSem_state_mem
        t (ptr2 + (n2w 3) * bytes_in_word) = wordLang_Word
-         (buffer_position (labSem_state_code_buffer t)) /\
-         labSem_state_mem
+         (buffer_position (labSem_state_code_buffer t))
+         /\ labSem_state_mem
        t (ptr2 + (n2w 4) * bytes_in_word) =
            wordLang_Word (buffer_position (labSem_state_code_buffer
              t) + n2w (buffer_space_left (labSem_state_code_buffer t)))
@@ -804,8 +804,8 @@ let state_rel_make_init = prove
          stack_to_labProof_code_installed pc' (append (FST
            (stack_to_lab_flatten T prog n (next_lab prog 2) [] [])))
            (labSem_state_code s) /\
-         loc_to_pc n 0 (labSem_state_code s) = SOME pc')) /\
-           ~(labSem_state_failed s) /\ labSem_state_compile_oracle
+         loc_to_pc n 0 (labSem_state_code s) = SOME pc'))
+           /\ ~(labSem_state_failed s) /\ labSem_state_compile_oracle
       s = (\n. (\(c,p,_17). (c,MAP prog_to_section p)) (coracle n))
         /\
       (!k.
@@ -818,8 +818,8 @@ let state_rel_make_init = prove
                 ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
                   (stackProps_extract_labels p) /\
                 ALL_DISTINCT (stackProps_extract_labels p)) ps /\
-           ALL_DISTINCT (MAP FST ps)) (coracle k)) /\
-             ~(labSem_state_link_reg
+           ALL_DISTINCT (MAP FST ps)) (coracle k))
+             /\ ~(labSem_state_link_reg
       s = labSem_state_len_reg s) /\ ~(labSem_state_link_reg s =
         labSem_state_ptr_reg s) /\ ~(labSem_state_link_reg
       s = labSem_state_len2_reg s) /\ ~(labSem_state_link_reg s =
@@ -939,14 +939,14 @@ let stack_to_lab_compile_all_enc_ok = prove
      (asm_config_reg_count (c:'a asm_config)) (asm_config_avoid_regs c)
      /\
    fixed_names (stack_to_lab_config_reg_names c1) c /\
-   asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
-     good_dimindex (:'a) /\
+   asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0)
+     /\ good_dimindex (:'a) /\
    asm_offset_ok 0 (asm_config_byte_offset c) (n2w 0) /\
    (!n. n <= max_stack_alloc ==> asm_config_valid_imm
-   c (INL word_bignum_Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
-     asm_config_valid_imm
-   c (INL word_bignum_Add) (n2w (n * (dimindex (:'a) DIV 8)))) /\
-     asm_config_valid_imm
+   c (INL word_bignum_Sub) (n2w (n * (dimindex (:'a) DIV 8)))
+     /\ asm_config_valid_imm
+   c (INL word_bignum_Add) (n2w (n * (dimindex (:'a) DIV 8))))
+     /\ asm_config_valid_imm
    c (INL word_bignum_Add) (n2w 1) /\ asm_config_valid_imm c (INL
      word_bignum_Sub) (n2w 1) /\ asm_config_valid_imm
    c (INL word_bignum_Add) (n2w 4) /\ asm_config_valid_imm c (INL
@@ -964,10 +964,10 @@ let IMP_init_store_ok = prove
    (fmis,xxx) = full_make_init stack_conf c1 max_heap sp offset
      (bitmaps:('a word) list) code s save_regs data_sp coracle ==>
     init_store_ok c1
-      (state_store fmis \\ Handler) (state_memory
-       fmis) (state_mdomain
+      (stackSem_state_store fmis \\ Handler) (stackSem_state_memory
+       fmis) (stackSem_state_mdomain
        fmis) (state_code_buffer
-      fmis) (state_data_buffer
+      fmis) (stackSem_state_data_buffer
       fmis)`,
   CHEAT_TAC);;
 
@@ -998,7 +998,7 @@ let IMP_init_state_ok = prove
 
 let full_make_init_has_fp_ops = prove
  (`full_make_init stack_conf (data_to_word_config_has_fp_tern_fupd (K
-  b2) (has_fp_ops_fupd (K b1) dconf))
+  b2) (data_to_word_config_has_fp_ops_fupd (K b1) dconf))
        mheap sp offset bitmaps code s save_regs dsp cor =
      full_make_init stack_conf dconf
        mheap sp offset bitmaps code s save_regs dsp cor`,

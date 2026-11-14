@@ -195,8 +195,8 @@ let fp_op_INDUCT,fp_op_RECURSION = define_datatype
 
 let float_some_qnan_def = new_definition
   `float_some_qnan (fp_op:('t,'w)fp_op) =
-   ((@f. let qnan = f fp_op in float_is_nan qnan /\
-     ~(float_is_signalling qnan))
+   ((@f. let qnan = f fp_op in float_is_nan qnan
+     /\ ~(float_is_signalling qnan))
      fp_op:('t,'w)float)`;;
 
 let float_round_def = new_definition
@@ -377,9 +377,9 @@ let float_mul_add_def = new_definition
               mode x y z)) else if float_is_infinite z /\ (float_Sign z
               = (n2w 0)) \/ infP /\ (signP = (n2w 0)) then
               (clear_flags,float_plus_infinity (:'t#'w)) else if
-              float_is_infinite z /\ (float_Sign z = (n2w 1)) \/ infP /\
-              (signP = (n2w 1)) then (clear_flags,float_minus_infinity
-              (:'t#'w)) else
+              float_is_infinite z /\ (float_Sign z = (n2w 1)) \/ infP
+              /\ (signP = (n2w 1)) then
+              (clear_flags,float_minus_infinity (:'t#'w)) else
            let r1 = float_to_real x * float_to_real y in let
                r2 = float_to_real z in let
                r = r1 + r2 in

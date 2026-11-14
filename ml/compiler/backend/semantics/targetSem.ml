@@ -334,12 +334,12 @@ let mmio_pcs_min_index_def = new_definition
 (* start_pc_ok: machine configuration's saved pcs and initial pc are ok *)
 let start_pc_ok_def = new_definition
   `start_pc_ok mc_conf pc' <=> ~(machine_config_halt_pc
-     mc_conf IN machine_config_prog_addresses mc_conf) /\
-       ~(machine_config_ccache_pc
-     mc_conf IN machine_config_prog_addresses mc_conf) /\
-       ~(machine_config_halt_pc
-     mc_conf IN machine_config_shared_addresses mc_conf) /\
-       ~(machine_config_ccache_pc
+     mc_conf IN machine_config_prog_addresses mc_conf)
+       /\ ~(machine_config_ccache_pc
+     mc_conf IN machine_config_prog_addresses mc_conf)
+       /\ ~(machine_config_halt_pc
+     mc_conf IN machine_config_shared_addresses mc_conf)
+       /\ ~(machine_config_ccache_pc
      mc_conf IN machine_config_shared_addresses mc_conf) /\
      pc' - n2w ffi_offset = machine_config_halt_pc mc_conf /\
      pc' - n2w (2 * ffi_offset) = machine_config_ccache_pc mc_conf /\
@@ -612,8 +612,8 @@ let installed_def = new_definition
       i ==>
       MAP (\rec. w2n (target_get_pc (machine_config_target mc_conf)
         ms) + shmem_info_num_entry_pc rec) shmem_extra =
-        DROP i (MAP w2n (machine_config_ffi_entry_pcs mc_conf)) /\
-          machine_config_mmio_info
+        DROP i (MAP w2n (machine_config_ffi_entry_pcs mc_conf))
+          /\ machine_config_mmio_info
       mc_conf = ZIP (list_of_seq (\index. index + i) (LENGTH
         shmem_extra))
                               (MAP (\rec. (shmem_info_num_nbytes rec,

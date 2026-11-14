@@ -12,7 +12,6 @@
 needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi_tailrec.ml";;
-needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
@@ -247,9 +246,9 @@ let evaluate_complete_ind = prove
  (`!P.
     (!xs s.
       (!ys t.
-        list_size bvi_exp_size ys < list_size bvi_exp_size xs /\
-          state_clock
-        t <= bviSem_state_clock s \/ state_clock t <
+        list_size bvi_exp_size ys < list_size bvi_exp_size xs
+          /\ bviSem_state_clock
+        t <= bviSem_state_clock s \/ bviSem_state_clock t <
           bviSem_state_clock s ==>
         P ys t) ==>
       P xs s) ==>
@@ -538,40 +537,40 @@ let input_condition_def = new_definition
 let bvi_tailrecProof_state_rel_def = new_definition
   `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=>
   bviSem_state_refs
-     t = state_refs s /\ bviSem_state_clock
-     t = state_clock s /\ bviSem_state_global
+     t = bviSem_state_refs s /\ bviSem_state_clock
+     t = bviSem_state_clock s /\ bviSem_state_global
      t = bviSem_state_global s /\ bviSem_state_ffi
-     t = state_ffi s /\ bviSem_state_compile_oracle
-     t = state_co bvi_tailrec_compile_each (compile_oracle s) /\
-       compile
+     t = bviSem_state_ffi s /\ bviSem_state_compile_oracle
+     t = state_co bvi_tailrec_compile_each
+       (bviSem_state_compile_oracle s) /\ bviSem_state_compile
      s = state_cc bvi_tailrec_compile_each (bviSem_state_compile t)
        /\
-     bvi_tailrecProof_code_rel (state_code s) (bviSem_state_code t)
-       /\
-     bvi_tailrecProof_namespace_rel (state_code s) (bviSem_state_code
-       t) /\
-     (!n. let ((next',cfg),prog) = compile_oracle s n in
+     bvi_tailrecProof_code_rel (bviSem_state_code s)
+       (bviSem_state_code t) /\
+     bvi_tailrecProof_namespace_rel (bviSem_state_code s)
+       (bviSem_state_code t) /\
+     (!n. let ((next',cfg),prog) = bviSem_state_compile_oracle s n in
              bvi_tailrecProof_input_condition next' prog) /\
      (!n. n IN domain (bviSem_state_code t) /\ (\n. n MOD
-       bvl_to_bvi_namespaces = 2) n ==> n < FST (FST (compile_oracle
-       s 0)))`;;
+       bvl_to_bvi_namespaces = 2) n ==> n < FST (FST
+       (bviSem_state_compile_oracle s 0)))`;;
 
 let state_rel_const = prove
- (`bvi_tailrecProof_state_rel s t ==> state_refs
-    t = state_refs s /\ state_clock
-    t = state_clock s /\ bviSem_state_global
-    t = bviSem_state_global s /\ state_ffi
-    t = state_ffi s`,
+ (`bvi_tailrecProof_state_rel s t ==> bviSem_state_refs
+    t = bviSem_state_refs s /\ bviSem_state_clock
+    t = bviSem_state_clock s /\ bviSem_state_global
+    t = bviSem_state_global s /\ bviSem_state_ffi
+    t = bviSem_state_ffi s`,
   CHEAT_TAC);;
 
 let state_rel_with_clock = prove
  (`bvi_tailrecProof_state_rel s t ==> bvi_tailrecProof_state_rel
-  (state_clock_fupd (K k) s) (state_clock_fupd (K k) t)`,
+  (bviSem_state_clock_fupd (K k) s) (bviSem_state_clock_fupd (K k) t)`,
   CHEAT_TAC);;
 
 let state_rel_code_rel = prove
  (`bvi_tailrecProof_state_rel s t ==> bvi_tailrecProof_code_rel
-  (state_code s) (state_code t)`,
+  (bviSem_state_code s) (bviSem_state_code t)`,
   CHEAT_TAC);;
 
 let code_rel_union = prove
@@ -710,12 +709,13 @@ let evaluate_rewrite_tail = prove
          (!op n exp arity.
            sptree_lookup loc (bviSem_state_code s) = SOME (arity,exp)
              /\
-           optimized_code loc arity exp n (state_code s') op /\
+           optimized_code loc arity exp n (bviSem_state_code s') op
+             /\
            op_type op = ty /\
            (?op1 tt ty r.
              scan_expr ts loc [HD xs] = [(tt,ty,r,SOME op1)] /\ ~(ty
-               = bvi_tailrec_Any) /\ ~(op1 = bvi_tailrec_Noop) /\
-               op_type op1 = op_type op) ==>
+               = bvi_tailrec_Any) /\ ~(op1 = bvi_tailrec_Noop)
+               /\ op_type op1 = op_type op) ==>
                (let (lr,x) = rewrite loc n op acc ts (HD xs) in
                  ?rrr t1 t2.
                  bviSem_evaluate ([x],env2,s') = (rrr,t1) /\
@@ -795,8 +795,8 @@ let compile_each_semantics = prove
        bvi_tailrecProof_input_condition n prog) /\
      (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
        = 2) k ==> k < FST (FST (co 0))) /\
-     SND (bvi_tailrec_compile_each n prog) = prog2 /\
-       ~(bviSem_semantics ffi (fromAList prog) co (state_cc
+     SND (bvi_tailrec_compile_each n prog) = prog2
+       /\ ~(bviSem_semantics ffi (fromAList prog) co (state_cc
        bvi_tailrec_compile_each cc) start =
         ffi_Fail) ==>
      bviSem_semantics ffi (fromAList prog) co (state_cc
@@ -815,8 +815,8 @@ let bvi_tailrecProof_compile_prog_semantics = prove
        bvi_tailrecProof_input_condition n prog) /\
      (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
        = 2) k ==> k < FST (FST (co 0))) /\
-     SND (bvi_tailrec_compile_prog b n prog) = prog2 /\
-       ~(bviSem_semantics ffi (fromAList prog) co (state_cc
+     SND (bvi_tailrec_compile_prog b n prog) = prog2
+       /\ ~(bviSem_semantics ffi (fromAList prog) co (state_cc
        (bvi_tailrec_compile_prog b) cc) start =
         ffi_Fail) ==>
      bviSem_semantics ffi (fromAList prog) co (state_cc

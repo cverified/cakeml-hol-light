@@ -35,88 +35,107 @@ let _ = hide_overloads
 
 (* set_store_const *)
 let stackProps_set_store_const = prove
- (`state_ffi
-      (stackSem_set_store x y z) = state_ffi z /\ state_clock
-      (stackSem_set_store x y z) = state_clock z /\
-        stackSem_state_use_alloc
-      (stackSem_set_store x y z) = stackSem_state_use_alloc z /\
-        stackSem_state_use_store
-      (stackSem_set_store x y z) = stackSem_state_use_store z /\
-        stackSem_state_use_stack
-      (stackSem_set_store x y z) = stackSem_state_use_stack z /\
-        state_code
-      (stackSem_set_store x y z) = state_code z /\ be
-      (stackSem_set_store x y z) = be z /\ state_gc_fun
-      (stackSem_set_store x y z) = state_gc_fun z /\ state_memory
-      (stackSem_set_store x y z) = state_memory z /\ state_mdomain
-      (stackSem_set_store x y z) = state_mdomain z /\
-        state_sh_mdomain
-      (stackSem_set_store x y z) = state_sh_mdomain z /\
-        stackSem_state_bitmaps
-      (stackSem_set_store x y z) = stackSem_state_bitmaps z /\
-        state_data_buffer
-      (stackSem_set_store x y z) = state_data_buffer z /\
-        state_code_buffer
-      (stackSem_set_store x y z) = state_code_buffer z /\ compile
-      (stackSem_set_store x y z) = compile z /\ compile_oracle
-      (stackSem_set_store x y z) = compile_oracle z /\
-        stackSem_state_stack_space
-      (stackSem_set_store x y z) = stackSem_state_stack_space z /\
-        stack
-      (stackSem_set_store x y z) = stack z`,
+ (`stackSem_state_ffi
+      (stackSem_set_store x y z) = stackSem_state_ffi z
+        /\ stackSem_state_clock
+      (stackSem_set_store x y z) = stackSem_state_clock z
+        /\ stackSem_state_use_alloc
+      (stackSem_set_store x y z) = stackSem_state_use_alloc z
+        /\ stackSem_state_use_store
+      (stackSem_set_store x y z) = stackSem_state_use_store z
+        /\ stackSem_state_use_stack
+      (stackSem_set_store x y z) = stackSem_state_use_stack z
+        /\ stackSem_state_code
+      (stackSem_set_store x y z) = stackSem_state_code z
+        /\ stackSem_state_be
+      (stackSem_set_store x y z) = stackSem_state_be z
+        /\ stackSem_state_gc_fun
+      (stackSem_set_store x y z) = stackSem_state_gc_fun z
+        /\ stackSem_state_memory
+      (stackSem_set_store x y z) = stackSem_state_memory z
+        /\ stackSem_state_mdomain
+      (stackSem_set_store x y z) = stackSem_state_mdomain z
+        /\ stackSem_state_sh_mdomain
+      (stackSem_set_store x y z) = stackSem_state_sh_mdomain z
+        /\ stackSem_state_bitmaps
+      (stackSem_set_store x y z) = stackSem_state_bitmaps z
+        /\ stackSem_state_data_buffer
+      (stackSem_set_store x y z) = stackSem_state_data_buffer z
+        /\ stackSem_state_code_buffer
+      (stackSem_set_store x y z) = stackSem_state_code_buffer z
+        /\ stackSem_state_compile
+      (stackSem_set_store x y z) = stackSem_state_compile z
+        /\ stackSem_state_compile_oracle
+      (stackSem_set_store x y z) = stackSem_state_compile_oracle z
+        /\ stackSem_state_stack_space
+      (stackSem_set_store x y z) = stackSem_state_stack_space z
+        /\ stackSem_state_stack
+      (stackSem_set_store x y z) = stackSem_state_stack z`,
   CHEAT_TAC);;
 add_simp stackProps_set_store_const;;
 
 (* set_store_with_const *)
 let stackProps_set_store_with_const = prove
- (`stackSem_set_store x y (state_clock_fupd (K a) z) =
-  state_clock_fupd (K a) (stackSem_set_store x y z)`,
+ (`stackSem_set_store x y (stackSem_state_clock_fupd (K a) z) =
+  stackSem_state_clock_fupd (K a) (stackSem_set_store x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_set_store_with_const;;
 
 (* set_var_const *)
 let stackProps_set_var_const = prove
- (`state_ffi
-      (stackSem_set_var x y z) = state_ffi z /\ state_clock
-      (stackSem_set_var x y z) = state_clock z /\
-        stackSem_state_use_alloc
-      (stackSem_set_var x y z) = stackSem_state_use_alloc z /\
-        stackSem_state_use_store
-      (stackSem_set_var x y z) = stackSem_state_use_store z /\
-        stackSem_state_use_stack
-      (stackSem_set_var x y z) = stackSem_state_use_stack z /\
-        state_code
-      (stackSem_set_var x y z) = state_code z /\ be
-      (stackSem_set_var x y z) = be z /\ fp_regs
-      (stackSem_set_var x y z) = fp_regs z /\ state_data_buffer
-      (stackSem_set_var x y z) = state_data_buffer z /\
-        state_code_buffer
-      (stackSem_set_var x y z) = state_code_buffer z /\ state_gc_fun
-      (stackSem_set_var x y z) = state_gc_fun z /\ state_memory
-      (stackSem_set_var x y z) = state_memory z /\ state_mdomain
-      (stackSem_set_var x y z) = state_mdomain z /\ state_sh_mdomain
-      (stackSem_set_var x y z) = state_sh_mdomain z /\
-        stackSem_state_bitmaps
-      (stackSem_set_var x y z) = stackSem_state_bitmaps z /\ compile
-      (stackSem_set_var x y z) = compile z /\ compile_oracle
-      (stackSem_set_var x y z) = compile_oracle z /\ state_store
-      (stackSem_set_var x y z) = state_store z /\ stack
-      (stackSem_set_var x y z) = stack z /\
-        stackSem_state_stack_space
+ (`stackSem_state_ffi
+      (stackSem_set_var x y z) = stackSem_state_ffi z
+        /\ stackSem_state_clock
+      (stackSem_set_var x y z) = stackSem_state_clock z
+        /\ stackSem_state_use_alloc
+      (stackSem_set_var x y z) = stackSem_state_use_alloc z
+        /\ stackSem_state_use_store
+      (stackSem_set_var x y z) = stackSem_state_use_store z
+        /\ stackSem_state_use_stack
+      (stackSem_set_var x y z) = stackSem_state_use_stack z
+        /\ stackSem_state_code
+      (stackSem_set_var x y z) = stackSem_state_code z
+        /\ stackSem_state_be
+      (stackSem_set_var x y z) = stackSem_state_be z
+        /\ stackSem_state_fp_regs
+      (stackSem_set_var x y z) = stackSem_state_fp_regs z
+        /\ stackSem_state_data_buffer
+      (stackSem_set_var x y z) = stackSem_state_data_buffer z
+        /\ stackSem_state_code_buffer
+      (stackSem_set_var x y z) = stackSem_state_code_buffer z
+        /\ stackSem_state_gc_fun
+      (stackSem_set_var x y z) = stackSem_state_gc_fun z
+        /\ stackSem_state_memory
+      (stackSem_set_var x y z) = stackSem_state_memory z
+        /\ stackSem_state_mdomain
+      (stackSem_set_var x y z) = stackSem_state_mdomain z
+        /\ stackSem_state_sh_mdomain
+      (stackSem_set_var x y z) = stackSem_state_sh_mdomain z
+        /\ stackSem_state_bitmaps
+      (stackSem_set_var x y z) = stackSem_state_bitmaps z
+        /\ stackSem_state_compile
+      (stackSem_set_var x y z) = stackSem_state_compile z
+        /\ stackSem_state_compile_oracle
+      (stackSem_set_var x y z) = stackSem_state_compile_oracle z
+        /\ stackSem_state_store
+      (stackSem_set_var x y z) = stackSem_state_store z
+        /\ stackSem_state_stack
+      (stackSem_set_var x y z) = stackSem_state_stack z
+        /\ stackSem_state_stack_space
       (stackSem_set_var x y z) = stackSem_state_stack_space z`,
   CHEAT_TAC);;
 add_simp stackProps_set_var_const;;
 
 (* set_var_with_const *)
 let stackProps_set_var_with_const = prove
- (`stackSem_set_var x y (state_clock_fupd (K clk) z) = state_clock_fupd
-  (K clk) (stackSem_set_var x y z) /\
-   stackSem_set_var x y (state_memory_fupd (K m) z) =
-     state_memory_fupd (K m) (stackSem_set_var x y z) /\
-   stackSem_set_var x y (state_ffi_fupd (K ffi) z) = state_ffi_fupd
-     (K ffi) (stackSem_set_var x y z) /\
-   stackSem_set_var x y (stack_fupd (K stk) z) = stack_fupd (K stk)
-     (stackSem_set_var x y z) /\
+ (`stackSem_set_var x y (stackSem_state_clock_fupd (K clk) z) =
+  stackSem_state_clock_fupd (K clk) (stackSem_set_var x y z) /\
+   stackSem_set_var x y (stackSem_state_memory_fupd (K m) z) =
+     stackSem_state_memory_fupd (K m) (stackSem_set_var x y z) /\
+   stackSem_set_var x y (stackSem_state_ffi_fupd (K ffi) z) =
+     stackSem_state_ffi_fupd (K ffi) (stackSem_set_var x y z) /\
+   stackSem_set_var x y (stackSem_state_stack_fupd (K stk) z) =
+     stackSem_state_stack_fupd (K stk) (stackSem_set_var x y z) /\
    stackSem_set_var x y (stackSem_state_stack_space_fupd (K
      stk_space) z) = stackSem_state_stack_space_fupd (K stk_space)
      (stackSem_set_var x y z)`,
@@ -125,50 +144,56 @@ add_simp stackProps_set_var_with_const;;
 
 (* set_fp_var_with_const[local] *)
 let stackProps_set_fp_var_with_const = prove
- (`stackSem_set_fp_var x y (state_clock_fupd (K k) z) =
-  state_clock_fupd (K k) (stackSem_set_fp_var x y z)`,
+ (`stackSem_set_fp_var x y (stackSem_state_clock_fupd (K k) z) =
+  stackSem_state_clock_fupd (K k) (stackSem_set_fp_var x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_set_fp_var_with_const;;
 
 (* set_fp_var_const[local] *)
 let stackProps_set_fp_var_const = prove
- (`state_ffi
-      (stackSem_set_fp_var x y z) = state_ffi z /\ state_clock
-      (stackSem_set_fp_var x y z) = state_clock z /\
-        stackSem_state_use_alloc
-      (stackSem_set_fp_var x y z) = stackSem_state_use_alloc z /\
-        stackSem_state_use_store
-      (stackSem_set_fp_var x y z) = stackSem_state_use_store z /\
-        stackSem_state_use_stack
-      (stackSem_set_fp_var x y z) = stackSem_state_use_stack z /\
-        state_code
-      (stackSem_set_fp_var x y z) = state_code z /\ be
-      (stackSem_set_fp_var x y z) = be z /\ state_gc_fun
-      (stackSem_set_fp_var x y z) = state_gc_fun z /\ state_mdomain
-      (stackSem_set_fp_var x y z) = state_mdomain z /\
-        state_sh_mdomain
-      (stackSem_set_fp_var x y z) = state_sh_mdomain z /\
-        stackSem_state_bitmaps
-      (stackSem_set_fp_var x y z) = stackSem_state_bitmaps z /\
-        compile
-      (stackSem_set_fp_var x y z) = compile z /\ compile_oracle
-      (stackSem_set_fp_var x y z) = compile_oracle z /\ stack
-      (stackSem_set_fp_var x y z) = stack z /\
-        stackSem_state_stack_space
+ (`stackSem_state_ffi
+      (stackSem_set_fp_var x y z) = stackSem_state_ffi z
+        /\ stackSem_state_clock
+      (stackSem_set_fp_var x y z) = stackSem_state_clock z
+        /\ stackSem_state_use_alloc
+      (stackSem_set_fp_var x y z) = stackSem_state_use_alloc z
+        /\ stackSem_state_use_store
+      (stackSem_set_fp_var x y z) = stackSem_state_use_store z
+        /\ stackSem_state_use_stack
+      (stackSem_set_fp_var x y z) = stackSem_state_use_stack z
+        /\ stackSem_state_code
+      (stackSem_set_fp_var x y z) = stackSem_state_code z
+        /\ stackSem_state_be
+      (stackSem_set_fp_var x y z) = stackSem_state_be z
+        /\ stackSem_state_gc_fun
+      (stackSem_set_fp_var x y z) = stackSem_state_gc_fun z
+        /\ stackSem_state_mdomain
+      (stackSem_set_fp_var x y z) = stackSem_state_mdomain z
+        /\ stackSem_state_sh_mdomain
+      (stackSem_set_fp_var x y z) = stackSem_state_sh_mdomain z
+        /\ stackSem_state_bitmaps
+      (stackSem_set_fp_var x y z) = stackSem_state_bitmaps z
+        /\ stackSem_state_compile
+      (stackSem_set_fp_var x y z) = stackSem_state_compile z
+        /\ stackSem_state_compile_oracle
+      (stackSem_set_fp_var x y z) = stackSem_state_compile_oracle z
+        /\ stackSem_state_stack
+      (stackSem_set_fp_var x y z) = stackSem_state_stack z
+        /\ stackSem_state_stack_space
       (stackSem_set_fp_var x y z) = stackSem_state_stack_space z`,
   CHEAT_TAC);;
 add_simp stackProps_set_fp_var_const;;
 
 (* get_fp_var_with_const[local] *)
 let stackProps_get_fp_var_with_const = prove
- (`stackSem_get_fp_var x (state_clock_fupd (K k) y) =
+ (`stackSem_get_fp_var x (stackSem_state_clock_fupd (K k) y) =
   stackSem_get_fp_var x y`,
   CHEAT_TAC);;
 add_simp stackProps_get_fp_var_with_const;;
 
 (* get_var_with_const *)
 let stackProps_get_var_with_const = prove
- (`stackSem_get_var r (state_clock_fupd (K clk) t) =
+ (`stackSem_get_var r (stackSem_state_clock_fupd (K clk) t) =
    (stackSem_get_var r t) /\
    stackSem_get_var r (stackSem_state_stack_space_fupd (K stk_space)
      t) =
@@ -178,8 +203,8 @@ add_simp stackProps_get_var_with_const;;
 
 (* get_vars_with_const[local] *)
 let stackProps_get_vars_with_const = prove
- (`stackSem_get_vars xs (state_clock_fupd (K k) y) = stackSem_get_vars
-  xs y`,
+ (`stackSem_get_vars xs (stackSem_state_clock_fupd (K k) y) =
+  stackSem_get_vars xs y`,
   CHEAT_TAC);;
 add_simp stackProps_get_vars_with_const;;
 
@@ -188,7 +213,7 @@ add_simp stackProps_get_vars_with_const;;
    variables of its own are read as variables *)
 let stackProps_get_var_imm_with_const = prove
  (cake_as_vars (fun () ->
-    `stackSem_get_var_imm x (state_clock_fupd (K k) y) =
+    `stackSem_get_var_imm x (stackSem_state_clock_fupd (K k) y) =
   stackSem_get_var_imm x y`),
   CHEAT_TAC);;
 add_simp stackProps_get_var_imm_with_const;;
@@ -196,89 +221,96 @@ add_simp stackProps_get_var_imm_with_const;;
 (* set_fp_var_const *)
 let stackProps_set_fp_var_const = prove
  (`stackSem_state_stack_space
-     (stackSem_set_fp_var x y z) = stackSem_state_stack_space z /\
-       stack
-     (stackSem_set_fp_var x y z) = stack z`,
+     (stackSem_set_fp_var x y z) = stackSem_state_stack_space z
+       /\ stackSem_state_stack
+     (stackSem_set_fp_var x y z) = stackSem_state_stack z`,
   CHEAT_TAC);;
 add_simp stackProps_set_fp_var_const;;
 
 let empty_env_const = prove
- (`state_ffi
-      (stackSem_empty_env x) = state_ffi x /\ state_clock
-      (stackSem_empty_env x) = state_clock x /\
-        stackSem_state_use_alloc
-      (stackSem_empty_env z) = stackSem_state_use_alloc z /\
-        stackSem_state_use_store
-      (stackSem_empty_env z) = stackSem_state_use_store z /\
-        stackSem_state_use_stack
-      (stackSem_empty_env z) = stackSem_state_use_stack z /\
-        state_code
-      (stackSem_empty_env z) = state_code z /\ be
-      (stackSem_empty_env z) = be z /\ state_gc_fun
-      (stackSem_empty_env z) = state_gc_fun z /\ state_mdomain
-      (stackSem_empty_env z) = state_mdomain z /\ state_sh_mdomain
-      (stackSem_empty_env z) = state_sh_mdomain z /\
-        stackSem_state_bitmaps
-      (stackSem_empty_env z) = stackSem_state_bitmaps z /\
-        state_data_buffer
-      (stackSem_empty_env z) = state_data_buffer z /\
-        state_code_buffer
-      (stackSem_empty_env z) = state_code_buffer z /\ compile
-      (stackSem_empty_env z) = compile z /\ compile_oracle
-      (stackSem_empty_env z) = compile_oracle z`,
+ (`stackSem_state_ffi
+      (stackSem_empty_env x) = stackSem_state_ffi x
+        /\ stackSem_state_clock
+      (stackSem_empty_env x) = stackSem_state_clock x
+        /\ stackSem_state_use_alloc
+      (stackSem_empty_env z) = stackSem_state_use_alloc z
+        /\ stackSem_state_use_store
+      (stackSem_empty_env z) = stackSem_state_use_store z
+        /\ stackSem_state_use_stack
+      (stackSem_empty_env z) = stackSem_state_use_stack z
+        /\ stackSem_state_code
+      (stackSem_empty_env z) = stackSem_state_code z
+        /\ stackSem_state_be
+      (stackSem_empty_env z) = stackSem_state_be z
+        /\ stackSem_state_gc_fun
+      (stackSem_empty_env z) = stackSem_state_gc_fun z
+        /\ stackSem_state_mdomain
+      (stackSem_empty_env z) = stackSem_state_mdomain z
+        /\ stackSem_state_sh_mdomain
+      (stackSem_empty_env z) = stackSem_state_sh_mdomain z
+        /\ stackSem_state_bitmaps
+      (stackSem_empty_env z) = stackSem_state_bitmaps z
+        /\ stackSem_state_data_buffer
+      (stackSem_empty_env z) = stackSem_state_data_buffer z
+        /\ stackSem_state_code_buffer
+      (stackSem_empty_env z) = stackSem_state_code_buffer z
+        /\ stackSem_state_compile
+      (stackSem_empty_env z) = stackSem_state_compile z
+        /\ stackSem_state_compile_oracle
+      (stackSem_empty_env z) = stackSem_state_compile_oracle z`,
   CHEAT_TAC);;
 add_simp empty_env_const;;
 
 let empty_env_with_const = prove
- (`stackSem_empty_env (state_clock_fupd (K y) x) = state_clock_fupd (K
-  y) (stackSem_empty_env x)`,
+ (`stackSem_empty_env (stackSem_state_clock_fupd (K y) x) =
+  stackSem_state_clock_fupd (K y) (stackSem_empty_env x)`,
   CHEAT_TAC);;
 add_simp empty_env_with_const;;
 
 (* alloc_const *)
 let stackProps_alloc_const = prove
- (`stackSem_alloc w s = (r,t) ==> state_ffi t = state_ffi s /\
-  state_clock
-    t = state_clock s /\ stackSem_state_use_alloc
+ (`stackSem_alloc w s = (r,t) ==> stackSem_state_ffi t =
+  stackSem_state_ffi s /\ stackSem_state_clock
+    t = stackSem_state_clock s /\ stackSem_state_use_alloc
     t = stackSem_state_use_alloc s /\ stackSem_state_use_store
     t = stackSem_state_use_store s /\ stackSem_state_use_stack
-    t = stackSem_state_use_stack s /\ state_code
-    t = state_code s /\ be
-    t = be s /\ state_gc_fun
-    t = state_gc_fun s /\ state_mdomain
-    t = state_mdomain s /\ state_sh_mdomain
-    t = state_sh_mdomain s /\ stackSem_state_bitmaps
-    t = stackSem_state_bitmaps s /\ compile
-    t = compile s /\ state_data_buffer
-    t = state_data_buffer s /\ state_code_buffer
-    t = state_code_buffer s /\ compile_oracle
-    t = compile_oracle s`,
+    t = stackSem_state_use_stack s /\ stackSem_state_code
+    t = stackSem_state_code s /\ stackSem_state_be
+    t = stackSem_state_be s /\ stackSem_state_gc_fun
+    t = stackSem_state_gc_fun s /\ stackSem_state_mdomain
+    t = stackSem_state_mdomain s /\ stackSem_state_sh_mdomain
+    t = stackSem_state_sh_mdomain s /\ stackSem_state_bitmaps
+    t = stackSem_state_bitmaps s /\ stackSem_state_compile
+    t = stackSem_state_compile s /\ stackSem_state_data_buffer
+    t = stackSem_state_data_buffer s /\ stackSem_state_code_buffer
+    t = stackSem_state_code_buffer s /\ stackSem_state_compile_oracle
+    t = stackSem_state_compile_oracle s`,
   CHEAT_TAC);;
 
 let store_const_sem_const = prove
- (`store_const_sem t1 t2 s = (r,t) ==> state_ffi t = state_ffi s /\
-  state_clock
-    t = state_clock s /\ stackSem_state_use_alloc
+ (`store_const_sem t1 t2 s = (r,t) ==> stackSem_state_ffi t =
+  stackSem_state_ffi s /\ stackSem_state_clock
+    t = stackSem_state_clock s /\ stackSem_state_use_alloc
     t = stackSem_state_use_alloc s /\ stackSem_state_use_store
     t = stackSem_state_use_store s /\ stackSem_state_use_stack
-    t = stackSem_state_use_stack s /\ state_code
-    t = state_code s /\ be
-    t = be s /\ state_gc_fun
-    t = state_gc_fun s /\ state_mdomain
-    t = state_mdomain s /\ state_sh_mdomain
-    t = state_sh_mdomain s /\ stackSem_state_bitmaps
-    t = stackSem_state_bitmaps s /\ compile
-    t = compile s /\ state_store
-    t = state_store s /\ state_data_buffer
-    t = state_data_buffer s /\ state_code_buffer
-    t = state_code_buffer s /\ compile_oracle
-    t = compile_oracle s`,
+    t = stackSem_state_use_stack s /\ stackSem_state_code
+    t = stackSem_state_code s /\ stackSem_state_be
+    t = stackSem_state_be s /\ stackSem_state_gc_fun
+    t = stackSem_state_gc_fun s /\ stackSem_state_mdomain
+    t = stackSem_state_mdomain s /\ stackSem_state_sh_mdomain
+    t = stackSem_state_sh_mdomain s /\ stackSem_state_bitmaps
+    t = stackSem_state_bitmaps s /\ stackSem_state_compile
+    t = stackSem_state_compile s /\ stackSem_state_store
+    t = stackSem_state_store s /\ stackSem_state_data_buffer
+    t = stackSem_state_data_buffer s /\ stackSem_state_code_buffer
+    t = stackSem_state_code_buffer s /\ stackSem_state_compile_oracle
+    t = stackSem_state_compile_oracle s`,
   CHEAT_TAC);;
 
 (* gc_with_const *)
 let stackProps_gc_with_const = prove
- (`stackSem_gc (state_clock_fupd (K k) x) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (stackSem_gc x)`,
+ (`stackSem_gc (stackSem_state_clock_fupd (K k) x) = OPTION_MAP (\s.
+  stackSem_state_clock_fupd (K k) s) (stackSem_gc x)`,
   CHEAT_TAC);;
 add_simp stackProps_gc_with_const;;
 
@@ -287,174 +319,196 @@ add_simp stackProps_gc_with_const;;
    variables of its own are read as variables *)
 let stackProps_alloc_with_const = prove
  (cake_as_vars (fun () ->
-    `stackSem_alloc x (state_clock_fupd (K z) y) = (I ## (\s.
-  state_clock_fupd (K z) s)) (stackSem_alloc x y)`),
+    `stackSem_alloc x (stackSem_state_clock_fupd (K z) y) = (I ## (\s.
+  stackSem_state_clock_fupd (K z) s)) (stackSem_alloc x y)`),
   CHEAT_TAC);;
 add_simp stackProps_alloc_with_const;;
 
 let store_const_sem_with_const = prove
- (`store_const_sem t1 t2 (state_clock_fupd (K z) y) =
-   (I ## (\s. state_clock_fupd (K z) s)) (store_const_sem t1 t2 y)`,
+ (`store_const_sem t1 t2 (stackSem_state_clock_fupd (K z) y) =
+   (I ## (\s. stackSem_state_clock_fupd (K z) s)) (store_const_sem
+     t1 t2 y)`,
   CHEAT_TAC);;
 add_simp store_const_sem_with_const;;
 
 (* mem_load_with_const *)
 let stackProps_mem_load_with_const = prove
- (`stackSem_mem_store x y (state_clock_fupd (K k) z) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (stackSem_mem_store x y z)`,
+ (`stackSem_mem_store x y (stackSem_state_clock_fupd (K k) z) =
+  OPTION_MAP (\s. stackSem_state_clock_fupd (K k) s)
+  (stackSem_mem_store x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_mem_load_with_const;;
 
 (* sh_mem_load_with_const *)
 let stackProps_sh_mem_load_with_const = prove
- (`(stackSem_sh_mem_load r x (state_clock_fupd (K k) y)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (stackSem_sh_mem_load r x y)`,
+ (`(stackSem_sh_mem_load r x (stackSem_state_clock_fupd (K k) y)) = (I
+  ## (\s. stackSem_state_clock_fupd (K k) s)) (stackSem_sh_mem_load r
+  x y)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_load_with_const;;
 
 (* sh_mem_store_with_const *)
 let stackProps_sh_mem_store_with_const = prove
- (`(stackSem_sh_mem_store x y (state_clock_fupd (K k) z)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (stackSem_sh_mem_store x y z)`,
+ (`(stackSem_sh_mem_store x y (stackSem_state_clock_fupd (K k) z)) =
+  (I ## (\s. stackSem_state_clock_fupd (K k) s))
+  (stackSem_sh_mem_store x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_store_with_const;;
 
 (* sh_mem_load32_with_const *)
 let stackProps_sh_mem_load32_with_const = prove
- (`(stackSem_sh_mem_load32 r x (state_clock_fupd (K k) y)) = (I ##
-  (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_load32 r x y)`,
+ (`(stackSem_sh_mem_load32 r x (stackSem_state_clock_fupd (K k) y)) =
+  (I ## (\s. stackSem_state_clock_fupd (K k) s))
+  (stackSem_sh_mem_load32 r x y)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_load32_with_const;;
 
 (* sh_mem_store32_with_const *)
 let stackProps_sh_mem_store32_with_const = prove
- (`(stackSem_sh_mem_store32 x y (state_clock_fupd (K k) z)) = (I ##
-  (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_store32 x y z)`,
+ (`(stackSem_sh_mem_store32 x y (stackSem_state_clock_fupd (K k) z)) =
+  (I ## (\s. stackSem_state_clock_fupd (K k) s))
+  (stackSem_sh_mem_store32 x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_store32_with_const;;
 
 (* sh_mem_load16_with_const *)
 let stackProps_sh_mem_load16_with_const = prove
- (`(stackSem_sh_mem_load16 r x (state_clock_fupd (K k) y)) = (I ##
-  (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_load16 r x y)`,
+ (`(stackSem_sh_mem_load16 r x (stackSem_state_clock_fupd (K k) y)) =
+  (I ## (\s. stackSem_state_clock_fupd (K k) s))
+  (stackSem_sh_mem_load16 r x y)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_load16_with_const;;
 
 (* sh_mem_store16_with_const *)
 let stackProps_sh_mem_store16_with_const = prove
- (`(stackSem_sh_mem_store16 x y (state_clock_fupd (K k) z)) = (I ##
-  (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_store16 x y z)`,
+ (`(stackSem_sh_mem_store16 x y (stackSem_state_clock_fupd (K k) z)) =
+  (I ## (\s. stackSem_state_clock_fupd (K k) s))
+  (stackSem_sh_mem_store16 x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_store16_with_const;;
 
 (* sh_mem_load_byte_with_const *)
 let stackProps_sh_mem_load_byte_with_const = prove
- (`(stackSem_sh_mem_load_byte r x (state_clock_fupd (K k) y)) = (I ##
-  (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_load_byte r x y)`,
+ (`(stackSem_sh_mem_load_byte r x (stackSem_state_clock_fupd (K k) y))
+  = (I ## (\s. stackSem_state_clock_fupd (K k) s))
+  (stackSem_sh_mem_load_byte r x y)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_load_byte_with_const;;
 
 (* sh_mem_store_byte_with_const *)
 let stackProps_sh_mem_store_byte_with_const = prove
- (`(stackSem_sh_mem_store_byte x y (state_clock_fupd (K k) z)) = (I ##
-  (\s. state_clock_fupd (K k) s)) (stackSem_sh_mem_store_byte x y z)`,
+ (`(stackSem_sh_mem_store_byte x y (stackSem_state_clock_fupd (K k)
+  z)) = (I ## (\s. stackSem_state_clock_fupd (K k) s))
+  (stackSem_sh_mem_store_byte x y z)`,
   CHEAT_TAC);;
 add_simp stackProps_sh_mem_store_byte_with_const;;
 
 (* [local] *)
 let sh_mem_op_with_const = prove
- (`(sh_mem_op op x y (state_clock_fupd (K k) z)) = (I ## (\s.
-  state_clock_fupd (K k) s)) (sh_mem_op op x y z)`,
+ (`(sh_mem_op op x y (stackSem_state_clock_fupd (K k) z)) = (I ## (\s.
+  stackSem_state_clock_fupd (K k) s)) (sh_mem_op op x y z)`,
   CHEAT_TAC);;
 add_simp sh_mem_op_with_const;;
 
 (* word_exp_with_const *)
 let stackProps_word_exp_with_const = prove
- (`!s y k. stackSem_word_exp (state_clock_fupd (K k) s) y =
+ (`!s y k. stackSem_word_exp (stackSem_state_clock_fupd (K k) s) y =
   stackSem_word_exp s y`,
   CHEAT_TAC);;
 add_simp stackProps_word_exp_with_const;;
 
 (* assign_with_const *)
 let stackProps_assign_with_const = prove
- (`stackSem_assign x y (state_clock_fupd (K k) s) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (stackSem_assign x y s)`,
+ (`stackSem_assign x y (stackSem_state_clock_fupd (K k) s) =
+  OPTION_MAP (\s. stackSem_state_clock_fupd (K k) s) (stackSem_assign
+  x y s)`,
   CHEAT_TAC);;
 add_simp stackProps_assign_with_const;;
 
 
 (* inst_const *)
 let stackProps_inst_const = prove
- (`stackSem_inst i s = SOME t ==> state_ffi
-    t = state_ffi s /\ state_clock
-    t = state_clock s /\ stackSem_state_use_alloc
+ (`stackSem_inst i s = SOME t ==> stackSem_state_ffi
+    t = stackSem_state_ffi s /\ stackSem_state_clock
+    t = stackSem_state_clock s /\ stackSem_state_use_alloc
     t = stackSem_state_use_alloc s /\ stackSem_state_use_store
     t = stackSem_state_use_store s /\ stackSem_state_use_stack
-    t = stackSem_state_use_stack s /\ state_code
-    t = state_code s /\ be
-    t = be s /\ state_gc_fun
-    t = state_gc_fun s /\ state_mdomain
-    t = state_mdomain s /\ state_sh_mdomain
-    t = state_sh_mdomain s /\ stackSem_state_bitmaps
-    t = stackSem_state_bitmaps s /\ compile
-    t = compile s /\ compile_oracle
-    t = compile_oracle s`,
+    t = stackSem_state_use_stack s /\ stackSem_state_code
+    t = stackSem_state_code s /\ stackSem_state_be
+    t = stackSem_state_be s /\ stackSem_state_gc_fun
+    t = stackSem_state_gc_fun s /\ stackSem_state_mdomain
+    t = stackSem_state_mdomain s /\ stackSem_state_sh_mdomain
+    t = stackSem_state_sh_mdomain s /\ stackSem_state_bitmaps
+    t = stackSem_state_bitmaps s /\ stackSem_state_compile
+    t = stackSem_state_compile s /\ stackSem_state_compile_oracle
+    t = stackSem_state_compile_oracle s`,
   CHEAT_TAC);;
 
 (* inst_with_const *)
 let stackProps_inst_with_const = prove
- (`stackSem_inst i (state_clock_fupd (K k) s) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (stackSem_inst i s)`,
+ (`stackSem_inst i (stackSem_state_clock_fupd (K k) s) = OPTION_MAP
+  (\s. stackSem_state_clock_fupd (K k) s) (stackSem_inst i s)`,
   CHEAT_TAC);;
 add_simp stackProps_inst_with_const;;
 
 (* dec_clock_const *)
 let stackProps_dec_clock_const = prove
- (`state_ffi
-      (stackSem_dec_clock s) = state_ffi s /\
-        stackSem_state_use_alloc
-      (stackSem_dec_clock z) = stackSem_state_use_alloc z /\
-        stackSem_state_use_store
-      (stackSem_dec_clock z) = stackSem_state_use_store z /\
-        stackSem_state_use_stack
-      (stackSem_dec_clock z) = stackSem_state_use_stack z /\ stack
-      (stackSem_dec_clock z) = stack z /\ state_store
-      (stackSem_dec_clock z) = state_store z /\ state_code
-      (stackSem_dec_clock z) = state_code z /\ state_data_buffer
-      (stackSem_dec_clock z) = state_data_buffer z /\
-        state_code_buffer
-      (stackSem_dec_clock z) = state_code_buffer z /\ fp_regs
-      (stackSem_dec_clock z) = fp_regs z /\ be
-      (stackSem_dec_clock z) = be z /\ state_gc_fun
-      (stackSem_dec_clock z) = state_gc_fun z /\ state_memory
-      (stackSem_dec_clock z) = state_memory z /\ state_mdomain
-      (stackSem_dec_clock z) = state_mdomain z /\ state_sh_mdomain
-      (stackSem_dec_clock z) = state_sh_mdomain z /\
-        stackSem_state_bitmaps
-      (stackSem_dec_clock z) = stackSem_state_bitmaps z /\
-        stackSem_state_stack_space
-      (stackSem_dec_clock z) = stackSem_state_stack_space z /\
-        compile
-      (stackSem_dec_clock z) = compile z /\ compile_oracle
-      (stackSem_dec_clock z) = compile_oracle z`,
+ (`stackSem_state_ffi
+      (stackSem_dec_clock s) = stackSem_state_ffi s
+        /\ stackSem_state_use_alloc
+      (stackSem_dec_clock z) = stackSem_state_use_alloc z
+        /\ stackSem_state_use_store
+      (stackSem_dec_clock z) = stackSem_state_use_store z
+        /\ stackSem_state_use_stack
+      (stackSem_dec_clock z) = stackSem_state_use_stack z
+        /\ stackSem_state_stack
+      (stackSem_dec_clock z) = stackSem_state_stack z
+        /\ stackSem_state_store
+      (stackSem_dec_clock z) = stackSem_state_store z
+        /\ stackSem_state_code
+      (stackSem_dec_clock z) = stackSem_state_code z
+        /\ stackSem_state_data_buffer
+      (stackSem_dec_clock z) = stackSem_state_data_buffer z
+        /\ stackSem_state_code_buffer
+      (stackSem_dec_clock z) = stackSem_state_code_buffer z
+        /\ stackSem_state_fp_regs
+      (stackSem_dec_clock z) = stackSem_state_fp_regs z
+        /\ stackSem_state_be
+      (stackSem_dec_clock z) = stackSem_state_be z
+        /\ stackSem_state_gc_fun
+      (stackSem_dec_clock z) = stackSem_state_gc_fun z
+        /\ stackSem_state_memory
+      (stackSem_dec_clock z) = stackSem_state_memory z
+        /\ stackSem_state_mdomain
+      (stackSem_dec_clock z) = stackSem_state_mdomain z
+        /\ stackSem_state_sh_mdomain
+      (stackSem_dec_clock z) = stackSem_state_sh_mdomain z
+        /\ stackSem_state_bitmaps
+      (stackSem_dec_clock z) = stackSem_state_bitmaps z
+        /\ stackSem_state_stack_space
+      (stackSem_dec_clock z) = stackSem_state_stack_space z
+        /\ stackSem_state_compile
+      (stackSem_dec_clock z) = stackSem_state_compile z
+        /\ stackSem_state_compile_oracle
+      (stackSem_dec_clock z) = stackSem_state_compile_oracle z`,
   CHEAT_TAC);;
 add_simp stackProps_dec_clock_const;;
 
 
 let sh_mem_op_const = prove
- (`sh_mem_op op a r s = (res,t) ==> state_clock
-    t = state_clock s /\ stackSem_state_use_alloc
+ (`sh_mem_op op a r s = (res,t) ==> stackSem_state_clock
+    t = stackSem_state_clock s /\ stackSem_state_use_alloc
     t = stackSem_state_use_alloc s /\ stackSem_state_use_store
     t = stackSem_state_use_store s /\ stackSem_state_use_stack
-    t = stackSem_state_use_stack s /\ state_code
-    t = state_code s /\ be
-    t = be s /\ state_gc_fun
-    t = state_gc_fun s /\ state_mdomain
-    t = state_mdomain s /\ state_sh_mdomain
-    t = state_sh_mdomain s /\ stackSem_state_bitmaps
-    t = stackSem_state_bitmaps s /\ compile
-    t = compile s /\ compile_oracle
-    t = compile_oracle s`,
+    t = stackSem_state_use_stack s /\ stackSem_state_code
+    t = stackSem_state_code s /\ stackSem_state_be
+    t = stackSem_state_be s /\ stackSem_state_gc_fun
+    t = stackSem_state_gc_fun s /\ stackSem_state_mdomain
+    t = stackSem_state_mdomain s /\ stackSem_state_sh_mdomain
+    t = stackSem_state_sh_mdomain s /\ stackSem_state_bitmaps
+    t = stackSem_state_bitmaps s /\ stackSem_state_compile
+    t = stackSem_state_compile s /\ stackSem_state_compile_oracle
+    t = stackSem_state_compile_oracle s`,
   CHEAT_TAC);;
 add_simp sh_mem_op_const;;
 
@@ -464,23 +518,25 @@ let stackProps_evaluate_consts = prove
       stackSem_evaluate (c,s) = (r,s1) ==> stackSem_state_use_alloc
       s1 = stackSem_state_use_alloc s /\ stackSem_state_use_store
       s1 = stackSem_state_use_store s /\ stackSem_state_use_stack
-      s1 = stackSem_state_use_stack s /\ be
-      s1 = be s /\ state_gc_fun
-      s1 = state_gc_fun s /\ state_mdomain
-      s1 = state_mdomain s /\ state_sh_mdomain
-      s1 = state_sh_mdomain s /\ compile
-      s1 = compile s`,
+      s1 = stackSem_state_use_stack s /\ stackSem_state_be
+      s1 = stackSem_state_be s /\ stackSem_state_gc_fun
+      s1 = stackSem_state_gc_fun s /\ stackSem_state_mdomain
+      s1 = stackSem_state_mdomain s /\ stackSem_state_sh_mdomain
+      s1 = stackSem_state_sh_mdomain s /\ stackSem_state_compile
+      s1 = stackSem_state_compile s`,
   CHEAT_TAC);;
 
 let evaluate_code_bitmaps = prove
  (`!c s r s1.
    stackSem_evaluate (c,s) = (r,s1) ==>
-   (?n. compile_oracle
-    s1 = misc_shift_seq n (compile_oracle s) /\ state_code
-    s1 = FOLDL sptree_union (state_code s) (MAP (fromAList o FST o
-      SND) (list_of_seq (compile_oracle s) n)) /\ stackSem_state_bitmaps
+   (?n. stackSem_state_compile_oracle
+    s1 = misc_shift_seq n (stackSem_state_compile_oracle s)
+      /\ stackSem_state_code
+    s1 = FOLDL sptree_union (stackSem_state_code s) (MAP (fromAList o
+      FST o SND) (list_of_seq (stackSem_state_compile_oracle s) n))
+      /\ stackSem_state_bitmaps
     s1 = APPEND (stackSem_state_bitmaps s) (FLAT (MAP (SND o SND)
-      (list_of_seq (compile_oracle s) n))))`,
+      (list_of_seq (stackSem_state_compile_oracle s) n))))`,
   CHEAT_TAC);;
 
 (* evaluate_mono *)
@@ -488,15 +544,15 @@ let stackProps_evaluate_mono = prove
  (`!c s r s1.
    stackSem_evaluate (c,s) = (r,s1) ==>
    isPREFIX (stackSem_state_bitmaps s) (stackSem_state_bitmaps s1) /\
-   subspt (state_code s) (state_code s1)`,
+   subspt (stackSem_state_code s) (stackSem_state_code s1)`,
   CHEAT_TAC);;
 
 (* evaluate_io_events_mono *)
 let stackProps_evaluate_io_events_mono = prove
  (`!exps s1 res s2.
     stackSem_evaluate (exps,s1) = (res,s2) ==> ffi_state_io_events
-      (state_ffi
-    s1) <<= ffi_state_io_events (state_ffi s2)`,
+      (stackSem_state_ffi
+    s1) <<= ffi_state_io_events (stackSem_state_ffi s2)`,
   CHEAT_TAC);;
 
 let pair_map_eq = prove
@@ -518,24 +574,25 @@ let stackProps_evaluate_add_clock = prove
  (`!p s r s'.
     stackSem_evaluate (p,s) = (r,s') /\ ~(r = SOME stackSem_TimeOut)
       ==>
-    stackSem_evaluate (p,state_clock_fupd (K (state_clock s +
-      extra)) s) = (r,state_clock_fupd (K (state_clock s' + extra))
-      s')`,
+    stackSem_evaluate (p,stackSem_state_clock_fupd (K
+      (stackSem_state_clock s + extra)) s) =
+      (r,stackSem_state_clock_fupd (K (stackSem_state_clock s' +
+      extra)) s')`,
   CHEAT_TAC);;
 
 (* with_clock_ffi *)
 let stackProps_with_clock_ffi = prove
- (`state_ffi
-      (state_clock_fupd (K k) s) = state_ffi s`,
+ (`stackSem_state_ffi
+      (stackSem_state_clock_fupd (K k) s) = stackSem_state_ffi s`,
   CHEAT_TAC);;
 
 (* evaluate_add_clock_io_events_mono *)
 let stackProps_evaluate_add_clock_io_events_mono = prove
- (`!e s. ffi_state_io_events (state_ffi
+ (`!e s. ffi_state_io_events (stackSem_state_ffi
      (SND (stackSem_evaluate (e,s)))) <<= ffi_state_io_events
-       (state_ffi
-     (SND (stackSem_evaluate (e,state_clock_fupd (K (state_clock s
-       + extra)) s))))`,
+       (stackSem_state_ffi
+     (SND (stackSem_evaluate (e,stackSem_state_clock_fupd (K
+       (stackSem_state_clock s + extra)) s))))`,
   CHEAT_TAC);;
 
 let clock_neutral_def,clock_neutral_ind = define_shaped_rec
@@ -548,38 +605,40 @@ let clock_neutral_def,clock_neutral_ind = define_shaped_rec
         | (stackLang_Halt _4) -> T
         | (stackLang_Inst _5) -> T
         | (stackLang_Skip) -> T
-        | (stackLang_If _6 _7 _8 p1 p2) -> clock_neutral p1 /\
-          clock_neutral p2
+        | (stackLang_If _6 _7 _8 p1 p2) -> clock_neutral p1
+          /\ clock_neutral p2
         | r -> F`];;
 
 (* [local] *)
 let inst_clock_neutral = prove
- (`(stackSem_inst i s = SOME t ==> stackSem_inst i (state_clock_fupd (K
-  k) s) = SOME (state_clock_fupd (K k) t)) /\
+ (`(stackSem_inst i s = SOME t ==> stackSem_inst i
+  (stackSem_state_clock_fupd (K k) s) = SOME (stackSem_state_clock_fupd
+  (K k) t)) /\
      (stackSem_inst i s = NONE ==> stackSem_inst i
-       (state_clock_fupd (K k) s) = NONE)`,
+       (stackSem_state_clock_fupd (K k) s) = NONE)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let inst_clock_neutral_ffi = prove
- (`(stackSem_inst i s = SOME t ==> stackSem_inst i (state_ffi_fupd (K k)
-  s) = SOME (state_ffi_fupd (K k) t)) /\
-     (stackSem_inst i s = NONE ==> stackSem_inst i (state_ffi_fupd
-       (K k) s) = NONE)`,
+ (`(stackSem_inst i s = SOME t ==> stackSem_inst i
+  (stackSem_state_ffi_fupd (K k) s) = SOME (stackSem_state_ffi_fupd (K
+  k) t)) /\
+     (stackSem_inst i s = NONE ==> stackSem_inst i
+       (stackSem_state_ffi_fupd (K k) s) = NONE)`,
   CHEAT_TAC);;
 
 let evaluate_clock_neutral = prove
  (`!prog s res t.
       stackSem_evaluate (prog,s) = (res,t) /\ clock_neutral prog ==>
-      stackSem_evaluate (prog,state_clock_fupd (K c) s) =
-        (res,state_clock_fupd (K c) t)`,
+      stackSem_evaluate (prog,stackSem_state_clock_fupd (K c) s) =
+        (res,stackSem_state_clock_fupd (K c) t)`,
   CHEAT_TAC);;
 
 let evaluate_ffi_neutral = prove
  (`!prog s res t.
       stackSem_evaluate (prog,s) = (res,t) /\ clock_neutral prog ==>
-      stackSem_evaluate (prog,state_ffi_fupd (K c) s) =
-        (res,state_ffi_fupd (K c) t)`,
+      stackSem_evaluate (prog,stackSem_state_ffi_fupd (K c) s) =
+        (res,stackSem_state_ffi_fupd (K c) t)`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -587,7 +646,7 @@ let evaluate_ffi_neutral = prove
 let semantics_Terminate_IMP_PREFIX = prove
  (cake_as_vars (fun () ->
     `stackSem_semantics start s1 = ffi_Terminate x l ==> isPREFIX
-  (ffi_state_io_events (state_ffi s1)) l`),
+  (ffi_state_io_events (stackSem_state_ffi s1)) l`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -595,7 +654,7 @@ let semantics_Terminate_IMP_PREFIX = prove
 let semantics_Diverge_IMP_LPREFIX = prove
  (cake_as_vars (fun () ->
     `stackSem_semantics start s1 = ffi_Diverge l ==> LPREFIX (fromList
-  (ffi_state_io_events (state_ffi s1))) l`),
+  (ffi_state_io_events (stackSem_state_ffi s1))) l`),
   CHEAT_TAC);;
 
 let map_bitmap_length = prove
@@ -662,18 +721,18 @@ let stack_asm_ok_def,stack_asm_ok_ind = define_wf
         | (stackLang_ShMemOp op r ad) -> reg_ok r c /\ addr_ok op ad
           c
         | (stackLang_CodeBufferWrite r1 r2) -> r1 <
-          asm_config_reg_count c /\ r2 < asm_config_reg_count c /\
-          ~(MEM r1 (asm_config_avoid_regs c)) /\ ~(MEM r2
+          asm_config_reg_count c /\ r2 < asm_config_reg_count c
+          /\ ~(MEM r1 (asm_config_avoid_regs c)) /\ ~(MEM r2
           (asm_config_avoid_regs c))
         | (stackLang_Seq p1 p2) -> stack_asm_ok c p1 /\ stack_asm_ok
           c p2
-        | (stackLang_If cmp n r p p') -> stack_asm_ok c p /\
-          stack_asm_ok c p'
+        | (stackLang_If cmp n r p p') -> stack_asm_ok c p
+          /\ stack_asm_ok c p'
         | (stackLang_Loop p) -> stack_asm_ok c p
         | (stackLang_Raise n) -> n < asm_config_reg_count c /\ ~(MEM
           n (asm_config_avoid_regs c))
-        | (stackLang_Return n) -> n < asm_config_reg_count c /\
-          ~(MEM n (asm_config_avoid_regs c))
+        | (stackLang_Return n) -> n < asm_config_reg_count c
+          /\ ~(MEM n (asm_config_avoid_regs c))
         | (stackLang_Call r tar h) ->
        (match tar with INR r -> r < asm_config_reg_count c /\ ~(MEM
          r (asm_config_avoid_regs c)) | _11 -> T) /\
@@ -701,16 +760,16 @@ let arith_name_def = new_definition
          Reg r2) /\ reg_name r1 c /\
        reg_name r2 c /\ reg_imm_name (INL b) ri c
         | ((asm_Shift l r1 r2 (Imm i)),c) ->
-       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\
-         reg_name r2 c /\
+       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c
+         /\ reg_name r2 c /\
        (i = (n2w 0) ==> l = Lsl) /\ w2n i < dimindex (:'a)
         | ((asm_Shift l r1 r2 (Reg r3)),c) ->
        (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\
         reg_name r2 c /\ reg_name r3 c /\ (asm_config_ISA c = x86_64
           ==> r3 = 4)
         | ((asm_Div r1 r2 r3),c) ->
-       (reg_name r1 c /\ reg_name r2 c /\ reg_name r3 c /\
-         asm_config_ISA
+       (reg_name r1 c /\ reg_name r2 c /\ reg_name r3 c
+         /\ asm_config_ISA
        c IN {ARMv8,MIPS,RISC_V})
         | ((asm_LongMul r1 r2 r3 r4),c) ->
        reg_name r1 c /\ reg_name r2 c /\ reg_name r3 c /\ reg_name r4
@@ -723,20 +782,20 @@ let arith_name_def = new_definition
        c = x86_64 /\ r1 = 0 /\ r2 = 3 /\ r3 = 3 /\ r4 = 0 /\
        reg_name r5 c
         | ((asm_AddCarry r1 r2 r3 r4),c) ->
-       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\
-         reg_name r2 c /\
+       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c
+         /\ reg_name r2 c /\
        reg_name r3 c /\ reg_name r4 c /\
        (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V ==> ~(r1
          = r3) /\ ~(r1 = r4))
         | ((asm_AddOverflow r1 r2 r3 r4),c) ->
-       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\
-         reg_name r2 c /\
+       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c
+         /\ reg_name r2 c /\
        reg_name r3 c /\ reg_name r4 c /\
        (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V ==> ~(r1
          = r3))
         | ((asm_SubOverflow r1 r2 r3 r4),c) ->
-       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\
-         reg_name r2 c /\
+       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c
+         /\ reg_name r2 c /\
        reg_name r3 c /\ reg_name r4 c /\
        (asm_config_ISA c = MIPS \/ asm_config_ISA c = RISC_V ==>
          ~(r1 = r3))`;;
@@ -751,13 +810,13 @@ let fp_name_def = define_cases
    `fp_name (FPEqual r d1 d2) (c:'a asm_config) <=>
           reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
    `fp_name (FPAbs d1 d2) (c:'a asm_config) <=>
-          (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\
-              fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+          (asm_config_two_reg_arith c ==> (~(d1 = d2)))
+              /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
    `fp_name (FPNeg d1 d2) (c:'a asm_config) <=>
-          (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\
-              fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPSqrt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\
-    fp_reg_ok d2 c`;
+          (asm_config_two_reg_arith c ==> (~(d1 = d2)))
+              /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPSqrt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
+    /\ fp_reg_ok d2 c`;
    `fp_name (FPAdd d1 d2 d3) (c:'a asm_config) <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
@@ -774,18 +833,18 @@ let fp_name_def = define_cases
           (asm_config_ISA c = ARMv7) /\
           2 < asm_config_fp_reg_count c /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPMov d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\
-    fp_reg_ok d2 c`;
+   `fp_name (FPMov d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
+    /\ fp_reg_ok d2 c`;
    `fp_name (FPMovToReg r1 r2 d) (c:'a asm_config) <=>
-          reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
-              reg_name r2 c) /\
+          reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2)
+              /\ reg_name r2 c) /\
           fp_reg_ok d c`;
    `fp_name (FPMovFromReg d r1 r2) (c:'a asm_config) <=>
-          reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
-              reg_name r2 c) /\
+          reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2)
+              /\ reg_name r2 c) /\
           fp_reg_ok d c`;
-   `fp_name (FPToInt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c /\
-    fp_reg_ok d2 c`;
+   `fp_name (FPToInt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
+    /\ fp_reg_ok d2 c`;
    `fp_name (FPFromInt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
     /\ fp_reg_ok d2 c`];;
 
@@ -816,18 +875,18 @@ let stack_asm_name_def,stack_asm_name_ind = define_wf
         match x2 with
           ((stackLang_Inst i):'a stackLang_prog) -> inst_name c i
         | (stackLang_OpCurrHeap b r1 r2) ->
-       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\
-         reg_name r2 c
+       (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c
+         /\ reg_name r2 c
         | (stackLang_ShMemOp op r a) -> reg_name r c /\ addr_name op
           a c
-        | (stackLang_CodeBufferWrite r1 r2) -> reg_name r1 c /\
-          reg_name r2 c
-        | (stackLang_DataBufferWrite r1 r2) -> reg_name r1 c /\
-          reg_name r2 c
-        | (stackLang_Seq p1 p2) -> stack_asm_name c p1 /\
-          stack_asm_name c p2
-        | (stackLang_If cmp n r p p') -> stack_asm_name c p /\
-          stack_asm_name c p'
+        | (stackLang_CodeBufferWrite r1 r2) -> reg_name r1 c
+          /\ reg_name r2 c
+        | (stackLang_DataBufferWrite r1 r2) -> reg_name r1 c
+          /\ reg_name r2 c
+        | (stackLang_Seq p1 p2) -> stack_asm_name c p1
+          /\ stack_asm_name c p2
+        | (stackLang_If cmp n r p p') -> stack_asm_name c p
+          /\ stack_asm_name c p'
         | (stackLang_Loop p) -> stack_asm_name c p
         | (stackLang_Raise n) -> reg_name n c
         | (stackLang_Return n) -> reg_name n c
@@ -853,8 +912,8 @@ let stack_asm_remove_def,stack_asm_remove_ind = define_wf
   [`stack_asm_remove c x2 =
         match x2 with
           ((stackLang_Get n s):'a stackLang_prog) -> reg_name n c
-        | (stackLang_OpCurrHeap binop v src) -> reg_name v c /\
-          reg_name src c
+        | (stackLang_OpCurrHeap binop v src) -> reg_name v c
+          /\ reg_name src c
         | (stackLang_Set s n) -> reg_name n c
         | (stackLang_StackStore n n0) -> reg_name n c
         | (stackLang_StackStoreAny n n0) -> reg_name n c /\ reg_name
@@ -866,12 +925,12 @@ let stack_asm_remove_def,stack_asm_remove_ind = define_wf
         | (stackLang_StackSetSize n) -> reg_name n c
         | (stackLang_BitmapLoad n n0) -> reg_name n c /\ reg_name n0
           c
-        | (stackLang_StoreConsts n n0 _30) -> reg_name n c /\
-          reg_name n0 c
-        | (stackLang_Seq p1 p2) -> stack_asm_remove c p1 /\
-          stack_asm_remove c p2
-        | (stackLang_If cmp n r p p') -> stack_asm_remove c p /\
-          stack_asm_remove c p'
+        | (stackLang_StoreConsts n n0 _30) -> reg_name n c
+          /\ reg_name n0 c
+        | (stackLang_Seq p1 p2) -> stack_asm_remove c p1
+          /\ stack_asm_remove c p2
+        | (stackLang_If cmp n r p p') -> stack_asm_remove c p
+          /\ stack_asm_remove c p'
         | (stackLang_Loop p) -> stack_asm_remove c p
         | (stackLang_Call r tar h) ->
        (match r with SOME (p,_31,_32,_33) -> stack_asm_remove c p /\
@@ -922,8 +981,8 @@ let reg_bound_exp_def,reg_bound_exp_ind = define_wf
         match x1 with
           wordLang_Var n -> n < k
         | (wordLang_Load e) -> reg_bound_exp e k
-        | (wordLang_Shift _45 e1 e2) -> reg_bound_exp e1 k /\
-          reg_bound_exp e2 k
+        | (wordLang_Shift _45 e1 e2) -> reg_bound_exp e1 k
+          /\ reg_bound_exp e2 k
         | (wordLang_Lookup _46) -> F
         | (wordLang_Op _47 es) -> ALL (\e. reg_bound_exp e k) es
         | _48 -> T`];;
@@ -934,10 +993,10 @@ let reg_bound_inst_def = new_definition
         match x1 with
           asm_Mem _49 n (Addr a _50) -> n < k /\ a < k
         | (asm_Const n _51) -> n < k
-        | (asm_Arith (asm_Shift _52 n r2 ri)) -> r2 < k /\ n < k /\
-          (match ri with Reg r -> r < k | _53 -> T)
-        | (asm_Arith (asm_Binop _54 n r2 ri)) -> r2 < k /\ n < k /\
-          (match ri with Reg r1 -> r1 < k | _55 -> T)
+        | (asm_Arith (asm_Shift _52 n r2 ri)) -> r2 < k /\ n < k
+          /\ (match ri with Reg r -> r < k | _53 -> T)
+        | (asm_Arith (asm_Binop _54 n r2 ri)) -> r2 < k /\ n < k
+          /\ (match ri with Reg r1 -> r1 < k | _55 -> T)
         | (asm_Arith (asm_Div r1 r2 r3)) -> r1 < k /\ r2 < k /\ r3 <
           k
         | (asm_Arith (asm_AddCarry r1 r2 r3 r4)) -> r1 < k /\ r2 < k
@@ -1031,8 +1090,8 @@ let call_args_def,call_args_ind = assume_definition_rec
         call_args p1 ptr len ptr2 len2 ret
         | (stackLang_Halt n) -> (n = ptr)
         | (stackLang_FFI ffi_index ptr' len' ptr2' len2' ret') ->
-        ptr' = ptr /\ len' = len /\ ptr2' = ptr2 /\ len2' = len2 /\
-          ret' = ret
+        ptr' = ptr /\ len' = len /\ ptr2' = ptr2 /\ len2' = len2
+          /\ ret' = ret
         | (stackLang_Call x1 _67 x2) ->
         (match x1 with NONE -> T | SOME (y,r,_68,_69) ->
              call_args y ptr len ptr2 len2 ret /\ r = ret /\
@@ -1123,8 +1182,8 @@ let stackProps_no_install_def,stackProps_no_install_ind = define_wf
          _101 -> T) /\
         (match h with SOME (x,_102,_103) -> stackProps_no_install x
           | _104 -> T))
-        | (stackLang_Seq p1 p2) -> (stackProps_no_install p1 /\
-          stackProps_no_install p2)
+        | (stackLang_Seq p1 p2) -> (stackProps_no_install p1
+          /\ stackProps_no_install p2)
         | (stackLang_If _105 _106 _107 p1 p2) ->
           (stackProps_no_install p1 /\ stackProps_no_install p2)
         | (stackLang_Loop p) -> stackProps_no_install p
@@ -1143,8 +1202,8 @@ let no_shmemop_def,no_shmemop_ind = define_wf
         (match h with SOME (x,_117,_118) -> no_shmemop x | _119 ->
           T))
         | (stackLang_Seq p1 p2) -> (no_shmemop p1 /\ no_shmemop p2)
-        | (stackLang_If _120 _121 _122 p1 p2) -> (no_shmemop p1 /\
-          no_shmemop p2)
+        | (stackLang_If _120 _121 _122 p1 p2) -> (no_shmemop p1
+          /\ no_shmemop p2)
         | (stackLang_Loop p) -> no_shmemop p
         | (stackLang_ShMemOp _123 _124 _125) -> F
         | _126 -> T`];;

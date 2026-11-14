@@ -47,17 +47,17 @@ let stack_rawcallProof_state_rel_def = new_definition
   `stack_rawcallProof_state_rel i s t <=>
      (?c.
        // co cc
-       domain c = domain (state_code s) /\
-       t = state_code_fupd (K c) s /\
+       domain c = domain (labSem_state_code s) /\
+       t = labSem_state_code_fupd (K c) s /\
        // ;
        // compile := cc ;
        // compile_oracle := co
        // s.compile = pure_cc compile t.compile /\
        // t.compile_oracle = (I ## compile ## I) o s.compile_oracle /\
-       stack_rawcallProof_state_ok i (state_code s) /\
+       stack_rawcallProof_state_ok i (labSem_state_code s) /\
        (!n b.
-         sptree_lookup n (state_code s) = SOME b ==>
-         (?i. stack_rawcallProof_state_ok i (state_code s) /\
+         sptree_lookup n (labSem_state_code s) = SOME b ==>
+         (?i. stack_rawcallProof_state_ok i (labSem_state_code s) /\
              sptree_lookup n c = SOME (comp_top i b))))`;;
 
 (* HOL4 stack_rawcallProofScript.sml:46-47: a theorem that HOL4
@@ -95,7 +95,8 @@ let evaluate_comp_Inst = prove
    (?ck t1 k1.
      stack_rawcallProof_state_rel i' s1 t1 /\
      stackSem_evaluate (stack_rawcall_comp i' (stackLang_Inst
-       i),state_clock_fupd (K (ck + state_clock t)) t) =
+       i),stackSem_state_clock_fupd (K (ck + stackSem_state_clock t)) t)
+       =
      (r,stackSem_state_stack_space_fupd (K k1) t1) /\
      (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackLang_Halt
        (wordLang_Word (n2w 2)))) ==>
@@ -109,16 +110,17 @@ let stack_rawcallProof_comp_correct = prove
        /\ stack_rawcallProof_state_rel i s t ==>
      (?ck t1 k1.
         stack_rawcallProof_state_rel i s1 t1 /\
-        stackSem_evaluate (comp_top i p,state_clock_fupd (K
-          (state_clock t + ck)) t) =
+        stackSem_evaluate (comp_top i p,stackSem_state_clock_fupd (K
+          (stackSem_state_clock t + ck)) t) =
           (r,stackSem_state_stack_space_fupd (K k1) t1) /\
         (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackLang_Halt
           (wordLang_Word (n2w 2)))) ==> k1 = stackSem_state_stack_space
           t1)) /\
      (?ck t1 k1.
         stack_rawcallProof_state_rel i s1 t1 /\
-        stackSem_evaluate (stack_rawcall_comp i p,state_clock_fupd (K
-          (state_clock t + ck)) t) =
+        stackSem_evaluate (stack_rawcall_comp i
+          p,stackSem_state_clock_fupd (K (stackSem_state_clock t + ck))
+          t) =
           (r,stackSem_state_stack_space_fupd (K k1) t1) /\
         (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackLang_Halt
           (wordLang_Word (n2w 2)))) ==> k1 =
@@ -149,12 +151,12 @@ let state_ok_collect_info = prove
    variables of its own are read as variables *)
 let stack_rawcallProof_compile_semantics = prove
  (cake_as_vars (fun () ->
-    `ALL_DISTINCT (MAP FST code) /\ stackSem_state_use_stack s /\
-  state_code
+    `ALL_DISTINCT (MAP FST code) /\ stackSem_state_use_stack s
+  /\ stackSem_state_code
      s = fromAList code /\ ~(stackSem_semantics start s = ffi_Fail)
        ==>
-     stackSem_semantics start (state_code_fupd (K (fromAList
-       (stack_rawcall_compile code))) s) =
+     stackSem_semantics start (stackSem_state_code_fupd (K
+       (fromAList (stack_rawcall_compile code))) s) =
      stackSem_semantics start s`),
   CHEAT_TAC);;
 

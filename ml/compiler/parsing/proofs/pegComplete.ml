@@ -369,8 +369,8 @@ let eapp_reassociated = prove
         rightLoc (ptree_loc pt') = rightLoc (ptree_loc bpt) /\
         ptree_head pt' = (\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nEapp /\ ptree_head bpt' =
-          (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nEbase /\
-          APPEND (real_fringe bpt') (real_fringe pt') = MAP
+          (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nEbase
+          /\ APPEND (real_fringe bpt') (real_fringe pt') = MAP
           ((grammar_TOK:tokens_token->(tokens_token
           ,MMLnonT)grammar_symbol) ## I) (APPEND pf bf) /\
         mkNd ((INL:MMLnonT->MMLnonT+num) nEapp) [pt; bpt] =
@@ -466,8 +466,8 @@ let dtype_reassociated = prove
           ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp /\
         ptree_head pt' = (\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nDType /\ ptree_head bpt' =
-          (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTbase /\
-          APPEND (real_fringe bpt') (real_fringe pt') = MAP
+          (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTbase
+          /\ APPEND (real_fringe bpt') (real_fringe pt') = MAP
           ((grammar_TOK:tokens_token->(tokens_token
           ,MMLnonT)grammar_symbol) ## I) (APPEND pf bf) /\
         leftLoc (ptree_loc bpt') = leftLoc (ptree_loc pt) /\
@@ -519,7 +519,7 @@ let ptree_loc_left_insert = prove
   CHEAT_TAC);;
 
 let lassoc_reassociated = prove
- (`!G P SEP C' ppt spt cpt pf sf cf. FAPPLY (peg_rules
+ (`!G P SEP C' ppt spt cpt pf sf cf. FAPPLY (grammar_rules
       G) P = {[grammar_NT P; SEP; C'],[C']} ==>
       valid_lptree G ppt /\ ptree_head ppt = grammar_NT P /\
         real_fringe ppt = MAP (grammar_TOK ## I) pf /\
@@ -589,8 +589,8 @@ let peg_eval_seqempty = prove
 
 let peg_eval_NT = prove
  (`peg_eval G (i0,peg_nt N f) r <=>
-     (?r0. r = resultmap f r0 /\ N IN FDOM (peg_rules G) /\
-       peg_eval G (i0,FAPPLY (peg_rules G) N) r0)`,
+     (?r0. r = resultmap f r0 /\ N IN FDOM (peg_rules G)
+       /\ peg_eval G (i0,FAPPLY (peg_rules G) N) r0)`,
   CHEAT_TAC);;
 
 (* HOL4 pegCompleteScript.sml:734-737: ML code, not ported *)
@@ -1132,9 +1132,9 @@ let extend_Pbase_list = prove
 let papp_complete = prove
  (`(!pt' pfx' N sfx'.
       LENGTH pfx' < LENGTH master /\ valid_lptree cmlG pt' /\
-      (INL:MMLnonT->MMLnonT+num) N IN FDOM (peg_rules cmlPEG) /\
-        ptree_head pt' = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
-        nt')) N /\
+      (INL:MMLnonT->MMLnonT+num) N IN FDOM (peg_rules cmlPEG)
+        /\ ptree_head pt' = (\nt'. grammar_NT
+        ((INL:MMLnonT->MMLnonT+num) nt')) N /\
       real_fringe pt' = MAP
         ((grammar_TOK:tokens_token->(tokens_token
         ,MMLnonT)grammar_symbol) ## I) pfx' /\
@@ -1261,7 +1261,7 @@ let peg_linfix_complete = prove
           pegComplete_stoppers n)) /\
    ~(peg0 cmlPEG (sym2peg C)) /\ ~(nullable cmlG [C]) /\
    ~(peg0 cmlPEG (sym2peg SEP)) /\ ~(nullable cmlG [SEP]) /\ FAPPLY
-     (peg_rules
+     (grammar_rules
    cmlG) ((INL:MMLnonT->MMLnonT+num) P) = {[grammar_NT
      ((INL:MMLnonT->MMLnonT+num) P); SEP; C],[C]} /\
    (!pt pfx0 sfx.

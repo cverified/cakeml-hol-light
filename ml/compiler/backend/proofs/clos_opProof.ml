@@ -225,8 +225,8 @@ let simple_exp_eq_pure_list = prove
 
 let evaluate_EL = prove
  (`!xs i vs.
-     closSem_evaluate (xs,env,s) = (Rval vs,s) /\ i < LENGTH xs /\
-       ALL pure xs ==>
+     closSem_evaluate (xs,env,s) = (Rval vs,s) /\ i < LENGTH xs
+       /\ ALL pure xs ==>
      closSem_evaluate ([EL i xs],env,s) = (Rval [EL i vs],s)`,
   CHEAT_TAC);;
 

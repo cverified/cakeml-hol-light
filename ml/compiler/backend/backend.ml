@@ -237,10 +237,11 @@ let compile_eq_to_target = prove
 let prim_src_config_def = new_definition
   `prim_src_config =
      (let (_11,next',env,_12,_13) = source_to_flat_compile_decs [] 1
-       (next empty_config) source_to_flat_empty_env
+       (source_to_flat_config_next empty_config)
+       source_to_flat_empty_env
          ARB prim_types_program in
-     (source_to_flat_config_mod_env_fupd (K env) (next_fupd (K
-       next') empty_config)))`;;
+     (source_to_flat_config_mod_env_fupd (K env)
+       (source_to_flat_config_next_fupd (K next') empty_config)))`;;
 
 (* HOL4 backendScript.sml:203: a theorem that HOL4 states as the
    value of an ML expression: prim_src_config_eq *)
@@ -379,10 +380,10 @@ let to_livesets_def = new_definition
 let to_data_conf_inv = prove
  (`to_data c p = (c',p',names) ==> backend_config_data_conf
    c' = backend_config_data_conf c /\ backend_config_word_conf
-   c' = backend_config_word_conf c /\
-     backend_config_word_to_word_conf
-   c' = backend_config_word_to_word_conf c /\
-     backend_config_stack_conf
+   c' = backend_config_word_conf c
+     /\ backend_config_word_to_word_conf
+   c' = backend_config_word_to_word_conf c
+     /\ backend_config_stack_conf
    c' = backend_config_stack_conf c /\ backend_config_lab_conf
    c' = backend_config_lab_conf c`,
   CHEAT_TAC);;

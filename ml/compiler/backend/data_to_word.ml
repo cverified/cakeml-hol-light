@@ -143,9 +143,9 @@ let shift_length_def = new_definition
 let conf_ok_def = new_definition
   `conf_ok (:'a) c <=>
      shift_length c < dimindex (:'a) /\
-     backend_common_word_shift (:'a) <= shift_length c /\
-       ~(data_to_word_config_len_size c = 0) /\
-       data_to_word_config_len_size
+     backend_common_word_shift (:'a) <= shift_length c
+       /\ ~(data_to_word_config_len_size c = 0)
+       /\ data_to_word_config_len_size
      c + 7 < dimindex (:'a)`;;
 
 let max_heap_limit_def = new_definition
@@ -173,8 +173,8 @@ let real_addr_def = new_definition
   `((real_addr (conf:data_to_word_config) r):'a wordLang_exp) =
      (let k = backend_common_word_shift (:'a) in
      let l = shift_length conf in
-       if k = l /\ data_to_word_config_len_bits conf = 0 /\
-         data_to_word_config_tag_bits conf = 0 then
+       if k = l /\ data_to_word_config_len_bits conf = 0
+         /\ data_to_word_config_tag_bits conf = 0 then
          wordLang_Op asm_Add [wordLang_Lookup CurrHeap; wordLang_Op
            asm_Sub [wordLang_Var r; wordLang_Const (n2w 1)]] else if k
            <= data_to_word_config_pad_bits conf + 1 then
@@ -3336,7 +3336,7 @@ let force_thunk_def = new_definition
            [wordLang_Assign 1 (real_addr c (adjust_var v1));
             wordLang_Assign 3 (wordLang_Op asm_And [wordLang_Load
               (wordLang_Var 1); wordLang_Const (n2w 0b111100)]);
-            closLang_If asm_Equal 3 (Imm (n2w ((8 + 6) * 4)))
+            wordLang_If asm_Equal 3 (Imm (n2w ((8 + 6) * 4)))
               (match ret with NONE ->
                   data_to_word_list_Seq
                     [wordLang_Assign 1 (wordLang_Load (wordLang_Op

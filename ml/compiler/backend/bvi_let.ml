@@ -2,7 +2,7 @@
 (*  bvi_let: ported from HOL4's
     compiler/backend/bvi_letScript.sml
     A definition theory, with 6 definitions and 5 theorems.  Needed
-    by bvi_letProof.ml, bvl_to_bvi.ml and bvl_to_bviProof.ml.  *)
+    by bvi_letProof.ml and bvl_to_bvi.ml.  *)
 (* ======================================================== *)
 
 (*

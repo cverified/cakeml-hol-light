@@ -126,8 +126,8 @@ let ctor_canonical_values_thm = prove
  (`(type_v tvs ctMap tenvS v Tbool /\ ctMap_ok ctMap /\ ctMap_has_bools
   ctMap ==>
     (?b. v = semanticPrimitives_Boolv b)) /\
-   (type_v tvs ctMap tenvS v (Tlist t) /\ ctMap_ok ctMap /\
-     ctMap_has_lists ctMap ==>
+   (type_v tvs ctMap tenvS v (Tlist t) /\ ctMap_ok ctMap
+     /\ ctMap_has_lists ctMap ==>
     (?vs.
       semanticPrimitives_v_to_list v = SOME vs /\
       ALL (\v. type_v tvs ctMap tenvS v t) vs /\
@@ -453,10 +453,10 @@ let exp_type_sound = prove
      type_es tenv (bind_tvar tvs tenvE) es ts ==>
      (?tenvS'.
        type_s ctMap (semanticPrimitives_state_refs s') tenvS' /\
-       store_type_extension tenvS tenvS' /\
-         semanticPrimitives_state_next_type_stamp
-       s' = semanticPrimitives_state_next_type_stamp s /\
-         semanticPrimitives_state_next_exn_stamp
+       store_type_extension tenvS tenvS'
+         /\ semanticPrimitives_state_next_type_stamp
+       s' = semanticPrimitives_state_next_type_stamp s
+         /\ semanticPrimitives_state_next_exn_stamp
        s' = semanticPrimitives_state_next_exn_stamp s /\
        (match r with Rval vs -> ALL2 (type_v tvs ctMap tenvS') vs ts
          | Rerr (Rraise v) -> type_v 0 ctMap tenvS' v Texn | Rerr
@@ -477,10 +477,10 @@ let exp_type_sound = prove
      type_pes tvs tvs tenv tenvE pes t1 t2 ==>
      (?tenvS'.
        type_s ctMap (semanticPrimitives_state_refs s') tenvS' /\
-       store_type_extension tenvS tenvS' /\
-         semanticPrimitives_state_next_type_stamp
-       s' = semanticPrimitives_state_next_type_stamp s /\
-         semanticPrimitives_state_next_exn_stamp
+       store_type_extension tenvS tenvS'
+         /\ semanticPrimitives_state_next_type_stamp
+       s' = semanticPrimitives_state_next_type_stamp s
+         /\ semanticPrimitives_state_next_exn_stamp
        s' = semanticPrimitives_state_next_exn_stamp s /\
        (match r with Rval vs -> type_v tvs ctMap tenvS' (HD vs) t2
          | Rerr (Rraise v) -> type_v 0 ctMap tenvS' v Texn | Rerr

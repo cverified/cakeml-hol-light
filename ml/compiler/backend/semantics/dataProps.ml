@@ -12,7 +12,6 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
@@ -102,27 +101,31 @@ add_simp the_NONE;;
 
 (* initial_state_simp *)
 let dataProps_initial_state_simp = prove
- (`state_clock
-     (dataSem_initial_state f c co cc ts l ss k) = k /\
-       dataSem_state_locals
-     (dataSem_initial_state f c co cc ts l ss k) = LN /\ state_code
-     (dataSem_initial_state f c co cc ts l ss k) = c /\ state_ffi
-     (dataSem_initial_state f c co cc ts l ss k) = f /\
-       compile_oracle
-     (dataSem_initial_state f c co cc ts l ss k) = co /\ compile
-     (dataSem_initial_state f c co cc ts l ss k) = cc /\ stack
-     (dataSem_initial_state f c co cc ts l ss k) = [] /\
-       dataSem_state_peak_heap_length
+ (`dataSem_state_clock
+     (dataSem_initial_state f c co cc ts l ss k) = k
+       /\ dataSem_state_locals
+     (dataSem_initial_state f c co cc ts l ss k) = LN
+       /\ dataSem_state_code
+     (dataSem_initial_state f c co cc ts l ss k) = c
+       /\ dataSem_state_ffi
+     (dataSem_initial_state f c co cc ts l ss k) = f
+       /\ dataSem_state_compile_oracle
+     (dataSem_initial_state f c co cc ts l ss k) = co
+       /\ dataSem_state_compile
+     (dataSem_initial_state f c co cc ts l ss k) = cc
+       /\ dataSem_state_stack
+     (dataSem_initial_state f c co cc ts l ss k) = []
+       /\ dataSem_state_peak_heap_length
      (dataSem_initial_state f c co cc ts l ss k) = 0`,
   CHEAT_TAC);;
 add_simp dataProps_initial_state_simp;;
 
 (* initial_state_with_simp *)
 let dataProps_initial_state_with_simp = prove
- (`(state_clock_fupd (K k') (dataSem_initial_state f c co cc ts l ss k)
-  = dataSem_initial_state f c co cc ts l ss k') /\
-   (stack_fupd (K []) (dataSem_initial_state f c co cc ts l ss k) =
-     dataSem_initial_state f c co cc ts l ss k) /\
+ (`(dataSem_state_clock_fupd (K k') (dataSem_initial_state f c co cc ts
+  l ss k) = dataSem_initial_state f c co cc ts l ss k') /\
+   (dataSem_state_stack_fupd (K []) (dataSem_initial_state f c co cc
+     ts l ss k) = dataSem_initial_state f c co cc ts l ss k) /\
    (dataSem_state_locals_fupd (K LN) (dataSem_initial_state f c co
      cc ts l ss k) = dataSem_initial_state f c co cc ts l ss k)`,
   CHEAT_TAC);;
@@ -134,26 +137,27 @@ let do_stack_const = prove
      (do_stack op vs s) = dataSem_state_locals s /\
    dataSem_state_locals_size (do_stack op vs s) =
      dataSem_state_locals_size s /\
-   stack (do_stack op vs s) = stack s /\
+   dataSem_state_stack (do_stack op vs s) = dataSem_state_stack s /\
    dataSem_state_stack_frame_sizes (do_stack op vs s) =
      dataSem_state_stack_frame_sizes s /\
    dataSem_state_global (do_stack op vs s) = dataSem_state_global s
      /\
    dataSem_state_handler (do_stack op vs s) = dataSem_state_handler s
      /\
-   state_refs (do_stack op vs s) = state_refs s /\
-   compile (do_stack op vs s) = compile s /\
-   state_clock (do_stack op vs s) = state_clock s /\
-   state_code (do_stack op vs s) = state_code s /\
-   state_ffi (do_stack op vs s) = state_ffi s /\
+   dataSem_state_refs (do_stack op vs s) = dataSem_state_refs s /\
+   dataSem_state_compile (do_stack op vs s) = dataSem_state_compile s
+     /\
+   dataSem_state_clock (do_stack op vs s) = dataSem_state_clock s /\
+   dataSem_state_code (do_stack op vs s) = dataSem_state_code s /\
+   dataSem_state_ffi (do_stack op vs s) = dataSem_state_ffi s /\
    dataSem_state_space (do_stack op vs s) = dataSem_state_space s /\
    dataSem_state_tstamps (do_stack op vs s) = dataSem_state_tstamps s
      /\
    dataSem_state_limits (do_stack op vs s) = dataSem_state_limits s
      /\
    dataSem_state_peak_heap_length (do_stack op vs s) =
-     dataSem_state_peak_heap_length s /\ compile_oracle (do_stack op
-     vs s) = compile_oracle s`,
+     dataSem_state_peak_heap_length s /\ dataSem_state_compile_oracle
+     (do_stack op vs s) = dataSem_state_compile_oracle s`,
   CHEAT_TAC);;
 add_simp do_stack_const;;
 
@@ -198,10 +202,12 @@ let get_vars_IMP_domain = prove
   CHEAT_TAC);;
 
 let cut_state_opt_with_const = prove
- (`(dataSem_cut_state_opt x (stack_fupd (K z) y) = OPTION_MAP (\s.
-  stack_fupd (K z) s) (dataSem_cut_state_opt x y)) /\
-    (dataSem_cut_state_opt x (state_clock_fupd (K k) y) = OPTION_MAP
-      (\s. state_clock_fupd (K k) s) (dataSem_cut_state_opt x y)) /\
+ (`(dataSem_cut_state_opt x (dataSem_state_stack_fupd (K z) y) =
+  OPTION_MAP (\s. dataSem_state_stack_fupd (K z) s)
+  (dataSem_cut_state_opt x y)) /\
+    (dataSem_cut_state_opt x (dataSem_state_clock_fupd (K k) y) =
+      OPTION_MAP (\s. dataSem_state_clock_fupd (K k) s)
+      (dataSem_cut_state_opt x y)) /\
    (dataSem_cut_state_opt x (dataSem_state_locals_size_fupd (K lsz)
      y) = OPTION_MAP (\s. dataSem_state_locals_size_fupd (K lsz) s)
      (dataSem_cut_state_opt x y))`,
@@ -219,8 +225,8 @@ let consume_space_add_space = prove
 
 (* [local] *)
 let consume_space_with_stack = prove
- (`consume_space x (stack_fupd (K z) y) = OPTION_MAP (\s. stack_fupd
-  (K z) s) (consume_space x y)`,
+ (`consume_space x (dataSem_state_stack_fupd (K z) y) = OPTION_MAP
+  (\s. dataSem_state_stack_fupd (K z) s) (consume_space x y)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -237,39 +243,42 @@ let consume_space_with_locals = prove
    comment *)
 (* [local] *)
 let do_app_with_stack = prove
- (`dataSem_do_app op vs (stack_fupd (K z) s) =
+ (`dataSem_do_app op vs (dataSem_state_stack_fupd (K z) s) =
     map_result (\(x,y). (x,dataSem_state_peak_heap_length_fupd (K (if
       op = wordLang_Install then dataSem_state_peak_heap_length
-      (stack_fupd (K z) s) else if MEM op [closLang_IntOp
+      (dataSem_state_stack_fupd (K z) s) else if MEM op [closLang_IntOp
       closLang_Greater; closLang_IntOp closLang_GreaterEq] then
-      dataSem_state_peak_heap_length (stack_fupd (K z) s) else (\op vs
-      s. if op_space_reset op then (\k op_args s. MAX
+      dataSem_state_peak_heap_length (dataSem_state_stack_fupd (K z) s)
+      else (\op vs s. if op_space_reset op then (\k op_args s. MAX
       (dataSem_state_peak_heap_length s) (size_of_heap_args op_args s +
       k)) (space_consumed s op vs) vs s else
-      dataSem_state_peak_heap_length s) op vs (stack_fupd (K z) s)))
-      (dataSem_state_stack_max_fupd (K (dataSem_state_stack_max
-      (do_stack op vs (stack_fupd (K z) s))))
-      (dataSem_state_safe_for_space_fupd (K (if allowed_op op (LENGTH
-      vs) then ((\op vs s. if op_space_reset op then
+      dataSem_state_peak_heap_length s) op vs (dataSem_state_stack_fupd
+      (K z) s))) (dataSem_state_stack_max_fupd (K
+      (dataSem_state_stack_max (do_stack op vs (dataSem_state_stack_fupd
+      (K z) s)))) (dataSem_state_safe_for_space_fupd (K (if allowed_op
+      op (LENGTH vs) then ((\op vs s. if op_space_reset op then
                     dataSem_state_safe_for_space s /\
                     no_thunks_in_refs (dataSem_state_refs s) /\
                         size_of_heap_args vs s + space_consumed s op
                           vs <= limits_heap_limit (dataSem_state_limits
                           s) else dataSem_state_safe_for_space s) op vs
-                          (stack_fupd (K z) s) /\
-                     lim_safe (dataSem_state_limits (stack_fupd (K z)
-                       s)) op vs /\ the F (OPTION_MAP ((>)
-                       (limits_stack_limit (dataSem_state_limits
-                       (stack_fupd (K z) s))))
+                          (dataSem_state_stack_fupd (K z) s) /\
+                     lim_safe (dataSem_state_limits
+                       (dataSem_state_stack_fupd (K z) s)) op vs /\ the
+                       F (OPTION_MAP ((>) (limits_stack_limit
+                       (dataSem_state_limits (dataSem_state_stack_fupd
+                       (K z) s))))
                             (OPTION_MAP2 (+) (stack_consumed
                               (dataSem_state_stack_frame_sizes
-                              (stack_fupd (K z) s))
-                              (dataSem_state_limits (stack_fupd (K z)
-                              s)) op vs)
-                              (OPTION_MAP2 (+) (size_of_stack (stack
-                                (stack_fupd (K z) s)))
-                                (dataSem_state_locals_size (stack_fupd
-                                (K z) s)))))) else F)) (stack_fupd (K z)
+                              (dataSem_state_stack_fupd (K z) s))
+                              (dataSem_state_limits
+                              (dataSem_state_stack_fupd (K z) s)) op vs)
+                              (OPTION_MAP2 (+) (size_of_stack
+                                (dataSem_state_stack
+                                (dataSem_state_stack_fupd (K z) s)))
+                                (dataSem_state_locals_size
+                                (dataSem_state_stack_fupd (K z) s))))))
+                                else F)) (dataSem_state_stack_fupd (K z)
                                 y)))))
                I (dataSem_do_app op vs s)`,
   CHEAT_TAC);;
@@ -278,51 +287,57 @@ let do_app_with_stack = prove
    comment *)
 (* [local] *)
 let do_app_with_stack_and_locals = prove
- (`dataSem_do_app op vs (stack_fupd (K z)
+ (`dataSem_do_app op vs (dataSem_state_stack_fupd (K z)
   (dataSem_state_locals_size_fupd (K lsz) s)) =
    map_result (\(x,y). (x,dataSem_state_peak_heap_length_fupd (K (if
      op = wordLang_Install then dataSem_state_peak_heap_length
-     (stack_fupd (K z) (dataSem_state_locals_size_fupd (K lsz) s)) else
-     if MEM op [closLang_IntOp closLang_Greater; closLang_IntOp
-     closLang_GreaterEq] then dataSem_state_peak_heap_length (stack_fupd
-     (K z) (dataSem_state_locals_size_fupd (K lsz) s)) else (\op vs s.
-     if op_space_reset op then (\k op_args s. MAX
+     (dataSem_state_stack_fupd (K z) (dataSem_state_locals_size_fupd (K
+     lsz) s)) else if MEM op [closLang_IntOp closLang_Greater;
+     closLang_IntOp closLang_GreaterEq] then
+     dataSem_state_peak_heap_length (dataSem_state_stack_fupd (K z)
+     (dataSem_state_locals_size_fupd (K lsz) s)) else (\op vs s. if
+     op_space_reset op then (\k op_args s. MAX
      (dataSem_state_peak_heap_length s) (size_of_heap_args op_args s +
      k)) (space_consumed s op vs) vs s else
-     dataSem_state_peak_heap_length s) op vs (stack_fupd (K z)
-     (dataSem_state_locals_size_fupd (K lsz) s))))
+     dataSem_state_peak_heap_length s) op vs (dataSem_state_stack_fupd
+     (K z) (dataSem_state_locals_size_fupd (K lsz) s))))
      (dataSem_state_stack_max_fupd (K (dataSem_state_stack_max (do_stack
-     op vs (stack_fupd (K z) (dataSem_state_locals_size_fupd (K lsz)
-     s))))) (dataSem_state_safe_for_space_fupd (K (if allowed_op op
-     (LENGTH vs) then ((\op vs s. if op_space_reset op then
+     op vs (dataSem_state_stack_fupd (K z)
+     (dataSem_state_locals_size_fupd (K lsz) s)))))
+     (dataSem_state_safe_for_space_fupd (K (if allowed_op op (LENGTH vs)
+     then ((\op vs s. if op_space_reset op then
                     dataSem_state_safe_for_space s /\
                     no_thunks_in_refs (dataSem_state_refs s) /\
                         size_of_heap_args vs s + space_consumed s op
                           vs <= limits_heap_limit (dataSem_state_limits
                           s) else dataSem_state_safe_for_space s) op vs
-                          (stack_fupd (K z)
+                          (dataSem_state_stack_fupd (K z)
                           (dataSem_state_locals_size_fupd (K lsz) s)) /\
-                     lim_safe (dataSem_state_limits (stack_fupd (K z)
+                     lim_safe (dataSem_state_limits
+                       (dataSem_state_stack_fupd (K z)
                        (dataSem_state_locals_size_fupd (K lsz) s))) op
                        vs /\ the F (OPTION_MAP ((>) (limits_stack_limit
-                       (dataSem_state_limits (stack_fupd (K z)
-                       (dataSem_state_locals_size_fupd (K lsz) s)))))
+                       (dataSem_state_limits (dataSem_state_stack_fupd
+                       (K z) (dataSem_state_locals_size_fupd (K lsz)
+                       s)))))
                             (OPTION_MAP2 (+) (stack_consumed
                               (dataSem_state_stack_frame_sizes
-                              (stack_fupd (K z)
+                              (dataSem_state_stack_fupd (K z)
                               (dataSem_state_locals_size_fupd (K lsz)
-                              s))) (dataSem_state_limits (stack_fupd (K
-                              z) (dataSem_state_locals_size_fupd (K lsz)
+                              s))) (dataSem_state_limits
+                              (dataSem_state_stack_fupd (K z)
+                              (dataSem_state_locals_size_fupd (K lsz)
                               s))) op vs)
-                              (OPTION_MAP2 (+) (size_of_stack (stack
-                                (stack_fupd (K z)
+                              (OPTION_MAP2 (+) (size_of_stack
+                                (dataSem_state_stack
+                                (dataSem_state_stack_fupd (K z)
                                 (dataSem_state_locals_size_fupd (K lsz)
                                 s)))) (dataSem_state_locals_size
-                                (stack_fupd (K z)
+                                (dataSem_state_stack_fupd (K z)
                                 (dataSem_state_locals_size_fupd (K lsz)
                                 s))))))) else F))
                                 (dataSem_state_locals_size_fupd (K lsz)
-                                (stack_fupd (K z) y))))))
+                                (dataSem_state_stack_fupd (K z) y))))))
                I (dataSem_do_app op vs s)`,
   CHEAT_TAC);;
 
@@ -376,7 +391,8 @@ let do_app_with_locals = prove
                               (dataSem_state_limits
                               (dataSem_state_locals_fupd (K z) s)) op
                               vs)
-                              (OPTION_MAP2 (+) (size_of_stack (stack
+                              (OPTION_MAP2 (+) (size_of_stack
+                                (dataSem_state_stack
                                 (dataSem_state_locals_fupd (K z) s)))
                                 (dataSem_state_locals_size
                                 (dataSem_state_locals_fupd (K z) s))))))
@@ -394,10 +410,12 @@ let do_app_aux_err = prove
 
 (* do_app_aux_const *)
 let dataProps_do_app_aux_const = prove
- (`dataSem_do_app_aux op vs x = Rval (y,z) ==> stack
-   z = stack x /\ dataSem_state_handler z = dataSem_state_handler x
-     /\ dataSem_state_locals z = dataSem_state_locals x /\ state_clock
-   z = state_clock x /\ compile z = compile x`,
+ (`dataSem_do_app_aux op vs x = Rval (y,z) ==> dataSem_state_stack
+   z = dataSem_state_stack x /\ dataSem_state_handler z =
+     dataSem_state_handler x /\ dataSem_state_locals z =
+     dataSem_state_locals x /\ dataSem_state_clock
+   z = dataSem_state_clock x /\ dataSem_state_compile z =
+     dataSem_state_compile x`,
   CHEAT_TAC);;
 
 (* do_app_err *)
@@ -410,10 +428,12 @@ let dataProps_do_app_err = prove
 
 (* do_app_const *)
 let dataProps_do_app_const = prove
- (`dataSem_do_app op vs x = Rval (y,z) ==> stack
-    z = stack x /\ dataSem_state_handler z = dataSem_state_handler x
-      /\ dataSem_state_locals z = dataSem_state_locals x /\ state_clock
-    z = state_clock x /\ compile z = compile x`,
+ (`dataSem_do_app op vs x = Rval (y,z) ==> dataSem_state_stack
+    z = dataSem_state_stack x /\ dataSem_state_handler z =
+      dataSem_state_handler x /\ dataSem_state_locals z =
+      dataSem_state_locals x /\ dataSem_state_clock
+    z = dataSem_state_clock x /\ dataSem_state_compile z =
+      dataSem_state_compile x`,
   CHEAT_TAC);;
 
 let do_app_locals = prove
@@ -441,8 +461,8 @@ let do_app_locals = prove
                          s) else dataSem_state_safe_for_space s) op x
                          (dataSem_state_locals_fupd (K extra) s) /\
                     lim_safe (dataSem_state_limits
-                      (dataSem_state_locals_fupd (K extra) s)) op x /\
-                      the F (OPTION_MAP ((>) (limits_stack_limit
+                      (dataSem_state_locals_fupd (K extra) s)) op x
+                      /\ the F (OPTION_MAP ((>) (limits_stack_limit
                       (dataSem_state_limits (dataSem_state_locals_fupd
                       (K extra) s))))
                            (OPTION_MAP2 (+) (stack_consumed
@@ -451,7 +471,8 @@ let do_app_locals = prove
                              (dataSem_state_limits
                              (dataSem_state_locals_fupd (K extra) s)) op
                              x)
-                             (OPTION_MAP2 (+) (size_of_stack (stack
+                             (OPTION_MAP2 (+) (size_of_stack
+                               (dataSem_state_stack
                                (dataSem_state_locals_fupd (K extra)
                                s))) (dataSem_state_locals_size
                                (dataSem_state_locals_fupd (K extra)
@@ -619,13 +640,15 @@ let do_app_err_sm_safe_peak_swap = prove
 let do_app_lss_stk_stfrm_swap_aux = prove
  (`!op vs s q s' lss stk stfrm. dataSem_do_app op vs s = Rval (q,s') ==>
      (?ss pk smx. dataSem_do_app op vs
-       (dataSem_state_stack_frame_sizes_fupd (K stfrm) (stack_fupd (K
-       stk) (dataSem_state_locals_size_fupd (K lss) s))) =
+       (dataSem_state_stack_frame_sizes_fupd (K stfrm)
+       (dataSem_state_stack_fupd (K stk) (dataSem_state_locals_size_fupd
+       (K lss) s))) =
        Rval (q,dataSem_state_peak_heap_length_fupd (K pk)
          (dataSem_state_safe_for_space_fupd (K ss)
          (dataSem_state_stack_max_fupd (K smx)
          (dataSem_state_stack_frame_sizes_fupd (K (if op =
-         wordLang_Install then LN else stfrm)) (stack_fupd (K stk)
+         wordLang_Install then LN else stfrm))
+         (dataSem_state_stack_fupd (K stk)
          (dataSem_state_locals_size_fupd (K lss) s')))))))`,
   CHEAT_TAC);;
 
@@ -635,8 +658,9 @@ let do_app_lss_stk_stfrm_swap_aux = prove
 let do_app_err_lss_stk_stfrm_swap = prove
  (`!op vs s lss stk stfrm.
      dataSem_do_app op vs s = Rerr e ==> dataSem_do_app op vs
-       (dataSem_state_stack_frame_sizes_fupd (K stfrm) (stack_fupd (K
-       stk) (dataSem_state_locals_size_fupd (K lss) s))) =
+       (dataSem_state_stack_frame_sizes_fupd (K stfrm)
+       (dataSem_state_stack_fupd (K stk) (dataSem_state_locals_size_fupd
+       (K lss) s))) =
        Rerr e`,
   CHEAT_TAC);;
 
@@ -775,11 +799,11 @@ let s_peak_heap = prove
      s = s /\ dataSem_state_locals_size_fupd (K
        (dataSem_state_locals_size s))
      s = s /\ dataSem_state_safe_for_space_fupd (K ssnew)
-       (state_clock_fupd (K clock) (dataSem_state_stack_max_fupd (K
-       smnew) (stack_fupd (K (stack s))
+       (dataSem_state_clock_fupd (K clock) (dataSem_state_stack_max_fupd
+       (K smnew) (dataSem_state_stack_fupd (K (dataSem_state_stack s))
      s))) = dataSem_state_safe_for_space_fupd (K ssnew)
-       (state_clock_fupd (K clock) (dataSem_state_stack_max_fupd (K
-       smnew) s)) /\ dataSem_state_peak_heap_length_fupd (K plnnew)
+       (dataSem_state_clock_fupd (K clock) (dataSem_state_stack_max_fupd
+       (K smnew) s)) /\ dataSem_state_peak_heap_length_fupd (K plnnew)
        (dataSem_state_safe_for_space_fupd (K ssnew)
        (dataSem_state_handler_fupd (K (dataSem_state_handler s))
      s)) = dataSem_state_peak_heap_length_fupd (K plnnew)
@@ -791,7 +815,7 @@ let evaluate_stack_and_locals_swap = prove
  (`!c (s:('c,'ffi)dataSem_state).
       match dataSem_evaluate (c,s) with (SOME (Rerr (Rabort
         Rtype_error)),s1) -> T | (SOME (Rerr (Rabort a)),s1) ->
-               (stack s1 = []) /\ (!xs lsz. (LENGTH
+               (dataSem_state_stack s1 = []) /\ (!xs lsz. (LENGTH
                  (dataSem_state_stack s) = LENGTH xs) ==>
                         (?lss sfs smx phl.
                         dataSem_evaluate
@@ -803,11 +827,11 @@ let evaluate_stack_and_locals_swap = prove
                             (dataSem_state_safe_for_space_fupd (K sfs)
                             (dataSem_state_locals_size_fupd (K lss)
                             s1)))))) | (SOME (Rerr (Rraise t)),s1) ->
-                 (?s2. (dataSem_jump_exc s = SOME s2) /\
-                   (dataSem_state_locals s2 = dataSem_state_locals s1)
-                   /\
-                       (stack s2 = stack s1) /\
-                         (dataSem_state_handler s2 =
+                 (?s2. (dataSem_jump_exc s = SOME s2)
+                   /\ (dataSem_state_locals s2 = dataSem_state_locals
+                   s1) /\
+                       (dataSem_state_stack s2 = dataSem_state_stack
+                         s1) /\ (dataSem_state_handler s2 =
                          dataSem_state_handler s1) /\
                        (!xs s7 lsz. (dataSem_jump_exc
                          (dataSem_state_locals_size_fupd (K lsz)
@@ -828,11 +852,13 @@ let evaluate_stack_and_locals_swap = prove
                                 (K lss) (dataSem_state_locals_fupd (K
                                 (dataSem_state_locals s7))
                                 (dataSem_state_handler_fupd (K
-                                (dataSem_state_handler s7)) (stack_fupd
-                                (K (stack s7))
-                              s1))))))))))) | (res,s1) -> (stack s1 =
-                                dataSem_state_stack s) /\
-                                (dataSem_state_handler s1 =
+                                (dataSem_state_handler s7))
+                                (dataSem_state_stack_fupd (K
+                                (dataSem_state_stack s7))
+                              s1))))))))))) | (res,s1) ->
+                                (dataSem_state_stack s1 =
+                                dataSem_state_stack s)
+                                /\ (dataSem_state_handler s1 =
                                 dataSem_state_handler s) /\
                          (!xs lsz. (LENGTH (dataSem_state_stack s) =
                            LENGTH xs) ==>
@@ -846,7 +872,7 @@ let evaluate_stack_and_locals_swap = prove
                                 (K phl) (dataSem_state_stack_max_fupd
                                 (K smx)
                                 (dataSem_state_safe_for_space_fupd (K
-                                sfs) (stack_fupd (K xs)
+                                sfs) (dataSem_state_stack_fupd (K xs)
                                 (dataSem_state_locals_size_fupd (K
                                 lss) s1)))))))`,
   CHEAT_TAC);;
@@ -855,8 +881,8 @@ let evaluate_stack_swap = prove
  (`!c (s:('c,'ffi)dataSem_state).
       match dataSem_evaluate (c,s) with (SOME (Rerr (Rabort
         Rtype_error)),s1) -> T | (SOME (Rerr (Rabort a)),s1) ->
-               (stack s1 = []) /\ (!xs. (LENGTH (dataSem_state_stack
-                 s) = LENGTH xs) ==>
+               (dataSem_state_stack s1 = []) /\ (!xs. (LENGTH
+                 (dataSem_state_stack s) = LENGTH xs) ==>
                         (?lss sfs smx phl.
                         dataSem_evaluate (c,dataSem_state_stack_fupd
                           (K xs) s) =
@@ -866,11 +892,11 @@ let evaluate_stack_swap = prove
                             (dataSem_state_safe_for_space_fupd (K sfs)
                             (dataSem_state_locals_size_fupd (K lss)
                             s1)))))) | (SOME (Rerr (Rraise t)),s1) ->
-                 (?s2. (dataSem_jump_exc s = SOME s2) /\
-                   (dataSem_state_locals s2 = dataSem_state_locals s1)
-                   /\
-                       (stack s2 = stack s1) /\
-                         (dataSem_state_handler s2 =
+                 (?s2. (dataSem_jump_exc s = SOME s2)
+                   /\ (dataSem_state_locals s2 = dataSem_state_locals
+                   s1) /\
+                       (dataSem_state_stack s2 = dataSem_state_stack
+                         s1) /\ (dataSem_state_handler s2 =
                          dataSem_state_handler s1) /\
                        (!xs s7. (dataSem_jump_exc
                          (dataSem_state_stack_fupd (K xs) s) = SOME s7)
@@ -888,11 +914,13 @@ let evaluate_stack_swap = prove
                                 (K lss) (dataSem_state_locals_fupd (K
                                 (dataSem_state_locals s7))
                                 (dataSem_state_handler_fupd (K
-                                (dataSem_state_handler s7)) (stack_fupd
-                                (K (stack s7))
-                              s1))))))))))) | (res,s1) -> (stack s1 =
-                                dataSem_state_stack s) /\
-                                (dataSem_state_handler s1 =
+                                (dataSem_state_handler s7))
+                                (dataSem_state_stack_fupd (K
+                                (dataSem_state_stack s7))
+                              s1))))))))))) | (res,s1) ->
+                                (dataSem_state_stack s1 =
+                                dataSem_state_stack s)
+                                /\ (dataSem_state_handler s1 =
                                 dataSem_state_handler s) /\
                          (!xs. (LENGTH (dataSem_state_stack s) =
                            LENGTH xs) ==>
@@ -904,7 +932,7 @@ let evaluate_stack_swap = prove
                                 (K phl) (dataSem_state_stack_max_fupd
                                 (K smx)
                                 (dataSem_state_safe_for_space_fupd (K
-                                sfs) (stack_fupd (K xs)
+                                sfs) (dataSem_state_stack_fupd (K xs)
                                 (dataSem_state_locals_size_fupd (K
                                 lss) s1)))))))`,
   CHEAT_TAC);;
@@ -912,34 +940,36 @@ let evaluate_stack_swap = prove
 let evaluate_stack = prove
  (`!c (s:('c,'ffi)dataSem_state).
       match dataSem_evaluate (c,s) with (SOME (Rerr (Rabort
-        Rtype_error)),s1) -> T | (SOME (Rerr (Rabort _7)),s1) -> (stack
-        s1 = []) | (SOME (Rerr _8),s1) ->
-            (?s2. (dataSem_jump_exc s = SOME s2) /\
-              (dataSem_state_locals s2 = dataSem_state_locals s1) /\
-                  (stack s2 = stack s1) /\ (dataSem_state_handler
-                    s2 = dataSem_state_handler s1)) | (_9,s1) ->
-                    (stack s1 = dataSem_state_stack s) /\
-                    (dataSem_state_handler s1 = dataSem_state_handler
-                    s)`,
+        Rtype_error)),s1) -> T | (SOME (Rerr (Rabort _7)),s1) ->
+        (dataSem_state_stack s1 = []) | (SOME (Rerr _8),s1) ->
+            (?s2. (dataSem_jump_exc s = SOME s2)
+              /\ (dataSem_state_locals s2 = dataSem_state_locals s1) /\
+                  (dataSem_state_stack s2 = dataSem_state_stack s1)
+                    /\ (dataSem_state_handler s2 =
+                    dataSem_state_handler s1)) | (_9,s1) ->
+                    (dataSem_state_stack s1 = dataSem_state_stack s)
+                    /\ (dataSem_state_handler s1 =
+                    dataSem_state_handler s)`,
   CHEAT_TAC);;
 
 let evaluate_NONE_jump_exc = prove
- (`(dataSem_evaluate (c,(s:('c,'ffi)dataSem_state)) = (NONE,u1)) /\
-  (dataSem_jump_exc u1 = SOME x) ==>
+ (`(dataSem_evaluate (c,(s:('c,'ffi)dataSem_state)) = (NONE,u1))
+  /\ (dataSem_jump_exc u1 = SOME x) ==>
      (dataSem_jump_exc s = SOME (dataSem_state_locals_size_fupd (K
        (dataSem_state_locals_size x)) (dataSem_state_locals_fupd (K
        (dataSem_state_locals x)) (dataSem_state_handler_fupd (K
-       (dataSem_state_handler x)) (dataSem_state_stack_fupd (K (stack
-       x)) s)))))`,
+       (dataSem_state_handler x)) (dataSem_state_stack_fupd (K
+       (dataSem_state_stack x)) s)))))`,
   CHEAT_TAC);;
 
 let evaluate_NONE_jump_exc_ALT = prove
- (`(dataSem_evaluate (c,(s:('c,'ffi)dataSem_state)) = (NONE,u1)) /\
-  (dataSem_jump_exc s = SOME x) ==>
+ (`(dataSem_evaluate (c,(s:('c,'ffi)dataSem_state)) = (NONE,u1))
+  /\ (dataSem_jump_exc s = SOME x) ==>
     (dataSem_jump_exc u1 = SOME (dataSem_state_locals_size_fupd (K
       (dataSem_state_locals_size x)) (dataSem_state_locals_fupd (K
       (dataSem_state_locals x)) (dataSem_state_handler_fupd (K
-      (dataSem_state_handler x)) (stack_fupd (K (stack x)) u1)))))`,
+      (dataSem_state_handler x)) (dataSem_state_stack_fupd (K
+      (dataSem_state_stack x)) u1)))))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1009,8 +1039,8 @@ let cut_state_opt_locals_ok = prove
   CHEAT_TAC);;
 
 let evaluate_locals = prove
- (`!c s res s2 vars' l. ~(res = SOME (Rerr (Rabort Rtype_error))) /\
-  (dataSem_evaluate (c,s) = (res,s2)) /\
+ (`!c s res s2 vars' l. ~(res = SOME (Rerr (Rabort Rtype_error)))
+  /\ (dataSem_evaluate (c,s) = (res,s2)) /\
        locals_ok (dataSem_state_locals s) l ==>
        (?w safe peak sm. (dataSem_evaluate
          (c,dataSem_state_locals_fupd (K l) s) =
@@ -1026,52 +1056,58 @@ let evaluate_locals = prove
   CHEAT_TAC);;
 
 let funpow_dec_clock_clock = prove
- (`!n s. ITER n dataSem_dec_clock s = (state_clock_fupd (K
-  (state_clock s - n)) s)`,
+ (`!n s. ITER n dataSem_dec_clock s = (dataSem_state_clock_fupd (K
+  (dataSem_state_clock s - n)) s)`,
   CHEAT_TAC);;
 
 let evaluate_mk_ticks = prove
  (`!p s n.
     dataSem_evaluate (mk_ticks n p,s) =
-    (if state_clock s < n then
+    (if dataSem_state_clock s < n then
       (SOME (Rerr (Rabort
         Rtimeout_error)),dataSem_state_locals_size_fupd (K (SOME 0))
-        (stack_fupd (K []) (dataSem_state_locals_fupd (K
-        (sptree_fromList [])) (state_clock_fupd (K 0)
+        (dataSem_state_stack_fupd (K []) (dataSem_state_locals_fupd (K
+        (sptree_fromList [])) (dataSem_state_clock_fupd (K 0)
        s)))) else
       dataSem_evaluate (p,ITER n dataSem_dec_clock s))`,
   CHEAT_TAC);;
 
 let FUNPOW_dec_clock_code = prove
- (`(state_code (ITER n dataSem_dec_clock t) = state_code t) /\
-   (stack (ITER n dataSem_dec_clock t) = stack t) /\
+ (`(dataSem_state_code (ITER n dataSem_dec_clock t) = dataSem_state_code
+  t) /\
+   (dataSem_state_stack (ITER n dataSem_dec_clock t) =
+     dataSem_state_stack t) /\
    (dataSem_state_handler (ITER n dataSem_dec_clock t) =
      dataSem_state_handler t) /\
-   (state_refs (ITER n dataSem_dec_clock t) = state_refs t) /\
-   (state_ffi (ITER n dataSem_dec_clock t) = state_ffi t) /\
+   (dataSem_state_refs (ITER n dataSem_dec_clock t) =
+     dataSem_state_refs t) /\
+   (dataSem_state_ffi (ITER n dataSem_dec_clock t) =
+     dataSem_state_ffi t) /\
    (dataSem_state_safe_for_space (ITER n dataSem_dec_clock t) =
      dataSem_state_safe_for_space t) /\
    (dataSem_state_global (ITER n dataSem_dec_clock t) =
      dataSem_state_global t) /\
    (dataSem_state_locals (ITER n dataSem_dec_clock t) =
      dataSem_state_locals t) /\
-   (compile (ITER n dataSem_dec_clock t) = compile t) /\
-   (compile_oracle (ITER n dataSem_dec_clock t) = compile_oracle t)
-     /\
+   (dataSem_state_compile (ITER n dataSem_dec_clock t) =
+     dataSem_state_compile t) /\
+   (dataSem_state_compile_oracle (ITER n dataSem_dec_clock t) =
+     dataSem_state_compile_oracle t) /\
    (dataSem_state_peak_heap_length (ITER n dataSem_dec_clock t) =
      dataSem_state_peak_heap_length t) /\
    (dataSem_state_stack_frame_sizes (ITER n dataSem_dec_clock t) =
      dataSem_state_stack_frame_sizes t) /\
    (dataSem_state_locals_size (ITER n dataSem_dec_clock t) =
      dataSem_state_locals_size t) /\
-   (state_clock (ITER n dataSem_dec_clock t) = state_clock t - n)`,
+   (dataSem_state_clock (ITER n dataSem_dec_clock t) =
+     dataSem_state_clock t - n)`,
   CHEAT_TAC);;
 add_simp FUNPOW_dec_clock_code;;
 
 let jump_exc_NONE = prove
  (`(dataSem_jump_exc (dataSem_state_locals_fupd (K x) t) = NONE <=>
   dataSem_jump_exc t = NONE) /\
-   (dataSem_jump_exc (state_clock_fupd (K c) t) = NONE <=>
+   (dataSem_jump_exc (dataSem_state_clock_fupd (K c) t) = NONE <=>
      dataSem_jump_exc t = NONE) /\
    (dataSem_jump_exc (dataSem_state_stack_max_fupd (K sm) t) = NONE
      <=> dataSem_jump_exc t = NONE) /\
@@ -1083,11 +1119,12 @@ let jump_exc_NONE = prove
 
 let jump_exc_IMP = prove
  (`(dataSem_jump_exc s = SOME t) ==> dataSem_state_handler
-    s < LENGTH (stack s) /\
-    (?n e ls xs. (LASTN (dataSem_state_handler s + 1) (stack s) =
-      CONS (dataSem_Exc ls e n) xs) /\
-                (t = stack_fupd (K xs) (dataSem_state_locals_fupd
-                  (K e) (dataSem_state_locals_size_fupd (K ls)
+    s < LENGTH (dataSem_state_stack s) /\
+    (?n e ls xs. (LASTN (dataSem_state_handler s + 1)
+      (dataSem_state_stack s) = CONS (dataSem_Exc ls e n) xs) /\
+                (t = dataSem_state_stack_fupd (K xs)
+                  (dataSem_state_locals_fupd (K e)
+                  (dataSem_state_locals_size_fupd (K ls)
                   (dataSem_state_handler_fupd (K n) s)))))`,
   CHEAT_TAC);;
 
@@ -1099,38 +1136,40 @@ let do_app_Rerr = prove
   CHEAT_TAC);;
 
 let size_of_heap_with_clock = prove
- (`!s z. size_of_heap (state_clock_fupd (K z) s) = size_of_heap s`,
+ (`!s z. size_of_heap (dataSem_state_clock_fupd (K z) s) =
+  size_of_heap s`,
   CHEAT_TAC);;
 
 let size_of_heap_args_with_clock = prove
- (`!s z a. size_of_heap_args a (state_clock_fupd (K z) s) =
+ (`!s z a. size_of_heap_args a (dataSem_state_clock_fupd (K z) s) =
   size_of_heap_args a s`,
   CHEAT_TAC);;
 
 let space_consumed_with_clock = prove
- (`!s op vs. space_consumed (state_clock_fupd (K z) s) op vs =
+ (`!s op vs. space_consumed (dataSem_state_clock_fupd (K z) s) op vs =
   space_consumed s op vs`,
   CHEAT_TAC);;
 
 (* HOL4 dataPropsScript.sml:1868: code that the source has in a
    comment *)
 let do_app_with_clock = prove
- (`dataSem_do_app op vs (state_clock_fupd (K z) s) =
-    map_result (\(x,y). (x,state_clock_fupd (K z) y)) I
+ (`dataSem_do_app op vs (dataSem_state_clock_fupd (K z) s) =
+    map_result (\(x,y). (x,dataSem_state_clock_fupd (K z) y)) I
       (dataSem_do_app op vs s)`,
   CHEAT_TAC);;
 
 (* do_app_change_clock *)
 let dataProps_do_app_change_clock = prove
  (`(dataSem_do_app op args s1 = Rval (res,s2)) ==>
-    (dataSem_do_app op args (state_clock_fupd (K ck) s1) = Rval
-      (res,state_clock_fupd (K ck) s2))`,
+    (dataSem_do_app op args (dataSem_state_clock_fupd (K ck) s1) =
+      Rval (res,dataSem_state_clock_fupd (K ck) s2))`,
   CHEAT_TAC);;
 
 (* do_app_change_clock_err *)
 let dataProps_do_app_change_clock_err = prove
  (`(dataSem_do_app op args s1 = Rerr e) ==>
-   (dataSem_do_app op args (state_clock_fupd (K ck) s1) = Rerr e)`,
+   (dataSem_do_app op args (dataSem_state_clock_fupd (K ck) s1) =
+     Rerr e)`,
   CHEAT_TAC);;
 
 let cut_state_eq_some = prove
@@ -1140,68 +1179,77 @@ let cut_state_eq_some = prove
   CHEAT_TAC);;
 
 let set_var_const = prove
- (`state_ffi
-      (dataSem_set_var x y z) = state_ffi z /\ state_clock
-      (dataSem_set_var x y z) = state_clock z`,
+ (`dataSem_state_ffi
+      (dataSem_set_var x y z) = dataSem_state_ffi z
+        /\ dataSem_state_clock
+      (dataSem_set_var x y z) = dataSem_state_clock z`,
   CHEAT_TAC);;
 add_simp set_var_const;;
 
 let set_var_with_const = prove
- (`(dataSem_set_var x y (state_clock_fupd (K k) z)) = state_clock_fupd
-  (K k) (dataSem_set_var x y z)`,
+ (`(dataSem_set_var x y (dataSem_state_clock_fupd (K k) z)) =
+  dataSem_state_clock_fupd (K k) (dataSem_set_var x y z)`,
   CHEAT_TAC);;
 
 let set_vars_const = prove
- (`state_ffi
-      (dataSem_set_vars xs ys z) = state_ffi z /\ state_clock
-      (dataSem_set_vars xs ys z) = state_clock z`,
+ (`dataSem_state_ffi
+      (dataSem_set_vars xs ys z) = dataSem_state_ffi z
+        /\ dataSem_state_clock
+      (dataSem_set_vars xs ys z) = dataSem_state_clock z`,
   CHEAT_TAC);;
 add_simp set_vars_const;;
 
 let set_vars_with_const = prove
- (`(dataSem_set_vars xs ys (state_clock_fupd (K k) z)) =
-  state_clock_fupd (K k) (dataSem_set_vars xs ys z)`,
+ (`(dataSem_set_vars xs ys (dataSem_state_clock_fupd (K k) z)) =
+  dataSem_state_clock_fupd (K k) (dataSem_set_vars xs ys z)`,
   CHEAT_TAC);;
 add_simp set_vars_with_const;;
 
 let call_env_const = prove
- (`state_ffi
-      (dataSem_call_env x s y) = state_ffi y /\ state_clock
-      (dataSem_call_env x s y) = state_clock y`,
+ (`dataSem_state_ffi
+      (dataSem_call_env x s y) = dataSem_state_ffi y
+        /\ dataSem_state_clock
+      (dataSem_call_env x s y) = dataSem_state_clock y`,
   CHEAT_TAC);;
 add_simp call_env_const;;
 
 let call_env_with_const = prove
- (`(dataSem_call_env x s (state_clock_fupd (K z) y)) =
-  state_clock_fupd (K z) (dataSem_call_env x s y)`,
+ (`(dataSem_call_env x s (dataSem_state_clock_fupd (K z) y)) =
+  dataSem_state_clock_fupd (K z) (dataSem_call_env x s y)`,
   CHEAT_TAC);;
 
 let push_env_const = prove
- (`state_ffi
-      (dataSem_push_env x y z) = state_ffi z /\ state_clock
-      (dataSem_push_env x y z) = state_clock z /\ state_code
-      (dataSem_push_env x y z) = state_code z /\ compile_oracle
-      (dataSem_push_env x y z) = compile_oracle z /\ compile
-      (dataSem_push_env x y z) = compile z /\ state_refs
-      (dataSem_push_env x y z) = state_refs z /\ dataSem_state_global
+ (`dataSem_state_ffi
+      (dataSem_push_env x y z) = dataSem_state_ffi z
+        /\ dataSem_state_clock
+      (dataSem_push_env x y z) = dataSem_state_clock z
+        /\ dataSem_state_code
+      (dataSem_push_env x y z) = dataSem_state_code z
+        /\ dataSem_state_compile_oracle
+      (dataSem_push_env x y z) = dataSem_state_compile_oracle z
+        /\ dataSem_state_compile
+      (dataSem_push_env x y z) = dataSem_state_compile z
+        /\ dataSem_state_refs
+      (dataSem_push_env x y z) = dataSem_state_refs z
+        /\ dataSem_state_global
       (dataSem_push_env x y z) = dataSem_state_global z`,
   CHEAT_TAC);;
 add_simp push_env_const;;
 
 let push_env_with_const = prove
- (`(dataSem_push_env x y (state_clock_fupd (K k) z)) =
-  state_clock_fupd (K k) (dataSem_push_env x y z)`,
+ (`(dataSem_push_env x y (dataSem_state_clock_fupd (K k) z)) =
+  dataSem_state_clock_fupd (K k) (dataSem_push_env x y z)`,
   CHEAT_TAC);;
 
 let pop_env_with_const = prove
- (`(dataSem_pop_env (state_clock_fupd (K k) z)) = OPTION_MAP (\z.
-  state_clock_fupd (K k) z) (dataSem_pop_env z)`,
+ (`(dataSem_pop_env (dataSem_state_clock_fupd (K k) z)) = OPTION_MAP
+  (\z. dataSem_state_clock_fupd (K k) z) (dataSem_pop_env z)`,
   CHEAT_TAC);;
 
 let pop_env_const = prove
- (`dataSem_pop_env a = SOME b ==> state_ffi
-   b = state_ffi a /\ state_clock
-   b = state_clock a /\ dataSem_state_stack_max
+ (`dataSem_pop_env a = SOME b ==> dataSem_state_ffi
+   b = dataSem_state_ffi a /\ dataSem_state_clock
+   b = dataSem_state_clock a /\ dataSem_state_stack_max
    b = dataSem_state_stack_max a`,
   CHEAT_TAC);;
 
@@ -1222,37 +1270,44 @@ let dataProps_evaluate_add_clock = prove
  (`!exps s1 res s2.
      dataSem_evaluate (exps,s1) = (res,s2) /\ ~(res = SOME (Rerr
        (Rabort Rtimeout_error))) ==>
-     (!ck. dataSem_evaluate (exps,state_clock_fupd (K (state_clock
-       s1 + ck)) s1) = (res,state_clock_fupd (K (state_clock s2 + ck))
+     (!ck. dataSem_evaluate (exps,dataSem_state_clock_fupd (K
+       (dataSem_state_clock s1 + ck)) s1) =
+       (res,dataSem_state_clock_fupd (K (dataSem_state_clock s2 + ck))
        s2))`,
   CHEAT_TAC);;
 
 let cut_state_opt_const = prove
- (`dataSem_cut_state_opt x y = SOME z ==> state_ffi
-    z = state_ffi y /\ dataSem_state_global
+ (`dataSem_cut_state_opt x y = SOME z ==> dataSem_state_ffi
+    z = dataSem_state_ffi y /\ dataSem_state_global
     z = dataSem_state_global y`,
   CHEAT_TAC);;
 
 (* do_app_io_events_mono *)
 let dataProps_do_app_io_events_mono = prove
- (`dataSem_do_app x y z = Rval (a,b) ==> ffi_state_io_events (state_ffi
-   z) <<= ffi_state_io_events (state_ffi b)`,
+ (`dataSem_do_app x y z = Rval (a,b) ==> ffi_state_io_events
+  (dataSem_state_ffi
+   z) <<= ffi_state_io_events (dataSem_state_ffi b)`,
   CHEAT_TAC);;
 
 let dec_clock_const = prove
- (`state_ffi
-      (dataSem_dec_clock s) = state_ffi s /\ state_code
-      (dataSem_dec_clock s) = state_code s /\ compile_oracle
-      (dataSem_dec_clock s) = compile_oracle s /\ compile
-      (dataSem_dec_clock s) = compile s /\ state_refs
-      (dataSem_dec_clock s) = state_refs s /\ dataSem_state_global
+ (`dataSem_state_ffi
+      (dataSem_dec_clock s) = dataSem_state_ffi s
+        /\ dataSem_state_code
+      (dataSem_dec_clock s) = dataSem_state_code s
+        /\ dataSem_state_compile_oracle
+      (dataSem_dec_clock s) = dataSem_state_compile_oracle s
+        /\ dataSem_state_compile
+      (dataSem_dec_clock s) = dataSem_state_compile s
+        /\ dataSem_state_refs
+      (dataSem_dec_clock s) = dataSem_state_refs s
+        /\ dataSem_state_global
       (dataSem_dec_clock s) = dataSem_state_global s`,
   CHEAT_TAC);;
 add_simp dec_clock_const;;
 
 let add_space_const = prove
- (`state_ffi
-      (add_space s k) = state_ffi s`,
+ (`dataSem_state_ffi
+      (add_space s k) = dataSem_state_ffi s`,
   CHEAT_TAC);;
 add_simp add_space_const;;
 
@@ -1260,29 +1315,29 @@ add_simp add_space_const;;
 let dataProps_evaluate_io_events_mono = prove
  (`!exps s1 res s2.
     dataSem_evaluate (exps,s1) = (res,s2) ==> ffi_state_io_events
-      (state_ffi
-    s1) <<= ffi_state_io_events (state_ffi s2)`,
+      (dataSem_state_ffi
+    s1) <<= ffi_state_io_events (dataSem_state_ffi s2)`,
   CHEAT_TAC);;
 
 (* with_clock_ffi *)
 let dataProps_with_clock_ffi = prove
- (`state_ffi
+ (`dataSem_state_ffi
       (dataSem_state_clock_fupd (K y) (s:('c,'ffi)dataSem_state)) =
         dataSem_state_ffi s`,
   CHEAT_TAC);;
 
 let jump_exc_with_const = prove
- (`dataSem_jump_exc (state_clock_fupd (K k) s) = OPTION_MAP (\s.
-  state_clock_fupd (K k) s) (dataSem_jump_exc s)`,
+ (`dataSem_jump_exc (dataSem_state_clock_fupd (K k) s) = OPTION_MAP
+  (\s. dataSem_state_clock_fupd (K k) s) (dataSem_jump_exc s)`,
   CHEAT_TAC);;
 
 (* evaluate_add_clock_io_events_mono *)
 let dataProps_evaluate_add_clock_io_events_mono = prove
- (`!exps s extra. ffi_state_io_events (state_ffi
+ (`!exps s extra. ffi_state_io_events (dataSem_state_ffi
     (SND (dataSem_evaluate (exps,s)))) <<= ffi_state_io_events
-      (state_ffi
-    (SND (dataSem_evaluate (exps,state_clock_fupd (K (state_clock s
-      + extra)) s))))`,
+      (dataSem_state_ffi
+    (SND (dataSem_evaluate (exps,dataSem_state_clock_fupd (K
+      (dataSem_state_clock s + extra)) s))))`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -1360,14 +1415,15 @@ let v_to_list_SOME_CONS_IMP = prove
 (* HOL4 dataPropsScript.sml:2259: code that the source has in a
    comment *)
 let do_app_safe_for_space_mono = prove
- (`(dataSem_do_app op xs s = Rval (r,s1)) /\
-  dataSem_state_safe_for_space s1 ==> dataSem_state_safe_for_space s`,
+ (`(dataSem_do_app op xs s = Rval (r,s1))
+  /\ dataSem_state_safe_for_space s1 ==> dataSem_state_safe_for_space
+  s`,
   CHEAT_TAC);;
 
 let evaluate_safe_for_space_mono = prove
  (`!prog (s:('c,'ffi)dataSem_state) res s1.
-     dataSem_evaluate (prog,s) = (res,s1) /\
-       dataSem_state_safe_for_space s1 ==>
+     dataSem_evaluate (prog,s) = (res,s1)
+       /\ dataSem_state_safe_for_space s1 ==>
        dataSem_state_safe_for_space s`,
   CHEAT_TAC);;
 
@@ -1407,8 +1463,8 @@ let evaluate_zero_limits_FST = prove
 
 (* [local] *)
 let evaluate_zero_limits_ffi = prove
- (`!c s r s'. state_ffi
-    (SND (dataSem_evaluate (c,s))) = state_ffi
+ (`!c s r s'. dataSem_state_ffi
+    (SND (dataSem_evaluate (c,s))) = dataSem_state_ffi
     (SND (dataSem_evaluate (c,dataSem_state_limits_fupd (K
       zero_limits) s)))`,
   CHEAT_TAC);;
@@ -1432,15 +1488,16 @@ let find_code_upto_size = prove
 
 
 let do_app_stack_eq = prove
- (`!op vs s q s'. dataSem_do_app op vs s = Rval (q,s') ==> stack
-    s = stack s'`,
+ (`!op vs s q s'. dataSem_do_app op vs s = Rval (q,s') ==>
+  dataSem_state_stack
+    s = dataSem_state_stack s'`,
   CHEAT_TAC);;
 
 
 let do_app_stack_frame_size_rel = prove
  (`!op vs s q s' stk. dataSem_do_app op vs s = Rval (q,s') /\
-     ALL2 stack_frame_size_rel (stack s) stk ==>
-       ALL2 stack_frame_size_rel (stack s') stk`,
+     ALL2 stack_frame_size_rel (dataSem_state_stack s) stk ==>
+       ALL2 stack_frame_size_rel (dataSem_state_stack s') stk`,
   CHEAT_TAC);;
 
 (* HOL4 dataPropsScript.sml:2541-2545: a proof *)
@@ -1450,33 +1507,37 @@ let do_app_stack_frame_size_rel = prove
 (* [local] *)
 let cut_state_opt_with_sfs = prove
  (`dataSem_cut_state_opt names_opt (dataSem_state_stack_frame_sizes_fupd
-  (K sfs) (stack_fupd (K xs) (dataSem_state_locals_size_fupd (K lsz)
-  s))) =
+  (K sfs) (dataSem_state_stack_fupd (K xs)
+  (dataSem_state_locals_size_fupd (K lsz) s))) =
    OPTION_MAP (\t. dataSem_state_stack_frame_sizes_fupd (K sfs)
-     (stack_fupd (K xs) (dataSem_state_locals_size_fupd (K lsz) t)))
+     (dataSem_state_stack_fupd (K xs) (dataSem_state_locals_size_fupd (K
+     lsz) t)))
               (dataSem_cut_state_opt names_opt s)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let cut_state_opt_stack = prove
- (`dataSem_cut_state_opt names_opt s = SOME s1 ==> stack s1 = stack s`,
+ (`dataSem_cut_state_opt names_opt s = SOME s1 ==> dataSem_state_stack
+  s1 = dataSem_state_stack s`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_swap_stack_frame_sizes_aux = prove
  (`!c s r s' xs lsz sfs.
     dataSem_evaluate (c,s) = (r,s') /\ ALL2 stack_frame_size_rel
-      (stack s) xs ==>
+      (dataSem_state_stack s) xs ==>
     (let s0 = dataSem_state_stack_frame_sizes_fupd (K sfs)
-      (stack_fupd (K xs) (dataSem_state_locals_size_fupd (K lsz) s)) in
+      (dataSem_state_stack_fupd (K xs) (dataSem_state_locals_size_fupd
+      (K lsz) s)) in
     ?xs lsz smx safe peak sfs'.
       (dataSem_evaluate (c,s0) =
         (r,dataSem_state_peak_heap_length_fupd (K peak)
         (dataSem_state_stack_max_fupd (K smx)
-        (dataSem_state_stack_frame_sizes_fupd (K sfs') (stack_fupd (K
-        xs) (dataSem_state_safe_for_space_fupd (K safe)
+        (dataSem_state_stack_frame_sizes_fupd (K sfs')
+        (dataSem_state_stack_fupd (K xs)
+        (dataSem_state_safe_for_space_fupd (K safe)
         (dataSem_state_locals_size_fupd (K lsz) s')))))) /\
-       ALL2 stack_frame_size_rel (stack s') xs))`,
+       ALL2 stack_frame_size_rel (dataSem_state_stack s') xs))`,
   CHEAT_TAC);;
 
 let evaluate_swap_local_sizes = prove
@@ -1487,10 +1548,11 @@ let evaluate_swap_local_sizes = prove
         =
          (r,dataSem_state_peak_heap_length_fupd (K peak)
            (dataSem_state_stack_max_fupd (K smx)
-           (dataSem_state_stack_frame_sizes_fupd (K sfs) (stack_fupd (K
-           xs) (dataSem_state_safe_for_space_fupd (K safe)
+           (dataSem_state_stack_frame_sizes_fupd (K sfs)
+           (dataSem_state_stack_fupd (K xs)
+           (dataSem_state_safe_for_space_fupd (K safe)
            (dataSem_state_locals_size_fupd (K lsz) s')))))) /\
-       ALL2 stack_frame_size_rel (stack s') xs))`,
+       ALL2 stack_frame_size_rel (dataSem_state_stack s') xs))`,
   CHEAT_TAC);;
 
 let evaluate_swap_stack_frame_sizes = prove
@@ -1500,10 +1562,11 @@ let evaluate_swap_stack_frame_sizes = prove
       (dataSem_evaluate (c,dataSem_state_stack_frame_sizes_fupd (K
         sfs) s) = (r,dataSem_state_peak_heap_length_fupd (K peak)
         (dataSem_state_stack_max_fupd (K smx)
-        (dataSem_state_stack_frame_sizes_fupd (K sfs') (stack_fupd (K
-        xs) (dataSem_state_safe_for_space_fupd (K safe)
+        (dataSem_state_stack_frame_sizes_fupd (K sfs')
+        (dataSem_state_stack_fupd (K xs)
+        (dataSem_state_safe_for_space_fupd (K safe)
         (dataSem_state_locals_size_fupd (K lsz) s')))))) /\
-       ALL2 stack_frame_size_rel (stack s') xs))`,
+       ALL2 stack_frame_size_rel (dataSem_state_stack s') xs))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1516,8 +1579,8 @@ let evaluate_stack_frame_sizes_FST = prove
 
 (* [local] *)
 let evaluate_stack_frame_sizes_ffi = prove
- (`!c s r s'. state_ffi
-    (SND (dataSem_evaluate (c,s))) = state_ffi
+ (`!c s r s'. dataSem_state_ffi
+    (SND (dataSem_evaluate (c,s))) = dataSem_state_ffi
     (SND (dataSem_evaluate (c,dataSem_state_stack_frame_sizes_fupd
       (K LN) s)))`,
   CHEAT_TAC);;
@@ -1560,8 +1623,8 @@ let cc_co_only_diff_def = new_definition
      s = dataSem_state_space t /\ dataSem_state_tstamps
      s = dataSem_state_tstamps t /\ dataSem_state_limits
      s = dataSem_state_limits t /\ dataSem_state_safe_for_space
-     s = dataSem_state_safe_for_space t /\
-       dataSem_state_peak_heap_length
+     s = dataSem_state_safe_for_space t
+       /\ dataSem_state_peak_heap_length
      s = dataSem_state_peak_heap_length t`;;
 
 (* HOL4 dataPropsScript.sml:2992: code that the source has in a
@@ -1576,8 +1639,8 @@ let do_app_cc_co_only_diff_rval = prove
 (* HOL4 dataPropsScript.sml:3027: code that the source has in a
    comment *)
 let do_app_cc_co_only_diff_rerr = prove
- (`dataSem_do_app op vs s = Rerr r /\ ~(op = wordLang_Install) /\
-  cc_co_only_diff s t ==>
+ (`dataSem_do_app op vs s = Rerr r /\ ~(op = wordLang_Install)
+  /\ cc_co_only_diff s t ==>
    dataSem_do_app op vs t = Rerr r`,
   CHEAT_TAC);;
 
@@ -1616,14 +1679,14 @@ let cut_state_opt_cc_co_full = prove
 let cut_cc_co = prove
  (`cc_co_only_diff (s) (t) /\
    dataSem_cut_state_opt names_opt s = SOME s1 ==>
-   (?t1. dataSem_cut_state_opt names_opt t = SOME t1 /\
-     cc_co_only_diff s1 t1)`,
+   (?t1. dataSem_cut_state_opt names_opt t = SOME t1
+     /\ cc_co_only_diff s1 t1)`,
   CHEAT_TAC);;
 
 let evaluate_cc_co_only_diff = prove
  (`!prog (s) res s1 (t).
-     dataSem_evaluate (prog,s) = (res,s1) /\
-       dataSem_state_safe_for_space
+     dataSem_evaluate (prog,s) = (res,s1)
+       /\ dataSem_state_safe_for_space
      s1 /\
      cc_co_only_diff s t ==> (?t1. dataSem_evaluate (prog,t) =
        (res,t1) /\ cc_co_only_diff s1 t1)`,
@@ -1645,8 +1708,8 @@ let the_le_IMP_option_le = prove
 (* HOL4 dataPropsScript.sml:3303: code that the source has in a
    comment *)
 let do_app_stack_max_le_stack_limit = prove
- (`dataSem_do_app op xs s = Rval (res,s1) /\
-  dataSem_state_safe_for_space s1 /\
+ (`dataSem_do_app op xs s = Rval (res,s1)
+  /\ dataSem_state_safe_for_space s1 /\
    option_le (dataSem_state_stack_max s) (SOME (limits_stack_limit
      (dataSem_state_limits s))) ==>
    option_le (dataSem_state_stack_max s1) (SOME (limits_stack_limit
@@ -1655,8 +1718,8 @@ let do_app_stack_max_le_stack_limit = prove
 
 let evaluate_stack_max_le_stack_limit = prove
  (`!prog s res s1.
-     dataSem_evaluate (prog,s) = (res,s1) /\
-       dataSem_state_safe_for_space s1 /\
+     dataSem_evaluate (prog,s) = (res,s1)
+       /\ dataSem_state_safe_for_space s1 /\
      option_le (dataSem_state_stack_max s) (SOME (limits_stack_limit
        (dataSem_state_limits s))) ==>
      option_le (dataSem_state_stack_max s1) (SOME

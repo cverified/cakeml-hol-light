@@ -814,8 +814,8 @@ let commas_def,commas_ind = define_wf
       match x1 with
         [] -> (implode "")
       | [x] -> x
-      | (CONS x xs) -> (\x y. strcat x y) ((\x y. strcat x y) x
-        (implode ",")) (presLang_commas xs)`];;
+      | (CONS x xs) -> strcat (strcat x (implode ","))
+        (presLang_commas xs)`];;
 
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)
@@ -1412,33 +1412,31 @@ let stack_prog_to_display_def,stack_prog_to_display_ind =
    `stack_prog_to_display (SUC k) ns (stackLang_StackFree n) =
     item_with_num (implode "stack_free") n`;
    `stack_prog_to_display (SUC k) ns (stackLang_StackStore n m) =
-      displayLang_Tuple [displayLang_String ((\x y. strcat x y)
-          ((\x y. strcat x y) ((\x y. strcat x y) (implode "stack[")
-          (num_to_hex_mlstring n)) (implode "] := ")) (mlint_toString
-          m))]`;
+      displayLang_Tuple [displayLang_String (strcat (strcat
+          (strcat (implode "stack[") (num_to_hex_mlstring n))
+          (implode "] := ")) (num_to_str m))]`;
    `stack_prog_to_display (SUC k) ns (stackLang_StackStoreAny n m) =
-      displayLang_Tuple [displayLang_String ((\x y. strcat x y)
-          ((\x y. strcat x y) ((\x y. strcat x y) (implode
-          "stack[var ") (mlint_toString n)) (implode "] := "))
-          (mlint_toString m))]`;
+      displayLang_Tuple [displayLang_String (strcat (strcat
+          (strcat (implode "stack[var ") (num_to_str n)) (implode
+          "] := ")) (num_to_str m))]`;
    `stack_prog_to_display (SUC k) ns (stackLang_StackLoad n m) =
       displayLang_Tuple [displayLang_String (mlstring_concat
-          [mlint_toString n;
+          [num_to_str n;
                              (implode " := stack[");
                              num_to_hex_mlstring m; (implode
                                  "]")])]`;
    `stack_prog_to_display (SUC k) ns (stackLang_StackLoadAny n m) =
       displayLang_Tuple [displayLang_String (mlstring_concat
-          [mlint_toString n;
+          [num_to_str n;
                              (implode " := stack[var ");
-                             mlint_toString m; (implode "]")])]`;
+                             num_to_str m; (implode "]")])]`;
    `stack_prog_to_display (SUC k) ns (stackLang_StackGetSize n) =
     item_with_num (implode "stack_get_size") n`;
    `stack_prog_to_display (SUC k) ns (stackLang_StackSetSize n) =
     item_with_num (implode "stack_set_size") n`;
    `stack_prog_to_display (SUC k) ns (stackLang_BitmapLoad n m) =
       displayLang_Tuple [displayLang_String (mlstring_concat
-          [mlint_toString n;
+          [num_to_str n;
                              (implode " := bitmap[");
                              num_to_hex_mlstring m;
                              (implode "]")])]`;

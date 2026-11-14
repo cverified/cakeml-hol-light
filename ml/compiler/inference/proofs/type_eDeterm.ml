@@ -34,8 +34,8 @@ let _ = cake_theory "type_eDeterm"
 
 (* [local] *)
 let sub_completion_empty = prove
- (`!m n s s'. sub_completion m n s [] s' <=> count n SUBSET FDOM s' /\
-  (!uv. uv IN FDOM s' ==> check_t m {} (t_walkstar s' (Infer_Tuvar
+ (`!m n s s'. sub_completion m n s [] s' <=> count n SUBSET FDOM s'
+  /\ (!uv. uv IN FDOM s' ==> check_t m {} (t_walkstar s' (Infer_Tuvar
   uv))) /\ s = s'`,
   CHEAT_TAC);;
 

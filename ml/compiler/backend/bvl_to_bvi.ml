@@ -626,7 +626,7 @@ let get_names_def = new_definition
          let n = (match sptree_lookup kd old_names with NONE ->
            implode "bvi_unmapped" | SOME name -> name) in
          let aux = (if km = 0 then implode "" else implode
-           "_bvi_aux") in (\x y. strcat x y) n aux))) final_nums)`;;
+           "_bvi_aux") in strcat n aux))) final_nums)`;;
 
 let bvl_to_bvi_compile_def = new_definition
   `bvl_to_bvi_compile start' c names prog =

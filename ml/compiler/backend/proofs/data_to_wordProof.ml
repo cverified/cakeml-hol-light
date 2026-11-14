@@ -73,16 +73,17 @@ let _ = hide_overloads
 
 let state_rel_with_locals_sfs = prove
  (`data_to_word_gcProof_state_rel c l1 l2
-  (dataSem_state_safe_for_space_fupd (K m) (state_locals_fupd (K l) x))
-  r t locs <=>
-   data_to_word_gcProof_state_rel c l1 l2 (state_locals_fupd (K l)
-     x) r t locs`,
+  (dataSem_state_safe_for_space_fupd (K m) (dataSem_state_locals_fupd (K
+  l) x)) r t locs <=>
+   data_to_word_gcProof_state_rel c l1 l2
+     (dataSem_state_locals_fupd (K l) x) r t locs`,
   CHEAT_TAC);;
 add_simp state_rel_with_locals_sfs;;
 
 let do_space_code_const = prove
- (`do_space op vs (s:('a,'b)dataSem_state) = SOME s1 ==> state_code
-   s1 = dataSem_state_code s /\ compile_oracle s1 =
+ (`do_space op vs (s:('a,'b)dataSem_state) = SOME s1 ==>
+  dataSem_state_code
+   s1 = dataSem_state_code s /\ dataSem_state_compile_oracle s1 =
      dataSem_state_compile_oracle s`,
   CHEAT_TAC);;
 
@@ -138,7 +139,7 @@ let jump_exc_locals = prove
 
 (* [local] *)
 let v_inv_Loc = prove
- (`v_inv c v1 (state_refs s) (v2,f,tf,heap) /\
+ (`v_inv c v1 (dataSem_state_refs s) (v2,f,tf,heap) /\
    word_addr c v2 = wordLang_Loc n1 n2 ==>
      n2 = 0`,
   CHEAT_TAC);;
@@ -153,8 +154,8 @@ let state_rel_get_var_RefPtr_Loc = prove
 
 (* [local] *)
 let cut_state_opt_ffi = prove
- (`dataSem_cut_state_opt names_opt r = SOME v1 ==> state_ffi v1 =
-  state_ffi r`,
+ (`dataSem_cut_state_opt names_opt r = SOME v1 ==> dataSem_state_ffi
+  v1 = dataSem_state_ffi r`,
   CHEAT_TAC);;
 
 (* shared conjunct tail for the two popped-frame cases (Env / Exc) of
@@ -186,16 +187,17 @@ let data_compile_correct = prove
  (`!prog s c n l l1 l2 res s1 (t:('a,'c,'ffi)wordSem_state) locs.
       (dataSem_evaluate (prog,s) = (res,s1)) /\ ~(res = SOME (Rerr
         (Rabort Rtype_error))) /\
-      data_to_word_gcProof_state_rel c l1 l2 s t NONE locs /\
-        wordSem_state_termdep
+      data_to_word_gcProof_state_rel c l1 l2 s t NONE locs
+        /\ wordSem_state_termdep
       t > 1 ==>
       (?t1 res1.
         (wordSem_evaluate (FST (data_to_word_comp c n l prog),t) =
           (res1,t1)) /\
-         option_le (state_stack_max t1) (state_stack_max s1) /\
+         option_le (wordSem_state_stack_max t1)
+           (wordSem_state_stack_max s1) /\
         (res1 = SOME wordSem_NotEnoughSpace ==> ffi_state_io_events
-          (state_ffi
-           t1) <<= ffi_state_io_events (state_ffi s1) /\
+          (wordSem_state_ffi
+           t1) <<= ffi_state_io_events (wordSem_state_ffi s1) /\
            (~(data_to_word_config_gc_kind c = data_to_word_None) ==>
              ~(dataSem_state_safe_for_space s1))) /\
         (~(res1 = SOME wordSem_NotEnoughSpace) ==>
@@ -205,23 +207,23 @@ let data_compile_correct = prove
                   data_to_word_gcProof_state_rel c l1 l2 s1 t1 (SOME
                     (ZIP v ws)) locs /\
                   (res1 = SOME (wordSem_Result (wordLang_Loc l1 l2)
-                    ws))) | SOME (Rerr (Rraise v)) -> (state_ffi t1 =
-                    state_ffi s1) /\
+                    ws))) | SOME (Rerr (Rraise v)) -> (wordSem_state_ffi
+                    t1 = wordSem_state_ffi s1) /\
              (?w l5 l6 ll.
                (res1 = SOME (wordSem_Exception (mk_loc
                  (wordSem_jump_exc t)) w)) /\
                (~(wordSem_jump_exc t = NONE) ==>
-                LASTN (LENGTH (stack s1) + 1) locs = CONS (l5,l6) ll
-                  /\
+                LASTN (LENGTH (wordSem_state_stack s1) + 1) locs =
+                  CONS (l5,l6) ll /\
                 (!i. data_to_word_gcProof_state_rel c l5 l6
                   (wordSem_set_var i v s1)
                        (wordSem_set_var (adjust_var i) w t1) NONE
                          ll))) | SOME (Rerr (Rabort (Rffi_error f)))
-                         -> (res1 = SOME (wordSem_FinalFFI f) /\
-                         state_ffi t1 = state_ffi s1) | SOME (Rerr
-                         (Rabort e)) -> (res1 = SOME
-                         targetSem_TimeOut) /\ state_ffi t1 =
-                         state_ffi s1)))`,
+                         -> (res1 = SOME (wordSem_FinalFFI f)
+                         /\ wordSem_state_ffi t1 = wordSem_state_ffi
+                         s1) | SOME (Rerr (Rabort e)) -> (res1 = SOME
+                         targetSem_TimeOut) /\ wordSem_state_ffi t1 =
+                         wordSem_state_ffi s1)))`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_wordProofScript.sml:348-351: a proof *)
@@ -255,42 +257,45 @@ let data_compile_correct = prove
 let compile_correct_lemma = prove
  (`!s c l1 l2 res s1 (t:('a,'c,'ffi)wordSem_state) start'.
       (dataSem_evaluate (wordLang_Call NONE (SOME start') [] NONE,s)
-        = (res,s1)) /\ ~(res = SOME (Rerr (Rabort Rtype_error))) /\
-        wordSem_state_termdep
+        = (res,s1)) /\ ~(res = SOME (Rerr (Rabort Rtype_error)))
+        /\ wordSem_state_termdep
       t > 1 /\
       data_to_word_gcProof_state_rel c l1 l2 s t NONE [] ==>
       (?t1 res1.
         (wordSem_evaluate (wordLang_Call NONE (SOME start') [0]
           NONE,t) = (res1,t1)) /\
-        option_le (state_stack_max t1) (state_stack_max s1) /\
+        option_le (wordSem_state_stack_max t1)
+          (dataSem_state_stack_max s1) /\
         (res1 = SOME wordSem_NotEnoughSpace ==> ffi_state_io_events
-          (state_ffi
-           t1) <<= ffi_state_io_events (state_ffi s1) /\
+          (wordSem_state_ffi
+           t1) <<= ffi_state_io_events (dataSem_state_ffi s1) /\
            (~(data_to_word_config_gc_kind c = data_to_word_None) ==>
              ~(dataSem_state_safe_for_space s1))) /\
         (~(res1 = SOME wordSem_NotEnoughSpace) ==>
-         (match res with NONE -> (state_ffi t1 = state_ffi s1) /\
-           (res1 = NONE) | SOME (Rval v) -> (state_ffi t1 = state_ffi
-           s1) /\
+         (match res with NONE -> (wordSem_state_ffi t1 =
+           dataSem_state_ffi s1) /\ (res1 = NONE) | SOME (Rval v) ->
+           (wordSem_state_ffi t1 = dataSem_state_ffi s1) /\
                            (?w. (res1 = SOME (wordSem_Result
                              (wordLang_Loc l1 l2) w))) | SOME (Rerr
-                             (Rraise v)) -> (state_ffi t1 = state_ffi
-                             s1) /\
+                             (Rraise v)) -> (wordSem_state_ffi t1 =
+                             dataSem_state_ffi s1) /\
                               (?v w. res1 = SOME (wordSem_Exception
                                 v w)) | SOME (Rerr (Rabort (Rffi_error
                                 f))) -> (res1 = SOME (wordSem_FinalFFI
-                                f) /\ state_ffi t1 = state_ffi s1) |
-                                SOME (Rerr (Rabort e)) -> (res1 = SOME
-                                targetSem_TimeOut) /\ state_ffi t1 =
-                                state_ffi s1)))`,
+                                f) /\ wordSem_state_ffi t1 =
+                                dataSem_state_ffi s1) | SOME (Rerr
+                                (Rabort e)) -> (res1 = SOME
+                                targetSem_TimeOut)
+                                /\ wordSem_state_ffi t1 =
+                                dataSem_state_ffi s1)))`,
   CHEAT_TAC);;
 
 let state_rel_ext_def = new_definition
   `state_rel_ext c l1 l2 s u <=>
      (?t l.
        data_to_word_gcProof_state_rel c l1 l2 s t NONE [] /\
-       domain (wordSem_state_code t) = domain l /\
-         wordSem_state_termdep
+       domain (wordSem_state_code t) = domain l
+         /\ wordSem_state_termdep
        t > 1 /\
        (?tt kk aa co. wordSem_state_compile_oracle
           u =
@@ -320,14 +325,15 @@ let data_to_wordProof_compile_correct = prove
       (?ck t1 res1.
         (wordSem_evaluate (wordLang_Call NONE (SOME start') [0] NONE,
            (wordProps_inc_clock ck t)) = (res1,t1)) /\
-        option_le (state_stack_max t1) (state_stack_max s1) /\
+        option_le (wordSem_state_stack_max t1)
+          (dataSem_state_stack_max s1) /\
         (res1 = SOME wordSem_NotEnoughSpace ==> ffi_state_io_events
-          (state_ffi
-           t1) <<= ffi_state_io_events (state_ffi s1) /\
+          (wordSem_state_ffi
+           t1) <<= ffi_state_io_events (dataSem_state_ffi s1) /\
            (~(data_to_word_config_gc_kind x = data_to_word_None) ==>
              ~(dataSem_state_safe_for_space s1))) /\
         (~(res1 = SOME wordSem_NotEnoughSpace) ==>
-         (state_ffi t1 = state_ffi s1) /\
+         (wordSem_state_ffi t1 = dataSem_state_ffi s1) /\
          (match res with NONE -> (res1 = NONE) | SOME (Rval v) ->
            (?w. (res1 = SOME (wordSem_Result (wordLang_Loc l1 l2) w)))
            | SOME (Rerr (Rraise v)) -> (?v w. res1 = SOME
@@ -339,8 +345,8 @@ let data_to_wordProof_compile_correct = prove
 (* [local] *)
 let state_rel_ext_with_clock = prove
  (`state_rel_ext a b c s1 s2 ==>
-     state_rel_ext a b c (state_clock_fupd (K k) s1)
-       (state_clock_fupd (K k) s2)`,
+     state_rel_ext a b c (wordSem_state_clock_fupd (K k) s1)
+       (wordSem_state_clock_fupd (K k) s2)`,
   CHEAT_TAC);;
 
 (* observational semantics preservation *)
@@ -362,7 +368,7 @@ let get_limits_def = new_definition
      mk_limits (w2n (theWord (FAPPLY (wordSem_state_store t)
        HeapLength)) DIV (dimindex (:'a) DIV 8))
        (data_to_word_config_len_size c) (wordSem_state_stack_limit t)
-       (dimindex (:'a) = 64) (has_fp_ops c)
+       (dimindex (:'a) = 64) (data_to_word_config_has_fp_ops c)
        (data_to_word_config_has_fp_tern c)`;;
 
 let option_le_SOME = prove
@@ -532,11 +538,12 @@ let assign_no_inst = prove
   /\
     (data_to_word_config_has_div a ==> (asm_config_ISA ac IN
       {ARMv8,MIPS,RISC_V})) /\
-    (has_fp_ops a ==> 1 < asm_config_fp_reg_count ac) /\
+    (data_to_word_config_has_fp_ops a ==> 1 < asm_config_fp_reg_count
+      ac) /\
     (data_to_word_config_has_fp_tern a ==> 2 <
       asm_config_fp_reg_count ac /\ asm_config_ISA ac = ARMv7) /\
-   asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\
-     asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0)) ==>
+   asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0)
+     /\ asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0)) ==>
    every_inst (inst_ok_less ac) (FST (wordSem_assign a b c d e f
      g))`,
   CHEAT_TAC);;
@@ -551,11 +558,12 @@ let comp_no_inst = prove
      x86_64)) /\
    (data_to_word_config_has_div c ==> (asm_config_ISA ac IN
      {ARMv8,MIPS,RISC_V})) /\
-   (has_fp_ops c ==> 1 < asm_config_fp_reg_count ac) /\
+   (data_to_word_config_has_fp_ops c ==> 1 < asm_config_fp_reg_count
+     ac) /\
    (data_to_word_config_has_fp_tern c ==> 2 < asm_config_fp_reg_count
      ac /\ asm_config_ISA ac = ARMv7)) /\
-   asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\
-     asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0) ==>
+   asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0)
+     /\ asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0) ==>
    every_inst (inst_ok_less ac) (FST (data_to_word_comp c n m p))`,
   CHEAT_TAC);;
 
@@ -617,7 +625,8 @@ let MAP_FST_stubs_bound = prove
   CHEAT_TAC);;
 
 let max_heap_limit_has_fp_ops = prove
- (`max_heap_limit (:'a) (has_fp_ops_fupd (K b) conf) =
+ (`max_heap_limit (:'a) (data_to_word_config_has_fp_ops_fupd (K b) conf)
+  =
     max_heap_limit (:'a) conf`,
   CHEAT_TAC);;
 add_simp max_heap_limit_has_fp_ops;;

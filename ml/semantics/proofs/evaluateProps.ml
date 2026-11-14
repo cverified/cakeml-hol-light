@@ -34,11 +34,12 @@ let call_FFI_rel_def = new_definition
   = FFI_return s2 t)`;;
 
 let call_FFI_rel_consts = prove
- (`call_FFI_rel s1 s2 ==> (oracle s2 = oracle s1)`,
+ (`call_FFI_rel s1 s2 ==> (ffi_state_oracle s2 = ffi_state_oracle s1)`,
   CHEAT_TAC);;
 
 let RTC_call_FFI_rel_consts = prove
- (`!s1 s2. RTC call_FFI_rel s1 s2 ==> (oracle s2 = oracle s1)`,
+ (`!s1 s2. RTC call_FFI_rel s1 s2 ==> (ffi_state_oracle s2 =
+  ffi_state_oracle s1)`,
   CHEAT_TAC);;
 
 let dest_IO_event_def = define_general
@@ -192,10 +193,10 @@ let is_clock_io_mono_def = new_definition
 let is_clock_io_mono_cong = prove
  (`s = t ==>
    (!s. semanticPrimitives_state_eval_state s =
-     semanticPrimitives_state_eval_state t /\
-     semanticPrimitives_state_refs s = semanticPrimitives_state_refs t
-     /\ semanticPrimitives_state_ffi s = semanticPrimitives_state_ffi t
-     ==>
+     semanticPrimitives_state_eval_state t
+     /\ semanticPrimitives_state_refs s = semanticPrimitives_state_refs
+     t /\ semanticPrimitives_state_ffi s = semanticPrimitives_state_ffi
+     t ==>
      f s = g s) ==>
    (is_clock_io_mono f s <=> is_clock_io_mono g t)`,
   CHEAT_TAC);;
@@ -625,8 +626,8 @@ let evaluate_ffi_intro = prove
       evaluate (semanticPrimitives_state_ffi_fupd (K nffi) s) env e =
         (semanticPrimitives_state_ffi_fupd (K nffi) s',r))) /\
    (!(s) env v pes errv s' r.
-      evaluate_evaluate_match s env v pes errv = (s',r) /\
-        semanticPrimitives_state_ffi
+      evaluate_evaluate_match s env v pes errv = (s',r)
+        /\ semanticPrimitives_state_ffi
       s' = semanticPrimitives_state_ffi s /\
       (!outcome. ~(r = Rerr (Rabort (Rffi_error outcome)))) ==>
       (!nffi.
@@ -634,8 +635,8 @@ let evaluate_ffi_intro = prove
         nffi) s) env v pes errv =
          (semanticPrimitives_state_ffi_fupd (K nffi) s',r))) /\
    (!(s) env ds s' r.
-      evaluate_evaluate_decs s env ds = (s',r) /\
-        semanticPrimitives_state_ffi
+      evaluate_evaluate_decs s env ds = (s',r)
+        /\ semanticPrimitives_state_ffi
       s' = semanticPrimitives_state_ffi s /\
       (!outcome. ~(r = Rerr (Rabort (Rffi_error outcome)))) ==>
       (!nffi.
@@ -676,8 +677,8 @@ let evaluate_decs_set_clock = prove
 let is_clock_io_mono_minimal = prove
  (`is_clock_io_mono f s ==>
     f s = (s',r) /\ semanticPrimitives_state_clock s' = 0 /\
-        ~(r = Rerr (Rabort Rtimeout_error)) /\
-          semanticPrimitives_state_clock s > k ==> (?s''. f
+        ~(r = Rerr (Rabort Rtimeout_error))
+          /\ semanticPrimitives_state_clock s > k ==> (?s''. f
           (semanticPrimitives_state_clock_fupd (K k) s) = (s'',Rerr
           (Rabort Rtimeout_error)) /\
                io_events_mono (semanticPrimitives_state_ffi s'')
@@ -689,8 +690,8 @@ let is_clock_io_mono_minimal = prove
 let evaluate_minimal_clock = prove
  (`(!(s:'ffi semanticPrimitives_state) env es s' r k.
     evaluate s env es = (s',r) /\ semanticPrimitives_state_clock
-    s' = 0 /\ ~(r = Rerr (Rabort Rtimeout_error)) /\
-      semanticPrimitives_state_clock
+    s' = 0 /\ ~(r = Rerr (Rabort Rtimeout_error))
+      /\ semanticPrimitives_state_clock
     s > k ==>
     (?s''.
       evaluate (semanticPrimitives_state_clock_fupd (K k) s) env es =
@@ -701,10 +702,10 @@ let evaluate_minimal_clock = prove
 
 let evaluate_match_minimal_clock = prove
  (`(!(s:'ffi semanticPrimitives_state) env v pes err_v s' r k.
-    evaluate_evaluate_match s env v pes err_v = (s',r) /\
-      semanticPrimitives_state_clock
-    s' = 0 /\ ~(r = Rerr (Rabort Rtimeout_error)) /\
-      semanticPrimitives_state_clock
+    evaluate_evaluate_match s env v pes err_v = (s',r)
+      /\ semanticPrimitives_state_clock
+    s' = 0 /\ ~(r = Rerr (Rabort Rtimeout_error))
+      /\ semanticPrimitives_state_clock
     s > k ==>
     (?s''.
       evaluate_evaluate_match (semanticPrimitives_state_clock_fupd (K
@@ -759,8 +760,8 @@ let combine_dec_result_eq_Rerr = prove
 
 let eval_no_eval_simulation = prove
  (`(!(s:'ffi semanticPrimitives_state) env exps s' res.
-      evaluate s env exps = (s',res) /\
-        semanticPrimitives_state_eval_state
+      evaluate s env exps = (s',res)
+        /\ semanticPrimitives_state_eval_state
       s = NONE /\ ~(res = Rerr (Rabort Rtype_error)) ==>
         semanticPrimitives_state_eval_state
       s' = NONE /\
@@ -768,8 +769,8 @@ let eval_no_eval_simulation = prove
         env exps =
       (semanticPrimitives_state_eval_state_fupd (K es) s',res)) /\
    (!(s:'ffi semanticPrimitives_state) env x pes err_x s' res.
-      evaluate_evaluate_match s env x pes err_x = (s',res) /\
-        semanticPrimitives_state_eval_state
+      evaluate_evaluate_match s env x pes err_x = (s',res)
+        /\ semanticPrimitives_state_eval_state
       s = NONE /\ ~(res = Rerr (Rabort Rtype_error)) ==>
         semanticPrimitives_state_eval_state
       s' = NONE /\
@@ -778,8 +779,8 @@ let eval_no_eval_simulation = prove
         err_x =
       (semanticPrimitives_state_eval_state_fupd (K es) s',res)) /\
    (!(s:'ffi semanticPrimitives_state) env decs s' res.
-      evaluate_evaluate_decs s env decs = (s',res) /\
-        semanticPrimitives_state_eval_state
+      evaluate_evaluate_decs s env decs = (s',res)
+        /\ semanticPrimitives_state_eval_state
       s = NONE /\ ~(res = Rerr (Rabort Rtype_error)) ==>
         semanticPrimitives_state_eval_state
       s' = NONE /\
@@ -790,16 +791,16 @@ let eval_no_eval_simulation = prove
 
 let evaluate_ffi_etc_intro = prove
  (`evaluate s0 env xs = (s1,res) /\
-   (!outcome. ~(res = Rerr (Rabort (Rffi_error outcome)))) /\
-     semanticPrimitives_state_ffi
-   s1 = semanticPrimitives_state_ffi s0 /\
-     semanticPrimitives_state_next_type_stamp
-   s1 = semanticPrimitives_state_next_type_stamp s0 /\
-     semanticPrimitives_state_next_exn_stamp
-   s1 = semanticPrimitives_state_next_exn_stamp s0 /\
-     semanticPrimitives_state_eval_state
-   s0 = NONE /\ ~(res = Rerr (Rabort Rtype_error)) /\
-     semanticPrimitives_state_refs
+   (!outcome. ~(res = Rerr (Rabort (Rffi_error outcome))))
+     /\ semanticPrimitives_state_ffi
+   s1 = semanticPrimitives_state_ffi s0
+     /\ semanticPrimitives_state_next_type_stamp
+   s1 = semanticPrimitives_state_next_type_stamp s0
+     /\ semanticPrimitives_state_next_exn_stamp
+   s1 = semanticPrimitives_state_next_exn_stamp s0
+     /\ semanticPrimitives_state_eval_state
+   s0 = NONE /\ ~(res = Rerr (Rabort Rtype_error))
+     /\ semanticPrimitives_state_refs
    s = semanticPrimitives_state_refs s0 ==>
    (?ck1 ck2. evaluate (semanticPrimitives_state_clock_fupd (K ck1)
      s) env xs =
@@ -825,8 +826,8 @@ let pmatch_not_type_error_EQ = prove
       v = semanticPrimitives_Conv (SOME t) ys /\
       nsLookup envC name = SOME (l,stamp) /\ LENGTH xs = l /\
       same_type stamp t /\
-      (t = stamp ==> l = LENGTH ys /\
-        ~(semanticPrimitives_pmatch_list envC refs xs ys acc =
+      (t = stamp ==> l = LENGTH ys
+        /\ ~(semanticPrimitives_pmatch_list envC refs xs ys acc =
         Match_type_error)))) /\
    (~(semanticPrimitives_pmatch envC refs (ast_Pcon NONE xs) v acc =
      Match_type_error) <=>
@@ -963,8 +964,8 @@ let evaluate_Apps_Funs_timeout = prove
      evaluate st env l = (s1,Rval vs) /\
      evaluate s1 env [x] = (s2,Rval [semanticPrimitives_Closure env1
        (HD ns) (Funs (TL ns) e)]) /\
-     LENGTH l = LENGTH ns /\ ~(ns = []) /\
-       semanticPrimitives_state_clock s2 < LENGTH ns ==>
+     LENGTH l = LENGTH ns /\ ~(ns = [])
+       /\ semanticPrimitives_state_clock s2 < LENGTH ns ==>
      evaluate st env [Apps x (REVERSE l)] =
        (semanticPrimitives_state_clock_fupd (K 0) s2,Rerr (Rabort
          Rtimeout_error))`,

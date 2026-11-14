@@ -47,8 +47,8 @@ let concat_with_def,concat_with_ind = define_wf
           (concat_with ss c))`];;
 
 let printable_def = new_definition
-  `printable c <=> ORD c >= 32 /\ ORD c < 127 /\ ~(c = (CHR 34)) /\
-  ~(c = (CHR 92))`;;
+  `printable c <=> ORD c >= 32 /\ ORD c < 127 /\ ~(c = (CHR 34))
+  /\ ~(c = (CHR 92))`;;
 
 let num_to_hex_digit_def = new_definition
   `num_to_hex_digit n =

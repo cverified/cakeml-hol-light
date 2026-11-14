@@ -63,8 +63,8 @@ let jump_exc_IMP_state_rel = prove
  (`!s1 t1 s2 t2.
        (dataSem_jump_exc s1 = SOME s2) /\ (dataSem_jump_exc t1 = SOME
          t2) /\
-       data_liveProof_state_rel s1 t1 LN /\ (LENGTH (stack s2) =
-         LENGTH (stack t2)) ==>
+       data_liveProof_state_rel s1 t1 LN /\ (LENGTH
+         (dataSem_state_stack s2) = LENGTH (dataSem_state_stack t2)) ==>
        data_liveProof_state_rel (dataSem_state_handler_fupd (K
          (dataSem_state_handler s1)) s2)
                  (dataSem_state_handler_fupd (K
@@ -77,15 +77,16 @@ let jump_exc_IMP_state_rel = prove
 let state_rel_IMP_do_app_aux = prove
  (`(dataSem_do_app_aux op args s1 = Rval (v,s2)) /\
      data_liveProof_state_rel s1 t1 anything ==>
-     (dataSem_state_handler s1 = dataSem_state_handler s2) /\ (stack
-       s1 = stack s2) /\
+     (dataSem_state_handler s1 = dataSem_state_handler s2)
+       /\ (dataSem_state_stack s1 = dataSem_state_stack s2) /\
      (?safe peak smx lss.
         dataSem_do_app_aux op args t1 =
           Rval (v,dataSem_state_peak_heap_length_fupd (K peak)
             (dataSem_state_safe_for_space_fupd (K safe)
             (dataSem_state_handler_fupd (K (dataSem_state_handler t1))
-            (dataSem_state_stack_max_fupd (K smx) (stack_fupd (K
-            (stack t1)) (dataSem_state_locals_size_fupd (K lss)
+            (dataSem_state_stack_max_fupd (K smx)
+            (dataSem_state_stack_fupd (K (dataSem_state_stack t1))
+            (dataSem_state_locals_size_fupd (K lss)
             (dataSem_state_locals_fupd (K (dataSem_state_locals t1))
             s2))))))))`,
   CHEAT_TAC);;
@@ -94,15 +95,15 @@ let state_rel_IMP_do_app_aux = prove
 let state_rel_IMP_do_app = prove
  (`(dataSem_do_app op args s1 = Rval (v,s2)) /\
      data_liveProof_state_rel s1 t1 anything ==>
-     (dataSem_state_handler s1 = dataSem_state_handler s2) /\ (stack
-       s1 = stack s2) /\
+     (dataSem_state_handler s1 = dataSem_state_handler s2)
+       /\ (dataSem_state_stack s1 = dataSem_state_stack s2) /\
      (?safe peak smx lss. dataSem_do_app op args t1 = Rval
        (v,dataSem_state_peak_heap_length_fupd (K peak)
        (dataSem_state_safe_for_space_fupd (K safe)
        (dataSem_state_handler_fupd (K (dataSem_state_handler t1))
-       (dataSem_state_stack_max_fupd (K smx) (stack_fupd (K (stack
-       t1)) (dataSem_state_locals_size_fupd (K lss)
-       (dataSem_state_locals_fupd (K (dataSem_state_locals t1))
+       (dataSem_state_stack_max_fupd (K smx) (dataSem_state_stack_fupd
+       (K (dataSem_state_stack t1)) (dataSem_state_locals_size_fupd (K
+       lss) (dataSem_state_locals_fupd (K (dataSem_state_locals t1))
        s2))))))))`,
   CHEAT_TAC);;
 
@@ -150,16 +151,17 @@ let domain_list_delete = prove
 (* [local] *)
 let evaluate_compile = prove
  (`!c s1 res s2 l2 t1 l1 d.
-       (dataSem_evaluate (c,s1) = (res,s2)) /\
-         data_liveProof_state_rel s1 t1 l1 /\
+       (dataSem_evaluate (c,s1) = (res,s2))
+         /\ data_liveProof_state_rel s1 t1 l1 /\
        (data_live_compile c l2 = (d,l1)) /\ (~(res = SOME (Rerr
          (Rabort Rtype_error)))) /\
        (!s3. (dataSem_jump_exc s1 = SOME s3) ==>
-             (?t3. (dataSem_jump_exc t1 = SOME t3) /\
-               data_liveProof_state_rel s3 t3 LN /\
+             (?t3. (dataSem_jump_exc t1 = SOME t3)
+               /\ data_liveProof_state_rel s3 t3 LN /\
                   (dataSem_state_handler t3 = dataSem_state_handler
                     s3) /\
-                  (LENGTH (stack t3) = LENGTH (stack s3)))) ==>
+                  (LENGTH (dataSem_state_stack t3) = LENGTH
+                    (dataSem_state_stack s3)))) ==>
        (?t2. (dataSem_evaluate (d,t1) = (res,t2)) /\
             data_liveProof_state_rel s2 t2 (match res with NONE ->
               l2 | _1 -> LN))`,

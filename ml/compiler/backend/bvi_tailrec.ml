@@ -268,8 +268,8 @@ let term_ok_int_def,term_ok_int_ind = define_wf
          else F) | bvi_Op op xs ->
          (match get_bin_args expr with
            NONE -> xs = [] /\ bvi_tailrec_is_const op | SOME
-             (x,y) -> is_arith op /\ term_ok_int ts x /\
-             term_ok_int ts y) | _27 -> F)`];;
+             (x,y) -> is_arith op /\ term_ok_int ts x
+             /\ term_ok_int ts y) | _27 -> F)`];;
 
 (* HOL4 bvi_tailrecScript.sml:286: a theorem that HOL4 states as the
    value of an ML expression: term_ok_int_ind *)
@@ -291,10 +291,10 @@ let term_ok_any_def,term_ok_any_ind = define_wf
            (closLang_Cons 0) else bvi_tailrec_is_const op) | SOME (x,y)
            ->
            (if op = closLang_BlockOp closLang_ListAppend then
-             term_ok_any ts T x /\ term_ok_any ts T y else if ~list' /\
-             is_arith op then term_ok_int ts x /\ term_ok_int ts y else
-             if ~list' /\ is_rel op then term_ok_int ts x /\
-             term_ok_int ts y else if op = closLang_BlockOp
+             term_ok_any ts T x /\ term_ok_any ts T y else if ~list'
+             /\ is_arith op then term_ok_int ts x /\ term_ok_int ts y
+             else if ~list' /\ is_rel op then term_ok_int ts x
+             /\ term_ok_int ts y else if op = closLang_BlockOp
              (closLang_Cons 0) then term_ok_any ts T x /\ term_ok_any
              ts F y else F))
         | expr -> F`];;

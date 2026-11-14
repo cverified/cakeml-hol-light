@@ -67,9 +67,9 @@ let bvi_to_bvl_def = new_definition
 
 let bvl_to_bvi_def = new_definition
   `(bvl_to_bvi:('c,'ffi)bvlSem_state->('c,'ffi)bviSem_state->('c
-  ,'ffi)bviSem_state) s t = bviSem_state_ffi_fupd (K (bvlSem_state_ffi
-  s)) (bviSem_state_clock_fupd (K (bvlSem_state_clock s))
-  (bviSem_state_refs_fupd (K (bvlSem_state_refs s))
+  ,'ffi)bviSem_state) s t = bvlSem_state_ffi_fupd (K (bvlSem_state_ffi
+  s)) (bvlSem_state_clock_fupd (K (bvlSem_state_clock s))
+  (bvlSem_state_refs_fupd (K (bvlSem_state_refs s))
      t))`;;
 
 (* the termination relation that HOL4 gives is
@@ -255,7 +255,7 @@ let bviSem_fix_clock_IMP = prove
 let bviSem_fix_clock_IMP =
   try prove
    (`!s x res s1. bviSem_fix_clock s x = (res,s1)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> bviSem_state_clock s1 <= bviSem_state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; bviSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "bviSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN

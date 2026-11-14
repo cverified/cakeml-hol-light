@@ -229,7 +229,8 @@ let find_loc_state_def = new_definition
        (let loc = (get_locals (wordSem_state_locals s)) in
        let sto = (word_elimProof_get_store (wordSem_state_store s))
          in
-       let sta = (word_elimProof_get_stack (stack s)) in
+       let sta = (word_elimProof_get_stack (wordSem_state_stack s))
+         in
        let mem' = (get_memory (wordSem_state_memory s)
          (wordSem_state_mdomain s)) in
        sptree_union (sptree_union loc sto) (sptree_union sta
@@ -239,9 +240,9 @@ let domain_find_loc_state = prove
  (`!s. domain (find_loc_state s) =
       domain (get_locals (wordSem_state_locals s)) UNION domain
         (word_elimProof_get_store (wordSem_state_store s)) UNION
-      domain (word_elimProof_get_stack (stack s)) UNION domain
-        (get_memory (wordSem_state_memory s) (wordSem_state_mdomain
-        s))`,
+      domain (word_elimProof_get_stack (wordSem_state_stack s))
+        UNION domain (get_memory (wordSem_state_memory s)
+        (wordSem_state_mdomain s))`,
   CHEAT_TAC);;
 
 let word_elimProof_code_rel_def = new_definition
@@ -275,23 +276,23 @@ let word_state_rel_def = new_definition
   `word_state_rel (reachable:1 spt) t s <=> wordSem_state_locals
        s = wordSem_state_locals t /\ wordSem_state_fp_regs
        s = wordSem_state_fp_regs t /\ wordSem_state_store
-       s = wordSem_state_store t /\ stack
-       s = stack t /\ wordSem_state_memory
+       s = wordSem_state_store t /\ wordSem_state_stack
+       s = wordSem_state_stack t /\ wordSem_state_memory
        s = wordSem_state_memory t /\ wordSem_state_mdomain
        s = wordSem_state_mdomain t /\ wordSem_state_sh_mdomain
        s = wordSem_state_sh_mdomain t /\ wordSem_state_permute
        s = wordSem_state_permute t /\ wordSem_state_compile
        s = wordSem_state_compile t /\ wordSem_state_compile_oracle
-       s = wordSem_state_compile_oracle t /\
-         wordSem_state_code_buffer
+       s = wordSem_state_compile_oracle t
+         /\ wordSem_state_code_buffer
        s = wordSem_state_code_buffer t /\ wordSem_state_data_buffer
        s = wordSem_state_data_buffer t /\ wordSem_state_gc_fun
        s = wordSem_state_gc_fun t /\ wordSem_state_handler
-       s = wordSem_state_handler t /\ state_clock
-       s = state_clock t /\ wordSem_state_termdep
+       s = wordSem_state_handler t /\ wordSem_state_clock
+       s = wordSem_state_clock t /\ wordSem_state_termdep
        s = wordSem_state_termdep t /\ wordSem_state_be
-       s = wordSem_state_be t /\ state_ffi
-       s = state_ffi t /\ wordSem_state_locals_size
+       s = wordSem_state_be t /\ wordSem_state_ffi
+       s = wordSem_state_ffi t /\ wordSem_state_locals_size
        s = wordSem_state_locals_size t /\ wordSem_state_stack_max
        s = wordSem_state_stack_max t /\ wordSem_state_stack_limit
        s = wordSem_state_stack_limit t /\ wordSem_state_stack_size
@@ -351,12 +352,13 @@ let get_memory_write_bytearray_lemma = prove
 let stack_list_rearrange_lemma = prove
  (`!s dr locs opt lsz.
       domain (get_locals (wordSem_state_locals s)) SUBSET dr /\
-      domain (word_elimProof_get_stack (stack s)) SUBSET dr ==>
+      domain (word_elimProof_get_stack (wordSem_state_stack s))
+        SUBSET dr ==>
       domain (word_elimProof_get_stack (CONS (StackFrame lsz (toAList
         (inter (wordSem_state_locals s) n)) (list_rearrange
         (wordSem_state_permute s 0)
    (sort key_val_compare (toAList (inter (wordSem_state_locals s)
-     locs)))) opt) (stack s))) SUBSET dr`,
+     locs)))) opt) (wordSem_state_stack s))) SUBSET dr`,
   CHEAT_TAC);;
 
 let remove_word_code_thm_FST = prove
@@ -499,15 +501,15 @@ let word_state_rel_gc = prove
  (`!reachable s t s1.
    word_state_rel reachable s t /\ gc_no_new_locs
      (wordSem_state_gc_fun s) ==>
-   wordSem_gc s = SOME s1 ==> (?t1. wordSem_gc t = SOME t1 /\
-     word_state_rel reachable s1 t1)`,
+   wordSem_gc s = SOME s1 ==> (?t1. wordSem_gc t = SOME t1
+     /\ word_state_rel reachable s1 t1)`,
   CHEAT_TAC);;
 
 let word_state_rel_alloc = prove
  (`!reachable s t res c n s1.
-   word_state_rel reachable s t /\ ~(res = SOME wordSem_Error) /\
-     gc_no_new_locs (wordSem_state_gc_fun s) ==> wordSem_alloc c n s =
-     (res,s1) ==>
+   word_state_rel reachable s t /\ ~(res = SOME wordSem_Error)
+     /\ gc_no_new_locs (wordSem_state_gc_fun s) ==> wordSem_alloc c n s
+     = (res,s1) ==>
       (?t1. wordSem_alloc c n t = (res,t1) /\ word_state_rel
         reachable s1 t1 /\
     dest_result_loc res SUBSET domain reachable)`,
@@ -527,12 +529,13 @@ let push_env_def2 = prove
         let handler = (match handler with NONE -> NONE | SOME
           (w,h,l1,l2) -> SOME (wordSem_state_handler s,l1,l2)) in
        let stack' = CONS (StackFrame (wordSem_state_locals_size s) l0
-         l handler) (stack s) in wordSem_state_handler_fupd (K (match
-         handler with NONE -> wordSem_state_handler s | SOME x -> LENGTH
-         (stack s))) (wordSem_state_permute_fupd (K permute)
+         l handler) (wordSem_state_stack s) in
+         wordSem_state_handler_fupd (K (match handler with NONE ->
+         wordSem_state_handler s | SOME x -> LENGTH (wordSem_state_stack
+         s))) (wordSem_state_permute_fupd (K permute)
          (wordSem_state_stack_max_fupd (K (OPTION_MAP2 MAX
-         (wordSem_state_stack_max s) (stack_size stack'))) (stack_fupd
-         (K stack')
+         (wordSem_state_stack_max s) (stack_size stack')))
+         (wordSem_state_stack_fupd (K stack')
         s))))`,
   CHEAT_TAC);;
 
@@ -544,9 +547,9 @@ let get_locals_inter_subset = prove
 
 let word_removal_lemma = prove
  (`!program state result new_state reachable removed_state.
-      wordSem_evaluate (program,state) = (result,new_state) /\
-        ~(result = SOME wordSem_Error) /\ word_state_rel reachable state
-        removed_state /\
+      wordSem_evaluate (program,state) = (result,new_state)
+        /\ ~(result = SOME wordSem_Error) /\ word_state_rel reachable
+        state removed_state /\
       gc_no_new_locs (wordSem_state_gc_fun state) /\
       wordConvs_no_install program /\ no_install_code
         (wordSem_state_code state) /\
@@ -614,8 +617,8 @@ let word_removal_thm = prove
  (`!start' state result new_state r reachable code1.
       wordSem_evaluate (wordLang_Call NONE (SOME start') [0]
         NONE,state) =
-          (result,new_state) /\ ~(result = SOME wordSem_Error) /\
-            wordSem_state_code state = fromAList code1 /\
+          (result,new_state) /\ ~(result = SOME wordSem_Error)
+            /\ wordSem_state_code state = fromAList code1 /\
       domain (find_loc_state state) SUBSET domain reachable /\
       gc_no_new_locs (wordSem_state_gc_fun state) /\
       reachable = closure_spt (sptree_insert start' one LN)

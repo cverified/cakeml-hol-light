@@ -148,16 +148,16 @@ let find_v_globalsL_LUPDATE = prove
 
 let find_v_globals_v_to_list = prove
  (`!x (reachable:1 spt) xs.
-      domain (find_v_globals x) SUBSET domain reachable /\
-        flatSem_v_to_list x = SOME xs ==> domain (find_v_globalsL xs)
-        SUBSET domain reachable`,
+      domain (find_v_globals x) SUBSET domain reachable
+        /\ flatSem_v_to_list x = SOME xs ==> domain (find_v_globalsL
+        xs) SUBSET domain reachable`,
   CHEAT_TAC);;
 
 let find_v_globals_list_to_v = prove
  (`!xs (reachable:1 spt) x.
-      domain (find_v_globalsL xs) SUBSET domain reachable /\
-        flatSem_list_to_v xs = x ==> domain (find_v_globals x) SUBSET
-        domain reachable`,
+      domain (find_v_globalsL xs) SUBSET domain reachable
+        /\ flatSem_list_to_v xs = x ==> domain (find_v_globals x)
+        SUBSET domain reachable`,
   CHEAT_TAC);;
 
 let _ = size_thms "store_v";;
@@ -447,8 +447,8 @@ let do_app_SOME_flat_state_rel = prove
       domain (find_lookups (flatLang_App tra op [])) SUBSET domain
         reachable /\
       ALL ((~) o v_has_Eval) l ==>
-          flatSem_do_app state op l = SOME (new_state,result) /\
-            ~(result = Rerr (Rabort Rtype_error)) ==>
+          flatSem_do_app state op l = SOME (new_state,result)
+            /\ ~(result = Rerr (Rabort Rtype_error)) ==>
             (?new_removed_state.
               flat_state_rel reachable new_state new_removed_state /\
               flatSem_do_app removed_state op l =
@@ -638,13 +638,14 @@ let evaluate_sing_notKeep_flat_state_rel = prove
 let flat_decs_removal_lemma = prove
  (`!((state:('c,'ffi)flatSem_state)) decs new_state result
       reachable removed_decs removed_state.
-      flatSem_evaluate_decs state decs = (new_state,result) /\
-        ~(result = SOME (Rabort Rtype_error)) /\
+      flatSem_evaluate_decs state decs = (new_state,result)
+        /\ ~(result = SOME (Rabort Rtype_error)) /\
       remove_unreachable reachable decs = removed_decs /\
       flat_state_rel reachable state removed_state /\
       ALL ((~) o has_Eval_dec) decs /\
-      decs_closed reachable decs ==> (?new_removed_state. state_ffi
-      new_removed_state = state_ffi new_state /\
+      decs_closed reachable decs ==> (?new_removed_state.
+        flatSem_state_ffi
+      new_removed_state = flatSem_state_ffi new_state /\
       flatSem_evaluate_decs removed_state removed_decs =
           (new_removed_state,result))`,
   CHEAT_TAC);;
@@ -658,8 +659,8 @@ let flat_removal_thm = prove
        reachable = closure_spt roots tree /\
        ~(EX has_Eval_dec decs) /\
        remove_unreachable reachable decs = removed_decs ==> (?s.
-         state_ffi
-       s = state_ffi new_state /\
+         flatSem_state_ffi
+       s = flatSem_state_ffi new_state /\
        flatSem_evaluate_decs (flatSem_initial_state ffi k ec)
          removed_decs = (s,result))`,
   CHEAT_TAC);;

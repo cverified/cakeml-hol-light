@@ -25,7 +25,6 @@ needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
-needs "lib/pegexec.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -119,12 +118,12 @@ let asm_step_nop_def = new_definition
      bytes_in_memory (asm_state_pc s1) bytes (asm_state_mem s1)
        (asm_state_mem_domain s1) /\
      enc_with_nop (asm_config_encode c) i bytes /\
-     (match link_reg c with NONE -> T | SOME r -> asm_state_lr s1 =
-       r) /\
+     (match asm_config_link_reg c with NONE -> T | SOME r ->
+       asm_state_lr s1 = r) /\
      (asm_state_be s1 <=> asm_config_big_endian c) /\ asm_state_align
        s1 = asm_config_code_alignment c /\
-     asmSem_asm i (asm_state_pc s1 + n2w (LENGTH bytes)) s1 = s2 /\
-       ~(failed s2) /\
+     asmSem_asm i (asm_state_pc s1 + n2w (LENGTH bytes)) s1 = s2
+       /\ ~(asm_state_failed s2) /\
      asm_ok i c`;;
 
 (* HOL4 lab_to_targetProofScript.sml:125-130: ML code, not ported *)
@@ -148,8 +147,8 @@ add_simp shift_interfer_twice;;
 (* [local] *)
 let evaluate_nop_steps = prove
  (`!n s1 ms1 c.
-       encoder_correct (machine_config_target c) /\
-         machine_config_prog_addresses
+       encoder_correct (machine_config_target c)
+         /\ machine_config_prog_addresses
        c = asm_state_mem_domain s1 /\
        ffi_entry_pcs_disjoint c s1
          (n * LENGTH (asm_config_encode (target_config
@@ -161,8 +160,9 @@ let evaluate_nop_steps = prove
            (machine_config_target c)) (asm_Inst asm_Skip))))
            (asm_state_mem s1) (asm_state_mem_domain
          s1) /\
-       (match link_reg (target_config (machine_config_target c)) with
-         NONE -> T | SOME r -> asm_state_lr s1 = r) /\
+       (match asm_config_link_reg (target_config
+         (machine_config_target c)) with NONE -> T | SOME r ->
+         asm_state_lr s1 = r) /\
        (asm_state_be s1 <=> asm_config_big_endian (target_config
          (machine_config_target c))) /\ asm_state_align
        s1 = asm_config_code_alignment (target_config
@@ -192,13 +192,13 @@ let ffi_entry_pcs_disjoint_LENGTH_shorter = prove
 
 let asm_step_IMP_evaluate_step_nop = prove
  (`!c s1 ms1 io i s2 bytes.
-      encoder_correct (machine_config_target c) /\
-        machine_config_prog_addresses
+      encoder_correct (machine_config_target c)
+        /\ machine_config_prog_addresses
       c = asm_state_mem_domain s1 /\
       ffi_entry_pcs_disjoint c s1 (LENGTH bytes) /\
       interference_ok (machine_config_next_interfer c) (target_proj
         (machine_config_target c) (asm_state_mem_domain s1)) /\
-      bytes_in_memory (asm_state_pc s1) bytes (mem s2)
+      bytes_in_memory (asm_state_pc s1) bytes (asm_state_mem s2)
         (asm_state_mem_domain s1) /\
       asm_step_nop bytes (target_config (machine_config_target c)) s1
         i s2 /\
@@ -648,12 +648,12 @@ let no_install_or_no_share_mem_def = new_definition
 let oracle_tie_def = new_definition
   `oracle_tie (mc_conf:('a,'state,'b)machine_config) ms
   (s1:('a,'c,'ffi)labSem_state) <=> labSem_state_io_regs
-     s1 = target_io_regs mc_conf (labSem_state_ffi s1) ms /\
-       labSem_state_io_fp_regs
-     s1 = target_io_fp_regs mc_conf (labSem_state_ffi s1) ms /\
-       labSem_state_cc_regs
-     s1 = target_cc_regs mc_conf (labSem_state_ffi s1) ms /\
-       labSem_state_cc_fp_regs
+     s1 = target_io_regs mc_conf (labSem_state_ffi s1) ms
+       /\ labSem_state_io_fp_regs
+     s1 = target_io_fp_regs mc_conf (labSem_state_ffi s1) ms
+       /\ labSem_state_cc_regs
+     s1 = target_cc_regs mc_conf (labSem_state_ffi s1) ms
+       /\ labSem_state_cc_fp_regs
      s1 = target_cc_fp_regs mc_conf (labSem_state_ffi s1) ms`;;
 
 let oracle_tie_shift_interfer = prove
@@ -671,8 +671,8 @@ let oracle_tie_step = prove
      ms1 =
         find_next_interference (shift_interfer l mc_conf)
           (labSem_state_ffi s1) k ms2) /\ labSem_state_io_regs
-   (s2:('a,'c,'ffi)labSem_state) = labSem_state_io_regs s1 /\
-     labSem_state_io_fp_regs
+   (s2:('a,'c,'ffi)labSem_state) = labSem_state_io_regs s1
+     /\ labSem_state_io_fp_regs
    s2 = labSem_state_io_fp_regs s1 /\ labSem_state_cc_regs
    s2 = labSem_state_cc_regs s1 /\ labSem_state_cc_fp_regs s2 =
      labSem_state_cc_fp_regs s1 /\ labSem_state_ffi
@@ -730,12 +730,12 @@ let oracle_tie_ccache_step = prove
 let oracle_tie_ffi_next = prove
  (`oracle_tie mc_conf ms1 (s1:('a,'c,'ffi)labSem_state) /\
    next_interference mc_conf (labSem_state_ffi s1) ms1 =
-     SOME (FfiApp index new_bytes ms_pre ms_post,mc',ffi') /\
-       labSem_state_io_regs
+     SOME (FfiApp index new_bytes ms_pre ms_post,mc',ffi')
+       /\ labSem_state_io_regs
    (s2:('a,'c,'ffi)labSem_state) = misc_shift_seq 1
      (labSem_state_io_regs s1) /\ labSem_state_io_fp_regs
-   s2 = misc_shift_seq 1 (labSem_state_io_fp_regs s1) /\
-     labSem_state_cc_regs
+   s2 = misc_shift_seq 1 (labSem_state_io_fp_regs s1)
+     /\ labSem_state_cc_regs
    s2 = labSem_state_cc_regs s1 /\ labSem_state_cc_fp_regs s2 =
      labSem_state_cc_fp_regs s1 /\ labSem_state_ffi
    s2 = ffi' ==>
@@ -745,12 +745,12 @@ let oracle_tie_ffi_next = prove
 let oracle_tie_ccache_next = prove
  (`oracle_tie mc_conf ms1 (s1:('a,'c,'ffi)labSem_state) /\
    next_interference mc_conf (labSem_state_ffi s1) ms1 =
-     SOME (CcApp a1 a2 ms_pre ms_post,mc',ffi') /\
-       labSem_state_cc_regs
+     SOME (CcApp a1 a2 ms_pre ms_post,mc',ffi')
+       /\ labSem_state_cc_regs
    (s2:('a,'c,'ffi)labSem_state) = misc_shift_seq 1
      (labSem_state_cc_regs s1) /\ labSem_state_cc_fp_regs
-   s2 = misc_shift_seq 1 (labSem_state_cc_fp_regs s1) /\
-     labSem_state_io_regs
+   s2 = misc_shift_seq 1 (labSem_state_cc_fp_regs s1)
+     /\ labSem_state_io_regs
    s2 = labSem_state_io_regs s1 /\ labSem_state_io_fp_regs s2 =
      labSem_state_io_fp_regs s1 /\ labSem_state_ffi
    s2 = ffi' ==>
@@ -768,8 +768,8 @@ let oracle_tie_ExtCall_residues = prove
             (labSem_state_ffi
           s1) k ms2) /\ ~(target_get_pc (machine_config_target
    mc_conf) ms2 IN machine_config_prog_addresses mc_conf DIFF
-     set_of_list (machine_config_ffi_entry_pcs mc_conf)) /\
-     ~(target_get_pc (machine_config_target
+     set_of_list (machine_config_ffi_entry_pcs mc_conf))
+     /\ ~(target_get_pc (machine_config_target
    mc_conf) ms2 = machine_config_halt_pc mc_conf) /\ ~(target_get_pc
      (machine_config_target
    mc_conf) ms2 = machine_config_ccache_pc mc_conf) /\
@@ -802,8 +802,8 @@ let oracle_tie_ExtCall_residues = prove
 let lab_to_targetProof_state_rel_def = new_definition
   `lab_to_targetProof_state_rel (mc_conf,code2,labs,p)
   (s1:('a,lab_to_target_config,'ffi)labSem_state) t1 ms1 <=>
-     target_state_rel (machine_config_target mc_conf) t1 ms1 /\
-       good_dimindex (:'a) /\
+     target_state_rel (machine_config_target mc_conf) t1 ms1
+       /\ good_dimindex (:'a) /\
      (machine_config_prog_addresses mc_conf = asm_state_mem_domain
        t1) /\
      ~(machine_config_halt_pc mc_conf IN
@@ -837,8 +837,8 @@ let lab_to_targetProof_state_rel_def = new_definition
         mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
           i /\
         index < i /\
-        read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME bytes2) /\
-          RTC
+        read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME bytes2)
+          /\ RTC
         call_FFI_rel (labSem_state_ffi s1) st /\
         call_FFI st (EL index (machine_config_ffi_names mc_conf))
           bytes bytes2 = FFI_return new_st new_bytes /\
@@ -979,8 +979,8 @@ let lab_to_targetProof_state_rel_def = new_definition
          labSem_state_mem_domain s1))) /\
      // Position of code memory
      bytes_in_mem p (prog_to_bytes code2) (asm_state_mem
-       t1) (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-         buffer_position (labSem_state_code_buffer
+       t1) (asm_state_mem_domain t1) (labSem_state_mem_domain s1)
+         /\ buffer_position (labSem_state_code_buffer
      // Position of code buffer pointer
      s1) = p + n2w (LENGTH (prog_to_bytes code2)) /\
      // Code buffer's bytes are in the right position
@@ -998,8 +998,8 @@ let lab_to_targetProof_state_rel_def = new_definition
          buffer_space_left (labSem_state_code_buffer s1) ==>
        ~(MEM (buffer_position (labSem_state_code_buffer s1) + n2w bn)
          (machine_config_ffi_entry_pcs mc_conf))) /\
-     ~(labSem_state_failed s1) /\ ~(asm_state_failed t1) /\
-       (labSem_state_be s1 = asm_state_be t1) /\
+     ~(labSem_state_failed s1) /\ ~(asm_state_failed t1)
+       /\ (labSem_state_be s1 = asm_state_be t1) /\
      (asm_state_pc t1 = p + n2w (pos_val (labSem_state_pc s1) 0
        code2)) /\
      ((p && n2w (2 EXP asm_state_align t1 - 1)) = (n2w 0)) /\
@@ -1699,7 +1699,7 @@ let byte_align_64_IMP = prove
 
 (* The lab and asm versions should be in their individual props *)
 let arith_upd_fp_regs = prove
- (`(fp_regs (labSem_arith_upd a s) = fp_regs s /\ fp_regs
+ (`(fp_regs (labSem_arith_upd a s) = labSem_state_fp_regs s /\ fp_regs
    (labSem_arith_upd a (t:'a asm_state)) = asm_state_fp_regs t)`,
   CHEAT_TAC);;
 add_simp arith_upd_fp_regs;;
@@ -1744,8 +1744,8 @@ let inst_share_mem_reg_update_helper = prove
 (* HOL4 lab_to_targetProofScript.sml:2138-2144: a proof *)
 
 let align2_not_align3_4w = prove
- (`~(alignment_aligned 3 x) /\ alignment_aligned 2 (x:'a word) /\
-  dimindex (:'a) = 64 ==>
+ (`~(alignment_aligned 3 x) /\ alignment_aligned 2 (x:'a word)
+  /\ dimindex (:'a) = 64 ==>
    x = byte_align x + (n2w 4) /\
    x + (n2w 1) = byte_align x + (n2w 5) /\
    x + (n2w 2) = byte_align x + (n2w 6) /\
@@ -1886,8 +1886,8 @@ let enc_lines_again_simp_def,enc_lines_again_simp_ind = define_wf
             let l1 = MAX (LENGTH bs) l in
             let (rest,ok) = enc_lines_again_simp labs ffis (pos +
                 l1) enc xs in
-              (CONS (labLang_LabAsm a w1 bs l1) rest,(l1 = l /\
-                  ok)))`;
+              (CONS (labLang_LabAsm a w1 bs l1) rest,(l1 = l
+                  /\ ok)))`;
    `enc_lines_again_simp labs ffis pos enc (CONS (labLang_Label k1 k2 l)
     xs) =
         (let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
@@ -2430,8 +2430,8 @@ let enc_secs_again_label_zero = prove
 
 let lines_upd_lab_len_encd0_label_zero = prove
  (`!pos lines aux.
-    enc_ok c /\ enc = asm_config_encode c /\
-      ~(asm_config_code_alignment c = 0) /\
+    enc_ok c /\ enc = asm_config_encode c
+      /\ ~(asm_config_code_alignment c = 0) /\
     ALL (line_encd0 enc) lines /\ EVEN pos /\
     ALL label_zero aux ==>
     ALL label_zero (FST (lines_upd_lab_len pos lines aux))`,
@@ -2449,8 +2449,8 @@ let EVEN_sec_length_lines_upd_lab_len = prove
 
 let upd_lab_len_encd0_label_zero = prove
  (`!pos code.
-    enc_ok c /\ enc = asm_config_encode c /\
-      ~(asm_config_code_alignment c = 0) /\
+    enc_ok c /\ enc = asm_config_encode c
+      /\ ~(asm_config_code_alignment c = 0) /\
     (\enc l. ALL (sec_encd0 enc) l) enc code /\ EVEN pos /\ ALL
       sec_ends_with_label code ==>
     ALL sec_label_zero (upd_lab_len pos code)`,
@@ -3898,8 +3898,8 @@ let ffi_entry_pcs_NOT_ccache_OR_halt_pc = prove
  (cake_as_vars (fun () ->
     `find_index pc (machine_config_ffi_entry_pcs mc_conf) 0 =
         SOME index /\ ~(machine_config_halt_pc
-     mc_conf = EL index (machine_config_ffi_entry_pcs mc_conf)) /\
-       ~(machine_config_ccache_pc
+     mc_conf = EL index (machine_config_ffi_entry_pcs mc_conf))
+       /\ ~(machine_config_ccache_pc
      mc_conf = EL index (machine_config_ffi_entry_pcs mc_conf))
        ==> ~(pc = machine_config_ccache_pc mc_conf) /\ ~(pc =
        machine_config_halt_pc mc_conf)`),
@@ -4025,11 +4025,12 @@ let oracle_tie_shift_gen = prove
    oracle_tie mc_conf ms1 (s1:('a,'c,'ffi)labSem_state) /\
    (!k. find_next_interference mc_conf (labSem_state_ffi s1) (k + l)
      ms1 =
-        find_next_interference mc2 (labSem_state_ffi s1) k ms2) /\
-          machine_config_target
-   mc2 = machine_config_target mc_conf /\
-     machine_config_callee_saved_regs
-   mc2 = machine_config_callee_saved_regs mc_conf /\ ptr_reg
+        find_next_interference mc2 (labSem_state_ffi s1) k ms2)
+          /\ machine_config_target
+   mc2 = machine_config_target mc_conf
+     /\ machine_config_callee_saved_regs
+   mc2 = machine_config_callee_saved_regs mc_conf
+     /\ machine_config_ptr_reg
    mc2 = machine_config_ptr_reg mc_conf ==>
    oracle_tie mc2 ms2 s1`,
   CHEAT_TAC);;
@@ -4039,12 +4040,12 @@ let oracle_tie_ccache_residues = prove
    oracle_tie mc_conf ms1 (s1:('a,'c,'ffi)labSem_state) /\
    (!k. find_next_interference mc_conf (labSem_state_ffi s1) (k + l)
      ms1 =
-        find_next_interference mc2 (labSem_state_ffi s1) k ms2) /\
-          machine_config_target
-   mc2 = machine_config_target mc_conf /\ ptr_reg
-   mc2 = machine_config_ptr_reg mc_conf /\ len_reg
-   mc2 = machine_config_len_reg mc_conf /\
-     machine_config_ccache_interfer
+        find_next_interference mc2 (labSem_state_ffi s1) k ms2)
+          /\ machine_config_target
+   mc2 = machine_config_target mc_conf /\ machine_config_ptr_reg
+   mc2 = machine_config_ptr_reg mc_conf /\ machine_config_len_reg
+   mc2 = machine_config_len_reg mc_conf
+     /\ machine_config_ccache_interfer
    mc2 = machine_config_ccache_interfer mc_conf /\ ~(target_get_pc
      (machine_config_target
    mc2) ms2 IN machine_config_prog_addresses mc2 DIFF set_of_list
@@ -4195,9 +4196,9 @@ let make_init_def = new_definition
        ffi ms) (target_cc_fp_regs mc_conf ffi ms) code comp' coracle
        (mk_buffer cbpos [] cbspace) 0 F (machine_config_ptr_reg mc_conf)
        (machine_config_len_reg mc_conf) (machine_config_ptr2_reg
-       mc_conf) (machine_config_len2_reg mc_conf) (match link_reg
-       (target_config (machine_config_target mc_conf)) with SOME n -> n
-       | _82 -> 0)
+       mc_conf) (machine_config_len2_reg mc_conf) (match
+       asm_config_link_reg (target_config (machine_config_target
+       mc_conf)) with SOME n -> n | _82 -> 0)
    // Initialize with code buffer empty`;;
 
 let oracle_tie_make_init = prove
@@ -4219,7 +4220,7 @@ let compiler_oracle_ok_def = new_definition
        no_share_mem_inst code) /\
      (let (cfg,code) = coracle 0 in lab_to_target_config_labels
          cfg = init_labs /\ lab_to_target_config_pos
-         cfg = init_pos /\ ffi_names
+         cfg = init_pos /\ lab_to_target_config_ffi_names
          cfg = SOME ffis)`;;
 
 (* mc_conf_ok: conditions on the machine configuration
@@ -4597,10 +4598,10 @@ let IMP_state_rel_make_init = prove
 (* HOL4 lab_to_targetProofScript.sml:10514: a proof *)
 
 let make_init_simp = prove
- (`state_ffi
+ (`labSem_state_ffi
      (lab_to_targetProof_make_init a b f g h i j k l m n p) = b /\ pc
-     (lab_to_targetProof_make_init a b f g h i j k l m n p) = 0 /\
-       state_code
+     (lab_to_targetProof_make_init a b f g h i j k l m n p) = 0
+       /\ labSem_state_code
      (lab_to_targetProof_make_init a b f g h i j k l m n p) = k`,
   CHEAT_TAC);;
 add_simp make_init_simp;;

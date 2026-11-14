@@ -303,8 +303,8 @@ let sunify_pairconstconst = prove
 
 let sunify_result_encodable = prove
  (`!st1t2 s pt1 pt2 s'.
-     st1t2 = (s,pt1,pt2) /\ swfs (sptree_map encode_infer_t s) /\
-       sptree_wf s /\
+     st1t2 = (s,pt1,pt2) /\ swfs (sptree_map encode_infer_t s)
+       /\ sptree_wf s /\
      ((?t1 t2. pt1 = encode_infer_t t1 /\ pt2 = encode_infer_t t2) \/
       (?ts1 ts2. pt1 = encode_infer_ts ts1 /\ pt2 = encode_infer_ts
         ts2)) /\

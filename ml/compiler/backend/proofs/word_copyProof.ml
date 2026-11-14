@@ -218,7 +218,8 @@ let CPstate_models_with_const = prove
   (CPstate_models cs s) /\
    CPstate_models cs (wordSem_state_fp_regs_fupd (K fp) s) =
      CPstate_models cs s /\
-   CPstate_models cs (stack_fupd (K xs) s) = CPstate_models cs s /\
+   CPstate_models cs (wordSem_state_stack_fupd (K xs) s) =
+     CPstate_models cs s /\
    CPstate_models cs (wordSem_state_stack_limit_fupd (K sl) s) =
      CPstate_models cs s /\
    CPstate_models cs (wordSem_state_stack_max_fupd (K sm) s) =
@@ -245,16 +246,16 @@ let CPstate_models_with_const = prove
      CPstate_models cs s /\
    CPstate_models cs (wordSem_state_handler_fupd (K hd) s) =
      CPstate_models cs s /\
-   CPstate_models cs (state_clock_fupd (K clk) s) = CPstate_models cs
-     s /\
+   CPstate_models cs (wordSem_state_clock_fupd (K clk) s) =
+     CPstate_models cs s /\
    CPstate_models cs (wordSem_state_termdep_fupd (K tdep) s) =
      CPstate_models cs s /\
    CPstate_models cs (wordSem_state_code_fupd (K cd) s) =
      CPstate_models cs s /\
    CPstate_models cs (wordSem_state_be_fupd (K b) s) = CPstate_models
      cs s /\
-   CPstate_models cs (state_ffi_fupd (K ffi) s) = CPstate_models cs
-     s`,
+   CPstate_models cs (wordSem_state_ffi_fupd (K ffi) s) =
+     CPstate_models cs s`,
   CHEAT_TAC);;
 add_simp CPstate_models_with_const;;
 

@@ -288,8 +288,9 @@ let LIST_REL_append_left = prove
 (* Stack thms *)
 
 let push_env_set_store_stack = prove
- (`!x1 x2 x3 x4 s. stack (wordSem_push_env x1 x2 (wordSem_set_store x3
-  x4 s)) = stack (wordSem_push_env x1 x2 s)`,
+ (`!x1 x2 x3 x4 s. wordSem_state_stack (wordSem_push_env x1 x2
+  (wordSem_set_store x3 x4 s)) = wordSem_state_stack (wordSem_push_env
+  x1 x2 s)`,
   CHEAT_TAC);;
 
 (*TODO delete*)
@@ -362,9 +363,9 @@ let evaluate_gc_fun_const_ok = prove
   CHEAT_TAC);;
 
 let get_above_handler_def = new_definition
-  `get_above_handler s = (match EL (LENGTH (stack s) -
-  (wordSem_state_handler s + 1)) (stack s) with StackFrame _7 _8 _9
-  (SOME (h,_10,_11)) -> h)`;;
+  `get_above_handler s = (match EL (LENGTH (wordSem_state_stack s) -
+  (wordSem_state_handler s + 1)) (wordSem_state_stack s) with
+  StackFrame _7 _8 _9 (SOME (h,_10,_11)) -> h)`;;
 
 let enc_stack_dec_stack_is_gc_word_const = prove
  (`!s s' s'l.
@@ -385,7 +386,8 @@ let gc_fun_sf_gc_consts = prove
 
 let gc_sf_gc_consts = prove
  (`!s s'. gc_fun_const_ok (wordSem_state_gc_fun s) /\ wordSem_gc s =
-  SOME s' ==> ALL2 sf_gc_consts (stack s) (stack s')`,
+  SOME s' ==> ALL2 sf_gc_consts (wordSem_state_stack s)
+  (wordSem_state_stack s')`,
   CHEAT_TAC);;
 
 let gc_handler = prove
@@ -394,21 +396,21 @@ let gc_handler = prove
   CHEAT_TAC);;
 
 let sf_gc_consts_get_above_handler = prove
- (`!s s'. ALL2 sf_gc_consts (stack s) (stack s') /\
-  wordSem_state_handler
+ (`!s s'. ALL2 sf_gc_consts (wordSem_state_stack s) (wordSem_state_stack
+  s') /\ wordSem_state_handler
           s' = wordSem_state_handler s /\ wordSem_state_handler
-          s < LENGTH (stack s) ==>
+          s < LENGTH (wordSem_state_stack s) ==>
           get_above_handler s' = get_above_handler s`,
   CHEAT_TAC);;
 
 let LIST_REL_call_Result = prove
  (`!s s' s'' s''' env handler.
-   ALL2 sf_gc_consts (stack (wordSem_push_env env handler s)) (stack
-     s'') /\
+   ALL2 sf_gc_consts (wordSem_state_stack (wordSem_push_env env
+     handler s)) (wordSem_state_stack s'') /\
    wordSem_pop_env s'' = SOME s''' /\ wordSem_state_handler
    s'' = wordSem_state_handler (wordSem_push_env env handler s) ==>
-   ALL2 sf_gc_consts (stack s) (stack s''') /\
-     wordSem_state_handler s''' = wordSem_state_handler s`,
+   ALL2 sf_gc_consts (wordSem_state_stack s) (wordSem_state_stack
+     s''') /\ wordSem_state_handler s''' = wordSem_state_handler s`,
   CHEAT_TAC);;
 
 let get_above_handler_call_env_push_env_dec_clock = prove
@@ -423,7 +425,7 @@ let call_env_push_env_dec_clock_handler_length = prove
  (`!s s' args lsz env x0 x1 x2 x3. s' = wordSem_call_env args lsz
   (wordSem_push_env env (SOME (x0,x1,x2,x3)) (wordSem_dec_clock s)) ==>
   wordSem_state_handler
-   s' < LENGTH (stack s')`,
+   s' < LENGTH (wordSem_state_stack s')`,
   CHEAT_TAC);;
 
 let EVERY2_trans_LASTN_sf_gc_consts = prove
@@ -433,8 +435,9 @@ let EVERY2_trans_LASTN_sf_gc_consts = prove
   CHEAT_TAC);;
 
 let LIST_REL_push_env = prove
- (`!R s s' env h. ALL2 R (stack (wordSem_push_env env h s)) (stack s')
-  ==> ALL2 R (stack s) (TL (stack s'))`,
+ (`!R s s' env h. ALL2 R (wordSem_state_stack (wordSem_push_env env h
+  s)) (wordSem_state_stack s') ==> ALL2 R (wordSem_state_stack s) (TL
+  (wordSem_state_stack s'))`,
   CHEAT_TAC);;
 
 (*TODO move*)
@@ -457,11 +460,12 @@ let push_env_pop_env_locals_thm = prove
   s''' env names (handler:(num#'a wordLang_prog#num#num) option).
    cut_envs names (wordSem_state_locals s) = SOME env /\
    wordSem_push_env env handler s = s' /\
-   ALL2 sf_gc_consts (stack s') (wordSem_state_stack s'') /\
+   ALL2 sf_gc_consts (wordSem_state_stack s') (wordSem_state_stack
+     s'') /\
    wordSem_pop_env s'' = SOME s''' ==>
-   (!v w. wordSem_get_var v s = SOME w /\ is_gc_word_const w /\
-     ~(sptree_lookup v (all_names names) = NONE) ==> wordSem_get_var v
-     s''' = SOME w)`,
+   (!v w. wordSem_get_var v s = SOME w /\ is_gc_word_const w
+     /\ ~(sptree_lookup v (all_names names) = NONE) ==>
+     wordSem_get_var v s''' = SOME w)`,
   CHEAT_TAC);;
 
 let evaluate_sf_gc_consts = prove
@@ -469,23 +473,24 @@ let evaluate_sf_gc_consts = prove
    wordSem_evaluate (p,s) = (res,s') /\ gc_fun_const_ok
      (wordSem_state_gc_fun s) ==>
    (match res with NONE ->
-       ALL2 sf_gc_consts (stack s) (stack s') /\
-         wordSem_state_handler
+       ALL2 sf_gc_consts (wordSem_state_stack s) (wordSem_state_stack
+         s') /\ wordSem_state_handler
        s' = wordSem_state_handler s | SOME (wordSem_Result _12 _13)
          ->
-       ALL2 sf_gc_consts (stack s) (stack s') /\
-         wordSem_state_handler
+       ALL2 sf_gc_consts (wordSem_state_stack s) (wordSem_state_stack
+         s') /\ wordSem_state_handler
        s' = wordSem_state_handler s | SOME (wordSem_Exception _14
          _15) -> wordSem_state_handler
-       s < LENGTH (stack s) ==>
-       ALL2 sf_gc_consts (LASTN (wordSem_state_handler s) (stack s))
-         (stack s') /\ wordSem_state_handler
+       s < LENGTH (wordSem_state_stack s) ==>
+       ALL2 sf_gc_consts (LASTN (wordSem_state_handler s)
+         (wordSem_state_stack s)) (wordSem_state_stack s')
+         /\ wordSem_state_handler
        s' = get_above_handler s | SOME (wordLang_Break _16) ->
-       ALL2 sf_gc_consts (stack s) (stack s') /\
-         wordSem_state_handler
+       ALL2 sf_gc_consts (wordSem_state_stack s) (wordSem_state_stack
+         s') /\ wordSem_state_handler
        s' = wordSem_state_handler s | SOME (wordLang_Continue _17) ->
-       ALL2 sf_gc_consts (stack s) (stack s') /\
-         wordSem_state_handler
+       ALL2 sf_gc_consts (wordSem_state_stack s) (wordSem_state_stack
+         s') /\ wordSem_state_handler
        s' = wordSem_state_handler s | _18 -> T)`,
   CHEAT_TAC);;
 
@@ -585,8 +590,8 @@ let evaluate_simp_push_out_if = prove
 (* putting it all together *)
 
 let compile_exp_thm = prove
- (`wordSem_evaluate (prog,(s:('a,'c,'ffi)wordSem_state)) = (res,s2) /\
-  ~(res = SOME wordSem_Error) /\
+ (`wordSem_evaluate (prog,(s:('a,'c,'ffi)wordSem_state)) = (res,s2)
+  /\ ~(res = SOME wordSem_Error) /\
    gc_fun_const_ok (wordSem_state_gc_fun s) ==>
    wordSem_evaluate (word_simp_compile_exp prog,s) = (res,s2)`,
   CHEAT_TAC);;

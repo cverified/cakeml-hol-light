@@ -479,8 +479,8 @@ let gc_move_data_thm = prove
         ((heap_map 0 (gc_state_heap state)) SUBMAP (heap_map 0
           (gc_state_heap state'))) /\
         gen_gc_gc_inv conf state' heap0 roots0 /\
-        (gc_state_h2 state' = []) /\ (gc_state_r3 state' = []) /\
-          (gc_state_r2 state' = []))`,
+        (gc_state_h2 state' = []) /\ (gc_state_r3 state' = [])
+          /\ (gc_state_r2 state' = []))`,
   CHEAT_TAC);;
 
 let gc_move_refs_lemma = prove
@@ -713,8 +713,8 @@ let gen_gc_gc_move_ok = prove
 (* gc_move_list_ok *)
 let gen_gc_gc_move_list_ok = prove
  (`!xs xs' state state'.
-      (gen_gc_gc_move_list conf state xs = (xs',state')) /\
-        gc_state_ok state' ==> gc_state_ok
+      (gen_gc_gc_move_list conf state xs = (xs',state'))
+        /\ gc_state_ok state' ==> gc_state_ok
       state`,
   CHEAT_TAC);;
 

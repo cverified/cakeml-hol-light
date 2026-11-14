@@ -112,10 +112,10 @@ let bvi_to_dataProof_state_rel_def = new_definition
 (* [local] *)
 let find_code_lemma = prove
  (`bvi_to_dataProof_state_rel r t2 /\
-     bvlSem_find_code dest (MAP data_to_bvi_v a) (state_code r) =
-       SOME (args,exp) ==> (?args' ss.
+     bvlSem_find_code dest (MAP data_to_bvi_v a) (bviSem_state_code
+       r) = SOME (args,exp) ==> (?args' ss.
         args = MAP data_to_bvi_v args' /\
-        dataSem_find_code dest a (state_code t2)
+        dataSem_find_code dest a (dataSem_state_code t2)
           (dataSem_state_stack_frame_sizes t2) =
           SOME (args',bvi_to_data_compile_exp (LENGTH args')
             exp,ss))`,
@@ -391,10 +391,10 @@ let data_to_bvi_finalise_cons = prove
 let data_to_bvi_do_app = prove
  (`!op t r z res s1.
      ~(op = wordLang_Install) /\ ~(op = closLang_IntOp
-       closLang_Greater) /\ ~(op = closLang_IntOp closLang_GreaterEq) /\
-       ~(op = closLang_WordOp (WordTest ast_W8 (ast_Compare ast_Gt))) /\
-       ~(op = closLang_WordOp (WordTest ast_W8 (ast_Compare ast_Geq)))
-       /\
+       closLang_Greater) /\ ~(op = closLang_IntOp closLang_GreaterEq)
+       /\ ~(op = closLang_WordOp (WordTest ast_W8 (ast_Compare ast_Gt)))
+       /\ ~(op = closLang_WordOp (WordTest ast_W8 (ast_Compare
+       ast_Geq))) /\
      (!b. ~(op = closLang_MemOp (closLang_CopyByte b))) /\ ~(op =
        closLang_ThunkOp ForceThunk) /\
      bvi_to_dataProof_state_rel r t /\
@@ -448,10 +448,10 @@ let jump_exc_lss = prove
 
 let state_rel_dest_thunk = prove
  (`bvi_to_dataProof_state_rel s t /\
-   dataSem_dest_thunk (data_to_bvi_v z) (state_refs s) =
+   dataSem_dest_thunk (data_to_bvi_v z) (bviSem_state_refs s) =
      dataSem_IsThunk ev v ==>
-     (?v'. dataSem_dest_thunk z (state_refs t) = dataSem_IsThunk ev
-       v' /\
+     (?v'. dataSem_dest_thunk z (dataSem_state_refs t) =
+       dataSem_IsThunk ev v' /\
           data_to_bvi_v v' = v)`,
   CHEAT_TAC);;
 
@@ -521,13 +521,15 @@ let bvi_to_dataProof_compile_correct = prove
                           vs'))))) /\
                (((\x. ?v. x = Rval v) res \/ (\x. ?vs. x = Rerr
                  (Rraise (Ret vs))) res) ==>
-                  (stack t1 = stack t2) /\
+                  (dataSem_state_stack t1 = dataSem_state_stack t2)
+                    /\
                   (dataSem_state_handler t1 = dataSem_state_handler
                     t2)) /\
                ((\x. ?v. x = Rval v) res ==> tail) /\
                ((\x. ?v. x = Rerr (Rraise (Exn v))) res ==>
                   (dataSem_jump_exc (dataSem_state_handler_fupd (K
-                    (dataSem_state_handler t1)) (stack_fupd (K (stack
+                    (dataSem_state_handler t1))
+                    (dataSem_state_stack_fupd (K (dataSem_state_stack
                     t1)) t2)) =
                      SOME (dataSem_state_locals_size_fupd (K ls)
                        t2)))) | NONE -> ~tail /\ n <= next_var /\
@@ -543,8 +545,9 @@ let bvi_to_dataProof_compile_correct = prove
                             (~(MEM k live) ==> MEM k corr) ==>
                             (sptree_lookup k (dataSem_state_locals
                               t2) = SOME x)) /\
-                     (stack t1 = stack t2) /\ (dataSem_state_handler
-                       t1 = dataSem_state_handler t2) /\
+                     (dataSem_state_stack t1 = dataSem_state_stack
+                       t2) /\ (dataSem_state_handler t1 =
+                       dataSem_state_handler t2) /\
                      (~(dataSem_jump_exc t1 = NONE) ==>
                        ~(dataSem_jump_exc t2 = NONE)) /\
                      (match res with Rval xs -> var_corr xs vs
@@ -597,8 +600,8 @@ let state_rel_dec_clock = prove
 let compile_part_evaluate = prove
  (cake_as_vars (fun () ->
     `dataSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],s1) =
-  (res,s2) /\ ~(res = Rerr (Rabort Rtype_error)) /\
-  bvi_to_dataProof_state_rel s1 t1 /\
+  (res,s2) /\ ~(res = Rerr (Rabort Rtype_error))
+  /\ bvi_to_dataProof_state_rel s1 t1 /\
      (\t. t = LN) (dataSem_state_locals t1) /\ (!x. res = Rerr
        (Rraise x) ==> ~(dataSem_jump_exc t1 = NONE)) ==> (?r t2.
         dataSem_evaluate ((bvi_Call NONE (SOME start) [] NONE),t1)

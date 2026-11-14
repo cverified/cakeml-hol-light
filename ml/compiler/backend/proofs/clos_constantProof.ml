@@ -191,8 +191,8 @@ let add_part_thm = prove
   (n1,rs,m1,acc1) /\
    make_part n x aux = (n2,rs1,aux1) /\
    good_hash_table m aux ==>
-   n1 = n2 /\ rs = rs1 /\ MAP (update_tag o FST) aux1 = acc1 /\
-     good_hash_table m1 aux1`,
+   n1 = n2 /\ rs = rs1 /\ MAP (update_tag o FST) aux1 = acc1
+     /\ good_hash_table m1 aux1`,
   CHEAT_TAC);;
 
 let add_parts_thm = prove
@@ -200,14 +200,14 @@ let add_parts_thm = prove
      add_parts l n m acc = (n1,rs,m1,acc1) /\
      parts l n aux = (n2,rs1,aux1) /\
      MAP (update_tag o FST) aux = acc /\ good_hash_table m aux ==>
-     n1 = n2 /\ rs = rs1 /\ MAP (update_tag o FST) aux1 = acc1 /\
-       good_hash_table m1 aux1) /\
+     n1 = n2 /\ rs = rs1 /\ MAP (update_tag o FST) aux1 = acc1
+       /\ good_hash_table m1 aux1) /\
    (!l n m acc n1 m1 rs m1 acc1 aux n2 rs1 aux1.
      add_parts_list l n m acc = (n1,rs,m1,acc1) /\
      parts_list l n aux = (n2,rs1,aux1) /\
      MAP (update_tag o FST) aux = acc /\ good_hash_table m aux ==>
-     n1 = n2 /\ rs = rs1 /\ MAP (update_tag o FST) aux1 = acc1 /\
-       good_hash_table m1 aux1)`,
+     n1 = n2 /\ rs = rs1 /\ MAP (update_tag o FST) aux1 = acc1
+       /\ good_hash_table m1 aux1)`,
   CHEAT_TAC);;
 
 let compile_const_thm = prove

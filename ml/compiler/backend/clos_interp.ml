@@ -46,13 +46,13 @@ let can_interpret_def,can_interpret_ind = define_rec
     (can_interpret e1 /\ can_interpret e2)`;
    `can_interpret (closLang_Call _9 _10 _11 es:closLang_exp) = F`;
    `can_interpret (closLang_App _13 opt e es:closLang_exp) =
-      (IS_NONE opt /\ can_interpret e /\ can_interpret_list es /\
-          LENGTH es = 1)`;
+      (IS_NONE opt /\ can_interpret e /\ can_interpret_list es
+          /\ LENGTH es = 1)`;
    `can_interpret (closLang_Letrec _17 _18 _19 fns e:closLang_exp) =
     F`;
    `can_interpret_list [] = T`;
-   `can_interpret_list (CONS x xs) = (can_interpret x /\
-    can_interpret_list xs)`];;
+   `can_interpret_list (CONS x xs) = (can_interpret x
+    /\ can_interpret_list xs)`];;
 
 (* check size *)
 

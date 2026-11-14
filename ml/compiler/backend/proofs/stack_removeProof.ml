@@ -15,7 +15,6 @@ needs "compiler/backend/semantics/stackProps.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
-needs "compiler/backend/stack_names.ml";;
 needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
@@ -162,17 +161,18 @@ let stack_removeProof_state_rel_def = new_definition
      ~(stackSem_state_use_stack s2) /\ ~(stackSem_state_use_store s2)
        /\
      ~(stackSem_state_use_alloc s2) /\ ~(stackSem_state_use_alloc s1)
-       /\ be
-     s2 = stackSem_state_be s1 /\ state_gc_fun
-     s2 = stackSem_state_gc_fun s1 /\ state_clock
-     s2 = stackSem_state_clock s1 /\ state_ffi
+       /\ stackSem_state_be
+     s2 = stackSem_state_be s1 /\ stackSem_state_gc_fun
+     s2 = stackSem_state_gc_fun s1 /\ stackSem_state_clock
+     s2 = stackSem_state_clock s1 /\ stackSem_state_ffi
      s2 = stackSem_state_ffi s1 /\ stackSem_state_ffi_save_regs
-     s2 = stackSem_state_ffi_save_regs s1 /\ fp_regs
-     s2 = stackSem_state_fp_regs s1 /\ state_code_buffer
-     s2 = stackSem_state_code_buffer s1 /\ state_sh_mdomain
+     s2 = stackSem_state_ffi_save_regs s1 /\ stackSem_state_fp_regs
+     s2 = stackSem_state_fp_regs s1 /\ stackSem_state_code_buffer
+     s2 = stackSem_state_code_buffer s1 /\ stackSem_state_sh_mdomain
      s2 = stackSem_state_sh_mdomain s1 /\ stackSem_state_compile
-     s1 = (\c p. compile s2 c (MAP (stack_remove_prog_comp jump off
-       k) p)) /\ compile_oracle
+     s1 = (\c p. stackSem_state_compile s2 c (MAP
+       (stack_remove_prog_comp jump off k) p))
+       /\ stackSem_state_compile_oracle
      // s2.data_buffer = empty_buffer /\
      s2 = (\n. (I ## MAP (stack_remove_prog_comp jump off k) ## I)
        (stackSem_state_compile_oracle
@@ -186,14 +186,14 @@ let stack_removeProof_state_rel_def = new_definition
         FLOOKUP (stackSem_state_regs s2) n = FLOOKUP
           (stackSem_state_regs s1) n) /\
      stack_removeProof_code_rel jump off k (stackSem_state_code s1)
-       (state_code s2) /\
-     sptree_lookup stack_err_lab (state_code s2) = SOME (halt_inst
-       (n2w 2)) /\
+       (stackSem_state_code s2) /\
+     sptree_lookup stack_err_lab (stackSem_state_code s2) = SOME
+       (halt_inst (n2w 2)) /\
      FLOOKUP (stackSem_state_regs s2) (k + 2) = FLOOKUP
        (stackSem_state_store s1) CurrHeap /\
      {k,k + 1,k + 2} SUBSET stackSem_state_ffi_save_regs s2 /\
-     is_SOME_Word (FLOOKUP (stackSem_state_store s1) BitmapBase) /\
-       stackSem_state_stack_space
+     is_SOME_Word (FLOOKUP (stackSem_state_store s1) BitmapBase)
+       /\ stackSem_state_stack_space
      s1 <= LENGTH (stackSem_state_stack s1) /\
      (let bp = (the_SOME_Word (FLOOKUP (stackSem_state_store s1)
        BitmapBase) << backend_common_word_shift (:'a)) in
@@ -218,7 +218,8 @@ let stack_removeProof_state_rel_def = new_definition
           s1)) *
         word_store base (stackSem_state_store s1) *
         misc_word_list base (stackSem_state_stack s1))
-         (fun2set (state_memory s2,state_mdomain s2)) | _2 -> F))`;;
+         (fun2set (stackSem_state_memory s2,stackSem_state_mdomain
+           s2)) | _2 -> F))`;;
 
 (* [local] *)
 let state_rel_get_var = prove
@@ -236,33 +237,37 @@ let state_rel_IMP = prove
 (* state_rel_with_clock[local] *)
 let stack_removeProof_state_rel_with_clock = prove
  (`stack_removeProof_state_rel jump off k s t1 ==>
-     stack_removeProof_state_rel jump off k (state_clock_fupd (K c)
-       s) (state_clock_fupd (K c) t1)`,
+     stack_removeProof_state_rel jump off k
+       (stackSem_state_clock_fupd (K c) s) (stackSem_state_clock_fupd
+       (K c) t1)`,
   CHEAT_TAC);;
 
 (* state_rel_const *)
 let stack_removeProof_state_rel_const = prove
- (`stack_removeProof_state_rel jump off k s t ==> state_code_buffer
-   t = state_code_buffer s /\ state_sh_mdomain
-   t = state_sh_mdomain s /\
-   ~(stackSem_state_use_stack t) /\ stackSem_state_use_stack s /\
-     state_ffi t = state_ffi s /\ compile_oracle
+ (`stack_removeProof_state_rel jump off k s t ==>
+  stackSem_state_code_buffer
+   t = stackSem_state_code_buffer s /\ stackSem_state_sh_mdomain
+   t = stackSem_state_sh_mdomain s /\
+   ~(stackSem_state_use_stack t) /\ stackSem_state_use_stack s
+     /\ stackSem_state_ffi t = stackSem_state_ffi s
+     /\ stackSem_state_compile_oracle
    t = (\n. (I ## MAP (stack_remove_prog_comp jump off k) ## I)
-     (compile_oracle
+     (stackSem_state_compile_oracle
                               // K []
-                              s n)) /\ compile
-   s = (\c p. compile t c (MAP (stack_remove_prog_comp jump off k)
-     p))`,
+                              s n)) /\ stackSem_state_compile
+   s = (\c p. stackSem_state_compile t c (MAP
+     (stack_remove_prog_comp jump off k) p))`,
   CHEAT_TAC);;
 
 (* find_code_lemma[local] *)
 let stack_removeProof_find_code_lemma = prove
  (`stack_removeProof_state_rel jump off k s t1 /\
      (match dest with INL v2 -> T | INR i -> i < k) /\
-     stackSem_find_code dest (stackSem_state_regs s) (state_code s) =
-       SOME x ==>
-     stackSem_find_code dest (stackSem_state_regs t1) (state_code
-       t1) = SOME (stack_remove_comp jump off k x) /\ reg_bound x k`,
+     stackSem_find_code dest (stackSem_state_regs s)
+       (stackSem_state_code s) = SOME x ==>
+     stackSem_find_code dest (stackSem_state_regs t1)
+       (stackSem_state_code t1) = SOME (stack_remove_comp jump off k
+       x) /\ reg_bound x k`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -270,10 +275,10 @@ let find_code_lemma2 = prove
  (`stack_removeProof_state_rel jump off k s t1 /\
      (match dest with INL v2 -> T | INR i -> i < k) /\
      stackSem_find_code dest (stackSem_state_regs s \\ x1)
-       (state_code s) = SOME x ==>
+       (stackSem_state_code s) = SOME x ==>
      stackSem_find_code dest (stackSem_state_regs t1 \\ x1)
-       (state_code t1) = SOME (stack_remove_comp jump off k x) /\
-       reg_bound x k`,
+       (stackSem_state_code t1) = SOME (stack_remove_comp jump off k
+       x) /\ reg_bound x k`,
   CHEAT_TAC);;
 
 let state_rel_set_var = prove
@@ -285,8 +290,8 @@ add_simp state_rel_set_var;;
 
 (* [local] *)
 let word_store_CurrHeap = prove
- (`word_store base (state_store s |+ (CurrHeap,x)) = word_store base
-  (state_store s)`,
+ (`word_store base (stackSem_state_store s |+ (CurrHeap,x)) =
+  word_store base (stackSem_state_store s)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -297,37 +302,39 @@ let memory_fun2set_IMP_read = prove
 
 (* [local] *)
 let state_rel_read = prove
- (`stack_removeProof_state_rel jump off k s t /\ a IN state_mdomain s
-  ==>
-     a IN state_mdomain t /\ (state_memory t a = state_memory s a)`,
+ (`stack_removeProof_state_rel jump off k s t /\ a IN
+  stackSem_state_mdomain s ==>
+     a IN stackSem_state_mdomain t /\ (stackSem_state_memory t a =
+       stackSem_state_memory s a)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let mem_load_32_IMP = prove
  (`stack_removeProof_state_rel jump off k s t /\
-     mem_load_32 (state_memory s) (state_mdomain s) (be s) a = SOME x
-       ==>
-     mem_load_32 (state_memory t) (state_mdomain t) (be t) a = SOME
-       x`,
+     mem_load_32 (stackSem_state_memory s) (stackSem_state_mdomain s)
+       (stackSem_state_be s) a = SOME x ==>
+     mem_load_32 (stackSem_state_memory t) (stackSem_state_mdomain
+       t) (stackSem_state_be t) a = SOME x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let mem_load_byte_aux_IMP = prove
  (`stack_removeProof_state_rel jump off k s t /\
-     mem_load_byte_aux (state_memory s) (state_mdomain s) (be s) a =
-       SOME x ==>
-     mem_load_byte_aux (state_memory t) (state_mdomain t) (be t) a
-       = SOME x`,
+     mem_load_byte_aux (stackSem_state_memory s)
+       (stackSem_state_mdomain s) (stackSem_state_be s) a = SOME x ==>
+     mem_load_byte_aux (stackSem_state_memory t)
+       (stackSem_state_mdomain t) (stackSem_state_be t) a = SOME x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let read_bytearray_IMP_read_bytearray = prove
  (`!n a k s t x.
        stack_removeProof_state_rel jump off k s t /\
-       read_bytearray a n (mem_load_byte_aux (state_memory s)
-         (state_mdomain s) (be s)) = SOME x ==>
-       read_bytearray a n (mem_load_byte_aux (state_memory t)
-         (state_mdomain t) (be t)) = SOME x`,
+       read_bytearray a n (mem_load_byte_aux (stackSem_state_memory
+         s) (stackSem_state_mdomain s) (stackSem_state_be s)) = SOME x
+         ==>
+       read_bytearray a n (mem_load_byte_aux (stackSem_state_memory
+         t) (stackSem_state_mdomain t) (stackSem_state_be t)) = SOME x`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -380,26 +387,27 @@ let state_rel_get_var_k = prove
    (?(c:'a word).
    stackSem_get_var (k + 1) t = SOME (wordLang_Word c) /\
    dimindex (:'a) DIV 8 * max_stack_alloc <= w2n c /\
-   w2n c + w2n (bytes_in_word:'a word) * LENGTH (stack s) < dimword
-     (:'a) /\
+   w2n c + w2n (bytes_in_word:'a word) * LENGTH (stackSem_state_stack
+     s) < dimword (:'a) /\
    stackSem_get_var k t = SOME (wordLang_Word (c + bytes_in_word *
      n2w (stackSem_state_stack_space s))) /\
-   (memory (state_memory s) (state_mdomain s) *
+   (memory (stackSem_state_memory s) (stackSem_state_mdomain s) *
      misc_word_list
-       (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
-         backend_common_word_shift (:'a))
+       (the_SOME_Word (FLOOKUP (stackSem_state_store s) BitmapBase)
+         << backend_common_word_shift (:'a))
        (APPEND (MAP wordLang_Word (stackSem_state_bitmaps s)) (MAP
-         wordLang_Word (buffer_buffer (state_data_buffer s)))) *
+         wordLang_Word (buffer_buffer (stackSem_state_data_buffer s))))
+         *
      word_list_exists
-       (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
-         backend_common_word_shift (:'a) +
+       (the_SOME_Word (FLOOKUP (stackSem_state_store s) BitmapBase)
+         << backend_common_word_shift (:'a) +
         bytes_in_word *
-        n2w (LENGTH (buffer_buffer (state_data_buffer s)) + LENGTH
-          (stackSem_state_bitmaps s))) (buffer_space_left
-          (state_data_buffer
-       s)) * word_store c (state_store s) *
-     misc_word_list c (stack s)) (fun2set (state_memory
-       t,state_mdomain t)))`,
+        n2w (LENGTH (buffer_buffer (stackSem_state_data_buffer s)) +
+          LENGTH (stackSem_state_bitmaps s))) (buffer_space_left
+          (stackSem_state_data_buffer
+       s)) * word_store c (stackSem_state_store s) *
+     misc_word_list c (stackSem_state_stack s)) (fun2set
+       (stackSem_state_memory t,stackSem_state_mdomain t)))`,
   CHEAT_TAC);;
 
 let evaluate_single_stack_alloc = prove
@@ -410,11 +418,12 @@ let evaluate_single_stack_alloc = prove
      (stackSem_state_stack_space s - n)) s))) /\ ~(n = 0) /\ n <=
      max_stack_alloc ==>
    (?ck t2.
-     stackSem_evaluate (single_stack_alloc jump k n,state_clock_fupd
-       (K (state_clock t1 + ck)) t1) = (r,t2) /\
-     (if stackSem_state_stack_space s < n then state_ffi t2 =
-       state_ffi s2 else stack_removeProof_state_rel jump off k s2
-       t2))`,
+     stackSem_evaluate (single_stack_alloc jump k
+       n,stackSem_state_clock_fupd (K (stackSem_state_clock t1 + ck))
+       t1) = (r,t2) /\
+     (if stackSem_state_stack_space s < n then stackSem_state_ffi
+       t2 = stackSem_state_ffi s2 else stack_removeProof_state_rel
+       jump off k s2 t2))`,
   CHEAT_TAC);;
 
 let evaluate_stack_alloc = prove
@@ -423,11 +432,12 @@ let evaluate_stack_alloc = prove
      SOME stackSem_Error) /\
    stack_removeProof_state_rel jump off k s t1 ==>
    (?ck t2.
-     stackSem_evaluate (stack_alloc jump k n,state_clock_fupd (K (ck
-       + state_clock t1)) t1) = (r,t2) /\
+     stackSem_evaluate (stack_alloc jump k
+       n,stackSem_state_clock_fupd (K (ck + stackSem_state_clock t1))
+       t1) = (r,t2) /\
      (if !w. ~(r = SOME (stackLang_Halt w)) then
-       stack_removeProof_state_rel jump off k s2 t2 else state_ffi t2
-       = state_ffi s2))`,
+       stack_removeProof_state_rel jump off k s2 t2 else
+       stackSem_state_ffi t2 = stackSem_state_ffi s2))`,
   CHEAT_TAC);;
 
 let state_rel_mem_load_imp = prove
@@ -459,20 +469,24 @@ let state_rel_mem_store = prove
 
 let state_rel_mem_store_32 = prove
  (`stack_removeProof_state_rel jump off k s t /\ mem_store_32
-  (state_memory s) (state_mdomain s) (be s) a b = SOME z ==>
-   (?y. mem_store_32 (state_memory t) (state_mdomain t) (be t) a b =
-     SOME y /\
-       stack_removeProof_state_rel jump off k (state_memory_fupd (K
-         z) s) (state_memory_fupd (K y) t))`,
+  (stackSem_state_memory s) (stackSem_state_mdomain s)
+  (stackSem_state_be s) a b = SOME z ==>
+   (?y. mem_store_32 (stackSem_state_memory t)
+     (stackSem_state_mdomain t) (stackSem_state_be t) a b = SOME y /\
+       stack_removeProof_state_rel jump off k
+         (stackSem_state_memory_fupd (K z) s)
+         (stackSem_state_memory_fupd (K y) t))`,
   CHEAT_TAC);;
 
 let state_rel_mem_store_byte_aux = prove
  (`stack_removeProof_state_rel jump off k s t /\ mem_store_byte_aux
-  (state_memory s) (state_mdomain s) (be s) a b = SOME z ==>
-   (?y. mem_store_byte_aux (state_memory t) (state_mdomain t) (be t)
-     a b = SOME y /\
-       stack_removeProof_state_rel jump off k (state_memory_fupd (K
-         z) s) (state_memory_fupd (K y) t))`,
+  (stackSem_state_memory s) (stackSem_state_mdomain s)
+  (stackSem_state_be s) a b = SOME z ==>
+   (?y. mem_store_byte_aux (stackSem_state_memory t)
+     (stackSem_state_mdomain t) (stackSem_state_be t) a b = SOME y /\
+       stack_removeProof_state_rel jump off k
+         (stackSem_state_memory_fupd (K z) s)
+         (stackSem_state_memory_fupd (K y) t))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -506,14 +520,16 @@ let stack_write = prove
   CHEAT_TAC);;
 
 let state_rel_stack_store = prove
- (`stack_removeProof_state_rel jump off k s t /\ st = stack s /\
-   FLOOKUP (stackSem_state_regs t) k = SOME (wordLang_Word b) /\
-     stackSem_state_stack_space
+ (`stack_removeProof_state_rel jump off k s t /\ st =
+  stackSem_state_stack s /\
+   FLOOKUP (stackSem_state_regs t) k = SOME (wordLang_Word b)
+     /\ stackSem_state_stack_space
    s + n < LENGTH st /\
    b + bytes_in_word * n2w n = a ==>
-   stack_removeProof_state_rel jump off k (stack_fupd (K (LUPDATE x
-     (n + stackSem_state_stack_space s) st)) s)
-     (state_memory_fupd (K ((a =+ x) (state_memory t))) t)`,
+   stack_removeProof_state_rel jump off k (stackSem_state_stack_fupd
+     (K (LUPDATE x (n + stackSem_state_stack_space s) st)) s)
+     (stackSem_state_memory_fupd (K ((a =+ x)
+       (stackSem_state_memory t))) t)`,
   CHEAT_TAC);;
 
 let lsl_word_shift = prove
@@ -556,12 +572,12 @@ let evaluate_single_stack_free = prove
  (`stack_removeProof_state_rel jump off k s t1 /\
    ((r,s2) = (NONE,stackSem_state_stack_space_fupd (K
      (stackSem_state_stack_space s + n)) s)) /\
-   ~(LENGTH (stack s) < stackSem_state_stack_space s + n) /\ ~(n = 0)
-     /\ n <= max_stack_alloc ==>
+   ~(LENGTH (stackSem_state_stack s) < stackSem_state_stack_space s +
+     n) /\ ~(n = 0) /\ n <= max_stack_alloc ==>
    (?ck t2.
-     stackSem_evaluate (single_stack_free k n,state_clock_fupd (K
-       (state_clock t1 + ck)) t1) = (r,t2) /\
-       stack_removeProof_state_rel jump off k s2 t2)`,
+     stackSem_evaluate (single_stack_free k
+       n,stackSem_state_clock_fupd (K (stackSem_state_clock t1 + ck))
+       t1) = (r,t2) /\ stack_removeProof_state_rel jump off k s2 t2)`,
   CHEAT_TAC);;
 
 let evaluate_stack_free = prove
@@ -570,8 +586,9 @@ let evaluate_stack_free = prove
      stackSem_Error) /\
    stack_removeProof_state_rel jump off k s t1 ==>
    (?ck t2.
-     stackSem_evaluate (stack_remove_stack_free k n,state_clock_fupd
-       (K (ck + state_clock t1)) t1) = (r,t2) /\
+     stackSem_evaluate (stack_remove_stack_free k
+       n,stackSem_state_clock_fupd (K (ck + stackSem_state_clock t1))
+       t1) = (r,t2) /\
      stack_removeProof_state_rel jump off k s2 t2)`,
   CHEAT_TAC);;
 
@@ -630,23 +647,25 @@ let mem_load_lemma = prove
 (* [local] *)
 let mem_load_lemma2 = prove
  (`MEM name stack_remove_store_list /\
-   (memory (state_memory s) (state_mdomain s) *
+   (memory (stackSem_state_memory s) (stackSem_state_mdomain s) *
          misc_word_list
-           (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
-             backend_common_word_shift (:'a))
+           (the_SOME_Word (FLOOKUP (stackSem_state_store s)
+             BitmapBase) << backend_common_word_shift (:'a))
            (APPEND (MAP wordLang_Word (stackSem_state_bitmaps s))
-             (MAP wordLang_Word (buffer_buffer (state_data_buffer s))))
-             *
+             (MAP wordLang_Word (buffer_buffer
+             (stackSem_state_data_buffer s)))) *
          word_list_exists
-           (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
+           (the_SOME_Word (FLOOKUP (stackSem_state_store s)
+             BitmapBase) <<
             backend_common_word_shift (:'a) +
             bytes_in_word *
-            n2w (LENGTH (buffer_buffer (state_data_buffer s)) +
-              LENGTH (stackSem_state_bitmaps s))) (buffer_space_left
-              (state_data_buffer
-           s)) * word_store c (state_store s) *
-         misc_word_list c (stack s)) (fun2set (stackSem_state_memory
-           t1,stackSem_state_mdomain (t1:('a,'c,'b)stackSem_state))) ==>
+            n2w (LENGTH (buffer_buffer (stackSem_state_data_buffer
+              s)) + LENGTH (stackSem_state_bitmaps s)))
+              (buffer_space_left (stackSem_state_data_buffer
+           s)) * word_store c (stackSem_state_store s) *
+         misc_word_list c (stackSem_state_stack s)) (fun2set
+           (stackSem_state_memory t1,stackSem_state_mdomain
+           (t1:('a,'c,'b)stackSem_state))) ==>
    c + store_offset name IN stackSem_state_mdomain t1`,
   CHEAT_TAC);;
 
@@ -661,38 +680,41 @@ let assoc_lem = prove
 (* [local] *)
 let store_write_lemma = prove
  (`MEM name stack_remove_store_list /\
-   (memory (state_memory s) (state_mdomain s) *
+   (memory (stackSem_state_memory s) (stackSem_state_mdomain s) *
          misc_word_list
-           (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
-             backend_common_word_shift (:'a))
+           (the_SOME_Word (FLOOKUP (stackSem_state_store s)
+             BitmapBase) << backend_common_word_shift (:'a))
            (APPEND (MAP wordLang_Word (stackSem_state_bitmaps s))
-             (MAP wordLang_Word (buffer_buffer (state_data_buffer s))))
-             *
+             (MAP wordLang_Word (buffer_buffer
+             (stackSem_state_data_buffer s)))) *
          word_list_exists
-           (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
+           (the_SOME_Word (FLOOKUP (stackSem_state_store s)
+             BitmapBase) <<
             backend_common_word_shift (:'a) +
             bytes_in_word *
-            n2w (LENGTH (buffer_buffer (state_data_buffer s)) +
-              LENGTH (stackSem_state_bitmaps s))) (buffer_space_left
-              (state_data_buffer
-           s)) * word_store c (state_store s) *
-         misc_word_list c (stack s)) (fun2set (m,d)) ==>
-   (memory (state_memory s) (state_mdomain s) *
+            n2w (LENGTH (buffer_buffer (stackSem_state_data_buffer
+              s)) + LENGTH (stackSem_state_bitmaps s)))
+              (buffer_space_left (stackSem_state_data_buffer
+           s)) * word_store c (stackSem_state_store s) *
+         misc_word_list c (stackSem_state_stack s)) (fun2set (m,d))
+           ==>
+   (memory (stackSem_state_memory s) (stackSem_state_mdomain s) *
        misc_word_list
-         (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
-           backend_common_word_shift (:'a))
+         (the_SOME_Word (FLOOKUP (stackSem_state_store s) BitmapBase)
+           << backend_common_word_shift (:'a))
          (APPEND (MAP wordLang_Word (stackSem_state_bitmaps s)) (MAP
-           wordLang_Word (buffer_buffer (state_data_buffer s)))) *
+           wordLang_Word (buffer_buffer (stackSem_state_data_buffer
+           s)))) *
        word_list_exists
-         (the_SOME_Word (FLOOKUP (state_store s) BitmapBase) <<
-           backend_common_word_shift (:'a) +
+         (the_SOME_Word (FLOOKUP (stackSem_state_store s) BitmapBase)
+           << backend_common_word_shift (:'a) +
           bytes_in_word *
-          n2w (LENGTH (buffer_buffer (state_data_buffer s)) + LENGTH
-            (stackSem_state_bitmaps s))) (buffer_space_left
-            (state_data_buffer
-         s)) * word_store c (state_store s |+ (name,x)) *
-       misc_word_list c (stack s)) (fun2set (((c + store_offset
-         name) =+ x) m,d))`,
+          n2w (LENGTH (buffer_buffer (stackSem_state_data_buffer s))
+            + LENGTH (stackSem_state_bitmaps s))) (buffer_space_left
+            (stackSem_state_data_buffer
+         s)) * word_store c (stackSem_state_store s |+ (name,x)) *
+       misc_word_list c (stackSem_state_stack s)) (fun2set (((c +
+         store_offset name) =+ x) m,d))`,
   CHEAT_TAC);;
 
 let prog_comp_eta = prove
@@ -768,11 +790,13 @@ let stack_removeProof_comp_correct = prove
       stack_removeProof_state_rel jump off k s1 t1 /\ reg_bound p k
         ==>
       (?ck t2. stackSem_evaluate (stack_remove_comp jump off k
-        p,state_clock_fupd (K (ck + state_clock t1)) t1) = (r,t2) /\
-              (match r with SOME (stackLang_Halt _3) -> state_ffi
-                t2 = state_ffi s2 | SOME stackSem_TimeOut -> state_ffi
-                t2 = state_ffi s2 | SOME (stackSem_FinalFFI _4) ->
-                state_ffi t2 = state_ffi s2 | _5 ->
+        p,stackSem_state_clock_fupd (K (ck + stackSem_state_clock t1))
+        t1) = (r,t2) /\
+              (match r with SOME (stackLang_Halt _3) ->
+                stackSem_state_ffi t2 = stackSem_state_ffi s2 | SOME
+                stackSem_TimeOut -> stackSem_state_ffi t2 =
+                stackSem_state_ffi s2 | SOME (stackSem_FinalFFI _4) ->
+                stackSem_state_ffi t2 = stackSem_state_ffi s2 | _5 ->
                 (stack_removeProof_state_rel jump off k s2 t2)))`,
   CHEAT_TAC);;
 
@@ -781,8 +805,8 @@ let stack_removeProof_comp_correct = prove
    variables of its own are read as variables *)
 let stack_removeProof_compile_semantics = prove
  (cake_as_vars (fun () ->
-    `stack_removeProof_state_rel jump off k s1 s2 /\
-  ~(stackSem_semantics start s1 = ffi_Fail) ==>
+    `stack_removeProof_state_rel jump off k s1 s2
+  /\ ~(stackSem_semantics start s1 = ffi_Fail) ==>
      stackSem_semantics start s2 = stackSem_semantics start s1`),
   CHEAT_TAC);;
 
@@ -799,7 +823,7 @@ let mem_val_def = define_cases
 let store_list_code_thm = prove
  (`!xs s w frame ys m dm.
       (misc_word_list w ys * frame) (fun2set (m,dm)) /\
-      m = state_memory s /\ dm = state_mdomain s /\
+      m = stackSem_state_memory s /\ dm = stackSem_state_mdomain s /\
       (LENGTH ys = LENGTH xs) /\ ~(a = t) /\
       stackSem_get_var a s = SOME (wordLang_Word w) /\ t IN FDOM
         (stackSem_state_regs s) /\
@@ -807,12 +831,12 @@ let store_list_code_thm = prove
         (stackSem_state_regs s)) xs ==>
       (?r1 m1.
         (misc_word_list w (MAP (mem_val (stackSem_state_regs s)) xs)
-          * frame) (fun2set (m1,state_mdomain s)) /\
+          * frame) (fun2set (m1,stackSem_state_mdomain s)) /\
         stackSem_evaluate (store_list_code a t xs,s) =
           (NONE,stackSem_state_regs_fupd (K (stackSem_state_regs s
             |++
             [(a,wordLang_Word (w + bytes_in_word * n2w (LENGTH
-              xs))); (t,r1)])) (state_memory_fupd (K m1) s)))`,
+              xs))); (t,r1)])) (stackSem_state_memory_fupd (K m1) s)))`,
   CHEAT_TAC);;
 
 (* HOL4 stack_removeProofScript.sml:2723-2725: a proof *)
@@ -952,16 +976,16 @@ let init_reduce_stack_space = prove
  (`stackSem_state_stack_space
      (init_reduce gen_gc jump off k code bitmaps data_sp coracle s8)
        <=
-       LENGTH (stack (init_reduce gen_gc jump off k code bitmaps
-         data_sp coracle s8))`,
+       LENGTH (stackSem_state_stack (init_reduce gen_gc jump off k
+         code bitmaps data_sp coracle s8))`,
   CHEAT_TAC);;
 
 let stack_heap_limit_ok_def = new_definition
   `stack_heap_limit_ok t (stack_lim,heap_lim) <=>
-     FLOOKUP (state_store t) HeapLength = SOME (wordLang_Word (n2w
-       heap_lim * (bytes_in_word:'a word))) /\
+     FLOOKUP (stackSem_state_store t) HeapLength = SOME
+       (wordLang_Word (n2w heap_lim * (bytes_in_word:'a word))) /\
      heap_lim * (dimindex (:'a) DIV 8) < dimword (:'a) /\
-     stack_lim = LENGTH (stack t)`;;
+     stack_lim = LENGTH (stackSem_state_stack t)`;;
 
 let init_prop_def = new_definition
   `init_prop gen_gc' max_heap data_sp stack_heap_lim
@@ -1032,7 +1056,8 @@ let init_prop_def = new_definition
 let init_code_pre_def = new_definition
   `init_code_pre k bitmaps data_sp s <=>
      (?ptr2 ptr3 ptr4 bitmap_ptr.
-       good_dimindex (:'a) /\ 8 <= k /\ 1 IN domain (state_code s) /\
+       good_dimindex (:'a) /\ 8 <= k /\ 1 IN domain
+         (stackSem_state_code s) /\
        {k,k + 1,k + 2} SUBSET stackSem_state_ffi_save_regs s /\
        ~(stackSem_state_use_stack s) /\ ~(stackSem_state_use_store s)
          /\ ~(stackSem_state_use_alloc s) /\
@@ -1041,24 +1066,26 @@ let init_code_pre_def = new_definition
        FLOOKUP (stackSem_state_regs s) 3 = SOME (wordLang_Word ptr3)
          /\
        FLOOKUP (stackSem_state_regs s) 4 = SOME (wordLang_Word ptr4)
-         /\ state_memory
-       s ptr2 = wordLang_Word bitmap_ptr /\ state_memory
+         /\ stackSem_state_memory
+       s ptr2 = wordLang_Word bitmap_ptr /\ stackSem_state_memory
        s (ptr2 + bytes_in_word) =
          wordLang_Word (bitmap_ptr + bytes_in_word * n2w (LENGTH
-           bitmaps)) /\ state_memory
+           bitmaps)) /\ stackSem_state_memory
        s (ptr2 + (n2w 2) * bytes_in_word) =
          wordLang_Word (bitmap_ptr + bytes_in_word * n2w (LENGTH
            bitmaps) +
-                            bytes_in_word * n2w data_sp) /\
-                              state_memory
+                            bytes_in_word * n2w data_sp)
+                              /\ stackSem_state_memory
        s (ptr2 + (n2w 3) * bytes_in_word) = wordLang_Word
-         (buffer_position (state_code_buffer s)) /\ state_memory
+         (buffer_position (stackSem_state_code_buffer s))
+         /\ stackSem_state_memory
        s (ptr2 + (n2w 4) * bytes_in_word) =
-          wordLang_Word (buffer_position (state_code_buffer s) + n2w
-            (buffer_space_left (state_code_buffer s))) /\
+          wordLang_Word (buffer_position (stackSem_state_code_buffer
+            s) + n2w (buffer_space_left (stackSem_state_code_buffer s)))
+            /\
        ptr2 <=+ ptr4 /\ (n2w 1024) * bytes_in_word <=+ ptr4 - ptr2 /\
        byte_aligned ptr2 /\ byte_aligned ptr4 /\ byte_aligned
-         bitmap_ptr /\ buffer_buffer (state_code_buffer
+         bitmap_ptr /\ buffer_buffer (stackSem_state_code_buffer
        // NOTE: The last conjunct only needs to hold if
        // the entry checks hold. Probably can make more assumptions
        // about the bitmap_ptr too
@@ -1068,7 +1095,8 @@ let init_code_pre_def = new_definition
           bitmaps)) data_sp *
         word_list_exists ptr2 (w2n (ptr4 - ptr2) DIV w2n
           (bytes_in_word:'a word)))
-         (fun2set (state_memory s,state_mdomain s)))`;;
+         (fun2set (stackSem_state_memory s,stackSem_state_mdomain
+           s)))`;;
 
 (* [local] *)
 let byte_aligned_bytes_in_word_MULT = prove
@@ -1197,13 +1225,13 @@ let word_list_in_memory = prove
 
 let init_code_thm = prove
  (`init_code_pre k bitmaps data_sp s /\ stack_removeProof_code_rel jump
-  off k code (state_code s) /\ compile_oracle
+  off k code (stackSem_state_code s) /\ stackSem_state_compile_oracle
     s = (I ## MAP (stack_remove_prog_comp jump off k) ## I) o coracle
       /\
-    (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k /\
-      stack_num_stubs <= i + 1) /\
-    sptree_lookup stack_err_lab (state_code s) = SOME (halt_inst (n2w
-      2)) /\
+    (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k
+      /\ stack_num_stubs <= i + 1) /\
+    sptree_lookup stack_err_lab (stackSem_state_code s) = SOME
+      (halt_inst (n2w 2)) /\
     max_stack_alloc <= max_heap ==>
     (match stackSem_evaluate (stack_remove_init_code gen_gc max_heap
       k,s) with (SOME res,t) -> F | (NONE,t) ->
@@ -1232,18 +1260,20 @@ let init_code_thm = prove
          FLOOKUP (stackSem_state_regs s) 3 = SOME (wordLang_Word w3))
            /\
          stack_removeProof_state_rel jump off k (init_reduce gen_gc
-           jump off k code bitmaps data_sp coracle t) t /\ state_ffi
-         t = state_ffi s /\
+           jump off k code bitmaps data_sp coracle t) t
+           /\ stackSem_state_ffi
+         t = stackSem_state_ffi s /\
          init_prop gen_gc max_heap data_sp (get_stack_heap_limit
            max_heap (read_pointers s))
                    (init_reduce gen_gc jump off k code bitmaps
-                     data_sp coracle t) /\ state_mdomain
-         s = state_mdomain t /\ state_sh_mdomain
-         s = state_sh_mdomain t /\
+                     data_sp coracle t) /\ stackSem_state_mdomain
+         s = stackSem_state_mdomain t /\ stackSem_state_sh_mdomain
+         s = stackSem_state_sh_mdomain t /\
          (let t0 = init_reduce gen_gc jump off k code bitmaps data_sp
            coracle t in
-            fun2set (state_memory s,state_mdomain t0) = fun2set
-              (state_memory t,state_mdomain t0)))`,
+            fun2set (stackSem_state_memory s,stackSem_state_mdomain
+              t0) = fun2set (stackSem_state_memory
+              t,stackSem_state_mdomain t0)))`,
   CHEAT_TAC);;
 
 let make_init_opt_def = new_definition
@@ -1261,7 +1291,7 @@ let make_init_opt_def = new_definition
 
 let init_pre_def = new_definition
   `init_pre gen_gc' max_heap bitmaps data_sp k start' s <=>
-     sptree_lookup 0 (state_code s) = SOME (stackLang_Seq
+     sptree_lookup 0 (stackSem_state_code s) = SOME (stackLang_Seq
        (stack_remove_init_code gen_gc' max_heap k)
                               (stackLang_Call NONE (INL start')
                                 NONE)) /\
@@ -1272,20 +1302,22 @@ let init_pre_def = new_definition
    variables of its own are read as variables *)
 let evaluate_init_code = prove
  (cake_as_vars (fun () ->
-    `init_pre gen_gc max_heap bitmaps data_sp k start s /\
-  stackSem_state_compile_oracle
+    `init_pre gen_gc max_heap bitmaps data_sp k start s
+  /\ stackSem_state_compile_oracle
       s = ((I ## MAP (stack_remove_prog_comp jump off k) ## I) o
         coracle) /\
       (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k
         /\ stack_num_stubs <= i + 1) /\
-      sptree_lookup stack_err_lab (state_code s) = SOME (halt_inst
-        (n2w 2)) /\
-      stack_removeProof_code_rel jump off k code (state_code s) ==>
+      sptree_lookup stack_err_lab (stackSem_state_code s) = SOME
+        (halt_inst (n2w 2)) /\
+      stack_removeProof_code_rel jump off k code
+        (stackSem_state_code s) ==>
       (match stackSem_evaluate (stack_remove_init_code gen_gc
         max_heap k,s) with (NONE,t) -> (?r. make_init_opt gen_gc
         max_heap bitmaps data_sp coracle jump off k code s = SOME r /\
                         stack_removeProof_state_rel jump off k r
-                          t /\ state_ffi t = state_ffi s) | _8 -> F)`),
+                          t /\ stackSem_state_ffi t =
+                          stackSem_state_ffi s) | _8 -> F)`),
   CHEAT_TAC);;
 
 let clock_neutral_store_list_code = prove
@@ -1297,8 +1329,8 @@ let evaluate_init_code_clock = prove
  (`stackSem_evaluate (stack_remove_init_code gen_gc max_heap k,s) =
   (res,t) ==>
      stackSem_evaluate (stack_remove_init_code gen_gc max_heap
-       k,state_clock_fupd (K c) s) =
-       (res,state_clock_fupd (K c) t)`,
+       k,stackSem_state_clock_fupd (K c) s) =
+       (res,stackSem_state_clock_fupd (K c) t)`,
   CHEAT_TAC);;
 
 let evaluate_init_code_ffi = prove
@@ -1306,18 +1338,20 @@ let evaluate_init_code_ffi = prove
   k,(s:('a,'c,'ffi)stackSem_state)) = (res,t) ==>
     stackSem_evaluate (stack_remove_init_code gen_gc max_heap
       k,stackSem_state_ffi_fupd (K c) s) =
-      (res,((state_ffi_fupd (K c) t):('a,'c,'ffi)stackSem_state))`,
+      (res,((stackSem_state_ffi_fupd (K c)
+        t):('a,'c,'ffi)stackSem_state))`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
 let init_semantics = prove
  (cake_as_vars (fun () ->
-    `sptree_lookup stack_err_lab (state_code s) = SOME (halt_inst (n2w
-  2)) /\
-      stack_removeProof_code_rel jump off k code (state_code s) /\
-      init_pre gen_gc max_heap bitmaps data_sp k start s /\
-        stackSem_state_compile_oracle
+    `sptree_lookup stack_err_lab (stackSem_state_code s) = SOME
+  (halt_inst (n2w 2)) /\
+      stack_removeProof_code_rel jump off k code
+        (stackSem_state_code s) /\
+      init_pre gen_gc max_heap bitmaps data_sp k start s
+        /\ stackSem_state_compile_oracle
       s = ((I ## MAP (stack_remove_prog_comp jump off k) ## I) o
         coracle) /\
       (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k
@@ -1335,15 +1369,16 @@ let init_semantics = prove
    variables of its own are read as variables *)
 let make_init_opt_SOME_semantics = prove
  (cake_as_vars (fun () ->
-    `init_pre gen_gc max_heap bitmaps data_sp k start s2 /\
-  stackSem_state_compile_oracle
+    `init_pre gen_gc max_heap bitmaps data_sp k start s2
+  /\ stackSem_state_compile_oracle
       s2 = ((I ## MAP (stack_remove_prog_comp jump off k) ## I) o
         coracle) /\
       (!n i p. MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k
         /\ stack_num_stubs <= i + 1) /\
-      stack_removeProof_code_rel jump off k code (state_code s2) /\
-      sptree_lookup stack_err_lab (state_code s2) = SOME (halt_inst
-        (n2w 2)) ==>
+      stack_removeProof_code_rel jump off k code
+        (stackSem_state_code s2) /\
+      sptree_lookup stack_err_lab (stackSem_state_code s2) = SOME
+        (halt_inst (n2w 2)) ==>
       (?s1.
         make_init_opt gen_gc max_heap bitmaps data_sp coracle jump
           off k code s2 = SOME s1 /\
@@ -1367,29 +1402,33 @@ let make_init_any_def = new_definition
   `make_init_any gen_gc' max_heap bitmaps data_sp coracle jump off k
   code s =
      (match make_init_opt gen_gc' max_heap bitmaps data_sp coracle
-       jump off k code s with SOME t -> t | NONE -> state_store_fupd (K
-       (FEMPTY |++ (MAP (\x. (x,wordLang_Word (n2w 0)))
+       jump off k code s with SOME t -> t | NONE ->
+       stackSem_state_store_fupd (K (FEMPTY |++ (MAP (\x.
+       (x,wordLang_Word (n2w 0)))
                               (CONS CurrHeap
                                 stack_remove_store_list))))
-                                (state_code_fupd (K code)
-                                (state_code_buffer_fupd (K (mk_buffer
-                                (n2w 0) [] 0))
-                                (state_data_buffer_fupd (K (mk_buffer
-                                (n2w 0) [] 0)) (compile_oracle_fupd
-                                (K coracle) (compile_fupd (K (\c p.
-                                compile s c (MAP
+                                (stackSem_state_code_fupd (K code)
+                                (stackSem_state_code_buffer_fupd (K
+                                (mk_buffer (n2w 0) [] 0))
+                                (stackSem_state_data_buffer_fupd (K
+                                (mk_buffer (n2w 0) [] 0))
+                                (stackSem_state_compile_oracle_fupd
+                                (K coracle)
+                                (stackSem_state_compile_fupd (K (\c
+                                p. stackSem_state_compile s c (MAP
                                 (stack_remove_prog_comp jump off k)
                                 p))) (stackSem_state_stack_space_fupd
-                                (K 0) (stack_fupd (K [wordLang_Word
-                                (n2w 0)])
+                                (K 0) (stackSem_state_stack_fupd (K
+                                [wordLang_Word (n2w 0)])
                                 (stackSem_state_use_alloc_fupd (K F)
                                 (stackSem_state_use_store_fupd (K T)
                                 (stackSem_state_use_stack_fupd (K T)
                                 (stackSem_state_bitmaps_fupd (K [(n2w
-                                4)]) (state_mdomain_fupd (K EMPTY)
-                                (fp_regs_fupd (K FEMPTY)
-                                (stackSem_state_regs_fupd (K (FEMPTY
-                                |+ (0,asm_Loc 1 0))) s)))))))))))))))`;;
+                                4)]) (stackSem_state_mdomain_fupd (K
+                                EMPTY) (stackSem_state_fp_regs_fupd
+                                (K FEMPTY) (stackSem_state_regs_fupd
+                                (K (FEMPTY |+ (0,asm_Loc 1 0)))
+                                s)))))))))))))))`;;
 
 let discharge_these_def = new_definition
   `discharge_these jump off gen_gc' max_heap k start' coracle code s2
@@ -1397,17 +1436,17 @@ let discharge_these_def = new_definition
        ALL (\(n,p). reg_bound p k /\ stack_num_stubs <= n + 1) code
          /\
        (!n i p.
-         MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k /\
-           stack_num_stubs <= i + 1) /\ compile_oracle
+         MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k
+           /\ stack_num_stubs <= i + 1) /\ stackSem_state_compile_oracle
        s2 = (I ## MAP (stack_remove_prog_comp jump off k) ## I) o
-         coracle /\ state_code
+         coracle /\ stackSem_state_code
        s2 = fromAList (stack_remove_compile jump off gen_gc' max_heap
          k start' code) /\
-       8 <= k /\ 1 IN domain (state_code s2) /\
-       {k,k + 1,k + 2} SUBSET stackSem_state_ffi_save_regs s2 /\
-         ~(stackSem_state_use_stack s2) /\
-       ~(stackSem_state_use_store s2) /\
-         ~(stackSem_state_use_alloc s2) /\ max_stack_alloc <=
+       8 <= k /\ 1 IN domain (stackSem_state_code s2) /\
+       {k,k + 1,k + 2} SUBSET stackSem_state_ffi_save_regs s2
+         /\ ~(stackSem_state_use_stack s2) /\
+       ~(stackSem_state_use_store s2)
+         /\ ~(stackSem_state_use_alloc s2) /\ max_stack_alloc <=
          max_heap`;;
 
 let propagate_these_def = new_definition
@@ -1419,23 +1458,23 @@ let propagate_these_def = new_definition
         FLOOKUP (stackSem_state_regs s) 3 = SOME (wordLang_Word ptr3)
           /\
         FLOOKUP (stackSem_state_regs s) 4 = SOME (wordLang_Word ptr4)
-          /\ state_memory
-        s ptr2 = wordLang_Word bitmap_ptr /\ state_memory
+          /\ stackSem_state_memory
+        s ptr2 = wordLang_Word bitmap_ptr /\ stackSem_state_memory
         s (ptr2 + bytes_in_word) =
             wordLang_Word (bitmap_ptr + bytes_in_word * n2w (LENGTH
-              bitmaps)) /\ state_memory
+              bitmaps)) /\ stackSem_state_memory
         s (ptr2 + (n2w 2) * bytes_in_word) =
             wordLang_Word (bitmap_ptr + bytes_in_word * n2w (LENGTH
               bitmaps) +
-                              bytes_in_word * n2w data_sp) /\
-                                state_memory
+                              bytes_in_word * n2w data_sp)
+                                /\ stackSem_state_memory
         s (ptr2 + (n2w 3) * bytes_in_word) =
-          wordLang_Word (buffer_position (state_code_buffer s)) /\
-            state_memory
+          wordLang_Word (buffer_position (stackSem_state_code_buffer
+            s)) /\ stackSem_state_memory
         s (ptr2 + (n2w 4) * bytes_in_word) =
-          wordLang_Word (buffer_position (state_code_buffer s) + n2w
-            (buffer_space_left (state_code_buffer s))) /\ buffer_buffer
-            (state_code_buffer
+          wordLang_Word (buffer_position (stackSem_state_code_buffer
+            s) + n2w (buffer_space_left (stackSem_state_code_buffer s)))
+            /\ buffer_buffer (stackSem_state_code_buffer
         s) = [] /\
         ptr2 <=+ ptr4 /\
         byte_aligned ptr2 /\ byte_aligned ptr4 /\ byte_aligned
@@ -1447,7 +1486,8 @@ let propagate_these_def = new_definition
          word_list_exists ptr2
              (w2n (--(n2w 1) * ptr2 + ptr4) DIV w2n (bytes_in_word:'a
                word)))
-          (fun2set (state_memory s,state_mdomain s)))`;;
+          (fun2set (stackSem_state_memory s,stackSem_state_mdomain
+            s)))`;;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -1464,7 +1504,7 @@ let make_init_semantics = prove
   CHEAT_TAC);;
 
 let make_init_any_ffi = prove
- (`state_ffi
+ (`stackSem_state_ffi
       (make_init_any gen_gc max_heap bitmaps data_sp coracle jump off
         k code s) = stackSem_state_ffi
        (s:('a,'c,'ffi)stackSem_state)`,
@@ -1497,19 +1537,19 @@ let make_init_any_use_alloc = prove
   CHEAT_TAC);;
 
 let make_init_any_code = prove
- (`state_code
+ (`stackSem_state_code
       (make_init_any gen_gc max_heap bitmaps data_sp coracle jump
         off k code s) = code`,
   CHEAT_TAC);;
 
 let make_init_any_stack_limit = prove
- (`LENGTH (stack (make_init_any gen_gc max_heap (bitmaps:('a word) list)
-  data_sp coracle jump off k code s)) *
+ (`LENGTH (stackSem_state_stack (make_init_any gen_gc max_heap
+  (bitmaps:('a word) list) data_sp coracle jump off k code s)) *
       (dimindex (:'a) DIV 8) < dimword (:'a)`,
   CHEAT_TAC);;
 
 let make_init_any_compile_oracle = prove
- (`compile_oracle
+ (`stackSem_state_compile_oracle
       (make_init_any ggc max_heap bitmaps data_sp coracle jump off
         k code s) = coracle`,
   CHEAT_TAC);;
@@ -1536,8 +1576,8 @@ let stack_remove_comp_stack_asm_name = prove
      asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
      good_dimindex (:'a) /\
      (!n. n <= max_stack_alloc ==> asm_config_valid_imm
-     c (INL asm_Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
-       asm_config_valid_imm
+     c (INL asm_Sub) (n2w (n * (dimindex (:'a) DIV 8)))
+       /\ asm_config_valid_imm
      c (INL asm_Add) (n2w (n * (dimindex (:'a) DIV 8)))) /\
      (
       // Needed to implement the global store
@@ -1559,10 +1599,10 @@ let stack_remove_stack_asm_name = prove
      asm_offset_ok 0 (asm_config_addr_offset c) (n2w 0) /\
      good_dimindex (:'a) /\
      (!n. n <= max_stack_alloc ==> asm_config_valid_imm
-     c (INL asm_Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
-       asm_config_valid_imm
-     c (INL asm_Add) (n2w (n * (dimindex (:'a) DIV 8)))) /\
-       asm_config_valid_imm
+     c (INL asm_Sub) (n2w (n * (dimindex (:'a) DIV 8)))
+       /\ asm_config_valid_imm
+     c (INL asm_Add) (n2w (n * (dimindex (:'a) DIV 8))))
+       /\ asm_config_valid_imm
      c (INL asm_Add) (n2w 4) /\ asm_config_valid_imm
      c (INL asm_Add) (n2w 8) /\
      (

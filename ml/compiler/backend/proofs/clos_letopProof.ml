@@ -54,8 +54,8 @@ let clos_letopProof_code_rel_IMP_LENGTH = prove
 let clos_letopProof_code_rel_CONS_CONS = prove
  (`clos_letopProof_code_rel (CONS x1 (CONS x2 xs)) (CONS y1 (CONS y2
   ys)) ==>
-      clos_letopProof_code_rel [x1] [y1] /\
-        clos_letopProof_code_rel (CONS x2 xs) (CONS y2 ys)`,
+      clos_letopProof_code_rel [x1] [y1]
+        /\ clos_letopProof_code_rel (CONS x2 xs) (CONS y2 ys)`,
   CHEAT_TAC);;
 
 (* value relation *)
@@ -115,21 +115,21 @@ let FMAP_REL_def = new_definition
 let clos_letopProof_state_rel_def = new_definition
   `clos_letopProof_state_rel (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
-     (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
-       closSem_state_code
-     s = FEMPTY /\ closSem_state_code t = FEMPTY /\
-       closSem_state_max_app
-     t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s /\
-       closSem_state_clock
+     (!n. SND (SND (closSem_state_compile_oracle s n)) = [])
+       /\ closSem_state_code
+     s = FEMPTY /\ closSem_state_code t = FEMPTY
+       /\ closSem_state_max_app
+     t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s
+       /\ closSem_state_clock
      t = closSem_state_clock s /\ closSem_state_ffi
      t = closSem_state_ffi s /\
      ALL2 (OPTREL clos_letopProof_v_rel) (closSem_state_globals s)
        (closSem_state_globals t) /\
      clos_letopProof_FMAP_REL clos_letopProof_ref_rel
-       (closSem_state_refs s) (closSem_state_refs t) /\
-       closSem_state_compile
-     s = pure_cc clos_letop_compile_inc (closSem_state_compile t) /\
-       closSem_state_compile_oracle
+       (closSem_state_refs s) (closSem_state_refs t)
+       /\ closSem_state_compile
+     s = pure_cc clos_letop_compile_inc (closSem_state_compile t)
+       /\ closSem_state_compile_oracle
      t = pure_co clos_letop_compile_inc o
        closSem_state_compile_oracle s`;;
 
@@ -199,8 +199,8 @@ let clos_letopProof_var_list_IMP_evaluate = prove
 let clos_letopProof_lookup_vars_lemma = prove
  (`!vs env1 env2. ALL2 clos_letopProof_v_rel env1 env2 ==>
     (match lookup_vars vs env1 with NONE -> lookup_vars vs env2 =
-      NONE | SOME l1 -> (?l2. ALL2 clos_letopProof_v_rel l1 l2 /\
-      lookup_vars vs env2 = SOME l2))`,
+      NONE | SOME l1 -> (?l2. ALL2 clos_letopProof_v_rel l1 l2
+      /\ lookup_vars vs env2 = SOME l2))`,
   CHEAT_TAC);;
 
 (* find_code_lemma *)
@@ -246,8 +246,8 @@ let clos_letopProof_do_app_lemma = prove
      closSem_do_app opp ys t = Rerr err2 /\
                            exc_rel clos_letopProof_v_rel err1 err2) |
                              Rval (x,s1) -> (?y t1.
-                             clos_letopProof_v_rel x y /\
-                             clos_letopProof_state_rel s1 t1 /\
+                             clos_letopProof_v_rel x y
+                             /\ clos_letopProof_state_rel s1 t1 /\
                               closSem_do_app opp ys t = Rval
                                 (y,t1)))`,
   CHEAT_TAC);;
@@ -257,8 +257,8 @@ let clos_letopProof_do_install_lemma = prove
  (`clos_letopProof_state_rel s t /\ ALL2 clos_letopProof_v_rel xs ys ==>
    (match closSem_do_install xs s with (Rerr err1,s1) -> (?err2 t1.
      closSem_do_install ys t = (Rerr err2,t1) /\
-                           exc_rel clos_letopProof_v_rel err1 err2 /\
-                             clos_letopProof_state_rel s1 t1) | (Rval
+                           exc_rel clos_letopProof_v_rel err1 err2
+                             /\ clos_letopProof_state_rel s1 t1) | (Rval
                              exps1,s1) -> (?exps2 t1.
                              clos_letopProof_state_rel s1 t1 /\ (~(exps1
                              = [])) /\
@@ -269,19 +269,20 @@ let clos_letopProof_do_install_lemma = prove
 
 (* state_rel_opt_rel_refs[local] *)
 let clos_letopProof_state_rel_opt_rel_refs = prove
- (`(clos_letopProof_state_rel s1 s2 /\ FLOOKUP (state_refs s1) n = r1
-  ==>
-      (?r2. FLOOKUP (state_refs s2) n = r2 /\ OPTREL
+ (`(clos_letopProof_state_rel s1 s2 /\ FLOOKUP (closSem_state_refs s1) n
+  = r1 ==>
+      (?r2. FLOOKUP (closSem_state_refs s2) n = r2 /\ OPTREL
         clos_letopProof_ref_rel r1 r2)) /\
-   (clos_letopProof_state_rel s1 s2 /\ FLOOKUP (state_refs s2) n = r2
-     ==>
-      (?r1. FLOOKUP (state_refs s1) n = r1 /\ OPTREL
+   (clos_letopProof_state_rel s1 s2 /\ FLOOKUP (closSem_state_refs
+     s2) n = r2 ==>
+      (?r1. FLOOKUP (closSem_state_refs s1) n = r1 /\ OPTREL
         clos_letopProof_ref_rel r1 r2))`,
   CHEAT_TAC);;
 
 (* state_rel_clocks_eqs[local] *)
 let clos_letopProof_state_rel_clocks_eqs = prove
- (`clos_letopProof_state_rel s1 s2 ==> state_clock s1 = state_clock s2`,
+ (`clos_letopProof_state_rel s1 s2 ==> closSem_state_clock s1 =
+  closSem_state_clock s2`,
   CHEAT_TAC);;
 
 (* state_rel_dec_clock[local] *)
@@ -294,16 +295,17 @@ let clos_letopProof_state_rel_dec_clock = prove
 let clos_letopProof_rel_update_thunk = prove
  (`clos_letopProof_state_rel s1 s2 /\
    ALL2 clos_letopProof_v_rel vs ys ==>
-     (closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs
-       = NONE ==>
-        closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s2)
-          ys = NONE) /\
-     (closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs
-       = SOME refs1 ==>
+     (closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs
+       s1) vs = NONE ==>
+        closSem_update_thunk [closSem_RefPtr v ptr]
+          (closSem_state_refs s2) ys = NONE) /\
+     (closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs
+       s1) vs = SOME refs1 ==>
         (?refs2. closSem_update_thunk [closSem_RefPtr v ptr]
-          (state_refs s2) ys = SOME refs2 /\
-                clos_letopProof_state_rel (state_refs_fupd (K
-                  refs1) s1) (state_refs_fupd (K refs2) s2)))`,
+          (closSem_state_refs s2) ys = SOME refs2 /\
+                clos_letopProof_state_rel (closSem_state_refs_fupd
+                  (K refs1) s1) (closSem_state_refs_fupd (K refs2)
+                  s2)))`,
   CHEAT_TAC);;
 
 (* evaluate_let_op *)
@@ -312,8 +314,8 @@ let clos_letopProof_rel_update_thunk = prove
 let clos_letopProof_evaluate_let_op = prove
  (`(!xs env1 (s1:('c,'ffi)closSem_state) res1 s2 ys env2 t1.
        closSem_evaluate (xs,env1,s1) = (res1,s2) /\
-       ALL2 clos_letopProof_v_rel env1 env2 /\
-         clos_letopProof_state_rel s1 t1 /\
+       ALL2 clos_letopProof_v_rel env1 env2
+         /\ clos_letopProof_state_rel s1 t1 /\
        clos_letopProof_code_rel xs ys ==>
        (?res2 t2.
          closSem_evaluate (ys,env2,t1) = (res2,t2) /\
@@ -336,8 +338,8 @@ let clos_letopProof_evaluate_let_op = prove
 let let_op_correct = prove
  (`!xs env1 (s1:('c,'ffi)closSem_state) res1 s2 env2 t1.
        closSem_evaluate (xs,env1,s1) = (res1,s2) /\
-       ALL2 clos_letopProof_v_rel env1 env2 /\
-         clos_letopProof_state_rel s1 t1 ==>
+       ALL2 clos_letopProof_v_rel env1 env2
+         /\ clos_letopProof_state_rel s1 t1 ==>
        (?res2 t2.
          closSem_evaluate (clos_letop_let_op xs,env2,t1) = (res2,t2)
            /\

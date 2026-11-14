@@ -46,29 +46,33 @@ let rename_state_def = new_definition
 
 let rename_state_with_clock = prove
  (`rename_state c f (stackSem_state_clock_fupd (K k) s) =
-  state_clock_fupd (K k) (rename_state c f s)`,
+  stackSem_state_clock_fupd (K k) (rename_state c f s)`,
   CHEAT_TAC);;
 
 let rename_state_const = prove
- (`state_memory
-      (rename_state c f s) = stackSem_state_memory s /\ be
-      (rename_state c f s) = stackSem_state_be s /\ state_mdomain
-      (rename_state c f s) = stackSem_state_mdomain s /\
-        state_sh_mdomain
-      (rename_state c f s) = stackSem_state_sh_mdomain s /\
-        state_code_buffer
-      (rename_state c f s) = stackSem_state_code_buffer s /\
-        state_clock
-      (rename_state c f s) = stackSem_state_clock s /\ compile
+ (`stackSem_state_memory
+      (rename_state c f s) = stackSem_state_memory s
+        /\ stackSem_state_be
+      (rename_state c f s) = stackSem_state_be s
+        /\ stackSem_state_mdomain
+      (rename_state c f s) = stackSem_state_mdomain s
+        /\ stackSem_state_sh_mdomain
+      (rename_state c f s) = stackSem_state_sh_mdomain s
+        /\ stackSem_state_code_buffer
+      (rename_state c f s) = stackSem_state_code_buffer s
+        /\ stackSem_state_clock
+      (rename_state c f s) = stackSem_state_clock s
+        /\ stackSem_state_compile
       (rename_state c f s) = c /\ stackSem_state_use_stack
-      (rename_state c f s) = stackSem_state_use_stack s /\ fp_regs
+      (rename_state c f s) = stackSem_state_use_stack s
+        /\ stackSem_state_fp_regs
       (rename_state c f s) = stackSem_state_fp_regs s`,
   CHEAT_TAC);;
 add_simp rename_state_const;;
 
 let rename_state_with_memory = prove
  (`rename_state c f (stackSem_state_memory_fupd (K k) s) =
-  state_memory_fupd (K k) (rename_state c f s)`,
+  stackSem_state_memory_fupd (K k) (rename_state c f s)`,
   CHEAT_TAC);;
 
 let dec_clock_rename_state = prove
@@ -188,7 +192,7 @@ let stack_namesProof_prog_comp_eta = prove
 let find_code_rename_state = prove
  (`BIJ (tlookup f) UNIV UNIV ==>
    stackSem_find_code (dest_find_name f dest) (stackSem_state_regs
-     (rename_state c f s)) (state_code (rename_state c f s)) =
+     (rename_state c f s)) (stackSem_state_code (rename_state c f s)) =
    OPTION_MAP (stack_names_comp f) (stackSem_find_code dest
      (stackSem_state_regs s) (stackSem_state_code s))`,
   CHEAT_TAC);;
@@ -218,7 +222,7 @@ let stack_namesProof_MAP_FST_compile = prove
 add_simp stack_namesProof_MAP_FST_compile;;
 
 let domain_rename_state_code = prove
- (`domain (state_code (rename_state c f s)) = domain
+ (`domain (stackSem_state_code (rename_state c f s)) = domain
   (stackSem_state_code s)`,
   CHEAT_TAC);;
 add_simp domain_rename_state_code;;
@@ -237,7 +241,7 @@ let stack_namesProof_get_labels_comp = prove
 
 (* [local] *)
 let loc_check_rename_state = prove
- (`loc_check (state_code (rename_state c f s)) (l1,l2) =
+ (`loc_check (stackSem_state_code (rename_state c f s)) (l1,l2) =
      loc_check (stackSem_state_code s) (l1,l2)`,
   CHEAT_TAC);;
 
@@ -275,9 +279,9 @@ let compile_semantics_alt = prove
            (stackSem_state_compile t) f s = t) /\ stackSem_state_compile
          s = (\c. stackSem_state_compile t c o (stack_names_compile
            f)) /\
-         ~(stackSem_state_use_alloc s) /\
-           ~(stackSem_state_use_store s) /\ ~(stackSem_state_use_stack
-           s) ==>
+         ~(stackSem_state_use_alloc s)
+           /\ ~(stackSem_state_use_store s)
+           /\ ~(stackSem_state_use_stack s) ==>
          stackSem_semantics start t = stackSem_semantics start s`),
   CHEAT_TAC);;
 
@@ -299,12 +303,12 @@ let stack_namesProof_make_init_def = new_definition
    variables of its own are read as variables *)
 let stack_namesProof_make_init_semantics = prove
  (cake_as_vars (fun () ->
-    `~(stackSem_state_use_alloc s) /\ ~(stackSem_state_use_store s) /\
-  ~(stackSem_state_use_stack s) /\
-     BIJ (tlookup f) UNIV UNIV /\ ALL_DISTINCT (MAP FST code) /\
-       stackSem_state_code
-     s = fromAList (stack_names_compile f code) /\
-       stackSem_state_compile_oracle
+    `~(stackSem_state_use_alloc s) /\ ~(stackSem_state_use_store s)
+  /\ ~(stackSem_state_use_stack s) /\
+     BIJ (tlookup f) UNIV UNIV /\ ALL_DISTINCT (MAP FST code)
+       /\ stackSem_state_code
+     s = fromAList (stack_names_compile f code)
+       /\ stackSem_state_compile_oracle
      s = (I ## stack_names_compile f ## I) o oracle ==>
      stackSem_semantics start s = stackSem_semantics start
        (stack_namesProof_make_init f (fromAList code) oracle s)`),

@@ -215,8 +215,8 @@ let flatSem_vs_to_string_def,flatSem_vs_to_string_ind = define_wf
         match x1 with
           [] -> SOME (implode "")
         | CONS (flatSem_Litv (ast_StrLit s1):flatSem_v) vs ->
-      (match flatSem_vs_to_string vs with SOME s2 -> SOME ((\x y.
-        strcat x y) s1 s2) | _60 -> NONE)
+      (match flatSem_vs_to_string vs with SOME s2 -> SOME (strcat s1
+        s2) | _60 -> NONE)
         | _61 -> NONE`];;
 
 let flatSem_v_to_bytes_def = new_definition
@@ -341,13 +341,13 @@ let flatSem_do_app_def = new_definition
        NONE | Eq_val b -> SOME (s,Rval (flatSem_Boolv b))) |
        (flatLang_Src (ast_Arith a ty),vs) ->
      (let vs = MAP flat_to_v vs in
-        if ALL (flatSem_check_type ty) vs then
+        if ALL (semanticPrimitives_check_type ty) vs then
           (match do_arith a ty vs with SOME (INR res) -> SOME (s,Rval
             (v_to_flat res)) | SOME (INL exn) -> SOME (s,Rerr (Rraise
             flatSem_div_exn_v)) | NONE -> NONE) else NONE) |
             (flatLang_Src (ast_FromTo ty1 ty2),[v]) ->
      (let v = flat_to_v v in
-        if flatSem_check_type ty1 v then
+        if semanticPrimitives_check_type ty1 v then
           (match do_conversion v ty1 ty2 with SOME (INR res) -> SOME
             (s,Rval (v_to_flat res)) | SOME (INL exn) -> SOME (s,Rerr
             (Rraise flatSem_chr_exn_v)) | NONE -> NONE) else NONE) |
@@ -826,7 +826,7 @@ add_simp dec_alt_size_def;;
 let flatSem_fix_clock_IMP =
   try prove
    (`!s x s1 res. flatSem_fix_clock s x = (s1,res)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> flatSem_state_clock s1 <= flatSem_state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; flatSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "flatSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN

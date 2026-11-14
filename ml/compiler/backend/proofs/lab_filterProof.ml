@@ -11,10 +11,8 @@
 
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_filter.ml";;
-needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/semantics/labProps.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
-needs "lib/pegexec.ml";;
 needs "semantics/ffi/ffi.ml";;
 
 (* the theory of this file, and the ones its statements read *)
@@ -96,11 +94,11 @@ let asm_fetch_not_skip_adjust_pc = prove
 
 (* [local] *)
 let state_rw = prove
- (`state_clock_fupd (K (state_clock s))
-     s = s /\ pc_fupd (K (pc s))
-     s = s /\ state_clock_fupd (K (state_clock s + k')) (pc_fupd (K
-       (pc s))
-     s) = state_clock_fupd (K (state_clock s + k')) s`,
+ (`labSem_state_clock_fupd (K (labSem_state_clock s))
+     s = s /\ labSem_state_pc_fupd (K (labSem_state_pc s))
+     s = s /\ labSem_state_clock_fupd (K (labSem_state_clock s + k'))
+       (labSem_state_pc_fupd (K (labSem_state_pc s))
+     s) = labSem_state_clock_fupd (K (labSem_state_clock s + k')) s`,
   CHEAT_TAC);;
 
 (* 2) all_skips allow swapping pc for clock*)
@@ -110,12 +108,14 @@ let state_rw = prove
 let lab_filterProof_state_rel_def = new_definition
   `lab_filterProof_state_rel (s1:('a,'c,'ffi)labSem_state) t1 <=>
      (?s1compile.
-      s1 = compile_fupd (K s1compile) (compile_oracle_fupd (K (\n.
-        (\(a,b). (a,filter_skip b)) (compile_oracle t1 n))) (pc_fupd (K
-        (adjust_pc (pc t1) (state_code t1))) (state_code_fupd (K
-        (filter_skip (state_code t1))) t1))) /\ compile
+      s1 = labSem_state_compile_fupd (K s1compile)
+        (labSem_state_compile_oracle_fupd (K (\n. (\(a,b).
+        (a,filter_skip b)) (labSem_state_compile_oracle t1 n)))
+        (labSem_state_pc_fupd (K (adjust_pc (labSem_state_pc t1)
+        (labSem_state_code t1))) (labSem_state_code_fupd (K (filter_skip
+        (labSem_state_code t1))) t1))) /\ labSem_state_compile
      t1 = (\c p. s1compile c (filter_skip p))) /\
-     ~(failed t1)`;;
+     ~(labSem_state_failed t1)`;;
 
 (* [local] *)
 let adjust_pc_all_skips = prove
@@ -198,13 +198,15 @@ let loc_to_pc_adjust_pc_append = prove
 (* HOL4 lab_filterProofScript.sml:565-576: a proof *)
 
 let share_mem_op_NONE_filter_correct = prove
- (`all_skips (pc t1) (state_code t1) k /\
+ (`all_skips (labSem_state_pc t1) (labSem_state_code t1) k /\
    share_mem_op m r a
-     (compile_oracle_fupd (K arb_oracle) (compile_fupd (K
-       arb_compile) (state_code_fupd (K (filter_skip (state_code t1)))
-       (pc_fupd (K (adjust_pc (pc t1) (state_code t1))) t1)))) = NONE
-       ==>
-   share_mem_op m r a (pc_fupd (K (k + pc t1)) t1) = NONE`,
+     (labSem_state_compile_oracle_fupd (K arb_oracle)
+       (labSem_state_compile_fupd (K arb_compile)
+       (labSem_state_code_fupd (K (filter_skip (labSem_state_code t1)))
+       (labSem_state_pc_fupd (K (adjust_pc (labSem_state_pc t1)
+       (labSem_state_code t1))) t1)))) = NONE ==>
+   share_mem_op m r a (labSem_state_pc_fupd (K (k + labSem_state_pc
+     t1)) t1) = NONE`,
   CHEAT_TAC);;
 
 (* HOL4 lab_filterProofScript.sml:594-602: a proof *)
@@ -212,37 +214,45 @@ let share_mem_op_NONE_filter_correct = prove
 (* HOL4 lab_filterProofScript.sml:604-612: a proof *)
 
 let share_mem_op_FFI_return_filter_correct = prove
- (`(all_skips (pc t1) (state_code t1) k /\ ~(state_clock t1 = 0) /\
-  compile
-   t1 = (\c p. s1compile c (filter_skip p)) /\ ~(failed t1) /\
+ (`(all_skips (labSem_state_pc t1) (labSem_state_code t1) k
+  /\ ~(labSem_state_clock t1 = 0) /\ labSem_state_compile
+   t1 = (\c p. s1compile c (filter_skip p)) /\ ~(labSem_state_failed
+     t1) /\
    share_mem_op m r a
-     (compile_oracle_fupd (K (\n. (\(a,b). (a,filter_skip b))
-       (compile_oracle t1 n))) (compile_fupd (K s1compile)
-       (state_code_fupd (K (filter_skip (state_code t1))) (pc_fupd (K
-       (adjust_pc (pc t1) (state_code t1))) t1)))) = SOME (FFI_return f
-       l,s)) ==>
-   (?s2. !k'. share_mem_op m r a (pc_fupd (K (k + pc t1)) t1) =
+     (labSem_state_compile_oracle_fupd (K (\n. (\(a,b).
+       (a,filter_skip b)) (labSem_state_compile_oracle t1 n)))
+       (labSem_state_compile_fupd (K s1compile) (labSem_state_code_fupd
+       (K (filter_skip (labSem_state_code t1))) (labSem_state_pc_fupd (K
+       (adjust_pc (labSem_state_pc t1) (labSem_state_code t1))) t1)))) =
+       SOME (FFI_return f l,s)) ==>
+   (?s2. !k'. share_mem_op m r a (labSem_state_pc_fupd (K (k +
+     labSem_state_pc t1)) t1) =
      SOME (FFI_return f l,s2) /\
-   lab_filterProof_state_rel s s2 /\ ~(failed s) /\ ~(failed s2) /\
-   share_mem_op m r a (state_clock_fupd (K (k' + state_clock t1))
-     (pc_fupd (K (k + pc t1)) t1)) =
-     SOME (FFI_return f l,state_clock_fupd (K (k' + state_clock
-       s2)) s2))`,
+   lab_filterProof_state_rel s s2 /\ ~(labSem_state_failed s)
+     /\ ~(labSem_state_failed s2) /\
+   share_mem_op m r a (labSem_state_clock_fupd (K (k' +
+     labSem_state_clock t1)) (labSem_state_pc_fupd (K (k +
+     labSem_state_pc t1)) t1)) =
+     SOME (FFI_return f l,labSem_state_clock_fupd (K (k' +
+       labSem_state_clock s2)) s2))`,
   CHEAT_TAC);;
 
 let share_mem_op_FFI_final_filter_correct = prove
- (`(all_skips (pc t1) (state_code t1) k /\ ~(state_clock t1 = 0) /\
-  compile
-   t1 = (\c p. s1compile c (filter_skip p)) /\ ~(failed t1) /\
+ (`(all_skips (labSem_state_pc t1) (labSem_state_code t1) k
+  /\ ~(labSem_state_clock t1 = 0) /\ labSem_state_compile
+   t1 = (\c p. s1compile c (filter_skip p)) /\ ~(labSem_state_failed
+     t1) /\
    share_mem_op m r a
-     (compile_oracle_fupd (K (\n. (\(a,b). (a,filter_skip b))
-       (compile_oracle t1 n))) (compile_fupd (K s1compile)
-       (state_code_fupd (K (filter_skip (state_code t1))) (pc_fupd (K
-       (adjust_pc (pc t1) (state_code t1))) t1)))) = SOME (FFI_final
-       f,s)) ==>
-   (?s2. share_mem_op m r a (pc_fupd (K (k + pc t1)) t1) = SOME
-     (FFI_final f,s2) /\ state_ffi
-   s = state_ffi s2)`,
+     (labSem_state_compile_oracle_fupd (K (\n. (\(a,b).
+       (a,filter_skip b)) (labSem_state_compile_oracle t1 n)))
+       (labSem_state_compile_fupd (K s1compile) (labSem_state_code_fupd
+       (K (filter_skip (labSem_state_code t1))) (labSem_state_pc_fupd (K
+       (adjust_pc (labSem_state_pc t1) (labSem_state_code t1))) t1)))) =
+       SOME (FFI_final f,s)) ==>
+   (?s2. share_mem_op m r a (labSem_state_pc_fupd (K (k +
+     labSem_state_pc t1)) t1) = SOME (FFI_final f,s2)
+     /\ labSem_state_ffi
+   s = labSem_state_ffi s2)`,
   CHEAT_TAC);;
 
 (* HOL4 lab_filterProofScript.sml:669-1037: a theorem whose statement

@@ -238,8 +238,8 @@ let mc_fix_def,mc_fix_pre_def =
        (let r10 = r10 - (n2w 0x1) in
         let cond' = (w2n r10 < LENGTH zs) in
         let r8 = EL (w2n r10) zs in
-          if r8 = (n2w 0x0) then (INL (l - 1,r8,r10,zs),(cond' /\
-            ~(l = 0))) else (let r10 = r10 + (n2w 0x1) in (INR
+          if r8 = (n2w 0x0) then (INL (l - 1,r8,r10,zs),(cond'
+            /\ ~(l = 0))) else (let r10 = r10 + (n2w 0x1) in (INR
             (l,r8,r10,zs),cond'))))`;;
 
 let mc_sub_def,mc_sub_pre_def =
@@ -694,8 +694,8 @@ let mc_adjust_aux_def,mc_adjust_aux_pre_def =
         let (r0,r3,r8) = mc_adj_cmp (r0,r3,r8) in
         let r11 = r11 + (n2w 0x1) in
         let r10 = r10 + (n2w 0x1) in
-          (INL (l - 1,r1,r6,r7,r8,r9,r10,r11,r12,ys,zs),(cond' /\
-            ~(l = 0))))):num#'a word#'a word#'a word#'a word#'a
+          (INL (l - 1,r1,r6,r7,r8,r9,r10,r11,r12,ys,zs),(cond'
+            /\ ~(l = 0))))):num#'a word#'a word#'a word#'a word#'a
             word#'a word#'a word#'a word#('a word) list#('a word)
             list->(num#'a word#'a word#'a word#'a word#'a word#'a
             word#'a word#'a word#('a word) list#('a word) list+num#'a
@@ -767,8 +767,8 @@ let mc_div_sub_loop_def,mc_div_sub_loop_pre_def =
         let r1 = r0 in
         let r11 = r11 + (n2w 0x1) in
         let r10 = r10 + (n2w 0x1) in
-          (INL (l - 1,r1,r6,r7,r8,r9,r10,r11,r12,ys,zs),(cond' /\
-            ~(l = 0))))):num#'a word#'a word#'a word#'a word#'a
+          (INL (l - 1,r1,r6,r7,r8,r9,r10,r11,r12,ys,zs),(cond'
+            /\ ~(l = 0))))):num#'a word#'a word#'a word#'a word#'a
             word#'a word#'a word#'a word#('a word) list#('a word)
             list->(num#'a word#'a word#'a word#'a word#'a word#'a
             word#'a word#'a word#('a word) list#('a word) list+num#'a

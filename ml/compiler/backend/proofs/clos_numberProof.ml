@@ -129,10 +129,10 @@ let clos_numberProof_v_rel = cake_inductive
 let clos_numberProof_state_rel_def = new_definition
   `clos_numberProof_state_rel (s:(num#'c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
-     (closSem_state_clock s = closSem_state_clock t) /\
-       (closSem_state_ffi s = closSem_state_ffi t) /\
-       (closSem_state_max_app t = closSem_state_max_app s) /\
-       closSem_state_compile
+     (closSem_state_clock s = closSem_state_clock t)
+       /\ (closSem_state_ffi s = closSem_state_ffi t)
+       /\ (closSem_state_max_app t = closSem_state_max_app s)
+       /\ closSem_state_compile
      s = state_cc (ignore_table clos_number_compile_inc)
        (closSem_state_compile t) /\ closSem_state_compile_oracle
      t = state_co (ignore_table clos_number_compile_inc)
@@ -156,12 +156,14 @@ let clos_numberProof_state_rel_max_app = prove
 (* state_rel_with_clock[local] *)
 let clos_numberProof_state_rel_with_clock = prove
  (`!s t. clos_numberProof_state_rel s t ==> clos_numberProof_state_rel
-  (state_clock_fupd (K x) s) (state_clock_fupd (K x) t)`,
+  (closSem_state_clock_fupd (K x) s) (closSem_state_clock_fupd (K x)
+  t)`,
   CHEAT_TAC);;
 
 (* state_rel_clock[local] *)
 let clos_numberProof_state_rel_clock = prove
- (`clos_numberProof_state_rel s t ==> state_clock s = state_clock t`,
+ (`clos_numberProof_state_rel s t ==> closSem_state_clock s =
+  closSem_state_clock t`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -175,13 +177,14 @@ let state_rel_globals = prove
 let state_rel_refs = prove
  (`clos_numberProof_state_rel s t ==>
      fmap_rel (closProps_ref_rel (clos_numberProof_v_rel
-       (closSem_state_max_app t))) (state_refs s) (state_refs t)`,
+       (closSem_state_max_app t))) (closSem_state_refs s)
+       (closSem_state_refs t)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let state_rel_code = prove
- (`clos_numberProof_state_rel s t ==> closSem_state_code s = FEMPTY /\
-  closSem_state_code t = FEMPTY`,
+ (`clos_numberProof_state_rel s t ==> closSem_state_code s = FEMPTY
+  /\ closSem_state_code t = FEMPTY`,
   CHEAT_TAC);;
 
 (* HOL4 clos_numberProofScript.sml:246-262: a theorem that HOL4
@@ -268,8 +271,8 @@ let clos_numberProof_simple_val_rel = prove
 (* simple_state_rel *)
 let clos_numberProof_simple_state_rel = prove
  (`closProps_simple_state_rel (clos_numberProof_v_rel max_app_n)
-     (\s t. closSem_state_max_app s = max_app_n /\
-       clos_numberProof_state_rel s t)`,
+     (\s t. closSem_state_max_app s = max_app_n
+       /\ clos_numberProof_state_rel s t)`,
   CHEAT_TAC);;
 
 (* HOL4 clos_numberProofScript.sml:467-472: ML code, not ported *)
@@ -282,8 +285,8 @@ let clos_numberProof_do_app_lemma = prove
       Rval (x,s1) ->
         (?y t1.
           clos_numberProof_v_rel (closSem_state_max_app s) x y /\
-          (closSem_state_max_app s1 = closSem_state_max_app s /\
-            clos_numberProof_state_rel s1 t1) /\
+          (closSem_state_max_app s1 = closSem_state_max_app s
+            /\ clos_numberProof_state_rel s1 t1) /\
           closSem_do_app opp ys t = Rval (y,t1)) | Rerr err1 ->
         (?err2.
           closSem_do_app opp ys t = Rerr err2 /\
@@ -344,8 +347,9 @@ let do_install = prove
                   clos_numberProof_state_rel t t')) /\
     (!e1 t1. closSem_do_install x1 s1 = (Rval e1,t1) ==>
       (?e2 t2. closSem_do_install x2 s2 = (Rval e2,t2) /\
-              ~(contains_App_SOME (closSem_state_max_app t1) (e1)) /\
-                closSem_state_max_app t1 = closSem_state_max_app s1 /\
+              ~(contains_App_SOME (closSem_state_max_app t1) (e1))
+                /\ closSem_state_max_app t1 = closSem_state_max_app s1
+                /\
               e2 = SND (clos_number_compile_inc (FST (FST
                 (closSem_state_compile_oracle s1 0))) e1) /\
               clos_numberProof_state_rel t1 t2))`,
@@ -369,12 +373,12 @@ let lookup_vars_SOME_related_env = prove
 let clos_numberProof_rel_update_thunk = prove
  (`clos_numberProof_state_rel s1 s2 /\
    ALL2 (clos_numberProof_v_rel (closSem_state_max_app s1)) vs ys /\
-   closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs =
-     SOME refs1 ==>
-     (?refs2. closSem_update_thunk [closSem_RefPtr v ptr] (state_refs
-       s2) ys = SOME refs2 /\
-             clos_numberProof_state_rel (state_refs_fupd (K refs1)
-               s1) (state_refs_fupd (K refs2) s2))`,
+   closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs
+     s1) vs = SOME refs1 ==>
+     (?refs2. closSem_update_thunk [closSem_RefPtr v ptr]
+       (closSem_state_refs s2) ys = SOME refs2 /\
+             clos_numberProof_state_rel (closSem_state_refs_fupd (K
+               refs1) s1) (closSem_state_refs_fupd (K refs2) s2))`,
   CHEAT_TAC);;
 
 (* HOL4 clos_numberProofScript.sml:637-645: code that the source has
@@ -482,8 +486,8 @@ let renumber_code_locs_get_code_labels = prove
   {}) (MAP closProps_get_code_labels es) /\ EVEN n ==>
       UNIONS (set_of_list (MAP closProps_get_code_labels es')) = {n +
         2 * k | k | n + 2 * k < n'}) /\
-   (!n e n' e'. renumber_code_locs n e = (n',e') /\
-     closProps_get_code_labels e = {} /\ EVEN n ==>
+   (!n e n' e'. renumber_code_locs n e = (n',e')
+     /\ closProps_get_code_labels e = {} /\ EVEN n ==>
      closProps_get_code_labels e' = {n + 2 * k | k | n + 2 * k <
        n'})`,
   CHEAT_TAC);;

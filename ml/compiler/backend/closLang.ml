@@ -267,8 +267,8 @@ let pure_def,pure_ind = define_shaped_rec
   [`pure (closLang_Var _28 _29:closLang_exp) <=> T`;
    `pure (closLang_If _31 e1 e2 e3:closLang_exp) <=> pure e1 /\ pure
     e2 /\ pure e3`;
-   `pure (closLang_Let _33 es e2:closLang_exp) <=> ALL pure es /\
-    pure e2`;
+   `pure (closLang_Let _33 es e2:closLang_exp) <=> ALL pure es
+    /\ pure e2`;
    `pure (closLang_Raise _36 _37:closLang_exp) <=> F`;
    `pure (closLang_Handle _39 e1 e2:closLang_exp) <=> pure e1`;
    `pure (closLang_Tick _42 _43:closLang_exp) <=> F`;
@@ -276,8 +276,8 @@ let pure_def,pure_ind = define_shaped_rec
    `pure (closLang_App _56 _57 _58 _59:closLang_exp) <=> F`;
    `pure (closLang_Fn _60 _61 _62 _63 _64) <=> T`;
    `pure (closLang_Letrec _69 _70 _71 _72 x:closLang_exp) <=> pure x`;
-   `pure (closLang_Op _74 opn es:closLang_exp) <=> ALL pure es /\
-    closLang_pure_op opn`];;
+   `pure (closLang_Op _74 opn es:closLang_exp) <=> ALL pure es
+    /\ closLang_pure_op opn`];;
 
 (* used in proofs about closLang, BVL, BVI and dataLang *)
 let assign_get_code_label_def = new_definition

@@ -97,8 +97,8 @@ let destLongidT_def = new_definition
 add_simp destLongidT_def;;
 
 let destLongidT_EQ_SOME = prove
- (`destLongidT t = SOME strs <=> (?str s. t = tokens_LongidT str s /\
-  strs = (str,s))`,
+ (`destLongidT t = SOME strs <=> (?str s. t = tokens_LongidT str s
+  /\ strs = (str,s))`,
   CHEAT_TAC);;
 add_simp destLongidT_EQ_SOME;;
 

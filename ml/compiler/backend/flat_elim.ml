@@ -95,13 +95,13 @@ let flat_elim_is_pure_def,flat_elim_is_pure_ind = define_wf
         | (flatLang_Fun t name body) -> T
         | (flatLang_App t (flatLang_GlobalVarInit g) es) -> ALL
           flat_elim_is_pure es
-        | (flatLang_If t e1 e2 e3) -> (flat_elim_is_pure e1 /\
-          flat_elim_is_pure e2 /\ flat_elim_is_pure e3)
+        | (flatLang_If t e1 e2 e3) -> (flat_elim_is_pure e1
+          /\ flat_elim_is_pure e2 /\ flat_elim_is_pure e3)
         | (flatLang_Mat t e1 pes) ->
          (flat_elim_is_pure e1 /\ ALL flat_elim_is_pure (MAP SND
            pes) /\ EX total_pat (MAP FST pes))
-        | (flatLang_Let t opt e1 e2) -> (flat_elim_is_pure e1 /\
-          flat_elim_is_pure e2)
+        | (flatLang_Let t opt e1 e2) -> (flat_elim_is_pure e1
+          /\ flat_elim_is_pure e2)
         | (flatLang_Letrec t funs e) -> flat_elim_is_pure e
         | _7 -> F`];;
 

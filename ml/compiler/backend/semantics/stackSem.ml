@@ -806,7 +806,8 @@ add_simp stackSem_exit_loop_def;;
 let stackSem_fix_clock_IMP =
   try prove
    (`!s x res s1. stackSem_fix_clock s x = (res,s1)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> stackSem_state_clock s1 <= stackSem_state_clock
+                    s`,
     REWRITE_TAC[FORALL_PAIR_THM; stackSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "stackSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
@@ -943,8 +944,8 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
                      then (SOME stackSem_Error,s) else (res,s))))) |
            // returning call, returns into var n
            SOME (ret_handler,link_reg',l1,l2) ->
-           (match stackSem_find_code dest (stackSem_state_regs s \\
-               link_reg') (stackSem_state_code s) with NONE -> (SOME
+           (match stackSem_find_code dest (stackSem_state_regs s
+               \\ link_reg') (stackSem_state_code s) with NONE -> (SOME
                stackSem_Error,s) | SOME prog ->
                (if stackSem_state_clock s = 0 then (SOME
                    stackSem_TimeOut,stackSem_empty_env s) else
@@ -1215,8 +1216,8 @@ let stackSem_semantics_def = new_definition
      (prog,stackSem_state_clock_fupd (K k) s)) in ~(res = SOME
      stackSem_TimeOut) /\ ~(res = SOME (stackSem_Result (wordLang_Loc 1
      0))) /\
-            (!w. ~(res = SOME (stackSem_Halt (wordLang_Word w)))) /\
-              (!f. ~(res = SOME (stackSem_FinalFFI f))) then ffi_Fail
+            (!w. ~(res = SOME (stackSem_Halt (wordLang_Word w))))
+              /\ (!f. ~(res = SOME (stackSem_FinalFFI f))) then ffi_Fail
               else
      match some (\res.
        ?k t r outcome.

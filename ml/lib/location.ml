@@ -49,8 +49,8 @@ let locnle_def = new_definition
      // maximal element
      // otherwise compare row and col lexicographically
      l2 = UNKNOWNpt) /\ ~(l1 = EOFpt) /\
-     (locnrow l1 < locnrow l2 \/ locnrow l1 = locnrow l2 /\
-       locncol l1 < locncol l2)`;;
+     (locnrow l1 < locnrow l2 \/ locnrow l1 = locnrow l2
+       /\ locncol l1 < locncol l2)`;;
 
 let locsle_def = define_general
   [`locsle (Locs l1 _1) (Locs l2 _2) <=> locnle l1 l2`];;

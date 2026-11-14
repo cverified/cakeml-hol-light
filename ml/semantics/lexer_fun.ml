@@ -274,8 +274,8 @@ let next_sym_def,next_sym_ind = define_guess
                let (n,rest) = read_while isDigit str [] in
                  SOME (NumberS (&(num_from_dec_string (CONS c n))),
                        Locs loc (next_loc (LENGTH n) loc),
-                       rest) else if c = (CHR 126) /\ ~(str = "") /\
-                           isDigit (HD str) then
+                       rest) else if c = (CHR 126) /\ ~(str = "")
+                           /\ isDigit (HD str) then
            // read negative number
            let (n,rest) = read_while isDigit str [] in
              SOME (NumberS ((&0) - &(num_from_dec_string n)),

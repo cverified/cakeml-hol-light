@@ -229,13 +229,12 @@ let odestSXNUM_SEXSTR = prove
 add_simp odestSXNUM_SEXSTR;;
 
 let sexpopt_def = new_definition
-  `sexpopt p s = OPTION_CHOICE (OPTION_BIND (odestSXSYM s) (\
-        nm. OPTION_IGNORE_BIND
-        (OPTION_GUARD (nm = (implode "NONE"))) (
+  `sexpopt p s = OPTION_CHOICE (OPTION_BIND (odestSXSYM s) (\nm.
+        OPTION_IGNORE_BIND (OPTION_GUARD (nm = (implode "NONE"))) (
         SOME NONE)))
-     (OPTION_BIND (dstrip_sexp s) (\
-       (nm,args). OPTION_IGNORE_BIND
-       (OPTION_GUARD (nm = "SOME" /\ LENGTH args = 1)) (
+     (OPTION_BIND (dstrip_sexp s) (\(nm,args).
+       OPTION_IGNORE_BIND (OPTION_GUARD (nm = "SOME" /\ LENGTH args =
+         1)) (
        OPTION_MAP SOME (p (HD args)))))`;;
 
 let sexplist_def,sexplist_ind = define_shaped_rec
@@ -243,9 +242,7 @@ let sexplist_def,sexplist_ind = define_shaped_rec
   [`sexplist p s =
      (match s with
        SX_CONS h t ->
-         OPTION_BIND (p h) (\
-           ph. OPTION_BIND (sexplist p t) (\
-           pt.
+         OPTION_BIND (p h) (\ph. OPTION_BIND (sexplist p t) (\pt.
            SOME (CONS ph pt))) | SX_SYM s -> (if s = "nil" then
              SOME [] else NONE) | _7 -> NONE)`];;
 
@@ -319,8 +316,7 @@ let sexplist_CONG = prove
    replacing the CHEAT_TAC is all that is left *)
 let sexpid_def,sexpid_ind = define_guess_cheat
   [`sexpid p s =
-     OPTION_BIND (dstrip_sexp s) (\
-        (nm,args).
+     OPTION_BIND (dstrip_sexp s) (\(nm,args).
         (OPTION_CHOICE ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b)
           m) (nm = "Short" /\ LENGTH args = 1)
                (OPTION_MAP Short (p (EL 0 args))))
@@ -339,8 +335,7 @@ let sexpid_def,sexpid_ind = define_guess_cheat
    replacing the CHEAT_TAC is all that is left *)
 let sexptype_def,sexptype_ind = define_guess_cheat
   [`sexptype s =
-     OPTION_BIND (dstrip_sexp s) (\
-        (s,args).
+     OPTION_BIND (dstrip_sexp s) (\(s,args).
         (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE ((\b m.
           OPTION_IGNORE_BIND (OPTION_GUARD b) m) (s = "Atvar" /\ LENGTH
           args = 1)
@@ -374,8 +369,8 @@ let sexptype_alt_def,sexptype_alt_ind = define_guess_cheat
             OPTION_MAP Atvar (odestSEXSTR (EL 0 args)) else if nm =
                 "Atfun" /\ LENGTH args = 2 then
             OPTION_MAP2 Atfun (sexptype_alt (EL 0 args))
-                (sexptype_alt (EL 1 args)) else if nm = "Attup" /\
-                LENGTH args = 1 then
+                (sexptype_alt (EL 1 args)) else if nm = "Attup"
+                /\ LENGTH args = 1 then
             OPTION_MAP Attup (sexptype_list (EL 0 args)) else if nm
                 = "Atapp" /\ LENGTH args = 2 then
             OPTION_MAP2 Atapp (sexptype_list (EL 0 args)) (sexpid
@@ -400,34 +395,29 @@ let sexplit_def = new_definition
   `sexplit s = OPTION_CHOICE (OPTION_CHOICE (OPTION_MAP (ast_IntLit o
   (&)) (odestSXNUM s))
      (OPTION_MAP ast_StrLit (odestSEXSTR s)))
-     (OPTION_BIND (dstrip_sexp s) (\
-       (nm,args). OPTION_IGNORE_BIND
-       (OPTION_GUARD (LENGTH args = 1)) (OPTION_CHOICE (OPTION_CHOICE
-         (OPTION_CHOICE (OPTION_CHOICE ((\b m. OPTION_IGNORE_BIND
-         (OPTION_GUARD b) m) (nm = "-")
+     (OPTION_BIND (dstrip_sexp s) (\(nm,args).
+       OPTION_IGNORE_BIND (OPTION_GUARD (LENGTH args = 1))
+         (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+         ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "-")
              (OPTION_BIND (odestSXNUM (HD args))
                           (\n. if n = 0 then NONE else SOME
                             (ast_IntLit (--(&n))))))
        ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "char")
-             (OPTION_BIND (odestSEXSTR (HD args)) (\
-               cs. OPTION_IGNORE_BIND
-               (OPTION_GUARD (strlen cs = 1)) (
+             (OPTION_BIND (odestSEXSTR (HD args)) (\cs.
+               OPTION_IGNORE_BIND (OPTION_GUARD (strlen cs = 1)) (
                SOME (ast_Char (strsub cs 0)))))))
        ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "word8")
-             (OPTION_BIND (odestSXNUM (HD args)) (\
-               n. OPTION_IGNORE_BIND
-               (OPTION_GUARD (n < 256)) (
+             (OPTION_BIND (odestSXNUM (HD args)) (\n.
+               OPTION_IGNORE_BIND (OPTION_GUARD (n < 256)) (
                SOME (ast_Word8 (n2w n)))))))
        ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "word64")
-             (OPTION_BIND (odestSXNUM (HD args)) (\
-               n. OPTION_IGNORE_BIND
-               (OPTION_GUARD (n < 2 EXP 64)) (
+             (OPTION_BIND (odestSXNUM (HD args)) (\n.
+               OPTION_IGNORE_BIND (OPTION_GUARD (n < 2 EXP 64)) (
                SOME (ast_Word64 (n2w n)))))))
        ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm =
          "float64")
-             (OPTION_BIND (odestSXNUM (HD args)) (\
-               n. OPTION_IGNORE_BIND
-               (OPTION_GUARD (n < 2 EXP 64)) (
+             (OPTION_BIND (odestSXNUM (HD args)) (\n.
+               OPTION_IGNORE_BIND (OPTION_GUARD (n < 2 EXP 64)) (
                SOME (ast_Float64 (n2w n)))))))))`;;
 
 (* don't require Pvar constructors; bare strings can be pattern variables.
@@ -442,10 +432,10 @@ let sexplit_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let sexppat_def,sexppat_ind = define_guess_cheat
   [`sexppat s = OPTION_CHOICE (OPTION_MAP ast_Pvar (odestSEXSTR s))
-     (OPTION_BIND (dstrip_sexp s) (\
-       (nm,args). OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
-         (OPTION_CHOICE (OPTION_CHOICE ((\b m. OPTION_IGNORE_BIND
-         (OPTION_GUARD b) m) (nm = "Pany" /\ LENGTH args = 0)
+     (OPTION_BIND (dstrip_sexp s) (\(nm,args). OPTION_CHOICE
+       (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE ((\b
+       m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Pany" /\ LENGTH
+       args = 0)
              (SOME ast_Pany))
        ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Plit"
          /\ LENGTH args = 1)
@@ -455,8 +445,8 @@ let sexppat_def,sexppat_ind = define_guess_cheat
              (OPTION_MAP2 ast_Pcon (sexpopt (sexpid odestSEXSTR) (EL
                0 args))
                          (sexplist sexppat (EL 1 args)))))
-       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Pas" /\
-         LENGTH args = 2)
+       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Pas"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 ast_Pas (sexppat (EL 0 args))
                         (odestSEXSTR (EL 1 args)))))
        ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Pref"
@@ -487,8 +477,8 @@ let sexppat_alt_def,sexppat_alt_ind = define_guess_cheat
                 "Pcon" /\ LENGTH args = 2 then
             OPTION_MAP2 ast_Pcon (sexpopt (sexpid odestSEXSTR) (EL 0
                 args))
-              (sexppat_list (EL 1 args)) else if nm = "Pas" /\
-                  LENGTH args = 2 then
+              (sexppat_list (EL 1 args)) else if nm = "Pas"
+                  /\ LENGTH args = 2 then
             OPTION_MAP2 ast_Pas (sexppat_alt (EL 0 args))
                             (odestSEXSTR (EL 1 args)) else if nm =
                                 "Pref" /\ LENGTH args = 1 then
@@ -660,8 +650,7 @@ let sexplocpt_def = new_definition
        (if s = "unk" then SOME UNKNOWNpt else if s = "eof" then SOME
          EOFpt else NONE)
         | s ->
-      OPTION_BIND (strip_sxcons s) (\
-        ls.
+      OPTION_BIND (strip_sxcons s) (\ls.
         (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (LENGTH ls = 2)
           (OPTION_MAP2 POSN
                               (odestSXNUM (EL 0 ls))
@@ -669,8 +658,7 @@ let sexplocpt_def = new_definition
 
 let sexplocn_def = new_definition
   `sexplocn s =
-     OPTION_BIND (strip_sxcons s) (\
-       ls.
+     OPTION_BIND (strip_sxcons s) (\ls.
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (LENGTH ls = 2)
              (OPTION_MAP2 Locs
               (sexplocpt (EL 0 ls))
@@ -686,12 +674,12 @@ let sexplocn_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let sexpexp_def,sexpexp_ind = define_guess_cheat
   [`sexpexp s =
-     OPTION_BIND (dstrip_sexp s) (\
-       (nm,args). OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
-         (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
-         (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
-         (OPTION_CHOICE (OPTION_CHOICE ((\b m. OPTION_IGNORE_BIND
-         (OPTION_GUARD b) m) (nm = "Raise" /\ LENGTH args = 1)
+     OPTION_BIND (dstrip_sexp s) (\(nm,args). OPTION_CHOICE
+       (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+       (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+       (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE ((\b
+       m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Raise"
+       /\ LENGTH args = 1)
              (OPTION_MAP ast_Raise (sexpexp (EL 0 args))))
        ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Handle"
          /\ LENGTH args = 2)
@@ -699,44 +687,44 @@ let sexpexp_def,sexpexp_ind = define_guess_cheat
                     (sexpexp (EL 0 args))
                     (sexplist (sexppair sexppat sexpexp) (EL 1
                       args)))))
-       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Lit" /\
-         LENGTH args = 1)
+       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Lit"
+         /\ LENGTH args = 1)
              (OPTION_MAP ast_Lit (sexplit (EL 0 args)))))
-       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Con" /\
-         LENGTH args = 2)
+       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Con"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 ast_Con
                     (sexpopt (sexpid odestSEXSTR) (EL 0 args))
                     (sexplist sexpexp (EL 1 args)))))
-       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Var" /\
-         LENGTH args = 1)
+       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Var"
+         /\ LENGTH args = 1)
              (OPTION_MAP ast_Var (sexpid odestSEXSTR (EL 0 args)))))
-       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Fun" /\
-         LENGTH args = 2)
+       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Fun"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 ast_Fun (odestSEXSTR (EL 0 args)) (sexpexp
                (EL 1 args)))))
-       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "App" /\
-         LENGTH args = 2)
+       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "App"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 ast_App (sexpop (EL 0 args)) (sexplist
                sexpexp (EL 1 args)))))
-       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Log" /\
-         LENGTH args = 3)
+       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Log"
+         /\ LENGTH args = 3)
              (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_Log
                (sexplog (EL 0 args)))
                        (sexpexp (EL 1 args)))
                        (sexpexp (EL 2 args)))))
-       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "If" /\
-         LENGTH args = 3)
+       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "If"
+         /\ LENGTH args = 3)
              (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_If (sexpexp
                (EL 0 args)))
                       (sexpexp (EL 1 args)))
                       (sexpexp (EL 2 args)))))
-       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Mat" /\
-         LENGTH args = 2)
+       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Mat"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 ast_Mat
                (sexpexp (EL 0 args))
                (sexplist (sexppair sexppat sexpexp) (EL 1 args)))))
-       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Let" /\
-         LENGTH args = 3)
+       ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Let"
+         /\ LENGTH args = 3)
              (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_Let
                (sexpopt odestSEXSTR (EL 0 args)))
                        (sexpexp (EL 1 args)))
@@ -872,11 +860,10 @@ let sexptype_def_def = new_definition
    replacing the CHEAT_TAC is all that is left *)
 let sexpdec_def,sexpdec_ind = define_guess_cheat
   [`sexpdec s =
-     OPTION_BIND (dstrip_sexp s) (\
-       (nm,args). OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
-         (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
-         ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dlet" /\
-         LENGTH args = 3)
+     OPTION_BIND (dstrip_sexp s) (\(nm,args). OPTION_CHOICE
+       (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
+       (OPTION_CHOICE (OPTION_CHOICE ((\b m. OPTION_IGNORE_BIND
+       (OPTION_GUARD b) m) (nm = "Dlet" /\ LENGTH args = 3)
              (OPTION_APPLY (OPTION_APPLY (OPTION_MAP Dlet (sexplocn
                (HD args)))
                         (sexppat (EL 1 args)))

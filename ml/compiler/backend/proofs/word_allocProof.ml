@@ -394,8 +394,8 @@ let env_to_list_perm = prove
 let push_env_s_val_eq = prove
  (`!tperm.
    wordSem_state_handler
-   st = wordSem_state_handler cst /\ stack
-   st = stack cst /\ wordSem_state_locals_size
+   st = wordSem_state_handler cst /\ wordSem_state_stack
+   st = wordSem_state_stack cst /\ wordSem_state_locals_size
    st = wordSem_state_locals_size cst /\
    domain y = IMAGE f (domain x) /\
    INJ f (domain x) UNIV /\
@@ -412,8 +412,8 @@ let push_env_s_val_eq = prove
      MAP (\(x,y). f x,y) l' = l /\
      (!x y. MEM x (MAP FST l') /\
        MEM y (MAP FST l') /\ f x = f y ==> x = y)) /\
-   s_val_eq (stack (wordSem_push_env (x',x) b
-     (wordSem_state_permute_fupd (K perm) st))) (stack
+   s_val_eq (wordSem_state_stack (wordSem_push_env (x',x) b
+     (wordSem_state_permute_fupd (K perm) st))) (wordSem_state_stack
           (wordSem_push_env (y',y) b' cst)))`,
   CHEAT_TAC);;
 
@@ -425,16 +425,16 @@ let gc_frame = prove
    st' = wordSem_state_mdomain st /\ wordSem_state_sh_mdomain
    st' = wordSem_state_sh_mdomain st /\ wordSem_state_gc_fun
    st' = wordSem_state_gc_fun st /\ wordSem_state_handler
-   st' = wordSem_state_handler st /\ state_clock
-   st' = state_clock st /\ wordSem_state_code
+   st' = wordSem_state_handler st /\ wordSem_state_clock
+   st' = wordSem_state_clock st /\ wordSem_state_code
    st' = wordSem_state_code st /\ wordSem_state_locals
    st' = wordSem_state_locals st /\ wordSem_state_locals_size
    st' = wordSem_state_locals_size st /\ wordSem_state_stack_size
    st' = wordSem_state_stack_size st /\ wordSem_state_stack_max
    st' = wordSem_state_stack_max st /\ wordSem_state_stack_limit
    st' = wordSem_state_stack_limit st /\ wordSem_state_be
-   st' = wordSem_state_be st /\ state_ffi
-   st' = state_ffi st /\ wordSem_state_compile
+   st' = wordSem_state_be st /\ wordSem_state_ffi
+   st' = wordSem_state_ffi st /\ wordSem_state_compile
    st' = wordSem_state_compile st /\ wordSem_state_compile_oracle
    st' = wordSem_state_compile_oracle st /\ wordSem_state_code_buffer
    st' = wordSem_state_code_buffer st /\ wordSem_state_data_buffer
@@ -448,16 +448,17 @@ let gc_frame = prove
 *)
 let s_key_eq_val_eq_pop_env = prove
  (`wordSem_pop_env s = SOME s' /\
-   s_key_eq (stack s) (CONS (StackFrame n lsz ls opt) keys) /\
-   s_val_eq (stack s) vals ==>
+   s_key_eq (wordSem_state_stack s) (CONS (StackFrame n lsz ls opt)
+     keys) /\
+   s_val_eq (wordSem_state_stack s) vals ==>
    (?lsz' ls' rest.
-   vals = CONS (StackFrame n lsz' ls' opt) rest /\
-     wordSem_state_locals
+   vals = CONS (StackFrame n lsz' ls' opt) rest
+     /\ wordSem_state_locals
    s' =
      sptree_union (fromAList (ZIP (MAP FST ls) (MAP SND ls')))
        (fromAList lsz) /\
-   s_key_eq (stack s') keys /\
-   s_val_eq (stack s') rest /\
+   s_key_eq (wordSem_state_stack s') keys /\
+   s_val_eq (wordSem_state_stack s') rest /\
    (match opt with NONE -> wordSem_state_handler s' =
      wordSem_state_handler s | SOME (h,l1,l2) -> wordSem_state_handler
      s' = h))`,
@@ -515,9 +516,10 @@ let MAP_FST_keys_SORT = prove
   CHEAT_TAC);;
 
 let pop_env_frame = prove
- (`s_val_eq (stack r') st' /\
-   s_key_eq (stack y') (stack y'') /\
-   wordSem_pop_env (stack_fupd (K st') r') = SOME y'' /\
+ (`s_val_eq (wordSem_state_stack r') st' /\
+   s_key_eq (wordSem_state_stack y') (wordSem_state_stack y'') /\
+   wordSem_pop_env (wordSem_state_stack_fupd (K st') r') = SOME y''
+     /\
    wordSem_pop_env r' = SOME y' ==>
    word_state_eq_rel y' y''`,
   CHEAT_TAC);;
@@ -595,7 +597,7 @@ let strong_locals_rel_set_vars_dom = prove
   CHEAT_TAC);;
 
 let s_key_eq_push_env_imp_MAP_FST = prove
- (`s_key_eq (stack
+ (`s_key_eq (wordSem_state_stack
      (wordSem_push_env (x',x'') o0 s))
      (CONS (StackFrame n' bb l opt) ls) /\
    env_to_list x'' (wordSem_state_permute s) = (ll,res) ==>
@@ -979,8 +981,9 @@ let get_forced_pairwise_distinct = prove
 (* [local] *)
 let get_forced_in_get_clash_tree = prove
  (`!prog lt c.
-   ALL (\(x,y). in_clash_tree (get_clash_tree prog lt) x /\
-     in_clash_tree (get_clash_tree prog lt) y) (get_forced c prog [])`,
+   ALL (\(x,y). in_clash_tree (get_clash_tree prog lt) x
+     /\ in_clash_tree (get_clash_tree prog lt) y) (get_forced c prog
+     [])`,
   CHEAT_TAC);;
 
 let select_reg_alloc_correct = prove
@@ -1227,8 +1230,8 @@ let evaluate_remove_dead_Loop_helper = prove
                   SOME (names,_20) ->
                     strong_locals_rel I (domain names)
                       (wordSem_state_locals rst') t'' | NONE -> T) |
-                      SOME _21 -> wordSem_state_locals rst' = t'' /\
-                      wordSem_state_store rst' = tstore''))) ==>
+                      SOME _21 -> wordSem_state_locals rst' = t''
+                      /\ wordSem_state_store rst' = tstore''))) ==>
      (?t' tstore'.
        wordSem_evaluate (prog',wordSem_state_store_fupd (K tstore)
          (wordSem_state_locals_fupd (K t) st)) =
@@ -1251,8 +1254,8 @@ let evaluate_remove_dead_Loop_helper = prove
                SOME (names,_23) ->
                  strong_locals_rel I (domain names)
                    (wordSem_state_locals rst) t' | NONE -> T) | SOME
-                   _24 -> wordSem_state_locals rst = t' /\
-                   wordSem_state_store rst = tstore'))`,
+                   _24 -> wordSem_state_locals rst = t'
+                   /\ wordSem_state_store rst = tstore'))`,
   CHEAT_TAC);;
 
 let evaluate_remove_dead = prove
@@ -1285,8 +1288,8 @@ let evaluate_remove_dead = prove
             SOME (names,_26) ->
               strong_locals_rel I (domain names)
                 (wordSem_state_locals rst) t' | NONE -> T) | SOME _27
-                -> wordSem_state_locals rst = t' /\
-                wordSem_state_store rst = tstore'))`,
+                -> wordSem_state_locals rst = t'
+                /\ wordSem_state_store rst = tstore'))`,
   CHEAT_TAC);;
 
 (* HOL4 word_allocProofScript.sml:3958-4029: a proof *)

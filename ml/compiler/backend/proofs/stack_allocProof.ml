@@ -279,8 +279,8 @@ let memcpy_code_thm = prove
 (* memcpy_code_thm *)
 let stack_allocProof_memcpy_code_thm = prove
  (`!w a b m dm b1 m1 (s:('a,'c,'b)stackSem_state).
-      memcpy (w:'a word) a b m dm = ((b1:'a word),m1,T) /\
-        stackSem_state_memory
+      memcpy (w:'a word) a b m dm = ((b1:'a word),m1,T)
+        /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\
       stackSem_get_var 0 s = SOME (wordLang_Word w) /\
       1 IN FDOM (stackSem_state_regs s) /\
@@ -473,8 +473,8 @@ let word_gc_move_roots_bitmaps = prove
                (let (stack',i,pa,m,c3) =
                  word_gc_move_roots_bitmaps conf
                    (stack',bitmaps,i2,pa2,curr,m2,dm) in
-                   (APPEND (CONS w new) stack',i,pa,m,(c2 /\
-                     c3)))))`,
+                   (APPEND (CONS w new) stack',i,pa,m,(c2
+                     /\ c3)))))`,
   CHEAT_TAC);;
 
 let word_gc_move_bitmap_def = new_definition
@@ -512,8 +512,8 @@ let word_gc_move_bitmaps_unroll = prove
                match word_gc_move_bitmaps conf (wordLang_Word (w +
                  (n2w 1)),ws,bitmaps,i2,pa2,curr,m2,dm) with NONE ->
                  NONE | SOME (hd3,ws3,i3,pa3,m3,c3) ->
-                   SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2 /\
-                     c3)))))`),
+                   SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2
+                     /\ c3)))))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -613,16 +613,16 @@ let word_gc_move_loop_code_thm = prove
  (`!k pb1 i1 pa1 old1 m1 dm1 c1 i2 pa2 m2 (s:('a,'c,'b)stackSem_state).
        word_gc_move_loop k conf (pb1,i1,pa1,old1,m1,dm1,c1) =
          (i2,pa2,m2,T) /\
-       shift_length conf < dimindex (:'a) /\
-         backend_common_word_shift (:'a) < dimindex (:'a) /\
+       shift_length conf < dimindex (:'a)
+         /\ backend_common_word_shift (:'a) < dimindex (:'a) /\
        2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf = 0)
          /\ data_to_word_config_len_size
        conf + 2 < dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
        FLOOKUP (stackSem_state_store s) CurrHeap = SOME
-         (wordLang_Word old1) /\ stackSem_state_use_store s /\
-         stackSem_state_memory
+         (wordLang_Word old1) /\ stackSem_state_use_store s
+         /\ stackSem_state_memory
        s = m1 /\ stackSem_state_mdomain s = dm1 /\
        0 IN FDOM (stackSem_state_regs s) /\
        1 IN FDOM (stackSem_state_regs s) /\
@@ -664,8 +664,8 @@ let word_gc_move_bitmap_code_thm = prove
         bytes_in_word) /\
       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word
         curr) /\ stackSem_state_use_store s /\ stackSem_state_memory
-      s = m /\ stackSem_state_mdomain s = dm /\
-        stackSem_state_use_stack s /\
+      s = m /\ stackSem_state_mdomain s = dm
+        /\ stackSem_state_use_stack s /\
       0 IN FDOM (stackSem_state_regs s) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
@@ -676,8 +676,8 @@ let word_gc_move_bitmap_code_thm = prove
       stackSem_get_var 7 s = SOME (wordLang_Word w) /\
       stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
         (LENGTH old))) /\ stackSem_state_stack
-      s = APPEND (APPEND init old) stack' /\
-        stackSem_state_stack_space
+      s = APPEND (APPEND init old) stack'
+        /\ stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -725,9 +725,9 @@ let word_gc_move_bitmaps_code_thm = prove
         bytes_in_word) /\
       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word
         curr) /\ stackSem_state_use_store s /\ stackSem_state_memory
-      s = m /\ stackSem_state_mdomain s = dm /\
-        stackSem_state_bitmaps s = bitmaps /\ stackSem_state_use_stack s
-        /\
+      s = m /\ stackSem_state_mdomain s = dm
+        /\ stackSem_state_bitmaps s = bitmaps
+        /\ stackSem_state_use_stack s /\
       stackSem_get_var 0 s = SOME (wordLang_Word z) /\ ~(z = (n2w 0))
         /\
       1 IN FDOM (stackSem_state_regs s) /\
@@ -739,10 +739,10 @@ let word_gc_move_bitmaps_code_thm = prove
       7 IN FDOM (stackSem_state_regs s) /\
       stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
         (LENGTH old))) /\
-      stackSem_get_var 9 s = SOME (wordLang_Word (w - (n2w 1))) /\
-        stackSem_state_stack
-      s = APPEND (APPEND init old) stack' /\
-        stackSem_state_stack_space
+      stackSem_get_var 9 s = SOME (wordLang_Word (w - (n2w 1)))
+        /\ stackSem_state_stack
+      s = APPEND (APPEND init old) stack'
+        /\ stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -780,18 +780,18 @@ let word_gc_move_roots_bitmaps_code_thm = prove
           (stack1,i1,pa1,m1,T) /\
         LENGTH bitmaps < dimword (:'a) - 1 /\ good_dimindex (:'a)
           /\
-        shift_length conf < dimindex (:'a) /\
-          backend_common_word_shift (:'a) < dimindex (:'a) /\
+        shift_length conf < dimindex (:'a)
+          /\ backend_common_word_shift (:'a) < dimindex (:'a) /\
         2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf =
           0) /\ good_dimindex (:'a) /\
         (!(w:'a word). w << backend_common_word_shift (:'a) = w *
           bytes_in_word) /\
         FLOOKUP (stackSem_state_store s) CurrHeap = SOME
-          (wordLang_Word curr) /\ stackSem_state_use_store s /\
-          stackSem_state_memory
-        s = m /\ stackSem_state_mdomain s = dm /\
-          stackSem_state_bitmaps s = bitmaps /\ stackSem_state_use_stack
-          s /\
+          (wordLang_Word curr) /\ stackSem_state_use_store s
+          /\ stackSem_state_memory
+        s = m /\ stackSem_state_mdomain s = dm
+          /\ stackSem_state_bitmaps s = bitmaps
+          /\ stackSem_state_use_stack s /\
         0 IN FDOM (stackSem_state_regs s) /\
         1 IN FDOM (stackSem_state_regs s) /\
         2 IN FDOM (stackSem_state_regs s) /\
@@ -802,10 +802,10 @@ let word_gc_move_roots_bitmaps_code_thm = prove
         7 IN FDOM (stackSem_state_regs s) /\
         stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word *
           n2w (LENGTH old))) /\
-        stackSem_get_var 9 s = SOME (HD stack) /\
-          stackSem_state_stack
-        s = APPEND (APPEND init old) stack /\
-          stackSem_state_stack_space
+        stackSem_get_var 9 s = SOME (HD stack)
+          /\ stackSem_state_stack
+        s = APPEND (APPEND init old) stack
+          /\ stackSem_state_stack_space
         s = LENGTH init /\
         (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
           dimword (:'a) ==>
@@ -854,11 +854,11 @@ let alloc_correct_lemma_Simple = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          s))))))) =
-        (r,state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd
-          (K l2) (state_code_fupd (K (fromAList (stack_alloc_compile c
-          (toAList (stackSem_state_code s)))))
-          (stackSem_state_use_alloc_fupd (K F)
-          (stackSem_state_use_stack_fupd (K T)
+        (r,stackSem_state_gc_fun_fupd (K anything)
+          (stackSem_state_regs_fupd (K l2) (stackSem_state_code_fupd (K
+          (fromAList (stack_alloc_compile c (toAList
+          (stackSem_state_code s))))) (stackSem_state_use_alloc_fupd (K
+          F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
        (~(r = NONE) ==> r = SOME (stackLang_Halt (wordLang_Word (n2w
@@ -1154,9 +1154,9 @@ let stack_allocProof_gc_thm = prove
                    (Temp (n2w 4),wordLang_Word (n2w 0));
                    (Temp (n2w 5),wordLang_Word (n2w 0));
                    (Temp (n2w 6),wordLang_Word (n2w 0))] in
-            if word_gc_fun_assum conf (stackSem_state_store s) /\
-              c1 /\ c2 /\ c3 then SOME (stackSem_state_memory_fupd (K
-              m3) (stackSem_state_regs_fupd (K FEMPTY)
+            if word_gc_fun_assum conf (stackSem_state_store s)
+              /\ c1 /\ c2 /\ c3 then SOME (stackSem_state_memory_fupd
+              (K m3) (stackSem_state_regs_fupd (K FEMPTY)
               (stackSem_state_store_fupd (K s1)
               (stackSem_state_stack_fupd (K (APPEND unused ws2)) s))))
               else NONE))`,
@@ -1271,8 +1271,8 @@ let word_gen_gc_partial_move_roots_bitmaps = prove
                (let (stack',i,pa,m,c3) =
                  word_gen_gc_partial_move_roots_bitmaps conf
                    (stack',bitmaps,i2,pa2,curr,m2,dm,gs,rs) in
-                     (APPEND (CONS w new) stack',i,pa,m,(c2 /\
-                       c3)))))`,
+                     (APPEND (CONS w new) stack',i,pa,m,(c2
+                       /\ c3)))))`,
   CHEAT_TAC);;
 
 let word_gen_gc_move_bitmap_def = new_definition
@@ -1355,8 +1355,8 @@ let word_gen_gc_partial_move_bitmaps_unroll = prove
                       (wordLang_Word (w + (n2w
                         1)),ws,bitmaps,i2,pa2,curr,m2,dm,gs,rs) with
                         NONE -> NONE | SOME (hd3,ws3,i3,pa3,m3,c3) ->
-                   SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2 /\
-                     c3)))))`),
+                   SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2
+                     /\ c3)))))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1376,8 +1376,8 @@ let word_gen_gc_move_bitmap_unroll = prove
            match word_gen_gc_move_bitmap conf (w >>>
              1,xs,i1,pa1,ib1,pb1,curr,m1,dm) with NONE -> NONE | SOME
              (new,stack',i1,pa1,ib1,pb1,m,c) ->
-               SOME (CONS x1 new,stack',i1,pa1,ib1,pb1,m,(c1 /\
-                 c))))`,
+               SOME (CONS x1 new,stack',i1,pa1,ib1,pb1,m,(c1
+                 /\ c))))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1458,8 +1458,8 @@ let word_gen_gc_partial_move_code_thm = prove
     (!(w:'a word). w << backend_common_word_shift (:'a) = w *
       bytes_in_word) /\
     FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word
-      old) /\ stackSem_state_use_store (s:('a,'c,'b)stackSem_state) /\
-      stackSem_state_memory
+      old) /\ stackSem_state_use_store (s:('a,'c,'b)stackSem_state)
+      /\ stackSem_state_memory
     s = m /\ stackSem_state_mdomain s = dm /\ good_dimindex (:'a) /\
     0 IN FDOM (stackSem_state_regs s) /\
     1 IN FDOM (stackSem_state_regs s) /\
@@ -1503,8 +1503,8 @@ let word_gen_gc_move_bitmap_code_thm = prove
         bytes_in_word) /\
       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word
         curr) /\ stackSem_state_use_store s /\ stackSem_state_memory
-      s = m /\ stackSem_state_mdomain s = dm /\
-        stackSem_state_use_stack s /\
+      s = m /\ stackSem_state_mdomain s = dm
+        /\ stackSem_state_use_stack s /\
       0 IN FDOM (stackSem_state_regs s) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
@@ -1521,8 +1521,8 @@ let word_gen_gc_move_bitmap_code_thm = prove
         (wordLang_Word pb) /\
       FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME
         (wordLang_Word ib) /\ stackSem_state_stack
-      s = APPEND (APPEND init old) stack' /\
-        stackSem_state_stack_space
+      s = APPEND (APPEND init old) stack'
+        /\ stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -1567,8 +1567,8 @@ let word_gen_gc_partial_move_bitmap_code_thm = prove
         bytes_in_word) /\
       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word
         curr) /\ stackSem_state_use_store s /\ stackSem_state_memory
-      s = m /\ stackSem_state_mdomain s = dm /\
-        stackSem_state_use_stack s /\
+      s = m /\ stackSem_state_mdomain s = dm
+        /\ stackSem_state_use_stack s /\
       0 IN FDOM (stackSem_state_regs s) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
@@ -1583,8 +1583,8 @@ let word_gen_gc_partial_move_bitmap_code_thm = prove
         (wordLang_Word gs) /\
       FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME
         (wordLang_Word rs) /\ stackSem_state_stack
-      s = APPEND (APPEND init old) stack' /\
-        stackSem_state_stack_space
+      s = APPEND (APPEND init old) stack'
+        /\ stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -1645,9 +1645,9 @@ let word_gen_gc_move_bitmaps_code_thm = prove
         bytes_in_word) /\
       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word
         curr) /\ stackSem_state_use_store s /\ stackSem_state_memory
-      s = m /\ stackSem_state_mdomain s = dm /\
-        stackSem_state_bitmaps s = bitmaps /\ stackSem_state_use_stack s
-        /\
+      s = m /\ stackSem_state_mdomain s = dm
+        /\ stackSem_state_bitmaps s = bitmaps
+        /\ stackSem_state_use_stack s /\
       stackSem_get_var 0 s = SOME (wordLang_Word z) /\ ~(z = (n2w 0))
         /\
       1 IN FDOM (stackSem_state_regs s) /\
@@ -1666,8 +1666,8 @@ let word_gen_gc_move_bitmaps_code_thm = prove
         (wordLang_Word pb) /\
       FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME
         (wordLang_Word ib) /\ stackSem_state_stack
-      s = APPEND (APPEND init old) stack' /\
-        stackSem_state_stack_space
+      s = APPEND (APPEND init old) stack'
+        /\ stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -1716,9 +1716,9 @@ let word_gen_gc_partial_move_bitmaps_code_thm = prove
         bytes_in_word) /\
       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word
         curr) /\ stackSem_state_use_store s /\ stackSem_state_memory
-      s = m /\ stackSem_state_mdomain s = dm /\
-        stackSem_state_bitmaps s = bitmaps /\ stackSem_state_use_stack s
-        /\
+      s = m /\ stackSem_state_mdomain s = dm
+        /\ stackSem_state_bitmaps s = bitmaps
+        /\ stackSem_state_use_stack s /\
       stackSem_get_var 0 s = SOME (wordLang_Word z) /\ ~(z = (n2w 0))
         /\
       1 IN FDOM (stackSem_state_regs s) /\
@@ -1735,8 +1735,8 @@ let word_gen_gc_partial_move_bitmaps_code_thm = prove
         (wordLang_Word gs) /\
       FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME
         (wordLang_Word rs) /\ stackSem_state_stack
-      s = APPEND (APPEND init old) stack' /\
-        stackSem_state_stack_space
+      s = APPEND (APPEND init old) stack'
+        /\ stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
         dimword (:'a) ==>
@@ -1774,18 +1774,18 @@ let word_gen_gc_move_roots_bitmaps_code_thm = prove
           (stack1,i1,pa1,ib1,pb1,m1,T) /\
         LENGTH bitmaps < dimword (:'a) - 1 /\ good_dimindex (:'a)
           /\
-        shift_length conf < dimindex (:'a) /\
-          backend_common_word_shift (:'a) < dimindex (:'a) /\
+        shift_length conf < dimindex (:'a)
+          /\ backend_common_word_shift (:'a) < dimindex (:'a) /\
         2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf =
           0) /\ good_dimindex (:'a) /\
         (!(w:'a word). w << backend_common_word_shift (:'a) = w *
           bytes_in_word) /\
         FLOOKUP (stackSem_state_store s) CurrHeap = SOME
-          (wordLang_Word curr) /\ stackSem_state_use_store s /\
-          stackSem_state_memory
-        s = m /\ stackSem_state_mdomain s = dm /\
-          stackSem_state_bitmaps s = bitmaps /\ stackSem_state_use_stack
-          s /\
+          (wordLang_Word curr) /\ stackSem_state_use_store s
+          /\ stackSem_state_memory
+        s = m /\ stackSem_state_mdomain s = dm
+          /\ stackSem_state_bitmaps s = bitmaps
+          /\ stackSem_state_use_stack s /\
         0 IN FDOM (stackSem_state_regs s) /\
         1 IN FDOM (stackSem_state_regs s) /\
         2 IN FDOM (stackSem_state_regs s) /\
@@ -1803,8 +1803,8 @@ let word_gen_gc_move_roots_bitmaps_code_thm = prove
           (wordLang_Word pb) /\
         FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME
           (wordLang_Word ib) /\ stackSem_state_stack
-        s = APPEND (APPEND init old) stack /\
-          stackSem_state_stack_space
+        s = APPEND (APPEND init old) stack
+          /\ stackSem_state_stack_space
         s = LENGTH init /\
         (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
           dimword (:'a) ==>
@@ -1850,18 +1850,18 @@ let word_gen_gc_partial_move_roots_bitmaps_code_thm = prove
           (stack1,i1,pa1,m1,T) /\
         LENGTH bitmaps < dimword (:'a) - 1 /\ good_dimindex (:'a)
           /\
-        shift_length conf < dimindex (:'a) /\
-          backend_common_word_shift (:'a) < dimindex (:'a) /\
+        shift_length conf < dimindex (:'a)
+          /\ backend_common_word_shift (:'a) < dimindex (:'a) /\
         2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf =
           0) /\ good_dimindex (:'a) /\
         (!(w:'a word). w << backend_common_word_shift (:'a) = w *
           bytes_in_word) /\
         FLOOKUP (stackSem_state_store s) CurrHeap = SOME
-          (wordLang_Word curr) /\ stackSem_state_use_store s /\
-          stackSem_state_memory
-        s = m /\ stackSem_state_mdomain s = dm /\
-          stackSem_state_bitmaps s = bitmaps /\ stackSem_state_use_stack
-          s /\
+          (wordLang_Word curr) /\ stackSem_state_use_store s
+          /\ stackSem_state_memory
+        s = m /\ stackSem_state_mdomain s = dm
+          /\ stackSem_state_bitmaps s = bitmaps
+          /\ stackSem_state_use_stack s /\
         0 IN FDOM (stackSem_state_regs s) /\
         1 IN FDOM (stackSem_state_regs s) /\
         2 IN FDOM (stackSem_state_regs s) /\
@@ -1877,8 +1877,8 @@ let word_gen_gc_partial_move_roots_bitmaps_code_thm = prove
           (wordLang_Word gs) /\
         FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME
           (wordLang_Word rs) /\ stackSem_state_stack
-        s = APPEND (APPEND init old) stack /\
-          stackSem_state_stack_space
+        s = APPEND (APPEND init old) stack
+          /\ stackSem_state_stack_space
         s = LENGTH init /\
         (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) <
           dimword (:'a) ==>
@@ -2015,16 +2015,16 @@ let word_gen_gc_partial_move_ref_list_code_thm = prove
        word_gen_gc_partial_move_ref_list k conf
          (r1a1,i1,pa1,old1,m1,dm1,T,gs,rs,r2a1) =
          (i2,pa2,m2,T) /\
-       shift_length conf < dimindex (:'a) /\
-         backend_common_word_shift (:'a) < dimindex (:'a) /\
+       shift_length conf < dimindex (:'a)
+         /\ backend_common_word_shift (:'a) < dimindex (:'a) /\
        2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf = 0)
          /\ data_to_word_config_len_size
        conf + 2 < dimindex (:'a) /\ good_dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
        FLOOKUP (stackSem_state_store s) CurrHeap = SOME
-         (wordLang_Word old1) /\ stackSem_state_use_store s /\
-         stackSem_state_memory
+         (wordLang_Word old1) /\ stackSem_state_use_store s
+         /\ stackSem_state_memory
        s = m1 /\ stackSem_state_mdomain s = dm1 /\
        FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME
          (wordLang_Word gs) /\
@@ -2065,16 +2065,16 @@ let word_gen_gc_move_data_code_thm = prove
        word_gen_gc_move_data conf k (ha1,i1,pa1,ib1,pb1,old1,m1,dm1)
          =
          (i2,pa2,ib2,pb2,m2,T) /\
-       shift_length conf < dimindex (:'a) /\
-         backend_common_word_shift (:'a) < dimindex (:'a) /\
+       shift_length conf < dimindex (:'a)
+         /\ backend_common_word_shift (:'a) < dimindex (:'a) /\
        2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf = 0)
          /\ data_to_word_config_len_size
        conf + 2 < dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
        FLOOKUP (stackSem_state_store s) CurrHeap = SOME
-         (wordLang_Word old1) /\ stackSem_state_use_store s /\
-         stackSem_state_memory
+         (wordLang_Word old1) /\ stackSem_state_use_store s
+         /\ stackSem_state_memory
        s = m1 /\ stackSem_state_mdomain s = dm1 /\
        Temp (n2w 0) IN FDOM (stackSem_state_store s) /\
        Temp (n2w 1) IN FDOM (stackSem_state_store s) /\
@@ -2121,16 +2121,16 @@ let word_gen_gc_partial_move_data_code_thm = prove
        word_gen_gc_partial_move_data conf k
          (ha1,i1,pa1,old1,m1,dm1,gs,rs) =
          (i2,pa2,m2,T) /\
-       shift_length conf < dimindex (:'a) /\
-         backend_common_word_shift (:'a) < dimindex (:'a) /\
+       shift_length conf < dimindex (:'a)
+         /\ backend_common_word_shift (:'a) < dimindex (:'a) /\
        2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf = 0)
          /\ data_to_word_config_len_size
        conf + 2 < dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
        FLOOKUP (stackSem_state_store s) CurrHeap = SOME
-         (wordLang_Word old1) /\ stackSem_state_use_store s /\
-         stackSem_state_memory
+         (wordLang_Word old1) /\ stackSem_state_use_store s
+         /\ stackSem_state_memory
        s = m1 /\ stackSem_state_mdomain s = dm1 /\ good_dimindex
          (:'a) /\
        FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME
@@ -2171,16 +2171,16 @@ let word_gen_gc_move_refs_code_thm = prove
        word_gen_gc_move_refs conf k
          (r2a1,r1a1,i1,pa1,ib1,pb1,old1,m1,dm1) =
          (r2a2,i2,pa2,ib2,pb2,m2,T) /\
-       shift_length conf < dimindex (:'a) /\
-         backend_common_word_shift (:'a) < dimindex (:'a) /\
+       shift_length conf < dimindex (:'a)
+         /\ backend_common_word_shift (:'a) < dimindex (:'a) /\
        2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf = 0)
          /\ data_to_word_config_len_size
        conf + 2 < dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
        FLOOKUP (stackSem_state_store s) CurrHeap = SOME
-         (wordLang_Word old1) /\ stackSem_state_use_store s /\
-         stackSem_state_memory
+         (wordLang_Word old1) /\ stackSem_state_use_store s
+         /\ stackSem_state_memory
        s = m1 /\ stackSem_state_mdomain s = dm1 /\
        Temp (n2w 0) IN FDOM (stackSem_state_store s) /\
        Temp (n2w 1) IN FDOM (stackSem_state_store s) /\
@@ -2229,16 +2229,16 @@ let word_gen_gc_move_loop_code_thm = prove
   (s:('a,'c,'b)stackSem_state).
        word_gen_gc_move_loop conf k (pax,i,pa,ib,pb,pbx,old,m,dm) =
            (i1,pa1,ib1,pb1,m1,T) /\
-       shift_length conf < dimindex (:'a) /\
-         backend_common_word_shift (:'a) < dimindex (:'a) /\
+       shift_length conf < dimindex (:'a)
+         /\ backend_common_word_shift (:'a) < dimindex (:'a) /\
        2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf = 0)
          /\ data_to_word_config_len_size
        conf + 2 < dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
        FLOOKUP (stackSem_state_store s) CurrHeap = SOME
-         (wordLang_Word old) /\ stackSem_state_use_store s /\
-         stackSem_state_memory
+         (wordLang_Word old) /\ stackSem_state_use_store s
+         /\ stackSem_state_memory
        s = m /\ stackSem_state_mdomain s = dm /\
        (tt = (n2w 0) <=> pbx = pb /\ pax = pa) /\
        Temp (n2w 0) IN FDOM (stackSem_state_store s) /\
@@ -2309,11 +2309,12 @@ let evaluate_SetNewTrigger = prove
        ib) /\
      FLOOKUP (stackSem_state_regs s5) endh_reg = SOME (wordLang_Word
        endh) /\
-     FLOOKUP (state_store s5) AllocSize = SOME (wordLang_Word (w:'a
-       word)) ==>
+     FLOOKUP (stackSem_state_store s5) AllocSize = SOME
+       (wordLang_Word (w:'a word)) ==>
      (?r7 r1 r4.
        res = NONE /\
-       new_s = state_store_fupd (K (state_store s5 |+ (TriggerGC,
+       new_s = stackSem_state_store_fupd (K (stackSem_state_store s5
+         |+ (TriggerGC,
                             wordLang_Word ((ib + new_trig (endh -
                               ib) w gen_sizes)))))
                               (stackSem_state_regs_fupd (K
@@ -2341,11 +2342,11 @@ let alloc_correct_lemma_Generational = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          s))))))) =
-        (r,state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd
-          (K l2) (state_code_fupd (K (fromAList (stack_alloc_compile c
-          (toAList (stackSem_state_code s)))))
-          (stackSem_state_use_alloc_fupd (K F)
-          (stackSem_state_use_stack_fupd (K T)
+        (r,stackSem_state_gc_fun_fupd (K anything)
+          (stackSem_state_regs_fupd (K l2) (stackSem_state_code_fupd (K
+          (fromAList (stack_alloc_compile c (toAList
+          (stackSem_state_code s))))) (stackSem_state_use_alloc_fupd (K
+          F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
        (~(r = NONE) ==> r = SOME (stackLang_Halt (wordLang_Word (n2w
@@ -2392,11 +2393,11 @@ let alloc_correct_lemma_None = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          s))))))) =
-        (r,state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd
-          (K l2) (state_code_fupd (K (fromAList (stack_alloc_compile c
-          (toAList (stackSem_state_code s)))))
-          (stackSem_state_use_alloc_fupd (K F)
-          (stackSem_state_use_stack_fupd (K T)
+        (r,stackSem_state_gc_fun_fupd (K anything)
+          (stackSem_state_regs_fupd (K l2) (stackSem_state_code_fupd (K
+          (fromAList (stack_alloc_compile c (toAList
+          (stackSem_state_code s))))) (stackSem_state_use_alloc_fupd (K
+          F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
        (~(r = NONE) ==> r = SOME (stackLang_Halt (wordLang_Word (n2w
@@ -2426,11 +2427,11 @@ let alloc_correct_lemma = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          s))))))) =
-        (r,state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd
-          (K l2) (state_code_fupd (K (fromAList (stack_alloc_compile c
-          (toAList (stackSem_state_code s)))))
-          (stackSem_state_use_alloc_fupd (K F)
-          (stackSem_state_use_stack_fupd (K T)
+        (r,stackSem_state_gc_fun_fupd (K anything)
+          (stackSem_state_regs_fupd (K l2) (stackSem_state_code_fupd (K
+          (fromAList (stack_alloc_compile c (toAList
+          (stackSem_state_code s))))) (stackSem_state_use_alloc_fupd (K
+          F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
        (~(r = NONE) ==> r = SOME (stackLang_Halt (wordLang_Word (n2w
@@ -2461,11 +2462,11 @@ let alloc_correct = prove
              (stackSem_state_use_stack_fupd (K T)
              (stackSem_state_use_store_fupd (K T)
             s)))))))) =
-          (r,state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd
-            (K l2) (state_code_fupd (K (fromAList (stack_alloc_compile c
-            (toAList (stackSem_state_code s)))))
-            (stackSem_state_use_alloc_fupd (K F)
-            (stackSem_state_use_alloc_fupd (K F)
+          (r,stackSem_state_gc_fun_fupd (K anything)
+            (stackSem_state_regs_fupd (K l2) (stackSem_state_code_fupd
+            (K (fromAList (stack_alloc_compile c (toAList
+            (stackSem_state_code s))))) (stackSem_state_use_alloc_fupd
+            (K F) (stackSem_state_use_alloc_fupd (K F)
             (stackSem_state_use_stack_fupd (K T)
             (stackSem_state_use_store_fupd (K T)
            t))))))) /\ stackSem_state_regs t SUBMAP l2)`,
@@ -2486,7 +2487,8 @@ let alloc_length_stack = prove
  (`stackSem_alloc c s = (r,t) /\ stackSem_state_gc_fun s = word_gc_fun
   conf /\
    (!w. ~(r = SOME (stackLang_Halt w))) ==>
-   LENGTH (stack t) = LENGTH (stackSem_state_stack s)`,
+   LENGTH (stackSem_state_stack t) = LENGTH (stackSem_state_stack
+     s)`,
   CHEAT_TAC);;
 
 let find_code_regs_SUBMAP = prove
@@ -2533,8 +2535,8 @@ let inst_correct = prove
        dimword (:'a) /\
      LENGTH (buffer_buffer (stackSem_state_data_buffer s)) +
        (LENGTH (stackSem_state_bitmaps s) + buffer_space_left
-       (stackSem_state_data_buffer s)) < dimword (:'a) - 1 /\
-       stackSem_state_regs
+       (stackSem_state_data_buffer s)) < dimword (:'a) - 1
+       /\ stackSem_state_regs
      s SUBMAP regs ==>
      (?regs1.
      stackSem_inst i (stackSem_state_code_fupd (K (fromAList
@@ -2546,20 +2548,23 @@ let inst_correct = prove
        stack_alloc_prog_comp ## I) o stackSem_state_compile_oracle s))
        (stackSem_state_compile_fupd (K compile_rest)
        (stackSem_state_regs_fupd (K regs) s)))))))) =
-       SOME (state_code_fupd (K (fromAList (stack_alloc_compile c
-         (toAList (state_code t))))) (stackSem_state_use_alloc_fupd (K
-         F) (stackSem_state_use_store_fupd (K T)
-         (stackSem_state_use_stack_fupd (K T) (state_gc_fun_fupd (K
-         anything) (stackSem_state_compile_oracle_fupd (K ((I ## MAP
+       SOME (stackSem_state_code_fupd (K (fromAList
+         (stack_alloc_compile c (toAList (stackSem_state_code t)))))
+         (stackSem_state_use_alloc_fupd (K F)
+         (stackSem_state_use_store_fupd (K T)
+         (stackSem_state_use_stack_fupd (K T)
+         (stackSem_state_gc_fun_fupd (K anything)
+         (stackSem_state_compile_oracle_fupd (K ((I ## MAP
          stack_alloc_prog_comp ## I) o stackSem_state_compile_oracle t))
-         (compile_fupd (K compile_rest) (stackSem_state_regs_fupd (K
-         regs1) t)))))))) /\ stackSem_state_regs
+         (stackSem_state_compile_fupd (K compile_rest)
+         (stackSem_state_regs_fupd (K regs1) t))))))))
+         /\ stackSem_state_regs
        t SUBMAP regs1 /\
        LENGTH (stackSem_state_stack t) * (dimindex (:'a) DIV 8) <
          dimword (:'a) /\
-       LENGTH (buffer_buffer (state_data_buffer t)) + (LENGTH
-         (stackSem_state_bitmaps t) + buffer_space_left
-         (state_data_buffer t)) < dimword (:'a) - 1)`),
+       LENGTH (buffer_buffer (stackSem_state_data_buffer t)) +
+         (LENGTH (stackSem_state_bitmaps t) + buffer_space_left
+         (stackSem_state_data_buffer t)) < dimword (:'a) - 1)`),
   CHEAT_TAC);;
 
 let ALOOKUP_prog_comp = prove
@@ -2579,14 +2584,14 @@ let lookup_fromAList_prog_comp = prove
 (* comp_correct *)
 let stack_allocProof_comp_correct = prove
  (`!p (s:('a,'c,'b)stackSem_state) r t m n c regs'.
-     stackSem_evaluate (p,s) = (r,t) /\ ~(r = SOME stackSem_Error) /\
-       alloc_arg p /\
+     stackSem_evaluate (p,s) = (r,t) /\ ~(r = SOME stackSem_Error)
+       /\ alloc_arg p /\
      (!k prog. sptree_lookup k (stackSem_state_code s) = SOME prog
        ==> ~(k = gc_stub_location) /\
                alloc_arg prog) /\
      (!n k p. MEM (k,p) (FST (SND (stackSem_state_compile_oracle s
-       n))) ==> ~(k = gc_stub_location) /\ alloc_arg p) /\
-       stackSem_state_gc_fun
+       n))) ==> ~(k = gc_stub_location) /\ alloc_arg p)
+       /\ stackSem_state_gc_fun
      s = word_gc_fun c /\ stackSem_state_use_alloc s /\
      LENGTH (stackSem_state_stack s) * (dimindex (:'a) DIV 8) <
        dimword (:'a) /\ stackSem_state_regs
@@ -2596,8 +2601,8 @@ let stack_allocProof_comp_correct = prove
      // Data buffer does not wrap around
      LENGTH (stackSem_state_bitmaps s) + LENGTH (buffer_buffer
        (stackSem_state_data_buffer s)) + buffer_space_left
-       (stackSem_state_data_buffer s) < dimword (:'a) - 1 /\
-       stackSem_state_compile
+       (stackSem_state_data_buffer s) < dimword (:'a) - 1
+       /\ stackSem_state_compile
      s = (\c. compile_rest c o (MAP stack_alloc_prog_comp)) ==>
      (?ck regs1.
        stackSem_evaluate (FST (stack_alloc_comp n m
@@ -2613,21 +2618,24 @@ let stack_allocProof_comp_correct = prove
          (stackSem_state_use_stack_fupd (K T)
          (stackSem_state_use_store_fupd (K T)
           s))))))))) =
-         (r,state_code_fupd (K (fromAList (stack_alloc_compile c
-           (toAList (state_code t))))) (compile_fupd (K compile_rest)
-           (compile_oracle_fupd (K ((I ## MAP stack_alloc_prog_comp ##
-           I) o compile_oracle t)) (state_gc_fun_fupd (K anything)
+         (r,stackSem_state_code_fupd (K (fromAList
+           (stack_alloc_compile c (toAList (stackSem_state_code t)))))
+           (stackSem_state_compile_fupd (K compile_rest)
+           (stackSem_state_compile_oracle_fupd (K ((I ## MAP
+           stack_alloc_prog_comp ## I) o stackSem_state_compile_oracle
+           t)) (stackSem_state_gc_fun_fupd (K anything)
            (stackSem_state_regs_fupd (K regs1)
            (stackSem_state_use_alloc_fupd (K F)
            (stackSem_state_use_stack_fupd (K T)
-           (stackSem_state_use_store_fupd (K T) t)))))))) /\
-           stackSem_state_regs
+           (stackSem_state_use_store_fupd (K T) t))))))))
+           /\ stackSem_state_regs
        t SUBMAP regs1 /\
        LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
-         (state_data_buffer t)) + buffer_space_left (state_data_buffer
-         t) < dimword (:'a) - 1 /\
-       ((!w. ~(r = SOME (stackLang_Halt w))) ==> LENGTH (stack t) *
-         (dimindex (:'a) DIV 8) < dimword (:'a)))`,
+         (stackSem_state_data_buffer t)) + buffer_space_left
+         (stackSem_state_data_buffer t) < dimword (:'a) - 1 /\
+       ((!w. ~(r = SOME (stackLang_Halt w))) ==> LENGTH
+         (stackSem_state_stack t) * (dimindex (:'a) DIV 8) < dimword
+         (:'a)))`,
   CHEAT_TAC);;
 
 (* HOL4 stack_allocProofScript.sml:5896-5899: ML code, not ported *)
@@ -2663,8 +2671,8 @@ let stack_allocProof_compile_semantics = prove
     `(!k prog. sptree_lookup k (stackSem_state_code s) = SOME prog ==>
   ~(k = gc_stub_location) /\ alloc_arg prog) /\
       (!n k p. MEM (k,p) (FST (SND (stackSem_state_compile_oracle s
-        n))) ==> ~(k = gc_stub_location) /\ alloc_arg p) /\
-        stackSem_state_gc_fun
+        n))) ==> ~(k = gc_stub_location) /\ alloc_arg p)
+        /\ stackSem_state_gc_fun
      (s:('a,'c,'b)stackSem_state) = (word_gc_fun c:('a word_loc)
        list#('a word->'a word_loc)#('a word->bool)#(store_name,'a
        word_loc)fmap->(('a word_loc) list#('a word->'a
@@ -2675,8 +2683,8 @@ let stack_allocProof_compile_semantics = prove
      LENGTH (stackSem_state_stack s) * (dimindex (:'a) DIV 8) <
        dimword (:'a) /\ stackSem_state_use_stack
      s /\ stackSem_state_use_alloc s /\ stackSem_state_compile
-     s = (\c. compile_rest c o (MAP stack_alloc_prog_comp)) /\
-       ~(stackSem_semantics start s = ffi_Fail) ==>
+     s = (\c. compile_rest c o (MAP stack_alloc_prog_comp))
+       /\ ~(stackSem_semantics start s = ffi_Fail) ==>
      stackSem_semantics start (stackSem_state_use_alloc_fupd (K F)
        (stackSem_state_use_stack_fupd (K T)
        (stackSem_state_use_store_fupd (K T)
@@ -2708,8 +2716,8 @@ let stack_allocProof_make_init_def = new_definition
    variables of its own are read as variables *)
 let stack_allocProof_make_init_semantics = prove
  (cake_as_vars (fun () ->
-    `(!k prog. ALOOKUP code k = SOME prog ==> ~(k = gc_stub_location) /\
-  alloc_arg prog) /\
+    `(!k prog. ALOOKUP code k = SOME prog ==> ~(k = gc_stub_location)
+  /\ alloc_arg prog) /\
      (!n k p. MEM (k,p) (FST (SND (oracle n))) ==> ~(k =
        gc_stub_location) /\ alloc_arg p) /\ stackSem_state_use_stack
      s /\ stackSem_state_use_store s /\ ~(stackSem_state_use_alloc

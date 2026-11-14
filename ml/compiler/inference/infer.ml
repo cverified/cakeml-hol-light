@@ -82,8 +82,8 @@ let n_fresh_uvar_def,n_fresh_uvar_ind = define_wf
   [`n_fresh_uvar (n:num) =
    (if n = 0 then
      st_ex_return [] else
-     st_ex_bind fresh_uvar (\v. st_ex_bind (n_fresh_uvar (n - 1)) (\
-        vs.
+     st_ex_bind fresh_uvar (\v. st_ex_bind (n_fresh_uvar (n - 1))
+       (\vs.
         st_ex_return (CONS v vs))))`];;
 
 let n_fresh_id_def = new_definition
@@ -127,8 +127,7 @@ let add_constraints_def,add_constraints_ind = define_wf
      st_ex_return one
         | ((CONS t1 ts1),(CONS t2 ts2)) ->
      st_ex_bind (add_constraint l t1 t2) (\one. st_ex_bind
-       (add_constraints l ts1 ts2) (\
-        one.
+       (add_constraints l ts1 ts2) (\one.
         st_ex_return one))
         | (_1,_2) ->
      infer_failwith l ((implode
@@ -243,39 +242,35 @@ let type_name_check_subst_def,type_name_check_subst_ind = define_wf
   `MEASURE (sum_measure (\(x0,x1,x2,x3,x4). ast_t_size x4)
   (\(x0,x1,x2,x3,x4). ast_t_size1 x4))`
   [`type_name_check_subst l err_string_f tenvT fvs (Atvar tv) =
-        st_ex_ignore_bind
-          (infer_guard (MEM tv fvs) l (err_string_f tv)) (
+          st_ex_ignore_bind (infer_guard (MEM tv fvs) l
+              (err_string_f tv)) (
           st_ex_return (Tvar tv))`;
    `type_name_check_subst l f tenvT fvs (Attup ts) =
-        st_ex_bind (type_name_check_subst_list l f tenvT fvs ts) (\
-          ts'.
+        st_ex_bind (type_name_check_subst_list l f tenvT fvs ts)
+            (\ts'.
           st_ex_return (Ttup ts'))`;
    `type_name_check_subst l f tenvT fvs (Atfun t1 t2) =
-        st_ex_bind (type_name_check_subst l f tenvT fvs t1) (\
-          t1'. st_ex_bind (type_name_check_subst l f tenvT fvs t2)
-              (\
-          t2'.
+        st_ex_bind (type_name_check_subst l f tenvT fvs t1) (\t1'.
+            st_ex_bind (type_name_check_subst l f tenvT fvs t2) (\t2'.
           st_ex_return (Tfn t1' t2')))`;
    `type_name_check_subst l f tenvT fvs (Atapp ts tc) =
-        st_ex_bind (type_name_check_subst_list l f tenvT fvs ts) (\
-          ts'. st_ex_bind (lookup_st_ex l (implode
-              "type constructor") tc tenvT) (\
-          (tvs',t'). st_ex_ignore_bind
-          (infer_guard (LENGTH tvs' = LENGTH ts) l
+        st_ex_bind (type_name_check_subst_list l f tenvT fvs ts)
+            (\ts'. st_ex_bind (lookup_st_ex l (implode
+            "type constructor") tc tenvT) (\(tvs',t').
+          st_ex_ignore_bind (infer_guard (LENGTH tvs' = LENGTH ts) l
                      (mlstring_concat [(implode
                          "Type constructor "); id_to_string tc; (implode
                          " given ");
-                              num_to_str (&(LENGTH ts)); (implode
-                                  " arguments, but expected ");
-                              num_to_str (&(LENGTH tvs'))])) (
+                              mlint_toString (&(LENGTH ts));
+                                  (implode " arguments, but expected ");
+                              mlint_toString (&(LENGTH tvs'))])) (
           st_ex_return (type_subst (alist_to_fmap (ZIP tvs' ts'))
               t'))))`;
    `type_name_check_subst_list l f tenvT fvs [] = st_ex_return []`;
    `type_name_check_subst_list l f tenvT fvs (CONS t ts) =
-        st_ex_bind (type_name_check_subst l f tenvT fvs t) (\
-          t'. st_ex_bind (type_name_check_subst_list l f tenvT fvs
-              ts) (\
-          ts'.
+        st_ex_bind (type_name_check_subst l f tenvT fvs t) (\t'.
+            st_ex_bind (type_name_check_subst_list l f tenvT fvs ts)
+            (\ts'.
           st_ex_return (CONS t' ts')))`];;
 
 let bind_guard = prove
@@ -441,8 +436,7 @@ let check_ctor_types_def,check_ctor_types_ind = define_wf
   ast_t_size1) x3)`
   [`check_ctor_types l tenvT tvs [] = st_ex_return one`;
    `check_ctor_types l tenvT tvs (CONS (cn,ts) ctors) =
-        st_ex_ignore_bind
-          (type_name_check_subst_list l
+          st_ex_ignore_bind (type_name_check_subst_list l
                 (\tv. mlstring_concat [(implode
                     "Unbound type variable "); tv;
                               (implode
@@ -462,20 +456,19 @@ let check_ctors_def,check_ctors_ind = define_wf
   (pair_size mlstring_size ast_t_size1))))      x2)`
   [`check_ctors l tenvT [] = st_ex_return one`;
    `check_ctors l tenvT (CONS (tvs,tn,ctors) tds) =
-        st_ex_ignore_bind
-          (check_dups l
+          st_ex_ignore_bind (check_dups l
                      (\n. mlstring_concat [(implode
                          "Duplicate constructor "); n;
                               (implode
                                   " in the definition of type "); tn])
-                     (MAP FST ctors)) (st_ex_ignore_bind
-          (check_dups l
+                     (MAP FST ctors)) (
+          st_ex_ignore_bind (check_dups l
                      (\n. mlstring_concat [(implode
                          "Duplicate type variable binding "); n;
                               (implode
                                   " in the definition of type "); tn])
-                     tvs) (st_ex_ignore_bind
-          (check_ctor_types l tenvT tvs ctors) (
+                     tvs) (
+          st_ex_ignore_bind (check_ctor_types l tenvT tvs ctors) (
           check_ctors l tenvT tds)))`];;
 
 (* HOL4 inferScript.sml:495-497: a theorem that HOL4 states as the
@@ -483,8 +476,7 @@ let check_ctors_def,check_ctors_ind = define_wf
 
 let check_type_definition_def = new_definition
   `check_type_definition l tenvT tds =
-     st_ex_ignore_bind
-       (check_dups l
+       st_ex_ignore_bind (check_dups l
                   (\n. mlstring_concat [(implode
                     "Duplicate type constructor "); n;
                               (implode
@@ -524,11 +516,10 @@ let infer_p_def,infer_p_ind = assume_definition_rec
                      cn ->
               st_ex_bind (lookup_st_ex l (implode "constructor") cn
                   (inf_env_inf_c ienv)) (\(tvs',ts,tn). st_ex_bind
-                  (infer_ps l ienv ps) (\
-                 (ts'',tenv). st_ex_bind (n_fresh_uvar (LENGTH
-                     tvs')) (\
-                 ts'. st_ex_ignore_bind
-                 (infer_guard (LENGTH ts'' = LENGTH ts) l
+                  (infer_ps l ienv ps) (\(ts'',tenv). st_ex_bind
+                  (n_fresh_uvar (LENGTH tvs')) (\ts'.
+                 st_ex_ignore_bind (infer_guard (LENGTH ts'' =
+                     LENGTH ts) l
                        (mlstring_concat [(implode "Constructor ");
                            id_to_string cn; (implode " given ");
                               mlint_toString (&(LENGTH ts''));
@@ -536,8 +527,7 @@ let infer_p_def,infer_p_ind = assume_definition_rec
                               mlint_toString (&(LENGTH ts))]))
                                   (st_ex_bind (add_constraints l ts''
                                   (MAP (infer_type_subst (ZIP tvs' ts'))
-                                  ts)) (\
-                 one.
+                                  ts)) (\one.
                  st_ex_return (Infer_Tapp ts' tn,tenv)))))))`;
    `infer_p l ienv (ast_Pref p:ast_pat) =
         st_ex_bind (infer_p l ienv p) (\(t,tenv).
@@ -554,17 +544,14 @@ let infer_p_def,infer_p_ind = assume_definition_rec
 
       "Type variables are not supported in type annotatio" "ns."))])
       (inf_env_inf_t
-                  ienv) [] t) (\
-          t''. st_ex_bind (add_constraint l t' (infer_type_subst []
-              t'')) (\
-          one.
+                  ienv) [] t) (\t''. st_ex_bind (add_constraint l t'
+                      (infer_type_subst [] t'')) (\one.
           st_ex_return (t',tenv))))`;
    `infer_ps l ienv [] =
         st_ex_return ([],[])`;
    `infer_ps l ienv (CONS p ps) =
         st_ex_bind (infer_p l ienv p) (\(t,tenv). st_ex_bind
-            (infer_ps l ienv ps) (\
-           (ts,tenv').
+            (infer_ps l ienv ps) (\(ts,tenv').
            st_ex_return (CONS t ts,APPEND tenv' tenv)))`];;
 
 let option_case_rand = prove
@@ -726,8 +713,7 @@ let constrain_op_def = new_definition
              st_ex_return (Infer_Tapp [] Tbool_num)) s |
                (ast_Opapp,[t1; t2]) ->
           st_ex_bind fresh_uvar (\uvar. st_ex_bind (add_constraint l
-            t1 (Infer_Tapp [t2; uvar] Tfn_num)) (\
-             one.
+            t1 (Infer_Tapp [t2; uvar] Tfn_num)) (\one.
              st_ex_return uvar)) s | (ast_Opassign,[t1; t2]) ->
           st_ex_bind (add_constraint l t1 (Infer_Tapp [t2] Tref_num))
             (\one.
@@ -735,23 +721,18 @@ let constrain_op_def = new_definition
                (ast_Opref,[t]) -> st_ex_return (Infer_Tapp [t] Tref_num)
                s | (ast_Opderef,[t]) ->
           st_ex_bind fresh_uvar (\uvar. st_ex_bind (add_constraint l
-            t (Infer_Tapp [uvar] Tref_num)) (\
-             one.
+            t (Infer_Tapp [uvar] Tref_num)) (\one.
              st_ex_return uvar)) s | (ast_VfromList,[t]) ->
           st_ex_bind fresh_uvar (\uvar. st_ex_bind (add_constraint l
-            t (Infer_Tapp [uvar] Tlist_num)) (\
-             one.
+            t (Infer_Tapp [uvar] Tlist_num)) (\one.
              st_ex_return (Infer_Tapp [uvar] Tvector_num))) s |
                (ast_Vsub,[t1; t2]) ->
           st_ex_bind fresh_uvar (\uvar. st_ex_bind (add_constraint l
-            t1 (Infer_Tapp [uvar] Tvector_num)) (\
-             one. st_ex_bind (add_constraint l t2 (Infer_Tapp []
-               Tint_num)) (\
-             one.
+            t1 (Infer_Tapp [uvar] Tvector_num)) (\one. st_ex_bind
+            (add_constraint l t2 (Infer_Tapp [] Tint_num)) (\one.
              st_ex_return uvar))) s | (ast_Vlength,[t]) ->
           st_ex_bind fresh_uvar (\uvar. st_ex_bind (add_constraint l
-            t (Infer_Tapp [uvar] Tvector_num)) (\
-             one.
+            t (Infer_Tapp [uvar] Tvector_num)) (\one.
              st_ex_return (Infer_Tapp [] Tint_num))) s |
                (ast_Aalloc,[t1; t2]) ->
           st_ex_bind (add_constraint l t1 (Infer_Tapp [] Tint_num))
@@ -759,32 +740,25 @@ let constrain_op_def = new_definition
              st_ex_return (Infer_Tapp [t2] Tarray_num)) s |
                (ast_AallocEmpty,[t1]) ->
           st_ex_bind fresh_uvar (\uvar. st_ex_bind (add_constraint l
-            t1 (Infer_Tapp [] Ttup_num)) (\
-             one.
+            t1 (Infer_Tapp [] Ttup_num)) (\one.
              st_ex_return (Infer_Tapp [uvar] Tarray_num))) s |
                (ast_Asub,[t1; t2]) ->
           st_ex_bind fresh_uvar (\uvar. st_ex_bind (add_constraint l
-            t1 (Infer_Tapp [uvar] Tarray_num)) (\
-             one. st_ex_bind (add_constraint l t2 (Infer_Tapp []
-               Tint_num)) (\
-             one.
+            t1 (Infer_Tapp [uvar] Tarray_num)) (\one. st_ex_bind
+            (add_constraint l t2 (Infer_Tapp [] Tint_num)) (\one.
              st_ex_return uvar))) s | (ast_Alength,[t]) ->
           st_ex_bind fresh_uvar (\uvar. st_ex_bind (add_constraint l
-            t (Infer_Tapp [uvar] Tarray_num)) (\
-             one.
+            t (Infer_Tapp [uvar] Tarray_num)) (\one.
              st_ex_return (Infer_Tapp [] Tint_num))) s |
                (ast_Aupdate,[t1; t2; t3]) ->
           st_ex_bind (add_constraint l t1 (Infer_Tapp [t3]
             Tarray_num)) (\one. st_ex_bind (add_constraint l t2
-            (Infer_Tapp [] Tint_num)) (\
-             one.
+            (Infer_Tapp [] Tint_num)) (\one.
              st_ex_return (Infer_Tapp [] Ttup_num))) s |
                (ast_ListAppend,[t1; t2]) ->
           st_ex_bind fresh_uvar (\uvar. st_ex_bind (add_constraint l
-            t1 (Infer_Tapp [uvar] Tlist_num)) (\
-             one. st_ex_bind (add_constraint l t2 (Infer_Tapp [uvar]
-               Tlist_num)) (\
-             one.
+            t1 (Infer_Tapp [uvar] Tlist_num)) (\one. st_ex_bind
+            (add_constraint l t2 (Infer_Tapp [uvar] Tlist_num)) (\one.
              st_ex_return (Infer_Tapp [uvar] Tlist_num)))) s |
                (ast_Vsub_unsafe,_20) -> infer_failwith l ((implode
                "Unsafe ops do not have a type")) s |
@@ -838,16 +812,14 @@ let infer_e_def,infer_e_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`infer_e l ienv (ast_Raise e:ast_exp) =
         st_ex_bind (infer_e l ienv e) (\t2. st_ex_bind
-            (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\
-           one. st_ex_bind fresh_uvar (\
-           t1.
+            (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\one.
+            st_ex_bind fresh_uvar (\t1.
            st_ex_return t1)))`;
    `infer_e l ienv (ast_Handle e pes:ast_exp) =
         (if pes = [] then
           infer_failwith l ((implode "No patterns in handle")) else
           st_ex_bind (infer_e l ienv e) (\t1. st_ex_bind (infer_pes
-              l ienv pes (Infer_Tapp [] Texn_num) t1) (\
-             one.
+              l ienv pes (Infer_Tapp [] Texn_num) t1) (\one.
              st_ex_return t1)))`;
    `infer_e l ienv (ast_Lit (ast_IntLit i):ast_exp) =
         st_ex_return (Infer_Tapp [] Tint_num)`;
@@ -864,8 +836,7 @@ let infer_e_def,infer_e_ind = assume_definition_rec
    `infer_e l ienv (ast_Var id':ast_exp) =
         st_ex_bind (lookup_st_ex l (implode "variable") id'
             (inf_env_inf_v ienv)) (\(tvs,t). st_ex_bind (n_fresh_uvar
-            tvs) (\
-           uvs.
+            tvs) (\uvs.
            st_ex_return (infer_deBruijn_subst uvs t)))`;
    `infer_e l ienv (ast_Con cn_opt es:ast_exp) =
         (match cn_opt with
@@ -874,10 +845,10 @@ let infer_e_def,infer_e_ind = assume_definition_rec
                 st_ex_return (Infer_Tapp ts Ttup_num)) | SOME cn ->
              st_ex_bind (lookup_st_ex l (implode "constructor") cn
                  (inf_env_inf_c ienv)) (\(tvs',ts,tn). st_ex_bind
-                 (infer_es l ienv es) (\
-                ts''. st_ex_bind (n_fresh_uvar (LENGTH tvs')) (\
-                ts'. st_ex_ignore_bind
-                 (infer_guard (LENGTH ts'' = LENGTH ts) l
+                 (infer_es l ienv es) (\ts''. st_ex_bind (n_fresh_uvar
+                 (LENGTH tvs')) (\ts'.
+                 st_ex_ignore_bind (infer_guard (LENGTH ts'' =
+                     LENGTH ts) l
                        (mlstring_concat [(implode "Constructor ");
                            id_to_string cn; (implode " given ");
                               mlint_toString (&(LENGTH ts''));
@@ -885,44 +856,34 @@ let infer_e_def,infer_e_ind = assume_definition_rec
                               mlint_toString (&(LENGTH ts))]))
                                   (st_ex_bind (add_constraints l ts''
                                   (MAP (infer_type_subst (ZIP tvs' ts'))
-                                  ts)) (\
-                one.
+                                  ts)) (\one.
                 st_ex_return (Infer_Tapp ts' tn)))))))`;
    `infer_e l ienv (ast_Fun x e:ast_exp) =
         st_ex_bind fresh_uvar (\t1. st_ex_bind (infer_e l
             (inf_env_inf_v_fupd (K (nsBind x (0,t1) (inf_env_inf_v
-            ienv))) ienv) e) (\
-           t2.
+            ienv))) ienv) e) (\t2.
            st_ex_return (Infer_Tapp [t1; t2] Tfn_num)))`;
    `infer_e l ienv (ast_App op es:ast_exp) =
         st_ex_bind (infer_es l ienv es) (\ts. st_ex_bind
-            (constrain_op l op ts) (\
-           t.
+            (constrain_op l op ts) (\t.
            st_ex_return t))`;
    `infer_e l ienv (ast_Log log e1 e2) =
         st_ex_bind (infer_e l ienv e1) (\t1. st_ex_bind (infer_e l
-            ienv e2) (\
-           t2. st_ex_bind (add_constraint l t1 (Infer_Tapp []
-               Tbool_num)) (\
-           one. st_ex_bind (add_constraint l t2 (Infer_Tapp []
-               Tbool_num)) (\
-           one.
+            ienv e2) (\t2. st_ex_bind (add_constraint l t1 (Infer_Tapp
+            [] Tbool_num)) (\one. st_ex_bind (add_constraint l t2
+            (Infer_Tapp [] Tbool_num)) (\one.
            st_ex_return (Infer_Tapp [] Tbool_num)))))`;
    `infer_e l ienv (ast_If e1 e2 e3:ast_exp) =
         st_ex_bind (infer_e l ienv e1) (\t1. st_ex_bind
-            (add_constraint l t1 (Infer_Tapp [] Tbool_num)) (\
-           one. st_ex_bind (infer_e l ienv e2) (\
-           t2. st_ex_bind (infer_e l ienv e3) (\
-           t3. st_ex_bind (add_constraint l t2 t3) (\
-           one.
+            (add_constraint l t1 (Infer_Tapp [] Tbool_num)) (\one.
+            st_ex_bind (infer_e l ienv e2) (\t2. st_ex_bind (infer_e l
+            ienv e3) (\t3. st_ex_bind (add_constraint l t2 t3) (\one.
            st_ex_return t2)))))`;
    `infer_e l ienv (ast_Mat e pes:ast_exp) =
         (if pes = [] then
           infer_failwith l ((implode "No patterns in case")) else
           st_ex_bind (infer_e l ienv e) (\t1. st_ex_bind fresh_uvar
-              (\
-             t2. st_ex_bind (infer_pes l ienv pes t1 t2) (\
-             one.
+              (\t2. st_ex_bind (infer_pes l ienv pes t1 t2) (\one.
              st_ex_return t2))))`;
    `infer_e l ienv (ast_Let x e1 e2:ast_exp) =
           // Don't do polymorphism for non-top-level lets
@@ -937,8 +898,7 @@ let infer_e_def,infer_e_ind = assume_definition_rec
           // else
           st_ex_bind (infer_e l ienv e1) (\t1. st_ex_bind (infer_e l
               (inf_env_inf_v_fupd (K (nsOptBind x (0,t1) (inf_env_inf_v
-              ienv))) ienv) e2) (\
-             t2.
+              ienv))) ienv) e2) (\t2.
              st_ex_return t2))`;
    `// Don't do polymorphism for non-top-level let recs
     // (infer_e l ienv (Letrec funs e) =
@@ -955,23 +915,20 @@ let infer_e_def,infer_e_ind = assume_definition_rec
     // return t
     // od) ∧
     infer_e l ienv (ast_Letrec funs e:ast_exp) =
-     st_ex_ignore_bind
-       (check_dups l (\n. mlstring_concat [(implode
-           "Duplicate function name "); n;
+       st_ex_ignore_bind (check_dups l (\n. mlstring_concat
+           [(implode "Duplicate function name "); n;
                               (implode
 
       " in mutually recursive function definition")])
                     (MAP FST funs)) (st_ex_bind (n_fresh_uvar
-                        (LENGTH funs)) (\
-        uvars. st_ex_bind (st_ex_return (nsAppend (alist_to_ns (MAP2
-            (\(f,x,e) uvar. (f,(0,uvar))) funs uvars)) (inf_env_inf_v
-            ienv))) (\
-        env'. st_ex_bind (infer_funs l (inf_env_inf_v_fupd (K env')
-            ienv) funs) (\
-        funs_ts. st_ex_bind (add_constraints l uvars funs_ts) (\
-        one. st_ex_bind (infer_e l (inf_env_inf_v_fupd (K env')
-            ienv) e) (\
-        t.
+                        (LENGTH funs)) (\uvars. st_ex_bind (st_ex_return
+                        (nsAppend (alist_to_ns (MAP2 (\(f,x,e) uvar.
+                        (f,(0,uvar))) funs uvars)) (inf_env_inf_v
+                        ienv))) (\env'. st_ex_bind (infer_funs l
+                        (inf_env_inf_v_fupd (K env') ienv) funs)
+                        (\funs_ts. st_ex_bind (add_constraints l uvars
+                        funs_ts) (\one. st_ex_bind (infer_e l
+                        (inf_env_inf_v_fupd (K env') ienv) e) (\t.
         st_ex_return t))))))`;
    `infer_e l ienv (ast_Tannot e t) =
         st_ex_bind (infer_e l ienv e) (\t'. st_ex_bind
@@ -982,10 +939,8 @@ let infer_e_def,infer_e_ind = assume_definition_rec
 
       "Type variables are not supported in type annotatio" "ns."))])
       (inf_env_inf_t
-                  ienv) [] t) (\
-           t''. st_ex_bind (add_constraint l t' (infer_type_subst []
-               t'')) (\
-           one.
+                  ienv) [] t) (\t''. st_ex_bind (add_constraint l t'
+                      (infer_type_subst [] t'')) (\one.
            st_ex_return t')))`;
    `infer_e l ienv (ast_Lannot e new_l) =
         infer_e (loc_err_info_loc_fupd (K (SOME new_l)) l) ienv e`;
@@ -993,32 +948,29 @@ let infer_e_def,infer_e_ind = assume_definition_rec
         st_ex_return []`;
    `infer_es l ienv (CONS e es) =
         st_ex_bind (infer_e l ienv e) (\t. st_ex_bind (infer_es l
-            ienv es) (\
-           ts.
+            ienv es) (\ts.
            st_ex_return (CONS t ts)))`;
    `infer_pes l ienv [] t1 t2 =
          st_ex_return one`;
    `infer_pes l ienv (CONS (p,e) pes) t1 t2 =
         st_ex_bind (infer_p l ienv p) (\(t1',env').
-            st_ex_ignore_bind
-          (check_dups l (\n. mlstring_concat [(implode
-              "Duplicate variable "); n; (implode " in pattern")])
+          st_ex_ignore_bind (check_dups l (\n. mlstring_concat
+              [(implode "Duplicate variable "); n; (implode
+              " in pattern")])
                     (MAP FST env')) (st_ex_bind (add_constraint l t1
-                        t1') (\
-           one. st_ex_bind (infer_e l (inf_env_inf_v_fupd (K
-               (nsAppend (alist_to_ns (MAP (\(n,t). (n,(0,t))) env'))
-               (inf_env_inf_v ienv))) ienv) e) (\
-           t2'. st_ex_bind (add_constraint l t2 t2') (\
-           one. st_ex_bind (infer_pes l ienv pes t1 t2) (\
-           one.
+                        t1') (\one. st_ex_bind (infer_e l
+                        (inf_env_inf_v_fupd (K (nsAppend (alist_to_ns
+                        (MAP (\(n,t). (n,(0,t))) env')) (inf_env_inf_v
+                        ienv))) ienv) e) (\t2'. st_ex_bind
+                        (add_constraint l t2 t2') (\one. st_ex_bind
+                        (infer_pes l ienv pes t1 t2) (\one.
            st_ex_return one))))))`;
    `infer_funs l ienv [] = st_ex_return []`;
    `infer_funs l ienv (CONS (f,x,e) funs) =
         st_ex_bind fresh_uvar (\uvar. st_ex_bind (infer_e l
             (inf_env_inf_v_fupd (K (nsBind x (0,uvar) (inf_env_inf_v
-            ienv))) ienv) e) (\
-           t. st_ex_bind (infer_funs l ienv funs) (\
-           ts.
+            ienv))) ienv) e) (\t. st_ex_bind (infer_funs l ienv funs)
+            (\ts.
            st_ex_return (CONS (Infer_Tapp [uvar; t] Tfn_num)
                ts))))`];;
 
@@ -1044,14 +996,13 @@ let lift_ienv_def = new_definition
 let infer_d_def,infer_d_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   [`infer_d ienv (Dlet locs p e) =
-      st_ex_bind init_state (\one. st_ex_bind get_next_uvar (\
-         n. st_ex_bind (infer_e (mk_loc_err_info (SOME locs)
-             (inf_env_inf_t ienv)) ienv e) (\
-         t1. st_ex_bind (infer_p (mk_loc_err_info (SOME locs)
-             (inf_env_inf_t ienv)) ienv p) (\
-         (t2,env'). st_ex_ignore_bind
-         (check_dups (mk_loc_err_info (SOME locs) (inf_env_inf_t
-             ienv))
+      st_ex_bind init_state (\one. st_ex_bind get_next_uvar (\n.
+          st_ex_bind (infer_e (mk_loc_err_info (SOME locs)
+          (inf_env_inf_t ienv)) ienv e) (\t1. st_ex_bind (infer_p
+          (mk_loc_err_info (SOME locs) (inf_env_inf_t ienv)) ienv p)
+          (\(t2,env').
+         st_ex_ignore_bind (check_dups (mk_loc_err_info (SOME locs)
+             (inf_env_inf_t ienv))
                        (\n. mlstring_concat [(implode
                            "Duplicate variable "); n;
                               (implode
@@ -1059,60 +1010,57 @@ let infer_d_def,infer_d_ind = assume_definition_rec
       " in the left-hand side of a definition")])
                     (MAP FST env')) (st_ex_bind (add_constraint
                         (mk_loc_err_info (SOME locs) (inf_env_inf_t
-                        ienv)) t1 t2) (\
-         one. st_ex_bind (apply_subst_list (MAP SND env')) (\
-         ts. st_ex_bind (st_ex_return (generalise_list n 0 FEMPTY
-             ts)) (\
-         (num_tvs',s,ts'). st_ex_bind (infer_guard (num_tvs' = 0 \/
-             is_value e) (mk_loc_err_info (SOME locs) (inf_env_inf_t
-             ienv))
-                     ((implode "Value restriction violated"))) (\
-         one.
+                        ienv)) t1 t2) (\one. st_ex_bind
+                        (apply_subst_list (MAP SND env')) (\ts.
+                        st_ex_bind (st_ex_return (generalise_list n 0
+                        FEMPTY ts)) (\(num_tvs',s,ts'). st_ex_bind
+                        (infer_guard (num_tvs' = 0 \/ is_value e)
+                        (mk_loc_err_info (SOME locs) (inf_env_inf_t
+                        ienv))
+                     ((implode "Value restriction violated")))
+                         (\one.
          st_ex_return (mk_inf_env (alist_to_ns (ZIP (MAP FST
              env') (MAP (\t. (num_tvs',t)) ts'))) nsEmpty
              nsEmpty))))))))))`;
    `infer_d ienv (Dletrec locs funs) =
-      st_ex_ignore_bind
-        (check_dups (mk_loc_err_info (SOME locs) (inf_env_inf_t
-            ienv))
+        st_ex_ignore_bind (check_dups (mk_loc_err_info (SOME locs)
+            (inf_env_inf_t ienv))
            (\n. mlstring_concat [(implode
                "Duplicate function name "); n;
                 (implode
                     " a mutually recursive function definition")])
-                   (MAP FST funs)) (st_ex_bind init_state (\
-         one. st_ex_bind get_next_uvar (\
-         next'. st_ex_bind (n_fresh_uvar (LENGTH funs)) (\
-         uvars. st_ex_bind (st_ex_return (nsAppend (alist_to_ns
-             (MAP2 (\(f,x,e) uvar. (f,(0,uvar))) funs uvars))
-             (inf_env_inf_v ienv))) (\
-         env'. st_ex_bind (infer_funs (mk_loc_err_info (SOME locs)
-             (inf_env_inf_t ienv))
+                   (MAP FST funs)) (st_ex_bind init_state (\one.
+                       st_ex_bind get_next_uvar (\next'. st_ex_bind
+                       (n_fresh_uvar (LENGTH funs)) (\uvars. st_ex_bind
+                       (st_ex_return (nsAppend (alist_to_ns (MAP2
+                       (\(f,x,e) uvar. (f,(0,uvar))) funs uvars))
+                       (inf_env_inf_v ienv))) (\env'. st_ex_bind
+                       (infer_funs (mk_loc_err_info (SOME locs)
+                       (inf_env_inf_t ienv))
                               (inf_env_inf_v_fupd (K env') ienv)
-                                  funs) (\
-         funs_ts. st_ex_bind (add_constraints (mk_loc_err_info (SOME
-             locs) (inf_env_inf_t ienv)) uvars funs_ts) (\
-         one. st_ex_bind (apply_subst_list uvars) (\
-         ts. st_ex_bind (st_ex_return (generalise_list next' 0
-             FEMPTY ts)) (\
-         (num_gen,s,ts').
+                                  funs) (\funs_ts. st_ex_bind
+                                  (add_constraints (mk_loc_err_info
+                                  (SOME locs) (inf_env_inf_t ienv))
+                                  uvars funs_ts) (\one. st_ex_bind
+                                  (apply_subst_list uvars) (\ts.
+                                  st_ex_bind (st_ex_return
+                                  (generalise_list next' 0 FEMPTY ts))
+                                  (\(num_gen,s,ts').
          st_ex_return (mk_inf_env (alist_to_ns (MAP2 (\(f,x,e) t.
              (f,(num_gen,t))) funs ts')) nsEmpty nsEmpty))))))))))`;
    `infer_d ienv (Dtype locs tdefs) =
-      st_ex_bind (n_fresh_id (LENGTH tdefs)) (\
-         tids. st_ex_bind (st_ex_return (alist_to_ns (MAP2
-             (\(tvs,tn,ctors) i. (tn,(tvs,Tapp (MAP Tvar tvs) i))) tdefs
-             tids))) (\
-         ienvT1. st_ex_bind (st_ex_return (nsAppend ienvT1
-             (inf_env_inf_t ienv))) (\
-         ienvT2. st_ex_ignore_bind
-         (check_type_definition (mk_loc_err_info (SOME locs)
-             (inf_env_inf_t ienv)) ienvT2 tdefs) (
+      st_ex_bind (n_fresh_id (LENGTH tdefs)) (\tids. st_ex_bind
+          (st_ex_return (alist_to_ns (MAP2 (\(tvs,tn,ctors) i.
+          (tn,(tvs,Tapp (MAP Tvar tvs) i))) tdefs tids))) (\ienvT1.
+          st_ex_bind (st_ex_return (nsAppend ienvT1 (inf_env_inf_t
+          ienv))) (\ienvT2.
+         st_ex_ignore_bind (check_type_definition (mk_loc_err_info
+             (SOME locs) (inf_env_inf_t ienv)) ienvT2 tdefs) (
          st_ex_return (mk_inf_env nsEmpty (build_ctor_tenv ienvT2
              tdefs tids) ienvT1)))))`;
    `infer_d ienv (Dtabbrev locs tvs tn t) =
-      st_ex_ignore_bind
-        (check_dups (mk_loc_err_info (SOME locs) (inf_env_inf_t
-            ienv))
+        st_ex_ignore_bind (check_dups (mk_loc_err_info (SOME locs)
+            (inf_env_inf_t ienv))
            (\n. mlstring_concat [(implode
                "Duplicate type variable bindings for ");
                         n; (implode " in type abbreviation ");
@@ -1122,8 +1070,7 @@ let infer_d_def,infer_d_ind = assume_definition_rec
                 (\tv. mlstring_concat [(implode
                     "Unbound type variable "); tv; (implode
                     " in type abbreviation "); tn]) (inf_env_inf_t
-                ienv) tvs t) (\
-         t'.
+                ienv) tvs t) (\t'.
          st_ex_return (mk_inf_env nsEmpty nsEmpty (nsSing tn
              (tvs,t')))))`;
    `infer_d ienv (Dexn locs cn ts) =
@@ -1136,8 +1083,7 @@ let infer_d_def,infer_d_ind = assume_definition_rec
 
       ". Type variables are not allowed in exception decl"
       "arations."))]) (inf_env_inf_t
-                ienv) [] ts) (\
-        ts'.
+                ienv) [] ts) (\ts'.
         st_ex_return (mk_inf_env nsEmpty (nsSing cn
             ([],ts',Texn_num)) nsEmpty))`;
    `infer_d ienv (Denv n) =
@@ -1152,10 +1098,8 @@ let infer_d_def,infer_d_ind = assume_definition_rec
    `infer_ds ienv [] =
       st_ex_return (mk_inf_env nsEmpty nsEmpty nsEmpty)`;
    `infer_ds ienv (CONS d ds) =
-      st_ex_bind (infer_d ienv d) (\
-        ienv'. st_ex_bind (infer_ds (extend_dec_ienv ienv' ienv) ds)
-            (\
-        ienv''.
+      st_ex_bind (infer_d ienv d) (\ienv'. st_ex_bind (infer_ds
+          (extend_dec_ienv ienv' ienv) ds) (\ienv''.
         st_ex_return (extend_dec_ienv ienv'' ienv')))`];;
 
 (* HOL4 inferScript.sml:1147-1152: a theorem that HOL4 states as the
@@ -1267,8 +1211,8 @@ let ns_nub_def,ns_nub_ind = define_shaped_rec
 let ns_to_alist_def,ns_to_alist_ind = define_guess_cheat
   [`ns_to_alist (Bind [] []) = []`;
    `ns_to_alist (Bind [] (CONS (n,x) ms)) = APPEND
-        (MAP (\(x,y). ((\x y. strcat x y) ((\x y. strcat x y) n
-            (implode ".")) x,y)) (ns_to_alist x))
+        (MAP (\(x,y). (strcat (strcat n (implode ".")) x,y))
+            (ns_to_alist x))
         (ns_to_alist (Bind [] ms))`;
    `ns_to_alist (Bind (CONS (s,x) xs) m) = CONS (s,x) (ns_to_alist
     (Bind xs m))`];;

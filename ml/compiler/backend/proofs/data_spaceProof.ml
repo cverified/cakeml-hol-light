@@ -61,8 +61,8 @@ let do_stack_with_locals = prove
 
 (* evaluate_compile[local] *)
 let data_spaceProof_evaluate_compile = prove
- (`!c s res s2 vars' l. ~(res = SOME (Rerr (Rabort Rtype_error))) /\
-  (dataSem_evaluate (c,s) = (res,s2)) /\
+ (`!c s res s2 vars' l. ~(res = SOME (Rerr (Rabort Rtype_error)))
+  /\ (dataSem_evaluate (c,s) = (res,s2)) /\
       locals_ok (dataSem_state_locals s) l ==>
       (?w safe peak smx.
        (dataSem_evaluate (data_space_compile

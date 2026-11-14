@@ -984,8 +984,8 @@ let termdep_rw = prove
 (* [local] *)
 let fix_clock_IMP_LESS_EQ = prove
  (`!x. wordSem_fix_clock ((s:('a,'c,'ffi)wordSem_state)) x = (res,s1)
-  ==> wordSem_state_clock s1 <= wordSem_state_clock s /\
-  wordSem_state_termdep s1 = wordSem_state_termdep s`,
+  ==> wordSem_state_clock s1 <= wordSem_state_clock s
+  /\ wordSem_state_termdep s1 = wordSem_state_termdep s`,
   CHEAT_TAC);;
 
 let MustTerminate_limit_def = new_definition
@@ -1353,9 +1353,9 @@ let gc_clock = prove
 let alloc_clock = prove
  (`!xs s1 vs s2. (wordSem_alloc x names s1 = (vs,s2)) ==>
   wordSem_state_clock
-                  s2 <= wordSem_state_clock s1 /\
-                    wordSem_state_termdep s2 = wordSem_state_termdep
-                    s1`,
+                  s2 <= wordSem_state_clock s1
+                    /\ wordSem_state_termdep s2 =
+                    wordSem_state_termdep s1`,
   CHEAT_TAC);;
 
 let sh_mem_set_var_clock = prove

@@ -294,8 +294,8 @@ add_simp wfv_def;;
 let wfv_state_def = new_definition
   `wfv_state g l code s <=>
      ALL (OPTION_ALL (wfv g l code)) (closSem_state_globals s) /\
-     FEVERY (every_refv (wfv g l code) o SND) (state_refs s) /\
-       closSem_state_code
+     FEVERY (every_refv (wfv g l code) o SND) (closSem_state_refs s)
+       /\ closSem_state_code
      s = FEMPTY`;;
 
 new_type_abbrev("calls_state",`:misc_num_set#(num#num#closLang_exp)
@@ -322,20 +322,23 @@ let clos_callProof_state_rel_max_app = prove
   CHEAT_TAC);;
 
 let state_rel_clock = prove
- (`clos_callProof_state_rel g l s t ==> state_clock s = state_clock t`,
+ (`clos_callProof_state_rel g l s t ==> closSem_state_clock s =
+  closSem_state_clock t`,
   CHEAT_TAC);;
 
 (* state_rel_with_clock *)
 let clos_callProof_state_rel_with_clock = prove
  (`clos_callProof_state_rel g l s t ==> clos_callProof_state_rel g l
-  (state_clock_fupd (K k) s) (state_clock_fupd (K k) t)`,
+  (closSem_state_clock_fupd (K k) s) (closSem_state_clock_fupd (K k)
+  t)`,
   CHEAT_TAC);;
 
 let state_rel_flookup_refs = prove
- (`clos_callProof_state_rel g l s t /\ FLOOKUP (state_refs s) k = SOME v
-  ==>
-   (?v'. FLOOKUP (state_refs t) k = SOME v' /\ closProps_ref_rel
-     (clos_callProof_v_rel g l (closSem_state_code t)) v v')`,
+ (`clos_callProof_state_rel g l s t /\ FLOOKUP (closSem_state_refs s) k
+  = SOME v ==>
+   (?v'. FLOOKUP (closSem_state_refs t) k = SOME v'
+     /\ closProps_ref_rel (clos_callProof_v_rel g l
+     (closSem_state_code t)) v v')`,
   CHEAT_TAC);;
 
 (* syntactic properties of compiler *)
@@ -1049,8 +1052,8 @@ let code_rel_state_rel_install = prove
          (closSem_state_compile_oracle r))
                 (closSem_state_code t |++ aux1)
                   (closSem_state_compile t) (misc_shift_seq 1
-                  (closSem_state_compile_oracle t)) /\
-                  closSem_state_code
+                  (closSem_state_compile_oracle t))
+                  /\ closSem_state_code
        t SUBMAP (closSem_state_code t |++ aux1) /\
        DISJOINT (IMAGE SUC (set_of_list (code_locs exps))) (FDOM
          (closSem_state_code t)))`,
@@ -1123,14 +1126,14 @@ let pure_correct_eq = prove
 
 (* state_rel_opt_rel_refs[local] *)
 let clos_callProof_state_rel_opt_rel_refs = prove
- (`(clos_callProof_state_rel g l s1 s2 /\ FLOOKUP (state_refs s1) n = r1
-  ==>
-      (?r2. FLOOKUP (state_refs s2) n = r2 /\
+ (`(clos_callProof_state_rel g l s1 s2 /\ FLOOKUP (closSem_state_refs
+  s1) n = r1 ==>
+      (?r2. FLOOKUP (closSem_state_refs s2) n = r2 /\
            OPTREL (closProps_ref_rel (clos_callProof_v_rel g l
              (closSem_state_code s2))) r1 r2)) /\
-   (clos_callProof_state_rel g l s1 s2 /\ FLOOKUP (state_refs s2) n =
-     r2 ==>
-      (?r1. FLOOKUP (state_refs s1) n = r1 /\
+   (clos_callProof_state_rel g l s1 s2 /\ FLOOKUP (closSem_state_refs
+     s2) n = r2 ==>
+      (?r1. FLOOKUP (closSem_state_refs s1) n = r1 /\
            OPTREL (closProps_ref_rel (clos_callProof_v_rel g l
              (closSem_state_code s2))) r1 r2))`,
   CHEAT_TAC);;
@@ -1278,8 +1281,8 @@ let oracle_monotonic_init_UNION = prove
 let semantics_calls = prove
  (`~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY co cc x =
   ffi_Fail) ==>
-      clos_call_compile T x = (y,g0,aux) /\ every_Fn_SOME x /\
-        every_Fn_vs_NONE x /\
+      clos_call_compile T x = (y,g0,aux) /\ every_Fn_SOME x
+        /\ every_Fn_vs_NONE x /\
       ALL_DISTINCT (code_locs x) /\
       FST (FST (co 0)) = g0 /\
       code_inv NONE (set_of_list (code_locs x)) FEMPTY cc co (FEMPTY

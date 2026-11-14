@@ -55,8 +55,7 @@ let get_tyname_def,get_tyname_ind = define_wf
   [`get_tyname n (Bind [] []) = NONE`;
    `get_tyname n (Bind [] (CONS (m,ys) xs)) =
       (match get_tyname n ys with NONE -> get_tyname n (Bind []
-          xs) | SOME x -> SOME ((\x y. strcat x y) ((\x y. strcat x
-          y) m (implode ".")) x))`;
+          xs) | SOME x -> SOME (strcat (strcat m (implode ".")) x))`;
    `get_tyname n (Bind (CONS (tyname,_1,t) xs) m) =
       (if (match t with Tapp _2 m -> m = n | _3 -> F) then
         SOME tyname else get_tyname n (Bind xs m))`];;

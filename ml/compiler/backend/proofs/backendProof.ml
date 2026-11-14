@@ -108,8 +108,8 @@ let backend_config_ok_def = new_definition
   `backend_config_ok (asm_conf:'a asm_config) (c:backend_config) <=>
   backend_config_source_conf
      c = prim_src_config /\
-     0 < clos_to_bvl_config_max_app (backend_config_clos_conf c) /\
-       bvl_to_bvi_config_next_name2 (backend_config_bvl_conf
+     0 < clos_to_bvl_config_max_app (backend_config_clos_conf c)
+       /\ bvl_to_bvi_config_next_name2 (backend_config_bvl_conf
      c) = bvl_num_stubs + 2 /\
      LENGTH (asm_config_avoid_regs asm_conf) + 13 <=
        asm_config_reg_count asm_conf /\ lab_to_target_config_pos
@@ -130,8 +130,8 @@ let backend_config_ok_def = new_definition
      (data_to_word_config_has_fp_ops (backend_config_data_conf c) <=>
        1 < asm_config_fp_reg_count asm_conf) /\
      max_stack_alloc <= 2 * max_heap_limit (:'a)
-       (backend_config_data_conf c) - 1 /\
-       stack_to_lab_config_perf_calls (backend_config_stack_conf
+       (backend_config_data_conf c) - 1
+       /\ stack_to_lab_config_perf_calls (backend_config_stack_conf
      c) = F /\
      (\c. asm_offset_ok 0 (asm_config_addr_offset c)) asm_conf (n2w
        0) /\
@@ -143,8 +143,8 @@ let backend_config_ok_def = new_definition
      asm_conf (INL asm_Add) (n2w 4) /\ asm_config_valid_imm
      asm_conf (INL asm_Add) (n2w 1) /\ asm_config_valid_imm
      asm_conf (INL asm_Sub) (n2w 1) /\
-     OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s)) (ffi_names
-       (backend_config_lab_conf c)) /\
+     OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s))
+       (lab_to_target_config_ffi_names (backend_config_lab_conf c)) /\
      tlookup (stack_to_lab_config_reg_names
        (backend_config_stack_conf c)) PERMUTES UNIV /\
      stack_names_names_ok (stack_to_lab_config_reg_names
@@ -193,31 +193,33 @@ let mc_init_ok_def = new_definition
      (asm_config_avoid_regs (target_config (machine_config_target mc)))
      + 5))) (machine_config_callee_saved_regs mc)) [2; 3; 4] /\
    tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
-     c)) 4 = len2_reg mc /\
+     c)) 4 = machine_config_len2_reg mc /\
    tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
-     c)) 3 = ptr2_reg mc /\
+     c)) 3 = machine_config_ptr2_reg mc /\
    tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
-     c)) 2 = len_reg mc /\
+     c)) 2 = machine_config_len_reg mc /\
    tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
-     c)) 1 = ptr_reg mc /\
+     c)) 1 = machine_config_ptr_reg mc /\
    tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
      c)) 0 =
-     (match link_reg (target_config (machine_config_target mc)) with
-       NONE -> 0 | SOME n -> n) /\ be (backend_config_data_conf
+     (match asm_config_link_reg (target_config (machine_config_target
+       mc)) with NONE -> 0 | SOME n -> n) /\ be
+       (backend_config_data_conf
    c) = asm_config_big_endian (target_config (machine_config_target
      mc)) /\ ~((
     // the next four are implied by injectivity of find_name
-    match link_reg (target_config (machine_config_target mc)) with
-      NONE -> 0 | SOME n -> n) = len_reg mc) /\ ~((match link_reg
+    match asm_config_link_reg (target_config (machine_config_target
+      mc)) with NONE -> 0 | SOME n -> n) = machine_config_len_reg mc)
+      /\ ~((match asm_config_link_reg (target_config
+      (machine_config_target mc)) with NONE -> 0 | SOME n -> n) =
+      machine_config_ptr_reg mc) /\ ~((match asm_config_link_reg
       (target_config (machine_config_target mc)) with NONE -> 0 | SOME n
-      -> n) = ptr_reg mc) /\ ~((match link_reg (target_config
-      (machine_config_target mc)) with NONE -> 0 | SOME n -> n) =
-      len2_reg mc) /\ ~((match link_reg (target_config
-      (machine_config_target mc)) with NONE -> 0 | SOME n -> n) =
-      ptr2_reg mc) /\
-   ~(MEM (match link_reg (target_config (machine_config_target mc))
-     with NONE -> 0 | SOME n -> n) (machine_config_callee_saved_regs
-     mc)) /\
+      -> n) = machine_config_len2_reg mc) /\ ~((match
+      asm_config_link_reg (target_config (machine_config_target mc))
+      with NONE -> 0 | SOME n -> n) = machine_config_ptr2_reg mc) /\
+   ~(MEM (match asm_config_link_reg (target_config
+     (machine_config_target mc)) with NONE -> 0 | SOME n -> n)
+     (machine_config_callee_saved_regs mc)) /\
     asm_conf = target_config (machine_config_target mc)`;;
 
 let mc_init_ok_with_bvl_conf_updated = prove
@@ -242,8 +244,8 @@ add_simp mc_init_ok_with_clos_conf_updated;;
 let set_oracle_simp = prove
  (`backend_config_ok asm_conf (set_oracle c x) = backend_config_ok
   asm_conf c /\
-   mc_init_ok asm_conf (set_oracle c x) = mc_init_ok asm_conf c /\
-     backend_config_stack_conf
+   mc_init_ok asm_conf (set_oracle c x) = mc_init_ok asm_conf c
+     /\ backend_config_stack_conf
    (set_oracle c x) = backend_config_stack_conf c`,
   CHEAT_TAC);;
 add_simp set_oracle_simp;;
@@ -499,8 +501,8 @@ let cake_orac_eqs = prove
        asm_conf c' src f4 (\ps. backend_progs_data_prog ps) =
    cake_orac asm_conf c' src f4 (\ps. backend_progs_word_prog ps)) /\
    (
-   backend_compile asm_conf c prog = SOME (b,bm,c') /\
-     stack_to_lab_config_perf_calls (backend_config_stack_conf c) = F
+   backend_compile asm_conf c prog = SOME (b,bm,c')
+     /\ stack_to_lab_config_perf_calls (backend_config_stack_conf c) = F
      ==>
    (\((bm0,cfg),prg). (\(prg2,fs,bm). (cfg,prg2,append (FST bm)))
      (compile_word_to_stack asm_conf F (asm_config_reg_count asm_conf
@@ -515,8 +517,8 @@ let cake_orac_eqs = prove
    (
    backend_compile asm_conf c prog = SOME (b,bm,c') /\ reg_nm =
      stack_to_lab_config_reg_names (backend_config_stack_conf c) /\
-     jump = stack_to_lab_config_jump (backend_config_stack_conf c) /\
-       sp = asm_config_reg_count asm_conf -
+     jump = stack_to_lab_config_jump (backend_config_stack_conf c)
+       /\ sp = asm_config_reg_count asm_conf -
        (LENGTH (asm_config_avoid_regs asm_conf) + 3) /\
      offs = asm_config_addr_offset asm_conf ==>
    pure_co (compile_no_stubs reg_nm jump offs sp o FST) o
@@ -859,11 +861,12 @@ add_simp BAG_ALL_DISTINCT_BAG_IMAGE_SUC';;
 let cake_orac_clos_syntax_oracle_ok = prove
  (`backend_compile asm_conf (c:backend_config) prog = SOME (b,bm,c') /\
    backend_compile c2 clos_prog = (clos_c',clos_prog') /\
-   (?st. backend_config_clos_conf c' = start_fupd (K st) clos_c') /\
+   (?st. backend_config_clos_conf c' = clos_to_bvl_config_start_fupd
+     (K st) clos_c') /\
    c2 = backend_config_clos_conf c /\ clos_prog = SND (to_clos c
      prog) /\
-   1 <= clos_to_bvl_config_max_app (backend_config_clos_conf c) /\
-     backend_config_source_conf
+   1 <= clos_to_bvl_config_max_app (backend_config_clos_conf c)
+     /\ backend_config_source_conf
    c = prim_src_config ==>
    clos_to_bvlProof_syntax_oracle_ok (backend_config_clos_conf c)
      clos_c' clos_prog
@@ -999,8 +1002,8 @@ let to_word_labels_ok = prove
    ALL (\n. n > wordLang_store_consts_stub_location) (MAP FST p) /\
    ALL (\(n,m,p).
      let labs = wordConvs_extract_labels p in
-     ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\
-       ALL_DISTINCT labs) p)`,
+     ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs
+       /\ ALL_DISTINCT labs) p)`,
   CHEAT_TAC);;
 
 let to_bvi_perf_calls = prove
@@ -1253,7 +1256,8 @@ let monotonic_labels_bvl_to_bvi = prove
 
 (* syntax_oracle_ok_start *)
 let backendProof_syntax_oracle_ok_start = prove
- (`clos_to_bvlProof_syntax_oracle_ok c (start_fupd f c') es co =
+ (`clos_to_bvlProof_syntax_oracle_ok c (clos_to_bvl_config_start_fupd f
+  c') es co =
    clos_to_bvlProof_syntax_oracle_ok c c' es co`,
   CHEAT_TAC);;
 
@@ -1377,8 +1381,8 @@ let PERM_toAList_fromAList = prove
 
 let compile_word_to_stack_sfs_aux = prove
  (`!ac perf k p bm progs' fs' bitmaps.
-     compile_word_to_stack ac perf k p bm = (progs',fs',bitmaps) /\
-       perf = F ==>
+     compile_word_to_stack ac perf k p bm = (progs',fs',bitmaps)
+       /\ perf = F ==>
       fromAList
         (MAP
            (\kv.
@@ -1450,8 +1454,8 @@ let add_eval_state_def = define_cases
       s0`];;
 
 let add_eval_state_ffi = prove
- (`state_ffi
-     (add_eval_state opt_ev s0) = state_ffi s0`,
+ (`labSem_state_ffi
+     (add_eval_state opt_ev s0) = labSem_state_ffi s0`,
   CHEAT_TAC);;
 
 
@@ -1459,8 +1463,8 @@ let opt_eval_config_wf_def = define_cases
   [`opt_eval_config_wf asm_conf c' (SOME ci) =
     (compiler_instance_compiler_fun
       ci = compile_inc_progs_for_eval asm_conf /\
-      INJ (compiler_instance_config_v ci) UNIV UNIV /\
-          compiler_instance_init_state ci = c')`;
+      INJ (compiler_instance_config_v ci) UNIV UNIV
+          /\ compiler_instance_init_state ci = c')`;
    `opt_eval_config_wf asm_conf c' NONE = T`];;
 
 let backend_from_data_tuple_cc_def = new_definition
@@ -1558,8 +1562,8 @@ let backend_from_flat_tuple_cc_eq_compile_inc_progs = prove
                (backend_config_word_to_word_conf
                c),backend_config_stack_conf c,(asm_conf:'a
                asm_config))))) c) /\
-   src_cfg = backend_config_source_conf c' /\
-     stack_to_lab_config_perf_calls (backend_config_stack_conf
+   src_cfg = backend_config_source_conf c'
+     /\ stack_to_lab_config_perf_calls (backend_config_stack_conf
    c) = F /\ source_to_flat_config_pattern_cfg
      (backend_config_source_conf
    c) = source_to_flat_config_pattern_cfg prim_src_config ==>
@@ -1613,9 +1617,9 @@ let cake_orac_eq_get_oracle = prove
  (`~(semantics_prog s env prog ffi_Fail) /\
    opt_eval_config_wf (asm_conf:'a asm_config) (c':backend_config)
      (SOME ci) /\
-   nsAll (K concrete_v) (sem_env_v env) /\
-     semanticPrimitives_state_refs s = [] /\
-     semanticPrimitives_state_eval_state
+   nsAll (K concrete_v) (sem_env_v env)
+     /\ semanticPrimitives_state_refs s = []
+     /\ semanticPrimitives_state_eval_state
    s = SOME (mk_init_eval_state ci) /\
    (!i r. get_oracle ci s env prog i = SOME r ==> syntax i = (I ##
      SND) r) /\
@@ -1630,7 +1634,7 @@ let cake_orac_eq_get_oracle = prove
 
 (* [local] *)
 let step_invs_cake_orac = prove
- (`oracle
+ (`eval_oracle_state_oracle
      st = f o cake_orac asm_conf c' syn I I ==>
      (!x k env_id st decs. x = cake_orac asm_conf c' syn I I k ==>
        f x = (env_id,st,decs) ==>
@@ -1661,8 +1665,8 @@ let source_to_source_semantics_prog_intro = prove
 (* [local] *)
 let eval_oracle_semantics_prog_intro = prove
  (`!ci. ~(semantics_prog s1 env decs ffi_Fail) /\
-   precond_eval_state orac ci s1 env decs /\
-     semanticPrimitives_state_refs s1 = [] /\
+   precond_eval_state orac ci s1 env decs
+     /\ semanticPrimitives_state_refs s1 = [] /\
    nsAll (K concrete_v) (sem_env_v env) /\
    (~(semantics_prog (semanticPrimitives_state_eval_state_fupd (K
      (put_oracle ci orac)) s1) env decs ffi_Fail) ==>
@@ -1692,8 +1696,8 @@ let source_eval_to_flat_semantics = prove
    source_to_flat_compile prim_src_config (source_to_source_compile
      prog) = (src_c',p') /\
    THE (prim_sem_env (ffi:'ffi ffi_state)) = (s0,env) /\
-   opt_eval_config_wf asm_conf c' ev /\
-     stack_to_lab_config_perf_calls (backend_config_stack_conf
+   opt_eval_config_wf asm_conf c' ev
+     /\ stack_to_lab_config_perf_calls (backend_config_stack_conf
    c) = F /\ backend_config_source_conf
    c = prim_src_config ==>
    (?syntax_oracle.
@@ -1701,7 +1705,8 @@ let source_eval_to_flat_semantics = prove
      (flatProps_mk_flat_install_conf
          (backend_from_flat_tuple_cc asm_conf c)
          (cake_orac asm_conf c' syntax_oracle (SND o config_tuple1)
-           (\ps. backend_progs_flat_prog ps))) (state_ffi
+           (\ps. backend_progs_flat_prog ps)))
+           (semanticPrimitives_state_ffi
      s0) p'))`,
   CHEAT_TAC);;
 
@@ -1755,16 +1760,20 @@ let remove_labels_loop_no_share_mem_inst = prove
 
 let compile_lab_IMP_mmio_pcs_min_index = prove
  (`compile_lab asm_conf c sec_list = SOME (bytes,c') /\
-   OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s)) (ffi_names c) ==>
-   (?ffi_names'. ffi_names c' = SOME ffi_names' /\
+   OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s))
+     (lab_to_target_config_ffi_names c) ==>
+   (?ffi_names'. lab_to_target_config_ffi_names c' = SOME ffi_names'
+     /\
      (?x. mmio_pcs_min_index ffi_names' = SOME x))`,
   CHEAT_TAC);;
 
 let compile_lab_no_share_mem_IMP_mmio_pcs_min_index = prove
  (`compile_lab asm_conf c sec_list = SOME (bytes,c') /\
    no_share_mem_inst sec_list /\
-   OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s)) (ffi_names c) ==>
-   (?ffi_names'. ffi_names c' = SOME ffi_names' /\
+   OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s))
+     (lab_to_target_config_ffi_names c) ==>
+   (?ffi_names'. lab_to_target_config_ffi_names c' = SOME ffi_names'
+     /\
    mmio_pcs_min_index ffi_names' = SOME (LENGTH ffi_names'))`,
   CHEAT_TAC);;
 
@@ -1777,9 +1786,10 @@ let compile_correct' = prove
     backend_config_ok asm_conf c /\ mc_conf_ok mc /\ mc_init_ok
       asm_conf c mc /\
     opt_eval_config_wf asm_conf c' ev /\
-    installed bytes cbspace bitmaps data_sp (ffi_names
-      (backend_config_lab_conf c')) (heap_regs
-      (stack_to_lab_config_reg_names (backend_config_stack_conf c))) mc
+    installed bytes cbspace bitmaps data_sp
+      (lab_to_target_config_ffi_names (backend_config_lab_conf c'))
+      (heap_regs (stack_to_lab_config_reg_names
+      (backend_config_stack_conf c))) mc
       (lab_to_target_config_shmem_extra (backend_config_lab_conf
        c')) ms ==>
       machine_sem (mc:('a,'b,'c)machine_config) ffi ms SUBSET
@@ -1801,8 +1811,8 @@ let backendProof_compile_correct = prove
     ~(semantics_prog s env prog ffi_Fail) /\
     backend_config_ok asm_conf c /\ mc_conf_ok mc /\ mc_init_ok
       asm_conf c mc /\
-    installed bytes cbspace bitmaps data_sp (ffi_names
-      (backend_config_lab_conf c'))
+    installed bytes cbspace bitmaps data_sp
+      (lab_to_target_config_ffi_names (backend_config_lab_conf c'))
          (heap_regs (stack_to_lab_config_reg_names
            (backend_config_stack_conf c))) mc
            (lab_to_target_config_shmem_extra (backend_config_lab_conf
@@ -1845,12 +1855,12 @@ let the_EvalDecs_def = define_general
 let compile_correct_eval = prove
  (`backend_compile asm_conf c prog = SOME (bytes,bitmaps,c') ==>
     (let (s0,env) = THE (prim_sem_env (ffi:'ffi ffi_state)) in
-    ~(semantics_prog (add_eval_state ev s0) env prog ffi_Fail) /\
-      backend_config_ok asm_conf c /\
+    ~(semantics_prog (add_eval_state ev s0) env prog ffi_Fail)
+      /\ backend_config_ok asm_conf c /\
     mc_conf_ok mc /\ mc_init_ok asm_conf c mc /\ opt_eval_config_wf
       asm_conf c' ev /\
-    installed bytes cbspace bitmaps data_sp (ffi_names
-      (backend_config_lab_conf c'))
+    installed bytes cbspace bitmaps data_sp
+      (lab_to_target_config_ffi_names (backend_config_lab_conf c'))
       (heap_regs (stack_to_lab_config_reg_names
         (backend_config_stack_conf c))) mc
         (lab_to_target_config_shmem_extra (backend_config_lab_conf

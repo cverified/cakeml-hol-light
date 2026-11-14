@@ -118,8 +118,8 @@ let eLookupV_weak = prove
  (`!n tenv tenv' tvs t.
      weak_tenv tenv' tenv /\
      nsLookup (type_env_v tenv) n = SOME (tvs,t) ==>
-     (?tvs' t'. nsLookup (type_env_v tenv') n = SOME (tvs',t') /\
-       tscheme_inst (tvs,t) (tvs',t'))`,
+     (?tvs' t'. nsLookup (type_env_v tenv') n = SOME (tvs',t')
+       /\ tscheme_inst (tvs,t) (tvs',t'))`,
   CHEAT_TAC);;
 
 (* HOL4 weakeningScript.sml:159-201: code that the source has in a
@@ -159,8 +159,8 @@ let type_e_weakening = prove
      type_es tenv tenvE es ts /\ weak tenv' tenv /\ weak_tenvE tenvE'
        tenvE ==> type_es tenv' tenvE' es ts) /\
    (!tenv tenvE funs bindings tenv' tenvE'.
-     type_funs tenv tenvE funs bindings /\ weak tenv' tenv /\
-       weak_tenvE tenvE' tenvE ==> type_funs tenv' tenvE' funs
+     type_funs tenv tenvE funs bindings /\ weak tenv' tenv
+       /\ weak_tenvE tenvE' tenvE ==> type_funs tenv' tenvE' funs
        bindings)`,
   (MESON_TAC[type_e_weakening_lem]));;
 

@@ -291,8 +291,8 @@ let nsLookup_nsAppend_none = prove
     nsLookup (nsAppend e1 e2) id' = NONE <=>
     (nsLookup e1 id' = NONE /\
      (nsLookup e2 id' = NONE \/
-      (?p1 p2 e3. ~(p1 = []) /\ id_to_mods id' = APPEND p1 p2 /\
-        nsLookupMod e1 p1 = SOME e3)))`,
+      (?p1 p2 e3. ~(p1 = []) /\ id_to_mods id' = APPEND p1 p2
+        /\ nsLookupMod e1 p1 = SOME e3)))`,
   CHEAT_TAC);;
 
 let nsLookup_nsAppend_some = prove
@@ -412,8 +412,8 @@ let alist_rel_restr_def,alist_rel_restr_ind = define_rec
 let alist_rel_restr_thm = prove
  (`!R e1 e2 keys.
     alist_rel_restr R e1 e2 keys <=>
-      (!k. MEM k keys ==> (?v1 v2. ALOOKUP e1 k = SOME v1 /\
-        ALOOKUP e2 k = SOME v2 /\ R k v1 v2))`,
+      (!k. MEM k keys ==> (?v1 v2. ALOOKUP e1 k = SOME v1
+        /\ ALOOKUP e2 k = SOME v2 /\ R k v1 v2))`,
   CHEAT_TAC);;
 
 let alistSub_def = new_definition
@@ -421,8 +421,8 @@ let alistSub_def = new_definition
 
 let alistSub_cong = prove
  (`!l1 l2 l1' l2' R R'.
-    l1 = l1' /\ l2 = l2' /\ (!n x y. ALOOKUP l1' n = SOME x /\
-      ALOOKUP l2' n = SOME y ==> R n x y = R' n x y) ==>
+    l1 = l1' /\ l2 = l2' /\ (!n x y. ALOOKUP l1' n = SOME x
+      /\ ALOOKUP l2' n = SOME y ==> R n x y = R' n x y) ==>
     (alistSub R l1 l2 <=> alistSub R' l1' l2')`,
   CHEAT_TAC);;
 
@@ -500,8 +500,8 @@ let nsAll2_nsBind = prove
 
 let nsAll2_nsBindList = prove
  (`!R l1 l2 e1 e2.
-     ALL2 (\(x,y) (x',y'). x = x' /\ R (Short x) y y') l1 l2 /\
-       nsAll2 R e1 e2 ==>
+     ALL2 (\(x,y) (x',y'). x = x' /\ R (Short x) y y') l1 l2
+       /\ nsAll2 R e1 e2 ==>
      nsAll2 R (nsBindList l1 e1) (nsBindList l2 e2)`,
   CHEAT_TAC);;
 

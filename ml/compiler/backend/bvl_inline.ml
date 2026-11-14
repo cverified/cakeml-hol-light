@@ -345,8 +345,8 @@ let var_list_def,var_list_ind = define_wf
   [`bvl_inline_var_list n x2 x3 =
       match (x2,x3) with
         ([],[]) -> T
-      | (CONS (bvl_Var m) xs,CONS y ys) -> (m = n /\
-        bvl_inline_var_list (n + 1) xs ys)
+      | (CONS (bvl_Var m) xs,CONS y ys) -> (m = n
+        /\ bvl_inline_var_list (n + 1) xs ys)
       | (_17,_18) -> F`];;
 
 let dest_op_def = new_definition

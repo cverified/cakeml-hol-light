@@ -815,8 +815,8 @@ let lim_safe_def = new_definition
       (limits_has_fp_ops lims /\ (limits_arch_64_bit lims \/ 1 <
         limits_length_limit lims))
         | ((closLang_WordOp (FP_top _101)),_102) ->
-      (limits_has_fp_ops lims /\ limits_has_fp_tops lims /\
-        (limits_arch_64_bit lims \/ 1 < limits_length_limit lims))
+      (limits_has_fp_ops lims /\ limits_has_fp_tops lims
+        /\ (limits_arch_64_bit lims \/ 1 < limits_length_limit lims))
         | (_103,_104) -> T`;;
 add_simp lim_safe_def;;
 
@@ -1672,8 +1672,8 @@ let isBool_def = new_definition
 
 let install_sfs_def = new_definition
   `install_sfs op (s:('c,'ffi)dataSem_state) =
-  dataSem_state_safe_for_space_fupd (K (~(op = closLang_Install) /\
-  dataSem_state_safe_for_space s)) s`;;
+  dataSem_state_safe_for_space_fupd (K (~(op = closLang_Install)
+  /\ dataSem_state_safe_for_space s)) s`;;
 add_simp install_sfs_def;;
 
 let set_vars_def = new_definition
@@ -1683,7 +1683,7 @@ let set_vars_def = new_definition
 let dataSem_fix_clock_IMP =
   try prove
    (`!s x res s1. dataSem_fix_clock s x = (res,s1)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> dataSem_state_clock s1 <= dataSem_state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; dataSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "dataSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN

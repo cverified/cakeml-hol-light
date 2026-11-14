@@ -280,8 +280,8 @@ let do_int_app_eq_some = prove
        bvlSem_Boolv (n1 >= n2))) /\
    (!n. bvlSem_do_int_app (closLang_LessConstSmall n) vs = SOME res
      ==>
-     (?i. vs = [bvlSem_Number i] /\ (&0) <= i /\ i <= (&1000000) /\
-       n < 1000000 /\ res = bvlSem_Boolv (i < &n)))`,
+     (?i. vs = [bvlSem_Number i] /\ (&0) <= i /\ i <= (&1000000)
+       /\ n < 1000000 /\ res = bvlSem_Boolv (i < &n)))`,
   CHEAT_TAC);;
 
 (* same as closSem$do_word_app *)
@@ -824,7 +824,7 @@ let bvlSem_fix_clock_IMP = prove
 let bvlSem_fix_clock_IMP =
   try prove
    (`!s x res s1. bvlSem_fix_clock s x = (res,s1)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> bvlSem_state_clock s1 <= bvlSem_state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; bvlSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "bvlSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
@@ -921,8 +921,8 @@ let bvlSem_do_app_const = prove
     (bvlSem_state_clock s2 = bvlSem_state_clock s1) /\
     (~(op = closLang_Install) ==> bvlSem_state_code s2 =
       bvlSem_state_code s1 /\ bvlSem_state_compile
-                       s2 = bvlSem_state_compile s1 /\
-                         bvlSem_state_compile_oracle
+                       s2 = bvlSem_state_compile s1
+                         /\ bvlSem_state_compile_oracle
                        s2 = bvlSem_state_compile_oracle s1)`,
   CHEAT_TAC);;
 

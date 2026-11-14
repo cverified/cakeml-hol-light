@@ -886,8 +886,8 @@ add_simp str_cmp_def;;
 let do_test_def = define_cases
   [`// TODO: extend with more cases
     semanticPrimitives_do_test (ast_Equal:test) ty v1 v2 =
-      (if semanticPrimitives_check_type ty v1 /\
-          semanticPrimitives_check_type ty v2 then
+      (if semanticPrimitives_check_type ty v1
+          /\ semanticPrimitives_check_type ty v2 then
          (if ty = ast_Float64T then Eq_val (fp64_equal
              (semanticPrimitives_the_Litv_Float64 v1)
              (semanticPrimitives_the_Litv_Float64 v2)) else

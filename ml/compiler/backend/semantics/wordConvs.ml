@@ -191,12 +191,12 @@ let inst_ok_less_def = new_definition
           {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
           (asm_config_hw_offset c)) c w else (\c. asm_offset_ok 0
           (asm_config_byte_offset c)) c w)
-        | (c,(asm_FP (FPLess r d1 d2))) -> fp_reg_ok d1 c /\
-          fp_reg_ok d2 c
-        | (c,(asm_FP (FPLessEqual r d1 d2))) -> fp_reg_ok d1 c /\
-          fp_reg_ok d2 c
-        | (c,(asm_FP (FPEqual r d1 d2))) -> fp_reg_ok d1 c /\
-          fp_reg_ok d2 c
+        | (c,(asm_FP (FPLess r d1 d2))) -> fp_reg_ok d1 c
+          /\ fp_reg_ok d2 c
+        | (c,(asm_FP (FPLessEqual r d1 d2))) -> fp_reg_ok d1 c
+          /\ fp_reg_ok d2 c
+        | (c,(asm_FP (FPEqual r d1 d2))) -> fp_reg_ok d1 c
+          /\ fp_reg_ok d2 c
         | (c,(asm_FP (FPAbs d1 d2))) ->
        (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
          c /\ fp_reg_ok d2 c
@@ -229,8 +229,8 @@ let inst_ok_less_def = new_definition
          ((dimindex (:'a) = 32) ==> ~(r1 = r2)) /\ fp_reg_ok d c
         | (c,(asm_FP (FPToInt d1 d2))) -> fp_reg_ok d1 c /\ fp_reg_ok
           d2 c
-        | (c,(asm_FP (FPFromInt d1 d2))) -> fp_reg_ok d1 c /\
-          fp_reg_ok d2 c
+        | (c,(asm_FP (FPFromInt d1 d2))) -> fp_reg_ok d1 c
+          /\ fp_reg_ok d2 c
         | (_4,_5) -> T`;;
 
 (*** Instructions have distinct targets and read vars -- set by SSA form ***)
@@ -239,8 +239,8 @@ let distinct_tar_reg_def = new_definition
         match x1 with
           asm_Arith (asm_Binop bop r1 r2 ri) -> ~(ri = Reg r1)
         | (asm_Arith (asm_Shift l r1 r2 ri)) -> ~(ri = Reg r1)
-        | (asm_Arith (asm_AddCarry r1 r2 r3 r4)) -> ~(r1 = r3) /\
-          ~(r1 = r4)
+        | (asm_Arith (asm_AddCarry r1 r2 r3 r4)) -> ~(r1 = r3)
+          /\ ~(r1 = r4)
         | (asm_Arith (asm_AddOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
         | (asm_Arith (asm_SubOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
         | _6 -> T`;;
@@ -270,8 +270,8 @@ let every_inst_def,every_inst_ind = define_wf
           p2)
         | (wordLang_Loop names c exit_names) ->
        every_inst P c
-        | (wordLang_If cmp r1 ri c1 c2) -> every_inst P c1 /\
-          every_inst P c2
+        | (wordLang_If cmp r1 ri c1 c2) -> every_inst P c1
+          /\ every_inst P c2
         | (wordLang_OpCurrHeap bop r1 r2) -> P (asm_Arith (asm_Binop
           bop r1 r2 (Reg r2)))
         | (wordLang_MustTerminate p) -> every_inst P p
@@ -385,8 +385,8 @@ let call_arg_convention_def,call_arg_convention_ind = define_wf
          NONE -> args = list_of_seq (\x. 2 * x) (LENGTH args) | SOME
            (vs,cutset,ret_handler,l1,l2) ->
          args = list_of_seq (\x. 2 * (x + 1)) (LENGTH args) /\
-         (vs = list_of_seq (\x. 2 * (x + 1)) (LENGTH vs)) /\
-           call_arg_convention ret_handler /\
+         (vs = list_of_seq (\x. 2 * (x + 1)) (LENGTH vs))
+           /\ call_arg_convention ret_handler /\
        (match h with
          // Does not check the case where Calls are ill-formed
          NONE -> T | SOME (v,prog,l1,l2) ->
@@ -495,11 +495,11 @@ let good_handlers_def,good_handlers_ind = define_wf
            /\
        (match h with SOME (_39,x,l1,_40) -> l1 = n /\ good_handlers
          n x | _41 -> T))
-        | (wordLang_Seq p1 p2) -> good_handlers n p1 /\
-          good_handlers n p2
+        | (wordLang_Seq p1 p2) -> good_handlers n p1
+          /\ good_handlers n p2
         | (wordLang_Loop names p exit_names) -> good_handlers n p
-        | (wordLang_If _42 _43 _44 p1 p2) -> good_handlers n p1 /\
-          good_handlers n p2
+        | (wordLang_If _42 _43 _44 p1 p2) -> good_handlers n p1
+          /\ good_handlers n p2
         | (wordLang_MustTerminate p) -> good_handlers n p
         | _45 -> T`];;
 add_simp good_handlers_def;;
@@ -522,8 +522,8 @@ let not_created_subprogs_def,not_created_subprogs_ind = define_wf
   [`not_created_subprogs P x2 =
       match x2 with
         (wordLang_MustTerminate p:'a wordLang_prog) ->
-     (P (wordLang_MustTerminate (wordLang_Skip:'a wordLang_prog)) /\
-       not_created_subprogs P p)
+     (P (wordLang_MustTerminate (wordLang_Skip:'a wordLang_prog))
+       /\ not_created_subprogs P p)
       | (wordLang_Seq p1 p2) -> (not_created_subprogs P p1 /\
      not_created_subprogs P p2)
       | (wordLang_Loop names c exit_names) ->

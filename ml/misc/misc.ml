@@ -499,8 +499,8 @@ let anub_notin_acc = prove
   CHEAT_TAC);;
 
 let anub_tl_anub = prove
- (`!x y h t. anub x y = CONS h t ==> (?a b. t = anub a b /\
-  set_of_list a SUBSET set_of_list x /\ set_of_list b SUBSET
+ (`!x y h t. anub x y = CONS h t ==> (?a b. t = anub a b
+  /\ set_of_list a SUBSET set_of_list x /\ set_of_list b SUBSET
   set_of_list (CONS (FST h) y))`,
   CHEAT_TAC);;
 
@@ -747,8 +747,8 @@ let ALL_DISTINCT_PERM_ALOOKUP_ZIP = prove
 
 (* surely better with UNZIP rather than ZIP: i.e., UNZIP l1 = (a,b)...  *)
 let PERM_ZIP = prove
- (`!l1 l2. PERM l1 l2 ==> (!a b c d. (l1 = ZIP a b) /\ (l2 = ZIP c d) /\
-  (LENGTH a = LENGTH b) /\ (LENGTH c = LENGTH d) ==>
+ (`!l1 l2. PERM l1 l2 ==> (!a b c d. (l1 = ZIP a b) /\ (l2 = ZIP c d)
+  /\ (LENGTH a = LENGTH b) /\ (LENGTH c = LENGTH d) ==>
     PERM a c /\ PERM b d)`,
   CHEAT_TAC);;
 
@@ -1277,8 +1277,8 @@ let ALL_DISTINCT_FLAT_EVERY = prove
 
 let ALL_DISTINCT_APPEND_APPEND_IMP = prove
  (`ALL_DISTINCT (APPEND (APPEND xs ys) zs) ==>
-    ALL_DISTINCT (APPEND xs ys) /\ ALL_DISTINCT (APPEND xs zs) /\
-      ALL_DISTINCT (APPEND ys zs)`,
+    ALL_DISTINCT (APPEND xs ys) /\ ALL_DISTINCT (APPEND xs zs)
+      /\ ALL_DISTINCT (APPEND ys zs)`,
   CHEAT_TAC);;
 
 let GSPEC_o = prove
@@ -1886,8 +1886,8 @@ let LUPDATE_insert_commute = prove
   CHEAT_TAC);;
 
 let LESS_EQ_LENGTH = prove
- (`!xs k. k <= LENGTH xs ==> (?ys1 ys2. (xs = APPEND ys1 ys2) /\
-  (LENGTH ys1 = k))`,
+ (`!xs k. k <= LENGTH xs ==> (?ys1 ys2. (xs = APPEND ys1 ys2)
+  /\ (LENGTH ys1 = k))`,
   CHEAT_TAC);;
 
 let LESS_LENGTH = prove

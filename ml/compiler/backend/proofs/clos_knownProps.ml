@@ -76,8 +76,8 @@ let subapprox_merge = prove
 add_simp subapprox_merge;;
 
 let subapprox_Other = prove
- (`(subapprox clos_known_Other a <=> (a = clos_known_Other)) /\
-  subapprox a clos_known_Other`,
+ (`(subapprox clos_known_Other a <=> (a = clos_known_Other))
+  /\ subapprox a clos_known_Other`,
   CHEAT_TAC);;
 add_simp subapprox_Other;;
 

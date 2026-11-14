@@ -460,8 +460,8 @@ let inst_select_pmatch = prove
          temp c2) | wordLang_ShareInst op var exp ->
      (let exp = (flatten_exp o pull_exp) exp in
      match exp with wordLang_Op asm_Add [exp'; wordLang_Const w] ->
-       (if ((op = wordLang_Load \/ op = wordLang_Store) /\
-         asm_offset_ok 0 (asm_config_addr_offset c) w) \/
+       (if ((op = wordLang_Load \/ op = wordLang_Store)
+         /\ asm_offset_ok 0 (asm_config_addr_offset c) w) \/
            ((op = asm_Load32 \/ op = asm_Store32) /\ asm_offset_ok 0
              (asm_config_addr_offset c) w) \/
            ((op = asm_Load16 \/ op = asm_Store16) /\ asm_offset_ok 0

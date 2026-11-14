@@ -251,9 +251,9 @@ let compile_word_to_word_thm = prove
         clk)) (wordSem_state_code_fupd (K (sptree_map (I ##
         remove_must_terminate) l))
         st))))) in
-        res1 = res /\ state_clock
-        rst1 = state_clock rst /\ state_ffi
-        rst1 = state_ffi rst /\ wordSem_state_stack_max
+        res1 = res /\ wordSem_state_clock
+        rst1 = wordSem_state_clock rst /\ wordSem_state_ffi
+        rst1 = wordSem_state_ffi rst /\ wordSem_state_stack_max
         rst1 = wordSem_state_stack_max rst)`),
   CHEAT_TAC);;
 
@@ -299,9 +299,9 @@ let compile_to_word_conventions = prove
      post_alloc_conventions (asm_config_reg_count ac - (5 + LENGTH
        (asm_config_avoid_regs ac))) prog /\
      (ALL (\(n,m,prog). every_inst (inst_ok_less ac) prog) p /\
-      asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\
-        asm_offset_ok 0 (asm_config_hw_offset ac) (n2w 0) /\
-        asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0) ==>
+      asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0)
+        /\ asm_offset_ok 0 (asm_config_hw_offset ac) (n2w 0)
+        /\ asm_offset_ok 0 (asm_config_byte_offset ac) (n2w 0) ==>
        full_inst_ok_less ac prog) /\
      (asm_config_two_reg_arith ac ==> every_inst two_reg_inst prog)
        /\
@@ -487,9 +487,10 @@ let panLang_compile_word_to_word_thm = prove
            if res = SOME wordSem_Error then T else
              let (res1,rst1) = wordSem_evaluate
                (prog,wordSem_state_code_fupd (K l) st) in
-               res1 = res /\ state_clock
-               rst1 = state_clock rst /\ state_ffi
-               rst1 = state_ffi rst /\ wordSem_state_stack_max
+               res1 = res /\ wordSem_state_clock
+               rst1 = wordSem_state_clock rst /\ wordSem_state_ffi
+               rst1 = wordSem_state_ffi rst
+                 /\ wordSem_state_stack_max
                rst1 = wordSem_state_stack_max rst)`),
   CHEAT_TAC);;
 
@@ -504,14 +505,14 @@ let word_to_word_compile_semantics = prove
      no_install_code (wordSem_state_code s) /\ no_alloc_code
        (wordSem_state_code s) /\
      no_mt_code (fromAList wprog0) /\
-     ALL_DISTINCT (MAP FST wprog0) /\ wordSem_state_stack s = [] /\
-       wordSem_state_code
+     ALL_DISTINCT (MAP FST wprog0) /\ wordSem_state_stack s = []
+       /\ wordSem_state_code
      // start = lc + first_name ∧
      // EL lc wprog0 = (start, v) ∧
      t = fromAList wprog /\ sptree_lookup 0 (wordSem_state_locals
        t) = SOME (wordLang_Loc 1 0) /\
-     t = wordSem_state_code_fupd (K (wordSem_state_code t)) s /\
-       wordSem_state_code
+     t = wordSem_state_code_fupd (K (wordSem_state_code t)) s
+       /\ wordSem_state_code
      s = fromAList wprog0 /\ ~(wordSem_semantics
        (s:('a,'b,'ffi)wordSem_state) start = reg_alloc_Fail) ==>
      wordSem_semantics s start =

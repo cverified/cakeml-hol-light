@@ -216,14 +216,14 @@ let do_app_ffi_unchanged = prove
   CHEAT_TAC);;
 
 let do_app_ffi_changed = prove
- (`semanticPrimitives_do_app (st,ffi) op vs = SOME ((st',ffi'),res) /\
-  ~(ffi = ffi') ==>
+ (`semanticPrimitives_do_app (st,ffi) op vs = SOME ((st',ffi'),res)
+  /\ ~(ffi = ffi') ==>
    (?s conf lnum ws ffi_st ws' b.
      op = ast_FFI s /\
      vs = [semanticPrimitives_Litv (ast_StrLit conf);
        semanticPrimitives_Loc b lnum] /\
-     store_lookup lnum st = SOME (semanticPrimitives_W8array ws) /\
-       ~(s = (implode "")) /\ oracle
+     store_lookup lnum st = SOME (semanticPrimitives_W8array ws)
+       /\ ~(s = (implode "")) /\ ffi_state_oracle
      ffi
         (ffi_ExtCall s) (ffi_state_ffi_state
         ffi)
@@ -231,8 +231,9 @@ let do_app_ffi_changed = prove
         ws =
      Oracle_return ffi_st ws' /\
      LENGTH ws = LENGTH ws' /\
-     st' = LUPDATE (semanticPrimitives_W8array ws') lnum st /\ oracle
-     ffi' = oracle ffi /\ ffi_state_ffi_state
+     st' = LUPDATE (semanticPrimitives_W8array ws') lnum st
+       /\ ffi_state_oracle
+     ffi' = ffi_state_oracle ffi /\ ffi_state_ffi_state
      ffi' = ffi_st /\ ffi_state_io_events
      ffi' = APPEND (ffi_state_io_events
        ffi)
@@ -300,8 +301,8 @@ let map_result_Rval = prove
 add_simp map_result_Rval;;
 
 let map_result_Rerr = prove
- (`map_result f1 f2 e = Rerr e' <=> (?a. e = Rerr a /\
-  map_error_result f2 a = e')`,
+ (`map_result f1 f2 e = Rerr e' <=> (?a. e = Rerr a
+  /\ map_error_result f2 a = e')`,
   CHEAT_TAC);;
 add_simp map_result_Rerr;;
 
@@ -336,8 +337,8 @@ let exc_rel_refl = prove
 add_simp exc_rel_refl;;
 
 let exc_rel_trans = prove
- (`(!x y z. R x y /\ R y z ==> R x z) ==> (!x y z. exc_rel R x y /\
-  exc_rel R y z ==> exc_rel R x z)`,
+ (`(!x y z. R x y /\ R y z ==> R x z) ==> (!x y z. exc_rel R x y
+  /\ exc_rel R y z ==> exc_rel R x z)`,
   CHEAT_TAC);;
 
 let result_rel_def = new_definition
@@ -438,8 +439,8 @@ add_simp sv_rel_refl;;
 
 let sv_rel_trans = prove
  (`!R. (!x y z. R x y /\ R y z ==> R x z) ==> (!x y z.
-  semanticPrimitivesProps_sv_rel R x y /\
-  semanticPrimitivesProps_sv_rel R y z ==>
+  semanticPrimitivesProps_sv_rel R x y
+  /\ semanticPrimitivesProps_sv_rel R y z ==>
   semanticPrimitivesProps_sv_rel R x z)`,
   CHEAT_TAC);;
 

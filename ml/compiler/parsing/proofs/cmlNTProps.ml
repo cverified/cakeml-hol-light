@@ -186,8 +186,8 @@ let firstSet_nV = prove
 let firstSet_nFQV = prove
  (`firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nFQV)] =
    firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nV)] UNION
-            {tokens_LongidT m i | (m,i) | ~(i = (implode "")) /\
-              (isAlpha (strsub i 0) ==> ~(isUpper (strsub i 0)))}`,
+            {tokens_LongidT m i | (m,i) | ~(i = (implode ""))
+              /\ (isAlpha (strsub i 0) ==> ~(isUpper (strsub i 0)))}`,
   CHEAT_TAC);;
 
 let firstSet_nUQConstructorName = prove
@@ -206,8 +206,8 @@ let firstSet_nConstructorName = prove
   CHEAT_TAC);;
 
 let firstSetML_nConstructorName = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) ==>
      (firstSetML cmlG sn (CONS ((\nt'. grammar_NT
        ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName) rest) =
       firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
@@ -224,8 +224,8 @@ let firstSetML_nV = prove
 add_simp firstSetML_nV;;
 
 let firstSetML_nFQV = prove
- (`~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn) ==>
      (firstSetML cmlG sn (CONS ((\nt'. grammar_NT
        ((INL:MMLnonT->MMLnonT+num) nt')) nFQV) rest) = firstSet cmlG
        [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nFQV])`,
@@ -269,12 +269,12 @@ let firstSet_nEbase = prove
 add_simp firstSet_nEbase;;
 
 let firstSetML_nEbase = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
      firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
        nEbase)) rest) =
      firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
@@ -288,12 +288,13 @@ let firstSet_nEapp = prove
 add_simp firstSet_nEapp;;
 
 let firstSetML_nEapp = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
    firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nEapp)) rest) =
    firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
@@ -307,13 +308,14 @@ let firstSet_nEmult = prove
 add_simp firstSet_nEmult;;
 
 let firstSetML_nEmult = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
    firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nEmult)) rest) =
    firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
@@ -327,14 +329,15 @@ let firstSet_nEadd = prove
 add_simp firstSet_nEadd;;
 
 let firstSetML_nEadd = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
      firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
        nEadd)) rest) =
      firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
@@ -349,15 +352,16 @@ let firstSet_nElistop = prove
 add_simp firstSet_nElistop;;
 
 let firstSetML_nElistop = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
    firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nElistop)) rest) =
    firstSet cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nEbase)]`,
@@ -372,16 +376,17 @@ let firstSet_nErel = prove
 add_simp firstSet_nErel;;
 
 let firstSetML_nErel = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nErel IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nErel IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
    firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nErel)) rest) = firstSet cmlG [(\nt'. grammar_NT
      ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]`,
@@ -396,17 +401,18 @@ let firstSet_nEcomp = prove
 add_simp firstSet_nEcomp;;
 
 let firstSetML_nEcomp = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nErel IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nErel IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
      firstSetML cmlG sn (CONS (grammar_NT
        ((INL:MMLnonT->MMLnonT+num) nEcomp)) rest) = firstSet cmlG
        [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]`,
@@ -421,18 +427,19 @@ let firstSet_nEbefore = prove
 add_simp firstSet_nEbefore;;
 
 let firstSetML_nEbefore = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nErel IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nErel IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
      firstSetML cmlG sn (CONS (grammar_NT
        ((INL:MMLnonT->MMLnonT+num) nEbefore)) rest) = firstSet cmlG
        [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]`,
@@ -447,19 +454,20 @@ let firstSet_nEtyped = prove
 add_simp firstSet_nEtyped;;
 
 let firstSetML_nEtyped = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nErel IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEtyped IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nErel IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEtyped IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
    firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nEtyped)) rest) = firstSet cmlG [(\nt'. grammar_NT
      ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]`,
@@ -474,20 +482,21 @@ let firstSet_nElogicAND = prove
 add_simp firstSet_nElogicAND;;
 
 let firstSetML_nElogicAND = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nErel IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEtyped IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElogicAND IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nErel IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEtyped IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElogicAND IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
    firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nElogicAND)) rest) =
    firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
@@ -503,21 +512,22 @@ let firstSet_nElogicOR = prove
 add_simp firstSet_nElogicOR;;
 
 let firstSetML_nElogicOR = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nErel IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEtyped IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElogicAND IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElogicOR IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nErel IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEtyped IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElogicAND IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElogicOR IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
    firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nElogicOR)) rest) =
    firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
@@ -533,22 +543,23 @@ let firstSet_nEhandle = prove
 add_simp firstSet_nEhandle;;
 
 let firstSetML_nEhandle = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nErel IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEtyped IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElogicAND IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElogicOR IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEhandle IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nErel IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEtyped IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElogicAND IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElogicOR IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEhandle IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
    firstSetML cmlG sn (CONS (grammar_NT ((INL:MMLnonT->MMLnonT+num)
      nEhandle)) rest) =
    firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
@@ -609,22 +620,24 @@ let NOTIN_firstSet_nE = prove
 add_simp NOTIN_firstSet_nE;;
 
 let firstSetML_nE = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nEapp IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nErel IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEtyped IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElogicAND IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nElogicOR IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nEhandle IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nE IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nElistop IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nFQV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEmult IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEadd IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nErel IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEcomp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEbefore IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEtyped IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElogicAND IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElogicOR IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEhandle IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nE IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nElistop IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nEliteral IN sn) ==>
      firstSetML cmlG sn (CONS (grammar_NT
        ((INL:MMLnonT->MMLnonT+num) nE)) rest) = firstSet cmlG [(\nt'.
        grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nE]`,
@@ -673,11 +686,11 @@ let firstSet_nPbase = prove
 add_simp firstSet_nPbase;;
 
 let firstSetML_nPbase = prove
- (`~((INL:MMLnonT->MMLnonT+num) nPbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nConstructorName IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nUQConstructorName IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nPtuple IN
-  sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nPbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPtuple IN sn) ==>
      firstSetML cmlG sn (CONS ((\nt'. grammar_NT
        ((INL:MMLnonT->MMLnonT+num) nt')) nPbase) rest) = firstSet cmlG
        [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
@@ -693,9 +706,9 @@ let firstSet_nPConApp = prove
 add_simp firstSet_nPConApp;;
 
 let firstSetML_nPConApp = prove
- (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn) ==>
      firstSetML cmlG sn (CONS ((\nt'. grammar_NT
        ((INL:MMLnonT->MMLnonT+num) nt')) nPConApp) rest) =
      firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
@@ -711,12 +724,13 @@ let firstSet_nPapp = prove
 add_simp firstSet_nPapp;;
 
 let firstSetML_nPapp = prove
- (`~((INL:MMLnonT->MMLnonT+num) nPbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nConstructorName IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nUQConstructorName IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nPtuple IN
-  sn) /\ ~((INL:MMLnonT->MMLnonT+num) nPapp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nPbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPtuple IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn) ==>
      firstSetML cmlG sn (CONS ((\nt'. grammar_NT
        ((INL:MMLnonT->MMLnonT+num) nt')) nPapp) rest) = firstSet cmlG
        [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
@@ -731,13 +745,14 @@ let firstSet_nPcons = prove
 add_simp firstSet_nPcons;;
 
 let firstSetML_nPcons = prove
- (`~((INL:MMLnonT->MMLnonT+num) nPbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nConstructorName IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nUQConstructorName IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nPtuple IN
-  sn) /\ ~((INL:MMLnonT->MMLnonT+num) nPapp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nPcons IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nPbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPtuple IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPcons IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn) ==>
      firstSetML cmlG sn (CONS ((\nt'. grammar_NT
        ((INL:MMLnonT->MMLnonT+num) nt')) nPcons) rest) = firstSet cmlG
        [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
@@ -752,14 +767,15 @@ let firstSet_nPas = prove
 add_simp firstSet_nPas;;
 
 let firstSetML_nPas = prove
- (`~((INL:MMLnonT->MMLnonT+num) nPbase IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nV IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nConstructorName IN sn) /\ ~((INL:MMLnonT->MMLnonT+num)
-  nUQConstructorName IN sn) /\ ~((INL:MMLnonT->MMLnonT+num) nPtuple IN
-  sn) /\ ~((INL:MMLnonT->MMLnonT+num) nPapp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nPcons IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn) /\
-  ~((INL:MMLnonT->MMLnonT+num) nPas IN sn) ==>
+ (`~((INL:MMLnonT->MMLnonT+num) nPbase IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nV IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nUQConstructorName IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPtuple IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPapp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPcons IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPConApp IN sn)
+  /\ ~((INL:MMLnonT->MMLnonT+num) nPas IN sn) ==>
      firstSetML cmlG sn (CONS ((\nt'. grammar_NT
        ((INL:MMLnonT->MMLnonT+num) nt')) nPas) rest) = firstSet cmlG
        [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]`,
@@ -797,17 +813,17 @@ add_simp firstSet_nPEsfx;;
 let NOTIN_firstSet_nV = prove
  (`~(tokens_CommaT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_LparT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\
-  ~(tokens_RparT IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV])
+  /\ ~(tokens_RparT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_UnderbarT IN
   firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
   nV]) /\ ~(tokens_BarT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_OpT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\
-  ~(tokens_FnT IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV])
+  /\ ~(tokens_FnT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_IfT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\
-  ~(tokens_EqualsT IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV])
+  /\ ~(tokens_EqualsT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_DarrowT IN
   firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
   nV]) /\ ~(tokens_ValT IN firstSet cmlG [(\nt'. grammar_NT
@@ -815,29 +831,29 @@ let NOTIN_firstSet_nV = prove
   firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
   nV]) /\ ~(tokens_EndT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_AndT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\
-  ~(tokens_FFIT s IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV])
+  /\ ~(tokens_FFIT s IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_FunT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\
-  ~(tokens_LbrackT IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV])
+  /\ ~(tokens_LbrackT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_LocalT IN
   firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
   nV]) /\ ~(tokens_RbrackT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_InT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\
-  ~(tokens_IntT i IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV])
+  /\ ~(tokens_IntT i IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_StringT s IN
   firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
   nV]) /\ ~(tokens_CharT c IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_ThenT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\
-  ~(tokens_ElseT IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV])
+  /\ ~(tokens_ElseT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_CaseT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\
-  ~(tokens_LetT IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV])
+  /\ ~(tokens_LetT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_OfT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\
-  ~(tokens_RaiseT IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nV])
+  /\ ~(tokens_RaiseT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV]) /\ ~(tokens_DatatypeT IN
   firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
   nV]) /\ ~(tokens_TypeT IN firstSet cmlG [(\nt'. grammar_NT
@@ -876,11 +892,11 @@ let NOTIN_firstSet_nFQV = prove
   firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
   nFQV]) /\ ~(tokens_FFIT s IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nFQV]) /\ ~(tokens_FnT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nFQV]) /\
-  ~(tokens_FunT IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nFQV])
+  /\ ~(tokens_FunT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nFQV]) /\ ~(tokens_IfT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nFQV]) /\
-  ~(tokens_InT IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nFQV])
+  /\ ~(tokens_InT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nFQV]) /\ ~(tokens_IntT i IN
   firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
   nFQV]) /\ ~(tokens_LbrackT IN firstSet cmlG [(\nt'. grammar_NT
@@ -891,8 +907,8 @@ let NOTIN_firstSet_nFQV = prove
   firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
   nFQV]) /\ ~(tokens_OfT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nFQV]) /\ ~(tokens_OpT IN firstSet
-  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nFQV]) /\
-  ~(tokens_RaiseT IN firstSet cmlG [(\nt'. grammar_NT
+  cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nFQV])
+  /\ ~(tokens_RaiseT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nFQV]) /\ ~(tokens_RbrackT IN
   firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
   nFQV]) /\ ~(tokens_RparT IN firstSet cmlG [(\nt'. grammar_NT
@@ -916,75 +932,75 @@ add_simp NOTIN_firstSet_nFQV;;
 
 let NOTIN_firstSet_nConstructorName = prove
  (`~(tokens_AndT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_BarT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_ColonT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_CaseT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_CharT c IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_CommaT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_DarrowT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_DatatypeT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_ElseT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_EndT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_EqualsT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_ExceptionT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_FFIT s IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_BarT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_ColonT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_CaseT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_CharT c IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_CommaT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_DarrowT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_DatatypeT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_ElseT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_EndT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_EqualsT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_ExceptionT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_FFIT s IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\ ~(tokens_FnT
   IN firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
   nt')) nConstructorName]) /\ ~(tokens_FunT IN firstSet cmlG [(\nt'.
-  grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_IfT IN firstSet cmlG [(\nt'. grammar_NT
+  grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_IfT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\ ~(tokens_InT
   IN firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
   nt')) nConstructorName]) /\ ~(tokens_IntT i IN firstSet cmlG [(\nt'.
-  grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_LbrackT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_LetT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_LocalT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_LparT IN firstSet cmlG [(\nt'. grammar_NT
+  grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_LbrackT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_LetT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_LocalT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_LparT IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\ ~(tokens_OfT
   IN firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
   nt')) nConstructorName]) /\ ~(tokens_OpT IN firstSet cmlG [(\nt'.
-  grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_RaiseT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_RbrackT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_RparT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_SemicolonT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_StringT s IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_StructureT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_SymbolT (implode "::") IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_SymbolT (implode "ref") IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_ThenT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_TypeT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_UnderbarT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_ValT IN firstSet cmlG [(\nt'. grammar_NT
-  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName]) /\
-  ~(tokens_WordT w IN firstSet cmlG [(\nt'. grammar_NT
+  grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_RaiseT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_RbrackT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_RparT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_SemicolonT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_StringT s IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_StructureT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_SymbolT (implode "::") IN firstSet cmlG [(\nt'.
+  grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_SymbolT (implode "ref") IN firstSet cmlG [(\nt'.
+  grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_ThenT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_TypeT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_UnderbarT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_ValT IN firstSet cmlG [(\nt'. grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])
+  /\ ~(tokens_WordT w IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName])`,
   CHEAT_TAC);;
 add_simp NOTIN_firstSet_nConstructorName;;

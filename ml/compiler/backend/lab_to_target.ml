@@ -2,7 +2,7 @@
 (*  lab_to_target: ported from HOL4's
     compiler/backend/lab_to_targetScript.sml
     A definition theory, with 39 definitions, 2 datatypes and 2
-    theorems.  Needed by 8 files of the port.  *)
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -160,8 +160,8 @@ let enc_lines_again_def,enc_lines_again_ind = define_wf
              let bs = enc (lab_inst w1 a) in
              let l1 = MAX (LENGTH bs) l in
                enc_lines_again labs ffis (pos + l1) enc xs
-                 (CONS (labLang_LabAsm a w1 bs l1) acc,(ok /\
-                     (l1 = l))))`];;
+                 (CONS (labLang_LabAsm a w1 bs l1) acc,(ok
+                     /\ (l1 = l))))`];;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)

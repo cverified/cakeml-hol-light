@@ -274,33 +274,34 @@ let s_rel_def = new_definition
      semanticPrimitives_state_eval_state_fupd (K (SOME (EvalOracle
      orac_s'))) (semanticPrimitives_state_refs_fupd (K refs') s) /\
    ALL2 (semanticPrimitivesProps_sv_rel (source_evalProof_v_rel
-     orac_s')) (semanticPrimitives_state_refs s) refs' /\
-     semanticPrimitives_state_eval_state
+     orac_s')) (semanticPrimitives_state_refs s) refs'
+     /\ semanticPrimitives_state_eval_state
    s = SOME (EvalDecs dec_s) /\ eval_oracle_state_custom_do_eval
    orac_s' = do_eval_record ci /\ eval_decs_state_compiler_state
-   dec_s = (FST (SND (oracle orac_s' 0))) /\
-     eval_decs_state_decode_decs
+   dec_s = (FST (SND (eval_oracle_state_oracle orac_s' 0)))
+     /\ eval_decs_state_decode_decs
    dec_s = v_fun_abs (compiler_instance_decs_dom ci)
      (compiler_instance_decs_v ci) /\ eval_decs_state_compiler
    dec_s = mk_compiler_fun_from_ci ci /\
    (
     // (0 < FST (FST (orac_s.oracle 0)) ==>
     // (FST (SND (orac_s.oracle 1))) = init_eds.compiler_state) /\
-    0 = FST (FST (oracle orac_s' 0)) ==>
+    0 = FST (FST (eval_oracle_state_oracle orac_s' 0)) ==>
       eval_decs_state_compiler_state
      dec_s = compiler_instance_config_v ci
        (compiler_instance_init_state ci)) /\
-   (0 < FST (FST (oracle orac_s' 0)) ==>
-     FST (SND (oracle orac_s' 1)) = compiler_instance_config_v ci
-       (compiler_instance_init_state ci)) /\
-       eval_decs_state_env_id_counter
+   (0 < FST (FST (eval_oracle_state_oracle orac_s' 0)) ==>
+     FST (SND (eval_oracle_state_oracle orac_s' 1)) =
+       compiler_instance_config_v ci (compiler_instance_init_state ci))
+       /\ eval_decs_state_env_id_counter
    dec_s = (eval_oracle_state_generation orac_s',
          LENGTH (EL (eval_oracle_state_generation orac_s')
            (eval_oracle_state_envs orac_s')),LENGTH
-           (eval_oracle_state_envs orac_s')) /\
-           eval_oracle_state_generation
+           (eval_oracle_state_envs orac_s'))
+           /\ eval_oracle_state_generation
    orac_s' < LENGTH (eval_oracle_state_envs orac_s') /\
-   recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle orac_s'))`;;
+   recorded_orac_wf (mk_compiler_fun_from_ci ci)
+     (eval_oracle_state_oracle orac_s'))`;;
 
 let orac_s_def = new_definition
   `orac_s x1 =
@@ -336,8 +337,8 @@ let forward_rules = prove
   source_evalProof_v_rel es' x y) /\
    (ALL2 (source_evalProof_v_rel es) xs ys /\ es_forward es es' ==>
      ALL2 (source_evalProof_v_rel es') xs ys) /\
-   (source_evalProof_env_rel (source_evalProof_v_rel es) env env' /\
-     es_forward es es' ==>
+   (source_evalProof_env_rel (source_evalProof_v_rel es) env env'
+     /\ es_forward es es' ==>
      source_evalProof_env_rel (source_evalProof_v_rel es') env env')
        /\
    (!xs ys. ALL2 (semanticPrimitivesProps_sv_rel
@@ -379,8 +380,8 @@ let store_lookup_rel = prove
    definitions below antiquote *)
 
 let s_rel_store_lookup = prove
- (`source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\ j = i /\
-  es = orac_s (semanticPrimitives_state_eval_state t) ==>
+ (`source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\ j = i
+  /\ es = orac_s (semanticPrimitives_state_eval_state t) ==>
    OPTREL (semanticPrimitivesProps_sv_rel (source_evalProof_v_rel
      es)) (store_lookup i (semanticPrimitives_state_refs s))
      (store_lookup j (semanticPrimitives_state_refs t))`,
@@ -399,8 +400,8 @@ let v_to_env_id_SOME = prove
 
 let pmatch = prove
  (`source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\ es =
-  orac_s (semanticPrimitives_state_eval_state t) /\
-  source_evalProof_env_rel (source_evalProof_v_rel es) env env' ==>
+  orac_s (semanticPrimitives_state_eval_state t)
+  /\ source_evalProof_env_rel (source_evalProof_v_rel es) env env' ==>
    (!env_c s_refs p x binds y binds'.
    s_refs = semanticPrimitives_state_refs s /\ env_c = sem_env_c env
      /\
@@ -427,8 +428,8 @@ let pmatch = prove
 let pmatch_drule_form = prove
  (`semanticPrimitives_pmatch (sem_env_c env)
   (semanticPrimitives_state_refs s) p x [] = res /\
-   source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
-     source_evalProof_env_rel (source_evalProof_v_rel (orac_s
+   source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t
+     /\ source_evalProof_env_rel (source_evalProof_v_rel (orac_s
      (semanticPrimitives_state_eval_state t))) env env' /\
    source_evalProof_v_rel (orac_s
      (semanticPrimitives_state_eval_state t)) x y ==>
@@ -590,8 +591,8 @@ let v_to_word64_list_concrete = prove
 
 let compiler_agrees = prove
  (`compiler_agrees f (id',st_v,decs) (st_v2,bs_v,ws_v) ==>
-   concrete_v st_v /\ concrete_v st_v2 /\ concrete_v bs_v /\
-     concrete_v ws_v`,
+   concrete_v st_v /\ concrete_v st_v2 /\ concrete_v bs_v
+     /\ concrete_v ws_v`,
   CHEAT_TAC);;
 
 let recorded_orac_wf_step = prove
@@ -795,8 +796,8 @@ let do_eval_oracle_def = new_definition
 
 let insert_gen_oracle_def = new_definition
   `insert_gen_oracle ci g shift_f orac es = (match es with SOME
-  (EvalOracle s) -> SOME (EvalOracle (oracle_fupd (K (misc_shift_seq
-  (shift_f (oracle s 0)) orac))
+  (EvalOracle s) -> SOME (EvalOracle (eval_oracle_state_oracle_fupd
+  (K (misc_shift_seq (shift_f (eval_oracle_state_oracle s 0)) orac))
   (eval_oracle_state_custom_do_eval_fupd (K (do_eval_oracle
   (mk_compiler_fun_from_ci ci) g)) s))) | _12 -> es)`;;
 
@@ -805,8 +806,8 @@ let insert_gen_oracle_def = new_definition
 
 let orac_agrees_def = new_definition
   `orac_agrees orac es = (match es with SOME (EvalOracle s) ->
-       (!j. j < FST (FST (oracle s 0)) ==> orac j = oracle s (j +
-         1)) | _13 -> F)`;;
+       (!j. j < FST (FST (eval_oracle_state_oracle s 0)) ==> orac
+         j = eval_oracle_state_oracle s (j + 1)) | _13 -> F)`;;
 
 (* the infinite extension of an oracle is still well-formed with
    respect to the compiler function *)
@@ -818,10 +819,12 @@ let orac_extended_wf_def = new_definition
 let record_forward_def = new_definition
   `record_forward es es' = (match es with SOME (EvalOracle s) -> (?s'.
   es' = SOME (EvalOracle s') /\
-         (FST (FST (oracle s 0)) <= FST (FST (oracle s' 0))) /\
-         (!j. 0 < j /\ j < FST (FST (oracle s 0)) + 1 ==> oracle
-             s' j = oracle s j)) | _14 -> (match es' with SOME
-               (EvalOracle _15) -> F | _16 -> T))`;;
+         (FST (FST (eval_oracle_state_oracle s 0)) <= FST (FST
+           (eval_oracle_state_oracle s' 0))) /\
+         (!j. 0 < j /\ j < FST (FST (eval_oracle_state_oracle s 0)) +
+           1 ==> eval_oracle_state_oracle
+             s' j = eval_oracle_state_oracle s j)) | _14 -> (match
+               es' with SOME (EvalOracle _15) -> F | _16 -> T))`;;
 
 let record_forward_refl = prove
  (`record_forward es es`,
@@ -857,10 +860,10 @@ let insert_do_eval = prove
    semanticPrimitives_do_eval vs ((\ci. insert_gen_oracle ci I (FST o
      FST)) ci orac es) = SOME (env,decs,
      (\ci. insert_gen_oracle ci I (FST o FST)) ci orac es')) /\
-   (recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle (orac_s
-     es)) ==>
-     recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle (orac_s
-       es')))`,
+   (recorded_orac_wf (mk_compiler_fun_from_ci ci)
+     (eval_oracle_state_oracle (orac_s es)) ==>
+     recorded_orac_wf (mk_compiler_fun_from_ci ci)
+       (eval_oracle_state_oracle (orac_s es')))`,
   CHEAT_TAC);;
 
 let insert_declare_env = prove
@@ -872,10 +875,10 @@ let insert_declare_env = prove
    declare_env ((\ci. insert_gen_oracle ci I (FST o FST)) ci orac
      es1) env = SOME (x,
      (\ci. insert_gen_oracle ci I (FST o FST)) ci orac es2)) /\
-   (recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle (orac_s
-     es1)) ==>
-     recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle (orac_s
-       es2)))`,
+   (recorded_orac_wf (mk_compiler_fun_from_ci ci)
+     (eval_oracle_state_oracle (orac_s es1)) ==>
+     recorded_orac_wf (mk_compiler_fun_from_ci ci)
+       (eval_oracle_state_oracle (orac_s es2)))`,
   CHEAT_TAC);;
 
 let reset_env_generation_orac_eqs = prove
@@ -891,8 +894,8 @@ let reset_env_generation_orac_eqs = prove
      FST)) ci orac es2) =
      (\ci. insert_gen_oracle ci I (FST o FST)) ci orac
        (reset_env_generation es1 es2)) /\
-   (oracle (orac_s (reset_env_generation es2 es3)) = oracle (orac_s
-     es3))`,
+   (eval_oracle_state_oracle (orac_s (reset_env_generation es2
+     es3)) = eval_oracle_state_oracle (orac_s es3))`,
   CHEAT_TAC);;
 
 (* HOL4 source_evalProofScript.sml:1547-1548: a theorem that HOL4
@@ -906,9 +909,11 @@ let evaluate_is_record_forward = prove
    is_record ci (semanticPrimitives_state_eval_state s') /\
    record_forward (semanticPrimitives_state_eval_state s)
      (semanticPrimitives_state_eval_state s') /\
-   (recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle (orac_s
+   (recorded_orac_wf (mk_compiler_fun_from_ci ci)
+     (eval_oracle_state_oracle (orac_s
      (semanticPrimitives_state_eval_state s))) ==>
-     recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle (orac_s
+     recorded_orac_wf (mk_compiler_fun_from_ci ci)
+       (eval_oracle_state_oracle (orac_s
        (semanticPrimitives_state_eval_state s'))))) /\
    (!((s:'ffi semanticPrimitives_state)) env x pes err_x s' res.
    evaluate_evaluate_match s env x pes err_x = (s',res) /\
@@ -916,9 +921,11 @@ let evaluate_is_record_forward = prove
    is_record ci (semanticPrimitives_state_eval_state s') /\
    record_forward (semanticPrimitives_state_eval_state s)
      (semanticPrimitives_state_eval_state s') /\
-   (recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle (orac_s
+   (recorded_orac_wf (mk_compiler_fun_from_ci ci)
+     (eval_oracle_state_oracle (orac_s
      (semanticPrimitives_state_eval_state s))) ==>
-     recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle (orac_s
+     recorded_orac_wf (mk_compiler_fun_from_ci ci)
+       (eval_oracle_state_oracle (orac_s
        (semanticPrimitives_state_eval_state s'))))) /\
    (!((s:'ffi semanticPrimitives_state)) env decs s' res.
    evaluate_evaluate_decs s env decs = (s',res) /\
@@ -926,9 +933,11 @@ let evaluate_is_record_forward = prove
    is_record ci (semanticPrimitives_state_eval_state s') /\
    record_forward (semanticPrimitives_state_eval_state s)
      (semanticPrimitives_state_eval_state s') /\
-   (recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle (orac_s
+   (recorded_orac_wf (mk_compiler_fun_from_ci ci)
+     (eval_oracle_state_oracle (orac_s
      (semanticPrimitives_state_eval_state s))) ==>
-     recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle (orac_s
+     recorded_orac_wf (mk_compiler_fun_from_ci ci)
+       (eval_oracle_state_oracle (orac_s
        (semanticPrimitives_state_eval_state s')))))`,
   CHEAT_TAC);;
 
@@ -1058,13 +1067,13 @@ let extract_oracle_def = new_definition
      (match (OLEAST (\k. ?s' res.
        evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K
          k) s) env decs = (s',res) /\
-         n < FST (FST (oracle (orac_s
+         n < FST (FST (eval_oracle_state_oracle (orac_s
            (semanticPrimitives_state_eval_state s')) 0)))) with NONE ->
            NONE | SOME k ->
        (let (s',_18) = evaluate_evaluate_decs
          (semanticPrimitives_state_clock_fupd (K k) s) env decs in
-         SOME (oracle (orac_s (semanticPrimitives_state_eval_state
-           s')) (n + 1))))`;;
+         SOME (eval_oracle_state_oracle (orac_s
+           (semanticPrimitives_state_eval_state s')) (n + 1))))`;;
 
 let evaluate_decs_clock_record_common_prefix = prove
  (`evaluate_evaluate_decs s env decs = (s',res) /\
@@ -1072,11 +1081,13 @@ let evaluate_decs_clock_record_common_prefix = prove
      s) env decs = (s'',res') /\
    is_record ((ci:'cfg compiler_instance))
      (semanticPrimitives_state_eval_state s) /\
-   j < FST (FST (oracle (orac_s (semanticPrimitives_state_eval_state
-     s')) 0)) /\
-   j < FST (FST (oracle (orac_s (semanticPrimitives_state_eval_state
-     s'')) 0)) ==> oracle
-   (orac_s (semanticPrimitives_state_eval_state s')) (j + 1) = oracle
+   j < FST (FST (eval_oracle_state_oracle (orac_s
+     (semanticPrimitives_state_eval_state s')) 0)) /\
+   j < FST (FST (eval_oracle_state_oracle (orac_s
+     (semanticPrimitives_state_eval_state s'')) 0)) ==>
+     eval_oracle_state_oracle
+   (orac_s (semanticPrimitives_state_eval_state s')) (j + 1) =
+     eval_oracle_state_oracle
      (orac_s (semanticPrimitives_state_eval_state s'')) (j + 1)`,
   CHEAT_TAC);;
 
@@ -1091,8 +1102,8 @@ let extract_oracle_agrees = prove
  (`evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K k) t)
   env decs = (t',res) /\
    source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
-   (!i r. extract_oracle t env decs i = SOME r /\
-     ~(mk_compiler_fun_from_ci ci r = NONE) ==>
+   (!i r. extract_oracle t env decs i = SOME r
+     /\ ~(mk_compiler_fun_from_ci ci r = NONE) ==>
      orac i = r) ==>
    orac_agrees orac (semanticPrimitives_state_eval_state t')`,
   CHEAT_TAC);;
@@ -1132,8 +1143,8 @@ let precond_eval_state_def = new_definition
   semanticPrimitives_state_eval_state s with NONE -> T | SOME (EvalDecs
   eds) -> EvalDecs eds = mk_init_eval_state ci /\
          (orac_extended_wf (mk_compiler_fun_from_ci ci) orac) /\
-         (!i r x. get_oracle ci s env decs i = SOME r /\
-           mk_compiler_fun_from_ci ci r = SOME x ==>
+         (!i r x. get_oracle ci s env decs i = SOME r
+           /\ mk_compiler_fun_from_ci ci r = SOME x ==>
              orac i = r) | SOME (EvalOracle _19) -> F)`;;
 
 (* [local] *)
@@ -1156,10 +1167,10 @@ let extract_oracle_0_st = prove
 let orac_agrees_s_rel_IMP = prove
  (`orac_agrees orac (semanticPrimitives_state_eval_state t) ==>
    source_evalProof_s_rel ci s t ==>
-   i < FST (FST (oracle (orac_s (semanticPrimitives_state_eval_state
-     t)) 0)) ==>
-   orac i = oracle (orac_s (semanticPrimitives_state_eval_state t))
-     (i + 1)`,
+   i < FST (FST (eval_oracle_state_oracle (orac_s
+     (semanticPrimitives_state_eval_state t)) 0)) ==>
+   orac i = eval_oracle_state_oracle (orac_s
+     (semanticPrimitives_state_eval_state t)) (i + 1)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1183,8 +1194,8 @@ let get_oracle_props = prove
      FST (SND r) = compiler_instance_config_v ci
        (compiler_instance_init_state ci)) /\
    (!i r'. get_oracle ci s env decs (SUC i) = SOME r' ==>
-     (?r x. get_oracle ci s env decs i = SOME r /\
-       mk_compiler_fun_from_ci ci r = SOME x /\
+     (?r x. get_oracle ci s env decs i = SOME r
+       /\ mk_compiler_fun_from_ci ci r = SOME x /\
          FST (SND r') = FST x))`,
   CHEAT_TAC);;
 
@@ -1273,7 +1284,8 @@ let adjust_oracle_reset = prove
 let is_insert_related = prove
  (`is_insert_oracle ci f (SOME (EvalOracle es)) ==>
    (eval_oracle_state_custom_do_eval es2 =
-     eval_oracle_state_custom_do_eval es /\ oracle es2 = oracle es) ==>
+     eval_oracle_state_custom_do_eval es /\ eval_oracle_state_oracle es2
+     = eval_oracle_state_oracle es) ==>
    is_insert_oracle ci f (SOME (EvalOracle es2))`,
   CHEAT_TAC);;
 
@@ -1297,8 +1309,8 @@ let adjust_oracle_evaluate = prove
        evaluate_evaluate_decs s env (compile_decs ds) = (s',res)) ==>
    (!((s:'ffi semanticPrimitives_state)) env exps s' res.
      evaluate s env exps = (s',res) /\
-     is_insert_oracle ci f (semanticPrimitives_state_eval_state s) /\
-       ~(res = Rerr (Rabort Rtype_error)) ==>
+     is_insert_oracle ci f (semanticPrimitives_state_eval_state s)
+       /\ ~(res = Rerr (Rabort Rtype_error)) ==>
        is_insert_oracle ci f (semanticPrimitives_state_eval_state s')
          /\
        evaluate (semanticPrimitives_state_eval_state_fupd
@@ -1307,8 +1319,8 @@ let adjust_oracle_evaluate = prove
              ci (compile_decs o f)) s',res)) /\
    (!((s:'ffi semanticPrimitives_state)) env x pes err_x s' res.
      evaluate_evaluate_match s env x pes err_x = (s',res) /\
-     is_insert_oracle ci f (semanticPrimitives_state_eval_state s) /\
-       ~(res = Rerr (Rabort Rtype_error)) ==>
+     is_insert_oracle ci f (semanticPrimitives_state_eval_state s)
+       /\ ~(res = Rerr (Rabort Rtype_error)) ==>
        is_insert_oracle ci f (semanticPrimitives_state_eval_state s')
          /\
        evaluate_evaluate_match
@@ -1318,8 +1330,8 @@ let adjust_oracle_evaluate = prove
              ci (compile_decs o f)) s',res)) /\
    (!((s:'ffi semanticPrimitives_state)) env ds s' res.
      evaluate_evaluate_decs s env ds = (s',res) /\
-     is_insert_oracle ci f (semanticPrimitives_state_eval_state s) /\
-       ~(res = Rerr (Rabort Rtype_error)) ==>
+     is_insert_oracle ci f (semanticPrimitives_state_eval_state s)
+       /\ ~(res = Rerr (Rabort Rtype_error)) ==>
        is_insert_oracle ci f (semanticPrimitives_state_eval_state s')
          /\
        evaluate_evaluate_decs

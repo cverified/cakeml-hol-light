@@ -340,8 +340,7 @@ let update_move_related_def = new_definition
 let st_ex_FOREACH_def,st_ex_FOREACH_ind = define_guess
   [`st_ex_FOREACH [] a = st_ex_return one`;
    `st_ex_FOREACH (CONS x xs) a =
-      st_ex_ignore_bind
-        (a x) (
+        st_ex_ignore_bind (a x) (
         st_ex_FOREACH xs a)`];;
 
 (* HOL4 reg_allocScript.sml: the case constant that its Datatype
@@ -358,9 +357,7 @@ let reg_alloc_tag_CASE =
 let st_ex_MAP_def,st_ex_MAP_ind = define_guess_cheat
   [`st_ex_MAP f [] = st_ex_return []`;
    `st_ex_MAP f (CONS x xs) =
-      st_ex_bind (f x) (\
-        fx. st_ex_bind (st_ex_MAP f xs) (\
-        fxs.
+      st_ex_bind (f x) (\fx. st_ex_bind (st_ex_MAP f xs) (\fxs.
         st_ex_return (CONS fx fxs)))`];;
 
 (* the first pass assumes the termination:
@@ -368,8 +365,7 @@ let st_ex_MAP_def,st_ex_MAP_ind = define_guess_cheat
 let st_ex_PARTITION_def,st_ex_PARTITION_ind = define_guess_cheat
   [`st_ex_PARTITION P [] tt ff = st_ex_return (tt,ff)`;
    `st_ex_PARTITION P (CONS x xs) tt ff =
-      st_ex_bind (P x) (\
-        Px.
+      st_ex_bind (P x) (\Px.
         if Px then
           st_ex_PARTITION P xs (CONS x tt) ff else
           st_ex_PARTITION P xs tt (CONS x ff))`];;
@@ -379,8 +375,7 @@ let st_ex_PARTITION_def,st_ex_PARTITION_ind = define_guess_cheat
 let st_ex_FILTER_def,st_ex_FILTER_ind = define_guess_cheat
   [`st_ex_FILTER P [] acc = st_ex_return acc`;
    `st_ex_FILTER P (CONS x xs) acc =
-      st_ex_bind (P x) (\
-        Px.
+      st_ex_bind (P x) (\Px.
         if Px then
           st_ex_FILTER P xs (CONS x acc) else
           st_ex_FILTER P xs acc)`];;
@@ -403,11 +398,10 @@ let sorted_mem_def,sorted_mem_ind = define_rec
 
 let insert_edge_def = new_definition
   `insert_edge x y =
-   st_ex_bind (adj_ls_sub x) (\
-     adjx. st_ex_bind (adj_ls_sub y) (\
-     adjy.
-     st_ex_ignore_bind
-       (update_adj_ls x (sorted_insert y [] adjx)) (
+   st_ex_bind (adj_ls_sub x) (\adjx. st_ex_bind (adj_ls_sub y)
+     (\adjy.
+       st_ex_ignore_bind (update_adj_ls x (sorted_insert y [] adjx))
+         (
        update_adj_ls y (sorted_insert x [] adjy))))`;;
 
 (* insert a list of edges all adjacent to one node *)
@@ -417,8 +411,7 @@ let list_insert_edge_def,list_insert_edge_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x1)`
   [`list_insert_edge x [] = st_ex_return one`;
    `list_insert_edge x (CONS y ys) =
-        st_ex_ignore_bind
-          (insert_edge x y) (
+          st_ex_ignore_bind (insert_edge x y) (
           list_insert_edge x ys)`];;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -427,8 +420,7 @@ let clique_insert_edge_def,clique_insert_edge_ind = define_wf
   `MEASURE (\x0. list_size (\n. n) x0)`
   [`clique_insert_edge [] = st_ex_return one`;
    `clique_insert_edge (CONS x xs) =
-      st_ex_ignore_bind
-        (list_insert_edge x xs) (
+        st_ex_ignore_bind (list_insert_edge x xs) (
         clique_insert_edge xs)`];;
 
 (* assuming vertices in cli already forms a clique,
@@ -442,8 +434,7 @@ let extend_clique_def,extend_clique_ind = define_wf
    `extend_clique (CONS x xs) cli =
         (if MEM x cli then
           extend_clique xs cli else
-        st_ex_ignore_bind
-          (list_insert_edge x cli) (
+          st_ex_ignore_bind (list_insert_edge x cli) (
           extend_clique xs (CONS x cli)))`];;
 
 (* The allocator heuristics, designed to minimize proof at the
@@ -452,52 +443,44 @@ let extend_clique_def,extend_clique_ind = define_wf
 (* (Safely) decrement the degree of all vertices adjacent to n by 1 *)
 let dec_deg_def = new_definition
   `dec_deg n =
-   st_ex_bind (degrees_sub n) (\
-     cd.
+   st_ex_bind (degrees_sub n) (\cd.
      update_degrees n (cd - 1))`;;
 
 let dec_degree_def = new_definition
   `dec_degree n =
-   st_ex_bind get_dim (\
-     d.
+   st_ex_bind get_dim (\d.
      // TODO: check unnecessary
      if n < d then
-     st_ex_bind (adj_ls_sub n) (\
-       adjs.
+     st_ex_bind (adj_ls_sub n) (\adjs.
        st_ex_FOREACH adjs dec_deg) else
        st_ex_return one)`;;
 
 let add_simp_wl_def = new_definition
   `add_simp_wl ls =
-   st_ex_bind get_simp_wl (\
-     swl.
+   st_ex_bind get_simp_wl (\swl.
      set_simp_wl (APPEND ls swl))`;;
 
 let add_spill_wl_def = new_definition
   `add_spill_wl ls =
-   st_ex_bind get_spill_wl (\
-     swl.
+   st_ex_bind get_spill_wl (\swl.
      set_spill_wl (APPEND ls swl))`;;
 
 let add_freeze_wl_def = new_definition
   `add_freeze_wl ls =
-   st_ex_bind get_freeze_wl (\
-     fwl.
+   st_ex_bind get_freeze_wl (\fwl.
      set_freeze_wl (APPEND ls fwl))`;;
 
 (* push x onto the stack, deleting it from "existence" *)
 let push_stack_def = new_definition
   `push_stack x =
-   st_ex_bind reg_alloc_get_stack (\
-     swl. st_ex_ignore_bind
-     (update_degrees x 0) (st_ex_ignore_bind
-     (update_move_related x F) (
+   st_ex_bind reg_alloc_get_stack (\swl.
+     st_ex_ignore_bind (update_degrees x 0) (
+     st_ex_ignore_bind (update_move_related x F) (
      set_stack (CONS x swl))))`;;
 
 let add_unavail_moves_wl_def = new_definition
   `add_unavail_moves_wl ls =
-   st_ex_bind get_unavail_moves_wl (\
-     swl.
+   st_ex_bind get_unavail_moves_wl (\swl.
      set_unavail_moves_wl (APPEND ls swl))`;;
 
 (* unspill:
@@ -507,17 +490,15 @@ let add_unavail_moves_wl_def = new_definition
 *)
 let is_not_coalesced_def = new_definition
   `is_not_coalesced d =
-   st_ex_bind (coalesced_sub d) (\
-     dt.
+   st_ex_bind (coalesced_sub d) (\dt.
      st_ex_return (d = dt))`;;
 
 let split_degree_def = new_definition
   `split_degree d k v =
    (if v < d then
    // TODO: unnecessary
-   st_ex_bind (degrees_sub v) (\
-     vd. st_ex_bind (is_not_coalesced v) (\
-     b.
+   st_ex_bind (degrees_sub v) (\vd. st_ex_bind (is_not_coalesced v)
+     (\b.
      st_ex_return (vd < k /\ b))) else
      st_ex_return T)`;;
 
@@ -545,31 +526,25 @@ let smerge_def,smerge_ind = define_wf
 *)
 let revive_moves_def = new_definition
   `revive_moves vs =
-   st_ex_bind (st_ex_MAP adj_ls_sub vs) (\
-     nbs. st_ex_bind get_unavail_moves_wl (\
-     uam. st_ex_bind get_avail_moves_wl (\
-     am.
+   st_ex_bind (st_ex_MAP adj_ls_sub vs) (\nbs. st_ex_bind
+     get_unavail_moves_wl (\uam. st_ex_bind get_avail_moves_wl (\am.
      let (rev,unavail) = PARTITION
        (\(_1,(x,y)). EX (sorted_mem x) nbs \/ EX (sorted_mem y) nbs)
          uam in
      let sorted = smerge (reg_alloc_sort_moves rev) am in
-     st_ex_ignore_bind
-       (set_avail_moves_wl sorted) (
+       st_ex_ignore_bind (set_avail_moves_wl sorted) (
        set_unavail_moves_wl unavail))))`;;
 
 let unspill_def = new_definition
   `unspill (k:num) =
-   st_ex_bind get_dim (\
-     d. st_ex_bind get_spill_wl (\
-     swl. st_ex_bind (st_ex_PARTITION (split_degree d k) swl [] [])
-       (\
-     (ltk,gtk). st_ex_ignore_bind
+   st_ex_bind get_dim (\d. st_ex_bind get_spill_wl (\swl. st_ex_bind
+     (st_ex_PARTITION (split_degree d k) swl [] []) (\(ltk,gtk).
+     st_ex_ignore_bind
      // The nodes in ltk have turned into low degree nodes
      (revive_moves ltk) (st_ex_bind (st_ex_PARTITION
-       (move_related_sub) ltk [] []) (\
-     (ltkfreeze,ltksimp). st_ex_ignore_bind
-     (set_spill_wl gtk) (st_ex_ignore_bind
-     (add_simp_wl ltksimp) (
+       (move_related_sub) ltk [] []) (\(ltkfreeze,ltksimp).
+     st_ex_ignore_bind (set_spill_wl gtk) (
+     st_ex_ignore_bind (add_simp_wl ltksimp) (
      add_freeze_wl ltkfreeze)))))))`;;
 
 (* simplify:
@@ -580,22 +555,19 @@ let unspill_def = new_definition
 *)
 let do_simplify_def = new_definition
   `do_simplify k =
-   st_ex_bind get_simp_wl (\
-     simps.
+   st_ex_bind get_simp_wl (\simps.
      if NULL simps then
        st_ex_return F else
-     st_ex_ignore_bind
-       (st_ex_FOREACH simps dec_degree) (st_ex_ignore_bind
-       (st_ex_FOREACH simps push_stack) (st_ex_ignore_bind
-       (set_simp_wl []) (st_ex_ignore_bind
-       (unspill k) (
+       st_ex_ignore_bind (st_ex_FOREACH simps dec_degree) (
+       st_ex_ignore_bind (st_ex_FOREACH simps push_stack) (
+       st_ex_ignore_bind (set_simp_wl []) (
+       st_ex_ignore_bind (unspill k) (
        st_ex_return T)))))`;;
 
 (* increment degree of n by d *)
 let inc_deg_def = new_definition
   `inc_deg n d =
-   st_ex_bind (degrees_sub n) (\
-     cd.
+   st_ex_bind (degrees_sub n) (\cd.
      update_degrees n (cd + d))`;;
 
 (*
@@ -623,8 +595,7 @@ let inc_deg_def = new_definition
 (* An actual register *)
 let is_Fixed_def = new_definition
   `is_Fixed x =
-   st_ex_bind (node_tag_sub x) (\
-     xt.
+   st_ex_bind (node_tag_sub x) (\xt.
      st_ex_return (match xt with Fixed n -> T | _2 -> F))`;;
 
 let do_coalesce_real_def = new_definition
@@ -633,12 +604,12 @@ let do_coalesce_real_def = new_definition
      // mark y as coalesced to x
      (update_coalesced y x) (st_ex_bind (is_Fixed x) (\
      // increment degree of x by new vertices
-     bx. st_ex_ignore_bind
-     (if bx then st_ex_return one else inc_deg x (LENGTH case2))
-       (st_ex_ignore_bind
+     bx.
+     st_ex_ignore_bind (if bx then st_ex_return one else inc_deg x
+       (LENGTH case2)) (st_ex_ignore_bind
      // add corresponding edges
-     (list_insert_edge x case2) (st_ex_ignore_bind
-     (st_ex_FOREACH case1 dec_deg) (
+     (list_insert_edge x case2) (
+     st_ex_ignore_bind (st_ex_FOREACH case1 dec_deg) (
      push_stack y)))))`;;
 
 (* The coalesceable criterion, Briggs and George *)
@@ -659,57 +630,48 @@ let do_coalesce_real_def = new_definition
 *)
 let is_Atemp_def = new_definition
   `is_Atemp d =
-   st_ex_bind (node_tag_sub d) (\
-     dt.
+   st_ex_bind (node_tag_sub d) (\dt.
      st_ex_return (dt = Atemp))`;;
 
 let is_Fixed_k_def = new_definition
   `is_Fixed_k k x =
-   st_ex_bind (node_tag_sub x) (\
-     xt.
+   st_ex_bind (node_tag_sub x) (\xt.
      st_ex_return (match xt with Fixed n -> n < k | _3 -> F))`;;
 
 let considered_var_def = new_definition
   `considered_var k x =
-   st_ex_bind (is_Atemp x) (\
-     bx. st_ex_bind (is_Fixed_k k x) (\
-     fx.
+   st_ex_bind (is_Atemp x) (\bx. st_ex_bind (is_Fixed_k k x) (\fx.
      st_ex_return (bx \/ fx)))`;;
 
 (* Fixed vars are treated as having infinite degree *)
 let deg_or_inf_def = new_definition
   `deg_or_inf k x =
-   st_ex_bind (is_Fixed_k k x) (\
-     bx.
+   st_ex_bind (is_Fixed_k k x) (\bx.
      if bx then st_ex_return k else degrees_sub x)`;;
 
 let bg_ok_def = new_definition
   `bg_ok k x y =
-   st_ex_bind (adj_ls_sub x) (\
-     adjx. st_ex_bind (adj_ls_sub y) (\
-     adjy.
+   st_ex_bind (adj_ls_sub x) (\adjx. st_ex_bind (adj_ls_sub y)
+     (\adjy.
      // see do_coalesce_real for the cases
      let (case1,case2) = PARTITION (\v. sorted_mem v adjx) adjy in
      st_ex_bind (st_ex_FILTER (considered_var k) case1 []) (\
        // the "true" case1 and 2s
        case1. st_ex_bind (st_ex_FILTER (considered_var k) case2 [])
-         (\
-       case2. st_ex_bind (st_ex_MAP (deg_or_inf k) case2) (\
+         (\case2. st_ex_bind (st_ex_MAP (deg_or_inf k) case2) (\
        // Check the George criterion
        case2degs.
        let c2len = LENGTH (FILTER (\x. x >= k) case2degs) in
        if c2len = 0 then st_ex_return (SOME (case1,case2)) else
        // george criterion
        let case3 = FILTER (\v. ~(sorted_mem v adjy)) adjx in
-       st_ex_bind (st_ex_FILTER (considered_var k) case3 []) (\
-         case3. st_ex_bind (st_ex_MAP (deg_or_inf (k + 1)) case1) (\
-         case1degs. st_ex_bind (st_ex_MAP (deg_or_inf k) case3) (\
+       st_ex_bind (st_ex_FILTER (considered_var k) case3 []) (\case3.
+         st_ex_bind (st_ex_MAP (deg_or_inf (k + 1)) case1) (\case1degs.
+         st_ex_bind (st_ex_MAP (deg_or_inf k) case3) (\
          // k+1 is infinity here..
          case3degs. st_ex_bind (st_ex_return (LENGTH (FILTER (\x. x -
-           1 >= k) case1degs))) (\
-         c1len. st_ex_bind (st_ex_return (LENGTH (FILTER (\x. x >= k)
-           case3degs))) (\
-         c3len.
+           1 >= k) case1degs))) (\c1len. st_ex_bind (st_ex_return
+           (LENGTH (FILTER (\x. x >= k) case3degs))) (\c3len.
          if c1len + c2len + c3len < k then
            st_ex_return (SOME (case1,case2)) else
            st_ex_return NONE))))))))))`;;
@@ -728,17 +690,14 @@ let consistency_ok_def = new_definition
    (if x = y then
      st_ex_return F else
    // check 1
-   st_ex_bind (adj_ls_sub y) (\
-     adjy.
+   st_ex_bind (adj_ls_sub y) (\adjy.
      // check 2
      if sorted_mem x adjy then st_ex_return F else
-     st_ex_bind (is_Fixed x) (\
-       bx. st_ex_bind (is_Fixed y) (\
-       by. st_ex_bind (move_related_sub x) (\
-       movrelx. st_ex_bind (move_related_sub y) (\
-       movrely.
-       st_ex_return ((bx \/ movrelx) /\ (by \/ movrely) /\ ~(bx /\
-         by))))))))`;;
+     st_ex_bind (is_Fixed x) (\bx. st_ex_bind (is_Fixed y) (\by.
+       st_ex_bind (move_related_sub x) (\movrelx. st_ex_bind
+       (move_related_sub y) (\movrely.
+       st_ex_return ((bx \/ movrelx) /\ (by \/ movrely) /\ ~(bx
+         /\ by))))))))`;;
 
 (*
   find the ancestor
@@ -750,24 +709,19 @@ let consistency_ok_def = new_definition
 let coalesce_parent_def,coalesce_parent_ind = define_wf
   `MEASURE (\x0. (\n. n) x0)`
   [`coalesce_parent x =
-   st_ex_bind (coalesced_sub x) (\
-     xt. st_ex_bind (is_Fixed xt) (\
-     bx.
+   st_ex_bind (coalesced_sub x) (\xt. st_ex_bind (is_Fixed xt) (\bx.
      // Special case where x is coalesced to a fixed color already
      if bx then
        st_ex_return xt else
        if x <= xt then
          st_ex_return x else
-       st_ex_bind (coalesce_parent xt) (\
-         anc. st_ex_ignore_bind
-         (update_coalesced x anc) (
+       st_ex_bind (coalesce_parent xt) (\anc.
+         st_ex_ignore_bind (update_coalesced x anc) (
          st_ex_return anc))))`];;
 
 let canonize_move_def = new_definition
   `canonize_move x y =
-   st_ex_bind (is_Fixed x) (\
-     bx. st_ex_bind (is_Fixed y) (\
-     by.
+   st_ex_bind (is_Fixed x) (\bx. st_ex_bind (is_Fixed y) (\by.
      if by then st_ex_return (y,x) else if bx then st_ex_return (x,y)
        else
        if x < y then st_ex_return (x,y) else st_ex_return (y,x)))`;;
@@ -786,15 +740,12 @@ let st_ex_FIRST_def,st_ex_FIRST_ind = define_wf
   [`st_ex_FIRST P Q [] unavail = st_ex_return (NONE,unavail)`;
    `st_ex_FIRST P Q (CONS m ms) unavail =
         (let (p,(x,y)) = m in
-        st_ex_bind (coalesce_parent x) (\
-          x. st_ex_bind (coalesce_parent y) (\
-          y. st_ex_bind (P x y) (\
-          b1.
+        st_ex_bind (coalesce_parent x) (\x. st_ex_bind
+            (coalesce_parent y) (\y. st_ex_bind (P x y) (\b1.
           if ~b1 then
             st_ex_FIRST P Q ms unavail else
-          st_ex_bind (canonize_move x y) (\
-            (x,y). st_ex_bind (Q x y) (\
-            optb2.
+          st_ex_bind (canonize_move x y) (\(x,y). st_ex_bind (Q x y)
+              (\optb2.
             match optb2 with
               NONE -> st_ex_FIRST P Q ms (CONS (p,(x,y)) unavail) |
                   SOME pr ->
@@ -802,34 +753,28 @@ let st_ex_FIRST_def,st_ex_FIRST_ind = define_wf
 
 let respill_def = new_definition
   `respill k x =
-   st_ex_bind (degrees_sub x) (\
-     xd.
+   st_ex_bind (degrees_sub x) (\xd.
      if xd < k then st_ex_return one else
-     st_ex_bind get_freeze_wl (\
-       freeze.
+     st_ex_bind get_freeze_wl (\freeze.
        if MEM x freeze then
-       st_ex_ignore_bind
-         (add_spill_wl [x]) (
+         st_ex_ignore_bind (add_spill_wl [x]) (
          set_freeze_wl (FILTER (\y. ~(y = x)) freeze)) else
            st_ex_return one))`;;
 
 let do_coalesce_def = new_definition
   `do_coalesce k =
-   st_ex_bind get_avail_moves_wl (\
-     am. st_ex_bind (st_ex_FIRST consistency_ok (bg_ok k) am []) (\
-     (ores,unavail). st_ex_ignore_bind
-     (add_unavail_moves_wl unavail) (
+   st_ex_bind get_avail_moves_wl (\am. st_ex_bind (st_ex_FIRST
+     consistency_ok (bg_ok k) am []) (\(ores,unavail).
+     st_ex_ignore_bind (add_unavail_moves_wl unavail) (
      match ores with
        NONE ->
-         st_ex_ignore_bind
-           (set_avail_moves_wl []) (
+           st_ex_ignore_bind (set_avail_moves_wl []) (
            st_ex_return F) | SOME ((x,y),(case1,case2),ms) ->
-     st_ex_ignore_bind
-       (set_avail_moves_wl ms) (st_ex_ignore_bind
+       st_ex_ignore_bind (set_avail_moves_wl ms) (st_ex_ignore_bind
        // coalesce y into x
-       (do_coalesce_real x y case1 case2) (st_ex_ignore_bind
-       (unspill k) (st_ex_ignore_bind
-       (respill k x) (
+       (do_coalesce_real x y case1 case2) (
+       st_ex_ignore_bind (unspill k) (
+       st_ex_ignore_bind (respill k x) (
        st_ex_return T)))))))`;;
 
 (*
@@ -850,54 +795,44 @@ let do_coalesce_def = new_definition
 
 let reset_move_related_def = new_definition
   `reset_move_related ls =
-   st_ex_bind get_dim (\
-     d. st_ex_ignore_bind
+   st_ex_bind get_dim (\d. st_ex_ignore_bind
      // zero out move_related
      (st_ex_FOREACH (COUNT_LIST d) (\x. update_move_related x F)) (
      // reset to correct values
      st_ex_FOREACH ls (\(_4,(x,y)).
          st_ex_bind (is_Fixed x) (\
            // make sure fixed are kept as NOT move_related
-           bx. st_ex_bind (is_Fixed y) (\
-           by. st_ex_ignore_bind
-           (update_move_related x (~bx)) (
+           bx. st_ex_bind (is_Fixed y) (\by.
+           st_ex_ignore_bind (update_move_related x (~bx)) (
            update_move_related y (~by)))))))`;;
 
 let do_prefreeze_def = new_definition
   `do_prefreeze k =
-   st_ex_bind get_freeze_wl (\
-     fwl_pre. st_ex_bind (st_ex_FILTER is_not_coalesced fwl_pre [])
-       (\
-     fwl. st_ex_bind get_spill_wl (\
-     swl_pre. st_ex_bind (st_ex_FILTER is_not_coalesced swl_pre [])
-       (\
-     swl. st_ex_ignore_bind
-     (set_spill_wl swl) (st_ex_bind get_unavail_moves_wl (\
-     uam_pre. st_ex_bind (st_ex_FILTER (\(_5,(x,y)). consistency_ok x
-       y) uam_pre []) (\
-     uam. st_ex_ignore_bind
-     (reset_move_related uam) (st_ex_bind (set_unavail_moves_wl uam)
-       (\
-     uam. st_ex_bind (st_ex_PARTITION (move_related_sub) fwl [] [])
-       (\
-     (ltkfreeze,ltksimp). st_ex_ignore_bind
-     (add_simp_wl ltksimp) (st_ex_ignore_bind
-     (set_freeze_wl ltkfreeze) (
+   st_ex_bind get_freeze_wl (\fwl_pre. st_ex_bind (st_ex_FILTER
+     is_not_coalesced fwl_pre []) (\fwl. st_ex_bind get_spill_wl
+     (\swl_pre. st_ex_bind (st_ex_FILTER is_not_coalesced swl_pre [])
+     (\swl.
+     st_ex_ignore_bind (set_spill_wl swl) (st_ex_bind
+       get_unavail_moves_wl (\uam_pre. st_ex_bind (st_ex_FILTER
+       (\(_5,(x,y)). consistency_ok x y) uam_pre []) (\uam.
+     st_ex_ignore_bind (reset_move_related uam) (st_ex_bind
+       (set_unavail_moves_wl uam) (\uam. st_ex_bind (st_ex_PARTITION
+       (move_related_sub) fwl [] []) (\(ltkfreeze,ltksimp).
+     st_ex_ignore_bind (add_simp_wl ltksimp) (
+     st_ex_ignore_bind (set_freeze_wl ltkfreeze) (
      do_simplify k))))))))))))`;;
 
 (* if prefreeze failed, then just freeze *)
 
 let do_freeze_def = new_definition
   `do_freeze k =
-   st_ex_bind get_freeze_wl (\
-     freeze.
+   st_ex_bind get_freeze_wl (\freeze.
      match freeze with
        [] -> st_ex_return F | CONS x xs ->
-       st_ex_ignore_bind
-         (dec_degree x) (st_ex_ignore_bind
-         (push_stack x) (st_ex_ignore_bind
-         (set_freeze_wl xs) (st_ex_ignore_bind
-         (unspill k) (
+         st_ex_ignore_bind (dec_degree x) (
+         st_ex_ignore_bind (push_stack x) (
+         st_ex_ignore_bind (set_freeze_wl xs) (
+         st_ex_ignore_bind (unspill k) (
          st_ex_return T)))))`;;
 
 (* spill:
@@ -917,10 +852,8 @@ let st_ex_list_MIN_cost_def,st_ex_list_MIN_cost_ind = define_wf
   [`st_ex_list_MIN_cost scost [] d k v acc = st_ex_return (k,acc)`;
    `st_ex_list_MIN_cost scost (CONS x xs) d k v acc =
       (if x < d then
-        st_ex_bind (degrees_sub x) (\
-          xv. st_ex_bind (st_ex_return (safe_div (lookup_any x scost
-              0) xv)) (\
-          cost.
+        st_ex_bind (degrees_sub x) (\xv. st_ex_bind (st_ex_return
+            (safe_div (lookup_any x scost 0) xv)) (\cost.
           if v > cost then
             st_ex_list_MIN_cost scost xs d x cost (CONS k acc) else
             st_ex_list_MIN_cost scost xs d k v (CONS x acc))) else
@@ -933,8 +866,7 @@ let st_ex_list_MAX_deg_def,st_ex_list_MAX_deg_ind = define_wf
   [`st_ex_list_MAX_deg [] d k v acc = st_ex_return (k,acc)`;
    `st_ex_list_MAX_deg (CONS x xs) d k v acc =
       (if x < d then
-        st_ex_bind (degrees_sub x) (\
-          xv.
+        st_ex_bind (degrees_sub x) (\xv.
           if v < xv then
             st_ex_list_MAX_deg xs d x xv (CONS k acc) else
             st_ex_list_MAX_deg xs d k v (CONS x acc)) else
@@ -942,40 +874,32 @@ let st_ex_list_MAX_deg_def,st_ex_list_MAX_deg_ind = define_wf
 
 let do_spill_def = new_definition
   `do_spill scostopt k =
-   st_ex_bind get_spill_wl (\
-     spills. st_ex_bind get_dim (\
-     d.
+   st_ex_bind get_spill_wl (\spills. st_ex_bind get_dim (\d.
      match spills with
        [] -> st_ex_return F | (CONS x xs) ->
-       st_ex_bind (degrees_sub x) (\
-         xv. st_ex_bind (match scostopt with
+       st_ex_bind (degrees_sub x) (\xv. st_ex_bind (match scostopt
+         with
                NONE -> st_ex_list_MAX_deg xs d x xv [] | SOME scost
                  -> st_ex_list_MIN_cost scost xs d x (safe_div
-                 (lookup_any x scost 0) xv) []) (\
-         (y,ys). st_ex_ignore_bind
-         (dec_degree y) (st_ex_ignore_bind
-         (push_stack y) (st_ex_ignore_bind
-         (set_spill_wl ys) (st_ex_ignore_bind
-         (unspill k) (
+                 (lookup_any x scost 0) xv) []) (\(y,ys).
+         st_ex_ignore_bind (dec_degree y) (
+         st_ex_ignore_bind (push_stack y) (
+         st_ex_ignore_bind (set_spill_wl ys) (
+         st_ex_ignore_bind (unspill k) (
          st_ex_return T))))))))`;;
 
 let do_step_def = new_definition
   `do_step scost k =
-   st_ex_bind (do_simplify k) (\
-     b.
+   st_ex_bind (do_simplify k) (\b.
      if b then st_ex_return b else
-     st_ex_bind (do_coalesce k) (\
-       b.
+     st_ex_bind (do_coalesce k) (\b.
        if b then st_ex_return b else
-       st_ex_bind (do_prefreeze k) (\
-         b.
+       st_ex_bind (do_prefreeze k) (\b.
          if b then st_ex_return b else
-         st_ex_bind (do_freeze k) (\
-           b.
+         st_ex_bind (do_freeze k) (\b.
            if b then
              st_ex_return b else
-             st_ex_bind (do_spill scost k) (\
-               b.
+             st_ex_bind (do_spill scost k) (\b.
                st_ex_return b)))))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -984,8 +908,7 @@ let rpt_do_step_def,rpt_do_step_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   [`rpt_do_step scost k 0 = st_ex_return one`;
    `rpt_do_step scost k (SUC c) =
-      st_ex_bind (do_step scost k) (\
-        b.
+      st_ex_bind (do_step scost k) (\b.
         if b then rpt_do_step scost k c else st_ex_return one)`];;
 
 (*
@@ -1005,13 +928,11 @@ let remove_colours_def,remove_colours_ind = define_wf
         | ([],(ks:num list)) -> st_ex_return ks
         // Do the check for vertex x
         | ((CONS x xs),ks) ->
-       st_ex_bind (node_tag_sub x) (\
-         cx. st_ex_bind
-         (match cx with
+       st_ex_bind (node_tag_sub x) (\cx.
+         st_ex_bind (match cx with
            Fixed c ->
              remove_colours xs (FILTER (\x. ~(x = c)) ks) | _6 ->
-             remove_colours xs ks) (\
-         r.
+             remove_colours xs ks) (\r.
          st_ex_return r))`];;
 
 (* First colouring -- turns all Atemps into Fixeds or Stemps drawing from colors in ks *)
@@ -1019,17 +940,14 @@ let remove_colours_def,remove_colours_ind = define_wf
 
 let assign_Atemp_tag_def = new_definition
   `assign_Atemp_tag ks prefs n =
-   st_ex_bind (node_tag_sub n) (\
-     ntag.
+   st_ex_bind (node_tag_sub n) (\ntag.
      match ntag with
        Atemp ->
-       st_ex_bind (adj_ls_sub n) (\
-         adjs. st_ex_bind (remove_colours adjs ks) (\
-         ks.
+       st_ex_bind (adj_ls_sub n) (\adjs. st_ex_bind (remove_colours
+         adjs ks) (\ks.
          match ks with
            [] -> update_node_tag n Stemp | (CONS x _7) ->
-           st_ex_bind (prefs n ks) (\
-             c.
+           st_ex_bind (prefs n ks) (\c.
              // Apply monadic preference oracle
              match c with
                NONE ->
@@ -1041,11 +959,10 @@ let assign_Atemp_tag_def = new_definition
 (* k = num registers, ls = heuristic list, prefs = coloring preference *)
 let assign_Atemps_def = new_definition
   `assign_Atemps k ls prefs =
-   st_ex_bind get_dim (\
-     d. st_ex_bind (st_ex_return (FILTER (\n. n < d) ls)) (\
-     ls. st_ex_bind (st_ex_return (list_of_seq (\x. x) k)) (\
-     ks. st_ex_bind (st_ex_return (list_of_seq (\x. x) d)) (\
-     cs. st_ex_ignore_bind
+   st_ex_bind get_dim (\d. st_ex_bind (st_ex_return (FILTER (\n. n <
+     d) ls)) (\ls. st_ex_bind (st_ex_return (list_of_seq (\x. x) k))
+     (\ks. st_ex_bind (st_ex_return (list_of_seq (\x. x) d)) (\cs.
+     st_ex_ignore_bind
      // actually, only need to do those not already in ls
      // Assign all the ones that the ls tells us to
      (st_ex_FOREACH ls (assign_Atemp_tag ks prefs)) (
@@ -1074,16 +991,13 @@ let unbound_colour_def,unbound_colour_ind = define_rec
 (* Second colouring -- turns all Stemps into Fixed ≥ k *)
 let assign_Stemp_tag_def = new_definition
   `assign_Stemp_tag k prefs n =
-   st_ex_bind (node_tag_sub n) (\
-     ntag.
+   st_ex_bind (node_tag_sub n) (\ntag.
      match ntag with
        Stemp ->
-       st_ex_bind (adj_ls_sub n) (\
-         adjs. st_ex_bind (st_ex_MAP node_tag_sub adjs) (\
-         tags.
+       st_ex_bind (adj_ls_sub n) (\adjs. st_ex_bind (st_ex_MAP
+         node_tag_sub adjs) (\tags.
          let bads = sort (\x y. x <= y) (MAP tag_col tags) in
-         st_ex_bind (prefs n bads) (\
-           c.
+         st_ex_bind (prefs n bads) (\c.
            match c with
              NONE ->
                update_node_tag n (Fixed (unbound_colour k bads)) |
@@ -1095,9 +1009,8 @@ let assign_Stemp_tag_def = new_definition
 (* The second allocation step *)
 let assign_Stemps_def = new_definition
   `assign_Stemps k prefs =
-   st_ex_bind get_dim (\
-     d. st_ex_bind (st_ex_return (list_of_seq (\x. x) d)) (\
-     cs.
+   st_ex_bind get_dim (\d. st_ex_bind (st_ex_return (list_of_seq (\x.
+     x) d)) (\cs.
      st_ex_FOREACH cs (assign_Stemp_tag k prefs)))`;;
 
 (* Monadic biased selection oracle, finds the first matching color *)
@@ -1107,8 +1020,7 @@ let first_match_col_def,first_match_col_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x1)`
   [`first_match_col ks [] = st_ex_return NONE`;
    `first_match_col ks (CONS x xs) =
-        st_ex_bind (node_tag_sub x) (\
-          c.
+        st_ex_bind (node_tag_sub x) (\c.
           match c with
             Fixed m ->
               (if MEM m ks then st_ex_return (SOME m) else
@@ -1254,8 +1166,7 @@ let convention_partitions = prove
 (* Set the tags according to wordLang conventions *)
 let mk_tags_def = new_definition
   `mk_tags n fs fa =
-   st_ex_bind (st_ex_return (list_of_seq (\x. x) n)) (\
-     inds.
+   st_ex_bind (st_ex_return (list_of_seq (\x. x) n)) (\inds.
      st_ex_FOREACH inds
      (\i.
        let v = fa i in
@@ -1274,36 +1185,30 @@ let _ = size_thms "clash_tree";;
 let mk_graph_def,mk_graph_ind = define_wf
   `MEASURE (\(x0,x1,x2). clash_tree_size x1)`
   [`mk_graph ta (reg_alloc_Delta w r) liveout =
-        st_ex_bind (st_ex_return (MAP ta w)) (\
-          wta. st_ex_bind (st_ex_return (MAP ta r)) (\
-          rta. st_ex_bind (extend_clique wta liveout) (\
-          live. st_ex_bind (st_ex_return (FILTER (\x. ~(MEM x wta))
-              live)) (\
-          live. st_ex_bind (extend_clique rta live) (\
-          livein.
+        st_ex_bind (st_ex_return (MAP ta w)) (\wta. st_ex_bind
+            (st_ex_return (MAP ta r)) (\rta. st_ex_bind (extend_clique
+            wta liveout) (\live. st_ex_bind (st_ex_return (FILTER (\x.
+            ~(MEM x wta)) live)) (\live. st_ex_bind (extend_clique rta
+            live) (\livein.
           st_ex_return livein)))))`;
    `mk_graph ta (reg_alloc_Set t:clash_tree) liveout =
-        st_ex_bind (st_ex_return (MAP ta (MAP FST (toAList t)))) (\
-          live. st_ex_ignore_bind
-          (clique_insert_edge live) (
+        st_ex_bind (st_ex_return (MAP ta (MAP FST (toAList t))))
+            (\live.
+          st_ex_ignore_bind (clique_insert_edge live) (
           st_ex_return live))`;
    `mk_graph ta (reg_alloc_Branch topt t1 t2:clash_tree) liveout =
-        st_ex_bind (mk_graph ta t1 liveout) (\
-          t1_live. st_ex_bind (mk_graph ta t2 liveout) (\
-          t2_live.
+        st_ex_bind (mk_graph ta t1 liveout) (\t1_live. st_ex_bind
+            (mk_graph ta t2 liveout) (\t2_live.
           (match topt with
             NONE ->
-            st_ex_bind (extend_clique t1_live t2_live) (\
-              livein.
+            st_ex_bind (extend_clique t1_live t2_live) (\livein.
               st_ex_return livein) | SOME t ->
             st_ex_bind (st_ex_return (MAP ta (MAP FST (toAList t))))
-                (\
-              clashes. st_ex_ignore_bind
-              (clique_insert_edge clashes) (
+                (\clashes.
+              st_ex_ignore_bind (clique_insert_edge clashes) (
               st_ex_return clashes)))))`;
    `mk_graph ta (reg_alloc_Seq t1 t2:clash_tree) liveout =
-        st_ex_bind (mk_graph ta t2 liveout) (\
-          live.
+        st_ex_bind (mk_graph ta t2 liveout) (\live.
           mk_graph ta t1 live)`];;
 
 let sp_default_def = new_definition
@@ -1317,8 +1222,7 @@ let extend_graph_def,extend_graph_ind = define_wf
   `MEASURE (\(x0,x1). list_size (pair_size (\x. 0) (\x. 0)) x1)`
   [`extend_graph ta [] = st_ex_return one`;
    `extend_graph ta (CONS (x,y) xs) =
-      st_ex_ignore_bind
-        (insert_edge (ta x) (ta y)) (
+        st_ex_ignore_bind (insert_edge (ta x) (ta y)) (
         extend_graph ta xs)`];;
 
 (* sets up the register allocator init state with the clash_tree input
@@ -1331,8 +1235,8 @@ let extend_graph_def,extend_graph_ind = define_wf
 *)
 let init_ra_state_def = new_definition
   `init_ra_state ct forced fs (ta,fa,n) =
-   st_ex_ignore_bind
-     (mk_graph (sp_default ta) ct []) (st_ex_ignore_bind
+     st_ex_ignore_bind (mk_graph (sp_default ta) ct [])
+       (st_ex_ignore_bind
      // Put in the usual edges
      (extend_graph (sp_default ta) forced) (
      mk_tags n fs (sp_default fa)))`;;
@@ -1345,8 +1249,8 @@ let do_upd_coalesce_def = new_definition
 (* Initializer for the first allocation step *)
 let init_alloc1_heu_def = new_definition
   `init_alloc1_heu moves d k =
-   st_ex_bind (st_ex_return (COUNT_LIST d)) (\
-     ds. st_ex_bind (st_ex_FILTER is_Atemp ds []) (\
+   st_ex_bind (st_ex_return (COUNT_LIST d)) (\ds. st_ex_bind
+     (st_ex_FILTER is_Atemp ds []) (\
      // make sure move_related is correct
      allocs. st_ex_ignore_bind
      // only need to allocate Atemps
@@ -1354,31 +1258,27 @@ let init_alloc1_heu_def = new_definition
        (
         // Set the degree for each node
         \i.
-       st_ex_bind (adj_ls_sub i) (\
-         adjls. st_ex_bind (st_ex_FILTER (\v. considered_var k v)
-           adjls []) (\
-         fills.
-         update_degrees i (LENGTH fills))))) (st_ex_ignore_bind
-     (st_ex_FOREACH ds do_upd_coalesce) (st_ex_ignore_bind
-     (set_avail_moves_wl (reg_alloc_sort_moves moves))
-       (st_ex_ignore_bind
-     (reset_move_related moves) (st_ex_bind (st_ex_PARTITION
-       (split_degree d k) allocs [] []) (\
-     (ltk,gtk). st_ex_bind (st_ex_PARTITION (move_related_sub) ltk []
-       []) (\
-     (ltkfreeze,ltksimp). st_ex_ignore_bind
-     (set_spill_wl gtk) (st_ex_ignore_bind
-     (set_simp_wl ltksimp) (st_ex_ignore_bind
-     (set_freeze_wl ltkfreeze) (
+       st_ex_bind (adj_ls_sub i) (\adjls. st_ex_bind (st_ex_FILTER
+         (\v. considered_var k v) adjls []) (\fills.
+         update_degrees i (LENGTH fills))))) (
+     st_ex_ignore_bind (st_ex_FOREACH ds do_upd_coalesce) (
+     st_ex_ignore_bind (set_avail_moves_wl (reg_alloc_sort_moves
+       moves)) (
+     st_ex_ignore_bind (reset_move_related moves) (st_ex_bind
+       (st_ex_PARTITION (split_degree d k) allocs [] []) (\(ltk,gtk).
+       st_ex_bind (st_ex_PARTITION (move_related_sub) ltk [] [])
+       (\(ltkfreeze,ltksimp).
+     st_ex_ignore_bind (set_spill_wl gtk) (
+     st_ex_ignore_bind (set_simp_wl ltksimp) (
+     st_ex_ignore_bind (set_freeze_wl ltkfreeze) (
      st_ex_return (LENGTH allocs))))))))))))`;;
 
 let do_alloc1_def = new_definition
   `do_alloc1 moves scost k =
-   st_ex_bind get_dim (\
-     d. st_ex_bind (init_alloc1_heu moves d k) (\
-     l. st_ex_ignore_bind
-     (rpt_do_step scost k l) (st_ex_bind reg_alloc_get_stack (\
-     st.
+   st_ex_bind get_dim (\d. st_ex_bind (init_alloc1_heu moves d k)
+     (\l.
+     st_ex_ignore_bind (rpt_do_step scost k l) (st_ex_bind
+       reg_alloc_get_stack (\st.
      st_ex_return st))))`;;
 
 let extract_tag_def = new_definition
@@ -1389,12 +1289,10 @@ let extract_tag_def = new_definition
 (* return the final coloring as an sptree *)
 let extract_color_def = new_definition
   `extract_color ta =
-   st_ex_bind (st_ex_return (toAList ta)) (\
-     taa. st_ex_bind (st_ex_MAP (\(k,v).
-       st_ex_bind (node_tag_sub v) (\
-         t.
-         st_ex_return (k,extract_tag t))) taa) (\
-     itags.
+   st_ex_bind (st_ex_return (toAList ta)) (\taa. st_ex_bind
+     (st_ex_MAP (\(k,v).
+       st_ex_bind (node_tag_sub v) (\t.
+         st_ex_return (k,extract_tag t))) taa) (\itags.
      // can make the sptree directly
      st_ex_return (fromAList itags)))`;;
 
@@ -1433,9 +1331,7 @@ let algorithm_INDUCT,algorithm_RECURSION = define_datatype
 let coalesce_root_def,coalesce_root_ind = define_wf
   `MEASURE (\x0. (\n. n) x0)`
   [`coalesce_root x =
-   st_ex_bind (coalesced_sub x) (\
-     xt. st_ex_bind (is_Fixed xt) (\
-     bx.
+   st_ex_bind (coalesced_sub x) (\xt. st_ex_bind (is_Fixed xt) (\bx.
      if bx then
        st_ex_return xt else
        if x <= xt then
@@ -1445,11 +1341,9 @@ let coalesce_root_def,coalesce_root_ind = define_wf
 (* mtable is an sptree lookup for the moves *)
 let biased_pref_def = new_definition
   `biased_pref mtable n ks =
-   st_ex_bind get_dim (\
-     d.
+   st_ex_bind get_dim (\d.
      if n < d then
-     st_ex_bind (coalesce_root n) (\
-       v.
+     st_ex_bind (coalesce_root n) (\v.
        let vs = (match sptree_lookup n mtable with NONE -> [] | SOME
          vs -> vs) in
        handle_Subscript (first_match_col ks (CONS v vs))
@@ -1462,20 +1356,16 @@ let full_consistency_ok_def = new_definition
    (if x = y then
      st_ex_return F else
    // check 1
-   st_ex_bind get_dim (\
-     d.
+   st_ex_bind get_dim (\d.
      if x >= d \/ y >= d then st_ex_return F else
-     st_ex_bind (adj_ls_sub y) (\
-       adjy.
+     st_ex_bind (adj_ls_sub y) (\adjy.
        // check 2
        if sorted_mem x adjy then st_ex_return F else
-       st_ex_bind (is_Fixed_k k x) (\
-         bx. st_ex_bind (is_Fixed_k k y) (\
-         by. st_ex_bind (is_Atemp x) (\
-         ax. st_ex_bind (is_Atemp y) (\
-         ay.
-         st_ex_return ((bx \/ ax) /\ (by \/ ay) /\ ~(bx /\
-           by)))))))))`;;
+       st_ex_bind (is_Fixed_k k x) (\bx. st_ex_bind (is_Fixed_k k y)
+         (\by. st_ex_bind (is_Atemp x) (\ax. st_ex_bind (is_Atemp y)
+         (\ay.
+         st_ex_return ((bx \/ ax) /\ (by \/ ay) /\ ~(bx
+           /\ by)))))))))`;;
 
 let update_move_def = new_definition
   `update_move spta ((p:num),(x:num),(y:num)) =
@@ -1492,8 +1382,7 @@ let neg_first_match_col_def,neg_first_match_col_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x2)`
   [`neg_first_match_col k bads [] = st_ex_return NONE`;
    `neg_first_match_col k bads (CONS x xs) =
-        st_ex_bind (node_tag_sub x) (\
-          c.
+        st_ex_bind (node_tag_sub x) (\c.
           match c with
             Fixed m ->
               (if MEM m bads \/ m < k then neg_first_match_col
@@ -1502,8 +1391,7 @@ let neg_first_match_col_def,neg_first_match_col_ind = define_wf
 
 let neg_biased_pref_def = new_definition
   `neg_biased_pref k mtable n bads =
-   st_ex_bind get_dim (\
-     d.
+   st_ex_bind get_dim (\d.
      if n < d then
        let vs = (match sptree_lookup n mtable with NONE -> [] | SOME
          vs -> vs) in
@@ -1514,20 +1402,16 @@ let neg_biased_pref_def = new_definition
 (* Putting everything together in one call *)
 let do_reg_alloc_def = new_definition
   `do_reg_alloc alg scost k moves ct forced fs (ta,fa,n) =
-   st_ex_ignore_bind
-     (init_ra_state ct forced fs (ta,fa,n)) (st_ex_bind (st_ex_return
-       (MAP (update_move (sp_default ta)) moves)) (\
-     moves0. st_ex_bind (st_ex_FILTER (\(_18,(x,y)).
-       full_consistency_ok k x y) moves0 []) (\
-     moves. st_ex_bind (do_alloc1 (if alg = reg_alloc_Simple then []
-       else moves) scost k) (\
-     ls. st_ex_bind (st_ex_return (resort_moves (moves_to_sp moves0
-       LN))) (\
-     mvs. st_ex_ignore_bind
-     (assign_Atemps k ls (biased_pref mvs)) (st_ex_ignore_bind
-     (assign_Stemps k (neg_biased_pref k mvs)) (st_ex_bind
-       (extract_color ta) (\
-     spcol.
+     st_ex_ignore_bind (init_ra_state ct forced fs (ta,fa,n))
+       (st_ex_bind (st_ex_return (MAP (update_move (sp_default ta))
+       moves)) (\moves0. st_ex_bind (st_ex_FILTER (\(_18,(x,y)).
+       full_consistency_ok k x y) moves0 []) (\moves. st_ex_bind
+       (do_alloc1 (if alg = reg_alloc_Simple then [] else moves) scost
+       k) (\ls. st_ex_bind (st_ex_return (resort_moves (moves_to_sp
+       moves0 LN))) (\mvs.
+     st_ex_ignore_bind (assign_Atemps k ls (biased_pref mvs)) (
+     st_ex_ignore_bind (assign_Stemps k (neg_biased_pref k mvs))
+       (st_ex_bind (extract_color ta) (\spcol.
      st_ex_return spcol))))))))
    // return the composed from wordLang into the graph + the allocation`;;
 

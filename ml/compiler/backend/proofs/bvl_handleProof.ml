@@ -130,8 +130,8 @@ let bvl_handleProof_env_rel_def = new_definition
 
 let env_rel_mk_Union = prove
  (`!env env1. bvl_handleProof_env_rel (mk_Union lx ly) env env1 <=>
-               bvl_handleProof_env_rel lx env env1 /\
-                 bvl_handleProof_env_rel ly env env1`,
+               bvl_handleProof_env_rel lx env env1
+                 /\ bvl_handleProof_env_rel ly env env1`,
   CHEAT_TAC);;
 
 (* env_rel_length *)

@@ -205,8 +205,8 @@ let shape_to_str_def,shape_to_str_ind = define_wf
     shape_to_str (Comb (CONS x xs)) =
       mlstring_concat (APPEND (CONS (implode "{") (CONS
           (shape_to_str x)
-              (MAP (\x. (\x y. strcat x y) (implode ",") x) (MAP
-                  shape_to_str xs))))
+              (MAP (\x. strcat (implode ",") x) (MAP shape_to_str
+                  xs))))
               [implode "}"])`;
    `shape_to_str (Named nm) = nm`];;
 

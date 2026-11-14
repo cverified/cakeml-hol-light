@@ -16,7 +16,6 @@ needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
-needs "lib/pegexec.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
@@ -115,24 +114,25 @@ let sec_ends_with_label_def = define_general
      ~(NULL ls) /\ is_Label (LAST ls)`];;
 
 let reg_imm_with_clock = prove
- (`labSem_reg_imm r (state_clock_fupd (K z) s) = labSem_reg_imm r s`,
+ (`labSem_reg_imm r (labSem_state_clock_fupd (K z) s) = labSem_reg_imm
+  r s`,
   CHEAT_TAC);;
 add_simp reg_imm_with_clock;;
 
 let asm_inst_with_clock = prove
- (`asm_inst i (state_clock_fupd (K z) s) = state_clock_fupd (K z)
-  (asm_inst i s)`,
+ (`asm_inst i (labSem_state_clock_fupd (K z) s) =
+  labSem_state_clock_fupd (K z) (asm_inst i s)`,
   CHEAT_TAC);;
 add_simp asm_inst_with_clock;;
 
 let read_reg_inc_pc = prove
- (`regs (inc_pc s) r = regs s r`,
+ (`labSem_state_regs (inc_pc s) r = labSem_state_regs s r`,
   CHEAT_TAC);;
 add_simp read_reg_inc_pc;;
 
 (* with_same_clock *)
 let labProps_with_same_clock = prove
- (`(state_clock_fupd (K (state_clock s)) s) = s`,
+ (`(labSem_state_clock_fupd (K (labSem_state_clock s)) s) = s`,
   CHEAT_TAC);;
 add_simp labProps_with_same_clock;;
 
@@ -141,44 +141,58 @@ let inc_pc_dec_clock = prove
   CHEAT_TAC);;
 
 let update_simps = prove
- (`(state_ffi (labSem_upd_pc x s) = state_ffi s) /\
-    (state_ffi (labSem_dec_clock s) = state_ffi s) /\
-    (pc (labSem_upd_pc x s) = x) /\
-    (pc (labSem_dec_clock s) = pc s) /\
-    (state_clock (labSem_upd_pc x s) = state_clock s) /\
-    (state_ffi (labSem_upd_pc x s) = state_ffi s) /\
-    (state_clock (labSem_dec_clock s) = state_clock s - 1) /\
-    (len_reg (labSem_dec_clock s) = len_reg s) /\
-    (len2_reg (labSem_dec_clock s) = len2_reg s) /\
-    (link_reg (labSem_dec_clock s) = link_reg s) /\
-    (state_code (labSem_dec_clock s) = state_code s) /\
-    (ptr_reg (labSem_dec_clock s) = ptr_reg s) /\
-    (ptr2_reg (labSem_dec_clock s) = ptr2_reg s) /\
-    (state_ffi (labSem_dec_clock s) = state_ffi s) /\
-    (len_reg (labSem_upd_pc x s) = len_reg s) /\
-    (len2_reg (labSem_upd_pc x s) = len2_reg s) /\
-    (link_reg (labSem_upd_pc x s) = link_reg s) /\
-    (state_code (labSem_upd_pc x s) = state_code s) /\
-    (ptr_reg (labSem_upd_pc x s) = ptr_reg s) /\
-    (ptr2_reg (labSem_upd_pc x s) = ptr2_reg s) /\
+ (`(labSem_state_ffi (labSem_upd_pc x s) = labSem_state_ffi s) /\
+    (labSem_state_ffi (labSem_dec_clock s) = labSem_state_ffi s) /\
+    (labSem_state_pc (labSem_upd_pc x s) = x) /\
+    (labSem_state_pc (labSem_dec_clock s) = labSem_state_pc s) /\
+    (labSem_state_clock (labSem_upd_pc x s) = labSem_state_clock s)
+      /\
+    (labSem_state_ffi (labSem_upd_pc x s) = labSem_state_ffi s) /\
+    (labSem_state_clock (labSem_dec_clock s) = labSem_state_clock s -
+      1) /\
+    (labSem_state_len_reg (labSem_dec_clock s) = labSem_state_len_reg
+      s) /\
+    (labSem_state_len2_reg (labSem_dec_clock s) =
+      labSem_state_len2_reg s) /\
+    (labSem_state_link_reg (labSem_dec_clock s) =
+      labSem_state_link_reg s) /\
+    (labSem_state_code (labSem_dec_clock s) = labSem_state_code s) /\
+    (labSem_state_ptr_reg (labSem_dec_clock s) = labSem_state_ptr_reg
+      s) /\
+    (labSem_state_ptr2_reg (labSem_dec_clock s) =
+      labSem_state_ptr2_reg s) /\
+    (labSem_state_ffi (labSem_dec_clock s) = labSem_state_ffi s) /\
+    (labSem_state_len_reg (labSem_upd_pc x s) = labSem_state_len_reg
+      s) /\
+    (labSem_state_len2_reg (labSem_upd_pc x s) =
+      labSem_state_len2_reg s) /\
+    (labSem_state_link_reg (labSem_upd_pc x s) =
+      labSem_state_link_reg s) /\
+    (labSem_state_code (labSem_upd_pc x s) = labSem_state_code s) /\
+    (labSem_state_ptr_reg (labSem_upd_pc x s) = labSem_state_ptr_reg
+      s) /\
+    (labSem_state_ptr2_reg (labSem_upd_pc x s) =
+      labSem_state_ptr2_reg s) /\
     (labSem_state_mem_domain (labSem_upd_pc x s) =
       labSem_state_mem_domain s) /\
     (labSem_state_shared_mem_domain (labSem_upd_pc x s) =
       labSem_state_shared_mem_domain s) /\
-    (failed (labSem_upd_pc x s) = failed s) /\
-    (be (labSem_upd_pc x s) = be s) /\
+    (labSem_state_failed (labSem_upd_pc x s) = labSem_state_failed s)
+      /\
+    (labSem_state_be (labSem_upd_pc x s) = labSem_state_be s) /\
     (labSem_state_mem (labSem_upd_pc x s) = labSem_state_mem s) /\
-    (regs (labSem_upd_pc x s) = regs s) /\
-    (fp_regs (labSem_upd_pc x s) = fp_regs s) /\
-    (state_ffi (labSem_upd_pc x s) = state_ffi s) /\
-    (ptr_reg (inc_pc s) = ptr_reg s) /\
-    (ptr2_reg (inc_pc s) = ptr2_reg s) /\
-    (len_reg (inc_pc s) = len_reg s) /\
-    (len2_reg (inc_pc s) = len2_reg s) /\
-    (link_reg (inc_pc s) = link_reg s) /\
-    (state_code (inc_pc s) = state_code s) /\
-    (be (inc_pc s) = be s) /\
-    (failed (inc_pc s) = failed s) /\
+    (labSem_state_regs (labSem_upd_pc x s) = labSem_state_regs s) /\
+    (labSem_state_fp_regs (labSem_upd_pc x s) = labSem_state_fp_regs
+      s) /\
+    (labSem_state_ffi (labSem_upd_pc x s) = labSem_state_ffi s) /\
+    (labSem_state_ptr_reg (inc_pc s) = labSem_state_ptr_reg s) /\
+    (labSem_state_ptr2_reg (inc_pc s) = labSem_state_ptr2_reg s) /\
+    (labSem_state_len_reg (inc_pc s) = labSem_state_len_reg s) /\
+    (labSem_state_len2_reg (inc_pc s) = labSem_state_len2_reg s) /\
+    (labSem_state_link_reg (inc_pc s) = labSem_state_link_reg s) /\
+    (labSem_state_code (inc_pc s) = labSem_state_code s) /\
+    (labSem_state_be (inc_pc s) = labSem_state_be s) /\
+    (labSem_state_failed (inc_pc s) = labSem_state_failed s) /\
     (labSem_state_mem_domain (inc_pc s) = labSem_state_mem_domain s)
       /\
     (labSem_state_shared_mem_domain (inc_pc s) =
@@ -189,109 +203,140 @@ let update_simps = prove
     (labSem_state_cc_regs (inc_pc s) = labSem_state_cc_regs s) /\
     (labSem_state_cc_fp_regs (inc_pc s) = labSem_state_cc_fp_regs s)
       /\
-    (compile (inc_pc s) = compile s) /\
-    (compile_oracle (inc_pc s) = compile_oracle s) /\
-    (state_code_buffer (inc_pc s) = state_code_buffer s) /\
+    (labSem_state_compile (inc_pc s) = labSem_state_compile s) /\
+    (labSem_state_compile_oracle (inc_pc s) =
+      labSem_state_compile_oracle s) /\
+    (labSem_state_code_buffer (inc_pc s) = labSem_state_code_buffer
+      s) /\
     (labSem_state_mem (inc_pc s) = labSem_state_mem s) /\
-    (regs (inc_pc s) = regs s) /\
-    (fp_regs (inc_pc s) = fp_regs s) /\
-    (pc (inc_pc s) = pc s + 1) /\
-    (state_ffi (inc_pc s) = state_ffi s)`,
+    (labSem_state_regs (inc_pc s) = labSem_state_regs s) /\
+    (labSem_state_fp_regs (inc_pc s) = labSem_state_fp_regs s) /\
+    (labSem_state_pc (inc_pc s) = labSem_state_pc s + 1) /\
+    (labSem_state_ffi (inc_pc s) = labSem_state_ffi s)`,
   CHEAT_TAC);;
 add_simp update_simps;;
 
 (* binop_upd_consts *)
 let labProps_binop_upd_consts = prove
  (`labSem_state_mem_domain
-      (labSem_binop_upd a b c d x) = labSem_state_mem_domain x /\
-        labSem_state_shared_mem_domain
+      (labSem_binop_upd a b c d x) = labSem_state_mem_domain x
+        /\ labSem_state_shared_mem_domain
       (labSem_binop_upd a b c d x) = labSem_state_shared_mem_domain x
-        /\ ptr_reg
-      (labSem_binop_upd a b c d x) = ptr_reg x /\ ptr2_reg
-      (labSem_binop_upd a b c d x) = ptr2_reg x /\ len_reg
-      (labSem_binop_upd a b c d x) = len_reg x /\ len2_reg
-      (labSem_binop_upd a b c d x) = len2_reg x /\ link_reg
-      (labSem_binop_upd a b c d x) = link_reg x /\ state_code
-      (labSem_binop_upd a b c d x) = state_code x /\ be
-      (labSem_binop_upd a b c d x) = be x /\ labSem_state_mem
-      (labSem_binop_upd a b c d x) = labSem_state_mem x /\
-        labSem_state_io_regs
-      (labSem_binop_upd a b c d x) = labSem_state_io_regs x /\
-        labSem_state_io_fp_regs
-      (labSem_binop_upd a b c d x) = labSem_state_io_fp_regs x /\
-        labSem_state_cc_regs
-      (labSem_binop_upd a b c d x) = labSem_state_cc_regs x /\
-        labSem_state_cc_fp_regs
-      (labSem_binop_upd a b c d x) = labSem_state_cc_fp_regs x /\
-        compile
-      (labSem_binop_upd a b c d x) = compile x /\ compile_oracle
-      (labSem_binop_upd a b c d x) = compile_oracle x /\
-        state_code_buffer
-      (labSem_binop_upd a b c d x) = state_code_buffer x /\ pc
-      (labSem_binop_upd a b c d x) = pc x /\ state_ffi
-      (labSem_binop_upd a b c d x) = state_ffi x`,
+        /\ labSem_state_ptr_reg
+      (labSem_binop_upd a b c d x) = labSem_state_ptr_reg x
+        /\ labSem_state_ptr2_reg
+      (labSem_binop_upd a b c d x) = labSem_state_ptr2_reg x
+        /\ labSem_state_len_reg
+      (labSem_binop_upd a b c d x) = labSem_state_len_reg x
+        /\ labSem_state_len2_reg
+      (labSem_binop_upd a b c d x) = labSem_state_len2_reg x
+        /\ labSem_state_link_reg
+      (labSem_binop_upd a b c d x) = labSem_state_link_reg x
+        /\ labSem_state_code
+      (labSem_binop_upd a b c d x) = labSem_state_code x
+        /\ labSem_state_be
+      (labSem_binop_upd a b c d x) = labSem_state_be x
+        /\ labSem_state_mem
+      (labSem_binop_upd a b c d x) = labSem_state_mem x
+        /\ labSem_state_io_regs
+      (labSem_binop_upd a b c d x) = labSem_state_io_regs x
+        /\ labSem_state_io_fp_regs
+      (labSem_binop_upd a b c d x) = labSem_state_io_fp_regs x
+        /\ labSem_state_cc_regs
+      (labSem_binop_upd a b c d x) = labSem_state_cc_regs x
+        /\ labSem_state_cc_fp_regs
+      (labSem_binop_upd a b c d x) = labSem_state_cc_fp_regs x
+        /\ labSem_state_compile
+      (labSem_binop_upd a b c d x) = labSem_state_compile x
+        /\ labSem_state_compile_oracle
+      (labSem_binop_upd a b c d x) = labSem_state_compile_oracle x
+        /\ labSem_state_code_buffer
+      (labSem_binop_upd a b c d x) = labSem_state_code_buffer x
+        /\ labSem_state_pc
+      (labSem_binop_upd a b c d x) = labSem_state_pc x
+        /\ labSem_state_ffi
+      (labSem_binop_upd a b c d x) = labSem_state_ffi x`,
   CHEAT_TAC);;
 add_simp labProps_binop_upd_consts;;
 
 (* arith_upd_consts *)
 let labProps_arith_upd_consts = prove
  (`labSem_state_mem_domain
-      (labSem_arith_upd a x) = labSem_state_mem_domain x /\
-        labSem_state_shared_mem_domain
-      (labSem_arith_upd a x) = labSem_state_shared_mem_domain x /\
-        ptr_reg
-      (labSem_arith_upd a x) = ptr_reg x /\ ptr2_reg
-      (labSem_arith_upd a x) = ptr2_reg x /\ len_reg
-      (labSem_arith_upd a x) = len_reg x /\ len2_reg
-      (labSem_arith_upd a x) = len2_reg x /\ link_reg
-      (labSem_arith_upd a x) = link_reg x /\ state_code
-      (labSem_arith_upd a x) = state_code x /\ be
-      (labSem_arith_upd a x) = be x /\ labSem_state_mem
-      (labSem_arith_upd a x) = labSem_state_mem x /\
-        labSem_state_io_regs
-      (labSem_arith_upd a x) = labSem_state_io_regs x /\
-        labSem_state_io_fp_regs
-      (labSem_arith_upd a x) = labSem_state_io_fp_regs x /\
-        labSem_state_cc_regs
-      (labSem_arith_upd a x) = labSem_state_cc_regs x /\
-        labSem_state_cc_fp_regs
-      (labSem_arith_upd a x) = labSem_state_cc_fp_regs x /\ compile
-      (labSem_arith_upd a x) = compile x /\ compile_oracle
-      (labSem_arith_upd a x) = compile_oracle x /\ state_code_buffer
-      (labSem_arith_upd a x) = state_code_buffer x /\ pc
-      (labSem_arith_upd a x) = pc x /\ state_ffi
-      (labSem_arith_upd a x) = state_ffi x`,
+      (labSem_arith_upd a x) = labSem_state_mem_domain x
+        /\ labSem_state_shared_mem_domain
+      (labSem_arith_upd a x) = labSem_state_shared_mem_domain x
+        /\ labSem_state_ptr_reg
+      (labSem_arith_upd a x) = labSem_state_ptr_reg x
+        /\ labSem_state_ptr2_reg
+      (labSem_arith_upd a x) = labSem_state_ptr2_reg x
+        /\ labSem_state_len_reg
+      (labSem_arith_upd a x) = labSem_state_len_reg x
+        /\ labSem_state_len2_reg
+      (labSem_arith_upd a x) = labSem_state_len2_reg x
+        /\ labSem_state_link_reg
+      (labSem_arith_upd a x) = labSem_state_link_reg x
+        /\ labSem_state_code
+      (labSem_arith_upd a x) = labSem_state_code x /\ labSem_state_be
+      (labSem_arith_upd a x) = labSem_state_be x /\ labSem_state_mem
+      (labSem_arith_upd a x) = labSem_state_mem x
+        /\ labSem_state_io_regs
+      (labSem_arith_upd a x) = labSem_state_io_regs x
+        /\ labSem_state_io_fp_regs
+      (labSem_arith_upd a x) = labSem_state_io_fp_regs x
+        /\ labSem_state_cc_regs
+      (labSem_arith_upd a x) = labSem_state_cc_regs x
+        /\ labSem_state_cc_fp_regs
+      (labSem_arith_upd a x) = labSem_state_cc_fp_regs x
+        /\ labSem_state_compile
+      (labSem_arith_upd a x) = labSem_state_compile x
+        /\ labSem_state_compile_oracle
+      (labSem_arith_upd a x) = labSem_state_compile_oracle x
+        /\ labSem_state_code_buffer
+      (labSem_arith_upd a x) = labSem_state_code_buffer x
+        /\ labSem_state_pc
+      (labSem_arith_upd a x) = labSem_state_pc x /\ labSem_state_ffi
+      (labSem_arith_upd a x) = labSem_state_ffi x`,
   CHEAT_TAC);;
 add_simp labProps_arith_upd_consts;;
 
 (* fp_upd_consts *)
 let labProps_fp_upd_consts = prove
  (`labSem_state_mem_domain
-      (labSem_fp_upd f x) = labSem_state_mem_domain x /\
-        labSem_state_shared_mem_domain
-      (labSem_fp_upd f x) = labSem_state_shared_mem_domain x /\
-        ptr_reg
-      (labSem_fp_upd f x) = ptr_reg x /\ len_reg
-      (labSem_fp_upd f x) = len_reg x /\ ptr2_reg
-      (labSem_fp_upd f x) = ptr2_reg x /\ len2_reg
-      (labSem_fp_upd f x) = len2_reg x /\ link_reg
-      (labSem_fp_upd f x) = link_reg x /\ state_code
-      (labSem_fp_upd f x) = state_code x /\ labSem_state_cc_regs
-      (labSem_fp_upd f x) = labSem_state_cc_regs x /\
-        labSem_state_cc_fp_regs
-      (labSem_fp_upd f x) = labSem_state_cc_fp_regs x /\
-        state_code_buffer
-      (labSem_fp_upd f x) = state_code_buffer x /\ compile
-      (labSem_fp_upd f x) = compile x /\ compile_oracle
-      (labSem_fp_upd f x) = compile_oracle x /\ be
-      (labSem_fp_upd f x) = be x /\ labSem_state_mem
-      (labSem_fp_upd f x) = labSem_state_mem x /\
-        labSem_state_io_regs
-      (labSem_fp_upd f x) = labSem_state_io_regs x /\
-        labSem_state_io_fp_regs
-      (labSem_fp_upd f x) = labSem_state_io_fp_regs x /\ pc
-      (labSem_fp_upd f x) = pc x /\ state_ffi
-      (labSem_fp_upd f x) = state_ffi x`,
+      (labSem_fp_upd f x) = labSem_state_mem_domain x
+        /\ labSem_state_shared_mem_domain
+      (labSem_fp_upd f x) = labSem_state_shared_mem_domain x
+        /\ labSem_state_ptr_reg
+      (labSem_fp_upd f x) = labSem_state_ptr_reg x
+        /\ labSem_state_len_reg
+      (labSem_fp_upd f x) = labSem_state_len_reg x
+        /\ labSem_state_ptr2_reg
+      (labSem_fp_upd f x) = labSem_state_ptr2_reg x
+        /\ labSem_state_len2_reg
+      (labSem_fp_upd f x) = labSem_state_len2_reg x
+        /\ labSem_state_link_reg
+      (labSem_fp_upd f x) = labSem_state_link_reg x
+        /\ labSem_state_code
+      (labSem_fp_upd f x) = labSem_state_code x
+        /\ labSem_state_cc_regs
+      (labSem_fp_upd f x) = labSem_state_cc_regs x
+        /\ labSem_state_cc_fp_regs
+      (labSem_fp_upd f x) = labSem_state_cc_fp_regs x
+        /\ labSem_state_code_buffer
+      (labSem_fp_upd f x) = labSem_state_code_buffer x
+        /\ labSem_state_compile
+      (labSem_fp_upd f x) = labSem_state_compile x
+        /\ labSem_state_compile_oracle
+      (labSem_fp_upd f x) = labSem_state_compile_oracle x
+        /\ labSem_state_be
+      (labSem_fp_upd f x) = labSem_state_be x /\ labSem_state_mem
+      (labSem_fp_upd f x) = labSem_state_mem x
+        /\ labSem_state_io_regs
+      (labSem_fp_upd f x) = labSem_state_io_regs x
+        /\ labSem_state_io_fp_regs
+      (labSem_fp_upd f x) = labSem_state_io_fp_regs x
+        /\ labSem_state_pc
+      (labSem_fp_upd f x) = labSem_state_pc x /\ labSem_state_ffi
+      (labSem_fp_upd f x) = labSem_state_ffi x`,
   CHEAT_TAC);;
 add_simp labProps_fp_upd_consts;;
 
@@ -318,21 +363,21 @@ add_simp LENGTH_line_bytes;;
    Light does not read (tools/unstated.py): addr_add_clock_eq *)
 
 let share_mem_op_add_clock_same = prove
- (`(~(state_clock s = 0) /\ share_mem_op m n a s = NONE ==>
-    share_mem_op m n a (state_clock_fupd (K (extra + state_clock s))
-      s) = NONE) /\
-   (~(state_clock s = 0) /\ share_mem_op m n a s = SOME (FFI_return f
-     l',r) ==>
-    share_mem_op m n a (state_clock_fupd (K (extra + state_clock s))
-      s) =
-      SOME (FFI_return f l',state_clock_fupd (K (extra + state_clock
-        r)) r)) /\
-   (~(state_clock s = 0) /\ share_mem_op m n a s = SOME (FFI_final
-     f2,r2) ==>
-    share_mem_op m n a (state_clock_fupd (K (extra + state_clock s))
-      s) =
-      SOME (FFI_final f2,(state_clock_fupd (K (extra + state_clock
-        r2)) r2)))`,
+ (`(~(labSem_state_clock s = 0) /\ share_mem_op m n a s = NONE ==>
+    share_mem_op m n a (labSem_state_clock_fupd (K (extra +
+      labSem_state_clock s)) s) = NONE) /\
+   (~(labSem_state_clock s = 0) /\ share_mem_op m n a s = SOME
+     (FFI_return f l',r) ==>
+    share_mem_op m n a (labSem_state_clock_fupd (K (extra +
+      labSem_state_clock s)) s) =
+      SOME (FFI_return f l',labSem_state_clock_fupd (K (extra +
+        labSem_state_clock r)) r)) /\
+   (~(labSem_state_clock s = 0) /\ share_mem_op m n a s = SOME
+     (FFI_final f2,r2) ==>
+    share_mem_op m n a (labSem_state_clock_fupd (K (extra +
+      labSem_state_clock s)) s) =
+      SOME (FFI_final f2,(labSem_state_clock_fupd (K (extra +
+        labSem_state_clock r2)) r2)))`,
   CHEAT_TAC);;
 
 (* HOL4 labPropsScript.sml:358-439: a theorem whose statement HOL
@@ -345,33 +390,38 @@ let align_dm_def = new_definition
        INTER byte_aligned)) s)`;;
 
 let align_dm_const = prove
- (`state_clock
-      (align_dm s) = state_clock s /\ pc
-      (align_dm s) = pc s /\ state_code
-      (align_dm s) = state_code s /\ labSem_state_mem
-      (align_dm s) = labSem_state_mem s /\
-        labSem_state_shared_mem_domain
-      (align_dm s) = labSem_state_shared_mem_domain s /\ be
-      (align_dm s) = be s /\ len_reg
-      (align_dm s) = len_reg s /\ link_reg
-      (align_dm s) = link_reg s /\ ptr_reg
-      (align_dm s) = ptr_reg s /\ ptr2_reg
-      (align_dm s) = ptr2_reg s /\ len2_reg
-      (align_dm s) = len2_reg s /\ labSem_state_io_regs
-      (align_dm s) = labSem_state_io_regs s /\
-        labSem_state_io_fp_regs
-      (align_dm s) = labSem_state_io_fp_regs s /\ state_code_buffer
-      (align_dm s) = state_code_buffer s /\ compile
-      (align_dm s) = compile s /\ compile_oracle
-      (align_dm s) = compile_oracle s /\ state_ffi
-      (align_dm s) = state_ffi s /\ failed
-      (align_dm s) = failed s`,
+ (`labSem_state_clock
+      (align_dm s) = labSem_state_clock s /\ labSem_state_pc
+      (align_dm s) = labSem_state_pc s /\ labSem_state_code
+      (align_dm s) = labSem_state_code s /\ labSem_state_mem
+      (align_dm s) = labSem_state_mem s
+        /\ labSem_state_shared_mem_domain
+      (align_dm s) = labSem_state_shared_mem_domain s
+        /\ labSem_state_be
+      (align_dm s) = labSem_state_be s /\ labSem_state_len_reg
+      (align_dm s) = labSem_state_len_reg s /\ labSem_state_link_reg
+      (align_dm s) = labSem_state_link_reg s /\ labSem_state_ptr_reg
+      (align_dm s) = labSem_state_ptr_reg s /\ labSem_state_ptr2_reg
+      (align_dm s) = labSem_state_ptr2_reg s /\ labSem_state_len2_reg
+      (align_dm s) = labSem_state_len2_reg s /\ labSem_state_io_regs
+      (align_dm s) = labSem_state_io_regs s
+        /\ labSem_state_io_fp_regs
+      (align_dm s) = labSem_state_io_fp_regs s
+        /\ labSem_state_code_buffer
+      (align_dm s) = labSem_state_code_buffer s
+        /\ labSem_state_compile
+      (align_dm s) = labSem_state_compile s
+        /\ labSem_state_compile_oracle
+      (align_dm s) = labSem_state_compile_oracle s
+        /\ labSem_state_ffi
+      (align_dm s) = labSem_state_ffi s /\ labSem_state_failed
+      (align_dm s) = labSem_state_failed s`,
   CHEAT_TAC);;
 add_simp align_dm_const;;
 
 let align_dm_with_clock = prove
- (`align_dm (state_clock_fupd (K k) s) = state_clock_fupd (K k)
-  (align_dm s)`,
+ (`align_dm (labSem_state_clock_fupd (K k) s) =
+  labSem_state_clock_fupd (K k) (align_dm s)`,
   CHEAT_TAC);;
 
 let asm_fetch_align_dm = prove
@@ -380,7 +430,7 @@ let asm_fetch_align_dm = prove
 add_simp asm_fetch_align_dm;;
 
 let read_reg_align_dm = prove
- (`regs (align_dm s) n = regs s n`,
+ (`labSem_state_regs (align_dm s) n = labSem_state_regs s n`,
   CHEAT_TAC);;
 add_simp read_reg_align_dm;;
 
@@ -522,17 +572,17 @@ add_simp get_ret_Loc_align_dm;;
 let read_bytearray_mem_load_byte_aux_align_dm = prove
  (`!y x.
     read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
-      (labSem_state_mem_domain (align_dm s)) (be s)) =
+      (labSem_state_mem_domain (align_dm s)) (labSem_state_be s)) =
    read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
-     (labSem_state_mem_domain s) (be s))`,
+     (labSem_state_mem_domain s) (labSem_state_be s))`,
   CHEAT_TAC);;
 add_simp read_bytearray_mem_load_byte_aux_align_dm;;
 
 let write_bytearray_align_dm = prove
  (`!y x. write_bytearray x y (labSem_state_mem s)
-  (labSem_state_mem_domain (align_dm s)) (be s) =
+  (labSem_state_mem_domain (align_dm s)) (labSem_state_be s) =
    write_bytearray x y (labSem_state_mem s)
-     (labSem_state_mem_domain s) (be s)`,
+     (labSem_state_mem_domain s) (labSem_state_be s)`,
   CHEAT_TAC);;
 add_simp write_bytearray_align_dm;;
 
@@ -562,32 +612,37 @@ let align_sdm_def = new_definition
        (labSem_state_shared_mem_domain s INTER byte_aligned)) s)`;;
 
 let align_sdm_const = prove
- (`state_clock
-      (align_sdm s) = state_clock s /\ pc
-      (align_sdm s) = pc s /\ state_code
-      (align_sdm s) = state_code s /\ labSem_state_mem
+ (`labSem_state_clock
+      (align_sdm s) = labSem_state_clock s /\ labSem_state_pc
+      (align_sdm s) = labSem_state_pc s /\ labSem_state_code
+      (align_sdm s) = labSem_state_code s /\ labSem_state_mem
       (align_sdm s) = labSem_state_mem s /\ labSem_state_mem_domain
-      (align_sdm s) = labSem_state_mem_domain s /\ be
-      (align_sdm s) = be s /\ len_reg
-      (align_sdm s) = len_reg s /\ link_reg
-      (align_sdm s) = link_reg s /\ ptr_reg
-      (align_sdm s) = ptr_reg s /\ ptr2_reg
-      (align_sdm s) = ptr2_reg s /\ len2_reg
-      (align_sdm s) = len2_reg s /\ labSem_state_io_regs
-      (align_sdm s) = labSem_state_io_regs s /\
-        labSem_state_io_fp_regs
-      (align_sdm s) = labSem_state_io_fp_regs s /\ state_code_buffer
-      (align_sdm s) = state_code_buffer s /\ compile
-      (align_sdm s) = compile s /\ compile_oracle
-      (align_sdm s) = compile_oracle s /\ state_ffi
-      (align_sdm s) = state_ffi s /\ failed
-      (align_sdm s) = failed s`,
+      (align_sdm s) = labSem_state_mem_domain s /\ labSem_state_be
+      (align_sdm s) = labSem_state_be s /\ labSem_state_len_reg
+      (align_sdm s) = labSem_state_len_reg s /\ labSem_state_link_reg
+      (align_sdm s) = labSem_state_link_reg s /\ labSem_state_ptr_reg
+      (align_sdm s) = labSem_state_ptr_reg s /\ labSem_state_ptr2_reg
+      (align_sdm s) = labSem_state_ptr2_reg s
+        /\ labSem_state_len2_reg
+      (align_sdm s) = labSem_state_len2_reg s /\ labSem_state_io_regs
+      (align_sdm s) = labSem_state_io_regs s
+        /\ labSem_state_io_fp_regs
+      (align_sdm s) = labSem_state_io_fp_regs s
+        /\ labSem_state_code_buffer
+      (align_sdm s) = labSem_state_code_buffer s
+        /\ labSem_state_compile
+      (align_sdm s) = labSem_state_compile s
+        /\ labSem_state_compile_oracle
+      (align_sdm s) = labSem_state_compile_oracle s
+        /\ labSem_state_ffi
+      (align_sdm s) = labSem_state_ffi s /\ labSem_state_failed
+      (align_sdm s) = labSem_state_failed s`,
   CHEAT_TAC);;
 add_simp align_sdm_const;;
 
 let align_sdm_with_clock = prove
- (`align_sdm (state_clock_fupd (K k) s) = state_clock_fupd (K k)
-  (align_sdm s)`,
+ (`align_sdm (labSem_state_clock_fupd (K k) s) =
+  labSem_state_clock_fupd (K k) (align_sdm s)`,
   CHEAT_TAC);;
 
 let asm_fetch_align_sdm = prove
@@ -596,7 +651,7 @@ let asm_fetch_align_sdm = prove
 add_simp asm_fetch_align_sdm;;
 
 let read_reg_align_sdm = prove
- (`regs (align_sdm s) n = regs s n`,
+ (`labSem_state_regs (align_sdm s) n = labSem_state_regs s n`,
   CHEAT_TAC);;
 add_simp read_reg_align_sdm;;
 
@@ -694,17 +749,17 @@ add_simp get_ret_Loc_align_sdm;;
 let read_bytearray_mem_load_byte_aux_align_sdm = prove
  (`!y x.
     read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
-      (labSem_state_mem_domain (align_sdm s)) (be s)) =
+      (labSem_state_mem_domain (align_sdm s)) (labSem_state_be s)) =
    read_bytearray x y (mem_load_byte_aux (labSem_state_mem s)
-     (labSem_state_mem_domain s) (be s))`,
+     (labSem_state_mem_domain s) (labSem_state_be s))`,
   CHEAT_TAC);;
 add_simp read_bytearray_mem_load_byte_aux_align_sdm;;
 
 let write_bytearray_align_sdm = prove
  (`!y x. write_bytearray x y (labSem_state_mem s)
-  (labSem_state_mem_domain (align_sdm s)) (be s) =
+  (labSem_state_mem_domain (align_sdm s)) (labSem_state_be s) =
    write_bytearray x y (labSem_state_mem s)
-     (labSem_state_mem_domain s) (be s)`,
+     (labSem_state_mem_domain s) (labSem_state_be s)`,
   CHEAT_TAC);;
 add_simp write_bytearray_align_sdm;;
 

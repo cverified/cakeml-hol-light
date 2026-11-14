@@ -807,10 +807,10 @@ let MAP_colors_eq_lemma = prove
    n <= LENGTH (linear_scan_hidden_state_colors sth) ==>
    (?sthout. (M_success one,sthout) = MAP_colors f n sth /\
    LENGTH (linear_scan_hidden_state_colors sth) = LENGTH
-     (linear_scan_hidden_state_colors sthout) /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     (linear_scan_hidden_state_colors sthout)
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
    (!n'. n' < n ==> EL n' (linear_scan_hidden_state_colors sthout) =
      f (EL n' (linear_scan_hidden_state_colors sth))) /\
@@ -826,10 +826,10 @@ let MAP_colors_eq = prove
      (linear_scan_hidden_state_colors sthout) = f (EL n
      (linear_scan_hidden_state_colors sth))) /\
    LENGTH (linear_scan_hidden_state_colors sth) = LENGTH
-     (linear_scan_hidden_state_colors sthout) /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     (linear_scan_hidden_state_colors sthout)
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth`,
   CHEAT_TAC);;
 
@@ -842,10 +842,10 @@ let apply_reg_exchange_correct = prove
      ==>
    (?sthout. (M_success one,sthout) = apply_reg_exchange l sth /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
-     (linear_scan_hidden_state_colors sth) /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     (linear_scan_hidden_state_colors sth)
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
    (!r1 r2. r1 < LENGTH (linear_scan_hidden_state_colors sth) /\ r2 <
      LENGTH (linear_scan_hidden_state_colors sth) ==> EL r1
@@ -895,18 +895,18 @@ let good_linear_scan_state_def = new_definition
        ALL (\r. EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_stacknum st) l /\
        domain (linear_scan_state_phyregs st) = {EL r
-         (linear_scan_hidden_state_colors sth) | r | MEM r l /\
-         is_phy_var r /\ EL r (linear_scan_hidden_state_colors sth) <
+         (linear_scan_hidden_state_colors sth) | r | MEM r l
+         /\ is_phy_var r /\ EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_colormax st} /\
        ALL_DISTINCT (MAP (\r. EL r (linear_scan_hidden_state_colors
          sth)) (FILTER is_phy_var l)) /\
        ALL (\c. c < linear_scan_state_colornum st)
          (linear_scan_state_colorpool st) /\
        ALL (\(e,r). EL r (linear_scan_hidden_state_colors sth) <
-         linear_scan_state_colornum st) (linear_scan_state_active st) /\
-         linear_scan_state_colornum
-       st <= linear_scan_state_colormax st /\
-         linear_scan_state_colormax
+         linear_scan_state_colornum st) (linear_scan_state_active st)
+         /\ linear_scan_state_colornum
+       st <= linear_scan_state_colormax st
+         /\ linear_scan_state_colormax
        st <= linear_scan_state_stacknum st /\
        ALL (\r. EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_colormax st ==> EL r
@@ -950,8 +950,8 @@ let remove_inactive_intervals_invariants = prove
    pos <= beg ==>
    (?stout. (M_success stout,sth) = remove_inactive_intervals beg st
      sth /\
-   good_linear_scan_state stout sth l beg forced mincol /\
-     linear_scan_state_colormax
+   good_linear_scan_state stout sth l beg forced mincol
+     /\ linear_scan_state_colormax
    stout = linear_scan_state_colormax st)`,
   CHEAT_TAC);;
 
@@ -978,8 +978,8 @@ let find_color_in_colornum_invariants = prove
    find_color_in_colornum st forbidden = (stout,SOME col) ==>
    good_linear_scan_state (linear_scan_state_colorpool_fupd (\l. CONS
      col l) stout) sth l pos forced mincol /\ linear_scan_state_colornum
-   st <= col /\ col < linear_scan_state_colornum stout /\
-     linear_scan_state_colornum
+   st <= col /\ col < linear_scan_state_colornum stout
+     /\ linear_scan_state_colornum
    st <= linear_scan_state_colornum stout /\ ~(col IN domain
      forbidden) /\
    st = linear_scan_state_colornum_fupd (K
@@ -1071,12 +1071,12 @@ let spill_register_FILTER_invariants_hidden = prove
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
      (linear_scan_hidden_state_colors sth) /\
    (!r. ~(r = reg) ==> EL r (linear_scan_hidden_state_colors sth) =
-     EL r (linear_scan_hidden_state_colors sthout)) /\
-     linear_scan_state_colormax
-   stout = linear_scan_state_colormax st /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     EL r (linear_scan_hidden_state_colors sthout))
+     /\ linear_scan_state_colormax
+   stout = linear_scan_state_colormax st
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\ linear_scan_state_colormax
    st <= EL reg (linear_scan_hidden_state_colors sthout))`,
   CHEAT_TAC);;
@@ -1102,16 +1102,16 @@ let spill_register_invariants = prove
    good_linear_scan_state stout sthout (CONS reg l) pos forced mincol
      /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
-     (linear_scan_hidden_state_colors sth) /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     (linear_scan_hidden_state_colors sth)
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
    (!r. ~(r = reg) ==> EL r (linear_scan_hidden_state_colors sth) =
-     EL r (linear_scan_hidden_state_colors sthout)) /\
-     linear_scan_state_colormax
-   stout = linear_scan_state_colormax st /\
-     linear_scan_state_colormax
+     EL r (linear_scan_hidden_state_colors sthout))
+     /\ linear_scan_state_colormax
+   stout = linear_scan_state_colormax st
+     /\ linear_scan_state_colormax
    st <= EL reg (linear_scan_hidden_state_colors sthout))`,
   CHEAT_TAC);;
 
@@ -1216,8 +1216,7 @@ let good_linear_scan_state_active_length_colors = prove
 let color_register_eq = prove
  (`!st reg col rend.
    color_register st reg col rend =
-    st_ex_ignore_bind
-      (update_colors reg col) (
+      st_ex_ignore_bind (update_colors reg col) (
       st_ex_return (linear_scan_state_phyregs_fupd (K (if is_phy_var
         reg then (sptree_insert col one) (linear_scan_state_phyregs st)
         else linear_scan_state_phyregs st))
@@ -1248,14 +1247,14 @@ let color_register_invariants = prove
    good_linear_scan_state stout sthout (CONS reg l) pos forced mincol
      /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
-     (linear_scan_hidden_state_colors sth) /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     (linear_scan_hidden_state_colors sth)
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
    (!r. ~(r = reg) ==> EL r (linear_scan_hidden_state_colors sth) =
-     EL r (linear_scan_hidden_state_colors sthout)) /\
-     linear_scan_state_colormax
+     EL r (linear_scan_hidden_state_colors sthout))
+     /\ linear_scan_state_colormax
    stout = linear_scan_state_colormax st)`,
   CHEAT_TAC);;
 
@@ -1276,18 +1275,18 @@ let find_spill_invariants = prove
    good_linear_scan_state stout sthout (CONS reg l) (EL reg
      (linear_scan_hidden_state_int_beg sth)) forced mincol /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
-     (linear_scan_hidden_state_colors sth) /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     (linear_scan_hidden_state_colors sth)
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
    (!r. ~(MEM r (CONS reg l)) ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
      (linear_scan_hidden_state_colors sth)) /\
    (!r. MEM r l /\ is_phy_var r ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
-     (linear_scan_hidden_state_colors sth)) /\
-     linear_scan_state_colormax
+     (linear_scan_hidden_state_colors sth))
+     /\ linear_scan_state_colormax
    stout = linear_scan_state_colormax st)`,
   CHEAT_TAC);;
 
@@ -1311,18 +1310,18 @@ let linear_reg_alloc_step_aux_invariants = prove
    good_linear_scan_state stout sthout (CONS reg l) (EL reg
      (linear_scan_hidden_state_int_beg sth)) forced mincol /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
-     (linear_scan_hidden_state_colors sth) /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     (linear_scan_hidden_state_colors sth)
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
    (!r. ~(MEM r (CONS reg l)) ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
      (linear_scan_hidden_state_colors sth)) /\
    (!r. MEM r l /\ is_phy_var r ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
-     (linear_scan_hidden_state_colors sth)) /\
-     linear_scan_state_colormax
+     (linear_scan_hidden_state_colors sth))
+     /\ linear_scan_state_colormax
    stout = linear_scan_state_colormax st)`,
   CHEAT_TAC);;
 
@@ -1360,10 +1359,10 @@ let linear_reg_alloc_step_pass1_invariants = prove
    good_linear_scan_state stout sthout (CONS reg l) (EL reg
      (linear_scan_hidden_state_int_beg sth)) forced mincol /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
-     (linear_scan_hidden_state_colors sth) /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     (linear_scan_hidden_state_colors sth)
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
    (!r. ~(MEM r (CONS reg l)) ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
@@ -1396,18 +1395,18 @@ let linear_reg_alloc_step_pass2_invariants = prove
    good_linear_scan_state stout sthout (CONS reg l) (EL reg
      (linear_scan_hidden_state_int_beg sth)) forced mincol /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
-     (linear_scan_hidden_state_colors sth) /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     (linear_scan_hidden_state_colors sth)
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
    (!r. ~(MEM r (CONS reg l)) ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
      (linear_scan_hidden_state_colors sth)) /\
    (!r. MEM r l /\ is_phy_var r ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
-     (linear_scan_hidden_state_colors sth)) /\
-     linear_scan_state_colormax
+     (linear_scan_hidden_state_colors sth))
+     /\ linear_scan_state_colormax
    stout = linear_scan_state_colormax st)`,
   CHEAT_TAC);;
 
@@ -1453,10 +1452,10 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants_lemma = prove
    good_linear_scan_state stout sthout (APPEND (REVERSE regl) l)
      (posout) forced mincol /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
-     (linear_scan_hidden_state_colors sth) /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     (linear_scan_hidden_state_colors sth)
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
    (!r. ~(MEM r (APPEND l regl)) ==> EL r
      (linear_scan_hidden_state_colors sthout) = EL r
@@ -1491,15 +1490,15 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants = prove
    good_linear_scan_state stout sthout (REVERSE regl) (posout) forced
      mincol /\
    LENGTH (linear_scan_hidden_state_colors sthout) = LENGTH
-     (linear_scan_hidden_state_colors sth) /\
-     linear_scan_hidden_state_int_beg
-   sthout = linear_scan_hidden_state_int_beg sth /\
-     linear_scan_hidden_state_int_end sthout =
+     (linear_scan_hidden_state_colors sth)
+     /\ linear_scan_hidden_state_int_beg
+   sthout = linear_scan_hidden_state_int_beg sth
+     /\ linear_scan_hidden_state_int_end sthout =
      linear_scan_hidden_state_int_end sth /\
    (!r. ~(MEM r regl) ==> EL r (linear_scan_hidden_state_colors
      sthout) = EL r (linear_scan_hidden_state_colors sth)) /\
-   (b ==> phystack_on_stack (REVERSE regl) stout sthout) /\
-     linear_scan_state_colormax
+   (b ==> phystack_on_stack (REVERSE regl) stout sthout)
+     /\ linear_scan_state_colormax
    stout = linear_scan_state_colormax st)`,
   CHEAT_TAC);;
 
@@ -1725,8 +1724,7 @@ let st_ex_FILTER_good_stack = prove
    ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) reglist
      ==>
    st_ex_FILTER_good (\r.
-    st_ex_bind (colors_sub r) (\
-      col.
+    st_ex_bind (colors_sub r) (\col.
       st_ex_return (is_stack_var r \/ k <= col))) reglist sth =
    (M_success (FILTER (\r. is_stack_var r \/ k <= EL r
      (linear_scan_hidden_state_colors sth)) reglist),sth)`,
@@ -2082,8 +2080,7 @@ let linear_reg_alloc_without_renaming_correct = prove
      (linear_scan_hidden_state_int_beg sth) /\
    ALL_DISTINCT reglist_unsorted ==>
    (?sthout livein flivein.
-   st_ex_ignore_bind
-    (get_intervals_ct_monad ct) (
+    st_ex_ignore_bind (get_intervals_ct_monad ct) (
     linear_reg_alloc_intervals k forced moves reglist_unsorted) sth =
       (M_success one,sthout) /\
    check_clash_tree (\r. EL r (linear_scan_hidden_state_colors

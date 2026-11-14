@@ -294,8 +294,8 @@ let ADDR_APPLY_def = define_cases
 let heaps_similar_def = new_definition
   `heaps_similar heap0 heap =
      ALL2 (\h0 h. if isForwardPointer h then
-                      (el_length h = el_length h0) /\
-                        isDataElement h0 else (h = h0)) heap0 heap`;;
+                      (el_length h = el_length h0)
+                        /\ isDataElement h0 else (h = h0)) heap0 heap`;;
 
 let IN_heap_map_IMP = prove
  (`!heap n k. n IN FDOM (heap_map k heap) ==> k <= n`,

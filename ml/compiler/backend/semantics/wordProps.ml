@@ -166,7 +166,8 @@ let get_var_with_const = prove
      wordSem_get_var x y /\
    wordSem_get_var x (wordSem_state_store_fupd (K store) y) =
      wordSem_get_var x y /\
-   wordSem_get_var x (stack_fupd (K xs) y) = wordSem_get_var x y /\
+   wordSem_get_var x (wordSem_state_stack_fupd (K xs) y) =
+     wordSem_get_var x y /\
    wordSem_get_var x (wordSem_state_stack_limit_fupd (K sl) y) =
      wordSem_get_var x y /\
    wordSem_get_var x (wordSem_state_stack_max_fupd (K sm) y) =
@@ -193,16 +194,16 @@ let get_var_with_const = prove
      wordSem_get_var x y /\
    wordSem_get_var x (wordSem_state_handler_fupd (K hd) y) =
      wordSem_get_var x y /\
-   wordSem_get_var x (state_clock_fupd (K clk) y) = wordSem_get_var x
-     y /\
+   wordSem_get_var x (wordSem_state_clock_fupd (K clk) y) =
+     wordSem_get_var x y /\
    wordSem_get_var x (wordSem_state_termdep_fupd (K tdep) y) =
      wordSem_get_var x y /\
    wordSem_get_var x (wordSem_state_code_fupd (K cd) y) =
      wordSem_get_var x y /\
    wordSem_get_var x (wordSem_state_be_fupd (K b) y) =
      wordSem_get_var x y /\
-   wordSem_get_var x (state_ffi_fupd (K ffi) y) = wordSem_get_var x
-     y`,
+   wordSem_get_var x (wordSem_state_ffi_fupd (K ffi) y) =
+     wordSem_get_var x y`,
   CHEAT_TAC);;
 add_simp get_var_with_const;;
 
@@ -213,7 +214,8 @@ let get_vars_with_const = prove
      wordSem_get_vars x y /\
    wordSem_get_vars x (wordSem_state_store_fupd (K store) y) =
      wordSem_get_vars x y /\
-   wordSem_get_vars x (stack_fupd (K xs) y) = wordSem_get_vars x y /\
+   wordSem_get_vars x (wordSem_state_stack_fupd (K xs) y) =
+     wordSem_get_vars x y /\
    wordSem_get_vars x (wordSem_state_stack_limit_fupd (K sl) y) =
      wordSem_get_vars x y /\
    wordSem_get_vars x (wordSem_state_stack_max_fupd (K sm) y) =
@@ -240,62 +242,65 @@ let get_vars_with_const = prove
      wordSem_get_vars x y /\
    wordSem_get_vars x (wordSem_state_handler_fupd (K hd) y) =
      wordSem_get_vars x y /\
-   wordSem_get_vars x (state_clock_fupd (K clk) y) = wordSem_get_vars
-     x y /\
+   wordSem_get_vars x (wordSem_state_clock_fupd (K clk) y) =
+     wordSem_get_vars x y /\
    wordSem_get_vars x (wordSem_state_termdep_fupd (K tdep) y) =
      wordSem_get_vars x y /\
    wordSem_get_vars x (wordSem_state_code_fupd (K cd) y) =
      wordSem_get_vars x y /\
    wordSem_get_vars x (wordSem_state_be_fupd (K b) y) =
      wordSem_get_vars x y /\
-   wordSem_get_vars x (state_ffi_fupd (K ffi) y) = wordSem_get_vars
-     x y`,
+   wordSem_get_vars x (wordSem_state_ffi_fupd (K ffi) y) =
+     wordSem_get_vars x y`,
   CHEAT_TAC);;
 add_simp get_vars_with_const;;
 
 (* set_var_const *)
 let wordProps_set_var_const = prove
  (`wordSem_state_locals_size
-      (wordSem_set_var x y z) = wordSem_state_locals_size z /\
-        wordSem_state_fp_regs
-      (wordSem_set_var x y z) = wordSem_state_fp_regs z /\
-        wordSem_state_store
-      (wordSem_set_var x y z) = wordSem_state_store z /\ stack
-      (wordSem_set_var x y z) = stack z /\ wordSem_state_stack_limit
-      (wordSem_set_var x y z) = wordSem_state_stack_limit z /\
-        wordSem_state_stack_max
-      (wordSem_set_var x y z) = wordSem_state_stack_max z /\
-        wordSem_state_stack_size
-      (wordSem_set_var x y z) = wordSem_state_stack_size z /\
-        wordSem_state_memory
-      (wordSem_set_var x y z) = wordSem_state_memory z /\
-        wordSem_state_mdomain
-      (wordSem_set_var x y z) = wordSem_state_mdomain z /\
-        wordSem_state_sh_mdomain
-      (wordSem_set_var x y z) = wordSem_state_sh_mdomain z /\
-        wordSem_state_permute
-      (wordSem_set_var x y z) = wordSem_state_permute z /\
-        wordSem_state_compile
-      (wordSem_set_var x y z) = wordSem_state_compile z /\
-        wordSem_state_compile_oracle
-      (wordSem_set_var x y z) = wordSem_state_compile_oracle z /\
-        wordSem_state_code_buffer
-      (wordSem_set_var x y z) = wordSem_state_code_buffer z /\
-        wordSem_state_data_buffer
-      (wordSem_set_var x y z) = wordSem_state_data_buffer z /\
-        wordSem_state_gc_fun
-      (wordSem_set_var x y z) = wordSem_state_gc_fun z /\
-        wordSem_state_handler
-      (wordSem_set_var x y z) = wordSem_state_handler z /\
-        state_clock
-      (wordSem_set_var x y z) = state_clock z /\
-        wordSem_state_termdep
-      (wordSem_set_var x y z) = wordSem_state_termdep z /\
-        wordSem_state_code
-      (wordSem_set_var x y z) = wordSem_state_code z /\
-        wordSem_state_be
-      (wordSem_set_var x y z) = wordSem_state_be z /\ state_ffi
-      (wordSem_set_var x y z) = state_ffi z`,
+      (wordSem_set_var x y z) = wordSem_state_locals_size z
+        /\ wordSem_state_fp_regs
+      (wordSem_set_var x y z) = wordSem_state_fp_regs z
+        /\ wordSem_state_store
+      (wordSem_set_var x y z) = wordSem_state_store z
+        /\ wordSem_state_stack
+      (wordSem_set_var x y z) = wordSem_state_stack z
+        /\ wordSem_state_stack_limit
+      (wordSem_set_var x y z) = wordSem_state_stack_limit z
+        /\ wordSem_state_stack_max
+      (wordSem_set_var x y z) = wordSem_state_stack_max z
+        /\ wordSem_state_stack_size
+      (wordSem_set_var x y z) = wordSem_state_stack_size z
+        /\ wordSem_state_memory
+      (wordSem_set_var x y z) = wordSem_state_memory z
+        /\ wordSem_state_mdomain
+      (wordSem_set_var x y z) = wordSem_state_mdomain z
+        /\ wordSem_state_sh_mdomain
+      (wordSem_set_var x y z) = wordSem_state_sh_mdomain z
+        /\ wordSem_state_permute
+      (wordSem_set_var x y z) = wordSem_state_permute z
+        /\ wordSem_state_compile
+      (wordSem_set_var x y z) = wordSem_state_compile z
+        /\ wordSem_state_compile_oracle
+      (wordSem_set_var x y z) = wordSem_state_compile_oracle z
+        /\ wordSem_state_code_buffer
+      (wordSem_set_var x y z) = wordSem_state_code_buffer z
+        /\ wordSem_state_data_buffer
+      (wordSem_set_var x y z) = wordSem_state_data_buffer z
+        /\ wordSem_state_gc_fun
+      (wordSem_set_var x y z) = wordSem_state_gc_fun z
+        /\ wordSem_state_handler
+      (wordSem_set_var x y z) = wordSem_state_handler z
+        /\ wordSem_state_clock
+      (wordSem_set_var x y z) = wordSem_state_clock z
+        /\ wordSem_state_termdep
+      (wordSem_set_var x y z) = wordSem_state_termdep z
+        /\ wordSem_state_code
+      (wordSem_set_var x y z) = wordSem_state_code z
+        /\ wordSem_state_be
+      (wordSem_set_var x y z) = wordSem_state_be z
+        /\ wordSem_state_ffi
+      (wordSem_set_var x y z) = wordSem_state_ffi z`,
   CHEAT_TAC);;
 add_simp wordProps_set_var_const;;
 
@@ -307,8 +312,8 @@ let wordProps_set_var_with_const = prove
      wordSem_state_fp_regs_fupd (K fp) (wordSem_set_var x y z) /\
    wordSem_set_var x y (wordSem_state_store_fupd (K store) z) =
      wordSem_state_store_fupd (K store) (wordSem_set_var x y z) /\
-   wordSem_set_var x y (stack_fupd (K xs) z) = stack_fupd (K xs)
-     (wordSem_set_var x y z) /\
+   wordSem_set_var x y (wordSem_state_stack_fupd (K xs) z) =
+     wordSem_state_stack_fupd (K xs) (wordSem_set_var x y z) /\
    wordSem_set_var x y (wordSem_state_stack_limit_fupd (K sl) z) =
      wordSem_state_stack_limit_fupd (K sl) (wordSem_set_var x y z) /\
    wordSem_set_var x y (wordSem_state_stack_max_fupd (K sm) z) =
@@ -335,61 +340,64 @@ let wordProps_set_var_with_const = prove
      wordSem_state_gc_fun_fupd (K g) (wordSem_set_var x y z) /\
    wordSem_set_var x y (wordSem_state_handler_fupd (K hd) z) =
      wordSem_state_handler_fupd (K hd) (wordSem_set_var x y z) /\
-   wordSem_set_var x y (state_clock_fupd (K clk) z) =
-     state_clock_fupd (K clk) (wordSem_set_var x y z) /\
+   wordSem_set_var x y (wordSem_state_clock_fupd (K clk) z) =
+     wordSem_state_clock_fupd (K clk) (wordSem_set_var x y z) /\
    wordSem_set_var x y (wordSem_state_termdep_fupd (K tdep) z) =
      wordSem_state_termdep_fupd (K tdep) (wordSem_set_var x y z) /\
    wordSem_set_var x y (wordSem_state_code_fupd (K cd) z) =
      wordSem_state_code_fupd (K cd) (wordSem_set_var x y z) /\
    wordSem_set_var x y (wordSem_state_be_fupd (K b) z) =
      wordSem_state_be_fupd (K b) (wordSem_set_var x y z) /\
-   wordSem_set_var x y (state_ffi_fupd (K ffi) z) = state_ffi_fupd
-     (K ffi) (wordSem_set_var x y z)`,
+   wordSem_set_var x y (wordSem_state_ffi_fupd (K ffi) z) =
+     wordSem_state_ffi_fupd (K ffi) (wordSem_set_var x y z)`,
   CHEAT_TAC);;
 add_simp wordProps_set_var_with_const;;
 
 let unset_var_const = prove
  (`wordSem_state_locals_size
-      (wordSem_unset_var x z) = wordSem_state_locals_size z /\
-        wordSem_state_fp_regs
-      (wordSem_unset_var x z) = wordSem_state_fp_regs z /\
-        wordSem_state_store
-      (wordSem_unset_var x z) = wordSem_state_store z /\ stack
-      (wordSem_unset_var x z) = stack z /\ wordSem_state_stack_limit
-      (wordSem_unset_var x z) = wordSem_state_stack_limit z /\
-        wordSem_state_stack_max
-      (wordSem_unset_var x z) = wordSem_state_stack_max z /\
-        wordSem_state_stack_size
-      (wordSem_unset_var x z) = wordSem_state_stack_size z /\
-        wordSem_state_memory
-      (wordSem_unset_var x z) = wordSem_state_memory z /\
-        wordSem_state_mdomain
-      (wordSem_unset_var x z) = wordSem_state_mdomain z /\
-        wordSem_state_sh_mdomain
-      (wordSem_unset_var x z) = wordSem_state_sh_mdomain z /\
-        wordSem_state_permute
-      (wordSem_unset_var x z) = wordSem_state_permute z /\
-        wordSem_state_compile
-      (wordSem_unset_var x z) = wordSem_state_compile z /\
-        wordSem_state_compile_oracle
-      (wordSem_unset_var x z) = wordSem_state_compile_oracle z /\
-        wordSem_state_code_buffer
-      (wordSem_unset_var x z) = wordSem_state_code_buffer z /\
-        wordSem_state_data_buffer
-      (wordSem_unset_var x z) = wordSem_state_data_buffer z /\
-        wordSem_state_gc_fun
-      (wordSem_unset_var x z) = wordSem_state_gc_fun z /\
-        wordSem_state_handler
-      (wordSem_unset_var x z) = wordSem_state_handler z /\
-        state_clock
-      (wordSem_unset_var x z) = state_clock z /\
-        wordSem_state_termdep
-      (wordSem_unset_var x z) = wordSem_state_termdep z /\
-        wordSem_state_code
-      (wordSem_unset_var x z) = wordSem_state_code z /\
-        wordSem_state_be
-      (wordSem_unset_var x z) = wordSem_state_be z /\ state_ffi
-      (wordSem_unset_var x z) = state_ffi z`,
+      (wordSem_unset_var x z) = wordSem_state_locals_size z
+        /\ wordSem_state_fp_regs
+      (wordSem_unset_var x z) = wordSem_state_fp_regs z
+        /\ wordSem_state_store
+      (wordSem_unset_var x z) = wordSem_state_store z
+        /\ wordSem_state_stack
+      (wordSem_unset_var x z) = wordSem_state_stack z
+        /\ wordSem_state_stack_limit
+      (wordSem_unset_var x z) = wordSem_state_stack_limit z
+        /\ wordSem_state_stack_max
+      (wordSem_unset_var x z) = wordSem_state_stack_max z
+        /\ wordSem_state_stack_size
+      (wordSem_unset_var x z) = wordSem_state_stack_size z
+        /\ wordSem_state_memory
+      (wordSem_unset_var x z) = wordSem_state_memory z
+        /\ wordSem_state_mdomain
+      (wordSem_unset_var x z) = wordSem_state_mdomain z
+        /\ wordSem_state_sh_mdomain
+      (wordSem_unset_var x z) = wordSem_state_sh_mdomain z
+        /\ wordSem_state_permute
+      (wordSem_unset_var x z) = wordSem_state_permute z
+        /\ wordSem_state_compile
+      (wordSem_unset_var x z) = wordSem_state_compile z
+        /\ wordSem_state_compile_oracle
+      (wordSem_unset_var x z) = wordSem_state_compile_oracle z
+        /\ wordSem_state_code_buffer
+      (wordSem_unset_var x z) = wordSem_state_code_buffer z
+        /\ wordSem_state_data_buffer
+      (wordSem_unset_var x z) = wordSem_state_data_buffer z
+        /\ wordSem_state_gc_fun
+      (wordSem_unset_var x z) = wordSem_state_gc_fun z
+        /\ wordSem_state_handler
+      (wordSem_unset_var x z) = wordSem_state_handler z
+        /\ wordSem_state_clock
+      (wordSem_unset_var x z) = wordSem_state_clock z
+        /\ wordSem_state_termdep
+      (wordSem_unset_var x z) = wordSem_state_termdep z
+        /\ wordSem_state_code
+      (wordSem_unset_var x z) = wordSem_state_code z
+        /\ wordSem_state_be
+      (wordSem_unset_var x z) = wordSem_state_be z
+        /\ wordSem_state_ffi
+      (wordSem_unset_var x z) = wordSem_state_ffi z`,
   CHEAT_TAC);;
 add_simp unset_var_const;;
 
@@ -400,8 +408,8 @@ let unset_var_with_const = prove
      wordSem_state_fp_regs_fupd (K fp) (wordSem_unset_var x z) /\
    wordSem_unset_var x (wordSem_state_store_fupd (K store) z) =
      wordSem_state_store_fupd (K store) (wordSem_unset_var x z) /\
-   wordSem_unset_var x (stack_fupd (K xs) z) = stack_fupd (K xs)
-     (wordSem_unset_var x z) /\
+   wordSem_unset_var x (wordSem_state_stack_fupd (K xs) z) =
+     wordSem_state_stack_fupd (K xs) (wordSem_unset_var x z) /\
    wordSem_unset_var x (wordSem_state_stack_limit_fupd (K sl) z) =
      wordSem_state_stack_limit_fupd (K sl) (wordSem_unset_var x z) /\
    wordSem_unset_var x (wordSem_state_stack_max_fupd (K sm) z) =
@@ -428,62 +436,65 @@ let unset_var_with_const = prove
      wordSem_state_gc_fun_fupd (K g) (wordSem_unset_var x z) /\
    wordSem_unset_var x (wordSem_state_handler_fupd (K hd) z) =
      wordSem_state_handler_fupd (K hd) (wordSem_unset_var x z) /\
-   wordSem_unset_var x (state_clock_fupd (K clk) z) =
-     state_clock_fupd (K clk) (wordSem_unset_var x z) /\
+   wordSem_unset_var x (wordSem_state_clock_fupd (K clk) z) =
+     wordSem_state_clock_fupd (K clk) (wordSem_unset_var x z) /\
    wordSem_unset_var x (wordSem_state_termdep_fupd (K tdep) z) =
      wordSem_state_termdep_fupd (K tdep) (wordSem_unset_var x z) /\
    wordSem_unset_var x (wordSem_state_code_fupd (K cd) z) =
      wordSem_state_code_fupd (K cd) (wordSem_unset_var x z) /\
    wordSem_unset_var x (wordSem_state_be_fupd (K b) z) =
      wordSem_state_be_fupd (K b) (wordSem_unset_var x z) /\
-   wordSem_unset_var x (state_ffi_fupd (K ffi) z) = state_ffi_fupd
-     (K ffi) (wordSem_unset_var x z)`,
+   wordSem_unset_var x (wordSem_state_ffi_fupd (K ffi) z) =
+     wordSem_state_ffi_fupd (K ffi) (wordSem_unset_var x z)`,
   CHEAT_TAC);;
 add_simp unset_var_with_const;;
 
 (* set_vars_const *)
 let wordProps_set_vars_const = prove
  (`wordSem_state_locals_size
-      (wordSem_set_vars x y z) = wordSem_state_locals_size z /\
-        wordSem_state_fp_regs
-      (wordSem_set_vars x y z) = wordSem_state_fp_regs z /\
-        wordSem_state_store
-      (wordSem_set_vars x y z) = wordSem_state_store z /\ stack
-      (wordSem_set_vars x y z) = stack z /\ wordSem_state_stack_limit
-      (wordSem_set_vars x y z) = wordSem_state_stack_limit z /\
-        wordSem_state_stack_max
-      (wordSem_set_vars x y z) = wordSem_state_stack_max z /\
-        wordSem_state_stack_size
-      (wordSem_set_vars x y z) = wordSem_state_stack_size z /\
-        wordSem_state_memory
-      (wordSem_set_vars x y z) = wordSem_state_memory z /\
-        wordSem_state_mdomain
-      (wordSem_set_vars x y z) = wordSem_state_mdomain z /\
-        wordSem_state_sh_mdomain
-      (wordSem_set_vars x y z) = wordSem_state_sh_mdomain z /\
-        wordSem_state_permute
-      (wordSem_set_vars x y z) = wordSem_state_permute z /\
-        wordSem_state_compile
-      (wordSem_set_vars x y z) = wordSem_state_compile z /\
-        wordSem_state_compile_oracle
-      (wordSem_set_vars x y z) = wordSem_state_compile_oracle z /\
-        wordSem_state_code_buffer
-      (wordSem_set_vars x y z) = wordSem_state_code_buffer z /\
-        wordSem_state_data_buffer
-      (wordSem_set_vars x y z) = wordSem_state_data_buffer z /\
-        wordSem_state_gc_fun
-      (wordSem_set_vars x y z) = wordSem_state_gc_fun z /\
-        wordSem_state_handler
-      (wordSem_set_vars x y z) = wordSem_state_handler z /\
-        state_clock
-      (wordSem_set_vars x y z) = state_clock z /\
-        wordSem_state_termdep
-      (wordSem_set_vars x y z) = wordSem_state_termdep z /\
-        wordSem_state_code
-      (wordSem_set_vars x y z) = wordSem_state_code z /\
-        wordSem_state_be
-      (wordSem_set_vars x y z) = wordSem_state_be z /\ state_ffi
-      (wordSem_set_vars x y z) = state_ffi z`,
+      (wordSem_set_vars x y z) = wordSem_state_locals_size z
+        /\ wordSem_state_fp_regs
+      (wordSem_set_vars x y z) = wordSem_state_fp_regs z
+        /\ wordSem_state_store
+      (wordSem_set_vars x y z) = wordSem_state_store z
+        /\ wordSem_state_stack
+      (wordSem_set_vars x y z) = wordSem_state_stack z
+        /\ wordSem_state_stack_limit
+      (wordSem_set_vars x y z) = wordSem_state_stack_limit z
+        /\ wordSem_state_stack_max
+      (wordSem_set_vars x y z) = wordSem_state_stack_max z
+        /\ wordSem_state_stack_size
+      (wordSem_set_vars x y z) = wordSem_state_stack_size z
+        /\ wordSem_state_memory
+      (wordSem_set_vars x y z) = wordSem_state_memory z
+        /\ wordSem_state_mdomain
+      (wordSem_set_vars x y z) = wordSem_state_mdomain z
+        /\ wordSem_state_sh_mdomain
+      (wordSem_set_vars x y z) = wordSem_state_sh_mdomain z
+        /\ wordSem_state_permute
+      (wordSem_set_vars x y z) = wordSem_state_permute z
+        /\ wordSem_state_compile
+      (wordSem_set_vars x y z) = wordSem_state_compile z
+        /\ wordSem_state_compile_oracle
+      (wordSem_set_vars x y z) = wordSem_state_compile_oracle z
+        /\ wordSem_state_code_buffer
+      (wordSem_set_vars x y z) = wordSem_state_code_buffer z
+        /\ wordSem_state_data_buffer
+      (wordSem_set_vars x y z) = wordSem_state_data_buffer z
+        /\ wordSem_state_gc_fun
+      (wordSem_set_vars x y z) = wordSem_state_gc_fun z
+        /\ wordSem_state_handler
+      (wordSem_set_vars x y z) = wordSem_state_handler z
+        /\ wordSem_state_clock
+      (wordSem_set_vars x y z) = wordSem_state_clock z
+        /\ wordSem_state_termdep
+      (wordSem_set_vars x y z) = wordSem_state_termdep z
+        /\ wordSem_state_code
+      (wordSem_set_vars x y z) = wordSem_state_code z
+        /\ wordSem_state_be
+      (wordSem_set_vars x y z) = wordSem_state_be z
+        /\ wordSem_state_ffi
+      (wordSem_set_vars x y z) = wordSem_state_ffi z`,
   CHEAT_TAC);;
 add_simp wordProps_set_vars_const;;
 
@@ -495,8 +506,8 @@ let wordProps_set_vars_with_const = prove
      wordSem_state_fp_regs_fupd (K fp) (wordSem_set_vars x y z) /\
    wordSem_set_vars x y (wordSem_state_store_fupd (K store) z) =
      wordSem_state_store_fupd (K store) (wordSem_set_vars x y z) /\
-   wordSem_set_vars x y (stack_fupd (K xs) z) = stack_fupd (K xs)
-     (wordSem_set_vars x y z) /\
+   wordSem_set_vars x y (wordSem_state_stack_fupd (K xs) z) =
+     wordSem_state_stack_fupd (K xs) (wordSem_set_vars x y z) /\
    wordSem_set_vars x y (wordSem_state_stack_limit_fupd (K sl) z) =
      wordSem_state_stack_limit_fupd (K sl) (wordSem_set_vars x y z) /\
    wordSem_set_vars x y (wordSem_state_stack_max_fupd (K sm) z) =
@@ -524,16 +535,16 @@ let wordProps_set_vars_with_const = prove
      wordSem_state_gc_fun_fupd (K g) (wordSem_set_vars x y z) /\
    wordSem_set_vars x y (wordSem_state_handler_fupd (K hd) z) =
      wordSem_state_handler_fupd (K hd) (wordSem_set_vars x y z) /\
-   wordSem_set_vars x y (state_clock_fupd (K clk) z) =
-     state_clock_fupd (K clk) (wordSem_set_vars x y z) /\
+   wordSem_set_vars x y (wordSem_state_clock_fupd (K clk) z) =
+     wordSem_state_clock_fupd (K clk) (wordSem_set_vars x y z) /\
    wordSem_set_vars x y (wordSem_state_termdep_fupd (K tdep) z) =
      wordSem_state_termdep_fupd (K tdep) (wordSem_set_vars x y z) /\
    wordSem_set_vars x y (wordSem_state_code_fupd (K cd) z) =
      wordSem_state_code_fupd (K cd) (wordSem_set_vars x y z) /\
    wordSem_set_vars x y (wordSem_state_be_fupd (K b) z) =
      wordSem_state_be_fupd (K b) (wordSem_set_vars x y z) /\
-   wordSem_set_vars x y (state_ffi_fupd (K ffi) z) = state_ffi_fupd
-     (K ffi) (wordSem_set_vars x y z)`,
+   wordSem_set_vars x y (wordSem_state_ffi_fupd (K ffi) z) =
+     wordSem_state_ffi_fupd (K ffi) (wordSem_set_vars x y z)`,
   CHEAT_TAC);;
 add_simp wordProps_set_vars_with_const;;
 
@@ -544,8 +555,8 @@ let get_store_with_const = prove
      wordSem_get_store x y /\
    wordSem_get_store x (wordSem_state_fp_regs_fupd (K fp) y) =
      wordSem_get_store x y /\
-   wordSem_get_store x (stack_fupd (K xs) y) = wordSem_get_store x y
-     /\
+   wordSem_get_store x (wordSem_state_stack_fupd (K xs) y) =
+     wordSem_get_store x y /\
    wordSem_get_store x (wordSem_state_stack_limit_fupd (K sl) y) =
      wordSem_get_store x y /\
    wordSem_get_store x (wordSem_state_stack_max_fupd (K sm) y) =
@@ -572,7 +583,7 @@ let get_store_with_const = prove
      wordSem_get_store x y /\
    wordSem_get_store x (wordSem_state_handler_fupd (K hd) y) =
      wordSem_get_store x y /\
-   wordSem_get_store x (state_clock_fupd (K clk) y) =
+   wordSem_get_store x (wordSem_state_clock_fupd (K clk) y) =
      wordSem_get_store x y /\
    wordSem_get_store x (wordSem_state_termdep_fupd (K tdep) y) =
      wordSem_get_store x y /\
@@ -580,54 +591,56 @@ let get_store_with_const = prove
      wordSem_get_store x y /\
    wordSem_get_store x (wordSem_state_be_fupd (K b) y) =
      wordSem_get_store x y /\
-   wordSem_get_store x (state_ffi_fupd (K ffi) y) =
+   wordSem_get_store x (wordSem_state_ffi_fupd (K ffi) y) =
      wordSem_get_store x y`,
   CHEAT_TAC);;
 add_simp get_store_with_const;;
 
 let set_store_const = prove
  (`wordSem_state_locals
-      (wordSem_set_store x y z) = wordSem_state_locals z /\
-        wordSem_state_locals_size
-      (wordSem_set_store x y z) = wordSem_state_locals_size z /\
-        wordSem_state_fp_regs
-      (wordSem_set_store x y z) = wordSem_state_fp_regs z /\ stack
-      (wordSem_set_store x y z) = stack z /\
-        wordSem_state_stack_limit
-      (wordSem_set_store x y z) = wordSem_state_stack_limit z /\
-        wordSem_state_stack_max
-      (wordSem_set_store x y z) = wordSem_state_stack_max z /\
-        wordSem_state_stack_size
-      (wordSem_set_store x y z) = wordSem_state_stack_size z /\
-        wordSem_state_memory
-      (wordSem_set_store x y z) = wordSem_state_memory z /\
-        wordSem_state_mdomain
-      (wordSem_set_store x y z) = wordSem_state_mdomain z /\
-        wordSem_state_sh_mdomain
-      (wordSem_set_store x y z) = wordSem_state_sh_mdomain z /\
-        wordSem_state_permute
-      (wordSem_set_store x y z) = wordSem_state_permute z /\
-        wordSem_state_compile
-      (wordSem_set_store x y z) = wordSem_state_compile z /\
-        wordSem_state_compile_oracle
-      (wordSem_set_store x y z) = wordSem_state_compile_oracle z /\
-        wordSem_state_code_buffer
-      (wordSem_set_store x y z) = wordSem_state_code_buffer z /\
-        wordSem_state_data_buffer
-      (wordSem_set_store x y z) = wordSem_state_data_buffer z /\
-        wordSem_state_gc_fun
-      (wordSem_set_store x y z) = wordSem_state_gc_fun z /\
-        wordSem_state_handler
-      (wordSem_set_store x y z) = wordSem_state_handler z /\
-        state_clock
-      (wordSem_set_store x y z) = state_clock z /\
-        wordSem_state_termdep
-      (wordSem_set_store x y z) = wordSem_state_termdep z /\
-        wordSem_state_code
-      (wordSem_set_store x y z) = wordSem_state_code z /\
-        wordSem_state_be
-      (wordSem_set_store x y z) = wordSem_state_be z /\ state_ffi
-      (wordSem_set_store x y z) = state_ffi z`,
+      (wordSem_set_store x y z) = wordSem_state_locals z
+        /\ wordSem_state_locals_size
+      (wordSem_set_store x y z) = wordSem_state_locals_size z
+        /\ wordSem_state_fp_regs
+      (wordSem_set_store x y z) = wordSem_state_fp_regs z
+        /\ wordSem_state_stack
+      (wordSem_set_store x y z) = wordSem_state_stack z
+        /\ wordSem_state_stack_limit
+      (wordSem_set_store x y z) = wordSem_state_stack_limit z
+        /\ wordSem_state_stack_max
+      (wordSem_set_store x y z) = wordSem_state_stack_max z
+        /\ wordSem_state_stack_size
+      (wordSem_set_store x y z) = wordSem_state_stack_size z
+        /\ wordSem_state_memory
+      (wordSem_set_store x y z) = wordSem_state_memory z
+        /\ wordSem_state_mdomain
+      (wordSem_set_store x y z) = wordSem_state_mdomain z
+        /\ wordSem_state_sh_mdomain
+      (wordSem_set_store x y z) = wordSem_state_sh_mdomain z
+        /\ wordSem_state_permute
+      (wordSem_set_store x y z) = wordSem_state_permute z
+        /\ wordSem_state_compile
+      (wordSem_set_store x y z) = wordSem_state_compile z
+        /\ wordSem_state_compile_oracle
+      (wordSem_set_store x y z) = wordSem_state_compile_oracle z
+        /\ wordSem_state_code_buffer
+      (wordSem_set_store x y z) = wordSem_state_code_buffer z
+        /\ wordSem_state_data_buffer
+      (wordSem_set_store x y z) = wordSem_state_data_buffer z
+        /\ wordSem_state_gc_fun
+      (wordSem_set_store x y z) = wordSem_state_gc_fun z
+        /\ wordSem_state_handler
+      (wordSem_set_store x y z) = wordSem_state_handler z
+        /\ wordSem_state_clock
+      (wordSem_set_store x y z) = wordSem_state_clock z
+        /\ wordSem_state_termdep
+      (wordSem_set_store x y z) = wordSem_state_termdep z
+        /\ wordSem_state_code
+      (wordSem_set_store x y z) = wordSem_state_code z
+        /\ wordSem_state_be
+      (wordSem_set_store x y z) = wordSem_state_be z
+        /\ wordSem_state_ffi
+      (wordSem_set_store x y z) = wordSem_state_ffi z`,
   CHEAT_TAC);;
 add_simp set_store_const;;
 
@@ -638,8 +651,8 @@ let set_store_with_const = prove
      wordSem_state_locals_size_fupd (K ls) (wordSem_set_store x y z) /\
    wordSem_set_store x y (wordSem_state_fp_regs_fupd (K fp) z) =
      wordSem_state_fp_regs_fupd (K fp) (wordSem_set_store x y z) /\
-   wordSem_set_store x y (stack_fupd (K xs) z) = stack_fupd (K xs)
-     (wordSem_set_store x y z) /\
+   wordSem_set_store x y (wordSem_state_stack_fupd (K xs) z) =
+     wordSem_state_stack_fupd (K xs) (wordSem_set_store x y z) /\
    wordSem_set_store x y (wordSem_state_stack_limit_fupd (K sl) z) =
      wordSem_state_stack_limit_fupd (K sl) (wordSem_set_store x y z) /\
    wordSem_set_store x y (wordSem_state_stack_max_fupd (K sm) z) =
@@ -668,64 +681,65 @@ let set_store_with_const = prove
      wordSem_state_gc_fun_fupd (K g) (wordSem_set_store x y z) /\
    wordSem_set_store x y (wordSem_state_handler_fupd (K hd) z) =
      wordSem_state_handler_fupd (K hd) (wordSem_set_store x y z) /\
-   wordSem_set_store x y (state_clock_fupd (K clk) z) =
-     state_clock_fupd (K clk) (wordSem_set_store x y z) /\
+   wordSem_set_store x y (wordSem_state_clock_fupd (K clk) z) =
+     wordSem_state_clock_fupd (K clk) (wordSem_set_store x y z) /\
    wordSem_set_store x y (wordSem_state_termdep_fupd (K tdep) z) =
      wordSem_state_termdep_fupd (K tdep) (wordSem_set_store x y z) /\
    wordSem_set_store x y (wordSem_state_code_fupd (K cd) z) =
      wordSem_state_code_fupd (K cd) (wordSem_set_store x y z) /\
    wordSem_set_store x y (wordSem_state_be_fupd (K b) z) =
      wordSem_state_be_fupd (K b) (wordSem_set_store x y z) /\
-   wordSem_set_store x y (state_ffi_fupd (K ffi) z) =
-     state_ffi_fupd (K ffi) (wordSem_set_store x y z)`,
+   wordSem_set_store x y (wordSem_state_ffi_fupd (K ffi) z) =
+     wordSem_state_ffi_fupd (K ffi) (wordSem_set_store x y z)`,
   CHEAT_TAC);;
 add_simp set_store_with_const;;
 
 
 (* push_env_const *)
 let wordProps_push_env_const = prove
- (`state_clock
-      (wordSem_push_env x y z) = state_clock z /\
-        wordSem_state_memory
-      (wordSem_push_env x y z) = wordSem_state_memory z /\
-        wordSem_state_store
-      (wordSem_push_env x y z) = wordSem_state_store z /\
-        wordSem_state_handler
-      (wordSem_push_env x NONE z) = wordSem_state_handler z /\
-        state_ffi
-      (wordSem_push_env x y z) = state_ffi z /\ wordSem_state_termdep
-      (wordSem_push_env x y z) = wordSem_state_termdep z /\
-        wordSem_state_data_buffer
-      (wordSem_push_env x y z) = wordSem_state_data_buffer z /\
-        wordSem_state_code_buffer
-      (wordSem_push_env x y z) = wordSem_state_code_buffer z /\
-        wordSem_state_compile
-      (wordSem_push_env x y z) = wordSem_state_compile z /\
-        wordSem_state_compile_oracle
-      (wordSem_push_env x y z) = wordSem_state_compile_oracle z /\
-        wordSem_state_mdomain
-      (wordSem_push_env x y z) = wordSem_state_mdomain z /\
-        wordSem_state_sh_mdomain
-      (wordSem_push_env x y z) = wordSem_state_sh_mdomain z /\
-        wordSem_state_gc_fun
-      (wordSem_push_env x y z) = wordSem_state_gc_fun z /\
-        wordSem_state_be
-      (wordSem_push_env x y z) = wordSem_state_be z /\
-        wordSem_state_fp_regs
-      (wordSem_push_env x y z) = wordSem_state_fp_regs z /\
-        wordSem_state_code
-      (wordSem_push_env x y z) = wordSem_state_code z /\
-        wordSem_state_stack_limit
-      (wordSem_push_env x y z) = wordSem_state_stack_limit z /\
-        wordSem_state_stack_size
+ (`wordSem_state_clock
+      (wordSem_push_env x y z) = wordSem_state_clock z
+        /\ wordSem_state_memory
+      (wordSem_push_env x y z) = wordSem_state_memory z
+        /\ wordSem_state_store
+      (wordSem_push_env x y z) = wordSem_state_store z
+        /\ wordSem_state_handler
+      (wordSem_push_env x NONE z) = wordSem_state_handler z
+        /\ wordSem_state_ffi
+      (wordSem_push_env x y z) = wordSem_state_ffi z
+        /\ wordSem_state_termdep
+      (wordSem_push_env x y z) = wordSem_state_termdep z
+        /\ wordSem_state_data_buffer
+      (wordSem_push_env x y z) = wordSem_state_data_buffer z
+        /\ wordSem_state_code_buffer
+      (wordSem_push_env x y z) = wordSem_state_code_buffer z
+        /\ wordSem_state_compile
+      (wordSem_push_env x y z) = wordSem_state_compile z
+        /\ wordSem_state_compile_oracle
+      (wordSem_push_env x y z) = wordSem_state_compile_oracle z
+        /\ wordSem_state_mdomain
+      (wordSem_push_env x y z) = wordSem_state_mdomain z
+        /\ wordSem_state_sh_mdomain
+      (wordSem_push_env x y z) = wordSem_state_sh_mdomain z
+        /\ wordSem_state_gc_fun
+      (wordSem_push_env x y z) = wordSem_state_gc_fun z
+        /\ wordSem_state_be
+      (wordSem_push_env x y z) = wordSem_state_be z
+        /\ wordSem_state_fp_regs
+      (wordSem_push_env x y z) = wordSem_state_fp_regs z
+        /\ wordSem_state_code
+      (wordSem_push_env x y z) = wordSem_state_code z
+        /\ wordSem_state_stack_limit
+      (wordSem_push_env x y z) = wordSem_state_stack_limit z
+        /\ wordSem_state_stack_size
       (wordSem_push_env x y z) = wordSem_state_stack_size z`,
   CHEAT_TAC);;
 add_simp wordProps_push_env_const;;
 
 (* push_env_with_const *)
 let wordProps_push_env_with_const = prove
- (`(wordSem_push_env x y (state_clock_fupd (K k) z) = state_clock_fupd
-  (K k) (wordSem_push_env x y z)) /\
+ (`(wordSem_push_env x y (wordSem_state_clock_fupd (K k) z) =
+  wordSem_state_clock_fupd (K k) (wordSem_push_env x y z)) /\
    (wordSem_push_env x y (wordSem_state_compile_fupd (K c) z) =
      wordSem_state_compile_fupd (K c) (wordSem_push_env x y z)) /\
    (wordSem_push_env x y (wordSem_state_compile_oracle_fupd (K co) z)
@@ -742,9 +756,9 @@ add_simp wordProps_push_env_with_const;;
 
 (* pop_env_const *)
 let wordProps_pop_env_const = prove
- (`wordSem_pop_env x = SOME y ==> state_clock
-   y = state_clock x /\ state_ffi
-   y = state_ffi x /\ wordSem_state_be
+ (`wordSem_pop_env x = SOME y ==> wordSem_state_clock
+   y = wordSem_state_clock x /\ wordSem_state_ffi
+   y = wordSem_state_ffi x /\ wordSem_state_be
    y = wordSem_state_be x /\ wordSem_state_compile
    y = wordSem_state_compile x /\ wordSem_state_compile_oracle
    y = wordSem_state_compile_oracle x /\ wordSem_state_memory
@@ -766,7 +780,7 @@ let wordProps_pop_env_const = prove
 
 (* pop_env_with_const *)
 let wordProps_pop_env_with_const = prove
- (`wordSem_pop_env (state_clock_fupd (K k) z) = OPTION_MAP (\s.
+ (`wordSem_pop_env (wordSem_state_clock_fupd (K k) z) = OPTION_MAP (\s.
   wordSem_state_clock_fupd (K k) s) (wordSem_pop_env z) /\
    wordSem_pop_env (wordSem_state_compile_fupd (K c) z) = OPTION_MAP
      (\s. wordSem_state_compile_fupd (K c) s) (wordSem_pop_env z) /\
@@ -795,8 +809,8 @@ let pop_env_code_gc_fun_clock = prove
    r = wordSem_state_code x /\ wordSem_state_code_buffer
    r = wordSem_state_code_buffer x /\ wordSem_state_data_buffer
    r = wordSem_state_data_buffer x /\ wordSem_state_gc_fun
-   r = wordSem_state_gc_fun x /\ state_clock
-   r = state_clock x /\ wordSem_state_be
+   r = wordSem_state_gc_fun x /\ wordSem_state_clock
+   r = wordSem_state_clock x /\ wordSem_state_be
    r = wordSem_state_be x /\ wordSem_state_mdomain
    r = wordSem_state_mdomain x /\ wordSem_state_sh_mdomain
    r = wordSem_state_sh_mdomain x /\ wordSem_state_compile
@@ -810,37 +824,40 @@ let pop_env_code_gc_fun_clock = prove
 (* call_env_const *)
 let wordProps_call_env_const = prove
  (`wordSem_state_store
-      (wordSem_call_env x ss y) = wordSem_state_store y /\
-        wordSem_state_termdep
-      (wordSem_call_env x ss y) = wordSem_state_termdep y /\
-        state_clock
-      (wordSem_call_env x ss y) = state_clock y /\
-        wordSem_state_handler
-      (wordSem_call_env x ss y) = wordSem_state_handler y /\ stack
-      (wordSem_call_env x ss y) = stack y /\
-        wordSem_state_compile_oracle
-      (wordSem_call_env x ss y) = wordSem_state_compile_oracle y /\
-        wordSem_state_compile
-      (wordSem_call_env x ss y) = wordSem_state_compile y /\
-        wordSem_state_be
-      (wordSem_call_env x ss y) = wordSem_state_be y /\
-        wordSem_state_memory
-      (wordSem_call_env x ss y) = wordSem_state_memory y /\
-        wordSem_state_mdomain
-      (wordSem_call_env x ss y) = wordSem_state_mdomain y /\
-        wordSem_state_sh_mdomain
-      (wordSem_call_env x ss y) = wordSem_state_sh_mdomain y /\
-        wordSem_state_gc_fun
-      (wordSem_call_env x ss y) = wordSem_state_gc_fun y /\ state_ffi
-      (wordSem_call_env x ss y) = state_ffi y /\ wordSem_state_code
-      (wordSem_call_env x ss y) = wordSem_state_code y /\
-        wordSem_state_code_buffer
-      (wordSem_call_env x ss y) = wordSem_state_code_buffer y /\
-        wordSem_state_data_buffer
-      (wordSem_call_env x ss y) = wordSem_state_data_buffer y /\
-        wordSem_state_stack_limit
-      (wordSem_call_env x ss y) = wordSem_state_stack_limit y /\
-        wordSem_state_stack_size
+      (wordSem_call_env x ss y) = wordSem_state_store y
+        /\ wordSem_state_termdep
+      (wordSem_call_env x ss y) = wordSem_state_termdep y
+        /\ wordSem_state_clock
+      (wordSem_call_env x ss y) = wordSem_state_clock y
+        /\ wordSem_state_handler
+      (wordSem_call_env x ss y) = wordSem_state_handler y
+        /\ wordSem_state_stack
+      (wordSem_call_env x ss y) = wordSem_state_stack y
+        /\ wordSem_state_compile_oracle
+      (wordSem_call_env x ss y) = wordSem_state_compile_oracle y
+        /\ wordSem_state_compile
+      (wordSem_call_env x ss y) = wordSem_state_compile y
+        /\ wordSem_state_be
+      (wordSem_call_env x ss y) = wordSem_state_be y
+        /\ wordSem_state_memory
+      (wordSem_call_env x ss y) = wordSem_state_memory y
+        /\ wordSem_state_mdomain
+      (wordSem_call_env x ss y) = wordSem_state_mdomain y
+        /\ wordSem_state_sh_mdomain
+      (wordSem_call_env x ss y) = wordSem_state_sh_mdomain y
+        /\ wordSem_state_gc_fun
+      (wordSem_call_env x ss y) = wordSem_state_gc_fun y
+        /\ wordSem_state_ffi
+      (wordSem_call_env x ss y) = wordSem_state_ffi y
+        /\ wordSem_state_code
+      (wordSem_call_env x ss y) = wordSem_state_code y
+        /\ wordSem_state_code_buffer
+      (wordSem_call_env x ss y) = wordSem_state_code_buffer y
+        /\ wordSem_state_data_buffer
+      (wordSem_call_env x ss y) = wordSem_state_data_buffer y
+        /\ wordSem_state_stack_limit
+      (wordSem_call_env x ss y) = wordSem_state_stack_limit y
+        /\ wordSem_state_stack_size
       (wordSem_call_env x ss y) = wordSem_state_stack_size y`,
   CHEAT_TAC);;
 add_simp wordProps_call_env_const;;
@@ -849,8 +866,8 @@ add_simp wordProps_call_env_const;;
 let wordProps_call_env_with_const = prove
  (`wordSem_call_env x ss (wordSem_state_locals_fupd (K l) y) =
   wordSem_call_env x ss y /\
-   wordSem_call_env x ss (state_clock_fupd (K k) y) =
-     state_clock_fupd (K k) (wordSem_call_env x ss y) /\
+   wordSem_call_env x ss (wordSem_state_clock_fupd (K k) y) =
+     wordSem_state_clock_fupd (K k) (wordSem_call_env x ss y) /\
    wordSem_call_env x ss (wordSem_state_termdep_fupd (K termdep) y) =
      wordSem_state_termdep_fupd (K termdep) (wordSem_call_env x ss y) /\
    wordSem_call_env x ss (wordSem_state_compile_fupd (K c) y) =
@@ -868,27 +885,30 @@ let wordProps_call_env_with_const = prove
 add_simp wordProps_call_env_with_const;;
 
 let flush_state_const = prove
- (`state_clock
-      (wordSem_flush_state b y) = state_clock y /\
-        wordSem_state_compile_oracle
-      (wordSem_flush_state b y) = wordSem_state_compile_oracle y /\
-        wordSem_state_compile
-      (wordSem_flush_state b y) = wordSem_state_compile y /\
-        wordSem_state_be
-      (wordSem_flush_state b y) = wordSem_state_be y /\
-        wordSem_state_gc_fun
-      (wordSem_flush_state b y) = wordSem_state_gc_fun y /\ state_ffi
-      (wordSem_flush_state b y) = state_ffi y /\ wordSem_state_code
-      (wordSem_flush_state b y) = wordSem_state_code y /\
-        wordSem_state_code_buffer
-      (wordSem_flush_state b y) = wordSem_state_code_buffer y /\
-        wordSem_state_data_buffer
-      (wordSem_flush_state b y) = wordSem_state_data_buffer y /\
-        wordSem_state_stack_limit
-      (wordSem_flush_state b y) = wordSem_state_stack_limit y /\
-        wordSem_state_stack_size
-      (wordSem_flush_state b y) = wordSem_state_stack_size y /\ stack
-      (wordSem_flush_state F y) = stack y`,
+ (`wordSem_state_clock
+      (wordSem_flush_state b y) = wordSem_state_clock y
+        /\ wordSem_state_compile_oracle
+      (wordSem_flush_state b y) = wordSem_state_compile_oracle y
+        /\ wordSem_state_compile
+      (wordSem_flush_state b y) = wordSem_state_compile y
+        /\ wordSem_state_be
+      (wordSem_flush_state b y) = wordSem_state_be y
+        /\ wordSem_state_gc_fun
+      (wordSem_flush_state b y) = wordSem_state_gc_fun y
+        /\ wordSem_state_ffi
+      (wordSem_flush_state b y) = wordSem_state_ffi y
+        /\ wordSem_state_code
+      (wordSem_flush_state b y) = wordSem_state_code y
+        /\ wordSem_state_code_buffer
+      (wordSem_flush_state b y) = wordSem_state_code_buffer y
+        /\ wordSem_state_data_buffer
+      (wordSem_flush_state b y) = wordSem_state_data_buffer y
+        /\ wordSem_state_stack_limit
+      (wordSem_flush_state b y) = wordSem_state_stack_limit y
+        /\ wordSem_state_stack_size
+      (wordSem_flush_state b y) = wordSem_state_stack_size y
+        /\ wordSem_state_stack
+      (wordSem_flush_state F y) = wordSem_state_stack y`,
   CHEAT_TAC);;
 add_simp flush_state_const;;
 
@@ -897,20 +917,20 @@ let flush_state_with_const = prove
   wordSem_flush_state b y /\
    wordSem_flush_state b (wordSem_state_locals_size_fupd (K ls) y) =
      wordSem_flush_state b y /\
-   wordSem_flush_state T (stack_fupd (K xs) y) = wordSem_flush_state
-     T y /\
+   wordSem_flush_state T (wordSem_state_stack_fupd (K xs) y) =
+     wordSem_flush_state T y /\
    wordSem_flush_state b (wordSem_state_permute_fupd (K p) y) =
      wordSem_state_permute_fupd (K p) (wordSem_flush_state b y) /\
    wordSem_flush_state b (wordSem_state_stack_max_fupd (K sm) y) =
      wordSem_state_stack_max_fupd (K sm) (wordSem_flush_state b y) /\
-   wordSem_flush_state b (state_clock_fupd (K k) y) =
-     state_clock_fupd (K k) (wordSem_flush_state b y)`,
+   wordSem_flush_state b (wordSem_state_clock_fupd (K k) y) =
+     wordSem_state_clock_fupd (K k) (wordSem_flush_state b y)`,
   CHEAT_TAC);;
 add_simp flush_state_with_const;;
 
 let has_space_with_const = prove
- (`wordSem_has_space x (state_clock_fupd (K k) y) = wordSem_has_space x
-  y /\
+ (`wordSem_has_space x (wordSem_state_clock_fupd (K k) y) =
+  wordSem_has_space x y /\
    wordSem_has_space x (wordSem_state_compile_fupd (K c) y) =
      wordSem_has_space x y /\
    wordSem_has_space x (wordSem_state_compile_oracle_fupd (K co) y) =
@@ -923,15 +943,15 @@ let has_space_with_const = prove
      wordSem_has_space x y /\
    wordSem_has_space x (wordSem_state_locals_size_fupd (K ls) y) =
      wordSem_has_space x y /\
-   wordSem_has_space x (stack_fupd (K xs) y) = wordSem_has_space x
-     y`,
+   wordSem_has_space x (wordSem_state_stack_fupd (K xs) y) =
+     wordSem_has_space x y`,
   CHEAT_TAC);;
 add_simp has_space_with_const;;
 
 let gc_const = prove
- (`wordSem_gc x = SOME y ==> state_clock
-   y = state_clock x /\ state_ffi
-   y = state_ffi x /\ wordSem_state_code
+ (`wordSem_gc x = SOME y ==> wordSem_state_clock
+   y = wordSem_state_clock x /\ wordSem_state_ffi
+   y = wordSem_state_ffi x /\ wordSem_state_code
    y = wordSem_state_code x /\ wordSem_state_be
    y = wordSem_state_be x /\ wordSem_state_code_buffer
    y = wordSem_state_code_buffer x /\ wordSem_state_data_buffer
@@ -946,7 +966,7 @@ let gc_const = prove
   CHEAT_TAC);;
 
 let gc_with_const = prove
- (`wordSem_gc (state_clock_fupd (K k) x) = OPTION_MAP (\s.
+ (`wordSem_gc (wordSem_state_clock_fupd (K k) x) = OPTION_MAP (\s.
   wordSem_state_clock_fupd (K k) s) (wordSem_gc x) /\
    wordSem_gc (wordSem_state_compile_fupd (K c) x) = OPTION_MAP (\s.
      wordSem_state_compile_fupd (K c) s) (wordSem_gc x) /\
@@ -968,8 +988,8 @@ let gc_with_const = prove
 add_simp gc_with_const;;
 
 let alloc_const = prove
- (`wordSem_alloc c names s = (r,s') ==> state_clock
-   s' = wordSem_state_clock s /\ state_ffi
+ (`wordSem_alloc c names s = (r,s') ==> wordSem_state_clock
+   s' = wordSem_state_clock s /\ wordSem_state_ffi
    s' = wordSem_state_ffi s /\ wordSem_state_code
    s' = wordSem_state_code s /\ wordSem_state_be
    s' = wordSem_state_be s /\ wordSem_state_code_buffer
@@ -1026,8 +1046,8 @@ let get_fp_var_with_const = prove
      wordSem_get_fp_var x y /\
    wordSem_get_fp_var x (wordSem_state_store_fupd (K store) y) =
      wordSem_get_fp_var x y /\
-   wordSem_get_fp_var x (stack_fupd (K xs) y) = wordSem_get_fp_var x
-     y /\
+   wordSem_get_fp_var x (wordSem_state_stack_fupd (K xs) y) =
+     wordSem_get_fp_var x y /\
    wordSem_get_fp_var x (wordSem_state_stack_limit_fupd (K sl) y) =
      wordSem_get_fp_var x y /\
    wordSem_get_fp_var x (wordSem_state_stack_max_fupd (K sm) y) =
@@ -1054,7 +1074,7 @@ let get_fp_var_with_const = prove
      wordSem_get_fp_var x y /\
    wordSem_get_fp_var x (wordSem_state_handler_fupd (K hd) y) =
      wordSem_get_fp_var x y /\
-   wordSem_get_fp_var x (state_clock_fupd (K clk) y) =
+   wordSem_get_fp_var x (wordSem_state_clock_fupd (K clk) y) =
      wordSem_get_fp_var x y /\
    wordSem_get_fp_var x (wordSem_state_termdep_fupd (K tdep) y) =
      wordSem_get_fp_var x y /\
@@ -1062,54 +1082,56 @@ let get_fp_var_with_const = prove
      wordSem_get_fp_var x y /\
    wordSem_get_fp_var x (wordSem_state_be_fupd (K b) y) =
      wordSem_get_fp_var x y /\
-   wordSem_get_fp_var x (state_ffi_fupd (K ffi) y) =
+   wordSem_get_fp_var x (wordSem_state_ffi_fupd (K ffi) y) =
      wordSem_get_fp_var x y`,
   CHEAT_TAC);;
 add_simp get_fp_var_with_const;;
 
 let set_fp_var_const = prove
  (`wordSem_state_locals
-      (wordSem_set_fp_var x y z) = wordSem_state_locals z /\
-        wordSem_state_locals_size
-      (wordSem_set_fp_var x y z) = wordSem_state_locals_size z /\
-        wordSem_state_store
-      (wordSem_set_fp_var x y z) = wordSem_state_store z /\ stack
-      (wordSem_set_fp_var x y z) = stack z /\
-        wordSem_state_stack_limit
-      (wordSem_set_fp_var x y z) = wordSem_state_stack_limit z /\
-        wordSem_state_stack_max
-      (wordSem_set_fp_var x y z) = wordSem_state_stack_max z /\
-        wordSem_state_stack_size
-      (wordSem_set_fp_var x y z) = wordSem_state_stack_size z /\
-        wordSem_state_memory
-      (wordSem_set_fp_var x y z) = wordSem_state_memory z /\
-        wordSem_state_mdomain
-      (wordSem_set_fp_var x y z) = wordSem_state_mdomain z /\
-        wordSem_state_sh_mdomain
-      (wordSem_set_fp_var x y z) = wordSem_state_sh_mdomain z /\
-        wordSem_state_permute
-      (wordSem_set_fp_var x y z) = wordSem_state_permute z /\
-        wordSem_state_compile
-      (wordSem_set_fp_var x y z) = wordSem_state_compile z /\
-        wordSem_state_compile_oracle
-      (wordSem_set_fp_var x y z) = wordSem_state_compile_oracle z /\
-        wordSem_state_code_buffer
-      (wordSem_set_fp_var x y z) = wordSem_state_code_buffer z /\
-        wordSem_state_data_buffer
-      (wordSem_set_fp_var x y z) = wordSem_state_data_buffer z /\
-        wordSem_state_gc_fun
-      (wordSem_set_fp_var x y z) = wordSem_state_gc_fun z /\
-        wordSem_state_handler
-      (wordSem_set_fp_var x y z) = wordSem_state_handler z /\
-        state_clock
-      (wordSem_set_fp_var x y z) = state_clock z /\
-        wordSem_state_termdep
-      (wordSem_set_fp_var x y z) = wordSem_state_termdep z /\
-        wordSem_state_code
-      (wordSem_set_fp_var x y z) = wordSem_state_code z /\
-        wordSem_state_be
-      (wordSem_set_fp_var x y z) = wordSem_state_be z /\ state_ffi
-      (wordSem_set_fp_var x y z) = state_ffi z`,
+      (wordSem_set_fp_var x y z) = wordSem_state_locals z
+        /\ wordSem_state_locals_size
+      (wordSem_set_fp_var x y z) = wordSem_state_locals_size z
+        /\ wordSem_state_store
+      (wordSem_set_fp_var x y z) = wordSem_state_store z
+        /\ wordSem_state_stack
+      (wordSem_set_fp_var x y z) = wordSem_state_stack z
+        /\ wordSem_state_stack_limit
+      (wordSem_set_fp_var x y z) = wordSem_state_stack_limit z
+        /\ wordSem_state_stack_max
+      (wordSem_set_fp_var x y z) = wordSem_state_stack_max z
+        /\ wordSem_state_stack_size
+      (wordSem_set_fp_var x y z) = wordSem_state_stack_size z
+        /\ wordSem_state_memory
+      (wordSem_set_fp_var x y z) = wordSem_state_memory z
+        /\ wordSem_state_mdomain
+      (wordSem_set_fp_var x y z) = wordSem_state_mdomain z
+        /\ wordSem_state_sh_mdomain
+      (wordSem_set_fp_var x y z) = wordSem_state_sh_mdomain z
+        /\ wordSem_state_permute
+      (wordSem_set_fp_var x y z) = wordSem_state_permute z
+        /\ wordSem_state_compile
+      (wordSem_set_fp_var x y z) = wordSem_state_compile z
+        /\ wordSem_state_compile_oracle
+      (wordSem_set_fp_var x y z) = wordSem_state_compile_oracle z
+        /\ wordSem_state_code_buffer
+      (wordSem_set_fp_var x y z) = wordSem_state_code_buffer z
+        /\ wordSem_state_data_buffer
+      (wordSem_set_fp_var x y z) = wordSem_state_data_buffer z
+        /\ wordSem_state_gc_fun
+      (wordSem_set_fp_var x y z) = wordSem_state_gc_fun z
+        /\ wordSem_state_handler
+      (wordSem_set_fp_var x y z) = wordSem_state_handler z
+        /\ wordSem_state_clock
+      (wordSem_set_fp_var x y z) = wordSem_state_clock z
+        /\ wordSem_state_termdep
+      (wordSem_set_fp_var x y z) = wordSem_state_termdep z
+        /\ wordSem_state_code
+      (wordSem_set_fp_var x y z) = wordSem_state_code z
+        /\ wordSem_state_be
+      (wordSem_set_fp_var x y z) = wordSem_state_be z
+        /\ wordSem_state_ffi
+      (wordSem_set_fp_var x y z) = wordSem_state_ffi z`,
   CHEAT_TAC);;
 add_simp set_fp_var_const;;
 
@@ -1120,8 +1142,8 @@ let set_fp_var_with_const = prove
      wordSem_state_locals_size_fupd (K ls) (wordSem_set_fp_var x y z) /\
    wordSem_set_fp_var x y (wordSem_state_store_fupd (K store) z) =
      wordSem_state_store_fupd (K store) (wordSem_set_fp_var x y z) /\
-   wordSem_set_fp_var x y (stack_fupd (K xs) z) = stack_fupd (K xs)
-     (wordSem_set_fp_var x y z) /\
+   wordSem_set_fp_var x y (wordSem_state_stack_fupd (K xs) z) =
+     wordSem_state_stack_fupd (K xs) (wordSem_set_fp_var x y z) /\
    wordSem_set_fp_var x y (wordSem_state_stack_limit_fupd (K sl) z) =
      wordSem_state_stack_limit_fupd (K sl) (wordSem_set_fp_var x y z) /\
    wordSem_set_fp_var x y (wordSem_state_stack_max_fupd (K sm) z) =
@@ -1150,16 +1172,16 @@ let set_fp_var_with_const = prove
      wordSem_state_gc_fun_fupd (K g) (wordSem_set_fp_var x y z) /\
    wordSem_set_fp_var x y (wordSem_state_handler_fupd (K hd) z) =
      wordSem_state_handler_fupd (K hd) (wordSem_set_fp_var x y z) /\
-   wordSem_set_fp_var x y (state_clock_fupd (K clk) z) =
-     state_clock_fupd (K clk) (wordSem_set_fp_var x y z) /\
+   wordSem_set_fp_var x y (wordSem_state_clock_fupd (K clk) z) =
+     wordSem_state_clock_fupd (K clk) (wordSem_set_fp_var x y z) /\
    wordSem_set_fp_var x y (wordSem_state_termdep_fupd (K tdep) z) =
      wordSem_state_termdep_fupd (K tdep) (wordSem_set_fp_var x y z) /\
    wordSem_set_fp_var x y (wordSem_state_code_fupd (K cd) z) =
      wordSem_state_code_fupd (K cd) (wordSem_set_fp_var x y z) /\
    wordSem_set_fp_var x y (wordSem_state_be_fupd (K b) z) =
      wordSem_state_be_fupd (K b) (wordSem_set_fp_var x y z) /\
-   wordSem_set_fp_var x y (state_ffi_fupd (K ffi) z) =
-     state_ffi_fupd (K ffi) (wordSem_set_fp_var x y z)`,
+   wordSem_set_fp_var x y (wordSem_state_ffi_fupd (K ffi) z) =
+     wordSem_state_ffi_fupd (K ffi) (wordSem_set_fp_var x y z)`,
   CHEAT_TAC);;
 add_simp set_fp_var_with_const;;
 
@@ -1168,9 +1190,10 @@ let mem_load_with_const = prove
   wordSem_mem_load x y /\
    wordSem_mem_load x (wordSem_state_termdep_fupd (K td) y) =
      wordSem_mem_load x y /\
-   wordSem_mem_load x (state_clock_fupd (K k) y) = wordSem_mem_load x
-     y /\
-   wordSem_mem_load x (stack_fupd (K xs) y) = wordSem_mem_load x y /\
+   wordSem_mem_load x (wordSem_state_clock_fupd (K k) y) =
+     wordSem_mem_load x y /\
+   wordSem_mem_load x (wordSem_state_stack_fupd (K xs) y) =
+     wordSem_mem_load x y /\
    wordSem_mem_load x (wordSem_state_permute_fupd (K perm) y) =
      wordSem_mem_load x y /\
    wordSem_mem_load x (wordSem_state_code_fupd (K c) y) =
@@ -1184,20 +1207,20 @@ add_simp mem_load_with_const;;
 
 let mem_store_const = prove
  (`wordSem_mem_store x y z = SOME a ==> wordSem_state_locals
-   a = wordSem_state_locals z /\ state_clock
-   a = state_clock z /\ wordSem_state_be
+   a = wordSem_state_locals z /\ wordSem_state_clock
+   a = wordSem_state_clock z /\ wordSem_state_be
    a = wordSem_state_be z /\ wordSem_state_gc_fun
    a = wordSem_state_gc_fun z /\ wordSem_state_mdomain
    a = wordSem_state_mdomain z /\ wordSem_state_sh_mdomain
-   a = wordSem_state_sh_mdomain z /\ state_ffi
-   a = state_ffi z /\ wordSem_state_handler
+   a = wordSem_state_sh_mdomain z /\ wordSem_state_ffi
+   a = wordSem_state_ffi z /\ wordSem_state_handler
    a = wordSem_state_handler z /\ wordSem_state_code
    a = wordSem_state_code z /\ wordSem_state_code_buffer
    a = wordSem_state_code_buffer z /\ wordSem_state_data_buffer
    a = wordSem_state_data_buffer z /\ wordSem_state_compile
    a = wordSem_state_compile z /\ wordSem_state_compile_oracle
-   a = wordSem_state_compile_oracle z /\ stack
-   a = stack z /\ wordSem_state_locals_size
+   a = wordSem_state_compile_oracle z /\ wordSem_state_stack
+   a = wordSem_state_stack z /\ wordSem_state_locals_size
    a = wordSem_state_locals_size z /\ wordSem_state_stack_limit
    a = wordSem_state_stack_limit z /\ wordSem_state_stack_max
    a = wordSem_state_stack_max z /\ wordSem_state_stack_size
@@ -1209,8 +1232,9 @@ let mem_store_with_const = prove
  (`wordSem_mem_store x z (wordSem_state_locals_fupd (K l) y) =
   OPTION_MAP (\s. wordSem_state_locals_fupd (K l) s) (wordSem_mem_store
   x z y) /\
-   wordSem_mem_store x z (state_clock_fupd (K k) y) = OPTION_MAP (\s.
-     wordSem_state_clock_fupd (K k) s) (wordSem_mem_store x z y) /\
+   wordSem_mem_store x z (wordSem_state_clock_fupd (K k) y) =
+     OPTION_MAP (\s. wordSem_state_clock_fupd (K k) s)
+     (wordSem_mem_store x z y) /\
    wordSem_mem_store x z (wordSem_state_code_fupd (K code) y) =
      OPTION_MAP (\s. wordSem_state_code_fupd (K code) s)
      (wordSem_mem_store x z y) /\
@@ -1223,16 +1247,18 @@ let mem_store_with_const = prove
    wordSem_mem_store x z (wordSem_state_permute_fupd (K perm) y) =
      OPTION_MAP (\s. wordSem_state_permute_fupd (K perm) s)
      (wordSem_mem_store x z y) /\
-   wordSem_mem_store x z (stack_fupd (K xs) y) = OPTION_MAP (\s.
-     wordSem_state_stack_fupd (K xs) s) (wordSem_mem_store x z y)`,
+   wordSem_mem_store x z (wordSem_state_stack_fupd (K xs) y) =
+     OPTION_MAP (\s. wordSem_state_stack_fupd (K xs) s)
+     (wordSem_mem_store x z y)`,
   CHEAT_TAC);;
 add_simp mem_store_with_const;;
 
 let word_exp_with_const = prove
  (`!x y.
-   wordSem_word_exp (state_clock_fupd (K k) x) y = wordSem_word_exp x
-     y /\
-   wordSem_word_exp (stack_fupd (K xs) x) y = wordSem_word_exp x y /\
+   wordSem_word_exp (wordSem_state_clock_fupd (K k) x) y =
+     wordSem_word_exp x y /\
+   wordSem_word_exp (wordSem_state_stack_fupd (K xs) x) y =
+     wordSem_word_exp x y /\
    wordSem_word_exp (wordSem_state_permute_fupd (K perm) x) y =
      wordSem_word_exp x y /\
    wordSem_word_exp (wordSem_state_termdep_fupd (K termdep) x) y =
@@ -1252,11 +1278,11 @@ let assign_const_full = prove
    a = wordSem_state_code_buffer z /\ wordSem_state_data_buffer
    a = wordSem_state_data_buffer z /\ wordSem_state_compile
    a = wordSem_state_compile z /\ wordSem_state_compile_oracle
-   a = wordSem_state_compile_oracle z /\ state_clock
-   a = state_clock z /\ state_ffi
-   a = state_ffi z /\ wordSem_state_handler
-   a = wordSem_state_handler z /\ stack
-   a = stack z /\ wordSem_state_locals_size
+   a = wordSem_state_compile_oracle z /\ wordSem_state_clock
+   a = wordSem_state_clock z /\ wordSem_state_ffi
+   a = wordSem_state_ffi z /\ wordSem_state_handler
+   a = wordSem_state_handler z /\ wordSem_state_stack
+   a = wordSem_state_stack z /\ wordSem_state_locals_size
    a = wordSem_state_locals_size z /\ wordSem_state_stack_limit
    a = wordSem_state_stack_limit z /\ wordSem_state_stack_max
    a = wordSem_state_stack_max z /\ wordSem_state_stack_size
@@ -1264,14 +1290,14 @@ let assign_const_full = prove
   CHEAT_TAC);;
 
 let assign_const = prove
- (`wordSem_assign x y z = SOME a ==> state_clock
-   a = state_clock z /\ state_ffi
-   a = state_ffi z`,
+ (`wordSem_assign x y z = SOME a ==> wordSem_state_clock
+   a = wordSem_state_clock z /\ wordSem_state_ffi
+   a = wordSem_state_ffi z`,
   CHEAT_TAC);;
 
 let assign_with_const = prove
- (`wordSem_assign x y (state_clock_fupd (K k) z) = OPTION_MAP (\s.
-  wordSem_state_clock_fupd (K k) s) (wordSem_assign x y z) /\
+ (`wordSem_assign x y (wordSem_state_clock_fupd (K k) z) = OPTION_MAP
+  (\s. wordSem_state_clock_fupd (K k) s) (wordSem_assign x y z) /\
    wordSem_assign x y (wordSem_state_code_fupd (K code) z) =
      OPTION_MAP (\s. wordSem_state_code_fupd (K code) s) (wordSem_assign
      x y z) /\
@@ -1284,8 +1310,9 @@ let assign_with_const = prove
    wordSem_assign x y (wordSem_state_permute_fupd (K perm) z) =
      OPTION_MAP (\s. wordSem_state_permute_fupd (K perm) s)
      (wordSem_assign x y z) /\
-   wordSem_assign x y (stack_fupd (K xs) z) = OPTION_MAP (\s.
-     wordSem_state_stack_fupd (K xs) s) (wordSem_assign x y z)`,
+   wordSem_assign x y (wordSem_state_stack_fupd (K xs) z) =
+     OPTION_MAP (\s. wordSem_state_stack_fupd (K xs) s)
+     (wordSem_assign x y z)`,
   CHEAT_TAC);;
 add_simp assign_with_const;;
 
@@ -1313,10 +1340,10 @@ let inst_const_full = prove
    s' = wordSem_state_code_buffer s /\ wordSem_state_data_buffer
    s' = wordSem_state_data_buffer s /\ wordSem_state_compile
    s' = wordSem_state_compile s /\ wordSem_state_compile_oracle
-   s' = wordSem_state_compile_oracle s /\ state_clock
-   s' = wordSem_state_clock s /\ state_ffi
+   s' = wordSem_state_compile_oracle s /\ wordSem_state_clock
+   s' = wordSem_state_clock s /\ wordSem_state_ffi
    s' = wordSem_state_ffi s /\ wordSem_state_handler
-   s' = wordSem_state_handler s /\ stack
+   s' = wordSem_state_handler s /\ wordSem_state_stack
    s' = wordSem_state_stack s /\ wordSem_state_locals_size
    s' = wordSem_state_locals_size s /\ wordSem_state_stack_limit
    s' = wordSem_state_stack_limit s /\ wordSem_state_stack_max
@@ -1332,15 +1359,15 @@ let inst_code_gc_fun_const = prove
         wordSem_state_gc_fun t /\ wordSem_state_sh_mdomain s =
         wordSem_state_sh_mdomain t /\ wordSem_state_mdomain s =
         wordSem_state_mdomain t /\
-      wordSem_state_be s = wordSem_state_be t /\
-        wordSem_state_compile s = wordSem_state_compile t /\
-        wordSem_state_stack_size s = wordSem_state_stack_size t /\
-        wordSem_state_stack_limit s = wordSem_state_stack_limit t`,
+      wordSem_state_be s = wordSem_state_be t
+        /\ wordSem_state_compile s = wordSem_state_compile t
+        /\ wordSem_state_stack_size s = wordSem_state_stack_size t
+        /\ wordSem_state_stack_limit s = wordSem_state_stack_limit t`,
   CHEAT_TAC);;
 
 let inst_const = prove
- (`wordSem_inst i s = SOME s' ==> state_clock
-   s' = wordSem_state_clock s /\ state_ffi
+ (`wordSem_inst i s = SOME s' ==> wordSem_state_clock
+   s' = wordSem_state_clock s /\ wordSem_state_ffi
    s' = wordSem_state_ffi s`,
   CHEAT_TAC);;
 
@@ -1354,8 +1381,8 @@ let jump_exc_const = prove
    s' = wordSem_state_code_buffer s /\ wordSem_state_data_buffer
    s' = wordSem_state_data_buffer s /\ wordSem_state_compile
    s' = wordSem_state_compile s /\ wordSem_state_compile_oracle
-   s' = wordSem_state_compile_oracle s /\ state_clock
-   s' = wordSem_state_clock s /\ state_ffi
+   s' = wordSem_state_compile_oracle s /\ wordSem_state_clock
+   s' = wordSem_state_clock s /\ wordSem_state_ffi
    s' = wordSem_state_ffi s /\ wordSem_state_stack_limit
    s' = wordSem_state_stack_limit s /\ wordSem_state_stack_max
    s' = wordSem_state_stack_max s /\ wordSem_state_stack_size
@@ -1376,7 +1403,7 @@ add_simp wordProps_jump_exc_with_const;;
    variables of its own are read as variables *)
 let get_var_imm_with_const = prove
  (cake_as_vars (fun () ->
-    `wordSem_get_var_imm x (state_clock_fupd (K k) y) =
+    `wordSem_get_var_imm x (wordSem_state_clock_fupd (K k) y) =
   wordSem_get_var_imm x y /\
      wordSem_get_var_imm x (wordSem_state_code_fupd (K code) y) =
        wordSem_get_var_imm x y /\
@@ -1396,56 +1423,58 @@ add_simp get_var_imm_with_const;;
 (* dec_clock_const *)
 let wordProps_dec_clock_const = prove
  (`wordSem_state_locals
-      (wordSem_dec_clock s) = wordSem_state_locals s /\
-        wordSem_state_locals_size
-      (wordSem_dec_clock s) = wordSem_state_locals_size s /\
-        wordSem_state_fp_regs
-      (wordSem_dec_clock s) = wordSem_state_fp_regs s /\
-        wordSem_state_store
-      (wordSem_dec_clock s) = wordSem_state_store s /\ stack
-      (wordSem_dec_clock s) = wordSem_state_stack s /\
-        wordSem_state_stack_limit
-      (wordSem_dec_clock s) = wordSem_state_stack_limit s /\
-        wordSem_state_stack_max
-      (wordSem_dec_clock s) = wordSem_state_stack_max s /\
-        wordSem_state_stack_size
-      (wordSem_dec_clock s) = wordSem_state_stack_size s /\
-        wordSem_state_memory
-      (wordSem_dec_clock s) = wordSem_state_memory s /\
-        wordSem_state_mdomain
-      (wordSem_dec_clock s) = wordSem_state_mdomain s /\
-        wordSem_state_sh_mdomain
-      (wordSem_dec_clock s) = wordSem_state_sh_mdomain s /\
-        wordSem_state_permute
-      (wordSem_dec_clock s) = wordSem_state_permute s /\
-        wordSem_state_compile
-      (wordSem_dec_clock s) = wordSem_state_compile s /\
-        wordSem_state_compile_oracle
-      (wordSem_dec_clock s) = wordSem_state_compile_oracle s /\
-        wordSem_state_code_buffer
-      (wordSem_dec_clock s) = wordSem_state_code_buffer s /\
-        wordSem_state_data_buffer
-      (wordSem_dec_clock s) = wordSem_state_data_buffer s /\
-        wordSem_state_gc_fun
-      (wordSem_dec_clock s) = wordSem_state_gc_fun s /\
-        wordSem_state_handler
-      (wordSem_dec_clock s) = wordSem_state_handler s /\
-        wordSem_state_termdep
-      (wordSem_dec_clock s) = wordSem_state_termdep s /\
-        wordSem_state_code
+      (wordSem_dec_clock s) = wordSem_state_locals s
+        /\ wordSem_state_locals_size
+      (wordSem_dec_clock s) = wordSem_state_locals_size s
+        /\ wordSem_state_fp_regs
+      (wordSem_dec_clock s) = wordSem_state_fp_regs s
+        /\ wordSem_state_store
+      (wordSem_dec_clock s) = wordSem_state_store s
+        /\ wordSem_state_stack
+      (wordSem_dec_clock s) = wordSem_state_stack s
+        /\ wordSem_state_stack_limit
+      (wordSem_dec_clock s) = wordSem_state_stack_limit s
+        /\ wordSem_state_stack_max
+      (wordSem_dec_clock s) = wordSem_state_stack_max s
+        /\ wordSem_state_stack_size
+      (wordSem_dec_clock s) = wordSem_state_stack_size s
+        /\ wordSem_state_memory
+      (wordSem_dec_clock s) = wordSem_state_memory s
+        /\ wordSem_state_mdomain
+      (wordSem_dec_clock s) = wordSem_state_mdomain s
+        /\ wordSem_state_sh_mdomain
+      (wordSem_dec_clock s) = wordSem_state_sh_mdomain s
+        /\ wordSem_state_permute
+      (wordSem_dec_clock s) = wordSem_state_permute s
+        /\ wordSem_state_compile
+      (wordSem_dec_clock s) = wordSem_state_compile s
+        /\ wordSem_state_compile_oracle
+      (wordSem_dec_clock s) = wordSem_state_compile_oracle s
+        /\ wordSem_state_code_buffer
+      (wordSem_dec_clock s) = wordSem_state_code_buffer s
+        /\ wordSem_state_data_buffer
+      (wordSem_dec_clock s) = wordSem_state_data_buffer s
+        /\ wordSem_state_gc_fun
+      (wordSem_dec_clock s) = wordSem_state_gc_fun s
+        /\ wordSem_state_handler
+      (wordSem_dec_clock s) = wordSem_state_handler s
+        /\ wordSem_state_termdep
+      (wordSem_dec_clock s) = wordSem_state_termdep s
+        /\ wordSem_state_code
       (wordSem_dec_clock s) = wordSem_state_code s /\
       (wordSem_state_be (wordSem_dec_clock s) <=> wordSem_state_be s)
-        /\ state_ffi
-      (wordSem_dec_clock s) = wordSem_state_ffi s /\ state_clock
+        /\ wordSem_state_ffi
+      (wordSem_dec_clock s) = wordSem_state_ffi s
+        /\ wordSem_state_clock
       (wordSem_dec_clock (wordSem_state_locals_fupd (K locs) s)) =
-        state_clock (wordSem_dec_clock s) /\ state_clock
+        wordSem_state_clock (wordSem_dec_clock s) /\ wordSem_state_clock
       (wordSem_dec_clock (wordSem_state_permute_fupd (K p) s)) =
-        state_clock (wordSem_dec_clock s)`,
+        wordSem_state_clock (wordSem_dec_clock s)`,
   CHEAT_TAC);;
 add_simp wordProps_dec_clock_const;;
 
 let sh_mem_set_var_const = prove
- (`sh_mem_set_var r v s = (x,s') ==> state_clock
+ (`sh_mem_set_var r v s = (x,s') ==> wordSem_state_clock
    s' = wordSem_state_clock s /\ wordSem_state_compile_oracle
    s' = wordSem_state_compile_oracle s /\ wordSem_state_compile
    s' = wordSem_state_compile s /\ wordSem_state_be
@@ -1460,9 +1489,9 @@ let sh_mem_set_var_const = prove
    s' = wordSem_state_handler s /\ wordSem_state_stack_limit
    s' = wordSem_state_stack_limit s /\ wordSem_state_stack_max
    s' = wordSem_state_stack_max s /\
-   (r = NONE ==> state_ffi s' = wordSem_state_ffi s) /\
-   (r = SOME (FFI_final outcome) ==> state_ffi s' = wordSem_state_ffi
-     s) /\
+   (r = NONE ==> wordSem_state_ffi s' = wordSem_state_ffi s) /\
+   (r = SOME (FFI_final outcome) ==> wordSem_state_ffi s' =
+     wordSem_state_ffi s) /\
    (r = NONE ==> wordSem_state_locals_size s' =
      wordSem_state_locals_size s) /\
    (r = SOME (FFI_return f l) ==> wordSem_state_locals_size s' =
@@ -1478,7 +1507,7 @@ let sh_mem_set_var_const = prove
   CHEAT_TAC);;
 
 let sh_mem_store_const = prove
- (`wordSem_sh_mem_store ad v s = (res,s') ==> state_clock
+ (`wordSem_sh_mem_store ad v s = (res,s') ==> wordSem_state_clock
    s' = wordSem_state_clock s /\ wordSem_state_compile_oracle
    s' = wordSem_state_compile_oracle s /\ wordSem_state_compile
    s' = wordSem_state_compile s /\ wordSem_state_be
@@ -1508,7 +1537,7 @@ let sh_mem_store_const = prove
   CHEAT_TAC);;
 
 let sh_mem_store_byte_const = prove
- (`wordSem_sh_mem_store_byte ad v s = (res,s') ==> state_clock
+ (`wordSem_sh_mem_store_byte ad v s = (res,s') ==> wordSem_state_clock
    s' = wordSem_state_clock s /\ wordSem_state_compile_oracle
    s' = wordSem_state_compile_oracle s /\ wordSem_state_compile
    s' = wordSem_state_compile s /\ wordSem_state_be
@@ -1538,7 +1567,7 @@ let sh_mem_store_byte_const = prove
   CHEAT_TAC);;
 
 let sh_mem_store16_const = prove
- (`wordSem_sh_mem_store16 ad v s = (res,s') ==> state_clock
+ (`wordSem_sh_mem_store16 ad v s = (res,s') ==> wordSem_state_clock
    s' = wordSem_state_clock s /\ wordSem_state_compile_oracle
    s' = wordSem_state_compile_oracle s /\ wordSem_state_compile
    s' = wordSem_state_compile s /\ wordSem_state_be
@@ -1568,7 +1597,7 @@ let sh_mem_store16_const = prove
   CHEAT_TAC);;
 
 let sh_mem_store32_const = prove
- (`wordSem_sh_mem_store32 ad v s = (res,s') ==> state_clock
+ (`wordSem_sh_mem_store32 ad v s = (res,s') ==> wordSem_state_clock
    s' = wordSem_state_clock s /\ wordSem_state_compile_oracle
    s' = wordSem_state_compile_oracle s /\ wordSem_state_compile
    s' = wordSem_state_compile s /\ wordSem_state_be
@@ -1608,7 +1637,7 @@ let share_inst_const = prove
    s' = wordSem_state_data_buffer s /\ wordSem_state_compile
    s' = wordSem_state_compile s /\ wordSem_state_compile_oracle
    s' = wordSem_state_compile_oracle s /\ wordSem_state_permute
-   s' = wordSem_state_permute s /\ state_clock
+   s' = wordSem_state_permute s /\ wordSem_state_clock
    s' = wordSem_state_clock s /\ wordSem_state_handler
    s' = wordSem_state_handler s /\ wordSem_state_stack_limit
    s' = wordSem_state_stack_limit s /\ wordSem_state_stack_max
@@ -1725,8 +1754,8 @@ let share_inst_with_const = prove
 add_simp share_inst_with_const;;
 
 let cut_state_with_const = prove
- (`wordSem_cut_state x (state_clock_fupd (K k) z) = OPTION_MAP (\s.
-  wordSem_state_clock_fupd (K k) s) (wordSem_cut_state x z) /\
+ (`wordSem_cut_state x (wordSem_state_clock_fupd (K k) z) = OPTION_MAP
+  (\s. wordSem_state_clock_fupd (K k) s) (wordSem_cut_state x z) /\
    wordSem_cut_state x (wordSem_state_code_fupd (K code) z) =
      OPTION_MAP (\s. wordSem_state_code_fupd (K code) s)
      (wordSem_cut_state x z) /\
@@ -1739,8 +1768,9 @@ let cut_state_with_const = prove
    wordSem_cut_state x (wordSem_state_permute_fupd (K perm) z) =
      OPTION_MAP (\s. wordSem_state_permute_fupd (K perm) s)
      (wordSem_cut_state x z) /\
-   wordSem_cut_state x (stack_fupd (K xs) z) = OPTION_MAP (\s.
-     wordSem_state_stack_fupd (K xs) s) (wordSem_cut_state x z)`,
+   wordSem_cut_state x (wordSem_state_stack_fupd (K xs) z) =
+     OPTION_MAP (\s. wordSem_state_stack_fupd (K xs) s)
+     (wordSem_cut_state x z)`,
   CHEAT_TAC);;
 add_simp cut_state_with_const;;
 
@@ -1800,8 +1830,9 @@ let wordProps_evaluate_add_clock = prove
      wordSem_evaluate (p,s) = (r,s') /\ ~(r = SOME wordSem_TimeOut)
        ==>
      wordSem_evaluate (p,wordSem_state_clock_fupd (K
-       (wordSem_state_clock s + extra)) s) = (r,state_clock_fupd (K
-       (state_clock s' + extra)) s')`,
+       (wordSem_state_clock s + extra)) s) =
+       (r,wordSem_state_clock_fupd (K (wordSem_state_clock s' +
+       extra)) s')`,
   CHEAT_TAC);;
 
 (* HOL4 wordPropsScript.sml:1436-1441: ML code, not ported *)
@@ -1832,14 +1863,16 @@ let evaluate_add_clock_body = prove
    (!extra.
      wordSem_evaluate (c,wordSem_state_clock_fupd (K
        (wordSem_state_clock s + extra)) s) =
-     (res,state_clock_fupd (K (state_clock s' + extra)) s'))`,
+     (res,wordSem_state_clock_fupd (K (wordSem_state_clock s' +
+       extra)) s'))`,
   CHEAT_TAC);;
 
 let evaluate_dec_clock = prove
  (`!prog st res rst.
    wordSem_evaluate (prog,st) = (res,rst) ==>
-   wordSem_evaluate (prog,state_clock_fupd (K (state_clock st -
-     state_clock rst)) st) = (res,state_clock_fupd (K 0) rst)`,
+   wordSem_evaluate (prog,wordSem_state_clock_fupd (K
+     (wordSem_state_clock st - wordSem_state_clock rst)) st) =
+     (res,wordSem_state_clock_fupd (K 0) rst)`,
   CHEAT_TAC);;
 
 (* IO and clock monotonicity *)
@@ -1860,9 +1893,9 @@ let SND_alt_def = prove
 (*TODO This format of is really weird can this be changed?*)
 (* evaluate_add_clock_io_events_mono *)
 let wordProps_evaluate_add_clock_io_events_mono = prove
- (`!exps s extra. ffi_state_io_events (state_ffi
+ (`!exps s extra. ffi_state_io_events (wordSem_state_ffi
     (SND (wordSem_evaluate (exps,s)))) <<= ffi_state_io_events
-      (state_ffi
+      (wordSem_state_ffi
     (SND (wordSem_evaluate (exps,wordSem_state_clock_fupd (K
       (wordSem_state_clock s + extra)) s))))`,
   CHEAT_TAC);;
@@ -2066,7 +2099,7 @@ let dec_stack_stack_key_eq = prove
 (*gc preserves the stack_key relation*)
 let gc_s_key_eq = prove
  (`!s x. wordSem_gc s = SOME x ==> s_key_eq (wordSem_state_stack s)
-  (stack x)`,
+  (wordSem_state_stack x)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2087,8 +2120,8 @@ let gc_s_val_eq = prove
  (`!s x st y. s_val_eq (wordSem_state_stack s) st /\
              wordSem_gc s = SOME y ==>
       (?z. wordSem_gc (wordSem_state_stack_fupd (K st) s) = SOME
-        (stack_fupd (K z) y) /\
-          s_val_eq (stack y) z /\ s_key_eq z st)`,
+        (wordSem_state_stack_fupd (K z) y) /\
+          s_val_eq (wordSem_state_stack y) z /\ s_key_eq z st)`,
   CHEAT_TAC);;
 
 (*Slightly more general theorem allows the unused locals to be differnt*)
@@ -2099,9 +2132,10 @@ let gc_s_val_eq_word_state = prove
     (?zlocs zstack.
           wordSem_gc (wordSem_state_locals_fupd (K tlocs)
             (wordSem_state_stack_fupd (K tstack) s)) =
-          SOME (wordSem_state_locals_fupd (K zlocs) (stack_fupd (K
-            zstack) y)) /\
-          s_val_eq (stack y) zstack /\ s_key_eq zstack tstack)`,
+          SOME (wordSem_state_locals_fupd (K zlocs)
+            (wordSem_state_stack_fupd (K zstack) y)) /\
+          s_val_eq (wordSem_state_stack y) zstack /\ s_key_eq
+            zstack tstack)`,
   CHEAT_TAC);;
 
 (*Most generalised gc_s_val_eq*)
@@ -2111,16 +2145,17 @@ let gc_s_val_eq_gen = prove
    s = wordSem_state_memory t /\ wordSem_state_mdomain
    s = wordSem_state_mdomain t /\ wordSem_state_store
    s = wordSem_state_store t /\
-   s_val_eq (wordSem_state_stack s) (stack t) /\
-     wordSem_state_stack_size
+   s_val_eq (wordSem_state_stack s) (wordSem_state_stack t)
+     /\ wordSem_state_stack_size
    s = wordSem_state_stack_size t /\ wordSem_state_stack_max
    s = wordSem_state_stack_max t /\ wordSem_state_stack_limit
    s = wordSem_state_stack_limit t /\
    wordSem_gc s = SOME s' ==>
    (?t'.
    wordSem_gc t = SOME t' /\
-   s_val_eq (stack s') (stack t') /\
-   s_key_eq (stack t) (stack t') /\ wordSem_state_memory
+   s_val_eq (wordSem_state_stack s') (wordSem_state_stack t') /\
+   s_key_eq (wordSem_state_stack t) (wordSem_state_stack t')
+     /\ wordSem_state_memory
    t' = wordSem_state_memory s' /\ wordSem_state_store
    t' = wordSem_state_store s' /\ wordSem_state_stack_size
    t' = wordSem_state_stack_size s' /\ wordSem_state_stack_max
@@ -2130,16 +2165,18 @@ let gc_s_val_eq_gen = prove
 
 (*pushing and popping maintain the stack_key relation*)
 let push_env_pop_env_s_key_eq = prove
- (`!x b s t. s_key_eq (stack (wordSem_push_env x b s)) (stack t) ==>
-       (?n l ls opt. stack
+ (`!x b s t. s_key_eq (wordSem_state_stack (wordSem_push_env x b s))
+  (wordSem_state_stack t) ==>
+       (?n l ls opt. wordSem_state_stack
               t = CONS (StackFrame n (toAList (FST x)) l opt) ls /\
-              (?y. (wordSem_pop_env t = SOME y /\
-                wordSem_state_locals
+              (?y. (wordSem_pop_env t = SOME y
+                /\ wordSem_state_locals
                    y = sptree_union (fromAList l) (fromAList (toAList
                      (FST x))) /\
                    (domain (SND x)) UNION (domain (FST x)) = domain
                      (wordSem_state_locals y) /\
-                   s_key_eq (wordSem_state_stack s) (stack y))))`,
+                   s_key_eq (wordSem_state_stack s)
+                     (wordSem_state_stack y))))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2258,24 +2295,24 @@ let s_val_append_eq_stack_size = prove
 let wordProps_evaluate_stack_swap = prove
  (`!c s.
      match wordSem_evaluate (c,s) with (SOME wordSem_Error,s1) -> T |
-       (SOME (wordSem_FinalFFI e),s1) -> wordSem_state_stack s1 = [] /\
-       wordSem_state_locals s1 = LN /\
+       (SOME (wordSem_FinalFFI e),s1) -> wordSem_state_stack s1 = []
+       /\ wordSem_state_locals s1 = LN /\
                             (!xs. s_val_eq (wordSem_state_stack s) xs
                               ==>
                               wordSem_evaluate
                                 (c,wordSem_state_stack_fupd (K xs) s) =
                               (SOME (wordSem_FinalFFI e),s1)) | (SOME
                                 wordSem_TimeOut,s1) ->
-                                wordSem_state_stack s1 = [] /\
-                                wordSem_state_locals s1 = LN /\
+                                wordSem_state_stack s1 = []
+                                /\ wordSem_state_locals s1 = LN /\
                             (!xs. s_val_eq (wordSem_state_stack s) xs
                               ==>
                               wordSem_evaluate
                                 (c,wordSem_state_stack_fupd (K xs) s) =
                               (SOME wordSem_TimeOut,s1)) | (SOME
                                 wordSem_NotEnoughSpace,s1) ->
-                                wordSem_state_stack s1 = [] /\
-                                wordSem_state_locals s1 = LN /\
+                                wordSem_state_stack s1 = []
+                                /\ wordSem_state_locals s1 = LN /\
                               (!xs. s_val_eq (wordSem_state_stack s)
                                 xs ==>
                               wordSem_evaluate
@@ -2297,8 +2334,8 @@ let wordProps_evaluate_stack_swap = prove
                (MAP FST e = MAP FST lss /\ wordSem_state_locals
                   s1 = sptree_union (fromAList lss) (fromAList e0))
                     /\
-               (s_key_eq (wordSem_state_stack s1) ls) /\
-                 (wordSem_state_handler s1 = (match n with (a,b,c) ->
+               (s_key_eq (wordSem_state_stack s1) ls)
+                 /\ (wordSem_state_handler s1 = (match n with (a,b,c) ->
                  a)) /\
                (!xs e0' e' ls'.
                           (LASTN (wordSem_state_handler s + 1) xs =
@@ -2318,8 +2355,8 @@ let wordProps_evaluate_stack_swap = prove
                               locs = sptree_union (fromAList lss')
                                 (fromAList e0') /\
                               MAP SND lss = MAP SND lss') /\
-                           s_val_eq (wordSem_state_stack s1) st /\
-                             s_key_eq ls' st)))) | (
+                           s_val_eq (wordSem_state_stack s1) st
+                             /\ s_key_eq ls' st)))) | (
         // NONE, SOME Result cases
         res,s1) -> (s_key_eq (wordSem_state_stack s)
           (wordSem_state_stack s1)) /\ (wordSem_state_handler s1 =
@@ -2547,8 +2584,9 @@ let push_env_dec_clock_stack = prove
  (`wordSem_state_stack_max
      (wordSem_push_env y opt (wordSem_dec_clock t)) =
        wordSem_state_stack_max
-     (wordSem_push_env y opt t) /\ stack
-     (wordSem_push_env y opt (wordSem_dec_clock t)) = stack
+     (wordSem_push_env y opt t) /\ wordSem_state_stack
+     (wordSem_push_env y opt (wordSem_dec_clock t)) =
+       wordSem_state_stack
      (wordSem_push_env y opt t)`,
   CHEAT_TAC);;
 
@@ -2556,8 +2594,8 @@ let set_store_stack_max_greater_bound = prove
  (`!v x s t. wordSem_set_store v x s = t /\
    option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s))
      (wordSem_state_locals_size s)) (wordSem_state_stack_max s) ==>
-      option_le (OPTION_MAP2 (+) (stack_size (stack t))
-        (wordSem_state_locals_size t)) (wordSem_state_stack_max t)`,
+      option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack
+        t)) (wordSem_state_locals_size t)) (wordSem_state_stack_max t)`,
   CHEAT_TAC);;
 
 let stack_size_some_at_least_one = prove
@@ -2568,7 +2606,7 @@ let push_call_option_le_stack_max_preserved = prove
  (`!args sz env handler s.
    option_le
      (OPTION_MAP2 (+)
-        (stack_size (stack (wordSem_call_env args sz
+        (stack_size (wordSem_state_stack (wordSem_call_env args sz
           (wordSem_push_env env handler s)))) (wordSem_state_locals_size
         (wordSem_call_env args sz (wordSem_push_env env handler s))))
           (wordSem_state_stack_max
@@ -2581,8 +2619,9 @@ let pop_env_option_le_stack_max_preserved = prove
      option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s))
        (wordSem_state_locals_size s)) (wordSem_state_stack_max s) /\
      wordSem_pop_env s = SOME t ==>
-       option_le (OPTION_MAP2 (+) (stack_size (stack t))
-         (wordSem_state_locals_size t)) (wordSem_state_stack_max t)`,
+       option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack
+         t)) (wordSem_state_locals_size t)) (wordSem_state_stack_max
+         t)`,
   CHEAT_TAC);;
 
 
@@ -2612,7 +2651,7 @@ let flush_state_option_le_stack_max_preserved = prove
         (wordSem_state_locals_size s)) (wordSem_state_stack_max s) ==>
       (let t = wordSem_flush_state p s in
         option_le
-          (OPTION_MAP2 (+) (stack_size (stack t))
+          (OPTION_MAP2 (+) (stack_size (wordSem_state_stack t))
             (wordSem_state_locals_size
               t)) (wordSem_state_stack_max t))`,
   CHEAT_TAC);;
@@ -2641,15 +2680,16 @@ let evaluate_option_le_stack_max_preserved = prove
  (`!p s r t. wordSem_evaluate (p,s) = (r,t) /\
       option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s))
         (wordSem_state_locals_size s)) (wordSem_state_stack_max s) ==>
-      option_le (OPTION_MAP2 (+) (stack_size (stack t))
-        (wordSem_state_locals_size t)) (wordSem_state_stack_max t)`,
+      option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack
+        t)) (wordSem_state_locals_size t)) (wordSem_state_stack_max t)`,
   CHEAT_TAC);;
 
 let push_env_stack_max_eq = prove
  (`wordSem_state_stack_max
      (wordSem_push_env env handler s) =
      OPTION_MAP2 MAX (wordSem_state_stack_max s)
-       (stack_size (stack (wordSem_push_env env handler s)))`,
+       (stack_size (wordSem_state_stack (wordSem_push_env env
+         handler s)))`,
   CHEAT_TAC);;
 (* [local] *)
 let call_env_option_le_stack_max = prove
@@ -2752,8 +2792,8 @@ let evaluate_code_only_grows = prove
 
 let evaluate_NONE_stack_size_const = prove
  (`!p s t. wordSem_evaluate (p,s) = (NONE,t) ==>
-           stack_size (stack t) = stack_size (wordSem_state_stack
-             s)`,
+           stack_size (wordSem_state_stack t) = stack_size
+             (wordSem_state_stack s)`,
   CHEAT_TAC);;
 
 let env_to_list_lookup_equiv = prove
@@ -2856,17 +2896,19 @@ let permute_swap_lemma2 = prove
                                 l' env' h') ->
                               ss = ss' /\ h = h' /\ l = l' /\ PERM
                                 env env' /\ ALL_DISTINCT (MAP FST env))
-                                stack' (stack st) ==>
+                                stack' (wordSem_state_stack st) ==>
      (?perm' stack'.
-       wordSem_evaluate (prog,stack_fupd (K stack')
-         (wordSem_state_permute_fupd (K perm) st)) = (res,stack_fupd (K
-         stack') (wordSem_state_permute_fupd (K perm') rst)) /\
+       wordSem_evaluate (prog,wordSem_state_stack_fupd (K stack')
+         (wordSem_state_permute_fupd (K perm) st)) =
+         (res,wordSem_state_stack_fupd (K stack')
+         (wordSem_state_permute_fupd (K perm') rst)) /\
        ALL2 (\s1 s2. match (s1,s2) with
                               (StackFrame ss l env h,StackFrame ss'
                                 l' env' h') ->
                               ss = ss' /\ h = h' /\ l = l' /\ PERM
                                 env env' /\ ALL_DISTINCT (MAP FST
-                                env)) stack' (stack rst))`,
+                                env)) stack' (wordSem_state_stack
+                                rst))`,
   CHEAT_TAC);;
 
 (* HOL4 wordPropsScript.sml:5146-5166: a proof *)
@@ -2881,17 +2923,18 @@ let permute_swap_lemma3 = prove
      no_install_code (wordSem_state_code st) /\ wordConvs_no_install
        prog /\
      ALL (\st. match st with StackFrame _20 _21 vs handler ->
-       ALL_DISTINCT (MAP FST vs)) (stack st) ==>
+       ALL_DISTINCT (MAP FST vs)) (wordSem_state_stack st) ==>
      (?perm' stack'.
        wordSem_evaluate (prog,wordSem_state_permute_fupd (K perm) st)
-         = (res,stack_fupd (K stack') (wordSem_state_permute_fupd (K
-         perm') rst)) /\
+         = (res,wordSem_state_stack_fupd (K stack')
+         (wordSem_state_permute_fupd (K perm') rst)) /\
        ALL2 (\s1 s2. match (s1,s2) with
                               (StackFrame ss l env h,StackFrame ss'
                                 l' env' h') ->
                               ss = ss' /\ h = h' /\ l = l' /\ PERM
                                 env env' /\ ALL_DISTINCT (MAP FST
-                                env)) stack' (stack rst))`,
+                                env)) stack' (wordSem_state_stack
+                                rst))`,
   CHEAT_TAC);;
 
 let word_cmp_Word_Word = prove

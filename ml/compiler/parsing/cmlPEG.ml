@@ -136,18 +136,17 @@ let peg_V_def = new_definition
                    (OPTION_BIND) (destAlphaT t) (\s.
                       OPTION_GUARD (~(s IN {(implode
                         "before"),(implode "div"),(implode
-                        "mod"),(implode "o")}) /\ ~(s = (implode "")) /\
-                        ~(isUpper (strsub s 0)))) = SOME one)
+                        "mod"),(implode "o")}) /\ ~(s = (implode ""))
+                        /\ ~(isUpper (strsub s 0)))) = SOME one)
                  (bindNT nV o mktokLf);
              cmlPEG_pegf (tokSymP (validPrefixSym o explode))
                (bindNT nV)]`;;
 
 let peg_longV_def = new_definition
-  `peg_longV = peg_tok (\t. (OPTION_BIND) (destLongidT t) (\
-                         (str,s).
-                         OPTION_GUARD (~(s = (implode "")) /\
-                           (isAlpha (strsub s 0) ==> ~(isUpper (strsub s
-                           0))))) = SOME one)
+  `peg_longV = peg_tok (\t. (OPTION_BIND) (destLongidT t) (\(str,s).
+                         OPTION_GUARD (~(s = (implode ""))
+                           /\ (isAlpha (strsub s 0) ==> ~(isUpper
+                           (strsub s 0))))) = SOME one)
                    (bindNT nFQV o mktokLf)`;;
 
 let peg_EbaseParenFn_def = new_definition
@@ -258,17 +257,15 @@ let cmlPEG_def = new_definition
                               (bindNT nCompOps));
                ((INL:MMLnonT->MMLnonT+num) nOpID,
                 cmlPEG_choicel [peg_tok (\t. (OPTION_BIND)
-                  (destLongidT t) (\
-                              (str,s).
+                  (destLongidT t) (\(str,s).
                               OPTION_GUARD (~(s = (implode "")))) =
                                 SOME one) (bindNT nOpID o mktokLf);
                          peg_tok (\t. (OPTION_BIND) (destSymbolT t)
-                           (\
-                              s.
+                           (\s.
                               OPTION_GUARD (~(s = (implode "")))) =
                                 SOME one) (bindNT nOpID o mktokLf);
-                         peg_tok (\t. (OPTION_BIND) (destAlphaT t) (\
-                              s.
+                         peg_tok (\t. (OPTION_BIND) (destAlphaT t)
+                           (\s.
                               OPTION_GUARD (~(s = (implode "")))) =
                                 SOME one) (bindNT nOpID o mktokLf);
                          cmlPEG_pegf (cmlPEG_tokeq tokens_StarT)
@@ -491,8 +488,8 @@ let cmlPEG_def = new_definition
                 cmlPEG_choicel [
                   cmlPEG_pegf (cmlPEG_pnt nUQConstructorName) (bindNT
                     nConstructorName);
-                  peg_tok (\t. (OPTION_BIND) (destLongidT t) (\
-                             (str,s).
+                  peg_tok (\t. (OPTION_BIND) (destLongidT t)
+                    (\(str,s).
                              OPTION_GUARD (~(s = (implode "")) /\
                               isAlpha (strsub s 0) /\
                               isUpper (strsub s 0))) = SOME one)

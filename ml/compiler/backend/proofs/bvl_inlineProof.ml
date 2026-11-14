@@ -10,7 +10,6 @@
 *)
 
 needs "compiler/backend/bvl.ml";;
-needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/bvl_handle.ml";;
 needs "compiler/backend/bvl_inline.ml";;
 needs "compiler/backend/proofs/bvl_handleProof.ml";;
@@ -58,7 +57,7 @@ let do_app_lemma = prove
 (* evaluate_remove_ticks *)
 let bvl_inlineProof_evaluate_remove_ticks = prove
  (`!k xs env s (t:('c,'ffi)bvlSem_state) res s'.
-      bvl_inlineProof_state_rel t s /\ state_clock s = k /\
+      bvl_inlineProof_state_rel t s /\ bvlSem_state_clock s = k /\
       bvlSem_evaluate (bvl_inline_remove_ticks xs,env,s) = (res,s')
         ==>
       (?ck t'. bvlSem_evaluate (xs,env,bvlSem_state_clock_fupd (K
@@ -93,9 +92,9 @@ let bvl_inlineProof_evaluate_compile_prog = prove
        bvlSem_evaluate
         ([bvl_Call 0 (SOME start) []],[],
           bvlSem_initial_state ffi0 prog co
-            (bvl_inlineProof_remove_ticks_cc cc) (k + ck)) = (r,s2) /\
-            bvlSem_state_ffi
-       s2 = state_ffi s)`),
+            (bvl_inlineProof_remove_ticks_cc cc) (k + ck)) = (r,s2)
+            /\ bvlSem_state_ffi
+       s2 = bvlSem_state_ffi s)`),
   CHEAT_TAC);;
 
 let FST_EQ_LEMMA = prove
@@ -167,23 +166,24 @@ let bvl_inlineProof_in_cc_def = new_definition
              (code,data,cfg1) -> SOME (code,data,(cs1,cfg1)))`;;
 
 let bvl_inlineProof_in_state_rel_def = new_definition
-  `bvl_inlineProof_in_state_rel limit' s t <=> state_globals
-     t = state_globals s /\ state_refs
-     t = state_refs s /\ state_clock
-     t = state_clock s /\ state_ffi
-     t = state_ffi s /\ compile_oracle
+  `bvl_inlineProof_in_state_rel limit' s t <=> bvlSem_state_globals
+     t = bvlSem_state_globals s /\ bvlSem_state_refs
+     t = bvlSem_state_refs s /\ bvlSem_state_clock
+     t = bvlSem_state_clock s /\ bvlSem_state_ffi
+     t = bvlSem_state_ffi s /\ bvlSem_state_compile_oracle
      t = (\n.
-       let ((cs,cfg),progs) = compile_oracle s n in
+       let ((cs,cfg),progs) = bvlSem_state_compile_oracle s n in
        let (cs1,progs) = tick_compile_prog limit' cs progs in
          (cfg,progs)) /\
-     subspt (FST (FST (compile_oracle s 0))) (state_code t) /\
-       compile
-     s = bvl_inlineProof_in_cc limit' (compile t) /\
-     domain (state_code t) = domain (state_code s) /\
+     subspt (FST (FST (bvlSem_state_compile_oracle s 0)))
+       (bvlSem_state_code t) /\ bvlSem_state_compile
+     s = bvl_inlineProof_in_cc limit' (bvlSem_state_compile t) /\
+     domain (bvlSem_state_code t) = domain (bvlSem_state_code s) /\
      (!k arity exp.
-        sptree_lookup k (state_code s) = SOME (arity,exp) ==>
-        (?exp2. sptree_lookup k (state_code t) = SOME (arity,exp2) /\
-               bvl_inlineProof_exp_rel (state_code s) [exp]
+        sptree_lookup k (bvlSem_state_code s) = SOME (arity,exp) ==>
+        (?exp2. sptree_lookup k (bvlSem_state_code t) = SOME
+          (arity,exp2) /\
+               bvl_inlineProof_exp_rel (bvlSem_state_code s) [exp]
                  [exp2]))`;;
 
 let subspt_exp_rel = prove
@@ -309,8 +309,8 @@ let bvl_inlineProof_exp_rel_refl = prove
 let bvl_inlineProof_evaluate_inline = prove
  (cake_as_vars (fun () ->
     `!es env s1 res t1 s2 es2.
-        bvl_inlineProof_in_state_rel limit s1 t1 /\
-          bvl_inlineProof_exp_rel (bvlSem_state_code s1) es es2 /\
+        bvl_inlineProof_in_state_rel limit s1 t1
+          /\ bvl_inlineProof_exp_rel (bvlSem_state_code s1) es es2 /\
         bvlSem_evaluate (es,env,s1) = (res,s2) /\ ~(res = Rerr
           (Rabort Rtype_error)) ==>
         (?t2. bvlSem_evaluate (es2,env,t1) = (res,t2) /\
@@ -505,8 +505,8 @@ let let_evaluate_Call = prove
              prog)
              ((I ## MAP (I ## let_opt q4 l4)) o co)
              cc k) = (r,s2) /\ bvlSem_state_ffi
-        s2 = state_ffi s /\ state_clock s = bvlSem_state_clock
-          s2)`),
+        s2 = bvlSem_state_ffi s /\ bvlSem_state_clock s =
+          bvlSem_state_clock s2)`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for

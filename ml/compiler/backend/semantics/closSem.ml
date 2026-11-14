@@ -128,8 +128,8 @@ let closSem_do_eq_def,closSem_do_eq_ind = define_wf
                  -> Eq_type_error) | closSem_Word64 v ->
              (match y with closSem_Word64 w -> Eq_val (v = w) | _4
                  -> Eq_type_error) | closSem_Block t1 xs ->
-             (match y with closSem_Block t2 ys -> (if (t1 = t2) /\
-                 (LENGTH xs = LENGTH ys) then
+             (match y with closSem_Block t2 ys -> (if (t1 = t2)
+                 /\ (LENGTH xs = LENGTH ys) then
                               closSem_do_eq_list xs ys else Eq_val
                                   F) | _5 -> Eq_type_error) |
                                   closSem_ByteVector cs ->
@@ -921,7 +921,7 @@ add_simp exp3_alt_size;;
 let closSem_fix_clock_IMP =
   try prove
    (`!s x res s1. closSem_fix_clock s x = (res,s1)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> closSem_state_clock s1 <= closSem_state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; closSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "closSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN

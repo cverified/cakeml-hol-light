@@ -79,19 +79,16 @@ let optlift_def = define_general
 
 let cmlParseExpr_def = new_definition
   `cmlParseExpr = pegresult_bind (cmlParse_destResult o (\n t. peg_exec
-  cmlPEG (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) nE) (\
-     pts. pegresult_bind (optlift (oHD pts)) (\
-     pt. pegresult_bind (optlift (ptree_Expr nE pt)) (\
-     ast.
+  cmlPEG (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) nE)
+  (\pts. pegresult_bind (optlift (oHD pts)) (\pt. pegresult_bind
+  (optlift (ptree_Expr nE pt)) (\ast.
      (\a inp. peg_Success inp a NONE) ast)))`;;
 
 let parse_prog_def = new_definition
   `parse_prog =
      pegresult_bind (cmlParse_destResult o (\n t. peg_exec cmlPEG
        (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed)
-       nTopLevelDecs) (\
-       pts. pegresult_bind (optlift (oHD pts)) (\
-       pt.
+       nTopLevelDecs) (\pts. pegresult_bind (optlift (oHD pts)) (\pt.
        optlift (ptree_TopLevelDecs pt)))`;;
 
 (* and the interface *)

@@ -393,9 +393,9 @@ let add_to_data_aux_def = new_definition
                       r (knowledge_to_latest data)))
                       (knowledge_to_canonical_fupd (K (sptree_insert
                       r r (knowledge_to_canonical data)))
-                      (knowledge_instrs_mem_fupd (K (sptree_insert
-                      listCmp i r (knowledge_instrs_mem data)))
-                      data)),x)))`;;
+                      (knowledge_instrs_mem_fupd (K
+                      (balanced_map_insert listCmp i r
+                      (knowledge_instrs_mem data))) data)),x)))`;;
 
 let add_to_data_def = new_definition
   `add_to_data data r adjusted x =
@@ -420,8 +420,9 @@ let add_to_data_const_def = new_definition
                        (knowledge_to_latest data)))
                        (knowledge_to_canonical_fupd (K (sptree_insert r
                        r (knowledge_to_canonical data)))
-                       (knowledge_instrs_mem_fupd (K (sptree_insert
-                       listCmp i r (knowledge_instrs_mem data))) data)),
+                       (knowledge_instrs_mem_fupd (K
+                       (balanced_map_insert listCmp i r
+                       (knowledge_instrs_mem data))) data)),
                      wordLang_Inst (asm_Const r w)))`;;
 
 (* As add_to_data_aux, but for the load-fact map. *)
@@ -443,9 +444,9 @@ let add_to_load_aux_def = new_definition
                       r (knowledge_to_latest data)))
                       (knowledge_to_canonical_fupd (K (sptree_insert
                       r r (knowledge_to_canonical data)))
-                      (knowledge_loads_mem_fupd (K (sptree_insert
-                      listCmp i r (knowledge_loads_mem data)))
-                      data)),x)))`;;
+                      (knowledge_loads_mem_fupd (K
+                      (balanced_map_insert listCmp i r
+                      (knowledge_loads_mem data))) data)),x)))`;;
 
 let can_mem_arith_def = new_definition
   `can_mem_arith x1 =

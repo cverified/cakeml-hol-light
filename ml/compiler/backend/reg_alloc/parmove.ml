@@ -99,8 +99,8 @@ let path_imp_mem2 = prove
 
 (* [local] *)
 let NoRead_path = prove
- (`!sigma. parmove_path sigma /\ windmill sigma /\ LENGTH sigma >= 2 /\
-  ~(FST (HD sigma) = SND (LAST sigma)) ==>
+ (`!sigma. parmove_path sigma /\ windmill sigma /\ LENGTH sigma >= 2
+  /\ ~(FST (HD sigma) = SND (LAST sigma)) ==>
     (\mu dn. ~(MEM dn (MAP SND mu))) (TL sigma) (FST (HD sigma))`,
   CHEAT_TAC);;
 
@@ -534,8 +534,8 @@ let pmov_MAP_INJ = prove
   CHEAT_TAC);;
 
 let parmove_MAP_INJ = prove
- (`(let ls1 = APPEND (MAP FST ls) (MAP SND ls) in (!x y. MEM x ls1 /\
-  MEM y ls1 /\ f x = f y ==> x = y)) /\
+ (`(let ls1 = APPEND (MAP FST ls) (MAP SND ls) in (!x y. MEM x ls1
+  /\ MEM y ls1 /\ f x = f y ==> x = y)) /\
    windmill ls ==>
    parmove (MAP (f ## f) ls) = MAP (OPTION_MAP f ## OPTION_MAP f)
      (parmove ls)`,

@@ -92,8 +92,8 @@ let pmatchResult_case_NONE = prove
    value of an ML expression: pmatchResult_case_NONE *)
 
 let is_const_row_lemma = prove
- (`(!t. ~(v = pattern_semantics_Term t [])) /\ is_const_row (p_1,p_2) /\
-  ~(pattern_semantics_pmatch refs p_1 v = PTypeFailure) ==>
+ (`(!t. ~(v = pattern_semantics_Term t [])) /\ is_const_row (p_1,p_2)
+  /\ ~(pattern_semantics_pmatch refs p_1 v = PTypeFailure) ==>
    pattern_semantics_pmatch refs p_1 v = PMatchFailure`,
   CHEAT_TAC);;
 

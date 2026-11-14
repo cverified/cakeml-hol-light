@@ -1181,6 +1181,11 @@ class Ctx:
     self.wordnotvars = set()           # ... of these variables
     self.append = False                # is ++ the append of lists?
     self.fieldvar = {}                 # variable -> its record
+    self.recseen = set()               # the records a block reads
+    self.recamb = set()                # ... and the fields it did
+                                       # not place in one
+    self.recpick = {}                  # field -> the record of it
+                                       # that the block settles on
     self.iffeq = False                 # is <=> plain equality?
     self.thy = thy
     self.wild = 0
@@ -1273,6 +1278,11 @@ class Ctx:
   def field(self, f):
     """the accessor of a record field, without its argument"""
     if f in self.accessors: return self.accessors[f]
+    # the record that the rest of the block settled this field on
+    # (tools/port.py, two_pass): a statement that reads the refs
+    # of two states says the type of one of them and leaves the
+    # other to the reader, who takes it to be the same record
+    if f in self.recpick: return self.recpick[f] + '_' + f
     # the body of an overload is read in the theory that declares
     # it, so the accessor of a field of it is written out: a
     # statement that uses the name of the field for a variable of
@@ -1282,14 +1292,17 @@ class Ctx:
     # state, and stack_to_labProof's compile_jump_correct has a
     # variable regs)
     if self.qualfields:
-      if f in self.fields: return self.fields[f] + '_' + f
+      if f in self.fields:
+        self.recseen.add(self.fields[f])
+        return self.fields[f] + '_' + f
       # the field is of several records in the scope of that
       # theory, and the one it means is the record of the theory
       # itself (the regs of labSem's read_reg is the one of a
       # labSem state and not of an asm_state)
       own = [r for r, fs in self.recs.items()
              if f in fs and r.startswith(self.qualfields + '_')]
-      if len(own) == 1: return own[0] + '_' + f
+      if len(own) == 1:
+        self.recseen.add(own[0]); return own[0] + '_' + f
     # the name of a field that several record types have is an
     # overload of their accessors, which HOL Light resolves by the
     # type of the record, as HOL4 does -- unless the file hides
@@ -1299,12 +1312,15 @@ class Ctx:
     if (f in self.ambfields and f not in self.fields
         and self.ambfields[f] not in self.hidden):
       AMBUSE.append((self.thy, f, self.ambfields[f]))
+      self.recamb.add(f)
       # HOL4 calls the accessor after the record (state_clock of
       # a state) and several theories have a record of the name;
       # the port writes the one this theory means
       a = self.ambfields[f]
       return self.accessor_names.get(a, a)
-    if f in self.fields: return self.fields[f] + '_' + f
+    if f in self.fields:
+      self.recseen.add(self.fields[f])
+      return self.fields[f] + '_' + f
     self.warn.append(f'unknown record field {f}')
     return '?_' + f
 
@@ -1316,6 +1332,78 @@ class Ctx:
   def fresh(self):
     self.wild += 1
     return '_' + str(self.wild)
+
+
+def _rec_arg_pos():
+  """the arguments of the constants of the port whose type is a
+     record type of the port: a variable that stands in one reads
+     the fields of that record, which is how a field name that
+     several records have is resolved.  An entry i.j says that the
+     argument i is a tuple whose component j is the record (the
+     state of bvlSem's evaluate is the third of a triple).  The
+     table comes from the types that the port gives its constants,
+     which tools/bin/recargs dumps out of a session."""
+  out = {}
+  f = os.path.dirname(os.path.abspath(__file__)) + '/recargs.txt'
+  try:
+    for l in open(f):
+      nm, ps = l.rstrip('\n').split('\t')
+      if nm.startswith('_'): continue
+      d = {}
+      for p in ps.split(','):
+        pos, rec = p.split(':')
+        if '.' in pos:
+          i, j = pos.split('.')
+          d[(int(i), int(j))] = rec
+        else:
+          d[(int(pos), None)] = rec
+      out[nm] = d
+  except OSError:
+    pass
+  return out
+
+
+REC_ARGS = _rec_arg_pos()
+
+
+def rec_arg_pos(nm):
+  """the record arguments of a constant of the port"""
+  return REC_ARGS.get(nm, {})
+
+
+def _rec_res_pos():
+  """the components of the result of a constant of the port whose
+     type is a record type of the port (tools/recres.txt): the
+     evaluate of bvlSem gives a result and a state, so the s1 of
+     'evaluate (xs,env,s) = (res,s1)' is a state of bvlSem.  A key
+     of None says that the whole result is the record (the
+     dec_clock of bvlSem gives a state)"""
+  out = {}
+  f = os.path.dirname(os.path.abspath(__file__)) + '/recres.txt'
+  try:
+    for l in open(f):
+      nm, ar, ps = l.rstrip('\n').split('\t')
+      if nm.startswith('_'): continue
+      d = {}
+      for p in ps.split(','):
+        pos, rec = p.split(':')
+        d[int(pos) if pos else None] = rec
+      out[nm] = (int(ar), d)
+  except OSError:
+    pass
+  return out
+
+
+REC_RES = _rec_res_pos()
+
+
+def rec_res_pos(nm, nargs):
+  """the record components of the result of a constant that stands
+     under nargs arguments: fewer than its own arity give a
+     function and no result of the port"""
+  e = REC_RES.get(nm)
+  if e is None or e[0] != nargs: return {}
+  return e[1]
 
 
 def _int_arg_pos():
@@ -1597,6 +1685,17 @@ def layout(tok, s):
   return s
 
 
+def split_nl(s):
+  """the line break that the layout of the source put in front of a
+     term, taken off the term: what the port writes before it (the
+     bind of a do binding) belongs on the line of the term, so the
+     break goes in front of that instead"""
+  if re.match(r'^\n+[ ]*//', s): return '', s
+  m = re.match(r'^(\n+[ ]*)(.*)$', s, re.S)
+  if not m: return '', s
+  return m.group(1), m.group(2)
+
+
 def sameline(s):
   """the text without the line break that the layout of the source
      put in front of it: what the port writes before it (the ~( of
@@ -1677,6 +1776,26 @@ HL_WORD_INFIX = set("""
   HAS_SIZE has_sup IN INSERT INTER INTERSECTION_OF MOD o
   PCROSS pow PSUBSET rem SUBSET treal_add treal_eq
   treal_le treal_mul UNION UNION_OF zpow""".split())
+
+
+ETA = re.compile(
+  r"^\\\s*([A-Za-z_][A-Za-z0-9_']*(?:\s+[A-Za-z_][A-Za-z0-9_']*)*)"
+  r"\.\s*(.*)$", re.S)
+
+
+def eta_contract(txt):
+  """the body of an Overload that is the eta expansion of a
+     constant is that constant: mlstring's ^ is the overload
+     (\\x y. strcat x y), and what the port writes for a ^ b is
+     strcat a b and not a beta redex"""
+  m = ETA.match(txt.strip())
+  if not m: return txt
+  vs = m.group(1).split()
+  parts = m.group(2).split()
+  if len(parts) != len(vs) + 1 or parts[1:] != vs: return txt
+  if not re.match(r"^[A-Za-z_][A-Za-z0-9_']*$", parts[0]): return txt
+  if parts[0] in vs: return txt
+  return parts[0]
 
 
 def as_function(nm):
@@ -1783,7 +1902,8 @@ class Printer:
   def cname(self, n):
     """the HOL Light name of a HOL4 constant, expanding an
        overload"""
-    if self.ctx.overloads.get(n): return self.ctx.overloads[n]
+    if self.ctx.overloads.get(n):
+      return eta_contract(self.ctx.overloads[n])
     return self.ctx.name(n)
 
   def pr(self, e, prec=0):
@@ -1962,7 +2082,7 @@ class Printer:
       if n == '_': return self.ctx.fresh()
       if n in self.ctx.vars: return self.ctx.vars[n]
       if n in self.ctx.overloads:
-        c = self.ctx.overloads[n]
+        c = eta_contract(self.ctx.overloads[n])
         # a variable with its type on it is parenthesised already
         # (source_evalProof antiquotes (ci:'cfg compiler_instance))
         if re.match(r"^\([A-Za-z_][A-Za-z0-9_']*:[^()]*\)$", c):
@@ -2221,7 +2341,7 @@ class Printer:
         fn = self.ctx.overloads.get(hop) if self.ctx is not None \
              else None
         if fn:
-          fn = as_function(fn)
+          fn = as_function(eta_contract(fn))
         else:
           fn = as_function(self.ctx.name(hop))
         return self.paren(fn + ' ' + sameline(self.pr(e.l, APP)) +
@@ -2413,6 +2533,7 @@ class Printer:
         # the gc_state has
         if rec and e.fld not in self.ctx.recs.get(rec, []):
           rec = None
+      if rec: self.ctx.recseen.add(rec)
       acc = (rec + '_' + e.fld) if rec else self.ctx.field(e.fld)
       return self.paren(acc + ' ' + self.pr(e.e, APP),
                         PRE_APP, prec)
@@ -2424,6 +2545,7 @@ class Printer:
       while w.kind == 'typed': w = w.e
       rec = (self.ctx.fieldvar.get(w.name)
              if w.kind == 'id' else None)
+      if rec: self.ctx.recseen.add(rec)
       for i, (fld, v, fn) in enumerate(e.upds):
         s = ((rec + '_' + fld + '_fupd' if rec
               else self.ctx.fupd(fld)) + ' ' +
@@ -2563,16 +2685,21 @@ class Printer:
     if len(stmts) == 1:
       return self.pr(e, 0)
     rest = self.pr_do(stmts[1:])
+    # the statement of a do block starts a line of the source, and
+    # the bind that the port writes in front of it goes on that
+    # line; the variable it binds follows the backslash, which is
+    # no place for a line break
+    nl, body = split_nl(self.pr(e, APP))
     if v is None:
       # a monad without an ignorebind binds a variable that the
       # rest does not use, as HOL4's monad_unitbind does
       if MONAD[0] and not MONAD[0].get('ignorebind'):
-        return (self.mname('bind') + ' ' + self.pr(e, APP) +
+        return (nl + self.mname('bind') + ' ' + body +
                 ' (\\' + self.ctx.fresh() + '. ' + rest + ')')
-      return (self.mname('ignorebind') + ' ' + self.pr(e, APP) +
+      return (nl + self.mname('ignorebind') + ' ' + body +
               ' (' + rest + ')')
-    return (self.mname('bind') + ' ' + self.pr(e, APP) + ' (\\' +
-            self.pr(v, 0) + '. ' + rest + ')')
+    return (nl + self.mname('bind') + ' ' + body + ' (\\' +
+            sameline(self.pr(v, 0)) + '. ' + rest + ')')
 
 
 def rename_ast(e, sub):

@@ -633,8 +633,8 @@ let type_d_type_d_canon = prove
    tenv_equiv (remap_tenv f tenv) mapped_tenv ==>
      (?g mapped_tenv'.
        // This is actually a property of the type system
-       set_tids_tenv (tids UNION ids) tenv' /\ prim_tids F ids /\
-         FINITE ids /\
+       set_tids_tenv (tids UNION ids) tenv' /\ prim_tids F ids
+         /\ FINITE ids /\
        // This forces g to extend the injection on f
        BIJ g ids (count (CARD ids)) /\
        type_d_canon n mapped_tenv d (CARD ids) mapped_tenv' /\
@@ -650,8 +650,8 @@ let type_d_type_d_canon = prove
    prim_tids T tids /\ good_remap f /\
    tenv_equiv (remap_tenv f tenv) mapped_tenv ==>
    (?g mapped_tenv'.
-     set_tids_tenv (tids UNION ids) tenv' /\ prim_tids F ids /\
-       FINITE ids /\
+     set_tids_tenv (tids UNION ids) tenv' /\ prim_tids F ids
+       /\ FINITE ids /\
      BIJ g ids (count (CARD ids)) /\
      type_ds_canon n mapped_tenv ds (CARD ids) mapped_tenv' /\
      tenv_equiv (remap_tenv (extend_bij f g ids n) tenv')

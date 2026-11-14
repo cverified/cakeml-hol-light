@@ -333,6 +333,11 @@ class Porter:
     # constant and nothing is resolved while a file loads
     self.ctx.resolve = self.resolve_overload
     self.ctx.accessor_names = {}
+    # the record types that the blocks of this file have named so
+    # far (two_pass), and the record arguments of the constants
+    # that this file defines (note_ownrec)
+    self.filerecs = set()
+    self.ownrec = {}
     self.ctx.fieldvar = self.fieldvar
     self.ctx.recdflt = dict(overrides.FIELD_DEFAULT)
     # a name that LOCAL_NAMES gives this theory is written as that
@@ -832,8 +837,12 @@ class Porter:
     if not defn:
       self.ctx.intvars = oldint | self.int_vars_by_type(e)
     # an annotation of a variable says which record its fields are
-    # of, wherever the term reads one of them
-    fv = self.annot_fieldvars(e)
+    # of, wherever the term reads one of them, and so does the
+    # type of a constant that it stands in an argument of -- which
+    # the overrides and an annotation of the term come before
+    fv = dict((k, v) for k, v in self.recarg_fieldvars(e).items()
+              if k not in self.ctx.fieldvar)
+    fv.update(self.annot_fieldvars(e))
     if fv:
       self.ctx.fieldvar = dict(self.ctx.fieldvar)
       self.ctx.fieldvar.update(fv)
@@ -855,7 +864,8 @@ class Porter:
       seen.add(nm)
       self.annotate(cl, not annotate)
     try:
-      out = hterm.Printer(self.ctx).pr(e, 0)
+      out = self.two_pass(lambda: hterm.Printer(self.ctx).pr(e, 0))
+      if defn: self.note_ownrec(e)
       for l in self.left_comments(toks, out):
         out += '\n  // ' + l
       return out
@@ -863,6 +873,45 @@ class Porter:
       self.ctx.vars = old
       self.ctx.intvars = oldint
       self.ctx.fieldvar = oldfv
+
+  def two_pass(self, f):
+    """print a term, and where it reads a field of a record type
+       that several theories have (the refs of a state) and
+       nothing says which of them it is, print it again with the
+       record that the rest of the term settles on.  HOL4 reads
+       such a field by the type of what it is of, and the port has
+       no types: what it has is the other fields of the term, and
+       a term that names one record is about that one"""
+    self.ctx.recseen = set()
+    self.ctx.recamb = set()
+    self.ctx.recpick = {}
+    wild = self.ctx.wild
+    out = f()
+    self.filerecs |= self.ctx.recseen
+    pick = {}
+    for fld in self.ctx.recamb:
+      cands = [r for r in self.ctx.recseen
+               if fld in self.ctx.recs.get(r, ())]
+      # a block that says nothing about the record itself is read
+      # with what the file says: one file is about the states of
+      # one language, and the one that is about two (a proof that
+      # relates a pass to its source) names both and settles
+      # nothing, which is what the overrides are for
+      if not cands:
+        cands = [r for r in self.filerecs
+                 if fld in self.ctx.recs.get(r, ())]
+      if len(cands) == 1: pick[fld] = cands[0]
+    if not pick: return out
+    # the second pass starts where the first did: the wildcards of
+    # a term are numbered as they are printed, and a term that is
+    # printed twice would number them on from the first pass
+    self.ctx.recpick = pick
+    self.ctx.wild = wild
+    self.ctx.head_for = None
+    try:
+      return f()
+    finally:
+      self.ctx.recpick = {}
 
   def ovl_lambdas(self):
     """the overloads whose body is a lambda that reads a record
@@ -1017,6 +1066,108 @@ class Porter:
 
     go(e)
     return out - nums
+
+  def recarg_fieldvars(self, e):
+    """the record of a variable that stands where a constant of the
+       port takes one (tools/recargs.txt): the s of bvlSem's
+       evaluate (xs,env,s) is a state of bvlSem, and that is how a
+       reader of the source knows which refs the s.refs of the
+       same statement is -- HOL4 knows it from the type"""
+    out = {}
+
+    def bare(a):
+      while a.kind in ('paren', 'typed', 'rawtyped'): a = a.e
+      return a.name if a.kind == 'id' else None
+
+    def parts(a):
+      """the components of a tuple, which HOL4 writes with , at
+         the loosest precedence"""
+      while a.kind == 'paren': a = a.e
+      ps = []
+      while a.kind == 'infix' and a.op == ',':
+        ps.append(a.l); a = a.r
+      ps.append(a)
+      return ps
+
+    def res_pos(a):
+      """the record components of the result of a term that is an
+         application of a constant of the port"""
+      while a.kind in ('paren', 'typed', 'rawtyped'): a = a.e
+      h, args = hterm.strip_app(a)
+      if h.kind != 'id': return {}
+      return hterm.rec_res_pos(self.ctx.name(h.name), len(args))
+
+    def go(n):
+      if n.kind == 'app':
+        h, args = hterm.strip_app(n)
+        if h.kind == 'id':
+          nm = self.ctx.name(h.name)
+          pos = hterm.rec_arg_pos(nm) or self.ownrec.get(nm, {})
+          for (i, j), rec in pos.items():
+            if i >= len(args): continue
+            a = args[i]
+            if j is not None:
+              ps = parts(a)
+              if len(ps) < 2 or j >= len(ps): continue
+              a = ps[j]
+            v = bare(a)
+            if v: out.setdefault(v, rec)
+      # and the variables that the result of such a constant is
+      # bound to: 'evaluate (xs,env,s) = (res,s1)' says that the
+      # s1 of it is a state of the same language as the s
+      if n.kind == 'infix' and n.op == '=':
+        for a, b in ((n.l, n.r), (n.r, n.l)):
+          pos = res_pos(a)
+          if not pos: continue
+          for j, rec in pos.items():
+            if j is None:
+              v = bare(b)
+              if v: out.setdefault(v, rec)
+            else:
+              ps = parts(b)
+              if len(ps) > 1 and j < len(ps):
+                v = bare(ps[j])
+                if v: out.setdefault(v, rec)
+      for t in hterm.subnodes(n): go(t)
+
+    go(e)
+    return out
+
+  def note_ownrec(self, e):
+    """the record arguments of a constant that this file defines,
+       read off its definition: the port resolved the s and the t
+       of 'state_rel b s t' from what the definition of state_rel
+       says of them, and a statement after it that applies
+       state_rel says the same of its own variables, which is how
+       a reader of the source reads it (recarg_fieldvars).  The
+       table of tools/recargs.txt comes from a session, so a file
+       that does not load yet is not in it, and these are exactly
+       the files that need it"""
+
+    def head(cl):
+      n = cl
+      while True:
+        if n.kind == 'paren': n = n.e
+        elif n.kind == 'quant' and n.q == '!': n = n.body
+        elif n.kind == 'infix' and n.op == '==>': n = n.r
+        elif n.kind == 'infix' and n.op in ('=', '<=>'): n = n.l
+        elif n.kind in ('typed', 'rawtyped'): n = n.e
+        else: return hterm.strip_app(n)
+
+    for cl in hterm.conjuncts_of(e):
+      try:
+        h, args = head(cl)
+      except Exception:
+        continue
+      if h.kind != 'id': continue
+      nm = self.ctx.name(h.name)
+      if hterm.rec_arg_pos(nm): continue
+      d = self.ownrec.setdefault(nm, {})
+      for i, a in enumerate(args):
+        while a.kind in ('paren', 'typed', 'rawtyped'): a = a.e
+        if a.kind != 'id': continue
+        rec = self.ctx.fieldvar.get(a.name)
+        if rec: d.setdefault((i, None), rec)
 
   def annot_fieldvars(self, e):
     """the record of a variable that the term says the type of: a
@@ -4083,6 +4234,15 @@ class Porter:
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.intvars = set(overrides.INT_ARGS.get(key, []))
     self.ctx.reclit = overrides.RECORD_OF.get(key)
+    # the record type of a variable of this block, as a definition
+    # and a statement take it (overrides.FIELD_VAR_DEF): the s of
+    # source_to_flat's s_rel is the state of the source and the s'
+    # is the state of flatLang, which the rule does not say
+    oldfv = self.ctx.fieldvar
+    fv = overrides.FIELD_VAR_DEF.get(key)
+    if fv:
+      self.ctx.fieldvar = dict(self.fieldvar)
+      self.ctx.fieldvar.update(fv)
     was = dict((nm, (self.ctx.names.get((self.thy, nm)),
                      nm in self.ctx.overloaded))
                for nm in conof)
@@ -4109,6 +4269,7 @@ class Porter:
       self.ctx.intvars = set()
       self.ctx.reclit = None
       self.ctx.defining = set()
+      self.ctx.fieldvar = oldfv
     # the binding of the relation in the file, as a definition's
     # (word_bignumProof and five other files state a v_rel of
     # their own, and a proof names the one of its file)
@@ -4391,7 +4552,9 @@ def wrap(line, indent, width, extra=2, hard=False):
         quoted = True; i += 1; continue
       # the break has to be beyond the indentation of the
       # continuation, or the line would not get any shorter
-      if i > len(ind):
+      # and not between the backslash of an abstraction and the
+      # variable it binds, which reads as if the line ended in one
+      if i > len(ind) and cur[i-1] != '\\':
         if c == ' ': cut = i; drop = 1
         elif c in SAFE and cur[i-1] != ' ': safe = i
       i += 1

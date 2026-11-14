@@ -186,15 +186,14 @@ let escape_sym_char_def = new_definition
   `escape_sym_char ch = (let code = ORD ch in
      if code >= 97 /\ code <= 122 \/ code >= 65 /\ code <= 90 \/
         code >= 48 /\ code <= 57 \/ code = 95 then chr_to_str
-          ch else (\x y. strcat x y) ((\x y. strcat x y) (implode
-          "$") (num_to_str (code))) (implode "_"))`;;
+          ch else strcat (strcat (implode "$") (num_to_str (code)))
+            (implode "_"))`;;
 
 let get_sym_label_def = new_definition
   `get_sym_label (ix,appl) (name,start',len) =
-     (let label = (\x y. strcat x y) ((\x y. strcat x y) ((\x y.
-       strcat x y) (implode "cml_") (mlvector_concat (MAP
-       escape_sym_char (explode name))))
-       (implode "_")) (mlint_toString (ix)) in
+     (let label = strcat (strcat (strcat (implode "cml_")
+       (mlstring_concat (MAP escape_sym_char (explode name))))
+       (implode "_")) (num_to_str (ix)) in
      (ix + 1,APPEND appl [(name,label,start',len)]))`;;
 
 let get_sym_labels_def = new_definition
@@ -204,9 +203,8 @@ let get_sym_labels_def = new_definition
 let emit_symbol_def = new_definition
   `emit_symbol appl (name,label,start',len) =
      misc_Append appl (misc_List
-       [(\x y. strcat x y) ((\x y. strcat x y) ((\x y. strcat x y)
-         ((\x y. strcat x y) ((\x y. strcat x y) ((\x y. strcat x y)
-         (implode "    makesym(") label) (implode ", ")) (mlint_toString
+       [strcat (strcat (strcat (strcat (strcat (strcat (implode
+         "    makesym(") label) (implode ", ")) (mlint_toString
          (start'))) (implode ", "))
        (mlint_toString (len))) (implode ")\n")])`;;
 

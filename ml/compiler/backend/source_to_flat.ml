@@ -483,16 +483,16 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
              (source_to_flat_Glob backend_common_None
              (next_indices_vidx next'))
              nsEmpty),environment_generation_store_envs_fupd (K
-             (sptree_insert (environment_store_next envs') env
-             (environment_generation_store_envs envs')))
-             (environment_store_next_fupd (K (environment_store_next
-             envs' + 1))
+             (sptree_insert (environment_generation_store_next envs')
+             env (environment_generation_store_envs envs')))
+             (environment_generation_store_next_fupd (K
+             (environment_generation_store_next envs' + 1))
            envs'),
            [(flatLang_App backend_common_None
              (flatLang_GlobalVarInit (next_indices_vidx next'))
                [env_id_tuple
                  (environment_generation_store_generation envs')
-                 (environment_store_next envs')])])
+                 (environment_generation_store_next envs')])])
         | (t,[]) ->
        (n,next',source_to_flat_empty_env,envs',[])
         | (t,(CONS d ds)) ->
@@ -574,21 +574,20 @@ let inc_compile_prog_def = new_definition
      (let env = lookup_env_id env_id (source_to_flat_config_envs c)
        in
      let envs' = mk_environment_generation_store 0
-       (source_to_flat_config_next (source_to_flat_config_envs c)) LN in
+       (environment_store_next (source_to_flat_config_envs c)) LN in
      let (_19,next',e,gen,p') = source_to_flat_compile_decs [] 1
-       (source_to_flat_config_next c) env envs' p in
-     let gen_envs = sptree_insert (source_to_flat_config_next gen)
+       (environment_store_next c) env envs' p in
+     let gen_envs = sptree_insert (environment_store_next gen)
        (extend_env e env) (source_to_flat_config_envs gen) in
-     let envs2 = mk_environment_store (source_to_flat_config_next
+     let envs2 = mk_environment_store (environment_store_next
        (source_to_flat_config_envs c) + 1) (sptree_insert
-       (source_to_flat_config_next (source_to_flat_config_envs c))
-       gen_envs (environment_store_env_gens (source_to_flat_config_envs
-       c))) in
+       (environment_store_next (source_to_flat_config_envs c)) gen_envs
+       (environment_store_env_gens (source_to_flat_config_envs c))) in
      (source_to_flat_config_envs_fupd (K envs2)
-       (source_to_flat_config_next_fupd (K next') c),APPEND (CONS
+       (environment_store_next_fupd (K next') c),APPEND (CONS
        (glob_alloc next' c) p') [store_env_id
        (environment_generation_store_generation gen)
-       (source_to_flat_config_next gen)]))`;;
+       (environment_store_next gen)]))`;;
 
 let source_to_flat_compile_def = new_definition
   `source_to_flat_compile c p =

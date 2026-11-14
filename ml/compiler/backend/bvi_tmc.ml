@@ -49,8 +49,8 @@ let pure_exp_def,pure_exp_ind = define_rec
    `pure_exp n (bvi_Force _33 _34:bvi_exp) = F`;
    `pure_exp n (bvi_LetCall _35 _36 _37 _38 _39) = F`;
    `pure_exp n (bvi_Return _41:bvi_exp) = F`;
-   `pure_exp n (bvi_Op op args:bvi_exp) = (bvi_tmc_pure_op op args /\
-    pure_exps n args)`;
+   `pure_exp n (bvi_Op op args:bvi_exp) = (bvi_tmc_pure_op op args
+    /\ pure_exps n args)`;
    `pure_exps n [] = T`;
    `pure_exps n (CONS h t) = (pure_exp n h /\ pure_exps n t)`];;
 
@@ -81,10 +81,10 @@ let pure_exps_eqns = prove
    (pure_exps n [bvi_Force fl fw] <=> F) /\
    (pure_exps n [bvi_LetCall la lb lc largs lce] <=> F) /\
    (pure_exps n [bvi_Return res] <=> F) /\
-   (pure_exps n [bvi_Op oop oargs] <=> bvi_tmc_pure_op oop oargs /\
-     pure_exps n oargs) /\
-   (pure_exps n (CONS x1 (CONS x2 xs)) <=> pure_exps n [x1] /\
-     pure_exps n (CONS x2 xs))`,
+   (pure_exps n [bvi_Op oop oargs] <=> bvi_tmc_pure_op oop oargs
+     /\ pure_exps n oargs) /\
+   (pure_exps n (CONS x1 (CONS x2 xs)) <=> pure_exps n [x1]
+     /\ pure_exps n (CONS x2 xs))`,
   CHEAT_TAC);;
 
 let pure_exp_eq = prove

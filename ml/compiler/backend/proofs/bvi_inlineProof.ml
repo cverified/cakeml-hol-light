@@ -13,7 +13,6 @@
 *)
 
 needs "compiler/backend/bvi_inline.ml";;
-needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
@@ -217,8 +216,8 @@ let exp_rel = cake_inductive
         bvi_inlineProof_exp_rel c (bvi_If x1 x2 x3) (bvi_If y1 y2
           y3))) /\
    ((!c xs ys x y.
-        ALL2 (bvi_inlineProof_exp_rel c) xs ys /\
-          bvi_inlineProof_exp_rel c x y ==>
+        ALL2 (bvi_inlineProof_exp_rel c) xs ys
+          /\ bvi_inlineProof_exp_rel c x y ==>
         bvi_inlineProof_exp_rel c (bvi_Let xs x) (bvi_Let ys y))) /\
    ((!c x y. bvi_inlineProof_exp_rel c x y ==>
      bvi_inlineProof_exp_rel c (bvi_Raise x) (bvi_Raise y))) /\
@@ -232,8 +231,8 @@ let exp_rel = cake_inductive
         bvi_inlineProof_exp_rel c (bvi_Call ticks dest xs handler)
           (bvi_Call ticks dest ys handler1))) /\
    ((!c rets ticks dest xs ys x y.
-        ALL2 (bvi_inlineProof_exp_rel c) xs ys /\
-          bvi_inlineProof_exp_rel c x y ==>
+        ALL2 (bvi_inlineProof_exp_rel c) xs ys
+          /\ bvi_inlineProof_exp_rel c x y ==>
         bvi_inlineProof_exp_rel c (bvi_LetCall rets ticks dest xs x)
           (bvi_LetCall rets ticks dest ys y))) /\
    ((!c xs ys. ALL2 (bvi_inlineProof_exp_rel c) xs ys ==>
@@ -259,11 +258,11 @@ let exp_rel_mono_list = prove
 (* [local] *)
 let exp_rel_evaluate_mono = prove
  (`(bviSem_evaluate (es,env,t) = (res,t1) /\ bvi_inlineProof_exp_rel
-  (state_code t) x y ==>
-      bvi_inlineProof_exp_rel (state_code t1) x y) /\
+  (bviSem_state_code t) x y ==>
+      bvi_inlineProof_exp_rel (bviSem_state_code t1) x y) /\
    (bviSem_evaluate (es,env,t) = (res,t1) /\ ALL2
-     (bvi_inlineProof_exp_rel (state_code t)) xs ys ==>
-      ALL2 (bvi_inlineProof_exp_rel (state_code t1)) xs ys)`,
+     (bvi_inlineProof_exp_rel (bviSem_state_code t)) xs ys ==>
+      ALL2 (bvi_inlineProof_exp_rel (bviSem_state_code t1)) xs ys)`,
   CHEAT_TAC);;
 
 let exp_rel_refl = prove
@@ -287,9 +286,10 @@ let inline_exp_rel = prove
 let evaluate_bvi_mk_tick = prove
  (`!exp env s n.
      bviSem_evaluate ([bvi_mk_tick n exp],env,s) =
-       (if state_clock s < n then
-         (Rerr (Rabort Rtimeout_error),state_clock_fupd (K 0) s)
-           else bviSem_evaluate ([exp],env,bviSem_dec_clock n s))`,
+       (if bviSem_state_clock s < n then
+         (Rerr (Rabort Rtimeout_error),bviSem_state_clock_fupd (K
+           0) s) else bviSem_evaluate ([exp],env,bviSem_dec_clock n
+           s))`,
   CHEAT_TAC);;
 
 (* evaluate_expand_env *)
@@ -316,17 +316,17 @@ let in_co_def = new_definition
 let in_state_rel_def = new_definition
   `bvi_inlineProof_in_state_rel s (t:('c,'ffi)bviSem_state) <=>
   bviSem_state_refs
-     t = state_refs s /\ bviSem_state_clock
-     t = state_clock s /\ bviSem_state_global
+     t = bviSem_state_refs s /\ bviSem_state_clock
+     t = bviSem_state_clock s /\ bviSem_state_global
      t = bviSem_state_global s /\ bviSem_state_ffi
-     t = state_ffi s /\ bviSem_state_compile_oracle
-     t = bvi_inlineProof_in_co (compile_oracle s) /\
-     subspt (FST (FST (compile_oracle s 0))) (bviSem_state_code t) /\
-       compile
+     t = bviSem_state_ffi s /\ bviSem_state_compile_oracle
+     t = bvi_inlineProof_in_co (bviSem_state_compile_oracle s) /\
+     subspt (FST (FST (bviSem_state_compile_oracle s 0)))
+       (bviSem_state_code t) /\ bviSem_state_compile
      s = bvi_inlineProof_in_cc (bviSem_state_compile t) /\
-     domain (bviSem_state_code t) = domain (state_code s) /\
+     domain (bviSem_state_code t) = domain (bviSem_state_code s) /\
      (!k arity exp.
-        sptree_lookup k (state_code s) = SOME (arity,exp) ==>
+        sptree_lookup k (bviSem_state_code s) = SOME (arity,exp) ==>
         (?exp1. sptree_lookup k (bviSem_state_code t) = SOME
           (arity,exp1) /\
                bvi_inlineProof_exp_rel (bviSem_state_code t) exp
@@ -336,10 +336,11 @@ let in_state_rel_def = new_definition
 let in_state_rel_find_code = prove
  (`!s t dest vs args exp.
      bvi_inlineProof_in_state_rel s t /\
-     bvlSem_find_code dest vs (state_code s) = SOME (args,exp) ==>
-     (?exp1. bvlSem_find_code dest vs (state_code t) = SOME
+     bvlSem_find_code dest vs (bviSem_state_code s) = SOME (args,exp)
+       ==>
+     (?exp1. bvlSem_find_code dest vs (bviSem_state_code t) = SOME
        (args,exp1) /\
-       bvi_inlineProof_exp_rel (state_code t) exp exp1)`,
+       bvi_inlineProof_exp_rel (bviSem_state_code t) exp exp1)`,
   CHEAT_TAC);;
 
 let inline_all_ALOOKUP = prove
@@ -359,26 +360,27 @@ let inline_all_ALOOKUP = prove
 let do_app_state_swap = prove
  (`~(op = closLang_Install) ==>
        ((bviSem_do_app op args s = Rval (value,s1) /\
-         domain (state_code s) SUBSET domain (state_code t) ==>
+         domain (bviSem_state_code s) SUBSET domain
+           (bviSem_state_code t) ==>
          bviSem_do_app op args
-           (state_ffi_fupd (K (state_ffi s))
+           (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
              (bviSem_state_global_fupd (K (bviSem_state_global s))
-             (state_clock_fupd (K (state_clock s)) (state_refs_fupd (K
-             (state_refs s)) t)))) =
+             (bviSem_state_clock_fupd (K (bviSem_state_clock s))
+             (bviSem_state_refs_fupd (K (bviSem_state_refs s)) t)))) =
          Rval
-           (value,state_ffi_fupd (K (state_ffi s1))
+           (value,bviSem_state_ffi_fupd (K (bviSem_state_ffi s1))
              (bviSem_state_global_fupd (K (bviSem_state_global s1))
-             (state_clock_fupd (K (state_clock s1)) (state_refs_fupd (K
-             (state_refs s1))
+             (bviSem_state_clock_fupd (K (bviSem_state_clock s1))
+             (bviSem_state_refs_fupd (K (bviSem_state_refs s1))
             t))))) /\
         (bviSem_do_app op args s = Rerr error /\
-         (domain (state_code t) SUBSET domain (state_code s) \/
-           ~(error = Rabort Rtype_error)) ==>
+         (domain (bviSem_state_code t) SUBSET domain
+           (bviSem_state_code s) \/ ~(error = Rabort Rtype_error)) ==>
          bviSem_do_app op args
-           (state_ffi_fupd (K (state_ffi s))
+           (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
              (bviSem_state_global_fupd (K (bviSem_state_global s))
-             (state_clock_fupd (K (state_clock s)) (state_refs_fupd (K
-             (state_refs s)) t)))) =
+             (bviSem_state_clock_fupd (K (bviSem_state_clock s))
+             (bviSem_state_refs_fupd (K (bviSem_state_refs s)) t)))) =
          Rerr error))`,
   CHEAT_TAC);;
 
@@ -460,8 +462,8 @@ let in_state_rel_do_install = prove
      (match bviSem_do_install a s1 with Rerr err ->
          (~(err = Rabort Rtype_error) ==> bviSem_do_install a t1 =
            Rerr err) | Rval (v,s2) ->
-         (?t2. bvi_inlineProof_in_state_rel s2 t2 /\
-           bviSem_do_install a t1 = Rval (v,t2)))`,
+         (?t2. bvi_inlineProof_in_state_rel s2 t2
+           /\ bviSem_do_install a t1 = Rval (v,t2)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -473,8 +475,8 @@ let in_do_app_lemma = prove
        (match bviSem_do_app op a s1 with Rerr err ->
            (~(err = Rabort Rtype_error) ==> bviSem_do_app op a t1 =
              Rerr err) | Rval (v,s2) ->
-           (?t2. bvi_inlineProof_in_state_rel s2 t2 /\
-             bviSem_do_app op a t1 = Rval (v,t2)))`),
+           (?t2. bvi_inlineProof_in_state_rel s2 t2
+             /\ bviSem_do_app op a t1 = Rval (v,t2)))`),
   CHEAT_TAC);;
 
 (* Inversion of [exp_rel] on each source constructor. [~inline] is why the
@@ -505,8 +507,8 @@ let exp_rel_inv = prove
    (bvi_inlineProof_exp_rel c (bvi_LetCall rets ticks target xs x) y
      <=>
       (?ys y1. y = bvi_LetCall rets ticks target ys y1 /\
-        ALL2 (bvi_inlineProof_exp_rel c) xs ys /\
-          bvi_inlineProof_exp_rel c x y1)) /\
+        ALL2 (bvi_inlineProof_exp_rel c) xs ys
+          /\ bvi_inlineProof_exp_rel c x y1)) /\
    (bvi_inlineProof_exp_rel c (bvi_Call ticks dest xs handler) y <=>
       (?ys handler1. y = bvi_Call ticks dest ys handler1 /\
          ALL2 (bvi_inlineProof_exp_rel c) xs ys /\ OPTREL
@@ -525,8 +527,8 @@ add_simp exp_rel_inv;;
    [Ret]-raise only, which the side condition excludes. *)
 (* [local] *)
 let evaluate_inlined_call = prove
- (`sptree_lookup n (state_code t) = SOME (LENGTH ys,body) /\ ~(FST
-  (bviSem_evaluate ([bvi_Call ticks (SOME n) ys NONE],env,t)) =
+ (`sptree_lookup n (bviSem_state_code t) = SOME (LENGTH ys,body)
+  /\ ~(FST (bviSem_evaluate ([bvi_Call ticks (SOME n) ys NONE],env,t)) =
      Rerr (Rabort Rtype_error)) ==>
    bviSem_evaluate ([bvi_Let ys (bvi_mk_tick (SUC ticks)
      body)],env,t) =
@@ -539,11 +541,11 @@ let evaluate_inline = prove
  (cake_as_vars (fun () ->
     `!es env s res s1 t es1.
        bvi_inlineProof_in_state_rel s t /\ ALL2
-         (bvi_inlineProof_exp_rel (state_code t)) es es1 /\
+         (bvi_inlineProof_exp_rel (bviSem_state_code t)) es es1 /\
        bviSem_evaluate (es,env,s) = (res,s1) /\ ~(res = Rerr
          (Rabort Rtype_error)) ==>
-       (?t1. bviSem_evaluate (es1,env,t) = (res,t1) /\
-         bvi_inlineProof_in_state_rel s1 t1)`),
+       (?t1. bviSem_evaluate (es1,env,t) = (res,t1)
+         /\ bvi_inlineProof_in_state_rel s1 t1)`),
   CHEAT_TAC);;
 
 (* HOL4 bvi_inlineProofScript.sml:877-907: a proof *)
@@ -599,8 +601,8 @@ let remove_state_rel_def = new_definition
        bviSem_state_clock s /\ bviSem_state_global t =
        bviSem_state_global s /\ bviSem_state_ffi t = bviSem_state_ffi s
        /\ bviSem_state_code
-     t = sptree_map (I ## remove_ticks_exp) (bviSem_state_code s) /\
-       bviSem_state_compile_oracle
+     t = sptree_map (I ## remove_ticks_exp) (bviSem_state_code s)
+       /\ bviSem_state_compile_oracle
      t = bvi_inlineProof_remove_ticks_co o
        bviSem_state_compile_oracle s /\ bviSem_state_compile
      s = bvi_inlineProof_remove_ticks_cc (bviSem_state_compile t)`;;
@@ -617,7 +619,7 @@ let remove_state_rel_find_code_eq = prove
      (!dest vs.
        bvlSem_find_code dest vs (bviSem_state_code t) =
          OPTION_MAP (I ## remove_ticks_exp) (bvlSem_find_code dest
-           vs (state_code s)))`,
+           vs (bviSem_state_code s)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -633,7 +635,8 @@ let evaluate_add_extra_clock = prove
        Rtimeout_error)) ==>
      bviSem_evaluate (xs,env,bviSem_state_clock_fupd (K (extra +
        extra' + bviSem_state_clock s)) s) =
-       (res,state_clock_fupd (K (extra' + state_clock s1)) s1)`,
+       (res,bviSem_state_clock_fupd (K (extra' + bviSem_state_clock
+         s1)) s1)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -657,9 +660,9 @@ let remove_state_rel_do_install = prove
  (`!args (s:('c,'ffi)bviSem_state) t.
      remove_state_rel s t ==>
        (match bviSem_do_install args s with Rval (value,s1) ->
-           (?t1. bviSem_do_install args t = Rval (value,t1) /\
-             remove_state_rel s1 t1) | Rerr err -> bviSem_do_install
-             args t = Rerr err)`,
+           (?t1. bviSem_do_install args t = Rval (value,t1)
+             /\ remove_state_rel s1 t1) | Rerr err ->
+             bviSem_do_install args t = Rerr err)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -667,8 +670,8 @@ let remove_state_rel_do_app = prove
  (`!op args (s:('c,'ffi)bviSem_state) t.
      remove_state_rel s t ==>
        (match bviSem_do_app op args s with Rval (value,s1) ->
-           (?t1. bviSem_do_app op args t = Rval (value,t1) /\
-             remove_state_rel s1 t1) | Rerr err -> bviSem_do_app op
+           (?t1. bviSem_do_app op args t = Rval (value,t1)
+             /\ remove_state_rel s1 t1) | Rerr err -> bviSem_do_app op
              args t = Rerr err)`,
   CHEAT_TAC);;
 
@@ -679,15 +682,15 @@ let evaluate_remove_ticks_mutual = prove
         remove_state_rel s t /\ bviSem_state_clock t <= k /\
         bviSem_evaluate ([remove_ticks_exp e],env,t) = (res,t1) ==>
         (?extra s1.
-          bviSem_evaluate ([e],env,state_clock_fupd (K (state_clock s
-            + extra)) s) =
+          bviSem_evaluate ([e],env,bviSem_state_clock_fupd (K
+            (bviSem_state_clock s + extra)) s) =
             (res,s1) /\ remove_state_rel s1 t1)) /\
      (!es env (t:('c,'ffi)bviSem_state) s res t1.
         remove_state_rel s t /\ bviSem_state_clock t <= k /\
         bviSem_evaluate (remove_ticks_exps es,env,t) = (res,t1) ==>
         (?extra s1.
-          bviSem_evaluate (es,env,state_clock_fupd (K (state_clock s
-            + extra)) s) =
+          bviSem_evaluate (es,env,bviSem_state_clock_fupd (K
+            (bviSem_state_clock s + extra)) s) =
             (res,s1) /\ remove_state_rel s1 t1))`,
   CHEAT_TAC);;
 
@@ -724,8 +727,8 @@ let evaluate_remove_ticks = prove
      remove_state_rel s t /\ bviSem_state_clock t = k /\
      bviSem_evaluate (remove_ticks_exps es,env,t) = (res,t1) ==>
      (?extra s1.
-       bviSem_evaluate (es,env,state_clock_fupd (K (state_clock s +
-         extra)) s) =
+       bviSem_evaluate (es,env,bviSem_state_clock_fupd (K
+         (bviSem_state_clock s + extra)) s) =
          (res,s1) /\ remove_state_rel s1 t1)`,
   CHEAT_TAC);;
 
@@ -758,9 +761,9 @@ let in_co_eq_state_co = prove
 (* [local] *)
 let evaluate_add_clock_io_events_mono = prove
  (`!exps env (s:('c,'ffi)bviSem_state) k extra. ffi_state_io_events
-  (state_ffi
+  (bviSem_state_ffi
      (SND (bviSem_evaluate (exps,env,bviSem_state_clock_fupd (K k)
-       s)))) <<= ffi_state_io_events (state_ffi
+       s)))) <<= ffi_state_io_events (bviSem_state_ffi
      (SND (bviSem_evaluate (exps,env,bviSem_state_clock_fupd (K (k
        + extra)) s))))`,
   CHEAT_TAC);;
@@ -806,8 +809,8 @@ let evaluate_remove_ticks_compile = prove
      bviSem_evaluate ([bvi_Call 0 (SOME start') [] NONE],[],
        bviSem_initial_state ffi (fromAList prog) co
          (bvi_inlineProof_remove_ticks_cc cc) (k + ck)) =
-         (r,s2) /\ state_ffi
-     s2 = state_ffi s)`,
+         (r,s2) /\ bviSem_state_ffi
+     s2 = bviSem_state_ffi s)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -839,7 +842,7 @@ let semantics_terminate_unique = prove
        bviSem_initial_state ffi code co cc k2) = (r2,t2) /\ ~(r1 =
          Rerr (Rabort Rtimeout_error)) /\ ~(r2 = Rerr (Rabort
          Rtimeout_error)) ==>
-     r1 = r2 /\ state_ffi t1 = state_ffi t2`,
+     r1 = r2 /\ bviSem_state_ffi t1 = bviSem_state_ffi t2`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -874,8 +877,8 @@ let evaluate_compile_prog = prove
        bviSem_evaluate ([bvi_Call 0 (SOME start') [] NONE],[],
          bviSem_initial_state ffi (fromAList prog) co
            (state_cc bvi_inline_compile_inc cc) (k + ck)) = (r,s2)
-             /\ state_ffi
-       s2 = state_ffi s)`),
+             /\ bviSem_state_ffi
+       s2 = bviSem_state_ffi s)`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for

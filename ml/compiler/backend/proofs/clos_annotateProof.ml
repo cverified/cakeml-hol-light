@@ -213,8 +213,8 @@ let clos_annotateProof_state_rel_def = new_definition
      (FDOM (closSem_state_refs s) = FDOM (closSem_state_refs t)) /\
      (!n r1.
        (FLOOKUP (closSem_state_refs s) n = SOME r1) ==>
-       (?r2. (FLOOKUP (closSem_state_refs t) n = SOME r2) /\
-         closProps_ref_rel clos_annotateProof_v_rel r1 r2)) /\
+       (?r2. (FLOOKUP (closSem_state_refs t) n = SOME r2)
+         /\ closProps_ref_rel clos_annotateProof_v_rel r1 r2)) /\
      (FDOM (closSem_state_code s) = FDOM (closSem_state_code t)) /\
      (!name arity c.
        (FLOOKUP (closSem_state_code s) name = SOME (arity,c)) ==>
@@ -277,9 +277,9 @@ let clos_annotateProof_do_app_lemma = prove
   ys ==>
    (match closSem_do_app opp xs s with
      Rval (x,s1) ->
-       (?y t1. clos_annotateProof_v_rel x y /\
-         clos_annotateProof_state_rel s1 t1 /\ closSem_do_app opp ys t =
-         Rval (y,t1)) | Rerr err1 ->
+       (?y t1. clos_annotateProof_v_rel x y
+         /\ clos_annotateProof_state_rel s1 t1 /\ closSem_do_app opp ys
+         t = Rval (y,t1)) | Rerr err1 ->
        (?err2. closSem_do_app opp ys t = Rerr err2 /\ exc_rel
          clos_annotateProof_v_rel err1 err2))`,
   CHEAT_TAC);;
@@ -290,8 +290,8 @@ let do_app_thm = prove
   xs ys /\
     (closSem_do_app op xs s1 = Rval (v,s2)) ==>
     (?w t2. (closSem_do_app op ys t1 = Rval (w,t2)) /\
-           clos_annotateProof_v_rel v w /\
-             clos_annotateProof_state_rel s2 t2)`,
+           clos_annotateProof_v_rel v w
+             /\ clos_annotateProof_state_rel s2 t2)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -401,31 +401,33 @@ let evaluate_pure_IMP = prove
 
 (* [local] *)
 let state_rel_opt_rel_refs = prove
- (`(clos_annotateProof_state_rel s1 s2 /\ FLOOKUP (state_refs s1) n = r1
-  ==>
-      (?r2. FLOOKUP (state_refs s2) n = r2 /\ OPTREL
+ (`(clos_annotateProof_state_rel s1 s2 /\ FLOOKUP (closSem_state_refs
+  s1) n = r1 ==>
+      (?r2. FLOOKUP (closSem_state_refs s2) n = r2 /\ OPTREL
         (closProps_ref_rel clos_annotateProof_v_rel) r1 r2)) /\
-   (clos_annotateProof_state_rel s1 s2 /\ FLOOKUP (state_refs s2) n =
-     r2 ==>
-      (?r1. FLOOKUP (state_refs s1) n = r1 /\ OPTREL
+   (clos_annotateProof_state_rel s1 s2 /\ FLOOKUP (closSem_state_refs
+     s2) n = r2 ==>
+      (?r1. FLOOKUP (closSem_state_refs s1) n = r1 /\ OPTREL
         (closProps_ref_rel clos_annotateProof_v_rel) r1 r2))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let state_rel_clocks_eqs = prove
- (`clos_annotateProof_state_rel s t ==> state_clock s = state_clock t`,
+ (`clos_annotateProof_state_rel s t ==> closSem_state_clock s =
+  closSem_state_clock t`,
   CHEAT_TAC);;
 
 (* [local] *)
 let rel_update_thunk = prove
  (`clos_annotateProof_state_rel s1 s2 /\
    ALL2 clos_annotateProof_v_rel vs ys ==>
-     (closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs
-       = SOME refs1 ==>
+     (closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs
+       s1) vs = SOME refs1 ==>
         (?refs2. closSem_update_thunk [closSem_RefPtr v ptr]
-          (state_refs s2) ys = SOME refs2 /\
-                clos_annotateProof_state_rel (state_refs_fupd (K
-                  refs1) s1) (state_refs_fupd (K refs2) s2)))`,
+          (closSem_state_refs s2) ys = SOME refs2 /\
+                clos_annotateProof_state_rel
+                  (closSem_state_refs_fupd (K refs1) s1)
+                  (closSem_state_refs_fupd (K refs2) s2)))`,
   CHEAT_TAC);;
 
 (* [local] *)

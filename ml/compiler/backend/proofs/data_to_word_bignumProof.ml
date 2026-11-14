@@ -80,8 +80,8 @@ let word_list_IMP_store_list = prove
 
 let word_exp_set_var_ShiftVar_lemma = prove
  (`wordSem_word_exp t (ShiftVar sow v n) =
-    (match sptree_lookup v (state_locals t) with SOME (wordLang_Word
-      w) ->
+    (match sptree_lookup v (wordSem_state_locals t) with SOME
+      (wordLang_Word w) ->
         OPTION_MAP wordLang_Word
           (match sow with Lsl -> SOME (w << n) | Lsr -> SOME (w >>>
             n) | Asr -> SOME (w >> n) | Ror -> SOME (word_ror w n)) |
@@ -96,8 +96,8 @@ let i2mw_small_int_IMP_0 = prove
   CHEAT_TAC);;
 
 let state_rel_Number_small_int = prove
- (`data_to_word_gcProof_state_rel c r1 r2 s t (SOME [x]) locs /\
-  small_int (:'a) i ==>
+ (`data_to_word_gcProof_state_rel c r1 r2 s t (SOME [x]) locs
+  /\ small_int (:'a) i ==>
     data_to_word_gcProof_state_rel c r1 r2 s t (SOME
       [(dataSem_Number i,wordLang_Word (Smallnum i:'a word))]) locs`,
   CHEAT_TAC);;
@@ -111,12 +111,14 @@ let heap_lookup_Unused_Bignum = prove
 let push_env_insert_0 = prove
  (`wordSem_push_env (sptree_insert 0 x LN,LN) NONE t =
   wordSem_state_permute_fupd (K (\n. wordSem_state_permute t (n + 1)))
-  (state_stack_max_fupd (K
-                (OPTION_MAP2 MAX (state_stack_max t)
-                  (stack_size (CONS (StackFrame (state_locals_size t)
-                    [(0,x)] [] NONE) (stack t))))) (stack_fupd (K (CONS
-                    (StackFrame (state_locals_size t) [(0,x)] [] NONE)
-                    (stack t)))
+  (wordSem_state_stack_max_fupd (K
+                (OPTION_MAP2 MAX (wordSem_state_stack_max t)
+                  (stack_size (CONS (StackFrame
+                    (wordSem_state_locals_size t) [(0,x)] [] NONE)
+                    (wordSem_state_stack t)))))
+                    (wordSem_state_stack_fupd (K (CONS (StackFrame
+                    (wordSem_state_locals_size t) [(0,x)] [] NONE)
+                    (wordSem_state_stack t)))
     t))`,
   CHEAT_TAC);;
 
@@ -294,7 +296,7 @@ let IMP_bignum_code_rel = prove
  (`data_to_word_compile Bignum_location 2 1 (Bignum_location + 1,[])
              mc_iop_code = (xx1,xx2,xx3,xx4,xx5) /\
     data_to_word_gcProof_state_rel c l1 l2 s t NONE locs ==>
-    data_to_word_gcProof_code_rel (xx4,xx5) (state_code t)`,
+    data_to_word_gcProof_code_rel (xx4,xx5) (wordSem_state_code t)`,
   CHEAT_TAC);;
 
 let TWO_LESS_MustTerminate_limit = prove
@@ -312,8 +314,8 @@ let arith_location_def = new_definition
      if index = 6 then Mod_location else ARB)`;;
 
 let push_env_code = prove
- (`state_code
-      (wordSem_push_env y NONE t) = state_code t`,
+ (`wordSem_state_code
+      (wordSem_push_env y NONE t) = wordSem_state_code t`,
   CHEAT_TAC);;
 
 let arith_code_def = new_definition
@@ -324,10 +326,10 @@ let arith_code_def = new_definition
          NONE)`;;
 
 let lookup_Arith_location = prove
- (`data_to_word_gcProof_state_rel c l1 l2 x t NONE locs /\
-  data_to_word_bignumProof_int_op index i1 i2 = SOME r ==>
-    sptree_lookup (Arith_location index) (state_code t) = SOME
-      (3,Arith_code index)`,
+ (`data_to_word_gcProof_state_rel c l1 l2 x t NONE locs
+  /\ data_to_word_bignumProof_int_op index i1 i2 = SOME r ==>
+    sptree_lookup (Arith_location index) (wordSem_state_code t) =
+      SOME (3,Arith_code index)`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_bignumProofScript.sml:1010-1055: a theorem whose

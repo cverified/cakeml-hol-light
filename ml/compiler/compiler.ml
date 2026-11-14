@@ -76,9 +76,8 @@ let staterr_INDUCT,staterr_RECURSION = define_datatype
 let print_option_def = new_definition
   `print_option h x =
      (match x with
-       NONE -> (implode "") | SOME y -> (\x y. strcat x y) ((\x y.
-         strcat x y) ((\x y. strcat x y) h (implode " ")) y) (implode
-         "\n"))`;;
+       NONE -> (implode "") | SOME y -> strcat (strcat (strcat h
+         (implode " ")) y) (implode "\n"))`;;
 
 (* HOL4 compilerScript.sml:136-145: the ML values that the
    definitions below antiquote *)
@@ -340,9 +339,8 @@ let parse_sexp_input_def = new_definition
 let parse_cml_input_def = new_definition
   `parse_cml_input input =
      (match parse_prog (lexer_fun input) with peg_Failure l _5 ->
-       INL ((\x y. strcat x y) (implode "Parsing failed at ")
-       (locs_to_string (implode input) (SOME l))) | peg_Success _6 x
-       _7 -> INR x)`;;
+       INL (strcat (implode "Parsing failed at ") (locs_to_string
+       (implode input) (SOME l))) | peg_Success _6 x _7 -> INR x)`;;
 
 let compiler_compile_def = new_definition
   `compiler_compile c prelude input =
@@ -627,9 +625,9 @@ EVAL ``parse_gc [«--gc=gen1234,1234,1234»] def``
 let conf_ok_check_def = new_definition
   `conf_ok_check (:'a) c <=>
      shift_length c < dimindex (:'a) /\
-     backend_common_word_shift (:'a) <= shift_length c /\
-       ~(data_to_word_config_len_size c = 0) /\
-       data_to_word_config_len_size
+     backend_common_word_shift (:'a) <= shift_length c
+       /\ ~(data_to_word_config_len_size c = 0)
+       /\ data_to_word_config_len_size
      c + 7 < dimindex (:'a)`;;
 
 (* data *)

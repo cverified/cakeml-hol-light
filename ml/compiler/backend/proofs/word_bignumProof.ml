@@ -82,8 +82,8 @@ let eval_exp_pre_def,eval_exp_pre_ind = define_wf
           wordLang_Const w -> T
         | (wordLang_Var v) -> v IN FDOM (word_bignumProof_state_regs
           s)
-        | (wordLang_Op _1 [x; y]) -> eval_exp_pre s x /\
-          eval_exp_pre s y
+        | (wordLang_Op _1 [x; y]) -> eval_exp_pre s x
+          /\ eval_exp_pre s y
         | (wordLang_Shift sh x1 x2) ->
         eval_exp_pre s x1 /\ eval_exp_pre s x2 /\ (w2n (eval_exp s
           x2) < 32)
@@ -159,8 +159,8 @@ let eval = cake_inductive
         (reg_write r (SOME (EL (w2n w) (word_bignumProof_state_arrays s
         a))) s))) /\
    (!rec s r i w wr.
-      (FLOOKUP (word_bignumProof_state_regs s) i = SOME w) /\
-        (FLOOKUP (word_bignumProof_state_regs s) r = SOME wr) /\
+      (FLOOKUP (word_bignumProof_state_regs s) i = SOME w)
+        /\ (FLOOKUP (word_bignumProof_state_regs s) r = SOME wr) /\
       w2n w < LENGTH (word_bignumProof_state_arrays s Out) ==>
       word_bignumProof_Eval rec s (word_bignum_Store r i) (INR
         (array_write Out (LUPDATE wr (w2n w)
@@ -217,8 +217,8 @@ let eval = cake_inductive
    (!r s1 p vs s2 rec.
       word_bignumProof_Eval (if rec then SOME p else NONE)
         (delete_vars vs (word_bignumProof_dec_clock s1))
-        (word_bignum_LoopBody p) (INR s2) /\
-          ~(word_bignumProof_state_clock s1 = 0) ==>
+        (word_bignum_LoopBody p) (INR s2)
+          /\ ~(word_bignumProof_state_clock s1 = 0) ==>
       word_bignumProof_Eval r s1 (word_bignum_Loop rec vs p) (INR
         s2)) /\
    (!s1 save_regs vs p s2 s3.
@@ -226,8 +226,8 @@ let eval = cake_inductive
         (word_bignumProof_dec_clock s1)) (word_bignum_LoopBody p) (INR
         s2) /\
       word_bignumProof_copy_vars save_regs
-        (word_bignumProof_state_regs s1) s2 = SOME s3 /\
-        ~(word_bignumProof_state_clock
+        (word_bignumProof_state_regs s1) s2 = SOME s3
+        /\ ~(word_bignumProof_state_clock
       s1 = 0) ==>
       word_bignumProof_Eval (SOME p) s1 (word_bignum_Rec save_regs
         vs) (INR s3)) /\
@@ -236,8 +236,8 @@ let eval = cake_inductive
       word_bignumProof_Eval r s1 (word_bignum_LoopBody p) (INR s2))
         /\
    (!r s1 s2 s3 p.
-      word_bignumProof_Eval r s1 p (INL s2) /\
-        ~(word_bignumProof_state_clock s2 = 0) /\
+      word_bignumProof_Eval r s1 p (INL s2)
+        /\ ~(word_bignumProof_state_clock s2 = 0) /\
       word_bignumProof_Eval r (word_bignumProof_dec_clock s2)
         (word_bignum_LoopBody p) (INR s3) ==>
       word_bignumProof_Eval r s1 (word_bignum_LoopBody p) (INR
@@ -336,15 +336,15 @@ let word_bignumProof_state_rel_def = new_definition
           (wordLang_Word v)) /\
      // code assumption
      word_bignumProof_code_rel cs (wordSem_state_code t) /\
-     div_code_assum (:'ffi) (:'c) (wordSem_state_code t) /\
-       ~(wordSem_state_termdep
+     div_code_assum (:'ffi) (:'c) (wordSem_state_code t)
+       /\ ~(wordSem_state_termdep
      t = 0) /\ wordSem_state_gc_fun
      // rest same as original
      t0 = wordSem_state_gc_fun t /\ wordSem_state_handler
      t0 = wordSem_state_handler t /\ wordSem_state_termdep
      t0 = wordSem_state_termdep t /\ wordSem_state_code
      t0 = wordSem_state_code t /\ wordSem_state_be
-     t0 = wordSem_state_be t /\ state_ffi
+     t0 = wordSem_state_be t /\ wordSem_state_ffi
      t0 = wordSem_state_ffi t /\ wordSem_state_compile
      t0 = wordSem_state_compile t /\ wordSem_state_compile_oracle
      t0 = wordSem_state_compile_oracle t /\ wordSem_state_code_buffer
@@ -362,9 +362,9 @@ let word_bignumProof_state_rel_def = new_definition
 (* [local] *)
 let state_rel_delete_vars = prove
  (`word_bignumProof_state_arrays
-       s1 = word_bignumProof_state_arrays s2 /\
-         word_bignumProof_state_clock s1 = word_bignumProof_state_clock
-         s2 /\ word_bignumProof_state_regs
+       s1 = word_bignumProof_state_arrays s2
+         /\ word_bignumProof_state_clock s1 =
+         word_bignumProof_state_clock s2 /\ word_bignumProof_state_regs
        s2 SUBMAP word_bignumProof_state_regs s1 ==>
        word_bignumProof_state_rel s1 t1 cs t0 frame ==>
        word_bignumProof_state_rel s2 t1 cs t0 frame`,
@@ -481,8 +481,8 @@ let state_rel_IN_FDOM = prove
 
 (* compile_exp_thm[local] *)
 let word_bignumProof_compile_exp_thm = prove
- (`word_bignumProof_state_rel s1 t1 cs2 t0 frame /\ eval_exp_pre s1 x /\
-  good_dimindex (:'a) ==>
+ (`word_bignumProof_state_rel s1 t1 cs2 t0 frame /\ eval_exp_pre s1 x
+  /\ good_dimindex (:'a) ==>
    wordSem_word_exp t1 (word_bignum_compile_exp x) = SOME
      (wordLang_Word (eval_exp s1 (x:'a wordLang_exp)))`,
   CHEAT_TAC);;
@@ -631,8 +631,8 @@ let copy_vars_const = prove
      word_bignumProof_copy_vars save_regs
        (word_bignumProof_state_regs s1) s2 = SOME s3 ==>
        word_bignumProof_state_clock
-     s3 = word_bignumProof_state_clock s2 /\
-       word_bignumProof_state_arrays s3 =
+     s3 = word_bignumProof_state_clock s2
+       /\ word_bignumProof_state_arrays s3 =
        word_bignumProof_state_arrays s2`,
   CHEAT_TAC);;
 
@@ -697,15 +697,15 @@ let word_bignumProof_compile_thm = prove
         (?t2 res.
           (wordSem_evaluate (word_bignum_Seq p1 p9,t1) = res) /\
           (match s2 with INR s -> res = wordSem_evaluate (p9,t2) /\
-                     0 < i1 /\ stack
-                     t2 = stack t1 /\
+                     0 < i1 /\ wordSem_state_stack
+                     t2 = wordSem_state_stack t1 /\
                      wordSem_get_var 0 t2 = SOME ret_val /\
-                     word_bignumProof_state_rel s t2 cs2 t0 frame /\
-                       wordSem_state_code t2 = wordSem_state_code t1 |
-                       INL s -> res = wordSem_evaluate (wordLang_Call
+                     word_bignumProof_state_rel s t2 cs2 t0 frame
+                       /\ wordSem_state_code t2 = wordSem_state_code t1
+                       | INL s -> res = wordSem_evaluate (wordLang_Call
                        NONE (SOME n) [0] NONE,t2) /\
-                     0 < i1 /\ stack
-                     t2 = stack t1 /\
+                     0 < i1 /\ wordSem_state_stack
+                     t2 = wordSem_state_stack t1 /\
                      wordSem_get_var 0 t2 = SOME ret_val /\
                      word_bignumProof_state_rel s t2 cs2 t0 frame
                        /\ wordSem_state_code t2 = wordSem_state_code
@@ -717,8 +717,8 @@ let good_code_def = new_definition
      (!prog n p2.
        MEM (prog,n,p2) (SND cs3) ==>
        (?cs1 l2' i2 cs2.
-         word_bignum_compile n 2 1 cs1 prog = (p2,l2',i2,cs2) /\
-           code_subset cs2 cs3))`;;
+         word_bignum_compile n 2 1 cs1 prog = (p2,l2',i2,cs2)
+           /\ code_subset cs2 cs3))`;;
 
 let _ = size_thms "mini";;
 (* [local] *)
@@ -829,8 +829,8 @@ let Corr_Add = prove
              (eval_ri s ri2)))) s)))
     (n3 IN FDOM (word_bignumProof_state_regs s) /\ eval_ri_pre s ri1
       /\ eval_ri_pre s ri2 /\
-     (~(eval_ri s ri2 = (n2w 0)) ==> eval_ri s ri2 = (n2w 1)) /\
-       ~(n1 = n2))`,
+     (~(eval_ri s ri2 = (n2w 0)) ==> eval_ri s ri2 = (n2w 1))
+       /\ ~(n1 = n2))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -846,8 +846,8 @@ let Corr_Sub = prove
              (eval_ri s ri2)))) s)))
     (n3 IN FDOM (word_bignumProof_state_regs s) /\ eval_ri_pre s ri1
       /\ eval_ri_pre s ri2 /\
-     (~(eval_ri s ri2 = (n2w 0)) ==> eval_ri s ri2 = (n2w 1)) /\
-       ~(n1 = n2))`,
+     (~(eval_ri s ri2 = (n2w 0)) ==> eval_ri s ri2 = (n2w 1))
+       /\ ~(n1 = n2))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -920,8 +920,8 @@ let Corr_Loop_lemma = prove
  (`(!s. Corr (word_bignum_LoopBody p) s (INR (f s)) (q s)) ==>
    Corr (word_bignum_Loop F vs p) s (INR (f (delete_vars vs
      (word_bignumProof_dec_clock s))))
-     (q (delete_vars vs (word_bignumProof_dec_clock s)) /\
-       ~(word_bignumProof_state_clock s = 0))`,
+     (q (delete_vars vs (word_bignumProof_dec_clock s))
+       /\ ~(word_bignumProof_state_clock s = 0))`,
   CHEAT_TAC);;
 
 (* HOL4 word_bignumProofScript.sml:1514: ML code, not ported *)
@@ -971,10 +971,10 @@ let state_eq_lemma = prove
 
 let clock_write_simp = prove
  (`word_bignumProof_state_regs
-      (clock_write n s) = word_bignumProof_state_regs s /\
-        word_bignumProof_state_arrays
-       (clock_write n s) = word_bignumProof_state_arrays s /\
-         word_bignumProof_state_clock
+      (clock_write n s) = word_bignumProof_state_regs s
+        /\ word_bignumProof_state_arrays
+       (clock_write n s) = word_bignumProof_state_arrays s
+         /\ word_bignumProof_state_clock
        (clock_write n s) = n`,
   CHEAT_TAC);;
 add_simp clock_write_simp;;
@@ -992,12 +992,12 @@ add_simp dec_clock_write_simp;;
 
 let reg_write_simp = prove
  (`word_bignumProof_state_regs
-      (reg_write n NONE s) = word_bignumProof_state_regs s \\ n /\
-        word_bignumProof_state_regs
+      (reg_write n NONE s) = word_bignumProof_state_regs s \\ n
+        /\ word_bignumProof_state_regs
        (reg_write n (SOME w) s) = word_bignumProof_state_regs s |+
          (n,w) /\ word_bignumProof_state_arrays
-       (reg_write n v s) = word_bignumProof_state_arrays s /\
-         word_bignumProof_state_clock
+       (reg_write n v s) = word_bignumProof_state_arrays s
+         /\ word_bignumProof_state_clock
        (reg_write n v s) = word_bignumProof_state_clock s`,
   CHEAT_TAC);;
 add_simp reg_write_simp;;
@@ -1017,8 +1017,8 @@ let reg_write_simp_alt = prove
 
 let array_write_simp = prove
  (`word_bignumProof_state_regs
-      (array_write n w s) = word_bignumProof_state_regs s /\
-        word_bignumProof_state_arrays
+      (array_write n w s) = word_bignumProof_state_regs s
+        /\ word_bignumProof_state_arrays
        (array_write n w s) = (n =+ w) (word_bignumProof_state_arrays
          s) /\ word_bignumProof_state_clock
        (array_write n w s) = word_bignumProof_state_clock s`,
@@ -1027,8 +1027,8 @@ add_simp array_write_simp;;
 
 let delete_vars_simp = prove
  (`!vs. word_bignumProof_state_clock
-      (delete_vars vs s) = word_bignumProof_state_clock s /\
-        word_bignumProof_state_arrays
+      (delete_vars vs s) = word_bignumProof_state_clock s
+        /\ word_bignumProof_state_arrays
       (delete_vars vs s) = word_bignumProof_state_arrays s /\
       (FLOOKUP (word_bignumProof_state_regs (delete_vars vs s)) n =
          (if MEM n vs then NONE else FLOOKUP

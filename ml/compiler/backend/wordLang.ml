@@ -113,8 +113,8 @@ let every_var_exp_def,every_var_exp_ind = define_wf
           wordLang_Var num' -> P num'
         | (wordLang_Load exp) -> every_var_exp P exp
         | (wordLang_Op wop ls) -> ALL (every_var_exp P) ls
-        | (wordLang_Shift sh e1 e2) -> (every_var_exp P e1 /\
-          every_var_exp P e2)
+        | (wordLang_Shift sh e1 e2) -> (every_var_exp P e1
+          /\ every_var_exp P e2)
         | expr -> T`];;
 
 let every_var_imm_def = new_definition
@@ -129,11 +129,11 @@ let every_var_inst_def = new_definition
           asm_Const reg w -> P reg
         | (asm_Arith (asm_Binop bop r1 r2 ri)) ->
        (P r1 /\ P r2 /\ every_var_imm P ri)
-        | (asm_Arith (asm_Shift shift' r1 r2 ri)) -> (P r1 /\ P r2 /\
-          every_var_imm P ri)
+        | (asm_Arith (asm_Shift shift' r1 r2 ri)) -> (P r1 /\ P r2
+          /\ every_var_imm P ri)
         | (asm_Arith (asm_Div r1 r2 r3)) -> (P r1 /\ P r2 /\ P r3)
-        | (asm_Arith (asm_AddCarry r1 r2 r3 r4)) -> (P r1 /\ P r2 /\
-          P r3 /\ P r4)
+        | (asm_Arith (asm_AddCarry r1 r2 r3 r4)) -> (P r1 /\ P r2
+          /\ P r3 /\ P r4)
         | (asm_Arith (asm_AddOverflow r1 r2 r3 r4)) -> (P r1 /\ P r2
           /\ P r3 /\ P r4)
         | (asm_Arith (asm_SubOverflow r1 r2 r3 r4)) -> (P r1 /\ P r2
@@ -197,11 +197,11 @@ let every_var_def,every_var_ind = define_wf
            NONE -> T | SOME (v,prog,l1,l2) ->
            (P v /\
            wordLang_every_var P prog)))))
-        | (wordLang_Seq s1 s2) -> (wordLang_every_var P s1 /\
-          wordLang_every_var P s2)
+        | (wordLang_Seq s1 s2) -> (wordLang_every_var P s1
+          /\ wordLang_every_var P s2)
         | (wordLang_If cmp r1 ri e2 e3) ->
-       (P r1 /\ every_var_imm P ri /\ wordLang_every_var P e2 /\
-         wordLang_every_var P e3)
+       (P r1 /\ every_var_imm P ri /\ wordLang_every_var P e2
+         /\ wordLang_every_var P e3)
         | (wordLang_Alloc num' numset) ->
        (P num' /\ every_name P numset)
         | (wordLang_StoreConsts a b c d ws) ->
@@ -211,8 +211,8 @@ let every_var_def,every_var_ind = define_wf
         | (wordLang_OpCurrHeap _3 num1 num2) -> (P num1 /\ P num2)
         | wordLang_Tick -> T
         | (wordLang_Set n exp) -> every_var_exp P exp
-        | (wordLang_ShareInst op num' exp) -> (P num' /\
-          every_var_exp P exp)
+        | (wordLang_ShareInst op num' exp) -> (P num'
+          /\ every_var_exp P exp)
         | (wordLang_Loop names body exit_names) ->
        (ALL P (MAP FST (toAList names)) /\ wordLang_every_var P body
          /\

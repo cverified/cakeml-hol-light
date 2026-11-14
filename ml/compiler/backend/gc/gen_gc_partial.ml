@@ -42,8 +42,8 @@ let gen_gc_partial_gc_move_def = define_cases
                 else
           match heap_lookup ptr (gc_state_heap state) with SOME
               (DataElement xs l dd) ->
-              (let ok = (ok /\ l + 1 <= gc_state_n state /\
-                  ~(gen_gc_partial_conf_isRef conf dd)) in
+              (let ok = (ok /\ l + 1 <= gc_state_n state
+                  /\ ~(gen_gc_partial_conf_isRef conf dd)) in
                let n = gc_state_n state - (l + 1) in
                let h2 = APPEND (gc_state_h2 state) [DataElement xs l
                    dd] in
@@ -203,8 +203,8 @@ let partial_gc_IMP = prove
 let heap_gen_ok_def = new_definition
   `heap_gen_ok heap conf <=>
      (?old current refs. gen_gc_partial_conf_gen_start
-       conf <= gen_gc_partial_conf_refs_start conf /\
-         gen_gc_partial_conf_refs_start conf <=
+       conf <= gen_gc_partial_conf_refs_start conf
+         /\ gen_gc_partial_conf_refs_start conf <=
          gen_gc_partial_conf_limit conf /\
        ALL isDataElement old /\
        ALL isDataElement refs /\
@@ -351,8 +351,8 @@ let heap_element_is_ref_def = new_definition
 let gen_inv_def = new_definition
   `gen_inv (conf:'b gen_gc_partial_conf) heap =
   (gen_gc_partial_conf_gen_start
-     conf <= gen_gc_partial_conf_refs_start conf /\
-       gen_gc_partial_conf_refs_start
+     conf <= gen_gc_partial_conf_refs_start conf
+       /\ gen_gc_partial_conf_refs_start
      conf <= gen_gc_partial_conf_limit conf /\
      (?heap_old heap_current heap_refs.
        (heap_segment (gen_gc_partial_conf_gen_start
@@ -404,8 +404,8 @@ add_simp has_old_ptr_simp;;
 let sim_inv_def = new_definition
   `sim_inv conf (heap0:(('a,'b)heap_element) list)
   (state:('a,'b)gc_state) <=>
-     gen_inv conf (gc_state_heap state) /\
-       gen_gc_partial_conf_gen_start
+     gen_inv conf (gc_state_heap state)
+       /\ gen_gc_partial_conf_gen_start
      conf <= gc_state_a state /\ gc_state_a
      state + gc_state_n state <= gen_gc_partial_conf_refs_start conf
        /\
@@ -451,8 +451,8 @@ let gc_move_simulation = prove
      (gen_gc_gc_move
         (to_gen_conf conf)
         (to_gen_state conf state)
-        (to_gen_heap_address conf ptr) = (ptr1',state1')) /\
-          gc_state_ok state1' ==>
+        (to_gen_heap_address conf ptr) = (ptr1',state1'))
+          /\ gc_state_ok state1' ==>
      sim_inv conf heap0 state' /\
      (
       (ptr1',state1') = (to_gen_heap_address conf ptr',to_gen_state
@@ -497,8 +497,8 @@ let gen_gc_partial_gc_move_ok = prove
 
 let gc_move_list_ok' = prove
  (`!xs xs' state state'.
-    (gen_gc_partial_gc_move_list conf state xs = (xs',state')) /\
-      gc_state_ok state' ==> gc_state_ok
+    (gen_gc_partial_gc_move_list conf state xs = (xs',state'))
+      /\ gc_state_ok state' ==> gc_state_ok
       state`,
   (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
     PAIR_EQ] THENL
@@ -552,8 +552,8 @@ let gc_move_list_simulation = prove
      (gen_gc_gc_move_list
         (to_gen_conf conf)
         (to_gen_state conf state)
-        (MAP (to_gen_heap_address conf) ptr) = (ptr1',state1')) /\
-          gc_state_ok state1' ==>
+        (MAP (to_gen_heap_address conf) ptr) = (ptr1',state1'))
+          /\ gc_state_ok state1' ==>
      sim_inv conf heap0 state' /\
      (
       (ptr1',state1') = (MAP (to_gen_heap_address conf)
@@ -604,8 +604,8 @@ let gc_move_ref_list_simulation = prove
    (
      gen_gc_gc_move_list (to_gen_conf conf)
                  (to_gen_state conf state)
-                 (refs_to_roots conf refs0) = (refs1',state1')) /\
-                   gc_state_ok state1' /\
+                 (refs_to_roots conf refs0) = (refs1',state1'))
+                   /\ gc_state_ok state1' /\
    sim_inv conf heap0 state /\
    (!ptrs l d ptr' u. MEM (gc_shared_Pointer ptr' u) ptrs /\ MEM
      (DataElement ptrs l d) refs0 ==> ptr' < heap_length (gc_state_heap
@@ -782,9 +782,9 @@ let partial_gc_simulation = prove
     new_roots new_state.
      (partial_gc conf (roots,heap0) = (roots1,state1)) /\
      heap_gen_ok heap0 conf /\ gen_gc_partial_conf_gen_start
-     conf <= gen_gc_partial_conf_refs_start conf /\
-       gen_gc_partial_conf_refs_start conf <= gen_gc_partial_conf_limit
-       conf /\
+     conf <= gen_gc_partial_conf_refs_start conf
+       /\ gen_gc_partial_conf_refs_start conf <=
+       gen_gc_partial_conf_limit conf /\
      (
        heap_segment (gen_gc_partial_conf_gen_start
          conf,gen_gc_partial_conf_refs_start conf) heap0 = SOME
@@ -803,8 +803,8 @@ let partial_gc_simulation = prove
      (new_roots = APPEND (to_gen_roots conf roots1) (refs_to_roots
        conf (gc_state_r1 state1))) /\
      (new_state = to_gen_state conf state1) /\
-     sim_inv conf heap0 state1 /\ (gc_state_h2 state1 = []) /\
-       gc_state_ok state1`,
+     sim_inv conf heap0 state1 /\ (gc_state_h2 state1 = [])
+       /\ gc_state_ok state1`,
   CHEAT_TAC);;
 
 let f_old_ptrs_def = new_definition

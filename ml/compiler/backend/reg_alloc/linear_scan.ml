@@ -501,14 +501,11 @@ let numset_list_add_if_lt_monad_def,numset_list_add_if_lt_monad_ind =
   [`numset_list_add_if_lt_monad [] (v:int) =
       st_ex_return one`;
    `numset_list_add_if_lt_monad (CONS r rs) (v:int) =
-      st_ex_bind (int_beg_sub r) (\
-        begr.
+      st_ex_bind (int_beg_sub r) (\begr.
         if (&0) < begr then
-          st_ex_ignore_bind
-            (update_int_beg r v) (
+            st_ex_ignore_bind (update_int_beg r v) (
             numset_list_add_if_lt_monad rs v) else if v <= begr then
-          st_ex_ignore_bind
-            (update_int_beg r v) (
+            st_ex_ignore_bind (update_int_beg r v) (
             numset_list_add_if_lt_monad rs v) else
           numset_list_add_if_lt_monad rs v)`];;
 
@@ -520,14 +517,11 @@ let numset_list_add_if_gt_monad_def,numset_list_add_if_gt_monad_ind =
   [`numset_list_add_if_gt_monad [] (v:int) =
       st_ex_return one`;
    `numset_list_add_if_gt_monad (CONS r rs) (v:int) =
-      st_ex_bind (int_end_sub r) (\
-        begr.
+      st_ex_bind (int_end_sub r) (\begr.
         if (&0) < begr then
-          st_ex_ignore_bind
-            (update_int_end r v) (
+            st_ex_ignore_bind (update_int_end r v) (
             numset_list_add_if_gt_monad rs v) else if begr <= v then
-          st_ex_ignore_bind
-            (update_int_end r v) (
+            st_ex_ignore_bind (update_int_end r v) (
             numset_list_add_if_gt_monad rs v) else
           numset_list_add_if_gt_monad rs v)`];;
 
@@ -538,41 +532,39 @@ let get_intervals_ct_monad_aux_def,get_intervals_ct_monad_aux_ind =
   define_wf
   `MEASURE (\(x0,x1,x2). clash_tree_size x0)`
   [`get_intervals_ct_monad_aux (reg_alloc_Delta wr rd) (n:int) live =
-      st_ex_ignore_bind
-        (numset_list_add_if_lt_monad wr n) (st_ex_ignore_bind
-        (numset_list_add_if_gt_monad wr n) (st_ex_ignore_bind
-        (numset_list_add_if_gt_monad rd (n - (&1))) (
+        st_ex_ignore_bind (numset_list_add_if_lt_monad wr n) (
+        st_ex_ignore_bind (numset_list_add_if_gt_monad wr n) (
+        st_ex_ignore_bind (numset_list_add_if_gt_monad rd (n -
+            (&1))) (
         st_ex_return (n - (&2),linear_scan_numset_list_insert rd
             (numset_list_delete wr live)))))`;
    `get_intervals_ct_monad_aux (reg_alloc_Set cutset) (n:int) live =
-      st_ex_ignore_bind
-        (numset_list_add_if_gt_monad (MAP FST (toAList cutset)) n) (
+        st_ex_ignore_bind (numset_list_add_if_gt_monad (MAP FST
+            (toAList cutset)) n) (
         st_ex_return (n - (&1),sptree_union cutset live))`;
    `get_intervals_ct_monad_aux (reg_alloc_Branch optcutset ct1 ct2)
     (n:int) live =
-      st_ex_bind (get_intervals_ct_monad_aux ct2 n live) (\
-        (n2,live2). st_ex_bind (get_intervals_ct_monad_aux ct1 n2
-            live) (\
-        (n1,live1).
+      st_ex_bind (get_intervals_ct_monad_aux ct2 n live)
+          (\(n2,live2). st_ex_bind (get_intervals_ct_monad_aux ct1 n2
+          live) (\(n1,live1).
         match optcutset with NONE -> st_ex_return (n1,sptree_union
             live1 live2) | SOME cutset ->
-          st_ex_ignore_bind
-            (numset_list_add_if_gt_monad (MAP FST (toAList cutset))
-                n1) (
+            st_ex_ignore_bind (numset_list_add_if_gt_monad (MAP FST
+                (toAList cutset)) n1) (
             st_ex_return (n1 - (&1),sptree_union cutset
                 (sptree_union live1 live2)))))`;
    `get_intervals_ct_monad_aux (reg_alloc_Seq ct1 ct2) (n:int) live =
-      st_ex_bind (get_intervals_ct_monad_aux ct2 n live) (\
-        (n2,live2).
+      st_ex_bind (get_intervals_ct_monad_aux ct2 n live)
+          (\(n2,live2).
         get_intervals_ct_monad_aux ct1 n2 live2)`];;
 
 let get_intervals_ct_monad_def = new_definition
   `get_intervals_ct_monad ct =
-     st_ex_bind (get_intervals_ct_monad_aux ct (&0) LN) (\
-       (n,live). st_ex_ignore_bind
-       (numset_list_add_if_lt_monad (MAP FST (toAList live)) n)
-         (st_ex_ignore_bind
-       (numset_list_add_if_gt_monad (MAP FST (toAList live)) n) (
+     st_ex_bind (get_intervals_ct_monad_aux ct (&0) LN) (\(n,live).
+       st_ex_ignore_bind (numset_list_add_if_lt_monad (MAP FST
+         (toAList live)) n) (
+       st_ex_ignore_bind (numset_list_add_if_gt_monad (MAP FST
+         (toAList live)) n) (
        st_ex_return (n - (&1)))))`;;
 
 (* the termination relation that HOL4 gives is
@@ -589,8 +581,7 @@ let remove_inactive_intervals_def,remove_inactive_intervals_ind =
      (match linear_scan_state_active st with [] -> st_ex_return st |
        CONS (e,r) activetail -> (
        if e < beg then
-         st_ex_bind (colors_sub r) (\
-           col.
+         st_ex_bind (colors_sub r) (\col.
            let st' = linear_scan_state_colorpool_fupd (\l. CONS col
              l) (linear_scan_state_active_fupd (K activetail) st) in
            remove_inactive_intervals beg st') else
@@ -627,14 +618,13 @@ let find_color_def = new_definition
 
 let spill_register_def = new_definition
   `spill_register st reg =
-     st_ex_ignore_bind
-       (update_colors reg (linear_scan_state_stacknum st)) (
+       st_ex_ignore_bind (update_colors reg
+         (linear_scan_state_stacknum st)) (
        st_ex_return (linear_scan_state_stacknum_fupd ((+) 1) st))`;;
 
 let color_register_def = new_definition
   `color_register st reg col rend =
-     st_ex_ignore_bind
-       (update_colors reg col) (
+       st_ex_ignore_bind (update_colors reg col) (
        if is_phy_var reg then
          st_ex_return (linear_scan_state_phyregs_fupd (sptree_insert
            col one) (linear_scan_state_active_fupd (add_active_interval
@@ -650,12 +640,10 @@ let find_last_stealable_def,find_last_stealable_ind = define_wf
   [`find_last_stealable [] (forbidden:1 spt) =
         st_ex_return NONE`;
    `find_last_stealable (CONS x xs) (forbidden:1 spt) =
-      st_ex_bind (find_last_stealable xs forbidden) (\
-        recursion.
+      st_ex_bind (find_last_stealable xs forbidden) (\recursion.
         match recursion with SOME (steal,rest) -> st_ex_return (SOME
             (steal,CONS x rest)) | NONE -> (
-            st_ex_bind (colors_sub (SND x)) (\
-              xcol.
+            st_ex_bind (colors_sub (SND x)) (\xcol.
               if ~(is_phy_var (SND x)) /\ (sptree_lookup xcol
                   forbidden = NONE) then
                 st_ex_return (SOME (x,xs)) else
@@ -664,16 +652,13 @@ let find_last_stealable_def,find_last_stealable_ind = define_wf
 let find_spill_def = new_definition
   `find_spill st (forbidden:1 spt) reg rend force =
      st_ex_bind (find_last_stealable (linear_scan_state_active st)
-       forbidden) (\
-       stealable.
+       forbidden) (\stealable.
        match stealable with NONE -> spill_register st reg | SOME
          ((stealend,stealreg),newactive) ->
          (if force \/ rend < stealend then
-           st_ex_bind (colors_sub stealreg) (\
-             stealcolor. st_ex_bind (spill_register
-               (linear_scan_state_active_fupd (K newactive) st)
-               stealreg) (\
-             st'.
+           st_ex_bind (colors_sub stealreg) (\stealcolor. st_ex_bind
+             (spill_register (linear_scan_state_active_fupd (K
+             newactive) st) stealreg) (\st'.
              color_register st' reg stealcolor rend)) else
            spill_register st reg))`;;
 
@@ -692,15 +677,13 @@ let linear_reg_alloc_step_aux_def = new_definition
 
 let linear_reg_alloc_step_pass1_def = new_definition
   `linear_reg_alloc_step_pass1 forced moves st reg =
-     st_ex_bind (int_beg_sub reg) (\
-       rbeg. st_ex_bind (int_end_sub reg) (\
-       rend. st_ex_bind (remove_inactive_intervals rbeg st) (\
-       st'.
+     st_ex_bind (int_beg_sub reg) (\rbeg. st_ex_bind (int_end_sub
+       reg) (\rend. st_ex_bind (remove_inactive_intervals rbeg st)
+       (\st'.
        if is_stack_var reg then
          spill_register st' reg else
          st_ex_bind (st_ex_MAP colors_sub (the [] (sptree_lookup reg
-           forced))) (\
-           forced_forbidden_list.
+           forced))) (\forced_forbidden_list.
            let forced_forbidden = fromAList (MAP (\c. (c,one))
              forced_forbidden_list) in
            if is_phy_var reg then
@@ -711,23 +694,19 @@ let linear_reg_alloc_step_pass1_def = new_definition
                  else
                spill_register st' reg else
              st_ex_bind (st_ex_MAP colors_sub (the [] (sptree_lookup
-               reg moves))) (\
-               moves_preferred.
+               reg moves))) (\moves_preferred.
                linear_reg_alloc_step_aux st' forced_forbidden
                  moves_preferred reg rend F)))))`;;
 
 let linear_reg_alloc_step_pass2_def = new_definition
   `linear_reg_alloc_step_pass2 forced moves st reg =
-     st_ex_bind (int_beg_sub reg) (\
-       rbeg. st_ex_bind (int_end_sub reg) (\
-       rend. st_ex_bind (remove_inactive_intervals rbeg st) (\
-       st'. st_ex_bind (st_ex_MAP colors_sub (the [] (sptree_lookup
-         reg forced))) (\
-       forced_forbidden_list. st_ex_bind (st_ex_return (fromAList
-         (MAP (\c. (c,one)) forced_forbidden_list))) (\
-       forced_forbidden. st_ex_bind (st_ex_MAP colors_sub (the []
-         (sptree_lookup reg moves))) (\
-       moves_preferred.
+     st_ex_bind (int_beg_sub reg) (\rbeg. st_ex_bind (int_end_sub
+       reg) (\rend. st_ex_bind (remove_inactive_intervals rbeg st)
+       (\st'. st_ex_bind (st_ex_MAP colors_sub (the [] (sptree_lookup
+       reg forced))) (\forced_forbidden_list. st_ex_bind (st_ex_return
+       (fromAList (MAP (\c. (c,one)) forced_forbidden_list)))
+       (\forced_forbidden. st_ex_bind (st_ex_MAP colors_sub (the []
+       (sptree_lookup reg moves))) (\moves_preferred.
        if is_phy_var reg then
          let forbidden = sptree_union (linear_scan_state_phyregs st')
            forced_forbidden in
@@ -750,8 +729,7 @@ let find_reg_exchange_def,find_reg_exchange_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x0)`
   [`find_reg_exchange [] exch invexch = st_ex_return (exch,invexch)`;
    `find_reg_exchange (CONS r rs) exch invexch =
-      st_ex_bind (colors_sub r) (\
-        col1.
+      st_ex_bind (colors_sub r) (\col1.
         let fcol1 = r DIV 2 in
         let col2 = option_CASE (sptree_lookup fcol1 invexch) fcol1
             (\x. x) in
@@ -767,16 +745,14 @@ let MAP_colors_def,MAP_colors_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
   [`MAP_colors f 0 = st_ex_return one`;
    `MAP_colors f (SUC n) =
-      st_ex_bind (colors_sub n) (\
-        col. st_ex_ignore_bind
-        (update_colors n (f col)) (
+      st_ex_bind (colors_sub n) (\col.
+        st_ex_ignore_bind (update_colors n (f col)) (
         MAP_colors f n))`];;
 
 let apply_reg_exchange_def = new_definition
   `apply_reg_exchange phyregs =
-     st_ex_bind (find_reg_exchange phyregs LN LN) (\
-       (exch,invexch). st_ex_bind colors_length (\
-       col_size.
+     st_ex_bind (find_reg_exchange phyregs LN LN) (\(exch,invexch).
+       st_ex_bind colors_length (\col_size.
        MAP_colors (\c. option_CASE (sptree_lookup c exch) c (\x.
          x)) col_size))`;;
 
@@ -785,8 +761,7 @@ let apply_reg_exchange_def = new_definition
 let st_ex_FOLDL_def,st_ex_FOLDL_ind = define_guess_cheat
   [`st_ex_FOLDL f e [] = st_ex_return e`;
    `st_ex_FOLDL f e (CONS x xs) =
-      st_ex_bind (f e x) (\
-        e'.
+      st_ex_bind (f e x) (\e'.
         st_ex_FOLDL f e' xs)`];;
 
 (* like st_ex_FILTER, but preserve the order *)
@@ -795,11 +770,9 @@ let st_ex_FOLDL_def,st_ex_FOLDL_ind = define_guess_cheat
 let st_ex_FILTER_good_def,st_ex_FILTER_good_ind = define_guess_cheat
   [`st_ex_FILTER_good P [] = st_ex_return []`;
    `st_ex_FILTER_good P (CONS x xs) =
-      st_ex_bind (P x) (\
-        Px.
+      st_ex_bind (P x) (\Px.
         if Px then
-          st_ex_bind (st_ex_FILTER_good P xs) (\
-            filter_xs.
+          st_ex_bind (st_ex_FILTER_good P xs) (\filter_xs.
             st_ex_return (CONS x filter_xs)) else
           st_ex_FILTER_good P xs)`];;
 
@@ -811,9 +784,8 @@ let edges_to_adjlist_def,edges_to_adjlist_ind = define_wf
    `edges_to_adjlist (CONS (a,b) abs') acc =
       (if a = b then
         edges_to_adjlist abs' acc else
-        st_ex_bind (int_beg_sub a) (\
-          bega. st_ex_bind (int_beg_sub b) (\
-          begb.
+        st_ex_bind (int_beg_sub a) (\bega. st_ex_bind (int_beg_sub
+            b) (\begb.
           if bega < begb \/ (bega = begb /\ a <= b) then
             edges_to_adjlist abs' (sptree_insert b (CONS a (the []
                 (sptree_lookup b acc))) acc) else
@@ -826,10 +798,9 @@ let sort_moves_rev_def = new_definition
 
 let swap_regs_def = new_definition
   `swap_regs i1 i2 =
-     st_ex_bind (sorted_regs_sub i1) (\
-       r1. st_ex_bind (sorted_regs_sub i2) (\
-       r2. st_ex_ignore_bind
-       (update_sorted_regs i1 r2) (
+     st_ex_bind (sorted_regs_sub i1) (\r1. st_ex_bind
+       (sorted_regs_sub i2) (\r2.
+       st_ex_ignore_bind (update_sorted_regs i1 r2) (
        update_sorted_regs i2 r1)))`;;
 
 (* the termination relation that HOL4 gives, with
@@ -839,14 +810,12 @@ let partition_regs_def,partition_regs_ind = define_wf
   [`partition_regs l rpiv begrpiv r =
      (if r <= l then
        st_ex_return l else
-       st_ex_bind (sorted_regs_sub l) (\
-         reg. st_ex_bind (int_beg_sub reg) (\
-         begreg.
+       st_ex_bind (sorted_regs_sub l) (\reg. st_ex_bind (int_beg_sub
+         reg) (\begreg.
          if begreg < begrpiv \/ (begreg = begrpiv /\ reg <= rpiv)
            then
              partition_regs (l + 1) rpiv begrpiv r else
-           st_ex_ignore_bind
-             (swap_regs l (r - 1)) (
+             st_ex_ignore_bind (swap_regs l (r - 1)) (
              partition_regs l rpiv begrpiv (r - 1)))))`];;
 
 (* the termination relation that HOL4 gives is
@@ -859,17 +828,14 @@ let sort_regs_def,sort_regs_ind = define_guess_cheat
   [`sort_regs l r =
      (if r <= l + 1 then
        st_ex_return one else
-       st_ex_bind (sorted_regs_sub l) (\
-         rpiv. st_ex_bind (int_beg_sub rpiv) (\
-         begrpiv. st_ex_bind (partition_regs (l + 1) rpiv begrpiv r)
-           (\
-         m. st_ex_ignore_bind
-         (swap_regs l (m - 1)) (
+       st_ex_bind (sorted_regs_sub l) (\rpiv. st_ex_bind
+         (int_beg_sub rpiv) (\begrpiv. st_ex_bind (partition_regs (l +
+         1) rpiv begrpiv r) (\m.
+         st_ex_ignore_bind (swap_regs l (m - 1)) (
          // TODO: this condition is necessary for the termination argument, but useless in practice
          if m <= l \/ r < m then
            st_ex_return one else
-           st_ex_ignore_bind
-             (sort_regs l (m - 1)) (
+             st_ex_ignore_bind (sort_regs l (m - 1)) (
              sort_regs m r))))))`];;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -879,8 +845,7 @@ let list_to_sorted_regs_def,list_to_sorted_regs_ind = define_wf
   [`list_to_sorted_regs [] n =
         st_ex_return one`;
    `list_to_sorted_regs (CONS r rs) n =
-      st_ex_ignore_bind
-        (update_sorted_regs n r) (
+        st_ex_ignore_bind (update_sorted_regs n r) (
         list_to_sorted_regs rs (n + 1))`];;
 
 (* the termination relation that HOL4 gives, with
@@ -890,17 +855,15 @@ let sorted_regs_to_list_def,sorted_regs_to_list_ind = define_wf
   [`sorted_regs_to_list n last =
      (if last <= n then
        st_ex_return [] else
-       st_ex_bind (sorted_regs_sub n) (\
-         r. st_ex_bind (sorted_regs_to_list (n + 1) last) (\
-         l.
+       st_ex_bind (sorted_regs_sub n) (\r. st_ex_bind
+         (sorted_regs_to_list (n + 1) last) (\l.
          st_ex_return (CONS r l))))`];;
 
 let swap_moves_def = new_definition
   `swap_moves i1 i2 =
-     st_ex_bind (sorted_moves_sub i1) (\
-       r1. st_ex_bind (sorted_moves_sub i2) (\
-       r2. st_ex_ignore_bind
-       (update_sorted_moves i1 r2) (
+     st_ex_bind (sorted_moves_sub i1) (\r1. st_ex_bind
+       (sorted_moves_sub i2) (\r2.
+       st_ex_ignore_bind (update_sorted_moves i1 r2) (
        update_sorted_moves i2 r1)))`;;
 
 (* the termination relation that HOL4 gives, with
@@ -910,12 +873,10 @@ let partition_moves_def,partition_moves_ind = define_wf
   [`partition_moves l ppiv r =
      (if r <= l then
        st_ex_return l else
-       st_ex_bind (sorted_moves_sub l) (\
-         move'.
+       st_ex_bind (sorted_moves_sub l) (\move'.
          if FST move' < ppiv then
            partition_moves (l + 1) ppiv r else
-           st_ex_ignore_bind
-             (swap_moves l (r - 1)) (
+             st_ex_ignore_bind (swap_moves l (r - 1)) (
              partition_moves l ppiv (r - 1))))`];;
 
 (* the termination relation that HOL4 gives is
@@ -929,15 +890,13 @@ let linear_scan_sort_moves_def,linear_scan_sort_moves_ind =
   [`linear_scan_sort_moves l r =
      (if r <= l + 1 then
        st_ex_return one else
-       st_ex_bind (sorted_moves_sub l) (\
-         piv. st_ex_bind (partition_moves (l + 1) (FST piv) r) (\
-         m. st_ex_ignore_bind
-         (swap_moves l (m - 1)) (
+       st_ex_bind (sorted_moves_sub l) (\piv. st_ex_bind
+         (partition_moves (l + 1) (FST piv) r) (\m.
+         st_ex_ignore_bind (swap_moves l (m - 1)) (
          // TODO: this condition is necessary for the termination argument, but useless in practice
          if m <= l \/ r < m then
            st_ex_return one else
-           st_ex_ignore_bind
-             (linear_scan_sort_moves l (m - 1)) (
+             st_ex_ignore_bind (linear_scan_sort_moves l (m - 1)) (
              linear_scan_sort_moves m r)))))`];;
 
 
@@ -949,8 +908,7 @@ let list_to_sorted_moves_def,list_to_sorted_moves_ind = define_wf
   [`list_to_sorted_moves [] n =
         st_ex_return one`;
    `list_to_sorted_moves (CONS r rs) n =
-      st_ex_ignore_bind
-        (update_sorted_moves n r) (
+        st_ex_ignore_bind (update_sorted_moves n r) (
         list_to_sorted_moves rs (n + 1))`];;
 
 (* the termination relation that HOL4 gives, with
@@ -960,9 +918,8 @@ let sorted_moves_to_list_def,sorted_moves_to_list_ind = define_wf
   [`sorted_moves_to_list n len =
      (if len <= n then
        st_ex_return [] else
-       st_ex_bind (sorted_moves_sub n) (\
-         r. st_ex_bind (sorted_moves_to_list (n + 1) len) (\
-         l.
+       st_ex_bind (sorted_moves_sub n) (\r. st_ex_bind
+         (sorted_moves_to_list (n + 1) len) (\l.
          st_ex_return (CONS r l))))`];;
 
 let linear_reg_alloc_intervals_def = new_definition
@@ -970,45 +927,36 @@ let linear_reg_alloc_intervals_def = new_definition
        (let lenreg = LENGTH reglist_unsorted in
        let lenmoves = LENGTH moves in
        let st_init_pass1 = linear_reg_alloc_pass1_initial_state k in
-       st_ex_ignore_bind
-         (list_to_sorted_regs reglist_unsorted 0) (st_ex_ignore_bind
-         (sort_regs 0 lenreg) (st_ex_bind (sorted_regs_to_list 0
-           lenreg) (\
-         reglist. st_ex_bind (st_ex_return (FILTER is_phy_var
-           reglist)) (\
-         phyregs. st_ex_bind (st_ex_return (FILTER (\r. r < 2 * k)
-           phyregs)) (\
-         phyphyregs. st_ex_bind (st_ex_return (FILTER (\r. 2 * k <=
-           r) phyregs)) (\
-         stackphyregs. st_ex_ignore_bind
-         (list_to_sorted_moves moves 0) (st_ex_ignore_bind
-         (linear_scan_sort_moves 0 lenmoves) (st_ex_bind
-           (sorted_moves_to_list 0 lenmoves) (\
-         smoves. st_ex_bind (edges_to_adjlist (MAP SND smoves) LN) (\
-         moves_adjlist. st_ex_bind (edges_to_adjlist forced LN) (\
-         forced_adjlist. st_ex_bind (st_ex_FOLDL
+         st_ex_ignore_bind (list_to_sorted_regs reglist_unsorted 0) (
+         st_ex_ignore_bind (sort_regs 0 lenreg) (st_ex_bind
+           (sorted_regs_to_list 0 lenreg) (\reglist. st_ex_bind
+           (st_ex_return (FILTER is_phy_var reglist)) (\phyregs.
+           st_ex_bind (st_ex_return (FILTER (\r. r < 2 * k) phyregs))
+           (\phyphyregs. st_ex_bind (st_ex_return (FILTER (\r. 2 * k <=
+           r) phyregs)) (\stackphyregs.
+         st_ex_ignore_bind (list_to_sorted_moves moves 0) (
+         st_ex_ignore_bind (linear_scan_sort_moves 0 lenmoves)
+           (st_ex_bind (sorted_moves_to_list 0 lenmoves) (\smoves.
+           st_ex_bind (edges_to_adjlist (MAP SND smoves) LN)
+           (\moves_adjlist. st_ex_bind (edges_to_adjlist forced LN)
+           (\forced_adjlist. st_ex_bind (st_ex_FOLDL
            (linear_reg_alloc_step_pass1 forced_adjlist moves_adjlist)
-           st_init_pass1 reglist) (\
-         st_end_pass1. st_ex_ignore_bind
-         (apply_reg_exchange phyphyregs) (st_ex_bind
-           (st_ex_FILTER_good (\r.
-           st_ex_bind (colors_sub r) (\
-             col.
-             st_ex_return (is_stack_var r \/ k <= col))) reglist) (\
-         stacklist. st_ex_bind (st_ex_return
-           (linear_reg_alloc_pass2_initial_state k (LENGTH stacklist)))
-           (\
-         st_init_pass2. st_ex_bind (st_ex_return (fromAList (MAP (\r.
-           (r,one)) stacklist))) (\
-         stackset. st_ex_bind (st_ex_return (sptree_map (FILTER (\r.
-           ~(sptree_lookup r stackset = NONE))) forced_adjlist)) (\
-         forced_adjlist'. st_ex_bind (st_ex_return (sptree_map
-           (FILTER (\r. ~(sptree_lookup r stackset = NONE)))
-           moves_adjlist)) (\
-         moves_adjlist'. st_ex_bind (st_ex_FOLDL
-           (linear_reg_alloc_step_pass2 forced_adjlist' moves_adjlist')
-           st_init_pass2 stacklist) (\
-         st_end_pass2.
+           st_init_pass1 reglist) (\st_end_pass1.
+         st_ex_ignore_bind (apply_reg_exchange phyphyregs)
+           (st_ex_bind (st_ex_FILTER_good (\r.
+           st_ex_bind (colors_sub r) (\col.
+             st_ex_return (is_stack_var r \/ k <= col))) reglist)
+               (\stacklist. st_ex_bind (st_ex_return
+               (linear_reg_alloc_pass2_initial_state k (LENGTH
+               stacklist))) (\st_init_pass2. st_ex_bind (st_ex_return
+               (fromAList (MAP (\r. (r,one)) stacklist))) (\stackset.
+               st_ex_bind (st_ex_return (sptree_map (FILTER (\r.
+               ~(sptree_lookup r stackset = NONE))) forced_adjlist))
+               (\forced_adjlist'. st_ex_bind (st_ex_return (sptree_map
+               (FILTER (\r. ~(sptree_lookup r stackset = NONE)))
+               moves_adjlist)) (\moves_adjlist'. st_ex_bind (st_ex_FOLDL
+               (linear_reg_alloc_step_pass2 forced_adjlist'
+               moves_adjlist') st_init_pass2 stacklist) (\st_end_pass2.
          apply_reg_exchange stackphyregs))))))))))))))))))))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -1017,8 +965,7 @@ let extract_coloration_def,extract_coloration_ind = define_wf
   `MEASURE (\(x0,x1,x2). list_size (\n. n) x1)`
   [`extract_coloration invbij [] acc = st_ex_return acc`;
    `extract_coloration invbij (CONS r rs) acc =
-      st_ex_bind (colors_sub r) (\
-        col.
+      st_ex_bind (colors_sub r) (\col.
         extract_coloration invbij rs (sptree_insert (the 0
             (sptree_lookup r invbij)) col acc))`];;
 
@@ -1111,9 +1058,9 @@ let run_i_linear_scan_hidden_state_def = new_definition
 let linear_reg_alloc_and_extract_coloration_def = new_definition
   `linear_reg_alloc_and_extract_coloration ct k forced moves
   reglist_unsorted invbij nmax =
-     st_ex_ignore_bind
-       (get_intervals_ct_monad ct) (st_ex_ignore_bind
-       (linear_reg_alloc_intervals k forced moves reglist_unsorted) (
+       st_ex_ignore_bind (get_intervals_ct_monad ct) (
+       st_ex_ignore_bind (linear_reg_alloc_intervals k forced moves
+         reglist_unsorted) (
        extract_coloration invbij reglist_unsorted LN))`;;
 
 let size_of_clash_tree_def,size_of_clash_tree_ind = define_rec

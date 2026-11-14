@@ -413,9 +413,9 @@ let type_op_def = new_definition
           Tword8array) /\ (t5 = Tint) /\ (t = Ttup []) |
           (ast_Implode,[t1]) -> (t1 = Tlist Tchar) /\ (t = Tstring) |
           (ast_Explode,[t1]) -> (t1 = Tstring) /\ (t = Tlist Tchar) |
-          (ast_Strsub,[t1; t2]) -> (t1 = Tstring) /\ (t2 = Tint) /\
-          (t = Tchar) | (ast_Strlen,[t1]) -> (t1 = Tstring) /\ (t =
-          Tint) | (ast_Strcat,[t1]) -> (t1 = Tlist Tstring) /\ (t =
+          (ast_Strsub,[t1; t2]) -> (t1 = Tstring) /\ (t2 = Tint)
+          /\ (t = Tchar) | (ast_Strlen,[t1]) -> (t1 = Tstring) /\ (t
+          = Tint) | (ast_Strcat,[t1]) -> (t1 = Tlist Tstring) /\ (t =
           Tstring) | (ast_VfromList,[Tapp [t1] ctor]) -> (ctor =
           Tlist_num) /\ (t = Tvector t1) | (ast_Vsub,[t1; t2]) -> (t2
           = Tint) /\ (Tvector t = t1) | (ast_Vlength,[Tapp [t1]

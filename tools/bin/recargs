@@ -1,0 +1,74 @@
+#!/bin/sh
+# recargs [session] : write tools/recargs.txt and tools/recres.txt,
+# the arguments and the result components of the constants of the
+# port whose type is a record type of the port, out of a session
+# that has the port loaded (hol-seq by default).  A variable in
+# such a place reads the fields of that record, which is how the
+# port resolves a field name that several records have
+# (tools/port.py, recarg_fieldvars).  An entry i.j of recargs says
+# that the argument i is a tuple whose component j is the record
+# (the state of bvlSem's evaluate is the third of a triple); an
+# entry j of recres says the same of the result (after the arity
+# of the constant), and a bare one
+# that the whole result is the record.
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s=${1:-seq}
+TIMEOUT=60 repl-step $s \
+  "let rec cake_prod_parts ty =
+     if is_vartype ty then [ty] else
+     match dest_type ty with
+       (\"prod\",[a;b]) -> a :: cake_prod_parts b
+     | _ -> [ty];;
+   let cake_rec_name a =
+     if is_vartype a then None else
+     let n,_ = dest_type a in
+     if can (assoc n) (!the_records) then Some n else None;;
+   let cake_parts_pos f ty =
+     let out = ref [] and j = ref 0 in
+     do_list (fun b ->
+         (match cake_rec_name b with
+            Some n -> out := f (string_of_int !j) n :: !out
+          | None -> ());
+         incr j) (cake_prod_parts ty);
+     rev !out;;
+   let cake_named n = not (String.length n > 0 && n.[0] = '_');;
+   length (constants ());;" 2>&1 | tail -1
+TIMEOUT=300 repl-step $s \
+  "let cake_rec_pos ty =
+     let args,_ = splitlist dest_fun_ty ty in
+     let out = ref [] and i = ref 0 in
+     do_list (fun a ->
+         (match cake_rec_name a with
+            Some n -> out := [string_of_int !i ^ \":\" ^ n] @ !out
+          | None ->
+              if length (cake_prod_parts a) > 1 then
+                out := rev (cake_parts_pos
+                              (fun j n -> string_of_int !i ^ \".\" ^
+                                          j ^ \":\" ^ n) a) @ !out);
+         incr i) args;
+     rev !out in
+   let cake_out = open_out \"$C/tools/recargs.txt\" in
+   do_list (fun (n,ty) ->
+       let ps = cake_rec_pos ty in
+       if ps <> [] && cake_named n then
+         output_string cake_out
+           (n ^ \"\\t\" ^ String.concat \",\" ps ^ \"\\n\"))
+     (constants ());
+   close_out cake_out; length (constants ());;" \
+  2>&1 | tail -1
+TIMEOUT=300 repl-step $s \
+  "let cake_out = open_out \"$C/tools/recres.txt\" in
+   do_list (fun (n,ty) ->
+       let _,res = splitlist dest_fun_ty ty in
+       let ps =
+         match cake_rec_name res with
+           Some r -> [\":\" ^ r]
+         | None -> cake_parts_pos (fun j n -> j ^ \":\" ^ n) res in
+       if ps <> [] && cake_named n then
+         output_string cake_out
+           (n ^ \"\\t\" ^ string_of_int (length (fst (splitlist dest_fun_ty ty))) ^ \"\\t\" ^ String.concat \",\" ps ^ \"\\n\"))
+     (constants ());
+   close_out cake_out; length (constants ());;" \
+  2>&1 | tail -1
+wc -l < $C/tools/recargs.txt; wc -l < $C/tools/recres.txt

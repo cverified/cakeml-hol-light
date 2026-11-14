@@ -509,6 +509,16 @@ FIELD_VAR_DEF = {
   # bvl_to_bvi takes the refs, the clock and the ffi of a state of
   # bvlSem and puts them in one of bviSem
   ('bviSem', 'bvl_to_bvi_def'): {'s': 'bvlSem_state'},
+  # the state that bvl_to_bvi's state_rel relates to a state of
+  # bviSem is one of bvlSem, which its globals say and the
+  # statement does not
+  ('bvl_to_bviProof', 'state_rel_def'): {'s': 'bvlSem_state'},
+  # the s of source_to_flat's s_rel and of its invariant is the
+  # state of the source and the other one is the state of flatLang
+  ('source_to_flatProof', 's_rel'):
+    {'s': 'semanticPrimitives_state', "s'": 'flatSem_state'},
+  ('source_to_flatProof', 'invariant_def'):
+    {'s': 'semanticPrimitives_state', 's_i1': 'flatSem_state'},
   # the conf a combined gc runs with is the one of a generational
   # gc, which the clause before this one says and this one does not
   ('gc_combined', 'gc_combined_def'): {'conf': 'gen_gc_conf'},
@@ -521,6 +531,31 @@ FIELD_VAR_DEF = {
   # reads, where the field on the left of the equation is the one
   # of the state of bvlSem that it gives
   ('bviProps', 'bvi_to_bvl_refs'): {'x': 'bviSem_state'},
+  # the state that a pass proof gives no type of, and that no
+  # other statement of the block names (the relation of the pass
+  # is what names it in the rest of them)
+  ('backendProof', 'source_eval_to_flat_semantics'):
+    {'s0': 'semanticPrimitives_state'},
+  ('source_to_flatProof', 'compile_prog_correct'):
+    {'s': 'semanticPrimitives_state'},
+  ('clos_to_bvlProof', 'cl_rel_NEW_F'): {'t2': 'bvlSem_state'},
+  ('clos_to_bvlProof', 'compile_exps_LIST_IMP_compile_exps_EL'):
+    {'t1': 'bvlSem_state'},
+  ('clos_to_bvlProof', 'do_build_const_thm'):
+    {'t1': 'bvlSem_state', 't2': 'bvlSem_state'},
+  ('data_to_wordProof', 'cut_state_opt_ffi'):
+    {'r': 'dataSem_state', 'v1': 'dataSem_state'},
+  ('data_to_wordProof', 'compile_correct_lemma'):
+    {'s1': 'dataSem_state'},
+  ('data_to_wordProof', 'compile_correct'): {'s1': 'dataSem_state'},
+  ('data_to_word_assignProof', 'cut_state_opt_IMP_ffi'):
+    {'s': 'dataSem_state', 'x': 'dataSem_state'},
+  ('data_to_word_bignumProof', 'IMP_bignum_code_rel'):
+    {'t': 'wordSem_state'},
+  ('data_to_word_bignumProof', 'lookup_Arith_location'):
+    {'t': 'wordSem_state'},
+  ('word_to_stackProof', 'share_load_lemma1'):
+    {'t1': 'stackSem_state'},
   ('bviProps', 'bvi_to_bvl_code'): {'x': 'bviSem_state'},
   ('bviProps', 'bvi_to_bvl_clock'): {'x': 'bviSem_state'},
   ('bviProps', 'bvi_to_bvl_ffi'): {'x': 'bviSem_state'},
@@ -11510,7 +11545,7 @@ if concl wordSem_fix_clock_IMP <> `T` then
 let flatSem_fix_clock_IMP =
   try prove
    (`!s x s1 res. flatSem_fix_clock s x = (s1,res)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> flatSem_state_clock s1 <= flatSem_state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; flatSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "flatSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
@@ -11529,7 +11564,7 @@ if concl flatSem_fix_clock_IMP <> `T` then
 let bvlSem_fix_clock_IMP =
   try prove
    (`!s x res s1. bvlSem_fix_clock s x = (res,s1)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> bvlSem_state_clock s1 <= bvlSem_state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; bvlSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "bvlSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
@@ -11547,7 +11582,7 @@ if concl bvlSem_fix_clock_IMP <> `T` then
 let bviSem_fix_clock_IMP =
   try prove
    (`!s x res s1. bviSem_fix_clock s x = (res,s1)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> bviSem_state_clock s1 <= bviSem_state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; bviSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "bviSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
@@ -11565,7 +11600,7 @@ if concl bviSem_fix_clock_IMP <> `T` then
 let dataSem_fix_clock_IMP =
   try prove
    (`!s x res s1. dataSem_fix_clock s x = (res,s1)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> dataSem_state_clock s1 <= dataSem_state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; dataSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "dataSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
@@ -11583,7 +11618,7 @@ if concl dataSem_fix_clock_IMP <> `T` then
 let closSem_fix_clock_IMP =
   try prove
    (`!s x res s1. closSem_fix_clock s x = (res,s1)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> closSem_state_clock s1 <= closSem_state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; closSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "closSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
@@ -11601,7 +11636,7 @@ if concl closSem_fix_clock_IMP <> `T` then
 let stackSem_fix_clock_IMP =
   try prove
    (`!s x res s1. stackSem_fix_clock s x = (res,s1)
-                  ==> state_clock s1 <= state_clock s`,
+                  ==> stackSem_state_clock s1 <= stackSem_state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; stackSem_fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "stackSem_state") THEN
     REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
@@ -12189,7 +12224,7 @@ DEF_PATCH = {
   # two of HOL4's overload
   ('export', 'escape_sym_char_def'): [
     ('mlint_toString\n          ch', 'chr_to_str\n          ch'),
-    ('mlint_toString (code)', 'num_to_str (code)'),
+    ('mlint_toString\n          (code)', 'num_to_str (code)'),
   ],
   # lab_inst reads a lab assembly instruction and gives the asm
   # instruction that it is, and the two share Jump, JumpCmp and

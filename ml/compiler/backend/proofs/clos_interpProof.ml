@@ -32,18 +32,18 @@ let _ = cake_theory "clos_interpProof"
 let clos_interpProof_state_rel_def = new_definition
   `clos_interpProof_state_rel (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
-     (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
-       closSem_state_code
-     s = FEMPTY /\ closSem_state_code t = FEMPTY /\
-       closSem_state_max_app
-     t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s /\
-       closSem_state_clock
+     (!n. SND (SND (closSem_state_compile_oracle s n)) = [])
+       /\ closSem_state_code
+     s = FEMPTY /\ closSem_state_code t = FEMPTY
+       /\ closSem_state_max_app
+     t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s
+       /\ closSem_state_clock
      t = closSem_state_clock s /\ closSem_state_ffi
      t = closSem_state_ffi s /\ closSem_state_globals
      s = closSem_state_globals t /\ closSem_state_refs
      s = closSem_state_refs t /\ closSem_state_compile
-     s = pure_cc (insert_interp ## I) (closSem_state_compile t) /\
-       closSem_state_compile_oracle
+     s = pure_cc (insert_interp ## I) (closSem_state_compile t)
+       /\ closSem_state_compile_oracle
      t = pure_co (insert_interp ## I) o closSem_state_compile_oracle
        s /\
      oHD (closSem_state_globals s) = SOME (SOME (closSem_Closure
@@ -51,18 +51,18 @@ let clos_interpProof_state_rel_def = new_definition
 
 let state_rel_1_def = new_definition
   `state_rel_1 (s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state) <=>
-     (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
-       closSem_state_code
-     s = FEMPTY /\ closSem_state_code t = FEMPTY /\
-       closSem_state_max_app
-     t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s /\
-       closSem_state_clock
+     (!n. SND (SND (closSem_state_compile_oracle s n)) = [])
+       /\ closSem_state_code
+     s = FEMPTY /\ closSem_state_code t = FEMPTY
+       /\ closSem_state_max_app
+     t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s
+       /\ closSem_state_clock
      t = closSem_state_clock s /\ closSem_state_ffi
      t = closSem_state_ffi s /\ closSem_state_globals
      s = closSem_state_globals t /\ closSem_state_refs
      s = closSem_state_refs t /\ closSem_state_compile
-     s = pure_cc (insert_interp ## I) (closSem_state_compile t) /\
-       closSem_state_compile_oracle
+     s = pure_cc (insert_interp ## I) (closSem_state_compile t)
+       /\ closSem_state_compile_oracle
      t = pure_co (insert_interp ## I) o
        closSem_state_compile_oracle s`;;
 
@@ -84,7 +84,8 @@ let do_app_oHD_globals = prove
 
 let interp_assum_def = new_definition
   `interp_assum (:'c) (:'ffi) c <=>
-     (!xs s1 env (t1:('c,'ffi)closSem_state) res s2. state_clock
+     (!xs s1 env (t1:('c,'ffi)closSem_state) res s2.
+       closSem_state_clock
        s1 <= c /\
        closSem_evaluate (xs,env,s1) = (res,s2) /\ ~(res = Rerr
          (Rabort Rtype_error)) ==>
@@ -93,7 +94,8 @@ let interp_assum_def = new_definition
          closSem_evaluate (xs,env,closSem_state_clock_fupd (K (ck +
            closSem_state_clock t1)) t1) = (res,t2) /\
          clos_interpProof_state_rel s2 t2)) /\
-     (!args s1 loc f (t1:('c,'ffi)closSem_state) res s2. state_clock
+     (!args s1 loc f (t1:('c,'ffi)closSem_state) res s2.
+       closSem_state_clock
        s1 <= c /\
        evaluate_app loc f args s1 = (res,s2) /\ ~(res = Rerr (Rabort
          Rtype_error)) ==>
@@ -124,9 +126,9 @@ let evaluate_Cons_nil = prove
 let evaluate_Global_0 = prove
  (`clos_interpProof_state_rel s t ==>
    closSem_evaluate ([closLang_Op tr (closLang_GlobOp
-     (closLang_Global 0)) []],env,state_clock_fupd (K k) t) =
+     (closLang_Global 0)) []],env,closSem_state_clock_fupd (K k) t) =
      (Rval [closSem_Closure NONE [] [] 1
-       clos_interpreter],state_clock_fupd (K k) t)`,
+       clos_interpreter],closSem_state_clock_fupd (K k) t)`,
   CHEAT_TAC);;
 
 let v_to_list_list_to_v = prove
@@ -141,8 +143,8 @@ let clos_interp_el_thm = prove
              (closSem_Number (&n)) (CONS (closSem_Recclosure NONE []
              cl_env
               [(1,closLang_Fn (implode "") NONE NONE 1
-                clos_interp_el)] 0) rest)),state_clock_fupd (K (c +
-                state_clock t4))
+                clos_interp_el)] 0) rest)),closSem_state_clock_fupd (K
+                (c + closSem_state_clock t4))
             t4) = (Rval [EL n env],t4))`,
   CHEAT_TAC);;
 
@@ -153,8 +155,8 @@ let clos_interp_rev_thm = prove
        ([clos_interp_rev],CONS (closSem_list_to_v env) (CONS
          (closSem_list_to_v a) (CONS (closSem_Recclosure NONE [] cl_env
               [(1,closLang_Fn (implode "") NONE NONE 1
-                clos_interp_rev)] 0) rest)),state_clock_fupd (K (2 *
-                LENGTH a + state_clock t4))
+                clos_interp_rev)] 0) rest)),closSem_state_clock_fupd (K
+                (2 * LENGTH a + closSem_state_clock t4))
             t4) =
       (Rval [closSem_list_to_v (APPEND (REVERSE a) env)],t4)`,
   CHEAT_TAC);;
@@ -215,73 +217,76 @@ let opt_interp_thm = prove
    clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
      Rtype_error)) ==>
    (?ck t5.
-     closSem_evaluate ([x],[],state_clock_fupd (K (ck + state_clock
-       t4)) t4) = (r,t5) /\
+     closSem_evaluate ([x],[],closSem_state_clock_fupd (K (ck +
+       closSem_state_clock t4)) t4) = (r,t5) /\
      clos_interpProof_state_rel s5 (t5:('c,'ffi)closSem_state))`,
   CHEAT_TAC);;
 
 let opt_interp1_thm' = prove
  (`!l s4 t4 s5 r.
-     interp_assum (:'c) (:'ffi) (state_clock s4) /\
+     interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
      closSem_evaluate ([l],[],s4) = (r,s5) /\
      clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
        Rtype_error)) ==>
      (?ck (t5:('c,'ffi)closSem_state).
-       closSem_evaluate ([opt_interp1 l],[],state_clock_fupd (K
-         (state_clock t4 + ck)) t4) = (r,t5) /\
+       closSem_evaluate ([opt_interp1 l],[],closSem_state_clock_fupd
+         (K (closSem_state_clock t4 + ck)) t4) = (r,t5) /\
        clos_interpProof_state_rel s5 t5)`,
   CHEAT_TAC);;
 
 let opt_interp1_thm = prove
  (`!l s4 t4 s5 r.
-     interp_assum (:'c) (:'ffi) (state_clock s4) /\
+     interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
      closSem_evaluate (l,[],s4) = (r,s5) /\
      clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
        Rtype_error)) ==>
      (?ck (t5:('c,'ffi)closSem_state).
-       closSem_evaluate (MAP opt_interp1 l,[],state_clock_fupd (K
-         (state_clock t4 + ck)) t4) = (r,t5) /\
+       closSem_evaluate (MAP opt_interp1
+         l,[],closSem_state_clock_fupd (K (closSem_state_clock t4 + ck))
+         t4) = (r,t5) /\
        clos_interpProof_state_rel s5 t5)`,
   CHEAT_TAC);;
 
 let evaluate_insert_interp1 = prove
- (`interp_assum (:'c) (:'ffi) (state_clock s4) /\
-   closSem_evaluate ([e],[],s4) = (r,s5) /\
-     clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
+ (`interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
+   closSem_evaluate ([e],[],s4) = (r,s5)
+     /\ clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
      Rtype_error)) ==>
    (?ck (t5:('c,'ffi)closSem_state).
-     closSem_evaluate ([insert_interp1 e],[],state_clock_fupd (K
-       (state_clock t4 + ck)) t4) = (r,t5) /\
+     closSem_evaluate ([insert_interp1 e],[],closSem_state_clock_fupd
+       (K (closSem_state_clock t4 + ck)) t4) = (r,t5) /\
      clos_interpProof_state_rel s5 t5)`,
   CHEAT_TAC);;
 
 let evaluate_insert_interp = prove
  (`!exps s4 s5 r t4.
-     interp_assum (:'c) (:'ffi) (state_clock s4) /\
-     closSem_evaluate (exps,[],s4) = (r,s5) /\
-       clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
+     interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
+     closSem_evaluate (exps,[],s4) = (r,s5)
+       /\ clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
        Rtype_error)) ==>
      (?ck (t5:('c,'ffi)closSem_state).
-       closSem_evaluate (insert_interp exps,[],state_clock_fupd (K
-         (state_clock t4 + ck)) t4) = (r,t5) /\
+       closSem_evaluate (insert_interp
+         exps,[],closSem_state_clock_fupd (K (closSem_state_clock t4 +
+         ck)) t4) = (r,t5) /\
        clos_interpProof_state_rel s5 t5)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let state_rel_refs_clocks_eqs = prove
- (`clos_interpProof_state_rel s1 s2 ==> state_refs s1 = state_refs s2
-  /\ state_clock s1 = state_clock s2`,
+ (`clos_interpProof_state_rel s1 s2 ==> closSem_state_refs s1 =
+  closSem_state_refs s2 /\ closSem_state_clock s1 =
+  closSem_state_clock s2`,
   CHEAT_TAC);;
 
 (* state_rel_update_thunk[local] *)
 let clos_interpProof_state_rel_update_thunk = prove
  (`clos_interpProof_state_rel s1 s2 ==>
-     closSem_update_thunk [closSem_RefPtr v ptr] (state_refs s1) vs =
-       SOME refs1 ==>
+     closSem_update_thunk [closSem_RefPtr v ptr] (closSem_state_refs
+       s1) vs = SOME refs1 ==>
        (?refs2. closSem_update_thunk [closSem_RefPtr v ptr]
-         (state_refs s2) vs = SOME refs2 /\
-               clos_interpProof_state_rel (state_refs_fupd (K
-                 refs1) s1) (state_refs_fupd (K refs2) s2))`,
+         (closSem_state_refs s2) vs = SOME refs2 /\
+               clos_interpProof_state_rel (closSem_state_refs_fupd
+                 (K refs1) s1) (closSem_state_refs_fupd (K refs2) s2))`,
   CHEAT_TAC);;
 
 let evaluate_interp_lemma = prove
@@ -290,16 +295,16 @@ let evaluate_interp_lemma = prove
         (Rabort Rtype_error)) ==>
       clos_interpProof_state_rel s1 t1 ==>
       (?ck t2.
-        (closSem_evaluate (xs,env,(state_clock_fupd (K (state_clock
-          t1 + ck)) t1)) = (res,t2)) /\
+        (closSem_evaluate (xs,env,(closSem_state_clock_fupd (K
+          (closSem_state_clock t1 + ck)) t1)) = (res,t2)) /\
         clos_interpProof_state_rel s2 t2)) /\
    (!args (s1:('c,'ffi)closSem_state) loc f t1 res s2.
       evaluate_app loc f args s1 = (res,s2) /\ ~(res = Rerr (Rabort
         Rtype_error)) ==>
       clos_interpProof_state_rel s1 t1 ==>
       (?ck t2.
-        (evaluate_app loc f args (state_clock_fupd (K (state_clock t1
-          + ck)) t1) = (res,t2)) /\
+        (evaluate_app loc f args (closSem_state_clock_fupd (K
+          (closSem_state_clock t1 + ck)) t1) = (res,t2)) /\
         clos_interpProof_state_rel s2 t2))`,
   CHEAT_TAC);;
 
@@ -309,8 +314,8 @@ let evaluate_interp_thm = prove
        Rtype_error)) /\
      clos_interpProof_state_rel s1 t1 ==>
      (?ck t2.
-        closSem_evaluate (xs,env,(state_clock_fupd (K (state_clock t1
-          + ck)) t1)) = (res,t2) /\
+        closSem_evaluate (xs,env,(closSem_state_clock_fupd (K
+          (closSem_state_clock t1 + ck)) t1)) = (res,t2) /\
         clos_interpProof_state_rel s2 t2)`,
   CHEAT_TAC);;
 
@@ -348,12 +353,12 @@ add_simp res_ok_def;;
 
 let state_rel'_def = new_definition
   `state_rel' (s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state) <=>
-     (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
-       closSem_state_code
-     s = FEMPTY /\ closSem_state_code t = FEMPTY /\
-       closSem_state_max_app
-     t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s /\
-       closSem_state_clock
+     (!n. SND (SND (closSem_state_compile_oracle s n)) = [])
+       /\ closSem_state_code
+     s = FEMPTY /\ closSem_state_code t = FEMPTY
+       /\ closSem_state_max_app
+     t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s
+       /\ closSem_state_clock
      t = closSem_state_clock s /\ closSem_state_ffi
      t = closSem_state_ffi s /\ closSem_state_globals
      s = closSem_state_globals t /\ ALL (OPTION_ALL v_ok)
@@ -363,8 +368,8 @@ let state_rel'_def = new_definition
        (closSem_state_refs t) /\
      FEVERY (\(k,v). !m w. v = closSem_Thunk m w ==> v_ok w)
        (closSem_state_refs t) /\ closSem_state_compile
-     s = pure_cc (insert_interp ## I) (closSem_state_compile t) /\
-       closSem_state_compile_oracle
+     s = pure_cc (insert_interp ## I) (closSem_state_compile t)
+       /\ closSem_state_compile_oracle
      t = pure_co (insert_interp ## I) o
        closSem_state_compile_oracle s`;;
 
@@ -375,12 +380,12 @@ let lookup_vars_ok = prove
 
 (* [local] *)
 let state_rel'_clock = prove
- (`state_rel' s t ==> state_clock t = state_clock s`,
+ (`state_rel' s t ==> closSem_state_clock t = closSem_state_clock s`,
   CHEAT_TAC);;
 
 (* [local] *)
 let state_rel'_refs = prove
- (`state_rel' s t ==> state_refs t = state_refs s`,
+ (`state_rel' s t ==> closSem_state_refs t = closSem_state_refs s`,
   CHEAT_TAC);;
 
 (* [local] *)
