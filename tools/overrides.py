@@ -387,6 +387,18 @@ SIZE_OF = {
   'dataSem': {'prog_size': 'dataLang'},
 }
 
+# the constructors of a stackLang program, for a definition that
+# reads another language and builds one
+STACKLANG_PROG = dict((c, 'stackLang') for c in
+                      ['Skip', 'Inst', 'Get', 'Set', 'Call', 'Seq',
+                       'If', 'Loop', 'Alloc', 'Raise', 'Return',
+                       'Tick', 'LocValue', 'Install', 'FFI',
+                       'Halt', 'StackAlloc', 'StackFree',
+                       'StackStore', 'StackLoad', 'RawCall',
+                       'JumpLower', 'OpCurrHeap', 'StoreConsts',
+                       'ShMemOp', 'CodeBufferWrite',
+                       'DataBufferWrite', 'BitmapLoad'])
+
 # CON_BODY: the theory of a constructor in the _body_ of a
 # clause, where the pattern of the same clause means the one of
 # another theory with that name.  The evaluate of wordSem and of
@@ -435,8 +447,11 @@ CON_BODY = {
   ('word_copy', 'copy_prop_inst_def'):
     {'Skip': 'wordLang', 'Inst': 'wordLang'},
   # wInst matches on an asm instruction and wraps it in the Inst
-  # of a stackLang program
+  # of a stackLang program, and comp reads a wordLang program and
+  # builds a stackLang one
   ('word_to_stack', 'wInst_def'): {'Inst': 'stackLang'},
+  ('word_to_stack', 'comp_def'): STACKLANG_PROG,
+  ('word_to_stack', 'comp_sing_def'): STACKLANG_PROG,
   ('wordSem', 'evaluate_def'): {'*': 'wordSem'},
   ('stackSem', 'evaluate_def'): {'*': 'stackSem'},
   # bvi_to_data's compile matches on a bvi expression and builds a
@@ -11902,7 +11917,9 @@ CON_FILE = {
   # the instructions that stack_alloc builds are asm's, which is
   # what the Inst of a stackLang program takes
   'stack_alloc': {'Load': 'asm', 'Store': 'asm',
-                  'Load8': 'asm', 'Store8': 'asm'},
+                  'Load8': 'asm', 'Store8': 'asm',
+                  'Add': 'asm', 'Sub': 'asm', 'And': 'asm',
+                  'Or': 'asm', 'Xor': 'asm'},
   # the reference cells of bvlSem are its own
   'bvlSem': {'ByteArray': 'bvlSem', 'ValueArray': 'bvlSem'},
   # the word operations that data_to_word builds are the binops
@@ -11969,6 +11986,9 @@ DEF_PATCH = {
   # every other Inst and Skip of the definition is stackLang's
   ('stack_to_lab', 'flatten_def'): [
     ('(stackLang_Inst (asm_Skip))', '(asm_Inst (asm_Skip))'),
+    ('(stackLang_Inst a) [] 0]', '(asm_Inst a) [] 0]'),
+    ('labLang_LabAsm stackLang_Install',
+     'labLang_LabAsm labLang_Install'),
   ],
   # lookup_word_op matches on an opw, whose constructors the port
   # calls after backend_common, and gives the binop of asm that
