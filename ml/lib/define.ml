@@ -1273,11 +1273,21 @@ let NESTED_LEMMAS =
 
 (* a name for a list function that is not in use yet *)
 
+(* the names that the port will give constants of its own, which a
+   name that the library invents has to keep clear of: the size
+   function of a datatype is made where the type is, before the
+   theory's own constants are there, and balanced_map's size and
+   the size field of panLang's struct_info are names of the
+   theory.  tools/portall.py writes ml/lib/reserved.ml *)
+
+let cake_reserved = ref ([]:string list);;
+
 let fresh_const_name s =
-  if not (can get_const_type s) then s else
+  let taken s = can get_const_type s || mem s (!cake_reserved) in
+  if not (taken s) then s else
   let rec go i =
     let s' = s ^ string_of_int i in
-    if can get_const_type s' then go (i + 1) else s' in
+    if taken s' then go (i + 1) else s' in
   go 1;;
 
 (* a type of pairs, and its two component types *)

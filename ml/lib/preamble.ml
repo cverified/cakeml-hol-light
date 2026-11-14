@@ -35,6 +35,13 @@ needs "lib/wildcard.ml";;
 needs "lib/fastdef.ml";;
 needs "lib/hol4.ml";;
 needs "lib/define.ml";;
+
+(* the names that the port gives constants of its own, so that a
+   name the library invents for a size function keeps clear of
+   them (ml/lib/define.ml, cake_reserved); tools/portall.py
+   writes the file *)
+
+needs "lib/reserved.ml";;
 needs "lib/induction.ml";;
 needs "lib/definition.ml";;
 needs "lib/theorem.ml";;
