@@ -107,12 +107,21 @@ and `LEAST P` is the binder `minimal n. P n`.
 
 Notation goes the same way.  HOL Light has no `::` and no `++`
 (its `++` is `realax`'s `nadd_add`, which `realax.ml` removes
-again), so the port writes `CONS x xs` and `APPEND xs ys`.  The
-exception is a CakeML source that overloads `++` with an append
-of its own -- `misc$Append` of the `app_list` type, which
-fourteen files use -- where the port writes that constant;
-`PLAIN_APPEND` in `tools/overrides.py` names the occurrences in
-such a file that are the list append after all.
+again), so the port writes `CONS x xs` and `APPEND xs ys` and
+declares no overload of either -- there is no notation left for
+one to resolve.
+
+Fourteen sources give `++` another meaning, and there the port
+writes the constant out: `misc$Append` of the `app_list` type
+(`jsonLang`, `stack_to_lab`), `SmartAppend` (`bvl_to_bvi`), and
+`OPTION_CHOICE`, the choice of the option monad, in the two files
+that use it for that (`cmlPtreeConversion`, `fromSexp` --
+`MONAD_CHOICE` in `tools/overrides.py` names them, because every
+other file that enables a monad still uses `++` for the append).
+`PLAIN_APPEND` names the blocks of such a file whose `++` is the
+list append after all: `bvl_to_bvi`'s `compile_op` stands in
+front of the `Overload` that gives `++` its other meaning, and
+`cmlPtreeConversion` has five of them among thirty choices.
 
 A HOL4 *convention* that HOL Light does not share is not taken
 over to keep a name company: HOL4 writes a case split with a case
