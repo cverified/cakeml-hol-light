@@ -1550,6 +1550,11 @@ BVL_EXP = dict((c, 'bvl') for c in
                 'Call', 'Force', 'Op'])
 
 CON_OF = {
+  # compile_arith matches on an ast arithmetic operation and
+  # builds a closLang expression
+  ('flat_to_clos', 'compile_arith_def'):
+    {'If': 'closLang', 'Raise': 'closLang', 'Let': 'closLang',
+     'Op': 'closLang', 'Var': 'closLang'},
   # the code that bvl_to_bvi builds for the primitives is bvi and
   # nothing else: these definitions have no bvl pattern in them.
   # The names are written out rather than taken with a wildcard,
@@ -11838,6 +11843,8 @@ CON_FILE = {
 # toString of an integer and num_to_str of a number -- and the
 # port writes the constant, so the definition says which.
 DEF_NAMES = {
+  ('displayLang', 'trace_to_json_def'): {'toString': 'num_to_str'},
+  ('export', 'word_to_string_def'): {'toString': 'num_to_str'},
   ('presLang', 'num_to_display_def'): {'toString': 'num_to_str'},
   ('jsonLang', 'encode_str_def'): {'toString': 'num_to_str'},
 }
@@ -11848,6 +11855,15 @@ DEF_NAMES = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # lab_inst reads a lab assembly instruction and gives the asm
+  # instruction that it is, and the two share Jump, JumpCmp and
+  # Call; the definition is one quotation, where a rule for the
+  # bodies does not reach it
+  ('lab_to_target', 'lab_inst_def'): [
+    ('= labLang_Jump w', '= asm_Jump w'),
+    ('= labLang_JumpCmp c r ri\n     w', '= asm_JumpCmp c r ri\n     w'),
+    ('= labLang_Call w', '= asm_Call w'),
+  ],
   # flatten compares the two halves of a stackLang If with Skip,
   # and the Inst of its first arm is asm's Skip: the definition
   # is printed as one term, where a rule for the bodies cannot
