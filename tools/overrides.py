@@ -441,6 +441,9 @@ CON_BODY = {
   ('data_to_word', 'WordOp64_on_32_def'):
     {'Xor': 'asm', 'Add': 'asm', 'Sub': 'asm',
      'And': 'asm', 'Or': 'asm'},
+  ('data_to_word', 'assign_WordOpW64_def'):
+    {'Xor': 'asm', 'Add': 'asm', 'Sub': 'asm',
+     'And': 'asm', 'Or': 'asm'},
   # get_live_tree reads a clash_tree of reg_alloc and builds a
   # live_tree of its own, and the two share Seq and Branch (the
   # patterns say reg_alloc$ themselves)
@@ -766,6 +769,8 @@ RENAME_CONST = {
 # fromList of data_to_word and flat_pattern is sptree's, the one
 # of the semantics theories is llist's)
 LOCAL_NAMES = {
+  # the mapi of word_alloc maps over a num_map, so it is sptree's
+  ('word_alloc', 'mapi'): 'sptree_mapi',
   # the word_shift that a Shift of an assembly instruction does is
   # asmSem's; backend_common's is the number of bits of a word
   ('labSem', 'word_shift'): 'asmSem_word_shift',
@@ -12076,6 +12081,7 @@ DEF_NAMES = {
   ('word_cse', 'add_to_data_const_def'): {'insert': 'sptree_insert'},
   ('word_cse', 'add_to_load_aux_def'): {'insert': 'sptree_insert'},
   ('word_cse', 'register_read_def'): {'insert': 'sptree_insert'},
+  ('word_cse', 'map_insert_def'): {'insert': 'sptree_insert'},
   ('displayLang', 'trace_to_json_def'): {'toString': 'num_to_str'},
   ('presLang', 'attach_name_def'): {'toString': 'num_to_str'},
   ('presLang', 'num_set_to_display_def'): {'toString': 'num_to_str'},
@@ -12096,6 +12102,14 @@ DEF_NAMES = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # the opw that assign_WordOpW64 matches on, where the binop of
+  # asm that each stands for is what its arms give: the three
+  # names that the two types share are the patterns here
+  ('data_to_word', 'assign_WordOpW64_def'): [
+    ('| asm_Xor ->', '| backend_common_Xor ->'),
+    ('| asm_Add -> asm_Add', '| backend_common_Add -> asm_Add'),
+    ('| asm_Sub ->', '| backend_common_Sub ->'),
+  ],
   # compile_exp reads an ast expression; pattern_semantics has an
   # If of its own, and the pattern of this one clause resolved to
   # it (the annotation that the port writes says ast_exp)
