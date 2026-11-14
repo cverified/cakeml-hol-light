@@ -448,6 +448,14 @@ class Db:
         taken[ty][self.rename[key]] = key
         continue
       new = self.rename[key]
+      # a prefix that gives one name to two constants
+      # (clos_to_bvl defines compile_inc as well as
+      # clos_to_bvl_compile_inc): the second one takes the double
+      # underscore, which says what it is, and a prime after that
+      if new in kept[ty] or new in taken[ty]:
+        thy, nm = key
+        alt = short_thy(thy) + '__' + nm
+        if alt not in kept[ty] and alt not in taken[ty]: new = alt
       while new in kept[ty] or new in taken[ty]:
         new += "'"
       self.rename[key] = new
@@ -1044,6 +1052,18 @@ def rule_names(body):
   return out
 
 
+# the names of a source whose port name puts a double underscore
+# between the theory and the name, because the single one is a name
+# that the port's own machinery makes: the size function of a
+# datatype foo is foo_size (ml/lib/define.ml, define_size), so
+# balanced_map$size is balanced_map__size and the size function of
+# a balanced_map keeps balanced_map_size.  Writing every
+# theory$name that way would read as noise, so only a name on this
+# list does.
+
+DOUBLE = {'size'}
+
+
 def short_thy(thy):
   """the prefix that the port puts in front of a name of a theory.
      HOL4 calls a language theory fooLang, where the Lang says
@@ -1054,6 +1074,7 @@ def short_thy(thy):
 
 def prefix(thy, nm):
   t = short_thy(thy)
+  if nm in DOUBLE: return t + '__' + nm
   return nm if t == nm else t + '_' + nm
 
 

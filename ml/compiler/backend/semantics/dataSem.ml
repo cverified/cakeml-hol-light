@@ -118,11 +118,11 @@ let arch_size_def = new_definition
 
 let check_res_def = new_definition
   `check_res r (n,refs,seen) =
-     if sptree_size refs <= sptree_size r then (n,refs,seen) else
+     if sptree__size refs <= sptree__size r then (n,refs,seen) else
        (n,r,seen)`;;
 
 let check_res_IMP = prove
- (`!y. (n,r,s) = check_res t y ==> sptree_size r <= sptree_size t`,
+ (`!y. (n,r,s) = check_res t y ==> sptree__size r <= sptree__size t`,
   CHEAT_TAC);;
 
 let small_num_def = new_definition
@@ -928,7 +928,7 @@ let dataSem_bad_thunk_update_def = new_definition
 (* mirrors bviSem$finalise_cons, but threads the timestamp counter so that
    each block produced by the finalisation gets a fresh time stamp *)
 (* the termination relation that HOL4 gives is
-     MEASURE (sptree_size o FST o SND)
+     MEASURE (sptree__size o FST o SND)
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 dataSemScript.sml:854-858: the tactic that proves the termination *)

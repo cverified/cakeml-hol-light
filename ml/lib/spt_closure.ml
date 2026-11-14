@@ -39,7 +39,7 @@ let num_set_tree_union_def,num_set_tree_union_ind = define_rec
 
 make_size "spt";;
 (* the termination relation that HOL4 gives is
-     MEASURE (\(r,t). sptree_size (difference (spt_fold sptree_union LN t) r))
+     MEASURE (\(r,t). sptree__size (difference (spt_fold sptree_union LN t) r))
    which is not one that HOL Light takes here; the one
    below is what the port found for it *)
 (* HOL4 spt_closureScript.sml:90-99: the tactic that proves the termination *)

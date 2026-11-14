@@ -6745,8 +6745,8 @@ balanceR
 balanceL
 singleton
 balanced_map_empty
-balanced_map_size1
-balanced_map_size1_rec
+balanced_map_size
+balanced_map_size_rec
 balanced_map_lookup
 balanced_map_lookup_rec
 bin

@@ -2239,7 +2239,7 @@ let lookup_copy_shape = prove
 (* BEGIN TODO: move to sptreeTheory *)
 
 let lookup_zero = prove
- (`!n t x. (sptree_lookup n t = SOME x) ==> (~(sptree_size t = 0))`,
+ (`!n t x. (sptree_lookup n t = SOME x) ==> (~(sptree__size t = 0))`,
   CHEAT_TAC);;
 
 let empty_sub = prove
@@ -2392,7 +2392,7 @@ let WORD_LS_IMP = prove
 
 let size_fromAList = prove
  (`// TODO: move to HOL
-   !xs. ALL_DISTINCT (MAP FST xs) ==> sptree_size (fromAList xs) = LENGTH
+   !xs. ALL_DISTINCT (MAP FST xs) ==> sptree__size (fromAList xs) = LENGTH
      xs`,
   CHEAT_TAC);;
 

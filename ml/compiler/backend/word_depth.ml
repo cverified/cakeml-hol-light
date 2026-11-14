@@ -95,7 +95,7 @@ let full_call_graph_def = new_definition
      match sptree_lookup n funs with NONE -> word_depth_Unknown
      | SOME (a,prog) -> word_depth_Branch (word_depth_Call n
        word_depth_Leaf)
-                              (call_graph funs n [n] (sptree_size funs)
+                              (call_graph funs n [n] (sptree__size funs)
                                 prog)`;;
 
 let max_depth_graphs_def,max_depth_graphs_ind = define_rec
@@ -105,7 +105,7 @@ let max_depth_graphs_def,max_depth_graphs_ind = define_rec
       | SOME (a,body) ->
           OPTION_MAP2 MAX (sptree_lookup n ss)
          (OPTION_MAP2 MAX (max_depth ss (call_graph funs n all'
-             (sptree_size all_funs) body))
+             (sptree__size all_funs) body))
                           (max_depth_graphs ss ns all' funs all_funs)))`;;
 
 (* and the interface *)

@@ -102,11 +102,11 @@ let fromList_def = new_definition
   `sptree_fromList l = SND (FOLDL (\(i,t) a. (i + 1,sptree_insert i a t))
   (0,LN) l)`;;
 
-let size_def,size_ind = define_rec
-  `(sptree_size LN = 0) /\
-   (sptree_size (LS a) = 1) /\
-   (sptree_size (BN t1 t2) = sptree_size t1 + sptree_size t2) /\
-   (sptree_size (BS t1 a t2) = sptree_size t1 + sptree_size t2 + 1)`;;
+let size_def,size_ind = define_guess
+  `(sptree__size LN = 0) /\
+   (sptree__size (LS a) = 1) /\
+   (sptree__size (BN t1 t2) = sptree__size t1 + sptree__size t2) /\
+   (sptree__size (BS t1 a t2) = sptree__size t1 + sptree__size t2 + 1)`;;
 add_simp size_def;;
 
 let union_def,union_ind = define_rec

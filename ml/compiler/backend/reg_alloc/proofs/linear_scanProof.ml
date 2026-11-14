@@ -2077,7 +2077,7 @@ let extract_coloration_output = prove
 
 (* TODO: move *)
 let LENGTH_toAList = prove
- (`!s. LENGTH (toAList s) = sptree_size s`,
+ (`!s. LENGTH (toAList s) = sptree__size s`,
   CHEAT_TAC);;
 
 let check_col_equal_col = prove

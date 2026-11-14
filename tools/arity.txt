@@ -3205,8 +3205,8 @@ balanceR	4
 balanceL	4
 singleton	2
 balanced_map_empty	0
-balanced_map_size1	3
-balanced_map_size1_rec	3
+balanced_map_size	3
+balanced_map_size_rec	3
 balanced_map_lookup	3
 balanced_map_lookup_rec	3
 bin	4

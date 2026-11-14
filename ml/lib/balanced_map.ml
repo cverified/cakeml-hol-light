@@ -29,11 +29,12 @@ let delta_def = new_definition
   `delta = (3:num)`;;
 
 let balanced_map_size_def = define_cases
-  `(balanced_map_size Tip = 0) /\
-   (balanced_map_size (Bin s k v l r) = s)`;;
+  `(balanced_map__size Tip = 0) /\
+   (balanced_map__size (Bin s k v l r) = s)`;;
 
 let bin_def = new_definition
-  `bin k x l r = Bin (balanced_map_size l + balanced_map_size r + 1) k x l r`;;
+  `bin k x l r = Bin (balanced_map__size l + balanced_map__size r + 1) k x l
+  r`;;
 
 let balanced_map_lookup_def,balanced_map_lookup_ind = define_rec
   `(balanced_map_lookup cmp k Tip = NONE) /\
@@ -63,9 +64,9 @@ let balanceL_def = new_definition
      if lrs < ratio * lls then
        Bin (1 + ls) lk lx (Bin lls k' v' l' r')
                         (Bin (1 + lrs) k x (Bin lrs lrk lrx lrl lrr) Tip)
-     else Bin (1 + ls) lrk lrx (Bin (1 + lls + balanced_map_size lrl) lk lx
+     else Bin (1 + ls) lrk lrx (Bin (1 + lls + balanced_map__size lrl) lk lx
        (Bin lls k' v' l' r') lrl)
-                          (Bin (1 + balanced_map_size lrr) k x lrr Tip)
+                          (Bin (1 + balanced_map__size lrr) k x lrr Tip)
      | (Tip,Bin rs k' v' l' r') ->
      Bin (1 + rs) k x Tip (Bin rs k' v' l' r')
      | (Bin ls lk lx ll lr,Bin rs k' v' l' r') ->
@@ -75,8 +76,8 @@ let balanceL_def = new_definition
                 Bin (1 + ls + rs) lk lx ll (Bin (1 + rs + lrs) k x lr (Bin
                   rs k' v' l' r'))
               else Bin (1 + ls + rs) lrk lrx (Bin (1 + lls +
-                balanced_map_size lrl) lk lx ll lrl)
-                              (Bin (1 + rs + balanced_map_size lrr) k x lrr
+                balanced_map__size lrl) lk lx ll lrl)
+                              (Bin (1 + rs + balanced_map__size lrr) k x lrr
                                 (Bin rs k' v' l' r'))
           | (_,_) -> Tip
      else
@@ -98,8 +99,9 @@ let balanceR_def = new_definition
      if rls < ratio * rrs then
        Bin (1 + rs) rk rx (Bin (1 + rls) k x Tip (Bin rls rlk rlx rll rlr))
          (Bin rrs k' v' l' r')
-     else Bin (1 + rs) rlk rlx (Bin (1 + balanced_map_size rll) k x Tip rll)
-                          (Bin (1 + rrs + balanced_map_size rlr) rk rx rlr
+     else Bin (1 + rs) rlk rlx (Bin (1 + balanced_map__size rll) k x Tip
+       rll)
+                          (Bin (1 + rrs + balanced_map__size rlr) rk rx rlr
                             (Bin rrs k' v' l' r'))
      | (Bin ls k' v' l' r',Tip) ->
      Bin (1 + ls) k x (Bin ls k' v' l' r') Tip
@@ -110,8 +112,8 @@ let balanceR_def = new_definition
                 Bin (1 + ls + rs) rk rx (Bin (1 + ls + rls) k x (Bin ls k'
                   v' l' r') rl) rr
               else Bin (1 + ls + rs) rlk rlx (Bin (1 + ls +
-                balanced_map_size rll) k x (Bin ls k' v' l' r') rll)
-                              (Bin (1 + rrs + balanced_map_size rlr) rk rx
+                balanced_map__size rll) k x (Bin ls k' v' l' r') rll)
+                              (Bin (1 + rrs + balanced_map__size rlr) rk rx
                                 rlr rr)
           | (_,_) -> Tip
      else
@@ -141,10 +143,11 @@ let insertMin_def,insertMin_ind = define_rec
   `(insertMin k v Tip = singleton k v) /\
    (insertMin k v (Bin s k' v' l r) = balanceL k' v' (insertMin k v l) r)`;;
 
+make_size "balanced_map";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let deleteFindMax_def,deleteFindMax_ind = define_wf
-  `MEASURE (\x0. balanced_map_size1 (\x. 0) (\x. 0) x0)`
+  `MEASURE (\x0. balanced_map_size (\x. 0) (\x. 0) x0)`
   `deleteFindMax x1 =
      match x1 with
        Bin s k x l Tip -> ((k,x),l)
@@ -157,7 +160,7 @@ let deleteFindMax_def,deleteFindMax_ind = define_wf
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let deleteFindMin_def,deleteFindMin_ind = define_wf
-  `MEASURE (\x0. balanced_map_size1 (\x. 0) (\x. 0) x0)`
+  `MEASURE (\x0. balanced_map_size (\x. 0) (\x. 0) x0)`
   `deleteFindMin x1' =
      match x1' with
        Bin s k x Tip r -> ((k,x),r)
@@ -173,7 +176,7 @@ let glue_def = new_definition
        (Tip,r) -> r
      | (l,Tip) -> l
      | (l,r) ->
-     if balanced_map_size l > balanced_map_size r then
+     if balanced_map__size l > balanced_map__size r then
        let ((km,m),l') = deleteFindMax l in
          balanceR km m l' r
      else let ((km,m),r') = deleteFindMin r in
@@ -221,8 +224,8 @@ let trim_def = new_definition
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let link_def,link_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3).      balanced_map_size1 (\x. 0) (\x. 0) x2 +
-  balanced_map_size1 (\x. 0) (\x. 0) x3)`
+  `MEASURE (\(x0,x1,x2,x3).      balanced_map_size (\x. 0) (\x. 0) x2 +
+  balanced_map_size (\x. 0) (\x. 0) x3)`
   `link k v l r =
      match (l,r) with
        (Tip,r) -> insertMin k v r
@@ -259,7 +262,7 @@ let filterGt_def = define_cases
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let hedgeUnion_def,hedgeUnion_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3,x4). balanced_map_size1 (\x. 0) (\x. 0) x3)`
+  `MEASURE (\(x0,x1,x2,x3,x4). balanced_map_size (\x. 0) (\x. 0) x3)`
   `hedgeUnion cmp blo bhi t1 t2 =
      match (t1,t2) with
        (t1,Tip) -> t1
@@ -324,7 +327,7 @@ let invariant_def,invariant_ind = define_rec
       s = 1 + structure_size l + structure_size r /\
       key_ordered cmp k l GREATER /\
       key_ordered cmp k r LESS /\
-      balanced (balanced_map_size l) (balanced_map_size r) /\
+      balanced (balanced_map__size l) (balanced_map__size r) /\
       balanced_map_invariant cmp l /\
       balanced_map_invariant cmp r)`;;
 

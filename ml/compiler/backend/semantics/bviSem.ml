@@ -418,7 +418,7 @@ let bviSem_initial_state_def = new_definition
 
 let bviSem_semantics_def = new_definition
   `bviSem_semantics init_ffi code co cc start' =
-   (let es = [bvi_Call 0 (SOME start') [] NONE] in
+   let es = [bvi_Call 0 (SOME start') [] NONE] in
    let init = bviSem_initial_state init_ffi code co cc in
      if ?k e. FST (bviSem_evaluate (es,[],init k)) = Rerr e /\
         ~(e = Rabort Rtimeout_error) /\ (!f. ~(e = Rabort (Rffi_error f)))
@@ -436,7 +436,7 @@ let bviSem_semantics_def = new_definition
         ffi_Diverge
           (build_lprefix_lub
             (IMAGE (\k. fromList (ffi_state_io_events (bviSem_state_ffi (SND
-               (bviSem_evaluate (es,[],init k)))))) UNIV)))`;;
+               (bviSem_evaluate (es,[],init k)))))) UNIV))`;;
 
 (* clean up *)
 

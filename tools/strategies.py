@@ -413,9 +413,9 @@ WAY = {
   ('balanced_map', 'bin'):
     ('new_definition', False, ''),
   ('balanced_map', 'deleteFindMax'):
-    ('measure', False, 'MEASURE (\\x0. balanced_map_size1 (\\x. 0) (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. balanced_map_size (\\x. 0) (\\x. 0) x0)'),
   ('balanced_map', 'deleteFindMin'):
-    ('measure', False, 'MEASURE (\\x0. balanced_map_size1 (\\x. 0) (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. balanced_map_size (\\x. 0) (\\x. 0) x0)'),
   ('balanced_map', 'delta'):
     ('new_definition', False, ''),
   ('balanced_map', 'filterGt'):
@@ -431,7 +431,7 @@ WAY = {
   ('balanced_map', 'glue'):
     ('new_definition', False, ''),
   ('balanced_map', 'hedgeUnion'):
-    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). balanced_map_size1 (\\x. 0) (\\x. 0) x3)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). balanced_map_size (\\x. 0) (\\x. 0) x3)'),
   ('balanced_map', 'insertMax'):
     ('prim_rec', False, ''),
   ('balanced_map', 'insertMin'):
@@ -443,7 +443,7 @@ WAY = {
   ('balanced_map', 'key_set'):
     ('new_definition', False, ''),
   ('balanced_map', 'link'):
-    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3).      balanced_map_size1 (\\x. 0) (\\x. 0) x2 +      balanced_map_size1 (\\x. 0) (\\x. 0) x3)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3).      balanced_map_size (\\x. 0) (\\x. 0) x2 +      balanced_map_size (\\x. 0) (\\x. 0) x3)'),
   ('balanced_map', 'mapWithKey'):
     ('prim_rec', False, ''),
   ('balanced_map', 'ratio'):
@@ -10986,9 +10986,9 @@ BY_CONST = {
   'degrees_sub':
     ('new_definition', False, ''),
   'deleteFindMax':
-    ('measure', False, 'MEASURE (\\x0. balanced_map_size1 (\\x. 0) (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. balanced_map_size (\\x. 0) (\\x. 0) x0)'),
   'deleteFindMin':
-    ('measure', False, 'MEASURE (\\x0. balanced_map_size1 (\\x. 0) (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. balanced_map_size (\\x. 0) (\\x. 0) x0)'),
   'delete_vars':
     ('prim_rec', False, ''),
   'delta':
@@ -12540,7 +12540,7 @@ BY_CONST = {
   'heaps_similar':
     ('new_definition', False, ''),
   'hedgeUnion':
-    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). balanced_map_size1 (\\x. 0) (\\x. 0) x3)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4). balanced_map_size (\\x. 0) (\\x. 0) x3)'),
   'help_string':
     ('new_definition', False, ''),
   'heu_max':
@@ -13358,7 +13358,7 @@ BY_CONST = {
   'lines_upd_lab_len':
     ('measure', False, 'MEASURE (\\(x0,x1,x2). list_size (line_size (\\x. 0)) x1)'),
   'link':
-    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3).      balanced_map_size1 (\\x. 0) (\\x. 0) x2 +      balanced_map_size1 (\\x. 0) (\\x. 0) x3)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3).      balanced_map_size (\\x. 0) (\\x. 0) x2 +      balanced_map_size (\\x. 0) (\\x. 0) x3)'),
   'listCmp':
     ('measure', False, 'MEASURE (\\(x0,x1). list_size (\\n. n) x0 + list_size (\\n. n) x1)'),
   'list_LUPDATE':

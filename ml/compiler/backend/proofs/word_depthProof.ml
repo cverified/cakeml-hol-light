@@ -74,7 +74,7 @@ let LENGTH_LESS_size = prove
      ~(MEM name ns) /\ set_of_list ns SUBSET domain funs /\ ALL_DISTINCT ns
        /\
      sptree_lookup name funs = SOME y ==>
-     LENGTH ns < sptree_size funs`,
+     LENGTH ns < sptree__size funs`,
   CHEAT_TAC);;
 
 let max_depth_call_graph_lemma = prove
@@ -92,10 +92,10 @@ let max_depth_call_graph_lemma = prove
              (max_depth_graphs (wordSem_state_stack_size s) ns ns funs
                funs2)
              (max_depth (wordSem_state_stack_size s) (call_graph funs n ns
-               (sptree_size funs2) prog))))) /\
+               (sptree__size funs2) prog))))) /\
      (~(max_depth_graphs (wordSem_state_stack_size s) ns ns funs funs2 =
        NONE) /\ ~(max_depth (wordSem_state_stack_size s) (call_graph funs n ns
-       (sptree_size funs2) prog) = NONE) ==> wordSem_state_stack_size
+       (sptree__size funs2) prog) = NONE) ==> wordSem_state_stack_size
       s1 = wordSem_state_stack_size s /\
       ((res = NONE \/ (?k. res = SOME (wordSem_Break k)) \/ (?k. res =
         SOME (wordSem_Continue k))) ==> wordSem_state_locals_size s1 =

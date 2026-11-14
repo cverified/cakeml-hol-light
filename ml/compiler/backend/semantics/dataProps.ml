@@ -34,7 +34,7 @@ let OPTION_CASE_OPTION_MAP = prove
 
 (* the termination relation that HOL4 gives is
      (inv_image (MEASURE I LEX MEASURE (list_size dataSem_v_size))
-                                  (\(lims,vs,refs). (sptree_size refs,vs)))
+                                  (\(lims,vs,refs). (sptree__size refs,vs)))
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 dataPropsScript.sml:43-48: the tactic that proves the termination *)

@@ -2734,8 +2734,12 @@ class Printer:
       # record of the variable it is read of, wherever the block
       # has that variable again -- an update of it among them
       # (source_to_flat's inc_compile_prog updates the next of a
-      # c whose envs it reads)
-      if acc.endswith('_' + e.fld):
+      # c whose envs it reads).  Only where the field settled it:
+      # a field that several records have says nothing about the
+      # variable, and taking the guess for an answer would carry
+      # it to the other fields of that variable
+      if (rec or e.fld in self.ctx.fields) \
+         and acc.endswith('_' + e.fld):
         r2 = acc[:-len(e.fld) - 1]
         v2 = e.e
         while v2.kind in ('paren', 'typed', 'rawtyped'): v2 = v2.e

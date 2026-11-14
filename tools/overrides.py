@@ -516,8 +516,12 @@ FIELD_VAR_DEF = {
   # bvlSem and puts them in one of bviSem
   ('bviSem', 'bvl_to_bvi_def'):
     {'s': 'bvlSem_state', 't': 'bviSem_state'},
-  # the gen that compile_decs gives back is the generation store
+  # the gen that compile_decs gives back is the generation store,
+  # which nothing in these two says: its generation is a field of
+  # two records and its next and its envs of three
   ('source_to_flat', 'compile_prog_def'):
+    {'gen': 'environment_generation_store'},
+  ('source_to_flat', 'inc_compile_prog_def'):
     {'gen': 'environment_generation_store'},
   # the state that bvl_to_bvi's state_rel relates to a state of
   # bviSem is one of bvlSem, which its globals say and the

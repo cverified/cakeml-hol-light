@@ -853,9 +853,9 @@ let Corr_If = prove
 
 let loop_app_def = new_definition
   `loop_app f g x =
-     (match f x with INL s -> (INL (word_bignumProof_dec_clock s),(g x
+     match f x with INL s -> (INL (word_bignumProof_dec_clock s),(g x
        /\ ~(word_bignumProof_state_clock s = 0)))
-     | INR s -> (INR s,g x))`;;
+     | INR s -> (INR s,g x)`;;
 
 (* [local] *)
 let Corr_LoopBody = prove
@@ -867,8 +867,8 @@ let Corr_LoopBody = prove
 
 let tick_before_def = new_definition
   `tick_before vs f s =
-     (if word_bignumProof_state_clock s = 0 then (s,F) else f
-       (delete_vars vs (word_bignumProof_dec_clock s)))`;;
+     if word_bignumProof_state_clock s = 0 then (s,F) else f (delete_vars
+       vs (word_bignumProof_dec_clock s))`;;
 
 (* [local] *)
 let Corr_Loop_lemma = prove
