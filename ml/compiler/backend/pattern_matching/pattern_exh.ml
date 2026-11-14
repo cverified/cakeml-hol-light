@@ -642,9 +642,8 @@ let LENGTH_expand_list = prove
  (`!ps qs. MEM qs (expand_list ps) ==> LENGTH qs = LENGTH ps`,
   (LIST_INDUCT_TAC THEN REWRITE_TAC[expand_def; MEM; MEM_mk_prods]
     THEN
-   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[LENGTH] THEN (ASSUM_LIST
-     (MAP_EVERY (fun th ->
-      TRY (IMP_RES_THEN ASSUME_TAC th)))) THEN
+   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[LENGTH] THEN RES_ASSUME_ALL
+     THEN
    ASM_REWRITE_TAC[]));;
 
 (* [local] *)

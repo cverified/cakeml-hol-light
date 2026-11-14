@@ -476,8 +476,7 @@ let heap_addresses_LESS = prove
  (`!heap n k. k IN heap_addresses n heap ==> n <= k`,
   (LIST_INDUCT_TAC THEN
    REWRITE_TAC[heap_addresses_def; NOT_IN_EMPTY; IN_INSERT] THEN
-   REPEAT STRIP_TAC THEN (ASSUM_LIST (MAP_EVERY (fun th ->
-      TRY (IMP_RES_THEN ASSUME_TAC th)))) THEN ASM_ARITH_TAC));;
+   REPEAT STRIP_TAC THEN RES_ASSUME_ALL THEN ASM_ARITH_TAC));;
 
 let FINITE_heap_addresses = prove
  (`!xs n. FINITE (heap_addresses n xs)`,

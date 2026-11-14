@@ -469,6 +469,16 @@ let VAR_EQ_TAC =
     else if is_var r then SUBST_ALL_TAC(SYM th)
     else failwith "VAR_EQ_TAC"));;
 
+(* resolve a lemma against the assumptions and assume what comes
+   out, and do nothing where nothing does.  HOL Light's
+   IMP_RES_THEN fails there, and a HOL4 proof counts on the step
+   being a no-op (its imp_res_tac); RES_ASSUME_ALL is the same
+   over every assumption, which is HOL4's res_tac *)
+
+let RES_ASSUME th = TRY (IMP_RES_THEN ASSUME_TAC th);;
+
+let RES_ASSUME_ALL = ASSUM_LIST (MAP_EVERY RES_ASSUME);;
+
 (* resolve a lemma whose hypothesis is a conjunction against the
    assumptions, as HOL4's imp_res_tac does *)
 

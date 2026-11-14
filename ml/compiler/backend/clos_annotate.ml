@@ -184,8 +184,7 @@ let alt_free_LENGTH = prove
 
 let alt_free_SING = prove
  (`(alt_free [x] = (ys,l)) ==> (?y. ys = [y])`,
-  (REPEAT STRIP_TAC THEN (fun th -> TRY (IMP_RES_THEN ASSUME_TAC th))
-    alt_free_LENGTH THEN
+  (REPEAT STRIP_TAC THEN RES_ASSUME alt_free_LENGTH THEN
    POP_ASSUM MP_TAC THEN SPEC_TAC(`ys:closLang_exp
      list`,`ys:closLang_exp list`) THEN
    LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ;
@@ -195,15 +194,15 @@ let alt_free_SING = prove
 let LENGTH_FST_alt_free = prove
  (`LENGTH (FST (alt_free fns)) = LENGTH fns`,
   (GEN_TAC THEN MP_TAC (ISPEC `alt_free fns` PAIR_SURJECTIVE) THEN
-   STRIP_TAC THEN ASM_REWRITE_TAC[FST] THEN (fun th -> TRY
-     (IMP_RES_THEN ASSUME_TAC th)) alt_free_LENGTH THEN
+   STRIP_TAC THEN ASM_REWRITE_TAC[FST] THEN RES_ASSUME
+     alt_free_LENGTH THEN
    ASM_REWRITE_TAC[]));;
 
 let HD_FST_alt_free = prove
  (`[HD (FST (alt_free [x1]))] = FST (alt_free [x1])`,
   (GEN_TAC THEN MP_TAC (ISPEC `alt_free [x1]` PAIR_SURJECTIVE) THEN
-   STRIP_TAC THEN ASM_REWRITE_TAC[FST] THEN (fun th -> TRY
-     (IMP_RES_THEN ASSUME_TAC th)) alt_free_SING THEN
+   STRIP_TAC THEN ASM_REWRITE_TAC[FST] THEN RES_ASSUME alt_free_SING
+     THEN
    ASM_REWRITE_TAC[HD]));;
 
 let alt_free_CONS = prove

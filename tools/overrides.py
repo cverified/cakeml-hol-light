@@ -1043,10 +1043,8 @@ KIT_MAP = {
   # HOL4's imp_res_tac and res_tac, which LightCake rebinds to
   # swallow a failure.  HOL Light has neither name: what it has
   # is IMP_RES_THEN, and these are what the two say with it
-  'IMP_RES_TAC': '(fun th -> TRY (IMP_RES_THEN ASSUME_TAC th))',
-  'RES_TAC':
-    '(ASSUM_LIST (MAP_EVERY (fun th ->\n'
-    '     TRY (IMP_RES_THEN ASSUME_TAC th))))',
+  'IMP_RES_TAC': 'RES_ASSUME',
+  'RES_TAC': 'RES_ASSUME_ALL',
 }
 
 

@@ -224,8 +224,7 @@ let build_aux_LENGTH = prove
   (LIST_INDUCT_TAC THEN REWRITE_TAC[build_aux_def; PAIR_EQ; LENGTH]
     THENL
     [ARITH_TAC; ALL_TAC] THEN
-   REPEAT STRIP_TAC THEN (ASSUM_LIST (MAP_EVERY (fun th ->
-      TRY (IMP_RES_THEN ASSUME_TAC th)))) THEN ASM_ARITH_TAC));;
+   REPEAT STRIP_TAC THEN RES_ASSUME_ALL THEN ASM_ARITH_TAC));;
 
 let build_aux_MOVE = prove
  (`!xs n aux n1 aux1.
