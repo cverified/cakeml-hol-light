@@ -849,6 +849,16 @@ THM_NAMES = {
   ('mlint', 'fromString_helper'): {'toString': 'num_to_dec_string'},
   ('mlint', 'fromString_hd'): {'toString': 'num_to_dec_string'},
   ('mlint', 'toString_len'): {'toString': 'num_to_dec_string'},
+  ('mlint', 'toString_len_1'): {'toString': 'num_to_dec_string'},
+  # and as an mlstring it is num_to_str
+  ('mlint', 'fromNatString_toString'): {'toString': 'num_to_str'},
+  ('mlint', 'num_to_str_imp_cons'): {'toString': 'num_to_str'},
+  # the Var, the Pair and the Const of these are the ones of the
+  # term that unification is about (ml/lib/term.ml), not ast's
+  ('unify', 'encode_eq_var'): {'Var': 'term_Var'},
+  ('unify', 'swalk_encode_infer_ts_EQ_VAR'): {'Var': 'term_Var'},
+  ('unify', 'subterm_thm'):
+    {'Var': 'term_Var', 'Pair': 'term_Pair', 'Const': 'term_Const'},
   # the toList and the fromList of a sparse tree, where the name
   # resolves to the one of a lazy list (ml/lib/llist.ml)
   ('misc', 'tlookup_bij_suff'): {'toList': 'sptree_toList'},
