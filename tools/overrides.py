@@ -1585,7 +1585,10 @@ ONE_QUOTATION = set([
   # which only the clause with <+ in it says)
   ('asm', 'word_cmp_def'),
   ('linear_scan', 'check_startlive_prop_def'),
-  ('displayLang', 'display_to_json_def'),
+  # (displayLang's display_to_json was here, for the overload
+  # resolution that the port no longer leaves to HOL Light: its
+  # String is jsonLang's in the bodies and its own in the
+  # patterns, which only the clause form can say)
   ('source_to_flat', 'compile_pat_def'),
   ('stack_remove', 'store_list_code_def'),
   ('word_to_stack', 'call_dest_def'),
