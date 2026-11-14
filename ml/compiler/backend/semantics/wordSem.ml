@@ -1148,8 +1148,10 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
            (match wordSem_jump_exc s with NONE -> (SOME
                wordSem_Error,s) | SOME (s,l1,l2) -> (SOME
                (wordSem_Exception (wordLang_Loc l1 l2) w)),s))`;
-   `wordSem_evaluate (wordLang_Break k,s) = (SOME (Break k),s)`;
-   `wordSem_evaluate (wordLang_Continue k,s) = (SOME (Continue k),s)`;
+   `wordSem_evaluate (wordLang_Break k,s) = (SOME (wordSem_Break
+    k),s)`;
+   `wordSem_evaluate (wordLang_Continue k,s) = (SOME
+    (wordSem_Continue k),s)`;
    `wordSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
         (match (wordSem_get_var r1 s,wordSem_get_var_imm ri s) with
             (SOME x,SOME y) ->
@@ -1168,7 +1170,7 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
                     wordSem_evaluate (wordSem_STOP ((wordLang_Loop
                         names c exit_names:'a
                         wordLang_prog)),wordSem_dec_clock s1)) else if
-                        res = SOME (Break 0) then
+                        res = SOME (wordSem_Break 0) then
                  match wordSem_cut_state (exit_names,LN) s1 with
                      NONE -> (SOME wordSem_Error,s1) | SOME s2 ->
                      (NONE,s2) else (wordSem_exit_loop res,s1)))`;
@@ -1333,11 +1335,11 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec
                                   (h,wordSem_set_var n y s2) else
                                   (SOME wordSem_Error,s2)))) |
                                   (NONE,s) -> (SOME
-                                  wordSem_Error,s) | (SOME (Break
-                                  _157),s) -> (SOME
                                   wordSem_Error,s) | (SOME
-                                  (Continue _158),s) -> (SOME
-                                  wordSem_Error,s) | res ->
+                                  (wordSem_Break _157),s) -> (SOME
+                                  wordSem_Error,s) | (SOME
+                                  (wordSem_Continue _158),s) ->
+                                  (SOME wordSem_Error,s) | res ->
                                   res)))))))`];;
 
 (* We prove that the clock never increases and that termdep is constant. *)

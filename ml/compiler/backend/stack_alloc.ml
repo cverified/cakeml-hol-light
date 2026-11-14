@@ -31,15 +31,14 @@ let memcpy_code_def = new_definition
        (stackLang_Break 0))) asm_NotEqual 0 (Imm (n2w 0))
        (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
          (Addr a (n2w 0)))) 1 2;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Add r1 r1 (Imm (bytes_in_word))))) 2;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Sub r1 r1 (Imm (n2w 1))))) 0;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                    r1 r1 (Imm (bytes_in_word))))) 2;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                    r1 r1 (Imm (n2w 1))))) 0;
                   (\r a. stackLang_Inst (asm_Mem asm_Store r (Addr a
                     (n2w 0)))) 1 3;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Add r1 r1 (Imm (bytes_in_word)))))
-                    3])`;;
+                    asm_Add r1 r1 (Imm (bytes_in_word))))) 3])`;;
 
 let clear_top_inst_def = new_definition
   `clear_top_inst i n =
@@ -59,8 +58,8 @@ let word_gc_move_code_def = new_definition
             (n2w v))))) 0 (shift_length conf);
           (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsl r r (Imm
             (n2w v))))) 0 (backend_common_word_shift (:'a));
-          (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-            word_bignum_Add r1 r1 (Reg r2)))) 0 1;
+          (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+            (Reg r2)))) 0 1;
           // here 0 is ptr_to_addr conf old w
           (\r a. stackLang_Inst (asm_Mem asm_Load r (Addr a (n2w
             0)))) 1 0;
@@ -80,7 +79,7 @@ let word_gc_move_code_def = new_definition
                          Lsr r r (Imm (n2w v))))) 1 (dimindex (:'a) -
                          data_to_word_config_len_size conf);
                        (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                         word_bignum_Add r1 r1 (Imm (n2w 1))))) 1;
+                         asm_Add r1 r1 (Imm (n2w 1))))) 1;
                        // store len+1w for later
                        (\dest src. stackLang_Inst (asm_Arith
                          (asm_Binop asm_Or dest src (Reg src)))) 6 1;
@@ -97,7 +96,7 @@ let word_gc_move_code_def = new_definition
                          Lsl r r (Imm (n2w v))))) 0
                          (backend_common_word_shift (:'a));
                        (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                         word_bignum_Sub r1 r1 (Reg r2)))) 2 0;
+                         asm_Sub r1 r1 (Reg r2)))) 2 0;
                        // store i << 2 into header_addr
                        (\dest src. stackLang_Inst (asm_Arith
                          (asm_Binop asm_Or dest src (Reg src)))) 0 4;
@@ -116,8 +115,7 @@ let word_gc_move_code_def = new_definition
                          asm_Or r1 r1 (Reg r2)))) 5 1;
                        // add to i in 4
                        (\r1 r2. stackLang_Inst (asm_Arith
-                         (asm_Binop word_bignum_Add r1 r1 (Reg r2))))
-                         4 6])])`;;
+                         (asm_Binop asm_Add r1 r1 (Reg r2)))) 4 6])])`;;
 
 let word_gc_move_list_code_def = new_definition
   `word_gc_move_list_code conf =
@@ -125,14 +123,13 @@ let word_gc_move_list_code_def = new_definition
        (stackLang_Break 0))) asm_NotEqual 7 (Imm ((n2w 0):'a word))
        (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
          (Addr a (n2w 0)))) 5 8;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Sub r1 r1 (Imm (n2w 1))))) 7;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                    r1 r1 (Imm (n2w 1))))) 7;
                   word_gc_move_code conf;
                   (\r a. stackLang_Inst (asm_Mem asm_Store r (Addr a
                     (n2w 0)))) 5 8;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Add r1 r1 (Imm (bytes_in_word)))))
-                    8])`;;
+                    asm_Add r1 r1 (Imm (bytes_in_word))))) 8])`;;
 
 let word_gc_move_loop_code_def = new_definition
   `word_gc_move_loop_code conf =
@@ -146,7 +143,7 @@ let word_gc_move_loop_code_def = new_definition
                      (dimindex (:'a) - data_to_word_config_len_size
                      conf);
                               (\r1. stackLang_Inst (asm_Arith
-                                (asm_Binop word_bignum_Add r1 r1 (Imm
+                                (asm_Binop asm_Add r1 r1 (Imm
                                 (bytes_in_word))))) 8;
                               word_gc_move_list_code conf])
                    (stackLang_list_Seq [(\r v. stackLang_Inst
@@ -154,14 +151,14 @@ let word_gc_move_loop_code_def = new_definition
                      (dimindex (:'a) - data_to_word_config_len_size
                      conf);
                               (\r1. stackLang_Inst (asm_Arith
-                                (asm_Binop word_bignum_Add r1 r1 (Imm
-                                (n2w 1))))) 7;
+                                (asm_Binop asm_Add r1 r1 (Imm (n2w
+                                1))))) 7;
                               (\r v. stackLang_Inst (asm_Arith
                                 (asm_Shift Lsl r r (Imm (n2w v))))) 7
                                 (backend_common_word_shift (:'a));
                               (\r1 r2. stackLang_Inst (asm_Arith
-                                (asm_Binop word_bignum_Add r1 r1 (Reg
-                                r2)))) 8 7])]):'a stackLang_prog)`;;
+                                (asm_Binop asm_Add r1 r1 (Reg r2))))
+                                8 7])]):'a stackLang_prog)`;;
 
 (* 7 is w, 8 is index into stack, 5 is input to word_gc_move_code *)
 let word_gc_move_bitmap_code_def = new_definition
@@ -172,15 +169,14 @@ let word_gc_move_bitmap_code_def = new_definition
          (stackLang_list_Seq [(\r v. stackLang_Inst (asm_Arith
            (asm_Shift Lsr r r (Imm (n2w v))))) 7 1;
                     (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                      word_bignum_Add r1 r1 (Imm (bytes_in_word))))) 8])
+                      asm_Add r1 r1 (Imm (bytes_in_word))))) 8])
          (stackLang_list_Seq [stackLang_StackLoadAny 5 8;
                     (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsr r
                       r (Imm (n2w v))))) 7 1;
                     word_gc_move_code conf;
                     stackLang_StackStoreAny 5 8;
                     (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                      word_bignum_Add r1 r1 (Imm (bytes_in_word)))))
-                      8]))`;;
+                      asm_Add r1 r1 (Imm (bytes_in_word))))) 8]))`;;
 
 (* 9 is w, 8 is index into stack *)
 let word_gc_move_bitmaps_code_def = new_definition
@@ -190,8 +186,8 @@ let word_gc_move_bitmaps_code_def = new_definition
        (stackLang_list_Seq [stackLang_BitmapLoad 7 9;
                   word_gc_move_bitmap_code conf;
                   stackLang_BitmapLoad 0 9;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Add r1 r1 (Imm (n2w 1))))) 9;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                    r1 r1 (Imm (n2w 1))))) 9;
                   (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsr
                     r r (Imm (n2w v))))) 0 (dimindex (:'a) - 1)])`;;
 
@@ -202,10 +198,10 @@ let word_gc_move_roots_bitmaps_code_def = new_definition
        (stackLang_Break 0))) asm_NotTest 9 (Reg 9)
        (stackLang_list_Seq [(\dest src. stackLang_Inst (asm_Arith
          (asm_Binop asm_Or dest src (Reg src)))) 0 9;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Sub r1 r1 (Imm (n2w 1))))) 9;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Add r1 r1 (Imm (bytes_in_word))))) 8;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                    r1 r1 (Imm (n2w 1))))) 9;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                    r1 r1 (Imm (bytes_in_word))))) 8;
                   word_gc_move_bitmaps_code conf;
                   stackLang_StackLoadAny 9 8])`;;
 
@@ -220,8 +216,8 @@ let word_gen_gc_move_code_def = new_definition
             (n2w v))))) 0 (shift_length conf);
           (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsl r r (Imm
             (n2w v))))) 0 (backend_common_word_shift (:'a));
-          (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-            word_bignum_Add r1 r1 (Reg r2)))) 0 1;
+          (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+            (Reg r2)))) 0 1;
           // here 0 is ptr_to_addr conf old w
           (\r a. stackLang_Inst (asm_Mem asm_Load r (Addr a (n2w
             0)))) 1 0;
@@ -244,7 +240,7 @@ let word_gen_gc_move_code_def = new_definition
                          Lsr r r (Imm (n2w v))))) 1 (dimindex (:'a) -
                          data_to_word_config_len_size conf);
                        (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                         word_bignum_Add r1 r1 (Imm (n2w 1))))) 1;
+                         asm_Add r1 r1 (Imm (n2w 1))))) 1;
                        (\r w. stackLang_Inst (word_depth_Const r w))
                          2 (n2w 0b1100);
                        (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
@@ -267,11 +263,9 @@ let word_gen_gc_move_code_def = new_definition
                              (asm_Shift Lsl r r (Imm (n2w v))))) 1
                              (backend_common_word_shift (:'a));
                            (\r1 r2. stackLang_Inst (asm_Arith
-                             (asm_Binop word_bignum_Sub r1 r1 (Reg
-                             r2)))) 4 6;
+                             (asm_Binop asm_Sub r1 r1 (Reg r2)))) 4 6;
                            (\r1 r2. stackLang_Inst (asm_Arith
-                             (asm_Binop word_bignum_Sub r1 r1 (Reg
-                             r2)))) 3 1;
+                             (asm_Binop asm_Sub r1 r1 (Reg r2)))) 3 1;
                            stackLang_Set (Temp (n2w 2)) 3;
                            // new ib
                            stackLang_Set (Temp (n2w 3)) 4;
@@ -326,8 +320,7 @@ let word_gen_gc_move_code_def = new_definition
                              (asm_Shift Lsl r r (Imm (n2w v))))) 0
                              (backend_common_word_shift (:'a));
                            (\r1 r2. stackLang_Inst (asm_Arith
-                             (asm_Binop word_bignum_Sub r1 r1 (Reg
-                             r2)))) 2 0;
+                             (asm_Binop asm_Sub r1 r1 (Reg r2)))) 2 0;
                            // store i << 2 into header_addr
                            (\dest src. stackLang_Inst (asm_Arith
                              (asm_Binop asm_Or dest src (Reg src)))) 0
@@ -349,8 +342,8 @@ let word_gen_gc_move_code_def = new_definition
                              (asm_Binop asm_Or r1 r1 (Reg r2)))) 5 1;
                            // add to i in 4
                            (\r1 r2. stackLang_Inst (asm_Arith
-                             (asm_Binop word_bignum_Add r1 r1 (Reg
-                             r2)))) 4 6])])]):'a stackLang_prog)`;;
+                             (asm_Binop asm_Add r1 r1 (Reg r2)))) 4
+                             6])])]):'a stackLang_prog)`;;
 
 let word_gen_gc_partial_move_code_def = new_definition
   `word_gen_gc_partial_move_code conf =
@@ -370,8 +363,8 @@ let word_gen_gc_partial_move_code_def = new_definition
            (stackLang_If asm_NotLower 0 (Reg 1) stackLang_Skip
              (stackLang_list_Seq [
               stackLang_Get 1 CurrHeap;
-              (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                word_bignum_Add r1 r1 (Reg r2)))) 0 1;
+              (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                r1 r1 (Reg r2)))) 0 1;
               // here 0 is ptr_to_addr conf old w
               (\r a. stackLang_Inst (asm_Mem asm_Load r (Addr a (n2w
                 0)))) 1 0;
@@ -397,7 +390,7 @@ let word_gen_gc_partial_move_code_def = new_definition
                              (dimindex (:'a) -
                              data_to_word_config_len_size conf);
                            (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                             word_bignum_Add r1 r1 (Imm (n2w 1))))) 1;
+                             asm_Add r1 r1 (Imm (n2w 1))))) 1;
                            // store len+1w for later
                            (\dest src. stackLang_Inst (asm_Arith
                              (asm_Binop asm_Or dest src (Reg src)))) 6
@@ -418,8 +411,7 @@ let word_gen_gc_partial_move_code_def = new_definition
                              (asm_Shift Lsl r r (Imm (n2w v))))) 0
                              (backend_common_word_shift (:'a));
                            (\r1 r2. stackLang_Inst (asm_Arith
-                             (asm_Binop word_bignum_Sub r1 r1 (Reg
-                             r2)))) 2 0;
+                             (asm_Binop asm_Sub r1 r1 (Reg r2)))) 2 0;
                            // store i << 2 into header_addr
                            (\dest src. stackLang_Inst (asm_Arith
                              (asm_Binop asm_Or dest src (Reg src)))) 0
@@ -441,8 +433,8 @@ let word_gen_gc_partial_move_code_def = new_definition
                              (asm_Binop asm_Or r1 r1 (Reg r2)))) 5 1;
                            // add to i in 4
                            (\r1 r2. stackLang_Inst (asm_Arith
-                             (asm_Binop word_bignum_Add r1 r1 (Reg
-                             r2)))) 4 6])])))]):'a stackLang_prog)`;;
+                             (asm_Binop asm_Add r1 r1 (Reg r2)))) 4
+                             6])])))]):'a stackLang_prog)`;;
 
 let word_gen_gc_move_bitmap_code_def = new_definition
   `word_gen_gc_move_bitmap_code conf =
@@ -452,15 +444,14 @@ let word_gen_gc_move_bitmap_code_def = new_definition
          (stackLang_list_Seq [(\r v. stackLang_Inst (asm_Arith
            (asm_Shift Lsr r r (Imm (n2w v))))) 7 1;
                     (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                      word_bignum_Add r1 r1 (Imm (bytes_in_word))))) 8])
+                      asm_Add r1 r1 (Imm (bytes_in_word))))) 8])
          (stackLang_list_Seq [stackLang_StackLoadAny 5 8;
                     (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsr r
                       r (Imm (n2w v))))) 7 1;
                     word_gen_gc_move_code conf;
                     stackLang_StackStoreAny 5 8;
                     (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                      word_bignum_Add r1 r1 (Imm (bytes_in_word)))))
-                      8]))`;;
+                      asm_Add r1 r1 (Imm (bytes_in_word))))) 8]))`;;
 
 let word_gen_gc_partial_move_bitmap_code_def = new_definition
   `word_gen_gc_partial_move_bitmap_code conf =
@@ -470,15 +461,14 @@ let word_gen_gc_partial_move_bitmap_code_def = new_definition
          (stackLang_list_Seq [(\r v. stackLang_Inst (asm_Arith
            (asm_Shift Lsr r r (Imm (n2w v))))) 7 1;
                     (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                      word_bignum_Add r1 r1 (Imm (bytes_in_word))))) 8])
+                      asm_Add r1 r1 (Imm (bytes_in_word))))) 8])
          (stackLang_list_Seq [stackLang_StackLoadAny 5 8;
                     (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsr r
                       r (Imm (n2w v))))) 7 1;
                     word_gen_gc_partial_move_code conf;
                     stackLang_StackStoreAny 5 8;
                     (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                      word_bignum_Add r1 r1 (Imm (bytes_in_word)))))
-                      8]))`;;
+                      asm_Add r1 r1 (Imm (bytes_in_word))))) 8]))`;;
 
 (* 9 is w, 8 is index into stack *)
 let word_gen_gc_move_bitmaps_code_def = new_definition
@@ -488,8 +478,8 @@ let word_gen_gc_move_bitmaps_code_def = new_definition
        (stackLang_list_Seq [stackLang_BitmapLoad 7 9;
                   word_gen_gc_move_bitmap_code conf;
                   stackLang_BitmapLoad 0 9;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Add r1 r1 (Imm (n2w 1))))) 9;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                    r1 r1 (Imm (n2w 1))))) 9;
                   (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsr
                     r r (Imm (n2w v))))) 0 (dimindex (:'a) - 1)])`;;
 
@@ -501,8 +491,8 @@ let word_gen_gc_partial_move_bitmaps_code_def = new_definition
        (stackLang_list_Seq [stackLang_BitmapLoad 7 9;
                   word_gen_gc_partial_move_bitmap_code conf;
                   stackLang_BitmapLoad 0 9;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Add r1 r1 (Imm (n2w 1))))) 9;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                    r1 r1 (Imm (n2w 1))))) 9;
                   (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsr
                     r r (Imm (n2w v))))) 0 (dimindex (:'a) - 1)])`;;
 
@@ -513,10 +503,10 @@ let word_gen_gc_move_roots_bitmaps_code_def = new_definition
        (stackLang_Break 0))) asm_NotTest 9 (Reg 9)
        (stackLang_list_Seq [(\dest src. stackLang_Inst (asm_Arith
          (asm_Binop asm_Or dest src (Reg src)))) 0 9;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Sub r1 r1 (Imm (n2w 1))))) 9;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Add r1 r1 (Imm (bytes_in_word))))) 8;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                    r1 r1 (Imm (n2w 1))))) 9;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                    r1 r1 (Imm (bytes_in_word))))) 8;
                   word_gen_gc_move_bitmaps_code conf;
                   stackLang_StackLoadAny 9 8])`;;
 
@@ -528,10 +518,10 @@ let word_gen_gc_partial_move_roots_bitmaps_code_def = new_definition
        (stackLang_Break 0))) asm_NotTest 9 (Reg 9)
        (stackLang_list_Seq [(\dest src. stackLang_Inst (asm_Arith
          (asm_Binop asm_Or dest src (Reg src)))) 0 9;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Sub r1 r1 (Imm (n2w 1))))) 9;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Add r1 r1 (Imm (bytes_in_word))))) 8;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                    r1 r1 (Imm (n2w 1))))) 9;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                    r1 r1 (Imm (bytes_in_word))))) 8;
                   word_gen_gc_partial_move_bitmaps_code conf;
                   stackLang_StackLoadAny 9 8])`;;
 
@@ -541,14 +531,13 @@ let word_gen_gc_move_list_code_def = new_definition
        (stackLang_Break 0))) asm_NotEqual 7 (Imm ((n2w 0):'a word))
        (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
          (Addr a (n2w 0)))) 5 8;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Sub r1 r1 (Imm (n2w 1))))) 7;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                    r1 r1 (Imm (n2w 1))))) 7;
                   word_gen_gc_move_code conf;
                   (\r a. stackLang_Inst (asm_Mem asm_Store r (Addr a
                     (n2w 0)))) 5 8;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Add r1 r1 (Imm (bytes_in_word)))))
-                    8])`;;
+                    asm_Add r1 r1 (Imm (bytes_in_word))))) 8])`;;
 
 let word_gen_gc_partial_move_list_code_def = new_definition
   `word_gen_gc_partial_move_list_code conf =
@@ -556,14 +545,13 @@ let word_gen_gc_partial_move_list_code_def = new_definition
        (stackLang_Break 0))) asm_NotEqual 7 (Imm ((n2w 0):'a word))
        (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
          (Addr a (n2w 0)))) 5 8;
-                  (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Sub r1 r1 (Imm (n2w 1))))) 7;
+                  (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                    r1 r1 (Imm (n2w 1))))) 7;
                   word_gen_gc_partial_move_code conf;
                   (\r a. stackLang_Inst (asm_Mem asm_Store r (Addr a
                     (n2w 0)))) 5 8;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                    word_bignum_Add r1 r1 (Imm (bytes_in_word)))))
-                    8])`;;
+                    asm_Add r1 r1 (Imm (bytes_in_word))))) 8])`;;
 
 let word_gen_gc_move_data_code_def = new_definition
   `word_gen_gc_move_data_code conf =
@@ -577,7 +565,7 @@ let word_gen_gc_move_data_code_def = new_definition
                      (dimindex (:'a) - data_to_word_config_len_size
                      conf);
                               (\r1. stackLang_Inst (asm_Arith
-                                (asm_Binop word_bignum_Add r1 r1 (Imm
+                                (asm_Binop asm_Add r1 r1 (Imm
                                 (bytes_in_word))))) 8;
                               word_gen_gc_move_list_code conf])
                    (stackLang_list_Seq [(\r v. stackLang_Inst
@@ -585,17 +573,17 @@ let word_gen_gc_move_data_code_def = new_definition
                      (dimindex (:'a) - data_to_word_config_len_size
                      conf);
                               (\r1. stackLang_Inst (asm_Arith
-                                (asm_Binop word_bignum_Add r1 r1 (Imm
-                                (n2w 1))))) 7;
+                                (asm_Binop asm_Add r1 r1 (Imm (n2w
+                                1))))) 7;
                               (\r v. stackLang_Inst (asm_Arith
                                 (asm_Shift Lsl r r (Imm (n2w v))))) 7
                                 (backend_common_word_shift (:'a));
                               (\r1 r2. stackLang_Inst (asm_Arith
-                                (asm_Binop word_bignum_Add r1 r1 (Reg
-                                r2)))) 8 7])]):'a stackLang_prog)`;;
+                                (asm_Binop asm_Add r1 r1 (Reg r2))))
+                                8 7])]):'a stackLang_prog)`;;
 
 let word_gen_gc_partial_move_ref_list_code_def = new_definition
-  `add_inst conf =
+  `word_gen_gc_partial_move_ref_list_code conf =
      ((\cmp r ri c. stackLang_Loop (stackLang_If cmp r ri c
        (stackLang_Break 0))) asm_NotEqual 9 (Reg 8)
       (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
@@ -603,8 +591,8 @@ let word_gen_gc_partial_move_ref_list_code_def = new_definition
                  (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsr r r
                    (Imm (n2w v))))) 7 (dimindex (:'a) -
                    data_to_word_config_len_size conf);
-                 (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                   word_bignum_Add r1 r1 (Imm (bytes_in_word))))) 8;
+                 (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                   r1 r1 (Imm (bytes_in_word))))) 8;
                  word_gen_gc_partial_move_list_code conf]):'a
                    stackLang_prog)`;;
 
@@ -620,7 +608,7 @@ let word_gen_gc_partial_move_data_code_def = new_definition
                      (dimindex (:'a) - data_to_word_config_len_size
                      conf);
                               (\r1. stackLang_Inst (asm_Arith
-                                (asm_Binop word_bignum_Add r1 r1 (Imm
+                                (asm_Binop asm_Add r1 r1 (Imm
                                 (bytes_in_word))))) 8;
                               word_gen_gc_partial_move_list_code
                                 conf])
@@ -629,14 +617,14 @@ let word_gen_gc_partial_move_data_code_def = new_definition
                      (dimindex (:'a) - data_to_word_config_len_size
                      conf);
                               (\r1. stackLang_Inst (asm_Arith
-                                (asm_Binop word_bignum_Add r1 r1 (Imm
-                                (n2w 1))))) 7;
+                                (asm_Binop asm_Add r1 r1 (Imm (n2w
+                                1))))) 7;
                               (\r v. stackLang_Inst (asm_Arith
                                 (asm_Shift Lsl r r (Imm (n2w v))))) 7
                                 (backend_common_word_shift (:'a));
                               (\r1 r2. stackLang_Inst (asm_Arith
-                                (asm_Binop word_bignum_Add r1 r1 (Reg
-                                r2)))) 8 7])]):'a stackLang_prog)`;;
+                                (asm_Binop asm_Add r1 r1 (Reg r2))))
+                                8 7])]):'a stackLang_prog)`;;
 
 let word_gen_gc_move_refs_code_def = new_definition
   `word_gen_gc_move_refs_code conf =
@@ -648,8 +636,8 @@ let word_gen_gc_move_refs_code_def = new_definition
                  (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsr r r
                    (Imm (n2w v))))) 7 (dimindex (:'a) -
                    data_to_word_config_len_size conf);
-                 (\r1. stackLang_Inst (asm_Arith (asm_Binop
-                   word_bignum_Add r1 r1 (Imm (bytes_in_word))))) 8;
+                 (\r1. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                   r1 r1 (Imm (bytes_in_word))))) 8;
                  word_gen_gc_move_list_code conf;
                  stackLang_Get 0 (Temp (n2w 4))]):'a
                    stackLang_prog)`;;
@@ -671,7 +659,7 @@ let word_gen_gc_move_loop_code_def = new_definition
                      (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                        asm_Or dest src (Reg src)))) 2 5;
                      (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                       word_bignum_Sub r1 r1 (Reg r2)))) 7 5])
+                       asm_Sub r1 r1 (Reg r2)))) 7 5])
           (
            // case: pbx <> pb i.e. move_refs
            stackLang_list_Seq [(\dest src. stackLang_Inst (asm_Arith
@@ -699,7 +687,7 @@ let word_gen_gc_move_loop_code_def = new_definition
                      (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                        asm_Or dest src (Reg src)))) 7 1;
                      (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                       word_bignum_Sub r1 r1 (Reg r2)))) 7 2;
+                       asm_Sub r1 r1 (Reg r2)))) 7 2;
                      // pbx' - pa'
                      stackLang_Get 8 (Temp (n2w 6));
                      // pax
@@ -707,7 +695,7 @@ let word_gen_gc_move_loop_code_def = new_definition
                        asm_Or dest src (Reg src)))) 5 8;
                      // pax - pa'
                      (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                       word_bignum_Sub r1 r1 (Reg r2)))) 5 3;
+                       asm_Sub r1 r1 (Reg r2)))) 5 3;
                      (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
                        asm_Or r1 r1 (Reg r2)))) 7 5]))`;;
 
@@ -715,12 +703,12 @@ let word_gc_partial_or_full_def = new_definition
   `word_gc_partial_or_full gen_sizes partial_code full_code =
      (match gen_sizes with [] -> stackLang_list_Seq (APPEND
        [stackLang_Get 8 TriggerGC; stackLang_Get 7 EndOfHeap; (\r1 r2.
-       stackLang_Inst (asm_Arith (asm_Binop word_bignum_Sub r1 r1 (Reg
-       r2)))) 7 8] full_code) | _1 -> stackLang_list_Seq
+       stackLang_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg r2)))) 7
+       8] full_code) | _1 -> stackLang_list_Seq
               [stackLang_Get 8 TriggerGC;
                stackLang_Get 7 EndOfHeap;
-               (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                 word_bignum_Sub r1 r1 (Reg r2)))) 7 8;
+               (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                 r1 r1 (Reg r2)))) 7 8;
                stackLang_If asm_NotLower 7 (Reg 1)
                  (stackLang_list_Seq partial_code)
                  (stackLang_list_Seq full_code)])`;;
@@ -732,23 +720,22 @@ let SetNewTrigger_def = new_definition
                stackLang_Get 7 AllocSize;
                (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                  asm_Or dest src (Reg src)))) 4 endh;
-               (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                 word_bignum_Sub r1 r1 (Reg r2)))) 4 ib;
+               (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                 r1 r1 (Reg r2)))) 4 ib;
                stackLang_If asm_Lower 1 (Reg 7)
                  (stackLang_If asm_Lower 4 (Reg 7)
                     (stackLang_Set TriggerGC endh)
                     (stackLang_If asm_Test 7 (Imm (if dimindex (:'a)
                       = 32 then (n2w 3) else (n2w 7)))
                       (stackLang_Seq ((\r1 r2. stackLang_Inst
-                        (asm_Arith (asm_Binop word_bignum_Add r1 r1 (Reg
-                        r2)))) 7 ib) (stackLang_Set TriggerGC 7))
+                        (asm_Arith (asm_Binop asm_Add r1 r1 (Reg r2))))
+                        7 ib) (stackLang_Set TriggerGC 7))
                       (stackLang_Set TriggerGC endh)))
                  (stackLang_If asm_Lower 4 (Reg 1)
                     (stackLang_Set TriggerGC endh)
                     (stackLang_Seq ((\r1 r2. stackLang_Inst
-                      (asm_Arith (asm_Binop word_bignum_Add r1 r1
-                      (Reg r2)))) 1 ib) (stackLang_Set TriggerGC
-                      1)))]`;;
+                      (asm_Arith (asm_Binop asm_Add r1 r1 (Reg r2))))
+                      1 ib) (stackLang_Set TriggerGC 1)))]`;;
 
 let word_gc_code_def = new_definition
   `word_gc_code conf =
@@ -788,8 +775,8 @@ let word_gc_code_def = new_definition
                 (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsl r r
                   (Imm (n2w v))))) 7 (backend_common_word_shift (:'a));
                 stackLang_Get 9 OtherHeap;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Add r1 r1 (Reg r2)))) 7 9;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                  r1 r1 (Reg r2)))) 7 9;
                 stackLang_Set GlobReal 7;
                 (\r w. stackLang_Inst (word_depth_Const r w)) 7 (n2w
                   0);
@@ -802,8 +789,8 @@ let word_gc_code_def = new_definition
                 stackLang_Get 0 CurrHeap;
                 stackLang_Get 1 OtherHeap;
                 stackLang_Get 2 HeapLength;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Add r1 r1 (Reg r2)))) 2 1;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                  r1 r1 (Reg r2)))) 2 1;
                 stackLang_Set CurrHeap 1;
                 stackLang_Set OtherHeap 0;
                 stackLang_Get 0 NextFree;
@@ -811,8 +798,8 @@ let word_gc_code_def = new_definition
                 stackLang_Set EndOfHeap 2;
                 stackLang_Set TriggerGC 2;
                 stackLang_Get 1 AllocSize;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Sub r1 r1 (Reg r2)))) 2 8;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                  r1 r1 (Reg r2)))) 2 8;
                 stackLang_If asm_Lower 2 (Reg 1) (stackLang_Seq ((\r
                   w. stackLang_Inst (word_depth_Const r w)) 1 (n2w 1))
                   (stackLang_Halt 1)) stackLang_Skip]) |
@@ -826,8 +813,8 @@ let word_gc_code_def = new_definition
                 stackLang_Get 5 EndOfHeap;
                 stackLang_Get 2 CurrHeap;
                 stackLang_Set (Temp (n2w 0)) 4;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Sub r1 r1 (Reg r2)))) 5 2;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                  r1 r1 (Reg r2)))) 5 2;
                 stackLang_Set (Temp (n2w 1)) 5;
                 stackLang_Get 7 HeapLength;
                 stackLang_Get 5 Globals;
@@ -845,8 +832,8 @@ let word_gc_code_def = new_definition
                 (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsl r r
                   (Imm (n2w v))))) 8 (backend_common_word_shift (:'a));
                 stackLang_Get 9 CurrHeap;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Add r1 r1 (Reg r2)))) 8 9;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                  r1 r1 (Reg r2)))) 8 9;
                 stackLang_Set GlobReal 8;
                 (\r w. stackLang_Inst (word_depth_Const r w)) 8 (n2w
                   0);
@@ -854,8 +841,8 @@ let word_gc_code_def = new_definition
                 word_gen_gc_partial_move_roots_bitmaps_code conf;
                 stackLang_Get 8 CurrHeap;
                 stackLang_Get 9 HeapLength;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Add r1 r1 (Reg r2)))) 9 8;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                  r1 r1 (Reg r2)))) 9 8;
                 stackLang_Get 8 EndOfHeap;
                 word_gen_gc_partial_move_ref_list_code conf;
                 stackLang_Get 8 OtherHeap;
@@ -863,14 +850,14 @@ let word_gc_code_def = new_definition
                 stackLang_Get 2 OtherHeap;
                 (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                   asm_Or dest src (Reg src)))) 0 3;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Sub r1 r1 (Reg r2)))) 0 2;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                  r1 r1 (Reg r2)))) 0 2;
                 (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsr r r
                   (Imm (n2w v))))) 0 (backend_common_word_shift (:'a));
                 stackLang_Get 3 GenStart;
                 stackLang_Get 1 CurrHeap;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Add r1 r1 (Reg r2)))) 3 1;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                  r1 r1 (Reg r2)))) 3 1;
                 memcpy_code;
                 stackLang_Get 0 NextFree;
                 stackLang_Set NextFree 3;
@@ -882,11 +869,11 @@ let word_gc_code_def = new_definition
                 stackLang_Set (Temp (n2w 0)) 1;
                 stackLang_Set (Temp (n2w 1)) 1;
                 stackLang_Get 1 AllocSize;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Sub r1 r1 (Reg r2)))) 8 3;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                  r1 r1 (Reg r2)))) 8 3;
                 stackLang_Get 7 CurrHeap;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Sub r1 r1 (Reg r2)))) 3 7;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                  r1 r1 (Reg r2)))) 3 7;
                 stackLang_Set GenStart 3]
                [
                 // There is no need for a memory check here
@@ -905,8 +892,8 @@ let word_gc_code_def = new_definition
                   asm_Or dest src (Reg src)))) 2 1;
                 stackLang_Get 3 OtherHeap;
                 stackLang_Get 4 HeapLength;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Add r1 r1 (Reg r2)))) 4 3;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                  r1 r1 (Reg r2)))) 4 3;
                 stackLang_Set (Temp (n2w 0)) 4;
                 stackLang_Set (Temp (n2w 1)) 4;
                 stackLang_Set (Temp (n2w 2)) 4;
@@ -933,8 +920,8 @@ let word_gc_code_def = new_definition
                   (Imm (n2w v))))) 7 (shift_length conf);
                 (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsl r r
                   (Imm (n2w v))))) 7 (backend_common_word_shift (:'a));
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Add r1 r1 (Reg r2)))) 7 9;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Add
+                  r1 r1 (Reg r2)))) 7 9;
                 stackLang_Set GlobReal 7;
                 (\r w. stackLang_Inst (word_depth_Const r w)) 7 (n2w
                   0);
@@ -946,13 +933,13 @@ let word_gc_code_def = new_definition
                 stackLang_Get 8 OtherHeap;
                 (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                   asm_Or dest src (Reg src)))) 7 3;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Sub r1 r1 (Reg r2)))) 7 8;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                  r1 r1 (Reg r2)))) 7 8;
                 stackLang_Get 1 (Temp (n2w 6));
                 (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                   asm_Or dest src (Reg src)))) 6 2;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Sub r1 r1 (Reg r2)))) 6 1;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                  r1 r1 (Reg r2)))) 6 1;
                 (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Or
                   r1 r1 (Reg r2)))) 7 6;
                 word_gen_gc_move_loop_code conf;
@@ -966,8 +953,8 @@ let word_gc_code_def = new_definition
                 stackLang_Set EndOfHeap 2;
                 (\dest src. stackLang_Inst (asm_Arith (asm_Binop
                   asm_Or dest src (Reg src)))) 8 3;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Sub r1 r1 (Reg r2)))) 8 1;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                  r1 r1 (Reg r2)))) 8 1;
                 stackLang_Set GenStart 8;
                 SetNewTrigger 2 3 gen_sizes;
                 (\r w. stackLang_Inst (word_depth_Const r w)) 1 (n2w
@@ -981,8 +968,8 @@ let word_gc_code_def = new_definition
                 stackLang_Set (Temp (n2w 6)) 1;
                 stackLang_Get 1 AllocSize;
                 stackLang_Get 2 TriggerGC;
-                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
-                  word_bignum_Sub r1 r1 (Reg r2)))) 2 3;
+                (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop asm_Sub
+                  r1 r1 (Reg r2)))) 2 3;
                 stackLang_If asm_Lower 2 (Reg 1) (stackLang_Seq
                   ((\r w. stackLang_Inst (word_depth_Const r w)) 1
                   (n2w 1)) (stackLang_Halt 1)) stackLang_Skip]):'a

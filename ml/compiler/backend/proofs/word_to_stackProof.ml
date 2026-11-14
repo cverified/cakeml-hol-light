@@ -1219,7 +1219,7 @@ let gc_state_rel = prove
 (* [local] *)
 let alloc_alt = prove
  (`~(FST (stackSem_alloc c names (s:('a,num#'c,'ffi)wordSem_state)) =
-       SOME (stackSem_Error:'a wordSem_result)) ==>
+       SOME (wordSem_Error:'a wordSem_result)) ==>
        (stackSem_alloc c names (s:('a,num#'c,'ffi)wordSem_state) =
         (match cut_envs names (wordSem_state_locals s) with
           NONE -> (SOME stackSem_Error,s) | SOME env ->

@@ -70,27 +70,29 @@ let call_graph_def,call_graph_ind = assume_definition_rec
             | SOME ((a:num),body) ->
             (match ret with NONE ->
               (if LENGTH ns < total' then
-                 mk_Branch (Call d (word_depth_Leaf))
+                 mk_Branch (word_depth_Call d (word_depth_Leaf))
                    (call_graph funs d (CONS d ns) total' body) else
                      word_depth_Leaf) | SOME (_4,_5,ret_prog,_6,_7) ->
               (let new_funs = sptree_delete d funs in
-                match handler with NONE -> word_depth_Branch (Call n
-                  (Call d word_depth_Leaf))
-                      (mk_Branch (Call n (call_graph new_funs d [d]
-                        total' body))
+                match handler with NONE -> word_depth_Branch
+                  (word_depth_Call n (word_depth_Call d
+                  word_depth_Leaf))
+                      (mk_Branch (word_depth_Call n (call_graph
+                        new_funs d [d] total' body))
                               (call_graph funs n ns total'
                                 ret_prog)) | SOME (_8,p,_9,_10) ->
-                                word_depth_Branch (Call n
-                                (word_depth_Const 3 (Call d
+                                word_depth_Branch (word_depth_Call n
+                                (word_depth_Const 3 (word_depth_Call d
                                 word_depth_Leaf)))
-                   (mk_Branch (Call n (word_depth_Const 3
+                   (mk_Branch (word_depth_Call n (word_depth_Const 3
                      (call_graph new_funs d [d] total' body)))
                    (mk_Branch (call_graph funs n ns total' p)
                               (call_graph funs n ns total'
                                 ret_prog)))))))
         | (wordLang_MustTerminate p) -> call_graph funs n ns total'
           p
-        | (wordLang_Alloc _11 _12) -> Call n word_depth_Leaf
+        | (wordLang_Alloc _11 _12) -> word_depth_Call n
+          word_depth_Leaf
         | (wordLang_Install _13 _14 _15 _16 _17) ->
           word_depth_Unknown
         | (wordLang_Loop _18 body _19) -> call_graph funs n ns

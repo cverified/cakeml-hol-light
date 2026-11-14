@@ -164,7 +164,7 @@ let genv_c_tys_ok_def = new_definition
 
 let source_to_flatProof_v_rel = cake_inductive
   `(!genv lit.
-     source_to_flatProof_v_rel genv ((flatSem_Litv
+     source_to_flatProof_v_rel genv ((semanticPrimitives_Litv
        lit):semanticPrimitives_v) ((flatSem_Litv lit):flatSem_v)) /\
    (!genv cn cn' vs vs'.
      ALL2 (source_to_flatProof_v_rel genv) vs vs' /\

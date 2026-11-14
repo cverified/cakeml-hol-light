@@ -526,27 +526,27 @@ let TempOut_def = new_definition
   `TempOut = Temp (n2w 29)`;;
 
 let SeqTemp_def = new_definition
-  `SeqTemp i r p = word_bignum_Seq (wordLang_Assign i
-  (wordLang_Lookup (Temp (n2w r)))) p`;;
+  `SeqTemp i r p = wordLang_Seq (wordLang_Assign i (wordLang_Lookup
+  (Temp (n2w r)))) p`;;
 
 let SeqTempImm_def = define_cases
   [`SeqTempImm i (Reg r) p = SeqTemp i r p`;
-   `SeqTempImm i (Imm w) p = word_bignum_Seq (wordLang_Assign i
+   `SeqTempImm i (Imm w) p = wordLang_Seq (wordLang_Assign i
     (wordLang_Const w)) p`];;
 
 let SeqTempImmNot_def = define_cases
   [`SeqTempImmNot i (Reg r) p =
-      SeqTemp i r (word_bignum_Seq (word_bignum_Assign i
-          (wordLang_Op asm_Xor [wordLang_Var i; wordLang_Const
-          (word_not (n2w 0))])) p)`;
-   `SeqTempImmNot i (Imm w) p = word_bignum_Seq (wordLang_Assign i
+      SeqTemp i r (wordLang_Seq (wordLang_Assign i (wordLang_Op
+          asm_Xor [wordLang_Var i; wordLang_Const (word_not (n2w
+          0))])) p)`;
+   `SeqTempImmNot i (Imm w) p = wordLang_Seq (wordLang_Assign i
     (wordLang_Const (word_not w))) p`];;
 
 let SeqIndex_def = new_definition
   `SeqIndex i r arr p =
      (let t = (match arr with Out -> TempOut | In2 -> TempIn2 | In1
        -> TempIn1) in
-       word_bignum_Seq (word_bignum_Assign i (wordLang_Op asm_Add
+       wordLang_Seq (wordLang_Assign i (wordLang_Op asm_Add
          [wordLang_Lookup t;
             (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
               n))) Lsl (wordLang_Lookup (Temp (n2w r)))
@@ -560,22 +560,21 @@ let DivCode_def = new_definition
   `DivCode l1 l2 n1 n2 n3 n4 n5 =
      wordLang_MustTerminate
        (wordLang_Seq (wordLang_Call (SOME ([n1],(LS
-         one,LN),word_bignum_Skip,l1,l2)) (SOME div_location) [n3; n4;
-         n5] NONE)
+         one,LN),wordLang_Skip,l1,l2)) (SOME div_location) [n3; n4; n5]
+         NONE)
             (wordLang_Assign n2 (wordLang_Lookup (Temp (n2w
               28)))))`;;
 
 let LoadRegs_def,LoadRegs_ind = define_rec
   [`LoadRegs [] (p:'a wordLang_prog) = (p:'a wordLang_prog)`;
-   `LoadRegs (CONS n ns) (p:'a wordLang_prog) = ((word_bignum_Seq
+   `LoadRegs (CONS n ns) (p:'a wordLang_prog) = ((wordLang_Seq
     (wordLang_Get (n + 2) (Temp (n2w n))) (LoadRegs ns p)):'a
     wordLang_prog)`];;
 
 let SaveRegs_def,SaveRegs_ind = define_rec
-  [`SaveRegs [] = (word_bignum_Skip:'a wordLang_prog)`;
-   `SaveRegs (CONS n ns) = ((word_bignum_Seq (wordLang_Set (Temp
-    (n2w n)) (wordLang_Var (n + 2))) (SaveRegs ns)):'a
-    wordLang_prog)`];;
+  [`SaveRegs [] = (wordLang_Skip:'a wordLang_prog)`;
+   `SaveRegs (CONS n ns) = ((wordLang_Seq (wordLang_Set (Temp (n2w
+    n)) (wordLang_Var (n + 2))) (SaveRegs ns)):'a wordLang_prog)`];;
 
 let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
   "match"
@@ -616,7 +615,7 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
         (word_bignum_Seq (word_bignum_Assign i
           (word_bignum_compile_exp e)) (wordLang_Set (Temp (n2w j))
           (wordLang_Var i)),l,i + 1,cs)
-        | (word_bignum_Delete _2) -> ((word_bignum_Skip:'a
+        | (word_bignum_Delete _2) -> ((wordLang_Skip:'a
           wordLang_prog),l,i,cs)
         | word_bignum_Swap ->
         (word_bignum_Seq (word_bignum_Assign i (wordLang_Lookup

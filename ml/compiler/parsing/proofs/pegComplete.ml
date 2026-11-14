@@ -659,7 +659,7 @@ let stoppers_def = new_definition
                      ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
         | nE -> nestoppers
         | nEadd ->
-        UNIV DIFF (NN cmlG [(\nt'. grammar_NT
+        UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
@@ -727,8 +727,8 @@ let stoppers_def = new_definition
                      ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
         | nElogicOR ->
         UNIV DIFF
-          ({tokens_AndalsoT,tokens_ColonT,tokens_ArrowT,tokens_OrelseT
-          ,tokens_AlphaT (implode "before")} UNION
+          ({tokens_AndalsoT,tokens_ColonT,tokens_ArrowT,NN,tokens_AlphaT
+          (implode "before")} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
@@ -797,8 +797,7 @@ let stoppers_def = new_definition
                      ((INL:MMLnonT->MMLnonT+num) nt'))
                      nConstructorName])
         | nPas ->
-        UNIV DIFF
-          ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_SymbolT
+        UNIV DIFF ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,NN
           (implode "::"),tokens_AsT,tokens_OpT} UNION
                    {tokens_IntT i | T} UNION {tokens_StringT s | T}
                      UNION {tokens_CharT c | T} UNION
@@ -808,9 +807,8 @@ let stoppers_def = new_definition
                      ((INL:MMLnonT->MMLnonT+num) nt'))
                      nConstructorName])
         | nPConApp ->
-        UNIV DIFF
-          ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_OpT}
-          UNION {tokens_IntT i | T} UNION
+        UNIV DIFF ({tokens_LparT,NN,tokens_LbrackT,tokens_OpT} UNION
+          {tokens_IntT i | T} UNION
                    {tokens_StringT s | T} UNION {tokens_CharT c | T}
                      UNION
                    firstSet cmlG [(\nt'. grammar_NT
@@ -819,8 +817,7 @@ let stoppers_def = new_definition
                      ((INL:MMLnonT->MMLnonT+num) nt'))
                      nConstructorName])
         | nPapp ->
-        UNIV DIFF
-          ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_OpT}
+        UNIV DIFF ({tokens_LparT,tokens_UnderbarT,NN,tokens_OpT}
           UNION {tokens_IntT i | T} UNION
                    {tokens_StringT s | T} UNION {tokens_CharT c | T}
                      UNION
@@ -830,9 +827,9 @@ let stoppers_def = new_definition
                      ((INL:MMLnonT->MMLnonT+num) nt'))
                      nConstructorName])
         | nPattern ->
-        UNIV DIFF
+        NN DIFF
           ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_ColonT
-          ,tokens_ArrowT,tokens_StarT,tokens_AsT,NN} UNION
+          ,tokens_ArrowT,tokens_StarT,tokens_AsT,tokens_OpT} UNION
                    {tokens_AlphaT s | T} UNION {tokens_SymbolT s | T}
                      UNION {tokens_LongidT s1 s2 | T} UNION
                    {tokens_IntT i | T} UNION {tokens_StringT s | T}
@@ -845,7 +842,7 @@ let stoppers_def = new_definition
         | nPatternList ->
         UNIV DIFF
           ({tokens_CommaT,tokens_LparT,tokens_UnderbarT,tokens_LbrackT
-          ,NN,tokens_ArrowT,tokens_StarT,tokens_AsT,
+          ,tokens_ColonT,tokens_ArrowT,tokens_StarT,tokens_AsT,
                     tokens_OpT} UNION
                    {tokens_AlphaT s | T} UNION {tokens_SymbolT s | T}
                      UNION {tokens_LongidT s1 s2 | T} UNION
@@ -889,8 +886,8 @@ let stoppers_def = new_definition
           firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
           nt')) nTyOp])
         | nTypeAbbrevDec ->
-        UNIV DIFF ({tokens_ArrowT,tokens_StarT} UNION NN cmlG [(\nt'.
-          grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
+        UNIV DIFF ({tokens_ArrowT,tokens_StarT} UNION firstSet cmlG
+          [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
         | nTypeDec ->
         UNIV DIFF
           ({tokens_AndT,tokens_ArrowT,tokens_StarT,NN,tokens_OfT

@@ -247,7 +247,7 @@ let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
 
 let bvl_handle_compile_sing_def,bvl_handle_compile_sing_ind = define_rec
   [`bvl_handle_compile_sing l n (bvl_Var v:bvl_exp) = (if v < n then
-    (bvl_Var v,bvl_Var v,1,T) else (bvl_Op (closLang_IntOp
+    (bvl_Var v,db_vars_Var v,1,T) else (bvl_Op (closLang_IntOp
     (closLang_Const (&0))) [],db_vars_Empty,1,T))`;
    `bvl_handle_compile_sing l n (bvl_If x1 x2 x3:bvl_exp) =
          (let (x1,l1,s1,nr1) = bvl_handle_compile_sing l n x1 in
@@ -290,7 +290,7 @@ let bvl_handle_compile_sing_def,bvl_handle_compile_sing_ind = define_rec
          (let (y,lx,s1,nr1) = bvl_handle_compile_sing l n x in
            (bvl_Tick y,lx,s1,nr1))`;
    `bvl_handle_compile_sing l n (bvl_Force m v:bvl_exp) = (if v < n
-    then ((bvl_Force m v:bvl_exp),bvl_Var v,1,F) else (bvl_Op
+    then ((bvl_Force m v:bvl_exp),db_vars_Var v,1,F) else (bvl_Op
     (closLang_IntOp (closLang_Const (&0))) [],db_vars_Empty,1,T))`;
    `bvl_handle_compile_sing l n (bvl_Call t dest xs:bvl_exp) =
          (let (ys,lx,s1,nr1) = bvl_handle_compile_list l n xs in

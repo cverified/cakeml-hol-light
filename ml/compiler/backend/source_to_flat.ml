@@ -74,17 +74,17 @@ let compile_var_def = define_cases
 let compile_pat_def,compile_pat_ind = define_shaped_rec
   "nested"
   [`compile_pat env (ast_Pvar v) = flatLang_Pvar v`;
-   `compile_pat env (flatLang_Pany:ast_pat) = flatLang_Pany`;
-   `compile_pat env (flatLang_Plit l:ast_pat) = flatLang_Plit l`;
+   `compile_pat env (ast_Pany:ast_pat) = flatLang_Pany`;
+   `compile_pat env (ast_Plit l:ast_pat) = flatLang_Plit l`;
    `compile_pat env (ast_Pcon id' ps) =
         flatLang_Pcon
           (OPTION_JOIN (OPTION_MAP (nsLookup
               (source_to_flat_environment_c env)) id'))
           (MAP (compile_pat env) ps)`;
-   `compile_pat env (flatLang_Pref p:ast_pat) = flatLang_Pref
-    (compile_pat env p)`;
-   `compile_pat env (flatLang_Pas p i:ast_pat) = flatLang_Pas
-    (compile_pat env p) i`;
+   `compile_pat env (ast_Pref p:ast_pat) = flatLang_Pref (compile_pat
+    env p)`;
+   `compile_pat env (ast_Pas p i:ast_pat) = flatLang_Pas (compile_pat
+    env p) i`;
    `compile_pat env (ast_Ptannot p t) = compile_pat env p`];;
 
 let pat_tups_def,pat_tups_ind = define_rec

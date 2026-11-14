@@ -42,7 +42,7 @@ let numset_list_insert_nottailrec_def,
 
 let get_live_tree_def,get_live_tree_ind = define_rec
   [`get_live_tree (reg_alloc_Delta wr rd) =
-      reg_alloc_Seq (linear_scan_Reads rd) (linear_scan_Writes
+      linear_scan_Seq (linear_scan_Reads rd) (linear_scan_Writes
           wr)`;
    `get_live_tree (reg_alloc_Set cutset) =
       (let cutlist = MAP FST (toAList cutset) in
@@ -52,13 +52,13 @@ let get_live_tree_def,get_live_tree_ind = define_rec
       let lt2 = get_live_tree ct2 in
       match optcutset with SOME cutset ->
           (let cutlist = MAP FST (toAList cutset) in
-          reg_alloc_Seq (linear_scan_Reads cutlist)
+          linear_scan_Seq (linear_scan_Reads cutlist)
               (linear_scan_Branch lt1 lt2)) | NONE ->
               (linear_scan_Branch lt1 lt2))`;
    `get_live_tree (reg_alloc_Seq ct1 ct2) =
       (let lt2 = get_live_tree ct2 in
       let lt1 = get_live_tree ct1 in
-      reg_alloc_Seq lt1 lt2)`];;
+      linear_scan_Seq lt1 lt2)`];;
 
 let check_live_tree_def,check_live_tree_ind = define_rec
   [`check_live_tree f (linear_scan_Writes l) live flive =

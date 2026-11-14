@@ -612,9 +612,9 @@ let num_to_varn_list_def,num_to_varn_list_ind = define_wf
 let attach_name_def = define_cases
   [`attach_name ns NONE = (implode "none")`;
    `attach_name ns (SOME d) =
-      (match sptree_lookup d ns with NONE -> mlint_toString d |
+      (match sptree_lookup d ns with NONE -> num_to_str d |
           SOME name -> mlstring_concat [name; (implode "@");
-          mlint_toString d])`];;
+          num_to_str d])`];;
 
 let const_part_to_display_def = define_cases
   [`const_part_to_display (closLang_Int i:const_part) =

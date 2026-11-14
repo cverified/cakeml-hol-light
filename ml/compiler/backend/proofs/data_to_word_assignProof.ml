@@ -1694,7 +1694,7 @@ let assign_LessConstSmall = prove
                     (closLang_Const (n2w 18:'a word)))
                   (word_bignum_Assign (adjust_var dest)
                     (closLang_Const (n2w 2:'a word))),l) | _5 ->
-                    ((word_bignum_Skip:'a wordLang_prog),l))`,
+                    ((wordLang_Skip:'a wordLang_prog),l))`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:11464-11503: a theorem

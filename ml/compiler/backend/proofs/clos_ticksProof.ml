@@ -64,7 +64,7 @@ let clos_ticksProof_remove_ticks_CONS = prove
 
 (* code_rel_CONS_CONS *)
 let clos_ticksProof_code_rel_CONS_CONS = prove
- (`!x1 x2 xs y1 y2 ys. clos_ticksProof_code_rel (CONS x1 (CONS x2 xs))
+ (`!x1 x2 xs y1 y2 ys. clos_ticks_remove_ticks (CONS x1 (CONS x2 xs))
   (CONS y1 (CONS y2 ys)) <=>
                         clos_ticksProof_code_rel [x1] [y1] /\
                           clos_ticksProof_code_rel (CONS x2 xs) (CONS

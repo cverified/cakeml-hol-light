@@ -322,14 +322,14 @@ let global_var_exp_def,global_var_exp_ind = assume_definition_rec
 let load_op_def = define_cases
   [`load_op Op8 = asm_Load8 /\
    load_op Op16 = asm_Load16 /\
-   load_op OpW = panLang_Load /\
-   load_op Op32 = panLang_Load32`];;
+   load_op OpW = asm_Load /\
+   load_op Op32 = asm_Load32`];;
 
 let store_op_def = define_cases
   [`store_op Op8 = asm_Store8 /\
    store_op Op16 = asm_Store16 /\
-   store_op OpW = panLang_Store /\
-   store_op Op32 = panLang_Store32`];;
+   store_op OpW = asm_Store /\
+   store_op Op32 = asm_Store32`];;
 
 let is_function_def = new_definition
   `is_function x1 =

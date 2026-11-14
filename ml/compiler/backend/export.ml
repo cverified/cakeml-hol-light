@@ -185,9 +185,9 @@ let byte_to_string_eq = prove
 let escape_sym_char_def = new_definition
   `escape_sym_char ch = (let code = ORD ch in
      if code >= 97 /\ code <= 122 \/ code >= 65 /\ code <= 90 \/
-        code >= 48 /\ code <= 57 \/ code = 95 then mlint_toString
+        code >= 48 /\ code <= 57 \/ code = 95 then chr_to_str
           ch else (\x y. strcat x y) ((\x y. strcat x y) (implode
-          "$") (mlint_toString (code))) (implode "_"))`;;
+          "$") (num_to_str (code))) (implode "_"))`;;
 
 let get_sym_label_def = new_definition
   `get_sym_label (ix,appl) (name,start',len) =

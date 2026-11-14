@@ -96,7 +96,7 @@ let empty_data_def = new_definition
   after writing to this register *)
 let keep_data_def = new_definition
   `keep_data canon (write_to_reg:num) =
-     IS_NONE (balanced_map_lookup write_to_reg canon)`;;
+     IS_NONE (sptree_lookup write_to_reg canon)`;;
 
 let invalidate_data_def = new_definition
   `invalidate_data data (write_to_reg:num) =

@@ -63,7 +63,7 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind =
      (match p with stackLang_Tick -> (misc_List [(\a. labLang_Asm
        (Asmi a)) (asm_Inst (asm_Skip)) [] 0],F,m) |
        stackLang_Inst a -> (misc_List [(\a. labLang_Asm (Asmi a))
-       (stackLang_Inst a) [] 0],F,m) | stackLang_Halt _1 -> (misc_List
+       (asm_Inst a) [] 0],F,m) | stackLang_Halt _1 -> (misc_List
        [labLang_LabAsm labLang_Halt (n2w 0) [] 0],T,m) | stackLang_Seq
        p1 p2 ->
          (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts
@@ -159,7 +159,7 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind =
                                 stackLang_Install _7 _8 _9 _10 ret ->
        (misc_List [labLang_LabAsm (labLang_LocValue ret (labLang_Lab
          n m)) (n2w 0) [] 0;
-       labLang_LabAsm stackLang_Install (n2w 0) [] 0;
+       labLang_LabAsm labLang_Install (n2w 0) [] 0;
        labLang_Label n m 0],F,m + 1) | stackLang_ShMemOp op r ad ->
          (misc_List [labLang_Asm (ShareMem op r ad) [] 0],F,m) |
          stackLang_CodeBufferWrite r1 r2 ->

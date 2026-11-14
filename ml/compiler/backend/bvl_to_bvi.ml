@@ -405,7 +405,7 @@ let compile_exps_def,compile_exps_ind = assume_definition_rec
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
       let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (CONS y xs) in
         (APPEND c1 c2,SmartAppend aux1 aux2,n2))) /\
-   (bvl_to_bvi_compile_exps n [bvl_Var v] = ([(bvl_Var
+   (bvl_to_bvi_compile_exps n [bvl_Var v] = ([(bvi_Var
      v):bvi_exp],misc_Nil,n)) /\
    (bvl_to_bvi_compile_exps n [bvl_If x1 x2 x3] =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
@@ -459,7 +459,7 @@ let compile_exps_def,compile_exps_ind = assume_definition_rec
 
 let compile_exps_sing_def,compile_exps_sing_ind = assume_definition_rec
   "the port cannot make this definition"
-  [`(compile_exps_sing n (bvl_Var v:bvl_exp) = (((bvl_Var
+  [`(compile_exps_sing n (bvl_Var v:bvl_exp) = (((bvi_Var
   v):bvi_exp),misc_Nil,n)) /\
    (compile_exps_sing n (bvl_If x1 x2 x3) =
       (let (c1,aux1,n1) = compile_exps_sing n x1 in

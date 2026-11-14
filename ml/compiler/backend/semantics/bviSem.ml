@@ -67,9 +67,9 @@ let bvi_to_bvl_def = new_definition
 
 let bvl_to_bvi_def = new_definition
   `(bvl_to_bvi:('c,'ffi)bvlSem_state->('c,'ffi)bviSem_state->('c
-  ,'ffi)bviSem_state) s t = bviSem_state_ffi_fupd (K (bviSem_state_ffi
-  s)) (bviSem_state_clock_fupd (K (bviSem_state_clock s))
-  (bviSem_state_refs_fupd (K (bviSem_state_refs s))
+  ,'ffi)bviSem_state) s t = bviSem_state_ffi_fupd (K (bvlSem_state_ffi
+  s)) (bviSem_state_clock_fupd (K (bvlSem_state_clock s))
+  (bviSem_state_refs_fupd (K (bvlSem_state_refs s))
      t))`;;
 
 (* the termination relation that HOL4 gives is

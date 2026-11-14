@@ -493,7 +493,7 @@ let word_to_stack_comp_def,word_to_stack_comp_ind =
   "termination (CHEAT_TAC)"
   [`word_to_stack_comp conf perf x3 bs kf =
         match x3 with
-          (wordLang_Skip:'a wordLang_prog) -> ((wordLang_Skip:'a
+          (wordLang_Skip:'a wordLang_prog) -> ((stackLang_Skip:'a
             stackLang_prog),bs)
         | (wordLang_Move _4 xs) -> (wMove xs kf,bs)
         | (wordLang_Inst i) -> (wInst i kf,bs)
@@ -505,9 +505,9 @@ let word_to_stack_comp_def,word_to_stack_comp_ind =
           raise_stub_location) NONE,bs)
         | (wordLang_OpCurrHeap b dst src) ->
         (let (xs,src_r) = wReg1 src kf in
-          (wStackLoad xs (wRegWrite1 (\dst_r. wordLang_OpCurrHeap b
+          (wStackLoad xs (wRegWrite1 (\dst_r. stackLang_OpCurrHeap b
             dst_r src_r) dst kf),bs))
-        | (wordLang_Tick) -> (wordLang_Tick,bs)
+        | (wordLang_Tick) -> (stackLang_Tick,bs)
         | (wordLang_Break k) -> (wordLang_Break k,bs)
         | (wordLang_Continue k) -> (wordLang_Continue k,bs)
         | (wordLang_MustTerminate p1) -> word_to_stack_comp conf
@@ -515,7 +515,7 @@ let word_to_stack_comp_def,word_to_stack_comp_ind =
         | (wordLang_Seq p1 p2) ->
         (let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
         let (q2,bs) = word_to_stack_comp conf perf p2 bs kf in
-          (wordLang_Seq q1 q2,bs))
+          (stackLang_Seq q1 q2,bs))
         | (wordLang_If cmp r ri p1 p2) ->
         (let (x1,r') = wReg1 r kf in
         let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
@@ -523,31 +523,31 @@ let word_to_stack_comp_def,word_to_stack_comp_ind =
         match ri with
           Reg r ->
             (let (x2,n) = wReg2 r kf in
-             (wStackLoad (APPEND x1 x2) (wordLang_If cmp r' (Reg n)
+             (wStackLoad (APPEND x1 x2) (stackLang_If cmp r' (Reg n)
                q1 q2),bs)) | Imm i ->
            (if asm_config_valid_imm conf (INR cmp) i then
-             (wStackLoad x1 (wordLang_If cmp r' (Imm i) q1 q2),bs)
+             (wStackLoad x1 (stackLang_If cmp r' (Imm i) q1 q2),bs)
                else
              let r = FST kf + 1 in
-             (wordLang_Seq
+             (stackLang_Seq
                ((\r w. stackLang_Inst (asm_Const r w)) r i)
-               (wStackLoad x1 (wordLang_If cmp r' (Reg r) q1
+               (wStackLoad x1 (stackLang_If cmp r' (Reg r) q1
                  q2)),bs)))
         | (wordLang_Loop _5 p1 _6) ->
         (let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
           (stackLang_Loop q1,bs))
         | (wordLang_Set name exp) ->
-       (if name = BitmapBase then (wordLang_Skip,bs) else
+       (if name = BitmapBase then (stackLang_Skip,bs) else
         // Impossible
         match exp with wordLang_Var n -> (let (x1,r') = wReg1 n kf
-          in (wStackLoad x1 (wordLang_Set name r'),bs)) | _7 ->
-          (wordLang_Skip,bs))
+          in (wStackLoad x1 (stackLang_Set name r'),bs)) | _7 ->
+          (stackLang_Skip,bs))
         // impossible
         | (wordLang_Get n name) ->
-        (wRegWrite1 (\r. wordLang_Get r name) n kf,bs)
+        (wRegWrite1 (\r. stackLang_Get r name) n kf,bs)
         | (wordLang_Call ret dest args handler) ->
         (let (q0,dest) = call_dest dest args kf in
-        match ret with NONE -> (wordLang_Seq q0 (SeqStackFree
+        match ret with NONE -> (stackLang_Seq q0 (SeqStackFree
           (word_to_stack_stack_free dest (LENGTH args) kf)
                     (stackLang_Call NONE dest NONE)),bs) | SOME
                       (vs,live,ret_code,l1,l2) ->
@@ -555,40 +555,40 @@ let word_to_stack_comp_def,word_to_stack_comp_ind =
             let (q2,bs) = word_to_stack_comp conf perf ret_code bs
               kf in
             let pre = (if perf then perf_call_prefix l1 l2 (FST kf)
-              else wordLang_Skip) in
+              else stackLang_Skip) in
             let suf = (if perf then perf_call_suffix else
-              wordLang_Skip) in
+              stackLang_Skip) in
               match handler with NONE ->
-                (let q3 = wordLang_Seq suf (copy_ret perf F kf vs
+                (let q3 = stackLang_Seq suf (copy_ret perf F kf vs
                   q2) in
-                  (wordLang_Seq q0
-                    (wordLang_Seq q1
-                      (wordLang_Seq (StackArgs dest (LENGTH args +
+                  (stackLang_Seq q0
+                    (stackLang_Seq q1
+                      (stackLang_Seq (StackArgs dest (LENGTH args +
                         1) kf)
-                        (wordLang_Seq pre
+                        (stackLang_Seq pre
                           (stackLang_Call (SOME (q3,0,l1,l2)) dest
                             NONE)))),
                    bs)) | SOME (handle_var,handle_code,h1,h2) ->
-                (let q3 = wordLang_Seq suf (copy_ret perf T kf vs
+                (let q3 = stackLang_Seq suf (copy_ret perf T kf vs
                   (PopHandler perf kf q2)) in
                 let (q4,bs) = word_to_stack_comp conf perf
                   handle_code bs kf in
-                  (wordLang_Seq q0
-                     (wordLang_Seq q1
-                       (wordLang_Seq (PushHandler perf h1 h2 kf)
-                         (wordLang_Seq (StackHandlerArgs perf dest
+                  (stackLang_Seq q0
+                     (stackLang_Seq q1
+                       (stackLang_Seq (PushHandler perf h1 h2 kf)
+                         (stackLang_Seq (StackHandlerArgs perf dest
                            (LENGTH args + 1) kf)
-                           (wordLang_Seq pre
+                           (stackLang_Seq pre
                              (stackLang_Call (SOME (q3,0,l1,l2))
                                dest (SOME (q4,h1,h2))))))),
                    bs))))
         | (wordLang_Alloc r live) ->
         (let (q1,bs) = wLive live bs kf in
-          (wordLang_Seq q1 (stackLang_Alloc 1),bs))
+          (stackLang_Seq q1 (stackLang_Alloc 1),bs))
         | (wordLang_StoreConsts a b c d ws) ->
         (let (new_bs,i) = insert_bitmap (const_words_to_bitmap ws
           (LENGTH ws)) bs in
-          (wordLang_Seq (wordLang_Inst (asm_Const 1 (n2w i)))
+          (stackLang_Seq (stackLang_Inst (asm_Const 1 (n2w i)))
                (stackLang_StoreConsts (FST kf) (FST kf + 1) (SOME
                  stackLang_store_consts_stub_location)),new_bs))
         | (wordLang_LocValue r l1) -> (wRegWrite1 (\r.
@@ -596,26 +596,26 @@ let word_to_stack_comp_def,word_to_stack_comp_ind =
         | (wordLang_Install r1 r2 r3 r4 live) ->
        (let (l3,r3) = wReg1 r3 kf in
        let (l4,r4) = wReg2 r4 kf in
-         (wStackLoad (APPEND l3 l4) (wordLang_Install (r1 DIV 2) (r2
-           DIV 2) r3 r4 0),bs))
+         (wStackLoad (APPEND l3 l4) (stackLang_Install (r1 DIV 2)
+           (r2 DIV 2) r3 r4 0),bs))
         | (wordLang_CodeBufferWrite r1 r2) ->
        (let (l1,r1) = wReg1 r1 kf in
        let (l2,r2) = wReg2 r2 kf in
-         (wStackLoad (APPEND l1 l2) (wordLang_CodeBufferWrite r1
+         (wStackLoad (APPEND l1 l2) (stackLang_CodeBufferWrite r1
            r2),bs))
         | (wordLang_DataBufferWrite r1 r2) ->
        (let (l1,r1) = wReg1 r1 kf in
        let (l2,r2) = wReg2 r2 kf in
-         (wStackLoad (APPEND l1 l2) (wordLang_DataBufferWrite r1
+         (wStackLoad (APPEND l1 l2) (stackLang_DataBufferWrite r1
            r2),bs))
-        | (wordLang_FFI i r1 r2 r3 r4 live) -> (wordLang_FFI i (r1
+        | (wordLang_FFI i r1 r2 r3 r4 live) -> (stackLang_FFI i (r1
           DIV 2) (r2 DIV 2)
                               (r3 DIV 2) (r4 DIV 2) 0,bs)
         | (wordLang_ShareInst op v exp) ->
       (match exp_to_addr exp with
-         NONE -> (wordLang_Skip,bs) | SOME addr' -> wShareInst op v
+         NONE -> (stackLang_Skip,bs) | SOME addr' -> wShareInst op v
            addr' kf,bs)
-        | _8 -> (wordLang_Skip,bs)`];;
+        | _8 -> (stackLang_Skip,bs)`];;
 
 let raise_stub_def = new_definition
   `raise_stub perf k =
