@@ -742,7 +742,12 @@ class Parser:
     s = self.parse(0)
     self.expect('of')
     arms = []
-    if self.at('|'): self.next()
+    # the | of an alternative starts a line of its own in the
+    # source, and the pattern after it does not: the layout of the
+    # source is the layout of its bar (bars below, one per arm
+    # after the first)
+    bars = [None]
+    if self.at('|'): bars[0] = self.next()
     while True:
       # HOL4 allows parentheses around an alternative, which is how
       # a case inside one is kept apart from the alternatives after
@@ -756,10 +761,11 @@ class Parser:
           b = self.parse(60)
           self.expect(')')
           arms.append((pat, b))
-          if self.at('|'): self.next(); continue
+          if self.at('|'): bars.append(self.next()); continue
           break
         except SyntaxError:
           self.i = save
+          del bars[len(arms) + 1:]
       # a pattern may be a tuple (HOL4 writes a case on several
       # values as "case x, y of p, q => ...")
       pat = self.parse(50)
@@ -769,9 +775,9 @@ class Parser:
       # case ... of NONE => (GiveUp,l) | SOME h => (if ...), l)
       b = self.parse(50)
       arms.append((pat, b))
-      if self.at('|'): self.next(); continue
+      if self.at('|'): bars.append(self.next()); continue
       break
-    return Node('case', tok=t, s=s, arms=arms)
+    return Node('case', tok=t, s=s, arms=arms, bars=bars)
 
   def parse_atom(self):
     t = self.next()
@@ -803,9 +809,13 @@ class Parser:
         # (if b then x else y, z) is the pair of the conditional
         # and z
         c = self.parse(0); self.expect('then')
-        a = self.parse(51); self.expect('else')
+        a = self.parse(51)
+        # the else of the source starts a line of its own in a
+        # chain of conditionals, and the branch after it does not:
+        # the layout of the source is the layout of its else
+        etok = self.expect('else')
         b = self.parse(51)
-        return Node('cond', tok=t, c=c, a=a, b=b)
+        return Node('cond', tok=t, c=c, a=a, b=b, etok=etok)
       if t.text == 'let':
         binds = []
         seq = False
@@ -1028,6 +1038,13 @@ def dtarg_texts(alt):
   return out
 
 
+def count_wild(e):
+  """the number of wildcards of a pattern"""
+  if not isinstance(e, Node): return 0
+  if e.kind == 'id': return 1 if e.name == '_' else 0
+  return sum(count_wild(x) for x in subnodes(e))
+
+
 def subnodes(e):
   """the direct children of a node"""
   out = []
@@ -1186,6 +1203,9 @@ class Ctx:
                                        # not place in one
     self.recpick = {}                  # field -> the record of it
                                        # that the block settles on
+    self.lone_wild = False             # is the pattern that is
+                                       # printed now one with a
+                                       # single wildcard in it?
     self.iffeq = False                 # is <=> plain equality?
     self.thy = thy
     self.wild = 0
@@ -2079,7 +2099,13 @@ class Printer:
     k = e.kind
     if k == 'id':
       n = e.name
-      if n == '_': return self.ctx.fresh()
+      # a wildcard of a pattern is a variable of HOL Light, so two
+      # of them in one pattern would be the same variable and the
+      # pattern would say that the two places are equal: the port
+      # numbers them, and leaves the one of a pattern that has a
+      # single wildcard as the _ that the source writes
+      if n == '_':
+        return '_' if self.ctx.lone_wild else self.ctx.fresh()
       if n in self.ctx.vars: return self.ctx.vars[n]
       if n in self.ctx.overloads:
         c = eta_contract(self.ctx.overloads[n])
@@ -2432,8 +2458,10 @@ class Printer:
       vs = ' '.join(self.pr(v, APP) for v in e.vs)
       return self.paren(e.q + vs + '. ' + self.pr(e.body, 0), 1, prec)
     if k == 'cond':
+      els = layout(getattr(e, 'etok', None), 'else ')
+      if not els.startswith('\n'): els = ' ' + els
       s = ('if ' + self.pr(e.c, 0) + ' then ' + self.pr(e.a, 0) +
-           ' else ' + self.pr(e.b, 0))
+           els + sameline(self.pr(e.b, 0)))
       return self.paren(s, 1, prec)
     if k == 'let':
       # HOL Light parses the binding of a let as a term and splits
@@ -2474,17 +2502,28 @@ class Printer:
           # Int of its own v_ty)
           oldt = self.ctx.armtys
           self.ctx.armtys = armts
+          oldw = self.ctx.lone_wild
+          self.ctx.lone_wild = count_wild(p) == 1
           try:
-            ps = self.pr(p, 15)
+            # a pattern is a constructor under its arguments, and
+            # HOL Light reads one without parentheses round it
+            ps = self.pr(p, 2)
           finally:
             self.ctx.armtys = oldt
+            self.ctx.lone_wild = oldw
           # the body of an arm is printed with the theories that
           # CON_BODY names, as the body of a clause is: a match
           # in a definition that the port prints as one term is
           # the clauses of that definition
+          # a conditional or a let of an arm needs no parentheses,
+          # as HOL Light reads the arm to the end of it; a match
+          # does, or the alternatives after this one would be its
+          bb = b
+          while bb.kind == 'paren': bb = bb.e
+          bp = 0 if bb.kind in ('cond', 'let') else 2
           if self.ctx.body_pr is not None:
-            return ps + ' -> ' + self.ctx.body_pr(self, b)
-          return ps + ' -> ' + self.pr(b, 2)
+            return ps + ' -> ' + self.ctx.body_pr(self, b, bp)
+          return ps + ' -> ' + self.pr(b, bp)
         finally:
           self.ctx.intvars = old
       # the scrutinee of a match has one type, so the heads of the
@@ -2504,8 +2543,20 @@ class Printer:
           if h.kind == 'id': cs.append(h.name.split('$')[-1])
         ts = self.ctx.arm_thys(cs)
         if ts: armts = ts
-      arms = ' | '.join(arm(p, b) for p, b in e.arms)
-      return self.paren('match ' + self.pr(e.s, 15) + ' with ' + arms,
+      bars = getattr(e, 'bars', None) or []
+      out = ''
+      for i, (p, b) in enumerate(e.arms):
+        a = arm(p, b)
+        if not i:
+          out = sameline(a) if bars and bars[0] is not None else a
+          continue
+        # the | of the source keeps its line, and the pattern
+        # after it goes on that line
+        bar = layout(bars[i] if i < len(bars) else None, '| ')
+        out += (bar if bar.startswith('\n') else ' ' + bar) + \
+               sameline(a)
+      # and so does the term that a match is of
+      return self.paren('match ' + self.pr(e.s, 2) + ' with ' + out,
                         1, prec)
     if k == 'field':
       # the record type of a variable that the overrides name

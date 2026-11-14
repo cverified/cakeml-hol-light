@@ -427,6 +427,9 @@ CON_BODY = {
   # call_graph matches on a wordLang program and builds a
   # call_tree, and both have Call
   ('word_depth', 'call_graph_def'): {'Call': 'word_depth'},
+  # word_cseInst matches on an instruction of asm and builds a
+  # program of wordLang, and both have Inst
+  ('word_cse', 'word_cseInst_def'): {'Inst': 'wordLang'},
   # bvl_to_bvi reads bvl and builds bvi, and the two share Call,
   # Var, Op, Let, If, Raise, Tick and Handle: the bodies are bvi
   ('bvl_to_bvi', 'compile_exps_def'): {'*': 'bvi'},

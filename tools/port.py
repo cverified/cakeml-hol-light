@@ -863,6 +863,8 @@ class Porter:
       if nm is None or nm in seen: continue
       seen.add(nm)
       self.annotate(cl, not annotate)
+    oldwild = self.ctx.lone_wild
+    self.ctx.lone_wild = hterm.count_wild(e) == 1
     try:
       out = self.two_pass(lambda: hterm.Printer(self.ctx).pr(e, 0))
       if defn: self.note_ownrec(e)
@@ -873,6 +875,7 @@ class Porter:
       self.ctx.vars = old
       self.ctx.intvars = oldint
       self.ctx.fieldvar = oldfv
+      self.ctx.lone_wild = oldwild
 
   def two_pass(self, f):
     """print a term, and where it reads a field of a record type
@@ -2823,15 +2826,19 @@ class Porter:
           ty = self.con_type(h.name, len(args0))
           if ty:
             self.annotated[hterm.Printer(self.ctx).pr(p, 0)] = ty
-          # a type variable that the port writes is rigid in HOL
-          # Light, so a type with parameters cannot be written in an
-          # annotation; the name of the constructor itself then says
-          # which one it is
-          if ambiguous and ty and ty.startswith('('):
+          # the name of the constructor says which type it is of,
+          # because the port writes every constant out: an
+          # annotation beside it would say it twice (and a type
+          # with parameters cannot be written in one at all, as a
+          # type variable that the port writes is rigid in HOL
+          # Light)
+          if ambiguous and ty:
             nm = self.con_name(h.name, len(args0))
             if nm:
               done[0] = True
               h.name = dbg('annotate_pat', h.name, nm)
+              return p
+          if ambiguous and ty and ty.startswith('('):
             return p
           if ty:
             done[0] = True
@@ -3566,12 +3573,17 @@ class Porter:
           self.conbody = dict(was)
           self.conbody.update(
             dict((n, t) for (c, n), t in per.items() if c in pats))
+        # a clause of the list is a quotation of its own, so a
+        # single wildcard in it is the _ that the source writes
+        oldw = self.ctx.lone_wild
+        self.ctx.lone_wild = hterm.count_wild(cl) == 1
         try:
           cls.append(fmt(self.pr_clause(p,
                            self.annotate(cl, True, atys)),
                          indent=4, last=last, extra=4))
         finally:
           self.conbody = was
+          self.ctx.lone_wild = oldw
       # a comment that has no token of the clause to stand before
       # (one at the end of it) goes at the end of that clause
       starts = [(hterm.first_tok(cl).pos
@@ -3885,12 +3897,25 @@ class Porter:
         # a comment of the source before the clause goes before
         # the arm that the port makes of it
         cs = hterm.pop_comments(hd_)
-        pat = ','.join(pr.pr(args[i], 60) for i in pats)
+        # a pattern is a constructor under its arguments, and HOL
+        # Light reads one without parentheses round it; the
+        # patterns of several arguments are a tuple and need theirs
+        wasw = self.ctx.lone_wild
+        self.ctx.lone_wild = sum(
+          hterm.count_wild(args[i]) for i in pats) == 1
+        try:
+          pat = ','.join(pr.pr(args[i], 2) for i in pats)
+        finally:
+          self.ctx.lone_wild = wasw
         if len(pats) > 1: pat = '(' + pat + ')'
-        # the body of an arm needs its parentheses: a match, a let
-        # or a conditional in it would swallow the arms after it
+        # a conditional or a let of an arm needs no parentheses, as
+        # HOL Light reads the arm to the end of it; a match does,
+        # or the arms after this one would be its
+        rr = r
+        while rr.kind == 'paren': rr = rr.e
         arms.append((cs, pat,
-                     self.pr_body(pr, hterm.rename_ast(r, sub))))
+                     self.pr_body(pr, hterm.rename_ast(r, sub),
+                       0 if rr.kind in ('cond', 'let') else 2)))
       finally:
         self.ctx.intvars = iv
         self.contys = wasc
