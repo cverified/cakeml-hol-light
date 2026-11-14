@@ -12,6 +12,10 @@
 (* ================================================================ *)
 
 
+let MOD_2EXP_def = prove
+ (`!x n. MOD_2EXP x n = n MOD 2 EXP x`,
+  REWRITE_TAC[MOD_2EXP]);;
+
 let WORDSAUX_EXP2_LT = prove
  (`!m n. 2 EXP m < 2 EXP n <=> m < n`,
   REWRITE_TAC[LT_EXP] THEN ARITH_TAC);;
@@ -227,22 +231,6 @@ let UINT_MAX_def = prove
 let INT_MAX_def = prove
  (`INT_MAX(:A) = INT_MIN(:A) - 1`,
   REWRITE_TAC[INT_MAX]);;
-
-let word_slice_def = prove
- (`!h l. word_slice h l =
-     \w:N word.
-       word_of_bits (\i. l <= i /\ i <= MIN h (dimindex(:N) - 1) /\ bit
-         i w)
-         :N word`,
-  REWRITE_TAC[FUN_EQ_THM; word_slice]);;
-
-let word_bits_def = prove
- (`!h l. word_bits h l =
-     \w:N word.
-       word_of_bits (\i. i + l <= MIN h (dimindex(:N) - 1) /\ bit (i +
-         l) w)
-         :N word`,
-  REWRITE_TAC[FUN_EQ_THM; word_bits]);;
 
 let ZERO_LT_dimword = prove
  (`0 < dimword(:N)`,
@@ -902,48 +890,6 @@ let n2w_DIV = prove
   REPEAT STRIP_TAC THEN REWRITE_TAC[word_ushr; VAL_WORD] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[dimword_def]) THEN ASM_SIMP_TAC[MOD_LT]);;
 
-let BIT_WORD_BITS = prove
- (`!h l (w:N word) i. bit i (word_bits h l w) <=> i + l <= h /\ bit (i +
-   l) w`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[word_bits; BIT_WORD_OF_BITS; IN] THEN
-  ASM_CASES_TAC `bit (i + l) (w:N word)` THEN ASM_REWRITE_TAC[] THEN
-  FIRST_X_ASSUM(MP_TAC o ONCE_REWRITE_RULE[BIT_GUARD]) THEN ARITH_TAC);;
-
-let word_bits_subword = prove
- (`!h l (w:N word). word_bits h l w = word_subword w (l,(h + 1) - l):N
-   word`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_BITS;
-    BIT_WORD_SUBWORD] THEN
-  X_GEN_TAC `i:num` THEN DISCH_TAC THEN REWRITE_TAC[ADD_SYM] THEN
-  ASM_CASES_TAC `bit (i + l) (w:N word)` THEN ASM_REWRITE_TAC[] THEN
-  ASM_ARITH_TAC);;
-
-let WORD_ALL_BITS = prove
- (`!w:N word h. dimindex(:N) - 1 <= h ==> word_bits h 0 w = w`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_BITS]
-    THEN
-  REWRITE_TAC[ADD_CLAUSES] THEN REPEAT STRIP_TAC THEN
-  MATCH_MP_TAC(TAUT `p ==> (p /\ q <=> q)`) THEN ASM_ARITH_TAC);;
-
-let WORD_BITS_COMP_THM = prove
- (`!h1 l1 h2 l2 (w:N word).
-     word_bits h2 l2 (word_bits h1 l1 w) =
-     word_bits (MIN h1 (h2 + l1)) (l2 + l1) w`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_BITS] THEN
-  X_GEN_TAC `i:num` THEN DISCH_TAC THEN REWRITE_TAC[ADD_ASSOC] THEN
-  ASM_CASES_TAC `bit ((i + l2) + l1) (w:N word)` THEN ASM_REWRITE_TAC[]
-    THEN
-  ARITH_TAC);;
-
-let w2w_w2w = prove
- (`!w:A word. word_zx (word_zx w:B word):C word =
-              word_zx (word_bits (dimindex(:B) - 1) 0 w)`,
-  GEN_TAC THEN REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_ZX; BIT_WORD_BITS]
-    THEN
-  X_GEN_TAC `i:num` THEN DISCH_TAC THEN ASM_REWRITE_TAC[ADD_CLAUSES]
-    THEN
-  REWRITE_TAC[GSYM LT_DIMINDEX_LE_HB] THEN MESON_TAC[]);;
-
 let WORD_w2w_OVER_BITWISE = prove
  (`(!v w:A word. word_and (word_zx v) (word_zx w) = word_zx (word_and v
    w):B word) /\
@@ -1034,6 +980,10 @@ let word_quot_def = prove
                INT_ARITH `&0 <= x /\ ~(x = &0) ==> &0 < x`] THEN
   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   TRY INT_ARITH_TAC THEN ASM_INT_ARITH_TAC);;
+
+let int_mod = prove
+ (`!i j. ~(j = &0) ==> integer_int_mod i j = i - int_div i j * j`,
+  REWRITE_TAC[integer_int_mod]);;
 
 let INT_MUL_CALCULATE = prove
  (`(!m n. &m * &n:int = &(m * n)) /\
@@ -1176,12 +1126,6 @@ let w2w_i2w = prove
      - dimindex(:A))` THEN
     REWRITE_TAC[GSYM INT_POW_ADD] THEN AP_TERM_TAC THEN ASM_ARITH_TAC;
     CONV_TAC INTEGER_RULE]);;
-
-let word_slice_alt_def = prove
- (`!h l (w:N word).
-     word_slice_alt h l w = word_of_bits (\i. l <= i /\ i < h /\ bit i
-       w):N word`,
-  REWRITE_TAC[word_slice_alt]);;
 
 let NUMBIT_MUL_2EXP = prove
  (`!i k n. numbit i (n * 2 EXP k) <=> k <= i /\ numbit (i - k) n`,
@@ -1340,41 +1284,58 @@ let SIZES_THMS = prove
    yet, with the names of its own that each proof
    uses:
 
-     MOD_2EXP_def                     MOD_2EXP_DEF
-     BITS_THM                         BITS_DEF
+     BITS_THM                         -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
      LOG                              LOG_DEF
      LOG2_PROPERTY                    LOG LOG2_def
      LOG2_UNIQUE                      LOG2_PROPERTY
      LOG2_TWOEXP                      LOG2_UNIQUE
-     BIT_def                          BITS_THM
-     BITS_THM2                        BITS_THM
-     BITS_ZEROL                       BITS_THM
-     BITSLT_THM                       BITS_THM
-     BITSLT_THM2                      BITSLT_THM
-     NOT_BITS2                        BITSLT_THM
-     NUMBIT_BITS                      BITS_THM
-     BIT_OF_BITS_THM                  NUMBIT_BITS
-     BIT_BITS_THM                     NUMBIT_BITS
-     BIT_COMP_THM3                    BITS_THM
+     BIT_def                          -- Error: Unbound value BITS_THM
+     BITS_THM2                        -- Error: Unbound value BITS_THM
+     BITS_ZEROL                       -- Error: Unbound value BITS_THM
+     BITSLT_THM                       -- Error: Unbound value BITS_THM
+     BITSLT_THM2                      -- Error: Unbound value BITSLT_THM
+     NOT_BITS2                        -- Error: Unbound value BITSLT_THM
+     NUMBIT_BITS                      -- Error: Unbound value BITS_THM
+     BIT_OF_BITS_THM                  -- Error: Unbound value
+                                      NUMBIT_BITS
+     BIT_BITS_THM                     -- Error: Unbound value
+                                      NUMBIT_BITS
+     BIT_COMP_THM3                    -- Error: Unbound value BITS_THM
      BIT_LOG2                         LOG2_PROPERTY
      LT_TWOEXP                        LOG2_PROPERTY
+     word_slice_def                   -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
+     word_bits_def                    -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
      word_extract_def                 M word_extract_DEF
      w2w                              M
-     BIT_WORD_EXTRACT                 M word_extract_DEF
-     VAL_WORD_BITS                    NUMBIT_BITS
+     BIT_WORD_BITS                    -- Exception: Failure
+     BIT_WORD_EXTRACT                 BIT_WORD_BITS M word_extract_DEF
+     VAL_WORD_BITS                    -- Error: Unbound value
+                                      BIT_WORD_BITS
+     word_bits_subword                -- Error: Unbound value
+                                      BIT_WORD_BITS
      word_extract_subword             BIT_WORD_EXTRACT M
-     word_bits_n2w                    NUMBIT_BITS
+     word_bits_n2w                    -- Error: Unbound value
+                                      BIT_WORD_BITS
      w2w_n2w                          M NUMBIT_BITS
      word_extract_n2w                 M NUMBIT_BITS w2w_n2w
                                       word_bits_n2w word_extract_DEF
-     WORD_BITS_EXTRACT                BIT_WORD_EXTRACT
+     WORD_BITS_EXTRACT                BIT_WORD_BITS BIT_WORD_EXTRACT
      WORD_w2w_EXTRACT                 BIT_WORD_EXTRACT M
-     word_bits_w2w                    M
+     WORD_ALL_BITS                    -- Error: Unbound value
+                                      BIT_WORD_BITS
+     WORD_BITS_COMP_THM               -- Error: Unbound value
+                                      BIT_WORD_BITS
+     w2w_w2w                          -- Error: Unbound value
+                                      BIT_WORD_BITS
+     word_bits_w2w                    BIT_WORD_BITS M
      w2n_w2w                          BITS_THM M VAL_WORD_BITS
      BIT_ATOM_CASES_TAC               failwith term
      WORD_EXTRACT_COMP_THM            BIT_ATOM_CASES_TAC
                                       BIT_WORD_EXTRACT
-     WORD_EXTRACT_BITS_COMP           BIT_ATOM_CASES_TAC
+     WORD_EXTRACT_BITS_COMP           BIT_ATOM_CASES_TAC BIT_WORD_BITS
                                       BIT_WORD_EXTRACT M
      WORD_EXTRACT_MIN_HIGH            BIT_ATOM_CASES_TAC
                                       BIT_WORD_EXTRACT
@@ -1385,30 +1346,37 @@ let SIZES_THMS = prove
      WORD_EXTRACT_OVER_ADD            WORD_EXTRACT_ZX
      WORD_EXTRACT_OVER_MUL            WORD_EXTRACT_ZX
      WORD_EXTRACT_OVER_BITWISE        BIT_WORD_EXTRACT
-     WORD_w2w_OVER_MUL                BITS_THM VAL_WORD_BITS
-     word_lsr_n2w                     BIT_ATOM_CASES_TAC
-     WORD_BITS_LSL                    BIT_ATOM_CASES_TAC
-     w2w_LSL                          BIT_ATOM_CASES_TAC
+     WORD_w2w_OVER_MUL                -- Error: Unbound value
+                                      VAL_WORD_BITS
+     word_lsr_n2w                     BIT_ATOM_CASES_TAC BIT_WORD_BITS
+     WORD_BITS_LSL                    BIT_ATOM_CASES_TAC BIT_WORD_BITS
+     w2w_LSL                          BIT_ATOM_CASES_TAC BIT_WORD_BITS
      BITWISE_LT_2EXP                  BITWISE_def SBIT_def
      NUMBIT_BITWISE                   BITWISE_LT_2EXP BITWISE_def
                                       SBIT_def
      word_and_n2w                     NUMBIT_BITWISE
      word_concat_def                  M
      word_join_def                    BIT_ATOM_CASES_TAC M
-     word_ror_n2w                     BITS_THM
-     int_mod                          integer_int_mod_DEF
-     INT_DIV                          int_div_DEF
-     INT_DIV_NEG                      int_div_DEF
-     INT_DIV_UNIQUE                   int_div_DEF
-     INT_DIV_LMUL                     int_div_DEF
-     INT_MOD                          int_div_DEF integer_int_mod_DEF
-     INT_MOD0                         int_div_DEF integer_int_mod_DEF
-     INT_DIV_CALCULATE                INT_DIV INT_DIV_NEG
+     word_ror_n2w                     -- Error: Unbound value BITS_THM
+     INT_DIV                          -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
+     INT_DIV_NEG                      -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
+     INT_DIV_UNIQUE                   -- Exception: Failure
+                                      "MATCH_MP_TAC: No match".
+     INT_DIV_LMUL                     -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
+     INT_MOD                          -- Exception: Failure
+     INT_MOD0                         -- Exception: Failure
+     INT_DIV_CALCULATE                -- Error: Unbound value INT_DIV
      integer_word_UINT_MAX_def        integer_word_UINT_MAX_DEF
-     w2n_i2w                          int_div_DEF integer_int_mod_DEF
-     i2w_DIV                          int_div_DEF
+     w2n_i2w                          -- Exception: Failure
+     i2w_DIV                          -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
      byte_index_def                   byte_index_DEF
      get_byte_def                     get_byte_DEF
+     word_slice_alt_def               -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
      set_byte_def                     set_byte_DEF
      word_of_bytes_def                CONS word_of_bytes_DEF
      bytes_to_word_def                bytes_to_word_DEF list_CASE

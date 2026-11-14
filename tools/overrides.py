@@ -1076,7 +1076,10 @@ PLAIN_APPEND = {
   # two parses; these five are the append of two lists
   # (HOL4 cmlPtreeConversionScript.sml:184, 595, 811, 816, 1100)
   ('cmlPtreeConversion', 'ptree_linfix_def'): set(['front']),
-  ('cmlPtreeConversion', 'Papply_def'): set(['args']),
+  # the key is the name of the OCaml binding, so Papply_def
+  # is papply_def (HOL Light's parser takes no binding that
+  # starts with a capital and has no other)
+  ('cmlPtreeConversion', 'papply_def'): set(['args']),
   ('cmlPtreeConversion', 'mkAst_App_def'): set(['args']),
   ('cmlPtreeConversion', 'ptree_Expr_def'): set(['fdecs']),
   # the alist of a namespace, which the monad of the file does not

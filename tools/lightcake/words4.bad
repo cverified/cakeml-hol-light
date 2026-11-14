@@ -1,0 +1,32 @@
+BITS_THM	Exception: Failure "TAC_PROOF: Unsolved goals".
+BIT_def	Error: Unbound value BITS_THM
+BITS_THM2	Error: Unbound value BITS_THM
+BITS_ZEROL	Error: Unbound value BITS_THM
+BITSLT_THM	Error: Unbound value BITS_THM
+BITSLT_THM2	Error: Unbound value BITSLT_THM
+NOT_BITS2	Error: Unbound value BITSLT_THM
+NUMBIT_BITS	Error: Unbound value BITS_THM
+BIT_OF_BITS_THM	Error: Unbound value NUMBIT_BITS
+BIT_BITS_THM	Error: Unbound value NUMBIT_BITS
+BIT_COMP_THM3	Error: Unbound value BITS_THM
+word_slice_def	Exception: Failure "TAC_PROOF: Unsolved goals".
+word_bits_def	Exception: Failure "TAC_PROOF: Unsolved goals".
+BIT_WORD_BITS	Exception: Failure
+VAL_WORD_BITS	Error: Unbound value BIT_WORD_BITS
+word_bits_subword	Error: Unbound value BIT_WORD_BITS
+word_bits_n2w	Error: Unbound value BIT_WORD_BITS
+WORD_ALL_BITS	Error: Unbound value BIT_WORD_BITS
+WORD_BITS_COMP_THM	Error: Unbound value BIT_WORD_BITS
+w2w_w2w	Error: Unbound value BIT_WORD_BITS
+WORD_w2w_OVER_MUL	Error: Unbound value VAL_WORD_BITS
+word_ror_n2w	Error: Unbound value BITS_THM
+INT_DIV	Exception: Failure "TAC_PROOF: Unsolved goals".
+INT_DIV_NEG	Exception: Failure "TAC_PROOF: Unsolved goals".
+INT_DIV_UNIQUE	Exception: Failure "MATCH_MP_TAC: No match".
+INT_DIV_LMUL	Exception: Failure "TAC_PROOF: Unsolved goals".
+INT_MOD	Exception: Failure
+INT_MOD0	Exception: Failure
+INT_DIV_CALCULATE	Error: Unbound value INT_DIV
+w2n_i2w	Exception: Failure
+i2w_DIV	Exception: Failure "TAC_PROOF: Unsolved goals".
+word_slice_alt_def	Exception: Failure "TAC_PROOF: Unsolved goals".

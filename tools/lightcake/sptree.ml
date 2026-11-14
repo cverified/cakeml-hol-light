@@ -108,13 +108,6 @@ let insert_notEmpty = prove
   SPTAUX_CASES_TAC `t:A spt` THEN ONCE_REWRITE_TAC[insert_def] THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[spt_distinct]);;
 
-let wf_insert = prove
- (`!k (a:A) t. sptree_wf t ==> sptree_wf (sptree_insert k a t)`,
-  MATCH_MP_TAC SPTAUX_bit_induction THEN REPEAT STRIP_TAC THEN
-  SPTAUX_CASES_TAC `t:A spt` THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[wf_def]) THEN
-  ASM_SIMP_TAC[SPTAUX_insert_bits; wf_def; insert_notEmpty]);;
-
 let mk_BN_thm = prove
  (`!t1 t2:A spt. mk_BN t1 t2 = if t1 = LN /\ t2 = LN then LN else BN t1
    t2`,
@@ -277,12 +270,6 @@ let SPTAUX_card_images = prove
                FINITE_EMPTY; CARD_SING] THEN
   ARITH_TAC);;
 
-let size_domain = prove
- (`!t:A spt. sptree_size t = CARD (domain t)`,
-  MATCH_MP_TAC spt_INDUCT THEN
-  ASM_SIMP_TAC[size_def; domain_def; SPTAUX_card_images; FINITE_domain;
-               CARD_CLAUSES; CARD_SING] THEN ARITH_TAC);;
-
 let domain_delete = prove
  (`domain (sptree_delete k (t:A spt)) = domain t DELETE k`,
   REWRITE_TAC[EXTENSION; domain_lookup; lookup_delete; IN_DELETE] THEN
@@ -424,14 +411,6 @@ let domain_empty = prove
               EMPTY_UNION; IMAGE_EQ_EMPTY] THEN
   MESON_TAC[]);;
 
-let SPTAUX_ALL_DISTINCT_CARD = prove
- (`!l:A list. ALL_DISTINCT l <=> CARD (set_of_list l) = LENGTH l`,
-  LIST_INDUCT_TAC THEN
-  ASM_SIMP_TAC[ALL_DISTINCT; set_of_list; LENGTH; CARD_CLAUSES;
-               FINITE_SET_OF_LIST; IN_SET_OF_LIST] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[SUC_INJ] THEN
-  MP_TAC(ISPEC `t:A list` CARD_SET_OF_LIST_LE) THEN ARITH_TAC);;
-
 let SPTAUX_toListA_APPEND = prove
  (`!t:A spt acc acc'.
      toListA (APPEND acc acc') t = APPEND (toListA acc t) acc'`,
@@ -512,19 +491,6 @@ let SPTAUX_lookup_NONE_LN = prove
   REWRITE_TAC[EXTENSION; NOT_IN_EMPTY; GSYM lookup_NONE_domain] THEN
   MESON_TAC[]);;
 
-let spt_eq_thm = prove
- (`!t1 t2:A spt. sptree_wf t1 /\ sptree_wf t2 ==>
-                 ((t1 = t2) <=> !n. sptree_lookup n t1 = sptree_lookup n
-                   t2)`,
-  MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
-  SPTAUX_CASES_TAC `t2:A spt` THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[wf_def]) THEN
-  REWRITE_TAC[spt_distinct; spt_inject] THEN
-  ONCE_REWRITE_TAC[SPTAUX_FORALL_BITS] THEN
-  REWRITE_TAC[lookup_rwts; SPTAUX_lookup_bits; option_DISTINCT;
-    option_INJ] THEN
-  ASM_SIMP_TAC[SPTAUX_lookup_NONE_LN] THEN ASM_MESON_TAC[]);;
-
 let wf_mk_wf = prove
  (`!t:A spt. sptree_wf (mk_wf t)`,
   MATCH_MP_TAC spt_INDUCT THEN
@@ -534,12 +500,6 @@ let wf_mk_id = prove
  (`!t:A spt. sptree_wf t ==> (mk_wf t = t)`,
   MATCH_MP_TAC spt_INDUCT THEN REWRITE_TAC[wf_def; mk_wf_def] THEN
   SIMP_TAC[mk_BS_thm; mk_BN_thm]);;
-
-let wf_fromAList = prove
- (`!ls:(num#A)list. sptree_wf (fromAList ls)`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[fromAList_def; wf_def] THEN
-  SPTAUX_CASES_TAC `h:num#A` THEN
-  ASM_SIMP_TAC[fromAList_def; wf_insert]);;
 
 let SPTAUX_toListA_map = prove
  (`!s:A spt acc. toListA (MAP (f:A->B) acc) (sptree_map f s) = MAP f
@@ -688,48 +648,10 @@ let SPTAUX_ALOOKUP_MAP_lemma = prove
   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ALOOKUP; OPTION_MAP] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[OPTION_MAP]);;
 
-let num_set_domain_eq = prove
- (`!t1 t2:1 spt. sptree_wf t1 /\ sptree_wf t2 ==> ((domain t1 = domain
-   t2) <=> (t1 = t2))`,
-  SIMP_TAC[spt_eq_thm] THEN REPEAT STRIP_TAC THEN
-  REWRITE_TAC[EXTENSION; domain_lookup; EXISTS_ONE_THM] THEN
-  EQ_TAC THEN DISCH_TAC THEN X_GEN_TAC `n:num` THENL
-   [FIRST_X_ASSUM(MP_TAC o SPEC `n:num`) THEN
-    SPTAUX_CASES_TAC `sptree_lookup n (t1:1 spt)` THEN
-    SPTAUX_CASES_TAC `sptree_lookup n (t2:1 spt)` THEN
-    REWRITE_TAC[option_DISTINCT; option_INJ] THEN MESON_TAC[one];
-    ASM_REWRITE_TAC[]]);;
-
-let delete_fail = prove
- (`!n t:A spt. sptree_wf t ==> (~(n IN domain t) <=> (sptree_delete n t
-   = t))`,
-  REPEAT STRIP_TAC THEN EQ_TAC THENL
-   [DISCH_TAC THEN ASM_SIMP_TAC[spt_eq_thm; wf_delete; lookup_delete]
-     THEN
-    GEN_TAC THEN COND_CASES_TAC THEN ASM_MESON_TAC[lookup_NONE_domain];
-    DISCH_THEN(MP_TAC o AP_TERM `domain:A spt->num->bool`) THEN
-    REWRITE_TAC[domain_delete] THEN SET_TAC[]]);;
-
-let size_delete = prove
- (`!n t:A spt. sptree_size (sptree_delete n t) =
-               if sptree_lookup n t = NONE then sptree_size t else
-                 sptree_size t - 1`,
-  REWRITE_TAC[size_domain; domain_delete; lookup_NONE_domain] THEN
-  SIMP_TAC[CARD_DELETE; FINITE_domain] THEN MESON_TAC[]);;
-
 let lookup_fromList_outside = prove
  (`!k. LENGTH args <= k ==> (sptree_lookup k (sptree_fromList (args:A
    list)) = NONE)`,
   SIMP_TAC[lookup_fromList; GSYM NOT_LT]);;
-
-let IMP_size_LESS_size = prove
- (`!x y:A spt. subspt x y /\ ~(domain x = domain y) ==> sptree_size x <
-   sptree_size y`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[size_domain] THEN
-  MATCH_MP_TAC CARD_PSUBSET THEN REWRITE_TAC[FINITE_domain; PSUBSET]
-    THEN
-  ASM_REWRITE_TAC[] THEN UNDISCH_TAC `subspt (x:A spt) y` THEN
-  REWRITE_TAC[subspt_def; SUBSET] THEN MESON_TAC[]);;
 
 let domain_FOLDR_delete = prove
  (`!ls live:A spt.
@@ -747,33 +669,9 @@ let lookup_list_to_num_set = prove
     THEN
   MESON_TAC[]);;
 
-let alist_insert_append = prove
- (`!a1 a2 (s:A spt) b1 b2.
-     (LENGTH a1 = LENGTH a2) ==>
-     (alist_insert (APPEND a1 b1) (APPEND a2 b2) s =
-      alist_insert a1 a2 (alist_insert b1 b2 s))`,
-  LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
-  REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ; alist_insert_def; APPEND] THEN
-  ASM_SIMP_TAC[alist_insert_def]);;
-
 let wf_LN = prove
  (`sptree_wf (LN:A spt)`,
   REWRITE_TAC[wf_def]);;
-
-let wf_fromList = prove
- (`sptree_wf (sptree_fromList (ls:A list))`,
-  REWRITE_TAC[fromList_def] THEN
-  SUBGOAL_THEN `!ls:A list i t. sptree_wf t ==>
-     sptree_wf (SND (FOLDL (\(i,t) a. (i + 1,sptree_insert i a t)) (i,t)
-       ls))`
-    (fun th -> MATCH_MP_TAC th THEN REWRITE_TAC[wf_LN]) THEN
-  LIST_INDUCT_TAC THEN REWRITE_TAC[FOLDL] THEN
-  ASM_SIMP_TAC[wf_insert]);;
-
-let wf_list_to_num_set = prove
- (`!ls. sptree_wf (list_to_num_set ls)`,
-  LIST_INDUCT_TAC THEN ASM_SIMP_TAC[list_to_num_set_def; wf_insert;
-    wf_LN]);;
 
 let SPTAUX_LENGTH_MAPi = prove
  (`!(f:num->A->B) l. LENGTH (MAPi f l) = LENGTH l`,
@@ -790,16 +688,6 @@ let SPTAUX_EL_MAPi = prove
 let SPTAUX_DROP_0 = prove
  (`!l:A list. DROP 0 l = l`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[DROP]);;
-
-let insert_unchanged = prove
- (`!t x. (sptree_lookup x t = SOME (y:A)) ==> (sptree_insert x y t =
-   t)`,
-  ONCE_REWRITE_TAC[SWAP_FORALL_THM] THEN
-  MATCH_MP_TAC SPTAUX_bit_induction THEN REPEAT STRIP_TAC THEN
-  SPTAUX_CASES_TAC `t:A spt` THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[lookup_rwts; SPTAUX_lookup_bits;
-                              option_DISTINCT; option_INJ]) THEN
-  TRY(FIRST_ASSUM CONTR_TAC) THEN ASM_SIMP_TAC[SPTAUX_insert_bits]);;
 
 let SPTAUX_delete_mk_BN = prove
  (`(!t1 t2:A spt. sptree_delete 0 (mk_BN t1 t2) = mk_BN t1 t2) /\
@@ -828,47 +716,6 @@ let SPTAUX_BIT_LT = prove
    (!p q. 2 * p + 2 < 2 * q + 2 <=> p < q)`,
   ARITH_TAC);;
 
-let size_map = prove
- (`sptree_size (sptree_map (f:A->B) t) = sptree_size t`,
-  REWRITE_TAC[size_domain; domain_map]);;
-
-let SUM_MAP_same_LE = prove
- (`ALL (\x. (f:A->num) x <= g x) xs ==> SUM_DEF (MAP f xs) <= SUM_DEF
-   (MAP g xs)`,
-  SPEC_TAC(`xs:A list`,`xs:A list`) THEN LIST_INDUCT_TAC THEN
-  REWRITE_TAC[ALL; MAP; SUM_DEF; LE_REFL] THEN STRIP_TAC THEN
-  MATCH_MP_TAC LE_ADD2 THEN ASM_SIMP_TAC[]);;
-
-let SUM_MAP_same_LESS = prove
- (`ALL (\x. (f:A->num) x <= g x) xs /\ EX (\x. f x < g x) xs
-   ==> SUM_DEF (MAP f xs) < SUM_DEF (MAP g xs)`,
-  SPEC_TAC(`xs:A list`,`xs:A list`) THEN LIST_INDUCT_TAC THEN
-  REWRITE_TAC[ALL; EX; MAP; SUM_DEF] THEN STRIP_TAC THENL
-   [MATCH_MP_TAC LTE_ADD2 THEN ASM_SIMP_TAC[SUM_MAP_same_LE];
-    MATCH_MP_TAC LET_ADD2 THEN ASM_SIMP_TAC[]]);;
-
-let size_fromList = prove
- (`sptree_size (sptree_fromList (ls:A list)) = LENGTH ls`,
-  REWRITE_TAC[size_domain; domain_fromList; count_def;
-    CARD_NUMSEG_LT]);;
-
-let SPTAUX_SUM_MAP_APPEND = prove
- (`!f l1 l2:B list. SUM_DEF (MAP f (APPEND l1 l2)) = SUM_DEF (MAP f l1)
-   + SUM_DEF (MAP f l2)`,
-  GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; MAP;
-    SUM_DEF] THEN
-  ARITH_TAC);;
-
-let SPTAUX_SUM_MAP_REVERSE = prove
- (`!f l:B list. SUM_DEF (MAP f (REVERSE l)) = SUM_DEF (MAP f l)`,
-  GEN_TAC THEN LIST_INDUCT_TAC THEN
-  ASM_REWRITE_TAC[REVERSE; MAP; SUM_DEF; SPTAUX_SUM_MAP_APPEND] THEN
-    ARITH_TAC);;
-
-let SPTAUX_LENGTH_COUNT_LIST = prove
- (`!n. LENGTH (COUNT_LIST n) = n`,
-  INDUCT_TAC THEN ASM_REWRITE_TAC[COUNT_LIST; LENGTH; LENGTH_MAP]);;
-
 let SPTAUX_ALOOKUP_ZIP_MAP_SUC = prove
  (`!c (t:A list). LENGTH c = LENGTH t ==>
      ALOOKUP (ZIP (MAP SUC c) t) 0 = NONE /\
@@ -877,18 +724,6 @@ let SPTAUX_ALOOKUP_ZIP_MAP_SUC = prove
   REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ; MAP; ZIP; ALOOKUP; NOT_SUC] THEN
   DISCH_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `t':A list`) THEN
   ASM_SIMP_TAC[FST; SND; SUC_INJ]);;
-
-let SPTAUX_ALOOKUP_ZIP_COUNT_LIST = prove
- (`!l:A list n.
-     ALOOKUP (ZIP (COUNT_LIST (LENGTH l)) l) n =
-     if n < LENGTH l then SOME (EL n l) else NONE`,
-  LIST_INDUCT_TAC THEN
-  REWRITE_TAC[LENGTH; COUNT_LIST; ZIP; ALOOKUP; CONJUNCT1 LT] THEN
-  INDUCT_TAC THEN
-  ASM_SIMP_TAC[FST; SND; ARITH_RULE `~(0 = SUC n)`; EL; HD; TL;
-               SPTAUX_ALOOKUP_ZIP_MAP_SUC; LENGTH_MAP;
-                 SPTAUX_LENGTH_COUNT_LIST;
-               LT_SUC; LT_0]);;
 
 let SPTAUX_EXISTS_lookup_P = prove
  (`(!P. (?k v. sptree_lookup k (LN:A spt) = SOME v /\ P v) <=> F) /\
@@ -938,6 +773,8 @@ let SPTAUX_FORALL_lookup_P = prove
      SPTAUX_TC_TAC                    WF_REL_THMS
      SPTAUX_BITS_TAC                  term
      SPTAUX_CASES_TAC                 term
+     wf_insert                        -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
      isEmpty_union                    spt_CASE
      wf_union                         isEmpty_union spt_CASE
      SPTAUX_optcase_lemma             option_CASE
@@ -960,6 +797,7 @@ let SPTAUX_FORALL_lookup_P = prove
      domain_insert                    v
      domain_difference                lookup_difference
      domain_sing                      domain_insert v
+     size_domain                      -- Exception: Failure
      spt_acc_thm                      spt_acc_def
      spt_acc_eqn                      spt_acc_def spt_acc_thm
      spt_acc_0                        spt_acc_eqn
@@ -973,21 +811,26 @@ let SPTAUX_FORALL_lookup_P = prove
      insert_union                     spt_CASE
      SPTAUX_LENGTH_foldi              CONS
      LENGTH_toAList                   SPTAUX_LENGTH_foldi
+     SPTAUX_ALL_DISTINCT_CARD         -- Exception: Failure "find_term".
      set_MAP_FST_toAList_domain       MEM_toAList
      ALL_DISTINCT_MAP_FST_toAList     LENGTH_toAList
+                                      SPTAUX_ALL_DISTINCT_CARD
                                       set_MAP_FST_toAList_domain
+                                      size_domain
      SPTAUX_ITLIST_UNCURRY            CONS UNCURRY
      SPTAUX_foldi_FOLDR_toAList_lemma CONS SPTAUX_ITLIST_UNCURRY UNCURRY
      foldi_FOLDR_toAList              SPTAUX_foldi_FOLDR_toAList_lemma
                                       UNCURRY
+     spt_eq_thm                       -- Error in included file the
+                                      block
      lookup_mk_wf                     SPTAUX_BITS_TAC
      domain_mk_wf                     lookup_mk_wf
-     mk_wf_eq                         lookup_mk_wf
-     inter_eq                         wf_inter
+     mk_wf_eq                         lookup_mk_wf spt_eq_thm
+     inter_eq                         spt_eq_thm wf_inter
      union_mk_wf                      lookup_mk_wf mk_wf_eq wf_union
      inter_mk_wf                      lookup_inter lookup_mk_wf mk_wf_eq
                                       wf_inter
-     insert_mk_wf                     lookup_mk_wf mk_wf_eq
+     insert_mk_wf                     lookup_mk_wf mk_wf_eq wf_insert
      delete_mk_wf                     lookup_mk_wf mk_wf_eq
      union_LN                         spt_CASE
      inter_LN                         spt_CASE
@@ -996,7 +839,9 @@ let SPTAUX_FORALL_lookup_P = prove
      lookup_fromAList                 ALOOKUP_THM
      domain_fromAList                 domain_insert
      lookup_fromAList_toAList         ALOOKUP_toAList lookup_fromAList
+     wf_fromAList                     -- Error: Unbound value wf_insert
      fromAList_toAList                lookup_fromAList_toAList
+                                      spt_eq_thm wf_fromAList
      union_insert_LN                  insert_union
      fromAList_append                 insert_union union_LN union_assoc
                                       union_insert_LN
@@ -1012,12 +857,20 @@ let SPTAUX_FORALL_lookup_P = prove
      lookup_filter_v                  SPTAUX_BITS_TAC option_CASE
      MAP_foldi                        CONS
      mapi_Alist                       ALOOKUP_toAList lookup_fromAList
-                                      lookup_mapi
+                                      lookup_mapi spt_eq_thm
+                                      wf_fromAList
+     num_set_domain_eq                -- Error: Unbound value spt_eq_thm
      union_num_set_sym                spt_CASE
-     union_disjoint_sym               option_CASE wf_union
+     union_disjoint_sym               option_CASE spt_eq_thm wf_union
      difference_sub                   domain_difference
      wf_difference                    spt_CASE
-     size_diff_less                   domain_difference
+     delete_fail                      -- Error: Unbound value spt_eq_thm
+     size_delete                      -- Error: Unbound value
+                                      size_domain
+     IMP_size_LESS_size               -- Error: Unbound value
+                                      size_domain
+     size_diff_less                   IMP_size_LESS_size
+                                      domain_difference
                                       lookup_difference
      inter_eq_LN                      domain_inter wf_inter
      domain_list_to_num_set           domain_insert
@@ -1028,27 +881,53 @@ let SPTAUX_FORALL_lookup_P = prove
      lookup_map_K                     K_THM lookup_map
      lookup_alist_insert              option_CASE
      domain_alist_insert              domain_insert
+     alist_insert_append              -- no answer
+     wf_fromList                      -- Error: Unbound value wf_insert
+     wf_list_to_num_set               -- Error: Unbound value wf_insert
      size_list_to_num_set             domain_list_to_num_set
-     mapi_fromList                    lookup_mapi
+     mapi_fromList                    lookup_mapi spt_eq_thm wf_fromList
      SPTAUX_TAKE_DROP_UPDATE          v
-     insert_fromList_IN_domain        SPTAUX_TAKE_DROP_UPDATE
+     insert_fromList_IN_domain        SPTAUX_TAKE_DROP_UPDATE spt_eq_thm
+                                      wf_fromList wf_insert
      insert_swap                      insert_insert
      alist_insert_pull_insert         insert_swap
-     alist_insert_REVERSE             alist_insert_pull_insert
+     alist_insert_REVERSE             alist_insert_append
+                                      alist_insert_pull_insert
+     insert_unchanged                 -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
      SPTAUX_delete_delete_same        SPTAUX_BITS_TAC
      SPTAUX_delete_delete_lt          SPTAUX_BITS_TAC
      delete_delete                    SPTAUX_delete_delete_lt
                                       SPTAUX_delete_delete_same
-     size_mapi                        domain_mapi
+     size_map                         -- Error: Unbound value
+                                      size_domain
+     size_mapi                        domain_mapi size_domain
+     SUM_MAP_same_LE                  -- Exception: Failure
+                                      "MATCH_MP_TAC: No match".
+     SUM_MAP_same_LESS                -- Error: Unbound value
+                                      SUM_MAP_same_LE
+     size_fromList                    -- Error: Unbound value
+                                      size_domain
      SPTAUX_spts_to_alist_aux_thm     CONS list_CASE option_CASE
                                       pair_CASE
      SPTAUX_SUM_add_pause             list_CASE pair_CASE spt_size_def
+     SPTAUX_SUM_MAP_APPEND            -- Exception: Failure
+     SPTAUX_SUM_MAP_REVERSE           -- Error: Unbound value
+                                      SPTAUX_SUM_MAP_APPEND
      SPTAUX_spt_size_left_right       K_THM spt_size_def
-     spts_to_alist_aux_size           SPTAUX_SUM_add_pause
+     spts_to_alist_aux_size           SPTAUX_SUM_MAP_APPEND
+                                      SPTAUX_SUM_MAP_REVERSE
+                                      SPTAUX_SUM_add_pause
                                       SPTAUX_spt_size_left_right
                                       SPTAUX_spts_to_alist_aux_thm
                                       spt_size_def
-     fromList_fromAList               lookup_fromAList
+     SPTAUX_LENGTH_COUNT_LIST         -- Exception: Failure "TAC_PROOF:
+                                      Unsolved goals".
+     SPTAUX_ALOOKUP_ZIP_COUNT_LIST    -- Error: Unbound value
+                                      SPTAUX_LENGTH_COUNT_LIST
+     fromList_fromAList               SPTAUX_ALOOKUP_ZIP_COUNT_LIST
+                                      lookup_fromAList spt_eq_thm
+                                      wf_fromAList wf_fromList
      domain_spt_fold_union            domain_union
      SPTAUX_closure_spt_size          domain_spt_fold_union domain_union
                                       lookup_inter_EQ size_diff_less
@@ -1093,8 +972,9 @@ let SPTAUX_FORALL_lookup_P = prove
                                       domain_union insert_mk_wf inter_LN
                                       inter_eq inter_mk_wf isEmpty_def
                                       isEmpty_union lookup_mk_wf
-                                      map_map_K mk_wf_eq size_mapi
-                                      subspt_union union_LN union_mk_wf
-                                      wf_inter
+                                      map_map_K mk_wf_eq size_fromList
+                                      size_map size_mapi subspt_union
+                                      union_LN union_mk_wf wf_fromList
+                                      wf_inter wf_list_to_num_set
 
 *)

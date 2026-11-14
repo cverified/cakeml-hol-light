@@ -1636,6 +1636,18 @@ OWN_INFIX = set()      # the infixes a CakeML source declares itself
 # infixes of HOL Light: where one of them is applied to its
 # arguments the port writes its name in parentheses
 HL_INFIX = {'BAG_UNION', 'LEX', 'o_f', 'SUBMAP'}
+
+
+def as_function(nm):
+  """a name that stands where a function stands, with the
+     brackets round it only where HOL Light would otherwise read
+     it as an infix or a binder: (APPEND) is noise, (o) is not"""
+  if nm in HL_INFIX or nm in BINDERS or not re.match(r"^[A-Za-z_]",
+                                                     nm):
+    return '(' + nm + ')'
+  return nm
+
+
 MONAD = [None]         # the monad that a source has enabled
 ANTIQ = {}             # the ML values that a source antiquotes
 # with this, an ML value that ANTIQ does not have is an error and
@@ -2114,10 +2126,9 @@ class Printer:
         fn = self.ctx.overloads.get(hop) if self.ctx is not None \
              else None
         if fn:
-          fn = '(' + fn + ')'
+          fn = as_function(fn)
         else:
-          fn = self.ctx.name(hop)
-          if fn in HL_INFIX: fn = '(' + fn + ')'
+          fn = as_function(self.ctx.name(hop))
         return self.paren(fn + ' ' + sameline(self.pr(e.l, APP)) +
                           ' ' + self.pr(e.r, APP), PRE_APP, prec)
       old = self.numctx
@@ -2378,14 +2389,12 @@ class Printer:
       # the port writes out; as a function of its own it is the
       # lambda that says the same (EVERY ((<>) x o FST) l)
       if n == '<>': return '(\\x y. ~(x = y))'
-      if n in INFIX: return '(' + INFIX[n][2] + ')'
+      if n in INFIX: return as_function(INFIX[n][2])
       # an operator that is not an identifier needs its parentheses
       if not n[0].isalpha() and n[0] != '_':
         return '(' + self.ctx.name(n) + ')'
-      n2 = self.ctx.name(n)
       # and so does a binder of HOL Light
-      if n2 in BINDERS: return '(' + n2 + ')'
-      return n2
+      return as_function(self.ctx.name(n))
     if k == 'univ':
       if greek(e.ty): return 'UNIV'
       return '(UNIV:' + self.pr_type(e.ty) + '->bool)'
