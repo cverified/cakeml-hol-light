@@ -179,10 +179,10 @@ clos_to_bvl	line 34 is 76 characters
 clos_to_bvl	line 37 is 79 characters
 clos_to_bvl	line 38 is 78 characters
 clos_to_bvl	line 41 is 76 characters
-clos_to_bvl	line 404 is 73 characters
-clos_to_bvl	line 415 is 75 characters
-clos_to_bvl	line 417 is 78 characters
-clos_to_bvl	line 1044 is 73 characters
+clos_to_bvl	line 401 is 73 characters
+clos_to_bvl	line 412 is 75 characters
+clos_to_bvl	line 414 is 78 characters
+clos_to_bvl	line 1041 is 73 characters
 asm	Overload addr_offset_ok
 asm	Overload hw_offset_ok
 asm	Overload byte_offset_ok
@@ -482,18 +482,18 @@ pattern_exh	line 565 is 75 characters
 pattern_exh	line 567 is 76 characters
 pattern_exh	line 630 is 75 characters
 pattern_exh	line 636 is 76 characters
-pattern_exh	line 661 is 75 characters
-pattern_exh	line 664 is 73 characters
-pattern_exh	line 668 is 76 characters
-pattern_exh	line 718 is 75 characters
-pattern_exh	line 725 is 73 characters
-pattern_exh	line 727 is 76 characters
-pattern_exh	line 773 is 75 characters
-pattern_exh	line 778 is 76 characters
-pattern_exh	line 793 is 75 characters
-pattern_exh	line 795 is 76 characters
-pattern_exh	line 826 is 75 characters
-pattern_exh	line 828 is 76 characters
+pattern_exh	line 658 is 75 characters
+pattern_exh	line 661 is 73 characters
+pattern_exh	line 665 is 76 characters
+pattern_exh	line 715 is 75 characters
+pattern_exh	line 722 is 73 characters
+pattern_exh	line 724 is 76 characters
+pattern_exh	line 770 is 75 characters
+pattern_exh	line 775 is 76 characters
+pattern_exh	line 790 is 75 characters
+pattern_exh	line 792 is 76 characters
+pattern_exh	line 823 is 75 characters
+pattern_exh	line 825 is 76 characters
 flat_pattern	Theorem pat1_size: the auxiliary size function pat1_size
 source_to_flat	Theorem ast_pat1_size: the auxiliary size function pat1_size
 source_to_flat	line 597 is 73 characters
@@ -2871,11 +2871,11 @@ pegComplete	ML code skipped: val list_case_eq = TypeBase.case_eq_of ``:'a list``
 pegComplete	ML code skipped: fun hasc cnm t = #1 (dest_const t) = cnm handle HOL_ERR _ =>
 pegComplete	ML code skipped: val pmap_cases =   rpt ((rename [`(_,_) = (_ ## _) pair`] >>
 pegComplete	ML code skipped: val loseRK = loseC “NT_rank”
-pegComplete	line 335 is 77 characters
-pegComplete	line 336 is 74 characters
-pegComplete	line 337 is 76 characters
-pegComplete	line 475 is 76 characters
-pegComplete	line 480 is 75 characters
+pegComplete	line 341 is 77 characters
+pegComplete	line 342 is 74 characters
+pegComplete	line 343 is 76 characters
 pegComplete	line 481 is 76 characters
-pegComplete	line 1239 is 77 characters
-pegComplete	line 1371 is 73 characters
+pegComplete	line 486 is 75 characters
+pegComplete	line 487 is 76 characters
+pegComplete	line 1245 is 77 characters
+pegComplete	line 1377 is 73 characters

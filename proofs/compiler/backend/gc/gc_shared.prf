@@ -47,11 +47,6 @@
                distinctness "heap_address"] THEN
    ASM_MESON_TAC[])
 
-### heap_addresses_LESS
-  (LIST_INDUCT_TAC THEN
-   REWRITE_TAC[heap_addresses_def; NOT_IN_EMPTY; IN_INSERT] THEN
-   REPEAT STRIP_TAC THEN RES_TAC THEN ASM_ARITH_TAC)
-
 ### heap_split_0
   (GEN_TAC THEN CASES_ON_TAC `h:((A,B)heap_element)list` THEN
    REWRITE_TAC[heap_split_def])

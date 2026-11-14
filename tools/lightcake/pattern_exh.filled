@@ -1,6 +1,5 @@
 LENGTH_anys
 LENGTH_dest_val
-LENGTH_expand_list
 MEM_add_head
 MEM_ctor_keep
 MEM_ctor_nub

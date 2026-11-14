@@ -77,7 +77,7 @@ let mk_rinfix_def,mk_rinfix_ind = define_wf
 
 let peg_linfix_def = new_definition
   `peg_linfix tgtnt rptsym opsym =
-     peg_seq rptsym (peg_rpt (peg_seq opsym rptsym (++)) FLAT)
+     peg_seq rptsym (peg_rpt (peg_seq opsym rptsym APPEND) FLAT)
          (\a b. match a with
                     [] -> [] | CONS h _1 -> [mk_linfix tgtnt (mkNd
                       tgtnt [h]) b])`;;
@@ -98,8 +98,8 @@ let cmlPEG_pegf_def = new_definition
 hol4_overload "pegf" "cmlPEG_pegf";;
 
 let seql_def = new_definition
-  `seql l f = pegf (ITLIST (\p acc. peg_seq p acc (++)) l (peg_empty
-  [])) f`;;
+  `seql l f = pegf (ITLIST (\p acc. peg_seq p acc APPEND) l
+  (peg_empty [])) f`;;
 
 (* HOL4 cmlPEGScript.sml:94-98: code that the source has in a comment *)
 

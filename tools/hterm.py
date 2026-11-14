@@ -2404,7 +2404,18 @@ class Printer:
       # the port writes out; as a function of its own it is the
       # lambda that says the same (EVERY ((<>) x o FST) l)
       if n == '<>': return '(\\x y. ~(x = y))'
-      if n in INFIX: return as_function(INFIX[n][2])
+      # an infix standing where a function stands is the
+      # constant it means, not the token: HOL4's seq opsym rptsym
+      # (++) hands the append over, and HOL Light has no ++
+      if n in INFIX:
+        _, _, hop, hprec = INFIX[n]
+        # one HOL Light has is written as itself, whatever this
+        # file overloads it with: ALL ((<=) n) is the order of
+        # the numbers and not the mlstring_le of the file
+        if hprec is not None or self.ctx is None:
+          return as_function(hop)
+        return as_function(self.ctx.overloads.get(hop) or
+                           self.ctx.name(hop))
       # an operator that is not an identifier needs its parentheses
       if not n[0].isalpha() and n[0] != '_':
         return '(' + self.ctx.name(n) + ')'

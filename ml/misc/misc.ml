@@ -1260,11 +1260,11 @@ let EXP2_EVEN = prove
   CHEAT_TAC);;
 
 let FST_UNZIP_MAPi = prove
- (`!l f. FST (UNZIP (MAPi f l)) = MAPi (o (o FST) f) l`,
+ (`!l f. FST (UNZIP (MAPi f l)) = MAPi ((o) ((o) FST) f) l`,
   CHEAT_TAC);;
 
 let SND_UNZIP_MAPi = prove
- (`!l f. SND (UNZIP (MAPi f l)) = MAPi (o (o SND) f) l`,
+ (`!l f. SND (UNZIP (MAPi f l)) = MAPi ((o) ((o) SND) f) l`,
   CHEAT_TAC);;
 
 let ALL_DISTINCT_FLAT = prove

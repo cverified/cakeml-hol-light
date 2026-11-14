@@ -583,7 +583,7 @@ let insert_each_pair_arg = prove
 (* [local] *)
 let calls_acc_0 = prove
  (`!xs tmp x r. APPEND x r = SND tmp ==>
-      calls xs tmp = (I ## I ## (hol4_C (++) r)) (calls xs (FST
+      calls xs tmp = (I ## I ## (hol4_C APPEND r)) (calls xs (FST
         tmp,x))`,
   CHEAT_TAC);;
 

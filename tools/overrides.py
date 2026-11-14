@@ -1040,9 +1040,13 @@ KIT_MAP = {
   # rveq is HOL4's "reverse the variable equations", and this
   # port's VAR_EQ_TAC does one of them
   'RVEQ_TAC': '(REPEAT VAR_EQ_TAC)',
-  # HOL Light's own, which LightCake rebinds to swallow a failure
-  'IMP_RES_TAC': 'IMP_RES_TAC',
-  'RES_TAC': 'RES_TAC',
+  # HOL4's imp_res_tac and res_tac, which LightCake rebinds to
+  # swallow a failure.  HOL Light has neither name: what it has
+  # is IMP_RES_THEN, and these are what the two say with it
+  'IMP_RES_TAC': '(fun th -> TRY (IMP_RES_THEN ASSUME_TAC th))',
+  'RES_TAC':
+    '(ASSUM_LIST (MAP_EVERY (fun th ->\n'
+    '     TRY (IMP_RES_THEN ASSUME_TAC th))))',
 }
 
 
@@ -1072,6 +1076,11 @@ PLAIN_APPEND = {
   # SmartAppend of an app_list, so its one ++ is the list append
   # (HOL4 bvl_to_bviScript.sml:298 against 323)
   ('bvl_to_bvi', 'compile_op_def'): True,
+  # stubs gives a list and append turns the app_list of the code
+  # into one, so this ++ joins two lists where every other ++
+  # after the Overload joins two app_lists
+  # (HOL4 bvl_to_bviScript.sml:517)
+  ('bvl_to_bvi', 'compile_prog_def'): True,
   # the file enables the option monad, so its ++ is the choice of
   # two parses; these five are the append of two lists
   # (HOL4 cmlPtreeConversionScript.sml:184, 595, 811, 816, 1100)

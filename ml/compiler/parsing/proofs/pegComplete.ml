@@ -235,7 +235,13 @@ let not_nullable_seql_input_CONS = prove
    peg_eval cmlPEG (i0,seql (CONS (peg_nt N I) rest) f) (peg_Success
      i r eo) ==>
    (?ht l t. i0 = CONS (ht,l) t /\ LENGTH i <= LENGTH t)`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[seql_cons_SOME]
+    THEN
+   STRIP_TAC THEN
+   FIRST_X_ASSUM(MP_TAC o MATCH_MP (MATCH_MP not_nullable_input_CONS
+     (ASSUME `~nullable cmlG [NT N]`))) THEN
+   FIRST_X_ASSUM(MP_TAC o MATCH_MP length_no_greater) THEN
+   MESON_TAC[LE_TRANS]));;
 
 let sym2peg_def = define_cases
   [`sym2peg (grammar_TOK tk) = cmlPEG_tokeq tk`;

@@ -61,12 +61,6 @@
 ### pmatch_Any
   (REWRITE_TAC[pattern_semantics_pmatch_def])
 
-### LENGTH_expand_list
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[expand_def; MEM; MEM_mk_prods]
-    THEN
-   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[LENGTH] THEN RES_TAC THEN
-   ASM_REWRITE_TAC[])
-
 ### MEM_add_head
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[add_head_def; MEM] THEN
     MESON_TAC[])

@@ -285,7 +285,7 @@ let splitl_def = new_definition
 let splitl_aux_SPLITP = prove
  (`!P s i.
     splitl_aux P s i =
-    (implode o ((++) (TAKE i (explode s))) ## implode)
+    (implode o (APPEND (TAKE i (explode s))) ## implode)
       (SPLITP ((~) o P) (DROP i (explode s)))`,
   CHEAT_TAC);;
 

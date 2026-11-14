@@ -565,7 +565,7 @@ let bvl_to_bvi_compile_prog_def = new_definition
   `bvl_to_bvi_compile_prog start' n prog =
      (let k = alloc_glob_count (MAP (\(_14,_15,p). p) prog) in
      let (code,n1) = compile_list n prog in
-       (InitGlobals_location,SmartAppend (bvl_to_bvi_stubs
+       (InitGlobals_location,APPEND (bvl_to_bvi_stubs
          (bvl_num_stubs + bvl_to_bvi_namespaces * start') k) (append
          code),n1))`;;
 hol4_overload "compile_prog" "bvl_to_bvi_compile_prog";;
