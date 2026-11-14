@@ -509,6 +509,9 @@ FIELD_VAR_DEF = {
   # bvl_to_bvi takes the refs, the clock and the ffi of a state of
   # bvlSem and puts them in one of bviSem
   ('bviSem', 'bvl_to_bvi_def'): {'s': 'bvlSem_state'},
+  # the conf a combined gc runs with is the one of a generational
+  # gc, which the clause before this one says and this one does not
+  ('gc_combined', 'gc_combined_def'): {'conf': 'gen_gc_conf'},
   # the envs that compile_decs carries is the generation store,
   # and source_to_flat has an environment_store as well
   ('source_to_flat', 'compile_decs_def'):
@@ -12133,6 +12136,11 @@ DEF_NAMES = {
   ('export', 'get_sym_label_def'):
     {'concat': 'mlstring_concat', 'toString': 'num_to_str'},
   ('presLang', 'num_to_display_def'): {'toString': 'num_to_str'},
+  # flatSem defines a check_type of its own values, but the two
+  # places where do_app has one are after a flat_to_v, so the
+  # values are semanticPrimitives' and so is the check_type
+  ('flatSem', 'do_app_def'):
+    {'check_type': 'semanticPrimitives_check_type'},
   # the stack offsets and the registers a stackLang program names
   # are numbers, so their toString is num_to_str
   ('presLang', 'stack_prog_to_display_def'):
