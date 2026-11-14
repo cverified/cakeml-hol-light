@@ -321,6 +321,7 @@ class Porter:
                          con_argty=db.con_argty_for(thy),
                          defnames=db.defnames_for(thy))
     self.ctx.arm_thys = self.arm_thys
+    self.ctx.body_pr = self.pr_body
     # HOL4's auxiliary size functions of a datatype family
     # (exp1_size, exp2_size, ...), as the term the port writes
     # for each (overrides.AUX_SIZE)

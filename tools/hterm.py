@@ -1169,6 +1169,7 @@ class Ctx:
     self.head_for = None               # a head already resolved
     self.arm_thys = None               # the theories of a match
     self.armtys = None                 # ... of the one being printed
+    self.body_pr = None                # how to print an arm's body
     self.intnums = False               # are numerals integers here?
     self.intneg = False                # is $~ the negation of an int?
     self.intvars = set()               # variables holding integers
@@ -2357,6 +2358,12 @@ class Printer:
             ps = self.pr(p, 15)
           finally:
             self.ctx.armtys = oldt
+          # the body of an arm is printed with the theories that
+          # CON_BODY names, as the body of a clause is: a match
+          # in a definition that the port prints as one term is
+          # the clauses of that definition
+          if self.ctx.body_pr is not None:
+            return ps + ' -> ' + self.ctx.body_pr(self, b)
           return ps + ' -> ' + self.pr(b, 2)
         finally:
           self.ctx.intvars = old

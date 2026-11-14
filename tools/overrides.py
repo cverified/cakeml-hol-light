@@ -1678,11 +1678,14 @@ CON_OF = {
   ('panLang', 'store_op_def'):
     {'Store': 'asm', 'Store8': 'asm', 'Store16': 'asm',
      'Store32': 'asm'},
-  # compile_arith matches on an ast arithmetic operation and
-  # builds a closLang expression
+  # compile_arith and compile_op match on an operation of ast or
+  # flatLang and build a closLang expression
   ('flat_to_clos', 'compile_arith_def'):
     {'If': 'closLang', 'Raise': 'closLang', 'Let': 'closLang',
      'Op': 'closLang', 'Var': 'closLang'},
+  ('flat_to_clos', 'compile_op_def'):
+    {'If': 'closLang', 'Raise': 'closLang', 'Let': 'closLang',
+     'Var': 'closLang'},
   # the code that bvl_to_bvi builds for the primitives is bvi and
   # nothing else: these definitions have no bvl pattern in them.
   # The names are written out rather than taken with a wildcard,
