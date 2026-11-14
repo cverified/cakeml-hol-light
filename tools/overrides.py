@@ -1671,6 +1671,9 @@ BVL_EXP = dict((c, 'bvl') for c in
                 'Call', 'Force', 'Op'])
 
 CON_OF = {
+  # the stubs that generated_bignum_stubs gives are wordLang
+  # programs, so its Seq and its Return are wordLang's
+  ('word_bignum', 'generated_bignum_stubs_def'): WORDLANG_PROG,
   # inst_find_name reads an asm instruction and gives one, so its
   # Skip is asm's where every other Skip of the file is the one of
   # a stackLang program
