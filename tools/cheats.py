@@ -31,8 +31,10 @@ with open(C + '/ml/CHEATS.md', 'w') as out:
             'its value.\n\n')
   if nax is not None:
     out.write('`length (axioms ())` is %d: the three axioms of HOL\n'
-              'Light and %d for the %d definitions below.\n\n'
-              % (nax, nax - 3, len(names)))
+              'Light, one for every theorem of phase two whose\n'
+              'proof is still a cheat, and the rest for the %d\n'
+              'definitions below.\n\n'
+              % (nax, len(names)))
   # why each of them is assumed, where the library layer says it
   why = {}
   try:

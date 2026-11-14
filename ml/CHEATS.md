@@ -14,39 +14,64 @@ axiom per clause.  A declared constant is no axiom: it
 has an implicit definition, which says nothing about
 its value.
 
-`length (axioms ())` is 9610: the three axioms of HOL
-Light and 9607 for the 431 definitions below.
+`length (axioms ())` is 9080: the three axioms of HOL
+Light and 9077 for the 587 definitions below.
 
-Of these 431 definitions
+Of these 587 definitions
 
-- 279 have only their **termination** assumed, so the
+- 189 have only their **termination** assumed, so the
   constant, its type and its clauses are the real ones;
-- 16 are a constant that is **declared** without a
+- 4 are a constant that is **declared** without a
   value, because HOL4 computes the value with ML code:
   the constant has an implicit definition, which says
   nothing about it and adds no axiom (PENDING.md);
-- 136 are assumed for another reason, which the list
+- 394 are assumed for another reason, which the list
   below names (the equation of a tail recursion that
   HOL4 proves with its `mc_tailrecLib`, say).
 
 Why they are assumed:
 
-- 279: termination (CHEAT_TAC)
+- 189: termination (CHEAT_TAC)
+- 149: induction: NO_TAC
 - 132: equation of a tail recursion assumed
-- 16: declared (no value)
-- 1: free: known_co:(clos_known_config)option->(num->((val_approx)spt#(
-- 1: free: word_heap:(?1655030)word->((?1655018,?1655019)heap_element)l
+- 75: the termination of the definition is assumed
+- 26: induction: MATCH_MP_TAC: No match
+- 4: induction: type_match
+- 4: declared (no value)
+- 3: induction: ACCEPT_TAC
+- 1: induction: find
+- 1: free: known_co:(clos_known_config)option->(num->((val_approx
+- 1: free: word_heap:(?1655030)word->((?1655018,?1655019)heap_ele
 - 1: free: thunk_tag_to_bits:thunk_mode->(?1655824)word
-- 1: free: memory_rel:data_to_word_config->bool->num->((dataSem_v)bvlSe
+- 1: free: memory_rel:data_to_word_config->bool->num->((dataSem_v
 
 | definition | file | why |
 |---|---|---|
-| `nullableML` | `lib/NTproperties.ml` | termination (CHEAT_TAC) |
+| `list_compare_ind` | `` | induction: NO_TAC |
+| `FOLDRi_ind` | `` | induction: NO_TAC |
+| `indexedLists_findi_ind` | `` | induction: NO_TAC |
+| `SORTED_ind` | `` | induction: NO_TAC |
+| `PART_ind` | `` | induction: NO_TAC |
+| `mergesort_merge_ind` | `` | induction: NO_TAC |
+| `mergesortN_ind` | `` | induction: NO_TAC |
+| `merge_tail_ind` | `` | induction: NO_TAC |
+| `mergesortN_tail_ind` | `` | induction: NO_TAC |
+| `spts_to_alist_ind` | `` | induction: NO_TAC |
+| `bitify_ind` | `` | induction: NO_TAC |
+| `word_of_bytes_ind` | `` | induction: NO_TAC |
+| `valid_ptree_ind` | `` | induction: NO_TAC |
+| `valid_locs_ind` | `` | induction: NO_TAC |
+| `nullableML_ind` | `` | the termination of the definition is assumed |
 | `firstSetML` | `lib/NTproperties.ml` | termination (CHEAT_TAC) |
-| `firstSetML` | `lib/NTproperties.ml` | termination (CHEAT_TAC) |
-| `print_sexp` | `lib/simpleSexpParse.ml` | termination (CHEAT_TAC) |
+| `firstSetML_ind` | `` | termination (CHEAT_TAC) |
+| `print_sexp_ind` | `` | the termination of the definition is assumed |
+| `closure_spt_ind` | `` | induction: NO_TAC |
+| `mw2n_ind` | `` | induction: NO_TAC |
+| `mw_sub_ind` | `` | induction: NO_TAC |
 | `mw_shift` | `lib/multiword.ml` | termination (CHEAT_TAC) |
-| `mw_shift` | `lib/multiword.ml` | termination (CHEAT_TAC) |
+| `mw_shift_ind` | `` | termination (CHEAT_TAC) |
+| `mw_cmp_ind` | `` | induction: NO_TAC |
+| `single_div_loop_ind` | `` | induction: NO_TAC |
 | `mc_cmp` | `` | equation of a tail recursion assumed |
 | `mc_cmp_pre` | `` | equation of a tail recursion assumed |
 | `mc_compare` | `` | equation of a tail recursion assumed |
@@ -177,300 +202,437 @@ Why they are assumed:
 | `mc_fac_init_pre` | `` | equation of a tail recursion assumed |
 | `mc_fac_final` | `` | equation of a tail recursion assumed |
 | `mc_fac_final_pre` | `` | equation of a tail recursion assumed |
+| `mc_fac_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `mc_fac_pre_ind` | `` | induction: MATCH_MP_TAC: No match |
 | `mc_use_fac` | `` | equation of a tail recursion assumed |
 | `mc_use_fac_pre` | `` | equation of a tail recursion assumed |
+| `any_el_ind` | `` | induction: NO_TAC |
+| `find_index_ind` | `` | induction: NO_TAC |
+| `misc_word_list_ind` | `` | induction: NO_TAC |
+| `enumerate_ind` | `` | induction: NO_TAC |
+| `is_subseq_ind` | `` | induction: NO_TAC |
+| `steps_ind` | `` | induction: NO_TAC |
+| `asm_write_bytearray_ind` | `` | induction: NO_TAC |
+| `bytes_in_memory_ind` | `` | induction: NO_TAC |
+| `bytes_in_mem_ind` | `` | induction: NO_TAC |
+| `intersperse_ind` | `` | induction: NO_TAC |
+| `takeUntil_ind` | `` | induction: NO_TAC |
+| `dropUntil_ind` | `` | induction: NO_TAC |
+| `mllist_mapi_ind` | `` | induction: NO_TAC |
+| `mllist_mapPartial_ind` | `` | induction: NO_TAC |
+| `partition_aux_ind` | `` | induction: NO_TAC |
+| `mllist_foldl_ind` | `` | induction: NO_TAC |
+| `mllist_foldli_aux_ind` | `` | induction: NO_TAC |
+| `tabulate_aux_ind` | `` | induction: NO_TAC |
+| `mllist_collate_ind` | `` | induction: NO_TAC |
+| `LENGTH_AUX_ind` | `` | induction: NO_TAC |
+| `map_rev'_ind` | `` | induction: NO_TAC |
+| `filter_rev'_ind` | `` | induction: NO_TAC |
+| `compare_aux_ind` | `` | induction: NO_TAC |
+| `mk_id_ind` | `` | induction: NO_TAC |
+| `nsLookupMod_ind` | `` | induction: NO_TAC |
+| `nsMap_ind` | `` | induction: NO_TAC |
+| `has_install_ind` | `` | induction: NO_TAC |
 | `bvi_to_data_compile` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
-| `bvi_to_data_compile` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
+| `bvi_to_data_compile_ind` | `` | termination (CHEAT_TAC) |
 | `bvi_to_data_compile_sing` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
-| `bvi_to_data_compile_sing` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
+| `bvi_to_data_compile_sing_ind` | `` | termination (CHEAT_TAC) |
 | `inline_exp` | `compiler/backend/bvi_inline.ml` | termination (CHEAT_TAC) |
-| `inline_exp` | `compiler/backend/bvi_inline.ml` | termination (CHEAT_TAC) |
+| `inline_exp_ind` | `` | termination (CHEAT_TAC) |
+| `remove_ticks_exp_ind` | `` | induction: type_match |
+| `bvi_let_compile_ind` | `` | the termination of the definition is assumed |
+| `bvi_let_compile_sing_ind` | `` | induction: type_match |
+| `term_ok_int_ind` | `` | induction: NO_TAC |
+| `term_ok_any_ind` | `` | induction: NO_TAC |
+| `LAST1_ind` | `` | induction: NO_TAC |
 | `scan_expr` | `compiler/backend/bvi_tailrec.ml` | termination (CHEAT_TAC) |
-| `scan_expr` | `compiler/backend/bvi_tailrec.ml` | termination (CHEAT_TAC) |
-| `has_rec` | `compiler/backend/bvi_tailrec.ml` | termination (CHEAT_TAC) |
+| `scan_expr_ind` | `` | termination (CHEAT_TAC) |
+| `has_rec_ind` | `` | the termination of the definition is assumed |
 | `has_rec_sing` | `compiler/backend/bvi_tailrec.ml` | termination (CHEAT_TAC) |
-| `has_rec_sing` | `compiler/backend/bvi_tailrec.ml` | termination (CHEAT_TAC) |
+| `has_rec_sing_ind` | `` | termination (CHEAT_TAC) |
+| `bvi_tmc_bind_ind` | `` | induction: NO_TAC |
 | `bvi_to_cb_aux_sing` | `compiler/backend/bvi_tmc.ml` | termination (CHEAT_TAC) |
-| `bvi_to_cb_aux_sing` | `compiler/backend/bvi_tmc.ml` | termination (CHEAT_TAC) |
-| `cb_to_bvi_worker_aux` | `compiler/backend/bvi_tmc.ml` | termination (CHEAT_TAC) |
+| `bvi_to_cb_aux_sing_ind` | `` | termination (CHEAT_TAC) |
+| `cb_to_bvi_worker_aux_ind` | `` | the termination of the definition is assumed |
+| `bvl_const_compile_ind` | `` | the termination of the definition is assumed |
 | `handle_simp` | `compiler/backend/bvl_handle.ml` | termination (CHEAT_TAC) |
-| `handle_simp` | `compiler/backend/bvl_handle.ml` | termination (CHEAT_TAC) |
+| `handle_simp_ind` | `` | termination (CHEAT_TAC) |
+| `compile_seqs_ind` | `` | induction: NO_TAC |
 | `tick_inline` | `compiler/backend/bvl_inline.ml` | termination (CHEAT_TAC) |
-| `tick_inline` | `compiler/backend/bvl_inline.ml` | termination (CHEAT_TAC) |
+| `tick_inline_ind` | `` | termination (CHEAT_TAC) |
 | `bvl_inline_let_op` | `compiler/backend/bvl_inline.ml` | termination (CHEAT_TAC) |
-| `bvl_inline_let_op` | `compiler/backend/bvl_inline.ml` | termination (CHEAT_TAC) |
-| `bvl_to_bvi_compile_exps` | `compiler/backend/bvl_to_bvi.ml` | termination (CHEAT_TAC) |
-| `bvl_to_bvi_compile_exps` | `compiler/backend/bvl_to_bvi.ml` | termination (CHEAT_TAC) |
-| `compile_exps_sing` | `compiler/backend/bvl_to_bvi.ml` | termination (CHEAT_TAC) |
-| `compile_exps_sing` | `compiler/backend/bvl_to_bvi.ml` | termination (CHEAT_TAC) |
-| `JumpList` | `compiler/backend/bvl_jump.ml` | termination (CHEAT_TAC) |
+| `bvl_inline_let_op_ind` | `` | termination (CHEAT_TAC) |
+| `JumpList_ind` | `` | the termination of the definition is assumed |
 | `alt_free` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
-| `alt_free` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `alt_free_ind` | `` | termination (CHEAT_TAC) |
 | `alt_free_sing` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
-| `alt_free_sing` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `alt_free_sing_ind` | `` | termination (CHEAT_TAC) |
 | `clos_annotate_shift` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
-| `clos_annotate_shift` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `clos_annotate_shift_ind` | `` | termination (CHEAT_TAC) |
 | `shift_sing` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
-| `shift_sing` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `shift_sing_ind` | `` | termination (CHEAT_TAC) |
 | `clos_call_free` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
-| `clos_call_free` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `clos_call_free_ind` | `` | termination (CHEAT_TAC) |
 | `free_sing` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
-| `free_sing` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `free_sing_ind` | `` | termination (CHEAT_TAC) |
+| `insert_each_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `code_list_ind` | `` | induction: MATCH_MP_TAC: No match |
 | `calls` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
-| `calls` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `calls_ind` | `` | termination (CHEAT_TAC) |
 | `calls_sing` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
-| `calls_sing` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `calls_sing_ind` | `` | termination (CHEAT_TAC) |
+| `remove_fvs_ind` | `` | induction: NO_TAC |
 | `clos_letop_let_op` | `compiler/backend/clos_letop.ml` | termination (CHEAT_TAC) |
-| `clos_letop_let_op` | `compiler/backend/clos_letop.ml` | termination (CHEAT_TAC) |
-| `eq_pure_list` | `compiler/backend/clos_op.ml` | termination (CHEAT_TAC) |
+| `clos_letop_let_op_ind` | `` | termination (CHEAT_TAC) |
+| `eq_pure_list_ind` | `` | the termination of the definition is assumed |
+| `lift_exps_ind` | `` | induction: NO_TAC |
+| `clos_ticks_remove_ticks_ind` | `` | induction: NO_TAC |
 | `get_size_sc_aux` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
-| `get_size_sc_aux` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
+| `get_size_sc_aux_ind` | `` | termination (CHEAT_TAC) |
 | `clos_known_free` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
-| `clos_known_free` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
+| `clos_known_free_ind` | `` | termination (CHEAT_TAC) |
+| `merge_tup_ind` | `` | induction: MATCH_MP_TAC: No match |
 | `known` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
-| `known` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
-| `intro_multi` | `compiler/backend/clos_mti.ml` | termination (CHEAT_TAC) |
+| `known_ind` | `` | termination (CHEAT_TAC) |
+| `intro_multi_ind` | `` | the termination of the definition is assumed |
 | `renumber_code_locs_list` | `compiler/backend/clos_number.ml` | termination (CHEAT_TAC) |
-| `renumber_code_locs_list` | `compiler/backend/clos_number.ml` | termination (CHEAT_TAC) |
+| `renumber_code_locs_list_ind` | `` | termination (CHEAT_TAC) |
+| `recc_Lets_ind` | `` | induction: NO_TAC |
 | `clos_to_bvl_compile_exps` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
-| `clos_to_bvl_compile_exps` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `clos_to_bvl_compile_exps_ind` | `` | termination (CHEAT_TAC) |
 | `compile_exp_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
-| `compile_exp_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `compile_exp_sing_ind` | `` | termination (CHEAT_TAC) |
+| `code_split_ind` | `` | induction: NO_TAC |
+| `code_merge_ind` | `` | induction: NO_TAC |
 | `code_sort` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
-| `code_sort` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `code_sort_ind` | `` | termination (CHEAT_TAC) |
 | `get_src_names` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
-| `get_src_names` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `get_src_names_ind` | `` | termination (CHEAT_TAC) |
 | `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
-| `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `get_src_names_sing_ind` | `` | termination (CHEAT_TAC) |
 | `var_exp` | `pancake/panLang.ml` | termination (CHEAT_TAC) |
-| `var_exp` | `pancake/panLang.ml` | termination (CHEAT_TAC) |
+| `var_exp_ind` | `` | termination (CHEAT_TAC) |
 | `global_var_exp` | `pancake/panLang.ml` | termination (CHEAT_TAC) |
-| `global_var_exp` | `pancake/panLang.ml` | termination (CHEAT_TAC) |
+| `global_var_exp_ind` | `` | termination (CHEAT_TAC) |
+| `wordLang_every_var_ind` | `` | induction: NO_TAC |
+| `every_stack_var_ind` | `` | induction: NO_TAC |
+| `max_var_ind` | `` | induction: NO_TAC |
+| `word_bignum_compile_ind` | `` | induction: NO_TAC |
 | `call_graph` | `compiler/backend/word_depth.ml` | termination (CHEAT_TAC) |
-| `call_graph` | `compiler/backend/word_depth.ml` | termination (CHEAT_TAC) |
+| `call_graph_ind` | `` | termination (CHEAT_TAC) |
 | `semanticPrimitives_pmatch` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
-| `semanticPrimitives_pmatch` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
+| `semanticPrimitives_pmatch_ind` | `` | termination (CHEAT_TAC) |
 | `semanticPrimitives_do_eq` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
-| `semanticPrimitives_do_eq` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
+| `semanticPrimitives_do_eq_ind` | `` | termination (CHEAT_TAC) |
 | `concrete_v` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
-| `concrete_v` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
-| `st_ex_MAP` | `compiler/backend/reg_alloc/reg_alloc.ml` | termination (CHEAT_TAC) |
-| `st_ex_PARTITION` | `compiler/backend/reg_alloc/reg_alloc.ml` | termination (CHEAT_TAC) |
-| `st_ex_FILTER` | `compiler/backend/reg_alloc/reg_alloc.ml` | termination (CHEAT_TAC) |
-| `remove_inactive_intervals` | `compiler/backend/reg_alloc/linear_scan.ml` | termination (CHEAT_TAC) |
-| `st_ex_FOLDL` | `compiler/backend/reg_alloc/linear_scan.ml` | termination (CHEAT_TAC) |
-| `st_ex_FILTER_good` | `compiler/backend/reg_alloc/linear_scan.ml` | termination (CHEAT_TAC) |
-| `sort_regs` | `compiler/backend/reg_alloc/linear_scan.ml` | termination (CHEAT_TAC) |
-| `linear_scan_sort_moves` | `compiler/backend/reg_alloc/linear_scan.ml` | termination (CHEAT_TAC) |
+| `concrete_v_ind` | `` | termination (CHEAT_TAC) |
+| `Msub_ind` | `` | induction: NO_TAC |
+| `Mupdate_ind` | `` | induction: NO_TAC |
+| `st_ex_FOREACH_ind` | `` | induction: NO_TAC |
+| `st_ex_MAP_ind` | `` | the termination of the definition is assumed |
+| `st_ex_PARTITION_ind` | `` | the termination of the definition is assumed |
+| `st_ex_FILTER_ind` | `` | the termination of the definition is assumed |
+| `st_ex_FIRST_ind` | `` | induction: NO_TAC |
+| `list_remap_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `mk_bij_aux_ind` | `` | induction: NO_TAC |
+| `remove_inactive_intervals_ind` | `` | the termination of the definition is assumed |
+| `add_active_interval_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `st_ex_FOLDL_ind` | `` | the termination of the definition is assumed |
+| `st_ex_FILTER_good_ind` | `` | the termination of the definition is assumed |
+| `sort_regs_ind` | `` | the termination of the definition is assumed |
+| `linear_scan_sort_moves_ind` | `` | the termination of the definition is assumed |
 | `ssa_cc_trans` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
-| `ssa_cc_trans` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
+| `ssa_cc_trans_ind` | `` | termination (CHEAT_TAC) |
+| `apply_colour_ind` | `` | induction: NO_TAC |
 | `remove_dead` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
-| `remove_dead` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
+| `remove_dead_ind` | `` | termination (CHEAT_TAC) |
 | `get_clash_tree` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
-| `get_clash_tree` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
+| `get_clash_tree_ind` | `` | termination (CHEAT_TAC) |
 | `get_heu` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
-| `get_heu` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
-| `get_stack_only_aux` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
-| `StoreAnyConsts` | `compiler/backend/data_to_word.ml` | termination (CHEAT_TAC) |
+| `get_heu_ind` | `` | termination (CHEAT_TAC) |
+| `get_stack_only_aux_ind` | `` | the termination of the definition is assumed |
+| `pull_ops_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `inst_select_exp_ind` | `` | induction: NO_TAC |
+| `inst_select_ind` | `` | induction: NO_TAC |
+| `three_to_two_reg_ind` | `` | induction: NO_TAC |
+| `remove_must_terminate_ind` | `` | induction: NO_TAC |
+| `Seq_assoc_ind` | `` | induction: NO_TAC |
+| `const_fp_exp_ind` | `` | induction: NO_TAC |
+| `simp_duplicate_if_ind` | `` | induction: NO_TAC |
+| `Seq_assoc_right_ind` | `` | induction: NO_TAC |
+| `MemEqList_ind` | `` | induction: NO_TAC |
+| `StoreAnyConsts_ind` | `` | the termination of the definition is assumed |
+| `write_bytes_ind` | `` | induction: NO_TAC |
+| `data_to_word_comp_ind` | `` | induction: NO_TAC |
 | `to_constant` | `compiler/backend/clos_interp.ml` | termination (CHEAT_TAC) |
-| `to_constant` | `compiler/backend/clos_interp.ml` | termination (CHEAT_TAC) |
+| `to_constant_ind` | `` | termination (CHEAT_TAC) |
 | `flat_to_clos_compile` | `compiler/backend/flat_to_clos.ml` | termination (CHEAT_TAC) |
-| `flat_to_clos_compile` | `compiler/backend/flat_to_clos.ml` | termination (CHEAT_TAC) |
-| `prog_to_bytes` | `compiler/backend/lab_to_target.ml` | termination (CHEAT_TAC) |
-| `find_ffi_names` | `compiler/backend/lab_to_target.ml` | termination (CHEAT_TAC) |
-| `mlsexp_lex_aux` | `basis/pure/mlsexp.ml` | termination (CHEAT_TAC) |
-| `getOpt` | `basis/pure/mloption.ml` | termination (CHEAT_TAC) |
+| `flat_to_clos_compile_ind` | `` | termination (CHEAT_TAC) |
+| `num_to_chars_ind` | `` | induction: NO_TAC |
+| `fromChars_unsafe_ind` | `` | induction: NO_TAC |
+| `fromChars_ind` | `` | induction: NO_TAC |
+| `json_to_mlstring_ind` | `` | induction: NO_TAC |
+| `enc_lines_again_ind` | `` | induction: NO_TAC |
+| `prog_to_bytes_ind` | `` | the termination of the definition is assumed |
+| `list_add_if_fresh_ind` | `` | induction: NO_TAC |
+| `find_ffi_names_ind` | `` | the termination of the definition is assumed |
+| `get_shmem_info_ind` | `` | induction: NO_TAC |
+| `mlsexp_lex_aux_ind` | `` | the termination of the definition is assumed |
+| `parse_aux_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `to_tokens_ind` | `` | induction: NO_TAC |
 | `getOpt` | `basis/pure/mloption.ml` | termination (CHEAT_TAC) |
 | `evaluate` | `semantics/evaluate.ml` | termination (CHEAT_TAC) |
-| `evaluate` | `semantics/evaluate.ml` | termination (CHEAT_TAC) |
-| `total_pat` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
+| `evaluate_ind` | `` | termination (CHEAT_TAC) |
+| `total_pat_ind` | `` | the termination of the definition is assumed |
 | `has_Eval` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
-| `has_Eval` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
+| `has_Eval_ind` | `` | termination (CHEAT_TAC) |
 | `find_loc` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
-| `find_loc` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
+| `find_loc_ind` | `` | termination (CHEAT_TAC) |
 | `find_lookups` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
-| `find_lookups` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
+| `find_lookups_ind` | `` | termination (CHEAT_TAC) |
 | `pattern_semantics_pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | termination (CHEAT_TAC) |
-| `pattern_semantics_pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | termination (CHEAT_TAC) |
-| `exh_matrix` | `compiler/backend/pattern_matching/pattern_exh.ml` | termination (CHEAT_TAC) |
-| `exh_steps` | `compiler/backend/pattern_matching/pattern_exh.ml` | termination (CHEAT_TAC) |
-| `exh_all` | `compiler/backend/pattern_matching/pattern_exh.ml` | termination (CHEAT_TAC) |
-| `pat_to_guard` | `compiler/backend/pattern_matching/pattern_comp.ml` | termination (CHEAT_TAC) |
+| `pattern_semantics_pmatch_ind` | `` | termination (CHEAT_TAC) |
+| `app_pos_ind` | `` | induction: NO_TAC |
+| `mk_prods_ind` | `` | induction: NO_TAC |
+| `mk_rows_ind` | `` | induction: NO_TAC |
+| `ctor_nub_ind` | `` | induction: NO_TAC |
+| `ctor_keep_ind` | `` | induction: NO_TAC |
+| `exh_matrix_ind` | `` | the termination of the definition is assumed |
+| `exh_steps_ind` | `` | the termination of the definition is assumed |
+| `exh_all_ind` | `` | the termination of the definition is assumed |
+| `pat_to_guard_ind` | `` | the termination of the definition is assumed |
 | `compile_pat_bindings` | `compiler/backend/flat_pattern.ml` | termination (CHEAT_TAC) |
-| `compile_pat_bindings` | `compiler/backend/flat_pattern.ml` | termination (CHEAT_TAC) |
-| `naive_pattern_match` | `compiler/backend/flat_pattern.ml` | termination (CHEAT_TAC) |
+| `compile_pat_bindings_ind` | `` | termination (CHEAT_TAC) |
+| `naive_pattern_match_ind` | `` | the termination of the definition is assumed |
 | `flat_pattern_compile_exp` | `compiler/backend/flat_pattern.ml` | termination (CHEAT_TAC) |
-| `flat_pattern_compile_exp` | `compiler/backend/flat_pattern.ml` | termination (CHEAT_TAC) |
+| `flat_pattern_compile_exp_ind` | `` | termination (CHEAT_TAC) |
+| `join_all_names_aux_ind` | `` | induction: MATCH_MP_TAC: No match |
 | `source_to_flat_compile_exp` | `compiler/backend/source_to_flat.ml` | termination (CHEAT_TAC) |
-| `source_to_flat_compile_exp` | `compiler/backend/source_to_flat.ml` | termination (CHEAT_TAC) |
+| `source_to_flat_compile_exp_ind` | `` | termination (CHEAT_TAC) |
+| `alloc_defs_ind` | `` | induction: NO_TAC |
 | `source_to_flat_compile_decs` | `compiler/backend/source_to_flat.ml` | termination (CHEAT_TAC) |
-| `source_to_flat_compile_decs` | `compiler/backend/source_to_flat.ml` | termination (CHEAT_TAC) |
+| `source_to_flat_compile_decs_ind` | `` | termination (CHEAT_TAC) |
 | `num_to_hex` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
-| `num_to_hex` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `num_to_hex_ind` | `` | termination (CHEAT_TAC) |
 | `ast_t_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
-| `ast_t_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `ast_t_to_display_ind` | `` | termination (CHEAT_TAC) |
 | `pat_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
-| `pat_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `pat_to_display_ind` | `` | termination (CHEAT_TAC) |
 | `exp_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
-| `exp_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `exp_to_display_ind` | `` | termination (CHEAT_TAC) |
 | `source_to_display_dec` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
-| `source_to_display_dec` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `source_to_display_dec_ind` | `` | termination (CHEAT_TAC) |
 | `flat_pat_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
-| `flat_pat_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `flat_pat_to_display_ind` | `` | termination (CHEAT_TAC) |
 | `clos_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
-| `clos_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `clos_to_display_ind` | `` | termination (CHEAT_TAC) |
+| `bvl_to_display_ind` | `` | induction: type_match |
 | `bvi_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
-| `bvi_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `bvi_to_display_ind` | `` | termination (CHEAT_TAC) |
 | `stack_prog_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
-| `stack_prog_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `stack_prog_to_display_ind` | `` | termination (CHEAT_TAC) |
 | `word_prog_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
-| `word_prog_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
-| `stack_alloc_comp` | `compiler/backend/stack_alloc.ml` | termination (CHEAT_TAC) |
+| `word_prog_to_display_ind` | `` | termination (CHEAT_TAC) |
+| `map_to_append_ind` | `` | induction: NO_TAC |
+| `lift_lets_ind` | `` | induction: NO_TAC |
+| `stack_alloc_comp_ind` | `` | the termination of the definition is assumed |
+| `stack_names_comp_ind` | `` | induction: NO_TAC |
+| `stack_remove_comp_ind` | `` | induction: NO_TAC |
+| `pmov_ind` | `` | induction: NO_TAC |
+| `wMoveAux_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `bits_to_word_ind` | `` | induction: NO_TAC |
+| `copy_ret_aux_ind` | `` | induction: NO_TAC |
 | `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | termination (CHEAT_TAC) |
-| `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | termination (CHEAT_TAC) |
-| `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | termination (CHEAT_TAC) |
-| `nsSub_compute` | `semantics/proofs/namespaceProps.ml` | termination (CHEAT_TAC) |
+| `word_to_stack_comp_ind` | `` | termination (CHEAT_TAC) |
+| `compile_word_to_stack_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `stack_to_lab_flatten_ind` | `` | the termination of the definition is assumed |
+| `alist_rel_restr_ind` | `` | induction: NO_TAC |
+| `nsSub_compute_ind` | `` | the termination of the definition is assumed |
 | `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
-| `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
+| `FV_ind` | `` | termination (CHEAT_TAC) |
+| `closSem_exp_alt_size_ind` | `` | induction: MATCH_MP_TAC: No match |
 | `closSem_evaluate` | `compiler/backend/semantics/closSem.ml` | termination (CHEAT_TAC) |
-| `closSem_evaluate` | `compiler/backend/semantics/closSem.ml` | termination (CHEAT_TAC) |
+| `closSem_evaluate_ind` | `` | termination (CHEAT_TAC) |
 | `bvlSem_evaluate` | `compiler/backend/semantics/bvlSem.ml` | termination (CHEAT_TAC) |
-| `bvlSem_evaluate` | `compiler/backend/semantics/bvlSem.ml` | termination (CHEAT_TAC) |
-| `bviSem_finalise_cons` | `compiler/backend/semantics/bviSem.ml` | termination (CHEAT_TAC) |
+| `bvlSem_evaluate_ind` | `` | termination (CHEAT_TAC) |
+| `bviSem_finalise_cons_ind` | `` | the termination of the definition is assumed |
 | `bviSem_evaluate` | `compiler/backend/semantics/bviSem.ml` | termination (CHEAT_TAC) |
-| `bviSem_evaluate` | `compiler/backend/semantics/bviSem.ml` | termination (CHEAT_TAC) |
-| `ptree_Expr` | `semantics/cmlPtreeConversion.ml` | termination (CHEAT_TAC) |
-| `ptree_Expr` | `semantics/cmlPtreeConversion.ml` | termination (CHEAT_TAC) |
-| `split16` | `compiler/backend/export.ml` | termination (CHEAT_TAC) |
-| `sexpid` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
-| `sexptype` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
-| `sexptype_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
-| `sexppat` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
-| `sexppat_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
-| `sexpexp` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
-| `sexpexp_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
-| `sexpexp_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
-| `sexpdec` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
-| `sexpdec_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
-| `decode_infer_t` | `compiler/inference/unify.ml` | termination (CHEAT_TAC) |
+| `bviSem_evaluate_ind` | `` | termination (CHEAT_TAC) |
+| `mk_linfix_ind` | `` | induction: ACCEPT_TAC |
+| `mk_rinfix_ind` | `` | induction: ACCEPT_TAC |
+| `split16_ind` | `` | the termination of the definition is assumed |
+| `comma_cat_ind` | `` | induction: NO_TAC |
+| `get_tyname_ind` | `` | induction: NO_TAC |
+| `infer_t_commas_ind` | `` | induction: NO_TAC |
+| `inf_type_to_string_rec_ind` | `` | induction: type_match |
+| `decode_infer_t_ind` | `` | the termination of the definition is assumed |
 | `cvwalk_code` | `compiler/inference/unify.ml` | declared (no value) |
 | `kcocwl_code` | `compiler/inference/unify.ml` | declared (no value) |
 | `kcwalkstarwl_code` | `compiler/inference/unify.ml` | declared (no value) |
 | `cunify_code` | `compiler/inference/unify.ml` | declared (no value) |
+| `find_dup_ind` | `` | induction: NO_TAC |
+| `check_dups_ind` | `` | induction: NO_TAC |
 | `infer_p` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
-| `infer_p` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `infer_p_ind` | `` | termination (CHEAT_TAC) |
 | `infer_e` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
-| `infer_e` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `infer_e_ind` | `` | termination (CHEAT_TAC) |
 | `infer_d` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
-| `infer_d` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
-| `alist_nub` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
-| `ns_to_alist` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
-| `lexer_fun_read_string` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
-| `read_Ident` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
-| `lexer_fun_aux` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
-| `split_top_level_semi` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
-| `lexer_impl_lex_aux` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
-| `lex_aux_alt` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
-| `lex_impl_all` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
-| `lex_impl_all_tokens` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
-| `parse_topdecs_to_ast` | `compiler/compiler.ml` | declared (no value) |
-| `static_check` | `compiler/compiler.ml` | declared (no value) |
-| `pan_compile_tap` | `compiler/compiler.ml` | declared (no value) |
-| `x64_enc` | `compiler/compiler.ml` | declared (no value) |
-| `arm8_enc` | `compiler/compiler.ml` | declared (no value) |
-| `mips_enc` | `compiler/compiler.ml` | declared (no value) |
-| `riscv_enc` | `compiler/compiler.ml` | declared (no value) |
-| `arm7_enc` | `compiler/compiler.ml` | declared (no value) |
-| `ag32_enc` | `compiler/compiler.ml` | declared (no value) |
-| `arm8_valid_immediate` | `compiler/compiler.ml` | declared (no value) |
-| `arm7_valid_immediate` | `compiler/compiler.ml` | declared (no value) |
-| `basis` | `compiler/compiler.ml` | declared (no value) |
-| `copying_gc_gc_move_list` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
-| `copying_gc_gc_move_loop` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
+| `infer_d_ind` | `` | termination (CHEAT_TAC) |
+| `alist_nub_ind` | `` | the termination of the definition is assumed |
+| `ns_to_alist_ind` | `` | the termination of the definition is assumed |
+| `lexer_fun_read_string_ind` | `` | the termination of the definition is assumed |
+| `read_Ident_ind` | `` | the termination of the definition is assumed |
+| `next_sym_ind` | `` | induction: NO_TAC |
+| `lexer_fun_aux_ind` | `` | the termination of the definition is assumed |
+| `split_top_level_semi_ind` | `` | the termination of the definition is assumed |
+| `next_sym_alt_ind` | `` | induction: NO_TAC |
+| `lexer_impl_lex_aux_ind` | `` | the termination of the definition is assumed |
+| `lex_aux_alt_ind` | `` | the termination of the definition is assumed |
+| `lex_impl_all_ind` | `` | the termination of the definition is assumed |
+| `lex_impl_all_tokens_ind` | `` | the termination of the definition is assumed |
+| `copying_gc_gc_move_list_ind` | `` | the termination of the definition is assumed |
+| `copying_gc_gc_move_loop_ind` | `` | the termination of the definition is assumed |
+| `bignum_digits_ind` | `` | induction: NO_TAC |
 | `size_of` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
-| `size_of` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
-| `dataSem_finalise_cons` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
+| `size_of_ind` | `` | termination (CHEAT_TAC) |
+| `dataSem_finalise_cons_ind` | `` | the termination of the definition is assumed |
 | `dataSem_evaluate` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
-| `dataSem_evaluate` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
+| `dataSem_evaluate_ind` | `` | termination (CHEAT_TAC) |
 | `flatSem_do_eq` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
-| `flatSem_do_eq` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
+| `flatSem_do_eq_ind` | `` | termination (CHEAT_TAC) |
 | `flatSem_pmatch` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
-| `flatSem_pmatch` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
+| `flatSem_pmatch_ind` | `` | termination (CHEAT_TAC) |
+| `flatSem_exp_alt_size_ind` | `` | induction: MATCH_MP_TAC: No match |
 | `flatSem_evaluate` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
-| `flatSem_evaluate` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
-| `gen_gc_gc_move_data` | `compiler/backend/gc/gen_gc.ml` | termination (CHEAT_TAC) |
-| `gc_move_refs` | `compiler/backend/gc/gen_gc.ml` | termination (CHEAT_TAC) |
-| `gen_gc_partial_gc_move_data` | `compiler/backend/gc/gen_gc_partial.ml` | termination (CHEAT_TAC) |
+| `flatSem_evaluate_ind` | `` | termination (CHEAT_TAC) |
+| `gen_gc_gc_move_data_ind` | `` | the termination of the definition is assumed |
+| `gc_move_refs_ind` | `` | the termination of the definition is assumed |
+| `gen_gc_partial_gc_move_data_ind` | `` | the termination of the definition is assumed |
+| `const_addresses_ind` | `` | induction: NO_TAC |
 | `wordSem_evaluate` | `compiler/backend/semantics/wordSem.ml` | termination (CHEAT_TAC) |
-| `wordSem_evaluate` | `compiler/backend/semantics/wordSem.ml` | termination (CHEAT_TAC) |
-| `all_pcs` | `compiler/encoders/asm/asmProps.ml` | termination (CHEAT_TAC) |
+| `wordSem_evaluate_ind` | `` | termination (CHEAT_TAC) |
+| `all_pcs_ind` | `` | the termination of the definition is assumed |
 | `targetSem_evaluate` | `compiler/backend/semantics/targetSem.ml` | termination (CHEAT_TAC) |
-| `targetSem_evaluate` | `compiler/backend/semantics/targetSem.ml` | termination (CHEAT_TAC) |
-| `asm_code_length` | `compiler/backend/semantics/labSem.ml` | termination (CHEAT_TAC) |
-| `loc_to_pc` | `compiler/backend/semantics/labSem.ml` | termination (CHEAT_TAC) |
+| `targetSem_evaluate_ind` | `` | termination (CHEAT_TAC) |
+| `asm_fetch_aux_ind` | `` | induction: NO_TAC |
+| `asm_code_length_ind` | `` | the termination of the definition is assumed |
+| `loc_to_pc_ind` | `` | the termination of the definition is assumed |
+| `next_label_ind` | `` | induction: NO_TAC |
+| `get_lab_after_ind` | `` | induction: NO_TAC |
 | `labSem_evaluate` | `compiler/backend/semantics/labSem.ml` | termination (CHEAT_TAC) |
-| `labSem_evaluate` | `compiler/backend/semantics/labSem.ml` | termination (CHEAT_TAC) |
-| `bit_length` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
-| `stackSem_enc_stack` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
-| `stackSem_dec_stack` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
-| `copy_words` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
+| `labSem_evaluate_ind` | `` | termination (CHEAT_TAC) |
+| `bit_length_ind` | `` | the termination of the definition is assumed |
+| `filter_bitmap_ind` | `` | induction: NO_TAC |
+| `read_bitmap_ind` | `` | induction: NO_TAC |
+| `stackSem_enc_stack_ind` | `` | the termination of the definition is assumed |
+| `stackSem_dec_stack_ind` | `` | the termination of the definition is assumed |
+| `copy_words_for_pattern_ind` | `` | induction: NO_TAC |
+| `copy_words_ind` | `` | the termination of the definition is assumed |
 | `stackSem_evaluate` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
-| `stackSem_evaluate` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
+| `stackSem_evaluate_ind` | `` | termination (CHEAT_TAC) |
+| `flat_exp_conventions_ind` | `` | induction: NO_TAC |
+| `every_inst_ind` | `` | induction: NO_TAC |
+| `full_inst_ok_less_ind` | `` | induction: NO_TAC |
+| `wf_cutsets_ind` | `` | induction: NO_TAC |
+| `call_arg_convention_ind` | `` | induction: NO_TAC |
+| `wordConvs_extract_labels_ind` | `` | induction: NO_TAC |
+| `wordConvs_get_code_labels_ind` | `` | induction: NO_TAC |
+| `not_created_subprogs_ind` | `` | induction: NO_TAC |
+| `find_word_ref_ind` | `` | induction: NO_TAC |
 | `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
-| `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
-| `approx_of` | `compiler/backend/semantics/dataProps.ml` | termination (CHEAT_TAC) |
-| `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
-| `handle_ok` | `compiler/backend/proofs/bvl_handleProof.ml` | termination (CHEAT_TAC) |
+| `bviProps_get_code_labels_ind` | `` | termination (CHEAT_TAC) |
+| `type_def_to_ctMap_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `approx_of_ind` | `` | the termination of the definition is assumed |
+| `no_mutcons_ind` | `` | induction: NO_TAC |
+| `mb_rel_ind` | `` | the termination of the definition is assumed |
+| `bvl_constProof_env_rel_ind` | `` | induction: find |
+| `handle_ok_ind` | `` | the termination of the definition is assumed |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `contains_App_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `code_locs_ind` | `` | termination (CHEAT_TAC) |
+| `contains_App_SOME_ind` | `` | the termination of the definition is assumed |
 | `every_Fn_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `every_Fn_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `every_Fn_SOME_ind` | `` | termination (CHEAT_TAC) |
 | `every_Fn_vs_NONE` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `every_Fn_vs_NONE` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `every_Fn_vs_NONE_ind` | `` | termination (CHEAT_TAC) |
 | `every_Fn_vs_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `every_Fn_vs_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `every_Fn_vs_SOME_ind` | `` | termination (CHEAT_TAC) |
+| `no_mti_ind` | `` | induction: NO_TAC |
 | `fv` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `fv` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `fv_ind` | `` | termination (CHEAT_TAC) |
 | `closProps_set_globals` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `closProps_set_globals` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `closProps_set_globals_ind` | `` | termination (CHEAT_TAC) |
 | `obeys_max_app` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `obeys_max_app` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `obeys_max_app_ind` | `` | termination (CHEAT_TAC) |
 | `no_Labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `no_Labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `no_Labels_ind` | `` | termination (CHEAT_TAC) |
 | `app_call_dests` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `app_call_dests` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `app_call_dests_ind` | `` | termination (CHEAT_TAC) |
 | `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `closProps_get_code_labels_ind` | `` | termination (CHEAT_TAC) |
 | `clos_callProof_v_rel` | `compiler/backend/proofs/clos_callProof.ml` | termination (CHEAT_TAC) |
-| `clos_callProof_v_rel` | `compiler/backend/proofs/clos_callProof.ml` | termination (CHEAT_TAC) |
+| `clos_callProof_v_rel_ind` | `` | termination (CHEAT_TAC) |
+| `wfv_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `insert_each'_ind` | `` | induction: NO_TAC |
 | `clos_knownProof_v_rel` | `compiler/backend/proofs/clos_knownProof.ml` | termination (CHEAT_TAC) |
-| `clos_knownProof_v_rel` | `compiler/backend/proofs/clos_knownProof.ml` | termination (CHEAT_TAC) |
+| `clos_knownProof_v_rel_ind` | `` | termination (CHEAT_TAC) |
 | `clos_to_bvlProof_syntax_oracle_ok` | `compiler/backend/proofs/clos_to_bvlProof.ml` | free: known_co:(clos_known_config)option->(num->((val_approx |
-| `memcpy` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
-| `word_gc_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
-| `word_gen_gc_partial_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
-| `word_gen_gc_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
+| `memcpy_ind` | `` | the termination of the definition is assumed |
+| `word_gc_move_roots_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `word_gc_move_list_ind` | `` | the termination of the definition is assumed |
+| `word_gen_gc_partial_move_roots_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `word_gen_gc_partial_move_list_ind` | `` | the termination of the definition is assumed |
+| `word_gc_move_loop_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `word_gen_gc_partial_move_ref_list_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `word_gen_gc_partial_move_data_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `word_gen_gc_move_roots_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `word_gen_gc_move_list_ind` | `` | the termination of the definition is assumed |
+| `word_gen_gc_move_data_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `word_gen_gc_move_refs_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `word_gen_gc_move_loop_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `eval_exp_ind` | `` | induction: MATCH_MP_TAC: No match |
 | `word_heap_parts` | `compiler/backend/proofs/data_to_word_gcProof.ml` | free: word_heap:(?1655030)word->((?1655018,?1655019)heap_ele |
 | `muttag_header` | `compiler/backend/proofs/data_to_word_gcProof.ml` | free: thunk_tag_to_bits:thunk_mode->(?1655824)word |
+| `data_to_word_gcProof_stack_rel_ind` | `` | induction: NO_TAC |
 | `data_to_word_gcProof_state_rel` | `compiler/backend/proofs/data_to_word_gcProof.ml` | free: memory_rel:data_to_word_config->bool->num->((dataSem_v |
+| `IS_SPARSE_SUBLIST_ind` | `` | induction: NO_TAC |
+| `colouring_ok_ind` | `` | induction: NO_TAC |
 | `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
-| `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
+| `flatProps_set_globals_ind` | `` | termination (CHEAT_TAC) |
 | `no_Mat` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
-| `no_Mat` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
-| `adjust_pc` | `compiler/backend/proofs/lab_filterProof.ml` | termination (CHEAT_TAC) |
+| `no_Mat_ind` | `` | termination (CHEAT_TAC) |
+| `adjust_pc_ind` | `` | the termination of the definition is assumed |
+| `stackProps_extract_labels_ind` | `` | induction: NO_TAC |
+| `stack_asm_ok_ind` | `` | induction: NO_TAC |
+| `stack_asm_name_ind` | `` | induction: NO_TAC |
+| `stack_asm_remove_ind` | `` | induction: NO_TAC |
+| `alloc_arg_ind` | `` | induction: NO_TAC |
+| `reg_bound_exp_ind` | `` | induction: NO_TAC |
+| `reg_bound_ind` | `` | induction: NO_TAC |
 | `call_args` | `compiler/backend/semantics/stackProps.ml` | termination (CHEAT_TAC) |
-| `call_args` | `compiler/backend/semantics/stackProps.ml` | termination (CHEAT_TAC) |
-| `has_odd_inst` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
-| `has_io_name` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
-| `all_enc_ok` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
-| `num_pcs` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
-| `all_enc_with_nop` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
-| `even_labels` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
-| `even_labels_strong` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
-| `find_v_globals` | `compiler/backend/proofs/flat_elimProof.ml` | termination (CHEAT_TAC) |
-| `v_has_Eval` | `compiler/backend/proofs/flat_elimProof.ml` | termination (CHEAT_TAC) |
+| `call_args_ind` | `` | termination (CHEAT_TAC) |
+| `stackProps_get_code_labels_ind` | `` | induction: NO_TAC |
+| `stackProps_no_install_ind` | `` | induction: NO_TAC |
+| `no_shmemop_ind` | `` | induction: NO_TAC |
+| `word_list_rev_ind` | `` | induction: NO_TAC |
+| `sec_loc_to_pc_ind` | `` | induction: NO_TAC |
+| `has_odd_inst_ind` | `` | the termination of the definition is assumed |
+| `has_io_name_ind` | `` | the termination of the definition is assumed |
+| `all_enc_ok_ind` | `` | the termination of the definition is assumed |
+| `pos_val_ind` | `` | induction: NO_TAC |
+| `num_pcs_ind` | `` | the termination of the definition is assumed |
+| `all_enc_with_nop_ind` | `` | the termination of the definition is assumed |
+| `even_labels_ind` | `` | the termination of the definition is assumed |
+| `even_labels_strong_ind` | `` | the termination of the definition is assumed |
+| `set_bytes_ind` | `` | induction: NO_TAC |
+| `find_v_globals_ind` | `` | the termination of the definition is assumed |
+| `v_has_Eval_ind` | `` | the termination of the definition is assumed |
+| `index_list_ind` | `` | induction: NO_TAC |
+| `list_LUPDATE_ind` | `` | induction: NO_TAC |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
-| `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
+| `abs_stack_ind` | `` | termination (CHEAT_TAC) |
+| `complex_get_code_labels_ind` | `` | induction: NO_TAC |
+| `convert_t_ind` | `` | induction: ACCEPT_TAC |
+| `leftmost_ind` | `` | induction: NO_TAC |
+| `left_insert_ind` | `` | induction: NO_TAC |
 
-431 definitions.
+587 definitions.
