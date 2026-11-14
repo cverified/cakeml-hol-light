@@ -89,3 +89,12 @@
 ### pmap_EQ
   (REWRITE_TAC[FORALL_PAIR_THM; PAIR_MAP_THM; PAIR_EQ] THEN
     MESON_TAC[])
+
+### not_nullable_seql_input_CONS
+  (REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[seql_cons_SOME]
+    THEN
+   STRIP_TAC THEN
+   FIRST_X_ASSUM(MP_TAC o MATCH_MP (MATCH_MP not_nullable_input_CONS
+     (ASSUME `~nullable cmlG [NT N]`))) THEN
+   FIRST_X_ASSUM(MP_TAC o MATCH_MP length_no_greater) THEN
+   MESON_TAC[LE_TRANS])

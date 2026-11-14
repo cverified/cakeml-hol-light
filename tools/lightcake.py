@@ -411,6 +411,28 @@ def ours_bindings(nm, rank):
   return out, bridge
 
 
+_OOVL = {}
+
+
+def ours_overloads(nm, rank):
+  """the names this port declares as overloads in the files that
+     load before <nm>: it writes those as they stand, so a name of
+     LightCake's that is one of them needs no renaming and is one
+     this port has.  grammar declares NT an overload of grammar_NT
+     while HOL4's gram has a *type* of that name, and the map
+     by the HOL4 name picks the type"""
+  out = set()
+  for p in ours_files(nm, rank):
+    if p not in _OOVL:
+      t = text_of(p)
+      if CUT in t: t = t[:t.index(CUT)]
+      _OOVL[p] = set(re.findall(
+        r'hol4_(?:overload|field_overload|overload_last)\s+"([^"]+)"',
+        t))
+    out |= _OOVL[p]
+  return out
+
+
 def ours_terms(nm, rank):
   """every name such a file of this port writes inside a term:
      what it has, as against what a theory it ports would have
@@ -741,6 +763,13 @@ class Ctx:
     for k, h in lc_thm_names().items():
       if k not in self.kit and h in obyt and k != obyt[h]:
         m.setdefault(k, obyt[h])
+    # a name this port declares as an overload is one it writes
+    # as it stands: it is not renamed, and it is one this port has
+    self.ovl = ours_overloads(nm, self.rank)
+    for k in list(m):
+      if k in self.ovl and k != m[k]: del m[k]
+    for k in list(gm):
+      if k in self.ovl and k != gm[k]: del gm[k]
     self.m, self.gm = m, gm
     # a name of LightCake's is there to be used once this port
     # has the thing it names: a block before it in the file, a
@@ -785,6 +814,7 @@ class Ctx:
                                    body))):
       if w in ns or w in bnd or w in mine: continue
       if w in self.lb and w not in self.have: need.append(w)
+      elif w in self.ovl: continue
       elif w in self.lcn and \
            self.gm.get(w, self.lcn[w]) not in self.ot:
         need.append(w)
