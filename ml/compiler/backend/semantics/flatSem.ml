@@ -695,7 +695,7 @@ let pmatch_stamps_ok = cake_inductive
      // tuples
      n_ps = n_vs ==> pmatch_stamps_ok NONE NONE n_ps n_vs)`;;
 
-(* the clauses in two quotations: ps is (A)list and (pat list); vs is (A)list
+(* the clauses in two quotations: ps is (_)list and (pat list); vs is (_)list
    and (v list), which one quotation cannot typecheck *)
 let flatSem_pmatch_def,flatSem_pmatch_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -784,7 +784,7 @@ let flatSem_AppUnit_def = new_definition
 
 (* the clauses in 10 quotations: a0 is tra, varN and exp; a1 is exp, lit,
    ((ctor_id # type_id) option), varN, op, (varN option), ((varN # varN #
-   exp) list) and (A)list; a2 is ((pat # exp) list), (A)list, (exp list) and
+   exp) list) and (_)list; a2 is ((pat # exp) list), (_)list, (exp list) and
    exp, which one quotation cannot typecheck *)
 let flatSem_exp_alt_size_def,flatSem_exp_alt_size_ind = define_rec_clauses
   [`(flatSem_exp_alt_size (flatLang_Raise a0 a1) = 1 + (tra_size a0 +

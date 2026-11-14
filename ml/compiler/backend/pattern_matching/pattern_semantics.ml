@@ -72,8 +72,8 @@ let is_sibling_def = define_cases
   `(is_sibling x NONE = T) /\
    (is_sibling x (SOME l) = MEM x l)`;;
 
-(* the clauses in three quotations: pargs is (pat list) and (A)list; targs is
-   (term list) and (A)list, which one quotation cannot typecheck *)
+(* the clauses in three quotations: pargs is (pat list) and (_)list; targs is
+   (term list) and (_)list, which one quotation cannot typecheck *)
 let pattern_semantics_pmatch_def,pattern_semantics_pmatch_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

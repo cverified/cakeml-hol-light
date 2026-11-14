@@ -101,7 +101,7 @@ let iAssign_def = new_definition
 let _ = do_list hide_constant ["tail"];;
 
 (* the clauses in two quotations: dest is (num option) and num; xs is (exp
-   list) and (A)list, which one quotation cannot typecheck *)
+   list) and (_)list, which one quotation cannot typecheck *)
 let bvi_to_data_compile_def,bvi_to_data_compile_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -187,7 +187,7 @@ let bvi_to_data_compile_def,bvi_to_data_compile_ind =
                    (dataLang_Call ret (SOME dest) vs NONE))) c2,v,n2)`];;
 
 (* the clauses in two quotations: dest is (num option) and num; xs is (exp
-   list) and (A)list, which one quotation cannot typecheck *)
+   list) and (_)list, which one quotation cannot typecheck *)
 let compile_sing_def,compile_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(bvi_to_data_compile_sing (n:num) (env:num list) tail live ((bvi_Var

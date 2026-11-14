@@ -471,7 +471,7 @@ let check_type_definition_def = new_definition
 (* HOL4 inferScript.sml:510-511: a theorem that HOL4 states as the value of
    an ML expression: check_type_definition_expand *)
 
-(* the clauses in two quotations: ps is (pat list) and (A)list; s is char and
+(* the clauses in two quotations: ps is (pat list) and (_)list; s is char and
    mlstring; w is word8 and word64, which one quotation cannot typecheck *)
 let infer_p_def,infer_p_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -785,8 +785,8 @@ let constrain_op_error_msg_sanity = prove
      IS_PREFIX (explode msg) "Thunk"`,
   CHEAT_TAC);;
 
-(* the clauses in 4 quotations: es is (A)list and (exp list); funs is (A)list
-   and ((varN # varN # exp) list); pes is ((pat # exp) list) and (A)list; x
+(* the clauses in 4 quotations: es is (_)list and (exp list); funs is (_)list
+   and ((varN # varN # exp) list); pes is ((pat # exp) list) and (_)list; x
    is varN and (varN option), which one quotation cannot typecheck *)
 let infer_e_def,infer_e_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -1156,7 +1156,7 @@ let alist_nub_def,alist_nub_ind = define_guess_cheat
    (alist_nub (CONS (x,y) xs) = CONS (x,y) (alist_nub (FILTER (\t. ~(x =
     FST t)) xs)))`;;
 
-(* the clauses in two quotations: ys is (('m , namespace) alist) and (A)list,
+(* the clauses in two quotations: ys is (('m , namespace) alist) and (_)list,
    which one quotation cannot typecheck *)
 let ns_nub_def,ns_nub_ind = define_shaped_rec_clauses
   "maplist>nested"

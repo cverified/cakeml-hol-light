@@ -38,7 +38,7 @@ let _ = do_list hide_constant ["all"; "pmatch"];;
 (* This definition is written to short-circuit,
    i.e. exit as soon as possible. *)
 (* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (A)list, which one quotation cannot typecheck *)
+   xs is (exp list) and (_)list, which one quotation cannot typecheck *)
 let get_size_sc_aux_def,get_size_sc_aux_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(get_size_sc_aux n [] = n) /\
@@ -78,7 +78,7 @@ let get_size_sc_def = new_definition
        if n = 0 then NONE else SOME ((limit' + 1) - n)`;;
 
 (* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (A)list, which one quotation cannot typecheck *)
+   xs is (exp list) and (_)list, which one quotation cannot typecheck *)
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 clos_knownScript.sml:99-102: the tactic that proves the termination *)
@@ -134,7 +134,7 @@ let get_size_sc_SOME = prove
    REWRITE_TAC[option_DISTINCT; option_INJ] THEN ASM_ARITH_TAC));;
 
 (* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (A)list; xs2 is (exp list) and (A)list, which one
+   xs is (exp list) and (_)list; xs2 is (exp list) and (_)list, which one
    quotation cannot typecheck *)
 let clos_known_free_def,clos_known_free_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -199,7 +199,7 @@ let clos_known_closed_def = new_definition
   [x])))`;;
 
 (* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (A)list, which one quotation cannot typecheck *)
+   xs is (exp list) and (_)list, which one quotation cannot typecheck *)
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let contains_closures_def,contains_closures_ind = define_wf_clauses
@@ -483,7 +483,7 @@ let decide_inline_LetInline = prove
   CHEAT_TAC);;
 
 (* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (A)list, which one quotation cannot typecheck *)
+   xs is (exp list) and (_)list, which one quotation cannot typecheck *)
 let known_def,known_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(known c [] vs (g:val_approx spt) = ([],g)) /\

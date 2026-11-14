@@ -515,9 +515,9 @@ add_simp ctors_of_dec_def;;
 
 (* free vars *)
 
-(* the clauses in three quotations: defs is (A)list and ((varN # varN # exp)
-   list); es is (A)list and (exp list); ls is (exp list) and (A)list; pes is
-   ((pat # exp) list) and (A)list, which one quotation cannot typecheck *)
+(* the clauses in three quotations: defs is (_)list and ((varN # varN # exp)
+   list); es is (_)list and (exp list); ls is (exp list) and (_)list; pes is
+   ((pat # exp) list) and (_)list, which one quotation cannot typecheck *)
 let FV_def,FV_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(FV (ast_Raise e) = FV e) /\

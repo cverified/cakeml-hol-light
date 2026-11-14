@@ -271,8 +271,8 @@ let op_sets_globals_EX = prove
  (`op_sets_globals op = (?n. op = flatLang_GlobalVarInit n)`,
   CHEAT_TAC);;
 
-(* the clauses in two quotations: ps is ((pat # exp) list) and (A)list; t is
-   tra and varN; xs is (exp list) and (A)list, which one quotation cannot
+(* the clauses in two quotations: ps is ((pat # exp) list) and (_)list; t is
+   tra and varN; xs is (exp list) and (_)list, which one quotation cannot
    typecheck *)
 let flat_pattern_compile_exp_def,flat_pattern_compile_exp_ind =
   assume_definition_rec_clauses

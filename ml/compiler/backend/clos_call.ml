@@ -23,7 +23,7 @@ let _ = cake_theory "clos_call"
   ["closLang"; "db_vars"];;
 
 (* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (A)list; xs2 is (exp list) and (A)list, which one
+   xs is (exp list) and (_)list; xs2 is (exp list) and (_)list, which one
    quotation cannot typecheck *)
 let free_def,free_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -84,7 +84,7 @@ let free_def,free_ind = assume_definition_rec_clauses
 (* HOL4 clos_callScript.sml:63: ML code, not ported *)
 
 (* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (A)list; xs2 is (exp list) and (A)list, which one
+   xs is (exp list) and (_)list; xs2 is (exp list) and (_)list, which one
    quotation cannot typecheck *)
 let free_sing_def,free_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -222,7 +222,7 @@ let exp3_size_MAP_SND = prove
   CHEAT_TAC);;
 
 (* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (A)list, which one quotation cannot typecheck *)
+   xs is (exp list) and (_)list, which one quotation cannot typecheck *)
 let calls_def,calls_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(calls [] g = ([],g)) /\
@@ -308,7 +308,7 @@ let calls_def,calls_ind = assume_definition_rec_clauses
                    (HD e1)],g)`];;
 
 (* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (A)list, which one quotation cannot typecheck *)
+   xs is (exp list) and (_)list, which one quotation cannot typecheck *)
 let calls_sing_def,calls_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(calls_sing (closLang_Var t v) g =

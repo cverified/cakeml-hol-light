@@ -866,8 +866,8 @@ let AppUnit_def = new_definition
   backend_common_None (closLang_BlockOp (closLang_Cons 0)) []]`;;
 
 (* the clauses in 8 quotations: a0 is tra, mlstring, (mlstring list) and exp;
-   a1 is num, exp, (exp list), (A)list, (num option) and op; a2 is num, exp,
-   (num list option), (exp list) and (A)list; a3 is (exp list), (A)list, exp,
+   a1 is num, exp, (exp list), (_)list, (num option) and op; a2 is num, exp,
+   (num list option), (exp list) and (_)list; a3 is (exp list), (_)list, exp,
    num and ((num # exp) list), which one quotation cannot typecheck *)
 let exp_alt_size_def,exp_alt_size_ind = define_rec_clauses
   [`(closSem_exp_alt_size (closLang_Var a0 a1) = 1 + (tra_size a0 + a1)) /\

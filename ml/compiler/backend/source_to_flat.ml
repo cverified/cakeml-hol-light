@@ -126,8 +126,8 @@ let join_all_names_def = new_definition
 
 let _ = size_thms "ast_exp";;
 let _ = size_thms "mlstring";;
-(* the clauses in two quotations: es is (A)list and (exp list); funs is
-   (A)list and ((varN # varN # exp) list), which one quotation cannot
+(* the clauses in two quotations: es is (_)list and (exp list); funs is
+   (_)list and ((varN # varN # exp) list), which one quotation cannot
    typecheck *)
 let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
   assume_definition_rec_clauses

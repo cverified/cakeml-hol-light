@@ -102,8 +102,8 @@ let flat_elim_is_pure_def,flat_elim_is_pure_ind = define_wf
 (* HOL4 flat_elimScript.sml:82: a theorem that HOL4 states as the value of
    an ML expression: is_pure_def1 *)
 
-(* the clauses in two quotations: es is (exp list) and (A)list; pes is
-   (A)list and ((pat # exp) list), which one quotation cannot typecheck *)
+(* the clauses in two quotations: es is (exp list) and (_)list; pes is
+   (_)list and ((pat # exp) list), which one quotation cannot typecheck *)
 let has_Eval_def,has_Eval_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(has_Eval (flatLang_App t op es) <=> op = flatLang_Src ast_Eval \/

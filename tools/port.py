@@ -3818,7 +3818,7 @@ class Porter:
       return None
     def pat_ty(a):
       while a.kind in ('paren', 'typed', 'rawtyped'): a = a.e
-      if a.kind == 'list': return '(A)list'
+      if a.kind == 'list': return '(_)list'
       if a.kind == 'app':
         h, args0 = hterm.strip_app(a)
         if h.kind == 'id' and iscon(h.name):

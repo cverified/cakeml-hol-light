@@ -468,7 +468,7 @@ let flatProps_op_gbag_def = new_definition
      flatLang_GlobalVarInit n -> BAG_INSERT n EMPTY_BAG
    | _ -> EMPTY_BAG`;;
 
-(* the clauses in two quotations: es is (exp list) and (A)list, which one
+(* the clauses in two quotations: es is (exp list) and (_)list, which one
    quotation cannot typecheck *)
 let flatProps_set_globals_def,flatProps_set_globals_ind =
   assume_definition_rec_clauses

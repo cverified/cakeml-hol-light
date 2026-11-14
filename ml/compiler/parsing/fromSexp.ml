@@ -972,10 +972,12 @@ let optsexp_11 = prove
   CHEAT_TAC);;
 add_simp optsexp_11;;
 
-let idsexp_def,idsexp_ind = define_rec
-  `(idsexp (Short n) = listsexp [SX_SYM "Short"; SEXSTR (explode n)]) /\
-   (idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode ns);
-    idsexp n])`;;
+(* the clauses in two quotations: n is 'n and id, which one quotation cannot
+   typecheck *)
+let idsexp_def,idsexp_ind = define_rec_clauses
+  [`idsexp (Short n) = listsexp [SX_SYM "Short"; SEXSTR (explode n)]`;
+   `idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode ns);
+    idsexp n]`];;
 
 let idsexp_11 = prove
  (`!i1 i2. idsexp i1 = idsexp i2 <=> i1 = i2`,

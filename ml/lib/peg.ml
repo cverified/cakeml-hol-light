@@ -191,21 +191,23 @@ let wfpeg = cake_inductive
      (!e f. wfpeg G e /\ ~(peg0 G e) ==> wfpeg G (peg_rpt e f)))`;;
 
 let _ = size_thms "pegsym";;
+(* the clauses in two quotations: e is 'e and pegsym, which one quotation
+   cannot typecheck *)
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
-let subexprs_def,subexprs_ind = define_wf
+let subexprs_def,subexprs_ind = define_wf_clauses
   `MEASURE (\x0. pegsym_size (\x. 0) (\x. 0) (\x. 0) (\x. 0) x0)`
-  `(subexprs (peg_any f1) = {peg_any f1}) /\
-   (subexprs (peg_empty c) = {peg_empty c}) /\
-   (subexprs (peg_tok t f2) = {peg_tok t f2}) /\
-   (subexprs (peg_error e) = {(peg_error e:('a,'b,'c,'e)pegsym)}) /\
-   (subexprs (peg_nt s f) = {peg_nt s f}) /\
-   (subexprs (peg_not e c) = peg_not e c INSERT subexprs e) /\
-   (subexprs (peg_seq e1 e2 f3) = peg_seq e1 e2 f3 INSERT (subexprs e1
+  [`(subexprs (peg_any f1) = {peg_any f1}) /\
+    (subexprs (peg_empty c) = {peg_empty c}) /\
+    (subexprs (peg_tok t f2) = {peg_tok t f2}) /\
+    (subexprs (peg_error e) = {(peg_error e:('a,'b,'c,'e)pegsym)}) /\
+    (subexprs (peg_nt s f) = {peg_nt s f}) /\
+    (subexprs (peg_seq e1 e2 f3) = peg_seq e1 e2 f3 INSERT (subexprs e1
     UNION subexprs e2)) /\
-   (subexprs (peg_choice e1 e2 f4) =
-        peg_choice e1 e2 f4 INSERT (subexprs e1 UNION subexprs e2)) /\
-   (subexprs (peg_rpt e f5) = peg_rpt e f5 INSERT subexprs e)`;;
+    (subexprs (peg_choice e1 e2 f4) =
+        peg_choice e1 e2 f4 INSERT (subexprs e1 UNION subexprs e2))`;
+   `(subexprs (peg_not e c) = peg_not e c INSERT subexprs e) /\
+    (subexprs (peg_rpt e f5) = peg_rpt e f5 INSERT subexprs e)`];;
 add_simp subexprs_def;;
 
 let gexprs_def = new_definition

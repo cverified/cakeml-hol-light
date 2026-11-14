@@ -1038,26 +1038,30 @@ def dtarg_texts(alt):
   return out
 
 
-def _is_tyvar(t):
-  """is this parsed type a type variable?  The port writes HOL
-     Light's A, B, ... and a source writes HOL4's 'a"""
-  return (t[0] == 'var' or
-          (t[0] == 'op' and not t[2] and
-           (t[1].startswith("'") or
-            (len(t[1]) == 1 and t[1].isupper()))))
+def _is_tyhole(t):
+  """is this parsed type the hole that tools/port.py writes where
+     a pattern says the shape of a type and not what is in it (the
+     [] of a clause says a list of anything)?  A type variable of
+     a source is not a hole: it is a parameter of the definition
+     and is rigid, so peg's 'e does not unify with a pegsym"""
+  return t[0] == 'op' and not t[2] and t[1] == '_'
 
 
 def ty_compatible(a, b):
-  """do two types of a source unify, with a type variable standing
-     for anything?  A pattern of [] says a list of anything, which
-     is no clash with a list of expressions"""
+  """do two types of a source unify, with a hole standing for
+     anything?  A pattern of [] says a list of anything, which is
+     no clash with a list of expressions"""
   if a == b: return True
   try:
     ta, tb = parse_type_text(a), parse_type_text(b)
   except Exception:
     return True
   def go(x, y):
-    if _is_tyvar(x) or _is_tyvar(y): return True
+    if _is_tyhole(x) or _is_tyhole(y): return True
+    # a type variable of a source is a parameter of the definition
+    # and is rigid: peg's 'e is not a pegsym
+    if x[0] == 'v' or y[0] == 'v':
+      return x[0] == y[0] and x[1] == y[1]
     if x[0] != 'op' or y[0] != 'op': return True
     if x[1] != y[1] or len(x[2]) != len(y[2]): return False
     return all(go(p, q) for p, q in zip(x[2], y[2]))

@@ -314,8 +314,8 @@ let boolv_def = new_definition
  * number of arguments, and constructors in corresponding positions in the
  * pattern and value come from the same type.  Match_type_error is returned
  * when one of these conditions is violated *)
-(* the clauses in three quotations: ps is (A)list and (pat list); vs is
-   (A)list and (v list), which one quotation cannot typecheck *)
+(* the clauses in three quotations: ps is (_)list and (pat list); vs is
+   (_)list and (v list), which one quotation cannot typecheck *)
 let pmatch_def,pmatch_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(semanticPrimitives_pmatch envC s ast_Pany v' env = Match env) /\

@@ -66,9 +66,9 @@ let sing_env_def = new_definition
        sem_env)`;;
 
 (* the clauses in three quotations: cn is (((modN , conN) id) option) and
-   conN; ds is (dec list) and (A)list; l is lit and locs; lds is (dec list)
-   and (A)list; n is ((modN , varN) id) and tvarN; pes is ((pat # exp) list)
-   and (A)list, which one quotation cannot typecheck *)
+   conN; ds is (dec list) and (_)list; l is lit and locs; lds is (dec list)
+   and (_)list; n is ((modN , varN) id) and tvarN; pes is ((pat # exp) list)
+   and (_)list, which one quotation cannot typecheck *)
 let evaluate_def,evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(evaluate (st:'ffi semanticPrimitives_state) env [] = ((st:'ffi

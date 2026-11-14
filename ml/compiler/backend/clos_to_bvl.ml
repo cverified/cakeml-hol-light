@@ -484,7 +484,7 @@ let force_thunk_code_def = new_definition
 
 let _ = size_thms "closLang_exp";;
 (* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (A)list; xs2 is (exp list) and (A)list, which one
+   xs is (exp list) and (_)list; xs2 is (exp list) and (_)list, which one
    quotation cannot typecheck *)
 let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
   assume_definition_rec_clauses
@@ -586,7 +586,7 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
 
 let _ = size_thms "bvl_exp";;
 (* the clauses in three quotations: t is tra, mlstring and (mlstring list);
-   xs is (exp list) and (A)list; xs2 is (exp list) and (A)list, which one
+   xs is (exp list) and (_)list; xs2 is (exp list) and (_)list, which one
    quotation cannot typecheck *)
 let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

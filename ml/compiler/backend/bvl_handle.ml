@@ -104,7 +104,7 @@ let handle_size_non_zero = prove
  (`0 < handle_size x`,
   CHEAT_TAC);;
 
-(* the clauses in three quotations: xs is (exp list) and (A)list, which one
+(* the clauses in three quotations: xs is (exp list) and (_)list, which one
    quotation cannot typecheck *)
 let handle_simp_def,handle_simp_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

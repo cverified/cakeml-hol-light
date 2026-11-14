@@ -283,12 +283,14 @@ let op_to_display_def = new_definition
    | ast_Env_id -> empty_item (implode "Env_id")
    | ast_ThunkOp t -> thunk_op_to_display t`;;
 
-let id_to_display_def,id_to_display_ind = define_rec
-  `(id_to_display (Short n) =
-      displayLang_Item NONE (implode "Short") [displayLang_String n]) /\
-   (id_to_display (Long n i) =
+(* the clauses in two quotations: n is 'n and 'm, which one quotation cannot
+   typecheck *)
+let id_to_display_def,id_to_display_ind = define_rec_clauses
+  [`id_to_display (Short n) =
+      displayLang_Item NONE (implode "Short") [displayLang_String n]`;
+   `id_to_display (Long n i) =
       displayLang_Item NONE (implode "Long") [displayLang_String n;
-          id_to_display i])`;;
+          id_to_display i]`];;
 
 let ast_t_to_display_def,ast_t_to_display_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -507,9 +509,9 @@ let add_name_hint_def = new_definition
   `add_name_hint prefix name_hint =
      mlstring_concat [prefix; (implode "<"); name_hint; (implode ">")]`;;
 
-(* the clauses in three quotations: exps is (exp list) and (A)list; funs is
-   ((varN # varN # exp) list) and (A)list; pes is ((pat # exp) list) and
-   (A)list, which one quotation cannot typecheck *)
+(* the clauses in three quotations: exps is (exp list) and (_)list; funs is
+   ((varN # varN # exp) list) and (_)list; pes is ((pat # exp) list) and
+   (_)list, which one quotation cannot typecheck *)
 let flat_to_display_def,flat_to_display_ind = define_shaped_rec_clauses
   "maplist>maplist>maplist>nested"
   [`(flat_to_display (flatLang_Raise tra exp) =
@@ -781,8 +783,8 @@ let commas_def,commas_ind = define_wf
 
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)
-(* the clauses in two quotations: es is (A)list and ((num # exp) list);
-   name_hint is mlstring and (mlstring list); xs is (exp list) and (A)list,
+(* the clauses in two quotations: es is (_)list and ((num # exp) list);
+   name_hint is mlstring and (mlstring list); xs is (exp list) and (_)list,
    which one quotation cannot typecheck *)
 let clos_to_display_def,clos_to_display_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -956,7 +958,7 @@ let MEM_bvi_exps_size = prove
   CHEAT_TAC);;
 
 (* the clauses in two quotations: dest is (num option) and num; xs is (exp
-   list) and (A)list, which one quotation cannot typecheck *)
+   list) and (_)list, which one quotation cannot typecheck *)
 let bvi_to_display_def,bvi_to_display_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(bvi_to_display ns h (bvi_Var n) =

@@ -99,7 +99,7 @@ cake_cheat_budget := 300;;
      could
    extend to `Let xs (Return (GENLIST Var n))`. *)
 (* the clauses in two quotations: dest is (num option) and num; xs is (exp
-   list) and (A)list, which one quotation cannot typecheck *)
+   list) and (_)list, which one quotation cannot typecheck *)
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvi_letScript.sml:110-116: the tactic that proves the termination *)
@@ -151,7 +151,7 @@ let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat_clauses
                 [y]))]`];;
 
 (* the clauses in two quotations: dest is (num option) and num; xs is (exp
-   list) and (A)list, which one quotation cannot typecheck *)
+   list) and (_)list, which one quotation cannot typecheck *)
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL (_,_,e) -> bvi_exp_size e
                                    | INR (_,_,es) -> list_size bvi_exp_size es)

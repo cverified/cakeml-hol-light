@@ -472,7 +472,7 @@ let op_ty_PMATCH = prove
 *)
 
 (* the clauses in two quotations: d is (num option) and num; xs is (exp list)
-   and (A)list, which one quotation cannot typecheck *)
+   and (_)list, which one quotation cannot typecheck *)
 let scan_expr_def,scan_expr_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(scan_expr ts loc [] = []) /\
@@ -545,7 +545,7 @@ let scan_expr_def,scan_expr_ind = assume_definition_rec_clauses
     [(ts,bvi_tailrec_Any,F,NONE)]`];;
 
 (* the clauses in two quotations: d is (num option) and num; xs is (exp list)
-   and (A)list, which one quotation cannot typecheck *)
+   and (_)list, which one quotation cannot typecheck *)
 let scan_expr_sing_def,scan_expr_sing_ind = define_rec_clauses
   [`(scan_expr_sing ts loc (bvi_Var n) =
         let ty = (if n < LENGTH ts then EL n ts else bvi_tailrec_Any) in
