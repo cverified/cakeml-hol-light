@@ -1,6 +1,7 @@
 FADISJ_EQ_IMP'
 pmap_EQ_pair
 ptree_fringemkNd
+ptree_head_mkNd
 real_fringe_mkNd
 valid_locs_mkNd
 valid_ptree_mkNd

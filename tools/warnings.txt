@@ -179,10 +179,10 @@ clos_to_bvl	line 34 is 76 characters
 clos_to_bvl	line 37 is 79 characters
 clos_to_bvl	line 38 is 78 characters
 clos_to_bvl	line 41 is 76 characters
-clos_to_bvl	line 401 is 73 characters
-clos_to_bvl	line 412 is 75 characters
-clos_to_bvl	line 414 is 78 characters
-clos_to_bvl	line 1041 is 73 characters
+clos_to_bvl	line 405 is 73 characters
+clos_to_bvl	line 416 is 75 characters
+clos_to_bvl	line 418 is 78 characters
+clos_to_bvl	line 1045 is 73 characters
 asm	Overload addr_offset_ok
 asm	Overload hw_offset_ok
 asm	Overload byte_offset_ok
@@ -482,18 +482,18 @@ pattern_exh	line 565 is 75 characters
 pattern_exh	line 567 is 76 characters
 pattern_exh	line 630 is 75 characters
 pattern_exh	line 636 is 76 characters
-pattern_exh	line 658 is 75 characters
-pattern_exh	line 661 is 73 characters
-pattern_exh	line 665 is 76 characters
-pattern_exh	line 715 is 75 characters
-pattern_exh	line 722 is 73 characters
-pattern_exh	line 724 is 76 characters
-pattern_exh	line 770 is 75 characters
-pattern_exh	line 775 is 76 characters
-pattern_exh	line 790 is 75 characters
-pattern_exh	line 792 is 76 characters
-pattern_exh	line 823 is 75 characters
-pattern_exh	line 825 is 76 characters
+pattern_exh	line 663 is 75 characters
+pattern_exh	line 666 is 73 characters
+pattern_exh	line 670 is 76 characters
+pattern_exh	line 720 is 75 characters
+pattern_exh	line 727 is 73 characters
+pattern_exh	line 729 is 76 characters
+pattern_exh	line 775 is 75 characters
+pattern_exh	line 780 is 76 characters
+pattern_exh	line 795 is 75 characters
+pattern_exh	line 797 is 76 characters
+pattern_exh	line 828 is 75 characters
+pattern_exh	line 830 is 76 characters
 flat_pattern	Theorem pat1_size: the auxiliary size function pat1_size
 source_to_flat	Theorem ast_pat1_size: the auxiliary size function pat1_size
 source_to_flat	line 597 is 73 characters

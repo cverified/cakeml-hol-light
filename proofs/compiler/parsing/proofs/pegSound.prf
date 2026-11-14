@@ -19,3 +19,6 @@
 ### pmap_EQ_pair
   (REWRITE_TAC[FORALL_PAIR_THM; PAIR_MAP_THM; PAIR_EQ] THEN
     MESON_TAC[])
+
+### ptree_head_mkNd
+  (REWRITE_TAC[mkNd_def; ptree_head_def])

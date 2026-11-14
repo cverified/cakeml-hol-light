@@ -17,3 +17,6 @@
 
 ### GSPEC_applied
   (REWRITE_TAC[IN])
+
+### nullloop_th
+  (REWRITE_TAC[nullableML_def; IN_INSERT])

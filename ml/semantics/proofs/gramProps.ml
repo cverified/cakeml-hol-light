@@ -116,7 +116,7 @@ let GSPEC_applied = prove
 (* [local] *)
 let nullloop_th = prove
  (`nullableML G (N INSERT sn) (CONS (grammar_NT N) rest) = F`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[nullableML_def; IN_INSERT]));;
 
 (* [local] *)
 let null2 = prove

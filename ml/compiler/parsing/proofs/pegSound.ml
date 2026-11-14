@@ -200,7 +200,7 @@ let valid_ptree_mkNd = prove
 (* [simp] *)
 let ptree_head_mkNd = prove
  (`ptree_head (mkNd N subs) = grammar_NT N`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[mkNd_def; ptree_head_def]));;
 
 (* HOL4 pegSoundScript.sml:233: ML code, not ported *)
 (* [simp] *)

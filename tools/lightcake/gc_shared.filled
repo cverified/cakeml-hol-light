@@ -4,6 +4,7 @@ EVERY_isDataElement_IMP_LEMMA
 FILTER_LEMMA
 FINITE_heap_addresses
 MEM_ADDR_MAP
+heap_addresses_LESS
 heap_filter_aux_SING_ZERO
 heap_length_heap_filter
 heap_lookup_EXTEND
