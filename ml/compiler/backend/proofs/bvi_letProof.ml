@@ -979,10 +979,10 @@ let compile_code_labels = prove
       name is an overload of several theories, and a later one of
       them wins where nothing pins it down *)
    let labs_APPEND = prove
-    (`!a b. BIGUNION (set_of_list (MAP get_code_labels
+    (`!a b. UNIONS (set_of_list (MAP get_code_labels
               (APPEND (a:bvi_exp list) b))) =
-            BIGUNION (set_of_list (MAP get_code_labels a)) UNION
-            BIGUNION (set_of_list (MAP get_code_labels b))`,
+            UNIONS (set_of_list (MAP get_code_labels a)) UNION
+            UNIONS (set_of_list (MAP get_code_labels b))`,
      LIST_INDUCT_TAC THEN
      ASM_REWRITE_TAC[APPEND; MAP; set_of_list; UNIONS_0;
                      UNIONS_INSERT; UNION_EMPTY; UNION_ASSOC]) in
@@ -990,7 +990,7 @@ let compile_code_labels = prove
       labels of its head are the labels of the list *)
    let labs_SING = prove
     (`!n d x. get_code_labels (HD (bvi_let_compile n d [x])) =
-              BIGUNION (set_of_list (MAP get_code_labels
+              UNIONS (set_of_list (MAP get_code_labels
                 (bvi_let_compile n d [x])))`,
      REPEAT GEN_TAC THEN
      GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV)
@@ -998,9 +998,9 @@ let compile_code_labels = prove
      REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
                  UNION_EMPTY]) in
    let labs_delete_var = prove
-    (`!l. BIGUNION (set_of_list (MAP get_code_labels
+    (`!l. UNIONS (set_of_list (MAP get_code_labels
             (MAP delete_var (l:bvi_exp list)))) =
-          BIGUNION (set_of_list (MAP get_code_labels l))`,
+          UNIONS (set_of_list (MAP get_code_labels l))`,
      LIST_INDUCT_TAC THEN
      ASM_REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                      dest_var_code_labels]) in
@@ -1111,9 +1111,9 @@ let compile_code_labels = prove
       [single_case; cons_cons_case]] in
    SUBGOAL_THEN
      `!n x y z. list_size bvi_exp_size z <= n ==>
-        BIGUNION (set_of_list (MAP get_code_labels
+        UNIONS (set_of_list (MAP get_code_labels
           (bvi_let_compile x y z))) =
-        BIGUNION (set_of_list (MAP get_code_labels z))`
+        UNIONS (set_of_list (MAP get_code_labels z))`
      (fun th -> REPEAT GEN_TAC THEN
         MATCH_MP_TAC(SPEC `list_size bvi_exp_size (z:bvi_exp list)`
                        th) THEN
@@ -1132,7 +1132,7 @@ let compile_exp_code_labels = prove
       speaks about *)
    let labs_SING = prove
     (`!n d x. get_code_labels (HD (bvi_let_compile n d [x])) =
-              BIGUNION (set_of_list (MAP get_code_labels
+              UNIONS (set_of_list (MAP get_code_labels
                 (bvi_let_compile n d [x])))`,
      REPEAT GEN_TAC THEN
      GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV)

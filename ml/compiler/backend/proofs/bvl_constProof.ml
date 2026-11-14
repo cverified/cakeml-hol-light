@@ -1915,18 +1915,18 @@ let bvl_constProof_compile_code_labels = prove
       the statement is in: of an APPEND, and of the one-expression
       list that every clause but two compiles *)
    let labs_app = prove
-    (`!a b. BIGUNION (set_of_list
+    (`!a b. UNIONS (set_of_list
                (MAP bvlProps_get_code_labels (APPEND a b))) =
-            BIGUNION (set_of_list
+            UNIONS (set_of_list
                (MAP bvlProps_get_code_labels a)) UNION
-            BIGUNION (set_of_list
+            UNIONS (set_of_list
                (MAP bvlProps_get_code_labels b))`,
      LIST_INDUCT_TAC THEN
      REWRITE_TAC[APPEND; MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                  UNION_EMPTY] THEN
      ASM_REWRITE_TAC[UNION_ASSOC]) in
    let labs_sing = prove
-    (`!x e. BIGUNION (set_of_list
+    (`!x e. UNIONS (set_of_list
               (MAP bvlProps_get_code_labels
                  (bvl_const_compile x [e]))) =
             bvlProps_get_code_labels
@@ -1937,9 +1937,9 @@ let bvl_constProof_compile_code_labels = prove
      REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
                  UNION_EMPTY]) in
    let labs_delete = prove
-    (`!l. BIGUNION (set_of_list (MAP bvlProps_get_code_labels
+    (`!l. UNIONS (set_of_list (MAP bvlProps_get_code_labels
             (MAP bvl_const_delete_var l))) =
-          BIGUNION (set_of_list (MAP bvlProps_get_code_labels l))`,
+          UNIONS (set_of_list (MAP bvlProps_get_code_labels l))`,
      LIST_INDUCT_TAC THEN
      ASM_REWRITE_TAC(delete_var_code_labels :: lset)) in
    (* an expression the environment holds has its labels in the
@@ -1947,7 +1947,7 @@ let bvl_constProof_compile_code_labels = prove
    let envlabs_oEL = prove
     (`!x v e. oEL v x = SOME (SOME e) ==>
         bvlProps_get_code_labels e SUBSET
-        BIGUNION (set_of_list
+        UNIONS (set_of_list
           (MAP (bvlProps_get_code_labels o THE) (FILTER IS_SOME x)))`,
      LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
      REWRITE_TAC[oEL; distinctness "option"] THEN
@@ -1960,7 +1960,7 @@ let bvl_constProof_compile_code_labels = prove
       REWRITE_TAC[SUBSET_UNION];
       DISCH_TAC THEN
       MATCH_MP_TAC SUBSET_TRANS THEN
-      EXISTS_TAC `BIGUNION (set_of_list
+      EXISTS_TAC `UNIONS (set_of_list
         (MAP (bvlProps_get_code_labels o THE)
            (FILTER IS_SOME t)))` THEN
       CONJ_TAC THENL
@@ -1972,11 +1972,11 @@ let bvl_constProof_compile_code_labels = prove
    (* ... and what the Let clause adds to the environment holds
       constants only, so it allows nothing new *)
    let envlabs_extract = prove
-    (`!ys x. BIGUNION (set_of_list
+    (`!ys x. UNIONS (set_of_list
                (MAP (bvlProps_get_code_labels o THE)
                   (FILTER IS_SOME
                      (APPEND (bvl_const_extract_list ys) x)))) =
-             BIGUNION (set_of_list
+             UNIONS (set_of_list
                (MAP (bvlProps_get_code_labels o THE)
                   (FILTER IS_SOME x)))`,
      let extract_cl = prove
@@ -2121,7 +2121,7 @@ let bvl_constProof_compile_exp_code_labels = prove
      head of it, and the empty environment allows nothing *)
   (let ce = bvl_const_compile_exp_def in
    let labs_sing = prove
-    (`!x e. BIGUNION (set_of_list
+    (`!x e. UNIONS (set_of_list
               (MAP bvlProps_get_code_labels
                  (bvl_const_compile x [e]))) =
             bvlProps_get_code_labels

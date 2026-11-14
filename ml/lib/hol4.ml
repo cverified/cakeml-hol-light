@@ -452,8 +452,8 @@ let num_size = new_definition
 
 let OWHILE = new_definition
   `OWHILE G (f:A->A) s =
-   if ?n. ~G (FUNPOW f n s)
-   then SOME (FUNPOW f (minimal n. ~G (FUNPOW f n s)) s)
+   if ?n. ~G (ITER n f s)
+   then SOME (ITER (minimal n. ~G (ITER n f s)) f s)
    else NONE`;;
 
 let WHILE = new_definition
@@ -973,7 +973,8 @@ override_interface("##",`PAIR_MAP:(A->C)->(B->D)->A#B->C#D`);;
    predicate when there is one *)
 
 let OLEAST = new_definition
-  `OLEAST (P:num->bool) = if ?n. P n then SOME (LEAST P) else NONE`;;
+  `OLEAST (P:num->bool) =
+     if ?n. P n then SOME ((minimal) P) else NONE`;;
 
 (* HOL4's left inverse of an injection (pred_setTheory): the one
    that LINV_OPT gives where there is one *)

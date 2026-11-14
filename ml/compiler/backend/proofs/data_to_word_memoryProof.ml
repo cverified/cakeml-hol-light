@@ -505,7 +505,7 @@ let v_inv_def = prove
          DISCH_TAC THEN
          FIRST_ASSUM(fun th ->
            if can (term_match []
-                     `EVERY2 (p:A->B->bool) l m`) (concl th)
+                     `ALL2 (p:A->B->bool) l m`) (concl th)
            then MP_TAC th else fail()) THEN
          MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
          REPEAT STRIP_TAC THEN FIRST_ASSUM MATCH_ACCEPT_TAC]] in
@@ -1220,7 +1220,7 @@ let v_inv_related_lemma = prove
   (* the references of a Block are those of its elements *)
   let all_flat = prove
    (`!P (ls:((A)list)list).
-       EVERY P (FLAT ls) <=> EVERY (EVERY P) ls`,
+       ALL P (FLAT ls) <=> ALL (ALL P) ls`,
     GEN_TAC THEN LIST_INDUCT_TAC THEN
     ASM_REWRITE_TAC[FLAT; ALL; ALL_APPEND]) in
   (* an element of the heap without roots the collection keeps as
@@ -1701,7 +1701,7 @@ let arm_VA = prove
      sptree_lookup n refs = SOME (bvlSem_ValueArray ys)
      ==> (bc_ref_inv conf n refs (f,tf,heap,be') <=>
           (?zs. heap_lookup x heap = SOME (RefBlock zs) /\
-                EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap))
+                ALL2 (\z y. v_inv conf y refs (z,f,tf,heap))
                   zs ys))`),
   STRIP_TAC THEN ASM_REWRITE_TAC[bc_ref_inv_def] THEN
   MATCH_REDUCE_TAC THEN
@@ -1741,7 +1741,7 @@ let arm_MB = prove
                    data_to_word_Generational gs)) /\
            (~fin ==> ~(x IN IMAGE (FAPPLY tf) (FDOM tf))) /\
            (?zs. heap_lookup x heap = SOME (BlockRep tg zs) /\
-                 EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs
+                 ALL2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs
                    (APPEND (APPEND l [c]) r))))`),
   STRIP_TAC THEN ASM_REWRITE_TAC[bc_ref_inv_def] THEN
   MATCH_REDUCE_TAC THEN
@@ -2261,7 +2261,7 @@ let gc_heap_inline_rel_v_inv_lemma = prove
   (* an element of the heap without roots the inlining of the heap
      keeps where it is *)
   let keep_de = prove
-   (`LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
+   (`ALL2 (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
        heap1 (heap2:(('a word_loc,
          data_to_word_memoryProof_tag#('a word_loc)
          list)heap_element) list)
@@ -2287,7 +2287,7 @@ let gc_heap_inline_rel_v_inv_lemma = prove
     MESON_TAC[]) in
   (* so an element with one root it keeps with the root inlined *)
   let keep_de1 = prove
-   (`LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
+   (`ALL2 (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
        heap1 (heap2:(('a word_loc,
          data_to_word_memoryProof_tag#('a word_loc)
          list)heap_element) list)
@@ -2444,7 +2444,7 @@ let gc_heap_inline_rel_v_inv_lemma = prove
      step, and then the types of the goal are not the types of it
      (PORTING-GUIDE.md entry 86) *)
   let keep_bignum = prove
-   (`LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
+   (`ALL2 (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
        heap1 (heap2:(('a word_loc,
          data_to_word_memoryProof_tag#('a word_loc)
          list)heap_element) list)
@@ -2463,7 +2463,7 @@ let gc_heap_inline_rel_v_inv_lemma = prove
     FIRST_ASSUM (fun lr ->
       MATCH_ACCEPT_TAC (MATCH_MP keep_de lr))) in
   let keep_w64 = prove
-   (`LIST_REL (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
+   (`ALL2 (gc_heap_inline_rel dest_evaluated_thunk_rel heap1)
        heap1 (heap2:(('a word_loc,
          data_to_word_memoryProof_tag#('a word_loc)
          list)heap_element) list)
@@ -4498,16 +4498,16 @@ let isRef_isDataElement = prove
    REWRITE_TAC[]));;
 
 let isRef_EVERY_data = prove
- (`!l. EVERY data_to_word_memoryProof_isRef l
-      ==> EVERY isDataElement l`,
+ (`!l. ALL data_to_word_memoryProof_isRef l
+      ==> ALL isDataElement l`,
   (   LIST_INDUCT_TAC THEN REWRITE_TAC[ALL] THEN
    ASM_MESON_TAC[isRef_isDataElement]));;
 
 let split_EVERY = prove
  (`!heap n1 n2 h1 h2 g1 g2 P.
     heap_split n1 heap = SOME (h1,h2) /\
-    heap_split n2 heap = SOME (g1,g2) /\ n1 <= n2 /\ EVERY P g1
-    ==> EVERY P h1`,
+    heap_split n2 heap = SOME (g1,g2) /\ n1 <= n2 /\ ALL P g1
+    ==> ALL P h1`,
   (   REPEAT GEN_TAC THEN STRIP_TAC THEN
    FIRST_ASSUM (fun le ->
      if not (is_binop `(<=):num->num->bool` (concl le)) then fail()
@@ -4533,12 +4533,12 @@ let split_EVERY = prove
    FIRST_ASSUM ACCEPT_TAC));;
 
 let ref_part = prove
- (`(EVERY (\x. ~(data_to_word_memoryProof_isRef x)) l1
+ (`(ALL (\x. ~(data_to_word_memoryProof_isRef x)) l1
    ==> (!xs n tag qs. MEM (DataElement xs n (tag,qs)) l1
         ==> ~(gen_gc_partial_conf_isRef
                 (make_partial_conf (make_gc_conf l)
                    (GenState u ss) rs) (tag,qs)))) /\
-  (EVERY data_to_word_memoryProof_isRef l2
+  (ALL data_to_word_memoryProof_isRef l2
    ==> (!xs n tag qs. MEM (DataElement xs n (tag,qs)) l2
         ==> gen_gc_partial_conf_isRef
               (make_partial_conf (make_gc_conf l)
@@ -4557,18 +4557,18 @@ let ref_part = prove
    ASM_REWRITE_TAC[]));;
 
 let ref_EVERY_d = prove
- (`(EVERY isDataElement l /\
+ (`(ALL isDataElement l /\
    (!xs n d. MEM (DataElement xs n d) l
     ==> ~(gen_gc_partial_conf_isRef
             (make_partial_conf (make_gc_conf lm) (GenState u ss) rs)
             d))
-   ==> EVERY (\x. ~(data_to_word_memoryProof_isRef x)) l) /\
-  (EVERY isDataElement l /\
+   ==> ALL (\x. ~(data_to_word_memoryProof_isRef x)) l) /\
+  (ALL isDataElement l /\
    (!xs n d. MEM (DataElement xs n d) l
     ==> gen_gc_partial_conf_isRef
           (make_partial_conf (make_gc_conf lm) (GenState u ss) rs)
           d)
-   ==> EVERY data_to_word_memoryProof_isRef l)`,
+   ==> ALL data_to_word_memoryProof_isRef l)`,
   (   REWRITE_TAC[GSYM ALL_MEM] THEN
    CONJ_TAC THEN REPEAT STRIP_TAC THEN
    FIRST_X_ASSUM (fun dl ->
@@ -4611,9 +4611,9 @@ let ref_EVERY_d = prove
    ASM_REWRITE_TAC[]));;
 
 let similar_isRef = prove
- (`!l1 l2. EVERY2 (similar_data c) l1 l2 /\
-          EVERY data_to_word_memoryProof_isRef l1
-          ==> EVERY data_to_word_memoryProof_isRef l2`,
+ (`!l1 l2. ALL2 (similar_data c) l1 l2 /\
+          ALL data_to_word_memoryProof_isRef l1
+          ==> ALL data_to_word_memoryProof_isRef l2`,
   (   LIST_INDUCT_TAC THEN GEN_TAC THEN
    CASES_ON_NAME "l2" THEN
    REWRITE_TAC[ALL2; ALL] THEN
@@ -5322,7 +5322,7 @@ let data_length_heap_length = prove
               el_length x + heap_length xs)`,
      REWRITE_TAC[heap_length_def; MAP; SUM_DEF; ITLIST]) in
    let aux = prove
-    (`!heap. EVERY isDataElement heap
+    (`!heap. ALL isDataElement heap
              ==> data_length heap = heap_length heap`,
      LIST_INDUCT_TAC THENL
       [REWRITE_TAC[dl; dp] THEN MATCH_REDUCE_TAC THEN
@@ -6446,7 +6446,7 @@ let heap_store_rel_alt = prove
    below it and the element written *)
 let data_up_to_written = prove
  (`!ha x he hb.
-     EVERY isDataElement ha /\ isDataElement x
+     ALL isDataElement ha /\ isDataElement x
      ==> data_up_to (heap_length ha + el_length x)
            (APPEND ha (APPEND (APPEND [x] he) hb))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -6721,7 +6721,7 @@ let v_inv_SUBMAP_lemma = prove
         [FIRST_ASSUM MATCH_ACCEPT_TAC;
          DISCH_TAC THEN
          FIRST_ASSUM(fun a2th ->
-           if can (term_match [] `EVERY2 (p:A->B->bool) l m`)
+           if can (term_match [] `ALL2 (p:A->B->bool) l m`)
                   (concl a2th)
            then MP_TAC a2th else fail()) THEN
          MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
@@ -8184,7 +8184,7 @@ let v_inv_tf_update_thm_lemma = prove
         [FIRST_ASSUM MATCH_ACCEPT_TAC;
          DISCH_TAC THEN
          FIRST_ASSUM(fun a2th ->
-           if can (term_match [] `EVERY2 (p:A->B->bool) l m`)
+           if can (term_match [] `ALL2 (p:A->B->bool) l m`)
                   (concl a2th)
            then MP_TAC a2th else fail()) THEN
          MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN
@@ -8352,7 +8352,7 @@ let V_INV_REFS_TAC_IH ih tp prep hp d5 d6 d7 =
        [FIRST_ASSUM MATCH_ACCEPT_TAC;
         DISCH_TAC THEN
         FIRST_ASSUM(fun a2th ->
-          if can (term_match [] `EVERY2 (p:A->B->bool) l m`)
+          if can (term_match [] `ALL2 (p:A->B->bool) l m`)
                  (concl a2th)
           then MP_TAC a2th else fail()) THEN
         (* the elements come with their membership of the two
@@ -8880,8 +8880,8 @@ let EVERY2_v_inv_alloc = prove
  (cake_as_vars (fun () ->
     `(!w1 w2. v_inv conf w1 refs (w2,f,tf,heap)
               ==> v_inv conf w1 refs2 (w2,f2,tf2,heap2)) /\
-     EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs ys
-     ==> EVERY2 (\z y. v_inv conf y refs2 (z,f2,tf2,heap2)) zs ys`),
+     ALL2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs ys
+     ==> ALL2 (\z y. v_inv conf y refs2 (z,f2,tf2,heap2)) zs ys`),
   STRIP_TAC THEN SPLIT_ASM_TAC THEN
   W(fun (asl,w as gl) ->
     let old = the_asm (hd_is "ALL2") gl in
@@ -8952,8 +8952,8 @@ let EVERY2_v_inv_alloc_stack = prove
  (cake_as_vars (fun () ->
     `(!w1 w2. v_inv conf w1 refs (w2,f,tf,heap)
               ==> v_inv conf w1 refs2 (w2,f2,tf2,heap2)) /\
-     EVERY2 (\v x. v_inv conf v refs (x,f,tf,heap)) vs rs
-     ==> EVERY2 (\v x. v_inv conf v refs2 (x,f2,tf2,heap2)) vs rs`),
+     ALL2 (\v x. v_inv conf v refs (x,f,tf,heap)) vs rs
+     ==> ALL2 (\v x. v_inv conf v refs2 (x,f2,tf2,heap2)) vs rs`),
   STRIP_TAC THEN SPLIT_ASM_TAC THEN
   W(fun (asl,w as gl) ->
     let old = the_asm (hd_is "ALL2") gl in
@@ -9854,8 +9854,8 @@ let v_inv_restrict = prove
 let EVERY2_v_inv_restrict = prove
  (`!vs (rs:(('a word_loc)heap_address)list) stack2.
     (!v. MEM v vs ==> v IN all_vs refs stack2) /\
-    EVERY2 (\v x. v_inv conf v refs (x,f,tf,heap)) vs rs
-    ==> EVERY2 (\v x. v_inv conf v refs
+    ALL2 (\v x. v_inv conf v refs (x,f,tf,heap)) vs rs
+    ==> ALL2 (\v x. v_inv conf v refs
           (x,f,DRESTRICT tf (all_ts refs stack2),heap)) vs rs`,
  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC (ISPEC `rs:(('a word_loc)heap_address)list`
@@ -9870,8 +9870,8 @@ let EVERY2_v_inv_restrict = prove
 let EVERY2_v_inv_restrict2 = prove
  (`!(zs:(('a word_loc)heap_address)list) vs stack2.
     (!v. MEM v vs ==> v IN all_vs refs stack2) /\
-    EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs vs
-    ==> EVERY2 (\z y. v_inv conf y refs
+    ALL2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs vs
+    ==> ALL2 (\z y. v_inv conf y refs
           (z,f,DRESTRICT tf (all_ts refs stack2),heap)) zs vs`,
  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC (ISPEC `vs:(dataSem_v)list` list_CASES) THEN
@@ -13083,8 +13083,8 @@ let heap_split_store_ref = prove
    heap_lookup p heap = SOME (RefBlock zs) /\
    ~(p < k) /\ LENGTH rs = LENGTH zs /\
    heap_store p [RefBlock rs] heap = (heap2,T) /\
-   EVERY isRef h2
-   ==> (?h3. heap_split k heap2 = SOME (h1,h3) /\ EVERY isRef h3)`,
+   ALL isRef h2
+   ==> (?h3. heap_split k heap2 = SOME (h1,h3) /\ ALL isRef h3)`,
   STRIP_TAC THEN
   (* the heap is its two halves, and the first is of the length *)
   FIRST_ASSUM (fun hs ->
@@ -13400,8 +13400,8 @@ let EVERY2_v_inv_update_gen = prove
     `(!w1 w2. v_inv conf w1 refs (w2,f,tf,heap)
               ==> v_inv conf w1 refs2 (w2,f,tf,heap2)) /\
      (!v. MEM v ys ==> v IN all_vs refs2 stack') /\
-     EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs ys
-     ==> EVERY2 (\z y. v_inv conf y refs2
+     ALL2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs ys
+     ==> ALL2 (\z y. v_inv conf y refs2
            (z,f,DRESTRICT tf (all_ts refs2 stack'),heap2)) zs ys`),
   STRIP_TAC THEN
   MATCH_MP_TAC EVERY2_MEM_MONO THEN
@@ -13761,7 +13761,7 @@ let bc_ref_inv_update_ref_at = prove
      FLOOKUP (f:(num,num)fmap) ptr = SOME p /\
      heap_lookup p heap2 = SOME (RefBlock t1) /\
      sptree_lookup ptr refs = SOME (bvlSem_ValueArray as1) /\
-     EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) t1 vls
+     ALL2 (\z y. v_inv conf y refs (z,f,tf,heap)) t1 vls
      ==> bc_ref_inv conf ptr (insert ptr (ValueArray vls) refs)
            (f,DRESTRICT tf (all_ts (insert ptr (ValueArray vls) refs)
                               stack'),heap2,be')`)),
@@ -14259,7 +14259,7 @@ let ptrs_store_LUPDATE = prove
 
 (* the first pair of two lists that a relation relates *)
 let EVERY2_HD = prove
- (`!(P:A->B->bool) xs ys. EVERY2 P xs ys /\ 0 < LENGTH xs
+ (`!(P:A->B->bool) xs ys. ALL2 P xs ys /\ 0 < LENGTH xs
                           ==> P (HD xs) (HD ys)`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[LENGTH; LT_REFL] THEN REPEAT GEN_TAC THEN
@@ -14311,7 +14311,7 @@ let bc_ref_inv_update_ref_at1 = prove
      FLOOKUP (f:(num,num)fmap) ptr = SOME p /\
      heap_lookup p heap2 = SOME (RefBlock (LUPDATE t i zs)) /\
      sptree_lookup ptr refs = SOME (bvlSem_ValueArray xs1) /\
-     EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs xs1 /\
+     ALL2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs xs1 /\
      v_inv conf v refs (t,f,tf,heap)
      ==> bc_ref_inv conf ptr
            (insert ptr (ValueArray (LUPDATE v i xs1)) refs)
@@ -14805,8 +14805,8 @@ let heap_split_store_thunk = prove
    heap_lookup p heap = SOME (ThunkBlock m y) /\
    ~(p < k) /\
    heap_store p [ThunkBlock ev r] heap = (heap2,T) /\
-   EVERY isRef h2
-   ==> (?h3. heap_split k heap2 = SOME (h1,h3) /\ EVERY isRef h3)`,
+   ALL isRef h2
+   ==> (?h3. heap_split k heap2 = SOME (h1,h3) /\ ALL isRef h3)`,
   STRIP_TAC THEN
   (* the heap is its two halves, and the first is of the length *)
   FIRST_ASSUM (fun hs ->
@@ -14974,8 +14974,8 @@ let EVERY2_v_inv_update_stack = prove
     `(!w1 w2. v_inv conf w1 refs (w2,f,tf,heap)
               ==> v_inv conf w1 refs2 (w2,f,tf,heap2)) /\
      (!v. MEM v vs ==> v IN all_vs refs2 stack') /\
-     EVERY2 (\v x. v_inv conf v refs (x,f,tf,heap)) vs rs
-     ==> EVERY2 (\v x. v_inv conf v refs2
+     ALL2 (\v x. v_inv conf v refs (x,f,tf,heap)) vs rs
+     ==> ALL2 (\v x. v_inv conf v refs2
            (x,f,DRESTRICT tf (all_ts refs2 stack'),heap2)) vs rs`),
   STRIP_TAC THEN
   MATCH_MP_TAC EVERY2_MEM_MONO THEN
@@ -16195,7 +16195,7 @@ let bc_ref_inv_update_mutblock_at = prove
      heap_lookup p heap2 =
        SOME (BlockRep tag (LUPDATE rr (LENGTH l) zs)) /\
      sptree_lookup ptr refs = SOME (bvlSem_MutBlock tag F l cv r) /\
-     EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs
+     ALL2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs
        (APPEND (APPEND l [cv]) r) /\
      v_inv conf h refs (rr,f,tf,heap) /\
      (!gs. ~(data_to_word_config_gc_kind conf =
@@ -20159,14 +20159,14 @@ let roots_ok_data = prove
 
 let all2_el_cons = prove
  (`!(P:A->B->bool) xs ys i a b st rs.
-     EVERY2 P xs ys /\ i < LENGTH xs /\ P a b /\ EVERY2 P st rs
-     ==> EVERY2 P (CONS (EL i xs) (CONS a st)) (CONS (EL i ys) (CONS b
+     ALL2 P xs ys /\ i < LENGTH xs /\ P a b /\ ALL2 P st rs
+     ==> ALL2 P (CONS (EL i xs) (CONS a st)) (CONS (EL i ys) (CONS b
        rs))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[ALL2_DEF; HD; TL; NOT_CONS_NIL] THEN
   REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
   MP_TAC (SPEC `i:num` (CONJUNCT2 (REWRITE_RULE[LIST_REL_EL_EQN]
-    (ASSUME `EVERY2 (P:A->B->bool) xs ys`)))) THEN
+    (ASSUME `ALL2 (P:A->B->bool) xs ys`)))) THEN
   ASM_REWRITE_TAC[]);;
 
 (* a reference that a value of a reference reaches is one that a
@@ -21700,8 +21700,8 @@ let v_inv_restrict_gen = prove
 let EVERY2_v_inv_restrict = prove
  (cake_as_vars (fun () ->
     `(!v. MEM v vs ==> v IN all_vs refs stack') /\
-     EVERY2 (\v x. v_inv conf v refs (x,f,tf,heap)) vs rs
-     ==> EVERY2 (\v x. v_inv conf v refs
+     ALL2 (\v x. v_inv conf v refs (x,f,tf,heap)) vs rs
+     ==> ALL2 (\v x. v_inv conf v refs
            (x,f,DRESTRICT tf (all_ts refs stack'),heap)) vs rs`),
   STRIP_TAC THEN
   MATCH_MP_TAC EVERY2_v_inv_update_stack THEN
@@ -21712,8 +21712,8 @@ let EVERY2_v_inv_restrict = prove
 let EVERY2_v_inv_restrict_gen = prove
  (cake_as_vars (fun () ->
     `(!v. MEM v ys ==> v IN all_vs refs stack') /\
-     EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs ys
-     ==> EVERY2 (\z y. v_inv conf y refs
+     ALL2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs ys
+     ==> ALL2 (\z y. v_inv conf y refs
            (z,f,DRESTRICT tf (all_ts refs stack'),heap)) zs ys`),
   STRIP_TAC THEN
   MATCH_MP_TAC EVERY2_v_inv_update_gen THEN
@@ -21848,8 +21848,8 @@ let MEM_MAP_subset = prove
 let EVERY2_FST_SND_subset = prove
  (`!(P:A->B->bool) ys xs.
      (!p. MEM p ys ==> MEM p xs) /\
-     EVERY2 P (MAP FST xs) (MAP SND xs)
-     ==> EVERY2 P (MAP FST ys) (MAP SND ys)`,
+     ALL2 P (MAP FST xs) (MAP SND xs)
+     ==> ALL2 P (MAP FST ys) (MAP SND ys)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[EVERY2_MAP_FST_SND; GSYM ALL_MEM] THEN
   MESON_TAC[]);;
@@ -21859,8 +21859,8 @@ let EVERY2_FST_SND_subset = prove
 let EVERY2_stack_permute = prove
  (cake_as_vars (fun () ->
     `(!p. MEM p ys ==> MEM p xs) /\
-     EVERY2 P (APPEND (MAP FST xs) stack) (APPEND (MAP SND xs) roots)
-     ==> EVERY2 P (APPEND (MAP FST ys) stack) (APPEND (MAP SND ys)
+     ALL2 P (APPEND (MAP FST xs) stack) (APPEND (MAP SND xs) roots)
+     ==> ALL2 P (APPEND (MAP FST ys) stack) (APPEND (MAP SND ys)
        roots)`),
   STRIP_TAC THEN
   W(fun gl ->
@@ -45546,7 +45546,7 @@ let elements_list_all_blocks = prove
    SUBGOAL_THEN
      `!xs. elements_list xs /\ ~(xs = []) /\
            (?t a b. HD xs = Block t a b)
-           ==> EVERY (\x. ?t a b. x = Block t a b) xs /\
+           ==> ALL (\x. ?t a b. x = Block t a b) xs /\
                SORTED (\x y. vb_size x < vb_size y) xs`
      (fun th -> MATCH_ACCEPT_TAC th) THEN
    LIST_INDUCT_TAC THENL [REWRITE_TAC[]; ALL_TAC] THEN
@@ -45557,7 +45557,7 @@ let elements_list_all_blocks = prove
      REWRITE_TAC[elements_list_def; HD; ALL; SORTED_DEF] THEN
      STRIP_TAC THEN
      SUBGOAL_THEN
-       `EVERY (\x. ?t a b. x = Block t a b) (CONS v vs) /\
+       `ALL (\x. ?t a b. x = Block t a b) (CONS v vs) /\
         SORTED (\x y. vb_size x < vb_size y) (CONS v vs)`
        (fun th -> STRIP_ASSUME_TAC(REWRITE_RULE[ALL] th)) THENL
       [FIRST_X_ASSUM MATCH_MP_TAC THEN
@@ -57387,7 +57387,7 @@ let cons_multi_thm = prove
      below it and the blocks that were written *)
   let data_up_to_blocks = prove
    (`!(ha:((A,B) heap_element) list) hm h2.
-       EVERY isDataElement ha /\ EVERY isDataElement hm
+       ALL isDataElement ha /\ ALL isDataElement hm
        ==> data_up_to (heap_length ha + heap_length hm)
              (APPEND (APPEND ha hm) h2)`,
     REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -59552,7 +59552,7 @@ let heap_length_Blocks = prove
                      SOME (BlockRep cons_tag [u; w])) /\
       (!z. MEM z t /\ ~(z < heap_length ha)
            ==> heap_length ha + 3 <= z)
-      ==> EVERY (\p. ?u w. heap_lookup p (APPEND ha hb) =
+      ==> ALL (\p. ?u w. heap_lookup p (APPEND ha hb) =
             SOME (BlockRep cons_tag [u; w]))
             (APPEND (FILTER (\z. z < heap_length ha) t) (MAP (\z. z - 3)
                (FILTER ((~) o (\z. z < heap_length ha)) t)))`,
@@ -59607,7 +59607,7 @@ let heap_length_Blocks = prove
                    data_to_word_memoryProof_tag#('a word_loc)
                    list)heap_element) list.
                       ALL_DISTINCT ps2 /\
-                      EVERY (\p. ?u w. heap_lookup p hp =
+                      ALL (\p. ?u w. heap_lookup p hp =
                         SOME (BlockRep cons_tag [u; w])) ps2
                       ==> 3 * LENGTH ps2 <= heap_length hp)
       ==> 3 * (LENGTH t + 1) <=
@@ -62944,7 +62944,7 @@ let good_loc_LN = prove
 let part_gl = prove
  (`(!k. good_loc s (SND (lookup_mem m k))) /\
    part_to_words c m h (off:'a word) = SOME ((y0,y1),y2)
-   ==> good_loc s y1 /\ EVERY (good_loc s o SND) y2`,
+   ==> good_loc s y1 /\ ALL (good_loc s o SND) y2`,
   STRIP_TAC THEN
   RULE_ASSUM_TRY (CONV_RULE(REWRITE_CONV[part_to_words_def])) THEN
   POP_ASSUM MP_TAC THEN
@@ -62980,7 +62980,7 @@ let const_parts_to_words_good_loc = prove
     (`!parts' m i (off:'a word) y0 y1 y2.
         (!k. good_loc s (SND (lookup_mem m k))) /\
         parts_to_words c m i parts' off = SOME ((y0,y1),y2)
-        ==> good_loc s y1 /\ EVERY (good_loc s o SND) y2`,
+        ==> good_loc s y1 /\ ALL (good_loc s o SND) y2`,
      LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
      REWRITE_TAC[parts_to_words_def] THENL
       [STRIP_TAC THEN

@@ -168,8 +168,8 @@ let LUPDATE_LENGTH = prove
 
 let EVERY2_LUPDATE_same = prove
  (`!(P:A->B->bool) l1 l2 n v1 v2.
-     P v1 v2 /\ EVERY2 P l1 l2
-     ==> EVERY2 P (LUPDATE v1 n l1) (LUPDATE v2 n l2)`,
+     P v1 v2 /\ ALL2 P l1 l2
+     ==> ALL2 P (LUPDATE v1 n l1) (LUPDATE v2 n l2)`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
    [REWRITE_TAC[LUPDATE; ALL2_DEF] THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[LUPDATE];
@@ -1079,8 +1079,8 @@ let FUPDATE_SUBMAP = prove
 
 let LIST_REL_APPEND_IMP = prove
  (`!(P:A->B->bool) xs ys xs1 ys1.
-     EVERY2 P (APPEND xs xs1) (APPEND ys ys1) /\ LENGTH xs = LENGTH ys
-     ==> EVERY2 P xs ys /\ EVERY2 P xs1 ys1`,
+     ALL2 P (APPEND xs xs1) (APPEND ys ys1) /\ LENGTH xs = LENGTH ys
+     ==> ALL2 P xs ys /\ ALL2 P xs1 ys1`,
   GEN_TAC THEN LIST_INDUCT_TAC THENL
    [REPEAT GEN_TAC THEN REWRITE_TAC[APPEND; LENGTH] THEN
     STRIP_TAC THEN
@@ -1099,7 +1099,7 @@ let LIST_REL_APPEND_IMP = prove
 let EVERY2_MEM_MONO = prove
  (`!(P:A->B->bool) Q l1 l2.
      (!x y. MEM (x,y) (ZIP l1 l2) /\ P x y ==> Q x y) /\
-     EVERY2 P l1 l2 ==> EVERY2 Q l1 l2`,
+     ALL2 P l1 l2 ==> ALL2 Q l1 l2`,
   GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
   REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC(ISPEC `l2:B list` (cases_of `:(B)list`)) THEN
