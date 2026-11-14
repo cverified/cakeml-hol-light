@@ -511,7 +511,11 @@ CON_CLAUSE = {
 FIELD_VAR_DEF = {
   # bvl_to_bvi takes the refs, the clock and the ffi of a state of
   # bvlSem and puts them in one of bviSem
-  ('bviSem', 'bvl_to_bvi_def'): {'s': 'bvlSem_state'},
+  ('bviSem', 'bvl_to_bvi_def'):
+    {'s': 'bvlSem_state', 't': 'bviSem_state'},
+  # the gen that compile_decs gives back is the generation store
+  ('source_to_flat', 'compile_prog_def'):
+    {'gen': 'environment_generation_store'},
   # the state that bvl_to_bvi's state_rel relates to a state of
   # bviSem is one of bvlSem, which its globals say and the
   # statement does not
@@ -12199,12 +12203,6 @@ DEF_PATCH = {
     ('| asm_Xor ->', '| backend_common_Xor ->'),
     ('| asm_Add -> asm_Add', '| backend_common_Add -> asm_Add'),
     ('| asm_Sub ->', '| backend_common_Sub ->'),
-  ],
-  # compile_exp reads an ast expression; pattern_semantics has an
-  # If of its own, and the pattern of this one clause resolved to
-  # it (the annotation that the port writes says ast_exp)
-  ('source_to_flat', 'compile_exp_def'): [
-    ('(pattern_semantics_If e1 e2', '(ast_If e1 e2'),
   ],
   # the mop of the ShMemOp arm is a memop of asm, where every
   # other Store of get_live is the one of a wordLang program

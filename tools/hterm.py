@@ -1983,6 +1983,50 @@ class Printer:
     head = head[-1] if head else ''
     return head if head in self.ctx.recs else None
 
+  def inner_rec(self, x):
+    """the record type of a term that is itself a field of a
+       record: the type of that field says it (tools/recres.txt,
+       which has the accessors whose result is a record of the
+       port).  HOL4 writes c.envs.next, where the next is the one
+       of an environment_store because the envs of a
+       source_to_flat_config is one"""
+    while x.kind in ('paren', 'typed', 'rawtyped'): x = x.e
+    if x.kind != 'field': return None
+    r = self.annot_rec(x.e) or self.inner_rec(x.e)
+    if r is None:
+      v = x.e
+      while v.kind in ('paren', 'typed', 'rawtyped'): v = v.e
+      r = (self.ctx.fieldvar.get(v.name) if v.kind == 'id' else None)
+    if r is not None and x.fld in self.ctx.recs.get(r, []):
+      acc = r + '_' + x.fld
+    else:
+      # the accessor that the inner field is written with, which
+      # is what the rest of the statement settles on
+      try: acc = self.ctx.field(x.fld)
+      except Exception: return None
+    if acc.endswith('_' + x.fld):
+      t = self.ctx.rectys.get(acc[:-len(x.fld) - 1], {}).get(x.fld)
+      if t:
+        r2 = self.rec_of_type(t)
+        if r2: return r2
+    return rec_res_pos(acc, 1).get(None)
+
+  def rec_of_type(self, t):
+    """the record type of the port that a type of a source names,
+       if it is one (the envs of a source_to_flat_config is an
+       environment_store)"""
+    head = re.sub(r'^.*\)', '', t).strip().split()
+    head = head[-1] if head else ''
+    if '$' in head:
+      thy, nm = head.split('$', 1)
+      for cand in (thy + '_' + nm, nm):
+        if cand in self.ctx.recs: return cand
+      return None
+    if head in self.ctx.recs: return head
+    # a record that the port renamed with the theory that has it
+    cands = [r for r in self.ctx.recs if r.endswith('_' + head)]
+    return cands[0] if len(cands) == 1 else None
+
   def pr_type(self, toks):
     try:
       ty = TypeParser(list(toks)).parse()
@@ -2610,6 +2654,10 @@ class Printer:
         # the gc_state has
         if rec and e.fld not in self.ctx.recs.get(rec, []):
           rec = None
+      if not rec:
+        rec = self.inner_rec(e.e)
+        if rec and e.fld not in self.ctx.recs.get(rec, []):
+          rec = None
       if rec: self.ctx.recseen.add(rec)
       acc = (rec + '_' + e.fld) if rec else self.ctx.field(e.fld)
       return self.paren(acc + ' ' + self.pr(e.e, APP),
@@ -2622,6 +2670,7 @@ class Printer:
       while w.kind == 'typed': w = w.e
       rec = (self.ctx.fieldvar.get(w.name)
              if w.kind == 'id' else None)
+      if rec is None: rec = self.annot_rec(e.e) or self.inner_rec(e.e)
       if rec: self.ctx.recseen.add(rec)
       for i, (fld, v, fn) in enumerate(e.upds):
         s = ((rec + '_' + fld + '_fupd' if rec

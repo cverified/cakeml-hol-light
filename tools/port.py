@@ -1120,20 +1120,25 @@ class Porter:
             if v: out.setdefault(v, rec)
       # and the variables that the result of such a constant is
       # bound to: 'evaluate (xs,env,s) = (res,s1)' says that the
-      # s1 of it is a state of the same language as the s
+      # s1 of it is a state of the same language as the s, and so
+      # does the let that binds it
+      pairs = []
       if n.kind == 'infix' and n.op == '=':
-        for a, b in ((n.l, n.r), (n.r, n.l)):
-          pos = res_pos(a)
-          if not pos: continue
-          for j, rec in pos.items():
-            if j is None:
-              v = bare(b)
+        pairs = [(n.l, n.r), (n.r, n.l)]
+      elif n.kind == 'let':
+        pairs = [(v, pt) for pt, v in n.binds]
+      for a, b in pairs:
+        pos = res_pos(a)
+        if not pos: continue
+        for j, rec in pos.items():
+          if j is None:
+            v = bare(b)
+            if v: out.setdefault(v, rec)
+          else:
+            ps = parts(b)
+            if len(ps) > 1 and j < len(ps):
+              v = bare(ps[j])
               if v: out.setdefault(v, rec)
-            else:
-              ps = parts(b)
-              if len(ps) > 1 and j < len(ps):
-                v = bare(ps[j])
-                if v: out.setdefault(v, rec)
       for t in hterm.subnodes(n): go(t)
 
     go(e)
