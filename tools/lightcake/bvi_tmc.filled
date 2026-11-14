@@ -1,0 +1,17 @@
+cb_to_bvi_worker_aux_alt_thm
+cb_to_bvi_worker_aux_eq
+length_shift_vars
+pure_exp_eq
+pure_exps_append
+pure_exps_sing
+shift_cb_dist
+shift_cb_zero
+shift_vars_dist
+shift_vars_zero
+wf_cb_expand
+wf_cb_shift_sing
+wf_vars_append
+wf_vars_empty
+wf_vars_expand
+wf_vars_shift
+wf_vars_shift_sing

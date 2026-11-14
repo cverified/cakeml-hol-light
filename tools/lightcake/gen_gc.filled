@@ -1,0 +1,9 @@
+FILTER_isForward_heap_expand_lemma
+GREATER_IMP_heap_lookup
+IMP_if_equal
+IN_heap_addresses_LESS
+NOT_IN_heap_addresses_gt
+NOT_IN_heap_addresses_less
+heap_addresses_APPEND_IN
+heap_lookup_IMP_MEM
+heaps_similar_lemma

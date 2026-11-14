@@ -1,0 +1,9 @@
+EVERY_EL_IMP
+find_refs_globals_EL
+find_v_globalsL_EL_trans
+flat_state_rel_trans
+globals_rel_trans
+has_Eval_def
+is_pure_EVERY_aconv
+not_LE_LESS_IMP
+not_v_has_Eval_EVERY_EL

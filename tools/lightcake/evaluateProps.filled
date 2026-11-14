@@ -1,0 +1,13 @@
+add_lemma
+can_pmatch_all_EVERY
+do_app_ffi_unchanged
+do_app_io_events_mono
+evaluate_call_FFI_rel_imp
+evaluate_decs_call_FFI_rel
+evaluate_decs_call_FFI_rel_imp
+evaluate_io_events_mono
+evaluate_io_events_mono_imp
+evaluate_nil
+evaluate_sing
+is_clock_io_mono_acc_safe
+is_clock_io_mono_evaluate_decs

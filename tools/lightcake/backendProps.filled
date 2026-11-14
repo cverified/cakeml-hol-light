@@ -1,0 +1,10 @@
+is_state_oracle_shift
+is_state_oracle_shift_imp
+oracle_monotonic_subset
+pure_cc_I
+restrict_nonzero_BIGUNION
+restrict_nonzero_SUBSET
+restrict_nonzero_SUBSET_left
+restrict_nonzero_left_union
+restrict_nonzero_mono
+restrict_nonzero_right_union
