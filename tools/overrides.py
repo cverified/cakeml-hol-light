@@ -11908,6 +11908,16 @@ AUX_SIZE = {
     '             (pair_size mlstring_size flatLang_exp_size))',
   # closLang's exp3_size is the size of an exp list
   ('clos_mti', 'exp3_size'): 'list_size closLang_exp_size',
+  ('clos_call', 'exp3_size'): 'list_size closLang_exp_size',
+  ('clos_call', 'exp1_size'):
+    'list_size (pair_size (\\x. x) closLang_exp_size)',
+  ('clos_knownProof', 'v1_size'): 'list_size closSem_v_size',
+  ('clos_callProof', 'v1_size'): 'list_size closSem_v_size',
+  ('flat_pattern', 'pat1_size'): 'list_size flatLang_pat_size',
+  ('source_to_flat', 'pat1_size'): 'list_size ast_pat_size',
+  # wordLang's exp_size takes the size of the type variable, so
+  # the one of a list of them is the composition
+  ('wordLang', 'exp1_size'): '(list_size o wordLang_exp_size)',
 }
 
 
