@@ -742,7 +742,7 @@ let word_to_stackProof_state_rel_def = new_definition
      t + f <= LENGTH (stackSem_state_stack t) /\ LENGTH
        (stackSem_state_stack t) < dimword (:'a) /\
      (if f' = 0 then f = 0 else (f = f' + 1)) /\
-     parmove_wf (wordSem_state_locals s) /\
+     sptree_wf (wordSem_state_locals s) /\
      stack_size_rel f (wordSem_state_locals_size s)
        (wordSem_state_stack_limit s) (wordSem_state_stack_max s)
        (wordSem_state_stack s) (stackSem_state_stack
@@ -1301,6 +1301,8 @@ let alloc_IMP_alloc2 = prove
          stackSem_state_ffi t1))`,
   CHEAT_TAC);;
 
+(* the clauses in two quotations: w2 is (('w word_loc) list) and ('w
+   word_loc), which one quotation cannot typecheck *)
 let compile_result_def = define_cases_clauses
   [`(compile_result (wordSem_Result w1 w2) = stackSem_Result w1) /\
     (compile_result wordSem_TimeOut = stackSem_TimeOut) /\
@@ -1422,7 +1424,7 @@ let SORTED_FST_PERM_IMP_ALIST_EQ = prove
   CHEAT_TAC);;
 
 let inter_union_left = prove
- (`parmove_wf s ==>
+ (`sptree_wf s ==>
    inter (sptree_union s t) s = s`,
   CHEAT_TAC);;
 
@@ -1729,7 +1731,7 @@ let ALOOKUP_MAP_any = prove
   CHEAT_TAC);;
 
 let wf_alist_insert = prove
- (`!xs ys z. parmove_wf z ==> parmove_wf (alist_insert xs ys z)`,
+ (`!xs ys z. sptree_wf z ==> sptree_wf (alist_insert xs ys z)`,
   CHEAT_TAC);;
 
 let ALOOKUP_MAP_INJ_FST = prove
@@ -1750,7 +1752,7 @@ let alist_insert_get_vars = prove
    ALL_DISTINCT (MAP FST moves) /\
    stackSem_get_vars (MAP SND moves) s = SOME x /\
    ALL_DISTINCT (FILTER IS_SOME ls) /\
-   parmove_wf (wordSem_state_locals s) /\
+   sptree_wf (wordSem_state_locals s) /\
    (!x. MEM (SOME x) ls ==> MEM x (MAP FST moves)) /\
    (!x y. MEM (x,y) moves /\ ~(x = y) ==> MEM (SOME x) ls) ==>
    alist_insert
@@ -1762,7 +1764,7 @@ let alist_insert_get_vars = prove
 
 (* [local] *)
 let wf_fromList2 = prove
- (`!ls. parmove_wf (fromList2 ls)`,
+ (`!ls. sptree_wf (fromList2 ls)`,
   CHEAT_TAC);;
 
 let wStackLoad_append = prove
@@ -2228,8 +2230,8 @@ let evaluate_stack_move_clock = prove
 
 (* [local] *)
 let pop_env_ffi = prove
- (`wordSem_pop_env s = SOME s' ==> wordSem_state_ffi
-   s = wordSem_state_ffi s'`,
+ (`wordSem_pop_env s = SOME s' ==> state_ffi
+   s = state_ffi s'`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2995,7 +2997,7 @@ let word_to_stackProof_make_init_def = new_definition
      mk_wordSem_state (sptree_insert 0 (wordLang_Loc 1 0) LN) (SOME 0)
        (stackSem_state_fp_regs t) (stackSem_state_store t \\ Handler) []
        (LENGTH (stackSem_state_stack t)) (stack_size ([]:('a stack_frame)
-       list)) (mllist_mapi (\n (arg_count,prog). FST (SND
+       list)) (sptree_mapi (\n (arg_count,prog). FST (SND
        (word_to_stack_compile_prog ac F prog arg_count k (misc_Nil,0)))) code)
        (stackSem_state_memory t) (stackSem_state_mdomain t)
        (stackSem_state_sh_mdomain t) (K I) (\(bm0,cfg) progs.

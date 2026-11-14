@@ -71,7 +71,8 @@ add_simp data_to_bvi_v_Unit;;
 
 (* Projection for Boolv constant *)
 let data_to_bvi_v_Boolv = prove
- (`!b. data_to_bvi_v (dataSem_Boolv b) = (dataSem_Boolv b)`,
+ (`!b. data_to_bvi_v (semanticPrimitives_Boolv b) = (semanticPrimitives_Boolv
+  b)`,
   CHEAT_TAC);;
 add_simp data_to_bvi_v_Boolv;;
 
@@ -172,7 +173,7 @@ add_simp data_to_bvi_result_def;;
 
 (* All the `dataSem$v` values project to `bvlSem$Boolv b` satisfy `isBool` *)
 let isBool_eq = prove
- (`!z b. isBool b z <=> (dataSem_Boolv b = data_to_bvi_v z)`,
+ (`!z b. isBool b z <=> (semanticPrimitives_Boolv b = data_to_bvi_v z)`,
   CHEAT_TAC);;
 
 (* Lifting `data_to_bvi_v` projection to work over `bvlSem$v list` *)
@@ -359,7 +360,7 @@ let do_build_thm = prove
 
 (* [local] *)
 let data_to_bvi_v_Boolv_IMP = prove
- (`data_to_bvi_v x0 = dataSem_Boolv b ==> dest_Boolv x0 = SOME b`,
+ (`data_to_bvi_v x0 = semanticPrimitives_Boolv b ==> dest_Boolv x0 = SOME b`,
   CHEAT_TAC);;
 
 (* bviSem$finalise_cons is simulated by dataSem$finalise_cons: the extra

@@ -103,6 +103,8 @@ let word_to_display_def = new_definition
 let item_with_word_def = new_definition
   `item_with_word name w = displayLang_Item NONE name [word_to_display w]`;;
 
+(* the clauses in two quotations: w is word8 and word64, which one quotation
+   cannot typecheck *)
 let lit_to_display_def = define_cases_clauses
   [`(lit_to_display (ast_IntLit i) =
         displayLang_Item NONE (implode "IntLit") [empty_item
@@ -281,6 +283,8 @@ let op_to_display_def = new_definition
    | ast_Env_id -> empty_item (implode "Env_id")
    | ast_ThunkOp t -> thunk_op_to_display t`;;
 
+(* the clauses in two quotations: n is 'n and 'm, which one quotation cannot
+   typecheck *)
 let id_to_display_def,id_to_display_ind = define_rec_clauses
   [`id_to_display (Short n) =
       displayLang_Item NONE (implode "Short") [displayLang_String n]`;
@@ -776,6 +780,8 @@ let commas_def,commas_ind = define_wf
 
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)
+(* the clauses in two quotations: name_hint is mlstring and (mlstring list),
+   which one quotation cannot typecheck *)
 let clos_to_display_def,clos_to_display_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(clos_to_display ns h (closLang_Var t n) =
@@ -947,6 +953,8 @@ let MEM_bvi_exps_size = prove
  (`!exps e. MEM e exps ==> bvi_exp_size e < list_size bvi_exp_size exps`,
   CHEAT_TAC);;
 
+(* the clauses in two quotations: dest is (num option) and num, which one
+   quotation cannot typecheck *)
 let bvi_to_display_def,bvi_to_display_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(bvi_to_display ns h (bvi_Var n) =
@@ -1509,6 +1517,10 @@ let num_sets_to_display_def = new_definition
      displayLang_Tuple [num_set_to_display l;
             num_set_to_display r]`;;
 
+(* the clauses in three quotations: a is ((num list # cutsets # wordLang$prog
+   # num # num) option) and num; b is (num option), binop and num; c is (num
+   list) and num; d is ((num # wordLang$prog # num # num) option) and num,
+   which one quotation cannot typecheck *)
 let word_prog_to_display_def,word_prog_to_display_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

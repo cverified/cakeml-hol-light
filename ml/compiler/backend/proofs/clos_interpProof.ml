@@ -307,6 +307,8 @@ let evaluate_interp_thm = prove
    not has_install ignores compiler oracle
  * ------------------------------------------------------------------------- *)
 
+(* the clauses in two quotations: i is int and num, which one quotation
+   cannot typecheck *)
 (* the termination relation that HOL4 gives is
      MEASURE closSem_v_size
    which is not one that HOL Light takes here, so the

@@ -512,7 +512,7 @@ let share_mem_op_def = define_cases
 let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   `labSem_evaluate (s:('a,'c,'ffi)labSem_state) =
-     if labSem_state_clock s = 0 then (targetSem_TimeOut,s) else match
+     (if labSem_state_clock s = 0 then (targetSem_TimeOut,s) else match
        asm_fetch s with SOME (labLang_Asm (Asmi a) _ _) ->
          (match a with asm_Inst i ->
              (let s1 = asm_inst i s in
@@ -559,7 +559,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
         (match get_pc_value l s with NONE -> (targetSem_Error,s)
          | SOME p -> labSem_evaluate (labSem_upd_pc p (labSem_dec_clock s)))
      | SOME (labLang_LabAsm (labLang_JumpCmp c r ri l) _ _ _) ->
-        (match wordSem_word_cmp c ((\r s. labSem_state_regs s r) r s)
+        (match asm_word_cmp c ((\r s. labSem_state_regs s r) r s)
           (labSem_reg_imm ri s) with NONE -> (targetSem_Error,s)
          | SOME F -> labSem_evaluate (inc_pc (labSem_dec_clock s))
          | SOME T ->
@@ -650,7 +650,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                                 (labSem_state_mem_fupd (K new_m) s)))))))))
            | _ -> (targetSem_Error,s))
         | _ -> (targetSem_Error,s))
-     | _ -> (targetSem_Error,s)`;;
+     | _ -> (targetSem_Error,s))`;;
 
 let labSem_semantics_def = new_definition
   `labSem_semantics s =

@@ -1418,6 +1418,31 @@ def rec_arg_pos(nm):
   return REC_ARGS.get(nm, {})
 
 
+def _arity():
+  """how many arguments every constant of the port takes
+     (tools/arity.txt, which tools/bin/recargs dumps out of a
+     session): a name that two theories have with constants of
+     different arity is resolved by how many arguments are there
+     (sptree's insert takes three and balanced_map's four)"""
+  out = {}
+  f = os.path.dirname(os.path.abspath(__file__)) + '/arity.txt'
+  try:
+    for l in open(f):
+      nm, n = l.rstrip('\n').split('\t')
+      out[nm] = int(n)
+  except OSError:
+    pass
+  return out
+
+
+ARITY = _arity()
+
+
+def const_arity(nm):
+  """the arity of a constant of the port, or None"""
+  return ARITY.get(nm)
+
+
 def _rec_res_pos():
   """the components of the result of a constant of the port whose
      type is a record type of the port (tools/recres.txt): the

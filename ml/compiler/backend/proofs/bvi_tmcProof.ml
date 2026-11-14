@@ -68,6 +68,8 @@ let no_mutcons_op_def = new_definition
   `no_mutcons_op op <=> (!tag i. ~(op = closLang_MemOp (closLang_MutCons tag
   i)))`;;
 
+(* the clauses in two quotations: dest is (num option) and num, which one
+   quotation cannot typecheck *)
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 let no_mutcons_def,no_mutcons_ind = define_wf_clauses
@@ -1114,8 +1116,8 @@ let is_block_op_cons_def = new_definition
 
 (* bvi_to_bvl_refs *)
 let bvi_tmcProof_bvi_to_bvl_refs = prove
- (`bvlSem_state_refs
-      (bvl_to_bvi s t) = bvlSem_state_refs s`,
+ (`bviSem_state_refs
+      (bvl_to_bvi s t) = bviSem_state_refs s`,
   CHEAT_TAC);;
 
 let finalise_cons_refs_SUBSET = prove

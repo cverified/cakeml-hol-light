@@ -12,14 +12,14 @@ needs "lib/sptree.ml";;
 let _ = cake_library ();;
 (* HOL4 ancestors outside the port: pred_set arithmetic relation *)
 
-let num_set_tree_union_def,num_set_tree_union_ind = define_rec_clauses
-  [`(num_set_tree_union LN (t2:(1 spt) spt) = (t2:(1 spt) spt)) /\
-    (num_set_tree_union (LS a) t =
+let num_set_tree_union_def,num_set_tree_union_ind = define_rec
+  `(num_set_tree_union LN (t2:(1 spt) spt) = (t2:(1 spt) spt)) /\
+   (num_set_tree_union (LS a) t =
        ((match t with LN -> LS a
          | LS b -> LS (sptree_union a b)
          | BN t1 t2 -> BS t1 a t2
-         | BS t1 b t2 -> BS t1 (sptree_union a b) t2):(1 spt) spt))`;
-   `(num_set_tree_union (BN t1 t2) t =
+         | BS t1 b t2 -> BS t1 (sptree_union a b) t2):(1 spt) spt)) /\
+   (num_set_tree_union (BN t1 t2) t =
          ((match t with LN -> BN t1 t2
            | LS a -> BS t1 a t2
            | BN t1' t2' ->
@@ -27,7 +27,7 @@ let num_set_tree_union_def,num_set_tree_union_ind = define_rec_clauses
            | BS t1' a t2' ->
             BS (num_set_tree_union t1 t1') a (num_set_tree_union t2
                 t2')):(1 spt) spt)) /\
-    (num_set_tree_union (BS t1 a t2) t =
+   (num_set_tree_union (BS t1 a t2) t =
          ((match t with LN -> BS t1 a t2
            | LS b -> BS t1 (sptree_union a b) t2
            | BN t1' t2' ->
@@ -35,7 +35,7 @@ let num_set_tree_union_def,num_set_tree_union_ind = define_rec_clauses
                     t2')
            | BS t1' b t2' ->
                 BS (num_set_tree_union t1 t1') (sptree_union a b)
-                    (num_set_tree_union t2 t2')):(1 spt) spt))`];;
+                    (num_set_tree_union t2 t2')):(1 spt) spt))`;;
 
 let _ = size_thms "spt";;
 (* the termination relation that HOL4 gives is

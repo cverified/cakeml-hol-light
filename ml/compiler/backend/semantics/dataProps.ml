@@ -152,7 +152,7 @@ add_simp do_stack_const;;
 
 (* Boolv_11 *)
 let dataProps_Boolv_11 = prove
- (`dataSem_Boolv b1 = dataSem_Boolv b2 <=> b1 = b2`,
+ (`dataSem_Boolv b1 = semanticPrimitives_Boolv b2 <=> b1 = b2`,
   CHEAT_TAC);;
 add_simp dataProps_Boolv_11;;
 

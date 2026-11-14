@@ -107,12 +107,12 @@ let not_is_Label_compile_jump = prove
 add_simp not_is_Label_compile_jump;;
 
 let word_cmp_not_NONE = prove
- (`~(wordSem_word_cmp cmp (wordLang_Word w1) (wordLang_Word w2) = NONE)`,
+ (`~(asm_word_cmp cmp (wordLang_Word w1) (wordLang_Word w2) = NONE)`,
   CHEAT_TAC);;
 add_simp word_cmp_not_NONE;;
 
 let word_cmp_negate_alt = prove
- (`asm_word_cmp (negate cmp) w1 w2 <=> ~(wordSem_word_cmp cmp w1 w2)`,
+ (`asm_word_cmp (negate cmp) w1 w2 <=> ~(asm_word_cmp cmp w1 w2)`,
   CHEAT_TAC);;
 add_simp word_cmp_negate_alt;;
 
@@ -677,12 +677,12 @@ let full_make_init_def = new_definition
    let code1 = stack_alloc_compile data_conf (stack_rawcall_compile code) in
    let code2 = stack_to_lab_compile jump offset ggc max_heap sp
      InitGlobals_location code1 in
-   let code3 = fromAList (stack_to_lab_compile
-     (stack_to_lab_config_reg_names stack_conf) code2) in
+   let code3 = fromAList (bvl_const_compile (stack_to_lab_config_reg_names
+     stack_conf) code2) in
    let coracle1 = (I ## MAP stack_alloc_prog_comp ## I) o coracle in
    let coracle2 = (I ## MAP (stack_alloc_prog_comp jump offset sp) ## I) o
      coracle1 in
-   let coracle3 = (I ## stack_to_lab_compile (stack_to_lab_config_reg_names
+   let coracle3 = (I ## data_space_compile (stack_to_lab_config_reg_names
      stack_conf) ## I) o coracle2 in
    let s3 = stack_to_labProof_make_init code3 coracle3 (MAP (tlookup
      (stack_to_lab_config_reg_names stack_conf)) [2; 3; 4]) save_regs s4 in
@@ -1088,7 +1088,7 @@ let stack_names_get_code_labels = prove
 (* stack_remove *)
 (* get_code_labels_comp[local] *)
 let stack_to_labProof_get_code_labels_comp = prove
- (`!a b c p. stackProps_get_code_labels (stack_alloc_comp a b c p) SUBSET
+ (`!a b c p. stackProps_get_code_labels (data_to_word_comp a b c p) SUBSET
   (stack_err_lab,0) INSERT stackProps_get_code_labels p`,
   CHEAT_TAC);;
 
@@ -1130,14 +1130,14 @@ let stack_names_stack_good_code_labels = prove
 (* [local] *)
 let stack_remove_get_code_labels_comp = prove
  (`!a b c p.
-   stackProps_get_code_labels (stack_alloc_comp a b c p) SUBSET
+   stackProps_get_code_labels (data_to_word_comp a b c p) SUBSET
      (stack_err_lab,0) INSERT stackProps_get_code_labels p`,
   CHEAT_TAC);;
 
 (* [local] *)
 let stack_remove_stack_get_handler_labels_comp = prove
  (`!a b c p m.
-   stack_get_handler_labels m (stack_alloc_comp a b c p) =
+   stack_get_handler_labels m (data_to_word_comp a b c p) =
    stack_get_handler_labels m p`,
   CHEAT_TAC);;
 
@@ -1340,7 +1340,7 @@ let stack_rawcall_comp_top_no_shmemop = prove
 
 let stack_rawcall_compile_no_shmemop = prove
  (`!prog. ALL (\(a,p). no_shmemop p) prog ==>
-       ALL (\(a,p). no_shmemop p) (stack_to_lab_compile prog)`,
+       ALL (\(a,p). no_shmemop p) (data_space_compile prog)`,
   CHEAT_TAC);;
 
 let stack_alloc_comp_no_shmemop = prove
@@ -1379,7 +1379,8 @@ let stack_alloc_no_shmemop = prove
 add_simp stack_alloc_no_shmemop;;
 
 let stack_remove_comp_no_shmemop = prove
- (`!jump off k p. no_shmemop p ==> no_shmemop (stack_alloc_comp jump off k p)`,
+ (`!jump off k p. no_shmemop p ==> no_shmemop (data_to_word_comp jump off k
+  p)`,
   CHEAT_TAC);;
 
 let stack_remove_prog_comp_no_shmemop = prove
@@ -1462,7 +1463,7 @@ let stack_rawcall_comp_top_no_install = prove
 
 let stack_rawcall_compile_no_install = prove
  (`!prog. ALL (\(a,p). stackProps_no_install p) prog ==>
-       ALL (\(a,p). stackProps_no_install p) (stack_to_lab_compile prog)`,
+       ALL (\(a,p). stackProps_no_install p) (data_space_compile prog)`,
   CHEAT_TAC);;
 
 let stack_alloc_comp_no_install = prove
@@ -1503,7 +1504,7 @@ add_simp stack_alloc_no_install;;
 
 let stack_remove_comp_no_install = prove
  (`!jump off k p. stackProps_no_install p ==> stackProps_no_install
-  (stack_alloc_comp jump off k p)`,
+  (data_to_word_comp jump off k p)`,
   CHEAT_TAC);;
 
 let stack_remove_prog_comp_no_install = prove

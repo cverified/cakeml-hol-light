@@ -471,6 +471,8 @@ let op_ty_PMATCH = prove
        branch of origin for the operation in conditionals.
 *)
 
+(* the clauses in two quotations: d is (num option) and num, which one
+   quotation cannot typecheck *)
 let scan_expr_def,scan_expr_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(scan_expr ts loc [] = []) /\
@@ -542,6 +544,8 @@ let scan_expr_def,scan_expr_ind = assume_definition_rec_clauses
    `scan_expr ts loc [bvi_LetCall rets t d xs y] =
     [(ts,bvi_tailrec_Any,F,NONE)]`];;
 
+(* the clauses in two quotations: d is (num option) and num, which one
+   quotation cannot typecheck *)
 let scan_expr_sing_def,scan_expr_sing_ind = define_rec_clauses
   [`(scan_expr_sing ts loc (bvi_Var n) =
         let ty = (if n < LENGTH ts then EL n ts else bvi_tailrec_Any) in
@@ -715,21 +719,21 @@ let has_rec_def,has_rec_ind = define_guess_cheat
 let has_rec1_def = new_definition
   `has_rec1 loc x = has_rec loc [x]`;;
 
-let has_rec_sing_def,has_rec_sing_ind = assume_definition_rec_clauses
+let has_rec_sing_def,has_rec_sing_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`(has_rec_sing loc (bvi_If x1 x2 x3) =
+  `(has_rec_sing loc (bvi_If x1 x2 x3) =
         if has_rec_sing loc x2 then T
         else has_rec_sing loc x3) /\
-    (has_rec_sing loc (bvi_Let xs x) = has_rec_sing loc x) /\
-    (has_rec_sing loc (bvi_Tick x) = has_rec_sing loc x) /\
-    (has_rec_sing loc (bvi_Op op xs) =
+   (has_rec_sing loc (bvi_Let xs x) = has_rec_sing loc x) /\
+   (has_rec_sing loc (bvi_Tick x) = has_rec_sing loc x) /\
+   (has_rec_sing loc (bvi_Op op xs) =
         if EX (bvi_tailrec_is_rec loc) xs then T
         else has_rec_list loc xs) /\
-    (has_rec_list loc [] = F) /\
-    (has_rec_list loc (CONS x xs) =
+   (has_rec_sing loc x = F) /\
+   (has_rec_list loc [] = F) /\
+   (has_rec_list loc (CONS x xs) =
         if has_rec_sing loc x then T
-        else has_rec_list loc xs)`;
-   `has_rec_sing loc x = F`];;
+        else has_rec_list loc xs)`;;
 
 let has_rec_eq = prove
  (`(!e loc. has_rec loc [e] = has_rec_sing loc e) /\

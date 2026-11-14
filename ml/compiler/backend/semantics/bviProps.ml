@@ -50,17 +50,17 @@ let bvl_to_bvi_id = prove
   CHEAT_TAC);;
 
 let bvl_to_bvi_with_refs = prove
- (`bvl_to_bvi (bvlSem_state_refs_fupd (K y) x) z = bvlSem_state_refs_fupd (K
+ (`bvl_to_bvi (bviSem_state_refs_fupd (K y) x) z = bviSem_state_refs_fupd (K
   y) (bvl_to_bvi x z)`,
   CHEAT_TAC);;
 
 let bvl_to_bvi_with_clock = prove
- (`bvl_to_bvi (bvlSem_state_clock_fupd (K y) x) z = bvlSem_state_clock_fupd
+ (`bvl_to_bvi (bviSem_state_clock_fupd (K y) x) z = bviSem_state_clock_fupd
   (K y) (bvl_to_bvi x z)`,
   CHEAT_TAC);;
 
 let bvl_to_bvi_with_ffi = prove
- (`bvl_to_bvi (bvlSem_state_ffi_fupd (K y) x) z = bvlSem_state_ffi_fupd (K y)
+ (`bvl_to_bvi (bviSem_state_ffi_fupd (K y) x) z = bviSem_state_ffi_fupd (K y)
   (bvl_to_bvi x z)`,
   CHEAT_TAC);;
 
@@ -71,8 +71,8 @@ let bvl_to_bvi_code = prove
 add_simp bvl_to_bvi_code;;
 
 let bvl_to_bvi_clock = prove
- (`bvlSem_state_clock
-      (bvl_to_bvi x y) = bvlSem_state_clock x`,
+ (`bviSem_state_clock
+      (bvl_to_bvi x y) = bviSem_state_clock x`,
   CHEAT_TAC);;
 add_simp bvl_to_bvi_clock;;
 
@@ -463,8 +463,9 @@ add_simp inc_clock_eq_0;;
 
 (* evaluate_add_to_clock_io_events_mono *)
 let bviProps_evaluate_add_to_clock_io_events_mono = prove
- (`!exps env s extra. ffi_state_io_events (state_ffi
-    (SND (bviSem_evaluate (exps,env,s)))) <<= ffi_state_io_events (state_ffi
+ (`!exps env s extra. ffi_state_io_events (bviSem_state_ffi
+    (SND (bviSem_evaluate (exps,env,s)))) <<= ffi_state_io_events
+      (bviSem_state_ffi
     (SND (bviSem_evaluate (exps,env,bviProps_inc_clock extra s))))`,
   CHEAT_TAC);;
 
@@ -484,6 +485,8 @@ let bviProps_evaluate_genlist_vars = prove
     (Rval (TAKE n (DROP skip env)),st)`,
   CHEAT_TAC);;
 
+(* the clauses in two quotations: d is (num option) and num, which one
+   quotation cannot typecheck *)
 let bviProps_get_code_labels_def,bviProps_get_code_labels_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

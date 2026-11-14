@@ -364,6 +364,8 @@ let loop_setup_def = new_definition
        list_next_var_rename_move ssa_ext na_ext refresh_ls in
      (wordLang_Seq fake_prog refresh_mov,ssa_refreshed,na_refreshed)`;;
 
+(* the clauses in two quotations: b is num and binop; n is store_name and
+   num, which one quotation cannot typecheck *)
 let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(ssa_cc_trans wordLang_Skip ssa na lt = (wordLang_Skip,ssa,na)) /\
@@ -1200,6 +1202,8 @@ let get_reads_exp_def,get_reads_exp_ind = define_wf
        (get_reads_exp nexp)
      | expr -> []`;;
 
+(* the clauses in two quotations: b is binop and num; n is store_name and
+   num, which one quotation cannot typecheck *)
 let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(get_clash_tree wordLang_Skip lt = reg_alloc_Delta [] []) /\

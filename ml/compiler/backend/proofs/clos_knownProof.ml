@@ -399,7 +399,7 @@ let fv_max_rw = prove
   CHEAT_TAC);;
 
 let fv_max_mk_Ticks = prove
- (`!t trc i e. fv_max n [clos_ticksProof_mk_Ticks t trc i e] <=> fv_max n [e]`,
+ (`!t trc i e. fv_max n [clos_known_mk_Ticks t trc i e] <=> fv_max n [e]`,
   CHEAT_TAC);;
 add_simp fv_max_mk_Ticks;;
 
@@ -521,7 +521,7 @@ let evaluate_changed_globals_0 = prove
    the value of an ML expression: evaluate_app_changed_globals *)
 
 let mk_Ticks_set_globals = prove
- (`!t tc n exp. closProps_set_globals (clos_ticksProof_mk_Ticks t tc n exp) =
+ (`!t tc n exp. closProps_set_globals (clos_known_mk_Ticks t tc n exp) =
   closProps_set_globals exp`,
   CHEAT_TAC);;
 add_simp mk_Ticks_set_globals;;
@@ -560,7 +560,7 @@ let oracle_gapprox_disjoint_first_n_exps = prove
   CHEAT_TAC);;
 
 let mk_Ticks_esgc_free = prove
- (`!t tc n exp. closProps_esgc_free (clos_ticksProof_mk_Ticks t tc n exp) <=>
+ (`!t tc n exp. closProps_esgc_free (clos_known_mk_Ticks t tc n exp) <=>
   closProps_esgc_free exp`,
   CHEAT_TAC);;
 add_simp mk_Ticks_esgc_free;;
@@ -649,7 +649,7 @@ let known_preserves_pure = prove
 
 let evaluate_mk_Ticks_rw = prove
  (`!t tc n exp env (s:('c,'ffi)closSem_state).
-     closSem_evaluate ([clos_ticksProof_mk_Ticks t tc n exp],env,s) =
+     closSem_evaluate ([clos_known_mk_Ticks t tc n exp],env,s) =
      if closSem_state_clock s < n then (Rerr (Rabort
        Rtimeout_error),closSem_state_clock_fupd (K 0) s)
      else closSem_evaluate ([exp],env,closSem_dec_clock n s)`,
@@ -657,8 +657,8 @@ let evaluate_mk_Ticks_rw = prove
 
 let evaluate_mk_Ticks_IMP = prove
  (`!t tc n exp env (s0:('c,'ffi)closSem_state) res s.
-     closSem_evaluate ([clos_ticksProof_mk_Ticks t tc n exp],env,s0) =
-       (res,s) ==>
+     closSem_evaluate ([clos_known_mk_Ticks t tc n exp],env,s0) = (res,s)
+       ==>
      (res = Rerr (Rabort Rtimeout_error) /\ s = closSem_state_clock_fupd (K
        0) s0) \/
      (closSem_evaluate ([exp],env,closSem_dec_clock n s0) = (res,s))`,
@@ -986,6 +986,8 @@ let v1_size_append = prove
   xs + list_size closSem_v_size ys`,
   CHEAT_TAC);;
 
+(* the clauses in two quotations: i is int and num, which one quotation
+   cannot typecheck *)
 let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -1036,6 +1038,8 @@ let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind =
 
 (* HOL4 clos_knownProofScript.sml:2622: ML code, not ported *)
 
+(* the clauses in two quotations: i is int and num, which one quotation
+   cannot typecheck *)
 let v_rel_app_def = define_cases_clauses
   [`(v_rel_app c g (closSem_Number i) v args1 <=> clos_knownProof_v_rel c g
     ((closSem_Number i:closSem_v)) v) /\
@@ -1095,8 +1099,10 @@ add_simp v_rel_Block;;
 
 (* v_rel_Boolv *)
 let clos_knownProof_v_rel_Boolv = prove
- (`(clos_knownProof_v_rel c g (closSem_Boolv b) v <=> v = closSem_Boolv b) /\
-   (clos_knownProof_v_rel c g v (closSem_Boolv b) <=> v = closSem_Boolv b)`,
+ (`(clos_knownProof_v_rel c g (semanticPrimitives_Boolv b) v <=> v =
+  semanticPrimitives_Boolv b) /\
+   (clos_knownProof_v_rel c g v (semanticPrimitives_Boolv b) <=> v =
+     semanticPrimitives_Boolv b)`,
   CHEAT_TAC);;
 add_simp clos_knownProof_v_rel_Boolv;;
 
@@ -1465,7 +1471,7 @@ let semantics_known = prove
   CHEAT_TAC);;
 
 let code_locs_mk_Ticks = prove
- (`!a b c d. code_locs [clos_ticksProof_mk_Ticks a b c d] = code_locs [d]`,
+ (`!a b c d. code_locs [clos_known_mk_Ticks a b c d] = code_locs [d]`,
   CHEAT_TAC);;
 add_simp code_locs_mk_Ticks;;
 
@@ -1621,13 +1627,13 @@ let clos_knownProof_semantics_compile = prove
   CHEAT_TAC);;
 
 let every_Fn_SOME_mk_Ticks = prove
- (`!t tc n e. every_Fn_SOME [e] ==> every_Fn_SOME [clos_ticksProof_mk_Ticks t
-  tc n e]`,
+ (`!t tc n e. every_Fn_SOME [e] ==> every_Fn_SOME [clos_known_mk_Ticks t tc n
+  e]`,
   CHEAT_TAC);;
 
 let every_Fn_vs_NONE_mk_Ticks = prove
- (`!t tc n e. every_Fn_vs_NONE [e] ==> every_Fn_vs_NONE
-  [clos_ticksProof_mk_Ticks t tc n e]`,
+ (`!t tc n e. every_Fn_vs_NONE [e] ==> every_Fn_vs_NONE [clos_known_mk_Ticks
+  t tc n e]`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives, with
@@ -1766,7 +1772,7 @@ let known_op_no_Labels = prove
   CHEAT_TAC);;
 
 let no_Labels_mk_Ticks = prove
- (`!t tc n e. no_Labels e ==> no_Labels (clos_ticksProof_mk_Ticks t tc n e)`,
+ (`!t tc n e. no_Labels e ==> no_Labels (clos_known_mk_Ticks t tc n e)`,
   CHEAT_TAC);;
 
 let clos_gen_no_inline_no_Labels = prove
@@ -1824,8 +1830,8 @@ let known_op_obeys_max_app = prove
   CHEAT_TAC);;
 
 let obeys_max_app_mk_Ticks = prove
- (`!t tc n e. obeys_max_app k e ==> obeys_max_app k (clos_ticksProof_mk_Ticks
-  t tc n e)`,
+ (`!t tc n e. obeys_max_app k e ==> obeys_max_app k (clos_known_mk_Ticks t tc
+  n e)`,
   CHEAT_TAC);;
 
 let clos_gen_no_inline_obeys_max_app = prove
@@ -1860,7 +1866,7 @@ let known_compile_IS_SOME = prove
 (* names *)
 
 let get_code_labels_mk_Ticks = prove
- (`!a b c d. closProps_get_code_labels (clos_ticksProof_mk_Ticks a b c d) =
+ (`!a b c d. closProps_get_code_labels (clos_known_mk_Ticks a b c d) =
   closProps_get_code_labels d`,
   CHEAT_TAC);;
 add_simp get_code_labels_mk_Ticks;;

@@ -3493,8 +3493,8 @@ let make_gc_conf_def = new_definition
 
 (* [local] *)
 let gc_move_data_refs_split = prove
- (`(gen_gc_gc_move cc s x = (x1,s1)) /\ (!t r. gen_gc_conf_isRef cc (t,r) <=>
-  isMutTag t) /\
+ (`(gen_gc_gc_move cc s x = (x1,s1)) /\ (!t r. isRef cc (t,r) <=> isMutTag t)
+  /\
     ALL isDataElement (gc_state_h2 s) /\ ALL (\x.
       ~(data_to_word_memoryProof_isRef x)) (gc_state_h2 s) /\ ALL
       data_to_word_memoryProof_isRef (gc_state_r4 s) ==>
@@ -3561,7 +3561,7 @@ let gc_move_data_refs_split = prove
 let gc_move_list_data_refs_split = prove
  (`!x x1 s s1.
    (gen_gc_gc_move_list cc s x = (x1,s1)) /\
-    (!t r. (gen_gc_conf_isRef cc (t,r) <=> isMutTag t)) /\ ALL isDataElement
+    (!t r. (isRef cc (t,r) <=> isMutTag t)) /\ ALL isDataElement
       (gc_state_h2 s) /\ (ALL (\x. ~(data_to_word_memoryProof_isRef x)))
       (gc_state_h2 s) /\ ALL data_to_word_memoryProof_isRef (gc_state_r4 s) ==>
     ALL isDataElement (gc_state_h2 s1) /\ (ALL (\x.
@@ -3592,8 +3592,8 @@ let gc_move_list_data_refs_split = prove
 let gc_move_refs_data_refs_split = prove
  (`!cc s s1.
    (gc_move_refs cc s = s1) /\
-    (!t r. (gen_gc_conf_isRef cc (t,r) <=> isMutTag t)) /\ ALL isDataElement
-      (APPEND (gc_state_h1 s) (gc_state_h2 s)) /\ (ALL (\x.
+    (!t r. (isRef cc (t,r) <=> isMutTag t)) /\ ALL isDataElement (APPEND
+      (gc_state_h1 s) (gc_state_h2 s)) /\ (ALL (\x.
       ~(data_to_word_memoryProof_isRef x))) (APPEND (gc_state_h1 s)
       (gc_state_h2 s)) /\
     ALL data_to_word_memoryProof_isRef (APPEND (APPEND (APPEND (gc_state_r1
@@ -3704,7 +3704,7 @@ let gc_move_refs_data_refs_split = prove
 let gc_move_data_data_refs_split = prove
  (`!cc s s1.
    (gen_gc_gc_move_data cc s = s1) /\
-    (!t r. (gen_gc_conf_isRef cc (t,r) <=> isMutTag t)) /\ (ALL (\x.
+    (!t r. (isRef cc (t,r) <=> isMutTag t)) /\ (ALL (\x.
       ~(data_to_word_memoryProof_isRef x))) (APPEND (gc_state_h1 s)
       (gc_state_h2 s)) /\
     ALL isDataElement (APPEND (gc_state_h1 s) (gc_state_h2 s)) /\
@@ -3835,7 +3835,7 @@ let gc_move_data_data_refs_split = prove
 let gc_move_loop_data_refs_split = prove
  (`!clock cc s s1.
    (gen_gc_gc_move_loop cc s clock = s1) /\
-   (!t r. (gen_gc_conf_isRef cc (t,r) <=> isMutTag t)) /\
+   (!t r. (isRef cc (t,r) <=> isMutTag t)) /\
    ALL isDataElement (APPEND (gc_state_h1 s) (gc_state_h2 s)) /\
    (ALL (\x. ~(data_to_word_memoryProof_isRef x))) (APPEND (gc_state_h1 s)
      (gc_state_h2 s)) /\
@@ -3902,7 +3902,7 @@ let gc_move_loop_data_refs_split = prove
 let gen_gc_data_refs_split = prove
  (`!cc roots heap.
    (gen_gc cc (roots,heap) = (roots1,s)) /\
-   (!t r. (gen_gc_conf_isRef cc (t,r) <=> isMutTag t)) ==>
+   (!t r. (isRef cc (t,r) <=> isMutTag t)) ==>
    (ALL (\x. ~(data_to_word_memoryProof_isRef x))) (APPEND (gc_state_h1 s)
      (gc_state_h2 s)) /\
    ALL isDataElement (APPEND (gc_state_h1 s) (gc_state_h2 s)) /\
@@ -42768,8 +42768,8 @@ let memory_rel_RefPtr_EQ_IMP = prove
 let memory_rel_Boolv_T = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a) ==>
-  memory_rel c be ts refs sp st m dm (CONS (dataSem_Boolv T,wordLang_Word
-  ((n2w 18):'a word)) vars)`),
+  memory_rel c be ts refs sp st m dm (CONS (semanticPrimitives_Boolv
+  T,wordLang_Word ((n2w 18):'a word)) vars)`),
   (* the true Boolv is the empty Block of the true tag, which is
      one, so its root is the Data of BlockNil 1, the word eighteen *)
   (let shl16 = prove
@@ -42807,8 +42807,8 @@ let memory_rel_Boolv_T = prove
 let memory_rel_Boolv_F = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a) ==>
-  memory_rel c be ts refs sp st m dm (CONS (dataSem_Boolv F,wordLang_Word
-  ((n2w 2):'a word)) vars)`),
+  memory_rel c be ts refs sp st m dm (CONS (semanticPrimitives_Boolv
+  F,wordLang_Word ((n2w 2):'a word)) vars)`),
   (* the false Boolv is the empty Block of the false tag, which is
      zero, so it is the same root as the one of Unit *)
   (let blocknil0 = prove
@@ -42843,7 +42843,8 @@ let memory_rel_Boolv = prove
     `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a) /\
      (b ==> v = wordLang_Word (n2w 18)) /\ (~b ==> v = wordLang_Word ((n2w
        2):'a word)) ==>
-     memory_rel c be ts refs sp st m dm (CONS (dataSem_Boolv b,v) vars)`),
+     memory_rel c be ts refs sp st m dm (CONS (semanticPrimitives_Boolv
+       b,v) vars)`),
   (STRIP_TAC THEN ASM_CASES_TAC `b:bool` THEN ASM_SIMP_TAC[] THENL
     [MATCH_MP_TAC memory_rel_Boolv_T;
      MATCH_MP_TAC memory_rel_Boolv_F] THEN

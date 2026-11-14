@@ -124,7 +124,7 @@ let flatSem_do_eq_def,flatSem_do_eq_ind = assume_definition_rec
    (flatSem_do_eq (flatSem_Conv cn1 vs1) (flatSem_Conv cn2 vs2) =
        if (cn1 = cn2) /\ (LENGTH vs1 = LENGTH vs2) then
          flatSem_do_eq_list vs1 vs2
-       else if flatSem_ctor_same_type cn1 cn2 then
+       else if semanticPrimitives_ctor_same_type cn1 cn2 then
          Eq_val F
        else Eq_type_error) /\
    (flatSem_do_eq (flatSem_Vectorv vs1) (flatSem_Vectorv vs2) =
@@ -159,8 +159,9 @@ let flatSem_do_opapp_def = new_definition
      | [flatSem_Recclosure env funs n; v] ->
        if ALL_DISTINCT (MAP FST funs) then
          (match find_recfun n funs with SOME (n,e) -> SOME
-           (flatSem_environment_v_fupd (K (CONS (n,v) (flatSem_build_rec_env
-           funs env (flatSem_environment_v env)))) env,e)
+           (flatSem_environment_v_fupd (K (CONS (n,v)
+           (semanticPrimitives_build_rec_env funs env (flatSem_environment_v
+           env)))) env,e)
           | NONE -> NONE)
        else NONE
      | _ -> NONE`;;
@@ -229,7 +230,8 @@ let flatSem_v_to_words_def = new_definition
 let flatSem_check_type_def = new_definition
   `flatSem_check_type x1 v =
    match x1 with
-     ast_BoolT -> (v = flatSem_Boolv T \/ v = flatSem_Boolv F)
+     ast_BoolT -> (v = semanticPrimitives_Boolv T \/ v =
+       semanticPrimitives_Boolv F)
    | ast_IntT -> (?i. v = flatSem_Litv (ast_IntLit i))
    | ast_CharT -> (?c. v = flatSem_Litv (ast_Char c))
    | ast_StrT -> (?s. v = flatSem_Litv (ast_StrLit s))
@@ -335,10 +337,10 @@ let flatSem_do_app_def = new_definition
           | SOME w -> SOME (s,Rval (flatSem_Litv w)))
    | (flatLang_Src ast_Equality,[v1; v2]) ->
      (match flatSem_do_eq v1 v2 with Eq_type_error -> NONE
-      | Eq_val b -> SOME (s,Rval (flatSem_Boolv b)))
+      | Eq_val b -> SOME (s,Rval (semanticPrimitives_Boolv b)))
    | (flatLang_Src (ast_Test test test_ty),[v1; v2]) ->
      (match flatSem_do_test test test_ty v1 v2 with Eq_type_error -> NONE
-      | Eq_val b -> SOME (s,Rval (flatSem_Boolv b)))
+      | Eq_val b -> SOME (s,Rval (semanticPrimitives_Boolv b)))
    | (flatLang_Src (ast_Arith a ty),vs) ->
      (let vs = MAP flat_to_v vs in
         if ALL (semanticPrimitives_check_type ty) vs then
@@ -652,9 +654,9 @@ let flatSem_do_app_def = new_definition
        SOME (s,Rval (THE (EL n (flatSem_state_globals s))))
      else NONE
    | (flatLang_TagLenEq n l,[flatSem_Conv (SOME (tag,_)) xs]) ->
-     SOME (s,Rval (flatSem_Boolv (tag = n /\ LENGTH xs = l)))
+     SOME (s,Rval (semanticPrimitives_Boolv (tag = n /\ LENGTH xs = l)))
    | (flatLang_LenEq l,[flatSem_Conv _ xs]) ->
-     SOME (s,Rval (flatSem_Boolv (LENGTH xs = l)))
+     SOME (s,Rval (semanticPrimitives_Boolv (LENGTH xs = l)))
    | (flatLang_El n,[flatSem_Conv _ vs]) ->
      (if n < LENGTH vs then SOME (s,Rval (EL n vs)) else NONE)
    | (flatLang_El n,[flatSem_Loc _ p]) ->
@@ -667,9 +669,9 @@ let flatSem_do_app_def = new_definition
 
 let flatSem_do_if_def = new_definition
   `(flatSem_do_if v e1 e2 =
-    if v = flatSem_Boolv T then
+    if v = semanticPrimitives_Boolv T then
       SOME e1
-    else if v = flatSem_Boolv F then
+    else if v = semanticPrimitives_Boolv F then
       SOME e2
     else NONE)`;;
 
@@ -778,6 +780,10 @@ let flatSem_AppUnit_def = new_definition
   `flatSem_AppUnit x = flatLang_App backend_common_None (flatLang_Src
   ast_Opapp) [x; flatLang_Con backend_common_None NONE []]`;;
 
+(* the clauses in 9 quotations: a0 is tra and varN; a1 is exp, lit, ((ctor_id
+   # type_id) option), varN, op, (varN option) and ((varN # varN # exp)
+   list); a2 is ((pat # exp) list), (exp list) and exp, which one quotation
+   cannot typecheck *)
 let flatSem_exp_alt_size_def,flatSem_exp_alt_size_ind = define_rec_clauses
   [`(flatSem_exp_alt_size (flatLang_Raise a0 a1) = 1 + (tra_size a0 +
     flatSem_exp_alt_size a1)) /\
@@ -861,6 +867,8 @@ let flatSem_fix_clock_IMP =
 if concl flatSem_fix_clock_IMP <> `T` then
   cake_term_facts := flatSem_fix_clock_IMP :: (!cake_term_facts);;
 
+(* the clauses in two quotations: n is varN and (varN option), which one
+   quotation cannot typecheck *)
 let flatSem_evaluate_def,flatSem_evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(flatSem_evaluate (env:flatSem_v flatSem_environment)
@@ -977,16 +985,10 @@ let flatSem_evaluate_def,flatSem_evaluate_ind = assume_definition_rec_clauses
     (flatSem_evaluate (env:flatSem_v flatSem_environment)
     (s:('c,'ffi)flatSem_state) [flatLang_Letrec _ funs e] =
        if ALL_DISTINCT (MAP FST funs) then flatSem_evaluate
-           (flatSem_environment_v_fupd (K (flatSem_build_rec_env funs env
-           (flatSem_environment_v env))) env) s [e]
-       else (s,Rerr (Rabort Rtype_error)))`;
-   `flatSem_evaluate (env:flatSem_v flatSem_environment)
-    (s:('c,'ffi)flatSem_state) [flatLang_Let _ n e1 e2] =
-       match flatSem_fix_clock s (flatSem_evaluate env s [e1]) with (s,Rval
-           vs) -> flatSem_evaluate (flatSem_environment_v_fupd (opt_bind n (HD
-           vs)) env) s [e2]
-       | res -> res`;
-   `(evaluate_dec (s:('c,'ffi)flatSem_state) e =
+           (flatSem_environment_v_fupd (K (semanticPrimitives_build_rec_env
+           funs env (flatSem_environment_v env))) env) s [e]
+       else (s,Rerr (Rabort Rtype_error))) /\
+    (evaluate_dec (s:('c,'ffi)flatSem_state) e =
        match flatSem_evaluate (mk_flatSem_environment []) s [e] with
            (s,Rval x) ->
          if x = [Unitv] then
@@ -997,7 +999,13 @@ let flatSem_evaluate_def,flatSem_evaluate_ind = assume_definition_rec_clauses
     (flatSem_evaluate_decs (s:('c,'ffi)flatSem_state) (CONS d ds) =
        match flatSem_fix_clock s (evaluate_dec s d) with (s,NONE) ->
            flatSem_evaluate_decs s ds
-       | (s,SOME e) -> (s,SOME e))`];;
+       | (s,SOME e) -> (s,SOME e))`;
+   `flatSem_evaluate (env:flatSem_v flatSem_environment)
+    (s:('c,'ffi)flatSem_state) [flatLang_Let _ n e1 e2] =
+       match flatSem_fix_clock s (flatSem_evaluate env s [e1]) with (s,Rval
+           vs) -> flatSem_evaluate (flatSem_environment_v_fupd (opt_bind n (HD
+           vs)) env) s [e2]
+       | res -> res`];;
 
 (* HOL4 flatSemScript.sml:947-950: ML code, not ported *)
 

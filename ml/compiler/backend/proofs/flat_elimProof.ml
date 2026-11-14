@@ -237,6 +237,8 @@ let find_result_globals_def = new_definition
 
 (* HOL4 flat_elimProofScript.sml:294: ML code, not ported *)
 
+(* the clauses in two quotations: e is ('b error_result) and 'a, which one
+   quotation cannot typecheck *)
 let find_sem_prim_res_globals_def = define_cases_clauses
   [`find_sem_prim_res_globals (Rerr e:(flatSem_v
     list,flatSem_v)semanticPrimitives_result) =

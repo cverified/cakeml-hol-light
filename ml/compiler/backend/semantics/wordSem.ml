@@ -1104,6 +1104,8 @@ let wordSem_fix_clock_IMP =
 if concl wordSem_fix_clock_IMP <> `T` then
   cake_term_facts := wordSem_fix_clock_IMP :: (!cake_term_facts);;
 
+(* the clauses in two quotations: names is cutsets and num_set; v is num and
+   store_name, which one quotation cannot typecheck *)
 let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(wordSem_evaluate ((wordLang_Skip:'a
@@ -1182,8 +1184,7 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
     (wordSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
         (match (wordSem_get_var r1 s,wordSem_get_var_imm ri s) with SOME
             x,SOME y ->
-         (match wordSem_word_cmp cmp x y with SOME T -> wordSem_evaluate
-             (c1,s)
+         (match asm_word_cmp cmp x y with SOME T -> wordSem_evaluate (c1,s)
           | SOME F -> wordSem_evaluate (c2,s)
           | NONE -> (SOME wordSem_Error,s))
         | _ -> (SOME wordSem_Error,s))) /\

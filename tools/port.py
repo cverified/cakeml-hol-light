@@ -2357,6 +2357,16 @@ class Porter:
     cheatnote = ('(* the first pass assumes the termination:\n'
                  '   replacing the CHEAT_TAC is all that is left *)\n'
                  if cheat and not tac else '')
+    # why the clauses stand in several quotations
+    splitnote = ''
+    if term is None and getattr(self, 'clause_list', False) \
+       and getattr(self, 'clause_why', None):
+      n = len(self.clause_split)
+      splitnote = '\n'.join(fill(
+        '(* the clauses in %s quotations:'
+        % ('two' if n == 2 else 'three' if n == 3 else str(n)),
+        ('; '.join(self.clause_why) +
+         ', which one quotation cannot typecheck *)').split())) + '\n'
     # why the clauses of one function of a family are a match
     matchnote = (overrides.MATCH_CLAUSES[key][1].strip() + '\n'
                  if key in overrides.MATCH_CLAUSES else '')
@@ -2471,6 +2481,7 @@ class Porter:
     binding = '%s,%s' % (bind, indbind) if recursive else bind
     # a comment of the source that cannot stand in the quotation
     sizes += getattr(self, 'clause_pre', '') or ''
+    sizes += splitnote
     self.clause_pre = ''
     # where the clauses are separate quotations, the way that makes
     # the definition is the one whose name ends in _clauses
@@ -2695,8 +2706,18 @@ class Porter:
     # the arguments that are there say more than the types that
     # the other clauses of the definition use
     if arity is not None:
-      ts = [x for x in ts
-            if self.db.con_arity(x, n) == arity] or ts
+      # the arity of a constructor, and of a constant that is no
+      # constructor the arity that the port's own gives
+      # (tools/arity.txt): sptree's insert takes three arguments
+      # and balanced_map's four, and word_cse uses both
+      def ar_of(x):
+        a = self.db.con_arity(x, n)
+        if a: return a
+        nm2 = self.ctx.names.get((x, n))
+        if nm2 is None and x == self.thy:
+          nm2 = self.ctx.names.get(n)
+        return hterm.const_arity(nm2 or n)
+      ts = [x for x in ts if ar_of(x) == arity] or ts
     # the patterns of the match that is being printed say the
     # theory more precisely than the block does, so they come
     # first; the block narrows what is left where it can
@@ -2757,7 +2778,7 @@ class Porter:
       ar = self.ctx.arity
       t = self.con_thy(nm, arity=ar)
       if t is None:
-        t = self.con_thy(nm, ('con', 'def', 'rel'))
+        t = self.con_thy(nm, ('con', 'def', 'rel'), arity=ar)
     except Exception:
       t = None
     # the accessor of a record field, which the record block of
@@ -3785,11 +3806,18 @@ class Porter:
       elif a.kind == 'id' and iscon(a.name):
         return self.con_type(a.name, 0)
       return None
+    # keyed by the function too: a definition of a family has one
+    # argument position per member, and the argument 1 of one of
+    # them has nothing to do with the argument 1 of another
+    # (clos_fvs's remove_fvs_sing takes an exp list where its
+    # remove_fvs_letrec takes a (num # exp) list)
+    def fname(h):
+      return h.name if h.kind == 'id' else '?'
     argtys = {}
-    for _, args, _ in cls:
+    for h, args, _ in cls:
       for i, a in enumerate(args):
         t = pat_ty(a)
-        if t: argtys.setdefault(i, t)
+        if t: argtys.setdefault((fname(h), i), t)
     # an argument that no clause patterns on has no type that the
     # clauses say, so the place stands for the argument itself: a
     # variable at argument 0 of one clause and at argument 1 of
@@ -3797,34 +3825,80 @@ class Porter:
     # arguments are of one type (balanced_map's trim_help_middle
     # has its comparison and its low bound the other way round in
     # its second clause, which is why HOL4 gets away with it)
-    for n, (_, args, _) in enumerate(cls):
+    for n, (h, args, _) in enumerate(cls):
       clause[0] = n
       for i, a in enumerate(args):
-        walk(a, {argtys[i]} if i in argtys else {('arg', i)})
+        k = (fname(h), i)
+        walk(a, {argtys[k]} if k in argtys else {('arg',) + k})
     # two clauses cannot stand in one quotation where a variable of
     # both has no type in common between them; the clauses are
     # grouped into as few quotations as that allows, which is one
     # for most definitions and two for the rest (a clause of
     # bviSem's evaluate has a dest that is a number where the
     # clause for Call has one that is an option)
-    def clash(i, j):
+    def fails(idx):
+      """do these clauses force a variable to two types?  A place
+         that is an argument of the function and that no clause
+         patterns on is a type of its own, and two of those unify:
+         the fvs that every member of a family takes is not a
+         clash.  What clashes is two places whose types the
+         constructors fix and that are not the same"""
+      parent = {}
+      def find(x):
+        while parent.get(x, x) != x: x = parent[x]
+        return x
+      def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb: parent[ra] = rb
+      seen = []
       for v in where.values():
-        a = [t for (n, t) in v if n == i]
-        b = [t for (n, t) in v if n == j]
-        if a and b and not (set.intersection(*map(set, a + b))):
+        toks = [t for (n, t) in v if n in idx]
+        # a place that could be one of several types says nothing
+        # of its own, but two of them with none in common clash
+        multi = [t for t in toks if len(t) > 1]
+        if len(multi) > 1 and not set.intersection(*multi):
           return True
-      return False
+        ks = [next(iter(t)) for t in toks if len(t) == 1]
+        for a in ks[1:]: union(ks[0], a)
+        seen.extend(ks)
+      byclass = {}
+      for x in seen: byclass.setdefault(find(x), set()).add(x)
+      return any(len([x for x in c if isinstance(x, str)]) > 1
+                 for c in byclass.values())
     groups = []
     for i in range(len(cls)):
       for g in groups:
-        if not any(clash(i, j) for j in g):
+        if not fails(g + [i]):
           g.append(i); break
       else:
         groups.append([i])
     self.clause_split = groups
+    # why the clauses are in several quotations, as a comment: the
+    # variables whose type is not the same in all of them
+    why = []
+    for k, v in sorted(where.items()):
+      tys = []
+      for g in groups:
+        for (n, t) in v:
+          if n in g and len(t) == 1:
+            x = next(iter(t))
+            if isinstance(x, str) and x not in tys: tys.append(x)
+      if len(tys) > 1:
+        def ty(t):
+          t = ' '.join(t.split())
+          return re.sub(r'\(\s+', '(', re.sub(r'\s+\)', ')', t))
+        why.append('%s is %s and %s'
+                   % (k, ', '.join(map(ty, tys[:-1])), ty(tys[-1])))
+    self.clause_why = why if len(groups) > 1 else []
     if len(groups) > 1 and os.environ.get('CLASHDBG'):
       print('CLASH %s %s: %s' % (self.thy, self.defkey, groups),
             file=sys.stderr)
+      if os.environ.get('CLASHDBG') == '2':
+        for n, (h, _, _) in enumerate(cls):
+          print('   %2d %s' % (n, fname(h)), file=sys.stderr)
+        for k, v in where.items():
+          if len(set(map(str, [t for _, t in v]))) > 1:
+            print('   %s: %s' % (k, v), file=sys.stderr)
     return len(groups) > 1
 
   def multi_pattern(self, body):

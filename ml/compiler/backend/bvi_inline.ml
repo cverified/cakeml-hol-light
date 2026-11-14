@@ -48,6 +48,8 @@ let wrapper_ok_def = new_definition
    needed for a hit is that the cached label, arity, and body correspond
    to the code table (up to the expression relation used by the pass). *)
 let _ = size_thms "bvi_exp";;
+(* the clauses in two quotations: dest is (num option) and num, which one
+   quotation cannot typecheck *)
 let inline_exp_def,inline_exp_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(inline_exp cs (bvi_Var n) = bvi_Var n) /\
@@ -90,6 +92,8 @@ let inline_all_def,inline_all_ind = define_rec
          let (cs2,prog2) = inline_all cs1 prog in
            (cs2,CONS (name,arity,body) prog2))`;;
 
+(* the clauses in two quotations: dest is (num option) and num, which one
+   quotation cannot typecheck *)
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL e -> bvi_exp_size e | INR es -> list_size
        bvi_exp_size es)

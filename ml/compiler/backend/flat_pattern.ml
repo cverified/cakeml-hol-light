@@ -271,6 +271,8 @@ let op_sets_globals_EX = prove
  (`op_sets_globals op = (?n. op = flatLang_GlobalVarInit n)`,
   CHEAT_TAC);;
 
+(* the clauses in two quotations: t is tra and varN, which one quotation
+   cannot typecheck *)
 let flat_pattern_compile_exp_def,flat_pattern_compile_exp_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

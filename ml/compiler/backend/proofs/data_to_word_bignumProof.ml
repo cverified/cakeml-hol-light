@@ -77,14 +77,14 @@ let word_list_IMP_store_list = prove
 
 let word_exp_set_var_ShiftVar_lemma = prove
  (`wordSem_word_exp t (ShiftVar sow v n) =
-    match sptree_lookup v (wordSem_state_locals t) with SOME (wordLang_Word
+    (match sptree_lookup v (dataSem_state_locals t) with SOME (wordLang_Word
       w) ->
         OPTION_MAP wordLang_Word
           (match sow with Lsl -> SOME (w << n)
                      | Lsr -> SOME (w >>> n)
                      | Asr -> SOME (w >> n)
                      | Ror -> SOME (word_ror w n))
-    | _ -> FAIL (wordSem_word_exp t (ShiftVar sow v n)) "lookup failed"`,
+    | _ -> FAIL (wordSem_word_exp t (ShiftVar sow v n)) "lookup failed")`,
   CHEAT_TAC);;
 
 let i2mw_small_int_IMP_0 = prove
@@ -137,7 +137,7 @@ let SND_i2mw_NIL = prove
   CHEAT_TAC);;
 
 let word_cmp_Test_1 = prove
- (`wordSem_word_cmp asm_Test w (n2w 1) <=> ~(word_bit 0 w)`,
+ (`asm_word_cmp asm_Test w (n2w 1) <=> ~(word_bit 0 w)`,
   CHEAT_TAC);;
 
 let word_bit_if_1_0 = prove
@@ -281,7 +281,7 @@ let div_code_assum_thm = prove
   CHEAT_TAC);;
 
 let IMP_bignum_code_rel = prove
- (`data_to_word_compile Bignum_location 2 1 (Bignum_location + 1,[])
+ (`word_bignum_compile Bignum_location 2 1 (Bignum_location + 1,[])
              mc_iop_code = (xx1,xx2,xx3,xx4,xx5) /\
     data_to_word_gcProof_state_rel c l1 l2 s t NONE locs ==>
     data_to_word_gcProof_code_rel (xx4,xx5) (wordSem_state_code t)`,
@@ -300,8 +300,8 @@ let arith_location_def = new_definition
        Div_location else if index = 6 then Mod_location else ARB`;;
 
 let push_env_code = prove
- (`wordSem_state_code
-      (wordSem_push_env y NONE t) = wordSem_state_code t`,
+ (`state_code
+      (wordSem_push_env y NONE t) = state_code t`,
   CHEAT_TAC);;
 
 let arith_code_def = new_definition
@@ -311,8 +311,8 @@ let arith_code_def = new_definition
        (wordLang_Call NONE (SOME AnyArith_location) [0; 2; 4; 6] NONE)`;;
 
 let lookup_Arith_location = prove
- (`data_to_word_gcProof_state_rel c l1 l2 x t NONE locs
-  /\ data_to_word_bignumProof_int_op index i1 i2 = SOME r ==>
+ (`data_to_word_gcProof_state_rel c l1 l2 x t NONE locs /\ multiword_int_op
+  index i1 i2 = SOME r ==>
     sptree_lookup (Arith_location index) (wordSem_state_code t) = SOME
       (3,Arith_code index)`,
   CHEAT_TAC);;

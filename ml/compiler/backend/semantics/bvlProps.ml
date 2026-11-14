@@ -153,7 +153,7 @@ add_simp bool_to_tag_11;;
 
 (* Boolv_11 *)
 let boolv_11 = prove
- (`bvlSem_Boolv b1 = bvlSem_Boolv b2 <=> b1 = b2`,
+ (`bvlSem_Boolv b1 = semanticPrimitives_Boolv b2 <=> b1 = b2`,
   CHEAT_TAC);;
 add_simp boolv_11;;
 
@@ -246,7 +246,8 @@ let evaluate_MAP_Const = prove
   CHEAT_TAC);;
 
 let evaluate_Bool = prove
- (`bvlSem_evaluate ([bvl_Bool b],env,s) = (Rval [bvlSem_Boolv b],s)`,
+ (`bvlSem_evaluate ([bvl_Bool b],env,s) = (Rval [semanticPrimitives_Boolv
+  b],s)`,
   CHEAT_TAC);;
 add_simp evaluate_Bool;;
 

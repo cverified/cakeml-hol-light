@@ -972,6 +972,8 @@ let optsexp_11 = prove
   CHEAT_TAC);;
 add_simp optsexp_11;;
 
+(* the clauses in two quotations: n is 'n and id, which one quotation cannot
+   typecheck *)
 let idsexp_def,idsexp_ind = define_rec_clauses
   [`idsexp (Short n) = listsexp [SX_SYM "Short"; SEXSTR (explode n)]`;
    `idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode ns);
@@ -1002,6 +1004,8 @@ let typesexp_11 = prove
   CHEAT_TAC);;
 add_simp typesexp_11;;
 
+(* the clauses in two quotations: w is word8 and word64, which one quotation
+   cannot typecheck *)
 let litsexp_def = define_cases_clauses
   [`(litsexp (ast_IntLit i) =
        if i < (&0) then listsexp [SX_SYM "-"; SX_NUM (num_of_int (--i))]
@@ -1409,6 +1413,8 @@ let mem_size_lemma = prove
  (`list_size sz xs < N ==> (MEM x xs ==> sz x < N)`,
   CHEAT_TAC);;
 
+(* the clauses in two quotations: name is tvarN and modN; x is typeN and
+   conN, which one quotation cannot typecheck *)
 let decsexp_def,decsexp_ind = define_shaped_rec_clauses
   "nested"
   [`(decsexp (Dlet locs p e) =

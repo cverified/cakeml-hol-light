@@ -915,7 +915,7 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
    (stackSem_evaluate (stackLang_JumpLower r1 r2 dest,s) =
         match (stackSem_get_var r1 s,stackSem_get_var r2 s) with SOME
             (wordLang_Word x),SOME (wordLang_Word y) ->
-          if wordSem_word_cmp asm_Lower x y then
+          if asm_word_cmp asm_Lower x y then
            (match stackSem_find_code (INL dest) (stackSem_state_regs s)
                (stackSem_state_code s) with NONE -> (SOME stackSem_Error,s)
             | SOME prog ->

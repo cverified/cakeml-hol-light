@@ -142,20 +142,20 @@ let bignum_size_def = new_definition
   `bignum_size arch64 i =
      1 + bignum_digits arch64 (num_of_int (abs i))`;;
 
-let size_of_def,size_of_ind = assume_definition_rec_clauses
+let size_of_def,size_of_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  [`(size_of lims [] refs seen = (0,refs,seen)) /\
-    (size_of lims (CONS x (CONS y ys)) refs seen =
+  `(size_of lims [] refs seen = (0,refs,seen)) /\
+   (size_of lims (CONS x (CONS y ys)) refs seen =
         let (n1,refs1,seen1) = check_res refs (size_of lims (CONS y ys)
             refs seen) in
         let (n2,refs2,seen2) = size_of lims [x] refs1 seen1 in
           (n1 + n2,refs2,seen2)) /\
-    (size_of lims [dataSem_Word64 _] refs seen = (3,refs,seen)) /\
-    (size_of lims [dataSem_Number i] refs seen =
+   (size_of lims [dataSem_Word64 _] refs seen = (3,refs,seen)) /\
+   (size_of lims [dataSem_Number i] refs seen =
         ((if small_num (limits_arch_64_bit lims) i then 0 else
             bignum_size (limits_arch_64_bit lims) i),refs,seen)) /\
-    (size_of lims [dataSem_CodePtr _] refs seen = (0,refs,seen)) /\
-    (size_of lims [dataSem_RefPtr _ r] refs seen =
+   (size_of lims [dataSem_CodePtr _] refs seen = (0,refs,seen)) /\
+   (size_of lims [dataSem_RefPtr _ r] refs seen =
          match sptree_lookup r refs with NONE -> (0,refs,seen)
          | SOME (bvlSem_ByteArray _ bs) -> (LENGTH bs DIV (arch_size lims
              DIV 8) + 2,sptree_delete r refs,seen)
@@ -169,12 +169,12 @@ let size_of_def,size_of_ind = assume_definition_rec_clauses
              let (n,refs,seen) = size_of lims (APPEND (APPEND ls [c]) rs)
                  (sptree_delete r refs) seen in
                (n + LENGTH ls + LENGTH rs + 2,refs,seen)) /\
-    (size_of lims [dataSem_Block ts tag vs] refs seen =
+   ((size_of lims [dataSem_Block ts tag []]) refs seen = (0,refs,seen)) /\
+   (size_of lims [dataSem_Block ts tag vs] refs seen =
          if IS_SOME (sptree_lookup ts seen) then (0,refs,seen) else let
              (n,refs,seen) = size_of lims vs refs (sptree_insert ts one seen)
              in
-             (n + LENGTH vs + 1,refs,seen))`;
-   `(size_of lims [dataSem_Block ts tag []]) refs seen = (0,refs,seen)`];;
+             (n + LENGTH vs + 1,refs,seen))`;;
 
 (* [local] *)
 let check_res_size_of = prove
@@ -802,6 +802,8 @@ let check_lim_def = new_definition
                               s))
       s`;;
 
+(* the clauses in two quotations: t is num and mlstring, which one quotation
+   cannot typecheck *)
 let dataSem_do_part_def = define_cases_clauses
   [`(dataSem_do_part m (closLang_Int i) s ts = (dataSem_Number i,s,ts)) /\
     (dataSem_do_part m (closLang_W64 w) s ts = (dataSem_Word64 w,s,ts)) /\
@@ -844,16 +846,16 @@ let dataSem_do_int_app_def = new_definition
    | (closLang_Mod,[dataSem_Number n1; dataSem_Number n2]) ->
        (if n2 = (&0) then NONE else SOME (dataSem_Number (n1 % n2)))
    | (closLang_Less,[dataSem_Number n1; dataSem_Number n2]) -> SOME
-     (dataSem_Boolv (n1 < n2))
+     (semanticPrimitives_Boolv (n1 < n2))
    | (closLang_LessEq,[dataSem_Number n1; dataSem_Number n2]) -> SOME
-     (dataSem_Boolv (n1 <= n2))
+     (semanticPrimitives_Boolv (n1 <= n2))
    | (closLang_Greater,[dataSem_Number n1; dataSem_Number n2]) -> SOME
-     (dataSem_Boolv (n1 > n2))
+     (semanticPrimitives_Boolv (n1 > n2))
    | (closLang_GreaterEq,[dataSem_Number n1; dataSem_Number n2]) -> SOME
-     (dataSem_Boolv (n1 >= n2))
+     (semanticPrimitives_Boolv (n1 >= n2))
    | (closLang_LessConstSmall n,[dataSem_Number i]) ->
          (if (&0) <= i /\ i <= (&1000000) /\ n < 1000000 then
-           SOME (dataSem_Boolv (i < &n)) else NONE)
+           SOME (semanticPrimitives_Boolv (i < &n)) else NONE)
    | ((op:closLang_int_op),(vs:dataSem_v list)) -> NONE`;;
 
 let dataSem_do_word_app_def = new_definition
@@ -868,9 +870,12 @@ let dataSem_do_word_app_def = new_definition
            SOME (dataSem_Word64 (opw_lookup opw w1 w2))
      | (WordTest ast_W8 test,[dataSem_Number n1; dataSem_Number n2]) ->
           (if (&0) <= n1 /\ n1 < (&256) /\ (&0) <= n2 /\ n2 < (&256) then
-             (match test with ast_Equal -> SOME (dataSem_Boolv (n1 = n2))
-              | ast_Compare ast_Lt -> SOME (dataSem_Boolv (n1 < n2))
-              | ast_Compare ast_Leq -> SOME (dataSem_Boolv (n1 <= n2))
+             (match test with ast_Equal -> SOME (semanticPrimitives_Boolv
+               (n1 = n2))
+              | ast_Compare ast_Lt -> SOME (semanticPrimitives_Boolv (n1 <
+                n2))
+              | ast_Compare ast_Leq -> SOME (semanticPrimitives_Boolv (n1 <=
+                n2))
               | _ -> NONE)
            else NONE)
      | (WordShift ast_W8 sh n,[dataSem_Number i]) ->
@@ -902,7 +907,7 @@ let dataSem_do_word_app_def = new_definition
             | _ -> NONE)
      | (FP_cmp cmp,ws) ->
            (match ws with [dataSem_Word64 w1; dataSem_Word64 w2] -> (SOME
-             (dataSem_Boolv (fp_cmp_comp cmp w1 w2)))
+             (semanticPrimitives_Boolv (fp_cmp_comp cmp w1 w2)))
             | _ -> NONE)
      | ((op:closLang_word_op),(vs:dataSem_v list)) -> NONE`;;
 
@@ -1131,12 +1136,13 @@ let dataSem_do_app_aux_def = new_definition
             ,dataSem_v)semanticPrimitives_result))
      | (closLang_BlockOp (closLang_BoolTest test),[v1; v2]) ->
          (match (dest_Boolv v1,dest_Boolv v2) with (SOME b1,SOME b2) -> Rval
-           (dataSem_Boolv (b1 = b2),s)
+           (semanticPrimitives_Boolv (b1 = b2),s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
      | (closLang_BlockOp closLang_BoolNot,[v1]) ->
-         (match dest_Boolv v1 with SOME b1 -> Rval (dataSem_Boolv (~b1),s)
+         (match dest_Boolv v1 with SOME b1 -> Rval (semanticPrimitives_Boolv
+           (~b1),s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
@@ -1226,7 +1232,7 @@ let dataSem_do_app_aux_def = new_definition
            (bvlSem_ByteArray _ ws2)) ->
               (let s1 = implode (MAP (CHR o w2n) ws1) in
                let s2 = implode (MAP (CHR o w2n) ws2) in
-                 Rval (dataSem_Boolv (str_cmp b cmp s1 s2),s))
+                 Rval (semanticPrimitives_Boolv (str_cmp b cmp s1 s2),s))
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
@@ -1248,26 +1254,26 @@ let dataSem_do_app_aux_def = new_definition
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
      | (closLang_BlockOp (closLang_TagEq n),[dataSem_Block _ tag xs]) ->
-         Rval (dataSem_Boolv (tag = n),s)
+         Rval (semanticPrimitives_Boolv (tag = n),s)
      | (closLang_BlockOp (closLang_LenEq l),[dataSem_Block _ tag xs]) ->
-         Rval (dataSem_Boolv (LENGTH xs = l),s)
+         Rval (semanticPrimitives_Boolv (LENGTH xs = l),s)
      | (closLang_BlockOp (closLang_TagLenEq n l),[dataSem_Block _ tag xs])
        ->
-         Rval (dataSem_Boolv (tag = n /\ LENGTH xs = l),s)
+         Rval (semanticPrimitives_Boolv (tag = n /\ LENGTH xs = l),s)
      | (closLang_BlockOp (closLang_EqualConst p),[x1]) ->
          (match p with closLang_Int i -> (match x1 with dataSem_Number j ->
-           Rval (dataSem_Boolv (i = j),s) | _ -> ((Rerr (Rabort
+           Rval (semanticPrimitives_Boolv (i = j),s) | _ -> ((Rerr (Rabort
            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
            ,dataSem_v)semanticPrimitives_result))
           | closLang_W64 i -> (match x1 with dataSem_Word64 j -> Rval
-            (dataSem_Boolv (i = j),s) | _ -> ((Rerr (Rabort
+            (semanticPrimitives_Boolv (i = j),s) | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
           | closLang_Str i -> (match x1 with dataSem_RefPtr _ p ->
                         (match sptree_lookup p (dataSem_state_refs s) with
                           SOME (bvlSem_ByteArray T j) ->
-                           Rval (dataSem_Boolv (j = MAP (n2w o ORD) (explode
-                             i)),s)
+                           Rval (semanticPrimitives_Boolv (j = MAP (n2w o
+                             ORD) (explode i)),s)
                          | _ -> ((Rerr (Rabort
                            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
                            ,dataSem_v)semanticPrimitives_result))
@@ -1279,7 +1285,7 @@ let dataSem_do_app_aux_def = new_definition
             ,dataSem_v)semanticPrimitives_result))
      | (closLang_BlockOp closLang_Equal,[x1; x2]) ->
          (match dataSem_do_eq (dataSem_state_refs s) x1 x2 with Eq_val b ->
-           Rval (dataSem_Boolv b,s)
+           Rval (semanticPrimitives_Boolv b,s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
@@ -1361,7 +1367,8 @@ let dataSem_do_app_aux_def = new_definition
             ,dataSem_v)semanticPrimitives_result))
      | (closLang_BlockOp closLang_BoundsCheckBlock,xs) ->
          (match xs with [dataSem_Block _ tag ys; dataSem_Number i] ->
-                Rval (dataSem_Boolv ((&0) <= i /\ i < &(LENGTH ys)),s)
+                Rval (semanticPrimitives_Boolv ((&0) <= i /\ i < &(LENGTH
+                  ys)),s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
@@ -1369,8 +1376,8 @@ let dataSem_do_app_aux_def = new_definition
          (match xs with [dataSem_RefPtr _ ptr; dataSem_Number i] ->
            (match sptree_lookup ptr (dataSem_state_refs s) with SOME
              (bvlSem_ByteArray _ ws) ->
-                Rval (dataSem_Boolv ((&0) <= i /\ (if loose then (<=) else
-                  (<)) i (&(LENGTH ws))),s)
+                Rval (semanticPrimitives_Boolv ((&0) <= i /\ (if loose then
+                  (<=) else (<)) i (&(LENGTH ws))),s)
             | _ -> ((Rerr (Rabort
               Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
               ,dataSem_v)semanticPrimitives_result))
@@ -1381,7 +1388,8 @@ let dataSem_do_app_aux_def = new_definition
          (match xs with [dataSem_RefPtr _ ptr; dataSem_Number i] ->
            (match sptree_lookup ptr (dataSem_state_refs s) with SOME
              (bvlSem_ValueArray ws) ->
-                Rval (dataSem_Boolv ((&0) <= i /\ i < &(LENGTH ws)),s)
+                Rval (semanticPrimitives_Boolv ((&0) <= i /\ i < &(LENGTH
+                  ws)),s)
             | _ -> ((Rerr (Rabort
               Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
               ,dataSem_v)semanticPrimitives_result))
@@ -1624,6 +1632,9 @@ let dataSem_fix_clock_IMP =
 if concl dataSem_fix_clock_IMP <> `T` then
   cake_term_facts := dataSem_fix_clock_IMP :: (!cake_term_facts);;
 
+(* the clauses in two quotations: dest is num and (num option); ret is ((num
+   # num_set) option) and ((num list # num_set) option), which one quotation
+   cannot typecheck *)
 let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(dataSem_evaluate (dataLang_Skip,(s:('c,'ffi)dataSem_state)) = (NONE,s)) /\

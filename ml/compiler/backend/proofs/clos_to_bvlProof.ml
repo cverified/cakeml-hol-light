@@ -320,8 +320,8 @@ let evaluate_genlist_prev_args1_no_rev = prove
 (* [local] *)
 let evaluate_partial_app_fn_location_code = prove
  (`!max_app n total_args st args tag ptr x fvs.
-      partial_app_fn_location max_app total_args n IN domain
-        (bvlSem_state_code st) /\
+      partial_app_fn_location max_app total_args n IN domain (state_code st)
+        /\
       n < total_args /\ total_args < max_app ==>
       bvlSem_evaluate
         ([partial_app_fn_location_code max_app
@@ -345,19 +345,18 @@ let global_table_def = new_definition
 (* [local] *)
 let evaluate_generic_app1 = prove
  (`!n args st total_args l fvs cl.
-     partial_app_fn_location max_app total_args n IN domain
-       (bvlSem_state_code st) /\
+     partial_app_fn_location max_app total_args n IN domain (state_code st)
+       /\
      n < total_args /\
      total_args < max_app /\
      n + 1 = LENGTH args /\
-     get_global 0 (bvlSem_state_globals st) = SOME (SOME (global_table
-       max_app)) /\
+     get_global 0 (state_globals st) = SOME (SOME (global_table max_app)) /\
      cl = bvlSem_Block closure_tag (CONS (bvlSem_CodePtr l) (CONS
        (bvlSem_Number (&total_args)) fvs)) ==>
      bvlSem_evaluate ([generate_generic_app max_app n],APPEND args [cl],st)
        =
-       (if bvlSem_state_clock st < n then
-         (Rerr (Rabort Rtimeout_error),bvlSem_state_clock_fupd (K 0) st)
+       (if state_clock st < n then
+         (Rerr (Rabort Rtimeout_error),state_clock_fupd (K 0) st)
        else (Rval [bvlSem_Block partial_app_tag (CONS (bvlSem_CodePtr
          (partial_app_fn_location max_app total_args n)) (CONS (bvlSem_Number
          (&(total_args - (n + 1)))) (CONS cl
@@ -369,19 +368,18 @@ let evaluate_generic_app1 = prove
 let evaluate_generic_app2 = prove
  (`!n args st rem_args prev_args l clo cl.
      partial_app_fn_location max_app (rem_args + LENGTH prev_args) (n +
-       LENGTH prev_args) IN domain (bvlSem_state_code st) /\
+       LENGTH prev_args) IN domain (state_code st) /\
      n < rem_args /\
      n + 1 = LENGTH args /\
      LENGTH prev_args > 0 /\
      rem_args + LENGTH prev_args < max_app /\
-     get_global 0 (bvlSem_state_globals st) = SOME (SOME (global_table
-       max_app)) /\
+     get_global 0 (state_globals st) = SOME (SOME (global_table max_app)) /\
      cl = bvlSem_Block partial_app_tag (CONS (bvlSem_CodePtr l) (CONS
        (bvlSem_Number (&rem_args)) (CONS clo prev_args))) ==>
      bvlSem_evaluate ([generate_generic_app max_app n],APPEND args [cl],st)
        =
-       (if bvlSem_state_clock st < n then
-         (Rerr (Rabort Rtimeout_error),bvlSem_state_clock_fupd (K 0) st)
+       (if state_clock st < n then
+         (Rerr (Rabort Rtimeout_error),state_clock_fupd (K 0) st)
        else (Rval [bvlSem_Block partial_app_tag (APPEND (CONS
          (bvlSem_CodePtr (partial_app_fn_location max_app (rem_args + LENGTH
          prev_args) (n + LENGTH prev_args))) (CONS (bvlSem_Number (&rem_args -
@@ -411,18 +409,16 @@ let evaluate_generic_app_partial = prove
      partial_app_fn_location
        max_app
        total_args
-       (LENGTH prev_args + (LENGTH args - 1)) IN domain (bvlSem_state_code
-         st) /\
+       (LENGTH prev_args + (LENGTH args - 1)) IN domain (state_code st) /\
      total_args < max_app /\
      LENGTH args < (total_args + 1) - LENGTH prev_args /\ ~(LENGTH args = 0)
        /\
-     get_global 0 (bvlSem_state_globals st) = SOME (SOME (global_table
-       max_app)) /\
+     get_global 0 (state_globals st) = SOME (SOME (global_table max_app)) /\
      unpack_closure cl (prev_args,total_args,sub_cl) ==>
      bvlSem_evaluate ([generate_generic_app max_app (LENGTH args -
        1)],APPEND args [cl],st) =
-     (if bvlSem_state_clock st < LENGTH args - 1 then
-       (Rerr (Rabort Rtimeout_error),bvlSem_state_clock_fupd (K 0) st)
+     (if state_clock st < LENGTH args - 1 then
+       (Rerr (Rabort Rtimeout_error),state_clock_fupd (K 0) st)
      else (Rval [bvlSem_Block partial_app_tag
                     (APPEND (CONS (bvlSem_CodePtr (partial_app_fn_location
                               max_app total_args
@@ -436,16 +432,16 @@ let evaluate_generic_app_partial = prove
 (* [local] *)
 let evaluate_generic_app_full = prove
  (`!n args st rem_args vs l tag exp clo.
-     sptree_lookup l (bvlSem_state_code st) = SOME (rem_args + 2,exp) /\
+     sptree_lookup l (state_code st) = SOME (rem_args + 2,exp) /\
      n + 1 = LENGTH args /\
      n > rem_args /\
      rem_args < max_app ==>
      bvlSem_evaluate ([generate_generic_app max_app n],APPEND args
        [bvlSem_Block tag (CONS (bvlSem_CodePtr l) (CONS (bvlSem_Number
        (&rem_args)) vs))],st) =
-     (if bvlSem_state_clock st < rem_args + 1 then (Rerr (Rabort
-       Rtimeout_error),bvlSem_state_clock_fupd (K 0) st) else match
-       bvlSem_evaluate ([exp],APPEND (DROP (LENGTH args - (rem_args + 1)) args)
+     (if state_clock st < rem_args + 1 then (Rerr (Rabort
+       Rtimeout_error),state_clock_fupd (K 0) st) else match bvlSem_evaluate
+       ([exp],APPEND (DROP (LENGTH args - (rem_args + 1)) args)
                       [bvlSem_Block tag (CONS (bvlSem_CodePtr l) (CONS
                         (bvlSem_Number (&rem_args)) vs))],
                       bvlSem_dec_clock (rem_args + 1) st) with (Rval
@@ -493,22 +489,22 @@ let evaluate_mk_cl_call = prove
      bvlSem_evaluate ([cl],env,s) = (Rval [bvlSem_Block tag (CONS
        (bvlSem_CodePtr p) (CONS (bvlSem_Number (&n)) xs))],s) /\
      bvlSem_evaluate (args,env,s) = (Rval args',s) /\
-     sptree_lookup p (bvlSem_state_code s) = SOME (n + 2,exp) /\
-     sptree_lookup (generic_app_fn_location (LENGTH args' - 1))
-       (bvlSem_state_code s) =
+     sptree_lookup p (state_code s) = SOME (n + 2,exp) /\
+     sptree_lookup (generic_app_fn_location (LENGTH args' - 1)) (state_code
+       s) =
        SOME (LENGTH args' + 1,generate_generic_app max_app (LENGTH args' -
          1)) /\
      LENGTH args' - 1 >= n /\
      n < max_app /\ ~(LENGTH args = 0) ==>
      bvlSem_evaluate ([mk_cl_call cl args],env,s) =
       (if n = LENGTH args - 1 then
-        if bvlSem_state_clock s < LENGTH args then (Rerr (Rabort
-          Rtimeout_error),bvlSem_state_clock_fupd (K 0) s)
+        if state_clock s < LENGTH args then (Rerr (Rabort
+          Rtimeout_error),state_clock_fupd (K 0) s)
         else bvlSem_evaluate ([exp],APPEND args' [bvlSem_Block tag (CONS
           (bvlSem_CodePtr p) (CONS (bvlSem_Number (&(LENGTH args - 1))) xs))],
                     bvlSem_dec_clock (LENGTH args) s)
-      else if bvlSem_state_clock s < n + 2 then (Rerr (Rabort
-        Rtimeout_error),bvlSem_state_clock_fupd (K 0) s)
+      else if state_clock s < n + 2 then (Rerr (Rabort
+        Rtimeout_error),state_clock_fupd (K 0) s)
           else match bvlSem_evaluate ([exp],APPEND (DROP (LENGTH args' - (n
             + 1)) args') [bvlSem_Block tag (CONS (bvlSem_CodePtr p) (CONS
             (bvlSem_Number (&n)) xs))],
@@ -534,13 +530,13 @@ let evaluate_partial_app_fn = prove
        - num_args) args')
             [bvlSem_Block tag (CONS l' (CONS num' (CONS (bvlSem_Block tag'
               (CONS (bvlSem_CodePtr l) (CONS num_args' fvs))) prev_args)))],
-            (bvlSem_state_code_fupd (K code) st)) =
-      (if bvlSem_state_clock st = 0 then
-        (Rerr (Rabort Rtimeout_error),(bvlSem_state_code_fupd (K code) st))
+            (state_code_fupd (K code) st)) =
+      (if state_clock st = 0 then
+        (Rerr (Rabort Rtimeout_error),(state_code_fupd (K code) st))
       else bvlSem_evaluate ([exp],APPEND (APPEND (DROP ((LENGTH args' +
         LENGTH prev_args) - num_args) args') prev_args) [bvlSem_Block tag'
         (CONS (bvlSem_CodePtr l) (CONS num_args' fvs))],
-               bvlSem_dec_clock 1 (bvlSem_state_code_fupd (K code) st))))`,
+               bvlSem_dec_clock 1 (state_code_fupd (K code) st))))`,
   CHEAT_TAC);;
 
 (* -- *)
@@ -697,10 +693,10 @@ add_simp clos_to_bvlProof_v_rel_Unit;;
 
 (* v_rel_Boolv *)
 let clos_to_bvlProof_v_rel_Boolv = prove
- (`(clos_to_bvlProof_v_rel max_app f refs code (bvlSem_Boolv b) y <=> (y =
-  bvlSem_Boolv b)) /\
-   (clos_to_bvlProof_v_rel max_app f refs code x (bvlSem_Boolv b) <=> (x =
-     bvlSem_Boolv b))`,
+ (`(clos_to_bvlProof_v_rel max_app f refs code (semanticPrimitives_Boolv b) y
+  <=> (y = semanticPrimitives_Boolv b)) /\
+   (clos_to_bvlProof_v_rel max_app f refs code x (semanticPrimitives_Boolv
+     b) <=> (x = semanticPrimitives_Boolv b))`,
   CHEAT_TAC);;
 add_simp clos_to_bvlProof_v_rel_Boolv;;
 
@@ -771,8 +767,8 @@ let clos_to_bvlProof_nth_code_def,clos_to_bvlProof_nth_code_ind = define_wf
 
 let compile_oracle_inv_def = new_definition
   `compile_oracle_inv max_app s_code s_cc s_co t_code t_cc t_co <=>
-      s_cc = pure_cc (clos_to_bvl_compile_inc max_app) t_cc /\
-      t_co = pure_co (clos_to_bvl_compile_inc max_app) o s_co /\
+      s_cc = pure_cc (clos_annotate_compile_inc max_app) t_cc /\
+      t_co = pure_co (clos_annotate_compile_inc max_app) o s_co /\
       (!n cfg ps. t_co n = (cfg,ps) ==> ALL_DISTINCT (MAP FST ps)) /\
       (!n. DISJOINT (domain (sptree_union t_code (clos_to_bvlProof_nth_code
         t_co n)))
@@ -1316,9 +1312,9 @@ let arith_helper_lem3 = prove
 (* [local] *)
 let evaluate_mk_cl_call_spec = prove
  (`!s env tag p n args exp xs.
-     sptree_lookup p (bvlSem_state_code s) = SOME (n + 2,exp) /\
-     sptree_lookup (generic_app_fn_location (LENGTH args - 1))
-       (bvlSem_state_code s) =
+     sptree_lookup p (state_code s) = SOME (n + 2,exp) /\
+     sptree_lookup (generic_app_fn_location (LENGTH args - 1)) (state_code
+       s) =
        SOME (LENGTH args + 1,generate_generic_app max_app (LENGTH args - 1))
          /\
      LENGTH args - 1 >= n /\
@@ -1327,13 +1323,13 @@ let evaluate_mk_cl_call_spec = prove
        db_vars_Var (LENGTH args))],APPEND (APPEND args [bvlSem_Block tag (CONS
        (bvlSem_CodePtr p) (CONS (bvlSem_Number (&n)) xs))]) env,s) =
       (if n = LENGTH args - 1 then
-        if bvlSem_state_clock s < LENGTH args then (Rerr (Rabort
-          Rtimeout_error),bvlSem_state_clock_fupd (K 0) s)
+        if state_clock s < LENGTH args then (Rerr (Rabort
+          Rtimeout_error),state_clock_fupd (K 0) s)
         else bvlSem_evaluate ([exp],APPEND args [bvlSem_Block tag (CONS
           (bvlSem_CodePtr p) (CONS (bvlSem_Number (&(LENGTH args - 1))) xs))],
                     bvlSem_dec_clock (LENGTH args) s)
-      else if bvlSem_state_clock s < n + 2 then (Rerr (Rabort
-        Rtimeout_error),bvlSem_state_clock_fupd (K 0) s)
+      else if state_clock s < n + 2 then (Rerr (Rabort
+        Rtimeout_error),state_clock_fupd (K 0) s)
           else match bvlSem_evaluate ([exp],APPEND (DROP (LENGTH args - (n +
             1)) args) [bvlSem_Block tag (CONS (bvlSem_CodePtr p) (CONS
             (bvlSem_Number (&n)) xs))],
@@ -1426,8 +1422,7 @@ let cl_rel_run_lemma3 = prove
 (* [local] *)
 let genlist_el = prove
  (`!skip st r xs args p n env ys.
-     FLOOKUP (bvlSem_state_refs st) r = SOME (bvlSem_ValueArray (APPEND ys
-       xs)) /\
+     FLOOKUP (state_refs st) r = SOME (bvlSem_ValueArray (APPEND ys xs)) /\
      skip = LENGTH ys ==>
      bvlSem_evaluate (list_of_seq (\i. (\b i. bvl_Op (closLang_BlockOp
        (closLang_ElemAt i)) [b]) (db_vars_Var 0) (i + skip)) (LENGTH xs),CONS
@@ -1440,7 +1435,7 @@ let genlist_el = prove
 (* [local] *)
 let evaluate_code_for_recc_case = prove
  (`!st r xs args c p n env.
-     FLOOKUP (bvlSem_state_refs st) r = SOME (bvlSem_ValueArray xs) ==>
+     FLOOKUP (state_refs st) r = SOME (bvlSem_ValueArray xs) ==>
      bvlSem_evaluate ([SND (code_for_recc_case (LENGTH xs) (LENGTH args)
        c)],APPEND args (CONS (bvlSem_Block closure_tag [bvlSem_CodePtr p;
        bvlSem_Number (&n); bvlSem_RefPtr T r]) env),
@@ -1703,11 +1698,11 @@ let chained_lemma = prove
       clos_to_bvl_compile_exps max_app all' acc = (x6,x7) /\
       clos_to_bvl_compile_exps max_app (MAP (SND o SND) (chain_exps index
         all')) acc =
-         (new_exps,aux) /\ clos_to_bvlProof_code_installed progs
-           (bvlSem_state_code t) /\ ~(x6 = []) ==>
+         (new_exps,aux) /\ clos_to_bvlProof_code_installed progs (state_code
+           t) /\ ~(x6 = []) ==>
       (?ck8 res8.
-         bvlSem_evaluate ([d1],[],bvlSem_state_clock_fupd (K (ck8 +
-           bvlSem_state_clock t)) t) = (res8,t1) /\
+         bvlSem_evaluate ([d1],[],state_clock_fupd (K (ck8 + state_clock t))
+           t) = (res8,t1) /\
          (match res with
            Rval vs -> res8 = Rval [LAST vs]
          | Rerr v3 -> res8 = Rerr v3))`,
@@ -1804,9 +1799,9 @@ let clos_to_bvlProof_compile_exps_correct = prove
         f1 SUBMAP f2 /\
         (FDIFF (bvlSem_state_refs t1) (FRANGE f1)) SUBMAP (FDIFF
           (bvlSem_state_refs t2) (FRANGE f2)) /\
-        FEVERY (\p. every_Fn_SOME [SND (SND p)]) (bvlSem_state_code s2) /\
-        FEVERY (\p. every_Fn_vs_SOME [SND (SND p)]) (bvlSem_state_code s2)
-          /\ bvlSem_state_clock
+        FEVERY (\p. every_Fn_SOME [SND (SND p)]) (closSem_state_code s2) /\
+        FEVERY (\p. every_Fn_vs_SOME [SND (SND p)]) (closSem_state_code s2)
+          /\ closSem_state_clock
         s2 = bvlSem_state_clock t2)) /\
    (!loc_opt func args (s1:('c,'ffi)closSem_state) res s2 env
      (t1:('c,'ffi)bvlSem_state) args' func' f1.
@@ -1851,9 +1846,9 @@ let clos_to_bvlProof_compile_exps_correct = prove
        f1 SUBMAP f2 /\
        FDIFF (bvlSem_state_refs t1) (FRANGE f1) SUBMAP FDIFF
          (bvlSem_state_refs t2) (FRANGE f2) /\
-       FEVERY (\p. every_Fn_SOME [SND (SND p)]) (bvlSem_state_code s2) /\
-       FEVERY (\p. every_Fn_vs_SOME [SND (SND p)]) (bvlSem_state_code s2)
-         /\ bvlSem_state_clock
+       FEVERY (\p. every_Fn_SOME [SND (SND p)]) (closSem_state_code s2) /\
+       FEVERY (\p. every_Fn_vs_SOME [SND (SND p)]) (closSem_state_code s2)
+         /\ closSem_state_clock
        s2 = bvlSem_state_clock t2))`,
   CHEAT_TAC);;
 
@@ -1894,23 +1889,23 @@ let init_code_ok = prove
  (`0 < max_app ==>
    (!n.
       n < max_app ==> sptree_lookup (generic_app_fn_location n)
-        (clos_to_bvlProof_init_code max_app) = SOME (n + 2,generate_generic_app
+        (clos_to_bvl_init_code max_app) = SOME (n + 2,generate_generic_app
         max_app n)) /\
    (!tot n.
       tot < max_app /\ n < tot ==>
         sptree_lookup (partial_app_fn_location max_app tot n)
-          (clos_to_bvlProof_init_code max_app) =
+          (clos_to_bvl_init_code max_app) =
           SOME (tot - n + 1,generate_partial_app_closure_fn tot n))`,
   CHEAT_TAC);;
 
 let domain_init_code_lt_num_stubs = prove
- (`!max_app x. x IN domain (clos_to_bvlProof_init_code max_app) ==> x <
-  (num_stubs max_app)`,
+ (`!max_app x. x IN domain (clos_to_bvl_init_code max_app) ==> x < (num_stubs
+  max_app)`,
   CHEAT_TAC);;
 
 let domain_init_code = prove
- (`0 < max_app ==> domain (clos_to_bvlProof_init_code max_app) = count
-  (max_app + (max_app * (max_app - 1)) DIV 2)`,
+ (`0 < max_app ==> domain (clos_to_bvl_init_code max_app) = count (max_app +
+  (max_app * (max_app - 1)) DIV 2)`,
   CHEAT_TAC);;
 
 let compile_prog_code_locs = prove
@@ -2027,7 +2022,7 @@ let code_installed_fromAList_strong = prove
 let evaluate_init1 = prove
  (`!mapp2 mapp1 tot st.
    (!n. n < mapp2 ==>
-   partial_app_fn_location mapp1 tot n IN domain (bvlSem_state_code st)) ==>
+   partial_app_fn_location mapp1 tot n IN domain (state_code st)) ==>
    bvlSem_evaluate (REVERSE
    (list_of_seq (\prev. bvl_Op (closLang_Label (partial_app_fn_location
      mapp1 tot prev)) []) mapp2),[bvlSem_Unit],st) =
@@ -2040,7 +2035,7 @@ let evaluate_init1 = prove
 let evaluate_init = prove
  (`!mapp2 mapp1 st.
    (!m n. m < mapp2 /\ n < m ==>
-   partial_app_fn_location mapp1 m n IN domain (bvlSem_state_code st)) ==>
+   partial_app_fn_location mapp1 m n IN domain (state_code st)) ==>
    bvlSem_evaluate (REVERSE
    (FLAT (list_of_seq (\tot. list_of_seq
    (\prev. bvl_Op (closLang_Label (partial_app_fn_location mapp1 tot prev))
@@ -2071,7 +2066,7 @@ let clos_to_bvlProof_eval_sim_def = new_definition
          bvlSem_evaluate ([bvl_Call 0 (SOME start') []],[],
            bvlSem_initial_state ffi code2 co2 cc2 (k + ck)) = (res2,t2) /\
          semanticPrimitivesProps_result_rel (\x y. T) (\x y. T) res1 res2
-           /\ bvlSem_state_ffi s2 = bvlSem_state_ffi t2))`;;
+           /\ state_ffi s2 = state_ffi t2))`;;
 
 (* initial_state_with_clock[local] *)
 let clos_to_bvlProof_initial_state_with_clock = prove
@@ -2149,16 +2144,16 @@ let chain_installed_SUBMAP = prove
 
 let chain_installed_thm = prove
  (`!es start'. ?e. !st code res st'.
-   chain_installed start' es (closSem_state_code st) /\
+   chain_installed start' es (state_code st) /\
    closSem_evaluate (es,[],st) = (res,st') /\
    0 < LENGTH es ==>
    (?k res1 st1.
-   bvlSem_find_code start' ([]:closSem_v list) (closSem_state_code st) =
-     SOME ([],e) /\
-   closSem_evaluate ([e],[],closSem_state_clock_fupd (K (closSem_state_clock
-     st + k)) st) = (res1,st1) /\
+   bvlSem_find_code start' ([]:closSem_v list) (state_code st) = SOME ([],e)
+     /\
+   closSem_evaluate ([e],[],state_clock_fupd (K (state_clock st + k)) st) =
+     (res1,st1) /\
    semanticPrimitivesProps_result_rel (\x y. T) (\x y. T) res1 res
-     /\ closSem_state_ffi st' = closSem_state_ffi st1)
+     /\ state_ffi st' = state_ffi st1)
    // ∧
    // (every_Fn_vs_NONE es ⇒ every_Fn_vs_NONE [e])`,
   CHEAT_TAC);;
@@ -2288,13 +2283,13 @@ let ccompile_inc_uncurry = prove
   CHEAT_TAC);;
 
 let compile_inc_uncurry = prove
- (`clos_to_bvl_compile_inc max_app p =
+ (`clos_number_compile_inc max_app p =
     clos_to_bvl_compile_prog max_app (APPEND (chain_exps (FST
       (extract_name (FST p))) (SND (extract_name (FST p)))) (SND p))`,
   CHEAT_TAC);;
 
 let fcompile_inc_uncurry = prove
- (`clos_fvs_compile_inc p = (clos_to_bvl_compile (FST p),[])`,
+ (`clos_fvs_compile_inc p = (clos_annotate_compile (FST p),[])`,
   CHEAT_TAC);;
 
 let elist_globals_sing = prove
@@ -2453,7 +2448,7 @@ let semantics_cond_mti_compile_inc = prove
                 1 <= max_app /\ ALL no_mti xs) ==>
         bvlSem_semantics ffi max_app FEMPTY
             (pure_co (cond_mti_compile_inc do_mti max_app) o co) cc
-            (clos_to_bvl_compile do_mti max_app xs) =
+            (clos_mti_compile do_mti max_app xs) =
         bvlSem_semantics ffi max_app FEMPTY co
             (pure_cc (cond_mti_compile_inc do_mti max_app) cc) xs`,
   CHEAT_TAC);;
@@ -2513,7 +2508,7 @@ let known_state_oracle_globals_approx = prove
 
 let known_co_facts = prove
  (`let co2 = known_co kc co in
-   clos_to_bvl_compile kc exps = (kc',exps') ==>
+   clos_call_compile kc exps = (kc',exps') ==>
    (IS_SOME kc ==>
        is_state_oracle (clos_known_compile_inc (THE kc))
            (pure_co (clos_fvs_compile_inc:closLang_exp
@@ -2579,13 +2574,13 @@ let SND_cond_mti_compile_inc = prove
   CHEAT_TAC);;
 
 let ccompile_aux_subset = prove
- (`clos_to_bvl_compile (clos_to_bvl_config_do_call c) exps = (exps',g,aux) ==>
+ (`clos_call_compile (clos_to_bvl_config_do_call c) exps = (exps',g,aux) ==>
    set_of_list (MAP FST aux) SUBSET IMAGE SUC (set_of_list (code_locs
      exps))`,
   CHEAT_TAC);;
 
 let ccompile_locs_subset = prove
- (`clos_to_bvl_compile (clos_to_bvl_config_do_call c) exps = (exps',g,aux) ==>
+ (`clos_call_compile (clos_to_bvl_config_do_call c) exps = (exps',g,aux) ==>
    set_of_list (code_locs (APPEND exps' (MAP (SND o SND) aux))) SUBSET
      (set_of_list (code_locs exps))`,
   CHEAT_TAC);;
@@ -2607,7 +2602,7 @@ let cond_mti_monotonic_elist_globals = prove
  (`oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND) (<)
         (SET_OF_BAG (closProps_elist_globals exps)) co ==>
    oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND) (<)
-        (SET_OF_BAG (closProps_elist_globals (clos_to_bvl_compile do_it ma
+        (SET_OF_BAG (closProps_elist_globals (clos_mti_compile do_it ma
           exps)))
         (pure_co (cond_mti_compile_inc do_it ma) o co)`,
   CHEAT_TAC);;
@@ -2623,11 +2618,11 @@ let oracle_monotonic_init_subset = prove
   CHEAT_TAC);;
 
 let compile_inc_post_kcompile_def = new_definition
-  `compile_inc_post_kcompile c exps = clos_to_bvl_compile
+  `compile_inc_post_kcompile c exps = clos_call_compile
   (clos_to_bvl_config_known_conf c)
      (SND (renumber_code_locs_list
          (make_even (clos_to_bvl_config_next_loc c + MAX 1 (LENGTH exps)))
-         (clos_to_bvl_compile (clos_to_bvl_config_do_mti c)
+         (clos_mti_compile (clos_to_bvl_config_do_mti c)
            (clos_to_bvl_config_max_app c) exps)))`;;
 
 (* HOL4 clos_to_bvlProofScript.sml:7489-7491: ML code, not ported *)
@@ -2658,7 +2653,7 @@ let compile_common_semantics = prove
                (state_co (ignore_table clos_number_compile_inc)
                    (pure_co (cond_mti_compile_inc (clos_to_bvl_config_do_mti
                      c) (clos_to_bvl_config_max_app c)) o co1))) /\
-       FST (SND (SND (FST (co1 0)))) = FST (SND (clos_to_bvl_compile
+       FST (SND (SND (FST (co1 0)))) = FST (SND (clos_call_compile
          (clos_to_bvl_config_do_call c) (SND
            (compile_inc_post_kcompile c es1))))) /\
    (IS_SOME (clos_to_bvl_config_known_conf c) ==>
@@ -2689,7 +2684,7 @@ let compile_common_semantics = prove
          (clos_to_bvl_config_max_app c)) o co1) /\
    FST (FST (co1 0)) >= FST (renumber_code_locs_list (make_even
        (clos_to_bvl_config_next_loc c + MAX 1 (LENGTH es1)))
-         (clos_to_bvl_compile (clos_to_bvl_config_do_mti c)
+         (clos_mti_compile (clos_to_bvl_config_do_mti c)
          (clos_to_bvl_config_max_app c) es1)) /\
    oracle_monotonic (set_of_list o MAP FST o SND o SND) (<) (count (FST (FST
      (co1 0))))
@@ -2846,8 +2841,8 @@ let extract_name_MAP_FST_addrs = prove
 
 let compile_inc_req_addrs = prove
  (`(ALL_DISTINCT (req_compile_inc_addrs [] prog) ==>
-     ALL_DISTINCT (MAP FST (clos_to_bvl_compile_inc max_app prog))) /\
-   (set_of_list (MAP FST (clos_to_bvl_compile_inc max_app prog)) SUBSET
+     ALL_DISTINCT (MAP FST (clos_number_compile_inc max_app prog))) /\
+   (set_of_list (MAP FST (clos_number_compile_inc max_app prog)) SUBSET
      set_of_list (MAP ((+) (num_stubs max_app)) (req_compile_inc_addrs []
        prog)))`,
   CHEAT_TAC);;
@@ -2857,7 +2852,7 @@ let compile_inc_monotonic = prove
          MAP ((+) (num_stubs max_app)) o req_compile_inc_addrs [] o SND) (<)
            St co ==>
    oracle_monotonic (set_of_list o MAP FST o SND) (<) St
-     (pure_co (clos_to_bvl_compile_inc max_app) o co)`,
+     (pure_co (clos_annotate_compile_inc max_app) o co)`,
   CHEAT_TAC);;
 
 (* HOL4 clos_to_bvlProofScript.sml:7921-7922: a theorem that HOL4 states as
@@ -3074,10 +3069,10 @@ let syntax_oracle_ok_to_oracle_inv = prove
                  (pure_co (cond_mti_compile_inc (clos_to_bvl_config_do_mti
                    c) (clos_to_bvl_config_max_app c)) o co))) in
    compile_oracle_inv (clos_to_bvl_config_max_app c) (alist_to_fmap prog')
-     (pure_cc (clos_to_bvl_compile_inc (clos_to_bvl_config_max_app c)) cc)
+     (pure_cc (clos_annotate_compile_inc (clos_to_bvl_config_max_app c)) cc)
        co'
      (fromAList
-        (APPEND (APPEND (toAList (clos_to_bvlProof_init_code
+        (APPEND (APPEND (toAList (clos_to_bvl_init_code
           (clos_to_bvl_config_max_app c)))
          [(num_stubs (clos_to_bvl_config_max_app c) - 2,2,force_thunk_code);
           (num_stubs (clos_to_bvl_config_max_app c) - 1,0,
@@ -3086,7 +3081,7 @@ let syntax_oracle_ok_to_oracle_inv = prove
              (clos_to_bvl_config_max_app c)))])
          (clos_to_bvl_compile_prog (clos_to_bvl_config_max_app c) prog')))
            cc
-     (pure_co (clos_to_bvl_compile_inc (clos_to_bvl_config_max_app c)) o
+     (pure_co (clos_annotate_compile_inc (clos_to_bvl_config_max_app c)) o
        co'))`,
   CHEAT_TAC);;
 
@@ -3158,7 +3153,7 @@ let renumber_code_locs_sing = prove
   CHEAT_TAC);;
 
 let MAP_FST_compile_inc = prove
- (`MAP FST (clos_to_bvl_compile_inc max_app p) =
+ (`MAP FST (clos_number_compile_inc max_app p) =
     MAP ((+) (num_stubs max_app))
       (
       APPEND (APPEND (MAP ((+) (FST (extract_name (FST p))))
@@ -3238,12 +3233,13 @@ let clos_to_bvlProof_compile_semantics = prove
  (cake_as_vars (fun () ->
     `~(bvlSem_semantics (ffi:'ffi ffi_state) (clos_to_bvl_config_max_app c)
   FEMPTY co
-       (compile_common_inc c (pure_cc (clos_to_bvl_compile_inc
+       (compile_common_inc c (pure_cc (clos_annotate_compile_inc
          (clos_to_bvl_config_max_app c)) cc)) es = ffi_Fail) /\
-     clos_to_bvl_compile c es = (c',prog,names) /\
+     clos_call_compile c es = (c',prog,names) /\
      clos_to_bvlProof_syntax_oracle_ok c c' es co ==>
      bvlSem_semantics ffi (fromAList prog)
-       (pure_co (clos_to_bvl_compile_inc (clos_to_bvl_config_max_app c)) o
+       (pure_co (clos_annotate_compile_inc (clos_to_bvl_config_max_app c))
+         o
         pure_co clos_annotate_compile_inc o
         state_co (cond_call_compile_inc (clos_to_bvl_config_do_call c))
           (known_co (clos_to_bvl_config_known_conf c)
@@ -3252,7 +3248,7 @@ let clos_to_bvlProof_compile_semantics = prove
                 (clos_to_bvl_config_max_app c)) o co))))
          cc (clos_to_bvl_config_start c') =
      bvlSem_semantics ffi (clos_to_bvl_config_max_app c) FEMPTY co
-       (compile_common_inc c (pure_cc (clos_to_bvl_compile_inc
+       (compile_common_inc c (pure_cc (clos_annotate_compile_inc
          (clos_to_bvl_config_max_app c)) cc)) es`),
   CHEAT_TAC);;
 
@@ -3268,10 +3264,10 @@ let compile_inc_phases_all_distinct = prove
 
 let syntax_oracle_ok_bvl_FST_monotonic = prove
  (`clos_to_bvlProof_syntax_oracle_ok c c' es co /\
-   clos_to_bvl_compile c es = (c',prog') ==>
+   clos_call_compile c es = (c',prog') ==>
    oracle_monotonic (set_of_list o MAP FST o SND) (<)
       (count (FST (FST (co 0)) + num_stubs (clos_to_bvl_config_max_app c)))
-      (pure_co (clos_to_bvl_compile_inc (clos_to_bvl_config_max_app c)) o
+      (pure_co (clos_annotate_compile_inc (clos_to_bvl_config_max_app c)) o
        pure_co clos_annotate_compile_inc o
        (state_co (cond_call_compile_inc (clos_to_bvl_config_do_call c))
          (known_co (clos_to_bvl_config_known_conf c)
@@ -3302,7 +3298,7 @@ let compile_exps_code_labels = prove
        closProps_get_code_labels es1))) UNION
      UNIONS (set_of_list (MAP (closProps_get_code_labels o SND o SND) aux1))
        UNION
-     domain (clos_to_bvlProof_init_code app) UNION {num_stubs app - 2}`,
+     domain (clos_to_bvl_init_code app) UNION {num_stubs app - 2}`,
   CHEAT_TAC);;
 
 (* compile_prog_code_labels *)
@@ -3315,8 +3311,7 @@ let clos_to_bvlProof_compile_prog_code_labels = prove
                    (clos_to_bvl_compile_prog max_app prog))) SUBSET
    IMAGE (((+) (num_stubs max_app))) (UNIONS (set_of_list (MAP
      closProps_get_code_labels (MAP (SND o SND) prog)))) UNION
-   domain (clos_to_bvlProof_init_code max_app) UNION {num_stubs max_app -
-     2}`,
+   domain (clos_to_bvl_init_code max_app) UNION {num_stubs max_app - 2}`,
   CHEAT_TAC);;
 
 let chain_exps_no_Labels = prove

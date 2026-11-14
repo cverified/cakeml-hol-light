@@ -28,7 +28,8 @@ let _ = cake_theory "flatProps"
 let _ = do_list hide_constant ["C"];;
 
 let ctor_same_type_OPTREL = prove
- (`!c1 c2. flatSem_ctor_same_type c1 c2 <=> OPTREL (inv_image (=) SND) c1 c2`,
+ (`!c1 c2. semanticPrimitives_ctor_same_type c1 c2 <=> OPTREL (inv_image (=)
+  SND) c1 c2`,
   CHEAT_TAC);;
 
 let pats_bindings_FLAT_MAP = prove
@@ -195,8 +196,8 @@ let flatProps_build_rec_env_help_lem = prove
 (* build_rec_env_merge *)
 let flatProps_build_rec_env_merge = prove
  (`!funs funs' env env'.
-    flatSem_build_rec_env funs env env' = APPEND (MAP (\(fn,n,e).
-      (fn,flatSem_Recclosure env funs fn)) funs) env'`,
+    semanticPrimitives_build_rec_env funs env env' = APPEND (MAP
+      (\(fn,n,e). (fn,flatSem_Recclosure env funs fn)) funs) env'`,
   CHEAT_TAC);;
 
 (* evaluate_length *)
@@ -475,6 +476,7 @@ let flatProps_set_globals_def,flatProps_set_globals_ind =
     (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))) /\
     (flatProps_set_globals (flatLang_Con t id' es) = flatProps_elist_globals
     es) /\
+    (flatProps_set_globals (flatLang_Fun t v e) = flatProps_set_globals e) /\
     (flatProps_set_globals (flatLang_App t op es) = (BAG_UNION)
     (flatProps_elist_globals es) (flatProps_op_gbag op)) /\
     (flatProps_set_globals (flatLang_If t e1 e2 e3) = (BAG_UNION)
@@ -488,10 +490,9 @@ let flatProps_set_globals_def,flatProps_set_globals_ind =
     (flatProps_elist_globals [] = EMPTY_BAG) /\
     (flatProps_elist_globals (CONS e es) = (BAG_UNION)
     (flatProps_set_globals e) (flatProps_elist_globals es))`;
-   `(flatProps_set_globals (flatLang_Fun t v e) = flatProps_set_globals e) /\
-    (flatProps_set_globals (flatLang_Letrec t fs e) = (BAG_UNION)
+   `flatProps_set_globals (flatLang_Letrec t fs e) = (BAG_UNION)
     (flatProps_set_globals e) (flatProps_elist_globals (MAP (SND o SND)
-    fs)))`];;
+    fs))`];;
 add_simp flatProps_set_globals_def;;
 
 
@@ -553,7 +554,7 @@ let flatProps_initial_state_clock = prove
   CHEAT_TAC);;
 
 let build_rec_env_eq_MAP = prove
- (`flatSem_build_rec_env funs cl_env env = APPEND (MAP (\(f,x,e).
+ (`semanticPrimitives_build_rec_env funs cl_env env = APPEND (MAP (\(f,x,e).
   (f,flatSem_Recclosure cl_env funs f)) funs) env`,
   CHEAT_TAC);;
 
@@ -593,13 +594,13 @@ let simple_basic_val_rel_def = define_cases
    (simple_basic_val_rel (flatSem_Recclosure vs exps nm) v = F)`;;
 add_simp simple_basic_val_rel_def;;
 
-let v_container_xs_def = define_cases_clauses
-  [`(v_container_xs (flatSem_Litv _) = []) /\
-    (v_container_xs (flatSem_Loc _ _) = []) /\
-    (v_container_xs (flatSem_Conv _ vs) = vs) /\
-    (v_container_xs (flatSem_Vectorv vs) = vs)`;
-   `(v_container_xs (flatSem_Closure vs nm exp) = []) /\
-    (v_container_xs (flatSem_Recclosure vs exps nm) = [])`];;
+let v_container_xs_def = define_cases
+  `(v_container_xs (flatSem_Litv _) = []) /\
+   (v_container_xs (flatSem_Loc _ _) = []) /\
+   (v_container_xs (flatSem_Conv _ vs) = vs) /\
+   (v_container_xs (flatSem_Vectorv vs) = vs) /\
+   (v_container_xs (flatSem_Closure vs nm exp) = []) /\
+   (v_container_xs (flatSem_Recclosure vs exps nm) = [])`;;
 add_simp v_container_xs_def;;
 
 let flatProps_simple_val_rel_def = new_definition
@@ -808,6 +809,8 @@ add_simp result_vs_def;;
 (* HOL4 flatPropsScript.sml:1463-1469: a theorem whose statement the port
    cannot state yet: v_size_aux *)
 
+(* the clauses in two quotations: t is tra and varN, which one quotation
+   cannot typecheck *)
 let no_Mat_def,no_Mat_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(no_Mat (flatLang_Raise t e) <=> no_Mat e) /\

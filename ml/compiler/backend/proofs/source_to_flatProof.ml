@@ -148,8 +148,8 @@ let genv_c_ok_def = new_definition
      (!cn1 cn2 l1 l2 stamp1 stamp2.
        FLOOKUP genv_c (cn1,l1) = SOME stamp1 /\
        FLOOKUP genv_c (cn2,l2) = SOME stamp2 ==>
-       (flatSem_ctor_same_type (SOME stamp1) (SOME stamp2) <=>
-         flatSem_ctor_same_type (SOME cn1) (SOME cn2))) /\
+       (semanticPrimitives_ctor_same_type (SOME stamp1) (SOME stamp2) <=>
+         semanticPrimitives_ctor_same_type (SOME cn1) (SOME cn2))) /\
      (!cn1 cn2 l1 l2 stamp.
        FLOOKUP genv_c (cn1,l1) = SOME stamp /\
        FLOOKUP genv_c (cn2,l2) = SOME stamp ==>
@@ -597,8 +597,8 @@ let source_to_flatProof_vs_to_string = prove
 (* [local] *)
 let v_rel_lems = prove
  (`!genv. genv_c_ok (global_env_c genv) ==>
-     (!b. source_to_flatProof_v_rel genv (flatSem_Boolv b) (flatSem_Boolv
-       b)) /\
+     (!b. source_to_flatProof_v_rel genv (semanticPrimitives_Boolv b)
+       (semanticPrimitives_Boolv b)) /\
      source_to_flatProof_v_rel genv flatSem_div_exn_v flatSem_div_exn_v /\
      source_to_flatProof_v_rel genv flatSem_chr_exn_v flatSem_chr_exn_v /\
      source_to_flatProof_v_rel genv flatSem_bind_exn_v flatSem_bind_exn_v /\
@@ -842,12 +842,12 @@ let eta2 = prove
 
 (* [local] *)
 let ctor_same_type_refl = prove
- (`flatSem_ctor_same_type x x`,
+ (`semanticPrimitives_ctor_same_type x x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let ctor_same_type_SND = prove
- (`flatSem_ctor_same_type (SOME x) (SOME y) = (SND x = SND y)`,
+ (`semanticPrimitives_ctor_same_type (SOME x) (SOME y) = (SND x = SND y)`,
   CHEAT_TAC);;
 
 let genv_c_ok_pmatch_stamps_ok = prove
@@ -899,7 +899,7 @@ let source_to_flatProof_pmatch = prove
       source_to_flatProof_match_result_rel genv env'' r r_i1)) /\
    (!cenv s ps vs env r env' env'' env_i1
      (s_i1:('f_orac_st,'ffi)flatSem_state) vs_i1 st'.
-    flatSem_pmatch_list cenv s ps vs env = r /\
+    semanticPrimitives_pmatch_list cenv s ps vs env = r /\
     global_env_inv genv comp_map2 shadowers senv /\
     genv_c_ok (global_env_c genv) /\
     genv_c_tys_ok (global_env_c genv) (global_env_tys genv) /\
@@ -1330,19 +1330,19 @@ let invariant_dec_clock = prove
 
 let v_rel_Bool_eqn = prove
  (`genv_c_ok (global_env_c genv) ==> (source_to_flatProof_v_rel genv
-  (flatSem_Boolv b) v <=> (v = flatSem_Boolv b))`,
+  (semanticPrimitives_Boolv b) v <=> (v = semanticPrimitives_Boolv b))`,
   CHEAT_TAC);;
 
 (* evaluate_Bool *)
 let source_to_flatProof_evaluate_Bool = prove
  (`source_to_flatProof_s_rel genv s s' /\ genv_c_ok (global_env_c genv) ==>
-   flatSem_evaluate env s' [flatLang_Bool t b] = (s',Rval [flatSem_Boolv
-     b])`,
+   flatSem_evaluate env s' [flatLang_Bool t b] = (s',Rval
+     [semanticPrimitives_Boolv b])`,
   CHEAT_TAC);;
 
 (* Boolv_11 *)
 let source_to_flatProof_Boolv_11 = prove
- (`(flatSem_Boolv b = flatSem_Boolv b') = (b = b')`,
+ (`(semanticPrimitives_Boolv b = semanticPrimitives_Boolv b') = (b = b')`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1431,8 +1431,8 @@ let pmatch_invariant = prove
      /\ source_to_flat_environment_c
    comp_map2 = source_to_flat_environment_c comp_map /\
    source_to_flatProof_v_rel genv v v' ==>
-   source_to_flatProof_match_result_rel genv [] (flatSem_pmatch (sem_env_c
-     env) (semanticPrimitives_state_refs st) p v [])
+   source_to_flatProof_match_result_rel genv [] (semanticPrimitives_pmatch
+     (sem_env_c env) (semanticPrimitives_state_refs st) p v [])
      (flatSem_pmatch st' (compile_pat comp_map p) v' [])`,
   CHEAT_TAC);;
 
@@ -1563,8 +1563,8 @@ let genv_c_ok_extend = prove
    (!cn arity stamp. FLOOKUP c_ext (cn,arity) = SOME stamp ==>
      (same_type (ExnStamp 0) stamp <=> SND cn = NONE) /\
      (!cn' arity' stamp'. FLOOKUP c_ext (cn',arity') = SOME stamp' ==>
-       (same_type stamp stamp' <=> flatSem_ctor_same_type (SOME cn) (SOME
-         cn')) /\
+       (same_type stamp stamp' <=> semanticPrimitives_ctor_same_type (SOME
+         cn) (SOME cn')) /\
        (stamp = stamp' ==> (cn = cn' /\ arity = arity'))) /\
      (!cn' arity' stamp'. FLOOKUP c (cn',arity') = SOME stamp' ==> ~(stamp =
        stamp') /\
@@ -2219,7 +2219,7 @@ let source_to_flatProof_compile_prog_semantics = prove
     `precondition1 interp g s1 env1 conf eval_conf prog ==>
       ~(semantics_prog s1 env1 prog ffi_Fail) ==>
       semantics_prog s1 env1 prog
-         (flatSem_semantics eval_conf (semanticPrimitives_state_ffi s1)
+         (flatSem_semantics eval_conf (state_ffi s1)
              (SND (source_to_flat_compile_prog conf prog)))`),
   CHEAT_TAC);;
 
@@ -2245,8 +2245,8 @@ let source_to_flatProof_compile_semantics = prove
     `precondition interp s env cfg ec prog ==>
      ~(semantics_prog s env prog ffi_Fail) ==>
      semantics_prog s env prog
-        (flatSem_semantics ec (semanticPrimitives_state_ffi s) (SND
-          (source_to_flat_compile cfg prog)))`),
+        (flatSem_semantics ec (state_ffi s) (SND (source_to_flat_compile
+          cfg prog)))`),
   CHEAT_TAC);;
 
 (* - esgc_free theorems for compile_exp ------------------------------------ *)

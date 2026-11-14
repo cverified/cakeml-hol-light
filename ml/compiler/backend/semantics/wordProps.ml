@@ -2844,8 +2844,8 @@ let permute_swap_lemma3 = prove
   CHEAT_TAC);;
 
 let word_cmp_Word_Word = prove
- (`wordSem_word_cmp cmp (wordLang_Word c) (wordLang_Word c') = SOME
-  (wordSem_word_cmp cmp c c')`,
+ (`asm_word_cmp cmp (wordLang_Word c) (wordLang_Word c') = SOME (asm_word_cmp
+  cmp c c')`,
   CHEAT_TAC);;
 add_simp word_cmp_Word_Word;;
 

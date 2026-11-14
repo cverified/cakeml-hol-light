@@ -177,7 +177,7 @@ let _ = size_thms "dTree";;
 let dt_eval_def,dt_eval_ind = define_wf
   `MEASURE (\(x0,x1,x2). dTree_size x2)`
   `(dt_eval refs _ (pattern_semantics_Leaf k) = SOME (MatchSuccess k)) /\
-   (dt_eval refs _ pattern_semantics_Fail = SOME (MatchFailure)) /\
+   (dt_eval refs _ ffi_Fail = SOME (MatchFailure)) /\
    (dt_eval refs _ pattern_semantics_TypeFail = NONE) /\
    (dt_eval refs v (pattern_semantics_If guard' dt1 dt2) =
          match dt_eval_guard refs v guard' with NONE -> NONE

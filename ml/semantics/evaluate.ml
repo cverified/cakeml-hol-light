@@ -65,6 +65,9 @@ let sing_env_def = new_definition
      (mk_sem_env (nsBind n v nsEmpty) nsEmpty:semanticPrimitives_v
        sem_env)`;;
 
+(* the clauses in two quotations: cn is (((modN , conN) id) option) and conN;
+   l is lit and locs; n is ((modN , varN) id) and tvarN, which one quotation
+   cannot typecheck *)
 let evaluate_def,evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(evaluate (st:'ffi semanticPrimitives_state) env [] = ((st:'ffi

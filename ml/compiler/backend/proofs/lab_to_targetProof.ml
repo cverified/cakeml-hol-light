@@ -1633,7 +1633,8 @@ let byte_align_64_IMP = prove
 
 (* The lab and asm versions should be in their individual props *)
 let arith_upd_fp_regs = prove
- (`(fp_regs (labSem_arith_upd a s) = labSem_state_fp_regs s /\ fp_regs
+ (`(asm_state_fp_regs (labSem_arith_upd a s) = asm_state_fp_regs s
+  /\ asm_state_fp_regs
    (labSem_arith_upd a (t:'a asm_state)) = asm_state_fp_regs t)`,
   CHEAT_TAC);;
 add_simp arith_upd_fp_regs;;
@@ -1725,10 +1726,9 @@ let EVEN_add_AND = prove
 (* [local] *)
 let word_cmp_lemma = prove
  (`lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
-     (wordSem_word_cmp cmp (labSem_state_regs s1 rr) (labSem_reg_imm ri s1)
-       = SOME x) ==>
-     (x = wordSem_word_cmp cmp (asm_state_regs t1 rr) (labSem_reg_imm ri
-       t1))`,
+     (asm_word_cmp cmp (labSem_state_regs s1 rr) (labSem_reg_imm ri s1) =
+       SOME x) ==>
+     (x = asm_word_cmp cmp (asm_state_regs t1 rr) (labSem_reg_imm ri t1))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -3924,8 +3924,8 @@ let oracle_tie_ccache_residues = prove
    (!k. find_next_interference mc_conf (labSem_state_ffi s1) (k + l) ms1 =
         find_next_interference mc2 (labSem_state_ffi s1) k ms2)
           /\ machine_config_target
-   mc2 = machine_config_target mc_conf /\ machine_config_ptr_reg
-   mc2 = machine_config_ptr_reg mc_conf /\ machine_config_len_reg
+   mc2 = machine_config_target mc_conf /\ ptr_reg
+   mc2 = machine_config_ptr_reg mc_conf /\ len_reg
    mc2 = machine_config_len_reg mc_conf /\ machine_config_ccache_interfer
    mc2 = machine_config_ccache_interfer mc_conf /\ ~(target_get_pc
      (machine_config_target

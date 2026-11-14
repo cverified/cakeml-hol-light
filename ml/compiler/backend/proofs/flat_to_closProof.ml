@@ -374,7 +374,8 @@ let compile_op_evaluates_args = prove
 
 (* v_rel_Boolv *)
 let flat_to_closProof_v_rel_Boolv = prove
- (`flat_to_closProof_v_rel (flatSem_Boolv b) v = (v = flatSem_Boolv b)`,
+ (`flat_to_closProof_v_rel (semanticPrimitives_Boolv b) v = (v =
+  semanticPrimitives_Boolv b)`,
   CHEAT_TAC);;
 add_simp flat_to_closProof_v_rel_Boolv;;
 
@@ -629,7 +630,7 @@ let check_type_CharT_flat_to_v = prove
 (* [local] *)
 let check_type_BoolT_flat_to_v = prove
  (`flatSem_check_type ast_BoolT (flat_to_v (v:flatSem_v)) ==> v =
-  flatSem_Boolv F \/ v = flatSem_Boolv T`,
+  semanticPrimitives_Boolv F \/ v = semanticPrimitives_Boolv T`,
   CHEAT_TAC);;
 
 let op_arith = prove

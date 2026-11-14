@@ -268,6 +268,8 @@ let is_name_def = new_definition
 let size_of_eids_def = new_definition
   `size_of_eids prog = LENGTH (FILTER is_exn_decl prog)`;;
 
+(* the clauses in two quotations: sh is shape and shift, which one quotation
+   cannot typecheck *)
 let var_exp_def,var_exp_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(var_exp (panLang_Const w) = ([]:mlstring list)) /\
@@ -292,6 +294,8 @@ let var_exp_def,var_exp_ind = assume_definition_rec_clauses
    `var_exp (panLang_Shift sh e1 e2) = ((APPEND (var_exp e1) (var_exp
     e2)):mlstring list)`];;
 
+(* the clauses in two quotations: sh is shape and shift, which one quotation
+   cannot typecheck *)
 let global_var_exp_def,global_var_exp_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(global_var_exp (panLang_Const w) = ([]:mlstring list)) /\

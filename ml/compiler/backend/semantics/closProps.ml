@@ -250,6 +250,8 @@ let contains_App_SOME_EXISTS = prove
   max_app [x]) ls`,
   CHEAT_TAC);;
 
+(* the clauses in two quotations: x2 is exp and (exp list), which one
+   quotation cannot typecheck *)
 let every_Fn_SOME_def,every_Fn_SOME_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(every_Fn_SOME [] <=> T) /\
@@ -296,6 +298,8 @@ let every_Fn_SOME_APPEND = prove
   CHEAT_TAC);;
 add_simp every_Fn_SOME_APPEND;;
 
+(* the clauses in two quotations: x2 is exp and (exp list), which one
+   quotation cannot typecheck *)
 let every_Fn_vs_NONE_def,every_Fn_vs_NONE_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(every_Fn_vs_NONE [] <=> T) /\
@@ -347,6 +351,8 @@ let every_Fn_vs_NONE_APPEND = prove
   CHEAT_TAC);;
 add_simp every_Fn_vs_NONE_APPEND;;
 
+(* the clauses in two quotations: x2 is exp and (exp list), which one
+   quotation cannot typecheck *)
 let every_Fn_vs_SOME_def,every_Fn_vs_SOME_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(every_Fn_vs_SOME [] <=> T) /\
@@ -407,6 +413,8 @@ let exp1_size_rw = prove
   CHEAT_TAC);;
 add_simp exp1_size_rw;;
 
+(* the clauses in three quotations: t is tra, mlstring and (mlstring list),
+   which one quotation cannot typecheck *)
 (* the termination relation that HOL4 gives is
      MEASURE closLang_exp_size
    which is not one that HOL Light takes here, so the
@@ -443,6 +451,8 @@ let no_mti_def,no_mti_ind = define_shaped_rec_clauses
         no_mti e /\ opt1 = NONE /\ opt2 = NONE /\
         ALL (\x. FST x = 1 /\ no_mti (SND x)) funs`];;
 
+(* the clauses in two quotations: x2 is exp and (exp list), which one
+   quotation cannot typecheck *)
 let fv_def,fv_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(fv n [] <=> F) /\
@@ -519,7 +529,7 @@ let closProps_do_app_err = prove
 
 (* Boolv_11 *)
 let closProps_Boolv_11 = prove
- (`closSem_Boolv b1 = closSem_Boolv b2 <=> b1 = b2`,
+ (`closSem_Boolv b1 = semanticPrimitives_Boolv b2 <=> b1 = b2`,
   CHEAT_TAC);;
 add_simp closProps_Boolv_11;;
 
@@ -754,6 +764,8 @@ let clo_to_partial_args_def = define_cases
    (clo_to_partial_args (closSem_Recclosure _ args _ _ _) = args)`;;
 add_simp clo_to_partial_args_def;;
 
+(* the clauses in two quotations: x3 is num and ((num # closLang$exp) list);
+   x4 is closLang$exp and num, which one quotation cannot typecheck *)
 let clo_add_partial_args_def = define_cases_clauses
   [`clo_add_partial_args args (closSem_Closure x1 args' x2 x3 x4) =
        closSem_Closure x1 (APPEND args args') x2 x3 x4`;
@@ -1197,7 +1209,7 @@ let vsgc_free_Unit = prove
 add_simp vsgc_free_Unit;;
 
 let vsgc_free_Boolv = prove
- (`vsgc_free (closSem_Boolv b)`,
+ (`vsgc_free (semanticPrimitives_Boolv b)`,
   CHEAT_TAC);;
 add_simp vsgc_free_Boolv;;
 
@@ -1210,6 +1222,8 @@ let rsgc_free_def = new_definition
      | Rerr (Rraise v) -> vsgc_free v`;;
 add_simp rsgc_free_def;;
 
+(* the clauses in two quotations: binds is (exp list) and ((num # exp) list),
+   which one quotation cannot typecheck *)
 (* the termination relation that HOL4 gives is
      MEASURE closLang_exp_size
    which is not one that HOL Light takes here, so the
@@ -1332,7 +1346,8 @@ let simple_val_rel_alt = prove
          vr x (closSem_Closure x1 x2 x3 x4 x5) ==> closProps_isClos x) /\
       (!y5 y4 y3 y2 y1 x.
          vr x (closSem_Recclosure y1 y2 y3 y4 y5) ==> closProps_isClos x) /\
-      (!b1 b2. vr (closSem_Boolv b1) (closSem_Boolv b2) <=> (b1 = b2)) /\
+      (!b1 b2. vr (semanticPrimitives_Boolv b1) (semanticPrimitives_Boolv
+        b2) <=> (b1 = b2)) /\
       (vr (closSem_Unit) (closSem_Unit) <=> T)`,
   CHEAT_TAC);;
 
@@ -1605,8 +1620,10 @@ let POS_INT_EQ_NUM = prove
 
 let simple_val_rel_Boolv = prove
  (`closProps_simple_val_rel vr ==>
-   (vr (closSem_Boolv b) v1 ==> v1 = closSem_Boolv b) /\
-   (vr v1 (closSem_Boolv b) ==> v1 = closSem_Boolv b)`,
+   (vr (semanticPrimitives_Boolv b) v1 ==> v1 = semanticPrimitives_Boolv b)
+     /\
+   (vr v1 (semanticPrimitives_Boolv b) ==> v1 = semanticPrimitives_Boolv
+     b)`,
   CHEAT_TAC);;
 
 (* HOL4 closPropsScript.sml:2325: ML code, not ported *)
@@ -1934,6 +1951,8 @@ let evaluate_code_SUBMAP = prove
     SUBMAP_rel s1 s2))`,
   CHEAT_TAC);;
 
+(* the clauses in two quotations: es is (exp list) and ((num # exp) list),
+   which one quotation cannot typecheck *)
 let obeys_max_app_def,obeys_max_app_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(obeys_max_app m (closLang_Var _ _) <=> T) /\
@@ -1956,6 +1975,8 @@ let obeys_max_app_def,obeys_max_app_ind = assume_definition_rec_clauses
 (* HOL4 closPropsScript.sml:3562-3564: a theorem that HOL4 states as the
    value of an ML expression: obeys_max_app_def *)
 
+(* the clauses in two quotations: es is (exp list) and ((num # exp) list),
+   which one quotation cannot typecheck *)
 let no_Labels_def,no_Labels_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(no_Labels (closLang_Var _ _) <=> T) /\
@@ -2065,6 +2086,8 @@ let any_dests_call_dests_app_dests = prove
   (app_call_dests (SOME F)) xs`,
   CHEAT_TAC);;
 
+(* the clauses in three quotations: es is (exp list) and ((num # exp) list);
+   l is num and (num option), which one quotation cannot typecheck *)
 let closProps_get_code_labels_def,closProps_get_code_labels_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

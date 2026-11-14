@@ -291,6 +291,8 @@ let pat_bindings_def,pat_bindings_ind = define_rec
    (ast_pats_bindings (CONS p ps) = APPEND (ast_pats_bindings ps)
     (ast_pat_bindings p))`;;
 
+(* the clauses in two quotations: a is ast_t and locs; x is varN and (varN
+   option), which one quotation cannot typecheck *)
 let every_exp_def,every_exp_ind = define_shaped_rec_clauses
   "nested"
   [`(every_exp p (ast_Raise e) <=>

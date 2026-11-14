@@ -280,6 +280,8 @@ let get_next_size_def,get_next_size_ind = define_shaped_rec
    | mlsexp_Parenthesis x -> get_next_size x + 2
    | _ -> 0`;;
 
+(* the clauses in two quotations: n is bool and num, which one quotation
+   cannot typecheck *)
 let mlsexp_annotate_def,mlsexp_annotate_ind = define_rec_clauses
   [`(mlsexp_annotate (mlsexp_String s) = mlsexp_Size (strlen s)
     (mlsexp_String s)) /\
@@ -301,6 +303,8 @@ let remove_all_def,remove_all_ind = define_rec
     (remove_all v3)) /\
    (remove_all (mlsexp_Size v4 v5) = remove_all v5)`;;
 
+(* the clauses in two quotations: b is pretty and bool, which one quotation
+   cannot typecheck *)
 let smart_remove_def,smart_remove_ind = define_rec_clauses
   [`(smart_remove i k (mlsexp_Size n b) =
       (if k + n < 70 then remove_all b else smart_remove i k b)) /\

@@ -471,6 +471,8 @@ let check_type_definition_def = new_definition
 (* HOL4 inferScript.sml:510-511: a theorem that HOL4 states as the value of
    an ML expression: check_type_definition_expand *)
 
+(* the clauses in two quotations: s is char and mlstring; w is word8 and
+   word64, which one quotation cannot typecheck *)
 let infer_p_def,infer_p_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(infer_p l ienv (ast_Pvar n) =
@@ -783,6 +785,8 @@ let constrain_op_error_msg_sanity = prove
      IS_PREFIX (explode msg) "Thunk"`,
   CHEAT_TAC);;
 
+(* the clauses in two quotations: x is varN and (varN option), which one
+   quotation cannot typecheck *)
 let infer_e_def,infer_e_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(infer_e l ienv (ast_Raise e) =

@@ -43,6 +43,8 @@ let num_size_def,num_size_ind = define_wf
    something false (see ISSUES.md). *)
 hol4_overload "num_size" "data_space_num_size";;
 
+(* the clauses in two quotations: s is word64 and mlstring, which one
+   quotation cannot typecheck *)
 let part_space_req_def = define_cases_clauses
   [`(part_space_req (closLang_W64 s) = 3) /\
     (part_space_req (closLang_Int i) =

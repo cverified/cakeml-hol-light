@@ -274,6 +274,8 @@ let bviSem_fix_clock_IMP =
 if concl bviSem_fix_clock_IMP <> `T` then
   cake_term_facts := bviSem_fix_clock_IMP :: (!cake_term_facts);;
 
+(* the clauses in two quotations: dest is (num option) and num, which one
+   quotation cannot typecheck *)
 let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
@@ -291,9 +293,10 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec_clauses
     (bviSem_evaluate ([bvi_If x1 x2 x3],env,s) =
          match bviSem_fix_clock s (bviSem_evaluate ([x1],env,s)) with (Rval
              vs,s1) ->
-              if bvlSem_Boolv T = HD vs then bviSem_evaluate ([x2],env,s1)
-                  else if bvlSem_Boolv F = HD vs then bviSem_evaluate
-                  ([x3],env,s1) else (Rerr (Rabort Rtype_error),s1)
+              if semanticPrimitives_Boolv T = HD vs then bviSem_evaluate
+                  ([x2],env,s1) else if semanticPrimitives_Boolv F = HD vs then
+                  bviSem_evaluate ([x3],env,s1) else (Rerr (Rabort
+                  Rtype_error),s1)
          | res -> res) /\
     (bviSem_evaluate ([bvi_Let xs x2],env,s) =
          match bviSem_fix_clock s (bviSem_evaluate (xs,env,s)) with (Rval
@@ -416,7 +419,7 @@ let bviSem_initial_state_def = new_definition
 
 let bviSem_semantics_def = new_definition
   `bviSem_semantics init_ffi code co cc start' =
-   (let es = [bvi_Call 0 (SOME start') [] NONE] in
+   let es = [bvi_Call 0 (SOME start') [] NONE] in
    let init = bviSem_initial_state init_ffi code co cc in
      if ?k e. FST (bviSem_evaluate (es,[],init k)) = Rerr e /\
         ~(e = Rabort Rtimeout_error) /\ (!f. ~(e = Rabort (Rffi_error f)))
@@ -434,7 +437,7 @@ let bviSem_semantics_def = new_definition
         ffi_Diverge
           (build_lprefix_lub
             (IMAGE (\k. fromList (ffi_state_io_events (bviSem_state_ffi (SND
-               (bviSem_evaluate (es,[],init k)))))) UNIV)))`;;
+               (bviSem_evaluate (es,[],init k)))))) UNIV))`;;
 
 (* clean up *)
 

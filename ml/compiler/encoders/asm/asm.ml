@@ -268,6 +268,8 @@ let arith_ok_def = define_cases
          (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V))
              ==> ~(r1 = r3)))`;;
 
+(* the clauses in two quotations: r is reg and fp_reg, which one quotation
+   cannot typecheck *)
 let fp_ok_def = define_cases_clauses
   [`(fp_ok (FPLess r d1 d2) (c:'a asm_config) <=>
           reg_ok r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c) /\

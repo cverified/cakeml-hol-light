@@ -1029,36 +1029,35 @@ let flat_exp_conventions_copy_prop = prove
 
 (* [local] *)
 let copy_prop_prog_not_alloc_var_aux1 = prove
- (`(!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq cs) =
-  NONE) ==>
+ (`(!x. ~(is_alloc_var x) ==> sptree_lookup x (copy_state_to_eq cs) = NONE) ==>
    ~(is_alloc_var x) ==>
-   balanced_map_lookup x (copy_state_to_eq (remove_eq cs y)) = NONE`,
+   sptree_lookup x (copy_state_to_eq (remove_eq cs y)) = NONE`,
   CHEAT_TAC);;
 
 (* [local] *)
 let copy_prop_prog_not_alloc_var_aux2 = prove
  (`!cs.
-   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq cs) =
-     NONE) ==>
+   (!x. ~(is_alloc_var x) ==> sptree_lookup x (copy_state_to_eq cs) = NONE)
+     ==>
    ~(is_alloc_var x) ==>
-   balanced_map_lookup x (copy_state_to_eq (remove_eqs cs yy)) = NONE`,
+   sptree_lookup x (copy_state_to_eq (remove_eqs cs yy)) = NONE`,
   CHEAT_TAC);;
 
 (* trivial and tedious *)
 (* [local] *)
 let copy_prop_prog_not_alloc_var = prove
  (`!p cs.
-   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq cs) =
-     NONE) ==>
-   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq (SND
+   (!x. ~(is_alloc_var x) ==> sptree_lookup x (copy_state_to_eq cs) = NONE)
+     ==>
+   (!x. ~(is_alloc_var x) ==> sptree_lookup x (copy_state_to_eq (SND
      (copy_prop_prog p cs))) = NONE)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let pre_alloc_conventions_copy_prop_aux = prove
  (`!p cs.
-   (!x. ~(is_alloc_var x) ==> balanced_map_lookup x (copy_state_to_eq cs) =
-     NONE) ==>
+   (!x. ~(is_alloc_var x) ==> sptree_lookup x (copy_state_to_eq cs) = NONE)
+     ==>
    pre_alloc_conventions p ==>
    pre_alloc_conventions (FST (copy_prop_prog p cs))`,
   CHEAT_TAC);;

@@ -459,6 +459,8 @@ let SmartCons_def = new_definition
        (ConstCons tag (REVERSE cs)))) []`;;
 
 let _ = size_thms "flatLang_exp";;
+(* the clauses in two quotations: t is tra and varN, which one quotation
+   cannot typecheck *)
 let flat_to_clos_compile_def,flat_to_clos_compile_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

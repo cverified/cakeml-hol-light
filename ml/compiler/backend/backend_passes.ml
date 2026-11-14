@@ -180,8 +180,8 @@ let to_bvi_all_def = new_definition
        (bvl_num_stubs + 3) code2 in
      let (bvi_inlines,code') = bvi_inline_compile_prog code3 in
      let (s,p,l,bl,n1,n2,n3,names) =
-       (loc,code',inlines,bvi_inlines,n1,n2,n3,data_to_word_get_names (MAP
-         FST code') names) in
+       (loc,code',inlines,bvi_inlines,n1,n2,n3,bvl_to_bvi_get_names (MAP FST
+         code') names) in
      let names = sptree_union (fromAList (APPEND (APPEND (APPEND
        (data_to_word_stub_names one)
        (word_to_stack_stub_names one)) (stack_alloc_stub_names one))
@@ -211,8 +211,8 @@ let to_bvi_thm = prove
 let to_data_all_def = new_definition
   `to_data_all (c:backend_config) p =
      let (ps,c,p,names) = to_bvi_all c p in
-     let p = MAP (\(a,n,e). (a,n,FST (backend_compile n (COUNT_LIST n) T []
-       [e]))) p in
+     let p = MAP (\(a,n,e). (a,n,FST (bvi_to_data_compile n (COUNT_LIST n) T
+       [] [e]))) p in
      let ps = APPEND ps [((implode "after bvi_to_data"),backend_passes_Data
        p names)] in
      let p = MAP (\(a,n,e). (a,n,FST (data_live_compile e LN))) p in
@@ -289,7 +289,7 @@ let to_word_all_def = new_definition
                    asm_config_fp_reg_count asm_conf))
              data_conf) in
      let p = APPEND (data_to_word_stubs (:'a) data_conf) (MAP
-       (data_to_word_compile_part data_conf) p) in
+       (bvi_to_data_compile_part data_conf) p) in
      let ps = APPEND ps [((implode "after data_to_word"),backend_passes_Word
        p names)] in
      let (p,ps) = word_internal_all asm_conf ps names p in
@@ -485,7 +485,7 @@ let from_data_all_def = new_definition
                    asm_config_fp_reg_count asm_conf))
              data_conf) in
      let p = APPEND (data_to_word_stubs (:'a) data_conf) (MAP
-       (data_to_word_compile_part data_conf) p) in
+       (bvi_to_data_compile_part data_conf) p) in
      let ps = APPEND ps [((implode "after data_to_word"),backend_passes_Word
        p names)] in
        from_word_0_all ps asm_conf c names p`;;
@@ -502,7 +502,7 @@ let to_data_all_from_data_all_correctness = prove
   CHEAT_TAC);;
 
 let compile_eq_to_target_all = prove
- (`backend_compile asm_conf c p = SND (to_target_all asm_conf c p)`,
+ (`clos_mti_compile asm_conf c p = SND (to_target_all asm_conf c p)`,
   CHEAT_TAC);;
 
 let number_of_passes = prove
@@ -531,11 +531,11 @@ let compile_tap_def = new_definition
      if tap_config_explore_flag (backend_config_tap_conf c) then
        let (ps,out) = to_target_all asm_conf c p in
          (out,ITLIST (pp_with_title any_prog_pp) ps misc_Nil)
-     else (backend_compile asm_conf c p,misc_Nil)`;;
+     else (clos_mti_compile asm_conf c p,misc_Nil)`;;
 
 (* compile_alt *)
 let backend_passes_compile_alt = prove
- (`backend_compile asm_conf c p = FST (compile_tap asm_conf c p)`,
+ (`clos_mti_compile asm_conf c p = FST (compile_tap asm_conf c p)`,
   CHEAT_TAC);;
 
 (* and the interface *)

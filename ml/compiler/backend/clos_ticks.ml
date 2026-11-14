@@ -19,6 +19,8 @@ needs "compiler/backend/closLang.ml";;
 let _ = cake_theory "clos_ticks"
   ["closLang"];;
 
+(* the clauses in three quotations: t is tra, (mlstring list) and mlstring,
+   which one quotation cannot typecheck *)
 let clos_ticks_remove_ticks_def,clos_ticks_remove_ticks_ind =
   define_shaped_rec_clauses
   "sing>nested"
@@ -57,6 +59,8 @@ let clos_ticks_remove_ticks_def,clos_ticks_remove_ticks_ind =
          [closLang_Fn t loc_opt vs num_args (HD
              (clos_ticks_remove_ticks [x1]))]`];;
 
+(* the clauses in three quotations: t is tra, (mlstring list) and mlstring,
+   which one quotation cannot typecheck *)
 let clos_ticks_remove_ticks_sing_def,clos_ticks_remove_ticks_sing_ind =
   define_shaped_rec_clauses
   "maplist>maplist>nested"

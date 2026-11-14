@@ -9,6 +9,9 @@
 # that the argument i is a tuple whose component j is the record
 # (the state of bvlSem's evaluate is the third of a triple); an
 # entry j of recres says the same of the result (after the arity
+# of the constant), and tools/arity.txt has the arity of every
+# constant of the port, which resolves a name that two theories
+# have with constants of different arity (insert)
 # of the constant), and a bare one
 # that the whole result is the record.
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
@@ -71,4 +74,13 @@ TIMEOUT=300 repl-step $s \
      (constants ());
    close_out cake_out; length (constants ());;" \
   2>&1 | tail -1
+TIMEOUT=300 repl-step $s \
+  "let cake_out = open_out \"$C/tools/arity.txt\" in
+   do_list (fun (n,ty) ->
+       if cake_named n then
+         output_string cake_out (n ^ \"\\t\" ^ string_of_int (length (fst (splitlist dest_fun_ty ty))) ^ \"\\n\"))
+     (constants ());
+   close_out cake_out; length (constants ());;" \
+  2>&1 | tail -1
 wc -l < $C/tools/recargs.txt; wc -l < $C/tools/recres.txt
+wc -l < $C/tools/arity.txt

@@ -201,14 +201,14 @@ let trim_help_lesser_def,trim_help_lesser_ind = define_rec
       else Bin s' k v' l r') /\
    (trim_help_lesser cmp lo Tip = Tip)`;;
 
-let trim_help_middle_def,trim_help_middle_ind = define_rec_clauses
-  [`trim_help_middle cmp lo hi (Bin s' k v' l r) =
+let trim_help_middle_def,trim_help_middle_ind = define_rec
+  `(trim_help_middle cmp lo hi (Bin s' k v' l r) =
       if cmp k lo = LESS \/ cmp k lo = EQUAL then
         trim_help_middle cmp lo hi r
       else if cmp k hi = GREATER \/ cmp k hi = EQUAL then
         trim_help_middle cmp lo hi l
-      else Bin s' k v' l r`;
-   `trim_help_middle lo cmp hi Tip = Tip`];;
+      else Bin s' k v' l r) /\
+   (trim_help_middle lo cmp hi Tip = Tip)`;;
 
 let trim_def = new_definition
   `trim cmp x2 x3 t =

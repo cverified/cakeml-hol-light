@@ -39,6 +39,8 @@ let clos_letop_dest_op_def = new_definition
          else NONE)
      | _ -> NONE`;;
 
+(* the clauses in three quotations: t is tra, (mlstring list) and mlstring,
+   which one quotation cannot typecheck *)
 let clos_letop_let_op_def,clos_letop_let_op_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(clos_letop_let_op [] = []) /\
@@ -83,6 +85,8 @@ let LENGTH_let_op = prove
  (`!xs. LENGTH (clos_letop_let_op xs) = LENGTH xs`,
   CHEAT_TAC);;
 
+(* the clauses in three quotations: t is tra, (mlstring list) and mlstring,
+   which one quotation cannot typecheck *)
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL x -> closLang_exp_size x
                                    | INR (INL x) -> list_size closLang_exp_size

@@ -77,7 +77,7 @@ let adjust_bv_Unit = prove
 add_simp adjust_bv_Unit;;
 
 let adjust_bv_Boolv = prove
- (`adjust_bv x (bvlSem_Boolv b) = bvlSem_Boolv b`,
+ (`adjust_bv x (semanticPrimitives_Boolv b) = semanticPrimitives_Boolv b`,
   CHEAT_TAC);;
 add_simp adjust_bv_Boolv;;
 
@@ -227,7 +227,7 @@ let bv_ok_Unit = prove
 add_simp bv_ok_Unit;;
 
 let bv_ok_Boolv = prove
- (`bv_ok refs (bvlSem_Boolv b)`,
+ (`bv_ok refs (semanticPrimitives_Boolv b)`,
   CHEAT_TAC);;
 add_simp bv_ok_Boolv;;
 
@@ -254,15 +254,14 @@ let state_ok_def = new_definition
 let evaluate_ok_lemma = prove
  (`(bvl_to_bviProof_state_ok (bviSem_dec_clock n s) = bvl_to_bviProof_state_ok
   s) /\
-     (bviSem_state_refs (bviSem_dec_clock n s) = bviSem_state_refs s)`,
+     (bvlSem_state_refs (bviSem_dec_clock n s) = bvlSem_state_refs s)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_IMP_bv_ok = prove
  (`(bvlSem_evaluate (xs,env,s) = (res,t)) ==>
-     (bv_ok (bvlSem_state_refs s) a1 ==> bv_ok (bvlSem_state_refs t) a1) /\
-     (ALL (bv_ok (bvlSem_state_refs s)) as ==> ALL (bv_ok
-       (bvlSem_state_refs t)) as)`,
+     (bv_ok (state_refs s) a1 ==> bv_ok (state_refs t) a1) /\
+     (ALL (bv_ok (state_refs s)) as ==> ALL (bv_ok (state_refs t)) as)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -328,13 +327,13 @@ let find_code_bv_ok = prove
 let evaluate_ok = prove
  (`!xs env s res t.
       (bviSem_evaluate (xs,env,s) = (res,t)) /\
-      bvl_to_bviProof_state_ok s /\ ALL (bv_ok (bviSem_state_refs s)) env
+      bvl_to_bviProof_state_ok s /\ ALL (bv_ok (bvlSem_state_refs s)) env
         ==>
       bvl_to_bviProof_state_ok t /\
-      (match res with Rval vs -> ALL (bv_ok (bviSem_state_refs t)) vs
-       | Rerr (Rraise v) -> bv_ok (bviSem_state_refs t) v
+      (match res with Rval vs -> ALL (bv_ok (bvlSem_state_refs t)) vs
+       | Rerr (Rraise v) -> bv_ok (bvlSem_state_refs t) v
        | _ -> T) /\
-      ALL (bv_ok (bviSem_state_refs t)) env`,
+      ALL (bv_ok (bvlSem_state_refs t)) env`,
   CHEAT_TAC);;
 
 (* semantics lemmas *)
@@ -361,20 +360,19 @@ let bEval_bVarBound = prove
 (* [local] *)
 let evaluate_CopyGlobals_code = prove
  (`!n l1 s.
-    sptree_lookup CopyGlobals_location (bviSem_state_code s) = SOME (3,SND
+    sptree_lookup CopyGlobals_location (state_code s) = SOME (3,SND
       CopyGlobals_code) /\
-    FLOOKUP (bviSem_state_refs s) p = SOME (bvlSem_ValueArray ls) /\
-    FLOOKUP (bviSem_state_refs s) p1 = SOME (bvlSem_ValueArray l1) /\ ~(p =
-      p1) /\
+    FLOOKUP (state_refs s) p = SOME (bvlSem_ValueArray ls) /\
+    FLOOKUP (state_refs s) p1 = SOME (bvlSem_ValueArray l1) /\ ~(p = p1) /\
     n < LENGTH ls /\ n < LENGTH l1 ==>
     (?c.
       bviSem_evaluate ([SND CopyGlobals_code],
                 [bvlSem_RefPtr b1 p1; bvlSem_RefPtr b p; bvlSem_Number
                   (&n)],
                 bviProps_inc_clock c s) =
-      (Rval [bvlSem_Unit],bviSem_state_refs_fupd (K (bviSem_state_refs s
-        |+ (p1,bvlSem_ValueArray (APPEND (TAKE (SUC n) ls) (DROP (SUC n)
-        l1))))) s))`,
+      (Rval [bvlSem_Unit],state_refs_fupd (K (state_refs s |+
+        (p1,bvlSem_ValueArray (APPEND (TAKE (SUC n) ls) (DROP (SUC n) l1)))))
+        s))`,
   CHEAT_TAC);;
 (* HOL4 bvl_to_bviProofScript.sml:782-783: ML code, not ported *)
 
@@ -402,7 +400,7 @@ let evaluate_AllocGlobal_code = prove
 
 let evaluate_ListLength_code = prove
  (`!lv vs n.
-      sptree_lookup ListLength_location (bviSem_state_code s) = SOME (2,SND
+      sptree_lookup ListLength_location (state_code s) = SOME (2,SND
         ListLength_code) /\
       bvlSem_v_to_list lv = SOME vs ==>
       (?p1 c.
@@ -450,11 +448,11 @@ let evaluate_ToListByte_code = prove
 
 let evaluate_SumListLength_code = prove
  (`!lv ps wss n.
-   sptree_lookup SumListLength_location (bviSem_state_code s) = SOME (2,SND
+   sptree_lookup SumListLength_location (state_code s) = SOME (2,SND
      SumListLength_code) /\
    bvlSem_v_to_list lv = SOME (MAP (bvlSem_RefPtr T) ps) /\
-   MAP (FLOOKUP (bviSem_state_refs s)) ps = MAP (SOME o closSem_ByteArray T)
-     wss ==>
+   MAP (FLOOKUP (state_refs s)) ps = MAP (SOME o closSem_ByteArray T) wss
+     ==>
    (?c.
      bviSem_evaluate
        ([SND SumListLength_code],[lv; bvlSem_Number (&n)],bviProps_inc_clock
@@ -606,11 +604,12 @@ let eval_ind_alt = prove
      (!x1 x2 x3 env s.
         (!v2 s1 vs.
            bviSem_evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs
-             /\ ~(bvlSem_Boolv T = HD vs) /\ bvlSem_Boolv F = HD vs ==>
+             /\ ~(semanticPrimitives_Boolv T = HD vs)
+             /\ semanticPrimitives_Boolv F = HD vs ==>
            P ([x3],env,s1)) /\
         (!v2 s1 vs.
            bviSem_evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs /\
-           bvlSem_Boolv T = HD vs ==>
+           semanticPrimitives_Boolv T = HD vs ==>
            P ([x2],env,s1)) /\ P ([x1],env,s) ==>
         P ([bvl_If x1 x2 x3],env,s)) /\
      (!xs x2 env s.
@@ -638,24 +637,23 @@ let eval_ind_alt = prove
      (!force_loc n env s.
         (!thunk_v v1 v v' args exp.
            n < LENGTH env /\ thunk_v = EL n env /\
-           bviSem_dest_thunk thunk_v (bviSem_state_refs s) = bviSem_IsThunk
-             v1 v /\ v1 = NotEvaluated /\ ~(bviSem_state_clock
+           bviSem_dest_thunk thunk_v (state_refs s) = bviSem_IsThunk v1 v
+             /\ v1 = NotEvaluated /\ ~(state_clock
            s = 0) /\
-           bvlSem_find_code (SOME force_loc) [thunk_v; v] (bviSem_state_code
-             s) = SOME v' /\
-           v' = (args,exp) /\ ~(bviSem_state_clock s = 0) ==>
+           bvlSem_find_code (SOME force_loc) [thunk_v; v] (state_code s) =
+             SOME v' /\
+           v' = (args,exp) /\ ~(state_clock s = 0) ==>
            P ([exp],args,bviSem_dec_clock 1 s)) ==>
         P ([bvl_Force force_loc n],env,s)) /\
      (!x env s.
-        (~(bviSem_state_clock s = 0) ==> P ([x],env,bviSem_dec_clock 1 s))
-          ==>
+        (~(state_clock s = 0) ==> P ([x],env,bviSem_dec_clock 1 s)) ==>
         P ([bvl_Tick x],env,s)) /\
      (!ticks dest xs env s1.
         (!v2 s vs v args exp.
            bviSem_evaluate (xs,env,s1) = (v2,s) /\ v2 = Rval vs /\
-           bvlSem_find_code dest vs (bviSem_state_code s) = SOME v /\ v =
+           bvlSem_find_code dest vs (state_code s) = SOME v /\ v =
              (args,exp) /\
-           ~(bviSem_state_clock s < ticks + 1) ==>
+           ~(state_clock s < ticks + 1) ==>
            P ([exp],args,bviSem_dec_clock (ticks + 1) s)) /\ P (xs,env,s1)
              ==>
         P ([bvl_Call ticks dest xs],env,s1)) ==>
@@ -672,10 +670,10 @@ let EVERY_isVar_evaluate_Rval_MEM = prove
 let do_app_Ref = prove
  (`bviSem_do_app (closLang_MemOp closLang_Ref) vs s =
       Rval
-       (bvlSem_RefPtr T (minimal ptr. ~(ptr IN FDOM (bviSem_state_refs s))),
+       (bvlSem_RefPtr T (minimal ptr. ~(ptr IN FDOM (state_refs s))),
         bvl_to_bvi
-         (bviSem_state_refs_fupd (K (bviSem_state_refs
-            s |+ ((minimal ptr. ~(ptr IN FDOM (bviSem_state_refs
+         (state_refs_fupd (K (state_refs
+            s |+ ((minimal ptr. ~(ptr IN FDOM (state_refs
               s))),bvlSem_ValueArray vs))) (bvi_to_bvl s)) s)`,
   CHEAT_TAC);;
 
@@ -889,7 +887,7 @@ let compile_exps_correct = prove
        Rtype_error)) /\
      (bvl_to_bvi_compile_exps n xs = (ys,aux,n2)) /\
      bvl_to_bviProof_state_rel b1 s1 t1 /\
-     bvl_to_bviProof_state_ok s1 /\ ALL (bv_ok (bviSem_state_refs s1)) env
+     bvl_to_bviProof_state_ok s1 /\ ALL (bv_ok (bvlSem_state_refs s1)) env
        /\
      aux_code_installed (append aux) (bviSem_state_code t1) /\
      handle_ok xs /\ IS_SOME (bviSem_state_global t1) ==>
@@ -900,7 +898,7 @@ let compile_exps_correct = prove
              res,t2)) /\
         bvl_to_bviProof_state_rel b2 s2 t2 /\
         (MAP (adjust_bv b1) env = MAP (adjust_bv b2) env) /\
-        (!a. a IN FDOM (bviSem_state_refs s1) ==> (b1 a = b2 a)))`,
+        (!a. a IN FDOM (bvlSem_state_refs s1) ==> (b1 a = b2 a)))`,
   CHEAT_TAC);;
 
 (* HOL4 bvl_to_bviProofScript.sml:2232-3504: a proof *)

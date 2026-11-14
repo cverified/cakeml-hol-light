@@ -15,6 +15,8 @@ needs "compiler/backend/closLang.ml";;
 let _ = cake_theory "clos_fvs"
   ["closLang"];;
 
+(* the clauses in three quotations: t is tra, (mlstring list) and mlstring,
+   which one quotation cannot typecheck *)
 let remove_fvs_def,remove_fvs_ind = define_shaped_rec_clauses
   "sing>nested"
   [`(remove_fvs fvs [] = []) /\
@@ -59,6 +61,8 @@ let remove_fvs_def,remove_fvs_ind = define_shaped_rec_clauses
         [closLang_Fn t loc_opt vs num_args (HD (remove_fvs (num_args +
             fvs) [x1]))]`];;
 
+(* the clauses in three quotations: t is tra, (mlstring list) and mlstring,
+   which one quotation cannot typecheck *)
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL (_,e) -> closLang_exp_size e
                                    | INR (INL (_,es)) -> list_size
@@ -98,6 +102,7 @@ let remove_fvs_sing_def,remove_fvs_sing_ind = define_shaped_rec_clauses
     (remove_fvs_list fvs [] = []) /\
     (remove_fvs_list fvs (CONS (x:closLang_exp) xs) = CONS (remove_fvs_sing
     fvs x) (remove_fvs_list fvs xs)) /\
+    (remove_fvs_let m fvs [] = []) /\
     (remove_fvs_let m new_fvs (CONS (num_args,x) xs) = CONS
     (num_args,remove_fvs_sing (num_args + m + new_fvs) x) (remove_fvs_let
     m new_fvs xs))`;
@@ -110,8 +115,7 @@ let remove_fvs_sing_def,remove_fvs_sing_ind = define_shaped_rec_clauses
    `remove_fvs_sing fvs (closLang_Fn t loc_opt vs num_args x1) =
         let fvs = (match vs with NONE -> fvs | SOME x -> LENGTH x) in
         closLang_Fn t loc_opt vs num_args (remove_fvs_sing (num_args +
-            fvs) x1)`;
-   `remove_fvs_let m fvs [] = []`];;
+            fvs) x1)`];;
 
 let remove_fvs_sing_eq = prove
  (`(!fvs e. remove_fvs fvs [e] = [remove_fvs_sing fvs e]) /\
