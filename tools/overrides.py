@@ -1695,6 +1695,7 @@ CON_OF = {
   # the word code that an assignment compiles to is a wordLang
   # program, and dataLang has an If as well
   ('data_to_word', 'assign_BoundsCheckByte_def'): {'If': 'wordLang'},
+  ('data_to_word', 'force_thunk_def'): {'If': 'wordLang'},
   # the stubs that generated_bignum_stubs gives are wordLang
   # programs, so its Seq and its Return are wordLang's
   ('word_bignum', 'generated_bignum_stubs_def'): WORDLANG_PROG,
