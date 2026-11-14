@@ -1018,6 +1018,46 @@ INT_NEG = set([
 # where only some of them are (bvl_to_bvi's compile_exps appends
 # two lists of expressions and two app_lists in one clause,
 # c1 ++ c2 and aux1 ++ aux2)
+# LightCake's proof kit is HOL4's tactic style, and this port does
+# not take it: a name of that kit never counts as one this port has
+# (tools/lightcake.py), so a proof that uses one is left out.  The
+# ones below are the exception -- where this port, or HOL Light
+# itself, has a tactic that does the same work, the import writes
+# that one and the proof comes across.  The value is OCaml text, so
+# it can be a tactic built out of several.
+#
+# What is deliberately NOT here: HOL4's stateful simpset (rw, fs,
+# simp, gvs), which this port writes out instead (PORTING-GUIDE
+# entry 7), and the case constants (pair_CASE, option_CASE,
+# case_eq and the rest), which are a way of writing a case split
+# that HOL Light does not share -- it writes `match` (entry 117).
+KIT_MAP = {
+  # this port has one of its own under the same name
+  'EVERY_CASE_TAC': 'EVERY_CASE_TAC',
+  'PAIRARG_TAC': 'PAIRARG_TAC',
+  # HOL4's Cases_on, which this port spells out
+  'CASES_ON': 'CASES_ON_TAC',
+  # rveq is HOL4's "reverse the variable equations", and this
+  # port's VAR_EQ_TAC does one of them
+  'RVEQ_TAC': '(REPEAT VAR_EQ_TAC)',
+  # HOL Light's own, which LightCake rebinds to swallow a failure
+  'IMP_RES_TAC': 'IMP_RES_TAC',
+  'RES_TAC': 'RES_TAC',
+}
+
+
+# the files that enable the option monad and write its choice as
+# ++: there the port writes OPTION_CHOICE, and PLAIN_APPEND below
+# names the blocks of them whose ++ is the append of two lists
+# after all.  Every other file that enables a monad uses ++ for
+# the append only (reg_alloc, inferScript, the two proof theories
+# of the register allocators), so there the append is what ++ is.
+MONAD_CHOICE = set([
+  'cmlPtreeConversion',
+  'fromSexp',
+])
+
+
 PLAIN_APPEND = {
   # the bindings that the two patterns of a pattern list bind
   ('infer', 'infer_p_def'): True,
@@ -1032,6 +1072,20 @@ PLAIN_APPEND = {
   # SmartAppend of an app_list, so its one ++ is the list append
   # (HOL4 bvl_to_bviScript.sml:298 against 323)
   ('bvl_to_bvi', 'compile_op_def'): True,
+  # the file enables the option monad, so its ++ is the choice of
+  # two parses; these five are the append of two lists
+  # (HOL4 cmlPtreeConversionScript.sml:184, 595, 811, 816, 1100)
+  ('cmlPtreeConversion', 'ptree_linfix_def'): set(['front']),
+  ('cmlPtreeConversion', 'Papply_def'): set(['args']),
+  ('cmlPtreeConversion', 'mkAst_App_def'): set(['args']),
+  ('cmlPtreeConversion', 'ptree_Expr_def'): set(['fdecs']),
+  # the alist of a namespace, which the monad of the file does not
+  # touch (HOL4 inferScript.sml:1256)
+  ('infer', 'ns_to_alist_def'): True,
+  # the two ++ of this one are the escape in front of the rest of
+  # the string; every other ++ of fromSexp is the choice of two
+  # parses (HOL4 fromSexpScript.sml:138-139)
+  ('fromSexp', 'encode_control_def'): True,
 }
 
 WORD_NOT = set([

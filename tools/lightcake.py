@@ -675,6 +675,14 @@ class Ctx:
     gm = dict((k, v) for k, v in self.lcn.items() if v)
     gm.update(m)
     self.lb, self.kit = lc_bindings()
+    # the few names of LightCake's kit that this port, or HOL
+    # Light itself, has a tactic for: the import writes that one
+    # (tools/overrides.py KIT_MAP says which, and why the rest of
+    # the kit stays out)
+    sys.path.insert(0, T)
+    import overrides
+    for k, v in overrides.KIT_MAP.items():
+      if k in self.kit: m.setdefault(k, v)
     self.ob, self.bridge = ours_bindings(nm, self.rank)
     # what this port has of its own, which is its file without
     # the block that an import before this one appended to it
@@ -714,7 +722,15 @@ class Ctx:
     # binding of this port, or a constant this port writes
     self.have = ((set(self.ob) - (self.kit - self.bridge)) |
                  set(k for k in self.defs
-                     if k in self.ob or k in m))
+                     if k in self.ob or k in m) |
+                 # and a binding of LightCake's that this port
+                 # binds under another name is one this port has,
+                 # because the import writes this port's name for
+                 # it: LightCake's asm_upd_reg_def is this port's
+                 # upd_reg_def, and the map above says so
+                 set(k for k, v in m.items()
+                     if k not in self.kit and v in self.ob) |
+                 (set(overrides.KIT_MAP) & self.kit))
     self.known = set(gm.values()) | set(self.lb)
     self.port = port_names(nm, d)
     # the map of the whole closure, less what the pair of files

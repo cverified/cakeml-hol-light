@@ -3591,9 +3591,16 @@ class Porter:
     # HOL Light, which resolves it by the type as HOL4 does
     if b.name in hterm.BASE_INFIX and IDENT.match(txt.strip()):
       c = self.const_name(txt.strip())
-      self.out.append('hol4_overload "%s" "%s";;' % (b.name, c))
+      # unless it is one HOL Light has not got (++), which the port
+      # writes as an application of the constant it stands for:
+      # there is no notation left for an overload to resolve
       if b.name in overrides.BASE_INFIX_CONST:
-        self.restore.add(b.name)
+        self.ctx.overloads[b.name] = c
+        self.out.append(self.at(
+          b, 'the overload %s, which the port writes as an '
+             'application of %s' % (b.name, c)))
+        return
+      self.out.append('hol4_overload "%s" "%s";;' % (b.name, c))
       return
     self.warn.append('Overload %s' % b.name)
     self.out.append(self.at(
@@ -3615,12 +3622,14 @@ class Porter:
     hterm.set_monad(out)
     # the ++ of a source that has enabled a monad is the choice of
     # that monad, not the append of two lists (fromSexp's sexpopt
-    # tries the second parse where the first gives NONE)
+    # tries the second parse where the first gives NONE).  HOL
+    # Light has no ++ at all, so the port writes that choice out
+    # as the constant it is, and PLAIN_APPEND of tools/overrides.py
+    # says which occurrences of such a file are the list append
+    # after all
     c = m.get('choice')
-    if c and IDENT.match(c):
-      nm = self.ctx.name(c)
-      self.out.append('hol4_overload "++" "%s";;' % nm)
-      self.restore.add('++')
+    if c and IDENT.match(c) and self.thy in overrides.MONAD_CHOICE:
+      self.ctx.overloads['++'] = self.ctx.name(c)
     # HOL4's monadsyntax overloads return with the unit of the
     # monad, which may be a term and not a constant
     u = m.get('unit')
