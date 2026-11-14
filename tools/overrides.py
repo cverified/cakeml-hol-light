@@ -1702,6 +1702,12 @@ CON_OF = {
   # Skip is asm's where every other Skip of the file is the one of
   # a stackLang program
   ('stack_names', 'inst_find_name_def'): {'Skip': 'asm'},
+  # bviSem declares a dest_thunk_ret of its own, and the values it
+  # reads are bvlSem's (bviSem's v is a type abbreviation of them),
+  # so the pattern is bvlSem and the result bviSem
+  ('bviSem', 'dest_thunk_def'):
+    {'BadRef': 'bviSem', 'NotThunk': 'bviSem',
+     'IsThunk': 'bviSem'},
   # the seqs of a program give an app_list of misc, as the Append
   # of their other arm does
   ('presLang', 'data_seqs_def'): {'List': 'misc'},
