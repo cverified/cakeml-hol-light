@@ -414,6 +414,11 @@ CON_BODY = {
   # that it is
   ('data_to_word', 'lookup_word_op_def'):
     {'Xor': 'asm', 'Add': 'asm', 'Sub': 'asm'},
+  # get_live_tree reads a clash_tree of reg_alloc and builds a
+  # live_tree of its own, and the two share Seq and Branch (the
+  # patterns say reg_alloc$ themselves)
+  ('linear_scan', 'get_live_tree_def'):
+    {'Seq': 'linear_scan', 'Branch': 'linear_scan'},
   # copy_prop_inst matches on an asm instruction and gives a
   # wordLang program, and both have Skip
   ('word_copy', 'copy_prop_inst_def'):
@@ -1564,6 +1569,14 @@ ONE_QUOTATION = set([
 # its scope (stack_remove's single_stack_free builds the Inst of
 # stackLang, and the port is loaded in one namespace, where the
 # Inst of wordLang comes later)
+# the constructors of a wordLang program and of the expressions
+# in it, for a definition that builds one and nothing else
+WORDLANG_PROG = dict((c, 'wordLang') for c in
+                     ['Skip', 'Assign', 'Seq', 'If', 'Call', 'Var',
+                      'Op', 'Const', 'Lookup', 'Load', 'Shift',
+                      'Move', 'Get', 'Set', 'Store', 'Raise',
+                      'Return', 'Tick', 'MustTerminate'])
+
 # the constructors of a bvi expression and of a bvl one, for the
 # definitions that build nothing else
 BVI_EXP = dict((c, 'bvi') for c in
@@ -1574,6 +1587,15 @@ BVL_EXP = dict((c, 'bvl') for c in
                 'Call', 'Force', 'Op'])
 
 CON_OF = {
+  # these build a wordLang program and not the mini language of
+  # word_bignum, as the source says of SeqIndex (:'a wordLang$prog)
+  # and of LoadRegs; the two share Seq, Assign, Var, Op, Const,
+  # Skip, Call and If
+  ('word_bignum', 'SeqTemp_def'): WORDLANG_PROG,
+  ('word_bignum', 'SeqTempImm_def'): WORDLANG_PROG,
+  ('word_bignum', 'SeqTempImmNot_def'): WORDLANG_PROG,
+  ('word_bignum', 'SeqIndex_def'): WORDLANG_PROG,
+  ('word_bignum', 'DivCode_def'): WORDLANG_PROG,
   # compile_arith matches on an ast arithmetic operation and
   # builds a closLang expression
   ('flat_to_clos', 'compile_arith_def'):
