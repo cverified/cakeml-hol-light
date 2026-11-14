@@ -410,6 +410,10 @@ CON_BODY = {
   # clos_to_bvl reads closLang and builds bvl
   ('clos_to_bvl', 'compile_exps_def'): {'*': 'bvl'},
   ('clos_to_bvl', 'compile_exps_sing_def'): {'*': 'bvl'},
+  # lookup_word_op matches on an opw and gives the binop of asm
+  # that it is
+  ('data_to_word', 'lookup_word_op_def'):
+    {'Xor': 'asm', 'Add': 'asm', 'Sub': 'asm'},
   ('wordSem', 'evaluate_def'): {'*': 'wordSem'},
   ('stackSem', 'evaluate_def'): {'*': 'stackSem'},
   # bvi_to_data's compile matches on a bvi expression and builds a
@@ -693,6 +697,11 @@ RENAME_CONST = {
 # fromList of data_to_word and flat_pattern is sptree's, the one
 # of the semantics theories is llist's)
 LOCAL_NAMES = {
+  # listCmp gives an ordering of ternaryComparisons, and asm has
+  # a Less and an Equal of its own
+  ('word_cse', 'Less'): 'LESS',
+  ('word_cse', 'Equal'): 'EQUAL',
+  ('word_cse', 'Greater'): 'GREATER',
   ('bvi_inlineProof', 'toList'): 'sptree_toList',
   # the toString of a number is ASCIInumbers' num_to_dec_string
   # (mlint has a toString of its own, so the port qualifies the
@@ -11788,6 +11797,9 @@ MAIN_THEORY = {
 # this says the exceptions: a proof about bvl that names asm's Xor
 # or backend_common's word_shift wants that one wherever it stands.
 CON_FILE = {
+  # the word operations that data_to_word builds are the binops
+  # of asm, which is what wordLang's Op takes
+  'data_to_word': {'Xor': 'asm', 'And': 'asm', 'Or': 'asm'},
   # the deep embedding that clos_interp builds is closLang, and
   # the ML code of the source applies its constructors a part at
   # a time, so the number of arguments at a place says nothing
@@ -11824,6 +11836,12 @@ DEF_NAMES = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # lookup_word_op matches on an opw, whose constructors the port
+  # calls after backend_common, and gives the binop of asm that
+  # it is: the body says asm (CON_BODY) and the pattern is this
+  ('data_to_word', 'lookup_word_op_def'): [
+    ('(asm_Xor:binop)', '(backend_common_Xor:opw)'),
+  ],
   # compile_exps reads a bvl expression and builds a bvi one, and
   # the patterns say bvl themselves; no bvi_to_data Call stands
   # in these, so the bodies are the bvi one wherever they say Call

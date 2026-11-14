@@ -2384,6 +2384,8 @@ class Porter:
     # does not apply is an error and not a silence
     for was, now in overrides.DEF_PATCH.get(key, []):
       if was not in text:
+        if os.environ.get('PATCHDBG'):
+          print('PATCHDBG', text[:600], file=sys.stderr)
         raise SyntaxError('DEF_PATCH does not apply: ' + was[:40])
       text = text.replace(was, now)
     # HOL4's [simp] on a definition says that its equations belong
@@ -4111,6 +4113,8 @@ class Porter:
     # does not apply is an error and not a silence
     for was, now in overrides.DEF_PATCH.get(key, []):
       if was not in text:
+        if os.environ.get('PATCHDBG'):
+          print('PATCHDBG', text[:600], file=sys.stderr)
         raise SyntaxError('DEF_PATCH does not apply: ' + was[:40])
       text = text.replace(was, now)
     # HOL4's [simp] on a definition says that its equations belong
