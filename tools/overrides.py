@@ -11922,6 +11922,24 @@ AUX_SIZE = {
   ('clos_call', 'exp1_size'):
     'list_size (pair_size (\\x. x) closLang_exp_size)',
   ('clos_knownProof', 'v1_size'): 'list_size closSem_v_size',
+  # closProps is about closLang and closSem both: exp3_size is
+  # the size of an exp list, exp1_size of a (num # exp) list,
+  # exp2_size of one such pair, and v1_size of a v list
+  ('closProps', 'exp3_size'): 'list_size closLang_exp_size',
+  ('closProps', 'exp1_size'):
+    'list_size (pair_size (\\x. x) closLang_exp_size)',
+  ('closProps', 'exp2_size'):
+    'pair_size (\\x. x) closLang_exp_size',
+  ('closProps', 'v1_size'): 'list_size closSem_v_size',
+  # fromSexp says the size itself: dec1_size is list_size dec_size
+  ('fromSexp', 'dec1_size'): 'list_size ast_dec_size',
+  # panLang's shape1_size is the size of a shape list, and its
+  # exp1_size the size of a list of its expressions
+  ('panLang', 'shape1_size'): 'list_size panLang_shape_size',
+  ('panLang', 'exp3_size'): '(list_size o panLang_exp_size)',
+  ('panLang', 'exp1_size'):
+    '(\\l. list_size (pair_size mlstring_size'
+    ' (panLang_exp_size l)))',
   ('clos_callProof', 'v1_size'): 'list_size closSem_v_size',
   ('flat_pattern', 'pat1_size'): 'list_size flatLang_pat_size',
   ('source_to_flat', 'pat1_size'): 'list_size ast_pat_size',
