@@ -63,12 +63,12 @@ let free_def,free_ind = assume_definition_rec_clauses
     (clos_call_free [closLang_Call t ticks dest xs] =
          let (c1,l1) = clos_call_free xs in
            ([closLang_Call t ticks dest c1],l1))`;
-   `(clos_call_free [closLang_Fn t loc _ num_args x1] =
+   `clos_call_free [closLang_Fn t loc _ num_args x1] =
          let (c1,l1) = clos_call_free [x1] in
          let l2 = db_vars_Shift num_args l1 in
            ([closLang_Fn t loc (SOME (vars_to_list l2)) num_args (HD
-               c1)],l2))`;
-   `(clos_call_free [closLang_Letrec t loc _ fns x1] =
+               c1)],l2)`;
+   `clos_call_free [closLang_Letrec t loc _ fns x1] =
          let m = LENGTH fns in
          let res = MAP (\(n,x). let (c,l) = clos_call_free [x] in
                               ((n,HD c),db_vars_Shift (n + m) l)) fns in
@@ -76,7 +76,7 @@ let free_def,free_ind = assume_definition_rec_clauses
          let l1 = list_mk_Union (MAP SND res) in
          let (c2,l2) = clos_call_free [x1] in
            ([closLang_Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
-            mk_Union l1 (db_vars_Shift (LENGTH fns) l2)))`];;
+            mk_Union l1 (db_vars_Shift (LENGTH fns) l2))`];;
 
 (* HOL4 clos_callScript.sml:63: ML code, not ported *)
 
@@ -119,11 +119,11 @@ let free_sing_def,free_sing_ind = assume_definition_rec_clauses
          let (c1,l1) = free_sing x in
          let (c2,l2) = free_list xs in
            (CONS c1 c2,mk_Union l1 l2))`;
-   `(free_sing (closLang_Fn t loc _ num_args x1) =
+   `free_sing (closLang_Fn t loc _ num_args x1) =
          let (c1,l1) = free_sing x1 in
          let l2 = db_vars_Shift num_args l1 in
-           (closLang_Fn t loc (SOME (vars_to_list l2)) num_args c1,l2))`;
-   `(free_sing (closLang_Letrec t loc _ fns x1) =
+           (closLang_Fn t loc (SOME (vars_to_list l2)) num_args c1,l2)`;
+   `free_sing (closLang_Letrec t loc _ fns x1) =
          let m = LENGTH fns in
          let res = MAP (\(n,x). let (c,l) = free_sing x in
                               ((n,c),db_vars_Shift (n + m) l)) fns in
@@ -131,7 +131,7 @@ let free_sing_def,free_sing_ind = assume_definition_rec_clauses
          let l1 = list_mk_Union (MAP SND res) in
          let (c2,l2) = free_sing x1 in
            (closLang_Letrec t loc (SOME (vars_to_list l1)) c1 c2,
-            mk_Union l1 (db_vars_Shift (LENGTH fns) l2)))`];;
+            mk_Union l1 (db_vars_Shift (LENGTH fns) l2))`];;
 
 let free_sing_eq = prove
  (`(!e. clos_call_free [e] = (\(e,vs). ([e],vs)) (free_sing e)) /\
@@ -268,7 +268,7 @@ let calls_def,calls_ind = assume_definition_rec_clauses
                   (closLang_Call (mk_cons t 1) (LENGTH es) (loc + 1)
                       (GENLIST_Var backend_common_None 2 (LENGTH es)))],g)
            else ([closLang_App t loc_opt e1 es],g))`;
-   `(calls [closLang_Fn t loc_opt ws num_args x1] g =
+   `calls [closLang_Fn t loc_opt ws num_args x1] g =
          // loc_opt ought to be SOME loc, with loc being EVEN
          let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
          let new_g = insert_each loc 1 g in
@@ -283,8 +283,8 @@ let calls_def,calls_ind = assume_definition_rec_clauses
                  (closLang_Call backend_common_None 0 (loc + 1)
                      (GENLIST_Var backend_common_None 1 num_args))],new_g)
            else let (e1,g) = calls [x1] g in
-               ([closLang_Fn t loc_opt ws num_args (HD e1)],g))`;
-   `(calls [closLang_Letrec t loc_opt ws fns x1] g =
+               ([closLang_Fn t loc_opt ws num_args (HD e1)],g)`;
+   `calls [closLang_Letrec t loc_opt ws fns x1] g =
          let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
          let new_g = insert_each loc (LENGTH fns) g in
          let (fns1,new_g) = calls (MAP SND fns) new_g in
@@ -297,7 +297,7 @@ let calls_def,calls_ind = assume_definition_rec_clauses
            else let (fns1,g) = calls (MAP SND fns) g in
              let (e1,g) = calls [x1] g in
                ([closLang_Letrec t loc_opt ws (ZIP (MAP FST fns) fns1)
-                   (HD e1)],g))`];;
+                   (HD e1)],g)`];;
 
 let calls_sing_def,calls_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -343,7 +343,7 @@ let calls_sing_def,calls_sing_ind = assume_definition_rec_clauses
          let (e1,g) = calls_sing x g in
          let (e2,g) = calls_sing_list xs g in
            (CONS e1 e2,g))`;
-   `(calls_sing (closLang_Fn t loc_opt ws num_args x1) g =
+   `calls_sing (closLang_Fn t loc_opt ws num_args x1) g =
          // loc_opt ought to be SOME loc, with loc being EVEN
          let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
          let new_g = insert_each loc 1 g in
@@ -356,8 +356,8 @@ let calls_sing_def,calls_sing_ind = assume_definition_rec_clauses
                  (closLang_Call backend_common_None 0 (loc + 1)
                      (GENLIST_Var backend_common_None 1 num_args)),new_g)
            else let (e1,g) = calls_sing x1 g in
-               (closLang_Fn t loc_opt ws num_args e1,g))`;
-   `(calls_sing (closLang_Letrec t loc_opt ws fns x1) g =
+               (closLang_Fn t loc_opt ws num_args e1,g)`;
+   `calls_sing (closLang_Letrec t loc_opt ws fns x1) g =
          let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
          let new_g = insert_each loc (LENGTH fns) g in
          let (fns1,new_g) = calls_sing_list (MAP SND fns) new_g in
@@ -370,7 +370,7 @@ let calls_sing_def,calls_sing_ind = assume_definition_rec_clauses
            else let (fns1,g) = calls_sing_list (MAP SND fns) g in
              let (e1,g) = calls_sing x1 g in
                (closLang_Letrec t loc_opt ws (ZIP (MAP FST fns) fns1)
-                   e1,g))`];;
+                   e1,g)`];;
 
 let calls_sing_eq = prove
  (`(!e g. calls [e] g = (\(e,rest). ([e],rest)) (calls_sing e g)) /\

@@ -252,7 +252,7 @@ let clos_callProof_v_rel_def,clos_callProof_v_rel_ind =
            ALL2 (clos_callProof_v_rel g l code) vs1 vs2 /\
            clos_callProof_env_rel (clos_callProof_v_rel g l code) env1
                env2 0 [(n,bod2)]))`;
-   `(clos_callProof_v_rel g l code (closSem_Recclosure loco vs1 env1 fns1 i) v
+   `clos_callProof_v_rel g l code (closSem_Recclosure loco vs1 env1 fns1 i) v
     <=>
          (?loc vs2 env2 fns2.
            recclosure_rel g l code loc fns1 fns2 /\
@@ -260,7 +260,7 @@ let clos_callProof_v_rel_def,clos_callProof_v_rel_ind =
                loc /\
            ALL2 (clos_callProof_v_rel g l code) vs1 vs2 /\
            clos_callProof_env_rel (clos_callProof_v_rel g l code) env1
-               env2 (LENGTH fns2) fns2))`];;
+               env2 (LENGTH fns2) fns2)`];;
 
 (* HOL4 clos_callProofScript.sml:335: ML code, not ported *)
 

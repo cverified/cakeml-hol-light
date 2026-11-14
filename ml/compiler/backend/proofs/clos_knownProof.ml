@@ -1013,8 +1013,7 @@ let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind =
                clos_known_Other) aenv) g e1 e2 /\
            v = closSem_Closure loc_opt args2 (APPEND env2a env2b)
                num_args e2 else F))`;
-   `(clos_knownProof_v_rel c g (closSem_Recclosure loc_opt args1 env1 funs1 i)
-     v
+   `clos_knownProof_v_rel c g (closSem_Recclosure loc_opt args1 env1 funs1 i) v
     <=>
          ALL (\(n,e). every_Fn_vs_NONE [e]) funs1 /\
          (let clos = (match loc_opt with NONE -> REPLICATE (LENGTH funs1)
@@ -1030,7 +1029,7 @@ let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind =
            ALL2 (clos_knownProof_f_rel c (APPEND clos aenv) g) funs1 funs2
                /\
            v = closSem_Recclosure loc_opt args2 (APPEND env2a env2b)
-               funs2 i else F))`];;
+               funs2 i else F)`];;
 
 (* HOL4 clos_knownProofScript.sml:2619-2620: a theorem that HOL4 states as
    the value of an ML expression: v_rel_def *)
@@ -1064,9 +1063,9 @@ let v_rel_app_def = define_cases_clauses
            clos_knownProof_exp_rel c (APPEND aargs aenv) g e1 e2 /\
            v = closSem_Closure loc_opt pargs2 (APPEND env2a env2b)
                num_args e2))`;
-   `(v_rel_app c g (closSem_Recclosure loc_opt pargs1 env1 funs1 i) v args1 <=>
+   `v_rel_app c g (closSem_Recclosure loc_opt pargs1 env1 funs1 i) v args1 <=>
          clos_knownProof_v_rel c g ((closSem_Recclosure loc_opt pargs1
-             env1 funs1 i:closSem_v)) v)`];;
+             env1 funs1 i:closSem_v)) v`];;
 
 let v_rel_app_NONE = prove
  (`v_rel_app c g v1 v2 NONE = clos_knownProof_v_rel c g v1 v2`,

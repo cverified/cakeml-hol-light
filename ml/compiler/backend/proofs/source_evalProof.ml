@@ -115,7 +115,7 @@ let v_to_env_id_def = new_definition
 let do_eval_record_def = new_definition
   `do_eval_record ci vs (orac:num->(num#num)#semanticPrimitives_v#dec list) =
   match vs with [env_id_v; st_v; decs_v; st_v2; bs_v; ws_v] ->
-       let ((i,_),st,_) = orac 0 in
+       (let ((i,_),st,_) = orac 0 in
        (match (v_to_env_id env_id_v,v_fun_abs (compiler_instance_decs_dom
          ci) (compiler_instance_decs_v ci) decs_v) with (SOME env_id,SOME decs)
          ->
@@ -125,7 +125,7 @@ let do_eval_record_def = new_definition
            else if j = SUC i then (env_id,st,decs)
            else orac j) in SOME (env_id,orac',decs)
          else NONE
-       | _ -> NONE)
+       | _ -> NONE))
      | _ -> NONE`;;
 
 (* a somewhat generic env rel *)
@@ -769,14 +769,14 @@ let do_eval_oracle_def = new_definition
   list->(semanticPrimitives_v#word8 list#word64 list) option) (g:dec list->dec
   list) vs (orac:num->(num#num)#semanticPrimitives_v#dec list) =
    match vs with [env_id_v; st_v; decs_v; st_v2; bs_v; ws_v] ->
-       let (env_id,st,decs) = orac 0 in
+       (let (env_id,st,decs) = orac 0 in
        (match f (env_id,st,decs),v_to_word8_list bs_v,
              v_to_word64_list ws_v with (SOME (st_v2,c_bs,c_ws),SOME bs,SOME
                ws) ->
              if bs = c_bs /\ ws = c_ws /\ st_v2 = (FST (SND (orac 1))) then
                SOME (env_id,misc_shift_seq 1 orac,g decs)
              else NONE
-         | _ -> NONE)
+         | _ -> NONE))
      | _ -> NONE`;;
 
 let insert_gen_oracle_def = new_definition

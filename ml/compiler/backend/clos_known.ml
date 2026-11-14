@@ -64,12 +64,11 @@ let get_size_sc_aux_def,get_size_sc_aux_ind = assume_definition_rec_clauses
     (get_size_sc_aux n [closLang_App t loc_opt x1 xs] =
          let n = n - 1 in if n = 0 then 0 else let n = get_size_sc_aux
              n [x1] in if n = 0 then 0 else get_size_sc_aux n xs)`;
-   `(get_size_sc_aux n [closLang_Fn t loc_opt ws_opt num_args x1] =
-         let n = n - 1 in if n = 0 then 0 else get_size_sc_aux n [x1])`;
-   `(get_size_sc_aux n [closLang_Letrec t loc_opt ws_opt fns x1] =
+   `get_size_sc_aux n [closLang_Fn t loc_opt ws_opt num_args x1] =
+         let n = n - 1 in if n = 0 then 0 else get_size_sc_aux n [x1]`;
+   `get_size_sc_aux n [closLang_Letrec t loc_opt ws_opt fns x1] =
          let n = n - 1 in if n = 0 then 0 else let n = get_size_sc_aux
-             n (MAP SND fns) in if n = 0 then 0 else get_size_sc_aux n
-               [x1])`];;
+             n (MAP SND fns) in if n = 0 then 0 else get_size_sc_aux n [x1]`];;
 
 let get_size_sc_def = new_definition
   `get_size_sc limit' e =
@@ -101,10 +100,10 @@ let get_size_aux_def,get_size_aux_ind = define_wf_clauses
          1 + get_size_aux xs) /\
     (get_size_aux [closLang_App t loc_opt x1 xs] =
          1 + get_size_aux [x1] + get_size_aux xs)`;
-   `(get_size_aux [closLang_Fn t loc_opt ws_opt num_args x1] =
-         1 + get_size_aux [x1])`;
-   `(get_size_aux [closLang_Letrec t loc_opt ws_opt fns x1] =
-         1 + get_size_aux (MAP SND fns) + get_size_aux [x1])`];;
+   `get_size_aux [closLang_Fn t loc_opt ws_opt num_args x1] =
+         1 + get_size_aux [x1]`;
+   `get_size_aux [closLang_Letrec t loc_opt ws_opt fns x1] =
+         1 + get_size_aux (MAP SND fns) + get_size_aux [x1]`];;
 
 (* HOL4 clos_knownScript.sml:104: ML code, not ported *)
 
@@ -171,12 +170,12 @@ let clos_known_free_def,clos_known_free_ind = assume_definition_rec_clauses
     (clos_known_free [closLang_Call t ticks dest xs] =
          let (c1,l1) = clos_known_free xs in
            ([closLang_Call t ticks dest c1],l1))`;
-   `(clos_known_free [closLang_Fn t loc _ num_args x1] =
+   `clos_known_free [closLang_Fn t loc _ num_args x1] =
          let (c1,l1) = clos_known_free [x1] in
          let l2 = db_vars_Shift num_args l1 in
            ([closLang_Fn t loc (SOME (vars_to_list l2)) num_args (HD
-               c1)],l2))`;
-   `(clos_known_free [closLang_Letrec t loc _ fns x1] =
+               c1)],l2)`;
+   `clos_known_free [closLang_Letrec t loc _ fns x1] =
          let m = LENGTH fns in
          let res = MAP (\(n,x). let (c,l) = clos_known_free [x] in
                               ((n,HD c),db_vars_Shift (n + m) l)) fns in
@@ -184,7 +183,7 @@ let clos_known_free_def,clos_known_free_ind = assume_definition_rec_clauses
          let l1 = list_mk_Union (MAP SND res) in
          let (c2,l2) = clos_known_free [x1] in
            ([closLang_Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
-            mk_Union l1 (db_vars_Shift (LENGTH fns) l2)))`];;
+            mk_Union l1 (db_vars_Shift (LENGTH fns) l2))`];;
 
 (* HOL4 clos_knownScript.sml:175-220: code that the source has in a comment *)
 
@@ -215,8 +214,8 @@ let contains_closures_def,contains_closures_ind = define_wf_clauses
     xs) /\
     (contains_closures [closLang_App t loc_opt x1 xs] =
          if contains_closures [x1] then T else contains_closures xs)`;
-   `(contains_closures [closLang_Fn t loc_opt ws_opt num_args x1] = T)`;
-   `(contains_closures [closLang_Letrec t loc_opt ws_opt fns x1] = T)`];;
+   `contains_closures [closLang_Fn t loc_opt ws_opt num_args x1] = T`;
+   `contains_closures [closLang_Letrec t loc_opt ws_opt fns x1] = T`];;
 
 (* -----------------------------------------------------------------
 
@@ -552,15 +551,15 @@ let known_def,known_ind = assume_definition_rec_clauses
                         closLang_Let (mk_cons t 0) (SNOC e1 (MAP FST ea2))
                               (clos_known_mk_Ticks t 1 (LENGTH xs)
                                   ebody),abody)],g))`;
-   `(known c [closLang_Fn t loc_opt ws_opt num_args x1] vs (g:val_approx spt) =
+   `known c [closLang_Fn t loc_opt ws_opt num_args x1] vs (g:val_approx spt) =
          let (ea1,g) = known c [x1] (APPEND (REPLICATE num_args
              clos_known_Other) vs) g in
          let (body,a1) = HD ea1 in
            ([(closLang_Fn t loc_opt NONE num_args body,
               (match loc_opt with SOME loc -> clos_approx
                   (clos_known_config_inline_max_body_size c) loc num_args x1
-                | NONE -> clos_known_Other))],g))`;
-   `(known c [closLang_Letrec t loc_opt _ fns x1] vs (g:val_approx spt) =
+                | NONE -> clos_known_Other))],g)`;
+   `known c [closLang_Letrec t loc_opt _ fns x1] vs (g:val_approx spt) =
          let clos = (match loc_opt with
                        NONE -> REPLICATE (LENGTH fns) clos_known_Other
                     | SOME loc -> clos_gen_noinline loc 0 fns) in
@@ -573,7 +572,7 @@ let known_def,known_ind = assume_definition_rec_clauses
                           (num_args,FST (HD (FST res)))) fns in
          let (ea1,g) = known c [x1] (APPEND clos vs) g in
          let (e1,a1) = HD ea1 in
-           ([(closLang_Letrec t loc_opt NONE new_fns e1,a1)],g))`];;
+           ([(closLang_Letrec t loc_opt NONE new_fns e1,a1)],g)`];;
 
 let known_LENGTH = prove
  (`!limit' es vs g. LENGTH (FST (known limit' es vs g)) = LENGTH es`,

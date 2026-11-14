@@ -504,9 +504,9 @@ let bviProps_get_code_labels_def,bviProps_get_code_labels_ind =
     UNION UNIONS (set_of_list (MAP bviProps_get_code_labels es))) /\
     (bviProps_get_code_labels (bvi_Return es) = UNIONS (set_of_list (MAP
     bviProps_get_code_labels es)))`;
-   `(bviProps_get_code_labels (bvi_LetCall _ _ d es y) =
+   `bviProps_get_code_labels (bvi_LetCall _ _ d es y) =
         {d} UNION bviProps_get_code_labels y UNION UNIONS (set_of_list
-            (MAP bviProps_get_code_labels es)))`];;
+            (MAP bviProps_get_code_labels es))`];;
 
 (* HOL4 bviPropsScript.sml:720-721: a theorem that HOL4 states as the value
    of an ML expression: get_code_labels_def *)

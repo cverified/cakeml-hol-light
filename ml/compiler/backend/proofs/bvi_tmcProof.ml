@@ -84,8 +84,8 @@ let no_mutcons_def,no_mutcons_ind = define_wf_clauses
     (no_mutcons (bvi_Force loc n) <=> T) /\
     (no_mutcons (bvi_Return xs) <=> ALL no_mutcons xs) /\
     (no_mutcons (bvi_Op op xs) <=> no_mutcons_op op /\ ALL no_mutcons xs)`;
-   `(no_mutcons (bvi_LetCall rets ticks dest xs y) <=> ALL no_mutcons xs
-    /\ no_mutcons y)`];;
+   `no_mutcons (bvi_LetCall rets ticks dest xs y) <=> ALL no_mutcons xs
+    /\ no_mutcons y`];;
 add_simp no_mutcons_def;;
 
 let bvi_tmcProof_code_rel_def = new_definition
@@ -722,7 +722,7 @@ let mb_rel_def,mb_rel_ind = define_guess_cheat
      match (x2,v1,v2) with
        ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),bvlSem_Block tag
          xs,bvlSem_RefPtr b ptr) ->
-      if b \/ ptr IN FRANGE f \/ ptr IN FDOM refs_old then F else match
+      (if b \/ ptr IN FRANGE f \/ ptr IN FDOM refs_old then F else match
         FLOOKUP refs ptr with SOME (bvlSem_MutBlock tag' fin' left' child'
         right') ->
             (tag = tag' /\
@@ -732,7 +732,7 @@ let mb_rel_def,mb_rel_ind = define_guess_cheat
                ALL2 (bvi_tmcProof_v_rel f) left left' /\
                mb_rel f refs_old (refs \\ ptr) child child' /\
                ALL2 (bvi_tmcProof_v_rel f) right right'))
-        | _ -> F
+        | _ -> F)
      | (_,v1,v2) -> bvi_tmcProof_v_rel f v1 v2`;;
 
 let mb_rel_cons = prove

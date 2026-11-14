@@ -63,7 +63,7 @@ let call_graph_def,call_graph_ind = assume_definition_rec
      | wordLang_Call ret dest args handler ->
         (match dest with NONE -> word_depth_Unknown
         | SOME d ->
-          if MEM d ns /\ ret = NONE then word_depth_Leaf else match
+          (if MEM d ns /\ ret = NONE then word_depth_Leaf else match
             sptree_lookup d funs with NONE -> word_depth_Unknown
           | SOME ((a:num),body) ->
             (match ret with NONE ->
@@ -72,7 +72,7 @@ let call_graph_def,call_graph_ind = assume_definition_rec
                    (call_graph funs d (CONS d ns) total' body)
                else word_depth_Leaf)
             | SOME (_,_,ret_prog,_,_) ->
-              let new_funs = sptree_delete d funs in
+              (let new_funs = sptree_delete d funs in
                 match handler with NONE -> word_depth_Branch
                   (word_depth_Call n (word_depth_Call d word_depth_Leaf))
                       (mk_Branch (word_depth_Call n (call_graph new_funs d
@@ -83,7 +83,7 @@ let call_graph_def,call_graph_ind = assume_definition_rec
                    (mk_Branch (word_depth_Call n (word_depth_Const 3
                      (call_graph new_funs d [d] total' body)))
                    (mk_Branch (call_graph funs n ns total' p)
-                              (call_graph funs n ns total' ret_prog)))))
+                              (call_graph funs n ns total' ret_prog)))))))
      | wordLang_MustTerminate p -> call_graph funs n ns total' p
      | wordLang_Alloc _ _ -> word_depth_Call n word_depth_Leaf
      | wordLang_Install _ _ _ _ _ -> word_depth_Unknown

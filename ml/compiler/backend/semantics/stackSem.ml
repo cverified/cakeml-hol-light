@@ -664,7 +664,7 @@ let stackSem_inst_def = new_definition
                      l w f) s))
          else NONE))
      | asm_FP (FPFromInt d1 d2) ->
-       if dimindex (:'a) = 64 then
+       (if dimindex (:'a) = 64 then
          match stackSem_get_fp_var d2 s with SOME f ->
            let i = w2i ((31 >< 0) f:word32) in
              SOME (stackSem_set_fp_var d1 (int_to_fp64 roundTiesToEven i) s)
@@ -674,7 +674,7 @@ let stackSem_inst_def = new_definition
              word) in
              SOME (stackSem_set_fp_var d1 (int_to_fp64 roundTiesToEven i) s)
          | NONE -> NONE
-     | _ -> NONE`;;
+     | _ -> NONE)`;;
 
 let stackSem_get_var_imm_def = define_cases
   `(stackSem_get_var_imm ((Reg n):'a asm_reg_imm) s = stackSem_get_var n s) /\
@@ -919,11 +919,11 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
            (match stackSem_find_code (INL dest) (stackSem_state_regs s)
                (stackSem_state_code s) with NONE -> (SOME stackSem_Error,s)
             | SOME prog ->
-               if stackSem_state_clock s = 0 then (SOME
+               (if stackSem_state_clock s = 0 then (SOME
                    stackSem_TimeOut,stackSem_empty_env s) else (match
                    stackSem_evaluate (prog,stackSem_dec_clock s) with (res,s)
                    -> if stackSem_bad_fun_return res then (SOME
-                   stackSem_Error,s) else (res,s)))
+                   stackSem_Error,s) else (res,s))))
           else (NONE,s)
         | _ -> (SOME stackSem_Error,s)) /\
    (stackSem_evaluate (stackLang_RawCall dest,s) =
@@ -931,11 +931,11 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
             stackSem_Error,s)
         | SOME prog ->
            (match stackSem_dest_Seq prog with SOME (_,body) ->
-               if stackSem_state_clock s = 0 then (SOME
+               (if stackSem_state_clock s = 0 then (SOME
                    stackSem_TimeOut,stackSem_empty_env s) else (match
                    stackSem_evaluate (body,stackSem_dec_clock s) with (res,s)
                    -> if stackSem_bad_fun_return res then (SOME
-                   stackSem_Error,s) else (res,s))
+                   stackSem_Error,s) else (res,s)))
             | _ -> (SOME stackSem_Error,s))
         | _ -> (SOME stackSem_Error,s)) /\
    (stackSem_evaluate (stackLang_Call ret dest handler,s) =
@@ -945,13 +945,13 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
            (match stackSem_find_code dest (stackSem_state_regs s)
                (stackSem_state_code s) with NONE -> (SOME stackSem_Error,s)
             | SOME prog ->
-               if ~(handler = NONE) then (SOME stackSem_Error,s) else if
+               (if ~(handler = NONE) then (SOME stackSem_Error,s) else if
                    stackSem_state_clock s = 0 then (SOME
                    stackSem_TimeOut,stackSem_empty_env s) else (match
                    stackSem_fix_clock (stackSem_dec_clock s) (stackSem_evaluate
                    (prog,stackSem_dec_clock s)) with (res,s) -> if
                    stackSem_bad_fun_return res then (SOME stackSem_Error,s)
-                   else (res,s)))
+                   else (res,s))))
          |
            // returning call, returns into var n
            SOME (ret_handler,link_reg',l1,l2) ->
@@ -959,7 +959,7 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
                \\ link_reg') (stackSem_state_code s) with NONE -> (SOME
                stackSem_Error,s)
             | SOME prog ->
-               if stackSem_state_clock s = 0 then (SOME
+               (if stackSem_state_clock s = 0 then (SOME
                    stackSem_TimeOut,stackSem_empty_env s) else (match
                    stackSem_fix_clock (stackSem_dec_clock (stackSem_set_var
                    link_reg' (wordLang_Loc l1 l2) s))
@@ -980,19 +980,19 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
                   | (SOME (stackLang_Break _),s) -> (SOME stackSem_Error,s)
                   | (SOME (stackLang_Continue _),s) -> (SOME
                       stackSem_Error,s)
-                  | (res,s) -> (res,s)))) /\
+                  | (res,s) -> (res,s))))) /\
    (stackSem_evaluate (stackLang_Install ptr len dptr dlen ret,s) =
         match (stackSem_get_var ptr s,stackSem_get_var len
             s,stackSem_get_var dptr s,stackSem_get_var dlen s) with SOME
             (wordLang_Word w1),SOME (wordLang_Word w2),SOME (wordLang_Word
             w3),SOME (wordLang_Word w4) ->
-            let (cfg,progs,bm) = stackSem_state_compile_oracle s 0 in
+            (let (cfg,progs,bm) = stackSem_state_compile_oracle s 0 in
            (match (buffer_flush (stackSem_state_code_buffer s) w1 w2,
                   (if stackSem_state_use_stack s then buffer_flush
                       (stackSem_state_data_buffer s) w3 w4
                   else SOME (bm,stackSem_state_data_buffer s))) with
              SOME (bytes,cb),SOME (data,db) ->
-            let new_oracle = misc_shift_seq 1
+            (let new_oracle = misc_shift_seq 1
                 (stackSem_state_compile_oracle s) in
             (match stackSem_state_compile s cfg progs,progs with SOME
                 (bytes',cfg'),CONS (k,prog) _ ->
@@ -1011,8 +1011,8 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
                     s)))))) in
                   (NONE,s')
                 else (SOME stackSem_Error,s)
-              | _ -> (SOME stackSem_Error,s))
-            | _ -> (SOME stackSem_Error,s))
+              | _ -> (SOME stackSem_Error,s)))
+            | _ -> (SOME stackSem_Error,s)))
           | _ -> (SOME stackSem_Error,s))
    // This order is convenient because it means all of s.code's entries are preserved
    // TODO: this might need to be a new field, cc_save_regs /\

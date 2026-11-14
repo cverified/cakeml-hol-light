@@ -47429,8 +47429,8 @@ let word_header_def = new_definition
   `word_header c st a dm m =
      match get_real_addr c st a with NONE -> NONE
      | SOME a1 ->
-         if ~(a1 IN dm) then NONE else match m a1 with wordLang_Word x1
-           -> SOME (a1,x1) | _ -> NONE`;;
+         (if ~(a1 IN dm) then NONE else match m a1 with wordLang_Word x1
+           -> SOME (a1,x1) | _ -> NONE)`;;
 
 let data_to_word_memoryProof_fix_clock_def = define_cases
   `(data_to_word_memoryProof_fix_clock ck (l:num) NONE = NONE) /\
@@ -47491,7 +47491,7 @@ let word_eq_def,word_eq_ind = define_wf_tac
       (if w1 = w2 then SOME (((n2w 1):'a word),l,ck) else if ~(word_bit 0 w1
         /\ word_bit 0 w2) then SOME ((n2w 0),l,ck) else match (word_header c st
         w1 dm m,word_header c st w2 dm m) with (SOME (a1,h1),SOME (a2,h2)) ->
-            if (h1 && (n2w 0b1100)) = (n2w 0) then
+            (if (h1 && (n2w 0b1100)) = (n2w 0) then
               // is Block
               if word_is_clos c h1 then
                     // isClos
@@ -47514,7 +47514,7 @@ let word_eq_def,word_eq_ind = define_wf_tac
                 (a1 + bytes_in_word * (decode_length c h1))
                 (a2 + bytes_in_word * (decode_length c h1)) dm m with NONE
                   -> NONE
-              | SOME res -> SOME (res,l - 1 - w2n (decode_length c h1),ck))
+              | SOME res -> SOME (res,l - 1 - w2n (decode_length c h1),ck)))
         | _ -> NONE)) /\
    (word_eq_list c st dm m l ck w a1 a2 =
       (if w = ((n2w 0):'a word) then SOME ((n2w 1),l,ck) else if ~(a1 IN dm)
@@ -51232,9 +51232,9 @@ let memory_rel_Number_const_test = prove
         (Smallnum j = w <=> i = j)
       else match bignum_words c j with NONE -> ~(i = j)
         | SOME words ->
-          if ~(word_bit 0 w) then ~(i = j) else ?a. get_real_addr c st w =
-            SOME a /\
-                word_mem_eq a words dm m = SOME (i = j))`),
+          (if ~(word_bit 0 w) then ~(i = j) else ?a. get_real_addr c st w
+            = SOME a /\
+                word_mem_eq a words dm m = SOME (i = j)))`),
 (* a small integer is compared with its Smallnum
    (memory_rel_Number_EQ), and a bignum with the header and the
    payload of its cell.  Of the three ways the two can differ: a

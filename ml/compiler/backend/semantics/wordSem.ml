@@ -696,10 +696,10 @@ let dec_stack_def,dec_stack_ind = define_wf
      match (xs,x2) with
        ([],[]) -> SOME []
      | (xs,CONS (StackFrame n l0 l handler) st) ->
-        if LENGTH xs < LENGTH l then NONE else match wordSem_dec_stack (DROP
-          (LENGTH l) xs) st with NONE -> NONE
+        (if LENGTH xs < LENGTH l then NONE else match wordSem_dec_stack
+          (DROP (LENGTH l) xs) st with NONE -> NONE
           | SOME s -> SOME (CONS (StackFrame n l0
-              (ZIP (MAP FST l) (TAKE (LENGTH l) xs)) handler) s)
+              (ZIP (MAP FST l) (TAKE (LENGTH l) xs)) handler) s))
      | (_,_) -> NONE`;;
 
 let gc_def = new_definition
@@ -989,7 +989,7 @@ let wordSem_inst_def = new_definition
                      w f) s))
          else NONE))
      | asm_FP (FPFromInt d1 d2) ->
-       if dimindex (:'a) = 64 then
+       (if dimindex (:'a) = 64 then
          match wordSem_get_fp_var d2 s with SOME f ->
            let i = w2i ((31 >< 0) f:word32) in
              SOME (wordSem_set_fp_var d1 (int_to_fp64 roundTiesToEven i) s)
@@ -999,7 +999,7 @@ let wordSem_inst_def = new_definition
              word) in
              SOME (wordSem_set_fp_var d1 (int_to_fp64 roundTiesToEven i) s)
          | NONE -> NONE
-     | _ -> NONE`;;
+     | _ -> NONE)`;;
 
 let get_var_imm_def = define_cases
   `(wordSem_get_var_imm ((Reg n):'a asm_reg_imm)
@@ -1199,13 +1199,13 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
             dptr s,wordSem_get_var dlen s) with SOME (wordLang_Word w1),SOME
             (wordLang_Word w2),SOME (wordLang_Word w3),SOME (wordLang_Word w4)
             ->
-           let (cfg,progs) = wordSem_state_compile_oracle s 0 in
+           (let (cfg,progs) = wordSem_state_compile_oracle s 0 in
            (match (
                  buffer_flush (wordSem_state_code_buffer s) w1
                      w2,buffer_flush (wordSem_state_data_buffer s) w3 w4) with
              SOME (bytes,cb),SOME (data,db) ->
-            let new_oracle = misc_shift_seq 1 (wordSem_state_compile_oracle
-                s) in
+            (let new_oracle = misc_shift_seq 1
+                (wordSem_state_compile_oracle s) in
             (match wordSem_state_compile s cfg progs,progs with SOME
                 (bytes',data',cfg'),CONS (k,prog) _ ->
                 if bytes = bytes' /\ data = data' /\ FST (new_oracle 0) =
@@ -1226,8 +1226,8 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
                    // after Install.
                    NONE,s')
                 else (SOME wordSem_Error,s)
-              | _ -> (SOME wordSem_Error,s))
-            | _ -> (SOME wordSem_Error,s))
+              | _ -> (SOME wordSem_Error,s)))
+            | _ -> (SOME wordSem_Error,s)))
           | _ -> (SOME wordSem_Error,s)))
     // This order is convenient because it means all of s.code's entries are preserved
     // Install is not safe for space /\
@@ -1281,7 +1281,7 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
     (wordSem_evaluate (wordLang_Call ret dest args handler,s) =
        match wordSem_get_vars args s with NONE -> (SOME wordSem_Error,s)
        | SOME xs ->
-           if bad_dest_args dest args then (SOME wordSem_Error,s)
+           (if bad_dest_args dest args then (SOME wordSem_Error,s)
            else match wordSem_find_code dest (add_ret_loc ret xs)
                (wordSem_state_code s) (wordSem_state_stack_size s) with NONE ->
                (SOME wordSem_Error,s)
@@ -1298,12 +1298,12 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
                      else (SOME wordSem_Error,s)
                  | SOME (n,names,ret_handler,l1,l2) ->
                      // returning call, returns into var n
-                     if domain (FST names) = {} \/ ~(ALL_DISTINCT n) then
+                     (if domain (FST names) = {} \/ ~(ALL_DISTINCT n) then
                          (SOME wordSem_Error,s)
                      else (match cut_envs names (wordSem_state_locals s)
                          with NONE -> (SOME wordSem_Error,s)
                         | SOME envs' ->
-                            if wordSem_state_clock s = 0 then
+                            (if wordSem_state_clock s = 0 then
                               (SOME wordSem_TimeOut,
                               wordSem_flush_state T
                               (wordSem_state_stack_max_fupd (K
@@ -1319,8 +1319,8 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
                               (wordSem_push_env envs' handler
                                   (wordSem_dec_clock s)))) with (SOME
                                   (wordSem_Result x ys),s2) ->
-                              if ~(x = wordLang_Loc l1 l2) \/ ~(LENGTH ys =
-                                  LENGTH n) then (SOME wordSem_Error,s2)
+                              (if ~(x = wordLang_Loc l1 l2) \/ ~(LENGTH ys
+                                  = LENGTH n) then (SOME wordSem_Error,s2)
                               else (match wordSem_pop_env s2 with NONE ->
                                   (SOME wordSem_Error,s2)
                               | SOME s1 ->
@@ -1328,7 +1328,7 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
                                   (FST envs') UNION domain (SND envs') then
                                   wordSem_evaluate
                                   (ret_handler,wordSem_set_vars n ys s1)
-                              else (SOME wordSem_Error,s1)))
+                              else (SOME wordSem_Error,s1))))
                               | (SOME (wordSem_Exception x y),s2) ->
                               (match handler with
                               // if handler is present, then handle exc
@@ -1346,7 +1346,7 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
                                   wordSem_Error,s)
                               | (SOME (wordSem_Continue _),s) -> (SOME
                                   wordSem_Error,s)
-                              | res -> res))))`;
+                              | res -> res)))))))`;
    `(wordSem_evaluate (wordLang_Set v exp,s) =
          if v = Handler \/ v = BitmapBase then (SOME wordSem_Error,s)
          else match wordSem_word_exp s exp with NONE -> (SOME

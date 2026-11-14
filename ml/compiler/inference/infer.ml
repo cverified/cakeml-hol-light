@@ -925,7 +925,7 @@ let infer_e_def,infer_e_ind = assume_definition_rec_clauses
             (inf_env_inf_v_fupd (K (nsBind x (0,uvar) (inf_env_inf_v ienv)))
             ienv) e) (\t. st_ex_bind (infer_funs l ienv funs) (\ts.
            st_ex_return (CONS (Infer_Tapp [uvar; t] Tfn_num) ts)))))`;
-   `(infer_e l ienv (ast_Let x e1 e2) =
+   `infer_e l ienv (ast_Let x e1 e2) =
           // Don't do polymorphism for non-top-level lets
           // if is_value e1 then
           // do n <- get_next_uvar;
@@ -939,7 +939,7 @@ let infer_e_def,infer_e_ind = assume_definition_rec_clauses
           st_ex_bind (infer_e l ienv e1) (\t1. st_ex_bind (infer_e l
               (inf_env_inf_v_fupd (K (nsOptBind x (0,t1) (inf_env_inf_v ienv)))
               ienv) e2) (\t2.
-             st_ex_return t2)))`];;
+             st_ex_return t2))`];;
 
 (* [local] *)
 let FUN_EQ_THM_state = prove

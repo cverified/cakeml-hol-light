@@ -657,12 +657,12 @@ let stackProps_extract_labels_def,stackProps_extract_labels_ind = define_wf
        (match ret with
          NONE -> []
        | SOME (ret_handler,_,l1,l2) ->
-         let ret_rest = stackProps_extract_labels ret_handler in
+         (let ret_rest = stackProps_extract_labels ret_handler in
        (match h with
          NONE -> APPEND [(l1,l2)] ret_rest
        | SOME (prog,l1',l2') ->
          let h_rest = stackProps_extract_labels prog in APPEND (APPEND
-           [(l1,l2); (l1',l2')] ret_rest) h_rest))
+           [(l1,l2); (l1',l2')] ret_rest) h_rest)))
      | stackLang_Loop s1 -> stackProps_extract_labels s1
      | stackLang_Seq s1 s2 -> APPEND (stackProps_extract_labels s1)
        (stackProps_extract_labels s2)

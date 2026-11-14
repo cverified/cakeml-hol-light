@@ -238,7 +238,7 @@ let inst_select_exp_def,inst_select_exp_ind = define_wf
        wordLang_Get tar store_name
      // All ops are binary branching
      | (c,tar,temp,wordLang_Op op [e1; e2]) ->
-       if is_Lookup_CurrHeap e2 then
+       (if is_Lookup_CurrHeap e2 then
          (let p1 = inst_select_exp c temp temp e1 in
            wordLang_Seq p1 (wordLang_OpCurrHeap op tar temp))
        else if is_Lookup_CurrHeap e1 /\ ~(op = asm_Sub) then
@@ -263,7 +263,7 @@ let inst_select_exp_def,inst_select_exp_ind = define_wf
        | _ ->
          let p2 = inst_select_exp c (temp + 1) (temp + 1) e2 in
          wordLang_Seq p1 (wordLang_Seq p2 (wordLang_Inst (asm_Arith
-           (asm_Binop op tar temp (Reg (temp + 1))))))
+           (asm_Binop op tar temp (Reg (temp + 1)))))))
      | (c,tar,temp,wordLang_Shift sh exp e1) ->
        (match e1 with wordLang_Const shift_len ->
            let n = w2n shift_len in
@@ -381,7 +381,7 @@ let inst_select_def,inst_select_ind = define_wf
          in
        wordLang_Seq prog (wordLang_Set store (wordLang_Var temp))
      | wordLang_Store exp var ->
-       let exp = (flatten_exp o pull_exp) exp in
+       (let exp = (flatten_exp o pull_exp) exp in
        match exp with wordLang_Op asm_Add [exp'; wordLang_Const w] ->
          if (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w then
            let prog = inst_select_exp c temp temp exp' in
@@ -393,13 +393,13 @@ let inst_select_def,inst_select_ind = define_wf
        | _ ->
          let prog = inst_select_exp c temp temp exp in
          wordLang_Seq prog (wordLang_Inst (asm_Mem asm_Store var (Addr temp
-           ((n2w 0)))))
+           ((n2w 0))))))
      | wordLang_Seq p1 p2 ->
        wordLang_Seq (inst_select c temp p1) (inst_select c temp p2)
      | wordLang_MustTerminate p1 ->
        wordLang_MustTerminate (inst_select c temp p1)
      | wordLang_ShareInst op v exp ->
-       let exp = (flatten_exp o pull_exp) exp in
+       (let exp = (flatten_exp o pull_exp) exp in
        match exp with wordLang_Op asm_Add [exp'; wordLang_Const w] ->
          if ((op = asm_Load \/ op = asm_Store) /\ (\c.
            asm_offset_ok 0 (asm_config_addr_offset c)) c w) \/
@@ -416,7 +416,7 @@ let inst_select_def,inst_select_ind = define_wf
              wordLang_Seq prog (wordLang_ShareInst op v (wordLang_Var temp))
        | _ ->
          let prog = inst_select_exp c temp temp exp in
-         wordLang_Seq prog (wordLang_ShareInst op v (wordLang_Var temp))
+         wordLang_Seq prog (wordLang_ShareInst op v (wordLang_Var temp)))
      | wordLang_If cmp r1 ri c1 c2 ->
        wordLang_If cmp r1 ri (inst_select c temp c1) (inst_select c temp c2)
      | wordLang_Call ret dest args handler ->

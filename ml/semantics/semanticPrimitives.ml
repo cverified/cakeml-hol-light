@@ -1096,7 +1096,7 @@ let do_app_def = new_definition
        (ast_Word8 w)]) ->
          (match store_lookup lnum s with
            SOME (semanticPrimitives_W8array ws) ->
-             if i < ((&0):int) then
+             (if i < ((&0):int) then
                SOME ((s,t),Rerr (Rraise sub_exn_v))
              else let n = (num_of_int (abs (I i))) in
                  if n >= LENGTH ws then
@@ -1105,14 +1105,14 @@ let do_app_def = new_definition
                    (LUPDATE w n ws)) s with
                        NONE -> NONE
                      | SOME s' -> SOME ((s',t),Rval (semanticPrimitives_Conv
-                       NONE [])))
+                       NONE []))))
          | _ -> NONE)
      | (ast_Aw8update_unsafe,[semanticPrimitives_Loc _ lnum;
        semanticPrimitives_Litv (ast_IntLit i); semanticPrimitives_Litv
        (ast_Word8 w)]) ->
          (match store_lookup lnum s with
            SOME (semanticPrimitives_W8array ws) ->
-             if i < ((&0):int) then
+             (if i < ((&0):int) then
                NONE
              else let n = (num_of_int (abs (I i))) in
                  if n >= LENGTH ws then
@@ -1121,7 +1121,7 @@ let do_app_def = new_definition
                    (LUPDATE w n ws)) s with
                        NONE -> NONE
                      | SOME s' -> SOME ((s',t),Rval (semanticPrimitives_Conv
-                       NONE [])))
+                       NONE []))))
          | _ -> NONE)
      | (ast_CopyStrStr,[semanticPrimitives_Litv (ast_StrLit str);
        semanticPrimitives_Litv (ast_IntLit off); semanticPrimitives_Litv
@@ -1288,7 +1288,7 @@ let do_app_def = new_definition
        (ast_IntLit i); v]) ->
          (match store_lookup lnum s with
            SOME (semanticPrimitives_Varray vs) ->
-             if i < ((&0):int) then
+             (if i < ((&0):int) then
                SOME ((s,t),Rerr (Rraise sub_exn_v))
              else let n = (num_of_int (abs (I i))) in
                  if n >= LENGTH vs then
@@ -1297,13 +1297,13 @@ let do_app_def = new_definition
                    (LUPDATE v n vs)) s with
                        NONE -> NONE
                      | SOME s' -> SOME ((s',t),Rval (semanticPrimitives_Conv
-                       NONE [])))
+                       NONE []))))
          | _ -> NONE)
      | (ast_Aupdate_unsafe,[semanticPrimitives_Loc _ lnum;
        semanticPrimitives_Litv (ast_IntLit i); v]) ->
          (match store_lookup lnum s with
            SOME (semanticPrimitives_Varray vs) ->
-             if i < ((&0):int) then
+             (if i < ((&0):int) then
                NONE
              else let n = (num_of_int (abs (I i))) in
                  if n >= LENGTH vs then
@@ -1312,7 +1312,7 @@ let do_app_def = new_definition
                    (LUPDATE v n vs)) s with
                        NONE -> NONE
                      | SOME s' -> SOME ((s',t),Rval (semanticPrimitives_Conv
-                       NONE [])))
+                       NONE []))))
          | _ -> NONE)
      | (ast_ConfigGC,[semanticPrimitives_Litv (ast_IntLit i);
        semanticPrimitives_Litv (ast_IntLit j)]) ->

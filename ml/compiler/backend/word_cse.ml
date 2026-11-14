@@ -221,10 +221,10 @@ let canonicalFp_def = define_cases_clauses
       FPToInt r1 (canonicalRegs data r2)) /\
     (canonicalFp data (FPFromInt r1 r2) =
       FPFromInt r1 (canonicalRegs data r2))`;
-   `(canonicalFp data (FPMovToReg r1 r2 r3) =
-      FPMovToReg r1 (canonicalRegs data r2) (canonicalRegs data r3))`;
-   `(canonicalFp data (FPMovFromReg r1 r2 r3) =
-      FPMovFromReg r1 (canonicalRegs data r2) (canonicalRegs data r3))`];;
+   `canonicalFp data (FPMovToReg r1 r2 r3) =
+      FPMovToReg r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
+   `canonicalFp data (FPMovFromReg r1 r2 r3) =
+      FPMovFromReg r1 (canonicalRegs data r2) (canonicalRegs data r3)`];;
 
 (* SEEN INSTRUCTIONS MEMORY *)
 
@@ -294,8 +294,8 @@ let fpToNumList_def = define_cases_clauses
     (fpToNumList (FPMov r1 r2) = [16; r2 + 100]) /\
     (fpToNumList (FPToInt r1 r2) = [19; r2 + 100]) /\
     (fpToNumList (FPFromInt r1 r2) = [20; r2 + 100])`;
-   `(fpToNumList (FPMovToReg r1 r2 r3) = [17; r2 + 100; r3 + 100])`;
-   `(fpToNumList (FPMovFromReg r1 r2 r3) = [18; r2 + 100; r3 + 100])`];;
+   `fpToNumList (FPMovToReg r1 r2 r3) = [17; r2 + 100; r3 + 100]`;
+   `fpToNumList (FPMovFromReg r1 r2 r3) = [18; r2 + 100; r3 + 100]`];;
 
 let instToNumList_def = new_definition
   `instToNumList x1 =
@@ -649,7 +649,7 @@ let word_cse_def,word_cse_ind = define_rec_clauses
     (word_cse data (wordLang_Loop names c exit_names) =
       let (_,c') = word_cse empty_data c in
         (empty_data,wordLang_Loop names c' exit_names))`;
-   `(word_cse data (wordLang_Return r1 r2) = (data,wordLang_Return r1 r2))`];;
+   `word_cse data (wordLang_Return r1 r2) = (data,wordLang_Return r1 r2)`];;
 
 let word_common_subexp_elim_def = new_definition
   `word_common_subexp_elim prog =

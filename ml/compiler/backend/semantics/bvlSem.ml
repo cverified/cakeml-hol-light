@@ -200,11 +200,11 @@ let do_part_def = define_cases_clauses
     (bvlSem_do_part m (closLang_W64 w) refs = (bvlSem_Word64 w,refs)) /\
     (bvlSem_do_part m (closLang_Con t ns) refs = (bvlSem_Block t (MAP m
     ns),refs))`;
-   `(bvlSem_do_part m (closLang_Str t) refs =
+   `bvlSem_do_part m (closLang_Str t) refs =
       let ptr = (minimal ptr. ~(ptr IN FDOM refs)) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (bvlSem_RefPtr T ptr,refs |+ (ptr,((bvlSem_ByteArray T
-            bytes):bvlSem_v bvlSem_ref))))`];;
+            bytes):bvlSem_v bvlSem_ref)))`];;
 
 let do_build_def,do_build_ind = define_rec
   `(bvlSem_do_build m i [] refs = (m (i - 1),refs)) /\

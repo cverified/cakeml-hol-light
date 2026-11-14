@@ -128,11 +128,11 @@ let mupdate_def,mupdate_ind = define_shaped_rec
      match l with
        [] -> M_failure e
      | CONS x' l' ->
-         if n = 0 then
+         (if n = 0 then
            M_success (CONS x l')
          else (match Mupdate e x (n - 1) l' with
               M_success l'' -> M_success (CONS x' l'')
-            | other -> other)`;;
+            | other -> other))`;;
 
 (* Mupdate_eq *)
 let mupdate_eq = prove
@@ -216,11 +216,11 @@ let mref_assign_aux_def,mref_assign_aux_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x1)`
   `Mref_assign_aux e (n:num) x =
      (\s. match s with CONS x' s ->
-             if n = 0 then
+             (if n = 0 then
                M_success (CONS x s)
              else (match Mref_assign_aux e (n - 1) x s with
                   M_success s -> M_success (CONS x' s)
-                | other -> other)
+                | other -> other))
          | [] -> M_failure e)`;;
 
 let mref_assign_def = define_general

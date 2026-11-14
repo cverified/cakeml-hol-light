@@ -598,12 +598,12 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
         let (p2,l,i,cs) = word_bignum_compile n l i cs p2 in
           (wordLang_Seq p1 p2,l,i,cs)
      | word_bignum_If t r ri p1 p2 ->
-        let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
+        (let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
         let (p2,l,i,cs) = word_bignum_compile n l i cs p2 in
           match ri with Reg r2 -> (SeqTemp i r (SeqTemp (i + 1) r2
             (wordLang_If t i (Reg (i + 1)) p1 p2)),
                        l,i + 2,cs)
-          | Imm im -> (SeqTemp i r (wordLang_If t i ri p1 p2),l,i + 1,cs)
+          | Imm im -> (SeqTemp i r (wordLang_If t i ri p1 p2),l,i + 1,cs))
      | word_bignum_Assign j e ->
         (wordLang_Seq (wordLang_Assign i (word_bignum_compile_exp e))
           (wordLang_Set (Temp (n2w j)) (wordLang_Var i)),l,i + 1,cs)

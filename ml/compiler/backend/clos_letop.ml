@@ -69,13 +69,13 @@ let clos_letop_let_op_def,clos_letop_let_op_ind = assume_definition_rec_clauses
     ticks dest (clos_letop_let_op xs)]) /\
     (clos_letop_let_op [closLang_App t loc_opt x1 xs] = [closLang_App t
     loc_opt (HD (clos_letop_let_op [x1])) (clos_letop_let_op xs)])`;
-   `(clos_letop_let_op [closLang_Letrec t loc_opt vs fns x1] =
+   `clos_letop_let_op [closLang_Letrec t loc_opt vs fns x1] =
          let new_fns = MAP (\(num_args,x). (num_args,HD (clos_letop_let_op
              [x]))) fns in
          [closLang_Letrec t loc_opt vs new_fns (HD (clos_letop_let_op
-             [x1]))])`;
-   `(clos_letop_let_op [closLang_Fn t loc_opt vs num_args x1] =
-    [closLang_Fn t loc_opt vs num_args (HD (clos_letop_let_op [x1]))])`];;
+             [x1]))]`;
+   `clos_letop_let_op [closLang_Fn t loc_opt vs num_args x1] =
+    [closLang_Fn t loc_opt vs num_args (HD (clos_letop_let_op [x1]))]`];;
 
 (* HOL4 clos_letopScript.sml:57: ML code, not ported *)
 
@@ -126,12 +126,12 @@ let clos_letop_let_op_sing_def,clos_letop_let_op_sing_ind =
     (let_op_let [] = []) /\
     (let_op_let (CONS (num_args,(x:closLang_exp)) xs) = CONS
     (num_args,clos_letop_let_op_sing x) (let_op_let xs))`;
-   `(clos_letop_let_op_sing (closLang_Letrec t loc_opt vs fns x1) =
+   `clos_letop_let_op_sing (closLang_Letrec t loc_opt vs fns x1) =
          let new_fns = let_op_let fns in
          (closLang_Letrec t loc_opt vs new_fns ((clos_letop_let_op_sing
-             (x1)))))`;
-   `(clos_letop_let_op_sing (closLang_Fn t loc_opt vs num_args x1) =
-    (closLang_Fn t loc_opt vs num_args ((clos_letop_let_op_sing (x1)))))`];;
+             (x1))))`;
+   `clos_letop_let_op_sing (closLang_Fn t loc_opt vs num_args x1) =
+    (closLang_Fn t loc_opt vs num_args ((clos_letop_let_op_sing (x1))))`];;
 
 let let_op_sing_eq = prove
  (`(!e. clos_letop_let_op [e] = [clos_letop_let_op_sing e]) /\

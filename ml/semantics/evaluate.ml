@@ -126,8 +126,8 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
            | semanticPrimitives_IsThunk NotEvaluated f ->
               (match semanticPrimitives_do_opapp [f;
                   semanticPrimitives_Conv NONE []] with SOME (env',e) ->
-                   if semanticPrimitives_state_clock st' = 0 then (st',Rerr
-                       (Rabort Rtimeout_error)) else (match evaluate
+                   (if semanticPrimitives_state_clock st' = 0 then
+                       (st',Rerr (Rabort Rtimeout_error)) else (match evaluate
                        (evaluate_dec_clock st') env' [e] with (st2,Rval vs2) ->
                           (match semanticPrimitives_update_thunk (REVERSE
                               vs) (semanticPrimitives_state_refs st2) vs2 with
@@ -135,12 +135,12 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
                            | SOME refs ->
                                (semanticPrimitives_state_refs_fupd (K refs)
                                st2,Rval vs2))
-                      | (st2,Rerr e) -> (st2,Rerr e))
+                      | (st2,Rerr e) -> (st2,Rerr e)))
                | NONE -> (st',Rerr (Rabort Rtype_error))))
        | ast_EvalOp ->
           (match evaluate_fix_clock st' (do_eval_res (REVERSE vs) st') with
             (st1,Rval (env1,decs)) ->
-              if semanticPrimitives_state_clock st1 = 0 then
+              (if semanticPrimitives_state_clock st1 = 0 then
                 (st1,Rerr (Rabort Rtimeout_error))
               else (match evaluate_fix_clock (evaluate_dec_clock st1)
                         (evaluate_evaluate_decs (evaluate_dec_clock st1)
@@ -160,7 +160,7 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
                     (reset_env_generation
                         (semanticPrimitives_state_eval_state st')
                         (semanticPrimitives_state_eval_state st2))) st2),Rerr
-                        e))
+                        e)))
           | (st1,Rerr e) -> (st1,Rerr e))
       | ast_Simple ->
           (match semanticPrimitives_do_app (semanticPrimitives_state_refs

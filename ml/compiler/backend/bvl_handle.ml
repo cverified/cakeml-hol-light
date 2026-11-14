@@ -121,7 +121,7 @@ let handle_simp_def,handle_simp_ind = assume_definition_rec_clauses
     (handle_simp_list [] = ([]:bvl_exp list)) /\
     (handle_simp_list (CONS x xs) = ((CONS (handle_simp x) (handle_simp_list
     xs)):bvl_exp list))`;
-   `(make_handle x1 x2 l =
+   `make_handle x1 x2 l =
          match dest_handle_Raise x1 with SOME r -> bvl_Let [r]
              (handle_adj_vars 1 l (handle_simp x2))
          | NONE ->
@@ -136,7 +136,7 @@ let handle_simp_def,handle_simp_ind = assume_definition_rec_clauses
                               (make_handle b2 x2 l)
                               (handle_simp b3)
          | NONE -> (bvl_Handle (handle_simp x1) (handle_adj_vars 1 l
-             (handle_simp x2))))))`];;
+             (handle_simp x2)))))`];;
 
 let SmartLet_def = new_definition
   `SmartLet xs x = if NULL xs then x else bvl_Let xs x`;;

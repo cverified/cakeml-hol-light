@@ -76,9 +76,9 @@ let inline_exp_def,inline_exp_ind = assume_definition_rec_clauses
     (inline_exps cs [] = []) /\
     (inline_exps cs (CONS x xs) = CONS (inline_exp cs x) (inline_exps cs
     xs))`;
-   `(inline_exp cs (bvi_LetCall rets ticks dest xs y) =
+   `inline_exp cs (bvi_LetCall rets ticks dest xs y) =
          bvi_LetCall rets ticks dest (inline_exps cs xs) (inline_exp cs
-             y))`];;
+             y)`];;
 
 let inline_all_def,inline_all_ind = define_rec
   `(inline_all cs [] = (cs,[])) /\
@@ -117,9 +117,9 @@ let remove_ticks_exp_def,remove_ticks_exp_ind = define_shaped_wf_clauses
     (remove_ticks_exps [] = []) /\
     (remove_ticks_exps (CONS x xs) = CONS (remove_ticks_exp x)
     (remove_ticks_exps xs))`;
-   `(remove_ticks_exp (bvi_LetCall rets ticks dest xs y) =
+   `remove_ticks_exp (bvi_LetCall rets ticks dest xs y) =
          bvi_LetCall rets 0 dest (remove_ticks_exps xs)
-           (remove_ticks_exp y))`];;
+           (remove_ticks_exp y)`];;
 
 let compile_inc_def = new_definition
   `bvi_inline_compile_inc cs prog =

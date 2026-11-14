@@ -330,13 +330,13 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec_clauses
                      (bviSem_state_code s) with NONE -> (Rerr (Rabort
                      Rtype_error),s)
                   | SOME (args,exp) ->
-                      if bviSem_state_clock s = 0 then
+                      (if bviSem_state_clock s = 0 then
                         (Rerr (Rabort
                             Rtimeout_error),bviSem_state_clock_fupd (K 0) s)
                       else (match bviSem_evaluate
                           ([exp],args,bviSem_dec_clock 1 s) with (Rerr (Rraise
                           (Ret _)),s1) -> (Rerr (Rabort Rtype_error),s1)
-                         | res -> res))) /\
+                         | res -> res)))) /\
     (bviSem_evaluate ([bvi_Call ticks dest xs handler],env,s1) =
          if IS_NONE dest /\ IS_SOME handler then (Rerr (Rabort
              Rtype_error),s1) else match bviSem_fix_clock s1 (bviSem_evaluate
@@ -344,7 +344,7 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec_clauses
              (match bvlSem_find_code dest vs (bviSem_state_code s) with
                  NONE -> (Rerr (Rabort Rtype_error),s)
               | SOME (args,exp) ->
-                  if (bviSem_state_clock s < ticks + 1) then (Rerr (Rabort
+                  (if (bviSem_state_clock s < ticks + 1) then (Rerr (Rabort
                       Rtimeout_error),bviSem_state_clock_fupd (K 0) s) else
                       match bviSem_fix_clock (bviSem_dec_clock (ticks + 1) s)
                       (bviSem_evaluate ([exp],args,bviSem_dec_clock (ticks + 1)
@@ -356,15 +356,15 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec_clauses
                               | res -> res)
                           | NONE -> (Rerr (Rraise (Exn v)),s))
                     | (Rerr (Rraise _),s) -> (Rerr (Rabort Rtype_error),s)
-                    | res -> res)
+                    | res -> res))
          | res -> res)`;
-   `(bviSem_evaluate ([bvi_LetCall rets ticks dest xs y],env,s1) =
+   `bviSem_evaluate ([bvi_LetCall rets ticks dest xs y],env,s1) =
          match bviSem_fix_clock s1 (bviSem_evaluate (xs,env,s1)) with (Rval
              vs,s) ->
              (match bvlSem_find_code (SOME dest) vs (bviSem_state_code s)
                  with NONE -> (Rerr (Rabort Rtype_error),s)
               | SOME (args,exp) ->
-                  if (bviSem_state_clock s < ticks + 1) then (Rerr (Rabort
+                  (if (bviSem_state_clock s < ticks + 1) then (Rerr (Rabort
                       Rtimeout_error),bviSem_state_clock_fupd (K 0) s) else
                       match bviSem_fix_clock (bviSem_dec_clock (ticks + 1) s)
                       (bviSem_evaluate ([exp],args,bviSem_dec_clock (ticks + 1)
@@ -373,8 +373,8 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec_clauses
                         if LENGTH ret_vs = rets then bviSem_evaluate
                             ([y],APPEND ret_vs env,s)
                         else (Rerr (Rabort Rtype_error),s)
-                    | res -> res)
-         | res -> res)`];;
+                    | res -> res))
+         | res -> res`];;
 
 (* HOL4 bviSemScript.sml:349: ML code, not ported *)
 

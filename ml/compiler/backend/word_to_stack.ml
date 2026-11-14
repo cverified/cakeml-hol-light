@@ -505,7 +505,7 @@ let word_to_stack_comp_def,word_to_stack_comp_ind = assume_definition_rec
         let (q2,bs) = word_to_stack_comp conf perf p2 bs kf in
           (stackLang_Seq q1 q2,bs)
      | wordLang_If cmp r ri p1 p2 ->
-        let (x1,r') = wReg1 r kf in
+        (let (x1,r') = wReg1 r kf in
         let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
         let (q2,bs) = word_to_stack_comp conf perf p2 bs kf in
         match ri with
@@ -519,27 +519,27 @@ let word_to_stack_comp_def,word_to_stack_comp_ind = assume_definition_rec
            else let r = FST kf + 1 in
              (stackLang_Seq
                ((\r w. stackLang_Inst (asm_Const r w)) r i)
-               (wStackLoad x1 (stackLang_If cmp r' (Reg r) q1 q2)),bs)
+               (wStackLoad x1 (stackLang_If cmp r' (Reg r) q1 q2)),bs))
      | wordLang_Loop _ p1 _ ->
         let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
           (stackLang_Loop q1,bs)
      | wordLang_Set name exp ->
-       if name = BitmapBase then (stackLang_Skip,bs)
+       (if name = BitmapBase then (stackLang_Skip,bs)
        else
         // Impossible
         match exp with wordLang_Var n -> let (x1,r') = wReg1 n kf in
           (wStackLoad x1 (stackLang_Set name r'),bs)
-        | _ -> (stackLang_Skip,bs)
+        | _ -> (stackLang_Skip,bs))
      // impossible
      | wordLang_Get n name ->
         (wRegWrite1 (\r. stackLang_Get r name) n kf,bs)
      | wordLang_Call ret dest args handler ->
-        let (q0,dest) = call_dest dest args kf in
+        (let (q0,dest) = call_dest dest args kf in
         match ret with NONE -> (stackLang_Seq q0 (SeqStackFree
           (word_to_stack_stack_free dest (LENGTH args) kf)
                     (stackLang_Call NONE dest NONE)),bs)
         | SOME (vs,live,ret_code,l1,l2) ->
-            let (q1,bs) = wLive live bs kf in
+            (let (q1,bs) = wLive live bs kf in
             let (q2,bs) = word_to_stack_comp conf perf ret_code bs kf in
             let pre = (if perf then perf_call_prefix l1 l2 (FST kf) else
               stackLang_Skip) in
@@ -565,7 +565,7 @@ let word_to_stack_comp_def,word_to_stack_comp_ind = assume_definition_rec
                            (stackLang_Seq pre
                              (stackLang_Call (SOME (q3,0,l1,l2)) dest (SOME
                                (q4,h1,h2))))))),
-                   bs)
+                   bs)))
      | wordLang_Alloc r live ->
         let (q1,bs) = wLive live bs kf in
           (stackLang_Seq q1 (stackLang_Alloc 1),bs)

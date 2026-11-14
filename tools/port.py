@@ -3643,7 +3643,9 @@ class Porter:
         while k > j + 1 and lines[k - 1].lstrip().startswith('//'):
           k -= 1
         rest = '\n'.join(lines[j:k])
-        out += '(' + (rest.lstrip() if j else rest) + ')'
+        if j: rest = rest.lstrip()
+        # a quotation of one clause needs no brackets round it
+        out += rest if len(idx) == 1 else '(' + rest + ')'
         for l in lines[k:]:
           out += '\n' + ind + l.lstrip()
       return '`' + out + '`'
@@ -3788,10 +3790,17 @@ class Porter:
       for i, a in enumerate(args):
         t = pat_ty(a)
         if t: argtys.setdefault(i, t)
+    # an argument that no clause patterns on has no type that the
+    # clauses say, so the place stands for the argument itself: a
+    # variable at argument 0 of one clause and at argument 1 of
+    # another is a clash, because nothing says that the two
+    # arguments are of one type (balanced_map's trim_help_middle
+    # has its comparison and its low bound the other way round in
+    # its second clause, which is why HOL4 gets away with it)
     for n, (_, args, _) in enumerate(cls):
       clause[0] = n
       for i, a in enumerate(args):
-        walk(a, {argtys[i]} if i in argtys else None)
+        walk(a, {argtys[i]} if i in argtys else {('arg', i)})
     # two clauses cannot stand in one quotation where a variable of
     # both has no type in common between them; the clauses are
     # grouped into as few quotations as that allows, which is one
@@ -4013,9 +4022,10 @@ class Porter:
         # or the arms after this one would be its
         rr = r
         while rr.kind == 'paren': rr = rr.e
+        rp = (0 if rr.kind in ('cond', 'let')
+                   and not hterm.open_tail(rr) else 2)
         arms.append((cs, pat,
-                     self.pr_body(pr, hterm.rename_ast(r, sub),
-                       0 if rr.kind in ('cond', 'let') else 2)))
+                     self.pr_body(pr, hterm.rename_ast(r, sub), rp)))
       finally:
         self.ctx.intvars = iv
         self.contys = wasc

@@ -2697,7 +2697,7 @@ let assign_WordToInt_def = new_definition
          let len = (if dimindex (:'a) < 64 then 2 else 1) in
          (match encode_header c 3 len with NONE -> (GiveUp,l)
             | SOME header ->
-              if len = 1 then
+              (if len = 1 then
                 (data_to_word_list_Seq [LoadWord64 c 3 (adjust_var v);
                            wordLang_Assign 1 ((\sh e n. wordLang_Shift sh e
                              (wordLang_Const (n2w n))) Lsr (wordLang_Var 3)
@@ -2725,8 +2725,8 @@ let assign_WordToInt_def = new_definition
                          (wordLang_Assign (adjust_var dest) ((\sh e n.
                            wordLang_Shift sh e (wordLang_Const (n2w n))) Lsl
                            (wordLang_Var 11) 2))
-                         (WriteWord32_on_32 c header1 dest 11)])],l))):'a
-                           wordLang_prog#num`;;
+                         (WriteWord32_on_32 c header1 dest
+                           11)])],l)))):'a wordLang_prog#num`;;
 
 let assign_FFI_def = new_definition
   `assign_FFI ffi_index (c:data_to_word_config) (secn:num) (l:num) (dest:num)
@@ -3208,7 +3208,7 @@ let comp_def,comp_ind = define_wf
          (match ret with NONE -> (wordLang_Call NONE target (CONS 0 (MAP
            adjust_var args)) NONE,l)
          | SOME (ns,names) ->
-             let ret = SOME (MAP adjust_var ns,adjust_sets
+             (let ret = SOME (MAP adjust_var ns,adjust_sets
                names,wordLang_Skip,secn,l) in
                match handler with NONE -> (wordLang_Call ret target (MAP
                  adjust_var args) NONE,l + 1)
@@ -3216,7 +3216,7 @@ let comp_def,comp_ind = define_wf
                    let (q1,l1) = data_to_word_comp c secn (l + 2) p in
                    let handler = SOME (adjust_var n,q1,secn,l + 1) in
                      (wordLang_Call ret target (MAP adjust_var args)
-                       handler,l1))`;;
+                       handler,l1)))`;;
 
 let data_to_word_compile_part_def = new_definition
   `data_to_word_compile_part c (n,arg_count,p) = (n,arg_count + 1,FST

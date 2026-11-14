@@ -282,11 +282,11 @@ let op_to_display_def = new_definition
    | ast_ThunkOp t -> thunk_op_to_display t`;;
 
 let id_to_display_def,id_to_display_ind = define_rec_clauses
-  [`(id_to_display (Short n) =
-      displayLang_Item NONE (implode "Short") [displayLang_String n])`;
-   `(id_to_display (Long n i) =
+  [`id_to_display (Short n) =
+      displayLang_Item NONE (implode "Short") [displayLang_String n]`;
+   `id_to_display (Long n i) =
       displayLang_Item NONE (implode "Long") [displayLang_String n;
-          id_to_display i])`];;
+          id_to_display i]`];;
 
 let ast_t_to_display_def,ast_t_to_display_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -844,7 +844,7 @@ let clos_to_display_def,clos_to_display_ind = assume_definition_rec_clauses
                 (num_to_varn_list ((h + len) - 1) vn);
             clos_to_display ns (h + len + vn) e])
                 (clos_to_display_letrecs ns h (i - 1) len es))`;
-   `(clos_to_display ns h (closLang_Letrec name_hint n1 n2 es e) =
+   `clos_to_display ns h (closLang_Letrec name_hint n1 n2 es e) =
         displayLang_Item (SOME backend_common_None) (add_name_hint (implode
             "letrec") (presLang_commas name_hint))
             [(\f opt. match opt with NONE -> empty_item (implode "none")
@@ -856,7 +856,7 @@ let clos_to_display_def,clos_to_display_ind = assume_definition_rec_clauses
                   n2;
              displayLang_Tuple (clos_to_display_letrecs ns h (LENGTH es -
                  1) (LENGTH es) es);
-             clos_to_display ns h e])`];;
+             clos_to_display ns h e]`];;
 
 let clos_fun_to_display_def = new_definition
   `clos_fun_to_display names (n,argc,body) =
@@ -992,14 +992,14 @@ let bvi_to_display_def,bvi_to_display_ind = assume_definition_rec_clauses
         CONS (displayLang_Tuple [display_num_as_varn (h + i);
             displayLang_String (implode "<-"); bvi_to_display ns h x])
             (bvi_to_display_lets ns h (i - 1) xs))`;
-   `(bvi_to_display ns h (bvi_LetCall rets ticks dest xs y) =
+   `bvi_to_display ns h (bvi_LetCall rets ticks dest xs y) =
         separate_lines (implode "letcall")
             [displayLang_Item NONE (implode "call")
                (CONS (displayLang_String (attach_name ns (SOME dest)))
                    (bvi_to_display_list ns h xs));
              displayLang_Tuple (REVERSE (list_of_seq (\i.
                  display_num_as_varn (h + i)) rets));
-             bvi_to_display ns (h + rets) y])`];;
+             bvi_to_display ns (h + rets) y]`];;
 
 let bvi_fun_to_display_def = new_definition
   `bvi_fun_to_display names (n,argc,body) =
@@ -1623,18 +1623,18 @@ let word_prog_to_display_def,word_prog_to_display_ind =
             word_prog_to_display k ns prog;
             displayLang_String (attach_name ns (SOME n2));
             num_to_display n3]])`;
-   `(word_prog_to_display (SUC k) ns (wordLang_OpCurrHeap b n1 n2) =
+   `word_prog_to_display (SUC k) ns (wordLang_OpCurrHeap b n1 n2) =
     displayLang_Tuple
         [num_to_display n1; displayLang_String (implode ":=");
             displayLang_String (implode "CurrHeap");
-         asm_binop_to_display b; num_to_display n2])`;
-   `(word_prog_to_display (SUC k) ns (wordLang_StoreConsts a b c d ws) =
+         asm_binop_to_display b; num_to_display n2]`;
+   `word_prog_to_display (SUC k) ns (wordLang_StoreConsts a b c d ws) =
     displayLang_Item NONE (implode "store_consts")
         [num_to_display a;
          num_to_display b;
          num_to_display c;
          num_to_display d;
-         displayLang_Tuple (ws_to_display ws)])`];;
+         displayLang_Tuple (ws_to_display ws)]`];;
 
 let word_fun_to_display_def = new_definition
   `word_fun_to_display names (n,argc,body) =

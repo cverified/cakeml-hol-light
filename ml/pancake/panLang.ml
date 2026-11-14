@@ -289,8 +289,8 @@ let var_exp_def,var_exp_ind = assume_definition_rec_clauses
     (var_exp panLang_BaseAddr = (([]):mlstring list)) /\
     (var_exp panLang_TopAddr = (([]):mlstring list)) /\
     (var_exp panLang_BytesInWord = (([]):mlstring list))`;
-   `(var_exp (panLang_Shift sh e1 e2) = ((APPEND (var_exp e1) (var_exp
-    e2)):mlstring list))`];;
+   `var_exp (panLang_Shift sh e1 e2) = ((APPEND (var_exp e1) (var_exp
+    e2)):mlstring list)`];;
 
 let global_var_exp_def,global_var_exp_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -315,8 +315,8 @@ let global_var_exp_def,global_var_exp_ind = assume_definition_rec_clauses
     es)):mlstring list)) /\
     (global_var_exp (panLang_Cmp c e1 e2) = ((APPEND (global_var_exp e1)
     (global_var_exp e2)):mlstring list))`;
-   `(global_var_exp (panLang_Shift sh e1 e2) = ((APPEND (global_var_exp e1)
-    (global_var_exp e2)):mlstring list))`];;
+   `global_var_exp (panLang_Shift sh e1 e2) = ((APPEND (global_var_exp e1)
+    (global_var_exp e2)):mlstring list)`];;
 
 let load_op_def = define_cases
   `load_op Op8 = asm_Load8 /\

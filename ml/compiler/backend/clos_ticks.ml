@@ -48,14 +48,14 @@ let clos_ticks_remove_ticks_def,clos_ticks_remove_ticks_ind =
     (clos_ticks_remove_ticks [closLang_App t loc_opt x1 xs] =
          [closLang_App t loc_opt (HD (clos_ticks_remove_ticks [x1]))
              (clos_ticks_remove_ticks xs)])`;
-   `(clos_ticks_remove_ticks [closLang_Letrec t loc_opt vs fns x1] =
+   `clos_ticks_remove_ticks [closLang_Letrec t loc_opt vs fns x1] =
          let new_fns = MAP (\(num_args,x). (num_args,HD
              (clos_ticks_remove_ticks [x]))) fns in
          [closLang_Letrec t loc_opt vs new_fns (HD
-             (clos_ticks_remove_ticks [x1]))])`;
-   `(clos_ticks_remove_ticks [closLang_Fn t loc_opt vs num_args x1] =
+             (clos_ticks_remove_ticks [x1]))]`;
+   `clos_ticks_remove_ticks [closLang_Fn t loc_opt vs num_args x1] =
          [closLang_Fn t loc_opt vs num_args (HD
-             (clos_ticks_remove_ticks [x1]))])`];;
+             (clos_ticks_remove_ticks [x1]))]`];;
 
 let clos_ticks_remove_ticks_sing_def,clos_ticks_remove_ticks_sing_ind =
   define_shaped_rec_clauses
@@ -89,13 +89,13 @@ let clos_ticks_remove_ticks_sing_def,clos_ticks_remove_ticks_sing_ind =
     (remove_ticks_let [] = []) /\
     (remove_ticks_let (CONS (num_args,x) xs) = CONS
     (num_args,clos_ticks_remove_ticks_sing x) (remove_ticks_let xs))`;
-   `(clos_ticks_remove_ticks_sing (closLang_Letrec t loc_opt vs fns x1) =
+   `clos_ticks_remove_ticks_sing (closLang_Letrec t loc_opt vs fns x1) =
          let new_fns = remove_ticks_let fns in
          (closLang_Letrec t loc_opt vs new_fns
-             ((clos_ticks_remove_ticks_sing (x1)))))`;
-   `(clos_ticks_remove_ticks_sing (closLang_Fn t loc_opt vs num_args x1) =
+             ((clos_ticks_remove_ticks_sing (x1))))`;
+   `clos_ticks_remove_ticks_sing (closLang_Fn t loc_opt vs num_args x1) =
          (closLang_Fn t loc_opt vs num_args
-             ((clos_ticks_remove_ticks_sing (x1)))))`];;
+             ((clos_ticks_remove_ticks_sing (x1))))`];;
 
 (* HOL4 clos_ticksScript.sml:77: ML code, not ported *)
 

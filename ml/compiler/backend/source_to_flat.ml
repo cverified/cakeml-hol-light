@@ -264,13 +264,13 @@ let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
     (source_to_flat_environment_v_fupd (K (nsBind x (source_to_flat_Local
     backend_common_None x) (source_to_flat_environment_v env))) env) e)
         (compile_funs t env funs))`;
-   `(source_to_flat_compile_exp (t:mlstring list)
+   `source_to_flat_compile_exp (t:mlstring list)
     (env:source_to_flat_environment) (ast_Fun x e) =
         flatLang_Fun (join_all_names t) x
           (source_to_flat_compile_exp t
               (source_to_flat_environment_v_fupd (K (nsBind x
               (source_to_flat_Local backend_common_None x)
-              (source_to_flat_environment_v env))) env) e))`];;
+              (source_to_flat_environment_v env))) env) e)`];;
 
 let compile_exps_append = prove
  (`!env es es'.

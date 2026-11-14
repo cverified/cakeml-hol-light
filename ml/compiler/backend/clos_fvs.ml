@@ -45,7 +45,7 @@ let remove_fvs_def,remove_fvs_ind = define_shaped_rec_clauses
     dest (remove_fvs fvs xs)]) /\
     (remove_fvs fvs [closLang_App t loc_opt x1 xs] = [closLang_App t loc_opt
     (HD (remove_fvs fvs [x1])) (remove_fvs fvs xs)])`;
-   `(remove_fvs fvs [closLang_Letrec t loc_opt vs fns x1] =
+   `remove_fvs fvs [closLang_Letrec t loc_opt vs fns x1] =
          let m = LENGTH fns in
          let new_fvs = (match vs with NONE -> fvs | SOME x -> LENGTH x) in
          let new_fns =
@@ -53,11 +53,11 @@ let remove_fvs_def,remove_fvs_ind = define_shaped_rec_clauses
              (num_args,HD (remove_fvs (num_args + m + new_fvs) [x]))) fns
                  in
          [closLang_Letrec t loc_opt vs new_fns (HD (remove_fvs (m +
-             fvs) [x1]))])`;
-   `(remove_fvs fvs [closLang_Fn t loc_opt vs num_args x1] =
+             fvs) [x1]))]`;
+   `remove_fvs fvs [closLang_Fn t loc_opt vs num_args x1] =
         let fvs = (match vs with NONE -> fvs | SOME x -> LENGTH x) in
         [closLang_Fn t loc_opt vs num_args (HD (remove_fvs (num_args +
-            fvs) [x1]))])`];;
+            fvs) [x1]))]`];;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL (_,e) -> closLang_exp_size e
@@ -98,20 +98,20 @@ let remove_fvs_sing_def,remove_fvs_sing_ind = define_shaped_rec_clauses
     (remove_fvs_list fvs [] = []) /\
     (remove_fvs_list fvs (CONS (x:closLang_exp) xs) = CONS (remove_fvs_sing
     fvs x) (remove_fvs_list fvs xs)) /\
-    (remove_fvs_let m fvs [] = []) /\
     (remove_fvs_let m new_fvs (CONS (num_args,x) xs) = CONS
     (num_args,remove_fvs_sing (num_args + m + new_fvs) x) (remove_fvs_let
     m new_fvs xs))`;
-   `(remove_fvs_sing fvs (closLang_Letrec t loc_opt vs fns x1) =
+   `remove_fvs_sing fvs (closLang_Letrec t loc_opt vs fns x1) =
          let m = LENGTH fns in
          let new_fvs = (match vs with NONE -> fvs | SOME x -> LENGTH x) in
          let new_fns = remove_fvs_let m new_fvs fns in
          closLang_Letrec t loc_opt vs new_fns (remove_fvs_sing (m +
-             fvs) x1))`;
-   `(remove_fvs_sing fvs (closLang_Fn t loc_opt vs num_args x1) =
+             fvs) x1)`;
+   `remove_fvs_sing fvs (closLang_Fn t loc_opt vs num_args x1) =
         let fvs = (match vs with NONE -> fvs | SOME x -> LENGTH x) in
         closLang_Fn t loc_opt vs num_args (remove_fvs_sing (num_args +
-            fvs) x1))`];;
+            fvs) x1)`;
+   `remove_fvs_let m fvs [] = []`];;
 
 let remove_fvs_sing_eq = prove
  (`(!fvs e. remove_fvs fvs [e] = [remove_fvs_sing fvs e]) /\

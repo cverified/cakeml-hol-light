@@ -339,11 +339,11 @@ let word_gc_move_roots_bitmaps_def = new_definition
      match stackSem_enc_stack bitmaps stack' with NONE ->
        (ARB,ARB,ARB,ARB,F)
      | SOME wl_list ->
-         let (wl,i2,pa2,m2,c2) =
+         (let (wl,i2,pa2,m2,c2) =
              word_gc_move_roots conf (wl_list,i1,pa1,curr,m,dm) in
            match stackSem_dec_stack bitmaps wl stack' with NONE ->
              (ARB,ARB,ARB,ARB,F)
-           | SOME stack' -> (stack',i2,pa2,m2,c2)`;;
+           | SOME stack' -> (stack',i2,pa2,m2,c2))`;;
 
 let word_gc_move_loop_F = prove
  (`!k conf pb i pa old m dm i1 pa1 m1 c1.
@@ -416,11 +416,11 @@ let word_gc_move_bitmaps_def = new_definition
      | SOME bs ->
        (match filter_bitmap bs stack' with NONE -> NONE
        | SOME (ts,ws) ->
-         let (wl,i2,pa2,m2,c2) =
+         (let (wl,i2,pa2,m2,c2) =
                  word_gc_move_roots conf (ts,i1,pa1,curr,m,dm) in
            match map_bitmap bs wl stack' with NONE -> NONE
            | SOME (hd,ts1,ws') ->
-               SOME (hd,ws,i2,pa2,m2,c2))`;;
+               SOME (hd,ws,i2,pa2,m2,c2)))`;;
 
 (* [local] *)
 let word_gc_move_roots_APPEND = prove
@@ -447,14 +447,14 @@ let word_gc_move_roots_bitmaps = prove
        word_gc_move_roots_bitmaps conf (stack',bitmaps,i1,pa1,curr,m,dm) =
        (match stack' with [] -> (ARB,ARB,ARB,ARB,F)
        | (CONS w ws) ->
-         if w = wordLang_Word (n2w 0) then (stack',i1,pa1,m,(ws = [])) else
+         (if w = wordLang_Word (n2w 0) then (stack',i1,pa1,m,(ws = [])) else
            match word_gc_move_bitmaps conf (w,ws,bitmaps,i1,pa1,curr,m,dm) with
            NONE -> (ARB,ARB,ARB,ARB,F)
            | SOME (new,stack',i2,pa2,m2,c2) ->
                let (stack',i,pa,m,c3) =
                  word_gc_move_roots_bitmaps conf
                    (stack',bitmaps,i2,pa2,curr,m2,dm) in
-                   (APPEND (CONS w new) stack',i,pa,m,(c2 /\ c3)))`,
+                   (APPEND (CONS w new) stack',i,pa,m,(c2 /\ c3))))`,
   CHEAT_TAC);;
 
 let word_gc_move_bitmap_def = new_definition
@@ -462,10 +462,10 @@ let word_gc_move_bitmap_def = new_definition
      let bs = get_bits w in
        match filter_bitmap bs stack' with NONE -> NONE
        | SOME (ts,ws) ->
-          let (wl,i2,pa2,m2,c2) = word_gc_move_roots conf
+          (let (wl,i2,pa2,m2,c2) = word_gc_move_roots conf
             (ts,i1,pa1,curr,m,dm) in
             match map_bitmap bs wl stack' with NONE -> NONE
-            | SOME (hd,v2) -> SOME (hd,ws,i2,pa2,m2,c2)`;;
+            | SOME (hd,v2) -> SOME (hd,ws,i2,pa2,m2,c2))`;;
 
 (* HOL4 stack_allocProofScript.sml:718-740: a theorem that HOL4 states as
    the value of an ML expression: map_bitmap_APPEND_APPEND *)
@@ -488,11 +488,11 @@ let word_gc_move_bitmaps_unroll = prove
          (match word_gc_move_bitmap conf (y,stack,i1,pa1,curr,m,dm) with
            NONE -> NONE
          | SOME (hd,ws,i2,pa2,m2,c2) ->
-             if ~(word_msb y) then SOME (hd,ws,i2,pa2,m2,c2) else match
+             (if ~(word_msb y) then SOME (hd,ws,i2,pa2,m2,c2) else match
                word_gc_move_bitmaps conf (wordLang_Word (w + (n2w
                1)),ws,bitmaps,i2,pa2,curr,m2,dm) with NONE -> NONE
                | SOME (hd3,ws3,i3,pa3,m3,c3) ->
-                   SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2 /\ c3))))`),
+                   SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2 /\ c3)))))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -502,7 +502,7 @@ let word_gc_move_bitmap_unroll = prove
        (n2w 1) then SOME ([],stack',i1,pa1,m,T) else match stack' with [] ->
        NONE
        | (CONS x xs) ->
-         if (w && (n2w 1)) = (n2w 0) then
+         (if (w && (n2w 1)) = (n2w 0) then
            match word_gc_move_bitmap conf (w >>> 1,xs,i1,pa1,curr,m,dm) with
              NONE -> NONE
            | SOME (new,stack',i1,pa1,m,c) -> SOME (CONS x
@@ -512,7 +512,7 @@ let word_gc_move_bitmap_unroll = prove
            match word_gc_move_bitmap conf (w >>> 1,xs,i1,pa1,curr,m1,dm)
              with NONE -> NONE
            | SOME (new,stack',i1,pa1,m,c) -> SOME (CONS x1
-             new,stack',i1,pa1,m,(c1 /\ c))`,
+             new,stack',i1,pa1,m,(c1 /\ c)))`,
   CHEAT_TAC);;
 
 let word_gc_move_code_thm = prove
@@ -945,12 +945,12 @@ let word_gen_gc_move_roots_bitmaps_def = new_definition
      match stackSem_enc_stack bitmaps stack' with NONE ->
        (ARB,ARB,ARB,ARB,ARB,ARB,F)
      | SOME wl_list ->
-         let (wl,i2,pa2,ib2,pb2,m2,c2) =
+         (let (wl,i2,pa2,ib2,pb2,m2,c2) =
              word_gen_gc_move_roots conf (wl_list,i1,pa1,ib1,pb1,curr,m,dm)
                in
            match stackSem_dec_stack bitmaps wl stack' with NONE ->
              (ARB,ARB,ARB,ARB,ARB,ARB,F)
-           | SOME stack' -> (stack',i2,pa2,ib2,pb2,m2,c2)`;;
+           | SOME stack' -> (stack',i2,pa2,ib2,pb2,m2,c2))`;;
 
 let word_gen_gc_partial_move_roots_bitmaps_def = new_definition
   `word_gen_gc_partial_move_roots_bitmaps conf
@@ -958,12 +958,12 @@ let word_gen_gc_partial_move_roots_bitmaps_def = new_definition
      match stackSem_enc_stack bitmaps stack' with NONE ->
        (ARB,ARB,ARB,ARB,F)
      | SOME wl_list ->
-         let (wl,i2,pa2,m2,c2) =
+         (let (wl,i2,pa2,m2,c2) =
              word_gen_gc_partial_move_roots conf
                (wl_list,i1,pa1,curr,m,dm,gs,rs) in
            match stackSem_dec_stack bitmaps wl stack' with NONE ->
              (ARB,ARB,ARB,ARB,F)
-           | SOME stack' -> (stack',i2,pa2,m2,c2)`;;
+           | SOME stack' -> (stack',i2,pa2,m2,c2))`;;
 
 (* [local] *)
 let word_gen_gc_partial_move_ref_list_ok = prove
@@ -1104,12 +1104,12 @@ let word_gen_gc_move_bitmaps_def = new_definition
      | SOME bs ->
        (match filter_bitmap bs stack' with NONE -> NONE
        | SOME (ts,ws) ->
-         let (wl,i2,pa2,ib2,pb2,m2,c2) =
+         (let (wl,i2,pa2,ib2,pb2,m2,c2) =
                  word_gen_gc_move_roots conf (ts,i1,pa1,ib1,pb1,curr,m,dm)
                    in
            match map_bitmap bs wl stack' with NONE -> NONE
            | SOME (hd,ts1,ws') ->
-               SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2))`;;
+               SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2)))`;;
 
 let word_gen_gc_partial_move_bitmaps_def = new_definition
   `word_gen_gc_partial_move_bitmaps conf
@@ -1118,12 +1118,12 @@ let word_gen_gc_partial_move_bitmaps_def = new_definition
      | SOME bs ->
        (match filter_bitmap bs stack' with NONE -> NONE
        | SOME (ts,ws) ->
-         let (wl,i2,pa2,m2,c2) =
+         (let (wl,i2,pa2,m2,c2) =
                  word_gen_gc_partial_move_roots conf
                    (ts,i1,pa1,curr,m,dm,gs,rs) in
            match map_bitmap bs wl stack' with NONE -> NONE
            | SOME (hd,ts1,ws') ->
-               SOME (hd,ws,i2,pa2,m2,c2))`;;
+               SOME (hd,ws,i2,pa2,m2,c2)))`;;
 
 (* [local] *)
 let word_gen_gc_move_roots_APPEND = prove
@@ -1174,7 +1174,7 @@ let word_gen_gc_move_roots_bitmaps = prove
          (stack',bitmaps,i1,pa1,ib1,pb1,curr,m,dm) =
        (match stack' with [] -> (ARB,ARB,ARB,ARB,ARB,ARB,F)
        | (CONS w ws) ->
-         if w = wordLang_Word (n2w 0) then (stack',i1,pa1,ib1,pb1,m,(ws =
+         (if w = wordLang_Word (n2w 0) then (stack',i1,pa1,ib1,pb1,m,(ws =
            [])) else match word_gen_gc_move_bitmaps conf
            (w,ws,bitmaps,i1,pa1,ib1,pb1,curr,m,dm) with NONE ->
            (ARB,ARB,ARB,ARB,ARB,ARB,F)
@@ -1183,7 +1183,7 @@ let word_gen_gc_move_roots_bitmaps = prove
                  word_gen_gc_move_roots_bitmaps conf
                    (stack',bitmaps,i2,pa2,ib2,pb2,curr,m2,dm) in
                      (APPEND (CONS w new) stack',i,pa,ib1,pb1,m,(c2
-                       /\ c3)))`,
+                       /\ c3))))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1196,7 +1196,7 @@ let word_gen_gc_partial_move_roots_bitmaps = prove
          (stack',bitmaps,i1,pa1,curr,m,dm,gs,rs) =
        (match stack' with [] -> (ARB,ARB,ARB,ARB,F)
        | (CONS w ws) ->
-         if w = wordLang_Word (n2w 0) then (stack',i1,pa1,m,(ws = [])) else
+         (if w = wordLang_Word (n2w 0) then (stack',i1,pa1,m,(ws = [])) else
            match word_gen_gc_partial_move_bitmaps conf
            (w,ws,bitmaps,i1,pa1,curr,m,dm,gs,rs) with NONE ->
            (ARB,ARB,ARB,ARB,F)
@@ -1204,7 +1204,7 @@ let word_gen_gc_partial_move_roots_bitmaps = prove
                let (stack',i,pa,m,c3) =
                  word_gen_gc_partial_move_roots_bitmaps conf
                    (stack',bitmaps,i2,pa2,curr,m2,dm,gs,rs) in
-                     (APPEND (CONS w new) stack',i,pa,m,(c2 /\ c3)))`,
+                     (APPEND (CONS w new) stack',i,pa,m,(c2 /\ c3))))`,
   CHEAT_TAC);;
 
 let word_gen_gc_move_bitmap_def = new_definition
@@ -1212,21 +1212,21 @@ let word_gen_gc_move_bitmap_def = new_definition
      let bs = get_bits w in
        match filter_bitmap bs stack' with NONE -> NONE
        | SOME (ts,ws) ->
-          let (wl,i2,pa2,ib2,pb2,m2,c2) =
+          (let (wl,i2,pa2,ib2,pb2,m2,c2) =
             word_gen_gc_move_roots conf (ts,i1,pa1,ib1,pb1,curr,m,dm) in
             match map_bitmap bs wl stack' with NONE -> NONE
-            | SOME (hd,v2) -> SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2)`;;
+            | SOME (hd,v2) -> SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2))`;;
 
 let word_gen_gc_partial_move_bitmap_def = new_definition
   `word_gen_gc_partial_move_bitmap conf (w,stack',i1,pa1,curr,m,dm,gs,rs) =
      let bs = get_bits w in
        match filter_bitmap bs stack' with NONE -> NONE
        | SOME (ts,ws) ->
-          let (wl,i2,pa2,m2,c2) =
+          (let (wl,i2,pa2,m2,c2) =
             word_gen_gc_partial_move_roots conf (ts,i1,pa1,curr,m,dm,gs,rs)
               in
             match map_bitmap bs wl stack' with NONE -> NONE
-            | SOME (hd,v2) -> SOME (hd,ws,i2,pa2,m2,c2)`;;
+            | SOME (hd,v2) -> SOME (hd,ws,i2,pa2,m2,c2))`;;
 
 (* HOL4 stack_allocProofScript.sml:2225-2247: a theorem that HOL4 states as
    the value of an ML expression: map_bitmap_APPEND_APPEND *)
@@ -1252,12 +1252,12 @@ let word_gen_gc_move_bitmaps_unroll = prove
          (match word_gen_gc_move_bitmap conf
            (y,stack,i1,pa1,ib1,pb1,curr,m,dm) with NONE -> NONE
          | SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2) ->
-             if ~(word_msb y) then SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2) else
+             (if ~(word_msb y) then SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2) else
                match word_gen_gc_move_bitmaps conf (wordLang_Word (w + (n2w
                1)),ws,bitmaps,i2,pa2,ib2,pb2,curr,m2,dm) with NONE -> NONE
                | SOME (hd3,ws3,i3,pa3,ib3,pb3,m3,c3) ->
                    SOME (APPEND hd hd3,ws3,i3,pa3,ib3,pb3,m3,(c2
-                     /\ c3))))`),
+                     /\ c3)))))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1276,13 +1276,13 @@ let word_gen_gc_partial_move_bitmaps_unroll = prove
          (match word_gen_gc_partial_move_bitmap conf
            (y,stack,i1,pa1,curr,m,dm,gs,rs) with NONE -> NONE
          | SOME (hd,ws,i2,pa2,m2,c2) ->
-             if ~(word_msb y) then SOME (hd,ws,i2,pa2,m2,c2) else match
+             (if ~(word_msb y) then SOME (hd,ws,i2,pa2,m2,c2) else match
                word_gen_gc_partial_move_bitmaps conf
                       (wordLang_Word (w + (n2w
                         1)),ws,bitmaps,i2,pa2,curr,m2,dm,gs,rs) with NONE ->
                         NONE
                | SOME (hd3,ws3,i3,pa3,m3,c3) ->
-                   SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2 /\ c3))))`),
+                   SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2 /\ c3)))))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1292,7 +1292,7 @@ let word_gen_gc_move_bitmap_unroll = prove
        if w = (n2w 1) then SOME ([],stack',i1,pa1,ib1,pb1,m,T) else match
        stack' with [] -> NONE
        | (CONS x xs) ->
-         if (w && (n2w 1)) = (n2w 0) then
+         (if (w && (n2w 1)) = (n2w 0) then
            match word_gen_gc_move_bitmap conf (w >>>
              1,xs,i1,pa1,ib1,pb1,curr,m,dm) with NONE -> NONE
            | SOME (new,stack',i1,pa1,ib1,pb1,m,c) ->
@@ -1302,7 +1302,7 @@ let word_gen_gc_move_bitmap_unroll = prove
            match word_gen_gc_move_bitmap conf (w >>>
              1,xs,i1,pa1,ib1,pb1,curr,m1,dm) with NONE -> NONE
            | SOME (new,stack',i1,pa1,ib1,pb1,m,c) ->
-               SOME (CONS x1 new,stack',i1,pa1,ib1,pb1,m,(c1 /\ c))`,
+               SOME (CONS x1 new,stack',i1,pa1,ib1,pb1,m,(c1 /\ c)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1312,7 +1312,7 @@ let word_gen_gc_partial_move_bitmap_unroll = prove
        (n2w 1) then SOME ([],stack',i1,pa1,m,T) else match stack' with [] ->
        NONE
        | (CONS x xs) ->
-         if (w && (n2w 1)) = (n2w 0) then
+         (if (w && (n2w 1)) = (n2w 0) then
            match word_gen_gc_partial_move_bitmap conf
                   (w >>> 1,xs,i1,pa1,curr,m,dm,gs,rs) with NONE -> NONE
            | SOME (new,stack',i1,pa1,m,c) ->
@@ -1322,7 +1322,7 @@ let word_gen_gc_partial_move_bitmap_unroll = prove
            match word_gen_gc_partial_move_bitmap conf
                   (w >>> 1,xs,i1,pa1,curr,m1,dm,gs,rs) with NONE -> NONE
            | SOME (new,stack',i1,pa1,m,c) ->
-               SOME (CONS x1 new,stack',i1,pa1,m,(c1 /\ c))`,
+               SOME (CONS x1 new,stack',i1,pa1,m,(c1 /\ c)))`,
   CHEAT_TAC);;
 
 let word_gen_gc_move_code_thm = prove

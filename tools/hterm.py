@@ -1038,6 +1038,21 @@ def dtarg_texts(alt):
   return out
 
 
+def open_tail(e):
+  """does a term end in something that reaches as far to the right
+     as it can -- a match, a binder -- so that what follows it
+     would be swallowed?  The body of a let and the else of a
+     conditional are the tail of the term they are in (data_space's
+     space has an arm whose body is a let whose body is a match,
+     and the arms after it would be the inner match's)"""
+  while True:
+    if e.kind == 'paren': e = e.e
+    elif e.kind == 'let': e = e.body
+    elif e.kind == 'cond': e = e.b
+    else: break
+  return e.kind in ('case', 'quant', 'resq', 'do', 'setabs')
+
+
 def lone_eqn(e):
   """is this term one equation, so that nothing follows its right
      hand side in the quotation?"""
@@ -2586,7 +2601,8 @@ class Printer:
           # does, or the alternatives after this one would be its
           bb = b
           while bb.kind == 'paren': bb = bb.e
-          bp = 0 if bb.kind in ('cond', 'let') else 2
+          bp = (0 if bb.kind in ('cond', 'let') and not open_tail(bb)
+                else 2)
           if self.ctx.body_pr is not None:
             return ps + ' -> ' + self.ctx.body_pr(self, b, bp)
           return ps + ' -> ' + self.pr(b, bp)

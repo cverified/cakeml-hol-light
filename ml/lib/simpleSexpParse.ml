@@ -65,7 +65,7 @@ let print_sexp_def,print_sexp_ind = define_guess_cheat
      | SX_NUM n -> num_to_dec_string n
      | SX_STR s -> APPEND (APPEND "\"" (escape_string s)) "\""
      | s ->
-      let (ls,n) = strip_dot s in
+      (let (ls,n) = strip_dot s in
       match n with NONE ->
         if LENGTH ls = 2 /\ HD ls = SX_SYM "quote" then APPEND "'"
           (print_sexp (EL 1 ls))
@@ -73,4 +73,4 @@ let print_sexp_def,print_sexp_ind = define_guess_cheat
           ")"
       | SOME last -> APPEND (APPEND (APPEND (APPEND "("
         (print_space_separated (MAP print_sexp ls))) " . ")
-          (print_sexp last)) ")"`;;
+          (print_sexp last)) ")")`;;

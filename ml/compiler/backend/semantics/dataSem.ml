@@ -142,20 +142,20 @@ let bignum_size_def = new_definition
   `bignum_size arch64 i =
      1 + bignum_digits arch64 (num_of_int (abs i))`;;
 
-let size_of_def,size_of_ind = assume_definition_rec
+let size_of_def,size_of_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  `(size_of lims [] refs seen = (0,refs,seen)) /\
-   (size_of lims (CONS x (CONS y ys)) refs seen =
+  [`(size_of lims [] refs seen = (0,refs,seen)) /\
+    (size_of lims (CONS x (CONS y ys)) refs seen =
         let (n1,refs1,seen1) = check_res refs (size_of lims (CONS y ys)
             refs seen) in
         let (n2,refs2,seen2) = size_of lims [x] refs1 seen1 in
           (n1 + n2,refs2,seen2)) /\
-   (size_of lims [dataSem_Word64 _] refs seen = (3,refs,seen)) /\
-   (size_of lims [dataSem_Number i] refs seen =
+    (size_of lims [dataSem_Word64 _] refs seen = (3,refs,seen)) /\
+    (size_of lims [dataSem_Number i] refs seen =
         ((if small_num (limits_arch_64_bit lims) i then 0 else
             bignum_size (limits_arch_64_bit lims) i),refs,seen)) /\
-   (size_of lims [dataSem_CodePtr _] refs seen = (0,refs,seen)) /\
-   (size_of lims [dataSem_RefPtr _ r] refs seen =
+    (size_of lims [dataSem_CodePtr _] refs seen = (0,refs,seen)) /\
+    (size_of lims [dataSem_RefPtr _ r] refs seen =
          match sptree_lookup r refs with NONE -> (0,refs,seen)
          | SOME (bvlSem_ByteArray _ bs) -> (LENGTH bs DIV (arch_size lims
              DIV 8) + 2,sptree_delete r refs,seen)
@@ -169,12 +169,12 @@ let size_of_def,size_of_ind = assume_definition_rec
              let (n,refs,seen) = size_of lims (APPEND (APPEND ls [c]) rs)
                  (sptree_delete r refs) seen in
                (n + LENGTH ls + LENGTH rs + 2,refs,seen)) /\
-   ((size_of lims [dataSem_Block ts tag []]) refs seen = (0,refs,seen)) /\
-   (size_of lims [dataSem_Block ts tag vs] refs seen =
+    (size_of lims [dataSem_Block ts tag vs] refs seen =
          if IS_SOME (sptree_lookup ts seen) then (0,refs,seen) else let
              (n,refs,seen) = size_of lims vs refs (sptree_insert ts one seen)
              in
-             (n + LENGTH vs + 1,refs,seen))`;;
+             (n + LENGTH vs + 1,refs,seen))`;
+   `(size_of lims [dataSem_Block ts tag []]) refs seen = (0,refs,seen)`];;
 
 (* [local] *)
 let check_res_size_of = prove
@@ -603,7 +603,7 @@ let dataSem_do_install_def = new_definition
        (match vs with [v1; v2; vl1; vl2] ->
             (match (dataSem_v_to_bytes v1,dataSem_v_to_words v2) with (SOME
               bytes,SOME data) ->
-                if ~(vl1 = dataSem_Number (&(LENGTH bytes))) \/ ~(vl2 =
+                (if ~(vl1 = dataSem_Number (&(LENGTH bytes))) \/ ~(vl2 =
                   dataSem_Number (&(LENGTH data))) then Rerr (Rabort
                   Rtype_error) else let (cfg,progs) =
                   dataSem_state_compile_oracle s 0 in
@@ -620,7 +620,7 @@ let dataSem_do_install_def = new_definition
                            s)) in
                            Rval (dataSem_CodePtr k,s')
                        else Rerr (Rabort Rtype_error)
-                   | _ -> Rerr (Rabort Rtype_error))
+                   | _ -> Rerr (Rabort Rtype_error)))
              | _ -> Rerr (Rabort Rtype_error))
         | _ -> Rerr (Rabort Rtype_error))`;;
 
@@ -811,11 +811,11 @@ let dataSem_do_part_def = define_cases_clauses
                       ns),s,ts)
                        | SOME n -> (dataSem_Block n t (MAP m ns),s,SOME
                            (n + (1:num)))))`;
-   `(dataSem_do_part m (closLang_Str t) s ts =
+   `dataSem_do_part m (closLang_Str t) s ts =
       let ptr = (minimal ptr. ~(ptr IN domain s)) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (dataSem_RefPtr T ptr,sptree_insert ptr (bvlSem_ByteArray T
-            bytes) s,ts))`];;
+            bytes) s,ts)`];;
 
 let dataSem_do_build_def,dataSem_do_build_ind = define_rec
   `(dataSem_do_build m i [] s ts = (m (i - 1),s,ts)) /\
@@ -1710,7 +1710,7 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
                      (match dataSem_cut_env names (dataSem_state_locals s)
                          with NONE -> (SOME (Rerr (Rabort Rtype_error)),s)
                       | SOME env ->
-                          let s1 = dataSem_call_env args1 ss
+                          (let s1 = dataSem_call_env args1 ss
                               (dataSem_push_env env F (dataSem_dec_clock s)) in
                             if dataSem_state_clock s = 0 then
                               (SOME (Rerr (Rabort
@@ -1728,8 +1728,8 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
                               else (SOME (Rerr (Rabort Rtype_error)),s2))
                               | (NONE,s) -> (SOME (Rerr (Rabort
                                   Rtype_error)),s)
-                              | res -> res))))))`;
-   `(dataSem_evaluate (dataLang_Call ret dest args handler,s) =
+                              | res -> res)))))))`;
+   `dataSem_evaluate (dataLang_Call ret dest args handler,s) =
          match dataSem_get_vars args (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          | SOME xs ->
@@ -1750,12 +1750,12 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
                    else (SOME (Rerr (Rabort Rtype_error)),s)
                | SOME (ns,names) ->
                  // returning call, returns into var n
-                 if ~(ALL_DISTINCT ns) then (SOME (Rerr (Rabort
+                 (if ~(ALL_DISTINCT ns) then (SOME (Rerr (Rabort
                      Rtype_error)),s) else (match dataSem_cut_env names
                      (dataSem_state_locals s) with NONE -> (SOME (Rerr (Rabort
                      Rtype_error)),s)
                   | SOME env ->
-                    let s1 = dataSem_call_env args1 ss
+                    (let s1 = dataSem_call_env args1 ss
                             (dataSem_push_env env (IS_SOME handler)
                                 (dataSem_dec_clock s)) in if
                                 dataSem_state_clock s = 0 then (SOME (Rerr
@@ -1780,7 +1780,7 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
                                   (h,dataSem_set_var n x s2))
                              | (NONE,s) -> (SOME (Rerr (Rabort
                                  Rtype_error)),s)
-                             | res -> res)))))`];;
+                             | res -> res))))))`];;
 
 (* HOL4 dataSemScript.sml:1497: ML code, not ported *)
 

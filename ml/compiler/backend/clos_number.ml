@@ -56,18 +56,18 @@ let renumber_code_locs_def,renumber_code_locs_ind =
          let (n,xs) = renumber_code_locs_list n xs in
            (n,closLang_Op t (closLang_IntOp closLang_Add) xs))
     // this case cannot occur`;
-   `(renumber_code_locs n (closLang_App t loc_opt x1 x2) =
+   `renumber_code_locs n (closLang_App t loc_opt x1 x2) =
          let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs_list n x2 in
-           (n,closLang_App t NONE x1 x2))`;
-   `(renumber_code_locs n (closLang_Fn t loc vs num_args x1) =
+           (n,closLang_App t NONE x1 x2)`;
+   `renumber_code_locs n (closLang_Fn t loc vs num_args x1) =
          let (n,x1) = renumber_code_locs n x1 in
-           (n + 2,closLang_Fn t (SOME n) vs num_args x1))`;
-   `(renumber_code_locs n (closLang_Letrec t loc vs fns x1) =
+           (n + 2,closLang_Fn t (SOME n) vs num_args x1)`;
+   `renumber_code_locs n (closLang_Letrec t loc vs fns x1) =
          let (m,fns') = renumber_code_locs_list n (MAP SND fns) in
          let (n,x1) = renumber_code_locs (m + 2 * LENGTH fns') x1 in
            (n,closLang_Letrec t (SOME m) vs (ZIP (MAP FST fns) fns')
-               x1))`];;
+               x1)`];;
 
 (* HOL4 clos_numberScript.sml:66: ML code, not ported *)
 

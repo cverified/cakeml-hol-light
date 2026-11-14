@@ -143,10 +143,10 @@ let bvi_let_compile_def,bvi_let_compile_ind = define_wf_cheat_clauses
                           env) d [e])))]) /\
     (bvi_let_compile env d [bvi_Return xs] = [bvi_Return (bvi_let_compile
     env d xs)])`;
-   `(bvi_let_compile env d [bvi_LetCall rets t dest xs y] =
+   `bvi_let_compile env d [bvi_LetCall rets t dest xs y] =
          [bvi_LetCall rets t dest (bvi_let_compile env d xs)
             (HD (bvi_let_compile (APPEND (REPLICATE rets 0) env) d
-                [y]))])`];;
+                [y]))]`];;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL (_,_,e) -> bvi_exp_size e
@@ -198,9 +198,9 @@ let bvi_let_compile_sing_def,bvi_let_compile_sing_ind =
     (bvi_let_compile_list env d [] = []) /\
     (bvi_let_compile_list env d (CONS x xs) = CONS (bvi_let_compile_sing
     env d x) (bvi_let_compile_list env d xs))`;
-   `(bvi_let_compile_sing env d (bvi_LetCall rets t dest xs y) =
+   `bvi_let_compile_sing env d (bvi_LetCall rets t dest xs y) =
          bvi_LetCall rets t dest (bvi_let_compile_list env d xs)
-            (bvi_let_compile_sing (APPEND (REPLICATE rets 0) env) d y))`];;
+            (bvi_let_compile_sing (APPEND (REPLICATE rets 0) env) d y)`];;
 
 cake_term_facts := bvi_let_term_facts;;
 cake_cheat_budget := bvi_let_budget;;

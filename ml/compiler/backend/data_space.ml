@@ -50,7 +50,7 @@ let part_space_req_def = define_cases_clauses
           (num_of_int (abs i)))) /\
     (part_space_req (closLang_Con t ns) =
       let l = LENGTH ns in if l = 0 then 0 else l + 1)`;
-   `(part_space_req (closLang_Str s) = strlen s DIV 4 + 2)`];;
+   `part_space_req (closLang_Str s) = strlen s DIV 4 + 2`];;
 
 let op_space_req_def = new_definition
   `op_space_req x1 l =
@@ -84,7 +84,7 @@ let space_def,space_ind = define_shaped_rec
      match c with
        dataLang_MakeSpace k names -> INR (k,names,dataLang_Skip)
      | dataLang_Seq c1 c2 ->
-        let d1 = pMakeSpace (space c1) in
+        (let d1 = pMakeSpace (space c1) in
         let x2 = space c2 in
           match x2 with INL c4 ->
              (match c1 with dataLang_MakeSpace k names -> INR (k,names,c4)
@@ -101,7 +101,7 @@ let space_def,space_ind = define_shaped_rec
                   INR (op_space_req op (LENGTH args) + k2,
                        list_insert args (sptree_delete dest names2),
                        dataLang_Seq (dataLang_Assign dest op args NONE) c4)
-              | _ -> INL (dataLang_Seq d1 (pMakeSpace x2)))
+              | _ -> INL (dataLang_Seq d1 (pMakeSpace x2))))
      | dataLang_If n c2 c3 ->
         INL (dataLang_If n (pMakeSpace (space c2)) (pMakeSpace (space c3)))
      | c -> INL c`;;

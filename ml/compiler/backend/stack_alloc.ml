@@ -965,13 +965,13 @@ let stack_alloc_comp_def,stack_alloc_comp_ind = define_guess_cheat
            (stackLang_Loop q1,m)
      | stackLang_Call NONE dest exc -> (stackLang_Call NONE dest NONE,m)
      | stackLang_Call (SOME (p1,lr,l1,l2)) dest exc ->
-         let (q1,m) = stack_alloc_comp n m p1 in
+         (let (q1,m) = stack_alloc_comp n m p1 in
           (match exc with NONE -> (stackLang_Call (SOME (q1,lr,l1,l2)) dest
             NONE,m)
            | SOME (p2,k1,k2) ->
                let (q2,m) = stack_alloc_comp n m p2 in
                  (stackLang_Call (SOME (q1,lr,l1,l2)) dest (SOME
-                   (q2,k1,k2)),m))
+                   (q2,k1,k2)),m)))
      | stackLang_Alloc k -> (stackLang_Call (SOME (stackLang_Skip,0,n,m))
        (INL gc_stub_location) NONE,m + 1)
      | stackLang_StoreConsts k1 k2 (SOME loc) -> (stackLang_Call (SOME

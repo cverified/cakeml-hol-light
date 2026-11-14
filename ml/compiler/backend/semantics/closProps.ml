@@ -282,9 +282,9 @@ let every_Fn_SOME_def,every_Fn_SOME_ind = assume_definition_rec_clauses
          every_Fn_SOME [x2]) /\
     (every_Fn_SOME [closLang_Call _ ticks dest xs] <=>
          every_Fn_SOME xs)`;
-   `(every_Fn_SOME [closLang_App _ loc_opt x1 x2] <=>
+   `every_Fn_SOME [closLang_App _ loc_opt x1 x2] <=>
          every_Fn_SOME [x1] /\
-         every_Fn_SOME x2)`];;
+         every_Fn_SOME x2`];;
 add_simp every_Fn_SOME_def;;
 
 let every_Fn_SOME_EVERY = prove
@@ -328,9 +328,9 @@ let every_Fn_vs_NONE_def,every_Fn_vs_NONE_ind = assume_definition_rec_clauses
          every_Fn_vs_NONE [x2]) /\
     (every_Fn_vs_NONE [closLang_Call _ ticks dest xs] <=>
          every_Fn_vs_NONE xs)`;
-   `(every_Fn_vs_NONE [closLang_App _ loc_opt x1 x2] <=>
+   `every_Fn_vs_NONE [closLang_App _ loc_opt x1 x2] <=>
          every_Fn_vs_NONE [x1] /\
-         every_Fn_vs_NONE x2)`];;
+         every_Fn_vs_NONE x2`];;
 add_simp every_Fn_vs_NONE_def;;
 
 let every_Fn_vs_NONE_EVERY = prove
@@ -379,9 +379,9 @@ let every_Fn_vs_SOME_def,every_Fn_vs_SOME_ind = assume_definition_rec_clauses
          every_Fn_vs_SOME [x2]) /\
     (every_Fn_vs_SOME [closLang_Call _ ticks dest xs] <=>
          every_Fn_vs_SOME xs)`;
-   `(every_Fn_vs_SOME [closLang_App _ loc_opt x1 x2] <=>
+   `every_Fn_vs_SOME [closLang_App _ loc_opt x1 x2] <=>
          every_Fn_vs_SOME [x1] /\
-         every_Fn_vs_SOME x2)`];;
+         every_Fn_vs_SOME x2`];;
 add_simp every_Fn_vs_SOME_def;;
 
 let every_Fn_vs_SOME_EVERY = prove
@@ -436,12 +436,12 @@ let no_mti_def,no_mti_ind = define_shaped_rec_clauses
         no_mti e) /\
     (no_mti (closLang_Op t op es) <=>
         ALL no_mti es)`;
-   `(no_mti (closLang_Fn t opt1 opt2 num_args e) <=>
+   `no_mti (closLang_Fn t opt1 opt2 num_args e) <=>
         num_args = 1 /\ opt1 = NONE /\ opt2 = NONE /\
-        no_mti e)`;
-   `(no_mti (closLang_Letrec t opt1 opt2 funs e) <=>
+        no_mti e`;
+   `no_mti (closLang_Letrec t opt1 opt2 funs e) <=>
         no_mti e /\ opt1 = NONE /\ opt2 = NONE /\
-        ALL (\x. FST x = 1 /\ no_mti (SND x)) funs)`];;
+        ALL (\x. FST x = 1 /\ no_mti (SND x)) funs`];;
 
 let fv_def,fv_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -464,8 +464,8 @@ let fv_def,fv_ind = assume_definition_rec_clauses
     (fv n [closLang_Handle _ x1 x2] <=>
          fv n [x1] \/ fv (n + 1) [x2]) /\
     (fv n [closLang_Call _ ticks dest xs] <=> fv n xs)`;
-   `(fv n [closLang_App _ loc_opt x1 x2] <=>
-         fv n [x1] \/ fv n x2)`];;
+   `fv n [closLang_App _ loc_opt x1 x2] <=>
+         fv n [x1] \/ fv n x2`];;
 
 let fv_append = prove
  (`!v l1. fv v (APPEND l1 l2) <=> fv v l1 \/ fv v l2`,
@@ -686,14 +686,14 @@ let evaluate_app_rw = prove
                  s)
              else (Rval [v],closSem_dec_clock (LENGTH args) s)
          | SOME (Full_app exp env rest_args) ->
-             if closSem_state_clock s < (LENGTH args - LENGTH rest_args)
+             (if closSem_state_clock s < (LENGTH args - LENGTH rest_args)
                then
                (Rerr (Rabort Rtimeout_error),closSem_state_clock_fupd (K 0)
                  s)
              else match closSem_evaluate ([exp],env,closSem_dec_clock
                (LENGTH args - LENGTH rest_args) s) with (Rval [v],s1) ->
                       evaluate_app loc_opt v rest_args s1
-                  | res -> res))`,
+                  | res -> res)))`,
   CHEAT_TAC);;
 
 (* HOL4 closPropsScript.sml:931-934: a proof *)
@@ -755,10 +755,10 @@ let clo_to_partial_args_def = define_cases
 add_simp clo_to_partial_args_def;;
 
 let clo_add_partial_args_def = define_cases_clauses
-  [`(clo_add_partial_args args (closSem_Closure x1 args' x2 x3 x4) =
-       closSem_Closure x1 (APPEND args args') x2 x3 x4)`;
-   `(clo_add_partial_args args (closSem_Recclosure x1 args' x2 x3 x4) =
-       closSem_Recclosure x1 (APPEND args args') x2 x3 x4)`];;
+  [`clo_add_partial_args args (closSem_Closure x1 args' x2 x3 x4) =
+       closSem_Closure x1 (APPEND args args') x2 x3 x4`;
+   `clo_add_partial_args args (closSem_Recclosure x1 args' x2 x3 x4) =
+       closSem_Recclosure x1 (APPEND args args') x2 x3 x4`];;
 add_simp clo_add_partial_args_def;;
 
 let clo_to_num_params_def = define_cases
@@ -1235,9 +1235,9 @@ let esgc_free_def,esgc_free_ind = define_shaped_rec_clauses
     = EMPTY_BAG) /\
     (closProps_esgc_free (closLang_Op _ _ args) <=> ALL closProps_esgc_free
     args)`;
-   `(closProps_esgc_free (closLang_Letrec _ _ _ binds bod) <=>
+   `closProps_esgc_free (closLang_Letrec _ _ _ binds bod) <=>
         closProps_elist_globals (MAP SND binds) = EMPTY_BAG
-            /\ closProps_esgc_free bod)`];;
+            /\ closProps_esgc_free bod`];;
 
 (* HOL4 closPropsScript.sml:1854-1855: a theorem that HOL4 states as the
    value of an ML expression: esgc_free_def *)
@@ -1950,8 +1950,8 @@ let obeys_max_app_def,obeys_max_app_ind = assume_definition_rec_clauses
     /\ obeys_max_app m e /\ ALL (obeys_max_app m) es) /\
     (obeys_max_app m (closLang_Fn _ _ _ _ e) <=> obeys_max_app m e) /\
     (obeys_max_app m (closLang_Op _ _ es) <=> ALL (obeys_max_app m) es)`;
-   `(obeys_max_app m (closLang_Letrec _ _ _ es e) <=> ALL (obeys_max_app m)
-    (MAP SND es) /\ obeys_max_app m e)`];;
+   `obeys_max_app m (closLang_Letrec _ _ _ es e) <=> ALL (obeys_max_app m)
+    (MAP SND es) /\ obeys_max_app m e`];;
 
 (* HOL4 closPropsScript.sml:3562-3564: a theorem that HOL4 states as the
    value of an ML expression: obeys_max_app_def *)
@@ -1970,8 +1970,8 @@ let no_Labels_def,no_Labels_ind = assume_definition_rec_clauses
     (no_Labels (closLang_Fn _ _ _ _ e) <=> no_Labels e) /\
     (no_Labels (closLang_Op _ op es) <=> (!n. ~(op = closLang_Label n))
     /\ ALL no_Labels es)`;
-   `(no_Labels (closLang_Letrec _ _ _ es e) <=> ALL no_Labels (MAP SND es)
-    /\ no_Labels e)`];;
+   `no_Labels (closLang_Letrec _ _ _ es e) <=> ALL no_Labels (MAP SND es)
+    /\ no_Labels e`];;
 
 (* HOL4 closPropsScript.sml:3586-3588: a theorem that HOL4 states as the
    value of an ML expression: no_Labels_def *)
@@ -2096,12 +2096,12 @@ let closProps_get_code_labels_def,closProps_get_code_labels_ind =
     (closProps_get_code_labels (closLang_Fn _ l _ _ e) =
        (match l with NONE -> {} | SOME n -> {n}) UNION
        closProps_get_code_labels e)`;
-   `(closProps_get_code_labels (closLang_Letrec _ l _ es e) =
+   `closProps_get_code_labels (closLang_Letrec _ l _ es e) =
        (match l with NONE -> {} | SOME n ->
          IMAGE (\k. n + 2 * k) (count (LENGTH es))) UNION
         closProps_get_code_labels e UNION
         UNIONS (set_of_list (MAP closProps_get_code_labels (MAP SND
-            es))))`];;
+            es)))`];;
 
 (* HOL4 closPropsScript.sml:3733-3735: a theorem that HOL4 states as the
    value of an ML expression: get_code_labels_def *)

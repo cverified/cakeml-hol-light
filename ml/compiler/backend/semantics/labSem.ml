@@ -393,12 +393,12 @@ let loc_to_pc_def,loc_to_pc_ind = define_guess_cheat
          if (k = n1) /\ (n2 = 0) then SOME (0:num) else match xs with [] ->
              loc_to_pc n1 n2 ys
            | (CONS z zs) ->
-             if (?k. z = labLang_Label n1 n2 k) /\ ~(n2 = 0) then SOME 0
+             (if (?k. z = labLang_Label n1 n2 k) /\ ~(n2 = 0) then SOME 0
                  else if is_Label z then loc_to_pc n1 n2 (CONS (Section k zs)
                  ys)
                else match loc_to_pc n1 n2 (CONS (Section k zs) ys) with
                    NONE -> NONE
-                 | SOME pos -> SOME (pos + (1:num)))`;;
+                 | SOME pos -> SOME (pos + (1:num))))`;;
 
 let asm_inst_consts = prove
  (`(labSem_state_pc (asm_inst i s) = labSem_state_pc s) /\
@@ -581,7 +581,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
             (match (buffer_flush (labSem_state_code_buffer s) w1
               w2,loc_to_pc n1 n2 (labSem_state_code s)) with (SOME
               (bytes,cb),SOME new_pc) ->
-               let (cfg,prog) = labSem_state_compile_oracle s 0 in
+               (let (cfg,prog) = labSem_state_compile_oracle s 0 in
                // the next oracle program
                let new_oracle = misc_shift_seq 1
                  (labSem_state_compile_oracle s) in
@@ -608,7 +608,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                                 (labSem_state_code_buffer_fupd (K cb)
                                 (labSem_state_pc_fupd (K new_pc) s)))))))))
                     else (targetSem_Error,s)
-                  | _ -> (targetSem_Error,s))
+                  | _ -> (targetSem_Error,s)))
                   | _ -> (targetSem_Error,s))
          | _ -> (targetSem_Error,s))
      | SOME (labLang_LabAsm (labLang_CallFFI ffi_index) _ _ _) ->

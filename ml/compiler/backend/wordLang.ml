@@ -317,16 +317,16 @@ let max_var_def,max_var_ind = define_wf
      | wordLang_Get num' store -> num'
      | wordLang_Store exp num' -> MAX num' (max_var_exp exp)
      | wordLang_Call ret dest args h ->
-       let n = MAX_LIST args in
+       (let n = MAX_LIST args in
        match ret with
          NONE -> n
        | SOME (v,cutset,ret_handler,l1,l2) ->
-         let cutset_max = MAX n (cutsets_max cutset) in
+         (let cutset_max = MAX n (cutsets_max cutset) in
          let ret_max = max3 (MAX_LIST v) cutset_max (max_var ret_handler) in
          (match h with
            NONE -> ret_max
          | SOME (v,prog,l1,l2) ->
-           max3 v ret_max (max_var prog))
+           max3 v ret_max (max_var prog))))
      | wordLang_Seq s1 s2 -> MAX (max_var s1) (max_var s2)
      | wordLang_MustTerminate s1 -> max_var s1
      | wordLang_If cmp r1 ri e2 e3 ->

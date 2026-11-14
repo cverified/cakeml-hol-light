@@ -420,12 +420,12 @@ let extract_labels_def,extract_labels_ind = define_wf
        (match ret with
          NONE -> []
        | SOME (v,cutset,ret_handler,l1,l2) ->
-         let ret_rest = wordConvs_extract_labels ret_handler in
+         (let ret_rest = wordConvs_extract_labels ret_handler in
        (match h with
          NONE -> APPEND [(l1,l2)] ret_rest
        | SOME (v,prog,l1',l2') ->
          let h_rest = wordConvs_extract_labels prog in APPEND (APPEND
-           [(l1,l2); (l1',l2')] ret_rest) h_rest))
+           [(l1,l2); (l1',l2')] ret_rest) h_rest)))
      | wordLang_MustTerminate s1 -> wordConvs_extract_labels s1
      | wordLang_Seq s1 s2 -> APPEND (wordConvs_extract_labels s1)
        (wordConvs_extract_labels s2)

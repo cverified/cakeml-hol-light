@@ -292,7 +292,7 @@ let mlsexp_annotate_def,mlsexp_annotate_ind = define_rec_clauses
           (
            // Size (get_size b1 + get_size b2 + 1)
            mlsexp_Append b1 n b2)))`;
-   `(mlsexp_annotate (mlsexp_Size n b) = mlsexp_Size n (mlsexp_annotate b))`];;
+   `mlsexp_annotate (mlsexp_Size n b) = mlsexp_Size n (mlsexp_annotate b)`];;
 
 let remove_all_def,remove_all_ind = define_rec
   `(remove_all (mlsexp_Parenthesis v) = mlsexp_Parenthesis (remove_all v)) /\
@@ -307,14 +307,14 @@ let smart_remove_def,smart_remove_ind = define_rec_clauses
     (smart_remove i k (mlsexp_Parenthesis v) = mlsexp_Parenthesis
     (smart_remove (i + 1) (k + 1) v)) /\
     (smart_remove i k (mlsexp_String v1) = (mlsexp_String v1:pretty))`;
-   `(smart_remove i k (mlsexp_Append v2 b v3) =
+   `smart_remove i k (mlsexp_Append v2 b v3) =
       let n2 = mlsexp_get_size v2 in
       let n3 = get_next_size v3 in
         if k + n2 + n3 < 50 then
           mlsexp_Append (smart_remove i k v2) F (smart_remove i (k + n2)
               v3)
         else mlsexp_Append (smart_remove i k v2) T (smart_remove i i
-            v3))`];;
+            v3)`];;
 
 let flatten_def,flatten_ind = define_rec
   `(mlsexp_flatten indent (mlsexp_Size n p) s = mlsexp_flatten indent p s) /\

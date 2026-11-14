@@ -194,20 +194,20 @@ let const_fp_exp_def,const_fp_exp_ind = define_wf
         (match sptree_lookup v cs with SOME x -> wordLang_Const x
           | NONE -> wordLang_Var v)
      | wordLang_Op op args ->
-        let const_fp_args = MAP (\a. const_fp_exp a cs) args in
+        (let const_fp_args = MAP (\a. const_fp_exp a cs) args in
           match strip_const const_fp_args with SOME ws -> (match
             wordLang_word_op op ws with SOME w -> wordLang_Const w
                            | _ -> wordLang_Op op (MAP wordLang_Const ws))
-            | _ -> wordLang_Op op const_fp_args
+            | _ -> wordLang_Op op const_fp_args)
      | wordLang_Shift sh e e1 ->
-        let const_fp_exp_e = const_fp_exp e cs in
+        (let const_fp_exp_e = const_fp_exp e cs in
         let const_fp_exp_e1 = const_fp_exp e1 cs in
           match (const_fp_exp_e,const_fp_exp_e1) with (wordLang_Const
             c,wordLang_Const c1) ->
                 (match word_sh sh c (w2n c1) with SOME w -> wordLang_Const w
                  | _ -> wordLang_Shift sh (wordLang_Const c) (wordLang_Const
                    c1))
-            | _ -> wordLang_Shift sh const_fp_exp_e const_fp_exp_e1
+            | _ -> wordLang_Shift sh const_fp_exp_e const_fp_exp_e1)
      | e -> e`;;
 
 let const_fp_move_cs_def,const_fp_move_cs_ind = define_rec
@@ -281,10 +281,10 @@ let const_fp_loop_def,const_fp_loop_ind = define_wf
          moves cs cs)
      | wordLang_Inst i -> (wordLang_Inst i,const_fp_inst_cs i cs)
      | wordLang_Assign v e ->
-        let const_fp_e = const_fp_exp e cs in
+        (let const_fp_e = const_fp_exp e cs in
           match const_fp_e with wordLang_Const c -> (wordLang_Assign v
             const_fp_e,sptree_insert v c cs)
-            | _ -> (wordLang_Assign v const_fp_e,sptree_delete v cs)
+            | _ -> (wordLang_Assign v const_fp_e,sptree_delete v cs))
      | wordLang_Get v name -> (wordLang_Get v name,sptree_delete v cs)
      | wordLang_OpCurrHeap b v w -> (wordLang_OpCurrHeap b v w,sptree_delete
        v cs)

@@ -535,8 +535,7 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
          let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
            ([bvl_Call ticks (SOME (dest + (num_stubs max_app)))
                c1],aux1))`;
-   `(clos_to_bvl_compile_exps max_app [closLang_Fn t loc_opt vs_opt num_args
-     x1]
+   `clos_to_bvl_compile_exps max_app [closLang_Fn t loc_opt vs_opt num_args x1]
     aux =
          let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
          let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
@@ -549,8 +548,8 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
                 (REVERSE (CONS (mk_label (loc + num_stubs max_app))
                     (CONS (mk_const (num_args - 1)) (MAP bvl_Var
                     vs))))],CONS (loc + (num_stubs max_app),num_args +
-                    1,c2) aux1))`;
-   `(clos_to_bvl_compile_exps max_app [closLang_Letrec t loc_opt vsopt fns x1]
+                    1,c2) aux1)`;
+   `clos_to_bvl_compile_exps max_app [closLang_Letrec t loc_opt vsopt fns x1]
     aux =
          let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
          let vs = (match vsopt with NONE -> [] | SOME x -> x) in
@@ -578,7 +577,7 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
              let (c3,aux3) = clos_to_bvl_compile_exps max_app [x1] aux2 in
              let c4 = build_recc_lets (MAP FST fns) vs (loc + (num_stubs
                  max_app)) fns_l (HD c3) in
-               ([c4],aux3))`];;
+               ([c4],aux3)`];;
 
 (* HOL4 clos_to_bvlScript.sml:495: ML code, not ported *)
 
@@ -632,7 +631,7 @@ let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec_clauses
          let (c1,aux1) = compile_exp_sing max_app x aux in
          let (c2,aux2) = compile_exp_list max_app xs aux1 in
            (CONS c1 c2,aux2))`;
-   `(compile_exp_sing max_app (closLang_Fn t loc_opt vs_opt num_args x1) aux =
+   `compile_exp_sing max_app (closLang_Fn t loc_opt vs_opt num_args x1) aux =
          let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
          let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let (c1,aux1) = compile_exp_sing max_app x1 aux in
@@ -642,8 +641,8 @@ let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec_clauses
            (bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
                (REVERSE (CONS (mk_label (loc + num_stubs max_app))
                    (CONS (mk_const (num_args - 1)) (MAP bvl_Var vs)))),CONS
-                   (loc + (num_stubs max_app),num_args + 1,c2) aux1))`;
-   `(compile_exp_sing max_app (closLang_Letrec t loc_opt vsopt fns x1) aux =
+                   (loc + (num_stubs max_app),num_args + 1,c2) aux1)`;
+   `compile_exp_sing max_app (closLang_Letrec t loc_opt vsopt fns x1) aux =
          let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
          let vs = (match vsopt with NONE -> [] | SOME x -> x) in
          match fns with [] -> compile_exp_sing max_app x1 aux
@@ -669,7 +668,7 @@ let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec_clauses
              let (c3,aux3) = compile_exp_sing max_app x1 aux2 in
              let c4 = build_recc_lets (MAP FST fns) vs (loc + (num_stubs
                  max_app)) fns_l c3 in
-               (c4,aux3))`];;
+               (c4,aux3)`];;
 
 let compile_exp_sing_eq = prove
  (`(!n e l. clos_to_bvl_compile_exps n [e] l = (\(a,b). ([a],b))

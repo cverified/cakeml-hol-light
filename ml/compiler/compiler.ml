@@ -351,7 +351,7 @@ let compiler_compile_def = new_definition
        else parse_cml_input input) with INL msg -> (M_failure (ParseError
          msg),misc_Nil)
      | INR prog ->
-        let _ = empty_ffi (implode "finished: lexing and parsing") in
+        (let _ = empty_ffi (implode "finished: lexing and parsing") in
         let full_prog = (if compiler_config_exclude_prelude c then prog else
           APPEND prelude prog) in
         match
@@ -362,7 +362,7 @@ let compiler_compile_def = new_definition
             (M_failure (TypeError (mlstring_concat [msg; (implode " at ");
                 locs_to_string (implode input) locs])),misc_Nil)
         | M_success ic ->
-           let _ = empty_ffi (implode "finished: type inference") in
+           (let _ = empty_ffi (implode "finished: type inference") in
            if compiler_config_only_print_types c then
              (M_failure (TypeError (mlstring_concat (APPEND (APPEND
                [(implode "\n")]
@@ -375,7 +375,7 @@ let compiler_compile_def = new_definition
            else match compile_tap (compiler_config_asm_config c)
              (compiler_config_backend_config c) full_prog with (NONE,td) ->
              (M_failure AssembleError,td)
-           | (SOME (bytes,data,c),td) -> (M_success (bytes,data,c),td)`;;
+           | (SOME (bytes,data,c),td) -> (M_success (bytes,data,c),td)))`;;
 
 cake_declare "parse_topdecs_to_ast"
   `:string -> (('a)decl)list + (mlstring#locs)list`;;
@@ -399,11 +399,11 @@ let compile_pancake_def = new_definition
        (match static_check funs with (errorMonad_error e,warns) ->
          (M_failure (StaticError e),misc_Nil,MAP StaticError warns)
        | (errorMonad_return one,warns) ->
-           let _ = empty_ffi (implode "finished: lexing and parsing") in
+           (let _ = empty_ffi (implode "finished: lexing and parsing") in
            match pan_compile_tap asm_conf c funs with (NONE,td) ->
              (M_failure AssembleError,td,MAP StaticError warns)
            | (SOME (bytes,data,c),td) -> (M_success (bytes,data,c),td,MAP
-             StaticError warns))`;;
+             StaticError warns)))`;;
 
 (* The top-level compiler *)
 let error_to_str_def = define_cases
@@ -983,7 +983,7 @@ let compile_64_def = new_definition
      (let ext_conf = extend_conf cl conf in
      match ext_conf with
        INL ext_conf ->
-         let compiler_conf =
+         (let compiler_conf =
            mk_compiler_config infer_init_config ext_conf aconf sexp prelude
              typeinfer onlyprinttypes sexpprint in
          (match compiler_compile compiler_conf basis input with
@@ -997,7 +997,7 @@ let compile_64_def = new_definition
                    (backend_config_exported c) mainret F),
                implode "")
          | (M_failure err,td) -> (add_tap_output td (misc_List
-           []),error_to_str err))
+           []),error_to_str err)))
      | INR err ->
      (misc_List [],error_to_str (ConfigError (get_err_str ext_conf))))
    | _ ->
@@ -1016,17 +1016,17 @@ let compile_pancake_64_def = new_definition
    match confexp with INR err -> (misc_List [],error_to_str (ConfigError
      err))
    | INL (conf,export,aconf) ->
-       let topconf = parse_top_config cl in
+       (let topconf = parse_top_config cl in
        match (topconf) with INR err -> (misc_List [],error_to_str
          (ConfigError err))
        | INL
          (sexp,prelude,typeinfer,onlyprinttypes,sexpprint,mainret,nowarn) ->
-           let ext_conf = extend_conf cl conf in
+           (let ext_conf = extend_conf cl conf in
            match ext_conf with INR err ->
                (misc_List [],error_to_str (ConfigError (get_err_str
                  ext_conf)))
            | INL ext_conf ->
-               let ext_conf = pancake_backend_conf ext_conf in
+               (let ext_conf = pancake_backend_conf ext_conf in
                match compile_pancake aconf ext_conf input with (M_failure
                  err,td,warns) ->
                    (misc_List [],mlstring_concat (MAP error_to_str (CONS err
@@ -1039,7 +1039,7 @@ let compile_pancake_64_def = new_definition
                          (backend_config_symbols c) (backend_config_exported
                        c) mainret T),
                     mlstring_concat (MAP error_to_str (if nowarn then []
-                      else warns)))`;;
+                      else warns))))))`;;
 
 (* PENDING: the file system of the basis library, which the port does not
    have (add_stdout, add_stderr, fastForwardFD) *)
@@ -1055,7 +1055,7 @@ let compile_32_def = new_definition
      (let ext_conf = extend_conf cl conf in
      match ext_conf with
        INL ext_conf ->
-         let compiler_conf =
+         (let compiler_conf =
            mk_compiler_config infer_init_config ext_conf aconf sexp prelude
              typeinfer onlyprinttypes sexpprint in
          (match compiler_compile compiler_conf basis input with
@@ -1067,7 +1067,7 @@ let compile_32_def = new_definition
                  bytes data (backend_config_symbols c)
                    (backend_config_exported c) mainret F),
                implode "")
-         | (M_failure err,td) -> (misc_List [],error_to_str err))
+         | (M_failure err,td) -> (misc_List [],error_to_str err)))
      | INR err ->
      (misc_List [],error_to_str (ConfigError (get_err_str ext_conf))))
    | _ ->
@@ -1080,17 +1080,17 @@ let compile_pancake_32_def = new_definition
    match confexp with INR err -> (misc_List [],error_to_str (ConfigError
      err))
    | INL (conf,export,aconf) ->
-       let topconf = parse_top_config cl in
+       (let topconf = parse_top_config cl in
        match (topconf) with INR err -> (misc_List [],error_to_str
          (ConfigError err))
        | INL
          (sexp,prelude,typeinfer,onlyprinttypes,sexpprint,mainret,nowarn) ->
-           let ext_conf = extend_conf cl conf in
+           (let ext_conf = extend_conf cl conf in
            match ext_conf with INR err ->
                (misc_List [],error_to_str (ConfigError (get_err_str
                  ext_conf)))
            | INL ext_conf ->
-               let ext_conf = pancake_backend_conf ext_conf in
+               (let ext_conf = pancake_backend_conf ext_conf in
                match compile_pancake aconf ext_conf input with (M_failure
                  err,td,warns) ->
                    (misc_List [],mlstring_concat (MAP error_to_str (CONS err
@@ -1103,7 +1103,7 @@ let compile_pancake_32_def = new_definition
                          (backend_config_symbols c) (backend_config_exported
                        c) mainret T),
                     mlstring_concat (MAP error_to_str (if nowarn then []
-                      else warns)))`;;
+                      else warns))))))`;;
 
 (* PENDING: the file system of the basis library, which the port does not
    have (add_stdout, add_stderr, fastForwardFD) *)

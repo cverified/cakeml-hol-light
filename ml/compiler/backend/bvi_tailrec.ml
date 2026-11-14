@@ -539,8 +539,8 @@ let scan_expr_def,scan_expr_ind = assume_definition_rec_clauses
                 | SOME (x,y) ->
                     [(update_context opt ts x y,opt,F,NONE)]
               else [(ts,bvi_tailrec_Any,F,NONE)])`;
-   `(scan_expr ts loc [bvi_LetCall rets t d xs y] =
-    [(ts,bvi_tailrec_Any,F,NONE)])`];;
+   `scan_expr ts loc [bvi_LetCall rets t d xs y] =
+    [(ts,bvi_tailrec_Any,F,NONE)]`];;
 
 let scan_expr_sing_def,scan_expr_sing_ind = define_rec_clauses
   [`(scan_expr_sing ts loc (bvi_Var n) =
@@ -607,8 +607,8 @@ let scan_expr_sing_def,scan_expr_sing_ind = define_rec_clauses
     (scan_expr_list ts loc (CONS x xs) =
         let (tx,ty,r,op) = scan_expr_sing ts loc x in CONS
             (tx,ty,r,op) (scan_expr_list tx loc xs))`;
-   `(scan_expr_sing ts loc (bvi_LetCall rets t d xs y) =
-    (ts,bvi_tailrec_Any,F,NONE))`];;
+   `scan_expr_sing ts loc (bvi_LetCall rets t d xs y) =
+    (ts,bvi_tailrec_Any,F,NONE)`];;
 
 let scan_expr_eq = prove
  (`(!e ts loc. scan_expr ts loc [e] = [scan_expr_sing ts loc e]) /\
@@ -729,7 +729,7 @@ let has_rec_sing_def,has_rec_sing_ind = assume_definition_rec_clauses
     (has_rec_list loc (CONS x xs) =
         if has_rec_sing loc x then T
         else has_rec_list loc xs)`;
-   `(has_rec_sing loc x = F)`];;
+   `has_rec_sing loc x = F`];;
 
 let has_rec_eq = prove
  (`(!e loc. has_rec loc [e] = has_rec_sing loc e) /\

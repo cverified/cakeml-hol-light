@@ -99,7 +99,7 @@ let gc_move_data_def,gc_move_data_ind = define_guess_cheat
   `(gen_gc_gc_move_data conf state =
      match gc_state_h2 state with [] -> state
      | CONS h h2 ->
-       if gen_gc_conf_limit conf < heap_length (APPEND (gc_state_h1 state)
+       (if gen_gc_conf_limit conf < heap_length (APPEND (gc_state_h1 state)
          (CONS h h2)) then gc_state_ok_fupd (K F) state else match h with
          DataElement xs l d ->
           let (xs,state) = gen_gc_gc_move_list conf state xs in
@@ -109,7 +109,7 @@ let gc_move_data_def,gc_move_data_ind = define_guess_cheat
             (gc_state_h2 state) = h)) in
             gen_gc_gc_move_data conf (gc_state_ok_fupd (K ok)
               (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1) state)))
-        | _ -> gc_state_ok_fupd (K F) state)`;;
+        | _ -> gc_state_ok_fupd (K F) state))`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(conf,state). heap_length (gc_state_r2 state))

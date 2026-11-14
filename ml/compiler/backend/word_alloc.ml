@@ -881,12 +881,12 @@ let get_live_def,get_live_ind = define_shaped_rec
      // We get the livesets for e2 and e3, union them, add the if variable
      // then pass the resulting liveset upwards
      | wordLang_If cmp r1 ri e2 e3 ->
-       let e2_live = get_live e2 live lt in
+       (let e2_live = get_live e2 live lt in
        let e3_live = get_live e3 live lt in
        let union_live = sptree_union e2_live e3_live in
           match ri with Reg r2 -> sptree_insert r2 one (sptree_insert r1 one
             union_live)
-         | _ -> sptree_insert r1 one union_live
+         | _ -> sptree_insert r1 one union_live)
      | wordLang_Alloc num' numset -> sptree_insert num' one (sptree_union
        (FST numset) (SND numset))
      | wordLang_StoreConsts a b c d ws ->
@@ -1262,7 +1262,7 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec_clauses
         match ret with
           NONE -> reg_alloc_Set args_set
         | SOME (vs,cutsets,ret_handler,_,_) ->
-          let cutset = sptree_union (FST cutsets) (SND cutsets) in
+          (let cutset = sptree_union (FST cutsets) (SND cutsets) in
           let live_set = sptree_union cutset args_set in
           // Might be inefficient..
           let ret_tree = reg_alloc_Seq (reg_alloc_Set
@@ -1274,7 +1274,7 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec_clauses
             let handler_tree =
               reg_alloc_Seq (reg_alloc_Set (sptree_insert v' one cutset))
                   (get_clash_tree prog lt) in
-            reg_alloc_Branch (SOME live_set) ret_tree handler_tree)`;
+            reg_alloc_Branch (SOME live_set) ret_tree handler_tree))`;
    `(get_clash_tree (wordLang_StoreConsts a b c d ws) lt = reg_alloc_Delta
     [a; b; c; d] [c; d]) /\
     // Break n: exit_names vars must all be live
@@ -1525,7 +1525,7 @@ let get_heu_def,get_heu_ind = assume_definition_rec
          if p = fc then (lr,add_call lr calls')
          else (lr,calls'))
      | (wordLang_Call (SOME (_,_,e2,_,_)) dest args h,lr,calls') ->
-       let calls' =
+       (let calls' =
          (match dest with NONE -> calls'
          | SOME p ->
            if p = fc then (add_call lr calls')
@@ -1535,7 +1535,7 @@ let get_heu_def,get_heu_ind = assume_definition_rec
          NONE -> (lr2,calls')
        | SOME (_,e3,_,_) ->
          let (lr3,calls3) = get_heu fc e3 (lr,calls') in
-         (heu_max_all lr2 lr3,heu_merge_call calls2 calls3)
+         (heu_max_all lr2 lr3,heu_merge_call calls2 calls3))
      | (wordLang_ShareInst asm_Load r _,lr,calls') -> (add1_lhs_mem r
        lr,calls')
      | (wordLang_ShareInst asm_Load8 r _,lr,calls') -> (add1_lhs_mem r
@@ -1815,25 +1815,25 @@ let get_stack_only_aux_def,get_stack_only_aux_ind = define_guess_cheat
      | wordLang_Seq s1 s2 ->
        get_stack_only_aux (get_stack_only_aux tfs s2) s1
      | wordLang_If cmp r1 ri e2 e3 ->
-       let tfsL = get_stack_only_aux tfs e2 in
+       (let tfsL = get_stack_only_aux tfs e2 in
        let tfsR = get_stack_only_aux tfs e3 in
        let tfsM = merge_stack_sets tfs tfsL tfsR in
          match ri with
            Reg r2 -> remove_temp_stack [r1; r2] tfsM
-         | _ -> remove_temp_stack [r1] tfsM
+         | _ -> remove_temp_stack [r1] tfsM)
      | wordLang_MustTerminate s ->
        get_stack_only_aux tfs s
      | wordLang_Call ret dest args h ->
        (match ret with
          NONE -> tfs
        | SOME (v,cutset,ret_handler,_,_) ->
-         let rettfs = get_stack_only_aux tfs ret_handler in
+         (let rettfs = get_stack_only_aux tfs ret_handler in
          match h with
            NONE -> rettfs
          | SOME (v',handler,_,_) ->
            let handlertfs =
              get_stack_only_aux tfs handler in
-           merge_stack_sets tfs rettfs handlertfs)
+           merge_stack_sets tfs rettfs handlertfs))
      | wordLang_Loop names body exit_names ->
        get_stack_only_aux tfs body
      | prog ->
@@ -1864,12 +1864,12 @@ let word_alloc_def = new_definition
    let forced = get_forced c prog [] in
    match oracle_colour_ok k col_opt tree prog forced with
      NONE ->
-       let (heu_moves,spillcosts) = get_heuristics alg fc prog in
+       (let (heu_moves,spillcosts) = get_heuristics alg fc prog in
        (match select_reg_alloc alg spillcosts k heu_moves tree forced fs
          with
          M_success col ->
            apply_colour (total_colour col) prog
-       | M_failure _ -> prog)
+       | M_failure _ -> prog))
    |
      // cannot happen
      SOME col_prog ->

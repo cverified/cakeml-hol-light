@@ -503,17 +503,17 @@ let abs_stack_def,abs_stack_ind = assume_definition_rec
          // read_bitmap reads a bitmap and returns the liveness bits,
          // the words read and the rest of the stack
          SOME bits ->
-           if ~(LENGTH bits = len) then NONE else if LENGTH stack' < len
+           (if ~(LENGTH bits = len) then NONE else if LENGTH stack' < len
              then NONE else
              // if the (len + 1) n ≠ len + 1 then NONE else
              let frame = TAKE len stack' in
              let rest = DROP len stack' in
                match abs_stack bitmaps xs rest lens with NONE -> NONE
-               | SOME ys -> SOME (CONS (NONE,bits,frame) ys))
+               | SOME ys -> SOME (CONS (NONE,bits,frame) ys)))
      | (bitmaps,CONS (StackFrame n l0 l (SOME _)) xs,CONS w stack',CONS len
        lens) ->
        // Index for bitmap for a handler frame
-       if ~(w = wordLang_Word (n2w 1)) then NONE
+       (if ~(w = wordLang_Word (n2w 1)) then NONE
        else (match stack' with CONS
            // Read next 2 elements on the stack for the handler
            loc (CONS hv (CONS w stack')) ->
@@ -522,14 +522,15 @@ let abs_stack_def,abs_stack_ind = assume_definition_rec
                // read_bitmap reads a bitmap and returns the liveness bits,
                // the words read and the rest of the stack
                SOME bits ->
-                 if ~(LENGTH bits = len) then NONE else if LENGTH stack' <
+                 (if ~(LENGTH bits = len) then NONE else if LENGTH stack' <
                    len then NONE else
                    // if the (len + 1) n ≠ len + 1 then NONE else
                    let frame = TAKE len stack' in
                    let rest = DROP len stack' in
                      match abs_stack bitmaps xs rest lens with NONE -> NONE
-                     | SOME ys -> SOME (CONS (SOME (loc,hv),bits,frame) ys))
-         | _ -> NONE)
+                     | SOME ys -> SOME (CONS (SOME (loc,hv),bits,frame)
+                       ys)))
+         | _ -> NONE))
      | (bitmaps,_,_,_) -> NONE`;;
 
 (* HOL4 word_to_stackProofScript.sml:742: ML code, not ported *)
@@ -1309,7 +1310,7 @@ let compile_result_def = define_cases_clauses
     (compile_result (wordSem_Break k) = stackSem_Break k) /\
     (compile_result (wordSem_Continue k) = stackSem_Continue k) /\
     (compile_result wordSem_Error = stackSem_Error)`;
-   `(compile_result (wordSem_Exception w1 w2) = stackSem_Exception w1)`];;
+   `compile_result (wordSem_Exception w1 w2) = stackSem_Exception w1`];;
 add_simp compile_result_def;;
 
 (* [local] *)

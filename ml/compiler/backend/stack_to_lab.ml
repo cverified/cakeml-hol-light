@@ -124,7 +124,7 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind = define_guess_cheat
      | stackLang_Call NONE dest handler -> (misc_List [compile_jump
        dest],T,m)
      | stackLang_Call (SOME (p1,lr,l1,l2)) dest handler ->
-         let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts breaks in
+         (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts breaks in
          let prefix = misc_Append (misc_List [labLang_LabAsm
            (labLang_LocValue lr (labLang_Lab l1 l2)) (n2w 0) [] 0;
                   compile_jump dest; labLang_Label l1 l2 0]) xs in
@@ -134,7 +134,7 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind = define_guess_cheat
                (misc_Append prefix (misc_Append (misc_Append (misc_List
                  [labLang_LabAsm (labLang_Jump (labLang_Lab n m)) (n2w 0) [] 0;
                  labLang_Label k1 k2 0])
-               ys) (misc_List [labLang_Label n m 0])),(nr1 /\ nr2),m + 1))
+               ys) (misc_List [labLang_Label n m 0])),(nr1 /\ nr2),m + 1)))
      | stackLang_JumpLower r1 r2 target ->
          (misc_List [labLang_LabAsm (labLang_JumpCmp asm_Lower r1 (Reg r2)
            (labLang_Lab target 0)) (n2w 0) [] 0],F,m)

@@ -147,9 +147,9 @@ let heap_segment_def = new_definition
   `heap_segment (a,b) heap =
      match heap_split a heap with NONE -> NONE
      | SOME (h1,heap') ->
-       if b < a then NONE else match heap_split (b - heap_length h1) heap'
+       (if b < a then NONE else match heap_split (b - heap_length h1) heap'
          with NONE -> NONE
-       | SOME (h2,h3) -> SOME (h1,h2,h3)`;;
+       | SOME (h2,h3) -> SOME (h1,h2,h3))`;;
 
 let heap_segment_IMP = prove
  (`!heap a b h1 h2 h3.

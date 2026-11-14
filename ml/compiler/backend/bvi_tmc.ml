@@ -533,12 +533,12 @@ let rewrite_wrapper_def,rewrite_wrapper_ind = define_shaped_rec
      match x4 with
        bvi_Var n -> NONE
      | bvi_If xi xt xe ->
-       let opt_t = rewrite_wrapper loc loc_opt n xt in
+       (let opt_t = rewrite_wrapper loc loc_opt n xt in
        let opt_e = rewrite_wrapper loc loc_opt n xe in
        match (opt_t,opt_e) with (NONE,NONE) -> NONE
        | (SOME yt,NONE) -> SOME (bvi_If xi yt xe)
        | (NONE,SOME ye) -> SOME (bvi_If xi xt ye)
-       | (SOME yt,SOME ye) -> SOME (bvi_If xi yt ye)
+       | (SOME yt,SOME ye) -> SOME (bvi_If xi yt ye))
      | bvi_Let xs x ->
        (match rewrite_wrapper loc loc_opt (n + LENGTH xs) x with NONE ->
          NONE

@@ -238,10 +238,10 @@ let find_result_globals_def = new_definition
 (* HOL4 flat_elimProofScript.sml:294: ML code, not ported *)
 
 let find_sem_prim_res_globals_def = define_cases_clauses
-  [`(find_sem_prim_res_globals (Rerr e:(flatSem_v
+  [`find_sem_prim_res_globals (Rerr e:(flatSem_v
     list,flatSem_v)semanticPrimitives_result) =
-            find_result_globals (SOME e))`;
-   `(find_sem_prim_res_globals (Rval e) = find_v_globalsL e)`];;
+            find_result_globals (SOME e)`;
+   `find_sem_prim_res_globals (Rval e) = find_v_globalsL e`];;
 
 (* HOL4 flat_elimProofScript.sml:303-306: the ML values that the definitions
    below antiquote *)
