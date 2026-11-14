@@ -313,7 +313,7 @@ let compile_funs_dom = prove
   CHEAT_TAC);;
 
 let om_tra_def = new_definition
-  `om_tra = pattern_semantics_Cons orphan_trace 1`;;
+  `om_tra = backend_common_Cons orphan_trace 1`;;
 
 let alloc_defs_def,alloc_defs_ind = define_rec
   [`alloc_defs n next' [] = []`;

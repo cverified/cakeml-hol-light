@@ -150,8 +150,11 @@ let struct_info_FIELDS = define_record "struct_info"
 (* HOL4 panLangScript.sml:129: the overload StandAloneCall, which the
    port expands *)
 
-(* HOL4 panLangScript.sml:131-137: a theorem whose statement the port
-   cannot state yet: MEM_IMP_shape_size *)
+let _ = size_thms "shape";;
+let MEM_IMP_shape_size = prove
+ (`!shapes a. MEM a shapes ==> (shape_size a < 1 + list_size
+  panLang_shape_size shapes)`,
+  CHEAT_TAC);;
 
 let is_wf_shape_def,is_wf_shape_ind = define_shaped_rec
   "nested"
@@ -192,7 +195,6 @@ let size_of_shape_def,size_of_shape_ind = define_shaped_rec
    `size_of_shape (Named name) = 1
     // should not happen`];;
 
-let _ = size_thms "shape";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let shape_to_str_def,shape_to_str_ind = define_wf
@@ -216,8 +218,14 @@ let shape_val_def,shape_val_ind = define_rec
     shape_vals [] = []`;
    `shape_vals (CONS sh shs) = CONS (shape_val sh) (shape_vals shs)`];;
 
-(* HOL4 panLangScript.sml:198-208: a theorem whose statement the port
-   cannot state yet: MEM_IMP_exp_size *)
+let _ = size_thms "mlstring";;
+let _ = size_thms "panLang_exp";;
+let MEM_IMP_exp_size = prove
+ (`(!xs a. MEM a xs ==> (panLang_exp_size l a < (list_size o
+  panLang_exp_size) l xs)) /\
+   (!xs a. MEM a xs ==> (panLang_exp_size l (SND a) < (\l.
+     list_size (pair_size mlstring_size (panLang_exp_size l))) l xs))`,
+  CHEAT_TAC);;
 
 
 let nested_seq_def,nested_seq_ind = define_rec

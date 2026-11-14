@@ -220,8 +220,6 @@ asm	line 68 is 79 characters
 panLang	Overload TailCall
 panLang	Overload AssignCall
 panLang	Overload StandAloneCall
-panLang	Theorem MEM_IMP_shape_size: the auxiliary size function shape1_size
-panLang	Theorem MEM_IMP_exp_size: the auxiliary size function exp3_size
 stackLang	Overload While
 stackLang	Overload move
 stackLang	Overload sub_1_inst
@@ -720,7 +718,6 @@ fromSexp	ML code skipped: val dec_ind =   (TypeBase.induction_of``:dec``)   |> Q
 fromSexp	Overload guard
 fromSexp	ML code skipped: val sexppat_alt_ind = theorem"sexppat_alt_ind";
 fromSexp	ML code skipped: val sexpdec_alt_ind = theorem"sexpdec_alt_ind";
-fromSexp	Theorem dec1_size_eq: the auxiliary size function dec1_size
 fromSexp	ML code skipped: val exists_g_tac =   (fn (g as (asl,w)) =>     let       val
 fromSexp	line 7 is 77 characters
 fromSexp	line 431 is 74 characters
@@ -1173,8 +1170,6 @@ bvl_to_bviProof	line 1448 is 77 characters
 bvl_to_bviProof	line 1449 is 77 characters
 bvl_to_bviProof	line 1450 is 79 characters
 bvl_to_bviProof	line 1451 is 74 characters
-closProps	Theorem exp3_size: the auxiliary size function exp3_size
-closProps	Theorem exp1_size_rw: the auxiliary size function exp1_size
 closProps	ML code skipped: val evaluate_LENGTH_ind =   evaluate_ind   |> Q.SPEC `\(xs,s
 closProps	ML code skipped: val evaluate_LENGTH = prove(evaluate_LENGTH_ind |> concl |> 
 closProps	ML code skipped: val evaluate_const_ind =   evaluate_ind   |> Q.SPEC `\(xs,en
@@ -1187,9 +1182,6 @@ closProps	ML code skipped: val s = ``s:('c,'ffi) closSem$state``;
 closProps	ML code skipped: val lemma = DECIDE``¬(x < y - z) ⇒ ((a:num) + x - (y - z) = 
 closProps	ML code skipped: val tac =   imp_res_tac evaluate_add_to_clock >> rev_full_si
 closProps	ML code skipped: val _ = export_rewrites ["closLang.exp_size_def"]
-closProps	Theorem exp_size_MEM: the auxiliary size function exp3_size
-closProps	Theorem exp2_size_rw: the auxiliary size function exp2_size
-closProps	Theorem v_size_lemma: the auxiliary size function v1_size
 closProps	ML code skipped: fun case_constant typ =   prove_case_const_thm {case_def = T
 closProps	ML code skipped: val _ = print "The following proof is slow due to Rerr cases
 closProps	ML code skipped: fun first_term f tm = f (find_term (can f) tm);
@@ -1203,7 +1195,7 @@ closProps	Overload app_dests
 closProps	Overload any_dests
 closProps	ML code skipped: val app_call_dests_ind = theorem"app_call_dests_ind";
 closProps	ML code skipped: val code_locs_ind = theorem"code_locs_ind";
-closProps	line 1178 is 74 characters
+closProps	line 1193 is 74 characters
 clos_annotateProof	ML code skipped: val EVERY2_EL = LIST_REL_EL_EQN |> SPEC_ALL |> EQ_IMP_RULE |
 clos_annotateProof	Overload alt_fv_set
 clos_annotateProof	ML code skipped: val env_ok_def = v_rel_cases |> CONJUNCT2

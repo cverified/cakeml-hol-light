@@ -151,7 +151,7 @@ let canonicalMultRegs_def = new_definition
 let map_insert_def,map_insert_ind = define_rec
   [`map_insert [] m = m`;
    `map_insert (CONS (x,y) xs) m =
-      balanced_map_insert x y (map_insert xs m)`];;
+      sptree_insert x y (map_insert xs m)`];;
 
 let canonicalMoveRegs_def = new_definition
   `canonicalMoveRegs data moves =

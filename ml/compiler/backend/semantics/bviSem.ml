@@ -226,13 +226,13 @@ let bviSem_dest_thunk_def = new_definition
   `bviSem_dest_thunk vs refs =
       match vs with
         (bvlSem_RefPtr b ptr:bvlSem_v) ->
-     (match FLOOKUP refs ptr with NONE -> bvlSem_BadRef | SOME
+     (match FLOOKUP refs ptr with NONE -> bviSem_BadRef | SOME
        (bvlSem_Thunk Evaluated v) ->
-          (if b then bvlSem_BadRef else bvlSem_IsThunk Evaluated v) |
+          (if b then bviSem_BadRef else bviSem_IsThunk Evaluated v) |
             SOME (bvlSem_Thunk NotEvaluated v) ->
-          (if b then bvlSem_BadRef else bvlSem_IsThunk NotEvaluated
-            v) | SOME _23 -> bvlSem_NotThunk)
-      | vs -> bvlSem_NotThunk`;;
+          (if b then bviSem_BadRef else bviSem_IsThunk NotEvaluated
+            v) | SOME _23 -> bviSem_NotThunk)
+      | vs -> bviSem_NotThunk`;;
 
 
 (* The evaluation is defined as a clocked functional version of

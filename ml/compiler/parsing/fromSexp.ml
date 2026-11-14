@@ -1452,8 +1452,10 @@ let type_defsexp_11 = prove
   CHEAT_TAC);;
 add_simp type_defsexp_11;;
 
-(* HOL4 fromSexpScript.sml:1737-1741: a theorem whose statement the
-   port cannot state yet: dec1_size_eq *)
+let _ = size_thms "dec";;
+let dec1_size_eq = prove
+ (`list_size ast_dec_size xs = list_size dec_size xs`,
+  CHEAT_TAC);;
 
 let mem_size_lemma = prove
  (`list_size sz xs < N ==> (MEM x xs ==> sz x < N)`,

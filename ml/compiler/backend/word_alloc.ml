@@ -1534,7 +1534,7 @@ let heu_max_all_def = new_definition
    // everything in t1 not already in t2
    sptree_union
    t1r
-   (mllist_mapi (\k v.
+   (sptree_mapi (\k v.
      match sptree_lookup k t1 with
        NONE -> v | SOME v' -> heu_max v v') t2))`;;
 
@@ -1805,7 +1805,7 @@ let get_heuristics_def = new_definition
    (if alg MOD 2 = 1 then
      let (lr,calls') = get_heu fc prog (LN,LN) in
      let moves = get_prefs prog [] in
-     let spillcosts = mllist_mapi (\k v. get_spillcost v
+     let spillcosts = sptree_mapi (\k v. get_spillcost v
        (sptree_lookup k calls' = NONE)) lr in
      let canon_moves = canonize_moves moves in
      let heu_moves = MAP (get_coalescecost spillcosts) canon_moves in

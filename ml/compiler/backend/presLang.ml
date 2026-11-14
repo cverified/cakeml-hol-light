@@ -1075,19 +1075,19 @@ let data_seqs_def,data_seqs_ind = define_wf
   `MEASURE (\x0. dataLang_prog_size x0)`
   [`data_seqs z =
      (match z with dataLang_Seq x y -> misc_Append (data_seqs x)
-       (data_seqs y) | _19 -> displayLang_List [z])`];;
+       (data_seqs y) | _19 -> misc_List [z])`];;
 
 (* [local] *)
 let MEM_append_data_seqs = prove
- (`!x. MEM a (append (data_seqs x)) ==> labLang_prog_size a <=
-  labLang_prog_size x`,
+ (`!x. MEM a (append (data_seqs x)) ==> dataLang_prog_size a <=
+  dataLang_prog_size x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let list_size_append_data_seqs = prove
  (`!x.
-   list_size labLang_prog_size (append (data_seqs x)) =
-   labLang_prog_size x + 1`,
+   list_size dataLang_prog_size (append (data_seqs x)) =
+   dataLang_prog_size x + 1`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives, with
@@ -1297,19 +1297,19 @@ let stack_seqs_def,stack_seqs_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
   [`stack_seqs z =
      (match z with stackLang_Seq x y -> misc_Append (stack_seqs
-       x) (stack_seqs y) | _24 -> displayLang_List [z])`];;
+       x) (stack_seqs y) | _24 -> misc_List [z])`];;
 
 (* [local] *)
 let MEM_append_stack_seqs = prove
- (`!x. MEM a (append (stack_seqs x)) ==> labLang_prog_size ARB a <=
-  labLang_prog_size ARB x`,
+ (`!x. MEM a (append (stack_seqs x)) ==> stackLang_prog_size ARB a <=
+  stackLang_prog_size ARB x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let list_size_append_stack_seqs = prove
  (`!x.
-   list_size (labLang_prog_size ARB) (append (stack_seqs x)) =
-   labLang_prog_size ARB x + 1`,
+   list_size (stackLang_prog_size ARB) (append (stack_seqs x)) =
+   stackLang_prog_size ARB x + 1`,
   CHEAT_TAC);;
 
 let stack_prog_to_display_def,stack_prog_to_display_ind =
@@ -1512,12 +1512,12 @@ let word_seqs_def,word_seqs_ind = define_wf
   `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
   [`word_seqs z =
      (match z with wordLang_Seq x y -> misc_Append (word_seqs x)
-       (word_seqs y) | _31 -> displayLang_List [z])`];;
+       (word_seqs y) | _31 -> misc_List [z])`];;
 
 (* [local] *)
 let MEM_append_word_seqs = prove
- (`!x. MEM a (append (word_seqs x)) ==> labLang_prog_size ARB a <=
-  labLang_prog_size ARB x`,
+ (`!x. MEM a (append (word_seqs x)) ==> wordLang_prog_size ARB a <=
+  wordLang_prog_size ARB x`,
   CHEAT_TAC);;
 
 (* HOL4 presLangScript.sml:1311-1312: a theorem that HOL4 states as

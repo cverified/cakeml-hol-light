@@ -406,11 +406,18 @@ let every_Fn_vs_SOME_APPEND = prove
   CHEAT_TAC);;
 add_simp every_Fn_vs_SOME_APPEND;;
 
-(* HOL4 closPropsScript.sml:404-408: a theorem whose statement the
-   port cannot state yet: exp3_size *)
+(* exp3_size *)
+let closProps_exp3_size = prove
+ (`list_size closLang_exp_size xs = LENGTH xs + SUM (MAP
+  closLang_exp_size xs)`,
+  CHEAT_TAC);;
 
-(* HOL4 closPropsScript.sml:410-415: a theorem whose statement the
-   port cannot state yet: exp1_size_rw *)
+let exp1_size_rw = prove
+ (`list_size (pair_size (\x. x) closLang_exp_size) fbinds =
+     list_size closLang_exp_size (MAP SND fbinds) + SUM (MAP FST
+       fbinds) + LENGTH fbinds`,
+  CHEAT_TAC);;
+add_simp exp1_size_rw;;
 
 (* the termination relation that HOL4 gives is
      MEASURE closLang_exp_size
@@ -1124,8 +1131,13 @@ let evaluate_timeout_clocks0 = prove
 
 (* HOL4 closPropsScript.sml:1737: ML code, not ported *)
 
-(* HOL4 closPropsScript.sml:1739-1744: a theorem whose statement the
-   port cannot state yet: exp_size_MEM *)
+(* exp_size_MEM *)
+let closProps_exp_size_MEM = prove
+ (`(!e elist. MEM e elist ==> closLang_exp_size e < list_size
+  closLang_exp_size elist) /\
+   (!x e ealist. MEM (x,e) ealist ==> closLang_exp_size e <
+     list_size (pair_size (\x. x) closLang_exp_size) ealist)`,
+  CHEAT_TAC);;
 
 let evaluate_eq_nil = prove
  (`closSem_evaluate (es,env,s0) = (Rval [],s) <=> s0 = s /\ es = []`,
@@ -1140,8 +1152,11 @@ let op_gbag_def = new_definition
           EMPTY_BAG
       | _209 -> EMPTY_BAG`;;
 
-(* HOL4 closPropsScript.sml:1761-1765: a theorem whose statement the
-   port cannot state yet: exp2_size_rw *)
+let exp2_size_rw = prove
+ (`pair_size (\x. x) closLang_exp_size h = 1 + FST h +
+  closLang_exp_size (SND h)`,
+  CHEAT_TAC);;
+add_simp exp2_size_rw;;
 
 let set_globals_def,set_globals_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
@@ -1181,8 +1196,11 @@ add_simp set_globals_def;;
    include calls to SetGlobal, for
      foo = {(e)xpr, (v)alue, (r)esult, and (s)tate}
 *)
-(* HOL4 closPropsScript.sml:1792-1797: a theorem whose statement the
-   port cannot state yet: v_size_lemma *)
+let _ = size_thms "closSem_v";;
+let v_size_lemma = prove
+ (`MEM (v:closSem_v) vl ==> closSem_v_size v < list_size
+  closSem_v_size vl`,
+  CHEAT_TAC);;
 
 (* value is setglobal-closure free *)
 (* the termination relation that HOL4 gives, with

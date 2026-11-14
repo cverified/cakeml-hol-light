@@ -2645,10 +2645,11 @@ let assign_WordOpW64_def = new_definition
                  (wordLang_Seq (wordLang_Assign 3
                    (wordLang_Op (match opw with
                            backend_common_Andw -> asm_And |
-                             backend_common_Orw -> asm_Or | asm_Xor ->
-                             asm_Xor | backend_common_Add ->
-                             word_bignum_Add | backend_common_Sub ->
-                             word_bignum_Sub)
+                             backend_common_Orw -> asm_Or |
+                               backend_common_Xor ->
+                             asm_Xor | backend_common_Add -> asm_Add |
+                               backend_common_Sub ->
+                             asm_Sub)
                           [wordLang_Load
                              (wordLang_Op asm_Add
                               [real_addr c (adjust_var v1);
