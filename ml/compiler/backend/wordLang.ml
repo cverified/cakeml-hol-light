@@ -386,3 +386,6 @@ let word_loc_INDUCT,word_loc_RECURSION = define_datatype
   "word_loc =
      wordLang_Word ('a word)
    | wordLang_Loc num num";;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

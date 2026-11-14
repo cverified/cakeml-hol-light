@@ -454,3 +454,6 @@ let compile_nil = prove
   (* compiler evaluation *)
 (* HOL4 clos_callScript.sml:471-474: the ML values that the
    definitions below antiquote *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

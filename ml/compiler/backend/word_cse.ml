@@ -83,10 +83,10 @@ let listCmp_def,listCmp_ind = define_wf
   `MEASURE (\(x0,x1). list_size (\n. n) x0 + list_size (\n. n) x1)`
   [`(listCmp (CONS (hd1:num) tl1) (CONS (hd2:num) tl2) =
     (if hd1 = hd2 then listCmp tl1 tl2 else if hd1 > hd2 then
-      GREATER else asm_Less)) /\
-   (listCmp [] [] = asm_Equal) /\
+      GREATER else LESS)) /\
+   (listCmp [] [] = EQUAL) /\
    (listCmp (CONS hd1 tl1) [] = GREATER) /\
-   (listCmp [] (CONS hd2 tl2) = asm_Less)`];;
+   (listCmp [] (CONS hd2 tl2) = LESS)`];;
 
 let empty_data_def = new_definition
   `empty_data = mk_knowledge LN LN [] balanced_map_empty
@@ -402,7 +402,7 @@ let add_to_data_aux_def = new_definition
 let add_to_data_def = new_definition
   `add_to_data data r adjusted x =
      (let i = instToNumList adjusted in
-       add_to_data_aux data r i (asm_Inst x))`;;
+       add_to_data_aux data r i (wordLang_Inst x))`;;
 
 (* As add_to_data, but for constants: a constant is rematerialisable for free,
    so a repeated Const is NOT replaced by a Move (which would only extend the
@@ -417,7 +417,7 @@ let add_to_data_const_def = new_definition
          (balanced_map_insert r' r (knowledge_to_latest data)))
          (knowledge_to_canonical_fupd (K (balanced_map_insert r r'
          (knowledge_to_canonical data))) data),
-                     asm_Inst (asm_Const r w)) | NONE ->
+                     wordLang_Inst (asm_Const r w)) | NONE ->
                        (knowledge_to_latest_fupd (K (balanced_map_insert
                        r r (knowledge_to_latest data)))
                        (knowledge_to_canonical_fupd (K
@@ -425,7 +425,7 @@ let add_to_data_const_def = new_definition
                        data))) (knowledge_instrs_mem_fupd (K
                        (balanced_map_insert listCmp i r
                        (knowledge_instrs_mem data))) data)),
-                     asm_Inst (asm_Const r w)))`;;
+                     wordLang_Inst (asm_Const r w)))`;;
 
 (* As add_to_data_aux, but for the load-fact map. *)
 let add_to_load_aux_def = new_definition
@@ -945,7 +945,7 @@ let test_if_merge = prove
  (`word_common_subexp_elim
      (word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           wordLang_If asm_Equal 1 (Imm (n2w 0))
+           wordLang_If EQUAL 1 (Imm (n2w 0))
               (wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg
                 1))))
               (wordLang_Move 0 [(11,7)]);
@@ -953,7 +953,7 @@ let test_if_merge = prove
              1)))]) =
      word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           wordLang_If asm_Equal 1 (Imm (n2w 0)) (wordLang_Move 0
+           wordLang_If EQUAL 1 (Imm (n2w 0)) (wordLang_Move 0
              [(9,7)]) (wordLang_Move 0 [(11,7)]);
            wordLang_Move 0 [(13,7)]]`,
   CHEAT_TAC);;
@@ -965,17 +965,20 @@ let test_if_merge_clobber = prove
  (`word_common_subexp_elim
      (word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           wordLang_If asm_Equal 1 (Imm (n2w 0))
+           wordLang_If EQUAL 1 (Imm (n2w 0))
               (wordLang_Move 0 [(7,3)])
               wordLang_Skip;
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg
              1)))]) =
      word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           wordLang_If asm_Equal 1 (Imm (n2w 0)) (wordLang_Move 0
+           wordLang_If EQUAL 1 (Imm (n2w 0)) (wordLang_Move 0
              [(7,3)]) wordLang_Skip;
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg
              1)))]`,
   CHEAT_TAC);;
 
 (* HOL4 word_cseScript.sml:905: ML code, not ported *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

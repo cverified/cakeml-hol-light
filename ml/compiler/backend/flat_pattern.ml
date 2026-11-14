@@ -380,3 +380,6 @@ let LENGTH_SND_compile_exps = prove
 
 let compile_dec_def = new_definition
   `compile_dec cfg exp = SND (SND (flat_pattern_compile_exp cfg exp))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

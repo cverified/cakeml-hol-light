@@ -296,3 +296,6 @@ let comp_thm = prove
      dt_eval refs v (pattern_comp_comp rows) =
        pattern_semantics_match refs rows v`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

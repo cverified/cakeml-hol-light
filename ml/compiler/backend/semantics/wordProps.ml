@@ -2905,3 +2905,6 @@ let _ = do_list unhide_constant
   ["Term";
    "comp";
    "precondition"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

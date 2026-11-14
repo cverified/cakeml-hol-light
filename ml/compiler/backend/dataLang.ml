@@ -96,3 +96,6 @@ let dataLang_prog_INDUCT,dataLang_prog_RECURSION = define_datatype
 
 let mk_ticks_def = new_definition
   `mk_ticks n e = ITER n (dataLang_Seq dataLang_Tick) e`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

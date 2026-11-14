@@ -37,7 +37,7 @@ let trace_to_json_def,trace_to_json_ind = define_rec
   [`trace_to_json (backend_common_Cons tra num') =
         jsonLang_Object [((implode "name"),jsonLang_String (implode
             "Cons"));
-          ((implode "num"),jsonLang_String (mlint_toString num'));
+          ((implode "num"),jsonLang_String (num_to_str num'));
           ((implode "trace"),trace_to_json tra)]`;
    `trace_to_json (backend_common_Union tra1 tra2:tra) =
         jsonLang_Object [((implode "name"),jsonLang_String (implode
@@ -90,3 +90,6 @@ let display_to_str_tree_def,display_to_str_tree_ind = define_rec
    `display_to_str_tree_list [] = []`;
    `display_to_str_tree_list (CONS x xs) = CONS
     (display_to_str_tree x) (display_to_str_tree_list xs)`];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

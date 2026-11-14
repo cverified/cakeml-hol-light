@@ -398,3 +398,6 @@ let marray_alloc_success = prove
 (* Run *)
 let run_def = new_definition
   `run (x:'a->('b,'c)exc#'a) state = FST (x state)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

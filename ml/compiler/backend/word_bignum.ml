@@ -526,8 +526,8 @@ let TempOut_def = new_definition
   `TempOut = Temp (n2w 29)`;;
 
 let SeqTemp_def = new_definition
-  `SeqTemp i r p = wordLang_Seq (wordLang_Assign i (wordLang_Lookup
-  (Temp (n2w r)))) p`;;
+  `SeqTemp i r p = word_bignum_Seq (wordLang_Assign i
+  (wordLang_Lookup (Temp (n2w r)))) p`;;
 
 let SeqTempImm_def = define_cases
   [`SeqTempImm i (Reg r) p = SeqTemp i r p`;
@@ -560,7 +560,8 @@ let DivCode_def = new_definition
   `DivCode l1 l2 n1 n2 n3 n4 n5 =
      wordLang_MustTerminate
        (wordLang_Seq (wordLang_Call (SOME ([n1],(LS
-         one,LN),asm_Skip,l1,l2)) (SOME div_location) [n3; n4; n5] NONE)
+         one,LN),word_bignum_Skip,l1,l2)) (SOME div_location) [n3; n4;
+         n5] NONE)
             (wordLang_Assign n2 (wordLang_Lookup (Temp (n2w
               28)))))`;;
 
@@ -680,3 +681,6 @@ let generated_bignum_stubs_def = new_definition
 
 (* HOL4 word_bignumScript.sml:576-577: a theorem that HOL4 states as
    the value of an ML expression: generated_bignum_stubs_eq *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

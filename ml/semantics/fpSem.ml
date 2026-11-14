@@ -74,3 +74,6 @@ let fpfma_def = new_definition
 
 let fp_top_comp_def = new_definition
   `fp_top_comp fop = fpfma`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

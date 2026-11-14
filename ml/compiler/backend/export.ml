@@ -155,7 +155,7 @@ let words_line_def = new_definition
      misc_List (CONS word_directive (comma_cat to_string ls))`;;
 
 let word_to_string_def = new_definition
-  `word_to_string w = mlint_toString (w2n w)`;;
+  `word_to_string w = num_to_str (w2n w)`;;
 
 let byte_to_string_def = new_definition
   `byte_to_string (b:word8) =
@@ -213,3 +213,6 @@ let emit_symbol_def = new_definition
 let emit_symbols_def = new_definition
   `emit_symbols lsyms =
      FOLDL emit_symbol misc_Nil lsyms`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

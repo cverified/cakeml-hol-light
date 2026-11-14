@@ -576,3 +576,6 @@ add_simp mk_tick_code_labels;;
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["parts"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

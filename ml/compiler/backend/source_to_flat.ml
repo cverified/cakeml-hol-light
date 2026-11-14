@@ -74,17 +74,17 @@ let compile_var_def = define_cases
 let compile_pat_def,compile_pat_ind = define_shaped_rec
   "nested"
   [`compile_pat env (ast_Pvar v) = flatLang_Pvar v`;
-   `compile_pat env (ast_Pany:ast_pat) = flatLang_Pany`;
-   `compile_pat env (ast_Plit l:ast_pat) = flatLang_Plit l`;
+   `compile_pat env (flatLang_Pany:ast_pat) = flatLang_Pany`;
+   `compile_pat env (flatLang_Plit l:ast_pat) = flatLang_Plit l`;
    `compile_pat env (ast_Pcon id' ps) =
         flatLang_Pcon
           (OPTION_JOIN (OPTION_MAP (nsLookup
               (source_to_flat_environment_c env)) id'))
           (MAP (compile_pat env) ps)`;
-   `compile_pat env (ast_Pref p:ast_pat) = flatLang_Pref (compile_pat
-    env p)`;
-   `compile_pat env (ast_Pas p i:ast_pat) = flatLang_Pas (compile_pat
-    env p) i`;
+   `compile_pat env (flatLang_Pref p:ast_pat) = flatLang_Pref
+    (compile_pat env p)`;
+   `compile_pat env (flatLang_Pas p i:ast_pat) = flatLang_Pas
+    (compile_pat env p) i`;
    `compile_pat env (ast_Ptannot p t) = compile_pat env p`];;
 
 let pat_tups_def,pat_tups_ind = define_rec
@@ -262,7 +262,7 @@ let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
     = []`;
    `compile_pes (t:mlstring list) (env:source_to_flat_environment) (CONS
     (p,e) pes) =
-        (let pbs = flatLang_pat_bindings p in
+        (let pbs = pat_bindings p in
         let pts = pat_tups backend_common_None pbs in
         CONS (compile_pat env p,source_to_flat_compile_exp t
             (source_to_flat_environment_v_fupd (K (nsBindList pts
@@ -412,7 +412,7 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
                       (n,next',mk_source_to_flat_environment nsEmpty
                       nsEmpty,envs',[])) | NONE ->
             (let n' = n + 4 in
-            let xs = REVERSE (flatLang_pat_bindings p) in
+            let xs = REVERSE (pat_bindings p) in
             let e' = source_to_flat_compile_exp (APPEND xs t) env e
               in
             let l = LENGTH xs in
@@ -601,3 +601,6 @@ let inc_compile_def = new_definition
      let p' = MAP (compile_dec (source_to_flat_config_pattern_cfg
        c')) p' in
        (c',p'))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

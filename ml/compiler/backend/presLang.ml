@@ -55,7 +55,7 @@ let empty_item_def = new_definition
   `empty_item name = displayLang_String name`;;
 
 let num_to_display_def = new_definition
-  `num_to_display (n:num) = displayLang_String (mlint_toString n)`;;
+  `num_to_display (n:num) = displayLang_String (num_to_str n)`;;
 
 let int_to_display_def = new_definition
   `int_to_display (i:int) = displayLang_String (mlint_toString i)`;;
@@ -1776,3 +1776,6 @@ val data_prog_tm =
 val _ = data_to_strs data_prog_tm names_tm |> print_strs
 
 *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -893,3 +893,6 @@ let bvi_tailrecProof_compile_prog_good_code_labels = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["all"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

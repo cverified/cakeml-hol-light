@@ -398,3 +398,6 @@ let evaluate_three_to_two_reg_prog = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

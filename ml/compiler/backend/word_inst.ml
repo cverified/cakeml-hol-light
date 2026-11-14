@@ -590,3 +590,6 @@ let three_to_two_reg_prog_def = new_definition
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

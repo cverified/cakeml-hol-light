@@ -632,3 +632,6 @@ let word_removal_thm = prove
 let _ = do_list unhide_constant
   ["addr";
    "mem"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

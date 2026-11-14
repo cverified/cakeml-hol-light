@@ -164,3 +164,6 @@ let fringe_lengths_V = prove
 
 (* HOL4 gramPropsScript.sml:340-350: a theorem that HOL4 states as
    the value of an ML expression: parsing_ind *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

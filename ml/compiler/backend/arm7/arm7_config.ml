@@ -57,3 +57,6 @@ let arm7_backend_config_def = new_definition
                 (mk_stack_to_lab_config arm7_names T F)
                 (mk_lab_to_target_config LN [] 0 5 NONE [] 104729) []
                 default_tap_config []`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

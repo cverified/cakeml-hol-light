@@ -19,3 +19,6 @@ let _ = cake_theory "source_to_source"
 
 let source_to_source_compile_def = new_definition
   `source_to_source_compile = source_let_compile_decs`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

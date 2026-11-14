@@ -228,3 +228,6 @@ let stack_get_handler_labels_comp = prove
      stack_get_handler_labels k (comp_top i p) =
      stack_get_handler_labels k p`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

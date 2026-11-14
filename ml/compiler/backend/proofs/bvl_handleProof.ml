@@ -404,3 +404,6 @@ let compile_seqs_code_labels = prove
      (match acc with NONE -> {} | SOME r ->
        bvlProps_get_code_labels r)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

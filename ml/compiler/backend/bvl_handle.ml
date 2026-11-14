@@ -194,7 +194,7 @@ let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
          let (dy,ly,s2,nr2) = bvl_handle_compile l n (CONS y xs) in
            (APPEND dx dy,mk_Union lx ly,s1 + s2,(nr1 /\ nr2)))`;
    `bvl_handle_compile l n [(bvl_Var v:bvl_exp)] = (if v < n then
-    ([bvl_Var v],bvl_Var v,1,T) else ([bvl_Op (closLang_IntOp
+    ([bvl_Var v],db_vars_Var v,1,T) else ([bvl_Op (closLang_IntOp
     (closLang_Const (&0))) []],db_vars_Empty,1,T))`;
    `bvl_handle_compile l n [(bvl_If x1 x2 x3:bvl_exp)] =
          (let (x1,l1,s1,nr1) = bvl_handle_compile l n [x1] in
@@ -236,7 +236,7 @@ let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
          (let (y,lx,s1,nr1) = bvl_handle_compile l n [x] in
            ([bvl_Tick (HD y)],lx,s1,nr1))`;
    `bvl_handle_compile l n [(bvl_Force m v:bvl_exp)] = (if v < n then
-    ([(bvl_Force m v:bvl_exp)],bvl_Var v,1,F) else ([bvl_Op
+    ([(bvl_Force m v:bvl_exp)],db_vars_Var v,1,F) else ([bvl_Op
     (closLang_IntOp (closLang_Const (&0))) []],db_vars_Empty,1,T))`;
    `bvl_handle_compile l n [(bvl_Call t dest xs:bvl_exp)] =
          (let (ys,lx,s1,nr1) = bvl_handle_compile l n xs in
@@ -374,3 +374,6 @@ let bvl_handle_compile_sing = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

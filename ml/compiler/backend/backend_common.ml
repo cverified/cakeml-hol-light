@@ -183,3 +183,6 @@ let lookup_list_delete = prove
  (`!xs l n. sptree_lookup n (list_delete xs l) =
             (if MEM n xs then NONE else sptree_lookup n l)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

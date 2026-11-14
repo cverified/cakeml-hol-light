@@ -429,3 +429,6 @@ let let_op_get_code_labels = prove
   closProps_get_code_labels es`,
   CHEAT_TAC);;
 add_simp let_op_get_code_labels;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

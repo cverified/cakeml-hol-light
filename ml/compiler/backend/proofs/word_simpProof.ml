@@ -595,3 +595,6 @@ let compile_exp_thm = prove
 let _ = do_list unhide_constant
   ["addr";
    "dummy"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

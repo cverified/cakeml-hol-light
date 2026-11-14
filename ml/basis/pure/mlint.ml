@@ -2,8 +2,8 @@
 (*  mlint: ported from HOL4's
     basis/pure/mlintScript.sml
     A definition theory, with 20 definitions and 41 theorems.
-    Needed by compiler.ml, displayLang.ml, export.ml, infer_t.ml,
-    jsonLang.ml and presLang.ml.  *)
+    Needed by compiler.ml, displayLang.ml, export.ml, infer.ml,
+    infer_t.ml, jsonLang.ml and presLang.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -306,24 +306,24 @@ let fromString_toString_Num = prove
 
 (* [local] *)
 let fromString_helper = prove
- (`HD (mlint_toString (i:num)) = c ==> isDigit c`,
+ (`HD (num_to_dec_string (i:num)) = c ==> isDigit c`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fromString_hd = prove
- (`HD (mlint_toString (i:num)) = c ==> isDigit c`,
+ (`HD (num_to_dec_string (i:num)) = c ==> isDigit c`,
   CHEAT_TAC);;
 
 (* [local] *)
 let toString_len = prove
- (`LENGTH (mlint_toString (i:num)) + 1 >= 2`,
+ (`LENGTH (num_to_dec_string (i:num)) + 1 >= 2`,
   CHEAT_TAC);;
 
 (* [local] *)
 let toString_len_1 = prove
- (`~(HD (mlint_toString (i:num)) = (CHR 126)) /\
-   ~(HD (mlint_toString (i:num)) = (CHR 45)) /\
-   ~(HD (mlint_toString (i:num)) = (CHR 43))`,
+ (`~(HD (num_to_dec_string (i:num)) = (CHR 126)) /\
+   ~(HD (num_to_dec_string (i:num)) = (CHR 45)) /\
+   ~(HD (num_to_dec_string (i:num)) = (CHR 43))`,
   CHEAT_TAC);;
 
 let fromString_int_to_string = prove
@@ -338,7 +338,7 @@ let fromString_toString = prove
 add_simp fromString_toString;;
 
 let fromNatString_toString = prove
- (`!(n:num). fromNatString (mlint_toString n) = SOME n`,
+ (`!(n:num). fromNatString (num_to_str n) = SOME n`,
   CHEAT_TAC);;
 add_simp fromNatString_toString;;
 
@@ -408,7 +408,7 @@ let num_to_str_every = prove
   CHEAT_TAC);;
 
 let num_to_str_imp_cons = prove
- (`mlint_toString (i:num) = implode s ==>
+ (`num_to_str (i:num) = implode s ==>
    (?x xs. s = CONS x xs /\ 48 <= ORD x /\ ORD x <= 57 /\ ALL (\x.
      48 <= ORD x /\ ORD x <= 57) xs)`,
   CHEAT_TAC);;
@@ -421,3 +421,6 @@ let num_to_str_APPEND_11 = prove
    ~(48 <= ORD x2 /\ ORD x2 <= 57) ==>
    n1 = n2 /\ CONS x1 xs1 = CONS x2 xs2`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

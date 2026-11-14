@@ -40,3 +40,6 @@ let bvl_get_code_labels_JumpList = prove
  (`!n xs. bvlProps_get_code_labels (JumpList n xs) = UNIONS
   (set_of_list (MAP bvlProps_get_code_labels xs))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

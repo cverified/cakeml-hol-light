@@ -2890,3 +2890,6 @@ let _ = do_list unhide_constant
    "not";
    "sloc";
    "val"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

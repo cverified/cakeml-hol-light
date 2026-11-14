@@ -688,3 +688,6 @@ let clos_mtiProof_semantics_compile = prove
         do_mti max_app xs) =
       closSem_semantics ffi max_app FEMPTY co cc1 xs`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

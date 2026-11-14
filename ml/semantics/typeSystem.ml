@@ -996,3 +996,6 @@ type_prog extra_checks (union_decls decls1 decls) (extend_dec_tenv tenv1 tenv) t
 type_prog extra_checks decls tenv (top :: tops)
   (union_decls decls2 decls1) (extend_dec_tenv tenv2 tenv1)
   *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

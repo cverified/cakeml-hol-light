@@ -1534,3 +1534,6 @@ let _ = do_list unhide_constant
   ["C";
    "comp";
    "dummy"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

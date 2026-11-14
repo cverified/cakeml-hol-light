@@ -744,3 +744,6 @@ let compile_prog_get_code_labels = prove
    UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND)
      p))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

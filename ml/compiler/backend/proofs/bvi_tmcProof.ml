@@ -2111,3 +2111,6 @@ let _ = do_list unhide_constant
   ["all";
    "parts";
    "vars"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

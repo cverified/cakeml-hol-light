@@ -129,3 +129,6 @@ let remove_ticks_sing_eq = prove
 
 let clos_ticks_compile_inc_def = new_definition
   `clos_ticks_compile_inc (e,xs) = (clos_ticks_remove_ticks e,[])`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

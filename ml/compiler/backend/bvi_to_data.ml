@@ -365,3 +365,6 @@ let compile_exp_eq = prove
 let _ = do_list unhide_constant
   ["pmatch";
    "tail"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

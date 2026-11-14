@@ -289,3 +289,6 @@ new_type_abbrev("clos_prog",`:closLang_exp
 
 (* HOL4 closLangScript.sml:228: the type abbreviation clos_cc, which
    the port expands *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

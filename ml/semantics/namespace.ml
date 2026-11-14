@@ -116,3 +116,6 @@ let nsMap_def,nsMap_ind = define_shaped_rec
   [`nsMap (f:'v->'w) ((Bind v m):('m,'n,'v)namespace) =
      Bind (MAP (\(n,x). (n,f x)) v) (MAP (\(mn,e). (mn,nsMap f
        e)) m)`];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

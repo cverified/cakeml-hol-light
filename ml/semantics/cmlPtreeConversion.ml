@@ -1423,3 +1423,6 @@ let ptree_TopLevelDecs_def,ptree_TopLevelDecs_ind = define_wf
 let _ = do_list unhide_constant
   ["assert";
    "pmatch"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

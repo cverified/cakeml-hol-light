@@ -1553,3 +1553,6 @@ let gen_gc_partial_partial_gc_IMP = prove
                           (?xs l d. MEM (DataElement xs l d) curr
                             /\ gen_gc_partial_conf_isRef c d)))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

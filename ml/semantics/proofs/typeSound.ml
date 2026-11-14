@@ -587,3 +587,6 @@ let semantics_type_sound = prove
     type_sound_invariant st env ctMap tenvS tids tenv ==> ~(r =
       ffi_Fail)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

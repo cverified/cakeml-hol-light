@@ -98,3 +98,6 @@ let prim_tenv_def = new_definition
 let prim_type_ids_def = new_definition
   `prim_type_ids = set_of_list (CONS Tlist_num (CONS Tbool_num
   prim_type_nums))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

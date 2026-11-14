@@ -787,3 +787,6 @@ add_simp PEG_wellformed;;
    value of an ML expression: NTS_in_PEG_exprs *)
 
 (* HOL4 cmlPEGScript.sml:844: ML code, not ported *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

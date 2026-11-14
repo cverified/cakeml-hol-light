@@ -343,3 +343,6 @@ let apps_def,apps_ind = define_rec
 let funs_def,funs_ind = define_rec
   [`Funs [] e = e`;
    `Funs (CONS x xs) e = ast_Fun x (Funs xs e)`];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

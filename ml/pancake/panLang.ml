@@ -427,3 +427,6 @@ let inlinable_def = new_definition
       match x1 with
         Function fi -> fun_decl_inline fi
       | _64 -> F`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

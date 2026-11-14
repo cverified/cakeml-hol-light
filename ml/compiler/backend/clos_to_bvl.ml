@@ -555,8 +555,8 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
              in
            ([match loc_opt with NONE ->
                  bvl_Let (APPEND c2 c1) (mk_cl_call (bvl_Var (LENGTH
-                     c2)) (list_of_seq closLang_Var (LENGTH c2))) | SOME
-                     loc ->
+                     c2)) (list_of_seq bvl_Var (LENGTH c2))) | SOME loc
+                     ->
                  (bvl_Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
                      max_app))) (APPEND c2 c1))],
             aux2))`;
@@ -567,13 +567,13 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
          let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
              in
          let c2 =
-           bvl_Let (APPEND (list_of_seq closLang_Var num_args)
-               (free_let (bvl_Var num_args) (LENGTH vs)))
+           bvl_Let (APPEND (list_of_seq bvl_Var num_args) (free_let
+               (bvl_Var num_args) (LENGTH vs)))
                (HD c1) in
            ([bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
                 (REVERSE (CONS (mk_label (loc + num_stubs
                     max_app)) (CONS (mk_const (num_args - 1)) (MAP
-                    closLang_Var vs))))],CONS (loc + (num_stubs
+                    bvl_Var vs))))],CONS (loc + (num_stubs
                     max_app),num_args + 1,c2) aux1))`;
    `clos_to_bvl_compile_exps max_app [(closLang_Letrec t loc_opt vsopt
     fns x1:closLang_exp)] aux =
@@ -583,9 +583,9 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
              aux | [(num_args,exp)] ->
              (let (c1,aux1) = clos_to_bvl_compile_exps max_app [exp]
                  aux in
-             let c3 = bvl_Let (APPEND (APPEND (list_of_seq
-                 closLang_Var num_args) [bvl_Var num_args]) (free_let
-                 (bvl_Var num_args) (LENGTH vs))) (HD c1) in
+             let c3 = bvl_Let (APPEND (APPEND (list_of_seq bvl_Var
+                 num_args) [bvl_Var num_args]) (free_let (bvl_Var
+                 num_args) (LENGTH vs))) (HD c1) in
              let (c2,aux2) = clos_to_bvl_compile_exps max_app [x1]
                  (CONS (loc + (num_stubs max_app),num_args + 1,c3) aux1)
                  in
@@ -593,7 +593,7 @@ let clos_to_bvl_compile_exps_def,clos_to_bvl_compile_exps_ind =
                bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
                   (REVERSE (CONS (mk_label (loc + (num_stubs
                       max_app))) (CONS (mk_const (num_args - 1)) (MAP
-                      closLang_Var vs)))) in
+                      bvl_Var vs)))) in
                ([bvl_Let [c4] (HD c2)],aux2)) | _3 ->
              (let fns_l = LENGTH fns in
              let l = fns_l + LENGTH vs in
@@ -1041,3 +1041,6 @@ let clos_to_bvl_clos_to_bvl_compile_inc_def = new_definition
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

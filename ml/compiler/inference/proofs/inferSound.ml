@@ -155,3 +155,6 @@ let db_subst_infer_subst_swap2 = prove
 
 (* HOL4 inferSoundScript.sml:754-1137: code that the source has in a
    comment *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

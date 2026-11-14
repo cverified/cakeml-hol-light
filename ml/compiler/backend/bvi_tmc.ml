@@ -614,3 +614,6 @@ let bvi_tmc_compile_each_def,bvi_tmc_compile_each_ind = define_rec
 let bvi_tmc_compile_prog_def = new_definition
   `bvi_tmc_compile_prog do_it next' xs =
      (if do_it then bvi_tmc_compile_each next' xs else (next',xs))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -372,3 +372,6 @@ let fix_clock_evaluate = prove
 
 (* HOL4 evaluateScript.sml:358-362: a theorem that HOL4 states as the
    value of an ML expression: evaluate_decs_ind *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

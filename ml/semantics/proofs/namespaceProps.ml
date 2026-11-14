@@ -615,3 +615,6 @@ let nsDomMod_nsAppend_flat = prove
 let _ = do_list unhide_constant
   ["id";
    "path"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

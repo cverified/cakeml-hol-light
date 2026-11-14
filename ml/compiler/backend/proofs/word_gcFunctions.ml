@@ -812,3 +812,6 @@ add_simp word_gc_fun_has_fp_ops;;
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["shift"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

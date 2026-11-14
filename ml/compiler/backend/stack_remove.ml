@@ -497,3 +497,6 @@ let _ = do_list unhide_constant
   ["dummy";
    "gc";
    "gen_gc"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

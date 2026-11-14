@@ -572,3 +572,6 @@ let bvl_const_compile_exp_eq = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

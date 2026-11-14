@@ -74,3 +74,6 @@ let bvi_exp_INDUCT,bvi_exp_RECURSION = define_datatype
 
 (* HOL4 bviScript.sml:63-64: the overload TailCall, which the port
    expands *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

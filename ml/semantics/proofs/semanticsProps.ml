@@ -167,3 +167,6 @@ let extend_with_resource_limit'_SUBSET = prove
  (`extend_with_resource_limit' b s SUBSET
    extend_with_resource_limit s`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -241,3 +241,6 @@ let type_config_ok = prove
  (`envRel_env_rel prim_tenv infer_init_config /\
    inf_set_tids_ienv prim_type_ids infer_init_config`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

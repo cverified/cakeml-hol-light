@@ -41,3 +41,6 @@ let JumpList_def,JumpList_ind = define_guess_cheat
 
 let jump_def = new_definition
   `bvl_jump_Jump x xs = bvl_Let [x] (JumpList 0 xs)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -11898,16 +11898,11 @@ DEF_PATCH = {
     ('= labLang_JumpCmp c r ri\n     w', '= asm_JumpCmp c r ri\n     w'),
     ('= labLang_Call w', '= asm_Call w'),
   ],
-  # flatten compares the two halves of a stackLang If with Skip,
-  # and the Inst of its first arm is asm's Skip: the definition
-  # is printed as one term, where a rule for the bodies cannot
-  # reach one and not the other
+  # flatten gives a lab program, and the Inst that the arm for a
+  # Tick puts in its Asm is the asm instruction Inst Skip, where
+  # every other Inst and Skip of the definition is stackLang's
   ('stack_to_lab', 'flatten_def'): [
-    ('(p1 = asm_Skip) /\\ (p2 = asm_Skip)',
-     '(p1 = stackLang_Skip) /\\ (p2 = stackLang_Skip)'),
-    ('else if p1 = asm_Skip then',
-     'else if p1 = stackLang_Skip then'),
-    ('= asm_Skip then', '= stackLang_Skip then'),
+    ('(stackLang_Inst (asm_Skip))', '(asm_Inst (asm_Skip))'),
   ],
   # lookup_word_op matches on an opw, whose constructors the port
   # calls after backend_common, and gives the binop of asm that

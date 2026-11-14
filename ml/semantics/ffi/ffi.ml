@@ -122,3 +122,6 @@ let trace_oracle_def = new_definition
        (if s = s' /\ MAP FST bytes2 = input /\ conf = conf' then
          Oracle_return (THE (LTL io_trace)) (MAP SND bytes2) else
            Oracle_final FFI_failed))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

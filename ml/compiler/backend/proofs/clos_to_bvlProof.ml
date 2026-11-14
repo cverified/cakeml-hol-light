@@ -3493,3 +3493,6 @@ let _ = do_list unhide_constant
    "parts";
    "syntax_ok";
    "update_tag"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

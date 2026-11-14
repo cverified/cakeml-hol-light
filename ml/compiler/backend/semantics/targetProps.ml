@@ -882,3 +882,6 @@ let ccache_interfer_ok_post_ccache_asm = prove
          mc_conf k (a1,a2,ms2)))
        (machine_config_ccache_interfer mc_conf k (a1,a2,ms2))`),
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -169,8 +169,8 @@ bvl_handle	ML code skipped: val compile_ind = theorem"compile_ind";
 bvl_to_bvi	ML code skipped: val large_int = ``268435457:int``; (* 2**28-1 *)
 bvl_to_bvi	Overload num_stubs
 bvl_to_bvi	Overload nss
-bvl_to_bvi	line 364 is 92 characters
-bvl_to_bvi	line 379 is 84 characters
+bvl_to_bvi	line 363 is 92 characters
+bvl_to_bvi	line 378 is 84 characters
 clos_annotate	line 22 is 90 characters
 clos_call	ML code skipped: val free_ind = theorem "free_ind";
 clos_call	Theorem exp3_size_MAP_SND: the auxiliary size function exp3_size
@@ -349,9 +349,9 @@ word_alloc	line 1607 is 73 characters
 word_alloc	line 1608 is 84 characters
 word_alloc	line 1610 is 75 characters
 word_alloc	line 1738 is 91 characters
-word_copy	line 225 is 78 characters
-word_copy	line 363 is 77 characters
-word_copy	line 364 is 73 characters
+word_copy	line 227 is 78 characters
+word_copy	line 365 is 77 characters
+word_copy	line 366 is 73 characters
 word_cse	ML code skipped: val _ = Theory.delete_const "Seqs";
 word_cse	line 7 is 73 characters
 word_cse	line 110 is 75 characters
@@ -419,11 +419,11 @@ data_to_word	Overload FALSE_CONST
 data_to_word	Overload TRUE_CONST
 data_to_word	ML code skipped: val assign_defs = ref ([]:thm list); fun assign_Define q = l
 data_to_word	ML code skipped: val th_FF = EVAL ``full_call_graph AnyArith_location        
-data_to_word	line 1060 is 76 characters
-data_to_word	line 2477 is 76 characters
-data_to_word	line 2481 is 81 characters
-data_to_word	line 2501 is 76 characters
-data_to_word	line 2505 is 81 characters
+data_to_word	line 1059 is 76 characters
+data_to_word	line 2472 is 76 characters
+data_to_word	line 2476 is 81 characters
+data_to_word	line 2496 is 76 characters
+data_to_word	line 2500 is 81 characters
 clos_interp	Overload V
 clos_interp	Overload IsCase
 clos_interp	Overload GetEl
@@ -599,18 +599,18 @@ parmove	ML code skipped: val _ = set_fixity "\226\134\170*" (Infix(NONASSOC,450)
 parmove	ML code skipped: val not_or = METIS_PROVE[]``¬a ∨ b ⇔ a ⇒ b``;
 parmove	ML code skipped: val pmov_ind = theorem"pmov_ind";
 parmove	line 25 is 74 characters
-word_to_stack	line 340 is 78 characters
-word_to_stack	line 341 is 74 characters
-word_to_stack	line 342 is 73 characters
-word_to_stack	line 344 is 75 characters
-word_to_stack	line 361 is 73 characters
-word_to_stack	line 362 is 76 characters
-word_to_stack	line 363 is 75 characters
-word_to_stack	line 369 is 74 characters
-word_to_stack	line 673 is 75 characters
-word_to_stack	line 674 is 73 characters
+word_to_stack	line 343 is 78 characters
+word_to_stack	line 344 is 74 characters
+word_to_stack	line 345 is 73 characters
+word_to_stack	line 347 is 75 characters
+word_to_stack	line 364 is 73 characters
+word_to_stack	line 365 is 76 characters
+word_to_stack	line 366 is 75 characters
+word_to_stack	line 372 is 74 characters
+word_to_stack	line 676 is 75 characters
+word_to_stack	line 677 is 73 characters
 stack_to_lab	Overload Asm
-stack_to_lab	line 192 is 75 characters
+stack_to_lab	line 193 is 75 characters
 backend	ML code skipped: val config_component_equality = theorem"config_component_equ
 backend	Overload bvl_inline_compile_prog
 backend	Overload bvi_tailrec_compile_prog
@@ -763,18 +763,18 @@ unify	line 744 is 76 characters
 unify	line 1560 is 91 characters
 infer	ML code skipped: val type_name_check_subst_alt =   type_name_check_subst_def 
 infer	Overload Tem
-infer	line 148 is 124 characters
-infer	line 157 is 85 characters
-infer	line 158 is 77 characters
-infer	line 931 is 86 characters
-infer	line 942 is 87 characters
-infer	line 945 is 87 characters
-infer	line 950 is 86 characters
-infer	line 1161 is 87 characters
-infer	line 1186 is 82 characters
-infer	line 1228 is 79 characters
-infer	line 1229 is 77 characters
-infer	line 1230 is 78 characters
+infer	line 149 is 124 characters
+infer	line 158 is 85 characters
+infer	line 159 is 77 characters
+infer	line 932 is 86 characters
+infer	line 943 is 87 characters
+infer	line 946 is 87 characters
+infer	line 951 is 86 characters
+infer	line 1162 is 87 characters
+infer	line 1187 is 82 characters
+infer	line 1229 is 79 characters
+infer	line 1230 is 77 characters
+infer	line 1231 is 78 characters
 lexer_fun	ML code skipped: val listeq = CaseEq "list" val optioneq = CaseEq "option"
 lexer_fun	line 236 is 76 characters
 lexer_fun	line 350 is 80 characters
@@ -2291,9 +2291,9 @@ lab_filterProof	Theorem state_rel_IMP_sem_EQ_sem: HOL Light does not read the st
 lab_filterProof	Theorem filter_skip_semantics: HOL Light does not read the statement
 lab_filterProof	line 84 is 73 characters
 stackProps	line 742 is 76 characters
-stackProps	line 880 is 80 characters
-stackProps	line 881 is 77 characters
-stackProps	line 1016 is 81 characters
+stackProps	line 881 is 80 characters
+stackProps	line 882 is 77 characters
+stackProps	line 1017 is 81 characters
 stack_removeProof	ML code skipped: val word_shift_def = backend_commonTheory.word_shift_def
 stack_removeProof	Overload num_stubs
 stack_removeProof	ML code skipped: val write_fun2set2 = write_fun2set |> SIMP_RULE std_ss [GSYM

@@ -387,3 +387,6 @@ let is_load_def = new_definition
         | asm_Load32 -> T
         | _1 -> F`;;
 add_simp is_load_def;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

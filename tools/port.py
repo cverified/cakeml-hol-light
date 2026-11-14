@@ -1257,9 +1257,9 @@ class Porter:
     # every file that said which theories it can see puts the
     # interface back, a file whose source has no CakeML ancestor as
     # well: it cut the interface down to nothing of the port
-    # the interface goes back where the next file says which
-    # theory it is (cake_theory, cake_library), so there is
-    # nothing for a file to take back at the end of itself
+    # and the interface it cut down to its own scope goes back
+    if self.hideconsts or self.kind != 'lib':
+      text += '\n(* and the interface *)\nlet _ = unhide_overloads ();;\n'
     # the lemmas that the port adds to this theory, which a proof
     # of phase three asks for and the source has not: they are in
     # tools/extra/<theory>.ml, so that a re-port keeps them (a
@@ -2041,6 +2041,11 @@ class Porter:
     # variables is for this definition only (a node of another
     # one can have the same id once it is gone)
     self.ctx.armvars = {}
+    # and so are the theories that the patterns of the block say
+    # (clause_clash sets them where the definition has clauses):
+    # without this a definition that the port prints as one term
+    # is resolved with the theories of the one before it
+    self.contys = set()
     # the theory whose constructor a name means here
     conof = dict(overrides.CON_OF.get(key, {}))
     # a name that the override gives a theory itself, rather than

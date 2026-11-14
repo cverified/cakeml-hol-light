@@ -238,3 +238,6 @@ let riscv_export_def = new_definition
       "     .p2align 4";
       ""]))) (export_riscv_export_funcs lsyms exp)) else misc_List
         [])))))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

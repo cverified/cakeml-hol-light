@@ -405,3 +405,6 @@ let peg_sound = prove
             MAP (grammar_TOK ## I) i0 = APPEND (real_fringe pt)
               (MAP (grammar_TOK ## I) i))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

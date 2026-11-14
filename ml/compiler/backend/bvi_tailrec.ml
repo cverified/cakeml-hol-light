@@ -385,16 +385,16 @@ let arg_ty_def = new_definition
   `arg_ty x1 =
       match x1 with
         closLang_IntOp (closLang_Const i) -> (if small_enough_int i
-          then closLang_Int else bvi_tailrec_Any)
-      | (closLang_IntOp closLang_Add) -> closLang_Int
-      | (closLang_IntOp closLang_Sub) -> closLang_Int
-      | (closLang_IntOp closLang_Mult) -> closLang_Int
-      | (closLang_IntOp closLang_Div) -> closLang_Int
-      | (closLang_IntOp closLang_Mod) -> closLang_Int
-      | (closLang_IntOp closLang_LessEq) -> closLang_Int
-      | (closLang_IntOp closLang_Less) -> closLang_Int
-      | (closLang_IntOp closLang_Greater) -> closLang_Int
-      | (closLang_IntOp closLang_GreaterEq) -> closLang_Int
+          then bvi_tailrec_Int else bvi_tailrec_Any)
+      | (closLang_IntOp closLang_Add) -> bvi_tailrec_Int
+      | (closLang_IntOp closLang_Sub) -> bvi_tailrec_Int
+      | (closLang_IntOp closLang_Mult) -> bvi_tailrec_Int
+      | (closLang_IntOp closLang_Div) -> bvi_tailrec_Int
+      | (closLang_IntOp closLang_Mod) -> bvi_tailrec_Int
+      | (closLang_IntOp closLang_LessEq) -> bvi_tailrec_Int
+      | (closLang_IntOp closLang_Less) -> bvi_tailrec_Int
+      | (closLang_IntOp closLang_Greater) -> bvi_tailrec_Int
+      | (closLang_IntOp closLang_GreaterEq) -> bvi_tailrec_Int
       | (closLang_BlockOp closLang_ListAppend) -> bvi_tailrec_List
       | _31 -> bvi_tailrec_Any`;;
 
@@ -951,3 +951,6 @@ let rev_compile_exp = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

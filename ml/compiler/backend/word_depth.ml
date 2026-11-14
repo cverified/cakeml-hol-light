@@ -115,3 +115,6 @@ let max_depth_graphs_def,max_depth_graphs_ind = define_rec
              (sptree_size all_funs) body))
                           (max_depth_graphs ss ns all' funs
                               all_funs)))`];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

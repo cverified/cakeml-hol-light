@@ -342,3 +342,6 @@ let full_gc_IMP_isDataElement = prove
  (`(full_gc (roots,heap,limit) = (roots1,heap1,a,T)) ==>
     ALL isDataElement heap1`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

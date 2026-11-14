@@ -674,3 +674,6 @@ let type_d_canon_tenv_ok = prove
 let _ = do_list unhide_constant
   ["all";
    "id"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

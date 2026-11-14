@@ -144,3 +144,6 @@ let inf_type_to_string_rec_def,inf_type_to_string_rec_ind =
 
 let inf_type_to_string_def = new_definition
   `inf_type_to_string tys t = FST (inf_type_to_string_rec tys t)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

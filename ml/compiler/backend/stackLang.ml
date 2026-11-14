@@ -158,3 +158,6 @@ let store_consts_stub_location_def = new_definition
    value of an ML expression: gc_stub_location_eq *)
 (* HOL4 stackLangScript.sml:100-101: a theorem that HOL4 states as
    the value of an ML expression: store_consts_stub_location_eq *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

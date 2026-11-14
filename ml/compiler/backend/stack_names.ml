@@ -28,8 +28,8 @@ let ri_find_name_def = define_cases
 
 let inst_find_name_def = new_definition
   `inst_find_name f i =
-     (match i with asm_Skip -> asm_Skip | asm_Const r w -> asm_Const
-       (tlookup f r) w | asm_Arith (asm_Binop bop d r ri) ->
+     (match i with asm_Skip -> stackLang_Skip | asm_Const r w ->
+       asm_Const (tlookup f r) w | asm_Arith (asm_Binop bop d r ri) ->
          asm_Arith (asm_Binop bop (tlookup f d) (tlookup f r)
            (ri_find_name f ri)) | asm_Arith (asm_Shift sop d r ri) ->
          asm_Arith (asm_Shift sop (tlookup f d) (tlookup f r)
@@ -122,3 +122,6 @@ let names_ok_def = new_definition
        avoid_regs) in
        ALL_DISTINCT xs /\
        ALL (\x. x < reg_count /\ ~(MEM x avoid_regs)) xs)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

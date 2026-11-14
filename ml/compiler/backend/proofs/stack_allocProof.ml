@@ -2823,3 +2823,6 @@ let _ = do_list unhide_constant
   ["not";
    "shift";
    "stack_alloc"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -237,3 +237,6 @@ let build_const'_def = new_definition
 let make_const_thm = prove
  (`make_const c = build_const' (to_parts c)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

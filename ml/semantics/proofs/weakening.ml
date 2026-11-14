@@ -294,3 +294,6 @@ let type_d_weakening = prove
 
 (* HOL4 weakeningScript.sml:879-913: code that the source has in a
    comment *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

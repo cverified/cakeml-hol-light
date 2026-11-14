@@ -264,3 +264,6 @@ let type_sound_invariant_def = new_definition
      consistent_ctMap st type_idents ctMap /\
      type_all_env ctMap tenvS env tenv /\
      type_s ctMap (semanticPrimitives_state_refs st) tenvS`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

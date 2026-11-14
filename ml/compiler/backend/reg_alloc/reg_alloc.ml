@@ -1577,3 +1577,6 @@ let reg_alloc_aux_def = new_definition
 let reg_alloc_def = new_definition
   `reg_alloc alg scost k moves ct forced fs =
      reg_alloc_aux alg scost k moves ct forced fs (mk_bij ct)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

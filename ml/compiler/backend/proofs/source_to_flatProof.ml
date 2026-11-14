@@ -2464,3 +2464,6 @@ let _ = do_list unhide_constant
    "id";
    "path";
    "vars"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

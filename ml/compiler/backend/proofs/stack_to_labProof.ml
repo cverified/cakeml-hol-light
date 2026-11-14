@@ -1609,3 +1609,6 @@ let stack_to_lab_compile_no_install = prove
      = prog' ==>
    labProps_no_install prog'`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

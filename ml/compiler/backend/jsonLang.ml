@@ -69,7 +69,7 @@ let encode_str_def = new_definition
    if ALL printable s2 then s else mlstring_concat (MAP (\c. if
      printable c then implode [c] else if unicode then implode
      (APPEND "\\u" (REVERSE (n_rev_hex_digs 4 (ORD c)))) else
-     mlstring_concat [(implode "\\"); mlint_toString (ORD c)]) s2))`;;
+     mlstring_concat [(implode "\\"); num_to_str (ORD c)]) s2))`;;
 
 let _ = size_thms "obj";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -97,3 +97,6 @@ let json_to_mlstring_def,json_to_mlstring_ind = define_wf
    `mem_to_string n_obj = (let (n,obj) = n_obj in misc_Append
     (misc_List [implode "\""; n; implode "\":"]) (json_to_mlstring
     obj))`];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -110,3 +110,6 @@ val test5 = EVAL “
     Dlet l (Pvar "foo") (Var (Short "bar"))
     ]”;
  *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

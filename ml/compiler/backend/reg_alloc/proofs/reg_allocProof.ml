@@ -1490,3 +1490,6 @@ let reg_alloc_correct = prove
        = y) forced)`,
   CHEAT_TAC);;
 (* --- --- *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

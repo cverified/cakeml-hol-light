@@ -994,3 +994,6 @@ let firstSets_nV_nConstructorName = prove
   nt')) nConstructorName] /\ t IN firstSet cmlG [(\nt'. grammar_NT
   ((INL:MMLnonT->MMLnonT+num) nt')) nV])`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -1139,3 +1139,6 @@ let semantics_def = new_definition
               (IMAGE (\k. fromList (ffi_state_io_events
                 (closSem_state_ffi
                  (SND (closSem_evaluate (es,[],st k)))))) UNIV)))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

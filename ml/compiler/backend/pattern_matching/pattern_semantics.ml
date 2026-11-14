@@ -188,3 +188,6 @@ let dt_eval_def,dt_eval_ind = define_wf
    `dt_eval refs v (pattern_semantics_If guard' dt1 dt2:dTree) =
          (match dt_eval_guard refs v guard' with NONE -> NONE |
              SOME b -> dt_eval refs v (if b then dt1 else dt2))`];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

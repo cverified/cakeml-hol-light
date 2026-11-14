@@ -62552,7 +62552,7 @@ let PW_SPLIT_CALL_TAC n =
   TRY SAFE_MATCH_REDUCE_ASM_TAC;;
 
 let part_to_words_add = prove
- (`!part m off a w clos_annotate_shift m1.
+ (`!part m off a w ws clos_annotate_shift.
      byte_aligned off /\ byte_aligned a /\
      good_dimindex (:'a) /\ backend_common_word_shift (:'a) <=
        shift_length c ==>
@@ -66036,3 +66036,6 @@ let _ = do_list unhide_constant
    "parts";
    "sign";
    "vars"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

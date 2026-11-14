@@ -383,3 +383,6 @@ let RTC_asm_step_outside_mem_domain = prove
      asm_state_mem_domain s1) ==> (asm_state_mem s2 a = asm_state_mem
      s1 a))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -3988,3 +3988,6 @@ let get_vars_sing = prove
 let _ = do_list unhide_constant
   ["stack_alloc";
    "vars"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

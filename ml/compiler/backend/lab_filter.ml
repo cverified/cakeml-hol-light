@@ -34,3 +34,6 @@ let filter_skip_MAP = prove
  (`!ls. filter_skip ls = MAP (\x. match x with Section n xs -> Section
   n (FILTER not_skip xs)) ls`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

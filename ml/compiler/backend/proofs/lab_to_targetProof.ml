@@ -4731,3 +4731,6 @@ let _ = do_list unhide_constant
   ["contain";
    "invariant";
    "not"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

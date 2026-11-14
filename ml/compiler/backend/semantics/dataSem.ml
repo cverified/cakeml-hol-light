@@ -1962,3 +1962,6 @@ let compute_limits_def = new_definition
 (* clean up *)
 
 (* HOL4 dataSemScript.sml:1660: ML code, not ported *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

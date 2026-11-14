@@ -361,8 +361,8 @@ let state_rel'_def = new_definition
      s = closSem_state_refs t /\
      FEVERY (\(k,v). !vs. v = closSem_ValueArray vs ==> ALL v_ok vs)
        (closSem_state_refs t) /\
-     FEVERY (\(k,v). !m w. v = semanticPrimitives_Thunk m w ==> v_ok
-       w) (closSem_state_refs t) /\ closSem_state_compile
+     FEVERY (\(k,v). !m w. v = closSem_Thunk m w ==> v_ok w)
+       (closSem_state_refs t) /\ closSem_state_compile
      s = pure_cc (insert_interp ## I) (closSem_state_compile t) /\
        closSem_state_compile_oracle
      t = pure_co (insert_interp ## I) o
@@ -473,3 +473,6 @@ let insert_interp_esgc_free = prove
  (`ALL closProps_esgc_free (insert_interp xs) = ALL
   closProps_esgc_free xs`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

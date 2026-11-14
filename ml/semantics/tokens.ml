@@ -93,3 +93,6 @@ let tokens_token_INDUCT,tokens_token_RECURSION = define_datatype
    | tokens_LongidT tokens_path mlstring
    | tokens_FFIT mlstring
    | tokens_REPLIDT mlstring";;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

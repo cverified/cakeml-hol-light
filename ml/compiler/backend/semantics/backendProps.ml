@@ -378,3 +378,6 @@ let OPTION_MAP2_MAX_ASSOC = prove
  (`OPTION_MAP2 MAX x (OPTION_MAP2 MAX y z) =
    OPTION_MAP2 MAX (OPTION_MAP2 MAX x y) z`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

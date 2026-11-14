@@ -149,3 +149,6 @@ let compile_alt = prove
    let _22 = empty_ffi (implode "finished: word_remove") in
    (col,ZIP names (ZIP args rmt_ps)))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

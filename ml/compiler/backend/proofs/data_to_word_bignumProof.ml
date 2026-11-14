@@ -405,3 +405,6 @@ let structure_le_IMP_option_le = prove
 (* HOL4 data_to_word_bignumProofScript.sml:2455-2583: a theorem whose
    statement HOL Light does not read (tools/unstated.py):
    eval_Call_Arith *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

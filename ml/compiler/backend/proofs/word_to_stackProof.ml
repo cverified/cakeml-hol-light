@@ -3677,3 +3677,6 @@ let word_to_stack_compile_no_install = prove
 let _ = do_list unhide_constant
   ["every";
    "fv"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

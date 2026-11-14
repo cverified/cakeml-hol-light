@@ -585,3 +585,6 @@ let fromString_sexp_to_string = prove
 let fromString_sexp_to_pretty_string = prove
  (`mlsexp_fromString (sexp_to_pretty_string x) = SOME x`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

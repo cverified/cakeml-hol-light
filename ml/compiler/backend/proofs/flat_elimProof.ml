@@ -705,3 +705,6 @@ let remove_flat_prog_distinct_globals = prove
  (`BAG_ALL_DISTINCT (flatProps_elist_globals ds) ==>
    BAG_ALL_DISTINCT (flatProps_elist_globals (remove_flat_prog ds))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -1636,3 +1636,6 @@ let full_inst_ok_less_word_common_subexp_elim = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["Greater"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -142,10 +142,6 @@ let cake_theory thy anc =
     filter (fun (n,(c,_)) -> not (mem (n,c) gone)) (!the_interface);;
 
 (* a file of a HOL4 library theory is of no theory of the port:
-   what it registers is in the scope of every file.  As a theory
-   does, it puts back the interface that the file before it cut
-   down *)
+   what it registers is in the scope of every file *)
 
-let cake_library () =
-  if !the_saved_interface <> None then unhide_overloads ();
-  the_thy_loading := "";;
+let cake_library () = the_thy_loading := "";;

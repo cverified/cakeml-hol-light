@@ -1610,3 +1610,6 @@ let _ = do_list unhide_constant
   ["C";
    "id";
    "inst"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

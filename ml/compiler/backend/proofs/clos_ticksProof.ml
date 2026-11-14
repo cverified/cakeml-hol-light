@@ -483,3 +483,6 @@ let clos_ticksProof_remove_ticks_code_labels = prove
   MAP closProps_get_code_labels es`,
   CHEAT_TAC);;
 add_simp clos_ticksProof_remove_ticks_code_labels;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

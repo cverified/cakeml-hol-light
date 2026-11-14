@@ -9,6 +9,7 @@
   Definition of CakeML's type inferencer.
 *)
 
+needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;
@@ -264,9 +265,9 @@ let type_name_check_subst_def,type_name_check_subst_ind = define_wf
                      (mlstring_concat [(implode
                          "Type constructor "); id_to_string tc; (implode
                          " given ");
-                              mlint_toString (&(LENGTH ts));
-                                  (implode " arguments, but expected ");
-                              mlint_toString (&(LENGTH tvs'))])) (
+                              num_to_str (&(LENGTH ts)); (implode
+                                  " arguments, but expected ");
+                              num_to_str (&(LENGTH tvs'))])) (
           st_ex_return (type_subst (alist_to_fmap (ZIP tvs' ts'))
               t'))))`;
    `type_name_check_subst_list l f tenvT fvs [] = st_ex_return []`;
@@ -351,10 +352,10 @@ let type_name_check_sub_def,type_name_check_sub_ind = define_wf
                               (mlstring_concat
                               [(implode "Type constructor ");
                                   id_to_string tc;
-                              (implode " given "); mlint_toString
+                              (implode " given "); num_to_str
                                   (LENGTH ts);
                               (implode " arguments, but expected ");
-                              mlint_toString (LENGTH y)])),s)) |
+                              num_to_str (LENGTH y)])),s)) |
                                   (M_failure x,s) -> (M_failure x,s))
                                   | (M_failure x,s) -> (M_failure
                                   x,s))`;
@@ -1284,3 +1285,6 @@ let inf_env_to_types_string_def = new_definition
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["not"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

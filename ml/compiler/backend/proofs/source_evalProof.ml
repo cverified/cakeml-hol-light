@@ -1353,3 +1353,6 @@ let adjust_oracle_semantics_prog = prove
 let _ = do_list unhide_constant
   ["compile_decs";
    "id"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

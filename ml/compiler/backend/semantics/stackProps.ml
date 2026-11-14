@@ -792,7 +792,8 @@ let fp_name_def = define_cases
 let addr_name_def = define_general
   [`addr_name m (Addr r w) c <=>
    reg_name r c /\
-   (if m IN {asm_Load,asm_Store,asm_Load32,asm_Store32} then
+   (if m IN
+     {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32} then
      (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w else if m
      IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
      (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32)
@@ -1147,3 +1148,6 @@ let no_shmemop_def,no_shmemop_ind = define_wf
         | (stackLang_Loop p) -> no_shmemop p
         | (stackLang_ShMemOp _123 _124 _125) -> F
         | _126 -> T`];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

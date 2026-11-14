@@ -148,3 +148,6 @@ let mk_Ticks_alt = prove
      clos_known_mk_Ticks t (tc + 1) n (closLang_Tick (mk_cons t tc)
      e))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

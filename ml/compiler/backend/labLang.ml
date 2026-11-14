@@ -72,3 +72,6 @@ add_simp section_lines_def;;
 
 (* HOL4 labLangScript.sml:61: the type abbreviation prog, which the
    port expands *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

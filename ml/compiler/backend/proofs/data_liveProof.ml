@@ -230,3 +230,6 @@ let get_code_labels_compile = prove
  (`!x y. dataProps_get_code_labels (FST (data_live_compile x y))
   SUBSET dataProps_get_code_labels x`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -160,3 +160,6 @@ let max_depth_Call_NONE = prove
          (max_depth (wordSem_state_stack_size s) (full_call_graph
            dest funs))))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

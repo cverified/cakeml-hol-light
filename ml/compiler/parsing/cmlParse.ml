@@ -93,3 +93,6 @@ let parse_prog_def = new_definition
        pts. pegresult_bind (optlift (oHD pts)) (\
        pt.
        optlift (ptree_TopLevelDecs pt)))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

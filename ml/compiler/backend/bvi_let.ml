@@ -416,3 +416,6 @@ let bvi_let_compile_exp_eq = prove
   (let ce = bvi_let_compile_exp_def in
    GEN_TAC THEN REWRITE_TAC[ce; CONJUNCT1 compile_sing] THEN
    MATCH_REDUCE_TAC THEN REWRITE_TAC[]));;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

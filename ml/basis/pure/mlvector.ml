@@ -339,3 +339,6 @@ let _ = do_list unhide_constant
   ["Equal";
    "Greater";
    "Less"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -1596,3 +1596,6 @@ let _ = do_list unhide_constant
    "gen_gc";
    "num_stubs";
    "shift"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

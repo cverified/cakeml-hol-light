@@ -383,13 +383,13 @@ let tlookup_id = prove
   CHEAT_TAC);;
 
 let tlookup_bij_suff = prove
- (`set_of_list (toList names) = domain names ==>
+ (`set_of_list (sptree_toList names) = domain names ==>
    BIJ (tlookup names) UNIV UNIV`,
   CHEAT_TAC);;
 
 let tlookup_bij_iff = prove
  (`BIJ (tlookup names) UNIV UNIV <=>
-   set_of_list (toList names) = domain names`,
+   set_of_list (sptree_toList names) = domain names`,
   CHEAT_TAC);;
 
 (* should be composition of oEL and as-yet-undefined "THE default" *)
@@ -1235,8 +1235,8 @@ let PERM_MAP_BIJ = prove
 
 let lookup_fromList2 = prove
  (`!l n. sptree_lookup n (fromList2 l) =
-          (if EVEN n then sptree_lookup (n DIV 2) (fromList l) else
-            NONE)`,
+          (if EVEN n then sptree_lookup (n DIV 2) (sptree_fromList
+            l) else NONE)`,
   CHEAT_TAC);;
 
 let domain_fromList2 = prove
@@ -2526,3 +2526,6 @@ let TotOrd_pair_cmp = prove
 let _ = do_list unhide_constant
   ["C";
    "num_cmp"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

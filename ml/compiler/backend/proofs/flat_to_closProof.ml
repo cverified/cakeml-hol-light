@@ -1093,3 +1093,6 @@ let FST_inc_compile_esgc_free = prove
    no_Mat_decs decs ==>
    ALL closProps_esgc_free (FST (inc_compile_decs decs))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

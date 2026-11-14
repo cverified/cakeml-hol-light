@@ -31,14 +31,14 @@ let ffi_offset_def = new_definition
 (* basic assemble function *)
 
 let lab_inst_def = define_cases
-  [`(lab_inst w (labLang_Jump _2) = labLang_Jump w) /\
-   (lab_inst w (labLang_JumpCmp c r ri _3) = labLang_JumpCmp c r ri
+  [`(lab_inst w (labLang_Jump _2) = asm_Jump w) /\
+   (lab_inst w (labLang_JumpCmp c r ri _3) = asm_JumpCmp c r ri
      w) /\
-   (lab_inst w (labLang_Call _4) = labLang_Call w) /\
+   (lab_inst w (labLang_Call _4) = asm_Call w) /\
    (lab_inst w (labLang_LocValue r _5) = asm_Loc r (w:'a word)) /\
-   (lab_inst w (labLang_Halt) = labLang_Jump w) /\
-   (lab_inst w (labLang_Install) = labLang_Jump w) /\
-   (lab_inst w (labLang_CallFFI n) = labLang_Jump w)`];;
+   (lab_inst w (labLang_Halt) = asm_Jump w) /\
+   (lab_inst w (labLang_Install) = asm_Jump w) /\
+   (lab_inst w (labLang_CallFFI n) = asm_Jump w)`];;
 
 let cbw_to_asm_def = new_definition
   `cbw_to_asm a =
@@ -518,3 +518,6 @@ let compile_lab_def = new_definition
 let lab_to_target_compile_def = new_definition
   `lab_to_target_compile asm_conf c sec_list = compile_lab asm_conf c
   (filter_skip sec_list)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

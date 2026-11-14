@@ -698,3 +698,6 @@ let evaluate_copy_prop = prove
 let _ = do_list unhide_constant
   ["addr";
    "val"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

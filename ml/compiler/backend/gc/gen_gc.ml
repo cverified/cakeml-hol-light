@@ -751,3 +751,6 @@ let gen_gc_a = prove
     roots_ok xs heap /\ heap_ok heap (gen_gc_conf_limit c) ==>
     (gc_state_a s1 = heap_length (gc_state_h1 s1))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -56,3 +56,6 @@ let gc_combined_def = new_definition
             (gc_state_n state))) (gc_state_r1 state),gc_state_a
            state,gc_state_n state,GenState 0 (MAP (K (gc_state_a
              state)) limits),gc_state_ok state)))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

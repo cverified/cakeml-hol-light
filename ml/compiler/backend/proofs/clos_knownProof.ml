@@ -1934,3 +1934,6 @@ let get_code_labels_mk_Ticks = prove
   d) = closProps_get_code_labels d`,
   CHEAT_TAC);;
 add_simp get_code_labels_mk_Ticks;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -178,3 +178,6 @@ let evaluate_remove_unreach = prove
        ==>
      wordSem_evaluate (remove_unreach p,s) = (res,s1)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

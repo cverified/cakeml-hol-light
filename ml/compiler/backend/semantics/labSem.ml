@@ -537,8 +537,8 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                 if labSem_state_failed s1 then (targetSem_Error,s)
                   else labSem_evaluate (inc_pc (labSem_dec_clock s1)))
                   | asm_JumpReg r ->
-             (match (\r s. labSem_state_regs s r) r s with asm_Loc
-               n1 n2 ->
+             (match (\r s. labSem_state_regs s r) r s with
+               wordLang_Loc n1 n2 ->
                   (match loc_to_pc n1 n2 (labSem_state_code s) with
                     NONE -> (targetSem_Error,s) | SOME p ->
                        labSem_evaluate (labSem_upd_pc p
@@ -572,19 +572,19 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
         (if get_pc_value lab s = NONE then (targetSem_Error,s) else
            let s1 = labSem_upd_reg r (lab_to_loc lab) s in
              labSem_evaluate (inc_pc (labSem_dec_clock s1))) | SOME
-               (labLang_LabAsm (asm_Jump l) _66 _67 _68) ->
+               (labLang_LabAsm (labLang_Jump l) _66 _67 _68) ->
         (match get_pc_value l s with NONE -> (targetSem_Error,s) |
           SOME p -> labSem_evaluate (labSem_upd_pc p (labSem_dec_clock
-          s))) | SOME (labLang_LabAsm (asm_JumpCmp c r ri l) _69 _70
-          _71) ->
+          s))) | SOME (labLang_LabAsm (labLang_JumpCmp c r ri l) _69
+          _70 _71) ->
         (match wordSem_word_cmp c ((\r s. labSem_state_regs s r) r
           s) (labSem_reg_imm ri s) with NONE -> (targetSem_Error,s) |
           SOME F -> labSem_evaluate (inc_pc (labSem_dec_clock s)) |
           SOME T ->
           (match get_pc_value l s with NONE -> (targetSem_Error,s) |
             SOME p -> labSem_evaluate (labSem_upd_pc p
-            (labSem_dec_clock s)))) | SOME (labLang_LabAsm (asm_Call l)
-            _72 _73 _74) ->
+            (labSem_dec_clock s)))) | SOME (labLang_LabAsm
+            (labLang_Call l) _72 _73 _74) ->
         (match get_pc_value l s with NONE -> (targetSem_Error,s) |
           SOME p ->
           (match get_ret_Loc s with NONE -> (targetSem_Error,s) |
@@ -597,7 +597,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
         (match (labSem_state_regs s (labSem_state_ptr_reg
           s),labSem_state_regs s (labSem_state_len_reg
           s),labSem_state_regs s (labSem_state_link_reg s)) with
-          (wordLang_Word w1,wordLang_Word w2,asm_Loc n1 n2) ->
+          (wordLang_Word w1,wordLang_Word w2,wordLang_Loc n1 n2) ->
             (match (buffer_flush (labSem_state_code_buffer s) w1
               w2,loc_to_pc n1 n2 (labSem_state_code s)) with (SOME
               (bytes,cb),SOME new_pc) ->
@@ -617,7 +617,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                           new_oracle) (labSem_state_fp_regs_fupd (K
                           (\n. labSem_state_cc_fp_regs s 0 n))
                           (labSem_state_regs_fupd (K
-                          ((labSem_state_ptr_reg s =+ asm_Loc k 0)
+                          ((labSem_state_ptr_reg s =+ wordLang_Loc k 0)
                               (\a. get_reg_value
                                 (labSem_state_cc_regs s 0 a)
                               (labSem_state_regs s a)
@@ -644,7 +644,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                  (labSem_state_ptr2_reg s),labSem_state_regs s
                  (labSem_state_link_reg s)) with (wordLang_Word
                  w,wordLang_Word w2,wordLang_Word w3,wordLang_Word
-                 w4,asm_Loc n1 n2) ->
+                 w4,wordLang_Loc n1 n2) ->
           (match (read_bytearray w2 (w2n w) (mem_load_byte_aux
             (labSem_state_mem s) (labSem_state_mem_domain s)
             (labSem_state_be s)),
@@ -699,3 +699,6 @@ let labSem_semantics_def = new_definition
             (IMAGE (\k. fromList (ffi_state_io_events
               (labSem_state_ffi (SND (labSem_evaluate
               (labSem_state_clock_fupd (K k) s)))))) UNIV)))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

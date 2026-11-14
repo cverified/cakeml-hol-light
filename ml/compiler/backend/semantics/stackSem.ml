@@ -1222,3 +1222,6 @@ let read_stack_space_def = new_definition
 (* clean up *)
 
 (* HOL4 stackSemScript.sml:1154: ML code, not ported *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

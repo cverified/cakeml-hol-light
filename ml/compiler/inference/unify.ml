@@ -95,8 +95,8 @@ let decode_left_inverse_I = prove
 add_simp decode_left_inverse_I;;
 
 let encode_eq_var = prove
- (`(ast_Var n = encode_infer_t i <=> i = Infer_Tuvar n) /\
-   (encode_infer_t i = ast_Var n <=> i = Infer_Tuvar n)`,
+ (`(term_Var n = encode_infer_t i <=> i = Infer_Tuvar n) /\
+   (encode_infer_t i = term_Var n <=> i = Infer_Tuvar n)`,
   CHEAT_TAC);;
 add_simp encode_eq_var;;
 
@@ -271,7 +271,7 @@ let domain_fm2sp = prove
   CHEAT_TAC);;
 
 let swalk_encode_infer_ts_EQ_VAR = prove
- (`swfs s /\ sptree_wf s ==> ~(swalk s (encode_infer_ts ts) = ast_Var
+ (`swfs s /\ sptree_wf s ==> ~(swalk s (encode_infer_ts ts) = term_Var
   v)`,
   CHEAT_TAC);;
 
@@ -678,7 +678,7 @@ let subterm_def = new_definition
 let subterm_thm = prove
  (`(subterm t (term_Pair u v) <=> t = u \/ t = v \/ subterm t u \/
   subterm t v) /\
-   (subterm t (ast_Var vnm) <=> F) /\
+   (subterm t (term_Var vnm) <=> F) /\
    (subterm t (term_Const c) <=> F)`,
   CHEAT_TAC);;
 add_simp subterm_thm;;
@@ -1698,3 +1698,6 @@ let t_compat_eqs_t_unify = prove
       t_compat s sx /\ (t_walkstar sx t1 = t_walkstar sx t2) ==>
       (?si. (t_unify s t1 t2 = SOME si) /\ t_compat si sx)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

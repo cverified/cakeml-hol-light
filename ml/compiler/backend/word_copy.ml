@@ -95,25 +95,25 @@ let remove_eqs_def,remove_eqs_ind = define_rec
 let copy_prop_inst_def = new_definition
   `copy_prop_inst x1 cs =
         match x1 with
-          asm_Skip -> (asm_Skip,cs)
+          asm_Skip -> (wordLang_Skip,cs)
         | (asm_Const reg w) ->
-       (asm_Inst (asm_Const reg w),remove_eq cs reg)
+       (wordLang_Inst (asm_Const reg w),remove_eq cs reg)
         | (asm_Arith (asm_Binop bop r1 r2 ri)) ->
        (let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let ri' = lookup_eq_imm cs ri in
        let ri'' = (if ri' = Reg r1 then ri else ri') in
-       (asm_Inst (asm_Arith (asm_Binop bop r1 r2' ri'')),cs'))
+       (wordLang_Inst (asm_Arith (asm_Binop bop r1 r2' ri'')),cs'))
         | (asm_Arith (asm_Shift shift' r1 r2 n)) ->
        (let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let n' = lookup_eq_imm cs n in
        let n'' = (if n' = Reg r1 then n else n') in
-       (asm_Inst (asm_Arith (asm_Shift shift' r1 r2' n'')),cs'))
+       (wordLang_Inst (asm_Arith (asm_Shift shift' r1 r2' n'')),cs'))
         | (asm_Arith (asm_Div r1 r2 r3)) ->
        (let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
-       (asm_Inst (asm_Arith (asm_Div r1 r2' r3')),
+       (wordLang_Inst (asm_Arith (asm_Div r1 r2' r3')),
            remove_eq cs r1))
         | (asm_Arith (asm_AddCarry r1 r2 r3 r4)) ->
        // r4 is both read from and written to
@@ -121,82 +121,84 @@ let copy_prop_inst_def = new_definition
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
        let r3'' = (if r3' = r1 then r3 else r3') in
-       (asm_Inst (asm_Arith (asm_AddCarry r1 r2' r3'' r4)),cs'))
+       (wordLang_Inst (asm_Arith (asm_AddCarry r1 r2' r3'' r4)),cs'))
         | (asm_Arith (asm_AddOverflow r1 r2 r3 r4)) ->
        (let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
        let r3'' = (if r3' = r1 then r3 else r3') in
-       (asm_Inst (asm_Arith (asm_AddOverflow r1 r2' r3'' r4)),cs'))
+       (wordLang_Inst (asm_Arith (asm_AddOverflow r1 r2' r3''
+         r4)),cs'))
         | (asm_Arith (asm_SubOverflow r1 r2 r3 r4)) ->
        (let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
        let r3'' = (if r3' = r1 then r3 else r3') in
-       (asm_Inst (asm_Arith (asm_SubOverflow r1 r2' r3'' r4)),cs'))
+       (wordLang_Inst (asm_Arith (asm_SubOverflow r1 r2' r3''
+         r4)),cs'))
         | (asm_Arith (asm_LongMul r1 r2 r3 r4)) ->
        (let r3' = lookup_eq cs r3 in
        let r4' = lookup_eq cs r4 in
-       (asm_Inst (asm_Arith (asm_LongMul r1 r2 r3 r4)),
+       (wordLang_Inst (asm_Arith (asm_LongMul r1 r2 r3 r4)),
            remove_eqs cs [r1; r2]))
         | (asm_Arith (asm_LongDiv r1 r2 r3 r4 r5)) ->
        (let r3' = lookup_eq cs r3 in
        let r4' = lookup_eq cs r4 in
        let r5' = lookup_eq cs r5 in
-       (asm_Inst (asm_Arith (asm_LongDiv r1 r2 r3' r4' r5')),
+       (wordLang_Inst (asm_Arith (asm_LongDiv r1 r2 r3' r4' r5')),
            remove_eqs cs [r2; r1]))
         | (asm_Mem asm_Load r (Addr a w)) ->
        (let a' = lookup_eq cs a in
-         (asm_Inst (asm_Mem asm_Load r (Addr a' w)),
+         (wordLang_Inst (asm_Mem asm_Load r (Addr a' w)),
            remove_eq cs r))
         | (asm_Mem asm_Store r (Addr a w)) ->
        (let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (asm_Inst (asm_Mem asm_Store r' (Addr a' w)),cs))
+         (wordLang_Inst (asm_Mem asm_Store r' (Addr a' w)),cs))
         | (asm_Mem asm_Load8 r (Addr a w)) ->
        (let a' = lookup_eq cs a in
-         (asm_Inst (asm_Mem asm_Load8 r (Addr a' w)),
+         (wordLang_Inst (asm_Mem asm_Load8 r (Addr a' w)),
            remove_eq cs r))
         | (asm_Mem asm_Store8 r (Addr a w)) ->
        (let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (asm_Inst (asm_Mem asm_Store8 r' (Addr a' w)),cs))
+         (wordLang_Inst (asm_Mem asm_Store8 r' (Addr a' w)),cs))
         | (asm_Mem asm_Load16 r (Addr a w)) ->
        (let a' = lookup_eq cs a in
-         (asm_Inst (asm_Mem asm_Load16 r (Addr a' w)),
+         (wordLang_Inst (asm_Mem asm_Load16 r (Addr a' w)),
            remove_eq cs r))
         | (asm_Mem asm_Store16 r (Addr a w)) ->
        (let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (asm_Inst (asm_Mem asm_Store16 r' (Addr a' w)),cs))
+         (wordLang_Inst (asm_Mem asm_Store16 r' (Addr a' w)),cs))
         | (asm_Mem asm_Load32 r (Addr a w)) ->
        (let a' = lookup_eq cs a in
-         (asm_Inst (asm_Mem asm_Load32 r (Addr a' w)),
+         (wordLang_Inst (asm_Mem asm_Load32 r (Addr a' w)),
            remove_eq cs r))
         | (asm_Mem asm_Store32 r (Addr a w)) ->
        (let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (asm_Inst (asm_Mem asm_Store32 r' (Addr a' w)),cs))
+         (wordLang_Inst (asm_Mem asm_Store32 r' (Addr a' w)),cs))
         | (asm_FP (FPLess r f1 f2)) ->
-         (asm_Inst (asm_FP (FPLess r f1 f2)),
+         (wordLang_Inst (asm_FP (FPLess r f1 f2)),
            remove_eq cs r)
         | (asm_FP (FPLessEqual r f1 f2)) ->
-         (asm_Inst (asm_FP (FPLessEqual r f1 f2)),
+         (wordLang_Inst (asm_FP (FPLessEqual r f1 f2)),
            remove_eq cs r)
         | (asm_FP (FPEqual r f1 f2)) ->
-         (asm_Inst (asm_FP (FPEqual r f1 f2)),
+         (wordLang_Inst (asm_FP (FPEqual r f1 f2)),
            remove_eq cs r)
         | (asm_FP (FPMovToReg r1 r2 d):'a asm_inst) ->
-         (asm_Inst (asm_FP (FPMovToReg r1 r2 d)),
+         (wordLang_Inst (asm_FP (FPMovToReg r1 r2 d)),
            remove_eqs cs [r1; r2])
         | (asm_FP (FPMovFromReg d r1 r2)) ->
          (let r1' = lookup_eq cs r1 in
          let r2' = lookup_eq cs r2 in
          let (r1'',r2'') = (if r1' = r2' then (r1,r2) else (r1',r2'))
            in
-         (asm_Inst (asm_FP (FPMovFromReg d r1'' r2'')),cs))
+         (wordLang_Inst (asm_FP (FPMovFromReg d r1'' r2'')),cs))
         // Catchall: all FP
-        | (asm_FP x) -> (asm_Inst (asm_FP x),cs)
+        | (asm_FP x) -> (wordLang_Inst (asm_FP x),cs)
         // Catchall: should not happen
         | _2 -> ARB`;;
 
@@ -376,3 +378,6 @@ let copy_prop_prog_def,copy_prop_prog_ind = define_shaped_rec
 let copy_prop_def = new_definition
   `copy_prop (e:'a wordLang_prog) =
      FST (copy_prop_prog e empty_eq)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -626,3 +626,6 @@ let installed_def = new_definition
                               shmem_extra) /\
      cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword
        (:'a)))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

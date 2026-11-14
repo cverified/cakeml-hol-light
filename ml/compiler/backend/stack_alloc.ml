@@ -29,14 +29,14 @@ let memcpy_code_def = new_definition
   `memcpy_code =
      (\cmp r ri c. stackLang_Loop (stackLang_If cmp r ri c
        (stackLang_Break 0))) asm_NotEqual 0 (Imm (n2w 0))
-       (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem
-         word_bignum_Load r (Addr a (n2w 0)))) 1 2;
+       (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
+         (Addr a (n2w 0)))) 1 2;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
                     word_bignum_Add r1 r1 (Imm (bytes_in_word))))) 2;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
                     word_bignum_Sub r1 r1 (Imm (n2w 1))))) 0;
-                  (\r a. stackLang_Inst (asm_Mem word_bignum_Store r
-                    (Addr a (n2w 0)))) 1 3;
+                  (\r a. stackLang_Inst (asm_Mem asm_Store r (Addr a
+                    (n2w 0)))) 1 3;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
                     word_bignum_Add r1 r1 (Imm (bytes_in_word)))))
                     3])`;;
@@ -62,8 +62,8 @@ let word_gc_move_code_def = new_definition
           (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
             word_bignum_Add r1 r1 (Reg r2)))) 0 1;
           // here 0 is ptr_to_addr conf old w
-          (\r a. stackLang_Inst (asm_Mem word_bignum_Load r (Addr a
-            (n2w 0)))) 1 0;
+          (\r a. stackLang_Inst (asm_Mem asm_Load r (Addr a (n2w
+            0)))) 1 0;
           // here 1 is m (ptr_to_addr conf old w)
           stackLang_If asm_Test 1 (Imm (n2w 3))
             (stackLang_list_Seq [(\r v. stackLang_Inst (asm_Arith
@@ -103,8 +103,8 @@ let word_gc_move_code_def = new_definition
                          (asm_Binop asm_Or dest src (Reg src)))) 0 4;
                        (\r v. stackLang_Inst (asm_Arith (asm_Shift
                          Lsl r r (Imm (n2w v))))) 0 2;
-                       (\r a. stackLang_Inst (asm_Mem
-                         word_bignum_Store r (Addr a (n2w 0)))) 0 2;
+                       (\r a. stackLang_Inst (asm_Mem asm_Store r
+                         (Addr a (n2w 0)))) 0 2;
                        // compute update_addr conf i w, where i in 4 and w in 5
                        (\dest src. stackLang_Inst (asm_Arith
                          (asm_Binop asm_Or dest src (Reg src)))) 1 4;
@@ -123,13 +123,13 @@ let word_gc_move_list_code_def = new_definition
   `word_gc_move_list_code conf =
      (\cmp r ri c. stackLang_Loop (stackLang_If cmp r ri c
        (stackLang_Break 0))) asm_NotEqual 7 (Imm ((n2w 0):'a word))
-       (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem
-         word_bignum_Load r (Addr a (n2w 0)))) 5 8;
+       (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
+         (Addr a (n2w 0)))) 5 8;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
                     word_bignum_Sub r1 r1 (Imm (n2w 1))))) 7;
                   word_gc_move_code conf;
-                  (\r a. stackLang_Inst (asm_Mem word_bignum_Store r
-                    (Addr a (n2w 0)))) 5 8;
+                  (\r a. stackLang_Inst (asm_Mem asm_Store r (Addr a
+                    (n2w 0)))) 5 8;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
                     word_bignum_Add r1 r1 (Imm (bytes_in_word)))))
                     8])`;;
@@ -138,8 +138,8 @@ let word_gc_move_loop_code_def = new_definition
   `word_gc_move_loop_code conf =
      ((\cmp r ri c. stackLang_Loop (stackLang_If cmp r ri c
        (stackLang_Break 0))) asm_NotEqual 3 (Reg 8)
-      (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem
-        word_bignum_Load r (Addr a (n2w 0)))) 7 8;
+      (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
+        (Addr a (n2w 0)))) 7 8;
                  stackLang_If asm_Test 7 (Imm (n2w 4))
                    (stackLang_list_Seq [(\r v. stackLang_Inst
                      (asm_Arith (asm_Shift Lsr r r (Imm (n2w v))))) 7
@@ -223,8 +223,8 @@ let word_gen_gc_move_code_def = new_definition
           (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
             word_bignum_Add r1 r1 (Reg r2)))) 0 1;
           // here 0 is ptr_to_addr conf old w
-          (\r a. stackLang_Inst (asm_Mem word_bignum_Load r (Addr a
-            (n2w 0)))) 1 0;
+          (\r a. stackLang_Inst (asm_Mem asm_Load r (Addr a (n2w
+            0)))) 1 0;
           // here 1 is m (ptr_to_addr conf old w)
           stackLang_If asm_Test 1 (Imm (n2w 3))
             (stackLang_list_Seq [(\r v. stackLang_Inst (asm_Arith
@@ -292,8 +292,8 @@ let word_gen_gc_move_code_def = new_definition
                            // fixed?
                            (\r v. stackLang_Inst (asm_Arith
                              (asm_Shift Lsl r r (Imm (n2w v))))) 0 2;
-                           (\r a. stackLang_Inst (asm_Mem
-                             word_bignum_Store r (Addr a (n2w 0)))) 0 4;
+                           (\r a. stackLang_Inst (asm_Mem asm_Store r
+                             (Addr a (n2w 0)))) 0 4;
                            // compute update_addr conf i w, where w in 5
                            stackLang_Get 1 (Temp (n2w 3));
                            clear_top_inst 5 (small_shift_length conf
@@ -334,8 +334,8 @@ let word_gen_gc_move_code_def = new_definition
                              4;
                            (\r v. stackLang_Inst (asm_Arith
                              (asm_Shift Lsl r r (Imm (n2w v))))) 0 2;
-                           (\r a. stackLang_Inst (asm_Mem
-                             word_bignum_Store r (Addr a (n2w 0)))) 0 2;
+                           (\r a. stackLang_Inst (asm_Mem asm_Store r
+                             (Addr a (n2w 0)))) 0 2;
                            // compute update_addr conf i w, where i in 4 and w in 5
                            (\dest src. stackLang_Inst (asm_Arith
                              (asm_Binop asm_Or dest src (Reg src)))) 1
@@ -373,8 +373,8 @@ let word_gen_gc_partial_move_code_def = new_definition
               (\r1 r2. stackLang_Inst (asm_Arith (asm_Binop
                 word_bignum_Add r1 r1 (Reg r2)))) 0 1;
               // here 0 is ptr_to_addr conf old w
-              (\r a. stackLang_Inst (asm_Mem word_bignum_Load r (Addr
-                a (n2w 0)))) 1 0;
+              (\r a. stackLang_Inst (asm_Mem asm_Load r (Addr a (n2w
+                0)))) 1 0;
               // here 1 is m (ptr_to_addr conf old w)
               stackLang_If asm_Test 1 (Imm (n2w 3))
                 (stackLang_list_Seq [(\r v. stackLang_Inst (asm_Arith
@@ -426,8 +426,8 @@ let word_gen_gc_partial_move_code_def = new_definition
                              4;
                            (\r v. stackLang_Inst (asm_Arith
                              (asm_Shift Lsl r r (Imm (n2w v))))) 0 2;
-                           (\r a. stackLang_Inst (asm_Mem
-                             word_bignum_Store r (Addr a (n2w 0)))) 0 2;
+                           (\r a. stackLang_Inst (asm_Mem asm_Store r
+                             (Addr a (n2w 0)))) 0 2;
                            // compute update_addr conf i w, where i in 4 and w in 5
                            (\dest src. stackLang_Inst (asm_Arith
                              (asm_Binop asm_Or dest src (Reg src)))) 1
@@ -539,13 +539,13 @@ let word_gen_gc_move_list_code_def = new_definition
   `word_gen_gc_move_list_code conf =
      (\cmp r ri c. stackLang_Loop (stackLang_If cmp r ri c
        (stackLang_Break 0))) asm_NotEqual 7 (Imm ((n2w 0):'a word))
-       (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem
-         word_bignum_Load r (Addr a (n2w 0)))) 5 8;
+       (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
+         (Addr a (n2w 0)))) 5 8;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
                     word_bignum_Sub r1 r1 (Imm (n2w 1))))) 7;
                   word_gen_gc_move_code conf;
-                  (\r a. stackLang_Inst (asm_Mem word_bignum_Store r
-                    (Addr a (n2w 0)))) 5 8;
+                  (\r a. stackLang_Inst (asm_Mem asm_Store r (Addr a
+                    (n2w 0)))) 5 8;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
                     word_bignum_Add r1 r1 (Imm (bytes_in_word)))))
                     8])`;;
@@ -554,13 +554,13 @@ let word_gen_gc_partial_move_list_code_def = new_definition
   `word_gen_gc_partial_move_list_code conf =
      (\cmp r ri c. stackLang_Loop (stackLang_If cmp r ri c
        (stackLang_Break 0))) asm_NotEqual 7 (Imm ((n2w 0):'a word))
-       (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem
-         word_bignum_Load r (Addr a (n2w 0)))) 5 8;
+       (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
+         (Addr a (n2w 0)))) 5 8;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
                     word_bignum_Sub r1 r1 (Imm (n2w 1))))) 7;
                   word_gen_gc_partial_move_code conf;
-                  (\r a. stackLang_Inst (asm_Mem word_bignum_Store r
-                    (Addr a (n2w 0)))) 5 8;
+                  (\r a. stackLang_Inst (asm_Mem asm_Store r (Addr a
+                    (n2w 0)))) 5 8;
                   (\r1. stackLang_Inst (asm_Arith (asm_Binop
                     word_bignum_Add r1 r1 (Imm (bytes_in_word)))))
                     8])`;;
@@ -569,8 +569,8 @@ let word_gen_gc_move_data_code_def = new_definition
   `word_gen_gc_move_data_code conf =
      ((\cmp r ri c. stackLang_Loop (stackLang_If cmp r ri c
        (stackLang_Break 0))) asm_NotEqual 3 (Reg 8)
-      (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem
-        word_bignum_Load r (Addr a (n2w 0)))) 7 8;
+      (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
+        (Addr a (n2w 0)))) 7 8;
                  stackLang_If asm_Test 7 (Imm (n2w 4))
                    (stackLang_list_Seq [(\r v. stackLang_Inst
                      (asm_Arith (asm_Shift Lsr r r (Imm (n2w v))))) 7
@@ -595,11 +595,11 @@ let word_gen_gc_move_data_code_def = new_definition
                                 r2)))) 8 7])]):'a stackLang_prog)`;;
 
 let word_gen_gc_partial_move_ref_list_code_def = new_definition
-  `word_gen_gc_partial_move_ref_list_code conf =
+  `add_inst conf =
      ((\cmp r ri c. stackLang_Loop (stackLang_If cmp r ri c
        (stackLang_Break 0))) asm_NotEqual 9 (Reg 8)
-      (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem
-        word_bignum_Load r (Addr a (n2w 0)))) 7 8;
+      (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
+        (Addr a (n2w 0)))) 7 8;
                  (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsr r r
                    (Imm (n2w v))))) 7 (dimindex (:'a) -
                    data_to_word_config_len_size conf);
@@ -612,8 +612,8 @@ let word_gen_gc_partial_move_data_code_def = new_definition
   `word_gen_gc_partial_move_data_code conf =
      ((\cmp r ri c. stackLang_Loop (stackLang_If cmp r ri c
        (stackLang_Break 0))) asm_NotEqual 3 (Reg 8)
-      (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem
-        word_bignum_Load r (Addr a (n2w 0)))) 7 8;
+      (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
+        (Addr a (n2w 0)))) 7 8;
                  stackLang_If asm_Test 7 (Imm (n2w 4))
                    (stackLang_list_Seq [(\r v. stackLang_Inst
                      (asm_Arith (asm_Shift Lsr r r (Imm (n2w v))))) 7
@@ -643,8 +643,8 @@ let word_gen_gc_move_refs_code_def = new_definition
      // r2a in 8, r1a in 0 and Temp 4w
      ((\cmp r ri c. stackLang_Loop (stackLang_If cmp r ri c
        (stackLang_Break 0))) asm_NotEqual 0 (Reg 8)
-      (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem
-        word_bignum_Load r (Addr a (n2w 0)))) 7 8;
+      (stackLang_list_Seq [(\r a. stackLang_Inst (asm_Mem asm_Load r
+        (Addr a (n2w 0)))) 7 8;
                  (\r v. stackLang_Inst (asm_Arith (asm_Shift Lsr r r
                    (Imm (n2w v))))) 7 (dimindex (:'a) -
                    data_to_word_config_len_size conf);
@@ -1053,3 +1053,6 @@ let prog_comp_def = new_definition
 let stack_alloc_compile_def = new_definition
   `stack_alloc_compile c prog = APPEND (stack_alloc_stubs c) (MAP
   stack_alloc_prog_comp prog)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

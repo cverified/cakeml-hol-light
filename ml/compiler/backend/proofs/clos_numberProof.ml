@@ -511,3 +511,6 @@ let semantics_number = prove
       closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
         co (state_cc (ignore_table clos_number_compile_inc) cc) xs`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

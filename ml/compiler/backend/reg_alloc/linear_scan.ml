@@ -1177,3 +1177,6 @@ let linear_scan_reg_alloc_def = new_definition
 
 (* HOL4 linear_scanScript.sml:1148-1328: code that the source has in
    a comment *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

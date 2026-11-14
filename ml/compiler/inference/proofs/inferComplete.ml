@@ -195,3 +195,6 @@ let infer_ds_complete = prove
 
 (* HOL4 inferCompleteScript.sml:1446-1788: code that the source has
    in a comment *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

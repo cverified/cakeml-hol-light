@@ -1413,3 +1413,6 @@ let calls_no_Labels = prove
 let _ = do_list unhide_constant
   ["C";
    "vars"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

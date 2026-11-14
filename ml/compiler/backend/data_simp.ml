@@ -49,3 +49,6 @@ let simp_def,simp_ind = define_shaped_rec
         pSeq (dataLang_Call ret dest args (SOME (v,simp handler
           dataLang_Skip))) c
         | c1 -> pSeq c1 c`];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

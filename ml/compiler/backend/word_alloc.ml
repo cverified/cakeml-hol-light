@@ -1939,3 +1939,6 @@ let full_ssa_cc_trans_def = new_definition
 let _ = do_list unhide_constant
   ["inst";
    "mem"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

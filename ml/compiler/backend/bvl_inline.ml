@@ -441,3 +441,6 @@ let bvl_inline_compile_inc_def = new_definition
 let bvl_inline_compile_prog_def = new_definition
   `bvl_inline_compile_prog limit' split_seq cut_size prog =
      bvl_inline_compile_inc limit' split_seq cut_size LN prog`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

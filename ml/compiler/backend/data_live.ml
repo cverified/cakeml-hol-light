@@ -164,3 +164,6 @@ let compile_def,compile_ind = define_shaped_rec
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

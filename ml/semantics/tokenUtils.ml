@@ -188,3 +188,6 @@ let destREPLIDT_def = new_definition
           tokens_REPLIDT s -> SOME s
         | _35 -> NONE`;;
 add_simp destREPLIDT_def;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

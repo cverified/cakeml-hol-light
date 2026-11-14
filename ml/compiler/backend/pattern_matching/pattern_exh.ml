@@ -864,3 +864,6 @@ let exh_rows_thm = prove
  (`~(pattern_semantics_match refs rows v = NONE) /\ exh_rows rows ==>
   ~(pattern_semantics_match refs rows v = SOME MatchFailure)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

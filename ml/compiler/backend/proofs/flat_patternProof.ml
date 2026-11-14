@@ -1002,3 +1002,6 @@ let compile_exp_no_Mat = prove
 let compile_decs_no_Mat = prove
  (`!decs. no_Mat_decs (MAP (compile_dec cfg) decs)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

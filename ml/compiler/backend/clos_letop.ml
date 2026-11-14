@@ -148,3 +148,6 @@ let let_op_sing_eq = prove
 
 let clos_letop_compile_inc_def = new_definition
   `clos_letop_compile_inc (e,xs) = (clos_letop_let_op e,[])`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

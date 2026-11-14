@@ -260,3 +260,6 @@ let remove_flat_prog_def = new_definition
        let (r,t) = analyse_code code in
        let reachable = closure_spt r t in
        remove_unreachable reachable code)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

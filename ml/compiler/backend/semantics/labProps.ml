@@ -817,3 +817,6 @@ let no_share_mem_inst_def = new_definition
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["mem"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

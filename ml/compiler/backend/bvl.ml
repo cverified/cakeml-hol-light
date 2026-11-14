@@ -62,3 +62,6 @@ let mk_tick_def = new_definition
 
 (* HOL4 bvlScript.sml:52: the overload mk_elem_at, which the port
    expands *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

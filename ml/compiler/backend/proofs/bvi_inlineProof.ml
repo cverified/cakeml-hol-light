@@ -896,3 +896,6 @@ let compile_prog_semantics = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["error"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

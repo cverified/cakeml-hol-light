@@ -315,3 +315,6 @@ let lfl_def = new_definition
 (* HOL4 gramScript.sml:277-282: ML code, not ported *)
 
 (* HOL4 gramScript.sml:284-285: ML code, not ported *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

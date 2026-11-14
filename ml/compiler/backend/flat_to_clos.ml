@@ -140,21 +140,21 @@ let compile_arith_def = new_definition
        t (closLang_IntOp closLang_Add) xs | ast_Sub -> closLang_Op t
        (closLang_IntOp closLang_Sub) xs | ast_Mul -> closLang_Op t
        (closLang_IntOp closLang_Mult) xs | ast_Div -> closLang_Let t xs
-       (flatLang_If t (closLang_Op t (closLang_BlockOp closLang_Equal)
+       (closLang_If t (closLang_Op t (closLang_BlockOp closLang_Equal)
        [closLang_Var t 0; closLang_Op t (closLang_IntOp (closLang_Const
        (&0))) []])
-                              (flatLang_Raise t (closLang_Op t
+                              (closLang_Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 div_tag)) []))
                               (closLang_Op t (closLang_IntOp
                                 closLang_Div) [closLang_Var t 0;
                                 closLang_Var t 1])) | ast_Mod ->
-                                closLang_Let t xs (flatLang_If t
+                                closLang_Let t xs (closLang_If t
                                 (closLang_Op t (closLang_BlockOp
                                 closLang_Equal) [closLang_Var t 0;
                                 closLang_Op t (closLang_IntOp
                                 (closLang_Const (&0))) []])
-                              (flatLang_Raise t (closLang_Op t
+                              (closLang_Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 div_tag)) []))
                               (closLang_Op t (closLang_IntOp
@@ -568,3 +568,6 @@ add_simp HD_compile;;
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["pmatch"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

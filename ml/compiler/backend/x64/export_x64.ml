@@ -349,3 +349,6 @@ let x64_export_def = new_definition
   |> concl |> rand |> listSyntax.dest_list |> fst |> map rand
   |> map stringSyntax.fromHOLstring |> concat |> print
 *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -201,3 +201,6 @@ let clos_mti_compile_nil = prove
  (`clos_mti_compile do_mti max_app [] = []`,
   CHEAT_TAC);;
 add_simp clos_mti_compile_nil;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

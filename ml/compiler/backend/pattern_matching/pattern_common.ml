@@ -43,3 +43,6 @@ let matchResult_INDUCT,matchResult_RECURSION = define_datatype
   "matchResult =
      MatchSuccess num
    | MatchFailure";;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -1381,3 +1381,6 @@ let extend_dec_env_def = new_definition
 (* HOL4 semanticPrimitivesScript.sml:1376: ML code, not ported *)
 (* HOL4 semanticPrimitivesScript.sml:1377: the overload +++, which
    the port writes as an application of extend_dec_env *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

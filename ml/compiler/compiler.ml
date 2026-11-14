@@ -1102,3 +1102,6 @@ let compile_pancake_32_def = new_definition
 (* PENDING: the file system of the basis library, which the port does
    not have (add_stdout, add_stderr, fastForwardFD) *)
 (* HOL4 compilerScript.sml:835-849: the definition *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

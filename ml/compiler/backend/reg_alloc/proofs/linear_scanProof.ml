@@ -2233,3 +2233,6 @@ let linear_scan_reg_alloc_correct = prove
      ALL (\(r1,r2). (sp_default col) r1 = (sp_default col) r2 ==>
        r1 = r2) forced)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

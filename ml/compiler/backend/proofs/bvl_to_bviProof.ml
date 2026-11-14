@@ -1495,3 +1495,6 @@ let _ = do_list unhide_constant
   ["id";
    "parts";
    "str"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

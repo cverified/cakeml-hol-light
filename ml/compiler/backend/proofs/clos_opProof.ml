@@ -433,3 +433,6 @@ let eq_op_fv = prove
 let fv1_SmartOp = prove
  (`fv1 n (clos_op_SmartOp t op xs) ==> fv1 n (closLang_Op t op xs)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

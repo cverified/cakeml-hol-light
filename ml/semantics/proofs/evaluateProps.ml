@@ -987,3 +987,6 @@ let evaluate_Apps = prove
          (sem_env_v_fupd (K (nsAppend (alist_to_ns (ZIP (REVERSE
            ns) (BUTLAST vs))) (sem_env_v env1))) env1) [e])`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

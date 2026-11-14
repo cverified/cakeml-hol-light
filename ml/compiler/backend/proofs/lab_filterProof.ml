@@ -261,3 +261,6 @@ let sec_ends_with_label_filter_skip = prove
    ALL sec_ends_with_label code ==>
    ALL sec_ends_with_label (filter_skip code)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

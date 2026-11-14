@@ -195,3 +195,6 @@ let final_tick_cleanup_example = prove
        (SOME (bvi_LetCall 1 0 11 [bvi_Var 1] (bvi_Return [bvi_Var
          0])))`,
   (REWRITE_TAC[remove_ticks_exp_def; OPTION_MAP]));;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

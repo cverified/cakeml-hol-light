@@ -2138,3 +2138,6 @@ let bvl_constProof_compile_exp_code_labels = prove
             bvl_constProof_compile_code_labels) THEN
    REWRITE_TAC[FILTER; MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
                UNION_EMPTY]));;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

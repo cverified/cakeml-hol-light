@@ -73,3 +73,6 @@ let remove_word_prog_def = new_definition
        let reachable = closure_spt (sptree_insert n one (LN:1 spt)) t
          in
        remove_word_code reachable code)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

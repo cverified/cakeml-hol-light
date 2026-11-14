@@ -547,8 +547,8 @@ let key_val_compare_def = new_definition
          (match b with
            wordLang_Word x -> (match b' with wordLang_Word y -> x
              <= y | _53 -> T) | wordLang_Loc a b -> (match b' with
-             asm_Loc a' b' -> (a > a') \/ (a = a' /\ b >= b') | _54
-             -> F))))`;;
+             wordLang_Loc a' b' -> (a > a') \/ (a = a' /\ b >= b') |
+             _54 -> F))))`;;
 
 (*
 EVAL ``key_val_compare (1,Loc 3 4) (1,Loc 1 2)``
@@ -1435,3 +1435,6 @@ let word_lang_safe_for_space_def = new_definition
 (* clean up *)
 
 (* HOL4 wordSemScript.sml:1412: ML code, not ported *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

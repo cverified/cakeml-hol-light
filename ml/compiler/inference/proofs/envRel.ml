@@ -460,3 +460,6 @@ let tenv_to_ienv_lift = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

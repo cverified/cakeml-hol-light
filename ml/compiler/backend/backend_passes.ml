@@ -562,3 +562,6 @@ let compile_tap_def = new_definition
 let backend_passes_compile_alt = prove
  (`backend_compile asm_conf c p = FST (compile_tap asm_conf c p)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -540,3 +540,6 @@ let parmove_MAP_INJ = prove
    parmove (MAP (f ## f) ls) = MAP (OPTION_MAP f ## OPTION_MAP f)
      (parmove ls)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

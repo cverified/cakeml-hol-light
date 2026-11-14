@@ -435,3 +435,6 @@ let compile_inc_eq = prove
  (`clos_annotate_compile_inc (e,aux) = (annotate_list 0
   e,clos_annotate_compile aux)`,
   (REWRITE_TAC[clos_annotate_compile_inc_def; annotate_sing_eq]));;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

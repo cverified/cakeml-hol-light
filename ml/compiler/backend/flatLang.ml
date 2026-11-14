@@ -177,3 +177,6 @@ let SmartIf_PMATCH = prove
 let _ = do_list unhide_constant
   ["id";
    "pmatch"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

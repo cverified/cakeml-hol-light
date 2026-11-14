@@ -105,3 +105,6 @@ let semantics_init_def = new_definition
      semantics_semantics (mk_semantics_state prim_tenv
        prim_type_ids (FST (THE (prim_sem_env ffi))) (SND (THE
        (prim_sem_env ffi))))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

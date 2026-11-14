@@ -141,3 +141,6 @@ let clos_fvs_compile_inc_def = new_definition
 let LENGTH_remove_fvs = prove
  (`!fvs xs. LENGTH (remove_fvs fvs xs) = LENGTH xs`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

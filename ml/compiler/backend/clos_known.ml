@@ -353,9 +353,9 @@ let known_op_def = new_definition
             g)))
         | (closLang_BlockOp (closLang_Cons tg)) -> (clos_known_Tuple
           tg as,g)
-        | (closLang_IntOp (closLang_Const i)) -> (closLang_Int i,g)
+        | (closLang_IntOp (closLang_Const i)) -> (clos_known_Int i,g)
         | (closLang_MemOp closLang_El) ->
-        (match as with [clos_known_Tuple _8 xs; closLang_Int i] ->
+        (match as with [clos_known_Tuple _8 xs; clos_known_Int i] ->
             (if (&0) <= i /\ i < &(LENGTH xs) then (EL (num_of_int i)
               xs,g) else (clos_known_Other,g)) | CONS
               clos_known_Impossible xs -> (clos_known_Impossible,g) |
@@ -768,3 +768,6 @@ EVAL ``
 let _ = do_list unhide_constant
   ["all";
    "pmatch"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

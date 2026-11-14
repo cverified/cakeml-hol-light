@@ -52,3 +52,6 @@ let get_code_labels_simp = prove
  (`!x y. dataProps_get_code_labels (simp x y) SUBSET
   dataProps_get_code_labels x UNION dataProps_get_code_labels y`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -172,3 +172,6 @@ let infer_funs_complete = prove
    FDOM s = count (infer_st_next_uvar st') /\
    MAP SND bindings = MAP (convert_t o t_walkstar s) funs_ts)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

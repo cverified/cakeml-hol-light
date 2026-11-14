@@ -438,3 +438,6 @@ let bviSem_semantics_def = new_definition
 (* clean up *)
 
 (* HOL4 bviSemScript.sml:437: ML code, not ported *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

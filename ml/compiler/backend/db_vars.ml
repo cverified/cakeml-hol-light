@@ -149,3 +149,6 @@ add_simp has_var_vars_flatten;;
 let ALL_DISTINCT_vars_to_list = prove
  (`ALL_DISTINCT (vars_to_list d)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

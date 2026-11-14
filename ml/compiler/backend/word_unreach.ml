@@ -89,3 +89,6 @@ let remove_unreach_test = prove
                        (wordLang_Move 1 [(3,1); (2,99)])) =
    wordLang_Move 1 [(3,11); (2,99); (1,11)]`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

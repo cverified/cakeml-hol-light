@@ -357,3 +357,6 @@ let stack_names_call_args = prove
                           (tlookup f 4)
                           (tlookup f 0)) (MAP SND p')`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

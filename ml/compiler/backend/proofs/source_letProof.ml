@@ -94,3 +94,6 @@ let compile_semantics_oracle = prove
              (adjust_oracle ci (source_let_compile_decs o f)) s)
          env prog outcome`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

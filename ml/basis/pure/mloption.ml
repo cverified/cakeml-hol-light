@@ -38,3 +38,6 @@ let mloption_compare_def = new_definition
      (match x with NONE -> (match y with NONE -> EQUAL | _1 ->
        LESS) | SOME vx -> (match y with NONE -> GREATER | SOME vy ->
        f vx vy))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

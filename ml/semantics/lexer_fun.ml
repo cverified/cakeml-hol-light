@@ -513,3 +513,6 @@ let split_top_level_semi_def,split_top_level_semi_ind =
   [`(split_top_level_semi toks =
     (match toplevel_semi_dex 0 0 toks with NONE -> [] | SOME i
       -> CONS (TAKE i toks) (split_top_level_semi (DROP i toks))))`];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

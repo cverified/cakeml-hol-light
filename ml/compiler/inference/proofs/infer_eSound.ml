@@ -261,3 +261,6 @@ let infer_e_sound = prove
       type_funs tenv tenvE funs (MAP2 (\(x,y,z) t. (x,(convert_t o
         t_walkstar s) t)) funs ts))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

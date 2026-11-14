@@ -91,3 +91,6 @@ let clos_number_compile_inc_def = new_definition
 let ignore_table_def = new_definition
   `ignore_table f st (code,aux) = (let (st',code') = f st code in
   (st',(code',aux)))`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

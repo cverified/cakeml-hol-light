@@ -790,3 +790,6 @@ let data_to_word_good_handlers_incr = prove
 let _ = do_list unhide_constant
   ["all";
    "vars"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

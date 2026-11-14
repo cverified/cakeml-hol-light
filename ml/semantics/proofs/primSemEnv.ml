@@ -39,3 +39,6 @@ let prim_type_sound_invariants = prove
          prim_tenv /\
        FRANGE ((SND o SND) o_f ctMap) SUBSET prim_type_ids)`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

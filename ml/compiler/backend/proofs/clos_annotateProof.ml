@@ -646,3 +646,6 @@ let every_Fn_SOME_ann = prove
       every_Fn_SOME (MAP (SND o SND) xs) ==>
       every_Fn_SOME (MAP (SND o SND) (clos_annotate_compile xs))`,
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

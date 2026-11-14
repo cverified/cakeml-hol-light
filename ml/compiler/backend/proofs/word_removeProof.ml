@@ -345,3 +345,6 @@ let word_remove_correct = prove
 (* HOL4 word_removeProofScript.sml:401-428: a proof *)
 
 (* HOL4 word_removeProofScript.sml:430: a proof *)
+
+(* and the interface *)
+let _ = unhide_overloads ();;

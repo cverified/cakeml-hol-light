@@ -678,3 +678,6 @@ let _ = do_list unhide_constant
   ["isException";
    "isResult";
    "parts"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

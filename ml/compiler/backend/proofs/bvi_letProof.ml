@@ -1151,3 +1151,6 @@ let compile_exp_code_labels = prove
    REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
                UNION_EMPTY]));;
 add_simp compile_exp_code_labels;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

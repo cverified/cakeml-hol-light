@@ -1076,3 +1076,6 @@ add_simp type_ds_sing;;
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["id"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -1031,7 +1031,7 @@ let funpow_dec_clock_clock = prove
   CHEAT_TAC);;
 
 let evaluate_mk_ticks = prove
- (`!FUNPOW s n.
+ (`!p s n.
     dataSem_evaluate (mk_ticks n p,s) =
     (if state_clock s < n then
       (SOME (Rerr (Rabort
@@ -1666,3 +1666,6 @@ let evaluate_stack_max_le_stack_limit = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["vars"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

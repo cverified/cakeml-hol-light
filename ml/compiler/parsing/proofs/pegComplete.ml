@@ -832,7 +832,7 @@ let stoppers_def = new_definition
         | nPattern ->
         UNIV DIFF
           ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_ColonT
-          ,tokens_ArrowT,tokens_StarT,tokens_AsT,tokens_OpT} UNION
+          ,tokens_ArrowT,tokens_StarT,tokens_AsT,NN} UNION
                    {tokens_AlphaT s | T} UNION {tokens_SymbolT s | T}
                      UNION {tokens_LongidT s1 s2 | T} UNION
                    {tokens_IntT i | T} UNION {tokens_StringT s | T}
@@ -845,7 +845,7 @@ let stoppers_def = new_definition
         | nPatternList ->
         UNIV DIFF
           ({tokens_CommaT,tokens_LparT,tokens_UnderbarT,tokens_LbrackT
-          ,tokens_ColonT,tokens_ArrowT,tokens_StarT,tokens_AsT,
+          ,NN,tokens_ArrowT,tokens_StarT,tokens_AsT,
                     tokens_OpT} UNION
                    {tokens_AlphaT s | T} UNION {tokens_SymbolT s | T}
                      UNION {tokens_LongidT s1 s2 | T} UNION
@@ -1373,3 +1373,6 @@ let cmlG_unambiguous = prove
 let _ = do_list unhide_constant
   ["C";
    "sub"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

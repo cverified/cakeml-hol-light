@@ -384,3 +384,6 @@ let get_code_labels_remove_fvs = prove
   closProps_get_code_labels es`,
   CHEAT_TAC);;
 add_simp get_code_labels_remove_fvs;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

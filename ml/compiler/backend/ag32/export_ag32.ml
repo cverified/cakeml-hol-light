@@ -25,3 +25,6 @@ let ag32_export_def = new_definition
         data)
       (split16 (words_line (implode ".code_byte ") byte_to_string)
         bytes)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

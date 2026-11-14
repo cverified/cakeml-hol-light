@@ -517,3 +517,6 @@ let word_to_word_compile_semantics = prove
      wordSem_semantics s start =
      wordSem_semantics (t:('a,'b,'ffi)wordSem_state) start`),
   CHEAT_TAC);;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

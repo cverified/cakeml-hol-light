@@ -106,3 +106,6 @@ let stack_rawcall_compile_def = new_definition
   `stack_rawcall_compile prog =
      (let i = collect_info prog LN in
        MAP (\(n,(b:'a stackLang_prog)). (n,comp_top i b)) prog)`;;
+
+(* and the interface *)
+let _ = unhide_overloads ();;

@@ -496,3 +496,6 @@ let lexer_correct = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["val"];;
+
+(* and the interface *)
+let _ = unhide_overloads ();;
