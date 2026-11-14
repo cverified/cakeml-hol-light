@@ -398,7 +398,8 @@ WORDLANG_PROG = dict((c, 'wordLang') for c in
 # the constructors of a stackLang program, for a definition that
 # reads another language and builds one
 STACKLANG_PROG = dict((c, 'stackLang') for c in
-                      ['Skip', 'Inst', 'Get', 'Set', 'Call', 'Seq',
+                      ['Break', 'Continue',
+                       'Skip', 'Inst', 'Get', 'Set', 'Call', 'Seq',
                        'If', 'Loop', 'Alloc', 'Raise', 'Return',
                        'Tick', 'LocValue', 'Install', 'FFI',
                        'Halt', 'StackAlloc', 'StackFree',
