@@ -1969,7 +1969,7 @@ class Printer:
         return c if re.match(r"^[A-Za-z_][A-Za-z0-9_']*$", c) \
                else '(' + c + ')'
       hf = self.ctx.head_for
-      if hf and hf[0] == id(e):
+      if hf and hf[0] is e:
         n2 = hf[1]
         self.ctx.head_for = None
       else:
@@ -2096,9 +2096,13 @@ class Printer:
         # the outermost application has all the arguments, and it
         # is entered first: an inner one of the same head (the
         # `Var t' of `Var t n') must not take its place
+        # the node itself and not its id: an id is reused once the
+        # node it belonged to is gone, and a stale entry would
+        # then answer for another node (pegComplete had a token of
+        # its grammar come out as the overload NN)
         if not (self.ctx.head_for and
-                self.ctx.head_for[0] == id(hop)):
-          self.ctx.head_for = (id(hop), n)
+                self.ctx.head_for[0] is hop):
+          self.ctx.head_for = (hop, n)
         if n in ARGPERM:
           # a permutation of a prefix of the arguments holds for
           # a partial application of that many as well (FUNPOW f
