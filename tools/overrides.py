@@ -844,6 +844,16 @@ INT_NUMERALS = set([
 # The library layer has them under a name of their own and the
 # statements that mean them say so here.
 THM_NAMES = {
+  # the toString of a number as a string of characters is
+  # ASCIInumbers' num_to_dec_string, not mlint's of an mlstring
+  ('mlint', 'fromString_helper'): {'toString': 'num_to_dec_string'},
+  ('mlint', 'fromString_hd'): {'toString': 'num_to_dec_string'},
+  ('mlint', 'toString_len'): {'toString': 'num_to_dec_string'},
+  # the toList and the fromList of a sparse tree, where the name
+  # resolves to the one of a lazy list (ml/lib/llist.ml)
+  ('misc', 'tlookup_bij_suff'): {'toList': 'sptree_toList'},
+  ('misc', 'tlookup_bij_iff'): {'toList': 'sptree_toList'},
+  ('misc', 'lookup_fromList2'): {'fromList': 'sptree_fromList'},
   # the fromList of a sparse tree, where the one the name resolves
   # to is the fromList of a lazy list (ml/lib/llist.ml)
   ('misc', 'LIST_REL_lookup_fromList'): {'fromList': 'sptree_fromList'},
