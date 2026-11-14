@@ -397,9 +397,13 @@ CON_BODY = {
   # trace_to_json builds a json object, so its String is
   # jsonLang's and not the one of a display expression
   ('displayLang', 'trace_to_json_def'): {'String': 'jsonLang'},
+  ('displayLang', 'display_to_json_def'): {'String': 'jsonLang'},
+  # and display_to_str_tree builds the str_tree of mlsexp
+  ('displayLang', 'display_to_str_tree_def'): {'String': 'mlsexp'},
   # compile_pat reads an ast pattern and builds a flatLang one,
   # and the two have Pany, Pvar, Plit, Pcon, Pas and Pref
   ('source_to_flat', 'compile_pat_def'): {'*': 'flatLang'},
+  ('source_to_flat', 'compile_pat_sing_def'): {'*': 'flatLang'},
   # call_graph matches on a wordLang program and builds a
   # call_tree, and both have Call
   ('word_depth', 'call_graph_def'): {'Call': 'word_depth'},
@@ -1602,6 +1606,13 @@ BVL_EXP = dict((c, 'bvl') for c in
                 'Call', 'Force', 'Op'])
 
 CON_OF = {
+  # the patterns of compile_pat are ast patterns, which the source
+  # says of three of the seven clauses and leaves to the type of
+  # the function in the other four (CON_BODY says the bodies)
+  ('source_to_flat', 'compile_pat_def'):
+    {'Pany': 'ast', 'Plit': 'ast', 'Pref': 'ast', 'Pas': 'ast'},
+  ('source_to_flat', 'compile_pat_sing_def'):
+    {'Pany': 'ast', 'Plit': 'ast', 'Pref': 'ast', 'Pas': 'ast'},
   # these match on an opw, whose constructors the port calls after
   # backend_common, and build wordLang programs whose Op takes the
   # binop of asm (CON_BODY says the bodies)
@@ -11944,14 +11955,6 @@ DEF_NAMES = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
-  # the three constructors that an opw shares with the binop of
-  # asm, in the patterns of this one: the port writes the binop
-  # there, which is what its body wants and not its pattern
-  ('data_to_word', 'lookup_word_op_def'): [
-    ('(asm_Xor:opw)', '(backend_common_Xor:opw)'),
-    ('(word_bignum_Add:opw)', '(backend_common_Add:opw)'),
-    ('(word_bignum_Sub:opw)', '(backend_common_Sub:opw)'),
-  ],
   # lab_inst reads a lab assembly instruction and gives the asm
   # instruction that it is, and the two share Jump, JumpCmp and
   # Call; the definition is one quotation, where a rule for the

@@ -3260,18 +3260,23 @@ class Porter:
     e = self.conof_arity(e)
     if not self.conof_wild and not self.conbody: return pr.pr(e, prec)
     old = {}
+    was = {}
     body = dict(self.conof) if self.conof_wild else {}
     body.update(self.conbody)
     for nm, t in body.items():
       old[nm] = nm in self.ctx.overloaded
       self.ctx.overloaded.discard(nm)
+      # what the name meant before: a CON_OF of the definition
+      # has set it already, and popping it would take that with it
+      was[nm] = self.ctx.names.get((self.thy, nm))
       self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
     try:
       return pr.pr(e, prec)
     finally:
       for nm in body:
         if old[nm]: self.ctx.overloaded.add(nm)
-        self.ctx.names.pop((self.thy, nm), None)
+        if was[nm] is None: self.ctx.names.pop((self.thy, nm), None)
+        else: self.ctx.names[(self.thy, nm)] = was[nm]
 
   def clause_names(self, cl):
     """the names that the pattern of a clause uses, which is what
@@ -3313,18 +3318,21 @@ class Porter:
       return '%s %s %s' % (lhs, e.op,
                            p.pr(self.conof_arity(e.r), 13))
     old = {}
+    was = {}
     body = dict(self.conof) if self.conof_wild else {}
     body.update(self.conbody)
     for nm, t in body.items():
       old[nm] = nm in self.ctx.overloaded
       self.ctx.overloaded.discard(nm)
+      was[nm] = self.ctx.names.get((self.thy, nm))
       self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
     try:
       rhs = p.pr(self.conof_arity(e.r), 13)
     finally:
       for nm in body:
         if old[nm]: self.ctx.overloaded.add(nm)
-        self.ctx.names.pop((self.thy, nm), None)
+        if was[nm] is None: self.ctx.names.pop((self.thy, nm), None)
+        else: self.ctx.names[(self.thy, nm)] = was[nm]
     return '%s %s %s' % (lhs, e.op, rhs)
 
   def iff_to_eq(self, e):
