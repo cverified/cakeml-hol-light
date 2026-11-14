@@ -327,8 +327,8 @@ let exc_rel_trans = prove
   CHEAT_TAC);;
 
 let result_rel_def = new_definition
-  `semanticPrimitivesProps_result_rel R1 R2 x3 x4 =
-     match (x3,x4) with
+  `semanticPrimitivesProps_result_rel R1 R2 x3' x4 =
+     match (x3',x4) with
        (Rval v1,Rval v2) -> R1 v1 v2
      | (Rerr e1,Rerr e2) -> exc_rel R2 e1 e2
      | (_,_) -> F`;;
@@ -403,8 +403,8 @@ let sv_every_def = new_definition
 add_simp sv_every_def;;
 
 let sv_rel_def = new_definition
-  `semanticPrimitivesProps_sv_rel R x2 x3 =
-   match (x2,x3) with
+  `semanticPrimitivesProps_sv_rel R x2' x3 =
+   match (x2',x3) with
      (semanticPrimitives_Refv v1,semanticPrimitives_Refv v2) -> R v1 v2
    | (semanticPrimitives_W8array w1,semanticPrimitives_W8array w2) -> (w1 =
      w2)

@@ -55,8 +55,8 @@ let extract_labels_append = prove
   CHEAT_TAC);;
 
 let labs_of_def = new_definition
-  `labs_of x1 =
-   match x1 with
+  `labs_of x1' =
+   match x1' with
      labLang_LocValue _ (labLang_Lab n1 n2) -> {(n1,n2)}
    | labLang_Jump (labLang_Lab n1 n2) -> {(n1,n2)}
    | labLang_JumpCmp _ _ _ (labLang_Lab n1 n2) -> {(n1,n2)}
@@ -64,8 +64,8 @@ let labs_of_def = new_definition
 add_simp labs_of_def;;
 
 let line_get_labels_def = new_definition
-  `line_get_labels x1 =
-   match x1 with
+  `line_get_labels x1'' =
+   match x1'' with
      labLang_LabAsm a _ _ _ -> labs_of a
    | _ -> {}`;;
 
@@ -83,8 +83,8 @@ let get_labels_cons = prove
   CHEAT_TAC);;
 
 let line_get_code_labels_def = new_definition
-  `line_get_code_labels x1 =
-   match x1 with
+  `line_get_code_labels x1''' =
+   match x1''' with
      labLang_Label _ l _ -> {l}
    | _ -> {}`;;
 add_simp line_get_code_labels_def;;
@@ -769,8 +769,8 @@ add_simp sec_ok_pre_def;;
 (* invariant: labels have correct section number and are non-zero *)
 
 let sec_label_ok_def = new_definition
-  `sec_label_ok k x2 =
-     match x2 with
+  `sec_label_ok k x2' =
+     match x2' with
        labLang_Label l1 l2 len -> l1 = k /\ ~(l2 = 0)
      | _ -> T`;;
 add_simp sec_label_ok_def;;

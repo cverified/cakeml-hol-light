@@ -69,8 +69,8 @@ let v_ty_INDUCT,v_ty_RECURSION = define_datatype
    | bvi_tailrec_Any";;
 
 let op_type_def = new_definition
-  `op_type x1 =
-   match x1 with
+  `op_type x1' =
+   match x1' with
      bvi_tailrec_Append -> bvi_tailrec_List
    | bvi_tailrec_Noop -> bvi_tailrec_Any
    | _ -> bvi_tailrec_Int`;;
@@ -158,8 +158,8 @@ let index_of_PMATCH = prove
   CHEAT_TAC);;
 
 let args_from_def = new_definition
-  `args_from x1 =
-     match x1 with
+  `args_from x1' =
+     match x1' with
        bvi_Call t (SOME d) as hdl -> SOME (t,d,as,hdl)
      | _ -> NONE`;;
 
@@ -382,8 +382,8 @@ let decide_ty_PMATCH = prove
   CHEAT_TAC);;
 
 let LAST1_def,LAST1_ind = define_guess
-  `LAST1 x1 =
-   match x1 with
+  `LAST1 x1' =
+   match x1' with
      [] -> NONE
    | [x] -> SOME x
    | CONS x xs -> LAST1 xs`;;
@@ -393,8 +393,8 @@ let update_context_def = new_definition
      try_update ty (index_of x2) (try_update ty (index_of x1) ts)`;;
 
 let arg_ty_def = new_definition
-  `arg_ty x1 =
-   match x1 with
+  `arg_ty x1'' =
+   match x1'' with
      closLang_IntOp (closLang_Const i) -> (if small_enough_int i then
        bvi_tailrec_Int else bvi_tailrec_Any)
    | closLang_IntOp closLang_Add -> bvi_tailrec_Int
@@ -429,8 +429,8 @@ let arg_ty_PMATCH = prove
   CHEAT_TAC);;
 
 let op_ty_def = new_definition
-  `op_ty x1 =
-     match x1 with
+  `op_ty x1''' =
+     match x1''' with
        closLang_IntOp closLang_Add -> bvi_tailrec_Int
      | closLang_IntOp closLang_Sub -> bvi_tailrec_Int
      | closLang_IntOp closLang_Mult -> bvi_tailrec_Int

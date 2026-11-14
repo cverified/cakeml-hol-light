@@ -34,15 +34,15 @@ let is_const_row_def = new_definition
 
 let is_Any_def,is_Any_ind = define_shaped_rec
   "match"
-  `is_Any x1 =
-   match x1 with
+  `is_Any x1' =
+   match x1' with
      pattern_semantics_Any -> T
    | pattern_semantics_Or p1 p2 -> (is_Any p1 \/ is_Any p2)
    | _ -> F`;;
 
 let is_Or_row_def = new_definition
-  `is_Or_row x1 =
-   match x1 with
+  `is_Or_row x1'' =
+   match x1'' with
      pattern_semantics_Or p1 p2,_ -> T
    | _ -> F`;;
 
@@ -150,8 +150,8 @@ let match_insert_Any = prove
 (* turning the pattern rows into code *)
 
 let is_True_def = new_definition
-  `is_True x1 =
-   match x1 with
+  `is_True x1' =
+   match x1' with
      pattern_semantics_True -> T
    | _ -> F`;;
 

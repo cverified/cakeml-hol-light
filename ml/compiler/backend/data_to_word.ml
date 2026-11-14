@@ -1381,8 +1381,8 @@ let fp_bop_inst_def = new_definition
    | fpSem_FP_Div -> FPDiv 0 0 1`;;
 
 let fp_uop_inst_def = new_definition
-  `fp_uop_inst x1 =
-   match x1 with
+  `fp_uop_inst x1' =
+   match x1' with
      fpSem_FP_Neg -> FPNeg 1 0
    | fpSem_FP_Abs -> FPAbs 1 0
    | fpSem_FP_Sqrt -> FPSqrt 1 0`;;
@@ -3469,7 +3469,7 @@ let compile_0_def = new_definition
 let AnyArith_call_tree_def = new_definition
   `AnyArith_call_tree =
      full_call_graph AnyArith_location
-       (fromAList (stubs (:1)
+       (fromAList (data_to_word_stubs (:1)
           (data_to_word_config_has_longdiv_fupd (K F)
              (data_to_word_config_call_empty_ffi_fupd (K F) ARB))))`;;
 

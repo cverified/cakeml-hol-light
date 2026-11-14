@@ -720,8 +720,8 @@ let flookup_com_neq = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let mb_rel_def,mb_rel_ind = define_guess_cheat
-  `mb_rel f x2 refs v1 v2 =
-     match (x2,v1,v2) with
+  `mb_rel f x2' refs v1 v2 =
+     match (x2',v1,v2) with
        ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),bvlSem_Block tag
          xs,bvlSem_RefPtr b ptr) ->
       (if b \/ ptr IN FRANGE f \/ ptr IN FDOM refs_old then F else match

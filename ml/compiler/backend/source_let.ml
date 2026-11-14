@@ -38,8 +38,8 @@ let dest_Let_NONE = prove
   CHEAT_TAC);;
 
 let dest_Letrec_def = new_definition
-  `dest_Letrec x1 =
-   match x1 with
+  `dest_Letrec x1' =
+   match x1' with
      ast_Letrec funs x -> SOME (funs,x)
    | _ -> NONE`;;
 add_simp dest_Letrec_def;;
@@ -53,8 +53,8 @@ let dest_Letrec_NONE = prove
   CHEAT_TAC);;
 
 let lift_let_def = new_definition
-  `lift_let x1 =
-     match x1 with
+  `lift_let x1'' =
+     match x1'' with
        Dlet l p x ->
        (match dest_Let x with SOME (NONE,x,y) -> SOME (Dlet l ast_Pany
          x,Dlet l p y)

@@ -710,8 +710,8 @@ let is_ref_header_thm = prove
   CHEAT_TAC);;
 
 let is_Ref_def = new_definition
-  `is_Ref is_ref_tag x2 =
-   match x2 with
+  `is_Ref is_ref_tag x2' =
+   match x2' with
      DataElement xs l r -> is_ref_tag r
    | _ -> F`;;
 
@@ -959,8 +959,8 @@ let word_heap_IMP_limit = prove
 
 let muttag_header_def = assume_definition
   "free: thunk_tag_to_bits:thunk_mode->(?1655824)word"
-  `muttag_header x1 =
-   match x1 with
+  `muttag_header x1' =
+   match x1' with
      ThunkTag e -> (thunk_tag_to_bits e << 3 || (n2w 6))
    | _ -> (n2w 2)`;;
 
@@ -1900,8 +1900,8 @@ let data_to_word_gcProof_code_rel_def = new_definition
          (data_to_word_comp c n 2 prog))))`;;
 
 let stack_rel_def,stack_rel_ind = define_guess
-  `data_to_word_gcProof_stack_rel x1 x2 =
-     match (x1,x2) with
+  `data_to_word_gcProof_stack_rel x1'' x2'' =
+     match (x1'',x2'') with
        (dataSem_Env s1 env,StackFrame s2 ws vs NONE) ->
         ALL (\(x1,x2). ~(x1 = 0) /\ EVEN x1) vs /\ s1 = s2 /\
         ALL (\(x1,x2). x1 = 0) ws /\
@@ -2164,8 +2164,8 @@ let get_var_T_OR_F = prove
     wordSem_get_var n (dataSem_state_locals s) = SOME x /\
     wordSem_get_var (adjust_var n) t = SOME w ==> ~(18 MOD dimword (:'a) = 2
       MOD dimword (:'a)) /\
-    ((x = semanticPrimitives_Boolv T) ==> (w = wordLang_Word (n2w 18))) /\
-    ((x = semanticPrimitives_Boolv F) ==> (w = wordLang_Word (n2w 2)))`,
+    ((x = dataSem_Boolv T) ==> (w = wordLang_Word (n2w 18))) /\
+    ((x = dataSem_Boolv F) ==> (w = wordLang_Word (n2w 2)))`,
   CHEAT_TAC);;
 
 let get_var_isT_OR_isF = prove
@@ -2782,8 +2782,8 @@ let word_gen_gc_partial_move_IMP_isWord = prove
   CHEAT_TAC);;
 
 let loc_ok_def = new_definition
-  `loc_ok x1 =
-   match x1 with
+  `loc_ok x1''' =
+   match x1''' with
      wordLang_Loc m n -> (n = 0)
    | _ -> T`;;
 add_simp loc_ok_def;;

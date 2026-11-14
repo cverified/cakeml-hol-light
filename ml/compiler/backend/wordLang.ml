@@ -376,8 +376,8 @@ let word_sh_def = new_definition
        | Ror -> SOME (word_ror w n)`;;
 
 let exp_to_addr_def = new_definition
-  `exp_to_addr x1 =
-     match x1 with
+  `exp_to_addr x1' =
+     match x1' with
        wordLang_Var ad -> SOME (Addr ad (n2w 0))
      | wordLang_Op asm_Add [wordLang_Var ad; wordLang_Const offset] -> SOME
        (Addr ad offset)

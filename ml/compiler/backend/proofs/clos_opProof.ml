@@ -30,8 +30,7 @@ let list_split3 = prove
 
 (* [local] *)
 let evaluate_MakeBool = prove
- (`!b. closSem_evaluate ([MakeBool b],vs,s) = (Rval [semanticPrimitives_Boolv
-  b],s)`,
+ (`!b. closSem_evaluate ([MakeBool b],vs,s) = (Rval [closSem_Boolv b],s)`,
   CHEAT_TAC);;
 
 let dest_Op_thm = prove
@@ -180,28 +179,28 @@ let lift_exps_simple_exp = prove
 
 let evaluate_ConjList_append_F = prove
  (`!xs ys.
-     closSem_evaluate ([ConjList xs],env1,r) = (Rval
-       [semanticPrimitives_Boolv F],r) /\ ALL pure xs ==>
+     closSem_evaluate ([ConjList xs],env1,r) = (Rval [closSem_Boolv F],r)
+       /\ ALL pure xs ==>
      closSem_evaluate ([ConjList (APPEND xs ys)],env1,r) = (Rval
-       [semanticPrimitives_Boolv F],(r:('c,'ffi)closSem_state))`,
+       [closSem_Boolv F],(r:('c,'ffi)closSem_state))`,
   CHEAT_TAC);;
 
 let evaluate_ConjList_append_T = prove
  (`!xs ys.
-     closSem_evaluate ([ConjList xs],env1,r) = (Rval
-       [semanticPrimitives_Boolv T],r) /\ ALL pure xs ==>
+     closSem_evaluate ([ConjList xs],env1,r) = (Rval [closSem_Boolv T],r)
+       /\ ALL pure xs ==>
      closSem_evaluate ([ConjList (APPEND xs ys)],env1,r) =
      closSem_evaluate ([ConjList ys],env1,(r:('c,'ffi)closSem_state))`,
   CHEAT_TAC);;
 
 let evaluate_ConjList_F = prove
- (`closSem_evaluate ([x],env,r) = (Rval [semanticPrimitives_Boolv F],r) ==>
-   closSem_evaluate ([ConjList (CONS x xs)],env,r) = (Rval
-     [semanticPrimitives_Boolv F],r)`,
+ (`closSem_evaluate ([x],env,r) = (Rval [closSem_Boolv F],r) ==>
+   closSem_evaluate ([ConjList (CONS x xs)],env,r) = (Rval [closSem_Boolv
+     F],r)`,
   CHEAT_TAC);;
 
 let evaluate_ConjList_T = prove
- (`closSem_evaluate ([x],env,r) = (Rval [semanticPrimitives_Boolv T],r) /\
+ (`closSem_evaluate ([x],env,r) = (Rval [closSem_Boolv T],r) /\
    closSem_evaluate ([ConjList xs],env,r) = res ==>
    closSem_evaluate ([ConjList (CONS x xs)],env,r) = res`,
   CHEAT_TAC);;
@@ -233,8 +232,7 @@ let eq_pure_thm = prove
  (`closSem_evaluate ([x1; y1],env1,r) = (Rval [h1; h2],r) /\ simple_exp x1
   /\ simple_exp y1 /\
    closSem_do_eq h1 h2 = Eq_val b ==>
-   closSem_evaluate ([eq_pure x1 y1],env1,r) = (Rval
-     [semanticPrimitives_Boolv b],r)`,
+   closSem_evaluate ([eq_pure x1 y1],env1,r) = (Rval [closSem_Boolv b],r)`,
   CHEAT_TAC);;
 
 (* SmartOp_thm *)

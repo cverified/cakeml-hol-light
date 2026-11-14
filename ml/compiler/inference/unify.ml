@@ -852,8 +852,8 @@ let FINITE_star_workbag = prove
 add_simp FINITE_star_workbag;;
 
 let isCONSk_def = new_definition
-  `isCONSk x1 =
-   match x1 with
+  `isCONSk x1' =
+   match x1' with
      CONSk _ _ -> T
    | _ -> F`;;
 add_simp isCONSk_def;;

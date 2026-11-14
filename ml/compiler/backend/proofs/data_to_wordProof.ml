@@ -386,14 +386,13 @@ let extract_labels_WordShift64_on_32 = prove
 
 (* [local] *)
 let extract_labels_assignWordOp = prove
- (`data_to_word_assign a b c d (closLang_WordOp (WordOpw e f)) g h = (i,j) ==>
+ (`wordSem_assign a b c d (closLang_WordOp (WordOpw e f)) g h = (i,j) ==>
    wordConvs_extract_labels i = [] /\ c <= j`,
   CHEAT_TAC);;
 
 (* [local] *)
 let extract_labels_assignWordShift = prove
- (`data_to_word_assign a b c d (closLang_WordOp (WordShift e f k)) g h = (i,j)
-  ==>
+ (`wordSem_assign a b c d (closLang_WordOp (WordShift e f k)) g h = (i,j) ==>
    wordConvs_extract_labels i = [] /\ c <= j`,
   CHEAT_TAC);;
 
@@ -514,7 +513,7 @@ let assign_no_inst = prove
       /\ asm_config_ISA ac = ARMv7) /\
    asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\ asm_offset_ok 0
      (asm_config_byte_offset ac) (n2w 0)) ==>
-   every_inst (inst_ok_less ac) (FST (data_to_word_assign a b c d e f g))`,
+   every_inst (inst_ok_less ac) (FST (wordSem_assign a b c d e f g))`,
   CHEAT_TAC);;
 
 (*
@@ -666,7 +665,7 @@ let const_parts_to_words_labels = prove
 (* [local] *)
 let word_get_code_labels_assign = prove
  (`!x.
-     data_to_word_assign c secn v w x y z = (res1,res2) ==>
+     wordSem_assign c secn v w x y z = (res1,res2) ==>
      wordConvs_get_code_labels res1 SUBSET
      assign_get_code_label x UNION (set_of_list (MAP FST
        (data_to_word_stubs (:'a) c)))`,
@@ -702,7 +701,7 @@ let word_good_handlers_StoreAnyConsts = prove
 (* [local] *)
 let word_good_handlers_assign = prove
  (`!x.
-     data_to_word_assign c secn v w x y z = (res1,res2) ==>
+     wordSem_assign c secn v w x y z = (res1,res2) ==>
      good_handlers secn res1`,
   CHEAT_TAC);;
 

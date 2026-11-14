@@ -65,8 +65,8 @@ let _ = size_thms "bvl_exp";;
    what the port found for it *)
 let alloc_glob_count_def,alloc_glob_count_ind = define_wf
   `MEASURE (\x0. bvl_exp_size1 x0)`
-  `alloc_glob_count x1 =
-     match x1 with
+  `alloc_glob_count x1' =
+     match x1' with
        [] -> (0:num)
      | CONS x (CONS y xs) ->
         alloc_glob_count [x] + alloc_glob_count (CONS y xs)

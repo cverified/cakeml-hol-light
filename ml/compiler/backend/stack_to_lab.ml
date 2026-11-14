@@ -171,8 +171,8 @@ let prog_to_section_def = new_definition
          (misc_List [labLang_Label n (if is_Seq p then m else 1) 0])))`;;
 
 let is_gen_gc_def = new_definition
-  `is_gen_gc x1 =
-     match x1 with
+  `is_gen_gc x1' =
+     match x1' with
        data_to_word_Generational l -> T
      | _ -> F`;;
 

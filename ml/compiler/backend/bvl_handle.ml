@@ -47,14 +47,14 @@ let dest_handle_Raise_def = new_definition
    | _ -> NONE`;;
 
 let dest_handle_Let_def = new_definition
-  `dest_handle_Let x1 =
-   match x1 with
+  `dest_handle_Let x1' =
+   match x1' with
      bvl_Let xs x -> (if can_raise1 xs then NONE else SOME (xs,x))
    | _ -> NONE`;;
 
 let dest_handle_If_def = new_definition
-  `dest_handle_If x1 =
-   match x1 with
+  `dest_handle_If x1'' =
+   match x1'' with
      bvl_If x1 x2 x3 ->
      (if can_raise x1 then NONE else if can_raise x2 then (if can_raise x3
        then NONE else SOME (INL (x1,x2,x3))) else if can_raise x3 then (if

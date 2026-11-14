@@ -529,7 +529,7 @@ let closProps_do_app_err = prove
 
 (* Boolv_11 *)
 let closProps_Boolv_11 = prove
- (`closSem_Boolv b1 = semanticPrimitives_Boolv b2 <=> b1 = b2`,
+ (`closSem_Boolv b1 = closSem_Boolv b2 <=> b1 = b2`,
   CHEAT_TAC);;
 add_simp closProps_Boolv_11;;
 
@@ -1209,14 +1209,14 @@ let vsgc_free_Unit = prove
 add_simp vsgc_free_Unit;;
 
 let vsgc_free_Boolv = prove
- (`vsgc_free (semanticPrimitives_Boolv b)`,
+ (`vsgc_free (closSem_Boolv b)`,
   CHEAT_TAC);;
 add_simp vsgc_free_Boolv;;
 
 (* result is setglobal-closure free *)
 let rsgc_free_def = new_definition
-  `rsgc_free x1 =
-     match x1 with
+  `rsgc_free x1' =
+     match x1' with
        Rval vs -> ALL vsgc_free vs
      | Rerr (Rabort _) -> T
      | Rerr (Rraise v) -> vsgc_free v`;;
@@ -1346,8 +1346,7 @@ let simple_val_rel_alt = prove
          vr x (closSem_Closure x1 x2 x3 x4 x5) ==> closProps_isClos x) /\
       (!y5 y4 y3 y2 y1 x.
          vr x (closSem_Recclosure y1 y2 y3 y4 y5) ==> closProps_isClos x) /\
-      (!b1 b2. vr (semanticPrimitives_Boolv b1) (semanticPrimitives_Boolv
-        b2) <=> (b1 = b2)) /\
+      (!b1 b2. vr (closSem_Boolv b1) (closSem_Boolv b2) <=> (b1 = b2)) /\
       (vr (closSem_Unit) (closSem_Unit) <=> T)`,
   CHEAT_TAC);;
 
@@ -1620,10 +1619,8 @@ let POS_INT_EQ_NUM = prove
 
 let simple_val_rel_Boolv = prove
  (`closProps_simple_val_rel vr ==>
-   (vr (semanticPrimitives_Boolv b) v1 ==> v1 = semanticPrimitives_Boolv b)
-     /\
-   (vr v1 (semanticPrimitives_Boolv b) ==> v1 = semanticPrimitives_Boolv
-     b)`,
+   (vr (closSem_Boolv b) v1 ==> v1 = closSem_Boolv b) /\
+   (vr v1 (closSem_Boolv b) ==> v1 = closSem_Boolv b)`,
   CHEAT_TAC);;
 
 (* HOL4 closPropsScript.sml:2325: ML code, not ported *)

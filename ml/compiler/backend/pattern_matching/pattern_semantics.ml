@@ -143,8 +143,8 @@ let _ = size_thms "position";;
    what the port found for it *)
 let app_pos_def,app_pos_ind = define_wf
   `MEASURE (\(x0,x1,x2). position_size x1)`
-  `app_pos refs x2 v =
-     match (x2,v) with
+  `app_pos refs x2' v =
+     match (x2',v) with
        (EmptyPos,v) -> SOME v
      | (Pos 0 pos,pattern_semantics_RefPtr r) ->
         (match FLOOKUP refs r with NONE -> NONE
@@ -179,7 +179,7 @@ let _ = size_thms "dTree";;
 let dt_eval_def,dt_eval_ind = define_wf
   `MEASURE (\(x0,x1,x2). dTree_size x2)`
   `(dt_eval refs _ (pattern_semantics_Leaf k) = SOME (MatchSuccess k)) /\
-   (dt_eval refs _ ffi_Fail = SOME (MatchFailure)) /\
+   (dt_eval refs _ pattern_semantics_Fail = SOME (MatchFailure)) /\
    (dt_eval refs _ pattern_semantics_TypeFail = NONE) /\
    (dt_eval refs v (pattern_semantics_If guard' dt1 dt2) =
          match dt_eval_guard refs v guard' with NONE -> NONE

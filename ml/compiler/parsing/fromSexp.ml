@@ -199,22 +199,22 @@ let SEXSTR_remove = prove
   (SIMP_TAC[SEXSTR_def; encode_control_remove]));;
 
 let odestSXSTR_def = new_definition
-  `odestSXSTR x1 =
-     match x1 with
+  `odestSXSTR x1' =
+     match x1' with
        SX_STR s -> SOME (implode s)
      | _ -> NONE`;;
 add_simp odestSXSTR_def;;
 
 let odestSXSYM_def = new_definition
-  `odestSXSYM x1 =
-     match x1 with
+  `odestSXSYM x1'' =
+     match x1'' with
        SX_SYM s -> SOME (implode s)
      | _ -> NONE`;;
 add_simp odestSXSYM_def;;
 
 let odestSXNUM_def = new_definition
-  `odestSXNUM x1 =
-     match x1 with
+  `odestSXNUM x1''' =
+     match x1''' with
        SX_NUM n -> SOME n
      | _ -> NONE`;;
 add_simp odestSXNUM_def;;
@@ -523,8 +523,8 @@ let fromSexp_decode_test_def = new_definition
    | _ -> NONE`;;
 
 let decode_prim_type_def = new_definition
-  `decode_prim_type x1 =
-   match x1 with
+  `decode_prim_type x1' =
+   match x1' with
      SX_SYM s ->
      (if s = "BoolT" then SOME ast_BoolT else if s = "IntT" then SOME
        ast_IntT else if s = "CharT" then SOME ast_CharT else if s = "StrT" then
@@ -534,8 +534,8 @@ let decode_prim_type_def = new_definition
    | _ -> NONE`;;
 
 let sexparith_def = new_definition
-  `sexparith x1 =
-   match x1 with
+  `sexparith x1'' =
+   match x1'' with
      SX_SYM s ->
      (if s = "Add" then SOME ast_Add else if s = "Sub" then SOME ast_Sub
        else if s = "Mul" then SOME ast_Mul else if s = "Div" then SOME ast_Div
@@ -547,16 +547,16 @@ let sexparith_def = new_definition
    | _ -> NONE`;;
 
 let sexplog_def = new_definition
-  `sexplog x1 =
-   match x1 with
+  `sexplog x1''' =
+   match x1''' with
      SX_SYM s ->
      (if s = "Andalso" then SOME Andalso else if s = "Orelse" then SOME
        Orelse else NONE)
    | _ -> NONE`;;
 
 let sexpop_def = new_definition
-  `sexpop x1 =
-     match x1 with
+  `sexpop x1'''' =
+     match x1'''' with
        SX_SYM s ->
      if s = "Equality" then SOME ast_Equality else if s = "Opapp" then SOME
        ast_Opapp else if s = "Opassign" then SOME ast_Opassign else if s =
@@ -1238,8 +1238,8 @@ let prim_typesexp_11 = prove
 add_simp prim_typesexp_11;;
 
 let opsexp_def = new_definition
-  `opsexp x1 =
-     match x1 with
+  `opsexp x1' =
+     match x1' with
        ast_Shift ast_W8 Lsl n -> SX_CONS (SX_SYM "Shift8Lsl") (SX_NUM n)
      | ast_Shift ast_W8 Lsr n -> SX_CONS (SX_SYM "Shift8Lsr") (SX_NUM n)
      | ast_Shift ast_W8 Asr n -> SX_CONS (SX_SYM "Shift8Asr") (SX_NUM n)

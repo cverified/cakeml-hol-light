@@ -321,8 +321,8 @@ let t_of_def = new_definition
 add_simp t_of_def;;
 
 let supported_test_def = new_definition
-  `supported_test x1 ty =
-   match x1 with
+  `supported_test x1' ty =
+   match x1' with
      ast_Equal -> T
    | ast_Compare _ -> MEM ty [ast_IntT; ast_CharT; ast_WordT ast_W8;
      ast_Float64T; ast_StrT]
@@ -348,8 +348,8 @@ let supported_arith_def = new_definition
 add_simp supported_arith_def;;
 
 let supported_conversion_def = new_definition
-  `supported_conversion x1 x2 =
-     match (x1,x2) with
+  `supported_conversion x1'' x2' =
+     match (x1'',x2') with
        // Word to Int conversions
      (ast_WordT ast_W8,ast_IntT) -> T
      | (ast_WordT ast_W64,ast_IntT) -> T

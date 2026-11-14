@@ -62,10 +62,10 @@ add_simp inline_exps_GENLIST_Var;;
 
 let incremental_wrapper_example = prove
  (`?cs p1 p2.
-     clos_number_compile_inc LN
+     bvi_inline_compile_inc LN
        [(10,0,bvi_LetCall 0 0 11 []
          (bvi_Op (closLang_BlockOp (closLang_Cons 7)) []))] = (cs,p1) /\
-     clos_number_compile_inc cs
+     bvi_inline_compile_inc cs
        [(12,0,bvi_Call 0 (SOME 10) [] NONE)] = (cs,p2) /\
      p2 = [(12,0,
        bvi_Let [] (bvi_LetCall 0 0 11 [] (bvi_Op (closLang_BlockOp
@@ -99,12 +99,12 @@ let MAP_FST_remove_ticks_prog = prove
 add_simp MAP_FST_remove_ticks_prog;;
 
 let compile_inc_MAP_FST = prove
- (`clos_number_compile_inc cs prog = (cs1,prog1) ==> MAP FST prog1 = MAP FST
+ (`bvi_inline_compile_inc cs prog = (cs1,prog1) ==> MAP FST prog1 = MAP FST
   prog`,
   CHEAT_TAC);;
 
 let compile_inc_ALL_DISTINCT = prove
- (`clos_number_compile_inc cs prog = (cs1,prog1) /\ ALL_DISTINCT (MAP FST prog)
+ (`bvi_inline_compile_inc cs prog = (cs1,prog1) /\ ALL_DISTINCT (MAP FST prog)
   ==>
    ALL_DISTINCT (MAP FST prog1)`,
   CHEAT_TAC);;
@@ -127,7 +127,7 @@ let remove_ticks_prog_code_labels = prove
   CHEAT_TAC);;
 
 let compile_inc_code_labels = prove
- (`clos_number_compile_inc cs prog = (cs1,prog1) ==>
+ (`bvi_inline_compile_inc cs prog = (cs1,prog1) ==>
    UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) prog1)) =
    UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND)
      (SND (inline_all cs prog))))`,

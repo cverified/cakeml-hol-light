@@ -192,7 +192,7 @@ let to_word_def = new_definition
 let to_word_thm = prove
  (`to_word asm_conf c p =
    let (c,p,names) = to_word_0 asm_conf c p in
-   let (col,p) = clos_mti_compile (backend_config_word_to_word_conf c)
+   let (col,p) = backend_compile (backend_config_word_to_word_conf c)
      asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
@@ -423,12 +423,12 @@ let from_word_0_to_livesets_0 = prove
   CHEAT_TAC);;
 
 let compile_oracle = prove
- (`from_livesets asm_conf (to_livesets asm_conf c p) = clos_mti_compile
+ (`from_livesets asm_conf (to_livesets asm_conf c p) = backend_compile
   asm_conf c p`,
   CHEAT_TAC);;
 
 let compile_oracle_word_0 = prove
- (`clos_mti_compile asm_conf c p =
+ (`backend_compile asm_conf c p =
    let (c,p,names) = to_word_0 asm_conf c p in
    from_word_0 asm_conf c names p`,
   CHEAT_TAC);;

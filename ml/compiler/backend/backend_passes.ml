@@ -211,8 +211,8 @@ let to_bvi_thm = prove
 let to_data_all_def = new_definition
   `to_data_all (c:backend_config) p =
      let (ps,c,p,names) = to_bvi_all c p in
-     let p = MAP (\(a,n,e). (a,n,FST (bvi_to_data_compile n (COUNT_LIST n) T
-       [] [e]))) p in
+     let p = MAP (\(a,n,e). (a,n,FST (backend_compile n (COUNT_LIST n) T []
+       [e]))) p in
      let ps = APPEND ps [((implode "after bvi_to_data"),backend_passes_Data
        p names)] in
      let p = MAP (\(a,n,e). (a,n,FST (data_live_compile e LN))) p in
@@ -502,7 +502,7 @@ let to_data_all_from_data_all_correctness = prove
   CHEAT_TAC);;
 
 let compile_eq_to_target_all = prove
- (`clos_mti_compile asm_conf c p = SND (to_target_all asm_conf c p)`,
+ (`backend_compile asm_conf c p = SND (to_target_all asm_conf c p)`,
   CHEAT_TAC);;
 
 let number_of_passes = prove
@@ -531,11 +531,11 @@ let compile_tap_def = new_definition
      if tap_config_explore_flag (backend_config_tap_conf c) then
        let (ps,out) = to_target_all asm_conf c p in
          (out,ITLIST (pp_with_title any_prog_pp) ps misc_Nil)
-     else (clos_mti_compile asm_conf c p,misc_Nil)`;;
+     else (backend_compile asm_conf c p,misc_Nil)`;;
 
 (* compile_alt *)
 let backend_passes_compile_alt = prove
- (`clos_mti_compile asm_conf c p = FST (compile_tap asm_conf c p)`,
+ (`backend_compile asm_conf c p = FST (compile_tap asm_conf c p)`,
   CHEAT_TAC);;
 
 (* and the interface *)

@@ -1639,26 +1639,26 @@ let word_exp_insert = prove
 
 let word_cmp_Less_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (asm_word_cmp asm_Less (word_cmp_res i i') ((n2w 1):'a word)
-             <=> i < i')`,
+           (wordSem_word_cmp asm_Less (word_cmp_res i i') ((n2w 1):'a
+             word) <=> i < i')`,
   CHEAT_TAC);;
 
 let word_cmp_NotLess_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (asm_word_cmp asm_NotLess ((n2w 1):'a word) (word_cmp_res i i')
-             <=> (i <= i'))`,
+           (wordSem_word_cmp asm_NotLess ((n2w 1):'a word) (word_cmp_res i
+             i') <=> (i <= i'))`,
   CHEAT_TAC);;
 
 let word_cmp_not_NotLess_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (~(asm_word_cmp asm_NotLess ((n2w 1):'a word) (word_cmp_res i
-             i')) <=> (i' < i))`,
+           (~(wordSem_word_cmp asm_NotLess ((n2w 1):'a word) (word_cmp_res
+             i i')) <=> (i' < i))`,
   CHEAT_TAC);;
 
 let not_word_cmp_Less_word_cmp_res = prove
  (`!i i'. good_dimindex (:'a) ==>
-           (~(asm_word_cmp asm_Less (word_cmp_res i i') ((n2w 1):'a word))
-             <=> (i' <= i))`,
+           (~(wordSem_word_cmp asm_Less (word_cmp_res i i') ((n2w 1):'a
+             word)) <=> (i' <= i))`,
   CHEAT_TAC);;
 
 let IMP_spt_eq = prove

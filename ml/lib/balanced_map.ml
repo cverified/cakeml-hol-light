@@ -84,8 +84,8 @@ let balanceL_def = new_definition
        Bin (1 + ls + rs) k x (Bin ls lk lx ll lr) (Bin rs k' v' l' r')`;;
 
 let balanceR_def = new_definition
-  `balanceR k x x3 x4 =
-     match (x3,x4) with
+  `balanceR k x x3' x4' =
+     match (x3',x4') with
        (Tip,Tip) ->
      Bin 1 k x Tip Tip
      | (Tip,Bin s' k' v' Tip Tip) ->
@@ -158,8 +158,8 @@ let deleteFindMax_def,deleteFindMax_ind = define_wf
    what the port found for it *)
 let deleteFindMin_def,deleteFindMin_ind = define_wf
   `MEASURE (\x0. balanced_map_size1 (\x. 0) (\x. 0) x0)`
-  `deleteFindMin x1 =
-     match x1 with
+  `deleteFindMin x1' =
+     match x1' with
        Bin s k x Tip r -> ((k,x),r)
      | Bin s k x l r ->
      let (km,l') = deleteFindMin l in

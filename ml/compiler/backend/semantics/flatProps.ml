@@ -28,8 +28,7 @@ let _ = cake_theory "flatProps"
 let _ = do_list hide_constant ["C"];;
 
 let ctor_same_type_OPTREL = prove
- (`!c1 c2. semanticPrimitives_ctor_same_type c1 c2 <=> OPTREL (inv_image (=)
-  SND) c1 c2`,
+ (`!c1 c2. flatSem_ctor_same_type c1 c2 <=> OPTREL (inv_image (=) SND) c1 c2`,
   CHEAT_TAC);;
 
 let pats_bindings_FLAT_MAP = prove
@@ -196,8 +195,8 @@ let flatProps_build_rec_env_help_lem = prove
 (* build_rec_env_merge *)
 let flatProps_build_rec_env_merge = prove
  (`!funs funs' env env'.
-    semanticPrimitives_build_rec_env funs env env' = APPEND (MAP
-      (\(fn,n,e). (fn,flatSem_Recclosure env funs fn)) funs) env'`,
+    flatSem_build_rec_env funs env env' = APPEND (MAP (\(fn,n,e).
+      (fn,flatSem_Recclosure env funs fn)) funs) env'`,
   CHEAT_TAC);;
 
 (* evaluate_length *)
@@ -556,7 +555,7 @@ let flatProps_initial_state_clock = prove
   CHEAT_TAC);;
 
 let build_rec_env_eq_MAP = prove
- (`semanticPrimitives_build_rec_env funs cl_env env = APPEND (MAP (\(f,x,e).
+ (`flatSem_build_rec_env funs cl_env env = APPEND (MAP (\(f,x,e).
   (f,flatSem_Recclosure cl_env funs f)) funs) env`,
   CHEAT_TAC);;
 

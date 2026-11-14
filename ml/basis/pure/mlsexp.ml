@@ -273,8 +273,8 @@ let mlsexp_get_size_def,mlsexp_get_size_ind = define_shaped_rec
 
 let get_next_size_def,get_next_size_ind = define_shaped_rec
   "match"
-  `get_next_size x1 =
-   match x1 with
+  `get_next_size x1' =
+   match x1' with
      mlsexp_Size n x -> n
    | mlsexp_Append x _ y -> get_next_size x
    | mlsexp_Parenthesis x -> get_next_size x + 2

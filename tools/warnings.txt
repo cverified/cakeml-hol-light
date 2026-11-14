@@ -455,7 +455,7 @@ gen_gc_partial	ML code skipped: val heap_lookup_heap_expand = isSomeDataElement_
 wordSem	ML code skipped: val state_component_equality = theorem"state_component_equal
 wordSem	ML code skipped: val s = ``(s:('a,'c,'ffi) wordSem$state)``
 wordSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-wordSem	line 1231 is 86 characters
+wordSem	line 1232 is 86 characters
 targetSem	line 62 is 86 characters
 targetSem	line 556 is 83 characters
 labSem	Overload read_reg
@@ -805,7 +805,7 @@ clos_knownProof	ML code skipped: val fvs_inc = ``clos_fvs$compile_inc : clos_pro
 clos_knownProof	ML code skipped: fun trivial x = x               |> concl               |> st
 clos_knownProof	line 38 is 80 characters
 clos_knownProof	line 147 is 82 characters
-clos_knownProof	line 1334 is 83 characters
+clos_knownProof	line 1332 is 83 characters
 clos_mtiProof	ML code skipped: val _ = bring_fwd_ctors "closLang" ``:closLang$exp``
 clos_mtiProof	ML code skipped: val do_app_inst =   simple_val_rel_do_app_rev   |> Q.INST [`
 clos_mtiProof	ML code skipped: val do_install_inst =   simple_val_rel_do_install   |> Q.INS
@@ -1738,9 +1738,9 @@ lab_to_targetProof	ML code skipped: Finalise IMP_state_rel_make_init;
 lab_to_targetProof	Theorem make_init_filter_skip: HOL Light does not read the statement
 lab_to_targetProof	Theorem semantics_compile_lemma': HOL Light does not read the statement
 lab_to_targetProof	Theorem semantics_compile: HOL Light does not read the statement
-lab_to_targetProof	line 3208 is 92 characters
-lab_to_targetProof	line 3249 is 84 characters
-lab_to_targetProof	line 4448 is 93 characters
+lab_to_targetProof	line 3209 is 92 characters
+lab_to_targetProof	line 3250 is 84 characters
+lab_to_targetProof	line 4449 is 93 characters
 flat_elimProof	ML code skipped: val find_v_globals_ind = theorem "find_v_globals_ind";
 flat_elimProof	ML code skipped: val find_refs_globals_ind = theorem "find_refs_globals_ind";
 flat_elimProof	ML code skipped: val find_result_globals_ind = theorem "find_result_globals_i

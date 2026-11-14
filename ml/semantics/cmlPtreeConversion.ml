@@ -126,8 +126,8 @@ let ptree_UQTyop_def = define_cases
       if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nUQTyOp) then NONE
       else match args with
             [pt] ->
-            OPTION_BIND (destLf pt) (\lf. OPTION_BIND (grammar_destTOK lf)
-                (\tk. OPTION_CHOICE (destSymbolT tk) (destAlphaT tk)))
+            OPTION_BIND (destLf pt) (\lf. OPTION_BIND (tokenUtils_destTOK
+                lf) (\tk. OPTION_CHOICE (destSymbolT tk) (destAlphaT tk)))
           | _ -> NONE)`;;
 
 let ptree_TyvarN_def = define_cases
@@ -580,8 +580,8 @@ let ptree_Pattern_def,ptree_Pattern_ind = define_wf
               (OPTION_BIND (ptree_ConstructorName vic) (\cname.
                  SOME (ast_Pcon (SOME cname) []))))
               (OPTION_BIND (ptree_V vic) (\vname. SOME (ast_Pvar vname))))
-              (OPTION_BIND (destLf vic) (\lf. OPTION_BIND (grammar_destTOK
-                  lf) (\t.
+              (OPTION_BIND (destLf vic) (\lf. OPTION_BIND
+                  (tokenUtils_destTOK lf) (\t.
                 (OPTION_CHOICE (OPTION_CHOICE (OPTION_BIND (destIntT t)
                     (\i. SOME (ast_Plit (ast_IntLit i))))
                  (OPTION_BIND (destStringT t) (\s. SOME (ast_Plit
@@ -717,14 +717,14 @@ let eseq_encode_def,eseq_encode_ind = define_wf
         SOME (ast_Let NONE e body))`;;
 
 let dest_Conk_def = new_definition
-  `dest_Conk x1 k v =
-     match x1 with
+  `dest_Conk x1' k v =
+     match x1' with
        ast_Con x y -> k x y
      | _ -> v`;;
 
 let destFFIop_def = new_definition
-  `destFFIop x1 =
-     match x1 with
+  `destFFIop x1'' =
+     match x1'' with
        ast_FFI s -> SOME s
      | _ -> NONE`;;
 add_simp destFFIop_def;;
@@ -739,8 +739,8 @@ let strip_loc_expr_def,strip_loc_expr_ind = define_shaped_rec
      | e -> (e,NONE)`;;
 
 let merge_locsopt_def = new_definition
-  `merge_locsopt x1 x2 =
-   match (x1,x2) with
+  `merge_locsopt x1''' x2 =
+   match (x1''',x2) with
      (SOME l1,SOME l2) -> SOME (merge_locs l1 l2)
    | (_,_) -> NONE`;;
 
@@ -779,7 +779,7 @@ let ptree_Eliteral_def = define_cases
    (ptree_Eliteral (Nd nt' subs) =
         OPTION_IGNORE_BIND (OPTION_GUARD (LENGTH subs = 1 /\ FST nt' =
             (INL:MMLnonT->MMLnonT+num) nEliteral)) (OPTION_BIND (destLf (HD
-            subs)) (\lf. OPTION_BIND (grammar_destTOK lf) (\t.
+            subs)) (\lf. OPTION_BIND (tokenUtils_destTOK lf) (\t.
         (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE (OPTION_CHOICE
             (OPTION_BIND (destIntT t) (\i. SOME (ast_Lit (ast_IntLit i))))
          (OPTION_BIND (destCharT t) (\c. SOME (ast_Lit (ast_Char c)))))

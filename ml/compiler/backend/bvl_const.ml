@@ -228,8 +228,8 @@ let SmartOp2_def = new_definition
 
 
 let dest_EqualInt_def = new_definition
-  `dest_EqualInt x1 =
-   match x1 with
+  `dest_EqualInt x1' =
+   match x1' with
      closLang_BlockOp (closLang_EqualConst (closLang_Int i)) -> SOME i
    | _ -> NONE`;;
 
@@ -260,8 +260,8 @@ let SmartOp_pmatch = prove
   (REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp_def]));;
 
 let bvl_const_extract_def = new_definition
-  `bvl_const_extract x1 ys =
-     match x1 with
+  `bvl_const_extract x1'' ys =
+     match x1'' with
        ((bvl_Var n):bvl_exp) -> SOME ((bvl_Var (n + LENGTH ys + 1)):bvl_exp)
      | bvl_Op (closLang_IntOp (closLang_Const i)) xs -> SOME (bvl_Op
        (closLang_IntOp (closLang_Const i)) [])

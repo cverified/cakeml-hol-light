@@ -36,8 +36,8 @@ let dest_Const_pmatch = prove
   CHEAT_TAC);;
 
 let dest_Constant_def = new_definition
-  `clos_op_dest_Constant x1 =
-   match x1 with
+  `clos_op_dest_Constant x1' =
+   match x1' with
      closLang_BlockOp (closLang_Constant (ConstStr c)) -> SOME (closLang_Str
        c)
    | closLang_BlockOp (closLang_Constant (ConstInt c)) -> SOME (closLang_Int
@@ -57,8 +57,8 @@ let dest_Constant_pmatch = prove
   CHEAT_TAC);;
 
 let clos_op_dest_Cons_def = new_definition
-  `clos_op_dest_Cons x1 =
-   match x1 with
+  `clos_op_dest_Cons x1'' =
+   match x1'' with
      closLang_BlockOp (closLang_Cons i) -> SOME i
    | _ -> NONE`;;
 
@@ -68,8 +68,8 @@ let dest_Cons_pmatch = prove
   CHEAT_TAC);;
 
 let dest_ElemAt_def = new_definition
-  `dest_ElemAt x1 =
-   match x1 with
+  `dest_ElemAt x1''' =
+   match x1''' with
      closLang_BlockOp (closLang_ElemAt i) -> SOME i
    | _ -> NONE`;;
 
@@ -79,8 +79,8 @@ let dest_ElemAt_pmatch = prove
   CHEAT_TAC);;
 
 let dest_TagEq_def = new_definition
-  `dest_TagEq x1 =
-   match x1 with
+  `dest_TagEq x1'''' =
+   match x1'''' with
      closLang_BlockOp (closLang_TagEq i) -> SOME i
    | _ -> NONE`;;
 
@@ -90,8 +90,8 @@ let dest_TagEq_pmatch = prove
   CHEAT_TAC);;
 
 let dest_LenEq_def = new_definition
-  `dest_LenEq x1 =
-   match x1 with
+  `dest_LenEq x1''''' =
+   match x1''''' with
      closLang_BlockOp (closLang_LenEq i) -> SOME i
    | _ -> NONE`;;
 
@@ -101,8 +101,8 @@ let dest_LenEq_pmatch = prove
   CHEAT_TAC);;
 
 let dest_TagLenEq_def = new_definition
-  `dest_TagLenEq x1 =
-   match x1 with
+  `dest_TagLenEq x1'''''' =
+   match x1'''''' with
      closLang_BlockOp (closLang_TagLenEq i j) -> SOME (i,j)
    | _ -> NONE`;;
 
@@ -189,8 +189,8 @@ let cons_op_def = new_definition
      | NONE -> NONE)))`;;
 
 let is_Var_def = new_definition
-  `is_Var x1 =
-   match x1 with
+  `is_Var x1''''''' =
+   match x1''''''' with
      closLang_Var _ _ -> T
    | _ -> F`;;
 
@@ -270,8 +270,8 @@ let cons_measure_lemma = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let eq_pure_list_def,eq_pure_list_ind = define_guess_cheat
-  `eq_pure_list x1 =
-   match x1 with
+  `eq_pure_list x1'''''''' =
+   match x1'''''''' with
      [] -> misc_Nil
    | [x,y] ->
     (match eq_direct x y with SOME z -> misc_List [z]
@@ -296,8 +296,8 @@ let eq_pure_list_def,eq_pure_list_ind = define_guess_cheat
    what the port found for it *)
 let ConjList_def,ConjList_ind = define_wf
   `MEASURE (\x0. closLang_exp_size1 x0)`
-  `ConjList x1 =
-   match x1 with
+  `ConjList x1''''''''' =
+   match x1''''''''' with
      [] -> MakeBool T
    | [x] -> x
    | CONS x xs -> closLang_If backend_common_None x (ConjList xs)

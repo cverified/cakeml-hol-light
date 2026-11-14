@@ -840,8 +840,8 @@ let inst_name_def = new_definition
    what the port found for it *)
 let stack_asm_name_def,stack_asm_name_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  `stack_asm_name c x2 =
-     match x2 with
+  `stack_asm_name c x2' =
+     match x2' with
        ((stackLang_Inst i):'a stackLang_prog) -> inst_name c i
      | stackLang_OpCurrHeap b r1 r2 ->
        (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\ reg_name
@@ -876,8 +876,8 @@ let fixed_names_def = new_definition
    what the port found for it *)
 let stack_asm_remove_def,stack_asm_remove_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  `stack_asm_remove c x2 =
-     match x2 with
+  `stack_asm_remove c x2'' =
+     match x2'' with
        ((stackLang_Get n s):'a stackLang_prog) -> reg_name n c
      | stackLang_OpCurrHeap binop v src -> reg_name v c /\ reg_name src c
      | stackLang_Set s n -> reg_name n c
@@ -938,8 +938,8 @@ let alloc_arg_def,alloc_arg_ind = define_wf
    termination *)
 let reg_bound_exp_def,reg_bound_exp_ind = define_wf
   `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x0)`
-  `reg_bound_exp x1 k =
-     match x1 with
+  `reg_bound_exp x1' k =
+     match x1' with
        wordLang_Var n -> n < k
      | wordLang_Load e -> reg_bound_exp e k
      | wordLang_Shift _ e1 e2 -> reg_bound_exp e1 k /\ reg_bound_exp e2 k
@@ -949,8 +949,8 @@ let reg_bound_exp_def,reg_bound_exp_ind = define_wf
 add_simp reg_bound_exp_def;;
 
 let reg_bound_inst_def = new_definition
-  `reg_bound_inst x1 k =
-     match x1 with
+  `reg_bound_inst x1'' k =
+     match x1'' with
        asm_Mem _ n (Addr a _) -> n < k /\ a < k
      | asm_Const n _ -> n < k
      | asm_Arith (asm_Shift _ n r2 ri) -> r2 < k /\ n < k /\ (match ri with
@@ -980,8 +980,8 @@ add_simp reg_bound_inst_def;;
    what the port found for it *)
 let reg_bound_def,reg_bound_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x0)`
-  `reg_bound x1 k =
-     match x1 with
+  `reg_bound x1''' k =
+     match x1''' with
        stackLang_Halt v1 ->
         v1 < k
      | stackLang_Raise v1 ->
@@ -1037,8 +1037,8 @@ let reg_bound_def,reg_bound_ind = define_wf
 (* Finally, stack_to_lab requires correct arguments for Call/FFI/Install calls *)
 let call_args_def,call_args_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  `call_args x1 ptr len ptr2 len2 ret =
-     match x1 with
+  `call_args x1'''' ptr len ptr2 len2 ret =
+     match x1'''' with
        ((stackLang_Seq p1 p2):'a stackLang_prog) ->
         call_args p1 ptr len ptr2 len2 ret /\
         call_args p2 ptr len ptr2 len2 ret
@@ -1067,8 +1067,8 @@ let call_args_def,call_args_ind = assume_definition_rec
    what the port found for it *)
 let stack_get_handler_labels_def,stack_get_handler_labels_ind = define_wf
   `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  `stack_get_handler_labels n x2 =
-     match x2 with
+  `stack_get_handler_labels n x2''' =
+     match x2''' with
        stackLang_Call r d h ->
        (match r with SOME (x,_,_) -> stack_get_handler_labels n x UNION
          (match h with SOME (x,l1,l2) -> (if l1 = n then {(l1,l2)} else {})
@@ -1086,8 +1086,8 @@ add_simp stack_get_handler_labels_def;;
    what the port found for it *)
 let stackProps_get_code_labels_def,stackProps_get_code_labels_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  `stackProps_get_code_labels x1 =
-     match x1 with
+  `stackProps_get_code_labels x1''''' =
+     match x1''''' with
        stackLang_Call r d h ->
        (match d with INL x -> {(x,0)} | _ -> {}) UNION
        (match r with SOME (x,_,_) -> stackProps_get_code_labels x | _ -> {})
@@ -1128,8 +1128,8 @@ let stack_good_handler_labels_def = new_definition
    what the port found for it *)
 let stackProps_no_install_def,stackProps_no_install_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  `stackProps_no_install x1 =
-     match x1 with
+  `stackProps_no_install x1'''''' =
+     match x1'''''' with
        stackLang_Call r d h ->
        ((match r with SOME (x,_,_) -> stackProps_no_install x | _ -> T) /\
         (match h with SOME (x,_,_) -> stackProps_no_install x | _ -> T))
@@ -1145,8 +1145,8 @@ let stackProps_no_install_def,stackProps_no_install_ind = define_wf
    what the port found for it *)
 let no_shmemop_def,no_shmemop_ind = define_wf
   `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
-  `no_shmemop x1 =
-     match x1 with
+  `no_shmemop x1''''''' =
+     match x1''''''' with
        stackLang_Call r d h ->
        ((match r with SOME (x,_,_) -> no_shmemop x | _ -> T) /\
         (match h with SOME (x,_,_) -> no_shmemop x | _ -> T))

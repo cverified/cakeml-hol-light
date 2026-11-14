@@ -430,6 +430,9 @@ CON_BODY = {
   # word_cseInst matches on an instruction of asm and builds a
   # program of wordLang, and both have Inst
   ('word_cse', 'word_cseInst_def'): {'Inst': 'wordLang'},
+  # lab_inst reads a labLang instruction and gives an asm one,
+  # and both have Jump
+  ('lab_to_target', 'lab_inst_def'): {'*': 'asm'},
   # bvl_to_bvi reads bvl and builds bvi, and the two share Call,
   # Var, Op, Let, If, Raise, Tick and Handle: the bodies are bvi
   ('bvl_to_bvi', 'compile_exps_def'): {'*': 'bvi'},
@@ -1390,6 +1393,11 @@ CLAUSE_FORM = set([
   ('clos_letop', 'let_op_sing_def'),
   ('clos_ticks', 'remove_ticks_def'),
   ('clos_ticks', 'remove_ticks_sing_def'),
+  # and the es and the funs of these are a list of expressions in
+  # one clause and a list of pairs in another, which the MAP of a
+  # body says and the clauses do not
+  ('presLang', 'exp_to_display_def'),
+  ('source_to_flat', 'compile_exp_def'),
 ])
 
 # definitions whose clauses overlap, so that they depend on HOL4's
@@ -1687,9 +1695,6 @@ ONE_QUOTATION = set([
   # the Writes clause gives an integer, which is what says that
   # the + of the Branch clause is the one of the integers
   ('linear_scan', 'size_of_live_tree_def'),
-  # the Jump of the right hand side is the one of asm, which
-  # only the LocValue clause says (it annotates the word)
-  ('lab_to_target', 'lab_inst_def'),
   # the Seq of the last clause is wordLang's, which only the
   # clause of the empty list says (it gives wordLang's Skip)
   ('data_to_word', 'list_Seq_def'),
@@ -1977,6 +1982,9 @@ CON_OF = {
   ('word_cse', 'seqs_def'): {'*': 'wordLang'},
   # the Shift and the Div that this canonicalises are asm's
   ('word_cse', 'canonicalArith_def'): {'*': 'asm'},
+  # the Fail that a decision tree matches on is its own, where
+  # ffi has a Fail too
+  ('pattern_semantics', 'dt_eval_def'): {'Fail': 'pattern_semantics'},
   # the garbage collector that this picks is stackLang code, and
   # nothing else in the definition says so
   ('stack_alloc', 'word_gc_partial_or_full_def'):
@@ -2212,7 +2220,7 @@ let stubs_fst_def = new_definition
 let AnyArith_call_tree_def = new_definition
   `AnyArith_call_tree =
      full_call_graph AnyArith_location
-       (fromAList (stubs (:1)
+       (fromAList (data_to_word_stubs (:1)
           (data_to_word_config_has_longdiv_fupd (K F)
              (data_to_word_config_call_empty_ffi_fupd (K F) ARB))))`;;
 ''',
@@ -12235,15 +12243,6 @@ DEF_PATCH = {
   ('export', 'escape_sym_char_def'): [
     ('mlint_toString\n          ch', 'chr_to_str\n          ch'),
     ('mlint_toString\n          (code)', 'num_to_str (code)'),
-  ],
-  # lab_inst reads a lab assembly instruction and gives the asm
-  # instruction that it is, and the two share Jump, JumpCmp and
-  # Call; the definition is one quotation, where a rule for the
-  # bodies does not reach it
-  ('lab_to_target', 'lab_inst_def'): [
-    ('= labLang_Jump w', '= asm_Jump w'),
-    ('= labLang_JumpCmp c r ri\n     w', '= asm_JumpCmp c r ri\n     w'),
-    ('= labLang_Call w', '= asm_Call w'),
   ],
   # flatten gives a lab program, and the Inst that the arm for a
   # Tick puts in its Asm is the asm instruction Inst Skip, where

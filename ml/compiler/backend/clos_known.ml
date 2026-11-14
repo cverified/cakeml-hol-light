@@ -405,8 +405,8 @@ let isGlobal_pmatch = prove
   CHEAT_TAC);;
 
 let gO_destApx_def = new_definition
-  `gO_destApx x1 =
-     match x1 with
+  `gO_destApx x1' =
+     match x1' with
        clos_known_Int i -> gO_Int i
      | clos_known_Tuple tag args -> if NULL args then gO_NullTuple tag
                               else gO_None

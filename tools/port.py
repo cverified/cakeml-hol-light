@@ -2721,7 +2721,12 @@ class Porter:
         if nm2 is None and x == self.thy:
           nm2 = self.ctx.names.get(n)
         return hterm.const_arity(nm2 or n)
-      ts = [x for x in ts if ar_of(x) == arity] or ts
+      ars = [ar_of(x) for x in ts]
+      # and only where the arity of every candidate is known: a
+      # table that has one of them and not the other would let the
+      # one it has win on nothing
+      if all(a is not None for a in ars):
+        ts = [x for x, a in zip(ts, ars) if a == arity] or ts
     # the patterns of the match that is being printed say the
     # theory more precisely than the block does, so they come
     # first; the block narrows what is left where it can
@@ -3553,6 +3558,7 @@ class Porter:
        _clauses.  The clauses of a constant of `matchcons' are one
        quotation with a match in it, where they overlap and HOL4
        takes the first that matches (overrides.MATCH_CLAUSES)"""
+    self.match_names = set()
     self.clause_list = self.clause_clash(body) or split
     # a clause of its own for each, where the override says to
     # split: what clashes there does not show in the clauses, so
@@ -4033,6 +4039,7 @@ class Porter:
     return False
 
   def match_form(self, body, only=None):
+    if not hasattr(self, 'match_names'): self.match_names = set()
     """the clauses of a definition as one clause with a match, which
        is what HOL4's first match semantics means; with `only' the
        clauses of that constant alone, for a definition of a family
@@ -4066,12 +4073,19 @@ class Porter:
            and args[i].name != '_' and args[i].name not in names:
           nm = args[i].name; break
       if nm is None:
+        # a name the port invents for an argument that every
+        # clause patterns on.  It has to differ from the ones it
+        # invented for another member of the same family: the two
+        # stand in one quotation and a name there is one type
+        # (bvlSem's do_eq takes a value where its do_eq_list takes
+        # a list of them)
         nm = 'x' + str(i + 1)
-        while nm in names: nm += "'"
+        while nm in names or nm in self.match_names: nm += "'"
       # a variable whose name is a constant is renamed, and the
       # head of the definition has to use the new name as well
       # (lab_to_target's get_shmem_info takes an ffi_names)
       names.append(self.ctx.vars.get(nm, nm))
+      self.match_names.add(names[-1])
     pats = [i for i in range(n)
             if any(args[i].kind != 'id' or iscon(args[i].name)
                    for _, args, _ in cls)

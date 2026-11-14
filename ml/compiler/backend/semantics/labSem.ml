@@ -539,7 +539,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
        | _ -> (targetSem_Error,s))
      | SOME (labLang_Asm (ShareMem m r ad) _ _) ->
         (match share_mem_op m r ad s with SOME (FFI_final outcome,s') ->
-          (targetSem_Halt (ffi_FFI_outcome outcome),s')
+          (labLang_Halt (ffi_FFI_outcome outcome),s')
          | SOME (FFI_return _ _,s') ->
              labSem_evaluate (labSem_state_io_fp_regs_fupd (K
                (misc_shift_seq 1 (labSem_state_io_fp_regs s')))
@@ -548,8 +548,8 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
          | NONE -> (targetSem_Error,s))
      | SOME (labLang_LabAsm labLang_Halt _ _ _) ->
         (match labSem_state_regs s (labSem_state_ptr_reg s) with
-          wordLang_Word (n2w 0) -> (targetSem_Halt ffi_Success,s)
-         | wordLang_Word _ -> (targetSem_Halt ffi_Resource_limit_hit,s)
+          wordLang_Word (n2w 0) -> (labLang_Halt ffi_Success,s)
+         | wordLang_Word _ -> (labLang_Halt ffi_Resource_limit_hit,s)
          | _ -> (targetSem_Error,s))
      | SOME (labLang_LabAsm (labLang_LocValue r lab) _ _ _) ->
         (if get_pc_value lab s = NONE then (targetSem_Error,s) else let s1 =
@@ -559,7 +559,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
         (match get_pc_value l s with NONE -> (targetSem_Error,s)
          | SOME p -> labSem_evaluate (labSem_upd_pc p (labSem_dec_clock s)))
      | SOME (labLang_LabAsm (labLang_JumpCmp c r ri l) _ _ _) ->
-        (match asm_word_cmp c ((\r s. labSem_state_regs s r) r s)
+        (match wordSem_word_cmp c ((\r s. labSem_state_regs s r) r s)
           (labSem_reg_imm ri s) with NONE -> (targetSem_Error,s)
          | SOME F -> labSem_evaluate (inc_pc (labSem_dec_clock s))
          | SOME T ->
@@ -627,7 +627,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                  loc_to_pc n1 n2 (labSem_state_code s)) with (SOME
                    bytes,SOME bytes2,SOME new_pc) ->
               (match call_FFI (labSem_state_ffi s) (ffi_ExtCall ffi_index)
-                bytes bytes2 with FFI_final outcome -> (targetSem_Halt
+                bytes bytes2 with FFI_final outcome -> (labLang_Halt
                 (ffi_FFI_outcome outcome),s)
                | FFI_return new_ffi new_bytes ->
                    let new_io_regs = misc_shift_seq 1 (labSem_state_io_regs
@@ -658,7 +658,7 @@ let labSem_semantics_def = new_definition
      targetSem_Error then ffi_Fail
    else match some (\res.
        ?k t outcome.
-         labSem_evaluate (labSem_state_clock_fupd (K k) s) = (targetSem_Halt
+         labSem_evaluate (labSem_state_clock_fupd (K k) s) = (labLang_Halt
            outcome,t) /\
          res = ffi_Terminate outcome (ffi_state_io_events (labSem_state_ffi
            t))) with SOME res -> res

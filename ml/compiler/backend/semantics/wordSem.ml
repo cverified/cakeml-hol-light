@@ -68,8 +68,8 @@ let theWord_def = define_general
   `theWord (wordLang_Word w) = w`;;
 
 let isWord_def = new_definition
-  `isWord x1 =
-     match x1 with
+  `isWord x1' =
+     match x1' with
        wordLang_Word w -> T
      | _ -> F`;;
 
@@ -81,8 +81,8 @@ let isWord_exists = prove
    MESON_TAC[]));;
 
 let wordSem_word_cmp_def = new_definition
-  `wordSem_word_cmp x1 x2 x3 =
-     match (x1,x2,x3) with
+  `wordSem_word_cmp x1'' x2 x3 =
+     match (x1'',x2,x3) with
        (asm_Equal,wordLang_Word w1,wordLang_Word w2) -> SOME (w1 = w2)
      | (asm_Less,wordLang_Word w1,wordLang_Word w2) -> SOME (w1 < w2)
      | (asm_Lower,wordLang_Word w1,wordLang_Word w2) -> SOME (w1 <+ w2)
@@ -277,14 +277,14 @@ let wordSem_result_INDUCT,wordSem_result_RECURSION = define_datatype
    | wordSem_Error";;
 
 let isResult_def = new_definition
-  `wordSem_isResult x1 =
-     match x1 with
+  `wordSem_isResult x1' =
+     match x1' with
        wordSem_Result a b -> T
      | _ -> F`;;
 
 let isException_def = new_definition
-  `wordSem_isException x1 =
-     match x1 with
+  `wordSem_isException x1'' =
+     match x1'' with
        wordSem_Exception a b -> T
      | _ -> F`;;
 
@@ -303,8 +303,8 @@ let wordSem_fix_clock_def = new_definition
        wordSem_state_clock new_s)) new_s))`;;
 
 let is_word_def = new_definition
-  `is_word x1 =
-     match x1 with
+  `is_word x1''' =
+     match x1''' with
        wordLang_Word w -> T
      | _ -> F`;;
 add_simp is_word_def;;
@@ -1069,8 +1069,8 @@ let bad_fun_return_def = new_definition
 add_simp bad_fun_return_def;;
 
 let cont_loop_def = new_definition
-  `wordSem_cont_loop x1 =
-   match x1 with
+  `wordSem_cont_loop x1' =
+   match x1' with
      NONE -> T
    | SOME (wordSem_Continue n) -> (n = 0)
    | _ -> F`;;
@@ -1184,7 +1184,8 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
     (wordSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
         (match (wordSem_get_var r1 s,wordSem_get_var_imm ri s) with SOME
             x,SOME y ->
-         (match asm_word_cmp cmp x y with SOME T -> wordSem_evaluate (c1,s)
+         (match wordSem_word_cmp cmp x y with SOME T -> wordSem_evaluate
+             (c1,s)
           | SOME F -> wordSem_evaluate (c2,s)
           | NONE -> (SOME wordSem_Error,s))
         | _ -> (SOME wordSem_Error,s))) /\

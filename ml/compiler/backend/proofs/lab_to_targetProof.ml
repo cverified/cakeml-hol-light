@@ -272,8 +272,8 @@ let _ = size_thms "sec";;
 let code_similar_def,code_similar_ind = define_wf
   `MEASURE (\(x0,x1). list_size (sec_size (\x. 0)) x0 + list_size (sec_size
   (\x. 0)) x1)`
-  `code_similar x1 x2 =
-     match (x1,x2) with
+  `code_similar x1' x2' =
+     match (x1',x2') with
        ([],[]) -> T
      | (CONS (Section s1 lines1) rest1,CONS (Section s2 lines2) rest2) ->
         code_similar rest1 rest2 /\
@@ -1726,9 +1726,10 @@ let EVEN_add_AND = prove
 (* [local] *)
 let word_cmp_lemma = prove
  (`lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
-     (asm_word_cmp cmp (labSem_state_regs s1 rr) (labSem_reg_imm ri s1) =
-       SOME x) ==>
-     (x = asm_word_cmp cmp (asm_state_regs t1 rr) (labSem_reg_imm ri t1))`,
+     (wordSem_word_cmp cmp (labSem_state_regs s1 rr) (labSem_reg_imm ri s1)
+       = SOME x) ==>
+     (x = wordSem_word_cmp cmp (asm_state_regs t1 rr) (labSem_reg_imm ri
+       t1))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2143,8 +2144,8 @@ add_simp sec_length_leq_def;;
 (* invariant: label annotated lengths are 0 or 1 *)
 
 let label_one_def = new_definition
-  `label_one x1 =
-     match x1 with
+  `label_one x1' =
+     match x1' with
        labLang_Label _ _ n -> n <= 1
      | _ -> T`;;
 add_simp label_one_def;;

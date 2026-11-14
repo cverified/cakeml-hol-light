@@ -151,10 +151,9 @@ let clos_annotateProof_v_rel = cake_inductive
    the value of an ML expression: v_rel_simp *)
 
 let v_rel_Boolv = prove
- (`(clos_annotateProof_v_rel x (semanticPrimitives_Boolv b) <=> (x =
-  semanticPrimitives_Boolv b)) /\
-    (clos_annotateProof_v_rel (semanticPrimitives_Boolv b) x <=> (x =
-      semanticPrimitives_Boolv b))`,
+ (`(clos_annotateProof_v_rel x (closSem_Boolv b) <=> (x = closSem_Boolv b)) /\
+    (clos_annotateProof_v_rel (closSem_Boolv b) x <=> (x = closSem_Boolv
+      b))`,
   CHEAT_TAC);;
 add_simp v_rel_Boolv;;
 

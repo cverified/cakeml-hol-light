@@ -77,7 +77,7 @@ let adjust_bv_Unit = prove
 add_simp adjust_bv_Unit;;
 
 let adjust_bv_Boolv = prove
- (`adjust_bv x (semanticPrimitives_Boolv b) = semanticPrimitives_Boolv b`,
+ (`adjust_bv x (bvlSem_Boolv b) = bvlSem_Boolv b`,
   CHEAT_TAC);;
 add_simp adjust_bv_Boolv;;
 
@@ -227,7 +227,7 @@ let bv_ok_Unit = prove
 add_simp bv_ok_Unit;;
 
 let bv_ok_Boolv = prove
- (`bv_ok refs (semanticPrimitives_Boolv b)`,
+ (`bv_ok refs (bvlSem_Boolv b)`,
   CHEAT_TAC);;
 add_simp bv_ok_Boolv;;
 
@@ -604,12 +604,11 @@ let eval_ind_alt = prove
      (!x1 x2 x3 env s.
         (!v2 s1 vs.
            bviSem_evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs
-             /\ ~(semanticPrimitives_Boolv T = HD vs)
-             /\ semanticPrimitives_Boolv F = HD vs ==>
+             /\ ~(bvlSem_Boolv T = HD vs) /\ bvlSem_Boolv F = HD vs ==>
            P ([x3],env,s1)) /\
         (!v2 s1 vs.
            bviSem_evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs /\
-           semanticPrimitives_Boolv T = HD vs ==>
+           bvlSem_Boolv T = HD vs ==>
            P ([x2],env,s1)) /\ P ([x1],env,s) ==>
         P ([bvl_If x1 x2 x3],env,s)) /\
      (!xs x2 env s.

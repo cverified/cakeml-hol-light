@@ -832,7 +832,7 @@ let v_to_list_wfv = prove
   CHEAT_TAC);;
 
 let wfv_Boolv = prove
- (`wfv g1 l1 code (semanticPrimitives_Boolv b) /\ wfv g1 l1 code closSem_Unit`,
+ (`wfv g1 l1 code (closSem_Boolv b) /\ wfv g1 l1 code closSem_Unit`,
   CHEAT_TAC);;
 
 let vrel_list_to_v = prove
@@ -901,8 +901,8 @@ let NOT_IN_domain_FST_g = prove
 
 (* v_rel_Boolv *)
 let clos_callProof_v_rel_Boolv = prove
- (`clos_callProof_v_rel g1 l1 code (semanticPrimitives_Boolv b) v <=> (v =
-  semanticPrimitives_Boolv b)`,
+ (`clos_callProof_v_rel g1 l1 code (closSem_Boolv b) v <=> (v = closSem_Boolv
+  b)`,
   CHEAT_TAC);;
 add_simp clos_callProof_v_rel_Boolv;;
 

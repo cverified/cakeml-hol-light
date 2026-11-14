@@ -797,8 +797,8 @@ let v_all_ts_def,v_all_ts_ind = define_wf
    | _ -> []`;;
 
 let find_ref_def = new_definition
-  `find_ref x1 x =
-   match x1 with
+  `find_ref x1' x =
+   match x1' with
      bvlSem_ValueArray l -> MEM x l
    | bvlSem_Thunk m v -> (v = x)
    | bvlSem_MutBlock tg fin l c r -> MEM x (APPEND (APPEND l [c]) r)
@@ -818,8 +818,8 @@ let be_ok_def = new_definition
    what the port found for it *)
 let v_all_vs_def,v_all_vs_ind = define_wf
   `MEASURE (\x0. dataSem_v_size1 x0)`
-  `v_all_vs x1 =
-   match x1 with
+  `v_all_vs x1'' =
+   match x1'' with
      CONS (dataSem_Block ts tag l) xs -> APPEND (CONS (dataSem_Block ts tag
        l) (v_all_vs l)) (v_all_vs xs)
    | CONS x xs -> CONS x (v_all_vs xs)
@@ -877,8 +877,8 @@ let isMutTag_def = new_definition
   `isMutTag t <=> t = RefTag \/ (?ev. t = ThunkTag ev)`;;
 
 let isRef_def = new_definition
-  `data_to_word_memoryProof_isRef x1 =
-   match x1 with
+  `data_to_word_memoryProof_isRef x1''' =
+   match x1''' with
      DataElement ys l (tag,qs) -> isMutTag tag
    | _ -> F`;;
 
@@ -5154,8 +5154,8 @@ let _ = size_thms "heap_element";;
    what the port found for it *)
 let data_pointers_def,data_pointers_ind = define_wf
   `MEASURE (\x0. list_size (heap_element_size (\x. 0) (\x. 0)) x0)`
-  `data_pointers x1 =
-     match x1 with
+  `data_pointers x1'''' =
+     match x1'''' with
        [] -> []
      | CONS (DataElement x y z) rest -> CONS 0 (MAP (\n. n + el_length
        (DataElement x y z)) (data_pointers rest))
@@ -42768,8 +42768,8 @@ let memory_rel_RefPtr_EQ_IMP = prove
 let memory_rel_Boolv_T = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a) ==>
-  memory_rel c be ts refs sp st m dm (CONS (semanticPrimitives_Boolv
-  T,wordLang_Word ((n2w 18):'a word)) vars)`),
+  memory_rel c be ts refs sp st m dm (CONS (dataSem_Boolv T,wordLang_Word
+  ((n2w 18):'a word)) vars)`),
   (* the true Boolv is the empty Block of the true tag, which is
      one, so its root is the Data of BlockNil 1, the word eighteen *)
   (let shl16 = prove
@@ -42807,8 +42807,8 @@ let memory_rel_Boolv_T = prove
 let memory_rel_Boolv_F = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a) ==>
-  memory_rel c be ts refs sp st m dm (CONS (semanticPrimitives_Boolv
-  F,wordLang_Word ((n2w 2):'a word)) vars)`),
+  memory_rel c be ts refs sp st m dm (CONS (dataSem_Boolv F,wordLang_Word
+  ((n2w 2):'a word)) vars)`),
   (* the false Boolv is the empty Block of the false tag, which is
      zero, so it is the same root as the one of Unit *)
   (let blocknil0 = prove
@@ -42843,8 +42843,7 @@ let memory_rel_Boolv = prove
     `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a) /\
      (b ==> v = wordLang_Word (n2w 18)) /\ (~b ==> v = wordLang_Word ((n2w
        2):'a word)) ==>
-     memory_rel c be ts refs sp st m dm (CONS (semanticPrimitives_Boolv
-       b,v) vars)`),
+     memory_rel c be ts refs sp st m dm (CONS (dataSem_Boolv b,v) vars)`),
   (STRIP_TAC THEN ASM_CASES_TAC `b:bool` THEN ASM_SIMP_TAC[] THENL
     [MATCH_MP_TAC memory_rel_Boolv_T;
      MATCH_MP_TAC memory_rel_Boolv_F] THEN
@@ -44804,8 +44803,8 @@ let v1_size_map = prove
    proves the termination *)
 let v_depth_def,v_depth_ind = define_wf
   `MEASURE dataSem_v_size`
-  `v_depth x1 =
-     match x1 with
+  `v_depth x1' =
+     match x1' with
        dataSem_Block _ _ ls -> (if NULL ls then 0 else 1) + MAX_LIST (MAP
          v_depth ls)
      | _ -> 0`;;
@@ -46092,8 +46091,8 @@ let vb_eq_size_def,vb_eq_size_ind = define_wf
       | (dataSem_Number n1,dataSem_Number n2) -> SOME (1,(n1 = n2))
       | (dataSem_Word64 w1,dataSem_Word64 w2) -> SOME (1,(w1 = w2))
       | (_,_) -> NONE) /\
-   (vb_eq_size_list refs x2 x3 =
-      match (x2,x3) with
+   (vb_eq_size_list refs x2' x3' =
+      match (x2',x3') with
         ([],[]) -> SOME (0,T)
       | ([],_) -> SOME (0,F)
       | (_,[]) -> SOME (0,F)

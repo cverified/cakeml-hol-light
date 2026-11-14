@@ -331,8 +331,8 @@ last step: need a relation <---
  *)
 
 let heap_element_is_ref_def = new_definition
-  `heap_element_is_ref conf x2 =
-     match x2 with
+  `heap_element_is_ref conf x2' =
+     match x2' with
        DataElement xs l d -> gen_gc_partial_conf_isRef conf d
      | _ -> F`;;
 

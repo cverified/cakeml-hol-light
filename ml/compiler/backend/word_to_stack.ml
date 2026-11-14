@@ -217,8 +217,8 @@ let wInst_def = new_definition
      | _ -> stackLang_Inst asm_Skip`;;
 
 let wShareInst_def = new_definition
-  `wShareInst x1 v x3 kf =
-     match (x1,x3) with
+  `wShareInst x1' v x3 kf =
+     match (x1',x3) with
        (asm_Load,Addr ad offset) ->
        let (l,n2) = wReg1 ad kf in
        wStackLoad l

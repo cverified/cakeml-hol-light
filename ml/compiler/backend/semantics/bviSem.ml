@@ -293,10 +293,9 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec_clauses
     (bviSem_evaluate ([bvi_If x1 x2 x3],env,s) =
          match bviSem_fix_clock s (bviSem_evaluate ([x1],env,s)) with (Rval
              vs,s1) ->
-              if semanticPrimitives_Boolv T = HD vs then bviSem_evaluate
-                  ([x2],env,s1) else if semanticPrimitives_Boolv F = HD vs then
-                  bviSem_evaluate ([x3],env,s1) else (Rerr (Rabort
-                  Rtype_error),s1)
+              if bvlSem_Boolv T = HD vs then bviSem_evaluate ([x2],env,s1)
+                  else if bvlSem_Boolv F = HD vs then bviSem_evaluate
+                  ([x3],env,s1) else (Rerr (Rabort Rtype_error),s1)
          | res -> res) /\
     (bviSem_evaluate ([bvi_Let xs x2],env,s) =
          match bviSem_fix_clock s (bviSem_evaluate (xs,env,s)) with (Rval

@@ -332,9 +332,9 @@ let pat_to_display_def,pat_to_display_ind = assume_definition_rec
    (pat_to_display_list (CONS x xs) = CONS (pat_to_display x)
     (pat_to_display_list xs))`;;
 
-let exp_to_display_def,exp_to_display_ind = assume_definition_rec
+let exp_to_display_def,exp_to_display_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  `(exp_to_display (c:ast_exp) =
+  [`exp_to_display (c:ast_exp) =
       match c with ast_Lit l -> displayLang_Item NONE (implode "Lit")
           [lit_to_display l]
       | ast_Raise e -> displayLang_Item NONE (implode "Raise")
@@ -380,20 +380,20 @@ let exp_to_display_def,exp_to_display_ind = assume_definition_rec
       | ast_Tannot e _ -> displayLang_Item NONE (implode "Tannot")
           [exp_to_display e]
       | ast_Lannot e _ -> displayLang_Item NONE (implode "Lannot")
-          [exp_to_display e]) /\
-   (exp_to_display_list [] = []) /\
-   (exp_to_display_list (CONS x xs) = CONS (exp_to_display x)
-    (exp_to_display_list xs)) /\
-   (pat_exp_to_display_list [] = []) /\
-   (pat_exp_to_display_list (CONS (p,e) xs) = CONS (displayLang_Tuple
+          [exp_to_display e]`;
+   `exp_to_display_list [] = []`;
+   `exp_to_display_list (CONS x xs) = CONS (exp_to_display x)
+    (exp_to_display_list xs)`;
+   `pat_exp_to_display_list [] = []`;
+   `pat_exp_to_display_list (CONS (p,e) xs) = CONS (displayLang_Tuple
     [pat_to_display p; exp_to_display e])
-        (pat_exp_to_display_list xs)) /\
-   (fun_to_display_list [] = []) /\
-   (fun_to_display_list (CONS (m,n,e) xs) = CONS (displayLang_Tuple
+        (pat_exp_to_display_list xs)`;
+   `fun_to_display_list [] = []`;
+   `fun_to_display_list (CONS (m,n,e) xs) = CONS (displayLang_Tuple
     [displayLang_String m;
                displayLang_String n;
                exp_to_display e])
-        (fun_to_display_list xs))`;;
+        (fun_to_display_list xs)`];;
 
 let source_to_display_dec_def,source_to_display_dec_ind = assume_definition_rec
   "termination (CHEAT_TAC)"

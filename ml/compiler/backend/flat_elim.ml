@@ -134,8 +134,8 @@ let dest_GlobalVarInit_def = new_definition
    | _ -> NONE`;;
 
 let dest_GlobalVarLookup_def = new_definition
-  `dest_GlobalVarLookup x1 =
-   match x1 with
+  `dest_GlobalVarLookup x1' =
+   match x1' with
    flatLang_GlobalVarLookup n -> SOME n
    | _ -> NONE`;;
 

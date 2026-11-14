@@ -58,14 +58,14 @@ let destSXNUM_def = new_definition
    | _ -> 0`;;
 
 let destSXSYM_def = new_definition
-  `destSXSYM x1 =
-   match x1 with
+  `destSXSYM x1' =
+   match x1' with
      SX_SYM s -> s
    | _ -> ""`;;
 
 let destSXCONS_def = new_definition
-  `destSXCONS x1 =
-   match x1 with
+  `destSXCONS x1'' =
+   match x1'' with
      SX_CONS a d -> (a,d)
    | _ -> (arb_sexp,arb_sexp)`;;
 
@@ -82,8 +82,8 @@ let sxMEM_def = new_definition
   `sxMEM e s <=> (?l. strip_sxcons s = SOME l /\ MEM e l)`;;
 
 let dstrip_sexp_def = new_definition
-  `dstrip_sexp x1 =
-     match x1 with
+  `dstrip_sexp x1''' =
+     match x1''' with
        SX_CONS sym args ->
         (match sym with
             SX_SYM s -> OPTION_MAP (\t. (s,t)) (strip_sxcons args)

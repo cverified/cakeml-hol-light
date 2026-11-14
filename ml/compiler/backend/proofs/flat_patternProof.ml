@@ -476,9 +476,8 @@ let do_app_thm_REVERSE = prove
 
 let do_if_helper = prove
  (`flatSem_do_if b x y = SOME e /\ flat_patternProof_v_rel b b' ==>
-   ((b' = semanticPrimitives_Boolv T) = (b = semanticPrimitives_Boolv T))
-     /\ ((b' = semanticPrimitives_Boolv F) = (b = semanticPrimitives_Boolv
-     F))`,
+   ((b' = flatSem_Boolv T) = (b = flatSem_Boolv T)) /\ ((b' =
+     flatSem_Boolv F) = (b = flatSem_Boolv F))`,
   CHEAT_TAC);;
 
 let MAX_LIST_LESS_EVERY = prove
@@ -508,8 +507,8 @@ let decode_test_simulation = prove
  (`dt_test test enc_v = SOME b /\
    pure_eval_to s env x v /\
    enc_v = encode_val v ==>
-   pure_eval_to s env (flat_pattern_decode_test tr test x)
-     (semanticPrimitives_Boolv b)`,
+   pure_eval_to s env (flat_pattern_decode_test tr test x) (flatSem_Boolv
+     b)`,
   CHEAT_TAC);;
 
 let app_pos_Term_IMP = prove
@@ -543,18 +542,16 @@ let decode_pos_simulation = prove
 
 (* do_eq_Boolv *)
 let flat_patternProof_do_eq_Boolv = prove
- (`flatSem_do_eq (semanticPrimitives_Boolv x) (semanticPrimitives_Boolv y) =
-  Eq_val (x = y)`,
+ (`flatSem_do_eq (flatSem_Boolv x) (flatSem_Boolv y) = Eq_val (x = y)`,
   CHEAT_TAC);;
 
 let do_if_Boolv = prove
- (`flatSem_do_if (semanticPrimitives_Boolv x) y z = SOME (if x then y else z)`,
+ (`flatSem_do_if (flatSem_Boolv x) y z = SOME (if x then y else z)`,
   CHEAT_TAC);;
 
 (* evaluate_Bool *)
 let flat_patternProof_evaluate_Bool = prove
- (`flatSem_evaluate env s [flatLang_Bool t b] = (s,Rval
-  [semanticPrimitives_Boolv b])`,
+ (`flatSem_evaluate env s [flatLang_Bool t b] = (s,Rval [flatSem_Boolv b])`,
   CHEAT_TAC);;
 
 let SmartIf_thm = prove
@@ -572,7 +569,7 @@ let decode_guard_simulation = prove
  (`!b.
    dt_eval_guard (encode_refs s) (encode_val y) gd = SOME b /\
    pure_eval_to s env x y ==>
-   pure_eval_to s env (decode_guard tr x gd) (semanticPrimitives_Boolv b)`,
+   pure_eval_to s env (decode_guard tr x gd) (flatSem_Boolv b)`,
   CHEAT_TAC);;
 
 let simp_guard_thm = prove
@@ -623,7 +620,7 @@ let naive_pattern_match_correct = prove
     flatSem_pmatch_list s (MAP FST mats) vs bindings = res /\ ~(res =
       Match_type_error) /\
     naive_pattern_match t mats = exp ==>
-    pure_eval_to s env exp (semanticPrimitives_Boolv (~(res = No_match)))`,
+    pure_eval_to s env exp (flatSem_Boolv (~(res = No_match)))`,
   CHEAT_TAC);;
 
 (* HOL4 flat_patternProofScript.sml:1308-1312: a theorem that HOL4 states as

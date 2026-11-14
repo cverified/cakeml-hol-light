@@ -422,8 +422,8 @@ let dest_nop_thm = prove
   CHEAT_TAC);;
 
 let flat_to_clos_dest_Constant_def = new_definition
-  `flat_to_clos_dest_Constant x1 =
-   match x1 with
+  `flat_to_clos_dest_Constant x1' =
+   match x1' with
      closLang_Op t (closLang_BlockOp (closLang_Constant c)) [] -> SOME c
    | closLang_Op t (closLang_IntOp (closLang_Const i)) [] -> SOME (ConstInt
      i)

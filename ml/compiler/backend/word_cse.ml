@@ -363,8 +363,8 @@ let arithReads_def = new_definition
 (* The general-purpose registers an fp instruction writes. Most write only
   fp-registers (disjoint from the tracked state), hence []. *)
 let fpWrites_def = new_definition
-  `fpWrites x1 =
-   match x1 with
+  `fpWrites x1' =
+   match x1' with
      FPLess r _ _ -> [r]
    | FPLessEqual r _ _ -> [r]
    | FPEqual r _ _ -> [r]
@@ -436,8 +436,8 @@ let add_to_load_aux_def = new_definition
                     listCmp i r (knowledge_loads_mem data))) data)),x)`;;
 
 let can_mem_arith_def = new_definition
-  `can_mem_arith x1 =
-   match x1 with
+  `can_mem_arith x1'' =
+   match x1'' with
      asm_Binop _ _ r1 (Reg r2) -> (ODD r1 /\ ODD r2)
    | asm_Binop _ _ r1 (Imm _) -> ODD r1
    | asm_Div _ r1 r2 -> (ODD r1 /\ ODD r2)
@@ -680,12 +680,12 @@ let word_cse_Seqs_def,word_cse_Seqs_ind = define_wf
 (* [local] *)
 let test_latest_name_used = prove
  (`word_common_subexp_elim
-     (ast_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+     (word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1)));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 11 1 (Reg 1)));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 13 1 (Reg 1)))]) =
-     ast_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+     word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
            wordLang_Move 0 [(9,7)];
            wordLang_Move 0 [(11,9)];
@@ -695,7 +695,7 @@ let test_latest_name_used = prove
 (* [local] *)
 let test_get_set = prove
  (`word_common_subexp_elim
-     (ast_Seqs [wordLang_Get 1 NextFree;
+     (word_cse_Seqs [wordLang_Get 1 NextFree;
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
            wordLang_Set NextFree (wordLang_Var 7);
            wordLang_Get 9 NextFree;
@@ -703,7 +703,7 @@ let test_get_set = prove
            wordLang_Get 33 NextFree;
            wordLang_Get 35 NextFree;
            wordLang_Get 37 NextFree]) =
-     ast_Seqs [wordLang_Get 1 NextFree;
+     word_cse_Seqs [wordLang_Get 1 NextFree;
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
            wordLang_Set NextFree (wordLang_Var 7);
            wordLang_Move 1 [(9,7)];
@@ -718,8 +718,8 @@ let test_get_set = prove
 (* [local] *)
 let test_pattern_match_and_cons = prove
  (`word_common_subexp_elim
-     (ast_Seqs [wordLang_Inst (asm_Arith (asm_Shift Lsr 301 297 (Imm ((n2w
-       9):word64))));
+     (word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Shift Lsr 301 297 (Imm
+       ((n2w 9):word64))));
            wordLang_OpCurrHeap asm_Add 305 301;
            wordLang_Inst (asm_Mem asm_Load 309 (Addr 305 (n2w 8)));
            wordLang_Move 0 [(313,297)];
@@ -765,8 +765,8 @@ let test_pattern_match_and_cons = prove
              24))));
            wordLang_Set NextFree (wordLang_Var 429);
            wordLang_Move 0 [(2,421)]; wordLang_Return 273 [2]]) =
-     ast_Seqs [wordLang_Inst (asm_Arith (asm_Shift Lsr 301 297 (Imm (n2w
-       9))));
+     word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Shift Lsr 301 297 (Imm
+       (n2w 9))));
            wordLang_OpCurrHeap asm_Add 305 301;
            wordLang_Inst (asm_Mem asm_Load 309 (Addr 305 (n2w 8)));
            wordLang_Move 0 [(313,297)];
@@ -822,7 +822,7 @@ let test_pattern_match_and_cons = prove
 (* [local] *)
 let test_load_cse = prove
  (`word_common_subexp_elim
-     (ast_Seqs [wordLang_Inst (asm_Mem asm_Load 9 (Addr 7 ((n2w
+     (word_cse_Seqs [wordLang_Inst (asm_Mem asm_Load 9 (Addr 7 ((n2w
        0):word64)));
            wordLang_Inst (asm_Arith (asm_Shift Lsr 11 9 (Imm (n2w 29))));
            wordLang_Inst (asm_Mem asm_Load 13 (Addr 7 (n2w 0)));
@@ -830,7 +830,7 @@ let test_load_cse = prove
            wordLang_Inst (asm_Mem asm_Load8 17 (Addr 7 (n2w 0)));
            wordLang_Inst (asm_Mem asm_Store 15 (Addr 7 (n2w 0)));
            wordLang_Inst (asm_Mem asm_Load 19 (Addr 7 (n2w 0)))]) =
-     ast_Seqs [wordLang_Inst (asm_Mem asm_Load 9 (Addr 7 (n2w 0)));
+     word_cse_Seqs [wordLang_Inst (asm_Mem asm_Load 9 (Addr 7 (n2w 0)));
            wordLang_Inst (asm_Arith (asm_Shift Lsr 11 9 (Imm (n2w 29))));
            wordLang_Move 0 [(13,9)];
            wordLang_Move 0 [(15,11)];
@@ -845,13 +845,13 @@ let test_load_cse = prove
 (* [local] *)
 let test_set_currheap = prove
  (`word_common_subexp_elim
-     (ast_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+     (word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
            wordLang_OpCurrHeap asm_Add 3 1;
            wordLang_Set CurrHeap (wordLang_Var 7);
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1)));
            wordLang_OpCurrHeap asm_Add 5 1]) =
-     ast_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+     word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
            wordLang_OpCurrHeap asm_Add 3 1;
            wordLang_Set CurrHeap (wordLang_Var 7);
@@ -863,8 +863,8 @@ let test_set_currheap = prove
 (* [local] *)
 let test_locvalue = prove
  (`word_common_subexp_elim
-     (ast_Seqs [wordLang_LocValue 7 100; wordLang_LocValue 9 100]) =
-     ast_Seqs [wordLang_LocValue 7 100; wordLang_Move 0 [(9,7)]]`,
+     (word_cse_Seqs [wordLang_LocValue 7 100; wordLang_LocValue 9 100]) =
+     word_cse_Seqs [wordLang_LocValue 7 100; wordLang_Move 0 [(9,7)]]`,
   CHEAT_TAC);;
 
 (* LongMul clobbers both outputs (7 and 9), so the value previously stored in
@@ -872,10 +872,12 @@ let test_locvalue = prove
 (* [local] *)
 let test_multi_output_invalidation = prove
  (`word_common_subexp_elim
-     (ast_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1)));
+     (word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg
+       1)));
            wordLang_Inst (asm_Arith (asm_LongMul 7 9 3 5));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 11 1 (Reg 1)))]) =
-     ast_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1)));
+     word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg
+       1)));
            wordLang_Inst (asm_Arith (asm_LongMul 7 9 3 5));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 11 1 (Reg 1)))]`,
   CHEAT_TAC);;
@@ -885,12 +887,12 @@ let test_multi_output_invalidation = prove
 (* [local] *)
 let test_self_read_not_cse = prove
  (`word_common_subexp_elim
-     (ast_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 7 (Imm (n2w
-       1))));
+     (word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 7 (Imm
+       (n2w 1))));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 7 (Imm (n2w 1))))])
              =
-     ast_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 7 (Imm (n2w
-       1))));
+     word_cse_Seqs [wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 7 (Imm
+       (n2w 1))));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 7 (Imm (n2w
              1))))]`,
   CHEAT_TAC);;
@@ -900,13 +902,13 @@ let test_self_read_not_cse = prove
 (* [local] *)
 let test_if_merge = prove
  (`word_common_subexp_elim
-     (ast_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+     (word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
            wordLang_If EQUAL 1 (Imm (n2w 0))
               (wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1))))
               (wordLang_Move 0 [(11,7)]);
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 13 1 (Reg 1)))]) =
-     ast_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+     word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
            wordLang_If EQUAL 1 (Imm (n2w 0)) (wordLang_Move 0 [(9,7)])
              (wordLang_Move 0 [(11,7)]);
@@ -918,13 +920,13 @@ let test_if_merge = prove
 (* [local] *)
 let test_if_merge_clobber = prove
  (`word_common_subexp_elim
-     (ast_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+     (word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
            wordLang_If EQUAL 1 (Imm (n2w 0))
               (wordLang_Move 0 [(7,3)])
               wordLang_Skip;
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1)))]) =
-     ast_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
+     word_cse_Seqs [wordLang_Inst (asm_Const 1 (n2w 0));
            wordLang_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
            wordLang_If EQUAL 1 (Imm (n2w 0)) (wordLang_Move 0 [(7,3)])
              wordLang_Skip;

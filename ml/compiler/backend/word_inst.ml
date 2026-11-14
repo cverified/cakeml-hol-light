@@ -47,8 +47,8 @@ let word_inst_is_const_def = new_definition
      | _ -> F`;;
 
 let rm_const_def = new_definition
-  `rm_const x1 =
-     match x1 with
+  `rm_const x1' =
+     match x1' with
        wordLang_Const w -> w
      // Make it total
      | _ -> (n2w 0)`;;
@@ -71,8 +71,8 @@ let convert_sub_pmatch = prove
   CHEAT_TAC);;
 
 let op_consts_def = new_definition
-  `op_consts x1 =
-     match x1 with
+  `op_consts x1'' =
+     match x1'' with
        asm_And -> wordLang_Const (word_not (n2w 0))
      | _ -> wordLang_Const (n2w 0)`;;
 
@@ -187,8 +187,8 @@ let flatten_exp_def,flatten_exp_ind = define_wf
 (* HOL4 word_instScript.sml:198-204: code that the source has in a comment *)
 
 let is_Lookup_CurrHeap_def = new_definition
-  `is_Lookup_CurrHeap x1 =
-   match x1 with
+  `is_Lookup_CurrHeap x1''' =
+   match x1''' with
      wordLang_Lookup CurrHeap -> T
    | _ -> F`;;
 

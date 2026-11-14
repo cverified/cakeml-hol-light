@@ -158,8 +158,8 @@ let closSem_do_eq_def,closSem_do_eq_ind = define_wf
    what the port found for it *)
 let closSem_v_to_list_def,closSem_v_to_list_ind = define_wf
   `MEASURE (\x0. closSem_v_size x0)`
-  `closSem_v_to_list x1 =
-     match x1 with
+  `closSem_v_to_list x1' =
+     match x1' with
        closSem_Block tag [] ->
         if tag = nil_tag then SOME [] else NONE
      | closSem_Block tag [h; bt] ->
@@ -251,16 +251,16 @@ let do_int_app_def = new_definition
    | (closLang_Mod,[closSem_Number n1; closSem_Number n2]) ->
        (if n2 = (&0) then NONE else SOME (closSem_Number (n1 % n2)))
    | (closLang_Less,[closSem_Number n1; closSem_Number n2]) -> SOME
-     (semanticPrimitives_Boolv (n1 < n2))
+     (closSem_Boolv (n1 < n2))
    | (closLang_LessEq,[closSem_Number n1; closSem_Number n2]) -> SOME
-     (semanticPrimitives_Boolv (n1 <= n2))
+     (closSem_Boolv (n1 <= n2))
    | (closLang_Greater,[closSem_Number n1; closSem_Number n2]) -> SOME
-     (semanticPrimitives_Boolv (n1 > n2))
+     (closSem_Boolv (n1 > n2))
    | (closLang_GreaterEq,[closSem_Number n1; closSem_Number n2]) -> SOME
-     (semanticPrimitives_Boolv (n1 >= n2))
+     (closSem_Boolv (n1 >= n2))
    | (closLang_LessConstSmall n,[closSem_Number i]) ->
          (if (&0) <= i /\ i <= (&1000000) /\ n < 1000000 then
-           SOME (semanticPrimitives_Boolv (i < &n)) else NONE)
+           SOME (closSem_Boolv (i < &n)) else NONE)
    | ((op:closLang_int_op),(vs:closSem_v list)) -> NONE`;;
 
 let opw_lookup_def = define_general
@@ -283,9 +283,8 @@ let do_word_app_def = new_definition
            SOME (closSem_Word64 (opw_lookup opw w1 w2))
      | (WordTest ast_W8 test,[closSem_Number n1; closSem_Number n2]) ->
           (if (&0) <= n1 /\ n1 < (&256) /\ (&0) <= n2 /\ n2 < (&256) then
-             (match test with ast_Equal -> SOME (semanticPrimitives_Boolv
-               (n1 = n2))
-              | ast_Compare cmp -> SOME (semanticPrimitives_Boolv
+             (match test with ast_Equal -> SOME (closSem_Boolv (n1 = n2))
+              | ast_Compare cmp -> SOME (closSem_Boolv
                 (semanticPrimitives_int_cmp cmp n1 n2))
               | _ -> NONE)
            else NONE)
@@ -318,7 +317,7 @@ let do_word_app_def = new_definition
             | _ -> NONE)
      | (FP_cmp cmp,ws) ->
            (match ws with [closSem_Word64 w1; closSem_Word64 w2] -> (SOME
-             (semanticPrimitives_Boolv (fp_cmp_comp cmp w1 w2)))
+             (closSem_Boolv (fp_cmp_comp cmp w1 w2)))
             | _ -> NONE)
      | ((op:closLang_word_op),(vs:closSem_v list)) -> NONE`;;
 
@@ -348,8 +347,8 @@ let store_thunk_def = new_definition
      | _ -> NONE`;;
 
 let closSem_update_thunk_def = new_definition
-  `closSem_update_thunk x1 refs x3 =
-   match (x1,x3) with
+  `closSem_update_thunk x1' refs x3 =
+   match (x1',x3) with
      ([closSem_RefPtr F ptr],[v]) ->
      (match closSem_dest_thunk [v] refs with closSem_NotThunk -> store_thunk
        ptr (closSem_Thunk Evaluated v) refs
@@ -428,19 +427,17 @@ let closSem_do_app_def = new_definition
             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
             ,closSem_v)semanticPrimitives_result))
      | (closLang_BlockOp (closLang_BoolTest test),[v1; v2]) ->
-         (if (~(v1 = semanticPrimitives_Boolv T) /\ ~(v1 =
-           semanticPrimitives_Boolv F)) then ((Rerr (Rabort
+         (if (~(v1 = closSem_Boolv T) /\ ~(v1 = closSem_Boolv F)) then
+           ((Rerr (Rabort
            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-           ,closSem_v)semanticPrimitives_result) else if (~(v2 =
-           semanticPrimitives_Boolv T) /\ ~(v2 = semanticPrimitives_Boolv F))
-           then ((Rerr (Rabort
+           ,closSem_v)semanticPrimitives_result) else if (~(v2 = closSem_Boolv
+           T) /\ ~(v2 = closSem_Boolv F)) then ((Rerr (Rabort
            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-           ,closSem_v)semanticPrimitives_result) else Rval
-           (semanticPrimitives_Boolv (v1 = v2),s))
+           ,closSem_v)semanticPrimitives_result) else Rval (closSem_Boolv (v1 =
+           v2),s))
      | (closLang_BlockOp closLang_BoolNot,[v1]) ->
-         (if v1 = semanticPrimitives_Boolv T then Rval
-           (semanticPrimitives_Boolv F,s) else if v1 = semanticPrimitives_Boolv
-           F then Rval (semanticPrimitives_Boolv T,s) else ((Rerr (Rabort
+         (if v1 = closSem_Boolv T then Rval (closSem_Boolv F,s) else if v1 =
+           closSem_Boolv F then Rval (closSem_Boolv T,s) else ((Rerr (Rabort
            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
            ,closSem_v)semanticPrimitives_result))
      | (closLang_BlockOp (closLang_ElemAt n),[closSem_Block tag xs]) ->
@@ -615,24 +612,24 @@ let closSem_do_app_def = new_definition
        closSem_ByteVector b2]) ->
         (let s1 = implode (MAP (CHR o w2n) b1) in
          let s2 = implode (MAP (CHR o w2n) b2) in
-           Rval (semanticPrimitives_Boolv (str_cmp b cmp s1 s2),s))
+           Rval (closSem_Boolv (str_cmp b cmp s1 s2),s))
      | (closLang_BlockOp (closLang_TagEq n),[closSem_Block tag xs]) ->
-         Rval (semanticPrimitives_Boolv (tag = n),s)
+         Rval (closSem_Boolv (tag = n),s)
      | (closLang_BlockOp (closLang_LenEq l),[closSem_Block tag xs]) ->
-         Rval (semanticPrimitives_Boolv (LENGTH xs = l),s)
+         Rval (closSem_Boolv (LENGTH xs = l),s)
      | (closLang_BlockOp (closLang_TagLenEq n l),[closSem_Block tag xs]) ->
-         Rval (semanticPrimitives_Boolv (tag = n /\ LENGTH xs = l),s)
+         Rval (closSem_Boolv (tag = n /\ LENGTH xs = l),s)
      | (closLang_BlockOp (closLang_EqualConst p),[x1]) ->
          (match p with closLang_Int i -> (match x1 with closSem_Number j ->
-           Rval (semanticPrimitives_Boolv (i = j),s) | _ -> ((Rerr (Rabort
+           Rval (closSem_Boolv (i = j),s) | _ -> ((Rerr (Rabort
            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
            ,closSem_v)semanticPrimitives_result))
           | closLang_W64 i -> (match x1 with closSem_Word64 j -> Rval
-            (semanticPrimitives_Boolv (i = j),s) | _ -> ((Rerr (Rabort
+            (closSem_Boolv (i = j),s) | _ -> ((Rerr (Rabort
             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
             ,closSem_v)semanticPrimitives_result))
           | closLang_Str i -> (match x1 with closSem_ByteVector j -> Rval
-            (semanticPrimitives_Boolv (j = MAP (n2w o ORD) (explode i)),s)
+            (closSem_Boolv (j = MAP (n2w o ORD) (explode i)),s)
                       | _ -> ((Rerr (Rabort
                         Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                         ,closSem_v)semanticPrimitives_result))
@@ -640,8 +637,8 @@ let closSem_do_app_def = new_definition
             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
             ,closSem_v)semanticPrimitives_result))
      | (closLang_BlockOp closLang_Equal,[x1; x2]) ->
-         (match closSem_do_eq x1 x2 with Eq_val b -> Rval
-           (semanticPrimitives_Boolv b,s)
+         (match closSem_do_eq x1 x2 with Eq_val b -> Rval (closSem_Boolv
+           b,s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
             ,closSem_v)semanticPrimitives_result))
@@ -691,17 +688,17 @@ let closSem_do_app_def = new_definition
             ,closSem_v)semanticPrimitives_result))
      | (closLang_BlockOp closLang_BoundsCheckBlock,[closSem_Block tag ys;
        closSem_Number i]) ->
-         Rval (semanticPrimitives_Boolv ((&0) <= i /\ i < &(LENGTH ys)),s)
+         Rval (closSem_Boolv ((&0) <= i /\ i < &(LENGTH ys)),s)
      | (closLang_MemOp (closLang_BoundsCheckByte loose),[closSem_ByteVector
        bs; closSem_Number i]) ->
-         Rval (semanticPrimitives_Boolv ((&0) <= i /\ (if loose then (<=)
-           else (<)) i (&(LENGTH bs))),s)
+         Rval (closSem_Boolv ((&0) <= i /\ (if loose then (<=) else (<)) i
+           (&(LENGTH bs))),s)
      | (closLang_MemOp (closLang_BoundsCheckByte loose),[closSem_RefPtr _
        ptr; closSem_Number i]) ->
          (match FLOOKUP (closSem_state_refs s) ptr with SOME
            (closSem_ByteArray ws) ->
-              Rval (semanticPrimitives_Boolv ((&0) <= i /\ (if loose then
-                (<=) else (<)) i (&(LENGTH ws))),s)
+              Rval (closSem_Boolv ((&0) <= i /\ (if loose then (<=) else
+                (<)) i (&(LENGTH ws))),s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
             ,closSem_v)semanticPrimitives_result))
@@ -709,8 +706,7 @@ let closSem_do_app_def = new_definition
        closSem_Number i]) ->
          (match FLOOKUP (closSem_state_refs s) ptr with SOME
            (closSem_ValueArray ws) ->
-              Rval (semanticPrimitives_Boolv ((&0) <= i /\ i < &(LENGTH
-                ws)),s)
+              Rval (closSem_Boolv ((&0) <= i /\ i < &(LENGTH ws)),s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
             ,closSem_v)semanticPrimitives_result))
@@ -954,8 +950,8 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
    (closSem_evaluate ([closLang_If _ x1 x2 x3],env,s) =
          match closSem_fix_clock s (closSem_evaluate ([x1],env,s)) with
              (Rval vs,s1) ->
-              if semanticPrimitives_Boolv T = HD vs then closSem_evaluate
-                  ([x2],env,s1) else if semanticPrimitives_Boolv F = HD vs then
+              if closSem_Boolv T = HD vs then closSem_evaluate
+                  ([x2],env,s1) else if closSem_Boolv F = HD vs then
                   closSem_evaluate ([x3],env,s1) else (Rerr (Rabort
                   Rtype_error),s1)
          | res -> res) /\

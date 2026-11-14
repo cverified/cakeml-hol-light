@@ -58,8 +58,8 @@ let filter_bitmap_def,filter_bitmap_ind = define_guess
      | (_,_) -> NONE`;;
 
 let map_bitmap_def,map_bitmap_ind = define_guess
-  `map_bitmap x1 ts rs =
-     match (x1,ts,rs) with
+  `map_bitmap x1' ts rs =
+     match (x1',ts,rs) with
        ([],ts,rs) -> SOME ([],ts,rs)
      | (CONS F bs,ts,CONS r rs) ->
         (match map_bitmap bs ts rs with NONE -> NONE
@@ -800,8 +800,8 @@ let stackSem_dest_Seq_def = new_definition
    | _ -> NONE`;;
 
 let stackSem_bad_fun_return_def = new_definition
-  `stackSem_bad_fun_return x1 =
-   match x1 with
+  `stackSem_bad_fun_return x1' =
+   match x1' with
      NONE -> T
    | SOME (stackSem_Break _) -> T
    | SOME (stackSem_Continue _) -> T
@@ -809,8 +809,8 @@ let stackSem_bad_fun_return_def = new_definition
 add_simp stackSem_bad_fun_return_def;;
 
 let stackSem_cont_loop_def = new_definition
-  `stackSem_cont_loop x1 =
-   match x1 with
+  `stackSem_cont_loop x1'' =
+   match x1'' with
      NONE -> T
    | SOME (stackSem_Continue n) -> (n = 0)
    | _ -> F`;;
@@ -917,7 +917,7 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
    (stackSem_evaluate (stackLang_JumpLower r1 r2 dest,s) =
         match (stackSem_get_var r1 s,stackSem_get_var r2 s) with SOME
             (wordLang_Word x),SOME (wordLang_Word y) ->
-          if asm_word_cmp asm_Lower x y then
+          if wordSem_word_cmp asm_Lower x y then
            (match stackSem_find_code (INL dest) (stackSem_state_regs s)
                (stackSem_state_code s) with NONE -> (SOME stackSem_Error,s)
             | SOME prog ->

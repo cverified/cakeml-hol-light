@@ -602,8 +602,8 @@ let op_to_string_def = new_definition
 (* HOL4 inferScript.sml:646: the overload Tem, which the port expands *)
 
 let t_num_of_def = new_definition
-  `t_num_of x1 =
-   match x1 with
+  `t_num_of x1' =
+   match x1' with
      ast_BoolT -> Tbool_num
    | ast_IntT -> Tint_num
    | ast_CharT -> Tchar_num

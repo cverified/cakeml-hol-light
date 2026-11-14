@@ -1906,8 +1906,8 @@ let _ = size_thms "stack_frame";;
 let s_val_eq_def,s_val_eq_ind = define_wf
   `MEASURE (\(x0,x1).      list_size (stack_frame_size (\x. 0)) x0 +
   list_size (stack_frame_size (\x. 0)) x1)`
-  `s_val_eq x1 x2 =
-     match (x1,x2) with
+  `s_val_eq x1' x2' =
+     match (x1',x2') with
        ([],[]) -> T
      | (CONS x xs,CONS y ys) -> (s_val_eq xs ys /\
                               s_frame_val_eq x y)
@@ -1915,8 +1915,8 @@ let s_val_eq_def,s_val_eq_ind = define_wf
 
 (*Stacks look the same except for the values of the GC-ed cutsets (e.g. result of gc)*)
 let s_frame_key_eq_def = new_definition
-  `s_frame_key_eq x1 x2 =
-     match (x1,x2) with
+  `s_frame_key_eq x1'' x2'' =
+     match (x1'',x2'') with
        (StackFrame n ls0 ls NONE,StackFrame n' ls0' ls' NONE) -> MAP FST ls
          = MAP FST ls' /\ ls0 = ls0' /\ n = n'
      | (StackFrame n ls0 ls (SOME y),StackFrame n' ls0' ls' (SOME y')) ->
@@ -1934,8 +1934,8 @@ let s_frame_key_eq_def2 = prove
 let s_key_eq_def,s_key_eq_ind = define_wf
   `MEASURE (\(x0,x1).      list_size (stack_frame_size (\x. 0)) x0 +
   list_size (stack_frame_size (\x. 0)) x1)`
-  `s_key_eq x1 x2 =
-     match (x1,x2) with
+  `s_key_eq x1''' x2''' =
+     match (x1''',x2''') with
        ([],[]) -> T
      | (CONS x xs,CONS y ys) -> (s_key_eq xs ys /\
                               s_frame_key_eq x y)
@@ -2844,8 +2844,8 @@ let permute_swap_lemma3 = prove
   CHEAT_TAC);;
 
 let word_cmp_Word_Word = prove
- (`asm_word_cmp cmp (wordLang_Word c) (wordLang_Word c') = SOME (asm_word_cmp
-  cmp c c')`,
+ (`wordSem_word_cmp cmp (wordLang_Word c) (wordLang_Word c') = SOME
+  (wordSem_word_cmp cmp c c')`,
   CHEAT_TAC);;
 add_simp word_cmp_Word_Word;;
 

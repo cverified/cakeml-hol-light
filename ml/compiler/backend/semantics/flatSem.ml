@@ -125,7 +125,7 @@ let flatSem_do_eq_def,flatSem_do_eq_ind = assume_definition_rec_clauses
     (flatSem_do_eq (flatSem_Conv cn1 vs1) (flatSem_Conv cn2 vs2) =
        if (cn1 = cn2) /\ (LENGTH vs1 = LENGTH vs2) then
          flatSem_do_eq_list vs1 vs2
-       else if semanticPrimitives_ctor_same_type cn1 cn2 then
+       else if flatSem_ctor_same_type cn1 cn2 then
          Eq_val F
        else Eq_type_error) /\
     (flatSem_do_eq (flatSem_Vectorv vs1) (flatSem_Vectorv vs2) =
@@ -162,9 +162,8 @@ let flatSem_do_opapp_def = new_definition
      | [flatSem_Recclosure env funs n; v] ->
        if ALL_DISTINCT (MAP FST funs) then
          (match find_recfun n funs with SOME (n,e) -> SOME
-           (flatSem_environment_v_fupd (K (CONS (n,v)
-           (semanticPrimitives_build_rec_env funs env (flatSem_environment_v
-           env)))) env,e)
+           (flatSem_environment_v_fupd (K (CONS (n,v) (flatSem_build_rec_env
+           funs env (flatSem_environment_v env)))) env,e)
           | NONE -> NONE)
        else NONE
      | _ -> NONE`;;
@@ -174,8 +173,8 @@ let _ = size_thms "flatSem_v";;
    what the port found for it *)
 let flatSem_v_to_list_def,flatSem_v_to_list_ind = define_wf
   `MEASURE (\x0. flatSem_v_size x0)`
-  `flatSem_v_to_list x1 =
-     match x1 with
+  `flatSem_v_to_list x1' =
+     match x1' with
        flatSem_Conv (SOME (cid,tid)) [] ->
       if cid = nil_tag /\ tid = SOME list_id then
         SOME []
@@ -214,8 +213,8 @@ let flatSem_v_to_char_list_def,flatSem_v_to_char_list_ind = define_wf
    what the port found for it *)
 let flatSem_vs_to_string_def,flatSem_vs_to_string_ind = define_wf
   `MEASURE (\x0. flatSem_v_size2 x0)`
-  `flatSem_vs_to_string x1 =
-     match x1 with
+  `flatSem_vs_to_string x1' =
+     match x1' with
        [] -> SOME (implode "")
      | CONS (flatSem_Litv (ast_StrLit s1)) vs ->
       (match flatSem_vs_to_string vs with SOME s2 -> SOME (strcat s1 s2)
@@ -231,10 +230,9 @@ let flatSem_v_to_words_def = new_definition
   (flatSem_Litv o ast_Word64) ns))`;;
 
 let flatSem_check_type_def = new_definition
-  `flatSem_check_type x1 v =
-   match x1 with
-     ast_BoolT -> (v = semanticPrimitives_Boolv T \/ v =
-       semanticPrimitives_Boolv F)
+  `flatSem_check_type x1'' v =
+   match x1'' with
+     ast_BoolT -> (v = flatSem_Boolv T \/ v = flatSem_Boolv F)
    | ast_IntT -> (?i. v = flatSem_Litv (ast_IntLit i))
    | ast_CharT -> (?c. v = flatSem_Litv (ast_Char c))
    | ast_StrT -> (?s. v = flatSem_Litv (ast_StrLit s))
@@ -243,8 +241,8 @@ let flatSem_check_type_def = new_definition
    | ast_Float64T -> (?w. v = flatSem_Litv (ast_Float64 w))`;;
 
 let flatSem_dest_Litv_def = new_definition
-  `flatSem_dest_Litv x1 =
-   match x1 with
+  `flatSem_dest_Litv x1''' =
+   match x1''' with
      flatSem_Litv v -> SOME v
    | _ -> NONE`;;
 
@@ -340,10 +338,10 @@ let flatSem_do_app_def = new_definition
           | SOME w -> SOME (s,Rval (flatSem_Litv w)))
    | (flatLang_Src ast_Equality,[v1; v2]) ->
      (match flatSem_do_eq v1 v2 with Eq_type_error -> NONE
-      | Eq_val b -> SOME (s,Rval (semanticPrimitives_Boolv b)))
+      | Eq_val b -> SOME (s,Rval (flatSem_Boolv b)))
    | (flatLang_Src (ast_Test test test_ty),[v1; v2]) ->
      (match flatSem_do_test test test_ty v1 v2 with Eq_type_error -> NONE
-      | Eq_val b -> SOME (s,Rval (semanticPrimitives_Boolv b)))
+      | Eq_val b -> SOME (s,Rval (flatSem_Boolv b)))
    | (flatLang_Src (ast_Arith a ty),vs) ->
      (let vs = MAP flat_to_v vs in
         if ALL (semanticPrimitives_check_type ty) vs then
@@ -657,9 +655,9 @@ let flatSem_do_app_def = new_definition
        SOME (s,Rval (THE (EL n (flatSem_state_globals s))))
      else NONE
    | (flatLang_TagLenEq n l,[flatSem_Conv (SOME (tag,_)) xs]) ->
-     SOME (s,Rval (semanticPrimitives_Boolv (tag = n /\ LENGTH xs = l)))
+     SOME (s,Rval (flatSem_Boolv (tag = n /\ LENGTH xs = l)))
    | (flatLang_LenEq l,[flatSem_Conv _ xs]) ->
-     SOME (s,Rval (semanticPrimitives_Boolv (LENGTH xs = l)))
+     SOME (s,Rval (flatSem_Boolv (LENGTH xs = l)))
    | (flatLang_El n,[flatSem_Conv _ vs]) ->
      (if n < LENGTH vs then SOME (s,Rval (EL n vs)) else NONE)
    | (flatLang_El n,[flatSem_Loc _ p]) ->
@@ -672,9 +670,9 @@ let flatSem_do_app_def = new_definition
 
 let flatSem_do_if_def = new_definition
   `(flatSem_do_if v e1 e2 =
-    if v = semanticPrimitives_Boolv T then
+    if v = flatSem_Boolv T then
       SOME e1
-    else if v = semanticPrimitives_Boolv F then
+    else if v = flatSem_Boolv F then
       SOME e2
     else NONE)`;;
 
@@ -990,8 +988,8 @@ let flatSem_evaluate_def,flatSem_evaluate_ind = assume_definition_rec_clauses
     (flatSem_evaluate (env:flatSem_v flatSem_environment)
     (s:('c,'ffi)flatSem_state) [flatLang_Letrec _ funs e] =
        if ALL_DISTINCT (MAP FST funs) then flatSem_evaluate
-           (flatSem_environment_v_fupd (K (semanticPrimitives_build_rec_env
-           funs env (flatSem_environment_v env))) env) s [e]
+           (flatSem_environment_v_fupd (K (flatSem_build_rec_env funs env
+           (flatSem_environment_v env))) env) s [e]
        else (s,Rerr (Rabort Rtype_error))) /\
     (evaluate_dec (s:('c,'ffi)flatSem_state) e =
        match flatSem_evaluate (mk_flatSem_environment []) s [e] with

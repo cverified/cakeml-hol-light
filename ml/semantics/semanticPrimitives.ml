@@ -283,8 +283,8 @@ let match_result_INDUCT,match_result_RECURSION = define_datatype
    | Match ('a)";;
 
 let same_type_def = new_definition
-  `same_type x1 x2 =
-     match (x1,x2) with
+  `same_type x1 x2' =
+     match (x1,x2') with
        (TypeStamp v0 n1,TypeStamp v1 n2) -> n1 = n2
      | (ExnStamp v2,ExnStamp v3) -> T
      | (_,_) -> F`;;
@@ -469,8 +469,8 @@ let do_opapp_def = new_definition
    what the port found for it *)
 let v_to_list_def,v_to_list_ind = define_wf
   `MEASURE (\x0. semanticPrimitives_v_size x0)`
-  `semanticPrimitives_v_to_list x1 =
-   match x1 with
+  `semanticPrimitives_v_to_list x1' =
+   match x1' with
      semanticPrimitives_Conv (SOME stamp) [] ->
      (if stamp = TypeStamp (implode "[]") list_type_num then SOME [] else
        NONE)
@@ -509,8 +509,8 @@ let v_to_char_list_def,v_to_char_list_ind = define_wf
    what the port found for it *)
 let vs_to_string_def,vs_to_string_ind = define_wf
   `MEASURE (\x0. semanticPrimitives_v_size3 x0)`
-  `semanticPrimitives_vs_to_string x1 =
-   match x1 with
+  `semanticPrimitives_vs_to_string x1' =
+   match x1' with
      [] -> SOME (implode "")
    | CONS (semanticPrimitives_Litv (ast_StrLit s1)) vs ->
      (match semanticPrimitives_vs_to_string vs with NONE -> NONE | SOME s2
@@ -818,8 +818,8 @@ let thunk_op_def = new_definition
      | _ -> NONE`;;
 
 let check_type_def = new_definition
-  `semanticPrimitives_check_type x1 v =
-   match x1 with
+  `semanticPrimitives_check_type x1' v =
+   match x1' with
      ast_BoolT -> (v = semanticPrimitives_Boolv T \/ v =
        semanticPrimitives_Boolv F)
    | ast_IntT -> (?i. v = semanticPrimitives_Litv (ast_IntLit i))
@@ -830,8 +830,8 @@ let check_type_def = new_definition
    | ast_Float64T -> (?w. v = semanticPrimitives_Litv (ast_Float64 w))`;;
 
 let dest_Litv_def = new_definition
-  `semanticPrimitives_dest_Litv x1 =
-   match x1 with
+  `semanticPrimitives_dest_Litv x1'' =
+   match x1'' with
      semanticPrimitives_Litv v -> SOME v
    | _ -> NONE`;;
 add_simp dest_Litv_def;;
@@ -985,8 +985,8 @@ let do_arith_def = new_definition
      | _ -> NONE`;;
 
 let do_conversion_def = new_definition
-  `do_conversion v x2 x3 =
-     match (x2,x3) with
+  `do_conversion v x2' x3 =
+     match (x2',x3) with
        // Word to Int conversions
      (ast_WordT ast_W8,ast_IntT) ->
         SOME (INR (semanticPrimitives_Litv (ast_IntLit (&(w2n

@@ -355,7 +355,7 @@ let config_tuple1_def = new_definition
        c)),config_tuple2 c)`;;
 
 let cake_configs_eq = prove
- (`!f. clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\
+ (`!f. backend_compile asm_conf c prog = SOME (b,bm,c') /\
      f c' = f c /\ (!c p. f (FST (compile_inc_progs T asm_conf c p)) = f c)
        ==>
    f c' = f c /\ (!i. f (cake_configs asm_conf c' src x) = f c)`,
@@ -367,7 +367,7 @@ let PAIR_MAP_EQ_EQ = prove
 
 (* known_compile_IS_SOME *)
 let backendProof_known_compile_IS_SOME = prove
- (`clos_call_compile kc es = (kc',es') ==> (IS_SOME kc' <=> IS_SOME kc)`,
+ (`backend_compile kc es = (kc',es') ==> (IS_SOME kc' <=> IS_SOME kc)`,
   CHEAT_TAC);;
 
 let attach_bitmaps_SOME = prove
@@ -380,7 +380,7 @@ let attach_bitmaps_SOME = prove
   CHEAT_TAC);;
 
 let known_compile_static_conf = prove
- (`clos_call_compile kc es = (kc',es') ==> known_static_conf kc' =
+ (`backend_compile kc es = (kc',es') ==> known_static_conf kc' =
   known_static_conf kc`,
   CHEAT_TAC);;
 
@@ -390,7 +390,7 @@ let known_option_upd_val_spt_eq = prove
   CHEAT_TAC);;
 
 let source_compile_pattern_cfg = prove
- (`(clos_call_compile c p = (c',p') ==> source_to_flat_config_pattern_cfg c' =
+ (`(backend_compile c p = (c',p') ==> source_to_flat_config_pattern_cfg c' =
   source_to_flat_config_pattern_cfg c) /\
    (inc_compile env_id c p = (c',p') ==> source_to_flat_config_pattern_cfg
      c' = source_to_flat_config_pattern_cfg c)`,
@@ -444,7 +444,7 @@ let cake_orac_eqs = prove
      backend_progs_flat_prog ps) =
    cake_orac asm_conf c' src f1 (\ps. backend_progs_clos_prog ps) /\
    (
-   clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ clos_c =
+   backend_compile asm_conf c prog = SOME (b,bm,c') /\ clos_c =
      backend_config_clos_conf c ==>
    pure_co (clos_to_bvl_compile_inc (clos_to_bvl_config_max_app clos_c)) o
    pure_co clos_annotate_compile_inc o
@@ -459,7 +459,7 @@ let cake_orac_eqs = prove
    cake_orac asm_conf c' src config_tuple2 (\ps. backend_progs_bvl_prog ps))
      /\
    (
-   clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ bvl_c =
+   backend_compile asm_conf c prog = SOME (b,bm,c') /\ bvl_c =
      backend_config_bvl_conf c ==>
    full_co bvl_c
      (cake_orac asm_conf c' src config_tuple2 (\ps. backend_progs_bvl_prog
@@ -470,7 +470,7 @@ let cake_orac_eqs = prove
      cake_orac asm_conf c' src f3 (\ps. backend_progs_bvi_prog ps) =
    cake_orac asm_conf c' src f3 (\ps. backend_progs_data_prog ps) /\
    (
-   clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\
+   backend_compile asm_conf c prog = SOME (b,bm,c') /\
      dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c) /\
      tr_c = asm_config_two_reg_arith asm_conf /\
      reg_c = asm_config_reg_count asm_conf -
@@ -483,7 +483,7 @@ let cake_orac_eqs = prove
        f4 (\ps. backend_progs_data_prog ps) =
    cake_orac asm_conf c' src f4 (\ps. backend_progs_word_prog ps)) /\
    (
-   clos_mti_compile asm_conf c prog = SOME (b,bm,c')
+   backend_compile asm_conf c prog = SOME (b,bm,c')
      /\ stack_to_lab_config_perf_calls (backend_config_stack_conf c) = F ==>
    (\((bm0,cfg),prg). (\(prg2,fs,bm). (cfg,prg2,append (FST bm)))
      (compile_word_to_stack asm_conf F (asm_config_reg_count asm_conf -
@@ -494,7 +494,7 @@ let cake_orac_eqs = prove
      config_tuple2)
      (\ps. (backend_progs_stack_prog ps,backend_progs_cur_bm ps))) /\
    (
-   clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ reg_nm =
+   backend_compile asm_conf c prog = SOME (b,bm,c') /\ reg_nm =
      stack_to_lab_config_reg_names (backend_config_stack_conf c) /\
      jump = stack_to_lab_config_jump (backend_config_stack_conf c) /\ sp =
        asm_config_reg_count asm_conf -
@@ -592,7 +592,7 @@ let oracle_monotonic_globals_flat_to_clos = prove
      (0 INSERT IMAGE SUC (SET_OF_BAG (flatProps_elist_globals p)))
      orac ==>
    oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND) (<)
-     (SET_OF_BAG (closProps_elist_globals (bvi_to_data_compile_prog p)))
+     (SET_OF_BAG (closProps_elist_globals (word_to_stack_compile_prog p)))
      (pure_co inc_compile_decs o orac)`,
   CHEAT_TAC);;
 
@@ -694,13 +694,13 @@ let configs_nn3_MOD_namespaces = prove
   CHEAT_TAC);;
 
 let configs_nn2_MOD_namespaces_ok = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==> bvl_to_bvi_config_next_name2 (backend_config_bvl_conf
    c') MOD bvl_to_bvi_namespaces = 2`,
   CHEAT_TAC);;
 
 let configs_nn3_MOD_namespaces_ok = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==> bvl_to_bvi_config_next_name3 (backend_config_bvl_conf
    c') MOD bvl_to_bvi_namespaces = 3`,
   CHEAT_TAC);;
@@ -713,7 +713,7 @@ let bvl_to_bvi_compile_inc_all_num_stubs_LE = prove
   CHEAT_TAC);;
 
 let bvl_num_stubs_LE_bvi_prog = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') ==>
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') ==>
    ALL ((<=) bvl_num_stubs)
      (MAP FST (SND (cake_orac asm_conf c' syntax f (\ps.
        backend_progs_bvi_prog ps) n)))`,
@@ -764,7 +764,7 @@ let cake_orac_source_is_state = prove
 
 let is_state_oracle_cake_orac_to_comp = prove
  (`is_state_oracle f_inc (cake_orac asm_conf c' syntax st_f ps_f) ==>
-   clos_mti_compile asm_conf c prog = SOME (b,bm,c') ==>
+   backend_compile asm_conf c prog = SOME (b,bm,c') ==>
    (!c'' ps c''' g_p'.
      (
      (\(sc,cc,bc,mc). (source_to_flat_config_pattern_cfg
@@ -816,8 +816,8 @@ let BAG_ALL_DISTINCT_BAG_IMAGE_SUC' = prove
 add_simp BAG_ALL_DISTINCT_BAG_IMAGE_SUC';;
 
 let cake_orac_clos_syntax_oracle_ok = prove
- (`clos_mti_compile asm_conf (c:backend_config) prog = SOME (b,bm,c') /\
-   clos_call_compile c2 clos_prog = (clos_c',clos_prog') /\
+ (`backend_compile asm_conf (c:backend_config) prog = SOME (b,bm,c') /\
+   backend_compile c2 clos_prog = (clos_c',clos_prog') /\
    (?st. backend_config_clos_conf c' = clos_to_bvl_config_start_fupd (K st)
      clos_c') /\
    c2 = backend_config_clos_conf c /\ clos_prog = SND (to_clos c prog) /\
@@ -831,7 +831,7 @@ let cake_orac_clos_syntax_oracle_ok = prove
   CHEAT_TAC);;
 
 let cake_orac_bvl_ALL_DISTINCT = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') ==>
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') ==>
    ALL_DISTINCT (MAP FST (SND (cake_orac asm_conf c' syntax f (\ps.
      backend_progs_bvl_prog ps) n)))`,
   CHEAT_TAC);;
@@ -850,7 +850,7 @@ let bvl_to_bvi_compile_inc_all_DISTINCT = prove
   CHEAT_TAC);;
 
 let cake_orac_stack_ALL_DISTINCT = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') ==>
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') ==>
    ALL_DISTINCT (MAP FST (FST (SND (cake_orac asm_conf c' syntax
      (SND o SND o SND o SND o SND o SND o config_tuple2)
      (\ps. (backend_progs_stack_prog ps,backend_progs_cur_bm ps)) n))))`,
@@ -866,7 +866,7 @@ let MAP_full_compile_single_to_compile = prove
   CHEAT_TAC);;
 
 let compile_to_word_conventions2 = prove
- (`clos_mti_compile wc ac p = (_,ps) /\
+ (`backend_compile wc ac p = (_,ps) /\
    ALL (\(_,_,prg). no_share_inst prg \/ ~(asm_config_ISA ac = Ag32)) p ==>
    MAP FST ps = MAP FST p /\
    ALL2 labels_rel
@@ -901,7 +901,7 @@ let stack_labels_ok_FST_code_labels_Section_num = prove
   CHEAT_TAC);;
 
 let lab_labels_ok_oracle = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\
    cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND o SND o
      config_tuple2)
      (\ps. backend_progs_lab_prog ps) i = (cfg,code) ==>
@@ -916,7 +916,7 @@ let compile_lab_domain_labels = prove
   CHEAT_TAC);;
 
 let accum_lab_conf_labels = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') ==>
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') ==>
    domain (lab_to_target_config_labels (backend_config_lab_conf
      (cake_configs asm_conf c' syntax i))) SUBSET
    domain (lab_to_target_config_labels (backend_config_lab_conf c')) UNION
@@ -934,7 +934,7 @@ let MAP_Section_num_stack_to_lab_SUBSET = prove
   CHEAT_TAC);;
 
 let to_data_labels_ok = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==>
    (let (_,p,_) = to_data c prog in
    ALL (\n. data_num_stubs <= n) (MAP FST p) /\ ALL_DISTINCT (MAP FST p))`,
@@ -946,7 +946,7 @@ let data_to_word_stubs_above_store_consts_stub = prove
   CHEAT_TAC);;
 
 let to_word_labels_ok = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==>
    (let (_,p,_) = to_word asm_conf c prog in
    ALL_DISTINCT (MAP FST p) /\
@@ -979,7 +979,7 @@ let to_word_perf_calls = prove
   CHEAT_TAC);;
 
 let to_lab_labels_ok = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==>
    labels_ok (FST (SND (SND (to_lab asm_conf c prog))))`,
   CHEAT_TAC);;
@@ -1022,7 +1022,7 @@ let oracle_monotonic_bounded_state = prove
    variables of its own are read as variables *)
 let backendProof_compile_prog_avoids_nss_2 = prove
  (cake_as_vars (fun () ->
-    `bvl_to_bvi_compile_prog start f prog = (loc,code,new_state) /\
+    `word_to_stack_compile_prog start f prog = (loc,code,new_state) /\
      MEM k (MAP FST code) /\ k MOD bvl_to_bvi_namespaces = 2 ==>
      k < bvl_num_stubs`),
   CHEAT_TAC);;
@@ -1042,7 +1042,7 @@ let tmc_compile_prog_MEM_not_nss_3 = prove
   CHEAT_TAC);;
 
 let is_state_oracle_tailrec_cake_orac = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') ==>
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') ==>
    is_state_oracle (bvi_tailrec_compile_prog (bvl_to_bvi_config_do_tailrec
      (backend_config_bvl_conf c)))
      (state_co bvl_to_bvi_compile_inc (state_co
@@ -1055,7 +1055,7 @@ let is_state_oracle_tailrec_cake_orac = prove
   CHEAT_TAC);;
 
 let is_state_oracle_tmc_cake_orac = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') ==>
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') ==>
    is_state_oracle (bvi_tmc_compile_prog (bvl_to_bvi_config_do_tmc
      (backend_config_bvl_conf c)))
      (state_co (bvi_tailrec_compile_prog (bvl_to_bvi_config_do_tailrec
@@ -1128,7 +1128,7 @@ let cake_orac_monotonic_bounded_state = prove
   CHEAT_TAC);;
 
 let monotonic_DISJOINT_labels_lab = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\
    oracle_monotonic (set_of_list o MAP Section_num o SND) (\x y. ~(x = y))
      (domain (lab_to_target_config_labels (backend_config_lab_conf c')))
      (cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND o SND o
@@ -1142,7 +1142,7 @@ let monotonic_DISJOINT_labels_lab = prove
   CHEAT_TAC);;
 
 let monotonic_labels_stack_to_lab = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==>
    oracle_monotonic (set_of_list o MAP FST o FST o SND) (\x y. ~(x = y))
      (set_of_list (MAP FST (FST (SND (SND (to_stack asm_conf c prog)))))
@@ -1158,7 +1158,7 @@ let monotonic_labels_stack_to_lab = prove
   CHEAT_TAC);;
 
 let monotonic_labels_bvi_down_to_stack = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==>
    oracle_monotonic (set_of_list o MAP FST o SND) (\x y. ~(x = y))
      (set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION count (SUC
@@ -1174,7 +1174,7 @@ let monotonic_labels_bvi_down_to_stack = prove
   CHEAT_TAC);;
 
 let monotonic_labels_bvl_to_bvi = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==>
    oracle_monotonic (set_of_list o MAP FST o SND) (\x y. ~(x = y))
      (set_of_list (MAP FST (FST (SND (to_bvl c prog)))))
@@ -1196,7 +1196,7 @@ let backendProof_syntax_oracle_ok_start = prove
   CHEAT_TAC);;
 
 let monotonic_labels_bvl = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\ backend_config_ok
   asm_conf c ==>
    oracle_monotonic (set_of_list o MAP FST o SND) (\x y. ~(x = y))
      (set_of_list (MAP FST (FST (SND (to_bvl c prog)))))
@@ -1205,7 +1205,7 @@ let monotonic_labels_bvl = prove
   CHEAT_TAC);;
 
 let good_code_lab_oracle = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\
    // validity of the code produced in the oracle at step i
    // - the tricky bit is cfg.labels, which gathers past and current labels
    // - older labels must always be there
@@ -1221,7 +1221,7 @@ let good_code_lab_oracle = prove
   CHEAT_TAC);;
 
 let oracle_stack_good_code = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') /\
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') /\
    reg_count_sub = (
      asm_config_reg_count asm_conf - (LENGTH (asm_config_avoid_regs
        asm_conf) + 3)) /\
@@ -1235,7 +1235,7 @@ let oracle_stack_good_code = prove
 let to_lab_good_code_lemma = prove
  (`backend_compile (backend_config_stack_conf c) (backend_config_data_conf c)
   lim1 lim2 offs stack_prog = code /\
-   clos_mti_compile asm_conf3 F word_prog = (bm,wc,fs,stack_prog) /\
+   backend_compile asm_conf3 F word_prog = (bm,wc,fs,stack_prog) /\
    backend_compile data_conf word_conf asm_conf2 data_prog = (col,word_prog)
      /\
    labels_ok code /\
@@ -1326,7 +1326,7 @@ let compile_word_to_stack_sfs_aux = prove
 
 let IMP_is_safe_for_space = prove
  (`backend_config_ok (asm_conf:'a asm_config) c ==>
-   clos_mti_compile asm_conf c prog = SOME (code,data,conf) ==>
+   backend_compile asm_conf c prog = SOME (code,data,conf) ==>
    to_data c prog = (bvi_conf,data_prog,names) ==>
      ~(data_to_word_config_gc_kind (backend_config_data_conf
    c) = backend_common_None) ==>
@@ -1365,7 +1365,7 @@ let PERMUTE_IMP_LINV = prove
   CHEAT_TAC);;
 
 let state_co_inc_compile_has_flat_comp = prove
- (`clos_mti_compile asm_conf c prog = SOME (b,bm,c') ==>
+ (`backend_compile asm_conf c prog = SOME (b,bm,c') ==>
    state_co (\c (env_id,(decs:dec list)). inc_compile env_id c (f decs))
      (cake_orac asm_conf c' src config_tuple1 g) =
    pure_co (MAP (compile_dec (source_to_flat_config_pattern_cfg
@@ -1402,7 +1402,7 @@ let backend_from_data_tuple_cc_def = new_definition
              OPTION_MAP
                (\(bytes,cfg).
                  (bytes,append (FST bm),(SND bm,cfg)))
-               (clos_mti_compile asm_conf cfg
+               (backend_compile asm_conf cfg
                  (MAP prog_to_section
                    (MAP
                      (stack_alloc_prog_comp (stack_to_lab_config_reg_names
@@ -1517,7 +1517,7 @@ let config_wf_abs_conc = prove
 
 (* [local] *)
 let cake_orac_extended_wf = prove
- (`clos_mti_compile asm_conf (c:backend_config) prog = SOME (b,bm,c') /\
+ (`backend_compile asm_conf (c:backend_config) prog = SOME (b,bm,c') /\
    opt_eval_config_wf asm_conf c' (SOME ci) ==>
    orac_extended_wf (mk_compiler_fun_from_ci ci)
      ((\(cfg,id',ds). (id',compiler_instance_config_v ci cfg,ds)) o
@@ -1602,7 +1602,7 @@ let source_to_source_semantics_prog_oracle_intro = prove
 
 let source_eval_to_flat_semantics = prove
  (`~(semantics_prog (add_eval_state ev s0) env prog ffi_Fail) /\
-   clos_mti_compile asm_conf (c:backend_config) prog = SOME (b,bm,c') /\
+   backend_compile asm_conf (c:backend_config) prog = SOME (b,bm,c') /\
    source_to_flat_compile prim_src_config (source_to_source_compile prog) =
      (src_c',p') /\
    THE (prim_sem_env (ffi:'ffi ffi_state)) = (s0,env) /\
@@ -1627,7 +1627,7 @@ let flat_semantics = prove
          co in ~(flatSem_semantics f_inst ffi ds = ffi_Fail) /\
    0 < clos_to_bvl_config_max_app cconf /\ no_Mat_decs ds ==>
    closSem_semantics ffi (clos_to_bvl_config_max_app cconf) FEMPTY
-     (pure_co inc_compile_decs o co) cc (bvi_to_data_compile_prog ds) =
+     (pure_co inc_compile_decs o co) cc (word_to_stack_compile_prog ds) =
    flatSem_semantics f_inst ffi ds`,
   CHEAT_TAC);;
 
@@ -1681,7 +1681,7 @@ let compile_lab_no_share_mem_IMP_mmio_pcs_min_index = prove
   CHEAT_TAC);;
 
 let compile_correct' = prove
- (`clos_mti_compile (asm_conf:'a asm_config) (c:backend_config) prog = SOME
+ (`backend_compile (asm_conf:'a asm_config) (c:backend_config) prog = SOME
   (bytes,bitmaps,c') ==>
     (let (s0,env) = THE (prim_sem_env (ffi:'ffi ffi_state)) in
     let s = add_eval_state ev s0 in
@@ -1707,7 +1707,7 @@ let compile_correct' = prove
 
 (* compile_correct *)
 let backendProof_compile_correct = prove
- (`clos_mti_compile (asm_conf:'a asm_config) (c:backend_config) prog = SOME
+ (`backend_compile (asm_conf:'a asm_config) (c:backend_config) prog = SOME
   (bytes,bitmaps,c') ==>
     (let (s,env) = THE (prim_sem_env (ffi:'ffi ffi_state)) in
     ~(semantics_prog s env prog ffi_Fail) /\
@@ -1731,7 +1731,7 @@ let semantics_prog_sing = prove
    variables of its own are read as variables *)
 let compile_correct_is_safe_for_space = prove
  (cake_as_vars (fun () ->
-    `clos_mti_compile (asm_conf:'a asm_config) (c:backend_config) prog = SOME
+    `backend_compile (asm_conf:'a asm_config) (c:backend_config) prog = SOME
   (bytes,bitmaps,c') ==>
      backendProof_is_safe_for_space ffi asm_conf c prog
        (stack_limit,heap_limit) ==>
@@ -1755,7 +1755,7 @@ let the_EvalDecs_def = define_general
   `the_EvalDecs (EvalDecs x) = x`;;
 
 let compile_correct_eval = prove
- (`clos_mti_compile asm_conf c prog = SOME (bytes,bitmaps,c') ==>
+ (`backend_compile asm_conf c prog = SOME (bytes,bitmaps,c') ==>
     (let (s0,env) = THE (prim_sem_env (ffi:'ffi ffi_state)) in
     ~(semantics_prog (add_eval_state ev s0) env prog ffi_Fail)
       /\ backend_config_ok asm_conf c /\

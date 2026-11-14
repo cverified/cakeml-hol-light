@@ -58,8 +58,8 @@ let dest_word_loc_def = new_definition
      | (_:'a word_loc) -> NONE`;;
 
 let dest_result_loc_def = new_definition
-  `dest_result_loc x1 =
-     match x1 with
+  `dest_result_loc x1' =
+     match x1' with
        SOME (wordSem_Result w ns) ->
        UNIONS (set_of_list (MAP (\x. match (dest_word_loc x) with NONE -> {}
          | SOME x -> {x}) ns))
@@ -158,27 +158,27 @@ let word_elimProof_get_stack_def,word_elimProof_get_stack_ind = define_wf
 
 let get_stack_hd_thm = prove
  (`!stack' dr l0 l opt t.
-      domain (reg_alloc_get_stack stack') SUBSET dr /\
+      domain (word_elimProof_get_stack stack') SUBSET dr /\
       stack' = CONS (StackFrame lsz l l0 opt) t ==> domain (get_locals
         (sptree_union (fromAList l0) (fromAList l))) SUBSET dr /\
-        domain (reg_alloc_get_stack t) SUBSET dr`,
+        domain (word_elimProof_get_stack t) SUBSET dr`,
   CHEAT_TAC);;
 
 let get_stack_LASTN = prove
- (`!stack' n. domain (reg_alloc_get_stack (LASTN n stack')) SUBSET domain
-  (reg_alloc_get_stack stack')`,
+ (`!stack' n. domain (word_elimProof_get_stack (LASTN n stack')) SUBSET
+  domain (word_elimProof_get_stack stack')`,
   CHEAT_TAC);;
 
 let get_stack_CONS = prove
- (`!h t. domain (reg_alloc_get_stack [h]) SUBSET domain (reg_alloc_get_stack
-  (CONS h t)) /\
-      domain (reg_alloc_get_stack t) SUBSET domain (reg_alloc_get_stack
-        (CONS h t))`,
+ (`!h t. domain (word_elimProof_get_stack [h]) SUBSET domain
+  (word_elimProof_get_stack (CONS h t)) /\
+      domain (word_elimProof_get_stack t) SUBSET domain
+        (word_elimProof_get_stack (CONS h t))`,
   CHEAT_TAC);;
 
 let get_stack_enc_stack = prove
  (`!stack' reachable.
-   domain (reg_alloc_get_stack stack') SUBSET domain reachable ==> (!e.
+   domain (word_elimProof_get_stack stack') SUBSET domain reachable ==> (!e.
    MEM e (wordSem_enc_stack stack') ==> (match dest_word_loc e with NONE ->
      {} | SOME n -> {n}) SUBSET
       domain reachable)`,
@@ -187,9 +187,9 @@ let get_stack_enc_stack = prove
 let get_stack_dec_stack = prove
  (`!locs stack' reachable new_stack.
    (!n n0. MEM (wordLang_Loc n n0) locs ==> n IN domain reachable) /\
-   domain (reg_alloc_get_stack stack') SUBSET domain reachable /\
+   domain (word_elimProof_get_stack stack') SUBSET domain reachable /\
    wordSem_dec_stack locs stack' = SOME new_stack ==> domain
-     (reg_alloc_get_stack new_stack) SUBSET domain reachable`,
+     (word_elimProof_get_stack new_stack) SUBSET domain reachable`,
   CHEAT_TAC);;
 
 let get_memory_def = new_definition
@@ -220,7 +220,7 @@ let find_loc_state_def = new_definition
   `find_loc_state s =
        (let loc = (get_locals (wordSem_state_locals s)) in
        let sto = (word_elimProof_get_store (wordSem_state_store s)) in
-       let sta = (reg_alloc_get_stack (wordSem_state_stack s)) in
+       let sta = (word_elimProof_get_stack (wordSem_state_stack s)) in
        let mem' = (get_memory (wordSem_state_memory s)
          (wordSem_state_mdomain s)) in
        sptree_union (sptree_union loc sto) (sptree_union sta mem'))`;;
@@ -229,8 +229,9 @@ let domain_find_loc_state = prove
  (`!s. domain (find_loc_state s) =
       domain (get_locals (wordSem_state_locals s)) UNION domain
         (word_elimProof_get_store (wordSem_state_store s)) UNION
-      domain (reg_alloc_get_stack (wordSem_state_stack s)) UNION domain
-        (get_memory (wordSem_state_memory s) (wordSem_state_mdomain s))`,
+      domain (word_elimProof_get_stack (wordSem_state_stack s)) UNION
+        domain (get_memory (wordSem_state_memory s) (wordSem_state_mdomain
+        s))`,
   CHEAT_TAC);;
 
 let word_elimProof_code_rel_def = new_definition
@@ -252,8 +253,8 @@ let gc_no_new_locs_def = new_definition
   mem1 sto1 sta1.
        (g (wordSem_enc_stack sta,mem',mdom,sto) = SOME (wl,mem1,sto1)) /\
         wordSem_dec_stack wl sta = SOME sta1 ==>
-       domain (reg_alloc_get_stack sta1) SUBSET domain (reg_alloc_get_stack
-         sta) /\
+       domain (word_elimProof_get_stack sta1) SUBSET domain
+         (word_elimProof_get_stack sta) /\
        domain (get_memory mem1 mdom) SUBSET domain (get_memory mem' mdom) /\
        domain (word_elimProof_get_store sto1) SUBSET domain
          (word_elimProof_get_store sto))`;;
@@ -336,8 +337,9 @@ let get_memory_write_bytearray_lemma = prove
 let stack_list_rearrange_lemma = prove
  (`!s dr locs opt lsz.
       domain (get_locals (wordSem_state_locals s)) SUBSET dr /\
-      domain (reg_alloc_get_stack (wordSem_state_stack s)) SUBSET dr ==>
-      domain (reg_alloc_get_stack (CONS (StackFrame lsz (toAList (inter
+      domain (word_elimProof_get_stack (wordSem_state_stack s)) SUBSET dr
+        ==>
+      domain (word_elimProof_get_stack (CONS (StackFrame lsz (toAList (inter
         (wordSem_state_locals s) n)) (list_rearrange (wordSem_state_permute s
         0)
    (sort key_val_compare (toAList (inter (wordSem_state_locals s) locs))))

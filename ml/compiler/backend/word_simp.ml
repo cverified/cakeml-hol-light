@@ -176,8 +176,8 @@ let _ = size_thms "wordLang_exp";;
    what the port found for it *)
 let strip_const_def,strip_const_ind = define_wf
   `MEASURE (\x0. wordLang_exp_size1 (\x. 0) x0)`
-  `strip_const x1 =
-     match x1 with
+  `strip_const x1' =
+     match x1' with
        [] -> SOME []
      | CONS (wordLang_Const w) cs ->
         (match strip_const cs with SOME ws -> SOME (CONS w ws)

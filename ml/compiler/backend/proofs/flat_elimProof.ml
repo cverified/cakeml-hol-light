@@ -230,8 +230,8 @@ let find_env_globals_def = new_definition
   env))`;;
 
 let find_result_globals_def = new_definition
-  `find_result_globals x1 =
-     match x1 with
+  `find_result_globals x1' =
+     match x1' with
        SOME (Rraise v) -> find_v_globals v
      | _ -> LN`;;
 

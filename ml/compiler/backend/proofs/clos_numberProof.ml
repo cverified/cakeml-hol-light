@@ -183,10 +183,10 @@ let state_rel_code = prove
 
 (* v_rel_Boolv *)
 let clos_numberProof_v_rel_Boolv = prove
- (`(clos_numberProof_v_rel max_app x (semanticPrimitives_Boolv b) <=> (x =
-  semanticPrimitives_Boolv b)) /\
-    (clos_numberProof_v_rel max_app (semanticPrimitives_Boolv b) x <=> (x
-      = semanticPrimitives_Boolv b))`,
+ (`(clos_numberProof_v_rel max_app x (closSem_Boolv b) <=> (x = closSem_Boolv
+  b)) /\
+    (clos_numberProof_v_rel max_app (closSem_Boolv b) x <=> (x =
+      closSem_Boolv b))`,
   CHEAT_TAC);;
 add_simp clos_numberProof_v_rel_Boolv;;
 
@@ -240,8 +240,8 @@ let helper = prove
 
 (* [local] *)
 let v_rel_Boolv_mono = prove
- (`(x <=> y) ==> (clos_numberProof_v_rel max_app (semanticPrimitives_Boolv x)
-  (semanticPrimitives_Boolv y))`,
+ (`(x <=> y) ==> (clos_numberProof_v_rel max_app (closSem_Boolv x)
+  (closSem_Boolv y))`,
   CHEAT_TAC);;
 
 (* v_to_list[local] *)

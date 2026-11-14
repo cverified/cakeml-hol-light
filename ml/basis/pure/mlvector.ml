@@ -58,29 +58,29 @@ let toList_aux_thm = prove
   CHEAT_TAC);;
 
 let toList_thm = prove
- (`!ls. sptree_toList (Vector ls) = ls`,
+ (`!ls. mlvector_toList (Vector ls) = ls`,
   CHEAT_TAC);;
 
 let length_toList = prove
- (`LENGTH (sptree_toList vec) = length vec`,
+ (`LENGTH (mlvector_toList vec) = length vec`,
   CHEAT_TAC);;
 
 let toList_11 = prove
- (`(sptree_toList l = sptree_toList l') = (l = l')`,
+ (`(mlvector_toList l = mlvector_toList l') = (l = l')`,
   CHEAT_TAC);;
 add_simp toList_11;;
 
 let EL_toList = prove
- (`EL n (sptree_toList l) = sub l n`,
+ (`EL n (mlvector_toList l) = sub l n`,
   CHEAT_TAC);;
 
 let toList_fromList = prove
- (`(sptree_toList (fromList l) = l) /\ (fromList (sptree_toList v) = v)`,
+ (`(mlvector_toList (fromList l) = l) /\ (fromList (mlvector_toList v) = v)`,
   CHEAT_TAC);;
 add_simp toList_fromList;;
 
 let update_def = new_definition
-  `update vec i x = Vector (LUPDATE x i (sptree_toList (vec)))`;;
+  `update vec i x = Vector (LUPDATE x i (mlvector_toList (vec)))`;;
 
 let update_thm = prove
  (`!vec i x. sub (update vec i x) i = if i < length vec then x
@@ -92,10 +92,10 @@ let mlvector_concat_def = new_definition
   `mlvector_concat l = Vector (FLAT (MAP mlvector_toList l))`;;
 
 let mlvector_map_def = new_definition
-  `mlvector_map vec f = Vector (MAP f (sptree_toList vec))`;;
+  `mlvector_map vec f = Vector (MAP f (mlvector_toList vec))`;;
 
 let mlvector_mapi_def = new_definition
-  `mlvector_mapi vec f = Vector (MAPi f (sptree_toList vec))`;;
+  `mlvector_mapi vec f = Vector (MAPi f (mlvector_toList vec))`;;
 
 
 (* [local] *)
@@ -119,12 +119,13 @@ let mlvector_foldli_def = new_definition
 let mlvector_foldli_aux_thm = prove
  (`!f e vec n len. (n + len = length vec) ==>
      (mlvector_foldli_aux f e vec n len = mllist_foldli_aux f e n (DROP n
-       (sptree_toList vec)))`,
+       (mlvector_toList vec)))`,
   CHEAT_TAC);;
 
 (* foldli_thm *)
 let mlvector_foldli_thm = prove
- (`!f e vec. mllist_foldli f e vec = mllist_foldli f e (sptree_toList vec)`,
+ (`!f e vec. mlvector_foldli f e vec = mllist_foldli f e (mlvector_toList
+  vec)`,
   CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -141,11 +142,11 @@ let mlvector_foldl_def = new_definition
 (* [local] *)
 let foldl_aux_thm = prove
  (`!f e vec x len. (x + len = length vec) ==>
-     (foldl_aux f e vec x len = FOLDL f e (DROP x (sptree_toList vec)))`,
+     (foldl_aux f e vec x len = FOLDL f e (DROP x (mlvector_toList vec)))`,
   CHEAT_TAC);;
 
 let foldl_thm = prove
- (`!f e vec. mllist_foldl f e vec = FOLDL f e (sptree_toList vec)`,
+ (`!f e vec. mlvector_foldl f e vec = FOLDL f e (mlvector_toList vec)`,
   (SIMP_TAC[foldl_aux_thm; mlvector_foldl_def; ADD_CLAUSES; DROP_0]));;
 
 
@@ -164,11 +165,12 @@ let foldri_def = new_definition
 (* [local] *)
 let foldri_aux_thm = prove
  (`!f e vec len. len <= length vec ==>
-     (foldri_aux f e vec len = FOLDRi f e (TAKE len (sptree_toList vec)))`,
+     (foldri_aux f e vec len = FOLDRi f e (TAKE len (mlvector_toList
+       vec)))`,
   CHEAT_TAC);;
 
 let foldri_thm = prove
- (`!f e vec. foldri f e vec = FOLDRi f e (sptree_toList vec)`,
+ (`!f e vec. foldri f e vec = FOLDRi f e (mlvector_toList vec)`,
   CHEAT_TAC);;
 
 
@@ -185,11 +187,11 @@ let foldr_def = new_definition
 (* [local] *)
 let foldr_aux_thm = prove
  (`!f e vec len. len <= length vec ==>
-     (foldr_aux f e vec len = ITLIST f (TAKE len (sptree_toList vec)) e)`,
+     (foldr_aux f e vec len = ITLIST f (TAKE len (mlvector_toList vec)) e)`,
   CHEAT_TAC);;
 
 let foldr_thm = prove
- (`!f e vec. foldr f e vec = ITLIST f (sptree_toList vec) e`,
+ (`!f e vec. foldr f e vec = ITLIST f (mlvector_toList vec) e`,
   CHEAT_TAC);;
 
 
@@ -221,11 +223,11 @@ let find_def = new_definition
 (* [local] *)
 let find_aux_thm = prove
  (`!f vec n len. (n + len = length vec) ==> (find_aux f vec n len = FIND f
-  (DROP n (sptree_toList vec)))`,
+  (DROP n (mlvector_toList vec)))`,
   CHEAT_TAC);;
 
 let find_thm = prove
- (`!f vec. find f vec = FIND f (sptree_toList vec)`,
+ (`!f vec. find f vec = FIND f (mlvector_toList vec)`,
   (SIMP_TAC[find_aux_thm; find_def; ADD_CLAUSES; DROP_0]));;
 
 
@@ -245,11 +247,11 @@ let mlvector_exists_def = new_definition
 let exists_aux_thm = prove
  (`!f vec n len.
      n + len = length vec ==>
-     exists_aux f vec n len = EX f (DROP n (sptree_toList vec))`,
+     exists_aux f vec n len = EX f (DROP n (mlvector_toList vec))`,
   CHEAT_TAC);;
 
 let exists_thm = prove
- (`!f vec. mlvector_exists f vec = EX f (sptree_toList vec)`,
+ (`!f vec. mlvector_exists f vec = EX f (mlvector_toList vec)`,
   CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -268,11 +270,11 @@ let all_def = new_definition
 let all_aux_thm = prove
  (`!f vec n len.
      n + len = length vec ==>
-     all_aux f vec n len = ALL f (DROP n (sptree_toList vec))`,
+     all_aux f vec n len = ALL f (DROP n (mlvector_toList vec))`,
   CHEAT_TAC);;
 
 let all_thm = prove
- (`!f vec. all f vec = ALL f (sptree_toList vec)`,
+ (`!f vec. all f vec = ALL f (mlvector_toList vec)`,
   CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -298,8 +300,8 @@ let mlvector_collate_aux_less_thm = prove
  (`!f vec1 vec2 n len.
      n + len = length vec1 /\ length vec1 < length vec2 ==>
      mlvector_collate_aux f vec1 vec2 n LESS len =
-     mllist_collate f (DROP n (sptree_toList vec1)) (DROP n (sptree_toList
-       vec2))`,
+     mllist_collate f (DROP n (mlvector_toList vec1)) (DROP n
+       (mlvector_toList vec2))`,
   CHEAT_TAC);;
 
 (* collate_aux_equal_thm[local] *)
@@ -307,8 +309,8 @@ let mlvector_collate_aux_equal_thm = prove
  (`!f vec1 vec2 n len.
      n + len = length vec2 /\ length vec1 = length vec2 ==>
      mlvector_collate_aux f vec1 vec2 n EQUAL len =
-     mllist_collate f (DROP n (sptree_toList vec1)) (DROP n (sptree_toList
-       vec2))`,
+     mllist_collate f (DROP n (mlvector_toList vec1)) (DROP n
+       (mlvector_toList vec2))`,
   CHEAT_TAC);;
 
 (* collate_aux_greater_thm[local] *)
@@ -316,15 +318,15 @@ let mlvector_collate_aux_greater_thm = prove
  (`!f vec1 vec2 n len.
      n + len = length vec2 /\ length vec2 < length vec1 ==>
      mlvector_collate_aux f vec1 vec2 n GREATER len =
-       mllist_collate f (DROP n (sptree_toList vec1)) (DROP n
-         (sptree_toList vec2))`,
+       mllist_collate f (DROP n (mlvector_toList vec1)) (DROP n
+         (mlvector_toList vec2))`,
   CHEAT_TAC);;
 
 (* collate_thm *)
 let mlvector_collate_thm = prove
  (`!f vec1 vec2.
-     mllist_collate f vec1 vec2 = mllist_collate f (sptree_toList vec1)
-       (sptree_toList vec2)`,
+     mlvector_collate f vec1 vec2 = mllist_collate f (mlvector_toList
+       vec1) (mlvector_toList vec2)`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

@@ -248,20 +248,20 @@ let exp_ids_def,exp_ids_ind = define_shaped_rec
      | _ -> []`;;
 
 let is_decl_def = new_definition
-  `is_decl x1 =
-   match x1 with
+  `is_decl x1' =
+   match x1' with
      Decl sh v e -> T
    | _ -> F`;;
 
 let is_exn_decl_def = new_definition
-  `is_exn_decl x1 =
-   match x1 with
+  `is_exn_decl x1'' =
+   match x1'' with
      ExnDecl eid sh -> T
    | _ -> F`;;
 
 let is_name_def = new_definition
-  `is_name x1 =
-   match x1 with
+  `is_name x1''' =
+   match x1''' with
      Name _ _ -> T
    | _ -> F`;;
 
@@ -378,8 +378,8 @@ let fun_ids_def,fun_ids_ind = define_shaped_rec
 
 let free_var_ids_def,free_var_ids_ind = define_shaped_rec
   "match"
-  `free_var_ids x1 =
-     match x1 with
+  `free_var_ids x1' =
+     match x1' with
        panLang_Dec vn sh e p -> APPEND (var_exp e) (FILTER ((\x y. ~(x = y))
          vn) (free_var_ids p))
      | panLang_Seq p q -> APPEND (free_var_ids p) (free_var_ids q)
@@ -419,8 +419,8 @@ let free_var_ids_def,free_var_ids_ind = define_shaped_rec
      | _ -> []`;;
 
 let inlinable_def = new_definition
-  `inlinable x1 =
-   match x1 with
+  `inlinable x1'' =
+   match x1'' with
      Function fi -> fun_decl_inline fi
    | _ -> F`;;
 

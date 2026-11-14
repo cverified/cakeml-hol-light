@@ -148,8 +148,8 @@ let genv_c_ok_def = new_definition
      (!cn1 cn2 l1 l2 stamp1 stamp2.
        FLOOKUP genv_c (cn1,l1) = SOME stamp1 /\
        FLOOKUP genv_c (cn2,l2) = SOME stamp2 ==>
-       (semanticPrimitives_ctor_same_type (SOME stamp1) (SOME stamp2) <=>
-         semanticPrimitives_ctor_same_type (SOME cn1) (SOME cn2))) /\
+       (flatSem_ctor_same_type (SOME stamp1) (SOME stamp2) <=>
+         flatSem_ctor_same_type (SOME cn1) (SOME cn2))) /\
      (!cn1 cn2 l1 l2 stamp.
        FLOOKUP genv_c (cn1,l1) = SOME stamp /\
        FLOOKUP genv_c (cn2,l2) = SOME stamp ==>
@@ -597,8 +597,8 @@ let source_to_flatProof_vs_to_string = prove
 (* [local] *)
 let v_rel_lems = prove
  (`!genv. genv_c_ok (global_env_c genv) ==>
-     (!b. source_to_flatProof_v_rel genv (semanticPrimitives_Boolv b)
-       (semanticPrimitives_Boolv b)) /\
+     (!b. source_to_flatProof_v_rel genv (flatSem_Boolv b) (flatSem_Boolv
+       b)) /\
      source_to_flatProof_v_rel genv flatSem_div_exn_v flatSem_div_exn_v /\
      source_to_flatProof_v_rel genv flatSem_chr_exn_v flatSem_chr_exn_v /\
      source_to_flatProof_v_rel genv flatSem_bind_exn_v flatSem_bind_exn_v /\
@@ -842,12 +842,12 @@ let eta2 = prove
 
 (* [local] *)
 let ctor_same_type_refl = prove
- (`semanticPrimitives_ctor_same_type x x`,
+ (`flatSem_ctor_same_type x x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let ctor_same_type_SND = prove
- (`semanticPrimitives_ctor_same_type (SOME x) (SOME y) = (SND x = SND y)`,
+ (`flatSem_ctor_same_type (SOME x) (SOME y) = (SND x = SND y)`,
   CHEAT_TAC);;
 
 let genv_c_ok_pmatch_stamps_ok = prove
@@ -899,7 +899,7 @@ let source_to_flatProof_pmatch = prove
       source_to_flatProof_match_result_rel genv env'' r r_i1)) /\
    (!cenv s ps vs env r env' env'' env_i1
      (s_i1:('f_orac_st,'ffi)flatSem_state) vs_i1 st'.
-    semanticPrimitives_pmatch_list cenv s ps vs env = r /\
+    flatSem_pmatch_list cenv s ps vs env = r /\
     global_env_inv genv comp_map2 shadowers senv /\
     genv_c_ok (global_env_c genv) /\
     genv_c_tys_ok (global_env_c genv) (global_env_tys genv) /\
@@ -1330,19 +1330,19 @@ let invariant_dec_clock = prove
 
 let v_rel_Bool_eqn = prove
  (`genv_c_ok (global_env_c genv) ==> (source_to_flatProof_v_rel genv
-  (semanticPrimitives_Boolv b) v <=> (v = semanticPrimitives_Boolv b))`,
+  (flatSem_Boolv b) v <=> (v = flatSem_Boolv b))`,
   CHEAT_TAC);;
 
 (* evaluate_Bool *)
 let source_to_flatProof_evaluate_Bool = prove
  (`source_to_flatProof_s_rel genv s s' /\ genv_c_ok (global_env_c genv) ==>
-   flatSem_evaluate env s' [flatLang_Bool t b] = (s',Rval
-     [semanticPrimitives_Boolv b])`,
+   flatSem_evaluate env s' [flatLang_Bool t b] = (s',Rval [flatSem_Boolv
+     b])`,
   CHEAT_TAC);;
 
 (* Boolv_11 *)
 let source_to_flatProof_Boolv_11 = prove
- (`(semanticPrimitives_Boolv b = semanticPrimitives_Boolv b') = (b = b')`,
+ (`(flatSem_Boolv b = flatSem_Boolv b') = (b = b')`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1431,8 +1431,8 @@ let pmatch_invariant = prove
      /\ source_to_flat_environment_c
    comp_map2 = source_to_flat_environment_c comp_map /\
    source_to_flatProof_v_rel genv v v' ==>
-   source_to_flatProof_match_result_rel genv [] (semanticPrimitives_pmatch
-     (sem_env_c env) (semanticPrimitives_state_refs st) p v [])
+   source_to_flatProof_match_result_rel genv [] (flatSem_pmatch (sem_env_c
+     env) (semanticPrimitives_state_refs st) p v [])
      (flatSem_pmatch st' (compile_pat comp_map p) v' [])`,
   CHEAT_TAC);;
 
@@ -1563,8 +1563,8 @@ let genv_c_ok_extend = prove
    (!cn arity stamp. FLOOKUP c_ext (cn,arity) = SOME stamp ==>
      (same_type (ExnStamp 0) stamp <=> SND cn = NONE) /\
      (!cn' arity' stamp'. FLOOKUP c_ext (cn',arity') = SOME stamp' ==>
-       (same_type stamp stamp' <=> semanticPrimitives_ctor_same_type (SOME
-         cn) (SOME cn')) /\
+       (same_type stamp stamp' <=> flatSem_ctor_same_type (SOME cn) (SOME
+         cn')) /\
        (stamp = stamp' ==> (cn = cn' /\ arity = arity'))) /\
      (!cn' arity' stamp'. FLOOKUP c (cn',arity') = SOME stamp' ==> ~(stamp =
        stamp') /\
@@ -2346,8 +2346,8 @@ let source_to_flatProof_mem_size_lemma = prove
    the names that the port gives the constants *)
 let num_bindings_def,num_bindings_ind = define_wf
   `MEASURE dec_size`
-  `num_bindings x1 =
-     match x1 with
+  `num_bindings x1' =
+     match x1' with
        Dlet _ p e ->
         (match simple_dlet p e with SOME _ -> 0 | _ -> LENGTH
           (flatLang_pat_bindings p))

@@ -31,13 +31,13 @@ let ffi_offset_def = new_definition
 (* basic assemble function *)
 
 let lab_inst_def = define_cases
-  `(lab_inst w (labLang_Jump _) = asm_Jump w) /\
-   (lab_inst w (labLang_JumpCmp c r ri _) = asm_JumpCmp c r ri w) /\
-   (lab_inst w (labLang_Call _) = asm_Call w) /\
-   (lab_inst w (labLang_LocValue r _) = asm_Loc r (w:'a word)) /\
-   (lab_inst w (labLang_Halt) = labLang_Jump w) /\
-   (lab_inst w (labLang_Install) = labLang_Jump w) /\
-   (lab_inst w (labLang_CallFFI n) = labLang_Jump w)`;;
+  `(lab_inst (w:'a word) (labLang_Jump _) = asm_Jump w) /\
+   (lab_inst (w:'a word) (labLang_JumpCmp c r ri _) = asm_JumpCmp c r ri w) /\
+   (lab_inst (w:'a word) (labLang_Call _) = asm_Call w) /\
+   (lab_inst (w:'a word) (labLang_LocValue r _) = asm_Loc r (w:'a word)) /\
+   (lab_inst (w:'a word) labLang_Halt = asm_Jump w) /\
+   (lab_inst (w:'a word) labLang_Install = asm_Jump w) /\
+   (lab_inst (w:'a word) (labLang_CallFFI n) = asm_Jump w)`;;
 
 let cbw_to_asm_def = new_definition
   `cbw_to_asm a =
@@ -308,8 +308,8 @@ add_simp zero_labs_acc_of_def;;
 
 
 let line_get_zero_labs_acc_def = new_definition
-  `line_get_zero_labs_acc x1 acc =
-   match x1 with
+  `line_get_zero_labs_acc x1' acc =
+   match x1' with
      labLang_LabAsm a _ _ _ -> zero_labs_acc_of a acc
    | _ -> acc`;;
 

@@ -961,8 +961,8 @@ let assign_Atemps_def = new_definition
 (* Default makes it easier to translate, doesn't matter for our purposes what
    the default is *)
 let tag_col_def = new_definition
-  `tag_col x1 =
-     match x1 with
+  `tag_col x1' =
+     match x1' with
        Fixed n -> n
      | _ -> 0`;;
 
