@@ -1097,10 +1097,10 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
            match stackSem_get_var rn s with SOME (wordLang_Word
                (w:'a word)) ->
              (let i = stackSem_state_stack_space s + w2n (w >>>
-                 backend_common_word_shift (:'a)) in
+                 asmSem_word_shift (:'a)) in
                if i < LENGTH (stackSem_state_stack s) /\
-                  ((w >>> backend_common_word_shift (:'a)) <<
-                      backend_common_word_shift (:'a) = w) then
+                  ((w >>> asmSem_word_shift (:'a)) <<
+                      asmSem_word_shift (:'a) = w) then
                       (NONE,stackSem_set_var r (EL i
                       (stackSem_state_stack s)) s) else (SOME
                       stackSem_Error,stackSem_empty_env s)) | _136 ->
@@ -1122,10 +1122,10 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
            match (stackSem_get_var r s,stackSem_get_var rn s) with
                (SOME v,SOME (wordLang_Word (w:'a word))) ->
              (let i = stackSem_state_stack_space s + w2n (w >>>
-                 backend_common_word_shift (:'a)) in
+                 asmSem_word_shift (:'a)) in
                if i < LENGTH (stackSem_state_stack s) /\
-                  ((w >>> backend_common_word_shift (:'a)) <<
-                      backend_common_word_shift (:'a) = w) then
+                  ((w >>> asmSem_word_shift (:'a)) <<
+                      asmSem_word_shift (:'a) = w) then
                       (NONE,stackSem_state_stack_fupd (K (LUPDATE v i
                       (stackSem_state_stack s))) s) else (SOME
                       stackSem_Error,stackSem_empty_env s)) | _137 ->
@@ -1143,7 +1143,7 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
              (if LENGTH (stackSem_state_stack s) <= w2n w then (SOME
                  stackSem_Error,stackSem_empty_env s) else
                  (NONE,stackSem_set_var r (wordLang_Word (w <<
-                 backend_common_word_shift (:'a)))
+                 asmSem_word_shift (:'a)))
                            (stackSem_state_stack_space_fupd (K
                                (w2n w)) s))) | _138 -> (SOME
                                stackSem_Error,s))`;

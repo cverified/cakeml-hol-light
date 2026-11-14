@@ -602,7 +602,7 @@ let gc_move_ref_list_simulation = prove
      gc_move_ref_list conf (state:('b,'a)gc_state)
        (refs0:(('b,'a)heap_element) list) = (refs1,state1)) /\
    (
-     gen_gc_partial_gc_move_list (to_gen_conf conf)
+     gen_gc_gc_move_list (to_gen_conf conf)
                  (to_gen_state conf state)
                  (refs_to_roots conf refs0) = (refs1',state1')) /\
                    gc_state_ok state1' /\

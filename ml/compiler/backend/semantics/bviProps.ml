@@ -80,31 +80,31 @@ add_simp bvl_to_bvi_clock;;
 
 let bvi_to_bvl_refs = prove
  (`state_refs
-      (bvi_to_bvl x) = state_refs x`,
+      (bvi_to_bvl x) = bviSem_state_refs x`,
   CHEAT_TAC);;
 add_simp bvi_to_bvl_refs;;
 
 let bvi_to_bvl_code = prove
  (`state_code
-      (bvi_to_bvl x) = sptree_map (K ARB) (state_code x)`,
+      (bvi_to_bvl x) = sptree_map (K ARB) (bviSem_state_code x)`,
   CHEAT_TAC);;
 add_simp bvi_to_bvl_code;;
 
 let bvi_to_bvl_clock = prove
  (`state_clock
-      (bvi_to_bvl x) = state_clock x`,
+      (bvi_to_bvl x) = bviSem_state_clock x`,
   CHEAT_TAC);;
 add_simp bvi_to_bvl_clock;;
 
 let bvi_to_bvl_ffi = prove
  (`state_ffi
-      (bvi_to_bvl x) = state_ffi x`,
+      (bvi_to_bvl x) = bviSem_state_ffi x`,
   CHEAT_TAC);;
 add_simp bvi_to_bvl_ffi;;
 
 let bvi_to_bvl_to_bvi_with_ffi = prove
- (`bvl_to_bvi (state_ffi_fupd (K f) (bvi_to_bvl x)) x = state_ffi_fupd
-  (K f) x`,
+ (`bvl_to_bvi (state_ffi_fupd (K f) (bvi_to_bvl x)) x =
+  bviSem_state_ffi_fupd (K f) x`,
   CHEAT_TAC);;
 
 let domain_bvi_to_bvl_code = prove

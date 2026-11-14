@@ -133,9 +133,8 @@ let labSem_arith_upd_def = define_cases
          (match ((\r s. labSem_state_regs s r) r2 s,labSem_reg_imm
              ri s) with (wordLang_Word w1,wordLang_Word w2) ->
              labSem_assert (w2n w2 < dimindex (:'a))
-                 (labSem_upd_reg r1 (wordLang_Word
-                 (backend_common_word_shift l w1 (w2n w2))) s) | _19
-                 -> labSem_assert F s)`;
+                 (labSem_upd_reg r1 (wordLang_Word (asmSem_word_shift
+                 l w1 (w2n w2))) s) | _19 -> labSem_assert F s)`;
    `labSem_arith_upd (asm_Div r1 r2 r3) s =
          (match ((\r s. labSem_state_regs s r) r3 s,(\r s.
              labSem_state_regs s r) r2 s) with (wordLang_Word

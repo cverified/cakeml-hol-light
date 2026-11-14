@@ -657,8 +657,8 @@ let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec
          let (c2,aux2) = compile_exp_list max_app xs2 aux1 in
            ((match loc_opt with NONE ->
                  bvl_Let (APPEND c2 [c1]) (mk_cl_call (bvl_Var
-                     (LENGTH c2)) (list_of_seq closLang_Var (LENGTH
-                     c2))) | SOME loc ->
+                     (LENGTH c2)) (list_of_seq bvl_Var (LENGTH c2))) |
+                     SOME loc ->
                  (bvl_Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
                      max_app))) (APPEND c2 [c1]))),
             aux2))`;
@@ -668,12 +668,12 @@ let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec
          let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let c2 =
-           bvl_Let (APPEND (list_of_seq closLang_Var num_args)
-               (free_let (bvl_Var num_args) (LENGTH vs))) c1 in
+           bvl_Let (APPEND (list_of_seq bvl_Var num_args) (free_let
+               (bvl_Var num_args) (LENGTH vs))) c1 in
            (bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
                (REVERSE (CONS (mk_label (loc + num_stubs
                    max_app)) (CONS (mk_const (num_args - 1)) (MAP
-                   closLang_Var vs)))),CONS (loc + (num_stubs
+                   bvl_Var vs)))),CONS (loc + (num_stubs
                    max_app),num_args + 1,c2) aux1))`;
    `compile_exp_sing max_app (closLang_Letrec t loc_opt vsopt fns
     x1:closLang_exp) aux =
@@ -682,16 +682,16 @@ let compile_exp_sing_def,compile_exp_sing_ind = assume_definition_rec
          match fns with [] -> compile_exp_sing max_app x1 aux |
              [(num_args,exp)] ->
              (let (c1,aux1) = compile_exp_sing max_app exp aux in
-             let c3 = bvl_Let (APPEND (APPEND (list_of_seq
-                 closLang_Var num_args) [bvl_Var num_args]) (free_let
-                 (bvl_Var num_args) (LENGTH vs))) c1 in
+             let c3 = bvl_Let (APPEND (APPEND (list_of_seq bvl_Var
+                 num_args) [bvl_Var num_args]) (free_let (bvl_Var
+                 num_args) (LENGTH vs))) c1 in
              let (c2,aux2) = compile_exp_sing max_app x1 (CONS (loc
                  + (num_stubs max_app),num_args + 1,c3) aux1) in
              let c4 =
                bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
                   (REVERSE (CONS (mk_label (loc + (num_stubs
                       max_app))) (CONS (mk_const (num_args - 1)) (MAP
-                      closLang_Var vs)))) in
+                      bvl_Var vs)))) in
                (bvl_Let [c4] c2,aux2)) | _6 ->
              (let fns_l = LENGTH fns in
              let l = fns_l + LENGTH vs in
