@@ -64,12 +64,12 @@ let incremental_wrapper_example = prove
  (`?cs p1 p2.
      bvi_inline_compile_inc LN
        [(10,0,bvi_LetCall 0 0 11 []
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) []))] = (cs,p1) /\
+         (bvi_Op (clos_BlockOp (clos_Cons 7)) []))] = (cs,p1) /\
      bvi_inline_compile_inc cs
        [(12,0,bvi_Call 0 (SOME 10) [] NONE)] = (cs,p2) /\
      p2 = [(12,0,
-       bvi_Let [] (bvi_LetCall 0 0 11 [] (bvi_Op (closLang_BlockOp
-         (closLang_Cons 7)) [])))]`,
+       bvi_Let [] (bvi_LetCall 0 0 11 [] (bvi_Op (clos_BlockOp (clos_Cons
+         7)) [])))]`,
   CHEAT_TAC);;
 
 let canonical_wrapper_thm = prove
@@ -78,7 +78,7 @@ let canonical_wrapper_thm = prove
        (?rets ticks worker tag. ~(worker = name) /\
          body =
            bvi_LetCall rets ticks worker (list_of_seq bvi_Var arity)
-             (bvi_Op (closLang_BlockOp (closLang_Cons tag))
+             (bvi_Op (clos_BlockOp (clos_Cons tag))
                 (REVERSE (list_of_seq bvi_Var rets))))`,
   CHEAT_TAC);;
 
@@ -347,7 +347,7 @@ let inline_all_ALOOKUP = prove
 
 (* [local] *)
 let do_app_state_swap = prove
- (`~(op = closLang_Install) ==>
+ (`~(op = clos_Install) ==>
        ((bviSem_do_app op args s = Rval (value,s1) /\
          domain (bviSem_state_code s) SUBSET domain (bviSem_state_code t)
            ==>
@@ -377,7 +377,7 @@ let do_app_state_swap = prove
 let do_app_state_swap_Rval = prove
  (`!op args (s)
        (source_state)
-       (t) value. ~(op = closLang_Install) /\
+       (t) value. ~(op = clos_Install) /\
      bviSem_do_app op args s = Rval (value,source_state) /\
      domain (bviSem_state_code s) SUBSET domain (bviSem_state_code t) ==>
      bviSem_do_app op args
@@ -396,7 +396,7 @@ let do_app_state_swap_Rval = prove
 (* [local] *)
 let do_app_state_swap_Rerr = prove
  (`!op args (s)
-       (t) error'. ~(op = closLang_Install) /\
+       (t) error'. ~(op = clos_Install) /\
      bviSem_do_app op args s = Rerr error' /\
      (domain (bviSem_state_code t) SUBSET domain (bviSem_state_code s) \/
        ~(error' = Rabort Rtype_error)) ==>

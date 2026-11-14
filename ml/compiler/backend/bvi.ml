@@ -59,7 +59,7 @@ let bvi_exp_INDUCT,bvi_exp_RECURSION = define_datatype
    | bvi_Force num num
      // loc to call for evaluation of unevaluated thunk
      // var holding thunk
-   | bvi_Op closLang_op (bvi_exp list)
+   | bvi_Op clos_op (bvi_exp list)
      // multi-value call and return:
      // let-and-call: num of return values, ticks, call target, args, body of let
    | bvi_LetCall num num num (bvi_exp list) bvi_exp

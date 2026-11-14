@@ -46,7 +46,7 @@ VARS = {
   'make_init_semantics': [('start', 'num')],
   'mem_store_32_align_dm': [('be', 'bool')],
   'mem_store_byte_aux_align_dm': [('be', 'bool')],
-  'panLang_compile_word_to_word_thm': [('start', 'num')],
+  'pan_compile_word_to_word_thm': [('start', 'num')],
   'rewrite_catchall_no_mutcons': [('next', 'num')],
   'state_rel_IMP_semantics': [('start', 'num')],
   "state_rel_IMP_semantics'": [('start', 'num')],

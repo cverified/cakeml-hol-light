@@ -190,7 +190,6 @@ let wfpeg = cake_inductive
        /\
      (!e f. wfpeg G e /\ ~(peg0 G e) ==> wfpeg G (peg_rpt e f)))`;;
 
-let _ = size_thms "pegsym";;
 (* the clauses in two quotations: e is 'e and pegsym, which one quotation
    cannot typecheck *)
 (* the termination relation is not in the HOL4 source; this one is

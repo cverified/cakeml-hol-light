@@ -491,13 +491,13 @@ let ensure_fp_conf_ok_def = new_definition
 let backend_progs_FIELDS = define_record "backend_progs"
   ["env_id","num#num";
    "source_prog","dec list";
-   "flat_prog","flatLang_exp list";
-   "clos_prog","closLang_exp list#(num#num#closLang_exp) list";
+   "flat_prog","flat_exp list";
+   "clos_prog","clos_exp list#(num#num#clos_exp) list";
    "bvl_prog","(num#num#bvl_exp) list";
    "bvi_prog","(num#num#bvi_exp) list";
-   "data_prog","(num#num#dataLang_prog) list";
-   "word_prog","(num#num#'a wordLang_prog) list";
-   "stack_prog","(num#'a stackLang_prog) list";
+   "data_prog","(num#num#data_prog) list";
+   "word_prog","(num#num#'a word_prog) list";
+   "stack_prog","(num#'a stack_prog) list";
    "cur_bm","('a word) list";
    "lab_prog","('a sec) list";
    "target_prog","(word8 list#('a word) list) option"];;
@@ -636,7 +636,6 @@ let compile_inc_progs_for_eval_eq = prove
        OPTION_MAP (\x. (c,FST x,MAP upper_w2w cur_bm)) target)`,
   CHEAT_TAC);;
 
-let _ = size_thms "ffiname";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ffinames_to_string_list_def,ffinames_to_string_list_ind = define_wf

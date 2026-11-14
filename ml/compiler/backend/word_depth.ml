@@ -54,13 +54,13 @@ let call_graph_def,call_graph_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   `call_graph funs n ns total' x5 =
      match x5 with
-       wordLang_Seq p1 p2 ->
+       word_Seq p1 p2 ->
         mk_Branch (call_graph funs n ns total' p1) (call_graph funs n ns
           total' p2)
-     | wordLang_If _ _ _ p1 p2 ->
+     | word_If _ _ _ p1 p2 ->
         mk_Branch (call_graph funs n ns total' p1) (call_graph funs n ns
           total' p2)
-     | wordLang_Call ret dest args handler ->
+     | word_Call ret dest args handler ->
         (match dest with NONE -> word_depth_Unknown
         | SOME d ->
           (if MEM d ns /\ ret = NONE then word_depth_Leaf else match
@@ -84,10 +84,10 @@ let call_graph_def,call_graph_ind = assume_definition_rec
                      (call_graph new_funs d [d] total' body)))
                    (mk_Branch (call_graph funs n ns total' p)
                               (call_graph funs n ns total' ret_prog)))))))
-     | wordLang_MustTerminate p -> call_graph funs n ns total' p
-     | wordLang_Alloc _ _ -> word_depth_Call n word_depth_Leaf
-     | wordLang_Install _ _ _ _ _ -> word_depth_Unknown
-     | wordLang_Loop _ body _ -> call_graph funs n ns total' body
+     | word_MustTerminate p -> call_graph funs n ns total' p
+     | word_Alloc _ _ -> word_depth_Call n word_depth_Leaf
+     | word_Install _ _ _ _ _ -> word_depth_Unknown
+     | word_Loop _ body _ -> call_graph funs n ns total' body
      | _ -> word_depth_Leaf`;;
 
 let full_call_graph_def = new_definition

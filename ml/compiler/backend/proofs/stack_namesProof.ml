@@ -225,8 +225,8 @@ add_simp domain_rename_state_code;;
 
 (* [local] *)
 let comp_STOP_Loop = prove
- (`stack_names_comp f (stackSem_STOP (stackLang_Loop c1)) =
-     stackSem_STOP (stackLang_Loop (stack_names_comp f c1))`,
+ (`stack_names_comp f (stackSem_STOP (stack_Loop c1)) =
+     stackSem_STOP (stack_Loop (stack_names_comp f c1))`,
   CHEAT_TAC);;
 
 (* get_labels_comp[local] *)

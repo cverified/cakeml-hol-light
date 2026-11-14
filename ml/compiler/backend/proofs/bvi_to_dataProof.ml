@@ -35,7 +35,7 @@ let _ = do_list hide_constant ["isException"; "isResult"; "parts"];;
 
 let code_rel_def = new_definition
   `bvi_to_dataProof_code_rel (bvi_code:(num#bvi_exp) spt)
-  (data_code:(num#dataLang_prog) spt) <=>
+  (data_code:(num#data_prog) spt) <=>
      sptree_wf bvi_code /\ sptree_wf data_code /\
      (domain bvi_code = domain data_code) /\
      (!n exp arg_count.
@@ -380,12 +380,12 @@ let data_to_bvi_finalise_cons = prove
 
 let data_to_bvi_do_app = prove
  (`!op t r z res s1.
-     ~(op = wordLang_Install) /\ ~(op = closLang_IntOp closLang_Greater)
-       /\ ~(op = closLang_IntOp closLang_GreaterEq) /\ ~(op = closLang_WordOp
-       (WordTest ast_W8 (ast_Compare ast_Gt))) /\ ~(op = closLang_WordOp
-       (WordTest ast_W8 (ast_Compare ast_Geq))) /\
-     (!b. ~(op = closLang_MemOp (closLang_CopyByte b))) /\ ~(op =
-       closLang_ThunkOp ForceThunk) /\
+     ~(op = word_Install) /\ ~(op = clos_IntOp clos_Greater) /\ ~(op =
+       clos_IntOp clos_GreaterEq) /\ ~(op = clos_WordOp (WordTest ast_W8
+       (ast_Compare ast_Gt))) /\ ~(op = clos_WordOp (WordTest ast_W8
+       (ast_Compare ast_Geq))) /\
+     (!b. ~(op = clos_MemOp (clos_CopyByte b))) /\ ~(op = clos_ThunkOp
+       ForceThunk) /\
      bvi_to_dataProof_state_rel r t /\
      dataSem_do_app op (MAP data_to_bvi_v z) r = Rval (res,s1) ==> (?s2
        pres.
@@ -464,9 +464,9 @@ add_simp list_insert_list_to_num_set;;
 let state_rel_do_app_FFI_err = prove
  (`!i z r t x.
      bvi_to_dataProof_state_rel r t /\
-     dataSem_do_app (closLang_FFI i) (MAP data_to_bvi_v z) r = Rerr (Rabort
+     dataSem_do_app (clos_FFI i) (MAP data_to_bvi_v z) r = Rerr (Rabort
        (Rffi_error x)) ==>
-     dataSem_do_app (closLang_FFI i) z t = Rerr (Rabort (Rffi_error x))`,
+     dataSem_do_app (clos_FFI i) z t = Rerr (Rabort (Rffi_error x))`,
   CHEAT_TAC);;
 
 (* [local] *)

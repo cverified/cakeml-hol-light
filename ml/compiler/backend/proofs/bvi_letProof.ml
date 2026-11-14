@@ -148,7 +148,7 @@ let evaluate_delete_var_Rerr = prove
    let opev = prove
     (`!env2 (s:('c,'ffi)bviSem_state).
         evaluate
-          ([(Op (closLang_IntOp (closLang_Const (&0))) []):bvi_exp],
+          ([(Op (clos_IntOp (clos_Const (&0))) []):bvi_exp],
            env2,s) = (Rval [(Number (&0)):bvlSem_v],s)`,
      REPEAT GEN_TAC THEN
      REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
@@ -156,7 +156,7 @@ let evaluate_delete_var_Rerr = prove
      REWRITE_TAC[da; daa; REVERSE; NULL; sei;
                  INT_ARITH `--(&268435457):int <= &0 /\
                             (&0):int <= &268435457`;
-                 distinctness "closLang_op"] THEN
+                 distinctness "clos_op"] THEN
      MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
    (* so the head leaves the same state either way ... *)
    let stateq = prove
@@ -241,7 +241,7 @@ let evaluate_delete_var_Rval = prove
    let opev = prove
     (`!env2 (s:('c,'ffi)bviSem_state).
         evaluate
-          ([(Op (closLang_IntOp (closLang_Const (&0))) []):bvi_exp],
+          ([(Op (clos_IntOp (clos_Const (&0))) []):bvi_exp],
            env2,s) = (Rval [(Number (&0)):bvlSem_v],s)`,
      REPEAT GEN_TAC THEN
      REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
@@ -249,7 +249,7 @@ let evaluate_delete_var_Rval = prove
      REWRITE_TAC[da; daa; REVERSE; NULL; sei;
                  INT_ARITH `--(&268435457):int <= &0 /\
                             (&0):int <= &268435457`;
-                 distinctness "closLang_op"] THEN
+                 distinctness "clos_op"] THEN
      MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
    (* and the Var is the only head whose extract is not 0 *)
    let notvar = prove
@@ -385,7 +385,6 @@ let IMP_COMM = prove
  (`(b1 ==> b2 ==> b3) <=> (b2 ==> b1 ==> b3)`,
   (MESON_TAC[]));;
 
-let _ = size_thms "bvi_exp";;
 let exp_size_APPEND = prove
  (`!xs ys. bvi_exp_size1 (APPEND xs ys) = bvi_exp_size1 xs + bvi_exp_size1 ys`,
   (* the same theorem as bvi_let's exp2_size_APPEND, which the

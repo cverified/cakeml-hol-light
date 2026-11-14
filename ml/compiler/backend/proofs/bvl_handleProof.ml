@@ -86,7 +86,6 @@ let let_ok_def = new_definition
        bvl_Let xs b -> ALL isVar xs /\ bVarBound (LENGTH xs) [b]
      | _ -> F`;;
 
-let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvl_handleProofScript.sml:186-190: the tactic that proves the
@@ -304,8 +303,8 @@ let bEvery_CONS = prove
   CHEAT_TAC);;
 
 let handle_ok_Var_Const_list = prove
- (`ALL (\x. ?v i. x = bvl_Var v \/ x = bvl_Op (closLang_IntOp (closLang_Const
-  i)) []) xs ==> handle_ok xs`,
+ (`ALL (\x. ?v i. x = bvl_Var v \/ x = bvl_Op (clos_IntOp (clos_Const i)) [])
+  xs ==> handle_ok xs`,
   CHEAT_TAC);;
 
 let handle_ok_SmartLet = prove

@@ -11,7 +11,7 @@ tokens_IntT	0
 bvlSem_Number	0
 closSem_Number	0
 int_to_display	0
-jsonLang_Int	0
+json_Int	0
 mlint_int_gcd	0,1
 mlint_int_cmp	0,1
 mlint_toString	0
@@ -48,8 +48,8 @@ clos_known_Int	0
 clos_op_int_op	1,2
 MakeInt	0
 compile_int	0
-closLang_Const	0
-closLang_Int	0
+clos_Const	0
+clos_Int	0
 ConstInt	0
 small_enough_int	0
 ast_IntLit	0

@@ -65,8 +65,7 @@ let bvi_tmcProof_env_rel_def = new_definition
          small_enough_int hole_idx)))`;;
 
 let no_mutcons_op_def = new_definition
-  `no_mutcons_op op <=> (!tag i. ~(op = closLang_MemOp (closLang_MutCons tag
-  i)))`;;
+  `no_mutcons_op op <=> (!tag i. ~(op = clos_MemOp (clos_MutCons tag i)))`;;
 
 (* the clauses in two quotations: dest is (num option) and num, which one
    quotation cannot typecheck *)
@@ -1112,7 +1111,7 @@ let wrapper_strip_tick = prove
 let is_block_op_cons_def = new_definition
   `is_block_op_cons op <=>
      (?block_tag.
-       op = closLang_BlockOp (closLang_Cons block_tag))`;;
+       op = clos_BlockOp (clos_Cons block_tag))`;;
 
 (* bvi_to_bvl_refs *)
 let bvi_tmcProof_bvi_to_bvl_refs = prove
@@ -1360,8 +1359,7 @@ let evaluate_bvi_to_cb_aux_inl_lemma = prove
 let evaluate_bvi_to_cb_aux_inr_lemma = prove
  (`(!n loc tag exp env s t r bs cb.
       bvi_to_cb_aux_sing n loc tag exp = SOME (bs,INR cb) /\
-      bviSem_evaluate ([bvi_Op (closLang_BlockOp (closLang_Cons tag))
-        [exp]],env,
+      bviSem_evaluate ([bvi_Op (clos_BlockOp (clos_Cons tag)) [exp]],env,
                 (s:('c,'ffi)bviSem_state)) = (r,t) /\
       n <= LENGTH env ==>
       (?as u.
@@ -1377,8 +1375,7 @@ let evaluate_bvi_to_cb_aux_inr_lemma = prove
            (as,u) = (r,t)))) /\
    (!n loc tag args env s t r bs cb.
       bvi_to_cb_aux n loc tag args = SOME (bs,INR cb) /\
-      bviSem_evaluate ([bvi_Op (closLang_BlockOp (closLang_Cons tag))
-        args],env,
+      bviSem_evaluate ([bvi_Op (clos_BlockOp (clos_Cons tag)) args],env,
                 (s:('c,'ffi)bviSem_state)) = (r,t) /\
       n <= LENGTH env ==>
       (?as u.
@@ -1765,11 +1762,11 @@ let evaluate_pres_opt_code = prove
 let bvi_to_cb_aux_no_mutcons_lemma = prove
  (`(!n loc tag exp cb bs.
       bvi_to_cb_aux_sing n loc tag exp = SOME (bs,cb) /\
-      no_mutcons (bvi_Op (closLang_BlockOp (closLang_Cons tag)) [exp]) ==>
+      no_mutcons (bvi_Op (clos_BlockOp (clos_Cons tag)) [exp]) ==>
       ALL (\x. no_mutcons x) bs) /\
    (!n loc tag args cb bs.
       bvi_to_cb_aux n loc tag args = SOME (bs,cb) /\
-      no_mutcons (bvi_Op (closLang_BlockOp (closLang_Cons tag)) args) ==>
+      no_mutcons (bvi_Op (clos_BlockOp (clos_Cons tag)) args) ==>
       ALL (\x. no_mutcons x) bs)`,
   CHEAT_TAC);;
 

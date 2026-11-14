@@ -24,17 +24,16 @@ let _ = cake_theory "jsonLang"
 
 let obj_INDUCT,obj_RECURSION = define_datatype
   "obj =
-     jsonLang_Object ((mlstring#obj) list)
-   | jsonLang_Array (obj list)
-   | jsonLang_String mlstring
-   | jsonLang_Int int
-   | jsonLang_Bool bool
-   | jsonLang_Null";;
+     json_Object ((mlstring#obj) list)
+   | json_Array (obj list)
+   | json_String mlstring
+   | json_Int int
+   | json_Bool bool
+   | json_Null";;
 
 (* HOL4 jsonLangScript.sml:24: the overload ++, which the port writes as an
    application of misc_Append *)
 
-let _ = size_thms "app_list";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let concat_with_def,concat_with_ind = define_wf
@@ -71,28 +70,27 @@ let encode_str_def = new_definition
        (ORD c))))
      else mlstring_concat [(implode "\\"); num_to_str (ORD c)]) s2)`;;
 
-let _ = size_thms "obj";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let json_to_mlstring_def,json_to_mlstring_ind = define_wf
   `MEASURE (sum_measure (\x0. obj_size x0) (\x0. obj_size3 x0))`
   `(json_to_mlstring obj =
-        match obj with jsonLang_Object mems -> misc_Append (misc_Append
+        match obj with json_Object mems -> misc_Append (misc_Append
             (misc_List [(implode "{")])
                     (concat_with (MAP mem_to_string mems) (misc_List
                         [(implode ",")])))
                     (misc_List [(implode "}")])
-            | jsonLang_Array obs -> misc_Append (misc_Append (misc_List
+            | json_Array obs -> misc_Append (misc_Append (misc_List
                 [(implode "[")])
                     (concat_with (MAP json_to_mlstring obs) (misc_List
                         [(implode ",")])))
                     (misc_List [(implode "]")])
-           | jsonLang_String s -> misc_List ([implode "\""; encode_str T s;
+           | json_String s -> misc_List ([implode "\""; encode_str T s;
                implode "\""])
-           | jsonLang_Int i -> misc_List [mlint_toString i]
-           | jsonLang_Bool b -> if b then misc_List [(implode "true")] else
+           | json_Int i -> misc_List [mlint_toString i]
+           | json_Bool b -> if b then misc_List [(implode "true")] else
                misc_List [(implode "false")]
-           | jsonLang_Null -> misc_List [(implode "null")]) /\
+           | json_Null -> misc_List [(implode "null")]) /\
    (mem_to_string n_obj = let (n,obj) = n_obj in misc_Append (misc_List
     [implode "\""; n; implode "\":"]) (json_to_mlstring obj))`;;
 

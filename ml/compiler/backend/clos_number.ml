@@ -31,52 +31,50 @@ let renumber_code_locs_def,renumber_code_locs_ind =
          let (n,x) = renumber_code_locs n x in
          let (n,xs) = renumber_code_locs_list n xs in
          (n,CONS x xs)) /\
-    (renumber_code_locs n (closLang_Var t v) = (n,((closLang_Var t
-    v:closLang_exp)))) /\
-    (renumber_code_locs n (closLang_If t x1 x2 x3) =
+    (renumber_code_locs n (clos_Var t v) = (n,((clos_Var t v:clos_exp)))) /\
+    (renumber_code_locs n (clos_If t x1 x2 x3) =
          let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs n x2 in
          let (n,x3) = renumber_code_locs n x3 in
-           (n,(closLang_If t x1 x2 x3:closLang_exp))) /\
-    (renumber_code_locs n (closLang_Let t xs x2) =
+           (n,(clos_If t x1 x2 x3:clos_exp))) /\
+    (renumber_code_locs n (clos_Let t xs x2) =
          let (n,xs) = renumber_code_locs_list n xs in
          let (n,x2) = renumber_code_locs n x2 in
-           (n,(closLang_Let t xs x2:closLang_exp))) /\
-    (renumber_code_locs n (closLang_Raise t x1) =
+           (n,(clos_Let t xs x2:clos_exp))) /\
+    (renumber_code_locs n (clos_Raise t x1) =
          let (n,x1) = renumber_code_locs n x1 in
-           (n,(closLang_Raise t x1:closLang_exp))) /\
-    (renumber_code_locs n (closLang_Tick t x1) =
+           (n,(clos_Raise t x1:clos_exp))) /\
+    (renumber_code_locs n (clos_Tick t x1) =
          let (n,x1) = renumber_code_locs n x1 in
-           (n,(closLang_Tick t x1:closLang_exp))) /\
-    (renumber_code_locs n (closLang_Op t op xs) =
+           (n,(clos_Tick t x1:clos_exp))) /\
+    (renumber_code_locs n (clos_Op t op xs) =
          let (n,xs) = renumber_code_locs_list n xs in
-           (n,(closLang_Op t op xs:closLang_exp))) /\
-    (renumber_code_locs n (closLang_Handle t x1 x2) =
+           (n,(clos_Op t op xs:clos_exp))) /\
+    (renumber_code_locs n (clos_Handle t x1 x2) =
          let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs n x2 in
-           (n,(closLang_Handle t x1 x2:closLang_exp))) /\
-    (renumber_code_locs n (closLang_Call t ticks dest xs) =
+           (n,(clos_Handle t x1 x2:clos_exp))) /\
+    (renumber_code_locs n (clos_Call t ticks dest xs) =
          let (n,xs) = renumber_code_locs_list n xs in
-           (n,closLang_Op t (closLang_IntOp closLang_Add) xs))
+           (n,clos_Op t (clos_IntOp clos_Add) xs))
     // this case cannot occur`;
-   `renumber_code_locs n (closLang_App t loc_opt x1 x2) =
+   `renumber_code_locs n (clos_App t loc_opt x1 x2) =
          let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs_list n x2 in
-           (n,closLang_App t NONE x1 x2)`;
-   `renumber_code_locs n (closLang_Fn t loc vs num_args x1) =
+           (n,clos_App t NONE x1 x2)`;
+   `renumber_code_locs n (clos_Fn t loc vs num_args x1) =
          let (n,x1) = renumber_code_locs n x1 in
-           (n + 2,closLang_Fn t (SOME n) vs num_args x1)`;
-   `renumber_code_locs n (closLang_Letrec t loc vs fns x1) =
+           (n + 2,clos_Fn t (SOME n) vs num_args x1)`;
+   `renumber_code_locs n (clos_Letrec t loc vs fns x1) =
          let (m,fns') = renumber_code_locs_list n (MAP SND fns) in
          let (n,x1) = renumber_code_locs (m + 2 * LENGTH fns') x1 in
-           (n,closLang_Letrec t (SOME m) vs (ZIP (MAP FST fns) fns')
-               x1)`];;
+           (n,clos_Letrec t (SOME m) vs (ZIP (MAP FST fns) fns') x1)`];;
 
 (* HOL4 clos_numberScript.sml:66: ML code, not ported *)
 
 let renumber_code_locs_length = prove
  (`(!x y. LENGTH (SND (renumber_code_locs_list x y)) = LENGTH y) /\
-    (!(x:num) (y:closLang_exp). T)`,
+    (!(x:num) (y:clos_exp). T)`,
   CHEAT_TAC);;
 
 let clos_number_compile_inc_def = new_definition
@@ -87,8 +85,8 @@ let clos_number_compile_inc_def = new_definition
        (
         // embed the name of the first free slot (n) in the code
         // no code will be generated for this pure Const expression
-        m,CONS (closLang_Op backend_common_None (closLang_IntOp
-          (closLang_Const (&n))) []) ys)`;;
+        m,CONS (clos_Op backend_common_None (clos_IntOp (clos_Const
+          (&n))) []) ys)`;;
 
 let ignore_table_def = new_definition
   `ignore_table f st (code,aux) = let (st',code') = f st code in

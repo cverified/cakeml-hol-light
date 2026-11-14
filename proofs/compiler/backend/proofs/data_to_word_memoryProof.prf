@@ -209,7 +209,7 @@
         heap_lookup (FAPPLY f n) heap = SOME (ThunkBlock ev y)
         ==> (n IN FDOM f /\ ~b /\
              x = gc_shared_Pointer (FAPPLY f n)
-                   (wordLang_Word (n2w 0)) /\
+                   (word_Word (n2w 0)) /\
              (ev = Evaluated ==> dest_thunk vv refs = NotThunk) /\
              v_inv_ck ck conf vv refs (y,f,tf,heap)) \/
             (ev = Evaluated /\ dest_thunk vv refs = NotThunk /\ ~b /\
@@ -237,7 +237,7 @@
                    SOME (ThunkBlock ev y) /\
                  n IN FDOM f /\ ~b /\
                  x = gc_shared_Pointer (FAPPLY f n)
-                       (wordLang_Word (n2w 0)) /\
+                       (word_Word (n2w 0)) /\
                  (ev = Evaluated ==> dest_thunk vv refs = NotThunk)
                  /\ v_inv_ck ck conf vv refs (y,f,tf,heap)) \/
             (ev = Evaluated /\ dest_thunk vv refs = NotThunk /\ ~b /\
@@ -372,7 +372,7 @@
     (`!conf o1.
         (!tg fin l c r.
            ~(o1 = SOME (bvlSem_MutBlock tg fin l c r))) ==>
-        ref_ptr_annot conf o1 = wordLang_Word (n2w 0)`,
+        ref_ptr_annot conf o1 = word_Word (n2w 0)`,
      REPEAT GEN_TAC THEN CASES_ON_NAME "o1" THEN
      REWRITE_TAC[ref_ptr_annot_def] THEN
      TRY(CASES_ON_NAME "a") THEN
@@ -5898,7 +5898,7 @@
      (INST [`0`,`tag:num`] cons_thm_EMPTY) in
    REWRITE_TAC[word_ml_inv_def] THEN REPEAT STRIP_TAC THEN
    EXISTS_TAC
-     `CONS (gc_shared_Data (wordLang_Word (n2w 2:'a word))) hs` THEN
+     `CONS (gc_shared_Data (word_Word (n2w 2:'a word))) hs` THEN
    REWRITE_TAC[MAP; ALL2; waddr; and2] THEN
    ASM_REWRITE_TAC[dataSem_Unit_def;
                    tuple_tag_def] THEN
@@ -6123,7 +6123,7 @@
      CONV_TAC NUM_REDUCE_CONV THEN INT_ARITH_TAC) in
    REWRITE_TAC[word_ml_inv_def] THEN REPEAT STRIP_TAC THEN
    EXISTS_TAC
-     `CONS (gc_shared_Data (wordLang_Word
+     `CONS (gc_shared_Data (word_Word
         (Smallnum (--(&n)):'a word))) hs` THEN
    REWRITE_TAC[MAP; ALL2; waddr] THEN REPEAT CONJ_TAC THENL
     [MATCH_MP_TAC abs_ml_inv_Num THEN
@@ -7660,7 +7660,7 @@
        REWRITE_TAC[GSYM ADD1; word_list_exists_thm] THEN
        REWRITE_TAC[STAR_SEP_EXISTS; SEP_EXISTS_THM] THEN
        DISCH_TAC THEN
-       EXISTS_TAC `wordLang_Word ((n2w a0 << 2):(M)word)` THEN
+       EXISTS_TAC `word_Word ((n2w a0 << 2):(M)word)` THEN
        FIRST_ASSUM ACCEPT_TAC;
        MP_TAC(ISPEC `a2:data_to_word_memoryProof_tag #
                         ((M)word_loc) list` PAIR_SURJECTIVE) THEN
@@ -8239,7 +8239,7 @@
     REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
     ASM_REWRITE_TAC[] THEN
     EXISTS_TAC
-      `CONS (gc_shared_Data (wordLang_Word (BlockNil tag:'a word))) hs`
+      `CONS (gc_shared_Data (word_Word (BlockNil tag:'a word))) hs`
     THEN
     REWRITE_TAC[MAP; ALL2; waddr] THEN
     ASM_REWRITE_TAC[] THEN
@@ -9321,7 +9321,7 @@
       left to the parser, so it is built with that type *)
    (fun (asl,w as gl) ->
       let v = fst(dest_exists w) in
-      let tm = `CONS (gc_shared_Data (wordLang_Loc lab 0)) hs` in
+      let tm = `CONS (gc_shared_Data (word_Loc lab 0)) hs` in
       EXISTS_TAC (inst (type_match (type_of tm) (type_of v) []) tm)
         gl) THEN
    REWRITE_TAC[MAP; ALL2; waddr] THEN
@@ -9468,7 +9468,7 @@
        else fail())) THEN
      FIRST_ASSUM(fun e ->
        let c = concl e in
-       if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+       if is_eq c && is_var (rand c) && hd_is "word_Word" (lhs c)
        then SUBST1_TAC (SYM e) else fail()) THEN
      REWRITE_TAC[injectivity "word_loc"] THEN
      CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
@@ -9572,7 +9572,7 @@
    REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
    ASM_REWRITE_TAC[] THEN
    EXISTS_TAC
-     `CONS (gc_shared_Data (wordLang_Word (Smallnum i:'a word))) hs`
+     `CONS (gc_shared_Data (word_Word (Smallnum i:'a word))) hs`
    THEN
    REWRITE_TAC[MAP; ALL2; waddr] THEN
    ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
@@ -9605,7 +9605,7 @@
    DISCH_THEN STRIP_ASSUME_TAC THEN
    W(fun (asl,w) ->
      let pe = grab asl (fun th ->
-       hd_is "wordLang_Word" (rhs (concl th))) in
+       hd_is "word_Word" (rhs (concl th))) in
      let ga = grab asl (fun th ->
        hd_is "get_real_addr" (lhs (concl th))) in
      let pw = rand (rhs (concl pe)) in
@@ -10029,7 +10029,7 @@
                  (TRANS (SYM t1) t2))))) THEN
    FIRST_ASSUM(fun e ->
      let c = concl e in
-     if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+     if is_eq c && is_var (rand c) && hd_is "word_Word" (lhs c)
      then SUBST1_TAC (SYM e) else fail()) THEN
    REWRITE_TAC[injectivity "word_loc"] THEN
    CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
@@ -10494,7 +10494,7 @@
          (X_CHOOSE_THEN `other:'a word` STRIP_ASSUME_TAC)) th
      else fail())) THEN
    REWRITE_TAC(word_addr_clauses ()) THEN
-   EXISTS_TAC `get_addr c ptr (wordLang_Word ((n2w 0):'a word))` THEN
+   EXISTS_TAC `get_addr c ptr (word_Word ((n2w 0):'a word))` THEN
    EXISTS_TAC `curr + n2w ptr * bytes_in_word:'a word` THEN
    REWRITE_TAC[] THEN CONJ_TAC THENL
     [FIRST_ASSUM(fun hl ->
@@ -10502,7 +10502,7 @@
        then FIRST_ASSUM(fun hlen ->
          FIRST_ASSUM(fun cu ->
            FIRST_ASSUM(fun gd ->
-             MP_TAC(SPEC `wordLang_Word ((n2w 0):'a word)`
+             MP_TAC(SPEC `word_Word ((n2w 0):'a word)`
                (GEN `w:('a)word_loc`
                  (MATCH_MP get_real_addr_get_addr
                    (CONJ hlen (CONJ hl (CONJ cu gd)))))))))
@@ -10833,7 +10833,7 @@
    REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
    ASM_REWRITE_TAC[] THEN
    EXISTS_TAC
-     `CONS (gc_shared_Data (wordLang_Word (n2w 18:'a word))) hs` THEN
+     `CONS (gc_shared_Data (word_Word (n2w 18:'a word))) hs` THEN
    REWRITE_TAC[MAP; ALL2; waddr; and18] THEN
    ASM_REWRITE_TAC[dataSem_Boolv_def;
                    bool_to_tag_def; true_tag_def] THEN
@@ -10860,7 +10860,7 @@
    REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
    ASM_REWRITE_TAC[] THEN
    EXISTS_TAC
-     `CONS (gc_shared_Data (wordLang_Word (n2w 2:'a word))) hs` THEN
+     `CONS (gc_shared_Data (word_Word (n2w 2:'a word))) hs` THEN
    REWRITE_TAC[MAP; ALL2; waddr; and2] THEN
    ASM_REWRITE_TAC[dataSem_Boolv_def;
                    bool_to_tag_def; false_tag_def] THEN
@@ -11391,7 +11391,7 @@
          (CONJ (ASSUME `i < dimindex (:'a)`) th))) THEN
      ARITH_TAC) in
    let glp = prove
-    (`get_lowerbits c (wordLang_Word (ptr_bits c x y)) =
+    (`get_lowerbits c (word_Word (ptr_bits c x y)) =
       (ptr_bits c x y || (n2w 1))`,
      REWRITE_TAC[get_lowerbits_def] THEN MATCH_REDUCE_TAC THEN
      AP_THM_TAC THEN AP_TERM_TAC THEN
@@ -11486,8 +11486,8 @@
                      (CONJ gd lt)))) THEN
     DISCH_THEN STRIP_ASSUME_TAC THEN
     FIRST_X_ASSUM(fun e ->
-      if is_eq (concl e) && hd_is "wordLang_Word" (lhs (concl e)) &&
-         hd_is "wordLang_Word" (rhs (concl e))
+      if is_eq (concl e) && hd_is "word_Word" (lhs (concl e)) &&
+         hd_is "word_Word" (rhs (concl e))
       then SUBST_ALL_TAC(SYM(REWRITE_RULE[injectivity "word_loc"] e))
       else fail()) THEN
     W(fun (asl,w) ->
@@ -11910,7 +11910,7 @@
       DISCH_THEN STRIP_ASSUME_TAC THEN
       FIRST_X_ASSUM(fun e ->
         if is_eq (concl e) && is_var (lhs (concl e)) &&
-           hd_is "wordLang_Word" (rhs (concl e))
+           hd_is "word_Word" (rhs (concl e))
         then SUBST1_TAC e else fail()) THEN
       REWRITE_TAC[isWord_def] THEN MATCH_REDUCE_TAC THEN
       REWRITE_TAC[];
@@ -12584,7 +12584,7 @@
    let loadword = prove
     (`!(m:('a)word->('a)word_loc) dm be' w x.
         mem_load_byte_aux m dm be' w = SOME x
-        ==> (?v. m (byte_align w) = wordLang_Word v) /\
+        ==> (?v. m (byte_align w) = word_Word v) /\
             byte_align w IN dm`,
      REPEAT GEN_TAC THEN
      REWRITE_TAC[mem_load_byte_aux_def] THEN
@@ -12956,7 +12956,7 @@
   (* writing bytes leaves a word a word: the write either updates
      the address with a word or leaves the memory alone *)
   (let isw = prove
-    (`!w. isWord (wordLang_Word w)`,
+    (`!w. isWord (word_Word w)`,
      GEN_TAC THEN REWRITE_TAC[isWord_def] THEN
      MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
    LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THENL
@@ -14529,8 +14529,8 @@
      the lower bits already hold is absorbed first *)
   (let lb1 = prove
      (`!c (x:(N)word).
-         word 1 || get_lowerbits c (wordLang_Word x) =
-         get_lowerbits c (wordLang_Word x)`,
+         word 1 || get_lowerbits c (word_Word x) =
+         get_lowerbits c (word_Word x)`,
       REPEAT GEN_TAC THEN REWRITE_TAC[get_lowerbits_def] THEN
       MATCH_REDUCE_TAC THEN CONV_TAC WORD_BITWISE_RULE) in
     STRIP_TAC THEN
@@ -25415,7 +25415,7 @@
   W(fun (asl,gl) ->
     let wa = grab asl (fun th ->
       try is_eq (concl th) &&
-          hd_is "wordLang_Word" (lhs (concl th)) &&
+          hd_is "word_Word" (lhs (concl th)) &&
           hd_is "get_addr" (rand (lhs (concl th)))
       with Failure _ -> false) in
     let uu = rand (rand (lhs (concl wa))) in
@@ -25428,7 +25428,7 @@
   W(fun (asl,gl) ->
     let wa = grab asl (fun th ->
       try is_eq (concl th) &&
-          hd_is "wordLang_Word" (lhs (concl th)) &&
+          hd_is "word_Word" (lhs (concl th)) &&
           hd_is "get_addr" (rand (lhs (concl th)))
       with Failure _ -> false) in
     let pw = rand (lhs (concl wa)) in
@@ -25485,7 +25485,7 @@
   REPEAT CONJ_TAC THENL
    [FIRST_ASSUM (fun wa ->
       if not (try is_eq (concl wa) &&
-                  hd_is "wordLang_Word" (lhs (concl wa)) &&
+                  hd_is "word_Word" (lhs (concl wa)) &&
                   hd_is "get_addr" (rand (lhs (concl wa)))
               with Failure _ -> false) then fail() else
       ACCEPT_TAC (SYM wa));
@@ -25791,7 +25791,7 @@
   W(fun (asl,gl) ->
     let wa = grab asl (fun th ->
       try is_eq (concl th) &&
-          hd_is "wordLang_Word" (lhs (concl th)) &&
+          hd_is "word_Word" (lhs (concl th)) &&
           hd_is "get_addr" (rand (lhs (concl th)))
       with Failure _ -> false) in
     let uu = rand (rand (lhs (concl wa))) in
@@ -25804,7 +25804,7 @@
   W(fun (asl,gl) ->
     let wa = grab asl (fun th ->
       try is_eq (concl th) &&
-          hd_is "wordLang_Word" (lhs (concl th)) &&
+          hd_is "word_Word" (lhs (concl th)) &&
           hd_is "get_addr" (rand (lhs (concl th)))
       with Failure _ -> false) in
     let pw = rand (lhs (concl wa)) in
@@ -25872,7 +25872,7 @@
   REPEAT CONJ_TAC THENL
    [FIRST_ASSUM (fun wa ->
       if not (try is_eq (concl wa) &&
-                  hd_is "wordLang_Word" (lhs (concl wa)) &&
+                  hd_is "word_Word" (lhs (concl wa)) &&
                   hd_is "get_addr" (rand (lhs (concl wa)))
               with Failure _ -> false) then fail() else
       ACCEPT_TAC (SYM wa));
@@ -31864,15 +31864,15 @@
   let wseq = prove
    (cake_as_vars (fun () ->
       `good_dimindex (:'a)
-     ==> LUPDATE (wordLang_Word
+     ==> LUPDATE (word_Word
                     (last_bytes (n MOD (dimindex (:'a) DIV 8))
                        (w:(8)word) ((n2w 0):'a word)
                        ((n2w 0):'a word) be))
            (byte_len (:'a) n - 1)
            (REPLICATE (byte_len (:'a) n)
-              (wordLang_Word
+              (word_Word
                  (word_of_byte ((w2w (w:(8)word)):'a word)))) =
-         MAP wordLang_Word
+         MAP word_Word
            (write_bytes (REPLICATE n (w:(8)word))
               (REPLICATE (byte_len (:'a) n) ((n2w 0):'a word)) be)`),
     DISCH_TAC THEN
@@ -32790,7 +32790,7 @@
         (word_list_exists (b + bytes_in_word * n2w k)
            (SUC (LENGTH vs)) * frame) (fun2set (m,dm)) /\
         good_dimindex (:'a) /\
-        FLOOKUP st NextFree = SOME (wordLang_Word b) /\
+        FLOOKUP st NextFree = SOME (word_Word b) /\
         k + LENGTH vs < sp
         ==> (?xs m1.
                copy_list c st (LENGTH vs)
@@ -33258,7 +33258,7 @@
     (* the root of the ref is the pointer to the block of the thunk *)
     SUBGOAL_THEN `v_inv c (RefPtr F p) refs
         (gc_shared_Pointer (FAPPLY f p)
-          (wordLang_Word ((n2w 0):'a word)),f,tf,heap)`
+          (word_Word ((n2w 0):'a word)),f,tf,heap)`
       ASSUME_TAC THENL
      [REWRITE_TAC[v_inv_def] THEN DISJ2_TAC THEN DISJ1_TAC THEN
       MAP_EVERY EXISTS_TAC [`ev:thunk_mode`; `z:dataSem_v`;
@@ -33269,7 +33269,7 @@
     W(fun (asl,gl) ->
       let vq = grab_asm (fun th -> is_eq (concl th) &&
         is_var (rhs (concl th)) &&
-        hd_is "wordLang_Word" (lhs (concl th))) asl in
+        hd_is "word_Word" (lhs (concl th))) asl in
       EXISTS_TAC (rand (lhs (concl vq))) THEN
       REWRITE_TAC[SYM vq; get_addr_0]) THEN
     (* the store says where the heap lies in the memory *)
@@ -33480,7 +33480,7 @@
       RULE_ASSUM_TAC (REWRITE_RULE
         [grab_asm (fun th -> is_eq (concl th) &&
           is_var (lhs (concl th)) &&
-          hd_is "wordLang_Word" (rhs (concl th))) asl])) THEN
+          hd_is "word_Word" (rhs (concl th))) asl])) THEN
     W(fun (asl,gl) ->
       cases_asm (var_by_name "a0" (asl,gl))
         [["ptr"; "u"]; ["dw"]]) THEN
@@ -34799,7 +34799,7 @@
       let a2,sep = ub_sep asl gl in
       let rd = CONJUNCT1 (MATCH_MP read_fun2set sep) in
       let mw = grab_asm (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th)) &&
+        hd_is "word_Word" (rhs (concl th)) &&
         is_var (rator (lhs (concl th)))) asl in
       SUBST_ALL_TAC (REWRITE_RULE[injectivity "word_loc"]
         (TRANS (SYM mw) rd))) in
@@ -35125,7 +35125,7 @@
     `good_dimindex (:'a) /\ byte_aligned (curr:'a word) /\
      (set_sep_one (curr + bytes_in_word * n2w hl, hw) *
       word_list ((curr + bytes_in_word * n2w hl) + bytes_in_word)
-        (MAP wordLang_Word (write_bytes vals
+        (MAP word_Word (write_bytes vals
           (REPLICATE ws ((n2w 0):'a word)) be)) * q)
        (fun2set (m,dm)) /\
      LENGTH vals <= ws * (dimindex (:'a) DIV 8) /\ i < LENGTH vals
@@ -35420,7 +35420,7 @@
   let mem_load_word = prove
    (`!(m:'a word->'a word_loc) dm be ad b.
        mem_load_byte_aux m dm be ad = SOME b
-       ==> ?v. m (byte_align ad) = wordLang_Word v`,
+       ==> ?v. m (byte_align ad) = word_Word v`,
     REPEAT GEN_TAC THEN REWRITE_TAC[mem_load_byte_aux_def] THEN
     CASES_ON_TAC `(m:'a word->'a word_loc) (byte_align (ad:'a word))`
       THEN
@@ -35501,7 +35501,7 @@
                    (TRANS (SYM t1) t2))))) THEN
     FIRST_ASSUM (fun e ->
       let c = concl e in
-      if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+      if is_eq c && is_var (rand c) && hd_is "word_Word" (lhs c)
       then SUBST1_TAC (SYM e) else fail()) THEN
     REWRITE_TAC[injectivity "word_loc"] THEN
     CONV_TAC (REDEPTH_CONV UNWIND_CONV) THEN
@@ -35634,7 +35634,7 @@
       REWRITE_TAC[hle] THEN RULE_ASSUM_TRY (REWRITE_RULE[hle])) THEN
     W(fun (asl,gl) ->
       let mw = grab_asm (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th)) &&
+        hd_is "word_Word" (rhs (concl th)) &&
         is_var (rator (lhs (concl th)))) asl in
       let adg = rand (rand (lhs (concl mw))) in
       let xx = lhand adg in
@@ -35655,7 +35655,7 @@
       let him = gr (fun th ->
         hd_is "heap_in_memory_store" (concl th)) in
       let mw = gr (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th)) &&
+        hd_is "word_Word" (rhs (concl th)) &&
         is_var (rator (lhs (concl th)))) in
       let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
       let ilt = gr (fun th -> hd_is "<" (concl th) &&
@@ -35835,7 +35835,7 @@
   MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
   FIRST_ASSUM(fun e ->
     let c = concl e in
-    if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+    if is_eq c && is_var (rand c) && hd_is "word_Word" (lhs c)
     then SUBST1_TAC (SYM e) else fail()) THEN
   REWRITE_TAC[injectivity "word_loc"] THEN
   CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
@@ -36005,7 +36005,7 @@
       let lst = el 8 (snd (strip_comb (concl mr))) in
       let pieces vt =
         let vw = the_asm (fun c -> is_eq c && lhand c = vt &&
-                   hd_is "wordLang_Word" (rand c)) gl in
+                   hd_is "word_Word" (rand c)) gl in
         let wv = rand (rand (concl vw)) in
         let ga = the_asm (fun c -> is_eq c &&
                    hd_is "get_real_addr" (lhand c) &&
@@ -36013,7 +36013,7 @@
         let a = rand (rand (concl ga)) in
         let ma = the_asm (fun c -> is_eq c && is_comb (lhand c) &&
                    rand (lhand c) = a &&
-                   hd_is "wordLang_Word" (rand c)) gl in
+                   hd_is "word_Word" (rand c)) gl in
         let x = rand (rand (concl ma)) in
         let he = the_asm (fun c -> is_eq c && lhand c = x &&
                    hd_is "make_header" (rand c)) gl in
@@ -36215,7 +36215,7 @@
        MP_TAC (SPEC p rk)) THEN
      REWRITE_TAC[MEM; isSomeDataElement_def] THEN
      DISCH_THEN (fun th ->
-       MP_TAC (REWRITE_RULE[] (SPEC `wordLang_Word ((n2w 0):'a word)`
+       MP_TAC (REWRITE_RULE[] (SPEC `word_Word ((n2w 0):'a word)`
                                 th))) THEN
      REWRITE_TAC[] THEN
      DISCH_THEN (REPEAT_TCL CHOOSE_THEN (fun hl ->
@@ -36354,9 +36354,9 @@
    `!k xs1 (xs2:('a word) list) f1 f2 (a1:'a word) a2.
       LENGTH xs1 <= k /\ LENGTH xs1 = LENGTH xs2 /\
       LENGTH xs1 < dimword (:'a) /\
-      (misc_word_list (a1 + bytes_in_word) (MAP wordLang_Word xs1) *
+      (misc_word_list (a1 + bytes_in_word) (MAP word_Word xs1) *
         f1) (fun2set (m,dm)) /\
-      (misc_word_list (a2 + bytes_in_word) (MAP wordLang_Word xs2) *
+      (misc_word_list (a2 + bytes_in_word) (MAP word_Word xs2) *
         f2) (fun2set (m,dm))
       ==> word_cmp_loop (n2w (LENGTH xs1))
             (a1 + bytes_in_word * n2w (LENGTH xs1))
@@ -36732,7 +36732,7 @@
       STRIP_ASSUME_TAC (MATCH_MP memory_rel_Number_IMP_Word_2 mr)) THEN
     REPEAT (FIRST_X_ASSUM (fun e ->
       if is_eq (concl e) && is_var (lhs (concl e)) &&
-         hd_is "wordLang_Word" (rhs (concl e))
+         hd_is "word_Word" (rhs (concl e))
       then SUBST_ALL_TAC e else fail())) THEN
     W(fun (asl,gl) ->
       let mr = grab_asm (fun th ->
@@ -36838,7 +36838,7 @@
         hd_is "get_real_addr" (lhs (concl th))) in
       let a = rand (rhs (concl gra)) in
       let ma = gr (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th)) &&
+        hd_is "word_Word" (rhs (concl th)) &&
         is_var (rand (rhs (concl th))) &&
         lhs (concl th) = mk_comb (`m:'a word->'a word_loc`, a)) in
       MAP_EVERY EXISTS_TAC [a; rand (rhs (concl ma))]) THEN
@@ -36877,7 +36877,7 @@
         lhs (concl t1) = lhs (concl t2) &&
         not (rhs (concl t1) = rhs (concl t2)) &&
         (hd_is "SOME" (rhs (concl t1)) ||
-         hd_is "wordLang_Word" (rhs (concl t1))))
+         hd_is "word_Word" (rhs (concl t1))))
         (allpairs (fun a b -> (a,b)) eqs eqs) in
       let ie = REWRITE_RULE[injectivity "option";
         injectivity "word_loc"] (TRANS (SYM t1) t2) in
@@ -36916,7 +36916,7 @@
       let hdr a = rand (rhs (concl (grab_asm (fun th ->
         is_eq (concl th) &&
         lhs (concl th) = mk_comb (`m:'a word->'a word_loc`, a) &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl))) in
+        hd_is "word_Word" (rhs (concl th))) asl))) in
       MAP_EVERY EXISTS_TAC [a1; hdr a1; a2; hdr a2]) THEN
     REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) in
   (* the condition of the sign that a header holds, as the case of
@@ -38098,7 +38098,7 @@
   let pf_same =
     W(fun (asl,_) ->
       let ws = filter (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th))) (map snd asl) in
+        hd_is "word_Word" (rhs (concl th))) (map snd asl) in
       SUBST_ALL_TAC (REWRITE_RULE[injectivity "word_loc"]
         (TRANS (SYM (hd ws)) (hd (tl ws))))) THEN
     RULE_ASSUM_TRY (REWRITE_RULE[]) in
@@ -38383,7 +38383,7 @@
     pf_same THEN
     W(fun (asl,_) ->
       let ws = grab_asm (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl in
+        hd_is "word_Word" (rhs (concl th))) asl in
       ASM_CASES_TAC (list_mk_icomb "bit"
         [`0`; rand (rhs (concl ws))])) THEN
     FIRST_ASSUM (fun th ->
@@ -38777,7 +38777,7 @@
       let cs = conjuncts (snd (strip_exists gl)) in
       let e t = grab_asm (fun th ->
         is_eq (concl th) && lhs (concl th) = t &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl in
+        hd_is "word_Word" (rhs (concl th))) asl in
       MAP_EVERY EXISTS_TAC
         [rand (rhs (concl (e (lhs (el 0 cs)))));
          rand (rhs (concl (e (lhs (el 1 cs)))))]) THEN
@@ -38824,7 +38824,7 @@
       tryfind (fun x ->
         let es = filter (fun (_,th) ->
           (try is_eq (concl th) && lhs (concl th) = x &&
-               hd_is "wordLang_Word" (rhs (concl th))
+               hd_is "word_Word" (rhs (concl th))
            with Failure _ -> false)) asl in
         if length es < 2 then fail() else
         let eq = REWRITE_RULE[injectivity "word_loc"]
@@ -38837,7 +38837,7 @@
       let cs = conjuncts (snd (strip_exists gl)) in
       let e t = grab_asm (fun th ->
         is_eq (concl th) && lhs (concl th) = t &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl in
+        hd_is "word_Word" (rhs (concl th))) asl in
       MAP_EVERY EXISTS_TAC
         [rand (rhs (concl (e (lhs (el 0 cs)))));
          rand (rhs (concl (e (lhs (el 1 cs)))))]) THEN
@@ -38869,7 +38869,7 @@
     two_roots memory_rel_Block_IMP THEN
     REPEAT (FIRST_X_ASSUM (fun th ->
       let c = concl th in
-      if is_eq c && is_var (lhs c) && hd_is "wordLang_Word" (rhs c)
+      if is_eq c && is_var (lhs c) && hd_is "word_Word" (rhs c)
       then SUBST_ALL_TAC th else fail())) THEN
     W(fun (asl,gl) ->
       let cs = conjuncts (snd (strip_exists gl)) in
@@ -39199,7 +39199,7 @@
           SUBST_ALL_TAC (REWRITE_RULE[injectivity "option"]
             (TRANS (SYM go) oc)))) THEN
       FIRST_X_ASSUM (fun e ->
-        if (try hd_is "wordLang_Word" (lhs (concl e)) &&
+        if (try hd_is "word_Word" (lhs (concl e)) &&
                 is_var (rand (rand (concl e)))
             with Failure _ -> false)
         then SUBST_ALL_TAC (SYM (REWRITE_RULE[injectivity
@@ -39706,10 +39706,10 @@
        (x + bytes_in_word * n2w 2) IN dm /\
        (y + bytes_in_word) IN dm /\
        (y + bytes_in_word * n2w 2) IN dm /\
-       m (x + bytes_in_word) = wordLang_Word ((63 >< 32) (u:word64)) /\
-       m (x + bytes_in_word * n2w 2) = wordLang_Word ((31 >< 0) u) /\
-       m (y + bytes_in_word) = wordLang_Word ((63 >< 32) v) /\
-       m (y + bytes_in_word * n2w 2) = wordLang_Word ((31 >< 0) v)
+       m (x + bytes_in_word) = word_Word ((63 >< 32) (u:word64)) /\
+       m (x + bytes_in_word * n2w 2) = word_Word ((31 >< 0) u) /\
+       m (y + bytes_in_word) = word_Word ((63 >< 32) v) /\
+       m (y + bytes_in_word * n2w 2) = word_Word ((31 >< 0) v)
        ==> (?res. word_cmp_loop ((n2w 2):'a word)
                     (x + bytes_in_word * n2w 2)
                     (y + bytes_in_word * n2w 2) dm m = SOME res /\
@@ -39753,8 +39753,8 @@
    (cake_as_vars (fun () ->
       `dimindex (:'a) = 64 /\
        (x + bytes_in_word) IN dm /\ (y + bytes_in_word) IN dm /\
-       m (x + bytes_in_word) = wordLang_Word ((63 >< 0) (u:word64)) /\
-       m (y + bytes_in_word) = wordLang_Word ((63 >< 0) v)
+       m (x + bytes_in_word) = word_Word ((63 >< 0) (u:word64)) /\
+       m (y + bytes_in_word) = word_Word ((63 >< 0) v)
        ==> (?res. word_cmp_loop ((n2w 1):'a word)
                     (x + bytes_in_word * n2w 1)
                     (y + bytes_in_word * n2w 1) dm m = SOME res /\
@@ -39924,7 +39924,7 @@
       let eqs = mapfilter (fun (_,th) ->
         if is_eq (concl th) &&
            (hd_is "get_real_addr" (lhs (concl th)) ||
-            (try hd_is "wordLang_Word" (rhs (concl th)) &&
+            (try hd_is "word_Word" (rhs (concl th)) &&
                  not (is_var (lhs (concl th)))
              with Failure _ -> false))
         then th else fail()) asl in
@@ -39942,7 +39942,7 @@
   let word_header_SOME = prove
    (cake_as_vars (fun () ->
       `get_real_addr c st w = SOME x /\ x IN dm /\
-       m x = wordLang_Word h
+       m x = word_Word h
        ==> word_header c st w dm m = SOME (x,h)`),
     STRIP_TAC THEN REWRITE_TAC[word_header_def] THEN
     ASM_REWRITE_TAC[] THEN TRY MATCH_REDUCE_TAC THEN
@@ -39961,7 +39961,7 @@
             hd_is "IN" (concl t2) && lhand (concl t2) = a) asl in
           let mx = grab_asm (fun t2 -> is_eq (concl t2) &&
             (try rand (lhs (concl t2)) = a &&
-                 hd_is "wordLang_Word" (rhs (concl t2))
+                 hd_is "word_Word" (rhs (concl t2))
              with Failure _ -> false)) asl in
           MATCH_MP word_header_SOME (CONJ th (CONJ inm mx))
         else fail()) asl in
@@ -40142,7 +40142,7 @@
         let a = rand (rhs (concl gra)) in
         let mx = grab_asm (fun th -> is_eq (concl th) &&
           (try rand (lhs (concl th)) = a &&
-               hd_is "wordLang_Word" (rhs (concl th))
+               hd_is "word_Word" (rhs (concl th))
            with Failure _ -> false)) asl in
         MATCH_MP memory_rel_isClos
           (CONJ mr0 (CONJ b0 (CONJ gra (CONJ mx gd)))) in
@@ -40236,7 +40236,7 @@
    (cake_as_vars (fun () ->
       `memory_rel c be ts refs sp st m dm (CONS (v,x) vars) /\
        (!ptr. ~(v = RefPtr F ptr)) /\ (!k. ~(v = CodePtr k))
-       ==> (?w. x = wordLang_Word (w:'a word))`),
+       ==> (?w. x = word_Word (w:'a word))`),
     STRIP_TAC THEN CASES_ON_TAC `x:('a)word_loc` THEN
     TRY (SOLVED (W(fun (asl,gl) ->
       EXISTS_TAC (rand (lhs (snd (dest_exists gl))))) THEN
@@ -40255,7 +40255,7 @@
    (cake_as_vars (fun () ->
       `~(w = ((n2w 0):'a word)) /\ a1 IN dm /\ a2 IN dm /\
        ~(l = 0) /\ ~(ck = 0) /\
-       m a1 = wordLang_Word c1 /\ m a2 = wordLang_Word c2 /\
+       m a1 = word_Word c1 /\ m a2 = word_Word c2 /\
        word_eq c st dm m (l - 1) (ck - 1) c1 c2 = SOME (x,l1,ck1)
        ==> word_eq_list c st dm m l ck w a1 a2 =
            (if ~(x = ((n2w 1):'a word)) then SOME (x,l1,ck) else
@@ -40379,13 +40379,13 @@
   let word_cmp_loop_bytes = prove
    (cake_as_vars (fun () ->
       `memory_rel c be ts refs sp st m dm
-         (CONS (RefPtr bl1 p1,wordLang_Word (w1:'a word)) (CONS (RefPtr
-           bl2 p2,wordLang_Word w2) vars)) /\
+         (CONS (RefPtr bl1 p1,word_Word (w1:'a word)) (CONS (RefPtr
+           bl2 p2,word_Word w2) vars)) /\
        lookup p1 refs = SOME (ByteArray T bs1) /\
        lookup p2 refs = SOME (ByteArray T bs2) /\
        get_real_addr c st w1 = SOME a1 /\
        get_real_addr c st w2 = SOME a2 /\
-       m a1 = wordLang_Word h /\ m a2 = wordLang_Word h /\
+       m a1 = word_Word h /\ m a2 = word_Word h /\
        good_dimindex (:'a)
        ==> (?res. word_cmp_loop (decode_length c h)
                     (a1 + bytes_in_word * decode_length c h)
@@ -40539,7 +40539,7 @@
     not (can (find_term (hd_is "eq_explode")) (concl th))) asl in
   let the_wd w asl = grab_asm (fun th -> is_eq (concl th) &&
     lhs (concl th) = w &&
-    (try hd_is "wordLang_Word" (rhs (concl th))
+    (try hd_is "word_Word" (rhs (concl th))
      with Failure _ -> false)) asl in
   let weq_at nm ck asl = grab_asm (fun th -> is_eq (concl th) &&
     hd_is nm (lhs (concl th)) &&
@@ -40938,9 +40938,9 @@
       `memory_rel c be ts refs sp st m dm (CONS (RefPtr T p,v) vars) /\
        sptree_lookup p refs = SOME r /\ ~(?bs. ByteArray T bs = r) /\
        good_dimindex (:'a)
-       ==> (?w a x. v = wordLang_Word w /\
+       ==> (?w a x. v = word_Word w /\
              get_real_addr c st w = SOME a /\
-             m a = wordLang_Word (x:'a word) /\ a IN dm /\
+             m a = word_Word (x:'a word) /\ a IN dm /\
              (word_bit 3 x /\ ~(word_bit 2 x) \/
               word_bit 2 x /\ ~(word_bit 3 x) /\ word_bit 4 x))`),
     STRIP_TAC THEN
@@ -40977,7 +40977,7 @@
       let a = rand (rhs (concl gra)) in
       let mx = grab_asm (fun th -> is_eq (concl th) &&
         (try rand (lhs (concl th)) = a &&
-             hd_is "wordLang_Word" (rhs (concl th))
+             hd_is "word_Word" (rhs (concl th))
          with Failure _ -> false)) asl in
       MAP_EVERY EXISTS_TAC [w; a; rand (rhs (concl mx))]) THEN
     REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
@@ -41613,7 +41613,7 @@
           let mx p = grab_asm (fun th -> is_eq (concl th) &&
             (try rand (lhs (concl th)) =
                    rand (rhs (concl (gr p))) &&
-                 hd_is "wordLang_Word" (rhs (concl th))
+                 hd_is "word_Word" (rhs (concl th))
              with Failure _ -> false)) asl in
           let p1 = lhand stack and p2 = lhand (rand stack) in
           STRIP_ASSUME_TAC (MATCH_MP word_cmp_loop_bytes
@@ -42144,7 +42144,7 @@
                  is_eq (lhs (concl th)) &&
                  is_conj (rhs (concl th))) asl in
                let heq = grab_asm (fun th -> is_eq (concl th) &&
-                 hd_is "wordLang_Word" (lhs (concl th))) asl in
+                 hd_is "word_Word" (lhs (concl th))) asl in
                MP_TAC (EQ_MP iff
                  (SYM (REWRITE_RULE[injectivity "word_loc"]
                    heq)))) THEN
@@ -42184,7 +42184,7 @@
           is_eq (lhs (concl th)) && is_conj (rhs (concl th))) asl in
         let hne = grab_asm (fun th -> is_neg (concl th) &&
           is_eq (rand (concl th)) &&
-          hd_is "wordLang_Word" (lhs (rand (concl th)))) asl in
+          hd_is "word_Word" (lhs (rand (concl th)))) asl in
         let parts = conjuncts (rhs (concl iff)) in
         let heq = EQ_MP (SYM iff)
           (end_itlist CONJ (map (fun t -> REFL (lhs t)) parts)) in
@@ -42226,7 +42226,7 @@
   MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
   FIRST_ASSUM(fun e ->
     let c = concl e in
-    if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+    if is_eq c && is_var (rand c) && hd_is "word_Word" (lhs c)
     then SUBST1_TAC (SYM e) else fail()) THEN
   REWRITE_TAC[injectivity "word_loc"] THEN
   CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
@@ -42300,7 +42300,7 @@
     let is = the_asm (hd_is "IS_SOME") gl in
     let eh = rand (concl is) in
     let mh = rand (rhs (concl (the_asm (fun c ->
-               try is_eq c && hd_is "wordLang_Word" (rand c) &&
+               try is_eq c && hd_is "word_Word" (rand c) &&
                    hd_is "make_header" (rand (rand c))
                with Failure _ -> false) gl))) in
     SUBGOAL_THEN (mk_eq (eh, mk_icomb (`SOME`, mh)))
@@ -42381,7 +42381,7 @@
      them *)
   let map_get_word = prove
    (`!l. MAP (get_Word o SND)
-           (MAP (\w. (F,wordLang_Word w)) (l:('a word)list)) = l`,
+           (MAP (\w. (F,word_Word w)) (l:('a word)list)) = l`,
     LIST_INDUCT_TAC THEN
     ASM_REWRITE_TAC[MAP; o_THM; SND; get_Word_def] THEN
     CONV_TAC (TOP_DEPTH_CONV MATCH_REDUCE_CONV) THEN
@@ -42506,7 +42506,7 @@
         (CONJ mr (CONJ lk gd)))) THEN
     FIRST_ASSUM (fun e ->
       if is_eq (concl e) && is_var (lhs (concl e)) &&
-         hd_is "wordLang_Word" (rhs (concl e))
+         hd_is "word_Word" (rhs (concl e))
       then SUBST_ALL_TAC e else fail()) THEN
     W(fun (asl,gl) ->
       let gr p = grab_asm p asl in
@@ -42639,7 +42639,7 @@
       let gr p = grab_asm p asl in
       let ind = gr (fun th -> hd_is "IN" (concl th)) in
       let mae = gr (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th)) &&
+        hd_is "word_Word" (rhs (concl th)) &&
         hd_is "make_byte_header" (rand (rhs (concl th)))) in
       REWRITE_TAC[word_mem_eq_def; ind; mae; isWord_def] THEN
       MATCH_REDUCE_TAC THEN
@@ -44016,7 +44016,7 @@
        the ones of the statement *)
     FIRST_ASSUM (fun we ->
       if not (is_eq (concl we)) ||
-         not (hd_is "wordLang_Word" (lhs (concl we))) then fail() else
+         not (hd_is "word_Word" (lhs (concl we))) then fail() else
        SUBST_ALL_TAC
          (SYM (REWRITE_RULE[injectivity "word_loc"] we))) THEN
     W(fun (asl,gl) ->
@@ -44150,11 +44150,11 @@
      `!c init_ptr offset.
         good_dimindex (:'a) /\
         backend_common_word_shift (:'a) <= shift_length c /\
-        wordLang_Word (init_ptr:'a word) =
+        word_Word (init_ptr:'a word) =
           make_cons_ptr c (bytes_in_word * n2w offset) 0 2 ==>
         (init_ptr + (n2w 3 << shift_length c) =
-           get_addr c (offset + 3) (wordLang_Word (ptr_bits c 0 2)) /\
-         wordLang_Word (init_ptr + (n2w 3 << shift_length c)) =
+           get_addr c (offset + 3) (word_Word (ptr_bits c 0 2)) /\
+         word_Word (init_ptr + (n2w 3 << shift_length c)) =
            make_cons_ptr c (bytes_in_word * n2w (offset + 3)) 0 2)`),
     REPEAT GEN_TAC THEN STRIP_TAC THEN
     FIRST_ASSUM (fun gd ->
@@ -47572,13 +47572,13 @@
         do_build map0 i t refs (SOME ts) = (v,refs1,SOME ts1) /\
         build_words c map0' i t (free' - curr) = SOME (w,ws) /\
         SUM (MAP part_space_req t) <= sp /\
-        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        FLOOKUP st NextFree = SOME (word_Word free') /\
+        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
         (!ks. memory_rel c be ts refs sp st m dm
                 (APPEND (MAP (\k. (map0 k,map0' k)) ks) vars)) /\
         good_dimindex (:'a)
         ==> (?m1. memory_rel c be ts1 refs1 (sp - LENGTH ws)
-                      (st |+ (NextFree,wordLang_Word
+                      (st |+ (NextFree,word_Word
                          (free' + bytes_in_word * n2w (LENGTH ws))))
                       m1 dm (CONS (v,w) vars) /\
                     data_to_word_memoryProof_store_list free' ws m dm
@@ -47587,10 +47587,10 @@
        SOME m0 ==>
      free2 = free' + bytes_in_word * n2w (LENGTH xs) ==>
      sp2 = sp - LENGTH xs ==>
-     FLOOKUP st2 NextFree = SOME (wordLang_Word free2) ==>
-     FLOOKUP st2 CurrHeap = SOME (wordLang_Word curr) ==>
-     (!nf. st2 |+ (NextFree,wordLang_Word nf) =
-           st |+ (NextFree,wordLang_Word nf)) ==>
+     FLOOKUP st2 NextFree = SOME (word_Word free2) ==>
+     FLOOKUP st2 CurrHeap = SOME (word_Word curr) ==>
+     (!nf. st2 |+ (NextFree,word_Word nf) =
+           st |+ (NextFree,word_Word nf)) ==>
      (!ks. memory_rel c be ts2 refs2 sp2 st2 m0 dm
              (APPEND (MAP (\k. ((i =+ b) mp k,(i =+ w2) mp' k)) ks)
                vars)) ==>
@@ -47604,7 +47604,7 @@
        ys))
                  in
                  memory_rel c be ts1 refs1 (sp - LENGTH (APPEND xs ys))
-                   (st |+ (NextFree,wordLang_Word nf)) m1 dm
+                   (st |+ (NextFree,word_Word nf)) m1 dm
                    (CONS (v,w) vars) /\
                  data_to_word_memoryProof_store_list free' (APPEND xs
                    ys)
@@ -48296,7 +48296,7 @@
      leaves it alone *)
   let lm_LN = prove
    (`!i. lookup_mem (LN:(bool#('a)word_loc)spt) i =
-         (F,wordLang_Word ((n2w 0):'a word))`,
+         (F,word_Word ((n2w 0):'a word))`,
     GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [lookup_mem_def] THEN
     REWRITE_TAC[lookup_def] THEN MATCH_REDUCE_TAC THEN
     REWRITE_TAC[]) in
@@ -48370,7 +48370,7 @@
       let args = snd (strip_comb (lhs (concl db))) in
       MAP_EVERY EXISTS_TAC
         [el 2 args; el 1 args; rand (rand adj); el 0 args;
-         `\(n:num). wordLang_Word ((n2w 0):'a word)`;
+         `\(n:num). word_Word ((n2w 0):'a word)`;
          el 3 args; rand (el 4 args)] THEN
       (REPEAT CONJ_TAC THEN
        TRY (SOLVED (ACCEPT_TAC db)) THEN
@@ -48644,8 +48644,8 @@
   let wr a v sp =
     SPEC v (MATCH_MP write_fun2set (front sp (cellat a sp))) in
   let isw = prove
-   (`isWord (wordLang_Word w) = T /\
-     theWord (wordLang_Word w) = w`,
+   (`isWord (word_Word w) = T /\
+     theWord (word_Word w) = w`,
     CONJ_TAC THENL
      [REWRITE_TAC[isWord_def] THEN MATCH_REDUCE_TAC;
       REWRITE_TAC[theWord_def]]) in
@@ -48987,8 +48987,8 @@
   let wr a v sp =
     SPEC v (MATCH_MP write_fun2set (front sp (cellat a sp))) in
   let isw = prove
-   (`isWord (wordLang_Word w) = T /\
-     theWord (wordLang_Word w) = w`,
+   (`isWord (word_Word w) = T /\
+     theWord (word_Word w) = w`,
     CONJ_TAC THENL
      [REWRITE_TAC[isWord_def] THEN MATCH_REDUCE_TAC;
       REWRITE_TAC[theWord_def]]) in
@@ -49301,7 +49301,7 @@
       (CONJUNCTS th) in
   (* the words of two lists of words are the same list *)
   let map_word_11 = prove
-   (`!l1 l2. MAP wordLang_Word l1 = MAP wordLang_Word l2 ==> l1 = l2`,
+   (`!l1 l2. MAP word_Word l1 = MAP word_Word l2 ==> l1 = l2`,
     LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
     REWRITE_TAC[MAP; NOT_CONS_NIL; CONS_11; injectivity "word_loc";
                 GSYM NOT_CONS_NIL] THEN
@@ -49644,8 +49644,8 @@
          a sp sp1 gens c s m dm limit /\
        LENGTH ys = LENGTH xs /\
        (!curr other.
-          FLOOKUP s CurrHeap = SOME (wordLang_Word curr) /\
-          FLOOKUP s OtherHeap = SOME (wordLang_Word other)
+          FLOOKUP s CurrHeap = SOME (word_Word curr) /\
+          FLOOKUP s OtherHeap = SOME (word_Word other)
           ==> (word_heap curr (APPEND (APPEND h1 [Bytes be fl ys ws])
             h2) c *
                word_heap other (heap_expand limit) c)
@@ -49702,7 +49702,7 @@
       let vs = snd (strip_exists gl) in
       let veq v = grab_asm (fun th -> is_eq (concl th) &&
         lhs (concl th) = v &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl in
+        hd_is "word_Word" (rhs (concl th))) asl in
       let v1 = lhs (hd (conjuncts vs)) in
       let v2 = lhs (el 1 (conjuncts vs)) in
       let w1 = rand (rhs (concl (veq v1))) in
@@ -49714,7 +49714,7 @@
       let x1 = rand (rhs (concl (grab_asm (fun th ->
         is_eq (concl th) &&
         (try rand (lhs (concl th)) = a1 with Failure _ -> false) &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl))) in
+        hd_is "word_Word" (rhs (concl th))) asl))) in
       MAP_EVERY EXISTS_TAC [w1; a1; w2; a2; x1]) THEN
     (* the array that is written goes first, and the invariant of
        the heap and of the stack is taken apart *)
@@ -49867,7 +49867,7 @@
         let gaw = REWRITE_RULE (word_addr_clauses ()) wa in
         let veq = grab_asm (fun th -> is_eq (concl th) &&
           lhs (concl th) = rhs (concl wa) &&
-          hd_is "wordLang_Word" (rhs (concl th))) asl in
+          hd_is "word_Word" (rhs (concl th))) asl in
         let weq = (REWRITE_RULE[injectivity "word_loc"]
           (TRANS gaw veq)) in
         let gra = INST [annot, mk_var("w", type_of annot)]

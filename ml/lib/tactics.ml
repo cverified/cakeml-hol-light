@@ -786,13 +786,13 @@ let word_addr_clauses () =
     prove(t, REPEAT GEN_TAC THEN
              GEN_REWRITE_TAC LAND_CONV [cake_def "word_addr"] THEN
              MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
-  [cl `!conf w. word_addr conf (gc_shared_Data (wordLang_Word w)) =
-        wordLang_Word (w && word_not (n2w 1))`;
+  [cl `!conf w. word_addr conf (gc_shared_Data (word_Word w)) =
+        word_Word (w && word_not (n2w 1))`;
    cl `!conf n w. word_addr conf (gc_shared_Pointer n w) =
-        wordLang_Word (get_addr conf n w)`;
+        word_Word (get_addr conf n w)`;
    cl `!conf l1 l2.
-         word_addr conf (gc_shared_Data (wordLang_Loc l1 l2)) =
-         wordLang_Loc l1 0`];;
+         word_addr conf (gc_shared_Data (word_Loc l1 l2)) =
+         word_Loc l1 0`];;
 
 (* The assumption that says what the root of a value is, taken
    apart: v_inv is a disjunction of the rules of the relation, and

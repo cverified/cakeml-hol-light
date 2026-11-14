@@ -46,93 +46,89 @@ hol4_overload "num_size" "data_space_num_size";;
 (* the clauses in two quotations: s is word64 and mlstring, which one
    quotation cannot typecheck *)
 let part_space_req_def = define_cases_clauses
-  [`(part_space_req (closLang_W64 s) = 3) /\
-    (part_space_req (closLang_Int i) =
+  [`(part_space_req (clos_W64 s) = 3) /\
+    (part_space_req (clos_Int i) =
       (if num_of_int (abs i) < 2 EXP 29 then 0 else data_space_num_size
           (num_of_int (abs i)))) /\
-    (part_space_req (closLang_Con t ns) =
+    (part_space_req (clos_Con t ns) =
       let l = LENGTH ns in if l = 0 then 0 else l + 1)`;
-   `part_space_req (closLang_Str s) = strlen s DIV 4 + 2`];;
+   `part_space_req (clos_Str s) = strlen s DIV 4 + 2`];;
 
 let op_space_req_def = new_definition
   `op_space_req x1 l =
      match x1 with
-       closLang_MemOp closLang_Ref -> l + 1
-     | closLang_MemOp (closLang_MutCons tag k) -> l + 1
-     | closLang_BlockOp (closLang_Cons _) -> if l = 0 then 0 else l + 1
-     | closLang_BlockOp (closLang_Build parts') -> SUM (MAP part_space_req
-       parts')
-     | closLang_WordOp (WordOpw ast_W64 _) -> 3
-     | closLang_WordOp (WordShift ast_W64 _ _) -> 3
-     | closLang_WordOp WordFromInt -> 3
-     | closLang_WordOp WordToInt -> 3
-     | closLang_WordOp (WordFromWord F) -> 3
-     | closLang_WordOp (FP_uop _) -> 3
-     | closLang_WordOp (FP_bop _) -> 3
-     | closLang_WordOp (FP_top _) -> 3
-     | closLang_ThunkOp (AllocThunk _) -> l + 1
+       clos_MemOp clos_Ref -> l + 1
+     | clos_MemOp (clos_MutCons tag k) -> l + 1
+     | clos_BlockOp (clos_Cons _) -> if l = 0 then 0 else l + 1
+     | clos_BlockOp (clos_Build parts') -> SUM (MAP part_space_req parts')
+     | clos_WordOp (WordOpw ast_W64 _) -> 3
+     | clos_WordOp (WordShift ast_W64 _ _) -> 3
+     | clos_WordOp WordFromInt -> 3
+     | clos_WordOp WordToInt -> 3
+     | clos_WordOp (WordFromWord F) -> 3
+     | clos_WordOp (FP_uop _) -> 3
+     | clos_WordOp (FP_bop _) -> 3
+     | clos_WordOp (FP_top _) -> 3
+     | clos_ThunkOp (AllocThunk _) -> l + 1
      | _ -> 0`;;
 
 (* HOL4 data_spaceScript.sml:46-66: code that the source has in a comment *)
 
 let pMakeSpace_def = define_cases
   `(pMakeSpace (INL c) = c) /\
-   (pMakeSpace (INR (k,names,c)) = dataLang_Seq (dataLang_MakeSpace k
-    names) c)`;;
+   (pMakeSpace (INR (k,names,c)) = data_Seq (data_MakeSpace k names) c)`;;
 
 let space_def,space_ind = define_shaped_rec
   "match"
   `space c =
      match c with
-       dataLang_MakeSpace k names -> INR (k,names,dataLang_Skip)
-     | dataLang_Seq c1 c2 ->
+       data_MakeSpace k names -> INR (k,names,data_Skip)
+     | data_Seq c1 c2 ->
         (let d1 = pMakeSpace (space c1) in
         let x2 = space c2 in
           match x2 with INL c4 ->
-             (match c1 with dataLang_MakeSpace k names -> INR (k,names,c4)
-              | dataLang_Skip -> INL c4
-              | _ -> INL (dataLang_Seq d1 c4))
+             (match c1 with data_MakeSpace k names -> INR (k,names,c4)
+              | data_Skip -> INL c4
+              | _ -> INL (data_Seq d1 c4))
           | INR (k2,names2,c4) ->
-             (match c1 with dataLang_Skip -> INR (k2,names2,c4)
-              | dataLang_MakeSpace k1 names1 -> INR (k2,inter names1
-                names2,c4)
-              | dataLang_Move dest src ->
+             (match c1 with data_Skip -> INR (k2,names2,c4)
+              | data_MakeSpace k1 names1 -> INR (k2,inter names1 names2,c4)
+              | data_Move dest src ->
                   INR (k2,sptree_insert src one (sptree_delete dest names2),
-                       dataLang_Seq (dataLang_Move dest src) c4)
-              | dataLang_Assign dest op args NONE ->
+                       data_Seq (data_Move dest src) c4)
+              | data_Assign dest op args NONE ->
                   INR (op_space_req op (LENGTH args) + k2,
                        list_insert args (sptree_delete dest names2),
-                       dataLang_Seq (dataLang_Assign dest op args NONE) c4)
-              | _ -> INL (dataLang_Seq d1 (pMakeSpace x2))))
-     | dataLang_If n c2 c3 ->
-        INL (dataLang_If n (pMakeSpace (space c2)) (pMakeSpace (space c3)))
+                       data_Seq (data_Assign dest op args NONE) c4)
+              | _ -> INL (data_Seq d1 (pMakeSpace x2))))
+     | data_If n c2 c3 ->
+        INL (data_If n (pMakeSpace (space c2)) (pMakeSpace (space c3)))
      | c -> INL c`;;
 
 let space_pmatch = prove
  (`!c.
    space c =
-     match c with dataLang_MakeSpace k names -> INR (k,names,dataLang_Skip)
-     | dataLang_Seq c1 c2 -> (
+     match c with data_MakeSpace k names -> INR (k,names,data_Skip)
+     | data_Seq c1 c2 -> (
       let d1 = pMakeSpace (space c1) in
       let x2 = space c2 in
         match x2 with INL c4 ->
-           (match c1 with dataLang_MakeSpace k names -> INR (k,names,c4)
-            | dataLang_Skip -> INL c4
-            | _ -> INL (dataLang_Seq d1 c4))
+           (match c1 with data_MakeSpace k names -> INR (k,names,c4)
+            | data_Skip -> INL c4
+            | _ -> INL (data_Seq d1 c4))
         | INR (k2,names2,c4) ->
-           (match c1 with dataLang_Skip -> INR (k2,names2,c4)
-            | dataLang_MakeSpace k1 names1 -> INR (k2,inter names1
-              names2,c4)
-            | dataLang_Move dest src ->
+           (match c1 with data_Skip -> INR (k2,names2,c4)
+            | data_MakeSpace k1 names1 -> INR (k2,inter names1 names2,c4)
+            | data_Move dest src ->
                 INR (k2,sptree_insert src one (sptree_delete dest names2),
-                     dataLang_Seq (dataLang_Move dest src) c4)
-            | dataLang_Assign dest op args NONE ->
+                     data_Seq (data_Move dest src) c4)
+            | data_Assign dest op args NONE ->
                 INR (op_space_req op (LENGTH args) + k2,
                      list_insert args (sptree_delete dest names2),
-                     dataLang_Seq (dataLang_Assign dest op args NONE) c4)
-            | _ -> INL (dataLang_Seq d1 (pMakeSpace x2))))
-     | dataLang_If n c2 c3 ->
-       INL (dataLang_If n (pMakeSpace (space c2)) (pMakeSpace (space c3)))
+                     data_Seq (data_Assign dest op args NONE) c4)
+            | _ -> INL (data_Seq d1 (pMakeSpace x2))))
+     | data_If n c2 c3 ->
+       INL (data_If n (pMakeSpace (space c2)) (pMakeSpace (space c3)))
      | c -> INL c`,
   CHEAT_TAC);;
 

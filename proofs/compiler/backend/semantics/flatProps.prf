@@ -36,7 +36,7 @@
 
 ### evaluate_decs_add_to_clock_io_events_mono_alt
   (REPEAT STRIP_TAC THEN
-   MP_TAC(ISPECL [`ds:flatLang_exp list`;
+   MP_TAC(ISPECL [`ds:flat_exp list`;
      `s:(C,ast_FFI)flatSem_state`; `extra:num`]
             flatProps_evaluate_decs_add_to_clock_io_events_mono) THEN
    ASM_REWRITE_TAC[FST])

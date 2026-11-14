@@ -48,13 +48,13 @@ let _ = cake_theory "backend_passes"
 let any_prog_INDUCT,any_prog_RECURSION = define_datatype
   "any_prog =
      backend_passes_Source (dec list)
-   | backend_passes_Flat (flatLang_exp list)
-   | backend_passes_Clos (closLang_exp list) ((num#num#closLang_exp) list)
+   | backend_passes_Flat (flat_exp list)
+   | backend_passes_Clos (clos_exp list) ((num#num#clos_exp) list)
    | backend_passes_Bvl ((num#num#bvl_exp) list) (mlstring spt)
    | backend_passes_Bvi ((num#num#bvi_exp) list) (mlstring spt)
-   | backend_passes_Data ((num#num#dataLang_prog) list) (mlstring spt)
-   | backend_passes_Word ((num#num#'a wordLang_prog) list) (mlstring spt)
-   | backend_passes_Stack ((num#'a stackLang_prog) list) (mlstring spt)
+   | backend_passes_Data ((num#num#data_prog) list) (mlstring spt)
+   | backend_passes_Word ((num#num#'a word_prog) list) (mlstring spt)
+   | backend_passes_Stack ((num#'a stack_prog) list) (mlstring spt)
    | backend_passes_Lab (('a sec) list) (mlstring spt)";;
 
 let to_flat_all_def = new_definition
@@ -522,8 +522,7 @@ let any_prog_pp_def = new_definition
 
 let pp_with_title_def = new_definition
   `pp_with_title pp (title,p) acc =
-     mlsexp_Append (displayLang_List [(implode "# "); title; (implode
-       "\n\n")])
+     mlsexp_Append (display_List [(implode "# "); title; (implode "\n\n")])
      (misc_Append (pp p) acc)`;;
 
 let compile_tap_def = new_definition

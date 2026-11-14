@@ -29,8 +29,8 @@ let _ = cake_theory "clos_ticksProof"
    port expands *)
 
 let remove_ticks_IMP_LENGTH = prove
- (`!(es:closLang_exp list) xs. xs = clos_ticks_remove_ticks es ==> LENGTH es
-  = LENGTH xs`,
+ (`!(es:clos_exp list) xs. xs = clos_ticks_remove_ticks es ==> LENGTH es =
+  LENGTH xs`,
   CHEAT_TAC);;
 
 (* remove_ticks_SING *)
@@ -143,70 +143,68 @@ let clos_ticksProof_state_rel_def = new_definition
 (* eval remove ticks *)
 
 let clos_ticksProof_mk_Ticks_def,clos_ticksProof_mk_Ticks_ind = define_rec
-  `(clos_ticksProof_mk_Ticks [] (e:closLang_exp) = e) /\
-   (clos_ticksProof_mk_Ticks (CONS t tr) (e:closLang_exp) = closLang_Tick
-    t (clos_ticksProof_mk_Ticks tr e))`;;
+  `(clos_ticksProof_mk_Ticks [] (e:clos_exp) = e) /\
+   (clos_ticksProof_mk_Ticks (CONS t tr) (e:clos_exp) = clos_Tick t
+    (clos_ticksProof_mk_Ticks tr e))`;;
 
 let remove_ticks_Tick = prove
- (`!x t e. ~([closLang_Tick t e] = clos_ticks_remove_ticks [x])`,
+ (`!x t e. ~([clos_Tick t e] = clos_ticks_remove_ticks [x])`,
   CHEAT_TAC);;
 
 let remove_ticks_Var_IMP_mk_Ticks = prove
- (`(!x tr n. [closLang_Var tr n] = clos_ticks_remove_ticks [x] ==> (?ts. x =
-  clos_ticksProof_mk_Ticks ts (closLang_Var tr n)))`,
+ (`(!x tr n. [clos_Var tr n] = clos_ticks_remove_ticks [x] ==> (?ts. x =
+  clos_ticksProof_mk_Ticks ts (clos_Var tr n)))`,
   CHEAT_TAC);;
 
 let remove_ticks_If_IMP_mk_Ticks = prove
  (`!x tr e1' e2' e3'.
-      [flatLang_If tr e1' e2' e3'] = clos_ticks_remove_ticks [x] ==>
-        (?ts e1 e2 e3. x = clos_ticksProof_mk_Ticks ts (flatLang_If tr e1 e2
-          e3) /\
+      [flat_If tr e1' e2' e3'] = clos_ticks_remove_ticks [x] ==>
+        (?ts e1 e2 e3. x = clos_ticksProof_mk_Ticks ts (flat_If tr e1 e2 e3)
+          /\
                       e1' = HD (clos_ticks_remove_ticks [e1]) /\
                       e2' = HD (clos_ticks_remove_ticks [e2]) /\
                       e3' = HD (clos_ticks_remove_ticks [e3]))`,
   CHEAT_TAC);;
 
 let remove_ticks_Let_IMP_mk_Ticks = prove
- (`!x t l e. [closLang_Let t l e] = clos_ticks_remove_ticks [x] ==>
-              (?ts l' e'. x = clos_ticksProof_mk_Ticks ts (closLang_Let t l'
-                e') /\
+ (`!x t l e. [clos_Let t l e] = clos_ticks_remove_ticks [x] ==>
+              (?ts l' e'. x = clos_ticksProof_mk_Ticks ts (clos_Let t l' e')
+                /\
                l = clos_ticks_remove_ticks l' /\
                [e] = clos_ticks_remove_ticks [e'])`,
   CHEAT_TAC);;
 
 let remove_ticks_Raise_IMP_mk_Ticks = prove
- (`!x t e. [flatLang_Raise t e] = clos_ticks_remove_ticks [x] ==>
-            (?ts e'. x = clos_ticksProof_mk_Ticks ts (flatLang_Raise t e')
+ (`!x t e. [flat_Raise t e] = clos_ticks_remove_ticks [x] ==>
+            (?ts e'. x = clos_ticksProof_mk_Ticks ts (flat_Raise t e')
               /\ [e] = clos_ticks_remove_ticks [e'])`,
   CHEAT_TAC);;
 
 let remove_ticks_Handle_IMP_mk_Ticks = prove
- (`!x t e1' e2'. [flatLang_Handle t e1' e2'] = clos_ticks_remove_ticks [x] ==>
-                  (?ts e1 e2. x = clos_ticksProof_mk_Ticks ts
-                    (flatLang_Handle t e1 e2) /\
+ (`!x t e1' e2'. [flat_Handle t e1' e2'] = clos_ticks_remove_ticks [x] ==>
+                  (?ts e1 e2. x = clos_ticksProof_mk_Ticks ts (flat_Handle t
+                    e1 e2) /\
                    [e1'] = clos_ticks_remove_ticks [e1] /\ [e2'] =
                      clos_ticks_remove_ticks [e2])`,
   CHEAT_TAC);;
 
 let remove_ticks_Op_IMP_mk_Ticks = prove
- (`!x tr op es'. [closLang_Op tr op es'] = clos_ticks_remove_ticks [x] ==>
-      (?ts es. x = clos_ticksProof_mk_Ticks ts (closLang_Op tr op es)
-        /\ es' = clos_ticks_remove_ticks es)`,
+ (`!x tr op es'. [clos_Op tr op es'] = clos_ticks_remove_ticks [x] ==>
+      (?ts es. x = clos_ticksProof_mk_Ticks ts (clos_Op tr op es) /\ es' =
+        clos_ticks_remove_ticks es)`,
   CHEAT_TAC);;
 
 let remove_ticks_Fn_IMP_mk_Ticks = prove
  (`!x tr loc vsopt num_args e'.
-      [closLang_Fn tr loc vsopt num_args e'] = clos_ticks_remove_ticks [x]
-        ==>
-        (?ts e. x = clos_ticksProof_mk_Ticks ts (closLang_Fn tr loc vsopt
+      [clos_Fn tr loc vsopt num_args e'] = clos_ticks_remove_ticks [x] ==>
+        (?ts e. x = clos_ticksProof_mk_Ticks ts (clos_Fn tr loc vsopt
           num_args e) /\ [e'] = clos_ticks_remove_ticks [e])`,
   CHEAT_TAC);;
 
 let remove_ticks_Letrec_IMP_mk_Ticks = prove
  (`!x tr loc vsopt fns' e'.
-      [closLang_Letrec tr loc vsopt fns' e'] = clos_ticks_remove_ticks [x]
-        ==>
-        (?ts fns e. x = clos_ticksProof_mk_Ticks ts (closLang_Letrec tr loc
+      [clos_Letrec tr loc vsopt fns' e'] = clos_ticks_remove_ticks [x] ==>
+        (?ts fns e. x = clos_ticksProof_mk_Ticks ts (clos_Letrec tr loc
           vsopt fns e) /\
                    e' = HD (clos_ticks_remove_ticks [e]) /\
                    fns' = MAP (\(num_args,x). (num_args,HD
@@ -215,18 +213,18 @@ let remove_ticks_Letrec_IMP_mk_Ticks = prove
 
 let remove_ticks_App_IMP_mk_Ticks = prove
  (`!x tr loc_opt e1' es'.
-      [closLang_App tr loc_opt e1' es'] = clos_ticks_remove_ticks [x] ==>
-        (?ts e1 es. x = clos_ticksProof_mk_Ticks ts (closLang_App tr loc_opt
-          e1 es) /\
+      [clos_App tr loc_opt e1' es'] = clos_ticks_remove_ticks [x] ==>
+        (?ts e1 es. x = clos_ticksProof_mk_Ticks ts (clos_App tr loc_opt e1
+          es) /\
                    e1' = HD (clos_ticks_remove_ticks [e1]) /\
                    es' = clos_ticks_remove_ticks es)`,
   CHEAT_TAC);;
 
 let remove_ticks_Call_IMP_mk_Ticks = prove
- (`!x tr ticks' dest es'. [closLang_Call tr ticks' dest es'] =
+ (`!x tr ticks' dest es'. [clos_Call tr ticks' dest es'] =
   clos_ticks_remove_ticks [x] ==>
       ticks' = 0 /\
-      (?ts ticks es. x = clos_ticksProof_mk_Ticks ts (closLang_Call tr ticks
+      (?ts ticks es. x = clos_ticksProof_mk_Ticks ts (clos_Call tr ticks
         dest es) /\
                     es' = clos_ticks_remove_ticks es)`,
   CHEAT_TAC);;

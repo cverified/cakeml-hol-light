@@ -28,57 +28,57 @@ let _ = cake_theory "clos_call"
 let free_def,free_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(clos_call_free [] = ([],db_vars_Empty)) /\
-    (clos_call_free (CONS (x:closLang_exp) (CONS y xs)) =
+    (clos_call_free (CONS (x:clos_exp) (CONS y xs)) =
          let (c1,l1) = clos_call_free [x] in
          let (c2,l2) = clos_call_free (CONS y xs) in
            (APPEND c1 c2,mk_Union l1 l2)) /\
-    (clos_call_free [closLang_Var t v] = ([(closLang_Var t
-    v:closLang_exp)],db_vars_Var v)) /\
-    (clos_call_free [closLang_If t x1 x2 x3] =
+    (clos_call_free [clos_Var t v] = ([(clos_Var t v:clos_exp)],db_vars_Var
+    v)) /\
+    (clos_call_free [clos_If t x1 x2 x3] =
          let (c1,l1) = clos_call_free [x1] in
          let (c2,l2) = clos_call_free [x2] in
          let (c3,l3) = clos_call_free [x3] in
-           ([closLang_If t (HD c1) (HD c2) (HD c3)],mk_Union l1
-               (mk_Union l2 l3))) /\
-    (clos_call_free [closLang_Let t xs x2] =
+           ([clos_If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union
+               l2 l3))) /\
+    (clos_call_free [clos_Let t xs x2] =
          let (c1,l1) = clos_call_free xs in
          let (c2,l2) = clos_call_free [x2] in
-           ([closLang_Let t c1 (HD c2)],mk_Union l1 (db_vars_Shift
-               (LENGTH xs) l2))) /\
-    (clos_call_free [closLang_Raise t x1] =
+           ([clos_Let t c1 (HD c2)],mk_Union l1 (db_vars_Shift (LENGTH
+               xs) l2))) /\
+    (clos_call_free [clos_Raise t x1] =
          let (c1,l1) = clos_call_free [x1] in
-           ([closLang_Raise t (HD c1)],l1)) /\
-    (clos_call_free [closLang_Tick t x1] =
+           ([clos_Raise t (HD c1)],l1)) /\
+    (clos_call_free [clos_Tick t x1] =
          let (c1,l1) = clos_call_free [x1] in
-           ([closLang_Tick t (HD c1)],l1)) /\
-    (clos_call_free [closLang_Op t op xs] =
+           ([clos_Tick t (HD c1)],l1)) /\
+    (clos_call_free [clos_Op t op xs] =
          let (c1,l1) = clos_call_free xs in
-           ([closLang_Op t op c1],l1)) /\
-    (clos_call_free [closLang_App t loc_opt x1 xs2] =
+           ([clos_Op t op c1],l1)) /\
+    (clos_call_free [clos_App t loc_opt x1 xs2] =
          let (c1,l1) = clos_call_free [x1] in
          let (c2,l2) = clos_call_free xs2 in
-           ([closLang_App t loc_opt (HD c1) c2],mk_Union l1 l2)) /\
-    (clos_call_free [closLang_Handle t x1 x2] =
+           ([clos_App t loc_opt (HD c1) c2],mk_Union l1 l2)) /\
+    (clos_call_free [clos_Handle t x1 x2] =
          let (c1,l1) = clos_call_free [x1] in
          let (c2,l2) = clos_call_free [x2] in
-           ([closLang_Handle t (HD c1) (HD c2)],mk_Union l1
-               (db_vars_Shift 1 l2))) /\
-    (clos_call_free [closLang_Call t ticks dest xs] =
+           ([clos_Handle t (HD c1) (HD c2)],mk_Union l1 (db_vars_Shift
+               1 l2))) /\
+    (clos_call_free [clos_Call t ticks dest xs] =
          let (c1,l1) = clos_call_free xs in
-           ([closLang_Call t ticks dest c1],l1))`;
-   `clos_call_free [closLang_Fn t loc _ num_args x1] =
+           ([clos_Call t ticks dest c1],l1))`;
+   `clos_call_free [clos_Fn t loc _ num_args x1] =
          let (c1,l1) = clos_call_free [x1] in
          let l2 = db_vars_Shift num_args l1 in
-           ([closLang_Fn t loc (SOME (vars_to_list l2)) num_args (HD
+           ([clos_Fn t loc (SOME (vars_to_list l2)) num_args (HD
                c1)],l2)`;
-   `clos_call_free [closLang_Letrec t loc _ fns x1] =
+   `clos_call_free [clos_Letrec t loc _ fns x1] =
          let m = LENGTH fns in
          let res = MAP (\(n,x). let (c,l) = clos_call_free [x] in
                               ((n,HD c),db_vars_Shift (n + m) l)) fns in
          let c1 = MAP FST res in
          let l1 = list_mk_Union (MAP SND res) in
          let (c2,l2) = clos_call_free [x1] in
-           ([closLang_Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
+           ([clos_Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
             mk_Union l1 (db_vars_Shift (LENGTH fns) l2))`];;
 
 (* HOL4 clos_callScript.sml:63: ML code, not ported *)
@@ -88,55 +88,54 @@ let free_def,free_ind = assume_definition_rec_clauses
    is (exp list) and (_)list, which one quotation cannot typecheck *)
 let free_sing_def,free_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`(free_sing (closLang_Var t v) = ((closLang_Var t
-    v:closLang_exp),db_vars_Var v)) /\
-    (free_sing (closLang_If t x1 x2 x3) =
+  [`(free_sing (clos_Var t v) = ((clos_Var t v:clos_exp),db_vars_Var v)) /\
+    (free_sing (clos_If t x1 x2 x3) =
          let (c1,l1) = free_sing x1 in
          let (c2,l2) = free_sing x2 in
          let (c3,l3) = free_sing x3 in
-           (closLang_If t c1 c2 c3,mk_Union l1 (mk_Union l2 l3))) /\
-    (free_sing (closLang_Let t xs x2) =
+           (clos_If t c1 c2 c3,mk_Union l1 (mk_Union l2 l3))) /\
+    (free_sing (clos_Let t xs x2) =
          let (c1,l1) = free_list xs in
          let (c2,l2) = free_sing x2 in
-           (closLang_Let t c1 c2,mk_Union l1 (db_vars_Shift (LENGTH xs)
+           (clos_Let t c1 c2,mk_Union l1 (db_vars_Shift (LENGTH xs)
                l2))) /\
-    (free_sing (closLang_Raise t x1) =
+    (free_sing (clos_Raise t x1) =
          let (c1,l1) = free_sing x1 in
-           (closLang_Raise t c1,l1)) /\
-    (free_sing (closLang_Tick t x1) =
+           (clos_Raise t c1,l1)) /\
+    (free_sing (clos_Tick t x1) =
          let (c1,l1) = free_sing x1 in
-           (closLang_Tick t c1,l1)) /\
-    (free_sing (closLang_Op t op xs) =
+           (clos_Tick t c1,l1)) /\
+    (free_sing (clos_Op t op xs) =
          let (c1,l1) = free_list xs in
-           (closLang_Op t op c1,l1)) /\
-    (free_sing (closLang_App t loc_opt x1 xs2) =
+           (clos_Op t op c1,l1)) /\
+    (free_sing (clos_App t loc_opt x1 xs2) =
          let (c1,l1) = free_sing x1 in
          let (c2,l2) = free_list xs2 in
-           (closLang_App t loc_opt c1 c2,mk_Union l1 l2)) /\
-    (free_sing (closLang_Handle t x1 x2) =
+           (clos_App t loc_opt c1 c2,mk_Union l1 l2)) /\
+    (free_sing (clos_Handle t x1 x2) =
          let (c1,l1) = free_sing x1 in
          let (c2,l2) = free_sing x2 in
-           (closLang_Handle t c1 c2,mk_Union l1 (db_vars_Shift 1 l2))) /\
-    (free_sing (closLang_Call t ticks dest xs) =
+           (clos_Handle t c1 c2,mk_Union l1 (db_vars_Shift 1 l2))) /\
+    (free_sing (clos_Call t ticks dest xs) =
          let (c1,l1) = free_list xs in
-           (closLang_Call t ticks dest c1,l1)) /\
+           (clos_Call t ticks dest c1,l1)) /\
     (free_list [] = ([],db_vars_Empty)) /\
-    (free_list (CONS (x:closLang_exp) xs) =
+    (free_list (CONS (x:clos_exp) xs) =
          let (c1,l1) = free_sing x in
          let (c2,l2) = free_list xs in
            (CONS c1 c2,mk_Union l1 l2))`;
-   `free_sing (closLang_Fn t loc _ num_args x1) =
+   `free_sing (clos_Fn t loc _ num_args x1) =
          let (c1,l1) = free_sing x1 in
          let l2 = db_vars_Shift num_args l1 in
-           (closLang_Fn t loc (SOME (vars_to_list l2)) num_args c1,l2)`;
-   `free_sing (closLang_Letrec t loc _ fns x1) =
+           (clos_Fn t loc (SOME (vars_to_list l2)) num_args c1,l2)`;
+   `free_sing (clos_Letrec t loc _ fns x1) =
          let m = LENGTH fns in
          let res = MAP (\(n,x). let (c,l) = free_sing x in
                               ((n,c),db_vars_Shift (n + m) l)) fns in
          let c1 = MAP FST res in
          let l1 = list_mk_Union (MAP SND res) in
          let (c2,l2) = free_sing x1 in
-           (closLang_Letrec t loc (SOME (vars_to_list l1)) c1 c2,
+           (clos_Letrec t loc (SOME (vars_to_list l1)) c1 c2,
             mk_Union l1 (db_vars_Shift (LENGTH fns) l2))`];;
 
 let free_sing_eq = prove
@@ -154,8 +153,8 @@ let free_LENGTH = prove
 let free_SING = prove
  (`(clos_call_free [x] = (ys,l)) ==> (?y. ys = [y])`,
   (REPEAT STRIP_TAC THEN RES_ASSUME free_LENGTH THEN
-   POP_ASSUM MP_TAC THEN SPEC_TAC(`ys:closLang_exp
-     list`,`ys:closLang_exp list`) THEN
+   POP_ASSUM MP_TAC THEN SPEC_TAC(`ys:clos_exp
+     list`,`ys:clos_exp list`) THEN
    LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ;
      LENGTH_EQ_NIL] THEN
    MESON_TAC[]));;
@@ -206,19 +205,18 @@ let GENLIST_Var_def,GENLIST_Var_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   `GENLIST_Var t (i:num) n =
      if n = 0 then [] else APPEND (GENLIST_Var t (i + 1) (n - (1:num)))
-       [closLang_Var t (n - 1)]`;;
+       [clos_Var t (n - 1)]`;;
 
 let calls_list_def,calls_list_ind = define_rec
   `(calls_list t (i:num) loc [] = []) /\
-   (calls_list t (i:num) loc (CONS (n,_) xs) = CONS (n,closLang_Call t 0 (loc +
-    1) (GENLIST_Var t 1 n))
+   (calls_list t (i:num) loc (CONS (n,_) xs) = CONS (n,clos_Call t 0 (loc + 1)
+    (GENLIST_Var t 1 n))
               (calls_list t (i + 1) (loc + 2) xs))`;;
 
-let _ = size_thms "closLang_exp";;
 (* [local] *)
 let exp3_size_MAP_SND = prove
- (`!fns. list_size closLang_exp_size (MAP SND fns) <= list_size (pair_size
-  (\x. x) closLang_exp_size) fns`,
+ (`!fns. list_size clos_exp_size (MAP SND fns) <= list_size (pair_size (\x.
+  x) clos_exp_size) fns`,
   CHEAT_TAC);;
 
 (* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
@@ -227,57 +225,57 @@ let exp3_size_MAP_SND = prove
 let calls_def,calls_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(calls [] g = ([],g)) /\
-    (calls (CONS (x:closLang_exp) (CONS y xs)) g =
+    (calls (CONS (x:clos_exp) (CONS y xs)) g =
          let (e1,g) = calls [x] g in
          let (e2,g) = calls (CONS y xs) g in
            (APPEND e1 e2,g)) /\
-    (calls [closLang_Var t v] g =
-         ([(closLang_Var t v:closLang_exp)],g)) /\
-    (calls [closLang_If t x1 x2 x3] g =
+    (calls [clos_Var t v] g =
+         ([(clos_Var t v:clos_exp)],g)) /\
+    (calls [clos_If t x1 x2 x3] g =
          let (e1,g) = calls [x1] g in
          let (e2,g) = calls [x2] g in
          let (e3,g) = calls [x3] g in
          let e1 = HD e1 in
          let e2 = HD e2 in
          let e3 = HD e3 in
-           ([closLang_If t e1 e2 e3],g)) /\
-    (calls [closLang_Let t xs x2] g =
+           ([clos_If t e1 e2 e3],g)) /\
+    (calls [clos_Let t xs x2] g =
          let (e1,g) = calls xs g in
          let (e2,g) = calls [x2] g in
          let e2 = HD e2 in
-           ([closLang_Let t e1 e2],g)) /\
-    (calls [closLang_Raise t x1] g =
+           ([clos_Let t e1 e2],g)) /\
+    (calls [clos_Raise t x1] g =
          let (e1,g) = calls [x1] g in
          let e1 = HD e1 in
-           ([closLang_Raise t e1],g)) /\
-    (calls [closLang_Tick t x1] g =
+           ([clos_Raise t e1],g)) /\
+    (calls [clos_Tick t x1] g =
          let (e1,g) = calls [x1] g in
          let e1 = HD e1 in
-           ([closLang_Tick t e1],g)) /\
-    (calls [closLang_Handle t x1 x2] g =
+           ([clos_Tick t e1],g)) /\
+    (calls [clos_Handle t x1 x2] g =
          let (e1,g) = calls [x1] g in
          let (e2,g) = calls [x2] g in
          let e1 = HD e1 in
          let e2 = HD e2 in
-           ([closLang_Handle t e1 e2],g)) /\
-    (calls [closLang_Call t ticks dest xs] g =
+           ([clos_Handle t e1 e2],g)) /\
+    (calls [clos_Call t ticks dest xs] g =
          let (xs,g) = calls xs g in
-           ([(closLang_Call t ticks dest xs:closLang_exp)],g)) /\
-    (calls [closLang_Op t op xs] g =
+           ([(clos_Call t ticks dest xs:clos_exp)],g)) /\
+    (calls [clos_Op t op xs] g =
          let (e1,g) = calls xs g in
-           ([closLang_Op t op e1],g)) /\
-    (calls [closLang_App t loc_opt x xs] g =
+           ([clos_Op t op e1],g)) /\
+    (calls [clos_App t loc_opt x xs] g =
          let (es,g) = calls xs g in
          let (e1,g) = calls [x] g in
          let e1 = HD e1 in
          let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
            if IS_SOME loc_opt /\ IS_SOME (sptree_lookup loc (FST g)) then
-             if pure x then ([closLang_Call t (LENGTH es) (loc + 1) es],g)
-                 else ([closLang_Let (mk_cons t 0) (SNOC e1 es)
-                  (closLang_Call (mk_cons t 1) (LENGTH es) (loc + 1)
+             if pure x then ([clos_Call t (LENGTH es) (loc + 1) es],g) else
+                 ([clos_Let (mk_cons t 0) (SNOC e1 es)
+                  (clos_Call (mk_cons t 1) (LENGTH es) (loc + 1)
                       (GENLIST_Var backend_common_None 2 (LENGTH es)))],g)
-           else ([closLang_App t loc_opt e1 es],g))`;
-   `calls [closLang_Fn t loc_opt ws num_args x1] g =
+           else ([clos_App t loc_opt e1 es],g))`;
+   `calls [clos_Fn t loc_opt ws num_args x1] g =
          // loc_opt ought to be SOME loc, with loc being EVEN
          let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
          let new_g = insert_each loc 1 g in
@@ -286,76 +284,75 @@ let calls_def,calls_ind = assume_definition_rec_clauses
              in
            // Closedness is checked on the transformed program because
            // the calls function can sometimes remove free variables.
-           if clos_call_closed (closLang_Fn t loc_opt ws num_args (HD e1))
-               then
-             ([closLang_Fn t loc_opt ws num_args
-                 (closLang_Call backend_common_None 0 (loc + 1)
-                     (GENLIST_Var backend_common_None 1 num_args))],new_g)
+           if clos_call_closed (clos_Fn t loc_opt ws num_args (HD e1)) then
+             ([clos_Fn t loc_opt ws num_args
+                 (clos_Call backend_common_None 0 (loc + 1) (GENLIST_Var
+                     backend_common_None 1 num_args))],new_g)
            else let (e1,g) = calls [x1] g in
-               ([closLang_Fn t loc_opt ws num_args (HD e1)],g)`;
-   `calls [closLang_Letrec t loc_opt ws fns x1] g =
+               ([clos_Fn t loc_opt ws num_args (HD e1)],g)`;
+   `calls [clos_Letrec t loc_opt ws fns x1] g =
          let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
          let new_g = insert_each loc (LENGTH fns) g in
          let (fns1,new_g) = calls (MAP SND fns) new_g in
-           if ALL2 (\(n,_) p. clos_call_closed (closLang_Fn (implode "")
-               NONE NONE n p)) fns fns1 then
+           if ALL2 (\(n,_) p. clos_call_closed (clos_Fn (implode "") NONE
+               NONE n p)) fns fns1 then
              let new_g = code_list loc (ZIP (MAP FST fns) fns1) new_g in
              let (e1,g) = calls [x1] new_g in
-               ([closLang_Letrec t loc_opt ws (calls_list
-                   backend_common_None 1 loc fns) (HD e1)],g)
+               ([clos_Letrec t loc_opt ws (calls_list backend_common_None 1
+                   loc fns) (HD e1)],g)
            else let (fns1,g) = calls (MAP SND fns) g in
              let (e1,g) = calls [x1] g in
-               ([closLang_Letrec t loc_opt ws (ZIP (MAP FST fns) fns1)
-                   (HD e1)],g)`];;
+               ([clos_Letrec t loc_opt ws (ZIP (MAP FST fns) fns1) (HD
+                   e1)],g)`];;
 
 (* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
    t is tra, mlstring and (mlstring list); xs is (exp list) and (_)list,
    which one quotation cannot typecheck *)
 let calls_sing_def,calls_sing_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`(calls_sing (closLang_Var t v) g =
-         ((closLang_Var t v:closLang_exp),g)) /\
-    (calls_sing (closLang_If t x1 x2 x3) g =
+  [`(calls_sing (clos_Var t v) g =
+         ((clos_Var t v:clos_exp),g)) /\
+    (calls_sing (clos_If t x1 x2 x3) g =
          let (e1,g) = calls_sing x1 g in
          let (e2,g) = calls_sing x2 g in
          let (e3,g) = calls_sing x3 g in
-           (closLang_If t e1 e2 e3,g)) /\
-    (calls_sing (closLang_Let t xs x2) g =
+           (clos_If t e1 e2 e3,g)) /\
+    (calls_sing (clos_Let t xs x2) g =
          let (e1,g) = calls_sing_list xs g in
          let (e2,g) = calls_sing x2 g in
-           (closLang_Let t e1 e2,g)) /\
-    (calls_sing (closLang_Raise t x1) g =
+           (clos_Let t e1 e2,g)) /\
+    (calls_sing (clos_Raise t x1) g =
          let (e1,g) = calls_sing x1 g in
-           (closLang_Raise t e1,g)) /\
-    (calls_sing (closLang_Tick t x1) g =
+           (clos_Raise t e1,g)) /\
+    (calls_sing (clos_Tick t x1) g =
          let (e1,g) = calls_sing x1 g in
-           (closLang_Tick t e1,g)) /\
-    (calls_sing (closLang_Handle t x1 x2) g =
+           (clos_Tick t e1,g)) /\
+    (calls_sing (clos_Handle t x1 x2) g =
          let (e1,g) = calls_sing x1 g in
          let (e2,g) = calls_sing x2 g in
-           (closLang_Handle t e1 e2,g)) /\
-    (calls_sing (closLang_Call t ticks dest xs) g =
+           (clos_Handle t e1 e2,g)) /\
+    (calls_sing (clos_Call t ticks dest xs) g =
          let (xs,g) = calls_sing_list xs g in
-           ((closLang_Call t ticks dest xs:closLang_exp),g)) /\
-    (calls_sing (closLang_Op t op xs) g =
+           ((clos_Call t ticks dest xs:clos_exp),g)) /\
+    (calls_sing (clos_Op t op xs) g =
          let (e1,g) = calls_sing_list xs g in
-           (closLang_Op t op e1,g)) /\
-    (calls_sing (closLang_App t loc_opt x xs) g =
+           (clos_Op t op e1,g)) /\
+    (calls_sing (clos_App t loc_opt x xs) g =
          let (es,g) = calls_sing_list xs g in
          let (e1,g) = calls_sing x g in
          let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
            if IS_SOME loc_opt /\ IS_SOME (sptree_lookup loc (FST g)) then
-             if pure x then (closLang_Call t (LENGTH es) (loc + 1) es,g)
-                 else (closLang_Let (mk_cons t 0) (SNOC e1 es)
-                  (closLang_Call (mk_cons t 1) (LENGTH es) (loc + 1)
+             if pure x then (clos_Call t (LENGTH es) (loc + 1) es,g) else
+                 (clos_Let (mk_cons t 0) (SNOC e1 es)
+                  (clos_Call (mk_cons t 1) (LENGTH es) (loc + 1)
                       (GENLIST_Var backend_common_None 2 (LENGTH es))),g)
-           else (closLang_App t loc_opt e1 es,g)) /\
+           else (clos_App t loc_opt e1 es,g)) /\
     (calls_sing_list [] g = ([],g)) /\
-    (calls_sing_list (CONS (x:closLang_exp) xs) g =
+    (calls_sing_list (CONS (x:clos_exp) xs) g =
          let (e1,g) = calls_sing x g in
          let (e2,g) = calls_sing_list xs g in
            (CONS e1 e2,g))`;
-   `calls_sing (closLang_Fn t loc_opt ws num_args x1) g =
+   `calls_sing (clos_Fn t loc_opt ws num_args x1) g =
          // loc_opt ought to be SOME loc, with loc being EVEN
          let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
          let new_g = insert_each loc 1 g in
@@ -363,26 +360,25 @@ let calls_sing_def,calls_sing_ind = assume_definition_rec_clauses
          let new_g = (FST new_g,CONS (loc + 1,num_args,e1) (SND new_g)) in
            // Closedness is checked on the transformed program because
            // the calls function can sometimes remove free variables.
-           if clos_call_closed (closLang_Fn t loc_opt ws num_args e1) then
-             (closLang_Fn t loc_opt ws num_args
-                 (closLang_Call backend_common_None 0 (loc + 1)
-                     (GENLIST_Var backend_common_None 1 num_args)),new_g)
+           if clos_call_closed (clos_Fn t loc_opt ws num_args e1) then
+             (clos_Fn t loc_opt ws num_args
+                 (clos_Call backend_common_None 0 (loc + 1) (GENLIST_Var
+                     backend_common_None 1 num_args)),new_g)
            else let (e1,g) = calls_sing x1 g in
-               (closLang_Fn t loc_opt ws num_args e1,g)`;
-   `calls_sing (closLang_Letrec t loc_opt ws fns x1) g =
+               (clos_Fn t loc_opt ws num_args e1,g)`;
+   `calls_sing (clos_Letrec t loc_opt ws fns x1) g =
          let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
          let new_g = insert_each loc (LENGTH fns) g in
          let (fns1,new_g) = calls_sing_list (MAP SND fns) new_g in
-           if ALL2 (\(n,_) p. clos_call_closed (closLang_Fn (implode "")
-               NONE NONE n p)) fns fns1 then
+           if ALL2 (\(n,_) p. clos_call_closed (clos_Fn (implode "") NONE
+               NONE n p)) fns fns1 then
              let new_g = code_list loc (ZIP (MAP FST fns) fns1) new_g in
              let (e1,g) = calls_sing x1 new_g in
-               (closLang_Letrec t loc_opt ws (calls_list
-                   backend_common_None 1 loc fns) e1,g)
+               (clos_Letrec t loc_opt ws (calls_list backend_common_None 1
+                   loc fns) e1,g)
            else let (fns1,g) = calls_sing_list (MAP SND fns) g in
              let (e1,g) = calls_sing x1 g in
-               (closLang_Letrec t loc_opt ws (ZIP (MAP FST fns) fns1)
-                   e1,g)`];;
+               (clos_Letrec t loc_opt ws (ZIP (MAP FST fns) fns1) e1,g)`];;
 
 let calls_sing_eq = prove
  (`(!e g. calls [e] g = (\(e,rest). ([e],rest)) (calls_sing e g)) /\
@@ -423,8 +419,8 @@ let calls_length = prove
 let calls_sing = prove
  (`!x g0 ys g. calls [x] g0 = (ys,g) ==> (?y. ys = [y])`,
   (REPEAT STRIP_TAC THEN RES_ASSUME calls_length THEN
-   POP_ASSUM MP_TAC THEN SPEC_TAC(`ys:closLang_exp
-     list`,`ys:closLang_exp list`) THEN
+   POP_ASSUM MP_TAC THEN SPEC_TAC(`ys:clos_exp
+     list`,`ys:clos_exp list`) THEN
    LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ;
      LENGTH_EQ_NIL] THEN
    MESON_TAC[]));;

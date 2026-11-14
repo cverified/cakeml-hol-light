@@ -33,7 +33,6 @@ let _ = hide_overloads
 
 let _ = do_list hide_constant ["mem"];;
 
-let _ = size_thms "line";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let labProps_extract_labels_def,labProps_extract_labels_ind = define_wf
@@ -41,8 +40,8 @@ let labProps_extract_labels_def,labProps_extract_labels_ind = define_wf
   `labProps_extract_labels x1 =
      match x1 with
        [] -> []
-     | CONS (labLang_Label l1 l2 _) xs -> CONS (l1,l2)
-       (labProps_extract_labels xs)
+     | CONS (lab_Label l1 l2 _) xs -> CONS (l1,l2) (labProps_extract_labels
+       xs)
      | CONS x xs -> labProps_extract_labels xs`;;
 add_simp labProps_extract_labels_def;;
 
@@ -57,16 +56,16 @@ let extract_labels_append = prove
 let labs_of_def = new_definition
   `labs_of x1' =
    match x1' with
-     labLang_LocValue _ (labLang_Lab n1 n2) -> {(n1,n2)}
-   | labLang_Jump (labLang_Lab n1 n2) -> {(n1,n2)}
-   | labLang_JumpCmp _ _ _ (labLang_Lab n1 n2) -> {(n1,n2)}
+     lab_LocValue _ (lab_Lab n1 n2) -> {(n1,n2)}
+   | lab_Jump (lab_Lab n1 n2) -> {(n1,n2)}
+   | lab_JumpCmp _ _ _ (lab_Lab n1 n2) -> {(n1,n2)}
    | _ -> {}`;;
 add_simp labs_of_def;;
 
 let line_get_labels_def = new_definition
   `line_get_labels x1'' =
    match x1'' with
-     labLang_LabAsm a _ _ _ -> labs_of a
+     lab_LabAsm a _ _ _ -> labs_of a
    | _ -> {}`;;
 
 let sec_get_labels_def = define_general
@@ -85,7 +84,7 @@ let get_labels_cons = prove
 let line_get_code_labels_def = new_definition
   `line_get_code_labels x1''' =
    match x1''' with
-     labLang_Label _ l _ -> {l}
+     lab_Label _ l _ -> {l}
    | _ -> {}`;;
 add_simp line_get_code_labels_def;;
 
@@ -310,9 +309,9 @@ let labProps_fp_upd_consts = prove
 add_simp labProps_fp_upd_consts;;
 
 let line_length_def = define_cases
-  `(line_length (labLang_Label k1 k2 l) = if l = 0 then 0 else 1) /\
-   (line_length (labLang_Asm b bytes l) = LENGTH bytes) /\
-   (line_length (labLang_LabAsm a w bytes l) = LENGTH bytes)`;;
+  `(line_length (lab_Label k1 k2 l) = if l = 0 then 0 else 1) /\
+   (line_length (lab_Asm b bytes l) = LENGTH bytes) /\
+   (line_length (lab_LabAsm a w bytes l) = LENGTH bytes)`;;
 
 let LENGTH_line_bytes = prove
  (`!x2. ~(is_Label x2) ==> (LENGTH (line_bytes x2) = line_length x2)`,
@@ -755,7 +754,7 @@ add_simp share_mem_op_align_sdm_simp;;
 let line_ok_pre_def = new_definition
   `line_ok_pre c x2 =
      match (c,x2) with
-       ((c:'a asm_config),labLang_Asm b bytes l) -> asm_ok (cbw_to_asm b) c
+       ((c:'a asm_config),lab_Asm b bytes l) -> asm_ok (cbw_to_asm b) c
      | (c,_) -> T`;;
 
 let sec_ok_pre_def = define_general
@@ -771,7 +770,7 @@ add_simp sec_ok_pre_def;;
 let sec_label_ok_def = new_definition
   `sec_label_ok k x2' =
      match x2' with
-       labLang_Label l1 l2 len -> l1 = k /\ ~(l2 = 0)
+       lab_Label l1 l2 len -> l1 = k /\ ~(l2 = 0)
      | _ -> T`;;
 add_simp sec_label_ok_def;;
 
@@ -809,12 +808,12 @@ let get_code_labels_extract_labels = prove
 let no_install_def = new_definition
   `labProps_no_install code <=>
    (!p w bytes l. ~(asm_fetch_aux p code =
-       SOME (labLang_LabAsm labLang_Install w bytes l)))`;;
+       SOME (lab_LabAsm lab_Install w bytes l)))`;;
 
 let no_share_mem_inst_def = new_definition
   `no_share_mem_inst code <=>
    (!p op re a inst' len. ~(asm_fetch_aux p code =
-       SOME (labLang_Asm (ShareMem op re a) inst' len)))`;;
+       SOME (lab_Asm (ShareMem op re a) inst' len)))`;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

@@ -67,11 +67,9 @@ let extract_list_def,extract_list_ind = define_rec
 let delete_var_def = new_definition
   `bvi_let_delete_var x =
      match x with
-       ((bvi_Var n):bvi_exp) -> bvi_Op (closLang_IntOp (closLang_Const
-         (&0))) []
+       ((bvi_Var n):bvi_exp) -> bvi_Op (clos_IntOp (clos_Const (&0))) []
      | x -> x`;;
 
-let _ = size_thms "bvi_exp";;
 let exp2_size_APPEND = prove
  (`!xs ys. bvi_exp_size1 (APPEND xs ys) = bvi_exp_size1 xs + bvi_exp_size1 ys`,
   (* bvi_exp_size1 is HOL4's exp2_size, which the size prelude

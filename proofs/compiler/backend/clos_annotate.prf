@@ -9,8 +9,8 @@
 
 ### alt_free_SING
   (REPEAT STRIP_TAC THEN RES_ASSUME alt_free_LENGTH THEN
-   POP_ASSUM MP_TAC THEN SPEC_TAC(`ys:closLang_exp
-     list`,`ys:closLang_exp list`) THEN
+   POP_ASSUM MP_TAC THEN SPEC_TAC(`ys:clos_exp
+     list`,`ys:clos_exp list`) THEN
    LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ;
      LENGTH_EQ_NIL] THEN
    MESON_TAC[])

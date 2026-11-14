@@ -228,7 +228,6 @@ let gc_forward_ptr_thm = prove
 let heap_expand_def = new_definition
   `heap_expand n = if n = 0 then [] else [Unused (n - 1)]`;;
 
-let _ = size_thms "heap_element";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let heap_map_def,heap_map_ind = define_wf
@@ -251,7 +250,6 @@ let heap_addresses_def,heap_addresses_ind = define_wf
    (heap_addresses a (CONS x xs) = a INSERT heap_addresses (a + el_length
     x) xs)`;;
 
-let _ = size_thms "heap_address";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let ADDR_MAP_def,ADDR_MAP_ind = define_wf

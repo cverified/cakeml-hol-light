@@ -2149,7 +2149,6 @@ let asm_write_bytearray_EL = prove
 
 (* TODO: move to sptTheory *)
 
-let _ = size_thms "spt";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let eq_shape_def,eq_shape_ind = define_wf

@@ -52,7 +52,6 @@ let _ = do_list hide_constant ["C"; "vars"];;
 
 (* HOL4 clos_callProofScript.sml:32: ML code, not ported *)
 
-let _ = size_thms "closSem_v";;
 (* v_size_lemma[local] *)
 let clos_callProof_v_size_lemma = prove
  (`MEM (v:closSem_v) vl ==> closSem_v_size v < list_size closSem_v_size vl`,
@@ -297,7 +296,7 @@ let wfv_state_def = new_definition
        /\ closSem_state_code
      s = FEMPTY`;;
 
-new_type_abbrev("calls_state",`:misc_num_set#(num#num#closLang_exp) list`);;
+new_type_abbrev("calls_state",`:misc_num_set#(num#num#clos_exp) list`);;
 new_type_abbrev("abs_calls_state",`:misc_num_set`);;
 
 let clos_callProof_state_rel_def = new_definition
@@ -350,8 +349,8 @@ let SND_insert_each = prove
 add_simp SND_insert_each;;
 
 let calls_list_MAPi = prove
- (`!loc tra n. calls_list t n loc = MAPi (\i p. (FST p,closLang_Call t 0 (loc
-  + 2 * i + 1) (GENLIST_Var t 1 (FST p))))`,
+ (`!loc tra n. calls_list t n loc = MAPi (\i p. (FST p,clos_Call t 0 (loc + 2
+  * i + 1) (GENLIST_Var t 1 (FST p))))`,
   CHEAT_TAC);;
 
 let calls_list_length = prove
@@ -464,12 +463,12 @@ let wfg'_code_list = prove
   CHEAT_TAC);;
 
 let closed_Fn = prove
- (`clos_call_closed (closLang_Fn t loco vs args e) <=>
+ (`clos_call_closed (clos_Fn t loco vs args e) <=>
    (!v. has_var v (SND (clos_call_free [e])) ==> v < args)`,
   CHEAT_TAC);;
 
 let closed_Fn_fv = prove
- (`clos_call_closed (closLang_Fn t loco vs args e) <=>
+ (`clos_call_closed (clos_Fn t loco vs args e) <=>
    (!v. fv v [e] ==> v < args)`,
   CHEAT_TAC);;
 
@@ -625,7 +624,7 @@ let dest_closure_v_rel_lookup = prove
      subg (code_list (loc - 2 * n) (ZIP (MAP FST xs) ls) g1) g /\
      ALOOKUP (SND g) (loc + 1) = SOME (LENGTH env1,EL n ls) /\
      dest_closure max_app (SOME loc) v2 env2 =
-       SOME (Full_app (closLang_Call tra 0 (loc + 1)
+       SOME (Full_app (clos_Call tra 0 (loc + 1)
          (GENLIST_Var tra 1 (LENGTH env1))) (APPEND env2 l1') []) /\
      code_includes (SND (code_list (loc - 2 * n) (ZIP (MAP FST xs) ls)
        g1)) code)`,
@@ -908,8 +907,7 @@ add_simp clos_callProof_v_rel_Boolv;;
 
 (* [local] *)
 let env_rel_Op_Install = prove
- (`clos_callProof_env_rel r env env2 0 [0,closLang_Op v6 closLang_Install e1]
-  <=>
+ (`clos_callProof_env_rel r env env2 0 [0,clos_Op v6 clos_Install e1] <=>
    clos_callProof_env_rel r env env2 0 (MAP (\x. (0,x)) e1)`,
   CHEAT_TAC);;
 
@@ -953,7 +951,7 @@ let co_ok_IMP_make_g = prove
   CHEAT_TAC);;
 
 let code_inv_def = new_definition
-  `code_inv g1_opt l1 (s_code:(num,num#closLang_exp)fmap)
+  `code_inv g1_opt l1 (s_code:(num,num#clos_exp)fmap)
          s_cc s_co t_code t_cc t_co <=>
      s_code = FEMPTY /\
      s_cc = state_cc clos_call_compile_inc t_cc /\
@@ -1328,8 +1326,8 @@ let calls_preserves_every_Fn_vs_NONE = prove
 (* obeys_max_app and no_Labels *)
 
 let state_syntax_def = new_definition
-  `state_syntax f ((g,xs):1 spt#(num#num#closLang_exp) list) = ALL
-  (\(x1,x2,x3). f x3) xs`;;
+  `state_syntax f ((g,xs):1 spt#(num#num#clos_exp) list) = ALL (\(x1,x2,x3).
+  f x3) xs`;;
 
 let state_syntax_insert_each = prove
  (`!k1 loc g.

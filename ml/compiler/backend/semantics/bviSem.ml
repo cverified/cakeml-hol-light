@@ -97,25 +97,25 @@ let bviSem_finalise_cons_def,bviSem_finalise_cons_ind = define_guess_cheat
 
 let do_app_aux_def = new_definition
   `bviSem_do_app_aux op (vs:bvlSem_v list) (s:('c,'ffi)bviSem_state) =
-     match (op,vs) with (closLang_IntOp (closLang_Const i),xs) ->
+     match (op,vs) with (clos_IntOp (clos_Const i),xs) ->
        if small_enough_int i /\ NULL xs then
          SOME (SOME (bvlSem_Number i,s))
        else NONE
-     | (closLang_Label l,xs) -> (match xs with [] -> if l IN domain
+     | (clos_Label l,xs) -> (match xs with [] -> if l IN domain
        (bviSem_state_code s) then
                               SOME (SOME (bvlSem_CodePtr l,s))
                               else NONE
                         | _ -> NONE)
-     | (closLang_GlobOp closLang_GlobalsPtr,xs) ->
+     | (clos_GlobOp clos_GlobalsPtr,xs) ->
          (match xs with [] -> (match bviSem_state_global s with SOME p ->
            SOME (SOME (bvlSem_RefPtr T p,s))
                    | NONE -> NONE)
           | _ -> NONE)
-     | (closLang_GlobOp closLang_SetGlobalsPtr,xs) ->
+     | (clos_GlobOp clos_SetGlobalsPtr,xs) ->
          (match xs with [bvlSem_RefPtr T p] -> SOME (SOME
            (bvlSem_Unit,bviSem_state_global_fupd (K (SOME p)) s))
           | _ -> NONE)
-     | (closLang_GlobOp (closLang_Global n),xs) ->
+     | (clos_GlobOp (clos_Global n),xs) ->
          (match xs with [] -> (match bviSem_state_global s with SOME ptr ->
                         (match FLOOKUP (bviSem_state_refs s) ptr with SOME
                           (bvlSem_ValueArray xs) ->
@@ -124,7 +124,7 @@ let do_app_aux_def = new_definition
                          | _ -> NONE)
                     | NONE -> NONE)
           | _ -> NONE)
-     | (closLang_GlobOp (closLang_SetGlobal n),xs) ->
+     | (clos_GlobOp (clos_SetGlobal n),xs) ->
          (match xs with [x] -> (match bviSem_state_global s with SOME ptr ->
                         (match FLOOKUP (bviSem_state_refs s) ptr with SOME
                           (bvlSem_ValueArray xs) ->
@@ -136,7 +136,7 @@ let do_app_aux_def = new_definition
                          | _ -> NONE)
                     | NONE -> NONE)
           | _ -> NONE)
-     | (closLang_BlockOp (closLang_FromList n),xs) ->
+     | (clos_BlockOp (clos_FromList n),xs) ->
          (match xs with [len; lv] ->
              (match bvlSem_v_to_list lv with SOME vs -> if len =
                bvlSem_Number (&(LENGTH vs)) then SOME (SOME (bvlSem_Block n
@@ -144,7 +144,7 @@ let do_app_aux_def = new_definition
                            else NONE
               | _ -> NONE)
           | _ -> NONE)
-     | (closLang_MemOp (closLang_RefByte f),xs) ->
+     | (clos_MemOp (clos_RefByte f),xs) ->
          (match xs with [bvlSem_Number i; bvlSem_Number b] ->
              if (&0) <= i /\ (?(w:word8). b = &(w2n w)) then
                let ptr = (minimal ptr. ~(ptr IN FDOM (bviSem_state_refs s)))
@@ -155,7 +155,7 @@ let do_app_aux_def = new_definition
                      b))))) s))
              else NONE
            | _ -> NONE)
-     | (closLang_MemOp (closLang_MutCons tag i),xs) ->
+     | (clos_MemOp (clos_MutCons tag i),xs) ->
          (let ptr = (minimal ptr. ~(ptr IN FDOM (bviSem_state_refs s))) in
             if i >= LENGTH xs then NONE else let l = TAKE i xs in
               let c = EL i xs in
@@ -163,23 +163,23 @@ let do_app_aux_def = new_definition
               let b = bvlSem_MutBlock tag F l c r in
                 SOME (SOME (bvlSem_RefPtr F ptr,(bviSem_state_refs_fupd (K
                   (bviSem_state_refs s |+ (ptr,b))) s))))
-     | (closLang_MemOp closLang_UpdateCons,[bvlSem_RefPtr _ ptr;
-       bvlSem_Number i; x]) ->
+     | (clos_MemOp clos_UpdateCons,[bvlSem_RefPtr _ ptr; bvlSem_Number i;
+       x]) ->
          (match FLOOKUP (bviSem_state_refs s) ptr with SOME (bvlSem_MutBlock
            tag finalised l c r) ->
               if ~(i = &(LENGTH l)) \/ finalised then NONE else SOME (SOME
                 (bvlSem_Unit,bviSem_state_refs_fupd (K (bviSem_state_refs s |+
                 (ptr,bvlSem_MutBlock tag F l x r))) s))
           | _ -> NONE)
-     | (closLang_MemOp closLang_FinaliseCons,[x]) ->
+     | (clos_MemOp clos_FinaliseCons,[x]) ->
          (match bviSem_finalise_cons x (bviSem_state_refs s) with SOME
            (v,refs') -> SOME (SOME (v,bviSem_state_refs_fupd (K refs') s))
           | NONE -> NONE)
-     | (closLang_GlobOp closLang_AllocGlobal,_) -> NONE
-     | (closLang_MemOp closLang_FromListByte,_) -> NONE
-     | (closLang_MemOp closLang_ToListByte,_) -> NONE
-     | (closLang_MemOp closLang_ConcatByteVec,_) -> NONE
-     | (closLang_MemOp (closLang_CopyByte T),_) -> NONE
+     | (clos_GlobOp clos_AllocGlobal,_) -> NONE
+     | (clos_MemOp clos_FromListByte,_) -> NONE
+     | (clos_MemOp clos_ToListByte,_) -> NONE
+     | (clos_MemOp clos_ConcatByteVec,_) -> NONE
+     | (clos_MemOp (clos_CopyByte T),_) -> NONE
      | _ -> SOME NONE`;;
 
 let bviSem_do_install_def = new_definition
@@ -212,7 +212,7 @@ let bviSem_do_install_def = new_definition
 
 let bviSem_do_app_def = new_definition
   `bviSem_do_app op vs (s:('c,'ffi)bviSem_state) =
-     if op = closLang_Install then bviSem_do_install vs s else match
+     if op = clos_Install then bviSem_do_install vs s else match
        bviSem_do_app_aux op vs s with NONE -> Rerr (Rabort Rtype_error)
      | SOME (SOME (v,t)) -> Rval (v,t)
      | SOME NONE -> (match bvlSem_do_app op vs (bvi_to_bvl s) with Rval

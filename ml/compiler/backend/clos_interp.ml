@@ -25,30 +25,30 @@ let _ = do_list hide_constant ["pmatch"];;
 let can_interpret_op_def = new_definition
   `can_interpret_op x1 l =
    match x1 with
-     closLang_BlockOp (closLang_Cons tag) -> (l = 0 \/ tag < 3)
-   | closLang_IntOp (closLang_Const i) -> (l = 0)
-   | closLang_GlobOp (closLang_Global n) -> (l = 0)
-   | closLang_BlockOp (closLang_Constant c) -> (l = 0)
+     clos_BlockOp (clos_Cons tag) -> (l = 0 \/ tag < 3)
+   | clos_IntOp (clos_Const i) -> (l = 0)
+   | clos_GlobOp (clos_Global n) -> (l = 0)
+   | clos_BlockOp (clos_Constant c) -> (l = 0)
    | _ -> F`;;
 
 let can_interpret_def,can_interpret_ind = define_rec
-  `(can_interpret ((closLang_Var t n):closLang_exp) = T) /\
-   (can_interpret (closLang_If t e1 e2 e3) =
+  `(can_interpret ((clos_Var t n):clos_exp) = T) /\
+   (can_interpret (clos_If t e1 e2 e3) =
       (can_interpret e1 /\ can_interpret e2 /\ can_interpret e3)) /\
-   (can_interpret (closLang_Let t es e) = (can_interpret e
+   (can_interpret (clos_Let t es e) = (can_interpret e
     /\ can_interpret_list es)) /\
-   (can_interpret (closLang_Op t p es) =
+   (can_interpret (clos_Op t p es) =
       (can_interpret_op p (LENGTH es) /\ can_interpret_list es)) /\
-   (can_interpret (closLang_Raise t e) = can_interpret e) /\
-   (can_interpret (closLang_Tick t e) = can_interpret e) /\
-   (can_interpret (closLang_Fn _ _ _ _ e) = F) /\
-   (can_interpret (closLang_Handle t e1 e2) = (can_interpret e1
+   (can_interpret (clos_Raise t e) = can_interpret e) /\
+   (can_interpret (clos_Tick t e) = can_interpret e) /\
+   (can_interpret (clos_Fn _ _ _ _ e) = F) /\
+   (can_interpret (clos_Handle t e1 e2) = (can_interpret e1
     /\ can_interpret e2)) /\
-   (can_interpret (closLang_Call _ _ _ es) = F) /\
-   (can_interpret (closLang_App _ opt e es) =
+   (can_interpret (clos_Call _ _ _ es) = F) /\
+   (can_interpret (clos_App _ opt e es) =
       (IS_NONE opt /\ can_interpret e /\ can_interpret_list es
           /\ LENGTH es = 1)) /\
-   (can_interpret (closLang_Letrec _ _ _ fns e) = F) /\
+   (can_interpret (clos_Letrec _ _ _ fns e) = F) /\
    (can_interpret_list [] = T) /\
    (can_interpret_list (CONS x xs) = (can_interpret x
     /\ can_interpret_list xs))`;;
@@ -58,34 +58,34 @@ let can_interpret_def,can_interpret_ind = define_rec
 let check_size_op_def = new_definition
   `check_size_op k x2 l =
    match x2 with
-     closLang_BlockOp (closLang_Cons tag) -> (if l = (0:num) then k else k -
+     clos_BlockOp (clos_Cons tag) -> (if l = (0:num) then k else k -
        (1:num))
-   | closLang_IntOp (closLang_Const i) -> (k:num)
-   | closLang_GlobOp (closLang_Global n) -> k
+   | clos_IntOp (clos_Const i) -> (k:num)
+   | clos_GlobOp (clos_Global n) -> k
    | _ -> k - 1`;;
 
 let check_size_def,check_size_ind = define_rec
-  `(check_size (k:num) ((closLang_Var t n):closLang_exp) = (k:num)) /\
-   (check_size (k:num) (closLang_If t e1 e2 e3) =
+  `(check_size (k:num) ((clos_Var t n):clos_exp) = (k:num)) /\
+   (check_size (k:num) (clos_If t e1 e2 e3) =
       (((let k = check_size k e1 in if k = 0 then 0 else let k =
           check_size k e2 in if k = 0 then 0 else check_size k e3)):num)) /\
-   (check_size (k:num) (closLang_Let t es e) =
+   (check_size (k:num) (clos_Let t es e) =
       (((let k = check_size_list k es in if k = 0 then 0 else
           check_size k e)):num)) /\
-   (check_size (k:num) (closLang_Op t p es) =
+   (check_size (k:num) (clos_Op t p es) =
       (((let k = check_size_op k p (LENGTH es) in if k = 0 then 0 else
           check_size_list k es)):num)) /\
-   (check_size (k:num) (closLang_Raise t e) = ((check_size k e):num)) /\
-   (check_size (k:num) (closLang_Tick t e) = ((check_size k e):num)) /\
-   (check_size (k:num) (closLang_Fn _ _ _ _ e) = ((k):num)) /\
-   (check_size (k:num) (closLang_Handle t e1 e2) =
+   (check_size (k:num) (clos_Raise t e) = ((check_size k e):num)) /\
+   (check_size (k:num) (clos_Tick t e) = ((check_size k e):num)) /\
+   (check_size (k:num) (clos_Fn _ _ _ _ e) = ((k):num)) /\
+   (check_size (k:num) (clos_Handle t e1 e2) =
       (((let k = check_size k e1 in if k = 0 then 0 else check_size k
           e2)):num)) /\
-   (check_size (k:num) (closLang_Call _ _ _ es) = ((k):num)) /\
-   (check_size (k:num) (closLang_App _ _ e es) =
+   (check_size (k:num) (clos_Call _ _ _ es) = ((k):num)) /\
+   (check_size (k:num) (clos_App _ _ e es) =
       (((let k = check_size (k - 1) e in if k = 0 then 0 else
           check_size_list k es)):num)) /\
-   (check_size (k:num) (closLang_Letrec _ _ _ fns e) = ((k):num)) /\
+   (check_size (k:num) (clos_Letrec _ _ _ fns e) = ((k):num)) /\
    (check_size_list (k:num) [] = k) /\
    (check_size_list (k:num) (CONS x xs) =
       (let k = check_size k x in if k = 0 then 0 else check_size_list
@@ -99,34 +99,34 @@ let nontrivial_size_def = new_definition
 let to_constant_op_def = new_definition
   `to_constant_op x1 l cs =
    match x1 with
-     closLang_IntOp (closLang_Const i) -> ConstCons 1 [ConstInt i]
-   | closLang_BlockOp (closLang_Constant c) -> ConstCons 1 [c]
-   | closLang_GlobOp (closLang_Global n) -> ConstCons 2 [ConstInt (&n)]
-   | closLang_BlockOp (closLang_Cons tag) ->
+     clos_IntOp (clos_Const i) -> ConstCons 1 [ConstInt i]
+   | clos_BlockOp (clos_Constant c) -> ConstCons 1 [c]
+   | clos_GlobOp (clos_Global n) -> ConstCons 2 [ConstInt (&n)]
+   | clos_BlockOp (clos_Cons tag) ->
      (if l = 0 then ConstCons 1 [ConstCons tag []]
                 else ConstCons (tag + 5) [cs])
    | _ -> ConstInt (&0)`;;
 
 let to_constant_def,to_constant_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  `(to_constant ((closLang_Var t n):closLang_exp) =
+  `(to_constant ((clos_Var t n):clos_exp) =
       ConstCons 0 [ConstInt (&n)]) /\
-   (to_constant (closLang_App _ _ e es) =
+   (to_constant (clos_App _ _ e es) =
       ConstCons 0 [to_constant e; match es with [] -> ConstInt (&0) |
           (CONS e1 _) -> to_constant e1]) /\
-   (to_constant (closLang_If t e1 e2 e3) =
+   (to_constant (clos_If t e1 e2 e3) =
       ConstCons 0 [to_constant e1; to_constant e2; to_constant e3]) /\
-   (to_constant (closLang_Let t es e) = ConstCons 1 [to_constant_list es;
+   (to_constant (clos_Let t es e) = ConstCons 1 [to_constant_list es;
     to_constant e]) /\
-   (to_constant (closLang_Op t p es) = to_constant_op p (LENGTH es)
+   (to_constant (clos_Op t p es) = to_constant_op p (LENGTH es)
     (to_constant_list es)) /\
-   (to_constant (closLang_Raise t e) = ConstCons 3 [to_constant e]) /\
-   (to_constant (closLang_Tick t e) = ConstCons 4 [to_constant e]) /\
-   (to_constant (closLang_Handle t e1 e2) = ConstCons 2 [to_constant e1;
+   (to_constant (clos_Raise t e) = ConstCons 3 [to_constant e]) /\
+   (to_constant (clos_Tick t e) = ConstCons 4 [to_constant e]) /\
+   (to_constant (clos_Handle t e1 e2) = ConstCons 2 [to_constant e1;
     to_constant e2]) /\
-   (to_constant (closLang_Fn _ _ _ _ e) = ConstInt (&0)) /\
-   (to_constant (closLang_Call _ _ _ es) = ConstInt (&0)) /\
-   (to_constant (closLang_Letrec _ _ _ fns e) = ConstInt (&0)) /\
+   (to_constant (clos_Fn _ _ _ _ e) = ConstInt (&0)) /\
+   (to_constant (clos_Call _ _ _ es) = ConstInt (&0)) /\
+   (to_constant (clos_Letrec _ _ _ fns e) = ConstInt (&0)) /\
    (to_constant_list [] = ConstCons 0 []) /\
    (to_constant_list (CONS x xs) = ConstCons 0 [to_constant x;
     to_constant_list xs])`;;
@@ -149,273 +149,246 @@ let to_constant_def,to_constant_ind = assume_definition_rec
 
 let clos_interp_el_def = new_definition
   `clos_interp_el =
-     closLang_If backend_common_None (closLang_Op backend_common_None
-       (closLang_BlockOp (closLang_EqualConst (closLang_Int (&0))))
-       [(closLang_Var backend_common_None) 1])
-       ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-         (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None) 0))
-     (closLang_App backend_common_None NONE (closLang_App
-       backend_common_None NONE ((closLang_Var backend_common_None) 2)
-       [closLang_Op backend_common_None (closLang_IntOp closLang_Sub)
-         [closLang_Op backend_common_None (closLang_IntOp (closLang_Const
-         (&1))) []; (closLang_Var backend_common_None) 1]]) [(\n x.
-         closLang_Op backend_common_None (closLang_BlockOp (closLang_ElemAt
-         n)) [x]) 1 ((closLang_Var backend_common_None) 0)])`;;
+     clos_If backend_common_None (clos_Op backend_common_None (clos_BlockOp
+       (clos_EqualConst (clos_Int (&0)))) [(clos_Var backend_common_None) 1])
+       ((\n x. clos_Op backend_common_None (clos_BlockOp (clos_ElemAt n))
+         [x]) 0 ((clos_Var backend_common_None) 0))
+     (clos_App backend_common_None NONE (clos_App backend_common_None NONE
+       ((clos_Var backend_common_None) 2)
+       [clos_Op backend_common_None (clos_IntOp clos_Sub) [clos_Op
+         backend_common_None (clos_IntOp (clos_Const (&1))) []; (clos_Var
+         backend_common_None) 1]]) [(\n x. clos_Op backend_common_None
+         (clos_BlockOp (clos_ElemAt n)) [x]) 1 ((clos_Var
+         backend_common_None) 0)])`;;
 
 let clos_interp_rev_def = new_definition
   `clos_interp_rev =
-     closLang_If backend_common_None (closLang_Op backend_common_None
-       (closLang_BlockOp (closLang_LenEq 0)) [(closLang_Var
-       backend_common_None) 1])
-       ((closLang_Var backend_common_None) 0)
-     (closLang_App backend_common_None NONE (closLang_App
-       backend_common_None NONE ((closLang_Var backend_common_None) 2)
-       [(\n x. closLang_Op backend_common_None (closLang_BlockOp
-         (closLang_ElemAt n)) [x]) 1 ((closLang_Var backend_common_None)
-         1)]) [closLang_Op backend_common_None (closLang_BlockOp
-         (closLang_Cons 0)) [(closLang_Var backend_common_None) 0; (\n x.
-         closLang_Op backend_common_None (closLang_BlockOp (closLang_ElemAt
-         n)) [x]) 0 ((closLang_Var backend_common_None) 1)]])`;;
+     clos_If backend_common_None (clos_Op backend_common_None (clos_BlockOp
+       (clos_LenEq 0)) [(clos_Var backend_common_None) 1])
+       ((clos_Var backend_common_None) 0)
+     (clos_App backend_common_None NONE (clos_App backend_common_None NONE
+       ((clos_Var backend_common_None) 2)
+       [(\n x. clos_Op backend_common_None (clos_BlockOp (clos_ElemAt n))
+         [x]) 1 ((clos_Var backend_common_None) 1)]) [clos_Op
+         backend_common_None (clos_BlockOp (clos_Cons 0)) [(clos_Var
+         backend_common_None) 0; (\n x. clos_Op backend_common_None
+         (clos_BlockOp (clos_ElemAt n)) [x]) 0 ((clos_Var
+         backend_common_None) 1)]])`;;
 
 let clos_interpreter_body_def = new_definition
   `clos_interpreter_body =
-       closLang_If backend_common_None ((closLang_Var backend_common_None)
-         1)
+       clos_If backend_common_None ((clos_Var backend_common_None) 1)
          (
           // is _list version
-          closLang_If backend_common_None (closLang_Op backend_common_None
-            (closLang_BlockOp (closLang_LenEq 0)) [(closLang_Var
-            backend_common_None) 0]) ((closLang_Var backend_common_None) 0) (
-            closLang_Let backend_common_None [(\env x. closLang_App
-              backend_common_None NONE (closLang_App backend_common_None NONE
-              (closLang_App backend_common_None NONE (closLang_Op
-              backend_common_None (closLang_GlobOp (closLang_Global 0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None)
-               0));
-                      (\env x. closLang_App backend_common_None NONE
-                        (closLang_App backend_common_None NONE (closLang_App
-                        backend_common_None NONE (closLang_Op
-                        backend_common_None (closLang_GlobOp (closLang_Global
-                        0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 1)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 1 ((closLang_Var backend_common_None)
-               0))]
-              (closLang_Op backend_common_None (closLang_BlockOp
-                (closLang_Cons 0)) [(closLang_Var backend_common_None) 1;
-                (closLang_Var backend_common_None) 0]))) (
+          clos_If backend_common_None (clos_Op backend_common_None
+            (clos_BlockOp (clos_LenEq 0)) [(clos_Var backend_common_None) 0])
+            ((clos_Var backend_common_None) 0) (
+            clos_Let backend_common_None [(\env x. clos_App
+              backend_common_None NONE (clos_App backend_common_None NONE
+              (clos_App backend_common_None NONE (clos_Op backend_common_None
+              (clos_GlobOp (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 0
+               ((clos_Var backend_common_None) 0));
+                      (\env x. clos_App backend_common_None NONE (clos_App
+                        backend_common_None NONE (clos_App backend_common_None
+                        NONE (clos_Op backend_common_None (clos_GlobOp
+                        (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               1)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 1
+               ((clos_Var backend_common_None) 0))]
+              (clos_Op backend_common_None (clos_BlockOp (clos_Cons 0))
+                [(clos_Var backend_common_None) 1; (clos_Var
+                backend_common_None) 0]))) (
        // normal cases
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 0 2
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 0 2
          (
           // App
-          closLang_App backend_common_None NONE ((\env x. closLang_App
-            backend_common_None NONE (closLang_App backend_common_None NONE
-            (closLang_App backend_common_None NONE (closLang_Op
-            backend_common_None (closLang_GlobOp (closLang_Global 0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None)
-               0)))
-                        [(\env x. closLang_App backend_common_None NONE
-                          (closLang_App backend_common_None NONE (closLang_App
-                          backend_common_None NONE (closLang_Op
-                          backend_common_None (closLang_GlobOp (closLang_Global
-                          0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 1 ((closLang_Var backend_common_None)
-               0))]) (
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 1 1
+          clos_App backend_common_None NONE ((\env x. clos_App
+            backend_common_None NONE (clos_App backend_common_None NONE
+            (clos_App backend_common_None NONE (clos_Op backend_common_None
+            (clos_GlobOp (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 0
+               ((clos_Var backend_common_None) 0)))
+                        [(\env x. clos_App backend_common_None NONE
+                          (clos_App backend_common_None NONE (clos_App
+                          backend_common_None NONE (clos_Op backend_common_None
+                          (clos_GlobOp (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 1
+               ((clos_Var backend_common_None) 0))]) (
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 1 1
          (
           // Constant
-          (\n x. closLang_Op backend_common_None (closLang_BlockOp
-            (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None) 0))
-            (
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 2 1
+          (\n x. clos_Op backend_common_None (clos_BlockOp (clos_ElemAt n))
+            [x]) 0 ((clos_Var backend_common_None) 0)) (
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 2 1
          (
           // Global
-          closLang_Op backend_common_None (closLang_GlobOp (closLang_Global
-            0)) [(\n x. closLang_Op backend_common_None (closLang_BlockOp
-            (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None)
-            0)]) (
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 0 1
+          clos_Op backend_common_None (clos_GlobOp (clos_Global 0)) [(\n x.
+            clos_Op backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 0
+            ((clos_Var backend_common_None) 0)]) (
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 0 1
          (
           // Var
-          closLang_Letrec [] NONE NONE
-            [(1,closLang_Fn (implode "") NONE NONE 1 clos_interp_el)]
-            (closLang_App backend_common_None NONE (closLang_App
-              backend_common_None NONE ((closLang_Var backend_common_None) 0)
-              [(\n x. closLang_Op backend_common_None (closLang_BlockOp
-              (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None)
-              1)]) [(closLang_Var backend_common_None) 3])) (
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 1 2
+          clos_Letrec [] NONE NONE
+            [(1,clos_Fn (implode "") NONE NONE 1 clos_interp_el)]
+            (clos_App backend_common_None NONE (clos_App backend_common_None
+              NONE ((clos_Var backend_common_None) 0) [(\n x. clos_Op
+              backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 0
+              ((clos_Var backend_common_None) 1)]) [(clos_Var
+              backend_common_None) 3])) (
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 1 2
          (
           // Let
-          closLang_Let backend_common_None [(\env x. closLang_App
-            backend_common_None NONE (closLang_App backend_common_None NONE
-            (closLang_App backend_common_None NONE (closLang_Op
-            backend_common_None (closLang_GlobOp (closLang_Global 0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 1)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None)
-               0))]
-            ((\env x. closLang_App backend_common_None NONE (closLang_App
-              backend_common_None NONE (closLang_App backend_common_None NONE
-              (closLang_Op backend_common_None (closLang_GlobOp
-              (closLang_Global 0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) (closLang_Op backend_common_None
-               (closLang_BlockOp closLang_ListAppend) [(closLang_Var
-               backend_common_None) 3; (closLang_Var backend_common_None) 0])
-               ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 1 ((closLang_Var backend_common_None)
-               1)))) (
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 2 2
+          clos_Let backend_common_None [(\env x. clos_App
+            backend_common_None NONE (clos_App backend_common_None NONE
+            (clos_App backend_common_None NONE (clos_Op backend_common_None
+            (clos_GlobOp (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               1)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 0
+               ((clos_Var backend_common_None) 0))]
+            ((\env x. clos_App backend_common_None NONE (clos_App
+              backend_common_None NONE (clos_App backend_common_None NONE
+              (clos_Op backend_common_None (clos_GlobOp (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) (clos_Op backend_common_None (clos_BlockOp
+               clos_ListAppend) [(clos_Var backend_common_None) 3; (clos_Var
+               backend_common_None) 0]) ((\n x. clos_Op backend_common_None
+               (clos_BlockOp (clos_ElemAt n)) [x]) 1 ((clos_Var
+               backend_common_None) 1)))) (
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 2 2
          (
           // Handle
-          closLang_Handle backend_common_None ((\env x. closLang_App
-            backend_common_None NONE (closLang_App backend_common_None NONE
-            (closLang_App backend_common_None NONE (closLang_Op
-            backend_common_None (closLang_GlobOp (closLang_Global 0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None)
-               0)))
-            ((\env x. closLang_App backend_common_None NONE (closLang_App
-              backend_common_None NONE (closLang_App backend_common_None NONE
-              (closLang_Op backend_common_None (closLang_GlobOp
-              (closLang_Global 0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) (closLang_Op backend_common_None
-               (closLang_BlockOp (closLang_Cons 0)) [(closLang_Var
-               backend_common_None) 3; (closLang_Var backend_common_None) 0])
-               ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 1 ((closLang_Var backend_common_None)
-               1)))) (
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 0 3
+          clos_Handle backend_common_None ((\env x. clos_App
+            backend_common_None NONE (clos_App backend_common_None NONE
+            (clos_App backend_common_None NONE (clos_Op backend_common_None
+            (clos_GlobOp (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 0
+               ((clos_Var backend_common_None) 0)))
+            ((\env x. clos_App backend_common_None NONE (clos_App
+              backend_common_None NONE (clos_App backend_common_None NONE
+              (clos_Op backend_common_None (clos_GlobOp (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) (clos_Op backend_common_None (clos_BlockOp
+               (clos_Cons 0)) [(clos_Var backend_common_None) 3; (clos_Var
+               backend_common_None) 0]) ((\n x. clos_Op backend_common_None
+               (clos_BlockOp (clos_ElemAt n)) [x]) 1 ((clos_Var
+               backend_common_None) 1)))) (
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 0 3
          (
           // If
-          closLang_If backend_common_None ((\env x. closLang_App
-            backend_common_None NONE (closLang_App backend_common_None NONE
-            (closLang_App backend_common_None NONE (closLang_Op
-            backend_common_None (closLang_GlobOp (closLang_Global 0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None)
-               0)))
-                  ((\env x. closLang_App backend_common_None NONE
-                    (closLang_App backend_common_None NONE (closLang_App
-                    backend_common_None NONE (closLang_Op backend_common_None
-                    (closLang_GlobOp (closLang_Global 0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 1 ((closLang_Var backend_common_None)
-               0)))
-                  ((\env x. closLang_App backend_common_None NONE
-                    (closLang_App backend_common_None NONE (closLang_App
-                    backend_common_None NONE (closLang_Op backend_common_None
-                    (closLang_GlobOp (closLang_Global 0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 2 ((closLang_Var backend_common_None)
-               0)))) (
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 3 1
+          clos_If backend_common_None ((\env x. clos_App backend_common_None
+            NONE (clos_App backend_common_None NONE (clos_App
+            backend_common_None NONE (clos_Op backend_common_None (clos_GlobOp
+            (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 0
+               ((clos_Var backend_common_None) 0)))
+                  ((\env x. clos_App backend_common_None NONE (clos_App
+                    backend_common_None NONE (clos_App backend_common_None NONE
+                    (clos_Op backend_common_None (clos_GlobOp (clos_Global 0))
+                    [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 1
+               ((clos_Var backend_common_None) 0)))
+                  ((\env x. clos_App backend_common_None NONE (clos_App
+                    backend_common_None NONE (clos_App backend_common_None NONE
+                    (clos_Op backend_common_None (clos_GlobOp (clos_Global 0))
+                    [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 2
+               ((clos_Var backend_common_None) 0)))) (
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 3 1
          (
           // Raise
-          closLang_Raise backend_common_None ((\env x. closLang_App
-            backend_common_None NONE (closLang_App backend_common_None NONE
-            (closLang_App backend_common_None NONE (closLang_Op
-            backend_common_None (closLang_GlobOp (closLang_Global 0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None)
-               0)))) (
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 4 1
+          clos_Raise backend_common_None ((\env x. clos_App
+            backend_common_None NONE (clos_App backend_common_None NONE
+            (clos_App backend_common_None NONE (clos_Op backend_common_None
+            (clos_GlobOp (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 0
+               ((clos_Var backend_common_None) 0)))) (
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 4 1
          (
           // Tick
-          (\env x. closLang_App backend_common_None NONE (closLang_App
-            backend_common_None NONE (closLang_App backend_common_None NONE
-            (closLang_Op backend_common_None (closLang_GlobOp (closLang_Global
-            0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None)
-               0))) (
+          (\env x. clos_App backend_common_None NONE (clos_App
+            backend_common_None NONE (clos_App backend_common_None NONE
+            (clos_Op backend_common_None (clos_GlobOp (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 0
+               ((clos_Var backend_common_None) 0))) (
        // Cons for non-empty payload
-       closLang_Let backend_common_None [(\env x. closLang_App
-         backend_common_None NONE (closLang_App backend_common_None NONE
-         (closLang_App backend_common_None NONE (closLang_Op
-         backend_common_None (closLang_GlobOp (closLang_Global 0)) [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 1)) []]) [x]) ((closLang_Var backend_common_None)
-               2) ((\n x. closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((closLang_Var backend_common_None)
-               0))] (
-       closLang_Letrec [] NONE NONE
-         [(1,closLang_Fn (implode "") NONE NONE 1 clos_interp_rev)] (
-       closLang_Let backend_common_None [closLang_App backend_common_None
-         NONE (closLang_App backend_common_None NONE ((closLang_Var
-         backend_common_None) 0) [(closLang_Var backend_common_None) 1])
-         [closLang_Op backend_common_None (closLang_BlockOp (closLang_Cons 0))
-         []]] (
-       closLang_Let backend_common_None [(closLang_Var backend_common_None)
-         3] (
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 5 1 (
+       clos_Let backend_common_None [(\env x. clos_App backend_common_None
+         NONE (clos_App backend_common_None NONE (clos_App backend_common_None
+         NONE (clos_Op backend_common_None (clos_GlobOp (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               1)) []]) [x]) ((clos_Var backend_common_None) 2) ((\n x. clos_Op
+               backend_common_None (clos_BlockOp (clos_ElemAt n)) [x]) 0
+               ((clos_Var backend_common_None) 0))] (
+       clos_Letrec [] NONE NONE
+         [(1,clos_Fn (implode "") NONE NONE 1 clos_interp_rev)] (
+       clos_Let backend_common_None [clos_App backend_common_None NONE
+         (clos_App backend_common_None NONE ((clos_Var backend_common_None) 0)
+         [(clos_Var backend_common_None) 1]) [clos_Op backend_common_None
+         (clos_BlockOp (clos_Cons 0)) []]] (
+       clos_Let backend_common_None [(clos_Var backend_common_None) 3] (
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 5 1 (
             // Cons 0
-            closLang_Op backend_common_None (closLang_BlockOp
-              (closLang_FromList 0)) [(closLang_Var backend_common_None) 1]) (
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 6 1 (
+            clos_Op backend_common_None (clos_BlockOp (clos_FromList 0))
+              [(clos_Var backend_common_None) 1]) (
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 6 1 (
             // Cons 1
-            closLang_Op backend_common_None (closLang_BlockOp
-              (closLang_FromList 1)) [(closLang_Var backend_common_None) 1]) (
-       (\tag len. closLang_If backend_common_None (closLang_Op
-         backend_common_None (closLang_BlockOp (closLang_TagLenEq tag len))
-         [(closLang_Var backend_common_None) 0])) 7 1 (
+            clos_Op backend_common_None (clos_BlockOp (clos_FromList 1))
+              [(clos_Var backend_common_None) 1]) (
+       (\tag len. clos_If backend_common_None (clos_Op backend_common_None
+         (clos_BlockOp (clos_TagLenEq tag len)) [(clos_Var backend_common_None)
+         0])) 7 1 (
             // Cons 2
-            closLang_Op backend_common_None (closLang_BlockOp
-              (closLang_FromList 2)) [(closLang_Var backend_common_None) 1])
-       (closLang_Op backend_common_None (closLang_BlockOp (closLang_Cons
-         0)) [])))))))))))))))))`;;
+            clos_Op backend_common_None (clos_BlockOp (clos_FromList 2))
+              [(clos_Var backend_common_None) 1])
+       (clos_Op backend_common_None (clos_BlockOp (clos_Cons 0))
+         [])))))))))))))))))`;;
 
 let clos_interpreter_def = new_definition
   `clos_interpreter =
-     closLang_Fn (implode "env") NONE NONE 1 (
-     closLang_Fn (implode "exp") NONE NONE 1
+     clos_Fn (implode "env") NONE NONE 1 (
+     clos_Fn (implode "exp") NONE NONE 1
        clos_interpreter_body)`;;
 
 (* functions that insert calls to interpreter *)
@@ -423,15 +396,13 @@ let clos_interpreter_def = new_definition
 let opt_interp_def = new_definition
   `opt_interp e =
      if can_interpret e /\ nontrivial_size e then
-       SOME ((\env x. closLang_App backend_common_None NONE (closLang_App
-         backend_common_None NONE (closLang_App backend_common_None NONE
-         (closLang_Op backend_common_None (closLang_GlobOp (closLang_Global 0))
-         [])
-             [env]) [closLang_Op backend_common_None (closLang_BlockOp
-               (closLang_Cons 0)) []]) [x]) (closLang_Op backend_common_None
-               (closLang_BlockOp (closLang_Cons 0)) []) (closLang_Op
-               backend_common_None (closLang_BlockOp (closLang_Constant
-               (to_constant e))) []))
+       SOME ((\env x. clos_App backend_common_None NONE (clos_App
+         backend_common_None NONE (clos_App backend_common_None NONE (clos_Op
+         backend_common_None (clos_GlobOp (clos_Global 0)) [])
+             [env]) [clos_Op backend_common_None (clos_BlockOp (clos_Cons
+               0)) []]) [x]) (clos_Op backend_common_None (clos_BlockOp
+               (clos_Cons 0)) []) (clos_Op backend_common_None (clos_BlockOp
+               (clos_Constant (to_constant e))) []))
      else NONE`;;
 
 let opt_interp1_def = new_definition
@@ -443,22 +414,22 @@ let insert_interp1_def = new_definition
   `insert_interp1 e =
      match opt_interp e with SOME x -> x
      | NONE ->
-         (match e with closLang_Let t ys y -> closLang_Let
-           backend_common_None (MAP opt_interp1 ys) y
+         (match e with clos_Let t ys y -> clos_Let backend_common_None (MAP
+           opt_interp1 ys) y
          | _ -> e)`;;
 
 let compile_init_def = new_definition
   `compile_init b =
-     closLang_Let backend_common_None [closLang_Op backend_common_None
-       (closLang_GlobOp closLang_AllocGlobal) [closLang_Op backend_common_None
-       (closLang_IntOp (closLang_Const (&1))) []];
+     clos_Let backend_common_None [clos_Op backend_common_None (clos_GlobOp
+       clos_AllocGlobal) [clos_Op backend_common_None (clos_IntOp (clos_Const
+       (&1))) []];
                if b then
-                 closLang_Fn (implode "clos_interpreter") NONE NONE 1
+                 clos_Fn (implode "clos_interpreter") NONE NONE 1
                    clos_interpreter
-               else closLang_Op backend_common_None (closLang_BlockOp
-                 (closLang_Cons 0)) []]
-       (closLang_Op backend_common_None (closLang_GlobOp
-         (closLang_SetGlobal 0)) [closLang_Var backend_common_None 1])`;;
+               else clos_Op backend_common_None (clos_BlockOp (clos_Cons 0))
+                 []]
+       (clos_Op backend_common_None (clos_GlobOp (clos_SetGlobal 0))
+         [clos_Var backend_common_None 1])`;;
 
 let attach_interpreter_def = new_definition
   `attach_interpreter xs = CONS (compile_init (has_install_list xs)) xs`;;
@@ -470,30 +441,29 @@ let insert_interp_def = new_definition
 
 let can_interpret_op_pmatch = prove
  (`can_interpret_op p l =
-     match p with closLang_BlockOp (closLang_Cons tag) -> (l = 0 \/ tag < 3)
-     | closLang_IntOp (closLang_Const i) -> (l = 0)
-     | closLang_GlobOp (closLang_Global n) -> (l = 0)
-     | closLang_BlockOp (closLang_Constant c) -> (l = 0)
+     match p with clos_BlockOp (clos_Cons tag) -> (l = 0 \/ tag < 3)
+     | clos_IntOp (clos_Const i) -> (l = 0)
+     | clos_GlobOp (clos_Global n) -> (l = 0)
+     | clos_BlockOp (clos_Constant c) -> (l = 0)
      | _ -> F`,
   CHEAT_TAC);;
 
 let check_size_op_pmatch = prove
  (`check_size_op k p l =
-     match p with closLang_BlockOp (closLang_Cons tag) -> (if l = (0:num)
-       then k else k - (1:num))
-     | closLang_IntOp (closLang_Const i) -> k
-     | closLang_GlobOp (closLang_Global n) -> k
+     match p with clos_BlockOp (clos_Cons tag) -> (if l = (0:num) then k
+       else k - (1:num))
+     | clos_IntOp (clos_Const i) -> k
+     | clos_GlobOp (clos_Global n) -> k
      | _ -> k - 1`,
   CHEAT_TAC);;
 
 let to_constant_op_pmatch = prove
  (`to_constant_op p l cs =
-     match p with closLang_IntOp (closLang_Const i) -> ConstCons 1 [ConstInt
-       i]
-     | closLang_BlockOp (closLang_Constant c) -> ConstCons 1 [c]
-     | closLang_GlobOp (closLang_Global n) -> ConstCons 2 [ConstInt (&n)]
-     | closLang_BlockOp (closLang_Cons tag) -> (if l = 0 then ConstCons 1
-       [ConstCons tag []]
+     match p with clos_IntOp (clos_Const i) -> ConstCons 1 [ConstInt i]
+     | clos_BlockOp (clos_Constant c) -> ConstCons 1 [c]
+     | clos_GlobOp (clos_Global n) -> ConstCons 2 [ConstInt (&n)]
+     | clos_BlockOp (clos_Cons tag) -> (if l = 0 then ConstCons 1 [ConstCons
+       tag []]
                               else ConstCons (tag + 5) [cs])
      | _ -> ConstInt (&0)`,
   CHEAT_TAC);;

@@ -5429,7 +5429,7 @@ block by block and not diffed.
 ## 118. Which theory a shared constructor name is of
 
 Every constant of the port has its own name now (entry 117): the
-`Var` of `closLang` is `closLang_Var` and the `Var` of `bvl` is
+`Var` of `closLang` is `clos_Var` and the `Var` of `bvl` is
 `bvl_Var`, and there is no overloading left to let HOL Light pick
 between them by type.  So the port has to pick, and in sixty files
 it picked wrong -- a pass of the compiler reads one language and

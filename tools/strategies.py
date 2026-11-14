@@ -1174,7 +1174,7 @@ WAY = {
     ('measure', False, 'MEASURE (\\(x0,x1,x2). (\\n. n) x0)'),
   ('closLang', 'assign_get_code_label'):
     ('new_definition', False, ''),
-  ('closLang', 'closLang_pure_op'):
+  ('closLang', 'clos_pure_op'):
     ('new_definition', False, ''),
   ('closLang', 'has_install'):
     ('nested', False, ''),
@@ -1517,7 +1517,7 @@ WAY = {
   ('clos_known', 'clos_known_mk_Ticks'):
     ('measure', False, 'MEASURE (FST o SND o SND)'),
   ('clos_known', 'contains_closures'):
-    ('measure', False, 'MEASURE (\\x0. closLang_exp_size1 x0)'),
+    ('measure', False, 'MEASURE (\\x0. clos_exp_size1 x0)'),
   ('clos_known', 'dec_inline_factor'):
     ('new_definition', False, ''),
   ('clos_known', 'decide_inline'):
@@ -1529,7 +1529,7 @@ WAY = {
   ('clos_known', 'gO_destApx'):
     ('new_definition', False, ''),
   ('clos_known', 'get_size_aux'):
-    ('measure', False, 'MEASURE (list_size closLang_exp_size)'),
+    ('measure', False, 'MEASURE (list_size clos_exp_size)'),
   ('clos_known', 'get_size_sc'):
     ('new_definition', False, ''),
   ('clos_known', 'get_size_sc_aux'):
@@ -1643,7 +1643,7 @@ WAY = {
   ('clos_letop', 'clos_letop_let_op_sing'):
     ('maplist>maplist>nested', False, ''),
   ('clos_letop', 'clos_letop_var_list'):
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). closLang_exp_size1 x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2). clos_exp_size1 x1)'),
   ('clos_letopProof', 'clos_letopProof_FMAP_REL'):
     ('new_definition', False, ''),
   ('clos_letopProof', 'clos_letopProof_code_rel'):
@@ -1657,9 +1657,9 @@ WAY = {
   ('clos_mti', 'clos_mti_compile_inc'):
     ('new_definition', False, ''),
   ('clos_mti', 'collect_apps'):
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). closLang_exp_size x2)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2). clos_exp_size x2)'),
   ('clos_mti', 'collect_args'):
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). closLang_exp_size x2)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2). clos_exp_size x2)'),
   ('clos_mti', 'cond_mti_compile_inc'):
     ('new_definition', False, ''),
   ('clos_mti', 'intro_multi'):
@@ -1689,7 +1689,7 @@ WAY = {
   ('clos_numberProof', 'clos_numberProof_state_rel'):
     ('new_definition', False, ''),
   ('clos_op', 'ConjList'):
-    ('measure', False, 'MEASURE (\\x0. closLang_exp_size1 x0)'),
+    ('measure', False, 'MEASURE (\\x0. clos_exp_size1 x0)'),
   ('clos_op', 'MakeBool'):
     ('new_definition', False, ''),
   ('clos_op', 'MakeInt'):
@@ -1705,7 +1705,7 @@ WAY = {
   ('clos_op', 'clos_op_int_op'):
     ('new_definition', False, ''),
   ('clos_op', 'cons_measure'):
-    ('measure', False, 'MEASURE closLang_exp_size'),
+    ('measure', False, 'MEASURE clos_exp_size'),
   ('clos_op', 'cons_op'):
     ('new_definition', False, ''),
   ('clos_op', 'dest_Const'):
@@ -1745,7 +1745,7 @@ WAY = {
   ('clos_op', 'is_Var'):
     ('new_definition', False, ''),
   ('clos_op', 'lift_exps'):
-    ('measure', False, 'MEASURE (\\(xs,n,binds). list_size closLang_exp_size xs)'),
+    ('measure', False, 'MEASURE (\\(xs,n,binds). list_size clos_exp_size xs)'),
   ('clos_ticks', 'clos_ticks_compile_inc'):
     ('new_definition', False, ''),
   ('clos_ticks', 'clos_ticks_remove_ticks'):
@@ -1773,7 +1773,7 @@ WAY = {
   ('clos_to_bvl', 'build_recc_lets'):
     ('new_definition', False, ''),
   ('clos_to_bvl', 'chain_exps'):
-    ('measure', False, 'MEASURE (\\(x0,x1). closLang_exp_size1 x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). clos_exp_size1 x1)'),
   ('clos_to_bvl', 'check_closure'):
     ('new_definition', False, ''),
   ('clos_to_bvl', 'clos_to_bvl_compile'):
@@ -2217,7 +2217,7 @@ WAY = {
   ('dataProps', 'cc_co_only_diff'):
     ('new_definition', False, ''),
   ('dataProps', 'dataProps_get_code_labels'):
-    ('measure', False, 'MEASURE (\\x0. dataLang_prog_size x0)'),
+    ('measure', False, 'MEASURE (\\x0. data_prog_size x0)'),
   ('dataProps', 'dataProps_good_code_labels'):
     ('new_definition', False, ''),
   ('dataProps', 'locals_ok'):
@@ -2725,7 +2725,7 @@ WAY = {
   ('data_to_word', 'data_to_word_assign'):
     ('new_definition', False, ''),
   ('data_to_word', 'data_to_word_comp'):
-    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). dataLang_prog_size x3)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). data_prog_size x3)'),
   ('data_to_word', 'data_to_word_compile'):
     ('new_definition', False, ''),
   ('data_to_word', 'data_to_word_compile_part'):
@@ -2733,7 +2733,7 @@ WAY = {
   ('data_to_word', 'data_to_word_get_names'):
     ('new_recursive_definition', False, ''),
   ('data_to_word', 'data_to_word_list_Seq'):
-    ('measure', False, 'MEASURE (\\x0. list_size (wordLang_prog_size (\\x. 0)) x0)'),
+    ('measure', False, 'MEASURE (\\x0. list_size (word_prog_size (\\x. 0)) x0)'),
   ('data_to_word', 'data_to_word_stub_names'):
     ('new_definition', False, ''),
   ('data_to_word', 'data_to_word_stubs'):
@@ -3258,14 +3258,14 @@ WAY = {
     ('new_definition', False, ''),
   ('flatLang', 'bool_id'):
     ('new_definition', False, ''),
-  ('flatLang', 'flatLang_Bool'):
+  ('flatLang', 'flat_Bool'):
     ('new_definition', False, ''),
-  ('flatLang', 'flatLang_pat_bindings'):
+  ('flatLang', 'flat_pat_bindings'):
     ('prim_rec', False, ''),
   ('flatProps', 'bind_locals_list'):
     ('new_definition', False, ''),
   ('flatProps', 'flatProps_esgc_free'):
-    ('measure', False, 'MEASURE flatLang_exp_size'),
+    ('measure', False, 'MEASURE flat_exp_size'),
   ('flatProps', 'flatProps_eval_sim'):
     ('new_definition', False, ''),
   ('flatProps', 'flatProps_evaluate_match'):
@@ -3387,13 +3387,13 @@ WAY = {
   ('flat_elim', 'find_lookups'):
     ('', False, ''),
   ('flat_elim', 'flat_elim_is_pure'):
-    ('measure', False, 'MEASURE (\\e. flatLang_exp_size e)'),
+    ('measure', False, 'MEASURE (\\e. flat_exp_size e)'),
   ('flat_elim', 'has_Eval'):
     ('', False, ''),
   ('flat_elim', 'has_Eval_dec'):
     ('new_definition', False, ''),
   ('flat_elim', 'is_hidden'):
-    ('measure', False, 'MEASURE (\\x0. flatLang_exp_size x0)'),
+    ('measure', False, 'MEASURE (\\x0. flat_exp_size x0)'),
   ('flat_elim', 'keep'):
     ('new_definition', False, ''),
   ('flat_elim', 'remove_flat_prog'):
@@ -3441,7 +3441,7 @@ WAY = {
   ('flat_pattern', 'enc_num_to_name_aux'):
     ('measure', False, 'MEASURE (\\(x0,x1). (\\n. n) x0)'),
   ('flat_pattern', 'encode_pat'):
-    ('measure', False, 'MEASURE (\\x0. flatLang_pat_size x0)'),
+    ('measure', False, 'MEASURE (\\x0. flat_pat_size x0)'),
   ('flat_pattern', 'flat_pattern_compile_exp'):
     ('', False, ''),
   ('flat_pattern', 'flat_pattern_decode_test'):
@@ -5465,7 +5465,7 @@ WAY = {
   ('presLang', 'data_prog_to_display'):
     ('measure', False, 'MEASURE (\\x. match x with INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)'),
   ('presLang', 'data_seqs'):
-    ('measure', False, 'MEASURE (\\x0. dataLang_prog_size x0)'),
+    ('measure', False, 'MEASURE (\\x0. data_prog_size x0)'),
   ('presLang', 'data_to_strs'):
     ('new_definition', False, ''),
   ('presLang', 'default_tap_config'):
@@ -5542,7 +5542,7 @@ WAY = {
     ('new_recursive_definition', False, ''),
   ('presLang', 'pat_to_display'):
     ('', False, ''),
-  ('presLang', 'presLang_commas'):
+  ('presLang', 'pres_commas'):
     ('measure', False, 'MEASURE (\\x0. list_size mlstring_size x0)'),
   ('presLang', 'prim_type_to_display'):
     ('new_definition', False, ''),
@@ -5559,7 +5559,7 @@ WAY = {
   ('presLang', 'stack_prog_to_display'):
     ('', False, ''),
   ('presLang', 'stack_seqs'):
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   ('presLang', 'stack_to_strs'):
     ('new_definition', False, ''),
   ('presLang', 'store_name_to_display'):
@@ -5579,7 +5579,7 @@ WAY = {
   ('presLang', 'word_prog_to_display'):
     ('', False, ''),
   ('presLang', 'word_seqs'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('presLang', 'word_size_to_display'):
     ('new_recursive_definition', False, ''),
   ('presLang', 'word_to_display'):
@@ -6532,16 +6532,16 @@ WAY = {
     ('new_definition', False, ''),
   ('stackLang', 'gc_stub_location'):
     ('new_definition', False, ''),
-  ('stackLang', 'stackLang_list_Seq'):
-    ('measure', False, 'MEASURE (\\x0. list_size (stackLang_prog_size (\\x. 0)) x0)'),
-  ('stackLang', 'stackLang_store_consts_stub_location'):
+  ('stackLang', 'stack_list_Seq'):
+    ('measure', False, 'MEASURE (\\x0. list_size (stack_prog_size (\\x. 0)) x0)'),
+  ('stackLang', 'stack_store_consts_stub_location'):
     ('new_definition', False, ''),
   ('stackProps', 'addr_name'):
     ('define_single', False, ''),
   ('stackProps', 'addr_ok'):
     ('define_single', False, ''),
   ('stackProps', 'alloc_arg'):
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   ('stackProps', 'arith_name'):
     ('new_definition', False, ''),
   ('stackProps', 'call_args'):
@@ -6555,11 +6555,11 @@ WAY = {
   ('stackProps', 'inst_name'):
     ('new_definition', False, ''),
   ('stackProps', 'no_shmemop'):
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   ('stackProps', 'reg_bound'):
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x0)'),
   ('stackProps', 'reg_bound_exp'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x0)'),
   ('stackProps', 'reg_bound_inst'):
     ('new_definition', False, ''),
   ('stackProps', 'reg_imm_name'):
@@ -6567,19 +6567,19 @@ WAY = {
   ('stackProps', 'reg_name'):
     ('new_definition', False, ''),
   ('stackProps', 'stackProps_extract_labels'):
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   ('stackProps', 'stackProps_get_code_labels'):
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   ('stackProps', 'stackProps_no_install'):
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   ('stackProps', 'stack_asm_name'):
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   ('stackProps', 'stack_asm_ok'):
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   ('stackProps', 'stack_asm_remove'):
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   ('stackProps', 'stack_get_handler_labels'):
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   ('stackProps', 'stack_good_code_labels'):
     ('new_definition', False, ''),
   ('stackProps', 'stack_good_handler_labels'):
@@ -6641,7 +6641,7 @@ WAY = {
   ('stackSem', 'stackSem_get_fp_var'):
     ('new_definition', False, ''),
   ('stackSem', 'stackSem_get_labels'):
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   ('stackSem', 'stackSem_get_var'):
     ('new_definition', False, ''),
   ('stackSem', 'stackSem_get_var_imm'):
@@ -6693,7 +6693,7 @@ WAY = {
   ('stack_alloc', 'memcpy_code'):
     ('new_definition', False, ''),
   ('stack_alloc', 'next_lab'):
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x0)'),
   ('stack_alloc', 'stack_alloc_comp'):
     ('measure', True, ''),
   ('stack_alloc', 'stack_alloc_compile'):
@@ -6779,7 +6779,7 @@ WAY = {
   ('stack_names', 'ri_find_name'):
     ('new_recursive_definition', False, ''),
   ('stack_names', 'stack_names_comp'):
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   ('stack_names', 'stack_names_compile'):
     ('new_definition', False, ''),
   ('stack_names', 'stack_names_names_ok'):
@@ -6801,7 +6801,7 @@ WAY = {
   ('stack_rawcall', 'seq_stack_alloc'):
     ('new_definition', False, ''),
   ('stack_rawcall', 'stack_rawcall_comp'):
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   ('stack_rawcall', 'stack_rawcall_compile'):
     ('new_definition', False, ''),
   ('stack_rawcallProof', 'stack_rawcallProof_state_ok'):
@@ -6833,7 +6833,7 @@ WAY = {
   ('stack_remove', 'stack_load'):
     ('new_definition', False, ''),
   ('stack_remove', 'stack_remove_comp'):
-    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). stackLang_prog_size (\\x. 0) x3)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). stack_prog_size (\\x. 0) x3)'),
   ('stack_remove', 'stack_remove_compile'):
     ('new_definition', False, ''),
   ('stack_remove', 'stack_remove_init_code'):
@@ -6929,7 +6929,7 @@ WAY = {
   ('stack_to_labProof', "code_installed'"):
     ('prim_rec', False, ''),
   ('stack_to_labProof', 'complex_get_code_labels'):
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   ('stack_to_labProof', 'contain'):
     ('new_definition', False, ''),
   ('stack_to_labProof', 'dest_to_loc'):
@@ -7419,17 +7419,17 @@ WAY = {
   ('weakening', 'weak_tenvE'):
     ('new_definition', False, ''),
   ('wordConvs', 'call_arg_convention'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('wordConvs', 'distinct_tar_reg'):
     ('new_definition', False, ''),
   ('wordConvs', 'every_inst'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   ('wordConvs', 'flat_exp_conventions'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('wordConvs', 'full_inst_ok_less'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   ('wordConvs', 'good_handlers'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   ('wordConvs', 'inst_arg_convention'):
     ('new_definition', False, ''),
   ('wordConvs', 'inst_ok_less'):
@@ -7443,7 +7443,7 @@ WAY = {
   ('wordConvs', 'no_share_inst'):
     ('new_definition', False, ''),
   ('wordConvs', 'not_created_subprogs'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   ('wordConvs', 'post_alloc_conventions'):
     ('new_definition', False, ''),
   ('wordConvs', 'pre_alloc_conventions'):
@@ -7451,13 +7451,13 @@ WAY = {
   ('wordConvs', 'two_reg_inst'):
     ('new_definition', False, ''),
   ('wordConvs', 'wf_cutsets'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('wordConvs', 'wf_names'):
     ('new_definition', False, ''),
   ('wordConvs', 'wordConvs_extract_labels'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('wordConvs', 'wordConvs_get_code_labels'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('wordConvs', 'wordConvs_good_code_labels'):
     ('new_definition', False, ''),
   ('wordConvs', 'wordConvs_no_install'):
@@ -7467,9 +7467,9 @@ WAY = {
   ('wordLang', 'every_name'):
     ('new_definition', False, ''),
   ('wordLang', 'every_stack_var'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   ('wordLang', 'every_var_exp'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   ('wordLang', 'every_var_imm'):
     ('new_definition', False, ''),
   ('wordLang', 'every_var_inst'):
@@ -7477,18 +7477,18 @@ WAY = {
   ('wordLang', 'exp_to_addr'):
     ('new_definition', False, ''),
   ('wordLang', 'max_var'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('wordLang', 'max_var_exp'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   ('wordLang', 'max_var_inst'):
     ('new_definition', False, ''),
   ('wordLang', 'raise_stub_location'):
     ('new_definition', False, ''),
-  ('wordLang', 'wordLang_every_var'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
-  ('wordLang', 'wordLang_store_consts_stub_location'):
+  ('wordLang', 'word_every_var'):
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
+  ('wordLang', 'word_store_consts_stub_location'):
     ('new_definition', False, ''),
-  ('wordLang', 'wordLang_word_op'):
+  ('wordLang', 'word_word_op'):
     ('new_definition', False, ''),
   ('wordLang', 'word_sh'):
     ('new_definition', False, ''),
@@ -7679,9 +7679,9 @@ WAY = {
   ('word_alloc', 'add_call'):
     ('new_definition', False, ''),
   ('word_alloc', 'apply_colour'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   ('word_alloc', 'apply_colour_exp'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   ('word_alloc', 'apply_colour_imm'):
     ('new_definition', False, ''),
   ('word_alloc', 'apply_colour_inst'):
@@ -7719,7 +7719,7 @@ WAY = {
   ('word_alloc', 'get_delta_inst'):
     ('new_definition', False, ''),
   ('word_alloc', 'get_forced'):
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). asm_config_size (\\x. 0) x0 + wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2). asm_config_size (\\x. 0) x0 + word_prog_size (\\x. 0) x1)'),
   ('word_alloc', 'get_heu'):
     ('', False, ''),
   ('word_alloc', 'get_heu_inst'):
@@ -7729,13 +7729,13 @@ WAY = {
   ('word_alloc', 'get_live'):
     ('match', False, ''),
   ('word_alloc', 'get_live_exp'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   ('word_alloc', 'get_live_inst'):
     ('new_definition', False, ''),
   ('word_alloc', 'get_prefs'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x0)'),
   ('word_alloc', 'get_reads_exp'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   ('word_alloc', 'get_spillcost'):
     ('new_definition', False, ''),
   ('word_alloc', 'get_stack_only'):
@@ -7789,7 +7789,7 @@ WAY = {
   ('word_alloc', 'ssa_cc_trans'):
     ('', False, ''),
   ('word_alloc', 'ssa_cc_trans_exp'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   ('word_alloc', 'ssa_cc_trans_inst'):
     ('new_definition', False, ''),
   ('word_alloc', 'ssa_reconcile'):
@@ -7803,7 +7803,7 @@ WAY = {
   ('word_alloc', 'word_alloc_numset_list_insert'):
     ('prim_rec', False, ''),
   ('word_allocProof', 'colouring_ok'):
-    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). word_prog_size (\\x. 0) x1)'),
   ('word_allocProof', 'even_starting_locals'):
     ('new_definition', False, ''),
   ('word_allocProof', 'live_store_rel'):
@@ -7811,7 +7811,7 @@ WAY = {
   ('word_allocProof', 'lt_ok'):
     ('new_definition', False, ''),
   ('word_allocProof', 'nlive_store'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   ('word_allocProof', 'ssa_locals_rel'):
     ('new_definition', False, ''),
   ('word_allocProof', 'ssa_map_ok'):
@@ -7855,7 +7855,7 @@ WAY = {
   ('word_bignum', 'word_bignum_compile'):
     ('match', False, ''),
   ('word_bignum', 'word_bignum_compile_exp'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   ('word_bignumProof', 'Corr'):
     ('new_definition', False, ''),
   ('word_bignumProof', 'array_rel'):
@@ -7871,13 +7871,13 @@ WAY = {
   ('word_bignumProof', 'div_code_assum'):
     ('new_definition', False, ''),
   ('word_bignumProof', 'eval_exp'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   ('word_bignumProof', 'eval_exp_pre'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   ('word_bignumProof', 'eval_ri_pre'):
     ('new_recursive_definition', False, ''),
   ('word_bignumProof', 'exp_ok'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   ('word_bignumProof', 'list_store'):
     ('prim_rec', False, ''),
   ('word_bignumProof', 'list_update'):
@@ -8023,7 +8023,7 @@ WAY = {
   ('word_cse', 'word_cseInst'):
     ('new_definition', False, ''),
   ('word_cse', 'word_cse_Seqs'):
-    ('measure', False, 'MEASURE (\\x0. list_size (wordLang_prog_size (\\x. 0)) x0)'),
+    ('measure', False, 'MEASURE (\\x0. list_size (word_prog_size (\\x. 0)) x0)'),
   ('word_cseProof', 'data_inv'):
     ('new_definition', False, ''),
   ('word_cseProof', 'in_names_set'):
@@ -8047,7 +8047,7 @@ WAY = {
   ('word_elim', 'find_word_loc'):
     ('new_definition', False, ''),
   ('word_elim', 'find_word_ref'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('word_elim', 'remove_word_code'):
     ('new_definition', False, ''),
   ('word_elim', 'remove_word_prog'):
@@ -8139,11 +8139,11 @@ WAY = {
   ('word_inst', 'convert_sub'):
     ('new_definition', False, ''),
   ('word_inst', 'flatten_exp'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   ('word_inst', 'inst_select'):
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). wordLang_prog_size (\\x. 0) x2)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2). word_prog_size (\\x. 0) x2)'),
   ('word_inst', 'inst_select_exp'):
-    ('measure', False, 'MEASURE (wordLang_exp_size ARB o SND o SND o SND)'),
+    ('measure', False, 'MEASURE (word_exp_size ARB o SND o SND o SND)'),
   ('word_inst', 'is_Lookup_CurrHeap'):
     ('new_definition', False, ''),
   ('word_inst', 'op_consts'):
@@ -8151,7 +8151,7 @@ WAY = {
   ('word_inst', 'optimize_consts'):
     ('new_definition', False, ''),
   ('word_inst', 'pull_exp'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   ('word_inst', 'pull_ops'):
     ('prim_rec', False, ''),
   ('word_inst', 'reduce_const'):
@@ -8159,21 +8159,21 @@ WAY = {
   ('word_inst', 'rm_const'):
     ('new_definition', False, ''),
   ('word_inst', 'three_to_two_reg'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('word_inst', 'three_to_two_reg_prog'):
     ('new_definition', False, ''),
   ('word_inst', 'word_inst_is_const'):
     ('new_definition', False, ''),
   ('word_instProof', 'binary_branch_exp'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   ('word_instProof', 'pull_ops_simp'):
     ('prim_rec', False, ''),
   ('word_remove', 'remove_must_terminate'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('word_removeProof', 'compile_state'):
     ('new_definition', False, ''),
   ('word_simp', 'Seq_assoc'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   ('word_simp', 'SmartSeq'):
     ('new_definition', False, ''),
   ('word_simp', 'all_names'):
@@ -8181,11 +8181,11 @@ WAY = {
   ('word_simp', 'const_fp'):
     ('new_definition', False, ''),
   ('word_simp', 'const_fp_exp'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x0)'),
   ('word_simp', 'const_fp_inst_cs'):
     ('new_definition', False, ''),
   ('word_simp', 'const_fp_loop'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x0)'),
   ('word_simp', 'const_fp_move_cs'):
     ('prim_rec', False, ''),
   ('word_simp', 'dest_If'):
@@ -8207,13 +8207,13 @@ WAY = {
   ('word_simp', 'push_out_if'):
     ('new_definition', False, ''),
   ('word_simp', 'push_out_if_aux'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('word_simp', 'rewrite_duplicate_if_max_reassoc'):
     ('new_definition', False, ''),
   ('word_simp', 'simp_duplicate_if'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   ('word_simp', 'strip_const'):
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size1 (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size1 (\\x. 0) x0)'),
   ('word_simp', 'try_if_hoist1'):
     ('new_definition', False, ''),
   ('word_simp', 'try_if_hoist2'):
@@ -8371,7 +8371,7 @@ WAY = {
   ('word_to_wordProof', 'word_to_wordProof_code_rel'):
     ('new_definition', False, ''),
   ('word_unreach', 'Seq_assoc_right'):
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x0)'),
   ('word_unreach', 'SimpSeq'):
     ('new_definition', False, ''),
   ('word_unreach', 'dest_Seq_Move'):
@@ -8484,7 +8484,7 @@ BY_CONST = {
   'ConcatByte_location':
     ('new_definition', False, ''),
   'ConjList':
-    ('measure', False, 'MEASURE (\\x0. closLang_exp_size1 x0)'),
+    ('measure', False, 'MEASURE (\\x0. clos_exp_size1 x0)'),
   'CopyByteAw8':
     ('new_definition', False, ''),
   'CopyByteStr':
@@ -8740,9 +8740,9 @@ BY_CONST = {
   'SeqTempImmNot':
     ('new_recursive_definition', False, ''),
   'Seq_assoc':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   'Seq_assoc_right':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x0)'),
   'SetBool':
     ('new_definition', False, ''),
   'SetNewTrigger':
@@ -9066,7 +9066,7 @@ BY_CONST = {
   'all_words':
     ('measure', False, 'MEASURE (\\(x0,x1). (\\n. n) x1)'),
   'alloc_arg':
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   'alloc_defs':
     ('prim_rec', False, ''),
   'alloc_env_ref':
@@ -9128,9 +9128,9 @@ BY_CONST = {
   'apply_bijection':
     ('new_definition', False, ''),
   'apply_colour':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   'apply_colour_exp':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   'apply_colour_imm':
     ('new_definition', False, ''),
   'apply_colour_inst':
@@ -9516,7 +9516,7 @@ BY_CONST = {
   'bin':
     ('new_definition', False, ''),
   'binary_branch_exp':
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   'bindNT':
     ('new_definition', False, ''),
   'bindNT0':
@@ -9926,7 +9926,7 @@ BY_CONST = {
   'call_FFI_rel':
     ('new_definition', False, ''),
   'call_arg_convention':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'call_args':
     ('', False, ''),
   'call_dest':
@@ -10006,7 +10006,7 @@ BY_CONST = {
   'ccache_interfer_ok':
     ('new_definition', False, ''),
   'chain_exps':
-    ('measure', False, 'MEASURE (\\(x0,x1). closLang_exp_size1 x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). clos_exp_size1 x1)'),
   'chain_installed':
     ('new_definition', False, ''),
   'char_escape_seq':
@@ -10115,7 +10115,7 @@ BY_CONST = {
     ('match', False, ''),
   'clock_write':
     ('new_definition', False, ''),
-  'closLang_pure_op':
+  'clos_pure_op':
     ('new_definition', False, ''),
   'closProps_adj_orac_rel':
     ('new_definition', False, ''),
@@ -10290,7 +10290,7 @@ BY_CONST = {
   'clos_letop_let_op_sing':
     ('maplist>maplist>nested', False, ''),
   'clos_letop_var_list':
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). closLang_exp_size1 x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2). clos_exp_size1 x1)'),
   'clos_mtiProof_FMAP_REL':
     ('new_definition', False, ''),
   'clos_mtiProof_code_rel':
@@ -10462,9 +10462,9 @@ BY_CONST = {
   'collapse':
     ('new_definition', False, ''),
   'collect_apps':
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). closLang_exp_size x2)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2). clos_exp_size x2)'),
   'collect_args':
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). closLang_exp_size x2)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2). clos_exp_size x2)'),
   'collect_info':
     ('prim_rec', False, ''),
   'color_register':
@@ -10474,7 +10474,7 @@ BY_CONST = {
   'colors_sub':
     ('new_definition', False, ''),
   'colouring_ok':
-    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). word_prog_size (\\x. 0) x1)'),
   'colouring_satisfactory':
     ('new_definition', False, ''),
   'combine_dec_result':
@@ -10574,7 +10574,7 @@ BY_CONST = {
   'compiler_oracle_ok':
     ('new_definition', False, ''),
   'complex_get_code_labels':
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   'compose':
     ('new_definition', False, ''),
   'composePartial':
@@ -10608,7 +10608,7 @@ BY_CONST = {
   'config_tuple2':
     ('new_definition', False, ''),
   'cons_measure':
-    ('measure', False, 'MEASURE closLang_exp_size'),
+    ('measure', False, 'MEASURE clos_exp_size'),
   'cons_op':
     ('new_definition', False, ''),
   'cons_tag':
@@ -10628,11 +10628,11 @@ BY_CONST = {
   'const_fp':
     ('new_definition', False, ''),
   'const_fp_exp':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x0)'),
   'const_fp_inst_cs':
     ('new_definition', False, ''),
   'const_fp_loop':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x0)'),
   'const_fp_move_cs':
     ('prim_rec', False, ''),
   'const_part_to_display':
@@ -10654,7 +10654,7 @@ BY_CONST = {
   'contains_App_SOME':
     ('measure', True, ''),
   'contains_closures':
-    ('measure', False, 'MEASURE (\\x0. closLang_exp_size1 x0)'),
+    ('measure', False, 'MEASURE (\\x0. clos_exp_size1 x0)'),
   'contains_loc':
     ('define_single', False, ''),
   'convert_env':
@@ -10754,7 +10754,7 @@ BY_CONST = {
   'cwfs':
     ('new_definition', False, ''),
   'dataProps_get_code_labels':
-    ('measure', False, 'MEASURE (\\x0. dataLang_prog_size x0)'),
+    ('measure', False, 'MEASURE (\\x0. data_prog_size x0)'),
   'dataProps_good_code_labels':
     ('new_definition', False, ''),
   'dataSem_Boolv':
@@ -10856,7 +10856,7 @@ BY_CONST = {
   'data_section':
     ('new_definition', False, ''),
   'data_seqs':
-    ('measure', False, 'MEASURE (\\x0. dataLang_prog_size x0)'),
+    ('measure', False, 'MEASURE (\\x0. data_prog_size x0)'),
   'data_space_compile':
     ('new_definition', False, ''),
   'data_space_num_size':
@@ -10882,7 +10882,7 @@ BY_CONST = {
   'data_to_word_bignumProof_int_op':
     ('new_definition', False, ''),
   'data_to_word_comp':
-    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). dataLang_prog_size x3)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). data_prog_size x3)'),
   'data_to_word_compile':
     ('new_definition', False, ''),
   'data_to_word_compile_part':
@@ -10898,7 +10898,7 @@ BY_CONST = {
   'data_to_word_get_names':
     ('new_recursive_definition', False, ''),
   'data_to_word_list_Seq':
-    ('measure', False, 'MEASURE (\\x0. list_size (wordLang_prog_size (\\x. 0)) x0)'),
+    ('measure', False, 'MEASURE (\\x0. list_size (word_prog_size (\\x. 0)) x0)'),
   'data_to_word_memoryProof_fix_clock':
     ('new_recursive_definition', False, ''),
   'data_to_word_memoryProof_isRef':
@@ -11268,7 +11268,7 @@ BY_CONST = {
   'encode_infer_t':
     ('prim_rec', False, ''),
   'encode_pat':
-    ('measure', False, 'MEASURE (\\x0. flatLang_pat_size x0)'),
+    ('measure', False, 'MEASURE (\\x0. flat_pat_size x0)'),
   'encode_refs':
     ('new_definition', False, ''),
   'encode_str':
@@ -11352,9 +11352,9 @@ BY_CONST = {
   'escape_sym_char':
     ('new_definition', False, ''),
   'eval_exp':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   'eval_exp_pre':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   'eval_ref_inv':
     ('new_definition', False, ''),
   'eval_ri':
@@ -11400,7 +11400,7 @@ BY_CONST = {
   'every_exp':
     ('nested', False, ''),
   'every_inst':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   'every_name':
     ('new_definition', False, ''),
   'every_refv':
@@ -11408,9 +11408,9 @@ BY_CONST = {
   'every_result':
     ('new_recursive_definition', False, ''),
   'every_stack_var':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   'every_var_exp':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   'every_var_imm':
     ('new_definition', False, ''),
   'every_var_inst':
@@ -11434,7 +11434,7 @@ BY_CONST = {
   'exp_ids':
     ('match', False, ''),
   'exp_ok':
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   'exp_to_addr':
     ('new_definition', False, ''),
   'exp_to_display':
@@ -11650,7 +11650,7 @@ BY_CONST = {
   'find_word_loc':
     ('new_definition', False, ''),
   'find_word_ref':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'findi_aux':
     ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). (\\n. n) x3)'),
   'firstRegOfArith':
@@ -11675,12 +11675,12 @@ BY_CONST = {
     ('new_definition', False, ''),
   'flat':
     ('measure', False, 'MEASURE (\\(x0,x1).      list_size dataSem_stack_size x0 +      list_size (stack_frame_size (\\x. 0)) x1)'),
-  'flatLang_Bool':
+  'flat_Bool':
     ('new_definition', False, ''),
-  'flatLang_pat_bindings':
+  'flat_pat_bindings':
     ('prim_rec', False, ''),
   'flatProps_esgc_free':
-    ('measure', False, 'MEASURE flatLang_exp_size'),
+    ('measure', False, 'MEASURE flat_exp_size'),
   'flatProps_eval_sim':
     ('new_definition', False, ''),
   'flatProps_evaluate_match':
@@ -11762,9 +11762,9 @@ BY_CONST = {
   'flatSem_vs_to_string':
     ('measure', False, 'MEASURE (\\x0. flatSem_v_size2 x0)'),
   'flat_elim_is_pure':
-    ('measure', False, 'MEASURE (\\e. flatLang_exp_size e)'),
+    ('measure', False, 'MEASURE (\\e. flat_exp_size e)'),
   'flat_exp_conventions':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'flat_op_to_display':
     ('new_definition', False, ''),
   'flat_pat_to_display':
@@ -11806,7 +11806,7 @@ BY_CONST = {
   'flat_to_v':
     ('new_definition', False, ''),
   'flatten_exp':
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   'float_abs':
     ('new_definition', False, ''),
   'float_add':
@@ -12074,7 +12074,7 @@ BY_CONST = {
   'full_gc':
     ('new_definition', False, ''),
   'full_inst_ok_less':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   'full_make_init':
     ('new_definition', False, ''),
   'full_read_bitmap':
@@ -12216,7 +12216,7 @@ BY_CONST = {
   'get_ffi_index':
     ('new_definition', False, ''),
   'get_forced':
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). asm_config_size (\\x. 0) x0 + wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2). asm_config_size (\\x. 0) x0 + word_prog_size (\\x. 0) x1)'),
   'get_freeze_wl':
     ('new_definition', False, ''),
   'get_gen_size':
@@ -12260,7 +12260,7 @@ BY_CONST = {
   'get_live_backward':
     ('prim_rec', False, ''),
   'get_live_exp':
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   'get_live_inst':
     ('new_definition', False, ''),
   'get_live_tree':
@@ -12298,9 +12298,9 @@ BY_CONST = {
   'get_pos':
     ('prim_rec', False, ''),
   'get_prefs':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x0)'),
   'get_reads_exp':
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   'get_real_addr':
     ('new_definition', False, ''),
   'get_real_offset':
@@ -12318,7 +12318,7 @@ BY_CONST = {
   'get_simp_wl':
     ('new_definition', False, ''),
   'get_size_aux':
-    ('measure', False, 'MEASURE (list_size closLang_exp_size)'),
+    ('measure', False, 'MEASURE (list_size clos_exp_size)'),
   'get_size_sc':
     ('new_definition', False, ''),
   'get_size_sc_aux':
@@ -12404,7 +12404,7 @@ BY_CONST = {
   'good_dimindex':
     ('new_definition', False, ''),
   'good_handlers':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   'good_hash_table':
     ('new_definition', False, ''),
   'good_init_state':
@@ -12770,9 +12770,9 @@ BY_CONST = {
   'inst_ok_less':
     ('new_definition', False, ''),
   'inst_select':
-    ('measure', False, 'MEASURE (\\(x0,x1,x2). wordLang_prog_size (\\x. 0) x2)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2). word_prog_size (\\x. 0) x2)'),
   'inst_select_exp':
-    ('measure', False, 'MEASURE (wordLang_exp_size ARB o SND o SND o SND)'),
+    ('measure', False, 'MEASURE (word_exp_size ARB o SND o SND o SND)'),
   'install':
     ('new_definition', False, ''),
   'install_conf_rel':
@@ -12980,7 +12980,7 @@ BY_CONST = {
   'is_handler_frame':
     ('new_definition', False, ''),
   'is_hidden':
-    ('measure', False, 'MEASURE (\\x0. flatLang_exp_size x0)'),
+    ('measure', False, 'MEASURE (\\x0. flat_exp_size x0)'),
   'is_insert_oracle':
     ('new_definition', False, ''),
   'is_load':
@@ -13268,7 +13268,7 @@ BY_CONST = {
   'lift_env':
     ('new_definition', False, ''),
   'lift_exps':
-    ('measure', False, 'MEASURE (\\(xs,n,binds). list_size closLang_exp_size xs)'),
+    ('measure', False, 'MEASURE (\\(xs,n,binds). list_size clos_exp_size xs)'),
   'lift_ienv':
     ('new_definition', False, ''),
   'lift_let':
@@ -13616,9 +13616,9 @@ BY_CONST = {
   'max_stack_alloc':
     ('new_definition', False, ''),
   'max_var':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'max_var_exp':
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   'max_var_inst':
     ('new_definition', False, ''),
   'maxout_bits':
@@ -14098,7 +14098,7 @@ BY_CONST = {
   'next_interference':
     ('new_definition', False, ''),
   'next_lab':
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x0)'),
   'next_label':
     ('measure', False, 'MEASURE (\\x0. list_size (sec_size (\\x. 0)) x0)'),
   'next_line':
@@ -14118,7 +14118,7 @@ BY_CONST = {
   'nil_tag':
     ('new_definition', False, ''),
   'nlive_store':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   'no_Labels':
     ('', False, ''),
   'no_Mat':
@@ -14152,7 +14152,7 @@ BY_CONST = {
   'no_share_mem_inst':
     ('new_definition', False, ''),
   'no_shmemop':
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   'no_thunks_in_refs':
     ('new_definition', False, ''),
   'node_tag_length':
@@ -14164,7 +14164,7 @@ BY_CONST = {
   'nontrivial_size':
     ('new_definition', False, ''),
   'not_created_subprogs':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
   'not_skip':
     ('new_definition', False, ''),
   'not_use_temp_before_assign':
@@ -14613,7 +14613,7 @@ BY_CONST = {
     ('new_definition', False, ''),
   'precondition1':
     ('new_definition', False, ''),
-  'presLang_commas':
+  'pres_commas':
     ('measure', False, 'MEASURE (\\x0. list_size mlstring_size x0)'),
   'pri_move_insert':
     ('new_definition', False, ''),
@@ -14730,7 +14730,7 @@ BY_CONST = {
   'ptree_loc':
     ('new_recursive_definition', False, ''),
   'pull_exp':
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   'pull_ops':
     ('prim_rec', False, ''),
   'pull_ops_simp':
@@ -14756,7 +14756,7 @@ BY_CONST = {
   'push_out_if':
     ('new_definition', False, ''),
   'push_out_if_aux':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'push_stack':
     ('new_definition', False, ''),
   'put_oracle':
@@ -14870,9 +14870,9 @@ BY_CONST = {
   'reg_alloc_sort_moves':
     ('new_definition', False, ''),
   'reg_bound':
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x0)'),
   'reg_bound_exp':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x0)'),
   'reg_bound_inst':
     ('new_definition', False, ''),
   'reg_imm_name':
@@ -14920,7 +14920,7 @@ BY_CONST = {
   'remove_labels_loop':
     ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4,x5). (\\n. n) x0)'),
   'remove_must_terminate':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'remove_state_rel':
     ('new_definition', False, ''),
   'remove_temp_stack':
@@ -15322,7 +15322,7 @@ BY_CONST = {
   'simp':
     ('match', False, ''),
   'simp_duplicate_if':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'simp_guard':
     ('match', False, ''),
   'simp_tenv_invC':
@@ -15562,7 +15562,7 @@ BY_CONST = {
   'ssa_cc_trans':
     ('', False, ''),
   'ssa_cc_trans_exp':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_exp_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). word_exp_size (\\x. 0) x1)'),
   'ssa_cc_trans_inst':
     ('new_definition', False, ''),
   'ssa_locals_rel':
@@ -15597,16 +15597,16 @@ BY_CONST = {
     ('measure', False, 'MEASURE (\\(x0,x1,x2,x3,x4,x5). list_size (\\n. n) x1)'),
   'st_ex_return':
     ('new_definition', False, ''),
-  'stackLang_list_Seq':
-    ('measure', False, 'MEASURE (\\x0. list_size (stackLang_prog_size (\\x. 0)) x0)'),
-  'stackLang_store_consts_stub_location':
+  'stack_list_Seq':
+    ('measure', False, 'MEASURE (\\x0. list_size (stack_prog_size (\\x. 0)) x0)'),
+  'stack_store_consts_stub_location':
     ('new_definition', False, ''),
   'stackProps_extract_labels':
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   'stackProps_get_code_labels':
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   'stackProps_no_install':
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   'stackSem_STOP':
     ('new_definition', False, ''),
   'stackSem_alloc':
@@ -15640,7 +15640,7 @@ BY_CONST = {
   'stackSem_get_fp_var':
     ('new_definition', False, ''),
   'stackSem_get_labels':
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   'stackSem_get_var':
     ('new_definition', False, ''),
   'stackSem_get_var_imm':
@@ -15700,11 +15700,11 @@ BY_CONST = {
   'stack_arg_count':
     ('new_definition', False, ''),
   'stack_asm_name':
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   'stack_asm_ok':
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   'stack_asm_remove':
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   'stack_consumed':
     ('new_definition', False, ''),
   'stack_err_lab':
@@ -15714,7 +15714,7 @@ BY_CONST = {
   'stack_fun_to_display':
     ('new_definition', False, ''),
   'stack_get_handler_labels':
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   'stack_good_code_labels':
     ('new_definition', False, ''),
   'stack_good_handler_labels':
@@ -15728,7 +15728,7 @@ BY_CONST = {
   'stack_namesProof_make_init':
     ('new_definition', False, ''),
   'stack_names_comp':
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   'stack_names_compile':
     ('new_definition', False, ''),
   'stack_names_names_ok':
@@ -15744,7 +15744,7 @@ BY_CONST = {
   'stack_rawcallProof_state_rel':
     ('new_definition', False, ''),
   'stack_rawcall_comp':
-    ('measure', False, 'MEASURE (\\(x0,x1). stackLang_prog_size (\\x. 0) x1)'),
+    ('measure', False, 'MEASURE (\\(x0,x1). stack_prog_size (\\x. 0) x1)'),
   'stack_rawcall_compile':
     ('new_definition', False, ''),
   'stack_rel_aux':
@@ -15756,7 +15756,7 @@ BY_CONST = {
   'stack_removeProof_state_rel':
     ('new_definition', False, ''),
   'stack_remove_comp':
-    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). stackLang_prog_size (\\x. 0) x3)'),
+    ('measure', False, 'MEASURE (\\(x0,x1,x2,x3). stack_prog_size (\\x. 0) x3)'),
   'stack_remove_compile':
     ('new_definition', False, ''),
   'stack_remove_init_code':
@@ -15770,7 +15770,7 @@ BY_CONST = {
   'stack_remove_stub_names':
     ('new_definition', False, ''),
   'stack_seqs':
-    ('measure', False, 'MEASURE (\\x0. stackLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. stack_prog_size (\\x. 0) x0)'),
   'stack_size':
     ('new_definition', False, ''),
   'stack_size_frame':
@@ -15888,7 +15888,7 @@ BY_CONST = {
   'string_imp':
     ('new_definition', False, ''),
   'strip_const':
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size1 (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size1 (\\x. 0) x0)'),
   'strip_dot':
     ('prim_rec', False, ''),
   'strip_loc_expr':
@@ -16102,7 +16102,7 @@ BY_CONST = {
   'the_words':
     ('prim_rec', False, ''),
   'three_to_two_reg':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'three_to_two_reg_prog':
     ('new_definition', False, ''),
   'threshold':
@@ -16528,7 +16528,7 @@ BY_CONST = {
   'wf_cb':
     ('prim_rec', False, ''),
   'wf_cutsets':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'wf_data':
     ('new_definition', False, ''),
   'wf_names':
@@ -16556,18 +16556,18 @@ BY_CONST = {
   'word8_to_char':
     ('new_definition', False, ''),
   'wordConvs_extract_labels':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'wordConvs_get_code_labels':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'wordConvs_good_code_labels':
     ('new_definition', False, ''),
   'wordConvs_no_install':
     ('new_definition', False, ''),
-  'wordLang_every_var':
-    ('measure', False, 'MEASURE (\\(x0,x1). wordLang_prog_size (\\x. 0) x1)'),
-  'wordLang_store_consts_stub_location':
+  'word_every_var':
+    ('measure', False, 'MEASURE (\\(x0,x1). word_prog_size (\\x. 0) x1)'),
+  'word_store_consts_stub_location':
     ('new_definition', False, ''),
-  'wordLang_word_op':
+  'word_word_op':
     ('new_definition', False, ''),
   'wordProps_inc_clock':
     ('new_definition', False, ''),
@@ -16696,7 +16696,7 @@ BY_CONST = {
   'word_bignum_compile':
     ('match', False, ''),
   'word_bignum_compile_exp':
-    ('measure', False, 'MEASURE (\\x0. wordLang_exp_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_exp_size (\\x. 0) x0)'),
   'word_cmp_loop':
     ('measure', False, 'MEASURE (w2n o FST)'),
   'word_cmp_res':
@@ -16716,7 +16716,7 @@ BY_CONST = {
   'word_cseInst':
     ('new_definition', False, ''),
   'word_cse_Seqs':
-    ('measure', False, 'MEASURE (\\x0. list_size (wordLang_prog_size (\\x. 0)) x0)'),
+    ('measure', False, 'MEASURE (\\x0. list_size (word_prog_size (\\x. 0)) x0)'),
   'word_el':
     ('define_single', False, ''),
   'word_elimProof_code_rel':
@@ -16878,7 +16878,7 @@ BY_CONST = {
   'word_prog_to_display':
     ('', False, ''),
   'word_seqs':
-    ('measure', False, 'MEASURE (\\x0. wordLang_prog_size (\\x. 0) x0)'),
+    ('measure', False, 'MEASURE (\\x0. word_prog_size (\\x. 0) x0)'),
   'word_sh':
     ('new_definition', False, ''),
   'word_simp_compile_exp':

@@ -273,10 +273,9 @@ let list_CASE_same = prove
 let evaluate_genlist_prev_args = prove
  (`!prev_args z x tag arg_list st.
      bvlSem_evaluate (REVERSE (list_of_seq (\prev_arg.
-       (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
-         (db_vars_Var (LENGTH x)) (prev_arg + LENGTH z)) (LENGTH
-         prev_args)),APPEND x (CONS (bvlSem_Block tag (APPEND z prev_args))
-         arg_list),
+       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (db_vars_Var
+         (LENGTH x)) (prev_arg + LENGTH z)) (LENGTH prev_args)),APPEND x (CONS
+         (bvlSem_Block tag (APPEND z prev_args)) arg_list),
             st) =
      (Rval (REVERSE prev_args),st)`,
   CHEAT_TAC);;
@@ -285,8 +284,8 @@ let evaluate_genlist_prev_args = prove
 let evaluate_genlist_prev_args1_simpl = prove
  (`!prev_args x y tag p n cl a st.
      bvlSem_evaluate (REVERSE (list_of_seq (\prev_arg.
-       (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
-         (db_vars_Var 3) (prev_arg + 3)) (LENGTH prev_args)),
+       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (db_vars_Var 3)
+         (prev_arg + 3)) (LENGTH prev_args)),
             [x; y; a; bvlSem_Block tag (CONS p (CONS n (CONS cl
               prev_args)))],
             st) =
@@ -297,10 +296,9 @@ let evaluate_genlist_prev_args1_simpl = prove
 let evaluate_genlist_prev_args_no_rev = prove
  (`!prev_args z x tag arg_list st.
      bvlSem_evaluate (list_of_seq (\prev_arg.
-       (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
-         (db_vars_Var (LENGTH x)) (prev_arg + LENGTH z)) (LENGTH
-         prev_args),APPEND x (CONS (bvlSem_Block tag (APPEND z prev_args))
-         arg_list),
+       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (db_vars_Var
+         (LENGTH x)) (prev_arg + LENGTH z)) (LENGTH prev_args),APPEND x (CONS
+         (bvlSem_Block tag (APPEND z prev_args)) arg_list),
             st) =
      (Rval prev_args,st)`,
   CHEAT_TAC);;
@@ -309,10 +307,9 @@ let evaluate_genlist_prev_args_no_rev = prove
 let evaluate_genlist_prev_args1_no_rev = prove
  (`!prev_args x tag p n cl args st.
      bvlSem_evaluate (list_of_seq (\prev_arg.
-       (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
-         (db_vars_Var (LENGTH args + 1)) (prev_arg + 3)) (LENGTH
-         prev_args),CONS x (APPEND args [bvlSem_Block tag (CONS p (CONS n (CONS
-         cl prev_args)))]),
+       (\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b]) (db_vars_Var
+         (LENGTH args + 1)) (prev_arg + 3)) (LENGTH prev_args),CONS x (APPEND
+         args [bvlSem_Block tag (CONS p (CONS n (CONS cl prev_args)))]),
             st) =
      (Rval prev_args,st)`,
   CHEAT_TAC);;
@@ -325,9 +322,9 @@ let evaluate_partial_app_fn_location_code = prove
       n < total_args /\ total_args < max_app ==>
       bvlSem_evaluate
         ([partial_app_fn_location_code max_app
-                ((\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
+                ((\b i. bvl_Op (clos_BlockOp (clos_ElemAt i)) [b])
                   (db_vars_Var (LENGTH args + 1)) 1)
-                (bvl_Op (closLang_IntOp (closLang_Const (&n))) [])],
+                (bvl_Op (clos_IntOp (clos_Const (&n))) [])],
          (CONS x (APPEND args [bvlSem_Block tag (CONS ptr (CONS
            (bvlSem_Number (&total_args)) fvs))])),
          st) =
@@ -703,8 +700,6 @@ add_simp clos_to_bvlProof_v_rel_Boolv;;
 (* HOL4 clos_to_bvlProofScript.sml:984-995: a theorem that HOL4 states as
    the value of an ML expression: v_rel_SIMP *)
 
-let _ = size_thms "bvlSem_v";;
-let _ = size_thms "closSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let clos_to_bvlProof_env_rel_def,clos_to_bvlProof_env_rel_ind = define_wf
@@ -1032,16 +1027,16 @@ let clos_to_bvlProof_do_app = prove
      (bvlSem_state_refs t1) (bvlSem_state_code t1)) xs ys /\
    (~(
     // store updates need special treatment
-    op = closLang_MemOp closLang_Ref)) /\ (~(op = closLang_MemOp
-      closLang_Update)) /\ (~(op = closLang_MemOp closLang_XorByte)) /\
-   (~(op = closLang_MemOp closLang_RefArray)) /\ (!f. ~(op = closLang_MemOp
-     (closLang_RefByte f))) /\ (~(op = closLang_MemOp closLang_UpdateByte)) /\
-   (~(op = closLang_MemOp closLang_FromListByte)) /\ ~(op = closLang_MemOp
-     closLang_ConcatByteVec) /\
-   (!b. ~(op = closLang_MemOp (closLang_CopyByte b))) /\ (!c. ~(op =
-     closLang_BlockOp (closLang_Constant c))) /\
-   (!n. ~(op = (closLang_FFI n))) /\
-   (!t. ~(op = (closLang_ThunkOp t))) ==>
+    op = clos_MemOp clos_Ref)) /\ (~(op = clos_MemOp clos_Update)) /\ (~(op
+      = clos_MemOp clos_XorByte)) /\
+   (~(op = clos_MemOp clos_RefArray)) /\ (!f. ~(op = clos_MemOp
+     (clos_RefByte f))) /\ (~(op = clos_MemOp clos_UpdateByte)) /\
+   (~(op = clos_MemOp clos_FromListByte)) /\ ~(op = clos_MemOp
+     clos_ConcatByteVec) /\
+   (!b. ~(op = clos_MemOp (clos_CopyByte b))) /\ (!c. ~(op = clos_BlockOp
+     (clos_Constant c))) /\
+   (!n. ~(op = (clos_FFI n))) /\
+   (!t. ~(op = (clos_ThunkOp t))) ==>
    (?w t2.
      (bvlSem_do_app (clos_to_bvl_compile_op op) ys t1 = Rval (w,t2)) /\
      clos_to_bvlProof_v_rel (closSem_state_max_app s1) f (bvlSem_state_refs
@@ -1424,8 +1419,8 @@ let genlist_el = prove
  (`!skip st r xs args p n env ys.
      FLOOKUP (state_refs st) r = SOME (bvlSem_ValueArray (APPEND ys xs)) /\
      skip = LENGTH ys ==>
-     bvlSem_evaluate (list_of_seq (\i. (\b i. bvl_Op (closLang_BlockOp
-       (closLang_ElemAt i)) [b]) (db_vars_Var 0) (i + skip)) (LENGTH xs),CONS
+     bvlSem_evaluate (list_of_seq (\i. (\b i. bvl_Op (clos_BlockOp
+       (clos_ElemAt i)) [b]) (db_vars_Var 0) (i + skip)) (LENGTH xs),CONS
        (bvlSem_RefPtr T r) (APPEND args (CONS (bvlSem_Block closure_tag
        [bvlSem_CodePtr p; bvlSem_Number (&n); bvlSem_RefPtr T r]) env)),
             st) =
@@ -2024,8 +2019,8 @@ let evaluate_init1 = prove
    (!n. n < mapp2 ==>
    partial_app_fn_location mapp1 tot n IN domain (state_code st)) ==>
    bvlSem_evaluate (REVERSE
-   (list_of_seq (\prev. bvl_Op (closLang_Label (partial_app_fn_location
-     mapp1 tot prev)) []) mapp2),[bvlSem_Unit],st) =
+   (list_of_seq (\prev. bvl_Op (clos_Label (partial_app_fn_location mapp1
+     tot prev)) []) mapp2),[bvlSem_Unit],st) =
    (Rval (REVERSE
    (list_of_seq (\prev. bvlSem_CodePtr (partial_app_fn_location mapp1 tot
      prev)) mapp2)),st)`,
@@ -2038,8 +2033,8 @@ let evaluate_init = prove
    partial_app_fn_location mapp1 m n IN domain (state_code st)) ==>
    bvlSem_evaluate (REVERSE
    (FLAT (list_of_seq (\tot. list_of_seq
-   (\prev. bvl_Op (closLang_Label (partial_app_fn_location mapp1 tot prev))
-     []) tot) mapp2)),[bvlSem_Unit],st) =
+   (\prev. bvl_Op (clos_Label (partial_app_fn_location mapp1 tot prev)) [])
+     tot) mapp2)),[bvlSem_Unit],st) =
      (Rval (REVERSE
      (FLAT (list_of_seq (\tot. list_of_seq
      (\prev. bvlSem_CodePtr (partial_app_fn_location mapp1 tot prev)) tot)
@@ -2117,12 +2112,11 @@ let clos_to_bvlProof_init_code_def = new_definition
          clos_to_bvlProof_code_installed aux2 code2))`;;
 
 let chain_installed_def = new_definition
-  `chain_installed start' (es:closLang_exp list) code <=>
+  `chain_installed start' (es:clos_exp list) code <=>
      (!i. i < LENGTH es ==> closSem_find_code (start' + i) ([]:closSem_v
        list) code =
-          SOME ([],(if i + 1 < LENGTH es then closLang_Let
-            backend_common_None [EL i es] (closLang_Call backend_common_None 0
-            (start' + i + 1) [])
+          SOME ([],(if i + 1 < LENGTH es then clos_Let backend_common_None
+            [EL i es] (clos_Call backend_common_None 0 (start' + i + 1) [])
                       else EL i es)))`;;
 
 (* the names of record fields that this statement uses for
@@ -2131,7 +2125,7 @@ let chain_installed_cons = prove
  (cake_as_vars (fun () ->
     `chain_installed start (CONS e es) code <=>
      bvlSem_find_code start ([]:closSem_v list) code = SOME ([],(if es =
-       [] then e else closLang_Let backend_common_None [e] (closLang_Call
+       [] then e else clos_Let backend_common_None [e] (clos_Call
        backend_common_None 0 (start + 1) []))) /\
      chain_installed (start + 1) es code`),
   CHEAT_TAC);;
@@ -2188,8 +2182,7 @@ let chain_exps_semantics_call = prove
       oracle_monotonic (set_of_list o MAP FST o SND o SND) (<)
            (IMAGE ((+) start) (count (LENGTH es)) UNION FDOM code) co ==>
       bvlSem_semantics ffi max_app (FUNION (alist_to_fmap (chain_exps
-        start es)) code) co cc ([closLang_Call backend_common_None 0 start []])
-        =
+        start es)) code) co cc ([clos_Call backend_common_None 0 start []]) =
       bvlSem_semantics ffi max_app code co cc es`),
   CHEAT_TAC);;
 
@@ -2415,10 +2408,9 @@ let compile_common_inc_def = new_definition
            (pure_cc clos_annotate_compile_inc cc)))))`;;
 
 let clos_state_cc_def = new_definition
-  `clos_state_cc inc (cc:'b->closLang_exp list#(num#num#closLang_exp)
-  list->(word8 list#word64 list#'b) option) = (state_cc inc
-  cc:'a#'b->closLang_exp list#(num#num#closLang_exp) list->(word8
-  list#word64 list#'a#'b) option)`;;
+  `clos_state_cc inc (cc:'b->clos_exp list#(num#num#clos_exp) list->(word8
+  list#word64 list#'b) option) = (state_cc inc cc:'a#'b->clos_exp
+  list#(num#num#clos_exp) list->(word8 list#word64 list#'a#'b) option)`;;
 
 let semantics_cond_call_compile_inc = prove
  (`~(bvlSem_semantics ffi max_app FEMPTY co
@@ -2494,9 +2486,8 @@ let SND_SND_known_compile_inc = prove
 
 let known_state_oracle_globals_approx = prove
  (`is_state_oracle (clos_known_compile_inc cfg')
-       (pure_co (clos_fvs_compile_inc:closLang_exp
-         list#(num#num#closLang_exp) list->closLang_exp
-         list#(num#num#closLang_exp) list) o co) /\
+       (pure_co (clos_fvs_compile_inc:clos_exp list#(num#num#clos_exp)
+         list->clos_exp list#(num#num#clos_exp) list) o co) /\
    FST (FST (co 0)) = spt /\
    known cfg exps [] LN = (k_exps,spt) /\
    every_Fn_vs_NONE exps /\ every_Fn_SOME exps /\
@@ -2511,9 +2502,8 @@ let known_co_facts = prove
    clos_to_bvl_compile kc exps = (kc',exps') ==>
    (IS_SOME kc ==>
        is_state_oracle (clos_known_compile_inc (THE kc))
-           (pure_co (clos_fvs_compile_inc:closLang_exp
-             list#(num#num#closLang_exp) list->closLang_exp
-             list#(num#num#closLang_exp) list) o co) /\
+           (pure_co (clos_fvs_compile_inc:clos_exp list#(num#num#clos_exp)
+             list->clos_exp list#(num#num#clos_exp) list) o co) /\
        FST (FST (co 0)) = clos_known_config_val_approx_spt (THE kc') /\
        every_Fn_vs_NONE exps /\ every_Fn_SOME exps /\
        (!k. every_Fn_vs_NONE (FST (SND (co k))) /\
@@ -2663,9 +2653,8 @@ let compile_common_semantics = prove
            (SET_OF_BAG (closProps_elist_globals es1)) co1 /\
        is_state_oracle (clos_known_compile_inc (THE
          (clos_to_bvl_config_known_conf c)))
-           (pure_co (clos_fvs_compile_inc:closLang_exp
-             list#(num#num#closLang_exp) list->closLang_exp
-             list#(num#num#closLang_exp) list) o
+           (pure_co (clos_fvs_compile_inc:clos_exp list#(num#num#clos_exp)
+             list->clos_exp list#(num#num#clos_exp) list) o
                state_co (ignore_table clos_number_compile_inc)
                    (pure_co (cond_mti_compile_inc (clos_to_bvl_config_do_mti
                      c) (clos_to_bvl_config_max_app c)) o co1)) /\
@@ -2701,8 +2690,8 @@ let compile_common_semantics = prove
            (state_co (ignore_table clos_number_compile_inc)
              (pure_co (cond_mti_compile_inc (clos_to_bvl_config_do_mti c)
                (clos_to_bvl_config_max_app c)) o co1))))
-     cc ([closLang_Call backend_common_None 0 (clos_to_bvl_config_start c')
-       []]) =
+     cc ([clos_Call backend_common_None 0 (clos_to_bvl_config_start c') []])
+       =
    closSem_semantics ffi (clos_to_bvl_config_max_app c) FEMPTY co1
      (compile_common_inc c cc) es1`,
   CHEAT_TAC);;
@@ -2718,8 +2707,8 @@ add_simp REPLICATE_1;;
    variables of its own are read as variables *)
 let clos_to_bvlProof_compile_prog_semantics = prove
  (cake_as_vars (fun () ->
-    `~(bvlSem_semantics (ffi:'ffi ffi_state) max_app code1 co1 cc1
-  [closLang_Call backend_common_None 0 start []] = ffi_Fail) /\
+    `~(bvlSem_semantics (ffi:'ffi ffi_state) max_app code1 co1 cc1 [clos_Call
+  backend_common_None 0 start []] = ffi_Fail) /\
      (!name arity c.
        FLOOKUP code1 name = SOME (arity,c) ==>
        (?aux1 c2 aux2.
@@ -2739,9 +2728,9 @@ let clos_to_bvlProof_compile_prog_semantics = prove
      clos_to_bvlProof_code_installed prog2 code2 ==>
      bvlSem_semantics ffi code2 (co2:num->'c#(num#num#bvl_exp) list) cc2
        nsm1 =
-     closSem_semantics ffi max_app code1 (co1:num->'c#closLang_exp
-       list#(num#num#closLang_exp) list) cc1 [closLang_Call
-       backend_common_None 0 start []]`),
+     closSem_semantics ffi max_app code1 (co1:num->'c#clos_exp
+       list#(num#num#clos_exp) list) cc1 [clos_Call backend_common_None 0
+       start []]`),
   CHEAT_TAC);;
 
 let clos_to_bvlProof_syntax_oracle_ok_def = assume_definition
@@ -2768,9 +2757,8 @@ let clos_to_bvlProof_syntax_oracle_ok_def = assume_definition
             (SET_OF_BAG (closProps_elist_globals es)) co /\
         is_state_oracle (clos_known_compile_inc (THE
           (clos_to_bvl_config_known_conf c)))
-            (pure_co (clos_fvs_compile_inc:closLang_exp
-              list#(num#num#closLang_exp) list->closLang_exp
-              list#(num#num#closLang_exp) list) o
+            (pure_co (clos_fvs_compile_inc:clos_exp list#(num#num#clos_exp)
+              list->clos_exp list#(num#num#clos_exp) list) o
                 state_co (ignore_table clos_number_compile_inc)
                     (pure_co (cond_mti_compile_inc
                       (clos_to_bvl_config_do_mti c) (clos_to_bvl_config_max_app
@@ -2831,8 +2819,7 @@ let req_compile_inc_addrs_def = new_definition
 
 let can_extract_def = new_definition
   `can_extract exps = (?t n exps'.
-         exps = CONS (closLang_Op t (closLang_IntOp (closLang_Const
-           (&n))) []) exps')`;;
+         exps = CONS (clos_Op t (clos_IntOp (clos_Const (&n))) []) exps')`;;
 
 let extract_name_MAP_FST_addrs = prove
  (`extract_name exps = (n,real_es) ==>
@@ -2864,9 +2851,9 @@ let EXISTS_CONS_NOT_NULL = prove
 
 let can_extract_to_case = prove
  (`can_extract exps ==>
-     (?t n. exps = [closLang_Op t (closLang_IntOp (closLang_Const (&n)))
-       []]) \/ (?t n exp exps'. exps = CONS (closLang_Op t (closLang_IntOp
-       (closLang_Const (&n))) []) (CONS exp exps'))`,
+     (?t n. exps = [clos_Op t (clos_IntOp (clos_Const (&n))) []]) \/ (?t n
+       exp exps'. exps = CONS (clos_Op t (clos_IntOp (clos_Const (&n))) [])
+       (CONS exp exps'))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2905,9 +2892,9 @@ let LENGTH_annotate = prove
   CHEAT_TAC);;
 
 let annotate_Op_Const = prove
- (`clos_annotate_annotate m (CONS (closLang_Op t (closLang_IntOp
-  (closLang_Const n)) []) ls) = CONS (closLang_Op t (closLang_IntOp
-  (closLang_Const n)) []:closLang_exp) (clos_annotate_annotate m ls)`,
+ (`clos_annotate_annotate m (CONS (clos_Op t (clos_IntOp (clos_Const n)) [])
+  ls) = CONS (clos_Op t (clos_IntOp (clos_Const n)) []:clos_exp)
+  (clos_annotate_annotate m ls)`,
   CHEAT_TAC);;
 
 let annotate_compile_inc_req = prove
@@ -2945,10 +2932,9 @@ let cond_call_compile_inc_req = prove
 (* HOL4 clos_to_bvlProofScript.sml:8095-8096: ML code, not ported *)
 
 let known_Op_Const = prove
- (`known a (CONS (closLang_Op tv (closLang_IntOp (closLang_Const (&n))) []) b)
-  c d =
-   ((CONS ((closLang_Op tv (closLang_IntOp (closLang_Const (&n)))
-     []:closLang_exp),closLang_Int (&n))) ## I) (known a b c d)`,
+ (`known a (CONS (clos_Op tv (clos_IntOp (clos_Const (&n))) []) b) c d =
+   ((CONS ((clos_Op tv (clos_IntOp (clos_Const (&n)))
+     []:clos_exp),clos_Int (&n))) ## I) (known a b c d)`,
   CHEAT_TAC);;
 
 let BAG_IMAGE_SUB_BAG = prove
@@ -2961,15 +2947,15 @@ let BAG_UNION_MONO = prove
   CHEAT_TAC);;
 
 let remove_ticks_Op_Const = prove
- (`clos_ticks_remove_ticks (CONS (closLang_Op t (closLang_IntOp
-  (closLang_Const (&n))) []) ls) = CONS ((closLang_Op t (closLang_IntOp
-  (closLang_Const (&n))) []:closLang_exp)) (clos_ticks_remove_ticks ls)`,
+ (`clos_ticks_remove_ticks (CONS (clos_Op t (clos_IntOp (clos_Const (&n)))
+  []) ls) = CONS ((clos_Op t (clos_IntOp (clos_Const (&n))) []:clos_exp))
+  (clos_ticks_remove_ticks ls)`,
   CHEAT_TAC);;
 
 let let_op_Op_Const = prove
- (`clos_letop_let_op (CONS (closLang_Op t (closLang_IntOp (closLang_Const
-  (&n))) []) ls) = CONS ((closLang_Op t (closLang_IntOp (closLang_Const
-  (&n))) []:closLang_exp)) (clos_letop_let_op ls)`,
+ (`clos_letop_let_op (CONS (clos_Op t (clos_IntOp (clos_Const (&n))) []) ls)
+  = CONS ((clos_Op t (clos_IntOp (clos_Const (&n))) []:clos_exp))
+  (clos_letop_let_op ls)`,
   CHEAT_TAC);;
 
 let known_co_req = prove
@@ -3277,7 +3263,7 @@ let syntax_oracle_ok_bvl_FST_monotonic = prove
 
 let assign_get_code_label_compile_op = prove
  (`assign_get_code_label (clos_to_bvl_compile_op op) = match some (\n. op =
-  closLang_Label n) with SOME n -> {n} | _ -> {}`,
+  clos_Label n) with SOME n -> {n} | _ -> {}`,
   CHEAT_TAC);;
 
 let recc_Lets_code_labels = prove

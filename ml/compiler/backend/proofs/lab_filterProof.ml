@@ -41,11 +41,11 @@ let adjust_pc_def,adjust_pc_ind = define_guess_cheat
 (*All skips for the next k*)
 let all_skips_def = new_definition
   `all_skips pc' code k <=>
-   (!x y. ~(asm_fetch_aux (pc' + k) code = SOME (labLang_Asm (Asmi (asm_Inst
+   (!x y. ~(asm_fetch_aux (pc' + k) code = SOME (lab_Asm (Asmi (asm_Inst
      asm_Skip)) x y))) /\
    (!i. i < k ==>
      (?x y.
-     asm_fetch_aux (pc' + i) code = SOME (labLang_Asm (Asmi (asm_Inst
+     asm_fetch_aux (pc' + i) code = SOME (lab_Asm (Asmi (asm_Inst
        asm_Skip)) x y)))`;;
 
 (* [local] *)
@@ -85,7 +85,7 @@ This is probably the wrong direction*)
 (* [local] *)
 let asm_fetch_not_skip_adjust_pc = prove
  (`!pc' code inst'.
-   (!x y. ~(asm_fetch_aux pc' code = SOME (labLang_Asm (Asmi (asm_Inst
+   (!x y. ~(asm_fetch_aux pc' code = SOME (lab_Asm (Asmi (asm_Inst
      asm_Skip)) x y))) ==>
    asm_fetch_aux pc' code = asm_fetch_aux (adjust_pc pc' code)
      (filter_skip code)`,

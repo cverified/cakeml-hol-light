@@ -58,8 +58,6 @@ let find_loc_EVERY_isEmpty = prove
 
 (************************** DEFINITIONS ***************************)
 
-let _ = size_thms "flatSem_v";;
-let _ = size_thms "mlstring";;
 let SUM_MAP_v3_size = prove
  (`!xs. SUM (MAP (pair_size mlstring_size flatSem_v_size) xs) = LENGTH xs +
      SUM (MAP (mlstring_size o FST) xs) +
@@ -155,7 +153,6 @@ let find_v_globals_list_to_v = prove
         domain reachable`,
   CHEAT_TAC);;
 
-let _ = size_thms "store_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let find_refs_globals_def,find_refs_globals_ind = define_wf
@@ -428,11 +425,10 @@ add_simp fvg_v_to_flat;;
 
 let do_app_SOME_flat_state_rel = prove
  (`!reachable state removed_state op l new_state result new_removed_state.
-      flat_state_rel reachable state removed_state /\ ~(op = flatLang_Src
+      flat_state_rel reachable state removed_state /\ ~(op = flat_Src
         ast_Opapp) /\
       domain (find_v_globalsL l) SUBSET domain reachable /\
-      domain (find_lookups (flatLang_App tra op [])) SUBSET domain reachable
-        /\
+      domain (find_lookups (flat_App tra op [])) SUBSET domain reachable /\
       ALL ((~) o v_has_Eval) l ==>
           flatSem_do_app state op l = SOME (new_state,result) /\ ~(result =
             Rerr (Rabort Rtype_error)) ==> (?new_removed_state.
@@ -460,7 +456,7 @@ let flat_state_rel_pmatch = prove
 
 let flat_state_rel_pmatch_rows = prove
  (`flat_state_rel reachable new_state new_removed_state ==>
-   pmatch_rows (pes:(flatLang_pat#flatLang_exp) list) new_removed_state a =
+   pmatch_rows (pes:(flat_pat#flat_exp) list) new_removed_state a =
    pmatch_rows pes new_state a`,
   CHEAT_TAC);;
 
@@ -489,22 +485,22 @@ let pmatch_not_has_Eval = prove
 
 (* has_Eval_def[local] *)
 let flat_elimProof_has_Eval_def = prove
- (`(has_Eval (flatLang_Handle _ e pes) = (has_Eval e \/ EX has_Eval (MAP SND
-  pes))) /\
-   (has_Eval (flatLang_Con _ _ es) = EX has_Eval es) /\
-   (has_Eval (flatLang_Fun _ _ e) = has_Eval e) /\
-   (has_Eval (flatLang_App t op es) = (op = flatLang_Src ast_Eval \/ EX
-     has_Eval es)) /\
-   (has_Eval (flatLang_If t e1 e2 e3) = (has_Eval e1 \/ has_Eval e2 \/
-     has_Eval e3)) /\
-   (has_Eval (flatLang_Mat t e pes) = (has_Eval e \/ EX has_Eval (MAP SND
-     pes))) /\
-   (has_Eval (flatLang_Let _ opt e1 e2) = (has_Eval e1 \/ has_Eval e2)) /\
-   (has_Eval (flatLang_Letrec _ funs e) = (has_Eval e \/ EX has_Eval (MAP
-     (SND o SND) funs))) /\
-   (has_Eval (flatLang_Raise _ e) = has_Eval e) /\
-   (has_Eval (flatLang_Var_local _ _) = F) /\
-   (has_Eval (flatLang_Lit _ v) = F)`,
+ (`(has_Eval (flat_Handle _ e pes) = (has_Eval e \/ EX has_Eval (MAP SND pes)))
+  /\
+   (has_Eval (flat_Con _ _ es) = EX has_Eval es) /\
+   (has_Eval (flat_Fun _ _ e) = has_Eval e) /\
+   (has_Eval (flat_App t op es) = (op = flat_Src ast_Eval \/ EX has_Eval
+     es)) /\
+   (has_Eval (flat_If t e1 e2 e3) = (has_Eval e1 \/ has_Eval e2 \/ has_Eval
+     e3)) /\
+   (has_Eval (flat_Mat t e pes) = (has_Eval e \/ EX has_Eval (MAP SND pes)))
+     /\
+   (has_Eval (flat_Let _ opt e1 e2) = (has_Eval e1 \/ has_Eval e2)) /\
+   (has_Eval (flat_Letrec _ funs e) = (has_Eval e \/ EX has_Eval (MAP (SND o
+     SND) funs))) /\
+   (has_Eval (flat_Raise _ e) = has_Eval e) /\
+   (has_Eval (flat_Var_local _ _) = F) /\
+   (has_Eval (flat_Lit _ v) = F)`,
   CHEAT_TAC);;
 
 (******** EVALUATE INDUCTION ********)

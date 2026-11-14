@@ -568,22 +568,20 @@ let list_to_v_adjust_APPEND = prove
 (* [local] *)
 let do_app_adjust = prove
  (`bvl_to_bviProof_state_rel b2 s5 t2 /\
-   (!i. ~(op = closLang_IntOp (closLang_Const i))) /\ (~(op = closLang_MemOp
-     closLang_Ref)) /\
-   (!flag. ~(op = closLang_MemOp (closLang_RefByte flag))) /\ (~(op =
-     closLang_MemOp closLang_RefArray)) /\
-   (!n. ~(op = closLang_GlobOp (closLang_Global n))) /\ (!n. ~(op =
-     closLang_GlobOp (closLang_SetGlobal n))) /\ (~(op = closLang_GlobOp
-     closLang_AllocGlobal)) /\ ~(op = closLang_Install) /\
-   (!t. ~(op = closLang_ThunkOp t)) /\
-   (!n. ~(op = closLang_BlockOp (closLang_FromList n))) /\ (~(op =
-     closLang_MemOp closLang_FromListByte)) /\
-   (~(op = closLang_MemOp closLang_ToListByte)) /\ (!c. ~(op =
-     closLang_BlockOp (closLang_Build c))) /\ ~(op = closLang_MemOp
-     closLang_XorByte) /\
-   (!b. ~(op = closLang_MemOp (closLang_CopyByte b))) /\ (~(op =
-     closLang_MemOp closLang_ConcatByteVec)) /\ (!n. ~(op = closLang_Label n))
+   (!i. ~(op = clos_IntOp (clos_Const i))) /\ (~(op = clos_MemOp clos_Ref))
      /\
+   (!flag. ~(op = clos_MemOp (clos_RefByte flag))) /\ (~(op = clos_MemOp
+     clos_RefArray)) /\
+   (!n. ~(op = clos_GlobOp (clos_Global n))) /\ (!n. ~(op = clos_GlobOp
+     (clos_SetGlobal n))) /\ (~(op = clos_GlobOp clos_AllocGlobal)) /\ ~(op =
+     clos_Install) /\
+   (!t. ~(op = clos_ThunkOp t)) /\
+   (!n. ~(op = clos_BlockOp (clos_FromList n))) /\ (~(op = clos_MemOp
+     clos_FromListByte)) /\
+   (~(op = clos_MemOp clos_ToListByte)) /\ (!c. ~(op = clos_BlockOp
+     (clos_Build c))) /\ ~(op = clos_MemOp clos_XorByte) /\
+   (!b. ~(op = clos_MemOp (clos_CopyByte b))) /\ (~(op = clos_MemOp
+     clos_ConcatByteVec)) /\ (!n. ~(op = clos_Label n)) /\
    (bviSem_do_app op (REVERSE a) s5 = Rval (q,r)) /\ ALL (bv_ok
      (bvlSem_state_refs s5)) (REVERSE a) ==>
    (?t3. (bviSem_do_app op (MAP (adjust_bv b2) (REVERSE a)) t2 =
@@ -591,7 +589,6 @@ let do_app_adjust = prove
        bvl_to_bviProof_state_rel b2 r t3)`,
   CHEAT_TAC);;
 
-let _ = size_thms "bvl_exp";;
 let eval_ind_alt = prove
  (`!P.
      (!env s. P ([],env,s)) /\
@@ -667,7 +664,7 @@ let EVERY_isVar_evaluate_Rval_MEM = prove
 
 (* [local] *)
 let do_app_Ref = prove
- (`bviSem_do_app (closLang_MemOp closLang_Ref) vs s =
+ (`bviSem_do_app (clos_MemOp clos_Ref) vs s =
       Rval
        (bvlSem_RefPtr T (minimal ptr. ~(ptr IN FDOM (state_refs s))),
         bvl_to_bvi
@@ -938,7 +935,7 @@ let compile_single_evaluate = prove
        t1) /\ bvl_to_bviProof_state_ok s1 /\ ~(res = Rerr (Rabort Rtype_error))
        ==>
      (?ck b2 t2.
-       bviSem_evaluate ([dataLang_Call 0 (SOME (bvl_num_stubs +
+       bviSem_evaluate ([data_Call 0 (SOME (bvl_num_stubs +
          bvl_to_bvi_namespaces * start)) [] NONE],[],bviProps_inc_clock ck t1)
          =
          (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2 v))
@@ -948,8 +945,8 @@ let compile_single_evaluate = prove
 
 (* [local] *)
 let evaluate_REPLICATE_0 = prove
- (`!n. bviSem_evaluate (REPLICATE n (bvl_Op (closLang_IntOp (closLang_Const
-  (&0))) []),env,s) =
+ (`!n. bviSem_evaluate (REPLICATE n (bvl_Op (clos_IntOp (clos_Const (&0)))
+  []),env,s) =
            (Rval (REPLICATE n (bvlSem_Number (&0))),s)`,
   CHEAT_TAC);;
 
@@ -962,12 +959,11 @@ let bvi_stubs_evaluate = prove
                     (bvlSem_Number (&0)))))) k (SOME 0) cc co (fromAList
                     (APPEND (bvl_to_bvi_stubs start' kk) code))
                     ffi0:('c,'ffi)bviSem_state) in
-      bviSem_evaluate ([dataLang_Call 0 (SOME InitGlobals_location) []
-        NONE],[],
+      bviSem_evaluate ([data_Call 0 (SOME InitGlobals_location) [] NONE],[],
         bviSem_initial_state ffi0 (fromAList (APPEND (bvl_to_bvi_stubs
           start' kk) code)) co cc (k + 1)) =
-   (let (r,s) = bviSem_evaluate ([dataLang_Call 0 (SOME start') []
-     NONE],[],t0) in
+   (let (r,s) = bviSem_evaluate ([data_Call 0 (SOME start') [] NONE],[],t0)
+     in
      ((match r with Rerr (Rraise (Exn v)) -> Rval [v] | _ -> r),s)))`,
   CHEAT_TAC);;
 
@@ -1005,7 +1001,7 @@ let bvl_to_bviProof_compile_prog_evaluate = prove
      (!n. ALL ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
      n' <= (FST (FST (co 0))) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
      (?ck b2 s2.
-     bviSem_evaluate ([dataLang_Call 0 (SOME start') [] NONE],[],
+     bviSem_evaluate ([data_Call 0 (SOME start') [] NONE],[],
                bviSem_initial_state ffi0 (fromAList prog') (state_co
                  bvl_to_bvi_compile_inc co) cc (k + ck)) =
        (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2 v))

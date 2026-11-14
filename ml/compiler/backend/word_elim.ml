@@ -27,15 +27,14 @@ let _ = cake_theory "word_elim"
 let find_word_loc_def = new_definition
   `(find_word_loc ((name:num),_,_) = name)`;;
 
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let find_word_ref_def,find_word_ref_ind = define_wf
-  `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
+  `MEASURE (\x0. word_prog_size (\x. 0) x0)`
   `find_word_ref x1 =
      match x1 with
-       wordLang_MustTerminate p -> find_word_ref p
-     | wordLang_Call ret target _ handler -> sptree_union
+       word_MustTerminate p -> find_word_ref p
+     | word_Call ret target _ handler -> sptree_union
            (match target with NONE -> LN | SOME n -> (sptree_insert n one
              LN))
                (sptree_union
@@ -46,12 +45,11 @@ let find_word_ref_def,find_word_ref_ind = define_wf
                    (match handler with NONE -> LN
                        | SOME (_,ex_handler,_,_) -> find_word_ref
                          (ex_handler)))
-     | wordLang_Seq p1 p2 -> sptree_union (find_word_ref p1) (find_word_ref
-       p2)
-     | wordLang_If _ _ _ p1 p2 ->
+     | word_Seq p1 p2 -> sptree_union (find_word_ref p1) (find_word_ref p2)
+     | word_If _ _ _ p1 p2 ->
            sptree_union (find_word_ref p1) (find_word_ref p2)
-     | wordLang_LocValue _ n -> sptree_insert n one LN
-     | wordLang_Loop names body exit_names -> find_word_ref body
+     | word_LocValue _ n -> sptree_insert n one LN
+     | word_Loop names body exit_names -> find_word_ref body
      | _ -> LN`;;
 
 (* HOL4 word_elimScript.sml:41: ML code, not ported *)

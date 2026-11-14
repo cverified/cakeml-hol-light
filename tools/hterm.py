@@ -1274,7 +1274,7 @@ class Ctx:
   def size_name(self, n, thy=None):
     """the name of the size function of a datatype, which is
        called after the type (HOL4's closLang$exp_size is
-       closLang_exp_size).  The auxiliary size functions of a
+       clos_exp_size).  The auxiliary size functions of a
        family (HOL4's exp1_size, exp2_size, ...) are not
        translated: HOL Light numbers the types of a family in
        another order than HOL4 does (of closLang's exp, HOL4's
@@ -1312,7 +1312,7 @@ class Ctx:
       return self.names.get((self.thy, n), self.names.get(n, n))
     # a name HOL4 overloads is written out as the constant it
     # means here: HOL Light has one namespace and no theory
-    # scope, so Var of closLang is closLang_Var and Var of bvl is
+    # scope, so Var of closLang is clos_Var and Var of bvl is
     # bvl_Var, and nothing has to resolve anything while a file
     # loads.  tools/port.py gives the resolver, which picks the
     # theory HOL4's own overload resolution would
@@ -1323,7 +1323,7 @@ class Ctx:
       return n
     # the size function of a datatype is called after the type, so
     # it follows the name that the port gives the type (HOL4's
-    # exp_size of closLang is closLang_exp_size)
+    # exp_size of closLang is clos_exp_size)
     # a name that a theory in scope defines as a constant of its
     # own is that constant, not the size function of a datatype
     # (wordSem's stack_size is a function of a stack frame list,

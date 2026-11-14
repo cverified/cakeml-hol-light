@@ -48,10 +48,10 @@ let bvl_exp_INDUCT,bvl_exp_RECURSION = define_datatype
    | bvl_Force num num
      // loc to call for evaluation of unevaluated thunk
      // var holding thunk
-   | bvl_Op closLang_op (bvl_exp list)";;
+   | bvl_Op clos_op (bvl_exp list)";;
 
 let bool_def = new_definition
-  `bvl_Bool b = bvl_Op (closLang_BlockOp (closLang_Cons (bool_to_tag b))) []`;;
+  `bvl_Bool b = bvl_Op (clos_BlockOp (clos_Cons (bool_to_tag b))) []`;;
 
 let mk_tick_def = new_definition
   `mk_tick n e = (ITER n bvl_Tick e:bvl_exp)`;;

@@ -18,10 +18,9 @@ let _ = cake_theory "lab_filter"
   ["labLang"];;
 
 let not_skip_def = new_definition
-  `not_skip l = match l with labLang_Asm (Asmi (asm_Inst asm_Skip)) _ _ -> F
-  | _ -> T`;;
+  `not_skip l = match l with lab_Asm (Asmi (asm_Inst asm_Skip)) _ _ -> F | _
+  -> T`;;
 
-let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let filter_skip_def,filter_skip_ind = define_wf

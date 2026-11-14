@@ -45,56 +45,56 @@ let _ = cake_theory "dataLang"
 let op_space_reset_def = new_definition
   `op_space_reset x1 =
      match x1 with
-       closLang_IntOp closLang_Add -> T
-     | closLang_IntOp closLang_Sub -> T
-     | closLang_IntOp closLang_Mult -> T
-     | closLang_IntOp closLang_Div -> T
-     | closLang_IntOp closLang_Mod -> T
-     | closLang_IntOp closLang_Less -> T
-     | closLang_IntOp closLang_LessEq -> T
-     | closLang_IntOp closLang_Greater -> T
-     | closLang_IntOp closLang_GreaterEq -> T
-     | closLang_BlockOp closLang_Equal -> T
-     | closLang_BlockOp closLang_ListAppend -> T
-     | closLang_BlockOp (closLang_FromList _) -> T
-     | closLang_MemOp closLang_RefArray -> T
-     | closLang_MemOp (closLang_RefByte _) -> T
-     | closLang_BlockOp (closLang_ConsExtend _) -> T
-     | closLang_MemOp (closLang_CopyByte new_flag) -> new_flag
-     | closLang_MemOp closLang_ConfigGC -> T
-     | closLang_FFI _ -> T
+       clos_IntOp clos_Add -> T
+     | clos_IntOp clos_Sub -> T
+     | clos_IntOp clos_Mult -> T
+     | clos_IntOp clos_Div -> T
+     | clos_IntOp clos_Mod -> T
+     | clos_IntOp clos_Less -> T
+     | clos_IntOp clos_LessEq -> T
+     | clos_IntOp clos_Greater -> T
+     | clos_IntOp clos_GreaterEq -> T
+     | clos_BlockOp clos_Equal -> T
+     | clos_BlockOp clos_ListAppend -> T
+     | clos_BlockOp (clos_FromList _) -> T
+     | clos_MemOp clos_RefArray -> T
+     | clos_MemOp (clos_RefByte _) -> T
+     | clos_BlockOp (clos_ConsExtend _) -> T
+     | clos_MemOp (clos_CopyByte new_flag) -> new_flag
+     | clos_MemOp clos_ConfigGC -> T
+     | clos_FFI _ -> T
      | _ -> F`;;
 
 let op_requires_names_def = new_definition
-  `op_requires_names op = (op_space_reset op \/ (?n. op = closLang_FFI n) \/
-                          (?new_flag. op = (closLang_MemOp
-                            (closLang_CopyByte new_flag))) \/
-                          (op = closLang_MemOp closLang_XorByte) \/
-                          (?b cmp. op = closLang_MemOp (closLang_StringCmp b
-                            cmp)) \/
-                          (op = closLang_Install))`;;
+  `op_requires_names op = (op_space_reset op \/ (?n. op = clos_FFI n) \/
+                          (?new_flag. op = (clos_MemOp (clos_CopyByte
+                            new_flag))) \/
+                          (op = clos_MemOp clos_XorByte) \/
+                          (?b cmp. op = clos_MemOp (clos_StringCmp b cmp))
+                            \/
+                          (op = clos_Install))`;;
 
-let dataLang_prog_INDUCT,dataLang_prog_RECURSION = define_datatype
-  "dataLang_prog =
-     dataLang_Skip
-   | dataLang_Move num num
-   | dataLang_Call ((num list#misc_num_set) option) (num option) (num list)
-       ((num#dataLang_prog) option)
+let data_prog_INDUCT,data_prog_RECURSION = define_datatype
+  "data_prog =
+     data_Skip
+   | data_Move num num
+   | data_Call ((num list#misc_num_set) option) (num option) (num list)
+       ((num#data_prog) option)
      // return var, cut-set
      // target of call
      // arguments
      // handler: varname, handler code
-   | dataLang_Assign num closLang_op (num list) (misc_num_set option)
-   | dataLang_Seq dataLang_prog dataLang_prog
-   | dataLang_If num dataLang_prog dataLang_prog
-   | dataLang_MakeSpace num misc_num_set
-   | dataLang_Raise num
-   | dataLang_Return (num list)
-   | dataLang_Tick
-   | dataLang_Force ((num#misc_num_set) option) num num";;
+   | data_Assign num clos_op (num list) (misc_num_set option)
+   | data_Seq data_prog data_prog
+   | data_If num data_prog data_prog
+   | data_MakeSpace num misc_num_set
+   | data_Raise num
+   | data_Return (num list)
+   | data_Tick
+   | data_Force ((num#misc_num_set) option) num num";;
 
 let mk_ticks_def = new_definition
-  `mk_ticks n e = ITER n (dataLang_Seq dataLang_Tick) e`;;
+  `mk_ticks n e = ITER n (data_Seq data_Tick) e`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

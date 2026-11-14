@@ -1176,7 +1176,6 @@ let mk_tags_def = new_definition
        else update_node_tag i (Fixed (v DIV 2))))`;;
 
 (* Initializes the clash_graph using a clash_tree and a remapping bijection *)
-let _ = size_thms "clash_tree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let mk_graph_def,mk_graph_ind = define_wf

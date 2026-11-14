@@ -45,53 +45,50 @@ let word_bignumProof_state_FIELDS = define_record "word_bignumProof_state"
    "arrays","address->('a word) list";
    "clock","num"];;
 
-let _ = size_thms "wordLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let eval_exp_def,eval_exp_ind = define_wf
-  `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
-  `eval_exp s (wordLang_Const w) = w /\
-   eval_exp s (wordLang_Var v) = FAPPLY (word_bignumProof_state_regs s) v /\
-   eval_exp s (wordLang_Op asm_Add [x1; x2]) = eval_exp s x1 + eval_exp s x2
-     /\
-   eval_exp s (wordLang_Op asm_Sub [x1; x2]) = eval_exp s x1 - eval_exp s x2
-     /\
-   eval_exp s (wordLang_Op asm_And [x1; x2]) = word_and (eval_exp s x1)
+  `MEASURE (\(x0,x1). word_exp_size (\x. 0) x1)`
+  `eval_exp s (word_Const w) = w /\
+   eval_exp s (word_Var v) = FAPPLY (word_bignumProof_state_regs s) v /\
+   eval_exp s (word_Op asm_Add [x1; x2]) = eval_exp s x1 + eval_exp s x2 /\
+   eval_exp s (word_Op asm_Sub [x1; x2]) = eval_exp s x1 - eval_exp s x2 /\
+   eval_exp s (word_Op asm_And [x1; x2]) = word_and (eval_exp s x1)
      (eval_exp s x2) /\
-   eval_exp s (wordLang_Op asm_Or [x1; x2]) = word_or (eval_exp s x1)
+   eval_exp s (word_Op asm_Or [x1; x2]) = word_or (eval_exp s x1) (eval_exp
+     s x2) /\
+   eval_exp s (word_Op asm_Xor [x1; x2]) = word_xor (eval_exp s x1)
      (eval_exp s x2) /\
-   eval_exp s (wordLang_Op asm_Xor [x1; x2]) = word_xor (eval_exp s x1)
-     (eval_exp s x2) /\
-   eval_exp s (wordLang_Shift Lsl x1 x2) = eval_exp s x1 << (w2n (eval_exp s
+   eval_exp s (word_Shift Lsl x1 x2) = eval_exp s x1 << (w2n (eval_exp s
      x2)) /\
-   eval_exp s (wordLang_Shift Asr x1 x2) = eval_exp s x1 >> (w2n (eval_exp s
+   eval_exp s (word_Shift Asr x1 x2) = eval_exp s x1 >> (w2n (eval_exp s
      x2)) /\
-   eval_exp s (wordLang_Shift Lsr x1 x2) = eval_exp s x1 >>> (w2n (eval_exp
-     s x2)) /\
-   eval_exp s (wordLang_Shift Ror x1 x2) = word_ror (eval_exp s x1) (w2n
+   eval_exp s (word_Shift Lsr x1 x2) = eval_exp s x1 >>> (w2n (eval_exp s
+     x2)) /\
+   eval_exp s (word_Shift Ror x1 x2) = word_ror (eval_exp s x1) (w2n
      (eval_exp s x2))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let eval_exp_pre_def,eval_exp_pre_ind = define_wf
-  `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x1)`
+  `MEASURE (\(x0,x1). word_exp_size (\x. 0) x1)`
   `eval_exp_pre s x2 =
      match x2 with
-       wordLang_Const w -> T
-     | wordLang_Var v -> v IN FDOM (word_bignumProof_state_regs s)
-     | wordLang_Op _ [x; y] -> eval_exp_pre s x /\ eval_exp_pre s y
-     | wordLang_Shift sh x1 x2 ->
+       word_Const w -> T
+     | word_Var v -> v IN FDOM (word_bignumProof_state_regs s)
+     | word_Op _ [x; y] -> eval_exp_pre s x /\ eval_exp_pre s y
+     | word_Shift sh x1 x2 ->
         eval_exp_pre s x1 /\ eval_exp_pre s x2 /\ (w2n (eval_exp s x2) < 32)
      | _ -> F`;;
 
 let eval_ri_pre_def = define_cases
   `(eval_ri_pre (s:'a word_bignumProof_state) (Reg r) <=> eval_exp_pre
-    (s:'a word_bignumProof_state) ((wordLang_Var r):'a wordLang_exp)) /\
+    (s:'a word_bignumProof_state) ((word_Var r):'a word_exp)) /\
    (eval_ri_pre (s:'a word_bignumProof_state) (Imm (w:'a word)) <=> T)`;;
 
 let eval_ri_def = define_cases
   `(eval_ri (s:'a word_bignumProof_state) (Reg r) =
-      eval_exp s ((Var r):'a wordLang_exp)) /\
+      eval_exp s ((Var r):'a word_exp)) /\
    (eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w)`;;
 
 let word_bignumProof_dec_clock_def = new_definition
@@ -141,7 +138,7 @@ let eval = cake_inductive
    (!rec s1 c r ri p1 p2 s2.
       r IN FDOM (word_bignumProof_state_regs s1) /\ eval_ri_pre s1 ri /\
       word_bignumProof_Eval rec s1 (if wordSem_word_cmp c (eval_exp s1
-        (wordLang_Var r)) (eval_ri s1 ri) then p1 else p2) s2 ==>
+        (word_Var r)) (eval_ri s1 ri) then p1 else p2) s2 ==>
       word_bignumProof_Eval rec s1 (word_bignum_If c r ri p1 p2) s2) /\
    (!rec s r i a w.
       (FLOOKUP (word_bignumProof_state_regs s) i = SOME w) /\
@@ -242,16 +239,16 @@ let Eval_NONE_IMP = prove
 let array_rel_def = new_definition
   `array_rel arr v1 v2 v3 m dm frame =
      (?a1 a2 a3 rest1 rest2.
-       v1 = SOME (wordLang_Word a1) /\
-       v2 = SOME (wordLang_Word a2) /\
-       v3 = SOME (wordLang_Word a3) /\
-       (misc_word_list a1 (MAP wordLang_Word (arr In1)) *
-        misc_word_list a3 (MAP wordLang_Word (arr Out)) * rest1) (fun2set
+       v1 = SOME (word_Word a1) /\
+       v2 = SOME (word_Word a2) /\
+       v3 = SOME (word_Word a3) /\
+       (misc_word_list a1 (MAP word_Word (arr In1)) *
+        misc_word_list a3 (MAP word_Word (arr Out)) * rest1) (fun2set
           (m,dm)) /\
-       (misc_word_list a2 (MAP wordLang_Word (arr In2)) *
-        misc_word_list a3 (MAP wordLang_Word (arr Out)) * rest2) (fun2set
+       (misc_word_list a2 (MAP word_Word (arr In2)) *
+        misc_word_list a3 (MAP word_Word (arr Out)) * rest2) (fun2set
           (m,dm)) /\
-       (misc_word_list a3 (MAP wordLang_Word (arr Out)) * frame) (fun2set
+       (misc_word_list a3 (MAP word_Word (arr Out)) * frame) (fun2set
          (m,dm)))`;;
 
 let code_subset_def = new_definition
@@ -264,8 +261,8 @@ let word_bignumProof_code_rel_def = new_definition
         ALOOKUP (SND cs) prog = SOME (n,p2) ==>
         (?cs1 l2 i2 cs2.
           word_bignum_compile n 2 1 cs1 prog = (p2,l2,i2,cs2) /\
-          sptree_lookup n code = SOME (1,word_bignum_Seq p2 (wordLang_Return
-            0 [0])) /\
+          sptree_lookup n code = SOME (1,word_bignum_Seq p2 (word_Return 0
+            [0])) /\
           code_subset cs2 cs))`;;
 
 let div_code_assum_def = new_definition
@@ -278,17 +275,17 @@ let div_code_assum_def = new_definition
        (?max'.
          wordSem_evaluate
            (DivCode n l i0 i1 i2 i3 i4,wordSem_state_locals_fupd (K
-                 (sptree_insert i2 (wordLang_Word w3) (sptree_insert i3
-                   (wordLang_Word w4) (sptree_insert i4 (wordLang_Word w5)
+                 (sptree_insert i2 (word_Word w3) (sptree_insert i3
+                   (word_Word w4) (sptree_insert i4 (word_Word w5)
                    (wordSem_state_locals
                    t1)))))
             t1) =
          (NONE,
            (let (w1,w2) = single_div w3 w4 w5 in
-             (wordSem_set_var 0 ret_val o wordSem_set_var i1 (wordLang_Word
-               w2) o
-              wordSem_set_var i0 (wordLang_Word w1) o wordSem_set_store
-                (Temp (n2w 28)) (wordLang_Word w2)) (
+             (wordSem_set_var 0 ret_val o wordSem_set_var i1 (word_Word w2)
+               o
+              wordSem_set_var i0 (word_Word w1) o wordSem_set_store (Temp
+                (n2w 28)) (word_Word w2)) (
              wordSem_state_stack_max_fupd (K max')
                (wordSem_state_locals_fupd (K LN) (wordSem_state_permute_fupd
                (K (\n. wordSem_state_permute t1 (n + 1))) t1)))))))`;;
@@ -313,8 +310,8 @@ let word_bignumProof_state_rel_def = new_definition
       !a v.
         FLOOKUP (word_bignumProof_state_regs s) a = SOME v ==>
         a < 25 /\
-        FLOOKUP (wordSem_state_store t) (Temp (n2w a)) = SOME (wordLang_Word
-          v)) /\
+        FLOOKUP (wordSem_state_store t) (Temp (n2w a)) = SOME (word_Word v))
+          /\
      // code assumption
      word_bignumProof_code_rel cs (wordSem_state_code t) /\
      div_code_assum (:'ffi) (:'c) (wordSem_state_code t)
@@ -359,13 +356,13 @@ let word_bignumProof_state_rel_delete_vars = prove
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let exp_ok_def,exp_ok_ind = define_wf
-  `MEASURE (\x0. wordLang_exp_size (\x. 0) x0)`
+  `MEASURE (\x0. word_exp_size (\x. 0) x0)`
   `exp_ok x1 =
      match x1 with
-       wordLang_Const _ -> T
-     | wordLang_Var i -> i < (25)
-     | wordLang_Op _ [x; y] -> exp_ok x /\ exp_ok y
-     | wordLang_Shift sh e n -> exp_ok e
+       word_Const _ -> T
+     | word_Var i -> i < (25)
+     | word_Op _ [x; y] -> exp_ok x /\ exp_ok y
+     | word_Shift sh e n -> exp_ok e
      | _ -> F`;;
 
 let syntax_ok_aux_def,syntax_ok_aux_ind = define_shaped_rec
@@ -407,8 +404,8 @@ let word_bignumProof_syntax_ok_def = new_definition
 
 let evaluate_Seq_Seq = prove
  (`!p1 p2 p3 t1.
-      wordSem_evaluate (wordLang_Seq p1 (wordLang_Seq p2 p3),t1) =
-        wordSem_evaluate (wordLang_Seq (wordLang_Seq p1 p2) p3,t1)`,
+      wordSem_evaluate (word_Seq p1 (word_Seq p2 p3),t1) =
+        wordSem_evaluate (word_Seq (word_Seq p1 p2) p3,t1)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -441,7 +438,7 @@ let has_compiled_lemma = prove
      word_bignum_compile x 2 1 cs' p = (p1,l1,i1,cs1) /\ code_subset cs1 cs2
        /\
      sptree_lookup x (wordSem_state_code t1) = SOME (1,word_bignum_Seq p1
-       (wordLang_Return 0 [0])))`,
+       (word_Return 0 [0])))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -450,8 +447,8 @@ let state_rel_IN_FDOM = prove
   (word_bignumProof_state_regs s1) ==>
    Temp (n2w r) IN FDOM (wordSem_state_store t1) /\ FAPPLY
      (wordSem_state_store
-   t1) (Temp (n2w r)) = wordLang_Word (FAPPLY (word_bignumProof_state_regs
-     s1) r)`,
+   t1) (Temp (n2w r)) = word_Word (FAPPLY (word_bignumProof_state_regs s1)
+     r)`,
   CHEAT_TAC);;
 
 
@@ -459,8 +456,8 @@ let state_rel_IN_FDOM = prove
 let word_bignumProof_compile_exp_thm = prove
  (`word_bignumProof_state_rel s1 t1 cs2 t0 frame /\ eval_exp_pre s1 x
   /\ good_dimindex (:'a) ==>
-   wordSem_word_exp t1 (word_bignum_compile_exp x) = SOME (wordLang_Word
-     (eval_exp s1 (x:'a wordLang_exp)))`,
+   wordSem_word_exp t1 (word_bignum_compile_exp x) = SOME (word_Word
+     (eval_exp s1 (x:'a word_exp)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -477,7 +474,7 @@ let evaluate_SeqTempImm = prove
  (`wordSem_evaluate (SeqTempImm i ri p,t) =
    (if !r. ri = Reg r ==> Temp (n2w r) IN FDOM (wordSem_state_store t) then
       wordSem_evaluate (p,wordSem_set_var i (match ri with Imm w ->
-        wordLang_Word w
+        word_Word w
                              | Reg r -> FAPPLY (wordSem_state_store t) (Temp
                                (n2w r))) t)
    else wordSem_evaluate (SeqTempImm i ri p,t))`,
@@ -488,12 +485,12 @@ let evaluate_SeqTempImmNot = prove
  (`wordSem_evaluate (SeqTempImmNot i ri p,t) =
    (if !r. ri = Reg r ==> Temp (n2w r) IN FDOM (wordSem_state_store t) /\
                          (?w. FAPPLY (wordSem_state_store t) (Temp (n2w r))
-                           = wordLang_Word w) then
+                           = word_Word w) then
       wordSem_evaluate (p,wordSem_set_var i (match ri with Imm w ->
-        wordLang_Word (word_not w)
+        word_Word (word_not w)
                              | Reg r -> (match FAPPLY (wordSem_state_store
-                               t) (Temp (n2w r)) with wordLang_Word w ->
-                               wordLang_Word (word_not w))) t)
+                               t) (Temp (n2w r)) with word_Word w -> word_Word
+                               (word_not w))) t)
    else wordSem_evaluate (SeqTempImmNot i ri p,t))`,
   CHEAT_TAC);;
 
@@ -552,8 +549,8 @@ let evaluate_LoadRegs = prove
        save_regs vals ==>
      wordSem_evaluate (LoadRegs save_regs p,t1) =
      wordSem_evaluate (p,wordSem_state_locals_fupd (K
-          (list_update (MAP (\n. n + 2) save_regs) (MAP wordLang_Word
-            vals) (wordSem_state_locals t1))) t1)`,
+          (list_update (MAP (\n. n + 2) save_regs) (MAP word_Word vals)
+            (wordSem_state_locals t1))) t1)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -572,19 +569,19 @@ let list_store_FUPDATE = prove
  (`!save_regs st ys.
      ~(MEM h save_regs) /\ h < (25) /\
      ALL (\n. n < (25)) save_regs ==>
-     list_store save_regs ys (st |+ (Temp (n2w h),wordLang_Word v)) =
-     list_store save_regs ys st |+ (Temp (n2w h),wordLang_Word v)`,
+     list_store save_regs ys (st |+ (Temp (n2w h),word_Word v)) =
+     list_store save_regs ys st |+ (Temp (n2w h),word_Word v)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_SaveRegs = prove
  (`!save_regs t7 vals.
      ALL2 (\n v. sptree_lookup (n + 2) (wordSem_state_locals t7) = SOME
-       (wordLang_Word v)) save_regs vals /\
+       (word_Word v)) save_regs vals /\
      ALL_DISTINCT save_regs /\ ALL (\n. n < (25)) save_regs ==>
      wordSem_evaluate (SaveRegs save_regs,t7) =
        (NONE,wordSem_state_store_fupd (K (list_store save_regs (MAP
-         wordLang_Word vals) (wordSem_state_store t7))) t7)`,
+         word_Word vals) (wordSem_state_store t7))) t7)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -655,11 +652,11 @@ let word_bignumProof_compile_thm = prove
                   word_bignum_compile n l i cs body = (p1,l1,i1,cs1) /\
                   0 < i /\ syntax_ok_aux body /\ code_subset cs1 cs2 /\
                   sptree_lookup n (wordSem_state_code t1) = SOME
-                    (1,word_bignum_Seq p1 (wordLang_Return 0 [0])))) /\
+                    (1,word_bignum_Seq p1 (word_Return 0 [0])))) /\
         (!body. prog = word_bignum_LoopBody body ==>
-                p9 = wordLang_Return 0 [0] /\
+                p9 = word_Return 0 [0] /\
                 sptree_lookup n (wordSem_state_code t1) = SOME
-                  (1,word_bignum_Seq p1 (wordLang_Return 0 [0]))) /\
+                  (1,word_bignum_Seq p1 (word_Return 0 [0]))) /\
         wordSem_get_var 0 t1 = SOME ret_val /\ good_dimindex (:'a) ==>
         (?t2 res.
           (wordSem_evaluate (word_bignum_Seq p1 p9,t1) = res) /\
@@ -669,7 +666,7 @@ let word_bignumProof_compile_thm = prove
                      wordSem_get_var 0 t2 = SOME ret_val /\
                      word_bignumProof_state_rel s t2 cs2 t0 frame
                        /\ wordSem_state_code t2 = wordSem_state_code t1
-          | INL s -> res = wordSem_evaluate (wordLang_Call NONE (SOME n) [0]
+          | INL s -> res = wordSem_evaluate (word_Call NONE (SOME n) [0]
             NONE,t2) /\
                      0 < i1 /\ wordSem_state_stack
                      t2 = wordSem_state_stack t1 /\
@@ -686,7 +683,6 @@ let good_code_def = new_definition
          word_bignum_compile n 2 1 cs1 prog = (p2,l2',i2,cs2)
            /\ code_subset cs2 cs3))`;;
 
-let _ = size_thms "mini";;
 (* [local] *)
 let compile_LESS_mini_size = prove
  (`!k l1 l2 yy5 code xx1 xx2 xx3 xx5.
@@ -846,11 +842,11 @@ let Corr_Div = prove
 let Corr_If = prove
  (`Corr p1 s f1 q1 /\ Corr p2 s f2 q2 ==>
    Corr (word_bignum_If c r ri p1 p2) s
-     (if wordSem_word_cmp c (eval_exp s (wordLang_Var r)) (eval_ri s ri)
-       then f1 else f2)
+     (if wordSem_word_cmp c (eval_exp s (word_Var r)) (eval_ri s ri) then f1
+       else f2)
      (r IN FDOM (word_bignumProof_state_regs s) /\ eval_ri_pre s ri /\
-      (if wordSem_word_cmp c (eval_exp s (wordLang_Var r)) (eval_ri s ri)
-        then q1 else q2))`,
+      (if wordSem_word_cmp c (eval_exp s (word_Var r)) (eval_ri s ri) then
+        q1 else q2))`,
   CHEAT_TAC);;
 
 let loop_app_def = new_definition

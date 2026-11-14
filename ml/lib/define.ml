@@ -2228,9 +2228,27 @@ let parse_datatype_spec s =
          | _ -> failwith "parse_datatype_spec")
       parts;;
 
+(* the size functions of a datatype are made where the type is,
+   which is the natural place for them: a theorem or a measure
+   that names one (flatLang's exp6_size_APPEND, right after the
+   datatype) comes before any definition that would force it.
+   size_thms is defined below, so it is reached through a
+   reference *)
+
+let size_thms_fwd = ref ((fun (_:string) -> ()):string->unit);;
+
 let define_datatype spec =
   let ith,rth = define_type_raw (parse_datatype_spec spec) in
   register_rec_thm rth;
+  (try
+     let _,bod = strip_forall(concl rth) in
+     let fns,_ = strip_exists bod in
+     do_list
+       (fun fn ->
+          let ty,_ = dest_fun_ty(type_of fn) in
+          if is_type ty then !size_thms_fwd (fst(dest_type ty)))
+       (if fns = [] then [] else [hd fns])
+   with Failure _ -> ());
   ith,rth;;
 
 (* the recursion theorems of the types that HOL Light defines itself *)
@@ -2589,6 +2607,10 @@ let size_thms tyname =
      function in ml/lib/hol4.ml, and nothing to define here *)
   try let a,b = assoc tyname (!the_size_thms) in a @ b
   with Failure _ -> [];;
+
+(* and this is what define_datatype above makes them with *)
+
+size_thms_fwd := (fun s -> ignore (size_thms s : thm list));;
 
 (* The definition functions that the port uses.                       *)
 (* ------------------------------------------------------------------ *)

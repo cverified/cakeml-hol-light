@@ -79,18 +79,18 @@ add_simp assert_T;;
 
 let asm_fetch_aux_no_label = prove
  (`!pc' code.
-   asm_fetch_aux pc' code = SOME (labLang_Label l1 l2 x) ==> F`,
+   asm_fetch_aux pc' code = SOME (lab_Label l1 l2 x) ==> F`,
   CHEAT_TAC);;
 
 let dest_to_loc_def = new_definition
   `dest_to_loc regs' dest =
      match dest with INL p -> p | INR r -> (match FAPPLY regs' r with
-       wordLang_Loc loc _ -> loc)`;;
+       word_Loc loc _ -> loc)`;;
 
 let dest_to_loc'_def = new_definition
   `dest_to_loc' regs' dest =
-     match dest with INL p -> p | INR r -> (match regs' r with
-       wordLang_Loc loc _ -> loc)`;;
+     match dest with INL p -> p | INR r -> (match regs' r with word_Loc
+       loc _ -> loc)`;;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -107,7 +107,7 @@ let not_is_Label_compile_jump = prove
 add_simp not_is_Label_compile_jump;;
 
 let word_cmp_not_NONE = prove
- (`~(wordSem_word_cmp cmp (wordLang_Word w1) (wordLang_Word w2) = NONE)`,
+ (`~(wordSem_word_cmp cmp (word_Word w1) (word_Word w2) = NONE)`,
   CHEAT_TAC);;
 add_simp word_cmp_not_NONE;;
 
@@ -129,8 +129,8 @@ let stack_to_labProof_code_installed_def,stack_to_labProof_code_installed_ind =
   `(stack_to_labProof_code_installed n [] code = T) /\
    (stack_to_labProof_code_installed n (CONS x xs) code <=>
        (if is_Label x then
-         (match x with labLang_Label l1 l2 _ -> loc_to_pc l1 l2 code = SOME
-             n) /\
+         (match x with lab_Label l1 l2 _ -> loc_to_pc l1 l2 code = SOME n)
+             /\
          stack_to_labProof_code_installed n xs code
        else asm_fetch_aux n code = SOME x /\
          stack_to_labProof_code_installed (n + 1) xs code))`;;
@@ -285,8 +285,8 @@ let labs_correct_def,labs_correct_ind = define_rec
   `(labs_correct n [] code <=> T) /\
    (labs_correct n (CONS x xs) code <=>
          (if is_Label x then labs_correct n xs code /\
-           (match x with labLang_Label l1 l2 v2 -> loc_to_pc l1 l2 code =
-               SOME n
+           (match x with lab_Label l1 l2 v2 -> loc_to_pc l1 l2 code = SOME
+               n
             | _ -> T)
          else labs_correct (n + 1) xs code))`;;
 
@@ -465,8 +465,8 @@ let set_var_upd_reg = prove
 
 let set_var_Word_upd_reg = prove
  (`stack_to_labProof_state_rel s t ==>
-   stack_to_labProof_state_rel (stackSem_set_var a (wordLang_Word b) s)
-     (labSem_upd_reg a (wordLang_Word b) t)`,
+   stack_to_labProof_state_rel (stackSem_set_var a (word_Word b) s)
+     (labSem_upd_reg a (word_Word b) t)`,
   CHEAT_TAC);;
 add_simp set_var_Word_upd_reg;;
 
@@ -534,8 +534,8 @@ let result_view_INDUCT,result_view_RECURSION = define_datatype
 let result_view_def = new_definition
   `result_view x1 l cs bs =
      match x1 with
-       stackSem_Result (wordLang_Loc n1 n2) -> Vloc n1 n2
-     | stackSem_Exception (wordLang_Loc n1 n2) -> Vloc n1 n2
+       stackSem_Result (word_Loc n1 n2) -> Vloc n1 n2
+     | stackSem_Exception (word_Loc n1 n2) -> Vloc n1 n2
      | targetSem_TimeOut -> Vtimeout
      | stackSem_Continue n -> Vcont l (find_lab n cs)
      | stackSem_Break n -> Vloc l (find_lab n bs)
@@ -545,8 +545,8 @@ add_simp result_view_def;;
 let halt_word_view_def = new_definition
   `halt_word_view x1' =
      match x1' with
-       wordLang_Word (n2w 0) -> targetSem_Halt ffi_Success
-     | wordLang_Word _ -> targetSem_Halt ffi_Resource_limit_hit
+       word_Word (n2w 0) -> targetSem_Halt ffi_Success
+     | word_Word _ -> targetSem_Halt ffi_Resource_limit_hit
      | _ -> targetSem_Error`;;
 add_simp halt_word_view_def;;
 
@@ -639,8 +639,8 @@ let halt_assum_def = new_definition
     (!(s:('a,'c,'ffi)stackSem_state).
       subspt code (stackSem_state_code s) /\ ~(stackSem_state_clock s = 0)
         ==>
-      (?t. stackSem_evaluate (stackLang_Call NONE (INL 1) NONE,s) = (SOME
-        (targetSem_Halt (wordLang_Word (n2w 0))),t) /\ stackSem_state_ffi
+      (?t. stackSem_evaluate (stack_Call NONE (INL 1) NONE,s) = (SOME
+        (targetSem_Halt (word_Word (n2w 0))),t) /\ stackSem_state_ffi
           t = stackSem_state_ffi s /\ stackSem_state_clock t =
             stackSem_state_clock s - 1))`;;
 
@@ -718,30 +718,30 @@ let full_make_init_compile = prove
 let memory_assumption_def = new_definition
   `memory_assumption rnames (bitmaps:('a word) list) data_sp t =
      (?ptr2 ptr3 ptr4 bitmap_ptr.
-       (\r s. labSem_state_regs s r) (tlookup rnames 2) t = wordLang_Word
-         ptr2 /\
-       (\r s. labSem_state_regs s r) (tlookup rnames 3) t = wordLang_Word
-         ptr3 /\
-       (\r s. labSem_state_regs s r) (tlookup rnames 4) t = wordLang_Word
-         ptr4 /\ labSem_state_mem
-       t ptr2 = wordLang_Word bitmap_ptr /\ labSem_state_mem
+       (\r s. labSem_state_regs s r) (tlookup rnames 2) t = word_Word ptr2
+         /\
+       (\r s. labSem_state_regs s r) (tlookup rnames 3) t = word_Word ptr3
+         /\
+       (\r s. labSem_state_regs s r) (tlookup rnames 4) t = word_Word ptr4
+         /\ labSem_state_mem
+       t ptr2 = word_Word bitmap_ptr /\ labSem_state_mem
        t (ptr2 + bytes_in_word) =
-           wordLang_Word (bitmap_ptr + bytes_in_word * n2w (LENGTH bitmaps))
+           word_Word (bitmap_ptr + bytes_in_word * n2w (LENGTH bitmaps))
              /\ labSem_state_mem
        t (ptr2 + (n2w 2) * bytes_in_word) =
-           wordLang_Word (bitmap_ptr + bytes_in_word * n2w data_sp +
+           word_Word (bitmap_ptr + bytes_in_word * n2w data_sp +
                  bytes_in_word * n2w (LENGTH bitmaps)) /\ labSem_state_mem
-       t (ptr2 + (n2w 3) * bytes_in_word) = wordLang_Word (buffer_position
+       t (ptr2 + (n2w 3) * bytes_in_word) = word_Word (buffer_position
          (labSem_state_code_buffer t)) /\ labSem_state_mem
        t (ptr2 + (n2w 4) * bytes_in_word) =
-           wordLang_Word (buffer_position (labSem_state_code_buffer t) + n2w
+           word_Word (buffer_position (labSem_state_code_buffer t) + n2w
              (buffer_space_left (labSem_state_code_buffer t))) /\ buffer_buffer
              (labSem_state_code_buffer
        t) = [] /\
        ptr2 <=+ ptr4 /\ byte_aligned ptr2 /\
        byte_aligned ptr4 /\ byte_aligned bitmap_ptr /\
        (n2w 1024) * bytes_in_word <=+ ptr4 - ptr2 /\
-      (word_to_stack_word_list bitmap_ptr (MAP wordLang_Word bitmaps) *
+      (word_to_stack_word_list bitmap_ptr (MAP word_Word bitmaps) *
        word_list_exists (bitmap_ptr + bytes_in_word * n2w (LENGTH bitmaps))
          data_sp *
        word_list_exists ptr2
@@ -946,7 +946,7 @@ let IMP_init_state_ok = prove
         (post_alloc_conventions kkk o SND o SND) progs /\
       ALL (flat_exp_conventions o SND o SND) progs /\
       ALL ((\y. ~(raise_stub_location = y)) o FST) progs /\
-      ALL ((\y. ~(wordLang_store_consts_stub_location = y)) o FST) progs /\
+      ALL ((\y. ~(word_store_consts_stub_location = y)) o FST) progs /\
       (n = 0 ==> bm0 = LENGTH bitmaps)) (word_oracle n)) /\
    stack_oracle =
    (\n.
@@ -969,18 +969,17 @@ let full_make_init_has_fp_ops = prove
   CHEAT_TAC);;
 add_simp full_make_init_has_fp_ops;;
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let complex_get_code_labels_def,complex_get_code_labels_ind = define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
+  `MEASURE (\x0. stack_prog_size (\x. 0) x0)`
   `complex_get_code_labels x1''' =
      match x1''' with
-       stackLang_Seq p1 p2 -> complex_get_code_labels p1 UNION
+       stack_Seq p1 p2 -> complex_get_code_labels p1 UNION
          complex_get_code_labels p2
-     | stackLang_If _ _ _ p1 p2 -> complex_get_code_labels p1 UNION
+     | stack_If _ _ _ p1 p2 -> complex_get_code_labels p1 UNION
        complex_get_code_labels p2
-     | stackLang_Call ret dest handler ->
+     | stack_Call ret dest handler ->
         (match dest with INL x -> {(x,0)} | _ -> {}) UNION
         (match ret with NONE -> {}
          | SOME (r,_,l1,l2) -> (l1,l2) INSERT (complex_get_code_labels r
@@ -988,10 +987,10 @@ let complex_get_code_labels_def,complex_get_code_labels_ind = define_wf
              (match handler with NONE -> {}
               | SOME (r,l1,l2) -> (l1,l2) INSERT complex_get_code_labels
                 r)))
-     | stackLang_Loop p -> complex_get_code_labels p
-     | stackLang_LocValue i l1 l2 -> {(l1,l2)}
-     | stackLang_RawCall l -> {(l,1)}
-     | stackLang_JumpLower n m l -> {(l,0)}
+     | stack_Loop p -> complex_get_code_labels p
+     | stack_LocValue i l1 l2 -> {(l1,l2)}
+     | stack_RawCall l -> {(l,1)}
+     | stack_JumpLower n m l -> {(l,0)}
      | _ -> {}`;;
 add_simp complex_get_code_labels_def;;
 
@@ -1411,14 +1410,14 @@ let stack_names_compile_no_shmemop = prove
 let flatten_no_share_mem_inst = prove
  (`!t p n m cs bs.
        no_shmemop p ==>
-       ALL (\ln. !op re a inst' len. ~(ln = labLang_Asm (ShareMem op re a)
-         inst' len))
+       ALL (\ln. !op re a inst' len. ~(ln = lab_Asm (ShareMem op re a) inst'
+         len))
              (append (FST (stack_to_lab_flatten t p n m cs bs)))`,
   CHEAT_TAC);;
 
 let asm_fetch_aux_no_share_mem_inst_CONS = prove
  (`!xs.
-   ALL (\ln. !op re a inst' len. ~(ln = labLang_Asm (ShareMem op re a) inst'
+   ALL (\ln. !op re a inst' len. ~(ln = lab_Asm (ShareMem op re a) inst'
      len)) xs /\
    no_share_mem_inst ls ==>
    no_share_mem_inst (CONS (Section k xs) ls)`,
@@ -1537,15 +1536,13 @@ let stack_names_compile_no_install = prove
 let flatten_no_install = prove
  (`!t p n m cs bs.
        stackProps_no_install p ==>
-       ALL (\ln. !w bytes l. ~(ln = labLang_LabAsm labLang_Install w bytes
-         l))
+       ALL (\ln. !w bytes l. ~(ln = lab_LabAsm lab_Install w bytes l))
              (append (FST (stack_to_lab_flatten t p n m cs bs)))`,
   CHEAT_TAC);;
 
 let asm_fetch_aux_no_install_CONS = prove
  (`!xs.
-   ALL (\ln. !w bytes l. ~(ln = labLang_LabAsm labLang_Install w bytes l))
-     xs /\
+   ALL (\ln. !w bytes l. ~(ln = lab_LabAsm lab_Install w bytes l)) xs /\
    stackProps_no_install ls ==>
    stackProps_no_install (CONS (Section k xs) ls)`,
   CHEAT_TAC);;

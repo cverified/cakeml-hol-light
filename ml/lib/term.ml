@@ -31,7 +31,6 @@ let term_CASE = new_recursive_definition term_RECURSION
    (term_CASE (term_Pair t1 t2) vf pf cf = pf t1 t2) /\
    (term_CASE (term_Const c) vf pf cf = cf c)`;;
 
-let _ = size_thms "term";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let vars_def,vars_ind = define_wf

@@ -25,15 +25,14 @@ let _ = cake_theory "bvl_jump"
 let JumpList_def,JumpList_ind = define_guess_cheat
   `(JumpList n xs =
       let l = LENGTH xs in
-        if l = 0 then bvl_Op (closLang_IntOp (closLang_Const (&0))) [] else
-          if l = 1 then HD xs else let k = l DIV 2 in
+        if l = 0 then bvl_Op (clos_IntOp (clos_Const (&0))) [] else if l = 1
+          then HD xs else let k = l DIV 2 in
           let ys = TAKE k xs in
           let zs = DROP k xs in
           let lt = (if n + l < 1000000 /\ n + k < 1000000 then bvl_Op
-            (closLang_IntOp (closLang_LessConstSmall (n + k))) [bvl_Var 0]
-                    else bvl_Op (closLang_IntOp closLang_Less) [bvl_Op
-                      (closLang_IntOp (closLang_Const (&(n + k)))) []; bvl_Var
-                      0]) in
+            (clos_IntOp (clos_LessConstSmall (n + k))) [bvl_Var 0]
+                    else bvl_Op (clos_IntOp clos_Less) [bvl_Op (clos_IntOp
+                      (clos_Const (&(n + k)))) []; bvl_Var 0]) in
             bvl_If lt (JumpList n ys) (JumpList (n + k) zs))`;;
 
 let jump_def = new_definition

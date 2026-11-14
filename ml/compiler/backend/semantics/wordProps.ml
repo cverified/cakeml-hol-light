@@ -68,7 +68,7 @@ let _ = hide_overloads
    "data_buffer","data_buffer"];;
 
 (* HOL4 wordPropsScript.sml:10: an overload that the source brings to the
-   front: Set, written out as wordLang_Set *)
+   front: Set, written out as word_Set *)
 
 (*
 Main lemmas:
@@ -1900,7 +1900,6 @@ let s_frame_val_eq_def2 = prove
         <=> MAP SND ls = MAP SND ls' /\ y = y' /\ n = n')`,
   CHEAT_TAC);;
 
-let _ = size_thms "stack_frame";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let s_val_eq_def,s_val_eq_ind = define_wf
@@ -2420,16 +2419,16 @@ let locals_rel_evaluate_thm = prove
  (`!prog st res rst loc temp.
      wordSem_evaluate (prog,st) = (res,rst) /\ ~(res = SOME wordSem_Error)
        /\
-     wordLang_every_var (\x. x < temp) prog /\
+     word_every_var (\x. x < temp) prog /\
      locals_rel temp (wordSem_state_locals st) loc ==>
      (?loc'.
        wordSem_evaluate (prog,wordSem_state_locals_fupd (K loc) st) =
          (res,wordSem_state_locals_fupd (K loc') rst) /\
        (match res with NONE -> locals_rel temp (wordSem_state_locals rst)
          loc'
-       | SOME (wordLang_Break _) -> locals_rel temp (wordSem_state_locals
-         rst) loc'
-       | SOME (wordLang_Continue _) -> locals_rel temp (wordSem_state_locals
+       | SOME (word_Break _) -> locals_rel temp (wordSem_state_locals rst)
+         loc'
+       | SOME (word_Continue _) -> locals_rel temp (wordSem_state_locals
          rst) loc'
        | SOME _ -> wordSem_state_locals rst = loc'))`,
   CHEAT_TAC);;
@@ -2723,7 +2722,7 @@ let env_to_list_ALL_DISTINCT_FST = prove
   CHEAT_TAC);;
 
 let no_alloc_code_def = new_definition
-  `no_alloc_code (code:(num#'a wordLang_prog) spt) <=>
+  `no_alloc_code (code:(num#'a word_prog) spt) <=>
    (!k n p. sptree_lookup k code = SOME (n,p) ==> no_alloc p)`;;
 
 let no_alloc_find_code = prove
@@ -2734,7 +2733,7 @@ let no_alloc_find_code = prove
   CHEAT_TAC);;
 
 let no_install_code_def = new_definition
-  `no_install_code (code:(num#'a wordLang_prog) spt) <=>
+  `no_install_code (code:(num#'a word_prog) spt) <=>
        (!k n p. sptree_lookup k code = SOME (n,p) ==>
          wordConvs_no_install p)`;;
 
@@ -2753,12 +2752,12 @@ let no_install_evaluate_const_code = prove
 
 let get_code_labels_not_created = prove
  (`!p x. (x IN wordConvs_get_code_labels p) <=>
-   (~(not_created_subprogs (\sp. ~(sp = (wordLang_Call NONE (SOME x) []
-     NONE)) /\ ~(sp = wordLang_LocValue 0 x)) p))`,
+   (~(not_created_subprogs (\sp. ~(sp = (word_Call NONE (SOME x) [] NONE))
+     /\ ~(sp = word_LocValue 0 x)) p))`,
   CHEAT_TAC);;
 
 let no_mt_code_def = new_definition
-  `no_mt_code (code:(num#'a wordLang_prog) spt) <=>
+  `no_mt_code (code:(num#'a word_prog) spt) <=>
    (!k n p. sptree_lookup k code = SOME (n,p) ==> no_mt p)`;;
 
 let no_mt_find_code = prove
@@ -2844,8 +2843,8 @@ let permute_swap_lemma3 = prove
   CHEAT_TAC);;
 
 let word_cmp_Word_Word = prove
- (`wordSem_word_cmp cmp (wordLang_Word c) (wordLang_Word c') = SOME
-  (wordSem_word_cmp cmp c c')`,
+ (`wordSem_word_cmp cmp (word_Word c) (word_Word c') = SOME (wordSem_word_cmp
+  cmp c c')`,
   CHEAT_TAC);;
 add_simp word_cmp_Word_Word;;
 

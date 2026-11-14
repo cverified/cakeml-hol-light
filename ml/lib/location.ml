@@ -58,7 +58,6 @@ add_simp locsle_def;;
 let merge_locs_def = define_general
   `merge_locs (Locs l1 l2) (Locs l3 l4) = Locs l1 l4`;;
 
-let _ = size_thms "locs";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let merge_list_locs_def,merge_list_locs_ind = define_wf

@@ -35,8 +35,8 @@ let canonical_wrapper_def = new_definition
   `canonical_wrapper name arity x3 =
      match x3 with
        bvi_LetCall rets ticks worker args
-           (bvi_Op (closLang_BlockOp (closLang_Cons tag)) rvs) -> ~(worker =
-             name) /\
+           (bvi_Op (clos_BlockOp (clos_Cons tag)) rvs) -> ~(worker = name)
+             /\
         args = list_of_seq bvi_Var arity /\
         rvs = REVERSE (list_of_seq bvi_Var rets)
      | _ -> F`;;
@@ -47,7 +47,6 @@ let wrapper_ok_def = new_definition
 (* [cs] is a cache of code-table entries.  The correctness invariant
    needed for a hit is that the cached label, arity, and body correspond
    to the code table (up to the expression relation used by the pass). *)
-let _ = size_thms "bvi_exp";;
 (* the clauses in two quotations: dest is (num option) and num; xs is (exp
    list) and (_)list, which one quotation cannot typecheck *)
 let inline_exp_def,inline_exp_ind = assume_definition_rec_clauses
@@ -137,50 +136,45 @@ let bvi_inline_compile_prog_def = new_definition
 let canonical_four_result_wrapper = prove
  (`wrapper_ok 10 3
      (bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-       (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (REVERSE (list_of_seq
-         bvi_Var 4))))`,
+       (bvi_Op (clos_BlockOp (clos_Cons 7)) (REVERSE (list_of_seq bvi_Var
+         4))))`,
   (REWRITE_TAC[wrapper_ok_def; canonical_wrapper_def] THEN
    CONV_TAC NUM_REDUCE_CONV));;
 
 let malformed_wrappers_rejected = prove
  (`~(wrapper_ok 10 3
        (bvi_LetCall 4 0 10 (list_of_seq bvi_Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq bvi_Var
-           4)))) /\
+         (bvi_Op (clos_BlockOp (clos_Cons 7)) (list_of_seq bvi_Var 4)))) /\
    ~(wrapper_ok 10 3
        (bvi_LetCall 4 0 11 [bvi_Var 0; bvi_Var 2; bvi_Var 1]
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq bvi_Var
-           4)))) /\
+         (bvi_Op (clos_BlockOp (clos_Cons 7)) (list_of_seq bvi_Var 4)))) /\
    ~(wrapper_ok 10 3
        (bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) [bvi_Var 0; bvi_Var 1;
-           bvi_Var 2]))) /\
+         (bvi_Op (clos_BlockOp (clos_Cons 7)) [bvi_Var 0; bvi_Var 1; bvi_Var
+           2]))) /\
    ~(wrapper_ok 10 3 (bvi_Return (list_of_seq bvi_Var 3)))`,
   CHEAT_TAC);;
 
 let inline_boundary_examples = prove
  (`inline_exp (sptree_insert 10 (3,
        bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq bvi_Var
-           4))) LN) (bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5; bvi_Var 6]
-           NONE) =
+         (bvi_Op (clos_BlockOp (clos_Cons 7)) (list_of_seq bvi_Var 4))) LN)
+           (bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5; bvi_Var 6] NONE) =
        bvi_Let [bvi_Var 4; bvi_Var 5; bvi_Var 6]
          (bvi_mk_tick 3
            (bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-             (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq
-               bvi_Var 4)))) /\
+             (bvi_Op (clos_BlockOp (clos_Cons 7)) (list_of_seq bvi_Var 4))))
+               /\
    inline_exp (sptree_insert 10 (3,
        bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq bvi_Var
-           4))) LN)
+         (bvi_Op (clos_BlockOp (clos_Cons 7)) (list_of_seq bvi_Var 4))) LN)
      (bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5; bvi_Var 6] (SOME (bvi_Var
        0))) =
        bvi_Call 2 (SOME 10) [bvi_Var 4; bvi_Var 5; bvi_Var 6] (SOME (bvi_Var
          0)) /\
    inline_exp (sptree_insert 10 (3,
        bvi_LetCall 4 0 11 (list_of_seq bvi_Var 3)
-         (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (list_of_seq bvi_Var
-           4))) LN)
+         (bvi_Op (clos_BlockOp (clos_Cons 7)) (list_of_seq bvi_Var 4))) LN)
      (bvi_LetCall 1 2 10 [bvi_Var 4; bvi_Var 5; bvi_Var 6] (bvi_Return
        [bvi_Var 0])) =
        bvi_LetCall 1 2 10 [bvi_Var 4; bvi_Var 5; bvi_Var 6] (bvi_Return

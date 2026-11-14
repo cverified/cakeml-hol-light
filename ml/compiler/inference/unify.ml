@@ -765,7 +765,6 @@ let kclkont_INDUCT,kclkont_RECURSION = define_datatype
    | UVk num
    | CONSk (infer_t list) num";;
 
-let _ = size_thms "kclkont";;
 (* the clauses in three quotations: n is num and type_ident, which one
    quotation cannot typecheck *)
 (* the termination relation is not in the HOL4 source; this one is

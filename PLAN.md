@@ -635,13 +635,13 @@ has `Var`, `Call`, `exp`, `state`, ...).  Therefore:
 > A CakeML name is kept as it is when it is unique in the
 > whole port (and does not clash with HOL Light); otherwise it
 > is prefixed with the name of its theory and an underscore
-> (`closLang_Var`, `wordSem_state`).
+> (`clos_Var`, `wordSem_state`).
 
 A name that _several theories of the port_ define is an
 overloaded name in HOL4, which resolves it by the type.  HOL
 Light can do that too, so such a name is declared as an
 overload of all its constants (`hol4_overload "Var"
-"closLang_Var"`) and the sources of the port use it exactly
+"clos_Var"`) and the sources of the port use it exactly
 where the CakeML sources use it.  A name that clashes with a
 HOL Light name is not overloaded (HOL Light's own constant
 would be in the way) but written out (`set_sep_one`).
@@ -798,7 +798,7 @@ are the two shapes of that:
   strategy or a termination measure, not more seconds.  The
   measure is usually not the problem: `clos_fvs$remove_fvs` is
   made with the measure that `candidate_measures` gives it
-  (`MEASURE (\(x0,x1). closLang_exp_size1 x1)`), but the
+  (`MEASURE (\(x0,x1). clos_exp_size1 x1)`), but the
   existence proof of HOL Light takes seven minutes over its
   thirteen clauses.  As one clause with a `match` it takes ten
   minutes and does not get there at all.  What the twenty or so

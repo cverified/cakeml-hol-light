@@ -35,51 +35,45 @@ let evaluate_MakeBool = prove
 
 let dest_Op_thm = prove
  (`dest_Op f x = SOME (i,ys) <=>
-   (?tra y. x = closLang_Op tra y ys /\ f y = SOME i)`,
+   (?tra y. x = clos_Op tra y ys /\ f y = SOME i)`,
   CHEAT_TAC);;
 
 let dest_Op_Nil_thm = prove
  (`dest_Op_Nil f x = SOME i <=>
-   (?tra y. x = closLang_Op tra y [] /\ f y = SOME i)`,
+   (?tra y. x = clos_Op tra y [] /\ f y = SOME i)`,
   CHEAT_TAC);;
 
 let dest_Const_thm = prove
- (`dest_Const x = SOME i <=> x = closLang_IntOp (closLang_Const i)`,
+ (`dest_Const x = SOME i <=> x = clos_IntOp (clos_Const i)`,
   CHEAT_TAC);;
 
 let dest_Constant_thm = prove
  (`clos_op_dest_Constant x = SOME i <=>
    (?s w j.
-     x = closLang_BlockOp (closLang_Constant (ConstStr s)) /\ i =
-       closLang_Str s \/
-     x = closLang_BlockOp (closLang_Constant (ConstInt j)) /\ i =
-       closLang_Int j \/
-     x = closLang_BlockOp (closLang_Constant (ConstWord64 w)) /\ i =
-       closLang_W64 w)`,
+     x = clos_BlockOp (clos_Constant (ConstStr s)) /\ i = clos_Str s \/
+     x = clos_BlockOp (clos_Constant (ConstInt j)) /\ i = clos_Int j \/
+     x = clos_BlockOp (clos_Constant (ConstWord64 w)) /\ i = clos_W64 w)`,
   CHEAT_TAC);;
 
 let dest_Cons_thm = prove
- (`clos_op_dest_Cons x = SOME i <=> x = closLang_BlockOp (closLang_Cons i)`,
+ (`clos_op_dest_Cons x = SOME i <=> x = clos_BlockOp (clos_Cons i)`,
   CHEAT_TAC);;
 
 let eq_direct_thm = prove
  (`!x y env s res s1 t z.
-     closSem_evaluate ([closLang_Op t (closLang_BlockOp closLang_Equal) [x;
-       y]],env,s) = (res,s1) /\ ~(res = Rerr (Rabort Rtype_error)) /\
+     closSem_evaluate ([clos_Op t (clos_BlockOp clos_Equal) [x; y]],env,s) =
+       (res,s1) /\ ~(res = Rerr (Rabort Rtype_error)) /\
      eq_direct x y = SOME z ==>
      closSem_evaluate ([z],env,s) = (res,s1)`,
   CHEAT_TAC);;
 
 let dont_lift_thm = prove
  (`dont_lift x <=>
-   (?t i. x = closLang_Op t (closLang_IntOp (closLang_Const i)) []) \/
-   (?t n. x = closLang_Op t (closLang_BlockOp (closLang_Cons n)) []) \/
-   (?t s. x = closLang_Op t (closLang_BlockOp (closLang_Constant (ConstStr
-     s))) []) \/
-   (?t i. x = closLang_Op t (closLang_BlockOp (closLang_Constant (ConstInt
-     i))) []) \/
-   (?t w. x = closLang_Op t (closLang_BlockOp (closLang_Constant
-     (ConstWord64 w))) [])`,
+   (?t i. x = clos_Op t (clos_IntOp (clos_Const i)) []) \/
+   (?t n. x = clos_Op t (clos_BlockOp (clos_Cons n)) []) \/
+   (?t s. x = clos_Op t (clos_BlockOp (clos_Constant (ConstStr s))) []) \/
+   (?t i. x = clos_Op t (clos_BlockOp (clos_Constant (ConstInt i))) []) \/
+   (?t w. x = clos_Op t (clos_BlockOp (clos_Constant (ConstWord64 w))) [])`,
   CHEAT_TAC);;
 
 let dont_lift_pure = prove
@@ -133,36 +127,35 @@ let lift_exps_thm = prove
 let lift_exps_Let = prove
  (`lift_exps [x] 0 [] = ([y],n,binds) /\
    closSem_evaluate ([x],env,s1) = (res,s2) ==>
-   closSem_evaluate ([closLang_Let backend_common_None binds y],env,s1) =
+   closSem_evaluate ([clos_Let backend_common_None binds y],env,s1) =
      (res,s2)`,
   CHEAT_TAC);;
 
 let simple_exp = cake_inductive
-  `(!t i. simple_exp (closLang_Var t i)) /\
+  `(!t i. simple_exp (clos_Var t i)) /\
    (!t x y z. simple_exp x /\ simple_exp y /\ simple_exp z ==> simple_exp
-     (closLang_If t x y z)) /\
-   (!t i. simple_exp (closLang_Op t (closLang_IntOp (closLang_Const i)) []))
-     /\
-   (!t i. simple_exp (closLang_Op t (closLang_BlockOp (closLang_Constant
-     (ConstInt i))) [])) /\
-   (!t i. simple_exp (closLang_Op t (closLang_BlockOp (closLang_Constant
-     (ConstStr i))) [])) /\
-   (!t i. simple_exp (closLang_Op t (closLang_BlockOp (closLang_Constant
-     (ConstWord64 i))) [])) /\
-   (!t i xs. ALL simple_exp xs ==> simple_exp (closLang_Op t
-     (closLang_BlockOp (closLang_Cons i)) xs)) /\
-   (!t i x. simple_exp x ==> simple_exp (closLang_Op t (closLang_BlockOp
-     (closLang_EqualConst (closLang_Int i))) [x])) /\
-   (!t i x. simple_exp x ==> simple_exp (closLang_Op t (closLang_BlockOp
-     (closLang_EqualConst (closLang_Str i))) [x])) /\
-   (!t i x. simple_exp x ==> simple_exp (closLang_Op t (closLang_BlockOp
-     (closLang_EqualConst (closLang_W64 i))) [x])) /\
-   (!t i x. simple_exp x ==> simple_exp (closLang_Op t (closLang_BlockOp
-     (closLang_ElemAt i)) [x])) /\
-   (!t x y. simple_exp x /\ simple_exp y ==> simple_exp (closLang_Op t
-     (closLang_BlockOp closLang_Equal) [x; y])) /\
-   (!t l y x. simple_exp x ==> simple_exp (closLang_Op t
-     (closLang_BlockOp (closLang_TagLenEq l y)) [x]))`;;
+     (clos_If t x y z)) /\
+   (!t i. simple_exp (clos_Op t (clos_IntOp (clos_Const i)) [])) /\
+   (!t i. simple_exp (clos_Op t (clos_BlockOp (clos_Constant (ConstInt i)))
+     [])) /\
+   (!t i. simple_exp (clos_Op t (clos_BlockOp (clos_Constant (ConstStr i)))
+     [])) /\
+   (!t i. simple_exp (clos_Op t (clos_BlockOp (clos_Constant (ConstWord64
+     i))) [])) /\
+   (!t i xs. ALL simple_exp xs ==> simple_exp (clos_Op t (clos_BlockOp
+     (clos_Cons i)) xs)) /\
+   (!t i x. simple_exp x ==> simple_exp (clos_Op t (clos_BlockOp
+     (clos_EqualConst (clos_Int i))) [x])) /\
+   (!t i x. simple_exp x ==> simple_exp (clos_Op t (clos_BlockOp
+     (clos_EqualConst (clos_Str i))) [x])) /\
+   (!t i x. simple_exp x ==> simple_exp (clos_Op t (clos_BlockOp
+     (clos_EqualConst (clos_W64 i))) [x])) /\
+   (!t i x. simple_exp x ==> simple_exp (clos_Op t (clos_BlockOp
+     (clos_ElemAt i)) [x])) /\
+   (!t x y. simple_exp x /\ simple_exp y ==> simple_exp (clos_Op t
+     (clos_BlockOp clos_Equal) [x; y])) /\
+   (!t l y x. simple_exp x ==> simple_exp (clos_Op t (clos_BlockOp
+     (clos_TagLenEq l y)) [x]))`;;
 
 let simple_exp_pure = prove
  (`!x. simple_exp x ==> pure x`,
@@ -223,8 +216,8 @@ let evaluate_EL = prove
   CHEAT_TAC);;
 
 let simpl_exp_Cons_EL = prove
- (`simple_exp (closLang_Op tra (closLang_BlockOp (closLang_Cons n)) xs) /\ i <
-  LENGTH xs ==>
+ (`simple_exp (clos_Op tra (clos_BlockOp (clos_Cons n)) xs) /\ i < LENGTH xs
+  ==>
    simple_exp (EL i xs)`,
   CHEAT_TAC);;
 
@@ -237,7 +230,7 @@ let eq_pure_thm = prove
 
 (* SmartOp_thm *)
 let clos_opProof_SmartOp_thm = prove
- (`closSem_evaluate ([closLang_Op t op xs],env,s) = (res,s1) /\ ~(res = Rerr
+ (`closSem_evaluate ([clos_Op t op xs],env,s) = (res,s1) /\ ~(res = Rerr
   (Rabort Rtype_error)) ==>
    closSem_evaluate ([clos_op_SmartOp t op xs],env,s) = (res,s1)`,
   CHEAT_TAC);;
@@ -246,30 +239,30 @@ let red_rel = cake_inductive
   `((!xs ys t op iop i tag t1 t2 s w.
        red_rel xs ys /\
        MEM op [
-         closLang_IntOp iop;
-         closLang_BlockOp closLang_Equal; closLang_BlockOp (closLang_Cons
-           tag); closLang_BlockOp (closLang_ElemAt t1);
-         closLang_BlockOp (closLang_TagLenEq t1 t2); closLang_BlockOp
-           (closLang_LenEq n); closLang_BlockOp (closLang_TagEq tag);
-         closLang_BlockOp (closLang_EqualConst (closLang_Str s));
-         closLang_BlockOp (closLang_EqualConst (closLang_W64 w));
-         closLang_BlockOp (closLang_EqualConst (closLang_Int i));
-         closLang_BlockOp (closLang_Constant (ConstInt i));
-         closLang_BlockOp (closLang_Constant (ConstStr s));
-         closLang_BlockOp (closLang_Constant (ConstWord64 w))] ==>
-       red_rel [closLang_Op t op xs] ys)) /\
+         clos_IntOp iop;
+         clos_BlockOp clos_Equal; clos_BlockOp (clos_Cons tag); clos_BlockOp
+           (clos_ElemAt t1);
+         clos_BlockOp (clos_TagLenEq t1 t2); clos_BlockOp (clos_LenEq n);
+           clos_BlockOp (clos_TagEq tag);
+         clos_BlockOp (clos_EqualConst (clos_Str s));
+         clos_BlockOp (clos_EqualConst (clos_W64 w));
+         clos_BlockOp (clos_EqualConst (clos_Int i));
+         clos_BlockOp (clos_Constant (ConstInt i));
+         clos_BlockOp (clos_Constant (ConstStr s));
+         clos_BlockOp (clos_Constant (ConstWord64 w))] ==>
+       red_rel [clos_Op t op xs] ys)) /\
    ((red_rel [] [])) /\
    ((!x. red_rel [x] [x])) /\
-   ((!v t. red_rel [closLang_Var t v] [])) /\
+   ((!v t. red_rel [clos_Var t v] [])) /\
    ((!x y zs x1 x2.
        red_rel [x] x1 /\ red_rel (CONS y zs) x2 ==>
        red_rel (CONS x (CONS y zs)) (APPEND x1 x2))) /\
    ((!xs x x1 t.
        red_rel xs x1 /\ red_rel [x] [] ==>
-       red_rel [closLang_Let t xs x] x1)) /\
+       red_rel [clos_Let t xs x] x1)) /\
    ((!x y z x1 x2 x3.
        red_rel [x] x1 /\ red_rel [y] x2 /\ red_rel [z] x3 ==>
-       red_rel [closLang_If t x y z] (APPEND (APPEND x1 x2) x3)))`;;
+       red_rel [clos_If t x y z] (APPEND (APPEND x1 x2) x3)))`;;
 
 (* HOL4 clos_opProofScript.sml:733-734: a theorem that HOL4 states as the
    value of an ML expression: red_rel_nil *)
@@ -329,8 +322,8 @@ let red_rel_refl = prove
   CHEAT_TAC);;
 
 let red_rel_exists = prove
- (`!t op xs. ?ys. red_rel [closLang_Op t op xs] ys /\ red_rel
-  [clos_op_SmartOp t op xs] ys`,
+ (`!t op xs. ?ys. red_rel [clos_Op t op xs] ys /\ red_rel [clos_op_SmartOp t
+  op xs] ys`,
   CHEAT_TAC);;
 
 let red_rel_pure = prove
@@ -348,35 +341,34 @@ let red_rel_esgc_free = prove
   CHEAT_TAC);;
 
 let SmartOp_simp = prove
- (`pure (clos_op_SmartOp t op xs) = pure (closLang_Op t op xs) /\
+ (`pure (clos_op_SmartOp t op xs) = pure (clos_Op t op xs) /\
    closProps_set_globals (clos_op_SmartOp t op xs) = closProps_set_globals
-     (closLang_Op t op xs) /\
+     (clos_Op t op xs) /\
    closProps_esgc_free (clos_op_SmartOp t op xs) = closProps_esgc_free
-     (closLang_Op t op xs)`,
+     (clos_Op t op xs)`,
   CHEAT_TAC);;
 
 let SmartOp_Const = prove
- (`!xs. clos_op_SmartOp t (closLang_IntOp (closLang_Const i)) xs =
-  closLang_Op t (closLang_IntOp (closLang_Const i)) xs`,
+ (`!xs. clos_op_SmartOp t (clos_IntOp (clos_Const i)) xs = clos_Op t
+  (clos_IntOp (clos_Const i)) xs`,
   CHEAT_TAC);;
 
 let SmartOp_Cons = prove
- (`!xs. clos_op_SmartOp t (closLang_BlockOp (closLang_Cons n)) xs =
-  closLang_Op t (closLang_BlockOp (closLang_Cons n)) xs`,
+ (`!xs. clos_op_SmartOp t (clos_BlockOp (clos_Cons n)) xs = clos_Op t
+  (clos_BlockOp (clos_Cons n)) xs`,
   CHEAT_TAC);;
 
 let SmartOp_Install = prove
- (`clos_op_SmartOp t closLang_Install = closLang_Op t closLang_Install`,
+ (`clos_op_SmartOp t clos_Install = clos_Op t clos_Install`,
   CHEAT_TAC);;
 
 let code_locs_SmartOp = prove
  (`LIST_TO_BAG (code_locs [clos_op_SmartOp t op xs]) =
-   LIST_TO_BAG (code_locs [closLang_Op t op xs])`,
+   LIST_TO_BAG (code_locs [clos_Op t op xs])`,
   CHEAT_TAC);;
 
 let every_Fn_SOME_SmartOp = prove
- (`every_Fn_SOME [clos_op_SmartOp t op xs] = every_Fn_SOME [closLang_Op t op
-  xs]`,
+ (`every_Fn_SOME [clos_op_SmartOp t op xs] = every_Fn_SOME [clos_Op t op xs]`,
   CHEAT_TAC);;
 
 let every_Fn_vs_NONE_SmartOp = prove
@@ -384,7 +376,7 @@ let every_Fn_vs_NONE_SmartOp = prove
   CHEAT_TAC);;
 
 let no_Labels_SmartOp = prove
- (`no_Labels (clos_op_SmartOp t op xs) <=> no_Labels (closLang_Op t op xs)`,
+ (`no_Labels (clos_op_SmartOp t op xs) <=> no_Labels (clos_Op t op xs)`,
   CHEAT_TAC);;
 
 let obeys_max_app_SmartOp = prove
@@ -416,7 +408,7 @@ let eq_op_fv = prove
   CHEAT_TAC);;
 
 let fv1_SmartOp = prove
- (`fv1 n (clos_op_SmartOp t op xs) ==> fv1 n (closLang_Op t op xs)`,
+ (`fv1 n (clos_op_SmartOp t op xs) ==> fv1 n (clos_Op t op xs)`,
   CHEAT_TAC);;
 
 (* and the interface *)

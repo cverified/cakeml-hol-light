@@ -297,13 +297,13 @@ let evaluate_inv_clock = prove
   CHEAT_TAC);;
 
 let do_app_code = prove
- (`!op s1 s2. (bviSem_do_app op a s1 = Rval (x0,s2)) /\ ~(op =
-  closLang_Install) ==> (bviSem_state_code s2 = bviSem_state_code s1)`,
+ (`!op s1 s2. (bviSem_do_app op a s1 = Rval (x0,s2)) /\ ~(op = clos_Install)
+  ==> (bviSem_state_code s2 = bviSem_state_code s1)`,
   CHEAT_TAC);;
 
 let do_app_oracle = prove
- (`!op s1 s2. (bviSem_do_app op a s1 = Rval (x0,s2)) /\ ~(op =
-  closLang_Install) ==>
+ (`!op s1 s2. (bviSem_do_app op a s1 = Rval (x0,s2)) /\ ~(op = clos_Install)
+  ==>
     (bviSem_state_compile_oracle s2 = bviSem_state_compile_oracle s1) /\
     (bviSem_state_compile s2 = bviSem_state_compile s1)`,
   CHEAT_TAC);;
@@ -353,7 +353,7 @@ let evaluate_global_mono = prove
 let bviProps_do_app_err = prove
  (`bviSem_do_app op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = closLang_FFI i /\ e = Rabort
+                             (?i x. op = clos_FFI i /\ e = Rabort
                                (Rffi_error x))`,
   CHEAT_TAC);;
 
@@ -365,8 +365,7 @@ let do_app_aux_const = prove
 (* do_app_with_code *)
 let bviProps_do_app_with_code = prove
  (`bviSem_do_app op vs s = Rval (r,s') ==>
-   domain (bviSem_state_code s) SUBSET domain c /\ ~(op = closLang_Install)
-     ==>
+   domain (bviSem_state_code s) SUBSET domain c /\ ~(op = clos_Install) ==>
    bviSem_do_app op vs (bviSem_state_code_fupd (K c) s) = Rval
      (r,bviSem_state_code_fupd (K c) s')`,
   CHEAT_TAC);;
@@ -375,7 +374,7 @@ let bviProps_do_app_with_code = prove
 let bviProps_do_app_with_code_err = prove
  (`bviSem_do_app op vs s = Rerr e ==>
    (domain c SUBSET domain (bviSem_state_code s) \/ ~(e = Rabort
-     Rtype_error)) /\ ~(op = closLang_Install) ==>
+     Rtype_error)) /\ ~(op = clos_Install) ==>
    bviSem_do_app op vs (bviSem_state_code_fupd (K c) s) = Rerr e`,
   CHEAT_TAC);;
 
@@ -563,7 +562,7 @@ let adj_orac_rel_def = new_definition
 
 (* [local] *)
 let do_app_cfg_swap = prove
- (`~(op = closLang_Install) ==>
+ (`~(op = clos_Install) ==>
        ((bviSem_do_app op args s = Rval (value,s1) /\
          domain (bviSem_state_code s) SUBSET domain (bviSem_state_code t)
            ==>
@@ -592,7 +591,7 @@ let do_app_cfg_swap = prove
 (* [local] *)
 let do_app_cfg_swap_Rval = prove
  (`!op args (s) (s1)
-       (t) value. ~(op = closLang_Install) /\ domain (bviSem_state_code s) =
+       (t) value. ~(op = clos_Install) /\ domain (bviSem_state_code s) =
          domain (bviSem_state_code t) /\
      bviSem_do_app op args s = Rval (value,s1) ==>
      bviSem_do_app op args
@@ -608,8 +607,8 @@ let do_app_cfg_swap_Rval = prove
 
 (* [local] *)
 let do_app_cfg_swap_Rerr = prove
- (`!op args (s) (t) error'. ~(op = closLang_Install) /\ domain
-  (bviSem_state_code s) = domain (bviSem_state_code t) /\
+ (`!op args (s) (t) error'. ~(op = clos_Install) /\ domain (bviSem_state_code
+  s) = domain (bviSem_state_code t) /\
      bviSem_do_app op args s = Rerr error' ==>
      bviSem_do_app op args
        (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))

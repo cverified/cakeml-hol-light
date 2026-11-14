@@ -545,7 +545,7 @@ let good_init_state_def = new_definition
      (!a. ?w. asm_state_mem
        t a = get_byte a w (asm_config_big_endian (target_config
          (machine_config_target mc_conf))) /\
-       m (byte_align a) = wordLang_Word w) /\
+       m (byte_align a) = word_Word w) /\
      (
       // code buffer constraints
       !n. n < cbspace ==>
@@ -574,20 +574,19 @@ let installed_def = new_definition
        (n2w 1024) * bytes_in_word <=+ asm_state_regs t r2 - asm_state_regs t
          r1 /\
        DISJOINT heap_stack_dm bitmaps_dm /\
-       m (asm_state_regs t r1) = wordLang_Word bitmap_ptr /\
+       m (asm_state_regs t r1) = word_Word bitmap_ptr /\
        m (asm_state_regs t r1 + bytes_in_word) =
-         wordLang_Word (bitmap_ptr + bytes_in_word * n2w (LENGTH bitmaps))
-           /\
+         word_Word (bitmap_ptr + bytes_in_word * n2w (LENGTH bitmaps)) /\
        m (asm_state_regs t r1 + (n2w 2) * bytes_in_word) =
-         wordLang_Word (bitmap_ptr + bytes_in_word * n2w data_sp +
+         word_Word (bitmap_ptr + bytes_in_word * n2w data_sp +
                bytes_in_word * n2w (LENGTH bitmaps)) /\
        m (asm_state_regs t r1 + (n2w 3) * bytes_in_word) =
-         wordLang_Word (target_get_pc (machine_config_target mc_conf) ms +
-           n2w (LENGTH bytes)) /\
+         word_Word (target_get_pc (machine_config_target mc_conf) ms + n2w
+           (LENGTH bytes)) /\
        m (asm_state_regs t r1 + (n2w 4) * bytes_in_word) =
-         wordLang_Word (target_get_pc (machine_config_target mc_conf) ms +
-           n2w cbspace + n2w (LENGTH bytes)) /\
-       (misc_word_list bitmap_ptr (MAP wordLang_Word bitmaps) *
+         word_Word (target_get_pc (machine_config_target mc_conf) ms + n2w
+           cbspace + n2w (LENGTH bytes)) /\
+       (misc_word_list bitmap_ptr (MAP word_Word bitmaps) *
          word_list_exists (bitmap_ptr + bytes_in_word * n2w (LENGTH
            bitmaps)) data_sp)
         (fun2set (m,byte_aligned INTER bitmaps_dm)) /\

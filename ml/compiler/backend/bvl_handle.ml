@@ -32,8 +32,8 @@ let can_raise_def,can_raise_ind = define_rec
    (can_raise (bvl_Let xs x2) = (can_raise x2 \/ can_raise1 xs)) /\
    (can_raise (bvl_Handle x1 x2) = can_raise x2) /\
    (can_raise (bvl_Raise x1) = T) /\
-   (can_raise (bvl_Op op xs) = (op = closLang_ThunkOp ForceThunk \/
-    can_raise1 xs)) /\
+   (can_raise (bvl_Op op xs) = (op = clos_ThunkOp ForceThunk \/ can_raise1
+    xs)) /\
    (can_raise (bvl_Tick x) = can_raise x) /\
    (can_raise (bvl_Force m n) = T) /\
    (can_raise (bvl_Call t dest xs) = T) /\
@@ -149,7 +149,7 @@ let LetLet_def = new_definition
      let zs = FILTER (\n. IS_SOME (sptree_lookup n fvs)) xs in
      let ys = MAPi (\i x. (x,i)) zs in
      let long_list = list_of_seq (\n. match ALOOKUP ys n with NONE -> bvl_Op
-       (closLang_IntOp (closLang_Const (&0))) []
+       (clos_IntOp (clos_Const (&0))) []
                               | SOME k -> bvl_Var k) env_length in
        bvl_Let (MAP bvl_Var zs) (SmartLet long_list body)`;;
 
@@ -170,7 +170,6 @@ let OptionalLetLet_sing_eq = prove
      (\(d,l,s,nr). ([d],l,s,nr)) (OptionalLetLet_sing e sz lv s lim nr)`,
   CHEAT_TAC);;
 
-let _ = size_thms "bvl_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
@@ -182,9 +181,8 @@ let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
            (APPEND dx dy,mk_Union lx ly,s1 + s2,(nr1 /\ nr2))) /\
    (bvl_handle_compile l n [bvl_Var v] = if v < n then ([bvl_Var v],db_vars_Var
      v,1,T)
-                             else ([bvl_Op (closLang_IntOp
-                                 (closLang_Const (&0)))
-                                 []],db_vars_Empty,1,T)) /\
+                             else ([bvl_Op (clos_IntOp (clos_Const
+                                 (&0))) []],db_vars_Empty,1,T)) /\
    (bvl_handle_compile l n [bvl_If x1 x2 x3] =
          let (x1,l1,s1,nr1) = bvl_handle_compile l n [x1] in
          let (x2,l2,s2,nr2) = bvl_handle_compile l n [x2] in
@@ -216,7 +214,7 @@ let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
            OptionalLetLet (bvl_Raise (HD dx)) n lx (s1 + 1) l F) /\
    (bvl_handle_compile l n [bvl_Op op xs] =
          let (ys,lx,s1,nr1) = bvl_handle_compile l n xs in
-           if op = closLang_ThunkOp ForceThunk then
+           if op = clos_ThunkOp ForceThunk then
              ([bvl_Op op ys],lx,s1 + 1,F)
            else OptionalLetLet (bvl_Op op ys) n lx (s1 + 1) l nr1) /\
    (bvl_handle_compile l n [bvl_Tick x] =
@@ -224,9 +222,8 @@ let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
            ([bvl_Tick (HD y)],lx,s1,nr1)) /\
    (bvl_handle_compile l n [bvl_Force m v] = if v < n then ([(bvl_Force m
      v:bvl_exp)],db_vars_Var v,1,F)
-                              else ([bvl_Op (closLang_IntOp
-                                  (closLang_Const (&0)))
-                                  []],db_vars_Empty,1,T)) /\
+                              else ([bvl_Op (clos_IntOp (clos_Const
+                                  (&0))) []],db_vars_Empty,1,T)) /\
    (bvl_handle_compile l n [bvl_Call t dest xs] =
          let (ys,lx,s1,nr1) = bvl_handle_compile l n xs in
            OptionalLetLet (bvl_Call t dest ys) n lx (s1 + 1) l F)`;;
@@ -236,9 +233,8 @@ let bvl_handle_compile_def,bvl_handle_compile_ind = define_wf
 let bvl_handle_compile_sing_def,bvl_handle_compile_sing_ind = define_rec
   `(bvl_handle_compile_sing l n (bvl_Var v) = if v < n then (bvl_Var
     v,db_vars_Var v,1,T)
-                             else (bvl_Op (closLang_IntOp
-                                 (closLang_Const (&0)))
-                                 [],db_vars_Empty,1,T)) /\
+                             else (bvl_Op (clos_IntOp (clos_Const
+                                 (&0))) [],db_vars_Empty,1,T)) /\
    (bvl_handle_compile_sing l n (bvl_If x1 x2 x3) =
          let (x1,l1,s1,nr1) = bvl_handle_compile_sing l n x1 in
          let (x2,l2,s2,nr2) = bvl_handle_compile_sing l n x2 in
@@ -270,7 +266,7 @@ let bvl_handle_compile_sing_def,bvl_handle_compile_sing_ind = define_rec
            OptionalLetLet_sing (bvl_Raise dx) n lx (s1 + 1) l F) /\
    (bvl_handle_compile_sing l n (bvl_Op op xs) =
          let (ys,lx,s1,nr1) = bvl_handle_compile_list l n xs in
-           if op = closLang_ThunkOp ForceThunk then
+           if op = clos_ThunkOp ForceThunk then
              (bvl_Op op ys,lx,s1 + 1,F)
            else OptionalLetLet_sing (bvl_Op op ys) n lx (s1 + 1) l nr1) /\
    (bvl_handle_compile_sing l n (bvl_Tick x) =
@@ -278,9 +274,8 @@ let bvl_handle_compile_sing_def,bvl_handle_compile_sing_ind = define_rec
            (bvl_Tick y,lx,s1,nr1)) /\
    (bvl_handle_compile_sing l n (bvl_Force m v) = if v < n then ((bvl_Force m
      v:bvl_exp),db_vars_Var v,1,F)
-                              else (bvl_Op (closLang_IntOp
-                                  (closLang_Const (&0)))
-                                  [],db_vars_Empty,1,T)) /\
+                              else (bvl_Op (clos_IntOp (clos_Const
+                                  (&0))) [],db_vars_Empty,1,T)) /\
    (bvl_handle_compile_sing l n (bvl_Call t dest xs) =
          let (ys,lx,s1,nr1) = bvl_handle_compile_list l n xs in
            OptionalLetLet_sing (bvl_Call t dest ys) n lx (s1 + 1) l F) /\

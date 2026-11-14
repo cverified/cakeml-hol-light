@@ -16,43 +16,43 @@ needs "compiler/encoders/asm/asm.ml";;
 let _ = cake_theory "labLang"
   ["asm"];;
 
-new_type_abbrev("labLang_reg",`:num`);;
+new_type_abbrev("lab_reg",`:num`);;
 
 (* A label refers to either a section name or a local label definition
    within the current section. *)
 
 let lab_INDUCT,lab_RECURSION = define_datatype
   "lab =
-     labLang_Lab num num";;
+     lab_Lab num num";;
 
 (* Each line of a section consists of either a label, an assembly
    instruction (without a label) or some labelled asm instruction. *)
 
 let asm_with_lab_INDUCT,asm_with_lab_RECURSION = define_datatype
   "asm_with_lab =
-     labLang_Jump lab
-   | labLang_JumpCmp cmp labLang_reg ('a asm_reg_imm) lab
-   | labLang_Call lab
-   | labLang_LocValue labLang_reg lab
+     lab_Jump lab
+   | lab_JumpCmp cmp lab_reg ('a asm_reg_imm) lab
+   | lab_Call lab
+   | lab_LocValue lab_reg lab
      // following have no label, but have similar semantics
-   | labLang_CallFFI mlstring
-   | labLang_Install
-   | labLang_Halt";;
+   | lab_CallFFI mlstring
+   | lab_Install
+   | lab_Halt";;
 
 let asm_or_cbw_INDUCT,asm_or_cbw_RECURSION = define_datatype
   "asm_or_cbw =
      Asmi ('a asm)
-   | Cbw labLang_reg labLang_reg
-   | ShareMem memop labLang_reg ('a asm_addr)";;
+   | Cbw lab_reg lab_reg
+   | ShareMem memop lab_reg ('a asm_addr)";;
  (* Either an asm inst/jumpreg or code-buffer-write *)
 
 let line_INDUCT,line_RECURSION = define_datatype
   "line =
-     labLang_Label num num num
+     lab_Label num num num
      // section number, label number, length
-   | labLang_Asm ('a asm_or_cbw) (word8 list) num
+   | lab_Asm ('a asm_or_cbw) (word8 list) num
      // instruction, encoded instruction, length
-   | labLang_LabAsm ('a asm_with_lab) ('a word) (word8 list) num";;
+   | lab_LabAsm ('a asm_with_lab) ('a word) (word8 list) num";;
                                   (* position, encoded instruction, length *)
 
 (* A section consists a name (num) and a list of assembly lines. *)

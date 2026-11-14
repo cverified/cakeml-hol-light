@@ -174,7 +174,6 @@ let test_lex = prove
      "lex_aux: too many closing parenthesis")," (1 2) ")`,
   CHEAT_TAC);;
 
-let _ = size_thms "mlsexp_token";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let parse_aux_def,parse_aux_ind = define_wf
@@ -237,7 +236,6 @@ let pretty_INDUCT,pretty_RECURSION = define_datatype
    | mlsexp_Append pretty bool pretty
    | mlsexp_Size num pretty";;
 
-let _ = size_thms "pretty";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let newlines_def,newlines_ind = define_wf
@@ -248,7 +246,6 @@ let newlines_def,newlines_ind = define_wf
    | [x] -> x
    | CONS x xs -> mlsexp_Append x T (newlines xs)`;;
 
-let _ = size_thms "str_tree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let v2pretty_def,v2pretty_ind = define_wf

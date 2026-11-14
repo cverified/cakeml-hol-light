@@ -191,7 +191,7 @@ let _ = do_list hide_constant ["C"; "comp"; "dummy"];;
 (* [local] *)
 let extract_labels_SmartSeq = prove
  (`wordConvs_extract_labels (SmartSeq p1 p2) = wordConvs_extract_labels
-  (wordLang_Seq p1 p2)`,
+  (word_Seq p1 p2)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -202,7 +202,7 @@ let extract_labels_Seq_assoc_lemma = prove
 
 (* [local] *)
 let extract_labels_Seq_assoc = prove
- (`wordConvs_extract_labels (Seq_assoc wordLang_Skip p) =
+ (`wordConvs_extract_labels (Seq_assoc word_Skip p) =
   wordConvs_extract_labels p`,
   CHEAT_TAC);;
 
@@ -249,20 +249,20 @@ let labels_rel_append_imp = prove
    in which nothing is duplicated. *)
 (* [local] *)
 let const_fp_loop_dummy_cases = prove
- (`const_fp_loop (wordLang_If cmp lhs rhs (wordLang_Raise 1) (wordLang_Raise
-  2)) cs = (p2,cs2) ==>
+ (`const_fp_loop (word_If cmp lhs rhs (word_Raise 1) (word_Raise 2)) cs =
+  (p2,cs2) ==>
    (dest_Raise_num p2 = 1 /\
-   (!br1 br2. const_fp_loop (wordLang_If cmp lhs rhs br1 br2) cs =
-     const_fp_loop br1 cs)) \/
+   (!br1 br2. const_fp_loop (word_If cmp lhs rhs br1 br2) cs = const_fp_loop
+     br1 cs)) \/
    (dest_Raise_num p2 = 2 /\
-   (!br1 br2. const_fp_loop (wordLang_If cmp lhs rhs br1 br2) cs =
-     const_fp_loop br2 cs)) \/
+   (!br1 br2. const_fp_loop (word_If cmp lhs rhs br1 br2) cs = const_fp_loop
+     br2 cs)) \/
    (dest_Raise_num p2 = 0)`,
   CHEAT_TAC);;
 
 (* dest_If_thm[local] *)
 let wordConvsProof_dest_If_thm = prove
- (`dest_If x2 = SOME (g1,g2,g3,g4,g5) <=> x2 = wordLang_If g1 g2 g3 g4 g5`,
+ (`dest_If x2 = SOME (g1,g2,g3,g4,g5) <=> x2 = word_If g1 g2 g3 g4 g5`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -270,8 +270,7 @@ let labels_rel_hoist2 = prove
  (`!N p1 interm dummy' p2 s.
    try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
    dest_If p2 = SOME (cmp,lhs,rhs,br1,br2) ==>
-   dummy' = wordLang_If cmp lhs rhs (wordLang_Raise 1) (wordLang_Raise 2)
-     ==>
+   dummy' = word_If cmp lhs rhs (word_Raise 1) (word_Raise 2) ==>
    wordConvs_extract_labels interm = [] ==>
    labels_rel (APPEND (wordConvs_extract_labels p1)
      (wordConvs_extract_labels p2))
@@ -620,32 +619,31 @@ let fake_moves_no_labs = prove
 
 (* [local] *)
 let fake_seq_no_labs = prove
- (`!ls. wordConvs_extract_labels (ITLIST wordLang_Seq (MAP (\r. fake_move r)
-  ls) wordLang_Skip) = []`,
+ (`!ls. wordConvs_extract_labels (ITLIST word_Seq (MAP (\r. fake_move r) ls)
+  word_Skip) = []`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_get_code_labels = prove
- (`!ls. wordConvs_get_code_labels (ITLIST wordLang_Seq (MAP (\r. fake_move r)
-  ls) wordLang_Skip) = {}`,
+ (`!ls. wordConvs_get_code_labels (ITLIST word_Seq (MAP (\r. fake_move r) ls)
+  word_Skip) = {}`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_good_handlers = prove
- (`!ls. good_handlers n (ITLIST wordLang_Seq (MAP (\r. fake_move r) ls)
-  wordLang_Skip)`,
+ (`!ls. good_handlers n (ITLIST word_Seq (MAP (\r. fake_move r) ls)
+  word_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_flat_exp_conventions = prove
- (`!ls. flat_exp_conventions (ITLIST wordLang_Seq (MAP (\r. fake_move r) ls)
-  wordLang_Skip)`,
+ (`!ls. flat_exp_conventions (ITLIST word_Seq (MAP (\r. fake_move r) ls)
+  word_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_seq_wf_cutsets = prove
- (`!ls. wf_cutsets (ITLIST wordLang_Seq (MAP (\r. fake_move r) ls)
-  wordLang_Skip)`,
+ (`!ls. wf_cutsets (ITLIST word_Seq (MAP (\r. fake_move r) ls) word_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -723,8 +721,8 @@ let fake_moves_not_created_subprogs = prove
 
 (* [local] *)
 let fake_seq_not_created_subprogs = prove
- (`!ls. not_created_subprogs P (ITLIST wordLang_Seq (MAP (\r. fake_move r)
-  ls) wordLang_Skip)`,
+ (`!ls. not_created_subprogs P (ITLIST word_Seq (MAP (\r. fake_move r) ls)
+  word_Skip)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -799,9 +797,9 @@ let word_good_handlers_full_ssa_cc_trans = prove
 
 (* [local] *)
 let flat_exp_conventions_ShareInst = prove
- (`flat_exp_conventions (wordLang_ShareInst op v exp) <=>
-     ((?v c. exp = wordLang_Op asm_Add [wordLang_Var v; wordLang_Const c])
-       \/ (?v. exp = wordLang_Var v))`,
+ (`flat_exp_conventions (word_ShareInst op v exp) <=>
+     ((?v c. exp = word_Op asm_Add [word_Var v; word_Const c]) \/ (?v. exp
+       = word_Var v))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -941,7 +939,7 @@ let word_good_handlers_word_common_subexp_elim = prove
    equality. *)
 (* [local] *)
 let word_cse_get_code_labels = prove
- (`!p data data' (q:'a wordLang_prog).
+ (`!p data data' (q:'a word_prog).
      word_cse data p = (data',q) ==>
      wordConvs_get_code_labels q SUBSET wordConvs_get_code_labels p`,
   CHEAT_TAC);;
@@ -954,7 +952,7 @@ let word_get_code_labels_word_common_subexp_elim = prove
 
 (* [local] *)
 let word_cse_flat_exp_conventions = prove
- (`!p data data' (q:'a wordLang_prog).
+ (`!p data data' (q:'a word_prog).
      flat_exp_conventions p /\ word_cse data p = (data',q) ==>
      flat_exp_conventions q`,
   CHEAT_TAC);;
@@ -966,7 +964,7 @@ let flat_exp_conventions_word_common_subexp_elim = prove
 
 (* [local] *)
 let word_cse_wf_cutsets = prove
- (`!p data data' (q:'a wordLang_prog).
+ (`!p data data' (q:'a word_prog).
      wf_cutsets p /\ word_cse data p = (data',q) ==>
      wf_cutsets q`,
   CHEAT_TAC);;
@@ -1219,7 +1217,7 @@ let remove_unreach_not_created_subprogs = prove
 (* [local] *)
 let extract_labels_SimpSeq = prove
  (`set_of_list (wordConvs_extract_labels (SimpSeq p1 p2)) SUBSET set_of_list
-  (wordConvs_extract_labels (wordLang_Seq p1 p2))`,
+  (wordConvs_extract_labels (word_Seq p1 p2))`,
   CHEAT_TAC);;
 
 (* [local] *)

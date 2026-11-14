@@ -250,8 +250,6 @@ let list_case_lemma = prove
   CHEAT_TAC);;
 
 (* only the subs = [x] and subs = [x;y] cases are relevant *)
-let _ = size_thms "locs";;
-let _ = size_thms "parsetree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let left_insert1_def,left_insert1_ind = define_wf
@@ -371,7 +369,6 @@ let eapp_reassociated = prove
           bpt' pt')`,
   CHEAT_TAC);;
 
-let _ = size_thms "MMLnonT";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let leftmost_def,leftmost_ind = define_wf

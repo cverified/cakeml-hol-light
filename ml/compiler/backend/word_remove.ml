@@ -22,20 +22,19 @@ let _ = do_list hide_constant ["pmatch"];;
 
 (*Removes MustTerminate*)
 
-let _ = size_thms "wordLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let remove_must_terminate_def,remove_must_terminate_ind = define_wf
-  `MEASURE (\x0. wordLang_prog_size (\x. 0) x0)`
+  `MEASURE (\x0. word_prog_size (\x. 0) x0)`
   `remove_must_terminate prog =
      match prog with
-       wordLang_Seq p0 p1 -> wordLang_Seq (remove_must_terminate p0)
+       word_Seq p0 p1 -> word_Seq (remove_must_terminate p0)
          (remove_must_terminate p1)
-     | wordLang_If cmp r1 ri e2 e3 ->
-       wordLang_If cmp r1 ri (remove_must_terminate e2)
-         (remove_must_terminate e3)
-     | wordLang_MustTerminate p -> remove_must_terminate p
-     | wordLang_Call ret dest args h ->
+     | word_If cmp r1 ri e2 e3 ->
+       word_If cmp r1 ri (remove_must_terminate e2) (remove_must_terminate
+         e3)
+     | word_MustTerminate p -> remove_must_terminate p
+     | word_Call ret dest args h ->
        let ret = (match ret with NONE -> NONE
                            | SOME (v,cutset,ret_handler,l1,l2) ->
                              SOME (v,cutset,remove_must_terminate
@@ -43,21 +42,20 @@ let remove_must_terminate_def,remove_must_terminate_ind = define_wf
        let h = (match h with NONE -> NONE
                        | SOME (v,prog,l1,l2) -> SOME
                          (v,remove_must_terminate prog,l1,l2)) in
-         wordLang_Call ret dest args h
-     | wordLang_Loop names body exit_names ->
-       wordLang_Loop names (remove_must_terminate body) exit_names
+         word_Call ret dest args h
+     | word_Loop names body exit_names ->
+       word_Loop names (remove_must_terminate body) exit_names
      | prog -> prog`;;
 
 let remove_must_terminate_pmatch = prove
  (`!prog.
    remove_must_terminate prog =
-   match prog with (wordLang_Seq p0 p1) -> wordLang_Seq
-     (remove_must_terminate p0) (remove_must_terminate p1)
-   | (wordLang_If cmp r1 ri e2 e3) ->
-     wordLang_If cmp r1 ri (remove_must_terminate e2) (remove_must_terminate
-       e3)
-   | (wordLang_MustTerminate p) -> remove_must_terminate p
-   | (wordLang_Call ret dest args h) ->
+   match prog with (word_Seq p0 p1) -> word_Seq (remove_must_terminate p0)
+     (remove_must_terminate p1)
+   | (word_If cmp r1 ri e2 e3) ->
+     word_If cmp r1 ri (remove_must_terminate e2) (remove_must_terminate e3)
+   | (word_MustTerminate p) -> remove_must_terminate p
+   | (word_Call ret dest args h) ->
      (let ret = (match ret with NONE -> NONE
                          | SOME (v,cutset,ret_handler,l1,l2) ->
                            SOME (v,cutset,remove_must_terminate
@@ -65,9 +63,9 @@ let remove_must_terminate_pmatch = prove
      let h = (match h with NONE -> NONE
                      | SOME (v,prog,l1,l2) -> SOME (v,remove_must_terminate
                        prog,l1,l2)) in
-       wordLang_Call ret dest args h)
-   | (wordLang_Loop names body exit_names) ->
-     wordLang_Loop names (remove_must_terminate body) exit_names
+       word_Call ret dest args h)
+   | (word_Loop names body exit_names) ->
+     word_Loop names (remove_must_terminate body) exit_names
    | prog -> prog`,
   CHEAT_TAC);;
 

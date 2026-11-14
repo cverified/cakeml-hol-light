@@ -133,7 +133,7 @@
    let opevi = prove
     (`!i env2 (s:('c,'ffi)bvlSem_state).
         bvlSem_evaluate
-          ([(bvl_Op (closLang_IntOp (closLang_Const i)) []):bvl_exp],
+          ([(bvl_Op (clos_IntOp (clos_Const i)) []):bvl_exp],
            env2,s) = (Rval [(Number i):bvlSem_v],s)`,
      REPEAT GEN_TAC THEN
      REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
@@ -235,7 +235,7 @@
    let opevi = prove
     (`!i env2 (s:('c,'ffi)bvlSem_state).
         bvlSem_evaluate
-          ([(bvl_Op (closLang_IntOp (closLang_Const i)) []):bvl_exp],
+          ([(bvl_Op (clos_IntOp (clos_Const i)) []):bvl_exp],
            env2,s) = (Rval [(Number i):bvlSem_v],s)`,
      REPEAT GEN_TAC THEN
      REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
@@ -245,7 +245,7 @@
    let consev = prove
     (`!tg env2 (s:('c,'ffi)bvlSem_state).
         bvlSem_evaluate
-          ([(bvl_Op (closLang_BlockOp (closLang_Cons tg))
+          ([(bvl_Op (clos_BlockOp (clos_Cons tg))
                []):bvl_exp],
            env2,s) = (Rval [(Block tg []):bvlSem_v],s)`,
      REPEAT GEN_TAC THEN
@@ -258,7 +258,7 @@
       so the clause for this one is taken off it first *)
    let da_int = prove
     (`!iop vs (s:('c,'ffi)bvlSem_state).
-        bvlSem_do_app (closLang_IntOp iop) vs s =
+        bvlSem_do_app (clos_IntOp iop) vs s =
         (match bvlSem_do_int_app iop vs with
            SOME res -> Rval (res,s)
          | NONE -> Rerr (Rabort Rtype_error))`,
@@ -266,7 +266,7 @@
    let const_val = prove
     (`!i xs env2 (s:('c,'ffi)bvlSem_state) hv hs.
         bvlSem_evaluate
-          ([bvl_Op (closLang_IntOp (closLang_Const i)) xs],env2,s) =
+          ([bvl_Op (clos_IntOp (clos_Const i)) xs],env2,s) =
         (Rval hv,hs) ==> hv = [(Number i):bvlSem_v]`,
      REPEAT GEN_TAC THEN
      GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [ev] THEN
@@ -280,7 +280,7 @@
    let cons_val = prove
     (`!tg env2 (s:('c,'ffi)bvlSem_state) hv hs.
         bvlSem_evaluate
-          ([bvl_Op (closLang_BlockOp (closLang_Cons tg)) []],
+          ([bvl_Op (clos_BlockOp (clos_Cons tg)) []],
            env2,s) = (Rval hv,hs) ==> hv = [(Block tg []):bvlSem_v]`,
      REPEAT GEN_TAC THEN REWRITE_TAC[consev] THEN
      REWRITE_TAC res_rws THEN STRIP_TAC THEN ASM_REWRITE_TAC[]) in
@@ -440,9 +440,9 @@
   (let ds = dest_simple_def in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
-      distinctness "closLang_op"; injectivity "closLang_op";
-      distinctness "closLang_int_op";
-      injectivity "closLang_int_op";
+      distinctness "clos_op"; injectivity "clos_op";
+      distinctness "clos_int_op";
+      injectivity "clos_int_op";
       distinctness "block_op"; injectivity "block_op";
       distinctness "const_part"; injectivity "const_part";
       distinctness "option"; injectivity "option"] in
@@ -457,9 +457,9 @@
   (let coc = case_op_const_def in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
-      distinctness "closLang_op"; injectivity "closLang_op";
-      distinctness "closLang_int_op";
-      injectivity "closLang_int_op";
+      distinctness "clos_op"; injectivity "clos_op";
+      distinctness "clos_int_op";
+      injectivity "clos_int_op";
       distinctness "block_op"; injectivity "block_op";
       distinctness "const_part"; injectivity "const_part";
       distinctness "option"; injectivity "option"] in
@@ -507,9 +507,9 @@
                UNION_EMPTY] in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
-      distinctness "closLang_op"; injectivity "closLang_op";
-      distinctness "closLang_int_op";
-      injectivity "closLang_int_op";
+      distinctness "clos_op"; injectivity "clos_op";
+      distinctness "clos_int_op";
+      injectivity "clos_int_op";
       distinctness "block_op"; injectivity "block_op";
       distinctness "const_part"; injectivity "const_part";
       distinctness "option"; injectivity "option"] in
@@ -520,27 +520,27 @@
    let agcl_rws = map (fun t ->
      prove(t, REWRITE_TAC[agcl] THEN MATCH_REDUCE_TAC THEN
               REWRITE_TAC[]))
-    [`assign_get_code_label (closLang_IntOp i) = ({}:num->bool)`;
-     `assign_get_code_label (closLang_BlockOp b) = ({}:num->bool)`;
-     `assign_get_code_label (closLang_MemOp m) = ({}:num->bool)`;
-     `assign_get_code_label (closLang_Label n) = {n}`] in
+    [`assign_get_code_label (clos_IntOp i) = ({}:num->bool)`;
+     `assign_get_code_label (clos_BlockOp b) = ({}:num->bool)`;
+     `assign_get_code_label (clos_MemOp m) = ({}:num->bool)`;
+     `assign_get_code_label (clos_Label n) = {n}`] in
    let labels_tac =
      TRY(REWRITE_TAC[bl]) THEN TRY(REWRITE_TAC[gcl]) THEN
      TRY(REWRITE_TAC agcl_rws) THEN TRY(REWRITE_TAC lset) in
    (* the operation that SmartOp2 looks at, split only where the
       goal still asks: a blind split on all eleven is 2048 goals *)
    let opconds =
-     [`op = closLang_IntOp closLang_Add`;
-      `op = closLang_IntOp closLang_Sub`;
-      `op = closLang_IntOp closLang_Mult`;
-      `op = closLang_IntOp closLang_Div`;
-      `op = closLang_IntOp closLang_Mod`;
-      `op = closLang_IntOp closLang_Less`;
-      `op = closLang_IntOp closLang_LessEq`;
-      `op = closLang_IntOp closLang_Greater`;
-      `op = closLang_IntOp closLang_GreaterEq`;
-      `op = closLang_BlockOp closLang_Equal`;
-      `op = closLang_MemOp closLang_El`] in
+     [`op = clos_IntOp clos_Add`;
+      `op = clos_IntOp clos_Sub`;
+      `op = clos_IntOp clos_Mult`;
+      `op = clos_IntOp clos_Div`;
+      `op = clos_IntOp clos_Mod`;
+      `op = clos_IntOp clos_Less`;
+      `op = clos_IntOp clos_LessEq`;
+      `op = clos_IntOp clos_Greater`;
+      `op = clos_IntOp clos_GreaterEq`;
+      `op = clos_BlockOp clos_Equal`;
+      `op = clos_MemOp clos_El`] in
    let split_when t (asl,w as gl) =
      if can (find_term (fun u -> u = t)) w
      then (ASM_CASES_TAC t THEN ASM_REWRITE_TAC (MEM :: con_rws)) gl
@@ -570,9 +570,9 @@
    let agcl = assign_get_code_label_def in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
-      distinctness "closLang_op"; injectivity "closLang_op";
-      distinctness "closLang_int_op";
-      injectivity "closLang_int_op";
+      distinctness "clos_op"; injectivity "clos_op";
+      distinctness "clos_int_op";
+      injectivity "clos_int_op";
       distinctness "block_op"; injectivity "block_op";
       distinctness "const_part"; injectivity "const_part";
       distinctness "option"; injectivity "option"] in
@@ -580,8 +580,8 @@
                   UNION_EMPTY; EMPTY_UNION] in
    let dei_eq = prove
     (`!op i. dest_EqualInt op = SOME i <=>
-             op = closLang_BlockOp
-                    (closLang_EqualConst (closLang_Int i))`,
+             op = clos_BlockOp
+                    (clos_EqualConst (clos_Int i))`,
      REPEAT GEN_TAC THEN REWRITE_TAC[dei] THEN EVERY_CASE_TAC THEN
      REWRITE_TAC con_rws THEN TRY(MATCH_ACCEPT_TAC EQ_SYM_EQ)) in
    REWRITE_TAC[so1] THEN EVERY_CASE_TAC THEN
@@ -602,19 +602,19 @@
                UNION_EMPTY] in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
-      distinctness "closLang_op"; injectivity "closLang_op";
-      distinctness "closLang_int_op";
-      injectivity "closLang_int_op";
+      distinctness "clos_op"; injectivity "clos_op";
+      distinctness "clos_int_op";
+      injectivity "clos_int_op";
       distinctness "block_op"; injectivity "block_op";
       distinctness "const_part"; injectivity "const_part";
       distinctness "option"; injectivity "option"] in
    let agcl_rws = map (fun t ->
      prove(t, REWRITE_TAC[agcl] THEN MATCH_REDUCE_TAC THEN
               REWRITE_TAC[]))
-    [`assign_get_code_label (closLang_IntOp i) = ({}:num->bool)`;
-     `assign_get_code_label (closLang_BlockOp b) = ({}:num->bool)`;
-     `assign_get_code_label (closLang_MemOp m) = ({}:num->bool)`;
-     `assign_get_code_label (closLang_Label n) = {n}`] in
+    [`assign_get_code_label (clos_IntOp i) = ({}:num->bool)`;
+     `assign_get_code_label (clos_BlockOp b) = ({}:num->bool)`;
+     `assign_get_code_label (clos_MemOp m) = ({}:num->bool)`;
+     `assign_get_code_label (clos_Label n) = {n}`] in
    let labels_tac =
      TRY(REWRITE_TAC[bl]) THEN TRY(REWRITE_TAC[gcl]) THEN
      TRY(REWRITE_TAC agcl_rws) THEN TRY(REWRITE_TAC lset) in
@@ -929,7 +929,7 @@
    let opevi = prove
     (`!i env2 (s:('c,'ffi)bvlSem_state).
         bvlSem_evaluate
-          ([(bvl_Op (closLang_IntOp (closLang_Const i)) []):bvl_exp],
+          ([(bvl_Op (clos_IntOp (clos_Const i)) []):bvl_exp],
            env2,s) = (Rval [(Number i):bvlSem_v],s)`,
      REPEAT GEN_TAC THEN
      REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
@@ -975,7 +975,7 @@
       this proof needs *)
    let da_int = prove
     (`!iop vs (s:('c,'ffi)bvlSem_state).
-        bvlSem_do_app (closLang_IntOp iop) vs s =
+        bvlSem_do_app (clos_IntOp iop) vs s =
         (match bvlSem_do_int_app iop vs with
            SOME res -> Rval (res,s)
          | NONE -> Rerr (Rabort Rtype_error))`,
@@ -984,12 +984,12 @@
       be swapped, where a subtraction becomes an addition of the
       negated constant *)
    let dia_comm = prove
-    (`!w i. (bvlSem_do_int_app closLang_Add [w; Number i] =
-             bvlSem_do_int_app closLang_Add [Number i; w]) /\
-            (bvlSem_do_int_app closLang_Mult [w; Number i] =
-             bvlSem_do_int_app closLang_Mult [Number i; w]) /\
-            (bvlSem_do_int_app closLang_Sub [w; Number i] =
-             bvlSem_do_int_app closLang_Add [Number (--i); w])`,
+    (`!w i. (bvlSem_do_int_app clos_Add [w; Number i] =
+             bvlSem_do_int_app clos_Add [Number i; w]) /\
+            (bvlSem_do_int_app clos_Mult [w; Number i] =
+             bvlSem_do_int_app clos_Mult [Number i; w]) /\
+            (bvlSem_do_int_app clos_Sub [w; Number i] =
+             bvlSem_do_int_app clos_Add [Number (--i); w])`,
      REPEAT GEN_TAC THEN REPEAT CONJ_TAC THEN
      STRUCT_CASES_TAC(ISPEC `w:bvlSem_v` (cases_of `:bvlSem_v`)) THEN
      REWRITE_TAC[dia] THEN TRY MATCH_REDUCE_TAC THEN
@@ -1049,9 +1049,9 @@
                   injectivity "semanticPrimitives_result"] in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
-      distinctness "closLang_op"; injectivity "closLang_op";
-      distinctness "closLang_int_op";
-      injectivity "closLang_int_op";
+      distinctness "clos_op"; injectivity "clos_op";
+      distinctness "clos_int_op";
+      injectivity "clos_int_op";
       distinctness "block_op"; injectivity "block_op";
       distinctness "const_part"; injectivity "const_part";
       distinctness "option"; injectivity "option"] in
@@ -1066,7 +1066,7 @@
    let opevi = prove
     (`!i env2 (s:('c,'ffi)bvlSem_state).
         bvlSem_evaluate
-          ([(bvl_Op (closLang_IntOp (closLang_Const i)) []):bvl_exp],
+          ([(bvl_Op (clos_IntOp (clos_Const i)) []):bvl_exp],
            env2,s) = (Rval [(Number i):bvlSem_v],s)`,
      REPEAT GEN_TAC THEN
      REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
@@ -1135,7 +1135,7 @@
      MATCH_TIDY_TAC THEN REWRITE_TAC[]) in
    let da_int = prove
     (`!iop vs (s:('c,'ffi)bvlSem_state).
-        bvlSem_do_app (closLang_IntOp iop) vs s =
+        bvlSem_do_app (clos_IntOp iop) vs s =
         (match bvlSem_do_int_app iop vs with
            SOME res -> Rval (res,s)
          | NONE -> Rerr (Rabort Rtype_error))`,
@@ -1146,25 +1146,25 @@
    let dia_num = end_itlist CONJ (map (fun t ->
      prove(t, REWRITE_TAC[dia] THEN TRY MATCH_REDUCE_TAC THEN
               REWRITE_TAC[]))
-    [`bvlSem_do_int_app closLang_Add [Number a; Number b] =
+    [`bvlSem_do_int_app clos_Add [Number a; Number b] =
       SOME (Number (a + b))`;
-     `bvlSem_do_int_app closLang_Sub [Number a; Number b] =
+     `bvlSem_do_int_app clos_Sub [Number a; Number b] =
       SOME (Number (a - b))`;
-     `bvlSem_do_int_app closLang_Mult [Number a; Number b] =
+     `bvlSem_do_int_app clos_Mult [Number a; Number b] =
       SOME (Number (a * b))`;
-     `bvlSem_do_int_app closLang_Div [Number a; Number b] =
+     `bvlSem_do_int_app clos_Div [Number a; Number b] =
       (if b = &0 then NONE else SOME (Number (a / b)))`;
-     `bvlSem_do_int_app closLang_Mod [Number a; Number b] =
+     `bvlSem_do_int_app clos_Mod [Number a; Number b] =
       (if b = &0 then NONE else SOME (Number (a % b)))`;
-     `bvlSem_do_int_app closLang_Less [Number a; Number b] =
+     `bvlSem_do_int_app clos_Less [Number a; Number b] =
       SOME (bvlSem_Boolv (a < b))`;
-     `bvlSem_do_int_app closLang_LessEq [Number a; Number b] =
+     `bvlSem_do_int_app clos_LessEq [Number a; Number b] =
       SOME (bvlSem_Boolv (a <= b))`;
-     `bvlSem_do_int_app closLang_Greater [Number a; Number b] =
+     `bvlSem_do_int_app clos_Greater [Number a; Number b] =
       SOME (bvlSem_Boolv (a > b))`;
-     `bvlSem_do_int_app closLang_GreaterEq [Number a; Number b] =
+     `bvlSem_do_int_app clos_GreaterEq [Number a; Number b] =
       SOME (bvlSem_Boolv (a >= b))`;
-     `bvlSem_do_int_app (closLang_Const n) [] =
+     `bvlSem_do_int_app (clos_Const n) [] =
       SOME (Number n)`]) in
    (* HOL4's do_int_app_eq_some, which says what the arguments were
       when the operation gave a value: this is how the proof learns
@@ -1206,9 +1206,9 @@
      REWRITE_TAC[INT_OF_NUM_LT]) in
    let el_elemat = prove
     (`!i v (s:('c,'ffi)bvlSem_state). (&0) <= i ==>
-        bvlSem_do_app (closLang_MemOp closLang_El) [v; Number i] s =
-        bvlSem_do_app (closLang_BlockOp
-                         (closLang_ElemAt (num_of_int i))) [v] s`,
+        bvlSem_do_app (clos_MemOp clos_El) [v; Number i] s =
+        bvlSem_do_app (clos_BlockOp
+                         (clos_ElemAt (num_of_int i))) [v] s`,
      REPEAT GEN_TAC THEN DISCH_TAC THEN
      STRUCT_CASES_TAC(ISPEC `v:bvlSem_v` (cases_of `:bvlSem_v`)) THEN
      REWRITE_TAC[da] THEN TRY SAFE_MATCH_REDUCE_TAC THEN
@@ -1224,17 +1224,17 @@
       whichever side the constant is on *)
    let da_eqconst = prove
     (`!i j (s:('c,'ffi)bvlSem_state).
-        bvlSem_do_app (closLang_BlockOp
-          (closLang_EqualConst (closLang_Int i))) [Number j] s =
+        bvlSem_do_app (clos_BlockOp
+          (clos_EqualConst (clos_Int i))) [Number j] s =
         Rval (bvlSem_Boolv (i = j),s)`,
      REPEAT GEN_TAC THEN REWRITE_TAC[da; bv] THEN
      MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
    let eq_eqconst = prove
     (`!i v (s:('c,'ffi)bvlSem_state).
-        bvlSem_do_app (closLang_BlockOp closLang_Equal)
+        bvlSem_do_app (clos_BlockOp clos_Equal)
           [v; Number i] s =
-        bvlSem_do_app (closLang_BlockOp
-          (closLang_EqualConst (closLang_Int i))) [v] s`,
+        bvlSem_do_app (clos_BlockOp
+          (clos_EqualConst (clos_Int i))) [v] s`,
      REPEAT GEN_TAC THEN
      STRUCT_CASES_TAC(ISPEC `v:bvlSem_v` (cases_of `:bvlSem_v`)) THEN
      REWRITE_TAC[da] THEN TRY SAFE_MATCH_REDUCE_TAC THEN
@@ -1245,10 +1245,10 @@
      AP_TERM_TAC THEN MATCH_ACCEPT_TAC EQ_SYM_EQ) in
    let eq_eqconst2 = prove
     (`!i v (s:('c,'ffi)bvlSem_state).
-        bvlSem_do_app (closLang_BlockOp closLang_Equal)
+        bvlSem_do_app (clos_BlockOp clos_Equal)
           [Number i; v] s =
-        bvlSem_do_app (closLang_BlockOp
-          (closLang_EqualConst (closLang_Int i))) [v] s`,
+        bvlSem_do_app (clos_BlockOp
+          (clos_EqualConst (clos_Int i))) [v] s`,
      REPEAT GEN_TAC THEN
      STRUCT_CASES_TAC(ISPEC `v:bvlSem_v` (cases_of `:bvlSem_v`)) THEN
      REWRITE_TAC[da] THEN TRY SAFE_MATCH_REDUCE_TAC THEN
@@ -1288,9 +1288,9 @@
        (((CASE_SPLIT_TAC THEN TRY tidy) ORELSE
          (sing_tac THEN TRY use_dia THEN VAR_EQ_TAC)) THEN norm)) THEN
      fin in
-   let cc x = "bvl_Op (closLang_IntOp (closLang_Const (" ^ x ^
+   let cc x = "bvl_Op (clos_IntOp (clos_Const (" ^ x ^
               "))) []" in
-   let o2 op u v = "bvl_Op (closLang_IntOp closLang_" ^ op ^ ") [" ^
+   let o2 op u v = "bvl_Op (clos_IntOp clos_" ^ op ^ ") [" ^
                    u ^ "; " ^ v ^ "]" in
    let aA = o2 "Add" and sS = o2 "Sub" and mM = o2 "Mult" in
    let lem lhs rhs extra = prove
@@ -1332,17 +1332,17 @@
       where the goal still asks: a blind split on all of them is
       2048 goals *)
    let opconds =
-     [`op = closLang_IntOp closLang_Add`;
-      `op = closLang_IntOp closLang_Sub`;
-      `op = closLang_IntOp closLang_Mult`;
-      `op = closLang_IntOp closLang_Div`;
-      `op = closLang_IntOp closLang_Mod`;
-      `op = closLang_IntOp closLang_Less`;
-      `op = closLang_IntOp closLang_LessEq`;
-      `op = closLang_IntOp closLang_Greater`;
-      `op = closLang_IntOp closLang_GreaterEq`;
-      `op = closLang_BlockOp closLang_Equal`;
-      `op = closLang_MemOp closLang_El`] in
+     [`op = clos_IntOp clos_Add`;
+      `op = clos_IntOp clos_Sub`;
+      `op = clos_IntOp clos_Mult`;
+      `op = clos_IntOp clos_Div`;
+      `op = clos_IntOp clos_Mod`;
+      `op = clos_IntOp clos_Less`;
+      `op = clos_IntOp clos_LessEq`;
+      `op = clos_IntOp clos_Greater`;
+      `op = clos_IntOp clos_GreaterEq`;
+      `op = clos_BlockOp clos_Equal`;
+      `op = clos_MemOp clos_El`] in
    let split_when t (asl,w as gl) =
      if can (find_term (fun u -> u = t)) w
      then (ASM_CASES_TAC t THEN ASM_REWRITE_TAC (MEM :: con_rws)) gl
@@ -1372,16 +1372,16 @@
    let dei = dest_EqualInt_def in
    let con_rws =
      [distinctness "bvl_exp"; injectivity "bvl_exp";
-      distinctness "closLang_op"; injectivity "closLang_op";
-      distinctness "closLang_int_op";
-      injectivity "closLang_int_op";
+      distinctness "clos_op"; injectivity "clos_op";
+      distinctness "clos_int_op";
+      injectivity "clos_int_op";
       distinctness "block_op"; injectivity "block_op";
       distinctness "const_part"; injectivity "const_part";
       distinctness "option"; injectivity "option"] in
    let opevi = prove
     (`!i env2 (s:('c,'ffi)bvlSem_state).
         bvlSem_evaluate
-          ([(bvl_Op (closLang_IntOp (closLang_Const i)) []):bvl_exp],
+          ([(bvl_Op (clos_IntOp (clos_Const i)) []):bvl_exp],
            env2,s) = (Rval [(Number i):bvlSem_v],s)`,
      REPEAT GEN_TAC THEN
      REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
@@ -1399,8 +1399,8 @@
      MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
    let da_eqconst = prove
     (`!i j (s:('c,'ffi)bvlSem_state).
-        bvlSem_do_app (closLang_BlockOp
-          (closLang_EqualConst (closLang_Int i))) [Number j] s =
+        bvlSem_do_app (clos_BlockOp
+          (clos_EqualConst (clos_Int i))) [Number j] s =
         Rval (bvlSem_Boolv (i = j),s)`,
      REPEAT GEN_TAC THEN REWRITE_TAC[da; bv] THEN
      MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
@@ -1408,8 +1408,8 @@
       dest_simple_eq says it about the expression *)
    let dei_eq = prove
     (`!op i. dest_EqualInt op = SOME i <=>
-             op = closLang_BlockOp
-                    (closLang_EqualConst (closLang_Int i))`,
+             op = clos_BlockOp
+                    (clos_EqualConst (clos_Int i))`,
      REPEAT GEN_TAC THEN REWRITE_TAC[dei] THEN EVERY_CASE_TAC THEN
      REWRITE_TAC con_rws THEN TRY(MATCH_ACCEPT_TAC EQ_SYM_EQ)) in
    REWRITE_TAC[so1] THEN EVERY_CASE_TAC THEN

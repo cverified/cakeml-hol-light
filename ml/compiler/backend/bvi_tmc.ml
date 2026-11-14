@@ -20,17 +20,17 @@ let _ = cake_theory "bvi_tmc"
 let bvi_tmc_pure_op_def = new_definition
   `bvi_tmc_pure_op x1 x2 =
      match (x1,x2) with
-       (closLang_Label _,_) -> F
-     | (closLang_FFI _,_) -> F
-     | (closLang_IntOp (closLang_Const n),[]) -> small_enough_int n
-     | (closLang_IntOp _,_) -> F
-     | (closLang_WordOp _,_) -> F
-     | (closLang_BlockOp (closLang_Cons _),_) -> T
-     | (closLang_BlockOp _,_) -> F
-     | (closLang_GlobOp _,_) -> F
-     | (closLang_MemOp _,_) -> F
-     | (closLang_Install,_) -> F
-     | (closLang_ThunkOp _,_) -> F`;;
+       (clos_Label _,_) -> F
+     | (clos_FFI _,_) -> F
+     | (clos_IntOp (clos_Const n),[]) -> small_enough_int n
+     | (clos_IntOp _,_) -> F
+     | (clos_WordOp _,_) -> F
+     | (clos_BlockOp (clos_Cons _),_) -> T
+     | (clos_BlockOp _,_) -> F
+     | (clos_GlobOp _,_) -> F
+     | (clos_MemOp _,_) -> F
+     | (clos_Install,_) -> F
+     | (clos_ThunkOp _,_) -> F`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL (_,e) -> bvi_exp_size e
@@ -99,7 +99,7 @@ let pure_exps_append = prove
 let dest_Cons_def = new_definition
   `bvi_tmc_dest_Cons x1 =
    match x1 with
-     closLang_BlockOp (closLang_Cons block_tag) -> SOME block_tag
+     clos_BlockOp (clos_Cons block_tag) -> SOME block_tag
    | _ -> NONE`;;
 
 (* PHASE 1: extract everything into a let bound "call block" *)
@@ -373,7 +373,7 @@ let bvi_to_cb_cases = prove
  (`!n loc x bs cb.
      bvi_to_cb n loc x = SOME (bs,cb) ==>
      (?tag args l child r.
-        x = bvi_Op (closLang_BlockOp (closLang_Cons tag)) args /\
+        x = bvi_Op (clos_BlockOp (clos_Cons tag)) args /\
         cb = CallBlock tag l child r) \/
      (?ts args vs.
         x = bvi_Call ts (SOME loc) args NONE /\
@@ -386,8 +386,8 @@ let cb_to_bvi_def,cb_to_bvi_ind = define_rec
          let l' = MAP (\n. bvi_Var n) l in
          let child' = cb_to_bvi loc child in
          let r' = MAP (\n. bvi_Var n) r in
-           bvi_Op (closLang_BlockOp (closLang_Cons tag)) (APPEND
-               (APPEND l' [child']) r')) /\
+           bvi_Op (clos_BlockOp (clos_Cons tag)) (APPEND (APPEND l'
+               [child']) r')) /\
    (cb_to_bvi loc (RCall ts args) =
          let args' = MAP (\n. bvi_Var n) args in
            bvi_Call ts (SOME loc) args' NONE)`;;
@@ -416,19 +416,19 @@ let bvi_to_cb_size = prove
 let mut_cons_def = new_definition
   `mut_cons t l r =
      let l' = MAP (\n. bvi_Var n) l in
-     let hole' = bvi_Op (closLang_IntOp (closLang_Const (&0))) [] in
+     let hole' = bvi_Op (clos_IntOp (clos_Const (&0))) [] in
      let r' = MAP (\n. bvi_Var n) r in
      let i = LENGTH r in
-     bvi_Op (closLang_MemOp (closLang_MutCons t i)) (APPEND (APPEND l'
-       [hole']) r')`;;
+     bvi_Op (clos_MemOp (clos_MutCons t i)) (APPEND (APPEND l' [hole'])
+       r')`;;
 
 let finalise_cons_def = new_definition
-  `bvi_tmc_finalise_cons i_top_ptr = bvi_Op (closLang_MemOp
-  closLang_FinaliseCons) [bvi_Var i_top_ptr]`;;
+  `bvi_tmc_finalise_cons i_top_ptr = bvi_Op (clos_MemOp clos_FinaliseCons)
+  [bvi_Var i_top_ptr]`;;
 
 let fill_hole_def = new_definition
-  `fill_hole i_ptr i_idx exp = bvi_Op (closLang_MemOp closLang_UpdateCons)
-  [exp; bvi_Var i_idx; bvi_Var i_ptr]`;;
+  `fill_hole i_ptr i_idx exp = bvi_Op (clos_MemOp clos_UpdateCons) [exp;
+  bvi_Var i_idx; bvi_Var i_ptr]`;;
 
 let optimise_call_def = new_definition
   `optimise_call call_ts loc_opt call_args' exp_ptr exp_idx =
@@ -436,8 +436,8 @@ let optimise_call_def = new_definition
      bvi_Call call_ts (SOME loc_opt) args NONE`;;
 
 let update_cons_def = new_definition
-  `update_cons exp_ptr exp_idx exp_val = bvi_Op (closLang_MemOp
-  closLang_UpdateCons) [exp_val; exp_idx; exp_ptr]`;;
+  `update_cons exp_ptr exp_idx exp_val = bvi_Op (clos_MemOp clos_UpdateCons)
+  [exp_val; exp_idx; exp_ptr]`;;
 
 let cb_size_def,cb_size_ind = define_shaped_rec
   "match"
@@ -461,11 +461,11 @@ let call_block_size_shift = prove
 let cb_to_bvi_worker_aux_def,cb_to_bvi_worker_aux_ind = define_guess_cheat
   `(cb_to_bvi_worker_aux (RCall call_ts call_args') loc_opt ptr idx =
        optimise_call call_ts loc_opt call_args' (bvi_Var ptr) (bvi_Op
-           (closLang_IntOp (closLang_Const (&idx))) [])) /\
+           (clos_IntOp (clos_Const (&idx))) [])) /\
    (cb_to_bvi_worker_aux (CallBlock tag left child right) loc_opt ptr idx =
        bvi_Let [mut_cons tag left right] (
-       bvi_Let [update_cons (bvi_Var (ptr + 1)) (bvi_Op (closLang_IntOp
-           (closLang_Const (&idx))) []) (bvi_Var 0)]
+       bvi_Let [update_cons (bvi_Var (ptr + 1)) (bvi_Op (clos_IntOp
+           (clos_Const (&idx))) []) (bvi_Var 0)]
          (cb_to_bvi_worker_aux (shift_cb 2 child) loc_opt 1 (LENGTH
              right))))`;;
 
@@ -482,12 +482,12 @@ let cb_to_bvi_worker_aux_alt_def,cb_to_bvi_worker_aux_alt_ind = define_rec
   `(cb_to_bvi_worker_aux_alt sh (RCall call_ts call_args') loc_opt ptr idx =
        optimise_call call_ts loc_opt (shift_vars sh call_args') (bvi_Var
            ptr)
-         (bvi_Op (closLang_IntOp (closLang_Const (&idx))) [])) /\
+         (bvi_Op (clos_IntOp (clos_Const (&idx))) [])) /\
    (cb_to_bvi_worker_aux_alt sh (CallBlock tag left child right) loc_opt ptr
     idx =
        bvi_Let [mut_cons tag (shift_vars sh left) (shift_vars sh right)] (
-       bvi_Let [update_cons (bvi_Var (ptr + 1)) (bvi_Op (closLang_IntOp
-           (closLang_Const (&idx))) []) (bvi_Var 0)]
+       bvi_Let [update_cons (bvi_Var (ptr + 1)) (bvi_Op (clos_IntOp
+           (clos_Const (&idx))) []) (bvi_Var 0)]
          (cb_to_bvi_worker_aux_alt (sh + 2) child loc_opt 1 (LENGTH
              right))))`;;
 

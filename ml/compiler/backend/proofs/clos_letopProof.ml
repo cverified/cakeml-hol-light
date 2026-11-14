@@ -162,7 +162,7 @@ let clos_letopProof_v_rel_IMP_v_to_words = prove
 
 let dest_op_SOME_IMP = prove
  (`!x args opp. clos_letop_dest_op x args = SOME opp ==>
-      (?t xs. x = closLang_Op t opp xs /\
+      (?t xs. x = clos_Op t opp xs /\
              clos_letop_var_list 0 xs args)`,
   CHEAT_TAC);;
 
@@ -173,14 +173,14 @@ let var_list_IMP_LENGTH = prove
 
 (* var_list_IMP_evaluate[local] *)
 let clos_letopProof_var_list_IMP_evaluate = prove
- (`!a2 a1 xs (ys:closLang_exp list) (s:('c,'ffi)closSem_state) env.
+ (`!a2 a1 xs (ys:clos_exp list) (s:('c,'ffi)closSem_state) env.
      clos_letop_var_list (LENGTH a1) xs ys /\ LENGTH ys = LENGTH a2 ==>
      closSem_evaluate (xs,APPEND (APPEND a1 a2) env,s) = (Rval a2,s)`,
   CHEAT_TAC);;
 
 (* var_list_IMP_evaluate[local] *)
 let clos_letopProof_var_list_IMP_evaluate = prove
- (`!vs xs (ys:closLang_exp list) (s:('c,'ffi)closSem_state) env.
+ (`!vs xs (ys:clos_exp list) (s:('c,'ffi)closSem_state) env.
      clos_letop_var_list 0 xs ys /\ LENGTH ys = LENGTH vs ==>
        closSem_evaluate (xs,APPEND vs env,s) = (Rval vs,s)`,
   CHEAT_TAC);;

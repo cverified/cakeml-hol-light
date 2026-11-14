@@ -41,7 +41,6 @@ let namespace_INDUCT,namespace_RECURSION = define_datatype
   "namespace =
      Bind (('n#'v) list) (('m#namespace) list)";;
 
-let _ = size_thms "namespace_id";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let nsLookup_def,nsLookup_ind = define_wf

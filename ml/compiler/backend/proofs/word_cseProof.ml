@@ -94,25 +94,23 @@ let sem_inv_def = new_definition
      (!n c v.
         balanced_map_lookup listCmp (instToNumList (asm_Const n c))
           (knowledge_instrs_mem data) = SOME v ==>
-        sptree_lookup v (wordSem_state_locals s) = SOME (wordLang_Word c))
-          /\
+        sptree_lookup v (wordSem_state_locals s) = SOME (word_Word c)) /\
      (!(a:'a asm_arith) v.
         balanced_map_lookup listCmp (instToNumList (asm_Arith a))
           (knowledge_instrs_mem data) = SOME v ==>
         (?w. wordSem_get_var v s = SOME w /\
-            wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
+            wordSem_evaluate (word_Inst (asm_Arith a),s) =
               (NONE,wordSem_set_var (firstRegOfArith a) w s))) /\
      (!op src v.
         balanced_map_lookup listCmp (OpCurrHeapToNumList op src)
           (knowledge_instrs_mem data) = SOME v ==>
-        (?w. wordSem_word_exp s (wordLang_Op op [wordLang_Var src;
-          wordLang_Lookup CurrHeap]) = SOME w /\
+        (?w. wordSem_word_exp s (word_Op op [word_Var src; word_Lookup
+          CurrHeap]) = SOME w /\
             wordSem_get_var v s = SOME w)) /\
      (!l v.
         balanced_map_lookup listCmp [48; l] (knowledge_instrs_mem data) =
           SOME v ==>
-        sptree_lookup v (wordSem_state_locals s) = SOME (wordLang_Loc l 0))
-          /\
+        sptree_lookup v (wordSem_state_locals s) = SOME (word_Loc l 0)) /\
      (!x v.
         ALOOKUP (knowledge_gets_mem data) x = SOME v ==>
         (?w. FLOOKUP (wordSem_state_store s) x = SOME w /\ wordSem_get_var v
@@ -122,7 +120,7 @@ let sem_inv_def = new_definition
         balanced_map_lookup listCmp (loadToNumList op a ofs)
           (knowledge_loads_mem data) = SOME v ==>
         (?w. wordSem_get_var v s = SOME w /\
-            (!r. wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
+            (!r. wordSem_evaluate (word_Inst (asm_Mem op r (Addr a
               ofs)),s) = (NONE,wordSem_set_var r w s))))`;;
 
 let data_inv_def = new_definition
@@ -192,11 +190,11 @@ let insert_eq = prove
 let evaluate_arith_set_var = prove
  (`!a r u w s.
      can_mem_arith a /\ ~(MEM r (arithReads a)) ==>
-     (wordSem_evaluate (wordLang_Inst (asm_Arith a),wordSem_set_var r u s) =
+     (wordSem_evaluate (word_Inst (asm_Arith a),wordSem_set_var r u s) =
         (NONE,wordSem_set_var (firstRegOfArith a) w (wordSem_set_var r u s))
           <=>
-      wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
-        (NONE,wordSem_set_var (firstRegOfArith a) w s))`,
+      wordSem_evaluate (word_Inst (asm_Arith a),s) = (NONE,wordSem_set_var
+        (firstRegOfArith a) w s))`,
   CHEAT_TAC);;
 
 (* A successful load evaluation determines the loaded value from the address
@@ -206,9 +204,9 @@ let evaluate_arith_set_var = prove
 let evaluate_load_any_dest = prove
  (`!op r0 a ofs w s r.
      ~(is_store op) /\
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r0 (Addr a ofs)),s) =
+     wordSem_evaluate (word_Inst (asm_Mem op r0 (Addr a ofs)),s) =
        (NONE,wordSem_set_var r0 w s) ==>
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
+     wordSem_evaluate (word_Inst (asm_Mem op r (Addr a ofs)),s) =
        (NONE,wordSem_set_var r w s)`,
   CHEAT_TAC);;
 
@@ -218,10 +216,10 @@ let evaluate_load_any_dest = prove
 let evaluate_load_set_var = prove
  (`!op r a ofs n u w s.
      ~(is_store op) /\ ~(a = n) ==>
-     (wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
+     (wordSem_evaluate (word_Inst (asm_Mem op r (Addr a
        ofs)),wordSem_set_var n u s) =
         (NONE,wordSem_set_var r w (wordSem_set_var n u s)) <=>
-      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
+      wordSem_evaluate (word_Inst (asm_Mem op r (Addr a ofs)),s) =
         (NONE,wordSem_set_var r w s))`,
   CHEAT_TAC);;
 
@@ -234,9 +232,9 @@ let evaluate_load_change_addr = prove
      ~(is_store op) /\
      sptree_lookup a' (wordSem_state_locals s) = sptree_lookup a
        (wordSem_state_locals s) /\
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
+     wordSem_evaluate (word_Inst (asm_Mem op r (Addr a ofs)),s) =
        (NONE,wordSem_set_var r w s) ==>
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a' ofs)),s) =
+     wordSem_evaluate (word_Inst (asm_Mem op r (Addr a' ofs)),s) =
        (NONE,wordSem_set_var r w s)`,
   CHEAT_TAC);;
 
@@ -246,12 +244,12 @@ let evaluate_load_change_addr = prove
 let evaluate_arith_memory = prove
  (`!a w s m.
      can_mem_arith a ==>
-     (wordSem_evaluate (wordLang_Inst (asm_Arith
-       a),wordSem_state_memory_fupd (K m) s) =
+     (wordSem_evaluate (word_Inst (asm_Arith a),wordSem_state_memory_fupd (K
+       m) s) =
         (NONE,wordSem_state_memory_fupd (K m) (wordSem_set_var
           (firstRegOfArith a) w s)) <=>
-      wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
-        (NONE,wordSem_set_var (firstRegOfArith a) w s))`,
+      wordSem_evaluate (word_Inst (asm_Arith a),s) = (NONE,wordSem_set_var
+        (firstRegOfArith a) w s))`,
   CHEAT_TAC);;
 
 (* Every register mentioned by the invariant lies in the domain of
@@ -293,21 +291,21 @@ let data_inv_set_var = prove
 let evaluate_arith_unset_var = prove
  (`!a r w (s:('a,'c,'ffi)wordSem_state).
      can_mem_arith a /\ ~(MEM r (arithReads a)) ==>
-     (wordSem_evaluate (wordLang_Inst (asm_Arith a),wordSem_unset_var r s) =
+     (wordSem_evaluate (word_Inst (asm_Arith a),wordSem_unset_var r s) =
         (NONE,wordSem_set_var (firstRegOfArith a) w (wordSem_unset_var r s))
           <=>
-      wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
-        (NONE,wordSem_set_var (firstRegOfArith a) w s))`,
+      wordSem_evaluate (word_Inst (asm_Arith a),s) = (NONE,wordSem_set_var
+        (firstRegOfArith a) w s))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_load_unset_var = prove
  (`!op r a ofs n w (s:('a,'c,'ffi)wordSem_state).
      ~(is_store op) /\ ~(a = n) ==>
-     (wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
+     (wordSem_evaluate (word_Inst (asm_Mem op r (Addr a
        ofs)),wordSem_unset_var n s) =
         (NONE,wordSem_set_var r w (wordSem_unset_var n s)) <=>
-      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
+      wordSem_evaluate (word_Inst (asm_Mem op r (Addr a ofs)),s) =
         (NONE,wordSem_set_var r w s))`,
   CHEAT_TAC);;
 
@@ -378,12 +376,12 @@ let data_inv_memory = prove
 (* [local] *)
 let evaluate_arith_agree = prove
  (`!a w (s1:('a,'c,'ffi)wordSem_state) (s2:('a,'c,'ffi)wordSem_state).
-     wordSem_evaluate (wordLang_Inst (asm_Arith a),s1) =
+     wordSem_evaluate (word_Inst (asm_Arith a),s1) =
        (NONE,wordSem_set_var (firstRegOfArith a) w s1) /\
      can_mem_arith a /\ wordSem_state_locals s2 = wordSem_state_locals s1
        ==>
-     wordSem_evaluate (wordLang_Inst (asm_Arith a),s2) =
-       (NONE,wordSem_set_var (firstRegOfArith a) w s2)`,
+     wordSem_evaluate (word_Inst (asm_Arith a),s2) = (NONE,wordSem_set_var
+       (firstRegOfArith a) w s2)`,
   CHEAT_TAC);;
 
 (* A load reads its address register, the memory fields and be; its
@@ -391,14 +389,14 @@ let evaluate_arith_agree = prove
 (* [local] *)
 let evaluate_load_agree = prove
  (`!op r a ofs w (s1:('a,'c,'ffi)wordSem_state) (s2:('a,'c,'ffi)wordSem_state).
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s1) =
+     wordSem_evaluate (word_Inst (asm_Mem op r (Addr a ofs)),s1) =
        (NONE,wordSem_set_var r w s1) /\
      ~(is_store op) /\ wordSem_state_locals s2 = wordSem_state_locals s1
        /\ wordSem_state_memory s2 = wordSem_state_memory s1
        /\ wordSem_state_mdomain
      s2 = wordSem_state_mdomain s1 /\ wordSem_state_be s2 = wordSem_state_be
        s1 ==>
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s2) =
+     wordSem_evaluate (word_Inst (asm_Mem op r (Addr a ofs)),s2) =
        (NONE,wordSem_set_var r w s2)`,
   CHEAT_TAC);;
 
@@ -685,8 +683,8 @@ let data_inv_set_vars = prove
 let evaluate_Move1 = prove
  (`!pri r k w (s:('a,'c,'ffi)wordSem_state).
      wordSem_get_var k s = SOME w ==>
-     wordSem_evaluate (wordLang_Move pri [(r,k)],s) =
-       (NONE,wordSem_set_var r w s)`,
+     wordSem_evaluate (word_Move pri [(r,k)],s) = (NONE,wordSem_set_var r
+       w s)`,
   CHEAT_TAC);;
 
 let shiftToNum_eq = prove
@@ -705,9 +703,9 @@ let arith_keys_eq = prove
      can_mem_arith a1 /\ arithToNumList a1 = arithToNumList a2 ==>
      can_mem_arith a2 /\ arithReads a2 = arithReads a1 /\
      (!(s:('a,'c,'ffi)wordSem_state) w.
-       wordSem_evaluate (wordLang_Inst (asm_Arith a1),s) =
-         (NONE,wordSem_set_var (firstRegOfArith a1) w s) ==>
-       wordSem_evaluate (wordLang_Inst (asm_Arith a2),s) =
+       wordSem_evaluate (word_Inst (asm_Arith a1),s) = (NONE,wordSem_set_var
+         (firstRegOfArith a1) w s) ==>
+       wordSem_evaluate (word_Inst (asm_Arith a2),s) =
          (NONE,wordSem_set_var (firstRegOfArith a2) w s))`,
   CHEAT_TAC);;
 
@@ -718,7 +716,7 @@ let data_inv_insert_instrs_Const = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) r n (w:'a word).
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = SOME r /\
-     sptree_lookup r (wordSem_state_locals s) = SOME (wordLang_Word w) ==>
+     sptree_lookup r (wordSem_state_locals s) = SOME (word_Word w) ==>
      data_inv (knowledge_instrs_mem_fupd (K
                  (balanced_map_insert listCmp (instToNumList (asm_Const n
                    w)) r (knowledge_instrs_mem data))) data) s`,
@@ -731,8 +729,8 @@ let data_inv_insert_instrs_Arith = prove
      sptree_lookup r (knowledge_to_canonical data) = SOME r /\
      can_mem_arith a /\ in_names_set a (knowledge_to_canonical data) /\
      wordSem_get_var r s = SOME w /\
-     wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
-       (NONE,wordSem_set_var (firstRegOfArith a) w s) ==>
+     wordSem_evaluate (word_Inst (asm_Arith a),s) = (NONE,wordSem_set_var
+       (firstRegOfArith a) w s) ==>
      data_inv (knowledge_instrs_mem_fupd (K
                  (balanced_map_insert listCmp (instToNumList (asm_Arith
                    a)) r (knowledge_instrs_mem data))) data) s`,
@@ -744,8 +742,8 @@ let data_inv_insert_instrs_OpCurrHeap = prove
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = SOME r /\
      sptree_lookup src (knowledge_to_canonical data) = SOME src /\
-     wordSem_word_exp s (wordLang_Op op [wordLang_Var src; wordLang_Lookup
-       CurrHeap]) = SOME w /\
+     wordSem_word_exp s (word_Op op [word_Var src; word_Lookup CurrHeap]) =
+       SOME w /\
      wordSem_get_var r s = SOME w ==>
      data_inv (knowledge_instrs_mem_fupd (K
                  (balanced_map_insert listCmp (OpCurrHeapToNumList op src)
@@ -757,7 +755,7 @@ let data_inv_insert_instrs_LocValue = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) r l.
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = SOME r /\
-     sptree_lookup r (wordSem_state_locals s) = SOME (wordLang_Loc l 0) ==>
+     sptree_lookup r (wordSem_state_locals s) = SOME (word_Loc l 0) ==>
      data_inv (knowledge_instrs_mem_fupd (K
                  (balanced_map_insert listCmp [48; l] r
                    (knowledge_instrs_mem data))) data) s`,
@@ -832,9 +830,8 @@ let add_to_data_const_correct = prove
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = NONE /\ ~(EVEN r) /\
      add_to_data_const data r w = (data',p') ==>
-     wordSem_evaluate (p',s) = (NONE,wordSem_set_var r (wordLang_Word w) s)
-       /\
-     data_inv data' (wordSem_set_var r (wordLang_Word w) s)`,
+     wordSem_evaluate (p',s) = (NONE,wordSem_set_var r (word_Word w) s) /\
+     data_inv data' (wordSem_set_var r (word_Word w) s)`,
   CHEAT_TAC);;
 
 let add_to_data_LocValue_correct = prove
@@ -842,10 +839,9 @@ let add_to_data_LocValue_correct = prove
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = NONE /\
      l IN domain (wordSem_state_code s) /\
-     add_to_data_aux data r [48; l] (wordLang_LocValue r l) = (data',p') ==>
-     wordSem_evaluate (p',s) = (NONE,wordSem_set_var r (wordLang_Loc l 0) s)
-       /\
-     data_inv data' (wordSem_set_var r (wordLang_Loc l 0) s)`,
+     add_to_data_aux data r [48; l] (word_LocValue r l) = (data',p') ==>
+     wordSem_evaluate (p',s) = (NONE,wordSem_set_var r (word_Loc l 0) s) /\
+     data_inv data' (wordSem_set_var r (word_Loc l 0) s)`,
   CHEAT_TAC);;
 
 let add_to_data_OpCurrHeap_correct = prove
@@ -854,10 +850,10 @@ let add_to_data_OpCurrHeap_correct = prove
      sptree_lookup r1 (knowledge_to_canonical data) = NONE /\
      r2' = canonicalRegs' r1 data r2 /\
      ~(EVEN r2) /\ ~(r2 = r1) /\
-     wordSem_word_exp s (wordLang_Op b [wordLang_Var r2; wordLang_Lookup
-       CurrHeap]) = SOME w /\
+     wordSem_word_exp s (word_Op b [word_Var r2; word_Lookup CurrHeap]) =
+       SOME w /\
      add_to_data_aux (register_read data r2') r1 (OpCurrHeapToNumList b r2')
-       (wordLang_OpCurrHeap b r1 r2) = (data',p') ==>
+       (word_OpCurrHeap b r1 r2) = (data',p') ==>
      wordSem_evaluate (p',s) = (NONE,wordSem_set_var r1 w s) /\
      data_inv data' (wordSem_set_var r1 w s)`,
   CHEAT_TAC);;
@@ -869,8 +865,8 @@ let add_to_data_Arith_correct = prove
      a' = canonicalArith data a /\
      can_mem_arith a' /\ ~(MEM r (arithReads a')) /\
      r = firstRegOfArith a /\
-     wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
-       (NONE,wordSem_set_var r w s) /\
+     wordSem_evaluate (word_Inst (asm_Arith a),s) = (NONE,wordSem_set_var r
+       w s) /\
      add_to_data (register_reads data (arithReads a')) r (asm_Arith a')
        (asm_Arith a) = (data',p') ==>
      wordSem_evaluate (p',s) = (NONE,wordSem_set_var r w s) /\
@@ -888,7 +884,7 @@ let data_inv_insert_loads = prove
      sptree_lookup a (knowledge_to_canonical data) = SOME a /\
      ~(is_store op) /\
      wordSem_get_var r s = SOME w /\
-     (!r'. wordSem_evaluate (wordLang_Inst (asm_Mem op r' (Addr a ofs)),s) =
+     (!r'. wordSem_evaluate (word_Inst (asm_Mem op r' (Addr a ofs)),s) =
        (NONE,wordSem_set_var r' w s)) ==>
      data_inv (knowledge_loads_mem_fupd (K
                  (balanced_map_insert listCmp (loadToNumList op a ofs) r
@@ -928,10 +924,10 @@ let add_to_load_correct = prove
      sptree_lookup r (knowledge_to_canonical data) = NONE /\
      a' = canonicalRegs' r data a /\
      ~(is_store op) /\ ~(EVEN r) /\ ~(EVEN a) /\ ~(a = r) /\
-     wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
+     wordSem_evaluate (word_Inst (asm_Mem op r (Addr a ofs)),s) =
        (NONE,wordSem_set_var r w s) /\
      add_to_load_aux (register_read data a') r (loadToNumList op a' ofs)
-       (wordLang_Inst (asm_Mem op r (Addr a ofs))) = (data',p') ==>
+       (word_Inst (asm_Mem op r (Addr a ofs))) = (data',p') ==>
      wordSem_evaluate (p',s) = (NONE,wordSem_set_var r w s) /\
      data_inv data' (wordSem_set_var r w s)`,
   CHEAT_TAC);;
@@ -999,9 +995,9 @@ let get_set_vars_in_2 = prove
 let lookup_set_vars_not_in = prove
  (`!moves v data c x.
      ~(MEM v (MAP FST moves)) ==>
-     sptree_lookup v (wordSem_state_locals s) = SOME (wordLang_Word c) ==>
+     sptree_lookup v (wordSem_state_locals s) = SOME (word_Word c) ==>
      sptree_lookup v (wordSem_state_locals (wordSem_set_vars (MAP FST
-       moves) x s)) = SOME (wordLang_Word c)`,
+       moves) x s)) = SOME (word_Word c)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1091,26 +1087,25 @@ add_simp if_eq_rw;;
 let evaluate_arith_clock = prove
  (`!a w s c td.
      can_mem_arith a ==>
-     (wordSem_evaluate (wordLang_Inst (asm_Arith
-       a),wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd (K c) s))
-       =
+     (wordSem_evaluate (word_Inst (asm_Arith a),wordSem_state_termdep_fupd
+       (K td) (wordSem_state_clock_fupd (K c) s)) =
         (NONE,wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd (K
           c)
          (wordSem_set_var (firstRegOfArith a) w s))) <=>
-      wordSem_evaluate (wordLang_Inst (asm_Arith a),s) =
-        (NONE,wordSem_set_var (firstRegOfArith a) w s))`,
+      wordSem_evaluate (word_Inst (asm_Arith a),s) = (NONE,wordSem_set_var
+        (firstRegOfArith a) w s))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_load_clock = prove
  (`!op r a ofs w s c td.
      ~(is_store op) ==>
-     (wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a
+     (wordSem_evaluate (word_Inst (asm_Mem op r (Addr a
        ofs)),wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd (K c)
                 s)) =
         (NONE,wordSem_state_termdep_fupd (K td) (wordSem_state_clock_fupd (K
           c) (wordSem_set_var r w s))) <=>
-      wordSem_evaluate (wordLang_Inst (asm_Mem op r (Addr a ofs)),s) =
+      wordSem_evaluate (word_Inst (asm_Mem op r (Addr a ofs)),s) =
         (NONE,wordSem_set_var r w s))`,
   CHEAT_TAC);;
 
@@ -1244,7 +1239,7 @@ let wf_data_insert_loads = prove
    destination at the stored (self-mapped) holder; the family-specific
    miss case arrives as a premise in the same nested-with form. *)
 let wf_add_to_data_aux = prove
- (`!data r i (p:'a wordLang_prog) data' p'.
+ (`!data r i (p:'a word_prog) data' p'.
      wf_data (:'a) data /\
      sptree_lookup r (knowledge_to_canonical data) = NONE /\
      add_to_data_aux data r i p = (data',p') /\
@@ -1272,7 +1267,7 @@ let wf_add_to_data_const = prove
   CHEAT_TAC);;
 
 let wf_add_to_load_aux = prove
- (`!data r i (p:'a wordLang_prog) data' p'.
+ (`!data r i (p:'a word_prog) data' p'.
      wf_data (:'a) data /\
      sptree_lookup r (knowledge_to_canonical data) = NONE /\
      add_to_load_aux data r i p = (data',p') /\
@@ -1427,7 +1422,7 @@ let canonicalArith_reads_self_or_fresh = prove
 let word_cse_wf_data = prove
  (`!p data.
      wf_data (:'a) data ==> wf_data (:'a) (FST (word_cse data (p:'a
-       wordLang_prog)))`,
+       word_prog)))`,
   CHEAT_TAC);;
 
 (* HOL4 word_cseProofScript.sml:2935-2937: a proof *)
@@ -1534,25 +1529,25 @@ let word_common_subexp_elim_correct = prove
    ------------------------------------------------------------------------ *)
 
 let word_cse_full_inst_ok_less = prove
- (`!p data c data' (q:'a wordLang_prog).
+ (`!p data c data' (q:'a word_prog).
      full_inst_ok_less c p /\ word_cse data p = (data',q) ==>
      full_inst_ok_less c q`,
   CHEAT_TAC);;
 
 let word_cse_pre_alloc_conventions = prove
- (`!p data data' (q:'a wordLang_prog).
+ (`!p data data' (q:'a word_prog).
      pre_alloc_conventions p /\ word_cse data p = (data',q) ==>
      pre_alloc_conventions q`,
   CHEAT_TAC);;
 
 let word_cse_every_inst_distinct_tar_reg = prove
- (`!p data data' (q:'a wordLang_prog).
+ (`!p data data' (q:'a word_prog).
      every_inst distinct_tar_reg p /\ word_cse data p = (data',q) ==>
      every_inst distinct_tar_reg q`,
   CHEAT_TAC);;
 
 let word_cse_every_inst_two_reg = prove
- (`!p data data' (q:'a wordLang_prog).
+ (`!p data data' (q:'a word_prog).
      every_inst two_reg_inst p /\ word_cse data p = (data',q) ==>
      every_inst two_reg_inst q`,
   CHEAT_TAC);;

@@ -44,67 +44,67 @@ let store_name_INDUCT,store_name_RECURSION = define_datatype
    | BitmapBufferEnd
    | Temp (5 word)";;
 
-let stackLang_prog_INDUCT,stackLang_prog_RECURSION = define_datatype
-  "stackLang_prog =
-     stackLang_Skip
-   | stackLang_Inst ('a asm_inst)
-   | stackLang_Get num store_name
-   | stackLang_Set store_name num
-   | stackLang_OpCurrHeap binop num num
-   | stackLang_Call ((stackLang_prog#num#num#num) option) (num+num)
-       ((stackLang_prog#num#num) option)
+let stack_prog_INDUCT,stack_prog_RECURSION = define_datatype
+  "stack_prog =
+     stack_Skip
+   | stack_Inst ('a asm_inst)
+   | stack_Get num store_name
+   | stack_Set store_name num
+   | stack_OpCurrHeap binop num num
+   | stack_Call ((stack_prog#num#num#num) option) (num+num)
+       ((stack_prog#num#num) option)
      // target of call
      // return-handler code, link reg, labels l1,l2
      // handler: exception-handler code, labels l1,l2
-   | stackLang_Seq stackLang_prog stackLang_prog
-   | stackLang_If cmp num ('a asm_reg_imm) stackLang_prog stackLang_prog
-   | stackLang_Loop stackLang_prog
-   | stackLang_JumpLower num num num
+   | stack_Seq stack_prog stack_prog
+   | stack_If cmp num ('a asm_reg_imm) stack_prog stack_prog
+   | stack_Loop stack_prog
+   | stack_JumpLower num num num
      // reg, reg, target name
-   | stackLang_Alloc num
-   | stackLang_StoreConsts num num (num option)
+   | stack_Alloc num
+   | stack_StoreConsts num num (num option)
      // reg, reg, stub name to call
-   | stackLang_Raise num
-   | stackLang_Return num
-   | stackLang_Break num
-   | stackLang_Continue num
-   | stackLang_FFI mlstring num num num num num
+   | stack_Raise num
+   | stack_Return num
+   | stack_Break num
+   | stack_Continue num
+   | stack_FFI mlstring num num num num num
      // FFI index, conf_ptr, conf_len,
      // array_ptr, array_len, ret_addr
-   | stackLang_Tick
-   | stackLang_LocValue num num num
+   | stack_Tick
+   | stack_LocValue num num num
      // assign v1 := Loc v2 v3
-   | stackLang_Install num num num num num
+   | stack_Install num num num num num
      // code buffer start, length of new code,
      // data buffer start, length of new data, ret_addr
-   | stackLang_ShMemOp memop num ('a asm_addr)
+   | stack_ShMemOp memop num ('a asm_addr)
      // share memory operation, register, addr to load/store
-   | stackLang_CodeBufferWrite num num
+   | stack_CodeBufferWrite num num
      // code buffer address, byte to write
-   | stackLang_DataBufferWrite num num
+   | stack_DataBufferWrite num num
      // data buffer address, word to write
      // new in stackLang, compared to wordLang, below
-   | stackLang_RawCall num
+   | stack_RawCall num
      // tail-call into body of function (past stack alloc)
-   | stackLang_StackAlloc num
+   | stack_StackAlloc num
      // allocate n slots on the stack
-   | stackLang_StackFree num
+   | stack_StackFree num
      // free n slots on the stack
-   | stackLang_StackStore num num
+   | stack_StackStore num num
      // offset, fast
-   | stackLang_StackStoreAny num num
+   | stack_StackStoreAny num num
      // reg contains offset, slow, used by GC
-   | stackLang_StackLoad num num
+   | stack_StackLoad num num
      // offset, fast
-   | stackLang_StackLoadAny num num
+   | stack_StackLoadAny num num
      // reg contains offset, slow, used by GC
-   | stackLang_StackGetSize num
+   | stack_StackGetSize num
      // used when installing exc handler
-   | stackLang_StackSetSize num
+   | stack_StackSetSize num
      // used by implementation of raise
-   | stackLang_BitmapLoad num num
+   | stack_BitmapLoad num num
      // load word from read-only region
-   | stackLang_Halt num";;
+   | stack_Halt num";;
 
 (* HOL4 stackLangScript.sml:68: the overload While, which the port expands *)
 
@@ -137,20 +137,19 @@ let stackLang_prog_INDUCT,stackLang_prog_RECURSION = define_datatype
 (* HOL4 stackLangScript.sml:84: the overload store_inst, which the port
    expands *)
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let list_Seq_def,list_Seq_ind = define_wf
-  `MEASURE (\x0. list_size (stackLang_prog_size (\x. 0)) x0)`
-  `(stackLang_list_Seq [] = stackLang_Skip) /\
-   (stackLang_list_Seq [x] = x) /\
-   (stackLang_list_Seq (CONS x (CONS y xs)) = stackLang_Seq x
-    (stackLang_list_Seq (CONS y xs)))`;;
+  `MEASURE (\x0. list_size (stack_prog_size (\x. 0)) x0)`
+  `(stack_list_Seq [] = stack_Skip) /\
+   (stack_list_Seq [x] = x) /\
+   (stack_list_Seq (CONS x (CONS y xs)) = stack_Seq x (stack_list_Seq
+    (CONS y xs)))`;;
 
 let gc_stub_location_def = new_definition
   `gc_stub_location = stack_num_stubs - 1`;;
 let store_consts_stub_location_def = new_definition
-  `stackLang_store_consts_stub_location = gc_stub_location - 1`;;
+  `stack_store_consts_stub_location = gc_stub_location - 1`;;
 (* HOL4 stackLangScript.sml:98-99: a theorem that HOL4 states as the value
    of an ML expression: gc_stub_location_eq *)
 (* HOL4 stackLangScript.sml:100-101: a theorem that HOL4 states as the value

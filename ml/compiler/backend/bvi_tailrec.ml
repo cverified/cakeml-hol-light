@@ -23,7 +23,6 @@ let _ = do_list hide_constant ["pmatch"];;
 let dummy_def = new_definition
   `dummy = bvi_Var 1234567890`;;
 
-let _ = size_thms "bvi_exp";;
 let MEM_exp_size_imp = prove
  (`!xs a. MEM a xs ==> bvi_exp_size a < list_size bvi_exp_size xs`,
   CHEAT_TAC);;
@@ -44,14 +43,14 @@ let is_rec_PMATCH = prove
 let is_const_def = new_definition
   `bvi_tailrec_is_const x1 =
      match x1 with
-       closLang_IntOp (closLang_Const i) -> small_enough_int i
+       clos_IntOp (clos_Const i) -> small_enough_int i
      | _ -> F`;;
 add_simp is_const_def;;
 
 let is_const_PMATCH = prove
  (`!op. bvi_tailrec_is_const op =
     match op with
-      closLang_IntOp (closLang_Const i) -> small_enough_int i
+      clos_IntOp (clos_Const i) -> small_enough_int i
     | _ -> F`,
   CHEAT_TAC);;
 
@@ -76,26 +75,25 @@ let op_type_def = new_definition
    | _ -> bvi_tailrec_Int`;;
 
 let to_op_def = define_cases
-  `(to_op bvi_tailrec_Plus = closLang_IntOp closLang_Add) /\
-   (to_op bvi_tailrec_Times = closLang_IntOp closLang_Mult) /\
-   (to_op bvi_tailrec_Append = closLang_BlockOp closLang_ListAppend) /\
-   (to_op bvi_tailrec_Noop = closLang_IntOp closLang_Mod)`;;
+  `(to_op bvi_tailrec_Plus = clos_IntOp clos_Add) /\
+   (to_op bvi_tailrec_Times = clos_IntOp clos_Mult) /\
+   (to_op bvi_tailrec_Append = clos_BlockOp clos_ListAppend) /\
+   (to_op bvi_tailrec_Noop = clos_IntOp clos_Mod)`;;
 
 let from_op_def = new_definition
   `from_op op =
-     if op = closLang_IntOp closLang_Add then bvi_tailrec_Plus
-     else if op = closLang_IntOp closLang_Mult then bvi_tailrec_Times
-     else if op = closLang_BlockOp closLang_ListAppend then
-       bvi_tailrec_Append
+     if op = clos_IntOp clos_Add then bvi_tailrec_Plus
+     else if op = clos_IntOp clos_Mult then bvi_tailrec_Times
+     else if op = clos_BlockOp clos_ListAppend then bvi_tailrec_Append
      else bvi_tailrec_Noop`;;
 
 let from_op_PMATCH = prove
  (`!op.
     from_op op =
       match op with
-        closLang_IntOp closLang_Add -> bvi_tailrec_Plus
-      | closLang_IntOp closLang_Mult -> bvi_tailrec_Times
-      | closLang_BlockOp closLang_ListAppend -> bvi_tailrec_Append
+        clos_IntOp clos_Add -> bvi_tailrec_Plus
+      | clos_IntOp clos_Mult -> bvi_tailrec_Times
+      | clos_BlockOp clos_ListAppend -> bvi_tailrec_Append
       | _ -> bvi_tailrec_Noop`,
   CHEAT_TAC);;
 
@@ -105,10 +103,10 @@ let from_op_PMATCH = prove
 let op_eq_def = new_definition
   `op_eq x1 x2 =
      match (x1,x2) with
-       (bvi_tailrec_Plus,bvi_Op op xs) -> op = closLang_IntOp closLang_Add
-     | (bvi_tailrec_Times,bvi_Op op xs) -> op = closLang_IntOp closLang_Mult
-     | (bvi_tailrec_Append,bvi_Op op xs) -> op = closLang_BlockOp
-       closLang_ListAppend
+       (bvi_tailrec_Plus,bvi_Op op xs) -> op = clos_IntOp clos_Add
+     | (bvi_tailrec_Times,bvi_Op op xs) -> op = clos_IntOp clos_Mult
+     | (bvi_tailrec_Append,bvi_Op op xs) -> op = clos_BlockOp
+       clos_ListAppend
      | (_,_) -> F`;;
 
 let op_eq_PMATCH = prove
@@ -117,9 +115,9 @@ let op_eq_PMATCH = prove
        match expr with
          bvi_Op op xs ->
            (match a with
-             bvi_tailrec_Plus -> op = closLang_IntOp closLang_Add
-           | bvi_tailrec_Times -> op = closLang_IntOp closLang_Mult
-           | bvi_tailrec_Append -> op = closLang_BlockOp closLang_ListAppend
+             bvi_tailrec_Plus -> op = clos_IntOp clos_Add
+           | bvi_tailrec_Times -> op = clos_IntOp clos_Mult
+           | bvi_tailrec_Append -> op = clos_BlockOp clos_ListAppend
            | _ -> F)
        | _ -> F`,
   CHEAT_TAC);;
@@ -135,11 +133,9 @@ let apply_op_def = new_definition
   `apply_op op e1 e2 = bvi_Op (to_op op) [e1; e2]`;;
 
 let id_from_op_def = define_cases
-  `(id_from_op bvi_tailrec_Plus = bvi_Op (closLang_IntOp (closLang_Const
-    (&0))) []) /\
-   (id_from_op bvi_tailrec_Times = bvi_Op (closLang_IntOp (closLang_Const
-    (&1))) []) /\
-   (id_from_op bvi_tailrec_Append = bvi_Op (closLang_BlockOp (closLang_Cons
+  `(id_from_op bvi_tailrec_Plus = bvi_Op (clos_IntOp (clos_Const (&0))) []) /\
+   (id_from_op bvi_tailrec_Times = bvi_Op (clos_IntOp (clos_Const (&1))) []) /\
+   (id_from_op bvi_tailrec_Append = bvi_Op (clos_BlockOp (clos_Cons
     nil_tag)) []) /\
    (id_from_op bvi_tailrec_Noop = dummy)`;;
 
@@ -207,38 +203,38 @@ let try_update_def = define_cases
 let is_arith_def = new_definition
   `is_arith op =
      match op with
-       closLang_IntOp closLang_Add -> T
-     | closLang_IntOp closLang_Sub -> T
-     | closLang_IntOp closLang_Mult -> T
+       clos_IntOp clos_Add -> T
+     | clos_IntOp clos_Sub -> T
+     | clos_IntOp clos_Mult -> T
      | _ -> F`;;
 
 let is_arith_PMATCH = prove
  (`!op.
      is_arith op =
        match op with
-         closLang_IntOp closLang_Add -> T
-       | closLang_IntOp closLang_Sub -> T
-       | closLang_IntOp closLang_Mult -> T
+         clos_IntOp clos_Add -> T
+       | clos_IntOp clos_Sub -> T
+       | clos_IntOp clos_Mult -> T
        | _ -> F`,
   CHEAT_TAC);;
 
 let is_rel_def = new_definition
   `is_rel op =
      match op with
-       closLang_IntOp closLang_Less -> T
-     | closLang_IntOp closLang_LessEq -> T
-     | closLang_IntOp closLang_Greater -> T
-     | closLang_IntOp closLang_GreaterEq -> T
+       clos_IntOp clos_Less -> T
+     | clos_IntOp clos_LessEq -> T
+     | clos_IntOp clos_Greater -> T
+     | clos_IntOp clos_GreaterEq -> T
      | _ -> F`;;
 
 let is_rel_PMATCH = prove
  (`!op.
      is_rel op =
        match op with
-         closLang_IntOp closLang_Less -> T
-       | closLang_IntOp closLang_LessEq -> T
-       | closLang_IntOp closLang_Greater -> T
-       | closLang_IntOp closLang_GreaterEq -> T
+         clos_IntOp clos_Less -> T
+       | clos_IntOp clos_LessEq -> T
+       | clos_IntOp clos_Greater -> T
+       | clos_IntOp clos_GreaterEq -> T
        | _ -> F`,
   CHEAT_TAC);;
 
@@ -297,34 +293,33 @@ let term_ok_any_def,term_ok_any_ind = define_wf
        else F
      | bvi_Op op xs ->
        (match get_bin_args (bvi_Op op xs) with
-         NONE -> xs = [] /\ (if list' then op = closLang_BlockOp
-           (closLang_Cons 0) else bvi_tailrec_is_const op)
+         NONE -> xs = [] /\ (if list' then op = clos_BlockOp (clos_Cons 0)
+           else bvi_tailrec_is_const op)
        | SOME (x,y) ->
-           if op = closLang_BlockOp closLang_ListAppend then term_ok_any ts
-             T x /\ term_ok_any ts T y
+           if op = clos_BlockOp clos_ListAppend then term_ok_any ts T x
+             /\ term_ok_any ts T y
            else if ~list' /\ is_arith op then term_ok_int ts x
              /\ term_ok_int ts y
            else if ~list' /\ is_rel op then term_ok_int ts x /\ term_ok_int
              ts y
-           else if op = closLang_BlockOp (closLang_Cons 0) then term_ok_any
-             ts T x /\ term_ok_any ts F y
+           else if op = clos_BlockOp (clos_Cons 0) then term_ok_any ts T x
+             /\ term_ok_any ts F y
            else F)
      | expr -> F`;;
 
 let is_op_thms = prove
- (`~(is_arith (closLang_BlockOp (closLang_Cons 0))) /\ ~(is_arith
-  (closLang_BlockOp closLang_ListAppend)) /\
-   ~(is_rel (closLang_BlockOp (closLang_Cons 0))) /\ ~(is_rel
-     (closLang_BlockOp closLang_ListAppend)) /\
-   (!op. ~(op = closLang_BlockOp closLang_ListAppend) /\ is_arith op <=>
-     is_arith op) /\
-   (!op. ~(op = closLang_BlockOp closLang_ListAppend) /\ ~(is_arith op)
-     /\ is_rel op <=> is_rel op) /\
-   (!op. ~(is_arith op) /\ ~(is_rel op) /\ op = closLang_BlockOp
-     (closLang_Cons 0) <=> op = closLang_BlockOp (closLang_Cons 0)) /\
-   (!op. ~(op = closLang_BlockOp closLang_ListAppend) /\ op =
-     closLang_BlockOp (closLang_Cons 0) <=> op = closLang_BlockOp
-     (closLang_Cons 0))`,
+ (`~(is_arith (clos_BlockOp (clos_Cons 0))) /\ ~(is_arith (clos_BlockOp
+  clos_ListAppend)) /\
+   ~(is_rel (clos_BlockOp (clos_Cons 0))) /\ ~(is_rel (clos_BlockOp
+     clos_ListAppend)) /\
+   (!op. ~(op = clos_BlockOp clos_ListAppend) /\ is_arith op <=> is_arith
+     op) /\
+   (!op. ~(op = clos_BlockOp clos_ListAppend) /\ ~(is_arith op) /\ is_rel op
+     <=> is_rel op) /\
+   (!op. ~(is_arith op) /\ ~(is_rel op) /\ op = clos_BlockOp (clos_Cons 0)
+     <=> op = clos_BlockOp (clos_Cons 0)) /\
+   (!op. ~(op = clos_BlockOp clos_ListAppend) /\ op = clos_BlockOp
+     (clos_Cons 0) <=> op = clos_BlockOp (clos_Cons 0))`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_tailrecScript.sml:322: a theorem that HOL4 states as the value
@@ -395,51 +390,51 @@ let update_context_def = new_definition
 let arg_ty_def = new_definition
   `arg_ty x1'' =
    match x1'' with
-     closLang_IntOp (closLang_Const i) -> (if small_enough_int i then
+     clos_IntOp (clos_Const i) -> (if small_enough_int i then
        bvi_tailrec_Int else bvi_tailrec_Any)
-   | closLang_IntOp closLang_Add -> bvi_tailrec_Int
-   | closLang_IntOp closLang_Sub -> bvi_tailrec_Int
-   | closLang_IntOp closLang_Mult -> bvi_tailrec_Int
-   | closLang_IntOp closLang_Div -> bvi_tailrec_Int
-   | closLang_IntOp closLang_Mod -> bvi_tailrec_Int
-   | closLang_IntOp closLang_LessEq -> bvi_tailrec_Int
-   | closLang_IntOp closLang_Less -> bvi_tailrec_Int
-   | closLang_IntOp closLang_Greater -> bvi_tailrec_Int
-   | closLang_IntOp closLang_GreaterEq -> bvi_tailrec_Int
-   | closLang_BlockOp closLang_ListAppend -> bvi_tailrec_List
+   | clos_IntOp clos_Add -> bvi_tailrec_Int
+   | clos_IntOp clos_Sub -> bvi_tailrec_Int
+   | clos_IntOp clos_Mult -> bvi_tailrec_Int
+   | clos_IntOp clos_Div -> bvi_tailrec_Int
+   | clos_IntOp clos_Mod -> bvi_tailrec_Int
+   | clos_IntOp clos_LessEq -> bvi_tailrec_Int
+   | clos_IntOp clos_Less -> bvi_tailrec_Int
+   | clos_IntOp clos_Greater -> bvi_tailrec_Int
+   | clos_IntOp clos_GreaterEq -> bvi_tailrec_Int
+   | clos_BlockOp clos_ListAppend -> bvi_tailrec_List
    | _ -> bvi_tailrec_Any`;;
 
 let arg_ty_PMATCH = prove
  (`!op.
      arg_ty op =
        match op with
-         closLang_IntOp closLang_Add -> bvi_tailrec_Int
-       | closLang_IntOp closLang_Sub -> bvi_tailrec_Int
-       | closLang_IntOp closLang_Mult -> bvi_tailrec_Int
-       | closLang_IntOp closLang_Div -> bvi_tailrec_Int
-       | closLang_IntOp closLang_Mod -> bvi_tailrec_Int
-       | closLang_IntOp closLang_LessEq -> bvi_tailrec_Int
-       | closLang_IntOp closLang_Less -> bvi_tailrec_Int
-       | closLang_IntOp closLang_Greater -> bvi_tailrec_Int
-       | closLang_IntOp closLang_GreaterEq -> bvi_tailrec_Int
-       | closLang_IntOp (closLang_Const i) -> if small_enough_int i then
+         clos_IntOp clos_Add -> bvi_tailrec_Int
+       | clos_IntOp clos_Sub -> bvi_tailrec_Int
+       | clos_IntOp clos_Mult -> bvi_tailrec_Int
+       | clos_IntOp clos_Div -> bvi_tailrec_Int
+       | clos_IntOp clos_Mod -> bvi_tailrec_Int
+       | clos_IntOp clos_LessEq -> bvi_tailrec_Int
+       | clos_IntOp clos_Less -> bvi_tailrec_Int
+       | clos_IntOp clos_Greater -> bvi_tailrec_Int
+       | clos_IntOp clos_GreaterEq -> bvi_tailrec_Int
+       | clos_IntOp (clos_Const i) -> if small_enough_int i then
          bvi_tailrec_Int else bvi_tailrec_Any
-       | closLang_BlockOp closLang_ListAppend -> bvi_tailrec_List
+       | clos_BlockOp clos_ListAppend -> bvi_tailrec_List
        | _ -> bvi_tailrec_Any`,
   CHEAT_TAC);;
 
 let op_ty_def = new_definition
   `op_ty x1''' =
      match x1''' with
-       closLang_IntOp closLang_Add -> bvi_tailrec_Int
-     | closLang_IntOp closLang_Sub -> bvi_tailrec_Int
-     | closLang_IntOp closLang_Mult -> bvi_tailrec_Int
-     | closLang_IntOp closLang_Div -> bvi_tailrec_Int
-     | closLang_IntOp closLang_Mod -> bvi_tailrec_Int
-     | closLang_BlockOp closLang_ListAppend -> bvi_tailrec_List
-     | closLang_BlockOp (closLang_Cons tag) -> if tag = nil_tag \/ tag =
-       cons_tag then bvi_tailrec_List else bvi_tailrec_Any
-     | closLang_IntOp (closLang_Const i) -> if small_enough_int i then
+       clos_IntOp clos_Add -> bvi_tailrec_Int
+     | clos_IntOp clos_Sub -> bvi_tailrec_Int
+     | clos_IntOp clos_Mult -> bvi_tailrec_Int
+     | clos_IntOp clos_Div -> bvi_tailrec_Int
+     | clos_IntOp clos_Mod -> bvi_tailrec_Int
+     | clos_BlockOp clos_ListAppend -> bvi_tailrec_List
+     | clos_BlockOp (clos_Cons tag) -> if tag = nil_tag \/ tag = cons_tag
+       then bvi_tailrec_List else bvi_tailrec_Any
+     | clos_IntOp (clos_Const i) -> if small_enough_int i then
        bvi_tailrec_Int else bvi_tailrec_Any
      | _ -> bvi_tailrec_Any`;;
 
@@ -447,15 +442,15 @@ let op_ty_PMATCH = prove
  (`!op.
      op_ty op =
        match op with
-         closLang_IntOp closLang_Add -> bvi_tailrec_Int
-       | closLang_IntOp closLang_Sub -> bvi_tailrec_Int
-       | closLang_IntOp closLang_Mult -> bvi_tailrec_Int
-       | closLang_IntOp closLang_Div -> bvi_tailrec_Int
-       | closLang_IntOp closLang_Mod -> bvi_tailrec_Int
-       | closLang_BlockOp closLang_ListAppend -> bvi_tailrec_List
-       | closLang_BlockOp (closLang_Cons tag) -> if tag = cons_tag \/ tag =
-         nil_tag then bvi_tailrec_List else bvi_tailrec_Any
-       | closLang_IntOp (closLang_Const i) -> if small_enough_int i then
+         clos_IntOp clos_Add -> bvi_tailrec_Int
+       | clos_IntOp clos_Sub -> bvi_tailrec_Int
+       | clos_IntOp clos_Mult -> bvi_tailrec_Int
+       | clos_IntOp clos_Div -> bvi_tailrec_Int
+       | clos_IntOp clos_Mod -> bvi_tailrec_Int
+       | clos_BlockOp clos_ListAppend -> bvi_tailrec_List
+       | clos_BlockOp (clos_Cons tag) -> if tag = cons_tag \/ tag = nil_tag
+         then bvi_tailrec_List else bvi_tailrec_Any
+       | clos_IntOp (clos_Const i) -> if small_enough_int i then
          bvi_tailrec_Int else bvi_tailrec_Any
        | _ -> bvi_tailrec_Any`,
   CHEAT_TAC);;
@@ -525,8 +520,7 @@ let scan_expr_def,scan_expr_ind = assume_definition_rec_clauses
                       [(update_context bvi_tailrec_Int ts x
                           y,bvi_tailrec_Any,F,NONE)]
                     else [(ts,bvi_tailrec_Any,F,NONE)]
-              else if op = closLang_BlockOp (closLang_Cons 0) /\ xs = []
-                  then
+              else if op = clos_BlockOp (clos_Cons 0) /\ xs = [] then
                 [(
                   // list nil
                   ts,bvi_tailrec_List,F,NONE)]
@@ -591,8 +585,7 @@ let scan_expr_sing_def,scan_expr_sing_ind = define_rec_clauses
                       (update_context bvi_tailrec_Int ts x
                           y,bvi_tailrec_Any,F,NONE)
                     else (ts,bvi_tailrec_Any,F,NONE)
-              else if op = closLang_BlockOp (closLang_Cons 0) /\ xs = []
-                  then
+              else if op = clos_BlockOp (clos_Cons 0) /\ xs = [] then
                 (
                  // list nil
                  ts,bvi_tailrec_List,F,NONE)
@@ -749,8 +742,8 @@ let has_rec_test1 = prove
 (* HOL4 bvi_tailrecScript.sml:751: the ML values that the definitions below
    antiquote *)
 let has_rec_test2 = prove
- (`has_rec1 0 (bvi_Op (closLang_IntOp closLang_Add) [bvi_Call 0 (SOME 0) []
-  NONE; bvi_Var 0]) <=> T`,
+ (`has_rec1 0 (bvi_Op (clos_IntOp clos_Add) [bvi_Call 0 (SOME 0) [] NONE;
+  bvi_Var 0]) <=> T`,
   CHEAT_TAC);;
 
 let check_exp_def = new_definition
@@ -843,44 +836,39 @@ add_simp check_exp_SOME_simp;;
 
 (* [local] *)
 let fac_check_exp = prove
- (`check_exp 0 1 (bvi_Let [bvi_Op (closLang_IntOp closLang_LessEq) [bvi_Var 0;
-  bvi_Op (closLang_IntOp (closLang_Const (&1))) []]]
+ (`check_exp 0 1 (bvi_Let [bvi_Op (clos_IntOp clos_LessEq) [bvi_Var 0; bvi_Op
+  (clos_IntOp (clos_Const (&1))) []]]
     (bvi_If (bvi_Var 0)
-       (bvi_Op (closLang_IntOp (closLang_Const (&1))) [])
-       (bvi_Let [bvi_Op (closLang_IntOp closLang_Sub) [bvi_Op
-         (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 1]]
-         (bvi_Op (closLang_IntOp closLang_Mult) [bvi_Var 2; bvi_Call 0
-           (SOME 0) [bvi_Var 0] NONE])))) = SOME bvi_tailrec_Times`,
+       (bvi_Op (clos_IntOp (clos_Const (&1))) [])
+       (bvi_Let [bvi_Op (clos_IntOp clos_Sub) [bvi_Op (clos_IntOp
+         (clos_Const (&1))) []; bvi_Var 1]]
+         (bvi_Op (clos_IntOp clos_Mult) [bvi_Var 2; bvi_Call 0 (SOME 0)
+           [bvi_Var 0] NONE])))) = SOME bvi_tailrec_Times`,
   CHEAT_TAC);;
 
 let fac_compile_exp = prove
- (`bvi_tailrec_compile_exp 0 1 1 (bvi_Let [bvi_Op (closLang_IntOp
-  closLang_LessEq) [bvi_Var 0; bvi_Op (closLang_IntOp (closLang_Const (&1)))
-  []]]
+ (`bvi_tailrec_compile_exp 0 1 1 (bvi_Let [bvi_Op (clos_IntOp clos_LessEq)
+  [bvi_Var 0; bvi_Op (clos_IntOp (clos_Const (&1))) []]]
     (bvi_If (bvi_Var 0)
-       (bvi_Op (closLang_IntOp (closLang_Const (&1))) [])
-       (bvi_Let [bvi_Op (closLang_IntOp closLang_Sub) [bvi_Op
-         (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 1]]
-         (bvi_Op (closLang_IntOp closLang_Mult) [bvi_Var 2; bvi_Call 0 (SOME
-           0) [bvi_Var 0] NONE])))) = SOME ((bvi_Let [bvi_Var 0; bvi_Op
-           (closLang_IntOp (closLang_Const (&1))) []] (bvi_Let [bvi_Op
-           (closLang_IntOp closLang_LessEq) [bvi_Var 0; bvi_Op (closLang_IntOp
-           (closLang_Const (&1))) []]] (bvi_If (bvi_Var 0) (bvi_Op
-           (closLang_IntOp closLang_Mult) [bvi_Var 2; bvi_Op (closLang_IntOp
-           (closLang_Const (&1))) []])
-        (bvi_Let [bvi_Op (closLang_IntOp closLang_Sub) [bvi_Op
-          (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 1]] (bvi_Call 0
-          (SOME 1) [bvi_Var 0; bvi_Op (closLang_IntOp closLang_Mult) [bvi_Var
-          3; bvi_Var 2]]
-              NONE))))),(bvi_Let [bvi_Op (closLang_IntOp closLang_LessEq)
-                [bvi_Var 0; bvi_Op (closLang_IntOp (closLang_Const (&1)))
-                []]] (bvi_If (bvi_Var 0) (bvi_Op (closLang_IntOp
-                closLang_Mult) [bvi_Var 2; bvi_Op (closLang_IntOp
-                (closLang_Const (&1))) []]) (bvi_Let [bvi_Op (closLang_IntOp
-                closLang_Sub) [bvi_Op (closLang_IntOp (closLang_Const (&1)))
+       (bvi_Op (clos_IntOp (clos_Const (&1))) [])
+       (bvi_Let [bvi_Op (clos_IntOp clos_Sub) [bvi_Op (clos_IntOp
+         (clos_Const (&1))) []; bvi_Var 1]]
+         (bvi_Op (clos_IntOp clos_Mult) [bvi_Var 2; bvi_Call 0 (SOME 0)
+           [bvi_Var 0] NONE])))) = SOME ((bvi_Let [bvi_Var 0; bvi_Op
+           (clos_IntOp (clos_Const (&1))) []] (bvi_Let [bvi_Op (clos_IntOp
+           clos_LessEq) [bvi_Var 0; bvi_Op (clos_IntOp (clos_Const (&1))) []]]
+           (bvi_If (bvi_Var 0) (bvi_Op (clos_IntOp clos_Mult) [bvi_Var 2;
+           bvi_Op (clos_IntOp (clos_Const (&1))) []])
+        (bvi_Let [bvi_Op (clos_IntOp clos_Sub) [bvi_Op (clos_IntOp
+          (clos_Const (&1))) []; bvi_Var 1]] (bvi_Call 0 (SOME 1) [bvi_Var 0;
+          bvi_Op (clos_IntOp clos_Mult) [bvi_Var 3; bvi_Var 2]]
+              NONE))))),(bvi_Let [bvi_Op (clos_IntOp clos_LessEq) [bvi_Var
+                0; bvi_Op (clos_IntOp (clos_Const (&1))) []]] (bvi_If
+                (bvi_Var 0) (bvi_Op (clos_IntOp clos_Mult) [bvi_Var 2; bvi_Op
+                (clos_IntOp (clos_Const (&1))) []]) (bvi_Let [bvi_Op
+                (clos_IntOp clos_Sub) [bvi_Op (clos_IntOp (clos_Const (&1)))
                 []; bvi_Var 1]] (bvi_Call 0 (SOME 1) [bvi_Var 0; bvi_Op
-                (closLang_IntOp closLang_Mult) [bvi_Var 3; bvi_Var 2]]
-                NONE)))))`,
+                (clos_IntOp clos_Mult) [bvi_Var 3; bvi_Var 2]] NONE)))))`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_tailrecScript.sml:887-895: the ML values that the definitions
@@ -894,61 +882,57 @@ let fac_compile_exp = prove
 
 (* [local] *)
 let rev_check_exp = prove
- (`check_exp 444 1 (bvi_Let [bvi_Op (closLang_IntOp (closLang_Const (&0))) []]
-     (bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq 0 0)) [bvi_Var 1])
-         (bvi_Op (closLang_BlockOp (closLang_Cons 0)) [])
-         (bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-           (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 1]]
-           (bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-             (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 2]]
-             (bvi_Op (closLang_BlockOp closLang_ListAppend)
-               [bvi_Op (closLang_BlockOp (closLang_Cons 0)) [bvi_Op
-                 (closLang_BlockOp (closLang_Cons 0)) []; bvi_Var 1];
+ (`check_exp 444 1 (bvi_Let [bvi_Op (clos_IntOp (clos_Const (&0))) []]
+     (bvi_If (bvi_Op (clos_BlockOp (clos_TagLenEq 0 0)) [bvi_Var 1])
+         (bvi_Op (clos_BlockOp (clos_Cons 0)) [])
+         (bvi_Let [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp
+           (clos_Const (&0))) []; bvi_Var 1]]
+           (bvi_Let [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp
+             (clos_Const (&1))) []; bvi_Var 2]]
+             (bvi_Op (clos_BlockOp clos_ListAppend)
+               [bvi_Op (clos_BlockOp (clos_Cons 0)) [bvi_Op (clos_BlockOp
+                 (clos_Cons 0)) []; bvi_Var 1];
                 bvi_Call 0 (SOME 444) [bvi_Var 0] NONE]))))) = SOME
                   bvi_tailrec_Append`,
   CHEAT_TAC);;
 
 (* [local] *)
 let rev_compile_exp = prove
- (`bvi_tailrec_compile_exp 444 445 1 (bvi_Let [bvi_Op (closLang_IntOp
-  (closLang_Const (&0))) []]
-     (bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq 0 0)) [bvi_Var 1])
-         (bvi_Op (closLang_BlockOp (closLang_Cons 0)) [])
-         (bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-           (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 1]]
-           (bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-             (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 2]]
-             (bvi_Op (closLang_BlockOp closLang_ListAppend)
-               [bvi_Op (closLang_BlockOp (closLang_Cons 0)) [bvi_Op
-                 (closLang_BlockOp (closLang_Cons 0)) []; bvi_Var 1];
+ (`bvi_tailrec_compile_exp 444 445 1 (bvi_Let [bvi_Op (clos_IntOp (clos_Const
+  (&0))) []]
+     (bvi_If (bvi_Op (clos_BlockOp (clos_TagLenEq 0 0)) [bvi_Var 1])
+         (bvi_Op (clos_BlockOp (clos_Cons 0)) [])
+         (bvi_Let [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp
+           (clos_Const (&0))) []; bvi_Var 1]]
+           (bvi_Let [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp
+             (clos_Const (&1))) []; bvi_Var 2]]
+             (bvi_Op (clos_BlockOp clos_ListAppend)
+               [bvi_Op (clos_BlockOp (clos_Cons 0)) [bvi_Op (clos_BlockOp
+                 (clos_Cons 0)) []; bvi_Var 1];
                 bvi_Call 0 (SOME 444) [bvi_Var 0] NONE]))))) = SOME
-                  ((bvi_Let [bvi_Var 0; bvi_Op (closLang_BlockOp (closLang_Cons
-                  0)) []] (bvi_Let [bvi_Op (closLang_IntOp (closLang_Const
-                  (&0))) []] (bvi_If (bvi_Op (closLang_BlockOp
-                  (closLang_TagLenEq 0 0)) [bvi_Var 1]) (bvi_Op
-                  (closLang_BlockOp closLang_ListAppend) [bvi_Var 2; bvi_Op
-                  (closLang_BlockOp (closLang_Cons 0)) []])
-         (bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-           (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 1]]
-           (bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-             (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 2]]
-             (bvi_Call 0 (SOME 445) [bvi_Var 0; bvi_Op (closLang_BlockOp
-               closLang_ListAppend) [bvi_Var 4; bvi_Op (closLang_BlockOp
-               (closLang_Cons 0)) [bvi_Op (closLang_BlockOp (closLang_Cons 0))
-               []; bvi_Var 1]]]
-               NONE)))))),(bvi_Let [bvi_Op (closLang_IntOp (closLang_Const
-                 (&0))) []] (bvi_If (bvi_Op (closLang_BlockOp
-                 (closLang_TagLenEq 0 0)) [bvi_Var 1]) (bvi_Op
-                 (closLang_BlockOp closLang_ListAppend) [bvi_Var 2; bvi_Op
-                 (closLang_BlockOp (closLang_Cons 0)) []]) (bvi_Let [bvi_Op
-                 (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
-                 (closLang_Const (&0))) []; bvi_Var 1]] (bvi_Let [bvi_Op
-                 (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
-                 (closLang_Const (&1))) []; bvi_Var 2]] (bvi_Call 0 (SOME
-                 445) [bvi_Var 0; bvi_Op (closLang_BlockOp
-                 closLang_ListAppend) [bvi_Var 4; bvi_Op (closLang_BlockOp
-                 (closLang_Cons 0)) [bvi_Op (closLang_BlockOp (closLang_Cons
-                 0)) []; bvi_Var 1]]] NONE))))))`,
+                  ((bvi_Let [bvi_Var 0; bvi_Op (clos_BlockOp (clos_Cons 0)) []]
+                  (bvi_Let [bvi_Op (clos_IntOp (clos_Const (&0))) []] (bvi_If
+                  (bvi_Op (clos_BlockOp (clos_TagLenEq 0 0)) [bvi_Var 1])
+                  (bvi_Op (clos_BlockOp clos_ListAppend) [bvi_Var 2; bvi_Op
+                  (clos_BlockOp (clos_Cons 0)) []])
+         (bvi_Let [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp
+           (clos_Const (&0))) []; bvi_Var 1]]
+           (bvi_Let [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp
+             (clos_Const (&1))) []; bvi_Var 2]]
+             (bvi_Call 0 (SOME 445) [bvi_Var 0; bvi_Op (clos_BlockOp
+               clos_ListAppend) [bvi_Var 4; bvi_Op (clos_BlockOp (clos_Cons 0))
+               [bvi_Op (clos_BlockOp (clos_Cons 0)) []; bvi_Var 1]]]
+               NONE)))))),(bvi_Let [bvi_Op (clos_IntOp (clos_Const (&0)))
+                 []] (bvi_If (bvi_Op (clos_BlockOp (clos_TagLenEq 0 0))
+                 [bvi_Var 1]) (bvi_Op (clos_BlockOp clos_ListAppend) [bvi_Var
+                 2; bvi_Op (clos_BlockOp (clos_Cons 0)) []]) (bvi_Let [bvi_Op
+                 (clos_MemOp clos_El) [bvi_Op (clos_IntOp (clos_Const (&0)))
+                 []; bvi_Var 1]] (bvi_Let [bvi_Op (clos_MemOp clos_El)
+                 [bvi_Op (clos_IntOp (clos_Const (&1))) []; bvi_Var 2]]
+                 (bvi_Call 0 (SOME 445) [bvi_Var 0; bvi_Op (clos_BlockOp
+                 clos_ListAppend) [bvi_Var 4; bvi_Op (clos_BlockOp (clos_Cons
+                 0)) [bvi_Op (clos_BlockOp (clos_Cons 0)) []; bvi_Var 1]]]
+                 NONE))))))`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

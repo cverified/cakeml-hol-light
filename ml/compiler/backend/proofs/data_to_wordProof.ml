@@ -102,12 +102,12 @@ let word_test_lemma2 = prove
    variables of its own are read as variables *)
 let memory_rel_Thunk_bits = prove
  (cake_as_vars (fun () ->
-    `memory_rel c be ts refs sp st m dm (CONS (dataSem_RefPtr bl
-  p,wordLang_Word (w:'a word)) vars) /\
+    `memory_rel c be ts refs sp st m dm (CONS (dataSem_RefPtr bl p,word_Word
+  (w:'a word)) vars) /\
      sptree_lookup p refs = SOME (bvlSem_Thunk ev z) /\
      good_dimindex (:'a) /\
      get_real_addr c st w = SOME a /\
-     m a = wordLang_Word x /\ FAPPLY
+     m a = word_Word x /\ FAPPLY
      w 0 ==>
      (~bl /\ ev = Evaluated /\ ~(((n2w 0b111100) && x) = n2w ((0 + 6) *
        4)) /\ ~(((n2w 0b111100) && x) = n2w ((8 + 6) * 4))) \/
@@ -133,7 +133,7 @@ let jump_exc_locals = prove
 (* [local] *)
 let v_inv_Loc = prove
  (`v_inv c v1 (dataSem_state_refs s) (v2,f,tf,heap) /\
-   word_addr c v2 = wordLang_Loc n1 n2 ==>
+   word_addr c v2 = word_Loc n1 n2 ==>
      n2 = 0`,
   CHEAT_TAC);;
 
@@ -141,7 +141,7 @@ let v_inv_Loc = prove
 let state_rel_get_var_RefPtr_Loc = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s t v1 locs /\
    wordSem_get_var n (state_locals s) = SOME (dataSem_RefPtr b p) /\
-   wordSem_get_var (adjust_var n) t = SOME (wordLang_Loc n1 n2) ==>
+   wordSem_get_var (adjust_var n) t = SOME (word_Loc n1 n2) ==>
      n2 = 0`,
   CHEAT_TAC);;
 
@@ -198,7 +198,7 @@ let data_compile_correct = prove
              (?ws. LENGTH ws = LENGTH v /\
                   data_to_word_gcProof_state_rel c l1 l2 s1 t1 (SOME (ZIP v
                     ws)) locs /\
-                  (res1 = SOME (wordSem_Result (wordLang_Loc l1 l2) ws)))
+                  (res1 = SOME (wordSem_Result (word_Loc l1 l2) ws)))
          | SOME (Rerr (Rraise v)) -> (state_ffi t1 = dataSem_state_ffi s1)
            /\
              (?w l5 l6 ll.
@@ -246,13 +246,12 @@ let data_compile_correct = prove
 
 let compile_correct_lemma = prove
  (`!s c l1 l2 res s1 (t:('a,'c,'ffi)wordSem_state) start'.
-      (dataSem_evaluate (wordLang_Call NONE (SOME start') [] NONE,s) =
-        (res,s1)) /\ ~(res = SOME (Rerr (Rabort Rtype_error)))
-        /\ wordSem_state_termdep
+      (dataSem_evaluate (word_Call NONE (SOME start') [] NONE,s) = (res,s1))
+        /\ ~(res = SOME (Rerr (Rabort Rtype_error))) /\ wordSem_state_termdep
       t > 1 /\
       data_to_word_gcProof_state_rel c l1 l2 s t NONE [] ==>
       (?t1 res1.
-        (wordSem_evaluate (wordLang_Call NONE (SOME start') [0] NONE,t) =
+        (wordSem_evaluate (word_Call NONE (SOME start') [0] NONE,t) =
           (res1,t1)) /\
         option_le (state_stack_max t1) (dataSem_state_stack_max s1) /\
         (res1 = SOME wordSem_NotEnoughSpace ==> ffi_state_io_events
@@ -264,8 +263,8 @@ let compile_correct_lemma = prove
          (match res with NONE -> (state_ffi t1 = dataSem_state_ffi s1)
            /\ (res1 = NONE)
         | SOME (Rval v) -> (state_ffi t1 = dataSem_state_ffi s1) /\
-                           (?w. (res1 = SOME (wordSem_Result (wordLang_Loc
-                             l1 l2) w)))
+                           (?w. (res1 = SOME (wordSem_Result (word_Loc l1
+                             l2) w)))
         | SOME (Rerr (Rraise v)) -> (state_ffi t1 = dataSem_state_ffi s1) /\
                               (?v w. res1 = SOME (wordSem_Exception v w))
         | SOME (Rerr (Rabort (Rffi_error f))) -> (res1 = SOME
@@ -299,11 +298,11 @@ let state_rel_ext_def = new_definition
 (* compile_correct *)
 let data_to_wordProof_compile_correct = prove
  (`!x s l1 l2 res s1 (t:('a,'c,'ffi)wordSem_state) start'.
-      (dataSem_evaluate (wordLang_Call NONE (SOME start') [] NONE,s) =
-        (res,s1)) /\ ~(res = SOME (Rerr (Rabort Rtype_error))) /\
+      (dataSem_evaluate (word_Call NONE (SOME start') [] NONE,s) = (res,s1))
+        /\ ~(res = SOME (Rerr (Rabort Rtype_error))) /\
       state_rel_ext x l1 l2 s t ==>
       (?ck t1 res1.
-        (wordSem_evaluate (wordLang_Call NONE (SOME start') [0] NONE,
+        (wordSem_evaluate (word_Call NONE (SOME start') [0] NONE,
            (wordProps_inc_clock ck t)) = (res1,t1)) /\
         option_le (dataSem_state_stack_max t1) (dataSem_state_stack_max s1)
           /\
@@ -315,8 +314,8 @@ let data_to_wordProof_compile_correct = prove
         (~(res1 = SOME wordSem_NotEnoughSpace) ==>
          (dataSem_state_ffi t1 = dataSem_state_ffi s1) /\
          (match res with NONE -> (res1 = NONE)
-         | SOME (Rval v) -> (?w. (res1 = SOME (wordSem_Result (wordLang_Loc
-           l1 l2) w)))
+         | SOME (Rval v) -> (?w. (res1 = SOME (wordSem_Result (word_Loc l1
+           l2) w)))
          | SOME (Rerr (Rraise v)) -> (?v w. res1 = SOME (wordSem_Exception v
            w))
          | SOME (Rerr (Rabort (Rffi_error f))) -> (res1 = SOME
@@ -388,13 +387,13 @@ let extract_labels_WordShift64_on_32 = prove
 
 (* [local] *)
 let extract_labels_assignWordOp = prove
- (`wordSem_assign a b c d (closLang_WordOp (WordOpw e f)) g h = (i,j) ==>
+ (`wordSem_assign a b c d (clos_WordOp (WordOpw e f)) g h = (i,j) ==>
    wordConvs_extract_labels i = [] /\ c <= j`,
   CHEAT_TAC);;
 
 (* [local] *)
 let extract_labels_assignWordShift = prove
- (`wordSem_assign a b c d (closLang_WordOp (WordShift e f k)) g h = (i,j) ==>
+ (`wordSem_assign a b c d (clos_WordOp (WordShift e f k)) g h = (i,j) ==>
    wordConvs_extract_labels i = [] /\ c <= j`,
   CHEAT_TAC);;
 
@@ -479,7 +478,7 @@ let data_to_word_compile_lab_pres = prove
  (`let (c,p) = backend_compile data_conf word_conf asm_conf prog in
    MAP FST p = APPEND (MAP FST (data_to_word_stubs (:'a) data_conf)) (MAP
      FST prog) /\
-   ALL (\(n,m,(p:'a wordLang_prog)).
+   ALL (\(n,m,(p:'a word_prog)).
      let labs = wordConvs_extract_labels p in
      ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\
      ALL_DISTINCT labs) p`,
@@ -556,7 +555,7 @@ let data_to_word_compile_conventions = prove
  (`good_dimindex (:'a) ==>
    (let (c,p) = backend_compile data_conf wc ac prog in
    ALL (\(n,m,prog).
-   flat_exp_conventions (prog:'a wordLang_prog) /\
+   flat_exp_conventions (prog:'a word_prog) /\
    post_alloc_conventions (asm_config_reg_count ac - (5 + LENGTH
      (asm_config_avoid_regs ac))) prog /\
    (
@@ -660,7 +659,7 @@ let getWords_good_loc = prove
 let const_parts_to_words_labels = prove
  (`const_parts_to_words c bs = SOME (q,r) ==>
    wordConvs_get_code_labels (StoreAnyConsts (adjust_var w) 1 3 r q) SUBSET
-   assign_get_code_label (closLang_BlockOp (closLang_Build bs))`,
+   assign_get_code_label (clos_BlockOp (clos_Build bs))`,
   CHEAT_TAC);;
 
 (* semi-slow... *)
@@ -677,7 +676,7 @@ let word_get_code_labels_assign = prove
 let data_to_word_comp_code_labels = prove
  (`!c secn l p.
    wordConvs_get_code_labels ((FST (data_to_word_comp c secn l p)):'a
-     wordLang_prog) SUBSET
+     word_prog) SUBSET
    dataProps_get_code_labels p UNION set_of_list (MAP FST
      (data_to_word_stubs (:'a) c))`,
   CHEAT_TAC);;
@@ -710,8 +709,7 @@ let word_good_handlers_assign = prove
 (* [local] *)
 let data_to_word_comp_good_handlers = prove
  (`!c secn l p.
-   good_handlers secn ((FST (data_to_word_comp c secn l p)):'a
-     wordLang_prog)`,
+   good_handlers secn ((FST (data_to_word_comp c secn l p)):'a word_prog)`,
   CHEAT_TAC);;
 
 (* [local] *)

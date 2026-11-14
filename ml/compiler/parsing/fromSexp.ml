@@ -69,7 +69,6 @@ let strip_sxcons_11 = prove
  (`!s1 s2 x. strip_sxcons s1 = SOME x /\ strip_sxcons s2 = SOME x ==> s1 = s2`,
   CHEAT_TAC);;
 
-let _ = size_thms "simpleSexp_sexp";;
 let dstrip_sexp_size = prove
  (`!s sym args. dstrip_sexp s = SOME (sym,args) ==>
                  (!e. MEM e args ==> simpleSexp_sexp_size e <
@@ -1404,7 +1403,6 @@ let type_defsexp_11 = prove
   CHEAT_TAC);;
 add_simp type_defsexp_11;;
 
-let _ = size_thms "dec";;
 let dec1_size_eq = prove
  (`list_size ast_dec_size xs = list_size dec_size xs`,
   CHEAT_TAC);;

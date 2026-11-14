@@ -230,7 +230,7 @@ let pat_bindings_evaluate_FOLDR_lemma = prove
    ALOOKUP_rel (\x. ~(x IN new_names)) (=) (flatSem_environment_v env2)
      (flatSem_environment_v env) ==>
    flatSem_evaluate env2 s
-     [ITLIST (\x exp. flatLang_Let t (f x) (g x) exp) xs exp] =
+     [ITLIST (\x exp. flat_Let t (f x) (g x) exp) xs exp] =
    flatSem_evaluate (flatSem_environment_v_fupd (K (APPEND (MAP (\x. (THE (f
      x),h x)) (REVERSE xs)) (flatSem_environment_v env2))) env2)
          s [exp])`,
@@ -271,8 +271,7 @@ let compile_pat_bindings_simulation = prove
    ALOOKUP_rel ((\k. k < j) o dec_name_to_num) (=) (flatSem_environment_v
      env)
      (APPEND pre_bindings base_vs) /\
-   ALL (\(p,k,_). ALL (\nm. dec_name_to_num nm < j) (flatLang_pat_bindings
-     p) /\
+   ALL (\(p,k,_). ALL (\nm. dec_name_to_num nm < j) (flat_pat_bindings p) /\
          j < k /\ k < i) n_bindings ==>
    (?env2. flatSem_evaluate env2 s [exp] = (s2,res) /\
    ALOOKUP_rel ((\k. k < j) o dec_name_to_num) (=) (flatSem_environment_v
@@ -551,18 +550,18 @@ let do_if_Boolv = prove
 
 (* evaluate_Bool *)
 let flat_patternProof_evaluate_Bool = prove
- (`flatSem_evaluate env s [flatLang_Bool t b] = (s,Rval [flatSem_Boolv b])`,
+ (`flatSem_evaluate env s [flat_Bool t b] = (s,Rval [flatSem_Boolv b])`,
   CHEAT_TAC);;
 
 let SmartIf_thm = prove
  (`SmartIf t e p q =
-     if ?t. e = flatLang_Bool t T then p else if ?t. e = flatLang_Bool t F
-       then q else flatLang_If t e p q`,
+     if ?t. e = flat_Bool t T then p else if ?t. e = flat_Bool t F then q
+       else flat_If t e p q`,
   CHEAT_TAC);;
 
 let evaluate_SmartIf = prove
- (`flatSem_evaluate env s [SmartIf t x y z] = flatSem_evaluate env s
-  [flatLang_If t x y z]`,
+ (`flatSem_evaluate env s [SmartIf t x y z] = flatSem_evaluate env s [flat_If
+  t x y z]`,
   CHEAT_TAC);;
 
 let decode_guard_simulation = prove
@@ -680,12 +679,12 @@ let compile_match_EL = prove
    (?exp_i sg exp'.
    flat_pattern_compile_exp cfg exp = (exp_i,sg,exp') /\
    EL i pats2 = (pat,exp') /\
-   exp_i <= k /\ max_dec_name (flatLang_pat_bindings pat) <= k)`,
+   exp_i <= k /\ max_dec_name (flat_pat_bindings pat) <= k)`,
   CHEAT_TAC);;
 
 let evaluate_compile_pat_rhs = prove
  (`flatSem_evaluate (flatSem_environment_v_fupd f env3) s
-     [compile_pat_rhs tr N (flatLang_Var_local tr (enc_num_to_name N))
+     [compile_pat_rhs tr N (flat_Var_local tr (enc_num_to_name N))
      (p,exp)] = (t,res) /\
    flatSem_pmatch s p v [] = Match bindings /\
    flat_patternProof_env_rel M env1 env2 /\
@@ -694,7 +693,7 @@ let evaluate_compile_pat_rhs = prove
    f (flatSem_environment_v env3) = CONS (enc_num_to_name N,v)
      (flatSem_environment_v env2) /\
    N <= M /\
-   max_dec_name (flatLang_pat_bindings p) < N - 1 ==>
+   max_dec_name (flat_pat_bindings p) < N - 1 ==>
    (?ext_env.
    flatSem_evaluate ext_env s [exp] = (t,res) /\
    flat_patternProof_env_rel (N - 1) (flatSem_environment_v_fupd (K
@@ -894,8 +893,8 @@ let esgc_free_naive_pattern_matches = prove
 
 let esgc_free_compile_pats = prove
  (`flatProps_esgc_free dflt /\ ALL flatProps_esgc_free (MAP SND ps) ==>
-   flatProps_esgc_free (compile_pats cfg naive t N (flatLang_Var_local t'
-     nm) dflt ps)`,
+   flatProps_esgc_free (compile_pats cfg naive t N (flat_Var_local t' nm)
+     dflt ps)`,
   CHEAT_TAC);;
 
 let compile_exp_esgc_free = prove

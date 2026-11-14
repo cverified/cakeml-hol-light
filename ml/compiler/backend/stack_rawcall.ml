@@ -25,85 +25,80 @@ let _ = cake_theory "stack_rawcall"
 (* collect stack allocation information *)
 
 let seq_stack_alloc_def = new_definition
-  `seq_stack_alloc (p:'a stackLang_prog) =
-     match p with stackLang_Seq (stackLang_StackAlloc k) _ -> SOME k | _
-       -> NONE`;;
+  `seq_stack_alloc (p:'a stack_prog) =
+     match p with stack_Seq (stack_StackAlloc k) _ -> SOME k | _ -> NONE`;;
 
 let seq_stack_alloc_pmatch = prove
- (`seq_stack_alloc (p:'a stackLang_prog) =
-     match p with stackLang_Seq (stackLang_StackAlloc k) _ -> SOME k | _
-       -> NONE`,
+ (`seq_stack_alloc (p:'a stack_prog) =
+     match p with stack_Seq (stack_StackAlloc k) _ -> SOME k | _ -> NONE`,
   CHEAT_TAC);;
 
 let collect_info_def,collect_info_ind = define_rec
   `(collect_info [] f = f) /\
-   (collect_info (CONS (n,(b:'a stackLang_prog)) xs) f =
+   (collect_info (CONS (n,(b:'a stack_prog)) xs) f =
          collect_info xs (match seq_stack_alloc b with NONE -> f
                           | SOME k -> sptree_insert n k f))`;;
 
 (* optimise based on stack allocation information *)
 
 let dest_case_def = new_definition
-  `dest_case (p1:'a stackLang_prog) (p2:'a stackLang_prog) =
-     match p1 with stackLang_StackFree k -> (match p2 with stackLang_Call
-       NONE (INL d) NONE -> SOME (k,d) | _ -> NONE)
+  `dest_case (p1:'a stack_prog) (p2:'a stack_prog) =
+     match p1 with stack_StackFree k -> (match p2 with stack_Call NONE (INL
+       d) NONE -> SOME (k,d) | _ -> NONE)
      | _ -> NONE`;;
 
 let dest_case_pmatch = prove
- (`dest_case (p1:'a stackLang_prog) (p2:'a stackLang_prog) =
-     match p1 with stackLang_StackFree k -> (match p2 with stackLang_Call
-       NONE (INL d) NONE -> SOME (k,d) | _ -> NONE)
+ (`dest_case (p1:'a stack_prog) (p2:'a stack_prog) =
+     match p1 with stack_StackFree k -> (match p2 with stack_Call NONE (INL
+       d) NONE -> SOME (k,d) | _ -> NONE)
      | _ -> NONE`,
   CHEAT_TAC);;
 
 let comp_seq_def = new_definition
-  `comp_seq (p1:'a stackLang_prog) (p2:'a stackLang_prog) i (default:'a
-  stackLang_prog) =
+  `comp_seq (p1:'a stack_prog) (p2:'a stack_prog) i (default:'a stack_prog) =
    match dest_case p1 p2 with SOME (k,dest) ->
        (match sptree_lookup dest i with NONE -> default
         | SOME l ->
-            if l = k then stackLang_RawCall dest else if l < k then
-              stackLang_Seq (stackLang_StackFree (k - l)) (stackLang_RawCall
-              dest) else stackLang_Seq stackLang_Tick (stackLang_Seq
-              (stackLang_StackAlloc (l - k)) (stackLang_RawCall dest)))
+            if l = k then stack_RawCall dest else if l < k then stack_Seq
+              (stack_StackFree (k - l)) (stack_RawCall dest) else stack_Seq
+              stack_Tick (stack_Seq (stack_StackAlloc (l - k)) (stack_RawCall
+              dest)))
    | _ -> default`;;
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_rawcall_comp_def,stack_rawcall_comp_ind = define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
-  `stack_rawcall_comp i (p:'a stackLang_prog) =
-     match p with stackLang_Seq p1 p2 -> comp_seq p1 p2 i (stackLang_Seq
+  `MEASURE (\(x0,x1). stack_prog_size (\x. 0) x1)`
+  `stack_rawcall_comp i (p:'a stack_prog) =
+     match p with stack_Seq p1 p2 -> comp_seq p1 p2 i (stack_Seq
        (stack_rawcall_comp i p1) (stack_rawcall_comp i p2))
-     | stackLang_If c r ri p1 p2 -> stackLang_If c r ri (stack_rawcall_comp
-       i p1) (stack_rawcall_comp i p2)
-     | stackLang_Loop p1 -> stackLang_Loop (stack_rawcall_comp i p1)
-     | stackLang_Call (SOME (p1,lr,l1,l2)) dest NONE ->
-         stackLang_Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest NONE
-     | stackLang_Call (SOME (p1,lr,l1,l2)) dest (SOME (p2,k1,k2)) ->
-         stackLang_Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest (SOME
+     | stack_If c r ri p1 p2 -> stack_If c r ri (stack_rawcall_comp i p1)
+       (stack_rawcall_comp i p2)
+     | stack_Loop p1 -> stack_Loop (stack_rawcall_comp i p1)
+     | stack_Call (SOME (p1,lr,l1,l2)) dest NONE ->
+         stack_Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest NONE
+     | stack_Call (SOME (p1,lr,l1,l2)) dest (SOME (p2,k1,k2)) ->
+         stack_Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest (SOME
            (stack_rawcall_comp i p2,k1,k2))
      | _ -> p`;;
 (* HOL4 stack_rawcallScript.sml:85-93: a theorem that HOL4 states as the
    value of an ML expression: comp_pmatch *)
 
 let comp_top_def = new_definition
-  `comp_top i (p:'a stackLang_prog) =
-     match p with stackLang_Seq p1 p2 -> stackLang_Seq
-       (stack_rawcall_comp i p1) (stack_rawcall_comp i p2) | _ ->
-       stack_rawcall_comp i p`;;
+  `comp_top i (p:'a stack_prog) =
+     match p with stack_Seq p1 p2 -> stack_Seq (stack_rawcall_comp i p1)
+       (stack_rawcall_comp i p2) | _ -> stack_rawcall_comp i p`;;
 
 let comp_top_pmatch = prove
- (`comp_top i (p:'a stackLang_prog) =
-     match p with stackLang_Seq p1 p2 -> stackLang_Seq (stack_rawcall_comp
-       i p1) (stack_rawcall_comp i p2) | _ -> stack_rawcall_comp i p`,
+ (`comp_top i (p:'a stack_prog) =
+     match p with stack_Seq p1 p2 -> stack_Seq (stack_rawcall_comp i p1)
+       (stack_rawcall_comp i p2) | _ -> stack_rawcall_comp i p`,
   CHEAT_TAC);;
 
 let stack_rawcall_compile_def = new_definition
   `stack_rawcall_compile prog =
      let i = collect_info prog LN in
-       MAP (\(n,(b:'a stackLang_prog)). (n,comp_top i b)) prog`;;
+       MAP (\(n,(b:'a stack_prog)). (n,comp_top i b)) prog`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

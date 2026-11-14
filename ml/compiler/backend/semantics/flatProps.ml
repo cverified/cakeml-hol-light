@@ -32,8 +32,8 @@ let ctor_same_type_OPTREL = prove
   CHEAT_TAC);;
 
 let pats_bindings_FLAT_MAP = prove
- (`!ps. flatLang_pats_bindings ps = FLAT (REVERSE (MAP (\p.
-  flatLang_pat_bindings p) ps))`,
+ (`!ps. flat_pats_bindings ps = FLAT (REVERSE (MAP (\p. flat_pat_bindings p)
+  ps))`,
   CHEAT_TAC);;
 
 (* HOL4 flatPropsScript.sml:31-33: the ML values that the definitions below
@@ -52,27 +52,27 @@ let pmatch_state = prove
 let flatProps_pmatch_extend = prove
  (`(!(s:('c,'ffi)flatSem_state) p v env env' env''.
     flatSem_pmatch s p v env = Match env' ==>
-    (?env''. env' = APPEND env'' env /\ MAP FST env'' =
-      flatLang_pat_bindings p)) /\
+    (?env''. env' = APPEND env'' env /\ MAP FST env'' = flat_pat_bindings
+      p)) /\
    (!(s:('c,'ffi)flatSem_state) ps vs env env' env''.
     flatSem_pmatch_list s ps vs env = Match env' ==>
-    (?env''. env' = APPEND env'' env /\ MAP FST env'' =
-      flatLang_pats_bindings ps))`,
+    (?env''. env' = APPEND env'' env /\ MAP FST env'' = flat_pats_bindings
+      ps))`,
   CHEAT_TAC);;
 
 let pmatch_bindings = prove
  (`(!(s:('c,'ffi)flatSem_state) p v env r.
       flatSem_pmatch s p v env = Match r ==>
-      MAP FST r = APPEND (flatLang_pat_bindings p) (MAP FST env)) /\
+      MAP FST r = APPEND (flat_pat_bindings p) (MAP FST env)) /\
    (!(s:('c,'ffi)flatSem_state) ps vs env r.
      flatSem_pmatch_list s ps vs env = Match r ==>
-     MAP FST r = APPEND (flatLang_pats_bindings ps) (MAP FST env))`,
+     MAP FST r = APPEND (flat_pats_bindings ps) (MAP FST env))`,
   CHEAT_TAC);;
 
 let pmatch_length = prove
  (`!(s:('c,'ffi)flatSem_state) p v env r.
       flatSem_pmatch s p v env = Match r ==>
-      LENGTH r = LENGTH (flatLang_pat_bindings p) + LENGTH env`,
+      LENGTH r = LENGTH (flat_pat_bindings p) + LENGTH env`,
   (REPEAT STRIP_TAC THEN
    FIRST_ASSUM(MP_TAC o AP_TERM `LENGTH:(mlstring)list->num` o
                MATCH_MP (CONJUNCT1 pmatch_bindings)) THEN
@@ -379,11 +379,11 @@ let flatProps_evaluate_decs_add_to_clock_io_events_mono = prove
 
 let evaluate_MAP_Var_local = prove
  (`MAP (ALOOKUP (flatSem_environment_v env)) xs = MAP SOME vs ==>
-   flatSem_evaluate env s (MAP (flatLang_Var_local t) xs) = (s,Rval vs)`,
+   flatSem_evaluate env s (MAP (flat_Var_local t) xs) = (s,Rval vs)`,
   CHEAT_TAC);;
 
 let bind_locals_list_def = new_definition
-  `bind_locals_list ts ks = MAP2 (\t x. (flatLang_Var_local t x)) ts ks`;;
+  `bind_locals_list ts ks = MAP2 (\t x. (flat_Var_local t x)) ts ks`;;
 
 let evaluate_vars = prove
  (`!env s kvs env' ks vs ts.
@@ -399,8 +399,8 @@ let evaluate_vars = prove
 
 let pmatch_list_MAP_Pvar = prove
  (`!xs vs. LENGTH xs = LENGTH vs ==>
-   flatSem_pmatch_list s (MAP flatLang_Pvar xs) vs [] = Match (REVERSE
-     (ZIP xs vs))`,
+   flatSem_pmatch_list s (MAP flat_Pvar xs) vs [] = Match (REVERSE (ZIP xs
+     vs))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -464,7 +464,7 @@ let flatProps_IMP_semantics_eq = prove
 let flatProps_op_gbag_def = new_definition
   `flatProps_op_gbag x1 =
    match x1 with
-     flatLang_GlobalVarInit n -> BAG_INSERT n EMPTY_BAG
+     flat_GlobalVarInit n -> BAG_INSERT n EMPTY_BAG
    | _ -> EMPTY_BAG`;;
 
 (* the clauses in two quotations: es is (exp list) and (_)list; pes is ((pat
@@ -472,26 +472,25 @@ let flatProps_op_gbag_def = new_definition
 let flatProps_set_globals_def,flatProps_set_globals_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`(flatProps_set_globals (flatLang_Raise t e) = flatProps_set_globals e) /\
-    (flatProps_set_globals (flatLang_Handle t e pes) = (BAG_UNION)
+  [`(flatProps_set_globals (flat_Raise t e) = flatProps_set_globals e) /\
+    (flatProps_set_globals (flat_Handle t e pes) = (BAG_UNION)
     (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))) /\
-    (flatProps_set_globals (flatLang_Con t id' es) = flatProps_elist_globals
-    es) /\
-    (flatProps_set_globals (flatLang_Fun t v e) = flatProps_set_globals e) /\
-    (flatProps_set_globals (flatLang_App t op es) = (BAG_UNION)
+    (flatProps_set_globals (flat_Con t id' es) = flatProps_elist_globals es) /\
+    (flatProps_set_globals (flat_Fun t v e) = flatProps_set_globals e) /\
+    (flatProps_set_globals (flat_App t op es) = (BAG_UNION)
     (flatProps_elist_globals es) (flatProps_op_gbag op)) /\
-    (flatProps_set_globals (flatLang_If t e1 e2 e3) = (BAG_UNION)
-    ((BAG_UNION) (flatProps_set_globals e1) (flatProps_set_globals e2))
+    (flatProps_set_globals (flat_If t e1 e2 e3) = (BAG_UNION) ((BAG_UNION)
+    (flatProps_set_globals e1) (flatProps_set_globals e2))
     (flatProps_set_globals e3)) /\
-    (flatProps_set_globals (flatLang_Mat t e pes) = (BAG_UNION)
+    (flatProps_set_globals (flat_Mat t e pes) = (BAG_UNION)
     (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))) /\
-    (flatProps_set_globals (flatLang_Let t v e1 e2) = (BAG_UNION)
+    (flatProps_set_globals (flat_Let t v e1 e2) = (BAG_UNION)
     (flatProps_set_globals e1) (flatProps_set_globals e2)) /\
     (flatProps_set_globals _ = EMPTY_BAG) /\
     (flatProps_elist_globals [] = EMPTY_BAG) /\
     (flatProps_elist_globals (CONS e es) = (BAG_UNION)
     (flatProps_set_globals e) (flatProps_elist_globals es))`;
-   `flatProps_set_globals (flatLang_Letrec t fs e) = (BAG_UNION)
+   `flatProps_set_globals (flat_Letrec t fs e) = (BAG_UNION)
     (flatProps_set_globals e) (flatProps_elist_globals (MAP (SND o SND)
     fs))`];;
 add_simp flatProps_set_globals_def;;
@@ -501,23 +500,23 @@ add_simp flatProps_set_globals_def;;
    the names that the port gives the constants *)
 (* HOL4 flatPropsScript.sml:850-856: the tactic that proves the termination *)
 let flatProps_esgc_free_def,flatProps_esgc_free_ind = define_wf
-  `MEASURE flatLang_exp_size`
+  `MEASURE flat_exp_size`
   `flatProps_esgc_free x1 =
      match x1 with
-       flatLang_Raise t e -> flatProps_esgc_free e
-     | flatLang_Handle t e pes ->
+       flat_Raise t e -> flatProps_esgc_free e
+     | flat_Handle t e pes ->
        flatProps_esgc_free e /\ ALL flatProps_esgc_free (MAP SND pes)
-     | flatLang_Con t id' es -> ALL flatProps_esgc_free es
-     | flatLang_Fun t v e -> flatProps_set_globals e = EMPTY_BAG
-     | flatLang_App t op es -> ALL flatProps_esgc_free es
-     | flatLang_If t e1 e2 e3 ->
+     | flat_Con t id' es -> ALL flatProps_esgc_free es
+     | flat_Fun t v e -> flatProps_set_globals e = EMPTY_BAG
+     | flat_App t op es -> ALL flatProps_esgc_free es
+     | flat_If t e1 e2 e3 ->
        flatProps_esgc_free e1 /\ flatProps_esgc_free e2
          /\ flatProps_esgc_free e3
-     | flatLang_Mat t e pes -> flatProps_esgc_free e /\ ALL
-       flatProps_esgc_free (MAP SND pes)
-     | flatLang_Let t v e1 e2 -> flatProps_esgc_free e1
-       /\ flatProps_esgc_free e2
-     | flatLang_Letrec t fs e ->
+     | flat_Mat t e pes -> flatProps_esgc_free e /\ ALL flatProps_esgc_free
+       (MAP SND pes)
+     | flat_Let t v e1 e2 -> flatProps_esgc_free e1 /\ flatProps_esgc_free
+       e2
+     | flat_Letrec t fs e ->
        flatProps_esgc_free e /\ flatProps_elist_globals (MAP (SND o SND) fs)
          = EMPTY_BAG
      | _ -> T`;;
@@ -565,7 +564,7 @@ let evaluate_decs_add_to_clock_io_events_mono_alt = prove
      + extra)) s) ds = (s2,res2) ==> ffi_state_io_events (flatSem_state_ffi
    s1) <<= ffi_state_io_events (flatSem_state_ffi s2)`,
   (REPEAT STRIP_TAC THEN
-   MP_TAC(ISPECL [`ds:flatLang_exp list`;
+   MP_TAC(ISPECL [`ds:flat_exp list`;
      `s:(C,ast_FFI)flatSem_state`; `extra:num`]
             flatProps_evaluate_decs_add_to_clock_io_events_mono) THEN
    ASM_REWRITE_TAC[FST]));;
@@ -745,13 +744,13 @@ let evaluate_match_def = new_definition
        Rtype_error))
      | No_match -> (s,Rerr (Rraise err_v))
      | Match (env',p',e') ->
-         if ALL_DISTINCT (flatLang_pat_bindings p') then flatSem_evaluate
+         if ALL_DISTINCT (flat_pat_bindings p') then flatSem_evaluate
            (flatSem_environment_v_fupd (K (APPEND env' (flatSem_environment_v
            env))) env) s [e']
          else (s,Rerr (Rabort Rtype_error)))`;;
 
 let evaluate_Mat = prove
- (`flatSem_evaluate env s [flatLang_Mat tra e pes] =
+ (`flatSem_evaluate env s [flat_Mat tra e pes] =
    match flatSem_evaluate env s [e] with (s,Rval v) ->
        if ~(pmatch_rows pes s (HD v) = Match_type_error) then
          flatProps_evaluate_match env s (HD v) pes flatSem_bind_exn_v
@@ -760,7 +759,7 @@ let evaluate_Mat = prove
   CHEAT_TAC);;
 
 let evaluate_Handle = prove
- (`flatSem_evaluate env s [flatLang_Handle _ e pes] =
+ (`flatSem_evaluate env s [flat_Handle _ e pes] =
    match flatSem_evaluate env s [e] with (s,Rerr (Rraise v)) ->
        if ~(pmatch_rows pes s v = Match_type_error) then
          flatProps_evaluate_match env s v pes v
@@ -779,10 +778,9 @@ let evaluate_match_CONS = prove
        flatProps_evaluate_match env s v pes err_v
      | Match_type_error -> (s,Rerr (Rabort Rtype_error))
      | Match env_v' ->
-         if ALL_DISTINCT (flatLang_pat_bindings p) /\ ~(pmatch_rows pes s v
-           = Match_type_error) then flatSem_evaluate
-           (flatSem_environment_v_fupd (K (APPEND env_v' (flatSem_environment_v
-           env))) env) s [e]
+         if ALL_DISTINCT (flat_pat_bindings p) /\ ~(pmatch_rows pes s v =
+           Match_type_error) then flatSem_evaluate (flatSem_environment_v_fupd
+           (K (APPEND env_v' (flatSem_environment_v env))) env) s [e]
          else (s,Rerr (Rabort Rtype_error)))`,
   CHEAT_TAC);;
 
@@ -815,21 +813,19 @@ add_simp result_vs_def;;
    which one quotation cannot typecheck *)
 let no_Mat_def,no_Mat_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`(no_Mat (flatLang_Raise t e) <=> no_Mat e) /\
-    (no_Mat (flatLang_Lit t l) <=> T) /\
-    (no_Mat (flatLang_Var_local t v) <=> T) /\
-    (no_Mat (flatLang_Con t n es) <=> ALL no_Mat es) /\
-    (no_Mat (flatLang_App t op es) <=> ALL no_Mat es) /\
-    (no_Mat (flatLang_If t x1 x2 x3) <=> no_Mat x1 /\ no_Mat x2 /\ no_Mat x3)
-      /\
-    (no_Mat (flatLang_Let t vo e1 e2) <=> no_Mat e1 /\ no_Mat e2) /\
-    (no_Mat (flatLang_Mat t e pes) <=> F) /\
-    (no_Mat (flatLang_Handle t e pes) <=> no_Mat e /\ ALL no_Mat (MAP SND pes)
-    /\
-        (match pes with [(flatLang_Pvar _,_)] -> T | _ -> F))`;
-   `(no_Mat (flatLang_Fun t v e) <=> no_Mat e) /\
-    (no_Mat (flatLang_Letrec t funs e) <=> ALL no_Mat (MAP (SND o SND)
-    funs) /\ no_Mat e)`];;
+  [`(no_Mat (flat_Raise t e) <=> no_Mat e) /\
+    (no_Mat (flat_Lit t l) <=> T) /\
+    (no_Mat (flat_Var_local t v) <=> T) /\
+    (no_Mat (flat_Con t n es) <=> ALL no_Mat es) /\
+    (no_Mat (flat_App t op es) <=> ALL no_Mat es) /\
+    (no_Mat (flat_If t x1 x2 x3) <=> no_Mat x1 /\ no_Mat x2 /\ no_Mat x3) /\
+    (no_Mat (flat_Let t vo e1 e2) <=> no_Mat e1 /\ no_Mat e2) /\
+    (no_Mat (flat_Mat t e pes) <=> F) /\
+    (no_Mat (flat_Handle t e pes) <=> no_Mat e /\ ALL no_Mat (MAP SND pes) /\
+        (match pes with [(flat_Pvar _,_)] -> T | _ -> F))`;
+   `(no_Mat (flat_Fun t v e) <=> no_Mat e) /\
+    (no_Mat (flat_Letrec t funs e) <=> ALL no_Mat (MAP (SND o SND) funs)
+    /\ no_Mat e)`];;
 add_simp no_Mat_def;;
 
 let no_Mat_decs_def,no_Mat_decs_ind = define_rec

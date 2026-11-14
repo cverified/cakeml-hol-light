@@ -32,15 +32,15 @@ let _ = do_list hide_constant ["pmatch"];;
 let dest_simple_def = new_definition
   `dest_simple x1 =
      match x1 with
-       bvl_Op (closLang_IntOp (closLang_Const i)) xs -> if NULL xs then SOME
-         i else NONE
+       bvl_Op (clos_IntOp (clos_Const i)) xs -> if NULL xs then SOME i else
+         NONE
      | _ -> NONE`;;
 add_simp dest_simple_def;;
 
 let dest_simple_pmatch = prove
  (`!op. dest_simple op =
    match op with
-     bvl_Op (closLang_IntOp (closLang_Const i)) [] -> SOME i
+     bvl_Op (clos_IntOp (clos_Const i)) [] -> SOME i
    | _ -> NONE`,
   (* HOL4's pmatch is the match of HOL Light as well, so the two
      sides differ in one thing only: the pattern of the source
@@ -51,14 +51,14 @@ let dest_simple_pmatch = prove
 
 let case_op_const_def = new_definition
   `case_op_const exp =
-       match exp with (bvl_Op op [x1; bvl_Op (closLang_IntOp (closLang_Const
-         n2)) l]) -> if NULL l then SOME (op,x1,n2) else NONE
+       match exp with (bvl_Op op [x1; bvl_Op (clos_IntOp (clos_Const n2))
+         l]) -> if NULL l then SOME (op,x1,n2) else NONE
        | _ -> NONE`;;
 
 let case_op_const_pmatch = prove
  (`!exp. case_op_const exp =
-   match exp with (bvl_Op op [x1; bvl_Op (closLang_IntOp (closLang_Const
-     n2)) []]) -> SOME (op,x1,n2)
+   match exp with (bvl_Op op [x1; bvl_Op (clos_IntOp (clos_Const n2)) []])
+     -> SOME (op,x1,n2)
      | _ -> NONE`,
   (GEN_TAC THEN REWRITE_TAC[case_op_const_def] THEN
    EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
@@ -66,20 +66,20 @@ let case_op_const_pmatch = prove
 let SmartOp_flip_def = new_definition
   `SmartOp_flip op x1 x2 =
      match (dest_simple x1) with (SOME i) ->
-         if MEM op [closLang_IntOp closLang_Add; closLang_IntOp
-           closLang_Mult] then (op,x2,x1)
-         else if op = closLang_IntOp closLang_Sub then (closLang_IntOp
-           closLang_Add,x2,bvl_Op (closLang_IntOp (closLang_Const (--i))) [])
+         if MEM op [clos_IntOp clos_Add; clos_IntOp clos_Mult] then
+           (op,x2,x1)
+         else if op = clos_IntOp clos_Sub then (clos_IntOp
+           clos_Add,x2,bvl_Op (clos_IntOp (clos_Const (--i))) [])
          else (op,x1,x2)
      | _ -> (op,x1,x2)`;;
 
 let SmartOp_flip_pmatch = prove
  (`!op x1 x2. SmartOp_flip op x1 x2 =
      match (dest_simple x1) with (SOME i) ->
-         if MEM op [closLang_IntOp closLang_Add; closLang_IntOp
-           closLang_Mult] then (op,x2,x1)
-         else if op = closLang_IntOp closLang_Sub then (closLang_IntOp
-           closLang_Add,x2,bvl_Op (closLang_IntOp (closLang_Const (--i))) [])
+         if MEM op [clos_IntOp clos_Add; clos_IntOp clos_Mult] then
+           (op,x2,x1)
+         else if op = clos_IntOp clos_Sub then (clos_IntOp
+           clos_Add,x2,bvl_Op (clos_IntOp (clos_Const (--i))) [])
          else (op,x1,x2)
      | _ -> (op,x1,x2)`,
   (* this one has no NULL in it, so the two sides are the same
@@ -90,132 +90,131 @@ let SmartOp2_def = new_definition
   `SmartOp2 (op,(x1:bvl_exp),(x2:bvl_exp)) =
      let mk_add_const = (\x1 c2.
        if c2 = (&0) then x1
-       else bvl_Op (closLang_IntOp closLang_Add) [x1; bvl_Op (closLang_IntOp
-         (closLang_Const c2)) []]) in
+       else bvl_Op (clos_IntOp clos_Add) [x1; bvl_Op (clos_IntOp (clos_Const
+         c2)) []]) in
      let mk_add = (\x1 x2.
-       let default = bvl_Op (closLang_IntOp closLang_Add) [x1; x2] in
+       let default = bvl_Op (clos_IntOp clos_Add) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
-                 if op = closLang_IntOp closLang_Add then mk_add_const x11
-                   (n2 + n12)
-                 else if op = closLang_IntOp closLang_Sub then bvl_Op
-                   (closLang_IntOp closLang_Sub) [x11; bvl_Op (closLang_IntOp
-                   (closLang_Const (n2 + n12))) []]
+                 if op = clos_IntOp clos_Add then mk_add_const x11 (n2 +
+                   n12)
+                 else if op = clos_IntOp clos_Sub then bvl_Op (clos_IntOp
+                   clos_Sub) [x11; bvl_Op (clos_IntOp (clos_Const (n2 + n12)))
+                   []]
                  else default
              | _ ->
-                 (match (dest_simple x1) with SOME n1 -> bvl_Op
-                   (closLang_IntOp (closLang_Const (n2 + n1))) []
+                 (match (dest_simple x1) with SOME n1 -> bvl_Op (clos_IntOp
+                   (clos_Const (n2 + n1))) []
                  | _ -> mk_add_const x1 n2))
          | _ ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
-                 if op1 = closLang_IntOp closLang_Add /\ op2 =
-                   closLang_IntOp closLang_Add then
-                   mk_add_const (bvl_Op (closLang_IntOp closLang_Add) [x11;
-                     x21]) (n22 + n12)
-                 else if op1 = closLang_IntOp closLang_Add /\ op2 =
-                   closLang_IntOp closLang_Sub then
-                   bvl_Op (closLang_IntOp closLang_Sub) [bvl_Op
-                     (closLang_IntOp closLang_Sub) [x11; x21]; bvl_Op
-                     (closLang_IntOp (closLang_Const (n22 + n12))) []]
-                 else if op1 = closLang_IntOp closLang_Sub /\ op2 =
-                   closLang_IntOp closLang_Add then
-                   mk_add_const (bvl_Op (closLang_IntOp closLang_Sub) [x11;
-                     x21]) (n22 + n12)
+                 if op1 = clos_IntOp clos_Add /\ op2 = clos_IntOp clos_Add
+                   then
+                   mk_add_const (bvl_Op (clos_IntOp clos_Add) [x11; x21])
+                     (n22 + n12)
+                 else if op1 = clos_IntOp clos_Add /\ op2 = clos_IntOp
+                   clos_Sub then
+                   bvl_Op (clos_IntOp clos_Sub) [bvl_Op (clos_IntOp
+                     clos_Sub) [x11; x21]; bvl_Op (clos_IntOp (clos_Const (n22
+                     + n12))) []]
+                 else if op1 = clos_IntOp clos_Sub /\ op2 = clos_IntOp
+                   clos_Add then
+                   mk_add_const (bvl_Op (clos_IntOp clos_Sub) [x11; x21])
+                     (n22 + n12)
                  else default
              | _ -> default)) in
      let mk_sub = (\x1 x2.
-       let default = bvl_Op (closLang_IntOp closLang_Sub) [x1; x2] in
+       let default = bvl_Op (clos_IntOp clos_Sub) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
-                 if op = closLang_IntOp closLang_Add then bvl_Op
-                   (closLang_IntOp closLang_Sub) [x11; bvl_Op (closLang_IntOp
-                   (closLang_Const (n2 - n12))) []]
-                 else if op = closLang_IntOp closLang_Sub then mk_add_const
-                   x11 (n2 - n12)
+                 if op = clos_IntOp clos_Add then bvl_Op (clos_IntOp
+                   clos_Sub) [x11; bvl_Op (clos_IntOp (clos_Const (n2 - n12)))
+                   []]
+                 else if op = clos_IntOp clos_Sub then mk_add_const x11 (n2
+                   - n12)
                  else default
              | _ ->
-                 (match (dest_simple x1) with SOME n1 -> bvl_Op
-                   (closLang_IntOp (closLang_Const (n2 - n1))) []
+                 (match (dest_simple x1) with SOME n1 -> bvl_Op (clos_IntOp
+                   (clos_Const (n2 - n1))) []
                  | _ -> default))
          | _ ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
-                 if op1 = closLang_IntOp closLang_Add /\ op2 =
-                   closLang_IntOp closLang_Add then
-                   bvl_Op (closLang_IntOp closLang_Add) [bvl_Op
-                     (closLang_IntOp closLang_Sub) [x11; x21]; bvl_Op
-                     (closLang_IntOp (closLang_Const (n22 - n12))) []]
-                 else if op1 = closLang_IntOp closLang_Add /\ op2 =
-                   closLang_IntOp closLang_Sub then
-                   bvl_Op (closLang_IntOp closLang_Sub) [bvl_Op
-                     (closLang_IntOp closLang_Add) [x11; x21]; bvl_Op
-                     (closLang_IntOp (closLang_Const (n22 - n12))) []]
-                 else if op1 = closLang_IntOp closLang_Sub /\ op2 =
-                   closLang_IntOp closLang_Add then
-                   mk_add_const (bvl_Op (closLang_IntOp closLang_Add) [x11;
-                     x21]) (n22 - n12)
+                 if op1 = clos_IntOp clos_Add /\ op2 = clos_IntOp clos_Add
+                   then
+                   bvl_Op (clos_IntOp clos_Add) [bvl_Op (clos_IntOp
+                     clos_Sub) [x11; x21]; bvl_Op (clos_IntOp (clos_Const (n22
+                     - n12))) []]
+                 else if op1 = clos_IntOp clos_Add /\ op2 = clos_IntOp
+                   clos_Sub then
+                   bvl_Op (clos_IntOp clos_Sub) [bvl_Op (clos_IntOp
+                     clos_Add) [x11; x21]; bvl_Op (clos_IntOp (clos_Const (n22
+                     - n12))) []]
+                 else if op1 = clos_IntOp clos_Sub /\ op2 = clos_IntOp
+                   clos_Add then
+                   mk_add_const (bvl_Op (clos_IntOp clos_Add) [x11; x21])
+                     (n22 - n12)
                  else default
              | _ -> default)) in
      let mk_mul = (\x1 x2.
-       let default = bvl_Op (closLang_IntOp closLang_Mult) [x1; x2] in
+       let default = bvl_Op (clos_IntOp clos_Mult) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
-                 if op = closLang_IntOp closLang_Mult then bvl_Op
-                   (closLang_IntOp closLang_Mult) [x11; bvl_Op (closLang_IntOp
-                   (closLang_Const (n2 * n12))) []]
+                 if op = clos_IntOp clos_Mult then bvl_Op (clos_IntOp
+                   clos_Mult) [x11; bvl_Op (clos_IntOp (clos_Const (n2 * n12)))
+                   []]
                  else default
              | _ ->
-                 (match (dest_simple x1) with SOME n1 -> bvl_Op
-                   (closLang_IntOp (closLang_Const (n2 * n1))) []
+                 (match (dest_simple x1) with SOME n1 -> bvl_Op (clos_IntOp
+                   (clos_Const (n2 * n1))) []
                  | _ ->
                      if n2 = (&1) then x1
-                     else if n2 = --(&1) then mk_sub x1 (bvl_Op
-                       (closLang_IntOp (closLang_Const (&0))) [])
+                     else if n2 = --(&1) then mk_sub x1 (bvl_Op (clos_IntOp
+                       (clos_Const (&0))) [])
                      else default))
          | _ ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
-                 if op1 = closLang_IntOp closLang_Mult /\ op2 =
-                   closLang_IntOp closLang_Mult then
-                   bvl_Op (closLang_IntOp closLang_Mult) [bvl_Op
-                     (closLang_IntOp (closLang_Const (n22 * n12))) []; bvl_Op
-                     (closLang_IntOp closLang_Mult) [x11; x21]]
+                 if op1 = clos_IntOp clos_Mult /\ op2 = clos_IntOp clos_Mult
+                   then
+                   bvl_Op (clos_IntOp clos_Mult) [bvl_Op (clos_IntOp
+                     (clos_Const (n22 * n12))) []; bvl_Op (clos_IntOp
+                     clos_Mult) [x11; x21]]
                  else default
              | _ -> default)) in
      let default = bvl_Op op [x1; x2] in
-     if op = closLang_IntOp closLang_Add then
+     if op = clos_IntOp clos_Add then
        mk_add x1 x2
-     else if op = closLang_IntOp closLang_Sub then
+     else if op = clos_IntOp clos_Sub then
        mk_sub x1 x2
-     else if op = closLang_IntOp closLang_Mult then
+     else if op = clos_IntOp clos_Mult then
        mk_mul x1 x2
-     else if MEM op [closLang_IntOp closLang_Div; closLang_IntOp
-       closLang_Mod; closLang_IntOp closLang_Less; closLang_IntOp
-       closLang_LessEq; closLang_IntOp closLang_Greater; closLang_IntOp
-       closLang_GreaterEq] then
+     else if MEM op [clos_IntOp clos_Div; clos_IntOp clos_Mod; clos_IntOp
+       clos_Less; clos_IntOp clos_LessEq; clos_IntOp clos_Greater; clos_IntOp
+       clos_GreaterEq] then
        match (dest_simple x1,dest_simple x2) with (SOME x1,SOME (x2:int)) ->
-           (match op with closLang_IntOp closLang_Div -> if x1 = (&0) then
-             default else bvl_Op (closLang_IntOp (closLang_Const (x2 / x1))) []
-            | closLang_IntOp closLang_Mod -> if x1 = (&0) then default else
-              bvl_Op (closLang_IntOp (closLang_Const (x2 % x1))) []
-            | closLang_IntOp closLang_Less -> bvl_Bool (x2 < x1)
-            | closLang_IntOp closLang_LessEq -> bvl_Bool (x2 <= x1)
-            | closLang_IntOp closLang_Greater -> bvl_Bool (x2 > x1)
-            | closLang_IntOp closLang_GreaterEq -> bvl_Bool (x2 >= x1)
+           (match op with clos_IntOp clos_Div -> if x1 = (&0) then default
+             else bvl_Op (clos_IntOp (clos_Const (x2 / x1))) []
+            | clos_IntOp clos_Mod -> if x1 = (&0) then default else bvl_Op
+              (clos_IntOp (clos_Const (x2 % x1))) []
+            | clos_IntOp clos_Less -> bvl_Bool (x2 < x1)
+            | clos_IntOp clos_LessEq -> bvl_Bool (x2 <= x1)
+            | clos_IntOp clos_Greater -> bvl_Bool (x2 > x1)
+            | clos_IntOp clos_GreaterEq -> bvl_Bool (x2 >= x1)
             | _ -> default)
        | _ -> default
-     else if op = closLang_BlockOp closLang_Equal then
+     else if op = clos_BlockOp clos_Equal then
        match (dest_simple x1,dest_simple x2) with (SOME i,SOME j) ->
          bvl_Bool (j = i)
-       | (SOME i,_) -> bvl_Op (closLang_BlockOp (closLang_EqualConst
-         (closLang_Int i))) [x2]
-       | (_,SOME i) -> bvl_Op (closLang_BlockOp (closLang_EqualConst
-         (closLang_Int i))) [x1]
+       | (SOME i,_) -> bvl_Op (clos_BlockOp (clos_EqualConst (clos_Int i)))
+         [x2]
+       | (_,SOME i) -> bvl_Op (clos_BlockOp (clos_EqualConst (clos_Int i)))
+         [x1]
        | _ -> default
-     else if op = closLang_MemOp closLang_El then
+     else if op = clos_MemOp clos_El then
        match dest_simple x1 with SOME i -> if i < (&0) then default else
-         bvl_Op (closLang_BlockOp (closLang_ElemAt (num_of_int i))) [x2]
+         bvl_Op (clos_BlockOp (clos_ElemAt (num_of_int i))) [x2]
        | _ -> default
      else default`;;
 
@@ -230,12 +229,12 @@ let SmartOp2_def = new_definition
 let dest_EqualInt_def = new_definition
   `dest_EqualInt x1' =
    match x1' with
-     closLang_BlockOp (closLang_EqualConst (closLang_Int i)) -> SOME i
+     clos_BlockOp (clos_EqualConst (clos_Int i)) -> SOME i
    | _ -> NONE`;;
 
 let dest_EqualInt_pmatch = prove
- (`dest_EqualInt x = match x with closLang_BlockOp (closLang_EqualConst
-  (closLang_Int i)) -> SOME i | _ -> NONE`,
+ (`dest_EqualInt x = match x with clos_BlockOp (clos_EqualConst (clos_Int i))
+  -> SOME i | _ -> NONE`,
   (REWRITE_TAC[dest_EqualInt_def]));;
 
 let SmartOp1_def = new_definition
@@ -263,21 +262,21 @@ let bvl_const_extract_def = new_definition
   `bvl_const_extract x1'' ys =
      match x1'' with
        ((bvl_Var n):bvl_exp) -> SOME ((bvl_Var (n + LENGTH ys + 1)):bvl_exp)
-     | bvl_Op (closLang_IntOp (closLang_Const i)) xs -> SOME (bvl_Op
-       (closLang_IntOp (closLang_Const i)) [])
-     | bvl_Op (closLang_BlockOp (closLang_Cons t)) xs ->
-       if NULL xs then SOME (bvl_Op (closLang_BlockOp (closLang_Cons t)) [])
-         else NONE
+     | bvl_Op (clos_IntOp (clos_Const i)) xs -> SOME (bvl_Op (clos_IntOp
+       (clos_Const i)) [])
+     | bvl_Op (clos_BlockOp (clos_Cons t)) xs ->
+       if NULL xs then SOME (bvl_Op (clos_BlockOp (clos_Cons t)) []) else
+         NONE
      | _ -> NONE`;;
 
 let extract_pmatch = prove
  (`!op ys. bvl_const_extract op ys =
    match op with
      ((bvl_Var n):bvl_exp) -> SOME ((bvl_Var (n + LENGTH ys + 1)):bvl_exp)
-   | bvl_Op (closLang_IntOp (closLang_Const i)) xs -> SOME (bvl_Op
-     (closLang_IntOp (closLang_Const i)) [])
-   | bvl_Op (closLang_BlockOp (closLang_Cons t)) [] -> SOME (bvl_Op
-     (closLang_BlockOp (closLang_Cons t)) [])
+   | bvl_Op (clos_IntOp (clos_Const i)) xs -> SOME (bvl_Op (clos_IntOp
+     (clos_Const i)) [])
+   | bvl_Op (clos_BlockOp (clos_Cons t)) [] -> SOME (bvl_Op (clos_BlockOp
+     (clos_Cons t)) [])
    | _ -> NONE`,
   (REPEAT GEN_TAC THEN REWRITE_TAC[bvl_const_extract_def] THEN
    EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
@@ -290,19 +289,17 @@ let bvl_const_extract_list_def,bvl_const_extract_list_ind = define_rec
 let bvl_const_delete_var_def = new_definition
   `bvl_const_delete_var x =
      match x with
-       ((bvl_Var n):bvl_exp) -> bvl_Op (closLang_IntOp (closLang_Const
-         (&0))) []
+       ((bvl_Var n):bvl_exp) -> bvl_Op (clos_IntOp (clos_Const (&0))) []
      | x -> x`;;
 
 let delete_var_pmatch = prove
  (`!op.
    bvl_const_delete_var op =
      match op with
-       bvl_Var n -> bvl_Op (closLang_IntOp (closLang_Const (&0))) []
+       bvl_Var n -> bvl_Op (clos_IntOp (clos_Const (&0))) []
      | x -> x`,
   (GEN_TAC THEN REWRITE_TAC[bvl_const_delete_var_def]));;
 
-let _ = size_thms "bvl_exp";;
 (* the termination relation is not in the HOL4 source *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)

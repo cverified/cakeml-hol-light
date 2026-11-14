@@ -235,7 +235,6 @@ let check_startlive_prop_def,check_startlive_prop_ind = define_rec
            end ndef in
          r1 /\ r2))`;;
 
-let _ = size_thms "live_tree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let live_tree_registers_def,live_tree_registers_ind = define_wf
@@ -508,7 +507,6 @@ let numset_list_add_if_gt_monad_def,numset_list_add_if_gt_monad_ind = define_wf
             numset_list_add_if_gt_monad rs v)
         else numset_list_add_if_gt_monad rs v))`;;
 
-let _ = size_thms "clash_tree";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let get_intervals_ct_monad_aux_def,get_intervals_ct_monad_aux_ind = define_wf

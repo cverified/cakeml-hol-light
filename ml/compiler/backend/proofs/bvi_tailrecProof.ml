@@ -68,26 +68,23 @@ let to_op_11 = prove
 add_simp to_op_11;;
 
 let to_op_eq_simp = prove
- (`(to_op x = closLang_IntOp closLang_Add <=> (x = bvi_tailrec_Plus)) /\
-   (to_op x = closLang_IntOp closLang_Mult <=> (x = bvi_tailrec_Times)) /\
-   (to_op x = closLang_IntOp closLang_Mod <=> (x = bvi_tailrec_Noop)) /\
-   (to_op x = closLang_BlockOp closLang_ListAppend <=> (x =
-     bvi_tailrec_Append)) /\
-   (closLang_IntOp closLang_Add = to_op x <=> (x = bvi_tailrec_Plus)) /\
-   (closLang_IntOp closLang_Mult = to_op x <=> (x = bvi_tailrec_Times)) /\
-   (closLang_BlockOp closLang_ListAppend = to_op x <=> (x =
-     bvi_tailrec_Append)) /\
-   (closLang_IntOp closLang_Mod = to_op x <=> (x = bvi_tailrec_Noop))`,
+ (`(to_op x = clos_IntOp clos_Add <=> (x = bvi_tailrec_Plus)) /\
+   (to_op x = clos_IntOp clos_Mult <=> (x = bvi_tailrec_Times)) /\
+   (to_op x = clos_IntOp clos_Mod <=> (x = bvi_tailrec_Noop)) /\
+   (to_op x = clos_BlockOp clos_ListAppend <=> (x = bvi_tailrec_Append)) /\
+   (clos_IntOp clos_Add = to_op x <=> (x = bvi_tailrec_Plus)) /\
+   (clos_IntOp clos_Mult = to_op x <=> (x = bvi_tailrec_Times)) /\
+   (clos_BlockOp clos_ListAppend = to_op x <=> (x = bvi_tailrec_Append)) /\
+   (clos_IntOp clos_Mod = to_op x <=> (x = bvi_tailrec_Noop))`,
   CHEAT_TAC);;
 add_simp to_op_eq_simp;;
 
 let op_eq_simp = prove
- (`(op_eq bvi_tailrec_Plus x <=> (?xs. x = bvi_Op (closLang_IntOp closLang_Add)
-  xs)) /\
-   (op_eq bvi_tailrec_Times x <=> (?xs. x = bvi_Op (closLang_IntOp
-     closLang_Mult) xs)) /\
-   (op_eq bvi_tailrec_Append x <=> (?xs. x = bvi_Op (closLang_BlockOp
-     closLang_ListAppend) xs))`,
+ (`(op_eq bvi_tailrec_Plus x <=> (?xs. x = bvi_Op (clos_IntOp clos_Add) xs)) /\
+   (op_eq bvi_tailrec_Times x <=> (?xs. x = bvi_Op (clos_IntOp clos_Mult)
+     xs)) /\
+   (op_eq bvi_tailrec_Append x <=> (?xs. x = bvi_Op (clos_BlockOp
+     clos_ListAppend) xs))`,
   CHEAT_TAC);;
 add_simp op_eq_simp;;
 
@@ -234,7 +231,6 @@ let evaluate_let_wrap = prove
      bviSem_evaluate ([x],APPEND (APPEND vs [op_id_val op]) vs,s)`,
   CHEAT_TAC);;
 
-let _ = size_thms "bvi_exp";;
 let evaluate_complete_ind = prove
  (`!P.
     (!xs s.
@@ -592,8 +588,8 @@ let compile_each_namespace_rel = prove
 
 let state_rel_do_app_aux = prove
  (`bviSem_do_app_aux op vs s = res /\
-   bvi_tailrecProof_state_rel s t /\ ~(op = closLang_Install) /\ (!n. ~(op =
-     closLang_Label n)) ==>
+   bvi_tailrecProof_state_rel s t /\ ~(op = clos_Install) /\ (!n. ~(op =
+     clos_Label n)) ==>
    (?res'.
      bviSem_do_app_aux op vs t = res' /\
      OPTREL (OPTREL (RPROD (=) bvi_tailrecProof_state_rel)) res res')`,
@@ -601,8 +597,8 @@ let state_rel_do_app_aux = prove
 
 let state_rel_do_app = prove
  (`bviSem_do_app op vs s = Rval (r,s') /\
-   bvi_tailrecProof_state_rel s t /\ ~(op = closLang_Install) /\ (!n. ~(op =
-     closLang_Label n)) ==>
+   bvi_tailrecProof_state_rel s t /\ ~(op = clos_Install) /\ (!n. ~(op =
+     clos_Label n)) ==>
    (?t'.
      bviSem_do_app op vs t = Rval (r,t') /\
      bvi_tailrecProof_state_rel s' t')`,
@@ -610,9 +606,8 @@ let state_rel_do_app = prove
 
 let state_rel_do_app_err = prove
  (`bviSem_do_app op vs s = Rerr e /\
-   bvi_tailrecProof_state_rel s t /\ ~(op = closLang_Install) /\ (!n. ~(op =
-     closLang_Label n)) /\ (!n. ~(op = closLang_BlockOp (closLang_Build n)))
-     ==>
+   bvi_tailrecProof_state_rel s t /\ ~(op = clos_Install) /\ (!n. ~(op =
+     clos_Label n)) /\ (!n. ~(op = clos_BlockOp (clos_Build n))) ==>
    bviSem_do_app op vs t = Rerr e`,
   CHEAT_TAC);;
 

@@ -941,8 +941,8 @@ let to_data_labels_ok = prove
   CHEAT_TAC);;
 
 let data_to_word_stubs_above_store_consts_stub = prove
- (`ALL (\n. n > wordLang_store_consts_stub_location) (MAP FST
-  (data_to_word_stubs (:'a) dc))`,
+ (`ALL (\n. n > word_store_consts_stub_location) (MAP FST (data_to_word_stubs
+  (:'a) dc))`,
   CHEAT_TAC);;
 
 let to_word_labels_ok = prove
@@ -950,7 +950,7 @@ let to_word_labels_ok = prove
   asm_conf c ==>
    (let (_,p,_) = to_word asm_conf c prog in
    ALL_DISTINCT (MAP FST p) /\
-   ALL (\n. n > wordLang_store_consts_stub_location) (MAP FST p) /\
+   ALL (\n. n > word_store_consts_stub_location) (MAP FST p) /\
    ALL (\(n,m,p).
      let labs = wordConvs_extract_labels p in
      ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\ ALL_DISTINCT

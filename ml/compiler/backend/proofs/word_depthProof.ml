@@ -134,8 +134,8 @@ let max_depth_call_graph = prove
   CHEAT_TAC);;
 
 let max_depth_Call_SOME = prove
- (`wordSem_evaluate (wordLang_Call (SOME (n1,n2,wordLang_Skip,n3,n4)) (SOME
-  dest) args NONE,s) = (res,s1) /\ ~(res = SOME wordSem_Error) /\ subspt funs
+ (`wordSem_evaluate (word_Call (SOME (n1,n2,word_Skip,n3,n4)) (SOME dest) args
+  NONE,s) = (res,s1) /\ ~(res = SOME wordSem_Error) /\ subspt funs
   (wordSem_state_code s) ==>
    option_le (wordSem_state_stack_max s1)
      (OPTION_MAP2 MAX (wordSem_state_stack_max s)
@@ -146,7 +146,7 @@ let max_depth_Call_SOME = prove
   CHEAT_TAC);;
 
 let max_depth_Call_NONE = prove
- (`wordSem_evaluate (wordLang_Call NONE (SOME dest) args NONE,s) = (res,s1)
+ (`wordSem_evaluate (word_Call NONE (SOME dest) args NONE,s) = (res,s1)
   /\ ~(res = SOME wordSem_Error) /\ subspt funs (wordSem_state_code s) ==>
    option_le (wordSem_state_stack_max s1)
      (OPTION_MAP2 MAX (wordSem_state_stack_max s)

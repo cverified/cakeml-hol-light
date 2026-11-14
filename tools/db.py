@@ -1044,8 +1044,17 @@ def rule_names(body):
   return out
 
 
+def short_thy(thy):
+  """the prefix that the port puts in front of a name of a theory.
+     HOL4 calls a language theory fooLang, where the Lang says
+     nothing that foo does not: flatLang$exp is flat_exp, which is
+     what LightCake writes too and what reads best beside it"""
+  return thy[:-4] if thy.endswith('Lang') and len(thy) > 4 else thy
+
+
 def prefix(thy, nm):
-  return nm if thy == nm else thy + '_' + nm
+  t = short_thy(thy)
+  return nm if t == nm else t + '_' + nm
 
 
 def strip_quote(s):

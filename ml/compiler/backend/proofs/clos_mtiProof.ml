@@ -60,7 +60,7 @@ let clos_mtiProof_code_rel_CONS_CONS = prove
 
 let mk_Fns_def,mk_Fns_ind = define_rec
   `(mk_Fns [] e = e) /\
-   (mk_Fns (CONS t ts) e = closLang_Fn t NONE NONE 1 (mk_Fns ts e))`;;
+   (mk_Fns (CONS t ts) e = clos_Fn t NONE NONE 1 (mk_Fns ts e))`;;
 
 let clos_mtiProof_f_rel_def = new_definition
   `clos_mtiProof_f_rel max_app (a1,e1) (a2,e2) <=>
@@ -226,11 +226,10 @@ let collect_apps_cons = prove
 
 let mk_Apps_def,mk_Apps_ind = define_rec
   `(mk_Apps e [] = e) /\
-   (mk_Apps e (CONS (t,other) ts) = closLang_App t NONE (mk_Apps e ts)
-    [other])`;;
+   (mk_Apps e (CONS (t,other) ts) = clos_App t NONE (mk_Apps e ts) [other])`;;
 
 let collect_apps_IMP_mk_Apps = prove
- (`!e max_app (acc:closLang_exp list) other e3.
+ (`!e max_app (acc:clos_exp list) other e3.
        collect_apps max_app [] e = (other,e3) /\ no_mti e ==>
        (?ts. e = mk_Apps e3 (ZIP ts other) /\ LENGTH other = LENGTH ts /\
             LENGTH other <= max_app)`,

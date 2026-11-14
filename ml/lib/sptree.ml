@@ -195,7 +195,6 @@ let lrnext_def,lrnext_ind = define_wf
   `MEASURE I`
   `lrnext n = if n = 0 then 1 else 2 * lrnext ((n - 1) DIV 2)`;;
 
-let _ = size_thms "spt";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let domain_def,domain_ind = define_wf

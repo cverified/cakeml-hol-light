@@ -19,17 +19,16 @@ needs "compiler/backend/closLang.ml";;
 let _ = cake_theory "clos_mti"
   ["closLang"];;
 
-let _ = size_thms "closLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let collect_args_def,collect_args_ind = define_wf
-  `MEASURE (\(x0,x1,x2). closLang_exp_size x2)`
+  `MEASURE (\(x0,x1,x2). clos_exp_size x2)`
   `collect_args max_app num_args e =
      match e with
-       closLang_Fn t NONE NONE num_args' e ->
+       clos_Fn t NONE NONE num_args' e ->
        if num_args + num_args' <= max_app then
          collect_args max_app (num_args + num_args') e
-       else (num_args,closLang_Fn t NONE NONE num_args' e)
+       else (num_args,clos_Fn t NONE NONE num_args' e)
      | e -> (num_args,e)`;;
 
 (* HOL4 clos_mtiScript.sml:22: ML code, not ported *)
@@ -37,7 +36,7 @@ let collect_args_def,collect_args_ind = define_wf
 let collect_args_size = prove
  (`!max_app num_args e num_args' e'.
      (num_args',e') = collect_args max_app num_args e ==>
-     num_args' + closLang_exp_size e' <= num_args + closLang_exp_size e`,
+     num_args' + clos_exp_size e' <= num_args + clos_exp_size e`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -56,21 +55,21 @@ let collect_args_zero = prove
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let collect_apps_def,collect_apps_ind = define_wf
-  `MEASURE (\(x0,x1,x2). closLang_exp_size x2)`
+  `MEASURE (\(x0,x1,x2). clos_exp_size x2)`
   `collect_apps max_app args e =
      match e with
-       closLang_App tra NONE e es ->
+       clos_App tra NONE e es ->
        if LENGTH args + LENGTH es <= max_app then
          collect_apps max_app (APPEND args es) e
-       else (args,closLang_App tra NONE e es)
+       else (args,clos_App tra NONE e es)
      | e -> (args,e)`;;
 
 (* HOL4 clos_mtiScript.sml:70: ML code, not ported *)
 
 (* [local] *)
 let exp3_size_append = prove
- (`!es1 es2. list_size closLang_exp_size (APPEND es1 es2) = list_size
-  closLang_exp_size es1 + list_size closLang_exp_size es2`,
+ (`!es1 es2. list_size clos_exp_size (APPEND es1 es2) = list_size
+  clos_exp_size es1 + list_size clos_exp_size es2`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -83,12 +82,12 @@ let collect_apps_more = prove
 let collect_apps_size = prove
  (`!max_app args e args' e'.
     (args',e') = collect_apps max_app args e ==>
-    list_size closLang_exp_size args' + closLang_exp_size e' <= list_size
-      closLang_exp_size args + closLang_exp_size e`,
+    list_size clos_exp_size args' + clos_exp_size e' <= list_size
+      clos_exp_size args + clos_exp_size e`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (list_size closLang_exp_size o SND)
+     MEASURE (list_size clos_exp_size o SND)
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 clos_mtiScript.sml:144-153: the tactic that proves the termination *)
@@ -100,50 +99,47 @@ let intro_multi_def,intro_multi_ind = define_guess_cheat
        [] -> []
      | CONS e1 (CONS e2 es) -> CONS (HD (intro_multi max_app [e1])) (CONS
        (HD (intro_multi max_app [e2])) (intro_multi max_app es))
-     | [closLang_Var t n] -> [closLang_Var t n]
-     | [closLang_If t e1 e2 e3] ->
-      [closLang_If t (HD (intro_multi max_app [e1]))
+     | [clos_Var t n] -> [clos_Var t n]
+     | [clos_If t e1 e2 e3] ->
+      [clos_If t (HD (intro_multi max_app [e1]))
             (HD (intro_multi max_app [e2]))
             (HD (intro_multi max_app [e3]))]
-     | [closLang_Let t es e] ->
-       [closLang_Let t (intro_multi max_app es) (HD (intro_multi max_app
-         [e]))]
-     | [closLang_Raise t e] ->
-       [closLang_Raise t (HD (intro_multi max_app [e]))]
-     | [closLang_Handle t e1 e2] ->
-       [closLang_Handle t (HD (intro_multi max_app [e1])) (HD (intro_multi
+     | [clos_Let t es e] ->
+       [clos_Let t (intro_multi max_app es) (HD (intro_multi max_app [e]))]
+     | [clos_Raise t e] ->
+       [clos_Raise t (HD (intro_multi max_app [e]))]
+     | [clos_Handle t e1 e2] ->
+       [clos_Handle t (HD (intro_multi max_app [e1])) (HD (intro_multi
          max_app [e2]))]
-     | [closLang_Tick t e] ->
-       [closLang_Tick t (HD (intro_multi max_app [e]))]
-     | [closLang_Call t ticks n es] ->
-       [closLang_Call t ticks n (intro_multi max_app es)]
-     | [closLang_App t NONE e es] ->
+     | [clos_Tick t e] ->
+       [clos_Tick t (HD (intro_multi max_app [e]))]
+     | [clos_Call t ticks n es] ->
+       [clos_Call t ticks n (intro_multi max_app es)]
+     | [clos_App t NONE e es] ->
        let (es',e') = collect_apps max_app es e in
-         [closLang_App t NONE (HD (intro_multi max_app [e'])) (intro_multi
+         [clos_App t NONE (HD (intro_multi max_app [e'])) (intro_multi
            max_app es')]
-     | [closLang_App t (SOME l) e es] ->
-       [closLang_App t (SOME l) (HD (intro_multi max_app [e])) (intro_multi
+     | [clos_App t (SOME l) e es] ->
+       [clos_App t (SOME l) (HD (intro_multi max_app [e])) (intro_multi
          max_app es)]
-     | [closLang_Fn t NONE NONE num_args e] ->
+     | [clos_Fn t NONE NONE num_args e] ->
        let (num_args',e') = collect_args max_app num_args e in
-         [closLang_Fn t NONE NONE num_args' (HD (intro_multi max_app [e']))]
-     | [closLang_Fn t loc fvs num_args e] ->
-         [closLang_Fn t loc fvs num_args (HD (intro_multi max_app [e]))]
-     | [closLang_Letrec t NONE NONE funs e] ->
-       [closLang_Letrec t NONE NONE (MAP (\(num_args,e).
+         [clos_Fn t NONE NONE num_args' (HD (intro_multi max_app [e']))]
+     | [clos_Fn t loc fvs num_args e] ->
+         [clos_Fn t loc fvs num_args (HD (intro_multi max_app [e]))]
+     | [clos_Letrec t NONE NONE funs e] ->
+       [clos_Letrec t NONE NONE (MAP (\(num_args,e).
                               let (num_args',e') = collect_args max_app
                                 num_args e in
                               (num_args',HD (intro_multi max_app [e'])))
                              funs)
                (HD (intro_multi max_app [e]))]
-     | [closLang_Letrec t (SOME loc) fvs funs e] ->
-        [closLang_Letrec t (SOME loc) fvs funs (HD (intro_multi max_app
-          [e]))]
-     | [closLang_Letrec t NONE (SOME fvs) funs e] ->
-        [closLang_Letrec t NONE (SOME fvs) funs (HD (intro_multi max_app
-          [e]))]
-     | [closLang_Op t op es] ->
-       [closLang_Op t op (intro_multi max_app es)]`;;
+     | [clos_Letrec t (SOME loc) fvs funs e] ->
+        [clos_Letrec t (SOME loc) fvs funs (HD (intro_multi max_app [e]))]
+     | [clos_Letrec t NONE (SOME fvs) funs e] ->
+        [clos_Letrec t NONE (SOME fvs) funs (HD (intro_multi max_app [e]))]
+     | [clos_Op t op es] ->
+       [clos_Op t op (intro_multi max_app es)]`;;
 
 (* HOL4 clos_mtiScript.sml:155: ML code, not ported *)
 
@@ -154,9 +150,9 @@ let intro_multi_length = prove
 let intro_multi_sing = prove
  (`!e max_app. ?e'. intro_multi max_app [e] = [e']`,
   (REPEAT GEN_TAC THEN
-   MP_TAC (ISPECL [`max_app:num`; `[e:closLang_exp]`]
+   MP_TAC (ISPECL [`max_app:num`; `[e:clos_exp]`]
      intro_multi_length) THEN
-   SPEC_TAC (`intro_multi max_app [e]`,`l:closLang_exp list`) THEN
+   SPEC_TAC (`intro_multi max_app [e]`,`l:clos_exp list`) THEN
    LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ;
      LENGTH_EQ_NIL] THEN
    MESON_TAC[]));;

@@ -127,7 +127,6 @@ let pattern_comp_pmatch_list_LENGTH = prove
 
 (* replace last pattern with Any (used if rows are exhaustive) *)
 
-let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let insert_Any_def,insert_Any_ind = define_wf

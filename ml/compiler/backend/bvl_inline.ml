@@ -90,7 +90,6 @@ let tick_inline_sing = prove
   CHEAT_TAC);;
 
 (* This definition is written to exit as soon as possible. *)
-let _ = size_thms "bvl_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let is_small_aux_def,is_small_aux_ind = define_wf
@@ -382,7 +381,7 @@ let let_op_one = prove
 let let_op_sing_def = new_definition
   `bvl_inline_let_op_sing x =
      match bvl_inline_let_op [x] with (CONS y ys) -> y
-     | _ -> bvl_Op (closLang_IntOp (closLang_Const (&0))) []`;;
+     | _ -> bvl_Op (clos_IntOp (clos_Const (&0))) []`;;
 
 (* HOL4 bvl_inlineScript.sml:414: a theorem that HOL4 states as the value of
    an ML expression: let_op_sing_eq *)

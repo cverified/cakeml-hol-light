@@ -92,29 +92,29 @@ let mk_word tm n =
        (mk_comb(`n2w:num->(A)word`,mk_small_numeral n));;
 
 let mk_Const_of n =
-  mk_comb(`wordLang_Const:(A)word->(A)wordLang_exp`,
+  mk_comb(`word_Const:(A)word->(A)word_exp`,
           mk_comb(`n2w:num->(A)word`,n));;
 
 let rec get_exp x =
   (* Var *)
-  try let n = dest_reg x in at_A (list_mk_icomb "wordLang_Var" [n])
+  try let n = dest_reg x in at_A (list_mk_icomb "word_Var" [n])
   with Failure _ ->
   (* Const *)
   try if not (is_n2w x) then failwith "get_exp" else
-      at_A (list_mk_icomb "wordLang_Const" [x])
+      at_A (list_mk_icomb "word_Const" [x])
   with Failure _ ->
   (* Op *)
   try let _,name = find (fun (pat,_) -> matches pat x) binops in
       let x1 = get_exp (rand (rator x)) in
       let x2 = get_exp (rand x) in
-      at_A (list_mk_icomb "wordLang_Op"
+      at_A (list_mk_icomb "word_Op"
               [name; mk_list([x1; x2],type_of x1)])
   with Failure _ ->
   (* Shift *)
   try let _,name = find (fun (pat,_) -> matches pat x) shifts in
       let x1 = get_exp (rand (rator x)) in
       let x2 = rand x in
-      at_A (list_mk_icomb "wordLang_Shift"
+      at_A (list_mk_icomb "word_Shift"
               [name; x1; mk_Const_of x2])
   with Failure _ ->
   (* ~ *)
@@ -354,7 +354,7 @@ let get_full_prog inp tm =
         ["word_bignum_Assign"; "word_bignum_Load"; "word_bignum_Add";
          "word_bignum_Sub"; "word_bignum_Mul"; "word_bignum_Div"] &&
     exists (fun pat -> can (term_match [] pat) tm)
-      [`(word_bignum_Assign n):(A)wordLang_exp->(A)mini`;
+      [`(word_bignum_Assign n):(A)word_exp->(A)mini`;
        `(word_bignum_Load n):num->address->(A)mini`;
        `(word_bignum_Add n1 n2):num->(A)asm_reg_imm->(A)asm_reg_imm
           ->(A)mini`;

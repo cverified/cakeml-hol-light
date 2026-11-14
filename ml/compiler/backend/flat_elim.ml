@@ -25,39 +25,37 @@ let _ = cake_theory "flat_elim"
 (**************************** ANALYSIS FUNCTIONS *****************************)
 
 (* is_hidden exp = T means there is no direct execution of GlobalVarLookup *)
-let _ = size_thms "flatLang_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let is_hidden_def,is_hidden_ind = define_wf
-  `MEASURE (\x0. flatLang_exp_size x0)`
+  `MEASURE (\x0. flat_exp_size x0)`
   `is_hidden x1 =
      match x1 with
-       flatLang_Raise t e -> is_hidden e
+       flat_Raise t e -> is_hidden e
      // raise exception
-     | flatLang_Handle t e pes -> F
+     | flat_Handle t e pes -> F
      // exception handler
-     | flatLang_Lit t l -> T
+     | flat_Lit t l -> T
      // literal
-     | flatLang_Con t id_option es -> ALL is_hidden es
+     | flat_Con t id_option es -> ALL is_hidden es
      // constructor
-     | flatLang_Var_local t str -> T
+     | flat_Var_local t str -> T
      // local var
-     | flatLang_Fun t name body -> T
+     | flat_Fun t name body -> T
      // function abstraction
-     | flatLang_App t (flatLang_Src ast_Opapp) l -> F
+     | flat_App t (flat_Src ast_Opapp) l -> F
      // function application
-     | flatLang_App t (flatLang_GlobalVarInit g) [e] -> is_hidden e
+     | flat_App t (flat_GlobalVarInit g) [e] -> is_hidden e
      // GlobalVarInit
-     | flatLang_App t (flatLang_GlobalVarLookup g) [e] -> F
+     | flat_App t (flat_GlobalVarLookup g) [e] -> F
      // GlobalVarLookup
-     | flatLang_If t e1 e2 e3 -> (is_hidden e1 /\ is_hidden e2 /\ is_hidden
-       e3)
+     | flat_If t e1 e2 e3 -> (is_hidden e1 /\ is_hidden e2 /\ is_hidden e3)
      // if expression
-     | flatLang_Mat t e1 [p,e2] -> (is_hidden e1 /\ is_hidden e2)
+     | flat_Mat t e1 [p,e2] -> (is_hidden e1 /\ is_hidden e2)
      // SINGLE pattern match
-     | flatLang_Let t opt e1 e2 -> (is_hidden e1 /\ is_hidden e2)
+     | flat_Let t opt e1 e2 -> (is_hidden e1 /\ is_hidden e2)
      // let-expression
-     | flatLang_Letrec t funs e -> is_hidden e
+     | flat_Letrec t funs e -> is_hidden e
      // local def of mutually recursive funs
      | _ -> F`;;
 
@@ -65,10 +63,10 @@ let is_hidden_def,is_hidden_ind = define_wf
    replacing the CHEAT_TAC is all that is left *)
 let total_pat_def,total_pat_ind = define_shaped_rec_cheat
   "maplist>measure"
-  `(total_pat flatLang_Pany = T) /\
-   (total_pat (flatLang_Pvar _) = T) /\
-   (total_pat (flatLang_Pcon NONE xs) = total_pat_list xs) /\
-   (total_pat (flatLang_Pas p _) = total_pat p) /\
+  `(total_pat flat_Pany = T) /\
+   (total_pat (flat_Pvar _) = T) /\
+   (total_pat (flat_Pcon NONE xs) = total_pat_list xs) /\
+   (total_pat (flat_Pas p _) = total_pat p) /\
    (total_pat _ = F) /\
    (total_pat_list [] = T) /\
    (total_pat_list (CONS p ps) = (total_pat p /\ total_pat_list ps))`;;
@@ -79,24 +77,23 @@ let total_pat_def,total_pat_ind = define_shaped_rec_cheat
    the names that the port gives the constants *)
 (* HOL4 flat_elimScript.sml:75-80: the tactic that proves the termination *)
 let flat_elim_is_pure_def,flat_elim_is_pure_ind = define_wf
-  `MEASURE (\e. flatLang_exp_size e)`
+  `MEASURE (\e. flat_exp_size e)`
   `flat_elim_is_pure x1 =
      match x1 with
-       flatLang_Handle t e pes -> flat_elim_is_pure e
-     | flatLang_Lit t l -> T
-     | flatLang_Con t id_option es -> ALL flat_elim_is_pure es
-     | flatLang_Var_local t str -> T
-     | flatLang_Fun t name body -> T
-     | flatLang_App t (flatLang_GlobalVarInit g) es -> ALL flat_elim_is_pure
-       es
-     | flatLang_If t e1 e2 e3 -> (flat_elim_is_pure e1 /\ flat_elim_is_pure
-       e2 /\ flat_elim_is_pure e3)
-     | flatLang_Mat t e1 pes ->
+       flat_Handle t e pes -> flat_elim_is_pure e
+     | flat_Lit t l -> T
+     | flat_Con t id_option es -> ALL flat_elim_is_pure es
+     | flat_Var_local t str -> T
+     | flat_Fun t name body -> T
+     | flat_App t (flat_GlobalVarInit g) es -> ALL flat_elim_is_pure es
+     | flat_If t e1 e2 e3 -> (flat_elim_is_pure e1 /\ flat_elim_is_pure e2
+       /\ flat_elim_is_pure e3)
+     | flat_Mat t e1 pes ->
          (flat_elim_is_pure e1 /\ ALL flat_elim_is_pure (MAP SND pes) /\ EX
            total_pat (MAP FST pes))
-     | flatLang_Let t opt e1 e2 -> (flat_elim_is_pure e1
-       /\ flat_elim_is_pure e2)
-     | flatLang_Letrec t funs e -> flat_elim_is_pure e
+     | flat_Let t opt e1 e2 -> (flat_elim_is_pure e1 /\ flat_elim_is_pure
+       e2)
+     | flat_Letrec t funs e -> flat_elim_is_pure e
      | _ -> F`;;
 
 (* HOL4 flat_elimScript.sml:82: a theorem that HOL4 states as the value of
@@ -107,49 +104,46 @@ let flat_elim_is_pure_def,flat_elim_is_pure_ind = define_wf
    which one quotation cannot typecheck *)
 let has_Eval_def,has_Eval_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`(has_Eval (flatLang_App t op es) <=> op = flatLang_Src ast_Eval \/
-    has_Eval_list es) /\
-    (has_Eval (flatLang_Letrec _ funs e) <=> has_Eval e \/ has_Eval_funs
-    funs) /\
-    (has_Eval (flatLang_Raise _ e) <=> has_Eval e) /\
-    (has_Eval (flatLang_Con _ _ es) <=> has_Eval_list es) /\
-    (has_Eval (flatLang_Fun _ _ e) <=> has_Eval e) /\
-    (has_Eval (flatLang_If _ e1 e2 e3) <=> has_Eval e1 \/ has_Eval e2 \/
+  [`(has_Eval (flat_App t op es) <=> op = flat_Src ast_Eval \/ has_Eval_list
+    es) /\
+    (has_Eval (flat_Letrec _ funs e) <=> has_Eval e \/ has_Eval_funs funs) /\
+    (has_Eval (flat_Raise _ e) <=> has_Eval e) /\
+    (has_Eval (flat_Con _ _ es) <=> has_Eval_list es) /\
+    (has_Eval (flat_Fun _ _ e) <=> has_Eval e) /\
+    (has_Eval (flat_If _ e1 e2 e3) <=> has_Eval e1 \/ has_Eval e2 \/
     has_Eval e3) /\
-    (has_Eval (flatLang_Let _ _ e1 e2) <=> has_Eval e1 \/ has_Eval e2) /\
+    (has_Eval (flat_Let _ _ e1 e2) <=> has_Eval e1 \/ has_Eval e2) /\
     (has_Eval _ <=> F) /\
     (has_Eval_list [] <=> F) /\
     (has_Eval_list (CONS e es) <=> has_Eval e \/ has_Eval_list es) /\
     (has_Eval_pats [] <=> F) /\
     (has_Eval_funs [] <=> F)`;
-   `(has_Eval (flatLang_Mat _ e pes) <=> has_Eval e \/ has_Eval_pats pes) /\
-    (has_Eval (flatLang_Handle _ e pes) <=> has_Eval e \/ has_Eval_pats pes) /\
+   `(has_Eval (flat_Mat _ e pes) <=> has_Eval e \/ has_Eval_pats pes) /\
+    (has_Eval (flat_Handle _ e pes) <=> has_Eval e \/ has_Eval_pats pes) /\
     (has_Eval_pats (CONS (p,e) pes) <=> has_Eval e \/ has_Eval_pats pes)`;
    `has_Eval_funs (CONS (_,_,e) fs) <=> has_Eval e \/ has_Eval_funs fs`];;
 
 let dest_GlobalVarInit_def = new_definition
   `dest_GlobalVarInit x1 =
    match x1 with
-   flatLang_GlobalVarInit n -> SOME n
+   flat_GlobalVarInit n -> SOME n
    | _ -> NONE`;;
 
 let dest_GlobalVarLookup_def = new_definition
   `dest_GlobalVarLookup x1' =
    match x1' with
-   flatLang_GlobalVarLookup n -> SOME n
+   flat_GlobalVarLookup n -> SOME n
    | _ -> NONE`;;
 
-let _ = size_thms "flatLang_pat";;
 let exp_size_map_snd = prove
- (`!p_es. list_size flatLang_exp_size (MAP SND p_es) <= list_size (pair_size
-  flatLang_pat_size flatLang_exp_size) p_es`,
+ (`!p_es. list_size flat_exp_size (MAP SND p_es) <= list_size (pair_size
+  flat_pat_size flat_exp_size) p_es`,
   CHEAT_TAC);;
 
-let _ = size_thms "mlstring";;
 let exp_size_map_snd_snd = prove
- (`!vv_es. list_size flatLang_exp_size (MAP (\x. SND (SND x)) vv_es) <=
-  list_size (pair_size mlstring_size
-           (pair_size mlstring_size flatLang_exp_size)) vv_es`,
+ (`!vv_es. list_size flat_exp_size (MAP (\x. SND (SND x)) vv_es) <= list_size
+  (pair_size mlstring_size
+           (pair_size mlstring_size flat_exp_size)) vv_es`,
   CHEAT_TAC);;
 
 (* the clauses in two quotations: es is (exp list) and (_)list; p_es is ((pat
@@ -157,28 +151,28 @@ let exp_size_map_snd_snd = prove
    (_#_)list, which one quotation cannot typecheck *)
 let find_loc_def,find_loc_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`(find_loc ((flatLang_Raise _ er):flatLang_exp) = ((find_loc er):1 spt)) /\
-    (find_loc (flatLang_Handle _ eh p_es) =
+  [`(find_loc ((flat_Raise _ er):flat_exp) = ((find_loc er):1 spt)) /\
+    (find_loc (flat_Handle _ eh p_es) =
             ((sptree_union (find_loc eh) (find_locL (MAP SND p_es))):1
                 spt)) /\
-    (find_loc (flatLang_Lit _ _) = (LN:1 spt)) /\
-    (find_loc (flatLang_Con _ _ es) = ((find_locL es):1 spt)) /\
-    (find_loc (flatLang_Var_local _ _) = ((LN):1 spt)) /\
-    (find_loc (flatLang_Fun _ _ ef) = ((find_loc ef):1 spt)) /\
-    (find_loc (flatLang_App _ op es) = (((match (dest_GlobalVarInit op) with
-    SOME n -> (sptree_insert n one (find_locL es))
+    (find_loc (flat_Lit _ _) = (LN:1 spt)) /\
+    (find_loc (flat_Con _ _ es) = ((find_locL es):1 spt)) /\
+    (find_loc (flat_Var_local _ _) = ((LN):1 spt)) /\
+    (find_loc (flat_Fun _ _ ef) = ((find_loc ef):1 spt)) /\
+    (find_loc (flat_App _ op es) = (((match (dest_GlobalVarInit op) with SOME n
+    -> (sptree_insert n one (find_locL es))
             | NONE -> find_locL es)):1 spt)) /\
-    (find_loc (flatLang_If _ ei1 ei2 ei3) =
+    (find_loc (flat_If _ ei1 ei2 ei3) =
             ((sptree_union (find_loc ei1) (sptree_union (find_loc ei2)
                 (find_loc ei3))):1 spt)) /\
-    (find_loc (flatLang_Mat _ em p_es) =
+    (find_loc (flat_Mat _ em p_es) =
             ((sptree_union (find_loc em) (find_locL (MAP SND p_es))):1
                 spt)) /\
-    (find_loc (flatLang_Let _ _ el1 el2) = ((sptree_union (find_loc el1)
+    (find_loc (flat_Let _ _ el1 el2) = ((sptree_union (find_loc el1)
     (find_loc el2)):1 spt)) /\
     (find_locL [] = LN) /\
     (find_locL (CONS e es) = sptree_union (find_loc e) (find_locL es))`;
-   `find_loc (flatLang_Letrec _ vv_es elr1) =
+   `find_loc (flat_Letrec _ vv_es elr1) =
             ((sptree_union (find_locL (MAP (SND o SND) vv_es))
                 (find_loc elr1)):1 spt)`];;
 
@@ -187,30 +181,29 @@ let find_loc_def,find_loc_ind = assume_definition_rec_clauses
    (_#_)list, which one quotation cannot typecheck *)
 let find_lookups_def,find_lookups_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`(find_lookups (flatLang_Raise _ er) = find_lookups er) /\
-    (find_lookups (flatLang_Handle _ eh p_es) =
+  [`(find_lookups (flat_Raise _ er) = find_lookups er) /\
+    (find_lookups (flat_Handle _ eh p_es) =
             sptree_union (find_lookups eh) (find_lookupsL (MAP SND
                 p_es))) /\
-    (find_lookups (flatLang_Lit _ _) = LN) /\
-    (find_lookups (flatLang_Con _ _ es) = find_lookupsL es) /\
-    (find_lookups (flatLang_Var_local _ _) = LN) /\
-    (find_lookups (flatLang_Fun _ _ ef) = find_lookups ef) /\
-    (find_lookups (flatLang_App _ op es) = (match (dest_GlobalVarLookup op)
-      with
+    (find_lookups (flat_Lit _ _) = LN) /\
+    (find_lookups (flat_Con _ _ es) = find_lookupsL es) /\
+    (find_lookups (flat_Var_local _ _) = LN) /\
+    (find_lookups (flat_Fun _ _ ef) = find_lookups ef) /\
+    (find_lookups (flat_App _ op es) = (match (dest_GlobalVarLookup op) with
     SOME n -> (sptree_insert n one (find_lookupsL es))
             | NONE -> find_lookupsL es)) /\
-    (find_lookups (flatLang_If _ ei1 ei2 ei3) =
+    (find_lookups (flat_If _ ei1 ei2 ei3) =
             sptree_union (find_lookups ei1)
                 (sptree_union (find_lookups ei2) (find_lookups ei3))) /\
-    (find_lookups (flatLang_Mat _ em p_es) =
+    (find_lookups (flat_Mat _ em p_es) =
             sptree_union (find_lookups em) (find_lookupsL (MAP SND
                 p_es))) /\
-    (find_lookups (flatLang_Let _ _ el1 el2) =
+    (find_lookups (flat_Let _ _ el1 el2) =
             sptree_union (find_lookups el1) (find_lookups el2)) /\
     (find_lookupsL [] = LN) /\
     (find_lookupsL (CONS e es) = sptree_union (find_lookups e)
     (find_lookupsL es))`;
-   `find_lookups (flatLang_Letrec _ vv_es elr1) =
+   `find_lookups (flat_Letrec _ vv_es elr1) =
             sptree_union (find_lookupsL (MAP (SND o SND) vv_es))
                 (find_lookups elr1)`];;
 

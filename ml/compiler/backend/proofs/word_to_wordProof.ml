@@ -38,7 +38,7 @@ let _ = cake_theory "word_to_wordProof"
    "word_unreach"; "word_unreachProof"];;
 
 (* HOL4 word_to_wordProofScript.sml:17: an overload that the source brings
-   to the front: Call, written out as wordLang_Call *)
+   to the front: Call, written out as word_Call *)
 
 (* HOL4 word_to_wordProofScript.sml:19-23: a proof *)
 
@@ -63,8 +63,8 @@ let compile_single_lem = prove
      word_state_eq_rel rst rcst /\
      (match res with
        NONE -> T
-     | SOME (wordLang_Break _) -> T
-     | SOME (wordLang_Continue _) -> T
+     | SOME (word_Break _) -> T
+     | SOME (word_Continue _) -> T
      | SOME _ -> wordSem_state_locals rst = wordSem_state_locals rcst))`,
   CHEAT_TAC);;
 
@@ -240,7 +240,7 @@ let compile_word_to_word_thm = prove
        o wordSem_state_compile_oracle st) /\
      gc_fun_const_ok (wordSem_state_gc_fun st) ==>
      (?perm' clk.
-     let prog = wordLang_Call NONE (SOME start) [0] NONE in
+     let prog = word_Call NONE (SOME start) [0] NONE in
      let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd (K
        perm') st) in
       if res = SOME wordSem_Error then T else let (res1,rst1) =
@@ -466,26 +466,23 @@ let code_rel_no_share_inst = prove
 
 (***** word_to_word semantics correctness for Pancake *****)
 
-(* the names of record fields that this statement uses for
-   variables of its own are read as variables *)
 let panLang_compile_word_to_word_thm = prove
- (cake_as_vars (fun () ->
-    `word_to_wordProof_code_rel (wordSem_state_code
+ (`word_to_wordProof_code_rel (wordSem_state_code
   (st:('a,'c,'ffi)wordSem_state)) l /\
-     no_install_code (wordSem_state_code st) /\ no_alloc_code
-       (wordSem_state_code st) /\ no_mt_code (wordSem_state_code st) /\
-     (domain (wordSem_state_code st) = domain l) /\
-     gc_fun_const_ok (wordSem_state_gc_fun st) ==>
-     (?perm' clk.
-       let prog = wordLang_Call NONE (SOME start) [0] NONE in
-         let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd
-           (K perm') st) in
-           if res = SOME wordSem_Error then T else let (res1,rst1) =
-             wordSem_evaluate (prog,wordSem_state_code_fupd (K l) st) in
-               res1 = res /\ wordSem_state_clock
-               rst1 = wordSem_state_clock rst /\ wordSem_state_ffi
-               rst1 = wordSem_state_ffi rst /\ wordSem_state_stack_max
-               rst1 = wordSem_state_stack_max rst)`),
+   no_install_code (wordSem_state_code st) /\ no_alloc_code
+     (wordSem_state_code st) /\ no_mt_code (wordSem_state_code st) /\
+   (domain (wordSem_state_code st) = domain l) /\
+   gc_fun_const_ok (wordSem_state_gc_fun st) ==>
+   (?perm' clk.
+     let prog = word_Call NONE (SOME start) [0] NONE in
+       let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd (K
+         perm') st) in
+         if res = SOME wordSem_Error then T else let (res1,rst1) =
+           wordSem_evaluate (prog,wordSem_state_code_fupd (K l) st) in
+             res1 = res /\ wordSem_state_clock
+             rst1 = wordSem_state_clock rst /\ wordSem_state_ffi
+             rst1 = wordSem_state_ffi rst /\ wordSem_state_stack_max
+             rst1 = wordSem_state_stack_max rst)`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -504,7 +501,7 @@ let word_to_word_compile_semantics = prove
      // start = lc + first_name ∧
      // EL lc wprog0 = (start, v) ∧
      t = fromAList wprog /\ sptree_lookup 0 (wordSem_state_locals t) =
-       SOME (wordLang_Loc 1 0) /\
+       SOME (word_Loc 1 0) /\
      t = wordSem_state_code_fupd (K (wordSem_state_code t)) s
        /\ wordSem_state_code
      s = fromAList wprog0 /\ ~(wordSem_semantics

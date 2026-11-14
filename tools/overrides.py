@@ -971,30 +971,30 @@ THM_NAMES = {
   # the prog_size of these is the one of the language the seqs
   # are of, which the port read as labLang's
   ('presLang', 'MEM_append_data_seqs'):
-    {'prog_size': 'dataLang_prog_size'},
+    {'prog_size': 'data_prog_size'},
   ('presLang', 'list_size_append_data_seqs'):
-    {'prog_size': 'dataLang_prog_size'},
+    {'prog_size': 'data_prog_size'},
   ('presLang', 'MEM_append_stack_seqs'):
-    {'prog_size': 'stackLang_prog_size'},
+    {'prog_size': 'stack_prog_size'},
   ('presLang', 'list_size_append_stack_seqs'):
-    {'prog_size': 'stackLang_prog_size'},
+    {'prog_size': 'stack_prog_size'},
   ('presLang', 'MEM_append_word_seqs'):
-    {'prog_size': 'wordLang_prog_size'},
+    {'prog_size': 'word_prog_size'},
   # presLang reads five languages, so an auxiliary size function
   # of one name is a different one in each of its theorems: the
   # name says the size itself here
   ('presLang', 'MEM_pat_size'):
-    {'pat1_size': 'list_size flatLang_pat_size'},
+    {'pat1_size': 'list_size flat_pat_size'},
   ('presLang', 'MEM_funs_size'):
     {'exp1_size': 'list_size (pair_size mlstring_size'
-                  ' (pair_size mlstring_size flatLang_exp_size))'},
+                  ' (pair_size mlstring_size flat_exp_size))'},
   ('presLang', 'MEM_exps_size'):
-    {'exp6_size': 'list_size flatLang_exp_size'},
+    {'exp6_size': 'list_size flat_exp_size'},
   ('presLang', 'MEM_pats_size'):
-    {'exp3_size': 'list_size (pair_size flatLang_pat_size'
-                  ' flatLang_exp_size)'},
+    {'exp3_size': 'list_size (pair_size flat_pat_size'
+                  ' flat_exp_size)'},
   ('presLang', 'MEM_clos_exps_size'):
-    {'exp3_size': 'list_size closLang_exp_size'},
+    {'exp3_size': 'list_size clos_exp_size'},
   ('presLang', 'MEM_bvl_exps_size'):
     {'exp1_size': 'list_size bvl_exp_size'},
   ('presLang', 'MEM_bvi_exps_size'):
@@ -1386,6 +1386,8 @@ CLAUSE_FORM = set([
   # and the es of this is a list of expressions in one clause and
   # a list of pairs in another, which only a MAP of a body says
   ('presLang', 'exp_to_display_def'),
+  ('presLang', 'flat_to_display_def'),
+  ('source_to_flat', 'compile_exp_def'),
   # the first argument of this is the name of a nonterminal in one
   # clause and the label of a parse tree node in another, which
   # only the INL of a right hand side says
@@ -1632,21 +1634,21 @@ MEASURE = {
     'MEASURE (\\x. match x with INL e -> bvl_exp_size e'
     ' | INR es -> list_size bvl_exp_size es)',
   ('clos_call', 'calls_def'):
-    'MEASURE (list_size closLang_exp_size o FST)',
+    'MEASURE (list_size clos_exp_size o FST)',
   ('clos_op', 'lift_exps_def'):
-    'MEASURE (\\(xs,n,binds). list_size closLang_exp_size xs)',
+    'MEASURE (\\(xs,n,binds). list_size clos_exp_size xs)',
   ('clos_to_bvl', 'compile_exps_def'):
-    'MEASURE (list_size closLang_exp_size o FST o SND)',
+    'MEASURE (list_size clos_exp_size o FST o SND)',
   ('clos_to_bvl', 'compile_exp_sing_def'):
     'MEASURE (\\x. match x with INL (_7,e,_8) -> bvl_exp_size e'
-    ' | INR (_9,es,_10) -> list_size closLang_exp_size es)',
+    ' | INR (_9,es,_10) -> list_size clos_exp_size es)',
   ('clos_to_bvl', 'get_src_names_def'):
-    'MEASURE (list_size closLang_exp_size o FST)',
+    'MEASURE (list_size clos_exp_size o FST)',
   ('clos_to_bvl', 'get_src_names_sing_def'):
-    'MEASURE (\\x. match x with INL (e,_70) -> closLang_exp_size e'
-    ' | INR (es,_71) -> list_size closLang_exp_size es)',
+    'MEASURE (\\x. match x with INL (e,_70) -> clos_exp_size e'
+    ' | INR (es,_71) -> list_size clos_exp_size es)',
   ('flat_to_clos', 'compile_def'):
-    'MEASURE (list_size flatLang_exp_size o SND)',
+    'MEASURE (list_size flat_exp_size o SND)',
   ('bvlProps', 'bVarBound_def'):
     'MEASURE (list_size bvl_exp_size o SND)',
   ('bvlProps', 'bEvery_def'):
@@ -2148,11 +2150,11 @@ let current_build_info_str_def = new_definition
   # CopyByteAw8 is Var t (4 - n))
   ('flat_to_clos', 'CopyByteStr_def'): r"""
 let CopyByteStr_def = new_definition
-  (mk_eq (`(CopyByteStr (t:tra)):closLang_exp`,checkT));;
+  (mk_eq (`(CopyByteStr (t:tra)):clos_exp`,checkT));;
 """,
   ('flat_to_clos', 'CopyByteAw8_def'): r"""
 let CopyByteAw8_def = new_definition
-  (mk_eq (`(CopyByteAw8 (t:tra)):closLang_exp`,checkF));;
+  (mk_eq (`(CopyByteAw8 (t:tra)):clos_exp`,checkF));;
 """,
   # the compiler that the oracle relation takes is a compiler_fun,
   # whose v is the one of semanticPrimitives; the port expands the
@@ -2194,7 +2196,7 @@ let run_linear_reg_alloc_intervals_def = new_definition
   ('word_bignumProof', 'eval_ri_def'): r'''
 let eval_ri_def = define_cases
   `(eval_ri (s:'a word_bignumProof_state) (Reg r) =
-      eval_exp s ((Var r):'a wordLang_exp)) /\
+      eval_exp s ((Var r):'a word_exp)) /\
    (eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w)`;;
 ''',
   # the ~ of HOL4 is the complement of a word as well as the
@@ -3130,7 +3132,7 @@ let the_ne asl =
 let the_weq v asl =
   grab_asm (fun th ->
     is_eq (concl th) && lhs (concl th) = v &&
-    hd_is "wordLang_Word" (rhs (concl th))) asl;;
+    hd_is "word_Word" (rhs (concl th))) asl;;
 let the_gra w asl =
   grab_asm (fun th ->
     is_eq (concl th) && hd_is "get_real_addr" (lhs (concl th)) &&
@@ -3234,7 +3236,7 @@ let bounds tm =
    of the statement; where a root is in the goal already it is the
    word of it *)
 let wof asl t =
-  if hd_is "wordLang_Word" t then rand t
+  if hd_is "word_Word" t then rand t
   else rand (rhs (concl (the_weq t asl)));;
 let wit1 =
   W(fun (asl,gl) ->
@@ -3267,7 +3269,7 @@ let wit_wcf =
 let subst_vs =
   REPEAT (FIRST_X_ASSUM (fun th ->
     let c = concl th in
-    if is_eq c && is_var (lhs c) && hd_is "wordLang_Word" (rhs c)
+    if is_eq c && is_var (lhs c) && hd_is "word_Word" (rhs c)
     then SUBST_ALL_TAC th else fail()));;
 (* the roots of the hypothesis of the induction are the roots of
    the goal, and so are the real addresses of them *)
@@ -3766,7 +3768,7 @@ let decode_length_byte_header = prove
 let walk_CONS = prove
  (cake_as_vars (fun () ->
     `!vs ptr v.
-       v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word
+       v_inv c v refs (gc_shared_Pointer ptr (word_Word
          (ptr_bits c cons_tag 2)),f,tf,heap) /\
        v_to_list v = SOME vs /\ ~(vs = []) ==>
        (?ws. data_to_word_memoryProof_walk c heap ptr (LENGTH vs) =
@@ -6069,7 +6071,7 @@ let ref_ptr_annot_ByteArray = prove
  (cake_as_vars (fun () ->
     `sptree_lookup ptr refs = SOME (bvlSem_ByteArray fl xs)
      ==> ref_ptr_annot conf (sptree_lookup ptr refs) =
-         (wordLang_Word (n2w 0):'a word_loc)`),
+         (word_Word (n2w 0):'a word_loc)`),
   DISCH_THEN (fun lk -> REWRITE_TAC[lk; ref_ptr_annot_def]) THEN
   MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
 
@@ -6185,10 +6187,10 @@ let bc_ref_inv_update_byte_at = prove
    as the header, is of one address *)
 let bignum_elt_eq = prove
  (cake_as_vars (fun () ->
-    `(v:'a word_loc) = wordLang_Word w /\
-     get_real_addr c st w = SOME a /\ m a = wordLang_Word x /\
-     v = wordLang_Word w2 /\ get_real_addr c st w2 = SOME a2 /\
-     m a2 = wordLang_Word y
+    `(v:'a word_loc) = word_Word w /\
+     get_real_addr c st w = SOME a /\ m a = word_Word x /\
+     v = word_Word w2 /\ get_real_addr c st w2 = SOME a2 /\
+     m a2 = word_Word y
      ==> (x:'a word) = y`),
   REPEAT STRIP_TAC THEN
   ASM_MESON_TAC[injectivity "word_loc"; injectivity "option"]);;
@@ -6241,9 +6243,9 @@ let bignum_header = prove
     `memory_rel c be ts refs sp st m dm (CONS (Number i,v) vars) /\
      ~(small_int (:'a) i) /\ good_dimindex (:'a)
      ==> (?w a x.
-            v = wordLang_Word w /\
+            v = word_Word w /\
             get_real_addr c st w = SOME a /\
-            m a = wordLang_Word (x:'a word) /\
+            m a = word_Word (x:'a word) /\
             x = make_header c (b2w ((i:int) < (&0)) << 2 ||
                   (n2w 3))
                   (LENGTH (n2mw (num_of_int (abs i)):('a word)
@@ -6273,7 +6275,7 @@ let bignum_header = prove
     let elts = mapfilter (fun (_,th) ->
       let c = concl th in
       if is_eq c && is_comb (lhand c) &&
-         rator (lhand c) = mem && hd_is "wordLang_Word" (rand c)
+         rator (lhand c) = mem && hd_is "word_Word" (rand c)
       then th else fail()) asl in
     let triple e =
       let a = rand (lhand (concl e)) in
@@ -6282,7 +6284,7 @@ let bignum_header = prove
                  rand (rand c) = a) gl in
       let wv = el 2 (snd (strip_comb (lhand (concl ga)))) in
       let vw = the_asm (fun c -> is_eq c && lhand c = vt &&
-                 rand c = list_mk_icomb "wordLang_Word" [wv]) gl in
+                 rand c = list_mk_icomb "word_Word" [wv]) gl in
       (vw,ga,e) in
     let alt = find (fun e -> is_var (rand (rand (concl e)))) elts in
     let hdr = find (fun e ->
@@ -10357,7 +10359,7 @@ let V_INV_REFS_TAC =
    keeps good. *)
 
 let good_loc_Word = prove
- (`!s w. good_loc s (wordLang_Word w) = T`,
+ (`!s w. good_loc s (word_Word w) = T`,
   REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [good_loc_def] THEN
   MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
@@ -10503,8 +10505,8 @@ let cond_add_F = prove
   MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
 
 let cond_add_T = prove
- (`!c a (w:'a word). word_cond_add c a (T,wordLang_Word w) =
-     wordLang_Word (w + a << (shift_length c -
+ (`!c a (w:'a word). word_cond_add c a (T,word_Word w) =
+     word_Word (w + a << (shift_length c -
        backend_common_word_shift (:'a)))`,
   REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [word_cond_add_def] THEN
@@ -12008,57 +12010,57 @@ AUX_SIZE = {
   # the source itself writes out in the measure of pure_op
   # (closLangScript.sml:163)
   ('closLang', 'exp1_size'):
-    'list_size (pair_size (\\x. x) closLang_exp_size)',
+    'list_size (pair_size (\\x. x) clos_exp_size)',
   ('flatLang', 'exp1_size'):
     'list_size (pair_size mlstring_size\n'
-    '             (pair_size mlstring_size flatLang_exp_size))',
+    '             (pair_size mlstring_size flat_exp_size))',
   ('flatLang', 'exp2_size'):
     'pair_size mlstring_size (pair_size mlstring_size'
-    ' flatLang_exp_size)',
+    ' flat_exp_size)',
   ('flatLang', 'exp3_size'):
-    'list_size (pair_size flatLang_pat_size flatLang_exp_size)',
+    'list_size (pair_size flat_pat_size flat_exp_size)',
   ('flatLang', 'exp5_size'):
-    'pair_size flatLang_pat_size flatLang_exp_size',
-  ('flatLang', 'exp6_size'): 'list_size flatLang_exp_size',
+    'pair_size flat_pat_size flat_exp_size',
+  ('flatLang', 'exp6_size'): 'list_size flat_exp_size',
   # and the files that use them name them too: an auxiliary size
   # function is a name of the theory that reads it, not of the
   # one whose datatype it is about
-  ('flat_elim', 'exp6_size'): 'list_size flatLang_exp_size',
+  ('flat_elim', 'exp6_size'): 'list_size flat_exp_size',
   ('flat_elim', 'exp3_size'):
-    'list_size (pair_size flatLang_pat_size flatLang_exp_size)',
+    'list_size (pair_size flat_pat_size flat_exp_size)',
   ('flat_elim', 'exp1_size'):
     'list_size (pair_size mlstring_size\n'
-    '             (pair_size mlstring_size flatLang_exp_size))',
+    '             (pair_size mlstring_size flat_exp_size))',
   # closLang's exp3_size is the size of an exp list
-  ('clos_mti', 'exp3_size'): 'list_size closLang_exp_size',
-  ('clos_call', 'exp3_size'): 'list_size closLang_exp_size',
+  ('clos_mti', 'exp3_size'): 'list_size clos_exp_size',
+  ('clos_call', 'exp3_size'): 'list_size clos_exp_size',
   ('clos_call', 'exp1_size'):
-    'list_size (pair_size (\\x. x) closLang_exp_size)',
+    'list_size (pair_size (\\x. x) clos_exp_size)',
   ('clos_knownProof', 'v1_size'): 'list_size closSem_v_size',
   # closProps is about closLang and closSem both: exp3_size is
   # the size of an exp list, exp1_size of a (num # exp) list,
   # exp2_size of one such pair, and v1_size of a v list
-  ('closProps', 'exp3_size'): 'list_size closLang_exp_size',
+  ('closProps', 'exp3_size'): 'list_size clos_exp_size',
   ('closProps', 'exp1_size'):
-    'list_size (pair_size (\\x. x) closLang_exp_size)',
+    'list_size (pair_size (\\x. x) clos_exp_size)',
   ('closProps', 'exp2_size'):
-    'pair_size (\\x. x) closLang_exp_size',
+    'pair_size (\\x. x) clos_exp_size',
   ('closProps', 'v1_size'): 'list_size closSem_v_size',
   # fromSexp says the size itself: dec1_size is list_size dec_size
   ('fromSexp', 'dec1_size'): 'list_size ast_dec_size',
   # panLang's shape1_size is the size of a shape list, and its
   # exp1_size the size of a list of its expressions
-  ('panLang', 'shape1_size'): 'list_size panLang_shape_size',
-  ('panLang', 'exp3_size'): '(list_size o panLang_exp_size)',
+  ('panLang', 'shape1_size'): 'list_size pan_shape_size',
+  ('panLang', 'exp3_size'): '(list_size o pan_exp_size)',
   ('panLang', 'exp1_size'):
     '(\\l. list_size (pair_size mlstring_size'
-    ' (panLang_exp_size l)))',
+    ' (pan_exp_size l)))',
   ('clos_callProof', 'v1_size'): 'list_size closSem_v_size',
-  ('flat_pattern', 'pat1_size'): 'list_size flatLang_pat_size',
+  ('flat_pattern', 'pat1_size'): 'list_size flat_pat_size',
   ('source_to_flat', 'pat1_size'): 'list_size ast_pat_size',
   # wordLang's exp_size takes the size of the type variable, so
   # the one of a list of them is the composition
-  ('wordLang', 'exp1_size'): '(list_size o wordLang_exp_size)',
+  ('wordLang', 'exp1_size'): '(list_size o word_exp_size)',
   ('displayLang', 'sExp1_size'): 'list_size sExp_size',
   ('bvi_tailrec', 'exp2_size'): 'list_size bvi_exp_size',
   # v3_size is the size of one (mlstring # v) of flatSem
@@ -12229,17 +12231,17 @@ DEF_PATCH = {
   # the mop of the ShMemOp arm is a memop of asm, where every
   # other Store of get_live is the one of a wordLang program
   ('word_alloc', 'get_live_def'): [
-    ('mop = wordLang_Store \\/', 'mop = asm_Store \\/'),
+    ('mop = word_Store \\/', 'mop = asm_Store \\/'),
   ],
   # the op of a ShareInst is a memop of asm, where every other
   # Load and Store of the definition is the one of a wordLang
   # expression or program
   ('word_inst', 'inst_select_def'): [
-    ('op = wordLang_Load \\/ op = wordLang_Store',
+    ('op = word_Load \\/ op = word_Store',
      'op = asm_Load \\/ op = asm_Store'),
   ],
   ('word_alloc', 'get_clash_tree_def'): [
-    ('    wordLang_Store \\/ op = asm_Store8',
+    ('    word_Store \\/ op = asm_Store8',
      '    asm_Store \\/ op = asm_Store8'),
   ],
   # the toString of a character is mlstring's chr_to_str and the
@@ -12253,10 +12255,10 @@ DEF_PATCH = {
   # Tick puts in its Asm is the asm instruction Inst Skip, where
   # every other Inst and Skip of the definition is stackLang's
   ('stack_to_lab', 'flatten_def'): [
-    ('(stackLang_Inst (asm_Skip))', '(asm_Inst (asm_Skip))'),
-    ('(stackLang_Inst a) [] 0]', '(asm_Inst a) [] 0]'),
-    ('labLang_LabAsm stackLang_Install',
-     'labLang_LabAsm labLang_Install'),
+    ('(stack_Inst (asm_Skip))', '(asm_Inst (asm_Skip))'),
+    ('(stack_Inst a) [] 0]', '(asm_Inst a) [] 0]'),
+    ('lab_LabAsm stack_Install',
+     'lab_LabAsm lab_Install'),
   ],
   # lookup_word_op matches on an opw, whose constructors the port
   # calls after backend_common, and gives the binop of asm that

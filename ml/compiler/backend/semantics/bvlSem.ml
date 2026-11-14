@@ -80,7 +80,6 @@ let bvlSem_state_FIELDS = define_record "bvlSem_state"
    "code","(num#bvl_exp) spt";
    "ffi","'ffi ffi_state"];;
 
-let _ = size_thms "bvlSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let bvlSem_v_to_list_def,bvlSem_v_to_list_ind = define_wf
@@ -198,11 +197,11 @@ let bvlSem_do_install_def = new_definition
 (* the clauses in two quotations: t is num and mlstring, which one quotation
    cannot typecheck *)
 let do_part_def = define_cases_clauses
-  [`(bvlSem_do_part m (closLang_Int i) refs = (bvlSem_Number i,refs)) /\
-    (bvlSem_do_part m (closLang_W64 w) refs = (bvlSem_Word64 w,refs)) /\
-    (bvlSem_do_part m (closLang_Con t ns) refs = (bvlSem_Block t (MAP m
+  [`(bvlSem_do_part m (clos_Int i) refs = (bvlSem_Number i,refs)) /\
+    (bvlSem_do_part m (clos_W64 w) refs = (bvlSem_Word64 w,refs)) /\
+    (bvlSem_do_part m (clos_Con t ns) refs = (bvlSem_Block t (MAP m
     ns),refs))`;
-   `bvlSem_do_part m (closLang_Str t) refs =
+   `bvlSem_do_part m (clos_Str t) refs =
       let ptr = (minimal ptr. ~(ptr IN FDOM refs)) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (bvlSem_RefPtr T ptr,refs |+ (ptr,((bvlSem_ByteArray T
@@ -221,61 +220,61 @@ let do_build_const_def = new_definition
 let bvlSem_do_int_app_def = new_definition
   `bvlSem_do_int_app x1 x2 =
    match (x1,x2) with
-     (closLang_Const n,[]) -> SOME (bvlSem_Number n)
-   | (closLang_Add,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME
-     (bvlSem_Number (n1 + n2))
-   | (closLang_Sub,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME
-     (bvlSem_Number (n1 - n2))
-   | (closLang_Mult,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME
-     (bvlSem_Number (n1 * n2))
-   | (closLang_Div,[bvlSem_Number n1; bvlSem_Number n2]) ->
+     (clos_Const n,[]) -> SOME (bvlSem_Number n)
+   | (clos_Add,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME (bvlSem_Number
+     (n1 + n2))
+   | (clos_Sub,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME (bvlSem_Number
+     (n1 - n2))
+   | (clos_Mult,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME (bvlSem_Number
+     (n1 * n2))
+   | (clos_Div,[bvlSem_Number n1; bvlSem_Number n2]) ->
        (if n2 = (&0) then NONE else SOME (bvlSem_Number (n1 / n2)))
-   | (closLang_Mod,[bvlSem_Number n1; bvlSem_Number n2]) ->
+   | (clos_Mod,[bvlSem_Number n1; bvlSem_Number n2]) ->
        (if n2 = (&0) then NONE else SOME (bvlSem_Number (n1 % n2)))
-   | (closLang_Less,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME
-     (bvlSem_Boolv (n1 < n2))
-   | (closLang_LessEq,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME
+   | (clos_Less,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME (bvlSem_Boolv
+     (n1 < n2))
+   | (clos_LessEq,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME
      (bvlSem_Boolv (n1 <= n2))
-   | (closLang_Greater,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME
+   | (clos_Greater,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME
      (bvlSem_Boolv (n1 > n2))
-   | (closLang_GreaterEq,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME
+   | (clos_GreaterEq,[bvlSem_Number n1; bvlSem_Number n2]) -> SOME
      (bvlSem_Boolv (n1 >= n2))
-   | (closLang_LessConstSmall n,[bvlSem_Number i]) ->
+   | (clos_LessConstSmall n,[bvlSem_Number i]) ->
          (if (&0) <= i /\ i <= (&1000000) /\ n < 1000000 then
            SOME (bvlSem_Boolv (i < &n)) else NONE)
-   | ((op:closLang_int_op),(vs:bvlSem_v list)) -> NONE`;;
+   | ((op:clos_int_op),(vs:bvlSem_v list)) -> NONE`;;
 
 let do_int_app_eq_some = prove
- (`(!n. bvlSem_do_int_app (closLang_Const n) vs = SOME res ==>
+ (`(!n. bvlSem_do_int_app (clos_Const n) vs = SOME res ==>
      vs = [] /\ res = bvlSem_Number n) /\
-   (bvlSem_do_int_app (closLang_Add) vs = SOME res ==>
+   (bvlSem_do_int_app (clos_Add) vs = SOME res ==>
      (?n1 n2. vs = [bvlSem_Number n1; bvlSem_Number n2] /\ res =
        bvlSem_Number (n1 + n2))) /\
-   (bvlSem_do_int_app (closLang_Sub) vs = SOME res ==>
+   (bvlSem_do_int_app (clos_Sub) vs = SOME res ==>
      (?n1 n2. vs = [bvlSem_Number n1; bvlSem_Number n2] /\ res =
        bvlSem_Number (n1 - n2))) /\
-   (bvlSem_do_int_app (closLang_Mult) vs = SOME res ==>
+   (bvlSem_do_int_app (clos_Mult) vs = SOME res ==>
      (?n1 n2. vs = [bvlSem_Number n1; bvlSem_Number n2] /\ res =
        bvlSem_Number (n1 * n2))) /\
-   (bvlSem_do_int_app (closLang_Div) vs = SOME res ==>
+   (bvlSem_do_int_app (clos_Div) vs = SOME res ==>
      (?n1 n2. vs = [bvlSem_Number n1; bvlSem_Number n2] /\ ~(n2 = (&0))
        /\ res = bvlSem_Number (n1 / n2))) /\
-   (bvlSem_do_int_app (closLang_Mod) vs = SOME res ==>
+   (bvlSem_do_int_app (clos_Mod) vs = SOME res ==>
      (?n1 n2. vs = [bvlSem_Number n1; bvlSem_Number n2] /\ ~(n2 = (&0))
        /\ res = bvlSem_Number (n1 % n2))) /\
-   (bvlSem_do_int_app (closLang_Less) vs = SOME res ==>
+   (bvlSem_do_int_app (clos_Less) vs = SOME res ==>
      (?n1 n2. vs = [bvlSem_Number n1; bvlSem_Number n2] /\ res =
        bvlSem_Boolv (n1 < n2))) /\
-   (bvlSem_do_int_app (closLang_LessEq) vs = SOME res ==>
+   (bvlSem_do_int_app (clos_LessEq) vs = SOME res ==>
      (?n1 n2. vs = [bvlSem_Number n1; bvlSem_Number n2] /\ res =
        bvlSem_Boolv (n1 <= n2))) /\
-   (bvlSem_do_int_app (closLang_Greater) vs = SOME res ==>
+   (bvlSem_do_int_app (clos_Greater) vs = SOME res ==>
      (?n1 n2. vs = [bvlSem_Number n1; bvlSem_Number n2] /\ res =
        bvlSem_Boolv (n1 > n2))) /\
-   (bvlSem_do_int_app (closLang_GreaterEq) vs = SOME res ==>
+   (bvlSem_do_int_app (clos_GreaterEq) vs = SOME res ==>
      (?n1 n2. vs = [bvlSem_Number n1; bvlSem_Number n2] /\ res =
        bvlSem_Boolv (n1 >= n2))) /\
-   (!n. bvlSem_do_int_app (closLang_LessConstSmall n) vs = SOME res ==>
+   (!n. bvlSem_do_int_app (clos_LessConstSmall n) vs = SOME res ==>
      (?i. vs = [bvlSem_Number i] /\ (&0) <= i /\ i <= (&1000000) /\ n <
        1000000 /\ res = bvlSem_Boolv (i < &n)))`,
   CHEAT_TAC);;
@@ -329,7 +328,7 @@ let bvlSem_do_word_app_def = new_definition
            (match ws with [bvlSem_Word64 w1; bvlSem_Word64 w2] -> (SOME
              (bvlSem_Boolv (fp_cmp_comp cmp w1 w2)))
             | _ -> NONE)
-     | ((op:closLang_word_op),(vs:bvlSem_v list)) -> NONE`;;
+     | ((op:clos_word_op),(vs:bvlSem_v list)) -> NONE`;;
 
 let bvlSem_dest_thunk_ret_INDUCT,bvlSem_dest_thunk_ret_RECURSION =
   define_datatype
@@ -363,13 +362,13 @@ let bvlSem_bad_thunk_update_def = new_definition
 
 let bvlSem_do_app_def = new_definition
   `bvlSem_do_app op vs (s:('c,'ffi)bvlSem_state) =
-     match (op,vs) with (closLang_GlobOp (closLang_Global n),[]) ->
+     match (op,vs) with (clos_GlobOp (clos_Global n),[]) ->
          (match get_global n (bvlSem_state_globals s) with SOME (SOME v) ->
            Rval (v,s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_GlobOp (closLang_Global _),[bvlSem_Number i]) ->
+     | (clos_GlobOp (clos_Global _),[bvlSem_Number i]) ->
          (if i < (&0) then ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result) else match get_global
@@ -378,7 +377,7 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_GlobOp (closLang_SetGlobal n),[v]) ->
+     | (clos_GlobOp (clos_SetGlobal n),[v]) ->
          (match get_global n (bvlSem_state_globals s) with SOME _ -> Rval
            (bvlSem_Unit,bvlSem_state_globals_fupd (K (LUPDATE (SOME v) n
            (bvlSem_state_globals s)))
@@ -386,16 +385,15 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_GlobOp closLang_AllocGlobal,[bvlSem_Number i]) ->
+     | (clos_GlobOp clos_AllocGlobal,[bvlSem_Number i]) ->
          (if i < (&0) then ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result)
           else Rval (bvlSem_Unit,bvlSem_state_globals_fupd (K (APPEND
             (bvlSem_state_globals s) (REPLICATE (num_of_int i) NONE))) s))
-     | (closLang_Install,vs) -> bvlSem_do_install vs s
-     | (closLang_BlockOp (closLang_Cons tag),xs) -> Rval (bvlSem_Block tag
-       xs,s)
-     | (closLang_BlockOp (closLang_BoolTest test),[v1; v2]) ->
+     | (clos_Install,vs) -> bvlSem_do_install vs s
+     | (clos_BlockOp (clos_Cons tag),xs) -> Rval (bvlSem_Block tag xs,s)
+     | (clos_BlockOp (clos_BoolTest test),[v1; v2]) ->
          (if (~(v1 = bvlSem_Boolv T) /\ ~(v1 = bvlSem_Boolv F)) then ((Rerr
            (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
@@ -404,17 +402,17 @@ let bvlSem_do_app_def = new_definition
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result) else Rval (bvlSem_Boolv (v1 =
            v2),s))
-     | (closLang_BlockOp closLang_BoolNot,[v1]) ->
+     | (clos_BlockOp clos_BoolNot,[v1]) ->
          (if v1 = bvlSem_Boolv T then Rval (bvlSem_Boolv F,s) else if v1 =
            bvlSem_Boolv F then Rval (bvlSem_Boolv T,s) else ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp (closLang_Build parts'),[]) ->
+     | (clos_BlockOp (clos_Build parts'),[]) ->
          (let (v,rs) = bvlSem_do_build_const parts' (bvlSem_state_refs s) in
            Rval (v,bvlSem_state_refs_fupd (K rs) s))
-     | (closLang_BlockOp (closLang_ConsExtend tag),CONS (bvlSem_Block _ xs')
-       (CONS (bvlSem_Number lower) (CONS (bvlSem_Number len) (CONS
-       (bvlSem_Number tot) xs)))) ->
+     | (clos_BlockOp (clos_ConsExtend tag),CONS (bvlSem_Block _ xs') (CONS
+       (bvlSem_Number lower) (CONS (bvlSem_Number len) (CONS (bvlSem_Number
+       tot) xs)))) ->
          if lower < (&0) \/ len < (&0) \/ lower + len > &(LENGTH xs') \/
             tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then
            ((Rerr (Rabort
@@ -422,17 +420,15 @@ let bvlSem_do_app_def = new_definition
              ,bvlSem_v)semanticPrimitives_result)
          else Rval (bvlSem_Block tag (APPEND xs (TAKE (num_of_int len) (DROP
            (num_of_int lower) xs'))),s)
-     | (closLang_BlockOp (closLang_ConsExtend tag),_) -> ((Rerr (Rabort
+     | (clos_BlockOp (clos_ConsExtend tag),_) -> ((Rerr (Rabort
        Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
        ,bvlSem_v)semanticPrimitives_result)
-     | (closLang_MemOp closLang_El,[bvlSem_Block tag xs; bvlSem_Number i])
-       ->
+     | (clos_MemOp clos_El,[bvlSem_Block tag xs; bvlSem_Number i]) ->
          if (&0) <= i /\ num_of_int i < LENGTH xs then Rval (EL (num_of_int
            i) xs,s) else ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result)
-     | (closLang_MemOp closLang_El,[bvlSem_RefPtr _ ptr; bvlSem_Number i])
-       ->
+     | (clos_MemOp clos_El,[bvlSem_RefPtr _ ptr; bvlSem_Number i]) ->
          (match FLOOKUP (bvlSem_state_refs s) ptr with SOME
            (bvlSem_ValueArray xs) ->
              (if (&0) <= i /\ i < &(LENGTH xs) then Rval (EL (num_of_int i)
@@ -443,11 +439,11 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp (closLang_ElemAt n),[bvlSem_Block tag xs]) ->
+     | (clos_BlockOp (clos_ElemAt n),[bvlSem_Block tag xs]) ->
          if n < LENGTH xs then Rval (EL n xs,s) else ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result)
-     | (closLang_BlockOp (closLang_ElemAt n),[bvlSem_RefPtr _ ptr]) ->
+     | (clos_BlockOp (clos_ElemAt n),[bvlSem_RefPtr _ ptr]) ->
          (match FLOOKUP (bvlSem_state_refs s) ptr with SOME
            (bvlSem_ValueArray xs) ->
              (if n < LENGTH xs then Rval (EL n xs,s)
@@ -457,30 +453,29 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp closLang_ListAppend,[x1; x2]) ->
+     | (clos_BlockOp clos_ListAppend,[x1; x2]) ->
          (match (bvlSem_v_to_list x1,bvlSem_v_to_list x2) with (SOME xs,SOME
            ys) -> Rval (bvlSem_list_to_v (APPEND xs ys),s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp closLang_LengthBlock,[bvlSem_Block tag xs]) ->
+     | (clos_BlockOp clos_LengthBlock,[bvlSem_Block tag xs]) ->
          Rval (bvlSem_Number (&(LENGTH xs)),s)
-     | (closLang_MemOp closLang_Length,[bvlSem_RefPtr _ ptr]) ->
+     | (clos_MemOp clos_Length,[bvlSem_RefPtr _ ptr]) ->
          (match FLOOKUP (bvlSem_state_refs s) ptr with SOME
            (bvlSem_ValueArray xs) ->
                Rval (bvlSem_Number (&(LENGTH xs)),s)
            | _ -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_LengthByte,[bvlSem_RefPtr _ ptr]) ->
+     | (clos_MemOp clos_LengthByte,[bvlSem_RefPtr _ ptr]) ->
          (match FLOOKUP (bvlSem_state_refs s) ptr with SOME
            (bvlSem_ByteArray _ xs) ->
                Rval (bvlSem_Number (&(LENGTH xs)),s)
            | _ -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_RefByte F),[bvlSem_Number i; bvlSem_Number
-       b]) ->
+     | (clos_MemOp (clos_RefByte F),[bvlSem_Number i; bvlSem_Number b]) ->
           if (&0) <= i /\ (?(w:word8). b = &(w2n w)) then
             let ptr = (minimal ptr. ~(ptr IN FDOM (bvlSem_state_refs s))) in
               Rval (bvlSem_RefPtr T ptr,bvlSem_state_refs_fupd (K
@@ -490,7 +485,7 @@ let bvlSem_do_app_def = new_definition
           else ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result)
-     | (closLang_MemOp closLang_RefArray,[bvlSem_Number i; v]) ->
+     | (clos_MemOp clos_RefArray,[bvlSem_Number i; v]) ->
          if (&0) <= i then
            let ptr = (minimal ptr. ~(ptr IN FDOM (bvlSem_state_refs s))) in
              Rval (bvlSem_RefPtr T ptr,bvlSem_state_refs_fupd (K
@@ -499,8 +494,7 @@ let bvlSem_do_app_def = new_definition
           else ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result)
-     | (closLang_MemOp closLang_DerefByte,[bvlSem_RefPtr _ ptr;
-       bvlSem_Number i]) ->
+     | (clos_MemOp clos_DerefByte,[bvlSem_RefPtr _ ptr; bvlSem_Number i]) ->
          (match FLOOKUP (bvlSem_state_refs s) ptr with SOME
            (bvlSem_ByteArray _ ws) ->
              (if (&0) <= i /\ i < &(LENGTH ws) then Rval (bvlSem_Number
@@ -511,8 +505,8 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_UpdateByte,[bvlSem_RefPtr _ ptr;
-       bvlSem_Number i; bvlSem_Number b]) ->
+     | (clos_MemOp clos_UpdateByte,[bvlSem_RefPtr _ ptr; bvlSem_Number i;
+       bvlSem_Number b]) ->
          (match FLOOKUP (bvlSem_state_refs s) ptr with SOME
            (bvlSem_ByteArray f bs) ->
              (if (&0) <= i /\ i < &(LENGTH bs) /\ (?(w:word8). b = &(w2n w))
@@ -527,7 +521,7 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_ConcatByteVec,[lv]) ->
+     | (clos_MemOp clos_ConcatByteVec,[lv]) ->
           (match
              (some (\wss. ?ps.
                bvlSem_v_to_list lv = SOME (MAP (bvlSem_RefPtr T) ps) /\
@@ -541,13 +535,13 @@ let bvlSem_do_app_def = new_definition
            | _ -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp (closLang_FromList n),[lv]) ->
+     | (clos_BlockOp (clos_FromList n),[lv]) ->
          (match bvlSem_v_to_list lv with SOME vs -> Rval (bvlSem_Block n
            vs,s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_FromListByte,[lv]) ->
+     | (clos_MemOp clos_FromListByte,[lv]) ->
          (match some (\ns. bvlSem_v_to_list lv = SOME (MAP (bvlSem_Number o
            (&)) ns) /\ ALL (\n. n < 256) ns) with SOME ns -> let ptr = (minimal
            ptr. ~(ptr IN FDOM (bvlSem_state_refs s))) in
@@ -557,7 +551,7 @@ let bvlSem_do_app_def = new_definition
            | NONE -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_ToListByte,[bvlSem_RefPtr _ ptr]) ->
+     | (clos_MemOp clos_ToListByte,[bvlSem_RefPtr _ ptr]) ->
          (match FLOOKUP (bvlSem_state_refs s) ptr with SOME
            (bvlSem_ByteArray f bs) ->
              (Rval (bvlSem_list_to_v (MAP (\b. bvlSem_Number (&(w2n b)))
@@ -565,9 +559,9 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_CopyByte F),[bvlSem_RefPtr _ src;
-       bvlSem_Number srcoff; bvlSem_Number len; bvlSem_RefPtr _ dst;
-       bvlSem_Number dstoff]) ->
+     | (clos_MemOp (clos_CopyByte F),[bvlSem_RefPtr _ src; bvlSem_Number
+       srcoff; bvlSem_Number len; bvlSem_RefPtr _ dst; bvlSem_Number dstoff])
+       ->
          (match (FLOOKUP (bvlSem_state_refs s) src,FLOOKUP
            (bvlSem_state_refs s) dst) with (SOME (bvlSem_ByteArray _ ws),SOME
            (bvlSem_ByteArray fl ds)) ->
@@ -580,8 +574,8 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_CopyByte T),[bvlSem_RefPtr _ src;
-       bvlSem_Number srcoff; bvlSem_Number len]) ->
+     | (clos_MemOp (clos_CopyByte T),[bvlSem_RefPtr _ src; bvlSem_Number
+       srcoff; bvlSem_Number len]) ->
         (match (FLOOKUP (bvlSem_state_refs s) src) with SOME
           (bvlSem_ByteArray _ ws) ->
             (match copy_array (ws,srcoff) len NONE with SOME ds ->
@@ -595,8 +589,8 @@ let bvlSem_do_app_def = new_definition
          | _ -> ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_XorByte,[bvlSem_RefPtr _ dst; bvlSem_RefPtr
-       _ src]) ->
+     | (clos_MemOp clos_XorByte,[bvlSem_RefPtr _ dst; bvlSem_RefPtr _ src])
+       ->
          (match (FLOOKUP (bvlSem_state_refs s) src,FLOOKUP
            (bvlSem_state_refs s) dst) with (SOME (bvlSem_ByteArray _ ws),SOME
            (bvlSem_ByteArray fl ds)) ->
@@ -609,8 +603,8 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_StringCmp b cmp),[bvlSem_RefPtr _ s1;
-       bvlSem_RefPtr _ s2]) ->
+     | (clos_MemOp (clos_StringCmp b cmp),[bvlSem_RefPtr _ s1; bvlSem_RefPtr
+       _ s2]) ->
          (match (FLOOKUP (bvlSem_state_refs s) s1,FLOOKUP (bvlSem_state_refs
            s) s2) with (SOME (bvlSem_ByteArray _ ws1),SOME (bvlSem_ByteArray _
            ws2)) ->
@@ -620,22 +614,22 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp (closLang_TagEq n),[bvlSem_Block tag xs]) ->
+     | (clos_BlockOp (clos_TagEq n),[bvlSem_Block tag xs]) ->
          Rval (bvlSem_Boolv (tag = n),s)
-     | (closLang_BlockOp (closLang_LenEq l),[bvlSem_Block tag xs]) ->
+     | (clos_BlockOp (clos_LenEq l),[bvlSem_Block tag xs]) ->
          Rval (bvlSem_Boolv (LENGTH xs = l),s)
-     | (closLang_BlockOp (closLang_TagLenEq n l),[bvlSem_Block tag xs]) ->
+     | (clos_BlockOp (clos_TagLenEq n l),[bvlSem_Block tag xs]) ->
          Rval (bvlSem_Boolv (tag = n /\ LENGTH xs = l),s)
-     | (closLang_BlockOp (closLang_EqualConst p),[x1]) ->
-         (match p with closLang_Int i -> (match x1 with bvlSem_Number j ->
-           Rval (bvlSem_Boolv (i = j),s) | _ -> ((Rerr (Rabort
+     | (clos_BlockOp (clos_EqualConst p),[x1]) ->
+         (match p with clos_Int i -> (match x1 with bvlSem_Number j -> Rval
+           (bvlSem_Boolv (i = j),s) | _ -> ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result))
-          | closLang_W64 i -> (match x1 with bvlSem_Word64 j -> Rval
+          | clos_W64 i -> (match x1 with bvlSem_Word64 j -> Rval
             (bvlSem_Boolv (i = j),s) | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-          | closLang_Str i -> (match x1 with bvlSem_RefPtr _ p ->
+          | clos_Str i -> (match x1 with bvlSem_RefPtr _ p ->
                         (match FLOOKUP (bvlSem_state_refs s) p with SOME
                           (bvlSem_ByteArray T j) ->
                            Rval (bvlSem_Boolv (j = MAP (n2w o ORD) (explode
@@ -649,18 +643,17 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp closLang_Equal,[x1; x2]) ->
+     | (clos_BlockOp clos_Equal,[x1; x2]) ->
          (match bvlSem_do_eq (bvlSem_state_refs s) x1 x2 with Eq_val b ->
            Rval (bvlSem_Boolv b,s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_Ref,xs) ->
+     | (clos_MemOp clos_Ref,xs) ->
          let ptr = (minimal ptr. ~(ptr IN FDOM (bvlSem_state_refs s))) in
            Rval (bvlSem_RefPtr T ptr,bvlSem_state_refs_fupd (K
              (bvlSem_state_refs s |+ (ptr,bvlSem_ValueArray xs))) s)
-     | (closLang_MemOp closLang_Update,[bvlSem_RefPtr _ ptr; bvlSem_Number
-       i; x]) ->
+     | (clos_MemOp clos_Update,[bvlSem_RefPtr _ ptr; bvlSem_Number i; x]) ->
          (match FLOOKUP (bvlSem_state_refs s) ptr with SOME
            (bvlSem_ValueArray xs) ->
              (if (&0) <= i /\ i < &(LENGTH xs) then Rval
@@ -673,22 +666,22 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_Label n,[]) ->
+     | (clos_Label n,[]) ->
          if n IN domain (bvlSem_state_code s) then Rval (bvlSem_CodePtr n,s)
            else ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result)
-     | (closLang_IntOp intop,vs) ->
+     | (clos_IntOp intop,vs) ->
          (match bvlSem_do_int_app intop vs with SOME res -> Rval (res,s)
          | _ -> ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_WordOp wordop,vs) ->
+     | (clos_WordOp wordop,vs) ->
          (match bvlSem_do_word_app wordop vs with SOME res -> Rval (res,s)
          | _ -> ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_FFI n,[bvlSem_RefPtr _ cptr; bvlSem_RefPtr _ ptr]) ->
+     | (clos_FFI n,[bvlSem_RefPtr _ cptr; bvlSem_RefPtr _ ptr]) ->
          (match (FLOOKUP (bvlSem_state_refs s) cptr,FLOOKUP
            (bvlSem_state_refs s) ptr) with SOME (bvlSem_ByteArray T cws),SOME
            (bvlSem_ByteArray F ws) ->
@@ -703,13 +696,13 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp closLang_BoundsCheckBlock,xs) ->
+     | (clos_BlockOp clos_BoundsCheckBlock,xs) ->
          (match xs with [bvlSem_Block tag ys; bvlSem_Number i] ->
                 Rval (bvlSem_Boolv ((&0) <= i /\ i < &(LENGTH ys)),s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_BoundsCheckByte loose),xs) ->
+     | (clos_MemOp (clos_BoundsCheckByte loose),xs) ->
          (match xs with [bvlSem_RefPtr _ ptr; bvlSem_Number i] ->
            (match FLOOKUP (bvlSem_state_refs s) ptr with SOME
              (bvlSem_ByteArray _ ws) ->
@@ -721,7 +714,7 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_BoundsCheckArray,xs) ->
+     | (clos_MemOp clos_BoundsCheckArray,xs) ->
          (match xs with [bvlSem_RefPtr _ ptr; bvlSem_Number i] ->
            (match FLOOKUP (bvlSem_state_refs s) ptr with SOME
              (bvlSem_ValueArray ws) ->
@@ -732,9 +725,9 @@ let bvlSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_ConfigGC,[bvlSem_Number _; bvlSem_Number _])
-       -> (Rval (bvlSem_Unit,s))
-     | (closLang_ThunkOp th_op,vs) ->
+     | (clos_MemOp clos_ConfigGC,[bvlSem_Number _; bvlSem_Number _]) ->
+       (Rval (bvlSem_Unit,s))
+     | (clos_ThunkOp th_op,vs) ->
          (match (th_op,vs) with (AllocThunk m,[v]) ->
               (if bvlSem_bad_thunk_update m v (bvlSem_state_refs s) then
                 ((Rerr (Rabort
@@ -902,15 +895,15 @@ let bvlSem_evaluate_def,bvlSem_evaluate_ind = assume_definition_rec
 let bvlSem_do_app_const = prove
  (`(bvlSem_do_app op args s1 = Rval (res,s2)) ==>
     (bvlSem_state_clock s2 = bvlSem_state_clock s1) /\
-    (~(op = closLang_Install) ==> bvlSem_state_code s2 = bvlSem_state_code
-      s1 /\ bvlSem_state_compile
+    (~(op = clos_Install) ==> bvlSem_state_code s2 = bvlSem_state_code s1
+      /\ bvlSem_state_compile
                        s2 = bvlSem_state_compile s1
                          /\ bvlSem_state_compile_oracle
                        s2 = bvlSem_state_compile_oracle s1)`,
   CHEAT_TAC);;
 
 let bvl_do_app_Ref = prove
- (`bvlSem_do_app (closLang_MemOp closLang_Ref) vs s = Rval
+ (`bvlSem_do_app (clos_MemOp clos_Ref) vs s = Rval
      (bvlSem_RefPtr T (minimal ptr. ~(ptr IN FDOM (bvlSem_state_refs
        s))),bvlSem_state_refs_fupd (K (bvlSem_state_refs
         s |+ ((minimal ptr. ~(ptr IN FDOM (bvlSem_state_refs
@@ -920,8 +913,8 @@ let bvl_do_app_Ref = prove
 add_simp bvl_do_app_Ref;;
 
 let bvl_do_app_Cons = prove
- (`bvlSem_do_app (closLang_BlockOp (closLang_Cons tag)) vs s = Rval
-  (bvlSem_Block tag vs,s)`,
+ (`bvlSem_do_app (clos_BlockOp (clos_Cons tag)) vs s = Rval (bvlSem_Block tag
+  vs,s)`,
   CHEAT_TAC);;
 add_simp bvl_do_app_Cons;;
 

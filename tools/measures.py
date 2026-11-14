@@ -8,7 +8,7 @@
    of the port whose type belongs to the theory itself or to one
    that the measure names.  It prints the ones where the theory
    that the port chose is not the one of the file (the measure of
-   bvlSem's evaluate said flatLang_exp_size where HOL4 means
+   bvlSem's evaluate said flat_exp_size where HOL4 means
    bvl's exp_size).  A prefix that is a theory the file loads is
    the port's own qualification and says nothing, so what is left
    is short: of the four that it prints, bvlSem's evaluate and

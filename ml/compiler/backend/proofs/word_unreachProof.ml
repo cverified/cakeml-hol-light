@@ -27,20 +27,20 @@ let _ = cake_theory "word_unreachProof"
 
 (* evaluate_Skip_Seq *)
 let word_unreachProof_evaluate_Skip_Seq = prove
- (`wordSem_evaluate (wordLang_Seq wordLang_Skip p,s) = wordSem_evaluate
+ (`wordSem_evaluate (word_Seq word_Skip p,s) = wordSem_evaluate
   (p,(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
 
 (* evaluate_Seq_Skip *)
 let word_unreachProof_evaluate_Seq_Skip = prove
- (`!p1 s. wordSem_evaluate (wordLang_Seq p1 wordLang_Skip,s) =
-  wordSem_evaluate (p1,(s:('a,'c,'ffi)wordSem_state))`,
+ (`!p1 s. wordSem_evaluate (word_Seq p1 word_Skip,s) = wordSem_evaluate
+  (p1,(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
 
 (* evaluate_Seq_assoc *)
 let word_unreachProof_evaluate_Seq_assoc = prove
- (`wordSem_evaluate (wordLang_Seq p1 (wordLang_Seq p2 p3),s) =
-  wordSem_evaluate (wordLang_Seq (wordLang_Seq p1 p2) p3,s)`,
+ (`wordSem_evaluate (word_Seq p1 (word_Seq p2 p3),s) = wordSem_evaluate
+  (word_Seq (word_Seq p1 p2) p3,s)`,
   CHEAT_TAC);;
 
 let ALL_DISTINCT_merge_moves = prove
@@ -62,7 +62,7 @@ let copy_vars_append = prove
   CHEAT_TAC);;
 
 let evaluate_Move = prove
- (`wordSem_evaluate (wordLang_Move pri moves,s) =
+ (`wordSem_evaluate (word_Move pri moves,s) =
    (if ALL_DISTINCT (MAP FST moves) then
      match wordSem_get_vars (MAP SND moves) s with
        NONE -> (SOME wordSem_Error,s)
@@ -113,24 +113,23 @@ let IMP_EVERY_MAP_SND_anub = prove
 
 let merge_moves_Skip = prove
  (`!l1 l2 s res s1.
-     wordSem_evaluate (wordLang_Seq (wordLang_Move n1 l1) (wordLang_Move n2
-       l2),s) = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
-     wordSem_evaluate (wordLang_Move m (word_unreach_merge_moves l1 l2),s)
-       = (res,s1)`,
+     wordSem_evaluate (word_Seq (word_Move n1 l1) (word_Move n2 l2),s) =
+       (res,s1) /\ ~(res = SOME wordSem_Error) ==>
+     wordSem_evaluate (word_Move m (word_unreach_merge_moves l1 l2),s) =
+       (res,s1)`,
   CHEAT_TAC);;
 
 let merge_moves_thm = prove
  (`!p l1 l2 s res s1.
-     wordSem_evaluate (wordLang_Seq (wordLang_Move n1 l1) (wordLang_Seq
-       (wordLang_Move n2 l2) p),s) = (res,s1) /\ ~(res = SOME wordSem_Error)
-       ==>
-     wordSem_evaluate (wordLang_Seq (wordLang_Move m
-       (word_unreach_merge_moves l1 l2)) p,s) = (res,s1)`,
+     wordSem_evaluate (word_Seq (word_Move n1 l1) (word_Seq (word_Move n2
+       l2) p),s) = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
+     wordSem_evaluate (word_Seq (word_Move m (word_unreach_merge_moves l1
+       l2)) p,s) = (res,s1)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_SimpSeq = prove
- (`wordSem_evaluate (wordLang_Seq p1 p2,s) = (res,s1) /\ ~(res = SOME
+ (`wordSem_evaluate (word_Seq p1 p2,s) = (res,s1) /\ ~(res = SOME
   wordSem_Error) ==>
    wordSem_evaluate (SimpSeq p1 p2,s) = (res,s1)`,
   CHEAT_TAC);;
@@ -139,25 +138,25 @@ let evaluate_SimpSeq = prove
 let push_env_handler = prove
  (`wordSem_push_env x' (match handler with NONE -> NONE
                 | SOME (y1,q2,y2,y3) -> SOME (y1,Seq_assoc_right q2
-                  wordLang_Skip,y2,y3)) (wordSem_dec_clock s) =
+                  word_Skip,y2,y3)) (wordSem_dec_clock s) =
    wordSem_push_env x' handler (wordSem_dec_clock s)`,
   CHEAT_TAC);;
 
 let evaluate_Seq_assoc_right_lemma = prove
  (`!p1 p2 s res s1.
-     wordSem_evaluate (wordLang_Seq p1 p2,(s:('a,'c,'ffi)wordSem_state)) =
+     wordSem_evaluate (word_Seq p1 p2,(s:('a,'c,'ffi)wordSem_state)) =
        (res,s1) /\ ~(res = SOME wordSem_Error) ==>
      wordSem_evaluate (Seq_assoc_right p1 p2,s) = (res,s1)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_Loop_body_eq = prove
- (`(!(s:('a,'b,'c)wordSem_state) res s1. wordSem_evaluate ((p1:'a
-  wordLang_prog),s) = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
-               wordSem_evaluate ((p2:'a wordLang_prog),s) = (res,s1)) ==>
-   (!(s:('a,'b,'c)wordSem_state) res s1. wordSem_evaluate (wordLang_Loop
-     names p1 exit_names,s) = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
-              wordSem_evaluate (wordLang_Loop names p2 exit_names,s) =
+ (`(!(s:('a,'b,'c)wordSem_state) res s1. wordSem_evaluate ((p1:'a word_prog),s)
+  = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
+               wordSem_evaluate ((p2:'a word_prog),s) = (res,s1)) ==>
+   (!(s:('a,'b,'c)wordSem_state) res s1. wordSem_evaluate (word_Loop names
+     p1 exit_names,s) = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
+              wordSem_evaluate (word_Loop names p2 exit_names,s) =
                 (res,s1))`,
   CHEAT_TAC);;
 

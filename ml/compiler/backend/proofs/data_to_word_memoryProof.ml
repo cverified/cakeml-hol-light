@@ -215,12 +215,12 @@ let bytes_def = new_definition
   list)heap_element) =
      let ws = write_bytes bs ws is_bigendian in
        DataElement [] (LENGTH ws) (BytesTag cmp_by_contents (LENGTH
-         bs),MAP wordLang_Word ws)`;;
+         bs),MAP word_Word ws)`;;
 
 let bignum_def = new_definition
   `Bignum i =
      let (sign,(payload:('a word) list)) = i2mw i in
-       DataElement [] (LENGTH payload) (NumTag sign,MAP wordLang_Word
+       DataElement [] (LENGTH payload) (NumTag sign,MAP word_Word
          payload)`;;
 
 let BlockNil_def = new_definition
@@ -229,9 +229,9 @@ let BlockNil_def = new_definition
 let Word64Rep_def = new_definition
   `Word64Rep (:'a) (w:word64) =
      if dimindex (:'a) < 64 then
-       DataElement [] 2 (Word64Tag,[wordLang_Word ((63 >< 32) w);
-         wordLang_Word ((31 >< 0) w)])
-     else DataElement [] 1 (Word64Tag,[wordLang_Word (((63 >< 0) w):'a
+       DataElement [] 2 (Word64Tag,[word_Word ((63 >< 32) w); word_Word ((31
+         >< 0) w)])
+     else DataElement [] 1 (Word64Tag,[word_Word (((63 >< 0) w):'a
        word)])`;;
 
 let Word64Rep_DataElement = prove
@@ -250,7 +250,6 @@ let Word64Rep_DataElement = prove
 let ThunkBlock_def = new_definition
   `ThunkBlock ev x = DataElement [x] 1 (ThunkTag ev,[])`;;
 
-let _ = size_thms "dataSem_v";;
 (* [local] *)
 let v_size_LEMMA = prove
  (`!vs v. MEM v vs ==> dataSem_v_size v <= list_size dataSem_v_size vs`,
@@ -271,30 +270,28 @@ let ref_ptr_annot_def = new_definition
   `ref_ptr_annot conf x2 =
    match x2 with
      SOME (bvlSem_MutBlock tg fin l c r) ->
-     (wordLang_Word (ptr_bits conf tg (LENGTH l + 1 + LENGTH r)):'a
-       word_loc)
-   | _ -> wordLang_Word (n2w 0)`;;
+     (word_Word (ptr_bits conf tg (LENGTH l + 1 + LENGTH r)):'a word_loc)
+   | _ -> word_Word (n2w 0)`;;
 add_simp ref_ptr_annot_def;;
 
 let v_inv_ck = cake_inductive
   `(small_int (:'a) i ==>
        v_inv_ck ck conf (bvlSem_Number i) (refs:(dataSem_v bvlSem_ref) spt)
-                  (gc_shared_Data (wordLang_Word (Smallnum
-                    i)),f,tf,(heap:(('a
+                  (gc_shared_Data (word_Word (Smallnum i)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
                     list)heap_element) list))) /\
    (~(small_int (:'a) i) /\
      heap_lookup ptr heap = SOME (Bignum i) ==>
        v_inv_ck ck conf (bvlSem_Number i) refs (gc_shared_Pointer ptr
-         (wordLang_Word (n2w 0)),f,tf,(heap:(('a
+         (word_Word (n2w 0)),f,tf,(heap:(('a
          word_loc,data_to_word_memoryProof_tag#('a word_loc) list)heap_element)
          list))) /\
    (heap_lookup ptr heap = SOME (Word64Rep (:'a) w) ==>
        v_inv_ck ck conf (bvlSem_Word64 w) refs (gc_shared_Pointer ptr
-         (wordLang_Word (n2w 0)),f,tf,(heap:(('a
+         (word_Word (n2w 0)),f,tf,(heap:(('a
          word_loc,data_to_word_memoryProof_tag#('a word_loc) list)heap_element)
          list))) /\
-   (v_inv_ck ck conf (bvlSem_CodePtr n) refs (gc_shared_Data (wordLang_Loc n
+   (v_inv_ck ck conf (bvlSem_CodePtr n) refs (gc_shared_Data (word_Loc n
      0),f,tf,(heap:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
      list)heap_element) list))) /\
    (n IN FDOM f /\
@@ -312,7 +309,7 @@ let v_inv_ck = cake_inductive
      heap_lookup (FAPPLY f n) heap = SOME (ThunkBlock ev x) /\
      (~(ck = (0:num)) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap)) ==>
        v_inv_ck ck conf (bvlSem_RefPtr F n) refs
-                  (gc_shared_Pointer (FAPPLY f n) (wordLang_Word (n2w
+                  (gc_shared_Pointer (FAPPLY f n) (word_Word (n2w
                     0)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
                     list)heap_element) list))) /\
@@ -326,8 +323,7 @@ let v_inv_ck = cake_inductive
      n < dimword (:'a) DIV 16 /\
      ts = 0 ==>
        v_inv_ck ck conf (dataSem_Block ts n vs) refs
-                  (gc_shared_Data (wordLang_Word (BlockNil
-                    n)),f,tf,(heap:(('a
+                  (gc_shared_Data (word_Word (BlockNil n)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
                     list)heap_element) list))) /\
    (~(vs = []) /\
@@ -336,8 +332,8 @@ let v_inv_ck = cake_inductive
      FLOOKUP tf ts = SOME ptr /\
      heap_lookup ptr heap = SOME (BlockRep n xs) ==>
        v_inv_ck ck conf (dataSem_Block ts n vs) refs
-                  (gc_shared_Pointer ptr (wordLang_Word (ptr_bits conf n
-                    (LENGTH xs))),
+                  (gc_shared_Pointer ptr (word_Word (ptr_bits conf n (LENGTH
+                    xs))),
                    f,tf,(heap:(('a
                      word_loc,data_to_word_memoryProof_tag#('a word_loc)
                      list)heap_element) list)))`;;
@@ -401,15 +397,14 @@ let v_inv_def = prove
  (`(v_inv conf (dataSem_Number i) (refs:(dataSem_v bvlSem_ref) spt)
   (x,f,tf,(heap:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
   list)heap_element) list)) <=>
-      (if small_int (:'a) i then (x = gc_shared_Data (wordLang_Word
-        (Smallnum i))) else ?ptr. (x = gc_shared_Pointer ptr (wordLang_Word
-        (n2w 0))) /\
+      (if small_int (:'a) i then (x = gc_shared_Data (word_Word (Smallnum
+        i))) else ?ptr. (x = gc_shared_Pointer ptr (word_Word (n2w 0))) /\
               (heap_lookup ptr heap = SOME (Bignum i)))) /\
    (v_inv conf (dataSem_Word64 w) refs (x,f,tf,heap) <=>
-     (?ptr. (x = gc_shared_Pointer ptr (wordLang_Word (n2w 0))) /\
+     (?ptr. (x = gc_shared_Pointer ptr (word_Word (n2w 0))) /\
            (heap_lookup ptr heap = SOME (Word64Rep (:'a) w)))) /\
    (v_inv conf (dataSem_CodePtr n) refs (x,f,tf,heap) <=>
-      (x = gc_shared_Data (wordLang_Loc n 0))) /\
+      (x = gc_shared_Data (word_Loc n 0))) /\
    (v_inv conf (dataSem_RefPtr b n) refs (x,f,tf,heap) <=>
       (n IN FDOM f /\
        (!ev v. ~(sptree_lookup n refs = SOME (bvlSem_Thunk ev v))) /\
@@ -425,20 +420,20 @@ let v_inv_def = prove
           heap_lookup (FAPPLY f n) heap = SOME (ThunkBlock ev y) /\
           v_inv conf v refs (y,f,tf,heap) /\
           ~b /\
-          x = gc_shared_Pointer (FAPPLY f n) (wordLang_Word (n2w 0))) \/
+          x = gc_shared_Pointer (FAPPLY f n) (word_Word (n2w 0))) \/
       (?v.
           sptree_lookup n refs = SOME (bvlSem_Thunk Evaluated v) /\
           dataSem_dest_thunk v refs = dataSem_NotThunk /\
           ~b /\
           v_inv conf v refs (x,f,tf,heap))) /\
    (v_inv conf (dataSem_Block ts n vs) refs (x,f,tf,heap) <=>
-      (if vs = [] then (x = gc_shared_Data (wordLang_Word (BlockNil n))) /\
+      (if vs = [] then (x = gc_shared_Data (word_Word (BlockNil n))) /\
            n < dimword (:'a) DIV 16 /\
            ts = 0
       else ?ptr xs.
           ALL2 (\v x. v_inv conf v refs (x,f,tf,heap)) vs xs /\
           FLOOKUP tf ts = SOME ptr /\
-          (x = gc_shared_Pointer ptr (wordLang_Word (ptr_bits conf n (LENGTH
+          (x = gc_shared_Pointer ptr (word_Word (ptr_bits conf n (LENGTH
             xs)))) /\
           (heap_lookup ptr heap = SOME (BlockRep n xs))))`,
   (* v_inv is v_inv_ck for every ck, so each clause is the cases
@@ -520,7 +515,7 @@ let v_inv_def = prove
         heap_lookup (FAPPLY f n) heap = SOME (ThunkBlock ev y)
         ==> (n IN FDOM f /\ ~b /\
              x = gc_shared_Pointer (FAPPLY f n)
-                   (wordLang_Word (n2w 0)) /\
+                   (word_Word (n2w 0)) /\
              (ev = Evaluated ==> dest_thunk vv refs = NotThunk) /\
              v_inv_ck ck conf vv refs (y,f,tf,heap)) \/
             (ev = Evaluated /\ dest_thunk vv refs = NotThunk /\ ~b /\
@@ -548,7 +543,7 @@ let v_inv_def = prove
                    SOME (ThunkBlock ev y) /\
                  n IN FDOM f /\ ~b /\
                  x = gc_shared_Pointer (FAPPLY f n)
-                       (wordLang_Word (n2w 0)) /\
+                       (word_Word (n2w 0)) /\
                  (ev = Evaluated ==> dest_thunk vv refs = NotThunk)
                  /\ v_inv_ck ck conf vv refs (y,f,tf,heap)) \/
             (ev = Evaluated /\ dest_thunk vv refs = NotThunk /\ ~b /\
@@ -686,7 +681,7 @@ let v_inv_RefPtr_T = prove
      (!ev v. ~(sptree_lookup n refs = SOME (bvlSem_Thunk ev v))) /\
      (!tg fin l c r. ~(sptree_lookup n refs = SOME (bvlSem_MutBlock tg fin l
        c r))) /\
-     x = gc_shared_Pointer (FAPPLY f n) (wordLang_Word (n2w 0))`,
+     x = gc_shared_Pointer (FAPPLY f n) (word_Word (n2w 0))`,
   (* a RefPtr T is no thunk and no MutBlock, so the two rules of
      v_inv that ask for a RefPtr F do not apply and the annotation
      of the pointer is zero *)
@@ -694,7 +689,7 @@ let v_inv_RefPtr_T = prove
     (`!conf o1.
         (!tg fin l c r.
            ~(o1 = SOME (bvlSem_MutBlock tg fin l c r))) ==>
-        ref_ptr_annot conf o1 = wordLang_Word (n2w 0)`,
+        ref_ptr_annot conf o1 = word_Word (n2w 0)`,
      REPEAT GEN_TAC THEN CASES_ON_NAME "o1" THEN
      REWRITE_TAC[ref_ptr_annot_def] THEN
      TRY(CASES_ON_NAME "a") THEN
@@ -5149,7 +5144,6 @@ let gen_gc_partial_thm = prove
     (* and that its state is good *)
     FIRST_ASSUM ACCEPT_TAC]));;
 
-let _ = size_thms "heap_element";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let data_pointers_def,data_pointers_ind = define_wf
@@ -7046,7 +7040,7 @@ let list_to_BlockReps_def,list_to_BlockReps_ind = define_rec
       match l with
         [] -> [BlockRep cons_tag [h; t]]
       | _ -> CONS (BlockRep cons_tag
-            [h; gc_shared_Pointer (a + 3) (wordLang_Word (ptr_bits conf
+            [h; gc_shared_Pointer (a + 3) (word_Word (ptr_bits conf
                 cons_tag 2))])
               (list_to_BlockReps conf t (a + 3) l))`;;
 
@@ -7148,7 +7142,7 @@ let list_to_BlockReps_MEM = prove
  (`MEM v (list_to_BlockReps conf x len (CONS h t)) ==>
      MEM v (list_to_BlockReps conf x (len + 3) t) \/
      v = BlockRep cons_tag
-           [h; gc_shared_Pointer (len + 3) (wordLang_Word (ptr_bits conf
+           [h; gc_shared_Pointer (len + 3) (word_Word (ptr_bits conf
              cons_tag 2))] \/
      v = BlockRep cons_tag [h; x]`,
   (ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
@@ -7418,7 +7412,7 @@ let v_inv_list_to_v_lem = prove
          sp)) hb)) xs rs /\
        heap_length hm <= sp /\ (!t. t IN FDOM tf ==> t < ts) ==>
        v_inv conf (dataSem_list_to_v ts t xs) refs
-         (gc_shared_Pointer (heap_length ha) (wordLang_Word (ptr_bits conf
+         (gc_shared_Pointer (heap_length ha) (word_Word (ptr_bits conf
            cons_tag 2)),
           f,bind_each tf ts (heap_length ha) 3 (LENGTH xs),APPEND (APPEND
             (APPEND ha hm) (heap_expand (sp - heap_length hm))) hb)`,
@@ -9241,8 +9235,8 @@ let cons_thm_alt = prove
           (heap2,T)) /\
         abs_ml_inv conf
           (CONS (dataSem_Block ts tag xs) stack) refs
-          (CONS (gc_shared_Pointer a (wordLang_Word (ptr_bits conf tag
-            (LENGTH xs)))) roots2,
+          (CONS (gc_shared_Pointer a (word_Word (ptr_bits conf tag (LENGTH
+            xs)))) roots2,
            heap2,be,a + el_length (BlockRep tag rs),
            sp - el_length (BlockRep tag rs),sp1,gens) limit (ts + 1))`),
   (* the steps are above the statement (tools/overrides.py).  The
@@ -9669,7 +9663,7 @@ let cons_thm_EMPTY = prove
   list),be,a,sp,sp1,gens) limit ts /\
       tag < dimword (:'a) DIV 16 ==>
       abs_ml_inv conf (CONS (dataSem_Block 0 tag []) stack) refs
-        (CONS (gc_shared_Data (wordLang_Word (BlockNil tag)))
+        (CONS (gc_shared_Data (word_Word (BlockNil tag)))
           roots,heap,be,a,sp,sp1,gens) limit ts`),
   (* the empty Block is a Data root, so the heap does not change at
      all: what the invariant asks of the new stack is what it asked
@@ -10334,7 +10328,7 @@ let word64_alt_thm = prove
        heap_store_unused_alt a (sp + sp1) (Word64Rep (:'a) w64) heap =
          (heap2,T) /\
        abs_ml_inv conf (CONS (dataSem_Word64 w64) stack) refs
-         (CONS (gc_shared_Pointer a (wordLang_Word (n2w 0))) roots,heap2,
+         (CONS (gc_shared_Pointer a (word_Word (n2w 0))) roots,heap2,
           be,a + len + 1,sp - len - 1,sp1,gens) limit ts)`),
 (* the steps are above the statement (tools/overrides.py), and
    they are the ones that cons_thm_alt and new_byte_alt_thm take:
@@ -10431,7 +10425,7 @@ let bignum_alt_thm = prove
      (?heap2.
        heap_store_unused_alt a (sp + sp1) (Bignum i) heap = (heap2,T) /\
        abs_ml_inv conf (CONS (dataSem_Number i) stack) refs
-         (CONS (gc_shared_Pointer a (wordLang_Word ((n2w 0):'a word)))
+         (CONS (gc_shared_Pointer a (word_Word ((n2w 0):'a word)))
            roots,heap2,be,a + len + 1,sp - len - 1,sp1,gens) limit ts)`),
 (* the same steps as word64_alt_thm, of a bignum instead of a word
    of sixty-four bits: the number is not small, so the value of the
@@ -11477,8 +11471,8 @@ let mutcons_thm_alt = prove
          (heap2,T)) /\
        abs_ml_inv conf (CONS (dataSem_RefPtr F ptr) stack)
          (sptree_insert ptr (bvlSem_MutBlock tag F l c r) refs)
-         (CONS (gc_shared_Pointer a (wordLang_Word (ptr_bits conf tag
-           (LENGTH (APPEND (APPEND l [c]) r))))) roots2,
+         (CONS (gc_shared_Pointer a (word_Word (ptr_bits conf tag (LENGTH
+           (APPEND (APPEND l [c]) r))))) roots2,
           heap2,be,a + el_length (BlockRep tag rs),
           sp - el_length (BlockRep tag rs),sp1,gens) limit ts)`),
   (* the steps are above the statement (tools/overrides.py).  The
@@ -12021,8 +12015,8 @@ let mutcons_thm = prove
          (sptree_insert ptr (bvlSem_MutBlock tag F (TAKE index xs) (EL
            index xs)
                               (DROP (index + 1) xs)) refs)
-         (CONS (gc_shared_Pointer a (wordLang_Word (ptr_bits conf tag
-           (LENGTH xs)))) roots2,
+         (CONS (gc_shared_Pointer a (word_Word (ptr_bits conf tag (LENGTH
+           xs)))) roots2,
           heap2,be,a + el_length (BlockRep tag rs),
           sp - el_length (BlockRep tag rs),sp1,gens) limit ts)`),
   (* take_el_drop writes the values as the three parts of the
@@ -17545,7 +17539,7 @@ let ref_ptr_annot_ByteArray = prove
  (cake_as_vars (fun () ->
     `sptree_lookup ptr refs = SOME (bvlSem_ByteArray fl xs)
      ==> ref_ptr_annot conf (sptree_lookup ptr refs) =
-         (wordLang_Word (n2w 0):'a word_loc)`),
+         (word_Word (n2w 0):'a word_loc)`),
   DISCH_THEN (fun lk -> REWRITE_TAC[lk; ref_ptr_annot_def]) THEN
   MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
 
@@ -17653,8 +17647,8 @@ let update_byte_ref_thm = prove
       (sptree_lookup ptr refs = SOME (bvlSem_ByteArray fl xs)) /\ (LENGTH
         xs = LENGTH ys) ==>
       (?roots2 h1 h2 ws.
-        (roots = CONS (gc_shared_Pointer (heap_length h1) ((wordLang_Word
-          (n2w 0)):'a word_loc)) roots2) /\
+        (roots = CONS (gc_shared_Pointer (heap_length h1) ((word_Word (n2w
+          0)):'a word_loc)) roots2) /\
         heap = APPEND (APPEND h1 [Bytes be fl xs ws]) h2 /\
         LENGTH ws = LENGTH xs DIV (dimindex (:'a) DIV 8) + 1 /\
         abs_ml_inv conf (CONS (dataSem_RefPtr b ptr) stack) (sptree_insert
@@ -18528,8 +18522,7 @@ let new_ref_thm = prove
         abs_ml_inv conf (APPEND xs (CONS (dataSem_RefPtr T ptr) stack))
           (sptree_insert ptr (bvlSem_ValueArray xs) refs)
                    (APPEND rs (CONS (gc_shared_Pointer ((a + sp + sp1) -
-                     (LENGTH xs + 1)) (wordLang_Word (n2w 0)))
-                     roots2),heap2,be,a,
+                     (LENGTH xs + 1)) (word_Word (n2w 0))) roots2),heap2,be,a,
                     sp - (LENGTH xs + 1),sp1,gens) limit ts)`),
   (* the steps are above the statement (tools/overrides.py).  The
      roots of the values of the array are the front of the roots of
@@ -19391,7 +19384,7 @@ let new_thunk_thm = prove
         abs_ml_inv conf (CONS v (CONS (dataSem_RefPtr F ptr) stack))
           (sptree_insert ptr (bvlSem_Thunk ev v) refs)
                    (CONS r (CONS (gc_shared_Pointer ((a + sp + sp1) - 2)
-                     (wordLang_Word (n2w 0))) roots2),heap2,be,a,
+                     (word_Word (n2w 0))) roots2),heap2,be,a,
                     sp - 2,sp1,gens) limit ts)`),
   (* the steps are above the statement (tools/overrides.py).  The
      root of the value of the thunk is the first of the roots of
@@ -20922,7 +20915,7 @@ let new_byte_alt_thm = prove
            (heap2,T)) /\
        abs_ml_inv conf (CONS (dataSem_RefPtr b ptr) stack) (sptree_insert
          ptr (bvlSem_ByteArray fl bs) refs)
-                  (CONS (gc_shared_Pointer a (wordLang_Word (n2w 0)))
+                  (CONS (gc_shared_Pointer a (word_Word (n2w 0)))
                     roots,heap2,be,a + ws + 1,
                    sp - (ws + 1),sp1,gens) limit ts)`),
   (* the steps are above the statement (tools/overrides.py).  The
@@ -21378,8 +21371,8 @@ let ref_eq_thm = prove
   stack)) refs
         (CONS r1 (CONS r2 roots),heap,be,a,sp,sp1,gens) limit ts ==>
       ((p1 = p2) <=> (r1 = r2)) /\
-      (?p1 p2. r1 = gc_shared_Pointer p1 (wordLang_Word (n2w 0)) /\ r2 =
-        gc_shared_Pointer p2 (wordLang_Word (n2w 0)))`),
+      (?p1 p2. r1 = gc_shared_Pointer p1 (word_Word (n2w 0)) /\ r2 =
+        gc_shared_Pointer p2 (word_Word (n2w 0)))`),
   (REWRITE_TAC[abs_ml_inv_def;
                bc_stack_ref_inv_def] THEN
    STRIP_TAC THEN
@@ -21396,8 +21389,8 @@ let num_eq_thm = prove
      small_int (:'a) i1 /\
      small_int (:'a) i2 ==>
      ((i1 = i2) <=> (r1 = r2)) /\
-     r1 = gc_shared_Data (wordLang_Word (Smallnum i1:'a word)) /\
-     r2 = gc_shared_Data (wordLang_Word (Smallnum i2))`),
+     r1 = gc_shared_Data (word_Word (Smallnum i1:'a word)) /\
+     r2 = gc_shared_Data (word_Word (Smallnum i2))`),
   (* the roots of two small integers are the words of four times
      them, and such a word determines the integer because four
      times a small one is within the range of the word: an eighth
@@ -22257,7 +22250,7 @@ let abs_ml_inv_Num = prove
     `abs_ml_inv conf stack refs (roots,heap,be,a,sp,sp1,gens) limit ts
   /\ small_int (:'a) i ==>
       abs_ml_inv conf (CONS (dataSem_Number i) stack) refs
-        (CONS (gc_shared_Data (wordLang_Word ((Smallnum i):'a word)))
+        (CONS (gc_shared_Data (word_Word ((Smallnum i):'a word)))
           roots,heap,be,a,sp,sp1,gens) limit ts`),
   (* the new root is a Data, so the roots stay ok; the value has no
      refs and no timestamps of its own, so what the stack reaches
@@ -22366,10 +22359,9 @@ let get_addr_def = new_definition
 let word_addr_def = new_definition
   `word_addr conf x2 =
      match x2 with
-       gc_shared_Data (wordLang_Loc l1 l2) -> wordLang_Loc l1 0
-     | gc_shared_Data (wordLang_Word v) -> wordLang_Word (v && (word_not
-       (n2w 1)))
-     | gc_shared_Pointer n w -> wordLang_Word (get_addr conf n w)`;;
+       gc_shared_Data (word_Loc l1 l2) -> word_Loc l1 0
+     | gc_shared_Data (word_Word v) -> word_Word (v && (word_not (n2w 1)))
+     | gc_shared_Pointer n w -> word_Word (get_addr conf n w)`;;
 
 (* b2w_def *)
 let data_to_word_memoryProof_b2w_def = prove
@@ -22484,16 +22476,14 @@ let word_el_def = define_general
   `(word_el (a:'a word) (Unused l) conf = word_list_exists (a:'a word) (l +
     1)) /\
    (word_el (a:'a word) (ForwardPointer n d l) conf =
-         set_sep_one (a,wordLang_Word (n2w n << 2)) *
+         set_sep_one (a,word_Word (n2w n << 2)) *
          word_list_exists (a + bytes_in_word) l) /\
    (word_el (a:'a word) (DataElement ys l (tag,qs)) conf =
          let (h,ts,c) = word_payload ys l tag qs conf in
-           misc_word_list a (CONS (wordLang_Word h) ts) *
+           misc_word_list a (CONS (word_Word h) ts) *
            cond (LENGTH ts < 2 EXP (dimindex (:'a) - 4) /\
                  decode_length conf h = n2w (LENGTH ts) /\ c))`;;
 
-let _ = size_thms "data_to_word_memoryProof_tag";;
-let _ = size_thms "word_loc";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let word_heap_def,word_heap_ind = define_wf
@@ -22509,7 +22499,7 @@ let word_heap_def,word_heap_ind = define_wf
 let gen_starts_in_store_def = new_definition
   `gen_starts_in_store c x2 x3 =
    match (x2,x3) with
-     (GenState _ gen_starts,SOME (wordLang_Word w)) ->
+     (GenState _ gen_starts,SOME (word_Word w)) ->
      (!gen_sizes. data_to_word_config_gc_kind
         c = data_to_word_Generational gen_sizes ==>
         LENGTH gen_starts = LENGTH gen_sizes /\
@@ -22518,7 +22508,7 @@ let gen_starts_in_store_def = new_definition
    | (_,_) -> F`;;
 
 let gen_starts_in_store_IMP = prove
- (`gen_starts_in_store c gens x ==> (?w. x = SOME (wordLang_Word w))`,
+ (`gen_starts_in_store c gens x ==> (?w. x = SOME (word_Word w))`,
   (CASES_ON_NAME "x" THEN CASES_ON_NAME "gens" THEN
    REWRITE_TAC[gen_starts_in_store_def] THEN
    SAFE_MATCH_REDUCE_TAC THEN REWRITE_TAC[] THEN
@@ -22529,9 +22519,9 @@ let gen_starts_in_store_IMP = prove
 
 let glob_real_inv_def = new_definition
   `glob_real_inv c (curr:'a word) globals globreal <=>
-     (?w. globals = SOME (wordLang_Word w) /\
-         globreal = SOME (wordLang_Word (curr + (w >>> (shift_length c)
-           << backend_common_word_shift (:'a)))))`;;
+     (?w. globals = SOME (word_Word w) /\
+         globreal = SOME (word_Word (curr + (w >>> (shift_length c) <<
+           backend_common_word_shift (:'a)))))`;;
 
 let heap_in_memory_store_def = new_definition
   `heap_in_memory_store heap a sp sp1 gens c s m dm limit' <=>
@@ -22547,15 +22537,15 @@ let heap_in_memory_store_def = new_definition
      shift_length c < dimindex (:'a) /\ Globals IN FDOM s /\
      (?curr other.
        byte_aligned curr /\ byte_aligned other /\
-       (FLOOKUP s CurrHeap = SOME (wordLang_Word (curr:'a word))) /\
-       (FLOOKUP s OtherHeap = SOME (wordLang_Word other)) /\
-       (FLOOKUP s NextFree = SOME (wordLang_Word (curr + bytes_in_word * n2w
+       (FLOOKUP s CurrHeap = SOME (word_Word (curr:'a word))) /\
+       (FLOOKUP s OtherHeap = SOME (word_Word other)) /\
+       (FLOOKUP s NextFree = SOME (word_Word (curr + bytes_in_word * n2w
          a))) /\
-       (FLOOKUP s TriggerGC = SOME (wordLang_Word (curr + bytes_in_word *
-         n2w (a + sp)))) /\
-       (FLOOKUP s EndOfHeap = SOME (wordLang_Word (curr + bytes_in_word *
-         n2w (a + sp + sp1)))) /\
-       (FLOOKUP s HeapLength = SOME (wordLang_Word (bytes_in_word * n2w
+       (FLOOKUP s TriggerGC = SOME (word_Word (curr + bytes_in_word * n2w (a
+         + sp)))) /\
+       (FLOOKUP s EndOfHeap = SOME (word_Word (curr + bytes_in_word * n2w (a
+         + sp + sp1)))) /\
+       (FLOOKUP s HeapLength = SOME (word_Word (bytes_in_word * n2w
          limit'))) /\
        glob_real_inv c curr (FLOOKUP s Globals) (FLOOKUP s GlobReal) /\
        gen_starts_in_store c gens (FLOOKUP s GenStart) /\
@@ -22931,7 +22921,7 @@ let word_ml_inv_Unit = prove
     `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs ws /\
       good_dimindex (:'a) ==>
       word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-        (CONS (data_to_word_Unit,wordLang_Word ((n2w 2):'a word)) ws)`),
+        (CONS (data_to_word_Unit,word_Word ((n2w 2):'a word)) ws)`),
   (* Unit is the empty Block of the tuple tag, which cons_thm_EMPTY
      puts on the stack with the root Data (Word (BlockNil 0)), and
      that word is two, whose lowest bit word_addr takes off *)
@@ -22951,7 +22941,7 @@ let word_ml_inv_Unit = prove
      (INST [`0`,`tag:num`] cons_thm_EMPTY) in
    REWRITE_TAC[word_ml_inv_def] THEN REPEAT STRIP_TAC THEN
    EXISTS_TAC
-     `CONS (gc_shared_Data (wordLang_Word (n2w 2:'a word))) hs` THEN
+     `CONS (gc_shared_Data (word_Word (n2w 2:'a word))) hs` THEN
    REWRITE_TAC[MAP; ALL2; waddr; and2] THEN
    ASM_REWRITE_TAC[dataSem_Unit_def;
                    tuple_tag_def] THEN
@@ -22964,7 +22954,7 @@ let memory_rel_Unit = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm xs /\ good_dimindex (:'a) ==>
      memory_rel c be ts refs sp st m dm (CONS
-       (data_to_word_Unit,wordLang_Word ((n2w 2):'a word)) xs)`),
+       (data_to_word_Unit,word_Word ((n2w 2):'a word)) xs)`),
   (REWRITE_TAC[memory_rel_def] THEN REPEAT STRIP_TAC THEN
    ASM_EXISTS_TAC THEN ASM_REWRITE_TAC[] THEN
    MATCH_MP_TAC word_ml_inv_Unit THEN ASM_REWRITE_TAC[]));;
@@ -22984,7 +22974,7 @@ let get_lowerbits_LSL_shift_length = prove
 let get_real_addr_def = new_definition
   `get_real_addr conf st (w:'a word) =
      let k = backend_common_word_shift (:'a) in
-       match FLOOKUP st CurrHeap with SOME (wordLang_Word curr) ->
+       match FLOOKUP st CurrHeap with SOME (word_Word curr) ->
            if k = shift_length conf /\ data_to_word_config_len_bits conf = 0
              /\ data_to_word_config_tag_bits conf = 0 then SOME ((curr + w) -
              (n2w 1))
@@ -23000,8 +22990,8 @@ let get_real_offset_def = new_definition
 
 let get_real_simple_addr_def = new_definition
   `get_real_simple_addr conf st (w:'a word) =
-     match FLOOKUP st CurrHeap with SOME (wordLang_Word curr) -> SOME (curr
-       + w >>> shift_length conf << backend_common_word_shift (:'a))
+     match FLOOKUP st CurrHeap with SOME (word_Word curr) -> SOME (curr + w
+       >>> shift_length conf << backend_common_word_shift (:'a))
      | _ -> NONE`;;
 
 (* [local] *)
@@ -23021,7 +23011,7 @@ let or_1 = prove
 let get_real_addr_get_addr = prove
  (`heap_length heap <= dimword (:'a) DIV 2 EXP shift_length c /\
     heap_lookup n heap = SOME anything /\
-    FLOOKUP st CurrHeap = SOME (wordLang_Word (curr:'a word)) /\
+    FLOOKUP st CurrHeap = SOME (word_Word (curr:'a word)) /\
     good_dimindex (:'a) ==>
     get_real_simple_addr c st (get_addr c n w) = SOME (curr + n2w n *
       bytes_in_word) /\
@@ -23355,8 +23345,7 @@ let word_ml_inv_num = prove
       small_enough_int (&n) ==>
       word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (dataSem_state_refs
         s)
-        (CONS (dataSem_Number (&n),wordLang_Word (n2w (4 * n):'a word))
-          ws)`),
+        (CONS (dataSem_Number (&n),word_Word (n2w (4 * n):'a word)) ws)`),
   (* a small enough integer as a root of word_ml_inv: its root is
      the Data of its Smallnum, which abs_ml_inv_Num adds to the
      roots of the abs_ml_inv, and word_addr of that Data is four
@@ -23449,7 +23438,7 @@ let word_ml_inv_neg_num = prove
       small_enough_int (--(&n)) /\ ~(n = 0) ==>
       word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (dataSem_state_refs
         s)
-        (CONS (dataSem_Number (--(&n)),wordLang_Word (--(n2w (4 * n):'a
+        (CONS (dataSem_Number (--(&n)),word_Word (--(n2w (4 * n):'a
           word))) ws)`),
   (* the root of a negative small number is the Data of its
      Smallnum, which is minus four times the number; its two lowest
@@ -23501,7 +23490,7 @@ let word_ml_inv_neg_num = prove
      CONV_TAC NUM_REDUCE_CONV THEN INT_ARITH_TAC) in
    REWRITE_TAC[word_ml_inv_def] THEN REPEAT STRIP_TAC THEN
    EXISTS_TAC
-     `CONS (gc_shared_Data (wordLang_Word
+     `CONS (gc_shared_Data (word_Word
         (Smallnum (--(&n)):'a word))) hs` THEN
    REWRITE_TAC[MAP; ALL2; waddr] THEN REPEAT CONJ_TAC THENL
     [MATCH_MP_TAC abs_ml_inv_Num THEN
@@ -23554,7 +23543,7 @@ let memory_rel_El' = prove
       good_dimindex (:'a) /\
       index < LENGTH vals ==>
       (?ptr_w i_w (x:'a word).
-        ptr = wordLang_Word ptr_w /\
+        ptr = word_Word ptr_w /\
         get_real_addr c st ptr_w = SOME x /\
         (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
         memory_rel c be ts refs sp st m dm
@@ -23790,7 +23779,7 @@ let memory_rel_El = prove
       good_dimindex (:'a) /\
       index < LENGTH vals ==>
       (?ptr_w i_w x (y:'a word).
-        ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
+        ptr = word_Word ptr_w /\ i = word_Word i_w /\
         get_real_addr c st ptr_w = SOME x /\
         get_real_offset i_w = SOME y /\
         (x + y) IN dm /\
@@ -24153,7 +24142,7 @@ let memory_rel_Deref' = prove
       good_dimindex (:'a) /\
       index < LENGTH vals ==>
       (?ptr_w (x:'a word).
-        ptr = wordLang_Word ptr_w /\
+        ptr = word_Word ptr_w /\
         get_real_addr c st ptr_w = SOME x /\
         (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
         memory_rel c be ts refs sp st m dm
@@ -24429,7 +24418,7 @@ let memory_rel_Deref = prove
       good_dimindex (:'a) /\
       index < LENGTH vals ==>
       (?ptr_w i_w x (y:'a word).
-        ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
+        ptr = word_Word ptr_w /\ i = word_Word i_w /\
         get_real_addr c st ptr_w = SOME x /\
         get_real_offset i_w = SOME y /\
         (x + y) IN dm /\
@@ -25154,7 +25143,7 @@ let memory_rel_Update' = prove
       good_dimindex (:'a) /\
       index < LENGTH vals ==>
       (?ptr_w (x:'a word).
-        ptr = wordLang_Word ptr_w /\
+        ptr = word_Word ptr_w /\
         get_real_addr c st ptr_w = SOME x /\
         (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
         memory_rel c be ts (sptree_insert nn (bvlSem_ValueArray (LUPDATE h
@@ -25570,7 +25559,7 @@ let memory_rel_Update = prove
       good_dimindex (:'a) /\
       index < LENGTH vals ==>
       (?ptr_w i_w x (y:'a word).
-        ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
+        ptr = word_Word ptr_w /\ i = word_Word i_w /\
         get_real_addr c st ptr_w = SOME x /\
         get_real_offset i_w = SOME y /\
         (x + y) IN dm /\
@@ -26075,7 +26064,7 @@ let memory_rel_UpdateCons = prove
       good_dimindex (:'a) /\
       index = LENGTH l ==>
       (?ptr_w i_w x (y:'a word).
-        ptr = wordLang_Word ptr_w /\ i = wordLang_Word i_w /\
+        ptr = word_Word ptr_w /\ i = word_Word i_w /\
         get_real_addr c st ptr_w = SOME x /\
         get_real_offset i_w = SOME y /\
         (x + y) IN dm /\
@@ -26677,7 +26666,7 @@ let memory_rel_UpdateThunk_NotEvaluated = prove
       sptree_lookup nn refs = SOME (bvlSem_Thunk NotEvaluated v) /\
       good_dimindex (:'a) ==>
       (?ptr_w (x:'a word).
-        ptr = wordLang_Word ptr_w /\
+        ptr = word_Word ptr_w /\
         get_real_addr c st ptr_w = SOME x /\
         (x + bytes_in_word) IN dm /\
         memory_rel c be ts (sptree_insert nn (bvlSem_Thunk NotEvaluated h)
@@ -26841,7 +26830,7 @@ let memory_rel_UpdateThunk_NotEvaluated = prove
   W(fun (asl,gl) ->
     let wa = grab asl (fun th ->
       try is_eq (concl th) &&
-          hd_is "wordLang_Word" (lhs (concl th)) &&
+          hd_is "word_Word" (lhs (concl th)) &&
           hd_is "get_addr" (rand (lhs (concl th)))
       with Failure _ -> false) in
     let uu = rand (rand (lhs (concl wa))) in
@@ -26854,7 +26843,7 @@ let memory_rel_UpdateThunk_NotEvaluated = prove
   W(fun (asl,gl) ->
     let wa = grab asl (fun th ->
       try is_eq (concl th) &&
-          hd_is "wordLang_Word" (lhs (concl th)) &&
+          hd_is "word_Word" (lhs (concl th)) &&
           hd_is "get_addr" (rand (lhs (concl th)))
       with Failure _ -> false) in
     let pw = rand (lhs (concl wa)) in
@@ -26911,7 +26900,7 @@ let memory_rel_UpdateThunk_NotEvaluated = prove
   REPEAT CONJ_TAC THENL
    [FIRST_ASSUM (fun wa ->
       if not (try is_eq (concl wa) &&
-                  hd_is "wordLang_Word" (lhs (concl wa)) &&
+                  hd_is "word_Word" (lhs (concl wa)) &&
                   hd_is "get_addr" (rand (lhs (concl wa)))
               with Failure _ -> false) then fail() else
       ACCEPT_TAC (SYM wa));
@@ -27059,12 +27048,12 @@ let memory_rel_UpdateThunk_Evaluated = prove
       dataSem_dest_thunk h refs = dataSem_NotThunk /\
       good_dimindex (:'a) ==>
       (?ptr_w (x:'a word).
-        ptr = wordLang_Word ptr_w /\
+        ptr = word_Word ptr_w /\
         get_real_addr c st ptr_w = SOME x /\
         x IN dm /\ (x + bytes_in_word) IN dm /\
         memory_rel c be ts (sptree_insert nn (bvlSem_Thunk Evaluated h)
           refs) sp st
-          (UPDATE_LIST m [x,wordLang_Word hdr; x + bytes_in_word,w]) dm
+          (UPDATE_LIST m [x,word_Word hdr; x + bytes_in_word,w]) dm
           (CONS (h,w) (CONS (dataSem_RefPtr F nn,ptr) vars)))`),
 (* the same proof as memory_rel_UpdateThunk_NotEvaluated, which the
    source names the same theorems for -- memory_rel_def,
@@ -27243,7 +27232,7 @@ let memory_rel_UpdateThunk_Evaluated = prove
   W(fun (asl,gl) ->
     let wa = grab asl (fun th ->
       try is_eq (concl th) &&
-          hd_is "wordLang_Word" (lhs (concl th)) &&
+          hd_is "word_Word" (lhs (concl th)) &&
           hd_is "get_addr" (rand (lhs (concl th)))
       with Failure _ -> false) in
     let uu = rand (rand (lhs (concl wa))) in
@@ -27256,7 +27245,7 @@ let memory_rel_UpdateThunk_Evaluated = prove
   W(fun (asl,gl) ->
     let wa = grab asl (fun th ->
       try is_eq (concl th) &&
-          hd_is "wordLang_Word" (lhs (concl th)) &&
+          hd_is "word_Word" (lhs (concl th)) &&
           hd_is "get_addr" (rand (lhs (concl th)))
       with Failure _ -> false) in
     let pw = rand (lhs (concl wa)) in
@@ -27324,7 +27313,7 @@ let memory_rel_UpdateThunk_Evaluated = prove
   REPEAT CONJ_TAC THENL
    [FIRST_ASSUM (fun wa ->
       if not (try is_eq (concl wa) &&
-                  hd_is "wordLang_Word" (lhs (concl wa)) &&
+                  hd_is "word_Word" (lhs (concl wa)) &&
                   hd_is "get_addr" (rand (lhs (concl wa)))
               with Failure _ -> false) then fail() else
       ACCEPT_TAC (SYM wa));
@@ -27695,7 +27684,7 @@ let word_el_IMP_word_list_exists = prove
        REWRITE_TAC[GSYM ADD1; word_list_exists_thm] THEN
        REWRITE_TAC[STAR_SEP_EXISTS; SEP_EXISTS_THM] THEN
        DISCH_TAC THEN
-       EXISTS_TAC `wordLang_Word ((n2w a0 << 2):(M)word)` THEN
+       EXISTS_TAC `word_Word ((n2w a0 << 2):(M)word)` THEN
        FIRST_ASSUM ACCEPT_TAC;
        MP_TAC(ISPEC `a2:data_to_word_memoryProof_tag #
                         ((M)word_loc) list` PAIR_SURJECTIVE) THEN
@@ -27804,13 +27793,13 @@ let memory_rel_Word64_alt = prove
      LENGTH ws < sp /\
      encode_header c 3 (LENGTH ws) = SOME hd ==>
      (?ne curr m1.
-       FLOOKUP st NextFree = SOME (wordLang_Word ne) /\
-       FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-       data_to_word_memoryProof_store_list ne (CONS (wordLang_Word hd) ws)
-         m dm = SOME m1 /\
+       FLOOKUP st NextFree = SOME (word_Word ne) /\
+       FLOOKUP st CurrHeap = SOME (word_Word curr) /\
+       data_to_word_memoryProof_store_list ne (CONS (word_Word hd) ws) m
+         dm = SOME m1 /\
        memory_rel c be ts refs (sp - (LENGTH ws + 1))
-          (st |+ (NextFree,wordLang_Word (ne + bytes_in_word * n2w (LENGTH
-            ws + 1)))) m1 dm
+          (st |+ (NextFree,word_Word (ne + bytes_in_word * n2w (LENGTH ws
+            + 1)))) m1 dm
           (CONS (dataSem_Word64 w64,make_ptr c (ne - curr) ((n2w 0):'a
             word) (LENGTH ws)) vars))`),
 (* the allocation of a word of sixty-four bits, which is
@@ -28313,19 +28302,19 @@ let IMP_memory_rel_bignum_alt = prove
       good_dimindex (:'a) /\ ~(small_int (:'a) i) /\
       (Bignum i:('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
         list)heap_element) = DataElement [] (LENGTH ws) (NumTag is_neg,MAP
-        wordLang_Word ws) /\
+        word_Word ws) /\
       LENGTH ws < sp /\
       encode_header c (w2n ((b2w is_neg << 2 || (n2w 3)):'a word)) (LENGTH
         ws) =
         SOME (hd:'a word) ==>
       (?next' curr m1.
-        FLOOKUP st NextFree = SOME (wordLang_Word next') /\
-        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-        (data_to_word_memoryProof_store_list next' (MAP wordLang_Word
-          (CONS hd ws)) m dm = SOME m1 /\
+        FLOOKUP st NextFree = SOME (word_Word next') /\
+        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
+        (data_to_word_memoryProof_store_list next' (MAP word_Word (CONS hd
+          ws)) m dm = SOME m1 /\
          memory_rel c be ts refs (sp - (LENGTH ws + 1))
-           (st |+ (NextFree,wordLang_Word (next' + bytes_in_word * n2w
-             (LENGTH ws + 1))))
+           (st |+ (NextFree,word_Word (next' + bytes_in_word * n2w (LENGTH
+             ws + 1))))
            m1 dm (CONS (dataSem_Number i,make_ptr c (next' - curr) ((n2w
              0):'a word) (LENGTH ws)) vars)))`),
 (* the allocation of a bignum, which is memory_rel_Word64_alt with
@@ -28838,13 +28827,13 @@ let memory_rel_Cons1 = prove
       encode_header c (4 * tag) (LENGTH ws) = SOME hd /\
       LENGTH ws < sp /\ good_dimindex (:'a) ==>
       (?free' (curr:'a word) m1.
-        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        FLOOKUP st NextFree = SOME (word_Word free') /\
+        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
         (let w = free' + bytes_in_word * n2w (LENGTH ws + 1) in
-          data_to_word_memoryProof_store_list free' (CONS (wordLang_Word
-            hd) ws) m dm = SOME m1 /\
+          data_to_word_memoryProof_store_list free' (CONS (word_Word hd)
+            ws) m dm = SOME m1 /\
           memory_rel c be (ts + 1) refs (sp - (LENGTH ws + 1))
-            (st |+ (NextFree,wordLang_Word w)) m1 dm
+            (st |+ (NextFree,word_Word w)) m1 dm
             (CONS (dataSem_Block ts tag vals,make_cons_ptr c (free' -
               curr) tag (LENGTH ws)) vars)))`),
 (* the allocation of a block, which is memory_rel_Ref at the other
@@ -29395,17 +29384,17 @@ let memory_rel_MutCons = prove
       (!gs. ~(data_to_word_config_gc_kind c = data_to_word_Generational
         gs)) ==>
       (?free' (curr:'a word) m1.
-        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        FLOOKUP st NextFree = SOME (word_Word free') /\
+        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
         (let w = free' + bytes_in_word * n2w (LENGTH ws + 1) in
-          data_to_word_memoryProof_store_list free' (CONS (wordLang_Word
-            hd) ws) m dm = SOME m1 /\
+          data_to_word_memoryProof_store_list free' (CONS (word_Word hd)
+            ws) m dm = SOME m1 /\
           memory_rel c be ts
             (sptree_insert ptr (bvlSem_MutBlock tag F (TAKE index vals)
               (EL index vals)
                               (DROP (index + 1) vals)) refs)
             (sp - (LENGTH ws + 1))
-            (st |+ (NextFree,wordLang_Word w)) m1 dm
+            (st |+ (NextFree,word_Word w)) m1 dm
             (CONS (dataSem_RefPtr F ptr,make_cons_ptr c (free' - curr)
               tag (LENGTH ws)) vars)))`),
 (* the allocation of an unfinalised mutable block, which is
@@ -30740,8 +30729,8 @@ let bc_stack_ref_inv_MutBlock_F = prove
     `bc_stack_ref_inv c ts2
        (CONS res (CONS (dataSem_RefPtr b ptr) vars)) refs
        (CONS (EL (LENGTH left) zs) (CONS (gc_shared_Pointer ptr_n
-          (wordLang_Word (ptr_bits c tag (LENGTH left + (LENGTH right +
-            1))))) xs),heap,be) /\
+          (word_Word (ptr_bits c tag (LENGTH left + (LENGTH right + 1)))))
+            xs),heap,be) /\
      heap_lookup ptr_n heap = SOME (BlockRep tag zs) /\
      sptree_lookup ptr refs = SOME (bvlSem_MutBlock tag F left cen right)
        ==>
@@ -30750,7 +30739,7 @@ let bc_stack_ref_inv_MutBlock_F = prove
          vars)
        (sptree_insert ptr (bvlSem_MutBlock tag T left cen right) refs)
        (CONS (gc_shared_Pointer ptr_n
-          (wordLang_Word (ptr_bits c tag (LENGTH left + (LENGTH right +
+          (word_Word (ptr_bits c tag (LENGTH left + (LENGTH right +
             1))))) xs,heap,be)`),
 (* the step keeps the addresses of the references and adds the
    timestamp of the block to the map of the timestamps, with the
@@ -31783,8 +31772,7 @@ let memory_rel_Cons_empty = prove
     `memory_rel c be ts refs sp st m (dm:'a word->bool) vars /\
       tag < dimword (:'a) DIV 16 /\ good_dimindex (:'a) ==>
       memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Block 0 tag [],wordLang_Word (BlockNil tag))
-          vars)`),
+        (CONS (dataSem_Block 0 tag [],word_Word (BlockNil tag)) vars)`),
   (* the empty Block of a tag has the root Data (Word (BlockNil
      tag)), which cons_thm_EMPTY adds, and the BlockNil is sixteen
      times the tag plus two, whose lowest bit is clear.  HOL4 has
@@ -31821,7 +31809,7 @@ let memory_rel_Cons_empty = prove
     REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
     ASM_REWRITE_TAC[] THEN
     EXISTS_TAC
-      `CONS (gc_shared_Data (wordLang_Word (BlockNil tag:'a word))) hs`
+      `CONS (gc_shared_Data (word_Word (BlockNil tag:'a word))) hs`
     THEN
     REWRITE_TAC[MAP; ALL2; waddr] THEN
     ASM_REWRITE_TAC[] THEN
@@ -31840,17 +31828,17 @@ let memory_rel_Ref = prove
         /\
       LENGTH ws < sp /\ good_dimindex (:'a) ==>
       (?eoh (curr:'a word) trig m1.
-        FLOOKUP st EndOfHeap = SOME (wordLang_Word eoh) /\
-        FLOOKUP st TriggerGC = SOME (wordLang_Word trig) /\
-        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        FLOOKUP st EndOfHeap = SOME (word_Word eoh) /\
+        FLOOKUP st TriggerGC = SOME (word_Word trig) /\
+        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
         (let w = eoh - bytes_in_word * n2w (LENGTH ws + 1) in
         let w1 = trig - bytes_in_word * n2w (LENGTH ws + 1) in
-          data_to_word_memoryProof_store_list w (CONS (wordLang_Word hd)
-            ws) m dm = SOME m1 /\
+          data_to_word_memoryProof_store_list w (CONS (word_Word hd) ws) m
+            dm = SOME m1 /\
           memory_rel c be ts (sptree_insert new (bvlSem_ValueArray vals)
             refs) (sp - (LENGTH ws + 1))
-            (st |+ (EndOfHeap,wordLang_Word w) |+ (TriggerGC,wordLang_Word
-              w1)) m1 dm
+            (st |+ (EndOfHeap,word_Word w) |+ (TriggerGC,word_Word w1)) m1
+              dm
             (CONS (dataSem_RefPtr T new,make_ptr c (w - curr) (n2w 0)
               (LENGTH ws)) vars)))`),
 (* the allocation of a reference in the unused space: new_ref_thm
@@ -32394,17 +32382,17 @@ let memory_rel_AllocThunk = prove
       (ev = Evaluated ==> dataSem_dest_thunk v refs = dataSem_NotThunk) /\
       2 <= sp /\ good_dimindex (:'a) ==>
       (?eoh (curr:'a word) trig m1.
-        FLOOKUP st EndOfHeap = SOME (wordLang_Word eoh) /\
-        FLOOKUP st TriggerGC = SOME (wordLang_Word trig) /\
-        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        FLOOKUP st EndOfHeap = SOME (word_Word eoh) /\
+        FLOOKUP st TriggerGC = SOME (word_Word trig) /\
+        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
         (let w' = eoh - bytes_in_word * (n2w 2) in
         let w1 = trig - bytes_in_word * (n2w 2) in
-          data_to_word_memoryProof_store_list w' [wordLang_Word hd; w] m
-            dm = SOME m1 /\
+          data_to_word_memoryProof_store_list w' [word_Word hd; w] m dm =
+            SOME m1 /\
           memory_rel c be ts (sptree_insert new (bvlSem_Thunk ev v) refs)
             (sp - 2)
-            (st |+ (EndOfHeap,wordLang_Word w') |+
-              (TriggerGC,wordLang_Word w1)) m1 dm
+            (st |+ (EndOfHeap,word_Word w') |+ (TriggerGC,word_Word w1))
+              m1 dm
             (CONS (dataSem_RefPtr F new,make_ptr c (w' - curr) (n2w 0)
               1) vars)))`),
 (* the allocation of a thunk, which is the proof of memory_rel_Ref
@@ -32895,7 +32883,7 @@ let memory_rel_write = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars ==>
       (?(free':'a word).
-        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
+        FLOOKUP st NextFree = SOME (word_Word free') /\
         (!n.
           n < sp ==>
           (let a = free' + bytes_in_word * n2w n in
@@ -33221,13 +33209,13 @@ let memory_rel_Cons_alt = prove
       encode_header c (4 * tag) (LENGTH ws) = SOME hd /\
       LENGTH ws < sp /\ good_dimindex (:'a) ==>
       (?free' (curr:'a word) m1.
-        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-        ((misc_word_list free' (CONS (wordLang_Word hd) ws) * SEP_T)
-          (fun2set (m,dm)) ==>
+        FLOOKUP st NextFree = SOME (word_Word free') /\
+        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
+        ((misc_word_list free' (CONS (word_Word hd) ws) * SEP_T) (fun2set
+          (m,dm)) ==>
          memory_rel c be (ts + 1) refs (sp - (LENGTH ws + 1))
-           (st |+ (NextFree,wordLang_Word (free' + bytes_in_word * n2w
-             (LENGTH ws + 1)))) m dm
+           (st |+ (NextFree,word_Word (free' + bytes_in_word * n2w (LENGTH
+             ws + 1)))) m dm
            (CONS (dataSem_Block ts tag vals,make_cons_ptr c (free' -
              curr) tag (LENGTH ws)) vars)))`),
 (* the same allocation as memory_rel_Cons1, of which this is the
@@ -35214,17 +35202,16 @@ let memory_rel_RefByte_content = prove
        bytes /\
      good_dimindex (:'a) ==>
      (?free' curr m1.
-       FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-       FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+       FLOOKUP st NextFree = SOME (word_Word free') /\
+       FLOOKUP st CurrHeap = SOME (word_Word curr) /\
        (let w' = bytes_in_word * ((n2w (byte_len (:'a) n + 1)):'a word) in
         let ws = REPLICATE (byte_len (:'a) n) (n2w 0) in
         let ws = write_bytes bytes ws be in
-          data_to_word_memoryProof_store_list free' (CONS (wordLang_Word
-            (make_byte_header c fl n)) (MAP wordLang_Word ws)) m dm = SOME m1
-            /\
+          data_to_word_memoryProof_store_list free' (CONS (word_Word
+            (make_byte_header c fl n)) (MAP word_Word ws)) m dm = SOME m1 /\
           memory_rel c be ts (sptree_insert new (bvlSem_ByteArray fl
             bytes) refs)
-            (sp - (byte_len (:'a) n + 1)) (st |+ (NextFree,wordLang_Word
+            (sp - (byte_len (:'a) n + 1)) (st |+ (NextFree,word_Word
               (free' + w'))) m1 dm
             (CONS (dataSem_RefPtr T new,make_ptr c (free' - curr) ((n2w
               0):'a word) (byte_len (:'a) n)) vars)))`),
@@ -35749,20 +35736,20 @@ let memory_rel_RefByte_alt = prove
       byte_len (:'a) n < 2 EXP data_to_word_config_len_size c /\
       good_dimindex (:'a) ==>
       (?free' curr m1.
-        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        FLOOKUP st NextFree = SOME (word_Word free') /\
+        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
         (let w' = bytes_in_word * ((n2w (byte_len (:'a) n + 1)):'a word)
           in
-         let ws = REPLICATE (byte_len (:'a) n) (wordLang_Word
-           (word_of_byte (w2w w))) in
+         let ws = REPLICATE (byte_len (:'a) n) (word_Word (word_of_byte
+           (w2w w))) in
          let nb = (n MOD (dimindex (:'a) DIV 8)) in
-         let ws = LUPDATE (wordLang_Word (last_bytes nb w (n2w 0) (n2w 0)
-           be)) (byte_len (:'a) n - 1) ws in
-           data_to_word_memoryProof_store_list free' (CONS (wordLang_Word
+         let ws = LUPDATE (word_Word (last_bytes nb w (n2w 0) (n2w 0) be))
+           (byte_len (:'a) n - 1) ws in
+           data_to_word_memoryProof_store_list free' (CONS (word_Word
              (make_byte_header c fl n)) ws) m dm = SOME m1 /\
            memory_rel c be ts (sptree_insert new (bvlSem_ByteArray fl
              (REPLICATE n w)) refs)
-             (sp - (byte_len (:'a) n + 1)) (st |+ (NextFree,wordLang_Word
+             (sp - (byte_len (:'a) n + 1)) (st |+ (NextFree,word_Word
                (free' + w'))) m1 dm
              (CONS (dataSem_RefPtr T new,make_ptr c (free' - curr) (n2w
                0) (byte_len (:'a) n)) vars)))`),
@@ -35855,15 +35842,15 @@ let memory_rel_RefByte_alt = prove
   let wseq = prove
    (cake_as_vars (fun () ->
       `good_dimindex (:'a)
-     ==> LUPDATE (wordLang_Word
+     ==> LUPDATE (word_Word
                     (last_bytes (n MOD (dimindex (:'a) DIV 8))
                        (w:(8)word) ((n2w 0):'a word)
                        ((n2w 0):'a word) be))
            (byte_len (:'a) n - 1)
            (REPLICATE (byte_len (:'a) n)
-              (wordLang_Word
+              (word_Word
                  (word_of_byte ((w2w (w:(8)word)):'a word)))) =
-         MAP wordLang_Word
+         MAP word_Word
            (write_bytes (REPLICATE n (w:(8)word))
               (REPLICATE (byte_len (:'a) n) ((n2w 0):'a word)) be)`),
     DISCH_TAC THEN
@@ -36428,7 +36415,7 @@ let memory_rel_drop = prove
 let memory_rel_IMP_word_list_exists = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars /\ n <= sp /\
-      FLOOKUP st NextFree = SOME (wordLang_Word f) ==>
+      FLOOKUP st NextFree = SOME (word_Word f) ==>
       (word_list_exists f n * SEP_T) (fun2set (m,dm))`),
   (* the free space of the heap is the Unused element at the
      address that NextFree points at, and word_el makes it a
@@ -36526,8 +36513,8 @@ let get_addr_0 = prove
    MESON_TAC[DIMINDEX_GE_1; ARITH_RULE `1 <= n ==> 0 < n`]));;
 
 let word_addr_eq_Loc = prove
- (`word_addr c v = wordLang_Loc l1 l2 <=> l2 = 0 /\ (?l2. v = gc_shared_Data
-  (wordLang_Loc l1 l2))`,
+ (`word_addr c v = word_Loc l1 l2 <=> l2 = 0 /\ (?l2. v = gc_shared_Data
+  (word_Loc l1 l2))`,
   (* only the Data of a Loc has a Loc for its word_addr, and the
      second component of it is zero *)
   (CASES_ON_NAME "v" THEN TRY(CASES_ON_NAME "a") THEN
@@ -36564,7 +36551,7 @@ let memory_rel_CodePtr = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars ==>
       memory_rel c be ts refs sp st m dm (CONS (dataSem_CodePtr
-        lab,wordLang_Loc lab 0) vars)`),
+        lab,word_Loc lab 0) vars)`),
   (* the root of a CodePtr is the Data of its Loc, which word_addr
      gives the Loc of; a CodePtr is no Block, so the timestamps and
      the unique blocks of the stack stay as they are, and it has no
@@ -36588,7 +36575,7 @@ let memory_rel_CodePtr = prove
       left to the parser, so it is built with that type *)
    (fun (asl,w as gl) ->
       let v = fst(dest_exists w) in
-      let tm = `CONS (gc_shared_Data (wordLang_Loc lab 0)) hs` in
+      let tm = `CONS (gc_shared_Data (word_Loc lab 0)) hs` in
       EXISTS_TAC (inst (type_match (type_of tm) (type_of v) []) tm)
         gl) THEN
    REWRITE_TAC[MAP; ALL2; waddr] THEN
@@ -36625,15 +36612,15 @@ let memory_rel_Block_IMP = prove
     `memory_rel c be ts refs sp st m dm (CONS (dataSem_Block ts' tag vals,(v:'a
   word_loc)) vars) /\
       good_dimindex (:'a) ==>
-      (?w. v = wordLang_Word w /\
+      (?w. v = word_Word w /\
           // ASK: If the Block has no vals then it's timestamp is 0
           (if vals = [] then
             w = n2w tag * (n2w 16) + (n2w 2) /\ ~(FAPPLY w 0) /\
             tag < dimword (:'a) DIV 16 /\ ts' = 0
           else ?a x. FAPPLY
               w 0 /\ ~(word_bit 3 x) /\ ~(word_bit 2 x) /\
-              get_real_addr c st w = SOME a /\ m a = wordLang_Word x /\ a
-                IN dm /\
+              get_real_addr c st w = SOME a /\ m a = word_Word x /\ a IN
+                dm /\
               decode_length c x = n2w (LENGTH vals) /\
               LENGTH vals < 2 EXP (dimindex (:'a) - 4) /\
               encode_header c (4 * tag) (LENGTH vals) = SOME x /\
@@ -36755,7 +36742,7 @@ let memory_rel_Block_IMP = prove
        else fail())) THEN
      FIRST_ASSUM(fun e ->
        let c = concl e in
-       if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+       if is_eq c && is_var (rand c) && hd_is "word_Word" (lhs c)
        then SUBST1_TAC (SYM e) else fail()) THEN
      REWRITE_TAC[injectivity "word_loc"] THEN
      CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
@@ -36831,7 +36818,7 @@ let IMP_memory_rel_Number = prove
     `good_dimindex (:'a) /\ small_int (:'a) i /\
       memory_rel c be ts refs sp st m dm vars ==>
       memory_rel c be ts refs sp st m dm
-       (CONS (dataSem_Number i,(wordLang_Word (Smallnum i):'a word_loc))
+       (CONS (dataSem_Number i,(word_Word (Smallnum i):'a word_loc))
          vars)`),
   (* the root of a small Number is the Data of its Smallnum, which
      abs_ml_inv_Num adds to the roots, and Smallnum is four times
@@ -36868,7 +36855,7 @@ let IMP_memory_rel_Number = prove
    REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
    ASM_REWRITE_TAC[] THEN
    EXISTS_TAC
-     `CONS (gc_shared_Data (wordLang_Word (Smallnum i:'a word))) hs`
+     `CONS (gc_shared_Data (word_Word (Smallnum i:'a word))) hs`
    THEN
    REWRITE_TAC[MAP; ALL2; waddr] THEN
    ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
@@ -36893,7 +36880,7 @@ let memory_rel_El_any = prove
       good_dimindex (:'a) /\
       index < LENGTH vals ==>
       (?ptr_w x (y:'a word).
-        ptr = wordLang_Word ptr_w /\
+        ptr = word_Word ptr_w /\
         get_real_addr c st ptr_w = SOME x /\
         (x + bytes_in_word + bytes_in_word * n2w index) IN dm /\
         memory_rel c be ts refs sp st m dm
@@ -36916,7 +36903,7 @@ let memory_rel_El_any = prove
    DISCH_THEN STRIP_ASSUME_TAC THEN
    W(fun (asl,w) ->
      let pe = grab asl (fun th ->
-       hd_is "wordLang_Word" (rhs (concl th))) in
+       hd_is "word_Word" (rhs (concl th))) in
      let ga = grab asl (fun th ->
        hd_is "get_real_addr" (lhs (concl th))) in
      let pw = rand (rhs (concl pe)) in
@@ -36933,7 +36920,7 @@ let copy_list_def,copy_list_ind = define_wf
      let m = (b =+ x) m in
      let b = b + bytes_in_word in
        if k = 0 then (if c then SOME (b,m) else NONE) else match a with
-         wordLang_Loc _ _ -> NONE | wordLang_Word a ->
+         word_Loc _ _ -> NONE | word_Word a ->
          (match get_real_addr c' st a with NONE -> NONE | SOME a ->
            let c = (c /\ a + (n2w 2) * bytes_in_word IN dm /\ a +
              bytes_in_word IN dm) in
@@ -36954,12 +36941,12 @@ let memory_rel_FromList = prove
       encode_header c (4 * tag) (LENGTH vs) = SOME hd /\ LENGTH vs < sp /\
       good_dimindex (:'a) ==>
       (?free' curr m1 f1 xs.
-        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-        copy_list c st (LENGTH vs) (a,wordLang_Word hd,free',m,dm) = SOME
+        FLOOKUP st NextFree = SOME (word_Word free') /\
+        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
+        copy_list c st (LENGTH vs) (a,word_Word hd,free',m,dm) = SOME
           (f1,m1) /\
         memory_rel c be (ts + 1) refs (sp - (LENGTH vs + 1)) (st |+
-          (NextFree,wordLang_Word f1)) m1 dm
+          (NextFree,word_Word f1)) m1 dm
           (CONS (dataSem_Block ts tag vs,
             make_cons_ptr c (free' - curr) tag (LENGTH vs)) vars))`),
 (* the elements of the list are copied into the free space by the
@@ -37346,7 +37333,7 @@ let memory_rel_FromList = prove
         (word_list_exists (b + bytes_in_word * n2w k)
            (SUC (LENGTH vs)) * frame) (fun2set (m,dm)) /\
         good_dimindex (:'a) /\
-        FLOOKUP st NextFree = SOME (wordLang_Word b) /\
+        FLOOKUP st NextFree = SOME (word_Word b) /\
         k + LENGTH vs < sp
         ==> (?xs m1.
                copy_list c st (LENGTH vs)
@@ -37673,8 +37660,8 @@ let memory_rel_test_nil_eq = prove
     `memory_rel c be ts refs sp st m dm (CONS (dataSem_Block ts' tag l,(w:'a
   word_loc)) rest) /\
       n < dimword (:'a) DIV 16 /\ good_dimindex (:'a) ==>
-      (?v. w = wordLang_Word v /\ (v = n2w (16 * n + 2) <=> tag = n /\ l
-        = []))`),
+      (?v. w = word_Word v /\ (v = n2w (16 * n + 2) <=> tag = n /\ l =
+        []))`),
   (* memory_rel_Block_IMP says what the word of the Block is: of an
      empty Block it is sixteen times the tag plus two, whose lowest
      bit is clear, and of a Block with values it is a pointer, whose
@@ -37914,11 +37901,11 @@ let memory_rel_ValueArray_IMP = prove
       sptree_lookup p refs = SOME (bvlSem_ValueArray vals)
         /\ good_dimindex (:'a) ==>
       (?w a x.
-        v = wordLang_Word w /\ FAPPLY w 0 /\ word_bit 3 x /\ ~(word_bit 2
-          x) /\ ~(word_bit 4 x) /\
+        v = word_Word w /\ FAPPLY w 0 /\ word_bit 3 x /\ ~(word_bit 2 x)
+          /\ ~(word_bit 4 x) /\
         get_real_simple_addr c st w = SOME a /\
         get_real_addr c st w = SOME a /\
-        m a = wordLang_Word x /\ a IN dm /\
+        m a = word_Word x /\ a IN dm /\
         decode_length c x = n2w (LENGTH vals) /\
         LENGTH vals < 2 EXP (dimindex (:'a) - 4))`),
   (* the header of a reference's array, read out of the memory: as
@@ -37960,7 +37947,7 @@ let memory_rel_ValueArray_IMP = prove
                  (TRANS (SYM t1) t2))))) THEN
    FIRST_ASSUM(fun e ->
      let c = concl e in
-     if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+     if is_eq c && is_var (rand c) && hd_is "word_Word" (lhs c)
      then SUBST1_TAC (SYM e) else fail()) THEN
    REWRITE_TAC[injectivity "word_loc"] THEN
    CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
@@ -38126,18 +38113,18 @@ let memory_rel_Thunk_IMP = prove
      good_dimindex (:'a) ==>
        (~bl /\
         ev = Evaluated /\
-        (!w. v = wordLang_Word w /\ FAPPLY w 0 ==>
+        (!w. v = word_Word w /\ FAPPLY w 0 ==>
            memory_rel c be ts refs sp st m dm (CONS (z,v) vars) /\
            (?a x. get_real_addr c st w = SOME a /\
-                 m a = wordLang_Word x /\ a IN dm /\ ~((x && (n2w
-                   0b111100)) = n2w ((0 + 6) * 4)) /\ ~((x && (n2w 0b111100)) =
-                   n2w ((8 + 6) * 4))))) \/
+                 m a = word_Word x /\ a IN dm /\ ~((x && (n2w 0b111100)) =
+                   n2w ((0 + 6) * 4)) /\ ~((x && (n2w 0b111100)) = n2w ((8 + 6)
+                   * 4))))) \/
        (?w a x.
-         v = wordLang_Word w /\ FAPPLY w 0 /\ word_bit 3 x /\ ~(word_bit 2
-           x) /\ word_bit 4 x /\
+         v = word_Word w /\ FAPPLY w 0 /\ word_bit 3 x /\ ~(word_bit 2 x)
+           /\ word_bit 4 x /\
          get_real_simple_addr c st w = SOME a /\
          get_real_addr c st w = SOME a /\
-         m a = wordLang_Word x /\ a IN dm /\
+         m a = word_Word x /\ a IN dm /\
          (a + bytes_in_word) IN dm /\
          decode_length c x = (n2w 1) /\
          (word_bit 5 x <=> ev = Evaluated) /\
@@ -38483,7 +38470,7 @@ let memory_rel_Thunk_IMP = prove
     (* the root of the ref is the pointer to the block of the thunk *)
     SUBGOAL_THEN `v_inv c (RefPtr F p) refs
         (gc_shared_Pointer (FAPPLY f p)
-          (wordLang_Word ((n2w 0):'a word)),f,tf,heap)`
+          (word_Word ((n2w 0):'a word)),f,tf,heap)`
       ASSUME_TAC THENL
      [REWRITE_TAC[v_inv_def] THEN DISJ2_TAC THEN DISJ1_TAC THEN
       MAP_EVERY EXISTS_TAC [`ev:thunk_mode`; `z:dataSem_v`;
@@ -38494,7 +38481,7 @@ let memory_rel_Thunk_IMP = prove
     W(fun (asl,gl) ->
       let vq = grab_asm (fun th -> is_eq (concl th) &&
         is_var (rhs (concl th)) &&
-        hd_is "wordLang_Word" (lhs (concl th))) asl in
+        hd_is "word_Word" (lhs (concl th))) asl in
       EXISTS_TAC (rand (lhs (concl vq))) THEN
       REWRITE_TAC[SYM vq; get_addr_0]) THEN
     (* the store says where the heap lies in the memory *)
@@ -38705,7 +38692,7 @@ let memory_rel_Thunk_IMP = prove
       RULE_ASSUM_TAC (REWRITE_RULE
         [grab_asm (fun th -> is_eq (concl th) &&
           is_var (lhs (concl th)) &&
-          hd_is "wordLang_Word" (rhs (concl th))) asl])) THEN
+          hd_is "word_Word" (rhs (concl th))) asl])) THEN
     W(fun (asl,gl) ->
       cases_asm (var_by_name "a0" (asl,gl))
         [["ptr"; "u"]; ["dw"]]) THEN
@@ -38926,8 +38913,8 @@ let memory_rel_Thunk_inlined = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm (CONS (dataSem_RefPtr bl p,(w:'a
   word_loc)) vars) /\
-     ((?l1 l2. w = wordLang_Loc l1 l2) \/ (?w1. w = wordLang_Word w1
-       /\ ~(FAPPLY w1 0))) /\
+     ((?l1 l2. w = word_Loc l1 l2) \/ (?w1. w = word_Word w1 /\ ~(FAPPLY
+       w1 0))) /\
      sptree_lookup p refs = SOME (bvlSem_Thunk ev z) /\
      good_dimindex (:'a) ==>
        ev = Evaluated /\
@@ -39499,12 +39486,12 @@ let heap_in_memory_store_UpdateByte = prove
      heap = APPEND (APPEND ha [Bytes be fl bs ws]) hb /\ i < LENGTH bs /\
      ad = curr + bytes_in_word + n2w i + (bytes_in_word:'a word) * n2w
        (heap_length ha) /\
-     FLOOKUP s CurrHeap = SOME (wordLang_Word curr) /\
-     m (byte_align ad) = wordLang_Word w /\ good_dimindex (:'a) ==>
+     FLOOKUP s CurrHeap = SOME (word_Word curr) /\
+     m (byte_align ad) = word_Word w /\ good_dimindex (:'a) ==>
      heap_in_memory_store (APPEND (APPEND ha [Bytes be fl (LUPDATE b i bs)
        ws]) hb)
      a sp sp1 gens c s
-     ((byte_align ad =+ wordLang_Word (set_byte ad b w be)) m) dm limit`),
+     ((byte_align ad =+ word_Word (set_byte ad b w be)) m) dm limit`),
 (* the write of a byte into a byte array of the heap: everything of
    the store but the words of the heap is what it was, because the
    array is as long as it was (heap_length_APPEND,
@@ -40313,7 +40300,7 @@ let heap_in_memory_store_UpdateByte = prove
       let a2,sep = ub_sep asl gl in
       let rd = CONJUNCT1 (MATCH_MP read_fun2set sep) in
       let mw = grab_asm (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th)) &&
+        hd_is "word_Word" (rhs (concl th)) &&
         is_var (rator (lhs (concl th)))) asl in
       SUBST_ALL_TAC (REWRITE_RULE[injectivity "word_loc"]
         (TRANS (SYM mw) rd))) in
@@ -40346,12 +40333,12 @@ let memory_rel_ByteArray_IMP = prove
      sptree_lookup p refs = SOME (bvlSem_ByteArray fl vals)
        /\ good_dimindex (:'a) ==>
      (?w a x l.
-       v = wordLang_Word w /\ FAPPLY w 0 /\
+       v = word_Word w /\ FAPPLY w 0 /\
        make_byte_header c fl (LENGTH vals) = x /\
        ~(word_bit 3 x) /\ (word_bit 4 x <=> ~fl) /\ word_bit 2 x /\
        get_real_simple_addr c st w = SOME a /\
        get_real_addr c st w = SOME a /\
-       m a = wordLang_Word x /\ a IN dm /\
+       m a = word_Word x /\ a IN dm /\
        (!i. i < LENGTH vals ==>
             mem_load_byte_aux m dm be (a + bytes_in_word + n2w i) =
             SOME (EL i vals)) /\
@@ -40360,8 +40347,8 @@ let memory_rel_ByteArray_IMP = prove
          memory_rel c be ts (sptree_insert p (bvlSem_ByteArray fl (LUPDATE
            w i vals)) refs) sp st
            ((byte_align addr' =+
-             wordLang_Word (set_byte addr' w (theWord (m (byte_align
-               addr'))) be)) m) dm
+             word_Word (set_byte addr' w (theWord (m (byte_align addr')))
+               be)) m) dm
              (CONS (dataSem_RefPtr bl p,v) vars))) /\
        (if dimindex (:'a) = 32 then
          LENGTH vals + 4 < 2 EXP (dimindex (:'a) - 3) /\
@@ -40678,7 +40665,7 @@ let memory_rel_ByteArray_IMP = prove
     `good_dimindex (:'a) /\ byte_aligned (curr:'a word) /\
      (set_sep_one (curr + bytes_in_word * n2w hl, hw) *
       word_list ((curr + bytes_in_word * n2w hl) + bytes_in_word)
-        (MAP wordLang_Word (write_bytes vals
+        (MAP word_Word (write_bytes vals
           (REPLICATE ws ((n2w 0):'a word)) be)) * q)
        (fun2set (m,dm)) /\
      LENGTH vals <= ws * (dimindex (:'a) DIV 8) /\ i < LENGTH vals
@@ -40973,7 +40960,7 @@ let memory_rel_ByteArray_IMP = prove
   let mem_load_word = prove
    (`!(m:'a word->'a word_loc) dm be ad b.
        mem_load_byte_aux m dm be ad = SOME b
-       ==> ?v. m (byte_align ad) = wordLang_Word v`,
+       ==> ?v. m (byte_align ad) = word_Word v`,
     REPEAT GEN_TAC THEN REWRITE_TAC[mem_load_byte_aux_def] THEN
     CASES_ON_TAC `(m:'a word->'a word_loc) (byte_align (ad:'a word))`
       THEN
@@ -41054,7 +41041,7 @@ let memory_rel_ByteArray_IMP = prove
                    (TRANS (SYM t1) t2))))) THEN
     FIRST_ASSUM (fun e ->
       let c = concl e in
-      if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+      if is_eq c && is_var (rand c) && hd_is "word_Word" (lhs c)
       then SUBST1_TAC (SYM e) else fail()) THEN
     REWRITE_TAC[injectivity "word_loc"] THEN
     CONV_TAC (REDEPTH_CONV UNWIND_CONV) THEN
@@ -41187,7 +41174,7 @@ let memory_rel_ByteArray_IMP = prove
       REWRITE_TAC[hle] THEN RULE_ASSUM_TRY (REWRITE_RULE[hle])) THEN
     W(fun (asl,gl) ->
       let mw = grab_asm (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th)) &&
+        hd_is "word_Word" (rhs (concl th)) &&
         is_var (rator (lhs (concl th)))) asl in
       let adg = rand (rand (lhs (concl mw))) in
       let xx = lhand adg in
@@ -41208,7 +41195,7 @@ let memory_rel_ByteArray_IMP = prove
       let him = gr (fun th ->
         hd_is "heap_in_memory_store" (concl th)) in
       let mw = gr (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th)) &&
+        hd_is "word_Word" (rhs (concl th)) &&
         is_var (rator (lhs (concl th)))) in
       let gd = gr (fun th -> hd_is "good_dimindex" (concl th)) in
       let ilt = gr (fun th -> hd_is "<" (concl th) &&
@@ -41306,13 +41293,13 @@ let memory_rel_RefPtr_T_IMP = prove
     `memory_rel c be ts refs sp st m dm (CONS (dataSem_RefPtr T p,v) vars) /\
      good_dimindex (:'a) ==>
        (?w a x.
-         v = wordLang_Word w /\ FAPPLY w 0 /\
+         v = word_Word w /\ FAPPLY w 0 /\
          (
           // (word_bit 4 x ⇒ word_bit 2 x) ∧
           word_bit 3 x <=> ~(word_bit 2 x)) /\
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
-         m a = wordLang_Word (x:'a word) /\ a IN dm)`),
+         m a = word_Word (x:'a word) /\ a IN dm)`),
   (* a RefPtr T is no thunk (the rule of v_inv for one asks for a
      RefPtr F) and no MutBlock, so the four cases of the value in
      the refs are the two arrays and two contradictions *)
@@ -41340,13 +41327,13 @@ let memory_rel_RefPtr_IMP = prove
      (!tg fin l cv rs. ~(sptree_lookup p refs = SOME (bvlSem_MutBlock tg
        fin l cv rs))) ==>
        (?w a x.
-         v = wordLang_Word w /\ FAPPLY w 0 /\
+         v = word_Word w /\ FAPPLY w 0 /\
          (
           // (word_bit 4 x ⇒ word_bit 2 x) ∧
           word_bit 3 x <=> ~(word_bit 2 x)) /\
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
-         m a = wordLang_Word (x:'a word) /\ a IN dm)`),
+         m a = word_Word (x:'a word) /\ a IN dm)`),
   (* the pointer has a value in the refs, which is a ValueArray or
      a ByteArray because the hypotheses exclude the other two *)
   (STRIP_TAC THEN
@@ -41387,23 +41374,23 @@ let memory_rel_RefPtr_gen_IMP = prove
      good_dimindex (:'a) ==>
      (?r. sptree_lookup p refs = SOME r /\
      (match r with bvlSem_Thunk Evaluated x ->
-       (!w. v = wordLang_Word w /\ FAPPLY w 0 ==>
+       (!w. v = word_Word w /\ FAPPLY w 0 ==>
           (?a x. get_real_addr c st w = SOME a /\
-                m a = wordLang_Word x /\ a IN dm /\ ~((x && (n2w
-                  0b111100)) = n2w ((0 + 6) * 4))))
+                m a = word_Word x /\ a IN dm /\ ~((x && (n2w 0b111100)) =
+                  n2w ((0 + 6) * 4))))
      |
        // a MutBlock carries a BlockTag header, for which the bit pattern below
        // does not hold; this theorem has no users, so the case is left trivial
        bvlSem_MutBlock _ _ _ _ _ -> T
      | _ ->
        (?w a x.
-         v = wordLang_Word w /\ FAPPLY w 0 /\
+         v = word_Word w /\ FAPPLY w 0 /\
          (
           // (word_bit 4 x ⇒ word_bit 2 x) ∧
           word_bit 3 x <=> ~(word_bit 2 x)) /\
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
-         m a = wordLang_Word (x:'a word) /\ a IN dm)))`),
+         m a = word_Word (x:'a word) /\ a IN dm)))`),
 (* the proof of the source takes the kind of the reference out of
    the lookup (memory_rel_RefPtr_IMP_lemma) and then has a case for
    each: an array of values has bit 3 of its header set and bit 2
@@ -41540,7 +41527,7 @@ let memory_rel_any_Number_IMP = prove
     `good_dimindex (:'a) /\
       memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i,(v:'a
         word_loc)) vars) ==>
-      (?w. v = wordLang_Word w /\ (FAPPLY w 0 <=> ~(small_int (:'a) i)))`),
+      (?w. v = word_Word w /\ (FAPPLY w 0 <=> ~(small_int (:'a) i)))`),
   (* the root of a Number is the Data of its Smallnum, whose lowest
      bit the and with the complement of one clears, or a Pointer,
      whose address has that bit set (get_addr_0) *)
@@ -41563,7 +41550,7 @@ let memory_rel_Number_IMP = prove
     `good_dimindex (:'a) /\ small_int (:'a) i /\
       memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i,(v:'a
         word_loc)) vars) ==>
-      v = wordLang_Word (Smallnum i)`),
+      v = word_Word (Smallnum i)`),
   (* the root of a small Number is the Data of its Smallnum,
      whose word_addr takes the tag bit off -- and Smallnum is
      four times the integer, which has that bit clear *)
@@ -41662,18 +41649,16 @@ let memory_rel_Number_bignum_IMP_ALT = prove
     `memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i,v) vars) /\
       ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
       (?ff w x a y.
-        v = wordLang_Word w /\ ~((w && (n2w 1)) = ((n2w 0):'a word)) /\
+        v = word_Word w /\ ~((w && (n2w 1)) = ((n2w 0):'a word)) /\
         get_real_addr c st w = SOME a /\
-        a IN dm /\ m a = wordLang_Word x /\ (~((x && (n2w 8)) = (n2w 0)))
-          /\
+        a IN dm /\ m a = word_Word x /\ (~((x && (n2w 8)) = (n2w 0))) /\
         word_bit 2 x /\ word_bit 3 x /\
         (word_bit 4 x <=> i < (&0)) /\
         (misc_word_list (a + bytes_in_word)
-          (MAP wordLang_Word (n2mw (num_of_int (abs i)))) * ff) (fun2set
+          (MAP word_Word (n2mw (num_of_int (abs i)))) * ff) (fun2set
             (m,dm)) /\
         a + bytes_in_word IN dm /\
-        m (a + bytes_in_word) = wordLang_Word (n2w (num_of_int (abs i)))
-          /\
+        m (a + bytes_in_word) = word_Word (n2w (num_of_int (abs i))) /\
         ((x && (n2w 16)) = (n2w 0) <=> (&0) <= i) /\
         LENGTH (n2mw (num_of_int (abs i)):('a word) list) < 2 EXP
           (dimindex (:'a) - 4) /\
@@ -41716,7 +41701,7 @@ let memory_rel_Number_bignum_IMP_ALT = prove
   MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
   FIRST_ASSUM(fun e ->
     let c = concl e in
-    if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+    if is_eq c && is_var (rand c) && hd_is "word_Word" (lhs c)
     then SUBST1_TAC (SYM e) else fail()) THEN
   REWRITE_TAC[injectivity "word_loc"] THEN
   CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
@@ -41867,13 +41852,12 @@ let memory_rel_Number_bignum_header = prove
   word_loc)) vars) /\
       ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
       (?ff w x a y.
-        v = wordLang_Word w /\ get_real_addr c st w = SOME a /\
+        v = word_Word w /\ get_real_addr c st w = SOME a /\
         IS_SOME ((encode_header c (w2n ((b2w (i < (&0)) << 2 || (n2w
           3)):'a word))
             (LENGTH (n2mw (num_of_int (abs i)):('a word) list))):('a word)
               option) /\
-        m a = wordLang_Word (make_header c (b2w (i < (&0)) << 2 || (n2w
-          3))
+        m a = word_Word (make_header c (b2w (i < (&0)) << 2 || (n2w 3))
                 (LENGTH (n2mw (num_of_int (abs i)):('a word) list))))`),
   (let hd_is n t =
      (try fst(dest_const(fst(strip_comb t))) = n
@@ -41918,7 +41902,7 @@ let memory_rel_Number_bignum_header = prove
          (X_CHOOSE_THEN `other:'a word` STRIP_ASSUME_TAC)) th
      else fail())) THEN
    REWRITE_TAC(word_addr_clauses ()) THEN
-   EXISTS_TAC `get_addr c ptr (wordLang_Word ((n2w 0):'a word))` THEN
+   EXISTS_TAC `get_addr c ptr (word_Word ((n2w 0):'a word))` THEN
    EXISTS_TAC `curr + n2w ptr * bytes_in_word:'a word` THEN
    REWRITE_TAC[] THEN CONJ_TAC THENL
     [FIRST_ASSUM(fun hl ->
@@ -41926,7 +41910,7 @@ let memory_rel_Number_bignum_header = prove
        then FIRST_ASSUM(fun hlen ->
          FIRST_ASSUM(fun cu ->
            FIRST_ASSUM(fun gd ->
-             MP_TAC(SPEC `wordLang_Word ((n2w 0):'a word)`
+             MP_TAC(SPEC `word_Word ((n2w 0):'a word)`
                (GEN `w:('a)word_loc`
                  (MATCH_MP get_real_addr_get_addr
                    (CONJ hlen (CONJ hl (CONJ cu gd)))))))))
@@ -41978,10 +41962,10 @@ let memory_rel_Number_bignum_header = prove
    as the header, is of one address *)
 let bignum_elt_eq = prove
  (cake_as_vars (fun () ->
-    `(v:'a word_loc) = wordLang_Word w /\
-     get_real_addr c st w = SOME a /\ m a = wordLang_Word x /\
-     v = wordLang_Word w2 /\ get_real_addr c st w2 = SOME a2 /\
-     m a2 = wordLang_Word y
+    `(v:'a word_loc) = word_Word w /\
+     get_real_addr c st w = SOME a /\ m a = word_Word x /\
+     v = word_Word w2 /\ get_real_addr c st w2 = SOME a2 /\
+     m a2 = word_Word y
      ==> (x:'a word) = y`),
   REPEAT STRIP_TAC THEN
   ASM_MESON_TAC[injectivity "word_loc"; injectivity "option"]);;
@@ -42034,9 +42018,9 @@ let bignum_header = prove
     `memory_rel c be ts refs sp st m dm (CONS (Number i,v) vars) /\
      ~(small_int (:'a) i) /\ good_dimindex (:'a)
      ==> (?w a x.
-            v = wordLang_Word w /\
+            v = word_Word w /\
             get_real_addr c st w = SOME a /\
-            m a = wordLang_Word (x:'a word) /\
+            m a = word_Word (x:'a word) /\
             x = make_header c (b2w ((i:int) < (&0)) << 2 ||
                   (n2w 3))
                   (LENGTH (n2mw (num_of_int (abs i)):('a word)
@@ -42066,7 +42050,7 @@ let bignum_header = prove
     let elts = mapfilter (fun (_,th) ->
       let c = concl th in
       if is_eq c && is_comb (lhand c) &&
-         rator (lhand c) = mem && hd_is "wordLang_Word" (rand c)
+         rator (lhand c) = mem && hd_is "word_Word" (rand c)
       then th else fail()) asl in
     let triple e =
       let a = rand (lhand (concl e)) in
@@ -42075,7 +42059,7 @@ let bignum_header = prove
                  rand (rand c) = a) gl in
       let wv = el 2 (snd (strip_comb (lhand (concl ga)))) in
       let vw = the_asm (fun c -> is_eq c && lhand c = vt &&
-                 rand c = list_mk_icomb "wordLang_Word" [wv]) gl in
+                 rand c = list_mk_icomb "word_Word" [wv]) gl in
       (vw,ga,e) in
     let alt = find (fun e -> is_var (rand (rand (concl e)))) elts in
     let hdr = find (fun e ->
@@ -42102,11 +42086,11 @@ let memory_rel_bignum_cmp = prove
       good_dimindex (:'a) /\ ~(small_int (:'a) i1) /\ ~(small_int (:'a)
         i2) ==>
       (?w1 w2 a1 a2 x1 x2.
-         v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
+         v1 = word_Word w1 /\ v2 = word_Word w2 /\
          get_real_addr c st w1 = SOME a1 /\
          get_real_addr c st w2 = SOME a2 /\
-         m a1 = wordLang_Word x1 /\
-         m a2 = wordLang_Word x2 /\
+         m a1 = word_Word x1 /\
+         m a2 = word_Word x2 /\
          (~(x1 = x2) ==>
           (decode_length c (x1) = decode_length c (x2)) ==> ~((((n2w 16)
             && x1) = (n2w 0)) = (((n2w 16) && x2) = (n2w 0)))))`),
@@ -42137,7 +42121,7 @@ let memory_rel_bignum_cmp = prove
       let lst = el 8 (snd (strip_comb (concl mr))) in
       let pieces vt =
         let vw = the_asm (fun c -> is_eq c && lhand c = vt &&
-                   hd_is "wordLang_Word" (rand c)) gl in
+                   hd_is "word_Word" (rand c)) gl in
         let wv = rand (rand (concl vw)) in
         let ga = the_asm (fun c -> is_eq c &&
                    hd_is "get_real_addr" (lhand c) &&
@@ -42145,7 +42129,7 @@ let memory_rel_bignum_cmp = prove
         let a = rand (rand (concl ga)) in
         let ma = the_asm (fun c -> is_eq c && is_comb (lhand c) &&
                    rand (lhand c) = a &&
-                   hd_is "wordLang_Word" (rand c)) gl in
+                   hd_is "word_Word" (rand c)) gl in
         let x = rand (rand (concl ma)) in
         let he = the_asm (fun c -> is_eq c && lhand c = x &&
                    hd_is "make_header" (rand c)) gl in
@@ -42177,13 +42161,11 @@ let memory_rel_Number_bignum_IMP = prove
     `memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i,v) vars) /\
       ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
       (?w x a y.
-        v = wordLang_Word w /\ ~((w && (n2w 1)) = ((n2w 0):'a word)) /\
+        v = word_Word w /\ ~((w && (n2w 1)) = ((n2w 0):'a word)) /\
         get_real_addr c st w = SOME a /\
-        a IN dm /\ m a = wordLang_Word x /\ (~((x && (n2w 8)) = (n2w 0)))
-          /\
+        a IN dm /\ m a = word_Word x /\ (~((x && (n2w 8)) = (n2w 0))) /\
         a + bytes_in_word IN dm /\
-        m (a + bytes_in_word) = wordLang_Word (n2w (num_of_int (abs i)))
-          /\
+        m (a + bytes_in_word) = word_Word (n2w (num_of_int (abs i))) /\
         ((x && (n2w 16)) = (n2w 0) <=> (&0) <= i))`),
   (* the ALT of it says more; this is what the source keeps *)
   (STRIP_TAC THEN
@@ -42211,19 +42193,18 @@ let memory_rel_Word64_IMP = prove
   word_loc)) vars) /\
      good_dimindex (:'a) ==>
      (?ptr x w.
-       v = wordLang_Word (get_addr c ptr (wordLang_Word (n2w 0))) /\
-       get_real_addr c st (get_addr c ptr (wordLang_Word (n2w 0))) = SOME
-         x /\
-       x IN dm /\ m x = wordLang_Word w /\ word_bit 3 w /\ ~(word_bit 4 w)
+       v = word_Word (get_addr c ptr (word_Word (n2w 0))) /\
+       get_real_addr c st (get_addr c ptr (word_Word (n2w 0))) = SOME x /\
+       x IN dm /\ m x = word_Word w /\ word_bit 3 w /\ ~(word_bit 4 w)
          /\ word_bit 2 w /\
        (x + bytes_in_word) IN dm /\
        (if dimindex (:'a) < 64 then
-         (m (x + bytes_in_word) = wordLang_Word ((63 >< 32) w64) /\
+         (m (x + bytes_in_word) = word_Word ((63 >< 32) w64) /\
           (x + (bytes_in_word << 1)) IN dm /\ m (x + (bytes_in_word << 1))
-            = wordLang_Word ((31 >< 0) w64) /\
+            = word_Word ((31 >< 0) w64) /\
          decode_length c w = (n2w 2) /\
          w = make_header c (n2w 3) 2)
-       else (m (x + bytes_in_word) = wordLang_Word ((63 >< 0) w64)) /\
+       else (m (x + bytes_in_word) = word_Word ((63 >< 0) w64)) /\
          decode_length c w = (n2w 1) /\
          w = make_header c (n2w 3) 1))`),
 (* the proof of the source is the one of memory_rel_ValueArray_IMP
@@ -42340,7 +42321,7 @@ let IMP_memory_rel_Number_num3 = prove
     `good_dimindex (:'a) /\ n < 2 EXP (dimindex (:'a) - 3) /\
       memory_rel c be ts refs sp st m dm vars ==>
       memory_rel c be ts refs sp st m dm
-       (CONS (dataSem_Number (&n),wordLang_Word ((n2w n << 2):'a word))
+       (CONS (dataSem_Number (&n),word_Word ((n2w n << 2):'a word))
          vars)`),
   (* the Smallnum of a natural number is it shifted up by two, and
      a number below two to the dimindex less three is small *)
@@ -42375,7 +42356,7 @@ let IMP_memory_rel_Number_num = prove
     `good_dimindex (:'a) /\ n < 2 EXP (dimindex (:'a) - 4) /\
       memory_rel c be ts refs sp st m dm vars ==>
       memory_rel c be ts refs sp st m dm
-       (CONS (dataSem_Number (&n),wordLang_Word ((n2w n << 2):'a word))
+       (CONS (dataSem_Number (&n),word_Word ((n2w n << 2):'a word))
          vars)`),
   (* and so is one below two to the dimindex less four *)
   (let shl2 = prove
@@ -42411,8 +42392,8 @@ let memory_rel_Number_EQ = prove
           /\
       (small_int (:'a) i1 \/ small_int (:'a) i2) /\
       good_dimindex (:'a) ==>
-        (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word (v2:'a
-          word) /\ (v1 = v2 <=> i1 = i2))`),
+        (?v1 v2. w1 = word_Word v1 /\ w2 = word_Word (v2:'a word) /\ (v1
+          = v2 <=> i1 = i2))`),
   (* two Numbers of which at least one is small: if both are, both
      roots are Smallnums and num_eq_thm says that two Smallnums are
      equal only for equal integers; if one is not, the lowest bits
@@ -42516,8 +42497,8 @@ let memory_rel_Number_LESS = prove
       small_int (:'a) i1 /\
       small_int (:'a) i2 /\
       good_dimindex (:'a) ==>
-        (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word v2 /\ (v1 <
-          (v2:'a word) <=> i1 < i2))`),
+        (?v1 v2. w1 = word_Word v1 /\ w2 = word_Word v2 /\ (v1 < (v2:'a
+          word) <=> i1 < i2))`),
   (* both words are the Smallnum of their integer, and num_less_thm
      says that the order of the two is the order of the integers *)
   (STRIP_TAC THEN
@@ -42535,8 +42516,8 @@ let memory_rel_Number_LESS_EQ = prove
       small_int (:'a) i1 /\
       small_int (:'a) i2 /\
       good_dimindex (:'a) ==>
-        (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word v2 /\ (v1
-          <= (v2:'a word) <=> i1 <= i2))`),
+        (?v1 v2. w1 = word_Word v1 /\ w2 = word_Word v2 /\ (v1 <= (v2:'a
+          word) <=> i1 <= i2))`),
   (* the order or the equality, which the two theorems above give *)
   (let wle = prove
     (`!(x:(N)word) y. x <= y <=> x < y \/ x = y`,
@@ -42562,7 +42543,7 @@ let memory_rel_Number_LESS_EQ = prove
    variables of its own are read as variables *)
 let memory_rel_Number_word_msb = prove
  (cake_as_vars (fun () ->
-    `memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i1,wordLang_Word
+    `memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i1,word_Word
   (w:'a word)) vars) /\
       good_dimindex (:'a) /\ small_int (:'a) i1 ==>
       (word_msb w <=> i1 < (&0))`),
@@ -42643,8 +42624,8 @@ let memory_rel_RefPtr_EQ = prove
     `memory_rel c be ts refs sp st m dm
         (CONS (dataSem_RefPtr T i1,w1) (CONS (dataSem_RefPtr T i2,w2)
           vars)) /\ good_dimindex (:'a) ==>
-        (?v1 v2. w1 = wordLang_Word v1 /\ w2 = wordLang_Word (v2:'a
-          word) /\ (v1 = v2 <=> i1 = i2))`),
+        (?v1 v2. w1 = word_Word v1 /\ w2 = word_Word (v2:'a word) /\ (v1
+          = v2 <=> i1 = i2))`),
   (* the invariant gives the heap and the roots, and ref_eq_thm
      gives the two roots as pointers with a zero annotation and
      says that the two references are the same exactly when the two
@@ -42715,7 +42696,7 @@ let memory_rel_RefPtr_EQ = prove
        MP_TAC (SPEC p rk)) THEN
      REWRITE_TAC[MEM; isSomeDataElement_def] THEN
      DISCH_THEN (fun th ->
-       MP_TAC (REWRITE_RULE[] (SPEC `wordLang_Word ((n2w 0):'a word)`
+       MP_TAC (REWRITE_RULE[] (SPEC `word_Word ((n2w 0):'a word)`
                                 th))) THEN
      REWRITE_TAC[] THEN
      DISCH_THEN (REPEAT_TCL CHOOSE_THEN (fun hl ->
@@ -42739,8 +42720,8 @@ let memory_rel_RefPtr_EQ = prove
 let memory_rel_RefPtr_EQ_IMP = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m (dm:'a word->bool)
-       (CONS (dataSem_RefPtr b1 i1,wordLang_Word w1) (CONS (dataSem_RefPtr
-         b2 i1,wordLang_Word w2) vars)) /\ good_dimindex (:'a) /\
+       (CONS (dataSem_RefPtr b1 i1,word_Word w1) (CONS (dataSem_RefPtr b2
+         i1,word_Word w2) vars)) /\ good_dimindex (:'a) /\
      sptree_lookup i1 refs = SOME (bvlSem_ByteArray ys_fl ys) ==>
      w1 = w2`),
   (* the value at the pointer is a ByteArray, so the two RefPtrs
@@ -42768,8 +42749,8 @@ let memory_rel_RefPtr_EQ_IMP = prove
 let memory_rel_Boolv_T = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a) ==>
-  memory_rel c be ts refs sp st m dm (CONS (dataSem_Boolv T,wordLang_Word
-  ((n2w 18):'a word)) vars)`),
+  memory_rel c be ts refs sp st m dm (CONS (dataSem_Boolv T,word_Word ((n2w
+  18):'a word)) vars)`),
   (* the true Boolv is the empty Block of the true tag, which is
      one, so its root is the Data of BlockNil 1, the word eighteen *)
   (let shl16 = prove
@@ -42795,7 +42776,7 @@ let memory_rel_Boolv_T = prove
    REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
    ASM_REWRITE_TAC[] THEN
    EXISTS_TAC
-     `CONS (gc_shared_Data (wordLang_Word (n2w 18:'a word))) hs` THEN
+     `CONS (gc_shared_Data (word_Word (n2w 18:'a word))) hs` THEN
    REWRITE_TAC[MAP; ALL2; waddr; and18] THEN
    ASM_REWRITE_TAC[dataSem_Boolv_def;
                    bool_to_tag_def; true_tag_def] THEN
@@ -42807,8 +42788,8 @@ let memory_rel_Boolv_T = prove
 let memory_rel_Boolv_F = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a) ==>
-  memory_rel c be ts refs sp st m dm (CONS (dataSem_Boolv F,wordLang_Word
-  ((n2w 2):'a word)) vars)`),
+  memory_rel c be ts refs sp st m dm (CONS (dataSem_Boolv F,word_Word ((n2w
+  2):'a word)) vars)`),
   (* the false Boolv is the empty Block of the false tag, which is
      zero, so it is the same root as the one of Unit *)
   (let blocknil0 = prove
@@ -42829,7 +42810,7 @@ let memory_rel_Boolv_F = prove
    REPEAT STRIP_TAC THEN ASM_EXISTS_TAC THEN
    ASM_REWRITE_TAC[] THEN
    EXISTS_TAC
-     `CONS (gc_shared_Data (wordLang_Word (n2w 2:'a word))) hs` THEN
+     `CONS (gc_shared_Data (word_Word (n2w 2:'a word))) hs` THEN
    REWRITE_TAC[MAP; ALL2; waddr; and2] THEN
    ASM_REWRITE_TAC[dataSem_Boolv_def;
                    bool_to_tag_def; false_tag_def] THEN
@@ -42841,8 +42822,8 @@ let memory_rel_Boolv_F = prove
 let memory_rel_Boolv = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars /\ good_dimindex (:'a) /\
-     (b ==> v = wordLang_Word (n2w 18)) /\ (~b ==> v = wordLang_Word ((n2w
-       2):'a word)) ==>
+     (b ==> v = word_Word (n2w 18)) /\ (~b ==> v = word_Word ((n2w 2):'a
+       word)) ==>
      memory_rel c be ts refs sp st m dm (CONS (dataSem_Boolv b,v) vars)`),
   (STRIP_TAC THEN ASM_CASES_TAC `b:bool` THEN ASM_SIMP_TAC[] THENL
     [MATCH_MP_TAC memory_rel_Boolv_T;
@@ -42997,12 +42978,12 @@ let small_int_w2i_i2w = prove
 let memory_rel_Add = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Number i,wordLang_Word wi) (CONS (dataSem_Number
-          j,wordLang_Word wj) vars)) /\
+        (CONS (dataSem_Number i,word_Word wi) (CONS (dataSem_Number
+          j,word_Word wj) vars)) /\
       ~(word_bit 0 wi) /\ ~(word_bit 0 wj) /\
       good_dimindex (:'a) /\ (w2i (wi + wj) = w2i wi + w2i wj) ==>
       memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Number (i + j),wordLang_Word (wi + (wj:'a word)))
+        (CONS (dataSem_Number (i + j),word_Word (wi + (wj:'a word)))
           vars)`),
   (* the sum of two small integers: the bit zero of each root is
      clear, so memory_rel_any_Number_IMP says that both integers
@@ -43097,12 +43078,12 @@ let memory_rel_Add = prove
 let memory_rel_Sub = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Number i,wordLang_Word wi) (CONS (dataSem_Number
-          j,wordLang_Word wj) vars)) /\
+        (CONS (dataSem_Number i,word_Word wi) (CONS (dataSem_Number
+          j,word_Word wj) vars)) /\
       ~(word_bit 0 wi) /\ ~(word_bit 0 wj) /\
       good_dimindex (:'a) /\ (w2i (wi - wj) = w2i wi - w2i wj) ==>
       memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Number (i - j),wordLang_Word (wi - (wj:'a word)))
+        (CONS (dataSem_Number (i - j),word_Word (wi - (wj:'a word)))
           vars)`),
   (* the difference of two small integers: the bit zero of each
      root is clear, so memory_rel_any_Number_IMP says that both
@@ -43219,12 +43200,12 @@ add_simp small_int_w2n;;
 let memory_rel_And = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Number (&(w2n (i:word8))),wordLang_Word wi) (CONS
-          (dataSem_Number (&(w2n j)),wordLang_Word wj) vars)) /\
+        (CONS (dataSem_Number (&(w2n (i:word8))),word_Word wi) (CONS
+          (dataSem_Number (&(w2n j)),word_Word wj) vars)) /\
       good_dimindex (:'a) ==>
       memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Number (&(w2n (i && j))),wordLang_Word (wi &&
-          (wj:'a word))) vars)`),
+        (CONS (dataSem_Number (&(w2n (i && j))),word_Word (wi && (wj:'a
+          word))) vars)`),
   (* the and of two bytes as the and of their roots: both roots are
      the Smallnum of their byte, because a byte is a small integer,
      and the and of two Smallnums of bytes is the Smallnum of the
@@ -43309,12 +43290,12 @@ let memory_rel_And = prove
 let memory_rel_Or = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Number (&(w2n (i:word8))),wordLang_Word wi) (CONS
-          (dataSem_Number (&(w2n j)),wordLang_Word wj) vars)) /\
+        (CONS (dataSem_Number (&(w2n (i:word8))),word_Word wi) (CONS
+          (dataSem_Number (&(w2n j)),word_Word wj) vars)) /\
       good_dimindex (:'a) ==>
       memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Number (&(w2n (i || j))),wordLang_Word (wi ||
-          (wj:'a word))) vars)`),
+        (CONS (dataSem_Number (&(w2n (i || j))),word_Word (wi || (wj:'a
+          word))) vars)`),
   (* the or of two bytes as the or of their roots: both roots are
      the Smallnum of their byte, because a byte is a small integer,
      and the or of two Smallnums of bytes is the Smallnum of the
@@ -43397,11 +43378,11 @@ let memory_rel_Or = prove
 let memory_rel_Xor = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Number (&(w2n (i:word8))),wordLang_Word wi) (CONS
-          (dataSem_Number (&(w2n j)),wordLang_Word wj) vars)) /\
+        (CONS (dataSem_Number (&(w2n (i:word8))),word_Word wi) (CONS
+          (dataSem_Number (&(w2n j)),word_Word wj) vars)) /\
       good_dimindex (:'a) ==>
       memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Number (&(w2n (word_xor i j))),wordLang_Word
+        (CONS (dataSem_Number (&(w2n (word_xor i j))),word_Word
           (word_xor wi wj:'a word)) vars)`),
   (* the xor of two bytes as the xor of their roots: both roots are
      the Smallnum of their byte, because a byte is a small integer,
@@ -43485,7 +43466,7 @@ let memory_rel_Xor = prove
 let memory_rel_Number_IMP_Word = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i,v) vars) ==>
-  (?w. v = wordLang_Word w)`),
+  (?w. v = word_Word w)`),
   (* a Number stands for a Data of its Smallnum or for a Pointer at
      its Bignum, and the word_addr of either is a Word *)
   (MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN ASM_MESON_TAC[]));;
@@ -43496,7 +43477,7 @@ let memory_rel_Number_IMP_Word_2 = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i,v) (CONS
   (dataSem_Number j,w) vars)) ==>
-      (?w1 w2. v = wordLang_Word w1 /\ w = wordLang_Word w2)`),
+      (?w1 w2. v = word_Word w1 /\ w = word_Word w2)`),
   (* the same of the two Numbers at the head of the list *)
   (MEMORY_REL_TAC THEN SPLIT_ROOTS_TAC THEN V_INV_TAC v_inv_def THEN
    ASM_MESON_TAC[]));;
@@ -43572,8 +43553,8 @@ let maxout_bits_IMP = prove
 
 let make_cons_ptr_thm = prove
  (`make_cons_ptr conf (f:'a word) tag len =
-     wordLang_Word ((f << (shift_length conf - backend_common_word_shift
-       (:'a)) || (n2w 1) ||
+     word_Word ((f << (shift_length conf - backend_common_word_shift (:'a))
+       || (n2w 1) ||
             ptr_bits conf tag len))`,
   (* the lower bits of ptr_bits are ptr_bits itself, which the
      source proves here as well (the theorem that states it on its
@@ -43590,7 +43571,7 @@ let make_cons_ptr_thm = prove
          (CONJ (ASSUME `i < dimindex (:'a)`) th))) THEN
      ARITH_TAC) in
    let glp = prove
-    (`get_lowerbits c (wordLang_Word (ptr_bits c x y)) =
+    (`get_lowerbits c (word_Word (ptr_bits c x y)) =
       (ptr_bits c x y || (n2w 1))`,
      REWRITE_TAC[get_lowerbits_def] THEN MATCH_REDUCE_TAC THEN
      AP_THM_TAC THEN AP_TERM_TAC THEN
@@ -43620,7 +43601,7 @@ let word_cmp_loop_def,word_cmp_loop_ind = define_wf_tac
   TERM_TAC
   `word_cmp_loop (l:'a word) (a1:'a word) a2 dm (m:'a word->'a word_loc) =
      if l = (n2w 0) then SOME (n2w 1) else if a1 IN dm /\ a2 IN dm then
-         match (m a1,m a2) with (wordLang_Word w1,wordLang_Word w2) ->
+         match (m a1,m a2) with (word_Word w1,word_Word w2) ->
              if w1 = w2 then
                word_cmp_loop (l - (n2w 1)) (a1 - bytes_in_word)
                  (a2 - bytes_in_word) dm m
@@ -43679,10 +43660,10 @@ let len_step = prove
 let word_cmp_loop_thm = prove
  (`!xs1 (xs2:('a word) list) f1 f2 (a1:'a word) a2.
      LENGTH xs1 = LENGTH xs2 /\ LENGTH xs1 < dimword (:'a) /\
-     (misc_word_list (a1 + bytes_in_word) (MAP wordLang_Word xs1) * f1)
-       (fun2set (m,dm)) /\
-     (misc_word_list (a2 + bytes_in_word) (MAP wordLang_Word xs2) * f2)
-       (fun2set (m,dm)) ==>
+     (misc_word_list (a1 + bytes_in_word) (MAP word_Word xs1) * f1) (fun2set
+       (m,dm)) /\
+     (misc_word_list (a2 + bytes_in_word) (MAP word_Word xs2) * f2) (fun2set
+       (m,dm)) ==>
      word_cmp_loop (n2w (LENGTH xs1))
        (a1 + bytes_in_word * n2w (LENGTH xs1))
        (a2 + bytes_in_word * n2w (LENGTH xs1)) dm m =
@@ -43707,9 +43688,9 @@ let word_cmp_loop_thm = prove
    `!k xs1 (xs2:('a word) list) f1 f2 (a1:'a word) a2.
       LENGTH xs1 <= k /\ LENGTH xs1 = LENGTH xs2 /\
       LENGTH xs1 < dimword (:'a) /\
-      (misc_word_list (a1 + bytes_in_word) (MAP wordLang_Word xs1) *
+      (misc_word_list (a1 + bytes_in_word) (MAP word_Word xs1) *
         f1) (fun2set (m,dm)) /\
-      (misc_word_list (a2 + bytes_in_word) (MAP wordLang_Word xs2) *
+      (misc_word_list (a2 + bytes_in_word) (MAP word_Word xs2) *
         f2) (fun2set (m,dm))
       ==> word_cmp_loop (n2w (LENGTH xs1))
             (a1 + bytes_in_word * n2w (LENGTH xs1))
@@ -43857,20 +43838,20 @@ let memory_rel_Number_cmp = prove
   (dataSem_Number i2,v2) vars)) /\
      good_dimindex (:'a) ==>
      (?w1 w2.
-       v1 = wordLang_Word w1 /\ v2 = wordLang_Word (w2:'a word) /\
+       v1 = word_Word w1 /\ v2 = word_Word (w2:'a word) /\
        (if ~(word_bit 0 w1) /\ ~(word_bit 0 w2) then
          (i1 < i2 <=> w1 < w2) /\ (i1 = i2 <=> w1 = w2)
        else if ~(word_bit 0 w1) /\ word_bit 0 w2 then ~(i1 = i2) /\
          (?a x2. get_real_addr c st w2 = SOME a /\
-                m a = wordLang_Word x2 /\ a IN dm /\
+                m a = word_Word x2 /\ a IN dm /\
                 word_cmp_res i1 i2 = (if (x2 && (n2w 16)) = (n2w 0) then
                   (n2w 0) else (n2w 2):'a word))
        else if word_bit 0 w1 /\ word_bit 0 w2 then
          ?a1 x1 a2 x2.
-           get_real_addr c st w1 = SOME a1 /\ m a1 = wordLang_Word x1
-             /\ a1 IN dm /\
-           get_real_addr c st w2 = SOME a2 /\ m a2 = wordLang_Word x2
-             /\ a2 IN dm /\
+           get_real_addr c st w1 = SOME a1 /\ m a1 = word_Word x1 /\ a1 IN
+             dm /\
+           get_real_addr c st w2 = SOME a2 /\ m a2 = word_Word x2 /\ a2 IN
+             dm /\
            (if x1 = x2 then
              let (a1,a2) = (if (x1 && (n2w 16)) = (n2w 0) then (a1,a2)
                else (a2,a1)) in
@@ -44128,7 +44109,7 @@ let memory_rel_Number_cmp = prove
       STRIP_ASSUME_TAC (MATCH_MP memory_rel_Number_IMP_Word_2 mr)) THEN
     REPEAT (FIRST_X_ASSUM (fun e ->
       if is_eq (concl e) && is_var (lhs (concl e)) &&
-         hd_is "wordLang_Word" (rhs (concl e))
+         hd_is "word_Word" (rhs (concl e))
       then SUBST_ALL_TAC e else fail())) THEN
     W(fun (asl,gl) ->
       let mr = grab_asm (fun th ->
@@ -44234,7 +44215,7 @@ let memory_rel_Number_cmp = prove
         hd_is "get_real_addr" (lhs (concl th))) in
       let a = rand (rhs (concl gra)) in
       let ma = gr (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th)) &&
+        hd_is "word_Word" (rhs (concl th)) &&
         is_var (rand (rhs (concl th))) &&
         lhs (concl th) = mk_comb (`m:'a word->'a word_loc`, a)) in
       MAP_EVERY EXISTS_TAC [a; rand (rhs (concl ma))]) THEN
@@ -44273,7 +44254,7 @@ let memory_rel_Number_cmp = prove
         lhs (concl t1) = lhs (concl t2) &&
         not (rhs (concl t1) = rhs (concl t2)) &&
         (hd_is "SOME" (rhs (concl t1)) ||
-         hd_is "wordLang_Word" (rhs (concl t1))))
+         hd_is "word_Word" (rhs (concl t1))))
         (allpairs (fun a b -> (a,b)) eqs eqs) in
       let ie = REWRITE_RULE[injectivity "option";
         injectivity "word_loc"] (TRANS (SYM t1) t2) in
@@ -44312,7 +44293,7 @@ let memory_rel_Number_cmp = prove
       let hdr a = rand (rhs (concl (grab_asm (fun th ->
         is_eq (concl th) &&
         lhs (concl th) = mk_comb (`m:'a word->'a word_loc`, a) &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl))) in
+        hd_is "word_Word" (rhs (concl th))) asl))) in
       MAP_EVERY EXISTS_TAC [a1; hdr a1; a2; hdr a2]) THEN
     REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) in
   (* the condition of the sign that a header holds, as the case of
@@ -44588,8 +44569,7 @@ let memory_rel_Block_MEM = prove
      good_dimindex (:'a) ==>
      (?w a y.
      get_real_offset (Smallnum (&i)) = SOME y /\
-     v = wordLang_Word w /\ get_real_addr c st w = SOME a /\ (a + y) IN dm
-       /\
+     v = word_Word w /\ get_real_addr c st w = SOME a /\ (a + y) IN dm /\
      memory_rel c be ts refs sp st m dm (CONS (EL i ls,m (a + y)) (CONS
        (dataSem_Block ts' n ls,v) vars)))`),
   (* an element of a block at an index, with the root of the index
@@ -44670,8 +44650,8 @@ let memory_rel_Block_MEM = prove
                      (CONJ gd lt)))) THEN
     DISCH_THEN STRIP_ASSUME_TAC THEN
     FIRST_X_ASSUM(fun e ->
-      if is_eq (concl e) && hd_is "wordLang_Word" (lhs (concl e)) &&
-         hd_is "wordLang_Word" (rhs (concl e))
+      if is_eq (concl e) && hd_is "word_Word" (lhs (concl e)) &&
+         hd_is "word_Word" (rhs (concl e))
       then SUBST_ALL_TAC(SYM(REWRITE_RULE[injectivity "word_loc"] e))
       else fail()) THEN
     W(fun (asl,w) ->
@@ -45145,7 +45125,7 @@ let shift_shift = prove
 
 (* [local] *)
 let word_addr_Data_NE_get_addr = prove
- (`good_dimindex (:'a) ==> ~(word_addr c (gc_shared_Data a1) = wordLang_Word
+ (`good_dimindex (:'a) ==> ~(word_addr c (gc_shared_Data a1) = word_Word
   (get_addr c n a2:'a word))`,
   (* the address of a Data of a Loc is a Loc, and the one of a Data
      of a word has its lowest bit taken off, where get_addr_0 says
@@ -45738,7 +45718,7 @@ let memory_rel_elements_list_words = prove
       DISCH_THEN STRIP_ASSUME_TAC THEN
       FIRST_X_ASSUM(fun e ->
         if is_eq (concl e) && is_var (lhs (concl e)) &&
-           hd_is "wordLang_Word" (rhs (concl e))
+           hd_is "word_Word" (rhs (concl e))
         then SUBST1_TAC e else fail()) THEN
       REWRITE_TAC[isWord_def] THEN MATCH_REDUCE_TAC THEN
       REWRITE_TAC[];
@@ -46524,7 +46504,7 @@ let memory_rel_ptr_eq = prove
   let pf_same =
     W(fun (asl,_) ->
       let ws = filter (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th))) (map snd asl) in
+        hd_is "word_Word" (rhs (concl th))) (map snd asl) in
       SUBST_ALL_TAC (REWRITE_RULE[injectivity "word_loc"]
         (TRANS (SYM (hd ws)) (hd (tl ws))))) THEN
     RULE_ASSUM_TRY (REWRITE_RULE[]) in
@@ -46809,7 +46789,7 @@ let memory_rel_ptr_eq = prove
     pf_same THEN
     W(fun (asl,_) ->
       let ws = grab_asm (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl in
+        hd_is "word_Word" (rhs (concl th))) asl in
       ASM_CASES_TAC (list_mk_icomb "bit"
         [`0`; rand (rhs (concl ws))])) THEN
     FIRST_ASSUM (fun th ->
@@ -47118,8 +47098,8 @@ let memory_rel_ptr_eq = prove
 let memory_rel_Block_Block_small_eq = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm
-       (CONS (dataSem_Block ts1 t1 v1,wordLang_Word (w1:'a word)) (CONS
-         (dataSem_Block ts2 t2 v2,wordLang_Word w2) vars)) /\
+       (CONS (dataSem_Block ts1 t1 v1,word_Word (w1:'a word)) (CONS
+         (dataSem_Block ts2 t2 v2,word_Word w2) vars)) /\
      good_dimindex (:'a) /\ ~(w1 = w2) /\ ~(word_bit 0 w1) ==> ~(LENGTH
        v1 = LENGTH v2) \/ ~(t1 = t2)`),
   (* the first Block has its lowest bit clear, so it is the empty
@@ -47163,7 +47143,7 @@ let memory_rel_simple_eq = prove
      dataSem_do_eq refs v1 v2 = Eq_val b /\
      good_dimindex (:'a) ==>
      (?w1 (w2:'a word).
-       x1 = wordLang_Word w1 /\ x2 = wordLang_Word w2 /\
+       x1 = word_Word w1 /\ x2 = word_Word w2 /\
        (~(word_bit 0 w1) \/ ~(word_bit 0 w2) ==>
        (w1 = w2) = b))`),
 (* the cases of the source: the five shapes of the one value
@@ -47257,7 +47237,7 @@ let memory_rel_simple_eq = prove
       let cs = conjuncts (snd (strip_exists gl)) in
       let e t = grab_asm (fun th ->
         is_eq (concl th) && lhs (concl th) = t &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl in
+        hd_is "word_Word" (rhs (concl th))) asl in
       MAP_EVERY EXISTS_TAC
         [rand (rhs (concl (e (lhs (el 0 cs)))));
          rand (rhs (concl (e (lhs (el 1 cs)))))]) THEN
@@ -47304,7 +47284,7 @@ let memory_rel_simple_eq = prove
       tryfind (fun x ->
         let es = filter (fun (_,th) ->
           (try is_eq (concl th) && lhs (concl th) = x &&
-               hd_is "wordLang_Word" (rhs (concl th))
+               hd_is "word_Word" (rhs (concl th))
            with Failure _ -> false)) asl in
         if length es < 2 then fail() else
         let eq = REWRITE_RULE[injectivity "word_loc"]
@@ -47317,7 +47297,7 @@ let memory_rel_simple_eq = prove
       let cs = conjuncts (snd (strip_exists gl)) in
       let e t = grab_asm (fun th ->
         is_eq (concl th) && lhs (concl th) = t &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl in
+        hd_is "word_Word" (rhs (concl th))) asl in
       MAP_EVERY EXISTS_TAC
         [rand (rhs (concl (e (lhs (el 0 cs)))));
          rand (rhs (concl (e (lhs (el 1 cs)))))]) THEN
@@ -47349,7 +47329,7 @@ let memory_rel_simple_eq = prove
     two_roots memory_rel_Block_IMP THEN
     REPEAT (FIRST_X_ASSUM (fun th ->
       let c = concl th in
-      if is_eq c && is_var (lhs c) && hd_is "wordLang_Word" (rhs c)
+      if is_eq c && is_var (lhs c) && hd_is "word_Word" (rhs c)
       then SUBST_ALL_TAC th else fail())) THEN
     W(fun (asl,gl) ->
       let cs = conjuncts (snd (strip_exists gl)) in
@@ -47429,8 +47409,8 @@ let word_header_def = new_definition
   `word_header c st a dm m =
      match get_real_addr c st a with NONE -> NONE
      | SOME a1 ->
-         (if ~(a1 IN dm) then NONE else match m a1 with wordLang_Word x1
-           -> SOME (a1,x1) | _ -> NONE)`;;
+         (if ~(a1 IN dm) then NONE else match m a1 with word_Word x1 ->
+           SOME (a1,x1) | _ -> NONE)`;;
 
 let data_to_word_memoryProof_fix_clock_def = define_cases
   `(data_to_word_memoryProof_fix_clock ck (l:num) NONE = NONE) /\
@@ -47519,7 +47499,7 @@ let word_eq_def,word_eq_ind = define_wf_tac
    (word_eq_list c st dm m l ck w a1 a2 =
       (if w = ((n2w 0):'a word) then SOME ((n2w 1),l,ck) else if ~(a1 IN dm)
         \/ ~(a2 IN dm) \/ (l = 0) \/ (ck = 0) then NONE else match (m a1,m a2)
-        with (wordLang_Word w1,wordLang_Word w2) ->
+        with (word_Word w1,word_Word w2) ->
          (match data_to_word_memoryProof_fix_clock (ck - 1) (l - 1) (word_eq
            c st dm m (l - 1) (ck - 1) w1 w2) with NONE -> NONE
           | SOME (x,l,ck') -> if ~(x = (n2w 1)) then SOME (x,l,ck) else if l
@@ -47906,9 +47886,9 @@ let word_eq_min_max_clock = prove
 let memory_rel_isClos = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm (CONS (dataSem_Block ts1 t1
-  v1,wordLang_Word (w1:'a word)) vars) /\
+  v1,word_Word (w1:'a word)) vars) /\
      word_bit 0 w1 /\
-     get_real_addr c st w1 = SOME a' /\ m a' = wordLang_Word x'
+     get_real_addr c st w1 = SOME a' /\ m a' = word_Word x'
        /\ good_dimindex (:'a) ==>
      (dataSem_isClos t1 v1 <=> word_is_clos c x')`),
   (* the Block has values, because the lowest bit of its word is
@@ -48044,12 +48024,12 @@ let memory_rel_Block_explode_lemma = prove
  (cake_as_vars (fun () ->
     `!n.
        memory_rel c be ts refs sp st m dm (CONS (dataSem_Block ts1 t1
-         v1,wordLang_Word w1) vars) /\
+         v1,word_Word w1) vars) /\
        word_bit 0 w1 /\ get_real_addr c st w1 = SOME a /\ good_dimindex
          (:'a) ==>
        memory_rel c be ts refs sp st m dm
          (APPEND (eq_explode (a + bytes_in_word) m dm (TAKE n v1)) (CONS
-           (dataSem_Block ts1 t1 v1,wordLang_Word (w1:'a word)) vars)) /\
+           (dataSem_Block ts1 t1 v1,word_Word (w1:'a word)) vars)) /\
        eq_assum (a + bytes_in_word) m dm (TAKE n v1)`),
 (* the proof of the source is an induction on how much of the block
    is exploded.  At nought nothing is, and the memory_rel is the
@@ -48100,7 +48080,7 @@ let memory_rel_Block_explode_lemma = prove
           SUBST_ALL_TAC (REWRITE_RULE[injectivity "option"]
             (TRANS (SYM go) oc)))) THEN
       FIRST_X_ASSUM (fun e ->
-        if (try hd_is "wordLang_Word" (lhs (concl e)) &&
+        if (try hd_is "word_Word" (lhs (concl e)) &&
                 is_var (rand (rand (concl e)))
             with Failure _ -> false)
         then SUBST_ALL_TAC (SYM (REWRITE_RULE[injectivity
@@ -48137,7 +48117,7 @@ let memory_rel_Block_explode_lemma = prove
 let memory_rel_Block_explode = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm (CONS (dataSem_Block ts1 t1
-  v1,wordLang_Word w1) vars) /\
+  v1,word_Word w1) vars) /\
       word_bit 0 w1 /\ get_real_addr c st w1 = SOME a /\ good_dimindex
         (:'a) ==>
       memory_rel c be ts refs sp st m dm
@@ -48169,7 +48149,7 @@ let memory_rel_Block_explode = prove
    variables of its own are read as variables *)
 let memory_rel_Loc = prove
  (cake_as_vars (fun () ->
-    `memory_rel c be ts refs sp st m dm (CONS (v1,wordLang_Loc n k) vars) /\
+    `memory_rel c be ts refs sp st m dm (CONS (v1,word_Loc n k) vars) /\
      (!ptr. ~(v1 = dataSem_RefPtr F ptr)) ==>
      v1 = dataSem_CodePtr n`),
   (* the word_addr of a root is a Loc only for a Data of a Loc,
@@ -48185,17 +48165,17 @@ let memory_rel_Loc = prove
    variables of its own are read as variables *)
 let memory_rel_ByteArray_words_IMP = prove
  (cake_as_vars (fun () ->
-    `memory_rel c be ts refs sp st m dm (CONS (dataSem_RefPtr bl
-  p,wordLang_Word (w:'a word)) vars) /\
+    `memory_rel c be ts refs sp st m dm (CONS (dataSem_RefPtr bl p,word_Word
+  (w:'a word)) vars) /\
      sptree_lookup p refs = SOME (bvlSem_ByteArray fl vals) /\
      good_dimindex (:'a) /\
      get_real_addr c st w = SOME a ==>
      (?x frame.
-       m a = wordLang_Word x /\
+       m a = word_Word x /\
        (
         misc_word_list (a + bytes_in_word)
-          (MAP wordLang_Word (write_bytes vals (REPLICATE (w2n
-            (decode_length c x)) (n2w 0)) be)) * frame) (fun2set (m,dm)) /\
+          (MAP word_Word (write_bytes vals (REPLICATE (w2n (decode_length
+            c x)) (n2w 0)) be)) * frame) (fun2set (m,dm)) /\
      w2n (decode_length c x) < dimword (:'a) /\
      w2n (decode_length c x) = LENGTH vals DIV (dimindex (:'a) DIV 8) +
        1)`),
@@ -48698,8 +48678,8 @@ let word_eq_thm0 = prove
  (cake_as_vars (fun () ->
     `(!refs v1 v2 l ck b w1 w2 n.
           memory_rel c be ts refs sp st m dm
-             (CONS (v1,wordLang_Word w1) (CONS (v2,(wordLang_Word w2:'a
-               word_loc)) vars)) /\
+             (CONS (v1,word_Word w1) (CONS (v2,(word_Word w2:'a word_loc))
+               vars)) /\
           vb_eq_size refs v1 v2 = SOME (n,b) /\
           ck = MIN (vs_depth v1) (vs_depth v2) /\
           n * dimword (:'a) < l /\
@@ -48962,10 +48942,10 @@ let word_eq_thm0 = prove
        (x + bytes_in_word * n2w 2) IN dm /\
        (y + bytes_in_word) IN dm /\
        (y + bytes_in_word * n2w 2) IN dm /\
-       m (x + bytes_in_word) = wordLang_Word ((63 >< 32) (u:word64)) /\
-       m (x + bytes_in_word * n2w 2) = wordLang_Word ((31 >< 0) u) /\
-       m (y + bytes_in_word) = wordLang_Word ((63 >< 32) v) /\
-       m (y + bytes_in_word * n2w 2) = wordLang_Word ((31 >< 0) v)
+       m (x + bytes_in_word) = word_Word ((63 >< 32) (u:word64)) /\
+       m (x + bytes_in_word * n2w 2) = word_Word ((31 >< 0) u) /\
+       m (y + bytes_in_word) = word_Word ((63 >< 32) v) /\
+       m (y + bytes_in_word * n2w 2) = word_Word ((31 >< 0) v)
        ==> (?res. word_cmp_loop ((n2w 2):'a word)
                     (x + bytes_in_word * n2w 2)
                     (y + bytes_in_word * n2w 2) dm m = SOME res /\
@@ -49009,8 +48989,8 @@ let word_eq_thm0 = prove
    (cake_as_vars (fun () ->
       `dimindex (:'a) = 64 /\
        (x + bytes_in_word) IN dm /\ (y + bytes_in_word) IN dm /\
-       m (x + bytes_in_word) = wordLang_Word ((63 >< 0) (u:word64)) /\
-       m (y + bytes_in_word) = wordLang_Word ((63 >< 0) v)
+       m (x + bytes_in_word) = word_Word ((63 >< 0) (u:word64)) /\
+       m (y + bytes_in_word) = word_Word ((63 >< 0) v)
        ==> (?res. word_cmp_loop ((n2w 1):'a word)
                     (x + bytes_in_word * n2w 1)
                     (y + bytes_in_word * n2w 1) dm m = SOME res /\
@@ -49180,7 +49160,7 @@ let word_eq_thm0 = prove
       let eqs = mapfilter (fun (_,th) ->
         if is_eq (concl th) &&
            (hd_is "get_real_addr" (lhs (concl th)) ||
-            (try hd_is "wordLang_Word" (rhs (concl th)) &&
+            (try hd_is "word_Word" (rhs (concl th)) &&
                  not (is_var (lhs (concl th)))
              with Failure _ -> false))
         then th else fail()) asl in
@@ -49198,7 +49178,7 @@ let word_eq_thm0 = prove
   let word_header_SOME = prove
    (cake_as_vars (fun () ->
       `get_real_addr c st w = SOME x /\ x IN dm /\
-       m x = wordLang_Word h
+       m x = word_Word h
        ==> word_header c st w dm m = SOME (x,h)`),
     STRIP_TAC THEN REWRITE_TAC[word_header_def] THEN
     ASM_REWRITE_TAC[] THEN TRY MATCH_REDUCE_TAC THEN
@@ -49217,7 +49197,7 @@ let word_eq_thm0 = prove
             hd_is "IN" (concl t2) && lhand (concl t2) = a) asl in
           let mx = grab_asm (fun t2 -> is_eq (concl t2) &&
             (try rand (lhs (concl t2)) = a &&
-                 hd_is "wordLang_Word" (rhs (concl t2))
+                 hd_is "word_Word" (rhs (concl t2))
              with Failure _ -> false)) asl in
           MATCH_MP word_header_SOME (CONJ th (CONJ inm mx))
         else fail()) asl in
@@ -49398,7 +49378,7 @@ let word_eq_thm0 = prove
         let a = rand (rhs (concl gra)) in
         let mx = grab_asm (fun th -> is_eq (concl th) &&
           (try rand (lhs (concl th)) = a &&
-               hd_is "wordLang_Word" (rhs (concl th))
+               hd_is "word_Word" (rhs (concl th))
            with Failure _ -> false)) asl in
         MATCH_MP memory_rel_isClos
           (CONJ mr0 (CONJ b0 (CONJ gra (CONJ mx gd)))) in
@@ -49492,7 +49472,7 @@ let word_eq_thm0 = prove
    (cake_as_vars (fun () ->
       `memory_rel c be ts refs sp st m dm (CONS (v,x) vars) /\
        (!ptr. ~(v = RefPtr F ptr)) /\ (!k. ~(v = CodePtr k))
-       ==> (?w. x = wordLang_Word (w:'a word))`),
+       ==> (?w. x = word_Word (w:'a word))`),
     STRIP_TAC THEN CASES_ON_TAC `x:('a)word_loc` THEN
     TRY (SOLVED (W(fun (asl,gl) ->
       EXISTS_TAC (rand (lhs (snd (dest_exists gl))))) THEN
@@ -49511,7 +49491,7 @@ let word_eq_thm0 = prove
    (cake_as_vars (fun () ->
       `~(w = ((n2w 0):'a word)) /\ a1 IN dm /\ a2 IN dm /\
        ~(l = 0) /\ ~(ck = 0) /\
-       m a1 = wordLang_Word c1 /\ m a2 = wordLang_Word c2 /\
+       m a1 = word_Word c1 /\ m a2 = word_Word c2 /\
        word_eq c st dm m (l - 1) (ck - 1) c1 c2 = SOME (x,l1,ck1)
        ==> word_eq_list c st dm m l ck w a1 a2 =
            (if ~(x = ((n2w 1):'a word)) then SOME (x,l1,ck) else
@@ -49635,13 +49615,13 @@ let word_eq_thm0 = prove
   let word_cmp_loop_bytes = prove
    (cake_as_vars (fun () ->
       `memory_rel c be ts refs sp st m dm
-         (CONS (RefPtr bl1 p1,wordLang_Word (w1:'a word)) (CONS (RefPtr
-           bl2 p2,wordLang_Word w2) vars)) /\
+         (CONS (RefPtr bl1 p1,word_Word (w1:'a word)) (CONS (RefPtr
+           bl2 p2,word_Word w2) vars)) /\
        lookup p1 refs = SOME (ByteArray T bs1) /\
        lookup p2 refs = SOME (ByteArray T bs2) /\
        get_real_addr c st w1 = SOME a1 /\
        get_real_addr c st w2 = SOME a2 /\
-       m a1 = wordLang_Word h /\ m a2 = wordLang_Word h /\
+       m a1 = word_Word h /\ m a2 = word_Word h /\
        good_dimindex (:'a)
        ==> (?res. word_cmp_loop (decode_length c h)
                     (a1 + bytes_in_word * decode_length c h)
@@ -49795,7 +49775,7 @@ let word_eq_thm0 = prove
     not (can (find_term (hd_is "eq_explode")) (concl th))) asl in
   let the_wd w asl = grab_asm (fun th -> is_eq (concl th) &&
     lhs (concl th) = w &&
-    (try hd_is "wordLang_Word" (rhs (concl th))
+    (try hd_is "word_Word" (rhs (concl th))
      with Failure _ -> false)) asl in
   let weq_at nm ck asl = grab_asm (fun th -> is_eq (concl th) &&
     hd_is nm (lhs (concl th)) &&
@@ -50194,9 +50174,9 @@ let word_eq_thm0 = prove
       `memory_rel c be ts refs sp st m dm (CONS (RefPtr T p,v) vars) /\
        sptree_lookup p refs = SOME r /\ ~(?bs. ByteArray T bs = r) /\
        good_dimindex (:'a)
-       ==> (?w a x. v = wordLang_Word w /\
+       ==> (?w a x. v = word_Word w /\
              get_real_addr c st w = SOME a /\
-             m a = wordLang_Word (x:'a word) /\ a IN dm /\
+             m a = word_Word (x:'a word) /\ a IN dm /\
              (word_bit 3 x /\ ~(word_bit 2 x) \/
               word_bit 2 x /\ ~(word_bit 3 x) /\ word_bit 4 x))`),
     STRIP_TAC THEN
@@ -50233,7 +50213,7 @@ let word_eq_thm0 = prove
       let a = rand (rhs (concl gra)) in
       let mx = grab_asm (fun th -> is_eq (concl th) &&
         (try rand (lhs (concl th)) = a &&
-             hd_is "wordLang_Word" (rhs (concl th))
+             hd_is "word_Word" (rhs (concl th))
          with Failure _ -> false)) asl in
       MAP_EVERY EXISTS_TAC [w; a; rand (rhs (concl mx))]) THEN
     REPEAT CONJ_TAC THEN TRY (FIRST_ASSUM ACCEPT_TAC) THEN
@@ -50869,7 +50849,7 @@ let word_eq_thm0 = prove
           let mx p = grab_asm (fun th -> is_eq (concl th) &&
             (try rand (lhs (concl th)) =
                    rand (rhs (concl (gr p))) &&
-                 hd_is "wordLang_Word" (rhs (concl th))
+                 hd_is "word_Word" (rhs (concl th))
              with Failure _ -> false)) asl in
           let p1 = lhand stack and p2 = lhand (rand stack) in
           STRIP_ASSUME_TAC (MATCH_MP word_cmp_loop_bytes
@@ -51124,8 +51104,8 @@ let word_eq_thm0 = prove
 let word_eq_thm = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm
-        (CONS (v1,wordLang_Word w1) (CONS (v2,(wordLang_Word w2:'a
-          word_loc)) vars)) /\
+        (CONS (v1,word_Word w1) (CONS (v2,(word_Word w2:'a word_loc))
+          vars)) /\
       dataSem_do_eq refs v1 v2 = Eq_val b /\ good_dimindex (:'a) ==>
       (?res l1 ck1.
          word_eq c st dm m (MustTerminate_limit (:'a) - 1)
@@ -51162,13 +51142,13 @@ let word_mem_eq_def,word_mem_eq_ind = define_rec
   `(word_mem_eq a [] dm m = SOME T) /\
    (word_mem_eq a (CONS x xs) dm m =
          if ~(a IN dm) then NONE else if ~(isWord (m a)) then NONE
-             else if ~(m a = wordLang_Word x) then SOME F else word_mem_eq
-             (a + bytes_in_word) xs dm m)`;;
+             else if ~(m a = word_Word x) then SOME F else word_mem_eq (a
+             + bytes_in_word) xs dm m)`;;
 
 (* [local] *)
 let word_mem_eq_thm = prove
  (`!xs ys a ff.
-    (misc_word_list a (MAP wordLang_Word xs) * ff) (fun2set (m,dm)) /\
+    (misc_word_list a (MAP word_Word xs) * ff) (fun2set (m,dm)) /\
     LENGTH xs = LENGTH ys ==>
     word_mem_eq a ys dm m = SOME (xs = ys)`,
   (* the memory holds the words of the list, so the loop reads them
@@ -51225,8 +51205,8 @@ let bignum_words_def = new_definition
    variables of its own are read as variables *)
 let memory_rel_Number_const_test = prove
  (cake_as_vars (fun () ->
-    `memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i,wordLang_Word
-  (w:'a word)) vars) /\
+    `memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i,word_Word (w:'a
+  word)) vars) /\
       good_dimindex (:'a) ==>
       (if small_int (:'a) j then
         (Smallnum j = w <=> i = j)
@@ -51516,7 +51496,7 @@ let memory_rel_Number_const_test = prove
                  is_eq (lhs (concl th)) &&
                  is_conj (rhs (concl th))) asl in
                let heq = grab_asm (fun th -> is_eq (concl th) &&
-                 hd_is "wordLang_Word" (lhs (concl th))) asl in
+                 hd_is "word_Word" (lhs (concl th))) asl in
                MP_TAC (EQ_MP iff
                  (SYM (REWRITE_RULE[injectivity "word_loc"]
                    heq)))) THEN
@@ -51556,7 +51536,7 @@ let memory_rel_Number_const_test = prove
           is_eq (lhs (concl th)) && is_conj (rhs (concl th))) asl in
         let hne = grab_asm (fun th -> is_neg (concl th) &&
           is_eq (rand (concl th)) &&
-          hd_is "wordLang_Word" (lhs (rand (concl th)))) asl in
+          hd_is "word_Word" (lhs (rand (concl th)))) asl in
         let parts = conjuncts (rhs (concl iff)) in
         let heq = EQ_MP (SYM iff)
           (end_itlist CONJ (map (fun t -> REFL (lhs t)) parts)) in
@@ -51571,7 +51551,7 @@ let memory_rel_Word64_const_test = prove
     `memory_rel c be ts refs sp st m dm (CONS (dataSem_Word64 i,v) vars) /\
      good_dimindex (:'a) ==>
        (?(w:'a word) a words h.
-         v = wordLang_Word w /\ get_real_addr c st w = SOME a /\
+         v = word_Word w /\ get_real_addr c st w = SOME a /\
          word_mem_eq (a + bytes_in_word) words dm m = SOME (i = j) /\
          encode_header c 3 (LENGTH words) = SOME (h:'a word) /\
          (if dimindex (:'a) < 64 then
@@ -51611,7 +51591,7 @@ let memory_rel_Word64_const_test = prove
   MEMORY_REL_TAC THEN V_INV_TAC v_inv_def THEN
   FIRST_ASSUM(fun e ->
     let c = concl e in
-    if is_eq c && is_var (rand c) && hd_is "wordLang_Word" (lhs c)
+    if is_eq c && is_var (rand c) && hd_is "word_Word" (lhs c)
     then SUBST1_TAC (SYM e) else fail()) THEN
   REWRITE_TAC[injectivity "word_loc"] THEN
   CONV_TAC(REDEPTH_CONV UNWIND_CONV) THEN
@@ -51685,7 +51665,7 @@ let memory_rel_Word64_const_test = prove
     let is = the_asm (hd_is "IS_SOME") gl in
     let eh = rand (concl is) in
     let mh = rand (rhs (concl (the_asm (fun c ->
-               try is_eq c && hd_is "wordLang_Word" (rand c) &&
+               try is_eq c && hd_is "word_Word" (rand c) &&
                    hd_is "make_header" (rand (rand c))
                with Failure _ -> false) gl))) in
     SUBGOAL_THEN (mk_eq (eh, mk_icomb (`SOME`, mh)))
@@ -51911,12 +51891,12 @@ let memory_rel_String_const_test = prove
      sptree_lookup i refs = SOME (bvlSem_ByteArray T other) /\
      good_dimindex (:'a) ==>
      (let t = implode (MAP (CHR o w2n) other) in
-       (part_to_words c LN (closLang_Str s) ((n2w 0):'a word) = NONE ==>
-         ~(s = t)) /\
+       (part_to_words c LN (clos_Str s) ((n2w 0):'a word) = NONE ==> ~(s =
+         t)) /\
        (!x res.
-         part_to_words c LN (closLang_Str s) (n2w 0) = SOME (x,res) ==>
+         part_to_words c LN (clos_Str s) (n2w 0) = SOME (x,res) ==>
          (?(w:'a word) a.
-           v = wordLang_Word w /\ get_real_addr c st w = SOME a /\
+           v = word_Word w /\ get_real_addr c st w = SOME a /\
            word_mem_eq a (MAP (get_Word o SND) res) dm m = SOME (s =
              t))))`),
 (* the string of a byte array, compared with the one the source
@@ -51942,7 +51922,7 @@ let memory_rel_String_const_test = prove
      them *)
   let map_get_word = prove
    (`!l. MAP (get_Word o SND)
-           (MAP (\w. (F,wordLang_Word w)) (l:('a word)list)) = l`,
+           (MAP (\w. (F,word_Word w)) (l:('a word)list)) = l`,
     LIST_INDUCT_TAC THEN
     ASM_REWRITE_TAC[MAP; o_THM; SND; get_Word_def] THEN
     CONV_TAC (TOP_DEPTH_CONV MATCH_REDUCE_CONV) THEN
@@ -52067,7 +52047,7 @@ let memory_rel_String_const_test = prove
         (CONJ mr (CONJ lk gd)))) THEN
     FIRST_ASSUM (fun e ->
       if is_eq (concl e) && is_var (lhs (concl e)) &&
-         hd_is "wordLang_Word" (rhs (concl e))
+         hd_is "word_Word" (rhs (concl e))
       then SUBST_ALL_TAC e else fail()) THEN
     W(fun (asl,gl) ->
       let gr p = grab_asm p asl in
@@ -52200,7 +52180,7 @@ let memory_rel_String_const_test = prove
       let gr p = grab_asm p asl in
       let ind = gr (fun th -> hd_is "IN" (concl th)) in
       let mae = gr (fun th -> is_eq (concl th) &&
-        hd_is "wordLang_Word" (rhs (concl th)) &&
+        hd_is "word_Word" (rhs (concl th)) &&
         hd_is "make_byte_header" (rand (rhs (concl th)))) in
       REWRITE_TAC[word_mem_eq_def; ind; mae; isWord_def] THEN
       MATCH_REDUCE_TAC THEN
@@ -52268,13 +52248,13 @@ let word_1_and_eq_0 = prove
 let memory_rel_Number_single_mul = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm
-        (CONS (dataSem_Number i1,wordLang_Word (w1:'a word)) (CONS
-          (dataSem_Number i2,wordLang_Word w2) vars)) /\
+        (CONS (dataSem_Number i1,word_Word (w1:'a word)) (CONS
+          (dataSem_Number i2,word_Word w2) vars)) /\
       good_dimindex (:'a) ==>
         (let (lw,hw) = single_mul w1 (w2 >>> 1) (n2w 0) in
           (hw || ((w1 || w2) && (n2w 1))) = (n2w 0) ==>
           memory_rel c be ts refs sp st m dm (CONS (dataSem_Number (i1 *
-            i2),wordLang_Word (lw >>> 1)) vars))`),
+            i2),word_Word (lw >>> 1)) vars))`),
 (* the single word multiplication of the two roots, with the high
    word of it zero: the two numbers are small, because the and of
    the two roots with one is zero, so each root is the Smallnum of
@@ -52639,7 +52619,7 @@ let memory_rel_Number_single_mul = prove
    variables of its own are read as variables *)
 let memory_rel_bounds_check = prove
  (cake_as_vars (fun () ->
-    `memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i1,wordLang_Word
+    `memory_rel c be ts refs sp st m dm (CONS (dataSem_Number i1,word_Word
   (w1:'a word)) vars) /\
       small_int (:'a) (&n) /\ good_dimindex (:'a) ==>
       (word_ror w1 2 <+ n2w n <=> (&0) <= i1 /\ i1 < &n) /\
@@ -52870,8 +52850,8 @@ let memory_rel_bounds_check = prove
    variables of its own are read as variables *)
 let memory_rel_ByteArray_IMP_store = prove
  (cake_as_vars (fun () ->
-    `memory_rel c be ts refs sp st m dm (CONS (dataSem_RefPtr bl
-  p,wordLang_Word (w:'a word)) vars) /\
+    `memory_rel c be ts refs sp st m dm (CONS (dataSem_RefPtr bl p,word_Word
+  (w:'a word)) vars) /\
       sptree_lookup p refs = SOME (bvlSem_ByteArray fl vals)
         /\ good_dimindex (:'a) /\
       get_real_addr c st w = SOME a /\ i < LENGTH vals ==>
@@ -52879,8 +52859,7 @@ let memory_rel_ByteArray_IMP_store = prove
         SOME m1 /\
            memory_rel c be ts (sptree_insert p (bvlSem_ByteArray fl
              (LUPDATE b i vals)) refs) sp st m1 dm
-             (CONS (dataSem_RefPtr bl p,wordLang_Word (w:'a word))
-               vars))`),
+             (CONS (dataSem_RefPtr bl p,word_Word (w:'a word)) vars))`),
   (* a byte of a byte array can be stored: memory_rel_ByteArray_IMP
      says that the load of that byte works, which tells that the
      cell the store writes holds a word and is in the domain, and
@@ -52896,7 +52875,7 @@ let memory_rel_ByteArray_IMP_store = prove
    let loadword = prove
     (`!(m:('a)word->('a)word_loc) dm be' w x.
         mem_load_byte_aux m dm be' w = SOME x
-        ==> (?v. m (byte_align w) = wordLang_Word v) /\
+        ==> (?v. m (byte_align w) = word_Word v) /\
             byte_align w IN dm`,
      REPEAT GEN_TAC THEN
      REWRITE_TAC[mem_load_byte_aux_def] THEN
@@ -53095,7 +53074,7 @@ let the_ne asl =
 let the_weq v asl =
   grab_asm (fun th ->
     is_eq (concl th) && lhs (concl th) = v &&
-    hd_is "wordLang_Word" (rhs (concl th))) asl;;
+    hd_is "word_Word" (rhs (concl th))) asl;;
 let the_gra w asl =
   grab_asm (fun th ->
     is_eq (concl th) && hd_is "get_real_addr" (lhs (concl th)) &&
@@ -53199,7 +53178,7 @@ let bounds tm =
    of the statement; where a root is in the goal already it is the
    word of it *)
 let wof asl t =
-  if hd_is "wordLang_Word" t then rand t
+  if hd_is "word_Word" t then rand t
   else rand (rhs (concl (the_weq t asl)));;
 let wit1 =
   W(fun (asl,gl) ->
@@ -53232,7 +53211,7 @@ let wit_wcf =
 let subst_vs =
   REPEAT (FIRST_X_ASSUM (fun th ->
     let c = concl th in
-    if is_eq c && is_var (lhs c) && hd_is "wordLang_Word" (rhs c)
+    if is_eq c && is_var (lhs c) && hd_is "word_Word" (rhs c)
     then SUBST_ALL_TAC th else fail()));;
 (* the roots of the hypothesis of the induction are the roots of
    the goal, and so are the real addresses of them *)
@@ -53329,7 +53308,7 @@ let word_copy_fwd_thm = prove
         list_copy_fwd n xp xs yp ys = SOME ys1 /\
         good_dimindex (:'a) /\ n < dimword (:'a) /\ ~(p1 = p2) ==>
         (?w1 (w2:'a word) a1 a2 m1.
-          v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
+          v1 = word_Word w1 /\ v2 = word_Word w2 /\
           get_real_addr c st w1 = SOME a1 /\
           get_real_addr c st w2 = SOME a2 /\
           word_copy_fwd be (n2w n) (a1 + bytes_in_word + n2w xp)
@@ -53399,7 +53378,7 @@ let word_copy_fwd_alias_thm = prove
         list_copy_fwd_alias n xp yp ys = SOME ys1 /\
         good_dimindex (:'a) /\ n < dimword (:'a) ==>
         (?(w2:'a word) a2 m1.
-          v2 = wordLang_Word w2 /\
+          v2 = word_Word w2 /\
           get_real_addr c st w2 = SOME a2 /\
           word_copy_fwd be (n2w n) (a2 + bytes_in_word + n2w xp)
             (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
@@ -53546,7 +53525,7 @@ let word_copy_bwd_thm = prove
         list_copy_bwd n xp xs yp ys = SOME ys1 /\
         good_dimindex (:'a) /\ n < dimword (:'a) /\ ~(p1 = p2) ==>
         (?w1 (w2:'a word) a1 a2 m1.
-          v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
+          v1 = word_Word w1 /\ v2 = word_Word w2 /\
           get_real_addr c st w1 = SOME a1 /\
           get_real_addr c st w2 = SOME a2 /\
           word_copy_bwd be (n2w n) (a1 + bytes_in_word + n2w xp)
@@ -53639,7 +53618,7 @@ let word_copy_bwd_alias_thm = prove
         list_copy_bwd_alias n xp yp ys = SOME ys1 /\
         good_dimindex (:'a) /\ n < dimword (:'a) ==>
         (?(w2:'a word) a2 m1.
-          v2 = wordLang_Word w2 /\
+          v2 = word_Word w2 /\
           get_real_addr c st w2 = SOME a2 /\
           word_copy_bwd be (n2w n) (a2 + bytes_in_word + n2w xp)
             (a2 + bytes_in_word + n2w yp) m dm = SOME m1 /\
@@ -54736,7 +54715,7 @@ let word_copy_array_thm = prove
         copy_array (xs,&xp) (&n) (SOME (ys,&yp)) = SOME ys1 /\
         good_dimindex (:'a) /\ ~(p1 = p2) ==>
         (?w1 (w2:'a word) a1 a2 m1.
-          v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
+          v1 = word_Word w1 /\ v2 = word_Word w2 /\
           get_real_addr c st w1 = SOME a1 /\
           get_real_addr c st w2 = SOME a2 /\
           word_copy_array be (n2w n) (a1 + bytes_in_word) (n2w xp)
@@ -54873,7 +54852,7 @@ let word_copy_array_alias_thm = prove
         copy_array (ys,&xp) (&n) (SOME (ys,&yp)) = SOME ys1 /\
         good_dimindex (:'a) ==>
         (?(w2:'a word) a2 m1.
-          v2 = wordLang_Word w2 /\
+          v2 = word_Word w2 /\
           get_real_addr c st w2 = SOME a2 /\
           word_copy_array be (n2w n) (a2 + bytes_in_word) (n2w xp)
             (a2 + bytes_in_word) (n2w yp) m dm = SOME m1 /\
@@ -55037,26 +55016,26 @@ let memory_rel_copy_array_NONE = prove
       byte_len (:'a) n < 2 EXP data_to_word_config_len_size c
         /\ good_dimindex (:'a) ==>
       (?free' curr a1 a2 m1 m2 w1 w2.
-        v1 = wordLang_Word w1 /\
+        v1 = word_Word w1 /\
         get_real_addr c st w1 = SOME a1 /\
-        make_ptr c (free' - curr) (n2w 0) (byte_len (:'a) n) =
-          wordLang_Word w2 /\
+        make_ptr c (free' - curr) (n2w 0) (byte_len (:'a) n) = word_Word
+          w2 /\
         get_real_addr c st w2 = SOME a2 /\
-        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        FLOOKUP st NextFree = SOME (word_Word free') /\
+        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
         data_to_word_memoryProof_store_list free'
-          (CONS (wordLang_Word (make_byte_header c fl n))
-               (REPLICATE (byte_len (:'a) n) (wordLang_Word (n2w 0)))) m
-                 dm = SOME m1 /\
+          (CONS (word_Word (make_byte_header c fl n))
+               (REPLICATE (byte_len (:'a) n) (word_Word (n2w 0)))) m dm =
+                 SOME m1 /\
         word_copy_fwd be (n2w n) (a1 + bytes_in_word + n2w xp)
           (a2 + bytes_in_word) m1 dm = SOME m2 /\
         memory_rel c be ts (sptree_insert new (bvlSem_ByteArray fl ys)
           refs)
          (sp - (byte_len (:'a) n + 1))
          (st |+ (NextFree,
-                 wordLang_Word (free' + bytes_in_word * n2w (byte_len
-                   (:'a) n + 1)))) m2 dm
-         (CONS (dataSem_RefPtr T new,wordLang_Word w2) vars))`),
+                 word_Word (free' + bytes_in_word * n2w (byte_len (:'a) n
+                   + 1)))) m2 dm
+         (CONS (dataSem_RefPtr T new,word_Word w2) vars))`),
 (* the lemma of the source is memory_rel_RefByte_alt at a zero
    byte, where the bytes the new array is made of are all zero
    (word_of_byte_0, last_bytes_0, LUPDATE_REPLICATE), and the one
@@ -55189,7 +55168,7 @@ let write_bytearray_isWord = prove
   (* writing bytes leaves a word a word: the write either updates
      the address with a word or leaves the memory alone *)
   (let isw = prove
-    (`!w. isWord (wordLang_Word w)`,
+    (`!w. isWord (word_Word w)`,
      GEN_TAC THEN REWRITE_TAC[isWord_def] THEN
      MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
    LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THENL
@@ -55332,14 +55311,14 @@ let memory_rel_write_bytearray_lemma = prove
  (cake_as_vars (fun () ->
     `!rest bytes bytes0 m refs.
        memory_rel c be stm refs sp st m dm (CONS (dataSem_RefPtr b
-         n,wordLang_Word (w:'a word)) vs) /\
+         n,word_Word (w:'a word)) vs) /\
        sptree_lookup n refs = SOME (bvlSem_ByteArray F (APPEND bytes0
          rest)) /\ LENGTH bytes = LENGTH bytes0 /\
        get_real_simple_addr c st w = SOME a /\ good_dimindex (:'a) ==>
        memory_rel c be stm (sptree_insert n (bvlSem_ByteArray F (APPEND
          bytes rest)) refs) sp st
          (write_bytearray (a + bytes_in_word) bytes m dm be)
-         dm (CONS (dataSem_RefPtr b n,wordLang_Word w) vs)`),
+         dm (CONS (dataSem_RefPtr b n,word_Word w) vs)`),
 (* the induction of the source, from the right on the bytes that
    are written (SNOC_INDUCT): where there are none the memory and
    the references stand as they are (insert_unchanged), and the
@@ -55417,7 +55396,7 @@ let memory_rel_write_bytearray_lemma = prove
        the ones of the statement *)
     FIRST_ASSUM (fun we ->
       if not (is_eq (concl we)) ||
-         not (hd_is "wordLang_Word" (lhs (concl we))) then fail() else
+         not (hd_is "word_Word" (lhs (concl we))) then fail() else
        SUBST_ALL_TAC
          (SYM (REWRITE_RULE[injectivity "word_loc"] we))) THEN
     W(fun (asl,gl) ->
@@ -55520,8 +55499,8 @@ let memory_rel_space_max = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs old_sp st m dm vars ==>
       (?next_free trig_gc sp.
-        FLOOKUP st NextFree = SOME (wordLang_Word next_free) /\
-        FLOOKUP st TriggerGC = SOME (wordLang_Word trig_gc) /\
+        FLOOKUP st NextFree = SOME (word_Word next_free) /\
+        FLOOKUP st TriggerGC = SOME (word_Word trig_gc) /\
         trig_gc - next_free = bytes_in_word * (n2w sp:'a word) /\ old_sp
           <= sp /\
         memory_rel c be ts refs sp st m dm vars /\
@@ -55591,8 +55570,7 @@ let memory_rel_space_max = prove
        ARITH_TAC])));;
 
 let get_lowerbits_ptrbits = prove
- (`get_lowerbits c (wordLang_Word (ptr_bits c x y)) = (ptr_bits c x y || (n2w
-  1))`,
+ (`get_lowerbits c (word_Word (ptr_bits c x y)) = (ptr_bits c x y || (n2w 1))`,
   (* the bits of ptr_bits are below small_shift_length (that is what
      maxout_bits_IMP says of each of the two), so the word_bits of
      it is itself *)
@@ -55620,10 +55598,10 @@ let get_lowerbits_ptrbits = prove
 
 let append_writes_def,append_writes_ind = define_rec
   `(append_writes c ptr (hdr:'a word) [] l = ARB) /\
-   (append_writes c ptr (hdr:'a word) (CONS x xs) l = CONS (wordLang_Word hdr)
+   (append_writes c ptr (hdr:'a word) (CONS x xs) l = CONS (word_Word hdr)
     (CONS x
         (if xs = [] then [l] else let ptr = ptr + ((n2w 3) << shift_length
-            c) in CONS (wordLang_Word ptr)
+            c) in CONS (word_Word ptr)
             (append_writes c ptr hdr xs l))))`;;
 
 let append_writes_LENGTH = prove
@@ -55795,8 +55773,8 @@ let append_writes_list_to_BlockReps = prove
        5 < dimindex (:'a) /\
      backend_common_word_shift (:'a) <= shift_length c /\
      ALL2 (\v w. word_addr c v = w) (CONS x xs) (CONS w ws) /\
-     wordLang_Word init_ptr = make_cons_ptr c (bytes_in_word * (n2w
-       offset:'a word)) 0 2 ==>
+     word_Word init_ptr = make_cons_ptr c (bytes_in_word * (n2w offset:'a
+       word)) 0 2 ==>
      misc_word_list (curr + bytes_in_word * (n2w offset:'a word))
        (append_writes c init_ptr
           (make_header c (n2w 0) 2) (CONS w ws) (word_addr c v)) =
@@ -55842,11 +55820,11 @@ let append_writes_list_to_BlockReps = prove
      `!c init_ptr offset.
         good_dimindex (:'a) /\
         backend_common_word_shift (:'a) <= shift_length c /\
-        wordLang_Word (init_ptr:'a word) =
+        word_Word (init_ptr:'a word) =
           make_cons_ptr c (bytes_in_word * n2w offset) 0 2 ==>
         (init_ptr + (n2w 3 << shift_length c) =
-           get_addr c (offset + 3) (wordLang_Word (ptr_bits c 0 2)) /\
-         wordLang_Word (init_ptr + (n2w 3 << shift_length c)) =
+           get_addr c (offset + 3) (word_Word (ptr_bits c 0 2)) /\
+         word_Word (init_ptr + (n2w 3 << shift_length c)) =
            make_cons_ptr c (bytes_in_word * n2w (offset + 3)) 0 2)`),
     REPEAT GEN_TAC THEN STRIP_TAC THEN
     FIRST_ASSUM (fun gd ->
@@ -57040,7 +57018,7 @@ let cons_multi_thm = prove
             a = heap_length heap1 /\
             abs_ml_inv conf
               (CONS (dataSem_list_to_v ts t xs) stack) refs
-              (CONS (gc_shared_Pointer a (wordLang_Word (ptr_bits conf
+              (CONS (gc_shared_Pointer a (word_Word (ptr_bits conf
                 cons_tag 2))) roots2,
                      APPEND (APPEND (APPEND heap1 Allocd) (heap_expand
                        ((sp + sp1) - heap_length Allocd))) heap2,be,
@@ -58347,14 +58325,14 @@ let memory_rel_append = prove
       1 < data_to_word_config_len_size c /\
       LENGTH in1 = LENGTH ws /\ ~(in1 = []) /\
       3 * LENGTH in1 <= sp /\ good_dimindex (:'a) /\
-      wordLang_Word init_ptr = make_cons_ptr c (next_free - curr) 0 2 /\
-      FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
-      FLOOKUP st NextFree = SOME (wordLang_Word (next_free:'a word)) ==>
+      word_Word init_ptr = make_cons_ptr c (next_free - curr) 0 2 /\
+      FLOOKUP st CurrHeap = SOME (word_Word curr) /\
+      FLOOKUP st NextFree = SOME (word_Word (next_free:'a word)) ==>
       memory_rel c be (ts + LENGTH in1) refs (sp - 3 * LENGTH in1)
          (st |+ (NextFree,
-                 wordLang_Word (next_free + bytes_in_word * n2w (3 *
-                   LENGTH in1)))) m1 dm
-         (CONS (dataSem_list_to_v ts v in1,wordLang_Word init_ptr) vars)`),
+                 word_Word (next_free + bytes_in_word * n2w (3 * LENGTH
+                   in1)))) m1 dm
+         (CONS (dataSem_list_to_v ts v in1,word_Word init_ptr) vars)`),
 (* the invariant of a list that the append built: cons_multi_thm
    gives the blocks of the values in the unused space and the
    invariant of the list that points at them, and what is left to
@@ -58914,7 +58892,7 @@ let data_to_word_memoryProof_walk_def,data_to_word_memoryProof_walk_ind =
      else if n = 1 then [ptr] else match some (\p.
          ?x y.
          heap_lookup ptr heap = SOME (BlockRep cons_tag [x; y]) /\
-         y = gc_shared_Pointer p (wordLang_Word (ptr_bits conf cons_tag 2)))
+         y = gc_shared_Pointer p (word_Word (ptr_bits conf cons_tag 2)))
            with
          NONE -> []
        | SOME p -> CONS ptr (data_to_word_memoryProof_walk conf heap p
@@ -58923,8 +58901,7 @@ let data_to_word_memoryProof_walk_def,data_to_word_memoryProof_walk_ind =
 let v_inv_v_to_list_lemma = prove
  (`v_inv c v refs (y,f,tf,heap) /\
    dataSem_v_to_list v = SOME vs /\ ~(vs = []) ==>
-    (?p ys. y = gc_shared_Pointer p (wordLang_Word (ptr_bits c cons_tag 2))
-      /\
+    (?p ys. y = gc_shared_Pointer p (word_Word (ptr_bits c cons_tag 2)) /\
                heap_lookup p heap = SOME (BlockRep cons_tag ys))`,
   (* a list of at least one element is a Block of the cons tag with
      two elements, and the invariant of a Block that is not empty
@@ -58951,8 +58928,8 @@ let v_inv_v_to_list_lemma = prove
 
 let walk_LENGTH = prove
  (`!vs ptr ps v ts.
-     v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word (ptr_bits c
-       cons_tag 2)),f,tf,heap) /\
+     v_inv c v refs (gc_shared_Pointer ptr (word_Word (ptr_bits c cons_tag
+       2)),f,tf,heap) /\
      dataSem_v_to_list v = SOME vs /\ ~(vs = []) /\
      data_to_word_memoryProof_walk c heap ptr (LENGTH vs) = ps ==>
      LENGTH ps = LENGTH vs`,
@@ -59491,8 +59468,8 @@ let heap_length_Blocks = prove
 let walk_heap_lookup = prove
  (`!vs p ps v ts.
      v_inv c v refs
-       (gc_shared_Pointer p (wordLang_Word (ptr_bits c cons_tag
-         2)),f,tf,heap) /\
+       (gc_shared_Pointer p (word_Word (ptr_bits c cons_tag 2)),f,tf,heap)
+         /\
      dataSem_v_to_list v = SOME vs /\ ~(vs = []) /\
      data_to_word_memoryProof_walk c heap p (LENGTH vs) = ps ==>
      ALL (\p. ?x y. heap_lookup p heap = SOME (BlockRep cons_tag [x; y]))
@@ -59652,7 +59629,7 @@ let walk_heap_lookup = prove
     REWRITE_TAC[]));;
 
 let walk_MEM = prove
- (`v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word (ptr_bits c cons_tag
+ (`v_inv c v refs (gc_shared_Pointer ptr (word_Word (ptr_bits c cons_tag
   2)),f,tf,heap) /\
    dataSem_v_to_list v = SOME vs /\ ~(vs = []) ==>
    MEM ptr (data_to_word_memoryProof_walk c heap ptr (LENGTH vs))`,
@@ -59787,7 +59764,7 @@ let walk_MEM = prove
 let walk_CONS = prove
  (cake_as_vars (fun () ->
     `!vs ptr v.
-       v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word
+       v_inv c v refs (gc_shared_Pointer ptr (word_Word
          (ptr_bits c cons_tag 2)),f,tf,heap) /\
        v_to_list v = SOME vs /\ ~(vs = []) ==>
        (?ws. data_to_word_memoryProof_walk c heap ptr (LENGTH vs) =
@@ -59915,15 +59892,15 @@ let walk_CONS = prove
 
 let walk_EL = prove
  (`!vs ptr ps v ts.
-     v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word (ptr_bits c
-       cons_tag 2)),f,tf,heap) /\
+     v_inv c v refs (gc_shared_Pointer ptr (word_Word (ptr_bits c cons_tag
+       2)),f,tf,heap) /\
      dataSem_v_to_list v = SOME vs /\ ~(vs = []) /\
      data_to_word_memoryProof_walk c heap ptr (LENGTH vs) = ps ==>
      (!n. SUC n < LENGTH vs ==>
        (?x.
          heap_lookup (EL n ps) heap =
            SOME (BlockRep cons_tag [x;
-             gc_shared_Pointer (EL (SUC n) ps) (wordLang_Word (ptr_bits c
+             gc_shared_Pointer (EL (SUC n) ps) (word_Word (ptr_bits c
                cons_tag 2))])))`,
 (* the proof of the source is the induction of walk_heap_lookup,
    and the same steps take the cons of the list and the BlockRep of
@@ -60229,14 +60206,14 @@ let block_drop_def,block_drop_ind = define_wf
 
 let v_to_list_DROP = prove
  (`!vs ptr ps k v ts.
-   v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word (ptr_bits c cons_tag
+   v_inv c v refs (gc_shared_Pointer ptr (word_Word (ptr_bits c cons_tag
      2)),f,tf,heap) /\
    dataSem_v_to_list v = SOME vs /\ ~(vs = []) /\
    data_to_word_memoryProof_walk c heap ptr (LENGTH vs) = ps /\
    ALL_DISTINCT ps /\
    k < LENGTH vs ==>
    v_inv c (THE (block_drop k v)) refs
-     (gc_shared_Pointer (EL k ps) (wordLang_Word (ptr_bits c cons_tag
+     (gc_shared_Pointer (EL k ps) (word_Word (ptr_bits c cons_tag
        2)),f,tf,heap)`,
 (* the proof of the source is the induction of walk_heap_lookup
    once more, with the index taken apart rather than inducted on.
@@ -60502,8 +60479,8 @@ let block_drop_DROP = prove
 
 let walk_ALL_DISTINCT = prove
  (`!vs ptr ps v ts.
-     v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word (ptr_bits c
-       cons_tag 2)),f,tf,heap) /\
+     v_inv c v refs (gc_shared_Pointer ptr (word_Word (ptr_bits c cons_tag
+       2)),f,tf,heap) /\
      dataSem_v_to_list v = SOME vs /\ ~(vs = []) /\
      data_to_word_memoryProof_walk c heap ptr (LENGTH vs) = ps ==>
      ALL_DISTINCT ps`,
@@ -60810,30 +60787,30 @@ let memory_rel_list_limit = prove
      MATCH_ACCEPT_TAC(MATCH_MP mul_le (CONJ le dw))))));;
 
 let build_part_words_def = define_cases
-  `(build_part_words c m (closLang_Int i) (offset:'a word) =
-      (if small_int (:'a) i then SOME (wordLang_Word (Smallnum i),[])
+  `(build_part_words c m (clos_Int i) (offset:'a word) =
+      (if small_int (:'a) i then SOME (word_Word (Smallnum i),[])
        else let (sign,ws) = i2mw i in
               match encode_header c (w2n (b2w sign << 2 || ((n2w 3):'a
                   word))) (LENGTH ws) with NONE -> NONE
               | SOME hd -> SOME (make_ptr c offset ((n2w 0):'a word)
                   (LENGTH ws),
-                              MAP wordLang_Word (CONS hd ws)))) /\
-   (build_part_words c m (closLang_Con t ns) (offset:'a word) =
+                              MAP word_Word (CONS hd ws)))) /\
+   (build_part_words c m (clos_Con t ns) (offset:'a word) =
       (if NULL ns then
-         if t < dimword (:'a) DIV 16 then SOME (wordLang_Word (n2w (16 * t
-             + 2)),[]) else NONE
+         if t < dimword (:'a) DIV 16 then SOME (word_Word (n2w (16 * t +
+             2)),[]) else NONE
        else match encode_header c (4 * t) (LENGTH ns) with NONE -> NONE
          | SOME hd -> SOME (make_cons_ptr c offset t (LENGTH ns),CONS
-             (wordLang_Word hd) (MAP m ns)))) /\
-   (build_part_words c m (closLang_W64 w) (offset:'a word) =
+             (word_Word hd) (MAP m ns)))) /\
+   (build_part_words c m (clos_W64 w) (offset:'a word) =
       (let ws = (if dimindex (:'a) < 64 then [((63 >< 32) w); ((31 >< 0)
           w)]
                  else [((63 >< 0) w):'a word]) in
          match encode_header c 3 (LENGTH ws) with NONE -> NONE
          | SOME hd -> SOME (make_ptr c offset ((n2w 0):'a word) (LENGTH
              ws),
-                            MAP wordLang_Word (CONS hd ws)))) /\
-   (build_part_words c m (closLang_Str s) (offset:'a word) =
+                            MAP word_Word (CONS hd ws)))) /\
+   (build_part_words c m (clos_Str s) (offset:'a word) =
       (let bytes = MAP (n2w o ORD) (explode s) in
        let n = LENGTH bytes in
        let hd = make_byte_header c T n in
@@ -60842,7 +60819,7 @@ let build_part_words_def = define_cases
          if byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4) /\
             byte_len (:'a) n < 2 EXP data_to_word_config_len_size c then
                 SOME (make_ptr c offset ((n2w 0):'a word) (byte_len (:'a)
-                n),MAP wordLang_Word (CONS hd ws))
+                n),MAP word_Word (CONS hd ws))
          else NONE))`;;
 
 let build_words_def,build_words_ind = define_rec
@@ -61003,16 +60980,15 @@ let memory_rel_do_build = prove
        build_words c map0' i parts' (free' - (curr:'a word)) = SOME (w,ws)
          /\
        SUM (MAP part_space_req parts') <= sp /\
-       FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-       FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+       FLOOKUP st NextFree = SOME (word_Word free') /\
+       FLOOKUP st CurrHeap = SOME (word_Word curr) /\
        (!ks. memory_rel c be ts refs sp st m dm (APPEND (MAP (\k. (map0
          k,(map0' k))) ks) vars)) /\
        good_dimindex (:'a) ==>
        (?m1.
          let nf = free' + bytes_in_word * n2w (LENGTH ws) in
            memory_rel c be ts1 refs1 (sp - LENGTH ws)
-             (st |+ (NextFree,wordLang_Word nf)) m1 dm (CONS (v,w) vars)
-               /\
+             (st |+ (NextFree,word_Word nf)) m1 dm (CONS (v,w) vars) /\
            data_to_word_memoryProof_store_list free' ws m dm = SOME m1)`),
 (* the parts one after the other: do_build makes the value of each
    part and puts it in the map at the index of it, and build_words
@@ -61240,13 +61216,13 @@ let memory_rel_do_build = prove
         do_build map0 i t refs (SOME ts) = (v,refs1,SOME ts1) /\
         build_words c map0' i t (free' - curr) = SOME (w,ws) /\
         SUM (MAP part_space_req t) <= sp /\
-        FLOOKUP st NextFree = SOME (wordLang_Word free') /\
-        FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+        FLOOKUP st NextFree = SOME (word_Word free') /\
+        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
         (!ks. memory_rel c be ts refs sp st m dm
                 (APPEND (MAP (\k. (map0 k,map0' k)) ks) vars)) /\
         good_dimindex (:'a)
         ==> (?m1. memory_rel c be ts1 refs1 (sp - LENGTH ws)
-                      (st |+ (NextFree,wordLang_Word
+                      (st |+ (NextFree,word_Word
                          (free' + bytes_in_word * n2w (LENGTH ws))))
                       m1 dm (CONS (v,w) vars) /\
                     data_to_word_memoryProof_store_list free' ws m dm
@@ -61255,10 +61231,10 @@ let memory_rel_do_build = prove
        SOME m0 ==>
      free2 = free' + bytes_in_word * n2w (LENGTH xs) ==>
      sp2 = sp - LENGTH xs ==>
-     FLOOKUP st2 NextFree = SOME (wordLang_Word free2) ==>
-     FLOOKUP st2 CurrHeap = SOME (wordLang_Word curr) ==>
-     (!nf. st2 |+ (NextFree,wordLang_Word nf) =
-           st |+ (NextFree,wordLang_Word nf)) ==>
+     FLOOKUP st2 NextFree = SOME (word_Word free2) ==>
+     FLOOKUP st2 CurrHeap = SOME (word_Word curr) ==>
+     (!nf. st2 |+ (NextFree,word_Word nf) =
+           st |+ (NextFree,word_Word nf)) ==>
      (!ks. memory_rel c be ts2 refs2 sp2 st2 m0 dm
              (APPEND (MAP (\k. ((i =+ b) mp k,(i =+ w2) mp' k)) ks)
                vars)) ==>
@@ -61272,7 +61248,7 @@ let memory_rel_do_build = prove
        ys))
                  in
                  memory_rel c be ts1 refs1 (sp - LENGTH (APPEND xs ys))
-                   (st |+ (NextFree,wordLang_Word nf)) m1 dm
+                   (st |+ (NextFree,word_Word nf)) m1 dm
                    (CONS (v,w) vars) /\
                  data_to_word_memoryProof_store_list free' (APPEND xs
                    ys)
@@ -61987,14 +61963,14 @@ let make_cons_ptr_add = prove
  (`byte_aligned n /\ good_dimindex (:'a) /\ backend_common_word_shift (:'a) <=
   shift_length c ==>
    make_cons_ptr c n tag len =
-   wordLang_Word (n << (shift_length c - backend_common_word_shift (:'a)) +
-         (get_lowerbits c (wordLang_Word (ptr_bits c tag len)):'a word))`,
+   word_Word (n << (shift_length c - backend_common_word_shift (:'a)) +
+         (get_lowerbits c (word_Word (ptr_bits c tag len)):'a word))`,
   (* and the same for the pointer of a cons, where the one that
      the lower bits already hold is absorbed first *)
   (let lb1 = prove
      (`!c (x:(N)word).
-         word 1 || get_lowerbits c (wordLang_Word x) =
-         get_lowerbits c (wordLang_Word x)`,
+         word 1 || get_lowerbits c (word_Word x) =
+         get_lowerbits c (word_Word x)`,
       REPEAT GEN_TAC THEN REWRITE_TAC[get_lowerbits_def] THEN
       MATCH_REDUCE_TAC THEN CONV_TAC WORD_BITWISE_RULE) in
     STRIP_TAC THEN
@@ -62025,8 +62001,8 @@ let make_ptr_add = prove
  (`byte_aligned n /\ good_dimindex (:'a) /\ backend_common_word_shift (:'a) <=
   shift_length c ==>
    make_ptr c n tag len =
-   wordLang_Word (n << (shift_length c - backend_common_word_shift (:'a))
-     + ((n2w 1):'a word))`,
+   word_Word (n << (shift_length c - backend_common_word_shift (:'a)) +
+     ((n2w 1):'a word))`,
   (* a byte aligned word is a word shifted up by the shift, so the
      pointer it makes has its lowest bit clear and the or with one
      is an add *)
@@ -62058,7 +62034,7 @@ let word_cond_add_def = new_definition
   `word_cond_add c a x3 =
    match x3 with
      F,x -> (x:'a word_loc)
-   | T,wordLang_Word w -> wordLang_Word (w + a << (shift_length c -
+   | T,word_Word w -> word_Word (w + a << (shift_length c -
      backend_common_word_shift (:'a)))
    | T,other -> other`;;
 add_simp word_cond_add_def;;
@@ -62167,8 +62143,8 @@ let cond_add_F = prove
   MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
 
 let cond_add_T = prove
- (`!c a (w:'a word). word_cond_add c a (T,wordLang_Word w) =
-     wordLang_Word (w + a << (shift_length c -
+ (`!c a (w:'a word). word_cond_add c a (T,word_Word w) =
+     word_Word (w + a << (shift_length c -
        backend_common_word_shift (:'a)))`,
   REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [word_cond_add_def] THEN
@@ -62722,7 +62698,7 @@ let const_parts_to_words_LENGTH = prove
 let good_loc_def = new_definition
   `good_loc code x2 =
    match x2 with
-     wordLang_Loc n m -> (m = 0 /\ n IN code)
+     word_Loc n m -> (m = 0 /\ n IN code)
    | _ -> T`;;
 
 (* the port's own: what says that the words of a constant part are
@@ -62731,7 +62707,7 @@ let good_loc_def = new_definition
    keeps good. *)
 
 let good_loc_Word = prove
- (`!s w. good_loc s (wordLang_Word w) = T`,
+ (`!s w. good_loc s (word_Word w) = T`,
   REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [good_loc_def] THEN
   MATCH_REDUCE_TAC THEN REWRITE_TAC[]);;
@@ -62841,15 +62817,15 @@ let memory_rel_do_build_const = prove
      const_parts_to_words c parts = SOME (w,ws) /\
      memory_rel c be ts refs sp st m dm vars /\
      SUM (MAP part_space_req parts) <= sp /\
-     FLOOKUP st NextFree = SOME (wordLang_Word clos_known_free) /\
-     FLOOKUP st CurrHeap = SOME (wordLang_Word curr) /\
+     FLOOKUP st NextFree = SOME (word_Word clos_known_free) /\
+     FLOOKUP st CurrHeap = SOME (word_Word curr) /\
      good_dimindex (:'a) ==>
      (?m1.
        let nf = clos_known_free + bytes_in_word * n2w (LENGTH ws) in
        let adjust = word_cond_add c (clos_known_free - (curr:'a word)) in
          memory_rel c be ts1 refs1 (sp - LENGTH ws)
-           (st |+ (NextFree,wordLang_Word nf)) m1 dm (CONS (v,adjust w)
-             vars) /\
+           (st |+ (NextFree,word_Word nf)) m1 dm (CONS (v,adjust w) vars)
+             /\
          data_to_word_memoryProof_store_list clos_known_free (MAP adjust
            ws) m dm = SOME m1)`),
 (* the step is memory_rel_do_build with the map of the constants
@@ -62882,7 +62858,7 @@ let memory_rel_do_build_const = prove
      leaves it alone *)
   let lm_LN = prove
    (`!i. lookup_mem (LN:(bool#('a)word_loc)spt) i =
-         (F,wordLang_Word ((n2w 0):'a word))`,
+         (F,word_Word ((n2w 0):'a word))`,
     GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [lookup_mem_def] THEN
     REWRITE_TAC[lookup_def] THEN MATCH_REDUCE_TAC THEN
     REWRITE_TAC[]) in
@@ -62956,7 +62932,7 @@ let memory_rel_do_build_const = prove
       let args = snd (strip_comb (lhs (concl db))) in
       MAP_EVERY EXISTS_TAC
         [el 2 args; el 1 args; rand (rand adj); el 0 args;
-         `\(n:num). wordLang_Word ((n2w 0):'a word)`;
+         `\(n:num). word_Word ((n2w 0):'a word)`;
          el 3 args; rand (el 4 args)] THEN
       (REPEAT CONJ_TAC THEN
        TRY (SOLVED (ACCEPT_TAC db)) THEN
@@ -63066,7 +63042,7 @@ let word_xor_bytes_def,word_xor_bytes_ind = define_wf_tac
        if len = (n2w 0) then SOME m else let (w1a,c1) = read_word dm m a1 in
          let (w2a,c2) = read_word dm m a2 in
          let a = word_xor w1a w2a in
-         let m = (a2 =+ wordLang_Word (a:'a word)) m in
+         let m = (a2 =+ word_Word (a:'a word)) m in
            if c1 /\ c2 then SOME m else NONE
      else let (w1a,c1) = read_word dm m a1 in
        let (w2a,c2) = read_word dm m a2 in
@@ -63074,8 +63050,8 @@ let word_xor_bytes_def,word_xor_bytes_ind = define_wf_tac
        let (w2b,c4) = read_word dm m (a2 + bytes_in_word) in
        let a = word_xor w1a w2a in
        let b = word_xor w1b w2b in
-       let m = ((a2 + bytes_in_word) =+ wordLang_Word b) ((a2 =+
-         wordLang_Word a) m) in
+       let m = ((a2 + bytes_in_word) =+ word_Word b) ((a2 =+ word_Word a) m)
+         in
          if c1 /\ c2 /\ c3 /\ c4 then
            word_xor_bytes (a1 + (n2w 2) * bytes_in_word) (a2 + (n2w 2) *
              bytes_in_word)
@@ -63417,12 +63393,12 @@ let xor_words_word_list = prove
  (`!vals1 vals2 res_vals a1 a2 be' frame m.
      xor_words vals1 vals2 = SOME res_vals /\
      good_dimindex (:'a) /\ LENGTH vals1 < dimword (:'a) /\
-     (misc_word_list a1 (MAP wordLang_Word vals1) *
-      misc_word_list a2 (MAP wordLang_Word vals2) *
+     (misc_word_list a1 (MAP word_Word vals1) *
+      misc_word_list a2 (MAP word_Word vals2) *
       frame) (fun2set (m,dm)) ==>
      (?m1.
-       (misc_word_list a1 (MAP wordLang_Word vals1) *
-        misc_word_list a2 (MAP wordLang_Word res_vals) *
+       (misc_word_list a1 (MAP word_Word vals1) *
+        misc_word_list a2 (MAP word_Word res_vals) *
         frame) (fun2set (m1,(dm:'a word->bool))) /\
        word_xor_bytes a1 a2 (n2w (LENGTH vals1)) dm m = SOME m1)`,
 (* the words of the second list become the exclusive or of the two,
@@ -63471,8 +63447,8 @@ let xor_words_word_list = prove
   let wr a v sp =
     SPEC v (MATCH_MP write_fun2set (front sp (cellat a sp))) in
   let isw = prove
-   (`isWord (wordLang_Word w) = T /\
-     theWord (wordLang_Word w) = w`,
+   (`isWord (word_Word w) = T /\
+     theWord (word_Word w) = w`,
     CONJ_TAC THENL
      [REWRITE_TAC[isWord_def] THEN MATCH_REDUCE_TAC;
       REWRITE_TAC[theWord_def]]) in
@@ -63782,10 +63758,10 @@ let xor_words_word_list_alias = prove
  (`!vals1 res_vals a1 be' frame m.
      xor_words vals1 vals1 = SOME res_vals /\
      good_dimindex (:'a) /\ LENGTH vals1 < dimword (:'a) /\
-     (misc_word_list a1 (MAP wordLang_Word vals1) *
+     (misc_word_list a1 (MAP word_Word vals1) *
       frame) (fun2set (m,dm)) ==>
      (?m1.
-       (misc_word_list a1 (MAP wordLang_Word res_vals) *
+       (misc_word_list a1 (MAP word_Word res_vals) *
         frame) (fun2set (m1,(dm:'a word->bool))) /\
        word_xor_bytes a1 a1 (n2w (LENGTH vals1)) dm m = SOME m1)`,
 (* the exclusive or of a list with itself, which writes the zeros
@@ -63824,8 +63800,8 @@ let xor_words_word_list_alias = prove
   let wr a v sp =
     SPEC v (MATCH_MP write_fun2set (front sp (cellat a sp))) in
   let isw = prove
-   (`isWord (wordLang_Word w) = T /\
-     theWord (wordLang_Word w) = w`,
+   (`isWord (word_Word w) = T /\
+     theWord (word_Word w) = w`,
     CONJ_TAC THENL
      [REWRITE_TAC[isWord_def] THEN MATCH_REDUCE_TAC;
       REWRITE_TAC[theWord_def]]) in
@@ -64115,15 +64091,15 @@ let xor_bytes_word_list = prove
        xor_bytes vals1 vals2 = SOME res_vals /\
        good_dimindex (:'a) /\ LENGTH (make_zeros vals1:('a word) list) <
          dimword (:'a) /\
-       (misc_word_list a1 (MAP wordLang_Word (write_bytes vals1
-         (make_zeros vals1) be')) *
-        misc_word_list a2 (MAP wordLang_Word (write_bytes vals2
-          (make_zeros vals2) be')) *
+       (misc_word_list a1 (MAP word_Word (write_bytes vals1 (make_zeros
+         vals1) be')) *
+        misc_word_list a2 (MAP word_Word (write_bytes vals2 (make_zeros
+          vals2) be')) *
         frame) (fun2set (m,dm)) ==>
        (?m1.
-         (misc_word_list a1 (MAP wordLang_Word (write_bytes vals1
-           (make_zeros vals1:('a word) list) be')) *
-          misc_word_list a2 (MAP wordLang_Word (write_bytes res_vals
+         (misc_word_list a1 (MAP word_Word (write_bytes vals1 (make_zeros
+           vals1:('a word) list) be')) *
+          misc_word_list a2 (MAP word_Word (write_bytes res_vals
             (make_zeros vals2:('a word) list) be')) *
           frame) (fun2set (m1,(dm:'a word->bool))) /\
          word_xor_bytes a1 a2 (n2w (LENGTH (make_zeros vals1:('a word)
@@ -64150,11 +64126,11 @@ let xor_bytes_word_list_alias = prove
        xor_bytes vals1 vals1 = SOME res_vals1 /\
        good_dimindex (:'a) /\ LENGTH (make_zeros vals1:('a word) list) <
          dimword (:'a) /\
-       (misc_word_list a1 (MAP wordLang_Word (write_bytes vals1
-         (make_zeros vals1) be')) *
+       (misc_word_list a1 (MAP word_Word (write_bytes vals1 (make_zeros
+         vals1) be')) *
         frame) (fun2set (m,dm)) ==>
        (?m1.
-         (misc_word_list a1 (MAP wordLang_Word (write_bytes res_vals1
+         (misc_word_list a1 (MAP word_Word (write_bytes res_vals1
            (make_zeros vals1:('a word) list) be')) *
           frame) (fun2set (m1,(dm:'a word->bool))) /\
          word_xor_bytes a1 a1 (n2w (LENGTH (make_zeros vals1:('a word)
@@ -64223,11 +64199,11 @@ let memory_rel_xor_bytes = prove
      xor_bytes vals1 vals2 = SOME res_vals /\
      good_dimindex (:'a) ==>
      (?w1 a1 w2 a2 x1 m1.
-       v1 = wordLang_Word w1 /\
-       v2 = wordLang_Word w2 /\
+       v1 = word_Word w1 /\
+       v2 = word_Word w2 /\
        get_real_addr c st w1 = SOME a1 /\
        get_real_addr c st w2 = SOME a2 /\
-       m a1 = wordLang_Word x1 /\ a1 IN dm /\
+       m a1 = word_Word x1 /\ a1 IN dm /\
        word_xor_bytes (a1 + bytes_in_word) (a2 + bytes_in_word)
                       (decode_length c x1) dm m = SOME m1 /\
        memory_rel c be ts (sptree_insert p2 (bvlSem_ByteArray fl2
@@ -64265,7 +64241,7 @@ let memory_rel_xor_bytes = prove
       (CONJUNCTS th) in
   (* the words of two lists of words are the same list *)
   let map_word_11 = prove
-   (`!l1 l2. MAP wordLang_Word l1 = MAP wordLang_Word l2 ==> l1 = l2`,
+   (`!l1 l2. MAP word_Word l1 = MAP word_Word l2 ==> l1 = l2`,
     LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
     REWRITE_TAC[MAP; NOT_CONS_NIL; CONS_11; injectivity "word_loc";
                 GSYM NOT_CONS_NIL] THEN
@@ -64608,8 +64584,8 @@ let memory_rel_xor_bytes = prove
          a sp sp1 gens c s m dm limit /\
        LENGTH ys = LENGTH xs /\
        (!curr other.
-          FLOOKUP s CurrHeap = SOME (wordLang_Word curr) /\
-          FLOOKUP s OtherHeap = SOME (wordLang_Word other)
+          FLOOKUP s CurrHeap = SOME (word_Word curr) /\
+          FLOOKUP s OtherHeap = SOME (word_Word other)
           ==> (word_heap curr (APPEND (APPEND h1 [Bytes be fl ys ws])
             h2) c *
                word_heap other (heap_expand limit) c)
@@ -64666,7 +64642,7 @@ let memory_rel_xor_bytes = prove
       let vs = snd (strip_exists gl) in
       let veq v = grab_asm (fun th -> is_eq (concl th) &&
         lhs (concl th) = v &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl in
+        hd_is "word_Word" (rhs (concl th))) asl in
       let v1 = lhs (hd (conjuncts vs)) in
       let v2 = lhs (el 1 (conjuncts vs)) in
       let w1 = rand (rhs (concl (veq v1))) in
@@ -64678,7 +64654,7 @@ let memory_rel_xor_bytes = prove
       let x1 = rand (rhs (concl (grab_asm (fun th ->
         is_eq (concl th) &&
         (try rand (lhs (concl th)) = a1 with Failure _ -> false) &&
-        hd_is "wordLang_Word" (rhs (concl th))) asl))) in
+        hd_is "word_Word" (rhs (concl th))) asl))) in
       MAP_EVERY EXISTS_TAC [w1; a1; w2; a2; x1]) THEN
     (* the array that is written goes first, and the invariant of
        the heap and of the stack is taken apart *)
@@ -64831,7 +64807,7 @@ let memory_rel_xor_bytes = prove
         let gaw = REWRITE_RULE (word_addr_clauses ()) wa in
         let veq = grab_asm (fun th -> is_eq (concl th) &&
           lhs (concl th) = rhs (concl wa) &&
-          hd_is "wordLang_Word" (rhs (concl th))) asl in
+          hd_is "word_Word" (rhs (concl th))) asl in
         let weq = (REWRITE_RULE[injectivity "word_loc"]
           (TRANS gaw veq)) in
         let gra = INST [annot, mk_var("w", type_of annot)]
@@ -65581,8 +65557,8 @@ let memory_rel_str_cmp = prove
      sptree_lookup p2 refs = SOME (bvlSem_ByteArray fl2 vals2) /\
      good_dimindex (:'a) ==>
      (?w1 a1 w2 a2 x1 m1 r1 r2.
-       v1 = wordLang_Word w1 /\
-       v2 = wordLang_Word w2 /\
+       v1 = word_Word w1 /\
+       v2 = word_Word w2 /\
        get_real_addr c st w1 = SOME a1 /\
        get_real_addr c st w2 = SOME a2 /\
        word_str_cmp b a1 a2 dm m be c = SOME (r1,r2) /\

@@ -32,22 +32,20 @@ let _ = cake_theory "data_simp"
 
 let pSeq_def = new_definition
   `pSeq c1 c2 =
-     if c2 = dataLang_Skip then c1 else dataLang_Seq c1 c2`;;
+     if c2 = data_Skip then c1 else data_Seq c1 c2`;;
 
 let simp_def,simp_ind = define_shaped_rec
   "match"
   `simp c1 c =
      match c1 with
-       dataLang_Skip -> c
-     | dataLang_Return n -> dataLang_Return n
-     | dataLang_Raise n -> dataLang_Raise n
-     | dataLang_Seq c1 c2 -> simp c1 (simp c2 c)
-     | dataLang_If n c2 c3 ->
-        pSeq (dataLang_If n (simp c2 dataLang_Skip) (simp c3 dataLang_Skip))
-          c
-     | dataLang_Call ret dest args (SOME (v,handler)) ->
-        pSeq (dataLang_Call ret dest args (SOME (v,simp handler
-          dataLang_Skip))) c
+       data_Skip -> c
+     | data_Return n -> data_Return n
+     | data_Raise n -> data_Raise n
+     | data_Seq c1 c2 -> simp c1 (simp c2 c)
+     | data_If n c2 c3 ->
+        pSeq (data_If n (simp c2 data_Skip) (simp c3 data_Skip)) c
+     | data_Call ret dest args (SOME (v,handler)) ->
+        pSeq (data_Call ret dest args (SOME (v,simp handler data_Skip))) c
      | c1 -> pSeq c1 c`;;
 
 (* and the interface *)

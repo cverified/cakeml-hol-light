@@ -105,19 +105,19 @@ let interp_assum_leq = prove
 
 (* [local] *)
 let evaluate_Constant = prove
- (`closSem_evaluate ([closLang_Op t (closLang_BlockOp (closLang_Constant c))
-  []],env,s) = (Rval [make_const c],s)`,
+ (`closSem_evaluate ([clos_Op t (clos_BlockOp (clos_Constant c)) []],env,s) =
+  (Rval [make_const c],s)`,
   CHEAT_TAC);;
 add_simp evaluate_Constant;;
 
 let evaluate_Cons_nil = prove
- (`closSem_evaluate ([closLang_Op t (closLang_BlockOp (closLang_Cons n))
-  []],env,s) = (Rval [closSem_Block n []],s)`,
+ (`closSem_evaluate ([clos_Op t (clos_BlockOp (clos_Cons n)) []],env,s) =
+  (Rval [closSem_Block n []],s)`,
   CHEAT_TAC);;
 
 let evaluate_Global_0 = prove
  (`clos_interpProof_state_rel s t ==>
-   closSem_evaluate ([closLang_Op tr (closLang_GlobOp (closLang_Global 0))
+   closSem_evaluate ([clos_Op tr (clos_GlobOp (clos_Global 0))
      []],env,closSem_state_clock_fupd (K k) t) =
      (Rval [closSem_Closure NONE [] [] 1
        clos_interpreter],closSem_state_clock_fupd (K k) t)`,
@@ -133,7 +133,7 @@ let clos_interp_el_thm = prove
      (?c. closSem_evaluate
            ([clos_interp_el],CONS (closSem_list_to_v env) (CONS
              (closSem_Number (&n)) (CONS (closSem_Recclosure NONE [] cl_env
-              [(1,closLang_Fn (implode "") NONE NONE 1 clos_interp_el)] 0)
+              [(1,clos_Fn (implode "") NONE NONE 1 clos_interp_el)] 0)
                 rest)),closSem_state_clock_fupd (K (c + closSem_state_clock
                 t4))
             t4) = (Rval [EL n env],t4))`,
@@ -145,7 +145,7 @@ let clos_interp_rev_thm = prove
      closSem_evaluate
        ([clos_interp_rev],CONS (closSem_list_to_v env) (CONS
          (closSem_list_to_v a) (CONS (closSem_Recclosure NONE [] cl_env
-              [(1,closLang_Fn (implode "") NONE NONE 1 clos_interp_rev)] 0)
+              [(1,clos_Fn (implode "") NONE NONE 1 clos_interp_rev)] 0)
                 rest)),closSem_state_clock_fupd (K (2 * LENGTH a +
                 closSem_state_clock t4))
             t4) =

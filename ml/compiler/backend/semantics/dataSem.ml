@@ -98,17 +98,17 @@ let dataSem_state_FIELDS = define_record "dataSem_state"
    "global","num option";
    "handler","num";
    "refs","(dataSem_v bvlSem_ref) spt";
-   "compile","'c->(num#num#dataLang_prog) list->(word8 list#word64 list#'c) \
+   "compile","'c->(num#num#data_prog) list->(word8 list#word64 list#'c) \
    option";
    "clock","num";
-   "code","(num#dataLang_prog) spt";
+   "code","(num#data_prog) spt";
    "ffi","'ffi ffi_state";
    "space","num";
    "tstamps","num option";
    "limits","limits";
    "safe_for_space","bool";
    "peak_heap_length","num";
-   "compile_oracle","num->'c#(num#num#dataLang_prog) list"];;
+   "compile_oracle","num->'c#(num#num#data_prog) list"];;
 
 (* HOL4 dataSemScript.sml:76-77: the ML values that the definitions below
    antiquote *)
@@ -254,8 +254,8 @@ let consume_space_def = new_definition
 
 (* Determines which operations are safe for space *)
 let allowed_op_def = new_definition
-  `allowed_op op _ = (~(op = closLang_Install) /\ (!t i. ~(op =
-  closLang_MemOp (closLang_MutCons t i))))`;;
+  `allowed_op op _ = (~(op = clos_Install) /\ (!t i. ~(op = clos_MemOp
+  (clos_MutCons t i))))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -279,19 +279,18 @@ let dataSem_v_to_list_def,dataSem_v_to_list_ind = define_wf
 let space_consumed_def = new_definition
   `space_consumed s x2 x3 =
      match (s,x2,x3) with
-       ((s:('c,'ffi)dataSem_state),closLang_BlockOp (closLang_ConsExtend
-         tag),CONS (dataSem_Block _ _ xs') (CONS (dataSem_Number lower) (CONS
+       ((s:('c,'ffi)dataSem_state),clos_BlockOp (clos_ConsExtend tag),CONS
+         (dataSem_Block _ _ xs') (CONS (dataSem_Number lower) (CONS
          (dataSem_Number len) (CONS (dataSem_Number tot) xs)))) ->
       LENGTH (APPEND xs (TAKE (num_of_int len) (DROP (num_of_int lower)
         xs'))) + 1
-     | (s,closLang_MemOp closLang_RefArray,[dataSem_Number len; _]) ->
+     | (s,clos_MemOp clos_RefArray,[dataSem_Number len; _]) -> num_of_int
+       len + 1
+     | (s,clos_MemOp (clos_RefByte _),[dataSem_Number len; _]) -> num_of_int
+       len DIV (arch_size (dataSem_state_limits s) DIV 8) + 2
+     | (s,clos_BlockOp (clos_FromList n),[dataSem_Number len; lv]) ->
        num_of_int len + 1
-     | (s,closLang_MemOp (closLang_RefByte _),[dataSem_Number len; _]) ->
-       num_of_int len DIV (arch_size (dataSem_state_limits s) DIV 8) + 2
-     | (s,closLang_BlockOp (closLang_FromList n),[dataSem_Number len; lv])
-       -> num_of_int len + 1
-     | (s,closLang_IntOp closLang_Add,[dataSem_Number i1; dataSem_Number
-       i2]) ->
+     | (s,clos_IntOp clos_Add,[dataSem_Number i1; dataSem_Number i2]) ->
        if small_num (limits_arch_64_bit (dataSem_state_limits s)) i1 /\
           small_num (limits_arch_64_bit (dataSem_state_limits s)) i2 /\
           small_num (limits_arch_64_bit (dataSem_state_limits s)) (i1 + i2)
@@ -301,8 +300,7 @@ let space_consumed_def = new_definition
          let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits s))
            i2 in
            2 * il + 2 * jl) i1 i2 s
-     | (s,closLang_IntOp closLang_Sub,[dataSem_Number i1; dataSem_Number
-       i2]) ->
+     | (s,clos_IntOp clos_Sub,[dataSem_Number i1; dataSem_Number i2]) ->
        if small_num (limits_arch_64_bit (dataSem_state_limits s)) i1 /\
           small_num (limits_arch_64_bit (dataSem_state_limits s)) i2 /\
           small_num (limits_arch_64_bit (dataSem_state_limits s)) (i1 - i2)
@@ -312,8 +310,7 @@ let space_consumed_def = new_definition
          let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits s))
            i2 in
            2 * il + 2 * jl) i1 i2 s
-     | (s,closLang_IntOp closLang_Mult,[dataSem_Number i1; dataSem_Number
-       i2]) ->
+     | (s,clos_IntOp clos_Mult,[dataSem_Number i1; dataSem_Number i2]) ->
        if small_num (limits_arch_64_bit (dataSem_state_limits s)) i1 /\ (&0)
          <= i1 /\
           small_num (limits_arch_64_bit (dataSem_state_limits s)) i2 /\ (&0)
@@ -325,8 +322,7 @@ let space_consumed_def = new_definition
          let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits s))
            i2 in
            2 * il + 2 * jl) i1 i2 s
-     | (s,closLang_IntOp closLang_Div,[dataSem_Number i1; dataSem_Number
-       i2]) ->
+     | (s,clos_IntOp clos_Div,[dataSem_Number i1; dataSem_Number i2]) ->
        if small_num (limits_arch_64_bit (dataSem_state_limits s)) i1 /\ (&0)
          <= i1 /\
           small_num (limits_arch_64_bit (dataSem_state_limits s)) i2 /\ (&0)
@@ -338,8 +334,7 @@ let space_consumed_def = new_definition
          let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits s))
            i2 in
            2 * il + 2 * jl) i1 i2 s
-     | (s,closLang_IntOp closLang_Mod,[dataSem_Number i1; dataSem_Number
-       i2]) ->
+     | (s,clos_IntOp clos_Mod,[dataSem_Number i1; dataSem_Number i2]) ->
        if small_num (limits_arch_64_bit (dataSem_state_limits s)) i1 /\ (&0)
          <= i1 /\
           small_num (limits_arch_64_bit (dataSem_state_limits s)) i2 /\ (&0)
@@ -351,11 +346,11 @@ let space_consumed_def = new_definition
          let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits s))
            i2 in
            2 * il + 2 * jl) i1 i2 s
-     | (s,closLang_BlockOp closLang_ListAppend,[lv1; lv2]) ->
+     | (s,clos_BlockOp clos_ListAppend,[lv1; lv2]) ->
       (match dataSem_v_to_list lv1 with
        SOME l -> SUC (LENGTH l) * 3
       | NONE -> 0)
-     | (s,(op:closLang_op),(vs:dataSem_v list)) -> (0:num)`;;
+     | (s,(op:clos_op),(vs:dataSem_v list)) -> (0:num)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -395,39 +390,38 @@ let eq_code_stack_max_def = new_definition
 let stack_consumed_def = new_definition
   `stack_consumed sfs lims p vs =
      match (p,vs) with
-       (closLang_MemOp (closLang_CopyByte _),vs) ->
+       (clos_MemOp (clos_CopyByte _),vs) ->
        OPTION_MAP2 MAX
         (sptree_lookup ByteCopy_location sfs)
         (OPTION_MAP2 MAX
            (sptree_lookup ByteCopyAdd_location sfs)
            (sptree_lookup ByteCopySub_location sfs))
-     | (closLang_MemOp (closLang_RefByte _),vs) ->
+     | (clos_MemOp (clos_RefByte _),vs) ->
        OPTION_MAP2 MAX
         (sptree_lookup RefByte_location sfs)
         (sptree_lookup Replicate_location sfs)
-     | (closLang_MemOp (closLang_RefArray),vs) ->
+     | (clos_MemOp (clos_RefArray),vs) ->
        OPTION_MAP2 MAX
         (sptree_lookup RefArray_location sfs)
         (sptree_lookup Replicate_location sfs)
-     | (closLang_MemOp closLang_XorByte,vs) ->
+     | (clos_MemOp clos_XorByte,vs) ->
        sptree_lookup XorLoop_location sfs
-     | (closLang_MemOp (closLang_StringCmp b cmp),vs) ->
+     | (clos_MemOp (clos_StringCmp b cmp),vs) ->
        sptree_lookup StringCmpLoop_location sfs
-     | (closLang_BlockOp (closLang_ConsExtend _),vs) ->
+     | (clos_BlockOp (clos_ConsExtend _),vs) ->
        sptree_lookup MemCopy_location sfs
      // MemCopy looks not always necessary. Could be refined for more precise bounds.
-     | (closLang_BlockOp (closLang_FromList _),vs) ->
+     | (clos_BlockOp (clos_FromList _),vs) ->
        OPTION_MAP2 MAX
         (sptree_lookup FromList_location sfs)
         (sptree_lookup FromList1_location sfs)
-     | (closLang_BlockOp closLang_ListAppend,vs) ->
+     | (clos_BlockOp clos_ListAppend,vs) ->
        OPTION_MAP2 MAX
         (sptree_lookup Append_location sfs)
         (OPTION_MAP2 MAX
           (sptree_lookup AppendLenLoop_location sfs)
           (sptree_lookup AppendMainLoop_location sfs))
-     | (closLang_IntOp closLang_Div,[dataSem_Number n1; dataSem_Number n2])
-       ->
+     | (clos_IntOp clos_Div,[dataSem_Number n1; dataSem_Number n2]) ->
        if small_num (limits_arch_64_bit lims) n1 /\ (&0) <= n1 /\
           small_num (limits_arch_64_bit lims) n2 /\ (&0) <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 / n2) then
@@ -436,8 +430,7 @@ let stack_consumed_def = new_definition
            (sptree_lookup LongDiv1_location sfs)
        else OPTION_MAP2 MAX (sptree_lookup Div_location sfs)
            (max_depth sfs AnyArith_call_tree)
-     | (closLang_IntOp closLang_Mod,[dataSem_Number n1; dataSem_Number n2])
-       ->
+     | (clos_IntOp clos_Mod,[dataSem_Number n1; dataSem_Number n2]) ->
        if small_num (limits_arch_64_bit lims) n1 /\ (&0) <= n1 /\
           small_num (limits_arch_64_bit lims) n2 /\ (&0) <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 % n2) then
@@ -446,35 +439,32 @@ let stack_consumed_def = new_definition
            (sptree_lookup LongDiv1_location sfs)
        else OPTION_MAP2 MAX (sptree_lookup Mod_location sfs)
            (max_depth sfs AnyArith_call_tree)
-     | (closLang_IntOp closLang_Mult,[dataSem_Number n1; dataSem_Number n2])
-       ->
+     | (clos_IntOp clos_Mult,[dataSem_Number n1; dataSem_Number n2]) ->
        if small_num (limits_arch_64_bit lims) n1 /\ (&0) <= n1 /\
           small_num (limits_arch_64_bit lims) n2 /\ (&0) <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 * n2) then SOME 0 else
             OPTION_MAP2 MAX (sptree_lookup Mul_location sfs)
            (max_depth sfs AnyArith_call_tree)
-     | (closLang_BlockOp closLang_Equal,[v1; v2]) ->
+     | (clos_BlockOp clos_Equal,[v1; v2]) ->
       (eq_code_stack_max (MIN (vs_depth v1 + 1) (vs_depth v2 + 1)) sfs)
-     | (closLang_IntOp closLang_Sub,[dataSem_Number n1; dataSem_Number n2])
-       ->
+     | (clos_IntOp clos_Sub,[dataSem_Number n1; dataSem_Number n2]) ->
        if small_num (limits_arch_64_bit lims) n1 /\
           small_num (limits_arch_64_bit lims) n2 /\
           small_num (limits_arch_64_bit lims) (n1 - n2) then SOME 0 else
             OPTION_MAP2 MAX (sptree_lookup Sub_location sfs)
            (max_depth sfs AnyArith_call_tree)
-     | (closLang_IntOp closLang_Add,[dataSem_Number n1; dataSem_Number n2])
-       ->
+     | (clos_IntOp clos_Add,[dataSem_Number n1; dataSem_Number n2]) ->
        if small_num (limits_arch_64_bit lims) n1 /\
           small_num (limits_arch_64_bit lims) n2 /\
           small_num (limits_arch_64_bit lims) (n1 + n2) then SOME 0 else
             OPTION_MAP2 MAX (sptree_lookup Add_location sfs)
            (max_depth sfs AnyArith_call_tree)
-     | (closLang_IntOp closLang_LessEq,vs) ->
+     | (clos_IntOp clos_LessEq,vs) ->
        // This is a conservative estimate --- no calls happen for smallnums
        OPTION_MAP2 MAX
         (sptree_lookup Compare_location sfs)
         (sptree_lookup Compare1_location sfs)
-     | (closLang_IntOp closLang_Less,vs) ->
+     | (clos_IntOp clos_Less,vs) ->
        // This is a conservative estimate --- no calls happen for smallnums
        OPTION_MAP2 MAX
         (sptree_lookup Compare_location sfs)
@@ -542,8 +532,6 @@ let dataSem_isClos_def = new_definition
   `dataSem_isClos t1 l1 = (((t1 = closure_tag) \/ (t1 = partial_app_tag))
   /\ ~(l1 = []))`;;
 
-let _ = size_thms "bvlSem_ref";;
-let _ = size_thms "spt";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 (* the clauses of the source overlap -- a later one says
@@ -642,7 +630,7 @@ let with_fresh_ts_def = new_definition
                           | NONE -> f 0 s`;;
 
 let lim_safe_part_def = define_cases
-  `(lim_safe_part lims (closLang_Con tag xs) <=> (if xs = [] then tag < 2 EXP
+  `(lim_safe_part lims (clos_Con tag xs) <=> (if xs = [] then tag < 2 EXP
     (arch_size lims) DIV 16
                               else LENGTH xs < 2 EXP limits_length_limit
                                   lims /\
@@ -650,35 +638,35 @@ let lim_safe_part_def = define_cases
                               4 * tag < 2 EXP (arch_size lims) DIV 16 /\
                               4 * tag < 2 EXP (arch_size lims -
                                   limits_length_limit lims - 2))) /\
-   (lim_safe_part lims (closLang_Int i) <=>
+   (lim_safe_part lims (clos_Int i) <=>
          (if small_num (limits_arch_64_bit lims) i then T else let il =
              bignum_size (limits_arch_64_bit lims) i in
               il <= 2 EXP limits_length_limit lims)) /\
-   (lim_safe_part lims (closLang_Str s) <=>
+   (lim_safe_part lims (clos_Str s) <=>
          (let i = strlen s in
             i DIV (arch_size lims DIV 8) < 2 EXP (arch_size lims) DIV
                 arch_size lims /\
             i DIV (arch_size lims DIV 8) + 1 < 2 EXP limits_length_limit
                 lims /\
             small_num (limits_arch_64_bit lims) (&i))) /\
-   (lim_safe_part lims (closLang_W64 w) <=> 1 < limits_length_limit lims)`;;
+   (lim_safe_part lims (clos_W64 w) <=> 1 < limits_length_limit lims)`;;
 add_simp lim_safe_part_def;;
 
 let lim_safe_def = new_definition
   `lim_safe lims x2 xs =
      match (x2,xs) with
-       (closLang_BlockOp (closLang_Cons tag),xs) ->
+       (clos_BlockOp (clos_Cons tag),xs) ->
        if xs = [] then tag < 2 EXP (arch_size lims) DIV 16
        else LENGTH xs < 2 EXP limits_length_limit lims /\
          LENGTH xs < 2 EXP (arch_size lims - 4) /\
          4 * tag < 2 EXP (arch_size lims) DIV 16 /\
          4 * tag < 2 EXP (arch_size lims - limits_length_limit lims - 2)
-     | (closLang_MemOp (closLang_MutCons tag i),xs) ->
+     | (clos_MemOp (clos_MutCons tag i),xs) ->
          (LENGTH xs < 2 EXP limits_length_limit lims /\
           LENGTH xs < 2 EXP (arch_size lims - 4) /\
           4 * tag < 2 EXP (arch_size lims) DIV 16 /\
           4 * tag < 2 EXP (arch_size lims - limits_length_limit lims - 2))
-     | (closLang_BlockOp (closLang_FromList tag),xs) ->
+     | (clos_BlockOp (clos_FromList tag),xs) ->
       (match xs with [len; lv] ->
          (match dataSem_v_to_list lv with SOME n ->
              if len = dataSem_Number (&(LENGTH n)) then small_num
@@ -691,14 +679,14 @@ let lim_safe_def = new_definition
              else T
          | _ -> T)
        | _ -> T)
-     | (closLang_BlockOp closLang_ListAppend,[x1; x2]) ->
+     | (clos_BlockOp clos_ListAppend,[x1; x2]) ->
       (match (dataSem_v_to_list x1,dataSem_v_to_list x2) with (SOME xs,SOME
         ys) ->
            1 < limits_length_limit lims /\
            3 * (SUC (LENGTH xs)) < 2 EXP (arch_size lims) DIV 8
        | _ -> T)
-     | (closLang_BlockOp (closLang_ConsExtend tag),CONS (dataSem_Block _ _
-       xs') (CONS (dataSem_Number lower) (CONS (dataSem_Number len) (CONS
+     | (clos_BlockOp (clos_ConsExtend tag),CONS (dataSem_Block _ _ xs')
+       (CONS (dataSem_Number lower) (CONS (dataSem_Number len) (CONS
        (dataSem_Number tot) xs)))) ->
            if lower < (&0) \/ len < (&0) \/ lower + len > &(LENGTH xs') \/
               tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then T
@@ -709,81 +697,76 @@ let lim_safe_def = new_definition
                 4 * tag < 2 EXP (arch_size lims) DIV 16 /\
                 4 * tag < 2 EXP (arch_size lims - limits_length_limit lims -
                   2)
-     | (closLang_IntOp closLang_Add,[dataSem_Number i1; dataSem_Number i2])
-       ->
+     | (clos_IntOp clos_Add,[dataSem_Number i1; dataSem_Number i2]) ->
       (if small_num (limits_arch_64_bit lims) i1 /\
           small_num (limits_arch_64_bit lims) i2 /\
           small_num (limits_arch_64_bit lims) (i1 + i2) then T else let il =
             bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
-     | (closLang_IntOp closLang_Sub,[dataSem_Number i1; dataSem_Number i2])
-       ->
+     | (clos_IntOp clos_Sub,[dataSem_Number i1; dataSem_Number i2]) ->
       (if small_num (limits_arch_64_bit lims) i1 /\
           small_num (limits_arch_64_bit lims) i2 /\
           small_num (limits_arch_64_bit lims) (i1 - i2) then T else let il =
             bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
-     | (closLang_IntOp closLang_Mult,[dataSem_Number i1; dataSem_Number i2])
-       ->
+     | (clos_IntOp clos_Mult,[dataSem_Number i1; dataSem_Number i2]) ->
       (if small_num (limits_arch_64_bit lims) i1 /\ (&0) <= i1 /\
           small_num (limits_arch_64_bit lims) i2 /\ (&0) <= i2 /\
           small_num (limits_arch_64_bit lims) (i1 * i2) then T else let il =
             bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
-     | (closLang_IntOp closLang_Div,[dataSem_Number i1; dataSem_Number i2])
-       ->
+     | (clos_IntOp clos_Div,[dataSem_Number i1; dataSem_Number i2]) ->
       (if small_num (limits_arch_64_bit lims) i1 /\ (&0) <= i1 /\
           small_num (limits_arch_64_bit lims) i2 /\ (&0) <= i2 /\
           small_num (limits_arch_64_bit lims) (i1 / i2) then T else let il =
             bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
-     | (closLang_IntOp closLang_Mod,[dataSem_Number i1; dataSem_Number i2])
-       ->
+     | (clos_IntOp clos_Mod,[dataSem_Number i1; dataSem_Number i2]) ->
       (if small_num (limits_arch_64_bit lims) i1 /\ (&0) <= i1 /\
           small_num (limits_arch_64_bit lims) i2 /\ (&0) <= i2 /\
           small_num (limits_arch_64_bit lims) (i1 % i2) then T else let il =
             bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
-     | (closLang_MemOp closLang_RefArray,[dataSem_Number i; v]) ->
+     | (clos_MemOp clos_RefArray,[dataSem_Number i; v]) ->
       ((&0) <= i /\
        num_of_int i < 2 EXP (arch_size lims) DIV 16 /\
        num_of_int i < 2 EXP limits_length_limit lims)
-     | (closLang_MemOp (closLang_RefByte _),CONS (dataSem_Number i) xs) ->
+     | (clos_MemOp (clos_RefByte _),CONS (dataSem_Number i) xs) ->
       ((&0) <= i /\
        num_of_int i DIV (arch_size lims DIV 8) < 2 EXP (arch_size lims) DIV
          arch_size lims /\
        num_of_int i DIV (arch_size lims DIV 8) + 1 < 2 EXP
          limits_length_limit lims /\
        small_num (limits_arch_64_bit lims) i)
-     | (closLang_MemOp closLang_Ref,xs) ->
+     | (clos_MemOp clos_Ref,xs) ->
       (LENGTH xs < 2 EXP limits_length_limit lims /\
        LENGTH xs < 2 EXP arch_size lims DIV 16)
-     | (closLang_BlockOp (closLang_Build parts'),_) ->
+     | (clos_BlockOp (clos_Build parts'),_) ->
       ALL (lim_safe_part lims) parts'
-     | (closLang_WordOp WordToInt,_) ->
+     | (clos_WordOp WordToInt,_) ->
       (1 < limits_length_limit lims)
-     | (closLang_WordOp WordFromInt,_) ->
+     | (clos_WordOp WordFromInt,_) ->
       (1 < limits_length_limit lims)
-     | (closLang_WordOp (WordOpw ast_W64 _),_) ->
+     | (clos_WordOp (WordOpw ast_W64 _),_) ->
       (1 < limits_length_limit lims)
-     | (closLang_WordOp (WordShift ast_W64 _ _),_) ->
+     | (clos_WordOp (WordShift ast_W64 _ _),_) ->
       (1 < limits_length_limit lims)
-     | (closLang_WordOp (WordFromWord _),_) ->
+     | (clos_WordOp (WordFromWord _),_) ->
       (1 < limits_length_limit lims)
-     | (closLang_WordOp (FP_cmp _),_) -> limits_has_fp_ops
+     | (clos_WordOp (FP_cmp _),_) -> limits_has_fp_ops
       lims
-     | (closLang_WordOp (FP_uop _),_) ->
+     | (clos_WordOp (FP_uop _),_) ->
       (limits_has_fp_ops lims /\ (limits_arch_64_bit lims \/ 1 <
         limits_length_limit lims))
-     | (closLang_WordOp (FP_bop _),_) ->
+     | (clos_WordOp (FP_bop _),_) ->
       (limits_has_fp_ops lims /\ (limits_arch_64_bit lims \/ 1 <
         limits_length_limit lims))
-     | (closLang_WordOp (FP_top _),_) ->
+     | (clos_WordOp (FP_top _),_) ->
       (limits_has_fp_ops lims /\ limits_has_fp_tops lims
         /\ (limits_arch_64_bit lims \/ 1 < limits_length_limit lims))
      | (_,_) -> T`;;
@@ -807,15 +790,15 @@ let check_lim_def = new_definition
 (* the clauses in two quotations: t is num and mlstring, which one quotation
    cannot typecheck *)
 let dataSem_do_part_def = define_cases_clauses
-  [`(dataSem_do_part m (closLang_Int i) s ts = (dataSem_Number i,s,ts)) /\
-    (dataSem_do_part m (closLang_W64 w) s ts = (dataSem_Word64 w,s,ts)) /\
-    (dataSem_do_part m (closLang_Con t ns) s ts =
+  [`(dataSem_do_part m (clos_Int i) s ts = (dataSem_Number i,s,ts)) /\
+    (dataSem_do_part m (clos_W64 w) s ts = (dataSem_Word64 w,s,ts)) /\
+    (dataSem_do_part m (clos_Con t ns) s ts =
       (if ns = [] then (dataSem_Block 0 t [],s,ts)
                   else match ts with NONE -> (dataSem_Block 0 t (MAP m
                       ns),s,ts)
                        | SOME n -> (dataSem_Block n t (MAP m ns),s,SOME
                            (n + (1:num)))))`;
-   `dataSem_do_part m (closLang_Str t) s ts =
+   `dataSem_do_part m (clos_Str t) s ts =
       let ptr = (minimal ptr. ~(ptr IN domain s)) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (dataSem_RefPtr T ptr,sptree_insert ptr (bvlSem_ByteArray T
@@ -834,31 +817,31 @@ let dataSem_do_build_const_def = new_definition
 let dataSem_do_int_app_def = new_definition
   `dataSem_do_int_app x1 x2 =
    match (x1,x2) with
-     (closLang_Const n,[]) ->
+     (clos_Const n,[]) ->
      (if small_enough_int n then SOME (dataSem_Number n)
      else NONE)
-   | (closLang_Add,[dataSem_Number n1; dataSem_Number n2]) -> SOME
+   | (clos_Add,[dataSem_Number n1; dataSem_Number n2]) -> SOME
      (dataSem_Number (n1 + n2))
-   | (closLang_Sub,[dataSem_Number n1; dataSem_Number n2]) -> SOME
+   | (clos_Sub,[dataSem_Number n1; dataSem_Number n2]) -> SOME
      (dataSem_Number (n1 - n2))
-   | (closLang_Mult,[dataSem_Number n1; dataSem_Number n2]) -> SOME
+   | (clos_Mult,[dataSem_Number n1; dataSem_Number n2]) -> SOME
      (dataSem_Number (n1 * n2))
-   | (closLang_Div,[dataSem_Number n1; dataSem_Number n2]) ->
+   | (clos_Div,[dataSem_Number n1; dataSem_Number n2]) ->
        (if n2 = (&0) then NONE else SOME (dataSem_Number (n1 / n2)))
-   | (closLang_Mod,[dataSem_Number n1; dataSem_Number n2]) ->
+   | (clos_Mod,[dataSem_Number n1; dataSem_Number n2]) ->
        (if n2 = (&0) then NONE else SOME (dataSem_Number (n1 % n2)))
-   | (closLang_Less,[dataSem_Number n1; dataSem_Number n2]) -> SOME
+   | (clos_Less,[dataSem_Number n1; dataSem_Number n2]) -> SOME
      (dataSem_Boolv (n1 < n2))
-   | (closLang_LessEq,[dataSem_Number n1; dataSem_Number n2]) -> SOME
+   | (clos_LessEq,[dataSem_Number n1; dataSem_Number n2]) -> SOME
      (dataSem_Boolv (n1 <= n2))
-   | (closLang_Greater,[dataSem_Number n1; dataSem_Number n2]) -> SOME
+   | (clos_Greater,[dataSem_Number n1; dataSem_Number n2]) -> SOME
      (dataSem_Boolv (n1 > n2))
-   | (closLang_GreaterEq,[dataSem_Number n1; dataSem_Number n2]) -> SOME
+   | (clos_GreaterEq,[dataSem_Number n1; dataSem_Number n2]) -> SOME
      (dataSem_Boolv (n1 >= n2))
-   | (closLang_LessConstSmall n,[dataSem_Number i]) ->
+   | (clos_LessConstSmall n,[dataSem_Number i]) ->
          (if (&0) <= i /\ i <= (&1000000) /\ n < 1000000 then
            SOME (dataSem_Boolv (i < &n)) else NONE)
-   | ((op:closLang_int_op),(vs:dataSem_v list)) -> NONE`;;
+   | ((op:clos_int_op),(vs:dataSem_v list)) -> NONE`;;
 
 let dataSem_do_word_app_def = new_definition
   `dataSem_do_word_app x1' ws =
@@ -908,7 +891,7 @@ let dataSem_do_word_app_def = new_definition
            (match ws with [dataSem_Word64 w1; dataSem_Word64 w2] -> (SOME
              (dataSem_Boolv (fp_cmp_comp cmp w1 w2)))
             | _ -> NONE)
-     | ((op:closLang_word_op),(vs:dataSem_v list)) -> NONE`;;
+     | ((op:clos_word_op),(vs:dataSem_v list)) -> NONE`;;
 
 let dest_Boolv_def = new_definition
   `dest_Boolv x1'' =
@@ -973,7 +956,7 @@ let dataSem_do_app_aux_def = new_definition
   `dataSem_do_app_aux op (vs:dataSem_v list) (s:('c,'ffi)dataSem_state) =
      match (op,vs) with (
         // bvi part
-        closLang_Label l,xs) ->
+        clos_Label l,xs) ->
          (match xs with [] -> if l IN domain (dataSem_state_code s) then
                     Rval (dataSem_CodePtr l,s)
                   else ((Rerr (Rabort
@@ -982,7 +965,7 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_GlobOp closLang_GlobalsPtr,xs) ->
+     | (clos_GlobOp clos_GlobalsPtr,xs) ->
          (match xs with [] -> (match dataSem_state_global s with SOME p ->
            Rval (dataSem_RefPtr T p,s)
                    | NONE -> ((Rerr (Rabort
@@ -991,7 +974,7 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_GlobOp (closLang_Global n),xs) ->
+     | (clos_GlobOp (clos_Global n),xs) ->
          (match xs with [] -> (match dataSem_state_global s with SOME ptr ->
                        (match sptree_lookup ptr (dataSem_state_refs s) with
                          SOME (bvlSem_ValueArray xs) ->
@@ -1008,7 +991,7 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_GlobOp (closLang_SetGlobal n),xs) ->
+     | (clos_GlobOp (clos_SetGlobal n),xs) ->
          (match xs with [x] -> (match dataSem_state_global s with SOME ptr
            ->
                         (match sptree_lookup ptr (dataSem_state_refs s) with
@@ -1030,13 +1013,13 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_GlobOp (closLang_SetGlobalsPtr),xs) ->
+     | (clos_GlobOp (clos_SetGlobalsPtr),xs) ->
          (match xs with [dataSem_RefPtr T p] -> Rval
            (dataSem_Unit,dataSem_state_global_fupd (K (SOME p)) s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp (closLang_FromList n),xs) ->
+     | (clos_BlockOp (clos_FromList n),xs) ->
          (match xs with [len; lv] ->
              (match dataSem_v_to_list lv with SOME [] -> if len =
                dataSem_Number (&0) then Rval (dataSem_Block 0 n [],s)
@@ -1056,7 +1039,7 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_RefByte f),xs) ->
+     | (clos_MemOp (clos_RefByte f),xs) ->
          (match xs with [dataSem_Number i; dataSem_Number b] ->
              if (&0) <= i /\ (?(w:word8). b = &(w2n w)) then
                let ptr = (minimal ptr. ~(ptr IN domain (dataSem_state_refs
@@ -1067,25 +1050,24 @@ let dataSem_do_app_aux_def = new_definition
                      (dataSem_state_refs s))) s)
              else Rerr (Rabort Rtype_error)
            | _ -> Rerr (Rabort Rtype_error))
-     | (closLang_GlobOp closLang_AllocGlobal,_) -> Rerr (Rabort Rtype_error)
-     | (closLang_MemOp closLang_FromListByte,_) -> Rerr (Rabort Rtype_error)
-     | (closLang_MemOp closLang_ConcatByteVec,_) -> Rerr (Rabort
-       Rtype_error)
-     | (closLang_MemOp (closLang_CopyByte T),_) -> Rerr (Rabort Rtype_error)
+     | (clos_GlobOp clos_AllocGlobal,_) -> Rerr (Rabort Rtype_error)
+     | (clos_MemOp clos_FromListByte,_) -> Rerr (Rabort Rtype_error)
+     | (clos_MemOp clos_ConcatByteVec,_) -> Rerr (Rabort Rtype_error)
+     | (clos_MemOp (clos_CopyByte T),_) -> Rerr (Rabort Rtype_error)
      | (
         // bvl part
-        closLang_BlockOp (closLang_Build parts'),[]) ->
+        clos_BlockOp (clos_Build parts'),[]) ->
          (match dataSem_do_build_const parts' (dataSem_state_refs s)
            (dataSem_state_tstamps s) with (v,s1,ts1) -> Rval
            (v,dataSem_state_tstamps_fupd (K ts1) (dataSem_state_refs_fupd (K
            s1) s)))
-     | (closLang_BlockOp (closLang_Cons tag),xs) -> (if xs = [] then Rval
+     | (clos_BlockOp (clos_Cons tag),xs) -> (if xs = [] then Rval
        (dataSem_Block 0 tag [],s)
                          else with_fresh_ts s 1
                               (\ts s'. Rval (dataSem_Block ts tag xs,
                               check_lim s' (LENGTH xs))))
-     | (closLang_BlockOp (closLang_ConsExtend tag),CONS (dataSem_Block x y
-       xs') (CONS (dataSem_Number lower) (CONS (dataSem_Number len) (CONS
+     | (clos_BlockOp (clos_ConsExtend tag),CONS (dataSem_Block x y xs')
+       (CONS (dataSem_Number lower) (CONS (dataSem_Number len) (CONS
        (dataSem_Number tot) xs)))) ->
          if lower < (&0) \/ len < (&0) \/ lower + len > &(LENGTH xs') \/
             tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then
@@ -1098,17 +1080,15 @@ let dataSem_do_app_aux_def = new_definition
                                 (DROP (num_of_int lower) xs'))) in Rval
                                 (dataSem_Block ts tag l,
                               check_lim s' (LENGTH l)))
-     | (closLang_BlockOp (closLang_ConsExtend tag),_) -> ((Rerr (Rabort
+     | (clos_BlockOp (clos_ConsExtend tag),_) -> ((Rerr (Rabort
        Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
        ,dataSem_v)semanticPrimitives_result)
-     | (closLang_MemOp closLang_El,[dataSem_Block _ tag xs; dataSem_Number
-       i]) ->
+     | (clos_MemOp clos_El,[dataSem_Block _ tag xs; dataSem_Number i]) ->
          if (&0) <= i /\ num_of_int i < LENGTH xs then Rval (EL (num_of_int
            i) xs,s) else ((Rerr (Rabort
            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
            ,dataSem_v)semanticPrimitives_result)
-     | (closLang_MemOp closLang_El,[dataSem_RefPtr _ ptr; dataSem_Number i])
-       ->
+     | (clos_MemOp clos_El,[dataSem_RefPtr _ ptr; dataSem_Number i]) ->
          (match sptree_lookup ptr (dataSem_state_refs s) with SOME
            (bvlSem_ValueArray xs) ->
              (if (&0) <= i /\ i < &(LENGTH xs) then Rval (EL (num_of_int i)
@@ -1119,11 +1099,11 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp (closLang_ElemAt n),[dataSem_Block _ tag xs]) ->
+     | (clos_BlockOp (clos_ElemAt n),[dataSem_Block _ tag xs]) ->
          if n < LENGTH xs then Rval (EL n xs,s) else ((Rerr (Rabort
            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
            ,dataSem_v)semanticPrimitives_result)
-     | (closLang_BlockOp (closLang_ElemAt n),[dataSem_RefPtr _ ptr]) ->
+     | (clos_BlockOp (clos_ElemAt n),[dataSem_RefPtr _ ptr]) ->
          (match sptree_lookup ptr (dataSem_state_refs s) with SOME
            (bvlSem_ValueArray xs) ->
              (if n < LENGTH xs then Rval (EL n xs,s)
@@ -1133,18 +1113,18 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp (closLang_BoolTest test),[v1; v2]) ->
+     | (clos_BlockOp (clos_BoolTest test),[v1; v2]) ->
          (match (dest_Boolv v1,dest_Boolv v2) with (SOME b1,SOME b2) -> Rval
            (dataSem_Boolv (b1 = b2),s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp closLang_BoolNot,[v1]) ->
+     | (clos_BlockOp clos_BoolNot,[v1]) ->
          (match dest_Boolv v1 with SOME b1 -> Rval (dataSem_Boolv (~b1),s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp closLang_ListAppend,[x1; x2]) ->
+     | (clos_BlockOp clos_ListAppend,[x1; x2]) ->
          (match (dataSem_v_to_list x1,dataSem_v_to_list x2) with (SOME
            xs,SOME ys) ->
               with_fresh_ts ((s:('c,'ffi)dataSem_state)) (LENGTH xs)
@@ -1153,23 +1133,23 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp closLang_LengthBlock,[dataSem_Block _ tag xs]) ->
+     | (clos_BlockOp clos_LengthBlock,[dataSem_Block _ tag xs]) ->
          Rval (dataSem_Number (&(LENGTH xs)),s)
-     | (closLang_MemOp closLang_Length,[dataSem_RefPtr _ ptr]) ->
+     | (clos_MemOp clos_Length,[dataSem_RefPtr _ ptr]) ->
          (match sptree_lookup ptr (dataSem_state_refs s) with SOME
            (bvlSem_ValueArray xs) ->
                Rval (dataSem_Number (&(LENGTH xs)),s)
            | _ -> ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
              ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_LengthByte,[dataSem_RefPtr _ ptr]) ->
+     | (clos_MemOp clos_LengthByte,[dataSem_RefPtr _ ptr]) ->
          (match sptree_lookup ptr (dataSem_state_refs s) with SOME
            (bvlSem_ByteArray _ xs) ->
                Rval (dataSem_Number (&(LENGTH xs)),s)
            | _ -> ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
              ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_RefArray,[dataSem_Number i; v]) ->
+     | (clos_MemOp clos_RefArray,[dataSem_Number i; v]) ->
          if (&0) <= i then
            let ptr = (minimal ptr. ~(ptr IN domain (dataSem_state_refs s)))
              in
@@ -1181,8 +1161,8 @@ let dataSem_do_app_aux_def = new_definition
           else ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result)
-     | (closLang_MemOp closLang_DerefByte,[dataSem_RefPtr _ ptr;
-       dataSem_Number i]) ->
+     | (clos_MemOp clos_DerefByte,[dataSem_RefPtr _ ptr; dataSem_Number i])
+       ->
          (match sptree_lookup ptr (dataSem_state_refs s) with SOME
            (bvlSem_ByteArray _ ws) ->
              (if (&0) <= i /\ i < &(LENGTH ws) then Rval (dataSem_Number
@@ -1193,8 +1173,8 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_UpdateByte,[dataSem_RefPtr _ ptr;
-       dataSem_Number i; dataSem_Number b]) ->
+     | (clos_MemOp clos_UpdateByte,[dataSem_RefPtr _ ptr; dataSem_Number i;
+       dataSem_Number b]) ->
          (match sptree_lookup ptr (dataSem_state_refs s) with SOME
            (bvlSem_ByteArray f bs) ->
              (if (&0) <= i /\ i < &(LENGTH bs) /\ (?(w:word8). b = &(w2n w))
@@ -1209,8 +1189,8 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_XorByte,[dataSem_RefPtr _ dst;
-       dataSem_RefPtr _ src]) ->
+     | (clos_MemOp clos_XorByte,[dataSem_RefPtr _ dst; dataSem_RefPtr _
+       src]) ->
          (match (sptree_lookup src (dataSem_state_refs s),sptree_lookup dst
            (dataSem_state_refs s)) with (SOME (bvlSem_ByteArray _ ws),SOME
            (bvlSem_ByteArray f ds)) ->
@@ -1223,7 +1203,7 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_StringCmp b cmp),[dataSem_RefPtr _ s1;
+     | (clos_MemOp (clos_StringCmp b cmp),[dataSem_RefPtr _ s1;
        dataSem_RefPtr _ s2]) ->
          (match (sptree_lookup s1 (dataSem_state_refs s),sptree_lookup s2
            (dataSem_state_refs s)) with (SOME (bvlSem_ByteArray _ ws1),SOME
@@ -1234,9 +1214,9 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_CopyByte F),[dataSem_RefPtr _ src;
-       dataSem_Number srcoff; dataSem_Number len; dataSem_RefPtr _ dst;
-       dataSem_Number dstoff]) ->
+     | (clos_MemOp (clos_CopyByte F),[dataSem_RefPtr _ src; dataSem_Number
+       srcoff; dataSem_Number len; dataSem_RefPtr _ dst; dataSem_Number
+       dstoff]) ->
          (match (sptree_lookup src (dataSem_state_refs s),sptree_lookup dst
            (dataSem_state_refs s)) with (SOME (bvlSem_ByteArray _ ws),SOME
            (bvlSem_ByteArray fl ds)) ->
@@ -1251,23 +1231,22 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp (closLang_TagEq n),[dataSem_Block _ tag xs]) ->
+     | (clos_BlockOp (clos_TagEq n),[dataSem_Block _ tag xs]) ->
          Rval (dataSem_Boolv (tag = n),s)
-     | (closLang_BlockOp (closLang_LenEq l),[dataSem_Block _ tag xs]) ->
+     | (clos_BlockOp (clos_LenEq l),[dataSem_Block _ tag xs]) ->
          Rval (dataSem_Boolv (LENGTH xs = l),s)
-     | (closLang_BlockOp (closLang_TagLenEq n l),[dataSem_Block _ tag xs])
-       ->
+     | (clos_BlockOp (clos_TagLenEq n l),[dataSem_Block _ tag xs]) ->
          Rval (dataSem_Boolv (tag = n /\ LENGTH xs = l),s)
-     | (closLang_BlockOp (closLang_EqualConst p),[x1]) ->
-         (match p with closLang_Int i -> (match x1 with dataSem_Number j ->
-           Rval (dataSem_Boolv (i = j),s) | _ -> ((Rerr (Rabort
+     | (clos_BlockOp (clos_EqualConst p),[x1]) ->
+         (match p with clos_Int i -> (match x1 with dataSem_Number j -> Rval
+           (dataSem_Boolv (i = j),s) | _ -> ((Rerr (Rabort
            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
            ,dataSem_v)semanticPrimitives_result))
-          | closLang_W64 i -> (match x1 with dataSem_Word64 j -> Rval
+          | clos_W64 i -> (match x1 with dataSem_Word64 j -> Rval
             (dataSem_Boolv (i = j),s) | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-          | closLang_Str i -> (match x1 with dataSem_RefPtr _ p ->
+          | clos_Str i -> (match x1 with dataSem_RefPtr _ p ->
                         (match sptree_lookup p (dataSem_state_refs s) with
                           SOME (bvlSem_ByteArray T j) ->
                            Rval (dataSem_Boolv (j = MAP (n2w o ORD) (explode
@@ -1281,19 +1260,19 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp closLang_Equal,[x1; x2]) ->
+     | (clos_BlockOp clos_Equal,[x1; x2]) ->
          (match dataSem_do_eq (dataSem_state_refs s) x1 x2 with Eq_val b ->
            Rval (dataSem_Boolv b,s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_Ref,xs) ->
+     | (clos_MemOp clos_Ref,xs) ->
          let ptr = (minimal ptr. ~(ptr IN domain (dataSem_state_refs s))) in
            Rval (dataSem_RefPtr T ptr,dataSem_state_refs_fupd (K
              (sptree_insert ptr (bvlSem_ValueArray xs) (dataSem_state_refs s)))
              s)
-     | (closLang_MemOp closLang_Update,[dataSem_RefPtr _ ptr; dataSem_Number
-       i; x]) ->
+     | (clos_MemOp clos_Update,[dataSem_RefPtr _ ptr; dataSem_Number i; x])
+       ->
          (match sptree_lookup ptr (dataSem_state_refs s) with SOME
            (bvlSem_ValueArray xs) ->
              (if (&0) <= i /\ i < &(LENGTH xs) then Rval
@@ -1306,7 +1285,7 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_MutCons tag i),xs) ->
+     | (clos_MemOp (clos_MutCons tag i),xs) ->
          (let ptr = (minimal ptr. ~(ptr IN domain (dataSem_state_refs s)))
            in
             if i >= LENGTH xs then ((Rerr (Rabort
@@ -1318,8 +1297,8 @@ let dataSem_do_app_aux_def = new_definition
                   (sptree_insert ptr (bvlSem_MutBlock tag F l c r)
                   (dataSem_state_refs s)))
                       s))
-     | (closLang_MemOp closLang_UpdateCons,[dataSem_RefPtr _ ptr;
-       dataSem_Number i; x]) ->
+     | (clos_MemOp clos_UpdateCons,[dataSem_RefPtr _ ptr; dataSem_Number i;
+       x]) ->
          (match sptree_lookup ptr (dataSem_state_refs s) with SOME
            (bvlSem_MutBlock tag finalised l c r) ->
               if ~(i = &(LENGTH l)) \/ finalised then ((Rerr (Rabort
@@ -1330,7 +1309,7 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_FinaliseCons,[x]) ->
+     | (clos_MemOp clos_FinaliseCons,[x]) ->
          (match dataSem_finalise_cons x (dataSem_state_refs s)
            (dataSem_state_tstamps s) with SOME (v,refs',ts') ->
               Rval (v,dataSem_state_tstamps_fupd (K ts')
@@ -1338,17 +1317,17 @@ let dataSem_do_app_aux_def = new_definition
           | NONE -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_IntOp intop,vs) ->
+     | (clos_IntOp intop,vs) ->
          (match dataSem_do_int_app intop vs with SOME res -> Rval (res,s)
          | _ -> ((Rerr (Rabort
            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
            ,dataSem_v)semanticPrimitives_result))
-     | (closLang_WordOp wordop,vs) ->
+     | (clos_WordOp wordop,vs) ->
          (match dataSem_do_word_app wordop vs with SOME res -> Rval (res,s)
          | _ -> ((Rerr (Rabort
            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
            ,dataSem_v)semanticPrimitives_result))
-     | (closLang_FFI n,[dataSem_RefPtr _ cptr; dataSem_RefPtr _ ptr]) ->
+     | (clos_FFI n,[dataSem_RefPtr _ cptr; dataSem_RefPtr _ ptr]) ->
          (match (sptree_lookup cptr (dataSem_state_refs s),sptree_lookup ptr
            (dataSem_state_refs s)) with SOME (bvlSem_ByteArray T cws),SOME
            (bvlSem_ByteArray F ws) ->
@@ -1363,13 +1342,13 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_BlockOp closLang_BoundsCheckBlock,xs) ->
+     | (clos_BlockOp clos_BoundsCheckBlock,xs) ->
          (match xs with [dataSem_Block _ tag ys; dataSem_Number i] ->
                 Rval (dataSem_Boolv ((&0) <= i /\ i < &(LENGTH ys)),s)
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp (closLang_BoundsCheckByte loose),xs) ->
+     | (clos_MemOp (clos_BoundsCheckByte loose),xs) ->
          (match xs with [dataSem_RefPtr _ ptr; dataSem_Number i] ->
            (match sptree_lookup ptr (dataSem_state_refs s) with SOME
              (bvlSem_ByteArray _ ws) ->
@@ -1381,7 +1360,7 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_BoundsCheckArray,xs) ->
+     | (clos_MemOp clos_BoundsCheckArray,xs) ->
          (match xs with [dataSem_RefPtr _ ptr; dataSem_Number i] ->
            (match sptree_lookup ptr (dataSem_state_refs s) with SOME
              (bvlSem_ValueArray ws) ->
@@ -1392,9 +1371,9 @@ let dataSem_do_app_aux_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
-     | (closLang_MemOp closLang_ConfigGC,[dataSem_Number _; dataSem_Number
-       _]) -> (Rval (dataSem_Unit,s))
-     | (closLang_ThunkOp th_op,vs) ->
+     | (clos_MemOp clos_ConfigGC,[dataSem_Number _; dataSem_Number _]) ->
+       (Rval (dataSem_Unit,s))
+     | (clos_ThunkOp th_op,vs) ->
          (match (th_op,vs) with (AllocThunk m,[v]) ->
               (if dataSem_bad_thunk_update m v (dataSem_state_refs s) then
                 ((Rerr (Rabort
@@ -1433,11 +1412,10 @@ let dataSem_do_app_aux_def = new_definition
 
 let dataSem_do_app_def = new_definition
   `dataSem_do_app op vs (s:('c,'ffi)dataSem_state) =
-     if op = wordLang_Install then dataSem_do_install vs
+     if op = word_Install then dataSem_do_install vs
        (dataSem_state_stack_frame_sizes_fupd (K LN)
-       (dataSem_state_stack_max_fupd (K NONE) s)) else if MEM op
-       [closLang_IntOp closLang_Greater; closLang_IntOp closLang_GreaterEq]
-       then ((Rerr (Rabort
+       (dataSem_state_stack_max_fupd (K NONE) s)) else if MEM op [clos_IntOp
+       clos_Greater; clos_IntOp clos_GreaterEq] then ((Rerr (Rabort
        Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
        ,dataSem_v)semanticPrimitives_result) else match do_space op vs s with
        NONE -> ((Rerr (Rabort
@@ -1603,7 +1581,7 @@ let isBool_def = new_definition
 
 let install_sfs_def = new_definition
   `install_sfs op (s:('c,'ffi)dataSem_state) =
-  dataSem_state_safe_for_space_fupd (K (~(op = closLang_Install)
+  dataSem_state_safe_for_space_fupd (K (~(op = clos_Install)
   /\ dataSem_state_safe_for_space s)) s`;;
 add_simp install_sfs_def;;
 
@@ -1633,12 +1611,12 @@ if concl dataSem_fix_clock_IMP <> `T` then
    cannot typecheck *)
 let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`(dataSem_evaluate (dataLang_Skip,(s:('c,'ffi)dataSem_state)) = (NONE,s)) /\
-    (dataSem_evaluate (dataLang_Move dest src,s) =
+  [`(dataSem_evaluate (data_Skip,(s:('c,'ffi)dataSem_state)) = (NONE,s)) /\
+    (dataSem_evaluate (data_Move dest src,s) =
          match dataSem_get_var src (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          | SOME v -> (NONE,dataSem_set_var dest v s)) /\
-    (dataSem_evaluate (dataLang_Assign dest op args names_opt,s) =
+    (dataSem_evaluate (data_Assign dest op args names_opt,s) =
          if op_requires_names op = IS_NONE names_opt then
            (SOME (Rerr (Rabort Rtype_error)),s)
          else match dataSem_get_vars args (dataSem_state_locals s) with
@@ -1652,30 +1630,30 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
                    | Rval (v,s) ->
                        (NONE,dataSem_set_var dest v (install_sfs op
                            s))))) /\
-    (dataSem_evaluate (dataLang_Tick,s) =
+    (dataSem_evaluate (data_Tick,s) =
          if dataSem_state_clock s = 0 then (SOME (Rerr (Rabort
              Rtimeout_error)),dataSem_flush_state T s)
                         else (NONE,dataSem_dec_clock s)) /\
-    (dataSem_evaluate (dataLang_MakeSpace k names,s) =
+    (dataSem_evaluate (data_MakeSpace k names,s) =
          match dataSem_cut_env names (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          | SOME env -> (NONE,add_space (dataSem_state_locals_fupd (K
              env) s) k)) /\
-    (dataSem_evaluate (dataLang_Raise n,s) =
+    (dataSem_evaluate (data_Raise n,s) =
          match dataSem_get_var n (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          | SOME x ->
            (match dataSem_jump_exc s with NONE -> (SOME (Rerr (Rabort
                Rtype_error)),s)
             | SOME s -> (SOME (Rerr (Rraise x)),s))) /\
-    (dataSem_evaluate (dataLang_Return ns,s) =
+    (dataSem_evaluate (data_Return ns,s) =
          match dataSem_get_vars ns (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          | SOME xs -> (SOME (Rval xs),dataSem_flush_state F s)) /\
-    (dataSem_evaluate (dataLang_Seq c1 c2,s) =
+    (dataSem_evaluate (data_Seq c1 c2,s) =
          let (res,s1) = dataSem_fix_clock s (dataSem_evaluate (c1,s)) in
            if res = NONE then dataSem_evaluate (c2,s1) else (res,s1)) /\
-    (dataSem_evaluate (dataLang_If n c1 c2,s) =
+    (dataSem_evaluate (data_If n c1 c2,s) =
          match dataSem_get_var n (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          |
@@ -1683,7 +1661,7 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
            SOME x -> if isBool T x then dataSem_evaluate (c1,s) else if
                isBool F x then dataSem_evaluate (c2,s) else (SOME (Rerr
                (Rabort Rtype_error)),s)) /\
-    (dataSem_evaluate (dataLang_Force ret loc src,s) =
+    (dataSem_evaluate (data_Force ret loc src,s) =
          match dataSem_get_var src (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          | SOME thunk_v ->
@@ -1736,7 +1714,7 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
                               | (NONE,s) -> (SOME (Rerr (Rabort
                                   Rtype_error)),s)
                               | res -> res)))))))`;
-   `dataSem_evaluate (dataLang_Call ret dest args handler,s) =
+   `dataSem_evaluate (data_Call ret dest args handler,s) =
          match dataSem_get_vars args (dataSem_state_locals s) with NONE ->
              (SOME (Rerr (Rabort Rtype_error)),s)
          | SOME xs ->
@@ -1849,7 +1827,7 @@ let dataSem_initial_state_def = new_definition
 
 let dataSem_semantics_def = new_definition
   `dataSem_semantics init_ffi code coracle cc lims ss start' =
-   (let p = dataLang_Call NONE (SOME start') [] NONE in
+   (let p = data_Call NONE (SOME start') [] NONE in
    let init = dataSem_initial_state init_ffi code coracle cc T lims ss in
      if ?k. match FST (dataSem_evaluate (p,init k)) with SOME (Rerr e) ->
        ~(e = Rabort Rtimeout_error) /\ (!f. ~(e = Rabort (Rffi_error f)))
@@ -1873,7 +1851,7 @@ let dataSem_semantics_def = new_definition
 let data_lang_safe_for_space_def = new_definition
   `data_lang_safe_for_space init_ffi code (lims:limits) (ss:num spt) start' =
      (!ck.
-       let p = dataLang_Call NONE (SOME start') [] NONE in
+       let p = data_Call NONE (SOME start') [] NONE in
        let init = dataSem_initial_state init_ffi code ARB ARB T lims ss in
        let (res,s) = dataSem_evaluate (p,((init ck):(1,'ffi)dataSem_state))
          in dataSem_state_safe_for_space

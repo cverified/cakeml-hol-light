@@ -142,7 +142,7 @@ let known_better_definedg = prove
 let mk_Ticks_alt = prove
  (`(!t tc e. clos_known_mk_Ticks t tc 0 e = e) /\
    (!t tc n e. clos_known_mk_Ticks t tc (SUC n) e = clos_known_mk_Ticks t
-     (tc + 1) n (closLang_Tick (mk_cons t tc) e))`,
+     (tc + 1) n (clos_Tick (mk_cons t tc) e))`,
   CHEAT_TAC);;
 
 (* and the interface *)

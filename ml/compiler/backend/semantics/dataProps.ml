@@ -230,12 +230,11 @@ let consume_space_with_locals = prove
 let do_app_with_stack = prove
  (`dataSem_do_app op vs (dataSem_state_stack_fupd (K z) s) =
     map_result (\(x,y). (x,dataSem_state_peak_heap_length_fupd (K (if op =
-      wordLang_Install then dataSem_state_peak_heap_length
+      word_Install then dataSem_state_peak_heap_length
       (dataSem_state_stack_fupd (K z) s)
-               else if MEM op [closLang_IntOp closLang_Greater;
-                 closLang_IntOp closLang_GreaterEq] then
-                 dataSem_state_peak_heap_length (dataSem_state_stack_fupd (K z)
-                 s)
+               else if MEM op [clos_IntOp clos_Greater; clos_IntOp
+                 clos_GreaterEq] then dataSem_state_peak_heap_length
+                 (dataSem_state_stack_fupd (K z) s)
                else (\op vs s. if op_space_reset op then (\k op_args s. MAX
                  (dataSem_state_peak_heap_length s) (size_of_heap_args op_args
                  s + k)) (space_consumed s op vs) vs s
@@ -275,12 +274,11 @@ let do_app_with_stack_and_locals = prove
  (`dataSem_do_app op vs (dataSem_state_stack_fupd (K z)
   (dataSem_state_locals_size_fupd (K lsz) s)) =
    map_result (\(x,y). (x,dataSem_state_peak_heap_length_fupd (K (if op =
-     wordLang_Install then dataSem_state_peak_heap_length
-     (dataSem_state_stack_fupd (K z) (dataSem_state_locals_size_fupd (K lsz)
-     s))
-               else if MEM op [closLang_IntOp closLang_Greater;
-                 closLang_IntOp closLang_GreaterEq] then
-                 dataSem_state_peak_heap_length (dataSem_state_stack_fupd (K z)
+     word_Install then dataSem_state_peak_heap_length (dataSem_state_stack_fupd
+     (K z) (dataSem_state_locals_size_fupd (K lsz) s))
+               else if MEM op [clos_IntOp clos_Greater; clos_IntOp
+                 clos_GreaterEq] then dataSem_state_peak_heap_length
+                 (dataSem_state_stack_fupd (K z)
                  (dataSem_state_locals_size_fupd (K lsz) s))
                else (\op vs s. if op_space_reset op then (\k op_args s. MAX
                  (dataSem_state_peak_heap_length s) (size_of_heap_args op_args
@@ -343,12 +341,11 @@ let do_app_aux_with_locals = prove
 let do_app_with_locals = prove
  (`dataSem_do_app op vs (dataSem_state_locals_fupd (K z) s) =
    map_result (\(x,y). (x,dataSem_state_peak_heap_length_fupd (K (if op =
-     wordLang_Install then dataSem_state_peak_heap_length
+     word_Install then dataSem_state_peak_heap_length
      (dataSem_state_locals_fupd (K z) s)
-               else if MEM op [closLang_IntOp closLang_Greater;
-                 closLang_IntOp closLang_GreaterEq] then
-                 dataSem_state_peak_heap_length (dataSem_state_locals_fupd (K
-                 z) s)
+               else if MEM op [clos_IntOp clos_Greater; clos_IntOp
+                 clos_GreaterEq] then dataSem_state_peak_heap_length
+                 (dataSem_state_locals_fupd (K z) s)
                else (\op vs s. if op_space_reset op then (\k op_args s. MAX
                  (dataSem_state_peak_heap_length s) (size_of_heap_args op_args
                  s + k)) (space_consumed s op vs) vs s
@@ -385,7 +382,7 @@ let do_app_with_locals = prove
 let do_app_aux_err = prove
  (`dataSem_do_app_aux op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = closLang_FFI i /\ e = Rabort
+                             (?i x. op = clos_FFI i /\ e = Rabort
                                (Rffi_error x))`,
   CHEAT_TAC);;
 
@@ -403,7 +400,7 @@ let dataProps_do_app_aux_const = prove
 let dataProps_do_app_err = prove
  (`dataSem_do_app op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = closLang_FFI i /\ e = Rabort
+                             (?i x. op = clos_FFI i /\ e = Rabort
                                (Rffi_error x))`,
   CHEAT_TAC);;
 
@@ -421,12 +418,11 @@ let do_app_locals = prove
  (`(dataSem_do_app op x s = Rval (q,r)) ==>
    (dataSem_do_app op x (dataSem_state_locals_fupd (K extra) s) =
          Rval (q,dataSem_state_peak_heap_length_fupd (K (if op =
-           wordLang_Install then dataSem_state_peak_heap_length
+           word_Install then dataSem_state_peak_heap_length
            (dataSem_state_locals_fupd (K extra) s)
-              else if MEM op [closLang_IntOp closLang_Greater;
-                closLang_IntOp closLang_GreaterEq] then
-                dataSem_state_peak_heap_length (dataSem_state_locals_fupd (K
-                extra) s)
+              else if MEM op [clos_IntOp clos_Greater; clos_IntOp
+                clos_GreaterEq] then dataSem_state_peak_heap_length
+                (dataSem_state_locals_fupd (K extra) s)
               else (\op vs s. if op_space_reset op then (\k op_args s. MAX
                 (dataSem_state_peak_heap_length s) (size_of_heap_args op_args s
                 + k)) (space_consumed s op vs) vs s
@@ -478,7 +474,7 @@ let do_space_alt = prove
   CHEAT_TAC);;
 
 let Seq_Skip = prove
- (`dataSem_evaluate (dataLang_Seq c dataLang_Skip,s) = dataSem_evaluate (c,s)`,
+ (`dataSem_evaluate (data_Seq c data_Skip,s) = dataSem_evaluate (c,s)`,
   CHEAT_TAC);;
 
 let evaluate_safe_alt = prove
@@ -612,8 +608,8 @@ let do_app_lss_stk_stfrm_swap_aux = prove
        Rval (q,dataSem_state_peak_heap_length_fupd (K pk)
          (dataSem_state_safe_for_space_fupd (K ss)
          (dataSem_state_stack_max_fupd (K smx)
-         (dataSem_state_stack_frame_sizes_fupd (K (if op = wordLang_Install
-         then LN else stfrm)) (dataSem_state_stack_fupd (K stk)
+         (dataSem_state_stack_frame_sizes_fupd (K (if op = word_Install then
+         LN else stfrm)) (dataSem_state_stack_fupd (K stk)
          (dataSem_state_locals_size_fupd (K lss) s')))))))`,
   CHEAT_TAC);;
 
@@ -1071,7 +1067,7 @@ let jump_exc_IMP = prove
 let do_app_Rerr = prove
  (`dataSem_do_app op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = closLang_FFI i /\ e = Rabort
+                             (?i x. op = clos_FFI i /\ e = Rabort
                                (Rffi_error x))`,
   CHEAT_TAC);;
 
@@ -1293,22 +1289,21 @@ let resource_limit_hit_implements_semantics = prove
           {dataSem_semantics ffi (fromAList prog) co cc lim ss start}`),
   CHEAT_TAC);;
 
-let _ = size_thms "dataLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let dataProps_get_code_labels_def,dataProps_get_code_labels_ind = define_wf
-  `MEASURE (\x0. dataLang_prog_size x0)`
+  `MEASURE (\x0. data_prog_size x0)`
   `dataProps_get_code_labels x1 =
      match x1 with
-       dataLang_Call r d a h ->
+       data_Call r d a h ->
        (match d with SOME x -> {x} | _ -> {}) UNION
        (match h with SOME (n,p) -> dataProps_get_code_labels p | _ -> {})
-     | dataLang_Force _ loc _ -> {loc}
-     | dataLang_Seq p1 p2 -> dataProps_get_code_labels p1 UNION
+     | data_Force _ loc _ -> {loc}
+     | data_Seq p1 p2 -> dataProps_get_code_labels p1 UNION
        dataProps_get_code_labels p2
-     | dataLang_If _ p1 p2 -> dataProps_get_code_labels p1 UNION
+     | data_If _ p1 p2 -> dataProps_get_code_labels p1 UNION
        dataProps_get_code_labels p2
-     | dataLang_Assign _ op _ _ -> assign_get_code_label op
+     | data_Assign _ op _ _ -> assign_get_code_label op
      | _ -> {}`;;
 add_simp dataProps_get_code_labels_def;;
 
@@ -1545,8 +1540,8 @@ let do_app_cc_co_only_diff_rval = prove
 
 (* HOL4 dataPropsScript.sml:3027: code that the source has in a comment *)
 let do_app_cc_co_only_diff_rerr = prove
- (`dataSem_do_app op vs s = Rerr r /\ ~(op = wordLang_Install)
-  /\ cc_co_only_diff s t ==>
+ (`dataSem_do_app op vs s = Rerr r /\ ~(op = word_Install) /\ cc_co_only_diff s
+  t ==>
    dataSem_do_app op vs t = Rerr r`,
   CHEAT_TAC);;
 

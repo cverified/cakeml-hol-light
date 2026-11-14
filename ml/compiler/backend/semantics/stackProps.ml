@@ -543,12 +543,12 @@ let pair_map_eq = prove
   CHEAT_TAC);;
 
 let bad_fun_return_IMP = prove
- (`stackSem_bad_fun_return res ==> res = NONE \/ (?n. res = SOME
-  (stackLang_Break n) \/ res = SOME (stackLang_Continue n))`,
+ (`stackSem_bad_fun_return res ==> res = NONE \/ (?n. res = SOME (stack_Break
+  n) \/ res = SOME (stack_Continue n))`,
   CHEAT_TAC);;
 
 let cont_loop_IMP = prove
- (`stackSem_cont_loop res ==> res = NONE \/ res = SOME (stackLang_Continue 0)`,
+ (`stackSem_cont_loop res ==> res = NONE \/ res = SOME (stack_Continue 0)`,
   CHEAT_TAC);;
 
 (* evaluate_add_clock *)
@@ -579,12 +579,12 @@ let clock_neutral_def,clock_neutral_ind = define_shaped_rec
   "match"
   `clock_neutral r =
      match r with
-       stackLang_Seq p1 p2 -> clock_neutral p1 /\ clock_neutral p2
-     | stackLang_LocValue _ _ _ -> T
-     | stackLang_Halt _ -> T
-     | stackLang_Inst _ -> T
-     | stackLang_Skip -> T
-     | stackLang_If _ _ _ p1 p2 -> clock_neutral p1 /\ clock_neutral p2
+       stack_Seq p1 p2 -> clock_neutral p1 /\ clock_neutral p2
+     | stack_LocValue _ _ _ -> T
+     | stack_Halt _ -> T
+     | stack_Inst _ -> T
+     | stack_Skip -> T
+     | stack_If _ _ _ p1 p2 -> clock_neutral p1 /\ clock_neutral p2
      | r -> F`;;
 
 (* [local] *)
@@ -646,14 +646,13 @@ let dec_stack_length = prove
    LENGTH orig_stack = LENGTH new_stack`,
   CHEAT_TAC);;
 
-let _ = size_thms "stackLang_prog";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stackProps_extract_labels_def,stackProps_extract_labels_ind = define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
+  `MEASURE (\x0. stack_prog_size (\x. 0) x0)`
   `stackProps_extract_labels x1 =
      match x1 with
-       stackLang_Call ret dest h ->
+       stack_Call ret dest h ->
        (match ret with
          NONE -> []
        | SOME (ret_handler,_,l1,l2) ->
@@ -663,10 +662,10 @@ let stackProps_extract_labels_def,stackProps_extract_labels_ind = define_wf
        | SOME (prog,l1',l2') ->
          let h_rest = stackProps_extract_labels prog in APPEND (APPEND
            [(l1,l2); (l1',l2')] ret_rest) h_rest)))
-     | stackLang_Loop s1 -> stackProps_extract_labels s1
-     | stackLang_Seq s1 s2 -> APPEND (stackProps_extract_labels s1)
+     | stack_Loop s1 -> stackProps_extract_labels s1
+     | stack_Seq s1 s2 -> APPEND (stackProps_extract_labels s1)
        (stackProps_extract_labels s2)
-     | stackLang_If cmp r1 ri e2 e3 ->
+     | stack_If cmp r1 ri e2 e3 ->
        (APPEND (stackProps_extract_labels e2) (stackProps_extract_labels
          e3))
      | _ -> []`;;
@@ -679,8 +678,8 @@ let find_code_IMP_get_labels = prove
 let addr_ok_def = define_general
   `addr_ok op (Addr a w) c <=>
    (reg_ok a c /\
-    (if op IN {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32} then
-      (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
+    (if op IN {word_Load,word_Store,asm_Load32,asm_Store32} then (\c.
+      asm_offset_ok 0 (asm_config_addr_offset c)) c w
     else if op IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
       (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32) else (\c.
       asm_offset_ok 0 (asm_config_byte_offset c)) c w))`;;
@@ -690,22 +689,22 @@ let addr_ok_def = define_general
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_asm_ok_def,stack_asm_ok_ind = define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
+  `MEASURE (\(x0,x1). stack_prog_size (\x. 0) x1)`
   `stack_asm_ok c x2 =
      match x2 with
-       ((stackLang_Inst i):'a stackLang_prog) -> inst_ok i c
-     | stackLang_ShMemOp op r ad -> reg_ok r c /\ addr_ok op ad c
-     | stackLang_CodeBufferWrite r1 r2 -> r1 < asm_config_reg_count c /\ r2
-       < asm_config_reg_count c /\ ~(MEM r1 (asm_config_avoid_regs c)) /\ ~(MEM
+       ((stack_Inst i):'a stack_prog) -> inst_ok i c
+     | stack_ShMemOp op r ad -> reg_ok r c /\ addr_ok op ad c
+     | stack_CodeBufferWrite r1 r2 -> r1 < asm_config_reg_count c /\ r2 <
+       asm_config_reg_count c /\ ~(MEM r1 (asm_config_avoid_regs c)) /\ ~(MEM
        r2 (asm_config_avoid_regs c))
-     | stackLang_Seq p1 p2 -> stack_asm_ok c p1 /\ stack_asm_ok c p2
-     | stackLang_If cmp n r p p' -> stack_asm_ok c p /\ stack_asm_ok c p'
-     | stackLang_Loop p -> stack_asm_ok c p
-     | stackLang_Raise n -> n < asm_config_reg_count c /\ ~(MEM n
+     | stack_Seq p1 p2 -> stack_asm_ok c p1 /\ stack_asm_ok c p2
+     | stack_If cmp n r p p' -> stack_asm_ok c p /\ stack_asm_ok c p'
+     | stack_Loop p -> stack_asm_ok c p
+     | stack_Raise n -> n < asm_config_reg_count c /\ ~(MEM n
        (asm_config_avoid_regs c))
-     | stackLang_Return n -> n < asm_config_reg_count c /\ ~(MEM n
+     | stack_Return n -> n < asm_config_reg_count c /\ ~(MEM n
        (asm_config_avoid_regs c))
-     | stackLang_Call r tar h ->
+     | stack_Call r tar h ->
        (match tar with INR r -> r < asm_config_reg_count c /\ ~(MEM r
          (asm_config_avoid_regs c)) | _ -> T) /\
        (match r with SOME (p,_,_,_) -> stack_asm_ok c p /\
@@ -821,7 +820,7 @@ let fp_name_def = define_cases
 let addr_name_def = define_general
   `addr_name m (Addr r w) c <=>
    reg_name r c /\
-   (if m IN {wordLang_Load,wordLang_Store,asm_Load32,asm_Store32} then (\c.
+   (if m IN {word_Load,word_Store,asm_Load32,asm_Store32} then (\c.
      asm_offset_ok 0 (asm_config_addr_offset c)) c w
     else if m IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
       (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32)
@@ -839,23 +838,22 @@ let inst_name_def = new_definition
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_asm_name_def,stack_asm_name_ind = define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
+  `MEASURE (\(x0,x1). stack_prog_size (\x. 0) x1)`
   `stack_asm_name c x2' =
      match x2' with
-       ((stackLang_Inst i):'a stackLang_prog) -> inst_name c i
-     | stackLang_OpCurrHeap b r1 r2 ->
+       ((stack_Inst i):'a stack_prog) -> inst_name c i
+     | stack_OpCurrHeap b r1 r2 ->
        (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\ reg_name
          r2 c
-     | stackLang_ShMemOp op r a -> reg_name r c /\ addr_name op a c
-     | stackLang_CodeBufferWrite r1 r2 -> reg_name r1 c /\ reg_name r2 c
-     | stackLang_DataBufferWrite r1 r2 -> reg_name r1 c /\ reg_name r2 c
-     | stackLang_Seq p1 p2 -> stack_asm_name c p1 /\ stack_asm_name c p2
-     | stackLang_If cmp n r p p' -> stack_asm_name c p /\ stack_asm_name c
-       p'
-     | stackLang_Loop p -> stack_asm_name c p
-     | stackLang_Raise n -> reg_name n c
-     | stackLang_Return n -> reg_name n c
-     | stackLang_Call r tar h ->
+     | stack_ShMemOp op r a -> reg_name r c /\ addr_name op a c
+     | stack_CodeBufferWrite r1 r2 -> reg_name r1 c /\ reg_name r2 c
+     | stack_DataBufferWrite r1 r2 -> reg_name r1 c /\ reg_name r2 c
+     | stack_Seq p1 p2 -> stack_asm_name c p1 /\ stack_asm_name c p2
+     | stack_If cmp n r p p' -> stack_asm_name c p /\ stack_asm_name c p'
+     | stack_Loop p -> stack_asm_name c p
+     | stack_Raise n -> reg_name n c
+     | stack_Return n -> reg_name n c
+     | stack_Call r tar h ->
        (match tar with INR r -> reg_name r c | _ -> T) /\
        (match r with SOME (p,_,_,_) -> stack_asm_name c p /\
          (match h with
@@ -875,25 +873,25 @@ let fixed_names_def = new_definition
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_asm_remove_def,stack_asm_remove_ind = define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
+  `MEASURE (\(x0,x1). stack_prog_size (\x. 0) x1)`
   `stack_asm_remove c x2'' =
      match x2'' with
-       ((stackLang_Get n s):'a stackLang_prog) -> reg_name n c
-     | stackLang_OpCurrHeap binop v src -> reg_name v c /\ reg_name src c
-     | stackLang_Set s n -> reg_name n c
-     | stackLang_StackStore n n0 -> reg_name n c
-     | stackLang_StackStoreAny n n0 -> reg_name n c /\ reg_name n0 c
-     | stackLang_StackLoad n n0 -> reg_name n c
-     | stackLang_StackLoadAny n n0 -> reg_name n c /\ reg_name n0 c
-     | stackLang_StackGetSize n -> reg_name n c
-     | stackLang_StackSetSize n -> reg_name n c
-     | stackLang_BitmapLoad n n0 -> reg_name n c /\ reg_name n0 c
-     | stackLang_StoreConsts n n0 _ -> reg_name n c /\ reg_name n0 c
-     | stackLang_Seq p1 p2 -> stack_asm_remove c p1 /\ stack_asm_remove c p2
-     | stackLang_If cmp n r p p' -> stack_asm_remove c p /\ stack_asm_remove
-       c p'
-     | stackLang_Loop p -> stack_asm_remove c p
-     | stackLang_Call r tar h ->
+       ((stack_Get n s):'a stack_prog) -> reg_name n c
+     | stack_OpCurrHeap binop v src -> reg_name v c /\ reg_name src c
+     | stack_Set s n -> reg_name n c
+     | stack_StackStore n n0 -> reg_name n c
+     | stack_StackStoreAny n n0 -> reg_name n c /\ reg_name n0 c
+     | stack_StackLoad n n0 -> reg_name n c
+     | stack_StackLoadAny n n0 -> reg_name n c /\ reg_name n0 c
+     | stack_StackGetSize n -> reg_name n c
+     | stack_StackSetSize n -> reg_name n c
+     | stack_BitmapLoad n n0 -> reg_name n c /\ reg_name n0 c
+     | stack_StoreConsts n n0 _ -> reg_name n c /\ reg_name n0 c
+     | stack_Seq p1 p2 -> stack_asm_remove c p1 /\ stack_asm_remove c p2
+     | stack_If cmp n r p p' -> stack_asm_remove c p /\ stack_asm_remove c
+       p'
+     | stack_Loop p -> stack_asm_remove c p
+     | stack_Call r tar h ->
        (match r with SOME (p,_,_,_) -> stack_asm_remove c p /\
          (match h with
          SOME (p',_,_) -> stack_asm_remove c p'
@@ -913,17 +911,17 @@ let stack_asm_remove_def,stack_asm_remove_ind = define_wf
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let alloc_arg_def,alloc_arg_ind = define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
+  `MEASURE (\x0. stack_prog_size (\x. 0) x0)`
   `alloc_arg x1 =
      match x1 with
-       stackLang_Alloc v -> (v = 1)
-     | ((stackLang_Seq p1 p2):'a stackLang_prog) ->
+       stack_Alloc v -> (v = 1)
+     | ((stack_Seq p1 p2):'a stack_prog) ->
         alloc_arg p1 /\ alloc_arg p2
-     | ((stackLang_If c r ri p1 p2):'a stackLang_prog) ->
+     | ((stack_If c r ri p1 p2):'a stack_prog) ->
         alloc_arg p1 /\ alloc_arg p2
-     | stackLang_Loop p1 ->
+     | stack_Loop p1 ->
         alloc_arg p1
-     | stackLang_Call x1 _ x2 ->
+     | stack_Call x1 _ x2 ->
         (match x1 with SOME (y,r,_,_) -> alloc_arg y | NONE -> T) /\
         (match x2 with SOME (y,_,_) -> alloc_arg y | NONE -> T)
      | _ -> T`;;
@@ -931,20 +929,20 @@ let alloc_arg_def,alloc_arg_ind = define_wf
 (* stack_remove requires that all register arguments are bounded by k *)
 
 (* the termination relation that HOL4 gives is
-     MEASURE ((wordLang_exp_size ARB) o FST)
+     MEASURE ((word_exp_size ARB) o FST)
    which is not one that HOL Light takes here; the one
    below is what the port found for it *)
 (* HOL4 stackPropsScript.sml:1027-1031: the tactic that proves the
    termination *)
 let reg_bound_exp_def,reg_bound_exp_ind = define_wf
-  `MEASURE (\(x0,x1). wordLang_exp_size (\x. 0) x0)`
+  `MEASURE (\(x0,x1). word_exp_size (\x. 0) x0)`
   `reg_bound_exp x1' k =
      match x1' with
-       wordLang_Var n -> n < k
-     | wordLang_Load e -> reg_bound_exp e k
-     | wordLang_Shift _ e1 e2 -> reg_bound_exp e1 k /\ reg_bound_exp e2 k
-     | wordLang_Lookup _ -> F
-     | wordLang_Op _ es -> ALL (\e. reg_bound_exp e k) es
+       word_Var n -> n < k
+     | word_Load e -> reg_bound_exp e k
+     | word_Shift _ e1 e2 -> reg_bound_exp e1 k /\ reg_bound_exp e2 k
+     | word_Lookup _ -> F
+     | word_Op _ es -> ALL (\e. reg_bound_exp e k) es
      | _ -> T`;;
 add_simp reg_bound_exp_def;;
 
@@ -979,59 +977,59 @@ add_simp reg_bound_inst_def;;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let reg_bound_def,reg_bound_ind = define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x0)`
+  `MEASURE (\(x0,x1). stack_prog_size (\x. 0) x0)`
   `reg_bound x1''' k =
      match x1''' with
-       stackLang_Halt v1 ->
+       stack_Halt v1 ->
         v1 < k
-     | stackLang_Raise v1 ->
+     | stack_Raise v1 ->
         v1 < k
-     | stackLang_Get v1 n ->
+     | stack_Get v1 n ->
         v1 < k
-     | stackLang_OpCurrHeap op v1 v2 ->
+     | stack_OpCurrHeap op v1 v2 ->
         v1 < k /\ v2 < k
-     | stackLang_Set n v1 ->
+     | stack_Set n v1 ->
         v1 < k /\ ~(n = BitmapBase)
-     | stackLang_LocValue v1 l1 l2 ->
+     | stack_LocValue v1 l1 l2 ->
         v1 < k
-     | stackLang_StoreConsts t1 t2 _ ->
+     | stack_StoreConsts t1 t2 _ ->
         3 < k /\ t1 < k /\ t2 < k
-     | stackLang_Return v1 ->
+     | stack_Return v1 ->
         v1 < k
-     | stackLang_JumpLower v1 v2 dest ->
+     | stack_JumpLower v1 v2 dest ->
         v1 < k /\ v2 < k
-     | ((stackLang_Seq p1 p2):'a stackLang_prog) ->
+     | ((stack_Seq p1 p2):'a stack_prog) ->
         reg_bound p1 k /\ reg_bound p2 k
-     | ((stackLang_If c r ri p1 p2):'a stackLang_prog) ->
+     | ((stack_If c r ri p1 p2):'a stack_prog) ->
         r < k /\ (match ri with Reg n -> n < k | _ -> T) /\
         reg_bound p1 k /\ reg_bound p2 k
-     | stackLang_Loop p1 ->
+     | stack_Loop p1 ->
         reg_bound p1 k
-     | stackLang_Halt n -> n < k
-     | stackLang_FFI ffi_index ptr' len' ptr2' len2' ret' ->
+     | stack_Halt n -> n < k
+     | stack_FFI ffi_index ptr' len' ptr2' len2' ret' ->
         ptr' < k /\ len' < k /\ ptr2' < k /\ len2' < k /\ ret' < k
-     | stackLang_Call x1 dest x2 ->
+     | stack_Call x1 dest x2 ->
         (match dest with INR i -> i < k | _ -> T) /\
         (match x1 with NONE -> T
          | SOME (y,r,_,_) -> reg_bound y k /\ r < k /\
                              (match x2 with SOME (y,_,_) -> reg_bound y k |
                                NONE -> T))
-     | stackLang_Install ptr len dptr dlen ret ->
+     | stack_Install ptr len dptr dlen ret ->
        ptr < k /\ len < k /\ dptr < k /\ dlen < k /\ ret < k
-     | stackLang_ShMemOp op r (Addr a _) -> r < k /\ a < k
-     | stackLang_CodeBufferWrite r1 r2 ->
+     | stack_ShMemOp op r (Addr a _) -> r < k /\ a < k
+     | stack_CodeBufferWrite r1 r2 ->
        r1 < k /\ r2 < k
-     | stackLang_DataBufferWrite r1 r2 ->
+     | stack_DataBufferWrite r1 r2 ->
        r1 < k /\ r2 < k
-     | stackLang_BitmapLoad r v -> r < k /\ v < k
-     | stackLang_Inst i -> reg_bound_inst i k
-     | stackLang_StackStore r _ -> r < k
-     | stackLang_StackSetSize r -> r < k
-     | stackLang_StackGetSize r -> r < k
-     | stackLang_StackLoad r n -> r < k
-     | stackLang_StackLoadAny r r2 -> r < k /\ r2 < k
-     | stackLang_StackStore r n -> r < k
-     | stackLang_StackStoreAny r r2 -> r < k /\ r2 < k
+     | stack_BitmapLoad r v -> r < k /\ v < k
+     | stack_Inst i -> reg_bound_inst i k
+     | stack_StackStore r _ -> r < k
+     | stack_StackSetSize r -> r < k
+     | stack_StackGetSize r -> r < k
+     | stack_StackLoad r n -> r < k
+     | stack_StackLoadAny r r2 -> r < k /\ r2 < k
+     | stack_StackStore r n -> r < k
+     | stack_StackStoreAny r r2 -> r < k /\ r2 < k
      | _ -> T`;;
 
 (* Finally, stack_to_lab requires correct arguments for Call/FFI/Install calls *)
@@ -1039,25 +1037,25 @@ let call_args_def,call_args_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   `call_args x1'''' ptr len ptr2 len2 ret =
      match x1'''' with
-       ((stackLang_Seq p1 p2):'a stackLang_prog) ->
+       ((stack_Seq p1 p2):'a stack_prog) ->
         call_args p1 ptr len ptr2 len2 ret /\
         call_args p2 ptr len ptr2 len2 ret
-     | ((stackLang_If c r ri p1 p2):'a stackLang_prog) ->
+     | ((stack_If c r ri p1 p2):'a stack_prog) ->
         call_args p1 ptr len ptr2 len2 ret /\
         call_args p2 ptr len ptr2 len2 ret
-     | stackLang_Loop p1 ->
+     | stack_Loop p1 ->
         call_args p1 ptr len ptr2 len2 ret
-     | stackLang_Halt n -> (n = ptr)
-     | stackLang_FFI ffi_index ptr' len' ptr2' len2' ret' ->
+     | stack_Halt n -> (n = ptr)
+     | stack_FFI ffi_index ptr' len' ptr2' len2' ret' ->
         ptr' = ptr /\ len' = len /\ ptr2' = ptr2 /\ len2' = len2 /\ ret' =
           ret
-     | stackLang_Call x1 _ x2 ->
+     | stack_Call x1 _ x2 ->
         (match x1 with NONE -> T
          | SOME (y,r,_,_) ->
              call_args y ptr len ptr2 len2 ret /\ r = ret /\
              (match x2 with SOME (y,_,_) -> call_args y ptr len ptr2 len2
                ret | NONE -> T))
-     | stackLang_Install ptr' len' _ _ ret' ->
+     | stack_Install ptr' len' _ _ ret' ->
         ptr' = ptr /\ len' = len /\ ret' = ret
      | _ -> T`;;
 
@@ -1066,42 +1064,42 @@ let call_args_def,call_args_ind = assume_definition_rec
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stack_get_handler_labels_def,stack_get_handler_labels_ind = define_wf
-  `MEASURE (\(x0,x1). stackLang_prog_size (\x. 0) x1)`
+  `MEASURE (\(x0,x1). stack_prog_size (\x. 0) x1)`
   `stack_get_handler_labels n x2''' =
      match x2''' with
-       stackLang_Call r d h ->
+       stack_Call r d h ->
        (match r with SOME (x,_,_) -> stack_get_handler_labels n x UNION
          (match h with SOME (x,l1,l2) -> (if l1 = n then {(l1,l2)} else {})
            UNION (stack_get_handler_labels n x) | _ -> {})
        | _ -> {})
-     | stackLang_Seq p1 p2 -> stack_get_handler_labels n p1 UNION
+     | stack_Seq p1 p2 -> stack_get_handler_labels n p1 UNION
        stack_get_handler_labels n p2
-     | stackLang_If _ _ _ p1 p2 -> stack_get_handler_labels n p1 UNION
+     | stack_If _ _ _ p1 p2 -> stack_get_handler_labels n p1 UNION
        stack_get_handler_labels n p2
-     | stackLang_Loop p -> stack_get_handler_labels n p
+     | stack_Loop p -> stack_get_handler_labels n p
      | _ -> {}`;;
 add_simp stack_get_handler_labels_def;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stackProps_get_code_labels_def,stackProps_get_code_labels_ind = define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
+  `MEASURE (\x0. stack_prog_size (\x. 0) x0)`
   `stackProps_get_code_labels x1''''' =
      match x1''''' with
-       stackLang_Call r d h ->
+       stack_Call r d h ->
        (match d with INL x -> {(x,0)} | _ -> {}) UNION
        (match r with SOME (x,_,_) -> stackProps_get_code_labels x | _ -> {})
          UNION
        (match h with SOME (x,_,_) -> stackProps_get_code_labels x | _ -> {})
-     | stackLang_Seq p1 p2 -> stackProps_get_code_labels p1 UNION
+     | stack_Seq p1 p2 -> stackProps_get_code_labels p1 UNION
        stackProps_get_code_labels p2
-     | stackLang_If _ _ _ p1 p2 -> stackProps_get_code_labels p1 UNION
+     | stack_If _ _ _ p1 p2 -> stackProps_get_code_labels p1 UNION
        stackProps_get_code_labels p2
-     | stackLang_Loop p -> stackProps_get_code_labels p
-     | stackLang_JumpLower _ _ t -> {(t,0)}
-     | stackLang_RawCall t -> {(t,1)}
-     | stackLang_LocValue _ l1 l2 -> {(l1,l2)}
-     | stackLang_StoreConsts _ _ (SOME l) -> {(l,0)}
+     | stack_Loop p -> stackProps_get_code_labels p
+     | stack_JumpLower _ _ t -> {(t,0)}
+     | stack_RawCall t -> {(t,1)}
+     | stack_LocValue _ l1 l2 -> {(l1,l2)}
+     | stack_StoreConsts _ _ (SOME l) -> {(l,0)}
      | _ -> {}`;;
 add_simp stackProps_get_code_labels_def;;
 
@@ -1127,33 +1125,33 @@ let stack_good_handler_labels_def = new_definition
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stackProps_no_install_def,stackProps_no_install_ind = define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
+  `MEASURE (\x0. stack_prog_size (\x. 0) x0)`
   `stackProps_no_install x1'''''' =
      match x1'''''' with
-       stackLang_Call r d h ->
+       stack_Call r d h ->
        ((match r with SOME (x,_,_) -> stackProps_no_install x | _ -> T) /\
         (match h with SOME (x,_,_) -> stackProps_no_install x | _ -> T))
-     | stackLang_Seq p1 p2 -> (stackProps_no_install p1
+     | stack_Seq p1 p2 -> (stackProps_no_install p1 /\ stackProps_no_install
+       p2)
+     | stack_If _ _ _ p1 p2 -> (stackProps_no_install p1
        /\ stackProps_no_install p2)
-     | stackLang_If _ _ _ p1 p2 -> (stackProps_no_install p1
-       /\ stackProps_no_install p2)
-     | stackLang_Loop p -> stackProps_no_install p
-     | stackLang_Install _ _ _ _ _ -> F
+     | stack_Loop p -> stackProps_no_install p
+     | stack_Install _ _ _ _ _ -> F
      | _ -> T`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let no_shmemop_def,no_shmemop_ind = define_wf
-  `MEASURE (\x0. stackLang_prog_size (\x. 0) x0)`
+  `MEASURE (\x0. stack_prog_size (\x. 0) x0)`
   `no_shmemop x1''''''' =
      match x1''''''' with
-       stackLang_Call r d h ->
+       stack_Call r d h ->
        ((match r with SOME (x,_,_) -> no_shmemop x | _ -> T) /\
         (match h with SOME (x,_,_) -> no_shmemop x | _ -> T))
-     | stackLang_Seq p1 p2 -> (no_shmemop p1 /\ no_shmemop p2)
-     | stackLang_If _ _ _ p1 p2 -> (no_shmemop p1 /\ no_shmemop p2)
-     | stackLang_Loop p -> no_shmemop p
-     | stackLang_ShMemOp _ _ _ -> F
+     | stack_Seq p1 p2 -> (no_shmemop p1 /\ no_shmemop p2)
+     | stack_If _ _ _ p1 p2 -> (no_shmemop p1 /\ no_shmemop p2)
+     | stack_Loop p -> no_shmemop p
+     | stack_ShMemOp _ _ _ -> F
      | _ -> T`;;
 
 (* and the interface *)

@@ -57,10 +57,9 @@ let destLet_pmatch = prove
 let compile_int_def = new_definition
   `compile_int (i:int) =
      bvi_Op (if --((&268435457):int) <= i /\ i <= ((&268435457):int) then
-       closLang_IntOp (closLang_Const i) else closLang_BlockOp
-       (closLang_Build [closLang_Int i])) []`;;
+       clos_IntOp (clos_Const i) else clos_BlockOp (clos_Build [clos_Int
+       i])) []`;;
 
-let _ = size_thms "bvl_exp";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let alloc_glob_count_def,alloc_glob_count_ind = define_wf
@@ -84,8 +83,7 @@ let alloc_glob_count_def,alloc_glob_count_ind = define_wf
      | [bvl_Let xs x] -> alloc_glob_count (CONS x xs)
      | [bvl_Call _ _ xs] -> alloc_glob_count xs
      | [bvl_Op op xs] ->
-        if op = closLang_GlobOp closLang_AllocGlobal then 1 +
-          alloc_glob_count xs
+        if op = clos_GlobOp clos_AllocGlobal then 1 + alloc_glob_count xs
                               else alloc_glob_count xs
      | [_] -> 0
      // Impossible`;;
@@ -109,8 +107,7 @@ let global_count_sing_def,global_count_sing_ind = define_rec
          global_count_sing x + global_count_list xs) /\
    (global_count_sing (bvl_Call _ _ xs) = global_count_list xs) /\
    (global_count_sing (bvl_Op op xs) =
-         if op = closLang_GlobOp closLang_AllocGlobal then 1 +
-             global_count_list xs
+         if op = clos_GlobOp clos_AllocGlobal then 1 + global_count_list xs
                               else global_count_list xs) /\
    (global_count_list [] = (0:num)) /\
    (global_count_list (CONS x xs) = ((
@@ -157,36 +154,34 @@ let ConcatByte_location_def = new_definition
 
 let AllocGlobal_code_def = new_definition
   `AllocGlobal_code = ((1:num),
-     bvi_Let [bvi_Op (closLang_GlobOp closLang_GlobalsPtr) []] (
-     bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
-       (closLang_Const (&0))) []; bvi_Var 0]] (
-     bvi_Let [bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 0; bvi_Var 2]] (
-     bvi_Let [bvi_Op (closLang_MemOp closLang_Length) [bvi_Var 2]] (
-     bvi_Let [bvi_Op (closLang_MemOp closLang_Update) [bvi_Var 1; bvi_Op
-       (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 3]]
-       (bvi_If (bvi_Op (closLang_IntOp closLang_Less) [bvi_Var 1; bvi_Var
-         2]) (bvi_Var 0)
-          (bvi_Let [bvi_Op (closLang_MemOp closLang_RefArray) [bvi_Op
-            (closLang_IntOp (closLang_Const (&0))) []; bvi_Op (closLang_IntOp
-            closLang_Add) [bvi_Var 2; bvi_Var 2]]] (
-           bvi_Let [bvi_Op (closLang_GlobOp closLang_SetGlobalsPtr) [bvi_Var
-             0]]
+     bvi_Let [bvi_Op (clos_GlobOp clos_GlobalsPtr) []] (
+     bvi_Let [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp (clos_Const
+       (&0))) []; bvi_Var 0]] (
+     bvi_Let [bvi_Op (clos_IntOp clos_Add) [bvi_Var 0; bvi_Var 2]] (
+     bvi_Let [bvi_Op (clos_MemOp clos_Length) [bvi_Var 2]] (
+     bvi_Let [bvi_Op (clos_MemOp clos_Update) [bvi_Var 1; bvi_Op (clos_IntOp
+       (clos_Const (&0))) []; bvi_Var 3]]
+       (bvi_If (bvi_Op (clos_IntOp clos_Less) [bvi_Var 1; bvi_Var 2])
+         (bvi_Var 0)
+          (bvi_Let [bvi_Op (clos_MemOp clos_RefArray) [bvi_Op (clos_IntOp
+            (clos_Const (&0))) []; bvi_Op (clos_IntOp clos_Add) [bvi_Var 2;
+            bvi_Var 2]]] (
+           bvi_Let [bvi_Op (clos_GlobOp clos_SetGlobalsPtr) [bvi_Var 0]]
              (bvi_Call 0 (SOME CopyGlobals_location)
-               [bvi_Var 1; bvi_Var 6; bvi_Op (closLang_IntOp
-                 closLang_Sub) [bvi_Op (closLang_IntOp (closLang_Const
-                 (&1))) []; bvi_Var 3]] NONE)))))))))`;;
+               [bvi_Var 1; bvi_Var 6; bvi_Op (clos_IntOp clos_Sub)
+                 [bvi_Op (clos_IntOp (clos_Const (&1))) []; bvi_Var 3]]
+                 NONE)))))))))`;;
 
 let CopyGlobals_code_def = new_definition
   `CopyGlobals_code = ((3:num),
      // ptr to new array, ptr to old array, index to copy
-     bvi_Let [bvi_Op (closLang_MemOp closLang_Update) [bvi_Op
-       (closLang_MemOp closLang_El) [bvi_Var 2; bvi_Var 1]; bvi_Var 2; bvi_Var
-       0]]
-       (bvi_If (bvi_Op (closLang_BlockOp closLang_Equal) [bvi_Op
-         (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 3]) (bvi_Var 0)
+     bvi_Let [bvi_Op (clos_MemOp clos_Update) [bvi_Op (clos_MemOp clos_El)
+       [bvi_Var 2; bvi_Var 1]; bvi_Var 2; bvi_Var 0]]
+       (bvi_If (bvi_Op (clos_BlockOp clos_Equal) [bvi_Op (clos_IntOp
+         (clos_Const (&0))) []; bvi_Var 3]) (bvi_Var 0)
          (bvi_Call 0 (SOME CopyGlobals_location) [bvi_Var 1; bvi_Var 2;
-           bvi_Op (closLang_IntOp closLang_Sub) [bvi_Op (closLang_IntOp
-           (closLang_Const (&1))) []; bvi_Var 3]] NONE)))`;;
+           bvi_Op (clos_IntOp clos_Sub) [bvi_Op (clos_IntOp (clos_Const
+           (&1))) []; bvi_Var 3]] NONE)))`;;
 
 let InitGlobals_max_def = new_definition
   `InitGlobals_max = 10000`;;
@@ -194,87 +189,81 @@ let InitGlobals_max_def = new_definition
 let InitGlobals_code_def = new_definition
   `InitGlobals_code start' n = ((0:num),
      (let n = MIN (MAX n 1) InitGlobals_max in
-       bvi_Let [bvi_Op (closLang_MemOp closLang_RefArray) [bvi_Op
-         (closLang_IntOp (closLang_Const (&0))) []; bvi_Op (closLang_IntOp
-         (closLang_Const (&n))) []]]
-         (bvi_Let [bvi_Op (closLang_MemOp closLang_Update) [bvi_Op
-           (closLang_IntOp (closLang_Const (&1))) []; bvi_Op (closLang_IntOp
-           (closLang_Const (&0))) []; bvi_Var 0]]
-           (bvi_Let [bvi_Op (closLang_GlobOp closLang_SetGlobalsPtr)
-             [bvi_Var 1]]
+       bvi_Let [bvi_Op (clos_MemOp clos_RefArray) [bvi_Op (clos_IntOp
+         (clos_Const (&0))) []; bvi_Op (clos_IntOp (clos_Const (&n))) []]]
+         (bvi_Let [bvi_Op (clos_MemOp clos_Update) [bvi_Op (clos_IntOp
+           (clos_Const (&1))) []; bvi_Op (clos_IntOp (clos_Const (&0))) [];
+           bvi_Var 0]]
+           (bvi_Let [bvi_Op (clos_GlobOp clos_SetGlobalsPtr) [bvi_Var 1]]
               (bvi_Call 0 (SOME start') [] (SOME (bvi_Var 0)))))))`;;
 
 let ListLength_code_def = new_definition
   `ListLength_code = (2,
      // ptr to array, accumulated length
-     bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0))
-       [bvi_Var 0])
+     bvi_If (bvi_Op (clos_BlockOp (clos_TagLenEq nil_tag 0)) [bvi_Var 0])
        (bvi_Var 1) (bvi_Call 0 (SOME ListLength_location)
-                 [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-                   (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 0];
-                  bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 1; bvi_Op
-                    (closLang_IntOp (closLang_Const (&1))) []]] NONE))`;;
+                 [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp
+                   (clos_Const (&1))) []; bvi_Var 0];
+                  bvi_Op (clos_IntOp clos_Add) [bvi_Var 1; bvi_Op
+                    (clos_IntOp (clos_Const (&1))) []]] NONE))`;;
 
 let FromListByte_code_def = new_definition
   `FromListByte_code = (3,
      // list, current index, byte array
-     bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0))
-       [bvi_Var 0]) (bvi_Var 2)
-       (bvi_Let [bvi_Op (closLang_MemOp closLang_UpdateByte) [bvi_Op
-         (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp (closLang_Const
-         (&0))) []; bvi_Var 0]; bvi_Var 1; bvi_Var 2]]
+     bvi_If (bvi_Op (clos_BlockOp (clos_TagLenEq nil_tag 0)) [bvi_Var 0])
+       (bvi_Var 2)
+       (bvi_Let [bvi_Op (clos_MemOp clos_UpdateByte) [bvi_Op (clos_MemOp
+         clos_El) [bvi_Op (clos_IntOp (clos_Const (&0))) []; bvi_Var 0];
+         bvi_Var 1; bvi_Var 2]]
          (bvi_Call 0 (SOME FromListByte_location)
-           [bvi_Op (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
-             (closLang_Const (&1))) []; bvi_Var 1];
-            bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 2; bvi_Op
-              (closLang_IntOp (closLang_Const (&1))) []];
+           [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp (clos_Const
+             (&1))) []; bvi_Var 1];
+            bvi_Op (clos_IntOp clos_Add) [bvi_Var 2; bvi_Op (clos_IntOp
+              (clos_Const (&1))) []];
             bvi_Var 3] NONE)))`;;
 
 let ToListByte_code_def = new_definition
   `ToListByte_code = (3,
      // list, current index, byte array
-     bvi_If (bvi_Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
-       (&0:int)))) [bvi_Var 1]) (bvi_Var 0)
-       (bvi_Let [bvi_Op (closLang_IntOp closLang_Sub) [bvi_Op
-         (closLang_IntOp (closLang_Const (&1))) []; bvi_Var 1]]
-       (bvi_Let [bvi_Op (closLang_MemOp closLang_DerefByte) [bvi_Var 0;
-         bvi_Var 3]]
+     bvi_If (bvi_Op (clos_BlockOp (clos_EqualConst (clos_Int (&0:int))))
+       [bvi_Var 1]) (bvi_Var 0)
+       (bvi_Let [bvi_Op (clos_IntOp clos_Sub) [bvi_Op (clos_IntOp
+         (clos_Const (&1))) []; bvi_Var 1]]
+       (bvi_Let [bvi_Op (clos_MemOp clos_DerefByte) [bvi_Var 0; bvi_Var 3]]
          (bvi_Call 0 (SOME ToListByte_location)
-           [bvi_Op (closLang_BlockOp (closLang_Cons 0)) [bvi_Var 2; bvi_Var
-             0];
+           [bvi_Op (clos_BlockOp (clos_Cons 0)) [bvi_Var 2; bvi_Var 0];
             bvi_Var 1;
             bvi_Var 4] NONE))))`;;
 
 let SumListLength_code_def = new_definition
   `SumListLength_code = (2,
      // ptr to list, accumulated length
-     bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0))
-       [bvi_Var 0])
+     bvi_If (bvi_Op (clos_BlockOp (clos_TagLenEq nil_tag 0)) [bvi_Var 0])
        (bvi_Var 1)
        (bvi_Call 0 (SOME SumListLength_location)
-          [bvi_Op (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
-            (closLang_Const (&1))) []; bvi_Var 0];
-           bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 1; bvi_Op
-             (closLang_MemOp closLang_LengthByte)
-                            [bvi_Op (closLang_MemOp closLang_El) [bvi_Op
-                              (closLang_IntOp (closLang_Const (&0))) [];
-                              bvi_Var 0]]]] NONE))`;;
+          [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp (clos_Const
+            (&1))) []; bvi_Var 0];
+           bvi_Op (clos_IntOp clos_Add) [bvi_Var 1; bvi_Op (clos_MemOp
+             clos_LengthByte)
+                            [bvi_Op (clos_MemOp clos_El) [bvi_Op
+                              (clos_IntOp (clos_Const (&0))) []; bvi_Var
+                              0]]]] NONE))`;;
 
 let ConcatByte_code_def = new_definition
   `ConcatByte_code = (3,
      // list, current index, destination
-     bvi_If (bvi_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0))
-       [bvi_Var 0]) (bvi_Var 2)
-       (bvi_Let [bvi_Op (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
-         (closLang_Const (&0))) []; bvi_Var 0]]
-         (bvi_Let [bvi_Op (closLang_MemOp closLang_LengthByte) [bvi_Var 0]]
-           (bvi_Let [bvi_Op (closLang_MemOp (closLang_CopyByte F))
-                   [bvi_Var 3; bvi_Var 4; bvi_Var 0; bvi_Op (closLang_IntOp
-                     (closLang_Const (&0))) []; bvi_Var 1]]
+     bvi_If (bvi_Op (clos_BlockOp (clos_TagLenEq nil_tag 0)) [bvi_Var 0])
+       (bvi_Var 2)
+       (bvi_Let [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp (clos_Const
+         (&0))) []; bvi_Var 0]]
+         (bvi_Let [bvi_Op (clos_MemOp clos_LengthByte) [bvi_Var 0]]
+           (bvi_Let [bvi_Op (clos_MemOp (clos_CopyByte F))
+                   [bvi_Var 3; bvi_Var 4; bvi_Var 0; bvi_Op (clos_IntOp
+                     (clos_Const (&0))) []; bvi_Var 1]]
              (bvi_Call 0 (SOME ConcatByte_location)
-               [bvi_Op (closLang_MemOp closLang_El) [bvi_Op (closLang_IntOp
-                 (closLang_Const (&1))) []; bvi_Var 3];
-                bvi_Op (closLang_IntOp closLang_Add) [bvi_Var 4; bvi_Var 1];
+               [bvi_Op (clos_MemOp clos_El) [bvi_Op (clos_IntOp (clos_Const
+                 (&1))) []; bvi_Var 3];
+                bvi_Op (clos_IntOp clos_Add) [bvi_Var 4; bvi_Var 1];
                 bvi_Var 5] NONE)))))`;;
 
 let stubs_def = new_definition
@@ -292,94 +281,90 @@ let stubs_def = new_definition
 
 let compile_op_def = new_definition
   `bvl_to_bvi_compile_op op c1 =
-     match op with closLang_IntOp (closLang_Const i) ->
+     match op with clos_IntOp (clos_Const i) ->
        (match c1 with [] -> compile_int i
-       | _ -> bvi_Let [bvi_Op (closLang_IntOp (closLang_Const (&0))) c1]
+       | _ -> bvi_Let [bvi_Op (clos_IntOp (clos_Const (&0))) c1]
          (compile_int i))
-     | closLang_GlobOp (closLang_Global n) ->
-       (if NULL c1 then bvi_Op (closLang_GlobOp (closLang_Global (n + 1)))
-         []
-       else bvi_Let c1 (bvi_Op (closLang_MemOp closLang_El) [
-         bvi_Op (closLang_IntOp closLang_Add) [bvi_Op (closLang_IntOp
-           (closLang_Const (&2))) []; bvi_Var 0];
-         bvi_Op (closLang_GlobOp closLang_GlobalsPtr) []]))
-     | closLang_GlobOp (closLang_SetGlobal n) -> bvi_Op (closLang_GlobOp
-       (closLang_SetGlobal (n + 1))) c1
-     | closLang_GlobOp closLang_AllocGlobal -> bvi_Call 0 (SOME
+     | clos_GlobOp (clos_Global n) ->
+       (if NULL c1 then bvi_Op (clos_GlobOp (clos_Global (n + 1))) []
+       else bvi_Let c1 (bvi_Op (clos_MemOp clos_El) [
+         bvi_Op (clos_IntOp clos_Add) [bvi_Op (clos_IntOp (clos_Const (&2)))
+           []; bvi_Var 0];
+         bvi_Op (clos_GlobOp clos_GlobalsPtr) []]))
+     | clos_GlobOp (clos_SetGlobal n) -> bvi_Op (clos_GlobOp (clos_SetGlobal
+       (n + 1))) c1
+     | clos_GlobOp clos_AllocGlobal -> bvi_Call 0 (SOME
        AllocGlobal_location) c1 NONE
-     | closLang_BlockOp (closLang_FromList n) -> bvi_Let
-         (if NULL c1 then [bvi_Op (closLang_IntOp (closLang_Const (&0))) []]
-           else c1)
-         (bvi_Op (closLang_BlockOp (closLang_FromList n))
+     | clos_BlockOp (clos_FromList n) -> bvi_Let
+         (if NULL c1 then [bvi_Op (clos_IntOp (clos_Const (&0))) []] else
+           c1)
+         (bvi_Op (clos_BlockOp (clos_FromList n))
          [bvi_Var 0; bvi_Call 0 (SOME ListLength_location) [bvi_Var 0;
-           bvi_Op (closLang_IntOp (closLang_Const (&0))) []] NONE])
-     | closLang_Install -> bvi_Let
-       (if ~(LENGTH c1 = 2) then [bvi_Let c1 (bvi_Op (closLang_IntOp
-         (closLang_Const (&0))) []); bvi_Op (closLang_IntOp (closLang_Const
-         (&0))) []] else c1)
-       (bvi_Op closLang_Install
+           bvi_Op (clos_IntOp (clos_Const (&0))) []] NONE])
+     | clos_Install -> bvi_Let
+       (if ~(LENGTH c1 = 2) then [bvi_Let c1 (bvi_Op (clos_IntOp (clos_Const
+         (&0))) []); bvi_Op (clos_IntOp (clos_Const (&0))) []] else c1)
+       (bvi_Op clos_Install
         [bvi_Call 0 (SOME ListLength_location)
-           [bvi_Var 0; bvi_Op (closLang_IntOp (closLang_Const (&0))) []]
-             NONE;
+           [bvi_Var 0; bvi_Op (clos_IntOp (clos_Const (&0))) []] NONE;
          bvi_Call 0 (SOME ListLength_location)
-           [bvi_Var 1; bvi_Op (closLang_IntOp (closLang_Const (&0))) []]
-             NONE;
+           [bvi_Var 1; bvi_Op (clos_IntOp (clos_Const (&0))) []] NONE;
          bvi_Var 0; bvi_Var 1])
-     | closLang_MemOp closLang_FromListByte ->
-         bvi_Let (if NULL c1 then [bvi_Op (closLang_IntOp (closLang_Const
-           (&0))) []] else c1)
+     | clos_MemOp clos_FromListByte ->
+         bvi_Let (if NULL c1 then [bvi_Op (clos_IntOp (clos_Const (&0))) []]
+           else c1)
            (bvi_Call 0 (SOME FromListByte_location)
               [bvi_Var 0;
-               bvi_Op (closLang_IntOp (closLang_Const (&0))) [];
-               bvi_Op (closLang_MemOp (closLang_RefByte T))
-                 [bvi_Op (closLang_IntOp (closLang_Const (&0))) [];
+               bvi_Op (clos_IntOp (clos_Const (&0))) [];
+               bvi_Op (clos_MemOp (clos_RefByte T))
+                 [bvi_Op (clos_IntOp (clos_Const (&0))) [];
                   bvi_Call 0 (SOME ListLength_location)
-                    [bvi_Var 0; bvi_Op (closLang_IntOp (closLang_Const
-                      (&0))) []] NONE]]
+                    [bvi_Var 0; bvi_Op (clos_IntOp (clos_Const (&0))) []]
+                      NONE]]
               NONE)
-     | closLang_MemOp closLang_ToListByte ->
-         bvi_Let (if NULL c1 then [bvi_Op (closLang_IntOp (closLang_Const
-           (&0))) []] else c1)
+     | clos_MemOp clos_ToListByte ->
+         bvi_Let (if NULL c1 then [bvi_Op (clos_IntOp (clos_Const (&0))) []]
+           else c1)
            (bvi_Call 0 (SOME ToListByte_location)
-              [bvi_Op (closLang_BlockOp (closLang_Cons 0)) [];
-               bvi_Op (closLang_MemOp closLang_LengthByte) [bvi_Var 0];
+              [bvi_Op (clos_BlockOp (clos_Cons 0)) [];
+               bvi_Op (clos_MemOp clos_LengthByte) [bvi_Var 0];
                bvi_Var 0]
               NONE)
-     | closLang_MemOp closLang_ConcatByteVec ->
-         bvi_Let (if NULL c1 then [bvi_Op (closLang_IntOp (closLang_Const
-           (&0))) []] else c1)
+     | clos_MemOp clos_ConcatByteVec ->
+         bvi_Let (if NULL c1 then [bvi_Op (clos_IntOp (clos_Const (&0))) []]
+           else c1)
            (bvi_Call 0 (SOME ConcatByte_location)
              [bvi_Var 0;
-              bvi_Op (closLang_IntOp (closLang_Const (&0))) [];
-              bvi_Op (closLang_MemOp (closLang_RefByte T))
-                [bvi_Op (closLang_IntOp (closLang_Const (&0))) [];
+              bvi_Op (clos_IntOp (clos_Const (&0))) [];
+              bvi_Op (clos_MemOp (clos_RefByte T))
+                [bvi_Op (clos_IntOp (clos_Const (&0))) [];
                  bvi_Call 0 (SOME SumListLength_location)
-                   [bvi_Var 0; bvi_Op (closLang_IntOp (closLang_Const (&0)))
-                     []] NONE]] NONE)
-     | closLang_MemOp (closLang_CopyByte T) ->
+                   [bvi_Var 0; bvi_Op (clos_IntOp (clos_Const (&0))) []]
+                     NONE]] NONE)
+     | clos_MemOp (clos_CopyByte T) ->
        // TODO: this should eventually be implemented in data_to_word instead for efficiency
        bvi_Let (if LENGTH c1 < 3 then (APPEND c1 (REPLICATE 3 (bvi_Op
-         (closLang_IntOp (closLang_Const (&0))) []))) else c1)
-         (bvi_Let [bvi_Op (closLang_MemOp (closLang_RefByte T)) [bvi_Op
-           (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 0]]
-            (bvi_Let [bvi_Op (closLang_MemOp (closLang_CopyByte F)) [bvi_Op
-              (closLang_IntOp (closLang_Const (&0))) []; bvi_Var 0; bvi_Var 1;
-              bvi_Var 2; bvi_Var 3]]
+         (clos_IntOp (clos_Const (&0))) []))) else c1)
+         (bvi_Let [bvi_Op (clos_MemOp (clos_RefByte T)) [bvi_Op (clos_IntOp
+           (clos_Const (&0))) []; bvi_Var 0]]
+            (bvi_Let [bvi_Op (clos_MemOp (clos_CopyByte F)) [bvi_Op
+              (clos_IntOp (clos_Const (&0))) []; bvi_Var 0; bvi_Var 1; bvi_Var
+              2; bvi_Var 3]]
               (bvi_Var 1)))
-     | closLang_Label l -> bvi_Op (closLang_Label (bvl_num_stubs +
+     | clos_Label l -> bvi_Op (clos_Label (bvl_num_stubs +
        bvl_to_bvi_namespaces * l)) c1
-     | closLang_BlockOp (closLang_Build ps) -> bvi_Op (closLang_BlockOp
-       (closLang_Build ps)) c1
-     | closLang_BlockOp (closLang_EqualConst p) -> bvi_Op (closLang_BlockOp
-       (closLang_EqualConst p)) c1
+     | clos_BlockOp (clos_Build ps) -> bvi_Op (clos_BlockOp (clos_Build ps))
+       c1
+     | clos_BlockOp (clos_EqualConst p) -> bvi_Op (clos_BlockOp
+       (clos_EqualConst p)) c1
      |
        // reserved for bvi_tmc; bvlSem$do_app is Error on these, so compile them out
-       closLang_MemOp (closLang_MutCons tag i) -> bvi_Let c1 (bvi_Op
-         (closLang_IntOp (closLang_Const (&0))) [])
-     | closLang_MemOp closLang_UpdateCons -> bvi_Let c1 (bvi_Op
-       (closLang_IntOp (closLang_Const (&0))) [])
-     | closLang_MemOp closLang_FinaliseCons -> bvi_Let c1 (bvi_Op
-       (closLang_IntOp (closLang_Const (&0))) [])
+       clos_MemOp (clos_MutCons tag i) -> bvi_Let c1 (bvi_Op (clos_IntOp
+         (clos_Const (&0))) [])
+     | clos_MemOp clos_UpdateCons -> bvi_Let c1 (bvi_Op (clos_IntOp
+       (clos_Const (&0))) [])
+     | clos_MemOp clos_FinaliseCons -> bvi_Let c1 (bvi_Op (clos_IntOp
+       (clos_Const (&0))) [])
      | _ -> bvi_Op op c1`;;
 
 (* HOL4 bvl_to_bviScript.sml:313-321: a theorem that HOL4 states as the

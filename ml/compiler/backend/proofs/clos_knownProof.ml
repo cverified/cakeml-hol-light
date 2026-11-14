@@ -134,30 +134,28 @@ let unique_set_globals_evaluate = prove
 let unique_set_globals_subexps = prove
  (`(unique_set_globals (CONS x1 (CONS x2 xs)) co ==>
       unique_set_globals [x1] co /\ unique_set_globals (CONS x2 xs) co) /\
-   (unique_set_globals [flatLang_If t x1 x2 x3] co ==>
+   (unique_set_globals [flat_If t x1 x2 x3] co ==>
       unique_set_globals [x1] co /\ unique_set_globals [x2] co
         /\ unique_set_globals [x3] co) /\
-   (unique_set_globals [closLang_Let t xs x2] co ==>
+   (unique_set_globals [clos_Let t xs x2] co ==>
       unique_set_globals xs co /\ unique_set_globals [x2] co) /\
-   (unique_set_globals [flatLang_Raise t x1] co ==>
+   (unique_set_globals [flat_Raise t x1] co ==>
       unique_set_globals [x1] co) /\
-   (unique_set_globals [flatLang_Handle t x1 x2] co ==>
+   (unique_set_globals [flat_Handle t x1 x2] co ==>
       unique_set_globals [x1] co /\ unique_set_globals [x2] co) /\
-   (unique_set_globals [closLang_Op t opn xs] co ==>
+   (unique_set_globals [clos_Op t opn xs] co ==>
       unique_set_globals xs co) /\
    (
     // /\ !n. BAG_ALL_DISTINCT (op_gbag opn ⊎ (elist_globals (first_n_exps co n)))
-    unique_set_globals [closLang_Fn src_name loc_opt vsopt num_args x1] co
-      ==>
+    unique_set_globals [clos_Fn src_name loc_opt vsopt num_args x1] co ==>
       unique_set_globals [x1] co) /\
-   (unique_set_globals [closLang_Letrec src_names loc_opt vsopt fns x1] co
-     ==>
+   (unique_set_globals [clos_Letrec src_names loc_opt vsopt fns x1] co ==>
       unique_set_globals [x1] co /\ unique_set_globals (MAP SND fns) co) /\
-   (unique_set_globals [closLang_App t loc_opt x1 xs] co ==>
+   (unique_set_globals [clos_App t loc_opt x1 xs] co ==>
       unique_set_globals [x1] co /\ unique_set_globals xs co) /\
-   (unique_set_globals [closLang_Tick t x1] co ==>
+   (unique_set_globals [clos_Tick t x1] co ==>
       unique_set_globals [x1] co) /\
-   (unique_set_globals [closLang_Call t ticks dest xs] co ==>
+   (unique_set_globals [clos_Call t ticks dest xs] co ==>
       unique_set_globals xs co)`,
   CHEAT_TAC);;
 
@@ -363,7 +361,7 @@ let fv_max_def = new_definition
   `fv_max n xs = (!v. fv v xs ==> v < n)`;;
 
 let fv_max_SmartOp = prove
- (`fv_max n [closLang_Op t op xs] ==> fv_max n [clos_op_SmartOp t op xs]`,
+ (`fv_max n [clos_Op t op xs] ==> fv_max n [clos_op_SmartOp t op xs]`,
   CHEAT_TAC);;
 
 let fv_alt = prove
@@ -378,24 +376,23 @@ let fv_max_rw = prove
  (`(fv_max n [] <=> T) /\
    (fv_max n (CONS x (CONS y xs)) <=> fv_max n [x] /\ fv_max n (CONS y xs))
      /\
-   (fv_max n [closLang_Var tr v] <=> v < n) /\
-   (fv_max n [flatLang_If tr x1 x2 x3] <=> fv_max n [x1] /\ fv_max n [x2]
+   (fv_max n [clos_Var tr v] <=> v < n) /\
+   (fv_max n [flat_If tr x1 x2 x3] <=> fv_max n [x1] /\ fv_max n [x2]
      /\ fv_max n [x3]) /\
-   (fv_max n [closLang_Let tr xs x1] <=> fv_max n xs /\ fv_max (n + LENGTH
-     xs) [x1]) /\
-   (fv_max n [flatLang_Raise tr x1] <=> fv_max n [x1]) /\
-   (fv_max n [closLang_Tick tr x1] <=> fv_max n [x1]) /\
-   (fv_max n [closLang_Op tr opn xs] <=> fv_max n xs) /\
-   (fv_max n [closLang_App tr lopt x1 xs] <=> fv_max n [x1] /\ fv_max n xs)
-     /\
-   (fv_max n [closLang_Fn src_name loc vs num_args x1] <=> fv_max (n +
-     num_args) [x1]) /\
-   (fv_max n [closLang_Letrec src_names loc vs fns x1] <=>
+   (fv_max n [clos_Let tr xs x1] <=> fv_max n xs /\ fv_max (n + LENGTH xs)
+     [x1]) /\
+   (fv_max n [flat_Raise tr x1] <=> fv_max n [x1]) /\
+   (fv_max n [clos_Tick tr x1] <=> fv_max n [x1]) /\
+   (fv_max n [clos_Op tr opn xs] <=> fv_max n xs) /\
+   (fv_max n [clos_App tr lopt x1 xs] <=> fv_max n [x1] /\ fv_max n xs) /\
+   (fv_max n [clos_Fn src_name loc vs num_args x1] <=> fv_max (n + num_args)
+     [x1]) /\
+   (fv_max n [clos_Letrec src_names loc vs fns x1] <=>
       ALL (\(num_args,x). fv_max (n + num_args + LENGTH fns) [x]) fns /\
       fv_max (n + LENGTH fns) [x1]) /\
-   (fv_max n [flatLang_Handle tr x1 x2] <=> fv_max n [x1] /\ fv_max (n + 1)
+   (fv_max n [flat_Handle tr x1 x2] <=> fv_max n [x1] /\ fv_max (n + 1)
      [x2]) /\
-   (fv_max n [closLang_Call tr ticks dest xs] <=> fv_max n xs)`,
+   (fv_max n [clos_Call tr ticks dest xs] <=> fv_max n xs)`,
   CHEAT_TAC);;
 
 let fv_max_mk_Ticks = prove
@@ -533,7 +530,7 @@ let gapprox_disjoint_def = new_definition
 let gapprox_disjoint_rw = prove
  (`(gapprox_disjoint g (CONS x (CONS y xs)) <=>
       gapprox_disjoint g [x] /\ gapprox_disjoint g (CONS y xs)) /\
-   (gapprox_disjoint g [closLang_Op tr opn xs] <=>
+   (gapprox_disjoint g [clos_Op tr opn xs] <=>
       gapprox_disjoint g xs /\ DISJOINT (domain g) (SET_OF_BAG
         (closProps_op_gbag opn)))`,
   CHEAT_TAC);;
@@ -760,25 +757,25 @@ let mglobals_disjoint_def = new_definition
 let mglobals_disjoint_rw = prove
  (`(mglobals_disjoint s (CONS x (CONS y xs)) <=>
       mglobals_disjoint s [x] /\ mglobals_disjoint s (CONS y xs)) /\
-   (mglobals_disjoint s [closLang_Let tr xs x] <=>
+   (mglobals_disjoint s [clos_Let tr xs x] <=>
       mglobals_disjoint s xs /\ mglobals_disjoint s [x]) /\
-   (mglobals_disjoint s [flatLang_Handle tr x1 x2] <=>
+   (mglobals_disjoint s [flat_Handle tr x1 x2] <=>
       mglobals_disjoint s [x1] /\ mglobals_disjoint s [x2]) /\
-   (mglobals_disjoint s [flatLang_If tr x1 x2 x3] <=>
+   (mglobals_disjoint s [flat_If tr x1 x2 x3] <=>
       mglobals_disjoint s [x1] /\ mglobals_disjoint s [x2]
         /\ mglobals_disjoint s [x3]) /\
-   (mglobals_disjoint s [flatLang_Raise tr x] <=>
+   (mglobals_disjoint s [flat_Raise tr x] <=>
       mglobals_disjoint s [x]) /\
-   (mglobals_disjoint s [closLang_Tick tr x] <=>
+   (mglobals_disjoint s [clos_Tick tr x] <=>
       mglobals_disjoint s [x]) /\
-   (mglobals_disjoint s [closLang_Call tr ticks dest xs] <=>
+   (mglobals_disjoint s [clos_Call tr ticks dest xs] <=>
       mglobals_disjoint s xs) /\
-   (mglobals_disjoint s [closLang_Op tr opn xs] <=>
+   (mglobals_disjoint s [clos_Op tr opn xs] <=>
       mglobals_disjoint s xs /\ DISJOINT (mapped_globals s) (SET_OF_BAG
         (closProps_op_gbag opn))) /\
-   (mglobals_disjoint s [closLang_App tr lopt x1 xs] <=>
+   (mglobals_disjoint s [clos_App tr lopt x1 xs] <=>
       mglobals_disjoint s [x1] /\ mglobals_disjoint s xs) /\
-   (mglobals_disjoint s [closLang_Letrec src_names lopt vs fns x1] <=>
+   (mglobals_disjoint s [clos_Letrec src_names lopt vs fns x1] <=>
       mglobals_disjoint s (MAP SND fns) /\ mglobals_disjoint s [x1])`,
   CHEAT_TAC);;
 
@@ -850,8 +847,8 @@ let state_globals_approx_known_op_evaluate = prove
    ssgc_free s0 /\ ALL vsgc_free env /\ ALL closProps_esgc_free xs /\
    DISJOINT (mapped_globals (closSem_state_globals s0)) (SET_OF_BAG
      (closProps_op_gbag opn)) /\
-   unique_set_globals [closLang_Op tr opn xs] (closSem_state_compile_oracle
-     s0) /\
+   unique_set_globals [clos_Op tr opn xs] (closSem_state_compile_oracle s0)
+     /\
    state_globals_approx s g0 ==>
    state_globals_approx s g`,
   CHEAT_TAC);;
@@ -980,7 +977,6 @@ let clos_knownProof_f_rel_def = new_definition
       n1 = n2 /\ clos_knownProof_exp_rel c (APPEND (REPLICATE n1
         clos_known_Other) aenv) g e1 e2`;;
 
-let _ = size_thms "closSem_v";;
 let v1_size_append = prove
  (`!xs ys. list_size closSem_v_size (APPEND xs ys) = list_size closSem_v_size
   xs + list_size closSem_v_size ys`,
@@ -1513,8 +1509,8 @@ let syntax_oracle_ok_def = new_definition
   `clos_knownProof_syntax_oracle_ok c xs co conf <=>
      clos_knownProof_syntax_ok xs /\
      is_state_oracle (clos_known_compile_inc c) (pure_co
-       (clos_fvs_compile_inc:closLang_exp list#(num#num#closLang_exp)
-       list->closLang_exp list#(num#num#closLang_exp) list) o co) /\
+       (clos_fvs_compile_inc:clos_exp list#(num#num#clos_exp) list->clos_exp
+       list#(num#num#clos_exp) list) o co) /\
      conf = FST (FST (co 0)) /\
      oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND) (<)
        (SET_OF_BAG (closProps_elist_globals xs)) co /\
@@ -1528,35 +1524,34 @@ let known_cc_def = new_definition
           (state_cc (clos_known_compile_inc kcfg)
             (pure_cc clos_ticks_compile_inc
               (pure_cc clos_letop_compile_inc
-                (cc:'b->closLang_exp list#(num#num#closLang_exp)
-                  list->(word8 list#word64 list#'b) option):'b->closLang_exp
-                  list#(num#num#closLang_exp) list->(word8 list#word64 list#'b)
-                  option):'b->closLang_exp list#(num#num#closLang_exp)
-                  list->(word8 list#word64 list#'b) option)))
-      | NONE -> (state_cc (CURRY I) cc:val_approx spt#'b->closLang_exp
-        list#(num#num#closLang_exp) list->(word8 list#word64 list#val_approx
+                (cc:'b->clos_exp list#(num#num#clos_exp) list->(word8
+                  list#word64 list#'b) option):'b->clos_exp
+                  list#(num#num#clos_exp) list->(word8 list#word64 list#'b)
+                  option):'b->clos_exp list#(num#num#clos_exp) list->(word8
+                  list#word64 list#'b) option)))
+      | NONE -> (state_cc (CURRY I) cc:val_approx spt#'b->clos_exp
+        list#(num#num#clos_exp) list->(word8 list#word64 list#val_approx
         spt#'b) option))`;;
 
 let known_co_def = new_definition
-  `known_co known_conf (co:num->(val_approx spt#'b)#closLang_exp
-  list#(num#num#closLang_exp) list) =
+  `known_co known_conf (co:num->(val_approx spt#'b)#clos_exp
+  list#(num#num#clos_exp) list) =
      (match known_conf with SOME kcfg -> (pure_co clos_letop_compile_inc o
                         ((pure_co clos_ticks_compile_inc o
                            (state_co (clos_known_compile_inc kcfg)
                              (pure_co clos_fvs_compile_inc o
-                               co):num->'b#closLang_exp
-                               list#(num#num#closLang_exp)
-                               list)):num->'b#closLang_exp
-                               list#(num#num#closLang_exp) list))
-      | NONE -> ((state_co (CURRY I) co):num->'b#closLang_exp
-        list#(num#num#closLang_exp) list))`;;
+                               co):num->'b#clos_exp list#(num#num#clos_exp)
+                               list)):num->'b#clos_exp list#(num#num#clos_exp)
+                               list))
+      | NONE -> ((state_co (CURRY I) co):num->'b#clos_exp
+        list#(num#num#clos_exp) list))`;;
 
 let known_co_eq_pure_state = prove
  (`known_co known_conf co =
      pure_co (if IS_SOME known_conf then
-             clos_letop_compile_inc o (clos_ticks_compile_inc:closLang_exp
-               list#(num#num#closLang_exp) list->closLang_exp
-               list#(num#num#closLang_exp) list)
+             clos_letop_compile_inc o (clos_ticks_compile_inc:clos_exp
+               list#(num#num#clos_exp) list->clos_exp list#(num#num#clos_exp)
+               list)
          else I) o
      state_co (match known_conf with SOME kcfg -> clos_known_compile_inc
        kcfg
@@ -1571,18 +1566,18 @@ let known_mk_co_def = new_definition
          else CURRY I)
      (option_val_approx_spt kc')
      (mk o pure_co_progs (if IS_SOME kc then
-           clos_letop_compile_inc o (clos_ticks_compile_inc:closLang_exp
-             list#(num#num#closLang_exp) list->closLang_exp
-             list#(num#num#closLang_exp) list)
+           clos_letop_compile_inc o (clos_ticks_compile_inc:clos_exp
+             list#(num#num#clos_exp) list->clos_exp list#(num#num#clos_exp)
+             list)
          else I)) o pure_co_progs (if IS_SOME kc then
            clos_fvs_compile_inc else I)`;;
 
 let known_co_progs_def = new_definition
   `known_co_progs kc kc' =
      pure_co_progs (if IS_SOME kc then
-           clos_letop_compile_inc o (clos_ticks_compile_inc:closLang_exp
-             list#(num#num#closLang_exp) list->closLang_exp
-             list#(num#num#closLang_exp) list)
+           clos_letop_compile_inc o (clos_ticks_compile_inc:clos_exp
+             list#(num#num#clos_exp) list->clos_exp list#(num#num#clos_exp)
+             list)
          else I) o
      state_co_progs (if IS_SOME kc then clos_known_compile_inc (THE kc)
          else CURRY I) (match kc' with NONE -> LN | SOME kcfg ->
@@ -1669,7 +1664,7 @@ let known_op_every_Fn_SOME = prove
   CHEAT_TAC);;
 
 let clos_gen_no_inline_every_Fn_SOME = prove
- (`!(xs:(num#closLang_exp) list) n x.
+ (`!(xs:(num#clos_exp) list) n x.
    ALL val_approx_every_Fn_SOME (clos_gen_noinline x n xs)`,
   CHEAT_TAC);;
 
@@ -1718,7 +1713,7 @@ let known_op_every_Fn_vs_NONE = prove
   CHEAT_TAC);;
 
 let clos_gen_no_inline_every_Fn_vs_NONE = prove
- (`!(xs:(num#closLang_exp) list) n x.
+ (`!(xs:(num#clos_exp) list) n x.
    ALL val_approx_every_Fn_vs_NONE (clos_gen_noinline x n xs)`,
   CHEAT_TAC);;
 
@@ -1774,7 +1769,7 @@ let no_Labels_mk_Ticks = prove
   CHEAT_TAC);;
 
 let clos_gen_no_inline_no_Labels = prove
- (`!(xs:(num#closLang_exp) list) n x.
+ (`!(xs:(num#clos_exp) list) n x.
    ALL val_approx_no_Labels (clos_gen_noinline x n xs)`,
   CHEAT_TAC);;
 
@@ -1833,7 +1828,7 @@ let obeys_max_app_mk_Ticks = prove
   CHEAT_TAC);;
 
 let clos_gen_no_inline_obeys_max_app = prove
- (`!(xs:(num#closLang_exp) list) n x.
+ (`!(xs:(num#clos_exp) list) n x.
    ALL (val_approx_obeys_max_app k) (clos_gen_noinline x n xs)`,
   CHEAT_TAC);;
 

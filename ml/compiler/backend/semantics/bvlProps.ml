@@ -70,7 +70,7 @@ let pair_lam_lem = prove
 
 let do_app_Rval_swap = prove
  (`bvlSem_do_app op a (s1:('a,'b)bvlSem_state) = Rval (x0,x1) /\ ~(op =
-  closLang_Install) /\
+  clos_Install) /\
     (domain (bvlSem_state_code s1)) SUBSET (domain (bvlSem_state_code t1))
       ==>
     bvlSem_do_app op a
@@ -87,7 +87,7 @@ let do_app_Rval_swap = prove
   CHEAT_TAC);;
 
 let do_app_with_code = prove
- (`bvlSem_do_app op vs s = Rval (r,s') /\ ~(op = closLang_Install) ==>
+ (`bvlSem_do_app op vs s = Rval (r,s') /\ ~(op = clos_Install) ==>
    domain (bvlSem_state_code s) SUBSET domain c ==>
    bvlSem_do_app op vs (bvlSem_state_compile_oracle_fupd (K co)
      (bvlSem_state_compile_fupd (K cc) (bvlSem_state_code_fupd (K c) s))) =
@@ -97,8 +97,8 @@ let do_app_with_code = prove
   CHEAT_TAC);;
 
 let do_app_Rerr_swap = prove
- (`bvlSem_do_app op a (s1:('a,'b)bvlSem_state) = Rerr e /\ ~(op =
-  closLang_Install) /\
+ (`bvlSem_do_app op a (s1:('a,'b)bvlSem_state) = Rerr e /\ ~(op = clos_Install)
+  /\
    (domain (bvlSem_state_code t1)) SUBSET (domain (bvlSem_state_code s1))
      ==>
    bvlSem_do_app op a
@@ -110,7 +110,7 @@ let do_app_Rerr_swap = prove
   CHEAT_TAC);;
 
 let do_app_with_code_err_not_Install = prove
- (`bvlSem_do_app op vs s = Rerr e /\ ~(op = closLang_Install) ==>
+ (`bvlSem_do_app op vs s = Rerr e /\ ~(op = clos_Install) ==>
    (domain c SUBSET domain (bvlSem_state_code s) \/ ~(e = Rabort
      Rtype_error)) ==>
    bvlSem_do_app op vs (bvlSem_state_compile_oracle_fupd (K co)
@@ -166,7 +166,7 @@ let find_code_EVERY_IMP = prove
 let do_app_err = prove
  (`bvlSem_do_app op vs s = Rerr e ==>
                              (e = Rabort Rtype_error) \/
-                             (?i x. op = closLang_FFI i /\ e = Rabort
+                             (?i x. op = clos_FFI i /\ e = Rabort
                                (Rffi_error x))`,
   CHEAT_TAC);;
 
@@ -240,8 +240,8 @@ let evaluate_mk_tick = prove
 
 let evaluate_MAP_Const = prove
  (`!exps.
-     bvlSem_evaluate (MAP (K (bvl_Op (closLang_IntOp (closLang_Const i))
-       [])) (exps:'a list),env,t1) =
+     bvlSem_evaluate (MAP (K (bvl_Op (clos_IntOp (clos_Const i)) []))
+       (exps:'a list),env,t1) =
      (Rval (MAP (K (bvlSem_Number i)) exps),t1)`,
   CHEAT_TAC);;
 
@@ -524,7 +524,7 @@ let bEvery_EVERY = prove
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
-     MEASURE flatLang_exp_size
+     MEASURE flat_exp_size
    which is not one that HOL Light takes here; the one
    below is what the port found for it *)
 (* HOL4 bvlPropsScript.sml:888-895: the tactic that proves the termination *)

@@ -77,9 +77,9 @@ let word_list_IMP_store_list = prove
 
 let word_exp_set_var_ShiftVar_lemma = prove
  (`wordSem_word_exp t (ShiftVar sow v n) =
-    (match sptree_lookup v (dataSem_state_locals t) with SOME (wordLang_Word
-      w) ->
-        OPTION_MAP wordLang_Word
+    (match sptree_lookup v (dataSem_state_locals t) with SOME (word_Word w)
+      ->
+        OPTION_MAP word_Word
           (match sow with Lsl -> SOME (w << n)
                      | Lsr -> SOME (w >>> n)
                      | Asr -> SOME (w >> n)
@@ -97,7 +97,7 @@ let state_rel_Number_small_int = prove
  (`data_to_word_gcProof_state_rel c r1 r2 s t (SOME [x]) locs /\ small_int
   (:'a) i ==>
     data_to_word_gcProof_state_rel c r1 r2 s t (SOME [(dataSem_Number
-      i,wordLang_Word (Smallnum i:'a word))]) locs`,
+      i,word_Word (Smallnum i:'a word))]) locs`,
   CHEAT_TAC);;
 
 let heap_lookup_Unused_Bignum = prove
@@ -196,10 +196,10 @@ add_simp lt_dimindex_MOD_dimword;;
 let get_real_addr_lemma = prove
  (`shift_length c < dimindex (:'a) /\
     good_dimindex (:'a) /\
-    wordSem_get_var v (t:('a,'c,'ffi)wordSem_state) = SOME (wordLang_Word
-      ptr_w) /\
+    wordSem_get_var v (t:('a,'c,'ffi)wordSem_state) = SOME (word_Word ptr_w)
+      /\
     get_real_addr c (wordSem_state_store t) ptr_w = SOME x ==>
-    wordSem_word_exp t (real_addr c v) = SOME (wordLang_Word (x:'a word))`,
+    wordSem_word_exp t (real_addr c v) = SOME (word_Word (x:'a word))`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -239,9 +239,9 @@ let word_list_store_list = prove
  (`!xs a frame m dm.
       (misc_word_list a xs * frame) (fun2set (m,dm)) ==>
       (?m2. (data_to_word_memoryProof_store_list a (REPLICATE (LENGTH xs)
-        (wordLang_Word (n2w 0))) m dm = SOME m2) /\
-           (misc_word_list a (REPLICATE (LENGTH xs) (wordLang_Word (n2w 0)))
-             * frame)
+        (word_Word (n2w 0))) m dm = SOME m2) /\
+           (misc_word_list a (REPLICATE (LENGTH xs) (word_Word (n2w 0))) *
+             frame)
               (fun2set (m2,dm)))`,
   CHEAT_TAC);;
 
@@ -250,9 +250,9 @@ let MustTerminate_limit_SUB_2 = prove
   CHEAT_TAC);;
 
 let cut_env_fromList_sing = prove
- (`wordSem_cut_env (sptree_fromList [one]) (sptree_insert 0 (wordLang_Loc l1
-  l2) LN) =
-    SOME (sptree_insert 0 (wordLang_Loc l1 l2) LN)`,
+ (`wordSem_cut_env (sptree_fromList [one]) (sptree_insert 0 (word_Loc l1 l2)
+  LN) =
+    SOME (sptree_insert 0 (word_Loc l1 l2) LN)`,
   CHEAT_TAC);;
 
 let single_div_pre_IMP_single_div_full = prove
@@ -306,9 +306,8 @@ let push_env_code = prove
 
 let arith_code_def = new_definition
   `Arith_code index =
-     word_bignum_Seq (word_bignum_Assign 6 (wordLang_Const (n2w (4 *
-       index))))
-       (wordLang_Call NONE (SOME AnyArith_location) [0; 2; 4; 6] NONE)`;;
+     word_bignum_Seq (word_bignum_Assign 6 (word_Const (n2w (4 * index))))
+       (word_Call NONE (SOME AnyArith_location) [0; 2; 4; 6] NONE)`;;
 
 let lookup_Arith_location = prove
  (`data_to_word_gcProof_state_rel c l1 l2 x t NONE locs

@@ -355,8 +355,6 @@ class Porter:
       db.types_in_scope(thy) |
       dbmod.hl_types() | set(overrides.TYPE_MAP))
     self.out = []
-    # the size functions this file has made (size_prelude)
-    self.sizes_made = set()
     self.warn = []
     # the proofs of phase three: a theorem of proofs/<path>.prf
     # gets the tactic that stands there, one that is not in it
@@ -667,11 +665,7 @@ class Porter:
     # the source where the binding is not that name itself (two
     # files that state a theorem of one name: the later one has
     # the name of its theory in front of it)
-    # a statement that uses the size function of a datatype needs
-    # it to be there: the port makes the size functions when a
-    # definition first needs one, and a theorem may be the first
-    # (flatLang's exp6_size_APPEND, right after the datatype)
-    head = self.size_prelude(stmt)
+    head = ''
     if attrs or name != nm:
       head += ('(* %s%s *)\n'
               % (nm if name != nm else '', attrs)).replace('(*  *)',
@@ -746,7 +740,11 @@ class Porter:
     nm = ocaml_name(name)
     if nm in self.db.hl or nm in self.db.hlids or \
        nm in self.db.thmnames:
-      nm = ocaml_name(self.thy + '_' + name)
+      # the theory in front of it, by the prefix that the port
+      # puts in front of a constant of that theory: the binding of
+      # flatLang's pat_bindings_def is flat_pat_bindings_def,
+      # beside the flat_pat_bindings that it defines
+      nm = ocaml_name(dbmod.short_thy(self.thy) + '_' + name)
     self.db.thmnames.add(nm)
     return nm
 
@@ -1258,37 +1256,6 @@ class Porter:
             n in set(self.db.ambiguous_fields().values()) or
             any(k not in ('type', 'tyabbrev')
                 for _, k in self.db.defs.get(n, [])))
-
-  def size_prelude(self, text):
-    """a measure that uses the size function of a datatype needs
-       it to be there; the port makes the size functions when a
-       definition first needs one, which is too late for the
-       measure itself"""
-    anc = self.db.scope(self.thy) | {self.thy}
-    # the name that the port gives the type of that theory, not
-    # the one that the name means in this theory's scope
-    types = set(self.tnm(t2 + '$' + ty)
-                for (t2, ty) in self.db.datatypes if t2 in anc)
-    out = ''
-    for ty in sorted(set(re.findall(r"([A-Za-z0-9_']+?)_size\d*\b",
-                                    text))):
-      # a constant whose name happens to end in _size is not the
-      # size function of a datatype (sptree's size is sptree_size
-      # in the port)
-      # the size function of a type of the library layer is in
-      # ml/lib/hol4.ml, and making one here would be a second
-      # constant that no lemma is about
-      if ty not in types: continue
-      # a constant of the port that happens to be called after
-      # the size of a type is not that size function
-      # (balanced_map's size is balanced_map_size in the port)
-      if ty + '_size' in self.constnames: continue
-      # and a file says it once: a theorem that uses a size
-      # function stands after the one that made it
-      if ty in self.sizes_made: continue
-      self.sizes_made.add(ty)
-      out += 'let _ = size_thms "%s";;\n' % ty
-    return out
 
   def typ(self, text, keep=False):
     ty = hterm.parse_type_text(text)
@@ -2342,11 +2309,7 @@ class Porter:
                               ' termination', 'Termination') + '\n'
 
 
-    # the size function of a datatype that the definition itself
-    # uses has to be there as well (closSem's exp_alt_size adds the
-    # size of the op of closLang)
-    sizes = self.size_prelude((rel or '') + ' ' +
-                              (term if term else clauses))
+    sizes = ''
     # where the source gives a termination its text is kept, as
     # it is for a relation that the port takes from it
     relnote = ('(* the termination relation is not in the HOL4 '
@@ -2469,11 +2432,6 @@ class Porter:
         self.warn.append('a MEASURE override that a run does not '
                          'bear out: ' + name)
       rel = fmt(found_rel, last=1) if found_rel else None
-      # a measure that uses the size function of a datatype needs
-      # it to be there, and this relation was not there when the
-      # prelude was made
-      sizes = self.size_prelude((rel or '') + ' ' +
-                                (term if term else clauses))
       def inset(r):
         return '\n'.join('     ' + l for l in r.split('\n')).lstrip()
       if rel is not None and hol4rel is None:

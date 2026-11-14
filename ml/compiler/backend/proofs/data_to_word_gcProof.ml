@@ -240,8 +240,6 @@ let join_env_def = new_definition
      MAP (\(n,v). (THE (sptree_lookup ((n - 2) DIV 2) env),v))
        (FILTER (\(n,v). ~(n = 0) /\ EVEN n) vs)`;;
 
-let _ = size_thms "dataSem_stack";;
-let _ = size_thms "stack_frame";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let flat_def,flat_ind = define_wf
@@ -491,20 +489,20 @@ let ptr_to_addr_get_addr = prove
   CHEAT_TAC);;
 
 let is_fws_ptr_OR_3 = prove
- (`is_fwd_ptr (wordLang_Word (w << 2)) /\ ~(is_fwd_ptr (wordLang_Word (w ||
-  (n2w 3))))`,
+ (`is_fwd_ptr (word_Word (w << 2)) /\ ~(is_fwd_ptr (word_Word (w || (n2w
+  3))))`,
   CHEAT_TAC);;
 
 let is_fws_ptr_OR_15 = prove
- (`~(is_fwd_ptr (wordLang_Word (w || (n2w 15))))`,
+ (`~(is_fwd_ptr (word_Word (w || (n2w 15))))`,
   CHEAT_TAC);;
 
 let is_fws_ptr_OR_10111 = prove
- (`~(is_fwd_ptr (wordLang_Word (w || (n2w 0b10111))))`,
+ (`~(is_fwd_ptr (word_Word (w || (n2w 0b10111))))`,
   CHEAT_TAC);;
 
 let is_fws_ptr_OR_7 = prove
- (`~(is_fwd_ptr (wordLang_Word (w || (n2w 7))))`,
+ (`~(is_fwd_ptr (word_Word (w || (n2w 7))))`,
   CHEAT_TAC);;
 
 let select_get_lowerbits = prove
@@ -559,8 +557,8 @@ let LESS_EQ_IMP_APPEND = prove
   CHEAT_TAC);;
 
 let NOT_is_fwd_ptr = prove
- (`word_payload addrs ll tag tt1 conf = (h,ts,c5) ==> ~(is_fwd_ptr
-  (wordLang_Word h))`,
+ (`word_payload addrs ll tag tt1 conf = (h,ts,c5) ==> ~(is_fwd_ptr (word_Word
+  h))`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -1745,7 +1743,7 @@ let word_gen_gc_partial_full_thm = prove
   CHEAT_TAC);;
 
 let gen_starts_in_store_IMP_SOME_Word = prove
- (`gen_starts_in_store c gens x ==> (?w. x = SOME (wordLang_Word w))`,
+ (`gen_starts_in_store c gens x ==> (?w. x = SOME (word_Word w))`,
   CHEAT_TAC);;
 
 let glob_real_inv = prove
@@ -1873,8 +1871,8 @@ let word_gc_fun_correct = prove
         word_addr c v1 = FAPPLY s1 Globals /\
         ALL2 (\v w. word_addr c v = w) xs
           (MAP SND (ZIP (MAP FST stack) stack1)) /\
-        (FLOOKUP s AllocSize = SOME (wordLang_Word (alloc_size k)) /\
-         wordSem_has_space (wordLang_Word ((alloc_size k):'a word))
+        (FLOOKUP s AllocSize = SOME (word_Word (alloc_size k)) /\
+         wordSem_has_space (word_Word ((alloc_size k):'a word))
            (wordSem_state_store_fupd (K s1) t) = SOME F
            /\ ~(data_to_word_config_gc_kind
          c = data_to_word_None) ==>
@@ -1888,8 +1886,7 @@ let word_gc_fun_correct = prove
    ------------------------------------------------------- *)
 
 let data_to_word_gcProof_code_rel_def = new_definition
-  `data_to_word_gcProof_code_rel c s_code (t_code:(num#'a wordLang_prog) spt)
-  <=>
+  `data_to_word_gcProof_code_rel c s_code (t_code:(num#'a word_prog) spt) <=>
      domain t_code = domain s_code UNION set_of_list (MAP FST
        (data_to_word_stubs (:'a) c)) /\
      ALL (\(n,x). sptree_lookup n t_code = SOME x) (data_to_word_stubs (:'a)
@@ -1919,25 +1916,25 @@ let the_global_def = new_definition
 
 let contains_loc_def = define_general
   `contains_loc (StackFrame _ vs _ _) (l1,l2) = (ALOOKUP vs 0 = SOME
-  (wordLang_Loc l1 l2))`;;
+  (word_Loc l1 l2))`;;
 
 let code_oracle_rel_def = new_definition
-  `code_oracle_rel c (s_compile:'c->(num#num#dataLang_prog) list->(word8
+  `code_oracle_rel c (s_compile:'c->(num#num#data_prog) list->(word8
   list#word64 list#'c) option)
-       s_compile_oracle t_store (t_compile:'c->(num#num#'a wordLang_prog)
+       s_compile_oracle t_store (t_compile:'c->(num#num#'a word_prog)
          list->(word8 list#('a word) list#'c) option)
        t_compile_oracle t_code_buffer t_data_buffer <=> buffer_buffer
      t_code_buffer = [] /\ buffer_buffer
      t_data_buffer = [] /\
-     FLOOKUP t_store CodeBuffer = SOME (wordLang_Word (buffer_position
+     FLOOKUP t_store CodeBuffer = SOME (word_Word (buffer_position
        t_code_buffer)) /\
      FLOOKUP t_store CodeBufferEnd =
-       SOME (wordLang_Word (buffer_position t_code_buffer + n2w
+       SOME (word_Word (buffer_position t_code_buffer + n2w
          (buffer_space_left t_code_buffer))) /\
-     FLOOKUP t_store BitmapBuffer = SOME (wordLang_Word (buffer_position
+     FLOOKUP t_store BitmapBuffer = SOME (word_Word (buffer_position
        t_data_buffer)) /\
      FLOOKUP t_store BitmapBufferEnd =
-       SOME (wordLang_Word (buffer_position t_data_buffer +
+       SOME (word_Word (buffer_position t_data_buffer +
                    bytes_in_word * n2w (buffer_space_left t_data_buffer)))
                      /\
      s_compile = (\cfg. OPTION_MAP (I ## MAP upper_w2w ## I) o t_compile cfg
@@ -1959,8 +1956,8 @@ let limits_inv_def = new_definition
      lims = t_stack_limit /\ limits_length_limit
      lims = c_len_size /\ limits_arch_64_bit
      lims = (dimindex (:'a) = 64) /\
-     heaplength = SOME (wordLang_Word (bytes_in_word * (n2w
-       (limits_heap_limit lims):'a word))) /\ limits_heap_limit
+     heaplength = SOME (word_Word (bytes_in_word * (n2w (limits_heap_limit
+       lims):'a word))) /\ limits_heap_limit
      lims * w2n (bytes_in_word:'a word) < dimword (:'a) /\ limits_has_fp_ops
      lims = c_has_fp_ops /\ limits_has_fp_tops
      lims = c_has_fp_tern`;;
@@ -1993,7 +1990,7 @@ let state_rel_thm = assume_definition
      (
       // every local is represented in word lang
       v1 = NONE ==> sptree_lookup 0 (wordSem_state_locals t) = SOME
-        (wordLang_Loc l1 l2)) /\
+        (word_Loc l1 l2)) /\
      (!n. IS_SOME (sptree_lookup n (dataSem_state_locals s)) ==>
           IS_SOME (sptree_lookup (adjust_var n) (wordSem_state_locals t)))
             /\
@@ -2055,29 +2052,29 @@ let init_store_ok_def = new_definition
   `init_store_ok c store m (dm:'a word->bool) code_buffer' data_buffer' <=>
      (?limit' curr.
        limit' <= max_heap_limit (:'a) c /\
-       FLOOKUP store Globals = SOME (wordLang_Word (n2w 0)) /\
-       FLOOKUP store GlobReal = SOME (wordLang_Word curr) /\
-       FLOOKUP store GenStart = SOME (wordLang_Word (n2w 0)) /\
-       FLOOKUP store CurrHeap = SOME (wordLang_Word curr) /\
+       FLOOKUP store Globals = SOME (word_Word (n2w 0)) /\
+       FLOOKUP store GlobReal = SOME (word_Word curr) /\
+       FLOOKUP store GenStart = SOME (word_Word (n2w 0)) /\
+       FLOOKUP store CurrHeap = SOME (word_Word curr) /\
        FLOOKUP store OtherHeap = FLOOKUP store EndOfHeap /\
-       FLOOKUP store NextFree = SOME (wordLang_Word curr) /\
+       FLOOKUP store NextFree = SOME (word_Word curr) /\
        FLOOKUP store EndOfHeap =
-         SOME (wordLang_Word (curr + bytes_in_word * n2w limit')) /\
+         SOME (word_Word (curr + bytes_in_word * n2w limit')) /\
        FLOOKUP store TriggerGC =
-         SOME (wordLang_Word (match data_to_word_config_gc_kind c with
+         SOME (word_Word (match data_to_word_config_gc_kind c with
            data_to_word_Generational _ -> curr
                      | _ -> curr + bytes_in_word * n2w limit')) /\
        FLOOKUP store HeapLength =
-         SOME (wordLang_Word (bytes_in_word * n2w limit')) /\
-       FLOOKUP store CodeBuffer = SOME (wordLang_Word (buffer_position
+         SOME (word_Word (bytes_in_word * n2w limit')) /\
+       FLOOKUP store CodeBuffer = SOME (word_Word (buffer_position
          code_buffer')) /\
        FLOOKUP store CodeBufferEnd =
-         SOME (wordLang_Word (buffer_position code_buffer' + n2w
+         SOME (word_Word (buffer_position code_buffer' + n2w
            (buffer_space_left code_buffer'))) /\
-       FLOOKUP store BitmapBuffer = SOME (wordLang_Word (buffer_position
+       FLOOKUP store BitmapBuffer = SOME (word_Word (buffer_position
          data_buffer')) /\
        FLOOKUP store BitmapBufferEnd = SOME
-         (wordLang_Word (buffer_position data_buffer' +
+         (word_Word (buffer_position data_buffer' +
                 bytes_in_word * n2w (buffer_space_left data_buffer')))
                   /\ buffer_buffer
        code_buffer' = [] /\ buffer_buffer
@@ -2100,7 +2097,7 @@ let state_rel_init = prove
          t) (wordSem_state_compile_oracle t) (wordSem_state_code_buffer t)
            (wordSem_state_data_buffer t) /\
        good_dimindex (:'a) /\
-       sptree_lookup 0 (wordSem_state_locals t) = SOME (wordLang_Loc l1 l2)
+       sptree_lookup 0 (wordSem_state_locals t) = SOME (word_Loc l1 l2)
          /\ wordSem_state_stack
        t = [] /\ wordSem_state_stack_max
        t = SOME 1 /\ wordSem_state_locals_size
@@ -2111,7 +2108,7 @@ let state_rel_init = prove
        (limits_arch_64_bit lim <=> dimindex (:'a) = 64) /\ limits_heap_limit
        lim * w2n (bytes_in_word:'a word) < dimword (:'a) /\ FAPPLY
          (wordSem_state_store
-       t) HeapLength = wordLang_Word (bytes_in_word * n2w (limits_heap_limit
+       t) HeapLength = word_Word (bytes_in_word * n2w (limits_heap_limit
          lim)) /\ limits_has_fp_ops
        lim = data_to_word_config_has_fp_ops c /\ limits_has_fp_tops
        lim = data_to_word_config_has_fp_tern c /\
@@ -2154,7 +2151,7 @@ let state_rel_0_get_vars_IMP = prove
   locs ==>
     (wordSem_get_vars n (dataSem_state_locals s) = SOME xs) ==>
     (?ws. wordSem_get_vars (CONS 0 (MAP adjust_var n)) t = SOME (CONS
-      (wordLang_Loc l1 l2) ws) /\
+      (word_Loc l1 l2) ws) /\
          (LENGTH xs = LENGTH ws))`,
   CHEAT_TAC);;
 
@@ -2164,8 +2161,8 @@ let get_var_T_OR_F = prove
     wordSem_get_var n (dataSem_state_locals s) = SOME x /\
     wordSem_get_var (adjust_var n) t = SOME w ==> ~(18 MOD dimword (:'a) = 2
       MOD dimword (:'a)) /\
-    ((x = dataSem_Boolv T) ==> (w = wordLang_Word (n2w 18))) /\
-    ((x = dataSem_Boolv F) ==> (w = wordLang_Word (n2w 2)))`,
+    ((x = dataSem_Boolv T) ==> (w = word_Word (n2w 18))) /\
+    ((x = dataSem_Boolv F) ==> (w = word_Word (n2w 2)))`,
   CHEAT_TAC);;
 
 let get_var_isT_OR_isF = prove
@@ -2174,12 +2171,12 @@ let get_var_isT_OR_isF = prove
      wordSem_get_var n (dataSem_state_locals s) = SOME x /\
      wordSem_get_var (adjust_var n) t = SOME w ==> ~(18 MOD dimword (:'a) =
        2 MOD dimword (:'a)) /\
-     ((isBool T x) ==> (w = wordLang_Word (n2w 18))) /\
-     ((isBool F x) ==> (w = wordLang_Word (n2w 2)))`,
+     ((isBool T x) ==> (w = word_Word (n2w 18))) /\
+     ((isBool F x) ==> (w = word_Word (n2w 2)))`,
   CHEAT_TAC);;
 
 let mk_loc_def = define_general
-  `mk_loc (SOME (t1,d1,d2)) = wordLang_Loc d1 d2`;;
+  `mk_loc (SOME (t1,d1,d2)) = word_Loc d1 d2`;;
 
 let cut_env_IMP_cut_env = prove
  (`data_to_word_gcProof_state_rel c l1 l2 ((s:('c,'ffi)dataSem_state)) t NONE
@@ -2320,7 +2317,7 @@ let state_rel_call_env = prove
    data_to_word_gcProof_state_rel c l5 l6 s t NONE locs ==>
    data_to_word_gcProof_state_rel c l1 l2 (wordSem_call_env q ss
      (word_bignumProof_dec_clock s))
-     (wordSem_call_env (CONS (wordLang_Loc l1 l2) ws) ss
+     (wordSem_call_env (CONS (word_Loc l1 l2) ws) ss
        (word_bignumProof_dec_clock t)) NONE locs`,
   CHEAT_TAC);;
 
@@ -2348,7 +2345,7 @@ let word_ml_inv_CodePtr = prove
  (cake_as_vars (fun () ->
     `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (dataSem_state_refs s)
   (CONS (dataSem_CodePtr n,v) xs) ==>
-      (v = wordLang_Loc n 0)`),
+      (v = word_Loc n 0)`),
   CHEAT_TAC);;
 
 let state_rel_CodePtr = prove
@@ -2356,7 +2353,7 @@ let state_rel_CodePtr = prove
     wordSem_get_vars args (dataSem_state_locals s) = SOME x /\
     wordSem_get_vars (MAP adjust_var args) t = SOME y /\
     LAST x = dataSem_CodePtr n /\ ~(x = []) ==> ~(y = []) /\ LAST y =
-      wordLang_Loc n 0`,
+      word_Loc n 0`,
   CHEAT_TAC);;
 
 let find_code_thm = prove
@@ -2365,11 +2362,11 @@ let find_code_thm = prove
            t NONE locs /\
          wordSem_get_vars args (dataSem_state_locals s) = SOME x /\
          wordSem_get_vars (CONS 0 (MAP adjust_var args)) t = SOME (CONS
-           (wordLang_Loc l1 l2) ws) /\
+           (word_Loc l1 l2) ws) /\
          wordSem_find_code dest x (dataSem_state_code s) fs = SOME (q,r,ss)
            ==>
          (?args1 n1 n2.
-           wordSem_find_code dest (CONS (wordLang_Loc l1 l2) ws)
+           wordSem_find_code dest (CONS (word_Loc l1 l2) ws)
              (wordSem_state_code t) fs = SOME (args1,FST (data_to_word_comp c
              n1 n2 r),ss) /\
            data_to_word_gcProof_state_rel c l1 l2 (wordSem_call_env q ss
@@ -2428,37 +2425,37 @@ let lookup_adjust_var_after_cut = prove
   CHEAT_TAC);;
 
 let state_rel_call_env_push_opt = prove
- (`!(opt:(num#'a wordLang_prog#num#num) option).
+ (`!(opt:(num#'a word_prog#num#num) option).
      data_to_word_gcProof_state_rel c l1 l2 s t (SOME (ZIP xs ws)) locs /\
-     sptree_lookup 0 (wordSem_state_locals t) = SOME (wordLang_Loc l1 l2) /\
+     sptree_lookup 0 (wordSem_state_locals t) = SOME (word_Loc l1 l2) /\
      LENGTH xs = LENGTH ws /\
      wordSem_cut_env r (dataSem_state_locals s) = SOME x /\
      cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
      data_to_word_gcProof_state_rel c q l
        (wordSem_call_env xs ss (wordSem_push_env x (IS_SOME opt)
          (word_bignumProof_dec_clock s)))
-       (wordSem_call_env (CONS (wordLang_Loc q l) ws) ss (wordSem_push_env y
-         opt (word_bignumProof_dec_clock t))) NONE
+       (wordSem_call_env (CONS (word_Loc q l) ws) ss (wordSem_push_env y opt
+         (word_bignumProof_dec_clock t))) NONE
        (CONS (l1,l2) locs)`,
   CHEAT_TAC);;
 
 let state_rel_call_env_push = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s t (SOME (ZIP xs ws)) locs /\
    LENGTH xs = LENGTH ws /\
-   sptree_lookup 0 (wordSem_state_locals t) = SOME (wordLang_Loc l1 l2) /\
+   sptree_lookup 0 (wordSem_state_locals t) = SOME (word_Loc l1 l2) /\
    wordSem_cut_env r (dataSem_state_locals s) = SOME x /\
    cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
    data_to_word_gcProof_state_rel c q l
      (wordSem_call_env xs ss (wordSem_push_env x F
        (word_bignumProof_dec_clock s)))
-     (wordSem_call_env (CONS (wordLang_Loc q l) ws) ss (wordSem_push_env y
-       NONE (word_bignumProof_dec_clock t))) NONE
+     (wordSem_call_env (CONS (word_Loc q l) ws) ss (wordSem_push_env y NONE
+       (word_bignumProof_dec_clock t))) NONE
      (CONS (l1,l2) locs)`,
   CHEAT_TAC);;
 
 let state_rel_call_env_push_env = prove
  (`// TODO: tidy up proof
-   !(opt:(num#'a wordLang_prog#num#num) option).
+   !(opt:(num#'a word_prog#num#num) option).
      data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state)
        NONE locs /\
      wordSem_get_vars args (dataSem_state_locals s) = SOME xs /\
@@ -2467,8 +2464,8 @@ let state_rel_call_env_push_env = prove
      cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
      data_to_word_gcProof_state_rel c q l (wordSem_call_env xs ss
        (wordSem_push_env x (IS_SOME opt) (word_bignumProof_dec_clock s)))
-        (wordSem_call_env (CONS (wordLang_Loc q l) ws) ss (wordSem_push_env
-          y opt (word_bignumProof_dec_clock t))) NONE
+        (wordSem_call_env (CONS (word_Loc q l) ws) ss (wordSem_push_env y
+          opt (word_bignumProof_dec_clock t))) NONE
         (CONS (l1,l2) locs)`,
   CHEAT_TAC);;
 
@@ -2482,8 +2479,8 @@ let find_code_thm_ret = prove
    dataSem_cut_env r (dataSem_state_locals s) = SOME x /\
    cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
    (?args1 n1 n2.
-     wordSem_find_code dest (CONS (wordLang_Loc q l) ws) (wordSem_state_code
-       t) fs = SOME (args1,FST (data_to_word_comp c n1 n2 prog),ss) /\
+     wordSem_find_code dest (CONS (word_Loc q l) ws) (wordSem_state_code t)
+       fs = SOME (args1,FST (data_to_word_comp c n1 n2 prog),ss) /\
      data_to_word_gcProof_state_rel c q l (wordSem_call_env ys ss
        (wordSem_push_env x F (word_bignumProof_dec_clock s)))
        (wordSem_call_env args1 ss (wordSem_push_env y NONE
@@ -2500,12 +2497,12 @@ let find_code_thm_handler = prove
    dataSem_cut_env r (dataSem_state_locals s) = SOME x /\
    cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
    (?args1 n1 n2.
-     wordSem_find_code dest (CONS (wordLang_Loc q l) ws) (wordSem_state_code
-       t) fs = SOME (args1,FST (data_to_word_comp c n1 n2 prog),ss) /\
+     wordSem_find_code dest (CONS (word_Loc q l) ws) (wordSem_state_code t)
+       fs = SOME (args1,FST (data_to_word_comp c n1 n2 prog),ss) /\
      data_to_word_gcProof_state_rel c q l (wordSem_call_env ys ss
        (wordSem_push_env x T (word_bignumProof_dec_clock s)))
        (wordSem_call_env args1 ss (wordSem_push_env y
-          (SOME (adjust_var x0,(prog1:'a wordLang_prog),nn,l + 1))
+          (SOME (adjust_var x0,(prog1:'a word_prog),nn,l + 1))
        (word_bignumProof_dec_clock t))) NONE (CONS (l1,l2) locs))`,
   CHEAT_TAC);;
 
@@ -2540,7 +2537,7 @@ let mk_loc_jump_exc = prove
  (`mk_loc (wordSem_jump_exc
           (wordSem_call_env args1 ss
              (wordSem_push_env y (SOME (adjust_var n,prog1,x0,l))
-                (word_bignumProof_dec_clock t)))) = wordLang_Loc x0 l`,
+                (word_bignumProof_dec_clock t)))) = word_Loc x0 l`,
   CHEAT_TAC);;
 
 let data_to_word_gcProof_inc_clock_def = new_definition
@@ -2577,8 +2574,8 @@ let state_rel_lookup_globals = prove
    // ∧
    // FLOOKUP s.refs g = SOME (ValueArray gs)
    (?x u.
-   FLOOKUP (wordSem_state_store t) Globals = SOME (wordLang_Word (get_addr
-     c x u)))`,
+   FLOOKUP (wordSem_state_store t) Globals = SOME (word_Word (get_addr c x
+     u)))`,
   CHEAT_TAC);;
 
 let state_rel_cut_env = prove
@@ -2592,7 +2589,7 @@ let state_rel_get_var_Block = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s t v1 locs /\
    wordSem_get_var n (dataSem_state_locals s) = SOME (dataSem_Block ts tag
      vs) ==>
-   (?w. wordSem_get_var (adjust_var n) t = SOME (wordLang_Word w))`,
+   (?w. wordSem_get_var (adjust_var n) t = SOME (word_Word w))`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_gcProofScript.sml:5826: ML code, not ported *)
@@ -2679,7 +2676,7 @@ let case_EQ_SOME_IFF = prove
 
 let state_rel_set_store_AllocSize = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s (wordSem_set_store AllocSize
-  (wordLang_Word w) t) v locs =
+  (word_Word w) t) v locs =
     data_to_word_gcProof_state_rel c l1 l2 s t v locs`,
   CHEAT_TAC);;
 
@@ -2765,18 +2762,18 @@ let data_to_word_gcProof_dec_clock_inc_clock = prove
   CHEAT_TAC);;
 
 let word_gc_move_IMP_isWord = prove
- (`word_gc_move c' (wordLang_Word c,i,pa,old,m,dm) = (w1,i1,pa1,m1,c1) ==>
-  isWord w1`,
+ (`word_gc_move c' (word_Word c,i,pa,old,m,dm) = (w1,i1,pa1,m1,c1) ==> isWord
+  w1`,
   CHEAT_TAC);;
 
 let word_gen_gc_move_IMP_isWord = prove
- (`word_gen_gc_move c' (wordLang_Word c,i,pa,ib,pb,old,m,dm) =
+ (`word_gen_gc_move c' (word_Word c,i,pa,ib,pb,old,m,dm) =
   (w1,i1,pa1,ib1,pb1,m1,c1) ==>
    isWord w1`,
   CHEAT_TAC);;
 
 let word_gen_gc_partial_move_IMP_isWord = prove
- (`word_gen_gc_partial_move c' (wordLang_Word c,i,pa,old,m,dm,gs,rs) =
+ (`word_gen_gc_partial_move c' (word_Word c,i,pa,old,m,dm,gs,rs) =
   (w1,i1,pa1,m1,c1) ==>
    isWord w1`,
   CHEAT_TAC);;
@@ -2784,7 +2781,7 @@ let word_gen_gc_partial_move_IMP_isWord = prove
 let loc_ok_def = new_definition
   `loc_ok x1''' =
    match x1''' with
-     wordLang_Loc m n -> (n = 0)
+     word_Loc m n -> (n = 0)
    | _ -> T`;;
 add_simp loc_ok_def;;
 
@@ -2831,19 +2828,18 @@ let word_gc_fun_IMP_FILTER = prove
      stack1,m1,s1)`,
   CHEAT_TAC);;
 
-let _ = size_thms "word_loc";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let loc_merge_def,loc_merge_ind = define_wf
   `MEASURE (\(x0,x1).      list_size (word_loc_size (\x. 0)) x0 +
   list_size (word_loc_size (\x. 0)) x1)`
   `(loc_merge [] ys = []) /\
-   (loc_merge (CONS (wordLang_Loc l1 l2) xs) ys = CONS (wordLang_Loc l1
-    l2:'a word_loc) (loc_merge xs ys)) /\
-   (loc_merge (CONS (wordLang_Word w) xs) (CONS y ys) = CONS y (loc_merge
-    xs ys)) /\
-   (loc_merge (CONS (wordLang_Word w) xs) [] = CONS (wordLang_Word w:'a
-    word_loc) xs)`;;
+   (loc_merge (CONS (word_Loc l1 l2) xs) ys = CONS (word_Loc l1 l2:'a
+    word_loc) (loc_merge xs ys)) /\
+   (loc_merge (CONS (word_Word w) xs) (CONS y ys) = CONS y (loc_merge xs
+    ys)) /\
+   (loc_merge (CONS (word_Word w) xs) [] = CONS (word_Word w:'a word_loc)
+    xs)`;;
 
 let LENGTH_loc_merge = prove
  (`!xs ys. LENGTH (loc_merge xs ys) = LENGTH xs`,
@@ -2952,10 +2948,10 @@ let dec_stack_loc_merge_enc_stack = prove
 
 let ALOOKUP_ZIP = prove
  (`!l zs1.
-      ALOOKUP l (0:num) = SOME (wordLang_Loc q r) /\
+      ALOOKUP l (0:num) = SOME (word_Loc q r) /\
       ALL2 (\x y. (isWord y ==> isWord x) /\
         (~(isWord x) ==> x = y)) (MAP SND l) zs1 ==>
-      ALOOKUP (ZIP (MAP FST l) zs1) 0 = SOME (wordLang_Loc q r)`,
+      ALOOKUP (ZIP (MAP FST l) zs1) 0 = SOME (word_Loc q r)`,
   CHEAT_TAC);;
 
 let stack_rel_dec_stack_IMP_stack_rel = prove
@@ -3234,10 +3230,10 @@ let soundness_size_of_gen = prove
 let state_rel_gc_gen = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
   locs ==>
-    FLOOKUP (wordSem_state_store t) AllocSize = SOME (wordLang_Word
-      (alloc_size k)) /\ dataSem_state_locals
+    FLOOKUP (wordSem_state_store t) AllocSize = SOME (word_Word (alloc_size
+      k)) /\ dataSem_state_locals
     s = LN /\ wordSem_state_locals
-    t = LS (wordLang_Loc l1 l2) ==>
+    t = LS (word_Loc l1 l2) ==>
     (?t2 wl m st w1 w2 stack'. wordSem_state_gc_fun
       t (wordSem_enc_stack (wordSem_state_stack t),wordSem_state_memory
         t,wordSem_state_mdomain t,wordSem_state_store t) =
@@ -3245,8 +3241,8 @@ let state_rel_gc_gen = prove
       wordSem_dec_stack wl (wordSem_state_stack t) = SOME stack' /\
       FLOOKUP st (Temp (n2w 29)) = FLOOKUP (wordSem_state_store t) (Temp
         (n2w 29)) /\
-      FLOOKUP st AllocSize = SOME (wordLang_Word (alloc_size k)) /\
-      (wordSem_has_space (wordLang_Word ((alloc_size k):'a word))
+      FLOOKUP st AllocSize = SOME (word_Word (alloc_size k)) /\
+      (wordSem_has_space (word_Word ((alloc_size k):'a word))
         (wordSem_state_store_fupd (K st) t) = SOME F
         /\ ~(data_to_word_config_gc_kind
        c = data_to_word_None) /\ no_thunks_in_refs (dataSem_state_refs s)
@@ -3281,13 +3277,13 @@ let size_of_heap_call_push_env = prove
   CHEAT_TAC);;
 
 let gc_lemma_gen = prove
- (`let t0 = wordSem_call_env [wordLang_Loc l1 l2] ss (wordSem_push_env y
-        (NONE:(num#'a wordLang_prog#num#num) option) t) in
+ (`let t0 = wordSem_call_env [word_Loc l1 l2] ss (wordSem_push_env y
+        (NONE:(num#'a word_prog#num#num) option) t) in
       dataSem_cut_env names (dataSem_state_locals
         (s:('c,'ffi)dataSem_state)) = SOME x /\
       data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state)
         NONE locs /\
-      FLOOKUP (wordSem_state_store t) AllocSize = SOME (wordLang_Word
+      FLOOKUP (wordSem_state_store t) AllocSize = SOME (word_Word
         (alloc_size k)) /\
       cut_envs (adjust_sets names) (wordSem_state_locals t) = SOME y ==>
       (?t2 wl m st w1 w2 stack'. wordSem_state_gc_fun
@@ -3300,10 +3296,10 @@ let gc_lemma_gen = prove
           t0))) = SOME t2 /\
         FLOOKUP (wordSem_state_store t2) (Temp (n2w 29)) = FLOOKUP
           (wordSem_state_store t) (Temp (n2w 29)) /\
-        FLOOKUP (wordSem_state_store t2) AllocSize = SOME (wordLang_Word
+        FLOOKUP (wordSem_state_store t2) AllocSize = SOME (word_Word
           (alloc_size k)) /\
-        (wordSem_has_space (wordLang_Word ((alloc_size k):'a word)) t2 =
-          SOME F /\ ~(data_to_word_config_gc_kind
+        (wordSem_has_space (word_Word ((alloc_size k):'a word)) t2 = SOME F
+          /\ ~(data_to_word_config_gc_kind
          c = data_to_word_None) /\ no_thunks_in_refs (dataSem_state_refs s)
            ==>
            (!roots2 dups n2 r2 s2.
@@ -3334,7 +3330,7 @@ let gc_add_call_env = prove
      | SOME s' -> (match wordSem_pop_env s' with NONE -> (SOME
        wordSem_Error,wordSem_flush_state T s')
                   | SOME s' -> f s')) = (res,t) ==>
-    (match wordSem_gc (wordSem_call_env [wordLang_Loc l1 l2] (SOME 0)
+    (match wordSem_gc (wordSem_call_env [word_Loc l1 l2] (SOME 0)
       (wordSem_push_env y NONE t5)) with NONE -> (SOME wordSem_Error,x)
      | SOME s' -> (match wordSem_pop_env s' with NONE -> (SOME
        wordSem_Error,wordSem_flush_state T s')
@@ -3342,7 +3338,7 @@ let gc_add_call_env = prove
   CHEAT_TAC);;
 
 let has_space_state_rel = prove
- (`wordSem_has_space (wordLang_Word ((alloc_size k):'a word))
+ (`wordSem_has_space (word_Word ((alloc_size k):'a word))
   (r:('a,'c,'ffi)wordSem_state) = SOME T /\
    data_to_word_gcProof_state_rel c l1 l2 s r NONE locs ==>
    data_to_word_gcProof_state_rel c l1 l2 (dataSem_state_space_fupd (K k)
@@ -3544,18 +3540,16 @@ let cut_names_insert_1_insert_1 = prove
 let alloc_store = prove
  (`wordSem_alloc k names t = (NONE,s1) /\ wordSem_state_gc_fun
    t = word_gc_fun c /\
-   FLOOKUP (wordSem_state_store t) CurrHeap = SOME (wordLang_Word cu) /\
-   FLOOKUP (wordSem_state_store t) TriggerGC = SOME (wordLang_Word end) /\
-   FLOOKUP (wordSem_state_store t) NextFree = SOME (wordLang_Word next') /\
-   FLOOKUP (wordSem_state_store t) HeapLength = SOME (wordLang_Word
+   FLOOKUP (wordSem_state_store t) CurrHeap = SOME (word_Word cu) /\
+   FLOOKUP (wordSem_state_store t) TriggerGC = SOME (word_Word end) /\
+   FLOOKUP (wordSem_state_store t) NextFree = SOME (word_Word next') /\
+   FLOOKUP (wordSem_state_store t) HeapLength = SOME (word_Word
      heap_length1) ==>
    (?end next' heap_length1 cu.
-     FLOOKUP (wordSem_state_store s1) CurrHeap = SOME (wordLang_Word cu) /\
-     FLOOKUP (wordSem_state_store s1) TriggerGC = SOME (wordLang_Word end)
-       /\
-     FLOOKUP (wordSem_state_store s1) NextFree = SOME (wordLang_Word next')
-       /\
-     FLOOKUP (wordSem_state_store s1) HeapLength = SOME (wordLang_Word
+     FLOOKUP (wordSem_state_store s1) CurrHeap = SOME (word_Word cu) /\
+     FLOOKUP (wordSem_state_store s1) TriggerGC = SOME (word_Word end) /\
+     FLOOKUP (wordSem_state_store s1) NextFree = SOME (word_Word next') /\
+     FLOOKUP (wordSem_state_store s1) HeapLength = SOME (word_Word
        heap_length1))`,
   CHEAT_TAC);;
 
@@ -3720,8 +3714,8 @@ let state_rel_IMP_Number_arg = prove
     n < dimword (:'a) DIV 16 /\ LENGTH ys = LENGTH xs + 1 ==>
     data_to_word_gcProof_state_rel c l1 l2
       (wordSem_call_env (APPEND xs [dataSem_Number (&n)]) ss s)
-      (wordSem_call_env (APPEND ys [wordLang_Word (n2w (4 * n):'a word)])
-        ss t) NONE locs`,
+      (wordSem_call_env (APPEND ys [word_Word (n2w (4 * n):'a word)]) ss
+        t) NONE locs`,
   CHEAT_TAC);;
 
 let state_rel_cut_IMP = prove

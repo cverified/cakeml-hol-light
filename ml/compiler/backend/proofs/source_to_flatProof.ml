@@ -830,8 +830,8 @@ let do_opapp = prove
   CHEAT_TAC);;
 
 let pat_bindings_compile_pat = prove
- (`!comp_map (p:ast_pat). flatLang_pat_bindings (compile_pat comp_map p) =
-  flatLang_pat_bindings p`,
+ (`!comp_map (p:ast_pat). flat_pat_bindings (compile_pat comp_map p) =
+  flat_pat_bindings p`,
   CHEAT_TAC);;
 add_simp pat_bindings_compile_pat;;
 
@@ -934,8 +934,8 @@ let env_updated_lem = prove
 let evaluate_foldr_let_err = prove
  (`!env s s' exps e x.
      flatSem_evaluate env s exps = (s',Rerr x) ==>
-     flatSem_evaluate env s [ITLIST (flatLang_Let t NONE) exps e] =
-       (s',Rerr x)`,
+     flatSem_evaluate env s [ITLIST (flat_Let t NONE) exps e] = (s',Rerr
+       x)`,
   CHEAT_TAC);;
 
 let env_domain_eq_def = new_definition
@@ -1336,8 +1336,7 @@ let v_rel_Bool_eqn = prove
 (* evaluate_Bool *)
 let source_to_flatProof_evaluate_Bool = prove
  (`source_to_flatProof_s_rel genv s s' /\ genv_c_ok (global_env_c genv) ==>
-   flatSem_evaluate env s' [flatLang_Bool t b] = (s',Rval [flatSem_Boolv
-     b])`,
+   flatSem_evaluate env s' [flat_Bool t b] = (s',Rval [flatSem_Boolv b])`,
   CHEAT_TAC);;
 
 (* Boolv_11 *)
@@ -1971,12 +1970,12 @@ let declare_env_store_env_id = prove
 (* [local] *)
 let pmatch_rows_drop_4 = prove
  (`LENGTH vs = 6 ==>
-   pmatch_rows [(flatLang_Pcon NONE [flatLang_Pany; flatLang_Pany;
-     flatLang_Pany; flatLang_Pany; flatLang_Pvar b; flatLang_Pvar w],exp)]
+   pmatch_rows [(flat_Pcon NONE [flat_Pany; flat_Pany; flat_Pany; flat_Pany;
+     flat_Pvar b; flat_Pvar w],exp)]
      st (flatSem_Conv NONE vs) =
    Match ([(w,LAST vs); (b,EL 4 vs)],
-     flatLang_Pcon NONE [flatLang_Pany; flatLang_Pany; flatLang_Pany;
-       flatLang_Pany; flatLang_Pvar b; flatLang_Pvar w],exp)`,
+     flat_Pcon NONE [flat_Pany; flat_Pany; flat_Pany; flat_Pany; flat_Pvar
+       b; flat_Pvar w],exp)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2349,7 +2348,7 @@ let num_bindings_def,num_bindings_ind = define_wf
      match x1' with
        Dlet _ p e ->
         (match simple_dlet p e with SOME _ -> 0 | _ -> LENGTH
-          (flatLang_pat_bindings p))
+          (flat_pat_bindings p))
      | Dletrec _ f -> LENGTH f
      | Dmod _ ds -> SUM (MAP num_bindings ds)
      | Dlocal lds ds ->

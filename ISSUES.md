@@ -7,7 +7,7 @@ sources, and why.
 
 - HOL Light has one flat namespace, so a CakeML name that is used
   in more than one theory (or that clashes with a HOL Light name)
-  is prefixed with its theory name: `closLang_Var`, `wordSem_state`.
+  is prefixed with its theory name: `clos_Var`, `wordSem_state`.
   This mirrors HOL4's own `closLang$Var` qualification.
   See `PLAN.md` and `tools/db.py`.
 - A name that several theories of the port define (there are 301
@@ -15,7 +15,7 @@ sources, and why.
   is an _overloaded_ name in HOL4, which resolves it by the type.
   HOL Light can do that too, so the port declares the name as an
   overload of all the constants that have it
-  (`hol4_overload "Var" "closLang_Var"`), and the sources of the
+  (`hol4_overload "Var" "clos_Var"`), and the sources of the
   port then read as the CakeML sources do.
 - A HOL4 definition may use the same variable name with two
   different types in two clauses (`every_exp` of `ast` does),
@@ -25,7 +25,7 @@ sources, and why.
 - Where the name of a constructor in a pattern is ambiguous, the
   clause says which constructor it is.  If the type of the
   constructor has no parameters the pattern carries that type
-  (`(Var t v:closLang_exp)`); if it has parameters the pattern
+  (`(Var t v:clos_exp)`); if it has parameters the pattern
   has the name of the constant instead, because a type variable
   that the port writes is rigid in HOL Light and the definition
   may use the type at a more special one.
@@ -1339,11 +1339,11 @@ HOL4's `Unit = Const 2w` is a `wordLang$exp`, because its
 Ancestors open `wordLang` and `word_bignum`, and HOL4's overload
 resolution prefers `wordLang$Const` of the two.  The port read
 it as `word_bignum$Const`, so `data_to_word$Unit` had the type
-`('a word) term` instead of `'a wordLang_exp`, and the first
+`('a word) term` instead of `'a word_exp`, and the first
 definition that uses it as an expression
 (`Assign (adjust_var dest) Unit` of `assign_SetGlobalsPtr`) has
 no resolution at all: in the port `Assign` is
-`word_bignum$Assign` as well (`num -> 'a wordLang_exp -> 'a
+`word_bignum$Assign` as well (`num -> 'a word_exp -> 'a
 mini`), and the argument it is given is not an expression.
 
 What it cost the proofs: of the 611 theorems of

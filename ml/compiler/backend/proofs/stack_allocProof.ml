@@ -65,7 +65,7 @@ let stack_allocProof_bytes_in_word_word_shift = prove
 let get_var_imm_case = prove
  (`stackSem_get_var_imm ri s =
      match ri with Reg n -> stackSem_get_var n s
-     | Imm w -> SOME (wordLang_Word w)`,
+     | Imm w -> SOME (word_Word w)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -185,12 +185,12 @@ let select_eq_select_0 = prove
 
 (* [local] *)
 let is_fwd_ptr_iff = prove
- (`!w. is_fwd_ptr w <=> (?v. w = wordLang_Word v /\ (v && (n2w 3)) = (n2w 0))`,
+ (`!w. is_fwd_ptr w <=> (?v. w = word_Word v /\ (v && (n2w 3)) = (n2w 0))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let isWord_thm = prove
- (`!w. isWord w = (?v. w = wordLang_Word v)`,
+ (`!w. isWord w = (?v. w = word_Word v)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -256,18 +256,18 @@ let memcpy_code_thm = prove
        memcpy ((n2w n):'a word) a b m dm = ((b1:'a word),m1,T) /\
        n < dimword (:'a) /\ stackSem_state_memory
        s = m /\ stackSem_state_mdomain s = dm /\
-       stackSem_get_var 0 s = SOME (wordLang_Word (n2w n)) /\
+       stackSem_get_var 0 s = SOME (word_Word (n2w n)) /\
        1 IN FDOM (stackSem_state_regs s) /\
-       stackSem_get_var 2 s = SOME (wordLang_Word a) /\
-       stackSem_get_var 3 s = SOME (wordLang_Word b) ==>
+       stackSem_get_var 2 s = SOME (word_Word a) /\
+       stackSem_get_var 3 s = SOME (word_Word b) ==>
        (?r1.
          stackSem_evaluate (memcpy_code,stackSem_state_clock_fupd (K
            (stackSem_state_clock s + n)) s) =
            (NONE,stackSem_state_regs_fupd (K (stackSem_state_regs s |++
-             [(0,wordLang_Word (n2w 0));
+             [(0,word_Word (n2w 0));
                               (1,r1);
-                              (2,wordLang_Word (a + n2w n * bytes_in_word));
-                              (3,wordLang_Word b1)]))
+                              (2,word_Word (a + n2w n * bytes_in_word));
+                              (3,word_Word b1)]))
                                 (stackSem_state_memory_fupd (K m1) s)))`,
   CHEAT_TAC);;
 
@@ -277,18 +277,18 @@ let stack_allocProof_memcpy_code_thm = prove
       memcpy (w:'a word) a b m dm = ((b1:'a word),m1,T)
         /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\
-      stackSem_get_var 0 s = SOME (wordLang_Word w) /\
+      stackSem_get_var 0 s = SOME (word_Word w) /\
       1 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 2 s = SOME (wordLang_Word a) /\
-      stackSem_get_var 3 s = SOME (wordLang_Word b) ==>
+      stackSem_get_var 2 s = SOME (word_Word a) /\
+      stackSem_get_var 3 s = SOME (word_Word b) ==>
       (?r1.
         stackSem_evaluate (memcpy_code,stackSem_state_clock_fupd (K
           (stackSem_state_clock s + w2n w)) s) =
           (NONE,stackSem_state_regs_fupd (K (stackSem_state_regs s |++
-            [(0,wordLang_Word (n2w 0));
+            [(0,word_Word (n2w 0));
                               (1,r1);
-                              (2,wordLang_Word (a + w * bytes_in_word));
-                              (3,wordLang_Word b1)]))
+                              (2,word_Word (a + w * bytes_in_word));
+                              (3,word_Word b1)]))
                                 (stackSem_state_memory_fupd (K m1) s)))`,
   CHEAT_TAC);;
 
@@ -314,15 +314,15 @@ let word_gc_fun_thm = prove
                   theWord (FAPPLY s CurrHeap),m2,dm,(c1 /\ c2)) in
          let s1 =
                s |++
-               [(CurrHeap,wordLang_Word (theWord (FAPPLY s OtherHeap)));
-                (OtherHeap,wordLang_Word (theWord (FAPPLY s CurrHeap)));
-                (NextFree,wordLang_Word pa1);
+               [(CurrHeap,word_Word (theWord (FAPPLY s OtherHeap)));
+                (OtherHeap,word_Word (theWord (FAPPLY s CurrHeap)));
+                (NextFree,word_Word pa1);
                 (TriggerGC,
-                 wordLang_Word
+                 word_Word
                    (theWord (FAPPLY s OtherHeap) +
                     theWord (FAPPLY s HeapLength)));
                 (EndOfHeap,
-                 wordLang_Word
+                 word_Word
                    (theWord (FAPPLY s OtherHeap) +
                     theWord (FAPPLY s HeapLength)));
                 (Globals,w1);
@@ -387,17 +387,17 @@ let gc_thm = prove
                  c1 /\ c2)) in
         let s1 = stackSem_state_store
               s |++
-              [(CurrHeap,wordLang_Word (theWord (FAPPLY
-                (stackSem_state_store s) OtherHeap)));
-               (OtherHeap,wordLang_Word (theWord (FAPPLY
-                 (stackSem_state_store s) CurrHeap)));
-               (NextFree,wordLang_Word pa1);
+              [(CurrHeap,word_Word (theWord (FAPPLY (stackSem_state_store s)
+                OtherHeap)));
+               (OtherHeap,word_Word (theWord (FAPPLY (stackSem_state_store
+                 s) CurrHeap)));
+               (NextFree,word_Word pa1);
                (TriggerGC,
-                wordLang_Word
+                word_Word
                   (theWord (FAPPLY (stackSem_state_store s) OtherHeap) +
                    theWord (FAPPLY (stackSem_state_store s) HeapLength)));
                (EndOfHeap,
-                wordLang_Word
+                word_Word
                   (theWord (FAPPLY (stackSem_state_store s) OtherHeap) +
                    theWord (FAPPLY (stackSem_state_store s) HeapLength)));
                (Globals,w1);
@@ -447,7 +447,7 @@ let word_gc_move_roots_bitmaps = prove
        word_gc_move_roots_bitmaps conf (stack',bitmaps,i1,pa1,curr,m,dm) =
        (match stack' with [] -> (ARB,ARB,ARB,ARB,F)
        | (CONS w ws) ->
-         (if w = wordLang_Word (n2w 0) then (stack',i1,pa1,m,(ws = [])) else
+         (if w = word_Word (n2w 0) then (stack',i1,pa1,m,(ws = [])) else
            match word_gc_move_bitmaps conf (w,ws,bitmaps,i1,pa1,curr,m,dm) with
            NONE -> (ARB,ARB,ARB,ARB,F)
            | SOME (new,stack',i2,pa2,m2,c2) ->
@@ -478,10 +478,10 @@ let word_gc_move_bitmap_def = new_definition
    variables of its own are read as variables *)
 let word_gc_move_bitmaps_unroll = prove
  (cake_as_vars (fun () ->
-    `word_gc_move_bitmaps conf (wordLang_Word w,stack,bitmaps,i1,pa1,curr,m,dm)
-  = SOME x /\
+    `word_gc_move_bitmaps conf (word_Word w,stack,bitmaps,i1,pa1,curr,m,dm) =
+  SOME x /\
        LENGTH bitmaps < dimword (:'a) - 1 /\ good_dimindex (:'a) ==>
-       word_gc_move_bitmaps conf (wordLang_Word
+       word_gc_move_bitmaps conf (word_Word
          w,stack,bitmaps,i1,pa1,curr,m,dm) =
        (match DROP (w2n (w - ((n2w 1):'a word))) bitmaps with [] -> NONE
        | (CONS y ys) ->
@@ -489,7 +489,7 @@ let word_gc_move_bitmaps_unroll = prove
            NONE -> NONE
          | SOME (hd,ws,i2,pa2,m2,c2) ->
              (if ~(word_msb y) then SOME (hd,ws,i2,pa2,m2,c2) else match
-               word_gc_move_bitmaps conf (wordLang_Word (w + (n2w
+               word_gc_move_bitmaps conf (word_Word (w + (n2w
                1)),ws,bitmaps,i2,pa2,curr,m2,dm) with NONE -> NONE
                | SOME (hd3,ws3,i3,pa3,m3,c3) ->
                    SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2 /\ c3)))))`),
@@ -523,14 +523,14 @@ let word_gc_move_code_thm = prove
     (!(w:'a word). w << backend_common_word_shift (:'a) = w * bytes_in_word)
       /\
     FLOOKUP (stackSem_state_store (s:('a,'c,'b)stackSem_state)) CurrHeap =
-      SOME (wordLang_Word old) /\ stackSem_state_use_store s
+      SOME (word_Word old) /\ stackSem_state_use_store s
       /\ stackSem_state_memory
     s = m /\ stackSem_state_mdomain s = dm /\
     0 IN FDOM (stackSem_state_regs s) /\
     1 IN FDOM (stackSem_state_regs s) /\
     2 IN FDOM (stackSem_state_regs s) /\
-    stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-    stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+    stackSem_get_var 3 s = SOME (word_Word pa) /\
+    stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
     stackSem_get_var 5 s = SOME w /\
     6 IN FDOM (stackSem_state_regs s) ==>
     (?ck r0 r1 r2 r6.
@@ -540,8 +540,8 @@ let word_gc_move_code_thm = prove
           [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,w1);
                               (6,r6)])) (stackSem_state_memory_fupd (K m1)
                                 s)))`,
@@ -556,18 +556,18 @@ let word_gc_move_list_code_thm = prove
       2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf = 0) /\
       (!(w:'a word). w << backend_common_word_shift (:'a) = w *
         bytes_in_word) /\
-      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word old)
+      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word old)
         /\ stackSem_state_use_store s /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\
        0 IN FDOM (stackSem_state_regs s) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-      stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+      stackSem_get_var 3 s = SOME (word_Word pa) /\
+      stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
       5 IN FDOM (stackSem_state_regs s) ==>
       6 IN FDOM (stackSem_state_regs s) ==>
-      stackSem_get_var 7 s = SOME (wordLang_Word l) /\
-      stackSem_get_var 8 s = SOME (wordLang_Word a) ==>
+      stackSem_get_var 7 s = SOME (word_Word l) /\
+      stackSem_get_var 8 s = SOME (word_Word a) ==>
       (?ck r0 r1 r2 r5 r6.
         stackSem_evaluate (word_gc_move_list_code
           conf,stackSem_state_clock_fupd (K (stackSem_state_clock s + ck)) s) =
@@ -575,12 +575,12 @@ let word_gc_move_list_code_thm = prove
             [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
-                              (7,wordLang_Word (n2w 0));
-                              (8,wordLang_Word a1)]))
+                              (7,word_Word (n2w 0));
+                              (8,word_Word a1)]))
                                 (stackSem_state_memory_fupd (K m1) s)))`,
   CHEAT_TAC);;
 
@@ -596,18 +596,18 @@ let word_gc_move_loop_code_thm = prove
        conf + 2 < dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
-       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word old1)
+       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word old1)
          /\ stackSem_state_use_store s /\ stackSem_state_memory
        s = m1 /\ stackSem_state_mdomain s = dm1 /\
        0 IN FDOM (stackSem_state_regs s) /\
        1 IN FDOM (stackSem_state_regs s) /\
        2 IN FDOM (stackSem_state_regs s) /\
-       stackSem_get_var 3 s = SOME (wordLang_Word pa1) /\
-       stackSem_get_var 4 s = SOME (wordLang_Word (i1:'a word)) /\
+       stackSem_get_var 3 s = SOME (word_Word pa1) /\
+       stackSem_get_var 4 s = SOME (word_Word (i1:'a word)) /\
        5 IN FDOM (stackSem_state_regs s) ==>
        6 IN FDOM (stackSem_state_regs s) ==>
        7 IN FDOM (stackSem_state_regs s) ==>
-       stackSem_get_var 8 s = SOME (wordLang_Word pb1) /\ c1 ==>
+       stackSem_get_var 8 s = SOME (word_Word pb1) /\ c1 ==>
        (?ck r0 r1 r2 r5 r6 r7.
          stackSem_evaluate (word_gc_move_loop_code
            conf,stackSem_state_clock_fupd (K (stackSem_state_clock s + ck)) s)
@@ -616,12 +616,12 @@ let word_gc_move_loop_code_thm = prove
              [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa2);
-                              (4,wordLang_Word i2);
+                              (3,word_Word pa2);
+                              (4,word_Word i2);
                               (5,r5);
                               (6,r6);
                               (7,r7);
-                              (8,wordLang_Word pa2)]))
+                              (8,word_Word pa2)]))
                                 (stackSem_state_memory_fupd (K m2) s)))`,
   CHEAT_TAC);;
 
@@ -636,20 +636,20 @@ let word_gc_move_bitmap_code_thm = prove
         /\ good_dimindex (:'a) /\
       (!(w:'a word). w << backend_common_word_shift (:'a) = w *
         bytes_in_word) /\
-      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word curr)
+      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word curr)
         /\ stackSem_state_use_store s /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\ stackSem_state_use_stack s
         /\
       0 IN FDOM (stackSem_state_regs s) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-      stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+      stackSem_get_var 3 s = SOME (word_Word pa) /\
+      stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
       5 IN FDOM (stackSem_state_regs s) /\
       6 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 7 s = SOME (wordLang_Word w) /\
-      stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
-        (LENGTH old))) /\ stackSem_state_stack
+      stackSem_get_var 7 s = SOME (word_Word w) /\
+      stackSem_get_var 8 s = SOME (word_Word (bytes_in_word * n2w (LENGTH
+        old))) /\ stackSem_state_stack
       s = APPEND (APPEND init old) stack' /\ stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) < dimword
@@ -661,14 +661,14 @@ let word_gc_move_bitmap_code_thm = prove
             [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
                               (7,r7);
-                      (8,wordLang_Word (bytes_in_word * n2w (LENGTH
-                        (APPEND old new))))])) (stackSem_state_stack_fupd (K
-                        (APPEND (APPEND (APPEND init old) new) stack1))
+                      (8,word_Word (bytes_in_word * n2w (LENGTH (APPEND
+                        old new))))])) (stackSem_state_stack_fupd (K (APPEND
+                        (APPEND (APPEND init old) new) stack1))
                         (stackSem_state_memory_fupd (K m1) s))))`,
   CHEAT_TAC);;
 
@@ -684,8 +684,8 @@ let word_gc_move_bitmaps_LENGTH = prove
 let word_gc_move_bitmaps_code_thm = prove
  (`!w bitmaps z stack' (s:('a,'c,'b)stackSem_state) i pa curr m dm new
          stack1 a1 i1 pa1 m1 old.
-      word_gc_move_bitmaps conf (wordLang_Word
-        w,stack',bitmaps,i,pa,curr,m,dm) =
+      word_gc_move_bitmaps conf (word_Word w,stack',bitmaps,i,pa,curr,m,dm)
+        =
         SOME (new,stack1,i1,pa1,m1,T) /\
       LENGTH bitmaps < dimword (:'a) - 1 /\ good_dimindex (:'a) /\
       shift_length conf < dimindex (:'a) /\ backend_common_word_shift (:'a)
@@ -694,21 +694,21 @@ let word_gc_move_bitmaps_code_thm = prove
         /\ good_dimindex (:'a) /\
       (!(w:'a word). w << backend_common_word_shift (:'a) = w *
         bytes_in_word) /\
-      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word curr)
+      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word curr)
         /\ stackSem_state_use_store s /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\ stackSem_state_bitmaps s =
         bitmaps /\ stackSem_state_use_stack s /\
-      stackSem_get_var 0 s = SOME (wordLang_Word z) /\ ~(z = (n2w 0)) /\
+      stackSem_get_var 0 s = SOME (word_Word z) /\ ~(z = (n2w 0)) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-      stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+      stackSem_get_var 3 s = SOME (word_Word pa) /\
+      stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
       5 IN FDOM (stackSem_state_regs s) /\
       6 IN FDOM (stackSem_state_regs s) /\
       7 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
-        (LENGTH old))) /\
-      stackSem_get_var 9 s = SOME (wordLang_Word (w - (n2w 1)))
+      stackSem_get_var 8 s = SOME (word_Word (bytes_in_word * n2w (LENGTH
+        old))) /\
+      stackSem_get_var 9 s = SOME (word_Word (w - (n2w 1)))
         /\ stackSem_state_stack
       s = APPEND (APPEND init old) stack' /\ stackSem_state_stack_space
       s = LENGTH init /\
@@ -721,13 +721,13 @@ let word_gc_move_bitmaps_code_thm = prove
             [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
                               (7,r7);
-                      (8,wordLang_Word (bytes_in_word * n2w (LENGTH (APPEND
-                        old new))));
+                      (8,word_Word (bytes_in_word * n2w (LENGTH (APPEND old
+                        new))));
                               (9,r9)])) (stackSem_state_clock_fupd (K
                                 (stackSem_state_clock s))
                                 (stackSem_state_stack_fupd (K (APPEND (APPEND
@@ -750,19 +750,19 @@ let word_gc_move_roots_bitmaps_code_thm = prove
           /\ good_dimindex (:'a) /\
         (!(w:'a word). w << backend_common_word_shift (:'a) = w *
           bytes_in_word) /\
-        FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word
-          curr) /\ stackSem_state_use_store s /\ stackSem_state_memory
+        FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word curr)
+          /\ stackSem_state_use_store s /\ stackSem_state_memory
         s = m /\ stackSem_state_mdomain s = dm /\ stackSem_state_bitmaps s
           = bitmaps /\ stackSem_state_use_stack s /\
         0 IN FDOM (stackSem_state_regs s) /\
         1 IN FDOM (stackSem_state_regs s) /\
         2 IN FDOM (stackSem_state_regs s) /\
-        stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-        stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+        stackSem_get_var 3 s = SOME (word_Word pa) /\
+        stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
         5 IN FDOM (stackSem_state_regs s) /\
         6 IN FDOM (stackSem_state_regs s) /\
         7 IN FDOM (stackSem_state_regs s) /\
-        stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
+        stackSem_get_var 8 s = SOME (word_Word (bytes_in_word * n2w
           (LENGTH old))) /\
         stackSem_get_var 9 s = SOME (HD stack) /\ stackSem_state_stack
         s = APPEND (APPEND init old) stack /\ stackSem_state_stack_space
@@ -777,13 +777,13 @@ let word_gc_move_roots_bitmaps_code_thm = prove
               [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
                               (7,r7);
                               (8,r8);
-                              (9,wordLang_Word (n2w 0))]))
+                              (9,word_Word (n2w 0))]))
                                 (stackSem_state_clock_fupd (K
                                 (stackSem_state_clock s))
                                 (stackSem_state_stack_fupd (K (APPEND (APPEND
@@ -801,7 +801,7 @@ let alloc_correct_lemma_Simple = prove
     LENGTH (stackSem_state_stack s) * (dimindex (:'a) DIV 8) < dimword (:'a)
       /\
     FLOOKUP l 0 = SOME ret /\
-    FLOOKUP l 1 = SOME (wordLang_Word w) ==>
+    FLOOKUP l 1 = SOME (word_Word w) ==>
     (?ck l2.
       stackSem_evaluate
         (word_gc_code conf,stackSem_state_code_fupd (K (fromAList
@@ -817,7 +817,7 @@ let alloc_correct_lemma_Simple = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
-       (~(r = NONE) ==> r = SOME (stackLang_Halt (wordLang_Word (n2w 1))))
+       (~(r = NONE) ==> r = SOME (stack_Halt (word_Word (n2w 1))))
          /\ stackSem_state_regs
        t SUBMAP l2 /\
        (r = NONE ==> FLOOKUP l2 0 = SOME ret))`,
@@ -847,19 +847,19 @@ let stack_allocProof_word_gc_fun_thm = prove
                SOME
                  (TL roots1,m1,
                   s |++
-                  [(CurrHeap,wordLang_Word (theWord (FAPPLY s CurrHeap)));
-                   (OtherHeap,wordLang_Word (theWord (FAPPLY s OtherHeap)));
-                   (NextFree,wordLang_Word pa1);
-                   (GenStart,wordLang_Word (pa1 + --(n2w 1) * theWord
-                     (FAPPLY s CurrHeap)));
-                   (TriggerGC,wordLang_Word (pa1 + new_trig (theWord (FAPPLY
-                     s EndOfHeap) - pa1)
+                  [(CurrHeap,word_Word (theWord (FAPPLY s CurrHeap)));
+                   (OtherHeap,word_Word (theWord (FAPPLY s OtherHeap)));
+                   (NextFree,word_Word pa1);
+                   (GenStart,word_Word (pa1 + --(n2w 1) * theWord (FAPPLY s
+                     CurrHeap)));
+                   (TriggerGC,word_Word (pa1 + new_trig (theWord (FAPPLY s
+                     EndOfHeap) - pa1)
                               (theWord (FAPPLY s AllocSize)) gen_sizes));
                    (Globals,HD roots1);
                    (GlobReal,glob_real conf (theWord (FAPPLY s CurrHeap))
                      (HD roots1));
-                   (Temp (n2w 0),wordLang_Word (n2w 0)); (Temp (n2w
-                     1),wordLang_Word (n2w 0))])
+                   (Temp (n2w 0),word_Word (n2w 0)); (Temp (n2w 1),word_Word
+                     (n2w 0))])
              else NONE)
             ((\(roots,i,pa,m,c1).
                 (\(b1,m,c2). (roots,i,b1,m,(c1 /\ c2)))
@@ -915,23 +915,22 @@ let stack_allocProof_word_gc_fun_thm = prove
           let a = theWord (FAPPLY s AllocSize) in
           let s1 =
                 s |++
-                [(CurrHeap,wordLang_Word (theWord (FAPPLY s OtherHeap)));
-                 (OtherHeap,wordLang_Word (theWord (FAPPLY s CurrHeap)));
-                 (NextFree,wordLang_Word pa3);
-                 (GenStart,wordLang_Word (pa3 - theWord (FAPPLY s
-                   OtherHeap)));
-                 (TriggerGC,wordLang_Word (pa3 + new_trig (pb3 - pa3) a
+                [(CurrHeap,word_Word (theWord (FAPPLY s OtherHeap)));
+                 (OtherHeap,word_Word (theWord (FAPPLY s CurrHeap)));
+                 (NextFree,word_Word pa3);
+                 (GenStart,word_Word (pa3 - theWord (FAPPLY s OtherHeap)));
+                 (TriggerGC,word_Word (pa3 + new_trig (pb3 - pa3) a
                    gen_sizes));
-                 (EndOfHeap,wordLang_Word pb3); (Globals,w1);
+                 (EndOfHeap,word_Word pb3); (Globals,w1);
                  (GlobReal,glob_real conf (theWord (FAPPLY s OtherHeap))
                    w1);
-                 (Temp (n2w 0),wordLang_Word (n2w 0));
-                 (Temp (n2w 1),wordLang_Word (n2w 0));
-                 (Temp (n2w 2),wordLang_Word (n2w 0));
-                 (Temp (n2w 3),wordLang_Word (n2w 0));
-                 (Temp (n2w 4),wordLang_Word (n2w 0));
-                 (Temp (n2w 5),wordLang_Word (n2w 0));
-                 (Temp (n2w 6),wordLang_Word (n2w 0))] in
+                 (Temp (n2w 0),word_Word (n2w 0));
+                 (Temp (n2w 1),word_Word (n2w 0));
+                 (Temp (n2w 2),word_Word (n2w 0));
+                 (Temp (n2w 3),word_Word (n2w 0));
+                 (Temp (n2w 4),word_Word (n2w 0));
+                 (Temp (n2w 5),word_Word (n2w 0));
+                 (Temp (n2w 6),word_Word (n2w 0))] in
             if word_gc_fun_assum conf s /\ c1 /\ c2 /\ c3 then SOME
               (ws2,m3,s1)
             else NONE))`,
@@ -1014,11 +1013,11 @@ let stack_allocProof_gc_thm = prove
             (stackSem_state_mdomain
                             s) in
           let s1 = stackSem_state_store s |++
-                   [(CurrHeap,wordLang_Word curr);
-                    (OtherHeap,wordLang_Word other);
-                    (NextFree,wordLang_Word b1);
-                    (GenStart,wordLang_Word (b1 - curr));
-                    (TriggerGC,wordLang_Word (b1 + new_trig
+                   [(CurrHeap,word_Word curr);
+                    (OtherHeap,word_Word other);
+                    (NextFree,word_Word b1);
+                    (GenStart,word_Word (b1 - curr));
+                    (TriggerGC,word_Word (b1 + new_trig
                        (theWord (FAPPLY (stackSem_state_store s) EndOfHeap)
                          - b1)
                        (theWord (FAPPLY (stackSem_state_store s) AllocSize))
@@ -1026,8 +1025,8 @@ let stack_allocProof_gc_thm = prove
                     (Globals,w1);
                     (GlobReal,glob_real conf (theWord (FAPPLY
                       (stackSem_state_store s) CurrHeap)) w1);
-                    (Temp (n2w 0),wordLang_Word (n2w 0));
-                    (Temp (n2w 1),wordLang_Word (n2w 0))] in
+                    (Temp (n2w 0),word_Word (n2w 0));
+                    (Temp (n2w 1),word_Word (n2w 0))] in
           let c6 = ((theWord (FAPPLY (stackSem_state_store s) AllocSize) <=+
                      theWord (FAPPLY (stackSem_state_store s) EndOfHeap) -
                        b1) /\
@@ -1070,27 +1069,27 @@ let stack_allocProof_gc_thm = prove
                        CurrHeap),m2,stackSem_state_mdomain s) in
           let s1 = stackSem_state_store
                   s |++
-                  [(CurrHeap,wordLang_Word (theWord (FAPPLY
+                  [(CurrHeap,word_Word (theWord (FAPPLY
                     (stackSem_state_store s) OtherHeap)));
-                   (OtherHeap,wordLang_Word (theWord (FAPPLY
+                   (OtherHeap,word_Word (theWord (FAPPLY
                      (stackSem_state_store s) CurrHeap)));
-                   (NextFree,wordLang_Word pa3);
-                   (GenStart,wordLang_Word (pa3 + --(n2w 1) * theWord
-                     (FAPPLY (stackSem_state_store s) OtherHeap)));
-                   (TriggerGC,wordLang_Word (pa3 + new_trig
+                   (NextFree,word_Word pa3);
+                   (GenStart,word_Word (pa3 + --(n2w 1) * theWord (FAPPLY
+                     (stackSem_state_store s) OtherHeap)));
+                   (TriggerGC,word_Word (pa3 + new_trig
                       (pb3 - pa3) (theWord (FAPPLY (stackSem_state_store s)
                         AllocSize)) gen_sizes));
-                   (EndOfHeap,wordLang_Word pb3);
+                   (EndOfHeap,word_Word pb3);
                    (Globals,w1);
                    (GlobReal,glob_real conf (theWord (FAPPLY
                      (stackSem_state_store s) OtherHeap)) w1);
-                   (Temp (n2w 0),wordLang_Word (n2w 0));
-                   (Temp (n2w 1),wordLang_Word (n2w 0));
-                   (Temp (n2w 2),wordLang_Word (n2w 0));
-                   (Temp (n2w 3),wordLang_Word (n2w 0));
-                   (Temp (n2w 4),wordLang_Word (n2w 0));
-                   (Temp (n2w 5),wordLang_Word (n2w 0));
-                   (Temp (n2w 6),wordLang_Word (n2w 0))] in
+                   (Temp (n2w 0),word_Word (n2w 0));
+                   (Temp (n2w 1),word_Word (n2w 0));
+                   (Temp (n2w 2),word_Word (n2w 0));
+                   (Temp (n2w 3),word_Word (n2w 0));
+                   (Temp (n2w 4),word_Word (n2w 0));
+                   (Temp (n2w 5),word_Word (n2w 0));
+                   (Temp (n2w 6),word_Word (n2w 0))] in
             if word_gc_fun_assum conf (stackSem_state_store s) /\ c1 /\ c2
               /\ c3 then SOME (stackSem_state_memory_fupd (K m3)
               (stackSem_state_regs_fupd (K FEMPTY) (stackSem_state_store_fupd
@@ -1174,8 +1173,8 @@ let word_gen_gc_move_roots_bitmaps = prove
          (stack',bitmaps,i1,pa1,ib1,pb1,curr,m,dm) =
        (match stack' with [] -> (ARB,ARB,ARB,ARB,ARB,ARB,F)
        | (CONS w ws) ->
-         (if w = wordLang_Word (n2w 0) then (stack',i1,pa1,ib1,pb1,m,(ws =
-           [])) else match word_gen_gc_move_bitmaps conf
+         (if w = word_Word (n2w 0) then (stack',i1,pa1,ib1,pb1,m,(ws = []))
+           else match word_gen_gc_move_bitmaps conf
            (w,ws,bitmaps,i1,pa1,ib1,pb1,curr,m,dm) with NONE ->
            (ARB,ARB,ARB,ARB,ARB,ARB,F)
            | SOME (new,stack',i2,pa2,ib2,pb2,m2,c2) ->
@@ -1196,7 +1195,7 @@ let word_gen_gc_partial_move_roots_bitmaps = prove
          (stack',bitmaps,i1,pa1,curr,m,dm,gs,rs) =
        (match stack' with [] -> (ARB,ARB,ARB,ARB,F)
        | (CONS w ws) ->
-         (if w = wordLang_Word (n2w 0) then (stack',i1,pa1,m,(ws = [])) else
+         (if w = word_Word (n2w 0) then (stack',i1,pa1,m,(ws = [])) else
            match word_gen_gc_partial_move_bitmaps conf
            (w,ws,bitmaps,i1,pa1,curr,m,dm,gs,rs) with NONE ->
            (ARB,ARB,ARB,ARB,F)
@@ -1242,10 +1241,10 @@ let word_gen_gc_partial_move_bitmap_def = new_definition
    variables of its own are read as variables *)
 let word_gen_gc_move_bitmaps_unroll = prove
  (cake_as_vars (fun () ->
-    `word_gen_gc_move_bitmaps conf (wordLang_Word
+    `word_gen_gc_move_bitmaps conf (word_Word
   w,stack,bitmaps,i1,pa1,ib1,pb1,curr,m,dm) = SOME x /\
        LENGTH bitmaps < dimword (:'a) - 1 /\ good_dimindex (:'a) ==>
-       word_gen_gc_move_bitmaps conf (wordLang_Word
+       word_gen_gc_move_bitmaps conf (word_Word
          w,stack,bitmaps,i1,pa1,ib1,pb1,curr,m,dm) =
        (match DROP (w2n (w - ((n2w 1):'a word))) bitmaps with [] -> NONE
        | (CONS y ys) ->
@@ -1253,7 +1252,7 @@ let word_gen_gc_move_bitmaps_unroll = prove
            (y,stack,i1,pa1,ib1,pb1,curr,m,dm) with NONE -> NONE
          | SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2) ->
              (if ~(word_msb y) then SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2) else
-               match word_gen_gc_move_bitmaps conf (wordLang_Word (w + (n2w
+               match word_gen_gc_move_bitmaps conf (word_Word (w + (n2w
                1)),ws,bitmaps,i2,pa2,ib2,pb2,curr,m2,dm) with NONE -> NONE
                | SOME (hd3,ws3,i3,pa3,ib3,pb3,m3,c3) ->
                    SOME (APPEND hd hd3,ws3,i3,pa3,ib3,pb3,m3,(c2
@@ -1266,11 +1265,10 @@ let word_gen_gc_move_bitmaps_unroll = prove
 let word_gen_gc_partial_move_bitmaps_unroll = prove
  (cake_as_vars (fun () ->
     `word_gen_gc_partial_move_bitmaps conf
-         (wordLang_Word w,stack,bitmaps,i1,pa1,curr,m,dm,gs,rs) = SOME x
-           /\
+         (word_Word w,stack,bitmaps,i1,pa1,curr,m,dm,gs,rs) = SOME x /\
        LENGTH bitmaps < dimword (:'a) - 1 /\ good_dimindex (:'a) ==>
        word_gen_gc_partial_move_bitmaps conf
-         (wordLang_Word w,stack,bitmaps,i1,pa1,curr,m,dm,gs,rs) =
+         (word_Word w,stack,bitmaps,i1,pa1,curr,m,dm,gs,rs) =
        (match DROP (w2n (w - ((n2w 1):'a word))) bitmaps with [] -> NONE
        | (CONS y ys) ->
          (match word_gen_gc_partial_move_bitmap conf
@@ -1278,7 +1276,7 @@ let word_gen_gc_partial_move_bitmaps_unroll = prove
          | SOME (hd,ws,i2,pa2,m2,c2) ->
              (if ~(word_msb y) then SOME (hd,ws,i2,pa2,m2,c2) else match
                word_gen_gc_partial_move_bitmaps conf
-                      (wordLang_Word (w + (n2w
+                      (word_Word (w + (n2w
                         1)),ws,bitmaps,i2,pa2,curr,m2,dm,gs,rs) with NONE ->
                         NONE
                | SOME (hd3,ws3,i3,pa3,m3,c3) ->
@@ -1332,21 +1330,19 @@ let word_gen_gc_move_code_thm = prove
     2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf = 0) /\
     (!(w:'a word). w << backend_common_word_shift (:'a) = w * bytes_in_word)
       /\
-    FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word old)
+    FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word old)
       /\ stackSem_state_use_store s /\ stackSem_state_memory
     (s:('a,'c,'b)stackSem_state) = m /\ stackSem_state_mdomain s = dm /\
     0 IN FDOM (stackSem_state_regs s) /\
     1 IN FDOM (stackSem_state_regs s) /\
     2 IN FDOM (stackSem_state_regs s) /\
-    stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-    stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+    stackSem_get_var 3 s = SOME (word_Word pa) /\
+    stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
     stackSem_get_var 5 s = SOME w /\
     (Temp (n2w 0)) IN FDOM (stackSem_state_store s) /\
     (Temp (n2w 1)) IN FDOM (stackSem_state_store s) /\
-    FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (wordLang_Word
-      pb) /\
-    FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (wordLang_Word
-      ib) /\
+    FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (word_Word pb) /\
+    FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (word_Word ib) /\
     1 IN FDOM (stackSem_state_regs s) /\
     2 IN FDOM (stackSem_state_regs s) /\
     6 IN FDOM (stackSem_state_regs s) ==>
@@ -1357,14 +1353,14 @@ let word_gen_gc_move_code_thm = prove
           [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,w1);
                               (6,r6)])) (stackSem_state_store_fupd (K
                                 (stackSem_state_store s |++ [(Temp (n2w 0),t0);
                               (Temp (n2w 1),t1);
-                              (Temp (n2w 2),wordLang_Word pb1);
-                              (Temp (n2w 3),wordLang_Word ib1)]))
+                              (Temp (n2w 2),word_Word pb1);
+                              (Temp (n2w 3),word_Word ib1)]))
                                 (stackSem_state_memory_fupd (K m1) s))))`,
   CHEAT_TAC);;
 
@@ -1375,20 +1371,18 @@ let word_gen_gc_partial_move_code_thm = prove
     2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf = 0) /\
     (!(w:'a word). w << backend_common_word_shift (:'a) = w * bytes_in_word)
       /\
-    FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word old)
+    FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word old)
       /\ stackSem_state_use_store (s:('a,'c,'b)stackSem_state)
       /\ stackSem_state_memory
     s = m /\ stackSem_state_mdomain s = dm /\ good_dimindex (:'a) /\
     0 IN FDOM (stackSem_state_regs s) /\
     1 IN FDOM (stackSem_state_regs s) /\
     2 IN FDOM (stackSem_state_regs s) /\
-    stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-    stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+    stackSem_get_var 3 s = SOME (word_Word pa) /\
+    stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
     stackSem_get_var 5 s = SOME w /\
-    FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (wordLang_Word
-      gs) /\
-    FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (wordLang_Word
-      rs) /\
+    FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (word_Word gs) /\
+    FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (word_Word rs) /\
     1 IN FDOM (stackSem_state_regs s) /\
     2 IN FDOM (stackSem_state_regs s) /\
     6 IN FDOM (stackSem_state_regs s) ==>
@@ -1399,8 +1393,8 @@ let word_gen_gc_partial_move_code_thm = prove
           [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,w1);
                               (6,r6)])) (stackSem_state_memory_fupd (K m1)
                                 s)))`,
@@ -1417,26 +1411,26 @@ let word_gen_gc_move_bitmap_code_thm = prove
         /\ good_dimindex (:'a) /\
       (!(w:'a word). w << backend_common_word_shift (:'a) = w *
         bytes_in_word) /\
-      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word curr)
+      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word curr)
         /\ stackSem_state_use_store s /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\ stackSem_state_use_stack s
         /\
       0 IN FDOM (stackSem_state_regs s) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-      stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+      stackSem_get_var 3 s = SOME (word_Word pa) /\
+      stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
       5 IN FDOM (stackSem_state_regs s) /\
       6 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 7 s = SOME (wordLang_Word w) /\
-      stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
-        (LENGTH old))) /\
+      stackSem_get_var 7 s = SOME (word_Word w) /\
+      stackSem_get_var 8 s = SOME (word_Word (bytes_in_word * n2w (LENGTH
+        old))) /\
       Temp (n2w 0) IN FDOM (stackSem_state_store s) /\
       Temp (n2w 1) IN FDOM (stackSem_state_store s) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (wordLang_Word
-        pb) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (wordLang_Word
-        ib) /\ stackSem_state_stack
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (word_Word pb)
+        /\
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (word_Word ib)
+        /\ stackSem_state_stack
       s = APPEND (APPEND init old) stack' /\ stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) < dimword
@@ -1448,18 +1442,18 @@ let word_gen_gc_move_bitmap_code_thm = prove
             [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
                               (7,r7);
-                      (8,wordLang_Word (bytes_in_word * n2w (LENGTH (APPEND
-                        old new))))])) (stackSem_state_store_fupd (K
+                      (8,word_Word (bytes_in_word * n2w (LENGTH (APPEND old
+                        new))))])) (stackSem_state_store_fupd (K
                         (stackSem_state_store
                             s |++
                             [(Temp (n2w 0),t0); (Temp (n2w 1),t1); (Temp
-                              (n2w 2),wordLang_Word pb1);
-                             (Temp (n2w 3),wordLang_Word ib1)]))
+                              (n2w 2),word_Word pb1);
+                             (Temp (n2w 3),word_Word ib1)]))
                                (stackSem_state_stack_fupd (K (APPEND (APPEND
                                (APPEND init old) new) stack1))
                                (stackSem_state_memory_fupd (K m1) s)))))`,
@@ -1476,24 +1470,24 @@ let word_gen_gc_partial_move_bitmap_code_thm = prove
         /\ good_dimindex (:'a) /\
       (!(w:'a word). w << backend_common_word_shift (:'a) = w *
         bytes_in_word) /\
-      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word curr)
+      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word curr)
         /\ stackSem_state_use_store s /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\ stackSem_state_use_stack s
         /\
       0 IN FDOM (stackSem_state_regs s) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-      stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+      stackSem_get_var 3 s = SOME (word_Word pa) /\
+      stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
       5 IN FDOM (stackSem_state_regs s) /\
       6 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 7 s = SOME (wordLang_Word w) /\
-      stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
-        (LENGTH old))) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (wordLang_Word
-        gs) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (wordLang_Word
-        rs) /\ stackSem_state_stack
+      stackSem_get_var 7 s = SOME (word_Word w) /\
+      stackSem_get_var 8 s = SOME (word_Word (bytes_in_word * n2w (LENGTH
+        old))) /\
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (word_Word gs)
+        /\
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (word_Word rs)
+        /\ stackSem_state_stack
       s = APPEND (APPEND init old) stack' /\ stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) < dimword
@@ -1506,14 +1500,14 @@ let word_gen_gc_partial_move_bitmap_code_thm = prove
             [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
                               (7,r7);
-                      (8,wordLang_Word (bytes_in_word * n2w (LENGTH
-                        (APPEND old new))))])) (stackSem_state_stack_fupd (K
-                        (APPEND (APPEND (APPEND init old) new) stack1))
+                      (8,word_Word (bytes_in_word * n2w (LENGTH (APPEND
+                        old new))))])) (stackSem_state_stack_fupd (K (APPEND
+                        (APPEND (APPEND init old) new) stack1))
                         (stackSem_state_memory_fupd (K m1) s))))`,
   CHEAT_TAC);;
 
@@ -1539,7 +1533,7 @@ let word_gen_gc_partial_move_bitmaps_LENGTH = prove
 let word_gen_gc_move_bitmaps_code_thm = prove
  (`!w bitmaps z stack' (s:('a,'c,'b)stackSem_state) i pa ib pb curr m dm new
          stack1 a1 i1 pa1 ib1 pb1 m1 old.
-      word_gen_gc_move_bitmaps conf (wordLang_Word
+      word_gen_gc_move_bitmaps conf (word_Word
         w,stack',bitmaps,i,pa,ib,pb,curr,m,dm) =
         SOME (new,stack1,i1,pa1,ib1,pb1,m1,T) /\
       LENGTH bitmaps < dimword (:'a) - 1 /\ good_dimindex (:'a) /\
@@ -1549,27 +1543,27 @@ let word_gen_gc_move_bitmaps_code_thm = prove
         /\ good_dimindex (:'a) /\
       (!(w:'a word). w << backend_common_word_shift (:'a) = w *
         bytes_in_word) /\
-      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word curr)
+      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word curr)
         /\ stackSem_state_use_store s /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\ stackSem_state_bitmaps s =
         bitmaps /\ stackSem_state_use_stack s /\
-      stackSem_get_var 0 s = SOME (wordLang_Word z) /\ ~(z = (n2w 0)) /\
+      stackSem_get_var 0 s = SOME (word_Word z) /\ ~(z = (n2w 0)) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-      stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+      stackSem_get_var 3 s = SOME (word_Word pa) /\
+      stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
       5 IN FDOM (stackSem_state_regs s) /\
       6 IN FDOM (stackSem_state_regs s) /\
       7 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
-        (LENGTH old))) /\
-      stackSem_get_var 9 s = SOME (wordLang_Word (w - (n2w 1))) /\
+      stackSem_get_var 8 s = SOME (word_Word (bytes_in_word * n2w (LENGTH
+        old))) /\
+      stackSem_get_var 9 s = SOME (word_Word (w - (n2w 1))) /\
       Temp (n2w 0) IN FDOM (stackSem_state_store s) /\
       Temp (n2w 1) IN FDOM (stackSem_state_store s) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (wordLang_Word
-        pb) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (wordLang_Word
-        ib) /\ stackSem_state_stack
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (word_Word pb)
+        /\
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (word_Word ib)
+        /\ stackSem_state_stack
       s = APPEND (APPEND init old) stack' /\ stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) < dimword
@@ -1581,19 +1575,19 @@ let word_gen_gc_move_bitmaps_code_thm = prove
             [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
                               (7,r7);
-                      (8,wordLang_Word (bytes_in_word * n2w (LENGTH (APPEND
-                        old new))));
+                      (8,word_Word (bytes_in_word * n2w (LENGTH (APPEND old
+                        new))));
                               (9,r9)])) (stackSem_state_store_fupd (K
                                 (stackSem_state_store
                             s |++
                             [(Temp (n2w 0),t0); (Temp (n2w 1),t1); (Temp
-                              (n2w 2),wordLang_Word pb1);
-                             (Temp (n2w 3),wordLang_Word ib1)]))
+                              (n2w 2),word_Word pb1);
+                             (Temp (n2w 3),word_Word ib1)]))
                                (stackSem_state_clock_fupd (K
                                (stackSem_state_clock s))
                                (stackSem_state_stack_fupd (K (APPEND (APPEND
@@ -1605,7 +1599,7 @@ let word_gen_gc_partial_move_bitmaps_code_thm = prove
  (`!w bitmaps z stack' (s:('a,'c,'b)stackSem_state) i pa ib pb curr m dm new
          stack1 a1 i1 pa1 ib1 pb1 m1 old.
       word_gen_gc_partial_move_bitmaps conf
-          (wordLang_Word w,stack',bitmaps,i,pa,curr,m,dm,gs,rs) =
+          (word_Word w,stack',bitmaps,i,pa,curr,m,dm,gs,rs) =
         SOME (new,stack1,i1,pa1,m1,T) /\
       LENGTH bitmaps < dimword (:'a) - 1 /\ good_dimindex (:'a) /\
       shift_length conf < dimindex (:'a) /\ backend_common_word_shift (:'a)
@@ -1614,25 +1608,25 @@ let word_gen_gc_partial_move_bitmaps_code_thm = prove
         /\ good_dimindex (:'a) /\
       (!(w:'a word). w << backend_common_word_shift (:'a) = w *
         bytes_in_word) /\
-      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word curr)
+      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word curr)
         /\ stackSem_state_use_store s /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\ stackSem_state_bitmaps s =
         bitmaps /\ stackSem_state_use_stack s /\
-      stackSem_get_var 0 s = SOME (wordLang_Word z) /\ ~(z = (n2w 0)) /\
+      stackSem_get_var 0 s = SOME (word_Word z) /\ ~(z = (n2w 0)) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-      stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+      stackSem_get_var 3 s = SOME (word_Word pa) /\
+      stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
       5 IN FDOM (stackSem_state_regs s) /\
       6 IN FDOM (stackSem_state_regs s) /\
       7 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
-        (LENGTH old))) /\
-      stackSem_get_var 9 s = SOME (wordLang_Word (w - (n2w 1))) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (wordLang_Word
-        gs) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (wordLang_Word
-        rs) /\ stackSem_state_stack
+      stackSem_get_var 8 s = SOME (word_Word (bytes_in_word * n2w (LENGTH
+        old))) /\
+      stackSem_get_var 9 s = SOME (word_Word (w - (n2w 1))) /\
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (word_Word gs)
+        /\
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (word_Word rs)
+        /\ stackSem_state_stack
       s = APPEND (APPEND init old) stack' /\ stackSem_state_stack_space
       s = LENGTH init /\
       (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) < dimword
@@ -1644,13 +1638,13 @@ let word_gen_gc_partial_move_bitmaps_code_thm = prove
             [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
                               (7,r7);
-                      (8,wordLang_Word (bytes_in_word * n2w (LENGTH (APPEND
-                        old new))));
+                      (8,word_Word (bytes_in_word * n2w (LENGTH (APPEND old
+                        new))));
                               (9,r9)])) (stackSem_state_clock_fupd (K
                                 (stackSem_state_clock s))
                                 (stackSem_state_stack_fupd (K (APPEND (APPEND
@@ -1674,27 +1668,27 @@ let word_gen_gc_move_roots_bitmaps_code_thm = prove
           /\ good_dimindex (:'a) /\
         (!(w:'a word). w << backend_common_word_shift (:'a) = w *
           bytes_in_word) /\
-        FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word
-          curr) /\ stackSem_state_use_store s /\ stackSem_state_memory
+        FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word curr)
+          /\ stackSem_state_use_store s /\ stackSem_state_memory
         s = m /\ stackSem_state_mdomain s = dm /\ stackSem_state_bitmaps s
           = bitmaps /\ stackSem_state_use_stack s /\
         0 IN FDOM (stackSem_state_regs s) /\
         1 IN FDOM (stackSem_state_regs s) /\
         2 IN FDOM (stackSem_state_regs s) /\
-        stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-        stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+        stackSem_get_var 3 s = SOME (word_Word pa) /\
+        stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
         5 IN FDOM (stackSem_state_regs s) /\
         6 IN FDOM (stackSem_state_regs s) /\
         7 IN FDOM (stackSem_state_regs s) /\
-        stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
+        stackSem_get_var 8 s = SOME (word_Word (bytes_in_word * n2w
           (LENGTH old))) /\
         stackSem_get_var 9 s = SOME (HD stack) /\
         Temp (n2w 0) IN FDOM (stackSem_state_store s) /\
         Temp (n2w 1) IN FDOM (stackSem_state_store s) /\
-        FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME
-          (wordLang_Word pb) /\
-        FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME
-          (wordLang_Word ib) /\ stackSem_state_stack
+        FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (word_Word
+          pb) /\
+        FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (word_Word
+          ib) /\ stackSem_state_stack
         s = APPEND (APPEND init old) stack /\ stackSem_state_stack_space
         s = LENGTH init /\
         (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) < dimword
@@ -1707,19 +1701,19 @@ let word_gen_gc_move_roots_bitmaps_code_thm = prove
               [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
                               (7,r7);
                               (8,r8);
-                              (9,wordLang_Word (n2w 0))]))
+                              (9,word_Word (n2w 0))]))
                                 (stackSem_state_store_fupd (K
                                 (stackSem_state_store
                               s |++
                               [(Temp (n2w 0),t0); (Temp (n2w 1),t1); (Temp
-                                (n2w 2),wordLang_Word pb1);
-                              (Temp (n2w 3),wordLang_Word ib1)]))
+                                (n2w 2),word_Word pb1);
+                              (Temp (n2w 3),word_Word ib1)]))
                                 (stackSem_state_clock_fupd (K
                                 (stackSem_state_clock s))
                                 (stackSem_state_stack_fupd (K (APPEND (APPEND
@@ -1743,25 +1737,25 @@ let word_gen_gc_partial_move_roots_bitmaps_code_thm = prove
           /\ good_dimindex (:'a) /\
         (!(w:'a word). w << backend_common_word_shift (:'a) = w *
           bytes_in_word) /\
-        FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word
-          curr) /\ stackSem_state_use_store s /\ stackSem_state_memory
+        FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word curr)
+          /\ stackSem_state_use_store s /\ stackSem_state_memory
         s = m /\ stackSem_state_mdomain s = dm /\ stackSem_state_bitmaps s
           = bitmaps /\ stackSem_state_use_stack s /\
         0 IN FDOM (stackSem_state_regs s) /\
         1 IN FDOM (stackSem_state_regs s) /\
         2 IN FDOM (stackSem_state_regs s) /\
-        stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-        stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+        stackSem_get_var 3 s = SOME (word_Word pa) /\
+        stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
         5 IN FDOM (stackSem_state_regs s) /\
         6 IN FDOM (stackSem_state_regs s) /\
         7 IN FDOM (stackSem_state_regs s) /\
-        stackSem_get_var 8 s = SOME (wordLang_Word (bytes_in_word * n2w
+        stackSem_get_var 8 s = SOME (word_Word (bytes_in_word * n2w
           (LENGTH old))) /\
         stackSem_get_var 9 s = SOME (HD stack) /\
-        FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME
-          (wordLang_Word gs) /\
-        FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME
-          (wordLang_Word rs) /\ stackSem_state_stack
+        FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (word_Word
+          gs) /\
+        FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (word_Word
+          rs) /\ stackSem_state_stack
         s = APPEND (APPEND init old) stack /\ stackSem_state_stack_space
         s = LENGTH init /\
         (dimindex (:'a) DIV 8) * LENGTH (stackSem_state_stack s) < dimword
@@ -1774,13 +1768,13 @@ let word_gen_gc_partial_move_roots_bitmaps_code_thm = prove
               [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
                               (7,r7);
                               (8,r8);
-                              (9,wordLang_Word (n2w 0))]))
+                              (9,word_Word (n2w 0))]))
                                 (stackSem_state_clock_fupd (K
                                 (stackSem_state_clock s))
                                 (stackSem_state_stack_fupd (K (APPEND (APPEND
@@ -1798,24 +1792,24 @@ let word_gen_gc_move_list_code_thm = prove
       2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf = 0) /\
       (!(w:'a word). w << backend_common_word_shift (:'a) = w *
         bytes_in_word) /\
-      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word old)
+      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word old)
         /\ stackSem_state_use_store s /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\
       Temp (n2w 0) IN FDOM (stackSem_state_store s) /\
       Temp (n2w 1) IN FDOM (stackSem_state_store s) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (wordLang_Word
-        pb) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (wordLang_Word
-        ib) /\
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (word_Word pb)
+        /\
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (word_Word ib)
+        /\
       0 IN FDOM (stackSem_state_regs s) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-      stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+      stackSem_get_var 3 s = SOME (word_Word pa) /\
+      stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
       5 IN FDOM (stackSem_state_regs s) ==>
       6 IN FDOM (stackSem_state_regs s) ==>
-      stackSem_get_var 7 s = SOME (wordLang_Word l) /\
-      stackSem_get_var 8 s = SOME (wordLang_Word a) ==>
+      stackSem_get_var 7 s = SOME (word_Word l) /\
+      stackSem_get_var 8 s = SOME (word_Word a) ==>
       (?ck r0 r1 r2 r5 r6 t0 t1.
         stackSem_evaluate (word_gen_gc_move_list_code
           conf,stackSem_state_clock_fupd (K (stackSem_state_clock s + ck)) s) =
@@ -1823,18 +1817,17 @@ let word_gen_gc_move_list_code_thm = prove
             [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
-                              (7,wordLang_Word (n2w 0));
-                              (8,wordLang_Word a1)]))
-                                (stackSem_state_store_fupd (K
-                                (stackSem_state_store
+                              (7,word_Word (n2w 0));
+                              (8,word_Word a1)])) (stackSem_state_store_fupd
+                                (K (stackSem_state_store
                             s |++
                             [(Temp (n2w 0),t0); (Temp (n2w 1),t1); (Temp
-                              (n2w 2),wordLang_Word pb1);
-                             (Temp (n2w 3),wordLang_Word ib1)]))
+                              (n2w 2),word_Word pb1);
+                             (Temp (n2w 3),word_Word ib1)]))
                                (stackSem_state_memory_fupd (K m1) s))))`,
   CHEAT_TAC);;
 
@@ -1848,22 +1841,22 @@ let word_gen_gc_partial_move_list_code_thm = prove
       2 < dimindex (:'a) /\ ~(data_to_word_config_len_size conf = 0) /\
       (!(w:'a word). w << backend_common_word_shift (:'a) = w *
         bytes_in_word) /\
-      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word old)
+      FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word old)
         /\ stackSem_state_use_store s /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\ good_dimindex (:'a) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (wordLang_Word
-        gs) /\
-      FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (wordLang_Word
-        rs) /\
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (word_Word gs)
+        /\
+      FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (word_Word rs)
+        /\
       0 IN FDOM (stackSem_state_regs s) /\
       1 IN FDOM (stackSem_state_regs s) /\
       2 IN FDOM (stackSem_state_regs s) /\
-      stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-      stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
+      stackSem_get_var 3 s = SOME (word_Word pa) /\
+      stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
       5 IN FDOM (stackSem_state_regs s) ==>
       6 IN FDOM (stackSem_state_regs s) ==>
-      stackSem_get_var 7 s = SOME (wordLang_Word l) /\
-      stackSem_get_var 8 s = SOME (wordLang_Word a) ==>
+      stackSem_get_var 7 s = SOME (word_Word l) /\
+      stackSem_get_var 8 s = SOME (word_Word a) ==>
       (?ck r0 r1 r2 r5 r6.
         stackSem_evaluate (word_gen_gc_partial_move_list_code
           conf,stackSem_state_clock_fupd (K (stackSem_state_clock s + ck)) s) =
@@ -1871,12 +1864,12 @@ let word_gen_gc_partial_move_list_code_thm = prove
             [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
-                              (7,wordLang_Word (n2w 0));
-                              (8,wordLang_Word a1)]))
+                              (7,word_Word (n2w 0));
+                              (8,word_Word a1)]))
                                 (stackSem_state_memory_fupd (K m1) s)))`,
   CHEAT_TAC);;
 
@@ -1894,23 +1887,23 @@ let word_gen_gc_partial_move_ref_list_code_thm = prove
        conf + 2 < dimindex (:'a) /\ good_dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
-       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word old1)
+       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word old1)
          /\ stackSem_state_use_store s /\ stackSem_state_memory
        s = m1 /\ stackSem_state_mdomain s = dm1 /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (wordLang_Word
-         gs) /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (wordLang_Word
-         rs) /\
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (word_Word gs)
+         /\
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (word_Word rs)
+         /\
        0 IN FDOM (stackSem_state_regs s) /\
        1 IN FDOM (stackSem_state_regs s) /\
        2 IN FDOM (stackSem_state_regs s) /\
-       stackSem_get_var 3 s = SOME (wordLang_Word pa1) /\
-       stackSem_get_var 4 s = SOME (wordLang_Word (i1:'a word)) /\
+       stackSem_get_var 3 s = SOME (word_Word pa1) /\
+       stackSem_get_var 4 s = SOME (word_Word (i1:'a word)) /\
        5 IN FDOM (stackSem_state_regs s) /\
        6 IN FDOM (stackSem_state_regs s) /\
        7 IN FDOM (stackSem_state_regs s) /\
-       stackSem_get_var 8 s = SOME (wordLang_Word r1a1) /\
-       stackSem_get_var 9 s = SOME (wordLang_Word r2a1) ==>
+       stackSem_get_var 8 s = SOME (word_Word r1a1) /\
+       stackSem_get_var 9 s = SOME (word_Word r2a1) ==>
        (?ck r0 r1 r2 r5 r6 r7 r8 r9.
          stackSem_evaluate (word_gen_gc_partial_move_ref_list_code
            conf,stackSem_state_clock_fupd (K (stackSem_state_clock s + ck)) s)
@@ -1919,8 +1912,8 @@ let word_gen_gc_partial_move_ref_list_code_thm = prove
              [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa2);
-                              (4,wordLang_Word i2);
+                              (3,word_Word pa2);
+                              (4,word_Word i2);
                               (5,r5);
                               (6,r6);
                               (7,r7);
@@ -1942,24 +1935,24 @@ let word_gen_gc_move_data_code_thm = prove
        conf + 2 < dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
-       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word old1)
+       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word old1)
          /\ stackSem_state_use_store s /\ stackSem_state_memory
        s = m1 /\ stackSem_state_mdomain s = dm1 /\
        Temp (n2w 0) IN FDOM (stackSem_state_store s) /\
        Temp (n2w 1) IN FDOM (stackSem_state_store s) /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (wordLang_Word
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (word_Word
          pb1) /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (wordLang_Word
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (word_Word
          ib1) /\
        0 IN FDOM (stackSem_state_regs s) /\
        1 IN FDOM (stackSem_state_regs s) /\
        2 IN FDOM (stackSem_state_regs s) /\
-       stackSem_get_var 3 s = SOME (wordLang_Word pa1) /\
-       stackSem_get_var 4 s = SOME (wordLang_Word (i1:'a word)) /\
+       stackSem_get_var 3 s = SOME (word_Word pa1) /\
+       stackSem_get_var 4 s = SOME (word_Word (i1:'a word)) /\
        5 IN FDOM (stackSem_state_regs s) ==>
        6 IN FDOM (stackSem_state_regs s) ==>
        7 IN FDOM (stackSem_state_regs s) ==>
-       stackSem_get_var 8 s = SOME (wordLang_Word ha1) /\ c1 ==>
+       stackSem_get_var 8 s = SOME (word_Word ha1) /\ c1 ==>
        (?ck r0 r1 r2 r5 r6 r7 t0 t1.
          stackSem_evaluate (word_gen_gc_move_data_code
            conf,stackSem_state_clock_fupd (K (stackSem_state_clock s + ck)) s)
@@ -1968,18 +1961,18 @@ let word_gen_gc_move_data_code_thm = prove
              [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa2);
-                              (4,wordLang_Word i2);
+                              (3,word_Word pa2);
+                              (4,word_Word i2);
                               (5,r5);
                               (6,r6);
                               (7,r7);
-                              (8,wordLang_Word pa2)]))
+                              (8,word_Word pa2)]))
                                 (stackSem_state_store_fupd (K
                                 (stackSem_state_store
                              s |++
                              [(Temp (n2w 0),t0); (Temp (n2w 1),t1); (Temp
-                               (n2w 2),wordLang_Word pb2);
-                              (Temp (n2w 3),wordLang_Word ib2)]))
+                               (n2w 2),word_Word pb2);
+                              (Temp (n2w 3),word_Word ib2)]))
                                 (stackSem_state_memory_fupd (K m2) s))))`,
   CHEAT_TAC);;
 
@@ -1995,22 +1988,22 @@ let word_gen_gc_partial_move_data_code_thm = prove
        conf + 2 < dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
-       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word old1)
+       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word old1)
          /\ stackSem_state_use_store s /\ stackSem_state_memory
        s = m1 /\ stackSem_state_mdomain s = dm1 /\ good_dimindex (:'a) /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (wordLang_Word
-         gs) /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (wordLang_Word
-         rs) /\
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 0)) = SOME (word_Word gs)
+         /\
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 1)) = SOME (word_Word rs)
+         /\
        0 IN FDOM (stackSem_state_regs s) /\
        1 IN FDOM (stackSem_state_regs s) /\
        2 IN FDOM (stackSem_state_regs s) /\
-       stackSem_get_var 3 s = SOME (wordLang_Word pa1) /\
-       stackSem_get_var 4 s = SOME (wordLang_Word (i1:'a word)) /\
+       stackSem_get_var 3 s = SOME (word_Word pa1) /\
+       stackSem_get_var 4 s = SOME (word_Word (i1:'a word)) /\
        5 IN FDOM (stackSem_state_regs s) ==>
        6 IN FDOM (stackSem_state_regs s) ==>
        7 IN FDOM (stackSem_state_regs s) ==>
-       stackSem_get_var 8 s = SOME (wordLang_Word ha1) /\ c1 ==>
+       stackSem_get_var 8 s = SOME (word_Word ha1) /\ c1 ==>
        (?ck r0 r1 r2 r5 r6 r7 t0 t1.
          stackSem_evaluate (word_gen_gc_partial_move_data_code
            conf,stackSem_state_clock_fupd (K (stackSem_state_clock s + ck)) s)
@@ -2019,12 +2012,12 @@ let word_gen_gc_partial_move_data_code_thm = prove
              [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa2);
-                              (4,wordLang_Word i2);
+                              (3,word_Word pa2);
+                              (4,word_Word i2);
                               (5,r5);
                               (6,r6);
                               (7,r7);
-                              (8,wordLang_Word pa2)]))
+                              (8,word_Word pa2)]))
                                 (stackSem_state_memory_fupd (K m2) s)))`,
   CHEAT_TAC);;
 
@@ -2041,46 +2034,46 @@ let word_gen_gc_move_refs_code_thm = prove
        conf + 2 < dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
-       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word old1)
+       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word old1)
          /\ stackSem_state_use_store s /\ stackSem_state_memory
        s = m1 /\ stackSem_state_mdomain s = dm1 /\
        Temp (n2w 0) IN FDOM (stackSem_state_store s) /\
        Temp (n2w 1) IN FDOM (stackSem_state_store s) /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (wordLang_Word
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (word_Word
          pb1) /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (wordLang_Word
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (word_Word
          ib1) /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 4)) = SOME (wordLang_Word
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 4)) = SOME (word_Word
          r1a1) /\
-       stackSem_get_var 0 s = SOME (wordLang_Word r1a1) /\
+       stackSem_get_var 0 s = SOME (word_Word r1a1) /\
        1 IN FDOM (stackSem_state_regs s) /\
        2 IN FDOM (stackSem_state_regs s) /\
-       stackSem_get_var 3 s = SOME (wordLang_Word pa1) /\
-       stackSem_get_var 4 s = SOME (wordLang_Word (i1:'a word)) /\
+       stackSem_get_var 3 s = SOME (word_Word pa1) /\
+       stackSem_get_var 4 s = SOME (word_Word (i1:'a word)) /\
        5 IN FDOM (stackSem_state_regs s) ==>
        6 IN FDOM (stackSem_state_regs s) ==>
        7 IN FDOM (stackSem_state_regs s) ==>
-       stackSem_get_var 8 s = SOME (wordLang_Word r2a1) /\ c1 ==>
+       stackSem_get_var 8 s = SOME (word_Word r2a1) /\ c1 ==>
        (?ck r1 r2 r5 r6 r7 t0 t1.
          stackSem_evaluate (word_gen_gc_move_refs_code
            conf,stackSem_state_clock_fupd (K (stackSem_state_clock s + ck)) s)
            =
            (NONE,stackSem_state_regs_fupd (K (stackSem_state_regs s |++
-             [(0,wordLang_Word r1a1);
+             [(0,word_Word r1a1);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa2);
-                              (4,wordLang_Word i2);
+                              (3,word_Word pa2);
+                              (4,word_Word i2);
                               (5,r5);
                               (6,r6);
                               (7,r7);
-                              (8,wordLang_Word r2a2)]))
+                              (8,word_Word r2a2)]))
                                 (stackSem_state_store_fupd (K
                                 (stackSem_state_store
                              s |++
                              [(Temp (n2w 0),t0); (Temp (n2w 1),t1); (Temp
-                               (n2w 2),wordLang_Word pb2);
-                              (Temp (n2w 3),wordLang_Word ib2)]))
+                               (n2w 2),word_Word pb2);
+                              (Temp (n2w 3),word_Word ib2)]))
                                 (stackSem_state_memory_fupd (K m2) s))))`,
   CHEAT_TAC);;
 
@@ -2097,7 +2090,7 @@ let word_gen_gc_move_loop_code_thm = prove
        conf + 2 < dimindex (:'a) /\
        (!(w:'a word). w << backend_common_word_shift (:'a) = w *
          bytes_in_word) /\
-       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (wordLang_Word old)
+       FLOOKUP (stackSem_state_store s) CurrHeap = SOME (word_Word old)
          /\ stackSem_state_use_store s /\ stackSem_state_memory
        s = m /\ stackSem_state_mdomain s = dm /\
        (tt = (n2w 0) <=> pbx = pb /\ pax = pa) /\
@@ -2105,19 +2098,19 @@ let word_gen_gc_move_loop_code_thm = prove
        Temp (n2w 1) IN FDOM (stackSem_state_store s) /\
        Temp (n2w 5) IN FDOM (stackSem_state_store s) /\
        Temp (n2w 6) IN FDOM (stackSem_state_store s) /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (wordLang_Word
-         pb) /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (wordLang_Word
-         ib) /\
-       FLOOKUP (stackSem_state_store s) (Temp (n2w 4)) = SOME (wordLang_Word
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 2)) = SOME (word_Word pb)
+         /\
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 3)) = SOME (word_Word ib)
+         /\
+       FLOOKUP (stackSem_state_store s) (Temp (n2w 4)) = SOME (word_Word
          pbx) /\
        0 IN FDOM (stackSem_state_regs s) /\
-       stackSem_get_var 1 s = SOME (wordLang_Word pbx) /\
-       stackSem_get_var 2 s = SOME (wordLang_Word pb) /\
-       stackSem_get_var 3 s = SOME (wordLang_Word pa) /\
-       stackSem_get_var 4 s = SOME (wordLang_Word (i:'a word)) /\
-       stackSem_get_var 7 s = SOME (wordLang_Word tt) /\
-       stackSem_get_var 8 s = SOME (wordLang_Word pax) /\
+       stackSem_get_var 1 s = SOME (word_Word pbx) /\
+       stackSem_get_var 2 s = SOME (word_Word pb) /\
+       stackSem_get_var 3 s = SOME (word_Word pa) /\
+       stackSem_get_var 4 s = SOME (word_Word (i:'a word)) /\
+       stackSem_get_var 7 s = SOME (word_Word tt) /\
+       stackSem_get_var 8 s = SOME (word_Word pax) /\
        5 IN FDOM (stackSem_state_regs s) /\
        6 IN FDOM (stackSem_state_regs s) /\ c1 ==>
        (?ck r0 r1 r2 r5 r6 r7 r8 t0 t1 t4 t5 t6.
@@ -2128,8 +2121,8 @@ let word_gen_gc_move_loop_code_thm = prove
              [(0,r0);
                               (1,r1);
                               (2,r2);
-                              (3,wordLang_Word pa1);
-                              (4,wordLang_Word i1);
+                              (3,word_Word pa1);
+                              (4,word_Word i1);
                               (5,r5);
                               (6,r6);
                               (7,r7);
@@ -2137,8 +2130,8 @@ let word_gen_gc_move_loop_code_thm = prove
                                 (stackSem_state_store
                              s |++
                              [(Temp (n2w 0),t0); (Temp (n2w 1),t1); (Temp
-                               (n2w 2),wordLang_Word pb1);
-                              (Temp (n2w 3),wordLang_Word ib1);
+                               (n2w 2),word_Word pb1);
+                              (Temp (n2w 3),word_Word ib1);
                               (Temp (n2w 4),t4); (Temp (n2w 5),t5); (Temp
                                 (n2w 6),t6)])) (stackSem_state_memory_fupd (K
                                 m1) s))))`,
@@ -2164,16 +2157,15 @@ let evaluate_SetNewTrigger = prove
    (!ib endh w.
      good_dimindex (:'a) /\ stackSem_state_use_store s5 /\
      ALL_DISTINCT [1; 4; 7; ib_reg; endh_reg] /\
-     FLOOKUP (stackSem_state_regs s5) ib_reg = SOME (wordLang_Word ib) /\
-     FLOOKUP (stackSem_state_regs s5) endh_reg = SOME (wordLang_Word endh)
-       /\
-     FLOOKUP (stackSem_state_store s5) AllocSize = SOME (wordLang_Word (w:'a
+     FLOOKUP (stackSem_state_regs s5) ib_reg = SOME (word_Word ib) /\
+     FLOOKUP (stackSem_state_regs s5) endh_reg = SOME (word_Word endh) /\
+     FLOOKUP (stackSem_state_store s5) AllocSize = SOME (word_Word (w:'a
        word)) ==>
      (?r7 r1 r4.
        res = NONE /\
        new_s = stackSem_state_store_fupd (K (stackSem_state_store s5 |+
          (TriggerGC,
-                            wordLang_Word ((ib + new_trig (endh - ib) w
+                            word_Word ((ib + new_trig (endh - ib) w
                               gen_sizes))))) (stackSem_state_regs_fupd (K
                               (stackSem_state_regs s5 |+ (1,r1) |+ (7,r7) |+
                               (4,r4))) s5)))`,
@@ -2188,7 +2180,7 @@ let alloc_correct_lemma_Generational = prove
     LENGTH (stackSem_state_stack s) * (dimindex (:'a) DIV 8) < dimword (:'a)
       /\
     FLOOKUP l 0 = SOME ret /\
-    FLOOKUP l 1 = SOME (wordLang_Word w) ==>
+    FLOOKUP l 1 = SOME (word_Word w) ==>
     (?ck l2.
       stackSem_evaluate
         (word_gc_code conf,stackSem_state_code_fupd (K (fromAList
@@ -2204,7 +2196,7 @@ let alloc_correct_lemma_Generational = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
-       (~(r = NONE) ==> r = SOME (stackLang_Halt (wordLang_Word (n2w 1))))
+       (~(r = NONE) ==> r = SOME (stack_Halt (word_Word (n2w 1))))
          /\ stackSem_state_regs
        t SUBMAP l2 /\
        (r = NONE ==> FLOOKUP l2 0 = SOME ret))`,
@@ -2237,7 +2229,7 @@ let alloc_correct_lemma_None = prove
     LENGTH (stackSem_state_stack s) * (dimindex (:'a) DIV 8) < dimword (:'a)
       /\
     FLOOKUP l 0 = SOME ret /\
-    FLOOKUP l 1 = SOME (wordLang_Word w) ==>
+    FLOOKUP l 1 = SOME (word_Word w) ==>
     (?ck l2.
       stackSem_evaluate
         (word_gc_code conf,stackSem_state_code_fupd (K (fromAList
@@ -2253,7 +2245,7 @@ let alloc_correct_lemma_None = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
-       (~(r = NONE) ==> r = SOME (stackLang_Halt (wordLang_Word (n2w 1))))
+       (~(r = NONE) ==> r = SOME (stack_Halt (word_Word (n2w 1))))
          /\ stackSem_state_regs
        t SUBMAP l2 /\
        (r = NONE ==> FLOOKUP l2 0 = SOME ret))`,
@@ -2269,7 +2261,7 @@ let alloc_correct_lemma = prove
     LENGTH (stackSem_state_stack s) * (dimindex (:'a) DIV 8) < dimword (:'a)
       /\
     FLOOKUP l 0 = SOME ret /\
-    FLOOKUP l 1 = SOME (wordLang_Word w) ==>
+    FLOOKUP l 1 = SOME (word_Word w) ==>
     (?ck l2.
       stackSem_evaluate
         (word_gc_code conf,stackSem_state_code_fupd (K (fromAList
@@ -2285,7 +2277,7 @@ let alloc_correct_lemma = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
-       (~(r = NONE) ==> r = SOME (stackLang_Halt (wordLang_Word (n2w 1))))
+       (~(r = NONE) ==> r = SOME (stack_Halt (word_Word (n2w 1))))
          /\ stackSem_state_regs
        t SUBMAP l2 /\
        (r = NONE ==> FLOOKUP l2 0 = SOME ret))`,
@@ -2299,14 +2291,14 @@ let alloc_correct = prove
      LENGTH (stackSem_state_bitmaps s) < dimword (:'a) - 1 /\
      LENGTH (stackSem_state_stack s) * (dimindex (:'a) DIV 8) < dimword
        (:'a) /\
-     FLOOKUP l 1 = SOME (wordLang_Word w) ==>
+     FLOOKUP l 1 = SOME (word_Word w) ==>
      (?ck l2.
         stackSem_evaluate
-           (stackLang_Call (SOME (stackLang_Skip,0,n',m)) (INL
-             gc_stub_location) NONE,stackSem_state_code_fupd (K (fromAList
-             (stack_alloc_compile c (toAList (stackSem_state_code s)))))
-             (stackSem_state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd
-             (K l) (stackSem_state_clock_fupd (K (stackSem_state_clock s + ck))
+           (stack_Call (SOME (stack_Skip,0,n',m)) (INL gc_stub_location)
+             NONE,stackSem_state_code_fupd (K (fromAList (stack_alloc_compile c
+             (toAList (stackSem_state_code s))))) (stackSem_state_gc_fun_fupd
+             (K anything) (stackSem_state_regs_fupd (K l)
+             (stackSem_state_clock_fupd (K (stackSem_state_clock s + ck))
              (stackSem_state_use_alloc_fupd (K F)
              (stackSem_state_use_alloc_fupd (K F)
              (stackSem_state_use_stack_fupd (K T)
@@ -2334,7 +2326,7 @@ let find_code_IMP_lookup = prove
 
 let alloc_length_stack = prove
  (`stackSem_alloc c s = (r,t) /\ stackSem_state_gc_fun s = word_gc_fun conf /\
-   (!w. ~(r = SOME (stackLang_Halt w))) ==>
+   (!w. ~(r = SOME (stack_Halt w))) ==>
    LENGTH (stackSem_state_stack t) = LENGTH (stackSem_state_stack s)`,
   CHEAT_TAC);;
 
@@ -2468,8 +2460,8 @@ let stack_allocProof_comp_correct = prove
        LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
          (stackSem_state_data_buffer t)) + buffer_space_left
          (stackSem_state_data_buffer t) < dimword (:'a) - 1 /\
-       ((!w. ~(r = SOME (stackLang_Halt w))) ==> LENGTH
-         (stackSem_state_stack t) * (dimindex (:'a) DIV 8) < dimword (:'a)))`,
+       ((!w. ~(r = SOME (stack_Halt w))) ==> LENGTH (stackSem_state_stack
+         t) * (dimindex (:'a) DIV 8) < dimword (:'a)))`,
   CHEAT_TAC);;
 
 (* HOL4 stack_allocProofScript.sml:5896-5899: ML code, not ported *)
@@ -2574,16 +2566,14 @@ let MAX_SIMP = prove
 
 let next_lab_thm = prove
  (`!p.
-      next_lab (p:'a stackLang_prog) 2 =
-      match p with stackLang_Seq p1 p2 -> MAX (next_lab p1 2) (next_lab p2
-        2)
-      | stackLang_If _ _ _ p1 p2 -> MAX (next_lab p1 2) (next_lab p2 2)
-      | stackLang_Loop p -> next_lab p 2
-      | stackLang_Call NONE _ NONE -> 2
-      | stackLang_Call NONE _ (SOME (_,_,l2)) -> MAX (l2 + 2) 2
-      | stackLang_Call (SOME (p,_,_,l2)) _ NONE -> MAX (next_lab p 2) (l2 +
-        2)
-      | stackLang_Call (SOME (p,_,_,l2)) _ (SOME (p',_,l3)) ->
+      next_lab (p:'a stack_prog) 2 =
+      match p with stack_Seq p1 p2 -> MAX (next_lab p1 2) (next_lab p2 2)
+      | stack_If _ _ _ p1 p2 -> MAX (next_lab p1 2) (next_lab p2 2)
+      | stack_Loop p -> next_lab p 2
+      | stack_Call NONE _ NONE -> 2
+      | stack_Call NONE _ (SOME (_,_,l2)) -> MAX (l2 + 2) 2
+      | stack_Call (SOME (p,_,_,l2)) _ NONE -> MAX (next_lab p 2) (l2 + 2)
+      | stack_Call (SOME (p,_,_,l2)) _ (SOME (p',_,l3)) ->
            MAX (MAX (next_lab p 2) (next_lab p' 2)) (MAX l2 l3 + 2)
       | _ -> 2`,
   CHEAT_TAC);;

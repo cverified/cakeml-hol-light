@@ -56,7 +56,6 @@ let evaluate_ignore_clocks = prove
      (r1,ms1,st1) = (r2,ms2,st2)`,
   CHEAT_TAC);;
 
-let _ = size_thms "line";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let sec_loc_to_pc_def,sec_loc_to_pc_ind = define_wf
@@ -65,7 +64,7 @@ let sec_loc_to_pc_def,sec_loc_to_pc_ind = define_wf
     if n2 = 0 then SOME 0
     else match xs with [] -> NONE
     | (CONS z zs) ->
-      if (?n1 k. z = labLang_Label n1 n2 k) then SOME 0
+      if (?n1 k. z = lab_Label n1 n2 k) then SOME 0
       else if is_Label z then sec_loc_to_pc n2 zs
       else OPTION_MAP SUC (sec_loc_to_pc n2 zs))`;;
 
@@ -73,7 +72,7 @@ let sec_loc_to_pc_def,sec_loc_to_pc_ind = define_wf
 
 let sec_loc_to_pc_cons = prove
  (`sec_loc_to_pc n2 (CONS l lines) =
-   if n2 = 0 \/ (?n1 k. l = labLang_Label n1 n2 k) then SOME 0
+   if n2 = 0 \/ (?n1 k. l = lab_Label n1 n2 k) then SOME 0
    else OPTION_MAP (if is_Label l then I else SUC) (sec_loc_to_pc n2
      lines)`,
   CHEAT_TAC);;
@@ -227,7 +226,7 @@ let lab_lookup_def = new_definition
 (* [local] *)
 let lab_lookup_IMP = prove
  (`(lab_lookup l1 l2 labs = SOME x) ==>
-     (find_pos (labLang_Lab l1 l2) labs = x)`,
+     (find_pos (lab_Lab l1 l2) labs = x)`,
   CHEAT_TAC);;
 
 let labs_domain_def = new_definition
@@ -257,16 +256,13 @@ let has_odd_inst_def,has_odd_inst_ind = define_guess_cheat
 let line_similar_def = new_definition
   `line_similar x1 x2 =
      match (x1,x2) with
-       (labLang_Label k1 k2 l,labLang_Label k1' k2' l') -> (k1 = k1') /\ (k2
-         = k2')
-     | (labLang_Asm b bytes l,labLang_Asm b' bytes' l') -> (b = b')
-     | (labLang_LabAsm a w bytes l,labLang_LabAsm a' w' bytes' l') -> (a =
-       a')
+       (lab_Label k1 k2 l,lab_Label k1' k2' l') -> (k1 = k1') /\ (k2 = k2')
+     | (lab_Asm b bytes l,lab_Asm b' bytes' l') -> (b = b')
+     | (lab_LabAsm a w bytes l,lab_LabAsm a' w' bytes' l') -> (a = a')
      | (_,_) -> F`;;
 
 (* HOL4 lab_to_targetProofScript.sml:398: ML code, not ported *)
 
-let _ = size_thms "sec";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let code_similar_def,code_similar_ind = define_wf
@@ -350,8 +346,8 @@ let code_similar_len_no_lab = prove
   CHEAT_TAC);;
 
 let word_loc_val_def = define_cases
-  `(word_loc_val p labs (wordLang_Word w) = SOME w) /\
-   (word_loc_val p labs (wordLang_Loc k1 k2) =
+  `(word_loc_val p labs (word_Word w) = SOME w) /\
+   (word_loc_val p labs (word_Loc k1 k2) =
          match lab_lookup k1 k2 labs with NONE -> NONE
          | SOME q -> SOME (p + n2w q))`;;
 
@@ -362,8 +358,8 @@ let has_io_name_def,has_io_name_ind = define_guess_cheat
    (has_io_name index (CONS (Section k []) xs) = has_io_name index xs) /\
    (has_io_name index (CONS (Section k (CONS y ys)) xs) <=>
          has_io_name index (CONS (Section k ys) xs) \/
-         (match y with labLang_LabAsm (labLang_CallFFI i) _ _ _ -> (i
-             = index) | _ -> F))`;;
+         (match y with lab_LabAsm (lab_CallFFI i) _ _ _ -> (i = index)
+             | _ -> F))`;;
 
 (* HOL4 lab_to_targetProofScript.sml:532: ML code, not ported *)
 
@@ -376,29 +372,29 @@ let word_loc_val_byte_def = new_definition
 let line_ok_def = new_definition
   `line_ok c labs ffis pos x5 =
      match (c,x5) with
-       ((c:'a asm_config),labLang_Label _ _ l) ->
+       ((c:'a asm_config),lab_Label _ _ l) ->
         EVEN pos /\ (l = 0)
-     | (c,labLang_Asm b bytes l) ->
+     | (c,lab_Asm b bytes l) ->
         enc_with_nop (asm_config_encode c) (cbw_to_asm b) bytes /\
         (LENGTH bytes = l) /\ asm_ok (cbw_to_asm b) c
-     | (c,labLang_LabAsm labLang_Halt w bytes l) ->
+     | (c,lab_LabAsm lab_Halt w bytes l) ->
         let w1 = ((n2w 0):'a word) - n2w (pos + ffi_offset) in
-          enc_with_nop (asm_config_encode c) (labLang_Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (labLang_Jump w1) c
-     | (c,labLang_LabAsm labLang_Install w bytes l) ->
+          enc_with_nop (asm_config_encode c) (lab_Jump w1) bytes /\
+          (LENGTH bytes = l) /\ asm_ok (lab_Jump w1) c
+     | (c,lab_LabAsm lab_Install w bytes l) ->
         let w1 = ((n2w 0):'a word) - n2w (pos + 2 * ffi_offset) in
-          enc_with_nop (asm_config_encode c) (labLang_Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (labLang_Jump w1) c
-     | (c,labLang_LabAsm (labLang_CallFFI index) w bytes l) ->
+          enc_with_nop (asm_config_encode c) (lab_Jump w1) bytes /\
+          (LENGTH bytes = l) /\ asm_ok (lab_Jump w1) c
+     | (c,lab_LabAsm (lab_CallFFI index) w bytes l) ->
         let w1 = ((n2w 0):'a word) - n2w (pos + (3 + get_ffi_index ffis
           (ffi_ExtCall index)) * ffi_offset) in
-          enc_with_nop (asm_config_encode c) (labLang_Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (labLang_Jump w1) c
-     | (c,labLang_LabAsm (labLang_Call v24) w bytes l) ->
+          enc_with_nop (asm_config_encode c) (lab_Jump w1) bytes /\
+          (LENGTH bytes = l) /\ asm_ok (lab_Jump w1) c
+     | (c,lab_LabAsm (lab_Call v24) w bytes l) ->
         F
      // Call not yet supported
-     | (c,labLang_LabAsm a w bytes l) ->
-        (match get_label a with labLang_Lab l1 l2 ->
+     | (c,lab_LabAsm a w bytes l) ->
+        (match get_label a with lab_Lab l1 l2 ->
         (match lab_lookup l1 l2 labs with
           NONE -> F
         | SOME t ->
@@ -521,8 +517,8 @@ let share_mem_domain_code_rel_def = new_definition
       // whenever the pc is accessing share mem, the pc is in ffi_entry_pcs
       // * after mmio_pcs_min_index and the mmio_info for it is correct
       !pc' op re a inst' len i.
-         (asm_fetch_aux pc' code2 = SOME (labLang_Asm (ShareMem op re a)
-           inst' len) /\
+         (asm_fetch_aux pc' code2 = SOME (lab_Asm (ShareMem op re a) inst'
+           len) /\
          mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i) ==>
          (?index.
            i <= index /\
@@ -540,8 +536,8 @@ let share_mem_domain_code_rel_def = new_definition
       // * it must be fetching ShareMem instruction
       !pc' line.
        asm_fetch_aux pc' code2 = SOME line /\
-       (!op re a inst' len. ~(line = labLang_Asm (ShareMem op re a) inst'
-         len)) ==>
+       (!op re a inst' len. ~(line = lab_Asm (ShareMem op re a) inst' len))
+         ==>
        DISJOINT (set_of_list (machine_config_ffi_entry_pcs mc_conf))
          {p + n2w a + n2w (pos_val pc' 0 code2) |
            a < LENGTH (line_bytes line)}) /\
@@ -1091,7 +1087,7 @@ let IMP_bytes_in_memory_JumpReg = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_Asm (Asmi (asm_JumpReg r1)) l n)) ==>
+       (asm_fetch s1 = SOME (lab_Asm (Asmi (asm_JumpReg r1)) l n)) ==>
        bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc s1) 0
          code2))
          (asm_config_encode (target_config (machine_config_target
@@ -1114,8 +1110,7 @@ let IMP_bytes_in_memory_Jump = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm (asm_Jump jtarget) l bytes n))
-         ==>
+       (asm_fetch s1 = SOME (lab_LabAsm (asm_Jump jtarget) l bytes n)) ==>
        (?tt enc.
          (tt = n2w (find_pos jtarget labs) -
                n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
@@ -1139,8 +1134,8 @@ let IMP_bytes_in_memory_JumpCmp = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm (asm_JumpCmp cmp rr ri
-         jtarget) l bytes n)) ==>
+       (asm_fetch s1 = SOME (lab_LabAsm (asm_JumpCmp cmp rr ri jtarget) l
+         bytes n)) ==>
        (?tt enc.
          (tt = n2w (find_pos jtarget labs) -
                n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
@@ -1164,8 +1159,8 @@ let IMP_bytes_in_memory_JumpCmp_1 = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm (asm_JumpCmp cmp rr ri
-         jtarget) l bytes n)) ==>
+       (asm_fetch s1 = SOME (lab_LabAsm (asm_JumpCmp cmp rr ri jtarget) l
+         bytes n)) ==>
        (?tt bytes.
          (tt = n2w (find_pos jtarget labs) -
                n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
@@ -1194,7 +1189,7 @@ let IMP_bytes_in_memory_Call = prove
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain
          (t1:'a asm_state)) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm (asm_Call ww) l bytes n)) ==>
+       (asm_fetch s1 = SOME (lab_LabAsm (asm_Call ww) l bytes n)) ==>
        F`),
   CHEAT_TAC);;
 
@@ -1209,10 +1204,10 @@ let IMP_bytes_in_memory_LocValue = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm (labLang_LocValue reg
-         (labLang_Lab l1 l2)) l bytes n)) ==>
+       (asm_fetch s1 = SOME (lab_LabAsm (lab_LocValue reg (lab_Lab l1 l2))
+         l bytes n)) ==>
        (?tt bytes.
-         (tt = n2w (find_pos (labLang_Lab l1 l2) labs) -
+         (tt = n2w (find_pos (lab_Lab l1 l2) labs) -
                n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
          enc_with_nop (asm_config_encode (target_config
            (machine_config_target mc_conf))) (asm_Loc reg tt) bytes /\
@@ -1236,8 +1231,7 @@ let IMP_bytes_in_memory_Inst = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_Asm (Asmi (asm_Inst i)) bytes len))
-         ==>
+       (asm_fetch s1 = SOME (lab_Asm (Asmi (asm_Inst i)) bytes len)) ==>
        (?bytes.
          enc_with_nop (asm_config_encode (target_config
            (machine_config_target mc_conf))) (asm_Inst i) bytes /\
@@ -1265,7 +1259,7 @@ let IMP_bytes_in_memory_Cbw = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_Asm (Cbw r1 r2) bytes len)) ==>
+       (asm_fetch s1 = SOME (lab_Asm (Cbw r1 r2) bytes len)) ==>
        (?bytes.
          enc_with_nop (asm_config_encode (target_config
            (machine_config_target mc_conf))) (asm_Inst (asm_Mem asm_Store8 r2
@@ -1295,8 +1289,7 @@ let IMP_bytes_in_memory_CallFFI = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm (labLang_CallFFI name) l bytes
-         n)) ==>
+       (asm_fetch s1 = SOME (lab_LabAsm (lab_CallFFI name) l bytes n)) ==>
        (?tt enc.
          (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2 + (3 +
            get_ffi_index ffi_names (ffi_ExtCall name)) * ffi_offset)) /\
@@ -1320,7 +1313,7 @@ let IMP_bytes_in_memory_Halt = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm labLang_Halt l bytes n)) ==>
+       (asm_fetch s1 = SOME (lab_LabAsm lab_Halt l bytes n)) ==>
        (?tt enc.
          (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2 +
            ffi_offset)) /\
@@ -1344,7 +1337,7 @@ let IMP_bytes_in_memory_Install = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (labLang_LabAsm labLang_Install c l n)) ==>
+       (asm_fetch s1 = SOME (lab_LabAsm lab_Install c l n)) ==>
        (?tt enc.
          (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2 + 2 *
            ffi_offset)) /\
@@ -1386,8 +1379,8 @@ let asm_fetch_aux_pos_val_LENGTH_EQ = prove
    variables of its own are read as variables *)
 let IMP_bytes_in_memory_ShareMem = prove
  (cake_as_vars (fun () ->
-    `(asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) = SOME
-  (labLang_Asm (ShareMem mop r ad) l n)) /\
+    `(asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) = SOME (lab_Asm
+  (ShareMem mop r ad) l n)) /\
      code_similar (labSem_state_code
        (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
      all_enc_ok (target_config (machine_config_target mc_conf)) labs
@@ -1395,8 +1388,8 @@ let IMP_bytes_in_memory_ShareMem = prove
      bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
        (asm_state_mem_domain t1) (labSem_state_mem_domain s1) ==>
      (?bytes.
-       asm_fetch_aux (labSem_state_pc s1) code2 = SOME (labLang_Asm
-         (ShareMem mop r ad)
+       asm_fetch_aux (labSem_state_pc s1) code2 = SOME (lab_Asm (ShareMem
+         mop r ad)
          bytes (LENGTH bytes)) /\
        enc_with_nop (asm_config_encode (target_config
          (machine_config_target mc_conf))) (asm_Inst (asm_Mem mop r ad)) bytes
@@ -1438,7 +1431,7 @@ let read_bytearray_state_rel = prove
 
 (* [local] *)
 let IMP_has_io_name = prove
- (`(asm_fetch s1 = SOME (labLang_LabAsm (labLang_CallFFI index) l bytes n)) ==>
+ (`(asm_fetch s1 = SOME (lab_LabAsm (lab_CallFFI index) l bytes n)) ==>
      has_io_name index (labSem_state_code s1)`,
   CHEAT_TAC);;
 
@@ -1467,9 +1460,9 @@ let bytes_in_mem_asm_write_bytearray = prove
 (* [local] *)
 let write_bytearray_NOT_Loc = prove
  (`!xs c1 s1 a c.
-       (labSem_state_mem s1 a = wordLang_Word c) ==> ~((write_bytearray c1
-         xs (labSem_state_mem s1) (labSem_state_mem_domain s1)
-         (labSem_state_be s1)) a = asm_Loc n n0)`,
+       (labSem_state_mem s1 a = word_Word c) ==> ~((write_bytearray c1 xs
+         (labSem_state_mem s1) (labSem_state_mem_domain s1) (labSem_state_be
+         s1)) a = asm_Loc n n0)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1662,8 +1655,8 @@ let inst_share_mem_reg_update_helper = prove
        (asm_state_regs t1))) t1)) ms2 ==>
    share_mem_state_rel mc_conf (labSem_state_clock_fupd (K
      (labSem_state_clock s1 - 1)) (labSem_state_pc_fupd (K (labSem_state_pc s1
-     + 1)) (labSem_state_regs_fupd (K ((n =+ wordLang_Word c)
-     (labSem_state_regs s1))) s1)))
+     + 1)) (labSem_state_regs_fupd (K ((n =+ word_Word c) (labSem_state_regs
+     s1))) s1)))
      (asm_state_pc_fupd (K pc') (asm_state_regs_fupd (K ((n =+ c)
        (asm_state_regs t1))) t1)) ms2`,
   CHEAT_TAC);;
@@ -1778,8 +1771,8 @@ let EL_get_ffi_index_MEM = prove
 
 let has_io_name_EXISTS = prove
  (`!name ls. has_io_name name ls <=>
-    EX (\x. match x with labLang_LabAsm (labLang_CallFFI i) _ _ _ -> i =
-      name | _ -> F)
+    EX (\x. match x with lab_LabAsm (lab_CallFFI i) _ _ _ -> i = name | _ ->
+      F)
     (FLAT (MAP Section_lines ls))`,
   CHEAT_TAC);;
 
@@ -1788,9 +1781,9 @@ let has_io_name_EXISTS = prove
 (* annotated line length *)
 
 let line_len_def = define_cases
-  `(line_len (labLang_Label _ _ l) = l) /\
-   (line_len (labLang_Asm _ _ l) = l) /\
-   (line_len (labLang_LabAsm _ _ _ l) = l)`;;
+  `(line_len (lab_Label _ _ l) = l) /\
+   (line_len (lab_Asm _ _ l) = l) /\
+   (line_len (lab_LabAsm _ _ _ l) = l)`;;
 add_simp line_len_def;;
 
 (* annotated section length *)
@@ -1811,24 +1804,23 @@ let sec_length_sum_line_len = prove
 let enc_lines_again_simp_def,enc_lines_again_simp_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). list_size (line_size (\x. 0)) x4)`
   `(enc_lines_again_simp labs ffis pos enc [] = ([],T)) /\
-   (enc_lines_again_simp labs ffis pos enc (CONS (labLang_LabAsm a w bytes l)
-    xs) =
+   (enc_lines_again_simp labs ffis pos enc (CONS (lab_LabAsm a w bytes l) xs) =
         let w1 = get_jump_offset a ffis labs pos in
           if w = w1 then
             let (rest,ok) = enc_lines_again_simp labs ffis (pos + l) enc xs
                 in
-              (CONS (labLang_LabAsm a w bytes l) rest,ok)
+              (CONS (lab_LabAsm a w bytes l) rest,ok)
           else let bs = enc (lab_inst w1 a) in
             let l1 = MAX (LENGTH bs) l in
             let (rest,ok) = enc_lines_again_simp labs ffis (pos + l1) enc
                 xs in
-              (CONS (labLang_LabAsm a w1 bs l1) rest,(l1 = l /\ ok))) /\
-   (enc_lines_again_simp labs ffis pos enc (CONS (labLang_Label k1 k2 l) xs) =
+              (CONS (lab_LabAsm a w1 bs l1) rest,(l1 = l /\ ok))) /\
+   (enc_lines_again_simp labs ffis pos enc (CONS (lab_Label k1 k2 l) xs) =
         let (rest,ok) = enc_lines_again_simp labs ffis (pos + l) enc xs in
-        (CONS (labLang_Label k1 k2 l:'a line) rest,ok)) /\
-   (enc_lines_again_simp labs ffis pos enc (CONS (labLang_Asm x1 x2 l) xs) =
+        (CONS (lab_Label k1 k2 l:'a line) rest,ok)) /\
+   (enc_lines_again_simp labs ffis pos enc (CONS (lab_Asm x1 x2 l) xs) =
         let (rest,ok) = enc_lines_again_simp labs ffis (pos + l) enc xs in
-        (CONS (labLang_Asm x1 x2 l) rest,ok))`;;
+        (CONS (lab_Asm x1 x2 l) rest,ok))`;;
 
 (* HOL4 lab_to_targetProofScript.sml:3172: ML code, not ported *)
 
@@ -2073,9 +2065,9 @@ add_simp sec_labels_ok_filter_skip;;
 let line_encd0_def = new_definition
   `line_encd0 enc x2 =
      match x2 with
-       labLang_Asm b bytes len ->
+       lab_Asm b bytes len ->
        enc (cbw_to_asm b) = bytes /\ len = LENGTH bytes
-     | labLang_LabAsm l w bytes len ->
+     | lab_LabAsm l w bytes len ->
         enc (lab_inst w l) = bytes /\ LENGTH bytes <= len /\
         (?w'. len = LENGTH (enc (lab_inst w' l)))
      | _ -> T`;;
@@ -2128,9 +2120,9 @@ let upd_lab_len_encd0 = prove
 let line_length_leq_def = new_definition
   `line_length_leq x1 =
      match x1 with
-       labLang_LabAsm _ _ bytes l ->
+       lab_LabAsm _ _ bytes l ->
        LENGTH bytes <= l
-     | labLang_Asm _ bytes l ->
+     | lab_Asm _ bytes l ->
        LENGTH bytes <= l
      | _ -> T`;;
 add_simp line_length_leq_def;;
@@ -2147,7 +2139,7 @@ add_simp sec_length_leq_def;;
 let label_one_def = new_definition
   `label_one x1' =
      match x1' with
-       labLang_Label _ _ n -> n <= 1
+       lab_Label _ _ n -> n <= 1
      | _ -> T`;;
 add_simp label_one_def;;
 
@@ -2210,30 +2202,30 @@ let line_len_pad_section1 = prove
 let line_encd_def = new_definition
   `line_encd enc labs ffis pos x5 =
      match x5 with
-       labLang_Asm b bytes len ->
+       lab_Asm b bytes len ->
        enc (cbw_to_asm b) = bytes /\ len = LENGTH bytes
-     | labLang_LabAsm labLang_Halt _ bytes len ->
-       enc (labLang_Jump (--(n2w (pos + ffi_offset)))) = bytes /\
+     | lab_LabAsm lab_Halt _ bytes len ->
+       enc (lab_Jump (--(n2w (pos + ffi_offset)))) = bytes /\
        LENGTH bytes <= len
-     | labLang_LabAsm labLang_Install _ bytes len ->
-       enc (labLang_Jump (--(n2w (pos + 2 * ffi_offset)))) = bytes /\
+     | lab_LabAsm lab_Install _ bytes len ->
+       enc (lab_Jump (--(n2w (pos + 2 * ffi_offset)))) = bytes /\
        LENGTH bytes <= len
-     | labLang_LabAsm (labLang_CallFFI s) _ bytes len ->
-       enc (labLang_Jump (--(n2w (pos + (get_ffi_index ffis (ffi_ExtCall s)
-         + 3) * ffi_offset)))) = bytes /\
+     | lab_LabAsm (lab_CallFFI s) _ bytes len ->
+       enc (lab_Jump (--(n2w (pos + (get_ffi_index ffis (ffi_ExtCall s) + 3)
+         * ffi_offset)))) = bytes /\
        LENGTH bytes <= len
-     | labLang_LabAsm (labLang_Jump l) _ bytes len ->
-       enc (labLang_Jump (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
+     | lab_LabAsm (lab_Jump l) _ bytes len ->
+       enc (lab_Jump (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
        LENGTH bytes <= len
-     | labLang_LabAsm (labLang_JumpCmp a b c l) _ bytes len ->
-       enc (labLang_JumpCmp a b c (n2w (find_pos l labs) + --(n2w pos))) =
-         bytes /\
+     | lab_LabAsm (lab_JumpCmp a b c l) _ bytes len ->
+       enc (lab_JumpCmp a b c (n2w (find_pos l labs) + --(n2w pos))) = bytes
+         /\
        LENGTH bytes <= len
-     | labLang_LabAsm (labLang_LocValue k l) _ bytes len ->
+     | lab_LabAsm (lab_LocValue k l) _ bytes len ->
        enc (asm_Loc k (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
        LENGTH bytes <= len
-     | labLang_LabAsm (labLang_Call l) _ bytes len ->
-       enc (labLang_Call (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
+     | lab_LabAsm (lab_Call l) _ bytes len ->
+       enc (lab_Call (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
        LENGTH bytes <= len
      | _ -> T`;;
 
@@ -2309,7 +2301,7 @@ let sec_length_sum_line_length = prove
 let label_zero_def = new_definition
   `label_zero x1 =
      match x1 with
-       labLang_Label _ _ n -> n = 0
+       lab_Label _ _ n -> n = 0
      | _ -> T`;;
 add_simp label_zero_def;;
 
@@ -2453,10 +2445,10 @@ let sec_label_prefix_zero_def = define_general
 add_simp sec_label_prefix_zero_def;;
 
 let label_prefix_zero_cons = prove
- (`(label_prefix_zero (CONS (labLang_Label l1 l2 len) ls) <=> ((len = 0)
+ (`(label_prefix_zero (CONS (lab_Label l1 l2 len) ls) <=> ((len = 0)
   /\ label_prefix_zero ls)) /\
-   (label_prefix_zero (CONS (labLang_Asm a b c) ls) <=> T) /\
-   (label_prefix_zero (CONS (labLang_LabAsm d e f g) ls) <=> T)`,
+   (label_prefix_zero (CONS (lab_Asm a b c) ls) <=> T) /\
+   (label_prefix_zero (CONS (lab_LabAsm d e f g) ls) <=> T)`,
   CHEAT_TAC);;
 
 (* establishing label_prefix_zero *)
@@ -2529,33 +2521,32 @@ let label_zero_line_length_pad_section = prove
 let line_enc_with_nop_def = new_definition
   `line_enc_with_nop enc labs ffis pos x5 =
      match x5 with
-       labLang_Asm b bytes len ->
+       lab_Asm b bytes len ->
        enc_with_nop enc (cbw_to_asm b) bytes /\ LENGTH bytes = len
-     | labLang_LabAsm labLang_Halt _ bytes len ->
-       enc_with_nop enc (labLang_Jump (--(n2w (pos + ffi_offset)))) bytes /\
+     | lab_LabAsm lab_Halt _ bytes len ->
+       enc_with_nop enc (lab_Jump (--(n2w (pos + ffi_offset)))) bytes /\
        LENGTH bytes = len
-     | labLang_LabAsm labLang_Install _ bytes len ->
-       enc_with_nop enc (labLang_Jump (--(n2w (pos + 2 * ffi_offset))))
-         bytes /\
+     | lab_LabAsm lab_Install _ bytes len ->
+       enc_with_nop enc (lab_Jump (--(n2w (pos + 2 * ffi_offset)))) bytes /\
        LENGTH bytes = len
-     | labLang_LabAsm (labLang_CallFFI s) _ bytes len ->
-       enc_with_nop enc (labLang_Jump (--(n2w (pos + (get_ffi_index ffis
+     | lab_LabAsm (lab_CallFFI s) _ bytes len ->
+       enc_with_nop enc (lab_Jump (--(n2w (pos + (get_ffi_index ffis
          (ffi_ExtCall s) + 3) * ffi_offset)))) bytes /\
        LENGTH bytes = len
-     | labLang_LabAsm (labLang_Jump l) _ bytes len ->
-       enc_with_nop enc (labLang_Jump (n2w (find_pos l labs) + --(n2w pos)))
+     | lab_LabAsm (lab_Jump l) _ bytes len ->
+       enc_with_nop enc (lab_Jump (n2w (find_pos l labs) + --(n2w pos)))
          bytes /\
        LENGTH bytes = len
-     | labLang_LabAsm (labLang_JumpCmp a b c l) _ bytes len ->
-       enc_with_nop enc (labLang_JumpCmp a b c (n2w (find_pos l labs) +
-         --(n2w pos))) bytes /\
+     | lab_LabAsm (lab_JumpCmp a b c l) _ bytes len ->
+       enc_with_nop enc (lab_JumpCmp a b c (n2w (find_pos l labs) + --(n2w
+         pos))) bytes /\
        LENGTH bytes = len
-     | labLang_LabAsm (labLang_LocValue k l) _ bytes len ->
+     | lab_LabAsm (lab_LocValue k l) _ bytes len ->
        enc_with_nop enc (asm_Loc k (n2w (find_pos l labs) + --(n2w pos)))
          bytes /\
        LENGTH bytes = len
-     | labLang_LabAsm _ _ bytes len -> LENGTH bytes = len
-     | labLang_Label _ _ len -> len = 0`;;
+     | lab_LabAsm _ _ bytes len -> LENGTH bytes = len
+     | lab_Label _ _ len -> len = 0`;;
 
 (* HOL4 lab_to_targetProofScript.sml:4357: ML code, not ported *)
 
@@ -2714,7 +2705,7 @@ let all_enc_with_nop_pad_code = prove
 let line_lab_len_pos_ok_def = new_definition
   `line_lab_len_pos_ok pos x2 =
      match x2 with
-       labLang_Label _ _ l ->
+       lab_Label _ _ l ->
         if EVEN pos then l = 0 else l = 1
      | _ -> T`;;
 
@@ -2809,7 +2800,7 @@ let all_lab_len_pos_ok_pad_code = prove
 let line_offset_ok_def = new_definition
   `line_offset_ok labs ffis pos x4 =
      match x4 with
-       labLang_LabAsm a w bytes _ ->
+       lab_LabAsm a w bytes _ ->
        w = get_jump_offset a ffis labs pos
      | _ -> T`;;
 
@@ -2880,7 +2871,7 @@ let offset_ok_pad_code = prove
 let line_labs_exist_def = new_definition
   `line_labs_exist labs x2 =
      match x2 with
-       labLang_LabAsm a _ _ _ ->
+       lab_LabAsm a _ _ _ ->
        (!n1 n2. (n1,n2) IN labs_of a ==> ~(lab_lookup n1 n2 labs = NONE))
      | _ -> T`;;
 add_simp line_labs_exist_def;;
@@ -3620,7 +3611,7 @@ let IMP_ffi_entry_pcs_disjoint_Asm = prove
        all_enc_ok (target_config (machine_config_target mc_conf)) labs
          ffi_names 0 code2 /\
        asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) = SOME
-         (labLang_Asm instr _bytes _len) /\
+         (lab_Asm instr _bytes _len) /\
        (!op re a. ~(instr = ShareMem op re a)) /\
        share_mem_domain_code_rel mc_conf p code2
          (labSem_state_shared_mem_domain s1) /\
@@ -3644,7 +3635,7 @@ let IMP_ffi_entry_pcs_disjoint_LabAsm = prove
        all_enc_ok (target_config (machine_config_target mc_conf)) labs
          ffi_names 0 code2 /\
        asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) = SOME
-         (labLang_LabAsm instr _pos _bytes _len) /\
+         (lab_LabAsm instr _pos _bytes _len) /\
        share_mem_domain_code_rel mc_conf p code2
          (labSem_state_shared_mem_domain s1) /\
        bytes_in_mem (p + n2w (pos_val (labSem_state_pc s1) 0 code2))
@@ -3822,8 +3813,7 @@ let mmio_pcs_min_index_is_SOME = prove
 let no_share_mem_lemma = prove
  (cake_as_vars (fun () ->
     `mmio_pcs_min_index ffi_names = SOME i /\
-     asm_fetch_aux pc code = SOME (labLang_LabAsm labLang_Install c l n)
-       /\
+     asm_fetch_aux pc code = SOME (lab_LabAsm lab_Install c l n) /\
      no_install_or_no_share_mem code ffi_names ==>
      i = LENGTH ffi_names`),
   CHEAT_TAC);;
@@ -4058,10 +4048,10 @@ let set_bytes_def,set_bytes_ind = define_rec
 let make_word_def = new_definition
   `make_word be' m (a:'a word) =
      if dimindex (:'a) = 32 then
-       wordLang_Word (set_bytes a be' [m a; m (a + (n2w 1)); m (a + (n2w
-         2)); m (a + (n2w 3))])
-     else wordLang_Word (set_bytes a be' [m a; m (a + (n2w 1)); m (a + (n2w
-       2)); m (a + (n2w 3));
+       word_Word (set_bytes a be' [m a; m (a + (n2w 1)); m (a + (n2w 2)); m
+         (a + (n2w 3))])
+     else word_Word (set_bytes a be' [m a; m (a + (n2w 1)); m (a + (n2w 2));
+       m (a + (n2w 3));
                              m (a + (n2w 4)); m (a + (n2w 5)); m (a +
                                (n2w 6)); m (a + (n2w 7))])`;;
 
@@ -4069,8 +4059,8 @@ let make_init_def = new_definition
   `lab_to_targetProof_make_init mc_conf (ffi:'ffi ffi_state) t m dm sdm
   (ms:'state) code
      comp' cbpos cbspace coracle =
-     mk_labSem_state (\k. wordLang_Word ((regs t k):'a word)) (fp_regs t) m
-       dm sdm 0 (asm_config_big_endian (target_config (machine_config_target
+     mk_labSem_state (\k. word_Word ((regs t k):'a word)) (fp_regs t) m dm
+       sdm 0 (asm_config_big_endian (target_config (machine_config_target
        mc_conf))) ffi (target_io_regs mc_conf ffi ms) (target_cc_regs mc_conf
        ffi ms) (target_io_fp_regs mc_conf ffi ms) (target_cc_fp_regs mc_conf
        ffi ms) code comp' coracle (mk_buffer cbpos [] cbspace) 0 F
@@ -4149,7 +4139,7 @@ let get_shmem_info_PREPEND = prove
 
 let line_to_info_def = new_definition
   `line_to_info (secs:('a sec) list) p x = match SND x with
-     SOME (labLang_Asm (ShareMem m r ad) bytes l) ->
+     SOME (lab_Asm (ShareMem m r ad) bytes l) ->
        let (name,nb) = get_memop_info m in
        [(ffi_SharedMem name,
         mk_shmem_info_num (pos_val (FST x) p secs) nb (match ad with Addr r
@@ -4158,10 +4148,10 @@ let line_to_info_def = new_definition
      | _ -> []`;;
 
 let line_to_info_next = prove
- (`line_to_info (CONS (Section k1 (CONS (labLang_LabAsm a b bytes1 len1) xs1))
+ (`line_to_info (CONS (Section k1 (CONS (lab_LabAsm a b bytes1 len1) xs1))
   rest1) p1 (i1 + 1,l1) = line_to_info (CONS (Section k1 xs1) rest1) (p1 +
   LENGTH bytes1) (i1,l1) /\
-   line_to_info (CONS (Section k2 (CONS (labLang_Asm c2 bytes2 len2) xs2))
+   line_to_info (CONS (Section k2 (CONS (lab_Asm c2 bytes2 len2) xs2))
      rest2) p2 (i2 + 1,l2) = line_to_info (CONS (Section k2 xs2) rest2) (p2 +
      LENGTH bytes2) (i2,l2)`,
   CHEAT_TAC);;
@@ -4172,7 +4162,7 @@ let line_to_info_hd_empty = prove
   CHEAT_TAC);;
 
 let line_to_info_hd_Label = prove
- (`line_to_info (CONS (Section k (CONS (labLang_Label a b 0) xs)) rest)
+ (`line_to_info (CONS (Section k (CONS (lab_Label a b 0) xs)) rest)
      p t = line_to_info (CONS (Section k xs) rest) p t`,
   CHEAT_TAC);;
 
@@ -4207,8 +4197,8 @@ let mmio_pcs_min_index_APPEND_thm = prove
 let MEM_get_shmem_info = prove
  (cake_as_vars (fun () ->
     `all_enc_ok c labs ffis p' (code2:('a sec) list) /\
-     asm_fetch_aux pc code2 = SOME (labLang_Asm (ShareMem op re a) inst'
-       len) /\
+     asm_fetch_aux pc code2 = SOME (lab_Asm (ShareMem op re a) inst' len)
+       /\
      get_memop_info op = (q,(r:word8)) ==>
      MEM
        (ffi_SharedMem q,
@@ -4266,8 +4256,8 @@ let get_shmem_info_ok_lemma = prove
    ALL (\x. ?s. x = ffi_ExtCall s) ffis /\
    get_shmem_info code2 p ffis [] = (new_ffi_names,new_shmem_info) ==>
    (!pc' op re a inst' len i.
-     (asm_fetch_aux pc' code2 = SOME (labLang_Asm (ShareMem op re a) inst'
-       len) /\
+     (asm_fetch_aux pc' code2 = SOME (lab_Asm (ShareMem op re a) inst' len)
+       /\
      mmio_pcs_min_index new_ffi_names = SOME i) ==>
      (?index.
        find_index (p + (pos_val pc' 0 code2)) (MAP (\rec.
@@ -4281,8 +4271,8 @@ let get_shmem_info_ok_lemma = prove
              Addr r off -> w2n off) re (p + (pos_val pc' 0 code2 + len))))) /\
    (!pc' line.
        asm_fetch_aux pc' code2 = SOME line /\
-       (!op re a inst' len. ~(line = labLang_Asm (ShareMem op re a) inst'
-         len)) ==>
+       (!op re a inst' len. ~(line = lab_Asm (ShareMem op re a) inst' len))
+         ==>
        DISJOINT (set_of_list (MAP (\rec. shmem_info_num_entry_pc rec)
          new_shmem_info))
          {p + a + (pos_val pc' 0 code2) |
@@ -4517,8 +4507,8 @@ let find_ffi_names_ALL_DISTINCT = prove
 
 (* [local] *)
 let not_not_skip_IMP_Skip = prove
- (`~(not_skip inst') ==> (?l n. inst' = labLang_Asm (Asmi (asm_Inst
-  asm_Skip)) l n)`,
+ (`~(not_skip inst') ==> (?l n. inst' = lab_Asm (Asmi (asm_Inst asm_Skip)) l
+  n)`,
   CHEAT_TAC);;
 
 let asm_fetch_aux_filter_skip = prove

@@ -127,7 +127,6 @@ let gc_move_data_IMP = prove
     (gc_state_r4 state1 = gc_state_r4 state)`,
   CHEAT_TAC);;
 
-let _ = size_thms "heap_element";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let gc_move_ref_list_def,gc_move_ref_list_ind = define_wf
