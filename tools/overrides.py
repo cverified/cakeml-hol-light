@@ -640,6 +640,14 @@ FIELD_VAR_DEF = {
     {'s': 'dataSem_state', 'r': 'wordSem_state'},
   ('data_to_word_gcProof', 'AllocVar_thm'):
     {'s': 'dataSem_state', 'r': 'wordSem_state'},
+  # and the r, the t1 and the t2 that an evaluate of wordSem
+  # gives are its states, where the s of this theory is dataSem's
+  ('data_to_word_gcProof', 'evaluate_GiveUp'):
+    {'s': 'dataSem_state', 'r': 'wordSem_state'},
+  ('data_to_word_gcProof', 'evaluate_IMP_domain_EQ'):
+    {'t1': 'wordSem_state', 't2': 'wordSem_state'},
+  ('data_to_word_gcProof', 'evaluate_IMP_domain_EQ_Exc'):
+    {'t1': 'wordSem_state'},
   # the t that the evaluate of halt_assum gives is a state of
   # stackSem, where the s of this theory is one of labSem
   ('stack_to_labProof', 'halt_assum_def'): {'t': 'stackSem_state'},
@@ -12517,6 +12525,12 @@ CON_FILE = {
   # means that one everywhere; clos_ticksProof's, which comes
   # later in the order, takes two values and nothing else
   'clos_knownProof': {'v_rel': 'clos_knownProof'},
+  # the dec_clock of this proof is wordSem's, on the state the
+  # compiler builds: word_bignumProof has a dec_clock of its own,
+  # on its own state, and comes later in the order.  The one
+  # theorem that means dataSem's writes dataSem$dec_clock, and a
+  # qualified name beats this table
+  'data_to_word_gcProof': {'dec_clock': 'wordSem'},
   # the wf of this proof is sptree's, on the locals of a state
   # and on the trees that alist_insert and fromList2 build;
   # parmove has a wf of its own, on a parallel move

@@ -2873,10 +2873,16 @@ class Porter:
        overload resolution takes"""
     t, n = nm.split('$') if '$' in nm else (None, nm)
     if n in self.conof_said: return self.conof_said[n]
+    # a name that the source qualifies says its theory itself,
+    # which is the strongest thing there is and beats the
+    # file-wide override: data_to_word_gcProof means wordSem's
+    # dec_clock everywhere but in the one theorem that writes
+    # dataSem$dec_clock and wordSem$dec_clock side by side
+    # (PORTING-GUIDE.md entry 118 puts it first too)
+    if t: return t
     # a name that means one theory's constant everywhere in this
     # file (overrides.CON_FILE)
     if n in self.con_file: return self.con_file[n]
-    if t: return t
     if n in self.front_thy: return self.front_thy[n]
     anc = self.db.scope(self.thy) | {self.thy}
     ts = [x for x, k in self.db.defs.get(n, [])
