@@ -2014,6 +2014,10 @@ CON_OF = {
      'chr_exn_v': 'semanticPrimitives'},
   ('source_to_flatProof', 'do_conversion_INR'):
     {'check_type': 'semanticPrimitives'},
+  # destLet is bvl's, so the three get_code_labels of this one
+  # are bvlProps'
+  ('bvl_to_bviProof', 'destLet_code_labels'):
+    {'get_code_labels': 'bvlProps'},
   # bvl_to_bviProof reads bvl and builds bvi, and the two have
   # Var, Op and Call: a Call of three arguments is bvl's and one
   # of four is bvi's, and everything these say is about the one
@@ -13205,6 +13209,28 @@ THM_PATCH = {
   ('bvl_to_bviProof', 'compile_prog_evaluate'): [
     ('bviSem_evaluate ([bvl_Call 0 (SOME start) []],[],',
      'bvlSem_evaluate ([bvl_Call 0 (SOME start) []],[],'),
+  ],
+  # the get_code_labels of the code the pass gives is bviProps',
+  # the one of the program it is given bvlProps'
+  ('bvl_to_bviProof', 'compile_exps_get_code_labels'): [
+    ('IMAGE (\\k. bvl_num_stubs + (k * bvl_to_bvi_namespaces)) (UNIONS (set_of_list (MAP bviProps_get_code_labels xs)))',
+     'IMAGE (\\k. bvl_num_stubs + (k * bvl_to_bvi_namespaces)) (UNIONS (set_of_list (MAP bvlProps_get_code_labels xs)))'),
+  ],
+  ('bvl_to_bviProof', 'compile_single_get_code_labels'): [
+    ('(bviProps_get_code_labels (SND (SND p)))',
+     '(bvlProps_get_code_labels (SND (SND p)))'),
+  ],
+  ('bvl_to_bviProof', 'compile_list_get_code_labels'): [
+    ('(MAP (bviProps_get_code_labels o SND o SND) p)',
+     '(MAP (bvlProps_get_code_labels o SND o SND) p)'),
+  ],
+  ('bvl_to_bviProof', 'compile_prog_get_code_labels'): [
+    ('(MAP (bviProps_get_code_labels o SND o SND) p)',
+     '(MAP (bvlProps_get_code_labels o SND o SND) p)'),
+  ],
+  ('bvl_to_bviProof', 'compile_get_code_labels'): [
+    ('(UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) prog)))',
+     '(UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND) prog)))'),
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
