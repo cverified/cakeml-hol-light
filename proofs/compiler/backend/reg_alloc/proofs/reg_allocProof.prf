@@ -127,6 +127,6 @@
      MESON_TAC[]])
 
 ### opt_split
-  (GEN_TAC THEN CASES_ON_TAC `a:1 option` THEN
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `a:1 option` THEN
     REWRITE_TAC[option_DISTINCT; option_INJ] THEN
    ONCE_REWRITE_TAC[one] THEN REWRITE_TAC[])

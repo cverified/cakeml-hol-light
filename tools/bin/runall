@@ -9,6 +9,11 @@ PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
 cd $C
 . tools/holenv.sh > /dev/null 2>&1
 python3 -I tools/loadorder.py > tools/load.txt
+# the statements that HOL Light does not read, and the proofs that
+# do not go through, are appended to tmp/unstated.txt by the files
+# themselves (TOLERANT=1), so the log of the run before has to go:
+# tools/mkunstated.py reads it against tmp/cs.out of this run
+: > tmp/unstated.txt
 MARK=1 TIMEOUT=${TIMEOUT:-240} checkseq $(cat tools/load.txt) \
   > tmp/cs.out 2>&1
 echo FINISHED >> tmp/cs.out
