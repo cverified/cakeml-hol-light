@@ -1994,6 +1994,20 @@ CON_OF = {
     {'semantics': {7: 'dataSem', 2: 'wordSem'}, 'Fail': 'ffi'},
   ('data_to_wordProof', 'compile_semantics_precise'):
     {'semantics': {7: 'dataSem', 2: 'wordSem'}, 'Fail': 'ffi'},
+  # the compile these name is the pass whose configuration they
+  # are about, not the one of stack_alloc that the plain name
+  # means in this file
+  ('backendProof', 'known_compile_IS_SOME'):
+    {'compile': 'clos_known'},
+  ('backendProof', 'known_compile_static_conf'):
+    {'compile': 'clos_known'},
+  ('backendProof', 'source_compile_pattern_cfg'):
+    {'compile': 'source_to_flat', 'inc_compile': 'source_to_flat'},
+  ('backendProof', 'compile_to_word_conventions2'):
+    {'compile': 'word_to_word'},
+  ('backendProof', 'to_lab_good_code_lemma'):
+    {'compile': {6: 'stack_to_lab', 3: 'word_to_stack',
+                 4: 'data_to_word'}},
   # the compile that this one runs on the sections it builds is
   # lab_to_target's; backend has a compile of its own, which
   # takes a program of source and is what the name alone means
@@ -13301,6 +13315,11 @@ THM_PATCH = {
      '(?w. y = bvlSem_Thunk m w'),
     ('y = closSem_ByteArray F bs',
      'y = bvlSem_ByteArray F bs'),
+  ],
+  # add_eval_state gives a state of semanticPrimitives
+  ('backendProof', 'add_eval_state_ffi'): [
+    ('labSem_state_ffi (add_eval_state opt_ev s0) = labSem_state_ffi s0',
+     'semanticPrimitives_state_ffi (add_eval_state opt_ev s0) = semanticPrimitives_state_ffi s0'),
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
