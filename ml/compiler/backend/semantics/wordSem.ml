@@ -43,20 +43,20 @@ let buffer_FIELDS = define_record "buffer"
 
 let buffer_flush_def = new_definition
   `buffer_flush cb (w1:'a word) w2 =
-     (if buffer_position cb = w1 /\ buffer_position cb + (n2w (dimindex
-       (:'b) DIV 8)) * n2w (LENGTH (buffer_buffer cb)) = w2 then
+     if buffer_position cb = w1 /\ buffer_position cb + (n2w (dimindex (:'b)
+       DIV 8)) * n2w (LENGTH (buffer_buffer cb)) = w2 then
        SOME ((buffer_buffer cb:('b word) list),buffer_buffer_fupd (K [])
          (buffer_position_fupd (K w2)
              cb))
-     else NONE)`;;
+     else NONE`;;
 
 let buffer_write_def = new_definition
   `buffer_write cb (w:'a word) (b:'b word) =
-     (if buffer_position cb + (n2w (dimindex (:'b) DIV 8)) * n2w (LENGTH
+     if buffer_position cb + (n2w (dimindex (:'b) DIV 8)) * n2w (LENGTH
        (buffer_buffer cb)) = w /\ 0 < buffer_space_left cb then
        SOME (buffer_space_left_fupd (K (buffer_space_left cb - 1))
          (buffer_buffer_fupd (K (APPEND (buffer_buffer cb) [b])) cb))
-     else NONE)`;;
+     else NONE`;;
 
 let is_fwd_ptr_def = new_definition
   `is_fwd_ptr x1 =

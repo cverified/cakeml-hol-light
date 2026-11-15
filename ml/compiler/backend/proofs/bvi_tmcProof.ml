@@ -1115,8 +1115,8 @@ let is_block_op_cons_def = new_definition
 
 (* bvi_to_bvl_refs *)
 let bvi_tmcProof_bvi_to_bvl_refs = prove
- (`bviSem_state_refs
-      (bvl_to_bvi s t) = bviSem_state_refs s`,
+ (`bvlSem_state_refs
+      (bvl_to_bvi s t) = bvlSem_state_refs s`,
   CHEAT_TAC);;
 
 let finalise_cons_refs_SUBSET = prove

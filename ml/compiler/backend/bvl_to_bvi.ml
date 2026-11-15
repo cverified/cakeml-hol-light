@@ -624,7 +624,7 @@ let get_names_def = new_definition
 
 let bvl_to_bvi_compile_def = new_definition
   `bvl_to_bvi_compile start' c names prog =
-     (let (inlines,prog) = bvl_inline_compile_prog
+     let (inlines,prog) = bvl_inline_compile_prog
        (bvl_to_bvi_config_inline_size_limit c)
        (bvl_to_bvi_config_split_main_at_seq
             c) (bvl_to_bvi_config_exp_cut c) prog in
@@ -635,11 +635,11 @@ let bvl_to_bvi_compile_def = new_definition
        (bvl_num_stubs + 3) code' in
      let (bvi_inlines,code') = bvi_inline_compile_prog code' in
        (loc,code',inlines,bvi_inlines,n1,n2,n3,
-        bvl_to_bvi_get_names (MAP FST code') names))`;;
+        bvl_to_bvi_get_names (MAP FST code') names)`;;
 
 let bvl_to_bvi_compile_inc_all_def = new_definition
   `bvl_to_bvi_compile_inc_all c p =
-     (let (inl,p) = bvl_inline_compile_inc
+     let (inl,p) = bvl_inline_compile_inc
        (bvl_to_bvi_config_inline_size_limit c)
        (bvl_to_bvi_config_split_main_at_seq
          c) (bvl_to_bvi_config_exp_cut c) (bvl_to_bvi_config_inlines c) p in
@@ -656,7 +656,7 @@ let bvl_to_bvi_compile_inc_all_def = new_definition
      let (bvi_inlines,p) = bvi_inline_compile_inc
        (bvl_to_bvi_config_bvi_inlines c) p in
      let c = bvl_to_bvi_config_bvi_inlines_fupd (K bvi_inlines) c in
-       (c,p))`;;
+       (c,p)`;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

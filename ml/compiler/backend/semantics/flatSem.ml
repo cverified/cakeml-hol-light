@@ -157,7 +157,7 @@ let flatSem_do_eq_def,flatSem_do_eq_ind = assume_definition_rec_clauses
 (* Do an application *)
 let flatSem_do_opapp_def = new_definition
   `flatSem_do_opapp vs =
-   (match vs with [flatSem_Closure env n e; v] ->
+   match vs with [flatSem_Closure env n e; v] ->
        SOME (flatSem_environment_v_fupd (\env. CONS (n,v) env) env,e)
      | [flatSem_Recclosure env funs n; v] ->
        if ALL_DISTINCT (MAP FST funs) then
@@ -166,7 +166,7 @@ let flatSem_do_opapp_def = new_definition
            funs env (flatSem_environment_v env)))) env,e)
           | NONE -> NONE)
        else NONE
-     | _ -> NONE)`;;
+     | _ -> NONE`;;
 
 make_size "flatSem_v";;
 (* the termination relation is not in the HOL4 source; this one is
@@ -332,7 +332,7 @@ let flatSem_bad_thunk_update_def = new_definition
 
 let flatSem_do_app_def = new_definition
   `flatSem_do_app s op (vs:flatSem_v list) =
-   (match (op,vs) with (flat_Src (ast_Shift wz sh n),[flatSem_Litv w]) ->
+   match (op,vs) with (flat_Src (ast_Shift wz sh n),[flatSem_Litv w]) ->
        (match do_shift sh n wz w with NONE -> NONE
           | SOME w -> SOME (s,Rval (flatSem_Litv w)))
    | (flat_Src ast_Equality,[v1; v2]) ->
@@ -665,7 +665,7 @@ let flatSem_do_app_def = new_definition
         | _ -> NONE)
    | (flat_Id,[v1]) ->
      SOME (s,Rval v1)
-   | _ -> NONE)`;;
+   | _ -> NONE`;;
 
 let flatSem_do_if_def = new_definition
   `(flatSem_do_if v e1 e2 =

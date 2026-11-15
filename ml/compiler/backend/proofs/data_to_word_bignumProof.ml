@@ -286,7 +286,7 @@ let div_code_assum_thm = prove
   CHEAT_TAC);;
 
 let IMP_bignum_code_rel = prove
- (`data_to_word_compile Bignum_location 2 1 (Bignum_location + 1,[])
+ (`word_bignum_compile Bignum_location 2 1 (Bignum_location + 1,[])
              mc_iop_code = (xx1,xx2,xx3,xx4,xx5) /\
     data_to_word_gcProof_state_rel c l1 l2 s t NONE locs ==>
     data_to_word_gcProof_code_rel (xx4,xx5) (wordSem_state_code t)`,

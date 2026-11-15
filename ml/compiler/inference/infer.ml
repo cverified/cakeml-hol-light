@@ -59,10 +59,10 @@ let write_def = new_definition
 
 let lookup_st_ex_def = new_definition
   `lookup_st_ex l err id' ienv st =
-     (match nsLookup ienv id' with NONE -> (M_failure (loc_err_info_loc
+     match nsLookup ienv id' with NONE -> (M_failure (loc_err_info_loc
        l,mlstring_concat [(implode "Undefined "); err; (implode ": ");
        id_to_string id']),st)
-     | SOME v -> (M_success v,st))`;;
+     | SOME v -> (M_success v,st)`;;
 
 let infer_st_FIELDS = define_record "infer_st"
   ["next_uvar","num";
@@ -1196,12 +1196,12 @@ let ns_to_alist_def,ns_to_alist_ind = define_guess_cheat_clauses
 
 let inf_env_to_types_string_def = new_definition
   `inf_env_to_types_string s =
-     (let l = ns_to_alist (ns_nub (inf_env_inf_v s)) in
+     let l = ns_to_alist (ns_nub (inf_env_inf_v s)) in
      let xs = MAP (\(n,_,t). mlstring_concat [n; (implode ": ");
                               inf_type_to_string (inf_env_inf_t s) t;
                               (implode "\n")]) l in
         // sort mlstring_le
-        REVERSE xs)`;;
+        REVERSE xs`;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

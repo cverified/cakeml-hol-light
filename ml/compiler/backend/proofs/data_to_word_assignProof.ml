@@ -855,7 +855,8 @@ let compile_part_loc_IMP = prove
   CHEAT_TAC);;
 
 let consume_space_stack_max = prove
- (`consume_space a x = SOME s ==> state_stack_max x = state_stack_max s`,
+ (`consume_space a x = SOME s ==> dataSem_state_stack_max x =
+  dataSem_state_stack_max s`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:2146-2147: ML code, not ported *)
@@ -956,10 +957,10 @@ let evaluate_SilentFFI_3 = prove
 let size_of_app_Number = prove
  (`!xs ys lims i refs seen.
      size_of lims (APPEND xs (CONS (dataSem_Number i) ys)) refs seen =
-     (let (n,refs',seen') = size_of lims (APPEND xs ys) refs seen in
+     let (n,refs',seen') = size_of lims (APPEND xs ys) refs seen in
      let k = (if small_num (limits_arch_64_bit lims) i then 0
              else bignum_size (limits_arch_64_bit lims) i) in
-     (n + k,refs',seen'))`,
+     (n + k,refs',seen')`,
   CHEAT_TAC);;
 
 let toList_delete_split = prove
@@ -972,9 +973,9 @@ let toList_delete_split = prove
 
 let size_of_heap_delete_Number_LE = prove
  (`!k s i.
-     sptree_lookup k (state_locals s) = SOME (dataSem_Number i) ==>
-     size_of_heap (state_locals_fupd (K (sptree_delete k (state_locals
-       s))) s) <= size_of_heap s`,
+     sptree_lookup k (dataSem_state_locals s) = SOME (dataSem_Number i) ==>
+     size_of_heap (dataSem_state_locals_fupd (K (sptree_delete k
+       (dataSem_state_locals s))) s) <= size_of_heap s`,
   CHEAT_TAC);;
 
 let wf_FOLDR_delete = prove

@@ -469,32 +469,30 @@ let flatProps_op_gbag_def = new_definition
      flat_GlobalVarInit n -> BAG_INSERT n EMPTY_BAG
    | _ -> EMPTY_BAG`;;
 
-(* the clauses in two quotations: es is (exp list) and (_)list; pes is ((pat
-   # exp) list) and (_#_)list, which one quotation cannot typecheck *)
 let flatProps_set_globals_def,flatProps_set_globals_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  [`(flatProps_set_globals (flat_Raise t e) = flatProps_set_globals e) /\
-    (flatProps_set_globals (flat_Handle t e pes) = (BAG_UNION)
-    (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))) /\
-    (flatProps_set_globals (flat_Con t id' es) = flatProps_elist_globals es) /\
-    (flatProps_set_globals (flat_Fun t v e) = flatProps_set_globals e) /\
-    (flatProps_set_globals (flat_App t op es) = (BAG_UNION)
-    (flatProps_elist_globals es) (flatProps_op_gbag op)) /\
-    (flatProps_set_globals (flat_If t e1 e2 e3) = (BAG_UNION) ((BAG_UNION)
+  [`flatProps_set_globals (flat_Raise t e) = flatProps_set_globals e`;
+   `flatProps_set_globals (flat_Handle t e pes) = (BAG_UNION)
+    (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))`;
+   `flatProps_set_globals (flat_Con t id' es) = flatProps_elist_globals es`;
+   `flatProps_set_globals (flat_Fun t v e) = flatProps_set_globals e`;
+   `flatProps_set_globals (flat_App t op es) = (BAG_UNION)
+    (flatProps_elist_globals es) (flatProps_op_gbag op)`;
+   `flatProps_set_globals (flat_If t e1 e2 e3) = (BAG_UNION) ((BAG_UNION)
     (flatProps_set_globals e1) (flatProps_set_globals e2))
-    (flatProps_set_globals e3)) /\
-    (flatProps_set_globals (flat_Mat t e pes) = (BAG_UNION)
-    (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))) /\
-    (flatProps_set_globals (flat_Let t v e1 e2) = (BAG_UNION)
-    (flatProps_set_globals e1) (flatProps_set_globals e2)) /\
-    (flatProps_set_globals _ = EMPTY_BAG) /\
-    (flatProps_elist_globals [] = EMPTY_BAG) /\
-    (flatProps_elist_globals (CONS e es) = (BAG_UNION)
-    (flatProps_set_globals e) (flatProps_elist_globals es))`;
+    (flatProps_set_globals e3)`;
+   `flatProps_set_globals (flat_Mat t e pes) = (BAG_UNION)
+    (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))`;
+   `flatProps_set_globals (flat_Let t v e1 e2) = (BAG_UNION)
+    (flatProps_set_globals e1) (flatProps_set_globals e2)`;
    `flatProps_set_globals (flat_Letrec t fs e) = (BAG_UNION)
     (flatProps_set_globals e) (flatProps_elist_globals (MAP (SND o SND)
-    fs))`];;
+    fs))`;
+   `flatProps_set_globals _ = EMPTY_BAG`;
+   `flatProps_elist_globals [] = EMPTY_BAG`;
+   `flatProps_elist_globals (CONS e es) = (BAG_UNION)
+    (flatProps_set_globals e) (flatProps_elist_globals es)`];;
 add_simp flatProps_set_globals_def;;
 
 

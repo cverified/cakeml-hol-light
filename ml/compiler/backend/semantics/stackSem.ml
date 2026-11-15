@@ -385,7 +385,7 @@ let stackSem_dec_stack_def,stackSem_dec_stack_ind = define_guess_cheat
 
 let stackSem_gc_def = new_definition
   `stackSem_gc s =
-     (if LENGTH (stackSem_state_stack s) < stackSem_state_stack_space s then
+     if LENGTH (stackSem_state_stack s) < stackSem_state_stack_space s then
        NONE else let unused = TAKE (stackSem_state_stack_space s)
        (stackSem_state_stack s) in
        let stack' = DROP (stackSem_state_stack_space s)
@@ -405,7 +405,7 @@ let stackSem_gc_def = new_definition
                    (stackSem_state_regs_fupd (K FEMPTY)
                    (stackSem_state_store_fupd (K st)
                    (stackSem_state_stack_fupd (K (APPEND unused stack'))
-                   s)))))))`;;
+                   s))))))`;;
 
 let stackSem_has_space_def = new_definition
   `stackSem_has_space wl store =
@@ -447,18 +447,18 @@ let stackSem_assign_def = new_definition
 let stackSem_inst_def = new_definition
   `stackSem_inst i (s:('a,'c,'ffi)stackSem_state) =
      match i with asm_Skip -> SOME s
-     | asm_Const reg w -> stackSem_assign reg (asm_Const w) s
+     | asm_Const reg w -> stackSem_assign reg (word_Const w) s
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
          if bop = asm_Or /\ ri = Reg r2 then
            match FLOOKUP (stackSem_state_regs s) r2 with NONE -> NONE
            | SOME w -> SOME (stackSem_set_var r1 w s)
          else stackSem_assign r1
              (word_Op bop [word_Var r2; match ri with Reg r3 -> word_Var r3
-                              | Imm w -> asm_Const w]) s
+                              | Imm w -> word_Const w]) s
      | asm_Arith (asm_Shift sh r1 r2 ri) ->
          stackSem_assign r1
            (word_Shift sh (word_Var r2) (match ri with Reg r3 -> word_Var r3
-                              | Imm w -> asm_Const w)) s
+                              | Imm w -> word_Const w)) s
      | asm_Arith (asm_Div r1 r2 r3) ->
         (let vs = stackSem_get_vars [r3; r2] s in
         match vs with
@@ -514,13 +514,13 @@ let stackSem_inst_def = new_definition
           else NONE
        | _ -> NONE)
      | asm_Mem asm_Load r (Addr a w) ->
-        (match stackSem_word_exp s (word_Op asm_Add [word_Var a; asm_Const
+        (match stackSem_word_exp s (word_Op asm_Add [word_Var a; word_Const
           w]) with NONE -> NONE
          | SOME w ->
              (match stackSem_mem_load w s with NONE -> NONE
              | SOME w -> SOME (stackSem_set_var r w s)))
      | asm_Mem asm_Load8 r (Addr a w) ->
-        (match stackSem_word_exp s (word_Op asm_Add [word_Var a; asm_Const
+        (match stackSem_word_exp s (word_Op asm_Add [word_Var a; word_Const
           w]) with SOME w ->
             (match mem_load_byte_aux (stackSem_state_memory s)
               (stackSem_state_mdomain s) (stackSem_state_be s) w with NONE ->
@@ -529,7 +529,7 @@ let stackSem_inst_def = new_definition
          | _ -> NONE)
      | asm_Mem asm_Load16 _ _ -> NONE
      | asm_Mem asm_Load32 r (Addr a w) ->
-        (match stackSem_word_exp s (word_Op asm_Add [word_Var a; asm_Const
+        (match stackSem_word_exp s (word_Op asm_Add [word_Var a; word_Const
           w]) with SOME w ->
             (match mem_load_32 (stackSem_state_memory s)
               (stackSem_state_mdomain s) (stackSem_state_be s) w with NONE ->
@@ -537,13 +537,13 @@ let stackSem_inst_def = new_definition
              | SOME w -> SOME (stackSem_set_var r (word_Word (w2w w)) s))
          | _ -> NONE)
      | asm_Mem asm_Store r (Addr a w) ->
-        (match (stackSem_word_exp s (word_Op asm_Add [word_Var a; asm_Const
+        (match (stackSem_word_exp s (word_Op asm_Add [word_Var a; word_Const
           w]),stackSem_get_var r s) with (SOME a,SOME w) ->
              (match stackSem_mem_store a w s with SOME s1 -> SOME s1
               | NONE -> NONE)
          | _ -> NONE)
      | asm_Mem asm_Store8 r (Addr a w) ->
-        (match (stackSem_word_exp s (word_Op asm_Add [word_Var a; asm_Const
+        (match (stackSem_word_exp s (word_Op asm_Add [word_Var a; word_Const
           w]),stackSem_get_var r s) with (SOME a,SOME (word_Word w)) ->
              (match mem_store_byte_aux (stackSem_state_memory s)
                (stackSem_state_mdomain s) (stackSem_state_be s) a (w2w w) with
@@ -552,7 +552,7 @@ let stackSem_inst_def = new_definition
          | _ -> NONE)
      | asm_Mem asm_Store16 _ _ -> NONE
      | asm_Mem asm_Store32 r (Addr a w) ->
-        (match (stackSem_word_exp s (word_Op asm_Add [word_Var a; asm_Const
+        (match (stackSem_word_exp s (word_Op asm_Add [word_Var a; word_Const
           w]),stackSem_get_var r s) with (SOME a,SOME (word_Word w)) ->
              (match mem_store_32 (stackSem_state_memory s)
                (stackSem_state_mdomain s) (stackSem_state_be s) a (w2w w) with

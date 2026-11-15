@@ -210,11 +210,11 @@ let read_mem_word_def,read_mem_word_ind = define_wf
 
 let mem_load_def = new_definition
   `asmSem_mem_load n r a s =
-     (let a = asmSem_addr a s in
+     let a = asmSem_addr a s in
      let (w,s) = read_mem_word (if asm_state_be s then a + n2w (n - 1) else
        a) n s in
      let s = asmSem_upd_reg r w s in
-       asmSem_assert (alignment_aligned (LOG2 n) a) s)`;;
+       asmSem_assert (alignment_aligned (LOG2 n) a) s`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -229,11 +229,11 @@ let write_mem_word_def,write_mem_word_ind = define_wf
 
 let mem_store_def = new_definition
   `asmSem_mem_store n r a s =
-     (let a = asmSem_addr a s in
+     let a = asmSem_addr a s in
      let w = asmSem_read_reg r s in
      let s = write_mem_word (if asm_state_be s then a + n2w (n - 1) else a)
        n w s in
-       asmSem_assert (alignment_aligned (LOG2 n) a) s)`;;
+       asmSem_assert (alignment_aligned (LOG2 n) a) s`;;
 
 let mem_op_def = define_general
   `(asmSem_mem_op asm_Load r (a:'a asm_addr) = asmSem_mem_load (dimindex

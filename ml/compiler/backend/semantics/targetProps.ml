@@ -249,7 +249,7 @@ let interference_pos_def = new_definition
    registers are marked NONE, i.e. preserved *)
 let target_io_regs_def = new_definition
   `target_io_regs mc ffi ms k (name:ffiname) r =
-     (match interference_pos is_ffi_app mc ffi ms k with NONE -> NONE
+     match interference_pos is_ffi_app mc ffi ms k with NONE -> NONE
      | SOME n ->
        (match interference_app_seq mc ffi ms n with SOME (FfiApp index
          new_bytes ms_pre ms_post,mc',ffi') ->
@@ -260,22 +260,22 @@ let target_io_regs_def = new_definition
                   (machine_config_target mc))) then NONE
              else SOME (target_get_reg (machine_config_target mc) ms_post
                r))
-        | _ -> NONE))`;;
+        | _ -> NONE)`;;
 
 let target_io_fp_regs_def = new_definition
   `target_io_fp_regs mc ffi ms k (i:num) =
-     (match interference_pos is_ffi_app mc ffi ms k with NONE -> ((n2w
+     match interference_pos is_ffi_app mc ffi ms k with NONE -> ((n2w
        0):word64)
      | SOME n ->
        (match interference_app_seq mc ffi ms n with SOME (FfiApp index
          new_bytes ms_pre ms_post,mc',ffi') -> target_get_fp_reg
          (machine_config_target
             mc) ms_post i
-        | _ -> (n2w 0)))`;;
+        | _ -> (n2w 0))`;;
 
 let target_cc_regs_def = new_definition
   `target_cc_regs mc ffi ms k r =
-     (match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k with NONE
+     match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k with NONE
        -> NONE
      | SOME n ->
        (match interference_app_seq mc ffi ms n with SOME (CcApp a1 a2 ms_pre
@@ -288,17 +288,17 @@ let target_cc_regs_def = new_definition
                   (machine_config_target mc))) then NONE
              else SOME (target_get_reg (machine_config_target mc) ms_post
                r))
-        | _ -> NONE))`;;
+        | _ -> NONE)`;;
 
 let target_cc_fp_regs_def = new_definition
   `target_cc_fp_regs mc ffi ms k (i:num) =
-     (match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k with NONE
+     match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k with NONE
        -> ((n2w 0):word64)
      | SOME n ->
        (match interference_app_seq mc ffi ms n with SOME (CcApp a1 a2 ms_pre
          ms_post,mc',ffi') -> target_get_fp_reg (machine_config_target
             mc) ms_post i
-        | _ -> (n2w 0)))`;;
+        | _ -> (n2w 0))`;;
 
 let find_next_interference_mono = prove
  (`!k mc ffi ms res i.

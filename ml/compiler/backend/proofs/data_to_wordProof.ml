@@ -475,7 +475,7 @@ let compile_no_share_inst = prove
 (***)
 
 let data_to_word_compile_lab_pres = prove
- (`let (c,p) = backend_compile data_conf word_conf asm_conf prog in
+ (`let (c,p) = data_to_word_compile data_conf word_conf asm_conf prog in
    MAP FST p = APPEND (MAP FST (data_to_word_stubs (:'a) data_conf)) (MAP
      FST prog) /\
    ALL (\(n,m,(p:'a word_prog)).
@@ -553,7 +553,7 @@ let bounds_lem = prove
 
 let data_to_word_compile_conventions = prove
  (`good_dimindex (:'a) ==>
-   (let (c,p) = backend_compile data_conf wc ac prog in
+   (let (c,p) = data_to_word_compile data_conf wc ac prog in
    ALL (\(n,m,prog).
    flat_exp_conventions (prog:'a word_prog) /\
    post_alloc_conventions (asm_config_reg_count ac - (5 + LENGTH

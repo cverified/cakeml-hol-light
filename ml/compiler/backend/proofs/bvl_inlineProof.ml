@@ -596,7 +596,7 @@ let MAP_optimise = prove
    variables of its own are read as variables *)
 let bvl_inlineProof_state_cc_compile_inc_eq = prove
  (cake_as_vars (fun () ->
-    `(state_cc (bvl_inline_compile_inc limit o1 o2) cc) =
+    `(state_cc (clos_known_compile_inc limit o1 o2) cc) =
         (bvl_inlineProof_in_cc limit (bvl_inlineProof_remove_ticks_cc
           (let_op_cc o1 o2 cc)))`),
   CHEAT_TAC);;
@@ -606,7 +606,7 @@ let bvl_inlineProof_state_cc_compile_inc_eq = prove
    variables of its own are read as variables *)
 let bvl_inlineProof_state_co_compile_inc_eq = prove
  (cake_as_vars (fun () ->
-    `(state_co (bvl_inline_compile_inc limit o1 o2) co) =
+    `(state_co (clos_known_compile_inc limit o1 o2) co) =
         ((I ## MAP (I ## let_opt o1 o2)) o
           bvl_inlineProof_remove_ticks_co o bvl_inlineProof_in_co limit co)`),
   CHEAT_TAC);;
@@ -619,13 +619,13 @@ let bvl_inlineProof_compile_prog_semantics = prove
     `bvl_inline_compile_prog limit o1 o2 prog = (s1,prog1) /\
       FST (FST (co 0)) = s1 /\
       ALL_DISTINCT (MAP FST prog) ==> ~(bvlSem_semantics ffi (fromAList
-        prog) co (state_cc (bvl_inline_compile_inc limit o1 o2) cc)
+        prog) co (state_cc (clos_known_compile_inc limit o1 o2) cc)
         start = ffi_Fail) ==>
       bvlSem_semantics ffi (fromAList prog1) (state_co
-        (bvl_inline_compile_inc limit o1 o2) co) cc
+        (clos_known_compile_inc limit o1 o2) co) cc
         start =
       bvlSem_semantics ffi (fromAList prog) co (state_cc
-        (bvl_inline_compile_inc limit o1 o2) cc)
+        (clos_known_compile_inc limit o1 o2) cc)
         start`),
   CHEAT_TAC);;
 

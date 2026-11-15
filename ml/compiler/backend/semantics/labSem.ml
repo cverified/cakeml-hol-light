@@ -653,7 +653,7 @@ let labSem_semantics_def = new_definition
      targetSem_Error then ffi_Fail
    else match some (\res.
        ?k t outcome.
-         labSem_evaluate (labSem_state_clock_fupd (K k) s) = (lab_Halt
+         labSem_evaluate (labSem_state_clock_fupd (K k) s) = (targetSem_Halt
            outcome,t) /\
          res = ffi_Terminate outcome (ffi_state_io_events (labSem_state_ffi
            t))) with SOME res -> res

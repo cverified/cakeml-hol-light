@@ -59,7 +59,7 @@ let any_prog_INDUCT,any_prog_RECURSION = define_datatype
 
 let to_flat_all_def = new_definition
   `to_flat_all (c:backend_config) p =
-     (let ps = [] in
+     let ps = [] in
      let ps = APPEND ps [((implode
        "original source code"),backend_passes_Source p)] in
      let p = source_let_compile_decs p in
@@ -76,7 +76,7 @@ let to_flat_all_def = new_definition
      let ps = APPEND ps [((implode "after flat_pattern"),backend_passes_Flat
        p)] in
      let c = backend_config_source_conf_fupd (K c') c in
-       ((ps:(mlstring#'a any_prog) list),c,p))`;;
+       ((ps:(mlstring#'a any_prog) list),c,p)`;;
 
 let to_flat_thm = prove
  (`SND (to_flat_all c p) = to_flat c p`,
@@ -289,7 +289,7 @@ let to_word_all_def = new_definition
                    asm_config_fp_reg_count asm_conf))
              data_conf) in
      let p = APPEND (data_to_word_stubs (:'a) data_conf) (MAP
-       (bvi_to_data_compile_part data_conf) p) in
+       (data_to_word_compile_part data_conf) p) in
      let ps = APPEND ps [((implode "after data_to_word"),backend_passes_Word
        p names)] in
      let (p,ps) = word_internal_all asm_conf ps names p in
@@ -485,7 +485,7 @@ let from_data_all_def = new_definition
                    asm_config_fp_reg_count asm_conf))
              data_conf) in
      let p = APPEND (data_to_word_stubs (:'a) data_conf) (MAP
-       (bvi_to_data_compile_part data_conf) p) in
+       (data_to_word_compile_part data_conf) p) in
      let ps = APPEND ps [((implode "after data_to_word"),backend_passes_Word
        p names)] in
        from_word_0_all ps asm_conf c names p`;;

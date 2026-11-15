@@ -3489,8 +3489,8 @@ let make_gc_conf_def = new_definition
 
 (* [local] *)
 let gc_move_data_refs_split = prove
- (`(gen_gc_gc_move cc s x = (x1,s1)) /\ (!t r. isRef cc (t,r) <=> isMutTag t)
-  /\
+ (`(gen_gc_gc_move cc s x = (x1,s1)) /\ (!t r. gen_gc_conf_isRef cc (t,r) <=>
+  isMutTag t) /\
     ALL isDataElement (gc_state_h2 s) /\ ALL (\x.
       ~(data_to_word_memoryProof_isRef x)) (gc_state_h2 s) /\ ALL
       data_to_word_memoryProof_isRef (gc_state_r4 s) ==>
@@ -3557,7 +3557,7 @@ let gc_move_data_refs_split = prove
 let gc_move_list_data_refs_split = prove
  (`!x x1 s s1.
    (gen_gc_gc_move_list cc s x = (x1,s1)) /\
-    (!t r. (isRef cc (t,r) <=> isMutTag t)) /\ ALL isDataElement
+    (!t r. (gen_gc_conf_isRef cc (t,r) <=> isMutTag t)) /\ ALL isDataElement
       (gc_state_h2 s) /\ (ALL (\x. ~(data_to_word_memoryProof_isRef x)))
       (gc_state_h2 s) /\ ALL data_to_word_memoryProof_isRef (gc_state_r4 s) ==>
     ALL isDataElement (gc_state_h2 s1) /\ (ALL (\x.
@@ -3588,8 +3588,8 @@ let gc_move_list_data_refs_split = prove
 let gc_move_refs_data_refs_split = prove
  (`!cc s s1.
    (gc_move_refs cc s = s1) /\
-    (!t r. (isRef cc (t,r) <=> isMutTag t)) /\ ALL isDataElement (APPEND
-      (gc_state_h1 s) (gc_state_h2 s)) /\ (ALL (\x.
+    (!t r. (gen_gc_conf_isRef cc (t,r) <=> isMutTag t)) /\ ALL isDataElement
+      (APPEND (gc_state_h1 s) (gc_state_h2 s)) /\ (ALL (\x.
       ~(data_to_word_memoryProof_isRef x))) (APPEND (gc_state_h1 s)
       (gc_state_h2 s)) /\
     ALL data_to_word_memoryProof_isRef (APPEND (APPEND (APPEND (gc_state_r1
@@ -3700,7 +3700,7 @@ let gc_move_refs_data_refs_split = prove
 let gc_move_data_data_refs_split = prove
  (`!cc s s1.
    (gen_gc_gc_move_data cc s = s1) /\
-    (!t r. (isRef cc (t,r) <=> isMutTag t)) /\ (ALL (\x.
+    (!t r. (gen_gc_conf_isRef cc (t,r) <=> isMutTag t)) /\ (ALL (\x.
       ~(data_to_word_memoryProof_isRef x))) (APPEND (gc_state_h1 s)
       (gc_state_h2 s)) /\
     ALL isDataElement (APPEND (gc_state_h1 s) (gc_state_h2 s)) /\
@@ -3831,7 +3831,7 @@ let gc_move_data_data_refs_split = prove
 let gc_move_loop_data_refs_split = prove
  (`!clock cc s s1.
    (gen_gc_gc_move_loop cc s clock = s1) /\
-   (!t r. (isRef cc (t,r) <=> isMutTag t)) /\
+   (!t r. (gen_gc_conf_isRef cc (t,r) <=> isMutTag t)) /\
    ALL isDataElement (APPEND (gc_state_h1 s) (gc_state_h2 s)) /\
    (ALL (\x. ~(data_to_word_memoryProof_isRef x))) (APPEND (gc_state_h1 s)
      (gc_state_h2 s)) /\
@@ -3898,7 +3898,7 @@ let gc_move_loop_data_refs_split = prove
 let gen_gc_data_refs_split = prove
  (`!cc roots heap.
    (gen_gc cc (roots,heap) = (roots1,s)) /\
-   (!t r. (isRef cc (t,r) <=> isMutTag t)) ==>
+   (!t r. (gen_gc_conf_isRef cc (t,r) <=> isMutTag t)) ==>
    (ALL (\x. ~(data_to_word_memoryProof_isRef x))) (APPEND (gc_state_h1 s)
      (gc_state_h2 s)) /\
    ALL isDataElement (APPEND (gc_state_h1 s) (gc_state_h2 s)) /\

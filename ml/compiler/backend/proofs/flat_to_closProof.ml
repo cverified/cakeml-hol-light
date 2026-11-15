@@ -227,7 +227,7 @@ let state_rel_IMP_clock = prove
 let flat_to_closProof_state_rel_dec_clock = prove
  (`flat_to_closProof_state_rel s t ==> flatSem_state_clock s =
   closSem_state_clock t /\
-     flat_to_closProof_state_rel (flatSem_dec_clock s) (flatSem_dec_clock
+     flat_to_closProof_state_rel (flatSem_dec_clock s) (closSem_dec_clock
        1 t)`,
   CHEAT_TAC);;
 
@@ -251,7 +251,7 @@ let flat_to_closProof_compile_correct = prove
         t /\ flat_to_closProof_env_rel env m db /\
       ALL no_Mat es /\ ~(res1 = Rerr (Rabort Rtype_error)) ==>
       (?res2 t1.
-        flatSem_evaluate (flat_to_clos_compile m es,db,t) = (res2,t1)
+        closSem_evaluate (flat_to_clos_compile m es,db,t) = (res2,t1)
           /\ flat_to_closProof_state_rel s1 t1 /\
         semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
           flat_to_closProof_v_rel res1 res2)) /\
@@ -259,7 +259,7 @@ let flat_to_closProof_compile_correct = prove
      flatSem_evaluate_decs s ds = (s1,res1) /\ flat_to_closProof_state_rel s
        t /\ no_Mat_decs ds /\ ~(res1 = SOME (Rabort Rtype_error)) ==>
      (?res2 t1.
-       flatSem_evaluate (flat_to_clos_compile_decs ds,[],t) = (res2,t1)
+       closSem_evaluate (flat_to_clos_compile_decs ds,[],t) = (res2,t1)
          /\ flat_to_closProof_state_rel s1 t1 /\
        (?v. (let
               res1' = (match res1 with NONE -> Rval v | SOME e -> Rerr e) in
@@ -312,17 +312,17 @@ let dest_Constants_IMP = prove
 
 let dest_Constant_evaluate = prove
  (`flat_to_clos_dest_Constant x = SOME c ==>
-   flatSem_evaluate ([x],db,s) = (Rval [make_const c],s)`,
+   closSem_evaluate ([x],db,s) = (Rval [make_const c],s)`,
   CHEAT_TAC);;
 
 let dest_Constants_evaluate = prove
  (`!xs x.
      dest_Constants xs = SOME x ==>
-     flatSem_evaluate (xs,db,s) = (Rval (MAP make_const x),s)`,
+     closSem_evaluate (xs,db,s) = (Rval (MAP make_const x),s)`,
   CHEAT_TAC);;
 
 let evaluate_SmartCons = prove
- (`flatSem_evaluate ([SmartCons t tag xs],db,s) = flatSem_evaluate ([clos_Op
+ (`closSem_evaluate ([SmartCons t tag xs],db,s) = closSem_evaluate ([clos_Op
   t (clos_BlockOp (clos_Cons tag)) xs],db,s)`,
   CHEAT_TAC);;
 
@@ -355,19 +355,19 @@ let state_rel_LEAST = prove
   CHEAT_TAC);;
 
 let evaluate_Let_error = prove
- (`flatSem_evaluate (es,env,s) = (Rerr err,s') ==>
-   flatSem_evaluate ([clos_Let t es e],env,s) = (Rerr err,s')`,
+ (`closSem_evaluate (es,env,s) = (Rerr err,s') ==>
+   closSem_evaluate ([clos_Let t es e],env,s) = (Rerr err,s')`,
   CHEAT_TAC);;
 
 let evaluate_Op_error = prove
- (`flatSem_evaluate (es,env,s) = (Rerr err,s') ==>
-   flatSem_evaluate ([clos_Op t op es],env,s) = (Rerr err,s')`,
+ (`closSem_evaluate (es,env,s) = (Rerr err,s') ==>
+   closSem_evaluate ([clos_Op t op es],env,s) = (Rerr err,s')`,
   CHEAT_TAC);;
 
 let compile_op_evaluates_args = prove
- (`flatSem_evaluate (xs,db,t) = (Rerr err,t1) /\ ~(op = flat_Src ast_Opapp)
+ (`closSem_evaluate (xs,db,t) = (Rerr err,t1) /\ ~(op = flat_Src ast_Opapp)
   /\ ~(op = flat_Src ast_Eval) /\ ~(op = flat_Src (ast_ThunkOp ForceThunk)) ==>
-   flatSem_evaluate ([flat_to_clos_compile_op tra op xs],db,t) = (Rerr
+   closSem_evaluate ([flat_to_clos_compile_op tra op xs],db,t) = (Rerr
      err,t1)`,
   CHEAT_TAC);;
 
@@ -391,12 +391,12 @@ let op_refs = prove
    (op = flat_Src ast_Opassign) ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -407,12 +407,12 @@ let op_shifts = prove
  (`(?w s n. op = flat_Src (ast_Shift w s n)) ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -428,12 +428,12 @@ let op_byte_arrays = prove
    op = flat_Src ast_Aw8update ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\ ALL2
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\ ALL2
        flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -448,12 +448,12 @@ let op_byte_copy = prove
    op = flat_Src ast_XorAw8Str_unsafe ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -470,12 +470,12 @@ let op_eq_gc = prove
    op = flat_Src ast_Equality ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -496,12 +496,12 @@ let op_str = prove
    op = flat_Src ast_Strcat ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state)
-       /\ flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+       /\ closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -514,12 +514,12 @@ let op_globals = prove
    (?n. op = flat_GlobalVarAlloc n) ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -533,12 +533,12 @@ let op_vectors = prove
    op = flat_Src ast_VfromList ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state)
-       /\ flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+       /\ closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -555,12 +555,12 @@ let op_arrays = prove
    op = flat_Src ast_Aupdate ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -573,12 +573,12 @@ let op_blocks = prove
    op = flat_Src ast_ListAppend ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\ flat_to_closProof_state_rel
      s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -635,12 +635,12 @@ let op_arith = prove
  (`(?a ty. op = flat_Src (ast_Arith a ty)) ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\ flat_to_closProof_state_rel
      s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -651,12 +651,12 @@ let op_from_to = prove
  (`(?ty1 ty2. op = flat_Src (ast_FromTo ty1 ty2)) ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -667,12 +667,12 @@ let op_test = prove
  (`(?test ty. op = flat_Src (ast_Test test ty)) ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -683,12 +683,12 @@ let op_ffi = prove
  (`(?n. op = flat_Src (ast_FFI n)) ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -699,12 +699,12 @@ let op_id = prove
  (`op = flat_Id ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -715,12 +715,12 @@ let op_eval = prove
  (`op = flat_Src ast_Eval ==>
    (flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -731,12 +731,12 @@ let op_thunk = prove
  (`!th_op. op = flat_Src (ast_ThunkOp th_op) ==> (flatSem_do_app s1 op vs =
   SOME (s2,res2) /\ flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state)
   /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -746,12 +746,12 @@ let op_thunk = prove
 let compile_op_correct = prove
  (`(flatSem_do_app s1 op vs = SOME (s2,res2) /\
      flat_to_closProof_state_rel s1 (t1:('c,'ffi)closSem_state) /\
-     flatSem_evaluate (xs,db,t) = (Rval ws,t1) /\
+     closSem_evaluate (xs,db,t) = (Rval ws,t1) /\
      ALL2 flat_to_closProof_v_rel vs (REVERSE ws) /\
      LENGTH xs = LENGTH vs /\ ~(op = flat_Src ast_Opapp) /\ ~(op = flat_Src
        (ast_ThunkOp ForceThunk)) ==>
      (?res2' t1.
-       flatSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
+       closSem_evaluate ([flat_to_clos_compile_op tt op xs],db,t) =
          (res2',t1) /\
        flat_to_closProof_state_rel s2 t1 /\
        semanticPrimitivesProps_result_rel (ALL2 flat_to_closProof_v_rel)
@@ -778,7 +778,7 @@ let do_eval_install = prove
    closSem_do_install ys t = (if closSem_state_clock t' = 0 then (Rerr
      (Rabort Rtimeout_error),t')
      else (Rval (APPEND exps (flat_to_clos_compile [] [flat_Con
-       backend_common_None NONE []])),flatSem_dec_clock 1 t')) /\
+       backend_common_None NONE []])),closSem_dec_clock 1 t')) /\
    no_Mat_decs decs /\
    (?envv dsv. xs = [envv; dsv]) /\
    (~(closSem_state_clock t' = 0) ==> exps = flat_to_clos_compile_decs
@@ -816,7 +816,7 @@ let compile_decs_correct = last (CONJUNCTS flat_to_closProof_compile_correct);;
 
 let compile_decs_correct2 = prove
  (`flatSem_evaluate_decs s1 decs = res_tup /\
-   flatSem_evaluate (flat_to_clos_compile_decs decs,[],s2) = (res2,t2) /\
+   closSem_evaluate (flat_to_clos_compile_decs decs,[],s2) = (res2,t2) /\
    flat_to_closProof_state_rel s1 s2 /\ no_Mat_decs decs /\ ~(SND res_tup =
      SOME (Rabort Rtype_error)) ==>
    flat_to_closProof_state_rel (FST res_tup) t2 /\
@@ -830,9 +830,9 @@ let FST_SND_EQ_CASE = prove
 
 let evaluate_compile_prog_initial_state = prove
  (`0 < max_app ==>
-   (flatSem_evaluate (flat_to_clos_compile_prog ds,[],flatSem_initial_state
+   (closSem_evaluate (flat_to_clos_compile_prog ds,[],closSem_initial_state
      ffi max_app FEMPTY co cc k) =
-    (match flatSem_evaluate (flat_to_clos_compile_decs ds,[],
+    (match closSem_evaluate (flat_to_clos_compile_decs ds,[],
            initial_state' (has_install_list (flat_to_clos_compile_decs ds))
              ffi max_app FEMPTY co cc k) with (Rval vs1,s1) -> (Rval (CONS
              closSem_Unit vs1),s1)
@@ -841,9 +841,9 @@ let evaluate_compile_prog_initial_state = prove
 
 let evaluate_compile_prog_initial_state_FST_Err = prove
  (`0 < max_app ==>
-   (FST (flatSem_evaluate (flat_to_clos_compile_prog
-     ds,[],flatSem_initial_state ffi max_app FEMPTY co cc k)) = Rerr e <=>
-    FST (flatSem_evaluate (flat_to_clos_compile_decs ds,[],initial_state'
+   (FST (closSem_evaluate (flat_to_clos_compile_prog
+     ds,[],closSem_initial_state ffi max_app FEMPTY co cc k)) = Rerr e <=>
+    FST (closSem_evaluate (flat_to_clos_compile_decs ds,[],initial_state'
       (has_install_list (flat_to_clos_compile_decs ds))
                               ffi max_app FEMPTY co cc k)) = Rerr e)`,
   CHEAT_TAC);;
@@ -878,7 +878,7 @@ let flat_to_closProof_compile_semantics = prove
  (cake_as_vars (fun () ->
     `0 < max_app /\ no_Mat_decs ds /\ install_config_rel ec co cc ==>
   ~(flatSem_semantics ec ffi ds = ffi_Fail) ==>
-     flatSem_semantics ffi max_app FEMPTY co cc (flat_to_clos_compile_prog
+     closSem_semantics ffi max_app FEMPTY co cc (flat_to_clos_compile_prog
        ds) =
      flatSem_semantics ec ffi ds`),
   CHEAT_TAC);;

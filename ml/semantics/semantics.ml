@@ -47,9 +47,9 @@ let can_type_prog_def = new_definition
 
 let evaluate_prog_with_clock_def = new_definition
   `evaluate_prog_with_clock st env k prog =
-     (let (st',r) =
+     let (st',r) =
        evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K k)
-         st) env prog in (semanticPrimitives_state_ffi st',r))`;;
+         st) env prog in (semanticPrimitives_state_ffi st',r)`;;
 
 let semantics_prog_def = define_cases
   `(semantics_prog st env prog (ffi_Terminate outcome io_list) <=>
@@ -92,12 +92,12 @@ let semantics_INDUCT,semantics_RECURSION = define_datatype
 
 let semantics_semantics_def = new_definition
   `semantics_semantics state prelude input =
-     (match semantics_parse (lexer_fun input) with NONE -> CannotParse
+     match semantics_parse (lexer_fun input) with NONE -> CannotParse
      | SOME prog ->
        if can_type_prog state (APPEND prelude prog) then Execute
          (semantics_prog (semantics_state_sem_st state)
          (semantics_state_sem_env state) (APPEND prelude prog))
-       else IllTyped)`;;
+       else IllTyped`;;
 
 let semantics_init_def = new_definition
   `semantics_init ffi =

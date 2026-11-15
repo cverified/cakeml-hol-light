@@ -509,7 +509,7 @@ let alloc_env_ref_def = new_definition
 
 let source_to_flat_compile_prog_def = new_definition
   `source_to_flat_compile_prog c p =
-     (let next' = next_indices_vidx_fupd (K (next_indices_vidx
+     let next' = next_indices_vidx_fupd (K (next_indices_vidx
        (source_to_flat_config_next c) + 1)) (source_to_flat_config_next c) in
      let envs' = mk_environment_generation_store 0 (environment_store_next
        (source_to_flat_config_envs c)) LN in
@@ -523,14 +523,14 @@ let source_to_flat_compile_prog_def = new_definition
      (source_to_flat_config_mod_env_fupd (K e)
        (source_to_flat_config_envs_fupd (K envs2)
        (source_to_flat_config_next_fupd (K next') c)),CONS (glob_alloc next'
-       c) (CONS alloc_env_ref p')))`;;
+       c) (CONS alloc_env_ref p'))`;;
 
 let lookup_env_id_def = new_definition
-  `lookup_env_id env_id envs' = (match sptree_lookup (FST env_id)
+  `lookup_env_id env_id envs' = match sptree_lookup (FST env_id)
   (environment_store_env_gens envs') with NONE -> source_to_flat_empty_env
    | SOME gen -> (match sptree_lookup (SND env_id) gen with NONE ->
      source_to_flat_empty_env
-     | SOME env -> env))`;;
+     | SOME env -> env)`;;
 
 let store_env_id_def = new_definition
   `store_env_id gen id' =
@@ -561,16 +561,16 @@ let inc_compile_prog_def = new_definition
 
 let source_to_flat_compile_def = new_definition
   `source_to_flat_compile c p =
-     (let (c',p') = source_to_flat_compile_prog c p in
+     let (c',p') = source_to_flat_compile_prog c p in
      let p' = compile_flat (source_to_flat_config_pattern_cfg c') p' in
-       (c',p'))`;;
+       (c',p')`;;
 
 (* note that flat_elim is always disabled in the eval/incremental case *)
 let inc_compile_def = new_definition
   `inc_compile env_id c p =
-     (let (c',p') = inc_compile_prog env_id c p in
+     let (c',p') = inc_compile_prog env_id c p in
      let p' = MAP (compile_dec (source_to_flat_config_pattern_cfg c')) p' in
-       (c',p'))`;;
+       (c',p')`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -97,7 +97,7 @@ let gc_move_list_IMP = prove
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_data_def,gc_move_data_ind = define_guess_cheat
   `(gen_gc_gc_move_data conf state =
-     (match gc_state_h2 state with [] -> state
+     match gc_state_h2 state with [] -> state
      | CONS h h2 ->
        (if gen_gc_conf_limit conf < heap_length (APPEND (gc_state_h1 state)
          (CONS h h2)) then gc_state_ok_fupd (K F) state else match h with
@@ -109,7 +109,7 @@ let gc_move_data_def,gc_move_data_ind = define_guess_cheat
             (gc_state_h2 state) = h)) in
             gen_gc_gc_move_data conf (gc_state_ok_fupd (K ok)
               (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1) state)))
-        | _ -> gc_state_ok_fupd (K F) state)))`;;
+        | _ -> gc_state_ok_fupd (K F) state))`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(conf,state). heap_length (gc_state_r2 state))
@@ -121,7 +121,7 @@ let gc_move_data_def,gc_move_data_ind = define_guess_cheat
 let gc_move_refs_def,gc_move_refs_ind = define_guess_cheat
   `// maybe more refs (r4 could have more)
    gc_move_refs conf state =
-     (match gc_state_r2 state with [] -> gc_state_r1_fupd (K (APPEND
+     match gc_state_r2 state with [] -> gc_state_r1_fupd (K (APPEND
        (gc_state_r3 state) (gc_state_r1 state))) (gc_state_r3_fupd (K [])
        state)
      | CONS ref r2 ->
@@ -130,7 +130,7 @@ let gc_move_refs_def,gc_move_refs_ind = define_guess_cheat
          let r3 = APPEND (gc_state_r3 state) [DataElement xs l d] in
            gc_move_refs conf (gc_state_r3_fupd (K r3) (gc_state_r2_fupd (K
              r2) state))
-       | _ -> gc_state_ok_fupd (K F) state))`;;
+       | _ -> gc_state_ok_fupd (K F) state)`;;
 
 (* The main gc loop *)
 (* Runs a clock to simplify the termination argument *)
@@ -139,7 +139,7 @@ let gc_move_refs_def,gc_move_refs_ind = define_guess_cheat
 let gen_gc_gc_move_loop_def,gen_gc_gc_move_loop_ind = define_wf
   `MEASURE (\(x0,x1,x2). (\n. n) x2)`
   `gen_gc_gc_move_loop conf state (clock:num) =
-     (match gc_state_r4 state with [] ->
+     match gc_state_r4 state with [] ->
        (match gc_state_h2 state with [] -> state
         | (CONS h h2) ->
           let state = gen_gc_gc_move_data conf state in
@@ -149,36 +149,36 @@ let gen_gc_gc_move_loop_def,gen_gc_gc_move_loop_ind = define_wf
        let state = gc_move_refs conf (gc_state_r4_fupd (K [])
          (gc_state_r2_fupd (K (gc_state_r4 state)) state)) in
        if clock = 0 then gc_state_ok_fupd (K F) state
-       else gen_gc_gc_move_loop conf state (clock - 1))`;;
+       else gen_gc_gc_move_loop conf state (clock - 1)`;;
 
 let gen_gc_def = new_definition
   `gen_gc conf (roots,heap) =
-     (let state =
+     let state =
          gc_state_ok_fupd (K (heap_length heap = gen_gc_conf_limit conf))
            (gc_state_n_fupd (K (gen_gc_conf_limit conf)) (gc_state_heap_fupd (K
            heap) empty_state)) in
      let (roots,state) = gen_gc_gc_move_list conf state roots in
      let state = gen_gc_gc_move_loop conf state (gen_gc_conf_limit conf) in
-       (roots,state))`;;
+       (roots,state)`;;
 
 (* Do we point to something that is fully processed? I.e. all children
 are also copied. *)
 let is_final_def = new_definition
   `is_final conf state ptr =
-     (let h1end = heap_length (gc_state_h1 state) in
+     let h1end = heap_length (gc_state_h1 state) in
      let r3start = gc_state_a state + gc_state_n state + heap_length
        (gc_state_r4 state) in
      let r3end = r3start + heap_length (gc_state_r3 state) in
      let r1start = r3end + heap_length (gc_state_r2 state) in
      ptr < h1end \/
      r1start <= ptr \/
-     (r3start <= ptr /\ ptr < r3end))`;;
+     (r3start <= ptr /\ ptr < r3end)`;;
 
 let gen_gc_gc_inv_def = new_definition
   `gen_gc_gc_inv conf state (heap0:(('a,'b)heap_element) list) (roots0:('a
   heap_address) list) =
-     (let heap' = APPEND (APPEND (APPEND (APPEND (APPEND (APPEND
-       (gc_state_h1 state) (gc_state_h2 state))
+     let heap' = APPEND (APPEND (APPEND (APPEND (APPEND (APPEND (gc_state_h1
+       state) (gc_state_h2 state))
                  (heap_expand (gc_state_n state))) (gc_state_r4
                  state)) (gc_state_r3 state)) (gc_state_r2 state))
                    (gc_state_r1 state) in
@@ -232,7 +232,7 @@ let gen_gc_gc_inv_def = new_definition
          reachable_addresses roots0 heap0 i /\
          (!ptr d.
            MEM (gc_shared_Pointer ptr d) xs /\ is_final conf state j ==>
-           ptr IN FDOM (heap_map 0 (gc_state_heap state))))))`;;
+           ptr IN FDOM (heap_map 0 (gc_state_heap state)))))`;;
 
 (* HOL4 gen_gcScript.sml:235: ML code, not ported *)
 
@@ -343,11 +343,11 @@ let gen_gc_gc_move_thm = prove
 (* gc_move_ALT *)
 let gen_gc_gc_move_ALT = prove
  (`gen_gc_gc_move conf state y =
-     (let (y',state') = gen_gc_gc_move conf (gc_state_r4_fupd (K [])
+     let (y',state') = gen_gc_gc_move conf (gc_state_r4_fupd (K [])
        (gc_state_h2_fupd (K []) state)) y in
        (y',gc_state_r4_fupd (K (APPEND (gc_state_r4 state') (gc_state_r4
          state))) (gc_state_h2_fupd (K (APPEND (gc_state_h2 state)
-         (gc_state_h2 state'))) state')))`,
+         (gc_state_h2 state'))) state'))`,
   CHEAT_TAC);;
 
 (* gc_move_list_thm[local] *)
@@ -373,11 +373,11 @@ let gen_gc_gc_move_list_thm = prove
 let gen_gc_gc_move_list_ALT = prove
  (`!ys state.
       gen_gc_gc_move_list conf state ys =
-        (let (ys',state') = gen_gc_gc_move_list conf (gc_state_r4_fupd (K
-          []) (gc_state_h2_fupd (K []) state)) ys in
+        let (ys',state') = gen_gc_gc_move_list conf (gc_state_r4_fupd (K [])
+          (gc_state_h2_fupd (K []) state)) ys in
         (ys',gc_state_r4_fupd (K (APPEND (gc_state_r4 state') (gc_state_r4
           state))) (gc_state_h2_fupd (K (APPEND (gc_state_h2 state)
-          (gc_state_h2 state'))) state')))`,
+          (gc_state_h2 state'))) state'))`,
   CHEAT_TAC);;
 
 (* gc_move_list_APPEND_lemma[local] *)

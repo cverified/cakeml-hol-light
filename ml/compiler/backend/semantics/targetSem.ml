@@ -96,7 +96,7 @@ let read_ffi_bytearrays_def = new_definition
 
 let is_valid_mapped_read_def = new_definition
   `is_valid_mapped_read pc' (nb:word8) (ad:'a asm_addr) r pc' t ms md =
-     (if nb = (n2w 1) then
+     if nb = (n2w 1) then
        (bytes_in_memory pc' (asm_config_encode (target_config t) (asm_Inst
          (asm_Mem asm_Load8 r ad)))
          (target_get_byte t ms) md)
@@ -112,11 +112,11 @@ let is_valid_mapped_read_def = new_definition
        (bytes_in_memory pc' (asm_config_encode (target_config t) (asm_Inst
          (asm_Mem asm_Load32 r ad)))
          (target_get_byte t ms) md)
-     else F)`;;
+     else F`;;
 
 let is_valid_mapped_write_def = new_definition
   `is_valid_mapped_write pc' (nb:word8) (ad:'a asm_addr) r pc' t ms md =
-     (if nb = (n2w 1) then
+     if nb = (n2w 1) then
          (bytes_in_memory pc' (asm_config_encode (target_config t) (asm_Inst
            (asm_Mem asm_Store8 r ad)))
            (target_get_byte t ms) md)
@@ -132,7 +132,7 @@ let is_valid_mapped_write_def = new_definition
          (bytes_in_memory pc' (asm_config_encode (target_config t) (asm_Inst
            (asm_Mem asm_Store32 r ad)))
            (target_get_byte t ms) md)
-     else F)`;;
+     else F`;;
 
 let targetSem_evaluate_def,targetSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"

@@ -1261,8 +1261,8 @@ let alloc_IMP_alloc = prove
 
 (* [local] *)
 let word_gc_empty_frame = prove
- (`stackSem_gc (wordSem_state_stack_fupd (K (CONS (StackFrame n [] [] NONE)
-  (wordSem_state_stack s))) s) = SOME x /\
+ (`stackSem_gc (stackSem_state_stack_fupd (K (CONS (StackFrame n [] [] NONE)
+  (stackSem_state_stack s))) s) = SOME x /\
    wordSem_pop_env x = SOME y ==> wordSem_state_locals
    y = LN /\
    stackSem_gc s = SOME (wordSem_state_locals_size_fupd (K

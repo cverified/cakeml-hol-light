@@ -367,7 +367,7 @@ let PAIR_MAP_EQ_EQ = prove
 
 (* known_compile_IS_SOME *)
 let backendProof_known_compile_IS_SOME = prove
- (`backend_compile kc es = (kc',es') ==> (IS_SOME kc' <=> IS_SOME kc)`,
+ (`stack_alloc_compile kc es = (kc',es') ==> (IS_SOME kc' <=> IS_SOME kc)`,
   CHEAT_TAC);;
 
 let attach_bitmaps_SOME = prove
@@ -380,7 +380,7 @@ let attach_bitmaps_SOME = prove
   CHEAT_TAC);;
 
 let known_compile_static_conf = prove
- (`backend_compile kc es = (kc',es') ==> known_static_conf kc' =
+ (`stack_alloc_compile kc es = (kc',es') ==> known_static_conf kc' =
   known_static_conf kc`,
   CHEAT_TAC);;
 
@@ -390,8 +390,8 @@ let known_option_upd_val_spt_eq = prove
   CHEAT_TAC);;
 
 let source_compile_pattern_cfg = prove
- (`(backend_compile c p = (c',p') ==> source_to_flat_config_pattern_cfg c' =
-  source_to_flat_config_pattern_cfg c) /\
+ (`(stack_alloc_compile c p = (c',p') ==> source_to_flat_config_pattern_cfg c'
+  = source_to_flat_config_pattern_cfg c) /\
    (inc_compile env_id c p = (c',p') ==> source_to_flat_config_pattern_cfg
      c' = source_to_flat_config_pattern_cfg c)`,
   CHEAT_TAC);;
@@ -593,7 +593,7 @@ let oracle_monotonic_globals_flat_to_clos = prove
      (0 INSERT IMAGE SUC (SET_OF_BAG (flatProps_elist_globals p)))
      orac ==>
    oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND) (<)
-     (SET_OF_BAG (closProps_elist_globals (word_to_stack_compile_prog p)))
+     (SET_OF_BAG (closProps_elist_globals (flat_to_clos_compile_prog p)))
      (pure_co inc_compile_decs o orac)`,
   CHEAT_TAC);;
 
@@ -819,7 +819,7 @@ add_simp BAG_ALL_DISTINCT_BAG_IMAGE_SUC';;
 
 let cake_orac_clos_syntax_oracle_ok = prove
  (`backend_compile asm_conf (c:backend_config) prog = SOME (b,bm,c') /\
-   backend_compile c2 clos_prog = (clos_c',clos_prog') /\
+   stack_alloc_compile c2 clos_prog = (clos_c',clos_prog') /\
    (?st. backend_config_clos_conf c' = clos_to_bvl_config_start_fupd (K st)
      clos_c') /\
    c2 = backend_config_clos_conf c /\ clos_prog = SND (to_clos c prog) /\
@@ -931,8 +931,8 @@ let accum_lab_conf_labels = prove
 let MAP_Section_num_stack_to_lab_SUBSET = prove
  (`set_of_list (MAP FST prog) SUBSET labs /\ count (SUC gc_stub_location)
   SUBSET labs ==>
-   set_of_list (MAP Section_num (backend_compile scc dc max_heap sp offset
-     prog)) SUBSET labs`,
+   set_of_list (MAP Section_num (stack_to_lab_compile scc dc max_heap sp
+     offset prog)) SUBSET labs`,
   CHEAT_TAC);;
 
 let to_data_labels_ok = prove
@@ -1024,7 +1024,7 @@ let oracle_monotonic_bounded_state = prove
    variables of its own are read as variables *)
 let backendProof_compile_prog_avoids_nss_2 = prove
  (cake_as_vars (fun () ->
-    `word_to_stack_compile_prog start f prog = (loc,code,new_state) /\
+    `bvl_to_bvi_compile_prog start f prog = (loc,code,new_state) /\
      MEM k (MAP FST code) /\ k MOD bvl_to_bvi_namespaces = 2 ==>
      k < bvl_num_stubs`),
   CHEAT_TAC);;
@@ -1235,11 +1235,11 @@ let oracle_stack_good_code = prove
   CHEAT_TAC);;
 
 let to_lab_good_code_lemma = prove
- (`backend_compile (backend_config_stack_conf c) (backend_config_data_conf c)
-  lim1 lim2 offs stack_prog = code /\
+ (`stack_to_lab_compile (backend_config_stack_conf c) (backend_config_data_conf
+  c) lim1 lim2 offs stack_prog = code /\
    backend_compile asm_conf3 F word_prog = (bm,wc,fs,stack_prog) /\
-   backend_compile data_conf word_conf asm_conf2 data_prog = (col,word_prog)
-     /\
+   data_to_word_compile data_conf word_conf asm_conf2 data_prog =
+     (col,word_prog) /\
    labels_ok code /\
    (\c ls. ALL (sec_ok_pre c) ls) conf code ==>
    lab_to_targetProof_good_code conf LN code`,
@@ -1268,11 +1268,11 @@ let compute_stack_frame_sizes_def = new_definition
 
 let compute_stack_frame_sizes_thm = prove
  (`compute_stack_frame_sizes c word_prog =
-     (let k = asm_config_reg_count c - LENGTH (asm_config_avoid_regs c) - 5
+     let k = asm_config_reg_count c - LENGTH (asm_config_avoid_regs c) - 5
        in
        sptree_mapi (\n (arg_count,prog).
          FST (SND (word_to_stack_compile_prog c F prog arg_count k
-           (misc_Nil,0)))) (fromAList word_prog))`,
+           (misc_Nil,0)))) (fromAList word_prog)`,
   CHEAT_TAC);;
 
 let is_64_bits_def = new_definition
@@ -1280,7 +1280,7 @@ let is_64_bits_def = new_definition
 
 let is_safe_for_space_def = new_definition
   `backendProof_is_safe_for_space ffi asm_conf c prog stack_heap_limit =
-     (let data_prog = FST (SND (to_data c prog)) in
+     let data_prog = FST (SND (to_data c prog)) in
      let word_prog = FST (SND (to_word (asm_conf:'a asm_config) c prog)) in
        data_lang_safe_for_space ffi (fromAList data_prog)
          (compute_limits (data_to_word_config_len_size
@@ -1290,7 +1290,7 @@ let is_safe_for_space_def = new_definition
            stack_heap_limit)
          (compute_stack_frame_sizes asm_conf word_prog) InitGlobals_location
            /\ ~(data_to_word_config_gc_kind (backend_config_data_conf
-       c) = backend_common_None))`;;
+       c) = backend_common_None)`;;
 
 let compile_word_conf_eq = prove
  (`!c prog code data conf w_conf stack_prog stack_names.
@@ -1629,7 +1629,7 @@ let flat_semantics = prove
          co in ~(flatSem_semantics f_inst ffi ds = ffi_Fail) /\
    0 < clos_to_bvl_config_max_app cconf /\ no_Mat_decs ds ==>
    closSem_semantics ffi (clos_to_bvl_config_max_app cconf) FEMPTY
-     (pure_co inc_compile_decs o co) cc (word_to_stack_compile_prog ds) =
+     (pure_co inc_compile_decs o co) cc (flat_to_clos_compile_prog ds) =
    flatSem_semantics f_inst ffi ds`,
   CHEAT_TAC);;
 
@@ -1669,16 +1669,18 @@ let remove_labels_loop_no_share_mem_inst = prove
 
 let compile_lab_IMP_mmio_pcs_min_index = prove
  (`compile_lab asm_conf c sec_list = SOME (bytes,c') /\
-   OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s)) (ffi_names c) ==>
-   (?ffi_names'. ffi_names c' = SOME ffi_names' /\
+   OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s))
+     (lab_to_target_config_ffi_names c) ==>
+   (?ffi_names'. lab_to_target_config_ffi_names c' = SOME ffi_names' /\
      (?x. mmio_pcs_min_index ffi_names' = SOME x))`,
   CHEAT_TAC);;
 
 let compile_lab_no_share_mem_IMP_mmio_pcs_min_index = prove
  (`compile_lab asm_conf c sec_list = SOME (bytes,c') /\
    no_share_mem_inst sec_list /\
-   OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s)) (ffi_names c) ==>
-   (?ffi_names'. ffi_names c' = SOME ffi_names' /\
+   OPTION_ALL (ALL (\x. ?s. x = ffi_ExtCall s))
+     (lab_to_target_config_ffi_names c) ==>
+   (?ffi_names'. lab_to_target_config_ffi_names c' = SOME ffi_names' /\
    mmio_pcs_min_index ffi_names' = SOME (LENGTH ffi_names'))`,
   CHEAT_TAC);;
 

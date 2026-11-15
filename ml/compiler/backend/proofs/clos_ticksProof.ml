@@ -237,10 +237,10 @@ let remove_ticks_mk_Ticks = prove
 let evaluate_mk_Ticks = prove
  (`!tr e env s1.
       closSem_evaluate ([clos_ticksProof_mk_Ticks tr e],env,s1) =
-        (if closSem_state_clock s1 < LENGTH tr then (Rerr (Rabort
+        if closSem_state_clock s1 < LENGTH tr then (Rerr (Rabort
           Rtimeout_error),closSem_state_clock_fupd (K 0) s1)
                               else closSem_evaluate
-                                ([e],env,closSem_dec_clock (LENGTH tr) s1))`,
+                                ([e],env,closSem_dec_clock (LENGTH tr) s1)`,
   CHEAT_TAC);;
 
 let simple_val_rel = prove

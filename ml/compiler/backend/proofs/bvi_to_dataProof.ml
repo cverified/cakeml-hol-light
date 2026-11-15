@@ -311,7 +311,7 @@ add_simp data_to_bvi_result_eq;;
 let data_to_bvi_v_list_to_v_Nil = prove
  (`!z ts.
    data_to_bvi_v (dataSem_list_to_v ts (dataSem_Block 0 nil_tag []) z) =
-   dataSem_list_to_v (MAP data_to_bvi_v z)`,
+   bvlSem_list_to_v (MAP data_to_bvi_v z)`,
   CHEAT_TAC);;
 
 (* `data_to_bvi_v` preservers `do_eq` *)
@@ -347,7 +347,7 @@ let refs_rel_LEAST_eq = prove
 
 let do_build_thm = prove
  (`!parts' m1 m2 k ts r t q rs.
-     dataSem_do_build m1 k parts' r = (q,rs) /\
+     bvlSem_do_build m1 k parts' r = (q,rs) /\
      (!n. FLOOKUP r n = OPTION_MAP data_to_bvi_ref (sptree_lookup n t)) /\
      (!n. m1 n = data_to_bvi_v (m2 n)) ==>
      (?pres s1 ts1.
@@ -573,7 +573,7 @@ let bvi_to_dataProof_compile_correct = prove
 (* [local] *)
 let state_rel_dec_clock = prove
  (`bvi_to_dataProof_state_rel s1 t1 ==> bvi_to_dataProof_state_rel
-  (dataSem_dec_clock 1 s1) (dataSem_dec_clock t1)`,
+  (bviSem_dec_clock 1 s1) (dataSem_dec_clock t1)`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -599,7 +599,7 @@ add_simp MAP_FST_compile_prog;;
 let compile_prog_evaluate = prove
  (cake_as_vars (fun () ->
     `dataSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],
-       dataSem_initial_state ffi0 (fromAList prog) co (\cfg prog. cc cfg
+       bviSem_initial_state ffi0 (fromAList prog) co (\cfg prog. cc cfg
          (bvi_to_data_compile_prog prog)) k) = (r,s) /\ ~(r = Rerr (Rabort
          Rtype_error)) /\ (!x. ~(r = Rerr (Rraise x))) ==> (?r2 s2.
          dataSem_evaluate (bvi_Call NONE (SOME start) [] NONE,

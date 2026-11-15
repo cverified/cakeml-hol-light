@@ -114,7 +114,7 @@ let v_to_env_id_def = new_definition
 
 let do_eval_record_def = new_definition
   `do_eval_record ci vs (orac:num->(num#num)#semanticPrimitives_v#dec list) =
-  (match vs with [env_id_v; st_v; decs_v; st_v2; bs_v; ws_v] ->
+  match vs with [env_id_v; st_v; decs_v; st_v2; bs_v; ws_v] ->
        (let ((i,_),st,_) = orac 0 in
        (match (v_to_env_id env_id_v,v_fun_abs (compiler_instance_decs_dom
          ci) (compiler_instance_decs_v ci) decs_v) with (SOME env_id,SOME decs)
@@ -126,7 +126,7 @@ let do_eval_record_def = new_definition
            else orac j) in SOME (env_id,orac',decs)
          else NONE
        | _ -> NONE))
-     | _ -> NONE)`;;
+     | _ -> NONE`;;
 
 (* a somewhat generic env rel *)
 
@@ -1090,11 +1090,11 @@ let extract_oracle_agrees = prove
 
 let get_oracle_def = new_definition
   `get_oracle ci s env decs =
-     (let es_record = EvalOracle (mk_eval_oracle_state (K
+     let es_record = EvalOracle (mk_eval_oracle_state (K
        ((0,0),compiler_instance_config_v ci (compiler_instance_init_state
        ci),[])) (do_eval_record ci) [[]] 0) in
      extract_oracle (semanticPrimitives_state_eval_state_fupd (K (SOME
-       es_record)) s) env decs)`;;
+       es_record)) s) env decs`;;
 
 let put_oracle_def = new_definition
   `put_oracle ci orac = ((\ci. insert_gen_oracle ci I (FST o FST)) ci orac

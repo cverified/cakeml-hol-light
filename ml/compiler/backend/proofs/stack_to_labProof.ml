@@ -69,7 +69,7 @@ let _ = hide_overloads
 
 let word_sh_word_shift = prove
  (`word_sh a (b:'a word) c = SOME z ==> c < dimindex (:'a) /\ z =
-  backend_common_word_shift a b c`,
+  asmSem_word_shift a b c`,
   CHEAT_TAC);;
 
 let assert_T = prove
@@ -675,14 +675,14 @@ let full_make_init_def = new_definition
    (let ggc = is_gen_gc (data_to_word_config_gc_kind data_conf) in
    let jump = stack_to_lab_config_jump stack_conf in
    let code1 = stack_alloc_compile data_conf (stack_rawcall_compile code) in
-   let code2 = stack_to_lab_compile jump offset ggc max_heap sp
+   let code2 = stack_remove_compile jump offset ggc max_heap sp
      InitGlobals_location code1 in
-   let code3 = fromAList (stack_to_lab_compile
-     (stack_to_lab_config_reg_names stack_conf) code2) in
+   let code3 = fromAList (stack_alloc_compile (stack_to_lab_config_reg_names
+     stack_conf) code2) in
    let coracle1 = (I ## MAP stack_alloc_prog_comp ## I) o coracle in
    let coracle2 = (I ## MAP (stack_alloc_prog_comp jump offset sp) ## I) o
      coracle1 in
-   let coracle3 = (I ## stack_to_lab_compile (stack_to_lab_config_reg_names
+   let coracle3 = (I ## stack_rawcall_compile (stack_to_lab_config_reg_names
      stack_conf) ## I) o coracle2 in
    let s3 = stack_to_labProof_make_init code3 coracle3 (MAP (tlookup
      (stack_to_lab_config_reg_names stack_conf)) [2; 3; 4]) save_regs s4 in
@@ -752,7 +752,7 @@ let memory_assumption_def = new_definition
 let halt_assum_lemma = prove
  (`halt_assum (:'ffi#'c)
       (fromAList (stack_names_compile f
-        (stack_to_lab_compile jump off gen max_heap k l code)))`,
+        (stack_remove_compile jump off gen max_heap k l code)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -810,7 +810,7 @@ let state_rel_make_init = prove
 
 (* [local] *)
 let MAP_FST_compile_compile = prove
- (`MAP FST (stack_to_lab_compile jump off gen max_heap k InitGlobals_location
+ (`MAP FST (stack_remove_compile jump off gen max_heap k InitGlobals_location
                (stack_alloc_compile c
                   (stack_rawcall_compile code))) = CONS 0 (CONS 1 (CONS 2
                     (CONS gc_stub_location (MAP FST code))))`,
@@ -1088,7 +1088,7 @@ let stack_names_get_code_labels = prove
 (* stack_remove *)
 (* get_code_labels_comp[local] *)
 let stack_to_labProof_get_code_labels_comp = prove
- (`!a b c p. stackProps_get_code_labels (stack_alloc_comp a b c p) SUBSET
+ (`!a b c p. stackProps_get_code_labels (stack_remove_comp a b c p) SUBSET
   (stack_err_lab,0) INSERT stackProps_get_code_labels p`,
   CHEAT_TAC);;
 
@@ -1130,14 +1130,14 @@ let stack_names_stack_good_code_labels = prove
 (* [local] *)
 let stack_remove_get_code_labels_comp = prove
  (`!a b c p.
-   stackProps_get_code_labels (stack_alloc_comp a b c p) SUBSET
+   stackProps_get_code_labels (stack_remove_comp a b c p) SUBSET
      (stack_err_lab,0) INSERT stackProps_get_code_labels p`,
   CHEAT_TAC);;
 
 (* [local] *)
 let stack_remove_stack_get_handler_labels_comp = prove
  (`!a b c p m.
-   stack_get_handler_labels m (stack_alloc_comp a b c p) =
+   stack_get_handler_labels m (stack_remove_comp a b c p) =
    stack_get_handler_labels m p`,
   CHEAT_TAC);;
 
@@ -1331,7 +1331,7 @@ let stack_to_lab_stack_good_handler_labels_incr = prove
 (*** no_shmemop ***)
 
 let stack_rawcall_comp_no_shmemop = prove
- (`!i p. no_shmemop p ==> no_shmemop (stack_alloc_comp i p)`,
+ (`!i p. no_shmemop p ==> no_shmemop (stack_rawcall_comp i p)`,
   CHEAT_TAC);;
 
 let stack_rawcall_comp_top_no_shmemop = prove
@@ -1340,7 +1340,7 @@ let stack_rawcall_comp_top_no_shmemop = prove
 
 let stack_rawcall_compile_no_shmemop = prove
  (`!prog. ALL (\(a,p). no_shmemop p) prog ==>
-       ALL (\(a,p). no_shmemop p) (stack_to_lab_compile prog)`,
+       ALL (\(a,p). no_shmemop p) (stack_rawcall_compile prog)`,
   CHEAT_TAC);;
 
 let stack_alloc_comp_no_shmemop = prove
@@ -1369,7 +1369,7 @@ let downshift_no_shmemop = prove
 add_simp downshift_no_shmemop;;
 
 let stack_free_no_shmemop = prove
- (`!k n. no_shmemop (word_to_stack_stack_free k n)`,
+ (`!k n. no_shmemop (stack_remove_stack_free k n)`,
   CHEAT_TAC);;
 add_simp stack_free_no_shmemop;;
 
@@ -1379,11 +1379,12 @@ let stack_alloc_no_shmemop = prove
 add_simp stack_alloc_no_shmemop;;
 
 let stack_remove_comp_no_shmemop = prove
- (`!jump off k p. no_shmemop p ==> no_shmemop (stack_alloc_comp jump off k p)`,
+ (`!jump off k p. no_shmemop p ==> no_shmemop (stack_remove_comp jump off k
+  p)`,
   CHEAT_TAC);;
 
 let stack_remove_prog_comp_no_shmemop = prove
- (`!p. no_shmemop p ==> no_shmemop (SND (stack_alloc_prog_comp jump off k
+ (`!p. no_shmemop p ==> no_shmemop (SND (stack_remove_prog_comp jump off k
   (n,p)))`,
   CHEAT_TAC);;
 
@@ -1452,8 +1453,8 @@ let compile_no_stubs_no_share_mem_inst = prove
 (*** no_install ***)
 
 let stack_rawcall_comp_no_install = prove
- (`!i p. stackProps_no_install p ==> stackProps_no_install (stack_alloc_comp
-  i p)`,
+ (`!i p. stackProps_no_install p ==> stackProps_no_install
+  (stack_rawcall_comp i p)`,
   CHEAT_TAC);;
 
 let stack_rawcall_comp_top_no_install = prove
@@ -1462,7 +1463,7 @@ let stack_rawcall_comp_top_no_install = prove
 
 let stack_rawcall_compile_no_install = prove
  (`!prog. ALL (\(a,p). stackProps_no_install p) prog ==>
-       ALL (\(a,p). stackProps_no_install p) (stack_to_lab_compile prog)`,
+       ALL (\(a,p). stackProps_no_install p) (stack_rawcall_compile prog)`,
   CHEAT_TAC);;
 
 let stack_alloc_comp_no_install = prove
@@ -1492,7 +1493,7 @@ let downshift_no_install = prove
 add_simp downshift_no_install;;
 
 let stack_free_no_install = prove
- (`!k n. stackProps_no_install (word_to_stack_stack_free k n)`,
+ (`!k n. stackProps_no_install (stack_remove_stack_free k n)`,
   CHEAT_TAC);;
 add_simp stack_free_no_install;;
 
@@ -1503,12 +1504,12 @@ add_simp stack_alloc_no_install;;
 
 let stack_remove_comp_no_install = prove
  (`!jump off k p. stackProps_no_install p ==> stackProps_no_install
-  (stack_alloc_comp jump off k p)`,
+  (stack_remove_comp jump off k p)`,
   CHEAT_TAC);;
 
 let stack_remove_prog_comp_no_install = prove
  (`!p. stackProps_no_install p ==> stackProps_no_install (SND
-  (stack_alloc_prog_comp jump off k (n,p)))`,
+  (stack_remove_prog_comp jump off k (n,p)))`,
   CHEAT_TAC);;
 
 let stack_remove_compile_no_install = prove

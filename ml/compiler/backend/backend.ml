@@ -77,7 +77,7 @@ let attach_bitmaps_def = define_cases
 
 let backend_compile_def = new_definition
   `backend_compile asm_conf c p =
-     (let p = source_to_source_compile p in
+     let p = source_to_source_compile p in
      let _ = empty_ffi (implode "finished: source_to_source") in
      let (c',p) = source_to_flat_compile (backend_config_source_conf c) p in
      let _ = empty_ffi (implode "finished: source_to_flat") in
@@ -126,14 +126,14 @@ let backend_compile_def = new_definition
        (lab_to_target_compile asm_conf (backend_config_lab_conf c) (p:('a
          sec) list)) in
      let _ = empty_ffi (implode "finished: lab_to_target") in
-       res)`;;
+       res`;;
 
 let to_flat_def = new_definition
   `to_flat c p =
-     (let p = source_to_source_compile p in
+     let p = source_to_source_compile p in
      let (c',p) = source_to_flat_compile (backend_config_source_conf c) p in
      let c = backend_config_source_conf_fupd (K c') c in
-     (c,p))`;;
+     (c,p)`;;
 
 let to_clos_def = new_definition
   `to_clos c p =
@@ -143,14 +143,14 @@ let to_clos_def = new_definition
 
 let to_bvl_def = new_definition
   `to_bvl c p =
-   (let (c,p) = to_clos c p in
+   let (c,p) = to_clos c p in
    let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf c) p in
    let c = backend_config_clos_conf_fupd (K c') c in
-   (c,p,names))`;;
+   (c,p,names)`;;
 
 let to_bvi_def = new_definition
   `to_bvi c p =
-   (let (c,p,names) = to_bvl c p in
+   let (c,p,names) = to_bvl c p in
    let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
      (clos_to_bvl_config_start (backend_config_clos_conf c))
      (backend_config_bvl_conf c) names p in
@@ -166,7 +166,7 @@ let to_bvi_def = new_definition
      (bvl_to_bvi_config_next_name1_fupd (K n1)
      (bvl_to_bvi_config_bvi_inlines_fupd (K bl) (bvl_to_bvi_config_inlines_fupd
      (K l) c))))) c in
-   (c,p,names))`;;
+   (c,p,names)`;;
 
 let to_data_def = new_definition
   `to_data c p =
@@ -176,54 +176,54 @@ let to_data_def = new_definition
 
 let to_word_0_def = new_definition
   `to_word_0 asm_conf c p =
-     (let (c,p,names) = to_data c p in
+     let (c,p,names) = to_data c p in
      let p = compile_0 (backend_config_data_conf c) asm_conf p in
-       (c,p,names))`;;
+       (c,p,names)`;;
 
 let to_word_def = new_definition
   `to_word asm_conf c p =
-   (let (c,p,names) = to_data c p in
+   let (c,p,names) = to_data c p in
    let (col,p) = data_to_word_compile (backend_config_data_conf c)
      (backend_config_word_to_word_conf c) asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   (c,p,names))`;;
+   (c,p,names)`;;
 
 let to_word_thm = prove
  (`to_word asm_conf c p =
-   (let (c,p,names) = to_word_0 asm_conf c p in
+   let (c,p,names) = to_word_0 asm_conf c p in
    let (col,p) = word_to_word_compile (backend_config_word_to_word_conf c)
      asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   (c,p,names))`,
+   (c,p,names)`,
   CHEAT_TAC);;
 
 let to_stack_def = new_definition
   `to_stack asm_conf c p =
-   (let (c,p,names) = to_word asm_conf c p in
+   let (c,p,names) = to_word asm_conf c p in
    let (bm,c',fs,p) = word_to_stack_compile asm_conf
      (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
    let c = backend_config_word_conf_fupd (K c') c in
-   (bm,c,p,names))`;;
+   (bm,c,p,names)`;;
 
 let to_lab_def = new_definition
   `to_lab asm_conf c p =
-   (let (bm,c,p,names) = to_stack asm_conf c p in
+   let (bm,c,p,names) = to_stack asm_conf c p in
    let p = stack_to_lab_compile (backend_config_stack_conf
      c) (backend_config_data_conf c) (2 * max_heap_limit (:'a)
        (backend_config_data_conf c) - 1)
      (asm_config_reg_count asm_conf - (LENGTH (asm_config_avoid_regs
        asm_conf) + 3))
      (asm_config_addr_offset asm_conf) p in
-   (bm,c,(p:('a sec) list),names))`;;
+   (bm,c,(p:('a sec) list),names)`;;
 
 let to_target_def = new_definition
   `to_target asm_conf c p =
-   (let (bm,c,p,names) = to_lab asm_conf c p in
+   let (bm,c,p,names) = to_lab asm_conf c p in
      attach_bitmaps names c bm (
        lab_to_target_compile
-         asm_conf (backend_config_lab_conf c) p))`;;
+         asm_conf (backend_config_lab_conf c) p)`;;
 
 let compile_eq_to_target = prove
  (`backend_compile = to_target`,
@@ -257,41 +257,41 @@ let from_lab_def = new_definition
 
 let from_stack_def = new_definition
   `from_stack asm_conf c names p bm =
-   (let p = stack_to_lab_compile (backend_config_stack_conf
+   let p = stack_to_lab_compile (backend_config_stack_conf
      c) (backend_config_data_conf c) (2 * max_heap_limit (:'a)
        (backend_config_data_conf c) - 1)
      (asm_config_reg_count asm_conf - (LENGTH (asm_config_avoid_regs
        asm_conf) + 3))
      (asm_config_addr_offset asm_conf) p in
-   from_lab asm_conf c names (p:('a sec) list) bm)`;;
+   from_lab asm_conf c names (p:('a sec) list) bm`;;
 
 let from_word_def = new_definition
   `from_word asm_conf c names p =
-   (let (bm,c',fs,p) = word_to_stack_compile asm_conf
+   let (bm,c',fs,p) = word_to_stack_compile asm_conf
      (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
    let c = backend_config_word_conf_fupd (K c') c in
-   from_stack asm_conf c names p bm)`;;
+   from_stack asm_conf c names p bm`;;
 
 let from_word_0_def = new_definition
   `from_word_0 asm_conf c names p =
-   (let (col,prog) = word_to_word_compile (backend_config_word_to_word_conf
+   let (col,prog) = word_to_word_compile (backend_config_word_to_word_conf
      c) asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   from_word asm_conf c names prog)`;;
+   from_word asm_conf c names prog`;;
 
 let from_data_def = new_definition
   `from_data asm_conf c names p =
-   (let (col,p) = data_to_word_compile (backend_config_data_conf c)
+   let (col,p) = data_to_word_compile (backend_config_data_conf c)
      (backend_config_word_to_word_conf c) asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   from_word asm_conf c names p)`;;
+   from_word asm_conf c names p`;;
 
 let from_data_thm = prove
  (`from_data asm_conf c names p =
-   (let p = compile_0 (backend_config_data_conf c) asm_conf p in
-   from_word_0 asm_conf c names p)`,
+   let p = compile_0 (backend_config_data_conf c) asm_conf p in
+   from_word_0 asm_conf c names p`,
   CHEAT_TAC);;
 
 let from_bvi_def = new_definition
@@ -301,7 +301,7 @@ let from_bvi_def = new_definition
 
 let from_bvl_def = new_definition
   `from_bvl asm_conf c names p =
-   (let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
+   let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
      (clos_to_bvl_config_start (backend_config_clos_conf c))
      (backend_config_bvl_conf c) names p in
    let names = sptree_union (fromAList (APPEND (APPEND (APPEND
@@ -316,13 +316,13 @@ let from_bvl_def = new_definition
      (bvl_to_bvi_config_next_name1_fupd (K n1)
      (bvl_to_bvi_config_bvi_inlines_fupd (K bl) (bvl_to_bvi_config_inlines_fupd
      (K l) c))))) c in
-   from_bvi asm_conf c names p)`;;
+   from_bvi asm_conf c names p`;;
 
 let from_clos_def = new_definition
   `from_clos asm_conf c e =
-   (let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf c) e in
+   let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf c) e in
    let c = backend_config_clos_conf_fupd (K c') c in
-   from_bvl asm_conf c names p)`;;
+   from_bvl asm_conf c names p`;;
 
 let from_flat_def = new_definition
   `from_flat asm_conf c p =
@@ -331,10 +331,10 @@ let from_flat_def = new_definition
 
 let from_source_def = new_definition
   `from_source asm_conf c p =
-   (let p = source_to_source_compile p in
+   let p = source_to_source_compile p in
    let (c',p) = source_to_flat_compile (backend_config_source_conf c) p in
    let c = backend_config_source_conf_fupd (K c') c in
-   from_flat asm_conf c p)`;;
+   from_flat asm_conf c p`;;
 
 let compile_eq_from_source = prove
  (`backend_compile = from_source`,
@@ -513,7 +513,7 @@ let keep_progs_def = new_definition
 
 let compile_inc_progs_def = new_definition
   `compile_inc_progs k asm_conf c p_tup =
-     (let (env_id,p) = p_tup in
+     let (env_id,p) = p_tup in
      let ps = backend_progs_source_prog_fupd (K p)
        (backend_progs_env_id_fupd (K env_id) empty_progs) in
      let p = source_to_source_compile p in
@@ -567,14 +567,14 @@ let compile_inc_progs_def = new_definition
          (\(bytes,_). (bytes,cur_bm)) target)) ps in
      let c = backend_config_lab_conf_fupd (match target with NONE -> I
          | SOME (_,c') -> K c') c in
-     (c,ps))`;;
+     (c,ps)`;;
 let compile_inc_progs_for_eval_def = new_definition
   `compile_inc_progs_for_eval asm_conf x =
-   (let (env_id,c',decs) = x in
+   let (env_id,c',decs) = x in
    let (c'',ps) = compile_inc_progs T asm_conf c' (env_id,decs) in
      OPTION_MAP (\(bs,ws). (c'',bs,MAP upper_w2w ws))
        (backend_progs_target_prog
-         ps))`;;
+         ps)`;;
 
 let to_word_0_invariant = prove
  (`(word_to_word_config_reg_alg wc = word_to_word_config_reg_alg
@@ -587,7 +587,7 @@ let to_word_0_invariant = prove
 
 let compile_inc_progs_for_eval_eq = prove
  (`compile_inc_progs_for_eval asm_conf (env_id,c,p) =
-     (let p = source_to_source_compile p in
+     let p = source_to_source_compile p in
      let (c',p) = inc_compile env_id (backend_config_source_conf c) p in
      let _ = empty_ffi (implode "finished: source_to_flat") in
      let c = backend_config_source_conf_fupd (K c') c in
@@ -635,7 +635,7 @@ let compile_inc_progs_for_eval_eq = prove
      let _ = empty_ffi (implode "finished: lab_to_target") in
      let c = backend_config_lab_conf_fupd (match target with NONE -> I
                               | SOME (_,c') -> K c') c in
-       OPTION_MAP (\x. (c,FST x,MAP upper_w2w cur_bm)) target)`,
+       OPTION_MAP (\x. (c,FST x,MAP upper_w2w cur_bm)) target`,
   CHEAT_TAC);;
 
 make_size "ffiname";;

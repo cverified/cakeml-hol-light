@@ -252,11 +252,11 @@ let exp_rel_mono_list = prove
 (* [local] *)
 let exp_rel_evaluate_mono = prove
  (`(bviSem_evaluate (es,env,t) = (res,t1) /\ bvi_inlineProof_exp_rel
-  (state_code t) x y ==>
-      bvi_inlineProof_exp_rel (state_code t1) x y) /\
+  (bviSem_state_code t) x y ==>
+      bvi_inlineProof_exp_rel (bviSem_state_code t1) x y) /\
    (bviSem_evaluate (es,env,t) = (res,t1) /\ ALL2 (bvi_inlineProof_exp_rel
-     (state_code t)) xs ys ==>
-      ALL2 (bvi_inlineProof_exp_rel (state_code t1)) xs ys)`,
+     (bviSem_state_code t)) xs ys ==>
+      ALL2 (bvi_inlineProof_exp_rel (bviSem_state_code t1)) xs ys)`,
   CHEAT_TAC);;
 
 let exp_rel_refl = prove
@@ -279,8 +279,8 @@ let inline_exp_rel = prove
 let evaluate_bvi_mk_tick = prove
  (`!exp env s n.
      bviSem_evaluate ([bvi_mk_tick n exp],env,s) =
-       if state_clock s < n then
-         (Rerr (Rabort Rtimeout_error),state_clock_fupd (K 0) s)
+       if bviSem_state_clock s < n then
+         (Rerr (Rabort Rtimeout_error),bviSem_state_clock_fupd (K 0) s)
        else bviSem_evaluate ([exp],env,bviSem_dec_clock n s)`,
   CHEAT_TAC);;
 

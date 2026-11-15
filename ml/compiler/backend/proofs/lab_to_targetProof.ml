@@ -1629,8 +1629,7 @@ let byte_align_64_IMP = prove
 
 (* The lab and asm versions should be in their individual props *)
 let arith_upd_fp_regs = prove
- (`(asm_state_fp_regs (labSem_arith_upd a s) = asm_state_fp_regs s
-  /\ asm_state_fp_regs
+ (`(fp_regs (labSem_arith_upd a s) = labSem_state_fp_regs s /\ fp_regs
    (labSem_arith_upd a (t:'a asm_state)) = asm_state_fp_regs t)`,
   CHEAT_TAC);;
 add_simp arith_upd_fp_regs;;
@@ -2207,17 +2206,17 @@ let line_encd_def = new_definition
        lab_Asm b bytes len ->
        enc (cbw_to_asm b) = bytes /\ len = LENGTH bytes
      | lab_LabAsm lab_Halt _ bytes len ->
-       enc (lab_Jump (--(n2w (pos + ffi_offset)))) = bytes /\
+       enc (asm_Jump (--(n2w (pos + ffi_offset)))) = bytes /\
        LENGTH bytes <= len
      | lab_LabAsm lab_Install _ bytes len ->
-       enc (lab_Jump (--(n2w (pos + 2 * ffi_offset)))) = bytes /\
+       enc (asm_Jump (--(n2w (pos + 2 * ffi_offset)))) = bytes /\
        LENGTH bytes <= len
      | lab_LabAsm (lab_CallFFI s) _ bytes len ->
-       enc (lab_Jump (--(n2w (pos + (get_ffi_index ffis (ffi_ExtCall s) + 3)
+       enc (asm_Jump (--(n2w (pos + (get_ffi_index ffis (ffi_ExtCall s) + 3)
          * ffi_offset)))) = bytes /\
        LENGTH bytes <= len
-     | lab_LabAsm (lab_Jump l) _ bytes len ->
-       enc (lab_Jump (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
+     | lab_LabAsm (asm_Jump l) _ bytes len ->
+       enc (asm_Jump (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
        LENGTH bytes <= len
      | lab_LabAsm (lab_JumpCmp a b c l) _ bytes len ->
        enc (lab_JumpCmp a b c (n2w (find_pos l labs) + --(n2w pos))) = bytes

@@ -1003,12 +1003,12 @@ let funpow_dec_clock_clock = prove
 let evaluate_mk_ticks = prove
  (`!p s n.
     dataSem_evaluate (mk_ticks n p,s) =
-    (if dataSem_state_clock s < n then
+    if dataSem_state_clock s < n then
       (SOME (Rerr (Rabort Rtimeout_error)),dataSem_state_locals_size_fupd (K
         (SOME 0)) (dataSem_state_stack_fupd (K []) (dataSem_state_locals_fupd
         (K (sptree_fromList [])) (dataSem_state_clock_fupd (K 0)
        s))))
-    else dataSem_evaluate (p,ITER n dataSem_dec_clock s))`,
+    else dataSem_evaluate (p,ITER n dataSem_dec_clock s)`,
   CHEAT_TAC);;
 
 let FUNPOW_dec_clock_code = prove

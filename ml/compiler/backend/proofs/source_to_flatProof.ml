@@ -900,7 +900,7 @@ let source_to_flatProof_pmatch = prove
       source_to_flatProof_match_result_rel genv env'' r r_i1)) /\
    (!cenv s ps vs env r env' env'' env_i1
      (s_i1:('f_orac_st,'ffi)flatSem_state) vs_i1 st'.
-    flatSem_pmatch_list cenv s ps vs env = r /\
+    semanticPrimitives_pmatch_list cenv s ps vs env = r /\
     global_env_inv genv comp_map2 shadowers senv /\
     genv_c_ok (global_env_c genv) /\
     genv_c_tys_ok (global_env_c genv) (global_env_tys genv) /\
@@ -1365,14 +1365,15 @@ let compile_decs_idx_prev = prove
 
 let inc_compile_prog_idx_prev = prove
  (`inc_compile_prog env_id c0 decs = (c1,fdecs) ==>
-   idx_prev (next c0) (next c1)`,
+   idx_prev (source_to_flat_config_next c0) (source_to_flat_config_next
+     c1)`,
   CHEAT_TAC);;
 
 let compile_decs_generation = prove
  (`!t n next' env envs' ds n' next' env' envs' ds_i1.
      source_to_flat_compile_decs t n next' env envs' ds =
-       (n',next',env',envs',ds_i1) ==> generation
-     envs' = generation envs'`,
+       (n',next',env',envs',ds_i1) ==> environment_generation_store_generation
+     envs' = environment_generation_store_generation envs'`,
   CHEAT_TAC);;
 
 let compile_decs_env_gen_inv = prove
@@ -1431,8 +1432,8 @@ let pmatch_invariant = prove
      /\ source_to_flat_environment_c
    comp_map2 = source_to_flat_environment_c comp_map /\
    source_to_flatProof_v_rel genv v v' ==>
-   source_to_flatProof_match_result_rel genv [] (flatSem_pmatch (sem_env_c
-     env) (semanticPrimitives_state_refs st) p v [])
+   source_to_flatProof_match_result_rel genv [] (semanticPrimitives_pmatch
+     (sem_env_c env) (semanticPrimitives_state_refs st) p v [])
      (flatSem_pmatch st' (compile_pat comp_map p) v' [])`,
   CHEAT_TAC);;
 
@@ -1664,13 +1665,13 @@ let do_eval = prove
    inc_compile_prog env_id c decs = (c',decs') /\ ~(decs' = []) /\
    source_to_flatProof_invariant interp g (mk_environment_generation_store 0
      (environment_store_next (source_to_flat_config_envs c)) LN) genv'
-     (source_to_flat_config_next c,next c',idx_block idx end_idx UNION
-       other)
+     (source_to_flat_config_next c,source_to_flat_config_next c',idx_block
+       idx end_idx UNION other)
      (semanticPrimitives_state_eval_state_fupd (K eval_state) s)
        (flatSem_state_globals_fupd (K (APPEND (flatSem_state_globals t)
-       (REPLICATE (next_indices_vidx (next c') - next_indices_vidx
-       (source_to_flat_config_next c)) NONE))) (flatSem_state_eval_config_fupd
-       (K eval_config') t)) /\
+       (REPLICATE (next_indices_vidx (source_to_flat_config_next c') -
+       next_indices_vidx (source_to_flat_config_next c)) NONE)))
+       (flatSem_state_eval_config_fupd (K eval_config') t)) /\
    env_gen_rel (mk_environment_generation_store 0 (environment_store_next
      (source_to_flat_config_envs c)) LN) eval_state /\
    (let (_,_,_,gen,_) = source_to_flat_compile_decs [] 1
@@ -1682,7 +1683,7 @@ let do_eval = prove
    global_env_inv genv' (lookup_env_id env_id (source_to_flat_config_envs
      c)) {} env /\
    src_orac_next_cfg interp eval_state = SOME c' /\
-   idx_prev end_idx (next c') /\ global_env_c
+   idx_prev end_idx (source_to_flat_config_next c') /\ global_env_c
    genv SUBMAP global_env_c genv' /\ global_env_tys
    genv SUBMAP global_env_tys genv' /\
    subglobals (global_env_v genv) (global_env_v genv') /\
@@ -2179,9 +2180,11 @@ let invariant_begin_alloc_blanks = prove
    init_globs = CONS (SOME (flatSem_Loc T 0)) (REPLICATE (next_indices_vidx
      (next cfg') - 1) NONE) ==>
    source_to_flatProof_invariant interp g
-     (mk_environment_generation_store 0 (next (envs cfg)) LN)
+     (mk_environment_generation_store 0 (environment_store_next
+       (source_to_flat_config_envs cfg)) LN)
      (global_env_v_fupd (K init_globs) init_genv)
-     (next_indices_vidx_fupd (K 1) (next cfg),next cfg',{})
+     (next_indices_vidx_fupd (K 1) (source_to_flat_config_next cfg),next
+       cfg',{})
      s1
      (flatSem_state_globals_fupd (K init_globs) (state_refs_fupd (K
        [semanticPrimitives_Refv (flatSem_Conv NONE [])])
@@ -2192,7 +2195,7 @@ let invariant_begin_alloc_blanks = prove
 let compile_prog_correct = prove
  (`precondition1 interp g s env cfg eval_conf ds /\
    source_to_flat_compile_prog cfg ds = (cfg',ds') /\
-   flatSem_evaluate_decs s env ds = (s',r) /\ ~(r = Rerr (Rabort
+   evaluate_evaluate_decs s env ds = (s',r) /\ ~(r = Rerr (Rabort
      Rtype_error)) ==>
    (?s_i1 s_i1' genv' r_i1.
    s_i1 = flatSem_initial_state (semanticPrimitives_state_ffi s)
@@ -2218,7 +2221,7 @@ let source_to_flatProof_compile_prog_semantics = prove
     `precondition1 interp g s1 env1 conf eval_conf prog ==>
       ~(semantics_prog s1 env1 prog ffi_Fail) ==>
       semantics_prog s1 env1 prog
-         (flatSem_semantics eval_conf (state_ffi s1)
+         (flatSem_semantics eval_conf (semanticPrimitives_state_ffi s1)
              (SND (source_to_flat_compile_prog conf prog)))`),
   CHEAT_TAC);;
 
@@ -2244,8 +2247,8 @@ let source_to_flatProof_compile_semantics = prove
     `precondition interp s env cfg ec prog ==>
      ~(semantics_prog s env prog ffi_Fail) ==>
      semantics_prog s env prog
-        (flatSem_semantics ec (state_ffi s) (SND (source_to_flat_compile
-          cfg prog)))`),
+        (flatSem_semantics ec (semanticPrimitives_state_ffi s) (SND
+          (source_to_flat_compile cfg prog)))`),
   CHEAT_TAC);;
 
 (* - esgc_free theorems for compile_exp ------------------------------------ *)

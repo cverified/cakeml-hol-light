@@ -36,11 +36,11 @@ let dec_clock_def = new_definition
 
 let do_eval_res_def = new_definition
   `do_eval_res vs s =
-     (match semanticPrimitives_do_eval vs
+     match semanticPrimitives_do_eval vs
        (semanticPrimitives_state_eval_state s) with NONE -> (s,Rerr (Rabort
        Rtype_error))
      | SOME (env1,decs,es1) -> (semanticPrimitives_state_eval_state_fupd
-       (K es1) s,Rval (env1,decs)))`;;
+       (K es1) s,Rval (env1,decs))`;;
 
 (* list_result is equivalent to map_result (\v. [v]) I, where map_result is
  * defined in evalPropsTheory *)

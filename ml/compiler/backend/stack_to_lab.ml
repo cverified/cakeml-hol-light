@@ -177,14 +177,14 @@ let stack_to_lab_config_FIELDS = define_record "stack_to_lab_config"
 
 let stack_to_lab_compile_def = new_definition
   `stack_to_lab_compile stack_conf data_conf max_heap sp offset prog =
-     (let prog = stack_rawcall_compile prog in
+     let prog = stack_rawcall_compile prog in
      let prog = stack_alloc_compile data_conf prog in
      let prog = stack_remove_compile (stack_to_lab_config_jump stack_conf)
        offset (is_gen_gc (data_to_word_config_gc_kind data_conf))
                   max_heap sp InitGlobals_location prog in
      let prog = stack_names_compile (stack_to_lab_config_reg_names
        stack_conf) prog in
-       MAP prog_to_section prog)`;;
+       MAP prog_to_section prog`;;
 
 let compile_no_stubs_def = new_definition
   `compile_no_stubs f jump offset sp prog =

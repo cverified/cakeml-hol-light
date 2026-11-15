@@ -114,7 +114,7 @@ let dataSem_state_FIELDS = define_record "dataSem_state"
    antiquote *)
 
 let arch_size_def = new_definition
-  `arch_size lims = (if limits_arch_64_bit lims then 64 else 32:num)`;;
+  `arch_size lims = if limits_arch_64_bit lims then 64 else 32:num`;;
 
 let check_res_def = new_definition
   `check_res r (n,refs,seen) =
@@ -1772,12 +1772,12 @@ let dataSem_evaluate_def,dataSem_evaluate_ind = assume_definition_rec_clauses
 (* HOL4 dataSemScript.sml:1497: ML code, not ported *)
 
 let evaluate_safe_def = new_definition
-  `evaluate_safe c s = (let (x,s1) = dataSem_evaluate (c,s) in
-  dataSem_state_safe_for_space s1)`;;
+  `evaluate_safe c s = let (x,s1) = dataSem_evaluate (c,s) in
+  dataSem_state_safe_for_space s1`;;
 
 let evaluate_peak_def = new_definition
-  `evaluate_peak c s = (let (x,s1) = dataSem_evaluate (c,s) in
-  dataSem_state_peak_heap_length s1)`;;
+  `evaluate_peak c s = let (x,s1) = dataSem_evaluate (c,s) in
+  dataSem_state_peak_heap_length s1`;;
 
 (* We prove that the clock never increases. *)
 
@@ -1835,7 +1835,7 @@ let dataSem_semantics_def = new_definition
    let init = dataSem_initial_state init_ffi code coracle cc T lims ss in
      if ?k. match FST (dataSem_evaluate (p,init k)) with SOME (Rerr e) ->
        ~(e = Rabort Rtimeout_error) /\ (!f. ~(e = Rabort (Rffi_error f)))
-              | NONE -> T | _ -> F then reg_alloc_Fail
+              | NONE -> T | _ -> F then ffi_Fail
      else match some (\res.
        ?k s r outcome.
          dataSem_evaluate (p,init k) = (SOME r,s) /\
@@ -1848,9 +1848,8 @@ let dataSem_semantics_def = new_definition
       | NONE ->
         ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. sptree_fromList (ffi_state_io_events
-              (dataSem_state_ffi (SND (dataSem_evaluate (p,init k))))))
-              UNIV)))`;;
+            (IMAGE (\k. fromList (ffi_state_io_events (dataSem_state_ffi
+              (SND (dataSem_evaluate (p,init k)))))) UNIV)))`;;
 
 let data_lang_safe_for_space_def = new_definition
   `data_lang_safe_for_space init_ffi code (lims:limits) (ss:num spt) start' =

@@ -576,15 +576,15 @@ let v_to_word64_list_def = new_definition
 
 let lookup_env_def = new_definition
   `lookup_env s (i,j) =
-     (match oEL i (eval_oracle_state_envs s) with NONE -> NONE | SOME
-       gen_envs -> oEL j gen_envs)`;;
+     match oEL i (eval_oracle_state_envs s) with NONE -> NONE | SOME
+       gen_envs -> oEL j gen_envs`;;
 
 let add_decs_generation_def = new_definition
   `add_decs_generation s =
-     (match eval_decs_state_env_id_counter s with
+     match eval_decs_state_env_id_counter s with
        (cur_gen,next_id,next_gen) -> eval_decs_state_env_id_counter_fupd (K
          (next_gen,0,next_gen + 1))
-         s)`;;
+         s`;;
 
 let add_env_generation_def = new_definition
   `add_env_generation s = eval_oracle_state_envs_fupd (K (APPEND

@@ -965,7 +965,7 @@ clos_knownProof	ML code skipped: fun trivial x = x               |> concl       
 clos_knownProof	derive val_approx_no_Labels_simp: rule filter/1
 clos_knownProof	line 38 is 80 characters
 clos_knownProof	line 147 is 82 characters
-clos_knownProof	line 1332 is 83 characters
+clos_knownProof	line 1331 is 83 characters
 clos_mtiProof	ML code skipped: val _ = bring_fwd_ctors "closLang" ``:closLang$exp``
 clos_mtiProof	derive no_mti_def: conv ETA_CONV
 clos_mtiProof	derive v_rel_simps: '\\\\ fs [Boolv'
@@ -1188,7 +1188,7 @@ data_to_word_gcProof	Theorem AllocVar_thm: HOL Light does not read the statement
 data_to_word_gcProof	Theorem AllocVar_thm_nary: HOL Light does not read the statement
 data_to_word_gcProof	derive memory_rel_get_var_IMP: no PULL_EXISTS
 data_to_word_gcProof	derive word_ml_inv_get_var_IMP: rule Once/0
-data_to_word_gcProof	line 3191 is 81 characters
+data_to_word_gcProof	line 3195 is 81 characters
 word_depthProof	ML code skipped: Resume max_depth_call_graph_lemma[Call]:   rpt gen_tac   \\ 
 word_depthProof	ML code skipped: \\ PairCases_on `x` \\ simp []   \\ TOP_CASE_TAC \\ simp [] 
 word_depthProof	ML code skipped: Resume max_depth_call_graph_lemma[Loop]:   rpt gen_tac \\ si
@@ -1318,15 +1318,15 @@ data_to_word_assignProof	Theorem assign_Build: HOL Light does not read the state
 data_to_word_assignProof	ML code skipped: fun foldr1 f (x::xs) = foldr f x xs | foldr1 f [] = fail();
 data_to_word_assignProof	derive imp_assign: '"-"] “_ ==> '
 data_to_word_assignProof	Theorem assign_thm: HOL Light does not read the statement
-data_to_word_assignProof	line 900 is 80 characters
-data_to_word_assignProof	line 925 is 86 characters
-data_to_word_assignProof	line 1615 is 80 characters
-data_to_word_assignProof	line 1616 is 81 characters
-data_to_word_assignProof	line 1617 is 80 characters
-data_to_word_assignProof	line 1647 is 80 characters
-data_to_word_assignProof	line 1731 is 80 characters
-data_to_word_assignProof	line 1792 is 85 characters
-data_to_word_assignProof	line 1822 is 83 characters
+data_to_word_assignProof	line 901 is 80 characters
+data_to_word_assignProof	line 926 is 86 characters
+data_to_word_assignProof	line 1616 is 80 characters
+data_to_word_assignProof	line 1617 is 81 characters
+data_to_word_assignProof	line 1618 is 80 characters
+data_to_word_assignProof	line 1648 is 80 characters
+data_to_word_assignProof	line 1732 is 80 characters
+data_to_word_assignProof	line 1793 is 85 characters
+data_to_word_assignProof	line 1823 is 83 characters
 wordConvsProof	ML code skipped: fun FIRST_THEN tacs tac = FIRST (map (fn t => t \\ tac) tacs
 wordConvsProof	ML code skipped: val try_cancel_labels_rel_append =   FIRST_THEN [ALL_TAC, ir
 wordConvsProof	derive const_fp_loop_Seq: '=> total (fs'
@@ -1880,9 +1880,9 @@ lab_to_targetProof	Theorem make_init_filter_skip: HOL Light does not read the st
 lab_to_targetProof	Theorem semantics_compile_lemma': HOL Light does not read the statement
 lab_to_targetProof	derive semantics_compile_lemma: no semantics_compile_lemma'
 lab_to_targetProof	Theorem semantics_compile: HOL Light does not read the statement
-lab_to_targetProof	line 3203 is 92 characters
-lab_to_targetProof	line 3244 is 84 characters
-lab_to_targetProof	line 4442 is 93 characters
+lab_to_targetProof	line 3202 is 92 characters
+lab_to_targetProof	line 3243 is 84 characters
+lab_to_targetProof	line 4441 is 93 characters
 flat_elimProof	ML code skipped: val find_v_globals_ind = theorem "find_v_globals_ind";
 flat_elimProof	ML code skipped: val find_refs_globals_ind = theorem "find_refs_globals_ind";
 flat_elimProof	ML code skipped: val find_result_globals_ind = theorem "find_result_globals_i
