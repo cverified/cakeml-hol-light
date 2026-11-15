@@ -2744,6 +2744,15 @@ ANTIQUOTE = {
   ('bvi_tailrecProof', 's1'): "(s:('c,'ffi) bviSem$state)",
   ('source_to_flatProof', 's'):
     "(s:'ffi semanticPrimitives$state)",
+  # the value of closure_tag, which backend_common defines as 30
+  # (HOL4 clos_to_bvlProofScript.sml:1446 antiquotes
+  # closure_tag_def |> concl |> rand)
+  ('clos_to_bvlProof', 'closure_tag_def |> concl |> rand'): '30',
+  # the right-hand side of stack_alloc's prog_comp, which HOL4
+  # antiquotes to say that the function is that lambda (HOL4
+  # stack_allocProofScript.sml:6076)
+  ('stack_allocProof', 'rhs (concl (SPEC_ALL prog_comp_def))'):
+    '(n,FST (comp n (next_lab p 2) p))',
   # the goal that sixty of data_to_word_assignProof's theorems
   # are stated with (HOL4 data_to_word_assignProofScript.sml:
   # 1765-1778).  It relates a state of dataSem, which it calls s,
