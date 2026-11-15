@@ -66,6 +66,18 @@ def check(mlrel):
       print('%s: the file states it %d time(s)'
             % (name, len(thm[nm]))); return 1
     pos = thm[nm][k - 1]
+    # a tactic that names the theorem it is the proof of proves
+    # it from itself: at the place it stands the binding is not
+    # made yet, so the file does not even compile (Unbound value).
+    # A section of a restated theorem that was keyed by the name
+    # of its source reads that way once it is keyed by the
+    # binding, which is how the port lost pattern_comp
+    if re.search(r'(?<![A-Za-z0-9_\'])%s(?![A-Za-z0-9_\'])'
+                 % re.escape(nm),
+                 re.sub(r'\(\*.*?\*\)', '', '\n'.join(body),
+                        flags=re.S)):
+      print('%s: the tactic names the theorem it proves' % name)
+      out += 1
     # the body stands where an argument stands (tools/landproof.py
     # wraps it in brackets of its own), so a tactic of several
     # steps has to be parenthesised: without the brackets

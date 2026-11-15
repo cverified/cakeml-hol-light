@@ -1,4 +1,11 @@
+pattern_comp restates pattern_exh's pmatch_list_LENGTH with the
+two sides of its conclusion the other way round, and this
+section was written to prove the one from the other.  Keyed by
+the name of the source it named no theorem of the file and did
+nothing; keyed by the binding it reads as a proof of the theorem
+from itself, which does not even compile.  What it wants is
+pattern_exh's theorem and a symmetry step, and that is phase
+three: it is out until then.
 
-
-### pattern_comp_pmatch_list_LENGTH
+### pmatch_list_LENGTH
   (MESON_TAC[pattern_comp_pmatch_list_LENGTH])
