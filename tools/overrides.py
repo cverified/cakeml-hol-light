@@ -12869,6 +12869,19 @@ THM_PATCH = {
      'labSem_evaluate s = labSem_evaluate (labSem_upd_pc pc'
      "' (labSem_dec_clock s))"),
   ],
+  # s1 is a state of labSem and t1 one of asm, and the two have
+  # arith_upd, fp_upd, regs and fp_regs each: the whole of
+  # these two statements is the labSem side beside the asm one
+  ('lab_to_targetProof', 'arith_upd_lemma'): [
+    ('SOME (labSem_state_regs (labSem_arith_upd a t1) r)',
+     'SOME (asm_state_regs (asmSem_arith_upd a t1) r)'),
+  ],
+  ('lab_to_targetProof', 'fp_upd_lemma'): [
+    ('labSem_state_fp_regs (labSem_fp_upd f t1) r',
+     'asm_state_fp_regs (asmSem_fp_upd f t1) r'),
+    ('SOME (labSem_state_regs (labSem_fp_upd f t1) r)',
+     'SOME (asm_state_regs (asmSem_fp_upd f t1) r)'),
+  ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
      'lab_LabAsm (lab_Jump jtarget)'),
