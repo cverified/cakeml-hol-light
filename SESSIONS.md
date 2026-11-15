@@ -9,6 +9,24 @@
   `Library/words.ml` and the HOL4 compatibility layer
   (`ml/lib/hol4.ml`, `ml/lib/records.ml`, `ml/lib/define.ml`)
 
+- `hol-runbase`
+  clone of `hol-template-cakeml` with the first 180 files of the
+  load order loaded -- every file of `ml/lib`, every definition
+  theory, and the five proof theories that a definition theory
+  needs (`targetSem` needs `evaluateProps` and `asmProps`).
+  `tools/bin/runbase` builds it and `tools/bin/fastrun` clones it
+  to load the 90 proof theories, which turns the inner loop of a
+  round of statement fixes from an hour and a quarter into about
+  half an hour.  It is **not** the authority: a cold run
+  (`tools/bin/runall`) is, because a base cannot report a
+  regression in what it already holds.  Rebuild it after any
+  change to `ml/lib` or to a definition theory.
+
+  A clone is a fork and costs the parent's heap again (the port
+  is 1.1 GB live, the machine has 7.9 GB and is shared), so there
+  is room for the base and one clone and no more: kill the
+  working sessions before a fastrun.
+
 - working sessions are clones of `hol-template-cakeml`
 
 The template has only the _hand written_ files of `ml/lib`
