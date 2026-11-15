@@ -13062,6 +13062,42 @@ THM_PATCH = {
     ('ffi_state_io_events (state_ffi (SND (bviSem_evaluate (exps,env,bviProps_inc_clock extra s))))',
      'ffi_state_io_events (bviSem_state_ffi (SND (bviSem_evaluate (exps,env,bviProps_inc_clock extra s))))'),
   ],
+  # data_to_bvi_v takes a value of dataSem to one of bvlSem,
+  # and the two have Unit, Boolv, Number, Word64, v_to_list,
+  # v_to_bytes and v_to_words: the side of the equation is
+  # all that says which is which
+  ('bvi_to_dataProof', 'data_to_bvi_v_Unit'): [
+    ('data_to_bvi_v dataSem_Unit = dataSem_Unit',
+     'data_to_bvi_v dataSem_Unit = bvlSem_Unit'),
+  ],
+  ('bvi_to_dataProof', 'data_to_bvi_v_Boolv'): [
+    ('(dataSem_Boolv b) = (dataSem_Boolv b)',
+     '(dataSem_Boolv b) = (bvlSem_Boolv b)'),
+  ],
+  ('bvi_to_dataProof', 'data_to_bvi_number_eq'): [
+    ('= MAP (dataSem_Number o (&) o w2n) ns',
+     '= MAP (bvlSem_Number o (&) o w2n) ns'),
+  ],
+  ('bvi_to_dataProof', 'data_to_bvi_word_eq'): [
+    ('= MAP dataSem_Word64 ns',
+     '= MAP bvlSem_Word64 ns'),
+  ],
+  ('bvi_to_dataProof', 'isBool_eq'): [
+    ('(dataSem_Boolv b = data_to_bvi_v z)',
+     '(bvlSem_Boolv b = data_to_bvi_v z)'),
+  ],
+  ('bvi_to_dataProof', 'v_to_list_eq'): [
+    ('dataSem_v_to_list (data_to_bvi_v x)',
+     'bvlSem_v_to_list (data_to_bvi_v x)'),
+  ],
+  ('bvi_to_dataProof', 'v_to_bytes_eq'): [
+    ('dataSem_v_to_bytes (data_to_bvi_v x)',
+     'bvlSem_v_to_bytes (data_to_bvi_v x)'),
+  ],
+  ('bvi_to_dataProof', 'v_to_words_eq'): [
+    ('dataSem_v_to_words (data_to_bvi_v x)',
+     'bvlSem_v_to_words (data_to_bvi_v x)'),
+  ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
      'lab_LabAsm (lab_Jump jtarget)'),
