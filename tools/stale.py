@@ -92,6 +92,34 @@ def duplicate_keys():
   return bad
 
 
+# what each table's entries look like, so that an entry put in
+# the wrong one is caught: CON_OF and its neighbours take a name
+# to a theory, DEF_PATCH and THM_PATCH a list of replacements.
+# The two take the same key, and a dict in a patch table (or a
+# list of pairs in a resolution table) does nothing at all
+SHAPES = {
+  'CON_OF': dict, 'CON_FILE': dict, 'CON_BODY': dict,
+  'CON_CLAUSE': dict, 'DEF_NAMES': dict, 'THM_NAMES': dict,
+  'FIELD_OF': dict, 'FIELD_VAR': dict, 'FIELD_VAR_DEF': dict,
+  'ARG_TYPES': dict, 'ACCESSORS': dict, 'UPDATERS': dict,
+  'DEF_PATCH': list, 'THM_PATCH': list,
+}
+
+
+def wrong_shape():
+  """an entry whose value is of the shape another table takes"""
+  bad = 0
+  for name, want in SHAPES.items():
+    t = getattr(overrides, name, None)
+    if not isinstance(t, dict): continue
+    for k, v in t.items():
+      if isinstance(v, want): continue
+      bad += 1
+      print('%s: the entry %r is a %s where the table takes a %s'
+            % (name, k, type(v).__name__, want.__name__))
+  return bad
+
+
 def main():
   verbose = '-v' in sys.argv[1:]
   src = {}
@@ -128,6 +156,8 @@ def main():
         'check cannot place' % (thy_only, other))
   dup = duplicate_keys()
   print('%d keys that a table gives twice' % dup)
+  print('%d entries of a shape their table does not take'
+        % wrong_shape())
 
 
 if __name__ == '__main__':
