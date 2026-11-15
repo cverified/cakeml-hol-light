@@ -2708,6 +2708,48 @@ CON_OF = {
   # the location that this puts in front of the arguments of a
   # call is a word_loc of wordLang
   ('wordSem', 'add_ret_loc_def'): {'Loc': 'wordLang'},
+  # the get_code_labels of a recc_Lets is bvlProps', not
+  # closProps': recc_Lets builds a bvl expression
+  ('clos_to_bvlProof', 'recc_Lets_code_labels'):
+    {'get_code_labels': 'bvlProps'},
+  # the Int that known gives back is the one of clos_known's
+  # val_approx, not the one of closLang's const_part
+  ('clos_to_bvlProof', 'known_Op_Const'): {'Int': 'clos_known'},
+  # the compile of a do_call flag is clos_call's, and the one of
+  # an optional known configuration is clos_known's; the port
+  # reads a bare compile in this file as clos_to_bvl's
+  ('clos_to_bvlProof', 'ccompile_aux_subset'): {'compile': 'clos_call'},
+  ('clos_to_bvlProof', 'ccompile_locs_subset'): {'compile': 'clos_call'},
+  ('clos_to_bvlProof', 'known_co_facts'): {'compile': 'clos_known'},
+  # the find_code of these two is closSem's, whose first argument
+  # is the number itself where bvlSem's takes an option of one:
+  # chain_installed fixes start as a number, which is how HOL4
+  # tells them apart and HOL Light cannot
+  ('clos_to_bvlProof', 'chain_installed_cons'): {'find_code': 'closSem'},
+  ('clos_to_bvlProof', 'chain_installed_thm'): {'find_code': 'closSem'},
+  # eleven theories of the backend define compile_inc, and the
+  # bare one of these four statements is clos_to_bvl's: the
+  # source writes clos_annotate's and clos_number's with the
+  # theory in front and leaves this one bare, where the port
+  # reads a bare one as clos_fvs'
+  ('clos_to_bvlProof', 'compile_inc_monotonic'):
+    {'compile_inc': 'clos_to_bvl'},
+  ('clos_to_bvlProof', 'syntax_oracle_ok_bvl_FST_monotonic'):
+    {'compile_inc': 'clos_to_bvl'},
+  ('clos_to_bvlProof', 'syntax_oracle_ok_to_oracle_inv'):
+    {'compile_inc': 'clos_to_bvl'},
+  ('clos_to_bvlProof', 'clos_to_bvlProof_compile_semantics'):
+    {'compile_inc': 'clos_to_bvl'},
+  # the cut_env of these three is wordSem's: their proofs rewrite
+  # with wordSemTheory.cut_env_def, and the file names dataSem's
+  # one in full where it means that (LightCake writes wordSem in
+  # all three as well, tools/lcstmt.py)
+  ('data_to_word_gcProof', 'cut_env_adjust_sets_ODD'):
+    {'cut_env': 'wordSem'},
+  ('data_to_word_gcProof', 'cut_env_adjust_sets_insert_ODD'):
+    {'cut_env': 'wordSem'},
+  ('data_to_word_gcProof', 'cut_env_insert_1'):
+    {'cut_env': 'wordSem'},
   # loc_ok says of a word_loc of wordLang that it is a code
   # pointer with the offset zero (the theorems about it filter a
   # list of word_locs with isWord)
@@ -13236,6 +13278,143 @@ DEF_NAMES = {
 # is not a definition, so it has a table of its own; what a patch
 # is and what happens when one does not apply is the same.
 THM_PATCH = {
+  # data_to_word_gcProof relates a state of dataSem, which it
+  # calls s, to one of wordSem, which it calls t, and the two
+  # semantics have get_var, get_vars, pop_env, jump_exc, set_var,
+  # call_env, dec_clock, find_code and state accessors each.
+  # HOL4 reads a bare name by the type the rest of the statement
+  # already fixes -- the locals of a dataSem state is a map of
+  # dataSem values, so the get_var over it is dataSem's -- and
+  # HOL Light has no such rule, so the place is said here.  Both
+  # sides take the same number of arguments, so an arity dict
+  # (CON_OF) cannot tell them apart.
+  ('data_to_word_gcProof', 'word_ml_inv_get_var_IMP_lemma'): [
+    ('wordSem_get_var n ll', 'dataSem_get_var n ll'),
+  ],
+  ('data_to_word_gcProof', 'word_ml_inv_get_vars_IMP_lemma'): [
+    ('wordSem_get_vars n ll', 'dataSem_get_vars n ll'),
+  ],
+  ('data_to_word_gcProof', 'memory_rel_get_vars_IMP_lemma'): [
+    ('wordSem_get_vars n ll', 'dataSem_get_vars n ll'),
+  ],
+  ('data_to_word_gcProof', 'state_rel_pop_env_IMP'): [
+    ('wordSem_pop_env s1 = SOME s2', 'dataSem_pop_env s1 = SOME s2'),
+  ],
+  ('data_to_word_gcProof', 'state_rel_pop_env_set_var_IMP'): [
+    ('wordSem_pop_env s1 = SOME s2', 'dataSem_pop_env s1 = SOME s2'),
+    ('wordSem_set_var q1 a s2', 'dataSem_set_var q1 a s2'),
+  ],
+  ('data_to_word_gcProof', 'state_rel_jump_exc'): [
+    ('wordSem_jump_exc s = SOME s1', 'dataSem_jump_exc s = SOME s1'),
+    ('wordSem_state_stack s1', 'dataSem_state_stack s1'),
+    ('wordSem_set_var i x s1', 'dataSem_set_var i x s1'),
+  ],
+  # the gc_move of the let is gen_gc's as well: HOL4 writes the
+  # first one qualified and lets the type of gen_conf settle the
+  # second, where gen_gc_partial's is the one in front
+  ('data_to_word_gcProof', 'gc_move_with_NIL'): [
+    ('gen_gc_partial_gc_move gen_conf', 'gen_gc_gc_move gen_conf'),
+  ],
+  ('data_to_word_gcProof', 'gc_move_list_with_NIL'): [
+    ('gen_gc_partial_gc_move_list gen_conf',
+     'gen_gc_gc_move_list gen_conf'),
+  ],
+  # clos_to_bvlProof relates closLang to bvl, and both have
+  # v_to_bytes, v_to_words and get_code_labels.  The side is what
+  # the argument says -- x is a closSem value and y a bvlSem one,
+  # es2 and aux2 are the bvl that compile_exps gives back where
+  # es1 and aux1 are the clos it took -- which HOL4 reads off the
+  # types and HOL Light cannot
+  ('clos_to_bvlProof', 'compile_common_semantics'): [
+    ('clos_to_bvl_compile (clos_to_bvl_config_do_call c)',
+     'clos_call_compile (clos_to_bvl_config_do_call c)'),
+  ],
+  ('clos_to_bvlProof', 'clos_to_bvlProof_do_app'): [
+    ('bvlSem_do_app op xs s1', 'closSem_do_app op xs s1'),
+  ],
+  ('clos_to_bvlProof', 'clos_to_bvlProof_do_app_err'): [
+    ('bvlSem_do_app op xs s1', 'closSem_do_app op xs s1'),
+  ],
+  ('clos_to_bvlProof', 'clos_to_bvlProof_compile_exps_correct'): [
+    ('bvlSem_evaluate (xs,env,s1)', 'closSem_evaluate (xs,env,s1)'),
+  ],
+  ('clos_to_bvlProof', 'clos_to_bvlProof_v_rel_IMP_v_to_bytes'): [
+    ('bvlSem_v_to_bytes x', 'closSem_v_to_bytes x'),
+  ],
+  ('clos_to_bvlProof', 'clos_to_bvlProof_v_rel_IMP_v_to_words'): [
+    ('bvlSem_v_to_words x', 'closSem_v_to_words x'),
+  ],
+  ('clos_to_bvlProof', 'compile_exps_code_labels'): [
+    ('MAP closProps_get_code_labels es2',
+     'MAP bvlProps_get_code_labels es2'),
+    ('MAP (closProps_get_code_labels o SND o SND) aux2',
+     'MAP (bvlProps_get_code_labels o SND o SND) aux2'),
+  ],
+  ('clos_to_bvlProof', 'clos_to_bvlProof_compile_prog_code_labels'): [
+    ('MAP (closProps_get_code_labels o SND o SND)\n'
+     '                   (clos_to_bvl_compile_prog max_app prog)',
+     'MAP (bvlProps_get_code_labels o SND o SND)\n'
+     '                   (clos_to_bvl_compile_prog max_app prog)'),
+  ],
+  ('data_to_word_gcProof', 'word_ml_inv_get_var_IMP'): [
+    ('wordSem_get_var n (wordSem_state_locals s)',
+     'dataSem_get_var n (dataSem_state_locals s)'),
+    ('wordSem_state_locals s', 'dataSem_state_locals s'),
+    ('wordSem_state_locals s', 'dataSem_state_locals s'),
+    ('wordSem_state_locals s', 'dataSem_state_locals s'),
+    ('wordSem_state_locals s', 'dataSem_state_locals s'),
+  ],
+  ('data_to_word_gcProof', 'word_ml_inv_get_vars_IMP'): [
+    ('wordSem_get_vars n (wordSem_state_locals s)',
+     'dataSem_get_vars n (dataSem_state_locals s)'),
+    ('wordSem_state_locals s', 'dataSem_state_locals s'),
+    ('wordSem_state_locals s', 'dataSem_state_locals s'),
+    ('wordSem_state_locals s', 'dataSem_state_locals s'),
+    ('wordSem_state_locals s', 'dataSem_state_locals s'),
+  ],
+  ('data_to_word_gcProof', 'state_rel_call_env_push_opt'): [
+    ('wordSem_call_env xs ss (wordSem_push_env x (IS_SOME opt) '
+     '(wordSem_dec_clock s))',
+     'dataSem_call_env xs ss (dataSem_push_env x (IS_SOME opt) '
+     '(dataSem_dec_clock s))'),
+  ],
+  ('data_to_word_gcProof', 'state_rel_call_env_push'): [
+    ('wordSem_call_env xs ss (wordSem_push_env x F (wordSem_dec_clock s))',
+     'dataSem_call_env xs ss (dataSem_push_env x F (dataSem_dec_clock s))'),
+  ],
+  ('data_to_word_gcProof', 'state_rel_call_env_push_env'): [
+    ('wordSem_call_env xs ss (wordSem_push_env x (IS_SOME opt) '
+     '(wordSem_dec_clock s))',
+     'dataSem_call_env xs ss (dataSem_push_env x (IS_SOME opt) '
+     '(dataSem_dec_clock s))'),
+  ],
+  ('data_to_word_gcProof', 'state_rel_IMP_Number_arg'): [
+    ('wordSem_call_env xs ss s', 'dataSem_call_env xs ss s'),
+    ('wordSem_call_env (APPEND xs [dataSem_Number (&n)]) ss s',
+     'dataSem_call_env (APPEND xs [dataSem_Number (&n)]) ss s'),
+  ],
+  ('data_to_word_gcProof', 'find_code_thm'): [
+    ('wordSem_find_code dest x (dataSem_state_code s) fs',
+     'dataSem_find_code dest x (dataSem_state_code s) fs'),
+    ('wordSem_call_env q ss (wordSem_dec_clock s)',
+     'dataSem_call_env q ss (dataSem_dec_clock s)'),
+  ],
+  ('data_to_word_gcProof', 'find_code_thm_ret'): [
+    ('wordSem_find_code dest xs (dataSem_state_code s) fs',
+     'dataSem_find_code dest xs (dataSem_state_code s) fs'),
+    ('wordSem_call_env ys ss (wordSem_push_env x F (wordSem_dec_clock s))',
+     'dataSem_call_env ys ss (dataSem_push_env x F (dataSem_dec_clock s))'),
+  ],
+  ('data_to_word_gcProof', 'find_code_thm_handler'): [
+    ('wordSem_find_code dest xs (dataSem_state_code s) fs',
+     'dataSem_find_code dest xs (dataSem_state_code s) fs'),
+    ('wordSem_call_env ys ss (wordSem_push_env x T (wordSem_dec_clock s))',
+     'dataSem_call_env ys ss (dataSem_push_env x T (dataSem_dec_clock s))'),
+  ],
+  ('data_to_word_gcProof', 'state_rel_call_env'): [
+    ('wordSem_call_env q ss (wordSem_dec_clock s)',
+     'dataSem_call_env q ss (dataSem_dec_clock s)'),
+  ],
   # the argument of a LabAsm is an asm_with_lab of labLang, and
   # the asm beside it in the same statement is an asm of asm: both
   # Jumps take one argument and both JumpCmps take four, so
