@@ -671,9 +671,6 @@ FIELD_VAR_DEF = {
   # the t that the evaluate of halt_assum gives is a state of
   # stackSem, where the s of this theory is one of labSem
   ('stack_to_labProof', 'halt_assum_def'): {'t': 'stackSem_state'},
-  # the s2 that the evaluate of stackSem gives is its state
-  ('stack_to_labProof', 'flatten_call_correct'):
-    {'t': 'stackSem_state', 's2': 'stackSem_state'},
   # the s of these two is the wordSem state that jump_exc and
   # call_env read, and the one of size_of_heap_call_push_env is
   # the dataSem state that cut_env reads
@@ -688,8 +685,9 @@ FIELD_VAR_DEF = {
   # a state of stackSem, where the t of the theory is one of
   # labSem (the halt_assum of the definition above says the same
   # of its own t)
+  # and the s2 that that evaluate gives is a stackSem state too
   ('stack_to_labProof', 'flatten_call_correct'):
-    {'t': 'stackSem_state'},
+    {'t': 'stackSem_state', 's2': 'stackSem_state'},
   # the s that the read_reg of this one reads is a state of
   # labSem, where the s of the theory is one of stackSem (the
   # port puts the argument into the body of the overload, so the
