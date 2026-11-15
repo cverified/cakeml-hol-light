@@ -13420,6 +13420,24 @@ THM_PATCH = {
   # the word_cmp of the result compares two words, which is asm's
   # and gives a bool; the one of the left hand side compares two
   # word_locs, which is wordSem's and gives an option
+  # source_to_flatProof relates the source semantics to flatSem,
+  # and writes one name for both: the first of each pair is
+  # semanticPrimitives' (or evaluate's) and the second flatSem's
+  ('source_to_flatProof', 'lookup_build_rec_env_lem'): [
+    ('(fn,flatSem_Recclosure cl_env funs' + chr(39) + ' fn)',
+     '(fn,semanticPrimitives_Recclosure cl_env funs' + chr(39) + ' fn)'),
+  ],
+  ('source_to_flatProof', 'invariant_dec_clock'): [
+    ('(flatSem_dec_clock st1)', '(evaluate_dec_clock st1)'),
+  ],
+  ('source_to_flatProof', 'v_rel_Bool_eqn'): [
+    ('genv (flatSem_Boolv b) v', 'genv (semanticPrimitives_Boolv b) v'),
+  ],
+  ('source_to_flatProof', 'do_eval'): [
+    ('flatSem_do_eval vs (semanticPrimitives_state_eval_state s)',
+     'semanticPrimitives_do_eval vs'
+     ' (semanticPrimitives_state_eval_state s)'),
+  ],
   # clos_to_bvlProof relates a value of closSem to one of bvlSem,
   # and writes one name for both: the first of each pair is
   # closSem's and the second bvlSem's
