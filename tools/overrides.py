@@ -668,6 +668,10 @@ FIELD_VAR_DEF = {
   # port puts the argument into the body of the overload, so the
   # record of that argument is the one it writes the accessor of)
   ('stack_to_labProof', 'FLOOKUP_regs'): {'s': 'labSem_state'},
+  # the s of compile_jump_correct is a labSem state too, as the
+  # pc, the code and the clock it is read with say
+  ('stack_to_labProof', 'compile_jump_correct'):
+    {'s': 'labSem_state'},
   # the t of memory_assumption is a state of labSem, where the
   # regs of this theory are the ones of stackSem; the s is the
   # variable of the overload read_reg (\r s. s.regs r)
@@ -12836,6 +12840,20 @@ THM_PATCH = {
   ('data_to_word_bignumProof', 'eval_Call_Arith'): [
     ('wordSem_get_vars [a1; a2] (dataSem_state_locals s)',
      'dataSem_get_vars [a1; a2] (dataSem_state_locals s)'),
+  ],
+  # the t that state_rel relates the stackSem state s to is a
+  # labSem state, and the two semantics have dec_clock each
+  ('stack_to_labProof', 'state_rel_dec_clock'): [
+    ('(stackSem_dec_clock s) (stackSem_dec_clock t)',
+     '(stackSem_dec_clock s) (labSem_dec_clock t)'),
+  ],
+  # and the evaluate and the dec_clock of compile_jump_correct
+  # are labSem's, on the s of that statement
+  ('stack_to_labProof', 'compile_jump_correct'): [
+    ('stackSem_evaluate s = stackSem_evaluate (labSem_upd_pc pc'
+     "' (stackSem_dec_clock s))",
+     'labSem_evaluate s = labSem_evaluate (labSem_upd_pc pc'
+     "' (labSem_dec_clock s))"),
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
