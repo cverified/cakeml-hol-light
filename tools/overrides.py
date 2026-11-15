@@ -901,7 +901,6 @@ LOCAL_NAMES = {
   # the word_shift that a Shift of an assembly instruction does is
   # asmSem's; backend_common's is the number of bits of a word
   ('labSem', 'word_shift'): 'asmSem_word_shift',
-  ('stackSem', 'word_shift'): 'asmSem_word_shift',
   # compile_pes reads the patterns of an ast expression, so the
   # pat_bindings it takes of one is ast's and not flatLang's
   ('source_to_flat', 'pat_bindings'): 'pat_bindings',
