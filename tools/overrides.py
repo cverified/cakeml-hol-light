@@ -338,6 +338,7 @@ FIELD_VAR = {
   # s is the dataSem state that state_rel relates to the wordSem
   # state t, and r and t' are what an evaluate of wordSem gives
   'data_to_word_assignProof': {'s': 'dataSem_state',
+                               's1': 'wordSem_state',
                                's2': 'dataSem_state',
                                't': 'wordSem_state',
                                "t'": 'wordSem_state',
@@ -670,6 +671,19 @@ FIELD_VAR_DEF = {
   # the t that the evaluate of halt_assum gives is a state of
   # stackSem, where the s of this theory is one of labSem
   ('stack_to_labProof', 'halt_assum_def'): {'t': 'stackSem_state'},
+  # the s2 that the evaluate of stackSem gives is its state
+  ('stack_to_labProof', 'flatten_call_correct'):
+    {'t': 'stackSem_state', 's2': 'stackSem_state'},
+  # the s of these two is the wordSem state that jump_exc and
+  # call_env read, and the one of size_of_heap_call_push_env is
+  # the dataSem state that cut_env reads
+  ('data_to_word_gcProof', 'jump_exc_call_env'):
+    {'s': 'wordSem_state'},
+  ('data_to_word_gcProof', 'size_of_heap_call_push_env'):
+    {'s': 'dataSem_state'},
+  # the s and the s' of pop_env_ffi are wordSem states
+  ('word_to_stackProof', 'pop_env_ffi'):
+    {'s': 'wordSem_state', "s'": 'wordSem_state'},
   # the t that the evaluate of the hypothesis of this one gives is
   # a state of stackSem, where the t of the theory is one of
   # labSem (the halt_assum of the definition above says the same
@@ -12968,6 +12982,27 @@ THM_PATCH = {
      '~(wordSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start = ffi_Fail)'),
     ('{stackSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start}',
      '{wordSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start}'),
+  ],
+  # a field read of an application takes its record from what
+  # the constant gives, which tools/recres.txt says and does
+  # not for these three
+  ('clos_to_bvlProof', 'initial_state_with_clock'): [
+    ('(state_clock_fupd (K (state_clock',
+     '(closSem_state_clock_fupd (K (closSem_state_clock'),
+  ],
+  ("flat_to_closProof", "initate_state'_clock"): [
+    ('(state_clock_fupd (K k)',
+     '(closSem_state_clock_fupd (K k)'),
+    ("/\\ state_clock (initial_state' b ffi max_app FEMPTY"
+     " co cc k) = k",
+     "/\\ closSem_state_clock (initial_state' b ffi max_app"
+     " FEMPTY co cc k) = k"),
+  ],
+  ('bviProps', 'evaluate_add_to_clock_io_events_mono'): [
+    ('ffi_state_io_events (state_ffi (SND (bviSem_evaluate (exps,env,s))))',
+     'ffi_state_io_events (bviSem_state_ffi (SND (bviSem_evaluate (exps,env,s))))'),
+    ('ffi_state_io_events (state_ffi (SND (bviSem_evaluate (exps,env,bviProps_inc_clock extra s))))',
+     'ffi_state_io_events (bviSem_state_ffi (SND (bviSem_evaluate (exps,env,bviProps_inc_clock extra s))))'),
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
