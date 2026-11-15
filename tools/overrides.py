@@ -2014,6 +2014,15 @@ CON_OF = {
      'chr_exn_v': 'semanticPrimitives'},
   ('source_to_flatProof', 'do_conversion_INR'):
     {'check_type': 'semanticPrimitives'},
+  # state_ok is about a state of bvlSem (the source annotates
+  # it), so the evaluate, the do_app, the dec_clock and the refs
+  # of the theorems about it are bvlSem's
+  ('bvl_to_bviProof', 'evaluate_ok'):
+    {'evaluate': 'bvlSem', 'state_refs': 'bvlSem'},
+  ('bvl_to_bviProof', 'do_app_ok'): {'do_app': 'bvlSem'},
+  ('bvl_to_bviProof', 'do_app_ok_lemma'): {'do_app': 'bvlSem'},
+  ('bvl_to_bviProof', 'evaluate_ok_lemma'):
+    {'dec_clock': 'bvlSem', 'state_refs': 'bvlSem'},
   # destLet is bvl's, so the three get_code_labels of this one
   # are bvlProps'
   ('bvl_to_bviProof', 'destLet_code_labels'):
@@ -13231,6 +13240,12 @@ THM_PATCH = {
   ('bvl_to_bviProof', 'compile_get_code_labels'): [
     ('(UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) prog)))',
      '(UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND) prog)))'),
+  ],
+  # both evaluates of this one are bvlSem's, as the equation
+  # between them says; the source qualifies only the first
+  ('bvl_to_bviProof', 'bEval_bVarBound'): [
+    ('bviSem_evaluate (xs,vs,s)',
+     'bvlSem_evaluate (xs,vs,s)'),
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
