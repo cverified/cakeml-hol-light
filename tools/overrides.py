@@ -2081,6 +2081,9 @@ CON_OF = {
   # of targetSem, of the outcome of the machine
   ('labSem', 'evaluate_def'):
     {'Halt': {0: 'labLang', 1: 'targetSem'}},
+  # the Halt of the machine that the semantics reads is
+  # targetSem's, where labLang has the one a LabAsm takes
+  ('labSem', 'semantics_def'): {'Halt': 'targetSem'},
   # the compile_part that takes the data configuration is
   # data_to_word's; bvi_to_data has one of a triple alone
   ('backend', 'compile_inc_progs_def'):
@@ -2163,6 +2166,10 @@ CON_OF = {
   # word_exp reads a wordLang expression, so its Const is
   # wordLang's and not the Const of an asm instruction
   ('stackSem', 'word_exp_def'): {'Const': 'wordLang'},
+  # the Const of an asm instruction takes a register and a word,
+  # the Const of a wordLang expression the word alone
+  ('stackSem', 'inst_def'):
+    {'Const': {2: 'asm', 1: 'wordLang'}},
   # the memory operation of a ShareInst is asm's and takes no
   # arguments, where the Load and the Store of a wordLang
   # expression take some
