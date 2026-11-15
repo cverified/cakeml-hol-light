@@ -22,9 +22,6 @@ let regexp_compiler_vector_INDUCT,regexp_compiler_vector_RECURSION =
   "regexp_compiler_vector =
      Vector ('a list)";;
 
-let fromList_def = new_definition
-  `fromList l = Vector l`;;
-
 let sub_def = define_general
   `sub (Vector l) n = EL n l`;;
 

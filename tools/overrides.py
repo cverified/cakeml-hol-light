@@ -844,10 +844,6 @@ ALSO_NEEDED = set([
   ('set_sep', 'STAR'), ('set_sep', 'SEP_EXISTS'),
   ('set_sep', 'SPLIT'), ('set_sep', 'SEP_T'),
   ('location', 'locnrow'), ('location', 'locncol'),
-  # mlvector's toList_fromList is about the fromList of
-  # regexp_compiler, which is a definition there (fromList l =
-  # Vector l) and not an overload of the constructor
-  ('regexp_compiler', 'fromList'),
   # the tail recursion of the bignum library: mc_multiword builds
   # its functions with the ML of mc_tailrecLib, which the port
   # mirrors (ml/lib/mc_tailrec.ml), so the scan of the sources
