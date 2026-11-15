@@ -2794,9 +2794,22 @@ INTRODUCES = (
 )
 
 
+# and what makes it a proof: it proves something, or it is a
+# tactic or a rule to be used in one
+PROVES = (
+  ' prove', '=prove', '_TAC', 'THEN', 'MATCH_MP', 'CONJUNCT',
+  'SPEC_ALL', 'GEN_ALL', 'REWRITE_RULE', 'SIMP_RULE', 'W(fun',
+  'UNDISCH', 'ASSUME ',
+)
+
+
 def proof_only(text):
-  """is this block of the overrides there for a proof alone?"""
-  return not any(k in text for k in INTRODUCES)
+  """is this block of the overrides there for a proof alone?  It
+     has to say so (it proves something, or it is a tactic), and
+     it must introduce no constant: a block that is neither --
+     a `needs' line, say -- is not proof material"""
+  return (any(k in text for k in PROVES)
+          and not any(k in text for k in INTRODUCES))
 
 
 ANTIQUOTE = {

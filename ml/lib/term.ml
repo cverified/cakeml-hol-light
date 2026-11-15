@@ -24,6 +24,13 @@ let pair_count_def,pair_count_ind = define_rec
    (pair_count (term_Pair t1 t2) = 1 + pair_count t1 + pair_count t2)`;;
 add_simp pair_count_def;;
 
+(* HOL4 termScript.sml: the case constant that its Datatype makes *)
+
+let term_CASE = new_recursive_definition term_RECURSION
+  `(term_CASE (term_Var n) vf pf cf = vf n) /\
+   (term_CASE (term_Pair t1 t2) vf pf cf = pf t1 t2) /\
+   (term_CASE (term_Const c) vf pf cf = cf c)`;;
+
 make_size "term";;
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)

@@ -328,6 +328,15 @@ let st_ex_FOREACH_def,st_ex_FOREACH_ind = define_guess
         st_ex_ignore_bind (a x) (
         st_ex_FOREACH xs a))`;;
 
+(* HOL4 reg_allocScript.sml: the case constant that its Datatype
+   makes for the tag of a register *)
+
+let reg_alloc_tag_CASE =
+  new_recursive_definition reg_alloc_tag_RECURSION
+  `(reg_alloc_tag_CASE (Fixed n) ff af sf = ff n) /\
+   (reg_alloc_tag_CASE Atemp ff af sf = af) /\
+   (reg_alloc_tag_CASE Stemp ff af sf = sf)`;;
+
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let st_ex_MAP_def,st_ex_MAP_ind = define_guess_cheat

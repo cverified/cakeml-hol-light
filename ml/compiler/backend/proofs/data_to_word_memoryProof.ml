@@ -5881,6 +5881,9 @@ let word_eq_def,word_eq_ind = define_wf_tac
                               (a1 + bytes_in_word) (a2 + bytes_in_word))
            | _ -> NONE)`;;
 
+(* the budget of the attempt, as it was *)
+let _ = cake_cheat_budget := 8;;
+
 (* HOL4 data_to_word_memoryProofScript.sml:14027: ML code, not ported *)
 
 let word_eq_LESS_EQ = prove

@@ -600,37 +600,37 @@ let imp_cmp_eq_num_cmp = prove
 
 (* [local] *)
 let check_type_IntT_flat_to_v = prove
- (`flatSem_check_type ast_IntT (flat_to_v (v:flatSem_v)) ==> (?i. v =
-  flatSem_Litv (ast_IntLit i))`,
+ (`semanticPrimitives_check_type ast_IntT (flat_to_v (v:flatSem_v)) ==> (?i.
+  v = flatSem_Litv (ast_IntLit i))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let check_type_Float64T_flat_to_v = prove
- (`flatSem_check_type ast_Float64T (flat_to_v (v:flatSem_v)) ==> (?w. v =
-  flatSem_Litv (ast_Float64 w))`,
+ (`semanticPrimitives_check_type ast_Float64T (flat_to_v (v:flatSem_v)) ==>
+  (?w. v = flatSem_Litv (ast_Float64 w))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let check_type_WordT_W8_flat_to_v = prove
- (`flatSem_check_type (ast_WordT ast_W8) (flat_to_v (v:flatSem_v)) ==> (?w. v
-  = flatSem_Litv (ast_Word8 w))`,
+ (`semanticPrimitives_check_type (ast_WordT ast_W8) (flat_to_v (v:flatSem_v))
+  ==> (?w. v = flatSem_Litv (ast_Word8 w))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let check_type_WordT_W64_flat_to_v = prove
- (`flatSem_check_type (ast_WordT ast_W64) (flat_to_v (v:flatSem_v)) ==> (?w.
-  v = flatSem_Litv (ast_Word64 w))`,
+ (`semanticPrimitives_check_type (ast_WordT ast_W64) (flat_to_v
+  (v:flatSem_v)) ==> (?w. v = flatSem_Litv (ast_Word64 w))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let check_type_CharT_flat_to_v = prove
- (`flatSem_check_type ast_CharT (flat_to_v (v:flatSem_v)) ==> (?c. v =
-  flatSem_Litv (ast_Char c))`,
+ (`semanticPrimitives_check_type ast_CharT (flat_to_v (v:flatSem_v)) ==> (?c.
+  v = flatSem_Litv (ast_Char c))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let check_type_BoolT_flat_to_v = prove
- (`flatSem_check_type ast_BoolT (flat_to_v (v:flatSem_v)) ==> v =
+ (`semanticPrimitives_check_type ast_BoolT (flat_to_v (v:flatSem_v)) ==> v =
   flatSem_Boolv F \/ v = flatSem_Boolv T`,
   CHEAT_TAC);;
 

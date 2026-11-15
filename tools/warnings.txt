@@ -185,11 +185,11 @@ reg_alloc	derive degrees_accessor: no degrees_manip
 reg_alloc	derive coalesced_accessor: no coalesced_manip
 reg_alloc	derive move_related_accessor: no move_related_manip
 reg_alloc	line 41 is 87 characters
-reg_alloc	line 915 is 89 characters
-reg_alloc	line 947 is 92 characters
-reg_alloc	line 1058 is 91 characters
-reg_alloc	line 1219 is 84 characters
-reg_alloc	line 1399 is 104 characters
+reg_alloc	line 924 is 89 characters
+reg_alloc	line 956 is 92 characters
+reg_alloc	line 1067 is 91 characters
+reg_alloc	line 1228 is 84 characters
+reg_alloc	line 1408 is 104 characters
 linear_scan	ML code skipped: val colors_accessors = el 1 accessors; val int_beg_accessors
 linear_scan	ML code skipped: val (colors,get_colors_def,set_colors_def) = colors_accessor
 linear_scan	Overload failwith
@@ -492,7 +492,7 @@ unify	derive svwalk_result_encodable': rule INST_TYPE/1
 unify	derive tcunify_thm: rule Once/0
 unify	derive t_vwalk_ind: rule UNDISCH/3
 unify	ML code skipped: val encode_walkstar_reverse = encode_walkstar |>            
-unify	line 1506 is 91 characters
+unify	line 1515 is 91 characters
 infer	ML code skipped: val type_name_check_subst_alt =   type_name_check_subst_def 
 infer	Overload Tem
 infer	derive constrain_op_case_def: conv patternMatchesLib.PMATCH_ELIM_CONV

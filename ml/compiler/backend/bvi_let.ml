@@ -74,6 +74,18 @@ let exp2_size_APPEND = prove
  (`!xs ys. bvi_exp_size1 (APPEND xs ys) = bvi_exp_size1 xs + bvi_exp_size1 ys`,
   CHEAT_TAC);;
 
+(* the size facts that the termination of the two definitions of
+   this file needs, which ml/lib/define.ml takes from here, and the
+   budget that their recursion asks for: eight seconds is what a
+   definition of the port is given before it is assumed instead,
+   and these two take about twenty each *)
+
+let bvi_let_term_facts = !cake_term_facts;;
+let bvi_let_budget = !cake_cheat_budget;;
+cake_term_facts := list_size_BUTLAST :: list_size_LAST ::
+                   (!cake_term_facts);;
+cake_cheat_budget := 300;;
+
 (* Return/LetCall are pass-through (only nested Lets are optimised).
   TODO(multiret):
    no optimisation specific to them yet -- e.g. the Let tail-position move
@@ -186,6 +198,9 @@ let bvi_let_compile_sing_def,bvi_let_compile_sing_ind =
    `bvi_let_compile_sing env d (bvi_LetCall rets t dest xs y) =
          bvi_LetCall rets t dest (bvi_let_compile_list env d xs)
             (bvi_let_compile_sing (APPEND (REPLICATE rets 0) env) d y)`];;
+
+cake_term_facts := bvi_let_term_facts;;
+cake_cheat_budget := bvi_let_budget;;
 
 let compile_sing = prove
  (`(!n d e. bvi_let_compile n d [e] = [bvi_let_compile_sing n d e]) /\

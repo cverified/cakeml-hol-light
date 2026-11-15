@@ -36,6 +36,14 @@ let id_to_string_def,id_to_string_ind = define_rec
    (id_to_string (Long x id') =
         mlstring_concat [x; implode "."; id_to_string id'])`;;
 
+(* HOL4 infer_tScript.sml: the case constant that its Datatype
+   makes *)
+
+let infer_t_CASE = new_recursive_definition infer_t_RECURSION
+  `(infer_t_CASE (Infer_Tvar_db n) dbf appf uvf = dbf n) /\
+   (infer_t_CASE (Infer_Tapp its n) dbf appf uvf = appf its n) /\
+   (infer_t_CASE (Infer_Tuvar n) dbf appf uvf = uvf n)`;;
+
 make_size "mlstring";;
 make_size "namespace";;
 make_size "t";;

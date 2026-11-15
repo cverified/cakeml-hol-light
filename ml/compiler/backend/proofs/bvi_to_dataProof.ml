@@ -65,13 +65,13 @@ add_simp data_to_bvi_v_def;;
 
 (* Projection for Unit constant *)
 let data_to_bvi_v_Unit = prove
- (`data_to_bvi_v dataSem_Unit = dataSem_Unit`,
+ (`data_to_bvi_v dataSem_Unit = bvlSem_Unit`,
   CHEAT_TAC);;
 add_simp data_to_bvi_v_Unit;;
 
 (* Projection for Boolv constant *)
 let data_to_bvi_v_Boolv = prove
- (`!b. data_to_bvi_v (dataSem_Boolv b) = (dataSem_Boolv b)`,
+ (`!b. data_to_bvi_v (dataSem_Boolv b) = (bvlSem_Boolv b)`,
   CHEAT_TAC);;
 add_simp data_to_bvi_v_Boolv;;
 
@@ -171,12 +171,12 @@ add_simp data_to_bvi_result_def;;
 
 (* All the `dataSem$v` values project to `bvlSem$Boolv b` satisfy `isBool` *)
 let isBool_eq = prove
- (`!z b. isBool b z <=> (dataSem_Boolv b = data_to_bvi_v z)`,
+ (`!z b. isBool b z <=> (bvlSem_Boolv b = data_to_bvi_v z)`,
   CHEAT_TAC);;
 
 (* Lifting `data_to_bvi_v` projection to work over `bvlSem$v list` *)
 let v_to_list_eq = prove
- (`!x. dataSem_v_to_list (data_to_bvi_v x) = OPTION_MAP (MAP data_to_bvi_v)
+ (`!x. bvlSem_v_to_list (data_to_bvi_v x) = OPTION_MAP (MAP data_to_bvi_v)
   (dataSem_v_to_list x)`,
   CHEAT_TAC);;
 add_simp v_to_list_eq;;
@@ -184,15 +184,14 @@ add_simp v_to_list_eq;;
 (* Special bijection for `data_to_bvi_v` with `dataSem$Number` + `MAP` *)
 let data_to_bvi_number_eq = prove
  (`!ns.
-     MAP data_to_bvi_v (MAP (dataSem_Number o (&) o w2n) ns) =
-     MAP (dataSem_Number o (&) o w2n) ns`,
+     MAP data_to_bvi_v (MAP (dataSem_Number o (&) o w2n) ns) = MAP
+       (bvlSem_Number o (&) o w2n) ns`,
   CHEAT_TAC);;
 
 (* Special bijection for `data_to_bvi_v` with `dataSem$Word64` + `MAP` *)
 let data_to_bvi_word_eq = prove
  (`!ns.
-     MAP data_to_bvi_v (MAP dataSem_Word64 ns) =
-     MAP dataSem_Word64 ns`,
+     MAP data_to_bvi_v (MAP dataSem_Word64 ns) = MAP bvlSem_Word64 ns`,
   CHEAT_TAC);;
 
 (* Bijection of `data_to_bvi_v (Number n)` over multiple maps *)
@@ -209,13 +208,13 @@ let MAP_data_to_bvi_Word64 = prove
 
 (* `data_to_bvi_v_def` is idempotent over `v_to_bytes` *)
 let v_to_bytes_eq = prove
- (`!x. dataSem_v_to_bytes (data_to_bvi_v x) = dataSem_v_to_bytes x`,
+ (`!x. bvlSem_v_to_bytes (data_to_bvi_v x) = dataSem_v_to_bytes x`,
   CHEAT_TAC);;
 add_simp v_to_bytes_eq;;
 
 (* `data_to_bvi_v_def` is idempotent over `v_to_words` *)
 let v_to_words_eq = prove
- (`!x. dataSem_v_to_words (data_to_bvi_v x) = dataSem_v_to_words x`,
+ (`!x. bvlSem_v_to_words (data_to_bvi_v x) = dataSem_v_to_words x`,
   CHEAT_TAC);;
 add_simp v_to_words_eq;;
 
