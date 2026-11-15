@@ -27,21 +27,27 @@ def arities(text):
     # port writes that newline as an escape) or to the end of the
     # specification: the parentheses of its prose are not
     # arguments of the constructor before it
-    part = re.sub(r'//.*?(?:\\n|$)', ' ', part)
+    part = re.sub(r'//[^\n]*', ' ', part.replace('\\n', '\n'))
     for alt in part.split('=', 1)[1].split('|'):
       alt = alt.strip()
       if not alt: continue
       m = re.match(r"([A-Za-z_][A-Za-z0-9_']*)(.*)$", alt, re.S)
       if not m: continue
-      # every argument is one parenthesised group, and a type in
-      # it may have parentheses of its own
+      # an argument is one parenthesised group, whose type may
+      # have parentheses of its own, or a bare name (HOL Light
+      # takes num and 'a without brackets, and the port writes
+      # them as the source does)
       n = d = 0
+      bare = False
       for ch in m.group(2):
         if ch == '(':
           if d == 0: n += 1
-          d += 1
+          d += 1; bare = False
         elif ch == ')':
-          d -= 1
+          d -= 1; bare = False
+        elif d == 0:
+          if ch.isspace(): bare = False
+          elif not bare: bare = True; n += 1
       out[m.group(1)] = n
   return out
 

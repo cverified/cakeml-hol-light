@@ -20,6 +20,16 @@ DECLARE = re.compile(r"""cake_declare\s+"([A-Za-z0-9_']+)\"""")
 # constants and sent 409 real ones to a theorem about them
 PROVED = re.compile(r"^let [A-Za-z0-9_']+ =\s*prove\b")
 
+# and a phrase that makes no constant at all is no definition
+# either: data_to_word_bignumProof binds a SIMP_CONV of a
+# quotation whose head is wordSem\'s evaluate, which is not where
+# the port defines it
+MAKES = re.compile(r"=\s*(?:\n\s*)?(?:new_definition|new_specification"
+                   r"|new_recursive_definition|new_inductive_definition"
+                   r"|new_axiom|new_type_abbrev|make_size|define_\w+"
+                   r"|assume_definition\w*|cake_inductive|cake_declare)"
+                   r"\b")
+
 
 def clause_heads(phrase):
   """the constants that a phrase of the port defines: the head of
@@ -53,6 +63,7 @@ def sites():
         # a theorem is not a definition of the constants its
         # statement mentions
         if PROVED.match(m.group(0)): continue
+        if not MAKES.search(m.group(0)): continue
         for h in clause_heads(m.group(0)):
           out.setdefault(h, (rel, m.group(1)))
       for m in DECLARE.finditer(src):

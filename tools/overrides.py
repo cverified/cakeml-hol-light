@@ -159,6 +159,7 @@ THM_ACCESSORS = {
   ('data_to_word_assignProof', 'push_env_store'):
     {'code': 'wordSem_state_code'},
 
+
   # this one has a variable compile and a variable compile_oracle,
   # so it is read with the overloads of the field names taken
   # away, and the stack that it updates is the one of a wordSem
@@ -739,6 +740,13 @@ FIELD_VAR_DEF = {
   # the t whose registers the initial labSem state takes over is
   # the state of the machine, an asm_state
   ('lab_to_targetProof', 'make_init_def'): {'t': 'asm_state'},
+  # the memory that get_var_consts writes is the one of a wordSem
+  # state, and the state that do_app_AllocThunk writes the refs,
+  # the safe_for_space and the stack_max of is the dataSem one
+  # that consume_space gives back
+  ('data_to_word_assignProof', 'get_var_consts'): {'s': 'wordSem_state'},
+  ('data_to_word_assignProof', 'do_app_AllocThunk'):
+    {'s1': 'dataSem_state'},
 }
 
 FIELD_OF = {
@@ -829,6 +837,10 @@ ALSO_NEEDED = set([
   ('set_sep', 'STAR'), ('set_sep', 'SEP_EXISTS'),
   ('set_sep', 'SPLIT'), ('set_sep', 'SEP_T'),
   ('location', 'locnrow'), ('location', 'locncol'),
+  # mlvector's toList_fromList is about the fromList of
+  # regexp_compiler, which is a definition there (fromList l =
+  # Vector l) and not an overload of the constructor
+  ('regexp_compiler', 'fromList'),
   # the tail recursion of the bignum library: mc_multiword builds
   # its functions with the ML of mc_tailrecLib, which the port
   # mirrors (ml/lib/mc_tailrec.ml), so the scan of the sources

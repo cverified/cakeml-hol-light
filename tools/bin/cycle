@@ -5,7 +5,10 @@
 #   1 the reports of the run that finished (they talk to hol-seq,
 #     so they go before the retemplate), and the table of the
 #     arguments of the constants whose type is int
-#   1a what a session reads differently from the source, and which
+#   1a the record arguments, the result parts and the arity of
+#     every constant (tools/recargs.txt and the two beside it),
+#     which a file that did not load is missing from
+#   1b what a session reads differently from the source, and which
 #     theorem reads a constant of a theory out of the scope of its
 #     source, which talk to the clone as well
 #   2 the cheat list from ml/CHEATS.md, which says where the port
@@ -47,6 +50,14 @@ sed -n '/=== axioms and cheats/,/=== timings/p' tmp/report.txt |
   head -14
 sed -n '/=== clauses that do not typecheck apart/,/=== types/p' \
   tmp/report.txt | head -8
+echo "=== the record arguments of the constants"
+# the tables that say which argument (and which part of the
+# result) of a constant is a record of the port, and the arity of
+# every constant: a file that did not load is not in the session,
+# and those are exactly the files whose statements need them, so
+# this goes after a run that loaded everything.  It has to happen
+# before the retemplate, which takes the session with it
+recargs
 echo "=== the integer arguments of the constants"
 # the table that says which argument of a constant is an int (a
 # numeral there is &n), out of the session of the run, which has
