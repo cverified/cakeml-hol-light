@@ -2921,11 +2921,33 @@ PROVES = (
 )
 
 
+def code_only(text):
+  """the text of a block with its comments taken out: a word in a
+     comment does not say what the block is.  The comment of
+     data_to_word_memoryProof\'s word_eq names TERM_TAC, where the
+     block itself only puts a fact where TERM_TAC reads it, and
+     without this the block went for a proof and the definition
+     lost the fact its termination goes by"""
+  out, depth, i = [], 0, 0
+  while i < len(text):
+    if text.startswith('(*', i): depth += 1; i += 2; continue
+    if depth and text.startswith('*)', i): depth -= 1; i += 2; continue
+    if not depth: out.append(text[i])
+    i += 1
+  return ''.join(out)
+
+
 def proof_only(text):
   """is this block of the overrides there for a proof alone?  It
      has to say so (it proves something, or it is a tactic), and
      it must introduce no constant: a block that is neither --
      a `needs' line, say -- is not proof material"""
+  text = code_only(text)
+  # a block that writes into one of the stores the definition
+  # machinery reads (cake_term_facts, cake_term_lemmas,
+  # admissible_extra, cake_cheat_budget) is what makes a
+  # definition of the file go through, whatever else is in it
+  if ':=' in text: return False
   return (any(k in text for k in PROVES)
           and not any(k in text for k in INTRODUCES))
 
