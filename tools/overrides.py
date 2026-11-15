@@ -2611,6 +2611,10 @@ CON_OF = {
   ('bvi_to_dataProof', 'data_to_bvi_do_app'): {'Install': 'closLang'},
   # the result that the machine gives is targetSem's, where the
   # TimeOut of wordSem is the one the resolution would take
+  # the mem_load of labSem's mem_op is labSem's own, applied to
+  # two of its three arguments: wordSem's takes exactly two, so
+  # the number of arguments picks the wrong one of the pair
+  ('labSem', 'mem_op_def'): {'mem_load': 'labSem'},
   ('labProps', 'evaluate_ADD_clock'): {'TimeOut': 'targetSem'},
   # the code that this relates is the deep embedding of the bignum
   # library, so its code_rel is word_bignumProof's
@@ -13416,6 +13420,36 @@ THM_PATCH = {
   # the word_cmp of the result compares two words, which is asm's
   # and gives a bool; the one of the left hand side compares two
   # word_locs, which is wordSem's and gives an option
+  # clos_to_bvlProof relates a value of closSem to one of bvlSem,
+  # and writes one name for both: the first of each pair is
+  # closSem's and the second bvlSem's
+  ('clos_to_bvlProof', 'v_to_list'): [
+    ('bvlSem_v_to_list v = SOME l', 'closSem_v_to_list v = SOME l'),
+  ],
+  ('clos_to_bvlProof', 'list_to_v_v_rel'): [
+    ('code (bvlSem_list_to_v xs)', 'code (closSem_list_to_v xs)'),
+  ],
+  ('clos_to_bvlProof', 'v_rel_IMP_v_to_words_lemma'): [
+    ('(bvlSem_v_to_list x = SOME (MAP bvlSem_Word64 ns))',
+     '(closSem_v_to_list x = SOME (MAP closSem_Word64 ns))'),
+  ],
+  ('clos_to_bvlProof', 'v_rel_IMP_v_to_bytes_lemma'): [
+    ('(bvlSem_v_to_list x = SOME (MAP (bvlSem_Number o (&) o'
+     ' (w2n:word8->num)) ns))',
+     '(closSem_v_to_list x = SOME (MAP (closSem_Number o (&) o'
+     ' (w2n:word8->num)) ns))'),
+  ],
+  # and the thunk that the closSem refs hold is closSem's
+  ('clos_to_bvlProof', 'rel_dest_thunk'): [
+    ('bvlSem_dest_thunk [h] (closSem_state_refs s) = bvlSem_IsThunk m r1',
+     'closSem_dest_thunk [h] (closSem_state_refs s) ='
+     ' closSem_IsThunk m r1'),
+  ],
+  ('clos_to_bvlProof', 'rel_dest_thunk_NotThunk'): [
+    ('bvlSem_dest_thunk [h] (closSem_state_refs s) = bvlSem_NotThunk',
+     'closSem_dest_thunk [h] (closSem_state_refs s) ='
+     ' closSem_NotThunk'),
+  ],
   # flat_to_closProof relates a value of flatSem to one of
   # closSem, and writes one name for both: the first of each pair
   # is flatSem's and the second closSem's
