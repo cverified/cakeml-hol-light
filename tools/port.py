@@ -5324,7 +5324,8 @@ def check_no_run():
 # a theorem that the port writes by hand, as the file writes it
 HANDTHM = re.compile(r"^let ([A-Za-z_][A-Za-z_0-9']*) =[ ]*"
                      r"(?:\n[ ]*)?(?:try[ ]+)?"
-                     r"(?:prove|new_axiom|CONJ|GEN_ALL|SPEC_ALL)\b",
+                     r"(?:prove|new_axiom|new_definition"
+                     r"|define_cases|CONJ|GEN_ALL|SPEC_ALL)\b",
                      re.M)
 
 
@@ -5351,9 +5352,12 @@ def port(thy, db=None):
   for i, l in enumerate(text.split('\n')):
     if len(l) > 79:
       p.warn.append('line %d is %d characters' % (i + 1, len(l)))
-  # a theorem that the port writes by hand (overrides.EXTRA_HEAD
-  # and the others) is one a later file can name as it names any
-  # other, so the bindings of the file are read off the file
+  # a theorem or a definition that the port writes by hand
+  # (overrides.EXTRA_HEAD and the others) is one a later file can
+  # name as it names any other, so the bindings of the file are
+  # read off the file.  gram's cmlG_def is one: HOL4 makes it with
+  # ML (mk_grammar_def), so nothing of the port's own machinery
+  # registered it and gramProps could not name it
   for nm in HANDTHM.findall(text):
     if nm not in db.thmbind: dbmod.bind_thm(db, thy, nm, nm)
   path = ML + db.mlpath_of(thy)
