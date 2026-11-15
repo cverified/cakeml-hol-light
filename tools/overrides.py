@@ -1941,6 +1941,20 @@ CON_OF = {
     {'NotThunk': 'dataSem', 'Number': 'dataSem',
      'Word64': 'dataSem', 'CodePtr': 'dataSem',
      'RefPtr': 'dataSem'},
+  # the semantics of dataSem takes the ffi, the code, the oracle,
+  # the compiler, the limits, the stack size and the start, and
+  # the one of wordSem takes a state and the start: the number of
+  # arguments tells the two apart.  The Fail it is compared with
+  # is the behaviour of ffi, where reg_alloc has a Fail of a
+  # string and comes last in the order
+  ('data_to_wordProof', 'compile_semantics_lemma'):
+    {'semantics': {7: 'dataSem', 2: 'wordSem'}, 'Fail': 'ffi'},
+  ('data_to_wordProof', 'compile_semantics'):
+    {'semantics': {7: 'dataSem', 2: 'wordSem'}, 'Fail': 'ffi'},
+  ('data_to_wordProof', 'compile_semantics_precise_lemma'):
+    {'semantics': {7: 'dataSem', 2: 'wordSem'}, 'Fail': 'ffi'},
+  ('data_to_wordProof', 'compile_semantics_precise'):
+    {'semantics': {7: 'dataSem', 2: 'wordSem'}, 'Fail': 'ffi'},
   # the compile that this one runs on the sections it builds is
   # lab_to_target's; backend has a compile of its own, which
   # takes a program of source and is what the name alone means
