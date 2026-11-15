@@ -374,6 +374,10 @@ class Porter:
       dbmod.hl_types() | set(overrides.TYPE_MAP))
     self.out = []
     self.warn = []
+    # which entries of overrides.FILE_PATCH this file has used, so
+    # that one that matches nowhere in it is reported and the
+    # table does not rot
+    self.filepatched = set()
     # the proofs of phase three: a theorem of proofs/<path>.prf
     # gets the tactic that stands there, one that is not in it
     # keeps its CHEAT_TAC (tools/proofstore.py)
@@ -715,6 +719,7 @@ class Porter:
     # apply is an error and not a silence
     stmt = patch_text(stmt, overrides.THM_PATCH.get((self.thy, nm), []),
                       'THM_PATCH')
+    stmt = file_patch(self.thy, stmt, self.filepatched)
     if vars_read:
       # the statement uses the name of a record accessor for a
       # variable of its own and the port cannot say its type in
@@ -1625,6 +1630,12 @@ class Porter:
                ' interface *)\nlet _ = hide_overloads\n  [' +
                ';\n   '.join('"%s","%s"' % (n, c)
                               for n, c in self.hideconsts) + '];;')
+    # an entry of overrides.FILE_PATCH that matched nowhere in
+    # this file is one the port no longer needs, or one that was
+    # written for text the port does not say any more
+    for i, (was, _) in enumerate(overrides.FILE_PATCH.get(self.thy, [])):
+      if i not in self.filepatched:
+        self.warn.append('FILE_PATCH matches nothing: %s' % was)
     return text.replace(NEEDS, head)
 
   def wanted(self, b):
@@ -2760,6 +2771,7 @@ class Porter:
     if os.environ.get('PATCHDBG') and key in overrides.DEF_PATCH:
       print('PATCHDBG', text[:900], file=sys.stderr)
     text = patch_text(text, overrides.DEF_PATCH.get(key, []))
+    text = file_patch(self.thy, text, self.filepatched)
     # HOL4's [simp] on a definition says that its equations belong
     # to the set that its simplifier reaches for, which the port
     # says with a call after the definition, as it does for a
@@ -5017,6 +5029,7 @@ class Porter:
     if os.environ.get('PATCHDBG') and key in overrides.DEF_PATCH:
       print('PATCHDBG', text[:900], file=sys.stderr)
     text = patch_text(text, overrides.DEF_PATCH.get(key, []))
+    text = file_patch(self.thy, text, self.filepatched)
     # HOL4's [simp] on a definition says that its equations belong
     # to the set that its simplifier reaches for, which the port
     # says with a call after the definition, as it does for a
@@ -5217,6 +5230,22 @@ def letline(binding, how, rest):
     return 'let %s =\n  %s\n  %s;;' % (binding, how, rest)
   a, b = binding.split(',')
   return 'let %s,\n    %s =\n  %s\n  %s;;' % (a, b, how, rest)
+
+
+def file_patch(thy, text, used=None):
+  """the patches that a whole file wants (overrides.FILE_PATCH): a
+     name that one theory of a pair means where an argument of it
+     is of the other\'s, which no rule of the resolution settles.
+     The pattern is a regular expression over the text as it is
+     laid out, where \\s+ stands for the break of a line as well
+     as a space, and every spot of the file that matches is
+     patched.  An entry that the whole file never matches is an
+     error, which tools/port.py reports when the file is done"""
+  for i, (was, now) in enumerate(overrides.FILE_PATCH.get(thy, [])):
+    text, k = re.subn(was, now, text)
+    if k and used is not None: used.add(i)
+  return '\n'.join(wrap(l, 0, 79) if len(l) > 79 else l
+                    for l in text.split('\n'))
 
 
 def patch_text(text, patches, what='DEF_PATCH'):

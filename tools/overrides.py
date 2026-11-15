@@ -925,6 +925,7 @@ LOCAL_NAMES = {
   # has a toList of its own, on a lazy list
   ('flat_patternProof', 'toList'): 'sptree_toList',
   ('bvl_inlineProof', 'toList'): 'sptree_toList',
+  ('data_to_word_gcProof', 'toList'): 'sptree_toList',
   # the word_shift that a Shift of an assembly instruction does is
   # asmSem's; backend_common's is the number of bits of a word
   ('labSem', 'word_shift'): 'asmSem_word_shift',
@@ -1073,6 +1074,9 @@ INT_NUMERALS = set([
 # The library layer has them under a name of their own and the
 # statements that mean them say so here.
 THM_NAMES = {
+  # the list that LPREFIX takes is a lazy one, so the fromList of
+  # this is llist's and not sptree's
+  ('dataProps', 'semantics_Div_IMP_LPREFIX'): {'fromList': 'fromList'},
   # the prog_size of these is the one of the language the seqs
   # are of, which the port read as labLang's
   ('presLang', 'MEM_append_data_seqs'):
@@ -1378,6 +1382,28 @@ INT_ARGS = {
 # the type of an argument of a definition, where the definition
 # itself says it nowhere and the overloaded names in it are
 # resolved by it
+# FILE_PATCH: what a whole file of the port says wrong, which no
+# rule of the resolution settles and a patch of every block of it
+# would say over and over.  The key is the theory, the pattern is
+# a regular expression over the text as the port lays it out
+# (\s+ stands for the break of a line as well as for a space) and
+# every spot that matches is patched.  An entry that matches
+# nowhere in the file is reported in tools/warnings.txt
+FILE_PATCH = {
+  # the get_var of dataSem takes the locals and the one of wordSem
+  # takes the state, so a get_var of the locals of a dataSem state
+  # is dataSem's wherever these two files write one (the arity of
+  # the two is the same, and nothing else tells them apart)
+  'data_to_word_gcProof': [
+    (r'wordSem_(get_vars?)(\s+\S+\s+\(dataSem_state_locals)',
+     r'dataSem_\1\2'),
+  ],
+  'data_to_word_assignProof': [
+    (r'wordSem_(get_vars?)(\s+\S+\s+\(dataSem_state_locals)',
+     r'dataSem_\1\2'),
+  ],
+}
+
 ARG_TYPES = {
   # the second state is one of stackSem as well, which the
   # accessors that the two are compared with do not say
@@ -2476,6 +2502,35 @@ CON_OF = {
   # the Halt that this assumes the program gives back is the
   # result of a stackSem evaluate and not the one of the machine
   ('stack_to_labProof', 'halt_assum_def'): {'Halt': 'stackSem'},
+  # the result that the machine gives is targetSem's, where the
+  # TimeOut of wordSem is the one the resolution would take
+  ('labProps', 'evaluate_ADD_clock'): {'TimeOut': 'targetSem'},
+  # the code that this relates is the deep embedding of the bignum
+  # library, so its code_rel is word_bignumProof's
+  ('data_to_word_bignumProof', 'IMP_bignum_code_rel'):
+    {'code_rel': 'word_bignumProof'},
+  # and the cut_env of this one takes a single set of names, which
+  # is dataSem's (wordSem's takes a pair of them)
+  ('data_to_word_bignumProof', 'cut_env_fromList_sing'):
+    {'cut_env': 'dataSem'},
+  # the values that this checks the type of are the ones that
+  # flat_to_v gives, which are semanticPrimitives'
+  ('flatProps', 'check_type_LIST_REL_same'):
+    {'check_type': 'semanticPrimitives'},
+  # the dest_thunk of this is bvlSem's, so the NotThunk it gives
+  # back is bvlSem's too
+  ('bvi_tmcProof', 'dest_thunk_not_thunk_rel'): {'NotThunk': 'bvlSem'},
+  # and the op that the do_app of bviSem takes is closLang's
+  ('bvi_tmcProof', 'do_app_op_err_rel'): {'FFI': 'closLang'},
+  # the Fail that a semantics is not is the one of the semantics
+  # result, where reg_alloc and pattern_semantics have a Fail of
+  # their own
+  ('flat_patternProof', 'compile_decs_semantics'): {'Fail': 'ffi'},
+  ('word_to_wordProof', 'word_to_word_compile_semantics'):
+    {'Fail': 'ffi'},
+  # the free variables that this is about are the ones of a
+  # closLang expression
+  ('clos_annotateProof', 'alt_fv'): {'*': 'closLang'},
   # the Equal that the If of a wordLang program takes is the
   # comparison of asm, and an ordering has an Equal as well
   ('word_simp', 'drop_consts_def'): {'*': 'wordLang'},
@@ -12841,19 +12896,52 @@ CON_FILE = {
   # results that an evaluate of wordSem gives, where wordLang
   # has a Break and a Continue of its own, both programs
   'word_allocProof': {'Break': 'wordSem', 'Continue': 'wordSem'},
+  # and so are the ones of wordProps and of word_to_wordProof:
+  # the Break and the Continue that a statement of either names
+  # are the results of an evaluate and never the programs
+  'wordProps': {'Break': 'wordSem', 'Continue': 'wordSem'},
+  'word_to_wordProof': {'Break': 'wordSem', 'Continue': 'wordSem'},
+  # the Break and the Continue of stackProps are results as well
+  'stackProps': {'Break': 'stackSem', 'Continue': 'stackSem'},
+  # every Var of closProps is closLang's, where the Var of ast is
+  # the one the resolution would take
+  'closProps': {'Var': 'closLang'},
+  # the expressions that remove_ticks is about are closLang's
+  'clos_ticksProof': {'If': 'closLang', 'Raise': 'closLang',
+                      'Handle': 'closLang'},
+  # the Halt of stack_rawcallProof is the result of an evaluate,
+  # and the labels it reads off a program are the ones of
+  # stackSem and not of a labLang section
+  'stack_rawcallProof': {'Halt': 'stackSem',
+                         'get_labels': 'stackSem'},
+  # a cut_state_opt of these three is dataSem's: the state it cuts
+  # is the one the pass reads, and wordSem has one of its own that
+  # none of their statements names
+  'data_to_word_bignumProof': {'cut_state_opt': 'dataSem'},
+  'data_to_word_assignProof': {'cut_state_opt': 'dataSem',
+                               'cut_state': 'dataSem'},
   # the assign of data_to_wordProof is the pass of
   # data_to_word, of seven arguments; wordSem has an assign
   # of its own, of three, and the file never writes that one
   # and its compile_part takes a configuration, so it is
   # data_to_word's; bvi_to_data's takes the triple alone
+  # and the code_rel of data_to_wordProof is the one of
+  # data_to_word_gcProof, which the source takes over by name
   'data_to_wordProof': {'assign': 'data_to_word',
-                        'compile_part': 'data_to_word'},
+                        'compile_part': 'data_to_word',
+                        'code_rel': 'data_to_word_gcProof'},
   # the dec_clock of this proof is wordSem's, on the state the
   # compiler builds: word_bignumProof has a dec_clock of its own,
   # on its own state, and comes later in the order.  The one
   # theorem that means dataSem's writes dataSem$dec_clock, and a
   # qualified name beats this table
-  'data_to_word_gcProof': {'dec_clock': 'wordSem'},
+  # and a cut_state_opt, a cut_state or a cut_env of it is
+  # dataSem's: the state it cuts is the one the pass reads, and
+  # the cut_env of wordSem that it names it qualifies
+  'data_to_word_gcProof': {'dec_clock': 'wordSem',
+                           'cut_state_opt': 'dataSem',
+                           'cut_state': 'dataSem',
+                           'cut_env': 'dataSem'},
   # the op of dataProps is a closLang op, so its Install is
   # closLang's; wordLang has an Install of its own and comes
   # later in the order
@@ -12917,7 +13005,10 @@ CON_FILE = {
   'stackSem': {'Const': 'asm'},
   # and its toList is sptree's, on a num_map; the one of
   # llist, on a lazy list, comes later in the order
-  'bvl_inlineProof': {'compile_oracle': 'bvl_inline'},
+  # and the compile_inc that it names without a theory is
+  # bvl_inline's, which takes the limit and the two switches
+  'bvl_inlineProof': {'compile_oracle': 'bvl_inline',
+                      'compile_inc': 'bvl_inline'},
 }
 
 
@@ -13182,6 +13273,13 @@ THM_PATCH = {
   # that the stackSem evaluate of the program gives back is
   # stackSem's: this file is about the two semantics at once and
   # writes the name of each of them for both
+  # the word_cmp of the result compares two words, which is asm's
+  # and gives a bool; the one of the left hand side compares two
+  # word_locs, which is wordSem's and gives an option
+  ('wordProps', 'word_cmp_Word_Word'): [
+    ("SOME (wordSem_word_cmp cmp c c')",
+     "SOME (asm_word_cmp cmp c c')"),
+  ],
   ('stack_to_labProof', 'flatten_correct'): [
     ('~(r = SOME targetSem_Error)', '~(r = SOME stackSem_Error)'),
     ('stackSem_evaluate (labSem_state_clock_fupd',
