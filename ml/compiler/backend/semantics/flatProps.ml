@@ -594,13 +594,13 @@ let simple_basic_val_rel_def = define_cases
    (simple_basic_val_rel (flatSem_Recclosure vs exps nm) v = F)`;;
 add_simp simple_basic_val_rel_def;;
 
-let v_container_xs_def = define_cases
-  `(v_container_xs (flatSem_Litv _) = []) /\
-   (v_container_xs (flatSem_Loc _ _) = []) /\
-   (v_container_xs (flatSem_Conv _ vs) = vs) /\
-   (v_container_xs (flatSem_Vectorv vs) = vs) /\
-   (v_container_xs (flatSem_Closure vs nm exp) = []) /\
-   (v_container_xs (flatSem_Recclosure vs exps nm) = [])`;;
+let v_container_xs_def = define_cases_clauses
+  [`v_container_xs (flatSem_Litv _) = []`;
+   `v_container_xs (flatSem_Loc _ _) = []`;
+   `v_container_xs (flatSem_Conv _ vs) = vs`;
+   `v_container_xs (flatSem_Vectorv vs) = vs`;
+   `v_container_xs (flatSem_Closure vs nm exp) = []`;
+   `v_container_xs (flatSem_Recclosure vs exps nm) = []`];;
 add_simp v_container_xs_def;;
 
 let flatProps_simple_val_rel_def = new_definition

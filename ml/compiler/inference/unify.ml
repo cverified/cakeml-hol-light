@@ -178,7 +178,7 @@ let wfs_rule = prove
   CHEAT_TAC);;
 
 let svwalk_result_encodable = prove
- (`sptree_wf fm /\ swfs (sptree_map f fm) /\ (!n. ?y. ast_Var n = f y) ==>
+ (`sptree_wf fm /\ swfs (sptree_map f fm) /\ (!n. ?y. term_Var n = f y) ==>
    (!x. ?y. svwalk (sptree_map f fm) x = f y)`,
   CHEAT_TAC);;
 

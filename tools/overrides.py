@@ -1038,6 +1038,20 @@ THM_NAMES = {
   # term that unification is about (ml/lib/term.ml), not ast's
   ('unify', 'encode_eq_var'): {'Var': 'term_Var'},
   ('unify', 'swalk_encode_infer_ts_EQ_VAR'): {'Var': 'term_Var'},
+  ('unify', 'svwalk_result_encodable'): {'Var': 'term_Var'},
+  # the f_rel of clos_knownProof's v_rel is the one of its own
+  # file, which defines one as clos_fvsProof does
+  ('clos_knownProof', 'v_rel_def'):
+    {'f_rel': 'clos_knownProof_f_rel'},
+  # the compile_inc that the oracle of clos_to_bvlProof runs is
+  # the one of clos_to_bvl, which the port names with a double
+  # underscore because the file defines a compile_inc as well
+  ('clos_to_bvlProof', 'compile_oracle_inv_def'):
+    {'compile_inc': 'clos_to_bvl__compile_inc'},
+  # the Loc that a register of a stackSem state holds is the
+  # word_loc of wordLang, not the one of an asm instruction
+  ('stack_removeProof', 'init_prop_def'): {'Loc': 'wordLang'},
+  ('stack_removeProof', 'make_init_any_def'): {'Loc': 'wordLang'},
   ('unify', 'subterm_thm'):
     {'Var': 'term_Var', 'Pair': 'term_Pair', 'Const': 'term_Const'},
   # these relate the partial collector with the full one, so the
@@ -1477,6 +1491,9 @@ CLAUSE_FORM = set([
   # Fun, which the model of the clash does not see because the
   # constructors of the clauses are of two theories
   ('flatProps', 'set_globals_def'),
+  # and its vs is the value list of a Conv and the environment
+  # of a Closure
+  ('flatProps', 'v_container_xs_def'),
   # and the es of this is a list of expressions in one clause and
   # a list of pairs in another, which only a MAP of a body says
   ('presLang', 'exp_to_display_def'),
@@ -2079,7 +2096,8 @@ CON_OF = {
   # the List and the Append that the pretty printer of a pass
   # builds are the app_list of misc, and displayLang has a List
   # of an sExp
-  ('backend_passes', 'pp_with_title_def'): {'List': 'misc'},
+  ('backend_passes', 'pp_with_title_def'):
+    {'List': 'misc', 'Append': {2: 'misc'}},
   # the operations of dataLang are closLang's, so the Install
   # that do_app compares its operation with is closLang's;
   # wordLang and stackLang have an Install of a program
@@ -12403,6 +12421,20 @@ DEF_NAMES = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # the Break and the Continue that evaluate gives back are the
+  # result of stackSem, where the ones it matches on are the
+  # program of stackLang: CON_BODY says that of a definition in
+  # the match form, and this one is in the clause form
+  ('stackSem', 'evaluate_def'): [
+    ('(stack_Break n,s) = (SOME (stack_Break n),s))',
+     '(stack_Break n,s) = (SOME (stackSem_Break n),s))'),
+    ('(stack_Continue n,s) = (SOME (stack_Continue n),s))',
+     '(stack_Continue n,s) = (SOME (stackSem_Continue n),s))'),
+    ('| (SOME (stack_Break _),s) -> (SOME stackSem_Error,s)',
+     '| (SOME (stackSem_Break _),s) -> (SOME stackSem_Error,s)'),
+    ('| (SOME (stack_Continue _),s) -> (SOME stackSem_Error,s)',
+     '| (SOME (stackSem_Continue _),s) -> (SOME stackSem_Error,s)'),
+  ],
   # the second argument of this v_rel is the value of closSem
   # that the first, a value of flatSem, is compiled to, and the
   # Word64 of a literal of ast and the one of a value of closSem

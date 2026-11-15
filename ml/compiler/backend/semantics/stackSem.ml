@@ -883,8 +883,8 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
          match stackSem_get_var n s with SOME (word_Loc l1 l2) -> (SOME
              (stackSem_Exception (word_Loc l1 l2)),s)
          | _ -> (SOME stackSem_Error,s)) /\
-   (stackSem_evaluate (stack_Break n,s) = (SOME (stack_Break n),s)) /\
-   (stackSem_evaluate (stack_Continue n,s) = (SOME (stack_Continue n),s)) /\
+   (stackSem_evaluate (stack_Break n,s) = (SOME (stackSem_Break n),s)) /\
+   (stackSem_evaluate (stack_Continue n,s) = (SOME (stackSem_Continue n),s)) /\
    (stackSem_evaluate (stack_If cmp r1 ri c1 c2,s) =
         (match (stackSem_get_var r1 s,stackSem_get_var_imm ri s) with SOME
             x,SOME y ->
@@ -966,8 +966,8 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec
                           if ~(x = word_Loc l1 l2) then (SOME
                               stackSem_Error,s2) else stackSem_evaluate (h,s2))
                   | (NONE,s) -> (SOME stackSem_Error,s)
-                  | (SOME (stack_Break _),s) -> (SOME stackSem_Error,s)
-                  | (SOME (stack_Continue _),s) -> (SOME stackSem_Error,s)
+                  | (SOME (stackSem_Break _),s) -> (SOME stackSem_Error,s)
+                  | (SOME (stackSem_Continue _),s) -> (SOME stackSem_Error,s)
                   | (res,s) -> (res,s))))) /\
    (stackSem_evaluate (stack_Install ptr len dptr dlen ret,s) =
         match (stackSem_get_var ptr s,stackSem_get_var len
