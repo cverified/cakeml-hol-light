@@ -2141,6 +2141,11 @@ CON_OF = {
   # the stack of dataSem holds a sptree, so this is sptree's
   # toList, not the one of llist
   ('dataSem', 'extract_stack_def'): {'toList': 'sptree'},
+  # the semantics of a program is a behaviour of ffi, so its
+  # Fail is ffi's and not the one of a reg_alloc, and the
+  # fromList that makes the lazy list of its io events is
+  # llist's and not sptree's
+  ('dataSem', 'semantics_def'): {'Fail': 'ffi', 'fromList': 'llist'},
   ('dataSem', 'stack_to_vs_def'): {'toList': 'sptree'},
   # the location that this puts in front of the arguments of a
   # call is a word_loc of wordLang

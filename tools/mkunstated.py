@@ -72,16 +72,23 @@ def main():
     seen.add((thy, nm))
     out.append((thy, nm, msg))
   # a file that did not load says nothing about the statements
-  # after the phrase it stopped at, and the ones it does say
-  # fail for want of what that file would have defined: so an
-  # entry of a file that loaded is what the session says, and of
-  # a file that did not it is what the table said before
+  # after the phrase it stopped at, and a file that needs it is
+  # missing what it defines: so an entry of a file that loaded,
+  # and whose ancestors all loaded, is what the session says,
+  # and every other one is what the table said before
   import unstated
-  bad = set()
+  bad, seen = set(), set()
   for l in open(T + '../tmp/cs.out'):
-    if 'Exception' in l or 'Error' in l:
-      rel = l.split()[0]
-      if rel in thy_of: bad.add(thy_of[rel])
+    rel = l.split()[0] if l.split() else ''
+    if rel in thy_of:
+      seen.add(thy_of[rel])
+      if 'Exception' in l or 'Error' in l: bad.add(thy_of[rel])
+  # a file the run did not reach says nothing either
+  bad |= {t for t in db.kind_of_thy if t not in seen}
+  # and a file whose ancestor did not load is missing what that
+  # one defines, whether it loaded itself or not
+  bad = {t for t in db.kind_of_thy
+         if (db.ancestors(t) | {t}) & bad}
   out = [r for r in out if r[0] not in bad]
   seen = {(r[0], r[1]) for r in out}
   out += [(thy, nm, 'the file did not load in this run')
