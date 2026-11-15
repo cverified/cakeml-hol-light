@@ -112,7 +112,8 @@ let COND_true = prove
   CHEAT_TAC);;
 
 let FILTER_EQ_MONO =
-  REWRITE_RULE [LIST_REL_eq] (ISPEC `(=)` (GEN `R` LIST_REL_FILTER_MONO));;
+  REWRITE_RULE [LIST_REL_eq] (ISPEC `(=)` (CAKE_GEN `R`
+  LIST_REL_FILTER_MONO));;
 
 (* HOL4 flat_patternProofScript.sml:168-171: a theorem that HOL4 states as
    the value of an ML expression: FILTER_EQ_MONO_TRANS *)
@@ -624,7 +625,7 @@ let naive_pattern_match_correct = prove
   CHEAT_TAC);;
 
 let naive_pattern_match_correct_inst =
-  GEN_ALL (SIMP_RULE [] (REWRITE_RULE [pure_eval_to_def] (SPECL [`t`;
+  GEN_ALL (SIMP_RULE [] (REWRITE_RULE [pure_eval_to_def] (CAKE_SPECL [`t`;
   `[(p,x)]`; `[v]`; `[]`] naive_pattern_match_correct)));;
 
 let naive_pattern_matches_correct = prove

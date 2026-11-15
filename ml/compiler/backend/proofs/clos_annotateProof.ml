@@ -452,7 +452,7 @@ let env_set_default = prove
   CHEAT_TAC);;
 
 let annotate_correct =
-  REWRITE_RULE [GSYM annotate_def; env_set_default; LENGTH; ADD_0] (INST
+  REWRITE_RULE [GSYM annotate_def; env_set_default; LENGTH; ADD_0] (CAKE_INST
   [`0`,`m`; `0`,`l`; `LN`,`i`; `[]`,`env`] (SPEC_ALL (CONJUNCT1
   shift_correct)));;
 

@@ -211,7 +211,7 @@ let env_rel_nsLookup_c = prove
 
 (* [local] *)
 let alist_to_ns_to_bind2 =
-  REWRITE_RULE [nsAppend_nsEmpty] (SPEC `nsEmpty` (GEN_ALL
+  REWRITE_RULE [nsAppend_nsEmpty] (CAKE_SPEC `nsEmpty` (GEN_ALL
   nsAppend_to_nsBindList));;
 
 (* [local] *)

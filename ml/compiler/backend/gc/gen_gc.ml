@@ -586,7 +586,7 @@ let gen_gc_LESS_IMP_heap_lookup = prove
   CHEAT_TAC);;
 
 let heap_lookup_IMP_heap_addresses =
-  GEN_ALL (SIMP_RULE [] (SPECL [`xs`; `0`]
+  GEN_ALL (SIMP_RULE [] (CAKE_SPECL [`xs`; `0`]
   heap_lookup_IMP_heap_addresses_GEN));;
 
 (* [local] *)

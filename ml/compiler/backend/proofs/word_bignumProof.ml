@@ -702,7 +702,7 @@ let MEM_compile = prove
   CHEAT_TAC);;
 
 let compile_NIL_IMP =
-  SIMP_RULE [good_code_def; MEM] (SPECL [`k`; `l1`; `l2`; `(l,[])`]
+  SIMP_RULE [good_code_def; MEM] (CAKE_SPECL [`k`; `l1`; `l2`; `(l,[])`]
   MEM_compile);;
 
 

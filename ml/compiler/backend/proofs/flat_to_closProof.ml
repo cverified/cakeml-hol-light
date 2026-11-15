@@ -812,8 +812,7 @@ let flat_to_closProof_rel_update_thunk = prove
 
 (* HOL4 flat_to_closProofScript.sml:1995: a proof *)
 
-(* HOL4 flat_to_closProofScript.sml:1997: a theorem that HOL4 states as the
-   value of an ML expression: compile_decs_correct *)
+let compile_decs_correct = last (CONJUNCTS flat_to_closProof_compile_correct);;
 
 let compile_decs_correct2 = prove
  (`flatSem_evaluate_decs s1 decs = res_tup /\

@@ -1042,8 +1042,8 @@ let closProps_evaluate_add_to_clock = prove
   CHEAT_TAC);;
 
 let closProps_evaluate_add_clock =
-  GEN_ALL (DISCH_ALL (GEN `extra` (UNDISCH (SPEC_ALL (SIMP_RULE [] (CONJUNCT1
-  closProps_evaluate_add_to_clock))))));;
+  GEN_ALL (DISCH_ALL (CAKE_GEN `extra` (UNDISCH (SPEC_ALL (SIMP_RULE []
+  (CONJUNCT1 closProps_evaluate_add_to_clock))))));;
 
 (* evaluate_add_clock_initial_state *)
 let closProps_evaluate_add_clock_initial_state = prove
@@ -2055,18 +2055,18 @@ let app_call_dests_cons = prove
          app_call_dests opt [x] UNION app_call_dests opt y`,
   CHEAT_TAC);;
 
-let any_dest_cons = INST [`NONE`,`opt`] app_call_dests_cons;;
-let call_dest_cons = INST [`SOME T`,`opt`] app_call_dests_cons;;
-let app_dest_cons = INST [`SOME F`,`opt`] app_call_dests_cons;;
+let any_dest_cons = CAKE_INST [`NONE`,`opt`] app_call_dests_cons;;
+let call_dest_cons = CAKE_INST [`SOME T`,`opt`] app_call_dests_cons;;
+let app_dest_cons = CAKE_INST [`SOME F`,`opt`] app_call_dests_cons;;
 
 let app_call_dests_append = prove
  (`!l1 l2. app_call_dests opt (APPEND l1 l2) =
            app_call_dests opt l1 UNION app_call_dests opt l2`,
   CHEAT_TAC);;
 
-let any_dest_append = INST [`NONE`,`opt`] app_call_dests_append;;
-let call_dest_append = INST [`SOME T`,`opt`] app_call_dests_append;;
-let app_dest_append = INST [`SOME F`,`opt`] app_call_dests_append;;
+let any_dest_append = CAKE_INST [`NONE`,`opt`] app_call_dests_append;;
+let call_dest_append = CAKE_INST [`SOME T`,`opt`] app_call_dests_append;;
+let app_dest_append = CAKE_INST [`SOME F`,`opt`] app_call_dests_append;;
 
 let app_call_dests_map = prove
  (`!ls. app_call_dests opt (MAP f ls) =

@@ -760,8 +760,9 @@ let cake_orac_source_is_state = prove
        (backend_progs_env_id ps,backend_progs_source_prog ps)))`,
   CHEAT_TAC);;
 
-(* HOL4 backendProofScript.sml:1066-1068: a theorem that HOL4 states as the
-   value of an ML expression: SND_flat_to_clos_inc_compile *)
+(* [local] *)
+let SND_flat_to_clos_inc_compile =
+  REWRITE_CONV [inc_compile_decs_def] `SND (inc_compile_decs p)`;;
 
 let is_state_oracle_cake_orac_to_comp = prove
  (`is_state_oracle f_inc (cake_orac asm_conf c' syntax st_f ps_f) ==>
@@ -1705,8 +1706,8 @@ let compile_correct' = prove
 
 (* [local] *)
 let compile_correct_no_eval =
-  SIMP_RULE [add_eval_state_def; opt_eval_config_wf_def] (INST [`NONE`,`ev`]
-  compile_correct');;
+  SIMP_RULE [add_eval_state_def; opt_eval_config_wf_def] (CAKE_INST
+  [`NONE`,`ev`] compile_correct');;
 
 (* compile_correct *)
 let backendProof_compile_correct = prove

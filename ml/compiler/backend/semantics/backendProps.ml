@@ -248,10 +248,10 @@ let oracle_monotonic_state_with_inv_init = prove
   CHEAT_TAC);;
 
 let oracle_monotonic_state =
-  SIMP_RULE [] (SPEC `\x. T` oracle_monotonic_state_with_inv);;
+  SIMP_RULE [] (CAKE_SPEC `\x. T` oracle_monotonic_state_with_inv);;
 
 let oracle_monotonic_state_init =
-  SIMP_RULE [] (SPEC `\x. T` oracle_monotonic_state_with_inv_init);;
+  SIMP_RULE [] (CAKE_SPEC `\x. T` oracle_monotonic_state_with_inv_init);;
 
 let restrict_zero_def = new_definition
   `restrict_zero (labels:num#num->bool) =

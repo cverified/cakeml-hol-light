@@ -352,8 +352,8 @@ let bvl_handle_compile_sing = prove
   CHEAT_TAC);;
 
 let compile_seqs_compute =
-  end_itlist CONJ [SIMP_RULE [LET_DEF] (SPECL [`e`; `c`; `NONE`]
-  compile_seqs_def); SIMP_RULE [LET_DEF] (SPECL [`e`; `c`; `SOME y`]
+  end_itlist CONJ [SIMP_RULE [LET_DEF] (CAKE_SPECL [`e`; `c`; `NONE`]
+  compile_seqs_def); SIMP_RULE [LET_DEF] (CAKE_SPECL [`e`; `c`; `SOME y`]
   compile_seqs_def)];;
 
 (* and the names it reads as variables are constants again *)

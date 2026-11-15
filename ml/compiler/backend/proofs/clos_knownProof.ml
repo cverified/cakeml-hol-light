@@ -929,7 +929,7 @@ let elist_globals_FLAT_APPEND_FOLDR = prove
   CHEAT_TAC);;
 
 let elist_globals_FLAT_FOLDR =
-  SIMP_RULE [] (INST [`[]`,`xs`] elist_globals_FLAT_APPEND_FOLDR);;
+  SIMP_RULE [] (CAKE_INST [`[]`,`xs`] elist_globals_FLAT_APPEND_FOLDR);;
 
 let monotonic_unique_set_globals = prove
  (`oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST o SND) (<)

@@ -1645,7 +1645,7 @@ let plus_0_I = prove
 add_simp plus_0_I;;
 
 (* used once *)
-let SUM_COUNT_LIST = SIMP_RULE [] (SPECL [`n`; `0`] SUM_MAP_COUNT_LIST);;
+let SUM_COUNT_LIST = SIMP_RULE [] (CAKE_SPECL [`n`; `0`] SUM_MAP_COUNT_LIST);;
 
 let OPTION_MAP_I = prove
  (`OPTION_MAP I x = x`,

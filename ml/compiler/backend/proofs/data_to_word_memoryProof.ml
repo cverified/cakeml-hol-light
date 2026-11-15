@@ -7095,7 +7095,7 @@ let list_to_BlockReps_data_up_to_lem = prove
    ASM_REWRITE_TAC[]));;
 
 let list_to_BlockReps_data_up_to =
-  SIMP_RULE [] (INST [`list_to_BlockReps conf x len xs`,`h1`]
+  SIMP_RULE [] (CAKE_INST [`list_to_BlockReps conf x len xs`,`h1`]
   list_to_BlockReps_data_up_to_lem);;
 
 let list_to_BlockReps_ForwardPointer = prove
@@ -22103,7 +22103,8 @@ let duplicate_thm = prove
        FIRST_ASSUM ACCEPT_TAC]]));;
 
 let duplicate1_thm =
-  SIMP_RULE [LENGTH; APPEND] (INST [`[x1]`,`xs`; `[r1]`,`rs`] duplicate_thm);;
+  SIMP_RULE [LENGTH; APPEND] (CAKE_INST [`[x1]`,`xs`; `[r1]`,`rs`]
+  duplicate_thm);;
 
 (* move *)
 
@@ -23407,7 +23408,7 @@ let word_ml_inv_num = prove
     ASM_REWRITE_TAC[MAP; FST; SND; ALL2] THEN
     REWRITE_TAC(word_addr_clauses () @ [smn; and4])));;
 
-let word_ml_inv_zero = SIMP_RULE [] (INST [`0`,`n`] word_ml_inv_num);;
+let word_ml_inv_zero = SIMP_RULE [] (CAKE_INST [`0`,`n`] word_ml_inv_num);;
 
 let word_ml_inv_neg_num_lemma = prove
  (`good_dimindex (:'a) ==> (--(n2w 2) && --(n2w 4) * v) = --(n2w 4) * (v:'a
@@ -28294,8 +28295,9 @@ let memory_rel_Word64_alt = prove
                 REWRITE_TAC[STAR_AC; emp_STAR; STAR_emp]) in
       ACCEPT_TAC (REWRITE_RULE[GSYM eq] sl2))))));;
 
-(* HOL4 data_to_word_memoryProofScript.sml:9026-9028: a theorem that HOL4
-   states as the value of an ML expression: memory_rel_WordOp64_alt *)
+let memory_rel_WordOp64_alt =
+  CONV_RULE (LAND_CONV (SIMP_CONV [])) (CAKE_SPEC `[w1; w2]` (CAKE_GEN `vs`
+  memory_rel_Word64_alt));;
 
 (* [local] *)
 (* the names of record fields that this statement uses for
@@ -28820,7 +28822,7 @@ let IMP_memory_rel_bignum_alt = prove
       ACCEPT_TAC (REWRITE_RULE[GSYM eq] sl2))))));;
 
 let data_to_word_memoryProof_IMP_memory_rel_bignum_alt =
-  SIMP_RULE [APPEND] (INST [`[]`,`vs`] IMP_memory_rel_bignum_alt);;
+  SIMP_RULE [APPEND] (CAKE_INST [`[]`,`vs`] IMP_memory_rel_bignum_alt);;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -55496,7 +55498,7 @@ let memory_rel_write_bytearray_lemma = prove
     finishb])));;
 
 let memory_rel_write_bytearray =
-  SPEC_ALL (SIMP_RULE [] (SPEC `[]` memory_rel_write_bytearray_lemma));;
+  SPEC_ALL (SIMP_RULE [] (CAKE_SPEC `[]` memory_rel_write_bytearray_lemma));;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)

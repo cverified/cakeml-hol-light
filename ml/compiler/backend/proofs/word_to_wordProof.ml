@@ -315,16 +315,16 @@ let code_rel_not_created_subprogs = prove
   CHEAT_TAC);;
 
 (* [local] *)
-let code_rel_P = GEN `P` code_rel_not_created_subprogs;;
+let code_rel_P = CAKE_GEN `P` code_rel_not_created_subprogs;;
 
 (* [local] *)
 let code_rel_no_alloc =
-  REWRITE_RULE [GSYM no_alloc_subprogs_def] (SPEC `(\x y. ~(x = y))
+  REWRITE_RULE [GSYM no_alloc_subprogs_def] (CAKE_SPEC `(\x y. ~(x = y))
   (word_Alloc 0 (LN,LN))` code_rel_P);;
 
 (* [local] *)
 let code_rel_no_install =
-  REWRITE_RULE [GSYM no_install_subprogs_def] (SPEC `(\x y. ~(x = y))
+  REWRITE_RULE [GSYM no_install_subprogs_def] (CAKE_SPEC `(\x y. ~(x = y))
   (word_Install 0 0 0 0 (LN,LN))` code_rel_P);;
 
 

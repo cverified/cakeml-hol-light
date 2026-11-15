@@ -3501,8 +3501,10 @@ let alloc_fail = prove
    q = SOME wordSem_NotEnoughSpace`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_gcProofScript.sml:8061-8070: a theorem that HOL4 states
-   as the value of an ML expression: word_exp_rw *)
+let word_exp_rw =
+  end_itlist CONJ [word_exp_def; word_op_def; word_sh_def;
+  wordSem_get_var_def; get_var_imm_def; the_words_def; get_store_def;
+  lookup_insert];;
 
 (* get_var_set_var_thm *)
 let data_to_word_gcProof_get_var_set_var_thm = prove

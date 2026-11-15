@@ -15,6 +15,7 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
 needs "lib/lprefix_lub.ml";;
+needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
@@ -158,8 +159,9 @@ let flatProps_pmatch_append = prove
       flatSem_pmatch_list s ps vs (APPEND env tail_env))`,
   CHEAT_TAC);;
 
-(* HOL4 flatPropsScript.sml:217-221: a theorem that HOL4 states as the value
-   of an ML expression: pmatch_nil *)
+let pmatch_nil =
+  SIMP_RULE [] (end_itlist CONJ (map (GEN_ALL o GSYM o CAKE_INST
+  [`[]`,`env`]) (BODY_CONJUNCTS flatProps_pmatch_append)));;
 
 let pmatch_ignore_clock = prove
  (`flatSem_pmatch (flatSem_state_clock_fupd (K s') s) p v env = flatSem_pmatch
@@ -610,8 +612,9 @@ let flatProps_simple_val_rel_def = new_definition
          simple_basic_val_rel v1 v2 /\ ALL2 vr (v_container_xs v1)
            (v_container_xs v2))))`;;
 
-(* HOL4 flatPropsScript.sml:953-954: a theorem that HOL4 states as the value
-   of an ML expression: simple_val_rel_rew *)
+let simple_val_rel_rew =
+  hd (tl (CONJUNCTS (REWRITE_RULE [flatProps_simple_val_rel_def] (ASSUME
+  `flatProps_simple_val_rel vr`))));;
 
 (* HOL4 flatPropsScript.sml:956-960: a theorem that HOL4 states as the value
    of an ML expression: simple_val_rel_simps *)
@@ -652,8 +655,7 @@ let simple_do_eq_thm_ind = prove
    flatSem_do_eq_list x2 y2 = Eq_val b)`,
   CHEAT_TAC);;
 
-(* HOL4 flatPropsScript.sml:1005: a theorem that HOL4 states as the value of
-   an ML expression: simple_do_eq_thm *)
+let simple_do_eq_thm = hd (CONJUNCTS simple_do_eq_thm_ind);;
 
 let simple_state_rel_store_assign = prove
  (`flatProps_simple_state_rel vr sr /\

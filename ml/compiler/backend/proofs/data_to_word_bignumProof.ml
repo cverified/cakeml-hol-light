@@ -66,8 +66,13 @@ let _ = hide_overloads
 
 (* HOL4 data_to_word_bignumProofScript.sml:32-36: a proof *)
 
-(* HOL4 data_to_word_bignumProofScript.sml:38-46: a theorem that HOL4 states
-   as the value of an ML expression: eq_eval *)
+let eq_eval =
+  end_itlist CONJ [wordSem_evaluate_def; wordSem_get_var_def; lookup_insert;
+  get_var_imm_def; word_cmp_def; word_exp_def; wordSem_set_var_def;
+  wordSem_call_env_def; fromList2_def; wordSem_mem_load_def;
+  bad_dest_args_def; wordSem_get_vars_def; wordSem_find_code_def;
+  add_ret_loc_def; list_insert_def; wordSem_dec_clock_def; the_words_def;
+  word_op_def];;
 
 let word_list_IMP_store_list = prove
  (`!xs a frame m dm.
@@ -381,8 +386,9 @@ let structure_le_IMP_option_le = prove
      option_le (max_depth l x) (max_depth l y)`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_bignumProofScript.sml:2450-2453: a theorem that HOL4
-   states as the value of an ML expression: evaluate_Assign_Const *)
+let evaluate_Assign_Const =
+  SIMP_CONV [wordSem_evaluate_def; word_exp_def; wordSem_set_var_def]
+  `wordSem_evaluate (word_bignum_Assign n (word_Const w),s)`;;
 
 (* HOL4 data_to_word_bignumProofScript.sml:2455-2583: a theorem whose
    statement HOL Light does not read (tools/unstated.py): eval_Call_Arith *)

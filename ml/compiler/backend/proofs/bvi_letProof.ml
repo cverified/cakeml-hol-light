@@ -895,8 +895,8 @@ let evaluate_env_rel = prove
 (* HOL4 bvi_letProofScript.sml:389: a proof *)
 
 let compile_thm =
-  SIMP_RULE [env_rel_def] (GEN_ALL (SPECL [`xs`; `env`; `s1`; `[]`; `env`;
-  `res`; `s2`; `ys`; `0`] evaluate_env_rel));;
+  SIMP_RULE [env_rel_def] (GEN_ALL (CAKE_SPECL [`xs`; `env`; `s1`; `[]`;
+  `env`; `res`; `s2`; `ys`; `0`] evaluate_env_rel));;
 
 let evaluate_compile_exp = prove
  (`bviSem_evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort Rtype_error)) ==>

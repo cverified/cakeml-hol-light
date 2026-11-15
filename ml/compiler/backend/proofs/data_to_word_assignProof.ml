@@ -1908,8 +1908,9 @@ let memcopy_def,memcopy_ind = define_wf
 (* HOL4 data_to_word_assignProofScript.sml:15279-15315: a theorem whose
    statement HOL Light does not read (tools/unstated.py): MemCopy_thm *)
 
-(* HOL4 data_to_word_assignProofScript.sml:15317-15319: a theorem that HOL4
-   states as the value of an ML expression: assign_ConsExtend_expand *)
+let assign_ConsExtend_expand =
+  SIMP_CONV [assign_def] `data_to_word_assign c n l dest (clos_BlockOp
+  (clos_ConsExtend tag)) args names_opt`;;
 
 (* get_vars_IMP_domain *)
 let data_to_word_assignProof_get_vars_IMP_domain = prove

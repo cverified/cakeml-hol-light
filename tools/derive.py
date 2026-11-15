@@ -48,21 +48,46 @@ SIMPLE = {
 # as a quotation of its own (Q.SPEC) or as one of the ambient
 # grammar (SPEC), which the port writes the same way either way
 TERM_RULE = {
-  'Q.SPEC': 'SPEC', 'SPEC': 'SPEC', 'Q.GEN': 'GEN', 'GEN': 'GEN',
+  'Q.SPEC': 'CAKE_SPEC', 'SPEC': 'CAKE_SPEC',
+  'Q.GEN': 'CAKE_GEN', 'GEN': 'CAKE_GEN',
   'Q.ISPEC': 'ISPEC', 'ISPEC': 'ISPEC', 'DISCH': 'DISCH',
   'Q.AP_THM': 'AP_THM', 'AP_THM': 'AP_THM',
 }
 
 # the same with a list of terms
 TERMS_RULE = {
-  'Q.SPECL': 'SPECL', 'SPECL': 'SPECL', 'Q.GENL': 'GENL',
-  'GENL': 'GENL', 'Q.ISPECL': 'ISPECL', 'ISPECL': 'ISPECL',
+  'Q.SPECL': 'CAKE_SPECL', 'SPECL': 'CAKE_SPECL',
+  'Q.GENL': 'CAKE_GENL', 'GENL': 'CAKE_GENL',
+  'Q.ISPECL': 'ISPECL', 'ISPECL': 'ISPECL',
 }
 
 # the rules that take another theorem and this one
 THM_RULE = {
   'MATCH_MP': 'MATCH_MP', 'MP': 'MP', 'PROVE_HYP': 'PROVE_HYP',
   'CONJ': 'CONJ', 'EQ_MP': 'EQ_MP',
+}
+
+# the conversions that HOL4 applies to a term, and the number of
+# arguments they take before it; the last of those is the list of
+# theorems and a simpset in front of it is not one the port has
+CONV = {
+  'REWRITE_CONV': ('REWRITE_CONV', 1),
+  'ONCE_REWRITE_CONV': ('ONCE_REWRITE_CONV', 1),
+  'PURE_REWRITE_CONV': ('PURE_REWRITE_CONV', 1),
+  'PURE_ONCE_REWRITE_CONV': ('PURE_ONCE_REWRITE_CONV', 1),
+  'SIMP_CONV': ('SIMP_CONV', 2),
+  'SCONV': ('SIMP_CONV', 1),
+}
+
+# the conversions that take a conversion and give one, which the
+# two systems have under one name but for HOL4's RHS_CONV
+CONV_WRAP = {
+  'RAND_CONV': 'RAND_CONV', 'RATOR_CONV': 'RATOR_CONV',
+  'LAND_CONV': 'LAND_CONV', 'ABS_CONV': 'ABS_CONV',
+  'BINDER_CONV': 'BINDER_CONV', 'DEPTH_CONV': 'DEPTH_CONV',
+  'TOP_DEPTH_CONV': 'TOP_DEPTH_CONV', 'RHS_CONV': 'RAND_CONV',
+  'ONCE_DEPTH_CONV': 'ONCE_DEPTH_CONV',
+  'REDEPTH_CONV': 'REDEPTH_CONV',
 }
 
 # the rules that take a list of theorems and this one
@@ -72,6 +97,18 @@ THMS_RULE = {
   'PURE_REWRITE_RULE': 'PURE_REWRITE_RULE',
   'PURE_ONCE_REWRITE_RULE': 'PURE_ONCE_REWRITE_RULE',
   'SRULE': 'SIMP_RULE',
+}
+
+# the functions on a theorem or on a list of them that the two
+# systems share: HOL Light is OCaml and has the list functions
+# of it, so a step that takes a theorem apart and puts the parts
+# back together is written the way HOL4 writes it
+LIST_FN = {
+  'CONJUNCTS': 'CONJUNCTS', 'BODY_CONJUNCTS': 'BODY_CONJUNCTS',
+  'CONJ_LIST': 'CONJUNCTS', 'LIST_CONJ': 'end_itlist CONJ',
+  'hd': 'hd', 'tl': 'tl', 'last': 'last', 'rev': 'rev',
+  'List.last': 'last', 'List.rev': 'rev', 'List.hd': 'hd',
+  'List.tl': 'tl',
 }
 
 # the same, where HOL4 puts the simpset in front of the list
@@ -178,6 +215,8 @@ class Derive:
 
   def quotation(self, toks):
     """the term of a quotation, as the port writes it"""
+    inner = unbracket(toks)
+    if inner is not None: toks = inner
     if len(toks) != 1 or toks[0][0] not in ('q1', 'q2', 'q3'):
       raise No('not a quotation')
     s = toks[0][1]
@@ -230,24 +269,63 @@ class Derive:
     if not e: raise No('EVAL')
     return e
 
+  def conv(self, toks):
+    """a conversion of HOL4 that HOL Light has as well, without
+       the term it is applied to and without the simpset that
+       HOL4 writes in front of its list of theorems"""
+    a = app(toks)
+    if not a or len(a[0]) != 1 or a[0][0][0] != 'id': raise No('conv')
+    f, args = a[0][0][1], a[1:]
+    if f not in CONV: raise No('conv %s' % f)
+    nm, k = CONV[f]
+    if len(args) != k: raise No('conv %s/%d' % (f, len(args)))
+    return '%s %s' % (nm, self.thmlist(args[-1]))
+
+  def convexpr(self, toks):
+    """a conversion that HOL4 builds out of conversions, where
+       HOL Light has every one of them"""
+    inner = unbracket(toks)
+    if inner is not None: toks = inner
+    a = app(toks)
+    if a and len(a[0]) == 1 and a[0][0][0] == 'id' and \
+       a[0][0][1] in CONV_WRAP and len(a) == 2:
+      return '%s %s' % (CONV_WRAP[a[0][0][1]],
+                        par(self.convexpr(a[1])))
+    return self.conv(toks)
+
+  def term_first(self, parts):
+    """what a pipeline whose first part is a term computes: HOL4
+       applies a conversion or its EVAL to the term and the
+       theorem comes from there"""
+    if len(parts) < 2: raise No('a term')
+    if parts[1] == [('id', 'EVAL')]:
+      return self.evaluated(parts[0])
+    return '%s %s' % (self.conv(parts[1]), self.quotation(parts[0]))
+
   def thm(self, toks):
     """a token list that computes a theorem"""
     parts = split(toks, 'pipe')
     if not parts[0]: raise No('empty')
-    # HOL4's EVAL takes a term and not a theorem, so a pipeline
-    # that starts with one is where the theorem comes from
-    if (len(parts) > 1 and self.quoted(parts[0]) and
-        parts[1] == [('id', 'EVAL')]):
-      out, parts = self.evaluated(parts[0]), parts[1:]
-    else:
-      a = app(parts[0])
-      if (len(a) == 2 and a[0] and len(a[0]) == 1 and
+    a = app(parts[0])
+    # HOL4's EVAL and its conversions take a term and not a
+    # theorem, so one of those is where the theorem comes from
+    if self.quoted(parts[0]):
+      out, parts = self.term_first(parts), parts[1:]
+    elif (len(a) == 2 and a[0] and len(a[0]) == 1 and
+          a[0][0] == ('id', 'ASSUME') and self.quoted(a[1])):
+      out = 'ASSUME %s' % self.quotation(a[1])
+    elif (len(a) == 2 and a[0] and len(a[0]) == 1 and
           a[0][0] == ('id', 'EVAL') and self.quoted(a[1])):
-        out = self.evaluated(a[1])
-      else:
-        if len(parts[0]) == 1 and parts[0][0][0] == 'id':
-          self.base_name = parts[0][0][1]
-        out = self.base(parts[0])
+      out = self.evaluated(a[1])
+    elif (len(a) > 1 and a[0] and len(a[0]) == 1 and
+          a[0][0][0] == 'id' and a[0][0][1] in CONV and
+          self.quoted(a[-1])):
+      out = '%s %s' % (self.conv(sum(a[:-1], [])),
+                       self.quotation(a[-1]))
+    else:
+      if len(parts[0]) == 1 and parts[0][0][0] == 'id':
+        self.base_name = parts[0][0][1]
+      out = self.base(parts[0])
     for p in parts[1:]:
       out = self.step(p, out)
     return out
@@ -283,6 +361,15 @@ class Derive:
       acc, args = self.thm(args[-1]), args[:-1]
     if f in SIMPLE and not args:
       return '%s %s' % (f, par(acc))
+    if f in LIST_FN and not args:
+      return '%s %s' % (LIST_FN[f], par(acc))
+    # a step that applies a rule to every theorem of a list: HOL
+    # Light's map, with the rule as a function of its own
+    if f in ('map', 'List.map') and len(args) == 1:
+      return 'map %s %s' % (par(self.rulefun(args[0])), par(acc))
+    # HOL4 counts the conjuncts of a theorem from one
+    if f == 'el' and len(args) == 1 and args[0][0][0] == 'num':
+      return 'el %d %s' % (int(args[0][0][1]) - 1, par(acc))
     if f in TERM_RULE and len(args) == 1:
       return '%s %s %s' % (TERM_RULE[f], self.quotation(args[0]),
                            par(acc))
@@ -310,12 +397,43 @@ class Derive:
       d = self.evaldefs(self.base_name)
       if not d: raise No('EVAL of %s' % self.base_name)
       return 'CONV_RULE (RAND_CONV (CAKE_EVAL %s)) %s' % (d, par(acc))
+    if f == 'CONV_RULE' and len(args) == 1:
+      return 'CONV_RULE %s %s' % (par(self.convexpr(args[0])),
+                                  par(acc))
     if f == 'Q.INST' and len(args) == 1:
-      return 'INST %s %s' % (self.inst(args[0]), par(acc))
+      return 'CAKE_INST %s %s' % (self.inst(args[0]), par(acc))
     if f == 'cj' and len(args) == 1 and args[0][0][0] == 'num':
       return 'el %d (CONJUNCTS %s)' % (int(args[0][0][1]) - 1,
                                        par(acc))
     raise No('rule %s/%d' % (f, len(args)))
+
+  def rulefun(self, toks):
+    """a rule as a function of its own, for a step that applies
+       it to every theorem of a list: a composition of rules, or
+       one with the arguments that come before the theorem"""
+    inner = unbracket(toks)
+    if inner is not None: toks = inner
+    ps = split(toks, 'id', 'o')
+    if len(ps) > 1:
+      return ' o '.join(self.rulefun(p) for p in ps)
+    a = app(toks)
+    if not a or len(a[0]) != 1 or a[0][0][0] != 'id':
+      raise No('rule function')
+    f, args = a[0][0][1], a[1:]
+    if f in SIMPLE and not args: return f
+    if f in LIST_FN and not args: return LIST_FN[f]
+    if f in TERM_RULE and len(args) == 1:
+      return '%s %s' % (TERM_RULE[f], self.quotation(args[0]))
+    if f in TERMS_RULE and len(args) == 1:
+      return '%s %s' % (TERMS_RULE[f],
+                        self.listof(args[0], self.quotation))
+    if f in THMS_RULE and len(args) == 1:
+      return '%s %s' % (THMS_RULE[f], self.thmlist(args[0]))
+    if f in SS_RULE and len(args) == 2:
+      return '%s %s' % (SS_RULE[f], self.thmlist(args[1]))
+    if f == 'Q.INST' and len(args) == 1:
+      return 'CAKE_INST %s' % self.inst(args[0])
+    raise No('rule function %s/%d' % (f, len(args)))
 
   def inst(self, toks):
     """the substitution of a Q.INST, which HOL4 writes the other

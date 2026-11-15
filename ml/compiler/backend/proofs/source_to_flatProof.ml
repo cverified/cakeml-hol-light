@@ -324,7 +324,7 @@ let env_rel_one = prove
   CHEAT_TAC);;
 
 let env_rel_bind_one =
-  SIMP_RULE [env_rel_one] (GEN_ALL (SPECL [`genv`; `nsBind a b nsEmpty`;
+  SIMP_RULE [env_rel_one] (GEN_ALL (CAKE_SPECL [`genv`; `nsBind a b nsEmpty`;
   `env2`; `[(c,d)]`] source_to_flatProof_env_rel_append));;
 
 (* env_rel_el[local] *)

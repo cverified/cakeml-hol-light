@@ -1636,8 +1636,8 @@ let bvl_constProof_evaluate_env_rel = prove
     TRY cons_cons_case]));;
 
 let bvl_constProof_compile_thm =
-  SIMP_RULE [bvl_constProof_env_rel_def] (GEN_ALL (SPECL [`xs`; `env`; `s1`;
-  `[]`; `env`] bvl_constProof_evaluate_env_rel));;
+  SIMP_RULE [bvl_constProof_env_rel_def] (GEN_ALL (CAKE_SPECL [`xs`; `env`;
+  `s1`; `[]`; `env`] bvl_constProof_evaluate_env_rel));;
 
 (* evaluate_compile_exp *)
 let bvl_constProof_evaluate_compile_exp = prove

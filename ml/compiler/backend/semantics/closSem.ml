@@ -1056,8 +1056,9 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                    evaluate_app loc_opt v rest_args s1
                | res -> res))`;;
 
-(* HOL4 closSemScript.sml:845-846: a theorem that HOL4 states as the value
-   of an ML expression: evaluate_app_NIL *)
+let evaluate_app_NIL =
+  SIMP_CONV [closSem_evaluate_def] `evaluate_app loc v [] s`;;
+add_simp evaluate_app_NIL;;
 
 (* We prove that the clock never increases. *)
 

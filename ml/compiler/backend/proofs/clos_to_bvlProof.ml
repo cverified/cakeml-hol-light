@@ -2842,7 +2842,7 @@ let compile_inc_monotonic = prove
   CHEAT_TAC);;
 
 let code_locs_Op_cons =
-  REWRITE_RULE [code_locs_def] (GEN_ALL (SPEC `clos_Op a b c`
+  REWRITE_RULE [code_locs_def] (GEN_ALL (CAKE_SPEC `clos_Op a b c`
   code_locs_cons));;
 
 let EXISTS_CONS_NOT_NULL = prove

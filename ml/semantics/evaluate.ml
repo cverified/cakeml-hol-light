@@ -361,16 +361,16 @@ let full_evaluate_ind =
 
 (* [allow_rebind] *)
 let evaluate_ind =
-  GENL [`P1`; `P2`] (SIMP_RULE [] (SPECL [`P1`; `P2`; `\v1 v2 v3. T`]
-  full_evaluate_ind));;
+  CAKE_GENL [`P1`; `P2`] (SIMP_RULE [] (CAKE_SPECL [`P1`; `P2`; `\v1 v2 v3.
+  T`] full_evaluate_ind));;
 
 let evaluate_match_ind =
-  GEN `P2` (SIMP_RULE [] (SPECL [`\v1 v2 v3. T`; `P2`; `\v1 v2 v3. T`]
-  full_evaluate_ind));;
+  CAKE_GEN `P2` (SIMP_RULE [] (CAKE_SPECL [`\v1 v2 v3. T`; `P2`; `\v1 v2 v3.
+  T`] full_evaluate_ind));;
 
 let evaluate_decs_ind =
-  GEN `P` (SIMP_RULE [] (SPECL [`\v1 v2 v3. T`; `\v1 v2 v3 v4 v5. T`; `P`]
-  full_evaluate_ind));;
+  CAKE_GEN `P` (SIMP_RULE [] (CAKE_SPECL [`\v1 v2 v3. T`; `\v1 v2 v3 v4 v5.
+  T`; `P`] full_evaluate_ind));;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

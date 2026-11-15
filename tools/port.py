@@ -5171,6 +5171,13 @@ def check_no_run():
     raise SystemExit('a run is going: ml/ must not change under it')
 
 
+# a theorem that the port writes by hand, as the file writes it
+HANDTHM = re.compile(r"^let ([A-Za-z_][A-Za-z_0-9']*) =[ ]*"
+                     r"(?:\n[ ]*)?(?:try[ ]+)?"
+                     r"(?:prove|new_axiom|CONJ|GEN_ALL|SPEC_ALL)\b",
+                     re.M)
+
+
 def port(thy, db=None):
   check_no_run()
   db = db or dbmod.Db()
@@ -5194,6 +5201,11 @@ def port(thy, db=None):
   for i, l in enumerate(text.split('\n')):
     if len(l) > 79:
       p.warn.append('line %d is %d characters' % (i + 1, len(l)))
+  # a theorem that the port writes by hand (overrides.EXTRA_HEAD
+  # and the others) is one a later file can name as it names any
+  # other, so the bindings of the file are read off the file
+  for nm in HANDTHM.findall(text):
+    if nm not in db.thmbind: dbmod.bind_thm(db, thy, nm, nm)
   path = ML + db.mlpath_of(thy)
   os.makedirs(os.path.dirname(path), exist_ok=True)
   open(path, 'w').write(text + '\n')

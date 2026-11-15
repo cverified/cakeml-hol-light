@@ -65,7 +65,8 @@ add_simp lift_lets_mod_local;;
 (* HOL4 source_letProofScript.sml:105-107: a theorem that HOL4 states as the
    value of an ML expression: evaluate_lift_start *)
 
-let compile_decs_correct = prove
+(* compile_decs_correct *)
+let source_letProof_compile_decs_correct = prove
  (`!s env ds s' res.
      evaluate_evaluate_decs s env ds = (s',res) /\ ~(res = Rerr (Rabort
        Rtype_error)) ==>

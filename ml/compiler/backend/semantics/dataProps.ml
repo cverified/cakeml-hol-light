@@ -719,14 +719,14 @@ let evaluate_fl_smx_safe_peak_swap_aux = prove
   CHEAT_TAC);;
 
 let evaluate_smx_safe_peak_swap_aux =
-  GEN_ALL (SIMP_RULE [] (SPECL [`c`; `s`; `r`; `s'`; `T`; `smx`; `safe`;
+  GEN_ALL (SIMP_RULE [] (CAKE_SPECL [`c`; `s`; `r`; `s'`; `T`; `smx`; `safe`;
   `peak`] evaluate_fl_smx_safe_peak_swap_aux));;
 let evaluate_smx_safe_peak_swap =
   SIMP_RULE [LET_DEF] evaluate_smx_safe_peak_swap_aux;;
 
 
 let evaluate_safe_peak_swap_aux =
-  GEN_ALL (SIMP_RULE [] (SPECL [`c`; `s`; `r`; `s'`; `F`; `smx`; `safe`;
+  GEN_ALL (SIMP_RULE [] (CAKE_SPECL [`c`; `s`; `r`; `s'`; `F`; `smx`; `safe`;
   `peak`] evaluate_fl_smx_safe_peak_swap_aux));;
 
 let evaluate_safe_peak_swap = prove

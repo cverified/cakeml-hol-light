@@ -1049,7 +1049,8 @@ let inf_set_tids_def,inf_set_tids_ind = define_wf
 let inf_set_tids_subset_def = new_definition
   `inf_set_tids_subset tids t <=> inf_set_tids t SUBSET tids`;;
 
-let typeSystem_t_ind = SIMP_RULE [] (SPEC `\_ _ x. P x` deBruijn_subst_ind);;
+let typeSystem_t_ind =
+  SIMP_RULE [] (CAKE_SPEC `\_ _ x. P x` deBruijn_subst_ind);;
 
 let inf_set_tids_infer_type_subst_SUBSET = prove
  (`!subst (t:t).

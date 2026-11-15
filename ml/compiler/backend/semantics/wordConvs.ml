@@ -110,7 +110,7 @@ let labels_rel_APPEND = prove
   CHEAT_TAC);;
 
 let labels_rel_CONS =
-  SIMP_RULE [APPEND] (SPECL [`[x]`; `[x1]`] (GENL [`xs`; `xs1`]
+  SIMP_RULE [APPEND] (CAKE_SPECL [`[x]`; `[x1]`] (CAKE_GENL [`xs`; `xs1`]
   labels_rel_APPEND));;
 
 let PERM_IMP_labels_rel = prove

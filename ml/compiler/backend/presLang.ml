@@ -1427,7 +1427,8 @@ let MEM_append_word_seqs = prove
   CHEAT_TAC);;
 
 (* [local] *)
-let MEM_word_exps_size_ARB = SPEC `ARB` (GEN `l` word_MEM_IMP_exp_size);;
+let MEM_word_exps_size_ARB =
+  CAKE_SPEC `ARB` (CAKE_GEN `l` word_MEM_IMP_exp_size);;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\x. match x with INL v -> word_exp_size ARB v | INR v ->

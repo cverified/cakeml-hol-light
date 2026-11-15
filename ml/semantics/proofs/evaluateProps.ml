@@ -258,15 +258,15 @@ let is_clock_io_mono_acc_safe = prove
 (* HOL4 evaluatePropsScript.sml:306-308: a theorem that HOL4 states as the
    value of an ML expression: is_clock_io_mono_if_safe *)
 let is_clock_io_mono_option_case_safe =
-  SIMP_RULE [] (SPEC `\v st. match v with NONE -> g st | SOME x -> h x st`
-  (ISPEC `NONE` is_clock_io_mono_acc_safe));;
+  SIMP_RULE [] (CAKE_SPEC `\v st. match v with NONE -> g st | SOME x -> h x
+  st` (ISPEC `NONE` is_clock_io_mono_acc_safe));;
 let is_clock_io_mono_match_case_safe =
-  SIMP_RULE [] (SPEC `\m st. match m with No_match -> g st
+  SIMP_RULE [] (CAKE_SPEC `\m st. match m with No_match -> g st
     |
   Match_type_error -> h st | Match env -> j env st` (ISPEC `No_match`
   is_clock_io_mono_acc_safe));;
 let is_clock_io_mono_match_case_pair_safe =
-  SIMP_RULE [] (SPEC `\m st. (st,(match m with No_match -> g st
+  SIMP_RULE [] (CAKE_SPEC `\m st. (st,(match m with No_match -> g st
     |
   Match_type_error -> h st | Match env -> j env st))` (ISPEC `No_match`
   is_clock_io_mono_acc_safe));;

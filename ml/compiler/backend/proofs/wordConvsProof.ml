@@ -872,7 +872,8 @@ let remove_dead_conventions = prove
 
 let remove_dead_prog_conventions =
   SIMP_RULE [LET_DEF; FORALL_AND_THM; GSYM remove_dead_prog_def] (SPEC_ALL
-  (SPEC `[]` (SPEC `[]` (SPEC `LN` (SPEC `p` remove_dead_conventions)))));;
+  (CAKE_SPEC `[]` (CAKE_SPEC `[]` (CAKE_SPEC `LN` (CAKE_SPEC `p`
+  remove_dead_conventions)))));;
 
 (* [local] *)
 let word_get_code_labels_remove_dead = prove

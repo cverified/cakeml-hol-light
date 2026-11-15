@@ -464,7 +464,7 @@ let lexer_impl_lex_aux_tokens_thm_1 = prove
 
 (* [local] *)
 let lexer_impl_lex_aux_tokens_thm =
-  SIMP_RULE [LENGTH] (SPECL [`input`; `0`; `[]`]
+  SIMP_RULE [LENGTH] (CAKE_SPECL [`input`; `0`; `[]`]
   lexer_impl_lex_aux_tokens_thm_1);;
 
 (* [local] *)
