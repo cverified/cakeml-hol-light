@@ -10410,7 +10410,11 @@ let MOVE =
 (* and what the arm says of a value of the old heap says of the
    mapped value in the new one *)
 
-let USE_V_REL =
+(* the whole of it under a W, so that a theorem of the file whose
+   proof did not go through fails where the tactic is used and
+   not where the file binds it: MATCH_MP_TAC of a bad theorem
+   raises as the file loads, and takes the file with it *)
+let USE_V_REL = W(fun gl -> (
   MATCH_MP_TAC v_inv_moved THEN
   W(fun gl ->
     let gc = the_asm (hd_is "gc_related") gl in
@@ -10424,7 +10428,7 @@ let USE_V_REL =
   POP_ASSUM_LIST (fun l -> MAP_EVERY ASSUME_TAC (filter
     (fun th -> let c = concl th in
        hd_is "MEM" c || (is_eq c && is_var (lhand c))) l)) THEN
-  ASM_MESON_TAC[MEM];;
+  ASM_MESON_TAC[MEM]) gl);;
 
 (* the port's own: what reaches a reference.  reachable_refs is a
    path of ref_edge from a reference of a value of the stack, so a
@@ -12637,8 +12641,11 @@ CON_FILE = {
   'bvl_handleProof': {'Let': 'bvl', 'Var': 'bvl', 'Op': 'bvl'},
   'clos_opProof': {'If': 'closLang', 'Op': 'closLang',
                    'Var': 'closLang'},
+  # and the Continue of this proof is the one of word_bignum's own
+  # mini language, where wordLang and wordSem have one each
   'word_bignumProof': {'Xor': 'asm', 'And': 'asm', 'Or': 'asm',
-                       'Add': 'asm', 'Sub': 'asm'},
+                       'Add': 'asm', 'Sub': 'asm',
+                       'Continue': 'word_bignum'},
   # and the None this proof compares a gc_kind with is the one of
   # data_to_word's gc_kind; backend_common's tra has a None too
   # and this file never writes that one
