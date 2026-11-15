@@ -453,10 +453,10 @@ let size_of_Number_head = prove
 let RefByte_thm = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
   locs /\
-    wordSem_get_vars [0; 1; 2] (dataSem_state_locals s) = SOME (APPEND vals
+    dataSem_get_vars [0; 1; 2] (dataSem_state_locals s) = SOME (APPEND vals
       [dataSem_Number (&(if fl then 0 else 4))]) /\ wordSem_state_clock
     t = MustTerminate_limit (:'a) - 1 /\
-    wordSem_pop_env s = SOME s1 /\ is_env (HD (dataSem_state_stack s))
+    dataSem_pop_env s = SOME s1 /\ is_env (HD (dataSem_state_stack s))
       /\ dataSem_state_locals_size
     s = sptree_lookup RefByte_location (dataSem_state_stack_frame_sizes s)
       /\
@@ -937,10 +937,10 @@ let cut_state_opt_SOME_eq = prove
 (* HOL4 data_to_word_assignProofScript.sml:2210-2212: ML code, not ported *)
 
 let state_rel_cut_state_opt_set_var = prove
- (`data_to_word_gcProof_state_rel c l1 l2 (wordSem_set_var dest v s2) r NONE
+ (`data_to_word_gcProof_state_rel c l1 l2 (dataSem_set_var dest v s2) r NONE
   locs /\
    dataSem_cut_state_opt (SOME names) s2 = SOME s2_cut ==>
-   data_to_word_gcProof_state_rel c l1 l2 (wordSem_set_var dest v s2_cut)
+   data_to_word_gcProof_state_rel c l1 l2 (dataSem_set_var dest v s2_cut)
      r NONE locs`,
   CHEAT_TAC);;
 
@@ -1878,7 +1878,7 @@ let assign_WordToInt = prove
   CHEAT_TAC);;
 
 let push_env_tstamps = prove
- (`!x t s. dataSem_state_tstamps (wordSem_push_env x t s) =
+ (`!x t s. dataSem_state_tstamps (dataSem_push_env x t s) =
   dataSem_state_tstamps s`,
   CHEAT_TAC);;
 
@@ -1923,10 +1923,10 @@ let FromList1_code_thm = prove
 let FromList_thm = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
   locs /\ ~(encode_header c (4 * tag) 0 = (NONE:('a word) option)) /\
-    wordSem_get_vars [0; 1; 2] (dataSem_state_locals s) = SOME [v1; v2;
+    dataSem_get_vars [0; 1; 2] (dataSem_state_locals s) = SOME [v1; v2;
       dataSem_Number (&(4 * tag))] /\ wordSem_state_clock
     t = MustTerminate_limit (:'a) - 1 /\
-    wordSem_pop_env s = SOME s1 /\ is_env (HD (dataSem_state_stack s))
+    dataSem_pop_env s = SOME s1 /\ is_env (HD (dataSem_state_stack s))
       /\ dataSem_state_locals_size
     s = sptree_lookup FromList_location (dataSem_state_stack_frame_sizes s)
       /\
@@ -2054,8 +2054,8 @@ let call_env_push_env_dec_clock_lift_locals = prove
 
 (* [local] *)
 let call_env_push_env_dec_clock_stack_max = prove
- (`wordSem_state_stack_max
-     (wordSem_call_env args ls (wordSem_push_env env F
+ (`dataSem_state_stack_max
+     (dataSem_call_env args ls (dataSem_push_env env F
        (word_bignumProof_dec_clock (s:('c,'ffi)dataSem_state)))) =
        OPTION_MAP2 MAX
          (OPTION_MAP2 MAX (dataSem_state_stack_max s)
@@ -2236,7 +2236,7 @@ let AllocVar_thm_binary = prove
      data_to_word_gcProof_state_rel c l1 l2 s t NONE locs /\
      dataSem_cut_env (list_insert [a1; a2] x') (dataSem_state_locals s) =
        SOME xa /\
-     wordSem_get_vars [a1; a2] (dataSem_state_locals s) = SOME
+     dataSem_get_vars [a1; a2] (dataSem_state_locals s) = SOME
        [dataSem_Number (&i); vv] /\
      wordSem_get_var 1 t = SOME (word_Word (n2w (4 * i))) /\
      4 * i < dimword (:'a) /\

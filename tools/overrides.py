@@ -2615,6 +2615,16 @@ CON_OF = {
   # two of its three arguments: wordSem's takes exactly two, so
   # the number of arguments picks the wrong one of the pair
   ('labSem', 'mem_op_def'): {'mem_load': 'labSem'},
+  # the compile of a known_conf is clos_known's and the compile
+  # of a do_mti and a max_app is clos_mti's; the compile of
+  # clos_to_bvl, which the name of the file would take, is
+  # neither
+  ('clos_to_bvlProof', 'compile_inc_post_kcompile_def'):
+    {'compile': {2: 'clos_known', 3: 'clos_mti'}},
+  # the code that word_bignum's compile goes into is a wordLang
+  # one, so the Seq that holds it is wordLang's and not the Seq
+  # of word_bignum's own mini language
+  ('word_bignumProof', 'code_rel_def'): {'Seq': 'wordLang'},
   ('labProps', 'evaluate_ADD_clock'): {'TimeOut': 'targetSem'},
   # the code that this relates is the deep embedding of the bignum
   # library, so its code_rel is word_bignumProof's
@@ -13517,7 +13527,7 @@ THM_PATCH = {
   ('bvi_to_dataProof', 'state_rel_dest_thunk'): [
     ('dataSem_dest_thunk (data_to_bvi_v z)',
      'bvlSem_dest_thunk (data_to_bvi_v z)'),
-    ('= dataSem_IsThunk ev v /\\', '= bvlSem_IsThunk ev v /\\'),
+    ('= dataSem_IsThunk ev v ==>', '= bvlSem_IsThunk ev v ==>'),
   ],
   ('bvi_to_dataProof', 'data_to_bvi_do_eq'): [
     ('dataSem_do_eq r (data_to_bvi_v v1)',

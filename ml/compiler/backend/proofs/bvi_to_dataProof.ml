@@ -259,11 +259,11 @@ let var_corr_map = prove
    wich in all cases except `Block` is bijective
  *)
 let data_to_bvi_v_eq = prove
- (`(!v n i. data_to_bvi_v v = dataSem_Number i <=> v = dataSem_Number i) /\
-   (!v n w. data_to_bvi_v v = dataSem_Word64 w <=> v = dataSem_Word64 w) /\
-   (!v n p. data_to_bvi_v v = dataSem_CodePtr p <=> v = dataSem_CodePtr p)
+ (`(!v n i. data_to_bvi_v v = bvlSem_Number i <=> v = dataSem_Number i) /\
+   (!v n w. data_to_bvi_v v = bvlSem_Word64 w <=> v = dataSem_Word64 w) /\
+   (!v n p. data_to_bvi_v v = bvlSem_CodePtr p <=> v = dataSem_CodePtr p)
      /\
-   (!v n r b. data_to_bvi_v v = dataSem_RefPtr b r <=> v = dataSem_RefPtr b
+   (!v n r b. data_to_bvi_v v = bvlSem_RefPtr b r <=> v = dataSem_RefPtr b
      r) /\
    (!v n l.
      data_to_bvi_v v = bvlSem_Block n l <=> (?ts l'. v = dataSem_Block ts
@@ -316,11 +316,11 @@ let data_to_bvi_v_list_to_v_Nil = prove
 let data_to_bvi_do_eq = prove
  (`(!t v1 v2 r.
      (!n. FLOOKUP r n = sptree_lookup n (sptree_map data_to_bvi_ref t)) ==>
-       dataSem_do_eq r (data_to_bvi_v v1) (data_to_bvi_v v2) =
+       bvlSem_do_eq r (data_to_bvi_v v1) (data_to_bvi_v v2) =
        dataSem_do_eq t v1 v2) /\
    (!t l1 l2 r.
      (!n. FLOOKUP r n = sptree_lookup n (sptree_map data_to_bvi_ref t)) ==>
-       dataSem_do_eq_list r (MAP data_to_bvi_v l1) (MAP data_to_bvi_v l2) =
+       bvlSem_do_eq_list r (MAP data_to_bvi_v l1) (MAP data_to_bvi_v l2) =
        dataSem_do_eq_list t l1 l2)`,
   CHEAT_TAC);;
 
@@ -357,7 +357,7 @@ let do_build_thm = prove
 
 (* [local] *)
 let data_to_bvi_v_Boolv_IMP = prove
- (`data_to_bvi_v x0 = dataSem_Boolv b ==> dest_Boolv x0 = SOME b`,
+ (`data_to_bvi_v x0 = bvlSem_Boolv b ==> dest_Boolv x0 = SOME b`,
   CHEAT_TAC);;
 
 (* bviSem$finalise_cons is simulated by dataSem$finalise_cons: the extra
@@ -378,7 +378,7 @@ let data_to_bvi_finalise_cons = prove
 
 let data_to_bvi_do_app = prove
  (`!op t r z res s1.
-     ~(op = word_Install) /\ ~(op = clos_IntOp clos_Greater) /\ ~(op =
+     ~(op = clos_Install) /\ ~(op = clos_IntOp clos_Greater) /\ ~(op =
        clos_IntOp clos_GreaterEq) /\ ~(op = clos_WordOp (WordTest ast_W8
        (ast_Compare ast_Gt))) /\ ~(op = clos_WordOp (WordTest ast_W8
        (ast_Compare ast_Geq))) /\
@@ -434,8 +434,8 @@ let jump_exc_lss = prove
 
 let state_rel_dest_thunk = prove
  (`bvi_to_dataProof_state_rel s t /\
-   dataSem_dest_thunk (data_to_bvi_v z) (bviSem_state_refs s) =
-     dataSem_IsThunk ev v ==>
+   bvlSem_dest_thunk (data_to_bvi_v z) (bviSem_state_refs s) = bvlSem_IsThunk
+     ev v ==>
      (?v'. dataSem_dest_thunk z (dataSem_state_refs t) = dataSem_IsThunk ev
        v' /\
           data_to_bvi_v v' = v)`,
@@ -462,7 +462,7 @@ add_simp list_insert_list_to_num_set;;
 let state_rel_do_app_FFI_err = prove
  (`!i z r t x.
      bvi_to_dataProof_state_rel r t /\
-     dataSem_do_app (clos_FFI i) (MAP data_to_bvi_v z) r = Rerr (Rabort
+     bviSem_do_app (clos_FFI i) (MAP data_to_bvi_v z) r = Rerr (Rabort
        (Rffi_error x)) ==>
      dataSem_do_app (clos_FFI i) z t = Rerr (Rabort (Rffi_error x))`,
   CHEAT_TAC);;
@@ -578,11 +578,11 @@ let state_rel_dec_clock = prove
    variables of its own are read as variables *)
 let compile_part_evaluate = prove
  (cake_as_vars (fun () ->
-    `dataSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],s1) = (res,s2)
+    `bviSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],s1) = (res,s2)
   /\ ~(res = Rerr (Rabort Rtype_error)) /\ bvi_to_dataProof_state_rel s1 t1 /\
      (\t. t = LN) (dataSem_state_locals t1) /\ (!x. res = Rerr (Rraise x)
        ==> ~(dataSem_jump_exc t1 = NONE)) ==> (?r t2.
-        dataSem_evaluate ((bvi_Call NONE (SOME start) [] NONE),t1) = (SOME
+        dataSem_evaluate ((data_Call NONE (SOME start) [] NONE),t1) = (SOME
           r,t2) /\
         bvi_to_dataProof_state_rel s2 t2 /\ data_to_bvi_result r = res)`),
   CHEAT_TAC);;
@@ -641,11 +641,11 @@ add_simp get_code_labels_iAssign;;
 let bvi_to_dataProof_get_code_labels_compile = prove
  (`!a b c d e. dataProps_get_code_labels (FST (bvi_to_data_compile a b c d e))
   SUBSET
-    UNIONS (set_of_list (MAP dataProps_get_code_labels e))`,
+    UNIONS (set_of_list (MAP bviProps_get_code_labels e))`,
   CHEAT_TAC);;
 
 let compile_prog_good_code_labels = prove
- (`!p. dataProps_good_code_labels p elabs ==> dataProps_good_code_labels
+ (`!p. bviProps_good_code_labels p elabs ==> dataProps_good_code_labels
   (bvi_to_data_compile_prog p) elabs`,
   CHEAT_TAC);;
 

@@ -474,11 +474,11 @@ let evaluate_sf_gc_consts = prove
          (wordSem_state_stack s)) (wordSem_state_stack s')
          /\ wordSem_state_handler
        s' = get_above_handler s
-     | SOME (word_Break _) ->
+     | SOME (wordSem_Break _) ->
        ALL2 sf_gc_consts (wordSem_state_stack s) (wordSem_state_stack s')
          /\ wordSem_state_handler
        s' = wordSem_state_handler s
-     | SOME (word_Continue _) ->
+     | SOME (wordSem_Continue _) ->
        ALL2 sf_gc_consts (wordSem_state_stack s) (wordSem_state_stack s')
          /\ wordSem_state_handler
        s' = wordSem_state_handler s

@@ -813,7 +813,8 @@ let global_env_inv_extend2 = prove
 (* [local] *)
 let lookup_build_rec_env_lem = prove
  (`!x cl_env funs' funs.
-     ALOOKUP (MAP (\(fn,n,e). (fn,flatSem_Recclosure cl_env funs' fn)) funs)
+     ALOOKUP (MAP (\(fn,n,e). (fn,semanticPrimitives_Recclosure cl_env funs'
+       fn)) funs)
        x = SOME v ==>
      v = semanticPrimitives_Recclosure cl_env funs' x`,
   CHEAT_TAC);;
@@ -1332,13 +1333,13 @@ let invariant_dec_clock = prove
  (`source_to_flatProof_invariant interp g gen genv env st1 st2 ==>
   semanticPrimitives_state_clock
    st1 = flatSem_state_clock st2 /\
-   source_to_flatProof_invariant interp g gen genv env (flatSem_dec_clock
-     st1) (flatSem_dec_clock st2)`,
+   source_to_flatProof_invariant interp g gen genv env (evaluate_dec_clock st1)
+     (flatSem_dec_clock st2)`,
   CHEAT_TAC);;
 
 let v_rel_Bool_eqn = prove
  (`genv_c_ok (global_env_c genv) ==> (source_to_flatProof_v_rel genv
-  (flatSem_Boolv b) v <=> (v = flatSem_Boolv b))`,
+  (semanticPrimitives_Boolv b) v <=> (v = flatSem_Boolv b))`,
   CHEAT_TAC);;
 
 (* evaluate_Bool *)
@@ -1660,7 +1661,7 @@ let subglobals_add_NONE = prove
 
 let do_eval = prove
  (`!vs'.
-   flatSem_do_eval vs (semanticPrimitives_state_eval_state s) = SOME
+   semanticPrimitives_do_eval vs (semanticPrimitives_state_eval_state s) = SOME
      (env,decs,eval_state) /\
    source_to_flatProof_invariant interp g gen genv idxs s t /\
    ALL2 (source_to_flatProof_v_rel genv) vs vs' ==>

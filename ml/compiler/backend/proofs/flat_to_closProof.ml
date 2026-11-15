@@ -141,7 +141,7 @@ let v_rel_to_list = prove
 let IMP_v_rel_to_list = prove
  (`!xs ys.
      ALL2 flat_to_closProof_v_rel xs ys ==>
-     flat_to_closProof_v_rel (flatSem_list_to_v xs) (flatSem_list_to_v ys)`,
+     flat_to_closProof_v_rel (flatSem_list_to_v xs) (closSem_list_to_v ys)`,
   CHEAT_TAC);;
 
 let lookup_refv = prove
@@ -166,7 +166,7 @@ let lookup_array = prove
 
 let lookup_thunk = prove
  (`flat_to_closProof_state_rel s1 t1 /\ store_lookup i (flatSem_state_refs s1)
-  = SOME (closSem_Thunk m v) ==>
+  = SOME (semanticPrimitives_Thunk m v) ==>
    (?w. FLOOKUP (closSem_state_refs t1) i = SOME (closSem_Thunk m w)
      /\ flat_to_closProof_v_rel v w)`,
   CHEAT_TAC);;
@@ -375,7 +375,7 @@ let compile_op_evaluates_args = prove
 
 (* v_rel_Boolv *)
 let flat_to_closProof_v_rel_Boolv = prove
- (`flat_to_closProof_v_rel (flatSem_Boolv b) v = (v = flatSem_Boolv b)`,
+ (`flat_to_closProof_v_rel (flatSem_Boolv b) v = (v = closSem_Boolv b)`,
   CHEAT_TAC);;
 add_simp flat_to_closProof_v_rel_Boolv;;
 
@@ -487,7 +487,7 @@ let op_eq_gc = prove
 let v_rel_v_to_char_list = prove
  (`!x ls y.
      flatSem_v_to_char_list x = SOME ls /\ flat_to_closProof_v_rel x y ==>
-     flatSem_v_to_list y = SOME (MAP (closSem_Number o (&)) (MAP ORD ls))`,
+     closSem_v_to_list y = SOME (MAP (closSem_Number o (&)) (MAP ORD ls))`,
   CHEAT_TAC);;
 
 let op_str = prove
@@ -798,7 +798,7 @@ let flat_to_closProof_rel_update_thunk = prove
    ALL2 flat_to_closProof_v_rel vs ys ==>
      (flatSem_update_thunk [flatSem_Loc v ptr] (flatSem_state_refs s1) vs =
        SOME refs1 ==>
-        (?refs2. flatSem_update_thunk [closSem_RefPtr v ptr]
+        (?refs2. closSem_update_thunk [closSem_RefPtr v ptr]
           (closSem_state_refs s2) ys = SOME refs2 /\
                 flat_to_closProof_state_rel (flatSem_state_refs_fupd (K
                   refs1) s1) (closSem_state_refs_fupd (K refs2) s2)))`,
@@ -899,11 +899,11 @@ let EVERY_IMP_HD = prove
 (* elist_globals_empty *)
 let flat_to_closProof_elist_globals_empty = prove
  (`!es. closProps_elist_globals es = EMPTY_BAG <=>
-        (!e. MEM e es ==> flatProps_set_globals e = EMPTY_BAG)`,
+        (!e. MEM e es ==> closProps_set_globals e = EMPTY_BAG)`,
   CHEAT_TAC);;
 
 let set_globals_SmartCons = prove
- (`flatProps_set_globals (SmartCons t tag xs) = flatProps_elist_globals xs`,
+ (`closProps_set_globals (SmartCons t tag xs) = closProps_elist_globals xs`,
   CHEAT_TAC);;
 
 let esgc_free_SmartCons = prove

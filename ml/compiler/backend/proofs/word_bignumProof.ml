@@ -262,8 +262,7 @@ let word_bignumProof_code_rel_def = new_definition
         ALOOKUP (SND cs) prog = SOME (n,p2) ==>
         (?cs1 l2 i2 cs2.
           word_bignum_compile n 2 1 cs1 prog = (p2,l2,i2,cs2) /\
-          sptree_lookup n code = SOME (1,word_bignum_Seq p2 (word_Return 0
-            [0])) /\
+          sptree_lookup n code = SOME (1,word_Seq p2 (word_Return 0 [0])) /\
           code_subset cs2 cs))`;;
 
 let div_code_assum_def = new_definition

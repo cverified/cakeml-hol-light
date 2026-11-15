@@ -2655,10 +2655,10 @@ let jump_exc_push_env_SOME = prove
   CHEAT_TAC);;
 
 let eval_push_env_T_Raise_IMP_stack_length = prove
- (`wordSem_evaluate (p,wordSem_call_env ys ss (wordSem_push_env x T
-  (wordSem_dec_clock (s:('c,'ffi)dataSem_state)))) =
+ (`dataSem_evaluate (p,dataSem_call_env ys ss (dataSem_push_env x T
+  (dataSem_dec_clock (s:('c,'ffi)dataSem_state)))) =
        (SOME (Rerr (Rraise a)),r') ==>
-    LENGTH (wordSem_state_stack r') = LENGTH (dataSem_state_stack s)`,
+    LENGTH (dataSem_state_stack r') = LENGTH (dataSem_state_stack s)`,
   CHEAT_TAC);;
 
 let eval_push_env_SOME_exc_IMP_s_key_eq = prove
@@ -2670,10 +2670,10 @@ let eval_push_env_SOME_exc_IMP_s_key_eq = prove
   CHEAT_TAC);;
 
 let eval_exc_stack_shorter = prove
- (`wordSem_evaluate (c,wordSem_call_env ys ss (wordSem_push_env x F
-  (wordSem_dec_clock (s:('c,'ffi)dataSem_state)))) =
+ (`dataSem_evaluate (c,dataSem_call_env ys ss (dataSem_push_env x F
+  (dataSem_dec_clock (s:('c,'ffi)dataSem_state)))) =
       (SOME (Rerr (Rraise a)),r') ==>
-    LENGTH (wordSem_state_stack r') < LENGTH (dataSem_state_stack s)`,
+    LENGTH (dataSem_state_stack r') < LENGTH (dataSem_state_stack s)`,
   CHEAT_TAC);;
 
 let NOT_1_domain = prove
@@ -3302,7 +3302,7 @@ let cut_locals_def = new_definition
 
 let size_of_heap_call_push_env = prove
  (`dataSem_cut_env names (dataSem_state_locals s) = SOME x ==>
-   size_of_heap (wordSem_call_env [] ss (wordSem_push_env x F s)) =
+   size_of_heap (dataSem_call_env [] ss (dataSem_push_env x F s)) =
      size_of_heap (dataSem_state_locals_fupd (K x) s)`,
   CHEAT_TAC);;
 
@@ -3739,17 +3739,17 @@ let state_rel_imp_clock = prove
   CHEAT_TAC);;
 
 let get_vars_SOME_IFF_data = prove
- (`(wordSem_get_vars [] t = SOME [] <=> T) /\
-    (wordSem_get_vars (CONS x xs) t = SOME (CONS y ys) <=>
+ (`(dataSem_get_vars [] t = SOME [] <=> T) /\
+    (dataSem_get_vars (CONS x xs) t = SOME (CONS y ys) <=>
      dataSem_get_var x t = SOME y /\
-     wordSem_get_vars xs t = SOME ys)`,
+     dataSem_get_vars xs t = SOME ys)`,
   CHEAT_TAC);;
 
 let get_vars_SOME_IFF_data_eq = prove
- (`((wordSem_get_vars [] t = SOME z) <=> (z = [])) /\
-    (wordSem_get_vars (CONS x xs) t = SOME z <=>
+ (`((dataSem_get_vars [] t = SOME z) <=> (z = [])) /\
+    (dataSem_get_vars (CONS x xs) t = SOME z <=>
     (?y ys. z = CONS y ys /\ dataSem_get_var x t = SOME y /\
-           wordSem_get_vars xs t = SOME ys))`,
+           dataSem_get_vars xs t = SOME ys))`,
   CHEAT_TAC);;
 
 let get_vars_SOME_IFF = prove

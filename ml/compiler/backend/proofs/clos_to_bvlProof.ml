@@ -972,7 +972,7 @@ let state_rel_NEW_REF = prove
 (* v_to_list[local] *)
 let clos_to_bvlProof_v_to_list = prove
  (`!v l v'.
-    bvlSem_v_to_list v = SOME l /\
+    closSem_v_to_list v = SOME l /\
     clos_to_bvlProof_v_rel max_app f r c v v' ==>
     (?l'. bvlSem_v_to_list v' = SOME l' /\
          ALL2 (clos_to_bvlProof_v_rel max_app f r c) l l')`,
@@ -1018,7 +1018,7 @@ let do_eq_list_T_every = prove
 let clos_to_bvlProof_list_to_v_v_rel = prove
  (`!xs ys.
      ALL2 (clos_to_bvlProof_v_rel app f refs code) xs ys ==>
-       clos_to_bvlProof_v_rel app f refs code (bvlSem_list_to_v xs)
+       clos_to_bvlProof_v_rel app f refs code (closSem_list_to_v xs)
          (bvlSem_list_to_v ys)`,
   CHEAT_TAC);;
 
@@ -1578,7 +1578,7 @@ add_simp clos_tag_shift_eq_nil_tag;;
 let clos_to_bvlProof_v_rel_IMP_v_to_words_lemma = prove
  (`!x y.
      clos_to_bvlProof_v_rel max_app f refs code x y ==>
-     (!ns. (bvlSem_v_to_list x = SOME (MAP bvlSem_Word64 ns)) <=>
+     (!ns. (closSem_v_to_list x = SOME (MAP closSem_Word64 ns)) <=>
           (bvlSem_v_to_list y = SOME (MAP bvlSem_Word64 ns)))`,
   CHEAT_TAC);;
 
@@ -1592,7 +1592,7 @@ let clos_to_bvlProof_v_rel_IMP_v_to_words = prove
 let clos_to_bvlProof_v_rel_IMP_v_to_bytes_lemma = prove
  (`!x y.
      clos_to_bvlProof_v_rel max_app f refs code x y ==>
-     (!ns. (bvlSem_v_to_list x = SOME (MAP (bvlSem_Number o (&) o
+     (!ns. (closSem_v_to_list x = SOME (MAP (closSem_Number o (&) o
        (w2n:word8->num)) ns)) <=>
           (bvlSem_v_to_list y = SOME (MAP (bvlSem_Number o (&) o
             (w2n:word8->num)) ns)))`,
@@ -1756,7 +1756,7 @@ let rel_dest_thunk = prove
  (`clos_to_bvlProof_state_rel f s t /\
    clos_to_bvlProof_v_rel (closSem_state_max_app s) f (bvlSem_state_refs t)
      (bvlSem_state_code t) h y /\
-   bvlSem_dest_thunk [h] (closSem_state_refs s) = bvlSem_IsThunk m r1 ==>
+   closSem_dest_thunk [h] (closSem_state_refs s) = closSem_IsThunk m r1 ==>
    (?r2.
      bvlSem_dest_thunk y (bvlSem_state_refs t) = bvlSem_IsThunk m r2 /\
      clos_to_bvlProof_v_rel (closSem_state_max_app s) f (bvlSem_state_refs
@@ -1767,7 +1767,7 @@ let rel_dest_thunk_NotThunk = prove
  (`clos_to_bvlProof_state_rel f s t /\
    clos_to_bvlProof_v_rel (closSem_state_max_app s) f (bvlSem_state_refs t)
      (bvlSem_state_code t) h y /\
-   bvlSem_dest_thunk [h] (closSem_state_refs s) = bvlSem_NotThunk ==>
+   closSem_dest_thunk [h] (closSem_state_refs s) = closSem_NotThunk ==>
      bvlSem_dest_thunk y (bvlSem_state_refs t) = bvlSem_NotThunk`,
   CHEAT_TAC);;
 
@@ -2615,7 +2615,7 @@ let oracle_monotonic_init_subset = prove
   CHEAT_TAC);;
 
 let compile_inc_post_kcompile_def = new_definition
-  `compile_inc_post_kcompile c exps = clos_to_bvl_compile
+  `compile_inc_post_kcompile c exps = clos_known_compile
   (clos_to_bvl_config_known_conf c)
      (SND (renumber_code_locs_list
          (make_even (clos_to_bvl_config_next_loc c + MAX 1 (LENGTH exps)))
