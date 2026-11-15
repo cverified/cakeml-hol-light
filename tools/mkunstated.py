@@ -51,7 +51,12 @@ def main():
   p = T + '../tmp/dry/thmbind.txt'
   if os.path.exists(p):
     for l in open(p):
-      thy, nm, b = l.split()
+      # the binding of a theorem that the port derives is an
+      # expression and not an identifier (cake_cases foo), so it
+      # is the rest of the line and not one field
+      parts = l.split()
+      if len(parts) < 3: continue
+      thy, nm, b = parts[0], parts[1], ' '.join(parts[2:])
       bind[(thy, b)] = nm
   out = []
   seen = set()
@@ -63,6 +68,11 @@ def main():
     # not a statement of the source: what it says is
     # overrides.NO_DERIVE's to record, not this table's
     if msg.startswith('VALUE'): continue
+    # a PROOF entry is one whose statement read on its own and
+    # whose proof did not, so it says nothing about the statement
+    # -- and a tactic of a hand-written proof holds terms of its
+    # own, which fail with the same message a statement does
+    if msg.startswith('PROOF'): continue
     if not any(k in msg for k in PARSE): continue
     rel = re.sub(r'^.*/ml/', '', f)
     thy = thy_of.get(rel)
