@@ -2604,6 +2604,11 @@ CON_OF = {
     {'push_env': 'dataSem'},
   ('data_to_word_assignProof', 'call_env_push_env_dec_clock_stack_max'):
     {'call_env': 'dataSem', 'push_env': 'dataSem'},
+  # data_to_bvi_v takes a value of dataSem to one of bvlSem, so
+  # the Boolv it is compared with is bvlSem's
+  ('bvi_to_dataProof', 'data_to_bvi_v_Boolv_IMP'): {'Boolv': 'bvlSem'},
+  # and the op that do_app takes is a closLang op
+  ('bvi_to_dataProof', 'data_to_bvi_do_app'): {'Install': 'closLang'},
   # the result that the machine gives is targetSem's, where the
   # TimeOut of wordSem is the one the resolution would take
   ('labProps', 'evaluate_ADD_clock'): {'TimeOut': 'targetSem'},
@@ -13411,6 +13416,83 @@ THM_PATCH = {
   # the word_cmp of the result compares two words, which is asm's
   # and gives a bool; the one of the left hand side compares two
   # word_locs, which is wordSem's and gives an option
+  # flat_to_closProof relates a value of flatSem to one of
+  # closSem, and writes one name for both: the first of each pair
+  # is flatSem's and the second closSem's
+  ('flat_to_closProof', 'IMP_v_rel_to_list'): [
+    ('(flatSem_list_to_v xs) (flatSem_list_to_v ys)',
+     '(flatSem_list_to_v xs) (closSem_list_to_v ys)'),
+  ],
+  ('flat_to_closProof', 'v_rel_Boolv'): [
+    ('(v = flatSem_Boolv b)', '(v = closSem_Boolv b)'),
+  ],
+  ('flat_to_closProof', 'v_rel_v_to_char_list'): [
+    ('flatSem_v_to_list y = SOME', 'closSem_v_to_list y = SOME'),
+  ],
+  ('flat_to_closProof', 'rel_update_thunk'): [
+    ('flatSem_update_thunk [closSem_RefPtr v ptr]',
+     'closSem_update_thunk [closSem_RefPtr v ptr]'),
+  ],
+  # the store of a flatSem state holds the store_v of
+  # semanticPrimitives, where the refs of a closSem state hold
+  # closSem's own ref
+  ('flat_to_closProof', 'lookup_thunk'): [
+    ('SOME (closSem_Thunk m v)', 'SOME (semanticPrimitives_Thunk m v)'),
+  ],
+  # SmartCons builds a closLang expression, so the globals it
+  # sets are the ones closProps counts
+  ('flat_to_closProof', 'set_globals_SmartCons'): [
+    ('flatProps_set_globals (SmartCons t tag xs) ='
+     ' flatProps_elist_globals xs',
+     'closProps_set_globals (SmartCons t tag xs) ='
+     ' closProps_elist_globals xs'),
+  ],
+  ('flat_to_closProof', 'elist_globals_empty'): [
+    ('flatProps_set_globals e = EMPTY_BAG',
+     'closProps_set_globals e = EMPTY_BAG'),
+  ],
+  # data_to_bvi_v takes a value of dataSem to one of bvlSem, so
+  # what it is equal to is bvlSem's and what it is applied to is
+  # dataSem's; the same for the refs and the states beside them
+  ('bvi_to_dataProof', 'data_to_bvi_v_eq'): [
+    ('data_to_bvi_v v = dataSem_Number i', 'data_to_bvi_v v = bvlSem_Number i'),
+    ('data_to_bvi_v v = dataSem_Word64 w', 'data_to_bvi_v v = bvlSem_Word64 w'),
+    ('data_to_bvi_v v = dataSem_CodePtr p',
+     'data_to_bvi_v v = bvlSem_CodePtr p'),
+    ('data_to_bvi_v v = dataSem_RefPtr b r',
+     'data_to_bvi_v v = bvlSem_RefPtr b r'),
+  ],
+  ('bvi_to_dataProof', 'state_rel_dest_thunk'): [
+    ('dataSem_dest_thunk (data_to_bvi_v z)',
+     'bvlSem_dest_thunk (data_to_bvi_v z)'),
+    ('= dataSem_IsThunk ev v /\\', '= bvlSem_IsThunk ev v /\\'),
+  ],
+  ('bvi_to_dataProof', 'data_to_bvi_do_eq'): [
+    ('dataSem_do_eq r (data_to_bvi_v v1)',
+     'bvlSem_do_eq r (data_to_bvi_v v1)'),
+    ('dataSem_do_eq_list r (MAP data_to_bvi_v l1)',
+     'bvlSem_do_eq_list r (MAP data_to_bvi_v l1)'),
+  ],
+  ('bvi_to_dataProof', 'state_rel_do_app_FFI_err'): [
+    ('dataSem_do_app (clos_FFI i) (MAP data_to_bvi_v z) r',
+     'bviSem_do_app (clos_FFI i) (MAP data_to_bvi_v z) r'),
+  ],
+  ('bvi_to_dataProof', 'compile_part_evaluate'): [
+    ('dataSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],s1)',
+     'bviSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],s1)'),
+    ('dataSem_evaluate ((bvi_Call NONE (SOME start) [] NONE),t1)',
+     'dataSem_evaluate ((data_Call NONE (SOME start) [] NONE),t1)'),
+  ],
+  # the labels of what the pass reads are bviProps' and of what it
+  # writes dataProps'
+  ('bvi_to_dataProof', 'get_code_labels_compile'): [
+    ('MAP dataProps_get_code_labels e',
+     'MAP bviProps_get_code_labels e'),
+  ],
+  ('bvi_to_dataProof', 'compile_prog_good_code_labels'): [
+    ('dataProps_good_code_labels p elabs ==>',
+     'bviProps_good_code_labels p elabs ==>'),
+  ],
   # compile_pat gives a flatLang pattern and takes one of ast,
   # so the two pat_bindings of this are of different languages
   ('source_to_flatProof', 'pat_bindings_compile_pat'): [
