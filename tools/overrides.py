@@ -12710,6 +12710,10 @@ CON_FILE = {
   # which an evaluate gives; stackLang has a Halt of its own,
   # a program, and the file never writes that one
   'stack_allocProof': {'Halt': 'stackSem'},
+  # the Break and the Continue of word_allocProof are the
+  # results that an evaluate of wordSem gives, where wordLang
+  # has a Break and a Continue of its own, both programs
+  'word_allocProof': {'Break': 'wordSem', 'Continue': 'wordSem'},
   'clos_knownProof': {'v_rel': 'clos_knownProof',
                       'ref_rel': 'clos_knownProof'},
   # the dec_clock of this proof is wordSem's, on the state the
