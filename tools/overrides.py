@@ -12625,6 +12625,43 @@ THM_PATCH = {
     ('stackSem_get_var n s = SOME v',
      'wordSem_get_var n s = SOME v'),
   ],
+  ('word_to_stackProof', 'wRegWrite1_thm1'): [
+    ('(stackSem_set_var (2 * m) v s)',
+     '(wordSem_set_var (2 * m) v s)'),
+  ],
+  ('word_to_stackProof', 'wRegWrite1_thm1_weak'): [
+    ('(stackSem_set_var (2 * m) v s)',
+     '(wordSem_set_var (2 * m) v s)'),
+  ],
+  ('word_to_stackProof', 'wRegWrite1_thm2'): [
+    ("(stackSem_set_var 0 v' (stackSem_set_var (2 * m) v s))",
+     "(wordSem_set_var 0 v' (wordSem_set_var (2 * m) v s))"),
+  ],
+  ('word_to_stackProof', 'wRegWrite2_thm1'): [
+    ('(stackSem_set_var (2 * m) v s)',
+     '(wordSem_set_var (2 * m) v s)'),
+  ],
+  ('word_to_stackProof', 'state_rel_set_store'): [
+    ('(stackSem_set_store v x s)', '(wordSem_set_store v x s)'),
+  ],
+  ('word_to_stackProof', 'gc_state_rel'): [
+    ('stackSem_gc (s1:(' + chr(39) + 'a,num#' + chr(39) + 'c,' + chr(39) + 'ffi)wordSem_state)',
+     'wordSem_gc (s1:(' + chr(39) + 'a,num#' + chr(39) + 'c,' + chr(39) + 'ffi)wordSem_state)'),
+  ],
+  ('word_to_stackProof', 'dec_stack_lemma1'): [
+    ('stackSem_dec_stack ls wstack', 'wordSem_dec_stack ls wstack'),
+  ],
+  # the first extract_labels of this one is on the program of
+  # wordLang that the pass reads and the second on the one of
+  # stackLang it builds; the same of get_code_labels below
+  ('word_to_stackProof', 'word_to_stack_lab_pres'): [
+    ('stackProps_extract_labels p = stackProps_extract_labels',
+     'wordConvs_extract_labels p = stackProps_extract_labels'),
+  ],
+  ('word_to_stackProof', 'word_to_stack_comp_code_labels'): [
+    ('(stackProps_get_code_labels prog)',
+     '(wordConvs_get_code_labels prog)'),
+  ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
      'lab_LabAsm (lab_Jump jtarget)'),
