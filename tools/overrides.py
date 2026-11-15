@@ -327,8 +327,21 @@ FIELD_VAR = {
                                't': 'wordSem_state',
                                'r': 'wordSem_state',
                                "r'": 'wordSem_state'},
-  # t and u are the states of wordSem that state_rel_ext relates
-  'data_to_wordProof': {'t': 'wordSem_state', 'u': 'wordSem_state'},
+  # t and u are the states of wordSem that state_rel_ext relates,
+  # and s is the dataSem state it relates them to
+  'data_to_wordProof': {'t': 'wordSem_state', 'u': 'wordSem_state',
+                        't1': 'wordSem_state',
+                        't2': 'wordSem_state',
+                        's': 'dataSem_state',
+                        's1': 'dataSem_state',
+                        'r': 'wordSem_state'},
+  # s is the dataSem state that state_rel relates to the wordSem
+  # state t, and r and t' are what an evaluate of wordSem gives
+  'data_to_word_assignProof': {'s': 'dataSem_state',
+                               's2': 'dataSem_state',
+                               't': 'wordSem_state',
+                               "t'": 'wordSem_state',
+                               'r': 'wordSem_state'},
   # the ic of the two install_config_rels is the install_config
   # that the eval_config of a flatSem state is
   'flat_to_closProof': {'ic': 'install_config'},
@@ -11881,10 +11894,10 @@ let mips_config_def = new_definition
        // 32
        0 F
        // valid_imm
-       (\b i. if b IN {INL And,INL Or,INL Xor,INR Test,
-                       INR NotTest}
+       (\b i. if b IN {INL asm_And,INL asm_Or,INL asm_Xor,
+                       INR asm_Test,INR asm_NotTest}
               then n2w 0 <= i /\ i <= w2w (UINT_MAXw:(16)word)
-              else (if b = INL Sub then sw2sw (INT_MINw:(16)word) < i
+              else (if b = INL asm_Sub then sw2sw (INT_MINw:(16)word) < i
                     else sw2sw (INT_MINw:(16)word) <= i) /\
                    i <= sw2sw (INT_MAXw:(16)word))
        // addr_offset hw_offset byte_offset
@@ -11915,7 +11928,7 @@ let riscv_config_def = new_definition
        // reg_count fp_reg_count two_reg_arith
        32 0 F
        // valid_imm
-       (\b i. (if b = INL Sub then sw2sw (INT_MINw:(12)word) < i
+       (\b i. (if b = INL asm_Sub then sw2sw (INT_MINw:(12)word) < i
                else sw2sw (INT_MINw:(12)word) <= i) /\
               i <= sw2sw (INT_MAXw:(12)word))
        // addr_offset hw_offset byte_offset
@@ -12947,8 +12960,8 @@ THM_PATCH = {
   ("word_to_stackProof", "state_rel_IMP_semantics'"): [
     ('~(stackSem_semantics s (start:num) = reg_alloc_Fail)',
      '~(wordSem_semantics s (start:num) = ffi_Fail)'),
-    ('{stackSem_semantics s start}',
-     '{wordSem_semantics s start}'),
+    ('stackSem_semantics start t = stackSem_semantics s start',
+     'stackSem_semantics start t = wordSem_semantics s start'),
   ],
   ('word_to_stackProof', 'compile_semantics'): [
     ('~(stackSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start = reg_alloc_Fail)',
