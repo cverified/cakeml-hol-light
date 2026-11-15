@@ -1,0 +1,49 @@
+# HOL4 theories that the port does not port, because HOL Light
+# has what CakeML uses of them: its own kernel and library
+# (bool, num, arithmetic, list, pred_set, option, pair, string),
+# Library/words.ml, or the compatibility layer ml/lib/hol4.ml.
+# tools/mklibs.py subtracts this from the names that the scope
+# reaches outside cakeml-src, so what is left is a theory to port
+# into ml/lib.  A name here is a decision, not an omission.
+While
+address
+alist
+arithmetic
+arm8_step
+arm_step
+bag
+bit
+blast
+bool
+combin
+container
+cps
+evaluateCompute
+experimental
+finite_map
+gcd
+helper
+induct_tweak
+int
+int_bitwise
+integer
+list
+llist
+mips_step
+num
+option
+pack
+pair
+path
+pred_set
+quantHeuristics
+relation
+res_quan
+rich_list
+riscv_step
+string
+transfer
+unifProps
+unwind
+words
+x64_step
