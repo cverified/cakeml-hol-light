@@ -113,8 +113,9 @@ let inc_compile_decs'_def = new_definition
 
 let install_config_rel'_def = new_definition
   `install_config_rel' ic co cc = (
-     (!i. no_Mat_decs (SND (compile_oracle ic i))) /\
-     co = pure_co inc_compile_decs' o compile_oracle ic /\ compile
+     (!i. no_Mat_decs (SND (install_config_compile_oracle ic i))) /\
+     co = pure_co inc_compile_decs' o install_config_compile_oracle ic
+       /\ install_config_compile
      ic = pure_cc inc_compile_decs' cc)`;;
 
 let flat_to_closProof_state_rel_def = new_definition
@@ -866,9 +867,9 @@ let inc_compile_decs_intro = prove
 
 let install_config_rel_def = new_definition
   `install_config_rel ic co cc <=>
-     (!i. no_Mat_decs (SND (closSem_state_compile_oracle ic i))) /\
-     co = pure_co inc_compile_decs o closSem_state_compile_oracle ic
-       /\ closSem_state_compile
+     (!i. no_Mat_decs (SND (install_config_compile_oracle ic i))) /\
+     co = pure_co inc_compile_decs o install_config_compile_oracle ic
+       /\ install_config_compile
      ic = pure_cc inc_compile_decs cc`;;
 
 (* compile_semantics *)

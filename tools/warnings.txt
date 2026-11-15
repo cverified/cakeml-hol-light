@@ -965,7 +965,7 @@ clos_knownProof	ML code skipped: fun trivial x = x               |> concl       
 clos_knownProof	derive val_approx_no_Labels_simp: rule filter/1
 clos_knownProof	line 38 is 80 characters
 clos_knownProof	line 147 is 82 characters
-clos_knownProof	line 1331 is 83 characters
+clos_knownProof	line 1332 is 83 characters
 clos_mtiProof	ML code skipped: val _ = bring_fwd_ctors "closLang" ``:closLang$exp``
 clos_mtiProof	derive no_mti_def: conv ETA_CONV
 clos_mtiProof	derive v_rel_simps: '\\\\ fs [Boolv'

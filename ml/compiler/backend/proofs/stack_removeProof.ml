@@ -980,7 +980,7 @@ let init_prop_def = new_definition
         s) = [] /\ buffer_buffer (stackSem_state_data_buffer s) = []
           /\ stackSem_state_use_stack
         s /\ stackSem_state_use_store s /\
-        FLOOKUP (stackSem_state_regs s) 0 = SOME (asm_Loc 1 0) /\
+        FLOOKUP (stackSem_state_regs s) 0 = SOME (word_Loc 1 0) /\
         LENGTH (stackSem_state_bitmaps s) + data_sp + 1 < dimword (:'a) /\
         LENGTH (stackSem_state_stack s) < dimword (:'a) /\
         (other = curr + bytes_in_word * n2w len) /\
@@ -1341,7 +1341,7 @@ let make_init_any_def = new_definition
                                 (stackSem_state_mdomain_fupd (K EMPTY)
                                 (stackSem_state_fp_regs_fupd (K FEMPTY)
                                 (stackSem_state_regs_fupd (K (FEMPTY |+
-                                (0,asm_Loc 1 0))) s))))))))))))))`;;
+                                (0,word_Loc 1 0))) s))))))))))))))`;;
 
 let discharge_these_def = new_definition
   `discharge_these jump off gen_gc' max_heap k start' coracle code s2 <=>

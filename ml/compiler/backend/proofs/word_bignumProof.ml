@@ -89,7 +89,7 @@ let eval_ri_pre_def = define_cases
 
 let eval_ri_def = define_cases
   `(eval_ri (s:'a word_bignumProof_state) (Reg r) =
-      eval_exp s ((Var r):'a word_exp)) /\
+      eval_exp s (word_Var r)) /\
    (eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w)`;;
 
 let word_bignumProof_dec_clock_def = new_definition

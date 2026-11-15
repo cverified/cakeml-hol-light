@@ -63,6 +63,35 @@ def candidates(name):
   return out
 
 
+def duplicate_keys():
+  """a key that a dict literal of tools/overrides.py gives twice:
+     Python keeps the last of them and says nothing, so the first
+     is dead and the table reads as if it were not.  That is not a
+     stale entry but it fails the same way, so it is reported
+     here"""
+  import ast
+  tree = ast.parse(open(T + 'overrides.py').read())
+  bad = 0
+  for node in ast.walk(tree):
+    if not isinstance(node, ast.Dict): continue
+    name = '?'
+    for a in ast.walk(tree):
+      if isinstance(a, ast.Assign) and a.value is node:
+        name = getattr(a.targets[0], 'id', '?')
+    seen = {}
+    for k in node.keys:
+      if k is None: continue
+      try: v = ast.literal_eval(k)
+      except Exception: continue
+      if v in seen:
+        bad += 1
+        print('%s: the key %r is given twice (lines %d and %d);'
+              ' the first is dead'
+              % (name, v, seen[v], k.lineno))
+      seen[v] = k.lineno
+  return bad
+
+
 def main():
   verbose = '-v' in sys.argv[1:]
   src = {}
@@ -97,6 +126,8 @@ def main():
         'source has not' % (block, dead))
   print('%d name a theory of the port, %d name something that the '
         'check cannot place' % (thy_only, other))
+  dup = duplicate_keys()
+  print('%d keys that a table gives twice' % dup)
 
 
 if __name__ == '__main__':

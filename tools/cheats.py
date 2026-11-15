@@ -8,8 +8,63 @@ C = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 names = [l.strip() for l in open(C + '/tmp/cheats.txt') if l.strip()]
 # the file that defines each of them, and the phrase in it
 sites = defsites.sites()
+
+
+def not_loaded():
+  """the theories the run says nothing about: one that failed, one
+     whose ancestor failed (it is missing what that one defines)
+     and one the run never reached"""
+  sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+  import db as dbmod
+  db = dbmod.Db()
+  thy_of = {}
+  for thy, _, _ in dbmod.load_order():
+    try: thy_of[db.mlpath_of(thy)] = thy
+    except Exception: pass
+  bad, seen = set(), set()
+  try: rows = open(C + '/tmp/cs.out')
+  except OSError: return {}, {}
+  for l in rows:
+    rel = l.split()[0] if l.split() else ''
+    if rel in thy_of:
+      seen.add(thy_of[rel])
+      if 'Exception' in l or 'Error' in l: bad.add(thy_of[rel])
+  bad |= {t for t in db.kind_of_thy if t not in seen}
+  bad = {t for t in db.kind_of_thy if (db.ancestors(t) | {t}) & bad}
+  return bad, thy_of
+
+
+def old_rows():
+  """the table as it stands, so that a definition of a file the run
+     says nothing about keeps the row it had: a run in which a file
+     did not load counts no cheat of it, and the port reads this
+     table to know which definitions it cannot make"""
+  out = []
+  try: rows = open(C + '/ml/CHEATS.md')
+  except OSError: return out
+  for l in rows:
+    m = re.match(r'\| `([^`]*)` \| `([^`]*)` \| (.*) \|', l)
+    if m: out.append((m.group(1), m.group(2), m.group(3).strip()))
+  return out
+
+
+BAD, THY_OF = not_loaded()
+KEPT = {}
+if BAD:
+  have = set(names)
+  for nm, f, w in old_rows():
+    if nm in have: continue
+    # the file of a name the table has no file for (foo_ind) is
+    # the file of the definition it comes with
+    f = f or (sites[nm[:-4]][0] if nm.endswith('_ind')
+              and nm[:-4] in sites else sites.get(nm, ('',))[0])
+    if THY_OF.get(f) in BAD:
+      names.append(nm)
+      KEPT[nm] = (f, w)
 where = {nm: sites[nm][0] for nm in names if nm in sites}
 phrase = {nm: sites[nm][1] for nm in names if nm in sites}
+for nm, (f, w) in KEPT.items():
+  if f: where[nm] = f
 with open(C + '/ml/CHEATS.md', 'w') as out:
   out.write('# What the port assumes\n\n')
   try:
@@ -35,6 +90,11 @@ with open(C + '/ml/CHEATS.md', 'w') as out:
               'proof is still a cheat, and the rest for the %d\n'
               'definitions below.\n\n'
               % (nax, len(names)))
+  if KEPT:
+    out.write('Of the definitions below, %d are in a file that did\n'
+              'not load in this run, so what the run counts says\n'
+              'nothing about them and they keep the row they had.\n\n'
+              % len(KEPT))
   # why each of them is assumed, where the library layer says it
   why = {}
   try:
@@ -44,6 +104,7 @@ with open(C + '/ml/CHEATS.md', 'w') as out:
         why[n] = w
   except Exception:
     pass
+  for n, (_, w) in KEPT.items(): why[n] = w
   # the three kinds, of which only the last is work to do: a
   # definition whose termination is assumed is made (the constant
   # is real and so are its clauses), and a declared constant is

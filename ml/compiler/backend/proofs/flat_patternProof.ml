@@ -496,7 +496,7 @@ let encode_val_def,encode_val_ind = define_wf
   `MEASURE flatSem_v_size`
   `encode_val others =
    match others with
-     flatSem_Litv l -> flatSem_Litv l
+     flatSem_Litv l -> pattern_semantics_Litv l
    | flatSem_Conv stmp xs -> pattern_semantics_Term
      (match stmp with NONE -> NONE | SOME (i,_) -> SOME i)
      (MAP encode_val xs)

@@ -317,8 +317,15 @@ FIELD_VAR = {
   # a stackSem state, where a bare compile is the constant of a
   # compiler pass (the port has 28 of those under that name)
   'stack_namesProof': {'s': 'stackSem_state', 't': 'stackSem_state'},
+  # stack_rawcall goes from stackLang to stackLang, so the two
+  # states its invariant relates are both stackSem's
+  'stack_rawcallProof': {'s': 'stackSem_state',
+                         't': 'stackSem_state'},
   # t and u are the states of wordSem that state_rel_ext relates
   'data_to_wordProof': {'t': 'wordSem_state', 'u': 'wordSem_state'},
+  # the ic of the two install_config_rels is the install_config
+  # that the eval_config of a flatSem state is
+  'flat_to_closProof': {'ic': 'install_config'},
   # the c of the three definitions that have one is the
   # configuration of clos_to_bvl, whose max_app the state of
   # closSem has as well
@@ -426,6 +433,10 @@ CON_BODY = {
   # jsonLang's and not the one of a display expression
   ('displayLang', 'trace_to_json_def'): {'String': 'jsonLang'},
   ('displayLang', 'display_to_json_def'): {'String': 'jsonLang'},
+  # encode_val reads a value of flatSem and builds a term of
+  # pattern_semantics, and both have Litv
+  ('flat_patternProof', 'encode_val_def'):
+    {'Litv': 'pattern_semantics'},
   # and display_to_str_tree builds the str_tree of mlsexp
   ('displayLang', 'display_to_str_tree_def'): {'String': 'mlsexp'},
   # compile_pat reads an ast pattern and builds a flatLang one,
@@ -608,10 +619,6 @@ FIELD_VAR_DEF = {
   # which the annotation of the other side of the equation says
   ('source_to_flatProof', 'env_updated_lem'):
     {'env': 'flatSem_environment'},
-  # the c of this definition is the state of flatSem whose compile
-  # and compile_oracle it is about, where the c of the theory is
-  # the configuration of source_to_flat
-  ('source_to_flatProof', 'orac_rel_inner_def'): {'c': 'flatSem_state'},
   # the var_map of env_domain_eq is an environment of
   # source_to_flat, where the v and the c of this theory are
   # the ones of its own global_env
@@ -646,9 +653,11 @@ FIELD_VAR_DEF = {
   ('stack_to_labProof', 'memory_assumption_def'):
     {'t': 'labSem_state', 's': 'labSem_state'},
   # the s whose oracle orac_rel_inner reads is the state of an
-  # EvalOracle
+  # EvalOracle, and its c is the state of flatSem whose compile
+  # and compile_oracle it is about (the c of the theory is the
+  # configuration of source_to_flat)
   ('source_to_flatProof', 'orac_rel_inner_def'):
-    {'s': 'eval_oracle_state'},
+    {'s': 'eval_oracle_state', 'c': 'flatSem_state'},
 }
 
 FIELD_OF = {
@@ -1039,19 +1048,6 @@ THM_NAMES = {
   ('unify', 'encode_eq_var'): {'Var': 'term_Var'},
   ('unify', 'swalk_encode_infer_ts_EQ_VAR'): {'Var': 'term_Var'},
   ('unify', 'svwalk_result_encodable'): {'Var': 'term_Var'},
-  # the f_rel of clos_knownProof's v_rel is the one of its own
-  # file, which defines one as clos_fvsProof does
-  ('clos_knownProof', 'v_rel_def'):
-    {'f_rel': 'clos_knownProof_f_rel'},
-  # the compile_inc that the oracle of clos_to_bvlProof runs is
-  # the one of clos_to_bvl, which the port names with a double
-  # underscore because the file defines a compile_inc as well
-  ('clos_to_bvlProof', 'compile_oracle_inv_def'):
-    {'compile_inc': 'clos_to_bvl__compile_inc'},
-  # the Loc that a register of a stackSem state holds is the
-  # word_loc of wordLang, not the one of an asm instruction
-  ('stack_removeProof', 'init_prop_def'): {'Loc': 'wordLang'},
-  ('stack_removeProof', 'make_init_any_def'): {'Loc': 'wordLang'},
   ('unify', 'subterm_thm'):
     {'Var': 'term_Var', 'Pair': 'term_Pair', 'Const': 'term_Const'},
   # these relate the partial collector with the full one, so the
@@ -1888,6 +1884,19 @@ CON_OF = {
   ('bviSem', 'dest_thunk_def'):
     {'BadRef': 'bviSem', 'NotThunk': 'bviSem',
      'IsThunk': 'bviSem'},
+  # the dest_thunk that this one reads is dataSem's, so the
+  # NotThunk it compares the result with is dataSem's too (bvlSem
+  # has one as well, and the values are bvlSem's)
+  ('data_to_word_memoryProof', 'v_inv_ck'): {'NotThunk': 'dataSem'},
+  # the extract_labels of these three is the one of labProps, on
+  # the lines of a Section; everywhere else in the file it is the
+  # one of stackProps, on a program of stackLang
+  ('stack_to_labProof', 'labs_correct_hd'):
+    {'extract_labels': 'labProps'},
+  ('stack_to_labProof', 'labels_ok_def'):
+    {'extract_labels': 'labProps'},
+  ('stack_to_labProof', 'labels_ok_imp'):
+    {'extract_labels': 'labProps'},
   # the seqs of a program give an app_list of misc, as the Append
   # of their other arm does
   ('presLang', 'data_seqs_def'): {'List': 'misc'},
@@ -2096,8 +2105,10 @@ CON_OF = {
   # the List and the Append that the pretty printer of a pass
   # builds are the app_list of misc, and displayLang has a List
   # of an sExp
+  # (HOL4 writes the outer one with a $, which is an infix where
+  # the arity is counted, so it stands under one argument there)
   ('backend_passes', 'pp_with_title_def'):
-    {'List': 'misc', 'Append': {2: 'misc'}},
+    {'List': 'misc', 'Append': {1: 'misc', 2: 'misc'}},
   # the operations of dataLang are closLang's, so the Install
   # that do_app compares its operation with is closLang's;
   # wordLang and stackLang have an Install of a program
@@ -2390,7 +2401,7 @@ let run_linear_reg_alloc_intervals_def = new_definition
   ('word_bignumProof', 'eval_ri_def'): r'''
 let eval_ri_def = define_cases
   `(eval_ri (s:'a word_bignumProof_state) (Reg r) =
-      eval_exp s ((Var r):'a word_exp)) /\
+      eval_exp s (word_Var r)) /\
    (eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w)`;;
 ''',
   # the ~ of HOL4 is the complement of a word as well as the
@@ -12335,6 +12346,10 @@ MAIN_THEORY = {
 # this says the exceptions: a proof about bvl that names asm's Xor
 # or backend_common's word_shift wants that one wherever it stands.
 CON_FILE = {
+  # the wf of this proof is sptree's, on the locals of a state
+  # and on the trees that alist_insert and fromList2 build;
+  # parmove has a wf of its own, on a parallel move
+  'word_to_stackProof': {'wf': 'sptree'},
   # the Int of clos_known is the one of a val_approx, which is
   # what it indexes a tuple with; closLang has an Int of a
   # const_part and clos_known never writes that one
@@ -12369,7 +12384,11 @@ CON_FILE = {
                    'Var': 'closLang'},
   'word_bignumProof': {'Xor': 'asm', 'And': 'asm', 'Or': 'asm',
                        'Add': 'asm', 'Sub': 'asm'},
-  'backendProof': {'Add': 'asm', 'Sub': 'asm'},
+  # and the None this proof compares a gc_kind with is the one of
+  # data_to_word's gc_kind; backend_common's tra has a None too
+  # and this file never writes that one
+  'backendProof': {'Add': 'asm', 'Sub': 'asm',
+                   'None': 'data_to_word'},
   'stackSem': {'Const': 'asm'},
   'bvl_inlineProof': {'compile_oracle': 'bvl_inline'},
 }
@@ -12410,9 +12429,48 @@ DEF_NAMES = {
   ('presLang', 'stack_prog_to_display_def'):
     {'toString': 'num_to_str'},
   ('jsonLang', 'encode_str_def'): {'toString': 'num_to_str'},
+  # the f_rel of clos_knownProof's v_rel is the one of its own
+  # file, which defines one as clos_fvsProof does
+  ('clos_knownProof', 'v_rel_def'):
+    {'f_rel': 'clos_knownProof_f_rel'},
+  # the compile_inc that the oracle of clos_to_bvlProof runs is
+  # the one of clos_to_bvl, which the port names with a double
+  # underscore because the file defines a compile_inc as well
+  ('clos_to_bvlProof', 'compile_oracle_inv_def'):
+    {'compile_inc': 'clos_to_bvl__compile_inc'},
+  # the Loc that a register of a stackSem state holds is the
+  # word_loc of wordLang, not the one of an asm instruction
+  ('stack_removeProof', 'init_prop_def'): {'Loc': 'word_Loc'},
+  ('stack_removeProof', 'make_init_any_def'): {'Loc': 'word_Loc'},
   # the line a location is on is a number, so its toString is
   # num_to_str
   ('compiler', 'locs_to_string_def'): {'toString': 'num_to_str'},
+}
+
+
+# THM_PATCH: the same for the statement of a theorem.  A theorem
+# is not a definition, so it has a table of its own; what a patch
+# is and what happens when one does not apply is the same.
+THM_PATCH = {
+  # the argument of a LabAsm is an asm_with_lab of labLang, and
+  # the asm beside it in the same statement is an asm of asm: both
+  # Jumps take one argument and both JumpCmps take four, so
+  # nothing but the place says which is which
+  ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
+    ('lab_LabAsm (asm_Jump jtarget)',
+     'lab_LabAsm (lab_Jump jtarget)'),
+  ],
+  ('lab_to_targetProof', 'IMP_bytes_in_memory_JumpCmp'): [
+    ('lab_LabAsm (asm_JumpCmp cmp rr ri jtarget)',
+     'lab_LabAsm (lab_JumpCmp cmp rr ri jtarget)'),
+  ],
+  ('lab_to_targetProof', 'IMP_bytes_in_memory_JumpCmp_1'): [
+    ('lab_LabAsm (asm_JumpCmp cmp rr ri jtarget)',
+     'lab_LabAsm (lab_JumpCmp cmp rr ri jtarget)'),
+  ],
+  ('lab_to_targetProof', 'IMP_bytes_in_memory_Call'): [
+    ('lab_LabAsm (asm_Call ww)', 'lab_LabAsm (lab_Call ww)'),
+  ],
 }
 
 
@@ -12434,6 +12492,26 @@ DEF_PATCH = {
      '| (SOME (stackSem_Break _),s) -> (SOME stackSem_Error,s)'),
     ('| (SOME (stack_Continue _),s) -> (SOME stackSem_Error,s)',
      '| (SOME (stackSem_Continue _),s) -> (SOME stackSem_Error,s)'),
+    # and the word_cmp of JumpLower is asm's, on two words,
+    # where the one of If, which the source qualifies, is
+    # wordSem's, on two values of word_loc
+    ('if wordSem_word_cmp asm_Lower x y then',
+     'if asm_word_cmp asm_Lower x y then'),
+  ],
+  # the first of these two reads the stamps that genv_c gives, so
+  # it is the ctor_same_type of semanticPrimitives; the second
+  # reads the keys, which are a pair, so it is flatSem's
+  ('source_to_flatProof', 'genv_c_ok_def'): [
+    ('(flatSem_ctor_same_type (SOME stamp1) (SOME stamp2) <=>',
+     '(semanticPrimitives_ctor_same_type (SOME stamp1)'
+     ' (SOME stamp2) <=>'),
+  ],
+  # the Jump inside the LabAsm of a line is labLang's, where the
+  # JumpCmp, the LocValue and the Call of the clauses beside it
+  # are read right: both Jumps take one argument
+  ('lab_to_targetProof', 'line_encd_def'): [
+    ('| lab_LabAsm (asm_Jump l) _ bytes len ->',
+     '| lab_LabAsm (lab_Jump l) _ bytes len ->'),
   ],
   # the second argument of this v_rel is the value of closSem
   # that the first, a value of flatSem, is compiled to, and the

@@ -696,6 +696,13 @@ class Porter:
       head += ('(* %s%s *)\n'
               % (nm if name != nm else '', attrs)).replace('(*  *)',
                                                            '')
+    # a spot of a statement that no rule can resolve: the Jump
+    # inside a LabAsm of lab_to_targetProof is labLang's and the
+    # Jump beside it asm's, and both take one argument, so nothing
+    # but the place says which is which.  A patch that does not
+    # apply is an error and not a silence
+    stmt = patch_text(stmt, overrides.THM_PATCH.get((self.thy, nm), []),
+                      'THM_PATCH')
     if vars_read:
       # the statement uses the name of a record accessor for a
       # variable of its own and the port cannot say its type in
@@ -3837,7 +3844,12 @@ class Porter:
       for k, i in enumerate(idx):
         for cm in qcs.get(i, []):
           self.clause_pre += '(* ' + '\n   '.join(cm) + ' *)\n'
-        if k: out += ' /\\\n' + ind
+        # a comment runs to the end of its line, so the /\ after a
+        # clause that ends in one goes on a line of its own
+        if k:
+          if out.split('\n')[-1].lstrip().startswith('//'):
+            out += '\n' + ind + '/\\\n' + ind
+          else: out += ' /\\\n' + ind
         # a comment of the source that stands before the clause
         # stands before its bracket too, or the bracket would be
         # alone at the end of a line of comment
@@ -5143,19 +5155,20 @@ def letline(binding, how, rest):
   return 'let %s,\n    %s =\n  %s\n  %s;;' % (a, b, how, rest)
 
 
-def patch_text(text, patches):
-  """apply the DEF_PATCH entries of a definition to its text.  The
-     text is laid out already, so a patch is matched with every run
-     of whitespace of it standing for any other (a patch is about
-     what the port says and not about where the lines of it break),
-     and a line that the patch makes too long is broken again.  A
-     patch that does not apply is an error and not a silence"""
+def patch_text(text, patches, what='DEF_PATCH'):
+  """apply the DEF_PATCH (or THM_PATCH) entries of a block to its
+     text.  The text is laid out already, so a patch is matched
+     with every run of whitespace of it standing for any other (a
+     patch is about what the port says and not about where the
+     lines of it break), and a line that the patch makes too long
+     is broken again.  A patch that does not apply is an error and
+     not a silence"""
   for was, now in patches:
     pat = re.compile(r'\s+'.join(re.escape(w) for w in was.split()))
     m = pat.search(text)
     if m is None:
-      raise SyntaxError('DEF_PATCH does not apply: '
-                        + ' '.join(was.split())[:40])
+      raise SyntaxError('%s does not apply: %s'
+                        % (what, ' '.join(was.split())[:40]))
     text = text[:m.start()] + ' '.join(now.split()) + text[m.end():]
   return '\n'.join(wrap(l, 0, 79) if len(l) > 79 else l
                    for l in text.split('\n'))

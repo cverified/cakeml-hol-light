@@ -305,7 +305,7 @@ let v_inv_ck = cake_inductive
                    f,tf,(heap:(('a word_loc,data_to_word_memoryProof_tag#('a
                      word_loc) list)heap_element) list))) /\
    (sptree_lookup n refs = SOME (bvlSem_Thunk ev v) /\
-     (ev = Evaluated ==> dataSem_dest_thunk v refs = bvlSem_NotThunk) /\
+     (ev = Evaluated ==> dataSem_dest_thunk v refs = dataSem_NotThunk) /\
      n IN FDOM f /\
      heap_lookup (FAPPLY f n) heap = SOME (ThunkBlock ev x) /\
      (~(ck = (0:num)) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap)) ==>
@@ -315,7 +315,7 @@ let v_inv_ck = cake_inductive
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
                     list)heap_element) list))) /\
    (sptree_lookup n refs = SOME (bvlSem_Thunk Evaluated v) /\
-     dataSem_dest_thunk v refs = bvlSem_NotThunk /\
+     dataSem_dest_thunk v refs = dataSem_NotThunk /\
      (~(ck = 0) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap)) ==>
        v_inv_ck ck conf (bvlSem_RefPtr F n) refs (x,f,tf,(heap:(('a
          word_loc,data_to_word_memoryProof_tag#('a word_loc) list)heap_element)

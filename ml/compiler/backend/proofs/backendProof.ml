@@ -1290,7 +1290,7 @@ let is_safe_for_space_def = new_definition
            stack_heap_limit)
          (compute_stack_frame_sizes asm_conf word_prog) InitGlobals_location
            /\ ~(data_to_word_config_gc_kind (backend_config_data_conf
-       c) = backend_common_None)`;;
+       c) = data_to_word_None)`;;
 
 let compile_word_conf_eq = prove
  (`!c prog code data conf w_conf stack_prog stack_names.
@@ -1331,7 +1331,7 @@ let IMP_is_safe_for_space = prove
    backend_compile asm_conf c prog = SOME (code,data,conf) ==>
    to_data c prog = (bvi_conf,data_prog,names) ==>
      ~(data_to_word_config_gc_kind (backend_config_data_conf
-   c) = backend_common_None) ==>
+   c) = data_to_word_None) ==>
    data_lang_safe_for_space ffi (fromAList data_prog)
      (compute_limits (data_to_word_config_len_size (backend_config_data_conf
        c)) (is_64_bits (:'a)) (data_to_word_config_has_fp_ops

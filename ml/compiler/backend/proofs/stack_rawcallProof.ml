@@ -47,17 +47,17 @@ let stack_rawcallProof_state_rel_def = new_definition
   `stack_rawcallProof_state_rel i s t <=>
      (?c.
        // co cc
-       domain c = domain (labSem_state_code s) /\
-       t = labSem_state_code_fupd (K c) s /\
+       domain c = domain (stackSem_state_code s) /\
+       t = stackSem_state_code_fupd (K c) s /\
        // ;
        // compile := cc ;
        // compile_oracle := co
        // s.compile = pure_cc compile t.compile /\
        // t.compile_oracle = (I ## compile ## I) o s.compile_oracle /\
-       stack_rawcallProof_state_ok i (labSem_state_code s) /\
+       stack_rawcallProof_state_ok i (stackSem_state_code s) /\
        (!n b.
-         sptree_lookup n (labSem_state_code s) = SOME b ==>
-         (?i. stack_rawcallProof_state_ok i (labSem_state_code s) /\
+         sptree_lookup n (stackSem_state_code s) = SOME b ==>
+         (?i. stack_rawcallProof_state_ok i (stackSem_state_code s) /\
              sptree_lookup n c = SOME (comp_top i b))))`;;
 
 (* HOL4 stack_rawcallProofScript.sml:46-47: a theorem that HOL4 states as

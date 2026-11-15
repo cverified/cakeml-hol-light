@@ -148,7 +148,7 @@ let genv_c_ok_def = new_definition
      (!cn1 cn2 l1 l2 stamp1 stamp2.
        FLOOKUP genv_c (cn1,l1) = SOME stamp1 /\
        FLOOKUP genv_c (cn2,l2) = SOME stamp2 ==>
-       (flatSem_ctor_same_type (SOME stamp1) (SOME stamp2) <=>
+       (semanticPrimitives_ctor_same_type (SOME stamp1) (SOME stamp2) <=>
          flatSem_ctor_same_type (SOME cn1) (SOME cn2))) /\
      (!cn1 cn2 l1 l2 stamp.
        FLOOKUP genv_c (cn1,l1) = SOME stamp /\

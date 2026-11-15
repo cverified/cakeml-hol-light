@@ -1112,7 +1112,7 @@ let IMP_bytes_in_memory_Jump = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (lab_LabAsm (asm_Jump jtarget) l bytes n)) ==>
+       (asm_fetch s1 = SOME (lab_LabAsm (lab_Jump jtarget) l bytes n)) ==>
        (?tt enc.
          (tt = n2w (find_pos jtarget labs) -
                n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
@@ -1136,7 +1136,7 @@ let IMP_bytes_in_memory_JumpCmp = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (lab_LabAsm (asm_JumpCmp cmp rr ri jtarget) l
+       (asm_fetch s1 = SOME (lab_LabAsm (lab_JumpCmp cmp rr ri jtarget) l
          bytes n)) ==>
        (?tt enc.
          (tt = n2w (find_pos jtarget labs) -
@@ -1161,7 +1161,7 @@ let IMP_bytes_in_memory_JumpCmp_1 = prove
          ffi_names 0 code2 /\
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (lab_LabAsm (asm_JumpCmp cmp rr ri jtarget) l
+       (asm_fetch s1 = SOME (lab_LabAsm (lab_JumpCmp cmp rr ri jtarget) l
          bytes n)) ==>
        (?tt bytes.
          (tt = n2w (find_pos jtarget labs) -
@@ -1191,7 +1191,7 @@ let IMP_bytes_in_memory_Call = prove
        bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
          (asm_state_mem_domain
          (t1:'a asm_state)) (labSem_state_mem_domain s1) /\
-       (asm_fetch s1 = SOME (lab_LabAsm (asm_Call ww) l bytes n)) ==>
+       (asm_fetch s1 = SOME (lab_LabAsm (lab_Call ww) l bytes n)) ==>
        F`),
   CHEAT_TAC);;
 
@@ -2216,7 +2216,7 @@ let line_encd_def = new_definition
        enc (asm_Jump (--(n2w (pos + (get_ffi_index ffis (ffi_ExtCall s) + 3)
          * ffi_offset)))) = bytes /\
        LENGTH bytes <= len
-     | lab_LabAsm (asm_Jump l) _ bytes len ->
+     | lab_LabAsm (lab_Jump l) _ bytes len ->
        enc (asm_Jump (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
        LENGTH bytes <= len
      | lab_LabAsm (lab_JumpCmp a b c l) _ bytes len ->

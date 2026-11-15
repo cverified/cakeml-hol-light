@@ -765,8 +765,8 @@ let clos_to_bvlProof_nth_code_def,clos_to_bvlProof_nth_code_ind = define_wf
 
 let compile_oracle_inv_def = new_definition
   `compile_oracle_inv max_app s_code s_cc s_co t_code t_cc t_co <=>
-      s_cc = pure_cc (clos_fvs_compile_inc max_app) t_cc /\
-      t_co = pure_co (clos_fvs_compile_inc max_app) o s_co /\
+      s_cc = pure_cc (clos_to_bvl__compile_inc max_app) t_cc /\
+      t_co = pure_co (clos_to_bvl__compile_inc max_app) o s_co /\
       (!n cfg ps. t_co n = (cfg,ps) ==> ALL_DISTINCT (MAP FST ps)) /\
       (!n. DISJOINT (domain (sptree_union t_code (clos_to_bvlProof_nth_code
         t_co n)))

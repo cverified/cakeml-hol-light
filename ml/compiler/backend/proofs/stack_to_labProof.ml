@@ -321,8 +321,8 @@ let code_installed_prog_to_section_lemma = prove
 
 let labs_correct_hd = prove
  (`!extra l.
-   ALL_DISTINCT (stackProps_extract_labels (APPEND extra l)) /\
-   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0)) (stackProps_extract_labels (APPEND
+   ALL_DISTINCT (labProps_extract_labels (APPEND extra l)) /\
+   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0)) (labProps_extract_labels (APPEND
      extra l)) ==>
    labs_correct (LENGTH (FILTER (\x. ~(is_Label x)) extra)) l (CONS
      (Section n (APPEND extra l)) code)`,
@@ -333,7 +333,7 @@ let labels_ok_def = new_definition
    // Section names are distinct
    ALL_DISTINCT (MAP (\s. match s with Section n _ -> n) code) /\
    ALL (\s. match s with Section n lines ->
-     let labs = stackProps_extract_labels lines in
+     let labs = labProps_extract_labels lines in
      ALL (\(l1,l2). l1 = n /\ ~(l2 = 0)) labs /\
      ALL_DISTINCT labs) code`;;
 
@@ -342,7 +342,7 @@ let labels_ok_imp = prove
    labels_ok code ==>
    ALL sec_labels_ok code /\
    ALL_DISTINCT (MAP Section_num code) /\
-   ALL (ALL_DISTINCT o stackProps_extract_labels o Section_lines) code`,
+   ALL (ALL_DISTINCT o labProps_extract_labels o Section_lines) code`,
   CHEAT_TAC);;
 
 let labels_ok_labs_correct = prove

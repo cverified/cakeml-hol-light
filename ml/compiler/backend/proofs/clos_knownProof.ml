@@ -1023,7 +1023,8 @@ let clos_knownProof_v_rel_def,clos_knownProof_v_rel_ind =
            ALL2 (clos_knownProof_v_rel c g) args1 args2 /\
            ALL2 (clos_knownProof_v_rel c g) env1a env2a /\
            ALL2 val_approx_val aenv env1a /\
-           ALL2 (clos_fvsProof_f_rel c (APPEND clos aenv) g) funs1 funs2 /\
+           ALL2 (clos_knownProof_f_rel c (APPEND clos aenv) g) funs1 funs2
+               /\
            v = closSem_Recclosure loc_opt args2 (APPEND env2a env2b)
                funs2 i else F)`];;
 

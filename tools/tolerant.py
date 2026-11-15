@@ -81,16 +81,23 @@ def tolerant(phrase, name):
   body = phrase.rstrip()
   assert body.endswith(';;'), body[-40:]
   body = body[:-2].rstrip()
-  body = re.sub(r"^let (%s) =(\n?\s*)prove\n" % re.escape(name),
-                r"let \1 =\2try prove\n", body, count=1, flags=re.M)
+  pat = r"^let (%s) =(\n?\s*)prove\n" % re.escape(name)
+  h = re.search(pat, body, re.M)
+  body = re.sub(pat, r"let \1 =\2try prove\n", body, count=1,
+                flags=re.M)
   # the statement of the block, so that the handler can read it
-  # again with the overloads taken away
+  # again with the overloads taken away.  The comments of the
+  # source stand before the head and one of them may hold a quote
+  # of its own, so the search starts at the head of the theorem
+  # and not at the start of the phrase
+  start = h.start() if h else 0
   m = re.search(r'\(\s*(?:cake_as_vars \(fun \(\) ->\s*)?'
-                r'(`.*?`)\s*\)?\s*,', body, re.S)
+                r'(`.*?`)\s*\)?\s*,', body[start:], re.S)
   stmt = m.group(1) if m else '`T`'
   # the block that reads its statement with the overloads taken
   # away has its own handler
-  fn = ('cake_unstated_v' if 'cake_as_vars (fun () ->' in body[:400]
+  fn = ('cake_unstated_v'
+        if 'cake_as_vars (fun () ->' in body[start:start + 400]
         else 'cake_unstated')
   return (body + '\n  with e ->\n'
           '    (%s "%s" (fun () ->\n%s)\n'
