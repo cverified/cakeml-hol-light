@@ -904,6 +904,10 @@ RENAME_CONST = {
 LOCAL_NAMES = {
   # the mapi of word_alloc maps over a num_map, so it is sptree's
   ('word_alloc', 'mapi'): 'sptree_mapi',
+  # the toList of these two is sptree's, on a num_map; HOL Light
+  # has a toList of its own, on a lazy list
+  ('flat_patternProof', 'toList'): 'sptree_toList',
+  ('bvl_inlineProof', 'toList'): 'sptree_toList',
   # the word_shift that a Shift of an assembly instruction does is
   # asmSem's; backend_common's is the number of bits of a word
   ('labSem', 'word_shift'): 'asmSem_word_shift',
@@ -915,6 +919,11 @@ LOCAL_NAMES = {
   ('word_cse', 'Less'): 'LESS',
   ('word_cse', 'Equal'): 'EQUAL',
   ('word_cse', 'Greater'): 'GREATER',
+  # and the same of the proof: listCmp gives an ordering, where
+  # asm has a Less and an Equal of its own
+  ('word_cseProof', 'Less'): 'LESS',
+  ('word_cseProof', 'Equal'): 'EQUAL',
+  ('word_cseProof', 'Greater'): 'GREATER',
   ('bvi_inlineProof', 'toList'): 'sptree_toList',
   # the toString of a number is ASCIInumbers' num_to_dec_string
   # (mlint has a toString of its own, so the port qualifies the
@@ -12710,12 +12719,17 @@ CON_FILE = {
   # which an evaluate gives; stackLang has a Halt of its own,
   # a program, and the file never writes that one
   'stack_allocProof': {'Halt': 'stackSem'},
+  # the toList of these two is sptree's, on a num_map; the
+  # one of llist, on a lazy list, comes later in the order
+  # and the If and the Handle of clos_knownProof are
+  # closLang's, where flatLang has one of each
+  'clos_knownProof': {'v_rel': 'clos_knownProof',
+                      'ref_rel': 'clos_knownProof',
+                      'If': 'closLang', 'Handle': 'closLang'},
   # the Break and the Continue of word_allocProof are the
   # results that an evaluate of wordSem gives, where wordLang
   # has a Break and a Continue of its own, both programs
   'word_allocProof': {'Break': 'wordSem', 'Continue': 'wordSem'},
-  'clos_knownProof': {'v_rel': 'clos_knownProof',
-                      'ref_rel': 'clos_knownProof'},
   # the dec_clock of this proof is wordSem's, on the state the
   # compiler builds: word_bignumProof has a dec_clock of its own,
   # on its own state, and comes later in the order.  The one
@@ -12781,6 +12795,8 @@ CON_FILE = {
   'backendProof': {'Add': 'asm', 'Sub': 'asm',
                    'None': 'data_to_word'},
   'stackSem': {'Const': 'asm'},
+  # and its toList is sptree's, on a num_map; the one of
+  # llist, on a lazy list, comes later in the order
   'bvl_inlineProof': {'compile_oracle': 'bvl_inline'},
 }
 
