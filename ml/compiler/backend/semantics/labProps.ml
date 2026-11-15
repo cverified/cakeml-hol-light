@@ -330,7 +330,7 @@ let labProps_evaluate_io_events_mono = prove
 
 let evaluate_ADD_clock = prove
  (`!s res r k.
-      labSem_evaluate s = (res,r) /\ ~(res = wordSem_TimeOut) ==>
+      labSem_evaluate s = (res,r) /\ ~(res = targetSem_TimeOut) ==>
       labSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock s +
         k)) s) = (res,labSem_state_clock_fupd (K (labSem_state_clock r + k))
         r)`,

@@ -334,7 +334,7 @@ let mem_store_byte_def = new_definition
          | _ -> labSem_assert F s)`;;
 
 let labSem_mem_op_def = define_general
-  `(labSem_mem_op asm_Load r (a:'a asm_addr) = labSem_mem_load r a) /\
+  `(labSem_mem_op asm_Load r (a:'a asm_addr) = wordSem_mem_load r a) /\
    (labSem_mem_op asm_Store r (a:'a asm_addr) = labSem_mem_store r a) /\
    (labSem_mem_op asm_Load32 r (a:'a asm_addr) = mem_load32 r a) /\
    (labSem_mem_op asm_Store32 r (a:'a asm_addr) = mem_store32 r a) /\

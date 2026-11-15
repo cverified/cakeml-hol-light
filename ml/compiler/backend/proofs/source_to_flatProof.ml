@@ -839,7 +839,7 @@ let do_opapp = prove
 
 let pat_bindings_compile_pat = prove
  (`!comp_map (p:ast_pat). flat_pat_bindings (compile_pat comp_map p) =
-  flat_pat_bindings p`,
+  ast_pat_bindings p`,
   CHEAT_TAC);;
 add_simp pat_bindings_compile_pat;;
 
@@ -1513,8 +1513,8 @@ let global_env_inv_extend = prove
      genv = APPEND (APPEND g1 (MAP SOME (REVERSE (MAP SND pat_env')))) g2 /\
      ALL_DISTINCT (MAP FST pat_env) ==>
      global_env_inv genv
-       (mk_sem_env (alist_to_ns (alloc_defs tt (LENGTH g1) (REVERSE (MAP FST
-         pat_env')))) nsEmpty)
+       (mk_source_to_flat_environment nsEmpty (alist_to_ns (alloc_defs tt
+         (LENGTH g1) (REVERSE (MAP FST pat_env')))))
        {}
        (mk_sem_env (alist_to_ns pat_env) nsEmpty)`,
   CHEAT_TAC);;
@@ -1556,8 +1556,8 @@ let invariant_make_varls = prove
    (!env1 tt. source_to_flatProof_env_rel genv' (alist_to_ns env1)
      (flatSem_environment_v env) ==>
      global_env_inv genv'
-       (mk_sem_env (alist_to_ns (alloc_defs tt vidx (REVERSE (MAP FST
-         (flatSem_environment_v env))))) nsEmpty)
+       (mk_source_to_flat_environment nsEmpty (alist_to_ns (alloc_defs tt
+         vidx (REVERSE (MAP FST (flatSem_environment_v env))))))
        {}
        (mk_sem_env (alist_to_ns env1) nsEmpty)))`,
   CHEAT_TAC);;
@@ -1776,8 +1776,9 @@ let alloc_tags_invariant = prove
    (let build_env = mk_sem_env nsEmpty (alist_to_ns
          (REVERSE (build_constrs (semanticPrimitives_state_next_type_stamp
            st) ctors))) in
-    global_env_inv genv' (mk_sem_env nsEmpty ns) {} build_env /\
-    env_domain_eq (mk_sem_env nsEmpty ns) build_env))`,
+    global_env_inv genv' (mk_source_to_flat_environment ns nsEmpty) {}
+      build_env /\
+    env_domain_eq (mk_source_to_flat_environment ns nsEmpty) build_env))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2163,8 +2164,8 @@ let precondition1_def = new_definition
 
 let precondition1_change_clock = prove
  (`precondition1 interp g s1 env1 conf eval_conf prog ==>
-   precondition1 interp g (state_clock_fupd (K k) s1) env1 conf eval_conf
-     prog`,
+   precondition1 interp g (semanticPrimitives_state_clock_fupd (K k) s1)
+     env1 conf eval_conf prog`,
   CHEAT_TAC);;
 
 let idx_block_union_final = prove
@@ -2360,7 +2361,7 @@ let num_bindings_def,num_bindings_ind = define_wf
      match x1' with
        Dlet _ p e ->
         (match simple_dlet p e with SOME _ -> 0 | _ -> LENGTH
-          (flat_pat_bindings p))
+          (ast_pat_bindings p))
      | Dletrec _ f -> LENGTH f
      | Dmod _ ds -> SUM (MAP num_bindings ds)
      | Dlocal lds ds ->

@@ -50,14 +50,14 @@ let alt_fv = prove
       (CONS y xs)) /\
     (!v0 v n. alt_fv n [clos_Var v0 v] <=> n = v) /\
     (!x3 x2 x1 v1 n.
-      alt_fv n [flat_If v1 x1 x2 x3] <=> alt_fv n [x1] \/ alt_fv n [x2] \/
+      alt_fv n [clos_If v1 x1 x2 x3] <=> alt_fv n [x1] \/ alt_fv n [x2] \/
         alt_fv n [x3]) /\
     (!xs x2 v2 n.
       alt_fv n [clos_Let v2 xs x2] <=>
         (if no_overlap (LENGTH xs) (SND (alt_free [x2])) /\ ALL pure xs then
           alt_fv (n + LENGTH xs) [x2]
         else alt_fv n xs \/ alt_fv (n + LENGTH xs) [x2])) /\
-    (!x1 v3 n. alt_fv n [flat_Raise v3 x1] <=> alt_fv n [x1]) /\
+    (!x1 v3 n. alt_fv n [clos_Raise v3 x1] <=> alt_fv n [x1]) /\
     (!x1 v4 n. alt_fv n [clos_Tick v4 x1] <=> alt_fv n [x1]) /\
     (!xs v5 op n. alt_fv n [clos_Op v5 op xs] <=> alt_fv n xs) /\
     (!x2 x1 v6 n loc_opt.
@@ -73,7 +73,7 @@ let alt_fv = prove
          // else
          EX (\(num_args,x). alt_fv (n + num_args + LENGTH fns) [x]) fns \/
          alt_fv (n + LENGTH fns) [x1]) /\
-    (!x2 x1 v9 n. alt_fv n [flat_Handle v9 x1 x2] <=> alt_fv n [x1] \/
+    (!x2 x1 v9 n. alt_fv n [clos_Handle v9 x1 x2] <=> alt_fv n [x1] \/
       alt_fv (n + 1) [x2]) /\
     (!xs v10 ticks n dest. alt_fv n [clos_Call v10 ticks dest xs] <=>
       alt_fv n xs)`,

@@ -1065,7 +1065,7 @@ let full_cc_def = new_definition
 
 let full_co_def = new_definition
   `full_co c co =
-     (let limit' = bvl_to_bvi_config_inline_size_limit c in
+     let limit' = bvl_to_bvi_config_inline_size_limit c in
      let split = bvl_to_bvi_config_split_main_at_seq c in
      let cut = bvl_to_bvi_config_exp_cut c in
        state_co bvi_inline_compile_inc
@@ -1073,8 +1073,7 @@ let full_co_def = new_definition
            (state_co (bvi_tailrec_compile_prog (bvl_to_bvi_config_do_tailrec
              c))
              (state_co bvl_to_bvi_compile_inc
-               (state_co (bvl_inline_compile_inc limit' split cut)
-                 co)))))`;;
+               (state_co (bvl_inline_compile_inc limit' split cut) co))))`;;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)

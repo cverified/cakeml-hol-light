@@ -344,7 +344,7 @@ let parse_cml_input_def = new_definition
 
 let compiler_compile_def = new_definition
   `compiler_compile c prelude input =
-     (let _ = empty_ffi (implode "finished: start up") in
+     let _ = empty_ffi (implode "finished: start up") in
      match
        (if compiler_config_input_is_sexp c then parse_sexp_input input
        else parse_cml_input input) with INL msg -> (M_failure (ParseError
@@ -374,7 +374,7 @@ let compiler_compile_def = new_definition
            else match compile_tap (compiler_config_asm_config c)
              (compiler_config_backend_config c) full_prog with (NONE,td) ->
              (M_failure AssembleError,td)
-           | (SOME (bytes,data,c),td) -> (M_success (bytes,data,c),td))))`;;
+           | (SOME (bytes,data,c),td) -> (M_success (bytes,data,c),td)))`;;
 
 cake_declare "parse_topdecs_to_ast"
   `:string -> (('a)decl)list + (mlstring#locs)list`;;
@@ -534,7 +534,7 @@ let parse_nums_def = new_definition
 (* clos_conf *)
 let parse_clos_conf_def = new_definition
   `parse_clos_conf ls clos =
-   (let multi = find_bool (implode "--multi=") ls (clos_to_bvl_config_do_mti
+   let multi = find_bool (implode "--multi=") ls (clos_to_bvl_config_do_mti
      clos) in
    let known' = find_bool (implode "--known=") ls (IS_SOME
      (clos_to_bvl_config_known_conf clos)) in
@@ -567,12 +567,12 @@ let parse_clos_conf_def = new_definition
                   get_err_str known';
                   get_err_str inline_factor;
                   get_err_str call;
-                  get_err_str maxapp]))`;;
+                  get_err_str maxapp])`;;
 
 (* bvl *)
 let parse_bvl_conf_def = new_definition
   `parse_bvl_conf ls bvl =
-   (let inlinesz = find_num (implode "--inline_size=") ls
+   let inlinesz = find_num (implode "--inline_size=") ls
      (bvl_to_bvi_config_inline_size_limit bvl) in
    let expcut = find_num (implode "--exp_cut=") ls
      (bvl_to_bvi_config_exp_cut bvl) in
@@ -595,16 +595,16 @@ let parse_bvl_conf_def = new_definition
                   get_err_str expcut;
                   get_err_str splitmain;
                   get_err_str tmc;
-                  get_err_str tailrec]))`;;
+                  get_err_str tailrec])`;;
 
 (* wtw *)
 let parse_wtw_conf_def = new_definition
   `parse_wtw_conf ls wtw =
-     (let regalg = find_num (implode "--reg_alg=") ls
+     let regalg = find_num (implode "--reg_alg=") ls
        (word_to_word_config_reg_alg wtw) in
        match regalg with
          INL r -> INL (word_to_word_config_reg_alg_fupd (K r) wtw)
-       | INR s -> INR (get_err_str regalg))`;;
+       | INR s -> INR (get_err_str regalg)`;;
 
 let parse_gc_def = new_definition
   `parse_gc ls default =
@@ -638,7 +638,7 @@ let conf_ok_check_def = new_definition
 (* data *)
 let parse_data_conf_def = new_definition
   `parse_data_conf ls data =
-   (let tag_bits = find_num (implode "--tag_bits=") ls
+   let tag_bits = find_num (implode "--tag_bits=") ls
      (data_to_word_config_tag_bits data) in
    let len_bits = find_num (implode "--len_bits=") ls
      (data_to_word_config_len_bits data) in
@@ -664,12 +664,12 @@ let parse_data_conf_def = new_definition
                    get_err_str pad_bits;
                    get_err_str len_size;
                    get_err_str gc';
-                   get_err_str empty_FFI]))`;;
+                   get_err_str empty_FFI])`;;
 
 (* stack *)
 let parse_stack_conf_def = new_definition
   `parse_stack_conf ls stack' =
-   (let jump = find_bool (implode "--jump=") ls (stack_to_lab_config_jump
+   let jump = find_bool (implode "--jump=") ls (stack_to_lab_config_jump
      stack') in
    let perf = find_bool (implode "--perf_callgraph=") ls
      (stack_to_lab_config_perf_calls stack') in
@@ -677,7 +677,7 @@ let parse_stack_conf_def = new_definition
      (INL j,INL p) -> INL (stack_to_lab_config_perf_calls_fupd (K p)
        (stack_to_lab_config_jump_fupd (K j) stack'))
    | (INR s,_) -> INR s
-   | (_,INR s) -> INR s)`;;
+   | (_,INR s) -> INR s`;;
 
 (* tap *)
 let parse_tap_conf_def = new_definition
@@ -687,15 +687,15 @@ let parse_tap_conf_def = new_definition
 (* lab *)
 let parse_lab_conf_def = new_definition
   `parse_lab_conf ls lab =
-     (let hs = find_num (implode "--hash_size=") ls
+     let hs = find_num (implode "--hash_size=") ls
        (lab_to_target_config_hash_size lab) in
        match hs with
          INL r -> INL (lab_to_target_config_hash_size_fupd (K r) lab)
-       | INR s -> INR s)`;;
+       | INR s -> INR s`;;
 
 let extend_conf_def = new_definition
   `extend_conf ls conf =
-   (let clos = parse_clos_conf ls (backend_config_clos_conf conf) in
+   let clos = parse_clos_conf ls (backend_config_clos_conf conf) in
    let bvl = parse_bvl_conf ls (backend_config_bvl_conf conf) in
    let wtw = parse_wtw_conf ls (backend_config_word_to_word_conf conf) in
    let data = parse_data_conf ls (backend_config_data_conf conf) in
@@ -717,7 +717,7 @@ let extend_conf_def = new_definition
                 get_err_str data;
                 get_err_str stack';
                 get_err_str tap;
-                get_err_str lab]))`;;
+                get_err_str lab])`;;
 
 (* Defaults to x64 if no target given *)
 (* HOL4 x64_targetScript.sml:226-248, arm8_targetScript.sml:298-341,

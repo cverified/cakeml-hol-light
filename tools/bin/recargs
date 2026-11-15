@@ -17,6 +17,7 @@
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
 s=${1:-seq}
+: > $C/tmp/recargs.start
 TIMEOUT=60 repl-step $s \
   "let rec cake_prod_parts ty =
      if is_vartype ty then [ty] else
@@ -86,4 +87,17 @@ TIMEOUT=300 repl-step $s \
 # constants of that file, and the three tables are written from
 # what it has: an entry that is not in it stays as it was, so a
 # refresh can only put a table right and never take from it
+# a repl-step comes back when the session prints its prompt, which
+# it has been seen to do before the file it wrote is on disk: the
+# merge then reads the dump of the run before and says that
+# nothing changed.  So wait (bounded) until all three are newer
+# than the marker
+for f in recargs recres arity; do
+  i=0
+  while [ $i -lt 30 ]; do
+    [ $C/tmp/$f.new -nt $C/tmp/recargs.start ] && break
+    sleep 1; i=$((i + 1))
+  done
+done
+rm -f $C/tmp/recargs.start
 python3 -I $C/tools/mergetable.py recargs recres arity

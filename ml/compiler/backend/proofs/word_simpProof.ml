@@ -356,9 +356,9 @@ let evaluate_gc_fun_const_ok = prove
   CHEAT_TAC);;
 
 let get_above_handler_def = new_definition
-  `get_above_handler s = (match EL (LENGTH (wordSem_state_stack s) -
+  `get_above_handler s = match EL (LENGTH (wordSem_state_stack s) -
   (wordSem_state_handler s + 1)) (wordSem_state_stack s) with StackFrame _ _
-  _ (SOME (h,_,_)) -> h)`;;
+  _ (SOME (h,_,_)) -> h`;;
 
 let enc_stack_dec_stack_is_gc_word_const = prove
  (`!s s' s'l.

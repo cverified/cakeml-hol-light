@@ -158,8 +158,8 @@ let remove_ticks_Var_IMP_mk_Ticks = prove
 
 let remove_ticks_If_IMP_mk_Ticks = prove
  (`!x tr e1' e2' e3'.
-      [flat_If tr e1' e2' e3'] = clos_ticks_remove_ticks [x] ==>
-        (?ts e1 e2 e3. x = clos_ticksProof_mk_Ticks ts (flat_If tr e1 e2 e3)
+      [clos_If tr e1' e2' e3'] = clos_ticks_remove_ticks [x] ==>
+        (?ts e1 e2 e3. x = clos_ticksProof_mk_Ticks ts (clos_If tr e1 e2 e3)
           /\
                       e1' = HD (clos_ticks_remove_ticks [e1]) /\
                       e2' = HD (clos_ticks_remove_ticks [e2]) /\
@@ -175,14 +175,14 @@ let remove_ticks_Let_IMP_mk_Ticks = prove
   CHEAT_TAC);;
 
 let remove_ticks_Raise_IMP_mk_Ticks = prove
- (`!x t e. [flat_Raise t e] = clos_ticks_remove_ticks [x] ==>
-            (?ts e'. x = clos_ticksProof_mk_Ticks ts (flat_Raise t e')
+ (`!x t e. [clos_Raise t e] = clos_ticks_remove_ticks [x] ==>
+            (?ts e'. x = clos_ticksProof_mk_Ticks ts (clos_Raise t e')
               /\ [e] = clos_ticks_remove_ticks [e'])`,
   CHEAT_TAC);;
 
 let remove_ticks_Handle_IMP_mk_Ticks = prove
- (`!x t e1' e2'. [flat_Handle t e1' e2'] = clos_ticks_remove_ticks [x] ==>
-                  (?ts e1 e2. x = clos_ticksProof_mk_Ticks ts (flat_Handle t
+ (`!x t e1' e2'. [clos_Handle t e1' e2'] = clos_ticks_remove_ticks [x] ==>
+                  (?ts e1 e2. x = clos_ticksProof_mk_Ticks ts (clos_Handle t
                     e1 e2) /\
                    [e1'] = clos_ticks_remove_ticks [e1] /\ [e2'] =
                      clos_ticks_remove_ticks [e2])`,

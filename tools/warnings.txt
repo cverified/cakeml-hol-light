@@ -1099,9 +1099,9 @@ data_to_word_memoryProof	ML code skipped: val word_eq_ind = theorem "word_eq_ind
 data_to_word_memoryProof	ML code skipped: val list_copy_bwd_def = list_copy_bwd_def |> REWRITE_RULE [m
 data_to_word_memoryProof	ML code skipped: val list_copy_bwd_alias_def = list_copy_bwd_alias_def       
 data_to_word_memoryProof	ML code skipped: val memory_rel_copy_array_NONE_lemma =   memory_rel_RefByte_
-data_to_word_memoryProof	line 173 is 94 characters
-data_to_word_memoryProof	line 386 is 81 characters
-data_to_word_memoryProof	line 1944 is 81 characters
+data_to_word_memoryProof	line 172 is 94 characters
+data_to_word_memoryProof	line 385 is 81 characters
+data_to_word_memoryProof	line 1943 is 81 characters
 word_bignumProof	ML code skipped: val good_dimindex_def = miscTheory.good_dimindex_def; val en
 word_bignumProof	ML code skipped: val shift_def = backend_commonTheory.word_shift_def
 word_bignumProof	ML code skipped: val raw_eval_cases = eval_cases;
@@ -1771,10 +1771,10 @@ lab_to_targetProof	derive semantics_make_init: no PULL_EXISTS
 lab_to_targetProof	line 3236 is 92 characters
 lab_to_targetProof	line 3277 is 84 characters
 lab_to_targetProof	line 4491 is 93 characters
-lab_to_targetProof	line 4652 is 89 characters
-lab_to_targetProof	line 4655 is 81 characters
-lab_to_targetProof	line 4712 is 89 characters
-lab_to_targetProof	line 4715 is 81 characters
+lab_to_targetProof	line 4653 is 89 characters
+lab_to_targetProof	line 4656 is 81 characters
+lab_to_targetProof	line 4713 is 89 characters
+lab_to_targetProof	line 4716 is 81 characters
 flat_elimProof	ML code skipped: val find_v_globals_ind = theorem "find_v_globals_ind";
 flat_elimProof	ML code skipped: val find_refs_globals_ind = theorem "find_refs_globals_ind";
 flat_elimProof	ML code skipped: val find_result_globals_ind = theorem "find_result_globals_i
@@ -2000,6 +2000,7 @@ word_to_stackProof	ML code skipped: val init_state_ok_semantics =   state_rel_IM
 word_to_stackProof	ML code skipped: val init_state_ok_semantics' =   state_rel_IMP_semantics' |>
 word_to_stackProof	ML code skipped: val wconvs = [post_alloc_conventions_def,wordConvsTheory.ful
 word_to_stackProof	ML code skipped: val reg_bound_ind = stackPropsTheory.reg_bound_ind val reg_b
+word_to_stackProof	FILE_PATCH matches nothing: \bstate_clock_fupd\b
 word_to_stackProof	line 647 is 82 characters
 stack_to_labProof	ML code skipped: val get_labels_def = stackSemTheory.get_labels_def; val get_
 stack_to_labProof	Overload Loc

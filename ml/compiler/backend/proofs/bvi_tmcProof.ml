@@ -1016,10 +1016,10 @@ let do_app_op_finalise_rel = prove
 
 let dest_thunk_not_thunk_rel = prove
  (`!v v' refs refs' f.
-     bvlSem_dest_thunk v refs = bviSem_NotThunk /\
+     bvlSem_dest_thunk v refs = bvlSem_NotThunk /\
      bvi_tmcProof_v_rel f v v' /\
      state_ref_rel f refs refs' ==>
-     bvlSem_dest_thunk v' refs' = bviSem_NotThunk`,
+     bvlSem_dest_thunk v' refs' = bvlSem_NotThunk`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_tmcProofScript.sml:1814-1817: a proof *)
@@ -1070,10 +1070,10 @@ let dest_thunk_not_thunk_rel = prove
 (* HOL4 bvi_tmcProofScript.sml:2125: a proof *)
 
 let do_app_op_err_rel = prove
- (`bviSem_do_app (ast_FFI i) vs u = Rerr (Rabort (Rffi_error e)) /\
+ (`bviSem_do_app (clos_FFI i) vs u = Rerr (Rabort (Rffi_error e)) /\
    bvi_tmcProof_state_rel f u u' /\
    ALL2 (bvi_tmcProof_v_rel f) vs vs' ==>
-   bviSem_do_app (ast_FFI i) vs' u' = Rerr (Rabort (Rffi_error e))`,
+   bviSem_do_app (clos_FFI i) vs' u' = Rerr (Rabort (Rffi_error e))`,
   CHEAT_TAC);;
 
 let wrapper_strip_if_then = prove

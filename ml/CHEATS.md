@@ -14,43 +14,43 @@ axiom per clause.  A declared constant is no axiom: it
 has an implicit definition, which says nothing about
 its value.
 
-`length (axioms ())` is 8152: the three axioms of HOL
+`length (axioms ())` is 10225: the three axioms of HOL
 Light, one for every theorem of phase two whose
-proof is still a cheat, and the rest for the 622
+proof is still a cheat, and the rest for the 637
 definitions below.
 
-Of the definitions below, 10 are in a file that did
+Of the definitions below, 2 are in a file that did
 not load in this run, so what the run counts says
 nothing about them and they keep the row they had.
 
-Of these 622 definitions
+Of these 637 definitions
 
 - 189 have only their **termination** assumed, so the
   constant, its type and its clauses are the real ones;
-- 7 are a constant that is **declared** without a
+- 16 are a constant that is **declared** without a
   value, because HOL4 computes the value with ML code:
   the constant has an implicit definition, which says
   nothing about it and adds no axiom (PENDING.md);
-- 426 are assumed for another reason, which the list
+- 432 are assumed for another reason, which the list
   below names (the equation of a tail recursion that
   HOL4 proves with its `mc_tailrecLib`, say).
 
 Why they are assumed:
 
 - 189: termination (CHEAT_TAC)
-- 161: induction: NO_TAC
+- 165: induction: NO_TAC
 - 132: equation of a tail recursion assumed
 - 83: the termination of the definition is assumed
-- 26: induction: MATCH_MP_TAC: No match
+- 28: induction: MATCH_MP_TAC: No match
+- 16: declared (no value)
 - 8: induction: type_match
 - 8: the port cannot make this definition
-- 7: declared (no value)
 - 3: induction: ACCEPT_TAC
 - 1: induction: find
 - 1: free: word_heap:(?1655030)word->((?1655018,?1655019)heap_ele
 - 1: free: thunk_tag_to_bits:thunk_mode->(?1655824)word
-- 1: free: known_co:(clos_known_config)option->(num->((val_approx
 - 1: free: memory_rel:data_to_word_config->bool->num->((dataSem_v
+- 1: free: known_co:(clos_known_config)option->(num->((val_approx
 
 | definition | file | why |
 |---|---|---|
@@ -530,6 +530,15 @@ Why they are assumed:
 | `parse_topdecs_to_ast` | `compiler/compiler.ml` | declared (no value) |
 | `static_check` | `compiler/compiler.ml` | declared (no value) |
 | `pan_compile_tap` | `compiler/compiler.ml` | declared (no value) |
+| `x64_enc` | `compiler/compiler.ml` | declared (no value) |
+| `arm8_enc` | `compiler/compiler.ml` | declared (no value) |
+| `mips_enc` | `compiler/compiler.ml` | declared (no value) |
+| `riscv_enc` | `compiler/compiler.ml` | declared (no value) |
+| `arm7_enc` | `compiler/compiler.ml` | declared (no value) |
+| `ag32_enc` | `compiler/compiler.ml` | declared (no value) |
+| `arm8_valid_immediate` | `compiler/compiler.ml` | declared (no value) |
+| `arm7_valid_immediate` | `compiler/compiler.ml` | declared (no value) |
+| `basis` | `compiler/compiler.ml` | declared (no value) |
 | `copying_gc_gc_move_list_ind` | `` | the termination of the definition is assumed |
 | `copying_gc_gc_move_loop_ind` | `` | the termination of the definition is assumed |
 | `bignum_digits_ind` | `` | induction: NO_TAC |
@@ -550,7 +559,7 @@ Why they are assumed:
 | `gc_move_refs_ind` | `` | the termination of the definition is assumed |
 | `gen_gc_partial_gc_move_data_ind` | `` | the termination of the definition is assumed |
 | `const_addresses_ind` | `` | induction: NO_TAC |
-| `wordSem_evaluate` | `compiler/backend/proofs/data_to_word_bignumProof.ml` | termination (CHEAT_TAC) |
+| `wordSem_evaluate` | `compiler/backend/semantics/wordSem.ml` | termination (CHEAT_TAC) |
 | `wordSem_evaluate_ind` | `` | termination (CHEAT_TAC) |
 | `all_pcs_ind` | `` | the termination of the definition is assumed |
 | `targetSem_evaluate` | `compiler/backend/semantics/targetSem.ml` | termination (CHEAT_TAC) |
@@ -569,6 +578,8 @@ Why they are assumed:
 | `stackSem_dec_stack_ind` | `` | the termination of the definition is assumed |
 | `copy_words_for_pattern_ind` | `` | induction: NO_TAC |
 | `copy_words_ind` | `` | the termination of the definition is assumed |
+| `stackSem_evaluate` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
+| `stackSem_evaluate_ind` | `` | termination (CHEAT_TAC) |
 | `flat_exp_conventions_ind` | `` | induction: NO_TAC |
 | `every_inst_ind` | `` | induction: NO_TAC |
 | `full_inst_ok_less_ind` | `` | induction: NO_TAC |
@@ -628,9 +639,17 @@ Why they are assumed:
 | `word_gen_gc_move_data_ind` | `` | induction: MATCH_MP_TAC: No match |
 | `word_gen_gc_move_refs_ind` | `` | induction: MATCH_MP_TAC: No match |
 | `word_gen_gc_move_loop_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `list_to_BlockReps_ind` | `` | induction: NO_TAC |
+| `copy_list_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `word_eq_ind` | `` | induction: MATCH_MP_TAC: No match |
+| `eq_assum_ind` | `` | induction: NO_TAC |
+| `eq_explode_ind` | `` | induction: NO_TAC |
+| `word_mem_eq_ind` | `` | induction: NO_TAC |
 | `eval_exp_ind` | `` | induction: MATCH_MP_TAC: No match |
 | `word_heap_parts` | `compiler/backend/proofs/data_to_word_gcProof.ml` | free: word_heap:(?1655030)word->((?1655018,?1655019)heap_ele |
 | `muttag_header` | `compiler/backend/proofs/data_to_word_gcProof.ml` | free: thunk_tag_to_bits:thunk_mode->(?1655824)word |
+| `data_to_word_gcProof_stack_rel_ind` | `` | induction: NO_TAC |
+| `data_to_word_gcProof_state_rel` | `compiler/backend/proofs/data_to_word_gcProof.ml` | free: memory_rel:data_to_word_config->bool->num->((dataSem_v |
 | `IS_SPARSE_SUBLIST_ind` | `` | induction: NO_TAC |
 | `colouring_ok_ind` | `` | induction: NO_TAC |
 | `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
@@ -657,6 +676,10 @@ Why they are assumed:
 | `all_enc_ok_ind` | `` | the termination of the definition is assumed |
 | `pos_val_ind` | `` | induction: NO_TAC |
 | `num_pcs_ind` | `` | the termination of the definition is assumed |
+| `all_enc_with_nop_ind` | `` | the termination of the definition is assumed |
+| `even_labels_ind` | `` | the termination of the definition is assumed |
+| `even_labels_strong_ind` | `` | the termination of the definition is assumed |
+| `set_bytes_ind` | `` | induction: NO_TAC |
 | `find_v_globals_ind` | `` | the termination of the definition is assumed |
 | `v_has_Eval_ind` | `` | the termination of the definition is assumed |
 | `index_list_ind` | `` | induction: NO_TAC |
@@ -666,15 +689,7 @@ Why they are assumed:
 | `convert_t_ind` | `` | induction: ACCEPT_TAC |
 | `leftmost_ind` | `` | induction: NO_TAC |
 | `left_insert_ind` | `` | induction: NO_TAC |
-| `stackSem_evaluate` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
-| `stackSem_evaluate_ind` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
 | `clos_to_bvlProof_syntax_oracle_ok` | `compiler/backend/proofs/clos_to_bvlProof.ml` | free: known_co:(clos_known_config)option->(num->((val_approx |
-| `data_to_word_gcProof_stack_rel_ind` | `compiler/backend/proofs/data_to_word_gcProof.ml` | induction: NO_TAC |
-| `data_to_word_gcProof_state_rel` | `compiler/backend/proofs/data_to_word_gcProof.ml` | free: memory_rel:data_to_word_config->bool->num->((dataSem_v |
-| `all_enc_with_nop_ind` | `compiler/backend/proofs/lab_to_targetProof.ml` | the termination of the definition is assumed |
-| `even_labels_ind` | `compiler/backend/proofs/lab_to_targetProof.ml` | the termination of the definition is assumed |
-| `even_labels_strong_ind` | `compiler/backend/proofs/lab_to_targetProof.ml` | the termination of the definition is assumed |
-| `set_bytes_ind` | `compiler/backend/proofs/lab_to_targetProof.ml` | induction: NO_TAC |
 | `complex_get_code_labels_ind` | `compiler/backend/proofs/stack_to_labProof.ml` | induction: NO_TAC |
 
-622 definitions.
+637 definitions.

@@ -26,7 +26,6 @@ needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
 needs "lib/errorMonad.ml";;
@@ -961,9 +960,9 @@ let heap_expand_not_isRef = prove
 
 let reset_gens_def = new_definition
   `reset_gens conf a =
-     (match data_to_word_config_gc_kind conf with data_to_word_Generational
+     match data_to_word_config_gc_kind conf with data_to_word_Generational
        sizes -> GenState 0 (MAP (K a) sizes)
-     | _ -> GenState 0 [])`;;
+     | _ -> GenState 0 []`;;
 
 let gen_state_ok_reset = prove
  (`heap_ok (APPEND (APPEND h (heap_expand n)) r) l ==>
@@ -2970,13 +2969,13 @@ let heap_store_unused_alt_IMP_length = prove
 let pointer_bits_def = new_definition
   `// pointers have tag and len bits
    pointer_bits conf abs_heap n =
-     (match heap_lookup n abs_heap with SOME (DataElement xs l (BlockTag
+     match heap_lookup n abs_heap with SOME (DataElement xs l (BlockTag
        tag,[])) ->
          maxout_bits (LENGTH xs) (data_to_word_config_len_bits conf)
            (data_to_word_config_tag_bits conf + 2) ||
          maxout_bits tag (data_to_word_config_tag_bits conf) 2 || (n2w 1)
      | _ -> all_ones (data_to_word_config_len_bits conf +
-       data_to_word_config_tag_bits conf + 1) 0)`;;
+       data_to_word_config_tag_bits conf + 1) 0`;;
 
 let is_all_ones_def = new_definition
   `is_all_ones m n w = ((all_ones m n && w) = all_ones m n)`;;
@@ -7279,7 +7278,7 @@ let build_part_words_def = define_cases
        let n = LENGTH bytes in
        let hd = make_byte_header c T n in
        let ws = write_bytes bytes (REPLICATE (byte_len (:'a) n) (n2w 0))
-           (be c) in
+           (data_to_word_config_be c) in
          if byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4) /\
             byte_len (:'a) n < 2 EXP data_to_word_config_len_size c then
                 SOME (make_ptr c offset ((n2w 0):'a word) (byte_len (:'a)

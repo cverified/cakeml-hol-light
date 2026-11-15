@@ -742,7 +742,7 @@ let flatten_semantics = prove
    stack_to_labProof_state_rel s1 (s2:('a,'c,'ffi)labSem_state) /\
    loc_to_pc (start:num) 0 (labSem_state_code s2) = SOME (labSem_state_pc
      s2) /\ ~(stackSem_semantics start s1 = reg_alloc_Fail) ==>
-   stackSem_semantics s2 = stackSem_semantics start s1`,
+   labSem_semantics s2 = stackSem_semantics start s1`,
   CHEAT_TAC);;
 
 let stack_to_labProof_make_init_def = new_definition
@@ -775,20 +775,20 @@ let full_make_init_def = new_definition
    let code1 = stack_alloc_compile data_conf (stack_rawcall_compile code) in
    let code2 = stack_remove_compile jump offset ggc max_heap sp
      InitGlobals_location code1 in
-   let code3 = fromAList (stack_alloc_compile (stack_to_lab_config_reg_names
+   let code3 = fromAList (stack_names_compile (stack_to_lab_config_reg_names
      stack_conf) code2) in
    let coracle1 = (I ## MAP stack_alloc_prog_comp ## I) o coracle in
-   let coracle2 = (I ## MAP (stack_alloc_prog_comp jump offset sp) ## I) o
+   let coracle2 = (I ## MAP (stack_remove_prog_comp jump offset sp) ## I) o
      coracle1 in
-   let coracle3 = (I ## stack_rawcall_compile (stack_to_lab_config_reg_names
+   let coracle3 = (I ## stack_names_compile (stack_to_lab_config_reg_names
      stack_conf) ## I) o coracle2 in
    let s3 = stack_to_labProof_make_init code3 coracle3 (MAP (tlookup
      (stack_to_lab_config_reg_names stack_conf)) [2; 3; 4]) save_regs s4 in
-   let s2 = stack_to_labProof_make_init (stack_to_lab_config_reg_names
+   let s2 = stack_namesProof_make_init (stack_to_lab_config_reg_names
      stack_conf) (fromAList code2) coracle2 s3 in
    let s1 = make_init_any ggc max_heap bitmaps data_sp coracle1 jump offset
      sp (fromAList code1) s2 in
-     (stack_to_labProof_make_init data_conf (fromAList code) coracle s1,
+     (stack_namesProof_make_init data_conf (fromAList code) coracle s1,
       make_init_opt ggc max_heap bitmaps data_sp coracle1 jump offset sp
         (fromAList code1) s2))`;;
 
@@ -1002,7 +1002,7 @@ let full_make_init_semantics = prove
    BIJ (tlookup (stack_to_lab_config_reg_names stack_conf)) UNIV UNIV ==>
    Abbrev (~(opt = NONE) /\ (~(stackSem_semantics InitGlobals_location s =
      reg_alloc_Fail) ==>
-   stackSem_semantics t = stackSem_semantics InitGlobals_location s))`,
+   labSem_semantics t = stackSem_semantics InitGlobals_location s))`,
   CHEAT_TAC);;
 
 (* HOL4 stack_to_labProofScript.sml:3617-3618: a theorem that HOL4 states as

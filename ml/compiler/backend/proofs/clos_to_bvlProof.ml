@@ -2068,7 +2068,7 @@ let clos_to_bvlProof_eval_sim_def = new_definition
          bvlSem_evaluate ([bvl_Call 0 (SOME start') []],[],
            bvlSem_initial_state ffi code2 co2 cc2 (k + ck)) = (res2,t2) /\
          semanticPrimitivesProps_result_rel (\x y. T) (\x y. T) res1 res2
-           /\ bvlSem_state_ffi s2 = bvlSem_state_ffi t2))`;;
+           /\ closSem_state_ffi s2 = bvlSem_state_ffi t2))`;;
 
 (* initial_state_with_clock[local] *)
 let clos_to_bvlProof_initial_state_with_clock = prove

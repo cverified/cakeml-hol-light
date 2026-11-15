@@ -740,6 +740,13 @@ FIELD_VAR_DEF = {
   # the t whose registers the initial labSem state takes over is
   # the state of the machine, an asm_state
   ('lab_to_targetProof', 'make_init_def'): {'t': 'asm_state'},
+  # the s2 that the closSem evaluate of this gives back is a
+  # closSem state, where the t2 beside it is bvlSem's
+  ('clos_to_bvlProof', 'eval_sim_def'): {'s2': 'closSem_state'},
+  # and the c whose be this reads is a configuration of
+  # data_to_word
+  ('data_to_word_memoryProof', 'build_part_words_def'):
+    {'c': 'data_to_word_config'},
   # the memory that get_var_consts writes is the one of a wordSem
   # state, and the state that do_app_AllocThunk writes the refs,
   # the safe_for_space and the stack_max of is the dataSem one
@@ -2554,6 +2561,16 @@ CON_OF = {
   # the Halt that this assumes the program gives back is the
   # result of a stackSem evaluate and not the one of the machine
   ('stack_to_labProof', 'halt_assum_def'): {'Halt': 'stackSem'},
+  # the compile of a set of register names is stack_names', and
+  # the prog_comp of a jump, an offset and a stack pointer is
+  # stack_remove's; the compiles that this names with a theory
+  # the arity dict leaves alone
+  ('stack_to_labProof', 'full_make_init_def'):
+    {'compile': {1: 'stack_names', 2: 'stack_names'},
+     'prog_comp': {0: 'stack_alloc', 3: 'stack_remove'}},
+  # the declaration that this counts the bindings of is the
+  # source language's, so its pat_bindings is ast's
+  ('source_to_flatProof', 'num_bindings_def'): {'pat_bindings': 'ast'},
   # the result that the machine gives is targetSem's, where the
   # TimeOut of wordSem is the one the resolution would take
   ('labProps', 'evaluate_ADD_clock'): {'TimeOut': 'targetSem'},
@@ -12984,6 +13001,10 @@ CON_FILE = {
   # every Var of closProps is closLang's, where the Var of ast is
   # the one the resolution would take
   'closProps': {'Var': 'closLang'},
+  # the patterns that source_to_flat reads are the source
+  # language's, so the pat_bindings of its compile_pes and of its
+  # compile_decs is ast's and not flatLang's
+  'source_to_flat': {'pat_bindings': 'ast'},
   # the expressions that remove_ticks is about are closLang's
   'clos_ticksProof': {'If': 'closLang', 'Raise': 'closLang',
                       'Handle': 'closLang'},
@@ -13081,7 +13102,8 @@ CON_FILE = {
   # mini language, and the word_cmp of it compares the words that
   # an expression of that language evaluates to, which is asm's
   'word_bignumProof': {'Xor': 'asm', 'And': 'asm', 'Or': 'asm',
-                       'Add': 'asm', 'Sub': 'asm',
+                       'Add': {0: 'asm', 5: 'word_bignum'},
+                       'Sub': {0: 'asm', 5: 'word_bignum'},
                        'word_cmp': 'asm',
                        'Continue': 'word_bignum'},
   # and the None this proof compares a gc_kind with is the one of
@@ -13224,9 +13246,6 @@ THM_PATCH = {
     ('stackSem_gc (s1:(' + chr(39) + 'a,num#' + chr(39) + 'c,' + chr(39) + 'ffi)wordSem_state)',
      'wordSem_gc (s1:(' + chr(39) + 'a,num#' + chr(39) + 'c,' + chr(39) + 'ffi)wordSem_state)'),
   ],
-  ('word_to_stackProof', 'dec_stack_lemma1'): [
-    ('stackSem_dec_stack ls wstack', 'wordSem_dec_stack ls wstack'),
-  ],
   # the first extract_labels of this one is on the program of
   # wordLang that the pass reads and the second on the one of
   # stackLang it builds; the same of get_code_labels below
@@ -13241,10 +13260,6 @@ THM_PATCH = {
   ('word_to_stackProof', 'state_rel_set_store_0'): [
     ('(stackSem_set_store AllocSize w s5)',
      '(wordSem_set_store AllocSize w s5)'),
-  ],
-  ('word_to_stackProof', 'dec_stack_lemma'): [
-    ('(stackSem_dec_stack x0 (wordSem_state_stack',
-     '(wordSem_dec_stack x0 (wordSem_state_stack'),
   ],
   ('word_to_stackProof', 'alloc_IMP_alloc'): [
     ('~(res = SOME stackSem_Error)', '~(res = SOME wordSem_Error)'),
@@ -13363,6 +13378,11 @@ THM_PATCH = {
   # the word_cmp of the result compares two words, which is asm's
   # and gives a bool; the one of the left hand side compares two
   # word_locs, which is wordSem's and gives an option
+  # compile_pat gives a flatLang pattern and takes one of ast,
+  # so the two pat_bindings of this are of different languages
+  ('source_to_flatProof', 'pat_bindings_compile_pat'): [
+    ('= flat_pat_bindings p', '= ast_pat_bindings p'),
+  ],
   ('wordProps', 'word_cmp_Word_Word'): [
     ("SOME (wordSem_word_cmp cmp c c')",
      "SOME (asm_word_cmp cmp c c')"),
@@ -13482,14 +13502,6 @@ THM_PATCH = {
   ('clos_to_bvlProof', 'initial_state_with_clock'): [
     ('(state_clock_fupd (K (state_clock',
      '(closSem_state_clock_fupd (K (closSem_state_clock'),
-  ],
-  ("flat_to_closProof", "initate_state'_clock"): [
-    ('(state_clock_fupd (K k)',
-     '(closSem_state_clock_fupd (K k)'),
-    ("/\\ state_clock (initial_state' b ffi max_app FEMPTY"
-     " co cc k) = k",
-     "/\\ closSem_state_clock (initial_state' b ffi max_app"
-     " FEMPTY co cc k) = k"),
   ],
   ('bviProps', 'evaluate_add_to_clock_io_events_mono'): [
     ('ffi_state_io_events (state_ffi (SND (bviSem_evaluate (exps,env,s))))',

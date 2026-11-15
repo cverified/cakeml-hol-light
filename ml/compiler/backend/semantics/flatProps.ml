@@ -710,7 +710,7 @@ let flatProps_simple_val_rel_v_to_bytes = prove
 (* [local] *)
 let check_type_LIST_REL_same = prove
  (`ALL2 vr vs1 vs2 /\
-   ALL (flatSem_check_type ty) (MAP flat_to_v vs1) /\
+   ALL (semanticPrimitives_check_type ty) (MAP flat_to_v vs1) /\
    flatProps_simple_val_rel vr ==>
    vs2 = vs1`,
   CHEAT_TAC);;
@@ -729,14 +729,14 @@ let simple_do_app_thm = prove
 
 let evaluate_match_def = new_definition
   `flatProps_evaluate_match env s v pes err_v =
-     (match pmatch_rows pes s v with Match_type_error -> (s,Rerr (Rabort
+     match pmatch_rows pes s v with Match_type_error -> (s,Rerr (Rabort
        Rtype_error))
      | No_match -> (s,Rerr (Rraise err_v))
      | Match (env',p',e') ->
          if ALL_DISTINCT (flat_pat_bindings p') then flatSem_evaluate
            (flatSem_environment_v_fupd (K (APPEND env' (flatSem_environment_v
            env))) env) s [e']
-         else (s,Rerr (Rabort Rtype_error)))`;;
+         else (s,Rerr (Rabort Rtype_error))`;;
 
 let evaluate_Mat = prove
  (`flatSem_evaluate env s [flat_Mat tra e pes] =
@@ -763,14 +763,14 @@ let evaluate_match_NIL = prove
 
 let evaluate_match_CONS = prove
  (`flatProps_evaluate_match env s v (CONS (p,e) pes) err_v =
-     (match flatSem_pmatch s p v [] with No_match ->
-       flatProps_evaluate_match env s v pes err_v
+     match flatSem_pmatch s p v [] with No_match -> flatProps_evaluate_match
+       env s v pes err_v
      | Match_type_error -> (s,Rerr (Rabort Rtype_error))
      | Match env_v' ->
          if ALL_DISTINCT (flat_pat_bindings p) /\ ~(pmatch_rows pes s v =
            Match_type_error) then flatSem_evaluate (flatSem_environment_v_fupd
            (K (APPEND env_v' (flatSem_environment_v env))) env) s [e]
-         else (s,Rerr (Rabort Rtype_error)))`,
+         else (s,Rerr (Rabort Rtype_error))`,
   CHEAT_TAC);;
 
 (* HOL4 flatPropsScript.sml:1432-1446: the ML values that the definitions

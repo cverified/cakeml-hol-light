@@ -217,12 +217,12 @@ let get_memory_update = prove
 
 let find_loc_state_def = new_definition
   `find_loc_state s =
-       (let loc = (get_locals (wordSem_state_locals s)) in
+       let loc = (get_locals (wordSem_state_locals s)) in
        let sto = (word_elimProof_get_store (wordSem_state_store s)) in
        let sta = (word_elimProof_get_stack (wordSem_state_stack s)) in
        let mem' = (get_memory (wordSem_state_memory s)
          (wordSem_state_mdomain s)) in
-       sptree_union (sptree_union loc sto) (sptree_union sta mem'))`;;
+       sptree_union (sptree_union loc sto) (sptree_union sta mem')`;;
 
 let domain_find_loc_state = prove
  (`!s. domain (find_loc_state s) =

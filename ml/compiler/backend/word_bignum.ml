@@ -656,7 +656,7 @@ let generated_bignum_stubs_eq =
   init_code_def; init_globals_def; force_thunk_code_def;
   clos_to_bvl_compile_prog_def; make_name_alist_def;
   partial_app_label_table_loc_def; tuple_tag_def; mk_label_def;
-  partial_app_fn_location_def; the_def; fromList_def;
+  partial_app_fn_location_def; the_def; sptree_fromList_def;
   generate_generic_app_def; generate_partial_app_closure_fn_def;
   mk_const_def; jump_def; mk_cl_call_def; mk_tick_def; closure_tag_def;
   partial_app_tag_def; mk_el_def; partial_app_fn_location_code_def;

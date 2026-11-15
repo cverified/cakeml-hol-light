@@ -82,8 +82,8 @@ let comp_seq_neq_IMP = prove
 (* get_labels_comp *)
 let stack_rawcallProof_get_labels_comp = prove
  (`!i e.
-     labProps_get_labels (stack_rawcall_comp i e) = labProps_get_labels e /\
-     labProps_get_labels (comp_top i e) = labProps_get_labels e`,
+     stackSem_get_labels (stack_rawcall_comp i e) = stackSem_get_labels e /\
+     stackSem_get_labels (comp_top i e) = stackSem_get_labels e`,
   CHEAT_TAC);;
 
 (* HOL4 stack_rawcallProofScript.sml:107-119: a proof *)
@@ -96,8 +96,8 @@ let evaluate_comp_Inst = prove
      stackSem_evaluate (stack_rawcall_comp i' (stack_Inst
        i),stackSem_state_clock_fupd (K (ck + stackSem_state_clock t)) t) =
      (r,stackSem_state_stack_space_fupd (K k1) t1) /\
-     (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stack_Halt (word_Word (n2w
-       2)))) ==>
+     (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackSem_Halt (word_Word
+       (n2w 2)))) ==>
       k1 = stackSem_state_stack_space t1))`,
   CHEAT_TAC);;
 
@@ -111,15 +111,15 @@ let stack_rawcallProof_comp_correct = prove
         stackSem_evaluate (comp_top i p,stackSem_state_clock_fupd (K
           (stackSem_state_clock t + ck)) t) =
           (r,stackSem_state_stack_space_fupd (K k1) t1) /\
-        (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stack_Halt (word_Word
-          (n2w 2)))) ==> k1 = stackSem_state_stack_space t1)) /\
+        (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackSem_Halt
+          (word_Word (n2w 2)))) ==> k1 = stackSem_state_stack_space t1)) /\
      (?ck t1 k1.
         stack_rawcallProof_state_rel i s1 t1 /\
         stackSem_evaluate (stack_rawcall_comp i p,stackSem_state_clock_fupd
           (K (stackSem_state_clock t + ck)) t) =
           (r,stackSem_state_stack_space_fupd (K k1) t1) /\
-        (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stack_Halt (word_Word
-          (n2w 2)))) ==> k1 = stackSem_state_stack_space t1))`,
+        (~(r = SOME stackSem_TimeOut) /\ ~(r = SOME (stackSem_Halt
+          (word_Word (n2w 2)))) ==> k1 = stackSem_state_stack_space t1))`,
   CHEAT_TAC);;
 
 let domain_fromAList_compile = prove

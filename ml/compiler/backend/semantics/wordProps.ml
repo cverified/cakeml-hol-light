@@ -2427,9 +2427,9 @@ let locals_rel_evaluate_thm = prove
          (res,wordSem_state_locals_fupd (K loc') rst) /\
        (match res with NONE -> locals_rel temp (wordSem_state_locals rst)
          loc'
-       | SOME (word_Break _) -> locals_rel temp (wordSem_state_locals rst)
-         loc'
-       | SOME (word_Continue _) -> locals_rel temp (wordSem_state_locals
+       | SOME (wordSem_Break _) -> locals_rel temp (wordSem_state_locals
+         rst) loc'
+       | SOME (wordSem_Continue _) -> locals_rel temp (wordSem_state_locals
          rst) loc'
        | SOME _ -> wordSem_state_locals rst = loc'))`,
   CHEAT_TAC);;
@@ -2844,8 +2844,8 @@ let permute_swap_lemma3 = prove
   CHEAT_TAC);;
 
 let word_cmp_Word_Word = prove
- (`wordSem_word_cmp cmp (word_Word c) (word_Word c') = SOME (wordSem_word_cmp
-  cmp c c')`,
+ (`wordSem_word_cmp cmp (word_Word c) (word_Word c') = SOME (asm_word_cmp cmp c
+  c')`,
   CHEAT_TAC);;
 add_simp word_cmp_Word_Word;;
 

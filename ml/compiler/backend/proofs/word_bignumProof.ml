@@ -164,7 +164,7 @@ let eval = cake_inductive
         /\
       (single_add_word (FAPPLY (word_bignumProof_state_regs s) n3) (eval_ri
         s n4) (eval_ri s n5) = (r1,r2)) ==>
-      word_bignumProof_Eval r s (asm_Add n1 n2 n3 n4 n5)
+      word_bignumProof_Eval r s (word_bignum_Add n1 n2 n3 n4 n5)
        (INR (reg_write n1 (SOME r1) (reg_write n2 (SOME r2) s)))) /\
    (!r s n1 n2 n3 n4 n5 r1 r2.
       n3 IN FDOM (word_bignumProof_state_regs s) /\ eval_ri_pre s n4
@@ -173,7 +173,7 @@ let eval = cake_inductive
         /\
       (single_sub_word (FAPPLY (word_bignumProof_state_regs s) n3) (eval_ri
         s n4) (eval_ri s n5) = (r1,r2)) ==>
-      word_bignumProof_Eval r s (asm_Sub n1 n2 n3 n4 n5)
+      word_bignumProof_Eval r s (word_bignum_Sub n1 n2 n3 n4 n5)
        (INR (reg_write n1 (SOME r1) (reg_write n2 (SOME r2) s)))) /\
    (!r s n1 n2 n3 n4.
       n3 IN FDOM (word_bignumProof_state_regs s) /\ n4 IN FDOM
@@ -379,11 +379,11 @@ let syntax_ok_aux_def,syntax_ok_aux_ind = define_shaped_rec
    | word_bignum_If t1 t2 t3 p1 p2 ->
       t2 < (25) /\ (!r. t3 = Reg r ==> r < (25)) /\
       syntax_ok_aux p1 /\ syntax_ok_aux p2
-   | asm_Add n1 n2 n3 n4 n5 ->
+   | word_bignum_Add n1 n2 n3 n4 n5 ->
       n1 < (25) /\ n2 < (25) /\ n3 < (25) /\
       (!r. n4 = Reg r ==> r < (25)) /\
       (!r. n5 = Reg r ==> r < (25))
-   | asm_Sub n1 n2 n3 n4 n5 ->
+   | word_bignum_Sub n1 n2 n3 n4 n5 ->
       n1 < (25) /\ n2 < (25) /\ n3 < (25) /\
       (!r. n4 = Reg r ==> r < (25)) /\
       (!r. n5 = Reg r ==> r < (25))
@@ -464,27 +464,27 @@ let word_bignumProof_compile_exp_thm = prove
 (* [local] *)
 let evaluate_SeqTemp = prove
  (`wordSem_evaluate (SeqTemp i r p,t) =
-   (if Temp (n2w r) IN FDOM (wordSem_state_store t) then
+   if Temp (n2w r) IN FDOM (wordSem_state_store t) then
       wordSem_evaluate (p,wordSem_set_var i (FAPPLY (wordSem_state_store t)
         (Temp (n2w r))) t)
-   else wordSem_evaluate (SeqTemp i r p,t))`,
+   else wordSem_evaluate (SeqTemp i r p,t)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_SeqTempImm = prove
  (`wordSem_evaluate (SeqTempImm i ri p,t) =
-   (if !r. ri = Reg r ==> Temp (n2w r) IN FDOM (wordSem_state_store t) then
+   if !r. ri = Reg r ==> Temp (n2w r) IN FDOM (wordSem_state_store t) then
       wordSem_evaluate (p,wordSem_set_var i (match ri with Imm w ->
         word_Word w
                              | Reg r -> FAPPLY (wordSem_state_store t) (Temp
                                (n2w r))) t)
-   else wordSem_evaluate (SeqTempImm i ri p,t))`,
+   else wordSem_evaluate (SeqTempImm i ri p,t)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_SeqTempImmNot = prove
  (`wordSem_evaluate (SeqTempImmNot i ri p,t) =
-   (if !r. ri = Reg r ==> Temp (n2w r) IN FDOM (wordSem_state_store t) /\
+   if !r. ri = Reg r ==> Temp (n2w r) IN FDOM (wordSem_state_store t) /\
                          (?w. FAPPLY (wordSem_state_store t) (Temp (n2w r))
                            = word_Word w) then
       wordSem_evaluate (p,wordSem_set_var i (match ri with Imm w ->
@@ -492,7 +492,7 @@ let evaluate_SeqTempImmNot = prove
                              | Reg r -> (match FAPPLY (wordSem_state_store
                                t) (Temp (n2w r)) with word_Word w -> word_Word
                                (word_not w))) t)
-   else wordSem_evaluate (SeqTempImmNot i ri p,t))`,
+   else wordSem_evaluate (SeqTempImmNot i ri p,t)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -781,7 +781,7 @@ let Corr_Swap = prove
 
 (* [local] *)
 let Corr_Add = prove
- (`Corr (asm_Add n1 n2 n3 ri1 ri2) s
+ (`Corr (word_bignum_Add n1 n2 n3 ri1 ri2) s
     (INR (reg_write n1
            (SOME (FST (single_add_word (FAPPLY (word_bignumProof_state_regs
              s) n3) (eval_ri s ri1) (eval_ri s ri2))))
@@ -796,7 +796,7 @@ let Corr_Add = prove
 
 (* [local] *)
 let Corr_Sub = prove
- (`Corr (asm_Sub n1 n2 n3 ri1 ri2) s
+ (`Corr (word_bignum_Sub n1 n2 n3 ri1 ri2) s
     (INR (reg_write n1
            (SOME (FST (single_sub_word (FAPPLY (word_bignumProof_state_regs
              s) n3) (eval_ri s ri1) (eval_ri s ri2))))

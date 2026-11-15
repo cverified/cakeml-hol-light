@@ -3997,8 +3997,8 @@ let lab_to_targetProof_compile_correct = prove
       encoder_correct (machine_config_target mc_conf) /\
       lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1 ==>
       (?k t2 ms2.
-        (labSem_evaluate mc_conf (labSem_state_ffi s1) (labSem_state_clock
-          s1 + k) ms1 =
+        (targetSem_evaluate mc_conf (labSem_state_ffi s1)
+          (labSem_state_clock s1 + k) ms1 =
            (res,
             ms2,labSem_state_ffi s2)))`,
   CHEAT_TAC);;
@@ -4501,7 +4501,8 @@ let IMP_state_rel_make_init = prove
 
 let make_init_simp = prove
  (`labSem_state_ffi
-     (lab_to_targetProof_make_init a b f g h i j k l m n p) = b /\ pc
+     (lab_to_targetProof_make_init a b f g h i j k l m n p) = b
+       /\ labSem_state_pc
      (lab_to_targetProof_make_init a b f g h i j k l m n p) = 0
        /\ labSem_state_code
      (lab_to_targetProof_make_init a b f g h i j k l m n p) = k`,

@@ -523,10 +523,10 @@ let encode_refs_def = new_definition
        (flatSem_state_refs s) = semanticPrimitives_Refv v})`;;
 
 let FLOOKUP_encode_refs = prove
- (`FLOOKUP (encode_refs s) n = (if n < LENGTH (flatSem_state_refs s) then
-  (match EL n (flatSem_state_refs s) with semanticPrimitives_Refv v -> SOME
+ (`FLOOKUP (encode_refs s) n = if n < LENGTH (flatSem_state_refs s) then (match
+  EL n (flatSem_state_refs s) with semanticPrimitives_Refv v -> SOME
   (encode_val v) | _ -> NONE)
-   else NONE)`,
+   else NONE`,
   CHEAT_TAC);;
 
 let decode_pos_simulation = prove
@@ -764,8 +764,8 @@ let compile_decs_eval_sim = prove
   CHEAT_TAC);;
 
 let compile_decs_semantics = prove
- (`install_conf_rel cfg ic1 ic2 /\ ~(flatSem_semantics ic1 ffi prog =
-  pattern_semantics_Fail) ==>
+ (`install_conf_rel cfg ic1 ic2 /\ ~(flatSem_semantics ic1 ffi prog = ffi_Fail)
+  ==>
    flatSem_semantics ic1 ffi prog =
    flatSem_semantics ic2 ffi (MAP (compile_dec cfg1) prog)`,
   CHEAT_TAC);;

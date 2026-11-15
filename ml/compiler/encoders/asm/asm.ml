@@ -2,7 +2,7 @@
 (*  asm: ported from HOL4's
     compiler/encoders/asm/asmScript.sml
     A definition theory, with 11 definitions, 11 datatypes and no
-    theorems.  Needed by 54 files of the port.  *)
+    theorems.  Needed by 53 files of the port.  *)
 (* ======================================================== *)
 
 (* -------------------------------------------------------------------------

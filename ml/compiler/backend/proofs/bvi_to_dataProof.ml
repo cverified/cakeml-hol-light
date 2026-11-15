@@ -619,13 +619,13 @@ add_simp FST_compile_part;;
    variables of its own are read as variables *)
 let bvi_to_dataProof_compile_prog_semantics = prove
  (cake_as_vars (fun () ->
-    `~(dataSem_semantics (ffi0:'ffi ffi_state)
+    `~(bviSem_semantics (ffi0:'ffi ffi_state)
                (fromAList prog) co
                (\cfg prog. cc cfg (bvi_to_data_compile_prog prog)) start =
                  ffi_Fail) ==> dataSem_semantics ffi0
                  (fromAList (bvi_to_data_compile_prog prog))
                  ((I ## bvi_to_data_compile_prog) o co) cc lim ss start =
-       dataSem_semantics ffi0
+       bviSem_semantics ffi0
                  (fromAList prog) co
                  (\cfg prog. cc cfg (bvi_to_data_compile_prog prog))
                    start`),

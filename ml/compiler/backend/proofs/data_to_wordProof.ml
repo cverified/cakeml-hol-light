@@ -400,7 +400,7 @@ let data_to_wordProof_compile_semantics = prove
        good_dimindex (:'a) /\ sptree_lookup 0 (wordSem_state_locals t) =
          SOME (word_Loc 1 0) /\ wordSem_state_stack t = [] /\
        conf_ok (:'a) c /\ wordSem_state_termdep t = 0
-         /\ word_to_wordProof_code_rel c (fromAList prog) x1 /\
+         /\ data_to_word_gcProof_code_rel c (fromAList prog) x1 /\
        cc =
        (\cfg.
             OPTION_MAP (I ## MAP upper_w2w ## I) o tcc cfg o

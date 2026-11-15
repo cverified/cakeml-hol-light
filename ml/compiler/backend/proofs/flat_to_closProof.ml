@@ -206,11 +206,10 @@ let initial_state'_def = new_definition
 
 (* [local] *)
 let initate_state'_clock = prove
- (`(closSem_state_clock_fupd (K k) (initial_state' b ffi max_app FEMPTY
-   co cc k'))
-  =
+ (`(closSem_state_clock_fupd (K k) (initial_state' b ffi max_app FEMPTY co cc
+  k')) =
    initial_state' b ffi max_app FEMPTY co cc k /\ closSem_state_clock
-     (initial_state' b ffi max_app FEMPTY co cc k) = k`,
+   (initial_state' b ffi max_app FEMPTY co cc k) = k`,
   CHEAT_TAC);;
 add_simp initate_state'_clock;;
 

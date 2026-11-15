@@ -346,7 +346,7 @@ let MustTerminate_limit_SUB_2 = prove
   CHEAT_TAC);;
 
 let cut_env_fromList_sing = prove
- (`wordSem_cut_env (sptree_fromList [one]) (sptree_insert 0 (word_Loc l1 l2)
+ (`dataSem_cut_env (sptree_fromList [one]) (sptree_insert 0 (word_Loc l1 l2)
   LN) =
     SOME (sptree_insert 0 (word_Loc l1 l2) LN)`,
   CHEAT_TAC);;
@@ -424,7 +424,7 @@ let IMP_bignum_code_rel = prove
  (`word_bignum_compile Bignum_location 2 1 (Bignum_location + 1,[])
              mc_iop_code = (xx1,xx2,xx3,xx4,xx5) /\
     data_to_word_gcProof_state_rel c l1 l2 s t NONE locs ==>
-    data_to_word_gcProof_code_rel (xx4,xx5) (wordSem_state_code t)`,
+    word_bignumProof_code_rel (xx4,xx5) (wordSem_state_code t)`,
   CHEAT_TAC);;
 
 let TWO_LESS_MustTerminate_limit = prove
@@ -598,7 +598,7 @@ let eval_Call_Arith_max_stack_NONE = prove
         wordSem_state_termdep t /\
       dataSem_get_vars [a1; a2] (dataSem_state_locals s) = SOME
         [dataSem_Number i1; dataSem_Number i2] /\
-      wordSem_cut_state_opt names_opt s = SOME x /\
+      dataSem_cut_state_opt names_opt s = SOME x /\
       data_to_word_bignumProof_int_op index i1 i2 = SOME r ==>
       (?q r'.
         (\(res,s1).
@@ -643,7 +643,7 @@ let structure_le_IMP_option_le = prove
 
 let evaluate_Assign_Const =
   SIMP_CONV [wordSem_evaluate_def; word_exp_def; wordSem_set_var_def]
-  `wordSem_evaluate (word_bignum_Assign n (word_Const w),s)`;;
+  `wordSem_evaluate (word_Assign n (word_Const w),s)`;;
 
 let eval_Call_Arith = prove
  (`!index r.
@@ -652,7 +652,7 @@ let eval_Call_Arith = prove
         wordSem_state_termdep t /\
       dataSem_get_vars [a1; a2] (dataSem_state_locals s) = SOME
         [dataSem_Number i1; dataSem_Number i2] /\
-      wordSem_cut_state_opt names_opt s = SOME x /\
+      dataSem_cut_state_opt names_opt s = SOME x /\
       data_to_word_bignumProof_int_op index i1 i2 = SOME r ==>
       (?q r'.
         (\(res,s1).

@@ -1269,7 +1269,7 @@ let dataProps_evaluate_add_clock_io_events_mono = prove
 let semantics_Div_IMP_LPREFIX = prove
  (cake_as_vars (fun () ->
     `dataSem_semantics ffi prog co cc lim ss start = ffi_Diverge l ==>
-  LPREFIX (sptree_fromList (ffi_state_io_events ffi)) l`),
+  LPREFIX (fromList (ffi_state_io_events ffi)) l`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for

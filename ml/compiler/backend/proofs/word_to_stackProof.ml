@@ -1202,7 +1202,7 @@ let alloc_alt = prove
                     (match wordSem_get_store AllocSize s' with
                       NONE -> (SOME wordSem_Error,s')
                     | SOME w ->
-                        (match stackSem_has_space w s' with
+                        (match wordSem_has_space w s' with
                           NONE -> (SOME wordSem_Error,s')
                         | SOME T -> (NONE,s')
                         | SOME F ->
@@ -1653,7 +1653,7 @@ let call_dest_lemma = prove
        /\ stackSem_state_stack_space
      t4 = stackSem_state_stack_space t /\
      (!real_args prog ssize.
-       stackSem_find_code dest
+       wordSem_find_code dest
                  (add_ret_loc (ret:(num list#(1 spt#1 spt)#'a
                    word_prog#num#num) option)
                               args':('a word_loc) list) (wordSem_state_code
@@ -1754,7 +1754,7 @@ let alist_insert_get_vars = prove
    (!x y. MEM (x,y) moves /\ ~(x = y) ==> MEM (SOME x) ls) ==>
    alist_insert
      (MAP THE (FILTER IS_SOME ls))
-     (MAP (\x. THE (stackSem_get_var (THE (ALOOKUP moves (THE x))) s))
+     (MAP (\x. THE (wordSem_get_var (THE (ALOOKUP moves (THE x))) s))
        (FILTER IS_SOME ls)) (wordSem_state_locals s) =
    alist_insert (MAP FST moves) x (wordSem_state_locals s)`,
   CHEAT_TAC);;
@@ -1948,7 +1948,7 @@ let evaluate_wStackLoad_wReg1 = prove
 let evaluate_wStackLoad_wReg1_with_const = prove
  (`wReg1 r (k,f,f') = (x,r') /\
    EVEN r /\
-   stackSem_word_exp (s:('a,num#'c,'ffi)wordSem_state) (word_Op asm_Add
+   wordSem_word_exp (s:('a,num#'c,'ffi)wordSem_state) (word_Op asm_Add
      [word_Var r; word_Const c]) = SOME (
    word_Word w) /\
    word_to_stackProof_state_rel ac k f f' s t lens 0 ==>
@@ -1967,9 +1967,10 @@ let evaluate_wStackLoad_wReg1_with_const = prove
 (* [local] *)
 let evaluate_wStackLoad_clock = prove
  (`!x t.
-   stackSem_evaluate (wStackLoad x stack_Skip,state_clock_fupd (K clk) t) =
-   (I ## (\s. state_clock_fupd (K clk) s)) (stackSem_evaluate (wStackLoad
-     x stack_Skip,t))`,
+   stackSem_evaluate (wStackLoad x stack_Skip,stackSem_state_clock_fupd (K
+     clk) t) =
+   (I ## (\s. stackSem_state_clock_fupd (K clk) s)) (stackSem_evaluate
+     (wStackLoad x stack_Skip,t))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2014,7 +2015,7 @@ let evaluate_wStackStore_wReg1 = prove
    (?(t':('a,'c,'ffi)stackSem_state).
    stackSem_evaluate (wStackStore x stack_Skip,(stackSem_set_var r' c t)) =
      (NONE,t') /\
-   word_to_stackProof_state_rel ac k f f' (stackSem_set_var r c s) t' lens 0
+   word_to_stackProof_state_rel ac k f f' (wordSem_set_var r c s) t' lens 0
      /\
    LENGTH (stackSem_state_stack t') = LENGTH_t_stack
      /\ stackSem_state_stack_space t' = t_stack_space)`,
@@ -2030,7 +2031,7 @@ let evaluate_wStackStore_wReg1_strong = prove
    (?(t':('a,'c,'ffi)stackSem_state).
    stackSem_evaluate (wStackStore x stack_Skip,(stackSem_set_var r' c t)) =
      (NONE,stackSem_set_var r' c t') /\
-   word_to_stackProof_state_rel ac k f f' (stackSem_set_var r c s)
+   word_to_stackProof_state_rel ac k f f' (wordSem_set_var r c s)
      (stackSem_set_var r' c t') lens 0 /\
    LENGTH (stackSem_state_stack t') = LENGTH (stackSem_state_stack t)
      /\ stackSem_state_stack_space t' = stackSem_state_stack_space t)`,
@@ -2088,8 +2089,8 @@ let evaluate_wStackStore_wReg1_0 = prove
    (?(t':('a,'c,'ffi)stackSem_state).
    stackSem_evaluate (wStackStore x stack_Skip,(stackSem_set_var 0 c1
      (stackSem_set_var r' c t))) = (NONE,t') /\
-   word_to_stackProof_state_rel ac k f f' (stackSem_set_var 0 c1
-     (stackSem_set_var r c s)) t' lens 0 /\
+   word_to_stackProof_state_rel ac k f f' (wordSem_set_var 0 c1
+     (wordSem_set_var r c s)) t' lens 0 /\
    LENGTH (stackSem_state_stack t') = LENGTH_t_stack
      /\ stackSem_state_stack_space t' = t_stack_space)`,
   CHEAT_TAC);;
@@ -2584,7 +2585,7 @@ let abs_stack_empty' = prove
 let evaluate_const_inst = prove
  (`word_to_stackProof_state_rel ac k f f' s t lens extra ==>
    (?(t':('a,'c,'ffi)stackSem_state).
-   stackSem_evaluate ((\r w. word_Inst (asm_Const r w)) (k + 1) i,t) =
+   stackSem_evaluate ((\r w. stack_Inst (asm_Const r w)) (k + 1) i,t) =
      (NONE,t') /\ stackSem_state_clock
    t = stackSem_state_clock t' /\
    word_to_stackProof_state_rel ac k f f' s t' lens extra /\
@@ -2595,10 +2596,10 @@ let evaluate_const_inst = prove
 
 (* [local] *)
 let evaluate_const_inst_clock = prove
- (`stackSem_evaluate ((\r w. word_Inst (asm_Const r w)) k i,state_clock_fupd (K
-  clk) t) =
-   (I ## (\t. state_clock_fupd (K clk) t)) (stackSem_evaluate ((\r w.
-     word_Inst (asm_Const r w)) k i,t))`,
+ (`stackSem_evaluate ((\r w. stack_Inst (asm_Const r w)) k
+  i,stackSem_state_clock_fupd (K clk) t) =
+   (I ## (\t. stackSem_state_clock_fupd (K clk) t)) (stackSem_evaluate
+     ((\r w. stack_Inst (asm_Const r w)) k i,t))`,
   CHEAT_TAC);;
 
 (* HOL4 word_to_stackProofScript.sml:6767-6773: a proof *)
@@ -2739,8 +2740,8 @@ let evaluate_ShareInst_Load = prove
          (k,f,f'),stackSem_state_clock_fupd (K (ck + stackSem_state_clock t))
          t) =
          (OPTION_MAP compile_result res,t1) /\
-     ((?fv'. res = SOME (stackSem_FinalFFI fv') /\ wordSem_state_ffi
-         s1 = stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
+     ((?fv'. res = SOME (wordSem_FinalFFI fv') /\ stackSem_state_ffi
+         s1 = stackSem_state_ffi t1 /\ stackSem_state_clock s1 =
            stackSem_state_clock t1) \/
      (res = NONE /\ word_to_stackProof_state_rel ac k f f' s1 t1 lens 0)))`,
   CHEAT_TAC);;
@@ -2760,8 +2761,8 @@ let evaluate_ShareInst_Store = prove
          (k,f,f'),stackSem_state_clock_fupd (K (ck + stackSem_state_clock t))
          t) =
          (OPTION_MAP compile_result res,t1) /\
-     ((?fv'. res = SOME (stackSem_FinalFFI fv') /\ wordSem_state_ffi
-         s1 = stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
+     ((?fv'. res = SOME (wordSem_FinalFFI fv') /\ stackSem_state_ffi
+         s1 = stackSem_state_ffi t1 /\ stackSem_state_clock s1 =
            stackSem_state_clock t1) \/
      (res = NONE /\ word_to_stackProof_state_rel ac k f f' s1 t1 lens 0)))`,
   CHEAT_TAC);;
@@ -2780,8 +2781,8 @@ let evaluate_ShareInst_correct_lemma = prove
          t) =
        (OPTION_MAP compile_result res,t1) /\
      ((res = NONE /\ word_to_stackProof_state_rel ac k f f' s1 t1 lens 0) \/
-       (?fv'. res = SOME (stackSem_FinalFFI fv') /\ wordSem_state_ffi
-         s1 = stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
+       (?fv'. res = SOME (wordSem_FinalFFI fv') /\ stackSem_state_ffi
+         s1 = stackSem_state_ffi t1 /\ stackSem_state_clock s1 =
            stackSem_state_clock t1)))`,
   CHEAT_TAC);;
 
@@ -2860,8 +2861,9 @@ let evaluate_copy_ret_aux = prove
 
 let evaluate_copy_ret_aux_clock = prove
  (`!t.
-     stackSem_evaluate (copy_ret_aux k f n,state_clock_fupd (K clk) t) =
-     (I ## (\t. state_clock_fupd (K clk) t)) (stackSem_evaluate
+     stackSem_evaluate (copy_ret_aux k f n,stackSem_state_clock_fupd (K clk)
+       t) =
+     (I ## (\t. stackSem_state_clock_fupd (K clk) t)) (stackSem_evaluate
        (copy_ret_aux k f n,t))`,
   CHEAT_TAC);;
 
@@ -2991,12 +2993,12 @@ let comp_Call = prove
            =
          (res1,t1) /\ ~((n2w 1) = ((n2w 0):'a word)) /\ ~((n2w 2) = ((n2w
            0):'a word)) /\
-         (if OPTION_MAP compile_result res = res1 then wordSem_state_ffi
-           s1 = stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
+         (if OPTION_MAP compile_result res = res1 then stackSem_state_ffi
+           s1 = stackSem_state_ffi t1 /\ stackSem_state_clock s1 =
              stackSem_state_clock t1
          else res1 = SOME (stackSem_Halt (word_Word (n2w 2)))
            /\ ffi_state_io_events (stackSem_state_ffi
-           t1) <<= ffi_state_io_events (wordSem_state_ffi s1) /\
+           t1) <<= ffi_state_io_events (stackSem_state_ffi s1) /\
            the (wordSem_state_stack_limit s1 + 1) (wordSem_state_stack_max
              s1) > wordSem_state_stack_limit s1))`,
   CHEAT_TAC);;
@@ -3023,8 +3025,8 @@ let word_Call_NONE_not_Break_Continue = prove
 (* [local] *)
 let stack_Call_NONE_not_Break_Continue = prove
  (`stackSem_evaluate (stack_Call NONE dest handler,s) = (res,s') ==>
-   (!n. ~(res = SOME (word_Break n))) /\ (!n. ~(res = SOME (word_Continue
-     n)))`,
+   (!n. ~(res = SOME (stackSem_Break n))) /\ (!n. ~(res = SOME
+     (stackSem_Continue n)))`,
   CHEAT_TAC);;
 
 let state_rel_IMP_semantics = prove

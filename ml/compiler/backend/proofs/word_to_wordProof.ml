@@ -63,8 +63,8 @@ let compile_single_lem = prove
      word_state_eq_rel rst rcst /\
      (match res with
        NONE -> T
-     | SOME (word_Break _) -> T
-     | SOME (word_Continue _) -> T
+     | SOME (wordSem_Break _) -> T
+     | SOME (wordSem_Continue _) -> T
      | SOME _ -> wordSem_state_locals rst = wordSem_state_locals rcst))`,
   CHEAT_TAC);;
 
@@ -509,7 +509,7 @@ let word_to_word_compile_semantics = prove
      t = wordSem_state_code_fupd (K (wordSem_state_code t)) s
        /\ wordSem_state_code
      s = fromAList wprog0 /\ ~(wordSem_semantics
-       (s:('a,'b,'ffi)wordSem_state) start = reg_alloc_Fail) ==>
+       (s:('a,'b,'ffi)wordSem_state) start = ffi_Fail) ==>
      wordSem_semantics s start =
      wordSem_semantics (t:('a,'b,'ffi)wordSem_state) start`),
   CHEAT_TAC);;
