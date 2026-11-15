@@ -2173,10 +2173,103 @@ CON_OF = {
      'Load8': {0: 'asm'}, 'Store8': {0: 'asm'}},
   # the stubs that these four build are stackLang programs, and
   # reg_alloc has a Seq of clash trees
-  ('word_to_stackProof', 'PushHandler_F'): {'Seq': 'stackLang'},
-  ('word_to_stackProof', 'PopHandler_F'): {'Seq': 'stackLang'},
+  ('word_to_stackProof', 'PushHandler_F'): STACKLANG_PROG,
+  ('word_to_stackProof', 'PopHandler_F'): STACKLANG_PROG,
   ('word_to_stackProof', 'copy_ret_F'): {'Seq': 'stackLang'},
-  ('word_to_stackProof', 'raise_stub_F'): {'Seq': 'stackLang'},
+  ('word_to_stackProof', 'raise_stub_F'): STACKLANG_PROG,
+  # and these say what the compiler builds and nothing about
+  # what it reads, so every constructor of a program in them is
+  # stackLang's
+  ('word_to_stackProof', 'wMoveAux_thm'): STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_wStackLoad_clock'):
+    STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_wStackLoad_seq'): STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_wStackStore_wReg1'):
+    STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_wStackStore_wReg1_strong'):
+    STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_wStackStore_wReg1_0'):
+    STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_wRegWrite1_seq'): STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_wRegWrite2_seq'): STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_stack_move'): STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_stack_move_seq'): STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_stack_move_clock'):
+    STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_PopHandler_clock'):
+    STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_PopHandler_seq'): STACKLANG_PROG,
+  ('word_to_stackProof', 'copy_ret_aux_thm'): STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_copy_ret_Seq'): STACKLANG_PROG,
+  ('word_to_stackProof', "evaluate_copy_ret_Seq'"): STACKLANG_PROG,
+  ('word_to_stackProof', 'extract_labels_wStackLoad_Skip'):
+    STACKLANG_PROG,
+  # the set_var and the set_store of these are wordSem's, which
+  # the source says with a qualified name on the first of them
+  ('word_to_stackProof', 'set_var_swap_word'):
+    {'set_var': 'wordSem'},
+  ('word_to_stackProof', 'set_var_cancel_word'):
+    {'set_var': 'wordSem'},
+  ('word_to_stackProof', 'push_env_set_store'):
+    {'set_store': 'wordSem', 'push_env': 'wordSem'},
+  # alloc_alt is about the alloc of wordSem, as the type of its
+  # state says, so the gc, the push_env, the set_store and the
+  # Error of it are wordSem's too
+  ('word_to_stackProof', 'alloc_alt'):
+    {'alloc': 'wordSem', 'set_store': 'wordSem',
+     'push_env': 'wordSem', 'gc': 'wordSem', 'Error': 'wordSem'},
+  # the enc_stack of stackSem takes the bitmaps and the stack,
+  # the one of wordSem takes the stack frames: the number of
+  # arguments tells the two apart
+  ('word_to_stackProof', 'enc_stack_lemma'):
+    {'enc_stack': {2: 'stackSem', 1: 'wordSem'}},
+  ('word_to_stackProof', 'IMP_enc_stack'):
+    {'enc_stack': {2: 'stackSem', 1: 'wordSem'}},
+  ('word_to_stackProof', 'dec_stack_lemma'):
+    {'enc_stack': {2: 'stackSem', 1: 'wordSem'}},
+  # the get_var, the get_vars and the set_var of these are
+  # wordSem's, on the state that the compiler reads
+  ('word_to_stackProof', 'IS_SOME_get_vars_set_var'):
+    {'get_vars': 'wordSem', 'set_var': 'wordSem'},
+  ('word_to_stackProof', 'IS_SOME_get_vars_EVERY'):
+    {'get_vars': 'wordSem', 'get_var': 'wordSem'},
+  ('word_to_stackProof', 'state_rel_get_var_imp'):
+    {'get_var': 'wordSem'},
+  ('word_to_stackProof', 'state_rel_get_var_imp2'):
+    {'get_var': 'wordSem'},
+  ('word_to_stackProof', 'alist_insert_get_vars'):
+    {'get_vars': 'wordSem'},
+  ('word_to_stackProof', 'get_vars_fromList2_eq'):
+    {'get_vars': 'wordSem'},
+  ('word_to_stackProof', 'get_vars_fromList2_eq_cons'):
+    {'get_vars': 'wordSem'},
+  ('word_to_stackProof', 'word_exp_Op_Add_0'):
+    {'word_exp': 'wordSem'},
+  # the source states evaluate_SeqStackFree twice, and both are
+  # about a program of stackLang
+  ('word_to_stackProof', 'evaluate_SeqStackFree'): STACKLANG_PROG,
+  # and these are about the state of wordSem that the compiler
+  # reads: its word_exp, its gc, its pop_env, its dec_stack and
+  # its stack frames
+  ('word_to_stackProof', 'word_exp_Op_SOME_Word'):
+    {'word_exp': 'wordSem'},
+  ('word_to_stackProof', 'word_gc_empty_frame'):
+    {'gc': 'wordSem', 'pop_env': 'wordSem',
+     'StackFrame': 'wordSem'},
+  ('word_to_stackProof', 'dec_stack_stack_size'):
+    {'dec_stack': 'wordSem', 'stack_size': 'wordSem'},
+  ('word_to_stackProof', 'word_stack_dec_stack_shape'):
+    {'dec_stack': 'wordSem'},
+  ('word_to_stackProof', 'word_stack_dec_stack_sorted'):
+    {'dec_stack': 'wordSem'},
+  ('word_to_stackProof', 'get_vars_eq'): {'get_vars': 'wordSem'},
+  ('word_to_stackProof', 'call_dest_lemma'):
+    {'get_vars': 'wordSem', 'evaluate': 'stackSem'},
+  # the Break and the Continue this one says the result is not
+  # are the results of wordSem, where wordLang has a Break and a
+  # Continue of its own in a program
+  ('word_to_stackProof', 'word_Call_NONE_not_Break_Continue'):
+    {'Break': 'wordSem', 'Continue': 'wordSem'},
   # the word_cmp of these is asm's, which compares two words,
   # and not wordSem's, which compares two word_locs
   ('data_to_word_assignProof', 'word_cmp_Less_word_cmp_res'):
@@ -12497,6 +12590,41 @@ THM_PATCH = {
   # the asm beside it in the same statement is an asm of asm: both
   # Jumps take one argument and both JumpCmps take four, so
   # nothing but the place says which is which
+  # word_to_stackProof relates a state of wordSem, which it calls
+  # s, to one of stackSem, which it calls t, and the two
+  # semantics have set_var, get_var, mem_store, get_fp_var,
+  # set_fp_var and dec_clock each: the place is what says which
+  # of the two a statement means, and the port reads both as
+  # stackSem's
+  ('word_to_stackProof', 'state_rel_set_var'): [
+    ('(stackSem_set_var (2 * x) v s)',
+     '(wordSem_set_var (2 * x) v s)'),
+  ],
+  ('word_to_stackProof', "state_rel_set_var'"): [
+    ('(stackSem_set_var y v s)', '(wordSem_set_var y v s)'),
+  ],
+  ('word_to_stackProof', 'state_rel_set_var2'): [
+    ('(stackSem_set_var (2 * x) v s)',
+     '(wordSem_set_var (2 * x) v s)'),
+  ],
+  ('word_to_stackProof', 'state_rel_mem_store'): [
+    ('stackSem_mem_store a b s = SOME s',
+     'wordSem_mem_store a b s = SOME s'),
+  ],
+  ('word_to_stackProof', 'state_rel_get_fp_var'): [
+    ('stackSem_get_fp_var n s = stackSem_get_fp_var n t',
+     'wordSem_get_fp_var n s = stackSem_get_fp_var n t'),
+  ],
+  ('word_to_stackProof', 'state_rel_set_fp_var'): [
+    ('(stackSem_set_fp_var n v s)', '(wordSem_set_fp_var n v s)'),
+  ],
+  ('word_to_stackProof', 'state_rel_dec_clock'): [
+    ('(stackSem_dec_clock s)', '(wordSem_dec_clock s)'),
+  ],
+  ('word_to_stackProof', "state_rel_get_var_imp'"): [
+    ('stackSem_get_var n s = SOME v',
+     'wordSem_get_var n s = SOME v'),
+  ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
      'lab_LabAsm (lab_Jump jtarget)'),
