@@ -151,6 +151,14 @@ THM_ACCESSORS = {
   # cannot say)
   ('source_to_flatProof', 'nsAll_extend_env'):
     {'v': 'source_to_flat_environment_v'},
+  # these two read the code of a wordSem state, where the code of
+  # a dataSem state is what the file means by the bare name (the
+  # s of the right hand side a FILE_PATCH puts right)
+  ('data_to_word_assignProof', 'set_var_consts'):
+    {'code': 'wordSem_state_code'},
+  ('data_to_word_assignProof', 'push_env_store'):
+    {'code': 'wordSem_state_code'},
+
   # this one has a variable compile and a variable compile_oracle,
   # so it is read with the overloads of the field names taken
   # away, and the stack that it updates is the one of a wordSem
@@ -1399,8 +1407,17 @@ FILE_PATCH = {
      r'dataSem_\1\2'),
   ],
   'data_to_word_assignProof': [
+    # the state that these read the code of is a wordSem one: the
+    # left hand side of each says so and the right hand side,
+    # which is the bare s, does not
+    (r'(wordSem_state_code\s+\((?:wordSem_set_var r v s'
+     r'|wordSem_push_env x y s)\)\s*=\s*)dataSem_state_code',
+     r'\1wordSem_state_code'),
     (r'wordSem_(get_vars?)(\s+\S+\s+\(dataSem_state_locals)',
      r'dataSem_\1\2'),
+    # and the cut_env of a single set of names is dataSem's, where
+    # wordSem's takes the pair of them that cut_envs takes
+    (r'wordSem_cut_env(\s+kept_names\s+s_locals)', r'dataSem_cut_env\1'),
   ],
 }
 
@@ -2513,6 +2530,13 @@ CON_OF = {
   # is dataSem's (wordSem's takes a pair of them)
   ('data_to_word_bignumProof', 'cut_env_fromList_sing'):
     {'cut_env': 'dataSem'},
+  # the get_vars of this takes a map of variables and not a
+  # state, so it is dataSem's
+  ('data_to_word_assignProof', 'get_vars_IMP_domain'):
+    {'get_vars': 'dataSem'},
+  # and the clock this takes down is the one of a dataSem state
+  ('data_to_word_assignProof', 'dec_clock_tstamps'):
+    {'dec_clock': 'dataSem'},
   # the values that this checks the type of are the ones that
   # flat_to_v gives, which are semanticPrimitives'
   ('flatProps', 'check_type_LIST_REL_same'):
@@ -12843,6 +12867,13 @@ MAIN_THEORY = {
   # are of the language it reads, which is the one here, and the
   # bodies say so themselves (CON_BODY)
   'data_to_word': 'wordLang',
+  # and the proofs of data_to_word are about the wordLang
+  # programs that it builds, so a constructor that wordLang has
+  # is wordLang's there as well
+  'data_to_word_assignProof': 'wordLang',
+  'data_to_word_gcProof': 'wordLang',
+  'data_to_word_bignumProof': 'wordLang',
+  'data_to_wordProof': 'wordLang',
   'lab_to_target': 'labLang',
   'stack_to_lab': 'stackLang',
   'word_to_stack': 'stackLang',
@@ -12918,8 +12949,17 @@ CON_FILE = {
   # is the one the pass reads, and wordSem has one of its own that
   # none of their statements names
   'data_to_word_bignumProof': {'cut_state_opt': 'dataSem'},
+  # and the op that assign takes is a closLang op, so the Install,
+  # the FFI and the thunk operations it is compared with are
+  # closLang's and not ast's or labLang's
   'data_to_word_assignProof': {'cut_state_opt': 'dataSem',
-                               'cut_state': 'dataSem'},
+                               'cut_state': 'dataSem',
+                               'Install': 'closLang',
+                               'FFI': 'closLang',
+                               'ThunkOp': 'closLang',
+                               'AllocThunk': 'closLang',
+                               'UpdateThunk': 'closLang',
+                               'compile_part': 'data_to_word'},
   # the assign of data_to_wordProof is the pass of
   # data_to_word, of seven arguments; wordSem has an assign
   # of its own, of three, and the file never writes that one
