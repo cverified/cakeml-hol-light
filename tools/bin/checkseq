@@ -5,12 +5,12 @@
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
 ML=$C/ml
-s=seq
+s=${CSSESSION:-seq}
 log=/home/freek/claude/hol-light/cakeml/tools/checkseq.log
 [ "$KEEP" = 1 ] && tmux has -t hol-$s 2> /dev/null || {
   repl-kill $s > /dev/null 2>&1
   rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
-  repl-clone hol-template-cakeml $s > /dev/null 2>&1 || {
+  repl-clone ${CSBASE:-hol-template-cakeml} $s > /dev/null 2>&1 || {
     echo "checkseq: cannot clone the template"; exit 1; }
   # with CAKE_TIMEOUT the definitions get another budget than the
   # thirty seconds of the library: a run that only has to say

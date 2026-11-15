@@ -788,7 +788,7 @@ let full_make_init_def = new_definition
      stack_conf) (fromAList code2) coracle2 s3 in
    let s1 = make_init_any ggc max_heap bitmaps data_sp coracle1 jump offset
      sp (fromAList code1) s2 in
-     (stack_namesProof_make_init data_conf (fromAList code) coracle s1,
+     (stack_allocProof_make_init data_conf (fromAList code) coracle s1,
       make_init_opt ggc max_heap bitmaps data_sp coracle1 jump offset sp
         (fromAList code1) s2))`;;
 
