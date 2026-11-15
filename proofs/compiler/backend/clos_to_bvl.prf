@@ -4,7 +4,7 @@
 ### clos_tag_shift_inj
   (REWRITE_TAC[clos_tag_shift_def] THEN ARITH_TAC)
 
-### compile_exps_SING
+### clos_to_bvl_compile_exps_SING
   (REPEAT GEN_TAC THEN
    DISCH_THEN(MP_TAC o MATCH_MP clos_to_bvl_compile_exps_LENGTH) THEN
    STRUCT_CASES_TAC(ISPEC `c:bvl_exp list` list_CASES) THEN

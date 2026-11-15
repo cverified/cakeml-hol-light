@@ -25,13 +25,13 @@
 ### evaluate_dec_io_events_mono
   (REWRITE_TAC[flatProps_evaluate_io_events_mono])
 
-### evaluate_decs_add_to_clock
+### flatProps_evaluate_decs_add_to_clock
   (REPEAT STRIP_TAC THEN
    MATCH_MP_TAC (CONJUNCT2 (CONJUNCT2
      flatProps_evaluate_add_to_clock)) THEN
    ASM_REWRITE_TAC[])
 
-### evaluate_decs_add_to_clock_io_events_mono
+### flatProps_evaluate_decs_add_to_clock_io_events_mono
   (REWRITE_TAC[flatProps_evaluate_add_to_clock_io_events_mono])
 
 ### evaluate_decs_add_to_clock_io_events_mono_alt
@@ -41,7 +41,7 @@
             flatProps_evaluate_decs_add_to_clock_io_events_mono) THEN
    ASM_REWRITE_TAC[FST])
 
-### evaluate_sing
+### flatProps_evaluate_sing
   (REPEAT STRIP_TAC THEN FIRST_ASSUM(MP_TAC o MATCH_MP
     flatProps_evaluate_length) THEN
    REWRITE_TAC[LENGTH; LENGTH_EQ_CONS; LENGTH_EQ_NIL] THEN

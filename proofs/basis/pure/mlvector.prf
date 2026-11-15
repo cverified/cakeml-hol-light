@@ -1,4 +1,4 @@
-### collate_thm
+### mlvector_collate_thm
   (REPEAT GEN_TAC THEN REWRITE_TAC[mlvector_collate_def] THEN
    REPEAT COND_CASES_TAC THEN
    TRY (SUBGOAL_THEN `length (vec1:A vector) = length (vec2:B
@@ -14,6 +14,6 @@
 ### foldl_thm
   (SIMP_TAC[foldl_aux_thm; mlvector_foldl_def; ADD_CLAUSES; DROP_0])
 
-### foldli_thm
+### mlvector_foldli_thm
   (SIMP_TAC[mlvector_foldli_def; foldli_def; mlvector_foldli_aux_thm;
    ADD_CLAUSES; DROP_0])

@@ -34,10 +34,10 @@
 ### gc_move_data_r1
   (MESON_TAC[gc_move_data_IMP])
 
-### gc_move_list_length
+### gen_gc_partial_gc_move_list_length
   (MESON_TAC[gen_gc_partial_gc_move_list_IMP])
 
-### gc_move_list_ok
+### gen_gc_partial_gc_move_list_ok
   (REPEAT STRIP_TAC THEN MATCH_MP_TAC gc_move_list_ok' THEN
    MAP_EVERY EXISTS_TAC [`xs:(A heap_address)list`; `xs':(A
      heap_address)list`;
@@ -48,7 +48,7 @@
 ### gc_move_list_r1
   (MESON_TAC[gen_gc_partial_gc_move_list_IMP])
 
-### gc_move_ok
+### gen_gc_partial_gc_move_ok
   (REPEAT STRIP_TAC THEN MATCH_MP_TAC gc_move_ok' THEN
    MAP_EVERY EXISTS_TAC [`conf:B gen_gc_partial_conf`; `x:A
      heap_address`;
@@ -146,7 +146,7 @@
    FIRST_X_ASSUM(MP_TAC o MATCH_MP gc_forward_ptr_heap_length) THEN
    MESON_TAC[])
 
-### gc_move_list_IMP
+### gen_gc_partial_gc_move_list_IMP
   (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
     PAIR_EQ] THENL
     [MESON_TAC[]; ALL_TAC] THEN
@@ -157,7 +157,7 @@
    FIRST_ASSUM(fun th -> FIRST_ASSUM(MP_TAC o MATCH_MP th)) THEN
    SIMP_TAC[])
 
-### gc_move_list_heap_length
+### gen_gc_partial_gc_move_list_heap_length
   (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
     PAIR_EQ] THENL
     [REPEAT STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN REWRITE_TAC[];

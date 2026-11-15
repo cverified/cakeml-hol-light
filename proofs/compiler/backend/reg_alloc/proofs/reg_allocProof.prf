@@ -79,7 +79,7 @@
    REPEAT GEN_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
      ASM_MESON_TAC[])
 
-### TWOxDIV2
+### reg_allocProof_TWOxDIV2
   (GEN_TAC THEN MATCH_MP_TAC DIV_MULT THEN ARITH_TAC)
 
 ### INJ_IMG_lookup
@@ -93,12 +93,12 @@
    REWRITE_TAC[option_DISTINCT; option_INJ] THEN
    ONCE_REWRITE_TAC[one] THEN MESON_TAC[])
 
-### Msub_eqn
+### msub_eqn
   (REPEAT GEN_TAC THEN COND_CASES_TAC THEN
    ASM_SIMP_TAC[msub_eq] THEN
    MATCH_MP_TAC msub_exn_eq THEN ASM_ARITH_TAC)
 
-### Mupdate_eqn
+### mupdate_eqn
   (REPEAT GEN_TAC THEN COND_CASES_TAC THEN
    ASM_SIMP_TAC[mupdate_eq] THEN
    MATCH_MP_TAC mupdate_exn_eq THEN ASM_ARITH_TAC)

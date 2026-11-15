@@ -13,7 +13,7 @@
 ### globals_rel_trans
   (REWRITE_TAC[globals_rel_def] THEN MESON_TAC[])
 
-### has_Eval_def
+### flat_elimProof_has_Eval_def
   (SUBGOAL_THEN `!es. has_Eval_list es <=> EX has_Eval es` ASSUME_TAC
     THENL
     [LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[has_Eval_def; EX]; ALL_TAC]

@@ -6,10 +6,10 @@
    ASM_REWRITE_TAC[can_pmatch_all_def; ALL] THEN GEN_TAC THEN
    COND_CASES_TAC THEN ASM_REWRITE_TAC[])
 
-### do_app_ffi_unchanged
+### evaluateProps_do_app_ffi_unchanged
   (MESON_TAC[do_app_SOME_ffi_same])
 
-### do_app_io_events_mono
+### evaluateProps_do_app_io_events_mono
   (MESON_TAC[do_app_call_FFI_rel; call_FFI_rel_io_events_mono])
 
 ### evaluate_call_FFI_rel_imp
@@ -21,7 +21,7 @@
 ### evaluate_decs_call_FFI_rel_imp
   (REWRITE_TAC[evaluate_call_FFI_rel_imp])
 
-### evaluate_io_events_mono
+### evaluateProps_evaluate_io_events_mono
   (MESON_TAC[evaluate_call_FFI_rel; call_FFI_rel_io_events_mono])
 
 ### evaluate_nil
@@ -41,7 +41,7 @@
 ### is_clock_io_mono_evaluate_decs
   (REWRITE_TAC[is_clock_io_mono_evaluate])
 
-### Apps_append
+### apps_append
   (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; apps_def])
 
 ### evaluate_match_list_result

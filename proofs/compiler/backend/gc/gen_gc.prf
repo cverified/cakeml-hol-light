@@ -25,29 +25,29 @@
 ### heap_lookup_IMP_MEM
   (MESON_TAC[heap_lookup_MEM])
 
-### heaps_similar_lemma
-  (REWRITE_TAC[heap_similar_Data_IMP_DataOrForward])
+### gen_gc_heaps_similar_lemma#2
+  (ACCEPT_TAC heap_similar_Data_IMP_DataOrForward)
 
-### ADDR_MAP_EQ
-  (REWRITE_TAC[gen_gc_ADDR_MAP_EQ])
+### gen_gc_ADDR_MAP_EQ
+  (ACCEPT_TAC ADDR_MAP_EQ)
 
-### LESS_IMP_heap_lookup
-  (REWRITE_TAC[gen_gc_LESS_IMP_heap_lookup])
+### gen_gc_LESS_IMP_heap_lookup
+  (ACCEPT_TAC LESS_IMP_heap_lookup)
 
-### gc_forward_ptr_ok
-  (MESON_TAC[gen_gc_gc_forward_ptr_ok])
+### gen_gc_gc_forward_ptr_ok
+  (REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC gc_forward_ptr_ok)
 
-### heap_addresses_APPEND
-  (REWRITE_TAC[gen_gc_heap_addresses_APPEND])
+### gen_gc_heap_addresses_APPEND
+  (ACCEPT_TAC heap_addresses_APPEND)
 
-### heap_length_heap_expand
-  (REWRITE_TAC[gen_gc_heap_length_heap_expand])
+### gen_gc_heap_length_heap_expand
+  (ACCEPT_TAC heap_length_heap_expand)
 
 ### heap_lookup_AND_APPEND_IMP
   (MESON_TAC[heap_lookup_EXTEND; option_INJ])
 
-### heap_lookup_EXTEND
-  (REWRITE_TAC[gen_gc_heap_lookup_EXTEND])
+### gen_gc_heap_lookup_EXTEND
+  (ACCEPT_TAC heap_lookup_EXTEND)
 
 ### heap_lookup_LENGTH
   (MESON_TAC[heap_lookup_PREFIX])

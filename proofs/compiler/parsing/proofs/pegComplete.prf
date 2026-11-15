@@ -34,7 +34,7 @@
 ### FST_NOTIN
   (MESON_TAC[PAIR; FST; SND])
 
-### disjImpI
+### pegComplete_disjImpI
   (MESON_TAC[])
 
 ### FLAT_EQ_CONS

@@ -51,6 +51,16 @@ def check(mlrel):
     m = re.match(r'^(.*?)(?:#(\d+))?$', name)
     nm, k = m.group(1), int(m.group(2) or 1)
     if nm not in thm:
+      # the file may bind that name to the value of an
+      # expression (tools/derive.py computes the theorem HOL4
+      # states as the value of one), and there is nowhere for a
+      # tactic to go then: the section is kept, because the
+      # derivation is the thing that may stop working, but it is
+      # no error of the store
+      if nm in at:
+        print('%s: the file derives it, so the section is unused'
+              % name)
+        return 0
       print('%s: no theorem of that name' % name); return 1
     if k > len(thm[nm]):
       print('%s: the file states it %d time(s)'

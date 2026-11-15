@@ -1,4 +1,4 @@
-### EL_MEM_LEMMA
+### clos_known_EL_MEM_LEMMA
   (MESON_TAC[MEM_EL])
 
 ### get_size_sc_SOME
