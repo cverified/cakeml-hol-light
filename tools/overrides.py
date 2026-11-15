@@ -2008,6 +2008,11 @@ CON_OF = {
   ('backendProof', 'to_lab_good_code_lemma'):
     {'compile': {6: 'stack_to_lab', 3: 'word_to_stack',
                  4: 'data_to_word'}},
+  # the Call that a dataSem evaluate reads is dataLang's, where
+  # the one beside it in the same statement is wordLang's
+  ('data_to_wordProof', 'compile_correct_lemma'):
+    {'Call': 'dataLang'},
+  ('data_to_wordProof', 'compile_correct'): {'Call': 'dataLang'},
   # the compile that this one runs on the sections it builds is
   # lab_to_target's; backend has a compile of its own, which
   # takes a program of source and is what the name alone means
@@ -12744,6 +12749,13 @@ CON_FILE = {
   # results that an evaluate of wordSem gives, where wordLang
   # has a Break and a Continue of its own, both programs
   'word_allocProof': {'Break': 'wordSem', 'Continue': 'wordSem'},
+  # the assign of data_to_wordProof is the pass of
+  # data_to_word, of seven arguments; wordSem has an assign
+  # of its own, of three, and the file never writes that one
+  # and its compile_part takes a configuration, so it is
+  # data_to_word's; bvi_to_data's takes the triple alone
+  'data_to_wordProof': {'assign': 'data_to_word',
+                        'compile_part': 'data_to_word'},
   # the dec_clock of this proof is wordSem's, on the state the
   # compiler builds: word_bignumProof has a dec_clock of its own,
   # on its own state, and comes later in the order.  The one
@@ -13320,6 +13332,22 @@ THM_PATCH = {
   ('backendProof', 'add_eval_state_ffi'): [
     ('labSem_state_ffi (add_eval_state opt_ev s0) = labSem_state_ffi s0',
      'semanticPrimitives_state_ffi (add_eval_state opt_ev s0) = semanticPrimitives_state_ffi s0'),
+  ],
+  # the get_var, the set_var, the set_vars and the pop_env on
+  # the dataSem side of a state_rel are dataSem's
+  ('data_to_wordProof', 'state_rel_get_var_RefPtr_Loc'): [
+    ('wordSem_get_var n (dataSem_state_locals s)',
+     'dataSem_get_var n (dataSem_state_locals s)'),
+  ],
+  ('data_to_wordProof', 'data_compile_correct'): [
+    ('(wordSem_set_var i v s1)',
+     '(dataSem_set_var i v s1)'),
+  ],
+  ('data_to_wordProof', 'state_rel_pop_env_set_vars_IMP'): [
+    ('wordSem_pop_env s1 = SOME s2',
+     'dataSem_pop_env s1 = SOME s2'),
+    ('(wordSem_set_vars ns as s2)',
+     '(dataSem_set_vars ns as s2)'),
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
