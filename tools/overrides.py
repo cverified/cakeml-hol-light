@@ -1398,6 +1398,28 @@ INT_ARGS = {
 # every spot that matches is patched.  An entry that matches
 # nowhere in the file is reported in tools/warnings.txt
 FILE_PATCH = {
+  # the state that these read or write is the wordSem one that
+  # the pass reads, not the stackSem one it writes: the two have
+  # a set_var, a get_var and a word_exp each, of the same arity,
+  # and nothing but the state tells them apart
+  'word_to_stackProof': [
+    (r'stackSem_set_var\s+0\s+c1\s*\(\s*stackSem_set_var\s+r\s+c\s+s\s*\)',
+     r'wordSem_set_var 0 c1 (wordSem_set_var r c s)'),
+    (r'\(\s*stackSem_set_var\s+r\s+c\s+s\s*\)',
+     r'(wordSem_set_var r c s)'),
+    (r'stackSem_word_exp\s+\(s:', r'wordSem_word_exp (s:'),
+    (r'stackSem_get_var\s+\(THE\s+\(ALOOKUP\s+moves',
+     r'wordSem_get_var (THE (ALOOKUP moves'),
+    # stackLang's Overload const_inst is a lambda, which the port
+    # expands where it is used and resolves in the scope of the
+    # file that uses it: the Inst of it is stackLang's, which this
+    # file (about wordLang and stackLang both) does not say
+    (r'(\(\\r w\.\s+)word_Inst(\s+\(asm_Const r w\)\))',
+     r'\1stack_Inst\2'),
+    # and the clock that this writes is the one of a stackSem
+    # state, which the bare t does not say
+    (r'\bstate_clock_fupd\b', r'stackSem_state_clock_fupd'),
+  ],
   # the get_var of dataSem takes the locals and the one of wordSem
   # takes the state, so a get_var of the locals of a dataSem state
   # is dataSem's wherever these two files write one (the arity of
@@ -2439,7 +2461,8 @@ CON_OF = {
   # Error of it are wordSem's too
   ('word_to_stackProof', 'alloc_alt'):
     {'alloc': 'wordSem', 'set_store': 'wordSem',
-     'push_env': 'wordSem', 'gc': 'wordSem', 'Error': 'wordSem'},
+     'push_env': 'wordSem', 'gc': 'wordSem', 'Error': 'wordSem',
+     'has_space': 'wordSem'},
   # the enc_stack of stackSem takes the bitmaps and the stack,
   # the one of wordSem takes the stack frames: the number of
   # arguments tells the two apart
@@ -2537,6 +2560,18 @@ CON_OF = {
   # and the clock this takes down is the one of a dataSem state
   ('data_to_word_assignProof', 'dec_clock_tstamps'):
     {'dec_clock': 'dataSem'},
+  # the res of these is what the wordSem evaluate of a ShareInst
+  # gives back
+  ('word_to_stackProof', 'evaluate_ShareInst_Load'):
+    {'FinalFFI': 'wordSem'},
+  ('word_to_stackProof', 'evaluate_ShareInst_Store'):
+    {'FinalFFI': 'wordSem'},
+  ('word_to_stackProof', 'evaluate_ShareInst_correct_lemma'):
+    {'FinalFFI': 'wordSem'},
+  # and the res of this one is the result of a stackSem evaluate,
+  # where the theorem beside it is about a wordSem one
+  ('word_to_stackProof', 'stack_Call_NONE_not_Break_Continue'):
+    {'Break': 'stackSem', 'Continue': 'stackSem'},
   # the values that this checks the type of are the ones that
   # flat_to_v gives, which are semanticPrimitives'
   ('flatProps', 'check_type_LIST_REL_same'):
