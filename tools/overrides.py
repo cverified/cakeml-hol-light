@@ -2014,6 +2014,25 @@ CON_OF = {
      'chr_exn_v': 'semanticPrimitives'},
   ('source_to_flatProof', 'do_conversion_INR'):
     {'check_type': 'semanticPrimitives'},
+  # bvl_to_bviProof reads bvl and builds bvi, and the two have
+  # Var, Op and Call: a Call of three arguments is bvl's and one
+  # of four is bvi's, and everything these say is about the one
+  # language or the other
+  ('bvl_to_bviProof', 'compile_exps_Var_list'): {'Var': 'bvi'},
+  ('bvl_to_bviProof', 'eval_ind_alt'): {'Var': 'bvi'},
+  ('bvl_to_bviProof', 'rewrite_catchall_no_mutcons'):
+    {'Var': 'bvi'},
+  ('bvl_to_bviProof', 'evaluate_REPLICATE_0'): {'Op': 'bvi'},
+  ('bvl_to_bviProof', 'bvi_stubs_evaluate'): {'Call': 'bvi'},
+  ('bvl_to_bviProof', 'compile_single_evaluate'):
+    {'Call': {3: 'bvl', 4: 'bvi'}},
+  ('bvl_to_bviProof', 'compile_prog_evaluate'):
+    {'Call': {3: 'bvl', 4: 'bvi'}},
+  # and the refs of a bviSem state hold the ByteArray of bvlSem
+  ('bvl_to_bviProof', 'evaluate_SumListLength_code'):
+    {'ByteArray': 'bvlSem'},
+  ('bvl_to_bviProof', 'evaluate_ConcatByte_code'):
+    {'ByteArray': 'bvlSem'},
   # result_view matches on the result of stackSem, so its TimeOut
   # is stackSem's; targetSem has a TimeOut of its own and the
   # machinery of the port reaches for that one
@@ -13176,6 +13195,16 @@ THM_PATCH = {
   ('source_to_flatProof', 'do_test_lemma'): [
     ('flatSem_do_test test ty v1 v2',
      'semanticPrimitives_do_test test ty v1 v2'),
+  ],
+  # the first evaluate of these two is bvlSem's, on the program
+  # the pass reads, and the second bviSem's
+  ('bvl_to_bviProof', 'compile_single_evaluate'): [
+    ('bviSem_evaluate ([bvl_Call 0 (SOME start) []],[],s1)',
+     'bvlSem_evaluate ([bvl_Call 0 (SOME start) []],[],s1)'),
+  ],
+  ('bvl_to_bviProof', 'compile_prog_evaluate'): [
+    ('bviSem_evaluate ([bvl_Call 0 (SOME start) []],[],',
+     'bvlSem_evaluate ([bvl_Call 0 (SOME start) []],[],'),
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
