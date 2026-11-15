@@ -2248,6 +2248,18 @@ CON_OF = {
   # the source states evaluate_SeqStackFree twice, and both are
   # about a program of stackLang
   ('word_to_stackProof', 'evaluate_SeqStackFree'): STACKLANG_PROG,
+  # and the Skip and the Seq that these load and store round are
+  # stackLang's
+  ('word_to_stackProof', 'evaluate_wStackLoad_wReg1'):
+    {'Skip': 'stackLang'},
+  ('word_to_stackProof', 'evaluate_wStackLoad_wReg1_with_const'):
+    {'Skip': 'stackLang'},
+  ('word_to_stackProof', 'evaluate_wStackLoad_wReg2'):
+    {'Skip': 'stackLang'},
+  ('word_to_stackProof', 'evaluate_wStackStore_wReg1_new'):
+    STACKLANG_PROG,
+  ('word_to_stackProof', 'evaluate_wStackStore_wReg2_new'):
+    STACKLANG_PROG,
   # and these are about the state of wordSem that the compiler
   # reads: its word_exp, its gc, its pop_env, its dec_stack and
   # its stack frames
@@ -12699,6 +12711,50 @@ THM_PATCH = {
      '(op = asm_Store \\/ op = asm_Store8'),
     ('~(res = SOME stackSem_Error)',
      '~(res = SOME wordSem_Error)'),
+  ],
+  ('word_to_stackProof', 'wMoveSingle_thm'): [
+    ('stackSem_get_var (x * 2) s = SOME v',
+     'wordSem_get_var (x * 2) s = SOME v'),
+    ('stackSem_set_var (y * 2) v s', 'wordSem_set_var (y * 2) v s'),
+  ],
+  ('word_to_stackProof', 'evaluate_wMoveAux_seqsem'): [
+    ('stackSem_get_var (2 * i) s = SOME v',
+     'wordSem_get_var (2 * i) s = SOME v'),
+    ('IS_SOME (stackSem_get_vars (MAP ((*) 2 o THE)',
+     'IS_SOME (wordSem_get_vars (MAP ((*) 2 o THE)'),
+  ],
+  ('word_to_stackProof', 'evaluate_wStackLoad_wReg1'): [
+    ("stackSem_get_var r (s:('a,num#'c,'ffi)wordSem_state)",
+     "wordSem_get_var r (s:('a,num#'c,'ffi)wordSem_state)"),
+  ],
+  ('word_to_stackProof', 'evaluate_wStackLoad_wReg2'): [
+    ("stackSem_get_var r (s:('a,num#'c,'ffi)wordSem_state)",
+     "wordSem_get_var r (s:('a,num#'c,'ffi)wordSem_state)"),
+  ],
+  ('word_to_stackProof', 'evaluate_wStackStore_wReg1_new'): [
+    ('(stackSem_set_var r c s)', '(wordSem_set_var r c s)'),
+  ],
+  ('word_to_stackProof', 'evaluate_wStackStore_wReg2_new'): [
+    ('(stackSem_set_var r c s)', '(wordSem_set_var r c s)'),
+  ],
+  # the first extract_labels of these two is on the programs of
+  # wordLang that the pass is given and the second on the ones
+  # of stackLang it gives back
+  ('word_to_stackProof', 'word_to_stack_compile_lab_pres'): [
+    ('let labs = stackProps_extract_labels p in',
+     'let labs = wordConvs_extract_labels p in'),
+  ],
+  ('word_to_stackProof', 'compile_word_to_stack_lab_pres'): [
+    ('ALL (\\(l,m,e). ALL (\\(l1,l2). (l1 = l) /\\ (~(l2 = 0))'
+     ' /\\ (~(l2 = 1))) (stackProps_extract_labels e)'
+     ' /\\ ALL_DISTINCT (stackProps_extract_labels e)) p',
+     'ALL (\\(l,m,e). ALL (\\(l1,l2). (l1 = l) /\\ (~(l2 = 0))'
+     ' /\\ (~(l2 = 1))) (wordConvs_extract_labels e)'
+     ' /\\ ALL_DISTINCT (wordConvs_extract_labels e)) p'),
+  ],
+  ('word_to_stackProof', 'compile_word_to_stack_code_labels'): [
+    ('(stackProps_get_code_labels pp)',
+     '(wordConvs_get_code_labels pp)'),
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
