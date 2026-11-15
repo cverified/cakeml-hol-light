@@ -31,7 +31,7 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_bignum.ml";;
 needs "compiler/backend/word_depth.ml";;
 needs "lib/alignment.ml";;
-needs "lib/location.ml";;
+needs "lib/byte.ml";;
 needs "lib/mc_multiword.ml";;
 needs "lib/multiword.ml";;
 needs "lib/pegexec.ml";;
@@ -40,7 +40,6 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
-needs "semantics/typeSystem.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "data_to_word_bignumProof"
@@ -82,14 +81,14 @@ let word_list_IMP_store_list = prove
 
 let word_exp_set_var_ShiftVar_lemma = prove
  (`wordSem_word_exp t (ShiftVar sow v n) =
-    (match sptree_lookup v (dataSem_state_locals t) with SOME (word_Word w)
+    match sptree_lookup v (wordSem_state_locals t) with SOME (word_Word w)
       ->
         OPTION_MAP word_Word
           (match sow with Lsl -> SOME (w << n)
                      | Lsr -> SOME (w >>> n)
                      | Asr -> SOME (w >> n)
                      | Ror -> SOME (word_ror w n))
-    | _ -> FAIL (wordSem_word_exp t (ShiftVar sow v n)) "lookup failed")`,
+    | _ -> FAIL (wordSem_word_exp t (ShiftVar sow v n)) "lookup failed"`,
   CHEAT_TAC);;
 
 let i2mw_small_int_IMP_0 = prove
@@ -186,11 +185,71 @@ let b2n_not = prove
  (`(if c then 0 else 1) = b2n (~c)`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_bignumProofScript.sml:254-363: a theorem whose
-   statement HOL Light does not read (tools/unstated.py): LongDiv1_thm' *)
+let LongDiv1_thm' = prove
+ (`!k n1 n2 m i1 i2 (t2:('a,'c,'ffi)wordSem_state)
+        r1 r2 m1 is1 (c:data_to_word_config).
+      single_div_loop (n2w k,[n1; n2],m,[i1; i2]) = (m1,is1) /\
+      sptree_lookup LongDiv1_location (wordSem_state_code t2) = SOME
+        (7,LongDiv1_code c) /\
+      sptree_lookup 0 (wordSem_state_locals t2) = SOME (word_Loc r1 r2) /\
+      sptree_lookup 2 (wordSem_state_locals t2) = SOME (word_Word (n2w k))
+        /\
+      sptree_lookup 4 (wordSem_state_locals t2) = SOME (word_Word n2) /\
+      sptree_lookup 6 (wordSem_state_locals t2) = SOME (word_Word n1) /\
+      sptree_lookup 8 (wordSem_state_locals t2) = SOME (word_Word m) /\
+      sptree_lookup 10 (wordSem_state_locals t2) = SOME (word_Word i1) /\
+      sptree_lookup 12 (wordSem_state_locals t2) = SOME (word_Word i2) /\
+      k < dimword (:'a) /\ k < wordSem_state_clock t2 /\ good_dimindex (:'a)
+        /\ ~(data_to_word_config_has_longdiv c) ==>
+      (?j1 j2 max'.
+        is1 = [j1; j2] /\
+        wordSem_evaluate (LongDiv1_code c,t2) = (SOME (wordSem_Result
+          (word_Loc r1 r2) [word_Word m1]),wordSem_state_store_fupd (K
+          (wordSem_state_store t2 |+ (Temp (n2w 28),word_Word (HD is1))))
+          (wordSem_state_stack_max_fupd (K max')
+          (wordSem_state_locals_size_fupd (K (SOME 0))
+          (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd (K
+          (wordSem_state_clock t2 - k))
+          t2))))) /\
+       (max' = wordSem_state_stack_max t2 \/ max' = OPTION_MAP2 MAX
+         (wordSem_state_stack_max t2)
+          (OPTION_MAP2 (+) (stack_size (wordSem_state_stack t2))
+             (sptree_lookup LongDiv1_location (wordSem_state_stack_size
+               t2)))))`,
+  CHEAT_TAC);;
 
-(* HOL4 data_to_word_bignumProofScript.sml:365-478: a theorem whose
-   statement HOL Light does not read (tools/unstated.py): LongDiv1_thm *)
+let LongDiv1_thm = prove
+ (`!k n1 n2 m i1 i2 (t2:('a,'c,'ffi)wordSem_state)
+        r1 r2 m1 is1 (c:data_to_word_config).
+      single_div_loop (n2w k,[n1; n2],m,[i1; i2]) = (m1,is1) /\
+      sptree_lookup LongDiv1_location (wordSem_state_code t2) = SOME
+        (7,LongDiv1_code c) /\
+      sptree_lookup 0 (wordSem_state_locals t2) = SOME (word_Loc r1 r2) /\
+      sptree_lookup 2 (wordSem_state_locals t2) = SOME (word_Word (n2w k))
+        /\
+      sptree_lookup 4 (wordSem_state_locals t2) = SOME (word_Word n2) /\
+      sptree_lookup 6 (wordSem_state_locals t2) = SOME (word_Word n1) /\
+      sptree_lookup 8 (wordSem_state_locals t2) = SOME (word_Word m) /\
+      sptree_lookup 10 (wordSem_state_locals t2) = SOME (word_Word i1) /\
+      sptree_lookup 12 (wordSem_state_locals t2) = SOME (word_Word i2) /\
+      k < dimword (:'a) /\ k < wordSem_state_clock t2 /\ good_dimindex (:'a)
+        /\ ~(data_to_word_config_has_longdiv c) ==>
+      (?j1 j2 max'.
+        is1 = [j1; j2] /\
+        wordSem_evaluate (LongDiv1_code c,t2) = (SOME (wordSem_Result
+          (word_Loc r1 r2) [word_Word m1]),wordSem_state_store_fupd (K
+          (wordSem_state_store t2 |+ (Temp (n2w 28),word_Word (HD is1))))
+          (wordSem_state_stack_max_fupd (K max')
+          (wordSem_state_locals_size_fupd (K (SOME 0))
+          (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd (K
+          (wordSem_state_clock t2 - k))
+          t2))))) /\
+      (option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack t2))
+        (wordSem_state_locals_size t2)) (wordSem_state_stack_max t2)
+        /\ wordSem_state_locals_size
+           t2 = sptree_lookup LongDiv1_location (wordSem_state_stack_size
+             t2) ==> max' = wordSem_state_stack_max t2))`,
+  CHEAT_TAC);;
 
 (* [local] *)
 let lt_dimindex_MOD_dimword = prove
@@ -220,12 +279,44 @@ let memory_rel_lookup = prove
          l1)))) xs))`),
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_bignumProofScript.sml:516-577: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   evaluate_AddNumSize *)
+let evaluate_AddNumSize = prove
+ (`!src c l1 l2 s t locs i w.
+      data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state)
+        NONE locs /\
+      dataSem_get_var src (dataSem_state_locals s) = SOME (dataSem_Number i)
+        ==>
+      wordSem_evaluate (AddNumSize c src,wordSem_set_var 1 (word_Word w) t)
+        =
+        (NONE,wordSem_set_var 1 (word_Word (w +
+           n2w (4 * LENGTH ((SND (i2mw i):('a word) list))))) t)`,
+  CHEAT_TAC);;
 
-(* HOL4 data_to_word_bignumProofScript.sml:579-731: a theorem whose
-   statement HOL Light does not read (tools/unstated.py): AnyHeader_thm *)
+let AnyHeader_thm = prove
+ (`!t1 t2 t3 r.
+      data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state)
+        NONE locs /\
+      dataSem_get_var r (dataSem_state_locals s) = SOME (dataSem_Number i)
+        /\
+      ALL_DISTINCT [t1; t2; t3] ==>
+      (?a2 a3 temp.
+        wordSem_evaluate (AnyHeader c (adjust_var r) a t1 t2 t3,t) =
+          (NONE,(wordSem_set_store (Temp t1) (word_Word (mc_header (i2mw
+            i)))
+                 (wordSem_set_store (Temp t2) (word_Word a2)
+                 (wordSem_set_store (Temp t3) (word_Word a3)
+                   (wordSem_set_var 7 temp t))))) /\
+        (i = (&0:int) ==>
+           small_int (:'a) (&0:int) /\ i2mw i = (F,[]) /\
+           a2 = (n2w 0) /\ a3 = (n2w 0)) /\
+        (small_int (:'a) i /\ ~(i = (&0)) ==>
+           i2mw i = ((i < (&0)),[a3]) /\
+           FLOOKUP (wordSem_state_store t) (if a then OtherHeap else
+             NextFree) = SOME (word_Word a2)) /\
+        (~(small_int (:'a) i) ==>
+           (?w x. wordSem_get_var (adjust_var r) t = SOME (word_Word w) /\
+                 get_real_addr c (wordSem_state_store t) w = SOME x /\
+                 a2 = x + bytes_in_word)))`,
+  CHEAT_TAC);;
 
 let state_rel_set_store_Temp = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s (wordSem_set_store (Temp tmp) w t)
@@ -236,7 +327,7 @@ let state_rel_set_store_Temp = prove
 let state_rel_IMP_num_size_limit = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
   locs /\
-    wordSem_get_var k (state_locals s) = SOME (dataSem_Number i) ==>
+    dataSem_get_var k (dataSem_state_locals s) = SOME (dataSem_Number i) ==>
     LENGTH (SND (i2mw i):('a word) list) < dimword (:'a) DIV 16`,
   CHEAT_TAC);;
 
@@ -271,13 +362,57 @@ let IMP_LESS_MustTerminate_limit = prove
   CHEAT_TAC);;
 add_simp IMP_LESS_MustTerminate_limit;;
 
-(* HOL4 data_to_word_bignumProofScript.sml:814-863: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   evaluate_LongDiv_code' *)
+let evaluate_LongDiv_code' = prove
+ (`!(t:('a,'c,'ffi)wordSem_state) l1 l2 c w x1 x2 y d1 m1.
+      single_div_pre x1 x2 y /\
+      single_div x1 x2 y = (d1,(m1:'a word)) /\
+      sptree_lookup LongDiv1_location (wordSem_state_code t) = SOME
+        (7,LongDiv1_code c) /\
+      sptree_lookup 0 (wordSem_state_locals t) = SOME (word_Loc l1 l2) /\
+      sptree_lookup 2 (wordSem_state_locals t) = SOME (word_Word x1) /\
+      sptree_lookup 4 (wordSem_state_locals t) = SOME (word_Word x2) /\
+      sptree_lookup 6 (wordSem_state_locals t) = SOME (word_Word y) /\
+      dimword (:'a) < wordSem_state_clock t /\ good_dimindex (:'a) ==>
+      (?ck max'.
+        wordSem_evaluate (LongDiv_code c,t) =
+          (SOME (wordSem_Result (word_Loc l1 l2) [word_Word
+            d1]),wordSem_state_stack_max_fupd (K max')
+            (wordSem_state_store_fupd (K (wordSem_state_store t |+ (Temp (n2w
+            28),word_Word m1))) (wordSem_state_locals_size_fupd (K (SOME 0))
+            (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd (K ck)
+           t))))) /\
+     (max' = wordSem_state_stack_max t \/ max' = OPTION_MAP2 MAX
+       (wordSem_state_stack_max t)
+          (OPTION_MAP2 (+) (stack_size (wordSem_state_stack t))
+             (sptree_lookup LongDiv1_location (wordSem_state_stack_size
+               t)))))`,
+  CHEAT_TAC);;
 
-(* HOL4 data_to_word_bignumProofScript.sml:865-915: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   evaluate_LongDiv_code *)
+let evaluate_LongDiv_code = prove
+ (`!(t:('a,'c,'ffi)wordSem_state) l1 l2 c w x1 x2 y d1 m1.
+      single_div_pre x1 x2 y /\
+      single_div x1 x2 y = (d1,(m1:'a word)) /\
+      sptree_lookup LongDiv1_location (wordSem_state_code t) = SOME
+        (7,LongDiv1_code c) /\
+      sptree_lookup 0 (wordSem_state_locals t) = SOME (word_Loc l1 l2) /\
+      sptree_lookup 2 (wordSem_state_locals t) = SOME (word_Word x1) /\
+      sptree_lookup 4 (wordSem_state_locals t) = SOME (word_Word x2) /\
+      sptree_lookup 6 (wordSem_state_locals t) = SOME (word_Word y) /\
+      dimword (:'a) < wordSem_state_clock t /\ good_dimindex (:'a) ==>
+      (?ck max'.
+        wordSem_evaluate (LongDiv_code c,t) =
+          (SOME (wordSem_Result (word_Loc l1 l2) [word_Word
+            d1]),wordSem_state_stack_max_fupd (K max')
+            (wordSem_state_store_fupd (K (wordSem_state_store t |+ (Temp (n2w
+            28),word_Word m1))) (wordSem_state_locals_size_fupd (K (SOME 0))
+            (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd (K ck)
+           t))))) /\
+      (option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack t))
+        (wordSem_state_locals_size t)) (wordSem_state_stack_max t)
+        /\ wordSem_state_locals_size
+       t = sptree_lookup LongDiv1_location (wordSem_state_stack_size t)
+         ==> max' = wordSem_state_stack_max t))`,
+  CHEAT_TAC);;
 
 let div_code_assum_thm = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
@@ -305,8 +440,8 @@ let arith_location_def = new_definition
        Div_location else if index = 6 then Mod_location else ARB`;;
 
 let push_env_code = prove
- (`state_code
-      (wordSem_push_env y NONE t) = state_code t`,
+ (`wordSem_state_code
+      (wordSem_push_env y NONE t) = wordSem_state_code t`,
   CHEAT_TAC);;
 
 let arith_code_def = new_definition
@@ -321,12 +456,64 @@ let lookup_Arith_location = prove
       (3,Arith_code index)`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_bignumProofScript.sml:1010-1055: a theorem whose
-   statement HOL Light does not read (tools/unstated.py): Replicate_code_thm *)
+(* Replicate_code_thm *)
+let replicate_code_thm = prove
+ (`!n a r m1 a1 a2 a3 a4 a5.
+      sptree_lookup Replicate_location (wordSem_state_code r) = SOME
+        (5,Replicate_code) /\
+      data_to_word_memoryProof_store_list (a + bytes_in_word) (REPLICATE n
+        v) (wordSem_state_memory
+        (r:('a,'c,'ffi)wordSem_state)) (wordSem_state_mdomain r) = SOME m1
+          /\
+      wordSem_get_var a1 r = SOME (word_Loc l1 l2) /\
+      wordSem_get_var a2 r = SOME (word_Word a) /\
+      wordSem_get_var a3 r = SOME v /\
+      wordSem_get_var a4 r = SOME (word_Word (n2w (4 * n))) /\
+      wordSem_get_var a5 (r:('a,'c,'ffi)wordSem_state) = SOME ret_val /\
+      4 * n < dimword (:'a) /\
+      n < wordSem_state_clock r ==>
+      (?m.
+        wordSem_evaluate (word_Call NONE (SOME Replicate_location) [a1; a2;
+          a3; a4; a5] NONE,r) =
+          (SOME (wordSem_Result (word_Loc l1 l2)
+            [ret_val]),wordSem_state_stack_max_fupd (K m)
+            (wordSem_state_locals_size_fupd (K (SOME 0))
+            (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd (K
+            (wordSem_state_clock r - n - 1)) (wordSem_state_memory_fupd (K m1)
+           r))))) /\
+        option_le m
+          (OPTION_MAP2 MAX (wordSem_state_stack_max r)
+             (OPTION_MAP2 (+) (stack_size (wordSem_state_stack r))
+                (sptree_lookup Replicate_location
+                  (wordSem_state_stack_size r)))))`,
+  CHEAT_TAC);;
 
-(* HOL4 data_to_word_bignumProofScript.sml:1057-1130: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   Replicate_code_alt_thm *)
+(* Replicate_code_alt_thm *)
+let replicate_code_alt_thm = prove
+ (`!n a r m1 a1 a2 a3 a4 a5 var.
+      sptree_lookup Replicate_location (wordSem_state_code r) = SOME
+        (5,Replicate_code) /\
+      data_to_word_memoryProof_store_list (a + bytes_in_word) (REPLICATE n
+        v) (wordSem_state_memory
+        (r:('a,'c,'ffi)wordSem_state)) (wordSem_state_mdomain r) = SOME m1
+          /\
+      wordSem_get_var a2 r = SOME (word_Word a) /\
+      wordSem_get_var a3 r = SOME v /\
+      wordSem_get_var a4 r = SOME (word_Word (n2w (4 * n))) /\
+      wordSem_get_var 0 (r:('a,'c,'ffi)wordSem_state) = SOME ret_val /\
+      4 * n < dimword (:'a) /\
+      n < wordSem_state_clock r ==>
+      (?max'.
+        wordSem_evaluate (word_Call (SOME ([0],(sptree_fromList
+          [one],LN),word_Skip,l1,l2))
+                    (SOME Replicate_location) [a2; a3; a4; 0] NONE,r) =
+        (NONE,wordSem_state_permute_fupd (K (\n. wordSem_state_permute r (n
+          + 1))) (wordSem_state_stack_max_fupd (K max')
+          (wordSem_state_locals_fupd (K (sptree_insert 0 ret_val LN))
+          (wordSem_state_clock_fupd (K (wordSem_state_clock r - n - 1))
+          (wordSem_state_memory_fupd (K m1)
+         r))))))`,
+  CHEAT_TAC);;
 
 let bignum_digits_LENGTH_n2mw = prove
  (`good_dimindex (:'a) ==>
@@ -341,8 +528,40 @@ let bignum_digits_LENGTH_n2mw = prove
 
 (* HOL4 data_to_word_bignumProofScript.sml:1149-1152: ML code, not ported *)
 
-(* HOL4 data_to_word_bignumProofScript.sml:1154-2126: a theorem whose
-   statement HOL Light does not read (tools/unstated.py): AnyArith_thm *)
+let AnyArith_thm = prove
+ (`!op_index i j v t s r2 r1 locs l2 l1 c.
+     data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
+       (t:('a,'c,'ffi)wordSem_state) NONE locs /\
+     dataSem_get_vars [0; 1; 2] (dataSem_state_locals s) = SOME
+       [dataSem_Number i; dataSem_Number j; dataSem_Number (&op_index)]
+       /\ wordSem_state_clock
+     t = MustTerminate_limit (:'a) - 2 /\ ~(wordSem_state_termdep t = 0) /\
+     sptree_lookup 6 (wordSem_state_locals t) = SOME (word_Word (n2w (4 *
+       op_index))) /\
+     data_to_word_bignumProof_int_op op_index i j = SOME v ==>
+     (?q r new_c.
+       wordSem_evaluate (AnyArith_code c,t) = (q,r) /\
+       (if q = SOME wordSem_NotEnoughSpace then wordSem_state_ffi
+         r = wordSem_state_ffi t /\
+         (~(data_to_word_config_gc_kind c = data_to_word_None)
+           /\ no_thunks_in_refs (dataSem_state_refs s) ==>
+            (let il = bignum_size (limits_arch_64_bit (dataSem_state_limits
+              s)) i in
+            let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits
+              s)) j in
+              il + jl <= 2 EXP data_to_word_config_len_size c ==>
+                limits_heap_limit (dataSem_state_limits
+              s) <
+              il + jl + size_of_heap (cut_locals (sptree_fromList [one; one;
+                one]) s)))
+       else ?rv. q = SOME (wordSem_Result (word_Loc l1 l2) [rv]) /\
+              data_to_word_gcProof_state_rel c r1 r2
+                (dataSem_state_stack_max_fupd (K NONE)
+                  (dataSem_state_space_fupd (K 0) (dataSem_state_clock_fupd (K
+                  new_c) (dataSem_state_locals_size_fupd (K (SOME 0))
+                  (dataSem_state_locals_fupd (K LN) s))))) r
+                (SOME [(dataSem_Number v,rv)]) locs))`,
+  CHEAT_TAC);;
 
 (* HOL4 data_to_word_bignumProofScript.sml:2128: ML code, not ported *)
 
@@ -372,9 +591,45 @@ let size_of_heap_LE_args = prove
  (`!vs s. size_of_heap s <= size_of_heap_args vs s`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_bignumProofScript.sml:2181-2419: a theorem whose
-   statement HOL Light does not read (tools/unstated.py):
-   eval_Call_Arith_max_stack_NONE *)
+let eval_Call_Arith_max_stack_NONE = prove
+ (`!index r.
+      data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
+        (t:('a,'c,'ffi)wordSem_state) NONE locs /\ ~(names_opt = NONE) /\ 1 <
+        wordSem_state_termdep t /\
+      dataSem_get_vars [a1; a2] (dataSem_state_locals s) = SOME
+        [dataSem_Number i1; dataSem_Number i2] /\
+      wordSem_cut_state_opt names_opt s = SOME x /\
+      data_to_word_bignumProof_int_op index i1 i2 = SOME r ==>
+      (?q r'.
+        (\(res,s1).
+           if res = NONE then
+             wordSem_evaluate (data_to_word_list_Seq [word_Move 2
+               [(adjust_var dest,1)]],s1)
+           else (res,s1))
+          (wordSem_evaluate
+            (word_MustTerminate
+              (word_Call (SOME ([1],adjust_sets (data_to_word_get_names
+                names_opt),word_Skip,n,l))
+                (SOME (Arith_location index))
+                [adjust_var a1; adjust_var a2] NONE),t)) = (q,r') /\
+        (q = SOME wordSem_NotEnoughSpace ==> wordSem_state_ffi
+         r' = dataSem_state_ffi s /\
+         (~(data_to_word_config_gc_kind c = data_to_word_None)
+           /\ no_thunks_in_refs (dataSem_state_refs s) ==>
+            (let il = bignum_size (limits_arch_64_bit (dataSem_state_limits
+              s)) i1 in
+            let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits
+              s)) i2 in
+              il + jl <= 2 EXP data_to_word_config_len_size c ==>
+                limits_heap_limit (dataSem_state_limits
+              s) < 2 * il + 2 * jl + size_of_heap x))) /\
+        (~(q = SOME wordSem_NotEnoughSpace) ==>
+         data_to_word_gcProof_state_rel c l1 l2
+           (dataSem_state_stack_max_fupd (K NONE) (dataSem_state_space_fupd
+             (K 0) (dataSem_state_locals_fupd (K (sptree_insert dest
+             (dataSem_Number r) (dataSem_state_locals x))) x)))
+           r' NONE locs /\ q = NONE))`,
+  CHEAT_TAC);;
 
 let EVERY_IMP_ALOOKUP = prove
  (`!xs P. ALL P xs ==> (!x y. ALOOKUP xs x = SOME y ==> P (x,y))`,
@@ -390,8 +645,55 @@ let evaluate_Assign_Const =
   SIMP_CONV [wordSem_evaluate_def; word_exp_def; wordSem_set_var_def]
   `wordSem_evaluate (word_bignum_Assign n (word_Const w),s)`;;
 
-(* HOL4 data_to_word_bignumProofScript.sml:2455-2583: a theorem whose
-   statement HOL Light does not read (tools/unstated.py): eval_Call_Arith *)
+let eval_Call_Arith = prove
+ (`!index r.
+      data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
+        (t:('a,'c,'ffi)wordSem_state) NONE locs /\ ~(names_opt = NONE) /\ 1 <
+        wordSem_state_termdep t /\
+      dataSem_get_vars [a1; a2] (dataSem_state_locals s) = SOME
+        [dataSem_Number i1; dataSem_Number i2] /\
+      wordSem_cut_state_opt names_opt s = SOME x /\
+      data_to_word_bignumProof_int_op index i1 i2 = SOME r ==>
+      (?q r'.
+        (\(res,s1).
+           if res = NONE then
+             wordSem_evaluate (data_to_word_list_Seq [word_Move 2
+               [(adjust_var dest,1)]],s1)
+           else (res,s1))
+          (wordSem_evaluate
+            (word_MustTerminate
+              (word_Call (SOME ([1],adjust_sets (data_to_word_get_names
+                names_opt),word_Skip,n,l))
+                (SOME (Arith_location index))
+                [adjust_var a1; adjust_var a2] NONE),t)) = (q,r') /\
+        (let max' = OPTION_MAP2 MAX (dataSem_state_stack_max s)
+                (OPTION_MAP2 (+) (stack_size (wordSem_state_stack t))
+                  (OPTION_MAP2 (+) (wordSem_state_locals_size t)
+                    (OPTION_MAP2 MAX (sptree_lookup (Arith_location index)
+                      (wordSem_state_stack_size t))
+                              (max_depth (wordSem_state_stack_size t)
+                                AnyArith_call_tree)))) in
+        option_le (wordSem_state_stack_max r') max' /\
+        (q = SOME wordSem_NotEnoughSpace ==> wordSem_state_ffi
+         r' = dataSem_state_ffi s /\
+         (~(data_to_word_config_gc_kind c = data_to_word_None)
+           /\ no_thunks_in_refs (dataSem_state_refs s) ==>
+            (let il = bignum_size (limits_arch_64_bit (dataSem_state_limits
+              s)) i1 in
+            let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits
+              s)) i2 in
+              il + jl <= 2 EXP data_to_word_config_len_size c ==>
+                limits_heap_limit (dataSem_state_limits
+              s) <
+                2 * il + 2 * jl + size_of_heap_args [dataSem_Number i1;
+                  dataSem_Number i2] x))) /\
+        (~(q = SOME wordSem_NotEnoughSpace) ==>
+         data_to_word_gcProof_state_rel c l1 l2
+           (dataSem_state_stack_max_fupd (K max') (dataSem_state_space_fupd
+             (K 0) (dataSem_state_locals_fupd (K (sptree_insert dest
+             (dataSem_Number r) (dataSem_state_locals x))) x)))
+           r' NONE locs /\ q = NONE)))`,
+  CHEAT_TAC);;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

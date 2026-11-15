@@ -24,6 +24,7 @@ needs "compiler/backend/proofs/data_to_word_gcProof.ml";;
 needs "compiler/backend/proofs/data_to_word_memoryProof.ml";;
 needs "compiler/backend/proofs/wordConvsProof.ml";;
 needs "compiler/backend/proofs/word_bignumProof.ml";;
+needs "compiler/backend/proofs/word_gcFunctions.ml";;
 needs "compiler/backend/proofs/word_to_wordProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/dataProps.ml";;
@@ -42,6 +43,7 @@ needs "lib/sptree.ml";;
 needs "lib/term.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
@@ -140,7 +142,7 @@ let v_inv_Loc = prove
 (* [local] *)
 let state_rel_get_var_RefPtr_Loc = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s t v1 locs /\
-   wordSem_get_var n (state_locals s) = SOME (dataSem_RefPtr b p) /\
+   wordSem_get_var n (dataSem_state_locals s) = SOME (dataSem_RefPtr b p) /\
    wordSem_get_var (adjust_var n) t = SOME (word_Loc n1 n2) ==>
      n2 = 0`,
   CHEAT_TAC);;
@@ -185,9 +187,10 @@ let data_compile_correct = prove
       (?t1 res1.
         (wordSem_evaluate (FST (data_to_word_comp c n l prog),t) =
           (res1,t1)) /\
-         option_le (state_stack_max t1) (dataSem_state_stack_max s1) /\
+         option_le (wordSem_state_stack_max t1) (dataSem_state_stack_max s1)
+           /\
         (res1 = SOME wordSem_NotEnoughSpace ==> ffi_state_io_events
-          (state_ffi
+          (wordSem_state_ffi
            t1) <<= ffi_state_io_events (dataSem_state_ffi s1) /\
            (~(data_to_word_config_gc_kind c = data_to_word_None) ==>
              ~(dataSem_state_safe_for_space s1))) /\
@@ -199,8 +202,8 @@ let data_compile_correct = prove
                   data_to_word_gcProof_state_rel c l1 l2 s1 t1 (SOME (ZIP v
                     ws)) locs /\
                   (res1 = SOME (wordSem_Result (word_Loc l1 l2) ws)))
-         | SOME (Rerr (Rraise v)) -> (state_ffi t1 = dataSem_state_ffi s1)
-           /\
+         | SOME (Rerr (Rraise v)) -> (wordSem_state_ffi t1 =
+           dataSem_state_ffi s1) /\
              (?w l5 l6 ll.
                (res1 = SOME (wordSem_Exception (mk_loc (wordSem_jump_exc t))
                  w)) /\
@@ -211,9 +214,9 @@ let data_compile_correct = prove
                   i v s1)
                        (wordSem_set_var (adjust_var i) w t1) NONE ll)))
          | SOME (Rerr (Rabort (Rffi_error f))) -> (res1 = SOME
-           (wordSem_FinalFFI f) /\ state_ffi t1 = dataSem_state_ffi s1)
+           (wordSem_FinalFFI f) /\ wordSem_state_ffi t1 = dataSem_state_ffi s1)
          | SOME (Rerr (Rabort e)) -> (res1 = SOME targetSem_TimeOut)
-           /\ state_ffi t1 = dataSem_state_ffi s1)))`,
+           /\ wordSem_state_ffi t1 = dataSem_state_ffi s1)))`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_wordProofScript.sml:348-351: a proof *)
@@ -253,24 +256,26 @@ let compile_correct_lemma = prove
       (?t1 res1.
         (wordSem_evaluate (word_Call NONE (SOME start') [0] NONE,t) =
           (res1,t1)) /\
-        option_le (state_stack_max t1) (dataSem_state_stack_max s1) /\
+        option_le (wordSem_state_stack_max t1) (dataSem_state_stack_max s1)
+          /\
         (res1 = SOME wordSem_NotEnoughSpace ==> ffi_state_io_events
-          (state_ffi
+          (wordSem_state_ffi
            t1) <<= ffi_state_io_events (dataSem_state_ffi s1) /\
            (~(data_to_word_config_gc_kind c = data_to_word_None) ==>
              ~(dataSem_state_safe_for_space s1))) /\
         (~(res1 = SOME wordSem_NotEnoughSpace) ==>
-         (match res with NONE -> (state_ffi t1 = dataSem_state_ffi s1)
-           /\ (res1 = NONE)
-        | SOME (Rval v) -> (state_ffi t1 = dataSem_state_ffi s1) /\
+         (match res with NONE -> (wordSem_state_ffi t1 = dataSem_state_ffi
+           s1) /\ (res1 = NONE)
+        | SOME (Rval v) -> (wordSem_state_ffi t1 = dataSem_state_ffi s1) /\
                            (?w. (res1 = SOME (wordSem_Result (word_Loc l1
                              l2) w)))
-        | SOME (Rerr (Rraise v)) -> (state_ffi t1 = dataSem_state_ffi s1) /\
+        | SOME (Rerr (Rraise v)) -> (wordSem_state_ffi t1 =
+          dataSem_state_ffi s1) /\
                               (?v w. res1 = SOME (wordSem_Exception v w))
         | SOME (Rerr (Rabort (Rffi_error f))) -> (res1 = SOME
-          (wordSem_FinalFFI f) /\ state_ffi t1 = dataSem_state_ffi s1)
+          (wordSem_FinalFFI f) /\ wordSem_state_ffi t1 = dataSem_state_ffi s1)
         | SOME (Rerr (Rabort e)) -> (res1 = SOME targetSem_TimeOut)
-          /\ state_ffi t1 = dataSem_state_ffi s1)))`,
+          /\ wordSem_state_ffi t1 = dataSem_state_ffi s1)))`,
   CHEAT_TAC);;
 
 let state_rel_ext_def = new_definition
@@ -304,15 +309,15 @@ let data_to_wordProof_compile_correct = prove
       (?ck t1 res1.
         (wordSem_evaluate (word_Call NONE (SOME start') [0] NONE,
            (wordProps_inc_clock ck t)) = (res1,t1)) /\
-        option_le (dataSem_state_stack_max t1) (dataSem_state_stack_max s1)
+        option_le (wordSem_state_stack_max t1) (dataSem_state_stack_max s1)
           /\
         (res1 = SOME wordSem_NotEnoughSpace ==> ffi_state_io_events
-          (dataSem_state_ffi
+          (wordSem_state_ffi
            t1) <<= ffi_state_io_events (dataSem_state_ffi s1) /\
            (~(data_to_word_config_gc_kind x = data_to_word_None) ==>
              ~(dataSem_state_safe_for_space s1))) /\
         (~(res1 = SOME wordSem_NotEnoughSpace) ==>
-         (dataSem_state_ffi t1 = dataSem_state_ffi s1) /\
+         (wordSem_state_ffi t1 = dataSem_state_ffi s1) /\
          (match res with NONE -> (res1 = NONE)
          | SOME (Rval v) -> (?w. (res1 = SOME (wordSem_Result (word_Loc l1
            l2) w)))
@@ -326,20 +331,48 @@ let data_to_wordProof_compile_correct = prove
 (* [local] *)
 let state_rel_ext_with_clock = prove
  (`state_rel_ext a b c s1 s2 ==>
-     state_rel_ext a b c (wordSem_state_clock_fupd (K k) s1)
+     state_rel_ext a b c (dataSem_state_clock_fupd (K k) s1)
        (wordSem_state_clock_fupd (K k) s2)`,
   CHEAT_TAC);;
 
 (* observational semantics preservation *)
 
-(* HOL4 data_to_wordProofScript.sml:1305-1527: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): compile_semantics_lemma *)
+let compile_semantics_lemma = prove
+ (`state_rel_ext conf 1 0 (dataSem_initial_state (ffi:'ffi ffi_state)
+  (fromAList prog) co cc T lims (wordSem_state_stack_size t)
+  (wordSem_state_clock t)) (t:('a,'c,'ffi)wordSem_state) /\ fs =
+  wordSem_state_stack_size t /\ ~(dataSem_semantics ffi (fromAList prog) co cc
+  lims fs (start:num) = ffi_Fail) ==>
+   wordSem_semantics t start IN
+     extend_with_resource_limit {dataSem_semantics ffi (fromAList prog) co
+       cc lims fs start}`,
+  CHEAT_TAC);;
 
-(* HOL4 data_to_wordProofScript.sml:1529-1755: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): compile_semantics_precise_lemma *)
+let compile_semantics_precise_lemma = prove
+ (`state_rel_ext conf 1 0 (dataSem_initial_state (ffi:'ffi ffi_state)
+  (fromAList prog) co cc T lims (wordSem_state_stack_size t)
+  (wordSem_state_clock t)) (t:('a,'c,'ffi)wordSem_state) /\ fs =
+  wordSem_state_stack_size t /\
+   data_lang_safe_for_space ffi (fromAList prog) lims fs (start:num)
+     /\ ~(data_to_word_config_gc_kind conf = data_to_word_None)
+     /\ ~(dataSem_semantics ffi (fromAList prog) co cc lims fs start =
+     ffi_Fail) ==>
+   wordSem_semantics t start IN
+     extend_with_resource_limit' T {dataSem_semantics ffi (fromAList prog)
+       co cc lims fs start}`,
+  CHEAT_TAC);;
 
-(* HOL4 data_to_wordProofScript.sml:1757-1766: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): compile_semantics_precise *)
+let compile_semantics_precise = prove
+ (`state_rel_ext conf 1 0 (dataSem_initial_state (ffi:'ffi ffi_state)
+  (fromAList prog) co cc T lims (wordSem_state_stack_size t)
+  (wordSem_state_clock t)) (t:('a,'c,'ffi)wordSem_state) /\
+   fs = wordSem_state_stack_size t /\ ~(data_to_word_config_gc_kind conf =
+     data_to_word_None) /\ ~(dataSem_semantics ffi (fromAList prog) co cc lims
+     fs (start:num) = ffi_Fail) /\
+   data_lang_safe_for_space ffi (fromAList prog) lims fs start ==>
+   wordSem_semantics t start = dataSem_semantics ffi (fromAList prog) co
+     cc lims fs start`,
+  CHEAT_TAC);;
 
 let get_limits_def = new_definition
   `get_limits c (t:('a,'c,'ffi)wordSem_state) =
@@ -353,8 +386,53 @@ let option_le_SOME = prove
  (`option_le x (SOME n) <=> (?m. x = SOME m /\ m <= n)`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_wordProofScript.sml:1785-1915: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): compile_semantics *)
+(* compile_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
+let data_to_wordProof_compile_semantics = prove
+ (cake_as_vars (fun () ->
+    `wordSem_state_handler
+       (t:('a,'c,'ffi)wordSem_state) = 0 /\ wordSem_state_gc_fun t =
+         word_gc_fun c /\
+       init_store_ok c (wordSem_state_store t) (wordSem_state_memory t)
+         (wordSem_state_mdomain t) (wordSem_state_code_buffer t)
+         (wordSem_state_data_buffer t) /\
+       good_dimindex (:'a) /\ sptree_lookup 0 (wordSem_state_locals t) =
+         SOME (word_Loc 1 0) /\ wordSem_state_stack t = [] /\
+       conf_ok (:'a) c /\ wordSem_state_termdep t = 0
+         /\ word_to_wordProof_code_rel c (fromAList prog) x1 /\
+       cc =
+       (\cfg.
+            OPTION_MAP (I ## MAP upper_w2w ## I) o tcc cfg o
+            MAP (bvi_to_data_compile_part c)) /\
+       Abbrev (tco = (I ## MAP (bvi_to_data_compile_part c)) o co) /\
+       (!n. ALL (\(n,_). data_num_stubs <= n) (SND (co n))) /\
+       code_rel_ext x1 (wordSem_state_code t) /\ domain x1 = domain
+         (wordSem_state_code t) /\ wordSem_state_be t = data_to_word_config_be
+         c /\ wordSem_state_stack_max
+       t = SOME 1 /\ wordSem_state_locals_size t = SOME 0
+         /\ ~(wordSem_state_stack_limit t = 0) /\ wordSem_state_compile_oracle
+       t =
+       (I ## MAP (\p. full_compile_single tt kk aa coo (p,NONE))) o tco /\
+       Abbrev
+         (tcc =
+          (\conf progs. wordSem_state_compile
+               t conf
+                 (MAP (\p. full_compile_single tt kk aa coo (p,NONE))
+                   progs))) /\
+       fs = wordSem_state_stack_size t /\ ~(ffi_Fail = dataSem_semantics
+         (wordSem_state_ffi t) (fromAList prog) co cc zero_limits fs start) ==>
+       (data_lang_safe_for_space (wordSem_state_ffi t) (fromAList prog)
+         (get_limits c t) fs start /\ ~(data_to_word_config_gc_kind
+        c = data_to_word_None) ==> word_lang_safe_for_space t start) /\
+       wordSem_semantics t start IN
+       extend_with_resource_limit'
+         (data_lang_safe_for_space (wordSem_state_ffi t) (fromAList prog)
+           (get_limits c t) fs
+            start /\ ~(data_to_word_config_gc_kind c = data_to_word_None))
+         {dataSem_semantics (wordSem_state_ffi t) (fromAList prog) co cc
+           zero_limits fs start}`),
+  CHEAT_TAC);;
 
 (* HOL4 data_to_wordProofScript.sml:1917: ML code, not ported *)
 

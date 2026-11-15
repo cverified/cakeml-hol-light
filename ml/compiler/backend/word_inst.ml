@@ -2,7 +2,8 @@
 (*  word_inst: ported from HOL4's
     compiler/backend/word_instScript.sml
     A definition theory, with 14 definitions and 7 theorems.  Needed
-    by 7 files of the port.  *)
+    by backend.ml, backend_passes.ml, wordConvsProof.ml,
+    word_instProof.ml, word_to_word.ml and word_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*

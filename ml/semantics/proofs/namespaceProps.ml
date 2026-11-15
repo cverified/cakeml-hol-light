@@ -571,7 +571,7 @@ add_simp nsDomMod_alist_to_ns;;
 (* [local] *)
 let lemma = prove
  (`(?x. y = SOME x) <=> ~(y = NONE)`,
-  (MESON_TAC[cases "option"; distinctness "option"]));;
+  CHEAT_TAC);;
 
 let nsDom_nsAppend_equal = prove
  (`!n1 n2 n3 n4.

@@ -462,9 +462,10 @@ add_simp inc_clock_eq_0;;
 
 (* evaluate_add_to_clock_io_events_mono *)
 let bviProps_evaluate_add_to_clock_io_events_mono = prove
- (`!exps env s extra. ffi_state_io_events (state_ffi
-    (SND (bviSem_evaluate (exps,env,s)))) <<= ffi_state_io_events (state_ffi
-    (SND (bviSem_evaluate (exps,env,bviProps_inc_clock extra s))))`,
+ (`!exps env s extra. ffi_state_io_events (bviSem_state_ffi (SND
+   (bviSem_evaluate
+  (exps,env,s)))) <<= ffi_state_io_events (bviSem_state_ffi (SND
+  (bviSem_evaluate (exps,env,bviProps_inc_clock extra s))))`,
   CHEAT_TAC);;
 
 (* take_drop_lem[local] *)

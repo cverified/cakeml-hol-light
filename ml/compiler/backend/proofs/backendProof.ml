@@ -480,8 +480,8 @@ let cake_orac_eqs = prove
        c) ==>
    pure_co (MAP (\p. full_compile_single tr_c reg_c reg_alg asm_conf
      (p,NONE))) o
-     pure_co (MAP (bvi_to_data_compile_part dc)) o cake_orac asm_conf c' src
-       f4 (\ps. backend_progs_data_prog ps) =
+     pure_co (MAP (data_to_word_compile_part dc)) o cake_orac asm_conf c'
+       src f4 (\ps. backend_progs_data_prog ps) =
    cake_orac asm_conf c' src f4 (\ps. backend_progs_word_prog ps)) /\
    (
    backend_compile asm_conf c prog = SOME (b,bm,c')
@@ -651,8 +651,8 @@ let compile_no_stubs_wrap_pure_co = prove
    (pure_co (compile_no_stubs rn j offs sp o FST) o coracle)`,
   CHEAT_TAC);;
 
-(* HOL4 backendProofScript.sml:832-833: a theorem that HOL4 states as the
-   value of an ML expression: full_make_init_semantics2 *)
+let full_make_init_semantics2 =
+  REWRITE_RULE [compile_no_stubs_wrap_pure_co] full_make_init_semantics;;
 
 let data_num_stubs_LE_tailrec_compile = prove
  (`data_num_stubs <= nn2 /\ ALL ((<=) data_num_stubs) (MAP FST (orac n)) ==>
@@ -1426,7 +1426,7 @@ let backend_from_data_tuple_cc_def = new_definition
                  (word_to_word_config_reg_alg (backend_config_word_to_word_conf
                c))
                asm_conf (p,NONE)) progs)) o
-               MAP (bvi_to_data_compile_part (ensure_fp_conf_ok asm_conf
+               MAP (data_to_word_compile_part (ensure_fp_conf_ok asm_conf
                  (backend_config_data_conf c)))`;;
 
 let backend_from_flat_tuple_cc_def = new_definition

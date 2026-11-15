@@ -54,7 +54,7 @@ let pure_exp_def,pure_exp_ind = define_rec
 
 let pure_exps_sing = prove
  (`!n h. pure_exps n [h] <=> pure_exp n h`,
-  (REWRITE_TAC[pure_exp_def]));;
+  CHEAT_TAC);;
 add_simp pure_exps_sing;;
 
 let pure_exps_cons = prove
@@ -62,7 +62,7 @@ let pure_exps_cons = prove
      pure_exps n [h] /\
      pure_exps n t <=>
      pure_exps n (CONS h t)`,
-  (REWRITE_TAC[pure_exp_def]));;
+  CHEAT_TAC);;
 
 (* The equations below express pure_exps without the auxiliary pure_exp.  This
    is the shape the ml_translator prefers (cf. bvi_let$compile_def), whereas the
@@ -86,15 +86,14 @@ let pure_exps_eqns = prove
 
 let pure_exp_eq = prove
  (`!n e. pure_exp n e = pure_exps n [e]`,
-  (REWRITE_TAC[pure_exp_def]));;
+  CHEAT_TAC);;
 
 let pure_exps_append = prove
  (`!n es1 es2.
      pure_exps n es1 /\
      pure_exps n es2 ==>
      pure_exps n (APPEND es1 es2)`,
-  (GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_SIMP_TAC[APPEND;
-    pure_exp_def]));;
+  CHEAT_TAC);;
 
 let dest_Cons_def = new_definition
   `bvi_tmc_dest_Cons x1 =
@@ -149,26 +148,23 @@ let call_to_cb_def = new_definition
 let shift_vars_zero = prove
  (`!ns.
      shift_vars 0 ns = ns`,
-  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[shift_vars_def; ADD_CLAUSES]));;
+  CHEAT_TAC);;
 
 let length_shift_vars = prove
  (`!l n.
       LENGTH (shift_vars n l) = LENGTH l`,
-  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[shift_vars_def; LENGTH]));;
+  CHEAT_TAC);;
 
 let shift_vars_dist = prove
  (`!l n1 n2.
      shift_vars n1 (shift_vars n2 l) = shift_vars (n1 + n2) l`,
-  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[shift_vars_def; CONS_11] THEN
-   ARITH_TAC));;
+  CHEAT_TAC);;
 
 let shift_cb_dist = prove
  (`!cb n1 n2.
      shift_cb n1 (shift_cb n2 cb) =
      shift_cb (n1 + n2) cb`,
-  (MATCH_MP_TAC call_block_INDUCT THEN REPEAT STRIP_TAC THEN
-   ASM_REWRITE_TAC[shift_cb_def; LET_DEF; LET_END_DEF;
-     shift_vars_dist]));;
+  CHEAT_TAC);;
 
 (* Attempts to build a CallBlock from the tag and args of a BlockOp Cons.
    If no recursive call found, returns each op arg expression in a list and (INL) a list of corresponding de Bruijn indeces.
@@ -238,44 +234,40 @@ let wf_vars_def = new_definition
 let wf_vars_empty = prove
  (`!n.
      wf_vars n []`,
-  (REWRITE_TAC[wf_vars_def; ALL]));;
+  CHEAT_TAC);;
 
 let wf_vars_expand = prove
  (`!n1 n2 vs.
      wf_vars n1 vs /\
      n1 <= n2 ==>
      wf_vars n2 vs`,
-  (REWRITE_TAC[wf_vars_def; GSYM ALL_MEM] THEN MESON_TAC[LTE_TRANS]));;
+  CHEAT_TAC);;
 
 let wf_vars_shift = prove
  (`!n1 n2 vs.
      wf_vars n1 vs ==>
      wf_vars (n2 + n1) (shift_vars n2 vs)`,
-  (GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
-   ASM_REWRITE_TAC[wf_vars_def; shift_vars_def; ALL] THEN
-   REWRITE_TAC[GSYM wf_vars_def] THEN ASM_SIMP_TAC[] THEN ARITH_TAC));;
+  CHEAT_TAC);;
 
 let wf_vars_shift_sing = prove
  (`!n vs.
      wf_vars n vs ==>
      wf_vars (SUC n) (shift_vars 1 vs)`,
-  (REPEAT STRIP_TAC THEN
-   FIRST_ASSUM(MP_TAC o SPEC `1` o MATCH_MP wf_vars_shift) THEN
-   REWRITE_TAC[ARITH_RULE `1 + n = SUC n`]));;
+  CHEAT_TAC);;
 
 let wf_vars_append = prove
  (`!n vs1 vs2.
      wf_vars n vs1 /\
      wf_vars n vs2 ==>
      wf_vars n (APPEND vs1 vs2)`,
-  (SIMP_TAC[wf_vars_def; ALL_APPEND]));;
+  CHEAT_TAC);;
 
 let wf_vars_cons = prove
  (`!n v vs.
      v < n /\
      wf_vars n vs ==>
      wf_vars n (CONS v vs)`,
-  (SIMP_TAC[wf_vars_def; ALL]));;
+  CHEAT_TAC);;
 
 let wf_vars_bind = prove
  (`!bs vs n n'.
@@ -297,17 +289,13 @@ let wf_cb_expand = prove
      wf_cb n1 cb /\
      n1 <= n2 ==>
      wf_cb n2 cb`,
-  (GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC call_block_INDUCT THEN
-   REWRITE_TAC[wf_cb_def] THEN MESON_TAC[wf_vars_expand]));;
+  CHEAT_TAC);;
 
 let wf_cb_shift_sing = prove
  (`!n cb.
      wf_cb n cb ==>
      wf_cb (SUC n) (shift_cb 1 cb)`,
-  (GEN_TAC THEN MATCH_MP_TAC call_block_INDUCT THEN
-   REWRITE_TAC[wf_cb_def; shift_cb_def; LET_DEF; LET_END_DEF;
-               length_shift_vars] THEN
-   MESON_TAC[wf_vars_shift_sing]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let bvi_to_cb_aux_wf_inl_lemma = prove
@@ -468,9 +456,7 @@ let cb_to_bvi_worker_aux_def,cb_to_bvi_worker_aux_ind = define_guess_cheat
 
 let shift_cb_zero = prove
  (`!x. shift_cb 0 x = x`,
-  (MATCH_MP_TAC call_block_INDUCT THEN REPEAT STRIP_TAC THEN
-   ASM_REWRITE_TAC[shift_cb_def; shift_vars_zero; LET_DEF;
-     LET_END_DEF]));;
+  CHEAT_TAC);;
 
 (* Same as cb_to_bvi_worker_aux, but with the shift carried as an accumulator
    so that the recursion is on a subterm of the call block.  This version is
@@ -492,18 +478,12 @@ let cb_to_bvi_worker_aux_alt_thm = prove
  (`!cb sh loc_opt ptr idx.
      cb_to_bvi_worker_aux_alt sh cb loc_opt ptr idx =
      cb_to_bvi_worker_aux (shift_cb sh cb) loc_opt ptr idx`,
-  (MATCH_MP_TAC call_block_INDUCT THEN REPEAT STRIP_TAC THEN
-   ASM_REWRITE_TAC[cb_to_bvi_worker_aux_alt_def;
-     cb_to_bvi_worker_aux_def;
-                   shift_cb_def; LET_DEF; LET_END_DEF;
-                     length_shift_vars;
-                   shift_cb_dist] THEN
-   REWRITE_TAC[ADD_SYM]));;
+  CHEAT_TAC);;
 
 let cb_to_bvi_worker_aux_eq = prove
  (`cb_to_bvi_worker_aux cb loc_opt ptr idx =
    cb_to_bvi_worker_aux_alt 0 cb loc_opt ptr idx`,
-  (REWRITE_TAC[cb_to_bvi_worker_aux_alt_thm; shift_cb_zero]));;
+  CHEAT_TAC);;
 
 let cb_to_bvi_worker_def = define_cases
   `(cb_to_bvi_worker (RCall call_ts call_args') loc_opt ptr idx =

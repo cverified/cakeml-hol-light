@@ -3,7 +3,7 @@
     src/finite_maps/sptreeScript.sml
     A HOL4 library theory, of which the port has the definitions
     that CakeML needs, and 88 theorems of it from LightCake.  Needed
-    by 107 files of the port.  *)
+    by 106 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/indexedLists.ml";;

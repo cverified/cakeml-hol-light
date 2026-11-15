@@ -14,8 +14,6 @@ let _ = cake_library ();;
 (* HOL4 ancestors outside the port: words address arithmetic list address
    pair rich_list integer *)
 
-needs "lib/mc_tailrec.ml";;
-
 let mc_cmp_def,mc_cmp_pre_def =
   tailrec_define "mc_cmp"
   `(\(l,r10,xs,ys).

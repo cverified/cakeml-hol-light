@@ -25,6 +25,7 @@ needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
+needs "lib/pegexec.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -1624,8 +1625,13 @@ let byte_align_64_IMP = prove
    (byte_align a = a ==> w2n a MOD 8 = 0)`,
   CHEAT_TAC);;
 
-(* HOL4 lab_to_targetProofScript.sml:2005-2055: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): arith_upd_lemma *)
+(* [local] *)
+let arith_upd_lemma = prove
+ (`(!r. word_loc_val p labs (labSem_state_regs s1 r) = SOME (asm_state_regs t1
+  r)) /\ ~(labSem_state_failed (labSem_arith_upd a s1)) ==>
+    (!r. word_loc_val p labs (labSem_state_regs (labSem_arith_upd a s1) r) =
+        SOME (asm_state_regs (asmSem_arith_upd a t1) r))`,
+  CHEAT_TAC);;
 
 (* The lab and asm versions should be in their individual props *)
 let arith_upd_fp_regs = prove
@@ -1635,8 +1641,18 @@ let arith_upd_fp_regs = prove
   CHEAT_TAC);;
 add_simp arith_upd_fp_regs;;
 
-(* HOL4 lab_to_targetProofScript.sml:2068-2096: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): fp_upd_lemma *)
+(* [local] *)
+let fp_upd_lemma = prove
+ (`(!r. word_loc_val p labs (labSem_state_regs s1 r) = SOME (asm_state_regs t1
+  r)) /\
+   (!r. labSem_state_fp_regs s1 r = asm_state_fp_regs t1 r) /\
+    ~(labSem_state_failed (labSem_fp_upd f s1)) ==>
+   (!r. labSem_state_fp_regs (labSem_fp_upd f s1) r = asm_state_fp_regs
+     (asmSem_fp_upd f t1) r) /\
+   (!r.
+     word_loc_val p labs (labSem_state_regs (labSem_fp_upd f s1) r) =
+     SOME (asm_state_regs (asmSem_fp_upd f t1) r))`,
+  CHEAT_TAC);;
 
 (* Inst_share_mem_pc_update_helper *)
 let inst_share_mem_pc_update_helper = prove
@@ -1663,13 +1679,15 @@ let inst_share_mem_reg_update_helper = prove
        (asm_state_regs t1))) t1)) ms2`,
   CHEAT_TAC);;
 
-(* HOL4 lab_to_targetProofScript.sml:2120-2128: a theorem whose statement
-   HOL Light does not read (tools/unstated.py):
-   arith_upd_share_mem_domain_unchange *)
+let arith_upd_share_mem_domain_unchange = prove
+ (`labSem_state_shared_mem_domain
+     (labSem_arith_upd a s1) = labSem_state_shared_mem_domain s1`,
+  CHEAT_TAC);;
 
-(* HOL4 lab_to_targetProofScript.sml:2130-2136: a theorem whose statement
-   HOL Light does not read (tools/unstated.py):
-   fp_upd_share_mem_domain_unchange *)
+let fp_upd_share_mem_domain_unchange = prove
+ (`labSem_state_shared_mem_domain
+     (labSem_fp_upd f s1) = labSem_state_shared_mem_domain s1`,
+  CHEAT_TAC);;
 
 (* HOL4 lab_to_targetProofScript.sml:2138-2144: a proof *)
 
@@ -1682,8 +1700,24 @@ let align2_not_align3_4w = prove
    x + (n2w 3) = byte_align x + (n2w 7)`,
   CHEAT_TAC);;
 
-(* HOL4 lab_to_targetProofScript.sml:2170-2930: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): Inst_lemma *)
+(* Inst_lemma *)
+let inst_lemma = prove
+ (`~(labSem_state_failed (asm_inst i s1)) /\
+    lab_to_targetProof_state_rel
+      ((mc_conf:('a,'state,'b)machine_config),code2,labs,p) s1 t1 ms1 /\
+    (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val (labSem_state_pc s1)
+      0 code2 + LENGTH bytes') ==>
+    ~(failed (wordSem_inst i t1)) /\
+     (!a. ~(a IN labSem_state_mem_domain s1) ==> mem (wordSem_inst i t1) a =
+       asm_state_mem t1 a) /\
+    (target_state_rel (machine_config_target mc_conf)
+       (labSem_upd_pc (asm_state_pc t1 + n2w (LENGTH bytes')) (wordSem_inst
+         i t1)) ms2 ==>
+     lab_to_targetProof_state_rel (mc_conf,code2,labs,p)
+       (inc_pc (labSem_dec_clock (asm_inst i s1)))
+       (labSem_upd_pc (asm_state_pc t1 + n2w (LENGTH (bytes':word8 list)))
+         (wordSem_inst i t1)) ms2)`,
+  CHEAT_TAC);;
 
 (* compile correct *)
 
@@ -2526,21 +2560,21 @@ let line_enc_with_nop_def = new_definition
        lab_Asm b bytes len ->
        enc_with_nop enc (cbw_to_asm b) bytes /\ LENGTH bytes = len
      | lab_LabAsm lab_Halt _ bytes len ->
-       enc_with_nop enc (lab_Jump (--(n2w (pos + ffi_offset)))) bytes /\
+       enc_with_nop enc (asm_Jump (--(n2w (pos + ffi_offset)))) bytes /\
        LENGTH bytes = len
      | lab_LabAsm lab_Install _ bytes len ->
-       enc_with_nop enc (lab_Jump (--(n2w (pos + 2 * ffi_offset)))) bytes /\
+       enc_with_nop enc (asm_Jump (--(n2w (pos + 2 * ffi_offset)))) bytes /\
        LENGTH bytes = len
      | lab_LabAsm (lab_CallFFI s) _ bytes len ->
-       enc_with_nop enc (lab_Jump (--(n2w (pos + (get_ffi_index ffis
+       enc_with_nop enc (asm_Jump (--(n2w (pos + (get_ffi_index ffis
          (ffi_ExtCall s) + 3) * ffi_offset)))) bytes /\
        LENGTH bytes = len
      | lab_LabAsm (lab_Jump l) _ bytes len ->
-       enc_with_nop enc (lab_Jump (n2w (find_pos l labs) + --(n2w pos)))
+       enc_with_nop enc (asm_Jump (n2w (find_pos l labs) + --(n2w pos)))
          bytes /\
        LENGTH bytes = len
      | lab_LabAsm (lab_JumpCmp a b c l) _ bytes len ->
-       enc_with_nop enc (lab_JumpCmp a b c (n2w (find_pos l labs) + --(n2w
+       enc_with_nop enc (asm_JumpCmp a b c (n2w (find_pos l labs) + --(n2w
          pos))) bytes /\
        LENGTH bytes = len
      | lab_LabAsm (lab_LocValue k l) _ bytes len ->
@@ -3955,8 +3989,20 @@ let oracle_tie_ccache_residues = prove
 
 (* HOL4 lab_to_targetProofScript.sml:7526: ML code, not ported *)
 
-(* HOL4 lab_to_targetProofScript.sml:7528-7558: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): compile_correct *)
+(* compile_correct *)
+let lab_to_targetProof_compile_correct = prove
+ (`!(s1:('a,lab_to_target_config,'ffi)labSem_state) res
+  (mc_conf:('a,'state,'b)machine_config) s2 code2 labs t1 ms1.
+      oracle_tie mc_conf ms1 s1 /\
+      (labSem_evaluate s1 = (res,s2)) /\ (~(res = targetSem_Error)) /\
+      encoder_correct (machine_config_target mc_conf) /\
+      lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1 ==>
+      (?k t2 ms2.
+        (labSem_evaluate mc_conf (labSem_state_ffi s1) (labSem_state_clock
+          s1 + k) ms1 =
+           (res,
+            ms2,labSem_state_ffi s2)))`,
+  CHEAT_TAC);;
 
 (* HOL4 lab_to_targetProofScript.sml:7560-7717: a proof *)
 
@@ -4034,8 +4080,12 @@ let init_ok_def = new_definition
        lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s t1 ms /\
        oracle_tie mc_conf ms s)`;;
 
-(* HOL4 lab_to_targetProofScript.sml:9364-9526: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): machine_sem_EQ_sem *)
+let machine_sem_EQ_sem = prove
+ (`!mc_conf p (ms:'state) (s1:('a,lab_to_target_config,'ffi)labSem_state).
+     encoder_correct (machine_config_target mc_conf) /\
+     init_ok (mc_conf,p) s1 ms /\ ~(labSem_semantics s1 = ffi_Fail) ==>
+     machine_sem mc_conf (labSem_state_ffi s1) ms = {labSem_semantics s1}`,
+  CHEAT_TAC);;
 
 (* HOL4 lab_to_targetProofScript.sml:9528-9531: code that the source has in
    a comment *)
@@ -4462,8 +4512,16 @@ add_simp make_init_simp;;
 (* HOL4 lab_to_targetProofScript.sml:10524-10538: a theorem that HOL4 states
    as the value of an ML expression: semantics_make_init *)
 
-(* HOL4 lab_to_targetProofScript.sml:10540-10552: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): make_init_filter_skip *)
+let make_init_filter_skip = prove
+ (`labSem_semantics (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms
+  (filter_skip code)
+       (compile_lab (target_config (machine_config_target mc_conf))) cbpos
+         cbspace ((\(a,b). (a,filter_skip b)) o coracle)) =
+   labSem_semantics
+    (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms code
+      (\c p. (compile_lab (target_config (machine_config_target mc_conf)))
+        c (filter_skip p)) cbpos cbspace coracle)`,
+  CHEAT_TAC);;
 
 (* TODO: move *)
 let find_ffi_names_filter_skip = prove
@@ -4559,11 +4617,63 @@ let find_ffi_names_EVERY = prove
 (* HOL4 lab_to_targetProofScript.sml:10953-11010: code that the source has
    in a comment *)
 
-(* HOL4 lab_to_targetProofScript.sml:11012-11165: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): semantics_compile_lemma' *)
+(* [local] *)
+let semantics_compile_lemma' = prove
+ (`mc_conf_ok mc_conf /\
+   (no_share_mem_inst code ==>
+     compiler_oracle_ok coracle (lab_to_target_config_labels c') (LENGTH
+       bytes) (asm_conf:'a asm_config) (machine_config_ffi_names mc_conf)) /\
+   // Assumptions on input code
+   lab_to_targetProof_good_code (target_config (machine_config_target
+     mc_conf)) LN code /\
+   // Config state
+   asm_conf = target_config (machine_config_target mc_conf)
+     /\ lab_to_target_config_labels
+   c = LN /\ lab_to_target_config_pos c = 0 /\
+   lab_to_target_compile asm_conf (c:lab_to_target_config) code = SOME
+     (bytes,c') /\ lab_to_target_config_ffi_names
+   // FFI is either given or computed
+   c' = SOME (machine_config_ffi_names mc_conf) /\
+   good_init_state mc_conf ms bytes cbspace t m dm sdm /\
+   // set up mmio_info and ffi_entry_pcs for mmio
+   MAP (\rec. w2n (target_get_pc (machine_config_target mc_conf) ms) +
+     shmem_info_num_entry_pc rec) (lab_to_target_config_shmem_extra c') =
+     DROP i (MAP w2n (machine_config_ffi_entry_pcs mc_conf))
+       /\ machine_config_mmio_info
+   mc_conf = ZIP (list_of_seq (\index. index + i) (LENGTH
+     (lab_to_target_config_shmem_extra c')))
+                             (MAP (\rec. (shmem_info_num_nbytes rec,Addr
+                               (shmem_info_num_addr_reg rec) (n2w
+                               (shmem_info_num_addr_off
+                               rec)),shmem_info_num_reg
+                              rec,n2w (shmem_info_num_exit_pc rec) +
+                                target_get_pc (machine_config_target mc_conf)
+                                ms)) (lab_to_target_config_shmem_extra
+                              c')) /\
+   no_install_or_no_share_mem code (machine_config_ffi_names mc_conf) /\
+   (mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i) /\
+   // to avoid the ffi_entry_pc wraps around and overlaps with the program or code buffer
+   cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword (:'a) /\
+   (
+    // the original ffi names provided does not contain MappedRead or MappedWrite
+    !ffis. lab_to_target_config_ffi_names c = SOME ffis ==> ALL (\x. ?s. x =
+      ffi_ExtCall s) ffis) /\ ~(labSem_semantics (lab_to_targetProof_make_init
+      mc_conf ffi t m dm sdm ms code
+     (lab_to_target_compile asm_conf) (target_get_pc (machine_config_target
+       mc_conf) ms + n2w (LENGTH bytes)) cbspace
+     coracle) = ffi_Fail) ==>
+   machine_sem mc_conf ffi ms =
+   {labSem_semantics (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms
+     code
+     (lab_to_target_compile asm_conf) (target_get_pc (machine_config_target
+       mc_conf) ms + n2w (LENGTH bytes)) cbspace
+     coracle)}`,
+  CHEAT_TAC);;
 
-(* HOL4 lab_to_targetProofScript.sml:11167-11171: a theorem that HOL4 states
-   as the value of an ML expression: semantics_compile_lemma *)
+(* [local] *)
+let semantics_compile_lemma =
+  REWRITE_RULE [GSYM CONJ_ASSOC] (MATCH_MP implements_intro_gen (REWRITE_RULE
+  [CONJ_ASSOC] semantics_compile_lemma'));;
 
 (* try to show the condition of semantics_compile is not vacuous *)
 (* HOL4 lab_to_targetProofScript.sml:11174-11199: code that the source has
@@ -4571,8 +4681,51 @@ let find_ffi_names_EVERY = prove
 (* HOL4 lab_to_targetProofScript.sml:11200-11245: code that the source has
    in a comment *)
 
-(* HOL4 lab_to_targetProofScript.sml:11247-11303: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): semantics_compile *)
+(* semantics_compile *)
+let lab_to_targetProof_semantics_compile = prove
+ (`mc_conf_ok mc_conf /\
+   (no_share_mem_inst code ==>
+     compiler_oracle_ok coracle (lab_to_target_config_labels c') (LENGTH
+       bytes) asm_conf (machine_config_ffi_names mc_conf)) /\
+   lab_to_targetProof_good_code asm_conf (lab_to_target_config_labels c)
+     code /\
+   asm_conf = target_config (machine_config_target mc_conf)
+     /\ lab_to_target_config_labels
+   c = LN /\ lab_to_target_config_pos c = 0 /\
+   lab_to_target_compile asm_conf c (code:('a sec) list) = SOME (bytes,c')
+     /\ lab_to_target_config_ffi_names
+   c' = SOME (machine_config_ffi_names mc_conf) /\
+   good_init_state mc_conf ms bytes cbspace t m dm sdm /\
+   mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i /\
+   MAP (\rec. w2n (target_get_pc (machine_config_target mc_conf) ms) +
+     shmem_info_num_entry_pc rec) (lab_to_target_config_shmem_extra c') =
+    DROP i (MAP w2n (machine_config_ffi_entry_pcs mc_conf))
+      /\ machine_config_mmio_info
+   mc_conf = ZIP (list_of_seq (\index. index + i) (LENGTH
+     (lab_to_target_config_shmem_extra c')))
+                              (MAP (\rec. (shmem_info_num_nbytes rec,Addr
+                                (shmem_info_num_addr_reg rec) (n2w
+                                (shmem_info_num_addr_off
+                                rec)),shmem_info_num_reg
+                              rec,n2w (shmem_info_num_exit_pc rec) +
+                                target_get_pc (machine_config_target mc_conf)
+                                ms)) (lab_to_target_config_shmem_extra
+                              c')) /\
+   no_install_or_no_share_mem code (machine_config_ffi_names mc_conf) /\
+   // to avoid the ffi_entry_pc wraps around and overlaps with the program or code buffer
+   cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword (:'a) /\
+   (
+    // the original ffi names provided does not contain MappedRead or MappedWrite
+    !ffis. lab_to_target_config_ffi_names c = SOME ffis ==> ALL (\x. ?s. x =
+      ffi_ExtCall s) ffis) ==>
+    implements' T (machine_sem mc_conf ffi ms)
+      {labSem_semantics
+         (lab_to_targetProof_make_init mc_conf ffi t m (dm INTER
+           byte_aligned) (sdm INTER byte_aligned) ms code
+            (lab_to_target_compile asm_conf) (target_get_pc
+              (machine_config_target mc_conf) ms + n2w (LENGTH bytes))
+            cbspace coracle)}`,
+  CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

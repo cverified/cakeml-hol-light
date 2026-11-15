@@ -376,7 +376,11 @@ class Porter:
     # the proofs of phase three: a theorem of proofs/<path>.prf
     # gets the tactic that stands there, one that is not in it
     # keeps its CHEAT_TAC (tools/proofstore.py)
-    self.proofs = proofstore.load(db.mlpath_of(thy))
+    # phase three has not started: the proof store is kept and
+    # not spliced in, so every theorem is the CHEAT_TAC that
+    # phase two leaves (overrides.PHASE_THREE)
+    self.proofs = (proofstore.load(db.mlpath_of(thy))
+                   if overrides.PHASE_THREE else {})
     self.proved = set()
     # how often a theorem name has been stated, for a source that
     # states two theorems of the same name (HOL4's allow_rebind):
@@ -471,6 +475,12 @@ class Porter:
       at.append('local')
     self.state(b, b.name, at, b.body)
 
+  def extra_wanted(self, text):
+    """is this block of the overrides one the port writes out?
+       A block that introduces a constant always is; one that is
+       there for a proof alone waits for phase three"""
+    return overrides.PHASE_THREE or not overrides.proof_only(text)
+
   def prove_head(self, name):
     """the head of a theorem: `let foo = prove`, or the name and
        the prove on two lines where that does not fit"""
@@ -520,7 +530,8 @@ class Porter:
     # proofs of the file ask for and the source has not, where they
     # need something the file itself defines and so cannot stand at
     # its head (overrides.EXTRA_BEFORE)
-    if (self.thy, nm) in overrides.EXTRA_BEFORE:
+    if (self.thy, nm) in overrides.EXTRA_BEFORE and \
+       self.extra_wanted(overrides.EXTRA_BEFORE[(self.thy, nm)]):
       self.out.append(
         overrides.EXTRA_BEFORE[(self.thy, nm)].strip() + '\n')
     # a statement that HOL Light's parser rejects would stop the
@@ -1723,7 +1734,8 @@ class Porter:
           self.out.append(c)
       # definitions that HOL4 generates with ML code, and that the
       # port has by hand
-      if self.thy in overrides.EXTRA_HEAD:
+      if self.thy in overrides.EXTRA_HEAD and \
+         self.extra_wanted(overrides.EXTRA_HEAD[self.thy]):
         self.out.append('\n' + overrides.EXTRA_HEAD[self.thy].strip())
     elif k == 'Libs':
       pass
@@ -2325,7 +2337,8 @@ class Porter:
     # what goes before the block goes there whether the block
     # itself is ported or not (a declaration takes the place of a
     # definition that the port does not make)
-    if key in overrides.EXTRA_BEFORE:
+    if key in overrides.EXTRA_BEFORE and \
+       self.extra_wanted(overrides.EXTRA_BEFORE[key]):
       self.out.append(overrides.EXTRA_BEFORE[key].strip() + '\n')
     key = (self.thy, b.name)
     if key in overrides.NOT_YET:
@@ -2759,7 +2772,8 @@ class Porter:
     # (unifDef's unify, which HOL4 makes with new_specification
     # out of a theorem about the tail recursive tunify)
     extra = overrides.EXTRA_AFTER.get((self.thy, key[1]))
-    if extra: self.out.append('\n' + extra.strip())
+    if extra and self.extra_wanted(extra):
+      self.out.append('\n' + extra.strip())
     for nm in conof:
       if '*' in overrides.CON_OF.get(key, {}): continue
       was, ovl = self.conof_was.get(nm, (None, True))

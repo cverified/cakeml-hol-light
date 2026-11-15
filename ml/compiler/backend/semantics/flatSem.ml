@@ -12,9 +12,7 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
-needs "lib/errorMonad.ml";;
 needs "lib/lprefix_lub.ml";;
-needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
@@ -677,10 +675,7 @@ let flatSem_do_if_def = new_definition
 
 let do_if_either_or = prove
  (`flatSem_do_if v e1 e2 = SOME e ==> e = e1 \/ e = e2`,
-  (REPEAT GEN_TAC THEN REWRITE_TAC[flatSem_do_if_def] THEN
-   REPEAT COND_CASES_TAC THEN REWRITE_TAC[option_INJ;
-     option_DISTINCT] THEN
-   MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let pmatch_stamps_ok = cake_inductive
   `(
@@ -846,23 +841,6 @@ let pmatch_rows_Match_exp_alt_size = prove
 let dec_alt_size_def = new_definition
   `dec_alt_size a = 1 + flatSem_exp_alt_size a`;;
 add_simp dec_alt_size_def;;
-
-let flatSem_fix_clock_IMP =
-  try prove
-   (`!s x s1 res. flatSem_fix_clock s x = (s1,res)
-                  ==> flatSem_state_clock s1 <= flatSem_state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; flatSem_fix_clock_def] THEN
-    REWRITE_TAC(PAIR_EQ :: record_thms "flatSem_state") THEN
-    REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
-    REWRITE_TAC(record_thms "flatSem_state") THEN
-    REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
-  with Failure e ->
-    (print_string ("\nflatSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
-
-(* a fallback TRUTH says nothing, and a fact that says nothing
-   is of no use *)
-if concl flatSem_fix_clock_IMP <> `T` then
-  cake_term_facts := flatSem_fix_clock_IMP :: (!cake_term_facts);;
 
 (* the clauses in two quotations: funs is ((varN # varN # exp) list) and
    (_#_)list; n is varN and (varN option), which one quotation cannot

@@ -57,9 +57,9 @@ mlstring	derive TOKENS_eq_tokens_sym: rule Q.AP_TERM/1
 mlstring	ML code skipped: val flip_ord_def = ternaryComparisonsTheory.invert_compariso
 mlstring	Overload flip_ord
 mlstring	Overload size_limit
-mlstring	line 29 is 81 characters
-mlstring	line 49 is 89 characters
-mlstring	line 50 is 84 characters
+mlstring	line 28 is 81 characters
+mlstring	line 48 is 89 characters
+mlstring	line 49 is 84 characters
 ast	line 109 is 82 characters
 ast	line 199 is 85 characters
 backend_common	ML code skipped: val _ = set_fixity "▷" (Infixl 480);
@@ -82,16 +82,16 @@ bvi_tailrec	ML code skipped: val opt_tm = ``   Let [Op (IntOp LessEq) [Var 0; Op
 bvi_tailrec	ML code skipped: val rev_tm = ``   Let [Op (IntOp (Const 0)) []]     (If (Op 
 bvi_tailrec	ML code skipped: val opt_tm = ``   Let [Op (IntOp (Const 0)) []]     (If (Op 
 bvi_tailrec	ML code skipped: val aux_tm = ``Let [Var 0; Op (BlockOp (Cons 0)) []] ^opt_tm
-bvi_tailrec	line 500 is 83 characters
-bvi_tailrec	line 501 is 80 characters
+bvi_tailrec	line 478 is 83 characters
+bvi_tailrec	line 479 is 80 characters
 bvi_tmc	line 7 is 81 characters
 bvi_tmc	line 66 is 80 characters
-bvi_tmc	line 109 is 87 characters
-bvi_tmc	line 172 is 124 characters
-bvi_tmc	line 173 is 102 characters
-bvi_tmc	line 174 is 137 characters
-bvi_tmc	line 221 is 94 characters
-bvi_tmc	line 553 is 98 characters
+bvi_tmc	line 108 is 87 characters
+bvi_tmc	line 168 is 124 characters
+bvi_tmc	line 169 is 102 characters
+bvi_tmc	line 170 is 137 characters
+bvi_tmc	line 217 is 94 characters
+bvi_tmc	line 533 is 98 characters
 bvl	Overload mk_unit
 bvl	Overload mk_elem_at
 bvl_const	ML code skipped: val tm = (SmartOp2_quotation |>    map (fn QUOTE s => Portab
@@ -119,8 +119,8 @@ clos_ticks	ML code skipped: val remove_ticks_ind = theorem "remove_ticks_ind";
 clos_known	ML code skipped: val get_size_aux_ind = theorem "get_size_aux_ind";
 clos_known	ML code skipped: val val_approx_size_def = definition "val_approx_size_def"
 clos_known	derive merge_def: '++ ETA_ss) ['
-clos_known	line 471 is 87 characters
-clos_known	line 472 is 80 characters
+clos_known	line 461 is 87 characters
+clos_known	line 462 is 80 characters
 clos_mti	ML code skipped: val collect_args_ind = theorem "collect_args_ind";
 clos_mti	ML code skipped: val collect_apps_ind = theorem "collect_apps_ind";
 clos_mti	ML code skipped: val intro_multi_ind = theorem "intro_multi_ind";
@@ -185,11 +185,11 @@ reg_alloc	derive degrees_accessor: no degrees_manip
 reg_alloc	derive coalesced_accessor: no coalesced_manip
 reg_alloc	derive move_related_accessor: no move_related_manip
 reg_alloc	line 41 is 87 characters
-reg_alloc	line 924 is 89 characters
-reg_alloc	line 956 is 92 characters
-reg_alloc	line 1067 is 91 characters
-reg_alloc	line 1228 is 84 characters
-reg_alloc	line 1408 is 104 characters
+reg_alloc	line 915 is 89 characters
+reg_alloc	line 947 is 92 characters
+reg_alloc	line 1058 is 91 characters
+reg_alloc	line 1219 is 84 characters
+reg_alloc	line 1399 is 104 characters
 linear_scan	ML code skipped: val colors_accessors = el 1 accessors; val int_beg_accessors
 linear_scan	ML code skipped: val (colors,get_colors_def,set_colors_def) = colors_accessor
 linear_scan	Overload failwith
@@ -451,7 +451,6 @@ unify	derive cunifyl_CONS2: no sunify_thm
 unify	derive walkstar1: no walkstar_thm
 unify	derive walkstar2: no walkstar_thm
 unify	derive cwalkstar_thm: no combinTheory.o_ABS_L
-unify	derive walkstar_def': no walkstar_def
 unify	derive walkstar_thm': no walkstar_thm
 unify	ML code skipped: fun tcallify_th fixedvs th =   let val (l,r) = dest_eq (conc
 unify	ML code skipped: val cvwalk_code = tcallify_th [“s:infer_t num_map”] cvwalk_t
@@ -493,19 +492,19 @@ unify	derive svwalk_result_encodable': rule INST_TYPE/1
 unify	derive tcunify_thm: rule Once/0
 unify	derive t_vwalk_ind: rule UNDISCH/3
 unify	ML code skipped: val encode_walkstar_reverse = encode_walkstar |>            
-unify	line 1534 is 91 characters
+unify	line 1506 is 91 characters
 infer	ML code skipped: val type_name_check_subst_alt =   type_name_check_subst_def 
 infer	Overload Tem
 infer	derive constrain_op_case_def: conv patternMatchesLib.PMATCH_ELIM_CONV
 infer	derive constrain_op_expand: no constrain_op_case_def
 infer	line 146 is 124 characters
 infer	line 155 is 85 characters
-infer	line 888 is 86 characters
-infer	line 921 is 87 characters
-infer	line 924 is 87 characters
-infer	line 929 is 86 characters
-infer	line 1079 is 87 characters
-infer	line 1104 is 82 characters
+infer	line 883 is 86 characters
+infer	line 916 is 87 characters
+infer	line 919 is 87 characters
+infer	line 924 is 86 characters
+infer	line 1074 is 87 characters
+infer	line 1099 is 82 characters
 lexer_fun	ML code skipped: val listeq = CaseEq "list" val optioneq = CaseEq "option"
 lexer_fun	line 353 is 80 characters
 lexer_impl	ML code skipped: val tac =  full_simp_tac (srw_ss()) [char_le_def, char_lt_de
@@ -518,9 +517,9 @@ compiler	ML code skipped: val help_string_tm =   help_string |> hd |> (fn QUOTE 
 compiler	Overload add_locs
 compiler	full_compile_64_def: PENDING (the file system of the basis library, which the port does)
 compiler	full_compile_32_def: PENDING (the file system of the basis library, which the port does)
-compiler	line 412 is 85 characters
-compiler	line 969 is 88 characters
-compiler	line 971 is 99 characters
+compiler	line 411 is 85 characters
+compiler	line 968 is 88 characters
+compiler	line 970 is 99 characters
 gc_shared	derive heap_lookup_FLOOKUP: '\\\\ full_simp'
 gc_shared	ML code skipped: val _ = augment_srw_ss [rewrites [LIST_REL_def]];
 gc_shared	derive NOT_IN_heap_map: '\\\\ full_simp'
@@ -547,7 +546,7 @@ dataSem	Overload do_app_peak
 dataSem	ML code skipped: val evaluate_ind = theorem"evaluate_ind";
 dataSem	derive case_eq_thms: not a name
 dataSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-dataSem	line 411 is 85 characters
+dataSem	line 409 is 85 characters
 flatSem	ML code skipped: val s = ``s:('c,'ffi) flatSem$state``
 flatSem	ML code skipped: val eqs = LIST_CONJ (map TypeBase.case_eq_of   [``:op``, ``:
 flatSem	derive case_eq_thms: no eqs
@@ -563,13 +562,13 @@ gen_gc_partial	ML code skipped: val heap_lookup_heap_expand = isSomeDataElement_
 wordSem	ML code skipped: val state_component_equality = theorem"state_component_equal
 wordSem	ML code skipped: val s = ``(s:('a,'c,'ffi) wordSem$state)``
 wordSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-wordSem	line 1222 is 86 characters
+wordSem	line 1195 is 86 characters
 targetSem	line 62 is 86 characters
 targetSem	line 556 is 83 characters
 labSem	Overload read_reg
 labSem	line 50 is 205 characters
 stackSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-stackSem	line 948 is 86 characters
+stackSem	line 929 is 86 characters
 wordConvs	derive not_created_subprogs_P_def: '=> GEN (hd ('
 wordConvs	ML code skipped: val no_alloc_P = ``((<>) (Alloc 0 (LN,LN)))``
 wordConvs	derive no_alloc_def: no not_created_subprogs_P_def
@@ -740,7 +739,7 @@ bvi_letProof	ML code skipped: Resume evaluate_env_rel[Return]:   (rw [] \\ qpat_
 bvi_letProof	ML code skipped: Resume evaluate_env_rel[LetCall]:   (qpat_x_assum `!_ _ _ _ 
 bvi_letProof	ML code skipped: Resume evaluate_env_rel[Let]:   (fs [] \\ rpt (qpat_x_assum 
 bvi_letProof	ML code skipped: Finalise evaluate_env_rel;
-bvi_letProof	line 879 is 80 characters
+bvi_letProof	line 148 is 80 characters
 bvi_tailrecProof	ML code skipped: val find_code_def = bvlSemTheory.find_code_def; val s = mk_v
 bvi_tailrecProof	ML code skipped: val v_ty_cases = TypeBase.case_eq_of ``:v_ty`` val assoc_op_
 bvi_tailrecProof	ML code skipped: val s1 = mk_var("s",   type_of ``bviSem$evaluate`` |> strip_
@@ -981,7 +980,6 @@ clos_to_bvlProof	ML code skipped: val EVERY2_GENLIST = LIST_REL_GENLIST |> EQ_IM
 clos_to_bvlProof	ML code skipped: val ARITH_TAC = intLib.ARITH_TAC;
 clos_to_bvlProof	derive v_rel_SIMP: not a name
 clos_to_bvlProof	ML code skipped: val env_rel_IMP_EL =   LESS_LENGTH_env_rel_IMP |> SPEC_ALL |
-clos_to_bvlProof	Theorem not_isClos: the ML expression ^(closure_tag_def |> concl |> ra...), which the port cannot evaluate
 clos_to_bvlProof	ML code skipped: val r = mk_var("r",``:num |-> 'a ref``);
 clos_to_bvlProof	ML code skipped: fun cases_on_op q = Cases_on q >|   map (MAP_EVERY Cases_on)
 clos_to_bvlProof	ML code skipped: val v_case_eq_thms =   LIST_CONJ [     TypeBase.case_eq_of `
@@ -1098,14 +1096,13 @@ data_to_word_memoryProof	ML code skipped: val good_dimindex_def = good_dimindex_
 data_to_word_memoryProof	derive memory_rel_pointer_eq: '\\\\ rw[] \\\\ C'
 data_to_word_memoryProof	ML code skipped: val v_depth_ind = theorem"v_depth_ind";
 data_to_word_memoryProof	ML code skipped: val elements_list_ind = theorem"elements_list_ind";
-data_to_word_memoryProof	several_clauses cannot read the body: expected 'then' but found 'else' at 454
 data_to_word_memoryProof	ML code skipped: val word_eq_ind = theorem "word_eq_ind";
 data_to_word_memoryProof	ML code skipped: val list_copy_bwd_def = list_copy_bwd_def |> REWRITE_RULE [m
 data_to_word_memoryProof	ML code skipped: val list_copy_bwd_alias_def = list_copy_bwd_alias_def       
 data_to_word_memoryProof	ML code skipped: val memory_rel_copy_array_NONE_lemma =   memory_rel_RefByte_
-data_to_word_memoryProof	line 260 is 94 characters
-data_to_word_memoryProof	line 763 is 81 characters
-data_to_word_memoryProof	line 11196 is 81 characters
+data_to_word_memoryProof	line 171 is 94 characters
+data_to_word_memoryProof	line 384 is 81 characters
+data_to_word_memoryProof	line 1942 is 81 characters
 word_bignumProof	ML code skipped: val good_dimindex_def = miscTheory.good_dimindex_def; val en
 word_bignumProof	ML code skipped: val shift_def = backend_commonTheory.word_shift_def
 word_bignumProof	ML code skipped: val raw_eval_cases = eval_cases;
@@ -1170,26 +1167,15 @@ data_to_word_gcProof	derive word_gc_fun_lemma: '\\\\ fs [do_pa'
 data_to_word_gcProof	ML code skipped: val s = ``(s:('c,'ffi) dataSem$state)``
 data_to_word_gcProof	derive LASTN_ADD1: no LASTN_LENGTH_ID
 data_to_word_gcProof	ML code skipped: val s1 = mk_var("s1",type_of s);
-data_to_word_gcProof	Theorem evaluate_mk_loc_EQ: HOL Light does not read the statement
-data_to_word_gcProof	Theorem mk_loc_eq_push_env_exc_Exception: HOL Light does not read the statement
-data_to_word_gcProof	Theorem evaluate_IMP_domain_EQ: HOL Light does not read the statement
-data_to_word_gcProof	Theorem evaluate_IMP_domain_EQ_Exc: HOL Light does not read the statement
 data_to_word_gcProof	ML code skipped: val s' = mk_var("s'",type_of s);
-data_to_word_gcProof	Theorem eval_push_env_SOME_exc_IMP_s_key_eq: HOL Light does not read the statement
 data_to_word_gcProof	ML code skipped: val IMP_EQ_DISJ = METIS_PROVE [] ``(b1 ==> b2) <=> ~b1 \/ b2
-data_to_word_gcProof	Theorem evaluate_IMP_inc_clock: HOL Light does not read the statement
-data_to_word_gcProof	Theorem evaluate_IMP_inc_clock_Ex: HOL Light does not read the statement
 data_to_word_gcProof	ML code skipped: val do_app = LIST_CONJ [dataSemTheory.do_app_def,do_space_de
 data_to_word_gcProof	ML code skipped: val alloc_alt_gen =   SPEC_ALL alloc_lemma_gen   |> ConseqCo
-data_to_word_gcProof	Theorem evaluate_GiveUp: HOL Light does not read the statement
 data_to_word_gcProof	ML code skipped: val alloc_alt =   SPEC_ALL alloc_lemma   |> ConseqConv.WEAKE
 data_to_word_gcProof	ML code skipped: val alloc_fail_lemma = alloc_lemma   |> Q.INST [`k`|->`dimwo
-data_to_word_gcProof	Theorem AllocVar_thm_gen: HOL Light does not read the statement
-data_to_word_gcProof	Theorem AllocVar_thm: HOL Light does not read the statement
-data_to_word_gcProof	Theorem AllocVar_thm_nary: HOL Light does not read the statement
 data_to_word_gcProof	derive memory_rel_get_var_IMP: no PULL_EXISTS
 data_to_word_gcProof	derive word_ml_inv_get_var_IMP: rule Once/0
-data_to_word_gcProof	line 3194 is 81 characters
+data_to_word_gcProof	line 3216 is 81 characters
 word_depthProof	ML code skipped: Resume max_depth_call_graph_lemma[Call]:   rpt gen_tac   \\ 
 word_depthProof	ML code skipped: \\ PairCases_on `x` \\ simp []   \\ TOP_CASE_TAC \\ simp [] 
 word_depthProof	ML code skipped: Resume max_depth_call_graph_lemma[Loop]:   rpt gen_tac \\ si
@@ -1201,21 +1187,10 @@ word_depthProof	ML code skipped: Finalise max_depth_call_graph_lemma;
 data_to_word_bignumProof	ML code skipped: val clean_tac = rpt var_eq_tac \\ rpt (qpat_x_assum `T` kall
 data_to_word_bignumProof	ML code skipped: val state_rel_def = data_to_word_gcProofTheory.state_rel_def
 data_to_word_bignumProof	ML code skipped: val eval_tac = fs [wordSemTheory.evaluate_def,   wordSemTheo
-data_to_word_bignumProof	Theorem LongDiv1_thm': HOL Light does not read the statement
-data_to_word_bignumProof	Theorem LongDiv1_thm: HOL Light does not read the statement
-data_to_word_bignumProof	Theorem evaluate_AddNumSize: HOL Light does not read the statement
-data_to_word_bignumProof	Theorem AnyHeader_thm: HOL Light does not read the statement
-data_to_word_bignumProof	Theorem evaluate_LongDiv_code': HOL Light does not read the statement
-data_to_word_bignumProof	Theorem evaluate_LongDiv_code: HOL Light does not read the statement
-data_to_word_bignumProof	Theorem Replicate_code_thm: HOL Light does not read the statement
-data_to_word_bignumProof	Theorem Replicate_code_alt_thm: HOL Light does not read the statement
 data_to_word_bignumProof	ML code skipped: val s = ``s:('c,'ffi)dataSem$state``;
 data_to_word_bignumProof	ML code skipped: val _ = numSimps.clear_arith_caches();
 data_to_word_bignumProof	ML code skipped: fun print_tac s goal = let   val _ = numSimps.clear_arith_ca
-data_to_word_bignumProof	Theorem AnyArith_thm: HOL Light does not read the statement
 data_to_word_bignumProof	ML code skipped: val _ = numSimps.clear_arith_caches();
-data_to_word_bignumProof	Theorem eval_Call_Arith_max_stack_NONE: HOL Light does not read the statement
-data_to_word_bignumProof	Theorem eval_Call_Arith: HOL Light does not read the statement
 data_to_word_assignProof	ML code skipped: fun drule0 th =   first_assum(mp_tac o MATCH_MP (ONCE_REWRIT
 data_to_word_assignProof	Overload lookup
 data_to_word_assignProof	ML code skipped: val assign_def =   data_to_wordTheory.assign_def   |> REWRIT
@@ -1227,107 +1202,35 @@ data_to_word_assignProof	derive evaluate_StoreEach: '\\\\ fs [store'
 data_to_word_assignProof	ML code skipped: fun sort_tac n =   CONV_TAC(PATH_CONV(String.concat(List.tab
 data_to_word_assignProof	derive ADD4DIV4: no ADD_DIV_ADD_DIV
 data_to_word_assignProof	derive ADD8DIV8: no ADD_DIV_ADD_DIV
-data_to_word_assignProof	Theorem RefByte_thm: HOL Light does not read the statement
 data_to_word_assignProof	ML code skipped: val get_var_get_real_addr_lemma =     GEN_ALL(CONV_RULE(LAND
 data_to_word_assignProof	ML code skipped: val assign_thm_goal =   ``state_rel c l1 l2 s (t:('a,'c,'ffi
 data_to_word_assignProof	ML code skipped: val evaluate_Assign =   SIMP_CONV(srw_ss())[wordSemTheory.ev
 data_to_word_assignProof	ML code skipped: fun cases_on_op q = Cases_on q >|   map (MAP_EVERY Cases_on)
 data_to_word_assignProof	ML code skipped: val mk_wf_inter = MATCH_MP wf_mk_id (SPEC_ALL wf_inter) |> G
-data_to_word_assignProof	Theorem assign_Install: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_MutCons: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_UpdateCons: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_FinaliseCons: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_WordFromWord: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_CopyByte: HOL Light does not read the statement
-data_to_word_assignProof	Theorem evaluate_StringCmpMin: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_StringCmp: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_XorByte: HOL Light does not read the statement
 data_to_word_assignProof	ML code skipped: val evaluate_AppendMainLoop_code_alt = evaluate_AppendMainLo
 data_to_word_assignProof	ML code skipped: val evaluate_AppendLenLoop_code = evaluate_AppendLenLoop_cod
-data_to_word_assignProof	Theorem assign_ListAppend: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_AllocThunk: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_UpdateThunk: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_ConfigGC: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_WordToInt: HOL Light does not read the statement
-data_to_word_assignProof	Theorem FromList_thm: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_FromList: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_RefByte: HOL Light does not read the statement
-data_to_word_assignProof	Theorem AllocVar_thm_binary: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_RefArray: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_WordFromInt: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_TagEq: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_TagLenEq: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_LenEq: HOL Light does not read the statement
 data_to_word_assignProof	ML code skipped: val eval_Call_Add = Q.SPEC `0` eval_Call_Arith   |> SIMP_RUL
 data_to_word_assignProof	ML code skipped: val eval_Call_Sub = Q.SPEC `1` eval_Call_Arith   |> SIMP_RUL
 data_to_word_assignProof	ML code skipped: val eval_Call_Mul = Q.SPEC `4` eval_Call_Arith   |> SIMP_RUL
 data_to_word_assignProof	ML code skipped: val eval_Call_Div = Q.SPEC `5` eval_Call_Arith   |> SIMP_RUL
 data_to_word_assignProof	ML code skipped: val eval_Call_Mod = Q.SPEC `6` eval_Call_Arith   |> SIMP_RUL
-data_to_word_assignProof	Theorem assign_Add: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Sub: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Mult: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Div: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Mod: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_LengthByte: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Length: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_LengthBlock: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_BoundsCheckBlock: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_BoundsCheckBlock: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_BoundsCheckArray: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_BoundsCheckArray: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_BoundsCheckByte: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_BoundsCheckByte: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_LessSmallConst: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_BoolNot: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_BoolTest: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_WordTest: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Less: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_LessEq: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_EqualConst: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Equal: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_WordOpW8: HOL Light does not read the statement
 data_to_word_assignProof	ML code skipped: val assign_WordOp64 =   ``assign c n l dest (WordOp (WordOpw
-data_to_word_assignProof	Theorem assign_WordOpW64: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_WordShiftW8: HOL Light does not read the statement
 data_to_word_assignProof	ML code skipped: val assign_WordShift64 =   ``assign c n l dest (WordOp (Word
-data_to_word_assignProof	Theorem assign_WordShiftW64: HOL Light does not read the statement
 data_to_word_assignProof	ML code skipped: val assign_FP_cmp = SIMP_CONV (srw_ss()) [assign_def]   ``((
 data_to_word_assignProof	ML code skipped: val assign_FP_top = SIMP_CONV (srw_ss()) [assign_def]   ``((
 data_to_word_assignProof	ML code skipped: val assign_FP_bop = SIMP_CONV (srw_ss()) [assign_def]   ``((
 data_to_word_assignProof	ML code skipped: val assign_FP_uop = SIMP_CONV (srw_ss()) [assign_def]   ``((
-data_to_word_assignProof	Theorem assign_FP_cmp: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_FP_top: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_FP_bop: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_FP_uop: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Label: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Ref: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Update: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_El: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_ElemAt: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_UpdateByte: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_DerefByte: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Const: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_GlobalsPtr: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Global: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_SetGlobal: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_SetGlobalsPtr: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_ConsExtend: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Cons: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_FFI: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_FFI_final: HOL Light does not read the statement
-data_to_word_assignProof	Theorem assign_Build: HOL Light does not read the statement
 data_to_word_assignProof	ML code skipped: fun foldr1 f (x::xs) = foldr f x xs | foldr1 f [] = fail();
 data_to_word_assignProof	derive imp_assign: '"-"] “_ ==> '
-data_to_word_assignProof	Theorem assign_thm: HOL Light does not read the statement
-data_to_word_assignProof	line 901 is 80 characters
-data_to_word_assignProof	line 926 is 86 characters
-data_to_word_assignProof	line 1616 is 80 characters
-data_to_word_assignProof	line 1617 is 81 characters
-data_to_word_assignProof	line 1618 is 80 characters
-data_to_word_assignProof	line 1648 is 80 characters
-data_to_word_assignProof	line 1732 is 80 characters
-data_to_word_assignProof	line 1793 is 85 characters
-data_to_word_assignProof	line 1823 is 83 characters
+data_to_word_assignProof	line 945 is 80 characters
+data_to_word_assignProof	line 970 is 86 characters
+data_to_word_assignProof	line 1981 is 80 characters
+data_to_word_assignProof	line 1982 is 81 characters
+data_to_word_assignProof	line 1983 is 80 characters
+data_to_word_assignProof	line 2013 is 80 characters
+data_to_word_assignProof	line 2118 is 80 characters
+data_to_word_assignProof	line 2179 is 85 characters
+data_to_word_assignProof	line 2230 is 83 characters
 wordConvsProof	ML code skipped: fun FIRST_THEN tacs tac = FIRST (map (fn t => t \\ tac) tacs
 wordConvsProof	ML code skipped: val try_cancel_labels_rel_append =   FIRST_THEN [ALL_TAC, ir
 wordConvsProof	derive const_fp_loop_Seq: '=> total (fs'
@@ -1709,10 +1612,6 @@ data_to_wordProof	ML code skipped: Resume data_compile_correct[If]:   (once_rewr
 data_to_wordProof	ML code skipped: Resume data_compile_correct[Call]:   (rename [‘evaluate (Cal
 data_to_wordProof	ML code skipped: \\ `ALL_DISTINCT q` by (Cases_on `ALL_DISTINCT q` \\ fs[] \\
 data_to_wordProof	ML code skipped: Finalise data_compile_correct;
-data_to_wordProof	Theorem compile_semantics_lemma: HOL Light does not read the statement
-data_to_wordProof	Theorem compile_semantics_precise_lemma: HOL Light does not read the statement
-data_to_wordProof	Theorem compile_semantics_precise: HOL Light does not read the statement
-data_to_wordProof	Theorem compile_semantics: HOL Light does not read the statement
 data_to_wordProof	ML code skipped: val _ = (max_print_depth := 15);
 data_to_wordProof	ML code skipped: val extract_labels_def = wordConvsTheory.extract_labels_def;
 data_to_wordProof	ML code skipped: fun cases_on_op q = Cases_on q >|   map (MAP_EVERY Cases_on)
@@ -1789,12 +1688,7 @@ lab_to_targetProof	ML code skipped: val pos_val_ind = theorem"pos_val_ind";
 lab_to_targetProof	ML code skipped: val prog_to_bytes_lemma = prog_to_bytes_lemma   |> Q.SPECL [
 lab_to_targetProof	ML code skipped: val s1 = ``s1:('a,lab_to_target$config,'ffi) labSem$state``;
 lab_to_targetProof	ML code skipped: val case_eq_thms0 = map TypeBase.case_eq_of [``:lab``, ``:'a
-lab_to_targetProof	Theorem arith_upd_lemma: HOL Light does not read the statement
-lab_to_targetProof	Theorem fp_upd_lemma: HOL Light does not read the statement
-lab_to_targetProof	Theorem arith_upd_share_mem_domain_unchange: HOL Light does not read the statement
-lab_to_targetProof	Theorem fp_upd_share_mem_domain_unchange: HOL Light does not read the statement
 lab_to_targetProof	ML code skipped: val share_mem_state_rel_tac =   rw[] >>   gvs[IMP_CONJ_THM, 
-lab_to_targetProof	Theorem Inst_lemma: HOL Light does not read the statement
 lab_to_targetProof	ML code skipped: val IMP_IMP2 = METIS_PROVE [] ``a /\ (a /\ b ==> c) ==> ((a 
 lab_to_targetProof	ML code skipped: val list_add_if_fresh_simp = Q.SPECL [`n`,`s`] list_add_if_f
 lab_to_targetProof	ML code skipped: val enc_lines_again_simp_ind = theorem"enc_lines_again_simp_
@@ -1814,7 +1708,6 @@ lab_to_targetProof	ML code skipped: fun share_mem_load_compile_correct_tac ffi_n
 lab_to_targetProof	ML code skipped: fun share_mem_store_compile_correct_tac ffi_name new_t1 (nb:
 lab_to_targetProof	ML code skipped: val share_mem_eval_expand_tac =   fs[share_mem_op_def,share_
 lab_to_targetProof	ML code skipped: val say = say0 "compile_correct";
-lab_to_targetProof	Theorem compile_correct: HOL Light does not read the statement
 lab_to_targetProof	ML code skipped: Resume compile_correct[Asm]:   fs[case_eq_thms]>>rw[]   THEN
 lab_to_targetProof	ML code skipped: Resume compile_correct[CBW]:
 lab_to_targetProof	ML code skipped: say "CBW" >>   fs[case_eq_thms]>>   fs[dec_clock_def]>>   qm
@@ -1848,7 +1741,6 @@ lab_to_targetProof	ML code skipped: say "Install" >>   qpat_x_assum`_ =(res,s2)`
 lab_to_targetProof	ML code skipped: Resume compile_correct[Halt]:
 lab_to_targetProof	ML code skipped: say "Halt"   \\ srw_tac[][]   \\ qmatch_assum_rename_tac `as
 lab_to_targetProof	ML code skipped: Finalise compile_correct;
-lab_to_targetProof	Theorem machine_sem_EQ_sem: HOL Light does not read the statement
 lab_to_targetProof	ML code skipped: val IMP_LEMMA = METIS_PROVE [] ``(a ==> b) ==> (b ==> c) ==>
 lab_to_targetProof	ML code skipped: Resume IMP_state_rel_make_init[ISR1]:   fs[Abbr ‘new_shmem_i
 lab_to_targetProof	ML code skipped: Resume IMP_state_rel_make_init[ISR2]:   rpt strip_tac   \\ i
@@ -1876,14 +1768,14 @@ lab_to_targetProof	ML code skipped: \\ ONCE_REWRITE_TAC[WORD_ADD_COMM] >> rewrit
 lab_to_targetProof	ML code skipped: \\ spose_not_then assume_tac >> gvs[NOT_LESS]     \\ qpat_x_
 lab_to_targetProof	ML code skipped: Resume IMP_state_rel_make_init[ISR17]:   drule_then (drule_t
 lab_to_targetProof	ML code skipped: Finalise IMP_state_rel_make_init;
-lab_to_targetProof	derive semantics_make_init: no machine_sem_EQ_sem
-lab_to_targetProof	Theorem make_init_filter_skip: HOL Light does not read the statement
-lab_to_targetProof	Theorem semantics_compile_lemma': HOL Light does not read the statement
-lab_to_targetProof	derive semantics_compile_lemma: no semantics_compile_lemma'
-lab_to_targetProof	Theorem semantics_compile: HOL Light does not read the statement
-lab_to_targetProof	line 3203 is 92 characters
-lab_to_targetProof	line 3244 is 84 characters
-lab_to_targetProof	line 4442 is 93 characters
+lab_to_targetProof	derive semantics_make_init: no PULL_EXISTS
+lab_to_targetProof	line 3237 is 92 characters
+lab_to_targetProof	line 3278 is 84 characters
+lab_to_targetProof	line 4492 is 93 characters
+lab_to_targetProof	line 4653 is 89 characters
+lab_to_targetProof	line 4656 is 81 characters
+lab_to_targetProof	line 4713 is 89 characters
+lab_to_targetProof	line 4716 is 81 characters
 flat_elimProof	ML code skipped: val find_v_globals_ind = theorem "find_v_globals_ind";
 flat_elimProof	ML code skipped: val find_refs_globals_ind = theorem "find_refs_globals_ind";
 flat_elimProof	ML code skipped: val find_result_globals_ind = theorem "find_result_globals_i
@@ -2014,7 +1906,6 @@ stack_allocProof	ML code skipped: val word_gen_gc_move_bitmaps_Loc =   ``word_ge
 stack_allocProof	ML code skipped: val word_gen_gc_partial_move_bitmaps_Loc =   ``word_gen_gc_p
 stack_allocProof	ML code skipped: val comp_correct_thm =   comp_correct |> SPEC_ALL   |> Q.INS
 stack_allocProof	ML code skipped: val _ = augment_srw_ss[rewrites[with_same_regs_lemma]];
-stack_allocProof	Theorem prog_comp_lambda: the ML expression ^(rhs (concl (SPEC_ALL prog_comp...), which the port cannot evaluate
 stack_allocProof	derive next_lab_EQ_MAX: '>>Cases_on`q'
 stack_rawcallProof	ML code skipped: val _ = (max_print_depth := 18);
 stack_rawcallProof	ML code skipped: val word_shift_def = backend_commonTheory.word_shift_def val
@@ -2035,7 +1926,6 @@ word_to_stackProof	derive DROP_list_LUPDATE_lemma: no LESS_EQ_REFL
 word_to_stackProof	ML code skipped: val MEM_SORT = SORTS_SORT_key_val_compare   |> SIMP_RULE std
 word_to_stackProof	ML code skipped: val stack_evaluate_add_clock_NONE =   stackPropsTheory.evalu
 word_to_stackProof	derive with_same_locals: no state_component_equality
-word_to_stackProof	Theorem evaluate_wInst: HOL Light does not read the statement
 word_to_stackProof	ML code skipped: fs[stackSemTheory.get_var_def,stackSemTheory.set_var_def,FLO
 word_to_stackProof	ML code skipped: val goal = ``    λ(prog:'a wordLang$prog,s:('a,num # 'c,'ffi
 word_to_stackProof	ML code skipped: val ind_thm = evaluate_ind |> ISPEC goal |> GEN_BETA_RULE;
@@ -2063,15 +1953,10 @@ word_to_stackProof	ML code skipped: Resume comp_correct[Install]:   REPEAT STRIP
 word_to_stackProof	ML code skipped: Resume comp_correct[CodeBufferWrite]:   REPEAT STRIP_TAC \\ 
 word_to_stackProof	ML code skipped: Resume comp_correct[DataBufferWrite]:   REPEAT STRIP_TAC \\ 
 word_to_stackProof	ML code skipped: Resume comp_correct[FFI]:   REPEAT STRIP_TAC \\ fs[get_label
-word_to_stackProof	Theorem evaluate_ShareInst_Var_eq_Op_Add: HOL Light does not read the statement
-word_to_stackProof	Theorem evaluate_ShareInst_Load: HOL Light does not read the statement
-word_to_stackProof	Theorem evaluate_ShareInst_Store: HOL Light does not read the statement
-word_to_stackProof	Theorem evaluate_ShareInst_correct_lemma: HOL Light does not read the statement
 word_to_stackProof	ML code skipped: Resume comp_correct[ShareInst]:   rpt strip_tac >>   gvs[EVA
 word_to_stackProof	ML code skipped: val cruft_tac =     rpt(PRED_ASSUM is_forall kall_tac) >>   
 word_to_stackProof	ML code skipped: fun uncurry_case_rand x = x                          |> Type
 word_to_stackProof	ML code skipped: fun note_tac s g = (print ("comp_Call_correct: " ^ s ^ "\n")
-word_to_stackProof	Theorem evaluate_cont_loop_handler: HOL Light does not read the statement
 word_to_stackProof	ML code skipped: Resume comp_correct[Loop]:   REPEAT GEN_TAC \\   DISCH_THEN 
 word_to_stackProof	ML code skipped: qexists_tac `ck` \\     qexists_tac `t1_b` \\     qexists_ta
 word_to_stackProof	ML code skipped: Cases_on `cont_loop q` \\ fs[]   >- (
@@ -2110,40 +1995,28 @@ word_to_stackProof	ML code skipped: Resume comp_correct[Continue]:   REPEAT STRI
 word_to_stackProof	ML code skipped: Finalise comp_correct;
 word_to_stackProof	ML code skipped: val comp_correct = let   val th = REWRITE_RULE [FORALL_PROD]
 word_to_stackProof	ML code skipped: val comp_Call_lemma = comp_correct   |> Q.SPEC `Call NONE (S
-word_to_stackProof	Theorem comp_Call: HOL Light does not read the statement
 word_to_stackProof	ML code skipped: val s = ``(s:(α,num # γ,'ffi)wordSem$state)``; val s' = ``(s
 word_to_stackProof	ML code skipped: fun drule0 th =   first_assum(mp_tac o MATCH_MP (ONCE_REWRIT
-word_to_stackProof	Theorem state_rel_IMP_semantics: HOL Light does not read the statement
 word_to_stackProof	ML code skipped: val init_state_ok_semantics =   state_rel_IMP_semantics |> Q
-word_to_stackProof	Theorem state_rel_IMP_semantics': HOL Light does not read the statement
 word_to_stackProof	ML code skipped: val init_state_ok_semantics' =   state_rel_IMP_semantics' |>
-word_to_stackProof	Theorem compile_semantics: HOL Light does not read the statement
 word_to_stackProof	ML code skipped: val wconvs = [post_alloc_conventions_def,wordConvsTheory.ful
 word_to_stackProof	ML code skipped: val reg_bound_ind = stackPropsTheory.reg_bound_ind val reg_b
-word_to_stackProof	line 646 is 82 characters
+word_to_stackProof	line 647 is 82 characters
 stack_to_labProof	ML code skipped: val get_labels_def = stackSemTheory.get_labels_def; val get_
 stack_to_labProof	Overload Loc
 stack_to_labProof	derive code_installed'_cons_non_label: '\\\\ fs [code_'
 stack_to_labProof	ML code skipped: val is_Label_def = labSemTheory.is_Label_def
 stack_to_labProof	ML code skipped: val extract_labels_def = labPropsTheory.extract_labels_def v
-stack_to_labProof	Theorem state_rel_dec_clock: HOL Light does not read the statement
-stack_to_labProof	Theorem set_fp_var_upd_fp_reg: HOL Light does not read the statement
-stack_to_labProof	Theorem state_rel_read_fp_reg_FLOOKUP_fp_regs: HOL Light does not read the statement
 stack_to_labProof	ML code skipped: val s = ``s:('a,'c,'ffi) labSem$state``;
-stack_to_labProof	Theorem compile_jump_correct: HOL Light does not read the statement
 stack_to_labProof	ML code skipped: val finish_tac =   rename1`halt_view (SOME z)` \\ Cases_on`z
 stack_to_labProof	ML code skipped: val sextract_labels_def = stackPropsTheory.extract_labels_de
-stack_to_labProof	Theorem flatten_correct: HOL Light does not read the statement
-stack_to_labProof	Theorem flatten_call_correct: HOL Light does not read the statement
-stack_to_labProof	Theorem flatten_semantics: HOL Light does not read the statement
 stack_to_labProof	ML code skipped: val make_init_semantics = flatten_semantics   |> Q.INST [`s1
 stack_to_labProof	Overload stack_to_lab_compile
 stack_to_labProof	Overload stack_names_compile
 stack_to_labProof	Overload stack_alloc_compile
 stack_to_labProof	Overload stack_remove_compile
 stack_to_labProof	ML code skipped: val sextract_labels_def = stackPropsTheory.extract_labels_de
-stack_to_labProof	Theorem full_make_init_semantics: HOL Light does not read the statement
-stack_to_labProof	derive full_make_init_semantics: no full_make_init_semantics
+stack_to_labProof	derive full_make_init_semantics: no markerTheory.Abbrev_def
 stack_to_labProof	ML code skipped: val stack_asm_ok_def = stackPropsTheory.stack_asm_ok_def
 backendProof	ML code skipped: val compile_tap_def = backend_passesTheory.compile_tap_def;
 backendProof	Overload bvl_inline_compile_prog
@@ -2179,7 +2052,6 @@ backendProof	ML code skipped: val simple_orac_eqs = LIST_CONJ [source_to_flat_or
 backendProof	ML code skipped: val from_EXS = [     from_clos_conf_EX,     from_bvl_conf_EX
 backendProof	ML code skipped: fun conseq xs = ConseqConv.CONSEQ_REWRITE_TAC (xs, [], [])
 backendProof	ML code skipped: fun qsubpat_x_assum tac = let     fun m t = can (find_term (
-backendProof	derive full_make_init_semantics2: no full_make_init_semantics
 backendProof	derive stack_to_lab_orac_eq_std_sym: no stack_to_lab_orac_eq
 backendProof	derive is_state_oracle_cake_orac: no combinTheory.I_o_ID
 backendProof	derive data_to_word_orac_eq_std: no data_to_word_orac_eq
@@ -2190,7 +2062,6 @@ gramProps	ML code skipped: fun dsimp thl = asm_simp_tac (srw_ss() ++ DNF_ss) thl
 gramProps	ML code skipped: fun qispl_then [] ttac = ttac   | qispl_then (q::qs) ttac = 
 gramProps	ML code skipped: fun erule k th = let   fun c th = let     val (vs, body) = s
 gramProps	ML code skipped: val APPEND_EQ_SING' = CONV_RULE (LAND_CONV (ONCE_REWRITE_CON
-gramProps	derive cmlG_FDOM: no cmlG_def
 gramProps	ML code skipped: val c1 = Cong (DECIDE ``(p = p') ==> ((p /\ q) = (p' /\ q))`
 gramProps	ML code skipped: val nullconv =     SIMP_CONV (srw_ss()) [nullableML_EQN, nul
 gramProps	ML code skipped: val safenml = LIST_CONJ (List.take(CONJUNCTS nullableML_def,

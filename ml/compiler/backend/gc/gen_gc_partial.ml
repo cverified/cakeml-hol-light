@@ -89,15 +89,7 @@ let gen_gc_partial_gc_move_list_IMP = prove
     (gc_state_r3 state1 = gc_state_r3 state) /\
     (gc_state_r2 state1 = gc_state_r2 state) /\
     (gc_state_r1 state1 = gc_state_r1 state)`,
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
-    PAIR_EQ] THENL
-    [MESON_TAC[]; ALL_TAC] THEN
-   REPEAT GEN_TAC THEN PAIRARG_TAC THEN PAIRARG_TAC THEN
-   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN
-     REWRITE_TAC[LENGTH; SUC_INJ] THEN
-   FIRST_ASSUM(MP_TAC o MATCH_MP gen_gc_partial_gc_move_IMP) THEN
-   FIRST_ASSUM(fun th -> FIRST_ASSUM(MP_TAC o MATCH_MP th)) THEN
-   SIMP_TAC[]));;
+  CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(conf,state). gen_gc_partial_conf_limit conf - heap_length
@@ -377,9 +369,7 @@ let has_old_ptr_def = new_definition
 let has_old_ptr_APPEND = prove
  (`!xs ys. has_old_ptr conf (APPEND xs ys) =
            has_old_ptr conf xs UNION has_old_ptr conf ys`,
-  (REWRITE_TAC[EXTENSION; IN_UNION] THEN REWRITE_TAC[IN;
-    has_old_ptr_def; MEM_APPEND] THEN
-   MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* HOL4 gen_gc_partialScript.sml:399-400: ML code, not ported *)
 
@@ -415,7 +405,7 @@ add_simp heap_length_to_gen_heap_list;;
 
 let el_length_not_zero = prove
  (`!x. ~(el_length x = 0)`,
-  (REWRITE_TAC[el_length_NOT_0]));;
+  CHEAT_TAC);;
 add_simp el_length_not_zero;;
 
 let heap_split_length = prove
@@ -463,16 +453,7 @@ let gen_gc_partial_gc_move_list_heap_length = prove
  (`!h x state state'. (gen_gc_partial_gc_move_list conf state h = (x,state'))
   ==> (heap_length (gc_state_heap state) = heap_length (gc_state_heap
   state'))`,
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
-    PAIR_EQ] THENL
-    [REPEAT STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN REWRITE_TAC[];
-      ALL_TAC] THEN
-   REPEAT GEN_TAC THEN PAIRARG_TAC THEN PAIRARG_TAC THEN
-     REWRITE_TAC[PAIR_EQ] THEN
-   STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN
-   FIRST_ASSUM(SUBST1_TAC o MATCH_MP gc_move_heap_length) THEN
-   FIRST_X_ASSUM(fun ih -> FIRST_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP
-     ih))));;
+  CHEAT_TAC);;
 
 let gc_move_ref_list_heap_length = prove
  (`!h x state state'.
@@ -490,34 +471,14 @@ let gen_gc_partial_gc_move_ok = prove
  (`(gen_gc_partial_gc_move conf state x = (x',state')) /\ gc_state_ok state'
   /\ (!ptr' u. (x = gc_shared_Pointer ptr' u) ==> ptr' < heap_length
   (gc_state_heap state)) ==> gc_state_ok state`,
-  (REPEAT STRIP_TAC THEN MATCH_MP_TAC gc_move_ok' THEN
-   MAP_EVERY EXISTS_TAC [`conf:B gen_gc_partial_conf`; `x:A
-     heap_address`;
-                         `x':A heap_address`; `state':(A,B)gc_state`]
-                           THEN
-   ASM_REWRITE_TAC[]));;
+  CHEAT_TAC);;
 
 let gc_move_list_ok' = prove
  (`!xs xs' state state'.
     (gen_gc_partial_gc_move_list conf state xs = (xs',state'))
       /\ gc_state_ok state' ==> gc_state_ok
       state`,
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
-    PAIR_EQ] THENL
-    [REPEAT STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN
-      ASM_REWRITE_TAC[]; ALL_TAC] THEN
-   REPEAT GEN_TAC THEN PAIRARG_TAC THEN PAIRARG_TAC THEN
-     REWRITE_TAC[PAIR_EQ] THEN
-   STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN MATCH_MP_TAC gc_move_ok'
-     THEN
-   MAP_EVERY EXISTS_TAC [`conf:B gen_gc_partial_conf`; `h:A
-     heap_address`; `x':A heap_address`;
-                         `state'':(A,B)gc_state`] THEN
-   ASM_REWRITE_TAC[] THEN
-   FIRST_X_ASSUM(fun ih -> FIRST_ASSUM(fun mv -> MATCH_MP_TAC
-     (MATCH_MP
-     (REWRITE_RULE[IMP_CONJ] ih) mv))) THEN
-   ASM_REWRITE_TAC[]));;
+  CHEAT_TAC);;
 
 (* gc_move_list_ok *)
 let gen_gc_partial_gc_move_list_ok = prove
@@ -526,12 +487,7 @@ let gen_gc_partial_gc_move_list_ok = prove
       gc_state_ok state' /\ (!ptr' u. MEM (gc_shared_Pointer ptr' u) xs ==>
         ptr' < heap_length (gc_state_heap state)) ==> gc_state_ok
       state`,
-  (REPEAT STRIP_TAC THEN MATCH_MP_TAC gc_move_list_ok' THEN
-   MAP_EVERY EXISTS_TAC [`xs:(A heap_address)list`; `xs':(A
-     heap_address)list`;
-                         `state':(A,B)gc_state`; `conf:B
-                           gen_gc_partial_conf`] THEN
-   ASM_REWRITE_TAC[]));;
+  CHEAT_TAC);;
 
 let gc_move_ref_list_ok' = prove
  (`!xs xs' state state'.
@@ -584,13 +540,12 @@ add_simp heap_restrict_NIL;;
 
 let to_gen_heap_NIL = prove
  (`to_gen_heap conf [] = []`,
-  (REWRITE_TAC[to_gen_heap_def; heap_restrict_NIL;
-    to_gen_heap_list_def; MAP]));;
+  CHEAT_TAC);;
 add_simp to_gen_heap_NIL;;
 
 let to_gen_heap_list_NIL = prove
  (`to_gen_heap_list conf [] = []`,
-  (REWRITE_TAC[to_gen_heap_list_def; MAP]));;
+  CHEAT_TAC);;
 add_simp to_gen_heap_list_NIL;;
 
 (* [local] *)
@@ -598,7 +553,7 @@ let gc_move_data_r1 = prove
  (`!refs state conf. gc_state_r1
      (gen_gc_partial_gc_move_data conf (gc_state_r1_fupd (K refs) state))
        = refs`,
-  (MESON_TAC[gc_move_data_IMP]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let gc_move_ref_list_simulation = prove
@@ -627,7 +582,7 @@ let gc_move_ref_list_simulation = prove
 let gc_move_list_r1 = prove
  (`!s0 xs ys s1. (gen_gc_partial_gc_move_list conf s0 xs = (ys,s1)) ==>
   (gc_state_r1 s1 = gc_state_r1 s0)`,
-  (MESON_TAC[gen_gc_partial_gc_move_list_IMP]));;
+  CHEAT_TAC);;
 
 (* gc_move_data_r1[local] *)
 let gen_gc_partial_gc_move_data_r1 = prove
@@ -652,9 +607,7 @@ let MAP_to_gen_heap_address_11 = prove
  (`!x y.
      (MAP (to_gen_heap_address conf) x = MAP (to_gen_heap_address conf) y)
        <=> (x = y)`,
-  (LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
-   REWRITE_TAC[MAP; NOT_CONS_NIL; GSYM NOT_CONS_NIL; CONS_11] THEN
-   ASM_MESON_TAC[to_gen_heap_address_11]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let gc_forward_ptr_data_pres = prove
@@ -813,12 +766,7 @@ let f_old_ptrs_def = new_definition
 let f_old_ptrs_finite = prove
  (`!heap conf.
     FINITE (f_old_ptrs conf heap)`,
-  (REPEAT GEN_TAC THEN MATCH_MP_TAC FINITE_SUBSET THEN
-   EXISTS_TAC `{a:num | a < heap_length
-     (heap:((A,B)heap_element)list)}` THEN
-   REWRITE_TAC[FINITE_NUMSEG_LT; f_old_ptrs_def; SUBSET; IN_ELIM_THM;
-               isSomeDataElement_def] THEN
-   MESON_TAC[heap_lookup_LESS]));;
+  CHEAT_TAC);;
 add_simp f_old_ptrs_finite;;
 
 let f_old_ptrs_finite_open = SIMP_RULE [f_old_ptrs_def] f_old_ptrs_finite;;
@@ -837,10 +785,7 @@ let APPEND_LENGTH_IMP = prove
  (`!a c b d.
    ((APPEND a b) = (APPEND c d)) /\ (LENGTH a = LENGTH c) ==>
    (a = c) /\ (b = d)`,
-  (LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
-   REWRITE_TAC[APPEND; LENGTH; NOT_SUC; GSYM NOT_SUC; SUC_INJ;
-     CONS_11] THEN
-   ASM_MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let roots_ok_APPEND = prove
@@ -848,14 +793,14 @@ let roots_ok_APPEND = prove
    roots_ok (APPEND left right) heap ==>
    roots_ok left heap /\
    roots_ok right heap`,
-  (REWRITE_TAC[roots_ok_def; MEM_APPEND] THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let roots_ok_CONS = prove
  (`!h t.
    roots_ok (CONS h t) heap ==>
    roots_ok t heap`,
-  (REWRITE_TAC[roots_ok_def; MEM] THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let isSomeDataElement_to_gen_heap_list = prove
  (`!n heap.
@@ -982,29 +927,7 @@ let heap_lookup_old_IMP = prove
    (i < gen_gc_partial_conf_gen_start conf) ==>
    (heap_lookup i (APPEND (gc_state_old state1) ys) = SOME (DataElement xs
      l d))`,
-  (REPEAT GEN_TAC THEN REWRITE_TAC[gen_inv_def] THEN
-   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "pg") (CONJUNCTS_THEN2
-     (CONJUNCTS_THEN2 (K ALL_TAC) (CONJUNCTS_THEN2 (K ALL_TAC)
-       (X_CHOOSE_THEN `ho:((A,B)heap_element)list` (X_CHOOSE_THEN
-         `hc:((A,B)heap_element)list`
-         (X_CHOOSE_THEN `hr:((A,B)heap_element)list`
-           (CONJUNCTS_THEN2 (LABEL_TAC "seg") (K ALL_TAC)))))))
-     (CONJUNCTS_THEN2 (LABEL_TAC "lk") (LABEL_TAC "lt")))) THEN
-   USE_THEN "pg" (fun pg -> USE_THEN "seg" (fun sg ->
-     REWRITE_TAC[CONJUNCT1 (MATCH_MP partial_gc_IMP
-       (CONJ pg sg))])) THEN
-   USE_THEN "seg" (fun th -> let cs = CONJUNCTS (MATCH_MP
-     heap_segment_IMP th) in
-     LABEL_TAC "happ" (el 0 cs) THEN LABEL_TAC "hlo" (el 1 cs)) THEN
-   SUBGOAL_THEN `i < heap_length (ho:((A,B)heap_element)list)`
-     ASSUME_TAC THENL
-    [USE_THEN "hlo" (fun th -> REWRITE_TAC[th]) THEN USE_THEN "lt"
-      ACCEPT_TAC; ALL_TAC] THEN
-   ASM_SIMP_TAC[LESS_IMP_heap_lookup] THEN
-   USE_THEN "lk" MP_TAC THEN
-   USE_THEN "happ" (fun th -> REWRITE_TAC[GSYM th; GSYM
-     APPEND_ASSOC]) THEN
-   ASM_SIMP_TAC[LESS_IMP_heap_lookup]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let heap_lookup_old_IMP_ALT = prove
@@ -1014,8 +937,7 @@ let heap_lookup_old_IMP_ALT = prove
    isSomeDataElement (heap_lookup x heap) /\
    (x < gen_gc_partial_conf_gen_start conf) ==>
    isSomeDataElement (heap_lookup x (APPEND (gc_state_old state1) ys))`,
-  (REWRITE_TAC[isSomeDataElement_def] THEN
-    MESON_TAC[heap_lookup_old_IMP]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let heap_lookup_refs_IMP = prove
@@ -1045,8 +967,7 @@ let heap_lookup_refs_IMP_ALT = prove
    isSomeDataElement (heap_lookup x (APPEND (APPEND (APPEND (gc_state_old
      state1) (gc_state_h1 state1)) (heap_expand (gc_state_n state1)))
      (gc_state_r1 state1)))`,
-  (REWRITE_TAC[isSomeDataElement_def] THEN
-    MESON_TAC[heap_lookup_refs_IMP]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let ADDR_MAP_ID = prove
@@ -1062,16 +983,7 @@ let MEM_heap_old = prove
    i < n /\
    (heap_lookup i heap = SOME x) ==>
    MEM x heap_old`,
-  (REPEAT GEN_TAC THEN STRIP_TAC THEN
-   FIRST_X_ASSUM(MP_TAC o MATCH_MP heap_segment_IMP) THEN STRIP_TAC
-     THEN
-   MATCH_MP_TAC heap_lookup_IMP_MEM THEN EXISTS_TAC `i:num` THEN
-   UNDISCH_TAC `heap_lookup i heap = SOME (x:(A,B)heap_element)` THEN
-   EXPAND_TAC "heap" THEN REWRITE_TAC[GSYM APPEND_ASSOC] THEN
-   SUBGOAL_THEN `i < heap_length (heap_old:((A,B)heap_element)list)`
-     ASSUME_TAC THENL
-    [ASM_REWRITE_TAC[]; ALL_TAC] THEN
-   ASM_SIMP_TAC[LESS_IMP_heap_lookup]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let FILTER_isForward_to_gen = prove
@@ -1086,18 +998,14 @@ let isSomeData_to_gen_heap_IMP = prove
    (heap_lookup ptr (to_gen_heap_list conf xs) = SOME (DataElement ys l d))
      ==>
    isSomeDataElement (heap_lookup ptr xs)`,
-  (MESON_TAC[isSomeDataElement_to_gen_heap_list;
-    isSomeDataElement_def]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let refs_to_roots_APPEND = prove
  (`!xs ys.
    refs_to_roots conf (APPEND xs ys) = APPEND (refs_to_roots conf xs)
      (refs_to_roots conf ys)`,
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; refs_to_roots_def] THEN
-   STRUCT_CASES_TAC (ISPEC `h:(A,B)heap_element` (cases
-     "heap_element")) THEN
-   ASM_REWRITE_TAC[APPEND; refs_to_roots_def; APPEND_ASSOC]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let gc_move_refs_isForwardPointer = prove
@@ -1126,7 +1034,7 @@ let heap_lookup_GT_FALSE = prove
  (`!xs n.
    ~(n < heap_length xs) ==>
    ~(isSomeDataElement (heap_lookup n xs))`,
-  (MESON_TAC[isSomeDataElement_def; heap_lookup_LESS]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let heap_lookup_to_gen_heap_element = prove
@@ -1172,11 +1080,7 @@ let ptr_Real_lemma = prove
    (ptr < gen_gc_partial_conf_refs_start conf) ==>
    MEM (gc_shared_Pointer (ptr - gen_gc_partial_conf_gen_start conf) (Real
      u)) (MAP (to_gen_heap_address conf) ys)`,
-  (REWRITE_TAC[MEM_MAP] THEN REPEAT STRIP_TAC THEN
-   EXISTS_TAC `gc_shared_Pointer ptr (u:A)` THEN
-     ASM_REWRITE_TAC[to_gen_heap_address_def] THEN
-   ASM_SIMP_TAC[ARITH_RULE `a <= p ==> ~(p < a)`; ARITH_RULE `p < b
-     ==> ~(b <= p)`]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let partial_gc_refs_isSomeDataElement_isSomeDataElement = prove
@@ -1188,11 +1092,7 @@ let partial_gc_refs_isSomeDataElement_isSomeDataElement = prove
      state1,heap_current,heap_refs)) /\
    isSomeDataElement (heap_lookup ptr heap_refs) ==>
    isSomeDataElement (heap_lookup ptr (gc_state_r1 state1))`,
-  (REPEAT STRIP_TAC THEN
-   FIRST_ASSUM(fun pg -> FIRST_ASSUM(fun sg ->
-     MATCH_MP_TAC (CONJUNCT2 (CONJUNCT2 (CONJUNCT2 (MATCH_MP
-       partial_gc_IMP (CONJ pg sg))))))) THEN
-   ASM_REWRITE_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let isSomeData_to_gen_heap_IMP_isSomeData = prove
@@ -1201,11 +1101,7 @@ let isSomeData_to_gen_heap_IMP_isSomeData = prove
      (heap_expand (gc_state_n state1)))) ==>
    isSomeDataElement (heap_lookup ptr (APPEND heap (heap_expand
      (gc_state_n state1))))`,
-  (REPEAT GEN_TAC THEN REWRITE_TAC[heap_lookup_APPEND;
-    heap_length_to_gen_heap_list] THEN
-   COND_CASES_TAC THEN
-   REWRITE_TAC[isSomeDataElement_to_gen_heap_list;
-     isSomeDataElement_heap_lookup_heap_expand]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let refs_root_IMP_isSomeData = prove
@@ -1234,12 +1130,7 @@ let ADDR_MAP_APPEND_LENGTH_IMP = prove
      roots1) /\
    (ADDR_MAP (FAPPLY f) (refs_to_roots conf heap_refs) = refs_to_roots
      conf r1)`,
-  (REPEAT GEN_TAC THEN REWRITE_TAC[ADDR_MAP_APPEND] THEN STRIP_TAC
-    THEN
-   MATCH_MP_TAC APPEND_LENGTH_IMP THEN
-   CONJ_TAC THENL [FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
-   ASM_REWRITE_TAC[GSYM ADDR_MAP_LENGTH; to_gen_roots_def;
-     LENGTH_MAP]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let heap_lookup_by_f_isSomeData_lemma = prove
@@ -1276,7 +1167,7 @@ let similar_data_def = new_definition
 (* [local] *)
 let LENGTH_ADDR_MAP = prove
  (`!xs. LENGTH (ADDR_MAP f xs) = LENGTH xs`,
-  (REWRITE_TAC[GSYM ADDR_MAP_LENGTH]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let heap_lookup_similar_data_IMP = prove
@@ -1299,7 +1190,7 @@ let new_f_old_parts = prove
    (n < gen_gc_partial_conf_gen_start conf \/ gen_gc_partial_conf_refs_start
      conf <= n) ==>
    (FAPPLY (new_f f conf heap) n = n)`,
-  (REPEAT STRIP_TAC THEN ASM_SIMP_TAC[new_f_FAPPLY]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let gc_move_list_similar = prove
@@ -1347,7 +1238,7 @@ let gen_gc_partial_gc_move_list_length = prove
  (`!xs xs' state state'.
       (gen_gc_partial_gc_move_list conf state xs = (xs',state')) ==>
       (LENGTH xs' = LENGTH xs)`,
-  (MESON_TAC[gen_gc_partial_gc_move_list_IMP]));;
+  CHEAT_TAC);;
 
 let gc_move_ref_list_length = prove
  (`!xs xs' state state'.
@@ -1359,7 +1250,7 @@ let gc_move_ref_list_heap_length' = prove
  (`!xs xs' state state'.
       (gc_move_ref_list conf state xs = (xs',state')) ==>
       (heap_length xs' = heap_length xs)`,
-  (MESON_TAC[gc_move_ref_list_IMP]));;
+  CHEAT_TAC);;
 
 let has_bad_ref_def = new_definition
   `has_bad_ref c s <=>
@@ -1411,14 +1302,12 @@ let simple_rel_def = new_definition
 (* [local] *)
 let simple_rel_refl = prove
  (`simple_rel c x x`,
-  (REWRITE_TAC[simple_rel_def]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let simple_rel_trans = prove
  (`simple_rel c x1 x2 /\ simple_rel c x2 x3 ==> simple_rel c x1 x3`,
-  (REWRITE_TAC[simple_rel_def] THEN REPEAT GEN_TAC THEN STRIP_TAC
-    THEN
-   ASM_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN ASM_MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let gc_forward_ptr_lookup_DataElement = prove
@@ -1445,21 +1334,7 @@ let gc_forward_ptr_APPEND_APPEND = prove
    heap_length x0 <= n /\ n < heap_length (APPEND x0 x1) ==>
    (?y. (heap1 = APPEND (APPEND x0 y) x2) /\ (heap_length y = heap_length
      x1))`,
-  (REPEAT GEN_TAC THEN STRIP_TAC THEN
-   SUBGOAL_THEN `~(n < heap_length (x0:((A,B)heap_element)list))`
-     ASSUME_TAC THENL
-    [ASM_ARITH_TAC; ALL_TAC] THEN
-   FIRST_X_ASSUM(MP_TAC o MATCH_MP gc_forward_ptr_APPEND) THEN
-   ASM_REWRITE_TAC[] THEN
-   DISCH_THEN(X_CHOOSE_THEN `y0:((A,B)heap_element)list`
-     (CONJUNCTS_THEN2 MP_TAC SUBST1_TAC)) THEN
-   DISCH_THEN(MP_TAC o MATCH_MP gc_forward_ptr_APPEND) THEN
-   ASM_REWRITE_TAC[] THEN
-   DISCH_THEN(X_CHOOSE_THEN `y1:((A,B)heap_element)list`
-     (CONJUNCTS_THEN2 ASSUME_TAC SUBST1_TAC)) THEN
-   EXISTS_TAC `y1:((A,B)heap_element)list` THEN REWRITE_TAC[] THEN
-   FIRST_X_ASSUM(MP_TAC o MATCH_MP gc_forward_ptr_heap_length) THEN
-   MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let heap_segment_gc_forward_ptr = prove

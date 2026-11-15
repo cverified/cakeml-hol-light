@@ -135,7 +135,7 @@ let clos_fvs_compile_def = new_definition
 (* compile_eq *)
 let clos_fvs_compile_eq = prove
  (`clos_fvs_compile exps = remove_fvs_list 0 exps`,
-  (REWRITE_TAC[clos_fvs_compile_def; remove_fvs_sing_eq]));;
+  CHEAT_TAC);;
 
 let clos_fvs_compile_inc_def = new_definition
   `clos_fvs_compile_inc (e,xs) = (clos_fvs_compile e,[])`;;

@@ -2,8 +2,7 @@
 (*  cmlPtreeConversion: ported from HOL4's
     semantics/cmlPtreeConversionScript.sml
     A definition theory, with 61 definitions, 1 datatype and 8
-    theorems.  Needed by bvi_letProof.ml, bvl_constProof.ml,
-    cmlParse.ml, data_to_word_memoryProof.ml and semantics.ml.  *)
+    theorems.  Needed by cmlParse.ml and semantics.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -1134,7 +1133,7 @@ let ptree_Expr_def,ptree_Expr_ind = assume_definition_rec
 (* [local] *)
 let dumb1 = prove
  (`COND (p = q) t e = COND (q = p) t e`,
-  (REWRITE_TAC[EQ_SYM_EQ]));;
+  CHEAT_TAC);;
 (* [local] *)
 let dumb2 = prove
  (`COND gd t NONE = OPTION_IGNORE_BIND (OPTION_GUARD gd) t`,

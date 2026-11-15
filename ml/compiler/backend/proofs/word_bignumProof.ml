@@ -125,7 +125,7 @@ let copy_vars_def,copy_vars_ind = define_rec
 let eval = cake_inductive
   `(!r s. word_bignumProof_Eval r s word_bignum_Skip (INR (s:'a
   word_bignumProof_state))) /\
-   (!r s. word_bignumProof_Eval r s wordSem_Continue (INL s)) /\
+   (!r s. word_bignumProof_Eval r s word_bignum_Continue (INL s)) /\
    (!r vs s. word_bignumProof_Eval r s (word_bignum_Delete vs) (INR
      (delete_vars vs (s:'a word_bignumProof_state)))) /\
    (!r s x n.
@@ -735,7 +735,7 @@ let Corr_Seq_alt = prove
 
 (* [local] *)
 let Corr_Continue = prove
- (`Corr wordSem_Continue s (INL s) T`,
+ (`Corr word_bignum_Continue s (INL s) T`,
   CHEAT_TAC);;
 
 (* [local] *)

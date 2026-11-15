@@ -2528,8 +2528,10 @@ let stack_allocProof_make_init_def = new_definition
   (stackSem_state_code_fupd (K code)
      s)))))`;;
 
-(* HOL4 stack_allocProofScript.sml:6075-6079: a theorem whose statement the
-   port cannot state yet: prog_comp_lambda *)
+let prog_comp_lambda = prove
+ (`stack_alloc_prog_comp = (\(n,p). ((n,FST (stack_alloc_comp n (next_lab p
+  2) p))))`,
+  CHEAT_TAC);;
 
 (* make_init_semantics *)
 (* the names of record fields that this statement uses for

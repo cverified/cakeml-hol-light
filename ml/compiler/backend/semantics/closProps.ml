@@ -2,7 +2,7 @@
 (*  closProps: ported from HOL4's
     compiler/backend/semantics/closPropsScript.sml
     A proof theory, with 35 definitions and 200 theorems.  Needed by
-    15 files of the port.  *)
+    14 files of the port.  *)
 (* ======================================================== *)
 
 (*

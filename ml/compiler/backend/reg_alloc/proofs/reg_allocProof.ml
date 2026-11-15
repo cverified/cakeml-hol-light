@@ -130,9 +130,7 @@ let msub_eqn = prove
    Msub e n ls =
    if n < LENGTH ls then M_success (EL n ls)
                   else M_failure e`,
-  (REPEAT GEN_TAC THEN COND_CASES_TAC THEN
-   ASM_SIMP_TAC[msub_eq] THEN
-   MATCH_MP_TAC msub_exn_eq THEN ASM_ARITH_TAC));;
+  CHEAT_TAC);;
 add_simp msub_eqn;;
 
 let adj_ls_sub_eqn = prove
@@ -183,9 +181,7 @@ let mupdate_eqn = prove
    if n < LENGTH ls then
    M_success (LUPDATE x n ls)
    else M_failure e`,
-  (REPEAT GEN_TAC THEN COND_CASES_TAC THEN
-   ASM_SIMP_TAC[mupdate_eq] THEN
-   MATCH_MP_TAC mupdate_exn_eq THEN ASM_ARITH_TAC));;
+  CHEAT_TAC);;
 add_simp mupdate_eqn;;
 
 let update_adj_ls_eqn = prove
@@ -480,11 +476,7 @@ let sp_inverts_def = new_definition
 let sp_inverts_insert = prove
  (`sp_inverts f g /\ ~(x IN domain f) /\ ~(y IN domain g) ==>
    sp_inverts (sptree_insert x y f) (sptree_insert y x g)`,
-  (REWRITE_TAC[sp_inverts_def; lookup_insert; domain_lookup] THEN
-   REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
-   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_INJ] THENL
-    [DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[];
-     DISCH_TAC THEN COND_CASES_TAC THEN ASM_MESON_TAC[]]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let list_remap_domain = prove
@@ -541,13 +533,13 @@ let is_subgraph_def = new_definition
 
 let is_subgraph_refl = prove
  (`is_subgraph s s`,
-  (REWRITE_TAC[is_subgraph_def]));;
+  CHEAT_TAC);;
 
 let is_subgraph_trans = prove
  (`is_subgraph s s' /\
    is_subgraph s' s'' ==>
    is_subgraph s s''`,
-  (REWRITE_TAC[is_subgraph_def] THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* TODO quick sanity check: move to proof file when done *)
 let hide_def = new_definition
@@ -556,7 +548,7 @@ let hide_def = new_definition
 (* [local] *)
 let GT_TRANS = prove
  (`(a:num) > b /\ b > c ==> a > c`,
-  (ARITH_TAC));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let GT_sorted_eq = prove
@@ -589,11 +581,7 @@ let sorted_mem_correct = prove
  (`!ls.
    SORTED (>) ls ==>
    (sorted_mem x ls <=> MEM x ls)`,
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[sorted_mem_def; MEM;
-    GT_sorted_eq] THEN
-   REPEAT STRIP_TAC THEN
-   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
-   ASM_MESON_TAC[ARITH_RULE `~(x:num > y /\ y > x)`]));;
+  CHEAT_TAC);;
 
 let insert_edge_succeeds = prove
  (`good_ra_state s /\
@@ -668,7 +656,7 @@ let INJ_less = prove
  (`!f s' t s.
    INJ f s' t /\ s SUBSET s' ==>
    INJ f s t`,
-  (REWRITE_TAC[INJ; SUBSET] THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let check_partial_col_success = prove
  (`!ls live flive col.
@@ -684,7 +672,7 @@ let INJ_COMPOSE_IMAGE = prove
    INJ f a b /\
    INJ g (IMAGE f a) u ==>
    INJ (g o f) a u`,
-  (REWRITE_TAC[INJ; IN_IMAGE; o_THM] THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let colouring_satisfactory_cliques = prove
  (`!ls g (f:num->num).
@@ -692,27 +680,7 @@ let colouring_satisfactory_cliques = prove
    ALL (\x. x < LENGTH g) ls /\
    colouring_satisfactory f g /\ is_clique ls g ==>
    ALL_DISTINCT (MAP f ls)`,
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[ALL_DISTINCT; MAP; ALL] THEN
-   REPEAT GEN_TAC THEN STRIP_TAC THEN CONJ_TAC THENL
-    [REWRITE_TAC[MEM_MAP] THEN DISCH_THEN(X_CHOOSE_THEN `y:num`
-      STRIP_ASSUME_TAC) THEN
-     SUBGOAL_THEN `has_edge g h y` MP_TAC THENL
-      [UNDISCH_TAC `is_clique (CONS h t) g` THEN
-        REWRITE_TAC[is_clique_def; MEM] THEN
-       ASM_MESON_TAC[];
-       ALL_TAC] THEN
-     REWRITE_TAC[has_edge_def] THEN STRIP_TAC THEN
-     UNDISCH_TAC `colouring_satisfactory (f:num->num) g` THEN
-     REWRITE_TAC[colouring_satisfactory_def] THEN
-     DISCH_THEN(MP_TAC o SPEC `h:num`) THEN ASM_REWRITE_TAC[] THEN
-     DISCH_THEN(MP_TAC o SPEC `y:num`) THEN ASM_REWRITE_TAC[] THEN
-     ASM_MESON_TAC[];
-     FIRST_X_ASSUM MATCH_MP_TAC THEN EXISTS_TAC `g:(num list)list`
-       THEN
-     ASM_REWRITE_TAC[] THEN
-     UNDISCH_TAC `is_clique (CONS h t) g` THEN
-       REWRITE_TAC[is_clique_def; MEM] THEN
-     MESON_TAC[]]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let domain_eq_IMAGE = prove
@@ -724,14 +692,14 @@ let is_clique_FILTER = prove
  (`!ls.
    is_clique ls G ==>
    is_clique (FILTER P ls) G`,
-  (REWRITE_TAC[is_clique_def; MEM_FILTER] THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let is_clique_subgraph = prove
  (`is_clique ls s /\
    is_subgraph s s' ==>
    is_clique ls s'`,
-  (REWRITE_TAC[is_clique_def; is_subgraph_def] THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let domain_numset_list_delete = prove
  (`!l live.
@@ -763,49 +731,32 @@ let colouring_satisfactory_subgraph = prove
  (`colouring_satisfactory f h /\
    is_subgraph g h ==>
    colouring_satisfactory f g`,
-  (REWRITE_TAC[colouring_satisfactory_def; is_subgraph_def;
-    has_edge_def] THEN
-   MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let ALL_DISTINCT_set_INJ = prove
  (`!ls col.
    ALL_DISTINCT (MAP col ls) ==>
    INJ col (set_of_list ls) UNIV`,
-  (* a list of distinct images has no two elements with one image,
-     which is what INJ says of the set the list stands for *)
-  (let adcons = prove
-    (`!(h:A) t.
-        ALL_DISTINCT (CONS h t) <=> ~(MEM h t) /\ ALL_DISTINCT t`,
-     REWRITE_TAC[ALL_DISTINCT; PAIRWISE; GSYM ALL_MEM] THEN
-     MESON_TAC[]) in
-   REWRITE_TAC[INJ; IN_UNIV; IN_SET_OF_LIST] THEN
-   ONCE_REWRITE_TAC[SWAP_FORALL_THM] THEN
-   GEN_TAC THEN LIST_INDUCT_TAC THEN
-   REWRITE_TAC[MAP; MEM; adcons; MEM_MAP] THEN
-   ASM_MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let IMAGE_DIFF = prove
  (`INJ f (s UNION t) UNIV ==>
    IMAGE f (s DIFF t) =
    (IMAGE f s DIFF IMAGE f t)`,
-  (REWRITE_TAC[EXTENSION; INJ; IN_IMAGE; IN_DIFF; IN_UNION; IN_UNIV]
-    THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let set_FILTER = prove
  (`set_of_list (FILTER P live) =
    set_of_list live DIFF (\x. ~(P x))`,
-  (REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; MEM_FILTER; IN_DIFF] THEN
-   REWRITE_TAC[IN] THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let MEM_MAP_IMAGE = prove
  (`(\x. MEM x (MAP f l)) = IMAGE f (set_of_list l)`,
-  (REWRITE_TAC[EXTENSION; IN_IMAGE; IN_SET_OF_LIST; MEM_MAP] THEN
-    REWRITE_TAC[IN] THEN
-   MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let domain_difference = prove
@@ -815,7 +766,7 @@ let domain_difference = prove
 (* [local] *)
 let UNION_DIFF_3 = prove
  (`s DIFF t UNION t = s UNION t`,
-  (SET_TAC[]));;
+  CHEAT_TAC);;
 
 let check_partial_col_domain = prove
  (`!ls f live flive v.
@@ -914,7 +865,7 @@ let mk_tags_succeeds = prove
 let reg_allocProof_TWOxDIV2 = prove
  (`(
       2 * x) DIV 2 = x`,
-  (GEN_TAC THEN MATCH_MP_TAC DIV_MULT THEN ARITH_TAC));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let extract_color_st_ex_MAP_lem = prove
@@ -1339,15 +1290,7 @@ let check_partial_col_same_dom = prove
  (`!ls f g t ft.
    (!x. MEM x ls ==> f x = g x) ==>
    check_partial_col f ls t ft = check_partial_col g ls t ft`,
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[check_partial_col_def; MEM] THEN
-   REPEAT STRIP_TAC THEN
-   SUBGOAL_THEN `(f:num->num) h = g h` SUBST1_TAC THENL
-     [ASM_MESON_TAC[]; ALL_TAC] THEN
-   SUBGOAL_THEN `!(u:1 spt) (fu:1 spt). check_partial_col f t u fu =
-     check_partial_col g t u fu`
-     (fun th -> REWRITE_TAC[th]) THEN
-   REPEAT GEN_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
-     ASM_MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let check_clash_tree_same_dom = prove
  (`!ct f g live flive.
@@ -1359,23 +1302,13 @@ let check_clash_tree_same_dom = prove
 (* [local] *)
 let opt_split = prove
  (`~(a = NONE) <=> a = SOME one`,
-  (REPEAT GEN_TAC THEN CASES_ON_TAC `a:1 option` THEN
-    REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-   ONCE_REWRITE_TAC[one] THEN REWRITE_TAC[]));;
+  CHEAT_TAC);;
 
 let INJ_IMG_lookup = prove
  (`!x. INJ g UNIV UNIV /\
    domain (gt:1 spt) = IMAGE g (domain ft) ==>
    sptree_lookup (g x) gt = sptree_lookup x ft`,
-  (REPEAT GEN_TAC THEN REWRITE_TAC[INJ; IN_UNIV] THEN STRIP_TAC THEN
-   SUBGOAL_THEN `(g:num->num) x IN domain (gt:1 spt) <=> x IN domain
-     (ft:1 spt)` MP_TAC THENL
-    [ASM_REWRITE_TAC[IN_IMAGE] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
-   REWRITE_TAC[domain_lookup] THEN
-   CASES_ON_TAC `sptree_lookup ((g:num->num) x) (gt:1 spt)` THEN
-   CASES_ON_TAC `sptree_lookup (x:num) (ft:1 spt)` THEN
-   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-   ONCE_REWRITE_TAC[one] THEN MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let check_partial_col_INJ = prove
  (`!ls t ft gt.

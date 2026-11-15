@@ -17,10 +17,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
-needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
-needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -813,23 +811,6 @@ let stackSem_exit_loop_def = new_definition
    | res -> res`;;
 add_simp stackSem_exit_loop_def;;
 
-let stackSem_fix_clock_IMP =
-  try prove
-   (`!s x res s1. stackSem_fix_clock s x = (res,s1)
-                  ==> stackSem_state_clock s1 <= stackSem_state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; stackSem_fix_clock_def] THEN
-    REWRITE_TAC(PAIR_EQ :: record_thms "stackSem_state") THEN
-    REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
-    REWRITE_TAC(record_thms "stackSem_state") THEN
-    REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
-  with Failure e ->
-    (print_string ("\nstackSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
-
-(* a fallback TRUTH says nothing, and a fact that says nothing
-   is of no use *)
-if concl stackSem_fix_clock_IMP <> `T` then
-  cake_term_facts := stackSem_fix_clock_IMP :: (!cake_term_facts);;
-
 (* the clauses in two quotations: dest is num and (num + num); ret is num and
    ((stackLang$prog # num # num # num) option); v is ('w word_loc) and num,
    which one quotation cannot typecheck *)
@@ -1027,11 +1008,12 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec_clauses
          if ~(stackSem_state_use_stack s) then (SOME stackSem_Error,s) else
              match stackSem_get_var rn s with SOME (word_Word (w:'a word)) ->
              let i = stackSem_state_stack_space s + w2n (w >>>
-                 asmSem_word_shift (:'a)) in
+                 backend_common_word_shift (:'a)) in
                if i < LENGTH (stackSem_state_stack s) /\
-                  ((w >>> asmSem_word_shift (:'a)) << asmSem_word_shift
-                      (:'a) = w) then (NONE,stackSem_set_var r (EL i
-                      (stackSem_state_stack s)) s)
+                  ((w >>> backend_common_word_shift (:'a)) <<
+                      backend_common_word_shift (:'a) = w) then
+                      (NONE,stackSem_set_var r (EL i (stackSem_state_stack s))
+                      s)
                else (SOME stackSem_Error,stackSem_empty_env s)
            | _ -> (SOME stackSem_Error,stackSem_empty_env s)) /\
     (stackSem_evaluate (stack_StackStore r n,s) =
@@ -1048,11 +1030,12 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec_clauses
              match (stackSem_get_var r s,stackSem_get_var rn s) with (SOME
              v,SOME (word_Word (w:'a word))) ->
              let i = stackSem_state_stack_space s + w2n (w >>>
-                 asmSem_word_shift (:'a)) in
+                 backend_common_word_shift (:'a)) in
                if i < LENGTH (stackSem_state_stack s) /\
-                  ((w >>> asmSem_word_shift (:'a)) << asmSem_word_shift
-                      (:'a) = w) then (NONE,stackSem_state_stack_fupd (K
-                      (LUPDATE v i (stackSem_state_stack s))) s)
+                  ((w >>> backend_common_word_shift (:'a)) <<
+                      backend_common_word_shift (:'a) = w) then
+                      (NONE,stackSem_state_stack_fupd (K (LUPDATE v i
+                      (stackSem_state_stack s))) s)
                else (SOME stackSem_Error,stackSem_empty_env s)
            | _ -> (SOME stackSem_Error,stackSem_empty_env s)) /\
     (stackSem_evaluate (stack_StackGetSize r,s) =
@@ -1065,7 +1048,7 @@ let stackSem_evaluate_def,stackSem_evaluate_ind = assume_definition_rec_clauses
              if LENGTH (stackSem_state_stack s) <= w2n w then (SOME
                  stackSem_Error,stackSem_empty_env s)
              else (NONE,stackSem_set_var r (word_Word (w <<
-                 asmSem_word_shift (:'a)))
+                 backend_common_word_shift (:'a)))
                            (stackSem_state_stack_space_fupd (K (w2n w)) s))
          | _ -> (SOME stackSem_Error,s))`;
    `(stackSem_evaluate (stack_Get v name,s) =

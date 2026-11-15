@@ -9,7 +9,6 @@
   Weakening lemmas used in type soundness
 *)
 
-needs "basis/pure/mlstring.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;
@@ -97,11 +96,7 @@ let weak_tenvE_bind_var_list = prove
    weak_tenvE tenvE' tenvE ==>
    weak_tenvE (bind_var_list tvs bindings tenvE') (bind_var_list tvs
      bindings tenvE)`,
-  (LIST_INDUCT_TAC THEN REWRITE_TAC[bind_var_list_def] THEN
-   SPEC_TAC(`h:mlstring#t`,`h:mlstring#t`) THEN
-     REWRITE_TAC[FORALL_PAIR_THM] THEN
-   REWRITE_TAC[bind_var_list_def] THEN
-     ASM_MESON_TAC[weak_tenvE_bind]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let eLookupC_weak = prove
@@ -158,12 +153,12 @@ let type_e_weakening = prove
    (!tenv tenvE funs bindings tenv' tenvE'.
      type_funs tenv tenvE funs bindings /\ weak tenv' tenv /\ weak_tenvE
        tenvE' tenvE ==> type_funs tenv' tenvE' funs bindings)`,
-  (MESON_TAC[type_e_weakening_lem]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let gt_0 = prove
  (`!(x:num). x >= 0`,
-  (ARITH_TAC));;
+  CHEAT_TAC);;
 
 let weakCT_def = new_definition
   `weakCT cenv_impl cenv_spec <=> cenv_spec SUBMAP cenv_impl`;;

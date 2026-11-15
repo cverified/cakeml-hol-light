@@ -2,7 +2,7 @@
 (*  bvlSem: ported from HOL4's
     compiler/backend/semantics/bvlSemScript.sml
     A definition theory, with 23 definitions, 4 datatypes and 10
-    theorems.  Needed by 11 files of the port.  *)
+    theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -17,10 +17,8 @@ needs "compiler/backend/clos_to_bvl.ml";;
 (* for closure_tag and num_added_globals *)
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
-needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
-needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -797,23 +795,6 @@ let bvlSem_fix_clock_IMP = prove
 (* The semantics of expression evaluation is defined next. For
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of exp expressions. *)
-
-let bvlSem_fix_clock_IMP =
-  try prove
-   (`!s x res s1. bvlSem_fix_clock s x = (res,s1)
-                  ==> bvlSem_state_clock s1 <= bvlSem_state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; bvlSem_fix_clock_def] THEN
-    REWRITE_TAC(PAIR_EQ :: record_thms "bvlSem_state") THEN
-    REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
-    REWRITE_TAC(record_thms "bvlSem_state") THEN
-    REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
-  with Failure e ->
-    (print_string ("\nbvlSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
-
-(* a fallback TRUTH says nothing, and a fact that says nothing
-   is of no use *)
-if concl bvlSem_fix_clock_IMP <> `T` then
-  cake_term_facts := bvlSem_fix_clock_IMP :: (!cake_term_facts);;
 
 let bvlSem_evaluate_def,bvlSem_evaluate_ind = assume_definition_rec
   "termination (CHEAT_TAC)"

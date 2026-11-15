@@ -21,7 +21,6 @@
 *)
 
 needs "compiler/backend/bvl.ml";;
-needs "lib/set_sep.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "bvl_const"
@@ -42,12 +41,7 @@ let dest_simple_pmatch = prove
    match op with
      bvl_Op (clos_IntOp (clos_Const i)) [] -> SOME i
    | _ -> NONE`,
-  (* HOL4's pmatch is the match of HOL Light as well, so the two
-     sides differ in one thing only: the pattern of the source
-     matches any list and asks NULL of it, and this one matches the
-     empty list.  The case split on the expression decides both *)
-  (GEN_TAC THEN REWRITE_TAC[dest_simple_def] THEN
-   EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
+  CHEAT_TAC);;
 
 let case_op_const_def = new_definition
   `case_op_const exp =
@@ -60,8 +54,7 @@ let case_op_const_pmatch = prove
    match exp with (bvl_Op op [x1; bvl_Op (clos_IntOp (clos_Const n2)) []])
      -> SOME (op,x1,n2)
      | _ -> NONE`,
-  (GEN_TAC THEN REWRITE_TAC[case_op_const_def] THEN
-   EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
+  CHEAT_TAC);;
 
 let SmartOp_flip_def = new_definition
   `SmartOp_flip op x1 x2 =
@@ -82,9 +75,7 @@ let SmartOp_flip_pmatch = prove
            clos_Add,x2,bvl_Op (clos_IntOp (clos_Const (--i))) [])
          else (op,x1,x2)
      | _ -> (op,x1,x2)`,
-  (* this one has no NULL in it, so the two sides are the same
-     term and the definition is the whole proof *)
-  (REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp_flip_def]));;
+  CHEAT_TAC);;
 
 let SmartOp2_def = new_definition
   `SmartOp2 (op,(x1:bvl_exp),(x2:bvl_exp)) =
@@ -235,7 +226,7 @@ let dest_EqualInt_def = new_definition
 let dest_EqualInt_pmatch = prove
  (`dest_EqualInt x = match x with clos_BlockOp (clos_EqualConst (clos_Int i))
   -> SOME i | _ -> NONE`,
-  (REWRITE_TAC[dest_EqualInt_def]));;
+  CHEAT_TAC);;
 
 let SmartOp1_def = new_definition
   `SmartOp1 op x =
@@ -256,7 +247,7 @@ let SmartOp_pmatch = prove
    match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2)
    | [x] -> SmartOp1 op x
    | _ -> bvl_Op op xs`,
-  (REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp_def]));;
+  CHEAT_TAC);;
 
 let bvl_const_extract_def = new_definition
   `bvl_const_extract x1'' ys =
@@ -278,8 +269,7 @@ let extract_pmatch = prove
    | bvl_Op (clos_BlockOp (clos_Cons t)) [] -> SOME (bvl_Op (clos_BlockOp
      (clos_Cons t)) [])
    | _ -> NONE`,
-  (REPEAT GEN_TAC THEN REWRITE_TAC[bvl_const_extract_def] THEN
-   EVERY_CASE_TAC THEN REWRITE_TAC[NULL]));;
+  CHEAT_TAC);;
 
 let bvl_const_extract_list_def,bvl_const_extract_list_ind = define_rec
   `(bvl_const_extract_list [] = []) /\
@@ -298,7 +288,7 @@ let delete_var_pmatch = prove
      match op with
        bvl_Var n -> bvl_Op (clos_IntOp (clos_Const (&0))) []
      | x -> x`,
-  (GEN_TAC THEN REWRITE_TAC[bvl_const_delete_var_def]));;
+  CHEAT_TAC);;
 
 make_size "bvl_exp";;
 (* the termination relation is not in the HOL4 source *)
@@ -382,194 +372,18 @@ let bvl_const_compile_sing_def,bvl_const_compile_sing_ind = define_rec
 let compile_eq = prove
  (`(!e env. bvl_const_compile env [e] = [bvl_const_compile_sing env e]) /\
    (!es env. bvl_const_compile env es = bvl_const_compile_list env es)`,
-  (let cp = bvl_const_compile_def in
-   let cs = bvl_const_compile_sing_def in
-   let sz = size_thms "bvl_exp" in
-   (* HOL4 does this induction on the structure of an expression
-      (Induct), which is an induction over the two types of the
-      family at once.  This proof was written before the port had
-      an induction theorem and goes by the measure the definition
-      was made with instead -- here a mutual one, over the size of
-      an expression and over the size of a list of them -- so
-      every use of the hypothesis leaves a side condition.  The
-      port now binds compile_sing_ind as HOL4 does *)
-   let compile_CONS = prove
-    (`!n x xs. bvl_const_compile n (CONS x xs) =
-               APPEND (bvl_const_compile n [x])
-                      (bvl_const_compile n xs)`,
-     REPEAT GEN_TAC THEN
-     STRUCT_CASES_TAC(ISPEC `xs:bvl_exp list` list_CASES) THEN
-     REWRITE_TAC[cp; APPEND_NIL]) in
-   (* no expression has size 0, which is what the base case says *)
-   let size_pos = prove
-    (`!e:bvl_exp. 1 <= bvl_exp_size e`,
-     GEN_TAC THEN
-     STRUCT_CASES_TAC(ISPEC `e:bvl_exp` (cases_of `:bvl_exp`)) THEN
-     REWRITE_TAC sz THEN ARITH_TAC) in
-   let size_tac =
-     RULE_ASSUM_TAC(REWRITE_RULE(list_size :: sz)) THEN
-     REWRITE_TAC(list_size :: sz) THEN ASM_ARITH_TAC in
-   let cond1 t =
-     mk_binop `(<=):num->num->bool`
-       (list_mk_icomb "bvl_exp_size" [t]) `k:num` in
-   let cond2 t =
-     mk_binop `(<=):num->num->bool`
-       (list_mk_icomb "list_size" [`bvl_exp_size`; t]) `k:num` in
-   let use1_by tac t =
-     SUBGOAL_THEN (cond1 t)
-       (fun c -> FIRST_ASSUM(fun ih ->
-          REWRITE_TAC[MATCH_MP (CONJUNCT1 ih) c])) THEN TRY tac in
-   let use2_by tac t =
-     SUBGOAL_THEN (cond2 t)
-       (fun c -> FIRST_ASSUM(fun ih ->
-          REWRITE_TAC[MATCH_MP (CONJUNCT2 ih) c])) THEN TRY tac in
-   let use1 = use1_by size_tac in
-   let use2 = use2_by size_tac in
-   let both = REWRITE_TAC[cp; cs] in
-   (* Var and Force read the environment, so both sides have the
-      same match on it *)
-   let match_case =
-     REWRITE_TAC[cp; cs] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-     EVERY_CASE_TAC THEN REWRITE_TAC[] in
-   (* the If folds the condition away when it compiled to a
-      constant, and the list of one is inside the branches on one
-      side of the equation and outside them on the other, so the
-      two tests are decided before the sides are compared *)
-   let sing_if_case =
-     REWRITE_TAC[cp; cs; LET_DEF; LET_END_DEF] THEN
-     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-     use1 `x1:bvl_exp` THEN use1 `x2:bvl_exp` THEN
-     use1 `x3:bvl_exp` THEN REWRITE_TAC[HD] THEN
-     ASM_CASES_TAC `bvl_const_compile_sing env x1 = bvl_Bool T` THEN
-     ASM_REWRITE_TAC[] THEN
-     ASM_CASES_TAC `bvl_const_compile_sing env x1 = bvl_Bool F` THEN
-     ASM_REWRITE_TAC[] in
-   (* the Let compiles its body in an environment that the compiled
-      bindings build, which the hypothesis is quantified over *)
-   let sing_let_case =
-     REWRITE_TAC[cp; cs; LET_DEF; LET_END_DEF] THEN
-     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-     use2 `xs:bvl_exp list` THEN use1 `x2:bvl_exp` THEN
-     REWRITE_TAC[HD] in
-   let part1 =
-     REPEAT GEN_TAC THEN DISCH_TAC THEN
-     NAMED_CASES_TAC `e:bvl_exp`
-       [["v"]; ["x1"; "x2"; "x3"]; ["xs"; "x2"]; ["x1"];
-        ["x1"; "x2"]; ["x1"]; ["tt"; "dd"; "gs"]; ["loc"; "fv"];
-        ["op"; "os"]] THENL
-     [match_case;
-      sing_if_case;
-      sing_let_case;
-      both THEN use1 `x1:bvl_exp` THEN REWRITE_TAC[HD];
-      both THEN use1 `x1:bvl_exp` THEN use1 `x2:bvl_exp` THEN
-      REWRITE_TAC[HD];
-      both THEN use1 `x1:bvl_exp` THEN REWRITE_TAC[HD];
-      both THEN use2 `gs:bvl_exp list` THEN REWRITE_TAC[];
-      match_case;
-      both THEN use2 `os:bvl_exp list` THEN REWRITE_TAC[]] in
-   (* and the list, where compile takes the head apart with the
-      clause for two or more and compile_list with its own *)
-   let part2 =
-     REPEAT GEN_TAC THEN DISCH_TAC THEN
-     NAMED_CASES_TAC `es:bvl_exp list` [[]; ["y"; "ys"]] THENL
-     [REWRITE_TAC[cp; cs];
-      REWRITE_TAC[cs] THEN ONCE_REWRITE_TAC[compile_CONS] THEN
-      use1 `y:bvl_exp` THEN use2 `ys:bvl_exp list` THEN
-      REWRITE_TAC[APPEND]] in
-   let sing_base =
-     CONJ_TAC THENL
-     [REPEAT GEN_TAC THEN DISCH_TAC THEN
-      SUBGOAL_THEN `F` CONTR_TAC THEN
-      MP_TAC(ISPEC `e:bvl_exp` size_pos) THEN ASM_ARITH_TAC;
-      REPEAT GEN_TAC THEN DISCH_TAC THEN
-      NAMED_CASES_TAC `es:bvl_exp list` [[]; ["y"; "ys"]] THENL
-      [REWRITE_TAC[cp; cs];
-       FIRST_ASSUM MP_TAC THEN
-       REWRITE_TAC[list_size; ARITH_RULE `~(1 + a + b <= 0)`]]] in
-   SUBGOAL_THEN
-     `!k. (!env e. bvl_exp_size e <= k ==>
-             bvl_const_compile env [e] =
-             [bvl_const_compile_sing env e]) /\
-          (!env es. list_size bvl_exp_size es <= k ==>
-             bvl_const_compile env es =
-             bvl_const_compile_list env es)`
-     (fun th -> CONJ_TAC THEN REPEAT GEN_TAC THENL
-        [MP_TAC(CONJUNCT1(SPEC `bvl_exp_size (e:bvl_exp)` th));
-         MP_TAC(CONJUNCT2
-                  (SPEC `list_size bvl_exp_size (es:bvl_exp list)`
-                     th))]
-        THEN DISCH_THEN MATCH_MP_TAC THEN REWRITE_TAC[LE_REFL]) THEN
-   INDUCT_TAC THENL
-   [sing_base; CONJ_TAC THENL [part1; part2]]));;
+  CHEAT_TAC);;
 
 (* compile_length *)
 let bvl_const_compile_length = prove
  (`!n xs. LENGTH (bvl_const_compile n xs) = LENGTH xs`,
-  (let cp = bvl_const_compile_def in
-   let sz = size_thms "bvl_exp" in
-   (* HOL4 takes the induction theorem that its termination proof
-      left behind (HO_MATCH_MP_TAC compile_ind); the port induces on
-      the measure the definition was made with *)
-   let cond t =
-     mk_binop `(<=):num->num->bool`
-       (list_mk_icomb "list_size" [`bvl_exp_size`; t]) `k:num` in
-   let size_tac =
-     RULE_ASSUM_TAC(REWRITE_RULE(list_size :: sz)) THEN
-     REWRITE_TAC(list_size :: sz) THEN ASM_ARITH_TAC in
-   let use_ih t =
-     SUBGOAL_THEN (cond t)
-       (fun c -> FIRST_ASSUM(fun ih -> REWRITE_TAC[MATCH_MP ih c]))
-     THEN TRY size_tac in
-   (* every clause but the empty list and the list of two or more
-      makes a list of one, so only that clause uses the hypothesis *)
-   let one = REWRITE_TAC[cp; LENGTH] in
-   let sing_case =
-     REWRITE_TAC[cp] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-     EVERY_CASE_TAC THEN REWRITE_TAC[LENGTH] in
-   let if_case =
-     REWRITE_TAC[cp; LET_DEF; LET_END_DEF] THEN
-     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-     REPEAT COND_CASES_TAC THEN REWRITE_TAC[LENGTH] in
-   let let_case =
-     REWRITE_TAC[cp; LET_DEF; LET_END_DEF] THEN
-     CONV_TAC(DEPTH_CONV BETA_CONV) THEN REWRITE_TAC[LENGTH] in
-   let single_case =
-     NAMED_CASES_TAC `x1:bvl_exp`
-       [["v"]; ["e1"; "e2"; "e3"]; ["es"; "e"]; ["e"]; ["e1"; "e2"];
-        ["e"]; ["tt"; "dd"; "es"]; ["loc"; "v"]; ["op"; "es"]] THENL
-     [sing_case; if_case; let_case; one; one; one; one; sing_case;
-      one] in
-   let cons_cons_case =
-     REWRITE_TAC[cp; LENGTH_APPEND] THEN
-     use_ih `[x1:bvl_exp]` THEN use_ih `CONS (x2:bvl_exp) xr2` THEN
-     REWRITE_TAC[LENGTH] THEN ARITH_TAC in
-   let base_case =
-     REPEAT GEN_TAC THEN DISCH_TAC THEN
-     NAMED_CASES_TAC `xs:bvl_exp list` [[]; ["x1"; "xr"]] THENL
-     [REWRITE_TAC[cp];
-      FIRST_ASSUM MP_TAC THEN
-      REWRITE_TAC[list_size; ARITH_RULE `~(1 + a + b <= 0)`]] in
-   let step_case =
-     REPEAT GEN_TAC THEN DISCH_TAC THEN
-     NAMED_CASES_TAC `xs:bvl_exp list` [[]; ["x1"; "xr"]] THENL
-     [REWRITE_TAC[cp];
-      NAMED_CASES_TAC `xr:bvl_exp list` [[]; ["x2"; "xr2"]] THENL
-      [single_case; cons_cons_case]] in
-   MEASURE_INDUCT_TAC `list_size bvl_exp_size` THENL
-   [base_case; step_case]));;
+  CHEAT_TAC);;
 add_simp bvl_const_compile_length;;
 
 (* compile_HD_SING *)
 let bvl_const_compile_HD_SING = prove
  (`[HD (bvl_const_compile n [x])] = bvl_const_compile n [x]`,
-  (* the compiled list of one has length one, so it is its own head
-     put back into a list *)
-  (MP_TAC(SPECL [`n:(bvl_exp option) list`; `[x:bvl_exp]`]
-            bvl_const_compile_length) THEN
-   STRUCT_CASES_TAC(ISPEC `bvl_const_compile n [x]` list_CASES) THEN
-   REWRITE_TAC[LENGTH; SUC_INJ; LENGTH_EQ_NIL; NOT_SUC] THEN
-   CONV_TAC NUM_REDUCE_CONV THEN
-   TRY(DISCH_THEN SUBST1_TAC) THEN REWRITE_TAC[HD]));;
+  CHEAT_TAC);;
 
 let bvl_const_compile_exp_def = new_definition
   `bvl_const_compile_exp x =

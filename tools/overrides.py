@@ -453,6 +453,13 @@ CON_BODY = {
   # jsonLang's and not the one of a display expression
   ('displayLang', 'trace_to_json_def'): {'String': 'jsonLang'},
   ('displayLang', 'display_to_json_def'): {'String': 'jsonLang'},
+  # line_enc_with_nop is the same: the Jump and the JumpCmp of
+  # the bodies are the asm that the encoder takes
+  ('lab_to_targetProof', 'line_enc_with_nop_def'):
+    {'Jump': 'asm', 'JumpCmp': 'asm'},
+  # halt_view matches on the result of stackSem and gives the
+  # machine_result of targetSem, and both have Halt
+  ('stack_to_labProof', 'halt_view_def'): {'Halt': 'targetSem'},
   # line_encd matches on the asm_with_lab of a LabAsm and gives
   # what the encoder takes, which is an asm: the JumpCmp and the
   # Call of the bodies are asm's where the ones of the patterns
@@ -1983,7 +1990,12 @@ CON_OF = {
   # lab_to_target's; backend has a compile of its own, which
   # takes a program of source and is what the name alone means
   ('backendProof', 'backend_from_data_tuple_cc_def'):
-    {'compile': 'lab_to_target'},
+    {'compile': 'lab_to_target', 'compile_part': 'data_to_word'},
+  # the compile_part that this one maps over the data programs
+  # takes the configuration dc, so it is data_to_word's;
+  # bvi_to_data's takes the triple alone
+  ('backendProof', 'cake_orac_eqs'):
+    {'compile_part': 'data_to_word'},
   # result_view matches on the result of stackSem, so its TimeOut
   # is stackSem's; targetSem has a TimeOut of its own and the
   # machinery of the port reaches for that one
@@ -2758,6 +2770,36 @@ let mergesortN_tail_def,mergesortN_tail_ind = define_wf
 # the ML values that a source antiquotes into a definition and
 # that ML code computes: the port writes the expression that HOL4
 # evaluates, which is provably the same value (see PENDING.md)
+# Phase three has not started.  The proof store (proofs/**.prf)
+# and the blocks that were only built to carry a proof -- the
+# tactics and the lemmas of the port's own in EXTRA_BEFORE,
+# EXTRA_HEAD and EXTRA_AFTER -- are kept in the repository and
+# are not written into ml/: every theorem is a CHEAT_TAC, which
+# is what phase two leaves.  A block that introduces a constant
+# is not proof material and stays, because a statement may name
+# what it defines (gram's cmlG, the configurations of the
+# targets).
+#
+# Set this to True to bring the proofs back.
+PHASE_THREE = False
+
+# what makes a block of the overrides a definition and not a
+# proof: it introduces a constant, so the port needs it whether
+# there are proofs or not
+INTRODUCES = (
+  'new_definition', 'new_specification', 'new_type_abbrev',
+  'define_cases', 'define_rec', 'define_wf', 'define_general',
+  'define_shaped_rec', 'define_datatype', 'define_record',
+  'define_cases_clauses', 'define_wf_tac', 'cake_inductive',
+  'cake_declare', 'assume_definition', 'make_size', 'new_axiom',
+)
+
+
+def proof_only(text):
+  """is this block of the overrides there for a proof alone?"""
+  return not any(k in text for k in INTRODUCES)
+
+
 ANTIQUOTE = {
   # exp_tm is rhs (concl (EVAL ``10n ** exp_for_dec_enc``))
   ('mlint', 'exp_tm'): '10 EXP exp_for_dec_enc',

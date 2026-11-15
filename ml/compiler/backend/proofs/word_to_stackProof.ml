@@ -14,6 +14,7 @@ needs "basis/pure/mllist.ml";;
 needs "compiler/backend/backend_common.ml";;
 (* for word_add_carry_def *)
 needs "compiler/backend/reg_alloc/parmove.ml";;
+needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
 (* for extract_labels *)
 needs "compiler/backend/semantics/stackSem.ml";;
@@ -2105,8 +2106,19 @@ let evaluate_wRegWrite2_seq = prove
    stackSem_evaluate ((stack_Seq (g n) (wStackStore l stack_Skip)),t))`,
   CHEAT_TAC);;
 
-(* HOL4 word_to_stackProofScript.sml:4688-5130: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): evaluate_wInst *)
+let evaluate_wInst = prove
+ (`!i s t s'.
+   wordSem_inst i s = SOME s' /\
+   every_var_inst is_phy_var i /\
+   max_var_inst i < 2 * f' + 2 * k /\
+   inst_arg_convention i /\
+   word_to_stackProof_state_rel ac k f f' s t lens 0 ==>
+   (?t'.
+     stackSem_evaluate (wInst i (k,f,f'),t) = (NONE,t') /\
+     word_to_stackProof_state_rel ac k f f' s' t' lens 0 /\
+     LENGTH (stackSem_state_stack t') = LENGTH (stackSem_state_stack t)
+       /\ stackSem_state_stack_space t' = stackSem_state_stack_space t)`,
+  CHEAT_TAC);;
 
 let state_rel_set_store = prove
  (`word_to_stackProof_state_rel ac k f f' s t lens extra /\ ~(v = Handler) ==>
@@ -2218,8 +2230,8 @@ let evaluate_stack_move_clock = prove
 
 (* [local] *)
 let pop_env_ffi = prove
- (`wordSem_pop_env s = SOME s' ==> state_ffi
-   s = state_ffi s'`,
+ (`wordSem_pop_env s = SOME s' ==> wordSem_state_ffi
+   s = wordSem_state_ffi s'`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2630,9 +2642,11 @@ let word_exp_Op_Add_0 = prove
        (word_Word x)`,
   CHEAT_TAC);;
 
-(* HOL4 word_to_stackProofScript.sml:7186-7205: a theorem whose statement
-   HOL Light does not read (tools/unstated.py):
-   evaluate_ShareInst_Var_eq_Op_Add *)
+let evaluate_ShareInst_Var_eq_Op_Add = prove
+ (`wordSem_evaluate (word_ShareInst op v (word_Var ad),s) =
+     wordSem_evaluate (word_ShareInst op v (word_Op asm_Add [word_Var ad;
+       word_Const (n2w 0)]),s)`,
+  CHEAT_TAC);;
 
 let share_load_lemma1 = prove
  (`share_inst op (2 * v) ad' s = (res,s1) /\
@@ -2710,15 +2724,66 @@ let share_store_lemma2 = prove
        word_to_stackProof_state_rel ac k f f' s1 t1 lens 0)))`,
   CHEAT_TAC);;
 
-(* HOL4 word_to_stackProofScript.sml:7386-7445: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): evaluate_ShareInst_Load *)
+let evaluate_ShareInst_Load = prove
+ (`wordSem_evaluate (word_ShareInst op (2 * v)
+     (word_Op asm_Add [word_Var (2 * ad); word_Const offset]),s) = (res,s1)
+       /\ ~(res = SOME wordSem_Error) /\
+   word_to_stackProof_state_rel ac k f f' s t lens 0 /\
+   v < f' + k /\
+   ad < f' + k /\
+   (op = asm_Load \/ op = asm_Load8 \/ op = asm_Load16 \/ op = asm_Load32)
+     ==>
+   (?ck t1.
+     stackSem_evaluate
+       (wShareInst op (2 * v) (Addr (2 * ad) offset)
+         (k,f,f'),stackSem_state_clock_fupd (K (ck + stackSem_state_clock t))
+         t) =
+         (OPTION_MAP compile_result res,t1) /\
+     ((?fv'. res = SOME (stackSem_FinalFFI fv') /\ wordSem_state_ffi
+         s1 = stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
+           stackSem_state_clock t1) \/
+     (res = NONE /\ word_to_stackProof_state_rel ac k f f' s1 t1 lens 0)))`,
+  CHEAT_TAC);;
 
-(* HOL4 word_to_stackProofScript.sml:7447-7499: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): evaluate_ShareInst_Store *)
+let evaluate_ShareInst_Store = prove
+ (`wordSem_evaluate (word_ShareInst op (2 * v)
+     (word_Op asm_Add [word_Var (2 * ad); word_Const offset]),s) = (res,s1)
+       /\
+   word_to_stackProof_state_rel ac k f f' s t lens 0 /\
+   v < f' + k /\
+   ad < f' + k /\ ~(res = SOME wordSem_Error) /\
+   (op = asm_Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op =
+     asm_Store32) ==>
+   (?ck t1.
+     stackSem_evaluate
+       (wShareInst op (2 * v) (Addr (2 * ad) offset)
+         (k,f,f'),stackSem_state_clock_fupd (K (ck + stackSem_state_clock t))
+         t) =
+         (OPTION_MAP compile_result res,t1) /\
+     ((?fv'. res = SOME (stackSem_FinalFFI fv') /\ wordSem_state_ffi
+         s1 = stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
+           stackSem_state_clock t1) \/
+     (res = NONE /\ word_to_stackProof_state_rel ac k f f' s1 t1 lens 0)))`,
+  CHEAT_TAC);;
 
-(* HOL4 word_to_stackProofScript.sml:7501-7526: a theorem whose statement
-   HOL Light does not read (tools/unstated.py):
-   evaluate_ShareInst_correct_lemma *)
+let evaluate_ShareInst_correct_lemma = prove
+ (`wordSem_evaluate (word_ShareInst op (2 * v)
+     (word_Op asm_Add [word_Var (2 * ad); word_Const offset]),s) = (res,s1)
+       /\ ~(res = SOME wordSem_Error) /\
+   word_to_stackProof_state_rel ac k f f' s t lens 0 /\
+   v < f' + k /\
+   ad < f' + k ==>
+   (?ck t1.
+     stackSem_evaluate
+       (wShareInst op (2 * v) (Addr (2 * ad) offset)
+         (k,f,f'),stackSem_state_clock_fupd (K (ck + stackSem_state_clock t))
+         t) =
+       (OPTION_MAP compile_result res,t1) /\
+     ((res = NONE /\ word_to_stackProof_state_rel ac k f f' s1 t1 lens 0) \/
+       (?fv'. res = SOME (stackSem_FinalFFI fv') /\ wordSem_state_ffi
+         s1 = stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
+           stackSem_state_clock t1)))`,
+  CHEAT_TAC);;
 
 (* HOL4 word_to_stackProofScript.sml:7528-7544: a proof *)
 
@@ -2804,8 +2869,11 @@ let evaluate_copy_ret_aux_clock = prove
 
 (* HOL4 word_to_stackProofScript.sml:7722: ML code, not ported *)
 
-(* HOL4 word_to_stackProofScript.sml:7724-7733: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): evaluate_cont_loop_handler *)
+(* [local] *)
+let evaluate_cont_loop_handler = prove
+ (`wordSem_evaluate (c,s) = (res,s1) /\ wordSem_cont_loop res ==>
+  wordSem_state_handler s1 = wordSem_state_handler s`,
+  CHEAT_TAC);;
 
 (* [local] *)
 let get_labels_loc_check_subspt = prove
@@ -2911,8 +2979,27 @@ let word_to_stackProof_evaluate_Seq_Skip = prove
 
 (* HOL4 word_to_stackProofScript.sml:10080-10088: ML code, not ported *)
 
-(* HOL4 word_to_stackProofScript.sml:10090-10114: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): comp_Call *)
+(* [local] *)
+let comp_Call = prove
+ (`!start' (s:('a,num#'c,'ffi)wordSem_state) k res s1 t lens.
+       wordSem_evaluate (word_Call NONE (SOME start') [0] NONE,s) =
+         (res,s1) /\ ~(res = SOME wordSem_Error)
+         /\ word_to_stackProof_state_rel ac k 0 0 s t lens 0 ==>
+       (?ck (t1:('a,'c,'ffi)stackSem_state) res1.
+         stackSem_evaluate (stack_Call NONE (INL start')
+           NONE,stackSem_state_clock_fupd (K (stackSem_state_clock t + ck)) t)
+           =
+         (res1,t1) /\ ~((n2w 1) = ((n2w 0):'a word)) /\ ~((n2w 2) = ((n2w
+           0):'a word)) /\
+         (if OPTION_MAP compile_result res = res1 then wordSem_state_ffi
+           s1 = stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
+             stackSem_state_clock t1
+         else res1 = SOME (stackSem_Halt (word_Word (n2w 2)))
+           /\ ffi_state_io_events (stackSem_state_ffi
+           t1) <<= ffi_state_io_events (wordSem_state_ffi s1) /\
+           the (wordSem_state_stack_limit s1 + 1) (wordSem_state_stack_max
+             s1) > wordSem_state_stack_limit s1))`,
+  CHEAT_TAC);;
 
 (* state_rel_with_clock *)
 let word_to_stackProof_state_rel_with_clock = prove
@@ -2940,8 +3027,13 @@ let stack_Call_NONE_not_Break_Continue = prove
      n)))`,
   CHEAT_TAC);;
 
-(* HOL4 word_to_stackProofScript.sml:10154-10371: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): state_rel_IMP_semantics *)
+let state_rel_IMP_semantics = prove
+ (`word_to_stackProof_state_rel ac k 0 0 ((s:('a,num#'c,'ffi)wordSem_state))
+  ((t:('a,'c,'ffi)stackSem_state)) lens 0 /\ ~(wordSem_semantics s (start:num)
+    = ffi_Fail) ==>
+   stackSem_semantics start t IN extend_with_resource_limit
+     {wordSem_semantics s start}`,
+  CHEAT_TAC);;
 
 let init_state_ok_def = new_definition
   `init_state_ok ac k (t:('a,'c,'ffi)stackSem_state) coracle <=>
@@ -3021,13 +3113,43 @@ let init_state_ok_IMP_state_rel = prove
 
 (* HOL4 word_to_stackProofScript.sml:10467-10471: ML code, not ported *)
 
-(* HOL4 word_to_stackProofScript.sml:10473-10701: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): state_rel_IMP_semantics' *)
+let state_rel_IMP_semantics' = prove
+ (`word_to_stackProof_state_rel ac k 0 0 ((s:('a,num#'c,'ffi)wordSem_state))
+  ((t:('a,'c,'ffi)stackSem_state)) lens 0 /\ ~(wordSem_semantics s (start:num)
+    = ffi_Fail) /\
+   word_lang_safe_for_space ((s:('a,num#'c,'ffi)wordSem_state)) start ==>
+   stackSem_semantics start t = wordSem_semantics s start`,
+  CHEAT_TAC);;
 
 (* HOL4 word_to_stackProofScript.sml:10703-10707: ML code, not ported *)
 
-(* HOL4 word_to_stackProofScript.sml:10709-10758: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): compile_semantics *)
+(* compile_semantics *)
+(* the names of record fields that this statement uses for
+   variables of its own are read as variables *)
+let word_to_stackProof_compile_semantics = prove
+ (cake_as_vars (fun () ->
+    `stackSem_state_code
+         ((t:('a,'c,'ffi)stackSem_state)) = fromAList (SND (SND (SND
+           (word_to_stack_compile asm_conf F code)))) /\
+         k = (asm_config_reg_count asm_conf - (5 + LENGTH
+           (asm_config_avoid_regs asm_conf))) /\
+         init_state_ok asm_conf k t coracle /\
+         (ALOOKUP code raise_stub_location = NONE) /\
+         (ALOOKUP code stack_store_consts_stub_location = NONE) /\
+         FST (word_to_stack_compile asm_conf F code) <<=
+           stackSem_state_bitmaps t /\
+         ALL (\(n,m,prog). flat_exp_conventions prog /\
+         post_alloc_conventions (asm_config_reg_count asm_conf - (5 +
+           LENGTH (asm_config_avoid_regs asm_conf))) prog) code
+           /\ ~(wordSem_semantics (word_to_stackProof_make_init asm_conf k t
+             (fromAList code) coracle) start = ffi_Fail) ==>
+         stackSem_semantics start t IN
+         extend_with_resource_limit' (word_lang_safe_for_space
+                        (word_to_stackProof_make_init asm_conf k t
+                          (fromAList code) coracle) start)
+             {wordSem_semantics (word_to_stackProof_make_init asm_conf k t
+               (fromAList code) coracle) start}`),
+  CHEAT_TAC);;
 
 (* [local] *)
 let stack_move_no_labs = prove

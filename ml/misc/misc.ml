@@ -2,7 +2,7 @@
 (*  misc: ported from HOL4's
     misc/miscScript.sml
     A definition theory, with 50 definitions, 1 datatype and 393
-    theorems.  Needed by 94 files of the port.  *)
+    theorems.  Needed by 93 files of the port.  *)
 (* ======================================================== *)
 
 (*

@@ -440,8 +440,11 @@ let loc_check_IMP_loc_to_pc = prove
     (?v. loc_to_pc l1 l2 (labSem_state_code t1) = SOME v)`,
   CHEAT_TAC);;
 
-(* HOL4 stack_to_labProofScript.sml:655-660: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): state_rel_dec_clock *)
+(* state_rel_dec_clock *)
+let stack_to_labProof_state_rel_dec_clock = prove
+ (`stack_to_labProof_state_rel s t ==> stack_to_labProof_state_rel
+  (stackSem_dec_clock s) (labSem_dec_clock t)`,
+  CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -470,8 +473,11 @@ let set_var_Word_upd_reg = prove
   CHEAT_TAC);;
 add_simp set_var_Word_upd_reg;;
 
-(* HOL4 stack_to_labProofScript.sml:690-696: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): set_fp_var_upd_fp_reg *)
+let set_fp_var_upd_fp_reg = prove
+ (`stack_to_labProof_state_rel s t ==>
+   stack_to_labProof_state_rel (stackSem_set_fp_var a b s)
+     (labSem_upd_fp_reg a b t)`,
+  CHEAT_TAC);;
 
 let mem_store_upd_mem = prove
  (`stack_to_labProof_state_rel s t /\ stackSem_mem_store x y s = SOME s1 ==>
@@ -484,9 +490,11 @@ let state_rel_read_reg_FLOOKUP_regs = prove
    y = labSem_state_regs t x`,
   CHEAT_TAC);;
 
-(* HOL4 stack_to_labProofScript.sml:719-726: a theorem whose statement HOL
-   Light does not read (tools/unstated.py):
-   state_rel_read_fp_reg_FLOOKUP_fp_regs *)
+let state_rel_read_fp_reg_FLOOKUP_fp_regs = prove
+ (`stack_to_labProof_state_rel s t /\
+   stackSem_get_fp_var n s = SOME x ==>
+   x = labSem_read_fp_reg n t`,
+  CHEAT_TAC);;
 
 let state_rel_get_var_imm = prove
  (`stack_to_labProof_state_rel s t /\
@@ -521,8 +529,17 @@ let no_ret_correct = prove
 (* HOL4 stack_to_labProofScript.sml:926: the ML values that the definitions
    below antiquote *)
 
-(* HOL4 stack_to_labProofScript.sml:928-939: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): compile_jump_correct *)
+let compile_jump_correct = prove
+ (`asm_fetch_aux (pc:num) code = SOME (compile_jump dest) /\
+   loc_to_pc (dest_to_loc' (regs:num->('a)word_loc) dest) 0 code = SOME pc'
+     /\
+   (!r. dest = INR r ==> (?p. labSem_state_regs s r = word_Loc p 0))
+     /\ labSem_state_pc
+   (s:('a,'c,'ffi)labSem_state) = pc /\ labSem_state_code s = code
+     /\ labSem_state_regs s = regs /\ ~(labSem_state_clock s = 0) ==>
+   labSem_evaluate s = labSem_evaluate (labSem_upd_pc pc'
+     (labSem_dec_clock s))`,
+  CHEAT_TAC);;
 
 let result_view_INDUCT,result_view_RECURSION = define_datatype
   "result_view =
@@ -554,7 +571,7 @@ let halt_view_def = new_definition
   `halt_view x1'' =
      match x1'' with
        SOME (stackSem_Halt w) -> SOME (halt_word_view w)
-     | SOME (stackSem_FinalFFI outcome) -> SOME (stackSem_Halt
+     | SOME (stackSem_FinalFFI outcome) -> SOME (targetSem_Halt
        (ffi_FFI_outcome outcome))
      | _ -> NONE`;;
 add_simp halt_view_def;;
@@ -628,11 +645,86 @@ let every_is_some_loc_to_pc_prefix = prove
    ALL (\k. IS_SOME (loc_to_pc n k c2)) cs`,
   CHEAT_TAC);;
 
-(* HOL4 stack_to_labProofScript.sml:1207-2739: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): flatten_correct *)
+let flatten_correct = prove
+ (`!prog s1 t r s2 n l cs bs (t1:('a,'c,'ffi)labSem_state).
+     stackSem_evaluate (prog,s1) = (r,s2) /\ ~(r = SOME targetSem_Error) /\
+     stack_to_labProof_state_rel s1 t1 /\
+     call_args prog (labSem_state_ptr_reg t1) (labSem_state_len_reg t1)
+       (labSem_state_ptr2_reg t1) (labSem_state_len2_reg t1)
+       (labSem_state_link_reg t1) /\
+     stack_to_labProof_code_installed (labSem_state_pc t1) (append (FST
+       (stack_to_lab_flatten t prog n l cs bs))) (labSem_state_code t1) /\
+     ALL (\k. IS_SOME (loc_to_pc n k (labSem_state_code t1))) (APPEND
+       (APPEND cs bs) [0]) ==>
+     (?ck t2.
+     match halt_view r with SOME res ->
+       stackSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock t1
+         + ck)) t1) =
+         (res,t2) /\ labSem_state_ffi t2 = stackSem_state_ffi s2
+     | NONE ->
+       (!ck1. stackSem_evaluate (labSem_state_clock_fupd (K
+         (labSem_state_clock t1 + ck + ck1)) t1) =
+         stackSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock
+           t2 + ck1)) t2)) /\ labSem_state_len_reg
+       t2 = labSem_state_len_reg t1 /\ labSem_state_ptr_reg
+       t2 = labSem_state_ptr_reg t1 /\ labSem_state_len2_reg
+       t2 = labSem_state_len2_reg t1 /\ labSem_state_ptr2_reg
+       t2 = labSem_state_ptr2_reg t1 /\ labSem_state_link_reg
+       t2 = labSem_state_link_reg t1 /\ labSem_state_code
+       t1 <<= labSem_state_code t2 /\
+       (match OPTION_MAP (\w. result_view w n cs bs) r with NONE ->
+         labSem_state_pc
+         t2 = labSem_state_pc t1 + LENGTH (FILTER ((~) o is_Label)
+                           (append (FST (stack_to_lab_flatten t prog n l cs
+                             bs)))) /\
+         stack_to_labProof_state_rel s2 t2
+       | SOME (Vloc n1 n2) ->
+           (!n. IS_SOME (sptree_lookup n (stackSem_state_code s2)) ==>
+             IS_SOME (loc_to_pc n 0 (labSem_state_code t2))) /\
+           (!w. loc_to_pc n1 n2 (labSem_state_code t2) = SOME w ==>
+               w = labSem_state_pc t2 /\
+               stack_to_labProof_state_rel s2 t2)
+       | SOME (Vcont n1 n2) ->
+           stack_to_labProof_state_rel s2 t2 /\
+           stack_to_labProof_code_installed (labSem_state_pc t2) [lab_LabAsm
+             (lab_Jump (lab_Lab n1 n2)) (n2w 0) [] 0] (labSem_state_code t2)
+       | SOME Vtimeout -> labSem_state_ffi t2 = stackSem_state_ffi s2
+         /\ labSem_state_clock t2 = 0
+       | _ -> F))`,
+  CHEAT_TAC);;
 
-(* HOL4 stack_to_labProofScript.sml:2741-2825: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): flatten_call_correct *)
+let flatten_call_correct = prove
+ (`stackSem_evaluate (stack_Call NONE (INL (start:num)) NONE,s1) = (res,s2) /\
+   stack_to_labProof_state_rel (s1:('a,'c,'ffi)stackSem_state) t1 /\
+   loc_to_pc start 0 (labSem_state_code t1) = SOME (labSem_state_pc t1)
+     /\ ~(res = SOME targetSem_Error) /\
+   (~(res = SOME targetSem_TimeOut) ==>
+     (?w. res = SOME (targetSem_Halt (word_Word w))) \/
+     (?f. res = SOME (stackSem_FinalFFI f)) \/
+     (?n. res = SOME (stackSem_Result (word_Loc n 0)) /\
+       (!(s:('a,'c,'ffi)stackSem_state). subspt (stackSem_state_code s1)
+         (stackSem_state_code s) /\ ~(stackSem_state_clock s = 0) ==>
+           (?t. stackSem_evaluate (stack_Call NONE (INL n) NONE,s) = (SOME
+             (targetSem_Halt (word_Word (n2w 0))),t) /\ stackSem_state_ffi
+               t = stackSem_state_ffi s /\ stackSem_state_clock t =
+                 stackSem_state_clock s - 1)))) ==>
+   (?ck r2 t2.
+     stackSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock t1 -
+       1 + ck)) (t1:('a,'c,'ffi)labSem_state)) = (r2,t2) /\
+     (!f. res = SOME (stackSem_FinalFFI f) ==> r2 = targetSem_Halt
+       (ffi_FFI_outcome f)) /\
+     (!w. res = SOME (targetSem_Halt w) ==> r2 =
+      (match w with word_Word (n2w 0) -> targetSem_Halt ffi_Success
+                 | word_Word _ -> targetSem_Halt ffi_Resource_limit_hit
+                 | _ -> targetSem_Error)) /\
+     (!n. res = SOME (stackSem_Result (word_Loc n 0)) ==> r2 =
+       targetSem_Halt ffi_Success) /\ labSem_state_ffi
+     // (evaluate (t1 with clock := t1.clock - 1 + ck) =
+     // (,t2)) ∧
+     t2 = stackSem_state_ffi s2 /\ ~(r2 = targetSem_Error) /\ (res = SOME
+       targetSem_TimeOut ==> r2 = targetSem_TimeOut))
+   // (FST (evaluate (t1 with clock := t1.clock - 1 + ck)) ≠ Error)`,
+  CHEAT_TAC);;
 
 let halt_assum_def = new_definition
   `halt_assum (:'ffi#'c) code <=>
@@ -644,8 +736,14 @@ let halt_assum_def = new_definition
           t = stackSem_state_ffi s /\ stackSem_state_clock t =
             stackSem_state_clock s - 1))`;;
 
-(* HOL4 stack_to_labProofScript.sml:2835-3025: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): flatten_semantics *)
+let flatten_semantics = prove
+ (`halt_assum (:'ffi#'c) (stackSem_state_code (s1:('a,'c,'ffi)stackSem_state))
+  /\
+   stack_to_labProof_state_rel s1 (s2:('a,'c,'ffi)labSem_state) /\
+   loc_to_pc (start:num) 0 (labSem_state_code s2) = SOME (labSem_state_pc
+     s2) /\ ~(stackSem_semantics start s1 = reg_alloc_Fail) ==>
+   stackSem_semantics s2 = stackSem_semantics start s1`,
+  CHEAT_TAC);;
 
 let stack_to_labProof_make_init_def = new_definition
   `stack_to_labProof_make_init code coracle regs' save_regs
@@ -865,8 +963,47 @@ let stack_to_labProof_good_code_def = new_definition
 let contain_def = new_definition
   `contain b = Abbrev b`;;
 
-(* HOL4 stack_to_labProofScript.sml:3365-3615: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): full_make_init_semantics *)
+let full_make_init_semantics = prove
+ (`full_make_init stack_conf data_conf max_heap sp offset
+    (bitmaps:('a word) list) code t save_regs data_sp coracle = (s,opt) /\
+   good_dimindex (:'a) /\ labSem_state_code
+   t = stack_to_lab_compile stack_conf data_conf max_heap sp offset code
+     /\ labSem_state_compile_oracle
+   t = (\n.
+     let (c,p,b) = coracle n in
+       (c,compile_no_stubs (stack_to_lab_config_reg_names stack_conf)
+         (stack_to_lab_config_jump stack_conf) offset sp p)) /\
+   ~(labSem_state_failed t) /\
+   memory_assumption (stack_to_lab_config_reg_names stack_conf) bitmaps
+     data_sp t /\
+   max_stack_alloc <= max_heap /\ ~(labSem_state_link_reg
+   t IN save_regs) /\ labSem_state_pc t = 0 /\
+   (!k i n. k IN save_regs ==> labSem_state_io_regs t n i k = NONE) /\
+   (!k n. k IN save_regs ==> labSem_state_cc_regs t n k = NONE) /\
+   (!x. x IN labSem_state_mem_domain t ==> w2n x MOD (dimindex (:'a) DIV 8)
+     = 0) /\
+   (!x. x IN labSem_state_shared_mem_domain t ==> w2n x MOD (dimindex (:'a)
+     DIV 8) = 0) /\
+   stack_to_labProof_good_code sp code /\
+   (!n. stack_to_labProof_good_code sp (FST (SND (coracle n)))) /\
+   10 <= sp /\
+   ALL (\r. (tlookup (stack_to_lab_config_reg_names stack_conf) ((r + sp) -
+     2)) IN save_regs) [2; 3; 4] /\
+   tlookup (stack_to_lab_config_reg_names stack_conf) 4 =
+     labSem_state_len2_reg t /\
+   tlookup (stack_to_lab_config_reg_names stack_conf) 3 =
+     labSem_state_ptr2_reg t /\
+   tlookup (stack_to_lab_config_reg_names stack_conf) 2 =
+     labSem_state_len_reg t /\
+   tlookup (stack_to_lab_config_reg_names stack_conf) 1 =
+     labSem_state_ptr_reg t /\
+   tlookup (stack_to_lab_config_reg_names stack_conf) 0 =
+     labSem_state_link_reg t /\
+   BIJ (tlookup (stack_to_lab_config_reg_names stack_conf)) UNIV UNIV ==>
+   Abbrev (~(opt = NONE) /\ (~(stackSem_semantics InitGlobals_location s =
+     reg_alloc_Fail) ==>
+   stackSem_semantics t = stackSem_semantics InitGlobals_location s))`,
+  CHEAT_TAC);;
 
 (* HOL4 stack_to_labProofScript.sml:3617-3618: a theorem that HOL4 states as
    the value of an ML expression: full_make_init_semantics *)

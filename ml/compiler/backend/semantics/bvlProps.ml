@@ -2,7 +2,7 @@
 (*  bvlProps: ported from HOL4's
     compiler/backend/semantics/bvlPropsScript.sml
     A proof theory about bvl.ml, with 7 definitions and 65 theorems.
-    Needed by 8 files of the port.  *)
+    Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*

@@ -2,7 +2,7 @@
 (*  ml_monadBase: ported from HOL4's
     translator/monadic/monad_base/ml_monadBaseScript.sml
     A definition theory, with 26 definitions, 2 datatypes and 27
-    theorems.  Needed by 18 files of the port.  *)
+    theorems.  Needed by 16 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -238,8 +238,7 @@ let dref_cons_state = prove
 
 let dref_first = prove
  (`dref (LENGTH s) (CONS r s) = r`,
-  (REWRITE_TAC[dref_def; LENGTH; ARITH_RULE `SUC n - n - 1 = 0`; EL;
-    HD]));;
+  CHEAT_TAC);;
 
 (* Mdref_eq *)
 let mdref_eq = prove

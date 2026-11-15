@@ -1174,7 +1174,7 @@ let clos_knownProof_state_rel_def = new_definition
        /\ closSem_state_max_app s = closSem_state_max_app t /\
      ALL2 (OPTREL (clos_knownProof_v_rel c g)) (closSem_state_globals s)
        (closSem_state_globals t) /\
-     fmap_rel (clos_ticksProof_ref_rel c g) (closSem_state_refs s)
+     fmap_rel (clos_knownProof_ref_rel c g) (closSem_state_refs s)
        (closSem_state_refs t) /\ closSem_state_compile
      s = state_cc (clos_ticks_compile_inc c) (closSem_state_compile t)
        /\ closSem_state_compile_oracle
@@ -1350,11 +1350,11 @@ let clos_knownProof_state_rel_opt_rel_refs = prove
  (`(clos_knownProof_state_rel c g s1 s2 /\ FLOOKUP (closSem_state_refs s1) n =
   r1 ==>
       (?r2. FLOOKUP (closSem_state_refs s2) n = r2 /\ OPTREL
-        (clos_ticksProof_ref_rel c g) r1 r2)) /\
+        (clos_knownProof_ref_rel c g) r1 r2)) /\
    (clos_knownProof_state_rel c g s1 s2 /\ FLOOKUP (closSem_state_refs s2) n
      = r2 ==>
       (?r1. FLOOKUP (closSem_state_refs s1) n = r1 /\ OPTREL
-        (clos_ticksProof_ref_rel c g) r1 r2))`,
+        (clos_knownProof_ref_rel c g) r1 r2))`,
   CHEAT_TAC);;
 
 (* rel_update_thunk[local] *)

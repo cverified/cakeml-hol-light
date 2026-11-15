@@ -720,7 +720,7 @@ let clos_to_bvlProof_env_rel_def,clos_to_bvlProof_env_rel_ind = define_wf
 (* [local] *)
 let env_rel_APPEND = prove
  (`!xs1 xs2.
-       ALL2 (clos_knownProof_v_rel max_app f1 refs code) xs1 xs2 /\
+       ALL2 (clos_to_bvlProof_v_rel max_app f1 refs code) xs1 xs2 /\
        clos_to_bvlProof_env_rel max_app f1 refs code ys1 ys2 ==>
        clos_to_bvlProof_env_rel max_app f1 refs code (APPEND xs1 ys1)
          (APPEND xs2 ys2)`,
@@ -729,7 +729,7 @@ let env_rel_APPEND = prove
 (* [local] *)
 let list_rel_IMP_env_rel = prove
  (`!xs ys.
-       ALL2 (clos_knownProof_v_rel max_app f refs code) xs ys ==>
+       ALL2 (clos_to_bvlProof_v_rel max_app f refs code) xs ys ==>
        clos_to_bvlProof_env_rel max_app f refs code xs (APPEND ys ts)`,
   CHEAT_TAC);;
 
@@ -804,7 +804,7 @@ let clos_to_bvlProof_state_rel_def = new_definition
   `clos_to_bvlProof_state_rel f (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)bvlSem_state) <=>
      (closSem_state_ffi s = bvlSem_state_ffi t) /\
-     ALL2 (OPTREL (clos_knownProof_v_rel (closSem_state_max_app s) f
+     ALL2 (OPTREL (clos_to_bvlProof_v_rel (closSem_state_max_app s) f
        (bvlSem_state_refs t) (bvlSem_state_code t))) (closSem_state_globals s)
        (DROP num_added_globals (bvlSem_state_globals t)) /\
      get_global 0 (bvlSem_state_globals t) = SOME (SOME (global_table
@@ -817,7 +817,7 @@ let clos_to_bvlProof_state_rel_def = new_definition
      (!n x. (FLOOKUP (closSem_state_refs s) n = SOME x) ==>
             (?y m. (FLOOKUP f n = SOME m) /\
                   (FLOOKUP (bvlSem_state_refs t) m = SOME y) /\
-                  clos_to_bvlProof_ref_rel (clos_knownProof_v_rel
+                  clos_to_bvlProof_ref_rel (clos_to_bvlProof_v_rel
                     (closSem_state_max_app s) f (bvlSem_state_refs t)
                     (bvlSem_state_code t)) x y)) /\
      (!n. n < closSem_state_max_app s ==>
@@ -848,7 +848,7 @@ let clos_to_bvlProof_state_rel_globals = prove
  (`clos_to_bvlProof_state_rel f s t ==>
      get_global 0 (bvlSem_state_globals t) = SOME (SOME (global_table
        (closSem_state_max_app s))) /\
-     ALL2 (OPTREL (clos_knownProof_v_rel (closSem_state_max_app s) f
+     ALL2 (OPTREL (clos_to_bvlProof_v_rel (closSem_state_max_app s) f
        (bvlSem_state_refs t) (bvlSem_state_code t))) (closSem_state_globals
        s) (DROP num_added_globals (bvlSem_state_globals t))`,
   CHEAT_TAC);;
@@ -867,7 +867,7 @@ let state_rel_refs_lookup = prove
    FLOOKUP (closSem_state_refs s1) p = SOME x /\
    FLOOKUP f p = SOME p' ==>
    (?x'. FLOOKUP (bvlSem_state_refs s2) p' = SOME x' /\
-     clos_to_bvlProof_ref_rel (clos_knownProof_v_rel
+     clos_to_bvlProof_ref_rel (clos_to_bvlProof_v_rel
        (closSem_state_max_app s1) f (bvlSem_state_refs s2) (bvlSem_state_code
        s2)) x x')`,
   CHEAT_TAC);;
@@ -912,16 +912,16 @@ let cl_rel_UPDATE_REF = prove
 
 (* [local] *)
 let OPTREL_v_rel_NEW_REF = prove
- (`OPTREL (clos_knownProof_v_rel max_app f1 refs1 code) x y /\ ~(r IN FDOM
+ (`OPTREL (clos_to_bvlProof_v_rel max_app f1 refs1 code) x y /\ ~(r IN FDOM
   refs1) ==>
-     OPTREL (clos_knownProof_v_rel max_app f1 (refs1 |+ (r,t)) code) x y`,
+     OPTREL (clos_to_bvlProof_v_rel max_app f1 (refs1 |+ (r,t)) code) x y`,
   CHEAT_TAC);;
 
 (* [local] *)
 let OPTREL_v_rel_UPDATE_REF = prove
- (`OPTREL (clos_knownProof_v_rel max_app f1 refs1 code) x y /\ r IN FRANGE f1
+ (`OPTREL (clos_to_bvlProof_v_rel max_app f1 refs1 code) x y /\ r IN FRANGE f1
   ==>
-     OPTREL (clos_knownProof_v_rel max_app f1 (refs1 |+ (r,t)) code) x y`,
+     OPTREL (clos_to_bvlProof_v_rel max_app f1 (refs1 |+ (r,t)) code) x y`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -952,7 +952,7 @@ let state_rel_UPDATE_REF = prove
  (`clos_to_bvlProof_state_rel f2 p1 t2 /\
    FLOOKUP f2 dst = SOME r2 /\
    FLOOKUP (closSem_state_refs p1) dst = SOME v0 /\
-   clos_to_bvlProof_ref_rel (clos_knownProof_v_rel (closSem_state_max_app
+   clos_to_bvlProof_ref_rel (clos_to_bvlProof_v_rel (closSem_state_max_app
      p1) f2 (bvlSem_state_refs t2) (bvlSem_state_code t2)) v v' /\
    (!bs. ~(v' = bvlSem_ByteArray T bs)) ==>
    clos_to_bvlProof_state_rel f2 (closSem_state_refs_fupd (K
@@ -975,11 +975,13 @@ let clos_to_bvlProof_v_to_list = prove
     bvlSem_v_to_list v = SOME l /\
     clos_to_bvlProof_v_rel max_app f r c v v' ==>
     (?l'. bvlSem_v_to_list v' = SOME l' /\
-         ALL2 (clos_knownProof_v_rel max_app f r c) l l')`,
+         ALL2 (clos_to_bvlProof_v_rel max_app f r c) l l')`,
   CHEAT_TAC);;
 
-(* HOL4 clos_to_bvlProofScript.sml:1445-1449: a theorem whose statement the
-   port cannot state yet: not_isClos *)
+let not_isClos = prove
+ (`~(bvlSem_isClos (if n < (30) then n else (n + 2)) ys)`,
+  CHEAT_TAC);;
+add_simp not_isClos;;
 
 (* [local] *)
 let do_eq = prove
@@ -991,8 +993,8 @@ let do_eq = prove
             clos_to_bvlProof_v_rel max_app f r c y y1 ==>
             closSem_do_eq x y = bvlSem_do_eq r x1 y1) /\
      (!x y x1 y1.
-            ALL2 (clos_knownProof_v_rel max_app f r c) x x1 /\
-            ALL2 (clos_knownProof_v_rel max_app f r c) y y1 ==>
+            ALL2 (clos_to_bvlProof_v_rel max_app f r c) x x1 /\
+            ALL2 (clos_to_bvlProof_v_rel max_app f r c) y y1 ==>
             closSem_do_eq_list x y = bvlSem_do_eq_list r x1 y1)`,
   CHEAT_TAC);;
 
@@ -1015,7 +1017,7 @@ let do_eq_list_T_every = prove
 (* list_to_v_v_rel *)
 let clos_to_bvlProof_list_to_v_v_rel = prove
  (`!xs ys.
-     ALL2 (clos_knownProof_v_rel app f refs code) xs ys ==>
+     ALL2 (clos_to_bvlProof_v_rel app f refs code) xs ys ==>
        clos_to_bvlProof_v_rel app f refs code (bvlSem_list_to_v xs)
          (bvlSem_list_to_v ys)`,
   CHEAT_TAC);;
@@ -1026,7 +1028,7 @@ let clos_to_bvlProof_list_to_v_v_rel = prove
 let clos_to_bvlProof_do_app = prove
  (`(bvlSem_do_app op xs s1 = Rval (v,s2)) /\
    clos_to_bvlProof_state_rel f s1 t1 /\
-   ALL2 (clos_knownProof_v_rel (closSem_state_max_app s1) f
+   ALL2 (clos_to_bvlProof_v_rel (closSem_state_max_app s1) f
      (bvlSem_state_refs t1) (bvlSem_state_code t1)) xs ys /\
    (~(
     // store updates need special treatment
@@ -1055,10 +1057,10 @@ let clos_to_bvlProof_do_app = prove
 let clos_to_bvlProof_do_app_err = prove
  (`bvlSem_do_app op xs s1 = Rerr err /\ ~(err = Rabort Rtype_error) /\
     clos_to_bvlProof_state_rel f s1 t1 /\
-    ALL2 (clos_knownProof_v_rel (closSem_state_max_app s1) f
+    ALL2 (clos_to_bvlProof_v_rel (closSem_state_max_app s1) f
       (bvlSem_state_refs t1) (bvlSem_state_code t1)) xs ys ==>
     (?e. bvlSem_do_app (clos_to_bvl_compile_op op) ys t1 = Rerr e /\
-        exc_rel (clos_knownProof_v_rel (closSem_state_max_app s1) f
+        exc_rel (clos_to_bvlProof_v_rel (closSem_state_max_app s1) f
           (bvlSem_state_refs t1) (bvlSem_state_code t1)) err e)`,
   CHEAT_TAC);;
 
@@ -1106,7 +1108,7 @@ let lookup_vars_IMP = prove
        clos_to_bvlProof_env_rel max_app f refs code env env2 ==>
        (?ys. (bvlSem_evaluate (MAP bvl_Var vs,env2,t1) = (Rval
          ys,(t1:('c,'ffi)bvlSem_state))) /\
-            ALL2 (clos_knownProof_v_rel max_app f refs code) xs ys /\
+            ALL2 (clos_to_bvlProof_v_rel max_app f refs code) xs ys /\
             (LENGTH vs = LENGTH xs))`,
   CHEAT_TAC);;
 
@@ -1454,8 +1456,8 @@ let cl_rel_run = prove
      dest_closure' loc func args = SOME (Full_app body new_env rest) /\
      clos_to_bvlProof_v_rel max_app f1 refs code func func' /\
      cl_rel max_app (FRANGE f1) refs code (env,fvs) func func' /\
-     ALL2 (clos_knownProof_v_rel max_app f1 refs code) env fvs /\
-     ALL2 (clos_knownProof_v_rel max_app f1 refs code) args args' ==>
+     ALL2 (clos_to_bvlProof_v_rel max_app f1 refs code) env fvs /\
+     ALL2 (clos_to_bvlProof_v_rel max_app f1 refs code) args args' ==>
      (?body' aux1 aux2 new_env' exp'.
        sptree_lookup ptr code = SOME (n + 2,exp') /\
        clos_to_bvl_compile_exps max_app [body] aux1 = ([body'],aux2)
@@ -1497,7 +1499,7 @@ let v_rel_run = prove
        dest_closure max_app loc func args = SOME (Full_app body newenv rest)
          /\
        clos_to_bvlProof_v_rel max_app f1 refs code func func' /\
-       ALL2 (clos_knownProof_v_rel max_app f1 refs code) args args' ==>
+       ALL2 (clos_to_bvlProof_v_rel max_app f1 refs code) args args' ==>
        (?ck' body' aux1 aux2 newenv' exp'.
          sptree_lookup ptr code = SOME (n + 2,exp') /\
          clos_to_bvl_compile_exps max_app [body] aux1 = ([body'],aux2)
@@ -1789,9 +1791,9 @@ let clos_to_bvlProof_compile_exps_correct = prove
      (?ck res' t2 f2.
         (bvlSem_evaluate (ys,env',bvlSem_state_clock_fupd (K
           (closSem_state_clock s1 + ck)) t1) = (res',t2)) /\
-        semanticPrimitivesProps_result_rel (ALL2 (clos_knownProof_v_rel
+        semanticPrimitivesProps_result_rel (ALL2 (clos_to_bvlProof_v_rel
           (closSem_state_max_app s1) f2 (bvlSem_state_refs t2)
-          (bvlSem_state_code t2))) (clos_knownProof_v_rel
+          (bvlSem_state_code t2))) (clos_to_bvlProof_v_rel
           (closSem_state_max_app s1) f2 (bvlSem_state_refs t2)
           (bvlSem_state_code t2)) res res' /\
         clos_to_bvlProof_state_rel f2 s2 t2 /\
@@ -1810,7 +1812,7 @@ let clos_to_bvlProof_compile_exps_correct = prove
      FEVERY (\p. every_Fn_vs_SOME [SND (SND p)]) (closSem_state_code s1) /\
      clos_to_bvlProof_v_rel (closSem_state_max_app s1) f1 (bvlSem_state_refs
        t1) (bvlSem_state_code t1) func func' /\
-     ALL2 (clos_knownProof_v_rel (closSem_state_max_app s1) f1
+     ALL2 (clos_to_bvlProof_v_rel (closSem_state_max_app s1) f1
        (bvlSem_state_refs t1) (bvlSem_state_code t1)) args args' /\
      clos_to_bvlProof_state_rel f1 s1 t1 ==>
      (?ck res' t2 f2.
@@ -1836,10 +1838,11 @@ let clos_to_bvlProof_compile_exps_correct = prove
                          ([exp],args,bvlSem_state_clock_fupd (K
                          ((closSem_state_clock s1 + ck) - LENGTH args')) t1)) =
                  (res',t2))) /\
-       semanticPrimitivesProps_result_rel (ALL2 (clos_knownProof_v_rel
+       semanticPrimitivesProps_result_rel (ALL2 (clos_to_bvlProof_v_rel
          (closSem_state_max_app s1) f2 (bvlSem_state_refs t2)
-         (bvlSem_state_code t2))) (clos_knownProof_v_rel (closSem_state_max_app
-         s1) f2 (bvlSem_state_refs t2) (bvlSem_state_code t2)) res res' /\
+         (bvlSem_state_code t2))) (clos_to_bvlProof_v_rel
+         (closSem_state_max_app s1) f2 (bvlSem_state_refs t2)
+         (bvlSem_state_code t2)) res res' /\
        clos_to_bvlProof_state_rel f2 s2 t2 /\
        f1 SUBMAP f2 /\
        FDIFF (bvlSem_state_refs t1) (FRANGE f1) SUBMAP FDIFF
@@ -2069,7 +2072,7 @@ let clos_to_bvlProof_eval_sim_def = new_definition
 
 (* initial_state_with_clock[local] *)
 let clos_to_bvlProof_initial_state_with_clock = prove
- (`(state_clock_fupd (K (state_clock
+ (`(closSem_state_clock_fupd (K (closSem_state_clock
      (closSem_initial_state ffi ma code co cc k) + ck))
        (closSem_initial_state ffi ma code co cc k)) =
    closSem_initial_state ffi ma code co cc (k + ck)`,

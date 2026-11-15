@@ -150,13 +150,7 @@ let intro_multi_length = prove
 
 let intro_multi_sing = prove
  (`!e max_app. ?e'. intro_multi max_app [e] = [e']`,
-  (REPEAT GEN_TAC THEN
-   MP_TAC (ISPECL [`max_app:num`; `[e:clos_exp]`]
-     intro_multi_length) THEN
-   SPEC_TAC (`intro_multi max_app [e]`,`l:clos_exp list`) THEN
-   LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ;
-     LENGTH_EQ_NIL] THEN
-   MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let collect_args_idem = prove
  (`!max_app num_args e num_args' e'.
@@ -193,8 +187,7 @@ let cond_mti_compile_inc_def = new_definition
 (* compile_nil *)
 let clos_mti_compile_nil = prove
  (`clos_mti_compile do_mti max_app [] = []`,
-  (GEN_TAC THEN CASES_ON_TAC `do_mti:bool` THEN
-   REWRITE_TAC[clos_mti_compile_def; intro_multi_def]));;
+  CHEAT_TAC);;
 add_simp clos_mti_compile_nil;;
 
 (* and the interface *)

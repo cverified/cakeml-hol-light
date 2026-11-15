@@ -2204,21 +2204,22 @@ let set_vars_sing = prove
 
 let jump_exc_call_env = prove
  (`wordSem_jump_exc (wordSem_call_env x y s) =
-   wordSem_jump_exc (state_stack_max_fupd (K
-               (OPTION_MAP2 MAX (state_stack_max s)
-                 (OPTION_MAP2 (+) (stack_size (stack s)) y))) s)`,
+   wordSem_jump_exc (wordSem_state_stack_max_fupd (K
+               (OPTION_MAP2 MAX (wordSem_state_stack_max s)
+                 (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s))
+                   y))) s)`,
   CHEAT_TAC);;
 
 let jump_exc_dec_clock = prove
- (`mk_loc (wordSem_jump_exc (word_bignumProof_dec_clock s)) = mk_loc
-  (wordSem_jump_exc s)`,
+ (`mk_loc (wordSem_jump_exc (wordSem_dec_clock s)) = mk_loc (wordSem_jump_exc
+  s)`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_gcProofScript.sml:4836-4838: a theorem that HOL4 states
    as the value of an ML expression: LASTN_ADD1 *)
 
 let jump_exc_push_env_NONE = prove
- (`mk_loc (wordSem_jump_exc (word_bignumProof_dec_clock s)) =
+ (`mk_loc (wordSem_jump_exc (wordSem_dec_clock s)) =
    mk_loc (wordSem_jump_exc s) /\
    mk_loc (wordSem_jump_exc (wordSem_push_env y NONE s)) =
    mk_loc (wordSem_jump_exc (s:('a,'c,'ffi)wordSem_state)) /\
@@ -2323,9 +2324,9 @@ let state_rel_call_env = prove
      SOME ws /\
    data_to_word_gcProof_state_rel c l5 l6 s t NONE locs ==>
    data_to_word_gcProof_state_rel c l1 l2 (wordSem_call_env q ss
-     (word_bignumProof_dec_clock s))
-     (wordSem_call_env (CONS (word_Loc l1 l2) ws) ss
-       (word_bignumProof_dec_clock t)) NONE locs`,
+     (wordSem_dec_clock s))
+     (wordSem_call_env (CONS (word_Loc l1 l2) ws) ss (wordSem_dec_clock
+       t)) NONE locs`,
   CHEAT_TAC);;
 
 let data_get_vars_SNOC_IMP = prove
@@ -2377,9 +2378,8 @@ let find_code_thm = prove
              (wordSem_state_code t) fs = SOME (args1,FST (data_to_word_comp c
              n1 n2 r),ss) /\
            data_to_word_gcProof_state_rel c l1 l2 (wordSem_call_env q ss
-             (word_bignumProof_dec_clock s))
-             (wordSem_call_env args1 ss (word_bignumProof_dec_clock t))
-               NONE locs)`,
+             (wordSem_dec_clock s))
+             (wordSem_call_env args1 ss (wordSem_dec_clock t)) NONE locs)`,
   CHEAT_TAC);;
 (* [allow_rebind] *)
 let data_to_word_gcProof_find_code_thm = find_code_thm;;
@@ -2440,9 +2440,9 @@ let state_rel_call_env_push_opt = prove
      cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
      data_to_word_gcProof_state_rel c q l
        (wordSem_call_env xs ss (wordSem_push_env x (IS_SOME opt)
-         (word_bignumProof_dec_clock s)))
+         (wordSem_dec_clock s)))
        (wordSem_call_env (CONS (word_Loc q l) ws) ss (wordSem_push_env y opt
-         (word_bignumProof_dec_clock t))) NONE
+         (wordSem_dec_clock t))) NONE
        (CONS (l1,l2) locs)`,
   CHEAT_TAC);;
 
@@ -2453,10 +2453,9 @@ let state_rel_call_env_push = prove
    wordSem_cut_env r (dataSem_state_locals s) = SOME x /\
    cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
    data_to_word_gcProof_state_rel c q l
-     (wordSem_call_env xs ss (wordSem_push_env x F
-       (word_bignumProof_dec_clock s)))
+     (wordSem_call_env xs ss (wordSem_push_env x F (wordSem_dec_clock s)))
      (wordSem_call_env (CONS (word_Loc q l) ws) ss (wordSem_push_env y NONE
-       (word_bignumProof_dec_clock t))) NONE
+       (wordSem_dec_clock t))) NONE
      (CONS (l1,l2) locs)`,
   CHEAT_TAC);;
 
@@ -2470,9 +2469,9 @@ let state_rel_call_env_push_env = prove
      dataSem_cut_env r (dataSem_state_locals s) = SOME x /\
      cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
      data_to_word_gcProof_state_rel c q l (wordSem_call_env xs ss
-       (wordSem_push_env x (IS_SOME opt) (word_bignumProof_dec_clock s)))
+       (wordSem_push_env x (IS_SOME opt) (wordSem_dec_clock s)))
         (wordSem_call_env (CONS (word_Loc q l) ws) ss (wordSem_push_env y
-          opt (word_bignumProof_dec_clock t))) NONE
+          opt (wordSem_dec_clock t))) NONE
         (CONS (l1,l2) locs)`,
   CHEAT_TAC);;
 
@@ -2489,9 +2488,9 @@ let find_code_thm_ret = prove
      wordSem_find_code dest (CONS (word_Loc q l) ws) (wordSem_state_code t)
        fs = SOME (args1,FST (data_to_word_comp c n1 n2 prog),ss) /\
      data_to_word_gcProof_state_rel c q l (wordSem_call_env ys ss
-       (wordSem_push_env x F (word_bignumProof_dec_clock s)))
+       (wordSem_push_env x F (wordSem_dec_clock s)))
        (wordSem_call_env args1 ss (wordSem_push_env y NONE
-       (word_bignumProof_dec_clock t))) NONE (CONS (l1,l2) locs))`,
+       (wordSem_dec_clock t))) NONE (CONS (l1,l2) locs))`,
   CHEAT_TAC);;
 
 let find_code_thm_handler = prove
@@ -2507,10 +2506,10 @@ let find_code_thm_handler = prove
      wordSem_find_code dest (CONS (word_Loc q l) ws) (wordSem_state_code t)
        fs = SOME (args1,FST (data_to_word_comp c n1 n2 prog),ss) /\
      data_to_word_gcProof_state_rel c q l (wordSem_call_env ys ss
-       (wordSem_push_env x T (word_bignumProof_dec_clock s)))
+       (wordSem_push_env x T (wordSem_dec_clock s)))
        (wordSem_call_env args1 ss (wordSem_push_env y
           (SOME (adjust_var x0,(prog1:'a word_prog),nn,l + 1))
-       (word_bignumProof_dec_clock t))) NONE (CONS (l1,l2) locs))`,
+       (wordSem_dec_clock t))) NONE (CONS (l1,l2) locs))`,
   CHEAT_TAC);;
 
 let data_find_code = prove
@@ -2527,24 +2526,43 @@ let data_to_word_gcProof_s_key_eq_LASTN = prove
  (`!xs ys n. s_key_eq xs ys ==> s_key_eq (LASTN n xs) (LASTN n ys)`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_gcProofScript.sml:5613-5623: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): evaluate_mk_loc_EQ *)
+let evaluate_mk_loc_EQ = prove
+ (`wordSem_evaluate (q,t) = (NONE,(t1:('a,'b,'c)wordSem_state)) ==>
+    mk_loc (wordSem_jump_exc t1) = ((mk_loc (wordSem_jump_exc t)):'a
+      word_loc)`,
+  CHEAT_TAC);;
 
-(* HOL4 data_to_word_gcProofScript.sml:5625-5644: a theorem whose statement
-   HOL Light does not read (tools/unstated.py):
-   mk_loc_eq_push_env_exc_Exception *)
+let mk_loc_eq_push_env_exc_Exception = prove
+ (`wordSem_evaluate
+      ((c:'a word_prog),wordSem_call_env args1 ss
+            (wordSem_push_env y (SOME (x0,(prog1:'a word_prog),x1,l))
+               (wordSem_dec_clock t))) = (SOME (wordSem_Exception xx
+                 w),(t1:('a,'b,'c)wordSem_state)) ==>
+    mk_loc (wordSem_jump_exc t1) = (mk_loc (wordSem_jump_exc t):'a
+      word_loc)`,
+  CHEAT_TAC);;
 
-(* HOL4 data_to_word_gcProofScript.sml:5646-5664: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): evaluate_IMP_domain_EQ *)
+let evaluate_IMP_domain_EQ = prove
+ (`wordSem_evaluate (c,wordSem_call_env (args1:('a word_loc) list) ss
+     (wordSem_push_env y (opt:(num#'a word_prog#num#num) option)
+       (wordSem_dec_clock t))) =
+      (SOME (wordSem_Result ll w),t1) /\ wordSem_pop_env t1 = SOME t2 ==>
+    domain (wordSem_state_locals t2) = domain (FST y) UNION domain (SND y)`,
+  CHEAT_TAC);;
 
-(* HOL4 data_to_word_gcProofScript.sml:5666-5686: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): evaluate_IMP_domain_EQ_Exc *)
+let evaluate_IMP_domain_EQ_Exc = prove
+ (`wordSem_evaluate (c,wordSem_call_env args1 ss (wordSem_push_env y
+      (SOME (x0,(prog1:'a word_prog),x1,l))
+      (wordSem_dec_clock (t:('a,'b,'c)wordSem_state)))) = (SOME
+        (wordSem_Exception ll w),t1) ==>
+    domain (wordSem_state_locals t1) = domain (FST y) UNION domain (SND y)`,
+  CHEAT_TAC);;
 
 let mk_loc_jump_exc = prove
  (`mk_loc (wordSem_jump_exc
           (wordSem_call_env args1 ss
              (wordSem_push_env y (SOME (adjust_var n,prog1,x0,l))
-                (word_bignumProof_dec_clock t)))) = word_Loc x0 l`,
+                (wordSem_dec_clock t)))) = word_Loc x0 l`,
   CHEAT_TAC);;
 
 let data_to_word_gcProof_inc_clock_def = new_definition
@@ -2638,18 +2656,22 @@ let jump_exc_push_env_SOME = prove
 
 let eval_push_env_T_Raise_IMP_stack_length = prove
  (`wordSem_evaluate (p,wordSem_call_env ys ss (wordSem_push_env x T
-  (word_bignumProof_dec_clock (s:('c,'ffi)dataSem_state)))) =
+  (wordSem_dec_clock (s:('c,'ffi)dataSem_state)))) =
        (SOME (Rerr (Rraise a)),r') ==>
     LENGTH (dataSem_state_stack r') = LENGTH (dataSem_state_stack s)`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_gcProofScript.sml:5900-5913: a theorem whose statement
-   HOL Light does not read (tools/unstated.py):
-   eval_push_env_SOME_exc_IMP_s_key_eq *)
+let eval_push_env_SOME_exc_IMP_s_key_eq = prove
+ (`wordSem_evaluate (p,wordSem_call_env args1 ss (wordSem_push_env y (SOME
+  (x1,x2,x3,x4)) (wordSem_dec_clock t))) =
+      (SOME (wordSem_Exception l w),t1) ==>
+    s_key_eq (wordSem_state_stack t1) (wordSem_state_stack t)
+      /\ wordSem_state_handler t = wordSem_state_handler t1`,
+  CHEAT_TAC);;
 
 let eval_exc_stack_shorter = prove
  (`wordSem_evaluate (c,wordSem_call_env ys ss (wordSem_push_env x F
-  (word_bignumProof_dec_clock (s:('c,'ffi)dataSem_state)))) =
+  (wordSem_dec_clock (s:('c,'ffi)dataSem_state)))) =
       (SOME (Rerr (Rraise a)),r') ==>
     LENGTH (dataSem_state_stack r') < LENGTH (dataSem_state_stack s)`,
   CHEAT_TAC);;
@@ -3278,9 +3300,9 @@ let cut_locals_def = new_definition
      | NONE -> dataSem_state_locals_fupd (K LN) s`;;
 
 let size_of_heap_call_push_env = prove
- (`dataSem_cut_env names (state_locals s) = SOME x ==>
+ (`dataSem_cut_env names (dataSem_state_locals s) = SOME x ==>
    size_of_heap (wordSem_call_env [] ss (wordSem_push_env x F s)) =
-     size_of_heap (state_locals_fupd (K x) s)`,
+     size_of_heap (dataSem_state_locals_fupd (K x) s)`,
   CHEAT_TAC);;
 
 let gc_lemma_gen = prove
@@ -3352,11 +3374,17 @@ let has_space_state_rel = prove
      s) r NONE locs`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_gcProofScript.sml:7686-7692: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): evaluate_IMP_inc_clock *)
+let evaluate_IMP_inc_clock = prove
+ (`wordSem_evaluate (q,t) = (NONE,t1) ==>
+    wordSem_evaluate (q,data_to_word_gcProof_inc_clock ck t) =
+      (NONE,data_to_word_gcProof_inc_clock ck t1)`,
+  CHEAT_TAC);;
 
-(* HOL4 data_to_word_gcProofScript.sml:7694-7700: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): evaluate_IMP_inc_clock_Ex *)
+let evaluate_IMP_inc_clock_Ex = prove
+ (`wordSem_evaluate (q,t) = (SOME (wordSem_Exception x y),t1) ==>
+    wordSem_evaluate (q,data_to_word_gcProof_inc_clock ck t) = (SOME
+      (wordSem_Exception x y),data_to_word_gcProof_inc_clock ck t1)`,
+  CHEAT_TAC);;
 
 let get_var_inc_clock = prove
  (`wordSem_get_var n (data_to_word_gcProof_inc_clock k s) = wordSem_get_var n
@@ -3471,8 +3499,14 @@ let alloc_locals_insert_1 = prove
    wordSem_alloc k (adjust_sets names) t`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_gcProofScript.sml:7990-8015: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): evaluate_GiveUp *)
+let evaluate_GiveUp = prove
+ (`data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
+  locs ==>
+    (?r. wordSem_evaluate (GiveUp,t) = (SOME wordSem_NotEnoughSpace,r)
+      /\ wordSem_state_ffi
+        r = dataSem_state_ffi s /\ wordSem_state_ffi t = dataSem_state_ffi
+          s)`,
+  CHEAT_TAC);;
 
 let insert_insert_3_1 = prove
  (`sptree_insert 3 x (sptree_insert 1 y t) = sptree_insert 1 y (sptree_insert
@@ -3580,15 +3614,100 @@ let cut_env_insert_1 = prove
      -> SOME (sptree_insert 1 w v)`,
   CHEAT_TAC);;
 
-(* HOL4 data_to_word_gcProofScript.sml:8272-8459: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): AllocVar_thm_gen *)
+let AllocVar_thm_gen = prove
+ (`data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
+  locs /\
+    dataSem_cut_env names (dataSem_state_locals s) = SOME x /\
+    wordSem_get_var 1 t = SOME (word_Word w) /\
+    wordSem_evaluate (AllocVar c (limit:num) names,t) = (q,r) /\
+    limit < dimword (:'a) DIV 8 ==>
+    (q = SOME wordSem_NotEnoughSpace ==> wordSem_state_ffi r =
+      dataSem_state_ffi s /\ option_le (wordSem_state_stack_max r)
+      (dataSem_state_stack_max s) /\
+          (~(data_to_word_config_gc_kind c = data_to_word_None) /\ w2n w DIV
+            4 < limit /\ no_thunks_in_refs (dataSem_state_refs s) ==>
+             (!roots2 dups n2 r2 s2.
+               PERM roots2 (APPEND (APPEND (APPEND dups (toList x)) (FLAT
+                 (MAP extract_stack (dataSem_state_stack s))))
+                            [the_global (dataSem_state_global s)]) /\
+               set_of_list dups SUBSET set_of_list (APPEND (APPEND (toList
+                 x) (FLAT (MAP extract_stack (dataSem_state_stack s))))
+                              [the_global (dataSem_state_global s)]) /\
+               size_of (dataSem_state_limits s) roots2 (dataSem_state_refs
+                 s) LN = (n2,r2,s2) ==> limits_heap_limit (dataSem_state_limits
+               s) < n2 + (w2n w DIV 4 + 1)))) /\
+    (~(q = SOME wordSem_NotEnoughSpace) ==>
+      w2n w DIV 4 < limit /\
+      data_to_word_gcProof_state_rel c l1 l2 (dataSem_state_space_fupd (K
+        (w2n w DIV 4 + 1)) (dataSem_state_locals_fupd (K x) s)) r NONE locs /\
+      FLOOKUP (wordSem_state_store r) (Temp (n2w 29)) = FLOOKUP
+        (wordSem_state_store t) (Temp (n2w 29)) /\ wordSem_state_code
+      r = wordSem_state_code t /\ wordSem_state_code_buffer
+      r = wordSem_state_code_buffer t /\ wordSem_state_data_buffer
+      r = wordSem_state_data_buffer t /\ wordSem_state_compile_oracle
+      r = wordSem_state_compile_oracle t /\
+      q = NONE)`,
+  CHEAT_TAC);;
 
-(* HOL4 data_to_word_gcProofScript.sml:8461-8498: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): AllocVar_thm *)
+let AllocVar_thm = prove
+ (`data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
+  locs /\
+    dataSem_cut_env names (dataSem_state_locals s) = SOME x /\
+    wordSem_get_var 1 t = SOME (word_Word w) /\
+    wordSem_evaluate (AllocVar c (limit:num) names,t) = (q,r) /\
+    limit < dimword (:'a) DIV 8 ==>
+    (q = SOME wordSem_NotEnoughSpace ==> wordSem_state_ffi r =
+      dataSem_state_ffi s /\ option_le (wordSem_state_stack_max r)
+      (dataSem_state_stack_max s) /\
+          (~(data_to_word_config_gc_kind c = data_to_word_None) /\ w2n w DIV
+            4 < limit /\ no_thunks_in_refs (dataSem_state_refs s) ==>
+            limits_heap_limit (dataSem_state_limits
+           s) < size_of_heap (cut_locals names s) + w2n w DIV 4 + 1)) /\
+    (~(q = SOME wordSem_NotEnoughSpace) ==>
+      w2n w DIV 4 < limit /\
+      data_to_word_gcProof_state_rel c l1 l2 (dataSem_state_space_fupd (K
+        (w2n w DIV 4 + 1)) (dataSem_state_locals_fupd (K x) s)) r NONE locs /\
+      FLOOKUP (wordSem_state_store r) (Temp (n2w 29)) = FLOOKUP
+        (wordSem_state_store t) (Temp (n2w 29)) /\ wordSem_state_code
+      r = wordSem_state_code t /\ wordSem_state_code_buffer
+      r = wordSem_state_code_buffer t /\ wordSem_state_data_buffer
+      r = wordSem_state_data_buffer t /\ wordSem_state_compile_oracle
+      r = wordSem_state_compile_oracle t /\
+      q = NONE)`,
+  CHEAT_TAC);;
 
 
-(* HOL4 data_to_word_gcProofScript.sml:8501-8562: a theorem whose statement
-   HOL Light does not read (tools/unstated.py): AllocVar_thm_nary *)
+let AllocVar_thm_nary = prove
+ (`!c l1 l2 s (t:('a,'c,'ffi)wordSem_state) locs args x' xa vals i limit' q r.
+     data_to_word_gcProof_state_rel c l1 l2 s t NONE locs /\
+     dataSem_cut_env (list_insert args x') (dataSem_state_locals s) = SOME
+       xa /\
+     wordSem_get_vars args (dataSem_state_locals s) = SOME vals /\
+     wordSem_get_var 1 t = SOME (word_Word (n2w (4 * i))) /\
+     4 * i < dimword (:'a) /\
+     wordSem_evaluate (AllocVar c limit' (list_insert args x'),t) = (q,r) /\
+     limit' < dimword (:'a) DIV 8 ==>
+     (q = SOME wordSem_NotEnoughSpace ==> wordSem_state_ffi
+        r = dataSem_state_ffi s /\ option_le (wordSem_state_stack_max r)
+          (dataSem_state_stack_max s) /\
+        (~(data_to_word_config_gc_kind c = data_to_word_None) /\ i < limit'
+          /\ no_thunks_in_refs (dataSem_state_refs s) ==> limits_heap_limit
+          (dataSem_state_limits
+           s) <
+             size_of_heap_args vals (cut_locals x' s) + (i + 1))) /\
+     (~(q = SOME wordSem_NotEnoughSpace) ==>
+        i < limit' /\
+        data_to_word_gcProof_state_rel c l1 l2
+          (dataSem_state_space_fupd (K (i + 1)) (dataSem_state_locals_fupd
+            (K xa) s)) r NONE locs /\
+        FLOOKUP (wordSem_state_store r) (Temp (n2w 29)) = FLOOKUP
+          (wordSem_state_store t) (Temp (n2w 29)) /\ wordSem_state_code
+        r = wordSem_state_code t /\ wordSem_state_code_buffer r =
+          wordSem_state_code_buffer t /\ wordSem_state_data_buffer
+        r = wordSem_state_data_buffer t /\ wordSem_state_compile_oracle r =
+          wordSem_state_compile_oracle t /\
+        q = NONE)`,
+  CHEAT_TAC);;
 
 let state_rel_with_clock_0 = prove
  (`data_to_word_gcProof_state_rel c r1 r2 s t x locs ==>

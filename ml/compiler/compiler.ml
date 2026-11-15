@@ -38,7 +38,6 @@ needs "compiler/parsing/fromSexp.ml";;
 needs "compiler/parsing/lexer_impl.ml";;
 needs "lib/errorMonad.ml";;
 needs "lib/location.ml";;
-needs "lib/multiword.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
 needs "lib/simpleSexpParse.ml";;
@@ -804,10 +803,10 @@ let mips_config_def = new_definition
        // 32
        0 F
        // valid_imm
-       (\b i. if b IN {INL And,INL Or,INL Xor,INR Test,
-                       INR NotTest}
+       (\b i. if b IN {INL asm_And,INL asm_Or,INL asm_Xor,
+                       INR asm_Test,INR asm_NotTest}
               then n2w 0 <= i /\ i <= w2w (UINT_MAXw:(16)word)
-              else (if b = INL Sub then sw2sw (INT_MINw:(16)word) < i
+              else (if b = INL asm_Sub then sw2sw (INT_MINw:(16)word) < i
                     else sw2sw (INT_MINw:(16)word) <= i) /\
                    i <= sw2sw (INT_MAXw:(16)word))
        // addr_offset hw_offset byte_offset
@@ -838,7 +837,7 @@ let riscv_config_def = new_definition
        // reg_count fp_reg_count two_reg_arith
        32 0 F
        // valid_imm
-       (\b i. (if b = INL Sub then sw2sw (INT_MINw:(12)word) < i
+       (\b i. (if b = INL asm_Sub then sw2sw (INT_MINw:(12)word) < i
                else sw2sw (INT_MINw:(12)word) <= i) /\
               i <= sw2sw (INT_MAXw:(12)word))
        // addr_offset hw_offset byte_offset

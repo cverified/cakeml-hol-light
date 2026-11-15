@@ -22,10 +22,8 @@ needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/word_depth.ml";;
-needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
-needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
@@ -1590,23 +1588,6 @@ add_simp install_sfs_def;;
 let set_vars_def = new_definition
   `dataSem_set_vars ns vs s = (dataSem_state_locals_fupd (K (sptree_union
   (fromAList (ZIP ns vs)) (dataSem_state_locals s))) s)`;;
-
-let dataSem_fix_clock_IMP =
-  try prove
-   (`!s x res s1. dataSem_fix_clock s x = (res,s1)
-                  ==> dataSem_state_clock s1 <= dataSem_state_clock s`,
-    REWRITE_TAC[FORALL_PAIR_THM; dataSem_fix_clock_def] THEN
-    REWRITE_TAC(PAIR_EQ :: record_thms "dataSem_state") THEN
-    REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
-    REWRITE_TAC(record_thms "dataSem_state") THEN
-    REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
-  with Failure e ->
-    (print_string ("\ndataSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
-
-(* a fallback TRUTH says nothing, and a fact that says nothing
-   is of no use *)
-if concl dataSem_fix_clock_IMP <> `T` then
-  cake_term_facts := dataSem_fix_clock_IMP :: (!cake_term_facts);;
 
 (* the clauses in two quotations: dest is num and (num option); ret is ((num
    # num_set) option) and ((num list # num_set) option), which one quotation

@@ -9,20 +9,9 @@
   Correctness proof for bvi_let
 *)
 
-needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/bvi_let.ml";;
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
-needs "compiler/backend/semantics/bvlProps.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
-needs "lib/binary_ieee.ml";;
-needs "lib/errorMonad.ml";;
-needs "lib/peg.ml";;
-needs "lib/set_sep.ml";;
-needs "semantics/ast.ml";;
-needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
@@ -51,14 +40,7 @@ let env_rel_def,env_rel_ind = define_wf
 let env_rel_length = prove
  (`!ax env env2. bvi_letProof_env_rel ax d env env2 ==> LENGTH env <= LENGTH
   env2`,
-  (LIST_INDUCT_TAC THENL
-   [REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[env_rel_def] THEN
-    MATCH_REDUCE_TAC THEN
-    DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[LENGTH_DROP_LE];
-    REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[env_rel_def] THEN
-    LIST_CASES_TAC ["env"; "env2"] THEN MATCH_REDUCE_TAC THEN
-    REWRITE_TAC[LENGTH; LE_SUC; LE_0] THEN STRIP_TAC THEN
-    FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let env_rel_LLOOKUP_NONE = prove
@@ -68,24 +50,7 @@ let env_rel_LLOOKUP_NONE = prove
        n < LENGTH env ==>
        n + d < LENGTH env2 /\
        EL (n + d) env2 = EL n env`,
-  (LIST_INDUCT_TAC THENL
-   [REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[env_rel_def] THEN
-    MATCH_REDUCE_TAC THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-    REWRITE_TAC[oEL] THEN STRIP_TAC THEN
-    FIRST_X_ASSUM SUBST_ALL_TAC THEN
-    POP_ASSUM MP_TAC THEN REWRITE_TAC[LENGTH_DROP] THEN
-    DISCH_TAC THEN CONJ_TAC THENL
-    [ASM_ARITH_TAC;
-     CONV_TAC SYM_CONV THEN MATCH_MP_TAC EL_DROP THEN ASM_ARITH_TAC];
-    REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[env_rel_def] THEN
-    LIST_CASES_TAC ["env"; "env2"] THEN MATCH_REDUCE_TAC THEN
-    CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-    STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
-    REWRITE_TAC[oEL; LENGTH; EL; TL; ADD_CLAUSES; LT_SUC; LT;
-                NOT_SUC; ARITH_EQ; SUC_SUB1;
-                distinctness "option"] THEN
-    STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
-    ASM_REWRITE_TAC[]]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let env_rel_LOOKUP_SOME = prove
@@ -94,36 +59,14 @@ let env_rel_LOOKUP_SOME = prove
        (\l n. oEL n l) ax n = SOME x ==>
        bvi_letProof_v_rel x (EL n env) (EL n env2) (DROP n env) (DROP n
          env2)`,
-  (let UNFOLD = CONV_TAC(DEPTH_CONV BETA_CONV) in
-   REWRITE_TAC[v_rel_def] THEN UNFOLD THEN
-   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
-   ONCE_REWRITE_TAC[env_rel_def] THEN
-   LIST_CASES_TAC ["ax"; "env2"] THEN MATCH_REDUCE_TAC THEN
-   REWRITE_TAC[v_rel_def] THEN UNFOLD THEN
-   REWRITE_TAC[oEL; distinctness "option"] THEN
-   STRUCT_CASES_TAC(SPEC `n:num` num_CASES) THEN
-   REWRITE_TAC[EL; TL; HD; DROP; ARITH_EQ; NOT_SUC; SUC_SUB1;
-               distinctness "option"; injectivity "option"] THEN
-   STRIP_TAC THEN ASM_REWRITE_TAC[oEL] THEN
-   ASM_MESON_TAC[]));;
+  CHEAT_TAC);;
 
 let evaluate_delete_var_Rerr_SING = prove
  (`!x s r e env2.
       bviSem_evaluate ([x],env2,s) = (Rerr e,r) /\ ~(e = Rabort Rtype_error)
         ==>
       bviSem_evaluate ([bvi_let_delete_var x],env2,s) = (Rerr e,r)`,
-  (let dv = delete_var_def in
-   let ev = bviSem_evaluate_def in
-   REPEAT GEN_TAC THEN
-   STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
-   REWRITE_TAC[dv] THEN MATCH_REDUCE_TAC THEN
-   TRY(DISCH_THEN(ACCEPT_TAC o CONJUNCT1)) THEN
-   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
-   GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [ev] THEN
-   COND_CASES_TAC THEN
-   REWRITE_TAC[PAIR_EQ; distinctness "semanticPrimitives_result";
-               injectivity "semanticPrimitives_result"] THEN
-   ASM_MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_delete_var_Rerr = prove
@@ -131,83 +74,7 @@ let evaluate_delete_var_Rerr = prove
        bviSem_evaluate (xs,env2,s) = (Rerr e,r) /\ ~(e = Rabort Rtype_error)
          ==>
        bviSem_evaluate (MAP bvi_let_delete_var xs,env2,s) = (Rerr e,r)`,
-  (let dv = delete_var_def in
-   let ev = bviSem_evaluate_def in
-   let da = bviSem_do_app_def in
-   let daa = do_app_aux_def in
-   let fc = bviSem_fix_clock_def in
-   let sei = small_enough_int_def in
-   let res_rws = [PAIR_EQ;
-                  distinctness "semanticPrimitives_result";
-                  injectivity "semanticPrimitives_result"] in
-   (* HOL4 takes the head apart inside this proof and again inside
-      the next one (bvi_letProofScript.sml:79-83 and :98-101).  What
-      its case analysis says is that delete_var changes a Var and
-      nothing else, and that the Op it leaves there evaluates to a
-      number without touching the state. *)
-   let opev = prove
-    (`!env2 (s:('c,'ffi)bviSem_state).
-        evaluate
-          ([(Op (clos_IntOp (clos_Const (&0))) []):bvi_exp],
-           env2,s) = (Rval [(Number (&0)):bvlSem_v],s)`,
-     REPEAT GEN_TAC THEN
-     REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
-     RECORD_CASES_TAC `s:('c,'ffi)bviSem_state` THEN
-     REWRITE_TAC[da; daa; REVERSE; NULL; sei;
-                 INT_ARITH `--(&268435457):int <= &0 /\
-                            (&0):int <= &268435457`;
-                 distinctness "clos_op"] THEN
-     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
-   (* so the head leaves the same state either way ... *)
-   let stateq = prove
-    (`!(x:bvi_exp) env2 (s:('c,'ffi)bviSem_state) v t u w.
-        evaluate ([x],env2,s) = (v,t) /\
-        evaluate ([delete_var x],env2,s) = (u,w) ==> w = t`,
-     REPEAT GEN_TAC THEN
-     STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
-     REWRITE_TAC[dv] THEN MATCH_REDUCE_TAC THEN
-     FIRST
-      [(* the ten that delete_var leaves alone: one evaluation *)
-       SOLVED(DISCH_THEN(fun th ->
-                MP_TAC(TRANS (SYM(CONJUNCT2 th)) (CONJUNCT1 th))) THEN
-              REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
-              ASM_REWRITE_TAC[]);
-       (* and the Var, where both leave the state it came in with *)
-       (REWRITE_TAC[opev; ev] THEN COND_CASES_TAC THEN
-        REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN VAR_EQ_TAC THEN
-        REFL_TAC)]) in
-   (* ... and a head that succeeds still succeeds *)
-   let valev = prove
-    (`!(x:bvi_exp) env2 (s:('c,'ffi)bviSem_state) v t.
-        evaluate ([x],env2,s) = (Rval v,t) ==>
-        ?w. evaluate ([delete_var x],env2,s) = (Rval w,t)`,
-     REPEAT GEN_TAC THEN
-     STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
-     REWRITE_TAC[dv] THEN MATCH_REDUCE_TAC THEN
-     FIRST
-      [SOLVED(DISCH_TAC THEN EXISTS_TAC `v:bvlSem_v list` THEN
-              ASM_REWRITE_TAC[]);
-       (REWRITE_TAC[opev; ev] THEN COND_CASES_TAC THEN
-        REWRITE_TAC res_rws THEN STRIP_TAC THEN
-        EXISTS_TAC `[(Number (&0)):bvlSem_v]` THEN
-        ASM_REWRITE_TAC[])]) in
-   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP] THENL
-    [REPEAT GEN_TAC THEN DISCH_THEN(ACCEPT_TAC o CONJUNCT1);
-     ALL_TAC] THEN
-   REPEAT GEN_TAC THEN
-   GEN_REWRITE_TAC ONCE_DEPTH_CONV [bviProps_evaluate_CONS] THEN
-   REPEAT STRIP_TAC THEN EVERY_CASE_TAC THEN VAR_EQ_TAC THEN
-   FIRST
-    [(* the head errored, so delete_var's head errors the same way *)
-     RES2_THEN evaluate_delete_var_Rerr_SING
-       (SOLVED(ASM_REWRITE_TAC res_rws));
-     (* the head succeeded, so delete_var's head cannot error *)
-     RES1_THEN valev (SOLVED(ASM_REWRITE_TAC res_rws));
-     (* both succeeded, at the same state: then the hypothesis *)
-     RES2_THEN stateq
-      (DISCH_THEN SUBST_ALL_TAC THEN
-       FIRST_ASSUM(fun ih ->
-         RES2_THEN ih (SOLVED(ASM_REWRITE_TAC res_rws))))]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let evaluate_delete_var_Rval = prove
@@ -218,136 +85,7 @@ let evaluate_delete_var_Rval = prove
          /\
            bvi_letProof_env_rel (APPEND (bvi_let_extract_list xs) ax) d
              (APPEND a env) (APPEND b env2))`,
-  (let rty = `:(bvlSem_v list,exn_or_ret)
-                semanticPrimitives_result` in
-   let dv = delete_var_def in
-   let ev = bviSem_evaluate_def in
-   let da = bviSem_do_app_def in
-   let daa = do_app_aux_def in
-   let fc = bviSem_fix_clock_def in
-   let sei = small_enough_int_def in
-   let el = extract_list_def in
-   let ex = bvi_let_extract_def in
-   let er = env_rel_def in
-   let vr = v_rel_def in
-   let res_rws = [PAIR_EQ;
-                  distinctness "semanticPrimitives_result";
-                  injectivity "semanticPrimitives_result"] in
-   (* HOL4 takes the head apart inside this proof and again inside
-      the next one (bvi_letProofScript.sml:79-83 and :98-101).  What
-      its case analysis says is that delete_var changes a Var and
-      nothing else, and that the Op it leaves there evaluates to a
-      number without touching the state. *)
-   let opev = prove
-    (`!env2 (s:('c,'ffi)bviSem_state).
-        evaluate
-          ([(Op (clos_IntOp (clos_Const (&0))) []):bvi_exp],
-           env2,s) = (Rval [(Number (&0)):bvlSem_v],s)`,
-     REPEAT GEN_TAC THEN
-     REWRITE_TAC[ev; fc; ARITH_RULE `MIN (a:num) a = a`] THEN
-     RECORD_CASES_TAC `s:('c,'ffi)bviSem_state` THEN
-     REWRITE_TAC[da; daa; REVERSE; NULL; sei;
-                 INT_ARITH `--(&268435457):int <= &0 /\
-                            (&0):int <= &268435457`;
-                 distinctness "clos_op"] THEN
-     MATCH_REDUCE_TAC THEN REWRITE_TAC[]) in
-   (* and the Var is the only head whose extract is not 0 *)
-   let notvar = prove
-    (`!(x:bvi_exp). ~(?i. x = Var i)
-        ==> delete_var x = x /\ (!ys. extract x ys = 0)`,
-     GEN_TAC THEN
-     STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
-     REWRITE_TAC[dv; ex] THEN MATCH_REDUCE_TAC THEN
-     REWRITE_TAC[distinctness "bvi_exp";
-                 injectivity "bvi_exp"] THEN
-     MESON_TAC[]) in
-   (* The splits of this proof are made by hand, with names of its
-      own: the goals that EVERY_CASE_TAC leaves carry names it
-      invented, and this proof has to write down the witness of an
-      existential goal and the instance of the induction
-      hypothesis afterwards. *)
-   let tidy =
-     TRY SAFE_MATCH_REDUCE_TAC THEN
-     TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
-     PRUNE_TAC res_rws THEN MATCH_TIDY_TAC THEN
-     SPLIT_ASM_TAC THEN VAR_EQ_TAC in
-   let split_tail st =
-     NAMED_CASES_TAC
-       (list_mk_icomb "bviSem_evaluate"
-          [mk_pair(`t:bvi_exp list`,
-                   mk_pair(`env2:bvlSem_v list`,st))])
-       [["tres"; "ts"]] THEN
-     NAMED_CASES_TAC (mk_var("tres",rty)) [["tv"]; ["te"]] THEN
-     tidy in
-   let use_ih st =
-     FIRST_X_ASSUM(fun ih ->
-       MP_TAC(SPECL [`env2:bvlSem_v list`; st;
-                     `tv:bvlSem_v list`;
-                     `r:('c,'ffi)bviSem_state`;
-                     `ax:num list`; `env:bvlSem_v list`;
-                     `d:num`] ih)) THEN
-     ASM_REWRITE_TAC[] THEN
-     DISCH_THEN(X_CHOOSE_THEN `bb:bvlSem_v list`
-                  STRIP_ASSUME_TAC) in
-   let env_rel_cons =
-     REWRITE_TAC[APPEND] THEN ONCE_REWRITE_TAC[er] THEN
-     MATCH_REDUCE_TAC THEN REWRITE_TAC[vr] THEN
-     CONV_TAC(DEPTH_CONV BETA_CONV) in
-   (* the empty list: nothing evaluated and nothing extracted *)
-   let base_branch =
-     REPEAT GEN_TAC THEN REWRITE_TAC[ev] THEN
-     REWRITE_TAC[PAIR_EQ;
-                 injectivity "semanticPrimitives_result"] THEN
-     STRIP_TAC THEN VAR_EQ_TAC THEN
-     EXISTS_TAC `[]:bvlSem_v list` THEN
-     ASM_REWRITE_TAC[APPEND; ev] in
-   (* a head that delete_var leaves alone: the same value in both
-      environments, so its entry of the relation is at offset 0 *)
-   let nonvar_branch =
-     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP notvar th]) THEN
-     STRIP_TAC THEN
-     NAMED_CASES_TAC
-       `evaluate ([h],env2,(s:('c,'ffi)bviSem_state))`
-       [["hres"; "hs"]] THEN
-     NAMED_CASES_TAC (mk_var("hres",rty)) [["hv"]; ["he"]] THEN
-     tidy THEN split_tail `hs:('c,'ffi)bviSem_state` THEN
-     use_ih `hs:('c,'ffi)bviSem_state` THEN
-     EXISTS_TAC `CONS (HD (hv:bvlSem_v list)) bb` THEN
-     ASM_REWRITE_TAC[] THEN tidy THEN
-     env_rel_cons THEN REWRITE_TAC[oEL] THEN
-     ASM_REWRITE_TAC[] in
-   (* and a Var, where delete_var put the Op: the value the Var
-      read is still in the second environment, at the offset that
-      the extract records -- past the number the Op left and past
-      the values of the rest of the list *)
-   let var_branch =
-     FIRST_X_ASSUM(X_CHOOSE_THEN `i:num` SUBST1_TAC) THEN
-     REWRITE_TAC[dv; ex] THEN SAFE_MATCH_REDUCE_TAC THEN
-     REWRITE_TAC[opev] THEN
-     GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev] THEN
-     ASM_CASES_TAC `i < LENGTH (env2:bvlSem_v list)` THEN
-     ASM_REWRITE_TAC[HD] THEN tidy THEN STRIP_TAC THEN tidy THEN
-     split_tail `s:('c,'ffi)bviSem_state` THEN
-     use_ih `s:('c,'ffi)bviSem_state` THEN
-     EXISTS_TAC `CONS ((Number (&0)):bvlSem_v) bb` THEN
-     ASM_REWRITE_TAC[] THEN tidy THEN env_rel_cons THEN
-     SUBGOAL_THEN
-       `LENGTH (t:bvi_exp list) = LENGTH (bb:bvlSem_v list)`
-       SUBST1_TAC THENL
-     [FIRST_ASSUM(fun th -> ACCEPT_TAC(REWRITE_RULE[LENGTH_MAP]
-        (MATCH_MP bviProps_evaluate_IMP_LENGTH th)));
-      ALL_TAC] THEN
-     REWRITE_TAC[oEL; ARITH_RULE `~(i + n + 1 = 0)`;
-                 ARITH_RULE `(i + n + 1) - 1 = i + n`] THEN
-     REWRITE_TAC[oEL_APPEND] THEN
-     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP oEL_EL th]) THEN
-     ASM_REWRITE_TAC[] in
-   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; el; APPEND] THENL
-    [base_branch; ALL_TAC] THEN
-   REPEAT GEN_TAC THEN
-   GEN_REWRITE_TAC ONCE_DEPTH_CONV [bviProps_evaluate_CONS] THEN
-   ASM_CASES_TAC `?i. (h:bvi_exp) = Var i` THENL
-   [var_branch; nonvar_branch]));;
+  CHEAT_TAC);;
 
 let evaluate_SNOC_Rval = prove
  (`bviSem_evaluate (SNOC x y,env,s) = (Rval a,r) ==>
@@ -355,80 +93,33 @@ let evaluate_SNOC_Rval = prove
       a = SNOC a1 a2 /\ LENGTH y = LENGTH a2 /\
       bviSem_evaluate (y,env,s) = (Rval a2,r1) /\
       bviSem_evaluate ([x],env,r1) = (Rval [a1],r))`,
-  (ONCE_REWRITE_TAC[bviProps_evaluate_SNOC] THEN EVERY_CASE_TAC THEN
-   REWRITE_TAC[PAIR_EQ; distinctness "semanticPrimitives_result";
-               injectivity "semanticPrimitives_result"] THEN
-   STRIP_TAC THEN
-   FIRST_ASSUM(CHOOSE_THEN SUBST_ALL_TAC o
-               MATCH_MP evaluate_SING_IMP) THEN
-   ASM_MESON_TAC[bviProps_evaluate_IMP_LENGTH;
-                 prove(`!l x. SNOC x l = APPEND l [x]`,
-                       LIST_INDUCT_TAC THEN
-                       ASM_REWRITE_TAC[SNOC; APPEND])]));;
+  CHEAT_TAC);;
 
 let compile_CONS = prove
  (`bvi_let_compile ax d (CONS x xs) = APPEND (bvi_let_compile ax d [x])
   (bvi_let_compile ax d xs)`,
-  (let compile_def = bvi_let_compile_def in
-   STRUCT_CASES_TAC(ISPEC `xs:bvi_exp list` list_CASES) THEN
-   REWRITE_TAC[compile_def; APPEND_NIL]));;
+  CHEAT_TAC);;
 
 let compile_APPEND = prove
  (`!xs ys ax d. bvi_let_compile ax d (APPEND xs ys) = APPEND (bvi_let_compile
   ax d xs) (bvi_let_compile ax d ys)`,
-  (let compile_def = bvi_let_compile_def in
-   LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; compile_def] THEN
-   ONCE_REWRITE_TAC[compile_CONS] THEN
-   ASM_REWRITE_TAC[GSYM APPEND_ASSOC]));;
+  CHEAT_TAC);;
 
 let IMP_COMM = prove
  (`(b1 ==> b2 ==> b3) <=> (b2 ==> b1 ==> b3)`,
-  (MESON_TAC[]));;
+  CHEAT_TAC);;
 
 make_size "bvi_exp";;
 let exp_size_APPEND = prove
  (`!xs ys. bvi_exp_size1 (APPEND xs ys) = bvi_exp_size1 xs + bvi_exp_size1 ys`,
-  (* the same theorem as bvi_let's exp2_size_APPEND, which the
-     source states again here *)
-  (let sz = size_thms "bvi_exp" in
-   REWRITE_TAC sz THEN
-   MATCH_ACCEPT_TAC (ISPEC `bvi_exp_size` list_size_APPEND)));;
+  CHEAT_TAC);;
 
 let env_rel_MAP = prove
  (`!ax env1 env2 d a.
       bvi_letProof_env_rel ax d env1 env2 ==>
       bvi_letProof_env_rel (MAP ((+) (LENGTH a)) ax) (d + LENGTH a) env1
         (APPEND a env2)`,
-  (* HOL4 moves the head of the new environment into ax with the
-     append gymnastics of bvi_letProofScript.sml:157-176; the same
-     induction, one element at a time *)
-  (let STEP = prove
-     (`!ax d e1 e2 v.
-         bvi_letProof_env_rel ax d e1 e2 ==>
-         bvi_letProof_env_rel (MAP SUC ax) (SUC d) e1 (CONS v e2)`,
-      LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
-      ONCE_REWRITE_TAC[env_rel_def] THEN REWRITE_TAC[MAP] THEN
-      LIST_CASES_TAC ["e1"; "e2"] THEN EVERY_CASE_TAC THEN
-      REWRITE_TAC[DROP; oEL; ARITH_EQ; NOT_SUC; SUC_SUB1;
-                  v_rel_def] THEN
-      CONV_TAC(DEPTH_CONV BETA_CONV) THEN STRIP_TAC THEN
-      CONJ_TAC THENL
-      [ASM_REWRITE_TAC[];
-       FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]) in
-   let MAP_SUC = prove
-     (`!n ax. MAP SUC (MAP ((+) n) ax) = MAP ((+) (SUC n)) ax`,
-      GEN_TAC THEN LIST_INDUCT_TAC THEN
-      ASM_REWRITE_TAC[MAP; ADD_CLAUSES]) in
-   let MAP_ZERO = prove
-     (`!ax. MAP ((+) 0) ax = ax`,
-      LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP; ADD_CLAUSES]) in
-   GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN
-   LIST_INDUCT_TAC THENL
-   [REWRITE_TAC[LENGTH; APPEND; ADD_CLAUSES; MAP_ZERO];
-    REWRITE_TAC[LENGTH; APPEND; ADD_CLAUSES] THEN
-    ONCE_REWRITE_TAC[GSYM MAP_SUC] THEN DISCH_TAC THEN
-    MATCH_MP_TAC STEP THEN FIRST_ASSUM MATCH_MP_TAC THEN
-    ASM_REWRITE_TAC[]]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let env_rel_REPLICATE_0 = prove
@@ -436,13 +127,7 @@ let env_rel_REPLICATE_0 = prove
      bvi_letProof_env_rel ax d env1 env2 ==>
      bvi_letProof_env_rel (APPEND (REPLICATE (LENGTH vs) 0) ax) d (APPEND
        vs env1) (APPEND vs env2)`,
-  (LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
-   ASM_REWRITE_TAC[REPLICATE; LENGTH; APPEND] THEN
-   ONCE_REWRITE_TAC[env_rel_def] THEN MATCH_REDUCE_TAC THEN
-   CONJ_TAC THENL
-   [REWRITE_TAC[v_rel_def] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-    REWRITE_TAC[oEL];
-    ASM_SIMP_TAC[]]));;
+  CHEAT_TAC);;
 
 let evaluate_env_rel = prove
  (`!xs env1 (s1:('c,'ffi)bviSem_state) ax env2 res s2 ys d.
@@ -450,423 +135,7 @@ let evaluate_env_rel = prove
       bvi_letProof_env_rel ax d env1 env2 /\ ~(res = Rerr (Rabort
         Rtype_error)) ==>
       (bviSem_evaluate (bvi_let_compile ax d xs,env2,s1) = (res,s2))`,
-  ((* ---- the pieces ---------------------------------------------- *)
-   let cp = bvi_let_compile_def in
-   let ev = bviSem_evaluate_def in
-   let er = env_rel_def in
-   let vr = v_rel_def in
-   let fc = bviSem_fix_clock_def in
-   let fce = bviSem_fix_clock_evaluate in
-   let sz = size_thms "bvi_exp" in
-   let res_rws = [PAIR_EQ; distinctness "semanticPrimitives_result";
-                  injectivity "semanticPrimitives_result"] in
-   let rty = `:(bvlSem_v list,exn_or_ret)semanticPrimitives_result` in
-   let s1t = `s1:('c,'ffi)bviSem_state` in
-   let add_lt = ARITH_RULE `!m v e. m < e - v ==> m + v < e` in
-   let add_sym_lt = ARITH_RULE `!m v e. m + v < e ==> v + m < e` in
-   let lkn = CONV_RULE(DEPTH_CONV BETA_CONV) env_rel_LLOOKUP_NONE in
-   let lks = CONV_RULE(DEPTH_CONV BETA_CONV) env_rel_LOOKUP_SOME in
-   let index_lemma = prove
-    (`!ax d env1 env2 v.
-        bvi_letProof_env_rel ax d env1 env2 /\ v < LENGTH env1 ==>
-        (oEL v ax = NONE ==> v + d < LENGTH env2 /\
-                             EL (v + d) env2 = EL v env1) /\
-        (!m. oEL v ax = SOME m ==> v + m < LENGTH env2 /\
-                                   EL (v + m) env2 = EL v env1)`,
-     REPEAT GEN_TAC THEN STRIP_TAC THEN CONJ_TAC THENL
-     [DISCH_TAC THEN
-      FIRST_ASSUM(fun er_th -> FIRST_ASSUM(fun lk ->
-        FIRST_ASSUM(fun lt ->
-          ACCEPT_TAC(MATCH_MP lkn (CONJ er_th (CONJ lk lt))))));
-      GEN_TAC THEN DISCH_TAC THEN
-      FIRST_ASSUM(fun er_th -> FIRST_ASSUM(fun lk ->
-        MP_TAC(MATCH_MP lks (CONJ er_th lk)))) THEN
-      REWRITE_TAC[vr] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-      DISCH_THEN(MP_TAC o MATCH_MP oEL_SOME) THEN
-      REWRITE_TAC[LENGTH_DROP] THEN STRIP_TAC THEN
-      FIRST_ASSUM(fun lt ->
-        let bound = MATCH_MP add_lt lt in
-        let eld = MATCH_MP EL_DROP bound in
-        CONJ_TAC THENL
-        [ACCEPT_TAC(MATCH_MP add_sym_lt bound);
-         FIRST_ASSUM(fun eq -> ACCEPT_TAC
-           (ONCE_REWRITE_RULE[ADD_SYM] (REWRITE_RULE[eld] eq)))])]) in
-   (* ---- the shared steps ---------------------------------------- *)
-   let size_tac_rws rws =
-     RULE_ASSUM_TAC(REWRITE_RULE(rws @ (list_size :: sz))) THEN
-     REWRITE_TAC(rws @ (list_size :: sz)) THEN ASM_ARITH_TAC in
-   let size_tac = size_tac_rws [] in
-   let impossible =
-     SUBGOAL_THEN `F` CONTR_TAC THEN
-     RULE_ASSUM_TAC(REWRITE_RULE(list_size :: sz)) THEN ASM_ARITH_TAC in
-   (* HOL4's fs, with the rewrites of this file: the clock that
-      fix_clock puts back is the clock that the evaluation left
-      (bviSem's fix_clock_evaluate), and it has to fire before the
-      definition of fix_clock or the proof is left with a record
-      update -- which is what the stages of FS_TAC are for *)
-   let tidy = FS_TAC [[fce]; [fc]] res_rws in
-   let tidy2 = tidy THEN ASM_FS_TAC THEN tidy in
-   let ev_term xs' env' s' =
-     list_mk_icomb "bviSem_evaluate"
-       [mk_pair(xs', mk_pair(env', s'))] in
-   let is_ev t =
-     try fst(dest_const(fst(strip_comb t))) = "bviSem_evaluate"
-     with Failure _ -> false in
-   let dest_ev t =
-     let a,bc = dest_pair (rand t) in
-     let b,c = dest_pair bc in a,b,c in
-   (* the instance of the induction hypothesis that an evaluation of
-      the source asks for: the list is the key, the three arguments
-      of the compiler are given *)
-   let USE_IH ax' env2' d' xs' (asl,w) =
-     let ih = tryfind (fun (_,th) ->
-       if is_forall (concl th) then th else fail()) asl in
-     let a,b,c,rt = tryfind (fun (_,th) ->
-       let l,r = dest_eq(concl th) in
-       if not (is_ev l) then fail() else
-       let a,b,c = dest_ev l in
-       if a = xs' then (a,b,c,r) else fail()) asl in
-     MP_TAC(SPECL [a; b; c; ax'; env2'; fst(dest_pair rt);
-                   snd(dest_pair rt); d'] ih) (asl,w) in
-   let ih_plain = USE_IH `ax:num list` `env2:bvlSem_v list` `d:num` in
-   let ih_ants_simple sz_tac =
-     ANTS_TAC THENL
-     [CONJ_TAC THENL [sz_tac; ASM_REWRITE_TAC res_rws];
-      DISCH_THEN(fun th -> TRY(REWRITE_TAC[th]) THEN
-        RULE_ASSUM_TRY(REWRITE_RULE[th]) THEN ASSUME_TAC th)] in
-   let use_ih_for xs' =
-     FIRST_ASSUM(fun eq ->
-       let l,rt = dest_eq(concl eq) in
-       let a,bc = dest_pair(rand l) in
-       let b,c = dest_pair bc in
-       if not (a = xs' && b = `env1:bvlSem_v list`) then
-         failwith "use_ih_for" else
-       FIRST_ASSUM(fun ih ->
-         MP_TAC(SPECL [a; b; c; `ax:num list`; `env2:bvlSem_v list`;
-                       fst(dest_pair rt); snd(dest_pair rt);
-                       `d:num`] ih)) THEN
-       ANTS_TAC THENL
-       [CONJ_TAC THENL [size_tac; ASM_REWRITE_TAC res_rws];
-        DISCH_THEN(fun th -> REWRITE_TAC[th])]) in
-   let do_sub nm xs' s' =
-     NAMED_CASES_TAC (ev_term xs' `env1:bvlSem_v list` s')
-       [[nm ^ "r"; nm ^ "s"]] THEN
-     NAMED_CASES_TAC (mk_var(nm ^ "r",rty))
-       [[nm ^ "v"]; [nm ^ "e"]] THEN
-     tidy THEN use_ih_for xs' THEN tidy in
-   let unfold_case =
-     REWRITE_TAC[cp] THEN
-     GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev] THEN
-     RULE_ASSUM_TAC(ONCE_REWRITE_RULE[ev]) THEN
-     REWRITE_TAC[fce; compile_HD_SING] THEN
-     RULE_ASSUM_TRY(REWRITE_RULE[fce]) in
-   let one_sub xs' = unfold_case THEN do_sub "h" xs' s1t in
-   (* ---- the index cases: Var and Force -------------------------- *)
-   let index_case =
-     TRY(RULE_ASSUM_TAC(ONCE_REWRITE_RULE[ev])) THEN
-     ASM_CASES_TAC `v < LENGTH (env1:bvlSem_v list)` THEN
-     TRY tidy2 THEN
-     TRY(REWRITE_TAC[cp]) THEN TRY(CONV_TAC(DEPTH_CONV BETA_CONV)) THEN
-     TRY(FIRST_ASSUM(fun er_th -> FIRST_ASSUM(fun lt ->
-           STRIP_ASSUME_TAC(MATCH_MP index_lemma
-             (CONJ er_th lt))))) THEN
-     TRY(NAMED_CASES_TAC `oEL v (ax:num list)` [[]; ["m"]]) THEN
-     TRY(PRUNE_TAC res_rws) THEN TRY MATCH_TIDY_TAC THEN
-     TRY SAFE_MATCH_REDUCE_TAC THEN
-     TRY(GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev]) THEN
-     TRY(FIRST_ASSUM(fun imp -> FIRST_ASSUM(fun eq ->
-           STRIP_ASSUME_TAC(MATCH_MP imp eq)))) THEN
-     TRY(ASM_REWRITE_TAC[]) THEN TRY ASM_FS_TAC THEN
-     TRY(ASM_REWRITE_TAC[]) THEN
-     (* the goal and the hypothesis have to be reduced alike: one of
-        them with its match turned into a guard and the other not is
-        two shapes of the same thing *)
-     TRY SAFE_MATCH_REDUCE_TAC THEN TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
-     TRY MATCH_TIDY_TAC THEN TRY(ASM_REWRITE_TAC[]) in
-   (* ---- Tick: the clock is tested on both sides alike ------------ *)
-   let tick_case =
-     unfold_case THEN
-     ASM_CASES_TAC `state_clock (s1:('c,'ffi)bviSem_state) = 0` THEN
-     ASM_FS_TAC THEN ASM_REWRITE_TAC[] THEN
-     TRY(use_ih_for `[e:bvi_exp]`) in
-   (* ---- If: the test is the same value on both sides ------------- *)
-   let if_case =
-     unfold_case THEN do_sub "h" `[e1:bvi_exp]` s1t THEN
-     REPEAT(COND_CASES_TAC THEN ASM_FS_TAC THEN tidy) THEN
-     TRY(use_ih_for `[e2:bvi_exp]`) THEN
-     TRY(use_ih_for `[e3:bvi_exp]`) THEN
-     TRY(ASM_REWRITE_TAC[]) THEN TRY tidy in
-   let env_rel_CONS = prove
-    (`!ax d env1 env2 v.
-        bvi_letProof_env_rel ax d env1 env2 ==>
-        bvi_letProof_env_rel (CONS 0 ax) d (CONS v env1) (CONS v env2)`,
-     REPEAT GEN_TAC THEN DISCH_TAC THEN
-     ONCE_REWRITE_TAC[er] THEN MATCH_REDUCE_TAC THEN
-     REWRITE_TAC[vr] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-     REWRITE_TAC[oEL] THEN ASM_REWRITE_TAC[]) in
-   (* the hypothesis of the branch, which is the assumption whose left
-      side is the conditional or the match that the clause of the
-      semantics made: put back into the goal it collapses against the
-      conditions of the branch, which are assumptions *)
-   let is_shape t =
-     try mem (fst(dest_const(fst(strip_comb t)))) ["COND"; "_MATCH"]
-     with Failure _ -> false in
-   let use_hyp tac =
-     FIRST_X_ASSUM(fun th ->
-       if is_eq (concl th) && is_shape (lhs (concl th))
-       then MP_TAC th THEN tac else failwith "use_hyp") in
-   let collapse_hyp =
-     use_hyp (ASM_REWRITE_TAC[] THEN TRY SAFE_MATCH_REDUCE_TAC THEN
-              TRY MATCH_TIDY_TAC THEN TRY(REWRITE_TAC res_rws) THEN
-              STRIP_TAC THEN TRY(PRUNE_TAC res_rws)) in
-   let ih_ants =
-     CONJ_TAC THENL
-     [size_tac;
-      REPEAT CONJ_TAC THEN
-      TRY(FIRST_ASSUM ACCEPT_TAC) THEN
-      TRY(MATCH_MP_TAC env_rel_CONS THEN ASM_REWRITE_TAC[]) THEN
-      TRY(MATCH_MP_TAC env_rel_REPLICATE_0 THEN ASM_REWRITE_TAC[]) THEN
-      (* the sub-result is no type error because the whole result is
-         none, which the assumptions say once the hypothesis of the
-         branch has collapsed and they are pruned *)
-      TRY tidy2 THEN TRY collapse_hyp THEN
-      TRY(PRUNE_TAC res_rws) THEN
-      TRY(ASM_REWRITE_TAC res_rws) THEN
-      (* and what is left is the one side condition that HOL4
-         discharges with a contradiction: the sub-result is no type
-         error because the whole result is none.  Seeing that means
-         deciding the conditions of the branch that are still open in
-         the hypothesis. *)
-      TRY(REPEAT(CHANGED_TAC(COND_SPLIT_TAC THEN TRY tidy2)) THEN
-          TRY(PRUNE_TAC res_rws) THEN
-          TRY(ASM_REWRITE_TAC res_rws))] in
-   (* HOL4's drule: the hypothesis at the evaluation of the source
-      whose compiled twin is in the goal.  EV_PAIR_TAC does the
-      search, which is the same in every file of this kind; what is
-      this file's own is the instantiation, because that is the
-      statement of its theorem *)
-   let use_ih_auto =
-     EV_PAIR_TAC "bviSem_evaluate" "bvi_let_compile"
-       (fun (xs',env1',s') rt cargs env2' ->
-          FIRST_ASSUM(fun ih ->
-            MP_TAC(SPECL [xs'; env1'; s'; el 0 cargs; env2';
-                          fst(dest_pair rt); snd(dest_pair rt);
-                          el 1 cargs] ih)) THEN
-          ANTS_TAC THENL
-          [ih_ants;
-           DISCH_THEN(fun t ->
-             TRY(REWRITE_TAC[t]) THEN
-             RULE_ASSUM_TRY(REWRITE_RULE[t]) THEN
-             ASSUME_TAC t)]) in
-   let nil_case =
-     REWRITE_TAC[cp; ev] THEN RULE_ASSUM_TAC(REWRITE_RULE[ev]) THEN
-     ASM_REWRITE_TAC[] in
-   let cons_cons_case =
-     REWRITE_TAC[cp] THEN
-     GEN_REWRITE_TAC ONCE_DEPTH_CONV [GSYM compile_HD_SING] THEN
-     REWRITE_TAC[APPEND] THEN
-     GEN_REWRITE_TAC ONCE_DEPTH_CONV [bviProps_evaluate_CONS] THEN
-     REWRITE_TAC[compile_HD_SING] THEN
-     RULE_ASSUM_TAC(ONCE_REWRITE_RULE[bviProps_evaluate_CONS]) THEN
-     NAMED_CASES_TAC `evaluate ([x1],env1,(s1:('c,'ffi)bviSem_state))`
-       [["hres"; "hs"]] THEN
-     NAMED_CASES_TAC (mk_var("hres",rty)) [["hv"]; ["he"]] THEN
-     tidy THEN
-     use_ih_for `[x1:bvi_exp]` THEN tidy THEN
-     TRY(NAMED_CASES_TAC
-           `evaluate (CONS (x2:bvi_exp) xr2,env1,
-                      hs:('c,'ffi)bviSem_state)`
-           [["tres"; "ts"]] THEN
-         NAMED_CASES_TAC (mk_var("tres",rty)) [["tv"]; ["te"]] THEN
-         tidy THEN use_ih_for `CONS (x2:bvi_exp) xr2` THEN tidy) in
-   (* the conditions of the semantics are if-then-else as well as
-      case, and both sides test the same one; the condition goes
-      first, because a condition that is still open when the
-      hypothesis is used leaves a side condition that the branch
-      cannot settle *)
-   let deep_case =
-     REPEAT(CHANGED_TAC
-       (TRY(CHANGED_TAC use_ih_auto) THEN TRY tidy2 THEN
-        (COND_SPLIT_TAC ORELSE CASE_SPLIT_TAC ORELSE
-         COND_CASES_TAC) THEN TRY tidy2 THEN
-        TRY(CHANGED_TAC use_ih_auto) THEN TRY tidy2 THEN
-        TRY(ASM_REWRITE_TAC[]))) THEN
-     TRY(CHANGED_TAC use_ih_auto) THEN TRY tidy2 THEN
-     TRY(ASM_REWRITE_TAC[]) in
-   let call_case =
-     REWRITE_TAC[cp] THEN
-     NAMED_CASES_TAC `hh:bvi_exp option` [[]; ["ce"]] THEN
-     TRY SAFE_MATCH_REDUCE_TAC THEN
-     GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev] THEN
-     RULE_ASSUM_TRY(ONCE_REWRITE_RULE[ev]) THEN
-     REWRITE_TAC[fce; compile_HD_SING; IS_NONE; IS_SOME] THEN
-     RULE_ASSUM_TRY(REWRITE_RULE[fce; IS_NONE; IS_SOME]) THEN
-     ASM_CASES_TAC `IS_NONE (dd:num option)` THEN TRY tidy2 THEN
-     TRY tidy THEN do_sub "a" `es:bvi_exp list` s1t THEN deep_case in
-   let letcall_case =
-     REWRITE_TAC[cp] THEN
-     GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev] THEN
-     RULE_ASSUM_TRY(ONCE_REWRITE_RULE[ev]) THEN
-     REWRITE_TAC[fce; compile_HD_SING] THEN
-     RULE_ASSUM_TRY(REWRITE_RULE[fce]) THEN
-     TRY tidy THEN do_sub "a" `es:bvi_exp list` s1t THEN deep_case in
-   (* ---- Let: the three shapes the compiler gives it -------------- *)
-   (* SNOC and its laws, and the EL of a value past the front of a
-      list, are in ml/lib/lemmas.ml: HOL Light has SNOC and none of
-      HOL4's lemmas about it (PORTING-GUIDE.md entry 15) *)
-   let snoc_rws = [FRONT_SNOC; LAST_SNOC; LENGTH_SNOC;
-                   ARITH_RULE `(a + 1) - 1 = a`] in
-   let snoc_size = size_tac_rws [list_size_SNOC] in
-   let no_val = TRY(REWRITE_TAC(EXISTS_SIMP :: res_rws)) THEN
-                TRY(ASM_REWRITE_TAC res_rws) in
-   let let_unfold =
-     RULE_ASSUM_TRY(ONCE_REWRITE_RULE[ev]) THEN
-     RULE_ASSUM_TRY(REWRITE_RULE[fce]) THEN
-     REWRITE_TAC[cp; LET_DEF; LET_END_DEF] THEN
-     CONV_TAC(DEPTH_CONV BETA_CONV) in
-   (* nothing bound: the Let is its body *)
-   let let_nil =
-     FIRST_ASSUM(SUBST_ALL_TAC o REWRITE_RULE[LENGTH_EQ_NIL]) THEN
-     RULE_ASSUM_TRY(REWRITE_RULE[ev]) THEN
-     RULE_ASSUM_TRY(REWRITE_RULE[APPEND]) THEN
-     TRY SAFE_MATCH_REDUCE_ASM_TAC THEN
-     REWRITE_TAC[LENGTH; ARITH] THEN
-     use_ih_for `[e:bvi_exp]` in
-   let get_snoc =
-     FIRST_ASSUM(fun th ->
-       X_CHOOSE_THEN `xl:bvi_exp` (X_CHOOSE_THEN `yl:bvi_exp list`
-         (fun eq -> RULE_ASSUM_TRY(REWRITE_RULE[eq]) THEN
-                    REWRITE_TAC[eq]))
-         (MATCH_MP SNOC_CASES (REWRITE_RULE[LENGTH_EQ_NIL] th))) in
-   (* the length of the front of the list is what the moved body
-      reads, so the second environment grows by exactly that much *)
-   let EV_LEN xs' =
-     FIRST_ASSUM(fun th ->
-       let l,r = dest_eq(concl th) in
-       if not (is_ev l) then failwith "EV_LEN" else
-       let a,_,_ = dest_ev l in
-       if not (a = xs') then failwith "EV_LEN" else
-       let len = MATCH_MP bviProps_evaluate_IMP_LENGTH th in
-       REWRITE_TAC[len] THEN RULE_ASSUM_TRY(REWRITE_RULE[len])) in
-   let env_rel_tail =
-     SUBGOAL_THEN
-       `bvi_letProof_env_rel
-          (MAP ((+) (LENGTH (yl:bvi_exp list))) (ax:num list))
-          (d + LENGTH (yl:bvi_exp list)) env1
-          (APPEND (av:bvlSem_v list) env2)`
-       ASSUME_TAC THENL
-     [EV_LEN `yl:bvi_exp list` THEN
-      MATCH_MP_TAC env_rel_MAP THEN ASM_REWRITE_TAC[];
-      ALL_TAC] in
-   let sing_xl =
-     FIRST_ASSUM(fun th ->
-       let l,r = dest_eq(concl th) in
-       if not (is_ev l) then failwith "sing_xl" else
-       let a,_,_ = dest_ev l in
-       if not (a = `[xl:bvi_exp]`) then failwith "sing_xl" else
-       X_CHOOSE_THEN `w:bvlSem_v` SUBST_ALL_TAC
-         (MATCH_MP evaluate_SING_IMP th)) in
-   let var_reduce =
-     RULE_ASSUM_TRY(REWRITE_RULE[GSYM APPEND_ASSOC; APPEND]) THEN
-     RULE_ASSUM_TRY(ONCE_REWRITE_RULE[ev]) THEN
-     EV_LEN `yl:bvi_exp list` THEN
-     RULE_ASSUM_TRY(REWRITE_RULE
-       [EL_LEN_APPEND; LENGTH_APPEND; LENGTH;
-        ARITH_RULE `!a b. a < a + SUC b`]) THEN
-     tidy in
-   let ih_yl = ih_plain `yl:bvi_exp list` THEN
-               ih_ants_simple snoc_size THEN tidy in
-   let ih_es = ih_plain `es:bvi_exp list` THEN
-               ih_ants_simple size_tac THEN tidy in
-   let ih_xl =
-     USE_IH `MAP ((+) (LENGTH (yl:bvi_exp list))) (ax:num list)`
-            `APPEND (av:bvlSem_v list) env2`
-            `d + LENGTH (yl:bvi_exp list)` `[xl:bvi_exp]` in
-   let ih_body =
-     USE_IH `APPEND (extract_list (bvi_let_compile ax d es)) ax`
-            `APPEND (b:bvlSem_v list) env2` `d:num` `[e:bvi_exp]` in
-   let is_compile t =
-     try fst(dest_const(fst(strip_comb t))) = "bvi_let_compile"
-     with Failure _ -> false in
-   let COMPILE_EV f =
-     FIRST_ASSUM(fun th ->
-       let l,r = dest_eq(concl th) in
-       if not (is_ev l) then failwith "COMPILE_EV" else
-       let a,_,_ = dest_ev l in
-       if not (is_compile a) then failwith "COMPILE_EV" else f th) in
-   let del_rerr =
-     COMPILE_EV (fun th ->
-       FIRST_ASSUM(fun ne0 ->
-         let ne = REWRITE_RULE[injectivity "semanticPrimitives_result"]
-                    ne0 in
-         REWRITE_TAC[MATCH_MP evaluate_delete_var_Rerr
-                       (CONJ th ne)])) in
-   let del_rval =
-     COMPILE_EV (fun th ->
-       FIRST_ASSUM(fun er0 ->
-         MP_TAC(MATCH_MP evaluate_delete_var_Rval (CONJ th er0)))) THEN
-     DISCH_THEN(X_CHOOSE_THEN `b:bvlSem_v list` STRIP_ASSUME_TAC) in
-   (* the body is a Var that reads the last binding: the last
-      expression of the list moves into tail-position, and the front
-      of the list is what the new Let binds *)
-   let let_tail =
-     get_snoc THEN REWRITE_TAC snoc_rws THEN
-     RULE_ASSUM_TRY(REWRITE_RULE snoc_rws) THEN ASM_REWRITE_TAC[] THEN
-     RULE_ASSUM_TRY(REWRITE_RULE[bviProps_evaluate_SNOC]) THEN
-     GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev] THEN
-     REWRITE_TAC[fce; compile_HD_SING] THEN
-     UNDISCH_TAC `(e:bvi_exp) = Var (LENGTH (yl:bvi_exp list))` THEN
-     DISCH_THEN SUBST_ALL_TAC THEN
-     NAMED_CASES_TAC `evaluate (yl,env1,(s1:('c,'ffi)bviSem_state))`
-       [["ar"; "as"]] THEN
-     NAMED_CASES_TAC (mk_var("ar",rty)) [["av"]; ["ae"]] THEN tidy THENL
-     [ih_yl THEN env_rel_tail THEN
-      NAMED_CASES_TAC `evaluate ([xl],env1,(as:('c,'ffi)bviSem_state))`
-        [["br"; "bs"]] THEN
-      NAMED_CASES_TAC (mk_var("br",rty)) [["bv"]; ["be"]] THEN tidy THEN
-      ih_xl THEN ih_ants_simple snoc_size THEN tidy THEN
-      TRY(sing_xl THEN var_reduce) THEN TRY(ASM_REWRITE_TAC res_rws);
-      ih_yl THEN no_val] in
-   (* and otherwise the bindings keep their places, with the Vars
-      among them turned into constants and the body reading the
-      original variables through the offsets that extract_list
-      recorded *)
-   let let_general =
-     ASM_REWRITE_TAC[] THEN
-     GEN_REWRITE_TAC ONCE_DEPTH_CONV [ev] THEN
-     REWRITE_TAC[fce; compile_HD_SING] THEN
-     NAMED_CASES_TAC `evaluate (es,env1,(s1:('c,'ffi)bviSem_state))`
-       [["cr"; "cs"]] THEN
-     NAMED_CASES_TAC (mk_var("cr",rty)) [["cv"]; ["cerr"]] THEN
-     tidy THENL
-     [ih_es THEN del_rval THEN ASM_REWRITE_TAC[] THEN tidy THEN
-      ih_body THEN ih_ants_simple size_tac THEN tidy THEN
-      TRY(ASM_REWRITE_TAC res_rws);
-      ih_es THEN del_rerr THEN no_val THEN TRY tidy] in
-   let let_case =
-     let_unfold THEN
-     ASM_CASES_TAC `LENGTH (es:bvi_exp list) = 0` THENL
-     [let_nil;
-      ASM_CASES_TAC `(e:bvi_exp) = Var (LENGTH (es:bvi_exp list) - 1)`
-      THENL [let_tail; let_general]] in
-   (* ---- the eleven cases ---------------------------------------- *)
-   let sub_cases =
-     [index_case; if_case; let_case; one_sub `[e:bvi_exp]`; tick_case;
-      call_case; index_case; one_sub `es:bvi_exp list`; letcall_case;
-      one_sub `es:bvi_exp list`] in
-   let single_case =
-     NAMED_CASES_TAC `x1:bvi_exp`
-       [["v"]; ["e1"; "e2"; "e3"]; ["es"; "e"]; ["e"]; ["e"];
-        ["tt"; "dd"; "es"; "hh"]; ["loc"; "v"]; ["op"; "es"];
-        ["rets"; "tt"; "dd"; "es"; "e"]; ["es"]] THENL sub_cases in
-   let env_rel_tac =
-     MEASURE_INDUCT_TAC `list_size bvi_exp_size` THEN
-     REPEAT GEN_TAC THEN STRIP_TAC THEN
-     NAMED_CASES_TAC `xs:bvi_exp list` [[]; ["x1"; "xr"]] THENL
-     [nil_case; impossible; nil_case; ALL_TAC] THEN
-     NAMED_CASES_TAC `xr:bvi_exp list` [[]; ["x2"; "xr2"]] THENL
-     [single_case; TRY cons_cons_case] in
-   env_rel_tac));;
+  CHEAT_TAC);;
 
 (* HOL4 bvi_letProofScript.sml:220-237: a proof *)
 
@@ -901,205 +170,19 @@ let compile_thm =
 let evaluate_compile_exp = prove
  (`bviSem_evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
     bviSem_evaluate ([bvi_let_compile_exp d],env,s) = (r,t)`,
-  (let ce = bvi_let_compile_exp_def in
-   let er = env_rel_def in
-   (* compile_exp x is the one expression that compile makes of the
-      list [x], which compile_HD_SING says is a singleton *)
-   let exp_SING = prove
-    (`!x. [bvi_let_compile_exp x] = bvi_let_compile [] 0 [x]`,
-     GEN_TAC THEN REWRITE_TAC[ce] THEN
-     GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
-       [GSYM compile_HD_SING] THEN
-     MATCH_REDUCE_TAC THEN REWRITE_TAC[compile_HD_SING]) in
-   (* and at ax = [] and d = 0 the environment relation is
-      reflexive: it says env = DROP 0 env *)
-   let env_rel_refl = prove
-    (`!env. bvi_letProof_env_rel [] 0 env env`,
-     GEN_TAC THEN ONCE_REWRITE_TAC[er] THEN MATCH_REDUCE_TAC THEN
-     REWRITE_TAC[DROP_0]) in
-   (* the terms come from the goal, because the statement of the
-      source annotates no type and the state of this one is an
-      invented type variable that nothing written by hand matches;
-      and the ys of evaluate_env_rel, which its statement does not
-      use, comes back as a universal quantifier that SPEC_ALL takes
-      off *)
-   REWRITE_TAC[exp_SING] THEN STRIP_TAC THEN
-   FIRST_ASSUM(fun ev ->
-     let tup = rand(lhs(concl ev)) in
-     let env_tm = fst(dest_pair(snd(dest_pair tup))) in
-     FIRST_ASSUM(fun ne ->
-       ACCEPT_TAC(SPEC_ALL(MATCH_MP evaluate_env_rel
-         (CONJ ev (CONJ (ISPEC env_tm env_rel_refl) ne))))))));;
+  CHEAT_TAC);;
 
 let dest_var_code_labels = prove
  (`!x. bviProps_get_code_labels (bvi_let_delete_var x) =
   bviProps_get_code_labels x`,
-  (let dv = delete_var_def in
-   let gcl = bviProps_get_code_labels_def in
-   let agcl = assign_get_code_label_def in
-   GEN_TAC THEN
-   STRUCT_CASES_TAC(ISPEC `x:bvi_exp` (cases_of `:bvi_exp`)) THEN
-   REWRITE_TAC[dv] THEN
-   MATCH_REDUCE_TAC THEN
-   REWRITE_TAC[gcl; agcl] THEN
-   MATCH_REDUCE_TAC THEN
-   REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
-               UNION_EMPTY; EMPTY_UNION]));;
+  CHEAT_TAC);;
 add_simp dest_var_code_labels;;
 
 let compile_code_labels = prove
  (`!x y z. UNIONS (set_of_list (MAP bviProps_get_code_labels (bvi_let_compile x
   y z))) =
            UNIONS (set_of_list (MAP bviProps_get_code_labels z))`,
-  (let cp = bvi_let_compile_def in
-   let gcl = bviProps_get_code_labels_def in
-   let sz = size_thms "bvi_exp" in
-   let labs_rws = [MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
-                   UNION_EMPTY; EMPTY_UNION] in
-   (* the type of the list says which get_code_labels this is: the
-      name is an overload of several theories, and a later one of
-      them wins where nothing pins it down *)
-   let labs_APPEND = prove
-    (`!a b. UNIONS (set_of_list (MAP get_code_labels
-              (APPEND (a:bvi_exp list) b))) =
-            UNIONS (set_of_list (MAP get_code_labels a)) UNION
-            UNIONS (set_of_list (MAP get_code_labels b))`,
-     LIST_INDUCT_TAC THEN
-     ASM_REWRITE_TAC[APPEND; MAP; set_of_list; UNIONS_0;
-                     UNIONS_INSERT; UNION_EMPTY; UNION_ASSOC]) in
-   (* a compiled singleton is a singleton (compile_HD_SING), so the
-      labels of its head are the labels of the list *)
-   let labs_SING = prove
-    (`!n d x. get_code_labels (HD (bvi_let_compile n d [x])) =
-              UNIONS (set_of_list (MAP get_code_labels
-                (bvi_let_compile n d [x])))`,
-     REPEAT GEN_TAC THEN
-     GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV)
-       [GSYM compile_HD_SING] THEN
-     REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
-                 UNION_EMPTY]) in
-   let labs_delete_var = prove
-    (`!l. UNIONS (set_of_list (MAP get_code_labels
-            (MAP delete_var (l:bvi_exp list)))) =
-          UNIONS (set_of_list (MAP get_code_labels l))`,
-     LIST_INDUCT_TAC THEN
-     ASM_REWRITE_TAC[MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
-                     dest_var_code_labels]) in
-   (* HOL4 does this induction with recInduct compile_ind, the
-      induction theorem that its termination proof left behind
-      (bvi_letProofScript.sml:420).  HOL Light's define keeps no
-      such theorem, and compile recurses on BUTLAST, which is not
-      a structural sub-term, so bvi_exp_INDUCT will not do either:
-      what is left is induction on the measure that the definition
-      itself was made with, and a side condition for every use of
-      the hypothesis. *)
-   let cond t =
-     mk_binop `(<=):num->num->bool`
-       (list_mk_icomb "list_size" [`bvi_exp_size`; t]) `n:num` in
-   let size_tac =
-     RULE_ASSUM_TAC(REWRITE_RULE(list_size :: sz)) THEN
-     REWRITE_TAC(list_size :: sz) THEN ASM_ARITH_TAC in
-   let use_ih_by tac t =
-     SUBGOAL_THEN (cond t)
-       (fun c -> FIRST_ASSUM(fun ih -> REWRITE_TAC[MATCH_MP ih c]))
-     THEN TRY tac in
-   let use_ih = use_ih_by size_tac in
-   let finish =
-     REWRITE_TAC labs_rws THEN TRY(REWRITE_TAC[UNION_ACI]) in
-   let unfold = REWRITE_TAC(cp :: gcl :: labs_SING :: labs_rws) in
-   (* the Let is the one clause that compiles something other than
-      a sub-term: the list without its last expression, and that
-      last expression as the new body *)
-   let let_case =
-     REWRITE_TAC[cp; LET_DEF; LET_END_DEF] THEN
-     CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-     ASM_CASES_TAC `LENGTH (es:bvi_exp list) = 0` THEN
-     ASM_REWRITE_TAC[] THENL
-     [FIRST_ASSUM(SUBST_ALL_TAC o REWRITE_RULE[LENGTH_EQ_NIL]) THEN
-      REWRITE_TAC(gcl :: labs_rws) THEN use_ih `[e:bvi_exp]` THEN
-      finish;
-      ALL_TAC] THEN
-     ASM_CASES_TAC
-       `(e:bvi_exp) = Var (LENGTH (es:bvi_exp list) - 1)` THEN
-     ASM_REWRITE_TAC[] THENL
-     [REWRITE_TAC(gcl :: labs_SING :: labs_rws) THEN
-      use_ih_by (MP_TAC(ISPECL [`bvi_exp_size`; `es:bvi_exp list`]
-                          list_size_BUTLAST) THEN size_tac)
-        `BUTLAST (es:bvi_exp list)` THEN
-      use_ih_by
-        (MP_TAC(MATCH_MP (ISPEC `bvi_exp_size` list_size_LAST)
-                  (REWRITE_RULE[LENGTH_EQ_NIL]
-                     (ASSUME `~(LENGTH (es:bvi_exp list) = 0)`))) THEN
-         size_tac)
-        `[LAST (es:bvi_exp list)]` THEN
-      FIRST_ASSUM(fun th ->
-        GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV)
-          [GSYM (MATCH_MP APPEND_BUTLAST_LAST
-                   (REWRITE_RULE[LENGTH_EQ_NIL] th))]) THEN
-      REWRITE_TAC[labs_APPEND] THEN finish;
-      REWRITE_TAC(gcl :: labs_SING :: labs_rws) THEN
-      REWRITE_TAC[labs_delete_var] THEN
-      use_ih `es:bvi_exp list` THEN use_ih `[e:bvi_exp]` THEN
-      finish] in
-   let sub_cases =
-     [(* Var *)
-      REWRITE_TAC[cp] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-      EVERY_CASE_TAC THEN REWRITE_TAC(gcl :: labs_rws);
-      (* If *)
-      unfold THEN use_ih `[e1:bvi_exp]` THEN
-      use_ih `[e2:bvi_exp]` THEN use_ih `[e3:bvi_exp]` THEN finish;
-      (* Let *)
-      let_case;
-      (* Raise *)
-      unfold THEN use_ih `[e:bvi_exp]` THEN finish;
-      (* Tick *)
-      unfold THEN use_ih `[e:bvi_exp]` THEN finish;
-      (* Call *)
-      REWRITE_TAC[cp] THEN
-      NAMED_CASES_TAC `hh:bvi_exp option` [[]; ["ce"]] THEN
-      unfold THEN use_ih `es:bvi_exp list` THEN
-      TRY(use_ih `[ce:bvi_exp]`) THEN finish;
-      (* Force *)
-      REWRITE_TAC[cp] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-      EVERY_CASE_TAC THEN REWRITE_TAC(gcl :: labs_rws);
-      (* Op *)
-      unfold THEN use_ih `es:bvi_exp list` THEN finish;
-      (* LetCall *)
-      unfold THEN use_ih `es:bvi_exp list` THEN
-      use_ih `[e:bvi_exp]` THEN finish;
-      (* Return *)
-      unfold THEN use_ih `es:bvi_exp list` THEN finish] in
-   let single_case =
-     NAMED_CASES_TAC `z1:bvi_exp`
-       [["v"]; ["e1"; "e2"; "e3"]; ["es"; "e"]; ["e"]; ["e"];
-        ["tt"; "dd"; "es"; "hh"]; ["loc"; "v"]; ["op"; "es"];
-        ["rets"; "tt"; "dd"; "es"; "e"]; ["es"]] THENL sub_cases in
-   let cons_cons_case =
-     REWRITE_TAC[cp; labs_APPEND] THEN
-     use_ih `[z1:bvi_exp]` THEN use_ih `CONS (z2:bvi_exp) zs2` THEN
-     finish in
-   let base_case =
-     REPEAT GEN_TAC THEN DISCH_TAC THEN
-     NAMED_CASES_TAC `z:bvi_exp list` [[]; ["z1"; "zs"]] THENL
-     [REWRITE_TAC[cp];
-      FIRST_ASSUM MP_TAC THEN
-      REWRITE_TAC[list_size; ARITH_RULE `~(1 + a + b <= 0)`]] in
-   let step_case =
-     REPEAT GEN_TAC THEN DISCH_TAC THEN
-     NAMED_CASES_TAC `z:bvi_exp list` [[]; ["z1"; "zs"]] THENL
-     [REWRITE_TAC[cp];
-      NAMED_CASES_TAC `zs:bvi_exp list` [[]; ["z2"; "zs2"]] THENL
-      [single_case; cons_cons_case]] in
-   SUBGOAL_THEN
-     `!n x y z. list_size bvi_exp_size z <= n ==>
-        UNIONS (set_of_list (MAP get_code_labels
-          (bvi_let_compile x y z))) =
-        UNIONS (set_of_list (MAP get_code_labels z))`
-     (fun th -> REPEAT GEN_TAC THEN
-        MATCH_MP_TAC(SPEC `list_size bvi_exp_size (z:bvi_exp list)`
-                       th) THEN
-        REWRITE_TAC[LE_REFL]) THEN
-   INDUCT_TAC THENL [base_case; step_case]));;
+  CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -1107,27 +190,7 @@ let compile_exp_code_labels = prove
  (cake_as_vars (fun () ->
     `!x. bviProps_get_code_labels (bvi_let_compile_exp x) =
   bviProps_get_code_labels x`),
-  (let ce = bvi_let_compile_exp_def in
-   (* compile_exp is the head of the compiled singleton, so its
-      labels are the labels of the list that compile_code_labels
-      speaks about *)
-   let labs_SING = prove
-    (`!n d x. get_code_labels (HD (bvi_let_compile n d [x])) =
-              UNIONS (set_of_list (MAP get_code_labels
-                (bvi_let_compile n d [x])))`,
-     REPEAT GEN_TAC THEN
-     GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV)
-       [GSYM compile_HD_SING] THEN
-     REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
-                 UNION_EMPTY]) in
-   GEN_TAC THEN REWRITE_TAC[ce] THEN
-   GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
-     [GSYM compile_HD_SING] THEN
-   MATCH_REDUCE_TAC THEN
-   GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [labs_SING] THEN
-   REWRITE_TAC[compile_code_labels] THEN
-   REWRITE_TAC[MAP; set_of_list; UNIONS_INSERT; UNIONS_0;
-               UNION_EMPTY]));;
+  CHEAT_TAC);;
 add_simp compile_exp_code_labels;;
 
 (* and the interface *)

@@ -22,7 +22,7 @@ let _ = cake_theory "cmlNTProps"
 (* [local] *)
 let disjImpI = prove
  (`~p \/ q <=> p ==> q`,
-  (REPEAT GEN_TAC THEN CONV_TAC TAUT));;
+  CHEAT_TAC);;
 
 let firstSet_nUQTyOp = prove
  (`firstSet cmlG (CONS ((\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
@@ -109,16 +109,12 @@ add_simp firstSet_nDecls;;
 (* [local] *)
 let IMAGE_GSPEC1 = prove
  (`IMAGE f (hol4_GSPEC (\a. (g a,P a))) = hol4_GSPEC (\a. (f (g a),P a))`,
-  (REWRITE_TAC[hol4_GSPEC] THEN GEN_REWRITE_TAC I [EXTENSION] THEN
-   REWRITE_TAC[IN_IMAGE; IN_ELIM_THM; PAIR_EQ] THEN
-   MESON_TAC[]));;
+  CHEAT_TAC);;
 
 (* [local] *)
 let BIGUNION_singletons = prove
  (`UNIONS (hol4_GSPEC (\a. {f a},P a)) = hol4_GSPEC (\a. f a,P a)`,
-  (REWRITE_TAC[hol4_GSPEC] THEN GEN_REWRITE_TAC I [EXTENSION] THEN
-   REWRITE_TAC[IN_UNIONS; IN_ELIM_THM; PAIR_EQ] THEN
-   MESON_TAC[IN_SING]));;
+  CHEAT_TAC);;
 add_simp BIGUNION_singletons;;
 
 let firstSet_nMultOps = prove
