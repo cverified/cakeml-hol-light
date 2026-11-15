@@ -1995,6 +1995,25 @@ CON_OF = {
   # bvi_to_data's takes the triple alone
   ('backendProof', 'cake_orac_eqs'):
     {'compile_part': 'data_to_word'},
+  # the check_type of these reads a value of semanticPrimitives,
+  # which is what the first argument of v_rel is and what
+  # flat_to_v gives; flatSem has a check_type of its own
+  ('source_to_flatProof', 'check_type_IMP_v_rel'):
+    {'check_type': 'semanticPrimitives'},
+  ('source_to_flatProof', 'check_type_v_rel_flat_to_v'):
+    {'check_type': 'semanticPrimitives'},
+  ('source_to_flatProof', 'check_type_v_rel_MAP_flat_to_v'):
+    {'check_type': 'semanticPrimitives'},
+  ('source_to_flatProof', 'do_arith_INL'):
+    {'check_type': 'semanticPrimitives',
+     'div_exn_v': 'semanticPrimitives'},
+  ('source_to_flatProof', 'do_arith_INR'):
+    {'check_type': 'semanticPrimitives'},
+  ('source_to_flatProof', 'do_conversion_INL'):
+    {'check_type': 'semanticPrimitives',
+     'chr_exn_v': 'semanticPrimitives'},
+  ('source_to_flatProof', 'do_conversion_INR'):
+    {'check_type': 'semanticPrimitives'},
   # result_view matches on the result of stackSem, so its TimeOut
   # is stackSem's; targetSem has a TimeOut of its own and the
   # machinery of the port reaches for that one
@@ -13110,6 +13129,53 @@ THM_PATCH = {
   ('bvi_to_dataProof', 'v_to_words_eq'): [
     ('dataSem_v_to_words (data_to_bvi_v x)',
      'bvlSem_v_to_words (data_to_bvi_v x)'),
+  ],
+  # v_rel relates a value of semanticPrimitives to one of
+  # flatSem, and the two have do_eq, v_to_list,
+  # v_to_char_list, vs_to_string, list_to_v, check_type,
+  # Boolv and the exception values each: the first of the
+  # pair is semanticPrimitives' and the second flatSem's
+  ('source_to_flatProof', 'do_eq'): [
+    ('flatSem_do_eq v1 v2 = r',
+     'semanticPrimitives_do_eq v1 v2 = r'),
+    ('flatSem_do_eq_list vs1 vs2 = r',
+     'semanticPrimitives_do_eq_list vs1 vs2 = r'),
+  ],
+  ('source_to_flatProof', 'v_to_char_list'): [
+    ('flatSem_v_to_char_list v1 = SOME vs1',
+     'semanticPrimitives_v_to_char_list v1 = SOME vs1'),
+  ],
+  ('source_to_flatProof', 'v_to_list'): [
+    ('flatSem_v_to_list v1 = SOME vs1',
+     'semanticPrimitives_v_to_list v1 = SOME vs1'),
+  ],
+  ('source_to_flatProof', 'vs_to_string'): [
+    ('flatSem_vs_to_string v1 = SOME s',
+     'semanticPrimitives_vs_to_string v1 = SOME s'),
+  ],
+  ('source_to_flatProof', 'v_rel_lems'): [
+    ('(flatSem_Boolv b) (flatSem_Boolv b)',
+     '(semanticPrimitives_Boolv b) (flatSem_Boolv b)'),
+    ('genv flatSem_div_exn_v flatSem_div_exn_v',
+     'genv semanticPrimitives_div_exn_v flatSem_div_exn_v'),
+    ('genv flatSem_chr_exn_v flatSem_chr_exn_v',
+     'genv semanticPrimitives_chr_exn_v flatSem_chr_exn_v'),
+    ('genv flatSem_bind_exn_v flatSem_bind_exn_v',
+     'genv semanticPrimitives_bind_exn_v flatSem_bind_exn_v'),
+  ],
+  ('source_to_flatProof', 'list_to_v_v_rel'): [
+    ('(flatSem_list_to_v xs)',
+     '(semanticPrimitives_list_to_v xs)'),
+  ],
+  ('source_to_flatProof', 'v_rel_check_type'): [
+    ('flatSem_check_type ty v1',
+     'semanticPrimitives_check_type ty v1'),
+  ],
+  # the first do_test of this one reads the values of
+  # semanticPrimitives and the second the ones of flatSem
+  ('source_to_flatProof', 'do_test_lemma'): [
+    ('flatSem_do_test test ty v1 v2',
+     'semanticPrimitives_do_test test ty v1 v2'),
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',

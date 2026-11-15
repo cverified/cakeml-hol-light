@@ -2886,6 +2886,13 @@ class Porter:
        comes last among the ones in scope, which is the one HOL4's
        overload resolution takes"""
     t, n = nm.split('$') if '$' in nm else (None, nm)
+    # with CONDBG=<name> the two overrides that decide before
+    # anything else say what they have, which is how an entry
+    # that went into the wrong table is found
+    if os.environ.get('CONDBG') == n:
+      print('CONDBG0 %s %s con_of=%s con_file=%s' %
+            (self.thy, nm, self.conof_said.get(n),
+             self.con_file.get(n)), file=sys.stderr)
     if n in self.conof_said: return self.conof_said[n]
     # a name that the source qualifies says its theory itself,
     # which is the strongest thing there is and beats the
