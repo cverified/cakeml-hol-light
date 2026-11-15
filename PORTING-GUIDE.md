@@ -5473,7 +5473,9 @@ source that a reader can check:
    pattern, not by a number, which moves when a clause is added),
    `DEF_NAMES` for a name that one definition means another
    constant by, and `DEF_PATCH` for the spots that none of those
-   reach.
+   reach.  A **theorem** is not a definition: its name goes in
+   `THM_NAMES` and its spots in `THM_PATCH`, and an entry put in
+   the definition table does nothing at all.
 
 Two things to know before reaching for an override:
 
@@ -5503,3 +5505,55 @@ rejects the statement and the run names the file, the phrase and
 the two types.  A run is the only authority -- a name that looks
 wrong in the file may be right, and one that looks right may be
 the only thing the typechecker rejects.
+
+
+## 119. A comment inside a term ends the line
+
+HOL Light reads `//` to the end of the line as a comment of a
+term (`comment_token`), and that is what the port writes a
+comment of a source as where it stands inside a quotation.  So
+**nothing of the term may follow a comment on its line** -- and
+for a week the port wrote
+
+```
+          | _ -> (SOME wordSem_Error,s)))
+    // Install is not safe for space /\
+    (wordSem_evaluate (word_CodeBufferWrite r1 r2,s) = ...
+```
+
+where the `/\` is the one that joins the clause to the next.
+Commented out, the two clauses stood side by side as an
+application, and the `=` of the first got three arguments:
+
+```
+= has type A->A->bool, it cannot be used with type ?->?->_->bool
+```
+
+which says nothing about where to look.  `wordSem` failed on it,
+and with `wordSem` seven files that need what it defines.
+
+Three things are worth keeping from how long it took to find:
+
+- **The message names the operator, not the place.**  A `=` of
+  three arguments is what a missing connective looks like, so
+  read it as "two things that should be joined are not", and
+  look at the layout between the phrase's conjuncts rather than
+  at the names in them.
+- **Bisecting by conjunct hides it.**  Splitting the quotation at
+  every top-level `/\` and reading the parts one at a time
+  reported every part good: the `/\` that was eaten is exactly
+  what the splitter throws away.  What found it was splitting at
+  the depth-0 `/\` and then reading the *prefixes*, where the
+  first bad prefix is the clause before the comment.
+- **The check is one line.**  A line of `ml/` that holds `//`
+  and then anything but comment text is a bug, and the eight
+  places in the port where a comment of a source ends in `/\`
+  are comments of HOL4's that have commented out a conjunct.
+
+The same rule bites a comment at the **end** of a quotation,
+where the closing backquote would land inside it.  That one is
+harmless, because camlp5 takes the backquote before HOL Light
+sees the string, but a `)` or a `,` of the port's own would not
+be.  `tools/port.py` (`quot`) puts a bracket before the comments
+that open a clause and after the ones that close it, and the
+`/\` of the joiner now goes on a line of its own.
