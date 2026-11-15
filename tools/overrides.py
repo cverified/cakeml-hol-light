@@ -343,7 +343,6 @@ FIELD_VAR = {
                                't': 'wordSem_state',
                                "t'": 'wordSem_state',
                                'r': 'wordSem_state'},
-  # the ic of the two install_config_rels is the install_config
   # that the eval_config of a flatSem state is
   'flat_to_closProof': {'ic': 'install_config'},
   # the c of the three definitions that have one is the
@@ -12643,6 +12642,14 @@ CON_FILE = {
   # theorem that means dataSem's writes dataSem$dec_clock, and a
   # qualified name beats this table
   'data_to_word_gcProof': {'dec_clock': 'wordSem'},
+  # the op of dataProps is a closLang op, so its Install is
+  # closLang's; wordLang has an Install of its own and comes
+  # later in the order
+  'dataProps': {'Install': 'closLang'},
+  # the check_type of this proof is semanticPrimitives', on the
+  # value that flat_to_v gives; flatSem has a check_type of its
+  # own, on its own values, and the file never writes that one
+  'flat_to_closProof': {'check_type': 'semanticPrimitives'},
   # the wf of this proof is sptree's, on the locals of a state
   # and on the trees that alist_insert and fromList2 build;
   # parmove has a wf of its own, on a parallel move
