@@ -5557,3 +5557,47 @@ sees the string, but a `)` or a `,` of the port's own would not
 be.  `tools/port.py` (`quot`) puts a bracket before the comments
 that open a clause and after the ones that close it, and the
 `/\` of the joiner now goes on a line of its own.
+
+## 120. A patch for a whole file, and what a comment is not
+
+Two of the tables of `tools/overrides.py` are new, and both came
+out of one pass over the resolution failures that a run reports.
+
+**`FILE_PATCH`** is a patch of a whole file rather than of a
+block.  Where a name of a pair of theories is resolved one way
+throughout a file and the other way is right in a dozen places,
+`CON_FILE` cannot say it (it is one theory per name per file) and
+a `THM_PATCH` for each of the twelve says the same thing twelve
+times.  The key is the theory, the pattern is a **regular
+expression** over the text as the port lays it out -- `\s+`
+stands for the break of a line as much as for a space -- and
+every spot of the file that matches is patched.  An entry that
+matches nowhere in the file is reported in
+`tools/warnings.txt`, so the table does not rot.
+
+The first entry of it is the `get_var` of the two biggest
+`data_to_word` proofs: dataSem's takes the locals and wordSem's
+takes the state, the arity of the two is the same, and the only
+thing that tells them apart is that the argument is
+`s.locals`.  One line each, twenty-three spots.
+
+**What a comment is not** is what the block of an override says
+it is.  `overrides.proof_only` decides whether a block of
+`EXTRA_BEFORE` (and the others) is there for a proof alone, and
+until it took the comments out it read them as well: the block
+that puts `data_to_word_memoryProof`'s `fix_clock_IMP` where
+`TERM_TAC` reads it has a comment that names `TERM_TAC`, so the
+block went for proof material and was left out with phase three.
+The definition then had no fact to go by and the run said
+
+```
+Exception: Failure "tryfind"
+```
+
+at the `define_wf_tac`, which is `discharge_conditions` giving
+up and says nothing about what is missing.  Eleven blocks were
+being left out that way, the `fix_clock_IMP` of every semantics
+file among them.  A block that writes into one of the stores the
+definition machinery reads (`cake_term_facts`, `cake_term_lemmas`,
+`admissible_extra`, `cake_cheat_budget`) is now never proof
+material, whatever else is in it.
