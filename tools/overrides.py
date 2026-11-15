@@ -12798,9 +12798,13 @@ CON_FILE = {
   # one of llist, on a lazy list, comes later in the order
   # and the If and the Handle of clos_knownProof are
   # closLang's, where flatLang has one of each
+  # a compile_inc that this file does not qualify is the one of
+  # clos_known, which takes the configuration; the ones of
+  # clos_fvs, clos_ticks and clos_letop it names with the theory
   'clos_knownProof': {'v_rel': 'clos_knownProof',
                       'ref_rel': 'clos_knownProof',
-                      'If': 'closLang', 'Handle': 'closLang'},
+                      'If': 'closLang', 'Handle': 'closLang',
+                      'compile_inc': 'clos_known'},
   # the Break and the Continue of word_allocProof are the
   # results that an evaluate of wordSem gives, where wordLang
   # has a Break and a Continue of its own, both programs
@@ -12867,9 +12871,11 @@ CON_FILE = {
   'clos_opProof': {'If': 'closLang', 'Op': 'closLang',
                    'Var': 'closLang'},
   # and the Continue of this proof is the one of word_bignum's own
-  # mini language, where wordLang and wordSem have one each
+  # mini language, and the word_cmp of it compares the words that
+  # an expression of that language evaluates to, which is asm's
   'word_bignumProof': {'Xor': 'asm', 'And': 'asm', 'Or': 'asm',
                        'Add': 'asm', 'Sub': 'asm',
+                       'word_cmp': 'asm',
                        'Continue': 'word_bignum'},
   # and the None this proof compares a gc_kind with is the one of
   # data_to_word's gc_kind; backend_common's tra has a None too
@@ -13532,6 +13538,13 @@ DEF_PATCH = {
   # first, a value of closSem, is compiled to, and the two types
   # have Number, Word64, Block and RefPtr: nothing but the place
   # says which is which
+  # the evaluate that this simulates is closSem's -- the one it
+  # is simulated by the source qualifies, which is how HOL4 tells
+  # the two apart here
+  ('clos_to_bvlProof', 'eval_sim_def'): [
+    ('bvlSem_evaluate (es1,[],closSem_initial_state',
+     'closSem_evaluate (es1,[],closSem_initial_state'),
+  ],
   ('clos_to_bvlProof', 'v_rel'): [
     ('(closSem_Number n) (closSem_Number n))',
      '(closSem_Number n) (bvlSem_Number n))'),

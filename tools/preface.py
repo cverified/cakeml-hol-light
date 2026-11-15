@@ -47,21 +47,25 @@ def base(path):
   return re.sub(r'^.*/', '', path)
 
 
-def what_it_is(db, thy, kind, blocks):
+def what_it_is(db, thy, kind, blocks, text=''):
   """the sentence that says what the file is"""
   if kind == 'lib':
-    s = ('A HOL4 library theory, of which the port has the '
-         'definitions that CakeML needs')
-    # and, where tools/lightcake.py has written one, the
-    # theorems of it that LightCake proves
+    # the theorems of it that the port states as well: the ones
+    # that tools/lightcake.py wrote, and the ones a file of the
+    # port needs that the port states itself
+    PRV = re.compile(r"^let [A-Za-z0-9_']+ = prove", re.M)
+    own = len(PRV.findall(text))
     n = 0
     try:
-      n = len(re.findall(r"^let [A-Za-z0-9_']+ = prove",
-                         open(T + 'lightcake/' + thy + '.ml').read(),
-                         re.M))
+      n = len(PRV.findall(open(T + 'lightcake/' + thy + '.ml').read()))
     except OSError: pass
-    return s + ('.' if not n
-                else ', and %d theorems of it from LightCake.' % n)
+    s = ('A HOL4 library theory, of which the port has the '
+         'definitions %sthat CakeML needs'
+         % ('' if not own else 'and %d theorems ' % own))
+    if own and n and n < own:
+      return s + ', %d of them from LightCake.' % n
+    if own and n: return s + ', all of them from LightCake.'
+    return s + '.'
   cnt = {}
   for b in blocks:
     cnt[b.kind] = cnt.get(b.kind, 0) + 1
@@ -93,7 +97,7 @@ def who_needs_it(dep):
           'Needed by %s of the port.' % n_of(len(dep), 'file')]
 
 
-def preface(db, thy, kind, path, blocks, dep):
+def preface(db, thy, kind, path, blocks, dep, text=''):
   """the lines of the preface, the empty line after it included"""
   name = "(*  %s: ported from HOL4's" % thy
   src = re.sub(r'^.*/(cakeml-src|hol4-src)/', '', path)
@@ -109,7 +113,7 @@ def preface(db, thy, kind, path, blocks, dep):
         srclines.append(cur); cur = '      '
       cur += part
     srclines.append(cur)
-  what = what_it_is(db, thy, kind, blocks)
+  what = what_it_is(db, thy, kind, blocks, text)
   room = 8 - 4 - len(srclines)
   for tail in who_needs_it(dep) + ['']:
     body = portmod.lay('    ', (what + ' ' + tail).split(), 68)
@@ -137,7 +141,8 @@ def main():
     while end + 1 < len(lines) and not lines[end + 1].strip():
       end += 1
     new = preface(db, thy, kind, path,
-                  hol4.parse(path), rev.get(db.mlpath_of(thy), []))
+                  hol4.parse(path), rev.get(db.mlpath_of(thy), []),
+                  '\n'.join(lines))
     if len(new) > 8:
       print('%s: a preface of %d lines' % (base(p), len(new)))
     long += sum(1 for l in new if len(l) > 79)

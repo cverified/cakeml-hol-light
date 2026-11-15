@@ -28,6 +28,7 @@ def main():
   db = dbmod.Db()
   n = bad = 0
   binds = []
+  warns = []
   for thy, path, kind in dbmod.load_order():
     was = dict(db.thmbind)
     try:
@@ -39,6 +40,7 @@ def main():
     n += 1
     binds.append((thy, {k: v for k, v in db.thmbind.items()
                         if was.get(k) != v}))
+    warns += [(thy, w) for w in warn]
     if open(p).read().count('PORT FAILED'):
       print('%-24s PORT FAILED' % thy)
       bad += 1
@@ -57,6 +59,12 @@ def main():
   with open(out + 'emitted.txt', 'w') as f:
     for thy, nm, b in portmod.EMITTED:
       f.write('%s %s %s\n' % (thy, nm, b))
+  # what the port could not do, as tools/warnings.txt has it for
+  # a real port: a dry one is the only way to see it while a run
+  # is going
+  with open(out + 'warnings.txt', 'w') as f:
+    for thy, w in warns:
+      f.write('%s\t%s\n' % (thy, w))
   with open(out + 'defbind.txt', 'w') as f:
     for thy, c, b in portmod.EMITTED_DEFS:
       f.write('%s %s %s\n' % (thy, c, b))

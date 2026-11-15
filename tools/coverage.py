@@ -44,7 +44,13 @@ def bound(text, thy, name):
      of it where another file of the port has the name already
      (tools/port.py's bindname)"""
   for nm in (portmod.ocaml_name(name),
-             portmod.ocaml_name(thy + '_' + name)):
+             portmod.ocaml_name(thy + '_' + name),
+             # the prefix that the port puts in front of a name of
+             # this theory, which is not always the theory itself
+             # (wordLang's is word, so wordLang's
+             # store_consts_stub_location_eq is bound as
+             # word_store_consts_stub_location_eq)
+             portmod.ocaml_name(dbmod.short_thy(thy) + '_' + name)):
     if re.search(r'^let %s = prove$' % re.escape(nm), text, re.M) or \
        re.search(r'^let %s = [A-Za-z_]' % re.escape(nm), text, re.M) or \
        re.search(r'^let %s =$' % re.escape(nm), text, re.M):
