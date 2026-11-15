@@ -12589,7 +12589,8 @@ CON_FILE = {
   # configuration, a globals approximation and two values, and it
   # means that one everywhere; clos_ticksProof's, which comes
   # later in the order, takes two values and nothing else
-  'clos_knownProof': {'v_rel': 'clos_knownProof'},
+  'clos_knownProof': {'v_rel': 'clos_knownProof',
+                      'ref_rel': 'clos_knownProof'},
   # the dec_clock of this proof is wordSem's, on the state the
   # compiler builds: word_bignumProof has a dec_clock of its own,
   # on its own state, and comes later in the order.  The one
@@ -12615,7 +12616,11 @@ CON_FILE = {
   # the Var of this proof is bvl's where it takes a number and
   # closLang's where it takes a trace and a number; db_vars has a
   # Var as well and this file never means that one
-  'clos_to_bvlProof': {'Var': {0: 'bvl', 1: 'bvl', 2: 'closLang'}},
+  # and its v_rel, which takes six arguments where
+  # clos_knownProof's takes four
+  'clos_to_bvlProof': {'Var': {0: 'bvl', 1: 'bvl',
+                              2: 'closLang'},
+                       'v_rel': 'clos_to_bvlProof'},
   # the word operations that data_to_word builds are the binops
   # of asm, which is what wordLang's Op takes
   'data_to_word': {'Xor': 'asm', 'And': 'asm', 'Or': 'asm'},
