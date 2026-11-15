@@ -19,7 +19,9 @@
   (MESON_TAC[idsexp_sexpid_odestSEXSTR])
 
 ### listsexp_11
-  (REWRITE_TAC[listsexp_def; FOLDR_SX_CONS_INJ])
+  (* listsexp is FOLDR, which the port defines from ITLIST
+     because its arguments stand the other way round *)
+  (REWRITE_TAC[listsexp_def; FOLDR_def; FOLDR_SX_CONS_INJ])
 
 ### listsexp_MAP_EQ_f
   (DISCH_TAC THEN AP_TERM_TAC THEN MATCH_MP_TAC MAP_EQ THEN
@@ -83,7 +85,7 @@
   (SIMP_TAC[isLower; isAlpha])
 
 ### listsexp_thm
-  (REWRITE_TAC[listsexp_def; ITLIST])
+  (REWRITE_TAC[listsexp_def; FOLDR_THM])
 
 ### logsexp_sexplog
   (MATCH_MP_TAC(TAUT `(a <=> c) /\ (b <=> a) ==> (a <=> c) /\ (b <=>

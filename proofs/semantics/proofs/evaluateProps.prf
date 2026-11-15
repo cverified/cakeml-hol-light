@@ -58,13 +58,15 @@
    REWRITE_TAC[list_result_def])
 
 ### list_result_eq_Rerr
-  (REPEAT GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
+  (REPEAT GEN_TAC THEN
+   CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
    REWRITE_TAC[list_result_def;
                injectivity "semanticPrimitives_result";
                distinctness "semanticPrimitives_result"])
 
 ### list_result_eq_Rval
-  (REPEAT GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
+  (REPEAT GEN_TAC THEN
+   CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
    REWRITE_TAC[list_result_def;
                injectivity "semanticPrimitives_result";
                distinctness "semanticPrimitives_result"] THEN

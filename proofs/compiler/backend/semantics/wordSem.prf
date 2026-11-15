@@ -1,5 +1,7 @@
 ### isWord_exists
-  (CASES_ON_TAC `x:(A)word_loc` THEN
-   REWRITE_TAC[isWord_def; injectivity "word_loc"; distinctness
-     "word_loc"] THEN
+  (* isWord is a match, so the clause has to be reduced before
+     the constructors of word_loc say anything *)
+  (CASES_ON_TAC `x:(A)word_loc` THEN REWRITE_TAC[isWord_def] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[injectivity "word_loc"; distinctness "word_loc"] THEN
    MESON_TAC[])
