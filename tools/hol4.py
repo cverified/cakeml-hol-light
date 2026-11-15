@@ -15,7 +15,13 @@ def strip_comments(s):
     if s.startswith('(*', i):
       depth += 1; i += 2; continue
     if s.startswith('*)', i) and depth:
-      depth -= 1; i += 2; continue
+      depth -= 1; i += 2
+      # a comment stands between two tokens, so what is left of it
+      # is a space: data_to_word_memoryProof's word_eq writes
+      # `if l = 0(* \\/ ck = 0 *)then NONE', and without the space
+      # the 0 and the then are one token
+      if not depth: out.append(' ')
+      continue
     if depth == 0 and s[i] == '"':
       j = i + 1
       while j < n and s[j] != '"':
