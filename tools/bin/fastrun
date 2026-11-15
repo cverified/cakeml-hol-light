@@ -1,0 +1,33 @@
+#!/bin/sh
+# fastrun : the proof theories of the load order, in a clone of
+# hol-runbase (tools/bin/runbase), into tmp/cs.out.
+#
+# The inner loop of a round of statement fixes: half an hour
+# instead of an hour and a quarter, because the 180 files that
+# runbase holds are not loaded again.  tmp/cs.out and
+# tmp/unstated.txt come out in the same shape a cold run leaves
+# them, so every report reads them as usual -- but what they say
+# about the files of the base is what the base said when it was
+# built.  Finish a round with tools/bin/runall.
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+cd $C
+. tools/holenv.sh > /dev/null 2>&1
+tmux has -t hol-runbase 2> /dev/null || {
+  echo "fastrun: no hol-runbase; run tools/bin/runbase first"; exit 1; }
+[ -f tmp/runbase-files.txt ] || {
+  echo "fastrun: no tmp/runbase-files.txt"; exit 1; }
+python3 -I tools/loadorder.py > tools/load.txt
+grep -vxF -f tmp/runbase-files.txt tools/load.txt > tmp/fastrun-files.txt
+n=$(wc -l < tmp/fastrun-files.txt)
+echo "fastrun: $n files into a clone of hol-runbase"
+repl-kill seq > /dev/null 2>&1
+rm -f /home/freek/claude/hol-light/bin/fifo/hol-seq
+repl-clone hol-runbase seq > /dev/null 2>&1 || {
+  echo "fastrun: cannot clone hol-runbase"; exit 1; }
+cp tmp/unstated-base.txt tmp/unstated.txt
+KEEP=1 MARK=1 TOLERANT=1 TIMEOUT=${TIMEOUT:-900} \
+  checkseq $(cat tmp/fastrun-files.txt) > tmp/cs-rest.out 2>&1
+cat tmp/cs-base.out tmp/cs-rest.out > tmp/cs.out
+echo FINISHED >> tmp/cs.out
+echo "fastrun: $(grep -c '^[a-z]' tmp/cs.out) files, $(grep -cE 'Exception|Error:|TOO SLOW' tmp/cs.out) failures, $(wc -l < tmp/unstated.txt) unread"

@@ -10,7 +10,11 @@ deps = {}
 nogram = {}
 for path in files:
   src = open(path, encoding='utf-8', errors='replace').read()
-  m = re.search(r'^Theory\s+(\S+)', src, re.M)
+  # a Theory line may carry an attribute (ag32ProgScript.sml says
+  # "Theory ag32Prog[no_sig_docs]"), which is not part of the name:
+  # an Ancestors entry of it is the bare name, so a key that kept
+  # the attribute made the theory look external to the closure
+  m = re.search(r'^Theory\s+([^\s\[]+)', src, re.M)
   if m: thy = m.group(1)
   else:
     thy = os.path.basename(path)[:-10]
