@@ -162,6 +162,9 @@ class Db:
     # that names one of them without saying which theory it is of
     # is one the port does not resolve
     self.thmbind_many = set()
+    # and by the name alone, for a source that names a theorem
+    # several theories of the port have
+    self.thmbind_name = {}
     self._ambflds = None
     self.ty_params = {}        # (thy,type) -> the type parameters
     self.monads = {'option': {'bind': 'OPTION_BIND',
@@ -1081,6 +1084,7 @@ def bind_thm(db, thy, name, bind):
     db.thmbind_many.add(name)
   db.thmbind[name] = bind
   db.thmbind_thy[(thy, name)] = bind
+  db.thmbind_name.setdefault(name, {})[thy] = bind
 
 
 def short_thy(thy):

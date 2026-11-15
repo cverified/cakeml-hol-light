@@ -786,7 +786,15 @@ class Porter:
               (nm if nm in self.db.hlids else None))
     b = self.db.thmbind_thy.get((self.thy, name))
     if b: return b
-    if name not in self.db.thmbind_many and name in self.db.thmbind:
+    if name in self.db.thmbind_many:
+      # the theory of the name is the closest one of the scope
+      # that has it, as HOL4 resolves it to the one that the
+      # ancestry of the file loads last (db.distance)
+      d = self.db.distance(self.thy)
+      cs = [(d[t], t) for t in self.db.thmbind_name.get(name, ())
+            if t in d]
+      if cs: return self.db.thmbind_name[name][min(cs)[1]]
+    elif name in self.db.thmbind:
       return self.db.thmbind[name]
     # a theorem of HOL Light itself, which the two systems share
     # under one name (FUN_EQ_THM, MAP, LENGTH) or under two

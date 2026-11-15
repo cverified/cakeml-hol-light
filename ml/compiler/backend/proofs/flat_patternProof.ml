@@ -536,8 +536,9 @@ let decode_pos_simulation = prove
    pure_eval_to s env (decode_pos tr exp pos) y)`,
   CHEAT_TAC);;
 
-(* HOL4 flat_patternProofScript.sml:1052-1054: a theorem that HOL4 states as
-   the value of an ML expression: fold_Boolv *)
+let fold_Boolv =
+  GSYM (end_itlist CONJ [REWRITE_RULE [GSYM bool_to_tag_def]
+  flatSem_Boolv_def; bool_to_tag_def]);;
 
 (* do_eq_Boolv *)
 let flat_patternProof_do_eq_Boolv = prove

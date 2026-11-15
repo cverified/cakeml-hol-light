@@ -920,7 +920,6 @@ clos_annotateProof	ML code skipped: val env_ok_some = env_ok_EXTEND   |> DISCH `
 clos_annotateProof	ML code skipped: val env_ok_append = env_ok_EXTEND   |> GSYM |> Q.INST [`l`|-
 clos_annotateProof	ML code skipped: val every_Fn_vs_NONE_EVERY_MAP =   every_Fn_vs_NONE_EVERY   
 clos_annotateProof	ML code skipped: val code_tac =     imp_res_tac evaluate_code     \\ fs[DISTI
-clos_annotateProof	derive annotate_correct: no annotate_def
 clos_annotateProof	ML code skipped: val IF_MAP_EQ = MAP_EQ_f |> SPEC_ALL |> EQ_IMP_RULE |> snd;
 clos_callProof	bring_to_front_overload domain: the port does not know which constant
 clos_callProof	ML code skipped: val PUSH_EXISTS_IMP = SPEC_ALL RIGHT_EXISTS_IMP_THM;
@@ -1973,7 +1972,7 @@ flat_elimProof	ML code skipped: fun conseq xs = ConseqConv.CONSEQ_REWRITE_TAC (x
 flat_elimProof	ML code skipped: val eqs = flatSemTheory.case_eq_thms;
 flat_elimProof	derive do_app_cases: '++COND_elim_'
 flat_elimProof	ML code skipped: val evaluate_exp_ind = evaluate_ind   |> Q.SPECL [`P`, `\_ _
-flat_elimProof	derive flat_remove_semantics: no IMP_semantics_eq
+flat_elimProof	derive flat_remove_semantics: no AND_IMP_INTRO
 flat_patternProof	ML code skipped: val build_rec_env_merge = flatPropsTheory.build_rec_env_merg
 flat_patternProof	derive FILTER_EQ_MONO_TRANS: no FILTER_T
 flat_patternProof	ML code skipped: val EVERY_EL_IMP = ASSUME ``EVERY P xs`` |> REWRITE_RULE [EV
@@ -1983,7 +1982,6 @@ flat_patternProof	ML code skipped: val _ = IndDefLib.add_mono_thm ALOOKUP_rel_mo
 flat_patternProof	derive v_rel_l_cases: '=> mk_comb ('
 flat_patternProof	ML code skipped: val env_rel_def = ``env_rel N env1 env2``     |> SIMP_CONV b
 flat_patternProof	Overload nv_rel
-flat_patternProof	derive fold_Boolv: no Boolv_def
 flat_patternProof	derive comp_thm: no quantHeuristicsTheory.IS_SOME_EQ_NOT_NONE
 flat_patternProof	ML code skipped: val evaluate_ind2 = induct_tweakLib.list_single_induct evalu
 source_evalProof	Overload ci_comp

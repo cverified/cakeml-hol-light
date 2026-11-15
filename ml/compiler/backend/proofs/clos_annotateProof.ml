@@ -451,8 +451,10 @@ let env_set_default = prove
  (`x SUBSET env_ok 0 0 LN [] env'`,
   CHEAT_TAC);;
 
-(* HOL4 clos_annotateProofScript.sml:1306-1309: a theorem that HOL4 states
-   as the value of an ML expression: annotate_correct *)
+let annotate_correct =
+  REWRITE_RULE [GSYM annotate_def; env_set_default; LENGTH; ADD_0] (INST
+  [`0`,`m`; `0`,`l`; `LN`,`i`; `[]`,`env`] (SPEC_ALL (CONJUNCT1
+  shift_correct)));;
 
 (* more correctness properties *)
 
