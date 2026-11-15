@@ -1707,16 +1707,16 @@ let inst_lemma = prove
       ((mc_conf:('a,'state,'b)machine_config),code2,labs,p) s1 t1 ms1 /\
     (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val (labSem_state_pc s1)
       0 code2 + LENGTH bytes') ==>
-    ~(failed (wordSem_inst i t1)) /\
-     (!a. ~(a IN labSem_state_mem_domain s1) ==> mem (wordSem_inst i t1) a =
+    ~(failed (asmSem_inst i t1)) /\
+     (!a. ~(a IN labSem_state_mem_domain s1) ==> mem (asmSem_inst i t1) a =
        asm_state_mem t1 a) /\
     (target_state_rel (machine_config_target mc_conf)
-       (labSem_upd_pc (asm_state_pc t1 + n2w (LENGTH bytes')) (wordSem_inst
-         i t1)) ms2 ==>
+       (labSem_upd_pc (asm_state_pc t1 + n2w (LENGTH bytes')) (asmSem_inst i
+         t1)) ms2 ==>
      lab_to_targetProof_state_rel (mc_conf,code2,labs,p)
        (inc_pc (labSem_dec_clock (asm_inst i s1)))
        (labSem_upd_pc (asm_state_pc t1 + n2w (LENGTH (bytes':word8 list)))
-         (wordSem_inst i t1)) ms2)`,
+         (asmSem_inst i t1)) ms2)`,
   CHEAT_TAC);;
 
 (* compile correct *)

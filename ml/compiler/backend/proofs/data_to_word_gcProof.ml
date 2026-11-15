@@ -347,7 +347,7 @@ let word_ml_inv_get_var_IMP_lemma = prove
     `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
         (APPEND (join_env ll (toAList (inter (wordSem_state_locals t)
           (adjust_set ll)))) envs) /\
-      wordSem_get_var n ll = SOME x /\
+      dataSem_get_var n ll = SOME x /\
       wordSem_get_var (adjust_var n) t = SOME w ==>
       word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
         (APPEND (APPEND [(x,w)] (join_env ll
@@ -360,15 +360,15 @@ let word_ml_inv_get_var_IMP_lemma = prove
 let word_ml_inv_get_var_IMP = prove
  (cake_as_vars (fun () ->
     `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-        (APPEND (join_env (wordSem_state_locals s) (toAList (inter
-          (wordSem_state_locals t) (adjust_set (wordSem_state_locals s)))))
+        (APPEND (join_env (dataSem_state_locals s) (toAList (inter
+          (wordSem_state_locals t) (adjust_set (dataSem_state_locals s)))))
           envs) /\
-      wordSem_get_var n (wordSem_state_locals s) = SOME x /\
+      dataSem_get_var n (dataSem_state_locals s) = SOME x /\
       wordSem_get_var (adjust_var n) t = SOME w ==>
       word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-        (APPEND (APPEND [(x,w)] (join_env (wordSem_state_locals s)
+        (APPEND (APPEND [(x,w)] (join_env (dataSem_state_locals s)
             (toAList (inter (wordSem_state_locals t) (adjust_set
-              (wordSem_state_locals s)))))) envs)`),
+              (dataSem_state_locals s)))))) envs)`),
   CHEAT_TAC);;
 
 (* [allow_rebind] *)
@@ -381,7 +381,7 @@ let word_ml_inv_get_vars_IMP_lemma = prove
              (APPEND (join_env ll
                 (toAList (inter (wordSem_state_locals t) (adjust_set
                   ll)))) envs') /\
-           wordSem_get_vars n ll = SOME x /\
+           dataSem_get_vars n ll = SOME x /\
            wordSem_get_vars (MAP adjust_var n) t = SOME w ==>
            word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
              (APPEND (APPEND (ZIP x w) (join_env ll
@@ -396,15 +396,15 @@ let word_ml_inv_get_vars_IMP = prove
  (cake_as_vars (fun () ->
     `!n x w envs'.
            word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-             (APPEND (join_env (wordSem_state_locals s)
+             (APPEND (join_env (dataSem_state_locals s)
                 (toAList (inter (wordSem_state_locals t) (adjust_set
-                  (wordSem_state_locals s))))) envs') /\
-           wordSem_get_vars n (wordSem_state_locals s) = SOME x /\
+                  (dataSem_state_locals s))))) envs') /\
+           dataSem_get_vars n (dataSem_state_locals s) = SOME x /\
            wordSem_get_vars (MAP adjust_var n) t = SOME w ==>
            word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-             (APPEND (APPEND (ZIP x w) (join_env (wordSem_state_locals s)
+             (APPEND (APPEND (ZIP x w) (join_env (dataSem_state_locals s)
                 (toAList (inter (wordSem_state_locals t) (adjust_set
-                  (wordSem_state_locals s)))))) envs')`),
+                  (dataSem_state_locals s)))))) envs')`),
   CHEAT_TAC);;
 
 let IMP_adjust_var = prove
@@ -763,7 +763,7 @@ let word_gen_gc_move_thm = prove
 let gc_move_with_NIL = prove
  (`!x s y t.
       gen_gc_gc_move gen_conf s x = (y,t) /\ gc_state_ok t ==>
-      (let (y,s1) = gen_gc_partial_gc_move gen_conf (gc_state_r4_fupd (K [])
+      (let (y,s1) = gen_gc_gc_move gen_conf (gc_state_r4_fupd (K [])
         (gc_state_h2_fupd (K []) s)) x in
         (y,gc_state_r4_fupd (K (APPEND (gc_state_r4 s1) (gc_state_r4 s)))
           (gc_state_h2_fupd (K (APPEND (gc_state_h2 s) (gc_state_h2 s1)))
@@ -805,7 +805,7 @@ let gc_move_list_ok_irr = prove
 let gc_move_list_with_NIL = prove
  (`!x s y t.
       gen_gc_gc_move_list gen_conf s x = (y,t) /\ gc_state_ok t ==>
-      (let (y,s1) = gen_gc_partial_gc_move_list gen_conf (gc_state_r4_fupd
+      (let (y,s1) = gen_gc_gc_move_list gen_conf (gc_state_r4_fupd
         (K []) (gc_state_h2_fupd (K []) s)) x in
         (y,gc_state_r4_fupd (K (APPEND (gc_state_r4 s1) (gc_state_r4 s)))
           (gc_state_h2_fupd (K (APPEND (gc_state_h2 s) (gc_state_h2 s1)))
@@ -2259,7 +2259,7 @@ let inter_union_lemma = prove
 let state_rel_pop_env_IMP = prove
  (`data_to_word_gcProof_state_rel c q l ((s1:('c,'ffi)dataSem_state)) t1 xs
   locs /\
-    wordSem_pop_env s1 = SOME s2 ==>
+    dataSem_pop_env s1 = SOME s2 ==>
     (?t2 l8 l9 ll.
       wordSem_pop_env t1 = SOME t2 /\ locs = CONS (l8,l9) ll /\
       data_to_word_gcProof_state_rel c l8 l9 s2 t2 xs ll)`,
@@ -2273,10 +2273,10 @@ let inter_insert_union = prove
 let state_rel_pop_env_set_var_IMP = prove
  (`data_to_word_gcProof_state_rel c q l ((s1:('c,'ffi)dataSem_state)) t1 (SOME
   [(a,w)]) locs /\
-    wordSem_pop_env s1 = SOME s2 ==>
+    dataSem_pop_env s1 = SOME s2 ==>
     (?t2 l8 l9 ll.
       wordSem_pop_env t1 = SOME t2 /\ locs = CONS (l8,l9) ll /\
-      data_to_word_gcProof_state_rel c l8 l9 (wordSem_set_var q1 a s2)
+      data_to_word_gcProof_state_rel c l8 l9 (dataSem_set_var q1 a s2)
         (wordSem_set_var (adjust_var q1) w t2) NONE ll)`,
   CHEAT_TAC);;
 
@@ -2289,11 +2289,11 @@ let state_rel_jump_exc = prove
   (t:('a,'c,'ffi)wordSem_state) NONE locs /\
     dataSem_get_var n (dataSem_state_locals s) = SOME x /\
     wordSem_get_var (adjust_var n) t = SOME w /\
-    wordSem_jump_exc s = SOME s1 ==>
+    dataSem_jump_exc s = SOME s1 ==>
     (?t1 d1 d2 l5 l6 ll.
       wordSem_jump_exc t = SOME (t1,d1,d2) /\
-      LASTN (LENGTH (wordSem_state_stack s1) + 1) locs = CONS (l5,l6) ll /\
-      (!i. data_to_word_gcProof_state_rel c l5 l6 (wordSem_set_var i x s1)
+      LASTN (LENGTH (dataSem_state_stack s1) + 1) locs = CONS (l5,l6) ll /\
+      (!i. data_to_word_gcProof_state_rel c l5 l6 (dataSem_set_var i x s1)
         (wordSem_set_var (adjust_var i) w t1) NONE ll))`,
   CHEAT_TAC);;
 
@@ -2323,8 +2323,8 @@ let state_rel_call_env = prove
    wordSem_get_vars (MAP adjust_var args) (t:('a,'c,'ffi)wordSem_state) =
      SOME ws /\
    data_to_word_gcProof_state_rel c l5 l6 s t NONE locs ==>
-   data_to_word_gcProof_state_rel c l1 l2 (wordSem_call_env q ss
-     (wordSem_dec_clock s))
+   data_to_word_gcProof_state_rel c l1 l2 (dataSem_call_env q ss
+     (dataSem_dec_clock s))
      (wordSem_call_env (CONS (word_Loc l1 l2) ws) ss (wordSem_dec_clock
        t)) NONE locs`,
   CHEAT_TAC);;
@@ -2371,14 +2371,14 @@ let find_code_thm = prove
          dataSem_get_vars args (dataSem_state_locals s) = SOME x /\
          wordSem_get_vars (CONS 0 (MAP adjust_var args)) t = SOME (CONS
            (word_Loc l1 l2) ws) /\
-         wordSem_find_code dest x (dataSem_state_code s) fs = SOME (q,r,ss)
+         dataSem_find_code dest x (dataSem_state_code s) fs = SOME (q,r,ss)
            ==>
          (?args1 n1 n2.
            wordSem_find_code dest (CONS (word_Loc l1 l2) ws)
              (wordSem_state_code t) fs = SOME (args1,FST (data_to_word_comp c
              n1 n2 r),ss) /\
-           data_to_word_gcProof_state_rel c l1 l2 (wordSem_call_env q ss
-             (wordSem_dec_clock s))
+           data_to_word_gcProof_state_rel c l1 l2 (dataSem_call_env q ss
+             (dataSem_dec_clock s))
              (wordSem_call_env args1 ss (wordSem_dec_clock t)) NONE locs)`,
   CHEAT_TAC);;
 (* [allow_rebind] *)
@@ -2439,8 +2439,8 @@ let state_rel_call_env_push_opt = prove
      dataSem_cut_env r (dataSem_state_locals s) = SOME x /\
      cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
      data_to_word_gcProof_state_rel c q l
-       (wordSem_call_env xs ss (wordSem_push_env x (IS_SOME opt)
-         (wordSem_dec_clock s)))
+       (dataSem_call_env xs ss (dataSem_push_env x (IS_SOME opt)
+         (dataSem_dec_clock s)))
        (wordSem_call_env (CONS (word_Loc q l) ws) ss (wordSem_push_env y opt
          (wordSem_dec_clock t))) NONE
        (CONS (l1,l2) locs)`,
@@ -2453,7 +2453,7 @@ let state_rel_call_env_push = prove
    dataSem_cut_env r (dataSem_state_locals s) = SOME x /\
    cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
    data_to_word_gcProof_state_rel c q l
-     (wordSem_call_env xs ss (wordSem_push_env x F (wordSem_dec_clock s)))
+     (dataSem_call_env xs ss (dataSem_push_env x F (dataSem_dec_clock s)))
      (wordSem_call_env (CONS (word_Loc q l) ws) ss (wordSem_push_env y NONE
        (wordSem_dec_clock t))) NONE
      (CONS (l1,l2) locs)`,
@@ -2468,8 +2468,8 @@ let state_rel_call_env_push_env = prove
      wordSem_get_vars (MAP adjust_var args) t = SOME ws /\
      dataSem_cut_env r (dataSem_state_locals s) = SOME x /\
      cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
-     data_to_word_gcProof_state_rel c q l (wordSem_call_env xs ss
-       (wordSem_push_env x (IS_SOME opt) (wordSem_dec_clock s)))
+     data_to_word_gcProof_state_rel c q l (dataSem_call_env xs ss
+       (dataSem_push_env x (IS_SOME opt) (dataSem_dec_clock s)))
         (wordSem_call_env (CONS (word_Loc q l) ws) ss (wordSem_push_env y
           opt (wordSem_dec_clock t))) NONE
         (CONS (l1,l2) locs)`,
@@ -2480,15 +2480,15 @@ let find_code_thm_ret = prove
   locs /\
    dataSem_get_vars args (dataSem_state_locals s) = SOME xs /\
    wordSem_get_vars (MAP adjust_var args) t = SOME ws /\
-   wordSem_find_code dest xs (dataSem_state_code s) fs = SOME (ys,prog,ss)
+   dataSem_find_code dest xs (dataSem_state_code s) fs = SOME (ys,prog,ss)
      /\
    dataSem_cut_env r (dataSem_state_locals s) = SOME x /\
    cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
    (?args1 n1 n2.
      wordSem_find_code dest (CONS (word_Loc q l) ws) (wordSem_state_code t)
        fs = SOME (args1,FST (data_to_word_comp c n1 n2 prog),ss) /\
-     data_to_word_gcProof_state_rel c q l (wordSem_call_env ys ss
-       (wordSem_push_env x F (wordSem_dec_clock s)))
+     data_to_word_gcProof_state_rel c q l (dataSem_call_env ys ss
+       (dataSem_push_env x F (dataSem_dec_clock s)))
        (wordSem_call_env args1 ss (wordSem_push_env y NONE
        (wordSem_dec_clock t))) NONE (CONS (l1,l2) locs))`,
   CHEAT_TAC);;
@@ -2498,15 +2498,15 @@ let find_code_thm_handler = prove
   locs /\
    dataSem_get_vars args (dataSem_state_locals s) = SOME xs /\
    wordSem_get_vars (MAP adjust_var args) t = SOME ws /\
-   wordSem_find_code dest xs (dataSem_state_code s) fs = SOME (ys,prog,ss)
+   dataSem_find_code dest xs (dataSem_state_code s) fs = SOME (ys,prog,ss)
      /\
    dataSem_cut_env r (dataSem_state_locals s) = SOME x /\
    cut_envs (adjust_sets r) (wordSem_state_locals t) = SOME y ==>
    (?args1 n1 n2.
      wordSem_find_code dest (CONS (word_Loc q l) ws) (wordSem_state_code t)
        fs = SOME (args1,FST (data_to_word_comp c n1 n2 prog),ss) /\
-     data_to_word_gcProof_state_rel c q l (wordSem_call_env ys ss
-       (wordSem_push_env x T (wordSem_dec_clock s)))
+     data_to_word_gcProof_state_rel c q l (dataSem_call_env ys ss
+       (dataSem_push_env x T (dataSem_dec_clock s)))
        (wordSem_call_env args1 ss (wordSem_push_env y
           (SOME (adjust_var x0,(prog1:'a word_prog),nn,l + 1))
        (wordSem_dec_clock t))) NONE (CONS (l1,l2) locs))`,
@@ -3486,8 +3486,8 @@ let cut_names_adjust_set_insert_ODD = prove
   CHEAT_TAC);;
 
 let cut_env_adjust_sets_ODD = prove
- (`ODD n ==> dataSem_cut_env (adjust_sets names) (sptree_insert n w s) =
-           dataSem_cut_env (adjust_sets names) s`,
+ (`ODD n ==> wordSem_cut_env (adjust_sets names) (sptree_insert n w s) =
+           wordSem_cut_env (adjust_sets names) s`,
   CHEAT_TAC);;
 
 let cut_envs_adjust_sets_ODD = prove
@@ -3566,8 +3566,8 @@ let domain_adjust_set_EVEN = prove
 
 let cut_env_adjust_sets_insert_ODD = prove
  (`ODD n ==>
-   dataSem_cut_env (adjust_sets names) (sptree_insert n w t) =
-   dataSem_cut_env (adjust_sets names) t`,
+   wordSem_cut_env (adjust_sets names) (sptree_insert n w t) =
+   wordSem_cut_env (adjust_sets names) t`,
   CHEAT_TAC);;
 
 let cut_envs_adjust_sets_insert_ODD = prove
@@ -3610,9 +3610,9 @@ let cut_names_imp_wf = prove
   CHEAT_TAC);;
 
 let cut_env_insert_1 = prove
- (`dataSem_cut_env (FST (adjust_sets names),sptree_insert 1 one (SND
+ (`wordSem_cut_env (FST (adjust_sets names),sptree_insert 1 one (SND
   (adjust_sets names))) (sptree_insert 1 w t) =
-   match dataSem_cut_env (adjust_sets names) t with NONE -> NONE | SOME v
+   match wordSem_cut_env (adjust_sets names) t with NONE -> NONE | SOME v
      -> SOME (sptree_insert 1 w v)`,
   CHEAT_TAC);;
 
@@ -3774,7 +3774,7 @@ let memory_rel_get_vars_IMP_lemma = prove
        (APPEND (join_env ll
           (toAList (inter (wordSem_state_locals t) (adjust_set ll))))
             envs) /\
-      wordSem_get_vars n ll = SOME x /\
+      dataSem_get_vars n ll = SOME x /\
       wordSem_get_vars (MAP adjust_var n) (t:('a,'c,'ffi)wordSem_state) =
         SOME w ==>
       memory_rel c be ts refs sp st m dm
@@ -3840,11 +3840,11 @@ let memory_rel_insert = prove
   CHEAT_TAC);;
 
 let state_rel_IMP_Number_arg = prove
- (`data_to_word_gcProof_state_rel c l1 l2 (wordSem_call_env xs ss s)
+ (`data_to_word_gcProof_state_rel c l1 l2 (dataSem_call_env xs ss s)
   (wordSem_call_env ys ss t) NONE locs /\
     n < dimword (:'a) DIV 16 /\ LENGTH ys = LENGTH xs + 1 ==>
     data_to_word_gcProof_state_rel c l1 l2
-      (wordSem_call_env (APPEND xs [dataSem_Number (&n)]) ss s)
+      (dataSem_call_env (APPEND xs [dataSem_Number (&n)]) ss s)
       (wordSem_call_env (APPEND ys [word_Word (n2w (4 * n):'a word)]) ss
         t) NONE locs`,
   CHEAT_TAC);;

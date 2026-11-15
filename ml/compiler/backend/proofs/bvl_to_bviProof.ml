@@ -584,7 +584,7 @@ let do_app_adjust = prove
      (clos_Build c))) /\ ~(op = clos_MemOp clos_XorByte) /\
    (!b. ~(op = clos_MemOp (clos_CopyByte b))) /\ (~(op = clos_MemOp
      clos_ConcatByteVec)) /\ (!n. ~(op = clos_Label n)) /\
-   (bviSem_do_app op (REVERSE a) s5 = Rval (q,r)) /\ ALL (bv_ok
+   (bvlSem_do_app op (REVERSE a) s5 = Rval (q,r)) /\ ALL (bv_ok
      (bvlSem_state_refs s5)) (REVERSE a) ==>
    (?t3. (bviSem_do_app op (MAP (adjust_bv b2) (REVERSE a)) t2 =
          Rval (adjust_bv b2 q,t3)) /\
@@ -597,29 +597,29 @@ let eval_ind_alt = prove
      (!env s. P ([],env,s)) /\
      (!x y xs env s.
         (!v3 s1 v1.
-           bviSem_evaluate ([x],env,s) = (v3,s1) /\ v3 = Rval v1 ==>
+           bvlSem_evaluate ([x],env,s) = (v3,s1) /\ v3 = Rval v1 ==>
            P (CONS y xs,env,s1)) /\ P ([x],env,s) ==>
-        P (CONS x (CONS y xs),env,s)) /\ (!n env s. P ([bvi_Var n],env,s))
+        P (CONS x (CONS y xs),env,s)) /\ (!n env s. P ([bvl_Var n],env,s))
           /\
      (!x1 x2 x3 env s.
         (!v2 s1 vs.
-           bviSem_evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs
+           bvlSem_evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs
              /\ ~(bvlSem_Boolv T = HD vs) /\ bvlSem_Boolv F = HD vs ==>
            P ([x3],env,s1)) /\
         (!v2 s1 vs.
-           bviSem_evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs /\
+           bvlSem_evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs /\
            bvlSem_Boolv T = HD vs ==>
            P ([x2],env,s1)) /\ P ([x1],env,s) ==>
         P ([bvl_If x1 x2 x3],env,s)) /\
      (!xs x2 env s.
         (!ys v2 s1 vs.
-           list_size bvl_exp_size ys <= bvl_exp_size x2 /\ bviSem_evaluate
+           list_size bvl_exp_size ys <= bvl_exp_size x2 /\ bvlSem_evaluate
              (xs,env,s) = (v2,s1) ==>
            P (ys,vs,s1)) /\
         (!ys env. list_size bvl_exp_size ys <= bvl_exp_size x2 ==> P
           (ys,env,s)) /\
         (!v2 s1 vs.
-           bviSem_evaluate (xs,env,s) = (v2,s1) /\ v2 = Rval vs ==>
+           bvlSem_evaluate (xs,env,s) = (v2,s1) /\ v2 = Rval vs ==>
            P ([x2],APPEND vs env,s1)) /\
         P (xs,env,s) ==>
         P ([bvl_Let xs x2],env,s)) /\
@@ -627,7 +627,7 @@ let eval_ind_alt = prove
      (!op xs env s. P (xs,env,s) ==> P ([bvl_Op op xs],env,s)) /\
      (!x1 x2 env s1.
         (!v3 s v8 v.
-           bviSem_evaluate ([x1],env,s1) = (v3,s) /\ v3 = Rerr v8 /\
+           bvlSem_evaluate ([x1],env,s1) = (v3,s) /\ v3 = Rerr v8 /\
            v8 = Rraise v ==>
            P ([x2],CONS v env,s)) /\
         (!xs env. list_size bvl_exp_size xs <= bvl_exp_size x1 ==> P
@@ -636,24 +636,24 @@ let eval_ind_alt = prove
      (!force_loc n env s.
         (!thunk_v v1 v v' args exp.
            n < LENGTH env /\ thunk_v = EL n env /\
-           bviSem_dest_thunk thunk_v (bviSem_state_refs s) = bviSem_IsThunk
-             v1 v /\ v1 = NotEvaluated /\ ~(bviSem_state_clock
+           bviSem_dest_thunk thunk_v (bvlSem_state_refs s) = bviSem_IsThunk
+             v1 v /\ v1 = NotEvaluated /\ ~(bvlSem_state_clock
            s = 0) /\
-           bvlSem_find_code (SOME force_loc) [thunk_v; v] (bviSem_state_code
+           bvlSem_find_code (SOME force_loc) [thunk_v; v] (bvlSem_state_code
              s) = SOME v' /\
-           v' = (args,exp) /\ ~(bviSem_state_clock s = 0) ==>
+           v' = (args,exp) /\ ~(bvlSem_state_clock s = 0) ==>
            P ([exp],args,bviSem_dec_clock 1 s)) ==>
         P ([bvl_Force force_loc n],env,s)) /\
      (!x env s.
-        (~(bviSem_state_clock s = 0) ==> P ([x],env,bviSem_dec_clock 1 s))
+        (~(bvlSem_state_clock s = 0) ==> P ([x],env,bviSem_dec_clock 1 s))
           ==>
         P ([bvl_Tick x],env,s)) /\
      (!ticks dest xs env s1.
         (!v2 s vs v args exp.
-           bviSem_evaluate (xs,env,s1) = (v2,s) /\ v2 = Rval vs /\
-           bvlSem_find_code dest vs (bviSem_state_code s) = SOME v /\ v =
+           bvlSem_evaluate (xs,env,s1) = (v2,s) /\ v2 = Rval vs /\
+           bvlSem_find_code dest vs (bvlSem_state_code s) = SOME v /\ v =
              (args,exp) /\
-           ~(bviSem_state_clock s < ticks + 1) ==>
+           ~(bvlSem_state_clock s < ticks + 1) ==>
            P ([exp],args,bviSem_dec_clock (ticks + 1) s)) /\ P (xs,env,s1)
              ==>
         P ([bvl_Call ticks dest xs],env,s1)) ==>
@@ -883,11 +883,11 @@ let call_SOME_handler_result = prove
 
 let compile_exps_correct = prove
  (`!xs env s1 n res s2 (t1:('c,'ffi)bviSem_state) n2 ys aux b1.
-     (bviSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort
+     (bvlSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort
        Rtype_error)) /\
      (bvl_to_bvi_compile_exps n xs = (ys,aux,n2)) /\
      bvl_to_bviProof_state_rel b1 s1 t1 /\
-     bvl_to_bviProof_state_ok s1 /\ ALL (bv_ok (bviSem_state_refs s1)) env
+     bvl_to_bviProof_state_ok s1 /\ ALL (bv_ok (bvlSem_state_refs s1)) env
        /\
      aux_code_installed (append aux) (bviSem_state_code t1) /\
      handle_ok xs /\ IS_SOME (bviSem_state_global t1) ==>
@@ -898,7 +898,7 @@ let compile_exps_correct = prove
              res,t2)) /\
         bvl_to_bviProof_state_rel b2 s2 t2 /\
         (MAP (adjust_bv b1) env = MAP (adjust_bv b2) env) /\
-        (!a. a IN FDOM (bviSem_state_refs s1) ==> (b1 a = b2 a)))`,
+        (!a. a IN FDOM (bvlSem_state_refs s1) ==> (b1 a = b2 a)))`,
   CHEAT_TAC);;
 
 (* HOL4 bvl_to_bviProofScript.sml:2232-3504: a proof *)
@@ -997,7 +997,7 @@ let bvl_to_bviProof_compile_prog_evaluate = prove
  (cake_as_vars (fun () ->
     `bvl_to_bvi_compile_prog start n prog = (start',prog',n') /\
      bvlSem_evaluate ([bvl_Call 0 (SOME start) []],[],
-               bviSem_initial_state ffi0 (fromAList prog) co (state_cc
+               bvlSem_initial_state ffi0 (fromAList prog) co (state_cc
                  bvl_to_bvi_compile_inc cc) k) = (r,s) /\
      0 < k /\
      ALL_DISTINCT (MAP FST prog) /\
@@ -1323,10 +1323,10 @@ let compile_semantics = prove
           bvl_num_stubs <= FST (SND (SND (SND (FST (co n))))) /\
           in_ns 3 (FST (SND (SND (SND (FST (co n))))))) /\
      ALL_DISTINCT (MAP FST prog) ==>
-     ~(bviSem_semantics (ffi0:'ffi ffi_state) (fromAList prog) co (full_cc
+     ~(bvlSem_semantics (ffi0:'ffi ffi_state) (fromAList prog) co (full_cc
        c cc) start = ffi_Fail) ==>
      bviSem_semantics ffi0 (fromAList prog') (full_co c co) cc start' =
-     bviSem_semantics ffi0 (fromAList prog) co (full_cc c cc) start`),
+     bvlSem_semantics ffi0 (fromAList prog) co (full_cc c cc) start`),
   CHEAT_TAC);;
 
 

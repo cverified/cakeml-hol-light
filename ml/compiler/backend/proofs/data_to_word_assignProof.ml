@@ -149,7 +149,7 @@ let memory_rel_lookup_var_IMP = prove
        (APPEND (join_env ll
           (toAList (inter (wordSem_state_locals t) (adjust_set ll))))
             envs) /\
-      wordSem_get_vars n ll = SOME x /\
+      dataSem_get_vars n ll = SOME x /\
       wordSem_get_vars (MAP adjust_var n) (t:('a,'c,'ffi)wordSem_state) =
         SOME w ==>
       memory_rel c be ts refs sp st m dm
@@ -1167,20 +1167,19 @@ let IN_domain_adjust_set_inter = prove
 
 let get_var_to_word_exp = prove
  (`wordSem_get_var r s = SOME (word_Word w) ==>
-   wordSem_word_exp s (word_Op word_bignum_Add [word_Var r; word_Const (n2w
-     0)]) = SOME (word_Word (w + (n2w 0))) /\
-   wordSem_word_exp s (word_Op word_bignum_Add [word_Var r; word_Const (n2w
-     1)]) = SOME (word_Word (w + (n2w 1))) /\
-   wordSem_word_exp s (word_Op word_bignum_Add [word_Var r; word_Const (n2w
-     2)]) = SOME (word_Word (w + (n2w 2))) /\
-   wordSem_word_exp s (word_Op word_bignum_Add [word_Var r; word_Const
-     (n2w 3)]) = SOME (word_Word (w + (n2w 3)))`,
+   wordSem_word_exp s (word_Op asm_Add [word_Var r; word_Const (n2w 0)]) =
+     SOME (word_Word (w + (n2w 0))) /\
+   wordSem_word_exp s (word_Op asm_Add [word_Var r; word_Const (n2w 1)]) =
+     SOME (word_Word (w + (n2w 1))) /\
+   wordSem_word_exp s (word_Op asm_Add [word_Var r; word_Const (n2w 2)]) =
+     SOME (word_Word (w + (n2w 2))) /\
+   wordSem_word_exp s (word_Op asm_Add [word_Var r; word_Const (n2w 3)]) =
+     SOME (word_Word (w + (n2w 3)))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let word_exp_set = prove
- (`(wordSem_word_exp s (word_Op backend_common_Add [word_Var n; word_Const c])
-  =
+ (`(wordSem_word_exp s (word_Op asm_Add [word_Var n; word_Const c]) =
    (match wordSem_get_var n s with
      SOME (word_Word w) -> SOME (word_Word (w + c))
    | _ -> NONE)) /\
@@ -2056,7 +2055,7 @@ let call_env_push_env_dec_clock_lift_locals = prove
 let call_env_push_env_dec_clock_stack_max = prove
  (`dataSem_state_stack_max
      (dataSem_call_env args ls (dataSem_push_env env F
-       (word_bignumProof_dec_clock (s:('c,'ffi)dataSem_state)))) =
+       (dataSem_dec_clock (s:('c,'ffi)dataSem_state)))) =
        OPTION_MAP2 MAX
          (OPTION_MAP2 MAX (dataSem_state_stack_max s)
             (OPTION_MAP2 (((+)):num->num->num) (dataSem_state_locals_size s)
@@ -2947,9 +2946,9 @@ let assign_BoundsCheckByte = prove
                                 else 3) in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c - extra in
-                              word_Op word_bignum_Sub [(\sh e n. word_Shift
-                                sh e (word_Const (n2w n))) Lsr header k;
-                                word_Const bytes_in_word]);
+                              word_Op asm_Sub [(\sh e n. word_Shift sh e
+                                (word_Const (n2w n))) Lsr header k; word_Const
+                                bytes_in_word]);
                               word_Assign 3 (ShiftVar Ror (adjust_var v2)
                                 2);
                               (if leq then data_If asm_NotLower 1 (Reg 3)

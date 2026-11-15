@@ -224,6 +224,18 @@ class Derive:
       raise No('not a quotation')
     s = toks[0][1]
     s = s[2:-2] if s.startswith('``') else s[1:-1]
+    # HOL4 writes an argument an abstraction does not use as `_`
+    # (deBruijn_subst_ind |> Q.SPEC `\u03bb_ _ x. P x`), and HOL
+    # Light's parser does not take `_` for a binder.  The two
+    # terms are the same: the binder is not in the body
+    def names(m):
+      out, i = [m.group(1)], 0
+      for w in m.group(2).split():
+        if w == '_': out.append('uu%d' % i); i += 1
+        else: out.append(w)
+      return ' '.join(out) + '.'
+    s = re.sub(r'(\\|\u03bb)((?:\s*(?:_|[A-Za-z][A-Za-z0-9_\']*))+)\s*\.',
+               names, s)
     try:
       return '`%s`' % self.term(s.strip())
     except No:

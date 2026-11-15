@@ -717,7 +717,7 @@ let do_conversion_INR = prove
 (* do_app[local] *)
 let source_to_flatProof_do_app = prove
  (`!genv s1 s2 op vs r ((s1_i1:('f_orac_st,'ffi)flatSem_state)) vs_i1.
-     flatSem_do_app s1 op vs = SOME (s2,r) /\
+     semanticPrimitives_do_app s1 op vs = SOME (s2,r) /\
      ALL2 (source_to_flatProof_sv_rel genv) (FST s1) (TL (flatSem_state_refs
        s1_i1)) /\
      ~(NULL (flatSem_state_refs s1_i1)) /\
@@ -771,7 +771,7 @@ let do_app_rec_help = prove
         (MAP
            (\(fn,n,e).
               (fn,
-               flatSem_Recclosure env_v_local'
+               semanticPrimitives_Recclosure env_v_local'
                  (compile_funs t
                     (source_to_flat_environment_v_fupd (K
                       (ITLIST (\(x,v) e. nsBind x v e)

@@ -1223,13 +1223,13 @@ data_to_word_assignProof	ML code skipped: fun foldr1 f (x::xs) = foldr f x xs | 
 data_to_word_assignProof	derive imp_assign: '"-"] “_ ==> '
 data_to_word_assignProof	line 945 is 80 characters
 data_to_word_assignProof	line 970 is 86 characters
-data_to_word_assignProof	line 1981 is 80 characters
-data_to_word_assignProof	line 1982 is 81 characters
-data_to_word_assignProof	line 1983 is 80 characters
-data_to_word_assignProof	line 2013 is 80 characters
-data_to_word_assignProof	line 2118 is 80 characters
-data_to_word_assignProof	line 2179 is 85 characters
-data_to_word_assignProof	line 2230 is 83 characters
+data_to_word_assignProof	line 1980 is 80 characters
+data_to_word_assignProof	line 1981 is 81 characters
+data_to_word_assignProof	line 1982 is 80 characters
+data_to_word_assignProof	line 2012 is 80 characters
+data_to_word_assignProof	line 2117 is 80 characters
+data_to_word_assignProof	line 2178 is 85 characters
+data_to_word_assignProof	line 2229 is 83 characters
 wordConvsProof	ML code skipped: fun FIRST_THEN tacs tac = FIRST (map (fn t => t \\ tac) tacs
 wordConvsProof	ML code skipped: val try_cancel_labels_rel_append =   FIRST_THEN [ALL_TAC, ir
 wordConvsProof	derive const_fp_loop_Seq: '=> total (fs'

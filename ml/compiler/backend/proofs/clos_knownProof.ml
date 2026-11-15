@@ -139,7 +139,7 @@ let unique_set_globals_subexps = prove
         /\ unique_set_globals [x3] co) /\
    (unique_set_globals [clos_Let t xs x2] co ==>
       unique_set_globals xs co /\ unique_set_globals [x2] co) /\
-   (unique_set_globals [flat_Raise t x1] co ==>
+   (unique_set_globals [clos_Raise t x1] co ==>
       unique_set_globals [x1] co) /\
    (unique_set_globals [clos_Handle t x1 x2] co ==>
       unique_set_globals [x1] co /\ unique_set_globals [x2] co) /\
@@ -381,7 +381,7 @@ let fv_max_rw = prove
      /\ fv_max n [x3]) /\
    (fv_max n [clos_Let tr xs x1] <=> fv_max n xs /\ fv_max (n + LENGTH xs)
      [x1]) /\
-   (fv_max n [flat_Raise tr x1] <=> fv_max n [x1]) /\
+   (fv_max n [clos_Raise tr x1] <=> fv_max n [x1]) /\
    (fv_max n [clos_Tick tr x1] <=> fv_max n [x1]) /\
    (fv_max n [clos_Op tr opn xs] <=> fv_max n xs) /\
    (fv_max n [clos_App tr lopt x1 xs] <=> fv_max n [x1] /\ fv_max n xs) /\
@@ -762,7 +762,7 @@ let mglobals_disjoint_rw = prove
    (mglobals_disjoint s [clos_If tr x1 x2 x3] <=>
       mglobals_disjoint s [x1] /\ mglobals_disjoint s [x2]
         /\ mglobals_disjoint s [x3]) /\
-   (mglobals_disjoint s [flat_Raise tr x] <=>
+   (mglobals_disjoint s [clos_Raise tr x] <=>
       mglobals_disjoint s [x]) /\
    (mglobals_disjoint s [clos_Tick tr x] <=>
       mglobals_disjoint s [x]) /\

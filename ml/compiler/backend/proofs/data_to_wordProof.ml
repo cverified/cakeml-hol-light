@@ -215,7 +215,7 @@ let data_compile_correct = prove
                        (wordSem_set_var (adjust_var i) w t1) NONE ll)))
          | SOME (Rerr (Rabort (Rffi_error f))) -> (res1 = SOME
            (wordSem_FinalFFI f) /\ wordSem_state_ffi t1 = dataSem_state_ffi s1)
-         | SOME (Rerr (Rabort e)) -> (res1 = SOME targetSem_TimeOut)
+         | SOME (Rerr (Rabort e)) -> (res1 = SOME wordSem_TimeOut)
            /\ wordSem_state_ffi t1 = dataSem_state_ffi s1)))`,
   CHEAT_TAC);;
 
@@ -254,7 +254,7 @@ let compile_correct_lemma = prove
       t > 1 /\
       data_to_word_gcProof_state_rel c l1 l2 s t NONE [] ==>
       (?t1 res1.
-        (wordSem_evaluate (data_Call NONE (SOME start') [0] NONE,t) =
+        (wordSem_evaluate (word_Call NONE (SOME start') [0] NONE,t) =
           (res1,t1)) /\
         option_le (wordSem_state_stack_max t1) (dataSem_state_stack_max s1)
           /\

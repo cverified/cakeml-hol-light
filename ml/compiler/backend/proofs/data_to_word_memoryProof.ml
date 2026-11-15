@@ -3211,7 +3211,7 @@ let word_ml_inv_Unit = prove
     `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs ws /\
       good_dimindex (:'a) ==>
       word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-        (CONS (data_to_word_Unit,word_Word ((n2w 2):'a word)) ws)`),
+        (CONS (dataSem_Unit,word_Word ((n2w 2):'a word)) ws)`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -3219,8 +3219,8 @@ let word_ml_inv_Unit = prove
 let memory_rel_Unit = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm xs /\ good_dimindex (:'a) ==>
-     memory_rel c be ts refs sp st m dm (CONS
-       (data_to_word_Unit,word_Word ((n2w 2):'a word)) xs)`),
+     memory_rel c be ts refs sp st m dm (CONS (dataSem_Unit,word_Word
+       ((n2w 2):'a word)) xs)`),
   CHEAT_TAC);;
 
 let get_lowerbits_LSL_shift_length = prove
@@ -7473,11 +7473,11 @@ let memory_rel_do_build_const = prove
      const_parts_to_words c parts = SOME (w,ws) /\
      memory_rel c be ts refs sp st m dm vars /\
      SUM (MAP part_space_req parts) <= sp /\
-     FLOOKUP st NextFree = SOME (word_Word clos_known_free) /\
+     FLOOKUP st NextFree = SOME (word_Word free) /\
      FLOOKUP st CurrHeap = SOME (word_Word curr) /\
      good_dimindex (:'a) ==>
      (?m1.
-       let nf = clos_known_free + bytes_in_word * n2w (LENGTH ws) in
+       let nf = free + bytes_in_word * n2w (LENGTH ws) in
        let adjust = word_cond_add c (clos_known_free - (curr:'a word)) in
          memory_rel c be ts1 refs1 (sp - LENGTH ws)
            (st |+ (NextFree,word_Word nf)) m1 dm (CONS (v,adjust w) vars)

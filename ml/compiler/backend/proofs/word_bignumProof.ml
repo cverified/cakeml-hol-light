@@ -437,7 +437,7 @@ let has_compiled_lemma = prove
    (?cs0 p1 l1 i1 cs' cs1.
      word_bignum_compile x 2 1 cs' p = (p1,l1,i1,cs1) /\ code_subset cs1 cs2
        /\
-     sptree_lookup x (wordSem_state_code t1) = SOME (1,word_bignum_Seq p1
+     sptree_lookup x (wordSem_state_code t1) = SOME (1,word_Seq p1
        (word_Return 0 [0])))`,
   CHEAT_TAC);;
 

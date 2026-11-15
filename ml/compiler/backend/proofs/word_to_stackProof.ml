@@ -2740,8 +2740,8 @@ let evaluate_ShareInst_Load = prove
          (k,f,f'),stackSem_state_clock_fupd (K (ck + stackSem_state_clock t))
          t) =
          (OPTION_MAP compile_result res,t1) /\
-     ((?fv'. res = SOME (wordSem_FinalFFI fv') /\ stackSem_state_ffi
-         s1 = stackSem_state_ffi t1 /\ stackSem_state_clock s1 =
+     ((?fv'. res = SOME (wordSem_FinalFFI fv') /\ wordSem_state_ffi s1 =
+       stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
            stackSem_state_clock t1) \/
      (res = NONE /\ word_to_stackProof_state_rel ac k f f' s1 t1 lens 0)))`,
   CHEAT_TAC);;
@@ -2761,8 +2761,8 @@ let evaluate_ShareInst_Store = prove
          (k,f,f'),stackSem_state_clock_fupd (K (ck + stackSem_state_clock t))
          t) =
          (OPTION_MAP compile_result res,t1) /\
-     ((?fv'. res = SOME (wordSem_FinalFFI fv') /\ stackSem_state_ffi
-         s1 = stackSem_state_ffi t1 /\ stackSem_state_clock s1 =
+     ((?fv'. res = SOME (wordSem_FinalFFI fv') /\ wordSem_state_ffi s1 =
+       stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
            stackSem_state_clock t1) \/
      (res = NONE /\ word_to_stackProof_state_rel ac k f f' s1 t1 lens 0)))`,
   CHEAT_TAC);;
@@ -2781,8 +2781,8 @@ let evaluate_ShareInst_correct_lemma = prove
          t) =
        (OPTION_MAP compile_result res,t1) /\
      ((res = NONE /\ word_to_stackProof_state_rel ac k f f' s1 t1 lens 0) \/
-       (?fv'. res = SOME (wordSem_FinalFFI fv') /\ stackSem_state_ffi
-         s1 = stackSem_state_ffi t1 /\ stackSem_state_clock s1 =
+       (?fv'. res = SOME (wordSem_FinalFFI fv') /\ wordSem_state_ffi s1 =
+         stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
            stackSem_state_clock t1)))`,
   CHEAT_TAC);;
 
@@ -2993,12 +2993,12 @@ let comp_Call = prove
            =
          (res1,t1) /\ ~((n2w 1) = ((n2w 0):'a word)) /\ ~((n2w 2) = ((n2w
            0):'a word)) /\
-         (if OPTION_MAP compile_result res = res1 then stackSem_state_ffi
-           s1 = stackSem_state_ffi t1 /\ stackSem_state_clock s1 =
+         (if OPTION_MAP compile_result res = res1 then wordSem_state_ffi s1 =
+           stackSem_state_ffi t1 /\ wordSem_state_clock s1 =
              stackSem_state_clock t1
          else res1 = SOME (stackSem_Halt (word_Word (n2w 2)))
            /\ ffi_state_io_events (stackSem_state_ffi
-           t1) <<= ffi_state_io_events (stackSem_state_ffi s1) /\
+           t1) <<= ffi_state_io_events (wordSem_state_ffi s1) /\
            the (wordSem_state_stack_limit s1 + 1) (wordSem_state_stack_max
              s1) > wordSem_state_stack_limit s1))`,
   CHEAT_TAC);;

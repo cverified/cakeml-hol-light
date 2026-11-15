@@ -1413,10 +1413,6 @@ INT_ARGS = {
 # every spot that matches is patched.  An entry that matches
 # nowhere in the file is reported in tools/warnings.txt
 FILE_PATCH = {
-  # the state that these read or write is the wordSem one that
-  # the pass reads, not the stackSem one it writes: the two have
-  # a set_var, a get_var and a word_exp each, of the same arity,
-  # and nothing but the state tells them apart
   'word_to_stackProof': [
     (r'stackSem_set_var\s+0\s+c1\s*\(\s*stackSem_set_var\s+r\s+c\s+s\s*\)',
      r'wordSem_set_var 0 c1 (wordSem_set_var r c s)'),
@@ -2165,7 +2161,6 @@ CON_OF = {
   # of four is bvi's, and everything these say is about the one
   # language or the other
   ('bvl_to_bviProof', 'compile_exps_Var_list'): {'Var': 'bvi'},
-  ('bvl_to_bviProof', 'eval_ind_alt'): {'Var': 'bvi'},
   ('bvl_to_bviProof', 'rewrite_catchall_no_mutcons'):
     {'Var': 'bvi'},
   ('bvl_to_bviProof', 'evaluate_REPLICATE_0'): {'Op': 'bvi'},
@@ -2708,6 +2703,37 @@ CON_OF = {
   # the location that this puts in front of the arguments of a
   # call is a word_loc of wordLang
   ('wordSem', 'add_ret_loc_def'): {'Loc': 'wordLang'},
+  # fv_max and the two beside it are about closLang expressions,
+  # so their Raise is closLang's and not flatLang's
+  ('clos_knownProof', 'fv_max_rw'): {'Raise': 'closLang'},
+  ('clos_knownProof', 'unique_set_globals_subexps'):
+    {'Raise': 'closLang'},
+  ('clos_knownProof', 'mglobals_disjoint_rw'): {'Raise': 'closLang'},
+  # memory_rel pairs a dataSem value with a word, so the Unit of
+  # these is dataSem's value and not the Unit expression that
+  # data_to_word builds
+  ('data_to_word_memoryProof', 'memory_rel_Unit'): {'Unit': 'dataSem'},
+  ('data_to_word_memoryProof', 'word_ml_inv_Unit'): {'Unit': 'dataSem'},
+  # the code of a wordSem state holds wordLang programs, so the
+  # Seq in it is wordLang's and not the one of word_bignum's own
+  # little language
+  ('word_bignumProof', 'has_compiled_lemma'): {'Seq': 'wordLang'},
+  ('word_bignumProof', 'word_bignumProof_compile_thm'):
+    {'Seq': 'wordLang'},
+  # the first argument of wordLang's Op is a binop of asm, so the
+  # Add and the Sub of these are asm's and not the Add of
+  # word_bignum's little language or the opw Add of
+  # backend_common
+  ('data_to_word_assignProof', 'get_var_to_word_exp'): {'Add': 'asm'},
+  ('data_to_word_assignProof', 'word_exp_set'): {'Add': 'asm'},
+  ('data_to_word_assignProof', 'assign_BoundsCheckByte'): {'Sub': 'asm'},
+  # eval_ind_alt is the induction over bvlSem's evaluate and not
+  # bviSem's: its clauses name Handle, which bvl's expression has
+  # and bvi's has not.  The port reads eight of its nine
+  # constructors as bvl's already and only Var and evaluate go
+  # the other way, because bvi has a Var too
+  ('bvl_to_bviProof', 'eval_ind_alt'):
+    {'evaluate': 'bvlSem', 'Var': 'bvl'},
   # the get_code_labels of a recc_Lets is bvlProps', not
   # closProps': recc_Lets builds a bvl expression
   ('clos_to_bvlProof', 'recc_Lets_code_labels'):
@@ -2738,7 +2764,7 @@ CON_OF = {
     {'compile_inc': 'clos_to_bvl'},
   ('clos_to_bvlProof', 'syntax_oracle_ok_to_oracle_inv'):
     {'compile_inc': 'clos_to_bvl'},
-  ('clos_to_bvlProof', 'clos_to_bvlProof_compile_semantics'):
+  ('clos_to_bvlProof', 'compile_semantics'):
     {'compile_inc': 'clos_to_bvl'},
   # the cut_env of these three is wordSem's: their proofs rewrite
   # with wordSemTheory.cut_env_def, and the file names dataSem's
@@ -13325,23 +13351,155 @@ THM_PATCH = {
   # es2 and aux2 are the bvl that compile_exps gives back where
   # es1 and aux1 are the clos it took -- which HOL4 reads off the
   # types and HOL Light cannot
+  # bvl_to_bviProof relates bvl to bvi and both have do_app,
+  # evaluate, semantics and the state accessors.  The bvl side is
+  # the one the unprimed prog and the state s1/s5 belong to,
+  # which HOL4 reads off the types
+  # the record this updates is the dataSem state s1, so its
+  # field updates are dataSem's; the port reached for wordSem's
+  # because the file relates the two
+  ('data_to_word_assignProof', 'data_to_word_assignProof_do_app_Ref'): [
+    ('wordSem_state_stack_max_fupd', 'dataSem_state_stack_max_fupd'),
+    ('wordSem_state_safe_for_space_fupd',
+     'dataSem_state_safe_for_space_fupd'),
+    ('wordSem_state_refs_fupd', 'dataSem_state_refs_fupd'),
+  ],
+  # xs is the list of bvi expressions that this pass compiles,
+  # so the evaluate over it is bviSem's and s1 is a bviSem state
+  ('bvi_to_dataProof', 'compile_correct'): [
+    ('dataSem_evaluate (xs,env,s1)', 'bviSem_evaluate (xs,env,s1)'),
+  ],
+  # `free` is a variable of this statement, the word that
+  # NextFree points at.  clos_known has a constant of that name
+  # and the port reached for it, although clos_known is no
+  # ancestor of this source and HOL4 reads a plain variable
+  ('data_to_word_memoryProof', 'memory_rel_do_build_const'): [
+    ('clos_known_free', 'free'),
+    ('clos_known_free', 'free'),
+  ],
+  # the closure this builds goes into a source-level value, so
+  # the Recclosure is semanticPrimitives' and not flatSem's
+  ('source_to_flatProof', 'do_app_rec_help'): [
+    ('flatSem_Recclosure env_v_local\'',
+     'semanticPrimitives_Recclosure env_v_local\''),
+  ],
+  # the first evaluate takes a list of bvi expressions and runs
+  # in a bviSem state, and the second takes one dataLang program:
+  # HOL4 tells them apart by the shape of the argument
+  ('bvi_to_dataProof', 'compile_prog_evaluate'): [
+    ('dataSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[]',
+     'bviSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[]'),
+    ('dataSem_evaluate (bvi_Call NONE (SOME start) [] NONE',
+     'dataSem_evaluate (data_Call NONE (SOME start) [] NONE'),
+  ],
+  # s1 is the pair of refs and ffi that the source semantics
+  # passes do_app, so the do_app is semanticPrimitives' and not
+  # flatSem's
+  ('source_to_flatProof', 'do_app'): [
+    ('flatSem_do_app s1 op vs', 'semanticPrimitives_do_app s1 op vs'),
+  ],
+  # the Call that a wordSem evaluate runs is wordLang's, where
+  # the dataSem evaluate above it runs dataLang's
+  ('data_to_wordProof', 'compile_correct_lemma'): [
+    ('wordSem_evaluate (data_Call NONE (SOME start\') [0] NONE',
+     'wordSem_evaluate (word_Call NONE (SOME start\') [0] NONE'),
+  ],
+  ('data_to_wordProof', 'data_to_wordProof_compile_correct'): [
+    ('wordSem_evaluate (data_Call NONE (SOME start\') [0] NONE',
+     'wordSem_evaluate (word_Call NONE (SOME start\') [0] NONE'),
+  ],
+  # `append cp` flattens an app_list of lines, so the
+  # extract_labels over it is labProps', where the one over the
+  # stackLang program p beside it stays stackProps'
+  ('stack_to_labProof', 'stack_to_lab_lab_pres'): [
+    ('stackProps_extract_labels (append cp)',
+     'labProps_extract_labels (append cp)'),
+    ('stackProps_extract_labels (append cp)',
+     'labProps_extract_labels (append cp)'),
+    ('stackProps_extract_labels (append cp)',
+     'labProps_extract_labels (append cp)'),
+  ],
+  ('stack_to_labProof', 'stack_to_lab_lab_pres_T'): [
+    ('stackProps_extract_labels (append cp)',
+     'labProps_extract_labels (append cp)'),
+    ('stackProps_extract_labels (append cp)',
+     'labProps_extract_labels (append cp)'),
+    ('stackProps_extract_labels (append cp)',
+     'labProps_extract_labels (append cp)'),
+  ],
+  # e is the stackLang program that flatten takes, so the
+  # get_labels over it is stackSem's and not labProps'
+  ('stack_to_labProof', 'code_installed_get_labels_IMP'): [
+    ('labProps_get_labels e', 'stackSem_get_labels e'),
+  ],
+  # the Fail that a semantics gives back is the one of the
+  # semantics result, not the Fail of the register allocator
+  ('stack_to_labProof', 'flatten_semantics'): [
+    ('stackSem_semantics start s1 = reg_alloc_Fail',
+     'stackSem_semantics start s1 = ffi_Fail'),
+  ],
+  # SmartCons builds a closLang expression, so the esgc_free over
+  # it is closProps' and not flatProps'
+  ('flat_to_closProof', 'esgc_free_SmartCons'): [
+    ('flatProps_esgc_free (SmartCons t tag xs)',
+     'closProps_esgc_free (SmartCons t tag xs)'),
+  ],
+  # t1 is a state of the assembly semantics here, so the inst it
+  # runs is asmSem's and not wordSem's
+  ('lab_to_targetProof', 'Inst_lemma'): [
+    ('wordSem_inst i t1', 'asmSem_inst i t1'),
+    ('wordSem_inst i t1', 'asmSem_inst i t1'),
+    ('wordSem_inst i t1', 'asmSem_inst i t1'),
+     ('wordSem_inst i t1', 'asmSem_inst i t1'),
+  ],
+  ('data_to_word_assignProof', 'memory_rel_lookup_var_IMP'): [
+    ('wordSem_get_vars n ll', 'dataSem_get_vars n ll'),
+  ],
+  # the state that this takes the clock off is dataSem's, where
+  # word_bignumProof has a dec_clock of its own
+  ('data_to_word_assignProof',
+   'call_env_push_env_dec_clock_stack_max'): [
+    ('word_bignumProof_dec_clock (s:(\'c,\'ffi)dataSem_state)',
+     'dataSem_dec_clock (s:(\'c,\'ffi)dataSem_state)'),
+  ],
+  ('bvl_to_bviProof', 'do_app_adjust'): [
+    ('bviSem_do_app op (REVERSE a) s5',
+     'bvlSem_do_app op (REVERSE a) s5'),
+  ],
+  ('bvl_to_bviProof', 'compile_exps_correct'): [
+    ('bviSem_evaluate (xs,env,s1)', 'bvlSem_evaluate (xs,env,s1)'),
+    ('bviSem_state_refs s1', 'bvlSem_state_refs s1'),
+    ('bviSem_state_refs s1', 'bvlSem_state_refs s1'),
+  ],
+  ('bvl_to_bviProof', 'bvl_to_bviProof_compile_prog_semantics'): [
+    ('bviSem_semantics (ffi0:\'ffi ffi_state) (fromAList prog) co',
+     'bvlSem_semantics (ffi0:\'ffi ffi_state) (fromAList prog) co'),
+    ('bviSem_semantics ffi0 (fromAList prog) co',
+     'bvlSem_semantics ffi0 (fromAList prog) co'),
+  ],
+  ('bvl_to_bviProof', 'compile_semantics'): [
+    ('bviSem_semantics (ffi0:\'ffi ffi_state) (fromAList prog) co',
+     'bvlSem_semantics (ffi0:\'ffi ffi_state) (fromAList prog) co'),
+    ('bviSem_semantics ffi0 (fromAList prog) co',
+     'bvlSem_semantics ffi0 (fromAList prog) co'),
+  ],
   ('clos_to_bvlProof', 'compile_common_semantics'): [
     ('clos_to_bvl_compile (clos_to_bvl_config_do_call c)',
      'clos_call_compile (clos_to_bvl_config_do_call c)'),
   ],
-  ('clos_to_bvlProof', 'clos_to_bvlProof_do_app'): [
+  ('clos_to_bvlProof', 'do_app'): [
     ('bvlSem_do_app op xs s1', 'closSem_do_app op xs s1'),
   ],
-  ('clos_to_bvlProof', 'clos_to_bvlProof_do_app_err'): [
+  ('clos_to_bvlProof', 'do_app_err'): [
     ('bvlSem_do_app op xs s1', 'closSem_do_app op xs s1'),
   ],
-  ('clos_to_bvlProof', 'clos_to_bvlProof_compile_exps_correct'): [
+  ('clos_to_bvlProof', 'compile_exps_correct'): [
     ('bvlSem_evaluate (xs,env,s1)', 'closSem_evaluate (xs,env,s1)'),
   ],
-  ('clos_to_bvlProof', 'clos_to_bvlProof_v_rel_IMP_v_to_bytes'): [
+  ('clos_to_bvlProof', 'v_rel_IMP_v_to_bytes'): [
     ('bvlSem_v_to_bytes x', 'closSem_v_to_bytes x'),
   ],
-  ('clos_to_bvlProof', 'clos_to_bvlProof_v_rel_IMP_v_to_words'): [
+  ('clos_to_bvlProof', 'v_rel_IMP_v_to_words'): [
     ('bvlSem_v_to_words x', 'closSem_v_to_words x'),
   ],
   ('clos_to_bvlProof', 'compile_exps_code_labels'): [
@@ -13350,7 +13508,7 @@ THM_PATCH = {
     ('MAP (closProps_get_code_labels o SND o SND) aux2',
      'MAP (bvlProps_get_code_labels o SND o SND) aux2'),
   ],
-  ('clos_to_bvlProof', 'clos_to_bvlProof_compile_prog_code_labels'): [
+  ('clos_to_bvlProof', 'compile_prog_code_labels'): [
     ('MAP (closProps_get_code_labels o SND o SND)\n'
      '                   (clos_to_bvl_compile_prog max_app prog)',
      'MAP (bvlProps_get_code_labels o SND o SND)\n'
@@ -13801,6 +13959,10 @@ THM_PATCH = {
      '~(res = SOME wordSem_Error)'),
     ('(op = word_Load \\/ op = asm_Load8',
      '(op = asm_Load \\/ op = asm_Load8'),
+    # s1 is what the wordSem evaluate gives back, so the
+    # clock and the ffi read off it are wordSem's too
+    ('stackSem_state_clock s1', 'wordSem_state_clock s1'),
+    ('stackSem_state_ffi s1', 'wordSem_state_ffi s1'),
   ],
   ('word_to_stackProof', 'evaluate_ShareInst_Store'): [
     ('stackSem_evaluate (word_',
@@ -13809,12 +13971,20 @@ THM_PATCH = {
      '~(res = SOME wordSem_Error)'),
     ('(op = word_Store \\/ op = asm_Store8',
      '(op = asm_Store \\/ op = asm_Store8'),
+    # s1 is what the wordSem evaluate gives back, so the
+    # clock and the ffi read off it are wordSem's too
+    ('stackSem_state_clock s1', 'wordSem_state_clock s1'),
+    ('stackSem_state_ffi s1', 'wordSem_state_ffi s1'),
   ],
   ('word_to_stackProof', 'evaluate_ShareInst_correct_lemma'): [
     ('stackSem_evaluate (word_',
      'wordSem_evaluate (word_'),
     ('~(res = SOME stackSem_Error)',
      '~(res = SOME wordSem_Error)'),
+    # s1 is what the wordSem evaluate gives back, so the
+    # clock and the ffi read off it are wordSem's too
+    ('stackSem_state_clock s1', 'wordSem_state_clock s1'),
+    ('stackSem_state_ffi s1', 'wordSem_state_ffi s1'),
   ],
   ('word_to_stackProof', 'evaluate_ShareInst_Var_eq_Op_Add'): [
     ('stackSem_evaluate (word_',
@@ -13829,6 +13999,11 @@ THM_PATCH = {
      'wordSem_evaluate (word_'),
     ('~(res = SOME stackSem_Error)',
      '~(res = SOME wordSem_Error)'),
+    # s1 is what the wordSem evaluate gives back, so the
+    # clock and the ffi read off it are wordSem's too
+    ('stackSem_state_clock s1', 'wordSem_state_clock s1'),
+    ('stackSem_state_ffi s1', 'wordSem_state_ffi s1'),
+    ('stackSem_state_ffi s1', 'wordSem_state_ffi s1'),
   ],
   ('word_to_stackProof', 'evaluate_wInst'): [
     ('stackSem_inst i s = SOME s',
@@ -13957,6 +14132,10 @@ THM_PATCH = {
   ('bvl_to_bviProof', 'compile_prog_evaluate'): [
     ('bviSem_evaluate ([bvl_Call 0 (SOME start) []],[],',
      'bvlSem_evaluate ([bvl_Call 0 (SOME start) []],[],'),
+    # and the initial_state the bvlSem evaluate runs in is
+    # bvlSem's too; the prog without the prime tells them apart
+    ('bviSem_initial_state ffi0 (fromAList prog) co',
+     'bvlSem_initial_state ffi0 (fromAList prog) co'),
   ],
   # the get_code_labels of the code the pass gives is bviProps',
   # the one of the program it is given bvlProps'
@@ -14023,6 +14202,9 @@ THM_PATCH = {
   ('data_to_wordProof', 'data_compile_correct'): [
     ('(wordSem_set_var i v s1)',
      '(dataSem_set_var i v s1)'),
+    # res1 is what the wordSem evaluate gives back, so its
+    # TimeOut is wordSem's, not targetSem's machine_result
+    ('SOME targetSem_TimeOut', 'SOME wordSem_TimeOut'),
   ],
   ('data_to_wordProof', 'state_rel_pop_env_set_vars_IMP'): [
     ('wordSem_pop_env s1 = SOME s2',

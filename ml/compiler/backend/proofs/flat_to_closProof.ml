@@ -907,7 +907,7 @@ let set_globals_SmartCons = prove
   CHEAT_TAC);;
 
 let esgc_free_SmartCons = prove
- (`flatProps_esgc_free (SmartCons t tag xs) = ALL flatProps_esgc_free xs`,
+ (`closProps_esgc_free (SmartCons t tag xs) = ALL flatProps_esgc_free xs`,
   CHEAT_TAC);;
 
 let flat_FINITE_BAG_set_globals = prove

@@ -481,7 +481,7 @@ let evaluate_Return_GENLIST_Var = prove
 (* compile_correct *)
 let bvi_to_dataProof_compile_correct = prove
  (`!xs env s1 res s2 t1 n corr tail live.
-      dataSem_evaluate (xs,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
+      bviSem_evaluate (xs,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
         Rtype_error)) /\
       var_corr env corr (sptree_map data_to_bvi_v (dataSem_state_locals t1))
         /\
@@ -596,11 +596,11 @@ add_simp MAP_FST_compile_prog;;
    variables of its own are read as variables *)
 let compile_prog_evaluate = prove
  (cake_as_vars (fun () ->
-    `dataSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],
+    `bviSem_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],
        bviSem_initial_state ffi0 (fromAList prog) co (\cfg prog. cc cfg
          (bvi_to_data_compile_prog prog)) k) = (r,s) /\ ~(r = Rerr (Rabort
          Rtype_error)) /\ (!x. ~(r = Rerr (Rraise x))) ==> (?r2 s2.
-         dataSem_evaluate (bvi_Call NONE (SOME start) [] NONE,
+         dataSem_evaluate (data_Call NONE (SOME start) [] NONE,
            dataSem_initial_state ffi0 (fromAList (bvi_to_data_compile_prog
              prog)) ((I ## bvi_to_data_compile_prog) o co) cc T lims ss k) =
              (SOME r2,s2) /\

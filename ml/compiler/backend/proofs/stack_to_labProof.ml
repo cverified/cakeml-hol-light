@@ -148,7 +148,7 @@ let code_installed_get_labels_IMP = prove
  (`!top e n q cs bs pc'.
        stack_to_labProof_code_installed pc' (append (FST
          (stack_to_lab_flatten top e n q cs bs))) c /\
-       (l1,l2) IN labProps_get_labels e ==>
+       (l1,l2) IN stackSem_get_labels e ==>
        (?v. loc_to_pc l1 l2 c = SOME v)`,
   CHEAT_TAC);;
 
@@ -593,9 +593,9 @@ let stack_to_lab_lab_pres = prove
      next_lab p 2 <= nl ==>
      (let (cp,nr,nl') = stack_to_lab_flatten t p n nl cs bs in
        ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
-         (stackProps_extract_labels (append cp)) /\
-       ALL_DISTINCT (stackProps_extract_labels (append cp)) /\
-       (!lab. MEM lab (stackProps_extract_labels (append cp)) ==> MEM lab
+         (labProps_extract_labels (append cp)) /\
+       ALL_DISTINCT (labProps_extract_labels (append cp)) /\
+       (!lab. MEM lab (labProps_extract_labels (append cp)) ==> MEM lab
          (stackProps_extract_labels p) \/
                               (nl <= SND lab /\ SND lab < nl')) /\
        nl <= nl')`,
@@ -608,10 +608,9 @@ let stack_to_lab_lab_pres_T = prove
    ALL_DISTINCT (stackProps_extract_labels p) /\ t /\
    next_lab p 2 <= nl ==>
    (let (cp,nr,nl') = stack_to_lab_flatten t p n nl cs bs in
-   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0)) (stackProps_extract_labels (append
-     cp)) /\
-   ALL_DISTINCT (stackProps_extract_labels (append cp)) /\
-   (!lab. MEM lab (stackProps_extract_labels (append cp)) ==>
+   ALL (\(l1,l2). l1 = n /\ ~(l2 = 0)) (labProps_extract_labels (append cp)) /\
+   ALL_DISTINCT (labProps_extract_labels (append cp)) /\
+   (!lab. MEM lab (labProps_extract_labels (append cp)) ==>
         MEM lab (stackProps_extract_labels p) \/ SND lab < nl') /\
    nl <= nl')`,
   CHEAT_TAC);;
@@ -741,7 +740,7 @@ let flatten_semantics = prove
   /\
    stack_to_labProof_state_rel s1 (s2:('a,'c,'ffi)labSem_state) /\
    loc_to_pc (start:num) 0 (labSem_state_code s2) = SOME (labSem_state_pc
-     s2) /\ ~(stackSem_semantics start s1 = reg_alloc_Fail) ==>
+     s2) /\ ~(stackSem_semantics start s1 = ffi_Fail) ==>
    labSem_semantics s2 = stackSem_semantics start s1`,
   CHEAT_TAC);;
 
