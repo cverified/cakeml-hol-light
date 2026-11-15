@@ -12662,6 +12662,44 @@ THM_PATCH = {
     ('(stackProps_get_code_labels prog)',
      '(wordConvs_get_code_labels prog)'),
   ],
+  ('word_to_stackProof', 'state_rel_set_store_0'): [
+    ('(stackSem_set_store AllocSize w s5)',
+     '(wordSem_set_store AllocSize w s5)'),
+  ],
+  ('word_to_stackProof', 'dec_stack_lemma'): [
+    ('(stackSem_dec_stack x0 (wordSem_state_stack',
+     '(wordSem_dec_stack x0 (wordSem_state_stack'),
+  ],
+  ('word_to_stackProof', 'alloc_IMP_alloc'): [
+    ('~(res = SOME stackSem_Error)', '~(res = SOME wordSem_Error)'),
+  ],
+  ('word_to_stackProof', 'alloc_IMP_alloc2'): [
+    ('~(res = SOME stackSem_Error)', '~(res = SOME wordSem_Error)'),
+  ],
+  ('word_to_stackProof', 'share_load_lemma1'): [
+    ('(op = word_Load \\/ op = asm_Load8',
+     '(op = asm_Load \\/ op = asm_Load8'),
+    ('~(res = SOME stackSem_Error)',
+     '~(res = SOME wordSem_Error)'),
+  ],
+  ('word_to_stackProof', 'share_load_lemma2'): [
+    ('(op = word_Load \\/ op = asm_Load8',
+     '(op = asm_Load \\/ op = asm_Load8'),
+    ('~(res = SOME stackSem_Error)',
+     '~(res = SOME wordSem_Error)'),
+  ],
+  ('word_to_stackProof', 'share_store_lemma1'): [
+    ('(op = word_Store \\/ op = asm_Store8',
+     '(op = asm_Store \\/ op = asm_Store8'),
+    ('~(res = SOME stackSem_Error)',
+     '~(res = SOME wordSem_Error)'),
+  ],
+  ('word_to_stackProof', 'share_store_lemma2'): [
+    ('(op = word_Store \\/ op = asm_Store8',
+     '(op = asm_Store \\/ op = asm_Store8'),
+    ('~(res = SOME stackSem_Error)',
+     '~(res = SOME wordSem_Error)'),
+  ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
      'lab_LabAsm (lab_Jump jtarget)'),
