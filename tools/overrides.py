@@ -321,6 +321,12 @@ FIELD_VAR = {
   # states its invariant relates are both stackSem's
   'stack_rawcallProof': {'s': 'stackSem_state',
                          't': 'stackSem_state'},
+  # s is the state of dataSem that these relate to the state t of
+  # wordSem, and the r that an evaluate gives is wordSem's
+  'data_to_word_bignumProof': {'s': 'dataSem_state',
+                               't': 'wordSem_state',
+                               'r': 'wordSem_state',
+                               "r'": 'wordSem_state'},
   # t and u are the states of wordSem that state_rel_ext relates
   'data_to_wordProof': {'t': 'wordSem_state', 'u': 'wordSem_state'},
   # the ic of the two install_config_rels is the install_config
@@ -1886,6 +1892,14 @@ CON_OF = {
   # program, and dataLang has an If as well
   ('data_to_word', 'assign_BoundsCheckByte_def'): {'If': 'wordLang'},
   ('data_to_word', 'force_thunk_def'): {'If': 'wordLang'},
+  # the Skip in the return of a Call is a wordLang program, where
+  # word_bignum has a Skip of its own and comes first in the order
+  ('data_to_word_bignumProof', 'Replicate_code_alt_thm'):
+    {'Skip': 'wordLang'},
+  ('data_to_word_bignumProof', 'eval_Call_Arith_max_stack_NONE'):
+    {'Skip': 'wordLang'},
+  ('data_to_word_bignumProof', 'eval_Call_Arith'):
+    {'Skip': 'wordLang'},
   # the code that Arith_code gives is a wordLang program, as the
   # Call of its second arm says; word_bignum has a Seq and an
   # Assign of its own
@@ -12794,6 +12808,34 @@ THM_PATCH = {
   ('word_to_stackProof', 'compile_word_to_stack_code_labels'): [
     ('(stackProps_get_code_labels pp)',
      '(wordConvs_get_code_labels pp)'),
+  ],
+  # the get_var and the get_vars that read the locals of a
+  # dataSem state are dataSem's; the ones beside them in the
+  # same statement read a state of wordSem and are wordSem's,
+  # and both take two arguments
+  ('data_to_word_bignumProof', 'evaluate_AddNumSize'): [
+    ('wordSem_get_var src (dataSem_state_locals s)',
+     'dataSem_get_var src (dataSem_state_locals s)'),
+  ],
+  ('data_to_word_bignumProof', 'AnyHeader_thm'): [
+    ('wordSem_get_var r (dataSem_state_locals s)',
+     'dataSem_get_var r (dataSem_state_locals s)'),
+  ],
+  ('data_to_word_bignumProof', 'state_rel_IMP_num_size_limit'): [
+    ('wordSem_get_var k (dataSem_state_locals s)',
+     'dataSem_get_var k (dataSem_state_locals s)'),
+  ],
+  ('data_to_word_bignumProof', 'AnyArith_thm'): [
+    ('wordSem_get_vars [0; 1; 2] (dataSem_state_locals s)',
+     'dataSem_get_vars [0; 1; 2] (dataSem_state_locals s)'),
+  ],
+  ('data_to_word_bignumProof', 'eval_Call_Arith_max_stack_NONE'): [
+    ('wordSem_get_vars [a1; a2] (dataSem_state_locals s)',
+     'dataSem_get_vars [a1; a2] (dataSem_state_locals s)'),
+  ],
+  ('data_to_word_bignumProof', 'eval_Call_Arith'): [
+    ('wordSem_get_vars [a1; a2] (dataSem_state_locals s)',
+     'dataSem_get_vars [a1; a2] (dataSem_state_locals s)'),
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
