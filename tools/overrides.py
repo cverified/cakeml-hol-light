@@ -2066,6 +2066,12 @@ CON_OF = {
   # word_bignum, wordLang and stackLang have one as well
   ('backend_passes', 'to_data_all_def'):
     {'Skip': 'dataLang', 'compile': {5: 'bvi_to_data'}},
+  # the compile_part that takes the data configuration is
+  # data_to_word's; bvi_to_data has one of a triple alone
+  ('backend_passes', 'to_word_all_def'):
+    {'compile_part': 'data_to_word'},
+  ('backend_passes', 'from_data_all_def'):
+    {'compile_part': 'data_to_word'},
   # the operations of dataLang are closLang's, so the Install
   # that do_app compares its operation with is closLang's;
   # wordLang and stackLang have an Install of a program

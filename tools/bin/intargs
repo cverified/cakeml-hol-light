@@ -29,7 +29,7 @@ TIMEOUT=180 repl-step $s \
                 incr j) args2);
          incr i) args;
      rev !out in
-   let cake_out = open_out \"$C/tools/intargs.txt\" in
+   let cake_out = open_out \"$C/tmp/intargs.new\" in
    do_list (fun (n,ty) ->
        let ps = cake_int_pos ty in
        if ps <> [] && not (String.length n > 0 && n.[0] = '_') then
@@ -39,7 +39,7 @@ TIMEOUT=180 repl-step $s \
    close_out cake_out; length (constants ());;" \
   2>&1 | tail -2
 TIMEOUT=180 repl-step $s \
-  "let cake_out = open_out \"$C/tools/intres.txt\" in
+  "let cake_out = open_out \"$C/tmp/intres.new\" in
    do_list (fun (n,ty) ->
        let _,r = splitlist dest_fun_ty ty in
        if r = \`:int\` && not (String.length n > 0 && n.[0] = '_')
@@ -48,7 +48,7 @@ TIMEOUT=180 repl-step $s \
    close_out cake_out; length (constants ());;" \
   2>&1 | tail -1
 TIMEOUT=180 repl-step $s \
-  "let cake_out = open_out \"$C/tools/constants.txt\" in
+  "let cake_out = open_out \"$C/tmp/constants.new\" in
    (* the witness of a type definition has a number of its own
       in every session (_6090360, _mk_list_4556600), and is no
       name of the port *)
@@ -64,5 +64,6 @@ TIMEOUT=180 repl-step $s \
      (constants ());
    close_out cake_out; length (constants ());;" \
   2>&1 | tail -1
-wc -l < $C/tools/intargs.txt; wc -l < $C/tools/intres.txt
-wc -l < $C/tools/constants.txt
+# a session in which a file did not load is missing the
+# constants of that file (tools/mergetable.py)
+python3 -I $C/tools/mergetable.py intargs intres constants
