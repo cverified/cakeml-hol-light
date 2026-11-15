@@ -226,6 +226,45 @@ cheat, and a cheat that another cheat depends on is fine.
 - `SESSIONS.md`   which tmux HOL Light sessions exist and what
                   has been loaded in them
 
+## How to work: the abstract is the loop, the run is the audit
+
+**Freek's instruction, 2026-11-16, and it overrides any habit of
+loading the whole port to see whether a change worked:**
+
+1. First make the abstracts work.
+2. Then develop everything **using the abstracts**, not the real
+   thing.
+3. When that works, do a run.
+4. When the run shows the abstract behaved differently from the
+   real thing, **that is a bug in the abstract**: fix it, and go
+   back to the abstracts until they work again.
+
+A _run_ is a cold session that loads every file of `ml/` in
+order and makes every definition for real: an hour and a half,
+and over three hours once the scope is 445 theories.  An
+_abstract_ (`tools/bin/abstract`, `tools/bin/abstractall`) makes
+every constant and **assumes** its equations, skips every proof,
+and takes about ten minutes.  `ml/lib/fast.ml` is what makes it
+sound: the statements are the same terms either way.
+
+So an abstract answers everything the statement work asks --
+does the constant exist, with the right type, and does the
+statement parse and typecheck against it -- which is what a
+resolution failure, an unread statement and a bad name all are.
+It does not answer whether a **termination** goes through, or
+anything else that making a definition for real does and
+assuming it does not.  That is the whole of what a run adds, and
+it is why a run stays the audit and never the loop.
+
+**Do not load the whole port to check a change.**  The loop is:
+change `tools/overrides.py` (or the translation), port, load the
+abstract, read the failures.  Ten minutes, not ninety.  A run
+goes at the **end of a round**, and what it reports that the
+abstract did not is a thing to fix in the abstract.
+
+`tools/bin/tryfile` is the same idea for one file: the port it
+stands on as an abstract, the file itself for real.
+
 ## Running HOL Light
 
 The opam HOL Light needs its own opam switch, so first
