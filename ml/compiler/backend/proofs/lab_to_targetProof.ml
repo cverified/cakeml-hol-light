@@ -1629,7 +1629,8 @@ let byte_align_64_IMP = prove
 
 (* The lab and asm versions should be in their individual props *)
 let arith_upd_fp_regs = prove
- (`(fp_regs (labSem_arith_upd a s) = labSem_state_fp_regs s /\ fp_regs
+ (`(labSem_state_fp_regs (labSem_arith_upd a s) = labSem_state_fp_regs s
+  /\ labSem_state_fp_regs
    (labSem_arith_upd a (t:'a asm_state)) = asm_state_fp_regs t)`,
   CHEAT_TAC);;
 add_simp arith_upd_fp_regs;;

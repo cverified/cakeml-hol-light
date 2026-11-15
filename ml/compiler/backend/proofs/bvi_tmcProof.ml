@@ -764,7 +764,7 @@ let state_ref_rel_update = prove
   CHEAT_TAC);;
 
 let bvl_to_bvi_refs = prove
- (`bvl_to_bvi (bviSem_state_refs_fupd (K r) (bvi_to_bvl s)) s =
+ (`bvl_to_bvi (bvlSem_state_refs_fupd (K r) (bvi_to_bvl s)) s =
   bviSem_state_refs_fupd (K r) s`,
   CHEAT_TAC);;
 
@@ -1115,7 +1115,7 @@ let is_block_op_cons_def = new_definition
 
 (* bvi_to_bvl_refs *)
 let bvi_tmcProof_bvi_to_bvl_refs = prove
- (`bvlSem_state_refs
+ (`bviSem_state_refs
       (bvl_to_bvi s t) = bvlSem_state_refs s`,
   CHEAT_TAC);;
 

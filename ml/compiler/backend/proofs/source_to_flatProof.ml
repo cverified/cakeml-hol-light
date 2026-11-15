@@ -1691,7 +1691,8 @@ let do_eval = prove
      eval_state /\
    (match semanticPrimitives_state_eval_state s with SOME (EvalOracle s) ->
      (?s'. eval_state = SOME (EvalOracle s') /\ eval_oracle_state_envs
-     s' = envs (add_env_generation s) /\ eval_oracle_state_generation
+     s' = eval_oracle_state_envs (add_env_generation s)
+       /\ eval_oracle_state_generation
      s' = eval_oracle_state_generation (add_env_generation s))
      | _ -> F))`,
   CHEAT_TAC);;
@@ -2186,8 +2187,8 @@ let invariant_begin_alloc_blanks = prove
      (next_indices_vidx_fupd (K 1) (source_to_flat_config_next cfg),next
        cfg',{})
      s1
-     (flatSem_state_globals_fupd (K init_globs) (state_refs_fupd (K
-       [semanticPrimitives_Refv (flatSem_Conv NONE [])])
+     (flatSem_state_globals_fupd (K init_globs) (flatSem_state_refs_fupd
+       (K [semanticPrimitives_Refv (flatSem_Conv NONE [])])
        (flatSem_initial_state (semanticPrimitives_state_ffi s1)
        (semanticPrimitives_state_clock s1) eval_conf)))`,
   CHEAT_TAC);;

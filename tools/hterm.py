@@ -2061,6 +2061,19 @@ class Printer:
        of an environment_store because the envs of a
        source_to_flat_config is one"""
     while x.kind in ('paren', 'typed', 'rawtyped'): x = x.e
+    # a term that is an application of a constant whose result is
+    # a record of the port: the type of the constant says which
+    # (tools/recres.txt).  HOL4 writes (to_gen_conf conf).limit,
+    # where the limit is the one of a gen_gc_conf because that is
+    # what to_gen_conf gives
+    if x.kind == 'app':
+      h, args = strip_app(x)
+      if h.kind != 'id': return None
+      nm = h.name
+      try: nm = self.ctx.name(nm)
+      except Exception: pass
+      return rec_res_pos(nm, len(args)).get(None) or \
+             rec_res_pos(h.name, len(args)).get(None)
     if x.kind != 'field': return None
     r = self.annot_rec(x.e) or self.inner_rec(x.e)
     if r is None:

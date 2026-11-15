@@ -2076,6 +2076,10 @@ CON_OF = {
     {'compile_part': 'data_to_word'},
   ('backend_passes', 'from_data_all_def'):
     {'compile_part': 'data_to_word'},
+  # the List and the Append that the pretty printer of a pass
+  # builds are the app_list of misc, and displayLang has a List
+  # of an sExp
+  ('backend_passes', 'pp_with_title_def'): {'List': 'misc'},
   # the operations of dataLang are closLang's, so the Install
   # that do_app compares its operation with is closLang's;
   # wordLang and stackLang have an Install of a program

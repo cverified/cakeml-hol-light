@@ -1044,7 +1044,7 @@ let evaluate_record_suffix = prove
    events, padding with null events if necessary. *)
 let extract_oracle_def = new_definition
   `extract_oracle s env decs n =
-     (match (OLEAST (\k. ?s' res.
+     match (OLEAST (\k. ?s' res.
        evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K k) s)
          env decs = (s',res) /\
          n < FST (FST (eval_oracle_state_oracle (orac_s
@@ -1053,7 +1053,7 @@ let extract_oracle_def = new_definition
        let (s',_) = evaluate_evaluate_decs
          (semanticPrimitives_state_clock_fupd (K k) s) env decs in
          SOME (eval_oracle_state_oracle (orac_s
-           (semanticPrimitives_state_eval_state s')) (n + 1)))`;;
+           (semanticPrimitives_state_eval_state s')) (n + 1))`;;
 
 let evaluate_decs_clock_record_common_prefix = prove
  (`evaluate_evaluate_decs s env decs = (s',res) /\

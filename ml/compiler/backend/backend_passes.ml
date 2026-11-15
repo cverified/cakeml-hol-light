@@ -522,7 +522,7 @@ let any_prog_pp_def = new_definition
 
 let pp_with_title_def = new_definition
   `pp_with_title pp (title,p) acc =
-     mlsexp_Append (display_List [(implode "# "); title; (implode "\n\n")])
+     mlsexp_Append (misc_List [(implode "# "); title; (implode "\n\n")])
      (misc_Append (pp p) acc)`;;
 
 let compile_tap_def = new_definition

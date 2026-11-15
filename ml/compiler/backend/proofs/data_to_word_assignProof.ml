@@ -1486,7 +1486,7 @@ let cut_state_refs_same = prove
 
 let do_app_AllocThunk = prove
  (`dataSem_do_app (clos_ThunkOp (AllocThunk m)) [v] x =
-    (match consume_space (1 + 1) x with
+    match consume_space (1 + 1) x with
       NONE -> Rerr (Rabort Rtype_error)
     | SOME s1 ->
       if dataSem_bad_thunk_update m v (dataSem_state_refs s1) then Rerr
@@ -1504,7 +1504,7 @@ let do_app_AllocThunk = prove
                  (dataSem_state_refs_fupd (K (sptree_insert (minimal ptr. ~(ptr
                  IN domain (dataSem_state_refs s1))) (bvlSem_Thunk m v)
                  (dataSem_state_refs s1)))
-         s1))))`,
+         s1)))`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:6319-6400: a theorem whose
@@ -2603,7 +2603,7 @@ let fp_greater = prove
 (* do_app_Ref *)
 let data_to_word_assignProof_do_app_Ref = prove
  (`dataSem_do_app (clos_MemOp clos_Ref) vals x =
-    (match consume_space (LENGTH vals + 1) x with
+    match consume_space (LENGTH vals + 1) x with
       NONE -> Rerr (Rabort Rtype_error)
     | SOME s1 ->
       Rval
@@ -2617,7 +2617,7 @@ let data_to_word_assignProof_do_app_Ref = prove
                (dataSem_state_refs_fupd (K (sptree_insert (minimal ptr. ~(ptr
                IN domain (dataSem_state_refs s1))) (bvlSem_ValueArray vals)
                (dataSem_state_refs s1)))
-         s1))))`,
+         s1)))`,
   CHEAT_TAC);;
 
 (* HOL4 data_to_word_assignProofScript.sml:14634-14694: a theorem whose

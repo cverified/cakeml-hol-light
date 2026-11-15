@@ -2077,7 +2077,7 @@ let clos_to_bvlProof_initial_state_with_clock = prove
 
 (* [local] *)
 let initial_state_with_clock_bvl = prove
- (`(state_clock_fupd (K (state_clock
+ (`(bvlSem_state_clock_fupd (K (bvlSem_state_clock
      (bvlSem_initial_state ffi code co cc k) + ck)) (bvlSem_initial_state
        ffi code co cc k)) =
    bvlSem_initial_state ffi code co cc (k + ck) /\

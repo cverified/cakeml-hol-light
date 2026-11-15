@@ -672,7 +672,7 @@ let do_app_Ref = prove
       Rval
        (bvlSem_RefPtr T (minimal ptr. ~(ptr IN FDOM (bviSem_state_refs s))),
         bvl_to_bvi
-         (bviSem_state_refs_fupd (K (bviSem_state_refs
+         (bvlSem_state_refs_fupd (K (bviSem_state_refs
             s |+ ((minimal ptr. ~(ptr IN FDOM (bviSem_state_refs
               s))),bvlSem_ValueArray vs))) (bvi_to_bvl s)) s)`,
   CHEAT_TAC);;

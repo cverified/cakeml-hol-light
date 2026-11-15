@@ -912,8 +912,7 @@ let heap_ok_simulation = prove
    (gen_gc_partial_conf_refs_start conf <= gen_gc_partial_conf_limit conf)
      ==>
    heap_ok
-     (MAP (to_gen_heap_element conf) heap_current)
-       (gen_gc_partial_conf_limit
+     (MAP (to_gen_heap_element conf) heap_current) (gen_gc_conf_limit
      (to_gen_conf conf))`,
   CHEAT_TAC);;
 
@@ -1124,7 +1123,7 @@ let partial_gc_heap_length_lemma = prove
    (gen_gc_partial_conf_refs_start conf <= gen_gc_partial_conf_limit conf)
      /\
    roots_ok gen_roots gen_heap /\
-   heap_ok gen_heap (gen_gc_partial_conf_limit (to_gen_conf conf)) ==>
+   heap_ok gen_heap (gen_gc_conf_limit (to_gen_conf conf)) ==>
    (heap_length (APPEND (APPEND (gc_state_old state1) (gc_state_h1
      state1)) (heap_expand (gc_state_n state1))) =
      gen_gc_partial_conf_refs_start conf)`,

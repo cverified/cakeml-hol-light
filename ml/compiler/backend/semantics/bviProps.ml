@@ -50,17 +50,17 @@ let bvl_to_bvi_id = prove
   CHEAT_TAC);;
 
 let bvl_to_bvi_with_refs = prove
- (`bvl_to_bvi (bvlSem_state_refs_fupd (K y) x) z = bvlSem_state_refs_fupd (K
+ (`bvl_to_bvi (bvlSem_state_refs_fupd (K y) x) z = bviSem_state_refs_fupd (K
   y) (bvl_to_bvi x z)`,
   CHEAT_TAC);;
 
 let bvl_to_bvi_with_clock = prove
- (`bvl_to_bvi (bvlSem_state_clock_fupd (K y) x) z = bvlSem_state_clock_fupd
+ (`bvl_to_bvi (bvlSem_state_clock_fupd (K y) x) z = bviSem_state_clock_fupd
   (K y) (bvl_to_bvi x z)`,
   CHEAT_TAC);;
 
 let bvl_to_bvi_with_ffi = prove
- (`bvl_to_bvi (bvlSem_state_ffi_fupd (K y) x) z = bvlSem_state_ffi_fupd (K y)
+ (`bvl_to_bvi (bvlSem_state_ffi_fupd (K y) x) z = bviSem_state_ffi_fupd (K y)
   (bvl_to_bvi x z)`,
   CHEAT_TAC);;
 
@@ -71,42 +71,42 @@ let bvl_to_bvi_code = prove
 add_simp bvl_to_bvi_code;;
 
 let bvl_to_bvi_clock = prove
- (`bvlSem_state_clock
+ (`bviSem_state_clock
       (bvl_to_bvi x y) = bvlSem_state_clock x`,
   CHEAT_TAC);;
 add_simp bvl_to_bvi_clock;;
 
 let bvi_to_bvl_refs = prove
- (`bviSem_state_refs
+ (`bvlSem_state_refs
       (bvi_to_bvl x) = bviSem_state_refs x`,
   CHEAT_TAC);;
 add_simp bvi_to_bvl_refs;;
 
 let bvi_to_bvl_code = prove
- (`bviSem_state_code
+ (`bvlSem_state_code
       (bvi_to_bvl x) = sptree_map (K ARB) (bviSem_state_code x)`,
   CHEAT_TAC);;
 add_simp bvi_to_bvl_code;;
 
 let bvi_to_bvl_clock = prove
- (`bviSem_state_clock
+ (`bvlSem_state_clock
       (bvi_to_bvl x) = bviSem_state_clock x`,
   CHEAT_TAC);;
 add_simp bvi_to_bvl_clock;;
 
 let bvi_to_bvl_ffi = prove
- (`bviSem_state_ffi
+ (`bvlSem_state_ffi
       (bvi_to_bvl x) = bviSem_state_ffi x`,
   CHEAT_TAC);;
 add_simp bvi_to_bvl_ffi;;
 
 let bvi_to_bvl_to_bvi_with_ffi = prove
- (`bvl_to_bvi (bviSem_state_ffi_fupd (K f) (bvi_to_bvl x)) x =
+ (`bvl_to_bvi (bvlSem_state_ffi_fupd (K f) (bvi_to_bvl x)) x =
   bviSem_state_ffi_fupd (K f) x`,
   CHEAT_TAC);;
 
 let domain_bvi_to_bvl_code = prove
- (`domain (bviSem_state_code (bvi_to_bvl s)) = domain (bviSem_state_code s)`,
+ (`domain (bvlSem_state_code (bvi_to_bvl s)) = domain (bviSem_state_code s)`,
   CHEAT_TAC);;
 add_simp domain_bvi_to_bvl_code;;
 
