@@ -625,6 +625,8 @@ class Porter:
     for k, v in self.con_file_ar.items():
       self.conof_arities.setdefault(k, v)
     self.conof_said = conof
+    # no definition is being ported: this is a statement
+    self.defkey = None
     try:
       # the statement is a quotation in a function, so that one
       # that does not typecheck is no error of the file but a
@@ -4271,6 +4273,21 @@ class Porter:
         args = [x[1:] for x in c if not isinstance(x, str)]
         if len(set(args)) > len(set(f for f, _ in args)): return True
       return False
+    # the clauses of each member of the family in a quotation of
+    # its own, where the override says so: what clashes there is
+    # a variable of one member and of another, and the model of
+    # the clash does not see it (closSem's evaluate has an args
+    # that is the argument list of an App in the clauses of
+    # evaluate and the value list that evaluate_app takes)
+    if self.defkey in overrides.CLAUSE_BY_FUNCTION:
+      byf, groups = {}, []
+      for i, (h, _, _) in enumerate(cls):
+        f = fname(h)
+        if f not in byf:
+          byf[f] = len(groups); groups.append([])
+        groups[byf[f]].append(i)
+      self.clause_split = groups
+      return True
     groups = []
     for i in range(len(cls)):
       for g in groups:

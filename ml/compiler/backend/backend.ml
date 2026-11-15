@@ -604,7 +604,7 @@ let compile_inc_progs_for_eval_eq = prove
      let p = bvi_to_data_compile_prog p in
      let _ = empty_ffi (implode "finished: bvi_to_data") in
      let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c) in
-     let p = MAP (bvi_to_data_compile_part dc) p in
+     let p = MAP (data_to_word_compile_part dc) p in
      let reg_count1 = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
      let p = MAP (\p. full_compile_single_for_eval (asm_config_two_reg_arith

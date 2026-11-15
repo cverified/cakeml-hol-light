@@ -211,8 +211,8 @@ let to_bvi_thm = prove
 let to_data_all_def = new_definition
   `to_data_all (c:backend_config) p =
      let (ps,c,p,names) = to_bvi_all c p in
-     let p = MAP (\(a,n,e). (a,n,FST (backend_compile n (COUNT_LIST n) T []
-       [e]))) p in
+     let p = MAP (\(a,n,e). (a,n,FST (bvi_to_data_compile n (COUNT_LIST n) T
+       [] [e]))) p in
      let ps = APPEND ps [((implode "after bvi_to_data"),backend_passes_Data
        p names)] in
      let p = MAP (\(a,n,e). (a,n,FST (data_live_compile e LN))) p in

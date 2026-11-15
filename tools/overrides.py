@@ -1442,6 +1442,20 @@ WORD_NOT = set([
 # different clauses, which HOL4 allows (it typechecks every clause on
 # its own) and one HOL Light quotation does not; the port writes the
 # clauses as separate quotations
+# CLAUSE_BY_FUNCTION: the clauses of each member of a family in a
+# quotation of its own.  What clashes is a variable that stands
+# in the clauses of one member and of another, which the model of
+# tools/port.py's clause_clash does not see; a clause of its own
+# for each (CLAUSE_FORM) would be a quotation for every line of
+# the biggest definition of the port.
+CLAUSE_BY_FUNCTION = set([
+  # the args of closSem's evaluate is the argument list of an App
+  # in its own clauses and the list of values that evaluate_app
+  # takes in the clauses of that one
+  ('closSem', 'evaluate_def'),
+])
+
+
 CLAUSE_FORM = set([
   ('ast', 'every_exp_def'),
   # compile_pat reads an ast pattern and builds a flatLang one,
@@ -2050,7 +2064,8 @@ CON_OF = {
   ('word_inst', 'op_consts_def'): {'Const': 'wordLang'},
   # the Skip that data_simp's simp takes is dataLang's, and
   # word_bignum, wordLang and stackLang have one as well
-  ('backend_passes', 'to_data_all_def'): {'Skip': 'dataLang'},
+  ('backend_passes', 'to_data_all_def'):
+    {'Skip': 'dataLang', 'compile': {5: 'bvi_to_data'}},
   # the operations of dataLang are closLang's, so the Install
   # that do_app compares its operation with is closLang's;
   # wordLang and stackLang have an Install of a program
@@ -2065,6 +2080,8 @@ CON_OF = {
   ('backend', 'compile_inc_progs_def'):
     {'compile_part': 'data_to_word'},
   ('backend', 'compile_inc_progs_for_eval_def'):
+    {'compile_part': 'data_to_word'},
+  ('backend', 'compile_inc_progs_for_eval_eq'):
     {'compile_part': 'data_to_word'},
   # the memory operation that a ShareInst and a Mem take is asm's
   # and takes no arguments, where the Load and the Store of a

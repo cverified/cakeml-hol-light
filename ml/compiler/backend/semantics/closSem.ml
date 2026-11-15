@@ -923,21 +923,25 @@ let closSem_fix_clock_IMP =
 if concl closSem_fix_clock_IMP <> `T` then
   cake_term_facts := closSem_fix_clock_IMP :: (!cake_term_facts);;
 
-let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
+(* the clauses in two quotations: a0 is tra, mlstring, (mlstring list) and
+   exp; a1 is num, exp, (exp list), (_)list, (num option) and op; a2 is num,
+   exp, (num list option), (exp list) and (_)list; a3 is (exp list), (_)list,
+   exp, num and ((num # exp) list), which one quotation cannot typecheck *)
+let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
-  `(closSem_evaluate ([],(env:closSem_v list),(s:('c,'ffi)closSem_state)) =
+  [`(closSem_evaluate ([],(env:closSem_v list),(s:('c,'ffi)closSem_state)) =
     (Rval [],s)) /\
-   (closSem_evaluate (CONS x (CONS y xs),env,s) =
+    (closSem_evaluate (CONS x (CONS y xs),env,s) =
          match closSem_fix_clock s (closSem_evaluate ([x],env,s)) with
              (Rval v1,s1) ->
              (match closSem_evaluate (CONS y xs,env,s1) with (Rval vs,s2)
                  -> (Rval (CONS (HD v1) vs),s2)
               | res -> res)
          | res -> res) /\
-   (closSem_evaluate ([clos_Var _ n],env,s) =
+    (closSem_evaluate ([clos_Var _ n],env,s) =
          if n < LENGTH env then (Rval [EL n env],s) else (Rerr (Rabort
              Rtype_error),s)) /\
-   (closSem_evaluate ([clos_If _ x1 x2 x3],env,s) =
+    (closSem_evaluate ([clos_If _ x1 x2 x3],env,s) =
          match closSem_fix_clock s (closSem_evaluate ([x1],env,s)) with
              (Rval vs,s1) ->
               if closSem_Boolv T = HD vs then closSem_evaluate
@@ -945,19 +949,19 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                   closSem_evaluate ([x3],env,s1) else (Rerr (Rabort
                   Rtype_error),s1)
          | res -> res) /\
-   (closSem_evaluate ([clos_Let _ xs x2],env,s) =
+    (closSem_evaluate ([clos_Let _ xs x2],env,s) =
          match closSem_fix_clock s (closSem_evaluate (xs,env,s)) with (Rval
              vs,s1) -> closSem_evaluate ([x2],APPEND vs env,s1)
          | res -> res) /\
-   (closSem_evaluate ([clos_Raise _ x1],env,s) =
+    (closSem_evaluate ([clos_Raise _ x1],env,s) =
          match closSem_evaluate ([x1],env,s) with (Rval vs,s) -> (Rerr
              (Rraise (HD vs)),s)
          | res -> res) /\
-   (closSem_evaluate ([clos_Handle _ x1 x2],env,s1) =
+    (closSem_evaluate ([clos_Handle _ x1 x2],env,s1) =
          match closSem_fix_clock s1 (closSem_evaluate ([x1],env,s1)) with
              (Rerr (Rraise v),s) -> closSem_evaluate ([x2],CONS v env,s)
          | res -> res) /\
-   (closSem_evaluate ([clos_Op _ op xs],env,s) =
+    (closSem_evaluate ([clos_Op _ op xs],env,s) =
          match closSem_fix_clock s (closSem_evaluate (xs,env,s)) with (Rval
              vs,s) ->
            (if op = clos_Install then
@@ -983,7 +987,7 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                (Rerr err,s)
             | Rval (v,s) -> (Rval [v],s)))
          | res -> res) /\
-   (closSem_evaluate ([clos_Fn _ loc vsopt num_args exp],env,s) =
+    (closSem_evaluate ([clos_Fn _ loc vsopt num_args exp],env,s) =
          if num_args <= closSem_state_max_app s /\ ~(num_args = 0) then
            match vsopt with NONE -> (Rval [closSem_Closure loc [] env
                num_args exp],s)
@@ -993,7 +997,7 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                   | SOME env' -> (Rval [closSem_Closure loc [] env'
                       num_args exp],s))
          else (Rerr (Rabort Rtype_error),s)) /\
-   (closSem_evaluate ([clos_Letrec _ loc namesopt fns exp],env,s) =
+    (closSem_evaluate ([clos_Letrec _ loc namesopt fns exp],env,s) =
          if ALL (\(num_args,e). num_args <= closSem_state_max_app s
              /\ ~(num_args = 0)) fns then
            let
@@ -1008,7 +1012,7 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                  NONE -> (Rerr (Rabort Rtype_error),s)
                | SOME ed -> closSem_evaluate ([exp],APPEND ed env,s)
          else (Rerr (Rabort Rtype_error),s)) /\
-   (closSem_evaluate ([clos_App _ loc_opt x1 args],env,s) =
+    (closSem_evaluate ([clos_App _ loc_opt x1 args],env,s) =
          if LENGTH args > 0 then
            (match closSem_fix_clock s (closSem_evaluate (args,env,s)) with
                (Rval y2,s1) ->
@@ -1017,11 +1021,11 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                | res -> res)
             | res -> res)
          else (Rerr (Rabort Rtype_error),s)) /\
-   (closSem_evaluate ([clos_Tick _ x],env,s) =
+    (closSem_evaluate ([clos_Tick _ x],env,s) =
          if closSem_state_clock s = 0 then (Rerr (Rabort
              Rtimeout_error),s) else closSem_evaluate
              ([x],env,closSem_dec_clock 1 s)) /\
-   (closSem_evaluate ([clos_Call _ ticks dest xs],env,s1) =
+    (closSem_evaluate ([clos_Call _ ticks dest xs],env,s1) =
          match closSem_fix_clock s1 (closSem_evaluate (xs,env,s1)) with
              (Rval vs,s) ->
              (match closSem_find_code dest vs (closSem_state_code s) with
@@ -1031,9 +1035,9 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                       Rtimeout_error),closSem_state_clock_fupd (K 0) s) else
                       closSem_evaluate ([exp],args,closSem_dec_clock (ticks +
                       1) s))
-         | res -> res) /\
-   (evaluate_app loc_opt f [] (s:('c,'ffi)closSem_state) = (Rval [f],s)) /\
-   (evaluate_app loc_opt f args (s:('c,'ffi)closSem_state) =
+         | res -> res)`;
+   `(evaluate_app loc_opt f [] (s:('c,'ffi)closSem_state) = (Rval [f],s)) /\
+    (evaluate_app loc_opt f args (s:('c,'ffi)closSem_state) =
          match dest_closure (closSem_state_max_app s) loc_opt f args with
              NONE -> (Rerr (Rabort Rtype_error),s)
          | SOME (Partial_app v) ->
@@ -1050,7 +1054,7 @@ let closSem_evaluate_def,closSem_evaluate_ind = assume_definition_rec
                             (LENGTH args - LENGTH rest_args) s)) with (Rval
                             [v],s1) ->
                    evaluate_app loc_opt v rest_args s1
-               | res -> res))`;;
+               | res -> res))`];;
 
 let evaluate_app_NIL =
   SIMP_CONV [closSem_evaluate_def] `evaluate_app loc v [] s`;;
