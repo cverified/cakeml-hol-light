@@ -2704,6 +2704,31 @@ ANTIQUOTE = {
   ('bvi_tailrecProof', 's1'): "(s:('c,'ffi) bviSem$state)",
   ('source_to_flatProof', 's'):
     "(s:'ffi semanticPrimitives$state)",
+  # the goal that sixty of data_to_word_assignProof's theorems
+  # are stated with (HOL4 data_to_word_assignProofScript.sml:
+  # 1765-1778).  It relates a state of dataSem, which it calls s,
+  # to one of wordSem, which it calls t, and the two semantics
+  # have cut_state_opt, get_vars, set_var, do_app, ffi, locals,
+  # stack_max and evaluate each: HOL4 reads them in the scope of
+  # the file and the port cannot, so the names are qualified here
+  # as HOL4 resolves them.  Nothing else of the goal is changed.
+  ('data_to_word_assignProof', 'assign_thm_goal'): r'''
+   state_rel c l1 l2 (s:('c,'ffi) dataSem$state)
+     (t:('a,'c,'ffi) wordSem$state) NONE locs /\
+   (op_requires_names op <> (names_opt = NONE)) /\
+   dataSem$cut_state_opt names_opt s = SOME x /\
+   dataSem$get_vars args s.locals = SOME vals /\
+   t.termdep > 1 /\
+   dataSem$do_app op vals x = Rval (v,s2) ==>
+   ?q (r:('a,'c,'ffi) wordSem$state).
+     wordSem$evaluate (FST (assign c n l dest op args names_opt),t)
+       = (q,r) /\
+     (q = SOME NotEnoughSpace ==>
+      r.ffi = t.ffi /\ option_le r.stack_max s2.stack_max /\
+      (c.gc_kind <> None ==> ~s2.safe_for_space)) /\
+     (q <> SOME NotEnoughSpace ==>
+      state_rel c l1 l2 (dataSem$set_var dest v s2) r NONE locs /\
+      q = NONE)''',
 }
 
 NOT_YET = {
