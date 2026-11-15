@@ -13,8 +13,10 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -254,6 +256,23 @@ let bviSem_fix_clock_IMP = prove
 (* The semantics of expression evaluation is defined next. For
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of bvi_exp expressions. *)
+
+let bviSem_fix_clock_IMP =
+  try prove
+   (`!s x res s1. bviSem_fix_clock s x = (res,s1)
+                  ==> bviSem_state_clock s1 <= bviSem_state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; bviSem_fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "bviSem_state") THEN
+    REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
+    REWRITE_TAC(record_thms "bviSem_state") THEN
+    REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nbviSem_fix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+(* a fallback TRUTH says nothing, and a fact that says nothing
+   is of no use *)
+if concl bviSem_fix_clock_IMP <> `T` then
+  cake_term_facts := bviSem_fix_clock_IMP :: (!cake_term_facts);;
 
 (* the clauses in two quotations: dest is (num option) and num, which one
    quotation cannot typecheck *)

@@ -647,7 +647,7 @@ let every_is_some_loc_to_pc_prefix = prove
 
 let flatten_correct = prove
  (`!prog s1 t r s2 n l cs bs (t1:('a,'c,'ffi)labSem_state).
-     stackSem_evaluate (prog,s1) = (r,s2) /\ ~(r = SOME targetSem_Error) /\
+     stackSem_evaluate (prog,s1) = (r,s2) /\ ~(r = SOME stackSem_Error) /\
      stack_to_labProof_state_rel s1 t1 /\
      call_args prog (labSem_state_ptr_reg t1) (labSem_state_len_reg t1)
        (labSem_state_ptr2_reg t1) (labSem_state_len2_reg t1)
@@ -658,13 +658,13 @@ let flatten_correct = prove
        (APPEND cs bs) [0]) ==>
      (?ck t2.
      match halt_view r with SOME res ->
-       stackSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock t1
+       labSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock t1
          + ck)) t1) =
          (res,t2) /\ labSem_state_ffi t2 = stackSem_state_ffi s2
      | NONE ->
-       (!ck1. stackSem_evaluate (labSem_state_clock_fupd (K
+       (!ck1. labSem_evaluate (labSem_state_clock_fupd (K
          (labSem_state_clock t1 + ck + ck1)) t1) =
-         stackSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock
+         labSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock
            t2 + ck1)) t2)) /\ labSem_state_len_reg
        t2 = labSem_state_len_reg t1 /\ labSem_state_ptr_reg
        t2 = labSem_state_ptr_reg t1 /\ labSem_state_len2_reg
@@ -697,23 +697,23 @@ let flatten_call_correct = prove
  (`stackSem_evaluate (stack_Call NONE (INL (start:num)) NONE,s1) = (res,s2) /\
    stack_to_labProof_state_rel (s1:('a,'c,'ffi)stackSem_state) t1 /\
    loc_to_pc start 0 (labSem_state_code t1) = SOME (labSem_state_pc t1)
-     /\ ~(res = SOME targetSem_Error) /\
-   (~(res = SOME targetSem_TimeOut) ==>
-     (?w. res = SOME (targetSem_Halt (word_Word w))) \/
+     /\ ~(res = SOME stackSem_Error) /\
+   (~(res = SOME stackSem_TimeOut) ==>
+     (?w. res = SOME (stackSem_Halt (word_Word w))) \/
      (?f. res = SOME (stackSem_FinalFFI f)) \/
      (?n. res = SOME (stackSem_Result (word_Loc n 0)) /\
        (!(s:('a,'c,'ffi)stackSem_state). subspt (stackSem_state_code s1)
          (stackSem_state_code s) /\ ~(stackSem_state_clock s = 0) ==>
            (?t. stackSem_evaluate (stack_Call NONE (INL n) NONE,s) = (SOME
-             (targetSem_Halt (word_Word (n2w 0))),t) /\ stackSem_state_ffi
+             (stackSem_Halt (word_Word (n2w 0))),t) /\ stackSem_state_ffi
                t = stackSem_state_ffi s /\ stackSem_state_clock t =
                  stackSem_state_clock s - 1)))) ==>
    (?ck r2 t2.
-     stackSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock t1 -
+     labSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock t1 -
        1 + ck)) (t1:('a,'c,'ffi)labSem_state)) = (r2,t2) /\
      (!f. res = SOME (stackSem_FinalFFI f) ==> r2 = targetSem_Halt
        (ffi_FFI_outcome f)) /\
-     (!w. res = SOME (targetSem_Halt w) ==> r2 =
+     (!w. res = SOME (stackSem_Halt w) ==> r2 =
       (match w with word_Word (n2w 0) -> targetSem_Halt ffi_Success
                  | word_Word _ -> targetSem_Halt ffi_Resource_limit_hit
                  | _ -> targetSem_Error)) /\
@@ -722,7 +722,7 @@ let flatten_call_correct = prove
      // (evaluate (t1 with clock := t1.clock - 1 + ck) =
      // (,t2)) ∧
      t2 = stackSem_state_ffi s2 /\ ~(r2 = targetSem_Error) /\ (res = SOME
-       targetSem_TimeOut ==> r2 = targetSem_TimeOut))
+       stackSem_TimeOut ==> r2 = targetSem_TimeOut))
    // (FST (evaluate (t1 with clock := t1.clock - 1 + ck)) ≠ Error)`,
   CHEAT_TAC);;
 
@@ -732,7 +732,7 @@ let halt_assum_def = new_definition
       subspt code (stackSem_state_code s) /\ ~(stackSem_state_clock s = 0)
         ==>
       (?t. stackSem_evaluate (stack_Call NONE (INL 1) NONE,s) = (SOME
-        (targetSem_Halt (word_Word (n2w 0))),t) /\ stackSem_state_ffi
+        (stackSem_Halt (word_Word (n2w 0))),t) /\ stackSem_state_ffi
           t = stackSem_state_ffi s /\ stackSem_state_clock t =
             stackSem_state_clock s - 1))`;;
 

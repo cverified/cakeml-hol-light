@@ -1,9 +1,9 @@
 (* ======================================================== *)
 (*  tailrec: ported from HOL4's
     examples/machine-code/hoare-triple/tailrecScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs, and 2 theorems of it from LightCake.  Needed
-    by unify.ml and word_bignumProof.ml.  *)
+    A HOL4 library theory, of which the port has the definitions and
+    2 theorems that CakeML needs, all of them from LightCake.
+    Needed by unify.ml and word_bignumProof.ml.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

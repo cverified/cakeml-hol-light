@@ -644,13 +644,13 @@ let evaluate_apply_colour_Loop_helper = prove
                  NONE ->
                    strong_locals_rel f (domain live) (wordSem_state_locals
                      rst) (wordSem_state_locals rcst)
-               | SOME (word_Break n) ->
+               | SOME (wordSem_Break n) ->
                    (match oEL n lt with SOME (_,exit_names) ->
                         strong_locals_rel f (domain exit_names)
                           (wordSem_state_locals
                           rst) (wordSem_state_locals rcst)
                     | NONE -> T)
-               | SOME (word_Continue n) ->
+               | SOME (wordSem_Continue n) ->
                    (match oEL n lt with SOME (names,_) ->
                         strong_locals_rel f (domain names)
                           (wordSem_state_locals
@@ -672,13 +672,13 @@ let evaluate_apply_colour_Loop_helper = prove
               NONE ->
                 strong_locals_rel f (domain live) (wordSem_state_locals rst)
                   (wordSem_state_locals rcst)
-            | SOME (word_Break n) ->
+            | SOME (wordSem_Break n) ->
                 (match oEL n lt with SOME (_,exit_names) ->
                      strong_locals_rel f (domain exit_names)
                        (wordSem_state_locals
                        rst) (wordSem_state_locals rcst)
                  | NONE -> T)
-            | SOME (word_Continue n) ->
+            | SOME (wordSem_Continue n) ->
                 (match oEL n lt with SOME (names,_) ->
                      strong_locals_rel f (domain names)
                        (wordSem_state_locals
@@ -705,12 +705,12 @@ let evaluate_apply_colour = prove
      (match res with
        NONE -> strong_locals_rel f (domain live) (wordSem_state_locals
                rst) (wordSem_state_locals rcst)
-     | SOME (word_Break n) ->
+     | SOME (wordSem_Break n) ->
          (match oEL n lt with SOME (_,exit_names) ->
               strong_locals_rel f (domain exit_names) (wordSem_state_locals
                 rst) (wordSem_state_locals rcst)
           | NONE -> T)
-     | SOME (word_Continue n) ->
+     | SOME (wordSem_Continue n) ->
          (match oEL n lt with SOME (names,_) ->
               strong_locals_rel f (domain names) (wordSem_state_locals rst)
                 (wordSem_state_locals rcst)
@@ -1016,8 +1016,8 @@ let word_alloc_correct = prove
      word_state_eq_rel rst rcst /\
      (match res with
        NONE -> T
-     | SOME (word_Break _) -> T
-     | SOME (word_Continue _) -> T
+     | SOME (wordSem_Break _) -> T
+     | SOME (wordSem_Continue _) -> T
      | SOME _ -> wordSem_state_locals rst = wordSem_state_locals rcst))`,
   CHEAT_TAC);;
 
@@ -1206,14 +1206,14 @@ let evaluate_remove_dead_Loop_helper = prove
                strong_locals_rel I (domain names) (wordSem_state_locals
                  rst') t'' /\
                live_store_rel [] (wordSem_state_store rst') tstore''
-           | SOME (word_Break n) -> wordSem_state_store
+           | SOME (wordSem_Break n) -> wordSem_state_store
                rst' = tstore'' /\
                (match oEL n (CONS (names,exit_names) lt) with
                   SOME (_,exit_names) ->
                     strong_locals_rel I (domain exit_names)
                       (wordSem_state_locals rst') t''
                 | NONE -> T)
-           | SOME (word_Continue n) -> wordSem_state_store
+           | SOME (wordSem_Continue n) -> wordSem_state_store
                rst' = tstore'' /\
                (match oEL n (CONS (names,exit_names) lt) with
                   SOME (names,_) ->
@@ -1232,14 +1232,14 @@ let evaluate_remove_dead_Loop_helper = prove
             strong_locals_rel I (domain live) (wordSem_state_locals rst) t'
               /\
             live_store_rel nlive (wordSem_state_store rst) tstore'
-        | SOME (word_Break n) -> wordSem_state_store
+        | SOME (wordSem_Break n) -> wordSem_state_store
             rst = tstore' /\
             (match oEL n lt with
                SOME (_,exit_names) ->
                  strong_locals_rel I (domain exit_names)
                    (wordSem_state_locals rst) t'
              | NONE -> T)
-        | SOME (word_Continue n) -> wordSem_state_store
+        | SOME (wordSem_Continue n) -> wordSem_state_store
             rst = tstore' /\
             (match oEL n lt with
                SOME (names,_) ->
@@ -1267,14 +1267,14 @@ let evaluate_remove_dead = prove
        NONE ->
          strong_locals_rel I (domain live) (wordSem_state_locals rst) t' /\
          live_store_rel nlive (wordSem_state_store rst) tstore'
-     | SOME (word_Break n) -> wordSem_state_store
+     | SOME (wordSem_Break n) -> wordSem_state_store
          rst = tstore' /\
          (match oEL n lt with
             SOME (_,exit_names) ->
               strong_locals_rel I (domain exit_names) (wordSem_state_locals
                 rst) t'
           | NONE -> T)
-     | SOME (word_Continue n) -> wordSem_state_store
+     | SOME (wordSem_Continue n) -> wordSem_state_store
          rst = tstore' /\
          (match oEL n lt with
             SOME (names,_) ->
@@ -1350,8 +1350,8 @@ let evaluate_remove_dead_prog = prove
        (res,wordSem_state_locals_fupd (K t') rst) /\
      (match res with
         NONE -> T
-      | SOME (word_Break _) -> T
-      | SOME (word_Continue _) -> T
+      | SOME (wordSem_Break _) -> T
+      | SOME (wordSem_Continue _) -> T
       | SOME _ -> wordSem_state_locals rst = t'))`,
   CHEAT_TAC);;
 
@@ -2283,14 +2283,14 @@ let ssa_cc_trans_Loop_helper = prove
                 (match res with
                   NONE -> ssa_locals_rel naB ssaB (wordSem_state_locals rst)
                     (wordSem_state_locals rcst)
-                | SOME (word_Break n) ->
+                | SOME (wordSem_Break n) ->
                     (match oEL n lt' with
                        NONE -> T
                      | SOME (tgt_ssa,_,exit_names) ->
                          strong_locals_rel (option_lookup tgt_ssa)
                            (domain exit_names) (wordSem_state_locals rst)
                              (wordSem_state_locals rcst))
-                | SOME (word_Continue n') ->
+                | SOME (wordSem_Continue n') ->
                     (match oEL n' lt' with
                        NONE -> T
                      | SOME (tgt_ssa,names,_) ->
@@ -2316,14 +2316,14 @@ let ssa_cc_trans_Loop_helper = prove
                NONE -> ssa_locals_rel na' (inter ssa_refreshed exit_names)
                  (wordSem_state_locals
                          rst) (wordSem_state_locals rcst)
-             | SOME (word_Break n) ->
+             | SOME (wordSem_Break n) ->
                  (match oEL n lt with
                     NONE -> T
                   | SOME (tgt_ssa,_,exit_names) ->
                       strong_locals_rel (option_lookup tgt_ssa)
                         (domain exit_names) (wordSem_state_locals rst)
                           (wordSem_state_locals rcst))
-             | SOME (word_Continue n') ->
+             | SOME (wordSem_Continue n') ->
                  (match oEL n' lt with
                     NONE -> T
                   | SOME (tgt_ssa,names,_) ->
@@ -2367,14 +2367,14 @@ let ssa_cc_trans_correct = prove
        NONE ->
          ssa_locals_rel na' ssa' (wordSem_state_locals rst)
            (wordSem_state_locals rcst)
-     | SOME (word_Break n) ->
+     | SOME (wordSem_Break n) ->
          (match oEL n lt with
             SOME (tgt_ssa,_,exit_names) ->
               strong_locals_rel (option_lookup tgt_ssa) (domain exit_names)
                 (wordSem_state_locals
                 rst) (wordSem_state_locals rcst)
           | NONE -> T)
-     | SOME (word_Continue n) ->
+     | SOME (wordSem_Continue n) ->
          (match oEL n lt with
             SOME (tgt_ssa,names,_) ->
               strong_locals_rel (option_lookup tgt_ssa) (domain names)
@@ -2549,8 +2549,8 @@ let full_ssa_cc_trans_correct = prove
       word_state_eq_rel rst rcst /\
       (match res with
         NONE -> T
-      | SOME (word_Break _) -> T
-      | SOME (word_Continue _) -> T
+      | SOME (wordSem_Break _) -> T
+      | SOME (wordSem_Continue _) -> T
       | SOME _ -> wordSem_state_locals rst = wordSem_state_locals rcst))`,
   CHEAT_TAC);;
 

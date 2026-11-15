@@ -1,9 +1,9 @@
 (* ======================================================== *)
 (*  toto: ported from HOL4's
     src/finite_maps/totoScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs, and 9 theorems of it from LightCake.  Needed
-    by 6 files of the port.  *)
+    A HOL4 library theory, of which the port has the definitions and
+    9 theorems that CakeML needs, all of them from LightCake.
+    Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/ternaryComparisons.ml";;

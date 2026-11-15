@@ -367,7 +367,7 @@ let PAIR_MAP_EQ_EQ = prove
 
 (* known_compile_IS_SOME *)
 let backendProof_known_compile_IS_SOME = prove
- (`stack_alloc_compile kc es = (kc',es') ==> (IS_SOME kc' <=> IS_SOME kc)`,
+ (`clos_known_compile kc es = (kc',es') ==> (IS_SOME kc' <=> IS_SOME kc)`,
   CHEAT_TAC);;
 
 let attach_bitmaps_SOME = prove
@@ -380,7 +380,7 @@ let attach_bitmaps_SOME = prove
   CHEAT_TAC);;
 
 let known_compile_static_conf = prove
- (`stack_alloc_compile kc es = (kc',es') ==> known_static_conf kc' =
+ (`clos_known_compile kc es = (kc',es') ==> known_static_conf kc' =
   known_static_conf kc`,
   CHEAT_TAC);;
 
@@ -390,8 +390,8 @@ let known_option_upd_val_spt_eq = prove
   CHEAT_TAC);;
 
 let source_compile_pattern_cfg = prove
- (`(stack_alloc_compile c p = (c',p') ==> source_to_flat_config_pattern_cfg c'
-  = source_to_flat_config_pattern_cfg c) /\
+ (`(source_to_flat_compile c p = (c',p') ==> source_to_flat_config_pattern_cfg
+  c' = source_to_flat_config_pattern_cfg c) /\
    (inc_compile env_id c p = (c',p') ==> source_to_flat_config_pattern_cfg
      c' = source_to_flat_config_pattern_cfg c)`,
   CHEAT_TAC);;
@@ -868,7 +868,7 @@ let MAP_full_compile_single_to_compile = prove
   CHEAT_TAC);;
 
 let compile_to_word_conventions2 = prove
- (`backend_compile wc ac p = (_,ps) /\
+ (`word_to_word_compile wc ac p = (_,ps) /\
    ALL (\(_,_,prg). no_share_inst prg \/ ~(asm_config_ISA ac = Ag32)) p ==>
    MAP FST ps = MAP FST p /\
    ALL2 labels_rel
@@ -1237,7 +1237,7 @@ let oracle_stack_good_code = prove
 let to_lab_good_code_lemma = prove
  (`stack_to_lab_compile (backend_config_stack_conf c) (backend_config_data_conf
   c) lim1 lim2 offs stack_prog = code /\
-   backend_compile asm_conf3 F word_prog = (bm,wc,fs,stack_prog) /\
+   word_to_stack_compile asm_conf3 F word_prog = (bm,wc,fs,stack_prog) /\
    data_to_word_compile data_conf word_conf asm_conf2 data_prog =
      (col,word_prog) /\
    labels_ok code /\
@@ -1383,8 +1383,8 @@ let add_eval_state_def = define_cases
       s0)`;;
 
 let add_eval_state_ffi = prove
- (`labSem_state_ffi
-     (add_eval_state opt_ev s0) = labSem_state_ffi s0`,
+ (`semanticPrimitives_state_ffi (add_eval_state opt_ev s0) =
+  semanticPrimitives_state_ffi s0`,
   CHEAT_TAC);;
 
 

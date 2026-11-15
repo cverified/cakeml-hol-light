@@ -682,8 +682,8 @@ let tick_inline_code_labels = prove
      UNIONS (set_of_list (MAP bvlProps_get_code_labels (tick_inline cs xs)))
        SUBSET
      UNIONS (set_of_list (MAP bvlProps_get_code_labels xs)) UNION
-     UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND) (toList
-       cs)))`,
+     UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND)
+       (sptree_toList cs)))`,
   CHEAT_TAC);;
 
 let tick_inline_all_code_labels = prove
@@ -695,8 +695,8 @@ let tick_inline_all_code_labels = prove
        UNION
      UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND) aux))
        UNION
-     UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND) (toList
-       cs)))`,
+     UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND)
+       (sptree_toList cs)))`,
   CHEAT_TAC);;
 
 let compile_prog_get_code_labels = prove

@@ -82,8 +82,8 @@ bvi_tailrec	ML code skipped: val opt_tm = ``   Let [Op (IntOp LessEq) [Var 0; Op
 bvi_tailrec	ML code skipped: val rev_tm = ``   Let [Op (IntOp (Const 0)) []]     (If (Op 
 bvi_tailrec	ML code skipped: val opt_tm = ``   Let [Op (IntOp (Const 0)) []]     (If (Op 
 bvi_tailrec	ML code skipped: val aux_tm = ``Let [Var 0; Op (BlockOp (Cons 0)) []] ^opt_tm
-bvi_tailrec	line 478 is 83 characters
-bvi_tailrec	line 479 is 80 characters
+bvi_tailrec	line 500 is 83 characters
+bvi_tailrec	line 501 is 80 characters
 bvi_tmc	line 7 is 81 characters
 bvi_tmc	line 66 is 80 characters
 bvi_tmc	line 108 is 87 characters
@@ -448,10 +448,9 @@ unify	derive cunifyl_NIL2: no sunify_thm
 unify	derive cunifyl_NILCONS: no sunify_thm
 unify	derive cunifyl_CONSNIL: no sunify_thm
 unify	derive cunifyl_CONS2: no sunify_thm
-unify	derive walkstar1: no walkstar_thm
-unify	derive walkstar2: no walkstar_thm
+unify	derive walkstar1: rule oneline/0
+unify	derive walkstar2: rule INST_TYPE/1
 unify	derive cwalkstar_thm: no combinTheory.o_ABS_L
-unify	derive walkstar_thm': no walkstar_thm
 unify	ML code skipped: fun tcallify_th fixedvs th =   let val (l,r) = dest_eq (conc
 unify	ML code skipped: val cvwalk_code = tcallify_th [“s:infer_t num_map”] cvwalk_t
 unify	cvwalk_code_def: PENDING (tcallify_th makes it with ML code)
@@ -492,7 +491,7 @@ unify	derive svwalk_result_encodable': rule INST_TYPE/1
 unify	derive tcunify_thm: rule Once/0
 unify	derive t_vwalk_ind: rule UNDISCH/3
 unify	ML code skipped: val encode_walkstar_reverse = encode_walkstar |>            
-unify	line 1515 is 91 characters
+unify	line 1517 is 91 characters
 infer	ML code skipped: val type_name_check_subst_alt =   type_name_check_subst_def 
 infer	Overload Tem
 infer	derive constrain_op_case_def: conv patternMatchesLib.PMATCH_ELIM_CONV
@@ -546,7 +545,7 @@ dataSem	Overload do_app_peak
 dataSem	ML code skipped: val evaluate_ind = theorem"evaluate_ind";
 dataSem	derive case_eq_thms: not a name
 dataSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-dataSem	line 409 is 85 characters
+dataSem	line 411 is 85 characters
 flatSem	ML code skipped: val s = ``s:('c,'ffi) flatSem$state``
 flatSem	ML code skipped: val eqs = LIST_CONJ (map TypeBase.case_eq_of   [``:op``, ``:
 flatSem	derive case_eq_thms: no eqs
@@ -562,13 +561,13 @@ gen_gc_partial	ML code skipped: val heap_lookup_heap_expand = isSomeDataElement_
 wordSem	ML code skipped: val state_component_equality = theorem"state_component_equal
 wordSem	ML code skipped: val s = ``(s:('a,'c,'ffi) wordSem$state)``
 wordSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-wordSem	line 1195 is 86 characters
+wordSem	line 1217 is 86 characters
 targetSem	line 62 is 86 characters
 targetSem	line 556 is 83 characters
 labSem	Overload read_reg
 labSem	line 50 is 205 characters
 stackSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-stackSem	line 929 is 86 characters
+stackSem	line 948 is 86 characters
 wordConvs	derive not_created_subprogs_P_def: '=> GEN (hd ('
 wordConvs	ML code skipped: val no_alloc_P = ``((<>) (Alloc 0 (LN,LN)))``
 wordConvs	derive no_alloc_def: no not_created_subprogs_P_def
@@ -1100,9 +1099,9 @@ data_to_word_memoryProof	ML code skipped: val word_eq_ind = theorem "word_eq_ind
 data_to_word_memoryProof	ML code skipped: val list_copy_bwd_def = list_copy_bwd_def |> REWRITE_RULE [m
 data_to_word_memoryProof	ML code skipped: val list_copy_bwd_alias_def = list_copy_bwd_alias_def       
 data_to_word_memoryProof	ML code skipped: val memory_rel_copy_array_NONE_lemma =   memory_rel_RefByte_
-data_to_word_memoryProof	line 171 is 94 characters
-data_to_word_memoryProof	line 384 is 81 characters
-data_to_word_memoryProof	line 1942 is 81 characters
+data_to_word_memoryProof	line 173 is 94 characters
+data_to_word_memoryProof	line 386 is 81 characters
+data_to_word_memoryProof	line 1944 is 81 characters
 word_bignumProof	ML code skipped: val good_dimindex_def = miscTheory.good_dimindex_def; val en
 word_bignumProof	ML code skipped: val shift_def = backend_commonTheory.word_shift_def
 word_bignumProof	ML code skipped: val raw_eval_cases = eval_cases;
@@ -1476,7 +1475,7 @@ word_cseProof	ML code skipped: Resume comp_correct[StoreConsts]:   rpt gen_tac \
 word_cseProof	ML code skipped: Resume comp_correct[ShareInst]:   rpt gen_tac \\ strip_tac  
 word_cseProof	ML code skipped: Resume comp_correct[Loop]:   rpt gen_tac >> strip_tac >>   g
 word_cseProof	ML code skipped: Finalise comp_correct;
-word_cseProof	line 418 is 80 characters
+word_cseProof	line 417 is 80 characters
 word_elimProof	bring_to_front_overload domain: the port does not know which constant
 word_elimProof	ML code skipped: val get_stack_ind = theorem "get_stack_ind";
 word_elimProof	ML code skipped: Resume word_removal_lemma[Skip]:   simp[wordSemTheory.evalua
@@ -1769,13 +1768,13 @@ lab_to_targetProof	ML code skipped: \\ spose_not_then assume_tac >> gvs[NOT_LESS
 lab_to_targetProof	ML code skipped: Resume IMP_state_rel_make_init[ISR17]:   drule_then (drule_t
 lab_to_targetProof	ML code skipped: Finalise IMP_state_rel_make_init;
 lab_to_targetProof	derive semantics_make_init: no PULL_EXISTS
-lab_to_targetProof	line 3237 is 92 characters
-lab_to_targetProof	line 3278 is 84 characters
-lab_to_targetProof	line 4492 is 93 characters
-lab_to_targetProof	line 4653 is 89 characters
-lab_to_targetProof	line 4656 is 81 characters
-lab_to_targetProof	line 4713 is 89 characters
-lab_to_targetProof	line 4716 is 81 characters
+lab_to_targetProof	line 3236 is 92 characters
+lab_to_targetProof	line 3277 is 84 characters
+lab_to_targetProof	line 4491 is 93 characters
+lab_to_targetProof	line 4652 is 89 characters
+lab_to_targetProof	line 4655 is 81 characters
+lab_to_targetProof	line 4712 is 89 characters
+lab_to_targetProof	line 4715 is 81 characters
 flat_elimProof	ML code skipped: val find_v_globals_ind = theorem "find_v_globals_ind";
 flat_elimProof	ML code skipped: val find_refs_globals_ind = theorem "find_refs_globals_ind";
 flat_elimProof	ML code skipped: val find_result_globals_ind = theorem "find_result_globals_i

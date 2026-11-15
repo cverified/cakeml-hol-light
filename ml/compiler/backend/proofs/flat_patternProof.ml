@@ -790,7 +790,7 @@ let set_globals_decode_guard = prove
 let set_globals_decode_dtree_empty = prove
  (`flatProps_set_globals x = EMPTY_BAG /\ flatProps_set_globals dflt =
   EMPTY_BAG /\
-   ALL (\y. flatProps_set_globals y = EMPTY_BAG) (toList br_spt) ==>
+   ALL (\y. flatProps_set_globals y = EMPTY_BAG) (sptree_toList br_spt) ==>
    flatProps_set_globals (decode_dtree t br_spt x dflt dtree) = EMPTY_BAG`,
   CHEAT_TAC);;
 
@@ -819,7 +819,7 @@ let set_globals_naive_pattern_matches = prove
   CHEAT_TAC);;
 
 let set_toList_fromList = prove
- (`set_of_list (toList (fromList xs)) = set_of_list xs`,
+ (`set_of_list (sptree_toList (fromList xs)) = set_of_list xs`,
   CHEAT_TAC);;
 
 let set_globals_compile_pats = prove
@@ -873,7 +873,7 @@ let esgc_free_decode_guard = prove
 
 let esgc_free_decode_dtree = prove
  (`flatProps_esgc_free v_exp /\ flatProps_esgc_free dflt /\
-   ALL (\y. flatProps_esgc_free y) (toList br_spt) ==>
+   ALL (\y. flatProps_esgc_free y) (sptree_toList br_spt) ==>
    flatProps_esgc_free (decode_dtree t br_spt v_exp dflt dtree)`,
   CHEAT_TAC);;
 
@@ -954,7 +954,7 @@ let decode_guard_no_Mat = prove
 
 let decode_dtree_no_Mat = prove
  (`no_Mat v_exp /\ no_Mat dflt /\
-   ALL no_Mat (toList br_spt) ==>
+   ALL no_Mat (sptree_toList br_spt) ==>
    no_Mat (decode_dtree t br_spt v_exp dflt dtree)`,
   CHEAT_TAC);;
 

@@ -324,16 +324,15 @@ let not_seen_data_inv_alist_insert = prove
 add_simp not_seen_data_inv_alist_insert;;
 
 let listCmpEq_correct = prove
- (`!L1 L2. listCmp L1 L2 = asm_Equal <=> L1 = L2`,
+ (`!L1 L2. listCmp L1 L2 = EQUAL <=> L1 = L2`,
   CHEAT_TAC);;
 
 let antisym_listCmp = prove
- (`!x y. listCmp x y = GREATER <=> listCmp y x = asm_Less`,
+ (`!x y. listCmp x y = GREATER <=> listCmp y x = LESS`,
   CHEAT_TAC);;
 
 let transit_listCmp = prove
- (`!x y z. listCmp x y = asm_Less /\ listCmp y z = asm_Less ==> listCmp x z =
-  asm_Less`,
+ (`!x y z. listCmp x y = LESS /\ listCmp y z = LESS ==> listCmp x z = LESS`,
   CHEAT_TAC);;
 
 let TotOrd_listCmp = prove

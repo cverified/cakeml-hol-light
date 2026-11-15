@@ -1,9 +1,9 @@
 (* ======================================================== *)
 (*  ternaryComparisons: ported from HOL4's
     src/sort/ternaryComparisonsScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs, and 7 theorems of it from LightCake.  Needed
-    by 11 files of the port.  *)
+    A HOL4 library theory, of which the port has the definitions and
+    7 theorems that CakeML needs, all of them from LightCake.
+    Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

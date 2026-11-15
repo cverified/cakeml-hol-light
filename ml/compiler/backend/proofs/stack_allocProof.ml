@@ -817,7 +817,7 @@ let alloc_correct_lemma_Simple = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
-       (~(r = NONE) ==> r = SOME (stack_Halt (word_Word (n2w 1))))
+       (~(r = NONE) ==> r = SOME (stackSem_Halt (word_Word (n2w 1))))
          /\ stackSem_state_regs
        t SUBMAP l2 /\
        (r = NONE ==> FLOOKUP l2 0 = SOME ret))`,
@@ -2196,7 +2196,7 @@ let alloc_correct_lemma_Generational = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
-       (~(r = NONE) ==> r = SOME (stack_Halt (word_Word (n2w 1))))
+       (~(r = NONE) ==> r = SOME (stackSem_Halt (word_Word (n2w 1))))
          /\ stackSem_state_regs
        t SUBMAP l2 /\
        (r = NONE ==> FLOOKUP l2 0 = SOME ret))`,
@@ -2245,7 +2245,7 @@ let alloc_correct_lemma_None = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
-       (~(r = NONE) ==> r = SOME (stack_Halt (word_Word (n2w 1))))
+       (~(r = NONE) ==> r = SOME (stackSem_Halt (word_Word (n2w 1))))
          /\ stackSem_state_regs
        t SUBMAP l2 /\
        (r = NONE ==> FLOOKUP l2 0 = SOME ret))`,
@@ -2277,7 +2277,7 @@ let alloc_correct_lemma = prove
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
          t)))))) /\
-       (~(r = NONE) ==> r = SOME (stack_Halt (word_Word (n2w 1))))
+       (~(r = NONE) ==> r = SOME (stackSem_Halt (word_Word (n2w 1))))
          /\ stackSem_state_regs
        t SUBMAP l2 /\
        (r = NONE ==> FLOOKUP l2 0 = SOME ret))`,
@@ -2326,7 +2326,7 @@ let find_code_IMP_lookup = prove
 
 let alloc_length_stack = prove
  (`stackSem_alloc c s = (r,t) /\ stackSem_state_gc_fun s = word_gc_fun conf /\
-   (!w. ~(r = SOME (stack_Halt w))) ==>
+   (!w. ~(r = SOME (stackSem_Halt w))) ==>
    LENGTH (stackSem_state_stack t) = LENGTH (stackSem_state_stack s)`,
   CHEAT_TAC);;
 
@@ -2460,8 +2460,8 @@ let stack_allocProof_comp_correct = prove
        LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
          (stackSem_state_data_buffer t)) + buffer_space_left
          (stackSem_state_data_buffer t) < dimword (:'a) - 1 /\
-       ((!w. ~(r = SOME (stack_Halt w))) ==> LENGTH (stackSem_state_stack
-         t) * (dimindex (:'a) DIV 8) < dimword (:'a)))`,
+       ((!w. ~(r = SOME (stackSem_Halt w))) ==> LENGTH
+         (stackSem_state_stack t) * (dimindex (:'a) DIV 8) < dimword (:'a)))`,
   CHEAT_TAC);;
 
 (* HOL4 stack_allocProofScript.sml:5896-5899: ML code, not ported *)

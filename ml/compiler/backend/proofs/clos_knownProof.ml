@@ -134,14 +134,14 @@ let unique_set_globals_evaluate = prove
 let unique_set_globals_subexps = prove
  (`(unique_set_globals (CONS x1 (CONS x2 xs)) co ==>
       unique_set_globals [x1] co /\ unique_set_globals (CONS x2 xs) co) /\
-   (unique_set_globals [flat_If t x1 x2 x3] co ==>
+   (unique_set_globals [clos_If t x1 x2 x3] co ==>
       unique_set_globals [x1] co /\ unique_set_globals [x2] co
         /\ unique_set_globals [x3] co) /\
    (unique_set_globals [clos_Let t xs x2] co ==>
       unique_set_globals xs co /\ unique_set_globals [x2] co) /\
    (unique_set_globals [flat_Raise t x1] co ==>
       unique_set_globals [x1] co) /\
-   (unique_set_globals [flat_Handle t x1 x2] co ==>
+   (unique_set_globals [clos_Handle t x1 x2] co ==>
       unique_set_globals [x1] co /\ unique_set_globals [x2] co) /\
    (unique_set_globals [clos_Op t opn xs] co ==>
       unique_set_globals xs co) /\
@@ -377,7 +377,7 @@ let fv_max_rw = prove
    (fv_max n (CONS x (CONS y xs)) <=> fv_max n [x] /\ fv_max n (CONS y xs))
      /\
    (fv_max n [clos_Var tr v] <=> v < n) /\
-   (fv_max n [flat_If tr x1 x2 x3] <=> fv_max n [x1] /\ fv_max n [x2]
+   (fv_max n [clos_If tr x1 x2 x3] <=> fv_max n [x1] /\ fv_max n [x2]
      /\ fv_max n [x3]) /\
    (fv_max n [clos_Let tr xs x1] <=> fv_max n xs /\ fv_max (n + LENGTH xs)
      [x1]) /\
@@ -390,7 +390,7 @@ let fv_max_rw = prove
    (fv_max n [clos_Letrec src_names loc vs fns x1] <=>
       ALL (\(num_args,x). fv_max (n + num_args + LENGTH fns) [x]) fns /\
       fv_max (n + LENGTH fns) [x1]) /\
-   (fv_max n [flat_Handle tr x1 x2] <=> fv_max n [x1] /\ fv_max (n + 1)
+   (fv_max n [clos_Handle tr x1 x2] <=> fv_max n [x1] /\ fv_max (n + 1)
      [x2]) /\
    (fv_max n [clos_Call tr ticks dest xs] <=> fv_max n xs)`,
   CHEAT_TAC);;
@@ -757,9 +757,9 @@ let mglobals_disjoint_rw = prove
       mglobals_disjoint s [x] /\ mglobals_disjoint s (CONS y xs)) /\
    (mglobals_disjoint s [clos_Let tr xs x] <=>
       mglobals_disjoint s xs /\ mglobals_disjoint s [x]) /\
-   (mglobals_disjoint s [flat_Handle tr x1 x2] <=>
+   (mglobals_disjoint s [clos_Handle tr x1 x2] <=>
       mglobals_disjoint s [x1] /\ mglobals_disjoint s [x2]) /\
-   (mglobals_disjoint s [flat_If tr x1 x2 x3] <=>
+   (mglobals_disjoint s [clos_If tr x1 x2 x3] <=>
       mglobals_disjoint s [x1] /\ mglobals_disjoint s [x2]
         /\ mglobals_disjoint s [x3]) /\
    (mglobals_disjoint s [flat_Raise tr x] <=>
@@ -945,7 +945,7 @@ let pure_co_oracle_props = prove
   CHEAT_TAC);;
 
 let state_oracle_domain = prove
- (`is_state_oracle (clos_ticks_compile_inc c) co ==>
+ (`is_state_oracle (clos_known_compile_inc c) co ==>
    BAG_OF_SET (domain (FST (FST (co n)))) <= (BAG_UNION)
      (BAG_OF_SET (domain (FST (FST (co 0)))))
      (closProps_elist_globals (FLAT (first_n_exps co n)))`,
@@ -1176,15 +1176,15 @@ let clos_knownProof_state_rel_def = new_definition
        (closSem_state_globals t) /\
      fmap_rel (clos_knownProof_ref_rel c g) (closSem_state_refs s)
        (closSem_state_refs t) /\ closSem_state_compile
-     s = state_cc (clos_ticks_compile_inc c) (closSem_state_compile t)
+     s = state_cc (clos_known_compile_inc c) (closSem_state_compile t)
        /\ closSem_state_compile_oracle
-     t = state_co (clos_ticks_compile_inc c)
+     t = state_co (clos_known_compile_inc c)
        (closSem_state_compile_oracle s)`;;
 
 (* [local] *)
 let compile_inc_upd_inline_factor = prove
- (`clos_ticks_compile_inc (clos_known_config_inline_factor_fupd (K k) c) =
-  clos_ticks_compile_inc c`,
+ (`clos_known_compile_inc (clos_known_config_inline_factor_fupd (K k) c) =
+  clos_known_compile_inc c`,
   CHEAT_TAC);;
 
 let state_rel_upd_inline_factor = prove
@@ -1397,7 +1397,7 @@ let known_correct0 = prove
       fv_max (LENGTH env1) xs /\
       ALL2 (clos_knownProof_v_rel c (next_g s0)) env1 env2 /\
       unique_set_globals xs (closSem_state_compile_oracle s0) /\
-      is_state_oracle (clos_ticks_compile_inc c)
+      is_state_oracle (clos_known_compile_inc c)
         (closSem_state_compile_oracle s0) /\
       env1full = APPEND env1 xenv1 /\ ~(res1 = Rerr (Rabort Rtype_error))
         ==>
@@ -1407,7 +1407,7 @@ let known_correct0 = prove
           (next_g s))) (clos_knownProof_v_rel c (next_g s)) res1 res2 /\
         clos_knownProof_state_rel c (next_g s) s t /\
         state_globals_approx s (next_g s) /\
-        is_state_oracle (clos_ticks_compile_inc c)
+        is_state_oracle (clos_known_compile_inc c)
           (closSem_state_compile_oracle s) /\
         oracle_gapprox_disjoint (next_g s) (closSem_state_compile_oracle
           s))) /\
@@ -1422,7 +1422,7 @@ let known_correct0 = prove
       oracle_state_sgc_free (closSem_state_compile_oracle s0) /\
       co_every_Fn_vs_NONE (closSem_state_compile_oracle s0) /\
       unique_set_globals [] (closSem_state_compile_oracle s0) /\
-      is_state_oracle (clos_ticks_compile_inc c)
+      is_state_oracle (clos_known_compile_inc c)
         (closSem_state_compile_oracle s0) /\
       ALL2 (clos_knownProof_v_rel c (next_g s0)) args1 args2 /\
       clos_knownProof_state_rel c (next_g s0) s0 t0 /\
@@ -1438,7 +1438,7 @@ let known_correct0 = prove
           (next_g s))) (clos_knownProof_v_rel c (next_g s)) res1 res2 /\
         clos_knownProof_state_rel c (next_g s) s t /\
         state_globals_approx s (next_g s) /\
-        is_state_oracle (clos_ticks_compile_inc c)
+        is_state_oracle (clos_known_compile_inc c)
           (closSem_state_compile_oracle s) /\
         oracle_gapprox_disjoint (next_g s) (closSem_state_compile_oracle
           s)))`,
@@ -1446,7 +1446,7 @@ let known_correct0 = prove
 
 let semantics_known = prove
  (`~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY co
-        (state_cc (clos_ticks_compile_inc c) cc) xs = ffi_Fail) ==>
+        (state_cc (clos_known_compile_inc c) cc) xs = ffi_Fail) ==>
       (!n. SND (SND (co n)) = []) /\
       (!n. fv_max 0 (FST (SND (co n)))) /\
       (!n exps aux. SND (co n) = (exps,aux) ==> ALL closProps_esgc_free
@@ -1455,7 +1455,7 @@ let semantics_known = prove
       co_every_Fn_vs_NONE co /\
       oracle_gapprox_subspt co /\
       oracle_state_sgc_free co /\
-      is_state_oracle (clos_ticks_compile_inc c) co /\
+      is_state_oracle (clos_known_compile_inc c) co /\
       unique_set_globals xs co /\
       ALL closProps_esgc_free xs /\
       fv_max 0 xs /\
@@ -1463,9 +1463,9 @@ let semantics_known = prove
       oracle_gapprox_disjoint g co /\
       known c xs [] LN = (eas,g) ==>
       closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
-        (state_co (clos_ticks_compile_inc c) co) cc (MAP FST eas) =
+        (state_co (clos_known_compile_inc c) co) cc (MAP FST eas) =
       closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
-        co (state_cc (clos_ticks_compile_inc c) cc) xs`,
+        co (state_cc (clos_known_compile_inc c) cc) xs`,
   CHEAT_TAC);;
 
 let code_locs_mk_Ticks = prove
@@ -1512,7 +1512,7 @@ let clos_knownProof_syntax_ok_def = new_definition
 let syntax_oracle_ok_def = new_definition
   `clos_knownProof_syntax_oracle_ok c xs co conf <=>
      clos_knownProof_syntax_ok xs /\
-     is_state_oracle (clos_ticks_compile_inc c) (pure_co
+     is_state_oracle (clos_known_compile_inc c) (pure_co
        (clos_fvs_compile_inc:clos_exp list#(num#num#clos_exp) list->clos_exp
        list#(num#num#clos_exp) list) o co) /\
      conf = FST (FST (co 0)) /\
@@ -1525,7 +1525,7 @@ let known_cc_def = new_definition
   `known_cc known_conf cc =
      (match known_conf with SOME kcfg ->
         (pure_cc clos_fvs_compile_inc
-          (state_cc (clos_ticks_compile_inc kcfg)
+          (state_cc (clos_known_compile_inc kcfg)
             (pure_cc clos_ticks_compile_inc
               (pure_cc clos_letop_compile_inc
                 (cc:'b->clos_exp list#(num#num#clos_exp) list->(word8
@@ -1542,7 +1542,7 @@ let known_co_def = new_definition
   list#(num#num#clos_exp) list) =
      (match known_conf with SOME kcfg -> (pure_co clos_letop_compile_inc o
                         ((pure_co clos_ticks_compile_inc o
-                           (state_co (clos_ticks_compile_inc kcfg)
+                           (state_co (clos_known_compile_inc kcfg)
                              (pure_co clos_fvs_compile_inc o
                                co):num->'b#clos_exp list#(num#num#clos_exp)
                                list)):num->'b#clos_exp list#(num#num#clos_exp)
@@ -1557,7 +1557,7 @@ let known_co_eq_pure_state = prove
                list#(num#num#clos_exp) list->clos_exp list#(num#num#clos_exp)
                list)
          else I) o
-     state_co (match known_conf with SOME kcfg -> clos_ticks_compile_inc
+     state_co (match known_conf with SOME kcfg -> clos_known_compile_inc
        kcfg
          | NONE -> CURRY I)
      (pure_co (if IS_SOME known_conf then clos_fvs_compile_inc else I) o

@@ -29,8 +29,10 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/multiword.ml";;
+needs "lib/peg.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
@@ -5829,6 +5831,21 @@ let word_is_clos_def = new_definition
    ck is an upper bound on the number of stack frames
       allocated by an equality comparison.
   *)
+(* what the termination of the loop below goes by: the limit and
+   the clock that a step gives back are no greater than the ones it
+   was given, which is the fact that HOL4's Termination uses
+   (imp_res_tac fix_clock_IMP).  The semantics files put theirs
+   among cake_term_facts in the same way, and that is where
+   TERM_TAC reads it from *)
+let _ = cake_term_facts :=
+  data_to_word_memoryProof_fix_clock_IMP :: (!cake_term_facts);;
+
+(* and the budget of the attempt: eight seconds is what a
+   definition that the machinery can do takes, and this one takes
+   four of them in a warm session and more in a cold one, so the
+   cheat would be taken for want of time alone *)
+let _ = cake_cheat_budget := 120;;
+
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 data_to_word_memoryProofScript.sml:14020-14025: the tactic that
@@ -7472,6 +7489,34 @@ let memory_rel_do_build_const = prove
 
 let read_word_def = new_definition
   `read_word dm m a = (theWord (m a),(a IN dm /\ isWord (m a)))`;;
+
+(* the port's own: the step of the loop over the words of two byte
+   arrays takes the counter down by two, and the guard of the step
+   says that the counter is not below two and that the word of the
+   machine is of thirty-two bits or of sixty-four, so two is below
+   the word size and the value of the counter goes down.  It stands
+   here, and not with VAL_WORD_SUB_1_LT and VAL_WORD_SUB_4_LT in
+   ml/lib/lemmas.ml, because good_dimindex is of the port's own
+   sources; cake_term_lemmas is what the termination proof of the
+   definition below reads it from *)
+let VAL_WORD_SUB_2_LT = prove
+ (`!(n:(N)word). ~(n <+ word 2 \/ ~good_dimindex (:N))
+     ==> val (word_sub n (word 2)) < val n`,
+  (let hd_is n t =
+     (try fst(dest_const(fst(strip_comb t))) = n
+      with Failure _ -> false) in
+   GEN_TAC THEN REWRITE_TAC[DE_MORGAN_THM] THEN STRIP_TAC THEN
+   MATCH_MP_TAC VAL_WORD_SUB_LT THEN
+   ASM_REWRITE_TAC[] THEN
+   FIRST_ASSUM (fun gd ->
+     if not (hd_is "good_dimindex" (concl gd)) then NO_TAC else
+     MP_TAC (REWRITE_RULE[good_dimindex_def] gd)) THEN
+   REWRITE_TAC[dimword] THEN
+   DISCH_THEN (DISJ_CASES_THEN SUBST1_TAC) THEN
+   CONV_TAC NUM_REDUCE_CONV));;
+
+let _ = cake_term_lemmas :=
+  VAL_WORD_SUB_2_LT :: (!cake_term_lemmas);;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)

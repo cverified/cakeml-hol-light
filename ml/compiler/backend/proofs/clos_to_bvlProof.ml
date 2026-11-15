@@ -665,36 +665,36 @@ let clos_to_bvlProof_v_rel = cake_inductive
 
 (* [local] *)
 let cl_rel_F = prove
- (`~(cl_rel max_app f refs code (env,ys) (bvlSem_Number i) cl) /\
-    ~(cl_rel max_app f refs code (env,ys) (bvlSem_Word64 w) cl) /\
-    ~(cl_rel max_app f refs code (env,ys) (bvlSem_RefPtr b p) cl) /\
-    ~(cl_rel max_app f refs code (env,ys) (bvlSem_Block tag xs) cl) /\
+ (`~(cl_rel max_app f refs code (env,ys) (closSem_Number i) cl) /\
+    ~(cl_rel max_app f refs code (env,ys) (closSem_Word64 w) cl) /\
+    ~(cl_rel max_app f refs code (env,ys) (closSem_RefPtr b p) cl) /\
+    ~(cl_rel max_app f refs code (env,ys) (closSem_Block tag xs) cl) /\
     ~(cl_rel max_app f refs code (env,ys) (closSem_ByteVector bs) cl)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let add_args_F = prove
- (`!cl args p i tag xs. ~(add_args cl args = SOME (bvlSem_RefPtr b p))
-  /\ ~(add_args cl args = SOME (bvlSem_Number i)) /\ ~(add_args cl args =
-  SOME (bvlSem_Word64 w)) /\ ~(add_args cl args = SOME (bvlSem_Block tag xs))
-  /\ ~(add_args cl args = SOME (closSem_ByteVector bs))`,
+ (`!cl args p i tag xs. ~(add_args cl args = SOME (closSem_RefPtr b p))
+  /\ ~(add_args cl args = SOME (closSem_Number i)) /\ ~(add_args cl args =
+  SOME (closSem_Word64 w)) /\ ~(add_args cl args = SOME (closSem_Block tag
+  xs)) /\ ~(add_args cl args = SOME (closSem_ByteVector bs))`,
   CHEAT_TAC);;
 
 (* v_rel_Unit *)
 let clos_to_bvlProof_v_rel_Unit = prove
- (`(clos_to_bvlProof_v_rel max_app f refs code bvlSem_Unit y <=> (y =
+ (`(clos_to_bvlProof_v_rel max_app f refs code closSem_Unit y <=> (y =
   bvlSem_Unit)) /\
    (clos_to_bvlProof_v_rel max_app f refs code x bvlSem_Unit <=> (x =
-     bvlSem_Unit))`,
+     closSem_Unit))`,
   CHEAT_TAC);;
 add_simp clos_to_bvlProof_v_rel_Unit;;
 
 (* v_rel_Boolv *)
 let clos_to_bvlProof_v_rel_Boolv = prove
- (`(clos_to_bvlProof_v_rel max_app f refs code (bvlSem_Boolv b) y <=> (y =
+ (`(clos_to_bvlProof_v_rel max_app f refs code (closSem_Boolv b) y <=> (y =
   bvlSem_Boolv b)) /\
    (clos_to_bvlProof_v_rel max_app f refs code x (bvlSem_Boolv b) <=> (x =
-     bvlSem_Boolv b))`,
+     closSem_Boolv b))`,
   CHEAT_TAC);;
 add_simp clos_to_bvlProof_v_rel_Boolv;;
 
@@ -792,11 +792,11 @@ add_simp clos_to_bvlProof_ref_rel_def;;
 (* ref_rel_simp *)
 let clos_to_bvlProof_ref_rel_simp = prove
  (`(clos_to_bvlProof_ref_rel R (closSem_ValueArray vs) y <=> (?ws. y =
-  closSem_ValueArray ws /\ ALL2 R vs ws)) /\
-   (clos_to_bvlProof_ref_rel R (closSem_Thunk m v) y <=> (?w. y =
-     closSem_Thunk m w /\ R v w)) /\
+  bvlSem_ValueArray ws /\ ALL2 R vs ws)) /\
+   (clos_to_bvlProof_ref_rel R (closSem_Thunk m v) y <=> (?w. y = bvlSem_Thunk
+     m w /\ R v w)) /\
    (clos_to_bvlProof_ref_rel R (closSem_ByteArray bs) y <=> y =
-     closSem_ByteArray F bs)`,
+     bvlSem_ByteArray F bs)`,
   CHEAT_TAC);;
 add_simp clos_to_bvlProof_ref_rel_simp;;
 
@@ -2061,7 +2061,7 @@ let clos_to_bvlProof_eval_sim_def = new_definition
   `clos_to_bvlProof_eval_sim ffi max_app code1 co1 cc1 es1 code2 co2 cc2 start'
   rel =
      (!k res1 s2.
-       bvlSem_evaluate (es1,[],closSem_initial_state ffi max_app code1 co1
+       closSem_evaluate (es1,[],closSem_initial_state ffi max_app code1 co1
          cc1 k) = (res1,s2) /\ ~(res1 = Rerr (Rabort Rtype_error)) /\
        rel code1 co1 cc1 es1 code2 co2 cc2 start' ==>
        (?ck res2 t2.

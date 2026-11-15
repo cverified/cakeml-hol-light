@@ -430,9 +430,11 @@ let decode_infer_ts_walkstar = prove
 (* [local] *)
 let walkstar_def' =
   MATCH_MP (GEN_ALL walkstar_def) (ASSUME `wfs (sp2fm (sptree_map
-  encode_infer_t s):atom subst)`);;
-(* HOL4 unifyScript.sml:710-713: a theorem that HOL4 states as the value of
-   an ML expression: walkstar_thm' *)
+  encode_infer_t s):(num,atom term)fmap)`);;
+(* [local] *)
+let walkstar_thm' =
+  MATCH_MP (GEN_ALL walkstar_thm) (ASSUME `wfs (sp2fm (sptree_map
+  encode_infer_t s):(num,atom term)fmap)`);;
 let infer_t_CASE_RAND = prove
  (`f (infer_t_CASE it tvf taf tuf) =
    infer_t_CASE it (f o tvf) (\l n. f (taf l n)) (f o tuf)`,

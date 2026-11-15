@@ -138,8 +138,8 @@ let eval = cake_inductive
       word_bignumProof_Eval r s1 (word_bignum_Seq p1 p2) s3) /\
    (!rec s1 c r ri p1 p2 s2.
       r IN FDOM (word_bignumProof_state_regs s1) /\ eval_ri_pre s1 ri /\
-      word_bignumProof_Eval rec s1 (if wordSem_word_cmp c (eval_exp s1
-        (word_Var r)) (eval_ri s1 ri) then p1 else p2) s2 ==>
+      word_bignumProof_Eval rec s1 (if asm_word_cmp c (eval_exp s1 (word_Var
+        r)) (eval_ri s1 ri) then p1 else p2) s2 ==>
       word_bignumProof_Eval rec s1 (word_bignum_If c r ri p1 p2) s2) /\
    (!rec s r i a w.
       (FLOOKUP (word_bignumProof_state_regs s) i = SOME w) /\
@@ -845,11 +845,11 @@ let Corr_Div = prove
 let Corr_If = prove
  (`Corr p1 s f1 q1 /\ Corr p2 s f2 q2 ==>
    Corr (word_bignum_If c r ri p1 p2) s
-     (if wordSem_word_cmp c (eval_exp s (word_Var r)) (eval_ri s ri) then f1
+     (if asm_word_cmp c (eval_exp s (word_Var r)) (eval_ri s ri) then f1
        else f2)
      (r IN FDOM (word_bignumProof_state_regs s) /\ eval_ri_pre s ri /\
-      (if wordSem_word_cmp c (eval_exp s (word_Var r)) (eval_ri s ri) then
-        q1 else q2))`,
+      (if asm_word_cmp c (eval_exp s (word_Var r)) (eval_ri s ri) then q1
+        else q2))`,
   CHEAT_TAC);;
 
 let loop_app_def = new_definition

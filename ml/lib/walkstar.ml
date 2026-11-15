@@ -2,8 +2,8 @@
 (*  walkstar: ported from HOL4's
     examples/algorithms/unification/triangular/first-order/
       walkstarScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 5 files of the port.  *)
+    A HOL4 library theory, of which the port has the definitions and
+    2 theorems that CakeML needs.  Needed by 5 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/subst.ml";;
@@ -24,8 +24,33 @@ let WALKSTARR_RULES,WALKSTARR_INDUCT,WALKSTARR_CASES =
    (!s t. (!t1 t2. ~(walk s t = term_Pair t1 t2))
       ==> WALKSTARR s t (walk s t))`;;
 
-let walkstar_def = new_definition
+let walkstar = new_definition
   `walkstar s t = @r. WALKSTARR s t r`;;
+
+(* the equations that HOL4 reads off its schema, under the
+   hypothesis that the substitution is wellfounded: walkstar_def
+   is its Theorem of that name and walkstar_thm the three clauses
+   of it *)
+
+let walkstar_def = prove
+ (`wfs s ==> !t. walkstar s t =
+     match walk s t with
+       term_Var v4 -> term_Var v4
+     | term_Pair t1 t2 -> term_Pair (walkstar s t1) (walkstar s t2)
+     | term_Const v7 -> term_Const v7`,
+  CHEAT_TAC);;
+
+let walkstar_thm = prove
+ (`wfs s ==>
+   (walkstar s (term_Var v) =
+      match vwalk s v with
+        term_Var v4 -> term_Var v4
+      | term_Pair t1 t2 -> term_Pair (walkstar s t1) (walkstar s t2)
+      | term_Const v7 -> term_Const v7) /\
+   (walkstar s (term_Pair t1 t2) =
+      term_Pair (walkstar s t1) (walkstar s t2)) /\
+   (walkstar s (term_Const c) = term_Const c)`,
+  CHEAT_TAC);;
 
 (* the occurs check, which HOL4 makes with Hol_reln in the same
    file (walkstarScript.sml) *)

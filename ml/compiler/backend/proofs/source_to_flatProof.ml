@@ -543,12 +543,12 @@ let match_result_rel_imp = prove
 let source_to_flatProof_do_eq = prove
  (`!genv. genv_c_ok (global_env_c genv) ==>
     (!v1 v2 r v1_i1 v2_i1.
-     flatSem_do_eq v1 v2 = r /\
+     semanticPrimitives_do_eq v1 v2 = r /\
      source_to_flatProof_v_rel genv v1 v1_i1 /\
      source_to_flatProof_v_rel genv v2 v2_i1 ==>
      flatSem_do_eq v1_i1 v2_i1 = r) /\
     (!vs1 vs2 r vs1_i1 vs2_i1.
-     flatSem_do_eq_list vs1 vs2 = r /\
+     semanticPrimitives_do_eq_list vs1 vs2 = r /\
      ALL2 (source_to_flatProof_v_rel genv) vs1 vs1_i1 /\
      ALL2 (source_to_flatProof_v_rel genv) vs2 vs2_i1 ==>
      flatSem_do_eq_list vs1_i1 vs2_i1 = r)`,
@@ -573,7 +573,7 @@ let source_to_flatProof_v_to_char_list = prove
  (`!genv. genv_c_ok (global_env_c genv) ==>
     (!v1 v2 vs1.
      source_to_flatProof_v_rel genv v1 v2 /\
-     flatSem_v_to_char_list v1 = SOME vs1 ==>
+     semanticPrimitives_v_to_char_list v1 = SOME vs1 ==>
      flatSem_v_to_char_list v2 = SOME vs1)`,
   CHEAT_TAC);;
 
@@ -582,7 +582,7 @@ let source_to_flatProof_v_to_list = prove
  (`!genv. genv_c_ok (global_env_c genv) ==>
     (!v1 v2 vs1.
      source_to_flatProof_v_rel genv v1 v2 /\
-     flatSem_v_to_list v1 = SOME vs1 ==>
+     semanticPrimitives_v_to_list v1 = SOME vs1 ==>
      (?vs2.
        flatSem_v_to_list v2 = SOME vs2 /\
        ALL2 (source_to_flatProof_v_rel genv) vs1 vs2))`,
@@ -592,18 +592,21 @@ let source_to_flatProof_v_to_list = prove
 let source_to_flatProof_vs_to_string = prove
  (`!v1 v2 s.
      ALL2 (source_to_flatProof_v_rel genv) v1 v2 ==>
-     flatSem_vs_to_string v1 = SOME s ==>
+     semanticPrimitives_vs_to_string v1 = SOME s ==>
      flatSem_vs_to_string v2 = SOME s`,
   CHEAT_TAC);;
 
 (* [local] *)
 let v_rel_lems = prove
  (`!genv. genv_c_ok (global_env_c genv) ==>
-     (!b. source_to_flatProof_v_rel genv (flatSem_Boolv b) (flatSem_Boolv
-       b)) /\
-     source_to_flatProof_v_rel genv flatSem_div_exn_v flatSem_div_exn_v /\
-     source_to_flatProof_v_rel genv flatSem_chr_exn_v flatSem_chr_exn_v /\
-     source_to_flatProof_v_rel genv flatSem_bind_exn_v flatSem_bind_exn_v /\
+     (!b. source_to_flatProof_v_rel genv (semanticPrimitives_Boolv b)
+       (flatSem_Boolv b)) /\
+     source_to_flatProof_v_rel genv semanticPrimitives_div_exn_v
+       flatSem_div_exn_v /\
+     source_to_flatProof_v_rel genv semanticPrimitives_chr_exn_v
+       flatSem_chr_exn_v /\
+     source_to_flatProof_v_rel genv semanticPrimitives_bind_exn_v
+       flatSem_bind_exn_v /\
      source_to_flatProof_v_rel genv sub_exn_v subscript_exn_v`,
   CHEAT_TAC);;
 
@@ -612,7 +615,7 @@ let source_to_flatProof_list_to_v_v_rel = prove
  (`!xs ys.
      has_lists (global_env_c genv) /\ ALL2 (source_to_flatProof_v_rel genv)
        xs ys ==>
-       source_to_flatProof_v_rel genv (flatSem_list_to_v xs)
+       source_to_flatProof_v_rel genv (semanticPrimitives_list_to_v xs)
          (flatSem_list_to_v ys)`,
   CHEAT_TAC);;
 
@@ -636,12 +639,12 @@ let NOT_NULL_EQ = prove
 (* v_rel_check_type *)
 let source_to_flatProof_v_rel_check_type = prove
  (`source_to_flatProof_v_rel genv v1 w1 /\ genv_c_ok (global_env_c genv)
-  /\ flatSem_check_type ty v1 ==> flatSem_check_type ty w1`,
+  /\ semanticPrimitives_check_type ty v1 ==> flatSem_check_type ty w1`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_test_lemma = prove
- (`flatSem_do_test test ty v1 v2 = Eq_val b /\
+ (`semanticPrimitives_do_test test ty v1 v2 = Eq_val b /\
    genv_c_ok (global_env_c genv) /\
    source_to_flatProof_v_rel genv v1 w1 /\ source_to_flatProof_v_rel genv v2
      w2 ==>
@@ -649,58 +652,61 @@ let do_test_lemma = prove
   CHEAT_TAC);;
 
 let check_type_IMP_v_rel = prove
- (`flatSem_check_type ty v /\ genv_c_ok (global_env_c genv) ==>
+ (`semanticPrimitives_check_type ty v /\ genv_c_ok (global_env_c genv) ==>
   source_to_flatProof_v_rel genv v (v_to_flat v)`,
   CHEAT_TAC);;
 
 let check_type_v_rel_flat_to_v = prove
- (`flatSem_check_type ty v /\ source_to_flatProof_v_rel genv v y /\ genv_c_ok
-  (global_env_c genv) ==> flat_to_v y = v`,
+ (`semanticPrimitives_check_type ty v /\ source_to_flatProof_v_rel genv v y
+  /\ genv_c_ok (global_env_c genv) ==> flat_to_v y = v`,
   CHEAT_TAC);;
 
 let check_type_v_rel_MAP_flat_to_v = prove
  (`!v y.
-     ALL (flatSem_check_type ty) v /\ ALL2 (source_to_flatProof_v_rel genv)
-       v y /\ genv_c_ok (global_env_c genv) ==>
+     ALL (semanticPrimitives_check_type ty) v /\ ALL2
+       (source_to_flatProof_v_rel genv) v y /\ genv_c_ok (global_env_c genv)
+       ==>
      MAP flat_to_v y = v`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_arith_INL = prove
- (`ALL (flatSem_check_type ty) vs /\ genv_c_ok (global_env_c genv) /\
+ (`ALL (semanticPrimitives_check_type ty) vs /\ genv_c_ok (global_env_c genv)
+  /\
    ALL2 (source_to_flatProof_v_rel genv) vs vs_i1 /\
    do_arith a ty vs = SOME (INL exn) ==>
-   exn = flatSem_div_exn_v /\
-   ALL (flatSem_check_type ty) (MAP flat_to_v vs_i1) /\
+   exn = semanticPrimitives_div_exn_v /\
+   ALL (semanticPrimitives_check_type ty) (MAP flat_to_v vs_i1) /\
    (?e. do_arith a ty (MAP flat_to_v vs_i1) = SOME (INL e))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_arith_INR = prove
- (`ALL (flatSem_check_type ty) vs /\ genv_c_ok (global_env_c genv) /\
+ (`ALL (semanticPrimitives_check_type ty) vs /\ genv_c_ok (global_env_c genv)
+  /\
    ALL2 (source_to_flatProof_v_rel genv) vs vs_i1 /\
    do_arith a ty vs = SOME (INR r) ==>
-   ALL (flatSem_check_type ty) (MAP flat_to_v vs_i1) /\
+   ALL (semanticPrimitives_check_type ty) (MAP flat_to_v vs_i1) /\
    (?r'. do_arith a ty (MAP flat_to_v vs_i1) = SOME (INR r') /\
         source_to_flatProof_v_rel genv r (v_to_flat r'))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_conversion_INL = prove
- (`flatSem_check_type ty1 v /\ genv_c_ok (global_env_c genv) /\
+ (`semanticPrimitives_check_type ty1 v /\ genv_c_ok (global_env_c genv) /\
    source_to_flatProof_v_rel genv v v_i1 /\
    do_conversion v ty1 ty2 = SOME (INL exn) ==>
-   exn = flatSem_chr_exn_v /\
-   flatSem_check_type ty1 (flat_to_v v_i1) /\
+   exn = semanticPrimitives_chr_exn_v /\
+   semanticPrimitives_check_type ty1 (flat_to_v v_i1) /\
    (?e. do_conversion (flat_to_v v_i1) ty1 ty2 = SOME (INL e))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let do_conversion_INR = prove
- (`flatSem_check_type ty1 v /\ genv_c_ok (global_env_c genv) /\
+ (`semanticPrimitives_check_type ty1 v /\ genv_c_ok (global_env_c genv) /\
    source_to_flatProof_v_rel genv v v_i1 /\
    do_conversion v ty1 ty2 = SOME (INR r) ==>
-   flatSem_check_type ty1 (flat_to_v v_i1) /\
+   semanticPrimitives_check_type ty1 (flat_to_v v_i1) /\
    (?r'. do_conversion (flat_to_v v_i1) ty1 ty2 = SOME (INR r') /\
         source_to_flatProof_v_rel genv r (v_to_flat r'))`,
   CHEAT_TAC);;
@@ -2081,8 +2087,8 @@ let init_eval_state_ok_def = new_definition
      match x1 with
        NONE -> T
      | SOME (EvalDecs _) -> F
-     | SOME (EvalOracle s) -> generation
-       s = 0 /\ envs s = [[]]`;;
+     | SOME (EvalOracle s) -> eval_oracle_state_generation
+       s = 0 /\ eval_oracle_state_envs s = [[]]`;;
 
 let init_genv_ty_els_def = new_definition
   `init_genv_ty_els = [

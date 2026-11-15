@@ -239,6 +239,28 @@ let is_rel_PMATCH = prove
        | _ -> F`,
   CHEAT_TAC);;
 
+let _ = size_thms "bvi_exp";;
+
+let exp_size_get_bin_args_term = prove
+ (`!x x1 x2. get_bin_args x = SOME (x1,x2)
+             ==> bvi_exp_size x1 + bvi_exp_size x2 < bvi_exp_size x`,
+  GEN_TAC THEN
+  STRUCT_CASES_TAC
+    (ISPEC `x:bvi_exp` (CONJUNCT1 (cases "bvi_exp"))) THEN
+  REWRITE_TAC[get_bin_args_def; distinctness "option"] THEN
+  STRUCT_CASES_TAC (ISPEC `a1:bvi_exp list` list_CASES) THEN
+  REWRITE_TAC[distinctness "option"] THEN
+  STRUCT_CASES_TAC (ISPEC `t:bvi_exp list` list_CASES) THEN
+  REWRITE_TAC[distinctness "option"] THEN
+  STRUCT_CASES_TAC (ISPEC `t':bvi_exp list` list_CASES) THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option";
+              PAIR_EQ] THEN
+  REWRITE_TAC(all_size_thms()) THEN REPEAT STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+cake_term_facts := exp_size_get_bin_args_term ::
+  (!cake_term_facts);;
+
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvi_tailrecScript.sml:280-284: the tactic that proves the

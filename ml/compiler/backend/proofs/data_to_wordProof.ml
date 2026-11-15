@@ -142,7 +142,7 @@ let v_inv_Loc = prove
 (* [local] *)
 let state_rel_get_var_RefPtr_Loc = prove
  (`data_to_word_gcProof_state_rel c l1 l2 s t v1 locs /\
-   wordSem_get_var n (dataSem_state_locals s) = SOME (dataSem_RefPtr b p) /\
+   dataSem_get_var n (dataSem_state_locals s) = SOME (dataSem_RefPtr b p) /\
    wordSem_get_var (adjust_var n) t = SOME (word_Loc n1 n2) ==>
      n2 = 0`,
   CHEAT_TAC);;
@@ -164,10 +164,10 @@ let state_rel_pop_env_set_vars_IMP = prove
  (`data_to_word_gcProof_state_rel c q l s1 (t1:('a,'c,'ffi)wordSem_state) (SOME
   (ZIP as ws)) locs /\
    LENGTH as = LENGTH ws /\ LENGTH ns = LENGTH as /\ ALL_DISTINCT ns /\
-   wordSem_pop_env s1 = SOME s2 ==>
+   dataSem_pop_env s1 = SOME s2 ==>
    (?t2 l8 l9 ll.
      wordSem_pop_env t1 = SOME t2 /\ locs = CONS (l8,l9) ll /\
-     data_to_word_gcProof_state_rel c l8 l9 (wordSem_set_vars ns as s2)
+     data_to_word_gcProof_state_rel c l8 l9 (dataSem_set_vars ns as s2)
        (wordSem_set_vars (MAP adjust_var ns) ws t2) NONE ll)`,
   CHEAT_TAC);;
 
@@ -210,8 +210,8 @@ let data_compile_correct = prove
                (~(wordSem_jump_exc t = NONE) ==>
                 LASTN (LENGTH (dataSem_state_stack s1) + 1) locs = CONS
                   (l5,l6) ll /\
-                (!i. data_to_word_gcProof_state_rel c l5 l6 (wordSem_set_var
-                  i v s1)
+                (!i. data_to_word_gcProof_state_rel c l5 l6 (dataSem_set_var i
+                  v s1)
                        (wordSem_set_var (adjust_var i) w t1) NONE ll)))
          | SOME (Rerr (Rabort (Rffi_error f))) -> (res1 = SOME
            (wordSem_FinalFFI f) /\ wordSem_state_ffi t1 = dataSem_state_ffi s1)
@@ -249,12 +249,12 @@ let data_compile_correct = prove
 
 let compile_correct_lemma = prove
  (`!s c l1 l2 res s1 (t:('a,'c,'ffi)wordSem_state) start'.
-      (dataSem_evaluate (word_Call NONE (SOME start') [] NONE,s) = (res,s1))
+      (dataSem_evaluate (data_Call NONE (SOME start') [] NONE,s) = (res,s1))
         /\ ~(res = SOME (Rerr (Rabort Rtype_error))) /\ wordSem_state_termdep
       t > 1 /\
       data_to_word_gcProof_state_rel c l1 l2 s t NONE [] ==>
       (?t1 res1.
-        (wordSem_evaluate (word_Call NONE (SOME start') [0] NONE,t) =
+        (wordSem_evaluate (data_Call NONE (SOME start') [0] NONE,t) =
           (res1,t1)) /\
         option_le (wordSem_state_stack_max t1) (dataSem_state_stack_max s1)
           /\
@@ -303,11 +303,11 @@ let state_rel_ext_def = new_definition
 (* compile_correct *)
 let data_to_wordProof_compile_correct = prove
  (`!x s l1 l2 res s1 (t:('a,'c,'ffi)wordSem_state) start'.
-      (dataSem_evaluate (word_Call NONE (SOME start') [] NONE,s) = (res,s1))
+      (dataSem_evaluate (data_Call NONE (SOME start') [] NONE,s) = (res,s1))
         /\ ~(res = SOME (Rerr (Rabort Rtype_error))) /\
       state_rel_ext x l1 l2 s t ==>
       (?ck t1 res1.
-        (wordSem_evaluate (word_Call NONE (SOME start') [0] NONE,
+        (wordSem_evaluate (data_Call NONE (SOME start') [0] NONE,
            (wordProps_inc_clock ck t)) = (res1,t1)) /\
         option_le (wordSem_state_stack_max t1) (dataSem_state_stack_max s1)
           /\
@@ -404,8 +404,8 @@ let data_to_wordProof_compile_semantics = prove
        cc =
        (\cfg.
             OPTION_MAP (I ## MAP upper_w2w ## I) o tcc cfg o
-            MAP (bvi_to_data_compile_part c)) /\
-       Abbrev (tco = (I ## MAP (bvi_to_data_compile_part c)) o co) /\
+            MAP (data_to_word_compile_part c)) /\
+       Abbrev (tco = (I ## MAP (data_to_word_compile_part c)) o co) /\
        (!n. ALL (\(n,_). data_num_stubs <= n) (SND (co n))) /\
        code_rel_ext x1 (wordSem_state_code t) /\ domain x1 = domain
          (wordSem_state_code t) /\ wordSem_state_be t = data_to_word_config_be
@@ -465,13 +465,13 @@ let extract_labels_WordShift64_on_32 = prove
 
 (* [local] *)
 let extract_labels_assignWordOp = prove
- (`wordSem_assign a b c d (clos_WordOp (WordOpw e f)) g h = (i,j) ==>
+ (`data_to_word_assign a b c d (clos_WordOp (WordOpw e f)) g h = (i,j) ==>
    wordConvs_extract_labels i = [] /\ c <= j`,
   CHEAT_TAC);;
 
 (* [local] *)
 let extract_labels_assignWordShift = prove
- (`wordSem_assign a b c d (clos_WordOp (WordShift e f k)) g h = (i,j) ==>
+ (`data_to_word_assign a b c d (clos_WordOp (WordShift e f k)) g h = (i,j) ==>
    wordConvs_extract_labels i = [] /\ c <= j`,
   CHEAT_TAC);;
 
@@ -592,7 +592,7 @@ let assign_no_inst = prove
       /\ asm_config_ISA ac = ARMv7) /\
    asm_offset_ok 0 (asm_config_addr_offset ac) (n2w 0) /\ asm_offset_ok 0
      (asm_config_byte_offset ac) (n2w 0)) ==>
-   every_inst (inst_ok_less ac) (FST (wordSem_assign a b c d e f g))`,
+   every_inst (inst_ok_less ac) (FST (data_to_word_assign a b c d e f g))`,
   CHEAT_TAC);;
 
 (*
@@ -655,7 +655,7 @@ let data_to_word_compile_conventions = prove
 
 let data_to_word_names = prove
  (`word_to_word_compile c1 c2 (APPEND (data_to_word_stubs (:'a)
-  (backend_config_data_conf c)) (MAP (bvi_to_data_compile_part c3) prog)) =
+  (backend_config_data_conf c)) (MAP (data_to_word_compile_part c3) prog)) =
   (col,p) ==>
     MAP FST p = APPEND (MAP FST (data_to_word_stubs (:'a)
       (backend_config_data_conf c))) (MAP FST prog)`,
@@ -744,7 +744,7 @@ let const_parts_to_words_labels = prove
 (* [local] *)
 let word_get_code_labels_assign = prove
  (`!x.
-     wordSem_assign c secn v w x y z = (res1,res2) ==>
+     data_to_word_assign c secn v w x y z = (res1,res2) ==>
      wordConvs_get_code_labels res1 SUBSET
      assign_get_code_label x UNION (set_of_list (MAP FST
        (data_to_word_stubs (:'a) c)))`,
@@ -780,7 +780,7 @@ let word_good_handlers_StoreAnyConsts = prove
 (* [local] *)
 let word_good_handlers_assign = prove
  (`!x.
-     wordSem_assign c secn v w x y z = (res1,res2) ==>
+     data_to_word_assign c secn v w x y z = (res1,res2) ==>
      good_handlers secn res1`,
   CHEAT_TAC);;
 
@@ -821,7 +821,7 @@ let stubs_fst_def = new_definition
 let data_to_word_good_code_labels_incr = prove
  (`set_of_list stubs_fst SUBSET elabs /\
    dataProps_good_code_labels progs elabs ==>
-   wordConvs_good_code_labels (MAP (bvi_to_data_compile_part dc) progs)
+   wordConvs_good_code_labels (MAP (data_to_word_compile_part dc) progs)
      elabs`,
   CHEAT_TAC);;
 
@@ -831,7 +831,7 @@ let data_to_word_good_handlers = prove
   CHEAT_TAC);;
 
 let data_to_word_good_handlers_incr = prove
- (`ALL (\(n,m,pp). good_handlers n pp) (MAP (bvi_to_data_compile_part dc)
+ (`ALL (\(n,m,pp). good_handlers n pp) (MAP (data_to_word_compile_part dc)
   progs)`,
   CHEAT_TAC);;
 

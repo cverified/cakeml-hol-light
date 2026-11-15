@@ -724,6 +724,13 @@ FIELD_VAR_DEF = {
   # configuration of source_to_flat)
   ('source_to_flatProof', 'orac_rel_inner_def'):
     {'s': 'eval_oracle_state', 'c': 'flatSem_state'},
+  # and the s whose generation and envs this reads is the state of
+  # an EvalOracle as well
+  ('source_to_flatProof', 'init_eval_state_ok_def'):
+    {'s': 'eval_oracle_state'},
+  # the t whose registers the initial labSem state takes over is
+  # the state of the machine, an asm_state
+  ('lab_to_targetProof', 'make_init_def'): {'t': 'asm_state'},
 }
 
 FIELD_OF = {
@@ -2466,6 +2473,9 @@ CON_OF = {
     {'word_cmp': 'asm'},
   ('data_to_word_bignumProof', 'word_cmp_Test_1'): {'word_cmp': 'asm'},
   ('stack_to_labProof', 'word_cmp_negate_alt'): {'word_cmp': 'asm'},
+  # the Halt that this assumes the program gives back is the
+  # result of a stackSem evaluate and not the one of the machine
+  ('stack_to_labProof', 'halt_assum_def'): {'Halt': 'stackSem'},
   # the Equal that the If of a wordLang program takes is the
   # comparison of asm, and an ordering has an Equal as well
   ('word_simp', 'drop_consts_def'): {'*': 'wordLang'},
@@ -13168,6 +13178,35 @@ THM_PATCH = {
   ],
   # and the evaluate and the dec_clock of compile_jump_correct
   # are labSem's, on the s of that statement
+  # the evaluate of a labSem state is labSem's, and the result
+  # that the stackSem evaluate of the program gives back is
+  # stackSem's: this file is about the two semantics at once and
+  # writes the name of each of them for both
+  ('stack_to_labProof', 'flatten_correct'): [
+    ('~(r = SOME targetSem_Error)', '~(r = SOME stackSem_Error)'),
+    ('stackSem_evaluate (labSem_state_clock_fupd',
+     'labSem_evaluate (labSem_state_clock_fupd'),
+    ('stackSem_evaluate (labSem_state_clock_fupd',
+     'labSem_evaluate (labSem_state_clock_fupd'),
+    ('stackSem_evaluate (labSem_state_clock_fupd',
+     'labSem_evaluate (labSem_state_clock_fupd'),
+  ],
+  ('stack_to_labProof', 'flatten_call_correct'): [
+    ('~(res = SOME targetSem_Error)',
+     '~(res = SOME stackSem_Error)'),
+    ('~(res = SOME targetSem_TimeOut) ==>',
+     '~(res = SOME stackSem_TimeOut) ==>'),
+    ('(?w. res = SOME (targetSem_Halt (word_Word w)))',
+     '(?w. res = SOME (stackSem_Halt (word_Word w)))'),
+    ('(SOME (targetSem_Halt (word_Word (n2w 0))),t)',
+     '(SOME (stackSem_Halt (word_Word (n2w 0))),t)'),
+    ('stackSem_evaluate (labSem_state_clock_fupd',
+     'labSem_evaluate (labSem_state_clock_fupd'),
+    ('(!w. res = SOME (targetSem_Halt w) ==>',
+     '(!w. res = SOME (stackSem_Halt w) ==>'),
+    ('(res = SOME targetSem_TimeOut ==> r2 = targetSem_TimeOut)',
+     '(res = SOME stackSem_TimeOut ==> r2 = targetSem_TimeOut)'),
+  ],
   ('stack_to_labProof', 'compile_jump_correct'): [
     ('stackSem_evaluate s = stackSem_evaluate (labSem_upd_pc pc'
      "' (stackSem_dec_clock s))",

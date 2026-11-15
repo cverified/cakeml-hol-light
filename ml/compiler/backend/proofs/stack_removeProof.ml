@@ -395,7 +395,7 @@ let state_rel_get_var_k = prove
 
 let evaluate_single_stack_alloc = prove
  (`stack_removeProof_state_rel jump off k s t1 /\
-   ((r,s2) = (if stackSem_state_stack_space s < n then (SOME (stack_Halt
+   ((r,s2) = (if stackSem_state_stack_space s < n then (SOME (stackSem_Halt
      (word_Word (n2w 2))),stackSem_empty_env s)
     else (NONE,stackSem_state_stack_space_fupd (K
       (stackSem_state_stack_space s - n)) s))) /\ ~(n = 0) /\ n <=
@@ -417,8 +417,9 @@ let evaluate_stack_alloc = prove
    (?ck t2.
      stackSem_evaluate (stack_alloc jump k n,stackSem_state_clock_fupd (K
        (ck + stackSem_state_clock t1)) t1) = (r,t2) /\
-     (if !w. ~(r = SOME (stack_Halt w)) then stack_removeProof_state_rel
-       jump off k s2 t2 else stackSem_state_ffi t2 = stackSem_state_ffi s2))`,
+     (if !w. ~(r = SOME (stackSem_Halt w)) then
+       stack_removeProof_state_rel jump off k s2 t2 else stackSem_state_ffi
+       t2 = stackSem_state_ffi s2))`,
   CHEAT_TAC);;
 
 let state_rel_mem_load_imp = prove
@@ -748,8 +749,8 @@ let stack_removeProof_comp_correct = prove
       (?ck t2. stackSem_evaluate (stack_remove_comp jump off k
         p,stackSem_state_clock_fupd (K (ck + stackSem_state_clock t1)) t1) =
         (r,t2) /\
-              (match r with SOME (stack_Halt _) -> stackSem_state_ffi t2 =
-                stackSem_state_ffi s2
+              (match r with SOME (stackSem_Halt _) -> stackSem_state_ffi t2
+                = stackSem_state_ffi s2
                | SOME stackSem_TimeOut -> stackSem_state_ffi t2 =
                  stackSem_state_ffi s2
                | SOME (stackSem_FinalFFI _) -> stackSem_state_ffi t2 =

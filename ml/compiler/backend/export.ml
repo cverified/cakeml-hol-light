@@ -197,9 +197,9 @@ let emit_symbol_def = new_definition
   `emit_symbol appl (name,label,start',len) =
      misc_Append appl (misc_List
        [strcat (strcat (strcat (strcat (strcat (strcat (implode
-         "    makesym(") label) (implode ", ")) (mlint_toString (start')))
-         (implode ", "))
-       (mlint_toString (len))) (implode ")\n")])`;;
+         "    makesym(") label) (implode ", ")) (num_to_str (start'))) (implode
+         ", "))
+       (num_to_str (len))) (implode ")\n")])`;;
 
 let emit_symbols_def = new_definition
   `emit_symbols lsyms =

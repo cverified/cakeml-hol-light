@@ -50,9 +50,9 @@ let _ = hide_overloads
 
 (* [local] *)
 let evaluate_ignore_clocks = prove
- (`labSem_evaluate mc_conf ffi k ms = (r1,ms1,st1) /\ ~(r1 = targetSem_TimeOut)
-  /\
-     labSem_evaluate mc_conf ffi k' ms = (r2,ms2,st2) /\ ~(r2 =
+ (`targetSem_evaluate mc_conf ffi k ms = (r1,ms1,st1) /\ ~(r1 =
+  targetSem_TimeOut) /\
+     targetSem_evaluate mc_conf ffi k' ms = (r2,ms2,st2) /\ ~(r2 =
        targetSem_TimeOut) ==>
      (r1,ms1,st1) = (r2,ms2,st2)`,
   CHEAT_TAC);;
@@ -139,7 +139,7 @@ let shift_interfer_0 = prove
 
 (* [local] *)
 let upd_pc_with_pc = prove
- (`labSem_upd_pc (asm_state_pc s1) s1 = (s1:'a asm_state)`,
+ (`asmSem_upd_pc (asm_state_pc s1) s1 = (s1:'a asm_state)`,
   CHEAT_TAC);;
 
 let shift_interfer_twice = prove
@@ -174,12 +174,12 @@ let evaluate_nop_steps = prove
          (ms1:'state) ==>
        (?l ms2.
          !k.
-           (labSem_evaluate c io (k + l) ms1 =
-            labSem_evaluate (shift_interfer l c) io k ms2) /\
+           (targetSem_evaluate c io (k + l) ms1 =
+            targetSem_evaluate (shift_interfer l c) io k ms2) /\
            (find_next_interference c io (k + l) ms1 =
             find_next_interference (shift_interfer l c) io k ms2) /\
            target_state_rel (machine_config_target c)
-             (labSem_upd_pc
+             (asmSem_upd_pc
                (asm_state_pc s1 +
                 n2w (n * LENGTH (asm_config_encode (target_config
                   (machine_config_target c)) (asm_Inst asm_Skip)))) s1)
@@ -211,8 +211,8 @@ let asm_step_IMP_evaluate_step_nop = prove
       (!x. ~(i = asm_Call x)) ==>
       (?l ms2.
         !k.
-          (labSem_evaluate c io (k + l) ms1 =
-           labSem_evaluate (shift_interfer l c) io k ms2) /\
+          (targetSem_evaluate c io (k + l) ms1 =
+           targetSem_evaluate (shift_interfer l c) io k ms2) /\
           (find_next_interference c io (k + l) ms1 =
            find_next_interference (shift_interfer l c) io k ms2) /\
           target_state_rel (machine_config_target c) s2 ms2 /\ ~(l = 0))`,
@@ -1465,7 +1465,7 @@ let write_bytearray_NOT_Loc = prove
  (`!xs c1 s1 a c.
        (labSem_state_mem s1 a = word_Word c) ==> ~((write_bytearray c1 xs
          (labSem_state_mem s1) (labSem_state_mem_domain s1) (labSem_state_be
-         s1)) a = asm_Loc n n0)`,
+         s1)) a = word_Loc n n0)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1636,8 +1636,8 @@ let arith_upd_lemma = prove
 (* The lab and asm versions should be in their individual props *)
 let arith_upd_fp_regs = prove
  (`(labSem_state_fp_regs (labSem_arith_upd a s) = labSem_state_fp_regs s
-  /\ labSem_state_fp_regs
-   (labSem_arith_upd a (t:'a asm_state)) = asm_state_fp_regs t)`,
+  /\ asm_state_fp_regs (asmSem_arith_upd a (t:'a asm_state)) =
+    asm_state_fp_regs t)`,
   CHEAT_TAC);;
 add_simp arith_upd_fp_regs;;
 
@@ -1758,8 +1758,7 @@ let word_cmp_lemma = prove
  (`lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
      (wordSem_word_cmp cmp (labSem_state_regs s1 rr) (labSem_reg_imm ri s1)
        = SOME x) ==>
-     (x = wordSem_word_cmp cmp (asm_state_regs t1 rr) (labSem_reg_imm ri
-       t1))`,
+     (x = asm_word_cmp cmp (asmSem_read_reg rr t1) (asmSem_reg_imm ri t1))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -4111,15 +4110,15 @@ let make_init_def = new_definition
   `lab_to_targetProof_make_init mc_conf (ffi:'ffi ffi_state) t m dm sdm
   (ms:'state) code
      comp' cbpos cbspace coracle =
-     mk_labSem_state (\k. word_Word ((regs t k):'a word)) (fp_regs t) m dm
-       sdm 0 (asm_config_big_endian (target_config (machine_config_target
-       mc_conf))) ffi (target_io_regs mc_conf ffi ms) (target_cc_regs mc_conf
-       ffi ms) (target_io_fp_regs mc_conf ffi ms) (target_cc_fp_regs mc_conf
-       ffi ms) code comp' coracle (mk_buffer cbpos [] cbspace) 0 F
-       (machine_config_ptr_reg mc_conf) (machine_config_len_reg mc_conf)
-       (machine_config_ptr2_reg mc_conf) (machine_config_len2_reg mc_conf)
-       (match asm_config_link_reg (target_config (machine_config_target
-       mc_conf)) with SOME n -> n | _ -> 0)
+     mk_labSem_state (\k. word_Word ((asm_state_regs t k):'a word))
+       (asm_state_fp_regs t) m dm sdm 0 (asm_config_big_endian (target_config
+       (machine_config_target mc_conf))) ffi (target_io_regs mc_conf ffi ms)
+       (target_cc_regs mc_conf ffi ms) (target_io_fp_regs mc_conf ffi ms)
+       (target_cc_fp_regs mc_conf ffi ms) code comp' coracle (mk_buffer cbpos
+       [] cbspace) 0 F (machine_config_ptr_reg mc_conf) (machine_config_len_reg
+       mc_conf) (machine_config_ptr2_reg mc_conf) (machine_config_len2_reg
+       mc_conf) (match asm_config_link_reg (target_config
+       (machine_config_target mc_conf)) with SOME n -> n | _ -> 0)
    // Initialize with code buffer empty`;;
 
 let oracle_tie_make_init = prove

@@ -1,9 +1,9 @@
 (* ======================================================== *)
 (*  sptree: ported from HOL4's
     src/finite_maps/sptreeScript.sml
-    A HOL4 library theory, of which the port has the definitions
-    that CakeML needs, and 88 theorems of it from LightCake.  Needed
-    by 106 files of the port.  *)
+    A HOL4 library theory, of which the port has the definitions and
+    103 theorems that CakeML needs, 88 of them from LightCake.
+    Needed by 106 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/indexedLists.ml";;
