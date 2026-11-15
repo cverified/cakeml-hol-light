@@ -1473,6 +1473,10 @@ CLAUSE_FORM = set([
   # takes, and flatSem's exp_alt_size reads the same way
   ('closSem', 'exp_alt_size_def'),
   ('flatSem', 'exp_alt_size_def'),
+  # the t of this one is the tra of a Raise and the varN of a
+  # Fun, which the model of the clash does not see because the
+  # constructors of the clauses are of two theories
+  ('flatProps', 'set_globals_def'),
   # and the es of this is a list of expressions in one clause and
   # a list of pairs in another, which only a MAP of a body says
   ('presLang', 'exp_to_display_def'),
@@ -2180,10 +2184,18 @@ CON_OF = {
   # every Jump of line_ok is the asm instruction that the line
   # encodes to, not the LabAsm of a labLang line
   ('lab_to_targetProof', 'line_ok_def'): {'Jump': 'asm'},
+  ('lab_to_targetProof', 'line_encd_def'): {'Jump': 'asm'},
+  ('lab_to_targetProof', 'line_encd0_def'): {'Jump': 'asm'},
+  # the memory operation that a ShareInst takes is asm's and
+  # takes no arguments, as it is in addr_ok beside this one
+  ('stackProps', 'addr_name_def'):
+    {'Load': {0: 'asm'}, 'Store': {0: 'asm'}},
   # the compile_inc that takes the limit, the split and the cut
   # is bvl_inline's; the one that state_cc takes on its own is
   # bvl_to_bvi's, of a number and a program
   ('bvl_to_bviProof', 'full_cc_def'):
+    {'compile_inc': {3: 'bvl_inline', 0: 'bvl_to_bvi'}},
+  ('bvl_to_bviProof', 'full_co_def'):
     {'compile_inc': {3: 'bvl_inline', 0: 'bvl_to_bvi'}},
   # the prog_comp with three arguments in front of the program is
   # stack_remove's, the one without arguments stack_alloc's
