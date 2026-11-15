@@ -2567,6 +2567,43 @@ CON_OF = {
   # the declaration that this counts the bindings of is the
   # source language's, so its pat_bindings is ast's
   ('source_to_flatProof', 'num_bindings_def'): {'pat_bindings': 'ast'},
+  # LightCake states these too, and writes the result of an
+  # evaluate where this port wrote the program of the language
+  # (tools/lcstmt.py says which names the two ports resolve
+  # differently)
+  ('word_simpProof', 'evaluate_sf_gc_consts'):
+    {'Break': 'wordSem', 'Continue': 'wordSem'},
+  ('word_instProof', 'inst_select_thm'):
+    {'Break': 'wordSem', 'Continue': 'wordSem'},
+  ('word_instProof', 'inst_select_Loop_helper'):
+    {'Break': 'wordSem', 'Continue': 'wordSem'},
+  # and the state that these push, pop, cut or read a variable of
+  # is the dataSem one that the pass reads, not the wordSem one it
+  # writes
+  ('data_to_word_gcProof', 'eval_push_env_T_Raise_IMP_stack_length'):
+    {'evaluate': 'dataSem', 'call_env': 'dataSem',
+     'push_env': 'dataSem', 'dec_clock': 'dataSem'},
+  ('data_to_word_gcProof', 'eval_exc_stack_shorter'):
+    {'evaluate': 'dataSem', 'call_env': 'dataSem',
+     'push_env': 'dataSem', 'dec_clock': 'dataSem'},
+  ('data_to_word_gcProof', 'size_of_heap_call_push_env'):
+    {'call_env': 'dataSem', 'push_env': 'dataSem'},
+  ('data_to_word_gcProof', 'get_vars_SOME_IFF_data'):
+    {'get_vars': 'dataSem'},
+  ('data_to_word_gcProof', 'get_vars_SOME_IFF_data_eq'):
+    {'get_vars': 'dataSem'},
+  ('data_to_word_assignProof', 'RefByte_thm'):
+    {'get_vars': 'dataSem', 'pop_env': 'dataSem'},
+  ('data_to_word_assignProof', 'FromList_thm'):
+    {'get_vars': 'dataSem', 'pop_env': 'dataSem'},
+  ('data_to_word_assignProof', 'AllocVar_thm_binary'):
+    {'get_vars': 'dataSem'},
+  ('data_to_word_assignProof', 'state_rel_cut_state_opt_set_var'):
+    {'set_var': 'dataSem'},
+  ('data_to_word_assignProof', 'push_env_tstamps'):
+    {'push_env': 'dataSem'},
+  ('data_to_word_assignProof', 'call_env_push_env_dec_clock_stack_max'):
+    {'call_env': 'dataSem', 'push_env': 'dataSem'},
   # the result that the machine gives is targetSem's, where the
   # TimeOut of wordSem is the one the resolution would take
   ('labProps', 'evaluate_ADD_clock'): {'TimeOut': 'targetSem'},
