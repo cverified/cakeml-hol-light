@@ -18,11 +18,11 @@ only which statements are out.
 """
 import sys, os, re, collections
 
-# with ONLY_OLD=1 the table keeps nothing that was not in it
-# before: a harvest in which a file did not load gives the files
-# after it statements that fail for want of a constant, and those
-# are not statements to take out of the port.  The run after the
-# failures are put right is the one that may add to the table.
+# A harvest in which a file did not load gives the files after it
+# statements that fail for want of a constant, and those are not
+# statements to take out of the port: an entry of a file that
+# loaded is what the session says, and of a file that did not it
+# is what the table said before.
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 sys.path.insert(0, T)
@@ -71,20 +71,23 @@ def main():
     if (thy, nm) in seen: continue
     seen.add((thy, nm))
     out.append((thy, nm, msg))
-  if os.environ.get('ONLY_OLD') == '1':
-    import unstated
-    # a file that did not load says nothing about the statements
-    # after the phrase it stopped at, so its entries stay
-    bad = set()
-    for l in open(T + '../tmp/cs.out'):
-      if 'Exception' in l or 'Error' in l:
-        rel = l.split()[0]
-        if rel in thy_of: bad.add(thy_of[rel])
-    keep = {(r[0], r[1]) for r in out}
-    out = [r for r in out if (r[0], r[1]) in unstated.NAMES]
-    out += [(thy, nm, 'the file did not load in the harvest')
-            for (thy, nm) in sorted(unstated.NAMES)
-            if thy in bad and (thy, nm) not in keep]
+  # a file that did not load says nothing about the statements
+  # after the phrase it stopped at, and the ones it does say
+  # fail for want of what that file would have defined: so an
+  # entry of a file that loaded is what the session says, and of
+  # a file that did not it is what the table said before
+  import unstated
+  bad = set()
+  for l in open(T + '../tmp/cs.out'):
+    if 'Exception' in l or 'Error' in l:
+      rel = l.split()[0]
+      if rel in thy_of: bad.add(thy_of[rel])
+  out = [r for r in out if r[0] not in bad]
+  seen = {(r[0], r[1]) for r in out}
+  out += [(thy, nm, 'the file did not load in this run')
+          for (thy, nm) in sorted(unstated.NAMES)
+          if thy in bad and (thy, nm) not in seen]
+
   print(open(T + 'unstated.py').read().split('NAMES = set([')[0]
         + 'NAMES = set([')
   # grouped by what the parser said, so that the table says what
