@@ -2,8 +2,12 @@
   (MESON_TAC[LE_EXISTS; LE_CASES])
 
 ### can_pmatch_all_EVERY
-  (GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
-   ASM_REWRITE_TAC[can_pmatch_all_def; ALL] THEN GEN_TAC THEN
+  (* the statement has no quantifier, so the list the induction
+     is on has to be generalised first (HOL4's Induct_on does
+     that itself) and the other three stay as they are *)
+  (SPEC_TAC(`ps:(ast_pat)list`,`ps:(ast_pat)list`) THEN
+   LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[can_pmatch_all_def; ALL] THEN
    COND_CASES_TAC THEN ASM_REWRITE_TAC[])
 
 ### evaluateProps_do_app_ffi_unchanged

@@ -88,8 +88,8 @@
      (ft:1 spt)` MP_TAC THENL
     [ASM_REWRITE_TAC[IN_IMAGE] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
    REWRITE_TAC[domain_lookup] THEN
-   CASES_ON_TAC `lookup ((g:num->num) x) (gt:1 spt)` THEN
-   CASES_ON_TAC `lookup (x:num) (ft:1 spt)` THEN
+   CASES_ON_TAC `sptree_lookup ((g:num->num) x) (gt:1 spt)` THEN
+   CASES_ON_TAC `sptree_lookup (x:num) (ft:1 spt)` THEN
    REWRITE_TAC[option_DISTINCT; option_INJ] THEN
    ONCE_REWRITE_TAC[one] THEN MESON_TAC[])
 
