@@ -2014,6 +2014,14 @@ CON_OF = {
      'chr_exn_v': 'semanticPrimitives'},
   ('source_to_flatProof', 'do_conversion_INR'):
     {'check_type': 'semanticPrimitives'},
+  # cl_rel and add_args are about the values of closSem, and
+  # closSem and bvlSem have Number, Word64, RefPtr and Block
+  ('clos_to_bvlProof', 'cl_rel_F'):
+    {'Number': 'closSem', 'Word64': 'closSem',
+     'RefPtr': 'closSem', 'Block': 'closSem'},
+  ('clos_to_bvlProof', 'add_args_F'):
+    {'Number': 'closSem', 'Word64': 'closSem',
+     'RefPtr': 'closSem', 'Block': 'closSem'},
   # state_ok is about a state of bvlSem (the source annotates
   # it), so the evaluate, the do_app, the dec_clock and the refs
   # of the theorems about it are bvlSem's
@@ -12698,6 +12706,10 @@ CON_FILE = {
   # configuration, a globals approximation and two values, and it
   # means that one everywhere; clos_ticksProof's, which comes
   # later in the order, takes two values and nothing else
+  # the Halt of stack_allocProof is the result of stackSem,
+  # which an evaluate gives; stackLang has a Halt of its own,
+  # a program, and the file never writes that one
+  'stack_allocProof': {'Halt': 'stackSem'},
   'clos_knownProof': {'v_rel': 'clos_knownProof',
                       'ref_rel': 'clos_knownProof'},
   # the dec_clock of this proof is wordSem's, on the state the
@@ -13246,6 +13258,29 @@ THM_PATCH = {
   ('bvl_to_bviProof', 'bEval_bVarBound'): [
     ('bviSem_evaluate (xs,vs,s)',
      'bvlSem_evaluate (xs,vs,s)'),
+  ],
+  # v_rel relates a value of closSem to one of bvlSem and
+  # ref_rel a ref of closSem to one of bvlSem, and the two
+  # have Unit, Boolv, ValueArray, Thunk and ByteArray
+  ('clos_to_bvlProof', 'v_rel_Unit'): [
+    ('code bvlSem_Unit y <=> (y = bvlSem_Unit)',
+     'code closSem_Unit y <=> (y = bvlSem_Unit)'),
+    ('code x bvlSem_Unit <=> (x = bvlSem_Unit)',
+     'code x bvlSem_Unit <=> (x = closSem_Unit)'),
+  ],
+  ('clos_to_bvlProof', 'v_rel_Boolv'): [
+    ('code (bvlSem_Boolv b) y <=> (y = bvlSem_Boolv b)',
+     'code (closSem_Boolv b) y <=> (y = bvlSem_Boolv b)'),
+    ('code x (bvlSem_Boolv b) <=> (x = bvlSem_Boolv b)',
+     'code x (bvlSem_Boolv b) <=> (x = closSem_Boolv b)'),
+  ],
+  ('clos_to_bvlProof', 'ref_rel_simp'): [
+    ('(?ws. y = closSem_ValueArray ws',
+     '(?ws. y = bvlSem_ValueArray ws'),
+    ('(?w. y = closSem_Thunk m w',
+     '(?w. y = bvlSem_Thunk m w'),
+    ('y = closSem_ByteArray F bs',
+     'y = bvlSem_ByteArray F bs'),
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
