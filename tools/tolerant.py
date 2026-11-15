@@ -19,6 +19,13 @@ The copy is for a harvest only.  Nothing of it goes into ml/.
 """
 import sys, re, os
 
+# tmp/unstated.txt and tmp/mark.txt are the reports of a run.  An
+# abstract (tools/bin/abstractall) is the loop and a run the audit
+# (CLAUDE.md), so the two may be going at once: CAKE_UNSTATED and
+# CAKE_MARK give the abstract reports of its own.
+UNSTATED = os.environ.get('CAKE_UNSTATED', 'unstated.txt')
+MARKFILE = os.environ.get('CAKE_MARK', 'mark.txt')
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
@@ -26,12 +33,12 @@ TMP = T + '../tmp/'
 
 PRELUDE = """let cake_mark s =
   let ch = open_out_gen [Open_append; Open_creat] 0o644
-            "%(tmp)smark.txt" in
+            "%(tmp)s%(markfile)s" in
   output_string ch (s ^ "\\n"); close_out ch;;
 
 let cake_log_unstated nm e =
   let ch = open_out_gen [Open_append; Open_creat] 0o644
-            "%(tmp)sunstated.txt" in
+            "%(tmp)s%(unstated)s" in
   output_string ch ("%(file)s\t" ^ nm ^ "\t" ^ e ^ "\n");
   close_out ch;
   print_string ("NOT STATED " ^ nm ^ ": " ^ e ^ "\n");;
@@ -150,7 +157,8 @@ def main():
   mark = len(sys.argv) > 3 and sys.argv[3] == 'mark'
   text = open(src).read()
   parts = re.split(r'(?<=;;)\n', text)
-  res = [PRELUDE % {'tmp': TMP, 'file': src}]
+  res = [PRELUDE % {'tmp': TMP, 'file': src,
+                    'unstated': UNSTATED, 'markfile': MARKFILE}]
   n = 0
   for p in parts:
     if not p.strip():

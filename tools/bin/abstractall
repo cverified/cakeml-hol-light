@@ -1,0 +1,40 @@
+#!/bin/sh
+# abstractall : the loop (CLAUDE.md, "the abstract is the loop,
+# the run is the audit").
+#
+# Loads every file of ml/ into a session as an abstract -- every
+# definition makes its constant and assumes its equations, every
+# proof is skipped -- and reports which files fail and which
+# statements HOL Light could not read.  About ten minutes against
+# the hour and a half of tools/bin/runall, and it answers
+# everything the statement work asks: does the constant exist,
+# with the right type, and does the statement parse and typecheck
+# against it.  ml/lib/fast.ml is what makes that sound, because
+# the statements are the same terms either way.
+#
+# What it does NOT answer is whether a definition goes through
+# for real -- a termination above all, which it assumes.  That is
+# the whole of what a run adds, which is why a run goes at the
+# end of a round and never inside one.  **A difference between
+# this and a run is a bug in the abstract: fix it here.**
+#
+# Its reports are its own (tmp/abs.out, tmp/abs-unstated.txt), so
+# it may be run while a run is going.
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+cd $C
+. tools/holenv.sh > /dev/null 2>&1
+s=${CAKE_ABS_SESSION:-abs}
+: > tmp/abs-unstated.txt
+: > tmp/abs-mark.txt
+t0=$(date +%s)
+CAKE_UNSTATED=abs-unstated.txt CAKE_MARK=abs-mark.txt \
+  TOLERANT=1 TIMEOUT=${TIMEOUT:-300} abstract "$s" \
+  > tmp/abs.out 2>&1
+t1=$(date +%s)
+n=$(grep -c . tools/load.txt)
+f=$(grep -cE 'Exception|Error in' tmp/abs.out)
+u=$(grep -c . tmp/abs-unstated.txt)
+echo "abstractall: $n files, $f with a failure, $u unread statements, $((t1-t0))s"
+[ "$f" = 0 ] || { echo '--- the files that failed:';
+  grep -E 'Exception|Error in' tmp/abs.out | cut -c1-120; }
