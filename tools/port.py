@@ -111,6 +111,7 @@ def recursive_text(text, names):
   return uses > heads
 hterm.NAME_MAP = overrides.NAME_MAP
 hterm.TYPE_MAP = overrides.TYPE_MAP
+hterm.TYPE_ABBREV = overrides.TYPE_ABBREV
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 ML = T + '../ml/'

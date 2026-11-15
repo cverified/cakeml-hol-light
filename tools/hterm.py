@@ -1009,6 +1009,7 @@ for k, v in INFIX.items():
 
 NAME_MAP = {}          # set by the porter, from tools/overrides.py
 TYPE_MAP = {}          # the same, for the type names
+TYPE_ABBREV = {}       # a HOL4 type abbreviation written out
 
 
 # a HOL4 function whose HOL Light counterpart takes the same
@@ -3130,6 +3131,12 @@ def print_type(ty, ctx=None, prec=0):
     s = (print_type(args[0], ctx, 4) + '+' +
          print_type(args[1], ctx, 3))
     return '(' + s + ')' if prec > 3 else s
+  # a type abbreviation of HOL4 that the port writes out, because
+  # HOL Light has none (overrides.TYPE_ABBREV): HOL4's 'a subst is
+  # the finite map (num |-> 'a term)
+  abb = TYPE_ABBREV.get(name.split('$')[-1])
+  if abb is not None:
+    return abb % tuple(print_type(a, ctx, 6) for a in args)
   nm = ctx.tyname(name) if ctx is not None else name
   if not args: return nm
   if len(args) == 1:

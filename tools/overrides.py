@@ -115,6 +115,16 @@ TYPE_MAP = {
   'unit': '1',
 }
 
+# TYPE_ABBREV: a type abbreviation of HOL4 that the port writes
+# out, because HOL Light has no type abbreviations and the port
+# does not declare one.  The value is the text of the type with a
+# %s for each argument of it, in order
+TYPE_ABBREV = {
+  # HOL4's substScript.sml abbreviates the type of a triangular
+  # substitution (type_abbrev_pp ("subst", ``:(num |-> 'a term)``))
+  'subst': '(num,%s term)fmap',
+}
+
 ACCESSORS = {
   'location': {'row': 'locnrow', 'col': 'locncol'},
   # labProps hides mem from its parser (its statements use it for
@@ -2563,6 +2573,27 @@ CON_OF = {
   ('flat_patternProof', 'v_rel'): {'*': 'flatSem'},
   # the program comparison of stack_alloc, whose pass this is
   ('stack_allocProof', 'make_init_def'): {'prog_comp': 'stack_alloc'},
+  # the Halt of these is the result of a semantics and not the
+  # program of stackLang: a StackAlloc that runs out of stack
+  # gives back Halt (Word 2w)
+  ('stack_removeProof', 'evaluate_single_stack_alloc'):
+    {'Halt': 'stackSem'},
+  ('stack_removeProof', 'evaluate_stack_alloc'): {'Halt': 'stackSem'},
+  ('stack_removeProof', 'comp_correct'): {'Halt': 'stackSem'},
+  # the evaluate of these is the one of the target machine, which
+  # takes a configuration, an oracle, a clock and a machine state
+  ('lab_to_targetProof', 'evaluate_ignore_clocks'):
+    {'evaluate': 'targetSem'},
+  ('lab_to_targetProof', 'evaluate_nop_steps'):
+    {'evaluate': 'targetSem', 'upd_pc': 'asmSem'},
+  ('lab_to_targetProof', 'asm_step_IMP_evaluate_step_nop'):
+    {'evaluate': 'targetSem'},
+  # the state whose pc this writes back is an asm_state
+  ('lab_to_targetProof', 'upd_pc_with_pc'): {'upd_pc': 'asmSem'},
+  # what the memory of a labSem state holds is a word_loc, so the
+  # Loc it is not is wordLang's and not the instruction of asm
+  ('lab_to_targetProof', 'write_bytearray_NOT_Loc'):
+    {'Loc': 'wordLang'},
 }
 
 # NB: the key of an override is (theory, name of the OCaml
@@ -12484,8 +12515,33 @@ let WALKSTARR_RULES,WALKSTARR_INDUCT,WALKSTARR_CASES =
    (!s t. (!t1 t2. ~(walk s t = term_Pair t1 t2))
       ==> WALKSTARR s t (walk s t))`;;
 
-let walkstar_def = new_definition
+let walkstar = new_definition
   `walkstar s t = @r. WALKSTARR s t r`;;
+
+(* the equations that HOL4 reads off its schema, under the
+   hypothesis that the substitution is wellfounded: walkstar_def
+   is its Theorem of that name and walkstar_thm the three clauses
+   of it *)
+
+let walkstar_def = prove
+ (`wfs s ==> !t. walkstar s t =
+     match walk s t with
+       term_Var v4 -> term_Var v4
+     | term_Pair t1 t2 -> term_Pair (walkstar s t1) (walkstar s t2)
+     | term_Const v7 -> term_Const v7`,
+  CHEAT_TAC);;
+
+let walkstar_thm = prove
+ (`wfs s ==>
+   (walkstar s (term_Var v) =
+      match vwalk s v with
+        term_Var v4 -> term_Var v4
+      | term_Pair t1 t2 -> term_Pair (walkstar s t1) (walkstar s t2)
+      | term_Const v7 -> term_Const v7) /\
+   (walkstar s (term_Pair t1 t2) =
+      term_Pair (walkstar s t1) (walkstar s t2)) /\
+   (walkstar s (term_Const c) = term_Const c)`,
+  CHEAT_TAC);;
 
 (* the occurs check, which HOL4 makes with Hol_reln in the same
    file (walkstarScript.sml) *)
@@ -12878,6 +12934,11 @@ DEF_NAMES = {
   # the line a location is on is a number, so its toString is
   # num_to_str
   ('compiler', 'locs_to_string_def'): {'toString': 'num_to_str'},
+  # the start and the length of a symbol are numbers: HOL4 reads
+  # the toString of them as num_to_str (the last overload of the
+  # name wins there), and the exporters of ag32 and of arm7 have
+  # to take the same symbol table, which ag32's says is num
+  ('export', 'emit_symbol_def'): {'toString': 'num_to_str'},
 }
 
 
@@ -13363,6 +13424,23 @@ THM_PATCH = {
   ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Call'): [
     ('lab_LabAsm (asm_Call ww)', 'lab_LabAsm (lab_Call ww)'),
+  ],
+  # the second conjunct is about an asm_state, so its arith_upd
+  # and its fp_regs are asmSem's and not labSem's
+  ('lab_to_targetProof', 'arith_upd_fp_regs'): [
+    ("labSem_state_fp_regs (labSem_arith_upd a (t:'a asm_state))"
+     " = asm_state_fp_regs t",
+     "asm_state_fp_regs (asmSem_arith_upd a (t:'a asm_state))"
+     " = asm_state_fp_regs t"),
+  ],
+  # the word_cmp of the conclusion compares the registers of an
+  # asm_state, which are words and not word_locs, so it is asm's
+  # and gives back a bool
+  ('lab_to_targetProof', 'word_cmp_lemma'): [
+    ('(x = wordSem_word_cmp cmp (asm_state_regs t1 rr)'
+     ' (labSem_reg_imm ri t1))',
+     '(x = asm_word_cmp cmp (asmSem_read_reg rr t1)'
+     ' (asmSem_reg_imm ri t1))'),
   ],
 }
 
