@@ -2,114 +2,54 @@
 
 Phase two states every theorem of the sources with its name, its
 attributes and its statement (`CLAUDE.md`).  Of the 10,688
-theorems of the 270 sources the port states 9,973 and points at
-715 with a comment that names them
-(`CAKE_KINDS=1 python3 -I tools/coverage.py`):
+theorems of the 270 sources the port states **10,406** and points
+at **282** with a comment that names them
+(`CAKE_ALL=1 python3 -I tools/coverage.py`; every one of the 282
+has such a pointer):
 
-| | stated | a pointer |
-|---|---|---|
-| `Theorem` (and `Triviality`) | 9,900 | 234 |
-| `ThmValue` (the value of an ML expression) | 38 | 441 |
-| a theorem that ML code states (`Q.prove`) | 35 | 40 |
-
-The `Theorem` row grew as the harvest got more honest, not as the
-port got worse: 188 of its 234 are statements that HOL Light's
-parser rejects, and a run finds one only when the file it is in
-loads far enough to reach it.  `tools/unstated.py` is that list,
-and every entry of it is a statement to win back -- 104 of them
-are in `data_to_word_assignProof` alone, so one cause may account
-for most of them.
-
-What the 715 are, and why the port cannot state them:
-
-- **441 theorems that HOL4 states as the value of an ML
-  expression** (`Theorem foo[simp] = CONV_RULE (RAND_CONV EVAL)
-  foo_def`, `Theorem bar = SIMP_RULE bool_ss [] baz`, `Theorem
-  baz = theorem"baz_ind"`).  The statement is not in the source:
-  HOL4 computes it from another theorem, so writing it down means
-  doing the computation.  The port could do most of them in phase
-  three, where it has the theorem that the expression starts from
-  and HOL Light's own rules to apply, but none of it is a
-  statement that phase two can read off the source.
-
-  Phase three does one as soon as the theorem it starts from is
-  proved, and then the computation is **done** rather than
-  guessed: `overrides.THM_VALUE` holds the statement in HOL4's
-  notation, `tools/port.py` translates it like any other statement
-  of the source, and the proof is a section of the file's proof
-  store.  Four of the 479 are in that way:
-
-  | theorem | the ML expression, and what it computes |
-  |---|---|
-  | `bvi_let$compile_exp_eq` | `compile_exp_def \|> SRULE [compile_sing]`: the compiled list of one is a singleton, so the `match` of `compile_exp` reduces to its head, and the theorem is `compile_exp x = compile_sing [] 0 x` |
-  | `bvi_letProof$compile_thm` | `evaluate_env_rel \|> Q.SPECL [...] \|> GEN_ALL \|> SIMP_RULE (srw_ss()) [env_rel_def]` at `ax = []` and `d = 0`, where `env_rel [] 0 env env` is `env = DROP 0 env` and so `T`: what is left of the antecedent is the evaluation and the type error |
-  | `bvl_const$compile_exp_eq` | the same expression one language up, where `compile_exp` carries no depth: `compile_exp x = compile_sing [] x` |
-  | `bvl_constProof$compile_thm` | `evaluate_env_rel` at `ax = []`, where `env_rel [] env env` is `env = env`: what is left is the evaluation and the type error |
-- **40 theorems that ML code states as the value of a rule
-  applied to another one** (`val foo = Q.prove(...) |> SIMP_RULE
-  ...`, `save_thm("foo", th)`): the same case, with the statement
-  of the theorem that the rule starts from in the source.
-- **three theorems whose statement is an ML expression**:
-  `word_to_stackProof$comp_correct`,
-  `clos_to_bvlProof$not_isClos` and
-  `bvi_to_dataProof$compile_exp_correct` are stated as
-  `^(ind_thm |> concl |> rand)` and the like -- the conclusion of
-  an induction theorem that HOL4's machinery built.  The same
-  case as the one above, with the expression in the statement
-  instead of in the place of it.
-
-Where the value is a `prove` of a quotation and nothing but
-`SPEC_ALL`, `GEN_ALL` or `check_thm` is applied to it, the
-quotation is the statement and the port states it: thirty-four of
-the theorems above are these, and the theorem that HOL4 binds is
-the one of the quotation with its variables free or closed, which
-says the same.
-
-Everything else of the sources is in: `tools/coverage.py` counts
-the blocks and the theorems of every source against its port, and
-what it reports missing is the two blocks below, the 481 that
-this section is about, and the 234 `Theorem` statements that HOL
-Light's parser rejects.
-
-**Forty-two statements use an auxiliary size function of a
-datatype family** (`exp1_size`, `exp3_size`, `v1_size`, ...).  HOL4's
-`Datatype` makes one of these for every type that the family
-needs besides the type itself (`exp1_size` of closLang is the
-size of a `(num # exp) list`), and HOL Light numbers the types of
-a family in another order, so a name of HOL4's says nothing about
-which function of the port it is.  The port writes a pointer that
-names the theorem: a statement with a free variable where the
-source has a constant would say something else than the source
-does, which is worse than saying nothing.
-
-A statement of this kind is stated as soon as a proof of phase
-three needs it, because then the identification is **checked**
-rather than guessed: `bvi_let$exp2_size_APPEND` and
-`bvi_letProof$exp_size_APPEND` (the same statement, which the two
-sources both state) say it of `exp2_size`, the size of a
-`bvi$exp list`, and the size prelude of the port calls that one
-`bvi_exp_size1` -- which `size_thms "bvi_exp"` states as
-`bvi_exp_size1 l = list_size bvi_exp_size l`, a list of
-`bvi_exp`, so the identification is the theorem itself.
-`overrides.THM_NAMES` is where the port says that a statement
-means it.  Two of the forty-four were these.
-
-No statement uses a constant of a HOL4 library that the port does
-not have any more; `tools/libnames.py` is the check.  There were
-six, and each has its name in the library layer now:
-
-| theorem | what it needed |
+| | a pointer |
 |---|---|
-| `misc$domain_rrestrict_subset`, `misc$range_rrestrict_subset`, `misc$GSPEC_o` | the `domain` and the `range` of `set_relationTheory` and HOL4's `GSPEC`, which `ml/lib/hol4.ml` has under a name of its own (`overrides.THM_NAMES` says which statements mean them) |
-| `misc$toPath_fromList`, `misc$steps_rel_okpath` | `pathTheory`: the type of a path (a state and a lazy list of transitions), with `toPath`, `stopped_at`, `pcons` and `okpath`, which `ml/lib/path.ml` has (HOL Light has no greatest fixed point, so the one that `okpath` is of HOL4's `okpath_f` is written out) |
-| `presLang$num_to_hex_eq` | `words$word_to_hex_string`, which is `w2s 16 HEX` and needs the `n2s` of ASCIInumbers: HOL4 has both in its words theory and the port has them at the end of `ml/lib/ASCIInumbers.ml`, because the hand written words layer of the port is loaded before that theory |
+| `Theorem` (and `Triviality`) | 7 |
+| `ThmValue` (the value of an ML expression) | 235 |
+| a theorem that ML code states (`Q.prove`) | 40 |
 
-The theorems of the **HOL4 library theories** of `ml/lib` are not
-in the port either, and are not counted: of a library theory the
-port has the definitions that CakeML needs (which is what the
-preface of such a file says), and the theorems of it that a proof
-of phase three needs are proved when that proof needs them.  The
-10,688 are the theorems of the CakeML sources.
+**The 282 are one thing, not three.**  In each of them HOL4
+*computes* the statement instead of writing it, so there is no
+text in the source to read off.  All seven of the `Theorem` row
+are an antiquotation of a term that the ML of the source builds:
+
+```
+Theorem comp_correct:
+  ^(ind_thm |> concl |> rand)
+```
+
+and the other two shapes are the same idea under another name --
+`Theorem foo = SIMP_RULE bool_ss [] bar` computes the statement
+from another theorem, and a `Q.prove` inside ML states one that
+the ML built.  So the question for all 282 is the same: can the
+port **do the computation** that HOL4 does?
+
+`tools/derive.py` is where that happens: it translates the ML
+expression into a HOL Light one, which is why the port has 10,406
+and not 9,973.  `tools/warnings.txt` logs every derivation it
+gives up on -- 242 of them -- and the reasons are a long tail:
+18 `not a name`, 11 a `Once` in a rewrite list, then dozens of
+one-offs, and a set that are **cascades**, where the derivation
+names a theorem that is itself one of the 282.  Each cause is a
+small addition to `derive.py` and each may unlock several
+theorems at once.
+
+Two of the seven would not come across even if the ML did run,
+and they are the exception to the paragraph above:
+
+- `bvl_const$SmartOp2_pmatch` states its `pmatch` form, which is
+  HOL4's `patternMatches` library; the port writes `match` and
+  has no counterpart to state.
+- `flatProps$v_size_aux` relates `v1_size` to `v4_size`, the
+  auxiliary size functions HOL4 generates for a mutually
+  recursive datatype.  HOL Light's size machinery handles lists
+  and pairs generically and makes two functions where HOL4 makes
+  five, so the equations have nothing to be about.
 
 # What the port has of the ML code of a source
 
