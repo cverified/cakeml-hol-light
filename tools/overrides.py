@@ -12882,6 +12882,71 @@ THM_PATCH = {
     ('SOME (labSem_state_regs (labSem_fp_upd f t1) r)',
      'SOME (asm_state_regs (asmSem_fp_upd f t1) r)'),
   ],
+  # the program that an evaluate of these reads is wordLang's,
+  # where the one beside it in the same statement is the
+  # stackLang program the pass builds; the res it says is not
+  # an Error is wordSem's; the op of a ShareInst is an asm
+  # memop; the semantics of the state the pass reads is
+  # wordSem's, where stackSem's takes the start first; and the
+  # Fail is the behaviour of ffi
+  ('word_to_stackProof', 'evaluate_ShareInst_Load'): [
+    ('stackSem_evaluate (word_',
+     'wordSem_evaluate (word_'),
+    ('~(res = SOME stackSem_Error)',
+     '~(res = SOME wordSem_Error)'),
+    ('(op = word_Load \\/ op = asm_Load8',
+     '(op = asm_Load \\/ op = asm_Load8'),
+  ],
+  ('word_to_stackProof', 'evaluate_ShareInst_Store'): [
+    ('stackSem_evaluate (word_',
+     'wordSem_evaluate (word_'),
+    ('~(res = SOME stackSem_Error)',
+     '~(res = SOME wordSem_Error)'),
+    ('(op = word_Store \\/ op = asm_Store8',
+     '(op = asm_Store \\/ op = asm_Store8'),
+  ],
+  ('word_to_stackProof', 'evaluate_ShareInst_correct_lemma'): [
+    ('stackSem_evaluate (word_',
+     'wordSem_evaluate (word_'),
+    ('~(res = SOME stackSem_Error)',
+     '~(res = SOME wordSem_Error)'),
+  ],
+  ('word_to_stackProof', 'evaluate_ShareInst_Var_eq_Op_Add'): [
+    ('stackSem_evaluate (word_',
+     'wordSem_evaluate (word_'),
+  ],
+  ('word_to_stackProof', 'evaluate_cont_loop_handler'): [
+    ('stackSem_evaluate (c,s) = (res,s1) /\\ stackSem_cont_loop res',
+     'wordSem_evaluate (c,s) = (res,s1) /\\ wordSem_cont_loop res'),
+  ],
+  ('word_to_stackProof', 'comp_Call'): [
+    ('stackSem_evaluate (word_',
+     'wordSem_evaluate (word_'),
+    ('~(res = SOME stackSem_Error)',
+     '~(res = SOME wordSem_Error)'),
+  ],
+  ('word_to_stackProof', 'evaluate_wInst'): [
+    ('stackSem_inst i s = SOME s',
+     'wordSem_inst i s = SOME s'),
+  ],
+  ('word_to_stackProof', 'state_rel_IMP_semantics'): [
+    ('~(stackSem_semantics s (start:num) = reg_alloc_Fail)',
+     '~(wordSem_semantics s (start:num) = ffi_Fail)'),
+    ('{stackSem_semantics s start}',
+     '{wordSem_semantics s start}'),
+  ],
+  ("word_to_stackProof", "state_rel_IMP_semantics'"): [
+    ('~(stackSem_semantics s (start:num) = reg_alloc_Fail)',
+     '~(wordSem_semantics s (start:num) = ffi_Fail)'),
+    ('{stackSem_semantics s start}',
+     '{wordSem_semantics s start}'),
+  ],
+  ('word_to_stackProof', 'compile_semantics'): [
+    ('~(stackSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start = reg_alloc_Fail)',
+     '~(wordSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start = ffi_Fail)'),
+    ('{stackSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start}',
+     '{wordSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start}'),
+  ],
   ('lab_to_targetProof', 'IMP_bytes_in_memory_Jump'): [
     ('lab_LabAsm (asm_Jump jtarget)',
      'lab_LabAsm (lab_Jump jtarget)'),
