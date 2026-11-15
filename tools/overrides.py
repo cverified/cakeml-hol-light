@@ -13891,6 +13891,17 @@ THM_PATCH = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # full_make_init calls the make_init of four theories, and two
+  # of them take four arguments: stack_namesProof's, whose first
+  # argument is the reg_names of the configuration, and
+  # stack_allocProof's, whose first is the data_to_word
+  # configuration itself.  An arity cannot tell those two apart,
+  # so the second one is said here (the CON_OF entry above does
+  # the compiles and the prog_comps of the same definition)
+  ('stack_to_labProof', 'full_make_init_def'): [
+    ('(stack_namesProof_make_init data_conf',
+     '(stack_allocProof_make_init data_conf'),
+  ],
   # the Break and the Continue that evaluate gives back are the
   # result of stackSem, where the ones it matches on are the
   # program of stackLang: CON_BODY says that of a definition in
