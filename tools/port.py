@@ -3037,7 +3037,10 @@ class Porter:
           if ambiguous and not self.ambiguous_con(h.name):
             return p
           ty = self.con_type(h.name, len(args0))
-          if ty:
+          # a type with parameters is not written in an
+          # annotation (below), so it is not carried to the body
+          # of the clause either
+          if ty and not ty.startswith('('):
             self.annotated[hterm.Printer(self.ctx).pr(p, 0)] = ty
           # the name of the constructor says which type it is of,
           # because the port writes every constant out: an
@@ -3051,7 +3054,13 @@ class Porter:
               done[0] = True
               h.name = dbg('annotate_pat', h.name, nm)
               return p
-          if ambiguous and ty and ty.startswith('('):
+          # a type with parameters cannot be written in an
+          # annotation at all, whether the name is ambiguous or
+          # not: a type variable that the port writes is rigid in
+          # HOL Light, so ((ByteArray b bl):'a bvlSem_ref) says
+          # that the clause gives back a ref over the same values
+          # it reads, where the clauses beside it say it does not
+          if ty and ty.startswith('('):
             return p
           if ty:
             done[0] = True
@@ -3922,7 +3931,12 @@ class Porter:
       toks = hterm.tokenize(hol4.strip_comments(body))
       e = hterm.Parser(toks, self.ctx).parse()
       cls = hterm.clauses_of(e)
-    except Exception:
+    except Exception as ex:
+      # a body this cannot read goes into one quotation
+      # whatever its clauses say, which is how a clash goes
+      # unseen: it is a warning and not a silence
+      self.warn.append('several_clauses cannot read the body: %s'
+                       % str(ex)[:60])
       return False
     global CONS
     CONS = self.ctx.cons
@@ -3939,7 +3953,12 @@ class Porter:
       toks = hterm.tokenize(hol4.strip_comments(body))
       e = hterm.Parser(toks, self.ctx).parse()
       cls = hterm.clauses_of(e)
-    except Exception:
+    except Exception as ex:
+      # a body this cannot read goes into one quotation
+      # whatever its clauses say, which is how a clash goes
+      # unseen: it is a warning and not a silence
+      self.warn.append('clause_clash cannot read the body: %s'
+                       % str(ex)[:60])
       return False
     if len(cls) < 2: return False
     global CONS
@@ -3983,13 +4002,27 @@ class Porter:
       if not ts: continue
       thys = ts if thys is None else thys & ts
     self.contys = thys or set()
-    def argty(nm, j):
+    def argty(nm, j, ar=None):
       t, nm = split_con(nm)
       ts = {t} if t else thys
       if ts:
         out = {self.db.con_argty_thy[(t, nm, j)] for t in ts
                if (t, nm, j) in self.db.con_argty_thy}
         if out: return out
+      # where the patterns name no one theory -- an argument of a
+      # pattern is a constructor of another theory, as the Addr of
+      # stackSem's ShMemOp is asm's -- the theory is the one the
+      # port itself resolves the name to, which is the one it
+      # writes into the file.  Without this the type of the
+      # argument is every type that any theory gives it, which
+      # says nothing, and the clash is not seen (the dest of
+      # stackSem's evaluate is a num in JumpLower and a num + num
+      # in Call)
+      if not t:
+        try: t2 = self.con_thy(nm, arity=ar)
+        except Exception: t2 = None
+        if t2 and (t2, nm, j) in self.db.con_argty_thy:
+          return {self.db.con_argty_thy[(t2, nm, j)]}
       return self.db.con_argty.get((nm, j))
     where = {}
     clause = [0]
@@ -4105,7 +4138,7 @@ class Porter:
         h, args = hterm.strip_app(p)
         nm = h.name if h.kind == 'id' else '?'
         for j, a in enumerate(args):
-          walk(a, argty(nm, j))
+          walk(a, argty(nm, j, len(args)))
         return
       if p.kind == 'list':
         for a in p.items: walk(a, None)
@@ -4325,14 +4358,17 @@ class Porter:
         why.append('%s is %s and %s'
                    % (k, ', '.join(map(ty, tys[:-1])), ty(tys[-1])))
     self.clause_why = why if len(groups) > 1 else []
-    if len(groups) > 1 and os.environ.get('CLASHDBG'):
+    # with CLASHDBG=4 a definition that did not split says so
+    # too, which is what to look at when one should have
+    if (len(groups) > 1 or os.environ.get('CLASHDBG') == '4') \
+       and os.environ.get('CLASHDBG'):
       print('CLASH %s %s: %s' % (self.thy, self.defkey, groups),
             file=sys.stderr)
-      if os.environ.get('CLASHDBG') in ('2', '3'):
+      if os.environ.get('CLASHDBG') in ('2', '3', '4'):
         for n, (h, _, _) in enumerate(cls):
           print('   %2d %s' % (n, fname(h)), file=sys.stderr)
         for k, v in where.items():
-          if (os.environ.get('CLASHDBG') == '3' or
+          if (os.environ.get('CLASHDBG') in ('3', '4') or
               len(set(map(str, [t for _, t in v]))) > 1):
             print('   %s: %s' % (k, v), file=sys.stderr)
     return len(groups) > 1

@@ -26,8 +26,8 @@ let wfs_def = new_definition
   `wfs s = WF (vR s)`;;
 
 let subst_APPLY_def,subst_APPLY_ind = define_rec
-  `(subst_APPLY s (term_Var v) = match FLOOKUP s v with NONE -> (term_Var
-    v:'a term) | SOME t -> t) /\
+  `(subst_APPLY s (term_Var v) = match FLOOKUP s v with NONE -> term_Var v
+    | SOME t -> t) /\
    (subst_APPLY s (term_Pair t1 t2) = term_Pair (subst_APPLY s t1)
     (subst_APPLY s t2)) /\
-   (subst_APPLY s (term_Const c) = (term_Const c:'a term))`;;
+   (subst_APPLY s (term_Const c) = term_Const c)`;;

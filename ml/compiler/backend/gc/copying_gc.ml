@@ -21,7 +21,7 @@ let _ = cake_theory "copying_gc"
 
 let gc_move_def = define_general
   `(copying_gc_gc_move (gc_shared_Data d,h2,a,n,heap,c,limit') =
-    ((gc_shared_Data d:'a heap_address),h2,a,n,heap,c)) /\
+    (gc_shared_Data d,h2,a,n,heap,c)) /\
    (copying_gc_gc_move (gc_shared_Pointer ptr d,h2,a,n,heap,c,limit') =
          match heap_lookup ptr heap with SOME (DataElement xs l dd) ->
              let c = (c /\ l + 1 <= n /\ (a + n = limit')) in

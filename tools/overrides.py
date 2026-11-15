@@ -433,6 +433,13 @@ CON_BODY = {
   # jsonLang's and not the one of a display expression
   ('displayLang', 'trace_to_json_def'): {'String': 'jsonLang'},
   ('displayLang', 'display_to_json_def'): {'String': 'jsonLang'},
+  # line_encd matches on the asm_with_lab of a LabAsm and gives
+  # what the encoder takes, which is an asm: the JumpCmp and the
+  # Call of the bodies are asm's where the ones of the patterns
+  # are labLang's (the Jump and the Loc of the bodies are read
+  # right, because labLang's Jump takes a lab)
+  ('lab_to_targetProof', 'line_encd_def'):
+    {'JumpCmp': 'asm', 'Call': 'asm'},
   # encode_val reads a value of flatSem and builds a term of
   # pattern_semantics, and both have Litv
   ('flat_patternProof', 'encode_val_def'):
@@ -1499,6 +1506,15 @@ CLAUSE_FORM = set([
   # clause and the label of a parse tree node in another, which
   # only the INL of a right hand side says
   ('cmlPtreeConversion', 'ptree_Type_def'),
+  # the n of this one is the value of a successful parse in one
+  # clause and the error message in the other, so one quotation
+  # makes the constant take a mlstring + mlstring where the
+  # source gives it an 'a + mlstring
+  ('compiler', 'get_err_str_def'),
+  # the v of this one is the register the first clause deletes
+  # and the word the second one writes, so the two clauses do not
+  # typecheck together
+  ('word_bignumProof', 'reg_write_def'),
 ])
 
 # definitions whose clauses overlap, so that they depend on HOL4's
@@ -1862,6 +1878,10 @@ CON_OF = {
   # program, and dataLang has an If as well
   ('data_to_word', 'assign_BoundsCheckByte_def'): {'If': 'wordLang'},
   ('data_to_word', 'force_thunk_def'): {'If': 'wordLang'},
+  # the code that Arith_code gives is a wordLang program, as the
+  # Call of its second arm says; word_bignum has a Seq and an
+  # Assign of its own
+  ('data_to_word_bignumProof', 'arith_code_def'): WORDLANG_PROG,
   # the stubs that generated_bignum_stubs gives are wordLang
   # programs, so its Seq and its Return are wordLang's
   ('word_bignum', 'generated_bignum_stubs_def'): WORDLANG_PROG,
@@ -1884,10 +1904,26 @@ CON_OF = {
   ('bviSem', 'dest_thunk_def'):
     {'BadRef': 'bviSem', 'NotThunk': 'bviSem',
      'IsThunk': 'bviSem'},
-  # the dest_thunk that this one reads is dataSem's, so the
-  # NotThunk it compares the result with is dataSem's too (bvlSem
-  # has one as well, and the values are bvlSem's)
-  ('data_to_word_memoryProof', 'v_inv_ck'): {'NotThunk': 'dataSem'},
+  # the refs of this one are a num_map of bvlSem refs over the
+  # values of dataSem (bvlSem's own dest_thunk reads a finite map
+  # and dataSem's a num_map), so the values it relates are
+  # dataSem's: its Number, Word64, CodePtr and RefPtr, and the
+  # NotThunk that its dest_thunk gives.  The Thunk and the
+  # MutBlock beside them are the refs, which are bvlSem's, and
+  # the Block is told apart by its timestamp
+  ('data_to_word_memoryProof', 'v_inv_ck'):
+    {'NotThunk': 'dataSem', 'Number': 'dataSem',
+     'Word64': 'dataSem', 'CodePtr': 'dataSem',
+     'RefPtr': 'dataSem'},
+  # the compile that this one runs on the sections it builds is
+  # lab_to_target's; backend has a compile of its own, which
+  # takes a program of source and is what the name alone means
+  ('backendProof', 'backend_from_data_tuple_cc_def'):
+    {'compile': 'lab_to_target'},
+  # result_view matches on the result of stackSem, so its TimeOut
+  # is stackSem's; targetSem has a TimeOut of its own and the
+  # machinery of the port reaches for that one
+  ('stack_to_labProof', 'result_view_def'): {'TimeOut': 'stackSem'},
   # the extract_labels of these three is the one of labProps, on
   # the lines of a Section; everywhere else in the file it is the
   # one of stackProps, on a program of stackLang
@@ -12346,6 +12382,11 @@ MAIN_THEORY = {
 # this says the exceptions: a proof about bvl that names asm's Xor
 # or backend_common's word_shift wants that one wherever it stands.
 CON_FILE = {
+  # clos_knownProof defines a v_rel of its own, on a
+  # configuration, a globals approximation and two values, and it
+  # means that one everywhere; clos_ticksProof's, which comes
+  # later in the order, takes two values and nothing else
+  'clos_knownProof': {'v_rel': 'clos_knownProof'},
   # the wf of this proof is sptree's, on the locals of a state
   # and on the trees that alist_insert and fromList2 build;
   # parmove has a wf of its own, on a parallel move
@@ -12434,10 +12475,10 @@ DEF_NAMES = {
   ('clos_knownProof', 'v_rel_def'):
     {'f_rel': 'clos_knownProof_f_rel'},
   # the compile_inc that the oracle of clos_to_bvlProof runs is
-  # the one of clos_to_bvl, which the port names with a double
-  # underscore because the file defines a compile_inc as well
+  # the one of clos_to_bvl, where the name on its own means the
+  # compile_inc of clos_fvs
   ('clos_to_bvlProof', 'compile_oracle_inv_def'):
-    {'compile_inc': 'clos_to_bvl__compile_inc'},
+    {'compile_inc': 'clos_to_bvl_compile_inc'},
   # the Loc that a register of a stackSem state holds is the
   # word_loc of wordLang, not the one of an asm instruction
   ('stack_removeProof', 'init_prop_def'): {'Loc': 'word_Loc'},
@@ -12506,12 +12547,47 @@ DEF_PATCH = {
      '(semanticPrimitives_ctor_same_type (SOME stamp1)'
      ' (SOME stamp2) <=>'),
   ],
+  # the three prog_comps of this one are the three passes the
+  # source overloads a name of its own for (stack_names,
+  # stack_remove and stack_alloc), and here it writes the plain
+  # name: the one that takes the register names is stack_names',
+  # the one that takes the jump flag is stack_remove's, and the
+  # bare one is stack_alloc's
+  ('backendProof', 'backend_from_data_tuple_cc_def'): [
+    ('(stack_alloc_prog_comp (stack_to_lab_config_reg_names',
+     '(stack_names_prog_comp (stack_to_lab_config_reg_names'),
+    ('(stack_alloc_prog_comp (stack_to_lab_config_jump',
+     '(stack_remove_prog_comp (stack_to_lab_config_jump'),
+  ],
   # the Jump inside the LabAsm of a line is labLang's, where the
   # JumpCmp, the LocValue and the Call of the clauses beside it
   # are read right: both Jumps take one argument
   ('lab_to_targetProof', 'line_encd_def'): [
     ('| lab_LabAsm (asm_Jump l) _ bytes len ->',
      '| lab_LabAsm (lab_Jump l) _ bytes len ->'),
+  ],
+  # the first argument of this v_rel is the value of
+  # semanticPrimitives that the second, a value of flatSem, is
+  # compiled to, and the two types have Conv, Closure,
+  # Recclosure, Loc and Vectorv: nothing but the place says which
+  # is which (the Litv of the first clause the port annotates,
+  # which is what says the types of the relation)
+  ('source_to_flatProof', 'v_rel'): [
+    ("(flatSem_Conv (SOME cn) vs) (flatSem_Conv (SOME cn') vs')",
+     "(semanticPrimitives_Conv (SOME cn) vs)"
+     " (flatSem_Conv (SOME cn') vs')"),
+    ("(flatSem_Conv NONE vs) (flatSem_Conv NONE vs')",
+     "(semanticPrimitives_Conv NONE vs) (flatSem_Conv NONE vs')"),
+    ('(flatSem_Closure (sem_env_v_fupd',
+     '(semanticPrimitives_Closure (sem_env_v_fupd'),
+    ('(flatSem_Recclosure (sem_env_v_fupd',
+     '(semanticPrimitives_Recclosure (sem_env_v_fupd'),
+    ('(flatSem_Recclosure env funs x)',
+     '(semanticPrimitives_Recclosure env funs x)'),
+    ('(flatSem_Loc b loc) (flatSem_Loc b (loc + 1))',
+     '(semanticPrimitives_Loc b loc) (flatSem_Loc b (loc + 1))'),
+    ("(flatSem_Vectorv vs) (flatSem_Vectorv vs')",
+     "(semanticPrimitives_Vectorv vs) (flatSem_Vectorv vs')"),
   ],
   # the second argument of this v_rel is the value of closSem
   # that the first, a value of flatSem, is compiled to, and the

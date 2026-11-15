@@ -66,15 +66,13 @@ let encode_infer_t_11 = prove
   CHEAT_TAC);;
 add_simp encode_infer_t_11;;
 
-(* the clauses in two quotations: s1 is term and exp, which one quotation
-   cannot typecheck *)
+(* the clauses in three quotations: n is ((modN , varN) id) and num; s1 is
+   term and exp, which one quotation cannot typecheck *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let decode_infer_t_def,decode_infer_t_ind = define_guess_cheat_clauses
   [`(decode_infer_t (term_Var n) =
       Infer_Tuvar n) /\
-    (decode_infer_t (term_Const (DB_tag n)) =
-      Infer_Tvar_db n) /\
     (decode_infer_t (term_Pair (term_Const Tapp_tag) (term_Pair (term_Const
     (TC_tag tc)) s)) =
       Infer_Tapp (decode_infer_ts s) tc) /\
@@ -82,6 +80,8 @@ let decode_infer_t_def,decode_infer_t_ind = define_guess_cheat_clauses
     (decode_infer_ts (term_Const Null_tag) =
       []) /\
     (decode_infer_ts _ = [])`;
+   `decode_infer_t (term_Const (DB_tag n)) =
+      Infer_Tvar_db n`;
    `decode_infer_ts (term_Pair s1 s2) = CONS (decode_infer_t s1)
     (decode_infer_ts s2)`];;
 

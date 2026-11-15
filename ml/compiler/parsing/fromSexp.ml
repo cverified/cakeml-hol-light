@@ -955,12 +955,14 @@ let listsexp_def = new_definition
 let listsexp_thm = prove
  (`listsexp [] = (SX_SYM "nil") /\ listsexp (CONS h t) = SX_CONS h (listsexp
   t)`,
-  (REWRITE_TAC[listsexp_def; ITLIST]));;
+  (REWRITE_TAC[listsexp_def; FOLDR_THM]));;
 add_simp listsexp_thm;;
 
 let listsexp_11 = prove
  (`!l1 l2. listsexp l1 = listsexp l2 <=> l1 = l2`,
-  (REWRITE_TAC[listsexp_def; FOLDR_SX_CONS_INJ]));;
+  (* listsexp is FOLDR, which the port defines from ITLIST
+     because its arguments stand the other way round *)
+  (REWRITE_TAC[listsexp_def; FOLDR_def; FOLDR_SX_CONS_INJ]));;
 add_simp listsexp_11;;
 
 let optsexp_def = define_cases

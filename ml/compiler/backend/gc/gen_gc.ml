@@ -27,8 +27,7 @@ let gen_gc_conf_FIELDS = define_record "gen_gc_conf"
    "isRef","'a->bool"];;
 
 let gen_gc_gc_move_def = define_cases
-  `(gen_gc_gc_move conf state (gc_shared_Data d) = ((gc_shared_Data d:'a
-    heap_address),state)) /\
+  `(gen_gc_gc_move conf state (gc_shared_Data d) = (gc_shared_Data d,state)) /\
    (gen_gc_gc_move conf state (gc_shared_Pointer ptr d) =
          match heap_lookup ptr (gc_state_heap state) with SOME
              (ForwardPointer ptr _ l) -> (gc_shared_Pointer ptr d,state)
@@ -303,13 +302,13 @@ let IMP_if_equal = prove
 (* heap_length_heap_expand[local] *)
 let gen_gc_heap_length_heap_expand = prove
  (`!l. heap_length (heap_expand l) = l`,
-  CHEAT_TAC);;
+  (ACCEPT_TAC heap_length_heap_expand));;
 
 (* ADDR_MAP_EQ[local] *)
 let gen_gc_ADDR_MAP_EQ = prove
  (`!xs. (!p d. MEM (gc_shared_Pointer p d) xs ==> (f p = g p)) ==>
         (ADDR_MAP f xs = ADDR_MAP g xs)`,
-  CHEAT_TAC);;
+  (ACCEPT_TAC ADDR_MAP_EQ));;
 
 (* heaps_similar_lemma[local] *)
 let gen_gc_heaps_similar_lemma = prove
@@ -393,7 +392,7 @@ let gen_gc_heap_addresses_APPEND = prove
  (`!xs ys n. heap_addresses n (APPEND xs ys) =
              heap_addresses n xs UNION heap_addresses (n + heap_length xs)
                ys`,
-  CHEAT_TAC);;
+  (ACCEPT_TAC heap_addresses_APPEND));;
 
 (* [local] *)
 let heap_addresses_APPEND_IN = prove
@@ -420,7 +419,7 @@ let gen_gc_heaps_similar_lemma = prove
  (`!h1 h2 ptr.
       heaps_similar h1 h2 /\ isSomeDataElement (heap_lookup ptr h1) ==>
       isSomeDataOrForward (heap_lookup ptr h2)`,
-  CHEAT_TAC);;
+  (ACCEPT_TAC heap_similar_Data_IMP_DataOrForward));;
 
 let BIJ_IMP_FLOOKUP_SOME = prove
  (`!s h j.
@@ -583,7 +582,7 @@ let gen_gc_thm = prove
 let gen_gc_LESS_IMP_heap_lookup = prove
  (`!xs j ys. j < heap_length xs ==> (heap_lookup j (APPEND xs ys) =
   heap_lookup j xs)`,
-  CHEAT_TAC);;
+  (ACCEPT_TAC LESS_IMP_heap_lookup));;
 
 let heap_lookup_IMP_heap_addresses =
   GEN_ALL (SIMP_RULE [] (CAKE_SPECL [`xs`; `0`]
@@ -653,7 +652,7 @@ let IN_heap_addresses_LESS = prove
 let gen_gc_heap_lookup_EXTEND = prove
  (`!xs n ys x. (heap_lookup n xs = SOME x) ==>
                 (heap_lookup n (APPEND xs ys) = SOME x)`,
-  CHEAT_TAC);;
+  (ACCEPT_TAC heap_lookup_EXTEND));;
 
 let gen_gc_related = prove
  (`!conf roots heap.
@@ -676,7 +675,7 @@ let gen_gc_related = prove
 (* gc_forward_ptr_ok *)
 let gen_gc_gc_forward_ptr_ok = prove
  (`!heap n a d c x. (gc_forward_ptr n heap a d c = (x,T)) ==> c`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC gc_forward_ptr_ok));;
 
 (* gc_move_ok *)
 let gen_gc_gc_move_ok = prove

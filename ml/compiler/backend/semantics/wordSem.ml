@@ -75,9 +75,11 @@ let isWord_def = new_definition
 
 let isWord_exists = prove
  (`isWord x <=> (?w. x = word_Word w)`,
-  (CASES_ON_TAC `x:(A)word_loc` THEN
-   REWRITE_TAC[isWord_def; injectivity "word_loc"; distinctness
-     "word_loc"] THEN
+  (* isWord is a match, so the clause has to be reduced before
+     the constructors of word_loc say anything *)
+  (CASES_ON_TAC `x:(A)word_loc` THEN REWRITE_TAC[isWord_def] THEN
+   MATCH_REDUCE_TAC THEN
+   REWRITE_TAC[injectivity "word_loc"; distinctness "word_loc"] THEN
    MESON_TAC[]));;
 
 let wordSem_word_cmp_def = new_definition
@@ -1351,8 +1353,8 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
                if wordSem_cont_loop res then
                  (if wordSem_state_clock s1 = 0 then (SOME
                      wordSem_TimeOut,wordSem_flush_state T s1) else
-                     wordSem_evaluate (wordSem_STOP ((word_Loop names c
-                     exit_names:'a word_prog)),wordSem_dec_clock s1))
+                     wordSem_evaluate (wordSem_STOP (word_Loop names c
+                     exit_names),wordSem_dec_clock s1))
                else if res = SOME (wordSem_Break 0) then
                  match wordSem_cut_state (exit_names,LN) s1 with NONE ->
                      (SOME wordSem_Error,s1)

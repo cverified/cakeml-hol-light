@@ -123,7 +123,7 @@ let match_move_const_up = prove
 let pattern_comp_pmatch_list_LENGTH = prove
  (`!ps vs. ~(pattern_semantics_pmatch_list refs ps vs = PTypeFailure) ==>
   LENGTH vs = LENGTH ps`,
-  CHEAT_TAC);;
+  (MESON_TAC[pattern_comp_pmatch_list_LENGTH]));;
 
 (* replace last pattern with Any (used if rows are exhaustive) *)
 

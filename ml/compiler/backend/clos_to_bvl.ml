@@ -706,7 +706,11 @@ let clos_to_bvl_compile_exps_LENGTH = prove
 (* compile_exps_SING *)
 let clos_to_bvl_compile_exps_SING = prove
  (`(clos_to_bvl_compile_exps max_app [x] aux = (c,aux1)) ==> (?d. c = [d])`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN
+   DISCH_THEN(MP_TAC o MATCH_MP clos_to_bvl_compile_exps_LENGTH) THEN
+   STRUCT_CASES_TAC(ISPEC `c:bvl_exp list` list_CASES) THEN
+   REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ; LENGTH_EQ_NIL; CONS_11] THEN
+   MESON_TAC[]));;
 
 let compile_exps_CONS = prove
  (`!max_app xs x aux.

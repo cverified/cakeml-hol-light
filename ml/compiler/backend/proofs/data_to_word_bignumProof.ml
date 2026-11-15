@@ -311,7 +311,7 @@ let push_env_code = prove
 
 let arith_code_def = new_definition
   `Arith_code index =
-     word_bignum_Seq (word_bignum_Assign 6 (word_Const (n2w (4 * index))))
+     word_Seq (word_Assign 6 (word_Const (n2w (4 * index))))
        (word_Call NONE (SOME AnyArith_location) [0; 2; 4; 6] NONE)`;;
 
 let lookup_Arith_location = prove

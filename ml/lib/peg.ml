@@ -200,7 +200,7 @@ let subexprs_def,subexprs_ind = define_wf_clauses
   [`(subexprs (peg_any f1) = {peg_any f1}) /\
     (subexprs (peg_empty c) = {peg_empty c}) /\
     (subexprs (peg_tok t f2) = {peg_tok t f2}) /\
-    (subexprs (peg_error e) = {(peg_error e:('a,'b,'c,'e)pegsym)}) /\
+    (subexprs (peg_error e) = {peg_error e}) /\
     (subexprs (peg_nt s f) = {peg_nt s f}) /\
     (subexprs (peg_seq e1 e2 f3) = peg_seq e1 e2 f3 INSERT (subexprs e1
     UNION subexprs e2)) /\

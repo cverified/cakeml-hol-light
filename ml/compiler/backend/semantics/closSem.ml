@@ -1089,7 +1089,7 @@ let closSem_evaluate_clock = prove
       (!loc_opt f args s1 vs s2.
         (evaluate_app loc_opt f args s1 = (vs,s2)) ==> closSem_state_clock
           s2 <= closSem_state_clock s1)`,
-  CHEAT_TAC);;
+  (MESON_TAC[evaluate_clock_help; SND]));;
 
 (* fix_clock_evaluate *)
 let closSem_fix_clock_evaluate = prove

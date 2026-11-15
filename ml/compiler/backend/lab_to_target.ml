@@ -139,8 +139,8 @@ let enc_lines_again_def,enc_lines_again_ind = define_wf
   `(enc_lines_again labs ffis pos enc [] (acc,ok) = (REVERSE
     acc,pos,(ok:bool))) /\
    (enc_lines_again labs ffis pos enc (CONS (lab_Label k1 k2 l) xs) (acc,ok) =
-         enc_lines_again labs ffis (pos + l) enc xs (CONS ((lab_Label
-             k1 k2 l:'a line)) acc,ok)) /\
+         enc_lines_again labs ffis (pos + l) enc xs (CONS (lab_Label k1
+             k2 l) acc,ok)) /\
    (enc_lines_again labs ffis pos enc (CONS (lab_Asm x1 x2 l) xs) (acc,ok) =
          enc_lines_again labs ffis (pos + l) enc xs (CONS (lab_Asm x1
              x2 l) acc,ok)) /\
@@ -233,8 +233,8 @@ let pad_bytes_def = new_definition
 let add_nop_def,add_nop_ind = define_wf
   `MEASURE (\(x0,x1). list_size (line_size (\x. 0)) x1)`
   `(add_nop nop [] = []) /\
-   (add_nop nop (CONS (lab_Label l1 l2 len) xs) = CONS ((lab_Label l1 l2
-    len:'a line)) (add_nop nop xs)) /\
+   (add_nop nop (CONS (lab_Label l1 l2 len) xs) = CONS (lab_Label l1 l2
+    len) (add_nop nop xs)) /\
    (add_nop nop (CONS (lab_Asm x bytes len) xs) = CONS (lab_Asm x (APPEND
     bytes nop) (len + 1)) xs) /\
    (add_nop nop (CONS (lab_LabAsm y w bytes len) xs) = CONS (lab_LabAsm y

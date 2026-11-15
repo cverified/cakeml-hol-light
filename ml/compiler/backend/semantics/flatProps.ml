@@ -220,7 +220,10 @@ let flatProps_evaluate_cons = prove
 (* evaluate_sing *)
 let flatProps_evaluate_sing = prove
  (`(flatSem_evaluate env s [e] = (s',Rval vs) ==> (?y. vs = [y]))`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN FIRST_ASSUM(MP_TAC o MATCH_MP
+    flatProps_evaluate_length) THEN
+   REWRITE_TAC[LENGTH; LENGTH_EQ_CONS; LENGTH_EQ_NIL] THEN
+     MESON_TAC[]));;
 
 (* evaluate_append *)
 let flatProps_evaluate_append = prove
@@ -293,7 +296,10 @@ let flatProps_evaluate_decs_add_to_clock = prove
     flatSem_evaluate_decs (flatSem_state_clock_fupd (K (flatSem_state_clock
       s + extra)) s) decs =
     (flatSem_state_clock_fupd (K (flatSem_state_clock s' + extra)) s',r)`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN
+   MATCH_MP_TAC (CONJUNCT2 (CONJUNCT2
+     flatProps_evaluate_add_to_clock)) THEN
+   ASM_REWRITE_TAC[]));;
 
 (* do_app_io_events_mono *)
 let flatProps_do_app_io_events_mono = prove
@@ -377,7 +383,7 @@ let flatProps_evaluate_decs_add_to_clock_io_events_mono = prove
        (flatSem_state_ffi
      (FST (flatSem_evaluate_decs (flatSem_state_clock_fupd (K
        (flatSem_state_clock s + extra)) s) ds)))`,
-  CHEAT_TAC);;
+  (REWRITE_TAC[flatProps_evaluate_add_to_clock_io_events_mono]));;
 
 let evaluate_MAP_Var_local = prove
  (`MAP (ALOOKUP (flatSem_environment_v env)) xs = MAP SOME vs ==>

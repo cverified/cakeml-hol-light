@@ -121,7 +121,7 @@ let evaluate_decs_call_FFI_rel_imp = prove
 let evaluateProps_do_app_io_events_mono = prove
  (`semanticPrimitives_do_app (r,ffi) op vs = SOME ((r',ffi'),res) ==>
   io_events_mono ffi ffi'`,
-  CHEAT_TAC);;
+  (MESON_TAC[do_app_call_FFI_rel; call_FFI_rel_io_events_mono]));;
 
 (* evaluate_io_events_mono *)
 let evaluateProps_evaluate_io_events_mono = prove
@@ -135,7 +135,7 @@ let evaluateProps_evaluate_io_events_mono = prove
    (!s e d.
       io_events_mono (semanticPrimitives_state_ffi s)
         (semanticPrimitives_state_ffi (FST (evaluate_evaluate_decs s e d))))`,
-  CHEAT_TAC);;
+  (MESON_TAC[evaluate_call_FFI_rel; call_FFI_rel_io_events_mono]));;
 
 let evaluate_io_events_mono_imp = prove
  (`(!s e p s' r.
@@ -326,7 +326,8 @@ let evaluate_match_add_to_clock = prove
 
 let list_result_eq_Rval = prove
  (`list_result r = Rval r' <=> (?v. r' = [v] /\ r = Rval v)`,
-  (GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
+  (REPEAT GEN_TAC THEN
+   CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
    REWRITE_TAC[list_result_def;
                injectivity "semanticPrimitives_result";
                distinctness "semanticPrimitives_result"] THEN
@@ -335,7 +336,8 @@ add_simp list_result_eq_Rval;;
 
 let list_result_eq_Rerr = prove
  (`list_result r = Rerr e <=> r = Rerr e`,
-  (GEN_TAC THEN CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
+  (REPEAT GEN_TAC THEN
+   CASES_ON_TAC `r:(A,B)semanticPrimitives_result` THEN
    REWRITE_TAC[list_result_def;
                injectivity "semanticPrimitives_result";
                distinctness "semanticPrimitives_result"]));;
@@ -353,7 +355,7 @@ add_simp result_rel_list_result;;
 
 let list_result_inj = prove
  (`list_result x = list_result y ==> x = y`,
-  (GEN_TAC THEN GEN_TAC THEN CASES_ON_TAC
+  (REPEAT GEN_TAC THEN CASES_ON_TAC
     `x:(A,B)semanticPrimitives_result` THEN CASES_ON_TAC
     `y:(A,B)semanticPrimitives_result` THEN
    REWRITE_TAC[list_result_def;
@@ -608,7 +610,7 @@ let evaluateProps_do_app_ffi_unchanged = prove
    (!outcome. ~(r = Rerr (Rabort (Rffi_error outcome)))) ==>
    (!ffi2. semanticPrimitives_do_app (refs,ffi2) op vs = SOME
      ((refs',ffi2),r))`,
-  CHEAT_TAC);;
+  (MESON_TAC[do_app_SOME_ffi_same]));;
 
 let evaluate_ffi_intro = prove
  (`(!(s) env e s' r.
@@ -721,8 +723,12 @@ let can_pmatch_all_EVERY = prove
  (`can_pmatch_all envC refs ps v <=>
    ALL (\p. ~(semanticPrimitives_pmatch envC refs p v [] =
      Match_type_error)) ps`,
-  (GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
-   ASM_REWRITE_TAC[can_pmatch_all_def; ALL] THEN GEN_TAC THEN
+  (* the statement has no quantifier, so the list the induction
+     is on has to be generalised first (HOL4's Induct_on does
+     that itself) and the other three stay as they are *)
+  (SPEC_TAC(`ps:(ast_pat)list`,`ps:(ast_pat)list`) THEN
+   LIST_INDUCT_TAC THEN
+   ASM_REWRITE_TAC[can_pmatch_all_def; ALL] THEN
    COND_CASES_TAC THEN ASM_REWRITE_TAC[]));;
 
 let same_type_trans = prove
@@ -906,7 +912,7 @@ let evaluate_add_history = prove
 (* Apps_append *)
 let apps_append = prove
  (`!xs ys f. Apps f (APPEND xs ys) = Apps (Apps f xs) ys`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; apps_def]));;
 
 let evaluate_Apps_Rerr = prove
  (`!xs f (st:'ffi semanticPrimitives_state) env s1 e.

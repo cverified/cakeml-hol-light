@@ -553,7 +553,7 @@ Signification of the terms:
 let word_cse_def,word_cse_ind = define_rec_clauses
   [`(word_cse data (word_Move r rs) =
         let data' = canonicalMoveRegs data rs in
-          (data',(word_Move r rs:'a word_prog))) /\
+          (data',word_Move r rs)) /\
     (word_cse data (word_Inst i) =
         let (data',p) = word_cseInst data i in
           (data',p)) /\
@@ -614,8 +614,7 @@ let word_cse_def,word_cse_ind = define_rec_clauses
     // drop the load facts, keep the register-only facts.
     (word_cse data (word_Store e r) = (knowledge_loads_mem_fupd (K
         balanced_map_empty) data,word_Store e r)) /\
-    (word_cse data (word_Assign r e) = (data,(word_Assign r e:'a word_prog)))
-      /\
+    (word_cse data (word_Assign r e) = (data,word_Assign r e)) /\
     (word_cse data (word_Raise r) = (data,word_Raise r)) /\
     (word_cse data word_Tick = (data,word_Tick)) /\
     (word_cse data (word_Alloc r m) = (empty_data,word_Alloc r m)) /\

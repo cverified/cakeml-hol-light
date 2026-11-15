@@ -372,7 +372,7 @@ let known_op_pmatch = prove
 (* EL_MEM_LEMMA[local] *)
 let clos_known_EL_MEM_LEMMA = prove
  (`!xs i x. i < LENGTH xs /\ (x = EL i xs) ==> MEM x xs`,
-  CHEAT_TAC);;
+  (MESON_TAC[MEM_EL]));;
 
 let clos_approx_def = new_definition
   `clos_approx max_size loc num_args body =

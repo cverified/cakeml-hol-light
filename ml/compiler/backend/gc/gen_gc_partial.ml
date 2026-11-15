@@ -31,8 +31,8 @@ let gen_gc_partial_conf_FIELDS = define_record "gen_gc_partial_conf"
   ];;
 
 let gen_gc_partial_gc_move_def = define_cases
-  `(gen_gc_partial_gc_move conf state (gc_shared_Data d) = ((gc_shared_Data
-    d:'a heap_address),state)) /\
+  `(gen_gc_partial_gc_move conf state (gc_shared_Data d) = (gc_shared_Data
+    d,state)) /\
    (gen_gc_partial_gc_move conf state (gc_shared_Pointer ptr d) =
          let ok = (gc_state_ok state /\ (ptr < heap_length (gc_state_heap
              state))) in
@@ -89,7 +89,15 @@ let gen_gc_partial_gc_move_list_IMP = prove
     (gc_state_r3 state1 = gc_state_r3 state) /\
     (gc_state_r2 state1 = gc_state_r2 state) /\
     (gc_state_r1 state1 = gc_state_r1 state)`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
+    PAIR_EQ] THENL
+    [MESON_TAC[]; ALL_TAC] THEN
+   REPEAT GEN_TAC THEN PAIRARG_TAC THEN PAIRARG_TAC THEN
+   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN
+     REWRITE_TAC[LENGTH; SUC_INJ] THEN
+   FIRST_ASSUM(MP_TAC o MATCH_MP gen_gc_partial_gc_move_IMP) THEN
+   FIRST_ASSUM(fun th -> FIRST_ASSUM(MP_TAC o MATCH_MP th)) THEN
+   SIMP_TAC[]));;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(conf,state). gen_gc_partial_conf_limit conf - heap_length
@@ -455,7 +463,16 @@ let gen_gc_partial_gc_move_list_heap_length = prove
  (`!h x state state'. (gen_gc_partial_gc_move_list conf state h = (x,state'))
   ==> (heap_length (gc_state_heap state) = heap_length (gc_state_heap
   state'))`,
-  CHEAT_TAC);;
+  (LIST_INDUCT_TAC THEN REWRITE_TAC[gen_gc_partial_gc_move_list_def;
+    PAIR_EQ] THENL
+    [REPEAT STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN REWRITE_TAC[];
+      ALL_TAC] THEN
+   REPEAT GEN_TAC THEN PAIRARG_TAC THEN PAIRARG_TAC THEN
+     REWRITE_TAC[PAIR_EQ] THEN
+   STRIP_TAC THEN (REPEAT VAR_EQ_TAC) THEN
+   FIRST_ASSUM(SUBST1_TAC o MATCH_MP gc_move_heap_length) THEN
+   FIRST_X_ASSUM(fun ih -> FIRST_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP
+     ih))));;
 
 let gc_move_ref_list_heap_length = prove
  (`!h x state state'.
@@ -473,7 +490,12 @@ let gen_gc_partial_gc_move_ok = prove
  (`(gen_gc_partial_gc_move conf state x = (x',state')) /\ gc_state_ok state'
   /\ (!ptr' u. (x = gc_shared_Pointer ptr' u) ==> ptr' < heap_length
   (gc_state_heap state)) ==> gc_state_ok state`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN MATCH_MP_TAC gc_move_ok' THEN
+   MAP_EVERY EXISTS_TAC [`conf:B gen_gc_partial_conf`; `x:A
+     heap_address`;
+                         `x':A heap_address`; `state':(A,B)gc_state`]
+                           THEN
+   ASM_REWRITE_TAC[]));;
 
 let gc_move_list_ok' = prove
  (`!xs xs' state state'.
@@ -504,7 +526,12 @@ let gen_gc_partial_gc_move_list_ok = prove
       gc_state_ok state' /\ (!ptr' u. MEM (gc_shared_Pointer ptr' u) xs ==>
         ptr' < heap_length (gc_state_heap state)) ==> gc_state_ok
       state`,
-  CHEAT_TAC);;
+  (REPEAT STRIP_TAC THEN MATCH_MP_TAC gc_move_list_ok' THEN
+   MAP_EVERY EXISTS_TAC [`xs:(A heap_address)list`; `xs':(A
+     heap_address)list`;
+                         `state':(A,B)gc_state`; `conf:B
+                           gen_gc_partial_conf`] THEN
+   ASM_REWRITE_TAC[]));;
 
 let gc_move_ref_list_ok' = prove
  (`!xs xs' state state'.
@@ -1320,7 +1347,7 @@ let gen_gc_partial_gc_move_list_length = prove
  (`!xs xs' state state'.
       (gen_gc_partial_gc_move_list conf state xs = (xs',state')) ==>
       (LENGTH xs' = LENGTH xs)`,
-  CHEAT_TAC);;
+  (MESON_TAC[gen_gc_partial_gc_move_list_IMP]));;
 
 let gc_move_ref_list_length = prove
  (`!xs xs' state state'.

@@ -1877,7 +1877,7 @@ let map_var_def,map_var_ind = define_shaped_rec
    (map_var f (word_Op wop ls) = word_Op wop (MAP (map_var f) ls)) /\
    (map_var f (word_Shift sh e1 e2) = word_Shift sh (map_var f e1) (map_var
     f e2)) /\
-   (map_var f (word_Const c) = (word_Const c:'a word_exp)) /\
+   (map_var f (word_Const c) = word_Const c) /\
    (map_var f (word_Lookup v) = word_Lookup v)`;;
 add_simp map_var_def;;
 

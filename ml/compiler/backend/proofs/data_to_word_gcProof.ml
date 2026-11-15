@@ -2842,12 +2842,11 @@ let loc_merge_def,loc_merge_ind = define_wf
   `MEASURE (\(x0,x1).      list_size (word_loc_size (\x. 0)) x0 +
   list_size (word_loc_size (\x. 0)) x1)`
   `(loc_merge [] ys = []) /\
-   (loc_merge (CONS (word_Loc l1 l2) xs) ys = CONS (word_Loc l1 l2:'a
-    word_loc) (loc_merge xs ys)) /\
+   (loc_merge (CONS (word_Loc l1 l2) xs) ys = CONS (word_Loc l1 l2)
+    (loc_merge xs ys)) /\
    (loc_merge (CONS (word_Word w) xs) (CONS y ys) = CONS y (loc_merge xs
     ys)) /\
-   (loc_merge (CONS (word_Word w) xs) [] = CONS (word_Word w:'a word_loc)
-    xs)`;;
+   (loc_merge (CONS (word_Word w) xs) [] = CONS (word_Word w) xs)`;;
 
 let LENGTH_loc_merge = prove
  (`!xs ys. LENGTH (loc_merge xs ys) = LENGTH xs`,

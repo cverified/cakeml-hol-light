@@ -130,7 +130,9 @@ let msub_eqn = prove
    Msub e n ls =
    if n < LENGTH ls then M_success (EL n ls)
                   else M_failure e`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+   ASM_SIMP_TAC[msub_eq] THEN
+   MATCH_MP_TAC msub_exn_eq THEN ASM_ARITH_TAC));;
 add_simp msub_eqn;;
 
 let adj_ls_sub_eqn = prove
@@ -181,7 +183,9 @@ let mupdate_eqn = prove
    if n < LENGTH ls then
    M_success (LUPDATE x n ls)
    else M_failure e`,
-  CHEAT_TAC);;
+  (REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+   ASM_SIMP_TAC[mupdate_eq] THEN
+   MATCH_MP_TAC mupdate_exn_eq THEN ASM_ARITH_TAC));;
 add_simp mupdate_eqn;;
 
 let update_adj_ls_eqn = prove
@@ -910,7 +914,7 @@ let mk_tags_succeeds = prove
 let reg_allocProof_TWOxDIV2 = prove
  (`(
       2 * x) DIV 2 = x`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN MATCH_MP_TAC DIV_MULT THEN ARITH_TAC));;
 
 (* [local] *)
 let extract_color_st_ex_MAP_lem = prove
@@ -1355,7 +1359,7 @@ let check_clash_tree_same_dom = prove
 (* [local] *)
 let opt_split = prove
  (`~(a = NONE) <=> a = SOME one`,
-  (GEN_TAC THEN CASES_ON_TAC `a:1 option` THEN
+  (REPEAT GEN_TAC THEN CASES_ON_TAC `a:1 option` THEN
     REWRITE_TAC[option_DISTINCT; option_INJ] THEN
    ONCE_REWRITE_TAC[one] THEN REWRITE_TAC[]));;
 
@@ -1368,8 +1372,8 @@ let INJ_IMG_lookup = prove
      (ft:1 spt)` MP_TAC THENL
     [ASM_REWRITE_TAC[IN_IMAGE] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
    REWRITE_TAC[domain_lookup] THEN
-   CASES_ON_TAC `lookup ((g:num->num) x) (gt:1 spt)` THEN
-   CASES_ON_TAC `lookup (x:num) (ft:1 spt)` THEN
+   CASES_ON_TAC `sptree_lookup ((g:num->num) x) (gt:1 spt)` THEN
+   CASES_ON_TAC `sptree_lookup (x:num) (ft:1 spt)` THEN
    REWRITE_TAC[option_DISTINCT; option_INJ] THEN
    ONCE_REWRITE_TAC[one] THEN MESON_TAC[]));;
 

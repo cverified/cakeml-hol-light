@@ -169,12 +169,12 @@ let source_to_flatProof_v_rel = cake_inductive
    (!genv cn cn' vs vs'.
      ALL2 (source_to_flatProof_v_rel genv) vs vs' /\
      FLOOKUP (global_env_c genv) (cn',LENGTH vs) = SOME cn ==>
-     source_to_flatProof_v_rel genv (flatSem_Conv (SOME cn) vs)
+     source_to_flatProof_v_rel genv (semanticPrimitives_Conv (SOME cn) vs)
        (flatSem_Conv (SOME cn') vs')) /\
    (!genv vs vs'.
      ALL2 (source_to_flatProof_v_rel genv) vs vs' ==>
-     source_to_flatProof_v_rel genv (flatSem_Conv NONE vs) (flatSem_Conv
-       NONE vs')) /\
+     source_to_flatProof_v_rel genv (semanticPrimitives_Conv NONE vs)
+       (flatSem_Conv NONE vs')) /\
    (!genv comp_map env env_v_local x e env_v_local' t ts.
      source_to_flatProof_env_rel genv env_v_local (flatSem_environment_v
        env_v_local') /\
@@ -182,7 +182,8 @@ let source_to_flatProof_v_rel = cake_inductive
        (flatSem_environment_v env_v_local'))) env /\
      LENGTH ts = LENGTH (flatSem_environment_v env_v_local') + 1 ==>
      source_to_flatProof_v_rel genv
-       (flatSem_Closure (sem_env_v_fupd (K (nsAppend env_v_local (sem_env_v
+       (semanticPrimitives_Closure (sem_env_v_fupd (K (nsAppend env_v_local
+         (sem_env_v
          env))) env) x e)
        (flatSem_Closure env_v_local' x
          (source_to_flat_compile_exp t
@@ -200,7 +201,7 @@ let source_to_flatProof_v_rel = cake_inductive
      LENGTH ts = LENGTH funs + LENGTH (flatSem_environment_v env_v_local')
        ==>
      source_to_flatProof_v_rel genv
-       (flatSem_Recclosure (sem_env_v_fupd (K (nsAppend env_v_local
+       (semanticPrimitives_Recclosure (sem_env_v_fupd (K (nsAppend env_v_local
          (sem_env_v env))) env) funs x)
        (flatSem_Recclosure env_v_local'
          (compile_funs t
@@ -232,7 +233,7 @@ let source_to_flatProof_v_rel = cake_inductive
                      (source_to_flat_environment_v comp_map))) comp_map) e))))
                      ==>
      source_to_flatProof_v_rel genv
-       (flatSem_Recclosure env funs x)
+       (semanticPrimitives_Recclosure env funs x)
        (flatSem_Closure flat_env y
          (source_to_flat_compile_exp t1
            (source_to_flat_environment_v_fupd (K (nsBindList (CONS
@@ -240,12 +241,12 @@ let source_to_flatProof_v_rel = cake_inductive
              (source_to_flat_environment_v comp_map))) comp_map)
            e))) /\
    (!genv loc b.
-     source_to_flatProof_v_rel genv (flatSem_Loc b loc) (flatSem_Loc b (loc
-       + 1))) /\
+     source_to_flatProof_v_rel genv (semanticPrimitives_Loc b loc) (flatSem_Loc
+       b (loc + 1))) /\
    (!genv vs vs'.
      ALL2 (source_to_flatProof_v_rel genv) vs vs' ==>
-     source_to_flatProof_v_rel genv (flatSem_Vectorv vs) (flatSem_Vectorv
-       vs')) /\
+     source_to_flatProof_v_rel genv (semanticPrimitives_Vectorv vs)
+       (flatSem_Vectorv vs')) /\
    (!genv.
      source_to_flatProof_env_rel genv nsEmpty []) /\
    (!genv x v env env' v'.

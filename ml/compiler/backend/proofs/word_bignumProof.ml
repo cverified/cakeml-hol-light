@@ -96,13 +96,13 @@ let word_bignumProof_dec_clock_def = new_definition
   `word_bignumProof_dec_clock s = word_bignumProof_state_clock_fupd (K
   (word_bignumProof_state_clock s - 1)) s`;;
 
-let reg_write_def = define_cases
-  `(reg_write v NONE (s:'a word_bignumProof_state) =
+let reg_write_def = define_cases_clauses
+  [`reg_write v NONE (s:'a word_bignumProof_state) =
     word_bignumProof_state_regs_fupd (K (word_bignumProof_state_regs s
-    \\ v)) s) /\
-   (reg_write n (SOME v) (s:'a word_bignumProof_state) =
+    \\ v)) s`;
+   `reg_write n (SOME v) (s:'a word_bignumProof_state) =
     word_bignumProof_state_regs_fupd (K (word_bignumProof_state_regs s |+
-    (n,v))) s)`;;
+    (n,v))) s`];;
 
 let delete_vars_def,delete_vars_ind = define_rec
   `(delete_vars [] s = s) /\

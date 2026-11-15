@@ -257,8 +257,8 @@ make_size "heap_address";;
 let ADDR_MAP_def,ADDR_MAP_ind = define_wf
   `MEASURE (\(x0,x1). list_size (heap_address_size (\x. 0)) x1)`
   `(ADDR_MAP f [] = []) /\
-   (ADDR_MAP f (CONS (gc_shared_Data x) xs) = CONS (gc_shared_Data x:'a
-    heap_address) (ADDR_MAP f xs)) /\
+   (ADDR_MAP f (CONS (gc_shared_Data x) xs) = CONS (gc_shared_Data x)
+    (ADDR_MAP f xs)) /\
    (ADDR_MAP f (CONS (gc_shared_Pointer a d) xs) = CONS (gc_shared_Pointer
     (f a) d) (ADDR_MAP f xs))`;;
 
@@ -278,7 +278,7 @@ let ADDR_MAP_APPEND = prove
 
 let ADDR_APPLY_def = define_cases
   `(ADDR_APPLY f (gc_shared_Pointer x d) = gc_shared_Pointer (f x) d) /\
-   (ADDR_APPLY f (gc_shared_Data y) = (gc_shared_Data y:'a heap_address))`;;
+   (ADDR_APPLY f (gc_shared_Data y) = gc_shared_Data y)`;;
 
 (* HOL4 gc_sharedScript.sml:383-395: a theorem that HOL4 states as the value
    of an ML expression: heap_lookup_FLOOKUP *)

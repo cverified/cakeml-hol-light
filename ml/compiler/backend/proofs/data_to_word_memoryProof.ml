@@ -277,29 +277,29 @@ add_simp ref_ptr_annot_def;;
 
 let v_inv_ck = cake_inductive
   `(small_int (:'a) i ==>
-       v_inv_ck ck conf (bvlSem_Number i) (refs:(dataSem_v bvlSem_ref) spt)
+       v_inv_ck ck conf (dataSem_Number i) (refs:(dataSem_v bvlSem_ref) spt)
                   (gc_shared_Data (word_Word (Smallnum i)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
                     list)heap_element) list))) /\
    (~(small_int (:'a) i) /\
      heap_lookup ptr heap = SOME (Bignum i) ==>
-       v_inv_ck ck conf (bvlSem_Number i) refs (gc_shared_Pointer ptr
+       v_inv_ck ck conf (dataSem_Number i) refs (gc_shared_Pointer ptr
          (word_Word (n2w 0)),f,tf,(heap:(('a
          word_loc,data_to_word_memoryProof_tag#('a word_loc) list)heap_element)
          list))) /\
    (heap_lookup ptr heap = SOME (Word64Rep (:'a) w) ==>
-       v_inv_ck ck conf (bvlSem_Word64 w) refs (gc_shared_Pointer ptr
+       v_inv_ck ck conf (dataSem_Word64 w) refs (gc_shared_Pointer ptr
          (word_Word (n2w 0)),f,tf,(heap:(('a
          word_loc,data_to_word_memoryProof_tag#('a word_loc) list)heap_element)
          list))) /\
-   (v_inv_ck ck conf (bvlSem_CodePtr n) refs (gc_shared_Data (word_Loc n
+   (v_inv_ck ck conf (dataSem_CodePtr n) refs (gc_shared_Data (word_Loc n
      0),f,tf,(heap:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
      list)heap_element) list))) /\
    (n IN FDOM f /\
      (!ev v. ~(sptree_lookup n refs = SOME (bvlSem_Thunk ev v))) /\
      (!tg fin l c r. sptree_lookup n refs = SOME (bvlSem_MutBlock tg fin l c
        r) ==> ~b) ==>
-       v_inv_ck ck conf (bvlSem_RefPtr b n) refs
+       v_inv_ck ck conf (dataSem_RefPtr b n) refs
                   (gc_shared_Pointer (FAPPLY f n) (ref_ptr_annot conf
                     (sptree_lookup n refs)),
                    f,tf,(heap:(('a word_loc,data_to_word_memoryProof_tag#('a
@@ -309,7 +309,7 @@ let v_inv_ck = cake_inductive
      n IN FDOM f /\
      heap_lookup (FAPPLY f n) heap = SOME (ThunkBlock ev x) /\
      (~(ck = (0:num)) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap)) ==>
-       v_inv_ck ck conf (bvlSem_RefPtr F n) refs
+       v_inv_ck ck conf (dataSem_RefPtr F n) refs
                   (gc_shared_Pointer (FAPPLY f n) (word_Word (n2w
                     0)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
@@ -317,7 +317,7 @@ let v_inv_ck = cake_inductive
    (sptree_lookup n refs = SOME (bvlSem_Thunk Evaluated v) /\
      dataSem_dest_thunk v refs = dataSem_NotThunk /\
      (~(ck = 0) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap)) ==>
-       v_inv_ck ck conf (bvlSem_RefPtr F n) refs (x,f,tf,(heap:(('a
+       v_inv_ck ck conf (dataSem_RefPtr F n) refs (x,f,tf,(heap:(('a
          word_loc,data_to_word_memoryProof_tag#('a word_loc) list)heap_element)
          list))) /\
    (vs = [] /\

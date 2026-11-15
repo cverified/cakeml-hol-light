@@ -73,11 +73,11 @@ let decode_length_def = new_definition
   data_to_word_config_len_size conf)`;;
 
 let word_gc_move_def = define_general
-  `(word_gc_move conf (word_Loc l1 l2,i,pa,old,m,dm) = ((word_Loc l1 l2:'a
-    word_loc),i,pa,m,(l2 = 0))) /\
+  `(word_gc_move conf (word_Loc l1 l2,i,pa,old,m,dm) = (word_Loc l1
+    l2,i,pa,m,(l2 = 0))) /\
    (word_gc_move conf (word_Word w,i,pa,old,m,dm) =
-         if (w && (n2w 1)) = (n2w 0) then ((word_Word w:'a
-             word_loc),i,pa,m,T) else let c = (ptr_to_addr conf old w IN dm) in
+         if (w && (n2w 1)) = (n2w 0) then (word_Word w,i,pa,m,T) else let c
+             = (ptr_to_addr conf old w IN dm) in
            let v = m (ptr_to_addr conf old w) in
              if is_fwd_ptr v then
                (word_Word (update_addr conf (theWord v >>> 2) w),i,pa,m,c)
@@ -94,7 +94,7 @@ let word_gc_move_def = define_general
 
 let word_gen_gc_partial_move_def = define_general
   `(word_gen_gc_partial_move conf (word_Loc l1 l2,i,pa,old,m,dm,gs,rs) =
-    ((word_Loc l1 l2:'a word_loc),i,pa,m,(l2 = 0))) /\
+    (word_Loc l1 l2,i,pa,m,(l2 = 0))) /\
    (word_gen_gc_partial_move conf (word_Word w,i,pa,old,m,dm,gs,rs) =
        if (w && (n2w 1)) = (n2w 0) then (word_Word w,i,pa,m,T) else let
            header_addr = ptr_to_addr conf old w in
@@ -352,11 +352,10 @@ let is_ref_header_def = new_definition
 
 let word_gen_gc_move_def = define_general
   `(word_gen_gc_move conf (word_Loc l1 l2,i,pa,ib,pb,old,m,dm) =
-         ((word_Loc l1 l2:'a word_loc),i,pa,ib,pb,m,(l2 = 0))) /\
+         (word_Loc l1 l2,i,pa,ib,pb,m,(l2 = 0))) /\
    (word_gen_gc_move conf (word_Word w,i,pa,ib,pb,old,m,dm) =
-         if ((n2w 1) && w) = (n2w 0) then ((word_Word w:'a
-             word_loc),i,pa,ib,pb,m,T) else let c = (ptr_to_addr conf old w IN
-             dm) in
+         if ((n2w 1) && w) = (n2w 0) then (word_Word w,i,pa,ib,pb,m,T) else
+             let c = (ptr_to_addr conf old w IN dm) in
            let v = m (ptr_to_addr conf old w) in
            let c = (c /\ isWord v) in
              if is_fwd_ptr v then

@@ -1404,13 +1404,13 @@ let backend_from_data_tuple_cc_def = new_definition
              OPTION_MAP
                (\(bytes,cfg).
                  (bytes,append (FST bm),(SND bm,cfg)))
-               (backend_compile asm_conf cfg
+               (lab_to_target_compile asm_conf cfg
                  (MAP prog_to_section
                    (MAP
-                     (stack_alloc_prog_comp (stack_to_lab_config_reg_names
+                     (stack_names_prog_comp (stack_to_lab_config_reg_names
                        (backend_config_stack_conf c)))
                      (MAP
-                       (stack_alloc_prog_comp (stack_to_lab_config_jump
+                       (stack_remove_prog_comp (stack_to_lab_config_jump
                          (backend_config_stack_conf c)) (asm_config_addr_offset
                          asm_conf)
                          (asm_config_reg_count asm_conf - (LENGTH

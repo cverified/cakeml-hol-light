@@ -1819,7 +1819,7 @@ let enc_lines_again_simp_def,enc_lines_again_simp_ind = define_wf
               (CONS (lab_LabAsm a w1 bs l1) rest,(l1 = l /\ ok))) /\
    (enc_lines_again_simp labs ffis pos enc (CONS (lab_Label k1 k2 l) xs) =
         let (rest,ok) = enc_lines_again_simp labs ffis (pos + l) enc xs in
-        (CONS (lab_Label k1 k2 l:'a line) rest,ok)) /\
+        (CONS (lab_Label k1 k2 l) rest,ok)) /\
    (enc_lines_again_simp labs ffis pos enc (CONS (lab_Asm x1 x2 l) xs) =
         let (rest,ok) = enc_lines_again_simp labs ffis (pos + l) enc xs in
         (CONS (lab_Asm x1 x2 l) rest,ok))`;;
@@ -2220,14 +2220,14 @@ let line_encd_def = new_definition
        enc (asm_Jump (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
        LENGTH bytes <= len
      | lab_LabAsm (lab_JumpCmp a b c l) _ bytes len ->
-       enc (lab_JumpCmp a b c (n2w (find_pos l labs) + --(n2w pos))) = bytes
+       enc (asm_JumpCmp a b c (n2w (find_pos l labs) + --(n2w pos))) = bytes
          /\
        LENGTH bytes <= len
      | lab_LabAsm (lab_LocValue k l) _ bytes len ->
        enc (asm_Loc k (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
        LENGTH bytes <= len
      | lab_LabAsm (lab_Call l) _ bytes len ->
-       enc (lab_Call (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
+       enc (asm_Call (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
        LENGTH bytes <= len
      | _ -> T`;;
 

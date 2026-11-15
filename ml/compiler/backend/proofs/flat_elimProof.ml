@@ -504,7 +504,25 @@ let flat_elimProof_has_Eval_def = prove
    (has_Eval (flat_Raise _ e) = has_Eval e) /\
    (has_Eval (flat_Var_local _ _) = F) /\
    (has_Eval (flat_Lit _ v) = F)`,
-  CHEAT_TAC);;
+  (SUBGOAL_THEN `!es. has_Eval_list es <=> EX has_Eval es` ASSUME_TAC
+    THENL
+    [LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[has_Eval_def; EX]; ALL_TAC]
+      THEN
+   SUBGOAL_THEN `!pes. has_Eval_pats pes <=> EX has_Eval (MAP SND
+     pes)` ASSUME_TAC THENL
+    [LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[has_Eval_def; EX; MAP] THEN
+     SPEC_TAC(`h:flat_pat#flat_exp`,`h:flat_pat#flat_exp`) THEN
+     ASM_REWRITE_TAC[FORALL_PAIR_THM; has_Eval_def; SND];
+     ALL_TAC] THEN
+   SUBGOAL_THEN `!funs. has_Eval_funs funs <=> EX has_Eval (MAP (SND
+     o SND) funs)`
+     ASSUME_TAC THENL
+    [LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[has_Eval_def; EX; MAP] THEN
+     SPEC_TAC(`h:varN#varN#flat_exp`,`h:varN#varN#flat_exp`)
+       THEN
+     ASM_REWRITE_TAC[FORALL_PAIR_THM; has_Eval_def; SND; o_THM];
+     ALL_TAC] THEN
+   ASM_REWRITE_TAC[has_Eval_def]));;
 
 (******** EVALUATE INDUCTION ********)
 

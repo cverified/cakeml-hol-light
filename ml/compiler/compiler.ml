@@ -491,9 +491,9 @@ let find_num_def = new_definition
    | NONE -> INR (mlstring_concat [(implode "Unable to parse as num: ");
      rest; (implode " for flag: "); flag]))`;;
 
-let get_err_str_def = define_cases
-  `(get_err_str (INL n) = (implode "")) /\
-   (get_err_str (INR n) = mlstring_concat [n; (implode "\n")])`;;
+let get_err_str_def = define_cases_clauses
+  [`get_err_str (INL n) = (implode "")`;
+   `get_err_str (INR n) = mlstring_concat [n; (implode "\n")]`];;
 
 (* All the numbers must parse *)
 let parse_num_list_def,parse_num_list_ind = define_rec

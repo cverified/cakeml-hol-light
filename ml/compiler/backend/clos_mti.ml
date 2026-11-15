@@ -193,7 +193,8 @@ let cond_mti_compile_inc_def = new_definition
 (* compile_nil *)
 let clos_mti_compile_nil = prove
  (`clos_mti_compile do_mti max_app [] = []`,
-  CHEAT_TAC);;
+  (GEN_TAC THEN CASES_ON_TAC `do_mti:bool` THEN
+   REWRITE_TAC[clos_mti_compile_def; intro_multi_def]));;
 add_simp clos_mti_compile_nil;;
 
 (* and the interface *)

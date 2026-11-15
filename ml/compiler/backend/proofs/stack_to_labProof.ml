@@ -536,7 +536,7 @@ let result_view_def = new_definition
      match x1 with
        stackSem_Result (word_Loc n1 n2) -> Vloc n1 n2
      | stackSem_Exception (word_Loc n1 n2) -> Vloc n1 n2
-     | targetSem_TimeOut -> Vtimeout
+     | stackSem_TimeOut -> Vtimeout
      | stackSem_Continue n -> Vcont l (find_lab n cs)
      | stackSem_Break n -> Vloc l (find_lab n bs)
      | _ -> Verr`;;

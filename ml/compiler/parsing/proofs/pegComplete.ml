@@ -137,7 +137,7 @@ add_simp peg_eval_tokSymP_NONE;;
 (* disjImpI[local] *)
 let pegComplete_disjImpI = prove
  (`~p \/ q <=> p ==> q`,
-  CHEAT_TAC);;
+  (MESON_TAC[]));;
 
 (* [local] *)
 let ptree_head_eq_tok0 = prove

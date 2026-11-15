@@ -555,7 +555,7 @@ flatSem	ML code skipped: val _ = map (can delete_const)   ["do_eq_UNION_aux","do
 gen_gc	ML code skipped: val gc_state_component_equality = DB.fetch "gc_shared" "gc_s
 gen_gc	ML code skipped: val full_simp = full_simp_tac std_ss
 gen_gc	ML code skipped: val isSomeDataOrForward_lemma_expanded =   isSomeDataOrForwa
-gen_gc	line 262 is 83 characters
+gen_gc	line 261 is 83 characters
 gen_gc_partial	ML code skipped: val gc_state_component_equality = DB.fetch "gc_shared" "gc_s
 gen_gc_partial	ML code skipped: val RootsRefs_def = RootsRefs_rules;
 gen_gc_partial	ML code skipped: val has_old_ptr_CONS =   has_old_ptr_APPEND |> Q.SPEC `[x]` 
@@ -563,13 +563,13 @@ gen_gc_partial	ML code skipped: val heap_lookup_heap_expand = isSomeDataElement_
 wordSem	ML code skipped: val state_component_equality = theorem"state_component_equal
 wordSem	ML code skipped: val s = ``(s:('a,'c,'ffi) wordSem$state)``
 wordSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-wordSem	line 1220 is 86 characters
+wordSem	line 1222 is 86 characters
 targetSem	line 62 is 86 characters
 targetSem	line 556 is 83 characters
 labSem	Overload read_reg
 labSem	line 50 is 205 characters
 stackSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-stackSem	line 1003 is 85 characters
+stackSem	line 948 is 86 characters
 wordConvs	derive not_created_subprogs_P_def: '=> GEN (hd ('
 wordConvs	ML code skipped: val no_alloc_P = ``((<>) (Alloc 0 (LN,LN)))``
 wordConvs	derive no_alloc_def: no not_created_subprogs_P_def
@@ -1098,6 +1098,7 @@ data_to_word_memoryProof	ML code skipped: val good_dimindex_def = good_dimindex_
 data_to_word_memoryProof	derive memory_rel_pointer_eq: '\\\\ rw[] \\\\ C'
 data_to_word_memoryProof	ML code skipped: val v_depth_ind = theorem"v_depth_ind";
 data_to_word_memoryProof	ML code skipped: val elements_list_ind = theorem"elements_list_ind";
+data_to_word_memoryProof	several_clauses cannot read the body: expected 'then' but found 'else' at 454
 data_to_word_memoryProof	ML code skipped: val word_eq_ind = theorem "word_eq_ind";
 data_to_word_memoryProof	ML code skipped: val list_copy_bwd_def = list_copy_bwd_def |> REWRITE_RULE [m
 data_to_word_memoryProof	ML code skipped: val list_copy_bwd_alias_def = list_copy_bwd_alias_def       
@@ -1188,7 +1189,7 @@ data_to_word_gcProof	Theorem AllocVar_thm: HOL Light does not read the statement
 data_to_word_gcProof	Theorem AllocVar_thm_nary: HOL Light does not read the statement
 data_to_word_gcProof	derive memory_rel_get_var_IMP: no PULL_EXISTS
 data_to_word_gcProof	derive word_ml_inv_get_var_IMP: rule Once/0
-data_to_word_gcProof	line 3195 is 81 characters
+data_to_word_gcProof	line 3194 is 81 characters
 word_depthProof	ML code skipped: Resume max_depth_call_graph_lemma[Call]:   rpt gen_tac   \\ 
 word_depthProof	ML code skipped: \\ PairCases_on `x` \\ simp []   \\ TOP_CASE_TAC \\ simp [] 
 word_depthProof	ML code skipped: Resume max_depth_call_graph_lemma[Loop]:   rpt gen_tac \\ si
@@ -1994,7 +1995,7 @@ source_to_flatProof	ML code skipped: rveq >>   fs [] >>   first_x_assum (drule_t
 source_to_flatProof	ML code skipped: Finalise compile_correct;
 source_to_flatProof	ML code skipped: val COUNT_LIST_ADD_SYM = COUNT_LIST_ADD   |> CONV_RULE (SIMP
 source_to_flatProof	derive compile_flat_BAG_ALL_DISTINCT: no BAG_ALL_DISTINCT_SUB_BAG
-source_to_flatProof	line 218 is 81 characters
+source_to_flatProof	line 219 is 81 characters
 source_letProof	derive evaluate_lift_start: rule Once/0
 stack_allocProof	ML code skipped: val _ = (max_print_depth := 18);
 stack_allocProof	ML code skipped: val word_shift_def = backend_commonTheory.word_shift_def val
