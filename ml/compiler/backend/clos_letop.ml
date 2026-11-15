@@ -40,7 +40,7 @@ let clos_letop_dest_op_def = new_definition
      | _ -> NONE`;;
 
 (* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
-   t is tra, (mlstring list) and mlstring; xs is (_)list and (exp list),
+   t is tra, (mlstring list) and mlstring; xs is (exp list) and (_)list,
    which one quotation cannot typecheck *)
 let clos_letop_let_op_def,clos_letop_let_op_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

@@ -131,8 +131,13 @@ let clos_mtiProof_ref_rel = cake_inductive
      clos_mtiProof_ref_rel max_app (closSem_Thunk m v) (closSem_Thunk m
        w))`;;
 
-(* HOL4 clos_mtiProofScript.sml:128-132: a theorem that HOL4 states as the
-   value of an ML expression: ref_rel_simps *)
+let clos_mtiProof_ref_rel_simps =
+  end_itlist CONJ [SIMP_CONV [cake_cases clos_mtiProof_ref_rel]
+  `clos_mtiProof_ref_rel max_app (closSem_ValueArray vs) x`; SIMP_CONV
+  [cake_cases clos_mtiProof_ref_rel] `clos_mtiProof_ref_rel max_app
+  (closSem_ByteArray bs) x`; SIMP_CONV [cake_cases clos_mtiProof_ref_rel]
+  `clos_mtiProof_ref_rel max_app (closSem_Thunk m v) x`];;
+add_simp clos_mtiProof_ref_rel_simps;;
 
 let clos_mtiProof_FMAP_REL_def = new_definition
   `clos_mtiProof_FMAP_REL r f1 f2 <=>

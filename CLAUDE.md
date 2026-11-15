@@ -247,3 +247,13 @@ describes, and a file that a `needs` of a later file reloads
 with another digest is an error of its own.  `tools/port.py`
 refuses to write while a run is going, and `tools/bin/trydef`
 refuses to use the session of one.
+
+`tools/unstated.py` is the table of the statements that HOL
+Light's parser rejects, and the port writes a pointer at the
+source in the place of each one.  So the port that a harvest
+loads does not have them, and a plain harvest can only add to
+that table and never take from it.  `tools/bin/retryharvest` is
+the run that takes from it: it writes `ml/` with the table
+ignored (`RETRY=1`), loads that, rebuilds the table from what
+the session says and writes `ml/` again without `RETRY`.  Run it
+after a pass that changes how statements are rendered.

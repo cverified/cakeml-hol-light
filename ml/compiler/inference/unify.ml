@@ -796,8 +796,9 @@ let kclkont_CASE = new_recursive_definition kclkont_RECURSION
 let dfkcwalkstarl_def = new_definition
   `dfkcwalkstarl s t k = kcwalkstarl s t (apply_kclkont s k)`;;
 
-(* HOL4 unifyScript.sml:1298-1299: a theorem that HOL4 states as the value
-   of an ML expression: apply_kclkont5 *)
+let apply_kclkont5 =
+  SIMP_RULE [GSYM (el 2 (CONJUNCTS apply_kclkont_def))] (el 4 (CONJUNCTS
+  apply_kclkont_def));;
 
 (* HOL4 unifyScript.sml:1301-1306: a theorem that HOL4 states as the value
    of an ML expression: apply_kclkont_thm *)
@@ -812,8 +813,7 @@ let kcwalkstarwl_def = define_general
 (* HOL4 unifyScript.sml:1320-1324: a theorem that HOL4 states as the value
    of an ML expression: kcwalkstarwl_thm *)
 
-(* HOL4 unifyScript.sml:1326: a theorem that HOL4 states as the value of an
-   ML expression: dfkcwalkstarl_removed *)
+let dfkcwalkstarl_removed = GSYM (el 1 (CONJUNCTS kcwalkstarwl_def));;
 let apply_kclkont_ID = prove
  (`apply_kclkont s [] = I`,
   CHEAT_TAC);;

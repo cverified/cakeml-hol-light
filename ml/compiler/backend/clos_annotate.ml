@@ -35,7 +35,7 @@ let no_overlap_def,no_overlap_ind = define_wf
          (if has_var n l then F else no_overlap n l))`;;
 
 (* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
-   t is tra, mlstring and (mlstring list); xs is (_)list and (exp list); xs2
+   t is tra, mlstring and (mlstring list); xs is (exp list) and (_)list; xs2
    is (exp list) and (_)list, which one quotation cannot typecheck *)
 let alt_free_def,alt_free_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
@@ -217,7 +217,7 @@ let shifted_env_def,shifted_env_ind = define_rec
     (n + 1) xs))`;;
 
 (* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
-   t is tra, mlstring and (mlstring list); xs is (_)list and (exp list); xs2
+   t is tra, mlstring and (mlstring list); xs is (exp list) and (_)list; xs2
    is (exp list) and (_)list, which one quotation cannot typecheck *)
 let shift_def,shift_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

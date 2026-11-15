@@ -98,8 +98,8 @@ let iAssign_def = new_definition
 
 let _ = do_list hide_constant ["tail"];;
 
-(* the clauses in two quotations: dest is (num option) and num; xs is (_)list
-   and (exp list), which one quotation cannot typecheck *)
+(* the clauses in two quotations: dest is (num option) and num; xs is (exp
+   list) and (_)list, which one quotation cannot typecheck *)
 let bvi_to_data_compile_def,bvi_to_data_compile_ind =
   assume_definition_rec_clauses
   "termination (CHEAT_TAC)"

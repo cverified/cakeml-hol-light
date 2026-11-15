@@ -1871,8 +1871,7 @@ let LESS_LENGTH = prove
              k))`,
   CHEAT_TAC);;
 
-(* HOL4 miscScript.sml:3372-3373: a theorem that HOL4 states as the value of
-   an ML expression: IN_EVEN *)
+let IN_EVEN = SIMP_CONV [IN] `x IN EVEN`;;
 
 let FOLDL_OPTION_CHOICE_EQ_SOME_IMP_MEM = prove
  (`FOLDL OPTION_CHOICE x ls = SOME y ==> MEM (SOME y) (CONS x ls)`,

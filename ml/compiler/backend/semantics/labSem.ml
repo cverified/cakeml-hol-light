@@ -534,7 +534,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
        | _ -> (targetSem_Error,s))
      | SOME (lab_Asm (ShareMem m r ad) _ _) ->
         (match share_mem_op m r ad s with SOME (FFI_final outcome,s') ->
-          (lab_Halt (ffi_FFI_outcome outcome),s')
+          (targetSem_Halt (ffi_FFI_outcome outcome),s')
          | SOME (FFI_return _ _,s') ->
              labSem_evaluate (labSem_state_io_fp_regs_fupd (K
                (misc_shift_seq 1 (labSem_state_io_fp_regs s')))
@@ -543,8 +543,8 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
          | NONE -> (targetSem_Error,s))
      | SOME (lab_LabAsm lab_Halt _ _ _) ->
         (match labSem_state_regs s (labSem_state_ptr_reg s) with word_Word
-          (n2w 0) -> (lab_Halt ffi_Success,s)
-         | word_Word _ -> (lab_Halt ffi_Resource_limit_hit,s)
+          (n2w 0) -> (targetSem_Halt ffi_Success,s)
+         | word_Word _ -> (targetSem_Halt ffi_Resource_limit_hit,s)
          | _ -> (targetSem_Error,s))
      | SOME (lab_LabAsm (lab_LocValue r lab) _ _ _) ->
         (if get_pc_value lab s = NONE then (targetSem_Error,s) else let s1 =
@@ -622,7 +622,7 @@ let labSem_evaluate_def,labSem_evaluate_ind = assume_definition_rec
                  loc_to_pc n1 n2 (labSem_state_code s)) with (SOME
                    bytes,SOME bytes2,SOME new_pc) ->
               (match call_FFI (labSem_state_ffi s) (ffi_ExtCall ffi_index)
-                bytes bytes2 with FFI_final outcome -> (lab_Halt
+                bytes bytes2 with FFI_final outcome -> (targetSem_Halt
                 (ffi_FFI_outcome outcome),s)
                | FFI_return new_ffi new_bytes ->
                    let new_io_regs = misc_shift_seq 1 (labSem_state_io_regs

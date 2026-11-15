@@ -2,7 +2,7 @@
 (*  semanticPrimitivesProps: ported from HOL4's
     semantics/proofs/semanticPrimitivesPropsScript.sml
     A proof theory about semanticPrimitives.ml, with 20 definitions
-    and 61 theorems.  Needed by 27 files of the port.  *)
+    and 61 theorems.  Needed by 28 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -126,8 +126,8 @@ let pmatch_nsAppend = prove
 
 let pmatch_nsAppend_No_match =
   el 0 (CONJUNCTS (el 0 (CONJUNCTS pmatch_nsAppend)));;
-let pmatch_nsAppend_Match =
-  el 1 (CONJUNCTS (el 0 (CONJUNCTS pmatch_nsAppend)));;
+(* HOL4 semanticPrimitivesPropsScript.sml:164: a theorem that HOL4 states as
+   the value of an ML expression: pmatch_nsAppend_Match *)
 
 let pmatch_acc = prove
  (`(!envc store p v env env' env2.
@@ -516,7 +516,7 @@ add_simp ctors_of_dec_def;;
 (* free vars *)
 
 (* the clauses in three quotations: defs is ((varN # varN # exp) list),
-   (_)list, (_#_)list and (_#_#_)list; es is (_)list and (exp list); ls is
+   (_)list, (_#_)list and (_#_#_)list; es is (exp list) and (_)list; ls is
    (exp list) and (_)list; pes is ((pat # exp) list), (_)list and (_#_)list,
    which one quotation cannot typecheck *)
 let FV_def,FV_ind = assume_definition_rec_clauses
@@ -534,14 +534,14 @@ let FV_def,FV_ind = assume_definition_rec_clauses
     (FV (ast_Tannot e t) = FV e) /\
     (FV (ast_Lannot e l) = FV e) /\
     (FV_list [] = {}) /\
-    (FV_list (CONS e es) = FV e UNION FV_list es) /\
     (FV_pes [] = {}) /\
     (FV_pes (CONS (p,e) pes) =
          (FV e DIFF (IMAGE Short (set_of_list (ast_pat_bindings p))))
              UNION FV_pes pes) /\
     (FV_defs [] = {})`;
    `(FV (ast_Con _ ls) = FV_list ls) /\
-    (FV (ast_App _ es) = FV_list es)`;
+    (FV (ast_App _ es) = FV_list es) /\
+    (FV_list (CONS e es) = FV e UNION FV_list es)`;
    `(FV (ast_Letrec defs b) = (FV_defs defs UNION FV b) DIFF set_of_list
     (MAP (Short o FST) defs)) /\
     (FV_defs (CONS (_,x,e) defs) =

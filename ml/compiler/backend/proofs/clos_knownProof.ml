@@ -1150,8 +1150,13 @@ let clos_knownProof_ref_rel = cake_inductive
        clos_knownProof_ref_rel c g (closSem_Thunk m v) (closSem_Thunk m
          w))`;;
 
-(* HOL4 clos_knownProofScript.sml:2762-2766: a theorem that HOL4 states as
-   the value of an ML expression: ref_rel_simps *)
+let ref_rel_simps =
+  end_itlist CONJ [SIMP_CONV [cake_cases clos_knownProof_ref_rel]
+  `clos_knownProof_ref_rel c g (closSem_ValueArray vs) x`; SIMP_CONV
+  [cake_cases clos_knownProof_ref_rel] `clos_knownProof_ref_rel c g
+  (closSem_ByteArray bs) x`; SIMP_CONV [cake_cases clos_knownProof_ref_rel]
+  `clos_knownProof_ref_rel c g (closSem_Thunk m v) x`];;
+add_simp ref_rel_simps;;
 
 let ref_rel_upd_inline_factor = prove
  (`clos_knownProof_ref_rel (clos_known_config_inline_factor_fupd (K k) c) =

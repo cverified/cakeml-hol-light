@@ -695,8 +695,8 @@ let pmatch_stamps_ok = cake_inductive
      // tuples
      n_ps = n_vs ==> pmatch_stamps_ok NONE NONE n_ps n_vs)`;;
 
-(* the clauses in two quotations: ps is (_)list and (pat list); vs is (_)list
-   and (v list), which one quotation cannot typecheck *)
+(* the clauses in three quotations: ps is (pat list) and (_)list; vs is (v
+   list) and (_)list, which one quotation cannot typecheck *)
 let flatSem_pmatch_def,flatSem_pmatch_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(flatSem_pmatch s (flat_Pvar x) v' bindings =
@@ -716,14 +716,6 @@ let flatSem_pmatch_def,flatSem_pmatch_ind = assume_definition_rec_clauses
         | _ -> Match_type_error) /\
     (flatSem_pmatch _ _ _ bindings = Match_type_error) /\
     (flatSem_pmatch_list s [] [] bindings = Match bindings) /\
-    (flatSem_pmatch_list s (CONS p ps) (CONS v vs) bindings =
-        match flatSem_pmatch s p v bindings with Match_type_error ->
-            Match_type_error
-        | Match bindings' -> flatSem_pmatch_list s ps vs bindings'
-        | No_match ->
-          (match flatSem_pmatch_list s ps vs bindings with Match_type_error
-              -> Match_type_error
-          | _ -> No_match)) /\
     (flatSem_pmatch_list s _ _ bindings = Match_type_error)`;
    `flatSem_pmatch s (flat_Pcon stmp ps) (flatSem_Conv stmp' vs) bindings =
         if ~(pmatch_stamps_ok stmp stmp' (LENGTH ps) (LENGTH vs)) then
@@ -731,7 +723,15 @@ let flatSem_pmatch_def,flatSem_pmatch_ind = assume_definition_rec_clauses
         else if OPTION_MAP FST stmp = OPTION_MAP FST stmp' /\
            LENGTH ps = LENGTH vs then
           flatSem_pmatch_list s ps vs bindings
-        else No_match`];;
+        else No_match`;
+   `flatSem_pmatch_list s (CONS p ps) (CONS v vs) bindings =
+        match flatSem_pmatch s p v bindings with Match_type_error ->
+            Match_type_error
+        | Match bindings' -> flatSem_pmatch_list s ps vs bindings'
+        | No_match ->
+          (match flatSem_pmatch_list s ps vs bindings with Match_type_error
+              -> Match_type_error
+          | _ -> No_match)`];;
 
 let pmatch_rows_def,pmatch_rows_ind = define_rec
   `(pmatch_rows [] s v = No_match) /\
@@ -782,28 +782,12 @@ let flatSem_AppUnit_def = new_definition
   `flatSem_AppUnit x = flat_App backend_common_None (flat_Src ast_Opapp) [x;
   flat_Con backend_common_None NONE []]`;;
 
-(* the clauses in 10 quotations: a0 is tra, varN and exp; a1 is exp, lit,
-   ((ctor_id # type_id) option), varN, op, (varN option), ((varN # varN #
-   exp) list) and (_)list; a2 is ((pat # exp) list), (_)list, (exp list) and
-   exp, which one quotation cannot typecheck *)
 let flatSem_exp_alt_size_def,flatSem_exp_alt_size_ind = define_rec_clauses
-  [`(flatSem_exp_alt_size (flat_Raise a0 a1) = 1 + (tra_size a0 +
-    flatSem_exp_alt_size a1)) /\
-    (flatSem_exp_alt_size (flat_Handle a0 a1 a2) =
+  [`flatSem_exp_alt_size (flat_Raise a0 a1) = 1 + (tra_size a0 +
+    flatSem_exp_alt_size a1)`;
+   `flatSem_exp_alt_size (flat_Handle a0 a1 a2) =
     1 + (tra_size a0 + (flatSem_exp_alt_size a1 + flatSem_exp3_alt_size
-        a2))) /\
-    (flatSem_exp_alt_size (flat_Mat a0 a1 a2) =
-    1 + (tra_size a0 + (flatSem_exp_alt_size a1 + flatSem_exp3_alt_size
-        a2))) /\
-    (flatSem_exp1_alt_size [] = 0) /\
-    (flatSem_exp2_alt_size (a0,a1) = 1 + (mlstring_size a0 + exp4_alt_size
-    a1)) /\
-    (flatSem_exp3_alt_size [] = 0) /\
-    (exp4_alt_size (a0,a1) = 1 + (mlstring_size a0 + flatSem_exp_alt_size
-    a1)) /\
-    (exp5_alt_size (a0,a1) = 1 + (flat_pat_size a0 + flatSem_exp_alt_size
-    a1)) /\
-    (exp6_alt_size [] = 0)`;
+        a2))`;
    `flatSem_exp_alt_size (flat_Lit a0 a1) = 1 + (tra_size a0 + lit_size a1)`;
    `flatSem_exp_alt_size (flat_Con a0 a1 a2) =
     1 +
@@ -821,18 +805,30 @@ let flatSem_exp_alt_size_def,flatSem_exp_alt_size_ind = define_rec_clauses
    `flatSem_exp_alt_size (flat_If a0 a1 a2 a3) =
     1 + (tra_size a0 + (flatSem_exp_alt_size a1 + (flatSem_exp_alt_size
         a2 + flatSem_exp_alt_size a3)))`;
+   `flatSem_exp_alt_size (flat_Mat a0 a1 a2) =
+    1 + (tra_size a0 + (flatSem_exp_alt_size a1 + flatSem_exp3_alt_size
+        a2))`;
    `flatSem_exp_alt_size (flat_Let a0 a1 a2 a3) =
     1 +
     (tra_size a0 +
      (option_size mlstring_size a1 + (flatSem_exp_alt_size a2 +
          flatSem_exp_alt_size a3)))`;
-   `(flatSem_exp_alt_size (flat_Letrec a0 a1 a2) =
+   `flatSem_exp_alt_size (flat_Letrec a0 a1 a2) =
     1 + (mlstring_size a0 + (flatSem_exp1_alt_size a1 +
-        flatSem_exp_alt_size a2))) /\
-    (flatSem_exp1_alt_size (CONS a0 a1) = 1 + (flatSem_exp2_alt_size a0 +
-    flatSem_exp1_alt_size a1)) /\
-    (flatSem_exp3_alt_size (CONS a0 a1) = 1 + (exp5_alt_size a0 +
-    flatSem_exp3_alt_size a1))`;
+        flatSem_exp_alt_size a2))`;
+   `flatSem_exp1_alt_size [] = 0`;
+   `flatSem_exp1_alt_size (CONS a0 a1) = 1 + (flatSem_exp2_alt_size a0 +
+    flatSem_exp1_alt_size a1)`;
+   `flatSem_exp2_alt_size (a0,a1) = 1 + (mlstring_size a0 + exp4_alt_size
+    a1)`;
+   `flatSem_exp3_alt_size [] = 0`;
+   `flatSem_exp3_alt_size (CONS a0 a1) = 1 + (exp5_alt_size a0 +
+    flatSem_exp3_alt_size a1)`;
+   `exp4_alt_size (a0,a1) = 1 + (mlstring_size a0 + flatSem_exp_alt_size
+    a1)`;
+   `exp5_alt_size (a0,a1) = 1 + (flat_pat_size a0 + flatSem_exp_alt_size
+    a1)`;
+   `exp6_alt_size [] = 0`;
    `exp6_alt_size (CONS a0 a1) = 1 + (flatSem_exp_alt_size a0 +
     exp6_alt_size a1)`];;
 add_simp flatSem_exp_alt_size_def;;
@@ -868,9 +864,9 @@ let flatSem_fix_clock_IMP =
 if concl flatSem_fix_clock_IMP <> `T` then
   cake_term_facts := flatSem_fix_clock_IMP :: (!cake_term_facts);;
 
-(* the clauses in two quotations: es is (_)list and (exp list); funs is
-   ((varN # varN # exp) list) and (_#_)list; n is varN and (varN option),
-   which one quotation cannot typecheck *)
+(* the clauses in two quotations: funs is ((varN # varN # exp) list) and
+   (_#_)list; n is varN and (varN option), which one quotation cannot
+   typecheck *)
 let flatSem_evaluate_def,flatSem_evaluate_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(flatSem_evaluate (env:flatSem_v flatSem_environment)

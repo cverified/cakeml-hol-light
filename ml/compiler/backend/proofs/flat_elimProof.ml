@@ -647,8 +647,9 @@ let flat_remove_eval_sim = prove
                     (\d1 d2. d2 = remove_flat_prog d1) F`,
   CHEAT_TAC);;
 
-(* HOL4 flat_elimProofScript.sml:1676-1678: a theorem that HOL4 states as
-   the value of an ML expression: flat_remove_semantics *)
+let flat_remove_semantics =
+  SIMP_RULE [] (MATCH_MP (REWRITE_RULE [GSYM IMP_IMP]
+  flatProps_IMP_semantics_eq) flat_remove_eval_sim);;
 
 (* syntactic results *)
 

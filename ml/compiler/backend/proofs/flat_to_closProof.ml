@@ -52,10 +52,9 @@ let flat_to_closProof_v_rel = cake_inductive
      (closSem_ByteVector (MAP (n2w o ORD) (explode s)))) /\
    (!b. flat_to_closProof_v_rel (flatSem_Litv (ast_Word8 b)) (closSem_Number
      (&(w2n b)))) /\
-   (!w. flat_to_closProof_v_rel (flatSem_Litv (ast_Word64 w)) (ast_Word64
-     w)) /\
-   (!f. flat_to_closProof_v_rel (flatSem_Litv (ast_Float64 f)) (ast_Word64
-     f)) /\
+   (!w. flat_to_closProof_v_rel (flatSem_Litv (ast_Word64 w)) (closSem_Word64
+     w)) /\ (!f. flat_to_closProof_v_rel (flatSem_Litv (ast_Float64 f))
+     (closSem_Word64 f)) /\
    (!vs ws. ALL2 flat_to_closProof_v_rel vs ws ==> flat_to_closProof_v_rel
      (flatSem_Conv NONE vs) (closSem_Block 0 ws)) /\
    (!vs ws t r. ALL2 flat_to_closProof_v_rel vs ws ==>
@@ -90,8 +89,9 @@ let flat_to_closProof_v_rel = cake_inductive
 (* HOL4 flat_to_closProofScript.sml:55-68: a theorem that HOL4 states as the
    value of an ML expression: v_rel_def *)
 
-(* HOL4 flat_to_closProofScript.sml:70: a theorem that HOL4 states as the
-   value of an ML expression: env_rel_def *)
+let flat_to_closProof_env_rel_def =
+  ONCE_REWRITE_CONV [cake_cases flat_to_closProof_v_rel]
+  `flat_to_closProof_env_rel env m db`;;
 
 let store_rel_def = new_definition
   `store_rel refs t_refs =

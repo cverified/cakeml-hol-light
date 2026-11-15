@@ -1,0 +1,30 @@
+#!/bin/sh
+# retryharvest : the harvest that says which of the statements of
+# tools/unstated.py the port reads now.
+#
+# Every entry of that table keeps a statement out of ml/: the port
+# writes the comment that points at the source in its place.  So
+# the port that a plain harvest loads does not have those
+# statements at all, and a plain harvest can only add to the table
+# and never take from it -- a statement that the port renders
+# right now stays out for ever.
+#
+# This writes ml/ with the table ignored (RETRY=1 of tools/port.py),
+# loads that with every theorem in a try, and rebuilds the table
+# from what the session says.  ml/ is written again without RETRY
+# at the end, so that what is left is the port with the table that
+# holds.  It is a _run_: it takes hours, hol-seq is its session,
+# and nothing may write into ml/ while it goes.
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+cd $C
+was=$(grep -c "^  ('" tools/unstated.py)
+RETRY=1 python3 -I tools/portall.py > tmp/retryport.out 2>&1 ||
+  { echo "retryharvest: the port failed"; exit 1; }
+retemplate > /dev/null 2>&1
+harvestall
+python3 -I tools/mkunstated.py > tmp/unstated.py.new &&
+  mv tmp/unstated.py.new tools/unstated.py
+now=$(grep -c "^  ('" tools/unstated.py)
+python3 -I tools/portall.py > tmp/retryport2.out 2>&1
+echo "statements that HOL Light does not read: $was -> $now"

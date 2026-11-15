@@ -10,6 +10,7 @@
   about the compiler backend.
 *)
 
+needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/typeSystem.ml";;
 
@@ -214,8 +215,11 @@ let is_state_oracle_add_state_co = prove
  (`is_state_oracle f (syntax_to_full_oracle (add_state_co f st mk) progs)`,
   CHEAT_TAC);;
 
-(* HOL4 backendPropsScript.sml:283-287: a theorem that HOL4 states as the
-   value of an ML expression: syntax_oracle_unpack *)
+let syntax_oracle_unpack =
+  end_itlist CONJ (map GEN_ALL [pure_co_syntax_to_full_oracle;
+  state_co_add_state_co; syntax_to_full_oracle_o_assoc;
+  syntax_to_full_oracle_def; oracle_monotonic_SND_syntax_to_full;
+  is_state_oracle_add_state_co]);;
 
 let FST_add_state_co_0 = prove
  (`FST (add_state_co f st mk orac 0) = st`,

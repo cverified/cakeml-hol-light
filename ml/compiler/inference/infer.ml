@@ -791,7 +791,7 @@ let constrain_op_error_msg_sanity = prove
      IS_PREFIX (explode msg) "Thunk"`,
   CHEAT_TAC);;
 
-(* the clauses in 4 quotations: es is (_)list and (exp list); funs is ((varN
+(* the clauses in 4 quotations: es is (exp list) and (_)list; funs is ((varN
    # varN # exp) list), (_#_)list, (_)list and (_#_#_)list; pes is ((pat #
    exp) list), (_)list and (_#_)list; x is varN and (varN option), which one
    quotation cannot typecheck *)
@@ -856,10 +856,6 @@ let infer_e_def,infer_e_ind = assume_definition_rec_clauses
         infer_e (loc_err_info_loc_fupd (K (SOME new_l)) l) ienv e) /\
     (infer_es l ienv [] =
         st_ex_return []) /\
-    (infer_es l ienv (CONS e es) =
-        st_ex_bind (infer_e l ienv e) (\t. st_ex_bind (infer_es l ienv es)
-            (\ts.
-           st_ex_return (CONS t ts)))) /\
     (infer_funs l ienv [] = st_ex_return [])`;
    `(infer_e l ienv (ast_Con cn_opt es) =
         (match cn_opt with
@@ -899,6 +895,10 @@ let infer_e_def,infer_e_ind = assume_definition_rec_clauses
               (inf_env_inf_v_fupd (K (nsOptBind x (0,t1) (inf_env_inf_v ienv)))
               ienv) e2) (\t2.
              st_ex_return t2))) /\
+    (infer_es l ienv (CONS e es) =
+        st_ex_bind (infer_e l ienv e) (\t. st_ex_bind (infer_es l ienv es)
+            (\ts.
+           st_ex_return (CONS t ts)))) /\
     (infer_pes l ienv [] t1 t2 =
          st_ex_return one)`;
    `(infer_e l ienv (ast_Mat e pes) =

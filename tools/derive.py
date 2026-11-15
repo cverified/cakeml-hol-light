@@ -124,8 +124,11 @@ ATOM = re.compile(r"^[A-Za-z_][A-Za-z_0-9']*$")
 
 def par(e):
   """an expression where it has to stand as an argument: a name
-     needs no brackets round it and nothing else goes without"""
-  return e if ATOM.match(e) else '(%s)' % e
+     and a list need no brackets round them and nothing else goes
+     without"""
+  if ATOM.match(e): return e
+  if e.startswith('[') and e.endswith(']'): return e
+  return '(%s)' % e
 
 
 class No(Exception):
@@ -330,16 +333,43 @@ class Derive:
       out = self.step(p, out)
     return out
 
+  def thmlistexpr(self, toks):
+    """an expression that computes a list of theorems"""
+    inner = unbracket(toks)
+    if inner is not None: toks = inner
+    ps = split(toks, 'punc', '$')
+    if len(ps) > 1:
+      return self.thmlistexpr(ps[0] + [('punc', '(')] +
+                              sum(ps[1:], []) + [('punc', ')')])
+    if toks and toks[0][1] == '[': return self.thmlist(toks)
+    a = app(toks)
+    if not a: raise No('empty list')
+    f = a[0][0][1] if len(a[0]) == 1 and a[0][0][0] == 'id' else None
+    if f in ('CONJUNCTS', 'BODY_CONJUNCTS', 'CONJ_LIST') and \
+       len(a) == 2:
+      return '%s %s' % (LIST_FN[f], par(self.thm(a[1])))
+    if f in ('rev', 'tl', 'List.rev', 'List.tl') and len(a) == 2:
+      return '%s %s' % (LIST_FN[f], par(self.thmlistexpr(a[1])))
+    if f in ('map', 'List.map') and len(a) == 3:
+      return 'map %s %s' % (par(self.rulefun(a[1])),
+                            par(self.thmlistexpr(a[2])))
+    raise No('a list of theorems')
+
   def base(self, toks):
     if not toks: raise No('empty')
     inner = unbracket(toks)
     if inner is not None: return self.thm(inner)
+    ps = split(toks, 'punc', '$')
+    if len(ps) > 1:
+      # HOL4's $ is application that binds least of all
+      return self.thm(ps[0] + [('punc', '(')] +
+                      sum(ps[1:], []) + [('punc', ')')])
     a = app(toks)
     if not a: raise No('empty')
     if len(a) == 1: return self.name(a[0])
     head = a[0][0][1] if len(a[0]) == 1 and a[0][0][0] == 'id' else None
     if head == 'LIST_CONJ' and len(a) == 2:
-      return 'end_itlist CONJ %s' % self.listof(a[1], self.thm)
+      return 'end_itlist CONJ %s' % par(self.thmlistexpr(a[1]))
     return self.applied(a)
 
   def applied(self, a):

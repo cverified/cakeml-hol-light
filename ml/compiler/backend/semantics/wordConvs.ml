@@ -297,7 +297,7 @@ let full_inst_ok_less_def,full_inst_ok_less_ind = define_wf
          | SOME (n,h,l1,l2) -> full_inst_ok_less c h))
      | word_ShareInst op r ad ->
        (match exp_to_addr ad with SOME (Addr _ w) ->
-         if op IN {word_Load,word_Store,asm_Load32,asm_Store32} then (\c.
+         if op IN {asm_Load,asm_Store,asm_Load32,asm_Store32} then (\c.
            asm_offset_ok 0 (asm_config_addr_offset c)) c w
          else if op IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
            (asm_config_hw_offset c)) c w

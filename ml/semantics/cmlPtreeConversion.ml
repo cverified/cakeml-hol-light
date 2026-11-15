@@ -1139,10 +1139,8 @@ let dumb1 = prove
 let dumb2 = prove
  (`COND gd t NONE = OPTION_IGNORE_BIND (OPTION_GUARD gd) t`,
   CHEAT_TAC);;
-(* [local] *)
-let ptree_Expr_def' =
-  REWRITE_RULE [dumb2] (SIMP_RULE [] (ONCE_REWRITE_RULE [dumb1]
-  ptree_Expr_def));;
+(* HOL4 cmlPtreeConversionScript.sml:1259-1262: a theorem that HOL4 states
+   as the value of an ML expression: ptree_Expr_def' *)
 
 (* HOL4 cmlPtreeConversionScript.sml:1264-1271: a theorem that HOL4 states
    as the value of an ML expression: ptree_Expr_pevaled *)

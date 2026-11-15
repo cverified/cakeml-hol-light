@@ -434,9 +434,6 @@ CON_BODY = {
   # call_graph matches on a wordLang program and builds a
   # call_tree, and both have Call
   ('word_depth', 'call_graph_def'): {'Call': 'word_depth'},
-  # the Skip that data_simp's simp takes is dataLang's, and
-  # word_bignum, wordLang and stackLang have one as well
-  ('backend_passes', 'to_data_all_def'): {'Skip': 'dataLang'},
   # word_cseInst matches on an instruction of asm and builds a
   # program of wordLang, and both have Inst
   ('word_cse', 'word_cseInst_def'): {'Inst': 'wordLang'},
@@ -1017,6 +1014,17 @@ THM_NAMES = {
     {'exp1_size': 'list_size bvl_exp_size'},
   ('presLang', 'MEM_bvi_exps_size'):
     {'exp2_size': 'list_size bvi_exp_size'},
+  # the fromList of a vector is the overload of its Vector that
+  # HOL4's regexp_compiler makes, and llist has a fromList too
+  ('mlvector', 'toList_fromList'): {'fromList': 'Vector'},
+  # the compile that takes the word_to_word configuration is
+  # word_to_word's, and backend has a compile of its own
+  ('backend', 'to_word_thm'): {'compile': 'word_to_word_compile'},
+  # the If of a wordLang program takes the comparison of asm,
+  # where every other Equal of word_cse is an ordering's
+  # (LOCAL_NAMES, which is of the whole file)
+  ('word_cse', 'test_if_merge'): {'Equal': 'asm_Equal'},
+  ('word_cse', 'test_if_merge_clobber'): {'Equal': 'asm_Equal'},
   # the toString of a number as a string of characters is
   # ASCIInumbers' num_to_dec_string, not mlint's of an mlstring
   ('mlint', 'fromString_helper'): {'toString': 'num_to_dec_string'},
@@ -1090,6 +1098,19 @@ THM_NAMES = {
 # two systems, because the simpsets differ, so the ones that go
 # are the ones whose value HOL Light cannot reach.
 NO_DERIVE = {
+  # HOL4 takes the second conjunct of the first conjunct, and
+  # the first conjunct of the port's statement is not a
+  # conjunction: `hd' of the empty list
+  ('semanticPrimitivesProps', 'pmatch_nsAppend_Match'):
+    'cj 1 |> cj 2: the first conjunct is not a conjunction here',
+  # the simplifier of HOL Light does not come back on the
+  # statement of ptree_Expr, which is the biggest of the port
+  ('cmlPtreeConversion', "ptree_Expr_def'"):
+    'SRULE [] of ptree_Expr_def does not come back',
+  # the read_while of the port is one equation with a match in
+  # it, where HOL4's is two clauses: there is no first conjunct
+  ('lexer_fun', 'read_while_EMPTY'):
+    'CONJUNCT1 of a definition the port writes as a match',
 }
 
 # THM_MAP: the HOL Light name of a theorem that HOL4 names in an
@@ -1108,6 +1129,10 @@ THM_MAP = {
   'K_THM': 'K_DEF',
   'ETA_THM': 'ETA_AX',
   'ETA_AX': 'ETA_AX',
+  'IN_DEF': 'IN',
+  'AND_IMP_INTRO': 'IMP_IMP',
+  'pred_setTheory.IN_DEF': 'IN',
+  'SPECIFICATION': 'IN',
 }
 
 THM_VALUE = {
@@ -1428,6 +1453,12 @@ CLAUSE_FORM = set([
   # functions and another in those of the next, which only shows
   # in the right hand sides, where clause_clash does not look.
   ('bvi_tmc', 'bvi_to_cb_aux_def'),
+  # every clause of this says the arguments of a constructor as
+  # a0, a1, a2 and a3, which is a dozen types for one name over
+  # the definition; a clause of its own for each is what it
+  # takes, and flatSem's exp_alt_size reads the same way
+  ('closSem', 'exp_alt_size_def'),
+  ('flatSem', 'exp_alt_size_def'),
   # and the es of this is a list of expressions in one clause and
   # a list of pairs in another, which only a MAP of a body says
   ('presLang', 'exp_to_display_def'),
@@ -2017,6 +2048,24 @@ CON_OF = {
   # expression of wordLang, which the pull_exp below it then could
   # not typecheck at all
   ('word_inst', 'op_consts_def'): {'Const': 'wordLang'},
+  # the Skip that data_simp's simp takes is dataLang's, and
+  # word_bignum, wordLang and stackLang have one as well
+  ('backend_passes', 'to_data_all_def'): {'Skip': 'dataLang'},
+  # the operations of dataLang are closLang's, so the Install
+  # that do_app compares its operation with is closLang's;
+  # wordLang and stackLang have an Install of a program
+  ('dataSem', 'do_app_def'): {'Install': 'closLang'},
+  # the Halt that a LabAsm takes is labLang's and takes no
+  # arguments; the Halt that evaluate gives is the machine_result
+  # of targetSem, of the outcome of the machine
+  ('labSem', 'evaluate_def'):
+    {'Halt': {0: 'labLang', 1: 'targetSem'}},
+  # the compile_part that takes the data configuration is
+  # data_to_word's; bvi_to_data has one of a triple alone
+  ('backend', 'compile_inc_progs_def'):
+    {'compile_part': 'data_to_word'},
+  ('backend', 'compile_inc_progs_for_eval_def'):
+    {'compile_part': 'data_to_word'},
   # the memory operation that a ShareInst and a Mem take is asm's
   # and takes no arguments, where the Load and the Store of a
   # wordLang expression and of a wordLang program take some
@@ -2029,9 +2078,6 @@ CON_OF = {
   ('word_to_stackProof', 'PopHandler_F'): {'Seq': 'stackLang'},
   ('word_to_stackProof', 'copy_ret_F'): {'Seq': 'stackLang'},
   ('word_to_stackProof', 'raise_stub_F'): {'Seq': 'stackLang'},
-  # the vector that this one is about is mlvector's, and llist
-  # has a fromList as well
-  ('mlvector', 'toList_fromList'): {'fromList': 'mlvector'},
   # the word_cmp of these is asm's, which compares two words,
   # and not wordSem's, which compares two word_locs
   ('data_to_word_assignProof', 'word_cmp_Less_word_cmp_res'):
@@ -2046,8 +2092,6 @@ CON_OF = {
   ('stack_to_labProof', 'word_cmp_negate_alt'): {'word_cmp': 'asm'},
   # the Equal that the If of a wordLang program takes is the
   # comparison of asm, and an ordering has an Equal as well
-  ('word_cse', 'test_if_merge'): {'Equal': 'asm'},
-  ('word_cse', 'test_if_merge_clobber'): {'Equal': 'asm'},
   ('word_simp', 'drop_consts_def'): {'*': 'wordLang'},
   ('word_cse', 'seqs_def'): {'*': 'wordLang'},
   # the Shift and the Div that this canonicalises are asm's
@@ -2088,6 +2132,24 @@ CON_OF = {
   # the program that this takes apart is stackLang's, which only
   # the annotation on the second component says
   ('stackSem', 'dest_Seq_def'): {'Seq': 'stackLang'},
+  # word_exp reads a wordLang expression, so its Const is
+  # wordLang's and not the Const of an asm instruction
+  ('stackSem', 'word_exp_def'): {'Const': 'wordLang'},
+  # the memory operation of a ShareInst is asm's and takes no
+  # arguments, where the Load and the Store of a wordLang
+  # expression take some
+  ('wordConvs', 'full_inst_ok_less_def'):
+    {'Load': {0: 'asm'}, 'Store': {0: 'asm'}},
+  ('stackProps', 'addr_ok_def'):
+    {'Load': {0: 'asm'}, 'Store': {0: 'asm'}},
+  # every Jump of line_ok is the asm instruction that the line
+  # encodes to, not the LabAsm of a labLang line
+  ('lab_to_targetProof', 'line_ok_def'): {'Jump': 'asm'},
+  # the compile_inc that takes the limit, the split and the cut
+  # is bvl_inline's; the one that state_cc takes on its own is
+  # bvl_to_bvi's, of a number and a program
+  ('bvl_to_bviProof', 'full_cc_def'):
+    {'compile_inc': {3: 'bvl_inline', 0: 'bvl_to_bvi'}},
   # the prog_comp with three arguments in front of the program is
   # stack_remove's, the one without arguments stack_alloc's
   ('stack_to_lab', 'compile_no_stubs_def'):
@@ -12290,6 +12352,42 @@ DEF_NAMES = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # the second argument of this v_rel is the value of closSem
+  # that the first, a value of flatSem, is compiled to, and the
+  # Word64 of a literal of ast and the one of a value of closSem
+  # have one name: nothing but the place says which is which
+  ('flat_to_closProof', 'v_rel'): [
+    ('(ast_Word64 w)) /\\ (!f.', '(closSem_Word64 w)) /\\ (!f.'),
+    ('(flatSem_Litv (ast_Float64 f)) (ast_Word64 f))',
+     '(flatSem_Litv (ast_Float64 f)) (closSem_Word64 f))'),
+  ],
+  # the second argument of v_rel is the value of bvlSem that the
+  # first, a value of closSem, is compiled to, and the two types
+  # have Number, Word64, Block and RefPtr: nothing but the place
+  # says which is which
+  ('clos_to_bvlProof', 'v_rel'): [
+    ('(closSem_Number n) (closSem_Number n))',
+     '(closSem_Number n) (bvlSem_Number n))'),
+    ('(closSem_Word64 w) (closSem_Word64 w))',
+     '(closSem_Word64 w) (bvlSem_Word64 w))'),
+    ('(closSem_Block t xs) (closSem_Block (clos_tag_shift t) ys))',
+     '(closSem_Block t xs) (bvlSem_Block (clos_tag_shift t) ys))'),
+    ('(closSem_ByteVector bs) (closSem_RefPtr T p))',
+     '(closSem_ByteVector bs) (bvlSem_RefPtr T p))'),
+    ('(closSem_RefPtr b r1) (closSem_RefPtr b r2))',
+     '(closSem_RefPtr b r1) (bvlSem_RefPtr b r2))'),
+    ('(env,fvs) cl (closSem_Block closure_tag (CONS (bvlSem_CodePtr p)'
+     ' (CONS (closSem_Number n) ys)))',
+     '(env,fvs) cl (bvlSem_Block closure_tag (CONS (bvlSem_CodePtr p)'
+     ' (CONS (bvlSem_Number n) ys)))'),
+    ('code cl (closSem_Block closure_tag (CONS (bvlSem_CodePtr p)'
+     ' (CONS (closSem_Number n) ys)))',
+     'code cl (bvlSem_Block closure_tag (CONS (bvlSem_CodePtr p)'
+     ' (CONS (bvlSem_Number n) ys)))'),
+    ('(closSem_Block partial_app_tag', '(bvlSem_Block partial_app_tag'),
+    ('(CONS (closSem_Number (&(num_args - 1 - LENGTH arg_env)))',
+     '(CONS (bvlSem_Number (&(num_args - 1 - LENGTH arg_env)))'),
+  ],
   # the opw that assign_WordOpW64 matches on, where the binop of
   # asm that each stands for is what its arms give: the three
   # names that the two types share are the patterns here

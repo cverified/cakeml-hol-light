@@ -16,7 +16,7 @@ let _ = cake_theory "clos_fvs"
   ["closLang"];;
 
 (* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
-   t is tra, (mlstring list) and mlstring; xs is (_)list and (exp list),
+   t is tra, (mlstring list) and mlstring; xs is (exp list) and (_)list,
    which one quotation cannot typecheck *)
 let remove_fvs_def,remove_fvs_ind = define_shaped_rec_clauses
   "sing>nested"

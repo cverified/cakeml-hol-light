@@ -44,7 +44,7 @@
   (REWRITE_TAC[gen_gc_heap_length_heap_expand])
 
 ### heap_lookup_AND_APPEND_IMP
-  (MESON_TAC[gen_gc_heap_lookup_EXTEND; option_INJ])
+  (MESON_TAC[heap_lookup_EXTEND; option_INJ])
 
 ### heap_lookup_EXTEND
   (REWRITE_TAC[gen_gc_heap_lookup_EXTEND])

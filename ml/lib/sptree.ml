@@ -847,8 +847,8 @@ let FINITE_domain = prove
                FINITE_EMPTY]);;
 
 let size_insert = prove
- (`!k (v:A) m. sptree_size (sptree_insert k v m) =
-               if k IN domain m then sptree_size m else sptree_size m +
+ (`!k (v:A) m. sptree__size (sptree_insert k v m) =
+               if k IN domain m then sptree__size m else sptree__size m +
                  1`,
   MATCH_MP_TAC SPTAUX_bit_induction THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `m:A spt` THEN
@@ -1074,12 +1074,12 @@ let toListA_append = prove
   REWRITE_TAC[GSYM SPTAUX_toListA_APPEND; APPEND]);;
 
 let SPTAUX_LENGTH_toListA = prove
- (`!t:A spt acc. LENGTH (toListA acc t) = sptree_size t + LENGTH acc`,
+ (`!t:A spt acc. LENGTH (toListA acc t) = sptree__size t + LENGTH acc`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[toListA_def; size_def; LENGTH] THEN ARITH_TAC);;
 
 let size_zero_empty = prove
- (`!x:A spt. sptree_size x = 0 <=> domain x = EMPTY`,
+ (`!x:A spt. sptree__size x = 0 <=> domain x = EMPTY`,
   MATCH_MP_TAC spt_INDUCT THEN
   ASM_REWRITE_TAC[size_def; domain_def; ADD_EQ_0; ARITH;
                   NOT_INSERT_EMPTY; EMPTY_UNION; IMAGE_EQ_EMPTY] THEN

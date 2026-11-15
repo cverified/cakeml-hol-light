@@ -467,8 +467,8 @@ let op_ty_PMATCH = prove
        branch of origin for the operation in conditionals.
 *)
 
-(* the clauses in two quotations: d is (num option) and num; xs is (_)list
-   and (exp list), which one quotation cannot typecheck *)
+(* the clauses in two quotations: d is (num option) and num; xs is (exp list)
+   and (_)list, which one quotation cannot typecheck *)
 let scan_expr_def,scan_expr_ind = assume_definition_rec_clauses
   "termination (CHEAT_TAC)"
   [`(scan_expr ts loc [] = []) /\

@@ -594,7 +594,7 @@ let heap_lookup_AND_APPEND_IMP = prove
  (`!xs n ys d d1.
      (heap_lookup n xs = SOME d) /\
      (heap_lookup n (APPEND xs ys) = SOME d1) ==> (d1 = d)`,
-  (MESON_TAC[gen_gc_heap_lookup_EXTEND; option_INJ]));;
+  (MESON_TAC[heap_lookup_EXTEND; option_INJ]));;
 
 (* [local] *)
 let heap_lookup_AND_PREPEND_IMP = prove
@@ -705,8 +705,7 @@ let gc_move_refs_ok = prove
  (`!conf s. gc_state_ok (gc_move_refs conf s) ==> gc_state_ok s`,
   CHEAT_TAC);;
 
-(* gc_move_loop_ok *)
-let gen_gc_gc_move_loop_ok = prove
+let gc_move_loop_ok = prove
  (`!conf s c. gc_state_ok (gen_gc_gc_move_loop conf s c) ==> gc_state_ok s`,
   CHEAT_TAC);;
 

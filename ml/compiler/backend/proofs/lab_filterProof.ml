@@ -101,8 +101,17 @@ let state_rw = prove
   CHEAT_TAC);;
 
 (* 2) all_skips allow swapping pc for clock*)
-(* HOL4 lab_filterProofScript.sml:170-197: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): all_skips_evaluate *)
+(* [local] *)
+let all_skips_evaluate = prove
+ (`!k s.
+   all_skips (labSem_state_pc s) (labSem_state_code s) k /\
+   ~(labSem_state_failed s) ==>
+   (!k'.
+   labSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock s + k' +
+     k)) s) =
+   labSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock s +
+     k')) (labSem_state_pc_fupd (K (labSem_state_pc s + k)) s)))`,
+  CHEAT_TAC);;
 
 let lab_filterProof_state_rel_def = new_definition
   `lab_filterProof_state_rel (s1:('a,'c,'ffi)labSem_state) t1 <=>
@@ -136,8 +145,15 @@ let asm_fetch_aux_eq2 = prove
 
 (* HOL4 lab_filterProofScript.sml:261: ML code, not ported *)
 
-(* HOL4 lab_filterProofScript.sml:263-278: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): all_skips_evaluate_rw *)
+(* [local] *)
+let all_skips_evaluate_rw = prove
+ (`all_skips (labSem_state_pc s) (labSem_state_code s) k
+  /\ ~(labSem_state_failed s) /\ labSem_state_clock
+   s = clk + k /\
+   t = labSem_state_clock_fupd (K clk) (labSem_state_pc_fupd (K
+     (labSem_state_pc s + k)) s) ==>
+   labSem_evaluate s = labSem_evaluate t`,
+  CHEAT_TAC);;
 
 (*For all initial code there is some all_skips*)
 (* [local] *)
@@ -248,14 +264,33 @@ let share_mem_op_FFI_final_filter_correct = prove
    s = labSem_state_ffi s2)`,
   CHEAT_TAC);;
 
-(* HOL4 lab_filterProofScript.sml:669-1037: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): filter_correct *)
+let filter_correct = prove
+ (`!(s1:('a,'c,'ffi)labSem_state) t1 res s2.
+      (labSem_evaluate s1 = (res,s2)) /\ lab_filterProof_state_rel s1 t1
+        /\ ~(labSem_state_failed t1) ==>
+      (?k t2.
+        (labSem_evaluate (labSem_state_clock_fupd (K (labSem_state_clock s1
+          + k)) t1) = (res,t2)) /\
+        (labSem_state_ffi s2 = labSem_state_ffi t2))`,
+  CHEAT_TAC);;
 
-(* HOL4 lab_filterProofScript.sml:1039-1152: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): state_rel_IMP_sem_EQ_sem *)
+(* [local] *)
+let state_rel_IMP_sem_EQ_sem = prove
+ (`!s t. lab_filterProof_state_rel s t ==> labSem_semantics s =
+  labSem_semantics t`,
+  CHEAT_TAC);;
 
-(* HOL4 lab_filterProofScript.sml:1154-1167: a theorem whose statement HOL
-   Light does not read (tools/unstated.py): filter_skip_semantics *)
+let filter_skip_semantics = prove
+ (`!s t. (labSem_state_pc t = 0) /\ ~(labSem_state_failed t) /\
+   (?scompile.
+     s = labSem_state_compile_fupd (K scompile)
+       (labSem_state_compile_oracle_fupd (K ((\(a,b). (a,filter_skip b)) o
+       labSem_state_compile_oracle t)) (labSem_state_code_fupd (K (filter_skip
+       (labSem_state_code t))) t)) /\ labSem_state_compile
+    t = (\c p. scompile c (filter_skip p))) /\
+    ~(labSem_state_failed t) ==>
+   labSem_semantics s = labSem_semantics t`,
+  CHEAT_TAC);;
 
 let sec_ends_with_label_filter_skip = prove
  (`!code.

@@ -18,6 +18,12 @@ only which statements are out.
 """
 import sys, os, re, collections
 
+# with ONLY_OLD=1 the table keeps nothing that was not in it
+# before: a harvest in which a file did not load gives the files
+# after it statements that fail for want of a constant, and those
+# are not statements to take out of the port.  The run after the
+# failures are put right is the one that may add to the table.
+
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 sys.path.insert(0, T)
 import db as dbmod
@@ -53,6 +59,10 @@ def main():
     parts = l.rstrip('\n').split('\t')
     if len(parts) < 3: continue
     f, b, msg = parts[0], parts[1], parts[2]
+    # a theorem that HOL4 states as the value of an expression is
+    # not a statement of the source: what it says is
+    # overrides.NO_DERIVE's to record, not this table's
+    if msg.startswith('VALUE'): continue
     if not any(k in msg for k in PARSE): continue
     rel = re.sub(r'^.*/ml/', '', f)
     thy = thy_of.get(rel)
@@ -61,6 +71,20 @@ def main():
     if (thy, nm) in seen: continue
     seen.add((thy, nm))
     out.append((thy, nm, msg))
+  if os.environ.get('ONLY_OLD') == '1':
+    import unstated
+    # a file that did not load says nothing about the statements
+    # after the phrase it stopped at, so its entries stay
+    bad = set()
+    for l in open(T + '../tmp/cs.out'):
+      if 'Exception' in l or 'Error' in l:
+        rel = l.split()[0]
+        if rel in thy_of: bad.add(thy_of[rel])
+    keep = {(r[0], r[1]) for r in out}
+    out = [r for r in out if (r[0], r[1]) in unstated.NAMES]
+    out += [(thy, nm, 'the file did not load in the harvest')
+            for (thy, nm) in sorted(unstated.NAMES)
+            if thy in bad and (thy, nm) not in keep]
   print(open(T + 'unstated.py').read().split('NAMES = set([')[0]
         + 'NAMES = set([')
   # grouped by what the parser said, so that the table says what
@@ -77,7 +101,7 @@ def main():
     if k != last:
       print('  # %s' % m)
       last = k
-    print("  ('%s', '%s')," % (thy, nm))
+    print('  (%r, %r),' % (thy, nm))
   print('])')
   print('# %d statements' % len(out), file=sys.stderr)
 

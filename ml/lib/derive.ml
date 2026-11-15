@@ -47,3 +47,24 @@ let CAKE_INST l th =
          with Failure _ -> t), w
     with Failure _ -> (t,v) in
   INST (map fix l) th;;
+
+(* HOL4 gives an inductive relation three theorems of its own,    *)
+(* under the name of the relation with _rules, _ind and _cases    *)
+(* after it; HOL Light's own machinery gives the three as a       *)
+(* triple, which is what the port keeps, and these are its parts. *)
+
+let cake_rules (r,_,_) = (r:thm);;
+let cake_ind (_,i,_) = (i:thm);;
+let cake_cases (_,_,c) = (c:thm);;
+
+(* HOL4's BODY_CONJUNCTS takes a theorem apart into the leaves of *)
+(* its conjunction, going under the quantifiers on the way.  HOL  *)
+(* Light has it in Library/compute.ml, which the port does not    *)
+(* load, so it stands here (the same function, from there).       *)
+
+let rec BODY_CONJUNCTS th =
+  if is_forall (concl th) then
+    BODY_CONJUNCTS (SPEC_ALL th)
+  else if is_conj (concl th) then
+    BODY_CONJUNCTS (CONJUNCT1 th) @ BODY_CONJUNCTS (CONJUNCT2 th)
+  else [th];;

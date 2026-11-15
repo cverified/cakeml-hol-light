@@ -192,7 +192,7 @@ let to_word_def = new_definition
 let to_word_thm = prove
  (`to_word asm_conf c p =
    (let (c,p,names) = to_word_0 asm_conf c p in
-   let (col,p) = backend_compile (backend_config_word_to_word_conf c)
+   let (col,p) = word_to_word_compile (backend_config_word_to_word_conf c)
      asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
@@ -534,7 +534,7 @@ let compile_inc_progs_def = new_definition
      let p = bvi_to_data_compile_prog p in
      let ps = backend_progs_data_prog_fupd (K (keep_progs k p)) ps in
      let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c) in
-     let p = MAP (bvi_to_data_compile_part dc) p in
+     let p = MAP (data_to_word_compile_part dc) p in
      let reg_count1 = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
      let p = MAP (\p. full_compile_single (asm_config_two_reg_arith

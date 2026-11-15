@@ -892,14 +892,14 @@ let test_if_merge = prove
  (`word_common_subexp_elim
      (word_cse_Seqs [word_Inst (asm_Const 1 (n2w 0));
            word_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           word_If EQUAL 1 (Imm (n2w 0))
+           word_If asm_Equal 1 (Imm (n2w 0))
               (word_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1))))
               (word_Move 0 [(11,7)]);
            word_Inst (asm_Arith (asm_Binop asm_Add 13 1 (Reg 1)))]) =
      word_cse_Seqs [word_Inst (asm_Const 1 (n2w 0));
            word_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           word_If EQUAL 1 (Imm (n2w 0)) (word_Move 0 [(9,7)]) (word_Move 0
-             [(11,7)]);
+           word_If asm_Equal 1 (Imm (n2w 0)) (word_Move 0 [(9,7)])
+             (word_Move 0 [(11,7)]);
            word_Move 0 [(13,7)]]`,
   CHEAT_TAC);;
 
@@ -910,13 +910,14 @@ let test_if_merge_clobber = prove
  (`word_common_subexp_elim
      (word_cse_Seqs [word_Inst (asm_Const 1 (n2w 0));
            word_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           word_If EQUAL 1 (Imm (n2w 0))
+           word_If asm_Equal 1 (Imm (n2w 0))
               (word_Move 0 [(7,3)])
               word_Skip;
            word_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1)))]) =
      word_cse_Seqs [word_Inst (asm_Const 1 (n2w 0));
            word_Inst (asm_Arith (asm_Binop asm_Add 7 1 (Reg 1)));
-           word_If EQUAL 1 (Imm (n2w 0)) (word_Move 0 [(7,3)]) word_Skip;
+           word_If asm_Equal 1 (Imm (n2w 0)) (word_Move 0 [(7,3)])
+             word_Skip;
            word_Inst (asm_Arith (asm_Binop asm_Add 9 1 (Reg 1)))]`,
   CHEAT_TAC);;
 

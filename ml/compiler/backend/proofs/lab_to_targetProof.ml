@@ -381,17 +381,17 @@ let line_ok_def = new_definition
         (LENGTH bytes = l) /\ asm_ok (cbw_to_asm b) c
      | (c,lab_LabAsm lab_Halt w bytes l) ->
         let w1 = ((n2w 0):'a word) - n2w (pos + ffi_offset) in
-          enc_with_nop (asm_config_encode c) (lab_Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (lab_Jump w1) c
+          enc_with_nop (asm_config_encode c) (asm_Jump w1) bytes /\
+          (LENGTH bytes = l) /\ asm_ok (asm_Jump w1) c
      | (c,lab_LabAsm lab_Install w bytes l) ->
         let w1 = ((n2w 0):'a word) - n2w (pos + 2 * ffi_offset) in
-          enc_with_nop (asm_config_encode c) (lab_Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (lab_Jump w1) c
+          enc_with_nop (asm_config_encode c) (asm_Jump w1) bytes /\
+          (LENGTH bytes = l) /\ asm_ok (asm_Jump w1) c
      | (c,lab_LabAsm (lab_CallFFI index) w bytes l) ->
         let w1 = ((n2w 0):'a word) - n2w (pos + (3 + get_ffi_index ffis
           (ffi_ExtCall index)) * ffi_offset) in
-          enc_with_nop (asm_config_encode c) (lab_Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (lab_Jump w1) c
+          enc_with_nop (asm_config_encode c) (asm_Jump w1) bytes /\
+          (LENGTH bytes = l) /\ asm_ok (asm_Jump w1) c
      | (c,lab_LabAsm (lab_Call v24) w bytes l) ->
         F
      // Call not yet supported

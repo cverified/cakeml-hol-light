@@ -1414,7 +1414,7 @@ let dataSem_do_app_aux_def = new_definition
 
 let dataSem_do_app_def = new_definition
   `dataSem_do_app op vs (s:('c,'ffi)dataSem_state) =
-     if op = word_Install then dataSem_do_install vs
+     if op = clos_Install then dataSem_do_install vs
        (dataSem_state_stack_frame_sizes_fupd (K LN)
        (dataSem_state_stack_max_fupd (K NONE) s)) else if MEM op [clos_IntOp
        clos_Greater; clos_IntOp clos_GreaterEq] then ((Rerr (Rabort

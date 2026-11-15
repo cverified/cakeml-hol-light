@@ -19,6 +19,8 @@ The copy is for a harvest only.  Nothing of it goes into ml/.
 """
 import sys, re, os
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 TMP = T + '../tmp/'
 
@@ -96,6 +98,46 @@ def tolerant(phrase, name):
           % (fn, name, stmt))
 
 
+# the heads that tools/derive.py writes: a phrase whose value
+# one of them computes is a theorem, and a theorem that does not
+# come out is logged where a statement that does not read is.
+# Every other phrase is left alone -- it introduces a constant or
+# a type, or it is not a theorem at all
+def value_heads():
+  import derive as d
+  out = {'CONV_RULE', 'CAKE_EVAL', 'CAKE_INST', 'el', 'map',
+         'ASSUME', 'cake_rules', 'cake_ind', 'cake_cases'}
+  out |= set(d.SIMPLE)
+  for t in (d.LIST_FN, d.TERM_RULE, d.TERMS_RULE, d.THM_RULE,
+            d.THMS_RULE, d.SS_RULE):
+    out |= {v.split()[0] for v in t.values()}
+  out |= {v for v, _ in d.CONV.values()}
+  out |= {v for v in d.CONV_WRAP.values()}
+  return out
+
+
+VALUES = value_heads()
+
+# a phrase that binds one name to the value of an expression,
+# which is what the port writes for a theorem that HOL4 states as
+# the value of one (tools/derive.py)
+VALUE = re.compile(r"^let ([A-Za-z_][A-Za-z_0-9']*) =\s*"
+                   r"([A-Za-z_][A-Za-z_0-9'.]*)", re.M)
+
+
+def tolerant_value(phrase, name):
+  """the phrase with its expression in a try: a theorem that does
+     not come out is logged and the file loads on with TRUTH"""
+  body = phrase.rstrip()
+  assert body.endswith(';;'), body[-40:]
+  body = body[:-2].rstrip()
+  body = re.sub(r"^let (%s) =" % re.escape(name),
+                r"let \1 =\n  try" , body, count=1, flags=re.M)
+  return (body + '\n  with e ->\n'
+          '    (cake_log_unstated "%s" ("VALUE " ^'
+          ' Printexc.to_string e); TRUTH);;' % name)
+
+
 def main():
   src, out = sys.argv[1], sys.argv[2]
   mark = len(sys.argv) > 3 and sys.argv[3] == 'mark'
@@ -110,7 +152,13 @@ def main():
     # the comments of the source stand before the `let', so the
     # head of a theorem is not at the start of the phrase
     m = HEAD.search(p)
-    q = tolerant(p, m.group(1)) + '\n' if m else p
+    if m:
+      q = tolerant(p, m.group(1)) + '\n'
+    else:
+      v = VALUE.search(p)
+      q = (tolerant_value(p, v.group(1)) + '\n'
+           if v and v.group(1) != '_' and v.group(2) in VALUES
+           else p)
     if mark:
       lab = p.strip().split('\n')[0][:60]
       lab = lab.replace('\\', '\\\\').replace('"', "'")

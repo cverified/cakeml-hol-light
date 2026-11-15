@@ -72,7 +72,7 @@ let is_sibling_def = define_cases
   `(is_sibling x NONE = T) /\
    (is_sibling x (SOME l) = MEM x l)`;;
 
-(* the clauses in three quotations: pargs is (pat list) and (_)list; targs is
+(* the clauses in 4 quotations: pargs is (pat list) and (_)list; targs is
    (term list) and (_)list, which one quotation cannot typecheck *)
 let pattern_semantics_pmatch_def,pattern_semantics_pmatch_ind =
   assume_definition_rec_clauses
@@ -96,15 +96,7 @@ let pattern_semantics_pmatch_def,pattern_semantics_pmatch_ind =
     (pattern_semantics_pmatch refs _ _ = PTypeFailure) /\
     (pattern_semantics_pmatch_list refs [] [] = PMatchSuccess) /\
     (pattern_semantics_pmatch_list refs [] ts = PTypeFailure) /\
-    (pattern_semantics_pmatch_list refs ps [] = PTypeFailure) /\
-    (pattern_semantics_pmatch_list refs (CONS p ps) (CONS t ts) =
-        match pattern_semantics_pmatch refs p t with
-          PMatchSuccess -> pattern_semantics_pmatch_list refs ps ts
-        | PMatchFailure -> (match pattern_semantics_pmatch_list refs ps ts
-            with
-                              PTypeFailure -> PTypeFailure
-                             | _ -> PMatchFailure)
-        | PTypeFailure -> PTypeFailure)`;
+    (pattern_semantics_pmatch_list refs ps [] = PTypeFailure)`;
    `pattern_semantics_pmatch refs (pattern_semantics_Cons (SOME (tag,siblings))
     pargs) (pattern_semantics_Term (SOME t) targs) =
         if tag = t /\ LENGTH pargs = LENGTH targs then
@@ -113,7 +105,15 @@ let pattern_semantics_pmatch_def,pattern_semantics_pmatch_ind =
             PTypeFailure`;
    `pattern_semantics_pmatch refs (pattern_semantics_Cons NONE pargs)
     (pattern_semantics_Term NONE targs) =
-        pattern_semantics_pmatch_list refs pargs targs`];;
+        pattern_semantics_pmatch_list refs pargs targs`;
+   `pattern_semantics_pmatch_list refs (CONS p ps) (CONS t ts) =
+        match pattern_semantics_pmatch refs p t with
+          PMatchSuccess -> pattern_semantics_pmatch_list refs ps ts
+        | PMatchFailure -> (match pattern_semantics_pmatch_list refs ps ts
+            with
+                              PTypeFailure -> PTypeFailure
+                             | _ -> PMatchFailure)
+        | PTypeFailure -> PTypeFailure`];;
 
 let match_def,match_ind = define_rec
   `(pattern_semantics_match refs [] v = SOME MatchFailure) /\

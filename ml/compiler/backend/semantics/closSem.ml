@@ -2,7 +2,7 @@
 (*  closSem: ported from HOL4's
     compiler/backend/semantics/closSemScript.sml
     A definition theory, with 30 definitions, 5 datatypes and 14
-    theorems.  Needed by 19 files of the port.  *)
+    theorems.  Needed by 20 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -855,32 +855,23 @@ let AppUnit_def = new_definition
   `closSem_AppUnit x = clos_App backend_common_None NONE x [clos_Op
   backend_common_None (clos_BlockOp (clos_Cons 0)) []]`;;
 
-(* the clauses in 8 quotations: a0 is tra, mlstring, (mlstring list) and exp;
-   a1 is num, exp, (exp list), (_)list, (num option) and op; a2 is num, exp,
-   (num list option), (exp list) and (_)list; a3 is (exp list), (_)list, exp,
-   num and ((num # exp) list), which one quotation cannot typecheck *)
 let exp_alt_size_def,exp_alt_size_ind = define_rec_clauses
-  [`(closSem_exp_alt_size (clos_Var a0 a1) = 1 + (tra_size a0 + a1)) /\
-    (closSem_exp_alt_size (clos_Call a0 a1 a2 a3) =
-    1 + (tra_size a0 + (a1 + (a2 + closSem_exp3_alt_size a3)))) /\
-    (closSem_exp1_alt_size [] = 0) /\
-    (closSem_exp3_alt_size [] = 0)`;
-   `(closSem_exp_alt_size (clos_If a0 a1 a2 a3) =
+  [`closSem_exp_alt_size (clos_Var a0 a1) = 1 + (tra_size a0 + a1)`;
+   `closSem_exp_alt_size (clos_If a0 a1 a2 a3) =
     1 + (tra_size a0 + (closSem_exp_alt_size a1 + (closSem_exp_alt_size
-        a2 + closSem_exp_alt_size a3)))) /\
-    (closSem_exp_alt_size (clos_Raise a0 a1) = 1 + (tra_size a0 +
-    closSem_exp_alt_size a1)) /\
-    (closSem_exp_alt_size (clos_Handle a0 a1 a2) =
-    1 + (tra_size a0 + (closSem_exp_alt_size a1 + closSem_exp_alt_size
-        a2))) /\
-    (closSem_exp_alt_size (clos_Tick a0 a1) = 1 + (tra_size a0 +
-    closSem_exp_alt_size a1)) /\
-    (closSem_exp2_alt_size (a0,a1) = 1 + (a0 + closSem_exp_alt_size a1))`;
-   `(closSem_exp_alt_size (clos_Let a0 a1 a2) =
+        a2 + closSem_exp_alt_size a3)))`;
+   `closSem_exp_alt_size (clos_Let a0 a1 a2) =
     1 + (tra_size a0 + (closSem_exp3_alt_size a1 + closSem_exp_alt_size
-        a2))) /\
-    (closSem_exp1_alt_size (CONS a0 a1) = 1 + (closSem_exp2_alt_size a0 +
-    closSem_exp1_alt_size a1))`;
+        a2))`;
+   `closSem_exp_alt_size (clos_Raise a0 a1) = 1 + (tra_size a0 +
+    closSem_exp_alt_size a1)`;
+   `closSem_exp_alt_size (clos_Handle a0 a1 a2) =
+    1 + (tra_size a0 + (closSem_exp_alt_size a1 + closSem_exp_alt_size
+        a2))`;
+   `closSem_exp_alt_size (clos_Tick a0 a1) = 1 + (tra_size a0 +
+    closSem_exp_alt_size a1)`;
+   `closSem_exp_alt_size (clos_Call a0 a1 a2 a3) =
+    1 + (tra_size a0 + (a1 + (a2 + closSem_exp3_alt_size a3)))`;
    `closSem_exp_alt_size (clos_App a0 a1 a2 a3) =
     1 +
     (tra_size a0 + (option_size (\x. x) a1 + (closSem_exp_alt_size a2 +
@@ -900,6 +891,11 @@ let exp_alt_size_def,exp_alt_size_ind = define_rec_clauses
    `closSem_exp_alt_size (clos_Op a0 a1 a2) =
       1 + (tra_size a0 + (clos_op_size a1 + closSem_exp3_alt_size a2))
           + (if a1 = clos_ThunkOp ForceThunk then 100 else 0)`;
+   `closSem_exp1_alt_size [] = 0`;
+   `closSem_exp1_alt_size (CONS a0 a1) = 1 + (closSem_exp2_alt_size a0 +
+    closSem_exp1_alt_size a1)`;
+   `closSem_exp2_alt_size (a0,a1) = 1 + (a0 + closSem_exp_alt_size a1)`;
+   `closSem_exp3_alt_size [] = 0`;
    `closSem_exp3_alt_size (CONS a0 a1) = 1 + (closSem_exp_alt_size a0 +
     closSem_exp3_alt_size a1)`];;
 add_simp exp_alt_size_def;;

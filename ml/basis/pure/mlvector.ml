@@ -13,7 +13,6 @@
 needs "basis/pure/mllist.ml";;
 needs "lib/indexedLists.ml";;
 needs "lib/regexp_compiler.ml";;
-needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 
@@ -73,7 +72,7 @@ let EL_toList = prove
   CHEAT_TAC);;
 
 let toList_fromList = prove
- (`(mlvector_toList (fromList l) = l) /\ (fromList (mlvector_toList v) = v)`,
+ (`(mlvector_toList (Vector l) = l) /\ (Vector (mlvector_toList v) = v)`,
   CHEAT_TAC);;
 add_simp toList_fromList;;
 

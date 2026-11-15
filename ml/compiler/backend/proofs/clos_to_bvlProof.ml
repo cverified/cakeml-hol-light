@@ -620,25 +620,25 @@ let get_num_args_def = new_definition
 
 let clos_to_bvlProof_v_rel = cake_inductive
   `(clos_to_bvlProof_v_rel max_app f refs code (closSem_Number n)
-  (closSem_Number n)) /\
+    (bvlSem_Number n)) /\
    (clos_to_bvlProof_v_rel max_app f refs code (closSem_Word64 w)
-     (closSem_Word64 w)) /\
+     (bvlSem_Word64 w)) /\
    (ALL2 (clos_to_bvlProof_v_rel max_app f refs code) xs (ys:bvlSem_v list)
      ==>
     clos_to_bvlProof_v_rel max_app f refs code (closSem_Block t xs)
-      (closSem_Block (clos_tag_shift t) ys)) /\
+      (bvlSem_Block (clos_tag_shift t) ys)) /\
    (FLOOKUP refs p = SOME (bvlSem_ByteArray T bs) /\ ~(p IN FRANGE f) ==>
     clos_to_bvlProof_v_rel max_app f refs code (closSem_ByteVector bs)
-      (closSem_RefPtr T p)) /\
+      (bvlSem_RefPtr T p)) /\
    ((FLOOKUP f r1 = SOME r2) ==>
     clos_to_bvlProof_v_rel max_app f refs code (closSem_RefPtr b r1)
-      (closSem_RefPtr b r2)) /\
+      (bvlSem_RefPtr b r2)) /\
    (
     ALL2 (clos_to_bvlProof_v_rel max_app f refs code) env fvs /\
-    cl_rel max_app (FRANGE f) refs code (env,fvs) cl (closSem_Block
-      closure_tag (CONS (bvlSem_CodePtr p) (CONS (closSem_Number n) ys))) ==>
-    clos_to_bvlProof_v_rel max_app f refs code cl (closSem_Block closure_tag
-      (CONS (bvlSem_CodePtr p) (CONS (closSem_Number n) ys)))) /\
+    cl_rel max_app (FRANGE f) refs code (env,fvs) cl (bvlSem_Block closure_tag
+      (CONS (bvlSem_CodePtr p) (CONS (bvlSem_Number n) ys))) ==>
+    clos_to_bvlProof_v_rel max_app f refs code cl (bvlSem_Block closure_tag
+      (CONS (bvlSem_CodePtr p) (CONS (bvlSem_Number n) ys)))) /\
    (
     ALL2 (clos_to_bvlProof_v_rel max_app f refs code) env fvs /\
     ALL2 (clos_to_bvlProof_v_rel max_app f refs code) arg_env ys
@@ -652,11 +652,11 @@ let clos_to_bvlProof_v_rel = cake_inductive
     get_num_args cl = SOME num_args /\
     cl_rel max_app (FRANGE f) refs code (env,fvs) cl cl' ==>
     clos_to_bvlProof_v_rel max_app f refs code cl_app
-                        (closSem_Block partial_app_tag
+                        (bvlSem_Block partial_app_tag
                               (CONS (bvlSem_CodePtr
                                 (partial_app_fn_location max_app (num_args -
-                                1) (LENGTH ys - 1))) (CONS (closSem_Number
-                                (&(num_args - 1 - LENGTH arg_env))) (CONS
+                                1) (LENGTH ys - 1))) (CONS (bvlSem_Number
+                                  (&(num_args - 1 - LENGTH arg_env))) (CONS
                                 cl' ys)))))`;;
 
 (* [local] *)

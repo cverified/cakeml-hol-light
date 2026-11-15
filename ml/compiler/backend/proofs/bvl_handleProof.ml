@@ -204,8 +204,8 @@ let OptionalLetLet_nr = prove
 (* HOL4 bvl_handleProofScript.sml:352-473: a theorem that HOL4 states as the
    value of an ML expression: compile_correct *)
 
-(* [allow_rebind] *)
-let bvl_handleProof_compile_correct = bvi_to_dataProof_compile_correct;;
+(* HOL4 bvl_handleProofScript.sml:475-476: a theorem that HOL4 states as the
+   value of an ML expression: compile_correct *)
 
 (* compile_correct[allow_rebind] *)
 let bvl_handleProof_compile_correct = prove

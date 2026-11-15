@@ -1053,7 +1053,7 @@ let full_cc_def = new_definition
      (let limit' = bvl_to_bvi_config_inline_size_limit c in
      let split = bvl_to_bvi_config_split_main_at_seq c in
      let cut = bvl_to_bvi_config_exp_cut c in
-       state_cc (bvl_to_bvi_compile_inc limit' split cut) (state_cc
+       state_cc (bvl_inline_compile_inc limit' split cut) (state_cc
          bvl_to_bvi_compile_inc
          (state_cc (bvi_tailrec_compile_prog (bvl_to_bvi_config_do_tailrec
            c))

@@ -29963,7 +29963,7 @@ let finalise_cons_none = prove
      lookup is (lookup_mk_BN of ml/lib/sptree.ml) *)
   (let size_mk_BN = prove
      (`!t1 (t2:(A)spt).
-         sptree_size (mk_BN t1 t2) = sptree_size (BN t1 t2)`,
+         sptree__size (mk_BN t1 t2) = sptree__size (BN t1 t2)`,
       REPEAT GEN_TAC THEN
       GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [mk_BN_def] THEN
       STRUCT_CASES_TAC(ISPEC `t1:(A)spt` (cases_of `:(A)spt`)) THEN
@@ -29971,7 +29971,7 @@ let finalise_cons_none = prove
       MATCH_REDUCE_TAC THEN REWRITE_TAC[size_def] THEN ARITH_TAC) in
    let size_mk_BS = prove
      (`!t1 (x:A) t2.
-         sptree_size (mk_BS t1 x t2) = sptree_size (BS t1 x t2)`,
+         sptree__size (mk_BS t1 x t2) = sptree__size (BS t1 x t2)`,
       REPEAT GEN_TAC THEN
       GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [mk_BS_def] THEN
       STRUCT_CASES_TAC(ISPEC `t1:(A)spt` (cases_of `:(A)spt`)) THEN
@@ -29979,7 +29979,7 @@ let finalise_cons_none = prove
       MATCH_REDUCE_TAC THEN REWRITE_TAC[size_def] THEN ARITH_TAC) in
    let lookup_zero = prove
      (`!(t:(A)spt) n x.
-         sptree_lookup n t = SOME x ==> ~(sptree_size t = 0)`,
+         sptree_lookup n t = SOME x ==> ~(sptree__size t = 0)`,
       MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THENL
        [REWRITE_TAC[lookup_def; distinctness "option"];
         REPEAT GEN_TAC THEN REWRITE_TAC[lookup_def; size_def] THEN
@@ -29998,9 +29998,9 @@ let finalise_cons_none = prove
         DISCH_TAC THEN ARITH_TAC]) in
    let size_delete = prove
      (`!(t:(A)spt) n.
-         sptree_size (sptree_delete n t) =
-         (if sptree_lookup n t = NONE then sptree_size t
-          else sptree_size t - 1)`,
+         sptree__size (sptree_delete n t) =
+         (if sptree_lookup n t = NONE then sptree__size t
+          else sptree__size t - 1)`,
       let FIN =
         W(fun (asl,w) ->
           CASES_ON_TAC (find_term (hd_is "sptree_lookup") w)) THEN
@@ -30020,7 +30020,7 @@ let finalise_cons_none = prove
    let size_delete_LESS = prove
      (`!(t:(A)spt) n x.
          sptree_lookup n t = SOME x
-         ==> sptree_size (sptree_delete n t) < sptree_size t`,
+         ==> sptree__size (sptree_delete n t) < sptree__size t`,
       REPEAT GEN_TAC THEN DISCH_TAC THEN
       ASM_SIMP_TAC[size_delete; distinctness "option"] THEN
       FIRST_ASSUM (fun th ->
@@ -30077,7 +30077,7 @@ let finalise_cons_none = prove
        CASES_ON_TAC (pv (rand (rand (concl fc))))) in
    let aux = prove
     (`!n v (refs:((dataSem_v)bvlSem_ref)spt) ts_opt v' refs' ts'.
-        sptree_size refs = n /\
+        sptree__size refs = n /\
         dataSem_finalise_cons v refs ts_opt = SOME (v',refs',ts') /\
         sptree_lookup ptr refs = NONE
         ==> sptree_lookup ptr refs' = NONE`,
@@ -30132,7 +30132,7 @@ let finalise_cons_none = prove
          let fc = the_asm (fun c -> is_eq c &&
                     hd_is "dataSem_finalise_cons" (lhand c)) gl in
          let dl = el 1 (snd (strip_comb (lhand (concl fc)))) in
-         MP_TAC (SPEC (list_mk_icomb "sptree_size" [dl]) ih))) THEN
+         MP_TAC (SPEC (list_mk_icomb "sptree__size" [dl]) ih))) THEN
      (ANTS_TAC THENL
        [FIRST_ASSUM (fun lk ->
           let c = concl lk in
@@ -31388,7 +31388,7 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
      above has the same lemmas for the same reason *)
   let size_mk_BN = prove
    (`!t1 (t2:(A)spt).
-       sptree_size (mk_BN t1 t2) = sptree_size (BN t1 t2)`,
+       sptree__size (mk_BN t1 t2) = sptree__size (BN t1 t2)`,
     REPEAT GEN_TAC THEN
     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [mk_BN_def] THEN
     STRUCT_CASES_TAC(ISPEC `t1:(A)spt` (cases_of `:(A)spt`)) THEN
@@ -31396,7 +31396,7 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
     MATCH_REDUCE_TAC THEN REWRITE_TAC[size_def] THEN ARITH_TAC) in
   let size_mk_BS = prove
    (`!t1 (x:A) t2.
-       sptree_size (mk_BS t1 x t2) = sptree_size (BS t1 x t2)`,
+       sptree__size (mk_BS t1 x t2) = sptree__size (BS t1 x t2)`,
     REPEAT GEN_TAC THEN
     GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [mk_BS_def] THEN
     STRUCT_CASES_TAC(ISPEC `t1:(A)spt` (cases_of `:(A)spt`)) THEN
@@ -31404,7 +31404,7 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
     MATCH_REDUCE_TAC THEN REWRITE_TAC[size_def] THEN ARITH_TAC) in
   let lookup_zero = prove
    (`!(t:(A)spt) n x.
-       sptree_lookup n t = SOME x ==> ~(sptree_size t = 0)`,
+       sptree_lookup n t = SOME x ==> ~(sptree__size t = 0)`,
     MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THENL
      [REWRITE_TAC[lookup_def; distinctness "option"];
       REPEAT GEN_TAC THEN REWRITE_TAC[lookup_def; size_def] THEN
@@ -31420,9 +31420,9 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
       DISCH_TAC THEN ARITH_TAC]) in
   let size_delete = prove
    (`!(t:(A)spt) n.
-       sptree_size (sptree_delete n t) =
-       (if sptree_lookup n t = NONE then sptree_size t
-        else sptree_size t - 1)`,
+       sptree__size (sptree_delete n t) =
+       (if sptree_lookup n t = NONE then sptree__size t
+        else sptree__size t - 1)`,
     let FIN =
       W(fun (asl,w) ->
         CASES_ON_TAC (find_term (hd_is "sptree_lookup") w)) THEN
@@ -31442,7 +31442,7 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
   let size_delete_LESS = prove
    (`!(t:(A)spt) n x.
        sptree_lookup n t = SOME x
-       ==> sptree_size (sptree_delete n t) < sptree_size t`,
+       ==> sptree__size (sptree_delete n t) < sptree__size t`,
     REPEAT GEN_TAC THEN DISCH_TAC THEN
     ASM_SIMP_TAC[size_delete; distinctness "option"] THEN
     FIRST_ASSUM (fun th ->
@@ -31562,7 +31562,7 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
                  hd_is "<" (lhand (body (rand (concl th))))) asl in
       let fc = the_fc asl in
       let dl = el 1 (snd (strip_comb (lhs (concl fc)))) in
-      MP_TAC (SPEC (list_mk_icomb "sptree_size" [dl]) ih)) THEN
+      MP_TAC (SPEC (list_mk_icomb "sptree__size" [dl]) ih)) THEN
     (ANTS_TAC THENL
       [W(fun (asl,gl) ->
          let lk = the_lk asl in
@@ -31576,7 +31576,7 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
       let tso = el 2 (snd (strip_comb (lhs (concl fc)))) in
       DISCH_THEN (fun ih ->
         MP_TAC (MATCH_MP ih
-          (CONJ (REFL (list_mk_icomb "sptree_size" [dl]))
+          (CONJ (REFL (list_mk_icomb "sptree__size" [dl]))
             (CONJ fc (CONJ (REFL tso) inv)))))) THEN
     DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "issome")
                                 (LABEL_TAC "ihc")) in
@@ -31652,7 +31652,7 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
    (cake_as_vars (fun () ->
      `!n v (refs:((dataSem_v)bvlSem_ref)spt) ts_opt v' refs' ts' ts
          vars' frame x xs.
-        sptree_size refs = n /\
+        sptree__size refs = n /\
         dataSem_finalise_cons v refs ts_opt = SOME (v',refs',ts') /\
         ts_opt = SOME ts /\
         bc_stack_ref_inv c ts (CONS v vars') (sptree_union refs frame)
@@ -31687,7 +31687,7 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
       hd_is "SOME" (rhs (concl th))) asl in
     let inv = grab_asm (fun th ->
       hd_is "bc_stack_ref_inv" (concl th)) asl in
-    let sz = list_mk_icomb "sptree_size" [rf] in
+    let sz = list_mk_icomb "sptree__size" [rf] in
     MATCH_ACCEPT_TAC (MATCH_MP (SPEC sz aux)
       (CONJ (REFL sz) (CONJ fc (CONJ tseq inv))))))));;
 

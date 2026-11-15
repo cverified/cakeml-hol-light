@@ -215,6 +215,11 @@ def strip_ml(text, strings=True):
 
 
 DEBUG_NAMES = os.environ.get('CAKE_DEBUG_NAMES')
+# with RETRY=1 the table of the statements that HOL Light does not
+# read is ignored, so that a harvest of the port it writes says
+# which of them the port reads now: an entry that a run does not
+# bear out any more is a statement won back
+RETRY_UNSTATED = os.environ.get('RETRY') == '1'
 
 
 def dbg(where, old, new):
@@ -523,7 +528,7 @@ class Porter:
     # points at the source in its place, as it does for a
     # statement its own parser cannot read (tools/unstated.py,
     # which a harvest writes; every entry is one to win back)
-    if (self.thy, nm) in unstated.NAMES:
+    if (self.thy, nm) in unstated.NAMES and not RETRY_UNSTATED:
       self.warn.append('%s %s: HOL Light does not read the statement'
                        % (b.kind, nm))
       self.out.append(self.at(
@@ -801,7 +806,12 @@ class Porter:
     # (HOL4's LET_THM is HOL Light's LET_DEF)
     nm = overrides.THM_MAP.get(name)
     if nm: return nm
-    return name if name in self.db.hlids else None
+    # a theorem of HOL Light goes by a name with a capital in it
+    # (FUN_EQ_THM, MAP, o_DEF); a short name without one is a
+    # local of the ML of the source (HOL4's th), which the port
+    # has nothing of
+    return (name if len(name) > 2 and any(c.isupper() for c in name)
+            and name in self.db.hlids else None)
 
   def eval_defs(self, text, skip=()):
     """the definitions that a term reaches, innermost last: what
@@ -1744,16 +1754,21 @@ class Porter:
       # port has that theorem, the name is that theorem of the
       # port (HOL4's Theorem foo = bar)
       alias = hol4.thmvalue_alias(b.text)
-      if alias and b.name and alias in self.db.thmbind:
+      # the theorem of the file itself before the one of another:
+      # HOL4's Theorem foo[allow_rebind] = foo binds the name to
+      # what it already stands for here, and a dozen theories of
+      # the port have a compile_correct
+      abind = self.resolve_thm(alias) if alias else None
+      if alias and b.name and abind:
         nm = self.bindname(b.name)
         simp = 'simp' in b.attrs
         ats = [a for a in b.attrs if a != 'simp']
         at = ('[' + ','.join(ats) + ']') if ats else ''
         text = (('(* %s *)\n' % at) if at else '') + \
-               ('let %s = %s;;' % (nm, self.db.thmbind[alias]))
+               ('let %s = %s;;' % (nm, abind))
         if max(len(l) for l in text.split('\n')) > 79:
           text = (('(* %s *)\n' % at) if at else '') + \
-                 ('let %s =\n  %s;;' % (nm, self.db.thmbind[alias]))
+                 ('let %s =\n  %s;;' % (nm, abind))
         self.out.append(text + ('\nadd_simp %s;;' % nm if simp else ''))
         dbmod.bind_thm(self.db, self.thy, b.name, nm)
         return
@@ -3974,6 +3989,27 @@ class Porter:
           return args[0], args[1]
       return None, None
 
+    def list_element(t):
+      """the element type of a list type, as the text of the type
+         says it; the hole of the port stands for any type, so a
+         list of holes says nothing of its elements"""
+      def unwrap(x):
+        x = x.strip()
+        while x.startswith('(') and x.endswith(')'):
+          d, whole = 0, True
+          for i, c in enumerate(x):
+            if c == '(': d += 1
+            elif c == ')':
+              d -= 1
+              if d == 0 and i != len(x) - 1: whole = False; break
+          if not whole: break
+          x = x[1:-1].strip()
+        return x
+      x = unwrap(' '.join(t.split()))
+      if not x.endswith('list'): return None
+      e = unwrap(x[:-4])
+      return None if not e or '_' in e else e
+
     def tuple_parts(t):
       """the component types of a tuple type, as the text of the
          type says them: a pattern that takes a value apart binds
@@ -4001,7 +4037,7 @@ class Porter:
       out = [x.strip() for x in out]
       return out if len(out) > 1 and all(out) else None
 
-    def walk(p, tys):
+    def walk(p, tys, key=None):
       while p.kind in ('paren', 'typed'): p = p.e
       # the tail of a cons pattern is a list of the same elements
       # as the whole, and an element that is a tuple says that it
@@ -4019,8 +4055,30 @@ class Porter:
             n2 += 1; v2 = v2.r
             while v2.kind in ('paren', 'typed'): v2 = v2.e
           t = '(' + '#'.join(['_'] * n2) + ')list'
-        walk(tl, {t} if t else tys)
-        walk(hd, None)
+        # where the list itself says nothing of its elements,
+        # the tail is a list of whatever the head is: a variable
+        # that another clause gives a type makes the tail a list
+        # of that type (closSem's exp_alt_size has an a0 that is
+        # a tra in one clause and the head of a cons in another)
+        hv = hd
+        while hv.kind in ('paren', 'typed'): hv = hv.e
+        t1 = next(iter(tys)) if tys and len(tys) == 1 else None
+        hole = (t1 is None or not isinstance(t1, str) or
+                not list_element(t1))
+        tt = ({('lst', hv.name)} if hv.kind == 'id' and hole
+              else tys)
+        walk(tl, {t} if t else tt, key)
+        # the head of a cons pattern is an element of the list
+        # the function is defined on, which is not the type of
+        # the list and not the type of a constructor argument
+        # either (closSem's exp_alt_size has an a0 that is a tra
+        # in one clause and the head of a cons in another)
+        el = None
+        t0 = next(iter(tys)) if tys and len(tys) == 1 else None
+        if isinstance(t0, str):
+          ps = list_element(t0)
+          if ps: el = {ps}
+        walk(hd, el)
         return
       if p.kind == 'id':
         # a wildcard is a fresh variable in every clause anyway, and
@@ -4145,7 +4203,7 @@ class Porter:
       clause[0] = n
       for i, a in enumerate(args):
         k = (fname(h), i)
-        walk(a, {argtys[k]} if k in argtys else {('arg',) + k})
+        walk(a, {argtys[k]} if k in argtys else {('arg',) + k}, k)
       body(n, r)
     # two clauses cannot stand in one quotation where a variable of
     # both has no type in common between them; the clauses are
@@ -4167,9 +4225,28 @@ class Porter:
       def union(a, b):
         ra, rb = find(a), find(b)
         if ra != rb: parent[ra] = rb
+      # the type that the constructors of these clauses give each
+      # variable, for the tail of a cons pattern: it is a list of
+      # whatever the head is
+      cty = {}
+      for v2, es in where.items():
+        cs = {next(iter(t)) for (n, t) in es
+              if n in idx and len(t) == 1 and
+              isinstance(next(iter(t)), str)}
+        if len(cs) == 1: cty[v2] = next(iter(cs))
+      def resolve(t):
+        out = set()
+        for x in t:
+          if isinstance(x, tuple) and x[0] == 'lst':
+            y = cty.get(x[1])
+            if y: out.add(y + ' list')
+          else:
+            out.add(x)
+        return out
       seen = []
       for v in where.values():
-        toks = [t for (n, t) in v if n in idx]
+        toks = [x for x in (resolve(t) for (n, t) in v if n in idx)
+                if x]
         # a place that could be one of several types says nothing
         # of its own, but two of them with none in common clash
         multi = [t for t in toks if len(t) > 1]
@@ -4823,6 +4900,13 @@ class Porter:
     # their own, and a proof names the one of its file)
     bind = self.bindname(b.name)
     dbmod.bind_thm(self.db, self.thy, b.name, bind)
+    # HOL4 gives a relation three theorems of its own; the port
+    # keeps the triple that HOL Light's own machinery gives,
+    # and these are its parts under the names HOL4 uses
+    for p2, k in (('_rules', 'cake_rules'), ('_ind', 'cake_ind'),
+                  ('_cases', 'cake_cases')):
+      dbmod.bind_thm(self.db, self.thy, b.name + p2,
+                     '%s %s' % (k, bind))
     text = 'let %s = cake_inductive\n  `%s`;;' % (bind, term)
     for c in defined:
       EMITTED_DEFS.append((self.thy,

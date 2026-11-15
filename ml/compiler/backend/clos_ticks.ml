@@ -20,7 +20,7 @@ let _ = cake_theory "clos_ticks"
   ["closLang"];;
 
 (* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
-   t is tra, (mlstring list) and mlstring; xs is (_)list and (exp list),
+   t is tra, (mlstring list) and mlstring; xs is (exp list) and (_)list,
    which one quotation cannot typecheck *)
 let clos_ticks_remove_ticks_def,clos_ticks_remove_ticks_ind =
   define_shaped_rec_clauses

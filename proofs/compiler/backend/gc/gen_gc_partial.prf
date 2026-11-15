@@ -200,7 +200,7 @@
            (CONJUNCTS_THEN2 (LABEL_TAC "seg") (K ALL_TAC)))))))
      (CONJUNCTS_THEN2 (LABEL_TAC "lk") (LABEL_TAC "lt")))) THEN
    USE_THEN "pg" (fun pg -> USE_THEN "seg" (fun sg ->
-     REWRITE_TAC[CONJUNCT1 (MATCH_MP gen_gc_partial_partial_gc_IMP
+     REWRITE_TAC[CONJUNCT1 (MATCH_MP partial_gc_IMP
        (CONJ pg sg))])) THEN
    USE_THEN "seg" (fun th -> let cs = CONJUNCTS (MATCH_MP
      heap_segment_IMP th) in
