@@ -18,7 +18,6 @@ needs "basis/fsFFI.ml";;
 needs "basis/fsFFIProps.ml";;
 needs "basis/pure/mllist.ml";;
 needs "basis/pure/mlstring.ml";;
-needs "candle/prover/compute/compute_exec.ml";;
 needs "characteristic/cfApp.ml";;
 needs "characteristic/cfFFIType.ml";;
 needs "characteristic/cfHeapsBase.ml";;
@@ -191,8 +190,8 @@ let IllegalArgument_UNICITY = prove
  * n.b. numchars is ignored *)
 
 let stdo_def = new_definition
-  `stdo fd' name fs out =
-     (ALOOKUP (IO_fs_infds fs) fd' = SOME (UStream (implode
+  `stdo fd name fs out =
+     (ALOOKUP (IO_fs_infds fs) fd = SOME (UStream (implode
        name),WriteMode,strlen out) /\
       ALOOKUP (IO_fs_inode_tbl fs) (UStream (implode name)) = SOME
         (explode out))`;;
@@ -204,12 +203,12 @@ let stdo_def = new_definition
 
 (* [xlet_auto_match] *)
 let stdo_UNICITY_R = prove
- (`!fd' name fs out out'. stdo fd' name fs out ==> (stdo fd' name fs out' <=>
+ (`!fd name fs out out'. stdo fd name fs out ==> (stdo fd name fs out' <=>
   out = out')`,
   CHEAT_TAC);;
 
 let up_stdo_def = new_definition
-  `up_stdo fd' fs out = fsupdate fs fd' 0 (strlen out) (explode out)`;;
+  `up_stdo fd fs out = fsupdate fs fd 0 (strlen out) (explode out)`;;
 (* HOL4 TextIOProofScript.sml:246: the overload up_stdout, which the port
    expands *)
 (* HOL4 TextIOProofScript.sml:247: the overload up_stderr, which the port
@@ -249,8 +248,8 @@ let up_stdo_with_numchars = prove
   CHEAT_TAC);;
 
 let add_stdo_def = new_definition
-  `add_stdo fd' nm fs out = up_stdo fd' fs (strcat (@init. stdo fd' nm fs
-  init) out)`;;
+  `add_stdo fd nm fs out = up_stdo fd fs (strcat (@init. stdo fd nm fs init)
+  out)`;;
 (* HOL4 TextIOProofScript.sml:291: the overload add_stdout, which the port
    expands *)
 (* HOL4 TextIOProofScript.sml:292: the overload add_stderr, which the port
@@ -385,14 +384,14 @@ let validFD_add_stdo = prove
 add_simp validFD_add_stdo;;
 
 let validFileFD_up_stdo = prove
- (`TextIOProof_validFileFD fd (IO_fs_infds (up_stdo fd' fs out)) <=>
-  TextIOProof_validFileFD fd (IO_fs_infds fs)`,
+ (`validFileFD fd (IO_fs_infds (up_stdo fd' fs out)) <=> validFileFD fd
+  (IO_fs_infds fs)`,
   CHEAT_TAC);;
 add_simp validFileFD_up_stdo;;
 
 let validFileFD_add_stdo = prove
- (`TextIOProof_validFileFD fd (IO_fs_infds (add_stdo fd' nm fs out)) <=>
-  TextIOProof_validFileFD fd (IO_fs_infds fs)`,
+ (`validFileFD fd (IO_fs_infds (add_stdo fd' nm fs out)) <=> validFileFD fd
+  (IO_fs_infds fs)`,
   CHEAT_TAC);;
 add_simp validFileFD_add_stdo;;
 
@@ -599,19 +598,18 @@ let linesFD_splitlines_get_stdin = prove
 
 (* file descriptors are encoded on 8 bytes *)
 let FD_def = new_definition
-  `FD fd' fdv = (STRING_TYPE (implode (MAP (CHR o w2n) (n2w8 fd'))) fdv
-  /\ fd' < 256 EXP 8)`;;
+  `FD fd fdv = (STRING_TYPE (implode (MAP (CHR o w2n) (n2w8 fd))) fdv /\ fd
+  < 256 EXP 8)`;;
 
 let INSTREAM_def = new_definition
-  `INSTREAM fd' fdv <=>
-     INSTREAM_TYPE (Instream (implode (MAP (CHR o w2n) (n2w8 fd')))) fdv /\
-     fd' < 256 EXP 8`;;
+  `INSTREAM fd fdv <=>
+     INSTREAM_TYPE (Instream (implode (MAP (CHR o w2n) (n2w8 fd)))) fdv /\
+     fd < 256 EXP 8`;;
 
 let OUTSTREAM_def = new_definition
-  `OUTSTREAM fd' fdv <=>
-     OUTSTREAM_TYPE (Outstream (implode (MAP (CHR o w2n) (n2w8 fd')))) fdv
-       /\
-     fd' < 256 EXP 8`;;
+  `OUTSTREAM fd fdv <=>
+     OUTSTREAM_TYPE (Outstream (implode (MAP (CHR o w2n) (n2w8 fd)))) fdv /\
+     fd < 256 EXP 8`;;
 
 let INSTREAM_stdin = prove
  (`INSTREAM 0 raw_stdin_v`,
@@ -659,43 +657,43 @@ let instream_buffered_inv_alt = prove
 
 let INSTREAM_BUFFERED_def = new_definition
   `INSTREAM_BUFFERED bactive is =
-     SEP_EXISTS (\rr r wr w buff bcontent fd' fdv.
+     SEP_EXISTS (\rr r wr w buff bcontent fd fdv.
        &(is = (semanticPrimitives_Conv instreambuffered_con_stamp [fdv; rr;
          wr; buff]) /\
-         INSTREAM fd' fdv /\
+         INSTREAM fd fdv /\
          instream_buffered_inv r w bcontent bactive) *
        REF_NUM rr r *
        REF_NUM wr w *
        W8ARRAY buff bcontent)`;;
 
 let INSTREAM_BUFFERED_FD_def = new_definition
-  `INSTREAM_BUFFERED_FD bactive fd' is =
+  `INSTREAM_BUFFERED_FD bactive fd is =
      SEP_EXISTS (\rr r wr w buff bcontent fdv.
        &(is = (semanticPrimitives_Conv instreambuffered_con_stamp [fdv; rr;
          wr; buff]) /\
-         INSTREAM fd' fdv /\
+         INSTREAM fd fdv /\
          instream_buffered_inv r w bcontent bactive) *
        REF_NUM rr r *
        REF_NUM wr w *
        W8ARRAY buff bcontent)`;;
 
 let INSTREAM_BUFFERED_BL_FD_def = new_definition
-  `INSTREAM_BUFFERED_BL_FD bcontent bactive fd' is =
+  `INSTREAM_BUFFERED_BL_FD bcontent bactive fd is =
      SEP_EXISTS (\rr r wr w buff fdv.
        &(is = (semanticPrimitives_Conv instreambuffered_con_stamp [fdv; rr;
          wr; buff]) /\
-         INSTREAM fd' fdv /\
+         INSTREAM fd fdv /\
          instream_buffered_inv r w bcontent bactive) *
        REF_NUM rr r *
        REF_NUM wr w *
        W8ARRAY buff bcontent)`;;
 
 let INSTREAM_BUFFERED_BL_FD_RW_def = new_definition
-  `INSTREAM_BUFFERED_BL_FD_RW bcontent bactive fd' r w is =
+  `INSTREAM_BUFFERED_BL_FD_RW bcontent bactive fd r w is =
      SEP_EXISTS (\rr wr buff fdv.
        &(is = (semanticPrimitives_Conv instreambuffered_con_stamp [fdv; rr;
          wr; buff]) /\
-         INSTREAM fd' fdv /\
+         INSTREAM fd fdv /\
          instream_buffered_inv r w bcontent bactive) *
        REF_NUM rr r *
        REF_NUM wr w *
@@ -745,11 +743,10 @@ let raw_closeIn_spec = prove
        TextIO_raw_closeIn_v [fdv]
        (IOFS fs)
        (POSTve
-          (\u. &(UNIT_TYPE one u /\ TextIOProof_validFileFD fdw (IO_fs_infds
-            fs)) *
+          (\u. &(UNIT_TYPE one u /\ validFileFD fdw (IO_fs_infds fs)) *
                IOFS (IO_fs_infds_fupd (ADELKEY fdw) fs))
-          (\e. &(InvalidFD_exn e /\ ~(TextIOProof_validFileFD fdw
-            (IO_fs_infds fs))) * IOFS fs))`,
+          (\e. &(InvalidFD_exn e /\ ~(validFileFD fdw (IO_fs_infds fs))) *
+            IOFS fs))`,
   CHEAT_TAC);;
 
 let closeOut_spec = prove
@@ -760,41 +757,38 @@ let closeOut_spec = prove
        TextIO_closeOut_v [fdv]
        (IOFS fs)
        (POSTve
-         (\u. &(UNIT_TYPE one u /\ TextIOProof_validFileFD fdw (IO_fs_infds
-           fs)) *
+         (\u. &(UNIT_TYPE one u /\ validFileFD fdw (IO_fs_infds fs)) *
               IOFS (IO_fs_infds_fupd (ADELKEY fdw) fs))
-         (\e. &(InvalidFD_exn e /\ ~(TextIOProof_validFileFD fdw
-           (IO_fs_infds fs))) * IOFS fs))`,
+         (\e. &(InvalidFD_exn e /\ ~(validFileFD fdw (IO_fs_infds fs))) *
+           IOFS fs))`,
   CHEAT_TAC);;
 
 let raw_closeIn_STDIO_spec = prove
- (`!fd' fs fdv.
-     INSTREAM fd' fdv /\ fd' >= 3 /\ fd' <= IO_fs_maxFD fs ==>
+ (`!fd fs fdv.
+     INSTREAM fd fdv /\ fd >= 3 /\ fd <= IO_fs_maxFD fs ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_raw_closeIn_v [fdv]
        (STDIO fs)
        (POSTve
-          (\u. &(UNIT_TYPE one u /\ TextIOProof_validFileFD fd' (IO_fs_infds
-            fs)) *
-               STDIO (IO_fs_infds_fupd (ADELKEY fd') fs))
-          (\e. &(InvalidFD_exn e /\ ~(TextIOProof_validFileFD fd'
-            (IO_fs_infds fs))) * STDIO fs))`,
+          (\u. &(UNIT_TYPE one u /\ validFileFD fd (IO_fs_infds fs)) *
+               STDIO (IO_fs_infds_fupd (ADELKEY fd) fs))
+          (\e. &(InvalidFD_exn e /\ ~(validFileFD fd (IO_fs_infds fs))) *
+            STDIO fs))`,
   CHEAT_TAC);;
 
 let closeOut_STDIO_spec = prove
- (`!fd' fs fdv.
-     OUTSTREAM fd' fdv /\ fd' >= 3 /\ fd' <= IO_fs_maxFD fs ==>
+ (`!fd fs fdv.
+     OUTSTREAM fd fdv /\ fd >= 3 /\ fd <= IO_fs_maxFD fs ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_closeOut_v [fdv]
        (STDIO fs)
        (POSTve
-          (\u. &(UNIT_TYPE one u /\ TextIOProof_validFileFD fd' (IO_fs_infds
-            fs)) *
-               STDIO (IO_fs_infds_fupd (ADELKEY fd') fs))
-          (\e. &(InvalidFD_exn e /\ ~(TextIOProof_validFileFD fd'
-            (IO_fs_infds fs))) * STDIO fs))`,
+          (\u. &(UNIT_TYPE one u /\ validFileFD fd (IO_fs_infds fs)) *
+               STDIO (IO_fs_infds_fupd (ADELKEY fd) fs))
+          (\e. &(InvalidFD_exn e /\ ~(validFileFD fd (IO_fs_infds fs))) *
+            STDIO fs))`,
   CHEAT_TAC);;
 
 let writei_spec = prove
@@ -824,37 +818,80 @@ let writei_spec = prove
   CHEAT_TAC);;
 
 let write_spec = prove
- (`!n fs fd' i pos h1 h2 h3 h4 rest bc fdv nv iv content.
+ (`!n fs fd i pos h1 h2 h3 h4 rest bc fdv nv iv content.
    wfFS fs ==> MAX (i + n) 2048 <= LENGTH rest ==> i + n < 256 EXP 2 ==>
-   get_file_content fs fd' = SOME (content,pos) ==>
-   get_mode fs fd' = SOME WriteMode ==>
-   FD fd' fdv ==> NUM n nv ==> NUM i iv ==>
+   get_file_content fs fd = SOME (content,pos) ==>
+   get_mode fs fd = SOME WriteMode ==>
+   FD fd fdv ==> NUM n nv ==> NUM i iv ==>
    bc = CONS h1 (CONS h2 (CONS h3 (CONS h4 rest))) ==>
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_write_v [fdv; nv; iv]
    (IOx fs_ffi_part fs * W8ARRAY iobuff_loc bc)
-   (POSTv (?_SEP_EXISTS nwv) (?_IOFS k) (fsupdate fs fd' k (pos + n)
+   (POSTv (\nwv. SEP_EXISTS (\k.
+      IOFS (fsupdate fs fd k (pos + n)
                     (insert_atI (TAKE n (MAP (CHR o w2n) (DROP i rest))) pos
-                              content)))`,
+                              content)))))`,
   CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:1459-1486: a theorem whose statement the port
-   cannot state yet: output1_spec *)
+let output1_spec = prove
+ (`!fd fdv c cv bc content pos.
+    get_file_content fs fd = SOME (content,pos) ==>
+    get_mode fs fd = SOME WriteMode ==>
+    CHAR c cv ==> OUTSTREAM fd fdv ==>
+    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+      TextIO_output1_v [fdv; cv]
+    (IOFS fs)
+    (POSTv (\uv.
+      &(UNIT_TYPE one uv) * SEP_EXISTS (\k.
+      IOFS (fsupdate fs fd k (pos + 1) (insert_atI [c] pos content)))))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:1488-1515: a theorem whose statement the port
-   cannot state yet: output1_STDIO_spec *)
+let output1_STDIO_spec = prove
+ (`!fd. get_file_content fs fd = SOME (content,pos) /\
+        get_mode fs fd = SOME WriteMode /\
+   CHAR c cv /\ OUTSTREAM fd fdv ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_output1_v [fdv; cv]
+   (STDIO fs)
+   (POSTv (\uv.
+     &(UNIT_TYPE one uv) *
+     STDIO (fsupdate fs fd 0 (pos + 1) (insert_atI [c] pos content))))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:1517-1530: a theorem whose statement the port
-   cannot state yet: output1_stdOut_spec *)
+let output1_stdOut_spec = prove
+ (`CHAR c cv ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_output1_v [stdout_v; cv]
+     (STDIO fs)
+     (POSTv (\uv. &(UNIT_TYPE one uv) * STDIO ((add_stdo 1 "stdout") fs
+       (integer_word_toString c))))`,
+  CHEAT_TAC);;
 
 (* HOL4 TextIOProofScript.sml:1532-1543: a proof *)
 
-(* HOL4 TextIOProofScript.sml:1545-1555: a theorem whose statement the port
-   cannot state yet: output1_stdout_spec *)
+let output1_stdout_spec = prove
+ (`CHAR c cv /\ fdv = stdout_v ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_output1_v
+     [fdv; cv] (STDIO fs)
+     (POSTv (\uv. &(UNIT_TYPE one uv) * STDIO ((add_stdo 1 "stdout") fs
+       (integer_word_toString c))))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:1557-1567: a theorem whose statement the port
-   cannot state yet: output1_stderr_spec *)
+let output1_stderr_spec = prove
+ (`CHAR c cv /\ fdv = stderr_v ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_output1_v
+     [fdv; cv] (STDIO fs)
+     (POSTv (\uv. &(UNIT_TYPE one uv) * STDIO ((add_stdo 2 "stderr") fs
+       (integer_word_toString c))))`,
+  CHEAT_TAC);;
 
 (* TODO Move? *)
 (* [local] *)
@@ -864,17 +901,62 @@ let SEG_APPEND3 = prove
        (off + len)) (off + len) l) = SEG (z - off) off l`,
   CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:1581-1666: a theorem whose statement the port
-   cannot state yet: output_aux_spec *)
+let output_aux_spec = prove
+ (`!fd fdv s sv i iv z zv fs content pos.
+     OUTSTREAM fd fdv /\ STRING_TYPE s sv /\ NUM i iv /\ NUM z zv /\
+     i <= z /\ z <= strlen s /\
+     get_file_content fs fd = SOME (content,pos) /\
+     get_mode fs fd = SOME WriteMode ==>
+     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+       TextIO_output_aux_v [fdv; sv; iv; zv]
+       (IOFS fs)
+       (POSTv (\uv.
+          &(UNIT_TYPE one uv) *
+          SEP_EXISTS (\k.
+            IOFS
+              (fsupdate fs fd k (pos + (z - i))
+                 (insert_atI (explode (substring s i (z - i))) pos
+                   content)))))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:1668-1687: a theorem whose statement the port
-   cannot state yet: output_spec *)
+let output_spec = prove
+ (`!s fd fdv sv fs content pos.
+    OUTSTREAM fd fdv ==> STRING_TYPE s sv ==>
+    (get_file_content fs fd = SOME (content,pos)) ==>
+    (get_mode fs fd = SOME WriteMode) ==>
+    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+      TextIO_output_v [fdv; sv]
+    (IOFS fs)
+    (POSTv (\uv. &(UNIT_TYPE one uv) *
+       SEP_EXISTS (\k. IOFS (fsupdate fs fd k (pos + (strlen s))
+                              (insert_atI (explode s) pos content)))))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:1689-1717: a theorem whose statement the port
-   cannot state yet: output_STDIO_spec *)
+let output_STDIO_spec = prove
+ (`!fd fdv fs content pos s.
+   OUTSTREAM fd fdv /\ get_file_content fs fd = SOME (content,pos)
+     /\ get_mode fs fd = SOME WriteMode /\ STRING_TYPE s sv ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_output_v [fdv; sv]
+   (STDIO fs)
+   (POSTv (\uv. &(UNIT_TYPE one uv) *
+      STDIO (fsupdate fs fd 0 (pos + strlen s) (insert_atI (explode s) pos
+        content))))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:1719-1731: a theorem whose statement the port
-   cannot state yet: print_spec *)
+let print_spec = prove
+ (`!fs sv s.
+    STRING_TYPE s sv ==>
+    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+      TextIO_print_v [sv]
+    (STDIO fs)
+    (POSTv (\uv. &(UNIT_TYPE one uv) * STDIO ((add_stdo 1 "stdout") fs
+      s)))`,
+  CHEAT_TAC);;
 
 let print_def = new_definition
   `print s = (\fs. (M_success one,(add_stdo 1 "stdout") fs s))`;;
@@ -891,11 +973,27 @@ let EvalM_print = prove
         cfHeapsBase_ffi_result) option)) list))`,
   CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:1752-1763: a theorem whose statement the port
-   cannot state yet: output_stderr_spec *)
+let output_stderr_spec = prove
+ (`!fs sv s fdv.
+    STRING_TYPE s sv /\ fdv = stderr_v ==>
+    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+      TextIO_output_v [fdv; sv]
+    (STDIO fs)
+    (POSTv (\uv. &(UNIT_TYPE one uv) * STDIO ((add_stdo 2 "stderr") fs
+      s)))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:1765-1776: a theorem whose statement the port
-   cannot state yet: print_err_spec *)
+let print_err_spec = prove
+ (`!fs sv s.
+    STRING_TYPE s sv ==>
+    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+      TextIO_print_err_v [sv]
+    (STDIO fs)
+    (POSTv (\uv. &(UNIT_TYPE one uv) * STDIO ((add_stdo 2 "stderr") fs
+      s)))`,
+  CHEAT_TAC);;
 
 let print_err_def = new_definition
   `print_err s = (\fs. (M_success one,(add_stdo 2 "stderr") fs s))`;;
@@ -914,7 +1012,7 @@ let EvalM_print_err = prove
   CHEAT_TAC);;
 
 let read_spec = prove
- (`!fs fd' fdv n nv. wfFS fs ==> FD fd' fdv ==> NUM n nv ==>
+ (`!fs fd fdv n nv. wfFS fs ==> FD fd fdv ==> NUM n nv ==>
     n < 256 EXP 2 ==> MAX n 2048 <= LENGTH rest ==>
     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
@@ -925,21 +1023,21 @@ let read_spec = prove
       (\nrv. SEP_EXISTS (\(nr:num).
        &(NUM nr nrv) *
        SEP_EXISTS (\content pos.
-         &(get_file_content fs fd' = SOME (content,pos) /\
-           get_mode fs fd' = SOME ReadMode /\
+         &(get_file_content fs fd = SOME (content,pos) /\
+           get_mode fs fd = SOME ReadMode /\
            (nr <= MIN n (LENGTH content - pos)) /\
-           (nr = 0 <=> eof fd' fs = SOME T \/ n = 0)) *
-       IOx fs_ffi_part (bumpFD fd' fs nr) *
+           (nr = 0 <=> eof fd fs = SOME T \/ n = 0)) *
+       IOx fs_ffi_part (bumpFD fd fs nr) *
        W8ARRAY iobuff_loc (APPEND (CONS (n2w 0) (CONS (n2w (nr DIV 256))
          (CONS (n2w nr) (CONS h4
          (MAP (n2w o ORD) (TAKE nr (DROP pos content))))))) (DROP nr
            rest)))))
-      (\e. &(InvalidFD_exn e) * &(get_file_content fs fd' = NONE \/
-        ~(get_mode fs fd' = SOME ReadMode)) * IOFS fs))`,
+      (\e. &(InvalidFD_exn e) * &(get_file_content fs fd = NONE \/
+        ~(get_mode fs fd = SOME ReadMode)) * IOFS fs))`,
   CHEAT_TAC);;
 
 let read_into_spec = prove
- (`!fs fd' fdv n nv buf. wfFS fs ==> FD fd' fdv ==> NUM n nv ==>
+ (`!fs fd fdv n nv buf. wfFS fs ==> FD fd fdv ==> NUM n nv ==>
     n < 256 EXP 2 ==> MAX n 1024 <= LENGTH rest ==>
     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
@@ -950,27 +1048,60 @@ let read_into_spec = prove
       (\nrv. SEP_EXISTS (\(nr:num).
        &(NUM nr nrv) *
        SEP_EXISTS (\content pos.
-         &(get_file_content fs fd' = SOME (content,pos) /\
-           get_mode fs fd' = SOME ReadMode /\
+         &(get_file_content fs fd = SOME (content,pos) /\
+           get_mode fs fd = SOME ReadMode /\
            (nr <= MIN n (LENGTH content - pos) /\
             nr <= LENGTH content - pos) /\
-           (nr = 0 <=> eof fd' fs = SOME T \/ n = 0)) *
-       IOx fs_ffi_part (bumpFD fd' fs nr) *
+           (nr = 0 <=> eof fd fs = SOME T \/ n = 0)) *
+       IOx fs_ffi_part (bumpFD fd fs nr) *
        W8ARRAY buf (APPEND (CONS (n2w 0) (CONS (n2w (nr DIV 256)) (CONS (n2w
          nr) (CONS h4
          (MAP (n2w o ORD) (TAKE nr (DROP pos content))))))) (DROP nr
            rest)))))
-      (\e. &(InvalidFD_exn e) * &(get_file_content fs fd' = NONE \/
-        ~(get_mode fs fd' = SOME ReadMode)) * IOFS_WO_iobuff fs))`,
+      (\e. &(InvalidFD_exn e) * &(get_file_content fs fd = NONE \/
+        ~(get_mode fs fd = SOME ReadMode)) * IOFS_WO_iobuff fs))`,
   CHEAT_TAC);;
 
 (* TODO: call the low-level IOFS specs with the non-standard name, not vice versa *)
 
-(* HOL4 TextIOProofScript.sml:2026-2225: a theorem whose statement the port
-   cannot state yet: raw_input_IOFS_spec *)
+let raw_input_IOFS_spec = prove
+ (`!fd fdv fs content pos off offv.
+     len + off <= LENGTH buf /\
+     INSTREAM fd fdv /\ NUM off offv /\ NUM len lenv /\
+     get_file_content fs fd = SOME (content,pos) ==>
+     get_mode fs fd = SOME ReadMode ==>
+     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+       TextIO_raw_input_v [fdv; bufv; offv; lenv]
+     (IOFS fs * W8ARRAY bufv buf)
+     (POSTv (\nv. &(NUM (MIN len (LENGTH content - pos)) nv) *
+        W8ARRAY bufv (insert_atI (TAKE len (DROP pos (MAP (n2w o ORD)
+          content)))
+                              off buf) *
+        SEP_EXISTS (\k. IOFS (fsupdate fs fd k (MIN (len + pos) (MAX pos
+          (LENGTH content))) content))))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:2227-2263: a theorem whose statement the port
-   cannot state yet: raw_input_spec *)
+let raw_input_spec = prove
+ (`!fd fdv fs content pos off offv len lenv buf bufv.
+     len + off <= LENGTH buf /\
+     INSTREAM fd fdv /\ NUM off offv /\ NUM len lenv /\
+     get_file_content fs fd = SOME (content,pos) ==>
+     get_mode fs fd = SOME ReadMode ==>
+     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+       TextIO_raw_input_v [fdv; bufv; offv; lenv]
+     (STDIO fs * W8ARRAY bufv buf)
+     (POSTv (\nv. &(NUM (MIN len (LENGTH content - pos)) nv /\
+        LENGTH buf = LENGTH (insert_atI (TAKE len (DROP pos (MAP (n2w o ORD)
+          content)))
+                              off buf)) *
+        W8ARRAY bufv (insert_atI (TAKE len (DROP pos (MAP (n2w o ORD)
+          content)))
+                              off buf) *
+         STDIO (fsupdate fs fd 0 (MIN (len + pos) (MAX pos (LENGTH
+           content))) content)))`,
+  CHEAT_TAC);;
 
 let take_drop_append = prove
  (`x < LENGTH l /\ y < LENGTH l /\ z < LENGTH l /\ ~(y < x) ==> APPEND (TAKE x
@@ -985,7 +1116,7 @@ let openStdInSetBufferSize_spec = prove
         list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
         TextIO_openStdInSetBufferSize_v [bsizev]
         (IOFS fs)
-        (POSTv (?_INSTREAM_BUFFERED_FD is) [] 0 is * IOFS fs)`,
+        (POSTv (\is. INSTREAM_BUFFERED_FD [] 0 is * IOFS fs))`,
   CHEAT_TAC);;
 
 let openStdIn_spec = prove
@@ -995,7 +1126,7 @@ let openStdIn_spec = prove
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_openStdIn_v [uv]
         (IOFS fs)
-        (POSTv (?_INSTREAM_BUFFERED_FD is) [] 0 is * IOFS fs)`,
+        (POSTv (\is. INSTREAM_BUFFERED_FD [] 0 is * IOFS fs))`,
   CHEAT_TAC);;
 
 (* STDIO version *)
@@ -1006,7 +1137,7 @@ let openStdIn_STDIO_spec = prove
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_openStdIn_v [uv]
        (STDIO fs)
-       (POSTv (?_INSTREAM_BUFFERED_FD is) [] 0 is * STDIO fs)`,
+       (POSTv (\is. INSTREAM_BUFFERED_FD [] 0 is * STDIO fs))`,
   CHEAT_TAC);;
 
 let openInSetBufferSize_spec = prove
@@ -1064,32 +1195,30 @@ let openIn_STDIO_spec = prove
   CHEAT_TAC);;
 
 let closeIn_spec = prove
- (`!fd' fs.
+ (`!fd fs.
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_closeIn_v [is]
-       (IOFS fs * INSTREAM_BUFFERED_FD bactive fd' is)
+       (IOFS fs * INSTREAM_BUFFERED_FD bactive fd is)
        (POSTve
-          (\u. &(UNIT_TYPE one u /\ TextIOProof_validFileFD fd' (IO_fs_infds
-            fs)) *
-               IOFS (IO_fs_infds_fupd (ADELKEY fd') fs))
-          (\e. &(InvalidFD_exn e /\ ~(TextIOProof_validFileFD fd'
-            (IO_fs_infds fs))) * IOFS fs))`,
+          (\u. &(UNIT_TYPE one u /\ validFileFD fd (IO_fs_infds fs)) *
+               IOFS (IO_fs_infds_fupd (ADELKEY fd) fs))
+          (\e. &(InvalidFD_exn e /\ ~(validFileFD fd (IO_fs_infds fs))) *
+            IOFS fs))`,
   CHEAT_TAC);;
 
 let closeIn_STDIO_spec = prove
- (`!fd' fs.
-     fd' >= 3 /\ fd' <= IO_fs_maxFD fs ==>
+ (`!fd fs.
+     fd >= 3 /\ fd <= IO_fs_maxFD fs ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_closeIn_v [is]
-       (STDIO fs * INSTREAM_BUFFERED_FD bactive fd' is)
+       (STDIO fs * INSTREAM_BUFFERED_FD bactive fd is)
        (POSTve
-          (\u. &(UNIT_TYPE one u /\ TextIOProof_validFileFD fd' (IO_fs_infds
-            fs)) *
-               STDIO (IO_fs_infds_fupd (ADELKEY fd') fs))
-          (\e. &(InvalidFD_exn e /\ ~(TextIOProof_validFileFD fd'
-            (IO_fs_infds fs))) * STDIO fs))`,
+          (\u. &(UNIT_TYPE one u /\ validFileFD fd (IO_fs_infds fs)) *
+               STDIO (IO_fs_infds_fupd (ADELKEY fd) fs))
+          (\e. &(InvalidFD_exn e /\ ~(validFileFD fd (IO_fs_infds fs))) *
+            STDIO fs))`,
   CHEAT_TAC);;
 
 let take_fromI_def = new_definition
@@ -1109,18 +1238,65 @@ let LENGTH_explode_fromI = prove
    (LENGTH l - i <= n ==> LENGTH (explode_fromI n l i) = LENGTH l - i)`,
   CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:2468-2539: a theorem whose statement the port
-   cannot state yet: refillBuffer_with_read_spec *)
+let refillBuffer_with_read_spec = prove
+ (`!fd fdv fs content pos.
+   is = (semanticPrimitives_Conv instreambuffered_con_stamp [fdv; rr; wr;
+     isbuff]) /\
+   get_file_content fs fd = SOME (content,pos) ==>
+   get_mode fs fd = SOME ReadMode ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_refillBuffer_with_read_v [is]
+   (IOFS fs * INSTREAM_BUFFERED_BL_FD bcontent bactive fd is)
+   (POSTv (\wv. SEP_EXISTS (\(nr:num) h4 rest.
+                  &(NUM nr wv /\
+                    LENGTH bcontent =
+                     LENGTH (CONS (n2w 0) (CONS (n2w (nr DIV 256)) (CONS
+                       (n2w nr) (CONS h4 rest)))) /\
+                    (nr = 0 <=> eof fd fs = SOME T) /\
+                    (nr = 0 <=> ~(pos < LENGTH content)) /\
+                    nr = LENGTH (explode_fromI nr content pos) /\
+                    nr <= LENGTH content - pos) *
+                  INSTREAM_BUFFERED_BL_FD
+                     (CONS (n2w 0) (CONS (n2w (nr DIV 256)) (CONS (n2w nr)
+                       (CONS h4 rest))))
+                     (explode_fromI nr content pos) fd is *
+                  IOFS (bumpFD fd fs nr))))`,
+  CHEAT_TAC);;
 
 (* HOL4 TextIOProofScript.sml:2541-2542: ML code, not ported *)
 
 (* HOL4 TextIOProofScript.sml:2544-2546: ML code, not ported *)
 
-(* HOL4 TextIOProofScript.sml:2548-2616: a theorem whose statement the port
-   cannot state yet: input1_aux_spec *)
+let input1_aux_spec = prove
+ (`app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+  list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+  TextIO_input1_aux_v [is]
+   (INSTREAM_BUFFERED_BL_FD_RW bcontent bactive fd r w is)
+   (POSTv (\chv. SEP_EXISTS (\cs.
+     match bactive with
+       [] ->
+         &(OPTION_TYPE CHAR NONE chv) *
+         INSTREAM_BUFFERED_BL_FD_RW bcontent bactive fd r w is
+       | (CONS c cs) ->
+         &(OPTION_TYPE CHAR (SOME ((CHR o w2n) c)) chv) *
+         INSTREAM_BUFFERED_BL_FD_RW bcontent cs fd (r + 1) w is)))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:2618-2678: a theorem whose statement the port
-   cannot state yet: peekChar_aux_spec *)
+let peekChar_aux_spec = prove
+ (`app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+  list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+  TextIO_peekChar_aux_v [is]
+   (INSTREAM_BUFFERED_BL_FD_RW bcontent bactive fd r w is)
+   (POSTv (\chv. SEP_EXISTS (\cs.
+     match bactive with
+       [] ->
+         &(OPTION_TYPE CHAR NONE chv) *
+         INSTREAM_BUFFERED_BL_FD_RW bcontent bactive fd r w is
+       | (CONS c cs) ->
+         &(OPTION_TYPE CHAR (SOME ((CHR o w2n) c)) chv) *
+         INSTREAM_BUFFERED_BL_FD_RW bcontent bactive fd r w is)))`,
+  CHEAT_TAC);;
 
 (* DROP_TAKE *)
 let TextIOProof_DROP_TAKE = prove
@@ -1133,17 +1309,103 @@ let TAKE_DROP_EQ_CONS_IMP = prove
      TAKE (n - 1) (DROP (pos + 1) xs) = ys`,
   CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:2699-2820: a theorem whose statement the port
-   cannot state yet: input1_IOFS_spec *)
+let input1_IOFS_spec = prove
+ (`!fd fdv fs content pos bactive.
+   get_file_content fs fd = SOME (content,pos) ==>
+   get_mode fs fd = SOME ReadMode ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_input1_v [is]
+      (IOFS fs * INSTREAM_BUFFERED_FD bactive fd is)
+      (POSTv (\chv.
+        match bactive with (CONS c cs) -> &(OPTION_TYPE CHAR (SOME ((CHR o
+          w2n) c)) chv) *
+                     IOFS fs * INSTREAM_BUFFERED_FD cs fd is
+        | [] ->
+            if LENGTH content <= pos then
+              &(OPTION_TYPE CHAR NONE chv) *
+              IOFS (bumpFD fd fs 0) * INSTREAM_BUFFERED_FD [] fd is
+            else SEP_EXISTS (\leftover.
+                &(OPTION_TYPE CHAR (SOME (EL pos content)) chv) *
+                IOFS (bumpFD fd fs (LENGTH leftover + 1)) *
+                INSTREAM_BUFFERED_FD leftover fd is *
+                &(leftover = explode_fromI (LENGTH leftover) content (pos +
+                  1) /\
+                 (pos + LENGTH leftover + 1 <= LENGTH content)))))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:2822-2941: a theorem whose statement the port
-   cannot state yet: peekChar_IOFS_spec *)
+let peekChar_IOFS_spec = prove
+ (`!fd fdv fs content pos bactive.
+   get_file_content fs fd = SOME (content,pos) ==>
+   get_mode fs fd = SOME ReadMode ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_peekChar_v [is]
+      (IOFS fs * INSTREAM_BUFFERED_FD bactive fd is)
+      (POSTv (\chv.
+        match bactive with (CONS c cs) -> &(OPTION_TYPE CHAR (SOME ((CHR o
+          w2n) c)) chv) *
+                     IOFS fs * INSTREAM_BUFFERED_FD bactive fd is
+        | [] ->
+            if LENGTH content <= pos then
+              &(OPTION_TYPE CHAR NONE chv) *
+              IOFS (bumpFD fd fs 0) * INSTREAM_BUFFERED_FD bactive fd is
+            else SEP_EXISTS (\leftover.
+                &(OPTION_TYPE CHAR (SOME (EL pos content)) chv) *
+                IOFS (bumpFD fd fs (LENGTH leftover)) *
+                INSTREAM_BUFFERED_FD leftover fd is *
+                &(leftover = explode_fromI (LENGTH leftover) content pos /\
+                 (pos + LENGTH leftover <= LENGTH content)))))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:2943-2994: a theorem whose statement the port
-   cannot state yet: input1_spec *)
+let input1_spec = prove
+ (`!fd fdv fs content pos bactive.
+   get_file_content fs fd = SOME (content,pos) ==>
+   get_mode fs fd = SOME ReadMode ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_input1_v [is]
+      (STDIO fs * INSTREAM_BUFFERED_FD bactive fd is)
+      (POSTv (\chv.
+        match bactive with (CONS (c:word8) cs) -> &(OPTION_TYPE CHAR (SOME
+          ((CHR o w2n) c)) chv) *
+                     STDIO fs * INSTREAM_BUFFERED_FD cs fd is
+        | [] ->
+            if LENGTH content <= pos then
+              &(OPTION_TYPE CHAR NONE chv) *
+              STDIO (bumpFD fd fs 0) * INSTREAM_BUFFERED_FD [] fd is
+            else SEP_EXISTS (\leftover.
+                &(OPTION_TYPE CHAR (SOME (EL pos content)) chv) *
+                STDIO (bumpFD fd fs (LENGTH leftover + 1)) *
+                INSTREAM_BUFFERED_FD leftover fd is *
+                &(leftover = explode_fromI (LENGTH leftover) content (pos +
+                  1) /\
+                 pos + LENGTH leftover + 1 <= LENGTH content))))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:2996-3047: a theorem whose statement the port
-   cannot state yet: peekChar_spec *)
+let peekChar_spec = prove
+ (`!fd fdv fs content pos bactive.
+   get_file_content fs fd = SOME (content,pos) ==>
+   get_mode fs fd = SOME ReadMode ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_peekChar_v [is]
+      (STDIO fs * INSTREAM_BUFFERED_FD bactive fd is)
+      (POSTv (\chv.
+        match bactive with (CONS (c:word8) cs) -> &(OPTION_TYPE CHAR (SOME
+          ((CHR o w2n) c)) chv) *
+                           STDIO fs * INSTREAM_BUFFERED_FD bactive fd is
+        | [] ->
+            if LENGTH content <= pos then
+              &(OPTION_TYPE CHAR NONE chv) *
+              STDIO (bumpFD fd fs 0) * INSTREAM_BUFFERED_FD [] fd is
+            else SEP_EXISTS (\leftover.
+                &(OPTION_TYPE CHAR (SOME (EL pos content)) chv) *
+                STDIO (bumpFD fd fs (LENGTH leftover)) *
+                INSTREAM_BUFFERED_FD leftover fd is *
+                &(leftover = explode_fromI (LENGTH leftover) content pos /\
+                 pos + LENGTH leftover <= LENGTH content))))`,
+  CHEAT_TAC);;
 
 let takeUntilIncl_def,takeUntilIncl_ind = define_guess
   `(takeUntilIncl p [] = []) /\
@@ -1482,15 +1744,15 @@ let LENGTH_dropUntilIncl_dropUntil = prove
   CHEAT_TAC);;
 
 let TextIOProof_lineForwardFD_def = new_definition
-  `TextIOProof_lineForwardFD buff fs fd' extra =
-        match get_file_content fs fd' with
+  `TextIOProof_lineForwardFD buff fs fd extra =
+        match get_file_content fs fd with
           NONE -> fs
         | SOME (content,pos') ->
           if EX ((=) ((n2w 10):word8)) buff then fs
            else if pos' < LENGTH content then
             (let
                (l,r) = SPLITP ((=) (CHR 10)) (DROP pos' content) in
-               forwardFD fs fd' (LENGTH extra + LENGTH l + (if NULL r then 0
+               forwardFD fs fd (LENGTH extra + LENGTH l + (if NULL r then 0
                  else 1)))
           else fs`;;
 
@@ -1855,62 +2117,92 @@ let takeUntilIncl_eq_takeUntil_append = prove
   CHEAT_TAC);;
 
 let forwardFD_lineForwardFD_not_in_buffer = prove
- (`!buff fs fd' extra.
-     get_file_content fs fd' = SOME (content,pos) /\
+ (`!buff fs fd extra.
+     get_file_content fs fd = SOME (content,pos) /\
      (extra <<= dropUntilIncl ((=) ((n2w 10):word8)) (MAP (n2w:num->(word8
        o) ORD) (DROP pos content)) \/
       extra = []) /\
      ~(EX ((=) ((n2w 10):word8)) buff) ==>
-       (forwardFD fs fd' (LENGTH extra + LENGTH (takeUntilIncl ((=) (CHR
-         10)) (DROP pos content))) =
-         TextIOProof_lineForwardFD buff fs fd' extra)`,
+       (forwardFD fs fd (LENGTH extra + LENGTH (takeUntilIncl ((=) (CHR 10))
+         (DROP pos content))) =
+         TextIOProof_lineForwardFD buff fs fd extra)`,
   CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:5063-5090: a theorem whose statement the port
-   cannot state yet: input_aux_w_content_spec *)
+let input_aux_w_content_spec = prove
+ (`!len lenv outbuf is.
+   NUM len lenv /\ NUM off offv /\ len + off <= LENGTH outcont /\
+   len <= LENGTH bactive ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_input_aux_v [is; outbuf; offv; lenv]
+   (W8ARRAY outbuf outcont * INSTREAM_BUFFERED_BL_FD bcontent bactive fd is)
+   (POSTv (\nReadv. &(NUM len nReadv) *
+                   W8ARRAY outbuf
+                     (insert_atI (TAKE len bactive) off outcont) *
+                   INSTREAM_BUFFERED_BL_FD bcontent (DROP len bactive) fd
+                     is))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:5092-5119: a theorem whose statement the port
-   cannot state yet: input_aux_spec *)
+let input_aux_spec = prove
+ (`!len lenv outbuf is.
+   NUM len lenv /\ NUM off offv /\ len + off <= LENGTH outcont /\
+   len <= LENGTH bactive ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_input_aux_v [is; outbuf; offv; lenv]
+   (W8ARRAY outbuf outcont * INSTREAM_BUFFERED_FD bactive fd is)
+   (POSTv (\nReadv. &(NUM len nReadv) *
+                   W8ARRAY outbuf
+                     (insert_atI (TAKE len bactive) off outcont) *
+                   INSTREAM_BUFFERED_FD (DROP len bactive) fd is))`,
+  CHEAT_TAC);;
 
 let input_spec = prove
- (`!fd' fdv fs content pos off offv req reqv buf bufv bactive pbactive.
+ (`!fd fdv fs content pos off offv req reqv buf bufv bactive pbactive.
    NUM off offv /\ NUM req reqv /\
-   get_file_content fs fd' = SOME (content,pos) ==>
-   get_mode fs fd' = SOME ReadMode ==>
+   get_file_content fs fd = SOME (content,pos) ==>
+   get_mode fs fd = SOME ReadMode ==>
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_input_v [is; bufv; offv; reqv]
-   (STDIO fs * W8ARRAY bufv buf * INSTREAM_BUFFERED_FD bactive fd' is)
+   (STDIO fs * W8ARRAY bufv buf * INSTREAM_BUFFERED_FD bactive fd is)
    (POSTve
      (\nv. SEP_EXISTS (\pbactive.
        &(NUM (MIN req ((LENGTH content - pos) + LENGTH bactive)) nv /\
          req + off <= LENGTH buf) *
-       INSTREAM_BUFFERED_FD pbactive fd' is *
+       INSTREAM_BUFFERED_FD pbactive fd is *
        W8ARRAY bufv (insert_atI (APPEND (TAKE req bactive) (TAKE (req -
          LENGTH bactive)
                               (DROP pos (MAP (n2w o ORD) content))))
                               off buf) *
-       STDIO (fsupdate fs fd' 0 (MIN ((req + LENGTH pbactive) - LENGTH
+       STDIO (fsupdate fs fd 0 (MIN ((req + LENGTH pbactive) - LENGTH
          bactive + pos)
                               (MAX pos (LENGTH content))) content)))
      (\e. &(IllegalArgument_exn e /\ LENGTH buf < req + off) *
-           STDIO fs * W8ARRAY bufv buf * INSTREAM_BUFFERED_FD bactive fd'
+           STDIO fs * W8ARRAY bufv buf * INSTREAM_BUFFERED_FD bactive fd
              is))`,
   CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:5474-5493: a theorem whose statement the port
-   cannot state yet: print_list_spec *)
+let print_list_spec = prove
+ (`!ls lv fs out. LIST_TYPE STRING_TYPE ls lv ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_print_list_v [lv]
+     (STDIO fs)
+     (POSTv (\v. &(UNIT_TYPE one v) * STDIO ((add_stdo 1 "stdout") fs
+       (mlstring_concat ls))))`,
+  CHEAT_TAC);;
 
 (* a layer that makes buffered I/O nicer to work with *)
 
 let INSTREAM_STR_def = new_definition
-  `INSTREAM_STR fd' is (str:string) fs =
+  `INSTREAM_STR fd is (str:string) fs =
      SEP_EXISTS (\fsFFI_read active left.
-       INSTREAM_BUFFERED_FD (MAP (n2w o ORD) active) fd' is *
+       INSTREAM_BUFFERED_FD (MAP (n2w o ORD) active) fd is *
        &(str = APPEND active left /\
-          get_file_content fs fd' = SOME (APPEND fsFFI_read str,LENGTH
+          get_file_content fs fd = SOME (APPEND fsFFI_read str,LENGTH
             fsFFI_read + LENGTH active) /\
-          get_mode fs fd' = SOME ReadMode))`;;
+          get_mode fs fd = SOME ReadMode))`;;
 
 let INSTREAM_STR_fd_neq = prove
  (`STD_streams fs ==>
@@ -1925,14 +2217,14 @@ let INSTREAM_STR_add_stdout = prove
   CHEAT_TAC);;
 
 let INSTREAM_STR'_def = new_definition
-  `INSTREAM_STR' fd' is (str:string) fs non_empty is_empty =
+  `INSTREAM_STR' fd is (str:string) fs non_empty is_empty =
      SEP_EXISTS (\fsFFI_read active left.
-       INSTREAM_BUFFERED_FD (MAP (n2w o ORD) active) fd' is *
+       INSTREAM_BUFFERED_FD (MAP (n2w o ORD) active) fd is *
        &(str = APPEND active left /\
           (non_empty ==> ~(active = [])) /\ (is_empty ==> active = []) /\
-          get_file_content fs fd' = SOME (APPEND fsFFI_read str,LENGTH
+          get_file_content fs fd = SOME (APPEND fsFFI_read str,LENGTH
             fsFFI_read + LENGTH active) /\
-          get_mode fs fd' = SOME ReadMode))`;;
+          get_mode fs fd = SOME ReadMode))`;;
 
 (* [local] *)
 let INSTREAM_STR'_F_F = prove
@@ -1979,9 +2271,9 @@ let lines_of_gen_lines_of = prove
   CHEAT_TAC);;
 
 let INSTREAM_LINES_def = new_definition
-  `INSTREAM_LINES c0 fd' is (lines:mlstring list) fs =
+  `INSTREAM_LINES c0 fd is (lines:mlstring list) fs =
      SEP_EXISTS (\rest.
-       INSTREAM_STR fd' is rest fs *
+       INSTREAM_STR fd is rest fs *
        &(lines_of_gen c0 (implode rest) = lines))`;;
 
 (* Useful for applying fastForwardFD_forwardFD *)
@@ -2090,9 +2382,11 @@ let input1_spec_str = prove
   list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
   TextIO_input1_v [is]
       (STDIO fs * INSTREAM_STR fd is s fs)
-      (POSTv (?_SEP_EXISTS chv) (?_STDIO k) (forwardFD fs fd k) *
+      (POSTv (\chv.
+        SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
           INSTREAM_STR fd is (TL s) (forwardFD fs fd k) *
-          &(OPTION_TYPE CHAR (oHD s) chv))`,
+          &(OPTION_TYPE CHAR (oHD s) chv))))`,
   CHEAT_TAC);;
 
 let peekChar_spec_str = prove
@@ -2100,9 +2394,11 @@ let peekChar_spec_str = prove
   list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
   TextIO_peekChar_v [is]
       (STDIO fs * INSTREAM_STR fd is s fs)
-      (POSTv (?_SEP_EXISTS chv) (?_STDIO k) (forwardFD fs fd k) *
+      (POSTv (\chv.
+        SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
           INSTREAM_STR fd is s (forwardFD fs fd k) *
-          &(OPTION_TYPE CHAR (oHD s) chv))`,
+          &(OPTION_TYPE CHAR (oHD s) chv))))`,
   CHEAT_TAC);;
 
 let peekChar_spec_lines = prove
@@ -2110,10 +2406,12 @@ let peekChar_spec_lines = prove
   list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
   TextIO_peekChar_v [is]
       (STDIO fs * INSTREAM_LINES c0 fd is s fs)
-      (POSTv (?_SEP_EXISTS chv) (?_STDIO k) (forwardFD fs fd k) *
+      (POSTv (\chv.
+        SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
           INSTREAM_LINES c0 fd is s (forwardFD fs fd k) *
           &(OPTION_TYPE CHAR (match s with [] -> NONE | (CONS l ls) -> oHD
-            (APPEND (explode l) [c0])) chv))`,
+            (APPEND (explode l) [c0])) chv))))`,
   CHEAT_TAC);;
 
 let file_content_def = new_definition
@@ -2135,7 +2433,7 @@ let openStdIn_spec_str = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_openStdIn_v [uv]
       (STDIO fs)
-      (POSTv (?_STDIO is) fs * INSTREAM_STR 0 is text fs)`,
+      (POSTv (\is. STDIO fs * INSTREAM_STR 0 is text fs))`,
   CHEAT_TAC);;
 
 let openIn_spec_str = prove
@@ -2145,8 +2443,9 @@ let openIn_spec_str = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_openIn_v [sv]
       (STDIO fs)
-      (POSTv (?_STDIO is) (openFileFS s fs ReadMode 0) *
-         INSTREAM_STR (nextFD fs) is text (openFileFS s fs ReadMode 0))`,
+      (POSTv (\is.
+         STDIO (openFileFS s fs ReadMode 0) *
+         INSTREAM_STR (nextFD fs) is text (openFileFS s fs ReadMode 0)))`,
   CHEAT_TAC);;
 
 let closeIn_spec_str = prove
@@ -2156,11 +2455,10 @@ let closeIn_spec_str = prove
      TextIO_closeIn_v [is]
      (STDIO fs * INSTREAM_STR fd is text fs)
      (POSTve
-        (\u. &(UNIT_TYPE one u /\ TextIOProof_validFileFD fd (IO_fs_infds
-          fs)) *
+        (\u. &(UNIT_TYPE one u /\ validFileFD fd (IO_fs_infds fs)) *
              STDIO (IO_fs_infds_fupd (ADELKEY fd) fs))
-        (\e. &(InvalidFD_exn e /\ ~(TextIOProof_validFileFD fd
-          (IO_fs_infds fs))) * STDIO fs))`,
+        (\e. &(InvalidFD_exn e /\ ~(validFileFD fd (IO_fs_infds fs))) *
+          STDIO fs))`,
   CHEAT_TAC);;
 
 let toString_STRING = prove
@@ -2182,8 +2480,8 @@ let openStdIn_spec_lines = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_openStdIn_v [uv]
       (STDIO fs)
-      (POSTv (?_STDIO is) fs * INSTREAM_LINES c0 0 is (lines_of_gen c0
-        (implode text)) fs)`,
+      (POSTv (\is. STDIO fs * INSTREAM_LINES c0 0 is (lines_of_gen c0
+        (implode text)) fs))`,
   CHEAT_TAC);;
 
 (* TODO: copied from fsFFIProps *)
@@ -2216,9 +2514,10 @@ let openIn_spec_lines = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_openIn_v [sv]
       (STDIO fs)
-      (POSTv (?_STDIO is) (openFileFS s fs ReadMode 0) *
+      (POSTv (\is.
+         STDIO (openFileFS s fs ReadMode 0) *
          INSTREAM_LINES c0 (nextFD fs) is (all_lines_file_gen c0 fs s)
-           (openFileFS s fs ReadMode 0))`,
+           (openFileFS s fs ReadMode 0)))`,
   CHEAT_TAC);;
 
 let closeIn_spec_lines = prove
@@ -2228,11 +2527,10 @@ let closeIn_spec_lines = prove
      TextIO_closeIn_v [is]
      (STDIO fs * INSTREAM_LINES c0 fd is lines fs)
      (POSTve
-        (\u. &(UNIT_TYPE one u /\ TextIOProof_validFileFD fd (IO_fs_infds
-          fs)) *
+        (\u. &(UNIT_TYPE one u /\ validFileFD fd (IO_fs_infds fs)) *
              STDIO (IO_fs_infds_fupd (ADELKEY fd) fs))
-        (\e. &(InvalidFD_exn e /\ ~(TextIOProof_validFileFD fd
-          (IO_fs_infds fs))) * STDIO fs))`,
+        (\e. &(InvalidFD_exn e /\ ~(validFileFD fd (IO_fs_infds fs))) *
+          STDIO fs))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2245,9 +2543,9 @@ let split_exists = prove
 
 (* [local] *)
 let fastForwardFD_eq_forwardFD = prove
- (`!fs fd' c off x.
-     get_file_content fs fd' = SOME (c,off) /\ LENGTH c = off + x ==>
-       forwardFD fs fd' x = fastForwardFD fs fd'`,
+ (`!fs fd c off x.
+     get_file_content fs fd = SOME (c,off) /\ LENGTH c = off + x ==>
+       forwardFD fs fd x = fastForwardFD fs fd`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2290,8 +2588,8 @@ let find_surplus = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_find_surplus_v [cv; av; iv; jv]
      (cell a (semanticPrimitives_W8array wl))
-     (cell (POSTv (?_a retv)) (semanticPrimitives_W8array wl) *
-         &(OPTION_TYPE NUM (find_surplus_fun c wl i j) retv))`,
+     (POSTv (\retv. cell a (semanticPrimitives_W8array wl) *
+         &(OPTION_TYPE NUM (find_surplus_fun c wl i j) retv)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2323,9 +2621,10 @@ let inputUntil_1_not_found = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_inputUntil_1_v [is; cv]
      (INSTREAM_BUFFERED_FD bactive fd is)
-     (POSTv (?_INSTREAM_BUFFERED_FD retv) [] fd is *
+     (POSTv (\retv.
+         INSTREAM_BUFFERED_FD [] fd is *
          &(SUM_TYPE STRING_TYPE STRING_TYPE
-              (INL (implode (MAP (CHR o w2n) bactive))) retv))`,
+              (INL (implode (MAP (CHR o w2n) bactive))) retv)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2339,9 +2638,10 @@ let inputUntil_1_found = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_inputUntil_1_v [is; cv]
      (INSTREAM_BUFFERED_FD (APPEND bs1 (CONS (n2w (ORD c)) bs2)) fd is)
-     (POSTv (?_INSTREAM_BUFFERED_FD retv) bs2 fd is *
+     (POSTv (\retv.
+         INSTREAM_BUFFERED_FD bs2 fd is *
          &(SUM_TYPE STRING_TYPE STRING_TYPE
-              (INR (implode (APPEND (MAP (CHR o w2n) bs1) [c]))) retv))`,
+              (INR (implode (APPEND (MAP (CHR o w2n) bs1) [c]))) retv)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2356,8 +2656,9 @@ let inputUntil_1_spec = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_inputUntil_1_v [is; cv]
      (INSTREAM_STR' fd is input fs non_empty is_empty)
-     (POSTv (?_SEP_EXISTS retv) bs1 bs2 (?_INSTREAM_STR' is_empty1) fd is
-       bs2 fs F is_empty1 *
+     (POSTv (\retv.
+         SEP_EXISTS (\bs1 bs2 is_empty1.
+           INSTREAM_STR' fd is bs2 fs F is_empty1 *
            &(input = APPEND bs1 bs2 /\
               (non_empty ==> ~(bs1 = [])) /\
               (
@@ -2366,7 +2667,7 @@ let inputUntil_1_spec = prove
                ALL (\v. ~(v = c)) (BUTLAST bs1) /\ LAST bs1 = c /\ ~(bs1 =
                  []) /\
                SUM_TYPE STRING_TYPE STRING_TYPE (INR (implode bs1))
-                 retv)))`,
+                 retv)))))`,
   CHEAT_TAC);;
 
 let refillBuffer_with_read_spec_STR = prove
@@ -2374,9 +2675,11 @@ let refillBuffer_with_read_spec_STR = prove
   list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
   TextIO_refillBuffer_with_read_v [is]
      (STDIO fs * INSTREAM_STR' fd is input fs F T)
-     (POSTv (?_SEP_EXISTS retv) (?_STDIO nr) (forwardFD fs fd nr) *
+     (POSTv (\retv.
+        SEP_EXISTS (\nr.
+          STDIO (forwardFD fs fd nr) *
           INSTREAM_STR' fd is input (forwardFD fs fd nr) (~(NULL input))
-            (NULL input))`,
+            (NULL input))))`,
   CHEAT_TAC);;
 
 let refillBuffer_with_read_guard_spec_STR = prove
@@ -2384,10 +2687,12 @@ let refillBuffer_with_read_guard_spec_STR = prove
   list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
   TextIO_refillBuffer_with_read_guard_v [is]
      (STDIO fs * INSTREAM_STR' fd is input fs F T)
-     (POSTv (?_SEP_EXISTS retv) (?_STDIO nr) (forwardFD fs fd nr) *
+     (POSTv (\retv.
+        SEP_EXISTS (\nr.
+          STDIO (forwardFD fs fd nr) *
           INSTREAM_STR' fd is input (forwardFD fs fd nr) (~(NULL input))
             (NULL input) *
-          &(BOOL (NULL input) retv))`,
+          &(BOOL (NULL input) retv))))`,
   CHEAT_TAC);;
 
 let takeUnitlIncl_append = prove
@@ -2419,12 +2724,14 @@ let inputUntil_2_spec_STR_lemma = prove
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_inputUntil_2_v [is; cv; accv]
        (STDIO fs * INSTREAM_STR' fd is input fs T F)
-       (POSTv (?_SEP_EXISTS retv) (?_STDIO nr) (forwardFD fs fd nr) *
+       (POSTv (\retv.
+          SEP_EXISTS (\nr.
+            STDIO (forwardFD fs fd nr) *
             INSTREAM_STR fd is (dropUntilIncl ((=) c) input) (forwardFD fs
               fd nr) *
             &(OPTION_TYPE STRING_TYPE
                 (SOME (strcat (mlstring_concat (REVERSE acc))
-                  (gen_inputLine c input))) retv))`,
+                  (gen_inputLine c input))) retv))))`,
   CHEAT_TAC);;
 
 let inputUntil_2_spec_STR = prove
@@ -2433,12 +2740,14 @@ let inputUntil_2_spec_STR = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_inputUntil_2_v [is; cv; accv]
      (STDIO fs * INSTREAM_STR fd is input fs)
-     (POSTv (?_SEP_EXISTS retv) (?_STDIO nr) (forwardFD fs fd nr) *
+     (POSTv (\retv.
+        SEP_EXISTS (\nr.
+          STDIO (forwardFD fs fd nr) *
           INSTREAM_STR fd is (dropUntilIncl ((=) c) input) (forwardFD fs fd
             nr) *
           &(OPTION_TYPE STRING_TYPE
               (if input = "" then NONE else SOME (gen_inputLine c input))
-                retv))`,
+                retv))))`,
   CHEAT_TAC);;
 
 let dropUntilIncl_empty = prove
@@ -2478,12 +2787,13 @@ let inputLineWith_spec_STR = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_inputLineWith_v [c0v; is]
      (STDIO fs * INSTREAM_STR fd is (APPEND to_read text) fs)
-     (POSTv (?_SEP_EXISTS v) (?_cond k) (OPTION_TYPE STRING_TYPE
+     (POSTv (\v. SEP_EXISTS (\k.
+                 cond (OPTION_TYPE STRING_TYPE
                          (match to_read with [] -> (if text = "" then NONE
                            else SOME (integer_word_toString c0))
                           | _ -> SOME (implode (APPEND to_read [c0]))) v) *
                  STDIO (forwardFD fs fd k) *
-                 INSTREAM_STR fd is (TL text) (forwardFD fs fd k))`,
+                 INSTREAM_STR fd is (TL text) (forwardFD fs fd k))))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2498,12 +2808,13 @@ let inputLineTokens_spec_STR = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_inputLineTokens_v [c0v; is; fv; gv]
      (STDIO fs * INSTREAM_STR fd is (APPEND to_read text) fs)
-     (POSTv (?_SEP_EXISTS v) (?_cond k) (OPTION_TYPE (LIST_TYPE a)
+     (POSTv (\v. SEP_EXISTS (\k.
+                 cond (OPTION_TYPE (LIST_TYPE a)
                          (OPTION_MAP (MAP g o tokens f)
                            (if NULL text /\ NULL to_read then NONE
                             else SOME (implode to_read))) v) *
                  STDIO (forwardFD fs fd k) *
-                 INSTREAM_STR fd is (TL text) (forwardFD fs fd k))`,
+                 INSTREAM_STR fd is (TL text) (forwardFD fs fd k))))`,
   CHEAT_TAC);;
 
 let inputLineTokens_spec_lines = prove
@@ -2514,10 +2825,12 @@ let inputLineTokens_spec_lines = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_inputLineTokens_v [c0v; is; fv; gv]
       (STDIO fs * INSTREAM_LINES c0 fd is lines fs)
-      (POSTv (?_SEP_EXISTS v) (?_STDIO k) (forwardFD fs fd k) *
+      (POSTv (\v.
+        SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
           INSTREAM_LINES c0 fd is (TL lines) (forwardFD fs fd k) *
           &(OPTION_TYPE (LIST_TYPE a)
-              (OPTION_MAP (MAP g o tokens f) (oHD lines)) v))`,
+              (OPTION_MAP (MAP g o tokens f) (oHD lines)) v))))`,
   CHEAT_TAC);;
 
 let inputAllTokens_aux_spec = prove
@@ -2531,11 +2844,13 @@ let inputAllTokens_aux_spec = prove
        TextIO_inputAllTokens_aux_v
       [c0v; is; fv; gv; accv]
       (STDIO fs * INSTREAM_LINES c0 fd is lines fs)
-        (POSTv (?_SEP_EXISTS v) (?_STDIO k) (forwardFD fs fd k) *
+        (POSTv (\v.
+             SEP_EXISTS (\k.
+                 STDIO (forwardFD fs fd k) *
                  INSTREAM_LINES c0 fd is [] (forwardFD fs fd k) *
                  &(LIST_TYPE (LIST_TYPE a)
                      (APPEND (REVERSE acc) (MAP (MAP g o tokens f) lines))
-                       v))`,
+                       v))))`,
   CHEAT_TAC);;
 
 let inputAllTokens_spec = prove
@@ -2547,13 +2862,29 @@ let inputAllTokens_spec = prove
      TextIO_inputAllTokens_v
      [c0v; is; fv; gv]
      (STDIO fs * INSTREAM_LINES c0 fd is lines fs)
-       (POSTv (?_STDIO v) (fastForwardFD fs fd) *
+       (POSTv (\v.
+          STDIO (fastForwardFD fs fd) *
           INSTREAM_LINES c0 fd is [] (fastForwardFD fs fd) *
-          &(LIST_TYPE (LIST_TYPE a) (MAP (MAP g o tokens f) lines) v))`,
+          &(LIST_TYPE (LIST_TYPE a) (MAP (MAP g o tokens f) lines) v)))`,
   CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:7092-7159: a theorem whose statement the port
-   cannot state yet: inputAllTokensFile_spec *)
+let inputAllTokensFile_spec = prove
+ (`CHAR c0 c0v /\
+   FILENAME fname fnamev /\ CARD (set_of_list (MAP FST (IO_fs_infds fs))) <
+     MIN (IO_fs_maxFD fs) (256 EXP 8) /\
+   (CHAR (Arrow) BOOL) f fv /\ (STRING_TYPE (Arrow)
+     (a:'a->semanticPrimitives_v->bool)) g gv /\ f c0 ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_inputAllTokensFile_v
+     [c0v; fnamev; fv; gv]
+     (STDIO fs)
+     (POSTv (\sv. &(OPTION_TYPE (LIST_TYPE (LIST_TYPE a))
+            (if inFS_fname fs fname then
+               SOME (MAP (MAP g o tokens f) (all_lines_file_gen c0 fs
+                 fname))
+             else NONE) sv) * STDIO fs))`,
+  CHEAT_TAC);;
 
 let open_option_SOME_fail = prove
  (`OPTION_TYPE FILENAME (SOME s) fnv /\ ~(inFS_fname fs s) /\ CARD (set_of_list
@@ -2562,11 +2893,21 @@ let open_option_SOME_fail = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_open_option_v [fnv]
      (STDIO fs)
-     (POSTv (?_STDIO retv) fs * &(OPTION_TYPE a NONE retv))`,
+     (POSTv (\retv. STDIO fs * &(OPTION_TYPE a NONE retv)))`,
   CHEAT_TAC);;
 
-(* PORT FAILED: Definition sub_spec_def: expected ')' but found '.' at 228 *)
-(* HOL4 TextIOProofScript.sml:7190-7198: the definition *)
+let sub_spec_def = new_definition
+  `sub_spec f p is fd =
+           (!fs text v.
+             UNIT_TYPE one v /\ fd >= 3 /\ fd <= IO_fs_maxFD fs
+               /\ validFileFD fd (IO_fs_infds fs) ==>
+             app (p:('ffi->(mlstring,ffi)fmap)#(mlstring
+               list#(mlstring->word8 list->word8 list->ffi->(ffi
+               cfHeapsBase_ffi_result) option)) list) f [v] (STDIO fs *
+               INSTREAM_STR fd is text fs)
+               (POSTv (\u.
+                  &(UNIT_TYPE one u /\ validFileFD fd (IO_fs_infds fs)) *
+                  STDIO (IO_fs_infds_fupd (ADELKEY fd) fs))))`;;
 
 let open_option_SOME = prove
  (`OPTION_TYPE FILENAME (SOME s) fnv /\ inFS_fname fs s /\ CARD (set_of_list
@@ -2576,12 +2917,12 @@ let open_option_SOME = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_open_option_v [fnv]
      (STDIO fs)
-     (POSTv (?_SEP_EXISTS retv) is (?_STDIO f) (openFileFS s fs ReadMode 0)
-       *
+     (POSTv (\retv. SEP_EXISTS (\is f.
+        STDIO (openFileFS s fs ReadMode 0) *
         INSTREAM_STR (nextFD fs) is text (openFileFS s fs ReadMode 0) *
         &(OPTION_TYPE (PAIR_TYPE (\x v. v = is) (\x v. v = f)) (SOME
           (one,one)) retv /\
-           sub_spec f p is (nextFD fs)))`,
+           sub_spec f p is (nextFD fs)))))`,
   CHEAT_TAC);;
 
 let sub_spec_none_def = new_definition
@@ -2593,16 +2934,16 @@ let sub_spec_none_def = new_definition
                cfHeapsBase_ffi_result) option)) list) f [v]
                (STDIO (forwardFD fs 0 k) *
                 INSTREAM_STR 0 is text (forwardFD fs 0 k))
-               (POSTv (?_STDIO u) (fastForwardFD fs 0)))`;;
+               (POSTv (\u. STDIO (fastForwardFD fs 0))))`;;
 
 let consume_rest_spec = prove
- (`!s fs fd' k.
+ (`!s fs fd k.
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_consume_rest_v [is]
-       (STDIO (forwardFD fs fd' k) * INSTREAM_STR fd' is s (forwardFD fs fd'
+       (STDIO (forwardFD fs fd k) * INSTREAM_STR fd is s (forwardFD fs fd
          k))
-       (POSTv (?_STDIO retv) (fastForwardFD fs fd'))`,
+       (POSTv (\retv. STDIO (fastForwardFD fs fd)))`,
   CHEAT_TAC);;
 
 let STDIO_ADELKEY = prove
@@ -2618,11 +2959,11 @@ let open_option_NONE = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_open_option_v [fnv]
      (STDIO fs)
-     (POSTv (?_SEP_EXISTS retv) is (?_STDIO f) fs * INSTREAM_STR 0 is text
-       fs *
+     (POSTv (\retv. SEP_EXISTS (\is f.
+        STDIO fs * INSTREAM_STR 0 is text fs *
         &(OPTION_TYPE (PAIR_TYPE (\x v. v = is) (\x v. v = f)) (SOME
           (one,one)) retv /\
-           sub_spec_none f p is))`,
+           sub_spec_none f p is))))`,
   CHEAT_TAC);;
 
 let inFS_fname_file_content_SOME = prove
@@ -2630,8 +2971,23 @@ let inFS_fname_file_content_SOME = prove
    (?s. file_content fs fname = SOME s)`,
   CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:7358-7436: a theorem whose statement the port
-   cannot state yet: inputAllTokensFrom_SOME *)
+let inputAllTokensFrom_SOME = prove
+ (`CHAR c0 c0v /\
+   OPTION_TYPE FILENAME (SOME fname) fnamev /\ CARD (set_of_list (MAP FST
+     (IO_fs_infds fs))) < MIN (IO_fs_maxFD fs) (256 EXP 8) /\
+   (CHAR (Arrow) BOOL) f fv /\ (STRING_TYPE (Arrow)
+     (a:'a->semanticPrimitives_v->bool)) g gv /\ f c0 ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_inputAllTokensFrom_v
+     [c0v; fnamev; fv; gv]
+     (STDIO fs)
+     (POSTv (\sv. &(OPTION_TYPE (LIST_TYPE (LIST_TYPE a))
+            (if inFS_fname fs fname then
+               SOME (MAP (MAP g o tokens f) (all_lines_file_gen c0 fs
+                 fname))
+             else NONE) sv) * STDIO fs))`,
+  CHEAT_TAC);;
 
 let fs_with_infds_updated_by = prove
  (`IO_fs_infds_fupd (AFUPDKEY k f)
@@ -2657,10 +3013,11 @@ let inputAllTokensFrom_NONE = prove
      TextIO_inputAllTokensFrom_v
      [c0v; fnamev; fv; gv]
      (STDIO fs)
-     (POSTv (?_STDIO sv) (fastForwardFD fs 0) *
+     (POSTv (\sv.
+        STDIO (fastForwardFD fs 0) *
         &(OPTION_TYPE (LIST_TYPE (LIST_TYPE a))
           (SOME (MAP (MAP g o tokens f) (lines_of_gen c0 (implode text))))
-            sv))`,
+            sv)))`,
   CHEAT_TAC);;
 
 let inputLineWith_spec_lines_and_terminator = prove
@@ -2669,11 +3026,13 @@ let inputLineWith_spec_lines_and_terminator = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_inputLineWith_v [c0v; is]
       (STDIO fs * INSTREAM_LINES c0 fd is lines fs)
-      (POSTv (?_SEP_EXISTS v) (?_STDIO k) (forwardFD fs fd k) *
+      (POSTv (\v.
+        SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
           INSTREAM_LINES c0 fd is (TL lines) (forwardFD fs fd k) *
           &(OPTION_TYPE STRING_TYPE (oHD lines) v /\
              (!s. oHD lines = SOME s ==> (?s0. s = strcat s0
-               (integer_word_toString c0)))))`,
+               (integer_word_toString c0)))))))`,
   CHEAT_TAC);;
 
 let inputLine_spec_lines_and_terminator = prove
@@ -2681,11 +3040,13 @@ let inputLine_spec_lines_and_terminator = prove
   list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
   TextIO_inputLine_v [is]
       (STDIO fs * INSTREAM_LINES (CHR 10) fd is lines fs)
-      (POSTv (?_SEP_EXISTS v) (?_STDIO k) (forwardFD fs fd k) *
+      (POSTv (\v.
+        SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
           INSTREAM_LINES (CHR 10) fd is (TL lines) (forwardFD fs fd k) *
           &(OPTION_TYPE STRING_TYPE (oHD lines) v /\
              (!s. oHD lines = SOME s ==> (?s0. s = strcat s0
-               (integer_word_toString (CHR 10))))))`,
+               (integer_word_toString (CHR 10))))))))`,
   CHEAT_TAC);;
 
 let inputLineWith_spec_lines = prove
@@ -2694,9 +3055,11 @@ let inputLineWith_spec_lines = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_inputLineWith_v [c0v; is]
       (STDIO fs * INSTREAM_LINES c0 fd is lines fs)
-      (POSTv (?_SEP_EXISTS v) (?_STDIO k) (forwardFD fs fd k) *
+      (POSTv (\v.
+        SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
           INSTREAM_LINES c0 fd is (TL lines) (forwardFD fs fd k) *
-          &(OPTION_TYPE STRING_TYPE (oHD lines) v))`,
+          &(OPTION_TYPE STRING_TYPE (oHD lines) v))))`,
   CHEAT_TAC);;
 
 let inputLine_spec_lines = prove
@@ -2704,9 +3067,11 @@ let inputLine_spec_lines = prove
   list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
   TextIO_inputLine_v [is]
       (STDIO fs * INSTREAM_LINES (CHR 10) fd is lines fs)
-      (POSTv (?_SEP_EXISTS v) (?_STDIO k) (forwardFD fs fd k) *
+      (POSTv (\v.
+        SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
           INSTREAM_LINES (CHR 10) fd is (TL lines) (forwardFD fs fd k) *
-          &(OPTION_TYPE STRING_TYPE (oHD lines) v))`,
+          &(OPTION_TYPE STRING_TYPE (oHD lines) v))))`,
   CHEAT_TAC);;
 
 let inputLines_aux_spec = prove
@@ -2718,9 +3083,12 @@ let inputLines_aux_spec = prove
        TextIO_inputLines_aux_v
       [c0v; is; accv]
       (STDIO fs * INSTREAM_LINES c0 fd is lines fs)
-        (POSTv (?_SEP_EXISTS v) (?_STDIO k) (forwardFD fs fd k) *
+        (POSTv (\v.
+             SEP_EXISTS (\k.
+                 STDIO (forwardFD fs fd k) *
                  INSTREAM_LINES c0 fd is [] (forwardFD fs fd k) *
-                 &(LIST_TYPE STRING_TYPE (APPEND (REVERSE acc) lines) v))`,
+                 &(LIST_TYPE STRING_TYPE (APPEND (REVERSE acc) lines)
+                   v))))`,
   CHEAT_TAC);;
 
 let inputLines_spec = prove
@@ -2730,24 +3098,48 @@ let inputLines_spec = prove
      TextIO_inputLines_v
      [c0v; is]
      (STDIO fs * INSTREAM_LINES c0 fd is lines fs)
-       (POSTv (?_STDIO v) (fastForwardFD fs fd) *
+       (POSTv (\v.
+         STDIO (fastForwardFD fs fd) *
          INSTREAM_LINES c0 fd is [] (fastForwardFD fs fd) *
-         &(LIST_TYPE STRING_TYPE lines v))`,
+         &(LIST_TYPE STRING_TYPE lines v)))`,
   CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:7707-7772: a theorem whose statement the port
-   cannot state yet: inputLinesFile_spec *)
+let inputLinesFile_spec = prove
+ (`CHAR c0 c0v /\
+   FILENAME f fv /\ CARD (set_of_list (MAP FST (IO_fs_infds fs))) < MIN
+     (IO_fs_maxFD fs) (256 EXP 8) ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_inputLinesFile_v
+     [c0v; fv]
+     (STDIO fs)
+     (POSTv (\sv.
+             &(OPTION_TYPE (LIST_TYPE STRING_TYPE)
+            (if inFS_fname fs f then
+               SOME (all_lines_file_gen c0 fs f)
+             else NONE) sv) * STDIO fs))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:7774-7800: a theorem whose statement the port
-   cannot state yet: inputLinesStdIn_spec *)
+let inputLinesStdIn_spec = prove
+ (`CHAR c0 c0v /\
+   stdin_content fs = SOME text ==>
+    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+      TextIO_inputLinesStdIn_v
+      [c0v]
+      (STDIO fs)
+      (POSTv (\sv.
+        &(LIST_TYPE STRING_TYPE (lines_of_gen c0 (implode text)) sv) *
+          STDIO (fastForwardFD fs 0)))`,
+  CHEAT_TAC);;
 
 let extend_array_spec = prove
  (`!arrv arr.
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_extend_array_v [arrv] (W8ARRAY arrv arr)
-         (POSTv (?_W8ARRAY v) v (APPEND arr (REPLICATE (LENGTH arr) (n2w
-           0))))`,
+         (POSTv (\v. W8ARRAY v (APPEND arr (REPLICATE (LENGTH arr) (n2w
+           0)))))`,
   CHEAT_TAC);;
 
 let map_n2w_ord = prove
@@ -2756,44 +3148,99 @@ let map_n2w_ord = prove
      xs = MAP (CHR o w2n) ys`,
   CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:7822-7870: a theorem whose statement the port
-   cannot state yet: inputBuff_spec *)
+(* [local] *)
+let inputBuff_spec = prove
+ (`!fd is text fs ne ie.
+     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+       TextIO_inputBuff_v [is]
+       (STDIO fs * INSTREAM_STR' fd is text fs ne ie)
+       (POSTv (\v.
+          SEP_EXISTS (\xs ys.
+            &(text = APPEND xs ys /\
+               STRING_TYPE (implode xs) v /\
+               (ne ==> LENGTH ys < LENGTH text)) *
+            INSTREAM_STR' fd is ys fs F T *
+            STDIO fs)))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:7872-7925: a theorem whose statement the port
-   cannot state yet: inputAll_aux_spec *)
+(* [local] *)
+let inputAll_aux_spec = prove
+ (`!text acc is fd fs ne ie accv.
+     LIST_TYPE STRING_TYPE acc accv ==>
+     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+       TextIO_inputAll_aux_v [is; accv]
+       (STDIO fs * INSTREAM_STR' fd is text fs ne ie)
+       (POSTv (\v.
+          &(STRING_TYPE (mlstring_concat (APPEND (REVERSE acc) [implode
+            text])) v) *
+          INSTREAM_STR fd is [] (fastForwardFD fs fd) *
+          STDIO (fastForwardFD fs fd)))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:7927-7944: a theorem whose statement the port
-   cannot state yet: inputAll_spec *)
+let inputAll_spec = prove
+ (`app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+  list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+  TextIO_inputAll_v [is]
+     (STDIO fs * INSTREAM_STR fd is text fs)
+     (POSTv (\v.
+        &(STRING_TYPE (implode text) v) *
+        INSTREAM_STR fd is [] (fastForwardFD fs fd) *
+        STDIO (fastForwardFD fs fd)))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:7946-8002: a theorem whose statement the port
-   cannot state yet: inputAllFrom_SOME_spec *)
+let inputAllFrom_SOME_spec = prove
+ (`!p fs fname fnamev.
+   OPTION_TYPE FILENAME (SOME fname) fnamev /\ CARD (set_of_list (MAP FST
+     (IO_fs_infds fs))) < MIN (IO_fs_maxFD fs) (256 EXP 8) ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_inputAllFrom_v [fnamev]
+     (STDIO fs)
+     (POSTv (\sv.
+        &(OPTION_TYPE STRING_TYPE
+           (OPTION_BIND (file_content fs fname) (SOME o implode)) sv) *
+        STDIO fs))`,
+  CHEAT_TAC);;
 
-(* HOL4 TextIOProofScript.sml:8004-8034: a theorem whose statement the port
-   cannot state yet: inputAllFrom_NONE_spec *)
+let inputAllFrom_NONE_spec = prove
+ (`!p fs TYPE' fnamev text.
+   OPTION_TYPE TYPE' NONE fnamev /\ stdin_content fs = SOME text ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     TextIO_inputAllFrom_v [fnamev]
+     (STDIO fs)
+     (POSTv (\sv.
+        &(OPTION_TYPE STRING_TYPE (SOME (implode text)) sv) *
+        STDIO (fastForwardFD fs 0)))`,
+  CHEAT_TAC);;
 
 let fold_chars_loop_thm = prove
- (`!is a f fv' s y yv fs fd'.
+ (`!is a f fv' s y yv fs fd.
      (CHAR (Arrow) a (Arrow) a) f fv' /\ a y yv ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_fold_chars_loop_v [fv'; is; yv]
-       (STDIO fs * INSTREAM_STR fd' is s fs)
-       (POSTv (?_SEP_EXISTS retv) (?_STDIO k) (forwardFD fs fd' k) *
-          INSTREAM_STR fd' is [] (forwardFD fs fd' k) *
-          &(a (mllist_foldl f y s) retv))`,
+       (STDIO fs * INSTREAM_STR fd is s fs)
+       (POSTv (\retv. SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
+          INSTREAM_STR fd is [] (forwardFD fs fd k) *
+          &(a (mllist_foldl f y s) retv))))`,
   CHEAT_TAC);;
 
 let fold_lines_loop_thm = prove
- (`!is a f fv' s y yv fs fd' c0 c0v.
+ (`!is a f fv' s y yv fs fd c0 c0v.
      CHAR c0 c0v /\
      (STRING_TYPE (Arrow) a (Arrow) a) f fv' /\ a y yv ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_fold_lines_loop_v [c0v; fv'; is; yv]
-       (STDIO fs * INSTREAM_LINES c0 fd' is s fs)
-       (POSTv (?_SEP_EXISTS retv) (?_STDIO k) (forwardFD fs fd' k) *
-          INSTREAM_LINES c0 fd' is [] (forwardFD fs fd' k) *
-          &(a (mllist_foldl f y s) retv))`,
+       (STDIO fs * INSTREAM_LINES c0 fd is s fs)
+       (POSTv (\retv. SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
+          INSTREAM_LINES c0 fd is [] (forwardFD fs fd k) *
+          &(a (mllist_foldl f y s) retv))))`,
   CHEAT_TAC);;
 
 let foldChars_SOME = prove
@@ -2804,10 +3251,10 @@ let foldChars_SOME = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_foldChars_v [fv; xv; fnv]
      (STDIO fs)
-     (POSTv (?_STDIO retv) fs *
+     (POSTv (\retv. STDIO fs *
                   &(OPTION_TYPE a
                        (OPTION_MAP (mlvector_foldl f x) (file_content fs s))
-                       retv))`,
+                       retv)))`,
   CHEAT_TAC);;
 
 let foldChars_NONE = prove
@@ -2818,8 +3265,8 @@ let foldChars_NONE = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_foldChars_v [fv; xv; fnv]
      (STDIO fs)
-     (POSTv (?_STDIO retv) (fastForwardFD fs 0) *
-                  &(OPTION_TYPE a (SOME (mlvector_foldl f x text)) retv))`,
+     (POSTv (\retv. STDIO (fastForwardFD fs 0) *
+                  &(OPTION_TYPE a (SOME (mlvector_foldl f x text)) retv)))`,
   CHEAT_TAC);;
 
 let foldLines_SOME = prove
@@ -2831,11 +3278,11 @@ let foldLines_SOME = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_foldLines_v [c0v; fv; xv; fnv]
      (STDIO fs)
-     (POSTv (?_STDIO retv) fs *
+     (POSTv (\retv. STDIO fs *
                   &(OPTION_TYPE a
                        (OPTION_MAP (mlvector_foldl f x o lines_of_gen c0 o
                          implode) (file_content fs s))
-                       retv))`,
+                       retv)))`,
   CHEAT_TAC);;
 
 let foldLines_NONE = prove
@@ -2847,9 +3294,9 @@ let foldLines_NONE = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      TextIO_foldLines_v [c0v; fv; xv; fnv]
      (STDIO fs)
-     (POSTv (?_STDIO retv) (fastForwardFD fs 0) *
+     (POSTv (\retv. STDIO (fastForwardFD fs 0) *
          &(OPTION_TYPE a (SOME (mlvector_foldl f x (lines_of_gen c0
-           (implode text)))) retv))`,
+           (implode text)))) retv)))`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

@@ -56,8 +56,8 @@ let CommandLine_read16bit = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      CommandLine_read16bit_v [av]
      (W8ARRAY av a)
-     (POSTv (?_W8ARRAY v) av a * &(NUM (w2n (EL 0 a) + 256 * w2n (EL 1 a))
-       v))`,
+     (POSTv (\v. W8ARRAY av a * &(NUM (w2n (EL 0 a) + 256 * w2n (EL 1 a))
+       v)))`,
   CHEAT_TAC);;
 
 let CommandLine_write16bit = prove
@@ -66,8 +66,8 @@ let CommandLine_write16bit = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      CommandLine_write16bit_v [av; nv]
      (W8ARRAY av a)
-     (POSTv (?_W8ARRAY v) av (CONS (n2w n) (CONS (n2w (n DIV 256)) (TL (TL
-       a)))))`,
+     (POSTv (\v. W8ARRAY av (CONS (n2w n) (CONS (n2w (n DIV 256)) (TL (TL
+       a))))))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -91,16 +91,36 @@ let DROP_SUC_LENGTH_MAP = prove
  (`(DROP (SUC (LENGTH ys)) (APPEND (MAP f ys) (CONS y ts))) = ts`,
   CHEAT_TAC);;
 
-(* HOL4 CommandLineProofScript.sml:120-213: a theorem whose statement the
-   port cannot state yet: CommandLine_cloop_spec *)
+let CommandLine_cloop_spec = prove
+ (`!n nv av cv a.
+     LIST_TYPE STRING_TYPE (DROP n cl) cv /\
+     NUM n nv /\ n <= LENGTH cl /\ LENGTH a = 2 ==>
+     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+       CommandLine_cloop_v [av; nv; cv]
+      (COMMANDLINE cl * W8ARRAY av a)
+      (POSTv (\v. &(LIST_TYPE STRING_TYPE cl v) * COMMANDLINE cl))`,
+  CHEAT_TAC);;
 
-(* HOL4 CommandLineProofScript.sml:215-263: a theorem whose statement the
-   port cannot state yet: CommandLine_cline_spec *)
+let CommandLine_cline_spec = prove
+ (`UNIT_TYPE u uv ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     CommandLine_cline_v [uv]
+    (COMMANDLINE cl)
+    (POSTv (\v. &(LIST_TYPE STRING_TYPE cl v) * COMMANDLINE cl))`,
+  CHEAT_TAC);;
 
 (* HOL4 CommandLineProofScript.sml:265-266: ML code, not ported *)
 
-(* HOL4 CommandLineProofScript.sml:268-281: a theorem whose statement the
-   port cannot state yet: CommandLine_name_spec *)
+let CommandLine_name_spec = prove
+ (`UNIT_TYPE u uv ==>
+    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+      CommandLine_name_v [uv]
+    (COMMANDLINE cl)
+    (POSTv (\namev. &(STRING_TYPE (HD cl) namev) * COMMANDLINE cl))`,
+  CHEAT_TAC);;
 
 (* HOL4 CommandLineProofScript.sml:283-284: ML code, not ported *)
 
@@ -120,8 +140,15 @@ let EvalM_name = prove
         cfHeapsBase_ffi_result) option)) list))`,
   CHEAT_TAC);;
 
-(* HOL4 CommandLineProofScript.sml:302-316: a theorem whose statement the
-   port cannot state yet: CommandLine_arguments_spec *)
+let CommandLine_arguments_spec = prove
+ (`UNIT_TYPE u uv ==>
+    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+      CommandLine_arguments_v [uv]
+    (COMMANDLINE cl)
+    (POSTv (\argv. &(LIST_TYPE STRING_TYPE
+       (TL cl) argv) * COMMANDLINE cl))`,
+  CHEAT_TAC);;
 
 let arguments_def = new_definition
   `arguments one = (\cl. (M_success (TL cl),cl))`;;

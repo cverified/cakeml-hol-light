@@ -278,7 +278,8 @@ let machine_sem_def = define_cases
 (* define what it means for code to be loaded and ready to run *)
 
 let code_loaded_def = new_definition
-  `code_loaded (bytes:word8 list) (mc:('a,'b,'c)machine_config) (ms:'b) <=>
+  `code_loaded (bytes:word8 list) (mc:(alpha,beta,gamma)machine_config) (ms:'b)
+  <=>
      read_bytearray (target_get_pc (machine_config_target mc) ms) (LENGTH
        bytes)
        (\a. if a IN machine_config_prog_addresses mc then SOME

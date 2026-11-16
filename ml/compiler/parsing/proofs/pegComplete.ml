@@ -15,6 +15,7 @@ needs "compiler/parsing/cmlPEG.ml";;
 needs "compiler/parsing/proofs/cmlNTProps.ml";;
 needs "compiler/parsing/proofs/pegSound.ml";;
 needs "lib/NTproperties.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/grammar.ml";;
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
@@ -92,12 +93,12 @@ let choicel_cons = prove
   CHEAT_TAC);;
 
 let choicel_cons_NONE = prove
- (`peg_eval G (i0,cmlPEG_choicel (CONS h t)) (peg_Failure fl fe:(('a#locs)
-  list,'c list,'d)pegresult) <=>
+ (`peg_eval G (i0,cmlPEG_choicel (CONS h t)) (peg_Failure fl fe:((alpha#locs)
+  list,gamma list,delta)pegresult) <=>
      (?fl1 fe1 fl2 fe2.
        peg_eval G (i0,h) (peg_Failure fl1 fe1) /\
        peg_eval G (i0,cmlPEG_choicel t) (peg_Failure fl2 fe2) /\
-       (peg_Failure fl fe:(('a#locs) list,'c list,'d)pegresult) =
+       (peg_Failure fl fe:((alpha#locs) list,gamma list,delta)pegresult) =
        UNCURRY peg_Failure (MAXerr (fl1,fe1) (fl2,fe2)))`,
   CHEAT_TAC);;
 

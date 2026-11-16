@@ -455,13 +455,13 @@ let float_equal_def = new_definition
 (* HOL4 binary_ieeeScript.sml:4395: the overload f2r, which the port expands *)
 
 let next_hi_def = new_definition
-  `next_hi (x:(tau,'w)float) =
+  `next_hi (x:(tau,chi)float) =
      if float_Significand x <+ word_T then float_Significand_fupd (K
        (float_Significand x + (n2w 1))) x
      else mk_float (float_Sign x) (float_Exponent x + (n2w 1)) (n2w 0)`;;
 
 let next_lo_def = new_definition
-  `next_lo (x:(tau,'w)float) =
+  `next_lo (x:(tau,chi)float) =
      if (n2w 0) <+ float_Significand x then float_Significand_fupd (K
        (float_Significand x - (n2w 1))) x
      else mk_float (float_Sign x) (float_Exponent x - (n2w 1)) word_T`;;

@@ -378,12 +378,12 @@ let STD_streams_stdin_fs = prove
 let ag32_fs_ok_def = new_definition
   `ag32_fs_ok fs <=>
     (IO_fs_numchars fs = LGENLIST (K output_buffer_size) NONE) /\
-    (!fd'. IS_SOME (ALOOKUP (IO_fs_infds fs) fd') <=> fd' < 3) /\
+    (!fd. IS_SOME (ALOOKUP (IO_fs_infds fs) fd) <=> fd < 3) /\
     (
      // this needs to change for close
-     !fd' ino md off.
-      (ALOOKUP (IO_fs_infds fs) fd' = SOME (ino,md,off)) ==>
-      (?cnt. (ALOOKUP (IO_fs_inode_tbl fs) ino = SOME cnt) /\ (fd' IN {1,2}
+     !fd ino md off.
+      (ALOOKUP (IO_fs_infds fs) fd = SOME (ino,md,off)) ==>
+      (?cnt. (ALOOKUP (IO_fs_inode_tbl fs) ino = SOME cnt) /\ (fd IN {1,2}
         ==> (off = LENGTH cnt)))) /\
     (!fnm. ALOOKUP (IO_fs_inode_tbl fs) (File fnm) = NONE) /\ IO_fs_maxFD
      // maybe
@@ -423,16 +423,16 @@ let ag32_ffi_rel_def = new_definition
      (ag32_cline_implemented (FST (ffi_state_ffi_state ffi)) (?_MEM ms))`;;
 
 let extract_write_def = new_definition
-  `extract_write fd' oevent =
+  `extract_write fd oevent =
      if NULL oevent then NONE else let conf = TAKE 8 oevent in
-       if (w82n conf = fd') then
+       if (w82n conf = fd) then
          SOME (DROP (8 + 4) oevent)
        else NONE`;;
 
 let extract_writes_def = new_definition
-  `extract_writes fd' oevents =
+  `extract_writes fd oevents =
      FLAT (MAP (MAP (CHR o w2n) o THE) (FILTER IS_SOME (MAP (hol4_C
-       OPTION_BIND (extract_write fd')) oevents)))`;;
+       OPTION_BIND (extract_write fd)) oevents)))`;;
 
 (* [local] *)
 let no_ext_apply = prove
@@ -449,7 +449,7 @@ let extract_fs_extract_writes = prove
     fs = LGENLIST (K output_buffer_size) NONE) /\
    (
     // UStream of interest exists at the start
-    ALOOKUP (IO_fs_infds fs) fd' = SOME (UStream nam,WriteMode,LENGTH out))
+    ALOOKUP (IO_fs_infds fs) fd = SOME (UStream nam,WriteMode,LENGTH out))
       /\
    (ALOOKUP (IO_fs_inode_tbl fs) (UStream nam) = SOME out) /\
    (
@@ -457,7 +457,7 @@ let extract_fs_extract_writes = prove
     !ino. ALOOKUP (IO_fs_inode_tbl fs) (File ino) = NONE) /\
    (
     // well-formedness invariants for the filesystem
-    !fd' fnm md off. ~(ALOOKUP (IO_fs_infds fs') fd' = SOME (File
+    !fd fnm md off. ~(ALOOKUP (IO_fs_infds fs') fd = SOME (File
       fnm,md,off))) /\
    (!fd1 nm md1 off1 fd2 md2 off2.
      (
@@ -468,16 +468,16 @@ let extract_fs_extract_writes = prove
    (
     // --
     // nothing has changed except the UStream of interest -- is this actually necessary?
-    !x. ~(x = fd') ==> (OPTREL (inv_image (=) FST) (ALOOKUP (IO_fs_infds
-      fs') x) (ALOOKUP (IO_fs_infds fs) x))) /\
+    !x. ~(x = fd) ==> (OPTREL (inv_image (=) FST) (ALOOKUP (IO_fs_infds fs')
+      x) (ALOOKUP (IO_fs_infds fs) x))) /\
    (!fnm. inFS_fname fs' fnm = inFS_fname fs fnm) /\
    (
     // and it has only changed by appending
-    ALOOKUP (IO_fs_infds fs') fd' = SOME (UStream nam,WriteMode,LENGTH out +
+    ALOOKUP (IO_fs_infds fs') fd = SOME (UStream nam,WriteMode,LENGTH out +
       LENGTH rest)) /\
    (ALOOKUP (IO_fs_inode_tbl fs') (UStream nam) = SOME (APPEND out rest))
      ==>
-   (extract_writes fd' (MAP get_output_io_event ls) = rest)`,
+   (extract_writes fd (MAP get_output_io_event ls) = rest)`,
   CHEAT_TAC);;
 
 

@@ -56,7 +56,7 @@ let _ = cake_theory "data_to_word_assignProof"
    "gen_gc_partial"; "semanticsProps"; "wordLang"; "wordProps"; "wordSem";
    "word_bignum"; "word_bignumProof"; "word_gcFunctions"];;
 
-let _ = do_list hide_constant ["ABS"; "Num"; "parts"; "post"; "prog"; "test"];;
+let _ = do_list hide_constant ["ABS"; "Num"; "parts"; "prog"; "test"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -728,8 +728,8 @@ let evaluate_LoadBignum = prove
   vars) /\
    ~(small_int (:'a) i) /\ good_dimindex (:'a) /\ shift_length c < dimindex
      (:'a) /\
-   wordSem_get_var src (t:('a,'c,'ffi)wordSem_state) = SOME v /\ ~(header =
-     w1) ==>
+   wordSem_get_var src (t:(alpha,'c,'ffi)wordSem_state) = SOME v /\ ~(header
+     = w1) ==>
    (?h junk.
    wordSem_evaluate (LoadBignum c header w1 src,t) =
      (NONE,wordSem_set_vars [w1; header; w1]
@@ -4514,7 +4514,6 @@ let _ = do_list unhide_constant
    "Num";
    "free";
    "parts";
-   "post";
    "prog";
    "test"];;
 

@@ -88,7 +88,7 @@ let app_frame = prove
 
 (* [local] *)
 let app_frame_POSTv = prove
- (`app p f xs P (POSTv Q) ==> (!H. app p f xs (P * H) (POSTv (?_Q v) v * H))`,
+ (`app p f xs P (POSTv Q) ==> (!H. app p f xs (P * H) (POSTv (\v. Q v * H)))`,
   CHEAT_TAC);;
 
 (* HOL4 repl_initScript.sml:110-121: a theorem that HOL4 states as the value

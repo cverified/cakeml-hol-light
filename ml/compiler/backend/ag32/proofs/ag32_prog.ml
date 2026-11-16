@@ -10,7 +10,6 @@
   the decompiler.
 *)
 
-needs "basis/basis_ffi.ml";;
 needs "compiler/backend/ag32/ag32_memory.ml";;
 needs "lib/alignment.ml";;
 needs "lib/bitstring.ml";;
@@ -23,7 +22,7 @@ needs "semantics/typeSystem.ml";;
 let _ = cake_theory "ag32_prog"
   ["ag32_memory"];;
 
-let _ = do_list hide_constant ["post"; "seq"];;
+let _ = do_list hide_constant ["seq"];;
 (* HOL4 ancestors outside the port: ag32 *)
 
 let v2w_F_T = prove
@@ -275,8 +274,7 @@ let SPEC_IMP_FUNPOW_Next = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["post";
-   "seq"];;
+  ["seq"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

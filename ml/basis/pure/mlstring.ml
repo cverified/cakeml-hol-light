@@ -2,7 +2,7 @@
 (*  mlstring: ported from HOL4's
     basis/pure/mlstringScript.sml
     A definition theory, with 49 definitions, 2 datatypes and 113
-    theorems.  Needed by 176 files of the port.  *)
+    theorems.  Needed by 177 files of the port.  *)
 (* ======================================================== *)
 
 (*

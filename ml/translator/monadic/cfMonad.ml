@@ -17,6 +17,7 @@ needs "characteristic/cfHeapsBase.ml";;
 needs "characteristic/cfStore.ml";;
 needs "lib/set_sep.ml";;
 needs "semantics/evaluate.ml";;
+needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "translator/ml_translator.ml";;
 needs "translator/monadic/ml_monad_translator.ml";;
@@ -146,17 +147,77 @@ let st2heap_new_refs_UNION = prove
            DISJOINT (st2heap p st) x`,
   CHEAT_TAC);;
 
-(* HOL4 cfMonadScript.sml:258-353: a theorem whose statement the port cannot
-   state yet: EvalM_from_app_gen *)
+let EvalM_from_app_gen = prove
+ (`!(eff_v:semanticPrimitives_v) ARG_TYPE EXC_TYPE P.
+   (!x s. ?r t. f x s = (M_success r,t)) /\
+   (!x xv s ret new_s.
+     P s ==>
+     ARG_TYPE x xv ==>
+     (f x s = (M_success ret,new_s)) ==>
+     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) fun_v
+       [xv] (H s)
+       (POSTv (\rv. &(RET_TYPE ret rv) * (H new_s)))) ==>
+   P st /\
+   ast_Eval env fun_exp (ARG_TYPE x) /\
+   (nsLookup (sem_env_v env) fun_name = SOME fun_v) ==>
+   EvalM F env st (ast_App ast_Opapp [ast_Var fun_name; fun_exp])
+    (MONAD RET_TYPE EXC_TYPE (f x))
+    (H,p)`,
+  CHEAT_TAC);;
 
-(* HOL4 cfMonadScript.sml:355-373: a theorem whose statement the port cannot
-   state yet: EvalM_from_app *)
+let EvalM_from_app = prove
+ (`!(eff_v:semanticPrimitives_v) ARG_TYPE EXC_TYPE.
+   (!x s. ?r t. f x s = (M_success r,t)) /\
+   (!x xv s ret new_s.
+     ARG_TYPE x xv ==>
+     (f x s = (M_success ret,new_s)) ==>
+     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) fun_v
+       [xv] (H s)
+       (POSTv (\rv. &(RET_TYPE ret rv) * (H new_s)))) ==>
+   ast_Eval env fun_exp (ARG_TYPE x) /\
+   (nsLookup (sem_env_v env) fun_name = SOME fun_v) ==>
+   EvalM F env st (ast_App ast_Opapp [ast_Var fun_name; fun_exp])
+    (MONAD RET_TYPE EXC_TYPE (f x))
+    (H,p)`,
+  CHEAT_TAC);;
 
-(* HOL4 cfMonadScript.sml:375-468: a theorem whose statement the port cannot
-   state yet: EvalM_from_app_unit_gen *)
+let EvalM_from_app_unit_gen = prove
+ (`!(eff_v:semanticPrimitives_v) EXC_TYPE P.
+   (!s. ?r t. f s = (M_success r,t)) /\
+   (!xv s ret new_s.
+     P s ==>
+     UNIT_TYPE one xv ==>
+     (f s = (M_success ret,new_s)) ==>
+     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) fun_v
+       [xv] (H s)
+       (POSTv (\rv. &(RET_TYPE ret rv) * (H new_s)))) ==>
+   P st /\
+   ast_Eval env fun_exp (UNIT_TYPE one) /\
+   (nsLookup (sem_env_v env) fun_name = SOME fun_v) ==>
+   EvalM F env st (ast_App ast_Opapp [ast_Var fun_name; fun_exp])
+    (MONAD RET_TYPE EXC_TYPE f)
+    (H,p)`,
+  CHEAT_TAC);;
 
-(* HOL4 cfMonadScript.sml:470-489: a theorem whose statement the port cannot
-   state yet: EvalM_from_app_unit *)
+let EvalM_from_app_unit = prove
+ (`!(eff_v:semanticPrimitives_v) EXC_TYPE.
+   (!s. ?r t. f s = (M_success r,t)) /\
+   (!xv s ret new_s.
+     UNIT_TYPE one xv ==>
+     (f s = (M_success ret,new_s)) ==>
+     app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+       list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) fun_v
+       [xv] (H s)
+       (POSTv (\rv. &(RET_TYPE ret rv) * (H new_s)))) ==>
+   ast_Eval env fun_exp (UNIT_TYPE one) /\
+   (nsLookup (sem_env_v env) fun_name = SOME fun_v) ==>
+   EvalM F env st (ast_App ast_Opapp [ast_Var fun_name; fun_exp])
+    (MONAD RET_TYPE EXC_TYPE f)
+    (H,p)`,
+  CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

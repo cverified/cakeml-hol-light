@@ -2,7 +2,7 @@
 (*  cfHeapsBase: ported from HOL4's
     characteristic/cfHeapsBaseScript.sml
     A definition theory, with 34 definitions, 3 datatypes and 99
-    theorems.  Needed by 42 files of the port.  *)
+    theorems.  Needed by 45 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -736,7 +736,7 @@ add_simp POSTed_Div;;
 (* other lemmas about POSTv *)
 
 let POSTv_ignore = prove
- (`(POSTv (?_P v)) r h <=> (?v. r = cfHeapsBase_Val v /\ P h)`,
+ (`(POSTv (\v. P)) r h <=> (?v. r = cfHeapsBase_Val v /\ P h)`,
   CHEAT_TAC);;
 
 (*------------------------------------------------------------------*)

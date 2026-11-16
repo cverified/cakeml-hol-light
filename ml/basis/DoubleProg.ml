@@ -287,12 +287,12 @@ let neginf64_def = new_definition
   `(neginf64:(52,11)float) = mk_float (n2w 1) (n2w 0x7ff) (n2w 0)`;;
 (* HOL4 DoubleProgScript.sml:536: ML code, not ported *)
 
-(* PORT FAILED: Definition posmin64_def: tokenize: '“fp64_to_float 1w”)' *)
-(* HOL4 DoubleProgScript.sml:538-540: the definition *)
+let posmin64_def = new_definition
+  `posmin64 = (mk_float (n2w 0) (n2w 0) (n2w 1))`;;
 (* HOL4 DoubleProgScript.sml:541: ML code, not ported *)
 
-(* PORT FAILED: Definition poszero64_def: tokenize: '“fp64_to_float 0w”)' *)
-(* HOL4 DoubleProgScript.sml:543-545: the definition *)
+let poszero64_def = new_definition
+  `poszero64 = (mk_float (n2w 0) (n2w 0) (n2w 0))`;;
 (* HOL4 DoubleProgScript.sml:546: ML code, not ported *)
 
 let word_addR_concat = prove

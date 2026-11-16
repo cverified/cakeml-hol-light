@@ -2,7 +2,7 @@
 (*  namespace: ported from HOL4's
     semantics/namespaceScript.sml
     A definition theory, with 19 definitions, 2 datatypes and no
-    theorems.  Needed by 69 files of the port.  *)
+    theorems.  Needed by 70 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -100,11 +100,11 @@ let nsAll2_def = new_definition
 let nsDom_def = new_definition
   `nsDom (env:('m,'n,'v)namespace) =
       {n | (v,n) | v IN (UNIV:'v->bool) /\ n IN
-        (UNIV:('m,'n)namespace_id->bool) /\ nsLookup env n = SOME v}`;;
+        (UNIV:(nu,xi)namespace_id->bool) /\ nsLookup env n = SOME v}`;;
 
 let nsDomMod_def = new_definition
   `nsDomMod (env:('m,'n,'v)namespace) =
-      {n | (v,n) | v IN (UNIV:('m,'n,'v)namespace->bool) /\ n IN (UNIV:'m
+      {n | (v,n) | v IN (UNIV:(nu,xi,phi)namespace->bool) /\ n IN (UNIV:'m
         list->bool) /\
                    nsLookupMod env n = SOME v}`;;
 

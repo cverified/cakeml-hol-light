@@ -47,8 +47,8 @@ let _ = cake_theory "pan_passes"
 let any_pan_prog_INDUCT,any_pan_prog_RECURSION = define_datatype
   "any_pan_prog =
      pan_passes_Pan (('a decl) list)
-   | pan_passes_Crep ((mlstring#num list#'a crep_prog) list)
-   | pan_passes_Loop ((num#num list#'a loop_prog) list) (mlstring spt)
+   | pan_passes_Crep ((mlstring#num list#alpha crep_prog) list)
+   | pan_passes_Loop ((num#num list#alpha loop_prog) list) (mlstring spt)
    | pan_passes_Cake ('a any_prog)";;
 
 let pan_to_target_all_def = new_definition

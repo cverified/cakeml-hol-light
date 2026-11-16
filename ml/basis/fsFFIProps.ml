@@ -20,7 +20,7 @@ needs "misc/misc.ml";;
 let _ = cake_theory "fsFFIProps"
   ["Marshalling"; "cfHeapsBase"; "fsFFI"; "mlstring"];;
 
-let _ = do_list hide_constant ["fd"; "stdin"];;
+let _ = do_list hide_constant ["stdin"];;
 
 let numchars_self = prove
  (`!fs. fs = IO_fs_numchars_fupd (K (IO_fs_numchars fs)) fs`,
@@ -57,9 +57,9 @@ let nextFD_numchars = prove
 (* bumpFD lemmas *)
 
 let bumpFD_numchars = prove
- (`!fs fd' n ll. bumpFD fd' (IO_fs_numchars_fupd (K ll) fs) n =
+ (`!fs fd n ll. bumpFD fd (IO_fs_numchars_fupd (K ll) fs) n =
   IO_fs_numchars_fupd (K (THE (LTL ll)))
-         (bumpFD fd' fs n)`,
+         (bumpFD fd fs n)`,
   CHEAT_TAC);;
 
 let bumpFD_inode_tbl = prove
@@ -75,10 +75,10 @@ let bumpFD_files = prove
 add_simp bumpFD_files;;
 
 let bumpFD_o = prove
- (`!fs fd' n1 n2.
-     bumpFD fd' (bumpFD fd' fs n1) n2 = IO_fs_numchars_fupd (K (THE (LTL
-       (THE (LTL (IO_fs_numchars fs))))))
-     (bumpFD fd' fs (n1 + n2))`,
+ (`!fs fd n1 n2.
+     bumpFD fd (bumpFD fd fs n1) n2 = IO_fs_numchars_fupd (K (THE (LTL (THE
+       (LTL (IO_fs_numchars fs))))))
+     (bumpFD fd fs (n1 + n2))`,
   CHEAT_TAC);;
 
 let bumpFD_0 = prove
@@ -89,7 +89,7 @@ let bumpFD_0 = prove
 (* validFD lemmas *)
 
 let validFD_numchars = prove
- (`!fd' fs ll. validFD fd' fs <=> validFD fd' (IO_fs_numchars_fupd (K ll) fs)`,
+ (`!fd fs ll. validFD fd fs <=> validFD fd (IO_fs_numchars_fupd (K ll) fs)`,
   CHEAT_TAC);;
 
 let validFD_bumpFD = prove
@@ -105,8 +105,8 @@ let ALOOKUP_validFD = prove
   CHEAT_TAC);;
 
 let validFileFD_def = new_definition
-  `fsFFIProps_validFileFD fd' infds <=>
-     (?fnm md off. ALOOKUP infds fd' = SOME (File fnm,md,off))`;;
+  `validFileFD fd infds <=>
+     (?fnm md off. ALOOKUP infds fd = SOME (File fnm,md,off))`;;
 
 let validFD_nextFD = prove
  (`~(validFD (nextFD fs) fs)`,
@@ -145,9 +145,9 @@ let consistentFS_def = new_definition
 
 let wfFS_def = new_definition
   `wfFS fs =
-     ((!fd'. fd' IN FDOM (alist_to_fmap (IO_fs_infds fs)) ==>
-          fd' <= IO_fs_maxFD fs /\
-          (?ino off. ALOOKUP (IO_fs_infds fs) fd' = SOME (ino,off) /\
+     ((!fd. fd IN FDOM (alist_to_fmap (IO_fs_infds fs)) ==>
+          fd <= IO_fs_maxFD fs /\
+          (?ino off. ALOOKUP (IO_fs_infds fs) fd = SOME (ino,off) /\
                     ino IN FDOM (alist_to_fmap (IO_fs_inode_tbl fs)))) /\
       consistentFS fs /\ liveFS fs)`;;
 
@@ -189,9 +189,9 @@ add_simp wfFS_bumpFD;;
 (* end of file is reached when the position index is the length of the file *)
 
 let eof_def = new_definition
-  `eof fd' fsys =
-     OPTION_BIND (ALOOKUP (IO_fs_infds fsys) fd') (\(ino,md,pos).
-       OPTION_BIND (ALOOKUP (IO_fs_inode_tbl fsys) ino) (\contents.
+  `eof fd fsys =
+     OPTION_BIND (ALOOKUP (IO_fs_infds fsys) fd) (\(ino,md,pos). OPTION_BIND
+       (ALOOKUP (IO_fs_inode_tbl fsys) ino) (\contents.
        SOME (LENGTH contents <= pos)))`;;
 
 let eof_numchars = prove
@@ -207,8 +207,8 @@ let wfFS_eof_EQ_SOME = prove
 (* HOL4 fsFFIPropsScript.sml:302-314: code that the source has in a comment *)
 
 let eof_read = prove
- (`!fd' fs n fs'. 0 < n ==> fsFFI_read fd' fs n = SOME ([],fs') ==> eof fd'
-  fs = SOME T`,
+ (`!fd fs n fs'. 0 < n ==> fsFFI_read fd fs n = SOME ([],fs') ==> eof fd fs =
+  SOME T`,
   CHEAT_TAC);;
 
 (* HOL4 fsFFIPropsScript.sml:325-341: code that the source has in a comment *)
@@ -285,10 +285,10 @@ let ffi_close_length = prove
 (* fastForwardFD *)
 
 let fastForwardFD_def = new_definition
-  `fastForwardFD fs fd' =
-     the fs (OPTION_BIND (ALOOKUP (IO_fs_infds fs) fd') (\(ino,md,off).
+  `fastForwardFD fs fd =
+     the fs (OPTION_BIND (ALOOKUP (IO_fs_infds fs) fd) (\(ino,md,off).
        OPTION_BIND (ALOOKUP (IO_fs_inode_tbl fs) ino) (\content.
-       SOME (IO_fs_infds_fupd (AFUPDKEY fd' (I ## I ## MAX (LENGTH
+       SOME (IO_fs_infds_fupd (AFUPDKEY fd (I ## I ## MAX (LENGTH
          content))) fs))))`;;
 
 let validFD_fastForwardFD = prove
@@ -297,8 +297,8 @@ let validFD_fastForwardFD = prove
 add_simp validFD_fastForwardFD;;
 
 let validFileFD_fastForwardFD = prove
- (`fsFFIProps_validFileFD fd (IO_fs_infds (fastForwardFD fs x)) <=>
-  fsFFIProps_validFileFD fd (IO_fs_infds fs)`,
+ (`validFileFD fd (IO_fs_infds (fastForwardFD fs x)) <=> validFileFD fd
+  (IO_fs_infds fs)`,
   CHEAT_TAC);;
 add_simp validFileFD_fastForwardFD;;
 
@@ -309,7 +309,7 @@ let fastForwardFD_inode_tbl = prove
 add_simp fastForwardFD_inode_tbl;;
 
 let fastForwardFD_files = prove
- (`!fs fd'. IO_fs_files (fastForwardFD fs fd') = IO_fs_files fs`,
+ (`!fs fd. IO_fs_files (fastForwardFD fs fd) = IO_fs_files fs`,
   CHEAT_TAC);;
 add_simp fastForwardFD_files;;
 
@@ -350,7 +350,7 @@ let fastForwardFD_maxFD = prove
 add_simp fastForwardFD_maxFD;;
 
 let wfFS_fastForwardFD = prove
- (`!fs fd'. validFD fd' fs /\ wfFS fs ==> wfFS (fastForwardFD fs fd')`,
+ (`!fs fd. validFD fd fs /\ wfFS fs ==> wfFS (fastForwardFD fs fd)`,
   CHEAT_TAC);;
 add_simp wfFS_fastForwardFD;;
 
@@ -367,8 +367,8 @@ let fsupdate_fastForwardFD_comm = prove
 (* fsupdate *)
 
 let wfFS_fsupdate = prove
- (`!fs fd' content pos k. wfFS fs ==> MEM fd' (MAP FST (IO_fs_infds fs)) ==>
-                          wfFS (fsupdate fs fd' k pos content)`,
+ (`!fs fd content pos k. wfFS fs ==> MEM fd (MAP FST (IO_fs_infds fs)) ==>
+                          wfFS (fsupdate fs fd k pos content)`,
   CHEAT_TAC);;
 
 let fsupdate_unchanged = prove
@@ -419,14 +419,14 @@ let validFD_fsupdate = prove
 add_simp validFD_fsupdate;;
 
 let validFileFD_fsupdate = prove
- (`fsFFIProps_validFileFD fd (IO_fs_infds (fsupdate fs fd' x y z)) <=>
-  fsFFIProps_validFileFD fd (IO_fs_infds fs)`,
+ (`validFileFD fd (IO_fs_infds (fsupdate fs fd' x y z)) <=> validFileFD fd
+  (IO_fs_infds fs)`,
   CHEAT_TAC);;
 add_simp validFileFD_fsupdate;;
 
 let fsupdate_numchars = prove
- (`!fs fd' k p c ll. IO_fs_numchars_fupd (K ll) (fsupdate fs fd' k p c) =
-                    fsupdate (IO_fs_numchars_fupd (K ll) fs) fd' 0 p c`,
+ (`!fs fd k p c ll. IO_fs_numchars_fupd (K ll) (fsupdate fs fd k p c) =
+                    fsupdate (IO_fs_numchars_fupd (K ll) fs) fd 0 p c`,
   CHEAT_TAC);;
 
 let fsupdate_ADELKEY = prove
@@ -444,16 +444,16 @@ let fsupdate_0_numchars = prove
   CHEAT_TAC);;
 
 let fsupdate_maxFD = prove
- (`!fs fd' k pos content. IO_fs_maxFD
-    (fsupdate fs fd' k pos content) = IO_fs_maxFD fs`,
+ (`!fs fd k pos content. IO_fs_maxFD
+    (fsupdate fs fd k pos content) = IO_fs_maxFD fs`,
   CHEAT_TAC);;
 add_simp fsupdate_maxFD;;
 
 (* get_file_content *)
 
 let get_file_content_numchars = prove
- (`!fs fd'. get_file_content fs fd' =
-               get_file_content (IO_fs_numchars_fupd (K ll) fs) fd'`,
+ (`!fs fd. get_file_content fs fd =
+               get_file_content (IO_fs_numchars_fupd (K ll) fs) fd`,
   CHEAT_TAC);;
 
 let get_file_content_validFD = prove
@@ -461,22 +461,22 @@ let get_file_content_validFD = prove
   CHEAT_TAC);;
 
 let get_file_content_fsupdate = prove
- (`!fs fd' x i c u. get_file_content fs fd' = SOME u ==>
-   get_file_content (fsupdate fs fd' x i c) fd' = SOME (c,i)`,
+ (`!fs fd x i c u. get_file_content fs fd = SOME u ==>
+   get_file_content (fsupdate fs fd x i c) fd = SOME (c,i)`,
   CHEAT_TAC);;
 
 let get_file_content_fsupdate_unchanged = prove
- (`!fs fd' u fnm pos fd' fnm' pos' x i c.
-   get_file_content fs fd' = SOME u ==>
-   ALOOKUP (IO_fs_infds fs) fd' = SOME (fnm,pos) ==>
+ (`!fs fd u fnm pos fd' fnm' pos' x i c.
+   get_file_content fs fd = SOME u ==>
+   ALOOKUP (IO_fs_infds fs) fd = SOME (fnm,pos) ==>
    ALOOKUP (IO_fs_infds fs) fd' = SOME (fnm',pos') ==> ~(fnm = fnm') ==>
-   get_file_content (fsupdate fs fd' x i c) fd' = SOME u`,
+   get_file_content (fsupdate fs fd' x i c) fd = SOME u`,
   CHEAT_TAC);;
 
 let get_file_content_bumpFD = prove
- (`!fs fd' c pos n.
-    get_file_content (bumpFD fd' fs n) fd' =
-    OPTION_MAP (I ## (+) n) (get_file_content fs fd')`,
+ (`!fs fd c pos n.
+    get_file_content (bumpFD fd fs n) fd =
+    OPTION_MAP (I ## (+) n) (get_file_content fs fd)`,
   CHEAT_TAC);;
 add_simp get_file_content_bumpFD;;
 
@@ -497,9 +497,9 @@ let liveFS_bumpFD = prove
 (* openFile, openFileFS *)
 
 let openFile_fupd_numchars = prove
- (`!s fs k ll fd' fs'. openFile s (IO_fs_numchars_fupd (K ll) fs) md k =
+ (`!s fs k ll fd fs'. openFile s (IO_fs_numchars_fupd (K ll) fs) md k =
        match openFile s fs md k with
-         SOME (fd',fs') -> SOME (fd',IO_fs_numchars_fupd (K ll) fs')
+         SOME (fd,fs') -> SOME (fd,IO_fs_numchars_fupd (K ll) fs')
        | NONE -> NONE`,
   CHEAT_TAC);;
 
@@ -556,7 +556,7 @@ let openFileFS_ADELKEY_nextFD = prove
 (* forwardFD: like bumpFD but leave numchars *)
 
 let forwardFD_def = new_definition
-  `forwardFD fs fd' n = IO_fs_infds_fupd (AFUPDKEY fd' (I ## I ## (+) n))
+  `forwardFD fs fd n = IO_fs_infds_fupd (AFUPDKEY fd (I ## I ## (+) n))
      fs`;;
 
 let forwardFD_const = prove
@@ -603,9 +603,9 @@ let wfFS_forwardFD = prove
 add_simp wfFS_forwardFD;;
 
 let get_file_content_forwardFD = prove
- (`!fs fd' c pos n.
-    get_file_content (forwardFD fs fd' n) fd' =
-    OPTION_MAP (I ## (+) n) (get_file_content fs fd')`,
+ (`!fs fd c pos n.
+    get_file_content (forwardFD fs fd n) fd =
+    OPTION_MAP (I ## (+) n) (get_file_content fs fd)`,
   CHEAT_TAC);;
 add_simp get_file_content_forwardFD;;
 
@@ -627,7 +627,7 @@ let forwardFD_ADELKEY_same = prove
 (* lineFD: the next line *)
 
 let lineFD_def = new_definition
-  `lineFD fs fd' = OPTION_BIND (get_file_content fs fd') (\(content,pos).
+  `lineFD fs fd = OPTION_BIND (get_file_content fs fd) (\(content,pos).
      OPTION_IGNORE_BIND (assert (pos < LENGTH content)) (
      let (l,r) = SPLITP ((=) (CHR 10)) (DROP pos content) in
        SOME (APPEND l "\n")))`;;
@@ -635,8 +635,8 @@ let lineFD_def = new_definition
 (* linesFD: get all the lines *)
 
 let linesFD_def = new_definition
-  `linesFD fs fd' =
-     match get_file_content fs fd' with NONE -> []
+  `linesFD fs fd =
+     match get_file_content fs fd with NONE -> []
      | SOME (content,pos) ->
          MAP (\x. APPEND x "\n")
            (splitlines (DROP pos content))`;;
@@ -698,12 +698,12 @@ let linesFD_openFileFS_nextFD = prove
 (* lineForwardFD: seek past the next line *)
 
 let lineForwardFD_def = new_definition
-  `fsFFIProps_lineForwardFD fs fd' =
-     match get_file_content fs fd' with NONE -> fs
+  `fsFFIProps_lineForwardFD fs fd =
+     match get_file_content fs fd with NONE -> fs
      | SOME (content,pos) ->
        if pos < LENGTH content then let (l,r) = SPLITP ((=) (CHR 10)) (DROP
          pos content) in
-         forwardFD fs fd' (LENGTH l + (if NULL r then 0 else 1))
+         forwardFD fs fd (LENGTH l + (if NULL r then 0 else 1))
        else fs`;;
 
 let fastForwardFD_lineForwardFD = prove
@@ -736,12 +736,12 @@ let linesFD_lineForwardFD = prove
   CHEAT_TAC);;
 
 let lineForwardFD_forwardFD = prove
- (`!fs fd'. ?n. fsFFIProps_lineForwardFD fs fd' = forwardFD fs fd' n`,
+ (`!fs fd. ?n. fsFFIProps_lineForwardFD fs fd = forwardFD fs fd n`,
   CHEAT_TAC);;
 
 let get_file_content_lineForwardFD_forwardFD = prove
- (`!fs fd'. get_file_content fs fd' = SOME (x,pos) ==>
-     fsFFIProps_lineForwardFD fs fd' = forwardFD fs fd' (LENGTH (FST (SPLITP
+ (`!fs fd. get_file_content fs fd = SOME (x,pos) ==>
+     fsFFIProps_lineForwardFD fs fd = forwardFD fs fd (LENGTH (FST (SPLITP
        ((=) (CHR 10)) (DROP pos x))) +
                               (if NULL (SND (SPLITP ((=) (CHR 10)) (DROP
                                 pos x))) then 0 else 1))`,
@@ -754,20 +754,20 @@ let STD_streams_def = new_definition
        /\
      (ALOOKUP (IO_fs_inode_tbl fs) (UStream (implode "stderr")) = SOME err)
        /\
-     (!fd' md off. ALOOKUP (IO_fs_infds fs) fd' = SOME (UStream (implode
-       "stdin"),md,off) <=> fd' = 0 /\ md = ReadMode /\ off = inp) /\
-     (!fd' md off. ALOOKUP (IO_fs_infds fs) fd' = SOME (UStream (implode
-       "stdout"),md,off) <=> fd' = 1 /\ md = WriteMode /\ off = LENGTH out) /\
-     (!fd' md off. ALOOKUP (IO_fs_infds fs) fd' = SOME (UStream (implode
-       "stderr"),md,off) <=> fd' = 2 /\ md = WriteMode /\ off = LENGTH err))`;;
+     (!fd md off. ALOOKUP (IO_fs_infds fs) fd = SOME (UStream (implode
+       "stdin"),md,off) <=> fd = 0 /\ md = ReadMode /\ off = inp) /\
+     (!fd md off. ALOOKUP (IO_fs_infds fs) fd = SOME (UStream (implode
+       "stdout"),md,off) <=> fd = 1 /\ md = WriteMode /\ off = LENGTH out) /\
+     (!fd md off. ALOOKUP (IO_fs_infds fs) fd = SOME (UStream (implode
+       "stderr"),md,off) <=> fd = 2 /\ md = WriteMode /\ off = LENGTH err))`;;
 
 let STD_streams_fsupdate = prove
- (`!fs fd' k pos c.
-   ((fd' = 1 \/ fd' = 2) ==> LENGTH c = pos) /\
+ (`!fs fd k pos c.
+   ((fd = 1 \/ fd = 2) ==> LENGTH c = pos) /\
     // (fd >= 3 ==> (FST(THE (ALOOKUP fs.infds fd)) <> UStream «stdout» /\
     // FST(THE (ALOOKUP fs.infds fd)) <> UStream «stderr»)) /\
     STD_streams fs ==>
-    STD_streams (fsupdate fs fd' k pos c)`,
+    STD_streams (fsupdate fs fd k pos c)`,
   CHEAT_TAC);;
 
 let STD_streams_openFileFS = prove
@@ -820,8 +820,8 @@ let get_file_content_stderr = prove
   CHEAT_TAC);;
 
 let get_mode_def = new_definition
-  `get_mode fs fd' =
-     OPTION_MAP (FST o SND) (ALOOKUP (IO_fs_infds fs) fd')`;;
+  `get_mode fs fd =
+     OPTION_MAP (FST o SND) (ALOOKUP (IO_fs_infds fs) fd)`;;
 
 let get_mode_with_numchars = prove
  (`get_mode (IO_fs_numchars_fupd (K ll) fs) fd = get_mode fs fd`,
@@ -865,20 +865,18 @@ let pipe_def = new_definition
              ALOOKUP (IO_fs_inode_tbl fs) (UStream ino) = SOME c)`;;
 
 let validFileFD_forwardFD = prove
- (`fsFFIProps_validFileFD fd (IO_fs_infds (forwardFD fs x y)) <=>
-  fsFFIProps_validFileFD fd (IO_fs_infds fs)`,
+ (`validFileFD fd (IO_fs_infds (forwardFD fs x y)) <=> validFileFD fd
+  (IO_fs_infds fs)`,
   CHEAT_TAC);;
 
 let validFileFD_nextFD = prove
  (`inFS_fname fs f /\ consistentFS fs /\ nextFD fs <= IO_fs_maxFD fs ==>
-   fsFFIProps_validFileFD (nextFD fs) (IO_fs_infds (openFileFS f fs
-     ReadMode 0))`,
+   validFileFD (nextFD fs) (IO_fs_infds (openFileFS f fs ReadMode 0))`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["fd";
-   "stdin"];;
+  ["stdin"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

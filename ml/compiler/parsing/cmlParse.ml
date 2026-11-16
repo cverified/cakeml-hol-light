@@ -41,7 +41,7 @@ let cmlParse_destResult_def = new_definition
 let pegresult_bind_def = new_definition
   `(pegresult_bind (f:(tokens_token#locs) list->((tokens_token#locs)
   list,'a,string)pegresult) (g:'a->(tokens_token#locs)
-  list->((tokens_token#locs) list,'b,string)pegresult):(tokens_token#locs)
+  list->((tokens_token#locs) list,beta,string)pegresult):(tokens_token#locs)
   list->((tokens_token#locs) list,'b,string)pegresult) =
    (\toks.
      match f toks with

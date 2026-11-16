@@ -11,6 +11,9 @@
 
 needs "basis/basis_ffi.ml";;
 needs "basis/pure/mlstring.ml";;
+needs "characteristic/cfApp.ml";;
+needs "characteristic/cfFFIType.ml";;
+needs "characteristic/cfHeapsBase.ml";;
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/data_to_word.ml";;
@@ -356,8 +359,16 @@ let has_repl_flag_def = new_definition
 
 (* HOL4 compiler64ProgScript.sml:657: ML code, not ported *)
 
-(* HOL4 compiler64ProgScript.sml:659-788: a theorem whose statement the port
-   cannot state yet: main_spec *)
+(* main_spec *)
+let compiler64Prog_main_spec = prove
+ (`~(has_repl_flag (TL cl)) /\ IS_SOME (stdin_content fs) ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) main_v
+       [semanticPrimitives_Conv NONE []] (STDIO fs * COMMANDLINE cl)
+       (POSTv (\uv.
+        &(UNIT_TYPE one uv) * STDIO (full_compile_64 (TL cl) (get_stdin
+          fs) fs) * COMMANDLINE cl))`,
+  CHEAT_TAC);;
 
 (* main_whole_prog_spec *)
 let compiler64Prog_main_whole_prog_spec = prove

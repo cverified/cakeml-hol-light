@@ -41,31 +41,81 @@ let is_std_interpretation_is_type = prove
 
 (* typesem *)
 
-(* HOL4 holSemanticsExtraScript.sml:26-42: a theorem whose statement the
-   port cannot state yet: typesem_inhabited *)
+let typesem_inhabited = prove
+ (`is_set_theory (mem:'U->'U->bool) ==>
+    (!tyenv delta' tau ty.
+    (is_type_valuation0 mem) tau /\
+    (is_type_assignment0 mem) tyenv delta' /\
+    type_ok tyenv ty ==>
+    (\s. ?x. mem:'U->'U->bool x s) (typesem delta' tau ty))`,
+  CHEAT_TAC);;
 
-(* HOL4 holSemanticsExtraScript.sml:44-51: a theorem whose statement the
-   port cannot state yet: typesem_Fun *)
+let typesem_Fun = prove
+ (`!delta' tau dom rng.
+    (is_std_type_assignment0 mem) delta' ==>
+    typesem delta' tau ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) dom
+      rng) =
+    (funspace mem) (typesem delta' tau dom) (typesem delta' tau rng)`,
+  CHEAT_TAC);;
 
-(* HOL4 holSemanticsExtraScript.sml:53-59: a theorem whose statement the
-   port cannot state yet: typesem_Bool *)
+let typesem_Bool = prove
+ (`!delta' tau.
+    (is_std_type_assignment0 mem) delta' ==>
+    typesem delta' tau (holSyntax_Tyapp (implode "bool") []) = ((two mem))`,
+  CHEAT_TAC);;
 
-(* HOL4 holSemanticsExtraScript.sml:61-69: a theorem whose statement the
-   port cannot state yet: typesem_TYPE_SUBST *)
+let typesem_TYPE_SUBST = prove
+ (`!tyin ty delta' tau.
+      typesem delta' tau (TYPE_SUBST tyin ty) =
+      typesem delta' (\x. typesem delta' tau (TYPE_SUBST tyin
+        (holSyntax_Tyvar x))) ty`,
+  CHEAT_TAC);;
 
-(* HOL4 holSemanticsExtraScript.sml:71-80: a theorem whose statement the
-   port cannot state yet: typesem_tyvars *)
+let typesem_tyvars = prove
+ (`!delta' tau ty tau'.
+    (!x. MEM x (holSyntax_tyvars ty) ==> tau' x = tau x) ==>
+    typesem delta' tau' ty = typesem delta' tau ty`,
+  CHEAT_TAC);;
 
-(* HOL4 holSemanticsExtraScript.sml:82-98: a theorem whose statement the
-   port cannot state yet: typesem_consts *)
+let typesem_consts = prove
+ (`!delta' tau ty delta'.
+    (!name args. RTC subtype1 (holSyntax_Tyapp name args) ty ==>
+      delta' name = delta' name \/
+      (?vars'. args = MAP holSyntax_Tyvar vars' /\
+             delta' name (MAP tau vars') = delta' name (MAP tau vars')))
+               ==> typesem delta' tau ty = typesem delta' tau ty`,
+  CHEAT_TAC);;
 
 (* termsem *)
 
-(* HOL4 holSemanticsExtraScript.sml:102-158: a theorem whose statement the
-   port cannot state yet: termsem_typesem *)
+let termsem_typesem = prove
+ (`is_set_theory (mem:'U->'U->bool) ==>
+    (!sig i tm v delta' tau tmenv.
+      delta' = FST i /\ tau = FST v /\
+      (is_valuation0 mem) ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
+        types_of_upd ctxt)) ctxt)) sig) delta' v /\
+      (is_interpretation0 mem) sig i /\
+      (is_std_type_assignment0 mem) delta' /\
+      holSyntax_term_ok sig tm /\ tmenv = (\ctxt. alist_to_fmap ((\ctxt.
+        FLAT (MAP consts_of_upd ctxt)) ctxt)) sig ==> mem:'U->'U->bool
+        ((termsem0 mem) tmenv i v tm) (typesem delta' tau (typeof tm)))`,
+  CHEAT_TAC);;
 
-(* HOL4 holSemanticsExtraScript.sml:160-170: a theorem whose statement the
-   port cannot state yet: termsem_typesem_matchable *)
+let termsem_typesem_matchable = prove
+ (`is_set_theory (mem:'U->'U->bool) ==>
+     (!sig i tm v delta' tau tmenv ty.
+       delta' = (FST:(mlstring->'U list->'U)#(mlstring->'U
+         list->'U)->mlstring->'U list->'U) i /\ tau =
+         (FST:(mlstring->'U)#(mlstring#type->'U)->mlstring->'U) v
+         /\ (is_valuation0 mem) ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
+         types_of_upd ctxt)) ctxt)) sig) delta' v /\
+       (is_interpretation0 mem) sig i /\ (is_std_type_assignment0 mem)
+         delta' /\
+       holSyntax_term_ok sig tm /\ tmenv = (\ctxt. alist_to_fmap ((\ctxt.
+         FLAT (MAP consts_of_upd ctxt)) ctxt)) sig /\
+       ty = typesem delta' tau (typeof tm) ==> mem:'U->'U->bool ((termsem0
+         mem) tmenv i v tm) ty)`,
+  CHEAT_TAC);;
 
 let termsem_consts = prove
  (`!tmsig i v tm i'.
@@ -135,8 +185,11 @@ let termsem_frees = prove
         (x,ty)) ==> (termsem0 mem) Γ i v1 t = (termsem0 mem) Γ i v2 t`,
   CHEAT_TAC);;
 
-(* HOL4 holSemanticsExtraScript.sml:315-324: a theorem whose statement the
-   port cannot state yet: typesem_frees *)
+let typesem_frees = prove
+ (`!ty tau1 tau2 delta'.
+      (!a. MEM a (holSyntax_tyvars ty) ==> tau1 a = tau2 a) ==>
+      typesem delta' tau1 ty = typesem delta' tau2 ty`,
+  CHEAT_TAC);;
 
 let termsem_tyfrees = prove
  (`!Γ i t v1 v2 tmenv.
@@ -222,8 +275,11 @@ let termsem_extend = prove
             (termsem0 mem) tmenv i v tm)`,
   CHEAT_TAC);;
 
-(* HOL4 holSemanticsExtraScript.sml:569-575: a theorem whose statement the
-   port cannot state yet: is_valuation_reduce *)
+let is_valuation_reduce = prove
+ (`!tyenv tyenv' delta' v. tyenv SUBMAP tyenv' /\ (is_valuation0 mem) tyenv'
+  delta' v ==>
+    (is_valuation0 mem) tyenv delta' v`,
+  CHEAT_TAC);;
 
 let satisfies_extend = prove
  (`!tyenv tmenv tyenv' tmenv' tm i h c.
@@ -295,8 +351,11 @@ let equal_on_reduce = prove
 
 (* semantics only depends on interpretation of things in the term's signature *)
 
-(* HOL4 holSemanticsExtraScript.sml:641-655: a theorem whose statement the
-   port cannot state yet: typesem_sig *)
+let typesem_sig = prove
+ (`!ty tau delta' delta' tyenv. type_ok tyenv ty /\ (!name. name IN FDOM tyenv
+  ==> delta' name = delta' name) ==>
+                    typesem delta' tau ty = typesem delta' tau ty`,
+  CHEAT_TAC);;
 
 let termsem_sig = prove
  (`!tm Γ i v i' tmenv.
@@ -316,17 +375,36 @@ let satisfies_sig = prove
 
 (* valuations exist *)
 
-(* HOL4 holSemanticsExtraScript.sml:716-724: a theorem whose statement the
-   port cannot state yet: term_valuation_exists *)
+let term_valuation_exists = prove
+ (`is_set_theory (mem:'U->'U->bool) ==>
+    (!tyenv delta' tau. (is_type_valuation0 mem) tau /\ (is_type_assignment0
+      mem) tyenv delta' ==>
+      (?sigma. (is_valuation0 mem) tyenv delta' (tau,sigma)))`,
+  CHEAT_TAC);;
 
 (* HOL4 holSemanticsExtraScript.sml:726-728: a theorem that HOL4 states as
    the value of an ML expression: is_type_valuation_exists *)
 
-(* HOL4 holSemanticsExtraScript.sml:730-739: a theorem whose statement the
-   port cannot state yet: valuation_exists *)
+let valuation_exists = prove
+ (`is_set_theory (mem:'U->'U->bool) ==>
+    (!tyenv delta'. (is_type_assignment0 mem) tyenv delta' ==>
+      (?v. (is_valuation0 mem) tyenv delta' v))`,
+  CHEAT_TAC);;
 
-(* HOL4 holSemanticsExtraScript.sml:741-756: a theorem whose statement the
-   port cannot state yet: extend_valuation_exists *)
+let extend_valuation_exists = prove
+ (`is_set_theory (mem:'U->'U->bool) ==>
+    (!tysig delta' v tysig'.
+    (is_valuation0 mem) tysig delta' v /\ tysig SUBMAP tysig' /\
+    (is_type_assignment0 mem) tysig' delta' ==>
+    (?v'. (is_valuation0 mem) tysig' delta' v' /\
+         ((FST:(mlstring->'U)#(mlstring#type->'U)->mlstring->'U) v' =
+           (FST:(mlstring->'U)#(mlstring#type->'U)->mlstring->'U) v) /\
+         (!x ty. type_ok tysig ty ==>
+           ((SND:(mlstring->'U)#(mlstring#type->'U)->mlstring#type->'U) v
+           (x,ty) =
+           (SND:(mlstring->'U)#(mlstring#type->'U)->mlstring#type->'U) v'
+           (x,ty)))))`,
+  CHEAT_TAC);;
 
 let is_type_valuation_UPDATE_LIST = prove
  (`!t ls. (is_type_valuation0 mem) t /\ ALL ((\s. ?x. mem:'U->'U->bool x s) o
@@ -358,11 +436,19 @@ let interprets_one = prove
 
 (* for models, reducing the context *)
 
-(* HOL4 holSemanticsExtraScript.sml:800-808: a theorem whose statement the
-   port cannot state yet: is_type_assignment_reduce *)
+let is_type_assignment_reduce = prove
+ (`!tyenv tyenv' delta'.
+     tyenv SUBMAP tyenv' /\
+     (is_type_assignment0 mem) tyenv' delta' ==>
+     (is_type_assignment0 mem) tyenv delta'`,
+  CHEAT_TAC);;
 
-(* HOL4 holSemanticsExtraScript.sml:810-818: a theorem whose statement the
-   port cannot state yet: is_term_assignment_reduce *)
+let is_term_assignment_reduce = prove
+ (`!tmenv tmenv' delta' gamma.
+     tmenv SUBMAP tmenv' /\
+     (is_term_assignment0 mem) tmenv' delta' gamma ==>
+     (is_term_assignment0 mem) tmenv delta' gamma`,
+  CHEAT_TAC);;
 
 let is_interpretation_reduce = prove
  (`!i tyenv tmenv tyenv' tmenv'.

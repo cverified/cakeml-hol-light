@@ -90,12 +90,12 @@ let _ = cake_theory "panStatic"
 
 
 (* Error categories for printing *)
-let panStatic_staterr_INDUCT,panStatic_staterr_RECURSION = define_datatype
-  "panStatic_staterr =
-     panStatic_ScopeErr mlstring
-   | panStatic_WarningErr mlstring
-   | panStatic_GenErr mlstring
-   | panStatic_ShapeErr mlstring";;
+let staterr_INDUCT,staterr_RECURSION = define_datatype
+  "staterr =
+     ScopeErr mlstring
+   | WarningErr mlstring
+   | GenErr mlstring
+   | ShapeErr mlstring";;
 
 (*
   Return type of static_check_* functions:
@@ -615,7 +615,7 @@ let primop_to_str_def = new_definition
 let check_fun_name_def = new_definition
   `check_fun_name ctxt fname =
      (match mlmap_lookup (panStatic_context_funcs ctxt) fname with NONE ->
-       errorMonad_error (panStatic_ScopeErr
+       errorMonad_error (ScopeErr
          (add_primitive_hint fname (get_scope_msg panStatic_Fun
            (panStatic_context_loc ctxt) fname (panStatic_context_scope ctxt))))
      | SOME f -> errorLogMonad_return f)`;;
@@ -624,7 +624,7 @@ let check_fun_name_def = new_definition
 let check_global_var_def = new_definition
   `check_global_var ctxt vname =
      (match mlmap_lookup (panStatic_context_globals ctxt) vname with NONE ->
-       errorMonad_error (panStatic_ScopeErr (get_scope_msg panStatic_Var
+       errorMonad_error (ScopeErr (get_scope_msg panStatic_Var
        (panStatic_context_loc ctxt) vname (panStatic_context_scope ctxt)))
      | SOME v -> errorLogMonad_return v)`;;
 
@@ -632,7 +632,7 @@ let check_global_var_def = new_definition
 let check_local_var_def = new_definition
   `check_local_var ctxt vname =
      (match mlmap_lookup (panStatic_context_locals ctxt) vname with NONE ->
-       errorMonad_error (panStatic_ScopeErr (get_scope_msg panStatic_Var
+       errorMonad_error (ScopeErr (get_scope_msg panStatic_Var
        (panStatic_context_loc ctxt) vname (panStatic_context_scope ctxt)))
      | SOME v -> errorLogMonad_return v)`;;
 
@@ -642,16 +642,15 @@ let check_redec_var_def = new_definition
      (match (mlmap_lookup (panStatic_context_locals ctxt) vname,mlmap_lookup
        (panStatic_context_globals ctxt) vname) with (NONE,NONE) ->
        errorLogMonad_return one
-     | _ -> errorLogMonad_log (panStatic_WarningErr (get_redec_msg
-       panStatic_Var (panStatic_context_loc ctxt) vname
-       (panStatic_context_scope ctxt))))`;;
+     | _ -> errorLogMonad_log (WarningErr (get_redec_msg panStatic_Var
+       (panStatic_context_loc ctxt) vname (panStatic_context_scope ctxt))))`;;
 
 (* Check shapes of exported arguments *)
 let check_export_params_def,check_export_params_ind = define_guess
   `(check_export_params loc scope [] = errorLogMonad_return one) /\
    (check_export_params loc scope (CONS (vname,shape) ps) =
       if ~(shape = pan_One) then
-        errorMonad_error (panStatic_ShapeErr (get_non_word_msg (
+        errorMonad_error (ShapeErr (get_non_word_msg (
             mlstring_concat [implode "exported function parameter ";
                 vname]) (shape_to_str shape) loc scope))
       else check_export_params loc scope ps)`;;
@@ -663,7 +662,7 @@ let check_operands_def,check_operands_ind = define_guess
       match sb with WordB b ->
         errorLogMonad_bind (check_operands ctxt op_str sbs) (\b'.
           errorLogMonad_return (based_merge b b'))
-      | _ -> errorMonad_error (panStatic_ShapeErr (get_non_word_msg (
+      | _ -> errorMonad_error (ShapeErr (get_non_word_msg (
           mlstring_concat [implode "operation "; op_str; implode
               " operand"]) (sh_bd_to_str sb) (panStatic_context_loc ctxt)
               (panStatic_context_scope ctxt))))`;;
@@ -675,8 +674,8 @@ let check_primitive_args_def = new_definition
        op_str << --(primop_to_str (pan_AddCarry:primop))) (\_.
          errorLogMonad_bind (
        nargs << --(LENGTH sh_bds)) (\_.
-       errorLogMonad_bind (if ~(nargs = 3) then errorMonad_error
-         (panStatic_GenErr (get_oparg_msg T (implode "3")
+       errorLogMonad_bind (if ~(nargs = 3) then errorMonad_error (GenErr
+         (get_oparg_msg T (implode "3")
            (num_to_str nargs) (panStatic_context_loc ctxt) op_str
              (panStatic_context_scope ctxt)))
        else errorLogMonad_return one) (\_. errorLogMonad_bind
@@ -690,8 +689,8 @@ let check_func_args_def,check_func_args_ind = define_guess
          // check declared vs provided
          p,s) ps,CONS sb sbs) ->
        if ~(sh_bd_has_shape s sb) then
-         errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
-           (mlstring_concat [
+         errorMonad_error (ShapeErr (get_shape_mismatch_msg (mlstring_concat
+           [
              (implode "value for argument "); p;
              (implode " given to function "); fname]) (sh_bd_to_str sb)
                (shape_to_str s) (panStatic_context_loc ctxt)
@@ -699,7 +698,7 @@ let check_func_args_def,check_func_args_ind = define_guess
        else check_func_args ctxt fname ps sbs
      | (CONS (
          // no more provided args
-         p,s) ps,[]) -> errorMonad_error (panStatic_GenErr (mlstring_concat
+         p,s) ps,[]) -> errorMonad_error (GenErr (mlstring_concat
            [panStatic_context_loc
          ctxt; implode "argument "; p;
          implode " for call to function "; fname;
@@ -707,7 +706,7 @@ let check_func_args_def,check_func_args_ind = define_guess
          get_scope_desc (panStatic_context_scope ctxt); implode "\n"]))
      | ([],CONS
             // no more declared params
-            sb sbs) -> errorMonad_error (panStatic_GenErr (mlstring_concat
+            sb sbs) -> errorMonad_error (GenErr (mlstring_concat
               [panStatic_context_loc
          ctxt; implode "extra arguments given to function "; fname;
          implode " in ";
@@ -728,7 +727,7 @@ let check_struct_fields_def,check_struct_fields_ind = define_guess
                fld,sb)] -> errorLogMonad_return sb
            | [] ->
                    // zero
-                   errorMonad_error (panStatic_ShapeErr (mlstring_concat
+                   errorMonad_error (ShapeErr (mlstring_concat
                      [panStatic_context_loc
                ctxt; implode "missing field "; fld;
                implode " in named struct "; sname;
@@ -737,7 +736,7 @@ let check_struct_fields_def,check_struct_fields_ind = define_guess
                  "\n"]))
            |
              // more than one
-             _ -> errorMonad_error (panStatic_ShapeErr (mlstring_concat
+             _ -> errorMonad_error (ShapeErr (mlstring_concat
                [panStatic_context_loc
                ctxt; implode "multiple values for field "; fld;
                implode " in named struct "; sname;
@@ -748,7 +747,7 @@ let check_struct_fields_def,check_struct_fields_ind = define_guess
          sb.
          // check shape of provided value
          if ~(sh_bd_has_shape sh sb) then
-           errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
+           errorMonad_error (ShapeErr (get_shape_mismatch_msg
              (mlstring_concat [
                implode "value for field "; fld;
                implode " given to named struct "; sname]) (sh_bd_to_str sb)
@@ -757,7 +756,7 @@ let check_struct_fields_def,check_struct_fields_ind = define_guess
          else check_struct_fields ctxt sname fss (ADELKEY fld fsbs))
      | ([],CONS
             // no more declared fields
-            fsb fsbs) -> errorMonad_error (panStatic_GenErr (mlstring_concat
+            fsb fsbs) -> errorMonad_error (GenErr (mlstring_concat
               [panStatic_context_loc
          ctxt; implode "unexpected field "; FST fsb;
          implode " given to named struct "; sname;
@@ -774,8 +773,8 @@ let check_shape_def,check_shape_ind = define_guess
       check_shapes sctxt loc scope shs) /\
    (check_shape sctxt loc scope (pan_Named nm) =
       (match ALOOKUP sctxt nm with SOME flds -> errorLogMonad_return one
-      | NONE -> errorMonad_error (panStatic_ScopeErr (get_scope_msg
-          panStatic_Stc loc nm scope)))) /\
+      | NONE -> errorMonad_error (ScopeErr (get_scope_msg panStatic_Stc
+          loc nm scope)))) /\
    (check_shapes sctxt loc scope [] = errorLogMonad_return one) /\
    (check_shapes sctxt loc scope (CONS sh shs) =
         errorLogMonad_bind (check_shape sctxt loc scope sh) (\_.
@@ -793,8 +792,7 @@ let check_id_shapes_def,check_id_shapes_ind = define_guess
             errorLogMonad_return (StcScope sname id)
           |
             // should never occur if static checker implemented correctly
-            s -> errorMonad_error (panStatic_GenErr
-                (get_implementation_err_msg
+            s -> errorMonad_error (GenErr (get_implementation_err_msg
               (implode "parameter or field found in unexpected scope")
               loc scope))) (\
         // setup specific scope message
@@ -839,8 +837,7 @@ let static_check_exp_def,static_check_exp_ind = define_guess
           SOME sb -> errorLogMonad_return (mk_exp_return sb)
         |
           // should never occur if static checker implemented correctly
-          NONE -> errorMonad_error (panStatic_ScopeErr
-              (get_implementation_err_msg
+          NONE -> errorMonad_error (ScopeErr (get_implementation_err_msg
           (implode "static analysis failed to convert in-scope shape")
               (panStatic_context_loc
           ctxt) (panStatic_context_scope ctxt))))) /\
@@ -856,8 +853,7 @@ let static_check_exp_def,static_check_exp_ind = define_guess
         // check struct exp
         eret.
         match index_sh_bd index (exp_return_sh_bd eret) with NONE ->
-            errorMonad_error (panStatic_ShapeErr (mlstring_concat
-            [panStatic_context_loc
+            errorMonad_error (ShapeErr (mlstring_concat [panStatic_context_loc
             ctxt; implode "expression shape "; sh_bd_to_str
                 (exp_return_sh_bd eret);
             implode " has no field at index "; num_to_str index;
@@ -869,9 +865,9 @@ let static_check_exp_def,static_check_exp_ind = define_guess
    (static_check_exp ctxt (pan_NStruct name eflds) =
           errorLogMonad_bind (match ALOOKUP (panStatic_context_structs
               ctxt) name with SOME info -> errorLogMonad_return info
-          | NONE -> errorMonad_error (panStatic_ScopeErr (get_scope_msg
-              panStatic_Stc (panStatic_context_loc ctxt) name
-              (panStatic_context_scope ctxt)))) (\sinfo. errorLogMonad_bind (
+          | NONE -> errorMonad_error (ScopeErr (get_scope_msg panStatic_Stc
+              (panStatic_context_loc ctxt) name (panStatic_context_scope
+              ctxt)))) (\sinfo. errorLogMonad_bind (
         (
          // check struct field exps
          field_names,field_exps) << --(UNZIP eflds)) (\_.
@@ -888,8 +884,7 @@ let static_check_exp_def,static_check_exp_ind = define_guess
         // check struct exp
         eret.
         match field_sh_bd field' (exp_return_sh_bd eret) with NONE ->
-            errorMonad_error (panStatic_ShapeErr (mlstring_concat
-            [panStatic_context_loc
+            errorMonad_error (ShapeErr (mlstring_concat [panStatic_context_loc
             ctxt; implode "expression shape "; sh_bd_to_str
                 (exp_return_sh_bd eret);
             implode " has no field "; field'; implode " in ";
@@ -907,18 +902,18 @@ let static_check_exp_def,static_check_exp_ind = define_guess
         aret. errorLogMonad_bind
         // check address shape and references base
         (match exp_return_sh_bd aret with StructB _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | NamedB _ _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotBased ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T T F
+          errorLogMonad_log (WarningErr (get_memop_msg T T F
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotTrusted ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T T T
+          errorLogMonad_log (WarningErr (get_memop_msg T T T
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | _ -> errorLogMonad_return one) (\_.
         match sh_bd_from_sh (panStatic_context_structs ctxt) Trusted shape
@@ -927,8 +922,7 @@ let static_check_exp_def,static_check_exp_ind = define_guess
           SOME sb -> errorLogMonad_return (mk_exp_return sb)
         |
           // should never occur if static checker implemented correctly
-          NONE -> errorMonad_error (panStatic_ScopeErr
-              (get_implementation_err_msg
+          NONE -> errorMonad_error (ScopeErr (get_implementation_err_msg
           (implode "static analysis failed to convert in-scope shape")
               (panStatic_context_loc
           ctxt) (panStatic_context_scope ctxt))))))) /\
@@ -938,18 +932,18 @@ let static_check_exp_def,static_check_exp_ind = define_guess
         aret. errorLogMonad_bind
         // check address shape and references base
         (match exp_return_sh_bd aret with StructB _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | NamedB _ _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotBased ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T T F
+          errorLogMonad_log (WarningErr (get_memop_msg T T F
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotTrusted ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T T T
+          errorLogMonad_log (WarningErr (get_memop_msg T T T
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | _ -> errorLogMonad_return one) (\_.
         // return exp info
@@ -960,18 +954,18 @@ let static_check_exp_def,static_check_exp_ind = define_guess
         aret. errorLogMonad_bind
         // check address shape and references base
         (match exp_return_sh_bd aret with StructB _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | NamedB _ _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotBased ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T T F
+          errorLogMonad_log (WarningErr (get_memop_msg T T F
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotTrusted ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T T T
+          errorLogMonad_log (WarningErr (get_memop_msg T T T
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | _ -> errorLogMonad_return one) (\_.
         // return exp info
@@ -983,14 +977,14 @@ let static_check_exp_def,static_check_exp_ind = define_guess
         nargs << --(LENGTH exps)) (\_.
         errorLogMonad_bind (match bop with asm_Sub ->
           if ~(nargs = 2) then
-            errorMonad_error (panStatic_GenErr (get_oparg_msg T (implode
-                "2") (num_to_str nargs) (panStatic_context_loc
+            errorMonad_error (GenErr (get_oparg_msg T (implode "2")
+                (num_to_str nargs) (panStatic_context_loc
               ctxt) op_str (panStatic_context_scope ctxt)))
           else errorLogMonad_return one
         | _ ->
           if nargs < 2 then
-            errorMonad_error (panStatic_GenErr (get_oparg_msg F (implode
-                "2") (num_to_str nargs) (panStatic_context_loc
+            errorMonad_error (GenErr (get_oparg_msg F (implode "2")
+                (num_to_str nargs) (panStatic_context_loc
               ctxt) op_str (panStatic_context_scope ctxt)))
           else errorLogMonad_return one) (\_. errorLogMonad_bind
               (static_check_exps ctxt exps) (\
@@ -1007,8 +1001,8 @@ let static_check_exp_def,static_check_exp_ind = define_guess
         nargs << --(LENGTH exps)) (\_.
         errorLogMonad_bind (match pop with pan_Mul ->
           if ~(nargs = 2) then
-            errorMonad_error (panStatic_GenErr (get_oparg_msg T (implode
-                "2") (num_to_str nargs) (panStatic_context_loc
+            errorMonad_error (GenErr (get_oparg_msg T (implode "2")
+                (num_to_str nargs) (panStatic_context_loc
               ctxt) op_str (panStatic_context_scope ctxt)))
           else errorLogMonad_return one) (\_. errorLogMonad_bind
               (static_check_exps ctxt exps) (\
@@ -1026,7 +1020,7 @@ let static_check_exp_def,static_check_exp_ind = define_guess
         // check for shape match
         (if ~(sh_bd_eq_shapes (exp_return_sh_bd eret1) (exp_return_sh_bd
             eret2)) then
-          errorMonad_error (panStatic_ShapeErr (mlstring_concat
+          errorMonad_error (ShapeErr (mlstring_concat
               [panStatic_context_loc
               ctxt; implode
                   "comparison given operands of different shapes in ";
@@ -1042,12 +1036,12 @@ let static_check_exp_def,static_check_exp_ind = define_guess
             errorLogMonad_bind
         // check exp shape
         (if ~(sh_bd_has_shape pan_One (exp_return_sh_bd eret1)) then
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "shifted expression")
             (sh_bd_to_str (exp_return_sh_bd eret1)) (panStatic_context_loc
                 ctxt) (panStatic_context_scope ctxt)))
         else if ~(sh_bd_has_shape pan_One (exp_return_sh_bd eret2)) then
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "shift expression")
             (sh_bd_to_str (exp_return_sh_bd eret2)) (panStatic_context_loc
                 ctxt) (panStatic_context_scope ctxt)))
@@ -1095,7 +1089,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         eret. errorLogMonad_bind
         // check for shape match
         (if ~(sh_bd_has_shape shape (exp_return_sh_bd eret)) then
-          errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
+          errorMonad_error (ShapeErr (get_shape_mismatch_msg
               (mlstring_concat [
               implode "expression to initialise local variable "; vname])
                   (sh_bd_to_str (exp_return_sh_bd eret)) (shape_to_str shape)
@@ -1129,7 +1123,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
             (exps_return_sh_bds esret)) (\_. errorLogMonad_bind
         // check for shape match
         (if ~(shape = func_info_ret_shape finf) then
-          errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
+          errorMonad_error (ShapeErr (get_shape_mismatch_msg
               (mlstring_concat [
               implode "result of function call "; fname;
               implode " to initialise local variable "; vname])
@@ -1143,8 +1137,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
             SOME sb -> errorLogMonad_return sb
           |
             // should never occur if static checker implemented correctly
-            NONE -> errorMonad_error (panStatic_ScopeErr
-                (get_implementation_err_msg
+            NONE -> errorMonad_error (ScopeErr (get_implementation_err_msg
             (implode "static analysis failed to convert in-scope shape")
                 (panStatic_context_loc
             ctxt) (panStatic_context_scope ctxt)))) (\
@@ -1168,7 +1161,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         // check for shape match
         (if ~(sh_bd_eq_shapes (local_info_vsh_bd vinf) (exp_return_sh_bd
             eret)) then
-          errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
+          errorMonad_error (ShapeErr (get_shape_mismatch_msg
               (mlstring_concat [
               implode "expression assigned to local variable "; vname])
                   (sh_bd_to_str (exp_return_sh_bd eret)) (sh_bd_to_str
@@ -1189,7 +1182,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         // check for shape match
         (if ~(sh_bd_has_shape (global_info_vshape vinf) (exp_return_sh_bd
             eret)) then
-          errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
+          errorMonad_error (ShapeErr (get_shape_mismatch_msg
               (mlstring_concat [
               implode "expression assigned to global variable "; vname])
                   (sh_bd_to_str (exp_return_sh_bd eret)) (shape_to_str
@@ -1213,8 +1206,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
     // check for shape match
     (if ~(sh_bd_has_shape (func_info_ret_shape finf) (local_info_vsh_bd
         vinf)) then
-      errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
-          (mlstring_concat [
+      errorMonad_error (ShapeErr (get_shape_mismatch_msg (mlstring_concat [
           implode "result of function call "; fname;
           implode " assigned to local variable "; vname]) (shape_to_str
               (func_info_ret_shape finf)) (sh_bd_to_str (local_info_vsh_bd
@@ -1228,8 +1220,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
       SOME (eid,evar,prog) ->
         errorLogMonad_bind (match mlmap_lookup (panStatic_context_exns
             ctxt) eid with
-                  NONE -> errorMonad_error (panStatic_ScopeErr
-                      (mlstring_concat [
+                  NONE -> errorMonad_error (ScopeErr (mlstring_concat [
                             implode "exception "; eid; implode
                                 " is not declared\n"]))
                 | SOME sh -> errorLogMonad_return sh) (\
@@ -1239,7 +1230,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
           evinf. errorLogMonad_bind
           // check handler variable shape matches exception shape
           (if ~(sh_bd_has_shape sh (local_info_vsh_bd evinf)) then
-            errorMonad_error (panStatic_ShapeErr (mlstring_concat [
+            errorMonad_error (ShapeErr (mlstring_concat [
               implode "handler variable "; evar;
               implode " does not match shape of exception "; eid; implode
                   "\n"]))
@@ -1250,7 +1241,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
               SOME sb -> errorLogMonad_return sb
             |
               // should never occur if static checker implemented correctly
-              NONE -> errorMonad_error (panStatic_ScopeErr
+              NONE -> errorMonad_error (ScopeErr
                   (get_implementation_err_msg
               (implode "static analysis failed to convert in-scope shape")
                   (panStatic_context_loc
@@ -1281,7 +1272,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
             (exps_return_sh_bds esret)) (\_. errorLogMonad_bind
         // check for shape match
         (if ~(global_info_vshape vinf = func_info_ret_shape finf) then
-          errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
+          errorMonad_error (ShapeErr (get_shape_mismatch_msg
               (mlstring_concat [
               implode "result of function call "; fname;
               implode " assigned to global variable "; vname])
@@ -1315,8 +1306,8 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         res_sb. errorLogMonad_bind
         // check declared destination shape matches result shape
         (if ~(sh_bd_eq_shapes (local_info_vsh_bd vinf) res_sb) then
-            errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
-            (mlstring_concat [
+            errorMonad_error (ShapeErr (get_shape_mismatch_msg (mlstring_concat
+            [
               (implode "result of primitive "); primop_to_str pop;
               (implode " assigned to local variable "); vname])
                   (sh_bd_to_str res_sb) (sh_bd_to_str (local_info_vsh_bd vinf))
@@ -1336,8 +1327,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
               FunScope fname _ -> check_fun_name ctxt fname
           |
             // should never occur if static checker implemented correctly
-            _ -> errorMonad_error (panStatic_GenErr
-                (get_implementation_err_msg
+            _ -> errorMonad_error (GenErr (get_implementation_err_msg
             (implode "return found outside function scope")
                 (panStatic_context_loc
             ctxt) (panStatic_context_scope ctxt)))) (\
@@ -1346,7 +1336,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         // check for shape match
         (if ~(sh_bd_has_shape (func_info_ret_shape finf) (exp_return_sh_bd
             eret)) then
-          errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
+          errorMonad_error (ShapeErr (get_shape_mismatch_msg
             (implode "expression to return")
             (sh_bd_to_str (exp_return_sh_bd eret)) (shape_to_str
                 (func_info_ret_shape finf)) (panStatic_context_loc
@@ -1360,7 +1350,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
           caller _ -> check_fun_name ctxt caller
           |
             // should never occur if static checker implemented correctly
-            _ -> errorMonad_error (panStatic_GenErr (implode
+            _ -> errorMonad_error (GenErr (implode
                 "tail call found outside function scope"))) (\
         // lookup current function info
         caller_inf. errorLogMonad_bind (check_fun_name ctxt fname) (\
@@ -1370,7 +1360,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         // check for shape match
         (if ~(func_info_ret_shape caller_inf = func_info_ret_shape
             callee_inf) then
-          errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
+          errorMonad_error (ShapeErr (get_shape_mismatch_msg
               (mlstring_concat [
               implode "result of function call "; fname;
               implode " to return"]) (shape_to_str (func_info_ret_shape
@@ -1400,8 +1390,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
           SOME (eid,evar,prog) ->
             errorLogMonad_bind (match mlmap_lookup (panStatic_context_exns
                 ctxt) eid with
-                      NONE -> errorMonad_error (panStatic_ScopeErr
-                          (mlstring_concat [
+                      NONE -> errorMonad_error (ScopeErr (mlstring_concat [
                               implode "exception "; eid; implode
                                   " is not declared\n"]))
                     | SOME sh -> errorLogMonad_return sh) (\
@@ -1411,7 +1400,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
               evinf. errorLogMonad_bind
               // check handler variable shape matches exception shape
               (if ~(sh_bd_has_shape sh (local_info_vsh_bd evinf)) then
-                errorMonad_error (panStatic_ShapeErr (mlstring_concat [
+                errorMonad_error (ShapeErr (mlstring_concat [
                   implode "handler variable "; evar;
                   implode " does not match shape of exception "; eid;
                       implode "\n"]))
@@ -1422,7 +1411,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
                   SOME sb -> errorLogMonad_return sb
                 |
                   // should never occur if static checker implemented correctly
-                  NONE -> errorMonad_error (panStatic_ScopeErr
+                  NONE -> errorMonad_error (ScopeErr
                       (get_implementation_err_msg
                   (implode
                       "static analysis failed to convert in-scope shape")
@@ -1447,7 +1436,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         // check arg shapes
         (match FIND (\sb. ~(sh_bd_has_shape pan_One sb))
             (exps_return_sh_bds esret) with SOME sb -> errorMonad_error
-            (panStatic_ShapeErr (get_non_word_msg (mlstring_concat [
+            (ShapeErr (get_non_word_msg (mlstring_concat [
             implode "value for argument given to FFI "; fname])
                 (sh_bd_to_str sb) (panStatic_context_loc ctxt)
                 (panStatic_context_scope ctxt)))
@@ -1461,7 +1450,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
          // check for prior warnable unreachability
          warn_p1,ctxt1) << --(reached_warnable prog1 ctxt)) (\_.
         errorLogMonad_bind (match warn_p1 with SOME ls ->
-          errorLogMonad_log (panStatic_WarningErr (get_unreach_msg
+          errorLogMonad_log (WarningErr (get_unreach_msg
               (panStatic_context_loc ctxt1) (last_to_str ls)
               (panStatic_context_scope ctxt1)))
         | NONE -> errorLogMonad_return one) (\_. errorLogMonad_bind
@@ -1484,7 +1473,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
          // check for warnable unreachability after first prog
          warn_p2,ctxt3) << --(reached_warnable prog2 ctxt2)) (\_.
         errorLogMonad_bind (match warn_p2 with SOME ls ->
-          errorLogMonad_log (panStatic_WarningErr (get_unreach_msg
+          errorLogMonad_log (WarningErr (get_unreach_msg
               (panStatic_context_loc ctxt3) (last_to_str ls)
               (panStatic_context_scope ctxt1)))
         | NONE -> errorLogMonad_return one) (\_. errorLogMonad_bind
@@ -1504,7 +1493,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         eret. errorLogMonad_bind
         // check condition shape
         (if ~(sh_bd_has_shape pan_One (exp_return_sh_bd eret)) then
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "if condition") (sh_bd_to_str (exp_return_sh_bd eret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         else errorLogMonad_return one) (\_. errorLogMonad_bind
@@ -1529,7 +1518,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         eret. errorLogMonad_bind
         // check condition shape
         (if ~(sh_bd_has_shape pan_One (exp_return_sh_bd eret)) then
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "while condition") (sh_bd_to_str (exp_return_sh_bd
                 eret)) (panStatic_context_loc ctxt) (panStatic_context_scope
                 ctxt)))
@@ -1547,8 +1536,8 @@ let static_check_prog_def,static_check_prog_ind = define_guess
       errorLogMonad_bind
         // check for rogueness
         (if ~(panStatic_context_in_loop ctxt) then
-          errorMonad_error (panStatic_GenErr (get_rogue_msg T
-              (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
+          errorMonad_error (GenErr (get_rogue_msg T (panStatic_context_loc
+              ctxt) (panStatic_context_scope ctxt)))
         else errorLogMonad_return one) (\_.
         // return prog info
         errorLogMonad_return (mk_prog_return F T BreakLast (mlmap_empty
@@ -1557,8 +1546,8 @@ let static_check_prog_def,static_check_prog_ind = define_guess
       errorLogMonad_bind
         // check for rogueness
         (if ~(panStatic_context_in_loop ctxt) then
-          errorMonad_error (panStatic_GenErr (get_rogue_msg F
-              (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
+          errorMonad_error (GenErr (get_rogue_msg F (panStatic_context_loc
+              ctxt) (panStatic_context_scope ctxt)))
         else errorLogMonad_return one) (\_.
         // return prog info
         errorLogMonad_return (mk_prog_return F T ContLast (mlmap_empty
@@ -1566,8 +1555,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
    (static_check_prog ctxt (pan_Raise eid exp) =
       errorLogMonad_bind (match mlmap_lookup (panStatic_context_exns ctxt)
           eid with
-                NONE -> errorMonad_error (panStatic_ScopeErr
-                    (mlstring_concat [
+                NONE -> errorMonad_error (ScopeErr (mlstring_concat [
                           implode "exception "; eid; implode
                               " is not declared\n"]))
               | SOME sh -> errorLogMonad_return sh) (\
@@ -1577,7 +1565,7 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         eret. errorLogMonad_bind
         // check shape match
         (if ~(sh_bd_has_shape sh (exp_return_sh_bd eret)) then
-          errorMonad_error (panStatic_ShapeErr (mlstring_concat [
+          errorMonad_error (ShapeErr (mlstring_concat [
             implode "raised exception "; eid;
             implode " has wrong value shape\n"]))
         else errorLogMonad_return one) (\_.
@@ -1590,20 +1578,20 @@ let static_check_prog_def,static_check_prog_ind = define_guess
             errorLogMonad_bind
         // check address shape and references base
         (match exp_return_sh_bd aret with StructB _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "store address") (sh_bd_to_str (exp_return_sh_bd
                 aret)) (panStatic_context_loc ctxt) (panStatic_context_scope
                 ctxt)))
         | NamedB _ _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "store address") (sh_bd_to_str (exp_return_sh_bd
                 aret)) (panStatic_context_loc ctxt) (panStatic_context_scope
                 ctxt)))
         | WordB NotBased ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T F F
+          errorLogMonad_log (WarningErr (get_memop_msg T F F
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotTrusted ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T F T
+          errorLogMonad_log (WarningErr (get_memop_msg T F T
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | _ -> errorLogMonad_return one) (\_.
         // return prog info
@@ -1616,25 +1604,25 @@ let static_check_prog_def,static_check_prog_ind = define_guess
             errorLogMonad_bind
         // check address shape and references base
         (match exp_return_sh_bd aret with StructB _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "store address") (sh_bd_to_str (exp_return_sh_bd
                 aret)) (panStatic_context_loc ctxt) (panStatic_context_scope
                 ctxt)))
         | NamedB _ _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "store address") (sh_bd_to_str (exp_return_sh_bd
                 aret)) (panStatic_context_loc ctxt) (panStatic_context_scope
                 ctxt)))
         | WordB NotBased ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T F F
+          errorLogMonad_log (WarningErr (get_memop_msg T F F
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotTrusted ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T F T
+          errorLogMonad_log (WarningErr (get_memop_msg T F T
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | _ -> errorLogMonad_return one) (\_. errorLogMonad_bind
         // check value shape
         (if ~(sh_bd_has_shape pan_One (exp_return_sh_bd eret)) then
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "store value") (sh_bd_to_str (exp_return_sh_bd eret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         else errorLogMonad_return one) (\_.
@@ -1648,25 +1636,25 @@ let static_check_prog_def,static_check_prog_ind = define_guess
             errorLogMonad_bind
         // check address shape and references base
         (match exp_return_sh_bd aret with StructB _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "store address") (sh_bd_to_str (exp_return_sh_bd
                 aret)) (panStatic_context_loc ctxt) (panStatic_context_scope
                 ctxt)))
         | NamedB _ _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "store address") (sh_bd_to_str (exp_return_sh_bd
                 aret)) (panStatic_context_loc ctxt) (panStatic_context_scope
                 ctxt)))
         | WordB NotBased ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T F F
+          errorLogMonad_log (WarningErr (get_memop_msg T F F
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotTrusted ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg T F T
+          errorLogMonad_log (WarningErr (get_memop_msg T F T
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | _ -> errorLogMonad_return one) (\_. errorLogMonad_bind
         // check value shape
         (if ~(sh_bd_has_shape pan_One (exp_return_sh_bd eret)) then
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "store value") (sh_bd_to_str (exp_return_sh_bd eret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         else errorLogMonad_return one) (\_.
@@ -1681,23 +1669,23 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         aret. errorLogMonad_bind
         // check address shape and references base
         (match exp_return_sh_bd aret with StructB _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | NamedB _ _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB Based ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg F T F
+          errorLogMonad_log (WarningErr (get_memop_msg F T F
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotTrusted ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg F T T
+          errorLogMonad_log (WarningErr (get_memop_msg F T T
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | _ -> errorLogMonad_return one) (\_. errorLogMonad_bind
         // check value shape
         (if ~(sh_bd_has_shape pan_One (local_info_vsh_bd vinf)) then
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load variable") (sh_bd_to_str (local_info_vsh_bd
                 vinf)) (panStatic_context_loc ctxt) (panStatic_context_scope
                 ctxt)))
@@ -1716,23 +1704,23 @@ let static_check_prog_def,static_check_prog_ind = define_guess
         aret. errorLogMonad_bind
         // check address shape and references base
         (match exp_return_sh_bd aret with StructB _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | NamedB _ _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB Based ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg F T F
+          errorLogMonad_log (WarningErr (get_memop_msg F T F
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotTrusted ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg F T T
+          errorLogMonad_log (WarningErr (get_memop_msg F T T
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | _ -> errorLogMonad_return one) (\_. errorLogMonad_bind
         // check value shape
         (if ~(pan_One = global_info_vshape vinf) then
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "load variable") (shape_to_str (global_info_vshape
                 vinf)) (panStatic_context_loc ctxt) (panStatic_context_scope
                 ctxt)))
@@ -1747,25 +1735,25 @@ let static_check_prog_def,static_check_prog_ind = define_guess
             errorLogMonad_bind
         // check address shape and references base
         (match exp_return_sh_bd aret with StructB _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "store address") (sh_bd_to_str (exp_return_sh_bd
                 aret)) (panStatic_context_loc ctxt) (panStatic_context_scope
                 ctxt)))
         | NamedB _ _ ->
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "store address") (sh_bd_to_str (exp_return_sh_bd
                 aret)) (panStatic_context_loc ctxt) (panStatic_context_scope
                 ctxt)))
         | WordB Based ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg F F F
+          errorLogMonad_log (WarningErr (get_memop_msg F F F
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | WordB NotTrusted ->
-          errorLogMonad_log (panStatic_WarningErr (get_memop_msg F F T
+          errorLogMonad_log (WarningErr (get_memop_msg F F T
               (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         | _ -> errorLogMonad_return one) (\_. errorLogMonad_bind
         // check value shape
         (if ~(sh_bd_has_shape pan_One (exp_return_sh_bd eret)) then
-          errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+          errorMonad_error (ShapeErr (get_non_word_msg
             (implode "store value") (sh_bd_to_str (exp_return_sh_bd eret))
                 (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
         else errorLogMonad_return one) (\_.
@@ -1812,8 +1800,7 @@ let static_check_progs_def,static_check_progs_ind = define_guess
             SOME sbs -> errorLogMonad_return (ZIP param_names sbs)
           |
             // should never occur if static checker implemented correctly
-            NONE -> errorMonad_error (panStatic_ScopeErr
-                (get_implementation_err_msg
+            NONE -> errorMonad_error (ScopeErr (get_implementation_err_msg
             (implode "static analysis failed to convert in-scope shape")
             (implode "") (FunScope (fun_decl_name fi) (implode "")))))
                 (\param_sbs. errorLogMonad_bind (
@@ -1829,7 +1816,7 @@ let static_check_progs_def,static_check_progs_ind = define_guess
         prog_ret. errorLogMonad_bind
         // check missing function exit
         (if ~(prog_return_exits_fun prog_ret) then
-          errorMonad_error (panStatic_GenErr (mlstring_concat [
+          errorMonad_error (GenErr (mlstring_concat [
               implode "branches missing return statement in ";
               get_scope_desc (FunScope (fun_decl_name fi) (implode ""));
                   implode "\n"]))
@@ -1866,7 +1853,7 @@ let static_check_decls_def,static_check_decls_ind = define_guess
         eret. errorLogMonad_bind
         // check for shape match
         (if ~(sh_bd_has_shape shape (exp_return_sh_bd eret)) then
-          errorMonad_error (panStatic_ShapeErr (get_shape_mismatch_msg
+          errorMonad_error (ShapeErr (get_shape_mismatch_msg
               (mlstring_concat [
               implode "expression to initialise global variable "; vname])
                   (sh_bd_to_str (exp_return_sh_bd eret)) (shape_to_str shape)
@@ -1879,7 +1866,7 @@ let static_check_decls_def,static_check_decls_ind = define_guess
       errorLogMonad_bind
         // check redeclaration
         (if mlmap_member eid ectxt then
-          errorMonad_error (panStatic_ScopeErr (mlstring_concat [
+          errorMonad_error (ScopeErr (mlstring_concat [
             implode "exception "; eid; implode " is redeclared\n"]))
         else errorLogMonad_return one) (\_.
         // continue with updated exception environment
@@ -1890,25 +1877,25 @@ let static_check_decls_def,static_check_decls_ind = define_guess
         // check for redeclaration
         // TODO: decl locs
         (if mlmap_member (fun_decl_name fi) fctxt then
-          errorMonad_error (panStatic_ScopeErr (get_redec_msg panStatic_Fun
-              (implode "") (fun_decl_name fi) TopLevel))
+          errorMonad_error (ScopeErr (get_redec_msg panStatic_Fun (implode
+              "") (fun_decl_name fi) TopLevel))
         else errorLogMonad_return one) (\_. errorLogMonad_bind
         // check main func
         (if fun_decl_name fi = (implode "main") then
           errorLogMonad_bind
             // check main func args
             (if LENGTH (func_info_params fi) > 0 then
-              errorMonad_error (panStatic_GenErr (implode
+              errorMonad_error (GenErr (implode
                   "main function has arguments\n"))
             else errorLogMonad_return one) (\_. errorLogMonad_bind
             // check main func export status
             (if fun_decl_export fi then
-              errorMonad_error (panStatic_GenErr (implode
+              errorMonad_error (GenErr (implode
                   "main function is exported\n"))
             else errorLogMonad_return one) (\_.
             // check main func return shape
             if ~(fun_decl_return fi = pan_One) then
-              errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+              errorMonad_error (ShapeErr (get_non_word_msg
                 (implode "main function return") (shape_to_str
                     (fun_decl_return fi))
                 (implode "") (FunScope (fun_decl_name fi) (implode ""))))
@@ -1917,8 +1904,7 @@ let static_check_decls_def,static_check_decls_ind = define_guess
             // check arg name uniqueness
             (match first_repeat (sort mlstring_lt (MAP FST
                 (func_info_params fi))) with
-              SOME pname -> errorMonad_error (panStatic_ScopeErr
-                  (mlstring_concat [
+              SOME pname -> errorMonad_error (ScopeErr (mlstring_concat [
                   implode "parameter "; pname; implode
                       " is redeclared in function "; fun_decl_name
                   fi; implode "\n"]))
@@ -1928,7 +1914,7 @@ let static_check_decls_def,static_check_decls_ind = define_guess
               errorLogMonad_bind
                 // check exported func arg num
                 (if LENGTH (func_info_params fi) > 4 then
-                  errorMonad_error (panStatic_GenErr (mlstring_concat [
+                  errorMonad_error (GenErr (mlstring_concat [
                       implode "exported function "; fun_decl_name fi;
                       implode " has more than 4 arguments\n"]))
                 else errorLogMonad_return one) (\_. errorLogMonad_bind
@@ -1938,7 +1924,7 @@ let static_check_decls_def,static_check_decls_ind = define_guess
                       (func_info_params fi)) (\_.
                 // check exported func return shape
                 if ~(fun_decl_return fi = pan_One) then
-                  errorMonad_error (panStatic_ShapeErr (get_non_word_msg
+                  errorMonad_error (ShapeErr (get_non_word_msg
                     (implode "exported function return") (shape_to_str
                         (fun_decl_return fi))
                     (implode "") (FunScope (fun_decl_name fi) (implode
@@ -1956,7 +1942,7 @@ let static_check_decls_def,static_check_decls_ind = define_guess
                     (fun_decl_return fi)) (\_.
               // check func return shape size
               if size_of_sh_with_ctxt sctxt (fun_decl_return fi) > 32 then
-                errorMonad_error (panStatic_ShapeErr (mlstring_concat [
+                errorMonad_error (ShapeErr (mlstring_concat [
                     implode "function "; fun_decl_name fi;
                     implode " returns a shape bigger than 32 words\n"]))
               else errorLogMonad_return one)))) (\_.
@@ -1979,12 +1965,12 @@ let static_check_names_def,static_check_names_ind = define_guess
      errorLogMonad_bind
        // check for redeclaration
        (match ALOOKUP sctxt name with SOME info ->
-         errorMonad_error (panStatic_ScopeErr (get_redec_msg panStatic_Stc
-           (implode "") name TopLevel))
+         errorMonad_error (ScopeErr (get_redec_msg panStatic_Stc (implode
+           "") name TopLevel))
        | NONE -> errorLogMonad_return one) (\_. errorLogMonad_bind
        // check field name uniqueness
        (match first_repeat (sort mlstring_lt (MAP FST flds)) with
-         SOME fld -> errorMonad_error (panStatic_ScopeErr (mlstring_concat [
+         SOME fld -> errorMonad_error (ScopeErr (mlstring_concat [
              implode "field "; fld; implode
                " is redeclared in struct name ";
              name; implode "\n"]))

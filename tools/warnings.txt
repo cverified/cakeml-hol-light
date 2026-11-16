@@ -30,6 +30,7 @@ binary_ieeeProps	Overload precision
 binary_ieeeProps	Overload f2r
 binary_ieeeProps	Overload sign
 sum	Overload case
+rat	rat_minv_def: PENDING (HOL4's fractions, which its rationals are a quotient of)
 rat	Overload expn
 rat	Overload exp
 cv_type	Overload c2n
@@ -510,14 +511,14 @@ infer	ML code skipped: val type_name_check_subst_alt =   type_name_check_subst_d
 infer	Overload Tem
 infer	derive constrain_op_case_def: conv patternMatchesLib.PMATCH_ELIM_CONV
 infer	derive constrain_op_expand: no constrain_op_case_def
-infer	line 149 is 124 characters
-infer	line 158 is 85 characters
-infer	line 886 is 86 characters
-infer	line 919 is 87 characters
-infer	line 922 is 87 characters
-infer	line 927 is 86 characters
-infer	line 1077 is 87 characters
-infer	line 1102 is 82 characters
+infer	line 150 is 124 characters
+infer	line 159 is 85 characters
+infer	line 887 is 86 characters
+infer	line 920 is 87 characters
+infer	line 923 is 87 characters
+infer	line 928 is 86 characters
+infer	line 1078 is 87 characters
+infer	line 1103 is 82 characters
 lexer_fun	ML code skipped: val listeq = CaseEq "list" val optioneq = CaseEq "option"
 lexer_fun	line 368 is 80 characters
 lexer_impl	ML code skipped: val tac =  full_simp_tac (srw_ss()) [char_le_def, char_lt_de
@@ -534,8 +535,6 @@ ml_translator	Overload True_ast
 ml_translator	Overload False_ast
 ml_translator	Overload -->
 ml_translator	ML code skipped: val Eval2_tac =   first_x_assum (qspec_then `refs` strip_ass
-ml_translator	ML FUN_FORALL_PUSH2: expected ')' but found '.' at 13
-ml_translator	derive FUN_QUANT_SIMP: no FUN_FORALL_PUSH2
 ml_translator	ML code skipped: local
 ml_translator	ML code skipped: val th0 = Q.SPEC `0` Eval_Val_INT val th_sub = MATCH_MP (MAT
 ml_translator	ML code skipped: in
@@ -597,10 +596,7 @@ cfHeapsBase	ML code skipped: val rew_heap = full_simp_tac bool_ss rew_heap_thms
 cfHeapsBase	line 114 is 100 characters
 cfHeaps	ML code skipped: fun sing x = [x]
 cfStore	ML code skipped: val tac_store2heap_IN =   Induct THENL [all_tac, Cases] \\ f
-cfApp	Theorem POSTv_cond: expected ')' but found '.' at 12
 cfApp	ML code skipped: val dec_clock_def = evaluateTheory.dec_clock_def val evaluat
-cfApp	Theorem Arrow_IMP_app_basic: expected ')' but found '.' at 102
-cfApp	Theorem Arrow_eq_app_basic: expected ')' but found '.' at 69
 cfApp	line 242 is 82 characters
 cfApp	line 246 is 85 characters
 cfApp	line 270 is 90 characters
@@ -683,8 +679,6 @@ cfDiv	Theorem evaluate_tailrec_div_ind_lemma: the ML value ^tailrec_clos, which 
 cfDiv	Theorem evaluate_tailrec_div_ind_lemma2: the ML value ^tailrec_clos, which the port does not have
 cfDiv	ML code skipped: fun rename_conv s tm =   let     val (v,body) = dest_abs tm 
 cfDiv	ML code skipped: val let_a = tailrec_clos |> rator |> rand |> rand |> rand |>
-cfDiv	Theorem tailrec_POSTd: expected ')' but found '.' at 359
-cfDiv	Theorem IMP_app_POSTd_old: expected ')' but found '.' at 711
 cfDiv	ML code skipped: val repeat_clos = process_topdecs `   fun repeat f x = repea
 cfDiv	ML code skipped: val repeat_body = repeat_clos |> rator |> rand |> rand |> ra
 cfDiv	ML code skipped: val make_single_app_ind = fetch "-" "make_single_app_ind"
@@ -695,25 +689,13 @@ cfDiv	Theorem evaluate_repeat_div_ind_lemma: the ML value ^repeat_clos, which th
 cfDiv	Theorem evaluate_repeat_div_ind_lemma2: the ML value ^repeat_clos, which the port does not have
 cfDiv	ML code skipped: fun rename_conv s tm =   let     val (v,body) = dest_abs tm 
 cfDiv	ML code skipped: val let_a = repeat_clos |> rator |> rand |> rand |> rand |> 
-cfDiv	Theorem repeat_POSTd0: expected ')' but found '.' at 232
-cfDiv	Theorem IMP_app_POSTd: expected ')' but found '.' at 275
-cfDiv	Theorem repeat_POSTd_one_FFI_part: expected ')' but found '.' at 291
-cfDiv	Theorem IMP_app_POSTd_one_FFI_part: expected ')' but found '.' at 357
 cfDiv	ML code skipped: val _ = (append_prog o process_topdecs)   `fun repeat f x = 
 cfDiv	ML code skipped: val st = ml_translatorLib.get_ml_prog_state ();
 cfDiv	ML code skipped: val repeat_v = fetch "-" "repeat_v_def"
-cfDiv	Theorem repeat_POSTd: expected ')' but found '.' at 228
-cfDiv	Theorem repeat_POSTe: expected ')' but found '.' at 149
 cfDiv	ML code skipped: val [llist_upto_eq,llist_upto_rel,llist_upto_trans,llist_upt
-cfDiv	Theorem LLIST_BISIM_UPTO: parse_atom: sym:'||' at 77
 cfDiv	Theorem LGENLIST_NONE_UNFOLD: parse_atom: sym:':' at 26
-cfDiv	Theorem LFLATTEN_NOT_NIL_IMP: parse_atom: sym:'||' at 19
-cfDiv	Theorem LFINITE_LFLATTEN_LGENERATE: parse_atom: sym:'||' at 88
-cfDiv	Theorem LFLATTEN_fromList_REPLICATE_LNIL: parse_atom: sym:'||' at 37
-cfDiv	Theorem repeat_POSTd_one_FFI_part_FLATTEN: expected ')' but found '.' at 292
-cfDiv	Theorem IMP_app_POSTd_one_FFI_part_FLATTEN: expected ')' but found '.' at 339
-cfDiv	line 1081 is 87 characters
-cfDiv	line 1082 is 85 characters
+cfDiv	line 1203 is 87 characters
+cfDiv	line 1204 is 85 characters
 RuntimeProg	ML code skipped: val _ = translation_extends "cfDiv";
 RuntimeProg	ML code skipped: val _ = ml_prog_update (open_module "Runtime");
 RuntimeProg	ML code skipped: val () = next_ml_names := ["fullGC"]; val result = translate
@@ -1245,11 +1227,7 @@ DoubleProg	ML code skipped: val _ = translate twicemaxulp_def
 DoubleProg	ML code skipped: val _ = translate ffloat_ulp_def
 DoubleProg	ML code skipped: val _ = translate posinf64_def
 DoubleProg	ML code skipped: val _ = translate neginf64_def
-DoubleProg	several_clauses cannot read the body: tokenize: '“fp64_to_float 1w”)'
-DoubleProg	Definition posmin64_def: tokenize: '“fp64_to_float 1w”)'
 DoubleProg	ML code skipped: val _ = translate posmin64_def
-DoubleProg	several_clauses cannot read the body: tokenize: '“fp64_to_float 0w”)'
-DoubleProg	Definition poszero64_def: tokenize: '“fp64_to_float 0w”)'
 DoubleProg	ML code skipped: val _ = translate poszero64_def
 DoubleProg	ML code skipped: val _ = augment_srw_ss [     rewrites [w2n_n2w, WORD_AND_CLA
 DoubleProg	Overload abs
@@ -1393,8 +1371,6 @@ basisProg	ML code skipped: Quote add_cakeml:   fun print_app_list_aux ls =     (
 basisProg	ML code skipped: val _ = ml_prog_update open_local_in_block;
 basisProg	ML code skipped: Quote add_cakeml:   fun print_app_list ls = print_app_list_a
 basisProg	ML code skipped: val _ = ml_prog_update close_local_blocks;
-basisProg	Theorem print_app_list_aux_spec: expected ')' but found '.' at 125
-basisProg	Theorem print_app_list_spec: expected ')' but found '.' at 121
 basisProg	ML code skipped: Quote add_cakeml:   fun print_int i = TextIO.print (Int.toSt
 basisProg	Theorem print_int_spec: the ML expression ^(fetch_v "print_int" (get_ml_pr...), which the port cannot evaluate
 basisProg	ML code skipped: Quote add_cakeml:   fun print_pp pp = print_app_list (Pretty
@@ -1465,9 +1441,9 @@ compiler	ML code skipped: val help_string_tm =   help_string |> hd |> (fn QUOTE 
 compiler	Overload add_locs
 compiler	full_compile_64_def: PENDING (the file system of the basis library, which the port does)
 compiler	full_compile_32_def: PENDING (the file system of the basis library, which the port does)
-compiler	line 415 is 85 characters
-compiler	line 972 is 88 characters
-compiler	line 974 is 99 characters
+compiler	line 402 is 85 characters
+compiler	line 959 is 88 characters
+compiler	line 961 is 99 characters
 gc_shared	derive heap_lookup_FLOOKUP: '\\\\ full_simp'
 gc_shared	ML code skipped: val _ = augment_srw_ss [rewrites [LIST_REL_def]];
 gc_shared	derive NOT_IN_heap_map: '\\\\ full_simp'
@@ -1512,7 +1488,7 @@ wordSem	ML code skipped: val s = ``(s:('a,'c,'ffi) wordSem$state)``
 wordSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
 wordSem	line 1219 is 86 characters
 targetSem	line 62 is 86 characters
-targetSem	line 556 is 83 characters
+targetSem	line 557 is 83 characters
 labSem	Overload read_reg
 labSem	line 51 is 205 characters
 stackSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
@@ -3050,8 +3026,6 @@ ag32Prog	ML code skipped: val _ = (ml_translatorLib.clean_on_exit := true);
 clFFI	ML code skipped: val decode_encode_name = "decode_encode"; val decode_encode 
 fsFFI	Overload isFile
 fsFFI	ML code skipped: val IO_fs_component_equality = theorem"IO_fs_component_equal
-fsFFI	several_clauses cannot read the body: parse_atom: sym:'||' at 215
-fsFFI	Definition write_def: parse_atom: sym:'||' at 215
 fsFFI	ML code skipped: val decode_encode_name = "decode_encode"; val decode_encode 
 fsFFI	line 134 is 80 characters
 fsFFI	line 135 is 80 characters
@@ -3059,12 +3033,6 @@ basis_ffi	ML code skipped: val iobuff_loc_num =   TextIOProgTheory.iobuff_loc_de
 basis_ffi	derive IOFS_precond: '\\\\ rw[set_se'
 basis_ffi	derive STDIO_precond: '>>\n  qexists'
 basis_ffi	ML code skipped: fun mk_main_call s =   ``(Dlet unknown_loc (Pcon NONE []) (A
-basis_ffi	several_clauses cannot read the body: expected ')' but found '.' at 194
-basis_ffi	Definition whole_prog_spec_def: expected ')' but found '.' at 194
-basis_ffi	several_clauses cannot read the body: expected ')' but found '.' at 172
-basis_ffi	Definition whole_prog_ffidiv_spec_def: expected ')' but found '.' at 172
-basis_ffi	several_clauses cannot read the body: expected ')' but found '.' at 185
-basis_ffi	Definition whole_prog_spec2_def: expected ')' but found '.' at 185
 basis_ffi	Theorem whole_prog_spec2_semantics_prog: the ML value ^main_call, which the port does not have
 basis_ffi	Theorem whole_prog_spec_semantics_prog: the ML value ^main_call, which the port does not have
 basis_ffi	Theorem whole_prog_spec_semantics_prog_ffidiv: the ML value ^main_call, which the port does not have
@@ -3072,9 +3040,9 @@ basis_ffi	derive basis_ffi_length_thms: no ffi_write_length
 basis_ffi	ML code skipped: val _ = translation_extends "TextIOProg"; val st_f = get_ml_
 basis_ffi	ML code skipped: val ref_eq_nil_pat = “_ = [] : v store_v list”
 basis_ffi	derive basis_refs_eqs: '"refs_def"\n '
-basis_ffi	line 194 is 81 characters
-basis_ffi	line 195 is 80 characters
-basis_ffi	line 198 is 81 characters
+basis_ffi	line 195 is 81 characters
+basis_ffi	line 196 is 80 characters
+basis_ffi	line 199 is 81 characters
 basis_ffi	line 229 is 101 characters
 basis_ffi	line 231 is 101 characters
 basis_ffi	line 237 is 96 characters
@@ -3085,7 +3053,7 @@ basis_ffi	line 279 is 93 characters
 basis_ffi	line 280 is 89 characters
 basis_ffi	line 281 is 92 characters
 basis_ffi	line 282 is 92 characters
-basis_ffi	line 315 is 90 characters
+basis_ffi	line 332 is 90 characters
 compiler32Prog	ML code skipped: open preamble; open compilerTheory      exportTheory      ml
 compiler32Prog	ML code skipped: val _ = translation_extends "ag32Prog"; val _ = ml_translato
 compiler32Prog	ML code skipped: val _ = ml_translatorLib.ml_prog_update (ml_progLib.open_mod
@@ -3170,7 +3138,6 @@ compiler32Prog	ML code skipped: val _ = res |> hyp |> null orelse         failwi
 compiler32Prog	ML code skipped: val res = translate (has_pancake_flag_def |> SIMP_RULE (srw_
 compiler32Prog	ML code skipped: Quote add_cakeml:   fun main u =     let       val cl = Comm
 compiler32Prog	ML code skipped: val main_v_def = fetch "-" "main_v_def";
-compiler32Prog	Theorem main_spec: expected ')' but found '.' at 127
 compiler32Prog	ML code skipped: val sem_thm = prove_sem_thm "main" "compiler32_prog" main_wh
 compiler32Prog	ML code skipped: val _ = ml_translatorLib.reset_translation(); (* because thi
 ag32Bootstrap	derive compiler32_compiled: '"" compiler3'
@@ -3957,7 +3924,6 @@ compiler64Prog	ML code skipped: val _ = (next_ml_names := ["compiler_has_repl_fl
 compiler64Prog	ML code skipped: val res = translate (has_pancake_flag_def |> SIMP_RULE (srw_
 compiler64Prog	ML code skipped: Quote add_cakeml:   fun main u =   let     val cl = CommandL
 compiler64Prog	ML code skipped: val main_v_def = fetch "-" "main_v_def";
-compiler64Prog	Theorem main_spec: expected ')' but found '.' at 152
 compiler64Prog	ML code skipped: val sem_thm = prove_sem_thm "main" "compiler64_prog" main_wh
 compiler64Prog	ML code skipped: val th = get_ml_prog_state ()
 compiler64Prog	ML code skipped: |> ml_progLib.remove_snocs   |> ml_progLib.get_thm   |> REWR
@@ -4695,13 +4661,9 @@ cfMonad	ML code skipped: fun PURE_FACTS_FIRST_CONV H =   let       val preds = l
 cfMonad	ML code skipped: val H_to_norm = STAR_AC_CONV H           val norm_to_H' = (S
 cfMonad	ML code skipped: val EXTRACT_PURE_FACTS_CONV =   (RATOR_CONV PURE_FACTS_FIRST
 cfMonad	ML code skipped: fun EXTRACT_PURE_FACTS_TAC (g as (asl, w)) =   let       fun
-cfMonad	Theorem EvalM_from_app_gen: expected ')' but found '.' at 243
-cfMonad	Theorem EvalM_from_app: expected ')' but found '.' at 228
-cfMonad	Theorem EvalM_from_app_unit_gen: expected ')' but found '.' at 228
-cfMonad	Theorem EvalM_from_app_unit: expected ')' but found '.' at 213
-cfMonad	line 36 is 89 characters
-cfMonad	line 41 is 89 characters
-cfMonad	line 51 is 97 characters
+cfMonad	line 37 is 89 characters
+cfMonad	line 42 is 89 characters
+cfMonad	line 52 is 97 characters
 compute_syntax	Overload Num
 compute_syntax	Overload _X
 compute_syntax	Overload _Y
@@ -4909,27 +4871,11 @@ holSemantics	Definition is_std_interpretation_def: unparsed input at 137: '\\'
 holSemantics	Overload is_std_interpretation
 holSemantics	Overload is_structure
 holSemanticsExtra	ML code skipped: val mem = ``mem:'U->'U->bool``
-holSemanticsExtra	Theorem typesem_inhabited: binder expected at 36: "'d"
-holSemanticsExtra	Theorem typesem_Fun: binder expected at 5: "'d"
-holSemanticsExtra	Theorem typesem_Bool: binder expected at 5: "'d"
-holSemanticsExtra	Theorem typesem_TYPE_SUBST: binder expected at 13: "'d"
-holSemanticsExtra	Theorem typesem_tyvars: binder expected at 5: "'d"
-holSemanticsExtra	Theorem typesem_consts: binder expected at 5: "'d"
-holSemanticsExtra	Theorem termsem_typesem: binder expected at 41: "'d"
-holSemanticsExtra	Theorem termsem_typesem_matchable: binder expected at 42: "'d"
 holSemanticsExtra	ML code skipped: val Equalsem =   is_std_interpretation_def   |> SPEC_ALL |> 
 holSemanticsExtra	Theorem termsem_Equal: the ML value ^Equalsem, which the port does not have
-holSemanticsExtra	Theorem typesem_frees: binder expected at 14: "'d"
-holSemanticsExtra	Theorem is_valuation_reduce: binder expected at 18: "'d"
-holSemanticsExtra	Theorem typesem_sig: binder expected at 10: "'d"
-holSemanticsExtra	Theorem term_valuation_exists: binder expected at 36: "'d"
-holSemanticsExtra	Theorem valuation_exists: binder expected at 36: "'d"
-holSemanticsExtra	Theorem extend_valuation_exists: binder expected at 36: "'d"
 holSemanticsExtra	ML code skipped: val rwt = MATCH_MP (PROVE[]``P x ⇒ ((∀x. P x ⇒ Q) ⇔ Q)``) is
 holSemanticsExtra	derive interprets_nil: '++listSimps.'
-holSemanticsExtra	Theorem is_type_assignment_reduce: binder expected at 18: "'d"
-holSemanticsExtra	Theorem is_term_assignment_reduce: binder expected at 18: "'d"
-holSemanticsExtra	line 293 is 80 characters
+holSemanticsExtra	line 349 is 80 characters
 holBool	ML code skipped: val mem = ``mem:'U->'U->bool``
 holBool	Overload p
 holBool	Overload FAp
@@ -5269,7 +5215,7 @@ bvi_tmcProof	ML code skipped: >> first_assum $ qspecl_then [‘[exp]’, ‘dec_
 bvi_tmcProof	ML code skipped: >> qmatch_asmsub_rename_tac                ‘evaluate ([body'
 bvi_tmcProof	ML code skipped: Resume evaluate_rewrite_tmc[return]:   gvs [evaluate_def]   
 bvi_tmcProof	ML code skipped: Finalise evaluate_rewrite_tmc;
-bvi_tmcProof	line 1885 is 82 characters
+bvi_tmcProof	line 1886 is 82 characters
 bvl_handleProof	derive evaluate_GENLIST: '++ETA_ss)[TA'
 bvl_handleProof	derive ALOOKUP_MAPi_SWAP: '\\\\ fs [o_DEF'
 bvl_handleProof	derive ALOOKUP_MAPi_APPEND2: '\\\\ fs [o_DEF'
@@ -6615,15 +6561,10 @@ CommandLineProof	ML code skipped: val _ = translation_extends"CommandLineProg";
 CommandLineProof	ML code skipped: val set_thm =   COMMANDLINE_def   |> SIMP_RULE(srw_ss())[   
 CommandLineProof	derive COMMANDLINE_precond: not a name
 CommandLineProof	ML code skipped: val eq_v_thm = fetch "mlbasicsProg" "eq_v_thm" val eq_num_v_
-CommandLineProof	Theorem CommandLine_cloop_spec: expected ')' but found '.' at 228
-CommandLineProof	Theorem CommandLine_cline_spec: expected ')' but found '.' at 106
 CommandLineProof	ML code skipped: val hd_v_thm = fetch "ListProg" "hd_v_thm"; val mlstring_hd_
-CommandLineProof	Theorem CommandLine_name_spec: expected ')' but found '.' at 110
 CommandLineProof	ML code skipped: val tl_v_thm = fetch "ListProg" "tl_v_thm"; val mlstring_tl_
-CommandLineProof	Theorem CommandLine_arguments_spec: expected ')' but found '.' at 114
 CommandLineProof	ML code skipped: fun prove_hprop_inj_tac thm =     rw[HPROP_INJ_def, GSYM STA
 RuntimeProof	ML code skipped: val st = get_ml_prog_state();
-RuntimeProof	Theorem Runtime_exit_spec: expected ')' but found '.' at 90
 RuntimeProof	Theorem Runtime_abort_spec: the ML expression ^(fetch_v "Runtime.abort" st...), which the port cannot evaluate
 fsFFIProps	Overload hasFreeFD
 fsFFIProps	Overload all_lines_inode
@@ -6636,45 +6577,11 @@ TextIOProof	Overload up_stderr
 TextIOProof	Overload add_stdout
 TextIOProof	Overload add_stderr
 TextIOProof	Overload TypeStamp_InstreamBuffered
-TextIOProof	Theorem output1_spec: expected ')' but found '.' at 236
-TextIOProof	Theorem output1_STDIO_spec: expected ')' but found '.' at 209
-TextIOProof	Theorem output1_stdOut_spec: expected ')' but found '.' at 99
 TextIOProof	ML code skipped: val tac =      simp[w82n_n2w8,FD_def,LENGTH_n2w8,STRING_TYPE
-TextIOProof	Theorem output1_stdout_spec: expected ')' but found '.' at 117
-TextIOProof	Theorem output1_stderr_spec: expected ')' but found '.' at 117
-TextIOProof	Theorem output_aux_spec: expected ')' but found '.' at 317
-TextIOProof	Theorem output_spec: expected ')' but found '.' at 246
-TextIOProof	Theorem output_STDIO_spec: expected ')' but found '.' at 227
-TextIOProof	Theorem print_spec: expected ')' but found '.' at 111
-TextIOProof	Theorem output_stderr_spec: expected ')' but found '.' at 137
-TextIOProof	Theorem print_err_spec: expected ')' but found '.' at 115
-TextIOProof	Theorem raw_input_IOFS_spec: expected ')' but found '.' at 320
-TextIOProof	Theorem raw_input_spec: expected ')' but found '.' at 339
-TextIOProof	Theorem refillBuffer_with_read_spec: expected ')' but found '.' at 340
 TextIOProof	ML code skipped: val eq_v_thm = fetch "mlbasicsProg" "eq_v_thm"; val eq_num_v
 TextIOProof	ML code skipped: val neq_v_thm = fetch "mlbasicsProg" "neq_v_thm"; val neq_ch
-TextIOProof	Theorem input1_aux_spec: expected ')' but found '.' at 135
-TextIOProof	Theorem peekChar_aux_spec: expected ')' but found '.' at 137
-TextIOProof	Theorem input1_IOFS_spec: expected ')' but found '.' at 230
-TextIOProof	Theorem peekChar_IOFS_spec: expected ')' but found '.' at 232
-TextIOProof	Theorem input1_spec: expected ')' but found '.' at 231
-TextIOProof	Theorem peekChar_spec: expected ')' but found '.' at 233
-TextIOProof	Theorem input_aux_w_content_spec: expected ')' but found '.' at 274
-TextIOProof	Theorem input_aux_spec: expected ')' but found '.' at 262
-TextIOProof	Theorem print_list_spec: expected ')' but found '.' at 128
 TextIOProof	Overload all_lines_inode_gen
-TextIOProof	Theorem inputAllTokensFile_spec: expected ')' but found '.' at 259
-TextIOProof	several_clauses cannot read the body: expected ')' but found '.' at 228
-TextIOProof	Definition sub_spec_def: expected ')' but found '.' at 228
-TextIOProof	Theorem inputAllTokensFrom_SOME: expected ')' but found '.' at 270
-TextIOProof	Theorem inputLinesFile_spec: expected ')' but found '.' at 151
-TextIOProof	Theorem inputLinesStdIn_spec: expected ')' but found '.' at 143
-TextIOProof	Theorem inputBuff_spec: expected ')' but found '.' at 169
-TextIOProof	Theorem inputAll_aux_spec: expected ')' but found '.' at 197
-TextIOProof	Theorem inputAll_spec: expected ')' but found '.' at 104
-TextIOProof	Theorem inputAllFrom_SOME_spec: expected ')' but found '.' at 174
-TextIOProof	Theorem inputAllFrom_NONE_spec: expected ')' but found '.' at 182
-TextIOProof	line 965 is 84 characters
+TextIOProof	line 1063 is 84 characters
 ag32_prog	ML code skipped: val ag32_el_11 = DB.fetch "-" "ag32_el_11"; val ag32_el_dist
 ag32_prog	ML code skipped: val PUSH_IN_INTO_IF = METIS_PROVE []   ``!g x y z. (x IN (if
 ag32_prog	ML code skipped: val lemma =   METIS_PROVE [SPLIT_ag32_proj]   ``p (ag32_proj

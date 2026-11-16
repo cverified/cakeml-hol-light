@@ -122,7 +122,7 @@ let memory_rel_Thunk_bits = prove
   CHEAT_TAC);;
 
 let MEM_join_env_cut_env = prove
- (`!(a:dataSem_v#'a word_loc) t r s.
+ (`!(a:dataSem_v#alpha word_loc) t r s.
      MEM a (join_env x (toAList (inter t (adjust_set x)))) /\
      dataSem_cut_env r s = SOME x ==>
      MEM a (join_env s (toAList (inter t (adjust_set s))))`,
@@ -396,7 +396,7 @@ let option_le_SOME = prove
 let data_to_wordProof_compile_semantics = prove
  (cake_as_vars (fun () ->
     `wordSem_state_handler
-       (t:('a,'c,'ffi)wordSem_state) = 0 /\ wordSem_state_gc_fun t =
+       (t:(alpha,gamma,'ffi)wordSem_state) = 0 /\ wordSem_state_gc_fun t =
          word_gc_fun c /\
        init_store_ok c (wordSem_state_store t) (wordSem_state_memory t)
          (wordSem_state_mdomain t) (wordSem_state_code_buffer t)

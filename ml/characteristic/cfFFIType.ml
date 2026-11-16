@@ -2,7 +2,7 @@
 (*  cfFFIType: ported from HOL4's
     characteristic/cfFFITypeScript.sml
     A definition theory, with 9 definitions, 2 datatypes and 16
-    theorems.  Needed by 79 files of the port.  *)
+    theorems.  Needed by 83 files of the port.  *)
 (* ======================================================== *)
 
 (*

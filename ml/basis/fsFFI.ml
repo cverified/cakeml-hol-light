@@ -64,8 +64,8 @@ let with_same_numchars = prove
   CHEAT_TAC);;
 
 let get_file_content_def = new_definition
-  `get_file_content fs fd' =
-     OPTION_BIND (ALOOKUP (IO_fs_infds fs) fd') (\(ino,md,off). OPTION_BIND
+  `get_file_content fs fd =
+     OPTION_BIND (ALOOKUP (IO_fs_infds fs) fd) (\(ino,md,off). OPTION_BIND
        (ALOOKUP (IO_fs_inode_tbl fs) ino) (\c.
        SOME (c,off)))`;;
 
@@ -76,12 +76,12 @@ let nextFD_def = new_definition
 (* adds a new file in infds *)
 let openFile_def = new_definition
   `openFile fnm fsys md pos =
-      (let fd' = nextFD fsys in
-           OPTION_IGNORE_BIND (assert (fd' <= IO_fs_maxFD fsys))
-             (OPTION_BIND (ALOOKUP (IO_fs_files fsys) fnm) (\iname.
+      (let fd = nextFD fsys in
+           OPTION_IGNORE_BIND (assert (fd <= IO_fs_maxFD fsys)) (OPTION_BIND
+             (ALOOKUP (IO_fs_files fsys) fnm) (\iname.
            OPTION_IGNORE_BIND (ALOOKUP (IO_fs_inode_tbl fsys) (File iname))
              (
-           SOME (fd',IO_fs_infds_fupd (K (CONS (nextFD fsys,(File
+           SOME (fd,IO_fs_infds_fupd (K (CONS (nextFD fsys,(File
              iname,md,pos)) (IO_fs_infds fsys))) fsys)))))`;;
 
 let openFileFS_def = new_definition
@@ -93,11 +93,11 @@ let openFileFS_def = new_definition
 (* adds a new file in infds and truncate it *)
 let openFile_truncate_def = new_definition
   `openFile_truncate fnm fsys md =
-     (let fd' = nextFD fsys in
-         OPTION_IGNORE_BIND (assert (fd' <= IO_fs_maxFD fsys)) (OPTION_BIND
+     (let fd = nextFD fsys in
+         OPTION_IGNORE_BIND (assert (fd <= IO_fs_maxFD fsys)) (OPTION_BIND
            (ALOOKUP (IO_fs_files fsys) fnm) (\iname.
          OPTION_IGNORE_BIND (ALOOKUP (IO_fs_inode_tbl fsys) (File iname)) (
-         SOME (fd',
+         SOME (fd,
                            IO_fs_inode_tbl_fupd (AFUPDKEY (File iname)
                              (\x. "")) (IO_fs_infds_fupd (K (CONS (nextFD
                              fsys,(File iname,md,0)) (IO_fs_infds fsys)))
@@ -105,50 +105,62 @@ let openFile_truncate_def = new_definition
 
 (* checks if a descriptor index is in infds *)
 let validFD_def = new_definition
-  `validFD fd' fs <=> fd' IN FDOM (alist_to_fmap (IO_fs_infds fs))`;;
+  `validFD fd fs <=> fd IN FDOM (alist_to_fmap (IO_fs_infds fs))`;;
 
 (* increase by n the position in file descriptor and dump numchar's head *)
 let bumpFD_def = new_definition
-  `bumpFD fd' fs n =
+  `bumpFD fd fs n =
                         IO_fs_numchars_fupd (K (THE (LTL (IO_fs_numchars
-                          fs)))) (IO_fs_infds_fupd (AFUPDKEY fd' (I ## I ##
+                          fs)))) (IO_fs_infds_fupd (AFUPDKEY fd (I ## I ##
                           ((+) n))) fs)`;;
 
 (* reads several chars and update position *)
 let fsFFI_read_def = new_definition
-  `fsFFI_read fd' fs n =
-     OPTION_BIND (ALOOKUP (IO_fs_infds fs) fd') (\(ino,md,off).
+  `fsFFI_read fd fs n =
+     OPTION_BIND (ALOOKUP (IO_fs_infds fs) fd) (\(ino,md,off).
        OPTION_IGNORE_BIND (assert (md = ReadMode)) (OPTION_BIND (ALOOKUP
          (IO_fs_inode_tbl fs) ino) (\content. OPTION_BIND (LHD (IO_fs_numchars
          fs)) (\strm.
        let k = MIN n (MIN (LENGTH content - off) (SUC strm)) in
-       SOME (TAKE k (DROP off content),bumpFD fd' fs k)))))`;;
+       SOME (TAKE k (DROP off content),bumpFD fd fs k)))))`;;
 
 (* replaces the content of the file in fs with filename fnm,
 * set the position in the file and skip k fsnumchars elements*)
 let fsupdate_def = new_definition
-  `fsupdate fs fd' k pos content =
-     (match ALOOKUP (IO_fs_infds fs) fd' with NONE -> fs | SOME (fnm,_) ->
-     (IO_fs_infds_fupd (K ((AFUPDKEY fd' (I ## I ## (K pos)))
-       (IO_fs_infds fs))) (IO_fs_numchars_fupd (K (THE (LDROP k
-       (IO_fs_numchars fs)))) (IO_fs_inode_tbl_fupd (K (AFUPDKEY fnm (K
-       content) (IO_fs_inode_tbl fs))) fs))))`;;
+  `fsupdate fs fd k pos content =
+     (match ALOOKUP (IO_fs_infds fs) fd with NONE -> fs | SOME (fnm,_) ->
+     (IO_fs_infds_fupd (K ((AFUPDKEY fd (I ## I ## (K pos))) (IO_fs_infds
+       fs))) (IO_fs_numchars_fupd (K (THE (LDROP k (IO_fs_numchars fs))))
+       (IO_fs_inode_tbl_fupd (K (AFUPDKEY fnm (K content) (IO_fs_inode_tbl
+       fs))) fs))))`;;
 
 (* "The write function returns the number of bytes successfully written into the
 *  array, which may at times be less than the specified nbytes. It returns -1 if
 *  an exceptional condition is encountered." *)
 (* can it be 0? *)
 
-(* PORT FAILED: Definition write_def: parse_atom: sym:'||' at 215 *)
-(* HOL4 fsFFIScript.sml:140-156: the definition *)
+let fsFFI_write_def = new_definition
+  `fsFFI_write fd n chars fs =
+     OPTION_BIND (ALOOKUP (IO_fs_infds fs) fd) (\(ino,md,off).
+       OPTION_IGNORE_BIND (assert (md = WriteMode)) (OPTION_BIND (ALOOKUP
+         (IO_fs_inode_tbl fs) ino) (\content.
+       OPTION_IGNORE_BIND (assert (n <= LENGTH chars)) (
+       OPTION_IGNORE_BIND (assert (~(IO_fs_numchars fs = LNIL)))
+         (OPTION_BIND (LHD (IO_fs_numchars fs)) (\strm.
+       let k = MIN n strm in
+         // an unspecified error occurred
+         SOME (k,fsupdate fs fd 1 (off + k)
+                             (APPEND (APPEND (TAKE off content)
+                              (TAKE k chars))
+                              (DROP (off + k) content)))))))))`;;
 
 
 (* remove file from infds *)
 let closeFD_def = new_definition
-  `closeFD fd' fsys =
-     OPTION_BIND (ALOOKUP (IO_fs_infds fsys) fd') (\(fnm,md,off).
+  `closeFD fd fsys =
+     OPTION_BIND (ALOOKUP (IO_fs_infds fsys) fd) (\(fnm,md,off).
         OPTION_IGNORE_BIND (assert ((\inode. ?fnm. inode = File fnm) fnm)) (
-        SOME (one,IO_fs_infds_fupd (K (ADELKEY fd' (IO_fs_infds fsys)))
+        SOME (one,IO_fs_infds_fupd (K (ADELKEY fd (IO_fs_infds fsys)))
           fsys)))`;;
 
 
@@ -175,8 +187,8 @@ let ffi_open_in_def = new_definition
   `ffi_open_in (conf:word8 list) bytes fs = APPEND (
        OPTION_IGNORE_BIND (assert (9 <= LENGTH bytes)) (OPTION_BIND
          (getNullTermStr conf) (\fname. OPTION_BIND (openFile (implode fname)
-         fs ReadMode 0) (\(fd',fs').
-       SOME (FFIreturn (APPEND (CONS (n2w 0) (n2w8 fd')) (DROP 9 bytes))
+         fs ReadMode 0) (\(fd,fs').
+       SOME (FFIreturn (APPEND (CONS (n2w 0) (n2w8 fd)) (DROP 9 bytes))
          fs')))))
      (
        OPTION_IGNORE_BIND (assert (0 < LENGTH bytes)) (
@@ -192,9 +204,9 @@ let ffi_open_out_def = new_definition
   `ffi_open_out (conf:word8 list) bytes fs = APPEND (
        OPTION_IGNORE_BIND (assert (9 <= LENGTH bytes)) (OPTION_BIND
          (getNullTermStr conf) (\fname. OPTION_BIND (openFile_truncate (implode
-         fname) fs WriteMode) (\(fd',fs').
-       OPTION_IGNORE_BIND (assert (fd' <= 255)) (
-       SOME (FFIreturn (APPEND (CONS (n2w 0) (n2w8 fd')) (DROP 9 bytes))
+         fname) fs WriteMode) (\(fd,fs').
+       OPTION_IGNORE_BIND (assert (fd <= 255)) (
+       SOME (FFIreturn (APPEND (CONS (n2w 0) (n2w8 fd)) (DROP 9 bytes))
          fs'))))))
      (
        OPTION_IGNORE_BIND (assert (0 < LENGTH bytes)) (

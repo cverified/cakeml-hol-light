@@ -132,15 +132,16 @@ let make_str_safe_side = prove
 (* HOL4 SexpProgScript.sml:220: ML code, not ported *)
 
 let read_string_aux_imp_post_def = new_definition
-  `read_string_aux_imp_post s acc fs is fd' =
+  `read_string_aux_imp_post s acc fs is fd =
      (match read_string_aux s acc with INL (msg,rest) ->
-          POSTe (?_SEP_EXISTS exn) (?_INSTREAM_STR k) fd' is rest (forwardFD
-            fs fd' k) *
-            &(Fail_exn msg exn)
+          POSTe (\exn. SEP_EXISTS (\k.
+            INSTREAM_STR fd is rest (forwardFD fs fd k) *
+            &(Fail_exn msg exn)))
       | INR (slit,rest) ->
-          POSTv (?_SEP_EXISTS slitv) (?_STDIO k) (forwardFD fs fd' k) *
-            INSTREAM_STR fd' is rest (forwardFD fs fd' k) *
-            &(STRING_TYPE slit slitv))`;;
+          POSTv (\slitv. SEP_EXISTS (\k.
+            STDIO (forwardFD fs fd k) *
+            INSTREAM_STR fd is rest (forwardFD fs fd k) *
+            &(STRING_TYPE slit slitv))))`;;
 
 (* Can be used in read_string_aux_imp_spec to finish proofs about base cases.
  * k indicates how much we moved forward (passed to forwardFD) *)
@@ -152,13 +153,13 @@ let read_string_aux_imp_post_def = new_definition
 
 (* [local] *)
 let read_string_aux_imp_spec = prove
- (`!s acc accv p is fs fd'.
+ (`!s acc accv p is fs fd.
      LIST_TYPE CHAR acc accv ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        Sexp_read_string_aux_imp_v [is; accv]
-       (STDIO fs * INSTREAM_STR fd' is s fs)
-       (read_string_aux_imp_post s acc fs is fd')`,
+       (STDIO fs * INSTREAM_STR fd is s fs)
+       (read_string_aux_imp_post s acc fs is fd)`,
   CHEAT_TAC);;
 
 let read_string_imp_spec = prove
@@ -167,39 +168,42 @@ let read_string_imp_spec = prove
   Sexp_read_string_imp_v [is]
      (STDIO fs * INSTREAM_STR fd is s fs)
      (match mlsexp_read_string s with INL (msg,rest) ->
-          POSTe (?_SEP_EXISTS exn) (?_INSTREAM_STR k) fd is rest (forwardFD
-            fs fd k) *
-            &(Fail_exn msg exn)
-      | INR (slit,rest) ->
-          POSTv (?_SEP_EXISTS slitv) (?_STDIO k) (forwardFD fs fd k) *
+          POSTe (\exn. SEP_EXISTS (\k.
             INSTREAM_STR fd is rest (forwardFD fs fd k) *
-            &(STRING_TYPE slit slitv))`,
+            &(Fail_exn msg exn)))
+      | INR (slit,rest) ->
+          POSTv (\slitv. SEP_EXISTS (\k.
+            STDIO (forwardFD fs fd k) *
+            INSTREAM_STR fd is rest (forwardFD fs fd k) *
+            &(STRING_TYPE slit slitv))))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let read_symbol_imp_spec = prove
- (`!s acc accv p is fs fd'.
+ (`!s acc accv p is fs fd.
      LIST_TYPE CHAR acc accv ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        Sexp_read_symbol_imp_v [is; accv]
-       (STDIO fs * INSTREAM_STR fd' is s fs)
+       (STDIO fs * INSTREAM_STR fd is s fs)
        (match read_symbol s acc with (slit,rest) ->
-            POSTv (?_SEP_EXISTS slitv) (?_STDIO k) (forwardFD fs fd' k) *
-              INSTREAM_STR fd' is rest (forwardFD fs fd' k) *
-              &(STRING_TYPE slit slitv))`,
+            POSTv (\slitv. SEP_EXISTS (\k.
+              STDIO (forwardFD fs fd k) *
+              INSTREAM_STR fd is rest (forwardFD fs fd k) *
+              &(STRING_TYPE slit slitv))))`,
   CHEAT_TAC);;
 
 let lex_aux_imp_post_def = new_definition
-  `lex_aux_imp_post depth s acc fs is fd' =
+  `lex_aux_imp_post depth s acc fs is fd =
      (match mlsexp_lex_aux depth s acc with INL (msg,rest) ->
-          POSTe (?_SEP_EXISTS exn) (?_INSTREAM_STR k) fd' is rest (forwardFD
-            fs fd' k) *
-            &(Fail_exn msg exn)
+          POSTe (\exn. SEP_EXISTS (\k.
+            INSTREAM_STR fd is rest (forwardFD fs fd k) *
+            &(Fail_exn msg exn)))
       | INR (toks,rest) ->
-          POSTv (?_SEP_EXISTS tokvs) (?_STDIO k) (forwardFD fs fd' k) *
-            INSTREAM_STR fd' is rest (forwardFD fs fd' k) *
-            &(LIST_TYPE MLSEXP_TOKEN_TYPE toks tokvs))`;;
+          POSTv (\tokvs. SEP_EXISTS (\k.
+            STDIO (forwardFD fs fd k) *
+            INSTREAM_STR fd is rest (forwardFD fs fd k) *
+            &(LIST_TYPE MLSEXP_TOKEN_TYPE toks tokvs))))`;;
 
 (* HOL4 SexpProgScript.sml:440: ML code, not ported *)
 
@@ -207,13 +211,13 @@ let lex_aux_imp_post_def = new_definition
 (* HOL4 SexpProgScript.sml:443-446: a proof *)
 
 let lex_aux_imp_spec = prove
- (`!depth s acc depthv accv p is fs fd'.
+ (`!depth s acc depthv accv p is fs fd.
      NUM depth depthv /\ LIST_TYPE MLSEXP_TOKEN_TYPE acc accv ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        Sexp_lex_aux_imp_v [depthv; is; accv]
-       (STDIO fs * INSTREAM_STR fd' is s fs)
-       (lex_aux_imp_post depth s acc fs is fd')`,
+       (STDIO fs * INSTREAM_STR fd is s fs)
+       (lex_aux_imp_post depth s acc fs is fd)`,
   CHEAT_TAC);;
 
 let lex_imp_spec = prove
@@ -222,13 +226,14 @@ let lex_imp_spec = prove
   Sexp_lex_imp_v [is]
      (STDIO fs * INSTREAM_STR fd is s fs)
      (match lex s with INL (msg,rest) ->
-        POSTe (?_SEP_EXISTS exn) (?_INSTREAM_STR k) fd is rest (forwardFD fs
-          fd k) *
-          &(Fail_exn msg exn)
-      | INR (toks,rest) ->
-        POSTv (?_SEP_EXISTS tokvs) (?_STDIO k) (forwardFD fs fd k) *
+        POSTe (\exn. SEP_EXISTS (\k.
           INSTREAM_STR fd is rest (forwardFD fs fd k) *
-          &(LIST_TYPE MLSEXP_TOKEN_TYPE toks tokvs))`,
+          &(Fail_exn msg exn)))
+      | INR (toks,rest) ->
+        POSTv (\tokvs. SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
+          INSTREAM_STR fd is rest (forwardFD fs fd k) *
+          &(LIST_TYPE MLSEXP_TOKEN_TYPE toks tokvs))))`,
   CHEAT_TAC);;
 
 let inputSexp_spec = prove
@@ -237,13 +242,14 @@ let inputSexp_spec = prove
   Sexp_inputSexp_v [is]
      (STDIO fs * INSTREAM_STR fd is s fs)
      (match mlsexp_parse s with INL (msg,rest) ->
-        POSTe (?_SEP_EXISTS exn) (?_INSTREAM_STR k) fd is rest (forwardFD fs
-          fd k) *
-          &(Fail_exn msg exn)
-      | INR (se,rest) ->
-        POSTv (?_SEP_EXISTS sev) (?_STDIO k) (forwardFD fs fd k) *
+        POSTe (\exn. SEP_EXISTS (\k.
           INSTREAM_STR fd is rest (forwardFD fs fd k) *
-          &(SEXP_TYPE se sev))`,
+          &(Fail_exn msg exn)))
+      | INR (se,rest) ->
+        POSTv (\sev. SEP_EXISTS (\k.
+          STDIO (forwardFD fs fd k) *
+          INSTREAM_STR fd is rest (forwardFD fs fd k) *
+          &(SEXP_TYPE se sev))))`,
   CHEAT_TAC);;
 
 (* and the interface *)

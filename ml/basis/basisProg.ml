@@ -15,6 +15,12 @@ needs "basis/PrettyPrinterProg.ml";;
 needs "basis/RuntimeProof.ml";;
 needs "basis/SexpProg.ml";;
 needs "basis/TextIOProof.ml";;
+needs "basis/pure/mlstring.ml";;
+needs "characteristic/cfApp.ml";;
+needs "characteristic/cfFFIType.ml";;
+needs "characteristic/cfHeapsBase.ml";;
+needs "misc/misc.ml";;
+needs "translator/ml_translator.ml";;
 needs "translator/std_prelude.ml";;
 
 (* the theory of this file, and the ones its statements read *)
@@ -39,11 +45,24 @@ let _ = cake_theory "basisProg"
 
 (* HOL4 basisProgScript.sml:51: ML code, not ported *)
 
-(* HOL4 basisProgScript.sml:53-82: a theorem whose statement the port cannot
-   state yet: print_app_list_aux_spec *)
+(* [local] *)
+let print_app_list_aux_spec = prove
+ (`!ls lv out. APP_LIST_TYPE STRING_TYPE ls lv ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     print_app_list_aux_v [lv]
+     (STDIO fs) (POSTv (\v. &(UNIT_TYPE one v) * STDIO ((add_stdo 1
+       "stdout") fs (mlvector_concat (append ls)))))`,
+  CHEAT_TAC);;
 
-(* HOL4 basisProgScript.sml:84-94: a theorem whose statement the port cannot
-   state yet: print_app_list_spec *)
+let print_app_list_spec = prove
+ (`!ls lv out. APP_LIST_TYPE STRING_TYPE ls lv ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     print_app_list_v [lv]
+     (STDIO fs) (POSTv (\v. &(UNIT_TYPE one v) * STDIO ((add_stdo 1
+       "stdout") fs (mlvector_concat (append ls)))))`,
+  CHEAT_TAC);;
 
 (* HOL4 basisProgScript.sml:96-98: ML code, not ported *)
 

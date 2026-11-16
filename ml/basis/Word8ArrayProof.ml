@@ -93,10 +93,10 @@ let w8array_find_aux_spec = prove
        Word8Array_findi_aux_v
        [fv'; arrv; av; nv]
        (W8ARRAY arrv (APPEND old arr))
-       (POSTv (?_W8ARRAY v) arrv (APPEND old arr) *
+       (POSTv (\v. W8ARRAY arrv (APPEND old arr) *
            cond (OPTION_TYPE (PAIR_TYPE NUM
              (WORD:word8->semanticPrimitives_v->bool)) (Word8ArrayProof_findi
-             f (APPEND old arr)) v))`,
+             f (APPEND old arr)) v)))`,
   CHEAT_TAC);;
 
 let w8array_find_spec = prove
@@ -106,10 +106,10 @@ let w8array_find_spec = prove
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        Word8Array_findi_v [fv'; arrv]
        (W8ARRAY arrv arr)
-       (POSTv (?_W8ARRAY v) arrv arr *
+       (POSTv (\v. W8ARRAY arrv arr *
            cond (OPTION_TYPE (PAIR_TYPE NUM
              (WORD:word8->semanticPrimitives_v->bool)) (Word8ArrayProof_findi
-             f arr) v))`,
+             f arr) v)))`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

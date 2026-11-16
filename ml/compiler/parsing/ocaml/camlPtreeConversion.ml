@@ -2117,9 +2117,9 @@ let camlPtreeConversion_ptree_Expr_def,camlPtreeConversion_ptree_Expr_ind =
    (ptree_Update (Nd (nterm,locs) args) =
          if nterm = sum_INL camlPEG_nUpdate then
            match args with
-             [fd'; eq; expr] ->
+             [fd; eq; expr] ->
                  OPTION_IGNORE_BIND (expect_tok eq caml_lex_EqualT)
-                     (OPTION_BIND (ptree_FieldName fd') (\f. OPTION_BIND
+                     (OPTION_BIND (ptree_FieldName fd) (\f. OPTION_BIND
                      (camlPtreeConversion_ptree_Expr camlPEG_nEIf expr) (\x.
                  SOME (f,x))))
            | _ -> NONE (locs,(implode "Impossible: nUpdate"))
@@ -2187,7 +2187,7 @@ let ptree_FieldDecs_def,ptree_FieldDecs_ind = define_guess
    (ptree_FieldDecs (Nd (nterm,locs) args) =
       if nterm = sum_INL camlPEG_nFieldDecs then
         match args with
-          [fdec] -> camlPtreeConversion_fmap (\fd'. [fd']) (ptree_FieldDec
+          [fdec] -> camlPtreeConversion_fmap (\fd. [fd]) (ptree_FieldDec
               fdec)
         | [fdec; semi; fdecs] ->
               OPTION_IGNORE_BIND (expect_tok semi caml_lex_SemiT)

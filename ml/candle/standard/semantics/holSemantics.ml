@@ -41,11 +41,12 @@ let _ = do_list hide_constant ["mem"];;
    port expands *)
 
 let is_type_assignment_def = new_definition
-  `is_type_assignment0 (mem':'U->'U->bool) tysig ('d:mlstring->'U list->'U) <=>
+  `is_type_assignment0 (mem':'U->'U->bool) tysig (delta':mlstring->'U list->'U)
+  <=>
      FEVERY
        (\(name,arity).
          !ls. LENGTH ls = arity /\ ALL (\s. ?x. mem:'U->'U->bool x s) ls ==>
-              (\s. ?x. mem:'U->'U->bool x s) (('d name) ls))
+              (\s. ?x. mem:'U->'U->bool x s) ((delta' name) ls))
        tysig`;;
 
 (* HOL4 holSemanticsScript.sml:40: the overload is_type_assignment, which
@@ -67,9 +68,9 @@ let is_type_valuation_def = new_definition
 
 (* HOL4 holSemanticsScript.sml:58-60: the tactic that proves the termination *)
 let typesem_def,typesem_ind = define_guess
-  `(typesem 'd (tau:mlstring->'U) (holSyntax_Tyvar s) = tau s) /\
-   (typesem 'd (tau:mlstring->'U) (holSyntax_Tyapp name args) =
-        ('d name) (MAP (typesem 'd tau) args))`;;
+  `(typesem delta' (tau:mlstring->'U) (holSyntax_Tyvar s) = tau s) /\
+   (typesem delta' (tau:mlstring->'U) (holSyntax_Tyapp name args) =
+        (delta' name) (MAP (typesem delta' tau) args))`;;
 
 (* A term assignment is a map from a constant name and a list of values for the
    free type variables to a value for the constant. The assignment is with
@@ -79,13 +80,13 @@ let typesem_def,typesem_ind = define_guess
    port expands *)
 
 let is_term_assignment_def = new_definition
-  `is_term_assignment0 (mem':'U->'U->bool) tmsig 'd ('c:mlstring->'U list->'U)
-  <=>
+  `is_term_assignment0 (mem':'U->'U->bool) tmsig delta' (gamma:mlstring->'U
+  list->'U) <=>
      FEVERY
        (\(name,ty).
-         !tau. (is_type_valuation0 mem) tau ==> mem:'U->'U->bool ('c name
+         !tau. (is_type_valuation0 mem) tau ==> mem:'U->'U->bool (gamma name
            (MAP tau (MAP implode (STRING_SORT (MAP explode (holSyntax_tyvars
-           ty)))))) (typesem 'd tau ty))
+           ty)))))) (typesem delta' tau ty))
        tmsig`;;
 
 (* HOL4 holSemanticsScript.sml:77: the overload is_term_assignment, which
@@ -99,10 +100,10 @@ let is_term_assignment_def = new_definition
    port expands *)
 
 let is_term_valuation_def = new_definition
-  `is_term_valuation0 (mem':'U->'U->bool) tysig 'd tau
+  `is_term_valuation0 (mem':'U->'U->bool) tysig delta' tau
   (sigma:mlstring#type->'U) <=>
      (!v ty. type_ok tysig ty ==> mem:'U->'U->bool (sigma (v,ty))
-       (typesem 'd tau ty))`;;
+       (typesem delta' tau ty))`;;
 
 (* HOL4 holSemanticsScript.sml:90: the overload is_term_valuation, which the
    port expands *)
@@ -124,10 +125,10 @@ let is_term_valuation_def = new_definition
    expands *)
 
 let is_valuation_def = new_definition
-  `is_valuation0 (mem':'U->'U->bool) tysig 'd v <=>
+  `is_valuation0 (mem':'U->'U->bool) tysig delta' v <=>
      (is_type_valuation0 mem)
        ((FST:(mlstring->'U)#(mlstring#type->'U)->mlstring->'U) v) /\
-     (is_term_valuation0 mem) tysig 'd
+     (is_term_valuation0 mem) tysig delta'
        ((FST:(mlstring->'U)#(mlstring#type->'U)->mlstring->'U) v)
        ((SND:(mlstring->'U)#(mlstring#type->'U)->mlstring#type->'U) v)`;;
 
@@ -212,15 +213,17 @@ let is_interpretation_def = new_definition
    to the standard model. *)
 
 let is_std_type_assignment_def = new_definition
-  `is_std_type_assignment0 (mem':'U->'U->bool) ('d:mlstring->'U list->'U) <=>
-     (!dom rng. 'd (implode "fun") [dom; rng] = (funspace mem) dom rng) /\
-     ('d (implode "bool") [] = ((two mem)))`;;
+  `is_std_type_assignment0 (mem':'U->'U->bool) (delta':mlstring->'U list->'U)
+  <=>
+     (!dom rng. delta' (implode "fun") [dom; rng] = (funspace mem) dom rng)
+       /\
+     (delta' (implode "bool") [] = ((two mem)))`;;
 
 (* HOL4 holSemanticsScript.sml:178: the overload is_std_type_assignment,
    which the port expands *)
 let interprets_def = new_definition
-  `interprets0 (mem':'U->'U->bool) 'c name vs f <=> (!tau.
-  (is_type_valuation0 mem) tau ==> 'c name (MAP tau vs) = f (MAP tau vs))`;;
+  `interprets0 (mem':'U->'U->bool) gamma name vs f <=> (!tau.
+  (is_type_valuation0 mem) tau ==> gamma name (MAP tau vs) = f (MAP tau vs))`;;
 
 (* HOL4 holSemanticsScript.sml:195: the overload interprets, which the port
    expands *)

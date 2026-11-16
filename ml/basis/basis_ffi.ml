@@ -2,7 +2,7 @@
 (*  basis_ffi: ported from HOL4's
     basis/basis_ffiScript.sml
     A definition theory, with 12 definitions and 36 theorems.
-    Needed by 7 files of the port.  *)
+    Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -18,6 +18,7 @@ needs "basis/fsFFI.ml";;
 needs "basis/fsFFIProps.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "basis/runtimeFFI.ml";;
+needs "characteristic/cfApp.ml";;
 needs "characteristic/cfFFIType.ml";;
 needs "characteristic/cfHeapsBase.ml";;
 needs "characteristic/cfStore.ml";;
@@ -219,11 +220,10 @@ let extract_fs_with_numchars_keeps_iostreams = prove
   CHEAT_TAC);;
 
 let extract_fs_with_numchars_closes_iostreams = prove
- (`!ls cls fs cls' fs' fd' nm off.
+ (`!ls cls fs cls' fs' fd nm off.
    (extract_fs_with_numchars no_ext (cls,fs) ls = SOME (cls',fs')) /\
-   (!fd' off. ~(ALOOKUP (IO_fs_infds fs) fd' = SOME (UStream nm,md,off)))
-     ==>
-   (~(ALOOKUP (IO_fs_infds fs') fd' = SOME (UStream nm,md,off)))`,
+   (!fd off. ~(ALOOKUP (IO_fs_infds fs) fd = SOME (UStream nm,md,off))) ==>
+   (~(ALOOKUP (IO_fs_infds fs') fd = SOME (UStream nm,md,off)))`,
   CHEAT_TAC);;
 
 (* HOL4 basis_ffiScript.sml:294-421: code that the source has in a comment *)
@@ -287,17 +287,34 @@ let RUNTIME_precond = prove
 (* HOL4 basis_ffiScript.sml:534-537: the ML values that the definitions
    below antiquote *)
 
-(* PORT FAILED: Definition whole_prog_spec_def: expected ')' but found '.'
-   at 194 *)
-(* HOL4 basis_ffiScript.sml:539-546: the definition *)
+let whole_prog_spec_def = new_definition
+  `whole_prog_spec fv' cl fs sprop basis_ffi_post <=>
+     (?fs'.
+     app (basis_proj1,basis_proj2) fv' [semanticPrimitives_Conv NONE []]
+       (COMMANDLINE cl * STDIO fs * (match sprop with NONE -> &T | SOME p ->
+         p))
+       (POSTv (\uv. &(UNIT_TYPE one uv) * STDIO fs')) /\
+     basis_ffi_post (IO_fs_numchars_fupd (K (IO_fs_numchars fs)) fs'))`;;
 
-(* PORT FAILED: Definition whole_prog_ffidiv_spec_def: expected ')' but
-   found '.' at 172 *)
-(* HOL4 basis_ffiScript.sml:548-555: the definition *)
+let whole_prog_ffidiv_spec_def = new_definition
+  `whole_prog_ffidiv_spec fv' cl fs basis_ffi_post <=>
+     (?fs' n' c' b'.
+     app (basis_proj1,basis_proj2) fv' [semanticPrimitives_Conv NONE []]
+       (COMMANDLINE cl * STDIO fs * RUNTIME)
+       (POSTf (\n. \c b. STDIO fs' * RUNTIME * &(n = n' /\ c = c' /\ b =
+         b'))) /\
+     basis_ffi_post n' c' b' (IO_fs_numchars_fupd (K (IO_fs_numchars fs))
+       fs'))`;;
 
-(* PORT FAILED: Definition whole_prog_spec2_def: expected ')' but found '.'
-   at 185 *)
-(* HOL4 basis_ffiScript.sml:557-565: the definition *)
+let whole_prog_spec2_def = new_definition
+  `whole_prog_spec2 fv' cl fs sprop basis_ffi_post <=>
+     app (basis_proj1,basis_proj2) fv' [semanticPrimitives_Conv NONE []]
+       (COMMANDLINE cl * STDIO fs * (match sprop with NONE -> &T | SOME p ->
+         p))
+       (POSTv (\uv. &(UNIT_TYPE one uv) *
+       SEP_EXISTS (\fs'.
+         STDIO fs' * &(basis_ffi_post (IO_fs_numchars_fupd (K
+           (IO_fs_numchars fs)) fs')))))`;;
 
 (* HOL4 basis_ffiScript.sml:567-618: a theorem whose statement the port
    cannot state yet: whole_prog_spec2_semantics_prog *)

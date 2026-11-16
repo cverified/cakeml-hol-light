@@ -2,7 +2,7 @@
 (*  cfApp: ported from HOL4's
     characteristic/cfAppScript.sml
     A definition theory, with 7 definitions and 37 theorems.  Needed
-    by 12 files of the port.  *)
+    by 17 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -117,7 +117,7 @@ let app_def,app_ind = define_guess
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list),f,CONS
      x xs,H,Q) ->
      app_basic p f x H
-       (POSTv (?_SEP_EXISTS g) (?_H' H') * cond (app p g xs H' Q))`;;
+       (POSTv (\g. SEP_EXISTS (\H'. H' * cond (app p g xs H' Q))))`;;
 
 let app_alt_ind = prove
  (`!f xs x H Q. ~(xs = []) ==>
@@ -127,7 +127,7 @@ let app_alt_ind = prove
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) f xs
        H
-       (POSTv (?_SEP_EXISTS g) (?_H' H') * cond (app_basic p g x H' Q))`,
+       (POSTv (\g. SEP_EXISTS (\H'. H' * cond (app_basic p g x H' Q))))`,
   CHEAT_TAC);;
 
 let app_alt_ind_w = prove
@@ -138,10 +138,10 @@ let app_alt_ind_w = prove
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) f xs
        H
-       (POSTv (?_SEP_EXISTS g) (?_H' H') * cond (app_basic
+       (POSTv (\g. SEP_EXISTS (\H'. H' * cond (app_basic
          (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
          list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) g
-         x H' Q))`,
+         x H' Q))))`,
   CHEAT_TAC);;
 
 let app_ge_2_unfold = prove
@@ -149,8 +149,8 @@ let app_ge_2_unfold = prove
       app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
         list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) f
         (CONS x xs) H Q =
-      app_basic p f x H (POSTv (?_SEP_EXISTS g) (?_H' H') * cond (app p g
-        xs H' Q))`,
+      app_basic p f x H (POSTv (\g. SEP_EXISTS (\H'. H' * cond (app p g xs
+        H' Q))))`,
   CHEAT_TAC);;
 
 let app_ge_2_unfold_extens = prove
@@ -158,8 +158,8 @@ let app_ge_2_unfold_extens = prove
       app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
         list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) f
         (CONS x xs) =
-      (\H Q. app_basic p f x H (POSTv (?_SEP_EXISTS g) (?_H' H') * cond
-        (app p g xs H' Q)))`,
+      (\H Q. app_basic p f x H (POSTv (\g. SEP_EXISTS (\H'. H' * cond (app
+        p g xs H' Q)))))`,
   CHEAT_TAC);;
 
 (* Weaken-frame-gc for [app]; auxiliary lemma for [app_local] *)
@@ -198,7 +198,7 @@ let curried_def,curried_ind = define_guess
         (!x. app_basic (p:('ffi->(mlstring,ffi)fmap)#(mlstring
           list#(mlstring->word8 list->word8 list->ffi->(ffi
           cfHeapsBase_ffi_result) option)) list) f x emp
-              (POSTv (?_cond g) (curried
+              (POSTv (\g. cond (curried
                 (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
                 list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option))
                 list) n g /\
@@ -210,7 +210,7 @@ let curried_def,curried_ind = define_guess
                        ==>
                      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring
                        list#(mlstring->word8 list->word8 list->ffi->(ffi
-                       cfHeapsBase_ffi_result) option)) list) g xs H Q))))`;;
+                       cfHeapsBase_ffi_result) option)) list) g xs H Q)))))`;;
 
 let curried_ge_2_unfold = prove
  (`!n f.
@@ -219,10 +219,10 @@ let curried_ge_2_unfold = prove
         list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) n f
         =
       (!x. app_basic p f x emp
-            (POSTv (?_cond g) (curried p (PRE n) g /\
+            (POSTv (\g. cond (curried p (PRE n) g /\
                  (!xs H Q.
                    LENGTH xs = PRE n ==>
-                   app p f (CONS x xs) H Q ==> app p g xs H Q))))`,
+                   app p f (CONS x xs) H Q ==> app p g xs H Q)))))`,
   CHEAT_TAC);;
 
 let app_basic_SEP_EXISTS = prove
@@ -330,8 +330,9 @@ let st2heap_with_refs_append = prove
      store2heap_aux (LENGTH r1) r2`,
   CHEAT_TAC);;
 
-(* HOL4 cfAppScript.sml:356-361: a theorem whose statement the port cannot
-   state yet: POSTv_cond *)
+let POSTv_cond = prove
+ (`(POSTv (\v. &(f v))) r h <=> (?v. r = cfHeapsBase_Val v /\ f v /\ h = {})`,
+  CHEAT_TAC);;
 
 (* HOL4 cfAppScript.sml:363-364: ML code, not ported *)
 
@@ -415,8 +416,15 @@ let SPLIT_st2heap_ffi = prove
          (semanticPrimitives_state_ffi st)))`,
   CHEAT_TAC);;
 
-(* HOL4 cfAppScript.sml:574-607: a theorem whose statement the port cannot
-   state yet: Arrow_IMP_app_basic *)
+let Arrow_IMP_app_basic = prove
+ (`(Arrow a b) f v ==>
+     (!x v1.
+       a x v1 ==>
+       app_basic (p:('ffi->(mlstring,ffi)fmap)#(mlstring
+         list#(mlstring->word8 list->word8 list->ffi->(ffi
+         cfHeapsBase_ffi_result) option)) list) v v1 emp (POSTv (\v. &(b (f
+         x) v))))`,
+  CHEAT_TAC);;
 
 let do_app_io_events_ExtCall = prove
  (`semanticPrimitives_do_app (refs,ffi) op vs = SOME ((refs',ffi'),r) ==>
@@ -453,13 +461,16 @@ let evaluate_ExtCall = prove
   CHEAT_TAC);;
 
 let app_basic_IMP_Arrow = prove
- (`(!x v1. a x v1 ==> app_basic p v v1 emp (POSTv (?_cond v) (b (f x) v))) ==>
+ (`(!x v1. a x v1 ==> app_basic p v v1 emp (POSTv (\v. cond (b (f x) v)))) ==>
    Arrow a b f v`,
   CHEAT_TAC);;
 (* use evaluate to prove st1.io_events = st2.io_events ++ [ExtCall...] *)
 
-(* HOL4 cfAppScript.sml:695-699: a theorem whose statement the port cannot
-   state yet: Arrow_eq_app_basic *)
+(* Arrow_eq_app_basic *)
+let arrow_eq_app_basic = prove
+ (`Arrow a b f fv <=> (!x xv. a x xv ==> app_basic p fv xv emp (POSTv (\v'.
+  &(b (f x) v'))))`,
+  CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

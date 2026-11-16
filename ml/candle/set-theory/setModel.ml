@@ -35,7 +35,8 @@ let is_set_theory_pred_def = new_definition
       ==> in_rep y x)))`;;
 
 let l_model_exists = prove
- (`?(P:'a+num->bool) (mem':'a+num->'a+num->bool). is_set_theory_pred P mem'`,
+ (`?(P:'a+num->bool) (mem':'a+num->alpha+num->bool). is_set_theory_pred P
+  mem'`,
   CHEAT_TAC);;
 
 (* HOL4 setModelScript.sml:168: ML code, not ported *)

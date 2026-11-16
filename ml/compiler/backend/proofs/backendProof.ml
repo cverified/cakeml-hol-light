@@ -1706,7 +1706,8 @@ let compile_correct' = prove
       (backend_config_stack_conf c))) mc (lab_to_target_config_shmem_extra
       (backend_config_lab_conf
        c')) ms ==>
-      targetSem_machine_sem (mc:('a,'b,'c)machine_config) ffi ms SUBSET
+      targetSem_machine_sem (mc:(alpha,beta,gamma)machine_config) ffi ms
+        SUBSET
         extend_with_resource_limit'
           (backendProof_is_safe_for_space ffi asm_conf c prog
             (backendProof_read_limits asm_conf c mc ms))
@@ -1733,7 +1734,8 @@ let backendProof_compile_correct = prove
            (backend_config_stack_conf c))) mc (lab_to_target_config_shmem_extra
            (backend_config_lab_conf
          c')) ms ==>
-      targetSem_machine_sem (mc:('a,'b,'c)machine_config) ffi ms SUBSET
+      targetSem_machine_sem (mc:(alpha,beta,gamma)machine_config) ffi ms
+        SUBSET
         extend_with_resource_limit (semantics_prog s env prog))`,
   CHEAT_TAC);;
 
@@ -1761,7 +1763,7 @@ let compile_correct_is_safe_for_space = prove
             (backend_config_stack_conf c))) mc
             (lab_to_target_config_shmem_extra (backend_config_lab_conf
           c')) ms ==>
-     targetSem_machine_sem (mc:('a,'b,'c)machine_config) ffi ms =
+     targetSem_machine_sem (mc:(alpha,beta,gamma)machine_config) ffi ms =
      semantics_prog s env prog)`),
   CHEAT_TAC);;
 

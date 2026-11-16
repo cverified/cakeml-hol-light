@@ -2,7 +2,7 @@
 (*  ml_translator: ported from HOL4's
     translator/ml_translatorScript.sml
     A definition theory, with 76 definitions and 271 theorems.
-    Needed by 82 files of the port.  *)
+    Needed by 83 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -591,7 +591,7 @@ let FUN_EXISTS = new_definition
   y a v)`;;
 
 let FUN_FORALL_INTRO = prove
- (`(!x. p x f v) ==> (FUN_FORALL (?_p x) x) f v`,
+ (`(!x. p x f v) ==> (FUN_FORALL (\x. p x)) f v`,
   CHEAT_TAC);;
 
 let eval_rel_11 = prove
@@ -601,27 +601,28 @@ let eval_rel_11 = prove
 
 let Eval_FUN_FORALL = prove
  (`(!x. ast_Eval env exp ((p x) f)) ==>
-    ast_Eval env exp ((FUN_FORALL (?_p x) x) f)`,
+    ast_Eval env exp ((FUN_FORALL (\x. p x)) f)`,
   CHEAT_TAC);;
 
 let Eval_FUN_FORALL_EQ = prove
  (`(!x. ast_Eval env exp ((p x) f)) =
-    ast_Eval env exp ((FUN_FORALL (?_p x) x) f)`,
+    ast_Eval env exp ((FUN_FORALL (\x. p x)) f)`,
   CHEAT_TAC);;
 
 let FUN_FORALL_PUSH1 = prove
- (`(FUN_FORALL (?_a x) (Arrow) (b x)) = (a (Arrow) FUN_FORALL (?_b x) x)`,
+ (`(FUN_FORALL (\x. a (Arrow) (b x))) = (a (Arrow) (FUN_FORALL (\x. b x)))`,
   CHEAT_TAC);;
 
-(* HOL4 ml_translatorScript.sml:858-861: a theorem that HOL4 states as the
-   value of an ML expression: FUN_FORALL_PUSH2 *)
+let FUN_FORALL_PUSH2 = prove
+ (`(FUN_FORALL (\x. (a x) (Arrow) b)) = ((FUN_EXISTS (\x. a x)) (Arrow) b)`,
+  CHEAT_TAC);;
 
 let FUN_EXISTS_Eq = prove
- (`(FUN_EXISTS (?_Eq x) a x) = a`,
+ (`(FUN_EXISTS (\x. ml_translator_Eq a x)) = a`,
   CHEAT_TAC);;
 
-(* HOL4 ml_translatorScript.sml:867-868: a theorem that HOL4 states as the
-   value of an ML expression: FUN_QUANT_SIMP *)
+let FUN_QUANT_SIMP =
+  end_itlist CONJ [FUN_EXISTS_Eq; FUN_FORALL_PUSH1; FUN_FORALL_PUSH2];;
 
 let Eval_Recclosure_ALT = prove
  (`!funs fname name body.

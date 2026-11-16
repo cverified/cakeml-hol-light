@@ -460,7 +460,7 @@ let EvalM_Var_ArrowP_EqSt = prove
 
 let EvalM_FUN_FORALL = prove
  (`(!x. EvalM ro env st exp (PURE (P x) f) H) ==>
-    EvalM ro env st exp (PURE (FUN_FORALL (?_P x) x) f)
+    EvalM ro env st exp (PURE (FUN_FORALL (\x. P x)) f)
       ((H:('a->(heap_part->bool)->bool)#('ffi->(mlstring,ffi)fmap)#(mlstring
       list#(mlstring->word8 list->word8 list->ffi->(ffi
       cfHeapsBase_ffi_result) option)) list))`,
@@ -468,7 +468,7 @@ let EvalM_FUN_FORALL = prove
 
 let EvalM_FUN_FORALL_EQ = prove
  (`(!x. EvalM ro env st exp (PURE (P x) f) H) =
-    EvalM ro env st exp (PURE (FUN_FORALL (?_P x) x) f)
+    EvalM ro env st exp (PURE (FUN_FORALL (\x. P x)) f)
       ((H:('a->(heap_part->bool)->bool)#('ffi->(mlstring,ffi)fmap)#(mlstring
       list#(mlstring->word8 list->word8 list->ffi->(ffi
       cfHeapsBase_ffi_result) option)) list))`,
@@ -476,24 +476,24 @@ let EvalM_FUN_FORALL_EQ = prove
 
 (* [local] *)
 let M_FUN_FORALL_PUSH1 = prove
- (`(FUN_FORALL (?_ArrowP x) ro
+ (`(FUN_FORALL (\x. ArrowP ro
   ((H:('a->(heap_part->bool)->bool)#('ffi->(mlstring,ffi)fmap)#(mlstring
   list#(mlstring->word8 list->word8 list->ffi->(ffi cfHeapsBase_ffi_result)
-  option)) list)) a (PURE (b x))) =
-    (ArrowP ro H a (PURE (FUN_FORALL (?_b x) x)))`,
+  option)) list)) a (PURE (b x)))) =
+    (ArrowP ro H a (PURE (FUN_FORALL (\x. b x))))`,
   CHEAT_TAC);;
 
 let M_FUN_FORALL_PUSH2 = prove
- (`(FUN_FORALL (?_ArrowP x) ro H ((PURE (a x))) b) =
+ (`(FUN_FORALL (\x. ArrowP ro H ((PURE (a x))) b)) =
        (ArrowP ro
          ((H:('a->(heap_part->bool)->bool)#('ffi->(mlstring,ffi)fmap)#
          (mlstring list#(mlstring->word8 list->word8 list->ffi->(ffi
-         cfHeapsBase_ffi_result) option)) list)) (PURE (FUN_EXISTS (?_a x)
-         x)) b)`,
+         cfHeapsBase_ffi_result) option)) list)) (PURE (FUN_EXISTS (\x. a
+         x))) b)`,
   CHEAT_TAC);;
 
 let M_FUN_FORALL_PUSH3 = prove
- (`(FUN_FORALL (?_ArrowP st) ro H (EqSt a st) b) =
+ (`(FUN_FORALL (\st. ArrowP ro H (EqSt a st) b)) =
        (ArrowP ro
          ((H:('a->(heap_part->bool)->bool)#('ffi->(mlstring,ffi)fmap)#
          (mlstring list#(mlstring->word8 list->word8 list->ffi->(ffi
@@ -502,7 +502,7 @@ let M_FUN_FORALL_PUSH3 = prove
 
 (* FUN_EXISTS_Eq *)
 let ml_monad_translator_FUN_EXISTS_Eq = prove
- (`(FUN_EXISTS (?_Eq x) a x) = a`,
+ (`(FUN_EXISTS (\x. ml_translator_Eq a x)) = a`,
   CHEAT_TAC);;
 
 let M_FUN_QUANT_SIMP =

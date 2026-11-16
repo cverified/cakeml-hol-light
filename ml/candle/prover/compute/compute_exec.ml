@@ -2,8 +2,8 @@
 (*  compute_exec: ported from HOL4's
     candle/prover/compute/compute_execScript.sml
     A definition theory, with 22 definitions, 2 datatypes and no
-    theorems.  Needed by TextIOProof.ml, compute.ml,
-    computeProof.ml, compute_execProof.ml and fmap_cv.ml.  *)
+    theorems.  Needed by compute.ml, computeProof.ml,
+    compute_execProof.ml and fmap_cv.ml.  *)
 (* ======================================================== *)
 
 (*

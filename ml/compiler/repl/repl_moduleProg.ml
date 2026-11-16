@@ -153,7 +153,7 @@ let charsFrom_spec = prove
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
      Repl_charsFrom_v [fnamev]
      (STDIO fs)
-     (POSTv (?_STDIO retv) fs * cond (LIST_TYPE CHAR content retv))`,
+     (POSTv (\retv. STDIO fs * cond (LIST_TYPE CHAR content retv)))`,
   CHEAT_TAC);;
 
 (* and the interface *)

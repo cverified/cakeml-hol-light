@@ -512,9 +512,9 @@ let word_to_word_compile_semantics = prove
      t = wordSem_state_code_fupd (K (wordSem_state_code t)) s
        /\ wordSem_state_code
      s = fromAList wprog0 /\ ~(wordSem_semantics
-       (s:('a,'b,'ffi)wordSem_state) start = ffi_Fail) ==>
+       (s:(alpha,beta,'ffi)wordSem_state) start = ffi_Fail) ==>
      wordSem_semantics s start =
-     wordSem_semantics (t:('a,'b,'ffi)wordSem_state) start`),
+     wordSem_semantics (t:(alpha,beta,'ffi)wordSem_state) start`),
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

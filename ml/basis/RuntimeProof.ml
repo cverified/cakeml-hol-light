@@ -12,9 +12,12 @@
 needs "basis/RuntimeProg.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "basis/runtimeFFI.ml";;
+needs "characteristic/cfApp.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "characteristic/cfHeapsBase.ml";;
 needs "characteristic/cfLetAuto.ml";;
 needs "characteristic/cfMain.ml";;
+needs "lib/integer_word.ml";;
 needs "translator/ml_translator.ml";;
 
 (* the theory of this file, and the ones its statements read *)
@@ -36,8 +39,16 @@ let RUNTIME_FFI_part_hprop = prove
 
 (* HOL4 RuntimeProofScript.sml:30: ML code, not ported *)
 
-(* HOL4 RuntimeProofScript.sml:32-76: a theorem whose statement the port
-   cannot state yet: Runtime_exit_spec *)
+(* Runtime_exit_spec *)
+let runtime_exit_spec = prove
+ (`INT i iv ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
+     Runtime_exit_v [iv]
+     (RUNTIME)
+     (POSTf (\n. \c b. RUNTIME * &(n = (implode "exit") /\ c = [] /\ b =
+       [i2w i])))`,
+  CHEAT_TAC);;
 
 (* HOL4 RuntimeProofScript.sml:78-90: a theorem whose statement the port
    cannot state yet: Runtime_abort_spec *)

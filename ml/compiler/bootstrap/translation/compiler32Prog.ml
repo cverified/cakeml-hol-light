@@ -12,6 +12,9 @@
 
 needs "basis/basis_ffi.ml";;
 needs "basis/pure/mlstring.ml";;
+needs "characteristic/cfApp.ml";;
+needs "characteristic/cfFFIType.ml";;
+needs "characteristic/cfHeapsBase.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/export.ml";;
 needs "compiler/bootstrap/translation/ag32Prog.ml";;
@@ -246,8 +249,15 @@ let nonzero_exit_code_for_error_msg_def = new_definition
 
 (* HOL4 compiler32ProgScript.sml:436: ML code, not ported *)
 
-(* HOL4 compiler32ProgScript.sml:438-562: a theorem whose statement the port
-   cannot state yet: main_spec *)
+let main_spec = prove
+ (`IS_SOME (stdin_content fs) ==>
+   app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
+     list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) main_v
+     [semanticPrimitives_Conv NONE []] (STDIO fs * COMMANDLINE cl)
+     (POSTv (\uv.
+       &(UNIT_TYPE one uv) * STDIO (full_compile_32 (TL cl) (get_stdin fs)
+         fs) * COMMANDLINE cl))`,
+  CHEAT_TAC);;
 
 let main_whole_prog_spec = prove
  (`IS_SOME (stdin_content fs) ==>

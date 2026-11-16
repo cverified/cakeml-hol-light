@@ -540,8 +540,8 @@ let hole_not_finalised_def = new_definition
        FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag F left child right))`;;
 
 let holes_still_not_finalised_def = new_definition
-  `holes_still_not_finalised f (refs:('b,'c bvlSem_ref)fmap) (refs':('b,'c
-  bvlSem_ref)fmap) <=>
+  `holes_still_not_finalised f (refs:('b,gamma bvlSem_ref)fmap)
+  (refs':('b,gamma bvlSem_ref)fmap) <=>
      (!ptr. ~(ptr IN FRANGE f) /\
        hole_not_finalised refs ptr ==>
        hole_not_finalised refs' ptr)`;;
@@ -1242,14 +1242,14 @@ let evaluate_fill_hole_val = prove
   CHEAT_TAC);;
 
 let evaluate_vars_source = prove
- (`!vs env (s:(num#'c,'ffi)bviSem_state).
+ (`!vs env (s:(num#gamma,'ffi)bviSem_state).
      wf_vars (LENGTH env) vs ==>
      bviSem_evaluate (MAP (\n. bvi_Var n) vs,env,s) = (Rval (MAP (\n. EL n
        env) vs),s)`,
   CHEAT_TAC);;
 
 let evaluate_vars_target = prove
- (`!vs n env (s:('c,'ffi)bviSem_state).
+ (`!vs n env (s:(gamma,'ffi)bviSem_state).
      wf_vars n vs /\
      LENGTH env >= n ==>
      bviSem_evaluate (MAP (\n. bvi_Var n) vs,env,s) = (Rval (MAP (\n. EL n
@@ -1428,7 +1428,7 @@ let optimised_code_def = new_definition
          body_work)`;;
 
 let evaluate_rewrite_tmc = prove
- (`!n xs (s:(num#'c,'ffi)bviSem_state) env1 r t opt f s' env2 loc.
+ (`!n xs (s:(num#gamma,'ffi)bviSem_state) env1 r t opt f s' env2 loc.
      bviSem_evaluate (xs,env1,s) = (r,t) /\
      n = (bviSem_state_clock s,list_size bvi_exp_size xs) /\
      bvi_tmcProof_env_rel opt f env1 env2 /\ ALL (\x. no_mutcons x) xs /\
@@ -1494,7 +1494,8 @@ let evaluate_rewrite_tmc = prove
 (* HOL4 bvi_tmcProofScript.sml:3031-3106: a proof *)
 
 let hypothesis_def = new_definition
-  `hypothesis xs' (s'':(num#'c,'ffi)bviSem_state) clock <=> bviSem_state_clock
+  `hypothesis xs' (s'':(num#gamma,'ffi)bviSem_state) clock <=>
+  bviSem_state_clock
    s'' < clock ==>
    (!env1' r' t' opt' f' s'3' env2' loc'.
              bviSem_evaluate (xs',env1',s'') = (r',t') /\
@@ -1672,13 +1673,13 @@ let mb_rel_refs_old_subset = prove
   CHEAT_TAC);;
 
 let evaluate_cb = prove
- (`!cb loc f opt env env2 (s:(num#'c,'ffi)bviSem_state) s' t r clock.
+ (`!cb loc f opt env env2 (s:(num#gamma,'ffi)bviSem_state) s' t r clock.
      bviSem_evaluate ([cb_to_bvi loc cb],env,s) = (r,t) /\
      wf_cb (LENGTH env) cb /\
      bvi_tmcProof_env_rel opt f env env2 /\
      bvi_tmcProof_state_rel f s s' /\ bviSem_state_clock
      s <= clock /\ ~(r = Rerr (Rabort Rtype_error)) /\
-     (!xs' (s'':(num#'c,'ffi)bviSem_state).
+     (!xs' (s'':(num#gamma,'ffi)bviSem_state).
         hypothesis xs' s'' clock) ==>
      (?r' t' f'.
         bviSem_evaluate ([cb_to_bvi loc cb],env2,s') = (r',t') /\

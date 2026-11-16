@@ -43,7 +43,8 @@ let loc_err_info_FIELDS = define_record "loc_err_info"
    "err","(mlstring,mlstring,mlstring list#t)namespace"];;
 
 let failwith_def = new_definition
-  `(infer_failwith:loc_err_info->'a->'b->('c,locs option#'a)exc#'b) l msg =
+  `(infer_failwith:loc_err_info->alpha->beta->(gamma,locs
+  option#alpha)exc#beta) l msg =
      (\s. (M_failure (loc_err_info_loc l,msg),s))`;;
 
 let guard_def = new_definition
@@ -51,11 +52,11 @@ let guard_def = new_definition
   msg`;;
 
 let read_def = new_definition
-  `(infer_read:'a->('a,'b)exc#'a) =
+  `(infer_read:alpha->(alpha,beta)exc#alpha) =
    (\s. (M_success s,s))`;;
 
 let write_def = new_definition
-  `(infer_write:'a->'a->(1,'b)exc#'a) v =
+  `(infer_write:'a->alpha->(1,beta)exc#alpha) v =
    (\s. (M_success one,v))`;;
 
 let lookup_st_ex_def = new_definition
@@ -71,7 +72,7 @@ let infer_st_FIELDS = define_record "infer_st"
    "next_id","num"];;
 
 let fresh_uvar_def = new_definition
-  `(fresh_uvar:infer_st->(infer_t,'a)exc#infer_st) =
+  `(fresh_uvar:infer_st->(infer_t,alpha)exc#infer_st) =
    (\s. (M_success (Infer_Tuvar (infer_st_next_uvar
      s)),infer_st_next_uvar_fupd (K (infer_st_next_uvar s + 1)) s))`;;
 

@@ -63,10 +63,6 @@ let _ = cake_theory "compiler"
    "panPtreeConversion"; "panStatic"; "pan_passes"; "pan_to_target";
    "riscv_config"; "x64_config"];;
 
-let staterr_INDUCT,staterr_RECURSION = define_datatype
-  "staterr = ScopeErr (mlstring) | WarningErr (mlstring) \
-             | GenErr (mlstring) | ShapeErr (mlstring)";;
-
 (* HOL4 compilerScript.sml:18-117: ML code, not ported *)
 
 (* == Build info =========================================================== *)
@@ -281,7 +277,7 @@ let compile_error_INDUCT,compile_error_RECURSION = define_datatype
    | TypeError mlstring
    | AssembleError
    | ConfigError mlstring
-   | StaticError compiler_staterr";;
+   | StaticError staterr";;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -381,15 +377,6 @@ let compiler_compile_def = new_definition
              (M_failure AssembleError,td)
            | (SOME (bytes,data,c),td) -> (M_success (bytes,data,c),td)))`;;
 
-cake_declare "parse_topdecs_to_ast"
-  `:string -> (('a)decl)list + (mlstring#locs)list`;;
-cake_declare "static_check"
-  `:(('a)decl)list -> (1,staterr)errorMonad_error#(staterr)list`;;
-cake_declare "pan_compile_tap"
-  `:('a)asm_config -> backend_config -> (('a)decl)list ->
-    ((((8)word)list#(('a)word)list#backend_config)option)#
-    (mlstring)app_list`;;
-
 let compile_pancake_def = new_definition
   `compile_pancake asm_conf c input =
    let _ = empty_ffi (implode "finished: start up") in
@@ -426,13 +413,13 @@ let error_to_str_def = define_cases
    (error_to_str AssembleError = (implode "### ERROR: assembly error\n")) /\
    (error_to_str (StaticError e) =
         match e with
-          compiler_ScopeErr s -> mlstring_concat [(implode
+          ScopeErr s -> mlstring_concat [(implode
               "### ERROR: scope error\n"); s; (implode "\n")]
-        | compiler_WarningErr s -> mlstring_concat [(implode
-            "# WARNING:\n"); s; (implode "\n")]
-        | compiler_GenErr s -> mlstring_concat [(implode
+        | WarningErr s -> mlstring_concat [(implode "# WARNING:\n"); s;
+            (implode "\n")]
+        | GenErr s -> mlstring_concat [(implode
             "### ERROR: static error\n"); s; (implode "\n")]
-        | compiler_ShapeErr s -> mlstring_concat [(implode
+        | ShapeErr s -> mlstring_concat [(implode
             "### ERROR: shape error\n"); s; (implode "\n")])`;;
 
 let is_error_msg_def = new_definition

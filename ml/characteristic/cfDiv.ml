@@ -645,8 +645,25 @@ let SUM_GENLIST_LESS_EQ = prove
  (`!n m f. n <= m ==> SUM (list_of_seq f n) <= SUM (list_of_seq f m)`,
   CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:1925-2119: a theorem whose statement the port cannot
-   state yet: tailrec_POSTd *)
+let tailrec_POSTd = prove
+ (`!p env fv' xv H Q.
+     nsLookup (sem_env_c env) (Short (implode "Inr")) = SOME (1,inr)
+       /\ same_type inr inl /\
+     nsLookup (sem_env_c env) (Short (implode "Inl")) = SOME (1,inl)
+       /\ ~(inr = inl) /\
+     (?Hs events vs io.
+        vs 0 = xv /\ SEP_IMP H (Hs 0) /\
+        (!i. ?P. Hs i = P * set_sep_one (cfHeapsBase_FFI_full (events i)))
+          /\
+        (!i.
+           (app p fv' [vs i] (Hs i)
+              (POSTv (\v'. &(v' = semanticPrimitives_Conv (SOME inl) [vs
+                (SUC i)]) *
+                         Hs (SUC i))))) /\
+        lprefix_lub (IMAGE (sptree_fromList o events) UNIV) io /\
+        Q io) ==>
+     app p (some_tailrec_clos env) [fv'; xv] H (POSTd Q)`,
+  CHEAT_TAC);;
 
 let app_opapp_intro = prove
  (`!body f args env x arg1v fv' argsv arg1 arg2 arg1v' arg2v H P.
@@ -666,8 +683,37 @@ let app_opapp_intro = prove
          ast_Opapp [f; arg1]; arg2])) [arg1v] H P`,
   CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:2212-2248: a theorem whose statement the port cannot
-   state yet: IMP_app_POSTd_old *)
+let IMP_app_POSTd_old = prove
+ (`mk_stepfun_closure env fname farg fbody = SOME stepv /\
+   nsLookup (sem_env_c env) (Short (implode "Inr")) = SOME (1,TypeStamp
+     (implode "Inr") 4) /\
+   nsLookup (sem_env_c env) (Short (implode "Inl")) = SOME (1,TypeStamp
+     (implode "Inl") 4) /\
+   do_con_check (sem_env_c env) (SOME (Short (implode "Inr"))) 1 /\
+   (!v. build_conv (sem_env_c env) (SOME (Short (implode "Inr"))) [v] =
+        SOME (semanticPrimitives_Conv (SOME (TypeStamp (implode "Inr") 4))
+          [v])) /\
+   do_con_check (sem_env_c env) (SOME (Short (implode "Inl"))) 1 /\
+   (!v. build_conv (sem_env_c env) (SOME (Short (implode "Inl"))) [v] =
+        SOME (semanticPrimitives_Conv (SOME (TypeStamp (implode "Inl") 4))
+          [v])) /\ ~(fname = farg) /\
+   (?Hs events vs io.
+        vs 0 = xv /\ SEP_IMP H (Hs 0 * set_sep_one (cfHeapsBase_FFI_full
+          (events 0))) /\
+        (!i.
+             app p stepv [vs i] (Hs i * set_sep_one (cfHeapsBase_FFI_full
+               (events i)))
+               (POSTv (\v'.
+                    &(v' = semanticPrimitives_Conv (SOME (TypeStamp (implode
+                      "Inl") 4))
+                             [vs (SUC i)]) *
+                  Hs (SUC i) * set_sep_one (cfHeapsBase_FFI_full (events
+                    (SUC i)))))) /\
+        lprefix_lub (IMAGE (sptree_fromList o events) univ (:num)) io /\ Q
+          io) ==>
+   app p (semanticPrimitives_Recclosure env [(fname,farg,fbody)] fname)
+     [xv] H (POSTd Q)`,
+  CHEAT_TAC);;
 
 
 (* -- repeat -- *)
@@ -1027,11 +1073,37 @@ let some_repeat_clos_def = new_definition
 
 (* HOL4 cfDivScript.sml:3483: ML code, not ported *)
 
-(* HOL4 cfDivScript.sml:3485-3676: a theorem whose statement the port cannot
-   state yet: repeat_POSTd0 *)
+let repeat_POSTd0 = prove
+ (`!p env fv' xv H Q.
+     (?Hs events vs io.
+        vs 0 = xv /\ SEP_IMP H (Hs 0) /\
+        (!i. ?P. Hs i = P * set_sep_one (cfHeapsBase_FFI_full (events i)))
+          /\
+        (!i.
+           (app p fv' [vs i] (Hs i)
+                            (POSTv (\v'. &(v' = vs (SUC i)) * Hs (SUC i)))))
+                              /\
+        lprefix_lub (IMAGE (sptree_fromList o events) UNIV) io /\
+        Q io) ==>
+     app p (some_repeat_clos env) [fv'; xv] H (POSTd Q)`,
+  CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:3678-3705: a theorem whose statement the port cannot
-   state yet: IMP_app_POSTd *)
+let IMP_app_POSTd = prove
+ (`make_stepfun_closure env fname farg fbody = SOME stepv /\ ~(fname = farg) /\
+   (?Hs events vs io.
+        vs 0 = xv /\ SEP_IMP H (Hs 0 * set_sep_one (cfHeapsBase_FFI_full
+          (events 0))) /\
+        (!i.
+             app p stepv [vs i] (Hs i * set_sep_one (cfHeapsBase_FFI_full
+               (events i)))
+               (POSTv (\v'. &(v' = vs (SUC i)) *
+                          Hs (SUC i) * set_sep_one (cfHeapsBase_FFI_full
+                            (events (SUC i)))))) /\
+        lprefix_lub (IMAGE (sptree_fromList o events) univ (:num)) io /\ Q
+          io) ==>
+   app p (semanticPrimitives_Recclosure env [(fname,farg,fbody)] fname)
+     [xv] H (POSTd Q)`,
+  CHEAT_TAC);;
 
 (* -- FFI_part -- *)
 
@@ -1054,11 +1126,40 @@ let limited_FFI_part_IN_st2heap_IMP = prove
    st) = events`,
   CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:3739-3952: a theorem whose statement the port cannot
-   state yet: repeat_POSTd_one_FFI_part *)
+let repeat_POSTd_one_FFI_part = prove
+ (`!p env fv' xv H Q ns.
+     limited_parts ns p /\
+     (?Hs events vs ss u io.
+        vs 0 xv /\ SEP_IMP H (Hs 0) /\
+        (!i. ?P. Hs i = P * set_sep_one (cfHeapsBase_FFI_part (ss i) u ns
+          (events i))) /\
+        (!i xv. vs i xv ==>
+           (app p fv' [xv] (Hs i)
+                            (POSTv (\v'. &(vs (SUC i) v') * Hs (SUC i)))))
+                              /\
+        lprefix_lub (IMAGE (sptree_fromList o events) UNIV) io /\
+        Q io) ==>
+     app p (some_repeat_clos env) [fv'; xv] H (POSTd Q)`,
+  CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:3954-3982: a theorem whose statement the port cannot
-   state yet: IMP_app_POSTd_one_FFI_part *)
+let IMP_app_POSTd_one_FFI_part = prove
+ (`make_stepfun_closure env fname farg fbody = SOME stepv /\ ~(fname = farg) /\
+   limited_parts ns p /\
+   (?Hs events vs ss u io.
+        vs 0 xv /\ SEP_IMP H (Hs 0 * set_sep_one (cfHeapsBase_FFI_part (ss
+          0) u ns (events 0))) /\
+        (!i xv'.
+             vs i xv' ==>
+             app p stepv [xv'] (Hs i * set_sep_one (cfHeapsBase_FFI_part (ss
+               i) u ns (events i)))
+               (POSTv (\v'. &(vs (SUC i) v') *
+                          Hs (SUC i) * set_sep_one (cfHeapsBase_FFI_part (ss
+                            (SUC i)) u ns (events (SUC i)))))) /\
+        lprefix_lub (IMAGE (sptree_fromList o events) univ (:num)) io /\ Q
+          io) ==>
+   app p (semanticPrimitives_Recclosure env [(fname,farg,fbody)] fname)
+     [xv] H (POSTd Q)`,
+  CHEAT_TAC);;
 
 (* -- old repeat approach -- *)
 
@@ -1074,11 +1175,32 @@ let evaluate_IMP_io_events_mono = prove
   (semanticPrimitives_state_ffi s) (semanticPrimitives_state_ffi t)`,
   CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:3999-4183: a theorem whose statement the port cannot
-   state yet: repeat_POSTd *)
+let repeat_POSTd = prove
+ (`!p fv' xv H Q.
+     (?Hs events vs io.
+        vs 0 = xv /\ SEP_IMP H (Hs 0) /\
+        (!i. ?P. Hs i = P * set_sep_one (cfHeapsBase_FFI_full (events i)))
+          /\
+        (!i.
+           (app p fv' [vs i] (Hs i)
+                            (POSTv (\v'. &(v' = vs (SUC i)) * Hs (SUC i)))))
+                              /\
+        lprefix_lub (IMAGE (sptree_fromList o events) UNIV) io /\
+        Q io) ==>
+     app p repeat_v [fv'; xv] H (POSTd Q)`,
+  CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:4185-4221: a theorem whose statement the port cannot
-   state yet: repeat_POSTe *)
+let repeat_POSTe = prove
+ (`!(p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8 list->word8
+  list->ffi->(ffi cfHeapsBase_ffi_result) option)) list) fv' xv H Q.
+     (?Hs vs j.
+         vs 0 = xv /\ SEP_IMP H (Hs 0) /\
+         (!i. i < j ==>
+           app p fv' [vs i] (Hs i) (POSTv (\v. &(v = vs (SUC i)) * Hs (SUC
+             i)))) /\
+         app p fv' [vs j] (Hs j) (POSTe Q)) ==>
+           app p repeat_v [fv'; xv] H (POSTe Q)`,
+  CHEAT_TAC);;
 
 (* TODO: up-to techniques duplicated from divTheory; should go elsewhere (llistTheory?)
          other stuff can probably be moved to llistTheory, various other cf theories,
@@ -1092,8 +1214,15 @@ let llist_upto = cake_inductive
 
 (* HOL4 cfDivScript.sml:4234-4238: ML code, not ported *)
 
-(* HOL4 cfDivScript.sml:4240-4277: a theorem whose statement the port cannot
-   state yet: LLIST_BISIM_UPTO *)
+let LLIST_BISIM_UPTO = prove
+ (`!ll1 ll2 R.
+     R ll1 ll2 /\
+     (!ll3 ll4.
+       R ll3 ll4 ==>
+       ll3 = LNIL /\ ll4 = LNIL \/
+       LHD ll3 = LHD ll4 /\
+       llist_upto R (THE (LTL ll3)) (THE (LTL ll4))) ==> ll1 = ll2`,
+  CHEAT_TAC);;
 
 
 let LFLATTEN_fromList = prove
@@ -1181,11 +1310,15 @@ let LAPPEND_fromList_EQ = prove
        ll = ll'`,
   CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:4402-4408: a theorem whose statement the port cannot
-   state yet: LFLATTEN_NOT_NIL_IMP *)
+let LFLATTEN_NOT_NIL_IMP = prove
+ (`~(LFLATTEN ll = LNIL) ==>
+   (?n ll2. LNTH n ll = SOME ll2 /\ ~(ll2 = LNIL))`,
+  CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:4410-4456: a theorem whose statement the port cannot
-   state yet: LFINITE_LFLATTEN_LGENERATE *)
+let LFINITE_LFLATTEN_LGENERATE = prove
+ (`LFINITE (LFLATTEN (LGENLIST f NONE)) ==>
+   (?n. LFLATTEN (LGENLIST (f o (+) n) NONE) = LNIL)`,
+  CHEAT_TAC);;
 
 (* [local] *)
 let list_length_eq = prove
@@ -1235,18 +1368,48 @@ let IMAGE_purge_parts_no_parts2 = prove
             | cfHeapsBase_FFI_full v13 -> x) h = h`,
   CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:4561-4565: a theorem whose statement the port cannot
-   state yet: LFLATTEN_fromList_REPLICATE_LNIL *)
+let LFLATTEN_fromList_REPLICATE_LNIL = prove
+ (`LFLATTEN (sptree_fromList (REPLICATE a1 LNIL)) = LNIL`,
+  CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:4567-4777: a theorem whose statement the port cannot
-   state yet: repeat_POSTd_one_FFI_part_FLATTEN *)
+let repeat_POSTd_one_FFI_part_FLATTEN = prove
+ (`!p env fv' xv H Q ns.
+     limited_parts ns p /\
+     (?Hs events vs ss u io.
+        vs 0 xv /\ SEP_IMP H (Hs 0 * set_sep_one (cfHeapsBase_FFI_part (ss
+          0) u ns (events 0))) /\
+        (!i xv. vs i xv ==>
+           (app p fv' [xv] (Hs i * set_sep_one (cfHeapsBase_FFI_part (ss i)
+             u ns []))
+                            (POSTv (\v'.
+                             &(vs (SUC i) v') * Hs (SUC i) * set_sep_one
+                               (cfHeapsBase_FFI_part (ss (SUC i)) u ns (events
+                               (SUC i))))))) /\
+        Q (LFLATTEN (LGENLIST (sptree_fromList o events) NONE))) ==>
+     app p (some_repeat_clos env) [fv'; xv] H (POSTd Q)`,
+  CHEAT_TAC);;
 
 let LFLATTEN_LGENLIST_REPEAT = prove
  (`LFLATTEN (LGENLIST (\x. sptree_fromList l) NONE) = LREPEAT l`,
   CHEAT_TAC);;
 
-(* HOL4 cfDivScript.sml:4797-4821: a theorem whose statement the port cannot
-   state yet: IMP_app_POSTd_one_FFI_part_FLATTEN *)
+let IMP_app_POSTd_one_FFI_part_FLATTEN = prove
+ (`make_stepfun_closure env fname farg fbody = SOME stepv /\ ~(fname = farg) /\
+   limited_parts ns p /\
+   (?Hs events vs ss u io.
+      vs 0 xv /\ SEP_IMP H (Hs 0 * set_sep_one (cfHeapsBase_FFI_part (ss 0)
+        u ns (events 0))) /\
+      (!i xv. vs i xv ==>
+         (app p stepv [xv] (Hs i * set_sep_one (cfHeapsBase_FFI_part (ss i)
+           u ns []))
+                          (POSTv (\v'.
+                           &(vs (SUC i) v') * Hs (SUC i) * set_sep_one
+                             (cfHeapsBase_FFI_part (ss (SUC i)) u ns (events
+                             (SUC i))))))) /\
+      Q (LFLATTEN (LGENLIST (sptree_fromList o events) NONE))) ==>
+   app p (semanticPrimitives_Recclosure env [(fname,farg,fbody)] fname)
+     [xv] H (POSTd Q)`,
+  CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
