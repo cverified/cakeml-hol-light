@@ -615,7 +615,7 @@ let primop_to_str_def = new_definition
 let check_fun_name_def = new_definition
   `check_fun_name ctxt fname =
      (match mlmap_lookup (panStatic_context_funcs ctxt) fname with NONE ->
-       errorMonad_error (ScopeErr
+       errorLogMonad_error (ScopeErr
          (add_primitive_hint fname (get_scope_msg panStatic_Fun
            (panStatic_context_loc ctxt) fname (panStatic_context_scope ctxt))))
      | SOME f -> errorLogMonad_return f)`;;
@@ -624,7 +624,7 @@ let check_fun_name_def = new_definition
 let check_global_var_def = new_definition
   `check_global_var ctxt vname =
      (match mlmap_lookup (panStatic_context_globals ctxt) vname with NONE ->
-       errorMonad_error (ScopeErr (get_scope_msg panStatic_Var
+       errorLogMonad_error (ScopeErr (get_scope_msg panStatic_Var
        (panStatic_context_loc ctxt) vname (panStatic_context_scope ctxt)))
      | SOME v -> errorLogMonad_return v)`;;
 
@@ -632,7 +632,7 @@ let check_global_var_def = new_definition
 let check_local_var_def = new_definition
   `check_local_var ctxt vname =
      (match mlmap_lookup (panStatic_context_locals ctxt) vname with NONE ->
-       errorMonad_error (ScopeErr (get_scope_msg panStatic_Var
+       errorLogMonad_error (ScopeErr (get_scope_msg panStatic_Var
        (panStatic_context_loc ctxt) vname (panStatic_context_scope ctxt)))
      | SOME v -> errorLogMonad_return v)`;;
 
@@ -650,7 +650,7 @@ let check_export_params_def,check_export_params_ind = define_guess
   `(check_export_params loc scope [] = errorLogMonad_return one) /\
    (check_export_params loc scope (CONS (vname,shape) ps) =
       if ~(shape = pan_One) then
-        errorMonad_error (ShapeErr (get_non_word_msg (
+        errorLogMonad_error (ShapeErr (get_non_word_msg (
             mlstring_concat [implode "exported function parameter ";
                 vname]) (shape_to_str shape) loc scope))
       else check_export_params loc scope ps)`;;
@@ -662,7 +662,7 @@ let check_operands_def,check_operands_ind = define_guess
       match sb with WordB b ->
         errorLogMonad_bind (check_operands ctxt op_str sbs) (\b'.
           errorLogMonad_return (based_merge b b'))
-      | _ -> errorMonad_error (ShapeErr (get_non_word_msg (
+      | _ -> errorLogMonad_error (ShapeErr (get_non_word_msg (
           mlstring_concat [implode "operation "; op_str; implode
               " operand"]) (sh_bd_to_str sb) (panStatic_context_loc ctxt)
               (panStatic_context_scope ctxt))))`;;
