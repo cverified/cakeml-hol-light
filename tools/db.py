@@ -757,13 +757,18 @@ class Db:
     anc = self.gram_ancestors(thy)
     ids = set()
     for b in blocks:
-      if b.kind in ('Theorem', 'Triviality'):
+      # an Inductive states its rules as a theorem does, and its
+      # variables are free in them: holSyntax's updates has a rule
+      # about the abs and the rep of a type definition
+      if b.kind in ('Theorem', 'Triviality', 'Inductive'):
         ids |= set(re.findall(r"[A-Za-z][A-Za-z0-9_']*", b.body or ''))
     out = set()
     for n in ids:
       # a constant that HOL4 hides from its parser is a variable
       # of a statement that writes it (overrides.HOL4_HIDDEN)
-      if n in overrides.HOL4_HIDDEN:
+      # a key may name the theory, for a constant that HOL Light
+      # has and one theory of the port writes for a variable
+      if n in overrides.HOL4_HIDDEN or (thy, n) in overrides.HOL4_HIDDEN:
         out.add(n); continue
       if n in self.hl or n in self.provided: continue
       ts = {t for t, k in self.defs.get(n, [])

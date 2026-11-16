@@ -1454,7 +1454,13 @@ THM_INT_VARS = {
 # while HOL Light's words library has one (the number of a word).
 # The statements that write these names are read with the constant
 # of HOL Light hidden (tools/db.py's hidden_for).
-HOL4_HIDDEN = set(['C', 'val'])
+# a name the port has a constant of and HOL4 reads as a variable.
+# A bare name is hidden in every theory whose statements write it;
+# a key that names the theory is for a constant of HOL Light that
+# one theory alone writes for a variable -- holSyntax's rule for a
+# type definition is about the abs and the rep of it, and HOL
+# Light's abs is the absolute value of a real
+HOL4_HIDDEN = set(['C', 'val', ('holSyntax', 'abs')])
 
 # HOL4's Definition foo[schematic] has a free variable in its
 # body, which HOL4 makes the first argument of the constant:
@@ -1634,6 +1640,9 @@ IFF_IS_EQ = set([
   # which are the only other definitions of the scope that write
   # the iff with an ordering anywhere in them
   ('holSyntax', 'ordav_def'),
+  # and extends is a relation between two contexts, which HOL4
+  # writes its iff at the same way: `extends ⇔ RTC (...)`
+  ('holSyntax', 'extends_def'),
 ])
 
 # definitions in which a ~ without an argument ($~) is the negation
