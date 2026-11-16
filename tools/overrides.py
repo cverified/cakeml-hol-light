@@ -1099,15 +1099,6 @@ LOCAL_NAMES = {
 # argument, so that the db knows the names (the port writes the
 # datatype itself in EXTRA_HEAD)
 EXTRA_DATATYPES = {
-  # compiler's compile_error has StaticError staterr in it, and
-  # staterr is a datatype of Pancake's panStatic, which the port
-  # does not have; without it compile_error is polymorphic where
-  # HOL4's is not, and the constructors in the match of
-  # error_to_str are variables
-  ('compiler', 'staterr'): [('ScopeErr', ['mlstring']),
-                            ('WarningErr', ['mlstring']),
-                            ('GenErr', ['mlstring']),
-                            ('ShapeErr', ['mlstring'])],
 }
 
 EXTRA_DEFS = [
@@ -12376,24 +12367,6 @@ cake_declare "cunify_code"
   ('compiler', 'compile_64_def'): r'''
 cake_declare "basis" `:dec list`;;
 ''',
-  # the three entry points of Pancake that the compiler of Pancake
-  # goes through: Pancake is a second source language of the same
-  # backend, which the CakeML correctness theorem does not mention,
-  # so its parser, its static checker and its own backend are
-  # outside the port (only its abstract syntax, panLang, is in,
-  # because the definitions below have it in their type); the port
-  # declares the three with the type that they are used at and
-  # says nothing about their value
-  ('compiler', 'compile_pancake_def'): r'''
-cake_declare "parse_topdecs_to_ast"
-  `:string -> (('a)decl)list + (mlstring#locs)list`;;
-cake_declare "static_check"
-  `:(('a)decl)list -> (1,staterr)errorMonad_error#(staterr)list`;;
-cake_declare "pan_compile_tap"
-  `:('a)asm_config -> backend_config -> (('a)decl)list ->
-    ((((8)word)list#(('a)word)list#backend_config)option)#
-    (mlstring)app_list`;;
-''',
   # the asm configuration of a target: the one field of it that
   # is not data is the encoder, which needs a machine model of
   # HOL4 (x64_step and the five others), and those are not part
@@ -12913,16 +12886,6 @@ let _ = do_list (fun (t,c) -> hol4_overload_last t c)
   # has in OCaml
   'mc_multiword': r'''
 needs "lib/mc_tailrec.ml";;
-''',
-
-  # the datatype of the static errors of Pancake (panStatic's
-  # staterr), which compiler's compile_error has in it; Pancake
-  # itself is not ported, but compile_error is not Pancake's and
-  # error_to_str matches on these constructors
-  'compiler': r'''
-let staterr_INDUCT,staterr_RECURSION = define_datatype
-  "staterr = ScopeErr (mlstring) | WarningErr (mlstring) \
-             | GenErr (mlstring) | ShapeErr (mlstring)";;
 ''',
   # HOL4 makes vwalk, walkstar and oc with a schema
   # (xDefineSchema, under the hypothesis wfs s that the
