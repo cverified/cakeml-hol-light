@@ -14454,6 +14454,28 @@ DEF_PATCH = {
   # overloaded with, but not one of HOL Light's own infixes, and *
   # is one of those -- so these said the multiplication of two
   # numbers.  Four places in the file and none outside it
+  # setSpec overloads the comma with its own pair, and HOL4
+  # resolves which of the two a comma is by the type: the pair of
+  # the set theory takes two elements of 'U, so the triple that
+  # is_model takes -- a membership relation, an element and a
+  # choice function -- is the tuple of HOL and not that pair.  The
+  # port has no such resolution and wrote the set pair; this is
+  # the only place of the file where it is wrong, because the
+  # theorems about is_model write the triple themselves
+  ('setSpec', 'is_model_def'): [
+    ("is_model (setSpec_pair mem' (mem':'U->'U->bool)"
+     " (setSpec_pair mem' (indset:'U) (ch:'U->'U)))",
+     "is_model ((mem':'U->'U->bool),(indset:'U),(ch:'U->'U))"),
+  ],
+  # the empty set of this file is the one of the set theory
+  # (HOL4 overloads the symbol with `empty ^mem`), which the port
+  # writes everywhere else in the file and wrote as HOL Light's
+  # own empty set here -- so tuple0 came out giving a predicate
+  # where it gives an element of the set theory
+  ('setSpec', 'tuple_def'): [
+    ("(tuple0 (mem':'U->'U->bool) [] = {})",
+     "(tuple0 (mem':'U->'U->bool) [] = setSpec_empty mem')"),
+  ],
   ('setSpec', 'relspace_def'): [
     ("(power mem') (x * y)",
      "(power mem') (setSpec_product mem' x y)"),
