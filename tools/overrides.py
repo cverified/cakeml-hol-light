@@ -1518,20 +1518,12 @@ INT_ARGS = {
 # (\s+ stands for the break of a line as well as for a space) and
 # every spot that matches is patched.  An entry that matches
 # nowhere in the file is reported in tools/warnings.txt
-FILE_PATCH = {
-  # HOL4 declares tysof and tmsof three times over, each at a type
-  # of its own, and its parser uses the one in force where the
-  # block stands: FST and SND of a signature up to line 478, then
-  # those after sigof for a theory, then the fold over a context
-  # from line 595 on.  The port keeps one value for an overload of
-  # a theory and took the last, so every block before 595 got the
-  # fold.  Which of the three a place means is what it is applied
-  # to, so that is what this says; sigof and axsof are declared
-  # twice and go the same way.  Six names of two theories of the
-  # whole scope are overloaded more than once (these four and
-  # basis_ffi's two), and a port that followed the declaration
-  # order would need none of it
-  'holSyntax': [
+# the overloads of holSyntax that HOL4 declares more than once,
+# which every theory that uses them inherits: HOL4 resolves
+# which of them a place means by the type, and the port writes
+# one of them everywhere, so what the overload is applied to is
+# what says which it is.  266 places in nine files of Candle
+HOLSYNTAX_SIGS = [
     (r'\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_'
      r'upd\s+ctxt\)\)\s+ctxt\)\)\s+sig',
      r'FST sig'),
@@ -1553,7 +1545,19 @@ FILE_PATCH = {
      r'+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctx'
      r't\)\)\s+ctxt\)\)\s+thy',
      r'SND thy'),
-  ],
+]
+
+FILE_PATCH = {
+  'holSyntax': HOLSYNTAX_SIGS,
+  'holSyntaxExtra': HOLSYNTAX_SIGS,
+  'holSemantics': HOLSYNTAX_SIGS,
+  'holSemanticsExtra': HOLSYNTAX_SIGS,
+  'holBool': HOLSYNTAX_SIGS,
+  'holBoolSyntax': HOLSYNTAX_SIGS,
+  'holSoundness': HOLSYNTAX_SIGS,
+  'holLightConsistency': HOLSYNTAX_SIGS,
+  'compute_syntaxProof': HOLSYNTAX_SIGS,
+  'compute_evalProof': HOLSYNTAX_SIGS,
   'word_to_stackProof': [
     (r'stackSem_set_var\s+0\s+c1\s*\(\s*stackSem_set_var\s+r\s+c\s+s\s*\)',
      r'wordSem_set_var 0 c1 (wordSem_set_var r c s)'),
