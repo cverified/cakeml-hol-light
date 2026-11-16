@@ -5455,8 +5455,41 @@ def port(thy, db=None):
     if nm not in db.thmbind: dbmod.bind_thm(db, thy, nm, nm)
   path = ML + db.mlpath_of(thy)
   os.makedirs(os.path.dirname(path), exist_ok=True)
-  open(path, 'w').write(text + '\n')
+  # the preface is read off the file before it is opened for
+  # writing, which truncates it
+  out = keep_preface(path, text)
+  open(path, 'w').write(out + '\n')
   return path, p.warn, p.amb
+
+
+BANNER = '(* ======================================================== *)'
+
+
+def keep_preface(path, text):
+  """the preface of a file is derived from the whole port -- which
+     files need it, how many blocks its source has -- so
+     tools/preface.py owns it and writes it after every file has
+     its needs lines.  What this port writes in its place is the
+     short one of a fresh file, and porting one theory also ports
+     every ancestor of it (the port of a theory depends on what
+     the port made of its ancestors), so one
+     `python3 -I tools/port.py lab_to_targetProof` would put the
+     short preface in the place of the full one in a hundred and
+     forty files.  So an existing preface stays, and a full port
+     refreshes it through tools/preface.py"""
+  try:
+    old = open(path).read().split('\n')
+  except IOError:
+    return text
+  new = text.split('\n')
+  if not old or not new or old[0] != BANNER or new[0] != BANNER:
+    return text
+  try:
+    oe = old.index(BANNER, 1)
+    ne = new.index(BANNER, 1)
+  except ValueError:
+    return text
+  return '\n'.join(old[:oe + 1] + new[ne + 1:])
 
 
 if __name__ == '__main__':
