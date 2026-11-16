@@ -23,8 +23,8 @@ let _ = cake_theory "monadic_enc"
   The modulus m is a hash size parameter
 *)
 let hash_reg_imm_def = define_cases
-  `(hash_reg_imm m (Reg reg) = reg) /\
-   (hash_reg_imm m (Imm imm) = 67 + (w2n imm MOD m))`;;
+  `(hash_reg_imm m (asm_Reg reg) = reg) /\
+   (hash_reg_imm m (asm_Imm imm) = 67 + (w2n imm MOD m))`;;
 
 let hash_binop_def = define_cases
   `(hash_binop asm_Add = 0) /\

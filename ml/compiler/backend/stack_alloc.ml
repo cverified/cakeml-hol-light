@@ -28,213 +28,214 @@ let _ = cake_theory "stack_alloc"
 let memcpy_code_def = new_definition
   `memcpy_code =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotEqual 0 (Imm (n2w 0))
+       asm_NotEqual 0 (asm_Imm (n2w 0))
        (stack_list_Seq [(\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w
          0)))) 1 2;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Imm
-                    (bytes_in_word))))) 2;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Imm
-                    (n2w 1))))) 0;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                    (asm_Imm (bytes_in_word))))) 2;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                    (asm_Imm (n2w 1))))) 0;
                   (\r a. stack_Inst (asm_Mem asm_Store r (Addr a (n2w 0))))
                     1 3;
                   (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                    (Imm (bytes_in_word))))) 3])`;;
+                    (asm_Imm (bytes_in_word))))) 3])`;;
 
 let clear_top_inst_def = new_definition
   `clear_top_inst i n =
-     (stack_Seq ((\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm (n2w
-       v))))) i (dimindex (:'a) - n - 1))
-         ((\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w
+     (stack_Seq ((\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (asm_Imm
+       (n2w v))))) i (dimindex (:'a) - n - 1))
+         ((\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm (n2w
            v))))) i (dimindex (:'a) - n - 1)):'a stack_prog)`;;
 
 let word_gc_move_code_def = new_definition
   `word_gc_move_code conf =
-     stack_If asm_Test 5 (Imm ((n2w 1):'a word)) stack_Skip
+     stack_If asm_Test 5 (asm_Imm ((n2w 1):'a word)) stack_Skip
        (stack_list_Seq
-         [(\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src (Reg
-           src)))) 0 5;
+         [(\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
+           (asm_Reg src)))) 0 5;
           stack_Get 1 CurrHeap;
-          (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w v))))) 0
-            (shift_length conf);
-          (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm (n2w v))))) 0
-            (backend_common_word_shift (:'a));
-          (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Reg
+          (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm (n2w
+            v))))) 0 (shift_length conf);
+          (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (asm_Imm (n2w
+            v))))) 0 (backend_common_word_shift (:'a));
+          (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (asm_Reg
             r2)))) 0 1;
           // here 0 is ptr_to_addr conf old w
           (\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w 0)))) 1 0;
           // here 1 is m (ptr_to_addr conf old w)
-          stack_If asm_Test 1 (Imm (n2w 3))
+          stack_If asm_Test 1 (asm_Imm (n2w 3))
             (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r
-              (Imm (n2w v))))) 1 2;
-                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm
-                         (n2w v))))) 1 (shift_length conf);
+              (asm_Imm (n2w v))))) 1 2;
+                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
+                         (asm_Imm (n2w v))))) 1 (shift_length conf);
                        clear_top_inst 5 (small_shift_length conf - 1);
                        (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Or r1
-                         r1 (Reg r2)))) 5 1])
+                         r1 (asm_Reg r2)))) 5 1])
             (stack_list_Seq [
                        // get len+1w
-                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm
-                         (n2w v))))) 1 (dimindex (:'a) -
+                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r
+                         (asm_Imm (n2w v))))) 1 (dimindex (:'a) -
                          data_to_word_config_len_size conf);
                        (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                         (Imm (n2w 1))))) 1;
+                         (asm_Imm (n2w 1))))) 1;
                        // store len+1w for later
                        (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                         dest src (Reg src)))) 6 1;
+                         dest src (asm_Reg src)))) 6 1;
                        // memcpy
                        (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                         dest src (Reg src)))) 2 0;
+                         dest src (asm_Reg src)))) 2 0;
                        (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                         dest src (Reg src)))) 0 1;
+                         dest src (asm_Reg src)))) 0 1;
                        memcpy_code;
                        // compute original header_addr
                        (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                         dest src (Reg src)))) 0 6;
-                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm
-                         (n2w v))))) 0 (backend_common_word_shift (:'a));
+                         dest src (asm_Reg src)))) 0 6;
+                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
+                         (asm_Imm (n2w v))))) 0 (backend_common_word_shift
+                         (:'a));
                        (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1
-                         r1 (Reg r2)))) 2 0;
+                         r1 (asm_Reg r2)))) 2 0;
                        // store i << 2 into header_addr
                        (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                         dest src (Reg src)))) 0 4;
-                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm
-                         (n2w v))))) 0 2;
+                         dest src (asm_Reg src)))) 0 4;
+                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
+                         (asm_Imm (n2w v))))) 0 2;
                        (\r a. stack_Inst (asm_Mem asm_Store r (Addr a (n2w
                          0)))) 0 2;
                        // compute update_addr conf i w, where i in 4 and w in 5
                        (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                         dest src (Reg src)))) 1 4;
+                         dest src (asm_Reg src)))) 1 4;
                        clear_top_inst 5 (small_shift_length conf - 1);
-                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm
-                         (n2w v))))) 1 (shift_length conf);
+                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
+                         (asm_Imm (n2w v))))) 1 (shift_length conf);
                        (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Or r1
-                         r1 (Reg r2)))) 5 1;
+                         r1 (asm_Reg r2)))) 5 1;
                        // add to i in 4
                        (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add
-                         r1 r1 (Reg r2)))) 4 6])])`;;
+                         r1 r1 (asm_Reg r2)))) 4 6])])`;;
 
 let word_gc_move_list_code_def = new_definition
   `word_gc_move_list_code conf =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotEqual 7 (Imm ((n2w 0):'a word))
+       asm_NotEqual 7 (asm_Imm ((n2w 0):'a word))
        (stack_list_Seq [(\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w
          0)))) 5 8;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Imm
-                    (n2w 1))))) 7;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                    (asm_Imm (n2w 1))))) 7;
                   word_gc_move_code conf;
                   (\r a. stack_Inst (asm_Mem asm_Store r (Addr a (n2w 0))))
                     5 8;
                   (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                    (Imm (bytes_in_word))))) 8])`;;
+                    (asm_Imm (bytes_in_word))))) 8])`;;
 
 let word_gc_move_loop_code_def = new_definition
   `word_gc_move_loop_code conf =
      ((\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotEqual 3 (Reg 8)
+       asm_NotEqual 3 (asm_Reg 8)
       (stack_list_Seq [(\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w
         0)))) 7 8;
-                 stack_If asm_Test 7 (Imm (n2w 4))
+                 stack_If asm_Test 7 (asm_Imm (n2w 4))
                    (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift
-                     Lsr r r (Imm (n2w v))))) 7 (dimindex (:'a) -
+                     Lsr r r (asm_Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add
-                                r1 r1 (Imm (bytes_in_word))))) 8;
+                                r1 r1 (asm_Imm (bytes_in_word))))) 8;
                               word_gc_move_list_code conf])
                    (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift
-                     Lsr r r (Imm (n2w v))))) 7 (dimindex (:'a) -
+                     Lsr r r (asm_Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add
-                                r1 r1 (Imm (n2w 1))))) 7;
+                                r1 r1 (asm_Imm (n2w 1))))) 7;
                               (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r
-                                r (Imm (n2w v))))) 7 (backend_common_word_shift
-                                (:'a));
+                                r (asm_Imm (n2w v))))) 7
+                                (backend_common_word_shift (:'a));
                               (\r1 r2. stack_Inst (asm_Arith (asm_Binop
-                                asm_Add r1 r1 (Reg r2)))) 8 7])]):'a
+                                asm_Add r1 r1 (asm_Reg r2)))) 8 7])]):'a
                                 stack_prog)`;;
 
 (* 7 is w, 8 is index into stack, 5 is input to word_gc_move_code *)
 let word_gc_move_bitmap_code_def = new_definition
   `word_gc_move_bitmap_code conf =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotLower 7 (Imm (n2w 2))
-      (stack_If asm_Test 7 (Imm (n2w 1))
+       asm_NotLower 7 (asm_Imm (n2w 2))
+      (stack_If asm_Test 7 (asm_Imm (n2w 1))
          (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r
-           (Imm (n2w v))))) 7 1;
+           (asm_Imm (n2w v))))) 7 1;
                     (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                      (Imm (bytes_in_word))))) 8])
+                      (asm_Imm (bytes_in_word))))) 8])
          (stack_list_Seq [stack_StackLoadAny 5 8;
-                    (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm
+                    (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm
                       (n2w v))))) 7 1;
                     word_gc_move_code conf;
                     stack_StackStoreAny 5 8;
                     (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                      (Imm (bytes_in_word))))) 8]))`;;
+                      (asm_Imm (bytes_in_word))))) 8]))`;;
 
 (* 9 is w, 8 is index into stack *)
 let word_gc_move_bitmaps_code_def = new_definition
   `((word_gc_move_bitmaps_code conf):'a stack_prog) =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotTest 0 (Reg 0)
+       asm_NotTest 0 (asm_Reg 0)
        (stack_list_Seq [stack_BitmapLoad 7 9;
                   word_gc_move_bitmap_code conf;
                   stack_BitmapLoad 0 9;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Imm
-                    (n2w 1))))) 9;
-                  (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm
-                    (n2w v))))) 0 (dimindex (:'a) - 1)])`;;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                    (asm_Imm (n2w 1))))) 9;
+                  (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r
+                    (asm_Imm (n2w v))))) 0 (dimindex (:'a) - 1)])`;;
 
 (* 9 is w, 8 is index into stack *)
 let word_gc_move_roots_bitmaps_code_def = new_definition
   `((word_gc_move_roots_bitmaps_code conf):'a stack_prog) =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotTest 9 (Reg 9)
+       asm_NotTest 9 (asm_Reg 9)
        (stack_list_Seq [(\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-         dest src (Reg src)))) 0 9;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Imm
-                    (n2w 1))))) 9;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Imm
-                    (bytes_in_word))))) 8;
+         dest src (asm_Reg src)))) 0 9;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                    (asm_Imm (n2w 1))))) 9;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                    (asm_Imm (bytes_in_word))))) 8;
                   word_gc_move_bitmaps_code conf;
                   stack_StackLoadAny 9 8])`;;
 
 let word_gen_gc_move_code_def = new_definition
   `word_gen_gc_move_code conf =
-     (stack_If asm_Test 5 (Imm ((n2w 1):'a word)) stack_Skip
+     (stack_If asm_Test 5 (asm_Imm ((n2w 1):'a word)) stack_Skip
        (stack_list_Seq
-         [(\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src (Reg
-           src)))) 0 5;
+         [(\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
+           (asm_Reg src)))) 0 5;
           stack_Get 1 CurrHeap;
-          (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w v))))) 0
-            (shift_length conf);
-          (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm (n2w v))))) 0
-            (backend_common_word_shift (:'a));
-          (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Reg
+          (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm (n2w
+            v))))) 0 (shift_length conf);
+          (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (asm_Imm (n2w
+            v))))) 0 (backend_common_word_shift (:'a));
+          (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (asm_Reg
             r2)))) 0 1;
           // here 0 is ptr_to_addr conf old w
           (\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w 0)))) 1 0;
           // here 1 is m (ptr_to_addr conf old w)
-          stack_If asm_Test 1 (Imm (n2w 3))
+          stack_If asm_Test 1 (asm_Imm (n2w 3))
             (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r
-              (Imm (n2w v))))) 1 2;
-                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm
-                         (n2w v))))) 1 (shift_length conf);
+              (asm_Imm (n2w v))))) 1 2;
+                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
+                         (asm_Imm (n2w v))))) 1 (shift_length conf);
                        clear_top_inst 5 (small_shift_length conf - 1);
                        (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Or r1
-                         r1 (Reg r2)))) 5 1])
+                         r1 (asm_Reg r2)))) 5 1])
             (stack_list_Seq [
                        // put header in 6
                        (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                         dest src (Reg src)))) 6 1;
+                         dest src (asm_Reg src)))) 6 1;
                        // get len+1w
-                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm
-                         (n2w v))))) 1 (dimindex (:'a) -
+                       (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r
+                         (asm_Imm (n2w v))))) 1 (dimindex (:'a) -
                          data_to_word_config_len_size conf);
                        (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                         (Imm (n2w 1))))) 1;
+                         (asm_Imm (n2w 1))))) 1;
                        (\r w. stack_Inst (asm_Const r w)) 2 (n2w 0b1100);
                        (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_And r1
-                         r1 (Reg r2)))) 6 2;
-                       stack_If asm_Equal 6 (Imm (n2w 8))
+                         r1 (asm_Reg r2)))) 6 2;
+                       stack_If asm_Equal 6 (asm_Imm (n2w 8))
                          (
                           // is_ref_header
                           stack_list_Seq [
@@ -246,228 +247,228 @@ let word_gen_gc_move_code_def = new_definition
                            // pb
                            // store len+1w for later
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 6 1;
+                             asm_Or dest src (asm_Reg src)))) 6 1;
                            (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
-                             (Imm (n2w v))))) 1 (backend_common_word_shift
+                             (asm_Imm (n2w v))))) 1 (backend_common_word_shift
                              (:'a));
                            (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub
-                             r1 r1 (Reg r2)))) 4 6;
+                             r1 r1 (asm_Reg r2)))) 4 6;
                            (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub
-                             r1 r1 (Reg r2)))) 3 1;
+                             r1 r1 (asm_Reg r2)))) 3 1;
                            stack_Set (Temp (n2w 2)) 3;
                            // new ib
                            stack_Set (Temp (n2w 3)) 4;
                            // new pb
                            // memcpy
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 2 0;
+                             asm_Or dest src (asm_Reg src)))) 2 0;
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 4 0;
+                             asm_Or dest src (asm_Reg src)))) 4 0;
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 0 6;
+                             asm_Or dest src (asm_Reg src)))) 0 6;
                            memcpy_code;
                            // compute original header_addr
                            stack_Get 0 (Temp (n2w 3));
                            // fixed?
                            (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
-                             (Imm (n2w v))))) 0 2;
+                             (asm_Imm (n2w v))))) 0 2;
                            (\r a. stack_Inst (asm_Mem asm_Store r (Addr a
                              (n2w 0)))) 0 4;
                            // compute update_addr conf i w, where w in 5
                            stack_Get 1 (Temp (n2w 3));
                            clear_top_inst 5 (small_shift_length conf - 1);
                            (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
-                             (Imm (n2w v))))) 1 (shift_length conf);
+                             (asm_Imm (n2w v))))) 1 (shift_length conf);
                            (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Or
-                             r1 r1 (Reg r2)))) 5 1;
+                             r1 r1 (asm_Reg r2)))) 5 1;
                            stack_Get 3 (Temp (n2w 0));
                            stack_Get 4 (Temp (n2w 1))])
                          (stack_list_Seq [
                            // store len+1w for later
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 6 1;
+                             asm_Or dest src (asm_Reg src)))) 6 1;
                            // memcpy
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 2 0;
+                             asm_Or dest src (asm_Reg src)))) 2 0;
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 0 1;
+                             asm_Or dest src (asm_Reg src)))) 0 1;
                            memcpy_code;
                            // compute original header_addr
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 0 6;
+                             asm_Or dest src (asm_Reg src)))) 0 6;
                            (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
-                             (Imm (n2w v))))) 0 (backend_common_word_shift
+                             (asm_Imm (n2w v))))) 0 (backend_common_word_shift
                              (:'a));
                            (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub
-                             r1 r1 (Reg r2)))) 2 0;
+                             r1 r1 (asm_Reg r2)))) 2 0;
                            // store i << 2 into header_addr
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 0 4;
+                             asm_Or dest src (asm_Reg src)))) 0 4;
                            (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
-                             (Imm (n2w v))))) 0 2;
+                             (asm_Imm (n2w v))))) 0 2;
                            (\r a. stack_Inst (asm_Mem asm_Store r (Addr a
                              (n2w 0)))) 0 2;
                            // compute update_addr conf i w, where i in 4 and w in 5
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 1 4;
+                             asm_Or dest src (asm_Reg src)))) 1 4;
                            clear_top_inst 5 (small_shift_length conf - 1);
                            (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
-                             (Imm (n2w v))))) 1 (shift_length conf);
+                             (asm_Imm (n2w v))))) 1 (shift_length conf);
                            (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Or
-                             r1 r1 (Reg r2)))) 5 1;
+                             r1 r1 (asm_Reg r2)))) 5 1;
                            // add to i in 4
                            (\r1 r2. stack_Inst (asm_Arith (asm_Binop
-                             asm_Add r1 r1 (Reg r2)))) 4 6])])]):'a
+                             asm_Add r1 r1 (asm_Reg r2)))) 4 6])])]):'a
                              stack_prog)`;;
 
 let word_gen_gc_partial_move_code_def = new_definition
   `word_gen_gc_partial_move_code conf =
      // uses 0,1,2,6 as temps
-     (stack_If asm_Test 5 (Imm ((n2w 1):'a word)) stack_Skip
+     (stack_If asm_Test 5 (asm_Imm ((n2w 1):'a word)) stack_Skip
        (stack_list_Seq
-         [(\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src (Reg
-           src)))) 0 5;
+         [(\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
+           (asm_Reg src)))) 0 5;
           stack_Get 6 (Temp (n2w 0));
-          (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w v))))) 0
-            (shift_length conf);
-          (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm (n2w v))))) 0
-            (backend_common_word_shift (:'a));
+          (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm (n2w
+            v))))) 0 (shift_length conf);
+          (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (asm_Imm (n2w
+            v))))) 0 (backend_common_word_shift (:'a));
           stack_Get 1 (Temp (n2w 1));
-          stack_If asm_Lower 0 (Reg 6) stack_Skip
+          stack_If asm_Lower 0 (asm_Reg 6) stack_Skip
            (stack_Seq (stack_Get 6 (Temp (n2w 1)))
-           (stack_If asm_NotLower 0 (Reg 1) stack_Skip (stack_list_Seq [
+           (stack_If asm_NotLower 0 (asm_Reg 1) stack_Skip (stack_list_Seq [
               stack_Get 1 CurrHeap;
-              (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Reg
-                r2)))) 0 1;
+              (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                (asm_Reg r2)))) 0 1;
               // here 0 is ptr_to_addr conf old w
               (\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w 0)))) 1 0;
               // here 1 is m (ptr_to_addr conf old w)
-              stack_If asm_Test 1 (Imm (n2w 3))
+              stack_If asm_Test 1 (asm_Imm (n2w 3))
                 (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift Lsr
-                  r r (Imm (n2w v))))) 1 2;
+                  r r (asm_Imm (n2w v))))) 1 2;
                            (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
-                             (Imm (n2w v))))) 1 (shift_length conf);
+                             (asm_Imm (n2w v))))) 1 (shift_length conf);
                            clear_top_inst 5 (small_shift_length conf - 1);
                            (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Or
-                             r1 r1 (Reg r2)))) 5 1])
+                             r1 r1 (asm_Reg r2)))) 5 1])
                 (stack_list_Seq [
                            // put header in 6
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 6 1;
+                             asm_Or dest src (asm_Reg src)))) 6 1;
                            // get len+1w
                            (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r
-                             (Imm (n2w v))))) 1 (dimindex (:'a) -
+                             (asm_Imm (n2w v))))) 1 (dimindex (:'a) -
                              data_to_word_config_len_size conf);
                            (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1
-                             r1 (Imm (n2w 1))))) 1;
+                             r1 (asm_Imm (n2w 1))))) 1;
                            // store len+1w for later
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 6 1;
+                             asm_Or dest src (asm_Reg src)))) 6 1;
                            // memcpy
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 2 0;
+                             asm_Or dest src (asm_Reg src)))) 2 0;
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 0 1;
+                             asm_Or dest src (asm_Reg src)))) 0 1;
                            memcpy_code;
                            // compute original header_addr
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 0 6;
+                             asm_Or dest src (asm_Reg src)))) 0 6;
                            (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
-                             (Imm (n2w v))))) 0 (backend_common_word_shift
+                             (asm_Imm (n2w v))))) 0 (backend_common_word_shift
                              (:'a));
                            (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub
-                             r1 r1 (Reg r2)))) 2 0;
+                             r1 r1 (asm_Reg r2)))) 2 0;
                            // store i << 2 into header_addr
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 0 4;
+                             asm_Or dest src (asm_Reg src)))) 0 4;
                            (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
-                             (Imm (n2w v))))) 0 2;
+                             (asm_Imm (n2w v))))) 0 2;
                            (\r a. stack_Inst (asm_Mem asm_Store r (Addr a
                              (n2w 0)))) 0 2;
                            // compute update_addr conf i w, where i in 4 and w in 5
                            (\dest src. stack_Inst (asm_Arith (asm_Binop
-                             asm_Or dest src (Reg src)))) 1 4;
+                             asm_Or dest src (asm_Reg src)))) 1 4;
                            clear_top_inst 5 (small_shift_length conf - 1);
                            (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r
-                             (Imm (n2w v))))) 1 (shift_length conf);
+                             (asm_Imm (n2w v))))) 1 (shift_length conf);
                            (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Or
-                             r1 r1 (Reg r2)))) 5 1;
+                             r1 r1 (asm_Reg r2)))) 5 1;
                            // add to i in 4
                            (\r1 r2. stack_Inst (asm_Arith (asm_Binop
-                             asm_Add r1 r1 (Reg r2)))) 4 6])])))]):'a
+                             asm_Add r1 r1 (asm_Reg r2)))) 4 6])])))]):'a
                              stack_prog)`;;
 
 let word_gen_gc_move_bitmap_code_def = new_definition
   `word_gen_gc_move_bitmap_code conf =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotLower 7 (Imm (n2w 2))
-      (stack_If asm_Test 7 (Imm (n2w 1))
+       asm_NotLower 7 (asm_Imm (n2w 2))
+      (stack_If asm_Test 7 (asm_Imm (n2w 1))
          (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r
-           (Imm (n2w v))))) 7 1;
+           (asm_Imm (n2w v))))) 7 1;
                     (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                      (Imm (bytes_in_word))))) 8])
+                      (asm_Imm (bytes_in_word))))) 8])
          (stack_list_Seq [stack_StackLoadAny 5 8;
-                    (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm
+                    (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm
                       (n2w v))))) 7 1;
                     word_gen_gc_move_code conf;
                     stack_StackStoreAny 5 8;
                     (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                      (Imm (bytes_in_word))))) 8]))`;;
+                      (asm_Imm (bytes_in_word))))) 8]))`;;
 
 let word_gen_gc_partial_move_bitmap_code_def = new_definition
   `word_gen_gc_partial_move_bitmap_code conf =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotLower 7 (Imm (n2w 2))
-      (stack_If asm_Test 7 (Imm (n2w 1))
+       asm_NotLower 7 (asm_Imm (n2w 2))
+      (stack_If asm_Test 7 (asm_Imm (n2w 1))
          (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r
-           (Imm (n2w v))))) 7 1;
+           (asm_Imm (n2w v))))) 7 1;
                     (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                      (Imm (bytes_in_word))))) 8])
+                      (asm_Imm (bytes_in_word))))) 8])
          (stack_list_Seq [stack_StackLoadAny 5 8;
-                    (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm
+                    (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm
                       (n2w v))))) 7 1;
                     word_gen_gc_partial_move_code conf;
                     stack_StackStoreAny 5 8;
                     (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                      (Imm (bytes_in_word))))) 8]))`;;
+                      (asm_Imm (bytes_in_word))))) 8]))`;;
 
 (* 9 is w, 8 is index into stack *)
 let word_gen_gc_move_bitmaps_code_def = new_definition
   `((word_gen_gc_move_bitmaps_code conf):'a stack_prog) =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotTest 0 (Reg 0)
+       asm_NotTest 0 (asm_Reg 0)
        (stack_list_Seq [stack_BitmapLoad 7 9;
                   word_gen_gc_move_bitmap_code conf;
                   stack_BitmapLoad 0 9;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Imm
-                    (n2w 1))))) 9;
-                  (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm
-                    (n2w v))))) 0 (dimindex (:'a) - 1)])`;;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                    (asm_Imm (n2w 1))))) 9;
+                  (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r
+                    (asm_Imm (n2w v))))) 0 (dimindex (:'a) - 1)])`;;
 
 (* 9 is w, 8 is index into stack *)
 let word_gen_gc_partial_move_bitmaps_code_def = new_definition
   `((word_gen_gc_partial_move_bitmaps_code conf):'a stack_prog) =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotTest 0 (Reg 0)
+       asm_NotTest 0 (asm_Reg 0)
        (stack_list_Seq [stack_BitmapLoad 7 9;
                   word_gen_gc_partial_move_bitmap_code conf;
                   stack_BitmapLoad 0 9;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Imm
-                    (n2w 1))))) 9;
-                  (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm
-                    (n2w v))))) 0 (dimindex (:'a) - 1)])`;;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                    (asm_Imm (n2w 1))))) 9;
+                  (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r
+                    (asm_Imm (n2w v))))) 0 (dimindex (:'a) - 1)])`;;
 
 (* 9 is w, 8 is index into stack *)
 let word_gen_gc_move_roots_bitmaps_code_def = new_definition
   `((word_gen_gc_move_roots_bitmaps_code conf):'a stack_prog) =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotTest 9 (Reg 9)
+       asm_NotTest 9 (asm_Reg 9)
        (stack_list_Seq [(\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-         dest src (Reg src)))) 0 9;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Imm
-                    (n2w 1))))) 9;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Imm
-                    (bytes_in_word))))) 8;
+         dest src (asm_Reg src)))) 0 9;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                    (asm_Imm (n2w 1))))) 9;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                    (asm_Imm (bytes_in_word))))) 8;
                   word_gen_gc_move_bitmaps_code conf;
                   stack_StackLoadAny 9 8])`;;
 
@@ -475,119 +476,119 @@ let word_gen_gc_move_roots_bitmaps_code_def = new_definition
 let word_gen_gc_partial_move_roots_bitmaps_code_def = new_definition
   `((word_gen_gc_partial_move_roots_bitmaps_code conf):'a stack_prog) =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotTest 9 (Reg 9)
+       asm_NotTest 9 (asm_Reg 9)
        (stack_list_Seq [(\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-         dest src (Reg src)))) 0 9;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Imm
-                    (n2w 1))))) 9;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Imm
-                    (bytes_in_word))))) 8;
+         dest src (asm_Reg src)))) 0 9;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                    (asm_Imm (n2w 1))))) 9;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                    (asm_Imm (bytes_in_word))))) 8;
                   word_gen_gc_partial_move_bitmaps_code conf;
                   stack_StackLoadAny 9 8])`;;
 
 let word_gen_gc_move_list_code_def = new_definition
   `word_gen_gc_move_list_code conf =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotEqual 7 (Imm ((n2w 0):'a word))
+       asm_NotEqual 7 (asm_Imm ((n2w 0):'a word))
        (stack_list_Seq [(\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w
          0)))) 5 8;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Imm
-                    (n2w 1))))) 7;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                    (asm_Imm (n2w 1))))) 7;
                   word_gen_gc_move_code conf;
                   (\r a. stack_Inst (asm_Mem asm_Store r (Addr a (n2w 0))))
                     5 8;
                   (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                    (Imm (bytes_in_word))))) 8])`;;
+                    (asm_Imm (bytes_in_word))))) 8])`;;
 
 let word_gen_gc_partial_move_list_code_def = new_definition
   `word_gen_gc_partial_move_list_code conf =
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotEqual 7 (Imm ((n2w 0):'a word))
+       asm_NotEqual 7 (asm_Imm ((n2w 0):'a word))
        (stack_list_Seq [(\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w
          0)))) 5 8;
-                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Imm
-                    (n2w 1))))) 7;
+                  (\r1. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                    (asm_Imm (n2w 1))))) 7;
                   word_gen_gc_partial_move_code conf;
                   (\r a. stack_Inst (asm_Mem asm_Store r (Addr a (n2w 0))))
                     5 8;
                   (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
-                    (Imm (bytes_in_word))))) 8])`;;
+                    (asm_Imm (bytes_in_word))))) 8])`;;
 
 let word_gen_gc_move_data_code_def = new_definition
   `word_gen_gc_move_data_code conf =
      ((\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotEqual 3 (Reg 8)
+       asm_NotEqual 3 (asm_Reg 8)
       (stack_list_Seq [(\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w
         0)))) 7 8;
-                 stack_If asm_Test 7 (Imm (n2w 4))
+                 stack_If asm_Test 7 (asm_Imm (n2w 4))
                    (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift
-                     Lsr r r (Imm (n2w v))))) 7 (dimindex (:'a) -
+                     Lsr r r (asm_Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add
-                                r1 r1 (Imm (bytes_in_word))))) 8;
+                                r1 r1 (asm_Imm (bytes_in_word))))) 8;
                               word_gen_gc_move_list_code conf])
                    (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift
-                     Lsr r r (Imm (n2w v))))) 7 (dimindex (:'a) -
+                     Lsr r r (asm_Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add
-                                r1 r1 (Imm (n2w 1))))) 7;
+                                r1 r1 (asm_Imm (n2w 1))))) 7;
                               (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r
-                                r (Imm (n2w v))))) 7 (backend_common_word_shift
-                                (:'a));
+                                r (asm_Imm (n2w v))))) 7
+                                (backend_common_word_shift (:'a));
                               (\r1 r2. stack_Inst (asm_Arith (asm_Binop
-                                asm_Add r1 r1 (Reg r2)))) 8 7])]):'a
+                                asm_Add r1 r1 (asm_Reg r2)))) 8 7])]):'a
                                 stack_prog)`;;
 
 let word_gen_gc_partial_move_ref_list_code_def = new_definition
   `word_gen_gc_partial_move_ref_list_code conf =
      ((\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotEqual 9 (Reg 8)
+       asm_NotEqual 9 (asm_Reg 8)
       (stack_list_Seq [(\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w
         0)))) 7 8;
-                 (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w
-                   v))))) 7 (dimindex (:'a) - data_to_word_config_len_size
+                 (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm
+                   (n2w v))))) 7 (dimindex (:'a) - data_to_word_config_len_size
                    conf);
-                 (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Imm
-                   (bytes_in_word))))) 8;
+                 (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                   (asm_Imm (bytes_in_word))))) 8;
                  word_gen_gc_partial_move_list_code conf]):'a stack_prog)`;;
 
 let word_gen_gc_partial_move_data_code_def = new_definition
   `word_gen_gc_partial_move_data_code conf =
      ((\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotEqual 3 (Reg 8)
+       asm_NotEqual 3 (asm_Reg 8)
       (stack_list_Seq [(\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w
         0)))) 7 8;
-                 stack_If asm_Test 7 (Imm (n2w 4))
+                 stack_If asm_Test 7 (asm_Imm (n2w 4))
                    (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift
-                     Lsr r r (Imm (n2w v))))) 7 (dimindex (:'a) -
+                     Lsr r r (asm_Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add
-                                r1 r1 (Imm (bytes_in_word))))) 8;
+                                r1 r1 (asm_Imm (bytes_in_word))))) 8;
                               word_gen_gc_partial_move_list_code conf])
                    (stack_list_Seq [(\r v. stack_Inst (asm_Arith (asm_Shift
-                     Lsr r r (Imm (n2w v))))) 7 (dimindex (:'a) -
+                     Lsr r r (asm_Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add
-                                r1 r1 (Imm (n2w 1))))) 7;
+                                r1 r1 (asm_Imm (n2w 1))))) 7;
                               (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r
-                                r (Imm (n2w v))))) 7 (backend_common_word_shift
-                                (:'a));
+                                r (asm_Imm (n2w v))))) 7
+                                (backend_common_word_shift (:'a));
                               (\r1 r2. stack_Inst (asm_Arith (asm_Binop
-                                asm_Add r1 r1 (Reg r2)))) 8 7])]):'a
+                                asm_Add r1 r1 (asm_Reg r2)))) 8 7])]):'a
                                 stack_prog)`;;
 
 let word_gen_gc_move_refs_code_def = new_definition
   `word_gen_gc_move_refs_code conf =
      // r2a in 8, r1a in 0 and Temp 4w
      ((\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotEqual 0 (Reg 8)
+       asm_NotEqual 0 (asm_Reg 8)
       (stack_list_Seq [(\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w
         0)))) 7 8;
-                 (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w
-                   v))))) 7 (dimindex (:'a) - data_to_word_config_len_size
+                 (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm
+                   (n2w v))))) 7 (dimindex (:'a) - data_to_word_config_len_size
                    conf);
-                 (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Imm
-                   (bytes_in_word))))) 8;
+                 (\r1. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                   (asm_Imm (bytes_in_word))))) 8;
                  word_gen_gc_move_list_code conf;
                  stack_Get 0 (Temp (n2w 4))]):'a stack_prog)`;;
 
@@ -596,30 +597,30 @@ let word_gen_gc_move_loop_code_def = new_definition
      // 7 is 0w iff pbx = pb and pax = pa, 1 is pbx (Temp 4w), 2 is pb,
      // 8 is pax, 3 is pa
      (\cmp r ri c. stack_Loop (stack_If cmp r ri c (stack_Break 0)))
-       asm_NotTest 7 (Reg 7)
-       (stack_If asm_Equal 1 (Reg 2)
+       asm_NotTest 7 (asm_Reg 7)
+       (stack_If asm_Equal 1 (asm_Reg 2)
           (
            // case: pax <> pa, i.e. move_data
            stack_list_Seq [word_gen_gc_move_data_code conf;
                      stack_Get 5 (Temp (n2w 2));
                      stack_Get 7 (Temp (n2w 4));
                      (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                       dest src (Reg src)))) 1 7;
+                       dest src (asm_Reg src)))) 1 7;
                      (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                       dest src (Reg src)))) 2 5;
+                       dest src (asm_Reg src)))) 2 5;
                      (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
-                       (Reg r2)))) 7 5])
+                       (asm_Reg r2)))) 7 5])
           (
            // case: pbx <> pb i.e. move_refs
            stack_list_Seq [(\dest src. stack_Inst (asm_Arith (asm_Binop
-             asm_Or dest src (Reg src)))) 0 1;
+             asm_Or dest src (asm_Reg src)))) 0 1;
                      stack_Set (Temp (n2w 6)) 8;
                      (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                       dest src (Reg src)))) 8 2;
+                       dest src (asm_Reg src)))) 8 2;
                      stack_Set (Temp (n2w 5)) 8;
                      word_gen_gc_move_refs_code conf;
                      (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                       dest src (Reg src)))) 7 8;
+                       dest src (asm_Reg src)))) 7 8;
                      // pbx'
                      stack_Get 1 (Temp (n2w 5));
                      // pb
@@ -628,37 +629,37 @@ let word_gen_gc_move_loop_code_def = new_definition
                      stack_Get 2 (Temp (n2w 2));
                      // pb'
                      (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                       dest src (Reg src)))) 3 3;
+                       dest src (asm_Reg src)))) 3 3;
                      // pa'
                      (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                       dest src (Reg src)))) 4 4;
+                       dest src (asm_Reg src)))) 4 4;
                      // i'
                      (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                       dest src (Reg src)))) 7 1;
+                       dest src (asm_Reg src)))) 7 1;
                      (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
-                       (Reg r2)))) 7 2;
+                       (asm_Reg r2)))) 7 2;
                      // pbx' - pa'
                      stack_Get 8 (Temp (n2w 6));
                      // pax
                      (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or
-                       dest src (Reg src)))) 5 8;
+                       dest src (asm_Reg src)))) 5 8;
                      // pax - pa'
                      (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
-                       (Reg r2)))) 5 3;
+                       (asm_Reg r2)))) 5 3;
                      (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Or r1
-                       r1 (Reg r2)))) 7 5]))`;;
+                       r1 (asm_Reg r2)))) 7 5]))`;;
 
 let word_gc_partial_or_full_def = new_definition
   `word_gc_partial_or_full gen_sizes partial_code full_code =
      match gen_sizes with [] -> stack_list_Seq (APPEND [stack_Get 8
        TriggerGC; stack_Get 7 EndOfHeap; (\r1 r2. stack_Inst (asm_Arith
-       (asm_Binop asm_Sub r1 r1 (Reg r2)))) 7 8] full_code)
+       (asm_Binop asm_Sub r1 r1 (asm_Reg r2)))) 7 8] full_code)
      | _ -> stack_list_Seq
               [stack_Get 8 TriggerGC;
                stack_Get 7 EndOfHeap;
-               (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-                 r2)))) 7 8;
-               stack_If asm_NotLower 7 (Reg 1)
+               (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                 (asm_Reg r2)))) 7 8;
+               stack_If asm_NotLower 7 (asm_Reg 1)
                  (stack_list_Seq partial_code)
                  (stack_list_Seq full_code)]`;;
 
@@ -668,23 +669,23 @@ let SetNewTrigger_def = new_definition
        gs):'a word);
                stack_Get 7 AllocSize;
                (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                 (Reg src)))) 4 endh;
-               (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-                 r2)))) 4 ib;
-               stack_If asm_Lower 1 (Reg 7)
-                 (stack_If asm_Lower 4 (Reg 7)
+                 (asm_Reg src)))) 4 endh;
+               (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                 (asm_Reg r2)))) 4 ib;
+               stack_If asm_Lower 1 (asm_Reg 7)
+                 (stack_If asm_Lower 4 (asm_Reg 7)
                     (stack_Set TriggerGC endh)
-                    (stack_If asm_Test 7 (Imm (if dimindex (:'a) = 32 then
-                      (n2w 3) else (n2w 7)))
+                    (stack_If asm_Test 7 (asm_Imm (if dimindex (:'a) = 32
+                      then (n2w 3) else (n2w 7)))
                       (stack_Seq ((\r1 r2. stack_Inst (asm_Arith (asm_Binop
-                        asm_Add r1 r1 (Reg r2)))) 7 ib) (stack_Set TriggerGC
-                        7))
+                        asm_Add r1 r1 (asm_Reg r2)))) 7 ib) (stack_Set
+                        TriggerGC 7))
                       (stack_Set TriggerGC endh)))
-                 (stack_If asm_Lower 4 (Reg 1)
+                 (stack_If asm_Lower 4 (asm_Reg 1)
                     (stack_Set TriggerGC endh)
                     (stack_Seq ((\r1 r2. stack_Inst (asm_Arith (asm_Binop
-                      asm_Add r1 r1 (Reg r2)))) 1 ib) (stack_Set TriggerGC
-                      1)))]`;;
+                      asm_Add r1 r1 (asm_Reg r2)))) 1 ib) (stack_Set
+                      TriggerGC 1)))]`;;
 
 let word_gc_code_def = new_definition
   `word_gc_code conf =
@@ -695,47 +696,47 @@ let word_gc_code_def = new_definition
                 stack_Set NextFree 2;
                 stack_Set TriggerGC 2;
                 stack_Set EndOfHeap 2;
-                stack_If asm_Test 1 (Reg 1) stack_Skip (stack_Seq ((\r w.
-                  stack_Inst (asm_Const r w)) 1 (n2w 1)) (stack_Halt 1))])
+                stack_If asm_Test 1 (asm_Reg 1) stack_Skip (stack_Seq ((\r
+                  w. stack_Inst (asm_Const r w)) 1 (n2w 1)) (stack_Halt 1))])
      | data_to_word_Simple ->
          (stack_list_Seq
                [stack_Set AllocSize 1;
                 stack_Set NextFree 0;
                 (\r w. stack_Inst (asm_Const r w)) 1 (n2w 0);
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 2 1;
+                  (asm_Reg src)))) 2 1;
                 stack_Get 3 OtherHeap;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 4 1;
+                  (asm_Reg src)))) 4 1;
                 stack_Get 5 Globals;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 6 1;
+                  (asm_Reg src)))) 6 1;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 8 1;
+                  (asm_Reg src)))) 8 1;
                 word_gc_move_code conf;
                 stack_Set Globals 5;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 7 5;
-                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w
-                  v))))) 7 (shift_length conf);
-                (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm (n2w
-                  v))))) 7 (backend_common_word_shift (:'a));
+                  (asm_Reg src)))) 7 5;
+                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm
+                  (n2w v))))) 7 (shift_length conf);
+                (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (asm_Imm
+                  (n2w v))))) 7 (backend_common_word_shift (:'a));
                 stack_Get 9 OtherHeap;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Reg
-                  r2)))) 7 9;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                  (asm_Reg r2)))) 7 9;
                 stack_Set GlobReal 7;
                 (\r w. stack_Inst (asm_Const r w)) 7 (n2w 0);
                 stack_StackLoadAny 9 8;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 8 7;
+                  (asm_Reg src)))) 8 7;
                 word_gc_move_roots_bitmaps_code conf;
                 stack_Get 8 OtherHeap;
                 word_gc_move_loop_code conf;
                 stack_Get 0 CurrHeap;
                 stack_Get 1 OtherHeap;
                 stack_Get 2 HeapLength;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Reg
-                  r2)))) 2 1;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                  (asm_Reg r2)))) 2 1;
                 stack_Set CurrHeap 1;
                 stack_Set OtherHeap 0;
                 stack_Get 0 NextFree;
@@ -743,10 +744,11 @@ let word_gc_code_def = new_definition
                 stack_Set EndOfHeap 2;
                 stack_Set TriggerGC 2;
                 stack_Get 1 AllocSize;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-                  r2)))) 2 8;
-                stack_If asm_Lower 2 (Reg 1) (stack_Seq ((\r w. stack_Inst
-                  (asm_Const r w)) 1 (n2w 1)) (stack_Halt 1)) stack_Skip])
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                  (asm_Reg r2)))) 2 8;
+                stack_If asm_Lower 2 (asm_Reg 1) (stack_Seq ((\r w.
+                  stack_Inst (asm_Const r w)) 1 (n2w 1)) (stack_Halt 1))
+                  stack_Skip])
      | data_to_word_Generational gen_sizes ->
          ((word_gc_partial_or_full gen_sizes
                [
@@ -757,50 +759,50 @@ let word_gc_code_def = new_definition
                 stack_Get 5 EndOfHeap;
                 stack_Get 2 CurrHeap;
                 stack_Set (Temp (n2w 0)) 4;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-                  r2)))) 5 2;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                  (asm_Reg r2)))) 5 2;
                 stack_Set (Temp (n2w 1)) 5;
                 stack_Get 7 HeapLength;
                 stack_Get 5 Globals;
                 stack_Get 3 OtherHeap;
-                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w
-                  v))))) 4 (backend_common_word_shift (:'a));
+                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm
+                  (n2w v))))) 4 (backend_common_word_shift (:'a));
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 6 3;
+                  (asm_Reg src)))) 6 3;
                 word_gen_gc_partial_move_code conf;
                 stack_Set Globals 5;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 8 5;
-                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w
-                  v))))) 8 (shift_length conf);
-                (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm (n2w
-                  v))))) 8 (backend_common_word_shift (:'a));
+                  (asm_Reg src)))) 8 5;
+                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm
+                  (n2w v))))) 8 (shift_length conf);
+                (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (asm_Imm
+                  (n2w v))))) 8 (backend_common_word_shift (:'a));
                 stack_Get 9 CurrHeap;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Reg
-                  r2)))) 8 9;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                  (asm_Reg r2)))) 8 9;
                 stack_Set GlobReal 8;
                 (\r w. stack_Inst (asm_Const r w)) 8 (n2w 0);
                 stack_StackLoadAny 9 8;
                 word_gen_gc_partial_move_roots_bitmaps_code conf;
                 stack_Get 8 CurrHeap;
                 stack_Get 9 HeapLength;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Reg
-                  r2)))) 9 8;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                  (asm_Reg r2)))) 9 8;
                 stack_Get 8 EndOfHeap;
                 word_gen_gc_partial_move_ref_list_code conf;
                 stack_Get 8 OtherHeap;
                 word_gen_gc_partial_move_data_code conf;
                 stack_Get 2 OtherHeap;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 0 3;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-                  r2)))) 0 2;
-                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w
-                  v))))) 0 (backend_common_word_shift (:'a));
+                  (asm_Reg src)))) 0 3;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                  (asm_Reg r2)))) 0 2;
+                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm
+                  (n2w v))))) 0 (backend_common_word_shift (:'a));
                 stack_Get 3 GenStart;
                 stack_Get 1 CurrHeap;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Reg
-                  r2)))) 3 1;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                  (asm_Reg r2)))) 3 1;
                 memcpy_code;
                 stack_Get 0 NextFree;
                 stack_Set NextFree 3;
@@ -811,11 +813,11 @@ let word_gc_code_def = new_definition
                 stack_Set (Temp (n2w 0)) 1;
                 stack_Set (Temp (n2w 1)) 1;
                 stack_Get 1 AllocSize;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-                  r2)))) 8 3;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                  (asm_Reg r2)))) 8 3;
                 stack_Get 7 CurrHeap;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-                  r2)))) 3 7;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                  (asm_Reg r2)))) 3 7;
                 stack_Set GenStart 3]
                [
                 // There is no need for a memory check here
@@ -830,11 +832,11 @@ let word_gc_code_def = new_definition
                 stack_Set NextFree 0;
                 (\r w. stack_Inst (asm_Const r w)) 1 ((n2w 0):'a word);
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 2 1;
+                  (asm_Reg src)))) 2 1;
                 stack_Get 3 OtherHeap;
                 stack_Get 4 HeapLength;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Reg
-                  r2)))) 4 3;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                  (asm_Reg r2)))) 4 3;
                 stack_Set (Temp (n2w 0)) 4;
                 stack_Set (Temp (n2w 1)) 4;
                 stack_Set (Temp (n2w 2)) 4;
@@ -842,46 +844,46 @@ let word_gc_code_def = new_definition
                 stack_Set (Temp (n2w 5)) 4;
                 stack_Set (Temp (n2w 6)) 4;
                 stack_Get 4 HeapLength;
-                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w
-                  v))))) 4 (backend_common_word_shift (:'a));
+                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm
+                  (n2w v))))) 4 (backend_common_word_shift (:'a));
                 stack_Set (Temp (n2w 3)) 4;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 4 1;
+                  (asm_Reg src)))) 4 1;
                 stack_Get 5 Globals;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 6 1;
+                  (asm_Reg src)))) 6 1;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 8 1;
+                  (asm_Reg src)))) 8 1;
                 word_gen_gc_move_code conf;
                 stack_Set Globals 5;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 7 5;
+                  (asm_Reg src)))) 7 5;
                 stack_Get 9 OtherHeap;
-                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (Imm (n2w
-                  v))))) 7 (shift_length conf);
-                (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (Imm (n2w
-                  v))))) 7 (backend_common_word_shift (:'a));
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1 (Reg
-                  r2)))) 7 9;
+                (\r v. stack_Inst (asm_Arith (asm_Shift Lsr r r (asm_Imm
+                  (n2w v))))) 7 (shift_length conf);
+                (\r v. stack_Inst (asm_Arith (asm_Shift Lsl r r (asm_Imm
+                  (n2w v))))) 7 (backend_common_word_shift (:'a));
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Add r1 r1
+                  (asm_Reg r2)))) 7 9;
                 stack_Set GlobReal 7;
                 (\r w. stack_Inst (asm_Const r w)) 7 (n2w 0);
                 stack_StackLoadAny 9 8;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 8 7;
+                  (asm_Reg src)))) 8 7;
                 word_gen_gc_move_roots_bitmaps_code conf;
                 stack_Get 2 (Temp (n2w 2));
                 stack_Get 8 OtherHeap;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 7 3;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-                  r2)))) 7 8;
+                  (asm_Reg src)))) 7 3;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                  (asm_Reg r2)))) 7 8;
                 stack_Get 1 (Temp (n2w 6));
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 6 2;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-                  r2)))) 6 1;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Or r1 r1 (Reg
-                  r2)))) 7 6;
+                  (asm_Reg src)))) 6 2;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                  (asm_Reg r2)))) 6 1;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Or r1 r1
+                  (asm_Reg r2)))) 7 6;
                 word_gen_gc_move_loop_code conf;
                 stack_Get 0 CurrHeap;
                 stack_Get 1 OtherHeap;
@@ -892,9 +894,9 @@ let word_gc_code_def = new_definition
                 stack_Set NextFree 3;
                 stack_Set EndOfHeap 2;
                 (\dest src. stack_Inst (asm_Arith (asm_Binop asm_Or dest src
-                  (Reg src)))) 8 3;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-                  r2)))) 8 1;
+                  (asm_Reg src)))) 8 3;
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                  (asm_Reg r2)))) 8 1;
                 stack_Set GenStart 8;
                 SetNewTrigger 2 3 gen_sizes;
                 (\r w. stack_Inst (asm_Const r w)) 1 (n2w 0);
@@ -907,9 +909,9 @@ let word_gc_code_def = new_definition
                 stack_Set (Temp (n2w 6)) 1;
                 stack_Get 1 AllocSize;
                 stack_Get 2 TriggerGC;
-                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
-                  r2)))) 2 3;
-                stack_If asm_Lower 2 (Reg 1) (stack_Seq ((\r w.
+                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1
+                  (asm_Reg r2)))) 2 3;
+                stack_If asm_Lower 2 (asm_Reg 1) (stack_Seq ((\r w.
                   stack_Inst (asm_Const r w)) 1 (n2w 1)) (stack_Halt 1))
                   stack_Skip]):'a stack_prog)`;;
 

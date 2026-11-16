@@ -54,13 +54,13 @@ let compile_panop_def = new_definition
 (* HOL4 pan_to_crepScript.sml:98-104: the tactic that proves the termination *)
 let pan_to_crep_compile_exp_def,pan_to_crep_compile_exp_ind =
   define_guess_clauses
-  [`(pan_to_crep_compile_exp ctxt ((pan_Const c):'a pan_exp) =
+  [`(pan_to_crep_compile_exp ctxt ((crep_Const c):'a pan_exp) =
        ([(crep_Const c):'a crep_exp],pan_One)) /\
     (pan_to_crep_compile_exp ctxt (pan_Var pan_Local vname) =
        match FLOOKUP (pan_to_crep_context_vars ctxt) vname with SOME
            (shape,ns) -> (MAP pan_Var ns,shape)
-       | NONE -> ([pan_Const (n2w 0)],pan_One)) /\
-    (pan_to_crep_compile_exp ctxt (pan_Var pan_Global vname) = ([pan_Const
+       | NONE -> ([crep_Const (n2w 0)],pan_One)) /\
+    (pan_to_crep_compile_exp ctxt (pan_Var pan_Global vname) = ([crep_Const
     (n2w 0)],pan_One)) /\
     // should never happen
     (pan_to_crep_compile_exp ctxt (pan_RStruct es) =
@@ -69,54 +69,54 @@ let pan_to_crep_compile_exp_def,pan_to_crep_compile_exp_ind =
     (pan_to_crep_compile_exp ctxt (pan_RField index e) =
        let (cexp,shape) = pan_to_crep_compile_exp ctxt e in
        match shape with pan_Comb shapes -> comp_field index shapes cexp
-       | _ -> ([pan_Const (n2w 0)],pan_One)) /\
-    (pan_to_crep_compile_exp ctxt (pan_NStruct nm flds) = ([pan_Const (n2w
+       | _ -> ([crep_Const (n2w 0)],pan_One)) /\
+    (pan_to_crep_compile_exp ctxt (pan_NStruct nm flds) = ([crep_Const (n2w
     0)],pan_One)) /\
     // should never happen
-    (pan_to_crep_compile_exp ctxt (pan_NField fld e) = ([pan_Const (n2w
+    (pan_to_crep_compile_exp ctxt (pan_NField fld e) = ([crep_Const (n2w
         0)],pan_One)) /\
     // should never happen
     (pan_to_crep_compile_exp ctxt (pan_Load sh e) =
     let (cexp,shape) = pan_to_crep_compile_exp ctxt e in
     match cexp with CONS e es -> (load_shape ((n2w 0)) (size_of_shape sh)
         e,sh)
-    | _ -> ([pan_Const (n2w 0)],pan_One)) /\
+    | _ -> ([crep_Const (n2w 0)],pan_One)) /\
     (pan_to_crep_compile_exp ctxt (crep_Load32 e) =
        let (cexp,shape) = pan_to_crep_compile_exp ctxt e in
        match (cexp,shape) with (CONS e es,pan_One) -> ([pan_Load32
            e],pan_One)
-       | (_,_) -> ([pan_Const (n2w 0)],pan_One)) /\
+       | (_,_) -> ([crep_Const (n2w 0)],pan_One)) /\
     (pan_to_crep_compile_exp ctxt (crep_LoadByte e) =
        let (cexp,shape) = pan_to_crep_compile_exp ctxt e in
        match (cexp,shape) with (CONS e es,pan_One) -> ([pan_LoadByte
            e],pan_One)
-       | (_,_) -> ([pan_Const (n2w 0)],pan_One)) /\
+       | (_,_) -> ([crep_Const (n2w 0)],pan_One)) /\
     // have a check here for the shape
     (pan_to_crep_compile_exp ctxt (crep_Op bop es) =
     let cexps = MAP FST (MAP (pan_to_crep_compile_exp ctxt) es) in
     match cexp_heads cexps with SOME es -> ([pan_Op bop es],pan_One)
-    | _ -> ([pan_Const (n2w 0)],pan_One)) /\
+    | _ -> ([crep_Const (n2w 0)],pan_One)) /\
     (pan_to_crep_compile_exp ctxt (pan_Panop pop es) =
        let cexps = MAP FST (MAP (pan_to_crep_compile_exp ctxt) es) in
        match cexp_heads cexps with SOME es -> ([crep_Crepop (compile_panop
            pop) es],pan_One)
-       | _ -> ([pan_Const (n2w 0)],pan_One)) /\
+       | _ -> ([crep_Const (n2w 0)],pan_One)) /\
     (pan_to_crep_compile_exp ctxt (crep_Cmp cmp e e') =
        let ce = FST (pan_to_crep_compile_exp ctxt e) in let
            ce' = FST (pan_to_crep_compile_exp ctxt e') in
        match (ce,ce') with (CONS e es,CONS e' es') -> ([pan_Cmp cmp e
            e'],pan_One)
-       | (_,_) -> ([pan_Const (n2w 0)],pan_One)) /\
+       | (_,_) -> ([crep_Const (n2w 0)],pan_One)) /\
     (pan_to_crep_compile_exp ctxt crep_BaseAddr = ([pan_BaseAddr],pan_One)) /\
     (pan_to_crep_compile_exp ctxt crep_TopAddr = ([pan_TopAddr],pan_One)) /\
-    (pan_to_crep_compile_exp ctxt pan_BytesInWord = ([pan_Const
+    (pan_to_crep_compile_exp ctxt pan_BytesInWord = ([crep_Const
     bytes_in_word],pan_One))`;
    `pan_to_crep_compile_exp ctxt (crep_Shift sh e e') =
        let ce = FST (pan_to_crep_compile_exp ctxt e) in let
            ce' = FST (pan_to_crep_compile_exp ctxt e') in
-       match (ce,ce') with (CONS e es,CONS e' es') -> ([pan_Shift sh e
+       match (ce,ce') with (CONS e es,CONS e' es') -> ([crep_Shift sh e
            e'],pan_One)
-       | _ -> ([pan_Const (n2w 0)],pan_One)`];;
+       | _ -> ([crep_Const (n2w 0)],pan_One)`];;
 
 let exp_hdl_def = new_definition
   `exp_hdl fm v =

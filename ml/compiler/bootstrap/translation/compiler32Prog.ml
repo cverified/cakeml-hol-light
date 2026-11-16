@@ -277,13 +277,13 @@ let dec_sides = prove
 
 let semantics_compiler32_prog = prove
  (`IS_SOME (stdin_content fs) /\ wfcl cl /\ wfFS fs /\ STD_streams fs ==>
-   (?io_events.
+   (?io_events'.
      semantics_dec_list
        (semanticPrimitives_state_eval_state_fupd (K
           (SOME (EvalDecs (eval_decs_state_env_id_counter_fupd (K (0,0,1))
             eval_state_var)))) (ml_prog_init_state (basis_ffi ext cl fs)))
-       init_env compiler32_prog (ffi_Terminate ffi_Success io_events) /\
-     extract_fs ext (cl,fs) io_events =
+       init_env compiler32_prog (ffi_Terminate ffi_Success io_events') /\
+     extract_fs ext (cl,fs) io_events' =
        SOME (full_compile_32 (TL cl) (get_stdin fs) fs))`,
   CHEAT_TAC);;
 

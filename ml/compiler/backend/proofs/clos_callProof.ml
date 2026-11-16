@@ -218,11 +218,11 @@ let recclosure_rel_def = new_definition
         code_includes (SND new_g) code))`;;
 
 let clos_callProof_env_rel_def = new_definition
-  `clos_callProof_env_rel R env1 env2 a es <=>
-     (if LENGTH env1 = LENGTH env2 then ALL2 R env1 env2 else !x. EX
+  `clos_callProof_env_rel R' env1 env2 a es <=>
+     (if LENGTH env1 = LENGTH env2 then ALL2 R' env1 env2 else !x. EX
        (\(n,p). fv1 (n + a + x) p) es ==>
          x < LENGTH env1 /\ x < LENGTH env2 /\
-         R (EL x env1) (EL x env2))`;;
+         R' (EL x env1) (EL x env2))`;;
 
 (* [mono] *)
 let env_rel_mono = prove

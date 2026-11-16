@@ -810,8 +810,8 @@ let gc_move_list_ok_irr = prove
 let gc_move_list_with_NIL = prove
  (`!x s y t.
       gen_gc_gc_move_list gen_conf s x = (y,t) /\ gc_state_ok t ==>
-      (let (y,s1) = gen_gc_gc_move_list gen_conf (gc_state_r4_fupd
-        (K []) (gc_state_h2_fupd (K []) s)) x in
+      (let (y,s1) = gen_gc_gc_move_list gen_conf (gc_state_r4_fupd (K [])
+        (gc_state_h2_fupd (K []) s)) x in
         (y,gc_state_r4_fupd (K (APPEND (gc_state_r4 s1) (gc_state_r4 s)))
           (gc_state_h2_fupd (K (APPEND (gc_state_h2 s) (gc_state_h2 s1)))
           s1))) = (y,t)`,

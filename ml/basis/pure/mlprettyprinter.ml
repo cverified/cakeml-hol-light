@@ -137,7 +137,7 @@ let findi_map_escape = prove
   CHEAT_TAC);;
 
 let escape_str_app_list_thm = prove
- (`!i s. mlvector_concat (append (escape_str_app_list i s)) =
+ (`!i s. mlstring_concat (append (escape_str_app_list i s)) =
    implode (FLAT (MAP char_escaped (DROP i (explode s))))`,
   CHEAT_TAC);;
 
@@ -146,7 +146,7 @@ let pp_string_def = new_definition
   (escape_str_app_list 0 s) (implode "\""))`;;
 
 let pp_string_thm = prove
- (`mlvector_concat (append (pp_contents (pp_string s))) = escape_str s`,
+ (`mlstring_concat (append (pp_contents (pp_string s))) = escape_str s`,
   CHEAT_TAC);;
 
 let pp_bool_def = new_definition
@@ -171,7 +171,7 @@ let pp_char_def = new_definition
      | SOME s -> s; implode "\""])`;;
 
 let pp_char_thm = prove
- (`mlvector_concat (append (pp_contents (pp_char c))) = escape_char c`,
+ (`mlstring_concat (append (pp_contents (pp_char c))) = escape_char c`,
   CHEAT_TAC);;
 
 let pp_int_def = new_definition

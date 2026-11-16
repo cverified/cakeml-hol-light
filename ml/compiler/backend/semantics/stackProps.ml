@@ -725,21 +725,21 @@ let reg_name_def = new_definition
 (* inst requirements just before stack_names *)
 
 let reg_imm_name_def = define_cases
-  `(reg_imm_name b (Reg r) c <=> reg_name r c) /\
-   (reg_imm_name b (Imm w) c <=> asm_config_valid_imm c b w)`;;
+  `(reg_imm_name b (asm_Reg r) c <=> reg_name r c) /\
+   (reg_imm_name b (asm_Imm w) c <=> asm_config_valid_imm c b w)`;;
 
 let arith_name_def = new_definition
   `arith_name x1 c =
      match (x1,c) with
        (asm_Binop b r1 r2 ri,(c:'a asm_config)) ->
-       (asm_config_two_reg_arith c ==> r1 = r2 \/ b = asm_Or /\ ri = Reg r2)
-         /\ reg_name r1 c /\
+       (asm_config_two_reg_arith c ==> r1 = r2 \/ b = asm_Or /\ ri = asm_Reg
+         r2) /\ reg_name r1 c /\
        reg_name r2 c /\ reg_imm_name (INL b) ri c
-     | (asm_Shift l r1 r2 (Imm i),c) ->
+     | (asm_Shift l r1 r2 (asm_Imm i),c) ->
        (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\ reg_name
          r2 c /\
        (i = (n2w 0) ==> l = Lsl) /\ w2n i < dimindex (:'a)
-     | (asm_Shift l r1 r2 (Reg r3),c) ->
+     | (asm_Shift l r1 r2 (asm_Reg r3),c) ->
        (asm_config_two_reg_arith c ==> r1 = r2) /\ reg_name r1 c /\
         reg_name r2 c /\ reg_name r3 c /\ (asm_config_ISA c = x86_64 ==> r3
           = 4)
@@ -956,9 +956,9 @@ let reg_bound_inst_def = new_definition
        asm_Mem _ n (Addr a _) -> n < k /\ a < k
      | asm_Const n _ -> n < k
      | asm_Arith (asm_Shift _ n r2 ri) -> r2 < k /\ n < k /\ (match ri with
-       Reg r -> r < k | _ -> T)
+       asm_Reg r -> r < k | _ -> T)
      | asm_Arith (asm_Binop _ n r2 ri) -> r2 < k /\ n < k /\ (match ri with
-       Reg r1 -> r1 < k | _ -> T)
+       asm_Reg r1 -> r1 < k | _ -> T)
      | asm_Arith (asm_Div r1 r2 r3) -> r1 < k /\ r2 < k /\ r3 < k
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> r1 < k /\ r2 < k /\ r3 < k
        /\ r4 < k
@@ -1005,7 +1005,7 @@ let reg_bound_def,reg_bound_ind = define_wf
      | ((stack_Seq p1 p2):'a stack_prog) ->
         reg_bound p1 k /\ reg_bound p2 k
      | ((stack_If c r ri p1 p2):'a stack_prog) ->
-        r < k /\ (match ri with Reg n -> n < k | _ -> T) /\
+        r < k /\ (match ri with asm_Reg n -> n < k | _ -> T) /\
         reg_bound p1 k /\ reg_bound p2 k
      | stack_Loop p1 ->
         reg_bound p1 k

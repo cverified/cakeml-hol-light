@@ -50,7 +50,7 @@ let pan_to_target_compile_prog_def = new_definition
                  | (xs,[]) ->
                               CONS (Function
                               (mk_fun_decl (implode "main") F F []
-                                (loop_Return (pan_Const (n2w 0))) pan_One)) xs
+                                (pan_Return (pan_Const (n2w 0))) pan_One)) xs
                  | (xs,CONS y ys) -> APPEND (CONS y xs) ys) in
      // Compiler passes
      let prog2 = pan_to_word_compile_prog (asm_config_ISA asm_conf) prog1 in
@@ -87,7 +87,7 @@ let pan_to_target_compile_prog_eq = prove
                  | (xs,[]) ->
                               CONS (Function
                               (mk_fun_decl (implode "main") F F []
-                                (loop_Return (pan_Const (n2w 0))) pan_One)) xs
+                                (pan_Return (pan_Const (n2w 0))) pan_One)) xs
                  | (xs,CONS y ys) -> APPEND (CONS y xs) ys) in
      // Compiler passes
      let prog2 = pan_to_word_compile_prog (asm_config_ISA asm_conf) prog1 in

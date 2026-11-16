@@ -935,15 +935,15 @@ let parse_top_config_def = new_definition
 
 (* Check for version flag *)
 let has_version_flag_def = new_definition
-  `has_version_flag ls = MEM (implode "--version") ls`;;
+  `has_version_flag ls = ag32_MEM (implode "--version") ls`;;
 
 (* Check for version help *)
 let has_help_flag_def = new_definition
-  `has_help_flag ls = MEM (implode "--help") ls`;;
+  `has_help_flag ls = ag32_MEM (implode "--help") ls`;;
 
 (* Check for pancake flag *)
 let has_pancake_flag_def = new_definition
-  `has_pancake_flag ls = MEM (implode "--pancake") ls`;;
+  `has_pancake_flag ls = ag32_MEM (implode "--pancake") ls`;;
 
 let format_compiler_result_def = define_cases
   `(format_compiler_result bytes_export (M_failure err) =

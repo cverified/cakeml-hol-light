@@ -1639,9 +1639,9 @@ let arith_upd_lemma = prove
 
 (* The lab and asm versions should be in their individual props *)
 let arith_upd_fp_regs = prove
- (`(labSem_state_fp_regs (labSem_arith_upd a s) = labSem_state_fp_regs s
-  /\ asm_state_fp_regs (asmSem_arith_upd a (t:'a asm_state)) =
-    asm_state_fp_regs t)`,
+ (`(asm_state_fp_regs (asmSem_arith_upd a s) = asm_state_fp_regs s
+  /\ asm_state_fp_regs
+   (asmSem_arith_upd a (t:'a asm_state)) = asm_state_fp_regs t)`,
   CHEAT_TAC);;
 add_simp arith_upd_fp_regs;;
 
@@ -1712,9 +1712,8 @@ let inst_lemma = prove
     (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val (labSem_state_pc s1)
       0 code2 + LENGTH bytes') ==>
     ~(asm_state_failed (asmSem_inst i t1)) /\
-     (!a. ~(a IN labSem_state_mem_domain s1) ==> asm_state_mem (asmSem_inst i
-       t1) a =
-       asm_state_mem t1 a) /\
+     (!a. ~(a IN labSem_state_mem_domain s1) ==> asm_state_asm_state_mem
+       (asmSem_inst i t1) a = asm_state_mem t1 a) /\
     (target_state_rel (machine_config_target mc_conf)
        (asmSem_upd_pc (asm_state_pc t1 + n2w (LENGTH bytes')) (asmSem_inst i
          t1)) ms2 ==>
@@ -3485,13 +3484,13 @@ let compute_labels_alt_domain_labs = prove
 
 let remove_labels_loop_domain_labs = prove
  (`!a b c d e f g h. remove_labels_loop a b c d e f = SOME (g,h) ==>
-   sptree_domain h = IMAGE FST (labProps_get_code_labels f) UNION
+   sptree_domain h = IMAGE FST (stackProps_get_code_labels f) UNION
      sptree_domain d`,
   CHEAT_TAC);;
 
 let remove_labels_domain_labs = prove
  (`remove_labels c t k init_labs f p = SOME (q,labs) ==>
-   sptree_domain labs = IMAGE FST (labProps_get_code_labels p) UNION
+   sptree_domain labs = IMAGE FST (stackProps_get_code_labels p) UNION
      sptree_domain init_labs`,
   CHEAT_TAC);;
 

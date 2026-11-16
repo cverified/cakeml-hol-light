@@ -127,7 +127,7 @@ let mipsProg_NOT_NIL_AND_LEMMA = prove
 (* HOL4 mipsProgScript.sml:215-225: ML code, not ported *)
 
 let mips_enc_Const_def = new_definition
-  `mips_enc_Const n c = mips_enc (asm_Inst (asm_Const n c))`;;
+  `mips_enc_Const n c = mips_enc (word_Inst (asm_Const n c))`;;
 
 (* HOL4 mipsProgScript.sml:344-385: ML code, not ported *)
 

@@ -18,7 +18,6 @@ needs "compiler/backend/ag32/proofs/ag32_machine_config.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/proofs/backendProof.ml";;
 needs "compiler/backend/proofs/data_to_word_memoryProof.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
@@ -169,7 +168,7 @@ let init_memory_halt = prove
    SUM (MAP strlen cl) + LENGTH cl <= cline_size /\ LENGTH inp <= stdin_size
      ==>
    (get_mem_word (ag32_memory_init_memory c d f (cl,inp)) pc =
-    Encode (asm_Jump (fAdd,(n2w 0),Imm (n2w 0))))`,
+    Encode (ag32_Jump (fAdd,(n2w 0),ag32_Imm (n2w 0))))`,
   CHEAT_TAC);;
 
 let init_memory_ccache = prove
@@ -178,7 +177,7 @@ let init_memory_ccache = prove
    SUM (MAP strlen cl) + LENGTH cl <= cline_size /\ LENGTH inp <= stdin_size
      ==>
    (get_mem_word (ag32_memory_init_memory c d f (cl,inp)) pc =
-    Encode (asm_Jump (fSnd,(n2w 0),Reg (n2w 0))))`,
+    Encode (ag32_Jump (fSnd,(n2w 0),ag32_Reg (n2w 0))))`,
   CHEAT_TAC);;
 
 let init_memory_startup_bytes_in_memory = prove

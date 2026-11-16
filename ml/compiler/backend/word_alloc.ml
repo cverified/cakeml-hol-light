@@ -148,24 +148,24 @@ let ssa_cc_trans_inst_def = new_definition
          (word_Inst (asm_Const reg' w),ssa',na')
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
        (match ri with
-         Reg r3 ->
+         asm_Reg r3 ->
          let r3' = option_lookup ssa r3 in
          let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (word_Inst (asm_Arith (asm_Binop bop r1' r2' (Reg
+           (word_Inst (asm_Arith (asm_Binop bop r1' r2' (asm_Reg
              r3'))),ssa',na')
        | _ ->
          let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
            (word_Inst (asm_Arith (asm_Binop bop r1' r2' ri)),ssa',na'))
      | asm_Arith (asm_Shift shift' r1 r2 ri) ->
-       (match ri with Reg r3 ->
+       (match ri with asm_Reg r3 ->
          let r3' = option_lookup ssa r3 in
          let r2' = option_lookup ssa r2 in
          let mov_in = (word_Move 1) [(8,r3')] in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
            (word_Seq mov_in (word_Inst (asm_Arith (asm_Shift shift' r1' r2'
-             (Reg 8)))),ssa',na')
+             (asm_Reg 8)))),ssa',na')
        | _ ->
          let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
@@ -506,8 +506,8 @@ let ssa_cc_trans_def,ssa_cc_trans_ind = assume_definition_rec_clauses
     // unSSA-ing the phi functions
     ssa_cc_trans (word_If cmp r1 ri e2 e3) ssa na lt =
      let r1' = option_lookup ssa r1 in
-     let ri' = (match ri with Reg r -> Reg (option_lookup ssa r)
-                       | Imm v -> Imm v) in
+     let ri' = (match ri with asm_Reg r -> asm_Reg (option_lookup ssa r)
+                       | asm_Imm v -> asm_Imm v) in
      // ssa is the copy for both branches,
      // however, we can use new na2 and ns2
      let (e2',ssa2,na2) = ssa_cc_trans e2 ssa na lt in
@@ -627,7 +627,7 @@ add_simp apply_colour_exp_def;;
 let apply_colour_imm_def = new_definition
   `apply_colour_imm f x =
      match x with
-       Reg n -> Reg (f n)
+       asm_Reg n -> asm_Reg (f n)
      | x -> x`;;
 add_simp apply_colour_imm_def;;
 
@@ -771,12 +771,12 @@ let get_live_inst_def = new_definition
        asm_Skip -> live
      | asm_Const reg w -> sptree_delete reg live
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
-       (match ri with Reg r3 -> sptree_insert r2 one (sptree_insert r3 one
-         (sptree_delete r1 live))
+       (match ri with asm_Reg r3 -> sptree_insert r2 one (sptree_insert r3
+         one (sptree_delete r1 live))
        | _ -> sptree_insert r2 one (sptree_delete r1 live))
      | asm_Arith (asm_Shift shift' r1 r2 ri) ->
-       (match ri with Reg r3 -> sptree_insert r2 one (sptree_insert r3 one
-         (sptree_delete r1 live))
+       (match ri with asm_Reg r3 -> sptree_insert r2 one (sptree_insert r3
+         one (sptree_delete r1 live))
        | _ -> sptree_insert r2 one (sptree_delete r1 live))
      | asm_Arith (asm_Div r1 r2 r3) ->
        (sptree_insert r3 one (sptree_insert r2 one (sptree_delete r1 live)))
@@ -873,8 +873,8 @@ let get_live_def,get_live_ind = define_shaped_rec
        (let e2_live = get_live e2 live lt in
        let e3_live = get_live e3 live lt in
        let union_live = sptree_union e2_live e3_live in
-          match ri with Reg r2 -> sptree_insert r2 one (sptree_insert r1 one
-            union_live)
+          match ri with asm_Reg r2 -> sptree_insert r2 one (sptree_insert r1
+            one union_live)
          | _ -> sptree_insert r1 one union_live)
      | word_Alloc num' numset -> sptree_insert num' one (sptree_union (FST
        numset) (SND numset))
@@ -1030,8 +1030,8 @@ let remove_dead_def,remove_dead_ind = assume_definition_rec
        let (e3,e3_live,e3_nlive) = remove_dead e3 live nlive lt in
        let union_live = sptree_union e2_live e3_live in
        let liveset =
-          (match ri with Reg r2 -> sptree_insert r2 one (sptree_insert r1
-            one union_live)
+          (match ri with asm_Reg r2 -> sptree_insert r2 one (sptree_insert
+            r1 one union_live)
          | _ -> sptree_insert r1 one union_live) in
        let nliveset = FILTER (\s. MEM s e3_nlive) e2_nlive in
        let prog =
@@ -1140,10 +1140,10 @@ let get_delta_inst_def = new_definition
        asm_Skip -> reg_alloc_Delta [] []
      | asm_Const reg w -> reg_alloc_Delta [reg] []
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
-       (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3]
+       (match ri with asm_Reg r3 -> reg_alloc_Delta [r1] [r2; r3]
                      | _ -> reg_alloc_Delta [r1] [r2])
      | asm_Arith (asm_Shift shift' r1 r2 ri) ->
-       (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3]
+       (match ri with asm_Reg r3 -> reg_alloc_Delta [r1] [r2; r3]
                      | _ -> reg_alloc_Delta [r1] [r2])
      | asm_Arith (asm_Div r1 r2 r3) -> reg_alloc_Delta [r1] [r3; r2]
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> reg_alloc_Delta [r1; r4] [r4;
@@ -1256,7 +1256,7 @@ let get_clash_tree_def,get_clash_tree_ind = assume_definition_rec_clauses
         let e2t = get_clash_tree e2 lt in
         let e3t = get_clash_tree e3 lt in
         match ri with
-          Reg r2 -> reg_alloc_Seq (reg_alloc_Delta [] [r1; r2])
+          asm_Reg r2 -> reg_alloc_Seq (reg_alloc_Delta [] [r1; r2])
               (reg_alloc_Branch NONE e2t e3t)
         | _ -> reg_alloc_Seq (reg_alloc_Delta [] [r1])
             (reg_alloc_Branch NONE e2t e3t)`;
@@ -1384,7 +1384,7 @@ let get_heu_inst_def = new_definition
        (add1_lhs_const reg tup)
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
        (match ri with
-         Reg r3 ->
+         asm_Reg r3 ->
            (
             // r1 := r2 op r3
             add1_lhs_reg r1
@@ -1394,7 +1394,7 @@ let get_heu_inst_def = new_definition
            (add1_rhs_reg r2 tup)))
      | asm_Arith (asm_Shift shift' r1 r2 ri) ->
        (match ri with
-         Reg r3 ->
+         asm_Reg r3 ->
            (
             // r1 := r2 (shift) r3
             add1_lhs_reg r1
@@ -1508,7 +1508,7 @@ let get_heu_def,get_heu_ind = assume_definition_rec
        let lr = heu_max_all lr2 lr3 in
        let calls' = heu_merge_call (calls2:1 spt) calls3 in
        ((match ri with
-         Reg r2 -> add1_rhs_reg r1 (add1_rhs_reg r2 lr)
+         asm_Reg r2 -> add1_rhs_reg r1 (add1_rhs_reg r2 lr)
        | _ ->
          add1_rhs_reg r1 lr),calls')
      | (word_Call NONE dest args h,lr,calls') ->
@@ -1811,7 +1811,7 @@ let get_stack_only_aux_def,get_stack_only_aux_ind = define_guess_cheat
        let tfsR = get_stack_only_aux tfs e3 in
        let tfsM = merge_stack_sets tfs tfsL tfsR in
          match ri with
-           Reg r2 -> remove_temp_stack [r1; r2] tfsM
+           asm_Reg r2 -> remove_temp_stack [r1; r2] tfsM
          | _ -> remove_temp_stack [r1] tfsM)
      | word_MustTerminate s ->
        get_stack_only_aux tfs s

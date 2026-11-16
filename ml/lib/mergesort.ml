@@ -14,34 +14,34 @@ let _ = cake_library ();;
    option pair relation *)
 
 let sort2_def = new_definition
-  `sort2 R x y =
-     if R x y then
+  `sort2 R' x y =
+     if R' x y then
        [x; y]
      else [y; x]`;;
 
 let sort3_def = new_definition
-  `sort3 R x y z =
-     if R x y then
-       if R y z then
+  `sort3 R' x y z =
+     if R' x y then
+       if R' y z then
          [x; y; z]
-       else if R x z then
+       else if R' x z then
          [x; z; y]
        else [z; x; y]
-     else if R y z then
-       if R x z then
+     else if R' y z then
+       if R' x z then
          [y; x; z]
        else [y; z; x]
      else [z; y; x]`;;
 
 let merge_def,merge_ind = define_guess
-  `mergesort_merge R l x3 =
+  `mergesort_merge R' l x3 =
      match (l,x3) with
        ([],[]) -> []
      | (l,[]) -> l
      | ([],l) -> l
      | (CONS x l1,CONS y l2) ->
-       if R x y then CONS x (mergesort_merge R l1 (CONS y l2))
-       else CONS y (mergesort_merge R (CONS x l1) l2)`;;
+       if R' x y then CONS x (mergesort_merge R' l1 (CONS y l2))
+       else CONS y (mergesort_merge R' (CONS x l1) l2)`;;
 
 let mergesortN_def,mergesortN_ind = define_wf
   `MEASURE (\(R,n,l). n)`
@@ -65,38 +65,38 @@ let mergesortN_def,mergesortN_ind = define_wf
          (mergesortN R (n - len1) (DROP len1 l)))`;;
 
 let mergesort_def = new_definition
-  `mergesort R l = mergesortN R (LENGTH l) l`;;
+  `mergesort R' l = mergesortN R' (LENGTH l) l`;;
 
 let sort2_tail_def = new_definition
-  `sort2_tail (neg:bool) R x y =
-     if ~(R x y = neg) then
+  `sort2_tail (neg:bool) R' x y =
+     if ~(R' x y = neg) then
        [x; y]
      else [y; x]`;;
 
 let sort3_tail_def = new_definition
-  `sort3_tail (neg:bool) R x y z =
-    if ~(R x y = neg) then
-      if ~(R y z = neg) then
+  `sort3_tail (neg:bool) R' x y z =
+    if ~(R' x y = neg) then
+      if ~(R' y z = neg) then
         [x; y; z]
-      else if ~(R x z = neg) then
+      else if ~(R' x z = neg) then
         [x; z; y]
       else [z; x; y]
-    else if ~(R y z = neg) then
-      if ~(R x z = neg) then
+    else if ~(R' y z = neg) then
+      if ~(R' x z = neg) then
         [y; x; z]
       else [y; z; x]
     else [z; y; x]`;;
 
 let merge_tail_def,merge_tail_ind = define_guess
-  `merge_tail negate' R l x4 acc =
+  `merge_tail negate' R' l x4 acc =
      match (negate',l,x4) with
        ((negate':bool),[],[]) -> acc
      | (negate',l,[]) -> REV l acc
      | (negate',[],l) -> REV l acc
      | (negate',CONS x l1,CONS y l2) ->
-       if ~(R x y = negate') then
-         merge_tail negate' R l1 (CONS y l2) (CONS x acc)
-       else merge_tail negate' R (CONS x l1) l2 (CONS y acc)`;;
+       if ~(R' x y = negate') then
+         merge_tail negate' R' l1 (CONS y l2) (CONS x acc)
+       else merge_tail negate' R' (CONS x l1) l2 (CONS y acc)`;;
 
 let mergesortN_tail_def,mergesortN_tail_ind = define_wf
   `MEASURE (\(negate,R,n,l). n)`
@@ -122,4 +122,4 @@ let mergesortN_tail_def,mergesortN_tail_ind = define_wf
                         [])`;;
 
 let mergesort_tail_def = new_definition
-  `mergesort_tail R l = mergesortN_tail F R (LENGTH l) l`;;
+  `mergesort_tail R' l = mergesortN_tail F R' (LENGTH l) l`;;

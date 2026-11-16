@@ -97,13 +97,13 @@ let evaluate_SNOC_Rval = prove
   CHEAT_TAC);;
 
 let compile_CONS = prove
- (`bvi_let_compile ax d (CONS x xs) = APPEND (bvi_let_compile ax d [x])
-  (bvi_let_compile ax d xs)`,
+ (`clos_mti_compile ax d (CONS x xs) = APPEND (clos_mti_compile ax d [x])
+  (clos_mti_compile ax d xs)`,
   CHEAT_TAC);;
 
 let compile_APPEND = prove
- (`!xs ys ax d. bvi_let_compile ax d (APPEND xs ys) = APPEND (bvi_let_compile
-  ax d xs) (bvi_let_compile ax d ys)`,
+ (`!xs ys ax d. clos_mti_compile ax d (APPEND xs ys) = APPEND
+  (clos_mti_compile ax d xs) (clos_mti_compile ax d ys)`,
   CHEAT_TAC);;
 
 let IMP_COMM = prove

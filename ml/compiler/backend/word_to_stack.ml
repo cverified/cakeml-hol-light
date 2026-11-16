@@ -75,7 +75,7 @@ let wStackStore_def,wStackStore_ind = define_rec
 let wMoveSingle_def = new_definition
   `wMoveSingle (x,y) (k,f,(f':num)) =
      match (x,y) with (INL r1,INL r2) -> stack_Inst (asm_Arith (asm_Binop
-       asm_Or r1 r2 (Reg r2)))
+       asm_Or r1 r2 (asm_Reg r2)))
      | (INL r1,INR r2) -> stack_StackLoad r1 (f - 1 - (r2 - k))
      | (INR r1,INL r2) -> stack_StackStore r2 (f - 1 - (r1 - k))
      | (INR r1,INR r2) -> stack_Seq (stack_StackLoad k (f - 1 - (r2 - k)))
@@ -106,28 +106,28 @@ let wInst_def = new_definition
      match x1 with
        ((asm_Const n c):'a asm_inst) ->
        wRegWrite1 (\n. stack_Inst (asm_Const n c)) n kf
-     | asm_Arith (asm_Binop bop n1 n2 (Imm imm)) ->
+     | asm_Arith (asm_Binop bop n1 n2 (asm_Imm imm)) ->
        let (l,n2) = wReg1 n2 kf in
        wStackLoad l
-         (wRegWrite1 (\n1. stack_Inst (asm_Arith (asm_Binop bop n1 n2 (Imm
-           imm)))) n1 kf)
-     | asm_Arith (asm_Binop bop n1 n2 (Reg n3)) ->
+         (wRegWrite1 (\n1. stack_Inst (asm_Arith (asm_Binop bop n1 n2
+           (asm_Imm imm)))) n1 kf)
+     | asm_Arith (asm_Binop bop n1 n2 (asm_Reg n3)) ->
        let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (APPEND l l')
-         (wRegWrite1 (\n1. stack_Inst (asm_Arith (asm_Binop bop n1 n2 (Reg
-           n3)))) n1 kf)
-     | asm_Arith (asm_Shift sh n1 n2 (Imm imm)) ->
+         (wRegWrite1 (\n1. stack_Inst (asm_Arith (asm_Binop bop n1 n2
+           (asm_Reg n3)))) n1 kf)
+     | asm_Arith (asm_Shift sh n1 n2 (asm_Imm imm)) ->
        let (l,n2) = wReg1 n2 kf in
        wStackLoad l
-         (wRegWrite1 (\n1. stack_Inst (asm_Arith (asm_Shift sh n1 n2 (Imm
-           imm)))) n1 kf)
-     | asm_Arith (asm_Shift sh n1 n2 (Reg n3)) ->
+         (wRegWrite1 (\n1. stack_Inst (asm_Arith (asm_Shift sh n1 n2
+           (asm_Imm imm)))) n1 kf)
+     | asm_Arith (asm_Shift sh n1 n2 (asm_Reg n3)) ->
        let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (APPEND l l')
-         (wRegWrite1 (\n1. stack_Inst (asm_Arith (asm_Shift sh n1 n2 (Reg
-           n3)))) n1 kf)
+         (wRegWrite1 (\n1. stack_Inst (asm_Arith (asm_Shift sh n1 n2
+           (asm_Reg n3)))) n1 kf)
      | asm_Arith (asm_Div n1 n2 n3) ->
        let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
@@ -354,9 +354,9 @@ let perf_call_prefix_def = new_definition
        stack_Inst (asm_Mem asm_Store k (Addr perf_rsp (--(n2w 8))));
        stack_Inst (asm_Mem asm_Store perf_rbp (Addr perf_rsp (--(n2w 16))));
        // Atomically commit the new frame, then sync perf_rbp := perf_rsp.
-       stack_Inst (asm_Arith (asm_Binop asm_Sub perf_rsp perf_rsp (Imm (n2w
-         16))));
-       stack_Inst (asm_Arith (asm_Binop asm_Or perf_rbp perf_rsp (Reg
+       stack_Inst (asm_Arith (asm_Binop asm_Sub perf_rsp perf_rsp (asm_Imm
+         (n2w 16))));
+       stack_Inst (asm_Arith (asm_Binop asm_Or perf_rbp perf_rsp (asm_Reg
          perf_rsp)))]`;;
 
 let perf_call_suffix_def = new_definition
@@ -365,8 +365,8 @@ let perf_call_suffix_def = new_definition
        // pop saved %rbp
        stack_Inst (asm_Mem asm_Load perf_rbp (Addr perf_rsp (n2w 0)));
        // discard both slots (saved-rbp + ret_addr) in one atomic step
-       stack_Inst (asm_Arith (asm_Binop asm_Add perf_rsp perf_rsp (Imm
-         (n2w 16))))]`;;
+       stack_Inst (asm_Arith (asm_Binop asm_Add perf_rsp perf_rsp
+         (asm_Imm (n2w 16))))]`;;
 
 let handler_slots_def = new_definition
   `handler_slots perf = if perf then 5 else 3`;;
@@ -388,11 +388,11 @@ let PushHandler_def = new_definition
     (stack_Seq (if perf then
             stack_list_Seq [
               // slot 3: saved %rsp
-              stack_Inst (asm_Arith (asm_Binop asm_Or k perf_rsp (Reg
+              stack_Inst (asm_Arith (asm_Binop asm_Or k perf_rsp (asm_Reg
                 perf_rsp)));
               stack_StackStore k 3;
               // slot 4: saved %rbp
-              stack_Inst (asm_Arith (asm_Binop asm_Or k perf_rbp (Reg
+              stack_Inst (asm_Arith (asm_Binop asm_Or k perf_rbp (asm_Reg
                 perf_rbp)));
               stack_StackStore k 4]
           else stack_Skip)
@@ -497,16 +497,17 @@ let word_to_stack_comp_def,word_to_stack_comp_ind = assume_definition_rec
         let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
         let (q2,bs) = word_to_stack_comp conf perf p2 bs kf in
         match ri with
-          Reg r ->
+          asm_Reg r ->
             let (x2,n) = wReg2 r kf in
-             (wStackLoad (APPEND x1 x2) (stack_If cmp r' (Reg n) q1 q2),bs)
-        | Imm i ->
+             (wStackLoad (APPEND x1 x2) (stack_If cmp r' (asm_Reg n) q1
+               q2),bs)
+        | asm_Imm i ->
            if asm_config_valid_imm conf (INR cmp) i then
-             (wStackLoad x1 (stack_If cmp r' (Imm i) q1 q2),bs)
+             (wStackLoad x1 (stack_If cmp r' (asm_Imm i) q1 q2),bs)
            else let r = FST kf + 1 in
              (stack_Seq
                ((\r w. stack_Inst (asm_Const r w)) r i)
-               (wStackLoad x1 (stack_If cmp r' (Reg r) q1 q2)),bs))
+               (wStackLoad x1 (stack_If cmp r' (asm_Reg r) q1 q2)),bs))
      | word_Loop _ p1 _ ->
         let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
           (stack_Loop q1,bs)
@@ -561,7 +562,7 @@ let word_to_stack_comp_def,word_to_stack_comp_ind = assume_definition_rec
           ws)) bs in
           (stack_Seq (stack_Inst (asm_Const 1 (n2w i)))
                (stack_StoreConsts (FST kf) (FST kf + 1) (SOME
-                 stack_store_consts_stub_location)),new_bs)
+                 word_store_consts_stub_location)),new_bs)
      | word_LocValue r l1 -> (wRegWrite1 (\r. stack_LocValue r l1 0) r
        kf,bs)
      | word_Install r1 r2 r3 r4 live ->
@@ -593,10 +594,12 @@ let raise_stub_def = new_definition
              stack_list_Seq [
                // restore %rsp from slot 3
                stack_StackLoad k 3;
-               stack_Inst (asm_Arith (asm_Binop asm_Or perf_rsp k (Reg k)));
+               stack_Inst (asm_Arith (asm_Binop asm_Or perf_rsp k (asm_Reg
+                 k)));
                // restore %rbp from slot 4
                stack_StackLoad k 4;
-               stack_Inst (asm_Arith (asm_Binop asm_Or perf_rbp k (Reg k)))]
+               stack_Inst (asm_Arith (asm_Binop asm_Or perf_rbp k (asm_Reg
+                 k)))]
            else stack_Skip)
      (stack_Seq (stack_StackLoad k 2)
      (
@@ -650,12 +653,12 @@ let word_to_stack_compile_def = new_definition
        (append (FST bitmaps),
         mk_word_to_stack_config (SND bitmaps) sfs,CONS 0 fs,CONS
           (raise_stub_location,raise_stub perf k) (CONS
-          (stack_store_consts_stub_location,store_consts_stub k) progs))`;;
+          (word_store_consts_stub_location,store_consts_stub k) progs))`;;
 
 let word_to_stack_stub_names_def = new_definition
   `word_to_stack_stub_names one = [
      (raise_stub_location,implode "_Raise");
-     (stack_store_consts_stub_location,implode "_StoreConsts")]`;;
+     (word_store_consts_stub_location,implode "_StoreConsts")]`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -420,10 +420,10 @@ let CPstate_modelsD_Var = prove
 let CPstate_modelsD_lookup_eq_imm = prove
  (`CPstate_inv cs ==>
    CPstate_models cs st ==>
-   wordSem_word_exp st (match lookup_eq_imm cs x with Reg r -> word_Var r |
-     Imm w -> word_Const w) =
-   wordSem_word_exp st (match x with Reg r -> word_Var r | Imm w ->
-     word_Const w)`,
+   wordSem_word_exp st (match lookup_eq_imm cs x with asm_Reg r -> word_Var
+     r | asm_Imm w -> word_Const w) =
+   wordSem_word_exp st (match x with asm_Reg r -> word_Var r | asm_Imm w
+     -> word_Const w)`,
   CHEAT_TAC);;
 
 let MAP_get_var_eqD = prove

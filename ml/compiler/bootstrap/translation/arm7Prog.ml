@@ -161,7 +161,7 @@ let if_ARM_BadCode = prove
 (* HOL4 arm7ProgScript.sml:301-311: ML code, not ported *)
 
 let arm7_enc_Const_def = new_definition
-  `arm7_enc_Const n c = arm7_enc (asm_Inst (asm_Const n c))`;;
+  `arm7_enc_Const n c = arm7_enc (word_Inst (asm_Const n c))`;;
 
 (* HOL4 arm7ProgScript.sml:430-471: ML code, not ported *)
 

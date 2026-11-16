@@ -87,7 +87,7 @@ let bool_fromString_def = new_definition
 
 let pair_toString_def = new_definition
   `pair_toString f1 f2 (x,y) =
-     mlvector_concat [(implode "(");
+     mlstring_concat [(implode "(");
              f1 x;
              (implode ", ");
              f2 y;

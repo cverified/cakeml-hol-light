@@ -30,7 +30,7 @@ let encode_pair_def = new_definition
   `encode_pair e1 e2 (x,y) = cfFFIType_Cons (e1 x) (e2 y)`;;
 
 let encode_list_def = new_definition
-  `encode_list e l = misc_List (MAP e l)`;;
+  `encode_list e l = cfFFIType_List (MAP e l)`;;
 
 let encode_list_11 = prove
  (`!xs ys.
@@ -40,8 +40,8 @@ let encode_list_11 = prove
   CHEAT_TAC);;
 
 let encode_option_def = define_cases
-  `(encode_option e NONE = misc_List []) /\
-   (encode_option e (SOME x) = misc_List [e x])`;;
+  `(encode_option e NONE = cfFFIType_List []) /\
+   (encode_option e (SOME x) = cfFFIType_List [e x])`;;
 
 let encode_option_11 = prove
  (`!x y. encode_option f x = encode_option f y /\ (!x y. f x = f y <=> x = y)
@@ -59,7 +59,7 @@ add_simp encode_bool_11;;
 
 let encode_int_def = new_definition
   `encode_int i = cfFFIType_Cons (encode_bool ((&0) <= i)) (cfFFIType_Num
-  (cfFFIType_Num (abs i)))`;;
+    (num_of_int (abs i)))`;;
 
 let encode_int_11 = prove
  (`!x y. encode_int x = encode_int y <=> x = y`,
@@ -347,15 +347,15 @@ let STARPOST_emp = prove
   CHEAT_TAC);;
 
 let SEP_IMP_frame_single_l = prove
- (`!H' R.
+ (`!H' R'.
      (emp (SEP_IMP) H') ==>
-     (R (SEP_IMP) H' * R)`,
+     (R' (SEP_IMP) H' * R')`,
   CHEAT_TAC);;
 
 let SEP_IMP_frame_single_r = prove
- (`!H R.
+ (`!H R'.
      (H (SEP_IMP) emp) ==>
-     (H * R (SEP_IMP) R)`,
+     (H * R' (SEP_IMP) R')`,
   CHEAT_TAC);;
 
 let SEP_IMP_cell_frame = prove

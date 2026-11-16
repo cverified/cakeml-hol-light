@@ -27,7 +27,6 @@ needs "compiler/backend/ag32/proofs/ag32_memoryProof.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/proofs/backendProof.ml";;
 needs "compiler/backend/semantics/targetSem.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
@@ -194,7 +193,8 @@ let interference_implemented_def = new_definition
 let evaluate_Halt_FUNPOW_next = prove
  (`!mc (ffi:'ffi ffi_state) k ms t ms' ffi'.
    interference_implemented mc ffi_rel md ms /\ ffi_rel ms ffi /\
-   ~(MEM (machine_config_ccache_pc mc) (machine_config_ffi_entry_pcs mc)) /\
+   ~(ag32_MEM (machine_config_ccache_pc mc) (machine_config_ffi_entry_pcs
+     mc)) /\
    ALL (\x. ?s. x = ffi_ExtCall s) (machine_config_ffi_names mc) /\
    LENGTH (machine_config_ffi_entry_pcs mc) <= LENGTH
      (machine_config_ffi_names mc) /\
@@ -215,15 +215,16 @@ let evaluate_Halt_FUNPOW_next = prove
 let machine_sem_Terminate_FUNPOW_next = prove
  (`interference_implemented mc ffi_rel md ms /\
    (ffi_rel ms st) /\
-   ~(MEM (machine_config_ccache_pc mc) (machine_config_ffi_entry_pcs mc)) /\
+   ~(ag32_MEM (machine_config_ccache_pc mc) (machine_config_ffi_entry_pcs
+     mc)) /\
    ALL (\x. ?s. x = ffi_ExtCall s) (machine_config_ffi_names mc) /\
    LENGTH (machine_config_ffi_entry_pcs mc) <= LENGTH
      (machine_config_ffi_names mc) /\
    targetSem_machine_sem mc (st:'ffi ffi_state) ms (ffi_Terminate t
-     io_events) ==>
+     ag32_io_events) ==>
    (?k st'.
      ffi_rel (ITER k (target_next (machine_config_target mc)) ms) st'
-       /\ (io_events = ffi_state_io_events st') /\
+       /\ (ag32_io_events = io_events st') /\
        (!x. ~(x IN md UNION machine_config_prog_addresses mc) ==>
          (target_get_byte (machine_config_target mc) (ITER k (target_next
          (machine_config_target mc)) ms) x = target_get_byte
@@ -284,27 +285,27 @@ let RTC_asm_step_target_configured = prove
 
 let ag32_io_events_unchanged = prove
  (`~(Decode (
-   let v:word32 = ((31 >< 2) (?_PC ms):word30) in
-     (?_MEM ms (v + (n2w 3)) @@
-      ((?_MEM ms (v + (n2w 2)) @@
-        ((?_MEM ms (v + (n2w 1)) @@ ?_MEM
-          ms (v + (n2w 0))):word16)):word24))) = Interrupt) ==>
-   (ffi_state_io_events (Next ms) = ffi_state_io_events ms)`,
+   let v:word32 = ((31 >< 2) (ag32_state_PC ms):word30) in
+     (ag32_state_MEM ms (v + (n2w 3)) @@
+      ((ag32_state_MEM ms (v + (n2w 2)) @@
+        ((ag32_state_MEM ms (v + (n2w 1)) @@ ag32_state_MEM
+          ms (v + (n2w 0))):word16)):word24))) = ag32_Interrupt) ==>
+   (ag32_state_io_events (Next ms) = ag32_state_io_events ms)`,
   CHEAT_TAC);;
 
 let ag32_enc_not_Interrupt = prove
  (`4 * k < LENGTH (ag32_enc istr) ==>
    (let bs = DROP (4 * k) (ag32_enc istr) in ~(Decode (EL 3 bs @@ ((EL 2
-     bs @@ ((EL 1 bs @@ EL 0 bs):word16)):word24)) = Interrupt))`,
+     bs @@ ((EL 1 bs @@ EL 0 bs):word16)):word24)) = ag32_Interrupt))`,
   CHEAT_TAC);;
 
 let RTC_asm_step_ag32_target_state_rel_io_events = prove
  (`target_state_rel ag32_target s1 ms /\
    RTC (\s1 s2. ?i. asm_step ag32_config s1 i s2) s1 s2 ==>
    (?n. target_state_rel ag32_target s2 (ITER n Next ms) /\
-       (ffi_state_io_events (ITER n Next ms) = ffi_state_io_events ms) /\
-       (!x. ~(x IN asm_state_mem_domain s1) ==> (?_MEM (ITER n Next ms) x
-         = ?_MEM ms x)))`,
+       (ag32_state_io_events (ITER n Next ms) = ag32_state_io_events ms) /\
+       (!x. ~(x IN asm_state_mem_domain s1) ==> (ag32_state_MEM (ITER n
+         Next ms) x = ag32_state_MEM ms x)))`,
   CHEAT_TAC);;
 
 let read_bytearray_IMP_domain = prove
@@ -415,12 +416,14 @@ let ag32_cline_implemented_def = new_definition
 
 let ag32_ffi_rel_def = new_definition
   `ag32_ffi_rel ms ffi <=>
-     (MAP get_ag32_io_event (ffi_state_io_events ms) =
+     (MAP get_ag32_io_event (ag32_state_io_events ms) =
       MAP get_output_io_event (ffi_state_io_events ffi)) /\
      (ffi_state_oracle ffi = basis_ffi_oracle no_ext) /\
      (ag32_fs_ok (SND (ffi_state_ffi_state ffi))) /\
-     (ag32_stdin_implemented (SND (ffi_state_ffi_state ffi)) (?_MEM ms)) /\
-     (ag32_cline_implemented (FST (ffi_state_ffi_state ffi)) (?_MEM ms))`;;
+     (ag32_stdin_implemented (SND (ffi_state_ffi_state ffi)) (ag32_state_MEM
+       ms)) /\
+     (ag32_cline_implemented (FST (ffi_state_ffi_state ffi))
+       (ag32_state_MEM ms))`;;
 
 let extract_write_def = new_definition
   `extract_write fd oevent =
@@ -482,54 +485,54 @@ let extract_fs_extract_writes = prove
 
 
 let ag32_ffi_write_thm = prove
- (`bytes_in_memory (?_R s (n2w 1)) conf (?_MEM s) md /\
-   bytes_in_memory (?_R s (n2w 3)) bytes (?_MEM s) md /\
+ (`bytes_in_memory (ag32_state_R s (n2w 1)) conf (ag32_state_MEM s) md /\
+   bytes_in_memory (ag32_state_R s (n2w 3)) bytes (ag32_state_MEM s) md /\
    Abbrev (md = ag32_prog_addresses (LENGTH ffi_names) lc ld) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (w2n (?_R s (n2w 2)) = LENGTH conf) /\
-   (w2n (?_R s (n2w 4)) = LENGTH bytes) /\ w2n (?_R s (n2w 3)) + LENGTH
-     bytes < dimword (:32) /\
+   (w2n (ag32_state_R s (n2w 2)) = LENGTH conf) /\
+   (w2n (ag32_state_R s (n2w 4)) = LENGTH bytes) /\ w2n (ag32_state_R s (n2w
+     3)) + LENGTH bytes < dimword (:32) /\
    (INDEX_OF (implode "write") ffi_names = SOME index) /\
    (ffi_write conf bytes fs = SOME (FFIreturn new_bytes fs')) /\
    ag32_fs_ok fs /\
-   (?_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP ffi_entrypoints
-     (implode "write")))) ==>
+   (ag32_state_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP
+     ffi_entrypoints (implode "write")))) ==>
    (ag32_ffi_write s = ag32_ffi_interfer ffi_names md (index,new_bytes,s))`,
   CHEAT_TAC);;
 
 let ag32_ffi_read_thm = prove
- (`bytes_in_memory (?_R s (n2w 1)) conf (?_MEM s) md /\
-   bytes_in_memory (?_R s (n2w 3)) bytes (?_MEM s) md /\
+ (`bytes_in_memory (ag32_state_R s (n2w 1)) conf (ag32_state_MEM s) md /\
+   bytes_in_memory (ag32_state_R s (n2w 3)) bytes (ag32_state_MEM s) md /\
    Abbrev (md = ag32_prog_addresses (LENGTH ffi_names) lc ld) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (w2n (?_R s (n2w 2)) = LENGTH conf) /\
-   (w2n (?_R s (n2w 4)) = LENGTH bytes) /\ w2n (?_R s (n2w 3)) + LENGTH
-     bytes < dimword (:32) /\
+   (w2n (ag32_state_R s (n2w 2)) = LENGTH conf) /\
+   (w2n (ag32_state_R s (n2w 4)) = LENGTH bytes) /\ w2n (ag32_state_R s (n2w
+     3)) + LENGTH bytes < dimword (:32) /\
    (INDEX_OF (implode "read") ffi_names = SOME index) /\
    (ffi_read conf bytes fs = SOME (FFIreturn new_bytes fs')) /\
-   ag32_fs_ok fs /\ ag32_stdin_implemented fs (?_MEM s) /\
-   (?_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP ffi_entrypoints
-     (implode "read")))) ==>
+   ag32_fs_ok fs /\ ag32_stdin_implemented fs (ag32_state_MEM s) /\
+   (ag32_state_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP
+     ffi_entrypoints (implode "read")))) ==>
    (ag32_ffi_read s = ag32_ffi_interfer ffi_names md (index,new_bytes,s))`,
   CHEAT_TAC);;
 
 let ag32_ffi_get_arg_count_thm = prove
- (`bytes_in_memory (?_R s (n2w 1)) conf (?_MEM s) md /\
-   bytes_in_memory (?_R s (n2w 3)) bytes (?_MEM s) md /\
+ (`bytes_in_memory (ag32_state_R s (n2w 1)) conf (ag32_state_MEM s) md /\
+   bytes_in_memory (ag32_state_R s (n2w 3)) bytes (ag32_state_MEM s) md /\
    Abbrev (md = ag32_prog_addresses (LENGTH ffi_names) lc ld) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (w2n (?_R s (n2w 2)) = LENGTH conf) /\
-   (w2n (?_R s (n2w 4)) = LENGTH bytes) /\ w2n (?_R s (n2w 3)) + LENGTH
-     bytes < dimword (:32) /\
+   (w2n (ag32_state_R s (n2w 2)) = LENGTH conf) /\
+   (w2n (ag32_state_R s (n2w 4)) = LENGTH bytes) /\ w2n (ag32_state_R s (n2w
+     3)) + LENGTH bytes < dimword (:32) /\
    (INDEX_OF (implode "get_arg_count") ffi_names = SOME index) /\
    (ffi_get_arg_count conf bytes (cl:mlstring list) = SOME (FFIreturn
      new_bytes cl')) /\
-   ag32_cline_implemented cl (?_MEM s) /\
-   (?_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP ffi_entrypoints
-     (implode "get_arg_count")))) ==>
+   ag32_cline_implemented cl (ag32_state_MEM s) /\
+   (ag32_state_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP
+     ffi_entrypoints (implode "get_arg_count")))) ==>
    (ag32_ffi_get_arg_count s = ag32_ffi_interfer ffi_names md
      (index,new_bytes,s))`,
   CHEAT_TAC);;
@@ -543,108 +546,108 @@ let get_mem_arg_thm = prove
   CHEAT_TAC);;
 
 let ag32_ffi_get_arg_length_thm = prove
- (`bytes_in_memory (?_R s (n2w 1)) conf (?_MEM s) md /\
-   bytes_in_memory (?_R s (n2w 3)) bytes (?_MEM s) md /\
+ (`bytes_in_memory (ag32_state_R s (n2w 1)) conf (ag32_state_MEM s) md /\
+   bytes_in_memory (ag32_state_R s (n2w 3)) bytes (ag32_state_MEM s) md /\
    Abbrev (md = ag32_prog_addresses (LENGTH ffi_names) lc ld) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (w2n (?_R s (n2w 2)) = LENGTH conf) /\
-   (w2n (?_R s (n2w 4)) = LENGTH bytes) /\ w2n (?_R s (n2w 3)) + LENGTH
-     bytes < dimword (:32) /\
+   (w2n (ag32_state_R s (n2w 2)) = LENGTH conf) /\
+   (w2n (ag32_state_R s (n2w 4)) = LENGTH bytes) /\ w2n (ag32_state_R s (n2w
+     3)) + LENGTH bytes < dimword (:32) /\
    (INDEX_OF (implode "get_arg_length") ffi_names = SOME index) /\
    (ffi_get_arg_length conf bytes (cl:mlstring list) = SOME (FFIreturn
      new_bytes cl')) /\
-   ag32_cline_implemented cl (?_MEM s) /\
-   (?_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP ffi_entrypoints
-     (implode "get_arg_length")))) ==>
+   ag32_cline_implemented cl (ag32_state_MEM s) /\
+   (ag32_state_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP
+     ffi_entrypoints (implode "get_arg_length")))) ==>
    (ag32_ffi_get_arg_length s = ag32_ffi_interfer ffi_names md
      (index,new_bytes,s))`,
   CHEAT_TAC);;
 
 let ag32_ffi_get_arg_thm = prove
- (`bytes_in_memory (?_R s (n2w 1)) conf (?_MEM s) md /\
-   bytes_in_memory (?_R s (n2w 3)) bytes (?_MEM s) md /\
+ (`bytes_in_memory (ag32_state_R s (n2w 1)) conf (ag32_state_MEM s) md /\
+   bytes_in_memory (ag32_state_R s (n2w 3)) bytes (ag32_state_MEM s) md /\
    Abbrev (md = ag32_prog_addresses (LENGTH ffi_names) lc ld) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (w2n (?_R s (n2w 2)) = LENGTH conf) /\
-   (w2n (?_R s (n2w 4)) = LENGTH bytes) /\ w2n (?_R s (n2w 3)) + LENGTH
-     bytes < dimword (:32) /\
+   (w2n (ag32_state_R s (n2w 2)) = LENGTH conf) /\
+   (w2n (ag32_state_R s (n2w 4)) = LENGTH bytes) /\ w2n (ag32_state_R s (n2w
+     3)) + LENGTH bytes < dimword (:32) /\
    (INDEX_OF (implode "get_arg") ffi_names = SOME index) /\
    (ffi_get_arg conf bytes (cl:mlstring list) = SOME (FFIreturn new_bytes
      cl')) /\
-   ag32_cline_implemented cl (?_MEM s) /\
-   (?_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP ffi_entrypoints
-     (implode "get_arg")))) ==>
+   ag32_cline_implemented cl (ag32_state_MEM s) /\
+   (ag32_state_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP
+     ffi_entrypoints (implode "get_arg")))) ==>
    (ag32_ffi_get_arg s = ag32_ffi_interfer ffi_names md
      (index,new_bytes,s))`,
   CHEAT_TAC);;
 
 let ag32_ffi_open_in_thm = prove
- (`bytes_in_memory (?_R s (n2w 1)) conf (?_MEM s) md /\
-   bytes_in_memory (?_R s (n2w 3)) bytes (?_MEM s) md /\
+ (`bytes_in_memory (ag32_state_R s (n2w 1)) conf (ag32_state_MEM s) md /\
+   bytes_in_memory (ag32_state_R s (n2w 3)) bytes (ag32_state_MEM s) md /\
    Abbrev (md = ag32_prog_addresses (LENGTH ffi_names) lc ld) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (w2n (?_R s (n2w 2)) = LENGTH conf) /\
-   (w2n (?_R s (n2w 4)) = LENGTH bytes) /\ w2n (?_R s (n2w 3)) + LENGTH
-     bytes < dimword (:32) /\
+   (w2n (ag32_state_R s (n2w 2)) = LENGTH conf) /\
+   (w2n (ag32_state_R s (n2w 4)) = LENGTH bytes) /\ w2n (ag32_state_R s (n2w
+     3)) + LENGTH bytes < dimword (:32) /\
    (INDEX_OF (implode "open_in") ffi_names = SOME index) /\
    (ffi_open_in conf bytes fs = SOME (FFIreturn new_bytes fs')) /\
    ag32_fs_ok fs /\
-   (?_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP ffi_entrypoints
-     (implode "open_in")))) ==>
+   (ag32_state_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP
+     ffi_entrypoints (implode "open_in")))) ==>
    (ag32_ffi_open_in s = ag32_ffi_interfer ffi_names md
      (index,new_bytes,s))`,
   CHEAT_TAC);;
 
 let ag32_ffi_open_out_thm = prove
- (`bytes_in_memory (?_R s (n2w 1)) conf (?_MEM s) md /\
-   bytes_in_memory (?_R s (n2w 3)) bytes (?_MEM s) md /\
+ (`bytes_in_memory (ag32_state_R s (n2w 1)) conf (ag32_state_MEM s) md /\
+   bytes_in_memory (ag32_state_R s (n2w 3)) bytes (ag32_state_MEM s) md /\
    Abbrev (md = ag32_prog_addresses (LENGTH ffi_names) lc ld) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (w2n (?_R s (n2w 2)) = LENGTH conf) /\
-   (w2n (?_R s (n2w 4)) = LENGTH bytes) /\ w2n (?_R s (n2w 3)) + LENGTH
-     bytes < dimword (:32) /\
+   (w2n (ag32_state_R s (n2w 2)) = LENGTH conf) /\
+   (w2n (ag32_state_R s (n2w 4)) = LENGTH bytes) /\ w2n (ag32_state_R s (n2w
+     3)) + LENGTH bytes < dimword (:32) /\
    (INDEX_OF (implode "open_out") ffi_names = SOME index) /\
    (ffi_open_out conf bytes fs = SOME (FFIreturn new_bytes fs')) /\
    ag32_fs_ok fs /\
-   (?_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP ffi_entrypoints
-     (implode "open_out")))) ==>
+   (ag32_state_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP
+     ffi_entrypoints (implode "open_out")))) ==>
    (ag32_ffi_open_out s = ag32_ffi_interfer ffi_names md
      (index,new_bytes,s))`,
   CHEAT_TAC);;
 
 let ag32_ffi_close_thm = prove
- (`bytes_in_memory (?_R s (n2w 1)) conf (?_MEM s) md /\
-   bytes_in_memory (?_R s (n2w 3)) bytes (?_MEM s) md /\
+ (`bytes_in_memory (ag32_state_R s (n2w 1)) conf (ag32_state_MEM s) md /\
+   bytes_in_memory (ag32_state_R s (n2w 3)) bytes (ag32_state_MEM s) md /\
    Abbrev (md = ag32_prog_addresses (LENGTH ffi_names) lc ld) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (w2n (?_R s (n2w 2)) = LENGTH conf) /\
-   (w2n (?_R s (n2w 4)) = LENGTH bytes) /\ w2n (?_R s (n2w 3)) + LENGTH
-     bytes < dimword (:32) /\
+   (w2n (ag32_state_R s (n2w 2)) = LENGTH conf) /\
+   (w2n (ag32_state_R s (n2w 4)) = LENGTH bytes) /\ w2n (ag32_state_R s (n2w
+     3)) + LENGTH bytes < dimword (:32) /\
    (INDEX_OF (implode "close") ffi_names = SOME index) /\
    (ffi_close conf bytes fs = SOME (FFIreturn new_bytes fs')) /\
    ag32_fs_ok fs /\
-   (?_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP ffi_entrypoints
-     (implode "close")))) ==>
+   (ag32_state_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP
+     ffi_entrypoints (implode "close")))) ==>
    (ag32_ffi_close s = ag32_ffi_interfer ffi_names md (index,new_bytes,s))`,
   CHEAT_TAC);;
 
 let ag32_ffi__thm = prove
- (`bytes_in_memory (?_R s (n2w 1)) conf (?_MEM s) md /\
-   bytes_in_memory (?_R s (n2w 3)) bytes (?_MEM s) md /\
+ (`bytes_in_memory (ag32_state_R s (n2w 1)) conf (ag32_state_MEM s) md /\
+   bytes_in_memory (ag32_state_R s (n2w 3)) bytes (ag32_state_MEM s) md /\
    Abbrev (md = ag32_prog_addresses (LENGTH ffi_names) lc ld) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (w2n (?_R s (n2w 2)) = LENGTH conf) /\
-   (w2n (?_R s (n2w 4)) = LENGTH bytes) /\ w2n (?_R s (n2w 3)) + LENGTH
-     bytes < dimword (:32) /\
+   (w2n (ag32_state_R s (n2w 2)) = LENGTH conf) /\
+   (w2n (ag32_state_R s (n2w 4)) = LENGTH bytes) /\ w2n (ag32_state_R s (n2w
+     3)) + LENGTH bytes < dimword (:32) /\
    (INDEX_OF (implode "") ffi_names = SOME index) /\
-   (?_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP ffi_entrypoints
-     (implode "")))) ==>
+   (ag32_state_PC s = n2w (ffi_code_start_offset + THE (ALOOKUP
+     ffi_entrypoints (implode "")))) ==>
    (ag32_ffi_ s = ag32_ffi_interfer ffi_names md (index,bytes,s))`,
   CHEAT_TAC);;
 
@@ -673,23 +676,23 @@ let ag32_stdin_implemented_ffi_write = prove
  (`STD_streams fs /\
    ag32_stdin_implemented fs m /\
    ffi_write conf bytes fs = SOME (FFIreturn bytes' fs') /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) ==>
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) ==>
    ag32_stdin_implemented fs'
    (ag32_ffi_mem_update (implode "write") conf bytes bytes'
-     (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+     (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
        ((n2w (ffi_code_start_offset - 1) =+
          n2w (THE (ALOOKUP FFI_codes (implode "write")))) m)))`,
   CHEAT_TAC);;
 
 let ag32_cline_implemented_ffi_write = prove
  (`ag32_cline_implemented cl m /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) /\
    (ffi_write conf bytes fs = SOME (FFIreturn bytes' fs')) ==>
    ag32_cline_implemented cl
      (ag32_ffi_mem_update (implode "write") conf bytes bytes'
-       (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+       (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
          ((n2w (ffi_code_start_offset - 1) =+
            n2w (THE (ALOOKUP FFI_codes (implode "write")))) m)))`,
   CHEAT_TAC);;
@@ -715,24 +718,24 @@ let ag32_stdin_implemented_ffi_read = prove
  (`ag32_fs_ok fs /\
    ag32_stdin_implemented fs m /\
    ffi_read conf bytes fs = SOME (FFIreturn bytes' fs') /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) ==>
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) ==>
    // you may assume more here from the context where this is used
    ag32_stdin_implemented fs'
      (ag32_ffi_mem_update (implode "read") conf bytes bytes'
-       (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+       (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
          ((n2w (ffi_code_start_offset - 1) =+
            n2w (THE (ALOOKUP FFI_codes (implode "read")))) m)))`,
   CHEAT_TAC);;
 
 let ag32_cline_implemented_ffi_read = prove
  (`ag32_cline_implemented cl m /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) /\
    (ffi_read conf bytes fs = SOME (FFIreturn bytes' fs')) ==>
    ag32_cline_implemented cl
      (ag32_ffi_mem_update (implode "read") conf bytes bytes'
-       (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+       (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
          ((n2w (ffi_code_start_offset - 1) =+
            n2w (THE (ALOOKUP FFI_codes (implode "read")))) m)))`,
   CHEAT_TAC);;
@@ -758,21 +761,21 @@ let ag32_stdin_implemented_ffi_open_in = prove
  (`ag32_fs_ok fs /\
    ag32_stdin_implemented fs m /\
    ffi_open_in conf bytes fs = SOME (FFIreturn bytes' fs') /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) ==>
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) ==>
    ag32_stdin_implemented fs'
-     (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+     (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
        ((n2w (ffi_code_start_offset - 1) =+
          n2w (THE (ALOOKUP FFI_codes (implode "open_in")))) m))`,
   CHEAT_TAC);;
 
 let ag32_cline_implemented_ffi_open_in = prove
  (`ag32_cline_implemented cl m /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) /\
    (ffi_open_in conf bytes fs = SOME (FFIreturn bytes' fs')) ==>
    ag32_cline_implemented cl
-       (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+       (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
          ((n2w (ffi_code_start_offset - 1) =+
            n2w (THE (ALOOKUP FFI_codes (implode "open_in")))) m))`,
   CHEAT_TAC);;
@@ -781,21 +784,21 @@ let ag32_stdin_implemented_ffi_open_out = prove
  (`ag32_fs_ok fs /\
    ag32_stdin_implemented fs m /\
    ffi_open_out conf bytes fs = SOME (FFIreturn bytes' fs') /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) ==>
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) ==>
    ag32_stdin_implemented fs'
-     (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+     (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
        ((n2w (ffi_code_start_offset - 1) =+
          n2w (THE (ALOOKUP FFI_codes (implode "open_out")))) m))`,
   CHEAT_TAC);;
 
 let ag32_cline_implemented_ffi_open_out = prove
  (`ag32_cline_implemented cl m /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) /\
    (ffi_open_out conf bytes fs = SOME (FFIreturn bytes' fs')) ==>
    ag32_cline_implemented cl
-       (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+       (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
          ((n2w (ffi_code_start_offset - 1) =+
            n2w (THE (ALOOKUP FFI_codes (implode "open_out")))) m))`,
   CHEAT_TAC);;
@@ -804,21 +807,21 @@ let ag32_stdin_implemented_ffi_close = prove
  (`ag32_fs_ok fs /\
    ag32_stdin_implemented fs m /\
    ffi_close conf bytes fs = SOME (FFIreturn bytes' fs') /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) ==>
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) ==>
    ag32_stdin_implemented fs'
-     (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+     (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
        ((n2w (ffi_code_start_offset - 1) =+
          n2w (THE (ALOOKUP FFI_codes (implode "close")))) m))`,
   CHEAT_TAC);;
 
 let ag32_cline_implemented_ffi_close = prove
  (`ag32_cline_implemented cl m /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) /\
    (ffi_close conf bytes fs = SOME (FFIreturn bytes' fs')) ==>
    ag32_cline_implemented cl
-       (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+       (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
          ((n2w (ffi_code_start_offset - 1) =+
            n2w (THE (ALOOKUP FFI_codes (implode "close")))) m))`,
   CHEAT_TAC);;
@@ -827,21 +830,21 @@ let ag32_stdin_implemented_ffi_get_arg_count = prove
  (`ag32_stdin_implemented fs m /\
    ffi_get_arg_count conf bytes (cl:mlstring list) = SOME (FFIreturn bytes'
      cl') /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) ==>
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) ==>
    ag32_stdin_implemented fs
-     (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+     (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
        ((n2w (ffi_code_start_offset - 1) =+
          n2w (THE (ALOOKUP FFI_codes (implode "get_arg_count")))) m))`,
   CHEAT_TAC);;
 
 let ag32_cline_implemented_ffi_get_arg_count = prove
  (`ag32_cline_implemented cl m /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) /\
    (ffi_get_arg_count conf bytes cl = SOME (FFIreturn bytes' cl')) ==>
    ag32_cline_implemented cl'
-       (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+       (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
          ((n2w (ffi_code_start_offset - 1) =+
            n2w (THE (ALOOKUP FFI_codes (implode "get_arg_count")))) m))`,
   CHEAT_TAC);;
@@ -850,21 +853,21 @@ let ag32_stdin_implemented_ffi_get_arg_length = prove
  (`ag32_stdin_implemented fs m /\
    ffi_get_arg_length conf bytes (cl:mlstring list) = SOME (FFIreturn bytes'
      cl') /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) ==>
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) ==>
    ag32_stdin_implemented fs
-     (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+     (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
        ((n2w (ffi_code_start_offset - 1) =+
          n2w (THE (ALOOKUP FFI_codes (implode "get_arg_length")))) m))`,
   CHEAT_TAC);;
 
 let ag32_cline_implemented_ffi_get_arg_length = prove
  (`ag32_cline_implemented cl m /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) /\
    (ffi_get_arg_length conf bytes cl = SOME (FFIreturn bytes' cl')) ==>
    ag32_cline_implemented cl'
-       (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+       (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
          ((n2w (ffi_code_start_offset - 1) =+
            n2w (THE (ALOOKUP FFI_codes (implode "get_arg_length")))) m))`,
   CHEAT_TAC);;
@@ -875,21 +878,21 @@ let ag32_stdin_implemented_ffi_get_arg = prove
  (`ag32_stdin_implemented fs m /\
    ffi_get_arg conf bytes (cl:mlstring list) = SOME (FFIreturn bytes' cl')
      /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) ==>
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < 4294967296 /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) ==>
    ag32_stdin_implemented fs
-     (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+     (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
        ((n2w (ffi_code_start_offset - 1) =+
          n2w (THE (ALOOKUP FFI_codes (implode "get_arg")))) m))`,
   CHEAT_TAC);;
 
 let ag32_cline_implemented_ffi_get_arg = prove
  (`ag32_cline_implemented cl m /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
-   n2w heap_start_offset <=+ ?_R ms (n2w 3) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes' < dimword (:32) /\
+   n2w heap_start_offset <=+ ag32_state_R ms (n2w 3) /\
    (ffi_get_arg conf bytes cl = SOME (FFIreturn bytes' cl')) ==>
    ag32_cline_implemented cl'
-       (asm_write_bytearray (?_R ms (n2w 3)) bytes'
+       (asm_write_bytearray (ag32_state_R ms (n2w 3)) bytes'
          ((n2w (ffi_code_start_offset - 1) =+
            n2w (THE (ALOOKUP FFI_codes (implode "get_arg")))) m))`,
   CHEAT_TAC);;
@@ -902,28 +905,28 @@ let ag32_ffi_interfer_write = prove
      ffi' bytes') /\
    (INDEX_OF (implode "write") ffi_names = SOME index) /\ ALL_DISTINCT
      ffi_names /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (?_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - 1 - index) *
-     ffi_offset)) /\
+   (ag32_state_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - 1 -
+     index) * ffi_offset)) /\
    (!k. k < LENGTH (ag32_ffi_jumps ffi_names) ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) = EL k
-           (ag32_ffi_jumps ffi_names))) /\
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) =
+           EL k (ag32_ffi_jumps ffi_names))) /\
    (!k. k < LENGTH ag32_ffi_write_code ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_code_start_offset + THE (ALOOKUP
-           ffi_entrypoints (implode "write")) + 4 * k)) = Encode (EL k
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_code_start_offset + THE
+           (ALOOKUP ffi_entrypoints (implode "write")) + 4 * k)) = Encode (EL k
            ag32_ffi_write_code))) ==>
    (?k.
      (ag32_ffi_interfer ffi_names
         (ag32_prog_addresses (LENGTH ffi_names) lc ld)
         (index,bytes',ms) = ITER k Next ms) /\
       ag32_ffi_rel (ITER k Next ms) ffi' /\
-      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (?_R ms (n2w 3))
-        (LENGTH bytes)) ==>
-          (?_MEM (ITER k Next ms) x = ?_MEM ms x)))`,
+      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (ag32_state_R ms
+        (n2w 3)) (LENGTH bytes)) ==>
+          (ag32_state_MEM (ITER k Next ms) x = ag32_state_MEM ms x)))`,
   CHEAT_TAC);;
 
 let ag32_ffi_interfer_read = prove
@@ -934,28 +937,28 @@ let ag32_ffi_interfer_read = prove
      bytes') /\
    (INDEX_OF (implode "read") ffi_names = SOME index) /\ ALL_DISTINCT
      ffi_names /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (?_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index + 1)) *
-     ffi_offset)) /\
+   (ag32_state_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index +
+     1)) * ffi_offset)) /\
    (!k. k < LENGTH (ag32_ffi_jumps ffi_names) ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) = EL k
-           (ag32_ffi_jumps ffi_names))) /\
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) =
+           EL k (ag32_ffi_jumps ffi_names))) /\
    (!k. k < LENGTH ag32_ffi_read_code ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_code_start_offset + THE (ALOOKUP
-           ffi_entrypoints (implode "read")) + 4 * k)) = Encode (EL k
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_code_start_offset + THE
+           (ALOOKUP ffi_entrypoints (implode "read")) + 4 * k)) = Encode (EL k
            ag32_ffi_read_code))) ==>
    (?k.
      (ag32_ffi_interfer ffi_names
         (ag32_prog_addresses (LENGTH ffi_names) lc ld)
         (index,bytes',ms) = ITER k Next ms) /\
       ag32_ffi_rel (ITER k Next ms) ffi' /\
-      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (?_R ms (n2w 3))
-        (LENGTH bytes)) ==>
-          (?_MEM (ITER k Next ms) x = ?_MEM ms x)))`,
+      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (ag32_state_R ms
+        (n2w 3)) (LENGTH bytes)) ==>
+          (ag32_state_MEM (ITER k Next ms) x = ag32_state_MEM ms x)))`,
   CHEAT_TAC);;
 
 let ag32_ffi_interfer_open_in = prove
@@ -966,28 +969,28 @@ let ag32_ffi_interfer_open_in = prove
      ffi' bytes') /\
    (INDEX_OF (implode "open_in") ffi_names = SOME index) /\ ALL_DISTINCT
      ffi_names /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (?_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index + 1)) *
-     ffi_offset)) /\
+   (ag32_state_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index +
+     1)) * ffi_offset)) /\
    (!k. k < LENGTH (ag32_ffi_jumps ffi_names) ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) = EL k
-           (ag32_ffi_jumps ffi_names))) /\
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) =
+           EL k (ag32_ffi_jumps ffi_names))) /\
    (!k. k < LENGTH ag32_ffi_open_in_code ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_code_start_offset + THE (ALOOKUP
-           ffi_entrypoints (implode "open_in")) + 4 * k)) = Encode (EL k
-           ag32_ffi_open_in_code))) ==>
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_code_start_offset + THE
+           (ALOOKUP ffi_entrypoints (implode "open_in")) + 4 * k)) = Encode (EL
+           k ag32_ffi_open_in_code))) ==>
    (?k.
      (ag32_ffi_interfer ffi_names
         (ag32_prog_addresses (LENGTH ffi_names) lc ld)
         (index,bytes',ms) = ITER k Next ms) /\
       ag32_ffi_rel (ITER k Next ms) ffi' /\
-      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (?_R ms (n2w 3))
-        (LENGTH bytes)) ==>
-          (?_MEM (ITER k Next ms) x = ?_MEM ms x)))`,
+      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (ag32_state_R ms
+        (n2w 3)) (LENGTH bytes)) ==>
+          (ag32_state_MEM (ITER k Next ms) x = ag32_state_MEM ms x)))`,
   CHEAT_TAC);;
 
 let ag32_ffi_interfer_open_out = prove
@@ -998,28 +1001,28 @@ let ag32_ffi_interfer_open_out = prove
      ffi' bytes') /\
    (INDEX_OF (implode "open_out") ffi_names = SOME index) /\ ALL_DISTINCT
      ffi_names /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (?_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index + 1)) *
-     ffi_offset)) /\
+   (ag32_state_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index +
+     1)) * ffi_offset)) /\
    (!k. k < LENGTH (ag32_ffi_jumps ffi_names) ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) = EL k
-           (ag32_ffi_jumps ffi_names))) /\
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) =
+           EL k (ag32_ffi_jumps ffi_names))) /\
    (!k. k < LENGTH ag32_ffi_open_out_code ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_code_start_offset + THE (ALOOKUP
-           ffi_entrypoints (implode "open_out")) + 4 * k)) = Encode (EL k
-           ag32_ffi_open_out_code))) ==>
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_code_start_offset + THE
+           (ALOOKUP ffi_entrypoints (implode "open_out")) + 4 * k)) = Encode
+           (EL k ag32_ffi_open_out_code))) ==>
    (?k.
      (ag32_ffi_interfer ffi_names
         (ag32_prog_addresses (LENGTH ffi_names) lc ld)
         (index,bytes',ms) = ITER k Next ms) /\
       ag32_ffi_rel (ITER k Next ms) ffi' /\
-      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (?_R ms (n2w 3))
-        (LENGTH bytes)) ==>
-          (?_MEM (ITER k Next ms) x = ?_MEM ms x)))`,
+      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (ag32_state_R ms
+        (n2w 3)) (LENGTH bytes)) ==>
+          (ag32_state_MEM (ITER k Next ms) x = ag32_state_MEM ms x)))`,
   CHEAT_TAC);;
 
 let ag32_ffi_interfer_close = prove
@@ -1030,28 +1033,28 @@ let ag32_ffi_interfer_close = prove
      ffi' bytes') /\
    (INDEX_OF (implode "close") ffi_names = SOME index) /\ ALL_DISTINCT
      ffi_names /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (?_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index + 1)) *
-     ffi_offset)) /\
+   (ag32_state_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index +
+     1)) * ffi_offset)) /\
    (!k. k < LENGTH (ag32_ffi_jumps ffi_names) ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) = EL k
-           (ag32_ffi_jumps ffi_names))) /\
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) =
+           EL k (ag32_ffi_jumps ffi_names))) /\
    (!k. k < LENGTH ag32_ffi_close_code ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_code_start_offset + THE (ALOOKUP
-           ffi_entrypoints (implode "close")) + 4 * k)) = Encode (EL k
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_code_start_offset + THE
+           (ALOOKUP ffi_entrypoints (implode "close")) + 4 * k)) = Encode (EL k
            ag32_ffi_close_code))) ==>
    (?k.
      (ag32_ffi_interfer ffi_names
         (ag32_prog_addresses (LENGTH ffi_names) lc ld)
         (index,bytes',ms) = ITER k Next ms) /\
       ag32_ffi_rel (ITER k Next ms) ffi' /\
-      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (?_R ms (n2w 3))
-        (LENGTH bytes)) ==>
-          (?_MEM (ITER k Next ms) x = ?_MEM ms x)))`,
+      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (ag32_state_R ms
+        (n2w 3)) (LENGTH bytes)) ==>
+          (ag32_state_MEM (ITER k Next ms) x = ag32_state_MEM ms x)))`,
   CHEAT_TAC);;
 
 (* HOL4 ag32_basis_ffiProofScript.sml:5222-5224: the ML values that the
@@ -1065,28 +1068,28 @@ let ag32_ffi_interfer_get_arg_count = prove
      FFI_return ffi' bytes') /\
    (INDEX_OF (implode "get_arg_count") ffi_names = SOME index)
      /\ ALL_DISTINCT ffi_names /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (?_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index + 1)) *
-     ffi_offset)) /\
+   (ag32_state_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index +
+     1)) * ffi_offset)) /\
    (!k. k < LENGTH (ag32_ffi_jumps ffi_names) ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) = EL k
-           (ag32_ffi_jumps ffi_names))) /\
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) =
+           EL k (ag32_ffi_jumps ffi_names))) /\
    (!k. k < LENGTH ag32_ffi_get_arg_count_code ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_code_start_offset + THE (ALOOKUP
-           ffi_entrypoints (implode "get_arg_count")) + 4 * k)) = Encode (EL k
-           ag32_ffi_get_arg_count_code))) ==>
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_code_start_offset + THE
+           (ALOOKUP ffi_entrypoints (implode "get_arg_count")) + 4 * k)) =
+           Encode (EL k ag32_ffi_get_arg_count_code))) ==>
    (?k.
      (ag32_ffi_interfer ffi_names
         (ag32_prog_addresses (LENGTH ffi_names) lc ld)
         (index,bytes',ms) = ITER k Next ms) /\
       ag32_ffi_rel (ITER k Next ms) ffi' /\
-      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (?_R ms (n2w 3))
-        (LENGTH bytes)) ==>
-          (?_MEM (ITER k Next ms) x = ?_MEM ms x)))`,
+      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (ag32_state_R ms
+        (n2w 3)) (LENGTH bytes)) ==>
+          (ag32_state_MEM (ITER k Next ms) x = ag32_state_MEM ms x)))`,
   CHEAT_TAC);;
 
 let cline_in_memory_has_n_args = prove
@@ -1104,28 +1107,28 @@ let ag32_ffi_interfer_get_arg_length = prove
      FFI_return ffi' bytes') /\
    (INDEX_OF (implode "get_arg_length") ffi_names = SOME index)
      /\ ALL_DISTINCT ffi_names /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (?_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index + 1)) *
-     ffi_offset)) /\
+   (ag32_state_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index +
+     1)) * ffi_offset)) /\
    (!k. k < LENGTH (ag32_ffi_jumps ffi_names) ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) = EL k
-           (ag32_ffi_jumps ffi_names))) /\
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) =
+           EL k (ag32_ffi_jumps ffi_names))) /\
    (!k. k < LENGTH ag32_ffi_get_arg_length_code ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_code_start_offset + THE (ALOOKUP
-           ffi_entrypoints (implode "get_arg_length")) + 4 * k)) = Encode (EL k
-           ag32_ffi_get_arg_length_code))) ==>
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_code_start_offset + THE
+           (ALOOKUP ffi_entrypoints (implode "get_arg_length")) + 4 * k)) =
+           Encode (EL k ag32_ffi_get_arg_length_code))) ==>
    (?k.
      (ag32_ffi_interfer ffi_names
         (ag32_prog_addresses (LENGTH ffi_names) lc ld)
         (index,bytes',ms) = ITER k Next ms) /\
       ag32_ffi_rel (ITER k Next ms) ffi' /\
-      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (?_R ms (n2w 3))
-        (LENGTH bytes)) ==>
-          (?_MEM (ITER k Next ms) x = ?_MEM ms x)))`,
+      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (ag32_state_R ms
+        (n2w 3)) (LENGTH bytes)) ==>
+          (ag32_state_MEM (ITER k Next ms) x = ag32_state_MEM ms x)))`,
   CHEAT_TAC);;
 
 let ag32_ffi_interfer_get_arg = prove
@@ -1136,28 +1139,28 @@ let ag32_ffi_interfer_get_arg = prove
      ffi' bytes') /\
    (INDEX_OF (implode "get_arg") ffi_names = SOME index) /\ ALL_DISTINCT
      ffi_names /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (?_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index + 1)) *
-     ffi_offset)) /\
+   (ag32_state_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index +
+     1)) * ffi_offset)) /\
    (!k. k < LENGTH (ag32_ffi_jumps ffi_names) ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) = EL k
-           (ag32_ffi_jumps ffi_names))) /\
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) =
+           EL k (ag32_ffi_jumps ffi_names))) /\
    (!k. k < LENGTH ag32_ffi_get_arg_code ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_code_start_offset + THE (ALOOKUP
-           ffi_entrypoints (implode "get_arg")) + 4 * k)) = Encode (EL k
-           ag32_ffi_get_arg_code))) ==>
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_code_start_offset + THE
+           (ALOOKUP ffi_entrypoints (implode "get_arg")) + 4 * k)) = Encode (EL
+           k ag32_ffi_get_arg_code))) ==>
    (?k.
      (ag32_ffi_interfer ffi_names
         (ag32_prog_addresses (LENGTH ffi_names) lc ld)
         (index,bytes',ms) = ITER k Next ms) /\
       ag32_ffi_rel (ITER k Next ms) ffi' /\
-      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (?_R ms (n2w 3))
-        (LENGTH bytes)) ==>
-          (?_MEM (ITER k Next ms) x = ?_MEM ms x)))`,
+      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (ag32_state_R ms
+        (n2w 3)) (LENGTH bytes)) ==>
+          (ag32_state_MEM (ITER k Next ms) x = ag32_state_MEM ms x)))`,
   CHEAT_TAC);;
 
 let ag32_ffi_interfer_ = prove
@@ -1168,28 +1171,28 @@ let ag32_ffi_interfer_ = prove
      bytes') /\
    (INDEX_OF (implode "") ffi_names = SOME index) /\ ALL_DISTINCT ffi_names
      /\
-   w2n (?_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
+   w2n (ag32_state_R ms (n2w 3)) + LENGTH bytes < dimword (:32) /\
    LENGTH ffi_names <= LENGTH FFI_codes /\
    code_start_offset (LENGTH ffi_names) + lc + 4 * ld < memory_size /\
-   (?_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index + 1)) *
-     ffi_offset)) /\
+   (ag32_state_PC ms = n2w (ffi_jumps_offset + (LENGTH ffi_names - (index +
+     1)) * ffi_offset)) /\
    (!k. k < LENGTH (ag32_ffi_jumps ffi_names) ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) = EL k
-           (ag32_ffi_jumps ffi_names))) /\
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_jumps_offset + 4 * k)) =
+           EL k (ag32_ffi_jumps ffi_names))) /\
    (!k. k < LENGTH ag32_ffi__code ==>
         (
-         get_mem_word (?_MEM ms) (n2w (ffi_code_start_offset + THE (ALOOKUP
-           ffi_entrypoints (implode "")) + 4 * k)) = Encode (EL k
+         get_mem_word (ag32_state_MEM ms) (n2w (ffi_code_start_offset + THE
+           (ALOOKUP ffi_entrypoints (implode "")) + 4 * k)) = Encode (EL k
            ag32_ffi__code))) ==>
    (?k.
      (ag32_ffi_interfer ffi_names
         (ag32_prog_addresses (LENGTH ffi_names) lc ld)
         (index,bytes',ms) = ITER k Next ms) /\
       ag32_ffi_rel (ITER k Next ms) ffi' /\
-      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (?_R ms (n2w 3))
-        (LENGTH bytes)) ==>
-          (?_MEM (ITER k Next ms) x = ?_MEM ms x)))`,
+      (!x. ~(x IN ag32_ffi_mem_domain) /\ ~(x IN all_words (ag32_state_R ms
+        (n2w 3)) (LENGTH bytes)) ==>
+          (ag32_state_MEM (ITER k Next ms) x = ag32_state_MEM ms x)))`,
   CHEAT_TAC);;
 
 let SUBSET_ffi_names_IMP_LENGTH_LESS_EQ = prove
@@ -1211,7 +1214,8 @@ let ag32_good_init_state = prove
      (cl,inp))
      (ITER startup_clock Next ms0) /\
    (!x. ~(x IN ag32_startup_addresses) ==>
-      (?_MEM (ITER startup_clock Next ms0) x = ?_MEM ms0 x)) ==>
+      (ag32_state_MEM (ITER startup_clock Next ms0) x = ag32_state_MEM ms0
+        x)) ==>
    good_init_state (ag32_machine_config ffi_names (LENGTH code) (LENGTH
      data))
      (ITER startup_clock Next ms0)
@@ -1247,7 +1251,8 @@ let ag32_installed = prove
      (init_asm_state code data ffi_names (cl,inp))
      (ITER startup_clock Next ms0) /\
    (!x. ~(x IN ag32_startup_addresses) ==>
-       (?_MEM (ITER startup_clock Next ms0) x = ?_MEM ms0 x)) ==>
+       (ag32_state_MEM (ITER startup_clock Next ms0) x = ag32_state_MEM ms0
+         x)) ==>
    installed code 0 data 0 (SOME (MAP ffi_ExtCall ffi_names))
      (heap_regs (stack_to_lab_config_reg_names (backend_config_stack_conf
        ag32_backend_config)))
@@ -1261,15 +1266,17 @@ let ag32_halted = prove
     LENGTH inp <= stdin_size /\
     LENGTH ffi_names <= LENGTH FFI_codes /\
     (mc = ag32_machine_config ffi_names (LENGTH code) (LENGTH data)) /\
-    (?_PC ms = machine_config_halt_pc mc) /\
+    (ag32_state_PC ms = machine_config_halt_pc mc) /\
     (!x. machine_config_halt_pc mc <=+ x /\ x <+ machine_config_halt_pc mc +
       (n2w 16) ==>
          (target_get_byte (machine_config_target mc) ms x =
            (ag32_memory_init_memory code data ffi_names (cl,inp)) x)) ==>
-    (!k. (ffi_state_io_events (ITER k Next ms) = ffi_state_io_events ms) /\
-        (?_PC (ITER k Next ms) = ?_PC ms) /\
-        (?_MEM (ITER k Next ms) = ?_MEM ms) /\
-        (!w. ~(w = (n2w 0)) ==> (?_R (ITER k Next ms) w = ?_R ms w)))`,
+    (!k. (ag32_state_io_events (ITER k Next ms) = ag32_state_io_events ms)
+      /\
+        (ag32_state_PC (ITER k Next ms) = ag32_state_PC ms) /\
+        (ag32_state_MEM (ITER k Next ms) = ag32_state_MEM ms) /\
+        (!w. ~(w = (n2w 0)) ==> (ag32_state_R (ITER k Next ms) w =
+          ag32_state_R ms w)))`,
   CHEAT_TAC);;
 
 (* HOL4 ag32_basis_ffiProofScript.sml:6799-6909: a proof *)
@@ -1284,7 +1291,8 @@ let ag32_interference_implemented = prove
    is_ag32_init_state (ag32_memory_init_memory code data ffi_names (cl,inp))
      ms0 /\
    Abbrev (ms = ITER startup_clock Next ms0) /\
-   (!x. ~(x IN ag32_startup_addresses) ==> (?_MEM ms x = ?_MEM ms0 x)) ==>
+   (!x. ~(x IN ag32_startup_addresses) ==> (ag32_state_MEM ms x =
+     ag32_state_MEM ms0 x)) ==>
    interference_implemented
     (ag32_machine_config ffi_names (LENGTH code) (LENGTH data))
     (ag32_ffi_rel)
@@ -1301,23 +1309,24 @@ let ag32_next = prove
    is_ag32_init_state (ag32_memory_init_memory code data ffi_names (cl,inp))
      ms0 /\
    Abbrev (ms = ITER startup_clock Next ms0) /\
-   (ffi_state_io_events ms = ffi_state_io_events ms0) /\
-   (!x. ~(x IN ag32_startup_addresses) ==> (?_MEM ms x = ?_MEM ms0 x)) /\
+   (ag32_state_io_events ms = ag32_state_io_events ms0) /\
+   (!x. ~(x IN ag32_startup_addresses) ==> (ag32_state_MEM ms x =
+     ag32_state_MEM ms0 x)) /\
    targetSem_machine_sem (ag32_machine_config ffi_names (LENGTH code)
      (LENGTH data)) (basis_ffi no_ext cl (stdin_fs inp))
      ms SUBSET extend_with_resource_limit {ffi_Terminate ffi_Success
-       io_events} ==>
+       ag32_io_events} ==>
    (?k1. !k. k1 <= k ==>
      (let ms = ITER k Next ms0 in
-     let outs = MAP (get_ag32_io_event) (ffi_state_io_events ms) in
-       (?_PC ms = machine_config_halt_pc (ag32_machine_config ffi_names
-         (LENGTH code) (LENGTH data))) /\
-       (get_mem_word (?_MEM ms) (?_PC ms) = Encode (asm_Jump (fAdd,(n2w
-         0),Imm (n2w 0)))) /\
-       outs <<= MAP get_output_io_event io_events /\
-       ((?_R ms (n2w (machine_config_ptr_reg (ag32_machine_config ffi_names
-         (LENGTH code) (LENGTH data)))) = (n2w 0)) ==>
-        (outs = MAP get_output_io_event io_events))))`,
+     let outs = MAP (get_ag32_io_event) (ag32_state_io_events ms) in
+       (ag32_state_PC ms = machine_config_halt_pc (ag32_machine_config
+         ffi_names (LENGTH code) (LENGTH data))) /\
+       (get_mem_word (ag32_state_MEM ms) (ag32_state_PC ms) = Encode
+         (ag32_Jump (fAdd,(n2w 0),ag32_Imm (n2w 0)))) /\
+       outs <<= MAP get_output_io_event ag32_io_events /\
+       ((ag32_state_R ms (n2w (machine_config_ptr_reg (ag32_machine_config
+         ffi_names (LENGTH code) (LENGTH data)))) = (n2w 0)) ==>
+        (outs = MAP get_output_io_event ag32_io_events))))`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

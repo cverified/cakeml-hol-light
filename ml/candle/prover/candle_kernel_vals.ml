@@ -316,8 +316,8 @@ let evaluate_unit_check = prove
 
 let evaluate_str_check = prove
  (`evaluate (s:'a semanticPrimitives_state) env
-     [compute_syntax_Let NONE (compute_syntax_App ast_Strlen
-       [compute_syntax_Var (Short v)]) ee] = (s',res) /\
+     [ast_Let NONE (ast_App ast_Strlen [ast_Var (Short v)]) ee] = (s',res)
+       /\
    nsLookup (sem_env_v env) (Short v) = SOME w ==>
    (?k. s' = (semanticPrimitives_state_clock_fupd (K k) (s:'a
      semanticPrimitives_state)) /\ (res = Rerr (Rabort Rtype_error) \/
@@ -330,7 +330,7 @@ let evaluate_str_check = prove
 
 let evaluate_ty_check = prove
  (`evaluate (s:'a semanticPrimitives_state) env
-     [compute_syntax_Let NONE
+     [ast_Let NONE
         (ast_Mat (ast_Var (Short v))
            [(ast_Pcon (SOME (Short (implode "Tyvar"))) [ast_Pvar a1],ast_Con
              NONE []);
@@ -353,7 +353,7 @@ let evaluate_ty_check = prove
 
 let evaluate_tm_check = prove
  (`evaluate (s:'a semanticPrimitives_state) env
-     [compute_syntax_Let NONE
+     [ast_Let NONE
         (ast_Mat (ast_Var (Short v))
            [(ast_Pcon (SOME (Short (implode "Var"))) [ast_Pvar a1; ast_Pvar
              a2],ast_Con NONE []);
@@ -384,7 +384,7 @@ let evaluate_tm_check = prove
 
 let evaluate_thm_check = prove
  (`evaluate (s:'a semanticPrimitives_state) env
-     [compute_syntax_Let NONE
+     [ast_Let NONE
        (ast_Mat (ast_Var (Short v))
          [(ast_Pcon (SOME (Short (implode "Sequent"))) [ast_Pvar a1;
            ast_Pvar a2],ast_Con NONE [])]) ee] =
@@ -522,9 +522,8 @@ let check_ty_ty_head = prove
 
 let evaluate_ty_list_check = prove
  (`evaluate (s:'a semanticPrimitives_state) env
-     [compute_syntax_Let NONE (compute_syntax_App ast_Opapp
-       [compute_syntax_Var (Short (implode "check_ty")); compute_syntax_Var
-       (Short v)]) ee] = (s',res) /\
+     [ast_Let NONE (ast_App ast_Opapp [ast_Var (Short (implode "check_ty"));
+       ast_Var (Short v)]) ee] = (s',res) /\
    nsLookup (sem_env_v env) (Short (implode "check_ty")) = SOME check_ty_v
      /\
    nsLookup (sem_env_v env) (Short v) = SOME w ==>
@@ -540,9 +539,8 @@ let evaluate_ty_list_check = prove
 
 let evaluate_thm_list_check = prove
  (`evaluate (s:'a semanticPrimitives_state) env
-     [compute_syntax_Let NONE (compute_syntax_App ast_Opapp
-       [compute_syntax_Var (Short (implode "check_thm")); compute_syntax_Var
-       (Short v)]) ee] = (s',res) /\
+     [ast_Let NONE (ast_App ast_Opapp [ast_Var (Short (implode
+       "check_thm")); ast_Var (Short v)]) ee] = (s',res) /\
    nsLookup (sem_env_v env) (Short (implode "check_thm")) = SOME check_thm_v
      /\
    nsLookup (sem_env_v env) (Short v) = SOME w ==>
@@ -559,9 +557,8 @@ let evaluate_thm_list_check = prove
 
 let evaluate_ty_ty_list_check = prove
  (`evaluate (s:'a semanticPrimitives_state) env
-     [compute_syntax_Let NONE (compute_syntax_App ast_Opapp
-       [compute_syntax_Var (Short (implode "check_ty_ty")); compute_syntax_Var
-       (Short v)]) ee] = (s',res) /\
+     [ast_Let NONE (ast_App ast_Opapp [ast_Var (Short (implode
+       "check_ty_ty")); ast_Var (Short v)]) ee] = (s',res) /\
    nsLookup (sem_env_v env) (Short (implode "check_ty_ty")) = SOME
      check_ty_ty_v /\
    nsLookup (sem_env_v env) (Short v) = SOME w ==>
@@ -578,9 +575,8 @@ let evaluate_ty_ty_list_check = prove
 
 let evaluate_tm_list_check = prove
  (`evaluate (s:'a semanticPrimitives_state) env
-     [compute_syntax_Let NONE (compute_syntax_App ast_Opapp
-       [compute_syntax_Var (Short (implode "check_tm")); compute_syntax_Var
-       (Short v)]) ee] = (s',res) /\
+     [ast_Let NONE (ast_App ast_Opapp [ast_Var (Short (implode "check_tm"));
+       ast_Var (Short v)]) ee] = (s',res) /\
    nsLookup (sem_env_v env) (Short (implode "check_tm")) = SOME check_tm_v
      /\
    nsLookup (sem_env_v env) (Short v) = SOME w ==>
@@ -596,9 +592,8 @@ let evaluate_tm_list_check = prove
 
 let evaluate_tm_tm_list_check = prove
  (`evaluate (s:'a semanticPrimitives_state) env
-     [compute_syntax_Let NONE (compute_syntax_App ast_Opapp
-       [compute_syntax_Var (Short (implode "check_tm_tm")); compute_syntax_Var
-       (Short v)]) ee] = (s',res) /\
+     [ast_Let NONE (ast_App ast_Opapp [ast_Var (Short (implode
+       "check_tm_tm")); ast_Var (Short v)]) ee] = (s',res) /\
    nsLookup (sem_env_v env) (Short (implode "check_tm_tm")) = SOME
      check_tm_tm_v /\
    nsLookup (sem_env_v env) (Short v) = SOME w ==>

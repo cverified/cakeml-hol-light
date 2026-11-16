@@ -783,10 +783,10 @@ let compile_oracle_inv_def = new_definition
    comment *)
 
 let clos_to_bvlProof_ref_rel_def = new_definition
-  `clos_to_bvlProof_ref_rel R x2 x3 =
+  `clos_to_bvlProof_ref_rel R' x2 x3 =
      match (x2,x3) with
-       (closSem_ValueArray vs,bvlSem_ValueArray ws) -> ALL2 R vs ws
-     | (closSem_Thunk m1 v,bvlSem_Thunk m2 w) -> m1 = m2 /\ R v w
+       (closSem_ValueArray vs,bvlSem_ValueArray ws) -> ALL2 R' vs ws
+     | (closSem_Thunk m1 v,bvlSem_Thunk m2 w) -> m1 = m2 /\ R' v w
      | (closSem_ByteArray as,bvlSem_ByteArray g bs) -> ~g /\ as = bs
      | (_,_) -> F`;;
 add_simp clos_to_bvlProof_ref_rel_def;;
@@ -1520,11 +1520,11 @@ let v_rel_run = prove
 
 (* [local] *)
 let list_rel_app = prove
- (`!R args args' l0 c l func rem_args.
+ (`!R' args args' l0 c l func rem_args.
      dest_closure max_app NONE func args = SOME (Full_app c l l0) /\
      num_remaining_args func = SOME rem_args /\
-     ALL2 R args args' ==>
-     ALL2 R l0 (TAKE (LENGTH args' - rem_args) args')`,
+     ALL2 R' args args' ==>
+     ALL2 R' l0 (TAKE (LENGTH args' - rem_args) args')`,
   CHEAT_TAC);;
 
 (* HOL4 clos_to_bvlProofScript.sml:2788-2812: a theorem that HOL4 states as
@@ -1890,22 +1890,22 @@ let init_code_ok = prove
  (`0 < max_app ==>
    (!n.
       n < max_app ==> sptree_lookup (generic_app_fn_location n)
-        (clos_to_bvlProof_init_code max_app) = SOME (n + 2,generate_generic_app
+        (clos_to_bvl_init_code max_app) = SOME (n + 2,generate_generic_app
         max_app n)) /\
    (!tot n.
       tot < max_app /\ n < tot ==>
         sptree_lookup (partial_app_fn_location max_app tot n)
-          (clos_to_bvlProof_init_code max_app) =
+          (clos_to_bvl_init_code max_app) =
           SOME (tot - n + 1,generate_partial_app_closure_fn tot n))`,
   CHEAT_TAC);;
 
 let domain_init_code_lt_num_stubs = prove
- (`!max_app x. x IN sptree_domain (clos_to_bvlProof_init_code max_app) ==> x
-  < (num_stubs max_app)`,
+ (`!max_app x. x IN sptree_domain (clos_to_bvl_init_code max_app) ==> x <
+  (num_stubs max_app)`,
   CHEAT_TAC);;
 
 let domain_init_code = prove
- (`0 < max_app ==> sptree_domain (clos_to_bvlProof_init_code max_app) = count
+ (`0 < max_app ==> sptree_domain (clos_to_bvl_init_code max_app) = count
   (max_app + (max_app * (max_app - 1)) DIV 2)`,
   CHEAT_TAC);;
 

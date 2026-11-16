@@ -17,7 +17,6 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_simp.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 
@@ -78,7 +77,7 @@ let evaluate_Seq_assoc = prove
 
 let dest_If_Eq_Imm_thm = prove
  (`dest_If_Eq_Imm x2 = SOME (n,w,p1,p2) <=>
-    x2 = word_If asm_Equal n (Imm w) p1 p2`,
+    x2 = word_If asm_Equal n (asm_Imm w) p1 p2`,
   CHEAT_TAC);;
 
 let dest_If_thm = prove
@@ -267,16 +266,16 @@ let lookup_filter_v_SOME_imp = prove
 (* LIST_REL/EVERY2 thms *)
 
 let LIST_REL_prefix = prove
- (`!R l1 l2 l1' l2'. ALL2 R (APPEND l1 l2) (APPEND l1' l2') /\
+ (`!R' l1 l2 l1' l2'. ALL2 R' (APPEND l1 l2) (APPEND l1' l2') /\
                      LENGTH l1 = LENGTH l1' ==>
-                     ALL2 R l1 l1'`,
+                     ALL2 R' l1 l1'`,
   CHEAT_TAC);;
 
 let LIST_REL_append_left = prove
- (`!l0 l1 l2 R.
-   ALL2 R (APPEND l0 l1) l2 ==>
-   ALL2 R l0 (TAKE (LENGTH l0) l2) /\
-   ALL2 R l1 (DROP (LENGTH l0) l2)`,
+ (`!l0 l1 l2 R'.
+   ALL2 R' (APPEND l0 l1) l2 ==>
+   ALL2 R' l0 (TAKE (LENGTH l0) l2) /\
+   ALL2 R' l1 (DROP (LENGTH l0) l2)`,
   CHEAT_TAC);;
 
 (* Stack thms *)
@@ -421,14 +420,14 @@ let call_env_push_env_dec_clock_handler_length = prove
   CHEAT_TAC);;
 
 let EVERY2_trans_LASTN_sf_gc_consts = prove
- (`!l l' l'' n R. n <= LENGTH l /\ ALL2 sf_gc_consts l l' /\ ALL2 sf_gc_consts
+ (`!l l' l'' n R'. n <= LENGTH l /\ ALL2 sf_gc_consts l l' /\ ALL2 sf_gc_consts
   (LASTN n l') l'' ==>
              ALL2 sf_gc_consts (LASTN n l) l''`,
   CHEAT_TAC);;
 
 let LIST_REL_push_env = prove
- (`!R s s' env h. ALL2 R (wordSem_state_stack (wordSem_push_env env h s))
-  (wordSem_state_stack s') ==> ALL2 R (wordSem_state_stack s) (TL
+ (`!R' s s' env h. ALL2 R' (wordSem_state_stack (wordSem_push_env env h s))
+  (wordSem_state_stack s') ==> ALL2 R' (wordSem_state_stack s) (TL
   (wordSem_state_stack s'))`,
   CHEAT_TAC);;
 

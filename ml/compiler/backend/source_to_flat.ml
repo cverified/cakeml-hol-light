@@ -253,7 +253,7 @@ let source_to_flat_compile_exp_def,source_to_flat_compile_exp_ind =
    `compile_pes (t:mlstring list) (env:source_to_flat_environment) [] = []`;
    `compile_pes (t:mlstring list) (env:source_to_flat_environment) (CONS (p,e)
     pes) =
-        let pbs = pat_bindings p in
+        let pbs = ast_pat_bindings p in
         let pts = pat_tups backend_common_None pbs in
         CONS (compile_pat env p,source_to_flat_compile_exp t
             (source_to_flat_environment_v_fupd (K (nsBindList pts
@@ -393,7 +393,7 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
                nsEmpty,envs',[]))
         | NONE ->
             let n' = n + 4 in
-            let xs = REVERSE (pat_bindings p) in
+            let xs = REVERSE (ast_pat_bindings p) in
             let e' = source_to_flat_compile_exp (APPEND xs t) env e in
             let l = LENGTH xs in
             let n'' = n' + l in

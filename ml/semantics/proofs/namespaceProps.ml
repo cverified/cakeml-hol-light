@@ -166,12 +166,12 @@ let nsLookup_nsSing = prove
 add_simp nsLookup_nsSing;;
 
 let nsAll_nsSing = prove
- (`!R n v. nsAll R (nsSing n v) <=> R (Short n) v`,
+ (`!R' n v. nsAll R' (nsSing n v) <=> R' (Short n) v`,
   CHEAT_TAC);;
 add_simp nsAll_nsSing;;
 
 let nsAll2_nsSing = prove
- (`!R n1 v1 n2 v2. nsAll2 R (nsSing n1 v1) (nsSing n2 v2) <=> n1 = n2 /\ R
+ (`!R' n1 v1 n2 v2. nsAll2 R' (nsSing n1 v1) (nsSing n2 v2) <=> n1 = n2 /\ R'
   (Short n1) v1 v2`,
   CHEAT_TAC);;
 add_simp nsAll2_nsSing;;
@@ -355,11 +355,11 @@ let nsAll_nsOptBind = prove
   CHEAT_TAC);;
 
 let nsAll_alist_to_ns = prove
- (`!R l. ALL (\(n,v). R (Short n) v) l ==> nsAll R (alist_to_ns l)`,
+ (`!R' l. ALL (\(n,v). R' (Short n) v) l ==> nsAll R' (alist_to_ns l)`,
   CHEAT_TAC);;
 
 let nsAll_nsLift = prove
- (`!R mn e. nsAll R (nsLift mn e) <=> nsAll (\id. R (Long mn id)) e`,
+ (`!R' mn e. nsAll R' (nsLift mn e) <=> nsAll (\id. R' (Long mn id)) e`,
   CHEAT_TAC);;
 add_simp nsAll_nsLift;;
 
@@ -375,50 +375,50 @@ let nsSub_conj = prove
   CHEAT_TAC);;
 
 let nsSub_refl = prove
- (`!P R. (!n x. P n x ==> R n x x) ==> (!e. nsAll P e ==> nsSub R e e)`,
+ (`!P R'. (!n x. P n x ==> R' n x x) ==> (!e. nsAll P e ==> nsSub R' e e)`,
   CHEAT_TAC);;
 
 let nsSub_nsBind = prove
- (`!R x v1 v2 e1 e2.
-     R (Short x) v1 v2 /\ nsSub R e1 e2 ==> nsSub R (nsBind x v1 e1)
+ (`!R' x v1 v2 e1 e2.
+     R' (Short x) v1 v2 /\ nsSub R' e1 e2 ==> nsSub R' (nsBind x v1 e1)
        (nsBind x v2 e2)`,
   CHEAT_TAC);;
 
 let nsSub_nsAppend2 = prove
- (`!R e1 e2 e2'. nsSub R e1 e1 /\ nsSub R e2 e2' ==> nsSub R (nsAppend e1 e2)
-  (nsAppend e1 e2')`,
+ (`!R' e1 e2 e2'. nsSub R' e1 e1 /\ nsSub R' e2 e2' ==> nsSub R' (nsAppend e1
+  e2) (nsAppend e1 e2')`,
   CHEAT_TAC);;
 
 let nsSub_nsAppend_lift = prove
- (`!R mn e1 e1' e2 e2'.
-    nsSub (\id. R (Long mn id)) e1 e1' /\
-    nsSub R e2 e2' ==>
-    nsSub R (nsAppend (nsLift mn e1) e2) (nsAppend (nsLift mn e1') e2')`,
+ (`!R' mn e1 e1' e2 e2'.
+    nsSub (\id. R' (Long mn id)) e1 e1' /\
+    nsSub R' e2 e2' ==>
+    nsSub R' (nsAppend (nsLift mn e1) e2) (nsAppend (nsLift mn e1') e2')`,
   CHEAT_TAC);;
 
 let alist_rel_restr_def,alist_rel_restr_ind = define_rec
-  `(alist_rel_restr R l1 l2 [] <=> T) /\
-   (alist_rel_restr R l1 l2 (CONS k1 keys) <=>
+  `(alist_rel_restr R' l1 l2 [] <=> T) /\
+   (alist_rel_restr R' l1 l2 (CONS k1 keys) <=>
         (match ALOOKUP l1 k1 with NONE -> F
         | SOME v1 ->
           (match ALOOKUP l2 k1 with NONE -> F
-          | SOME v2 -> R k1 v1 v2 /\ alist_rel_restr R l1 l2 keys)))`;;
+          | SOME v2 -> R' k1 v1 v2 /\ alist_rel_restr R' l1 l2 keys)))`;;
 
 let alist_rel_restr_thm = prove
- (`!R e1 e2 keys.
-    alist_rel_restr R e1 e2 keys <=>
+ (`!R' e1 e2 keys.
+    alist_rel_restr R' e1 e2 keys <=>
       (!k. MEM k keys ==> (?v1 v2. ALOOKUP e1 k = SOME v1 /\ ALOOKUP e2 k
-        = SOME v2 /\ R k v1 v2))`,
+        = SOME v2 /\ R' k v1 v2))`,
   CHEAT_TAC);;
 
 let alistSub_def = new_definition
-  `alistSub R e1 e2 <=> alist_rel_restr R e1 e2 (MAP FST e1)`;;
+  `alistSub R' e1 e2 <=> alist_rel_restr R' e1 e2 (MAP FST e1)`;;
 
 let alistSub_cong = prove
- (`!l1 l2 l1' l2' R R'.
+ (`!l1 l2 l1' l2' R' R'.
     l1 = l1' /\ l2 = l2' /\ (!n x y. ALOOKUP l1' n = SOME x /\ ALOOKUP l2' n
-      = SOME y ==> R n x y = R' n x y) ==>
-    (alistSub R l1 l2 <=> alistSub R' l1' l2')`,
+      = SOME y ==> R' n x y = R' n x y) ==>
+    (alistSub R' l1 l2 <=> alistSub R' l1' l2')`,
   CHEAT_TAC);;
 
 (* HOL4 namespacePropsScript.sml:785: ML code, not ported *)
@@ -432,9 +432,9 @@ let alistSub_cong = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let nsSub_compute_def,nsSub_compute_ind = define_guess_cheat
-  `nsSub_compute path R (Bind e1V e1M) (Bind e2V e2M) <=>
-     alistSub (\k v1 v2. R (mk_id (REVERSE path) k) v1 v2) e1V e2V /\
-     alistSub (\k v1 v2. nsSub_compute (CONS k path) R v1 v2) e1M e2M`;;
+  `nsSub_compute path R' (Bind e1V e1M) (Bind e2V e2M) <=>
+     alistSub (\k v1 v2. R' (mk_id (REVERSE path) k) v1 v2) e1V e2V /\
+     alistSub (\k v1 v2. nsSub_compute (CONS k path) R' v1 v2) e1M e2M`;;
 
 let nsLookup_FOLDR_nsLift = prove
  (`!e p k. nsLookup (ITLIST nsLift p e) (mk_id p k) = nsLookup e (Short k)`,
@@ -465,51 +465,51 @@ let nsAll2_conj = prove
   CHEAT_TAC);;
 
 let nsAll2_nsLookup1 = prove
- (`!R e1 e2 n v1.
+ (`!R' e1 e2 n v1.
     nsLookup e1 n = SOME v1 /\
-    nsAll2 R e1 e2 ==>
-    (?v2. nsLookup e2 n = SOME v2 /\ R n v1 v2)`,
+    nsAll2 R' e1 e2 ==>
+    (?v2. nsLookup e2 n = SOME v2 /\ R' n v1 v2)`,
   CHEAT_TAC);;
 
 let nsAll2_nsLookup2 = prove
- (`!R e1 e2 n v2.
+ (`!R' e1 e2 n v2.
     nsLookup e2 n = SOME v2 /\
-    nsAll2 R e1 e2 ==>
-    (?v1. nsLookup e1 n = SOME v1 /\ R n v1 v2)`,
+    nsAll2 R' e1 e2 ==>
+    (?v1. nsLookup e1 n = SOME v1 /\ R' n v1 v2)`,
   CHEAT_TAC);;
 
 let nsAll2_nsLookup_none = prove
- (`!R e1 e2 n.
-    nsAll2 R e1 e2 ==>
+ (`!R' e1 e2 n.
+    nsAll2 R' e1 e2 ==>
     (nsLookup e1 n = NONE <=> nsLookup e2 n = NONE)`,
   CHEAT_TAC);;
 
 let nsAll2_nsBind = prove
- (`!R x v1 v2 e1 e2.
-     R (Short x) v1 v2 /\ nsAll2 R e1 e2 ==> nsAll2 R (nsBind x v1 e1)
+ (`!R' x v1 v2 e1 e2.
+     R' (Short x) v1 v2 /\ nsAll2 R' e1 e2 ==> nsAll2 R' (nsBind x v1 e1)
        (nsBind x v2 e2)`,
   CHEAT_TAC);;
 
 let nsAll2_nsBindList = prove
- (`!R l1 l2 e1 e2.
-     ALL2 (\(x,y) (x',y'). x = x' /\ R (Short x) y y') l1 l2 /\ nsAll2 R e1
-       e2 ==>
-     nsAll2 R (nsBindList l1 e1) (nsBindList l2 e2)`,
+ (`!R' l1 l2 e1 e2.
+     ALL2 (\(x,y) (x',y'). x = x' /\ R' (Short x) y y') l1 l2 /\ nsAll2 R'
+       e1 e2 ==>
+     nsAll2 R' (nsBindList l1 e1) (nsBindList l2 e2)`,
   CHEAT_TAC);;
 
 let nsAll2_nsAppend = prove
- (`!R e1 e1' e2 e2'.
-    nsAll2 R e1 e2 /\ nsAll2 R e1' e2' ==> nsAll2 R (nsAppend e1 e1')
+ (`!R' e1 e1' e2 e2'.
+    nsAll2 R' e1 e2 /\ nsAll2 R' e1' e2' ==> nsAll2 R' (nsAppend e1 e1')
       (nsAppend e2 e2')`,
   CHEAT_TAC);;
 
 let nsAll2_alist_to_ns = prove
- (`!R l1 l2. ALL2 (\(x,y) (x',y'). x = x' /\ R (Short x) y y') l1 l2 ==>
-  nsAll2 R (alist_to_ns l1) (alist_to_ns l2)`,
+ (`!R' l1 l2. ALL2 (\(x,y) (x',y'). x = x' /\ R' (Short x) y y') l1 l2 ==>
+  nsAll2 R' (alist_to_ns l1) (alist_to_ns l2)`,
   CHEAT_TAC);;
 
 let nsAll2_nsLift = prove
- (`!R mn e1 e2. nsAll2 R (nsLift mn e1) (nsLift mn e2) <=> nsAll2 (\id. R
+ (`!R' mn e1 e2. nsAll2 R' (nsLift mn e1) (nsLift mn e2) <=> nsAll2 (\id. R'
   (Long mn id)) e1 e2`,
   CHEAT_TAC);;
 add_simp nsAll2_nsLift;;
@@ -551,8 +551,8 @@ let nsLift_nsMap = prove
   CHEAT_TAC);;
 
 let nsSub_nsMap = prove
- (`!R f n1 n2.
-    nsSub R (nsMap f n1) (nsMap f n2) <=> nsSub (\id x y. R id (f x) (f
+ (`!R' f n1 n2.
+    nsSub R' (nsMap f n1) (nsMap f n2) <=> nsSub (\id x y. R' id (f x) (f
       y)) n1 n2`,
   CHEAT_TAC);;
 

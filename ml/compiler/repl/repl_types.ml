@@ -113,7 +113,7 @@ let repl_types = cake_inductive
         repl_types b (ffi,rs) (types',s,env) /\
         infertype_prog_inc types' decs = M_success new_types /\
         evaluate_evaluate_decs s env decs = (new_s,Rerr (Rraise e)) /\
-        MEM (name',repl_types_Exn,loc) rs /\
+        ag32_MEM (name',repl_types_Exn,loc) rs /\
         store_assign loc (semanticPrimitives_Refv e)
           (semanticPrimitives_state_refs new_s) = SOME new_store ==>
         repl_types b (ffi,rs) (repl_types_roll_back types'
@@ -122,7 +122,7 @@ let repl_types = cake_inductive
    ((!ffi rs types' (s:'ffi semanticPrimitives_state) env t name' loc
      new_store b.
         repl_types b (ffi,rs) (types',s,env) /\
-        MEM (name',repl_types_Str,loc) rs /\
+        ag32_MEM (name',repl_types_Str,loc) rs /\
         store_assign loc (semanticPrimitives_Refv (semanticPrimitives_Litv
           (ast_StrLit t))) (semanticPrimitives_state_refs s) = SOME new_store
           ==>
@@ -173,7 +173,7 @@ let repl_types_TS = cake_inductive
         type_ds T tenv decs new_tids new_tenv /\
         DISJOINT tids new_tids /\
         evaluate_evaluate_decs s env decs = (new_s,Rerr (Rraise e)) /\
-        MEM (name',repl_types_Exn,loc) rs /\
+        ag32_MEM (name',repl_types_Exn,loc) rs /\
         store_assign loc (semanticPrimitives_Refv e)
           (semanticPrimitives_state_refs new_s) = SOME new_store ==>
         repl_types_TS (ffi,rs) (tids UNION
@@ -182,7 +182,7 @@ let repl_types_TS = cake_inductive
    ((!ffi rs tids tenv (s:'ffi semanticPrimitives_state) env t name' loc
      new_store.
         repl_types_TS (ffi,rs) (tids,tenv,s,env) /\
-        MEM (name',repl_types_Str,loc) rs /\
+        ag32_MEM (name',repl_types_Str,loc) rs /\
         store_assign loc (semanticPrimitives_Refv (semanticPrimitives_Litv
           (ast_StrLit t))) (semanticPrimitives_state_refs s) = SOME new_store
           ==>
@@ -261,7 +261,7 @@ let type_d_tids_disjoint = prove
 
 let ref_lookup_ok_store_assign = prove
  (`ALL (ref_lookup_ok store) rs /\
-   MEM (n,repl_types_Str,loc) rs /\
+   ag32_MEM (n,repl_types_Str,loc) rs /\
    store_assign loc (semanticPrimitives_Refv (semanticPrimitives_Litv
      (ast_StrLit t))) store = SOME new_store ==>
    ALL (ref_lookup_ok new_store) rs`,
@@ -276,7 +276,7 @@ let type_v_invert_strlit = prove
 
 let ref_lookup_ok_store_assign_exn = prove
  (`ALL (ref_lookup_ok store) rs /\
-   MEM (n,repl_types_Exn,loc) rs /\
+   ag32_MEM (n,repl_types_Exn,loc) rs /\
    type_v 0 ctMap tenvS e (Tapp [] Texn_num) /\ ctMap_ok ctMap /\
    store_assign loc (semanticPrimitives_Refv e) store = SOME new_store ==>
    ALL (ref_lookup_ok new_store) rs`,
@@ -293,7 +293,7 @@ let type_v_invert_exn = prove
 let type_s_store_assign_StrLit = prove
  (`type_s ctMap st tenvS /\
    ALL (ref_lookup_ok st) rs /\
-   MEM (n,repl_types_Str,loc) rs /\
+   ag32_MEM (n,repl_types_Str,loc) rs /\
    store_assign loc (semanticPrimitives_Refv (semanticPrimitives_Litv
      (ast_StrLit t))) st = SOME new_st ==>
    type_s ctMap new_st tenvS`,
@@ -302,7 +302,7 @@ let type_s_store_assign_StrLit = prove
 let type_s_store_assign_exn = prove
  (`type_s ctMap st tenvS /\
    ALL (ref_lookup_ok st) rs /\
-   MEM (n,repl_types_Exn,loc) rs /\
+   ag32_MEM (n,repl_types_Exn,loc) rs /\
    ctMap_ok ctMap /\
    type_v 0 ctMap tenvS e (Tapp [] Texn_num) /\
    store_assign loc (semanticPrimitives_Refv e) st = SOME new_st ==>

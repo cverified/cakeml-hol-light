@@ -79,7 +79,7 @@ let mlmap_toAscList_def = new_definition
   `mlmap_toAscList (Map cmp t) = balanced_map_toAscList t`;;
 
 let mlmap_fromList_def = new_definition
-  `mlmap_fromList cmp l = Map cmp (fromList cmp l)`;;
+  `mlmap_fromList cmp l = Map cmp (balanced_map_fromList cmp l)`;;
 
 let isSubmapBy_def = new_definition
   `isSubmapBy f (Map cmp t1) (Map _ t2) = isSubmapOfBy cmp f t1 t2`;;

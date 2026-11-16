@@ -51,8 +51,8 @@ let RatProg_div_gcd_def = new_definition
 let RAT_TYPE_def = new_definition
   `RAT_TYPE (r:rat) =
      (\v. ?(n:int) (d:num). (r = (rat_of_int n) / &d) /\
-                           hol4_gcd (cfFFIType_Num (abs n)) d = 1 /\ ~(d =
-                             0) /\
+                           hol4_gcd (num_of_int (abs n)) d = 1 /\ ~(d = 0)
+                             /\
                            RATIONAL_TYPE (RatPair n d) v)`;;
 
 (* HOL4 RatProgScript.sml:44: the ML values that the definitions below
@@ -312,7 +312,7 @@ let SGN_ABS = prove
   CHEAT_TAC);;
 
 let Int_Num_ABS = prove
- (`&(cfFFIType_Num (abs n)) = abs n`,
+ (`&(num_of_int (abs n)) = abs n`,
   CHEAT_TAC);;
 
 (* Num_le *)
@@ -327,7 +327,7 @@ let int_divides_ABS = prove
   CHEAT_TAC);;
 
 let gcd_RATND = prove
- (`hol4_gcd (cfFFIType_Num (abs n)) d = 1 /\ 0 < d ==>
+ (`hol4_gcd (num_of_int (abs n)) d = 1 /\ 0 < d ==>
    RATN (rat_of_int n / &d) = n /\
    RATD (rat_of_int n / &d) = d`,
   CHEAT_TAC);;

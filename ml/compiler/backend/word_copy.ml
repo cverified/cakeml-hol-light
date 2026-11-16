@@ -68,7 +68,7 @@ let lookup_eq_def = new_definition
 let lookup_eq_imm_def = new_definition
   `lookup_eq_imm cs vi =
    match vi with
-     Reg v -> Reg (lookup_eq cs v)
+     asm_Reg v -> asm_Reg (lookup_eq cs v)
    | _ -> vi`;;
 
 (* remove v from its equivalence class,
@@ -105,13 +105,13 @@ let copy_prop_inst_def = new_definition
        let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let ri' = lookup_eq_imm cs ri in
-       let ri'' = (if ri' = Reg r1 then ri else ri') in
+       let ri'' = (if ri' = asm_Reg r1 then ri else ri') in
        (word_Inst (asm_Arith (asm_Binop bop r1 r2' ri'')),cs')
      | asm_Arith (asm_Shift shift' r1 r2 n) ->
        let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let n' = lookup_eq_imm cs n in
-       let n'' = (if n' = Reg r1 then n else n') in
+       let n'' = (if n' = asm_Reg r1 then n else n') in
        (word_Inst (asm_Arith (asm_Shift shift' r1 r2' n'')),cs')
      | asm_Arith (asm_Div r1 r2 r3) ->
        let r2' = lookup_eq cs r2 in

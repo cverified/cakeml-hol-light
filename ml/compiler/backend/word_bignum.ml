@@ -33,9 +33,9 @@ let _ = cake_theory "word_bignum"
 
 let address_INDUCT,address_RECURSION = define_datatype
   "address =
-     In1
-   | In2
-   | Out";;
+     word_bignum_In1
+   | word_bignum_In2
+   | word_bignum_Out";;
 
 let mini_INDUCT,mini_RECURSION = define_datatype
   "mini =
@@ -528,20 +528,20 @@ let SeqTemp_def = new_definition
   `SeqTemp i r p = word_Seq (word_Assign i (word_Lookup (Temp (n2w r)))) p`;;
 
 let SeqTempImm_def = define_cases
-  `(SeqTempImm i (Reg r) p = SeqTemp i r p) /\
-   (SeqTempImm i (Imm w) p = word_Seq (word_Assign i (word_Const w)) p)`;;
+  `(SeqTempImm i (asm_Reg r) p = SeqTemp i r p) /\
+   (SeqTempImm i (asm_Imm w) p = word_Seq (word_Assign i (word_Const w)) p)`;;
 
 let SeqTempImmNot_def = define_cases
-  `(SeqTempImmNot i (Reg r) p =
+  `(SeqTempImmNot i (asm_Reg r) p =
       SeqTemp i r (word_Seq (word_Assign i (word_Op asm_Xor [word_Var
           i; word_Const (word_not (n2w 0))])) p)) /\
-   (SeqTempImmNot i (Imm w) p = word_Seq (word_Assign i (word_Const
+   (SeqTempImmNot i (asm_Imm w) p = word_Seq (word_Assign i (word_Const
     (word_not w))) p)`;;
 
 let SeqIndex_def = new_definition
   `SeqIndex i r arr p =
-     let t = (match arr with Out -> TempOut | In2 -> TempIn2 | In1 ->
-       TempIn1) in
+     let t = (match arr with word_bignum_Out -> TempOut | word_bignum_In2 ->
+       TempIn2 | word_bignum_In1 -> TempIn1) in
        word_Seq (word_Assign i (word_Op asm_Add [word_Lookup t;
             (\sh e n. word_Shift sh e (word_Const (n2w n))) Lsl
               (word_Lookup (Temp (n2w r))) (backend_common_word_shift
@@ -596,10 +596,10 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
      | word_bignum_If t r ri p1 p2 ->
         (let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
         let (p2,l,i,cs) = word_bignum_compile n l i cs p2 in
-          match ri with Reg r2 -> (SeqTemp i r (SeqTemp (i + 1) r2 (word_If
-            t i (Reg (i + 1)) p1 p2)),
+          match ri with asm_Reg r2 -> (SeqTemp i r (SeqTemp (i + 1) r2
+            (word_If t i (asm_Reg (i + 1)) p1 p2)),
                        l,i + 2,cs)
-          | Imm im -> (SeqTemp i r (word_If t i ri p1 p2),l,i + 1,cs))
+          | asm_Imm im -> (SeqTemp i r (word_If t i ri p1 p2),l,i + 1,cs))
      | word_bignum_Assign j e ->
         (word_Seq (word_Assign i (word_bignum_compile_exp e)) (word_Set
           (Temp (n2w j)) (word_Var i)),l,i + 1,cs)
@@ -610,7 +610,7 @@ let word_bignum_compile_def,word_bignum_compile_ind = define_shaped_rec
              (word_Set (TempIn2) (word_Var i))),l,i + 1,cs)
      | word_bignum_Store r1 r2 ->
         (SeqTemp i r1
-        (SeqIndex (i + 1) r2 Out
+        (SeqIndex (i + 1) r2 word_bignum_Out
            (word_Store (word_Var (i + 1)) i)),l,i + 2,cs)
      | word_bignum_Load r1 r2 arr ->
         (SeqIndex i r2 arr
@@ -656,11 +656,12 @@ let generated_bignum_stubs_eq =
   init_code_def; init_globals_def; force_thunk_code_def;
   clos_to_bvl_compile_prog_def; make_name_alist_def;
   partial_app_label_table_loc_def; tuple_tag_def; mk_label_def;
-  partial_app_fn_location_def; the_def; fromList_def;
+  partial_app_fn_location_def; the_def; balanced_map_fromList_def;
   generate_generic_app_def; generate_partial_app_closure_fn_def;
   mk_const_def; jump_def; mk_cl_call_def; mk_tick_def; closure_tag_def;
   partial_app_tag_def; mk_el_def; partial_app_fn_location_code_def;
-  generic_app_fn_location_def; install_def] `generated_bignum_stubs n`);;
+  generic_app_fn_location_def; empty_def; install_def]
+  `generated_bignum_stubs n`);;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

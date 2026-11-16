@@ -36,7 +36,7 @@ let _ = cake_theory "typeSound"
 (* HOL4 typeSoundScript.sml:17-32: ML code, not ported *)
 
 let list_rel_flat = prove
- (`!R l1 l2. ALL2 (ALL2 R) l1 l2 ==> ALL2 R (FLAT l1) (FLAT l2)`,
+ (`!R' l1 l2. ALL2 (ALL2 R') l1 l2 ==> ALL2 R' (FLAT l1) (FLAT l2)`,
   CHEAT_TAC);;
 
 (* [local] *)

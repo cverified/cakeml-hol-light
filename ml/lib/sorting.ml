@@ -17,13 +17,13 @@ let PERM_DEF = new_definition
   `PERM L1 L2 = (!x. FILTER ((=) x) L1 = FILTER ((=) x) L2)`;;
 
 let SORTED_DEF,SORTED_DEF_ind = define_guess
-  `(SORTED R [] = T) /\
-   (SORTED R [x] = T) /\
-   (SORTED R (CONS x (CONS y rst)) <=> R x y /\ SORTED R (CONS y rst))`;;
+  `(SORTED R' [] = T) /\
+   (SORTED R' [x] = T) /\
+   (SORTED R' (CONS x (CONS y rst)) <=> R' x y /\ SORTED R' (CONS y rst))`;;
 add_simp SORTED_DEF;;
 
 let SORTS_DEF = new_definition
-  `SORTS f R <=> (!l. PERM l (f R l) /\ SORTED R (f R l))`;;
+  `SORTS f R' <=> (!l. PERM l (f R' l) /\ SORTED R' (f R' l))`;;
 
 let PART_DEF,PART_DEF_ind = define_rec
   `(PART P [] l1 l2 = (l1,l2)) /\

@@ -43,7 +43,7 @@ let crep_to_loop_find_lab_def = new_definition
 let prog_if_def = new_definition
   `prog_if cmp p q e e' n m l = APPEND (APPEND p q) [
      loop_Assign n e; loop_Assign m e';
-     loop_If cmp n (Reg m)
+     loop_If cmp n (asm_Reg m)
      (loop_Assign n (loop_Const (n2w 1))) (loop_Assign n (loop_Const (n2w
        0))) (list_insert [n; m] l)]`;;
 
@@ -212,15 +212,15 @@ let crep_to_loop_compile_def,crep_to_loop_compile_ind = define_guess_clauses
             lp = crep_to_loop_compile ctxt l p in let
             lq = crep_to_loop_compile ctxt l q in
         loop_nested_seq (APPEND np [loop_Assign tmp le;
-                           loop_If asm_NotEqual tmp (Imm (n2w 0)) lp lq
-                               l])):'a loop_prog)) /\
+                           loop_If asm_NotEqual tmp (asm_Imm (n2w 0))
+                               lp lq l])):'a loop_prog)) /\
     (crep_to_loop_compile ctxt l (crep_While e p) =
         ((let (np,le,tmp,nl) = crep_to_loop_compile_exp ctxt
             (crep_to_loop_context_vmax ctxt + 1) l e in let
             lp = crep_to_loop_compile ctxt l p in
          loop_Loop l (loop_nested_seq (APPEND np [
                     loop_Assign tmp le;
-                    loop_If asm_NotEqual tmp (Imm (n2w 0))
+                    loop_If asm_NotEqual tmp (asm_Imm (n2w 0))
                        (loop_Seq lp (loop_Continue 0)) (loop_Break 0) l]))
               l):'a loop_prog)) /\
     (crep_to_loop_compile ctxt l (crep_ExtCall f ptr1 len1 ptr2 len2) =
@@ -244,9 +244,9 @@ let crep_to_loop_compile_def,crep_to_loop_compile_ind = define_guess_clauses
                    pe = (match hdl with NONE -> loop_Raise en
                       | SOME (eid,ep) ->
                         let cpe = crep_to_loop_compile ctxt l ep in
-                          (loop_If asm_NotEqual en (Imm eid) (loop_Raise
-                              en) (loop_Seq loop_Tick cpe) l)) in (SOME
-                              (rns,l),SOME (en,pe,loop_Skip,l))) in
+                          (loop_If asm_NotEqual en (asm_Imm eid)
+                              (loop_Raise en) (loop_Seq loop_Tick cpe) l)) in
+                              (SOME (rns,l),SOME (en,pe,loop_Skip,l))) in
           loop_nested_seq (APPEND (APPEND p (MAP2 loop_Assign nargs
               les)) [loop_Call rt1 (SOME dest) nargs rt2])):'a loop_prog)`];;
 

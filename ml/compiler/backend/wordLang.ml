@@ -118,7 +118,7 @@ let every_var_exp_def,every_var_exp_ind = define_wf
 let every_var_imm_def = new_definition
   `every_var_imm P x2 =
      match x2 with
-       Reg r -> P r
+       asm_Reg r -> P r
      | _ -> T`;;
 
 let every_var_inst_def = new_definition
@@ -267,9 +267,9 @@ let max_var_inst_def = new_definition
        asm_Skip -> 0
      | asm_Const reg w -> reg
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
-       (match ri with Reg r -> max3 r1 r2 r | _ -> MAX r1 r2)
+       (match ri with asm_Reg r -> max3 r1 r2 r | _ -> MAX r1 r2)
      | asm_Arith (asm_Shift shift' r1 r2 n) ->
-       (match n with Reg r -> max3 r1 r2 r | _ -> MAX r1 r2)
+       (match n with asm_Reg r -> max3 r1 r2 r | _ -> MAX r1 r2)
      | asm_Arith (asm_Div r1 r2 r3) -> max3 r1 r2 r3
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> MAX (MAX r1 r2) (MAX r3 r4)
      | asm_Arith (asm_AddOverflow r1 r2 r3 r4) -> MAX (MAX r1 r2) (MAX r3
@@ -329,7 +329,7 @@ let max_var_def,max_var_ind = define_wf
      | word_Seq s1 s2 -> MAX (max_var s1) (max_var s2)
      | word_MustTerminate s1 -> max_var s1
      | word_If cmp r1 ri e2 e3 ->
-       let r = (match ri with Reg r -> MAX r r1 | _ -> r1) in
+       let r = (match ri with asm_Reg r -> MAX r r1 | _ -> r1) in
          max3 r (max_var e2) (max_var e3)
      | word_Alloc num' numset ->
        MAX num' (cutsets_max numset)

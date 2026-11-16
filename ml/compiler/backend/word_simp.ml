@@ -122,13 +122,15 @@ let dest_If_pmatch = prove
 
 let dest_If_Eq_Imm_def = new_definition
   `dest_If_Eq_Imm p =
-     match dest_If p with SOME (asm_Equal,n,Imm w,p1,p2) -> SOME (n,w,p1,p2)
+     match dest_If p with SOME (asm_Equal,n,asm_Imm w,p1,p2) -> SOME
+       (n,w,p1,p2)
      | _ -> NONE`;;
 
 let dest_If_Eq_Imm_pmatch = prove
  (`!p.
    dest_If_Eq_Imm p =
-     match dest_If p with SOME (asm_Equal,n,Imm w,p1,p2) -> SOME (n,w,p1,p2)
+     match dest_If p with SOME (asm_Equal,n,asm_Imm w,p1,p2) -> SOME
+       (n,w,p1,p2)
      | _ -> NONE`,
   CHEAT_TAC);;
 
@@ -245,8 +247,8 @@ let const_fp_inst_cs_def = new_definition
      | _ -> cs`;;
 
 let get_var_imm_cs_def = define_cases
-  `(get_var_imm_cs (Reg r) cs = sptree_lookup r cs) /\
-   (get_var_imm_cs (Imm i) _ = SOME i)`;;
+  `(get_var_imm_cs (asm_Reg r) cs = sptree_lookup r cs) /\
+   (get_var_imm_cs (asm_Imm i) _ = SOME i)`;;
 
 let is_gc_const_def = new_definition
   `is_gc_const c = ((c && (n2w 1)) = (n2w 0))`;;

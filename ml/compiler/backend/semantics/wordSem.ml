@@ -774,12 +774,14 @@ let wordSem_inst_def = new_definition
      | asm_Const reg w -> wordSem_assign reg (word_Const w) s
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
          wordSem_assign r1
-           (word_Op bop [word_Var r2; match ri with Reg r3 -> word_Var r3
-                              | Imm w -> word_Const w]) s
+           (word_Op bop [word_Var r2; match ri with asm_Reg r3 -> word_Var
+             r3
+                              | asm_Imm w -> word_Const w]) s
      | asm_Arith (asm_Shift sh r1 r2 ri) ->
          wordSem_assign r1
-           (word_Shift sh (word_Var r2) (match ri with Reg r3 -> word_Var r3
-                              | Imm w -> word_Const w)) s
+           (word_Shift sh (word_Var r2) (match ri with asm_Reg r3 ->
+             word_Var r3
+                              | asm_Imm w -> word_Const w)) s
      | asm_Arith (asm_Div r1 r2 r3) ->
         (let vs = wordSem_get_vars [r3; r2] s in
         match vs with
@@ -990,9 +992,9 @@ let wordSem_inst_def = new_definition
      | _ -> NONE)`;;
 
 let get_var_imm_def = define_cases
-  `(wordSem_get_var_imm ((Reg n):'a asm_reg_imm)
+  `(wordSem_get_var_imm ((asm_Reg n):'a asm_reg_imm)
     (s:('a,'c,'ffi)wordSem_state) = wordSem_get_var n s) /\
-   (wordSem_get_var_imm (Imm w) (s:('a,'c,'ffi)wordSem_state) = SOME
+   (wordSem_get_var_imm (asm_Imm w) (s:('a,'c,'ffi)wordSem_state) = SOME
     (word_Word w))`;;
 
 let add_ret_loc_def = define_cases

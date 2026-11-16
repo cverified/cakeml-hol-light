@@ -28,7 +28,6 @@ needs "compiler/backend/semantics/targetSem.ml";;
 needs "compiler/bootstrap/compilation/ag32/32/ag32Bootstrap.ml";;
 needs "compiler/bootstrap/translation/compiler32Prog.ml";;
 needs "compiler/compiler.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/repl/repl_decs_allowed.ml";;
 needs "lib/sptree.ml";;
@@ -106,9 +105,9 @@ let target_state_rel_cake_start_asm_state = prove
             (lab_to_target_config_ffi_names (backend_config_lab_conf info)))
             (cl,inp))
           (ITER n Next ms) /\
-       (ffi_state_io_events (ITER n Next ms) = ffi_state_io_events ms) /\
+       (ag32_state_io_events (ITER n Next ms) = ag32_state_io_events ms) /\
        (!x. ~(x IN (ag32_startup_addresses)) ==>
-         (?_MEM (ITER n Next ms) x = ?_MEM ms x)))`,
+         (ag32_state_MEM (ITER n Next ms) x = ag32_state_MEM ms x)))`,
   CHEAT_TAC);;
 
 (* HOL4 ag32BootstrapProofScript.sml:109-112: ML code, not ported *)
@@ -222,10 +221,10 @@ let cake_extract_writes = prove
      (out = explode current_build_info_str) /\ (err = "")
    else if has_pancake_flag (TL cl) then
      let (cout,cerr) = compile_pancake_32 (TL cl) inp in
-     (out = explode (mlvector_concat (append cout))) /\
+     (out = explode (mlstring_concat (append cout))) /\
      (err = explode cerr)
    else let (cout,cerr) = compile_32 (TL cl) inp in
-     (out = explode (mlvector_concat (append cout))) /\
+     (out = explode (mlstring_concat (append cout))) /\
      (err = explode cerr))`,
   CHEAT_TAC);;
 
@@ -237,17 +236,17 @@ let cake_ag32_next = prove
      ms0 ==>
    (?k1. !k. k1 <= k ==>
      (let ms = ITER k Next ms0 in
-     let outs = MAP (get_ag32_io_event) (ffi_state_io_events ms) in
-       (?_PC ms = machine_config_halt_pc ((ag32_machine_config (extcalls
-         (lab_to_target_config_ffi_names (backend_config_lab_conf info)))
-         (LENGTH code) (LENGTH data)))) /\
-       (get_mem_word (?_MEM ms) (?_PC ms) = Encode (asm_Jump (fAdd,(n2w
-         0),Imm (n2w 0)))) /\
+     let outs = MAP (get_ag32_io_event) (ag32_state_io_events ms) in
+       (ag32_state_PC ms = machine_config_halt_pc ((ag32_machine_config
+         (extcalls (lab_to_target_config_ffi_names (backend_config_lab_conf
+         info))) (LENGTH code) (LENGTH data)))) /\
+       (get_mem_word (ag32_state_MEM ms) (ag32_state_PC ms) = Encode
+         (asm_Jump (fAdd,(n2w 0),asm_Imm (n2w 0)))) /\
        outs <<= MAP get_output_io_event (cake_io_events cl (stdin_fs inp))
          /\
-       ((?_R ms (n2w (machine_config_ptr_reg ((ag32_machine_config (extcalls
-         (lab_to_target_config_ffi_names (backend_config_lab_conf info)))
-         (LENGTH code) (LENGTH data))))) = (n2w 0)) ==>
+       ((ag32_state_R ms (n2w (machine_config_ptr_reg ((ag32_machine_config
+         (extcalls (lab_to_target_config_ffi_names (backend_config_lab_conf
+         info))) (LENGTH code) (LENGTH data))))) = (n2w 0)) ==>
         (outs = MAP get_output_io_event (cake_io_events cl (stdin_fs
           inp))))))`,
   CHEAT_TAC);;

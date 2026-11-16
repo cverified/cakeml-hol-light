@@ -177,11 +177,11 @@ let binop_less_def = new_definition
 
 let binop_def = new_definition
   `compute_exec_binop op =
-     match op with compute_syntax_Add -> binop_add
-     | compute_syntax_Sub -> binop_sub
-     | compute_syntax_Mul -> binop_mul
-     | compute_syntax_Div -> binop_div
-     | compute_syntax_Mod -> binop_mod
+     match op with ast_Add -> binop_add
+     | ast_Sub -> binop_sub
+     | ast_Mul -> binop_mul
+     | ast_Div -> binop_div
+     | ast_Mod -> binop_mod
      | compute_syntax_Eq -> binop_eq
      | compute_syntax_Less -> binop_less`;;
 

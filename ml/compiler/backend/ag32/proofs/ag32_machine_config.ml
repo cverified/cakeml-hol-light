@@ -45,9 +45,9 @@ let ag32_startup_addresses_def = new_definition
          4 * 5)}`;;
 
 let ag32_ccache_interfer_def = new_definition
-  `ag32_ccache_interfer num_ffis (_,_,ms) = ?_R_fupd (K (((n2w 0) =+ n2w
-  (ffi_jumps_offset + num_ffis * ffi_offset + 4)) (?_R ms))) (?_PC_fupd (K (?_R
-  ms (n2w 0)))
+  `ag32_ccache_interfer num_ffis (_,_,ms) = ag32_state_R_fupd (K (((n2w 0) =+
+  n2w (ffi_jumps_offset + num_ffis * ffi_offset + 4)) (ag32_state_R ms)))
+  (ag32_state_PC_fupd (K (ag32_state_R ms (n2w 0)))
      ms)`;;
 
 let ag32_ffi_mem_update_def = new_definition
@@ -76,24 +76,27 @@ let ag32_ffi_interfer_def = new_definition
   `ag32_ffi_interfer ffi_names' md (index,new_bytes,ms) =
      (let name = EL index ffi_names' in
      let exitpc = THE (ALOOKUP ffi_exitpcs name) in
-     if name = (implode "") then ffi_state_OverflowFlag_fupd (K F)
-       (ffi_state_CarryFlag_fupd (K F) (ffi_state_R_fupd (K (((n2w 0) =+ n2w
-       exitpc) (((n2w 5) =+ (n2w 0)) (?_R ms)))) (ffi_state_PC_fupd (K (?_R ms
-       (n2w 0)))
+     if name = (implode "") then ag32_state_OverflowFlag_fupd (K F)
+       (ag32_state_CarryFlag_fupd (K F) (ag32_state_R_fupd (K (((n2w 0) =+ n2w
+       exitpc) (((n2w 5) =+ (n2w 0)) (ag32_state_R ms)))) (ag32_state_PC_fupd
+       (K (ag32_state_R ms (n2w 0)))
        ms)))
      else let new_mem = ((n2w (ffi_code_start_offset - 1)) =+ n2w (THE
-       (ALOOKUP FFI_codes name))) (?_MEM ms) in
-     let new_mem = asm_write_bytearray (?_R ms (n2w 3)) new_bytes new_mem in
+       (ALOOKUP FFI_codes name))) (ag32_state_MEM ms) in
+     let new_mem = asm_write_bytearray (ag32_state_R ms (n2w 3)) new_bytes
+       new_mem in
      let new_mem =
        ag32_ffi_mem_update name
-         (THE (read_bytearray (?_R ms (n2w 1)) (w2n (?_R ms (n2w 2))) (\a.
-           if a IN md then SOME (?_MEM ms a) else NONE)))
-         (THE (read_bytearray (?_R ms (n2w 3)) (w2n (?_R ms (n2w 4))) (\a.
-           if a IN md then SOME (?_MEM ms a) else NONE)))
-         new_bytes new_mem in ffi_state_MEM_fupd (K new_mem)
-           (ffi_state_io_events_fupd (K (APPEND (ffi_state_io_events ms)
-           [new_mem])) (ffi_state_OverflowFlag_fupd (K F)
-           (ffi_state_CarryFlag_fupd (K F) (ffi_state_R_fupd (K (((n2w 0) =+
+         (THE (read_bytearray (ag32_state_R ms (n2w 1)) (w2n (ag32_state_R
+           ms (n2w 2))) (\a. if a IN md then SOME (ag32_state_MEM ms a) else
+           NONE)))
+         (THE (read_bytearray (ag32_state_R ms (n2w 3)) (w2n (ag32_state_R
+           ms (n2w 4))) (\a. if a IN md then SOME (ag32_state_MEM ms a) else
+           NONE)))
+         new_bytes new_mem in ag32_state_MEM_fupd (K new_mem)
+           (ag32_state_io_events_fupd (K (APPEND (ag32_state_io_events ms)
+           [new_mem])) (ag32_state_OverflowFlag_fupd (K F)
+           (ag32_state_CarryFlag_fupd (K F) (ag32_state_R_fupd (K (((n2w 0) =+
            n2w exitpc)
                   (((n2w 1) =+ (n2w 0))
                   (((n2w 2) =+ (n2w 0))
@@ -102,8 +105,8 @@ let ag32_ffi_interfer_def = new_definition
                   (((n2w 5) =+ (n2w 0))
                   (((n2w 6) =+ (n2w 0))
                   (((n2w 7) =+ (n2w 0))
-                  (((n2w 8) =+ (n2w 0)) (?_R ms)))))))))))
-                    (ffi_state_PC_fupd (K (?_R ms (n2w 0)))
+                  (((n2w 8) =+ (n2w 0)) (ag32_state_R ms)))))))))))
+                    (ag32_state_PC_fupd (K (ag32_state_R ms (n2w 0)))
        ms))))))`;;
 
 let ag32_machine_config_def = new_definition

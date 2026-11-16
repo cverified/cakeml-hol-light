@@ -238,9 +238,9 @@ let fmap_greatest = prove
  * -------------------------------------------------------------------------- *)
 
 let match_res_rel_def = new_definition
-  `match_res_rel R x2' x3' =
+  `match_res_rel R' x2' x3' =
      match (x2',x3') with
-       (Match env1,Match env2) -> R env1 env2
+       (Match env1,Match env2) -> R' env1 env2
      | (No_match,No_match) -> T
      | (Match_type_error,Match_type_error) -> T
      | (_,_) -> F`;;

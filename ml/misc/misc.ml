@@ -586,9 +586,9 @@ let FUNPOW_SUC_PLUS = prove
      transitive R ==> transitive (OPTREL R)
    or that with transitive expanded out *)
 let OPTREL_trans = prove
- (`!R x y z.
-    (!a b c. (x = SOME a) /\ (y = SOME b) /\ (z = SOME c) /\ R a b /\ R b
-      c ==> R a c) /\ OPTREL R x y /\ OPTREL R y z ==> OPTREL R x z`,
+ (`!R' x y z.
+    (!a b c. (x = SOME a) /\ (y = SOME b) /\ (z = SOME c) /\ R' a b /\ R'
+      b c ==> R' a c) /\ OPTREL R' x y /\ OPTREL R' y z ==> OPTREL R' x z`,
   CHEAT_TAC);;
 
 let UPDATE_LIST_def = new_definition
@@ -745,8 +745,8 @@ let PERM_ZIP = prove
 
 (* never used *)
 let RTC_invariant = prove
- (`!R P. (!x y. P x /\ R x y ==> P y) ==> (!x y. RTC R x y ==> P x ==> RTC
-  (RINTER R (\x y. P x /\ P y)) x y)`,
+ (`!R' P. (!x y. P x /\ R' x y ==> P y) ==> (!x y. RTC R' x y ==> P x ==> RTC
+  (RINTER R' (\x y. P x /\ P y)) x y)`,
   CHEAT_TAC);;
 
 (* never used *)
@@ -1629,11 +1629,12 @@ let n2l_DIV_MOD = prove
   CHEAT_TAC);;
 
 let irreflexive_inv_image = prove
- (`!R f. irreflexive R ==> irreflexive (inv_image R f)`,
+ (`!R' f. irreflexive R' ==> irreflexive (inv_image R' f)`,
   CHEAT_TAC);;
 
 let trichotomous_inv_image = prove
- (`!R f. trichotomous R /\ (INJ f UNIV UNIV) ==> trichotomous (inv_image R f)`,
+ (`!R' f. trichotomous R' /\ (INJ f UNIV UNIV) ==> trichotomous (inv_image R'
+  f)`,
   CHEAT_TAC);;
 
 let MEM_REPLICATE_IMP = prove
@@ -2049,22 +2050,22 @@ let steps_def,steps_ind = define_rec
          (CONS (j,y) tr))`;;
 
 let steps_rel_def,steps_rel_ind = define_rec
-  `(steps_rel R x [] <=> T) /\
-   (steps_rel R x (CONS (j,y) tr) <=>
-        R x j y /\
-        steps_rel R y tr)`;;
+  `(steps_rel R' x [] <=> T) /\
+   (steps_rel R' x (CONS (j,y) tr) <=>
+        R' x j y /\
+        steps_rel R' y tr)`;;
 
 (* HOL4 miscScript.sml:3681: ML code, not ported *)
 
 let steps_rel_okpath = prove
- (`!R x tr.
-    steps_rel R x tr <=> okpath R (toPath (x,fromList tr))`,
+ (`!R' x tr.
+    steps_rel R' x tr <=> okpath R' (toPath (x,fromList tr))`,
   CHEAT_TAC);;
 
 let steps_rel_LRC = prove
- (`!R x tr.
-    steps_rel R x tr ==>
-    LRC (\x y. ?i. R x i y)
+ (`!R' x tr.
+    steps_rel R' x tr ==>
+    LRC (\x y. ?i. R' x i y)
       (BUTLAST (CONS x (MAP SND tr))) x (LAST (CONS x (MAP SND tr)))`,
   CHEAT_TAC);;
 

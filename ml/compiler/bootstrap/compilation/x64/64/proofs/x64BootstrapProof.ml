@@ -184,13 +184,12 @@ let compile_correct_applied = prove
 
 (* [local] *)
 let isPREFIX_MEM = prove
- (`!xs ys. isPREFIX xs ys ==> (!x. MEM x xs ==> MEM x ys)`,
+ (`!xs ys. isPREFIX xs ys ==> (!x. ag32_MEM x xs ==> ag32_MEM x ys)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let LPREFIX_MEM = prove
- (`!xs ys. LPREFIX (sptree_fromList xs) ys ==> (!x. MEM x xs ==> x IN LSET
-  ys)`,
+ (`!xs ys. LPREFIX (fromList xs) ys ==> (!x. ag32_MEM x xs ==> x IN LSET ys)`,
   CHEAT_TAC);;
 
 let repl_ready_to_run_imp = prove

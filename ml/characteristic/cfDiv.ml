@@ -1215,13 +1215,13 @@ let llist_upto = cake_inductive
 (* HOL4 cfDivScript.sml:4234-4238: ML code, not ported *)
 
 let LLIST_BISIM_UPTO = prove
- (`!ll1 ll2 R.
-     R ll1 ll2 /\
+ (`!ll1 ll2 R'.
+     R' ll1 ll2 /\
      (!ll3 ll4.
-       R ll3 ll4 ==>
+       R' ll3 ll4 ==>
        ll3 = LNIL /\ ll4 = LNIL \/
        LHD ll3 = LHD ll4 /\
-       llist_upto R (THE (LTL ll3)) (THE (LTL ll4))) ==> ll1 = ll2`,
+       llist_upto R' (THE (LTL ll3)) (THE (LTL ll4))) ==> ll1 = ll2`,
   CHEAT_TAC);;
 
 

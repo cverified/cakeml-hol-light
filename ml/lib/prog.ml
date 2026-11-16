@@ -14,9 +14,9 @@ let _ = cake_library ();;
 (* HOL4 ancestors outside the port: pred_set arithmetic *)
 
 let rel_sequence_def = new_definition
-  `rel_sequence R seq state = (
+  `rel_sequence R' seq state = (
      (seq 0 = state) /\
-     (!n. if (?x. R (seq n) x) then R (seq n) (seq (SUC n)) else (seq
+     (!n. if (?x. R' (seq n) x) then R' (seq n) (seq (SUC n)) else (seq
        (SUC n) = seq n)))`;;
 
 let SEP_REFINE_def = new_definition

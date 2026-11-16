@@ -108,42 +108,43 @@ let termsem_equation = prove
 
 let termsem_raconv = prove
  (`!env tp. RACONV env tp ==>
-      (!Γ i v1 v2.
+      (!Gamma i v1 v2.
         (FST v1 = FST v2) /\
         (!x1 ty1 x2 ty2.
           ALPHAVARS env (holSyntax_Var x1 ty1,holSyntax_Var x2 ty2) ==>
-            ((termsem0 mem) Γ i v1 (holSyntax_Var x1 ty1) =
-             (termsem0 mem) Γ i v2 (holSyntax_Var x2 ty2))) /\
+            ((termsem0 mem) Gamma i v1 (holSyntax_Var x1 ty1) =
+             (termsem0 mem) Gamma i v2 (holSyntax_Var x2 ty2))) /\
         ALL (\(x,y). welltyped x /\ welltyped y /\ typeof x = typeof y) env
           /\
         welltyped (FST tp) /\ welltyped (SND tp) ==>
-        (termsem0 mem) Γ i v1 (FST tp) = (termsem0 mem) Γ i v2 (SND tp))`,
+        (termsem0 mem) Gamma i v1 (FST tp) = (termsem0 mem) Gamma i v2
+          (SND tp))`,
   CHEAT_TAC);;
 
 let termsem_aconv = prove
- (`!Γ i v t1 t2. ACONV t1 t2 /\ welltyped t1 /\ welltyped t2 ==> (termsem0
-  mem) Γ i v t1 = (termsem0 mem) Γ i v t2`,
+ (`!Gamma i v t1 t2. ACONV t1 t2 /\ welltyped t1 /\ welltyped t2 ==>
+  (termsem0 mem) Gamma i v t1 = (termsem0 mem) Gamma i v t2`,
   CHEAT_TAC);;
 
 (* semantics only depends on valuation of free variables *)
 
 let termsem_frees = prove
- (`!Γ i t v1 v2.
+ (`!Gamma i t v1 v2.
       welltyped t /\ FST v1 = FST v2 /\
       (!x ty. VFREE_IN (holSyntax_Var x ty) t ==> SND v1 (x,ty) = SND v2
-        (x,ty)) ==> (termsem0 mem) Γ i v1 t = (termsem0 mem) Γ i v2 t`,
+        (x,ty)) ==> (termsem0 mem) Gamma i v1 t = (termsem0 mem) Gamma i v2 t`,
   CHEAT_TAC);;
 
 (* HOL4 holSemanticsExtraScript.sml:315-324: a theorem whose statement the
    port cannot state yet: typesem_frees *)
 
 let termsem_tyfrees = prove
- (`!Γ i t v1 v2 tmenv.
-      holSyntax_term_ok Γ t /\
+ (`!Gamma i t v1 v2 tmenv.
+      holSyntax_term_ok Gamma t /\
       SND v1 = SND v2 /\
       (!a. MEM a (tvars t) ==> FST v1 a = FST v2 a) /\
       tmenv = (\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
-        ctxt)) ctxt)) Γ ==> (termsem0 mem) tmenv i v1 t = (termsem0 mem)
+        ctxt)) ctxt)) Gamma ==> (termsem0 mem) tmenv i v1 t = (termsem0 mem)
         tmenv i v2 t`,
   CHEAT_TAC);;
 
@@ -156,11 +157,11 @@ let termsem_simple_subst = prove
         (holSyntax_Var y ty) u /\ MEM u (MAP FST ilist)} /\
       (!s s'. MEM (s',s) ilist ==> (?x ty. s = holSyntax_Var x ty
         /\ has_type s' ty)) ==>
-      (!Γ i v.
-        (termsem0 mem) Γ i v (simple_subst ilist tm) =
-        (termsem0 mem) Γ i
+      (!Gamma i v.
+        (termsem0 mem) Gamma i v (simple_subst ilist tm) =
+        (termsem0 mem) Gamma i
           (FST v,UPDATE_LIST (SND v)
-                  (MAP ((holSyntax_dest_var ## (termsem0 mem) Γ i v) o
+                  (MAP ((holSyntax_dest_var ## (termsem0 mem) Gamma i v) o
                     (\(s',s). (s,s')))
                       (REVERSE ilist)))
           tm)`,
@@ -171,10 +172,10 @@ let termsem_VSUBST = prove
      welltyped tm /\
      (!s s'. MEM (s',s) ilist ==> (?x ty. s = holSyntax_Var x ty /\ has_type
        s' ty)) ==>
-     (!Γ i v.
-      (termsem0 mem) Γ i v (VSUBST ilist tm) =
-      (termsem0 mem) Γ i (FST v,UPDATE_LIST (SND v)
-                   (MAP ((holSyntax_dest_var ## (termsem0 mem) Γ i v) o
+     (!Gamma i v.
+      (termsem0 mem) Gamma i v (VSUBST ilist tm) =
+      (termsem0 mem) Gamma i (FST v,UPDATE_LIST (SND v)
+                   (MAP ((holSyntax_dest_var ## (termsem0 mem) Gamma i v) o
                      (\(s',s). (s,s')))
                      (REVERSE ilist))) tm)`,
   CHEAT_TAC);;
@@ -182,13 +183,13 @@ let termsem_VSUBST = prove
 (* semantics of instantiation *)
 
 let termsem_simple_inst = prove
- (`!Γ tm tyin tmenv.
-      welltyped tm /\ holSyntax_term_ok Γ tm /\
+ (`!Gamma tm tyin tmenv.
+      welltyped tm /\ holSyntax_term_ok Gamma tm /\
       ALL_DISTINCT (bv_names tm) /\
       DISJOINT (set_of_list (bv_names tm)) {x | ?ty. VFREE_IN (holSyntax_Var
         x ty) tm} /\
       tmenv = (\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-        ctxt)) Γ ==>
+        ctxt)) Gamma ==>
       (!i v.
         (termsem0 mem) tmenv i v (simple_inst tyin tm) =
         (termsem0 mem) tmenv i
@@ -199,9 +200,9 @@ let termsem_simple_inst = prove
   CHEAT_TAC);;
 
 let termsem_INST = prove
- (`!Γ tm tyin tmenv.
-      holSyntax_term_ok Γ tm /\ tmenv = (\ctxt. alist_to_fmap ((\ctxt. FLAT
-        (MAP consts_of_upd ctxt)) ctxt)) Γ ==>
+ (`!Gamma tm tyin tmenv.
+      holSyntax_term_ok Gamma tm /\ tmenv = (\ctxt. alist_to_fmap ((\ctxt.
+        FLAT (MAP consts_of_upd ctxt)) ctxt)) Gamma ==>
       (!i v.
         (termsem0 mem) tmenv i v (holSyntax_INST tyin tm) =
         (termsem0 mem) tmenv i
@@ -294,10 +295,10 @@ let equal_on_reduce = prove
    port cannot state yet: typesem_sig *)
 
 let termsem_sig = prove
- (`!tm Γ i v i' tmenv.
-      is_std_sig Γ /\ holSyntax_term_ok Γ tm /\ tmenv = (\ctxt.
-        alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) Γ
-        /\ equal_on Γ i i' ==>
+ (`!tm Gamma i v i' tmenv.
+      is_std_sig Gamma /\ holSyntax_term_ok Gamma tm /\ tmenv = (\ctxt.
+        alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) Gamma
+        /\ equal_on Gamma i i' ==>
       (termsem0 mem) tmenv i' v tm = (termsem0 mem) tmenv i v tm`,
   CHEAT_TAC);;
 

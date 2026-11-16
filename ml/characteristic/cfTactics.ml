@@ -31,8 +31,8 @@ let _ = do_list hide_constant ["True"];;
 (* HOL4 cfTacticsScript.sml:12-21: code that the source has in a comment *)
 
 let xret_lemma = prove
- (`!H Q R. SEP_IMP H (Q v * GC) /\ R Q ==>
-    local (\H' Q'. SEP_IMP H' (Q' v) /\ R Q') H Q`,
+ (`!H Q R'. SEP_IMP H (Q v * GC) /\ R' Q ==>
+    local (\H' Q'. SEP_IMP H' (Q' v) /\ R' Q') H Q`,
   CHEAT_TAC);;
 
 let xret_lemma1 =
@@ -47,8 +47,8 @@ let xret_lemma_unify = prove
 (* HOL4 cfTacticsScript.sml:43-51: code that the source has in a comment *)
 
 let xret_no_gc_lemma = prove
- (`!v H Q R. SEP_IMP H (Q v) /\ R Q ==>
-      local (\H' Q'. SEP_IMP H' (Q' v) /\ R Q') H Q`,
+ (`!v H Q R'. SEP_IMP H (Q v) /\ R' Q ==>
+      local (\H' Q'. SEP_IMP H' (Q' v) /\ R' Q') H Q`,
   CHEAT_TAC);;
 
 (*------------------------------------------------------------------*)

@@ -368,16 +368,16 @@ let MEM_anub = prove
    port lets its own machinery find one *)
 (* HOL4 inferProgScript.sml:692-699: the tactic that proves the termination *)
 let nsSub_translate_def,nsSub_translate_ind = define_guess
-  `nsSub_translate path' R b1 b2 <=>
+  `nsSub_translate path' R' b1 b2 <=>
    (match b1 with (Bind e1V e1M) -> (match b2 with (Bind e2V e2M) ->
      ALL (\(k,v1).
        match ALOOKUP e2V k with
          NONE -> F
-       | SOME v2 -> R (mk_id (REVERSE path') k) v1 v2) (anub e1V []) /\
+       | SOME v2 -> R' (mk_id (REVERSE path') k) v1 v2) (anub e1V []) /\
      ALL (\(k,v1).
        match ALOOKUP e2M k with
          NONE -> F
-       | SOME v2 -> nsSub_translate (CONS k path') R v1 v2) (anub e1M
+       | SOME v2 -> nsSub_translate (CONS k path') R' v1 v2) (anub e1M
          [])))`;;
 
 (* [local] *)
@@ -394,7 +394,7 @@ let inferProg_MEM_ALOOKUP = prove
 
 (* [local] *)
 let nsSub_thm = prove
- (`!ls R e1 e2. nsSub_compute ls R e1 e2 <=> nsSub_translate ls R e1 e2`,
+ (`!ls R' e1 e2. nsSub_compute ls R' e1 e2 <=> nsSub_translate ls R' e1 e2`,
   CHEAT_TAC);;
 
 (* HOL4 inferProgScript.sml:742: ML code, not ported *)

@@ -142,7 +142,7 @@ let repl_prog_def,repl_prog_ind = define_guess
 
 (* [local] *)
 let foldl_char_cons = prove
- (`!xs ys. mlvector_foldl char_cons ys xs = APPEND (REVERSE xs) ys`,
+ (`!xs ys. mllist_foldl char_cons ys xs = APPEND (REVERSE xs) ys`,
   CHEAT_TAC);;
 
 let charsFrom_spec = prove

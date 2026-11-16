@@ -105,8 +105,8 @@ let labSem_assert_def = new_definition
   labSem_state_failed s)) s`;;
 
 let labSem_reg_imm_def = define_cases
-  `(labSem_reg_imm (Reg r) s = (\r s. labSem_state_regs s r) r s) /\
-   (labSem_reg_imm (Imm w) s = word_Word w)`;;
+  `(labSem_reg_imm (asm_Reg r) s = (\r s. labSem_state_regs s r) r s) /\
+   (labSem_reg_imm (asm_Imm w) s = word_Word w)`;;
 add_simp labSem_reg_imm_def;;
 
 let labSem_binop_upd_def = define_general
@@ -125,8 +125,8 @@ let labSem_arith_upd_def = define_cases
   `(labSem_arith_upd (asm_Binop b r1 r2 (ri:'a asm_reg_imm)) s =
          match ((\r s. labSem_state_regs s r) r2 s,labSem_reg_imm ri s)
              with (word_Word w1,word_Word w2) -> labSem_binop_upd r1 b w1 w2 s
-         | (x,_) -> if b = asm_Or /\ ri = Reg r2 then labSem_upd_reg r1
-             x s else labSem_assert F s) /\
+         | (x,_) -> if b = asm_Or /\ ri = asm_Reg r2 then
+             labSem_upd_reg r1 x s else labSem_assert F s) /\
    (labSem_arith_upd (asm_Shift l r1 r2 ri) s =
          match ((\r s. labSem_state_regs s r) r2 s,labSem_reg_imm ri s)
              with (word_Word w1,word_Word w2) ->

@@ -69,7 +69,7 @@ let json_to_mlstring_ind = prove
 
 (* [local] *)
 let string_imp_thm = prove
- (`string_imp = (\s. mlsexp_String s)`,
+ (`string_imp = (\s. display_String s)`,
   CHEAT_TAC);;
 
 (* HOL4 explorerProgScript.sml:106-108: ML code, not ported *)

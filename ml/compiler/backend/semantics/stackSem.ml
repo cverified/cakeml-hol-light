@@ -450,16 +450,18 @@ let stackSem_inst_def = new_definition
      match i with asm_Skip -> SOME s
      | asm_Const reg w -> stackSem_assign reg (word_Const w) s
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
-         if bop = asm_Or /\ ri = Reg r2 then
+         if bop = asm_Or /\ ri = asm_Reg r2 then
            match FLOOKUP (stackSem_state_regs s) r2 with NONE -> NONE
            | SOME w -> SOME (stackSem_set_var r1 w s)
          else stackSem_assign r1
-             (word_Op bop [word_Var r2; match ri with Reg r3 -> word_Var r3
-                              | Imm w -> word_Const w]) s
+             (word_Op bop [word_Var r2; match ri with asm_Reg r3 -> word_Var
+               r3
+                              | asm_Imm w -> word_Const w]) s
      | asm_Arith (asm_Shift sh r1 r2 ri) ->
          stackSem_assign r1
-           (word_Shift sh (word_Var r2) (match ri with Reg r3 -> word_Var r3
-                              | Imm w -> word_Const w)) s
+           (word_Shift sh (word_Var r2) (match ri with asm_Reg r3 ->
+             word_Var r3
+                              | asm_Imm w -> word_Const w)) s
      | asm_Arith (asm_Div r1 r2 r3) ->
         (let vs = stackSem_get_vars [r3; r2] s in
         match vs with
@@ -670,8 +672,9 @@ let stackSem_inst_def = new_definition
      | _ -> NONE)`;;
 
 let stackSem_get_var_imm_def = define_cases
-  `(stackSem_get_var_imm ((Reg n):'a asm_reg_imm) s = stackSem_get_var n s) /\
-   (stackSem_get_var_imm (Imm w) s = SOME (word_Word w))`;;
+  `(stackSem_get_var_imm ((asm_Reg n):'a asm_reg_imm) s = stackSem_get_var
+    n s) /\
+   (stackSem_get_var_imm (asm_Imm w) s = SOME (word_Word w))`;;
 
 let stackSem_find_code_def = define_cases
   `(stackSem_find_code (INL p) regs' code = sptree_lookup p code) /\

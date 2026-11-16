@@ -23,8 +23,8 @@ let _ = cake_theory "stack_names"
    expands *)
 
 let ri_find_name_def = define_cases
-  `(ri_find_name f (Reg r) = Reg (tlookup f r)) /\
-   (ri_find_name f (Imm w) = Imm w)`;;
+  `(ri_find_name f (asm_Reg r) = asm_Reg (tlookup f r)) /\
+   (ri_find_name f (asm_Imm w) = asm_Imm w)`;;
 
 let inst_find_name_def = new_definition
   `inst_find_name f i =

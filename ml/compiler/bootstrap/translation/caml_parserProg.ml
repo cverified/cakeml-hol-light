@@ -158,7 +158,7 @@ let camlptreeconversion_partition_types_side = prove
 
 (* [local] *)
 let destresult_side = prove
- (`pegexec_destresult_side v = (?r. v = pegexec_Result r)`,
+ (`pegexec_destresult_side v = (?r. v = holSyntaxLib_Result r)`,
   CHEAT_TAC);;
 
 let ptree_definition_side = prove

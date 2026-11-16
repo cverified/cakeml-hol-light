@@ -57,8 +57,8 @@ let assert_def = new_definition
   s`;;
 
 let reg_imm_def = define_cases
-  `(asmSem_reg_imm (Reg r) s = asmSem_read_reg r s) /\
-   (asmSem_reg_imm (Imm w) s = w)`;;
+  `(asmSem_reg_imm (asm_Reg r) s = asmSem_read_reg r s) /\
+   (asmSem_reg_imm (asm_Imm w) s = w)`;;
 
 let binop_upd_def = define_general
   `(asmSem_binop_upd r asm_Add w1 w2 = asmSem_upd_reg r (w1 + w2)) /\
@@ -81,8 +81,8 @@ let arith_upd_def = define_cases
          asmSem_binop_upd r1 b (asmSem_read_reg r2 s) (asmSem_reg_imm
              ri s) s) /\
    (asmSem_arith_upd (asm_Shift l r1 r2 ri) (s:'a asm_state) =
-         asmSem_assert (match ri with Reg r -> w2n (asmSem_read_reg r s) <
-             dimindex (:'a) | _ -> T)
+         asmSem_assert (match ri with asm_Reg r -> w2n (asmSem_read_reg r
+             s) < dimindex (:'a) | _ -> T)
            (asmSem_upd_reg r1 (asmSem_word_shift l (asmSem_read_reg r2
                s) (w2n (asmSem_reg_imm ri s))) s)) /\
    (asmSem_arith_upd (asm_Div r1 r2 r3) (s:'a asm_state) =

@@ -29,14 +29,15 @@ let bytes_in_memory_thm = prove
        target_state_rel ag32_target s state /\
        bytes_in_memory (asm_state_pc s) [a; b; c; d] (asm_state_mem s)
          (asm_state_mem_domain s) ==>
-       alignment_aligned 2 (?_PC state) /\
-       (?_MEM state (?_PC state) = a) /\
-       (?_MEM state (?_PC state + (n2w 1)) = b) /\
-       (?_MEM state (?_PC state + (n2w 2)) = c) /\
-       (?_MEM state (?_PC state + (n2w 3)) = d) /\ ?_PC
-       state + (n2w 3) IN asm_state_mem_domain s /\ ?_PC
-       state + (n2w 2) IN asm_state_mem_domain s /\ ?_PC
-       state + (n2w 1) IN asm_state_mem_domain s /\ ?_PC
+       alignment_aligned 2 (ag32_state_PC state) /\
+       (ag32_state_MEM state (ag32_state_PC state) = a) /\
+       (ag32_state_MEM state (ag32_state_PC state + (n2w 1)) = b) /\
+       (ag32_state_MEM state (ag32_state_PC state + (n2w 2)) = c) /\
+       (ag32_state_MEM state (ag32_state_PC state + (n2w 3)) = d)
+         /\ ag32_state_PC
+       state + (n2w 3) IN asm_state_mem_domain s /\ ag32_state_PC
+       state + (n2w 2) IN asm_state_mem_domain s /\ ag32_state_PC
+       state + (n2w 1) IN asm_state_mem_domain s /\ ag32_state_PC
        state IN asm_state_mem_domain s`,
   CHEAT_TAC);;
 
@@ -46,13 +47,14 @@ let bytes_in_memory_thm2 = prove
        target_state_rel ag32_target s state /\
        bytes_in_memory (asm_state_pc s + w) [a; b; c; d] (asm_state_mem s)
          (asm_state_mem_domain s) ==>
-       (?_MEM state (?_PC state + w) = a) /\
-       (?_MEM state (?_PC state + w + (n2w 1)) = b) /\
-       (?_MEM state (?_PC state + w + (n2w 2)) = c) /\
-       (?_MEM state (?_PC state + w + (n2w 3)) = d) /\ ?_PC
-       state + w + (n2w 3) IN asm_state_mem_domain s /\ ?_PC
-       state + w + (n2w 2) IN asm_state_mem_domain s /\ ?_PC
-       state + w + (n2w 1) IN asm_state_mem_domain s /\ ?_PC
+       (ag32_state_MEM state (ag32_state_PC state + w) = a) /\
+       (ag32_state_MEM state (ag32_state_PC state + w + (n2w 1)) = b) /\
+       (ag32_state_MEM state (ag32_state_PC state + w + (n2w 2)) = c) /\
+       (ag32_state_MEM state (ag32_state_PC state + w + (n2w 3)) = d)
+         /\ ag32_state_PC
+       state + w + (n2w 3) IN asm_state_mem_domain s /\ ag32_state_PC
+       state + w + (n2w 2) IN asm_state_mem_domain s /\ ag32_state_PC
+       state + w + (n2w 1) IN asm_state_mem_domain s /\ ag32_state_PC
        state + w IN asm_state_mem_domain s`,
   CHEAT_TAC);;
 
@@ -165,11 +167,14 @@ let Decode_Encode = prove
 (* [local] *)
 let ag32_run = prove
  (`!i ms.
-      (?_MEM ms (?_PC ms) = (7 >< 0) (Encode i)) /\
-      (?_MEM ms (?_PC ms + (n2w 1)) = (15 >< 8) (Encode i)) /\
-      (?_MEM ms (?_PC ms + (n2w 2)) = (23 >< 16) (Encode i)) /\
-      (?_MEM ms (?_PC ms + (n2w 3)) = (31 >< 24) (Encode i)) /\
-      alignment_aligned 2 (?_PC ms) ==>
+      (ag32_state_MEM ms (ag32_state_PC ms) = (7 >< 0) (Encode i)) /\
+      (ag32_state_MEM ms (ag32_state_PC ms + (n2w 1)) = (15 >< 8) (Encode
+        i)) /\
+      (ag32_state_MEM ms (ag32_state_PC ms + (n2w 2)) = (23 >< 16) (Encode
+        i)) /\
+      (ag32_state_MEM ms (ag32_state_PC ms + (n2w 3)) = (31 >< 24) (Encode
+        i)) /\
+      alignment_aligned 2 (ag32_state_PC ms) ==>
       (Next ms = Run i ms)`,
   CHEAT_TAC);;
 
@@ -184,10 +189,10 @@ let bytes_in_memory_IMP_all_pcs_MEM = prove
     bytes_in_memory a xs m dm /\
     (
      // (!(i:num) ms'. (∀a. a ∈ dm ⇒ (env i ms').MEM a = ms'.MEM a)) ==>
-     !(i:num) ms'. fun2set (?_MEM (env i ms'),dm) = fun2set (?_MEM ms',dm))
-       ==>
-    (!i ms'. (!pc'. pc' IN all_pcs (LENGTH xs) a 0 ==> ?_MEM (env i ms')
-      pc' = ?_MEM ms' pc'))`,
+     !(i:num) ms'. fun2set (ag32_state_MEM (env i ms'),dm) = fun2set
+       (ag32_state_MEM ms',dm)) ==>
+    (!i ms'. (!pc'. pc' IN all_pcs (LENGTH xs) a 0 ==> ag32_state_MEM (env
+      i ms') pc' = ag32_state_MEM ms' pc'))`,
   CHEAT_TAC);;
 
 (* -------------------------------------------------------------------------

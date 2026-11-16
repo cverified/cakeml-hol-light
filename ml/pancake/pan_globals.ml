@@ -280,7 +280,7 @@ let compile_top_def = new_definition
                               (mk_pan_globals_context FEMPTY (n2w 0)
                                 (bytes_in_word * n2w (SUM (MAP size_of_shape
                                 (dec_shapes nds'))))) nds' in let
-           params' = MAP (ast_Var pan_Local o FST) args in let
+           params' = MAP (pan_Var pan_Local o FST) args in let
            new_main = Function (mk_fun_decl start' F F args (pan_Seq
              (pan_nested_seq decls) ((asm_Call NONE) start' params'))
              rshape) in APPEND exns (CONS new_main funs)`;;

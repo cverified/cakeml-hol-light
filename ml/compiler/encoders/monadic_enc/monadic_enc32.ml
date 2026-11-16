@@ -169,7 +169,7 @@ let run_ienc_state_32_def = new_definition
 let enc_secs_32_aux_def = new_definition
   `enc_secs_32_aux enc n xs =
      run_ienc_state_32 (enc_sec_hash_32_ls_full enc n xs)
-       (mk_enc_state_32 (n,[]))`;;
+       (mk_ienc_state_32 (n,[]))`;;
 
 let enc_secs_32_def = new_definition
   `enc_secs_32 enc n xs =

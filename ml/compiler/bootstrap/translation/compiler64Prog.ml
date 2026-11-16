@@ -338,7 +338,7 @@ let select_parse_def = new_definition
 (* HOL4 compiler64ProgScript.sml:589-592: ML code, not ported *)
 
 let init_next_string_def = new_definition
-  `init_next_string cl = if MEM (implode "--candle") cl then (implode
+  `init_next_string cl = if ag32_MEM (implode "--candle") cl then (implode
   "candle") else (implode "")`;;
 
 (* HOL4 compiler64ProgScript.sml:598-599: ML code, not ported *)
@@ -348,7 +348,7 @@ let init_next_string_def = new_definition
 (* HOL4 compiler64ProgScript.sml:616-624: ML code, not ported *)
 
 let has_repl_flag_def = new_definition
-  `has_repl_flag cl <=> MEM (implode "--repl") cl \/ MEM (implode
+  `has_repl_flag cl <=> ag32_MEM (implode "--repl") cl \/ ag32_MEM (implode
   "--candle") cl`;;
 
 (* HOL4 compiler64ProgScript.sml:630-631: ML code, not ported *)
@@ -391,14 +391,14 @@ let semantics_compiler64_prog = prove
  (`~(has_repl_flag (TL cl)) /\ IS_SOME (stdin_content fs) /\ wfcl cl /\ wfFS fs
   /\
    STD_streams fs ==>
-   (?io_events.
+   (?io_events'.
      semantics_dec_list
        (semanticPrimitives_state_eval_state_fupd (K (SOME (EvalDecs
          (eval_decs_state_env_id_counter_fupd (K (0,0,1)) eval_state_var))))
          (ml_prog_init_state
          (basis_ffi ext cl fs)))
-       init_env compiler64_prog (ffi_Terminate ffi_Success io_events) /\
-     extract_fs ext (cl,fs) io_events =
+       init_env compiler64_prog (ffi_Terminate ffi_Success io_events') /\
+     extract_fs ext (cl,fs) io_events' =
        SOME (full_compile_64 (TL cl) (get_stdin fs) fs))`,
   CHEAT_TAC);;
 

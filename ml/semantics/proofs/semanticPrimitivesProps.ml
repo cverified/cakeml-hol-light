@@ -292,9 +292,9 @@ let map_result_Rerr = prove
 add_simp map_result_Rerr;;
 
 let exc_rel_def = new_definition
-  `exc_rel R x2 x3 =
+  `exc_rel R' x2 x3 =
      match (x2,x3) with
-       (Rraise v1,Rraise v2) -> R v1 v2
+       (Rraise v1,Rraise v2) -> R' v1 v2
      | (Rabort a1,Rabort a2) -> a1 = a2
      | (_,_) -> F`;;
 add_simp exc_rel_def;;
@@ -403,27 +403,27 @@ let sv_every_def = new_definition
 add_simp sv_every_def;;
 
 let sv_rel_def = new_definition
-  `semanticPrimitivesProps_sv_rel R x2' x3 =
+  `semanticPrimitivesProps_sv_rel R' x2' x3 =
    match (x2',x3) with
-     (semanticPrimitives_Refv v1,semanticPrimitives_Refv v2) -> R v1 v2
+     (semanticPrimitives_Refv v1,semanticPrimitives_Refv v2) -> R' v1 v2
    | (semanticPrimitives_W8array w1,semanticPrimitives_W8array w2) -> (w1 =
      w2)
-   | (semanticPrimitives_Varray vs1,semanticPrimitives_Varray vs2) -> ALL2 R
-     vs1 vs2
+   | (semanticPrimitives_Varray vs1,semanticPrimitives_Varray vs2) -> ALL2
+     R' vs1 vs2
    | (semanticPrimitives_Thunk m1 v1,semanticPrimitives_Thunk m2 v2) -> (m1
-     = m2 /\ R v1 v2)
+     = m2 /\ R' v1 v2)
    | (_,_) -> F`;;
 add_simp sv_rel_def;;
 
 let sv_rel_refl = prove
- (`!R x. (!x. R x x) ==> semanticPrimitivesProps_sv_rel R x x`,
+ (`!R' x. (!x. R' x x) ==> semanticPrimitivesProps_sv_rel R' x x`,
   CHEAT_TAC);;
 add_simp sv_rel_refl;;
 
 let sv_rel_trans = prove
- (`!R. (!x y z. R x y /\ R y z ==> R x z) ==> (!x y z.
-  semanticPrimitivesProps_sv_rel R x y /\ semanticPrimitivesProps_sv_rel R y
-  z ==> semanticPrimitivesProps_sv_rel R x z)`,
+ (`!R'. (!x y z. R' x y /\ R' y z ==> R' x z) ==> (!x y z.
+  semanticPrimitivesProps_sv_rel R' x y /\ semanticPrimitivesProps_sv_rel R'
+  y z ==> semanticPrimitivesProps_sv_rel R' x z)`,
   CHEAT_TAC);;
 
 let sv_rel_cases = prove

@@ -380,10 +380,10 @@ let es_stack_forward_trans = prove
   CHEAT_TAC);;
 
 let match_result_rel_def = new_definition
-  `source_evalProof_match_result_rel nerr R mr1 mr2 <=> (match mr1 with
+  `source_evalProof_match_result_rel nerr R' mr1 mr2 <=> (match mr1 with
   No_match -> mr2 = No_match
      | Match_type_error -> nerr \/ mr2 = Match_type_error
-     | Match x -> (?y. mr2 = Match y /\ R x y))`;;
+     | Match x -> (?y. mr2 = Match y /\ R' x y))`;;
 
 let store_lookup_rel = prove
  (`ALL2 (semanticPrimitivesProps_sv_rel R) refs refs' ==>

@@ -148,7 +148,7 @@ let MONAD_def = new_definition
 
 (* return *)
 let EvalM_return = prove
- (`!H b. ast_Eval env exp (a x) ==>
+ (`!H b. ml_translator_Eval env exp (a x) ==>
          EvalM ro env st exp (MONAD a b (st_ex_return x))
            ((H:('a->(heap_part->bool)->bool)#('ffi->(mlstring,ffi)fmap)#
            (mlstring list#(mlstring->word8 list->word8 list->ffi->(ffi
@@ -182,7 +182,7 @@ let EvalM_bind_ignore = prove
   CHEAT_TAC);;
 
 let EvalM_pure_seq = prove
- (`ast_Eval env e1 (c y) /\
+ (`ml_translator_Eval env e1 (c y) /\
    EvalM ro env st e2 (MONAD a b x)
      ((H:('a->(heap_part->bool)->bool)#('ffi->(mlstring,ffi)fmap)#(mlstring
      list#(mlstring->word8 list->word8 list->ffi->(ffi cfHeapsBase_ffi_result)
@@ -216,14 +216,16 @@ let state_update_clock_id = prove
 add_simp state_update_clock_id;;
 
 let Eval_IMP_PURE = prove
- (`!H env exp P x. ast_Eval env exp (P x) ==> EvalM ro env st exp (PURE P x)
+ (`!H env exp P x. ml_translator_Eval env exp (P x) ==> EvalM ro env st exp
+  (PURE P x)
   ((H:('a->(heap_part->bool)->bool)#('ffi->(mlstring,ffi)fmap)#(mlstring
   list#(mlstring->word8 list->word8 list->ffi->(ffi cfHeapsBase_ffi_result)
   option)) list))`,
   CHEAT_TAC);;
 
 let Eval_IMP_PURE_EvalM_T = prove
- (`!H env exp P x. ast_Eval env exp (P x) ==> EvalM T env st exp (PURE P x)
+ (`!H env exp P x. ml_translator_Eval env exp (P x) ==> EvalM T env st exp
+  (PURE P x)
   ((H:('a->(heap_part->bool)->bool)#('ffi->(mlstring,ffi)fmap)#(mlstring
   list#(mlstring->word8 list->word8 list->ffi->(ffi cfHeapsBase_ffi_result)
   option)) list))`,
@@ -551,7 +553,7 @@ let EvalM_otherwise = prove
 
 let EvalM_If = prove
  (`!H.
-     (a1 ==> ast_Eval env x1 (BOOL b1)) /\
+     (a1 ==> ml_translator_Eval env x1 (BOOL b1)) /\
      (a2 ==> EvalM ro env st x2 (a b2) H) /\
      (a3 ==> EvalM ro env st x3 (a b3) H) ==>
      (a1 /\ (CONTAINER b1 ==> a2) /\ (~(CONTAINER b1) ==> a3) ==>
@@ -565,7 +567,7 @@ let EvalM_If = prove
 
 let EvalM_Let = prove
  (`!H.
-    ast_Eval env exp (a res) /\
+    ml_translator_Eval env exp (a res) /\
     (!v. a res v ==> EvalM ro (ml_prog_write name v env) st body (b (f res))
       H) ==>
     EvalM ro env st (ast_Let (SOME name) exp body) (b (LET f res))
@@ -578,7 +580,7 @@ let EvalM_Let = prove
 
 let EvalM_PMATCH_NIL = prove
  (`!H b x xv a.
-      ast_Eval env x (a xv) ==>
+      ml_translator_Eval env x (a xv) ==>
       pmatch_all_no_type_error (sem_env_c env) a ([]:(ast_pat#ast_exp) list)
         /\
       (CONTAINER F ==>
@@ -592,7 +594,7 @@ let EvalM_PMATCH = prove
  (`!H b a x xv.
       ALL_DISTINCT (ast_pat_bindings pt) ==>
       (!v1 v2. pat v1 = pat v2 ==> v1 = v2) ==>
-      ast_Eval env x (a xv) ==>
+      ml_translator_Eval env x (a xv) ==>
       (pt1 xv ==> EvalM ro env st (ast_Mat x ys) (b (PMATCH xv yrs)) H) ==>
       EvalPatRel env a pt pat ==>
       (!env2 vars'.
@@ -725,7 +727,7 @@ let LIST_CONJ_REVERSE = prove
 (* [local] *)
 let LIST_CONJ_Eval = prove
  (`!xs Ps (s:'d semanticPrimitives_state).
-     LIST_CONJ (MAP (\(exp,P). ast_Eval env exp P) (ZIP xs Ps)) /\
+     LIST_CONJ (MAP (\(exp,P). ml_translator_Eval env exp P) (ZIP xs Ps)) /\
      LENGTH xs = LENGTH Ps ==>
      (?ck vs junk.
         evaluate (semanticPrimitives_state_clock_fupd (K ck) s) env xs =
@@ -752,7 +754,8 @@ let EvalM_raise = prove
    LENGTH exprs = arity ==>
    LENGTH EVAL_CONDS = arity ==>
    lookup_cons cons_name env = SOME (arity,ExnStamp stamp) ==>
-   LIST_CONJ (MAP (\(exp,P). ast_Eval env exp P) (ZIP exprs EVAL_CONDS)) ==>
+   LIST_CONJ (MAP (\(exp,P). ml_translator_Eval env exp P) (ZIP exprs
+     EVAL_CONDS)) ==>
    EvalM ro env st (ast_Raise (ast_Con (SOME cons_name) exprs))
      (MONAD a EXN_TYPE f) H`,
   CHEAT_TAC);;

@@ -822,8 +822,7 @@ let global_env_inv_extend2 = prove
 let lookup_build_rec_env_lem = prove
  (`!x cl_env funs' funs.
      ALOOKUP (MAP (\(fn,n,e). (fn,semanticPrimitives_Recclosure cl_env funs'
-       fn)) funs)
-       x = SOME v ==>
+       fn)) funs) x = SOME v ==>
      v = semanticPrimitives_Recclosure cl_env funs' x`,
   CHEAT_TAC);;
 

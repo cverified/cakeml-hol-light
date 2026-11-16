@@ -223,7 +223,7 @@ let state_rel_initial_state = prove
 
 (* [local] *)
 let state_rel_IMP_clock = prove
- (`flat_to_closProof_state_rel s t ==> flatSem_state_clock s =
+ (`clos_interpProof_state_rel s t ==> closSem_state_clock s =
   closSem_state_clock t`,
   CHEAT_TAC);;
 
@@ -290,9 +290,9 @@ let dest_pat_from_case = prove
 
 (* [local] *)
 let LIST_REL_MAP_GENLIST = prove
- (`!funs f1 f2 R.
-     (!n. n < LENGTH funs ==> R (f1 (EL n funs)) (f2 n)) ==>
-     ALL2 R (MAP f1 funs) (list_of_seq f2 (LENGTH funs))`,
+ (`!funs f1 f2 R'.
+     (!n. n < LENGTH funs ==> R' (f1 (EL n funs)) (f2 n)) ==>
+     ALL2 R' (MAP f1 funs) (list_of_seq f2 (LENGTH funs))`,
   CHEAT_TAC);;
 
 (* HOL4 flat_to_closProofScript.sml:408-428: a proof *)

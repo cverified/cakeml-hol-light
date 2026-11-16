@@ -237,8 +237,7 @@ let MAP_subst_MAP_Var = prove
  (`!xs ys.
      ALL_DISTINCT xs /\
      LENGTH xs = LENGTH ys ==>
-       MAP (compute_eval_subst (ZIP xs ys)) (MAP compute_syntax_Var xs) =
-         ys`,
+       MAP (compute_eval_subst (ZIP xs ys)) (MAP holSyntax_Var xs) = ys`,
   CHEAT_TAC);;
 
 (* TODO Move *)
@@ -376,8 +375,8 @@ let compute_eval_thm = prove
        ALL (\(f,vs,cv).
          ALL_DISTINCT vs /\
          cexp_consts_ok eqs cv /\
-         (?r. (|-) (thy,[]) ((===) (cexp2term (compute_syntax_App f (MAP
-           compute_syntax_Var vs))) r) /\
+         (?r. (|-) (thy,[]) ((===) (cexp2term (ast_App f (MAP ast_Var vs)))
+           r) /\
              dest_cexp r = SOME cv /\
              cexp_vars cv SUBSET set_of_list vs)) eqs ==>
          s' = s /\
@@ -394,8 +393,8 @@ let compute_eval_thm = prove
        ALL (\(f,vs,cv).
          ALL_DISTINCT vs /\
          cexp_consts_ok eqs cv /\
-         (?r. (|-) (thy,[]) ((===) (cexp2term (compute_syntax_App f (MAP
-           compute_syntax_Var vs))) r) /\
+         (?r. (|-) (thy,[]) ((===) (cexp2term (ast_App f (MAP ast_Var vs)))
+           r) /\
              dest_cexp r = SOME cv /\
              cexp_vars cv SUBSET set_of_list vs)) eqs ==>
          s' = s /\

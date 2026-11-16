@@ -35,7 +35,6 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_bignum.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
 needs "lib/integer_word.ml";;
@@ -1433,7 +1432,7 @@ let evaluate_AssignCmp = prove
 (* [local] *)
 let evaluate_StringCmpMin = prove
  (`wordSem_evaluate (word_Seq (word_Assign 9 (word_Var 5))
-                 (word_Seq (word_If asm_Lower 7 (Reg 5) (word_Assign 9
+                 (word_Seq (word_If asm_Lower 7 (asm_Reg 5) (word_Assign 9
                    (word_Var 7)) word_Skip) p),state_locals_fupd (K l)
              t1) =
    match (sptree_lookup 5 l,sptree_lookup 7 l) with (SOME (word_Word
@@ -1442,8 +1441,8 @@ let evaluate_StringCmpMin = prove
          (n2w (MIN (w2n w1) (w2n w2)))) l)) t1)
    | _ ->
        wordSem_evaluate (word_Seq (word_Assign 9 (word_Var 5))
-                     (word_Seq (word_If asm_Lower 7 (Reg 5) (word_Assign 9
-                       (word_Var 7)) word_Skip) p),state_locals_fupd (K l)
+                     (word_Seq (word_If asm_Lower 7 (asm_Reg 5) (word_Assign
+                       9 (word_Var 7)) word_Skip) p),state_locals_fupd (K l)
                  t1)`,
   CHEAT_TAC);;
 
@@ -2853,7 +2852,7 @@ let assign_BoundsCheckBlock = prove
  (`data_to_word_assign c secn l dest (clos_BlockOp clos_BoundsCheckBlock) args
   names =
       match args with [v1; v2] -> (data_to_word_list_Seq [word_If asm_Test
-        (adjust_var v1) (Imm (n2w 1))
+        (adjust_var v1) (asm_Imm (n2w 1))
                               (word_Assign 1 (word_Const (n2w 0)))
                               (word_Assign 1
                               (let addr' = real_addr c (adjust_var v1) in
@@ -2864,7 +2863,7 @@ let assign_BoundsCheckBlock = prove
                                 n))) Lsr header k));
                               word_Assign 3 (ShiftVar Ror (adjust_var v2)
                                 2);
-                              word_If asm_Lower 3 (Reg 1)
+                              word_If asm_Lower 3 (asm_Reg 1)
                               (word_Assign (adjust_var dest) (word_Const
                                 (n2w 18:'a word)))
                               (word_Assign (adjust_var dest) (word_Const
@@ -2909,7 +2908,7 @@ let assign_BoundsCheckArray = prove
                                 n))) Lsr header k);
                               word_Assign 3 (ShiftVar Ror (adjust_var v2)
                                 2);
-                              word_If asm_Lower 3 (Reg 1)
+                              word_If asm_Lower 3 (asm_Reg 1)
                               (word_Assign (adjust_var dest) (word_Const
                                 (n2w 18:'a word)))
                               (word_Assign (adjust_var dest) (word_Const
@@ -2957,8 +2956,8 @@ let assign_BoundsCheckByte = prove
                                 bytes_in_word]);
                               word_Assign 3 (ShiftVar Ror (adjust_var v2)
                                 2);
-                              (if leq then word_If asm_NotLower 1 (Reg 3)
-                                else word_If asm_Lower 3 (Reg 1))
+                              (if leq then word_If asm_NotLower 1 (asm_Reg
+                                3) else word_If asm_Lower 3 (asm_Reg 1))
                               (word_Assign (adjust_var dest) (word_Const
                                 (n2w 18:'a word)))
                               (word_Assign (adjust_var dest) (word_Const
@@ -2994,8 +2993,8 @@ let data_to_word_assignProof_assign_BoundsCheckByte = prove
 let assign_LessConstSmall = prove
  (`data_to_word_assign c secn l dest (clos_IntOp (clos_LessConstSmall i)) args
   names =
-      match args with [v1] -> (word_If asm_Less (adjust_var v1) (Imm (n2w (4
-        * i)))
+      match args with [v1] -> (word_If asm_Less (adjust_var v1) (asm_Imm
+        (n2w (4 * i)))
                   (word_Assign (adjust_var dest) (word_Const (n2w 18:'a
                     word)))
                   (word_Assign (adjust_var dest) (word_Const (n2w 2:'a

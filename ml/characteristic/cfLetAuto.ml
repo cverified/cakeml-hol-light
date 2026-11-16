@@ -225,36 +225,36 @@ let REPLICATE_PLUS_ONE = prove
 
 (* [local] *)
 let LIST_REL_DECOMPOSE_RIGHT_recip = prove
- (`!R. ALL2 R (APPEND a b) x ==> ALL2 R a (TAKE (LENGTH a) x) /\ ALL2 R b
+ (`!R'. ALL2 R' (APPEND a b) x ==> ALL2 R' a (TAKE (LENGTH a) x) /\ ALL2 R' b
   (DROP (LENGTH a) x)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let LIST_REL_DECOMPOSE_RIGHT_imp = prove
- (`!R. ALL2 R a (TAKE (LENGTH a) x) /\ ALL2 R b (DROP (LENGTH a) x) ==> ALL2
-  R (APPEND a b) x`,
+ (`!R'. ALL2 R' a (TAKE (LENGTH a) x) /\ ALL2 R' b (DROP (LENGTH a) x) ==>
+  ALL2 R' (APPEND a b) x`,
   CHEAT_TAC);;
 
 let LIST_REL_DECOMPOSE_RIGHT = prove
- (`!R. ALL2 R (APPEND a b) x <=> ALL2 R a (TAKE (LENGTH a) x) /\ ALL2 R b
+ (`!R'. ALL2 R' (APPEND a b) x <=> ALL2 R' a (TAKE (LENGTH a) x) /\ ALL2 R' b
   (DROP (LENGTH a) x)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let LIST_REL_DECOMPOSE_LEFT_recip = prove
- (`!R. ALL2 R x (APPEND a b) ==> ALL2 R (TAKE (LENGTH a) x) a /\ ALL2 R (DROP
-  (LENGTH a) x) b`,
+ (`!R'. ALL2 R' x (APPEND a b) ==> ALL2 R' (TAKE (LENGTH a) x) a /\ ALL2 R'
+  (DROP (LENGTH a) x) b`,
   CHEAT_TAC);;
 
 (* [local] *)
 let LIST_REL_DECOMPOSE_LEFT_imp = prove
- (`!R. ALL2 R (TAKE (LENGTH a) x) a /\ ALL2 R (DROP (LENGTH a) x) b ==> ALL2
-  R x (APPEND a b)`,
+ (`!R'. ALL2 R' (TAKE (LENGTH a) x) a /\ ALL2 R' (DROP (LENGTH a) x) b ==>
+  ALL2 R' x (APPEND a b)`,
   CHEAT_TAC);;
 
 let LIST_REL_DECOMPOSE_LEFT = prove
- (`!R. ALL2 R x (APPEND a b) <=> ALL2 R (TAKE (LENGTH a) x) a /\ ALL2 R (DROP
-  (LENGTH a) x) b`,
+ (`!R'. ALL2 R' x (APPEND a b) <=> ALL2 R' (TAKE (LENGTH a) x) a /\ ALL2 R'
+  (DROP (LENGTH a) x) b`,
   CHEAT_TAC);;
 
 let HEAD_TAIL = prove

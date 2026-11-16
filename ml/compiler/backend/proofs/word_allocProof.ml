@@ -160,7 +160,7 @@ let colouring_ok_def,colouring_ok_ind = define_wf
        let e2_live = get_live e2 live lt in
        let e3_live = get_live e3 live lt in
        let union_live = sptree_union e2_live e3_live in
-       let merged = (match ri with Reg r2 -> sptree_insert r2 one
+       let merged = (match ri with asm_Reg r2 -> sptree_insert r2 one
          (sptree_insert r1 one union_live)
                          | _ -> sptree_insert r1 one union_live) in
          // All of them must be live at once
@@ -259,7 +259,7 @@ let strong_locals_rel_get_var = prove
 let strong_locals_rel_get_var_imm = prove
  (`strong_locals_rel f live (wordSem_state_locals st) (wordSem_state_locals
   cst) /\
-   (match n with Reg n -> n IN live | _ -> T) /\
+   (match n with asm_Reg n -> n IN live | _ -> T) /\
    wordSem_get_var_imm n st = SOME x ==>
    wordSem_get_var_imm (apply_colour_imm f n) cst = SOME x`,
   CHEAT_TAC);;

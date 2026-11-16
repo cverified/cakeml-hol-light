@@ -59,7 +59,7 @@ misc	ML code skipped: val steps_rel_ind = theorem"steps_rel_ind";
 misc	ML code skipped: val LESS4 = DECIDE ``n < 4 <=> (n = 0) \/ (n = 1) \/ (n = 2)
 misc	line 49 is 102 characters
 misc	line 118 is 80 characters
-misc	line 1889 is 92 characters
+misc	line 1890 is 92 characters
 mllist	derive LENGTH_AUX_THM: not a name
 mllist	line 28 is 80 characters
 mlstring	ML code skipped: val cpn_distinct = TypeBase.distinct_of ``:ordering`` val cp
@@ -232,19 +232,19 @@ word_alloc	line 1134 is 80 characters
 word_alloc	line 1547 is 81 characters
 word_alloc	line 1690 is 91 characters
 word_cse	ML code skipped: val _ = Theory.delete_const "Seqs";
-word_cse	line 582 is 81 characters
+word_cse	line 583 is 81 characters
 word_inst	line 354 is 83 characters
 word_simp	Overload delete_all
 word_simp	derive dest_Raise_num_def: conv patternMatchesLib.PMATCH_ELIM_CONV
 word_simp	derive is_simple_def: conv patternMatchesLib.PMATCH_ELIM_CONV
-word_simp	line 458 is 80 characters
+word_simp	line 460 is 80 characters
 data_to_word	Overload FALSE_CONST
 data_to_word	Overload TRUE_CONST
 data_to_word	ML code skipped: val assign_defs = ref ([]:thm list); fun assign_Define q = l
 data_to_word	derive all_assign_defs: '!assign_defs'
 data_to_word	ML code skipped: val th_FF = EVAL ``full_call_graph AnyArith_location        
-data_to_word	line 2434 is 81 characters
-data_to_word	line 2454 is 81 characters
+data_to_word	line 2438 is 81 characters
+data_to_word	line 2458 is 81 characters
 clos_interp	Overload V
 clos_interp	Overload IsCase
 clos_interp	Overload GetEl
@@ -303,8 +303,8 @@ typeSystem	line 978 is 96 characters
 source_let	Overload string_size
 stack_alloc	derive next_lab_pmatch: '=> Portable.'
 stack_alloc	derive comp_pmatch: '=> Portable.'
-stack_alloc	line 307 is 83 characters
-stack_alloc	line 384 is 83 characters
+stack_alloc	line 308 is 83 characters
+stack_alloc	line 385 is 83 characters
 stack_names	Overload find_name
 stack_names	derive comp_pmatch: '=> Portable.'
 stack_rawcall	derive comp_pmatch: '=> Portable.'
@@ -648,7 +648,7 @@ cf	ML code skipped: Resume cf_sound[Log]:   cf_strip_sound_full_tac \\   fs [sou
 cf	ML code skipped: Resume cf_sound[If]:   cf_strip_sound_full_tac \\ fs [do_if_
 cf	ML code skipped: Resume cf_sound[Mat]:   cf_strip_sound_full_tac   \\ `EVERY 
 cf	ML code skipped: Finalise cf_sound
-cf	line 1842 is 87 characters
+cf	line 1841 is 87 characters
 std_prelude	ML code skipped: val _ = (use_full_type_names := false)
 std_prelude	ML code skipped: val _ = register_type ``:ordering``; val _ = register_type `
 std_prelude	ML code skipped: val res = translate FST; val res = translate SND; val res = 
@@ -1485,13 +1485,13 @@ gen_gc_partial	ML code skipped: val heap_lookup_heap_expand = isSomeDataElement_
 wordSem	ML code skipped: val state_component_equality = theorem"state_component_equal
 wordSem	ML code skipped: val s = ``(s:('a,'c,'ffi) wordSem$state)``
 wordSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-wordSem	line 1219 is 86 characters
+wordSem	line 1221 is 86 characters
 targetSem	line 62 is 86 characters
 targetSem	line 556 is 83 characters
 labSem	Overload read_reg
 labSem	line 51 is 205 characters
 stackSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-stackSem	line 949 is 86 characters
+stackSem	line 952 is 86 characters
 wordConvs	derive not_created_subprogs_P_def: '=> GEN (hd ('
 wordConvs	ML code skipped: val no_alloc_P = ``((<>) (Alloc 0 (LN,LN)))``
 wordConvs	derive no_alloc_def: no not_created_subprogs_P_def
@@ -3150,13 +3150,13 @@ compiler32Prog	ML code skipped: val _ = ml_translatorLib.reset_translation(); (*
 ag32Bootstrap	derive compiler32_compiled: '"" compiler3'
 ag32_memory	ML code skipped: val get_next_mem_arg_ind = theorem"get_next_mem_arg_ind";
 ag32_memory	derive LENGTH_ag32_ffi_jumps: '++LET_ss)\n  '
-ag32_memory	line 455 is 83 characters
-ag32_memory	line 456 is 93 characters
-ag32_memory	line 852 is 89 characters
-ag32_memory	line 1201 is 85 characters
-ag32_memory	line 1209 is 81 characters
-ag32_memory	line 1762 is 99 characters
-ag32_memory	line 1905 is 97 characters
+ag32_memory	line 467 is 83 characters
+ag32_memory	line 468 is 93 characters
+ag32_memory	line 892 is 89 characters
+ag32_memory	line 1264 is 85 characters
+ag32_memory	line 1272 is 81 characters
+ag32_memory	line 1864 is 99 characters
+ag32_memory	line 2007 is 97 characters
 monadic_enc64	ML code skipped: val sub_exn = ``Subscript``; val update_exn = ``Subscript``;
 monadic_enc64	ML code skipped: fun accessor_thm (a,b,c,d,e,f) = LIST_CONJ [b,c,d,e,f]
 monadic_enc64	Overload failwith
@@ -4903,7 +4903,7 @@ holSemanticsExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\
 holSemanticsExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holSemanticsExtra	FILE_PATCH matches nothing: \(\\\(ctxt:holSyntax_update\s+list\)\.\s+\(\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt,\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holSemanticsExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
-holSemanticsExtra	line 288 is 80 characters
+holSemanticsExtra	line 289 is 80 characters
 holBool	ML code skipped: val mem = ``mem:'U->'U->bool``
 holBool	Overload p
 holBool	Overload FAp
@@ -5649,15 +5649,15 @@ data_to_word_assignProof	ML code skipped: val assign_FP_bop = SIMP_CONV (srw_ss(
 data_to_word_assignProof	ML code skipped: val assign_FP_uop = SIMP_CONV (srw_ss()) [assign_def]   ``((
 data_to_word_assignProof	ML code skipped: fun foldr1 f (x::xs) = foldr f x xs | foldr1 f [] = fail();
 data_to_word_assignProof	derive imp_assign: '"-"] “_ ==> '
-data_to_word_assignProof	line 951 is 80 characters
-data_to_word_assignProof	line 976 is 86 characters
-data_to_word_assignProof	line 1986 is 80 characters
-data_to_word_assignProof	line 1987 is 81 characters
-data_to_word_assignProof	line 1988 is 80 characters
-data_to_word_assignProof	line 2018 is 80 characters
-data_to_word_assignProof	line 2123 is 80 characters
-data_to_word_assignProof	line 2184 is 85 characters
-data_to_word_assignProof	line 2235 is 83 characters
+data_to_word_assignProof	line 950 is 80 characters
+data_to_word_assignProof	line 975 is 86 characters
+data_to_word_assignProof	line 1985 is 80 characters
+data_to_word_assignProof	line 1986 is 81 characters
+data_to_word_assignProof	line 1987 is 80 characters
+data_to_word_assignProof	line 2017 is 80 characters
+data_to_word_assignProof	line 2122 is 80 characters
+data_to_word_assignProof	line 2183 is 85 characters
+data_to_word_assignProof	line 2234 is 83 characters
 wordConvsProof	ML code skipped: fun FIRST_THEN tacs tac = FIRST (map (fn t => t \\ tac) tacs
 wordConvsProof	ML code skipped: val try_cancel_labels_rel_append =   FIRST_THEN [ALL_TAC, ir
 wordConvsProof	derive const_fp_loop_Seq: '=> total (fs'
@@ -6195,13 +6195,13 @@ lab_to_targetProof	ML code skipped: \\ spose_not_then assume_tac >> gvs[NOT_LESS
 lab_to_targetProof	ML code skipped: Resume IMP_state_rel_make_init[ISR17]:   drule_then (drule_t
 lab_to_targetProof	ML code skipped: Finalise IMP_state_rel_make_init;
 lab_to_targetProof	derive semantics_make_init: no PULL_EXISTS
-lab_to_targetProof	line 3248 is 92 characters
-lab_to_targetProof	line 3289 is 84 characters
-lab_to_targetProof	line 4510 is 93 characters
-lab_to_targetProof	line 4673 is 89 characters
-lab_to_targetProof	line 4676 is 81 characters
-lab_to_targetProof	line 4733 is 89 characters
-lab_to_targetProof	line 4736 is 81 characters
+lab_to_targetProof	line 3247 is 92 characters
+lab_to_targetProof	line 3288 is 84 characters
+lab_to_targetProof	line 4509 is 93 characters
+lab_to_targetProof	line 4672 is 89 characters
+lab_to_targetProof	line 4675 is 81 characters
+lab_to_targetProof	line 4732 is 89 characters
+lab_to_targetProof	line 4735 is 81 characters
 flat_elimProof	ML code skipped: val find_v_globals_ind = theorem "find_v_globals_ind";
 flat_elimProof	ML code skipped: val find_refs_globals_ind = theorem "find_refs_globals_ind";
 flat_elimProof	ML code skipped: val find_result_globals_ind = theorem "find_result_globals_i
@@ -6427,6 +6427,7 @@ word_to_stackProof	ML code skipped: val init_state_ok_semantics =   state_rel_IM
 word_to_stackProof	ML code skipped: val init_state_ok_semantics' =   state_rel_IMP_semantics' |>
 word_to_stackProof	ML code skipped: val wconvs = [post_alloc_conventions_def,wordConvsTheory.ful
 word_to_stackProof	ML code skipped: val reg_bound_ind = stackPropsTheory.reg_bound_ind val reg_b
+word_to_stackProof	FILE_PATCH matches nothing: stackSem_get_var\s+\(THE\s+\(ALOOKUP\s+moves
 word_to_stackProof	FILE_PATCH matches nothing: \bstate_clock_fupd\b
 word_to_stackProof	line 649 is 82 characters
 stack_to_labProof	ML code skipped: val get_labels_def = stackSemTheory.get_labels_def; val get_
@@ -6708,8 +6709,8 @@ ag32_basis_ffiProof	Overload nxt
 ag32_basis_ffiProof	ML code skipped: val is_ag32_init_state_def = ag32_targetTheory.is_ag32_init_
 ag32_basis_ffiProof	ML code skipped: val ag32_ffi_get_arg_count_entrypoint_thm =     EVAL “ag32_f
 ag32_basis_ffiProof	ML code skipped: fun ffi_tac   ag32_ffi_interfer_xxx   ag32_ffi_xxx_code =   
-ag32_basis_ffiProof	line 446 is 85 characters
-ag32_basis_ffiProof	line 468 is 88 characters
+ag32_basis_ffiProof	line 449 is 85 characters
+ag32_basis_ffiProof	line 471 is 88 characters
 ag32BootstrapProof	Overload cake_config
 ag32BootstrapProof	ML code skipped: val cake_io_events_def = new_specification("cake_io_events_d
 ag32BootstrapProof	ML code skipped: val (cake_sem,cake_output) = cake_io_events_def |> SPEC_ALL 

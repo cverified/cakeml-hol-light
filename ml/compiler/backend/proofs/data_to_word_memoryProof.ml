@@ -7331,7 +7331,7 @@ let data_to_word_memoryProof_ZIP_MAP_MAP = prove
 (* [local] *)
 let LENGTH_n2mw_LE_num_size = prove
  (`!n m. good_dimindex (:'a) /\ n <= m ==> SUC (LENGTH (n2mw n:('a word)
-  list)) <= num_size m`,
+  list)) <= data_space_num_size m`,
   CHEAT_TAC);;
 
 let least_notin_domain = prove
@@ -7452,7 +7452,8 @@ let parts_to_words_IMP_build_words = prove
 
 let LESS_EQ_num_size = prove
  (`good_dimindex (:'a) ==>
-   (!m n. n <= m ==> SUC (LENGTH (n2mw n:('a word) list)) <= num_size m)`,
+   (!m n. n <= m ==> SUC (LENGTH (n2mw n:('a word) list)) <=
+     data_space_num_size m)`,
   CHEAT_TAC);;
 
 let part_to_words_LENGTH = prove

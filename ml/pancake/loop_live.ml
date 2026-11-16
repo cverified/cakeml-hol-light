@@ -11,7 +11,6 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "pancake/loopLang.ml";;
 needs "pancake/loop_call.ml";;
@@ -99,8 +98,8 @@ let loop_live_shrink_def,loop_live_shrink_ind = define_guess_clauses
          let l = inter l l1 in
          let (p1,l1) = loop_live_shrink lt p1 l in
          let (p2,l2) = loop_live_shrink lt p2 l in
-         let l3 = (match x3 with Reg r -> sptree_insert r one LN | _ -> LN)
-             in
+         let l3 = (match x3 with asm_Reg r -> sptree_insert r one LN | _ ->
+             LN) in
            (loop_If x1 x2 x3 p1 p2 l,sptree_insert x2 one (sptree_union
                l3 (sptree_union l1 l2)))) /\
     (loop_live_shrink (lt:(1 spt#1 spt) list) (loop_Mark p1) l =

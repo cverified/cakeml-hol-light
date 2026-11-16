@@ -53,8 +53,8 @@ let ag32_instr_def = new_definition
 let ag32_proj'_def = new_definition
   `ag32_proj' (fs,ms,pc') (s:ag32_state) =
      (if fs then {aState s} else {}) UNION
-     IMAGE (\a. aMem a (?_MEM s a)) ms UNION
-     (if pc' then {aPc (?_PC s)} else {})`;;
+     IMAGE (\a. aMem a (ag32_state_MEM s a)) ms UNION
+     (if pc' then {aPc (ag32_state_PC s)} else {})`;;
 
 let ag32_proj_def,ag32_proj_ind = define_guess
   `ag32_proj s = ag32_proj' (T,UNIV,T) s`;;
@@ -107,17 +107,19 @@ let SPLIT_ag32_proj_EXISTS = prove
 
 (* [local] *)
 let IN_ag32_proj = prove
- (`(!x s. aPc x IN (ag32_proj s) <=> (x = ?_PC s)) /\
-   (!x s. aPc x IN (ag32_proj' (fs,ms,pc) s) <=> (x = ?_PC s) /\ pc) /\
-   (!x s. aPc x IN (ag32_proj'' (fs,ms,pc) s) <=> (x = ?_PC s) /\ ~pc) /\
+ (`(!x s. aPc x IN (ag32_proj s) <=> (x = ag32_state_PC s)) /\
+   (!x s. aPc x IN (ag32_proj' (fs,ms,pc) s) <=> (x = ag32_state_PC s)
+     /\ pc) /\
+   (!x s. aPc x IN (ag32_proj'' (fs,ms,pc) s) <=> (x = ag32_state_PC s)
+     /\ ~pc) /\
    (!x s. aState x IN (ag32_proj s) <=> (x = s)) /\
    (!x s. aState x IN (ag32_proj' (fs,ms,pc) s) <=> (x = s) /\ fs) /\
    (!x s. aState x IN (ag32_proj'' (fs,ms,pc) s) <=> (x = s) /\ ~fs) /\
-   (!p x s. aMem p x IN (ag32_proj s) <=> (x = ?_MEM s p)) /\
-   (!p x s. aMem p x IN (ag32_proj' (fs,ms,pc) s) <=> (x = ?_MEM s p) /\ p
-     IN ms) /\
-   (!p x s. aMem p x IN (ag32_proj'' (fs,ms,pc) s) <=> (x = ?_MEM s p)
-     /\ ~(p IN ms))`,
+   (!p x s. aMem p x IN (ag32_proj s) <=> (x = ag32_state_MEM s p)) /\
+   (!p x s. aMem p x IN (ag32_proj' (fs,ms,pc) s) <=> (x = ag32_state_MEM s
+     p) /\ p IN ms) /\
+   (!p x s. aMem p x IN (ag32_proj'' (fs,ms,pc) s) <=> (x = ag32_state_MEM
+     s p) /\ ~(p IN ms))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -129,9 +131,9 @@ let ag32_proj''_11 = prove
 let DELETE_ag32_proj = prove
  (`(!s. (ag32_proj' (fs,ms,pc) s) DELETE aState s =
         (ag32_proj' (F,ms,pc) s)) /\
-   (!b s. (ag32_proj' (fs,ms,pc) s) DELETE aMem b (?_MEM s b) =
+   (!b s. (ag32_proj' (fs,ms,pc) s) DELETE aMem b (ag32_state_MEM s b) =
           (ag32_proj' (fs,ms DELETE b,pc) s)) /\
-   (!s. (ag32_proj' (fs,ms,pc) s) DELETE aPc (?_PC s) =
+   (!s. (ag32_proj' (fs,ms,pc) s) DELETE aPc (ag32_state_PC s) =
         (ag32_proj' (fs,ms,F) s))`,
   CHEAT_TAC);;
 
@@ -161,11 +163,12 @@ let STAR_ag32_proj = prove
  (`((aS t * p) (ag32_proj' (fs,ms,pc) s) <=>
       (t = s) /\ fs /\ p (ag32_proj' (F,ms,pc) s)) /\
     ((aM b y * p) (ag32_proj' (fs,ms,pc) s) <=>
-      (y = ?_MEM s b) /\ b IN ms /\ p (ag32_proj' (fs,ms DELETE b,pc) s)) /\
+      (y = ag32_state_MEM s b) /\ b IN ms /\ p (ag32_proj' (fs,ms DELETE
+        b,pc) s)) /\
     ((aD md * p) (ag32_proj' (fs,ms,pc) s) <=>
       md SUBSET ms /\ p (ag32_proj' (fs,ms DIFF md,pc) s)) /\
     ((aP q * p) (ag32_proj' (fs,ms,pc) s) <=>
-      (q = ?_PC s) /\ pc /\ p (ag32_proj' (fs,ms,F) s)) /\
+      (q = ag32_state_PC s) /\ pc /\ p (ag32_proj' (fs,ms,F) s)) /\
     ((cond g * p) (ag32_proj' (fs,ms,pc) s) <=>
       g /\ p (ag32_proj' (fs,ms,pc) s))`,
   CHEAT_TAC);;
@@ -180,10 +183,10 @@ let CODE_POOL_ag32_proj_LEMMA = prove
 let CODE_POOL_ag32_proj = prove
  (`CODE_POOL ag32_instr {(p,c)} (ag32_proj' (fs,ms,pc) s) <=>
      ({p + (n2w 3),p + (n2w 2),p + (n2w 1),p} = ms) /\ ~fs /\ ~pc /\
-     (?_MEM s (p + (n2w 0)) = (7 >< 0) c) /\
-     (?_MEM s (p + (n2w 1)) = (15 >< 8) c) /\
-     (?_MEM s (p + (n2w 2)) = (23 >< 16) c) /\
-     (?_MEM s (p + (n2w 3)) = (31 >< 24) c)`,
+     (ag32_state_MEM s (p + (n2w 0)) = (7 >< 0) c) /\
+     (ag32_state_MEM s (p + (n2w 1)) = (15 >< 8) c) /\
+     (ag32_state_MEM s (p + (n2w 2)) = (23 >< 16) c) /\
+     (ag32_state_MEM s (p + (n2w 3)) = (31 >< 24) c)`,
   CHEAT_TAC);;
 
 (* HOL4 ag32_progScript.sml:296-299: the ML values that the definitions
@@ -218,27 +221,27 @@ add_simp mem_unchanged_same;;
 let ANY_AG32_SPEC_LEMMA = prove
  (`!w ast.
       ast = Decode w ==>
-      mem_unchanged md (?_MEM (Run ast s)) (?_MEM s) ==>
+      mem_unchanged md (ag32_state_MEM (Run ast s)) (ag32_state_MEM s) ==>
       SPEC AG32_MODEL
         (aS s * aD md * aPC p)
         {(p,w)}
-        (aS (Run ast s) * aD md * aP (?_PC (Run ast s)))`,
+        (aS (Run ast s) * aD md * aP (ag32_state_PC (Run ast s)))`,
   CHEAT_TAC);;
 
 let ANY_AG32_SPEC = prove
  (`!w ast.
       ast = Decode w ==>
-      (alignment_aligned 2 (?_PC s) ==> alignment_aligned 2 (?_PC (Run ast
-        s))) /\
-      mem_unchanged md (?_MEM (Run ast s)) (?_MEM s) ==>
+      (alignment_aligned 2 (ag32_state_PC s) ==> alignment_aligned 2
+        (ag32_state_PC (Run ast s))) /\
+      mem_unchanged md (ag32_state_MEM (Run ast s)) (ag32_state_MEM s) ==>
       SPEC AG32_MODEL
         (aS s * aD md * aPC p)
         {(p,w)}
-        (aS (Run ast s) * aD md * aPC (?_PC (Run ast s)))`,
+        (aS (Run ast s) * aD md * aPC (ag32_state_PC (Run ast s)))`,
   CHEAT_TAC);;
 
 let SPEC_AG32_FIX_POST_PC = prove
- (`SPEC AG32_MODEL (aS s * aD md * aPC p) c (post (?_PC s)) ==>
+ (`SPEC AG32_MODEL (aS s * aD md * aPC p) c (post (ag32_state_PC s)) ==>
     SPEC AG32_MODEL (aS s * aD md * aPC p) c (post p)`,
   CHEAT_TAC);;
 
@@ -260,14 +263,14 @@ let IN_code_set = prove
 
 let SPEC_IMP_FUNPOW_Next = prove
  (`SPEC AG32_MODEL
-      (aS s * aD md * aPC (?_PC s))
+      (aS s * aD md * aPC (ag32_state_PC s))
       (code_set a (MAP Encode instr_list))
       (aS s1 * aD md1 * other) ==>
     LENGTH instr_list < 2 EXP 30 ==>
     (!k. k < LENGTH instr_list ==>
-         (get_mem_word (?_MEM s) (a + n2w (4 * k)) =
+         (get_mem_word (ag32_state_MEM s) (a + n2w (4 * k)) =
           Encode (EL k instr_list))) /\
-    byte_aligned (?_PC s) /\
+    byte_aligned (ag32_state_PC s) /\
     DISJOINT md {a + n2w k | k | k DIV 4 < LENGTH instr_list} ==>
     (?k. ITER k Next s = s1)`,
   CHEAT_TAC);;

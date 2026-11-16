@@ -1092,9 +1092,9 @@ let asm_binop_to_display_def = new_definition
      | asm_Xor -> empty_item (implode "Xor")`;;
 
 let asm_reg_imm_to_display_def = new_definition
-  `asm_reg_imm_to_display reg_imm = match reg_imm with Reg reg -> item_with_num
-  (implode "Reg") reg
-     | Imm imm -> item_with_word (implode "Imm") imm`;;
+  `asm_reg_imm_to_display reg_imm = match reg_imm with asm_Reg reg ->
+  item_with_num (implode "Reg") reg
+     | asm_Imm imm -> item_with_word (implode "Imm") imm`;;
 
 let asm_arith_to_display_def = new_definition
   `asm_arith_to_display op = match op with asm_Binop bop n1 n2 reg_imm ->

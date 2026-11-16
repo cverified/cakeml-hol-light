@@ -19,7 +19,6 @@ needs "compiler/backend/stack_names.ml";;
 needs "compiler/backend/stack_rawcall.ml";;
 needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/word_to_stack.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 
 (* the theory of this file, and the ones its statements read *)
@@ -127,8 +126,8 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind = define_guess_cheat
                  k1 k2 0])
                ys) (misc_List [lab_Label n m 0])),(nr1 /\ nr2),m + 1)))
      | stack_JumpLower r1 r2 target ->
-         (misc_List [lab_LabAsm (lab_JumpCmp asm_Lower r1 (Reg r2) (lab_Lab
-           target 0)) (n2w 0) [] 0],F,m)
+         (misc_List [lab_LabAsm (lab_JumpCmp asm_Lower r1 (asm_Reg r2)
+           (lab_Lab target 0)) (n2w 0) [] 0],F,m)
      | stack_FFI ffi_index _ _ _ _ lr -> (misc_List [lab_LabAsm
        (lab_LocValue lr (lab_Lab n m)) (n2w 0) [] 0;
                               lab_LabAsm (lab_CallFFI ffi_index) (n2w 0) []

@@ -395,6 +395,9 @@ let isSubmapOfBy_def = new_definition
 
 let isSubmapOf_def = new_definition
   `isSubmapOf cmp t1 t2 <=> isSubmapOfBy cmp (=) t1 t2`;;
+let balanced_map_fromList_def = new_definition
+  `balanced_map_fromList cmp l = ITLIST (\(k,v) t. balanced_map_insert cmp k
+  v t) l balanced_map_empty`;;
 
 let to_fmap_def,to_fmap_ind = define_rec
   `(balanced_map_to_fmap cmp Tip = FEMPTY) /\

@@ -158,8 +158,8 @@ let pmatch_list_append_Match_exists = prove
   CHEAT_TAC);;
 
 let ALOOKUP_rel_def = new_definition
-  `ALOOKUP_rel P R env1 env2 =
-   (!x. P x ==> OPTREL R (ALOOKUP env1 x) (ALOOKUP env2 x))`;;
+  `ALOOKUP_rel P R' env1 env2 =
+   (!x. P x ==> OPTREL R' (ALOOKUP env1 x) (ALOOKUP env2 x))`;;
 
 let ALOOKUP_rel_empty = prove
  (`ALOOKUP_rel P R [] []`,

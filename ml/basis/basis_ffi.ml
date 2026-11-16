@@ -449,13 +449,13 @@ let whole_prog_spec_IMP' = prove
      res_st = basis_ffi ext cl fs ==>
      is_refs_basis (semanticPrimitives_state_refs res_st) ==>
      wfcl cl /\ wfFS fs /\ STD_streams fs ==>
-     (?io_events result.
+     (?io_events' result.
        semantics_dec_list
          (semanticPrimitives_state_eval_state_fupd (K es)
            (ml_prog_init_state (basis_ffi ext cl fs))) init_env
          all_decs
-         (ffi_Terminate ffi_Success io_events) /\
-       extract_fs ext (cl,fs) io_events = SOME result /\
+         (ffi_Terminate ffi_Success io_events') /\
+       extract_fs ext (cl,fs) io_events' = SOME result /\
        basis_ffi_post result))`,
   CHEAT_TAC);;
 
@@ -472,12 +472,12 @@ let whole_prog_spec_IMP = prove
      res_st = basis_ffi ext cl fs ==>
      is_refs_basis (semanticPrimitives_state_refs res_st) ==>
      wfcl cl /\ wfFS fs /\ STD_streams fs ==>
-     (?io_events result.
+     (?io_events' result.
        semantics_dec_list
          (ml_prog_init_state (basis_ffi ext cl fs)) init_env
          all_decs
-         (ffi_Terminate ffi_Success io_events) /\
-       extract_fs ext (cl,fs) io_events = SOME result /\
+         (ffi_Terminate ffi_Success io_events') /\
+       extract_fs ext (cl,fs) io_events' = SOME result /\
        basis_ffi_post result))`,
   CHEAT_TAC);;
 
@@ -496,12 +496,12 @@ let whole_prog_spec_SOME_IMP = prove
      wfcl cl /\ wfFS fs /\ STD_streams fs /\
      (?other. p other /\ other SUBSET store2heap_aux 2 (TL (TL
        (semanticPrimitives_state_refs res_st)))) ==>
-     (?io_events result.
+     (?io_events' result.
        semantics_dec_list
          (ml_prog_init_state (basis_ffi ext cl fs)) init_env
          all_decs
-         (ffi_Terminate ffi_Success io_events) /\
-       extract_fs ext (cl,fs) io_events = SOME result /\
+         (ffi_Terminate ffi_Success io_events') /\
+       extract_fs ext (cl,fs) io_events' = SOME result /\
        basis_ffi_post result))`,
   CHEAT_TAC);;
 
@@ -518,12 +518,12 @@ let whole_prog_spec2_IMP = prove
      res_st = basis_ffi ext cl fs ==>
      is_refs_basis (semanticPrimitives_state_refs res_st) ==>
      wfcl cl /\ wfFS fs /\ STD_streams fs ==>
-     (?io_events result.
+     (?io_events' result.
        semantics_dec_list
          (ml_prog_init_state (basis_ffi ext cl fs)) init_env
          all_decs
-         (ffi_Terminate ffi_Success io_events) /\
-       extract_fs ext (cl,fs) io_events = SOME result /\
+         (ffi_Terminate ffi_Success io_events') /\
+       extract_fs ext (cl,fs) io_events' = SOME result /\
        basis_ffi_post result))`,
   CHEAT_TAC);;
 
@@ -540,14 +540,14 @@ let whole_prog_spec_ffidiv_IMP = prove
      res_st = basis_ffi ext cl fs ==>
      is_refs_basis (semanticPrimitives_state_refs res_st) ==>
      wfcl cl /\ wfFS fs /\ STD_streams fs ==>
-     (?io_events fs' n c b.
+     (?io_events' fs' n c b.
        semantics_dec_list
          (ml_prog_init_state (basis_ffi ext cl fs)) init_env
          all_decs
          (ffi_Terminate
             (ffi_FFI_outcome (Final_event (ffi_ExtCall n) c b FFI_diverged))
-            io_events) /\
-       extract_fs ext (cl,fs) io_events = SOME fs' /\ Q n c b fs'))`,
+            io_events') /\
+       extract_fs ext (cl,fs) io_events' = SOME fs' /\ Q n c b fs'))`,
   CHEAT_TAC);;
 
 (* HOL4 basis_ffiScript.sml:1212: the ML values that the definitions below

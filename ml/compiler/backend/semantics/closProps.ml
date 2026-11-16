@@ -133,11 +133,11 @@ let evaluate_better_ind = prove
   CHEAT_TAC);;
 
 let closProps_ref_rel_def = new_definition
-  `closProps_ref_rel R x2 x3 =
+  `closProps_ref_rel R' x2 x3 =
      match (x2,x3) with
-       (closSem_ValueArray vs,closSem_ValueArray ws) -> ALL2 R vs ws
+       (closSem_ValueArray vs,closSem_ValueArray ws) -> ALL2 R' vs ws
      | (closSem_ByteArray as,closSem_ByteArray bs) -> as = bs
-     | (closSem_Thunk ma a,closSem_Thunk mb b) -> ma = mb /\ R a b
+     | (closSem_Thunk ma a,closSem_Thunk mb b) -> ma = mb /\ R' a b
      | (_,_) -> F`;;
 add_simp closProps_ref_rel_def;;
 

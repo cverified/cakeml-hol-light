@@ -90,102 +90,109 @@ let get_mem_word_change_mem = prove
   CHEAT_TAC);;
 
 let dfn'Normal_PC = prove
- (`?_PC
-      (dfn'Normal x s) = ?_PC s + (n2w 4)`,
+ (`ag32_state_PC
+      (dfn'Normal x s) = ag32_state_PC s + (n2w 4)`,
   CHEAT_TAC);;
 
 let dfn'Normal_MEM = prove
- (`?_MEM
-      (dfn'Normal x s) = ?_MEM s`,
+ (`ag32_state_MEM
+      (dfn'Normal x s) = ag32_state_MEM s`,
   CHEAT_TAC);;
 
 let dfn'JumpIfZero_PC = prove
- (`(?_PC (dfn'JumpIfZero (fSnd,Reg i,Imm w,Reg r) s) =
-      (if ?_R s r = (n2w 0) then ?_PC s + ?_R s i else ?_PC s + (n2w 4))) /\
-   (?_PC (dfn'JumpIfZero (fSnd,Imm v,Imm w,Reg r) s) =
-      (if ?_R s r = (n2w 0) then ?_PC s + sw2sw v else ?_PC s + (n2w 4))) /\
-   (?_PC (dfn'JumpIfZero (fSnd,Imm v,Imm w,Imm x) s) =
-      (if sw2sw x = ((n2w 0):word32) then ?_PC s + sw2sw v else ?_PC s +
-        (n2w 4)))`,
+ (`(ag32_state_PC (dfn'JumpIfZero (fSnd,ag32_Reg i,ag32_Imm w,ag32_Reg r) s) =
+      (if ag32_state_R s r = (n2w 0) then ag32_state_PC s + ag32_state_R s i
+        else ag32_state_PC s + (n2w 4))) /\
+   (ag32_state_PC (dfn'JumpIfZero (fSnd,ag32_Imm v,ag32_Imm w,ag32_Reg r) s)
+     =
+      (if ag32_state_R s r = (n2w 0) then ag32_state_PC s + sw2sw v else
+        ag32_state_PC s + (n2w 4))) /\
+   (ag32_state_PC (dfn'JumpIfZero (fSnd,ag32_Imm v,ag32_Imm w,ag32_Imm x) s)
+     =
+      (if sw2sw x = ((n2w 0):word32) then ag32_state_PC s + sw2sw v else
+        ag32_state_PC s + (n2w 4)))`,
   CHEAT_TAC);;
 
 let dfn'JumpIfNotZero_PC = prove
- (`(?_PC (dfn'JumpIfNotZero (fSnd,Reg i,Imm w,Reg r) s) =
-      (if ~(?_R s r = (n2w 0)) then ?_PC s + ?_R s i else ?_PC s + (n2w 4)))
-        /\
-   (?_PC (dfn'JumpIfNotZero (fSnd,Imm v,Imm w,Reg r) s) =
-      (if ~(?_R s r = (n2w 0)) then ?_PC s + sw2sw v else ?_PC s + (n2w 4)))
-        /\
-   (?_PC (dfn'JumpIfNotZero (fSnd,Imm v,Imm w,Imm x) s) =
-      (if ~(sw2sw x = ((n2w 0):word32)) then ?_PC s + sw2sw v else ?_PC s
-        + (n2w 4)))`,
+ (`(ag32_state_PC (dfn'JumpIfNotZero (fSnd,ag32_Reg i,ag32_Imm w,ag32_Reg r) s)
+  =
+      (if ~(ag32_state_R s r = (n2w 0)) then ag32_state_PC s + ag32_state_R
+        s i else ag32_state_PC s + (n2w 4))) /\
+   (ag32_state_PC (dfn'JumpIfNotZero (fSnd,ag32_Imm v,ag32_Imm w,ag32_Reg r)
+     s) =
+      (if ~(ag32_state_R s r = (n2w 0)) then ag32_state_PC s + sw2sw v else
+        ag32_state_PC s + (n2w 4))) /\
+   (ag32_state_PC (dfn'JumpIfNotZero (fSnd,ag32_Imm v,ag32_Imm w,ag32_Imm x)
+     s) =
+      (if ~(sw2sw x = ((n2w 0):word32)) then ag32_state_PC s + sw2sw v
+        else ag32_state_PC s + (n2w 4)))`,
   CHEAT_TAC);;
 
 let dfn'JumpIfNotZero_MEM = prove
- (`?_MEM
-      (dfn'JumpIfNotZero x s) = ?_MEM s`,
+ (`ag32_state_MEM
+      (dfn'JumpIfNotZero x s) = ag32_state_MEM s`,
   CHEAT_TAC);;
 
 let dfn'Interrupt_PC = prove
- (`(?_PC (dfn'Interrupt s) = ?_PC s + (n2w 4))`,
+ (`(ag32_state_PC (dfn'Interrupt s) = ag32_state_PC s + (n2w 4))`,
   CHEAT_TAC);;
 
 let dfn'Interrupt_MEM = prove
- (`(?_MEM (dfn'Interrupt s) = ?_MEM s)`,
+ (`(ag32_state_MEM (dfn'Interrupt s) = ag32_state_MEM s)`,
   CHEAT_TAC);;
 
 let dfn'Jump_MEM = prove
- (`(?_MEM (dfn'Jump x s) = ?_MEM s)`,
+ (`(ag32_state_MEM (dfn'Jump x s) = ag32_state_MEM s)`,
   CHEAT_TAC);;
 
 let dfn'LoadMEM_PC = prove
- (`?_PC
-      (dfn'LoadMEM x s) = ?_PC s + (n2w 4)`,
+ (`ag32_state_PC
+      (dfn'LoadMEM x s) = ag32_state_PC s + (n2w 4)`,
   CHEAT_TAC);;
 
 let dfn'LoadMEM_MEM = prove
- (`?_MEM
-      (dfn'LoadMEM x s) = ?_MEM s`,
+ (`ag32_state_MEM
+      (dfn'LoadMEM x s) = ag32_state_MEM s`,
   CHEAT_TAC);;
 
 let dfn'StoreMEMByte_PC = prove
- (`?_PC
-      (dfn'StoreMEMByte x s) = ?_PC s + (n2w 4)`,
+ (`ag32_state_PC
+      (dfn'StoreMEMByte x s) = ag32_state_PC s + (n2w 4)`,
   CHEAT_TAC);;
 
 let dfn'LoadMEMByte_PC = prove
- (`?_PC
-      (dfn'LoadMEMByte x s) = ?_PC s + (n2w 4)`,
+ (`ag32_state_PC
+      (dfn'LoadMEMByte x s) = ag32_state_PC s + (n2w 4)`,
   CHEAT_TAC);;
 
 let dfn'LoadMEMByte_MEM = prove
- (`?_MEM
-      (dfn'LoadMEMByte x s) = ?_MEM s`,
+ (`ag32_state_MEM
+      (dfn'LoadMEMByte x s) = ag32_state_MEM s`,
   CHEAT_TAC);;
 
 let dfn'Shift_PC = prove
- (`?_PC
-      (dfn'Shift x s) = ?_PC s + (n2w 4)`,
+ (`ag32_state_PC
+      (dfn'Shift x s) = ag32_state_PC s + (n2w 4)`,
   CHEAT_TAC);;
 
 let dfn'Shift_MEM = prove
- (`?_MEM
-      (dfn'Shift x s) = ?_MEM s`,
+ (`ag32_state_MEM
+      (dfn'Shift x s) = ag32_state_MEM s`,
   CHEAT_TAC);;
 
 let dfn'LoadConstant_PC = prove
- (`?_PC
-      (dfn'LoadConstant x s) = ?_PC s + (n2w 4)`,
+ (`ag32_state_PC
+      (dfn'LoadConstant x s) = ag32_state_PC s + (n2w 4)`,
   CHEAT_TAC);;
 
 let dfn'LoadConstant_MEM = prove
- (`?_MEM
-      (dfn'LoadConstant x s) = ?_MEM s`,
+ (`ag32_state_MEM
+      (dfn'LoadConstant x s) = ag32_state_MEM s`,
   CHEAT_TAC);;
 
 let dfn'JumpIfZero_MEM = prove
- (`?_MEM
-      (dfn'JumpIfZero x s) = ?_MEM s`,
+ (`ag32_state_MEM
+      (dfn'JumpIfZero x s) = ag32_state_MEM s`,
   CHEAT_TAC);;
 
 (* -- *)
@@ -283,36 +290,36 @@ let ffi_jumps_offset_def = new_definition
 
 let ag32_ffi_return_code_def = new_definition
   `ag32_ffi_return_code = [
-    Normal (fAdd,(n2w 1),Imm (n2w 0),Imm (n2w 0));
-    Normal (fSnd,(n2w 2),Imm (n2w 0),Imm (n2w 0));
-    Normal (fSnd,(n2w 3),Imm (n2w 0),Imm (n2w 0));
-    Normal (fSnd,(n2w 4),Imm (n2w 0),Imm (n2w 0));
-    Normal (fSnd,(n2w 5),Imm (n2w 0),Imm (n2w 0));
-    Normal (fSnd,(n2w 6),Imm (n2w 0),Imm (n2w 0));
-    Normal (fSnd,(n2w 7),Imm (n2w 0),Imm (n2w 0));
-    Normal (fSnd,(n2w 8),Imm (n2w 0),Imm (n2w 0));
-    Interrupt;
-    lab_Jump (fSnd,(n2w 0),Reg (n2w 0))]`;;
+    ag32_Normal (fAdd,(n2w 1),ag32_Imm (n2w 0),ag32_Imm (n2w 0));
+    ag32_Normal (fSnd,(n2w 2),ag32_Imm (n2w 0),ag32_Imm (n2w 0));
+    ag32_Normal (fSnd,(n2w 3),ag32_Imm (n2w 0),ag32_Imm (n2w 0));
+    ag32_Normal (fSnd,(n2w 4),ag32_Imm (n2w 0),ag32_Imm (n2w 0));
+    ag32_Normal (fSnd,(n2w 5),ag32_Imm (n2w 0),ag32_Imm (n2w 0));
+    ag32_Normal (fSnd,(n2w 6),ag32_Imm (n2w 0),ag32_Imm (n2w 0));
+    ag32_Normal (fSnd,(n2w 7),ag32_Imm (n2w 0),ag32_Imm (n2w 0));
+    ag32_Normal (fSnd,(n2w 8),ag32_Imm (n2w 0),ag32_Imm (n2w 0));
+    ag32_Interrupt;
+    ag32_Jump (fSnd,(n2w 0),ag32_Reg (n2w 0))]`;;
 
 let ag32_ffi_return_def = new_definition
   `ag32_ffi_return s =
-   let s = dfn'Normal (fAdd,(n2w 1),Imm (n2w 0),Imm (n2w 0)) s in
-   let s = dfn'Normal (fSnd,(n2w 2),Imm (n2w 0),Imm (n2w 0)) s in
-   let s = dfn'Normal (fSnd,(n2w 3),Imm (n2w 0),Imm (n2w 0)) s in
-   let s = dfn'Normal (fSnd,(n2w 4),Imm (n2w 0),Imm (n2w 0)) s in
-   let s = dfn'Normal (fSnd,(n2w 5),Imm (n2w 0),Imm (n2w 0)) s in
-   let s = dfn'Normal (fSnd,(n2w 6),Imm (n2w 0),Imm (n2w 0)) s in
-   let s = dfn'Normal (fSnd,(n2w 7),Imm (n2w 0),Imm (n2w 0)) s in
-   let s = dfn'Normal (fSnd,(n2w 8),Imm (n2w 0),Imm (n2w 0)) s in
+   let s = dfn'Normal (fAdd,(n2w 1),ag32_Imm (n2w 0),ag32_Imm (n2w 0)) s in
+   let s = dfn'Normal (fSnd,(n2w 2),ag32_Imm (n2w 0),ag32_Imm (n2w 0)) s in
+   let s = dfn'Normal (fSnd,(n2w 3),ag32_Imm (n2w 0),ag32_Imm (n2w 0)) s in
+   let s = dfn'Normal (fSnd,(n2w 4),ag32_Imm (n2w 0),ag32_Imm (n2w 0)) s in
+   let s = dfn'Normal (fSnd,(n2w 5),ag32_Imm (n2w 0),ag32_Imm (n2w 0)) s in
+   let s = dfn'Normal (fSnd,(n2w 6),ag32_Imm (n2w 0),ag32_Imm (n2w 0)) s in
+   let s = dfn'Normal (fSnd,(n2w 7),ag32_Imm (n2w 0),ag32_Imm (n2w 0)) s in
+   let s = dfn'Normal (fSnd,(n2w 8),ag32_Imm (n2w 0),ag32_Imm (n2w 0)) s in
    let s = dfn'Interrupt s in
-   let s = dfn'Jump (fSnd,(n2w 0),Reg (n2w 0)) s in
+   let s = dfn'Jump (fSnd,(n2w 0),ag32_Reg (n2w 0)) s in
    s`;;
 
 let ag32_ffi_return_thm = prove
- (`(ag32_ffi_return s = ffi_state_CarryFlag_fupd (K F)
-  (ffi_state_OverflowFlag_fupd (K F) (ffi_state_io_events_fupd (K (SNOC (?_MEM
-  s) (ffi_state_io_events s))) (ffi_state_R_fupd (K (((n2w 0) =+ (?_PC s + n2w
-  (4 * LENGTH ag32_ffi_return_code)))
+ (`(ag32_ffi_return s = ag32_state_CarryFlag_fupd (K F)
+  (ag32_state_OverflowFlag_fupd (K F) (ag32_state_io_events_fupd (K (SNOC
+  (ag32_state_MEM s) (ag32_state_io_events s))) (ag32_state_R_fupd (K (((n2w 0)
+  =+ (ag32_state_PC s + n2w (4 * LENGTH ag32_ffi_return_code)))
                    (((n2w 1) =+ (n2w 0))
                    (((n2w 2) =+ (n2w 0))
                    (((n2w 3) =+ (n2w 0))
@@ -320,56 +327,60 @@ let ag32_ffi_return_thm = prove
                    (((n2w 5) =+ (n2w 0))
                    (((n2w 6) =+ (n2w 0))
                    (((n2w 7) =+ (n2w 0))
-                   (((n2w 8) =+ (n2w 0)) (?_R s)))))))))))
-                     (ffi_state_PC_fupd (K (?_R s (n2w 0)))
+                   (((n2w 8) =+ (n2w 0)) (ag32_state_R s)))))))))))
+                     (ag32_state_PC_fupd (K (ag32_state_R s (n2w 0)))
     s)))))`,
   CHEAT_TAC);;
 
 let ag32_ffi_copy_code_def = new_definition
   `ag32_ffi_copy_code = [
-      JumpIfZero (fSnd,Reg (n2w 2),Imm (n2w 0),Reg (n2w 1));
-      LoadMEMByte ((n2w 8),Reg (n2w 3));
-      StoreMEMByte (Reg (n2w 8),Reg (n2w 5));
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
-      Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1));
-      Normal (fDec,(n2w 1),Reg (n2w 1),Imm (n2w 1));
-      JumpIfZero (fSnd,Imm ((n2w 4) * --(n2w 6)),Imm (n2w 0),Imm (n2w
-        0))]`;;
+      ag32_JumpIfZero (fSnd,ag32_Reg (n2w 2),ag32_Imm (n2w 0),ag32_Reg (n2w
+        1));
+      ag32_LoadMEMByte ((n2w 8),ag32_Reg (n2w 3));
+      ag32_StoreMEMByte (ag32_Reg (n2w 8),ag32_Reg (n2w 5));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1));
+      ag32_Normal (fDec,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
+      ag32_JumpIfZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 6)),ag32_Imm (n2w
+        0),ag32_Imm (n2w 0))]`;;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (\s. w2n (?_R s (n2w 1)))
+     MEASURE (\s. w2n (ag32_state_R s (n2w 1)))
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 ag32_memoryScript.sml:461-471: the tactic that proves the
    termination *)
 let ag32_ffi_copy_def,ag32_ffi_copy_ind = define_guess
   `ag32_ffi_copy s0 =
-   let s = dfn'JumpIfZero (fSnd,Reg (n2w 2),Imm (n2w 0),Reg (n2w 1)) s0 in
-   if (?_R s0 (n2w 1) = (n2w 0)) then s else let s = dfn'LoadMEMByte ((n2w
-     8),Reg (n2w 3)) s in
-   let s = dfn'StoreMEMByte (Reg (n2w 8),Reg (n2w 5)) s in
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1)) s in
-   let s0 = dfn'Normal (fDec,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-   let s = dfn'JumpIfZero (fSnd,Imm ((n2w 4) * --(n2w 6)),Imm (n2w 0),Imm
-     (n2w 0)) s0 in
-   ag32_ffi_copy s`;;
+   (let s = dfn'JumpIfZero (fSnd,ag32_Reg (n2w 2),ag32_Imm (n2w 0),ag32_Reg
+     (n2w 1)) s0 in
+   if (ag32_state_R s0 (n2w 1) = (n2w 0)) then s else let s =
+     dfn'LoadMEMByte ((n2w 8),ag32_Reg (n2w 3)) s in
+   let s = dfn'StoreMEMByte (ag32_Reg (n2w 8),ag32_Reg (n2w 5)) s in
+   let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1)) s in
+   let s0 = dfn'Normal (fDec,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+   let s = dfn'JumpIfZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 6)),ag32_Imm (n2w
+     0),ag32_Imm (n2w 0)) s0 in
+   ag32_ffi_copy s)`;;
 
 let ag32_ffi_copy_thm = prove
  (`!s written.
-   bytes_in_memory (?_R s (n2w 3)) written (?_MEM s) md /\ (w2n (?_R s (n2w
-     1)) = LENGTH written) /\
-   DISJOINT md {w | ?_R s (n2w 5) <=+ w /\ w <+ ?_R s (n2w 5) + n2w (LENGTH
-     written)} /\
-   w2n (?_R s (n2w 5)) + LENGTH written < dimword (:32) /\
-   w2n (?_R s (n2w 3)) + LENGTH written < dimword (:32) ==>
+   bytes_in_memory (ag32_state_R s (n2w 3)) written (ag32_state_MEM s) md
+     /\ (w2n (ag32_state_R s (n2w 1)) = LENGTH written) /\
+   DISJOINT md {w | ag32_state_R s (n2w 5) <=+ w /\ w <+ ag32_state_R s (n2w
+     5) + n2w (LENGTH written)} /\
+   w2n (ag32_state_R s (n2w 5)) + LENGTH written < dimword (:32) /\
+   w2n (ag32_state_R s (n2w 3)) + LENGTH written < dimword (:32) ==>
    (?r1 r3 r5 r8.
-   (ag32_ffi_copy s = ?_MEM_fupd (K (asm_write_bytearray (?_R s (n2w 5))
-     written (?_MEM s))) (?_R_fupd (K (((n2w 1) =+ r1)
+   (ag32_ffi_copy s = ag32_state_MEM_fupd (K (asm_write_bytearray
+     (ag32_state_R s (n2w 5)) written (ag32_state_MEM s))) (ag32_state_R_fupd
+     (K (((n2w 1) =+ r1)
                    (((n2w 3) =+ r3)
                    (((n2w 5) =+ r5)
-                   (((n2w 8) =+ r8) (?_R s)))))) (?_PC_fupd (K (?_PC s + ?_R
-                     s (n2w 2)))
+                   (((n2w 8) =+ r8) (ag32_state_R s))))))
+                     (ag32_state_PC_fupd (K (ag32_state_PC s + ag32_state_R s
+                     (n2w 2)))
     s))))`,
   CHEAT_TAC);;
 
@@ -383,14 +394,14 @@ let ag32_ffi__entrypoint_def = new_definition
 
 let ag32_ffi__def = new_definition
   `ag32_ffi_ s =
-   let s = dfn'Normal (fAdd,(n2w 5),Imm (n2w 0),Imm (n2w 0)) s in
-   dfn'Jump (fSnd,(n2w 0),Reg (n2w 0)) s`;;
+   let s = dfn'Normal (fAdd,(n2w 5),ag32_Imm (n2w 0),ag32_Imm (n2w 0)) s in
+   dfn'Jump (fSnd,(n2w 0),ag32_Reg (n2w 0)) s`;;
 
 let ag32_ffi__code_def = new_definition
   `ag32_ffi__code =
      [
-     Normal (fAdd,(n2w 5),Imm (n2w 0),Imm (n2w 0));
-     lab_Jump (fSnd,(n2w 0),Reg (n2w 0))]`;;
+     ag32_Normal (fAdd,(n2w 5),ag32_Imm (n2w 0),ag32_Imm (n2w 0));
+     ag32_Jump (fSnd,(n2w 0),ag32_Reg (n2w 0))]`;;
 
 (* get_arg_count
    PC is ffi_code_start_offset
@@ -403,15 +414,15 @@ let ag32_ffi_get_arg_count_entrypoint_def = new_definition
 
 let ag32_ffi_get_arg_count_main_code_def = new_definition
   `ag32_ffi_get_arg_count_main_code =
-     [LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1));
-      StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes (implode
-        "get_arg_count")))),Reg (n2w 5));
-      LoadConstant ((n2w 5),F,n2w startup_code_size);
-      LoadMEM ((n2w 5),Reg (n2w 5));
-      StoreMEMByte (Reg (n2w 5),Reg (n2w 3));
-      asm_Shift (shiftLR,(n2w 5),Reg (n2w 5),Imm (n2w 8));
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 0));
-      StoreMEMByte (Reg (n2w 5),Reg (n2w 3))]`;;
+     [ag32_LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1));
+      ag32_StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes (implode
+        "get_arg_count")))),ag32_Reg (n2w 5));
+      ag32_LoadConstant ((n2w 5),F,n2w startup_code_size);
+      ag32_LoadMEM ((n2w 5),ag32_Reg (n2w 5));
+      ag32_StoreMEMByte (ag32_Reg (n2w 5),ag32_Reg (n2w 3));
+      ag32_Shift (shiftLR,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 8));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 0));
+      ag32_StoreMEMByte (ag32_Reg (n2w 5),ag32_Reg (n2w 3))]`;;
 
 let ag32_ffi_get_arg_count_code_def = new_definition
   `ag32_ffi_get_arg_count_code =
@@ -420,28 +431,29 @@ let ag32_ffi_get_arg_count_code_def = new_definition
 let ag32_ffi_get_arg_count_main_def = new_definition
   `ag32_ffi_get_arg_count_main s =
    let s = dfn'LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1)) s in
-   let s = dfn'StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes (implode
-     "get_arg_count")))),Reg (n2w 5)) s in
+   let s = dfn'StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes (implode
+     "get_arg_count")))),ag32_Reg (n2w 5)) s in
    let s = dfn'LoadConstant ((n2w 5),F,n2w startup_code_size) s in
-   let s = dfn'LoadMEM ((n2w 5),Reg (n2w 5)) s in
-   let s = dfn'StoreMEMByte (Reg (n2w 5),Reg (n2w 3)) s in
-   let s = dfn'Shift (shiftLR,(n2w 5),Reg (n2w 5),Imm (n2w 8)) s in
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 0)) s in
-   let s = dfn'StoreMEMByte (Reg (n2w 5),Reg (n2w 3)) s in
+   let s = dfn'LoadMEM ((n2w 5),ag32_Reg (n2w 5)) s in
+   let s = dfn'StoreMEMByte (ag32_Reg (n2w 5),ag32_Reg (n2w 3)) s in
+   let s = dfn'Shift (shiftLR,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 8)) s
+     in
+   let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 0)) s in
+   let s = dfn'StoreMEMByte (ag32_Reg (n2w 5),ag32_Reg (n2w 3)) s in
    s`;;
 
 let ag32_ffi_get_arg_count_main_thm = prove
- (`(get_mem_word (?_MEM s) (n2w startup_code_size) = n2w len) /\ len < 256 *
-  256 ==>
+ (`(get_mem_word (ag32_state_MEM s) (n2w startup_code_size) = n2w len) /\ len <
+  256 * 256 ==>
    (?r3 r5.
-    (ag32_ffi_get_arg_count_main s = ?_R_fupd (K (((n2w 3) =+ r3) (((n2w 5)
-      =+ r5) (?_R s)))) (?_MEM_fupd (K
-                 (asm_write_bytearray (?_R s (n2w 3)) [n2w len; n2w (len DIV
-                   256)]
+    (ag32_ffi_get_arg_count_main s = ag32_state_R_fupd (K (((n2w 3) =+ r3)
+      (((n2w 5) =+ r5) (ag32_state_R s)))) (ag32_state_MEM_fupd (K
+                 (asm_write_bytearray (ag32_state_R s (n2w 3)) [n2w len; n2w
+                   (len DIV 256)]
                    (((n2w (ffi_code_start_offset - 1)) =+ n2w (THE (ALOOKUP
-                     FFI_codes (implode "get_arg_count")))) (?_MEM s))))
-                     (?_PC_fupd (K (?_PC s + n2w (4 * (LENGTH
-                     ag32_ffi_get_arg_count_main_code))))
+                     FFI_codes (implode "get_arg_count")))) (ag32_state_MEM
+                     s)))) (ag32_state_PC_fupd (K (ag32_state_PC s + n2w (4 *
+                     (LENGTH ag32_ffi_get_arg_count_main_code))))
      s))))`,
   CHEAT_TAC);;
 
@@ -464,20 +476,20 @@ let ag32_ffi_get_arg_length_entrypoint_def = new_definition
 
 let ag32_ffi_get_arg_length_setup_code_def = new_definition
   `ag32_ffi_get_arg_length_setup_code =
-     [LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1));
-      StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes (implode
-        "get_arg_length")))),Reg (n2w 5));
-      LoadConstant ((n2w 5),F,(n2w (startup_code_size + 4)));
+     [ag32_LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1));
+      ag32_StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes (implode
+        "get_arg_length")))),ag32_Reg (n2w 5));
+      ag32_LoadConstant ((n2w 5),F,(n2w (startup_code_size + 4)));
       // r5 contains pointer
-      LoadMEMByte ((n2w 6),Reg (n2w 3));
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
-      LoadMEMByte ((n2w 7),Reg (n2w 3));
-      asm_Shift (shiftLL,(n2w 7),Reg (n2w 7),Imm (n2w 8));
-      Normal (fDec,(n2w 3),Reg (n2w 3),Imm (n2w 1));
-      Normal (fInc,(n2w 6),Reg (n2w 6),Imm (n2w 1));
-      Normal (fAdd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_LoadMEMByte ((n2w 6),ag32_Reg (n2w 3));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
+      ag32_LoadMEMByte ((n2w 7),ag32_Reg (n2w 3));
+      ag32_Shift (shiftLL,(n2w 7),ag32_Reg (n2w 7),ag32_Imm (n2w 8));
+      ag32_Normal (fDec,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 6),ag32_Reg (n2w 6),ag32_Imm (n2w 1));
+      ag32_Normal (fAdd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 contains index+1
-      LoadConstant ((n2w 7),F,n2w (4 * 8))]`;;
+      ag32_LoadConstant ((n2w 7),F,n2w (4 * 8))]`;;
 
 let ag32_ffi_get_arg_length_loop_code_def = new_definition
   `ag32_ffi_get_arg_length_loop_code =
@@ -491,24 +503,25 @@ let ag32_ffi_get_arg_length_loop_code_def = new_definition
       // JumpIfNotZero (fSnd,Imm (4w * -3w),Imm 0w,Reg 8w);
       // Normal (fDec,6w,Reg 6w,Imm 1w);
       // JumpIfNotZero (fSnd,Imm (4w * -6w),Imm 0w,Reg 6w)]
-      JumpIfZero (fSnd,Reg (n2w 7),Imm (n2w 0),Reg (n2w 6));
-      Normal (fSnd,(n2w 4),Reg (n2w 4),Imm (n2w 0));
-      LoadMEMByte ((n2w 8),Reg (n2w 5));
-      Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1));
-      Normal (fInc,(n2w 4),Reg (n2w 4),Imm (n2w 1));
-      JumpIfNotZero (fSnd,Imm ((n2w 4) * --(n2w 3)),Imm (n2w 0),Reg (n2w
-        8));
-      Normal (fDec,(n2w 6),Reg (n2w 6),Imm (n2w 1));
-      JumpIfZero (fSnd,Imm ((n2w 4) * --(n2w 7)),Imm (n2w 0),Imm (n2w
-        0))]`;;
+      ag32_JumpIfZero (fSnd,ag32_Reg (n2w 7),ag32_Imm (n2w 0),ag32_Reg (n2w
+        6));
+      ag32_Normal (fSnd,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 0));
+      ag32_LoadMEMByte ((n2w 8),ag32_Reg (n2w 5));
+      ag32_Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 1));
+      ag32_JumpIfNotZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 3)),ag32_Imm (n2w
+        0),ag32_Reg (n2w 8));
+      ag32_Normal (fDec,(n2w 6),ag32_Reg (n2w 6),ag32_Imm (n2w 1));
+      ag32_JumpIfZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 7)),ag32_Imm (n2w
+        0),ag32_Imm (n2w 0))]`;;
 
 let ag32_ffi_get_arg_length_store_code_def = new_definition
   `ag32_ffi_get_arg_length_store_code =
-     [Normal (fDec,(n2w 4),Reg (n2w 4),Imm (n2w 1));
-      StoreMEMByte (Reg (n2w 4),Reg (n2w 3));
-      asm_Shift (shiftLR,(n2w 4),Reg (n2w 4),Imm (n2w 8));
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
-      StoreMEMByte (Reg (n2w 4),Reg (n2w 3))]`;;
+     [ag32_Normal (fDec,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 1));
+      ag32_StoreMEMByte (ag32_Reg (n2w 4),ag32_Reg (n2w 3));
+      ag32_Shift (shiftLR,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 8));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
+      ag32_StoreMEMByte (ag32_Reg (n2w 4),ag32_Reg (n2w 3))]`;;
 
 let ag32_ffi_get_arg_length_code_def = new_definition
   `ag32_ffi_get_arg_length_code = APPEND (APPEND (APPEND
@@ -520,36 +533,39 @@ let ag32_ffi_get_arg_length_code_def = new_definition
 let ag32_ffi_get_arg_length_setup_def = new_definition
   `ag32_ffi_get_arg_length_setup s =
    let s = dfn'LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1)) s in
-   let s = dfn'StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes (implode
-     "get_arg_length")))),Reg (n2w 5)) s in
+   let s = dfn'StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes (implode
+     "get_arg_length")))),ag32_Reg (n2w 5)) s in
    let s = dfn'LoadConstant ((n2w 5),F,(n2w (startup_code_size + 4))) s in
-   let s = dfn'LoadMEMByte ((n2w 6),Reg (n2w 3)) s in
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'LoadMEMByte ((n2w 7),Reg (n2w 3)) s in
-   let s = dfn'Shift (shiftLL,(n2w 7),Reg (n2w 7),Imm (n2w 8)) s in
-   let s = dfn'Normal (fDec,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'Normal (fInc,(n2w 6),Reg (n2w 6),Imm (n2w 1)) s in
-   let s = dfn'Normal (fAdd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
+   let s = dfn'LoadMEMByte ((n2w 6),ag32_Reg (n2w 3)) s in
+   let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'LoadMEMByte ((n2w 7),ag32_Reg (n2w 3)) s in
+   let s = dfn'Shift (shiftLL,(n2w 7),ag32_Reg (n2w 7),ag32_Imm (n2w 8)) s
+     in
+   let s = dfn'Normal (fDec,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'Normal (fInc,(n2w 6),ag32_Reg (n2w 6),ag32_Imm (n2w 1)) s in
+   let s = dfn'Normal (fAdd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
    let s = dfn'LoadConstant ((n2w 7),F,n2w (4 * 8)) s in
    s`;;
 
 let ag32_ffi_get_arg_length_setup_thm = prove
- (`bytes_in_memory (?_R s (n2w 3)) [l0; l1] (?_MEM s) md /\ ~(n2w
-  (ffi_code_start_offset - 1) IN md) ==>
+ (`bytes_in_memory (ag32_state_R s (n2w 3)) [l0; l1] (ag32_state_MEM s) md
+  /\ ~(n2w (ffi_code_start_offset - 1) IN md) ==>
    (?ov cf.
-   (ag32_ffi_get_arg_length_setup s = ?_OverflowFlag_fupd (K ov)
-     (?_CarryFlag_fupd (K cf) (?_R_fupd (K (((n2w 5) =+ n2w (startup_code_size
-     + 4))
+   (ag32_ffi_get_arg_length_setup s = ag32_state_OverflowFlag_fupd (K ov)
+     (ag32_state_CarryFlag_fupd (K cf) (ag32_state_R_fupd (K (((n2w 5) =+ n2w
+     (startup_code_size + 4))
            (((n2w 6) =+ n2w (256 * w2n l1 + w2n l0 + 1))
-           (((n2w 7) =+ n2w (4 * 8)) (?_R s))))) (?_PC_fupd (K (?_PC s + n2w
-             (4 * LENGTH ag32_ffi_get_arg_length_setup_code))) (?_MEM_fupd (K
+           (((n2w 7) =+ n2w (4 * 8)) (ag32_state_R s)))))
+             (ag32_state_PC_fupd (K (ag32_state_PC s + n2w (4 * LENGTH
+             ag32_ffi_get_arg_length_setup_code))) (ag32_state_MEM_fupd (K
              (((n2w (ffi_code_start_offset - 1)) =+ n2w (THE (ALOOKUP FFI_codes
-             (implode "get_arg_length")))) (?_MEM s)))
+             (implode "get_arg_length")))) (ag32_state_MEM s)))
     s))))))`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (\s. minimal n. (?_MEM s (?_R s (n2w 5) + n2w n) = (n2w 0)))
+     MEASURE (\s. minimal n. (ag32_state_MEM s (ag32_state_R s (n2w 5) + n2w n)
+       = (n2w 0)))
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 ag32_memoryScript.sml:848-867: the tactic that proves the
@@ -557,28 +573,32 @@ let ag32_ffi_get_arg_length_setup_thm = prove
 let ag32_ffi_get_arg_length_loop1_def,ag32_ffi_get_arg_length_loop1_ind =
   define_guess
   `ag32_ffi_get_arg_length_loop1 s =
-     if (!n. ~(?_MEM s (?_R s (n2w 5) + n2w n) = (n2w 0))) then s else let s
-       = dfn'LoadMEMByte ((n2w 8),Reg (n2w 5)) s in
-     let s = dfn'Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1)) s in
-     let s0 = dfn'Normal (fInc,(n2w 4),Reg (n2w 4),Imm (n2w 1)) s in
-     let s = dfn'JumpIfNotZero (fSnd,Imm ((n2w 4) * --(n2w 3)),Imm (n2w
-       0),Reg (n2w 8)) s0 in
-     if (?_R s0 (n2w 8) = (n2w 0)) then s else
-       ag32_ffi_get_arg_length_loop1 s`;;
+     (if (!n. ~(ag32_state_MEM s (ag32_state_R s (n2w 5) + n2w n) = (n2w
+       0))) then s else let s = dfn'LoadMEMByte ((n2w 8),ag32_Reg (n2w 5)) s in
+     let s = dfn'Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1)) s
+       in
+     let s0 = dfn'Normal (fInc,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 1)) s
+       in
+     let s = dfn'JumpIfNotZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 3)),ag32_Imm
+       (n2w 0),ag32_Reg (n2w 8)) s0 in
+     if (ag32_state_R s0 (n2w 8) = (n2w 0)) then s else
+       ag32_ffi_get_arg_length_loop1 s)`;;
 
 let ag32_ffi_get_arg_length_loop1_thm = prove
  (`ag32_ffi_get_arg_length_loop1 s =
-   match OLEAST (\n. ?_MEM s (?_R s (n2w 5) + n2w n) = (n2w 0)) with
+   (match OLEAST (\n. ag32_state_MEM s (ag32_state_R s (n2w 5) + n2w n) =
+     (n2w 0)) with
      NONE -> s
-   | SOME n -> ?_R_fupd (K (((n2w 8) =+ (n2w 0))
-                    (((n2w 4) =+ (?_R s (n2w 4) + n2w (n + 1)))
-                    (((n2w 5) =+ (?_R s (n2w 5) + n2w (n + 1))) (?_R s)))))
-                      (?_PC_fupd (K (?_PC s + n2w (4 * 4)))
-     s)`,
+   | SOME n -> ag32_state_R_fupd (K (((n2w 8) =+ (n2w 0))
+                    (((n2w 4) =+ (ag32_state_R s (n2w 4) + n2w (n + 1)))
+                    (((n2w 5) =+ (ag32_state_R s (n2w 5) + n2w (n + 1)))
+                      (ag32_state_R s))))) (ag32_state_PC_fupd (K
+                      (ag32_state_PC s + n2w (4 * 4)))
+     s))`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (\s. w2n (?_R s (n2w 6)))
+     MEASURE (\s. w2n (ag32_state_R s (n2w 6)))
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 ag32_memoryScript.sml:940-951: the tactic that proves the
@@ -586,14 +606,15 @@ let ag32_ffi_get_arg_length_loop1_thm = prove
 let ag32_ffi_get_arg_length_loop_def,ag32_ffi_get_arg_length_loop_ind =
   define_guess
   `ag32_ffi_get_arg_length_loop s0 =
-   let s = dfn'JumpIfZero (fSnd,Reg (n2w 7),Imm (n2w 0),Reg (n2w 6)) s0 in
-   if (?_R s0 (n2w 6) = (n2w 0)) then s else let s = dfn'Normal (fSnd,(n2w
-     4),Reg (n2w 4),Imm (n2w 0)) s in
+   (let s = dfn'JumpIfZero (fSnd,ag32_Reg (n2w 7),ag32_Imm (n2w 0),ag32_Reg
+     (n2w 6)) s0 in
+   if (ag32_state_R s0 (n2w 6) = (n2w 0)) then s else let s = dfn'Normal
+     (fSnd,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 0)) s in
    let s = ag32_ffi_get_arg_length_loop1 s in
-   let s = dfn'Normal (fDec,(n2w 6),Reg (n2w 6),Imm (n2w 1)) s in
-   let s = dfn'JumpIfZero (fSnd,Imm ((n2w 4) * --(n2w 7)),Imm (n2w 0),Imm
-     (n2w 0)) s in
-   ag32_ffi_get_arg_length_loop s`;;
+   let s = dfn'Normal (fDec,(n2w 6),ag32_Reg (n2w 6),ag32_Imm (n2w 1)) s in
+   let s = dfn'JumpIfZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 7)),ag32_Imm (n2w
+     0),ag32_Imm (n2w 0)) s in
+   ag32_ffi_get_arg_length_loop s)`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (\(m,a,acc). minimal n. m (a + n2w n) = (n2w 0))
@@ -623,38 +644,42 @@ let get_mem_arg_def,get_mem_arg_ind = define_guess
          get_mem_arg m (a + (n2w 1)) n)`;;
 
 let ag32_ffi_get_arg_length_loop_thm = prove
- (`(?_R s (n2w 6) = n2w (index + 1)) /\ index <= cline_size /\
-   (?_R s (n2w 7) = n2w (4 * 8)) /\
-   (?n. ?_MEM s (?_R s (n2w 5) + n2w n) = (n2w 0)) ==>
+ (`(ag32_state_R s (n2w 6) = n2w (index + 1)) /\ index <= cline_size /\
+   (ag32_state_R s (n2w 7) = n2w (4 * 8)) /\
+   (?n. ag32_state_MEM s (ag32_state_R s (n2w 5) + n2w n) = (n2w 0)) ==>
    (?r8 r6 r5.
-   (ag32_ffi_get_arg_length_loop s = ?_R_fupd (K (((n2w 8) =+ r8)
-                   (((n2w 4) =+ n2w (LENGTH (SND (get_mem_arg (?_MEM s) (?_R
-                     s (n2w 5)) index)) + 1))
+   (ag32_ffi_get_arg_length_loop s = ag32_state_R_fupd (K (((n2w 8) =+ r8)
+                   (((n2w 4) =+ n2w (LENGTH (SND (get_mem_arg
+                     (ag32_state_MEM s) (ag32_state_R s (n2w 5)) index)) + 1))
                    (((n2w 6) =+ r6)
-                   (((n2w 5) =+ r5) (?_R s)))))) (?_PC_fupd (K (?_PC s + n2w
-                     (4 * LENGTH ag32_ffi_get_arg_length_loop_code)))
+                   (((n2w 5) =+ r5) (ag32_state_R s))))))
+                     (ag32_state_PC_fupd (K (ag32_state_PC s + n2w (4 * LENGTH
+                     ag32_ffi_get_arg_length_loop_code)))
     s)))`,
   CHEAT_TAC);;
 
 let ag32_ffi_get_arg_length_store_def = new_definition
   `ag32_ffi_get_arg_length_store s =
-   let s = dfn'Normal (fDec,(n2w 4),Reg (n2w 4),Imm (n2w 1)) s in
-   let s = dfn'StoreMEMByte (Reg (n2w 4),Reg (n2w 3)) s in
-   let s = dfn'Shift (shiftLR,(n2w 4),Reg (n2w 4),Imm (n2w 8)) s in
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'StoreMEMByte (Reg (n2w 4),Reg (n2w 3)) s in
+   let s = dfn'Normal (fDec,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 1)) s in
+   let s = dfn'StoreMEMByte (ag32_Reg (n2w 4),ag32_Reg (n2w 3)) s in
+   let s = dfn'Shift (shiftLR,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 8)) s
+     in
+   let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'StoreMEMByte (ag32_Reg (n2w 4),ag32_Reg (n2w 3)) s in
    s`;;
 
 let ag32_ffi_get_arg_length_store_thm = prove
- (`(?_R s (n2w 4) = n2w (n + 1)) /\
+ (`(ag32_state_R s (n2w 4) = n2w (n + 1)) /\
    n < dimword (:32) ==>
    (?r4 r3.
-   (ag32_ffi_get_arg_length_store s = ?_MEM_fupd (K (((?_R s (n2w 3)) =+
-     (n2w n))
-                     (((?_R s (n2w 3) + (n2w 1)) =+ (n2w (n DIV 256)))
-                       (?_MEM s)))) (?_R_fupd (K (((n2w 4) =+ r4)
-                   (((n2w 3) =+ r3) (?_R s)))) (?_PC_fupd (K (?_PC s + n2w
-                     (4 * LENGTH ag32_ffi_get_arg_length_store_code)))
+   (ag32_ffi_get_arg_length_store s = ag32_state_MEM_fupd (K (((ag32_state_R
+     s (n2w 3)) =+ (n2w n))
+                     (((ag32_state_R s (n2w 3) + (n2w 1)) =+ (n2w (n DIV
+                       256))) (ag32_state_MEM s)))) (ag32_state_R_fupd (K
+                       (((n2w 4) =+ r4)
+                   (((n2w 3) =+ r3) (ag32_state_R s)))) (ag32_state_PC_fupd
+                     (K (ag32_state_PC s + n2w (4 * LENGTH
+                     ag32_ffi_get_arg_length_store_code)))
     s))))`,
   CHEAT_TAC);;
 
@@ -674,39 +699,41 @@ let ag32_ffi_get_arg_entrypoint_def = new_definition
 
 let ag32_ffi_get_arg_setup_code_def = new_definition
   `ag32_ffi_get_arg_setup_code =
-     [LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1));
-      StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes (implode
-        "get_arg")))),Reg (n2w 5));
-      LoadConstant ((n2w 5),F,(n2w (startup_code_size + 4)));
+     [ag32_LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1));
+      ag32_StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes (implode
+        "get_arg")))),ag32_Reg (n2w 5));
+      ag32_LoadConstant ((n2w 5),F,(n2w (startup_code_size + 4)));
       // r5 contains pointer
-      LoadMEMByte ((n2w 6),Reg (n2w 3));
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
-      LoadMEMByte ((n2w 7),Reg (n2w 3));
-      asm_Shift (shiftLL,(n2w 7),Reg (n2w 7),Imm (n2w 8));
-      Normal (fDec,(n2w 3),Reg (n2w 3),Imm (n2w 1));
-      Normal (fAdd,(n2w 6),Reg (n2w 6),Reg (n2w 7))]
+      ag32_LoadMEMByte ((n2w 6),ag32_Reg (n2w 3));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
+      ag32_LoadMEMByte ((n2w 7),ag32_Reg (n2w 3));
+      ag32_Shift (shiftLL,(n2w 7),ag32_Reg (n2w 7),ag32_Imm (n2w 8));
+      ag32_Normal (fDec,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
+      ag32_Normal (fAdd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7))]
    // r6 contains index`;;
 
 let ag32_ffi_get_arg_find_code_def = new_definition
   `ag32_ffi_get_arg_find_code =
-     [JumpIfZero (fSnd,Imm ((n2w 4) * (n2w 6)),Imm (n2w 0),Reg (n2w 6));
-      LoadMEMByte ((n2w 8),Reg (n2w 5));
-      Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1));
-      JumpIfNotZero (fSnd,Imm ((n2w 4) * --(n2w 2)),Imm (n2w 0),Reg (n2w
-        8));
-      Normal (fDec,(n2w 6),Reg (n2w 6),Imm (n2w 1));
-      JumpIfZero (fSnd,Imm ((n2w 4) * --(n2w 5)),Imm (n2w 0),Imm (n2w
-        0))]`;;
+     [ag32_JumpIfZero (fSnd,ag32_Imm ((n2w 4) * (n2w 6)),ag32_Imm (n2w
+       0),ag32_Reg (n2w 6));
+      ag32_LoadMEMByte ((n2w 8),ag32_Reg (n2w 5));
+      ag32_Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1));
+      ag32_JumpIfNotZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 2)),ag32_Imm (n2w
+        0),ag32_Reg (n2w 8));
+      ag32_Normal (fDec,(n2w 6),ag32_Reg (n2w 6),ag32_Imm (n2w 1));
+      ag32_JumpIfZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 5)),ag32_Imm (n2w
+        0),ag32_Imm (n2w 0))]`;;
 
 let ag32_ffi_get_arg_store_code_def = new_definition
   `ag32_ffi_get_arg_store_code =
-     [LoadMEMByte ((n2w 8),Reg (n2w 5));
-      JumpIfZero (fSnd,Imm ((n2w 4) * (n2w 5)),Imm (n2w 0),Reg (n2w 8));
-      StoreMEMByte (Reg (n2w 8),Reg (n2w 3));
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
-      Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1));
-      JumpIfZero (fSnd,Imm ((n2w 4) * --(n2w 5)),Imm (n2w 0),Imm (n2w
-        0))]`;;
+     [ag32_LoadMEMByte ((n2w 8),ag32_Reg (n2w 5));
+      ag32_JumpIfZero (fSnd,ag32_Imm ((n2w 4) * (n2w 5)),ag32_Imm (n2w
+        0),ag32_Reg (n2w 8));
+      ag32_StoreMEMByte (ag32_Reg (n2w 8),ag32_Reg (n2w 3));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1));
+      ag32_JumpIfZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 5)),ag32_Imm (n2w
+        0),ag32_Imm (n2w 0))]`;;
 
 let ag32_ffi_get_arg_code_def = new_definition
   `ag32_ffi_get_arg_code = APPEND (APPEND (APPEND ag32_ffi_get_arg_setup_code
@@ -717,118 +744,131 @@ let ag32_ffi_get_arg_code_def = new_definition
 let ag32_ffi_get_arg_setup_def = new_definition
   `ag32_ffi_get_arg_setup s =
    let s = dfn'LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1)) s in
-   let s = dfn'StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes (implode
-     "get_arg")))),Reg (n2w 5)) s in
+   let s = dfn'StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes (implode
+     "get_arg")))),ag32_Reg (n2w 5)) s in
    let s = dfn'LoadConstant ((n2w 5),F,(n2w (startup_code_size + 4))) s in
-   let s = dfn'LoadMEMByte ((n2w 6),Reg (n2w 3)) s in
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'LoadMEMByte ((n2w 7),Reg (n2w 3)) s in
-   let s = dfn'Shift (shiftLL,(n2w 7),Reg (n2w 7),Imm (n2w 8)) s in
-   let s = dfn'Normal (fDec,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'Normal (fAdd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
+   let s = dfn'LoadMEMByte ((n2w 6),ag32_Reg (n2w 3)) s in
+   let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'LoadMEMByte ((n2w 7),ag32_Reg (n2w 3)) s in
+   let s = dfn'Shift (shiftLL,(n2w 7),ag32_Reg (n2w 7),ag32_Imm (n2w 8)) s
+     in
+   let s = dfn'Normal (fDec,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'Normal (fAdd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
    s`;;
 
 let ag32_ffi_get_arg_setup_thm = prove
- (`bytes_in_memory (?_R s (n2w 3)) [l0; l1] (?_MEM s) md /\ ~(n2w
-  (ffi_code_start_offset - 1) IN md) ==>
+ (`bytes_in_memory (ag32_state_R s (n2w 3)) [l0; l1] (ag32_state_MEM s) md
+  /\ ~(n2w (ffi_code_start_offset - 1) IN md) ==>
    (?r7 ov cf.
-   (ag32_ffi_get_arg_setup s = ?_OverflowFlag_fupd (K ov) (?_CarryFlag_fupd
-     (K cf) (?_R_fupd (K (((n2w 5) =+ n2w (startup_code_size + 4))
+   (ag32_ffi_get_arg_setup s = ag32_state_OverflowFlag_fupd (K ov)
+     (ag32_state_CarryFlag_fupd (K cf) (ag32_state_R_fupd (K (((n2w 5) =+ n2w
+     (startup_code_size + 4))
            (((n2w 6) =+ n2w (256 * w2n l1 + w2n l0))
-           (((n2w 7) =+ r7) (?_R s))))) (?_PC_fupd (K (?_PC s + n2w (4 *
-             LENGTH ag32_ffi_get_arg_setup_code))) (?_MEM_fupd (K (((n2w
-             (ffi_code_start_offset - 1)) =+ n2w (THE (ALOOKUP FFI_codes
-             (implode "get_arg")))) (?_MEM s)))
+           (((n2w 7) =+ r7) (ag32_state_R s))))) (ag32_state_PC_fupd (K
+             (ag32_state_PC s + n2w (4 * LENGTH ag32_ffi_get_arg_setup_code)))
+             (ag32_state_MEM_fupd (K (((n2w (ffi_code_start_offset - 1)) =+ n2w
+             (THE (ALOOKUP FFI_codes (implode "get_arg")))) (ag32_state_MEM
+             s)))
     s))))))`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (\s. minimal n. (?_MEM s (?_R s (n2w 5) + n2w n) = (n2w 0)))
+     MEASURE (\s. minimal n. (ag32_state_MEM s (ag32_state_R s (n2w 5) + n2w n)
+       = (n2w 0)))
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 ag32_memoryScript.sml:1267-1286: the tactic that proves the
    termination *)
 let ag32_ffi_get_arg_find1_def,ag32_ffi_get_arg_find1_ind = define_guess
   `ag32_ffi_get_arg_find1 s =
-     if (!n. ~(?_MEM s (?_R s (n2w 5) + n2w n) = (n2w 0))) then s else let s
-       = dfn'LoadMEMByte ((n2w 8),Reg (n2w 5)) s in
-     let s0 = dfn'Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1)) s in
-     let s = dfn'JumpIfNotZero (fSnd,Imm ((n2w 4) * --(n2w 2)),Imm (n2w
-       0),Reg (n2w 8)) s0 in
-     if (?_R s0 (n2w 8) = (n2w 0)) then s else ag32_ffi_get_arg_find1 s`;;
+     (if (!n. ~(ag32_state_MEM s (ag32_state_R s (n2w 5) + n2w n) = (n2w
+       0))) then s else let s = dfn'LoadMEMByte ((n2w 8),ag32_Reg (n2w 5)) s in
+     let s0 = dfn'Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1)) s
+       in
+     let s = dfn'JumpIfNotZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 2)),ag32_Imm
+       (n2w 0),ag32_Reg (n2w 8)) s0 in
+     if (ag32_state_R s0 (n2w 8) = (n2w 0)) then s else
+       ag32_ffi_get_arg_find1 s)`;;
 
 let ag32_ffi_get_arg_find1_thm = prove
  (`ag32_ffi_get_arg_find1 s =
-   match OLEAST (\n. ?_MEM s (?_R s (n2w 5) + n2w n) = (n2w 0)) with
+   (match OLEAST (\n. ag32_state_MEM s (ag32_state_R s (n2w 5) + n2w n) =
+     (n2w 0)) with
      NONE -> s
-   | SOME n -> ?_R_fupd (K (((n2w 8) =+ (n2w 0))
-                    (((n2w 5) =+ (?_R s (n2w 5) + n2w (n + 1))) (?_R s))))
-                      (?_PC_fupd (K (?_PC s + n2w (4 * 3)))
-     s)`,
+   | SOME n -> ag32_state_R_fupd (K (((n2w 8) =+ (n2w 0))
+                    (((n2w 5) =+ (ag32_state_R s (n2w 5) + n2w (n + 1)))
+                      (ag32_state_R s)))) (ag32_state_PC_fupd (K (ag32_state_PC
+                      s + n2w (4 * 3)))
+     s))`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (\s. w2n (?_R s (n2w 6)))
+     MEASURE (\s. w2n (ag32_state_R s (n2w 6)))
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 ag32_memoryScript.sml:1357-1368: the tactic that proves the
    termination *)
 let ag32_ffi_get_arg_find_def,ag32_ffi_get_arg_find_ind = define_guess
   `ag32_ffi_get_arg_find s0 =
-   let s = dfn'JumpIfZero (fSnd,Imm ((n2w 4) * (n2w 6)),Imm (n2w 0),Reg (n2w
-     6)) s0 in
-   if (?_R s0 (n2w 6) = (n2w 0)) then s else let s = ag32_ffi_get_arg_find1
-     s in
-   let s = dfn'Normal (fDec,(n2w 6),Reg (n2w 6),Imm (n2w 1)) s in
-   let s = dfn'JumpIfZero (fSnd,Imm ((n2w 4) * --(n2w 5)),Imm (n2w 0),Imm
-     (n2w 0)) s in
-   ag32_ffi_get_arg_find s`;;
+   (let s = dfn'JumpIfZero (fSnd,ag32_Imm ((n2w 4) * (n2w 6)),ag32_Imm (n2w
+     0),ag32_Reg (n2w 6)) s0 in
+   if (ag32_state_R s0 (n2w 6) = (n2w 0)) then s else let s =
+     ag32_ffi_get_arg_find1 s in
+   let s = dfn'Normal (fDec,(n2w 6),ag32_Reg (n2w 6),ag32_Imm (n2w 1)) s in
+   let s = dfn'JumpIfZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 5)),ag32_Imm (n2w
+     0),ag32_Imm (n2w 0)) s in
+   ag32_ffi_get_arg_find s)`;;
 
 let ag32_ffi_get_arg_find_thm = prove
- (`(?_R s (n2w 6) = n2w (index)) /\ index <= cline_size /\
-   (?n. ?_MEM s (?_R s (n2w 5) + n2w n) = (n2w 0)) ==>
+ (`(ag32_state_R s (n2w 6) = n2w (index)) /\ index <= cline_size /\
+   (?n. ag32_state_MEM s (ag32_state_R s (n2w 5) + n2w n) = (n2w 0)) ==>
    (?r8 r6.
-   (ag32_ffi_get_arg_find s = ?_R_fupd (K (((n2w 8) =+ r8)
-                   (((n2w 5) =+ (if 0 < index then FST (get_mem_arg (?_MEM
-                     s) (?_R s (n2w 5)) (index - 1)) + (n2w 1) else ?_R s (n2w
-                     5)))
-                   (((n2w 6) =+ r6) (?_R s))))) (?_PC_fupd (K (?_PC s + n2w
-                     (4 * LENGTH ag32_ffi_get_arg_find_code)))
+   (ag32_ffi_get_arg_find s = ag32_state_R_fupd (K (((n2w 8) =+ r8)
+                   (((n2w 5) =+ (if 0 < index then FST (get_mem_arg
+                     (ag32_state_MEM s) (ag32_state_R s (n2w 5)) (index - 1)) +
+                     (n2w 1) else ag32_state_R s (n2w 5)))
+                   (((n2w 6) =+ r6) (ag32_state_R s))))) (ag32_state_PC_fupd
+                     (K (ag32_state_PC s + n2w (4 * LENGTH
+                     ag32_ffi_get_arg_find_code)))
     s)))`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
-     MEASURE (\s. minimal n. (?_MEM s (?_R s (n2w 5) + n2w n) = (n2w 0)))
+     MEASURE (\s. minimal n. (ag32_state_MEM s (ag32_state_R s (n2w 5) + n2w n)
+       = (n2w 0)))
    which is not one that HOL Light takes here, so the
    port lets its own machinery find one *)
 (* HOL4 ag32_memoryScript.sml:1453-1496: the tactic that proves the
    termination *)
 let ag32_ffi_get_arg_store_def,ag32_ffi_get_arg_store_ind = define_guess
   `ag32_ffi_get_arg_store s =
-   if ~(?n. (?_MEM s (?_R s (n2w 5) + n2w n) = (n2w 0)) /\ (!i. i <= n ==>
-     ~(?_R s (n2w 3) = ?_R s (n2w 5) + n2w i))) then s else let s0 =
-     dfn'LoadMEMByte ((n2w 8),Reg (n2w 5)) s in
-   let s = dfn'JumpIfZero (fSnd,Imm ((n2w 4) * (n2w 5)),Imm (n2w 0),Reg (n2w
-     8)) s0 in
-   if ?_R s0 (n2w 8) = (n2w 0) then s else let s = dfn'StoreMEMByte (Reg
-     (n2w 8),Reg (n2w 3)) s in
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1)) s in
-   let s = dfn'JumpIfZero (fSnd,Imm ((n2w 4) * --(n2w 5)),Imm (n2w 0),Imm
-     (n2w 0)) s in
-   ag32_ffi_get_arg_store s`;;
+   (if ~(?n. (ag32_state_MEM s (ag32_state_R s (n2w 5) + n2w n) = (n2w 0))
+     /\ (!i. i <= n ==> ~(ag32_state_R s (n2w 3) = ag32_state_R s (n2w 5) + n2w
+     i))) then s else let s0 = dfn'LoadMEMByte ((n2w 8),ag32_Reg (n2w 5)) s in
+   let s = dfn'JumpIfZero (fSnd,ag32_Imm ((n2w 4) * (n2w 5)),ag32_Imm (n2w
+     0),ag32_Reg (n2w 8)) s0 in
+   if ag32_state_R s0 (n2w 8) = (n2w 0) then s else let s = dfn'StoreMEMByte
+     (ag32_Reg (n2w 8),ag32_Reg (n2w 3)) s in
+   let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1)) s in
+   let s = dfn'JumpIfZero (fSnd,ag32_Imm ((n2w 4) * --(n2w 5)),ag32_Imm (n2w
+     0),ag32_Imm (n2w 0)) s in
+   ag32_ffi_get_arg_store s)`;;
 
 let ag32_ffi_get_arg_store_thm = prove
- (`((OLEAST (\n. ?_MEM s (?_R s (n2w 5) + n2w n) = (n2w 0))) = SOME n) /\
-   (!i. i <= n ==> ~(?_R s (n2w 5) + n2w i = ?_R s (n2w 3))) /\ Abbrev (w2n
-     (?_R s (n2w 3)) + n < dimword (:32)) ==>
+ (`((OLEAST (\n. ag32_state_MEM s (ag32_state_R s (n2w 5) + n2w n) = (n2w 0)))
+  = SOME n) /\
+   (!i. i <= n ==> ~(ag32_state_R s (n2w 5) + n2w i = ag32_state_R s (n2w
+     3))) /\ Abbrev (w2n (ag32_state_R s (n2w 3)) + n < dimword (:32)) ==>
    (?r8 r5 r3.
-   (ag32_ffi_get_arg_store s = ?_MEM_fupd (K (asm_write_bytearray (?_R s
-     (n2w 3)) (list_of_seq (\n. ?_MEM s (?_R s (n2w 5) + n2w n)) n) (?_MEM s)))
-     (?_R_fupd (K (((n2w 8) =+ r8)
+   (ag32_ffi_get_arg_store s = ag32_state_MEM_fupd (K (asm_write_bytearray
+     (ag32_state_R s (n2w 3)) (list_of_seq (\n. ag32_state_MEM s (ag32_state_R
+     s (n2w 5) + n2w n)) n) (ag32_state_MEM s))) (ag32_state_R_fupd (K (((n2w
+     8) =+ r8)
                    (((n2w 5) =+ r5)
-                   (((n2w 3) =+ r3) (?_R s))))) (?_PC_fupd (K (?_PC s + n2w
-                     (4 * LENGTH ag32_ffi_get_arg_store_code)))
+                   (((n2w 3) =+ r3) (ag32_state_R s))))) (ag32_state_PC_fupd
+                     (K (ag32_state_PC s + n2w (4 * LENGTH
+                     ag32_ffi_get_arg_store_code)))
     s))))`,
   CHEAT_TAC);;
 
@@ -847,155 +887,158 @@ let ag32_ffi_read_entrypoint_def = new_definition
 
 let ag32_ffi_read_set_id_code_def = new_definition
   `ag32_ffi_read_set_id_code =
-     [LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1));
-      StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes (implode
-        "read")))),Reg (n2w 5))]`;;
+     [ag32_LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1));
+      ag32_StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes (implode
+        "read")))),ag32_Reg (n2w 5))]`;;
 
 (* TODO: this would be shorter and maybe simpler using LoadMEM rather than LoadMEMByte *)
 let ag32_ffi_read_check_conf_code_def = new_definition
   `ag32_ffi_read_check_conf_code = [
-      Normal (fEqual,(n2w 6),Reg (n2w 2),Imm (n2w 8));
+      ag32_Normal (fEqual,(n2w 6),ag32_Reg (n2w 2),ag32_Imm (n2w 8));
       // r6 = (LENGTH conf = 8)
-      Normal (fSub,(n2w 4),Reg (n2w 4),Imm (n2w 4));
+      ag32_Normal (fSub,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 4));
       // r4 = LENGTH tll
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf7
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf7 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf7 = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf6::conf5...conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf6
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf6 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..6} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf5::conf4...conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf5
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf5 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..5} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf4::conf3...conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf4
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf4 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..4} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf3::conf2...conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf3
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf3 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..3} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf2::conf1::conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf2
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf2 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..2} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf1::conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf1
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf1 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..1} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf0
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf0 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7))]
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7))]
    // r6 = (LENGTH conf = 8) ∧ w82n conf = 0`;;
 
 let ag32_ffi_read_load_lengths_code_def = new_definition
   `ag32_ffi_read_load_lengths_code = [
       // r3 -> n1::n0::...
-      LoadMEMByte ((n2w 1),Reg (n2w 3));
+      ag32_LoadMEMByte ((n2w 1),ag32_Reg (n2w 3));
       // r1 = [0w; 0w; 0w; n1]
-      asm_Shift (shiftLL,(n2w 1),Reg (n2w 1),Imm (n2w 8));
+      ag32_Shift (shiftLL,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 8));
       // r1 = [0w; 0w; n1; 0w]
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
       // r3 -> n0::...
-      LoadMEMByte ((n2w 8),Reg (n2w 3));
+      ag32_LoadMEMByte ((n2w 8),ag32_Reg (n2w 3));
       // r8 = [0w; 0w; 0w; n0]
-      Normal (fXor,(n2w 1),Reg (n2w 1),Reg (n2w 8));
+      ag32_Normal (fXor,(n2w 1),ag32_Reg (n2w 1),ag32_Reg (n2w 8));
       // r1 = [0w; 0w; n1; n0] (= w22n [n1; n0])
-      Normal (fDec,(n2w 3),Reg (n2w 3),Imm (n2w 1));
+      ag32_Normal (fDec,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
       // r3 -> n1::n0::...
-      LoadConstant ((n2w 8),F,n2w (stdin_offset));
+      ag32_LoadConstant ((n2w 8),F,n2w (stdin_offset));
       // r8 = stdin_offset
-      LoadMEM ((n2w 5),Reg (n2w 8));
+      ag32_LoadMEM ((n2w 5),ag32_Reg (n2w 8));
       // r5 = off
-      Normal (fAdd,(n2w 8),Reg (n2w 8),Imm (n2w 4));
+      ag32_Normal (fAdd,(n2w 8),ag32_Reg (n2w 8),ag32_Imm (n2w 4));
       // r8 = stdin_offset + 4
-      LoadMEM ((n2w 7),Reg (n2w 8));
+      ag32_LoadMEM ((n2w 7),ag32_Reg (n2w 8));
       // r7 = LENGTH content
-      Normal (fSub,(n2w 7),Reg (n2w 7),Reg (n2w 5))]
+      ag32_Normal (fSub,(n2w 7),ag32_Reg (n2w 7),ag32_Reg (n2w 5))]
    // r7 = LENGTH content - off`;;
 
 let ag32_ffi_read_check_length_code_def = new_definition
   `ag32_ffi_read_check_length_code = [
-      Normal (fLower,(n2w 8),Reg (n2w 4),Reg (n2w 1));
+      ag32_Normal (fLower,(n2w 8),ag32_Reg (n2w 4),ag32_Reg (n2w 1));
       // r8 = LENGTH tll < w22n [n1; n0]
-      Normal (fSub,(n2w 8),Imm (n2w 1),Reg (n2w 8));
+      ag32_Normal (fSub,(n2w 8),ag32_Imm (n2w 1),ag32_Reg (n2w 8));
       // r8 = ¬(LENGTH tll < w22n [n1; n0]
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 8));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 8));
       // r6 = (LENGTH conf = 8) ∧ w82n conf < 3 ∧
       // w22n [n1; n0] ≤ LENGTH tll
-      LoadConstant ((n2w 4),F,(n2w 4) * (n2w 26));
-      JumpIfZero (fAnd,Reg (n2w 4),Reg (n2w 6),Reg (n2w 8))]`;;
+      ag32_LoadConstant ((n2w 4),F,(n2w 4) * (n2w 26));
+      ag32_JumpIfZero (fAnd,ag32_Reg (n2w 4),ag32_Reg (n2w 6),ag32_Reg
+        (n2w 8))]`;;
 
 let ag32_ffi_read_num_written_code_def = new_definition
   `ag32_ffi_read_num_written_code = [
-      StoreMEMByte (Imm (n2w 0),Reg (n2w 3));
+      ag32_StoreMEMByte (ag32_Imm (n2w 0),ag32_Reg (n2w 3));
       // r3 -> 0w::n0::pad1::pad2::tll
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
       // r3 -> n0::pad1::pad2::tll
-      LoadConstant ((n2w 8),F,n2w (output_buffer_size + 1));
+      ag32_LoadConstant ((n2w 8),F,n2w (output_buffer_size + 1));
       // r8 = output_buffer_size+1
-      JumpIfZero (fLess,Imm (n2w 8),Reg (n2w 8),Reg (n2w 1));
+      ag32_JumpIfZero (fLess,ag32_Imm (n2w 8),ag32_Reg (n2w 8),ag32_Reg (n2w
+        1));
       // skip if ¬(output_buffer_size+1 < w22n [n1; n0])
-      Normal (fSnd,(n2w 1),Reg (n2w 1),Reg (n2w 8));
+      ag32_Normal (fSnd,(n2w 1),ag32_Reg (n2w 1),ag32_Reg (n2w 8));
       // r1 = MIN (output_buffer_size+1) n
-      JumpIfZero (fLess,Imm (n2w 8),Reg (n2w 7),Reg (n2w 1));
+      ag32_JumpIfZero (fLess,ag32_Imm (n2w 8),ag32_Reg (n2w 7),ag32_Reg (n2w
+        1));
       // skip if ¬(LENGTH content - off < MIN (output_buffer_size+1) n)
-      Normal (fSnd,(n2w 1),Reg (n2w 1),Reg (n2w 7));
+      ag32_Normal (fSnd,(n2w 1),ag32_Reg (n2w 1),ag32_Reg (n2w 7));
       // r1 = MIN n (MIN (LENGTH content - off) (output_buffer_size+1))
-      asm_Shift (shiftLR,(n2w 8),Reg (n2w 1),Imm (n2w 8));
+      ag32_Shift (shiftLR,(n2w 8),ag32_Reg (n2w 1),ag32_Imm (n2w 8));
       // r8 = r1 DIV 256
-      StoreMEMByte (Reg (n2w 8),Reg (n2w 3));
+      ag32_StoreMEMByte (ag32_Reg (n2w 8),ag32_Reg (n2w 3));
       // r3 -> k1::pad1::pad2::tll
-      Normal (fInc,(n2w 4),Reg (n2w 3),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 4),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
       // r4 -> pad1::pad2::tll
-      StoreMEMByte (Reg (n2w 1),Reg (n2w 4));
+      ag32_StoreMEMByte (ag32_Reg (n2w 1),ag32_Reg (n2w 4));
       // r4 -> k0::pad2::tll
-      Normal (fAdd,(n2w 8),Reg (n2w 5),Reg (n2w 1));
+      ag32_Normal (fAdd,(n2w 8),ag32_Reg (n2w 5),ag32_Reg (n2w 1));
       // r8 = off + k
-      LoadConstant ((n2w 2),F,n2w stdin_offset);
+      ag32_LoadConstant ((n2w 2),F,n2w stdin_offset);
       // r2 = stdin_offset
-      StoreMEM (Reg (n2w 8),Reg (n2w 2));
+      ag32_StoreMEM (ag32_Reg (n2w 8),ag32_Reg (n2w 2));
       // stdin pointer updated
-      Normal (fAdd,(n2w 2),Reg (n2w 2),Imm (n2w 8));
+      ag32_Normal (fAdd,(n2w 2),ag32_Reg (n2w 2),ag32_Imm (n2w 8));
       // r2 -> stdin
-      Normal (fAdd,(n2w 3),Reg (n2w 2),Reg (n2w 5));
+      ag32_Normal (fAdd,(n2w 3),ag32_Reg (n2w 2),ag32_Reg (n2w 5));
       // r3 -> DROP off stdin
-      Normal (fAdd,(n2w 5),Reg (n2w 4),Imm (n2w 2));
+      ag32_Normal (fAdd,(n2w 5),ag32_Reg (n2w 4),ag32_Imm (n2w 2));
       // r5 -> tll
-      LoadConstant ((n2w 2),F,(n2w 4) * (n2w 8))]`;;
+      ag32_LoadConstant ((n2w 2),F,(n2w 4) * (n2w 8))]`;;
 (* r2 = 4*8 *)
 
 let ag32_ffi_read_code_def = new_definition
@@ -1006,192 +1049,212 @@ let ag32_ffi_read_code_def = new_definition
       ag32_ffi_read_check_length_code)
       ag32_ffi_read_num_written_code)
       ag32_ffi_copy_code)
-      [StoreMEMByte (Imm (n2w 1),Reg (n2w 3))])
+      [ag32_StoreMEMByte (ag32_Imm (n2w 1),ag32_Reg (n2w 3))])
       ag32_ffi_return_code`;;
 
 let ag32_ffi_read_set_id_def = new_definition
   `ag32_ffi_read_set_id s =
      let s = dfn'LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1)) s
        in
-     let s = dfn'StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes (implode
-       "read")))),Reg (n2w 5)) s in
+     let s = dfn'StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes
+       (implode "read")))),ag32_Reg (n2w 5)) s in
      s`;;
 
 let ag32_ffi_read_set_id_thm = prove
- (`(ag32_ffi_read_set_id s = ?_MEM_fupd (K (((n2w (ffi_code_start_offset - 1))
-  =+ n2w (THE (ALOOKUP FFI_codes (implode "read")))) (?_MEM s))) (?_R_fupd (K
-  (((n2w 5) =+ n2w (ffi_code_start_offset - 1)) (?_R s))) (?_PC_fupd (K (?_PC s
-  + (n2w 8)))
+ (`(ag32_ffi_read_set_id s = ag32_state_MEM_fupd (K (((n2w
+  (ffi_code_start_offset - 1)) =+ n2w (THE (ALOOKUP FFI_codes (implode
+  "read")))) (ag32_state_MEM s))) (ag32_state_R_fupd (K (((n2w 5) =+ n2w
+  (ffi_code_start_offset - 1)) (ag32_state_R s))) (ag32_state_PC_fupd (K
+  (ag32_state_PC s + (n2w 8)))
     s)))`,
   CHEAT_TAC);;
 
 let ag32_ffi_read_check_conf_def = new_definition
   `ag32_ffi_read_check_conf s =
-    let s = dfn'Normal (fEqual,(n2w 6),Reg (n2w 2),Imm (n2w 8)) s in
-    let s = dfn'Normal (fSub,(n2w 4),Reg (n2w 4),Imm (n2w 4)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in s`;;
+    let s = dfn'Normal (fEqual,(n2w 6),ag32_Reg (n2w 2),ag32_Imm (n2w 8)) s
+      in
+    let s = dfn'Normal (fSub,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 4)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s
+      in s`;;
 
 let ag32_ffi_read_check_conf_thm = prove
- (`bytes_in_memory (?_R s (n2w 1)) conf (?_MEM s) md /\ (w2n (?_R s (n2w 2)) =
-  LENGTH conf) ==>
+ (`bytes_in_memory (ag32_state_R s (n2w 1)) conf (ag32_state_MEM s) md /\ (w2n
+  (ag32_state_R s (n2w 2)) = LENGTH conf) ==>
    (?ov cf r1 r2 r7.
-   (ag32_ffi_read_check_conf s = ?_CarryFlag_fupd (K cf)
-     (?_OverflowFlag_fupd (K ov) (?_PC_fupd (K (?_PC s + n2w (4 * LENGTH
-     ag32_ffi_read_check_conf_code))) (?_R_fupd (K (((n2w 6) =+ v2w [(LENGTH
-     conf = 8) /\ (w82n conf = 0)])
+   (ag32_ffi_read_check_conf s = ag32_state_CarryFlag_fupd (K cf)
+     (ag32_state_OverflowFlag_fupd (K ov) (ag32_state_PC_fupd (K (ag32_state_PC
+     s + n2w (4 * LENGTH ag32_ffi_read_check_conf_code))) (ag32_state_R_fupd (K
+     (((n2w 6) =+ v2w [(LENGTH conf = 8) /\ (w82n conf = 0)])
                    (((n2w 2) =+ (if (LENGTH conf = 8) /\ (w82n conf = 0)
                      then n2w (w82n conf) else r2))
-                   (((n2w 4) =+ (?_R s (n2w 4) - (n2w 4)))
+                   (((n2w 4) =+ (ag32_state_R s (n2w 4) - (n2w 4)))
                    (((n2w 1) =+ r1)
-                   (((n2w 7) =+ r7) (?_R s)))))))
+                   (((n2w 7) =+ r7) (ag32_state_R s)))))))
     s)))))`,
   CHEAT_TAC);;
 
 let ag32_ffi_read_load_lengths_def = new_definition
   `ag32_ffi_read_load_lengths s =
-   let s = dfn'LoadMEMByte ((n2w 1),Reg (n2w 3)) s in
-   let s = dfn'Shift (shiftLL,(n2w 1),Reg (n2w 1),Imm (n2w 8)) s in
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'LoadMEMByte ((n2w 8),Reg (n2w 3)) s in
-   let s = dfn'Normal (fXor,(n2w 1),Reg (n2w 1),Reg (n2w 8)) s in
-   let s = dfn'Normal (fDec,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
+   let s = dfn'LoadMEMByte ((n2w 1),ag32_Reg (n2w 3)) s in
+   let s = dfn'Shift (shiftLL,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 8)) s
+     in
+   let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'LoadMEMByte ((n2w 8),ag32_Reg (n2w 3)) s in
+   let s = dfn'Normal (fXor,(n2w 1),ag32_Reg (n2w 1),ag32_Reg (n2w 8)) s in
+   let s = dfn'Normal (fDec,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
    let s = dfn'LoadConstant ((n2w 8),F,n2w (stdin_offset)) s in
-   let s = dfn'LoadMEM ((n2w 5),Reg (n2w 8)) s in
-   let s = dfn'Normal (fAdd,(n2w 8),Reg (n2w 8),Imm (n2w 4)) s in
-   let s = dfn'LoadMEM ((n2w 7),Reg (n2w 8)) s in
-   let s = dfn'Normal (fSub,(n2w 7),Reg (n2w 7),Reg (n2w 5)) s in
+   let s = dfn'LoadMEM ((n2w 5),ag32_Reg (n2w 8)) s in
+   let s = dfn'Normal (fAdd,(n2w 8),ag32_Reg (n2w 8),ag32_Imm (n2w 4)) s in
+   let s = dfn'LoadMEM ((n2w 7),ag32_Reg (n2w 8)) s in
+   let s = dfn'Normal (fSub,(n2w 7),ag32_Reg (n2w 7),ag32_Reg (n2w 5)) s in
    s`;;
 
 let ag32_ffi_read_load_lengths_thm = prove
- (`bytes_in_memory (?_R s (n2w 3)) [n1; n0] (?_MEM s) md /\
-   (get_mem_word (?_MEM s) (n2w stdin_offset) = n2w off) /\
-   (get_mem_word (?_MEM s) (n2w (stdin_offset + 4)) = n2w len) /\ off <= len
-     /\ len <= stdin_size ==>
+ (`bytes_in_memory (ag32_state_R s (n2w 3)) [n1; n0] (ag32_state_MEM s) md /\
+   (get_mem_word (ag32_state_MEM s) (n2w stdin_offset) = n2w off) /\
+   (get_mem_word (ag32_state_MEM s) (n2w (stdin_offset + 4)) = n2w len)
+     /\ off <= len /\ len <= stdin_size ==>
    (?ov cf r8.
-   (ag32_ffi_read_load_lengths s = ?_CarryFlag_fupd (K cf)
-     (?_OverflowFlag_fupd (K ov) (?_PC_fupd (K (?_PC s + n2w (4 * LENGTH
-     ag32_ffi_read_load_lengths_code))) (?_R_fupd (K (((n2w 8) =+ r8)
+   (ag32_ffi_read_load_lengths s = ag32_state_CarryFlag_fupd (K cf)
+     (ag32_state_OverflowFlag_fupd (K ov) (ag32_state_PC_fupd (K (ag32_state_PC
+     s + n2w (4 * LENGTH ag32_ffi_read_load_lengths_code))) (ag32_state_R_fupd
+     (K (((n2w 8) =+ r8)
                    (((n2w 5) =+ n2w (off))
                    (((n2w 7) =+ n2w (len - off))
-                   (((n2w 1) =+ n2w (w22n [n1; n0])) (?_R s))))))
+                   (((n2w 1) =+ n2w (w22n [n1; n0])) (ag32_state_R s))))))
     s)))))`,
   CHEAT_TAC);;
 
 let ag32_ffi_read_check_length_def = new_definition
   `ag32_ffi_read_check_length s =
-    let s = dfn'Normal (fLower,(n2w 8),Reg (n2w 4),Reg (n2w 1)) s in
-    let s = dfn'Normal (fSub,(n2w 8),Imm (n2w 1),Reg (n2w 8)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 8)) s in
+    let s = dfn'Normal (fLower,(n2w 8),ag32_Reg (n2w 4),ag32_Reg (n2w 1)) s
+      in
+    let s = dfn'Normal (fSub,(n2w 8),ag32_Imm (n2w 1),ag32_Reg (n2w 8)) s in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 8)) s in
     let s = dfn'LoadConstant ((n2w 4),F,(n2w 4) * (n2w 26)) s in
-    let s = dfn'JumpIfZero (fAnd,Reg (n2w 4),Reg (n2w 6),Reg (n2w 8)) s in
+    let s = dfn'JumpIfZero (fAnd,ag32_Reg (n2w 4),ag32_Reg (n2w 6),ag32_Reg
+      (n2w 8)) s in
     s`;;
 
 let ag32_ffi_read_check_length_thm = prove
- (`(?_R s (n2w 1) = n2w n) /\ (?_R s (n2w 4) = n2w ltll) /\
-   (?_R s (n2w 6) = v2w [cnd]) /\ ltll < dimword (:32) /\ n < dimword (:32)
-     ==>
+ (`(ag32_state_R s (n2w 1) = n2w n) /\ (ag32_state_R s (n2w 4) = n2w ltll) /\
+   (ag32_state_R s (n2w 6) = v2w [cnd]) /\ ltll < dimword (:32) /\ n <
+     dimword (:32) ==>
    (?r4 r6 r8 cf ov.
-   (ag32_ffi_read_check_length s = ?_OverflowFlag_fupd (K ov)
-     (?_CarryFlag_fupd (K cf) (?_R_fupd (K (((n2w 8) =+ r8)
+   (ag32_ffi_read_check_length s = ag32_state_OverflowFlag_fupd (K ov)
+     (ag32_state_CarryFlag_fupd (K cf) (ag32_state_R_fupd (K (((n2w 8) =+ r8)
                    (((n2w 6) =+ r6)
-                   (((n2w 4) =+ r4) (?_R s))))) (?_PC_fupd (K (if cnd /\ n
-                     <= ltll then ?_PC s + n2w (4 * LENGTH
-                     ag32_ffi_read_check_length_code)
-                    else ?_PC s + n2w (4 * (LENGTH
+                   (((n2w 4) =+ r4) (ag32_state_R s))))) (ag32_state_PC_fupd
+                     (K (if cnd /\ n <= ltll then ag32_state_PC s + n2w (4 *
+                     LENGTH ag32_ffi_read_check_length_code)
+                    else ag32_state_PC s + n2w (4 * (LENGTH
                       ag32_ffi_read_check_length_code + 25))))
     s)))))`,
   CHEAT_TAC);;
 
 let ag32_ffi_read_num_written_def = new_definition
   `ag32_ffi_read_num_written s =
-    let s = dfn'StoreMEMByte (Imm (n2w 0),Reg (n2w 3)) s in
-    let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
+    (let s = dfn'StoreMEMByte (ag32_Imm (n2w 0),ag32_Reg (n2w 3)) s in
+    let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
     let s0 = dfn'LoadConstant ((n2w 8),F,n2w (output_buffer_size + 1)) s in
-    let s = dfn'JumpIfZero (fLess,Imm (n2w 8),Reg (n2w 8),Reg (n2w 1)) s0 in
-    let s0 = (if ?_PC s = ?_PC s0 + (n2w 4) then dfn'Normal (fSnd,(n2w
-      1),Reg (n2w 1),Reg (n2w 8)) s else s) in
-    let s = dfn'JumpIfZero (fLess,Imm (n2w 8),Reg (n2w 7),Reg (n2w 1)) s0 in
-    let s = (if ?_PC s = ?_PC s0 + (n2w 4) then dfn'Normal (fSnd,(n2w 1),Reg
-      (n2w 1),Reg (n2w 7)) s else s) in
-    let s = dfn'Shift (shiftLR,(n2w 8),Reg (n2w 1),Imm (n2w 8)) s in
-    let s = dfn'StoreMEMByte (Reg (n2w 8),Reg (n2w 3)) s in
-    let s = dfn'Normal (fInc,(n2w 4),Reg (n2w 3),Imm (n2w 1)) s in
-    let s = dfn'StoreMEMByte (Reg (n2w 1),Reg (n2w 4)) s in
-    let s = dfn'Normal (fAdd,(n2w 8),Reg (n2w 5),Reg (n2w 1)) s in
+    let s = dfn'JumpIfZero (fLess,ag32_Imm (n2w 8),ag32_Reg (n2w 8),ag32_Reg
+      (n2w 1)) s0 in
+    let s0 = (if ag32_state_PC s = ag32_state_PC s0 + (n2w 4) then
+      dfn'Normal (fSnd,(n2w 1),ag32_Reg (n2w 1),ag32_Reg (n2w 8)) s else s) in
+    let s = dfn'JumpIfZero (fLess,ag32_Imm (n2w 8),ag32_Reg (n2w 7),ag32_Reg
+      (n2w 1)) s0 in
+    let s = (if ag32_state_PC s = ag32_state_PC s0 + (n2w 4) then dfn'Normal
+      (fSnd,(n2w 1),ag32_Reg (n2w 1),ag32_Reg (n2w 7)) s else s) in
+    let s = dfn'Shift (shiftLR,(n2w 8),ag32_Reg (n2w 1),ag32_Imm (n2w 8)) s
+      in
+    let s = dfn'StoreMEMByte (ag32_Reg (n2w 8),ag32_Reg (n2w 3)) s in
+    let s = dfn'Normal (fInc,(n2w 4),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+    let s = dfn'StoreMEMByte (ag32_Reg (n2w 1),ag32_Reg (n2w 4)) s in
+    let s = dfn'Normal (fAdd,(n2w 8),ag32_Reg (n2w 5),ag32_Reg (n2w 1)) s in
     let s = dfn'LoadConstant ((n2w 2),F,n2w stdin_offset) s in
-    let s = dfn'StoreMEM (Reg (n2w 8),Reg (n2w 2)) s in
-    let s = dfn'Normal (fAdd,(n2w 2),Reg (n2w 2),Imm (n2w 8)) s in
-    let s = dfn'Normal (fAdd,(n2w 3),Reg (n2w 2),Reg (n2w 5)) s in
-    let s = dfn'Normal (fAdd,(n2w 5),Reg (n2w 4),Imm (n2w 2)) s in
+    let s = dfn'StoreMEM (ag32_Reg (n2w 8),ag32_Reg (n2w 2)) s in
+    let s = dfn'Normal (fAdd,(n2w 2),ag32_Reg (n2w 2),ag32_Imm (n2w 8)) s in
+    let s = dfn'Normal (fAdd,(n2w 3),ag32_Reg (n2w 2),ag32_Reg (n2w 5)) s in
+    let s = dfn'Normal (fAdd,(n2w 5),ag32_Reg (n2w 4),ag32_Imm (n2w 2)) s in
     let s = dfn'LoadConstant ((n2w 2),F,(n2w 4) * (n2w 8)) s in
-    s`;;
+    s)`;;
 
 let ag32_ffi_read_num_written_thm = prove
- (`bytes_in_memory (?_R s (n2w 3)) (CONS n1 (CONS n0 (CONS pad1 (CONS pad2
-  tll)))) (?_MEM s) md /\
-   (?_R s (n2w 1) = n2w n) /\
-   (?_R s (n2w 5) = n2w off) /\
-   (?_R s (n2w 7) = n2w lcmo) /\
+ (`bytes_in_memory (ag32_state_R s (n2w 3)) (CONS n1 (CONS n0 (CONS pad1 (CONS
+  pad2 tll)))) (ag32_state_MEM s) md /\
+   (ag32_state_R s (n2w 1) = n2w n) /\
+   (ag32_state_R s (n2w 5) = n2w off) /\
+   (ag32_state_R s (n2w 7) = n2w lcmo) /\
    (k = MIN n (MIN lcmo (output_buffer_size + 1))) /\ n < dimword (:31)
      /\ lcmo < dimword (:31) ==>
    (?r8 r4 cf ov.
-   (ag32_ffi_read_num_written s = ?_OverflowFlag_fupd (K ov)
-     (?_CarryFlag_fupd (K cf) (?_R_fupd (K (((n2w 8) =+ r8)
+   (ag32_ffi_read_num_written s = ag32_state_OverflowFlag_fupd (K ov)
+     (ag32_state_CarryFlag_fupd (K cf) (ag32_state_R_fupd (K (((n2w 8) =+ r8)
                    (((n2w 4) =+ r4)
                    (((n2w 3) =+ n2w (stdin_offset + 8 + off))
-                   (((n2w 5) =+ (?_R s (n2w 3) + (n2w 4)))
+                   (((n2w 5) =+ (ag32_state_R s (n2w 3) + (n2w 4)))
                    (((n2w 2) =+ ((n2w 4) * (n2w 8)))
-                   (((n2w 1) =+ n2w k) (?_R s)))))))) (?_MEM_fupd (K
-                     (set_mem_word (n2w stdin_offset) (n2w (off + k))
-                       (asm_write_bytearray (?_R s (n2w 3)) (CONS (n2w 0)
-                         (n2w2 k)) (?_MEM s)))) (?_PC_fupd (K (?_PC s + n2w (4
-                         * LENGTH ag32_ffi_read_num_written_code)))
+                   (((n2w 1) =+ n2w k) (ag32_state_R s))))))))
+                     (ag32_state_MEM_fupd (K (set_mem_word (n2w stdin_offset)
+                     (n2w (off + k))
+                       (asm_write_bytearray (ag32_state_R s (n2w 3)) (CONS
+                         (n2w 0) (n2w2 k)) (ag32_state_MEM s))))
+                         (ag32_state_PC_fupd (K (ag32_state_PC s + n2w (4 *
+                         LENGTH ag32_ffi_read_num_written_code)))
     s))))))`,
   CHEAT_TAC);;
 
 let ag32_ffi_read_def = new_definition
   `ag32_ffi_read s =
-   let s = ag32_ffi_read_set_id s in
+   (let s = ag32_ffi_read_set_id s in
    let s = ag32_ffi_read_check_conf s in
    let s0 = ag32_ffi_read_load_lengths s in
    let s = ag32_ffi_read_check_length s0 in
    let s =
-     (if ?_PC s = ?_PC s0 + n2w (4 * LENGTH ag32_ffi_read_check_length_code)
-       then
+     (if ag32_state_PC s = ag32_state_PC s0 + n2w (4 * LENGTH
+       ag32_ffi_read_check_length_code) then
        let s = ag32_ffi_read_num_written s in
        let s = ag32_ffi_copy s in s
-     else dfn'StoreMEMByte (Imm (n2w 1),Reg (n2w 3)) s) in
-     ag32_ffi_return s`;;
+     else dfn'StoreMEMByte (ag32_Imm (n2w 1),ag32_Reg (n2w 3)) s) in
+     ag32_ffi_return s)`;;
 
 (* write
    PC is ffi_code_start_offset + ag32_ffi_write_entrypoint
@@ -1224,183 +1287,185 @@ let ag32_ffi_write_entrypoint_def = new_definition
 
 let ag32_ffi_write_set_id_code_def = new_definition
   `ag32_ffi_write_set_id_code =
-     [lab_Jump (fAdd,(n2w 5),Imm (n2w 4));
-      LoadConstant ((n2w 6),F,n2w (ag32_ffi_write_entrypoint + 4));
-      Normal (fSub,(n2w 5),Reg (n2w 5),Reg (n2w 6));
+     [ag32_Jump (fAdd,(n2w 5),ag32_Imm (n2w 4));
+      ag32_LoadConstant ((n2w 6),F,n2w (ag32_ffi_write_entrypoint + 4));
+      ag32_Normal (fSub,(n2w 5),ag32_Reg (n2w 5),ag32_Reg (n2w 6));
       // r5 = ffi_code_start_offset
-      Normal (fDec,(n2w 5),Reg (n2w 5),Imm (n2w 0));
-      StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes (implode
-        "write")))),Reg (n2w 5))]`;;
+      ag32_Normal (fDec,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 0));
+      ag32_StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes (implode
+        "write")))),ag32_Reg (n2w 5))]`;;
 
 let ag32_ffi_write_check_conf_code_def = new_definition
   `ag32_ffi_write_check_conf_code = [
-      Normal (fEqual,(n2w 6),Reg (n2w 2),Imm (n2w 8));
+      ag32_Normal (fEqual,(n2w 6),ag32_Reg (n2w 2),ag32_Imm (n2w 8));
       // r6 = (LENGTH conf = 8)
-      Normal (fSub,(n2w 4),Reg (n2w 4),Imm (n2w 4));
+      ag32_Normal (fSub,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 4));
       // r4 = LENGTH tll
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf7
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf7 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf7 = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf6::conf5...conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf6
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf6 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..6} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf5::conf4...conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf5
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf5 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..5} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf4::conf3...conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf4
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf4 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..4} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf3::conf2...conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf3
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf3 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..3} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf2::conf1::conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf2
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf2 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..2} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf1::conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf1
-      Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0));
+      ag32_Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0));
       // r7 = conf1 = 0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ conf{7..1} = 0
-      Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1));
       // r1 -> conf0
-      LoadMEMByte ((n2w 2),Reg (n2w 1));
+      ag32_LoadMEMByte ((n2w 2),ag32_Reg (n2w 1));
       // r2 = conf0
-      Normal (fLess,(n2w 7),Reg (n2w 2),Imm (n2w 3));
+      ag32_Normal (fLess,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 3));
       // r7 = conf0 < 3
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7));
       // r6 = (LENGTH conf = 8) ∧ w82n conf < 3
-      Normal (fLess,(n2w 7),Imm (n2w 0),Reg (n2w 2));
+      ag32_Normal (fLess,(n2w 7),ag32_Imm (n2w 0),ag32_Reg (n2w 2));
       // r7 = 0 < conf0
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7))]
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7))]
    // r6 = (LENGTH conf = 8) ∧ 0 < w82n conf < 3`;;
 
 let ag32_ffi_write_load_noff_code_def = new_definition
   `ag32_ffi_write_load_noff_code = [
       // r3 -> n1::n0::off1::off0::...
-      LoadMEMByte ((n2w 1),Reg (n2w 3));
+      ag32_LoadMEMByte ((n2w 1),ag32_Reg (n2w 3));
       // r1 = [0w; 0w; 0w; n1]
-      asm_Shift (shiftLL,(n2w 1),Reg (n2w 1),Imm (n2w 8));
+      ag32_Shift (shiftLL,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 8));
       // r1 = [0w; 0w; n1; 0w]
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
       // r3 -> n0::off1::off0::...
-      LoadMEMByte ((n2w 8),Reg (n2w 3));
+      ag32_LoadMEMByte ((n2w 8),ag32_Reg (n2w 3));
       // r8 = [0w; 0w; 0w; n0]
-      Normal (fXor,(n2w 1),Reg (n2w 1),Reg (n2w 8));
+      ag32_Normal (fXor,(n2w 1),ag32_Reg (n2w 1),ag32_Reg (n2w 8));
       // r1 = [0w; 0w; n1; n0] (= w22n [n1; n0])
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
       // r3 -> off1::off0::...
-      LoadMEMByte ((n2w 7),Reg (n2w 3));
+      ag32_LoadMEMByte ((n2w 7),ag32_Reg (n2w 3));
       // r7 = [0w; 0w; 0w; off1]
-      asm_Shift (shiftLL,(n2w 7),Reg (n2w 7),Imm (n2w 8));
+      ag32_Shift (shiftLL,(n2w 7),ag32_Reg (n2w 7),ag32_Imm (n2w 8));
       // r7 = [0w; 0w; off1; 0w]
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
       // r3 -> off0::...
-      LoadMEMByte ((n2w 8),Reg (n2w 3));
+      ag32_LoadMEMByte ((n2w 8),ag32_Reg (n2w 3));
       // r8 = [0w; 0w; 0w; off0]
-      Normal (fXor,(n2w 7),Reg (n2w 7),Reg (n2w 8));
+      ag32_Normal (fXor,(n2w 7),ag32_Reg (n2w 7),ag32_Reg (n2w 8));
       // r7 = [0w; 0w; off1; off0] (= w22n [off1; off0])
-      Normal (fSub,(n2w 3),Reg (n2w 3),Imm (n2w 3))]`;;
+      ag32_Normal (fSub,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 3))]`;;
 
 let ag32_ffi_write_check_lengths_code_def = new_definition
   `ag32_ffi_write_check_lengths_code = [
-      Normal (fLower,(n2w 8),Reg (n2w 4),Reg (n2w 7));
+      ag32_Normal (fLower,(n2w 8),ag32_Reg (n2w 4),ag32_Reg (n2w 7));
       // r8 = LENGTH tll < w22n [off1; off0]
-      Normal (fSub,(n2w 8),Imm (n2w 1),Reg (n2w 8));
+      ag32_Normal (fSub,(n2w 8),ag32_Imm (n2w 1),ag32_Reg (n2w 8));
       // r8 = ¬(LENGTH tll < w22n [off1; off0]
-      Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 8));
+      ag32_Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 8));
       // r6 = (LENGTH conf = 8) ∧ w82n conf < 3 ∧
       // w22n [off1; off0] ≤ LENGTH tll
-      Normal (fSub,(n2w 4),Reg (n2w 4),Reg (n2w 7));
+      ag32_Normal (fSub,(n2w 4),ag32_Reg (n2w 4),ag32_Reg (n2w 7));
       // r4 = LENGTH tll - w22n [off1; off0]
-      Normal (fLower,(n2w 8),Reg (n2w 4),Reg (n2w 1));
+      ag32_Normal (fLower,(n2w 8),ag32_Reg (n2w 4),ag32_Reg (n2w 1));
       // r8 = LENGTH tll - w22n [off1; off0] < w22n [n1; n0]
-      Normal (fSub,(n2w 8),Imm (n2w 1),Reg (n2w 8));
+      ag32_Normal (fSub,(n2w 8),ag32_Imm (n2w 1),ag32_Reg (n2w 8));
       // r8 = ¬(LENGTH tll - w22n [off1; off0] < w22n [n1; n0]
-      LoadConstant ((n2w 4),F,n2w ((ffi_code_start_offset - 1) -
+      ag32_LoadConstant ((n2w 4),F,n2w ((ffi_code_start_offset - 1) -
         output_offset));
-      Normal (fSub,(n2w 5),Reg (n2w 5),Reg (n2w 4));
+      ag32_Normal (fSub,(n2w 5),ag32_Reg (n2w 5),ag32_Reg (n2w 4));
       // r5 = output_offset
-      LoadConstant ((n2w 4),F,(n2w 4) * (n2w 34));
-      JumpIfZero (fAnd,Reg (n2w 4),Reg (n2w 6),Reg (n2w 8))]`;;
+      ag32_LoadConstant ((n2w 4),F,(n2w 4) * (n2w 34));
+      ag32_JumpIfZero (fAnd,ag32_Reg (n2w 4),ag32_Reg (n2w 6),ag32_Reg
+        (n2w 8))]`;;
 
 let ag32_ffi_write_write_header_code_def = new_definition
   `ag32_ffi_write_write_header_code = [
-      StoreMEM (Imm (n2w 0),Reg (n2w 5));
-      Normal (fAdd,(n2w 5),Reg (n2w 5),Imm (n2w 4));
+      ag32_StoreMEM (ag32_Imm (n2w 0),ag32_Reg (n2w 5));
+      ag32_Normal (fAdd,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 4));
       // r5 = output_offset + 4
-      asm_Shift (shiftLL,(n2w 2),Reg (n2w 2),Imm (n2w 24));
+      ag32_Shift (shiftLL,(n2w 2),ag32_Reg (n2w 2),ag32_Imm (n2w 24));
       // r2 = [conf0; 0w; 0w; 0w]
-      StoreMEM (Reg (n2w 2),Reg (n2w 5));
-      Normal (fAdd,(n2w 5),Reg (n2w 5),Imm (n2w 4));
+      ag32_StoreMEM (ag32_Reg (n2w 2),ag32_Reg (n2w 5));
+      ag32_Normal (fAdd,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 4));
       // r5 = output_offset + 8
-      StoreMEMByte (Imm (n2w 0),Reg (n2w 5));
-      Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1));
+      ag32_StoreMEMByte (ag32_Imm (n2w 0),ag32_Reg (n2w 5));
+      ag32_Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1));
       // r5 = output_offset + 9
-      StoreMEMByte (Imm (n2w 0),Reg (n2w 5));
-      Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1));
+      ag32_StoreMEMByte (ag32_Imm (n2w 0),ag32_Reg (n2w 5));
+      ag32_Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1));
       // r5 = output_offset + 10
-      asm_Shift (shiftLR,(n2w 2),Reg (n2w 1),Imm (n2w 8));
+      ag32_Shift (shiftLR,(n2w 2),ag32_Reg (n2w 1),ag32_Imm (n2w 8));
       // r2 = [0w; 0w; 0w; n1]
-      StoreMEMByte (Reg (n2w 2),Reg (n2w 5));
-      Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1));
+      ag32_StoreMEMByte (ag32_Reg (n2w 2),ag32_Reg (n2w 5));
+      ag32_Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1));
       // r5 = output_offset + 11
-      StoreMEMByte (Reg (n2w 1),Reg (n2w 5));
-      Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1));
+      ag32_StoreMEMByte (ag32_Reg (n2w 1),ag32_Reg (n2w 5));
+      ag32_Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1));
       // r5 = output_offset + 12
-      StoreMEMByte (Imm (n2w 0),Reg (n2w 3))]`;;
+      ag32_StoreMEMByte (ag32_Imm (n2w 0),ag32_Reg (n2w 3))]`;;
 
 let ag32_ffi_write_num_written_code_def = new_definition
   `ag32_ffi_write_num_written_code = [
       // calculate k and write to mutable array
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
       // r3 -> n0::off1::off0::tll
-      LoadConstant ((n2w 8),F,n2w output_buffer_size);
+      ag32_LoadConstant ((n2w 8),F,n2w output_buffer_size);
       // r8 = output_buffer_size
-      JumpIfZero (fLess,Imm (n2w 8),Reg (n2w 8),Reg (n2w 1));
+      ag32_JumpIfZero (fLess,ag32_Imm (n2w 8),ag32_Reg (n2w 8),ag32_Reg (n2w
+        1));
       // skip if ¬(output_buffer_size < w22n [n1; n0])
-      Normal (fSnd,(n2w 1),Reg (n2w 1),Reg (n2w 8));
+      ag32_Normal (fSnd,(n2w 1),ag32_Reg (n2w 1),ag32_Reg (n2w 8));
       // r1 = MIN output_buffer_size (w22n [n1; n0])
-      asm_Shift (shiftLR,(n2w 8),Reg (n2w 1),Imm (n2w 8));
+      ag32_Shift (shiftLR,(n2w 8),ag32_Reg (n2w 1),ag32_Imm (n2w 8));
       // r8 = r1 DIV 256
-      StoreMEMByte (Reg (n2w 8),Reg (n2w 3));
-      Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1));
+      ag32_StoreMEMByte (ag32_Reg (n2w 8),ag32_Reg (n2w 3));
+      ag32_Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1));
       // r3 -> off1::off0::tll
-      StoreMEMByte (Reg (n2w 1),Reg (n2w 3));
-      Normal (fAdd,(n2w 3),Reg (n2w 3),Imm (n2w 2));
-      Normal (fAdd,(n2w 3),Reg (n2w 3),Reg (n2w 7));
+      ag32_StoreMEMByte (ag32_Reg (n2w 1),ag32_Reg (n2w 3));
+      ag32_Normal (fAdd,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 2));
+      ag32_Normal (fAdd,(n2w 3),ag32_Reg (n2w 3),ag32_Reg (n2w 7));
       // r3 -> DROP off tll
-      LoadConstant ((n2w 2),F,(n2w 4) * (n2w 9))]`;;
+      ag32_LoadConstant ((n2w 2),F,(n2w 4) * (n2w 9))]`;;
 
 let ag32_ffi_write_code_def = new_definition
   `ag32_ffi_write_code = APPEND (APPEND (APPEND (APPEND (APPEND (APPEND (APPEND
@@ -1413,308 +1478,345 @@ let ag32_ffi_write_code_def = new_definition
       ag32_ffi_copy_code)
       [
        // error case
-       StoreMEMByte (Imm (n2w 1),Reg (n2w 3));
-       StoreMEMByte (Imm (n2w 1),Reg (n2w 5))])
+       ag32_StoreMEMByte (ag32_Imm (n2w 1),ag32_Reg (n2w 3));
+       ag32_StoreMEMByte (ag32_Imm (n2w 1),ag32_Reg (n2w 5))])
       ag32_ffi_return_code`;;
 
 let ag32_ffi_write_set_id_def = new_definition
   `ag32_ffi_write_set_id s =
-     let s = dfn'Jump (fAdd,(n2w 5),Imm (n2w 4)) s in
+     let s = dfn'Jump (fAdd,(n2w 5),ag32_Imm (n2w 4)) s in
      let s = dfn'LoadConstant ((n2w 6),F,n2w (ag32_ffi_write_entrypoint +
        4)) s in
-     let s = dfn'Normal (fSub,(n2w 5),Reg (n2w 5),Reg (n2w 6)) s in
-     let s = dfn'Normal (fDec,(n2w 5),Reg (n2w 5),Imm (n2w 0)) s in
-     let s = dfn'StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes (implode
-       "write")))),Reg (n2w 5)) s in
+     let s = dfn'Normal (fSub,(n2w 5),ag32_Reg (n2w 5),ag32_Reg (n2w 6)) s
+       in
+     let s = dfn'Normal (fDec,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 0)) s
+       in
+     let s = dfn'StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes
+       (implode "write")))),ag32_Reg (n2w 5)) s in
      s`;;
 
 let ag32_ffi_write_set_id_thm = prove
- (`(?_PC s = n2w (ffi_code_start_offset + ag32_ffi_write_entrypoint)) ==>
+ (`(ag32_state_PC s = n2w (ffi_code_start_offset + ag32_ffi_write_entrypoint))
+  ==>
     (?cf ov r6.
-     (ag32_ffi_write_set_id s = ?_MEM_fupd (K (((n2w (ffi_code_start_offset
-       - 1)) =+ n2w (THE (ALOOKUP FFI_codes (implode "write")))) (?_MEM s)))
-       (?_OverflowFlag_fupd (K ov) (?_CarryFlag_fupd (K cf) (?_R_fupd (K (((n2w
-       6) =+ r6) (((n2w 5) =+ (n2w (ffi_code_start_offset - 1))) (?_R s))))
-       (?_PC_fupd (K (?_PC s + n2w (4 * LENGTH ag32_ffi_write_set_id_code)))
+     (ag32_ffi_write_set_id s = ag32_state_MEM_fupd (K (((n2w
+       (ffi_code_start_offset - 1)) =+ n2w (THE (ALOOKUP FFI_codes (implode
+       "write")))) (ag32_state_MEM s))) (ag32_state_OverflowFlag_fupd (K ov)
+       (ag32_state_CarryFlag_fupd (K cf) (ag32_state_R_fupd (K (((n2w 6) =+ r6)
+       (((n2w 5) =+ (n2w (ffi_code_start_offset - 1))) (ag32_state_R s))))
+       (ag32_state_PC_fupd (K (ag32_state_PC s + n2w (4 * LENGTH
+       ag32_ffi_write_set_id_code)))
       s))))))`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_check_conf_def = new_definition
   `ag32_ffi_write_check_conf s =
-    let s = dfn'Normal (fEqual,(n2w 6),Reg (n2w 2),Imm (n2w 8)) s in
-    let s = dfn'Normal (fSub,(n2w 4),Reg (n2w 4),Imm (n2w 4)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fEqual,(n2w 7),Reg (n2w 2),Imm (n2w 0)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fInc,(n2w 1),Reg (n2w 1),Imm (n2w 1)) s in
-    let s = dfn'LoadMEMByte ((n2w 2),Reg (n2w 1)) s in
-    let s = dfn'Normal (fLess,(n2w 7),Reg (n2w 2),Imm (n2w 3)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
-    let s = dfn'Normal (fLess,(n2w 7),Imm (n2w 0),Reg (n2w 2)) s in
-    let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 7)) s in
+    let s = dfn'Normal (fEqual,(n2w 6),ag32_Reg (n2w 2),ag32_Imm (n2w 8)) s
+      in
+    let s = dfn'Normal (fSub,(n2w 4),ag32_Reg (n2w 4),ag32_Imm (n2w 4)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fEqual,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 0)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fInc,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 1)) s in
+    let s = dfn'LoadMEMByte ((n2w 2),ag32_Reg (n2w 1)) s in
+    let s = dfn'Normal (fLess,(n2w 7),ag32_Reg (n2w 2),ag32_Imm (n2w 3)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
+    let s = dfn'Normal (fLess,(n2w 7),ag32_Imm (n2w 0),ag32_Reg (n2w 2)) s
+      in
+    let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 7)) s in
     s`;;
 
 let ag32_ffi_write_check_conf_thm = prove
- (`bytes_in_memory (?_R s (n2w 1)) conf (?_MEM s) md /\ (w2n (?_R s (n2w 2)) =
-  LENGTH conf) ==>
+ (`bytes_in_memory (ag32_state_R s (n2w 1)) conf (ag32_state_MEM s) md /\ (w2n
+  (ag32_state_R s (n2w 2)) = LENGTH conf) ==>
    (?ov cf r1 r2 r7.
-   (ag32_ffi_write_check_conf s = ?_CarryFlag_fupd (K cf)
-     (?_OverflowFlag_fupd (K ov) (?_PC_fupd (K (?_PC s + n2w (4 * LENGTH
-     ag32_ffi_write_check_conf_code))) (?_R_fupd (K (((n2w 6) =+ v2w [(LENGTH
-     conf = 8) /\ w82n conf < 3 /\ 0 < w82n conf])
+   (ag32_ffi_write_check_conf s = ag32_state_CarryFlag_fupd (K cf)
+     (ag32_state_OverflowFlag_fupd (K ov) (ag32_state_PC_fupd (K (ag32_state_PC
+     s + n2w (4 * LENGTH ag32_ffi_write_check_conf_code))) (ag32_state_R_fupd
+     (K (((n2w 6) =+ v2w [(LENGTH conf = 8) /\ w82n conf < 3 /\ 0 < w82n conf])
                    (((n2w 2) =+ (if (LENGTH conf = 8) /\ w82n conf < 3 /\ 0
                      < w82n conf then n2w (w82n conf) else r2))
-                   (((n2w 4) =+ (?_R s (n2w 4) - (n2w 4)))
+                   (((n2w 4) =+ (ag32_state_R s (n2w 4) - (n2w 4)))
                    (((n2w 1) =+ r1)
-                   (((n2w 7) =+ r7) (?_R s)))))))
+                   (((n2w 7) =+ r7) (ag32_state_R s)))))))
     s)))))`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_check_conf_MEM = prove
- (`?_MEM
-      (ag32_ffi_write_check_conf s) = ?_MEM s`,
+ (`ag32_state_MEM
+      (ag32_ffi_write_check_conf s) = ag32_state_MEM s`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_check_conf_PC = prove
- (`?_PC
-      (ag32_ffi_write_check_conf s) = ?_PC s + (n2w 140)`,
+ (`ag32_state_PC
+      (ag32_ffi_write_check_conf s) = ag32_state_PC s + (n2w 140)`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_check_conf_R = prove
- (`(?_R (ag32_ffi_write_check_conf s) (n2w 3) = ?_R s (n2w 3)) /\
-   (?_R (ag32_ffi_write_check_conf s) (n2w 5) = ?_R s (n2w 5))`,
+ (`(ag32_state_R (ag32_ffi_write_check_conf s) (n2w 3) = ag32_state_R s (n2w
+  3)) /\
+   (ag32_state_R (ag32_ffi_write_check_conf s) (n2w 5) = ag32_state_R s
+     (n2w 5))`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_load_noff_def = new_definition
   `ag32_ffi_write_load_noff s =
-   let s = dfn'LoadMEMByte ((n2w 1),Reg (n2w 3)) s in
-   let s = dfn'Shift (shiftLL,(n2w 1),Reg (n2w 1),Imm (n2w 8)) s in
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'LoadMEMByte ((n2w 8),Reg (n2w 3)) s in
-   let s = dfn'Normal (fXor,(n2w 1),Reg (n2w 1),Reg (n2w 8)) s in
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'LoadMEMByte ((n2w 7),Reg (n2w 3)) s in
-   let s = dfn'Shift (shiftLL,(n2w 7),Reg (n2w 7),Imm (n2w 8)) s in
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'LoadMEMByte ((n2w 8),Reg (n2w 3)) s in
-   let s = dfn'Normal (fXor,(n2w 7),Reg (n2w 7),Reg (n2w 8)) s in
-   let s = dfn'Normal (fSub,(n2w 3),Reg (n2w 3),Imm (n2w 3)) s in
+   let s = dfn'LoadMEMByte ((n2w 1),ag32_Reg (n2w 3)) s in
+   let s = dfn'Shift (shiftLL,(n2w 1),ag32_Reg (n2w 1),ag32_Imm (n2w 8)) s
+     in
+   let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'LoadMEMByte ((n2w 8),ag32_Reg (n2w 3)) s in
+   let s = dfn'Normal (fXor,(n2w 1),ag32_Reg (n2w 1),ag32_Reg (n2w 8)) s in
+   let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'LoadMEMByte ((n2w 7),ag32_Reg (n2w 3)) s in
+   let s = dfn'Shift (shiftLL,(n2w 7),ag32_Reg (n2w 7),ag32_Imm (n2w 8)) s
+     in
+   let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'LoadMEMByte ((n2w 8),ag32_Reg (n2w 3)) s in
+   let s = dfn'Normal (fXor,(n2w 7),ag32_Reg (n2w 7),ag32_Reg (n2w 8)) s in
+   let s = dfn'Normal (fSub,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 3)) s in
    s`;;
 
 let ag32_ffi_write_load_noff_thm = prove
- (`bytes_in_memory (?_R s (n2w 3)) (CONS n1 (CONS n0 (CONS off1 (CONS off0
-  tll)))) (?_MEM s) md ==>
+ (`bytes_in_memory (ag32_state_R s (n2w 3)) (CONS n1 (CONS n0 (CONS off1 (CONS
+  off0 tll)))) (ag32_state_MEM s) md ==>
    (?r8 ov cf.
-   (ag32_ffi_write_load_noff s = ?_R_fupd (K (((n2w 8) =+ r8)
+   (ag32_ffi_write_load_noff s = ag32_state_R_fupd (K (((n2w 8) =+ r8)
                    (((n2w 1) =+ n2w (w22n [n1; n0]))
-                   (((n2w 7) =+ n2w (w22n [off1; off0])) (?_R s)))))
-                     (?_CarryFlag_fupd (K cf) (?_OverflowFlag_fupd (K ov)
-                     (?_PC_fupd (K (?_PC s + n2w (4 * LENGTH
+                   (((n2w 7) =+ n2w (w22n [off1; off0])) (ag32_state_R
+                     s))))) (ag32_state_CarryFlag_fupd (K cf)
+                     (ag32_state_OverflowFlag_fupd (K ov) (ag32_state_PC_fupd
+                     (K (ag32_state_PC s + n2w (4 * LENGTH
                      ag32_ffi_write_load_noff_code)))
     s)))))`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_load_noff_MEM = prove
- (`?_MEM
-      (ag32_ffi_write_load_noff s) = ?_MEM s`,
+ (`ag32_state_MEM
+      (ag32_ffi_write_load_noff s) = ag32_state_MEM s`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_load_noff_PC = prove
- (`?_PC
-      (ag32_ffi_write_load_noff s) = ?_PC s + (n2w 48)`,
+ (`ag32_state_PC
+      (ag32_ffi_write_load_noff s) = ag32_state_PC s + (n2w 48)`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_load_noff_R = prove
- (`(?_R (ag32_ffi_write_load_noff s) (n2w 3) = ?_R s (n2w 3)) /\
-   (?_R (ag32_ffi_write_load_noff s) (n2w 5) = ?_R s (n2w 5))`,
+ (`(ag32_state_R (ag32_ffi_write_load_noff s) (n2w 3) = ag32_state_R s (n2w 3))
+  /\
+   (ag32_state_R (ag32_ffi_write_load_noff s) (n2w 5) = ag32_state_R s
+     (n2w 5))`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_check_lengths_def = new_definition
   `ag32_ffi_write_check_lengths s =
-   let s = dfn'Normal (fLower,(n2w 8),Reg (n2w 4),Reg (n2w 7)) s in
-   let s = dfn'Normal (fSub,(n2w 8),Imm (n2w 1),Reg (n2w 8)) s in
-   let s = dfn'Normal (fAnd,(n2w 6),Reg (n2w 6),Reg (n2w 8)) s in
-   let s = dfn'Normal (fSub,(n2w 4),Reg (n2w 4),Reg (n2w 7)) s in
-   let s = dfn'Normal (fLower,(n2w 8),Reg (n2w 4),Reg (n2w 1)) s in
-   let s = dfn'Normal (fSub,(n2w 8),Imm (n2w 1),Reg (n2w 8)) s in
+   let s = dfn'Normal (fLower,(n2w 8),ag32_Reg (n2w 4),ag32_Reg (n2w 7)) s
+     in
+   let s = dfn'Normal (fSub,(n2w 8),ag32_Imm (n2w 1),ag32_Reg (n2w 8)) s in
+   let s = dfn'Normal (fAnd,(n2w 6),ag32_Reg (n2w 6),ag32_Reg (n2w 8)) s in
+   let s = dfn'Normal (fSub,(n2w 4),ag32_Reg (n2w 4),ag32_Reg (n2w 7)) s in
+   let s = dfn'Normal (fLower,(n2w 8),ag32_Reg (n2w 4),ag32_Reg (n2w 1)) s
+     in
+   let s = dfn'Normal (fSub,(n2w 8),ag32_Imm (n2w 1),ag32_Reg (n2w 8)) s in
    let s = dfn'LoadConstant ((n2w 4),F,n2w ((ffi_code_start_offset - 1) -
      output_offset)) s in
-   let s = dfn'Normal (fSub,(n2w 5),Reg (n2w 5),Reg (n2w 4)) s in
+   let s = dfn'Normal (fSub,(n2w 5),ag32_Reg (n2w 5),ag32_Reg (n2w 4)) s in
    let s = dfn'LoadConstant ((n2w 4),F,(n2w 4) * (n2w 34)) s in
-   let s = dfn'JumpIfZero (fAnd,Reg (n2w 4),Reg (n2w 6),Reg (n2w 8)) s in
+   let s = dfn'JumpIfZero (fAnd,ag32_Reg (n2w 4),ag32_Reg (n2w 6),ag32_Reg
+     (n2w 8)) s in
    s`;;
 
 let ag32_ffi_write_check_lengths_thm = prove
- (`(?_R s (n2w 5) = n2w (ffi_code_start_offset - 1)) /\
-   (?_R s (n2w 4) = n2w ltll) /\ (?_R s (n2w 7) = n2w off) /\ (?_R s (n2w 1)
-     = n2w n) /\ (?_R s (n2w 6) = v2w [cnd]) /\
+ (`(ag32_state_R s (n2w 5) = n2w (ffi_code_start_offset - 1)) /\
+   (ag32_state_R s (n2w 4) = n2w ltll) /\ (ag32_state_R s (n2w 7) = n2w off)
+     /\ (ag32_state_R s (n2w 1) = n2w n) /\ (ag32_state_R s (n2w 6) = v2w
+     [cnd]) /\
    off < dimword (:16) /\ n < dimword (:16) /\ ltll < dimword (:32) ==>
    (?r4 r6 r8 cf ov.
-   (ag32_ffi_write_check_lengths s = ?_OverflowFlag_fupd (K ov)
-     (?_CarryFlag_fupd (K cf) (?_R_fupd (K (((n2w 8) =+ r8)
+   (ag32_ffi_write_check_lengths s = ag32_state_OverflowFlag_fupd (K ov)
+     (ag32_state_CarryFlag_fupd (K cf) (ag32_state_R_fupd (K (((n2w 8) =+ r8)
                    (((n2w 4) =+ r4)
                    (((n2w 5) =+ n2w output_offset)
-                   (((n2w 6) =+ r6) (?_R s)))))) (?_PC_fupd (K (if cnd
-                     /\ off <= ltll /\ n <= ltll - off then ?_PC s + n2w (4 *
-                     LENGTH ag32_ffi_write_check_lengths_code)
-                    else ?_PC s + n2w (4 * (LENGTH
+                   (((n2w 6) =+ r6) (ag32_state_R s))))))
+                     (ag32_state_PC_fupd (K (if cnd /\ off <= ltll /\ n <= ltll
+                     - off then ag32_state_PC s + n2w (4 * LENGTH
+                     ag32_ffi_write_check_lengths_code)
+                    else ag32_state_PC s + n2w (4 * (LENGTH
                       ag32_ffi_write_check_lengths_code + 33))))
     s)))))`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_check_lengths_MEM = prove
- (`?_MEM
-      (ag32_ffi_write_check_lengths s) = ?_MEM s`,
+ (`ag32_state_MEM
+      (ag32_ffi_write_check_lengths s) = ag32_state_MEM s`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_check_lengths_PC = prove
- (`?_PC
+ (`ag32_state_PC
       (ag32_ffi_write_check_lengths s) IN
-       {?_PC s + n2w (4 * LENGTH ag32_ffi_write_check_lengths_code),?_PC
+       {ag32_state_PC s + n2w (4 * LENGTH
+         ag32_ffi_write_check_lengths_code),ag32_state_PC
          s + n2w (4 * (LENGTH ag32_ffi_write_check_lengths_code + 33))}`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_check_lengths_R = prove
- (`(?_R (ag32_ffi_write_check_lengths s) (n2w 3) = ?_R s (n2w 3)) /\
-   (?_R (ag32_ffi_write_check_lengths s) (n2w 5) = ?_R s (n2w 5) - n2w
-     ((ffi_code_start_offset - 1) - output_offset))`,
+ (`(ag32_state_R (ag32_ffi_write_check_lengths s) (n2w 3) = ag32_state_R s (n2w
+  3)) /\
+   (ag32_state_R (ag32_ffi_write_check_lengths s) (n2w 5) = ag32_state_R s
+     (n2w 5) - n2w ((ffi_code_start_offset - 1) - output_offset))`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_write_header_def = new_definition
   `ag32_ffi_write_write_header s =
-   let s = dfn'StoreMEM (Imm (n2w 0),Reg (n2w 5)) s in
-   let s = dfn'Normal (fAdd,(n2w 5),Reg (n2w 5),Imm (n2w 4)) s in
-   let s = dfn'Shift (shiftLL,(n2w 2),Reg (n2w 2),Imm (n2w 24)) s in
-   let s = dfn'StoreMEM (Reg (n2w 2),Reg (n2w 5)) s in
-   let s = dfn'Normal (fAdd,(n2w 5),Reg (n2w 5),Imm (n2w 4)) s in
-   let s = dfn'StoreMEMByte (Imm (n2w 0),Reg (n2w 5)) s in
-   let s = dfn'Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1)) s in
-   let s = dfn'StoreMEMByte (Imm (n2w 0),Reg (n2w 5)) s in
-   let s = dfn'Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1)) s in
-   let s = dfn'Shift (shiftLR,(n2w 2),Reg (n2w 1),Imm (n2w 8)) s in
-   let s = dfn'StoreMEMByte (Reg (n2w 2),Reg (n2w 5)) s in
-   let s = dfn'Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1)) s in
-   let s = dfn'StoreMEMByte (Reg (n2w 1),Reg (n2w 5)) s in
-   let s = dfn'Normal (fInc,(n2w 5),Reg (n2w 5),Imm (n2w 1)) s in
-   let s = dfn'StoreMEMByte (Imm (n2w 0),Reg (n2w 3)) s in
+   let s = dfn'StoreMEM (ag32_Imm (n2w 0),ag32_Reg (n2w 5)) s in
+   let s = dfn'Normal (fAdd,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 4)) s in
+   let s = dfn'Shift (shiftLL,(n2w 2),ag32_Reg (n2w 2),ag32_Imm (n2w 24)) s
+     in
+   let s = dfn'StoreMEM (ag32_Reg (n2w 2),ag32_Reg (n2w 5)) s in
+   let s = dfn'Normal (fAdd,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 4)) s in
+   let s = dfn'StoreMEMByte (ag32_Imm (n2w 0),ag32_Reg (n2w 5)) s in
+   let s = dfn'Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1)) s in
+   let s = dfn'StoreMEMByte (ag32_Imm (n2w 0),ag32_Reg (n2w 5)) s in
+   let s = dfn'Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1)) s in
+   let s = dfn'Shift (shiftLR,(n2w 2),ag32_Reg (n2w 1),ag32_Imm (n2w 8)) s
+     in
+   let s = dfn'StoreMEMByte (ag32_Reg (n2w 2),ag32_Reg (n2w 5)) s in
+   let s = dfn'Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1)) s in
+   let s = dfn'StoreMEMByte (ag32_Reg (n2w 1),ag32_Reg (n2w 5)) s in
+   let s = dfn'Normal (fInc,(n2w 5),ag32_Reg (n2w 5),ag32_Imm (n2w 1)) s in
+   let s = dfn'StoreMEMByte (ag32_Imm (n2w 0),ag32_Reg (n2w 3)) s in
    s`;;
 
 let ag32_ffi_write_write_header_thm = prove
- (`(?_R s (n2w 5) = n2w output_offset) /\
-   (LENGTH conf = 8) /\ (w82n conf < 3) /\ (?_R s (n2w 2) = n2w (w82n conf))
-     /\
-   (?_R s (n2w 1) = n2w (w22n [n1; n0])) /\ (~(?_R s (n2w 3) = n2w
-     output_offset)) ==>
+ (`(ag32_state_R s (n2w 5) = n2w output_offset) /\
+   (LENGTH conf = 8) /\ (w82n conf < 3) /\ (ag32_state_R s (n2w 2) = n2w
+     (w82n conf)) /\
+   (ag32_state_R s (n2w 1) = n2w (w22n [n1; n0])) /\ (~(ag32_state_R s (n2w
+     3) = n2w output_offset)) ==>
    (?r2 ov cf.
-   (ag32_ffi_write_write_header s = ?_CarryFlag_fupd (K cf)
-     (?_OverflowFlag_fupd (K ov) (?_MEM_fupd (K
-                (((?_R s (n2w 3)) =+ (n2w 0))
+   (ag32_ffi_write_write_header s = ag32_state_CarryFlag_fupd (K cf)
+     (ag32_state_OverflowFlag_fupd (K ov) (ag32_state_MEM_fupd (K
+                (((ag32_state_R s (n2w 3)) =+ (n2w 0))
                  (asm_write_bytearray (n2w output_offset) (APPEND conf [(n2w
-                   0); (n2w 0); n1; n0]) (?_MEM s)))) (?_R_fupd (K (((n2w 5) =+
-                   n2w (output_offset + 12))
-                   (((n2w 2) =+ r2) (?_R s)))) (?_PC_fupd (K (?_PC s + n2w
-                     (4 * LENGTH ag32_ffi_write_write_header_code)))
+                   0); (n2w 0); n1; n0]) (ag32_state_MEM s))))
+                   (ag32_state_R_fupd (K (((n2w 5) =+ n2w (output_offset + 12))
+                   (((n2w 2) =+ r2) (ag32_state_R s)))) (ag32_state_PC_fupd
+                     (K (ag32_state_PC s + n2w (4 * LENGTH
+                     ag32_ffi_write_write_header_code)))
     s))))))`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_write_header_PC = prove
- (`?_PC
-      (ag32_ffi_write_write_header s) = ?_PC s + n2w (4 * LENGTH
+ (`ag32_state_PC
+      (ag32_ffi_write_write_header s) = ag32_state_PC s + n2w (4 * LENGTH
         ag32_ffi_write_write_header_code)`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_write_header_R = prove
- (`(?_R (ag32_ffi_write_write_header s) (n2w 3) = ?_R s (n2w 3))`,
+ (`(ag32_state_R (ag32_ffi_write_write_header s) (n2w 3) = ag32_state_R s
+  (n2w 3))`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_num_written_def = new_definition
   `ag32_ffi_write_num_written s =
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
+   (let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
    let s0 = dfn'LoadConstant ((n2w 8),F,n2w output_buffer_size) s in
-   let s = dfn'JumpIfZero (fLess,Imm (n2w 8),Reg (n2w 8),Reg (n2w 1)) s0 in
-   let s = (if ?_PC s = ?_PC s0 + (n2w 4) then dfn'Normal (fSnd,(n2w 1),Reg
-     (n2w 1),Reg (n2w 8)) s else s) in
-   let s = dfn'Shift (shiftLR,(n2w 8),Reg (n2w 1),Imm (n2w 8)) s in
-   let s = dfn'StoreMEMByte (Reg (n2w 8),Reg (n2w 3)) s in
-   let s = dfn'Normal (fInc,(n2w 3),Reg (n2w 3),Imm (n2w 1)) s in
-   let s = dfn'StoreMEMByte (Reg (n2w 1),Reg (n2w 3)) s in
-   let s = dfn'Normal (fAdd,(n2w 3),Reg (n2w 3),Imm (n2w 2)) s in
-   let s = dfn'Normal (fAdd,(n2w 3),Reg (n2w 3),Reg (n2w 7)) s in
+   let s = dfn'JumpIfZero (fLess,ag32_Imm (n2w 8),ag32_Reg (n2w 8),ag32_Reg
+     (n2w 1)) s0 in
+   let s = (if ag32_state_PC s = ag32_state_PC s0 + (n2w 4) then dfn'Normal
+     (fSnd,(n2w 1),ag32_Reg (n2w 1),ag32_Reg (n2w 8)) s else s) in
+   let s = dfn'Shift (shiftLR,(n2w 8),ag32_Reg (n2w 1),ag32_Imm (n2w 8)) s
+     in
+   let s = dfn'StoreMEMByte (ag32_Reg (n2w 8),ag32_Reg (n2w 3)) s in
+   let s = dfn'Normal (fInc,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 1)) s in
+   let s = dfn'StoreMEMByte (ag32_Reg (n2w 1),ag32_Reg (n2w 3)) s in
+   let s = dfn'Normal (fAdd,(n2w 3),ag32_Reg (n2w 3),ag32_Imm (n2w 2)) s in
+   let s = dfn'Normal (fAdd,(n2w 3),ag32_Reg (n2w 3),ag32_Reg (n2w 7)) s in
    let s = dfn'LoadConstant ((n2w 2),F,(n2w 4) * (n2w 9)) s in
-   s`;;
+   s)`;;
 
 let ag32_ffi_write_num_written_thm = prove
- (`bytes_in_memory (?_R s (n2w 3)) (CONS (n2w 0) (CONS n0 (CONS off1 (CONS off0
-  tll)))) (?_MEM s) md /\
-   (?_R s (n2w 1) = n2w n) /\ (k = MIN n output_buffer_size) /\ n < dimword
-     (:16) ==>
+ (`bytes_in_memory (ag32_state_R s (n2w 3)) (CONS (n2w 0) (CONS n0 (CONS off1
+  (CONS off0 tll)))) (ag32_state_MEM s) md /\
+   (ag32_state_R s (n2w 1) = n2w n) /\ (k = MIN n output_buffer_size) /\ n <
+     dimword (:16) ==>
    (?r8 cf ov.
-   (ag32_ffi_write_num_written s = ?_OverflowFlag_fupd (K ov)
-     (?_CarryFlag_fupd (K cf) (?_R_fupd (K (((n2w 8) =+ r8)
-                   (((n2w 3) =+ (?_R s (n2w 3) + (n2w 4) + ?_R s (n2w 7)))
+   (ag32_ffi_write_num_written s = ag32_state_OverflowFlag_fupd (K ov)
+     (ag32_state_CarryFlag_fupd (K cf) (ag32_state_R_fupd (K (((n2w 8) =+ r8)
+                   (((n2w 3) =+ (ag32_state_R s (n2w 3) + (n2w 4) +
+                     ag32_state_R s (n2w 7)))
                    (((n2w 2) =+ ((n2w 4) * (n2w 9)))
-                   (((n2w 1) =+ n2w k) (?_R s)))))) (?_MEM_fupd (K
-                     (asm_write_bytearray (?_R s (n2w 3)) (CONS (n2w 0) (n2w2
-                     k)) (?_MEM s))) (?_PC_fupd (K (?_PC s + n2w (4 * LENGTH
+                   (((n2w 1) =+ n2w k) (ag32_state_R s))))))
+                     (ag32_state_MEM_fupd (K (asm_write_bytearray (ag32_state_R
+                     s (n2w 3)) (CONS (n2w 0) (n2w2 k)) (ag32_state_MEM s)))
+                     (ag32_state_PC_fupd (K (ag32_state_PC s + n2w (4 * LENGTH
                      ag32_ffi_write_num_written_code)))
     s))))))`,
   CHEAT_TAC);;
 
 let ag32_ffi_write_def = new_definition
   `ag32_ffi_write s =
-   let s = ag32_ffi_write_set_id s in
+   (let s = ag32_ffi_write_set_id s in
    let s = ag32_ffi_write_check_conf s in
    let s0 = ag32_ffi_write_load_noff s in
    let s = ag32_ffi_write_check_lengths s0 in
    let s =
-     (if ?_PC s = ?_PC s0 + n2w (4 * LENGTH
+     (if ag32_state_PC s = ag32_state_PC s0 + n2w (4 * LENGTH
        ag32_ffi_write_check_lengths_code) then
        let s = ag32_ffi_write_write_header s in
        let s = ag32_ffi_write_num_written s in
                ag32_ffi_copy s
-     else let s = dfn'StoreMEMByte (Imm (n2w 1),Reg (n2w 3)) s in
-               dfn'StoreMEMByte (Imm (n2w 1),Reg (n2w 5)) s) in
-                 ag32_ffi_return s`;;
+     else let s = dfn'StoreMEMByte (ag32_Imm (n2w 1),ag32_Reg (n2w 3)) s in
+               dfn'StoreMEMByte (ag32_Imm (n2w 1),ag32_Reg (n2w 5)) s) in
+                 ag32_ffi_return s)`;;
 
 (* returns error code 1 after writing the appropriate ffi *)
 let ag32_ffi_fail_def = new_definition
   `ag32_ffi_fail ffiname s =
    let s = dfn'LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1)) s in
-   let s = dfn'StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes ffiname))),Reg
-     (n2w 5)) s in
-   let s = dfn'StoreMEMByte (Imm (n2w 1),Reg (n2w 3)) s in
+   let s = dfn'StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes
+     ffiname))),ag32_Reg (n2w 5)) s in
+   let s = dfn'StoreMEMByte (ag32_Imm (n2w 1),ag32_Reg (n2w 3)) s in
    s`;;
 
 let ag32_ffi_fail_code_def = new_definition
   `ag32_ffi_fail_code ffiname =
-     [LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1));
-      StoreMEMByte (Imm (n2w (THE (ALOOKUP FFI_codes ffiname))),Reg (n2w
-        5));
-      StoreMEMByte (Imm (n2w 1),Reg (n2w 3))]`;;
+     [ag32_LoadConstant ((n2w 5),F,n2w (ffi_code_start_offset - 1));
+      ag32_StoreMEMByte (ag32_Imm (n2w (THE (ALOOKUP FFI_codes
+        ffiname))),ag32_Reg (n2w 5));
+      ag32_StoreMEMByte (ag32_Imm (n2w 1),ag32_Reg (n2w 3))]`;;
 
 (* open_in *)
 let ag32_ffi_open_in_entrypoint_def = new_definition
@@ -1809,11 +1911,11 @@ let mk_jump_ag32_code_def = new_definition
      let dist_to_ffi_code = (
        8 + ffi_offset * (LENGTH ffi_names' - 1 - index) +
        heap_size + length_ag32_ffi_code) - entrypoint in
-     [Encode (LoadConstant ((n2w 5),F,(22 >< 0) ((n2w
+     [Encode (ag32_LoadConstant ((n2w 5),F,(22 >< 0) ((n2w
        dist_to_ffi_code):word32)));
-      Encode (LoadUpperConstant ((n2w 5),(31 >< 23) ((n2w
+      Encode (ag32_LoadUpperConstant ((n2w 5),(31 >< 23) ((n2w
         dist_to_ffi_code):word32)));
-      Encode (lab_Jump (fSub,(n2w 5),Reg (n2w 5)));
+      Encode (ag32_Jump (fSub,(n2w 5),ag32_Reg (n2w 5)));
       (n2w 0)]`;;
 
 let EL_FLAT_MAP_mk_jump_ag32_code = prove
@@ -1824,12 +1926,12 @@ let EL_FLAT_MAP_mk_jump_ag32_code = prove
   CHEAT_TAC);;
 
 let ccache_jump_ag32_code_def = new_definition
-  `ccache_jump_ag32_code = [Encode (lab_Jump (fSnd,(n2w 0),Reg (n2w 0)));
-  (n2w 0); (n2w 0); (n2w 0)]`;;
+  `ccache_jump_ag32_code = [Encode (ag32_Jump (fSnd,(n2w 0),ag32_Reg (n2w
+  0))); (n2w 0); (n2w 0); (n2w 0)]`;;
 
 let halt_jump_ag32_code_def = new_definition
-  `halt_jump_ag32_code = [Encode (lab_Jump (fAdd,(n2w 0),Imm (n2w 0))); (n2w
-  0); (n2w 0); (n2w 0)]`;;
+  `halt_jump_ag32_code = [Encode (ag32_Jump (fAdd,(n2w 0),ag32_Imm (n2w
+  0))); (n2w 0); (n2w 0); (n2w 0)]`;;
 
 let ag32_ffi_jumps_def = new_definition
   `ag32_ffi_jumps ffi_names' = APPEND (APPEND (FLAT (MAP (mk_jump_ag32_code
@@ -1931,16 +2033,16 @@ let startup_asm_code_def = new_definition
       asm_Inst (asm_Const 2 (n2w heap_start_offset));
       asm_Inst (asm_Const 4 (n2w (code_start_offset num_ffis)));
       asm_Inst (asm_Const 1 code_length);
-      asm_Inst (asm_Arith (asm_Binop asm_Add 4 4 (Reg 1)));
+      asm_Inst (asm_Arith (asm_Binop asm_Add 4 4 (ag32_Reg 1)));
       asm_Inst (asm_Mem asm_Store 4 (Addr 2 ((n2w 0) * bytes_in_word)));
       asm_Inst (asm_Mem asm_Store 4 (Addr 2 ((n2w 3) * bytes_in_word)));
       asm_Inst (asm_Mem asm_Store 4 (Addr 2 ((n2w 4) * bytes_in_word)));
       asm_Inst (asm_Const 1 bitmaps_length);
-      asm_Inst (asm_Arith (asm_Binop asm_Add 4 1 (Reg 4)));
+      asm_Inst (asm_Arith (asm_Binop asm_Add 4 1 (ag32_Reg 4)));
       asm_Inst (asm_Mem asm_Store 4 (Addr 2 ((n2w 1) * bytes_in_word)));
       asm_Inst (asm_Mem asm_Store 4 (Addr 2 ((n2w 2) * bytes_in_word)));
       asm_Inst (asm_Const 1 (n2w heap_size));
-      asm_Inst (asm_Arith (asm_Binop asm_Add 4 2 (Reg 1)));
+      asm_Inst (asm_Arith (asm_Binop asm_Add 4 2 (ag32_Reg 1)));
       asm_Inst (asm_Const 1 (n2w (code_start_offset num_ffis)));
       asm_JumpReg 1]`;;
 

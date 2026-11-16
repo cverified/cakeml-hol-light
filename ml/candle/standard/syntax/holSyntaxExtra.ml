@@ -304,7 +304,7 @@ let holSyntaxExtra_irreflexive_mlstring_lt =
 
 (* [local] *)
 let LLEX_irreflexive = prove
- (`!R. irreflexive R ==> irreflexive (LLEX R)`,
+ (`!R'. irreflexive R' ==> irreflexive (LLEX R')`,
   CHEAT_TAC);;
 
 (* [local] *)

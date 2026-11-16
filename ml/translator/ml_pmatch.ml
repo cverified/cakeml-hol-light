@@ -138,11 +138,11 @@ let pmatch_all_no_type_error_def = define_cases
 
 let Eval_PMATCH_NIL = prove
  (`!b x xv a.
-      ast_Eval env x (a xv) ==>
+      ml_translator_Eval env x (a xv) ==>
       pmatch_all_no_type_error (sem_env_c env) a ([]:(ast_pat#ast_exp) list)
         /\
       (CONTAINER F ==>
-       ast_Eval env (ast_Mat x []) (b (PMATCH xv [])))`,
+       ml_translator_Eval env (ast_Mat x []) (b (PMATCH xv [])))`,
   CHEAT_TAC);;
 
 let pmatch_all_no_type_error_IMP_can_pmatch_all = prove
@@ -154,20 +154,21 @@ let Eval_PMATCH = prove
  (`!b a x xv.
       ALL_DISTINCT (ast_pat_bindings p) ==>
       (!v1 v2. pat v1 = pat v2 ==> v1 = v2) ==>
-      ast_Eval env x (a xv) ==>
-      (p1 xv ==> ast_Eval env (ast_Mat x ys) (b (PMATCH xv yrs))) ==>
+      ml_translator_Eval env x (a xv) ==>
+      (p1 xv ==> ml_translator_Eval env (ast_Mat x ys) (b (PMATCH xv yrs)))
+        ==>
       EvalPatRel env a p pat ==>
       (!env2 vars'.
         EvalPatBind env a p pat vars' env2 /\ p2 vars' ==>
-        ast_Eval env2 e (b (res vars'))) ==>
+        ml_translator_Eval env2 e (b (res vars'))) ==>
       pmatch_all_no_type_error (sem_env_c env) a ys ==>
       pmatch_all_no_type_error (sem_env_c env) a (CONS (p,e) ys) /\
       ((!vars'. CONTAINER (PMATCH_ROW_COND pat (K T) xv vars') ==> p2 vars')
         /\
        ((!vars'. ~(CONTAINER (PMATCH_ROW_COND pat (K T) xv vars'))) ==> p1
          xv) ==>
-       ast_Eval env (ast_Mat x (CONS (p,e) ys)) (b (PMATCH xv (CONS
-         (PMATCH_ROW pat (K T) res) yrs))))`,
+       ml_translator_Eval env (ast_Mat x (CONS (p,e) ys)) (b (PMATCH xv
+         (CONS (PMATCH_ROW pat (K T) res) yrs))))`,
   CHEAT_TAC);;
 
 let PMATCH_option_case_rwt = prove

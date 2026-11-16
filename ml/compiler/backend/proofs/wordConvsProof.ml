@@ -826,9 +826,9 @@ let full_ssa_cc_trans_flat_exp_conventions = prove
 
 (* [local] *)
 let fake_moves_wf_cutsets = prove
- (`!ls A B C' L R D E G.
-   fake_moves prio ls A B C' = (L,R,D,E,G) ==>
-   wf_cutsets L /\ wf_cutsets R`,
+ (`!ls A B C' L R' D E G.
+   fake_moves prio ls A B C' = (L,R',D,E,G) ==>
+   wf_cutsets L /\ wf_cutsets R'`,
   CHEAT_TAC);;
 (* [local] *)
 let ssa_cc_trans_wf_cutsets = prove

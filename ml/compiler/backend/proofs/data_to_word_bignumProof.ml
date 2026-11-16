@@ -347,9 +347,9 @@ let MustTerminate_limit_SUB_2 = prove
   CHEAT_TAC);;
 
 let cut_env_fromList_sing = prove
- (`dataSem_cut_env (sptree_fromList [one]) (sptree_insert 0 (word_Loc l1 l2)
-  LN) =
-    SOME (sptree_insert 0 (word_Loc l1 l2) LN)`,
+ (`dataSem_cut_env (sptree_fromList [one]) (sptree_insert 0
+  (semanticPrimitives_Loc l1 l2) LN) =
+    SOME (sptree_insert 0 (semanticPrimitives_Loc l1 l2) LN)`,
   CHEAT_TAC);;
 
 let single_div_pre_IMP_single_div_full = prove

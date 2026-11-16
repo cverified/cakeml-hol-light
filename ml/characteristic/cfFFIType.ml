@@ -114,7 +114,7 @@ add_simp cons_11;;
 
 (* List_11 *)
 let list_11 = prove
- (`!xs ys. misc_List xs = misc_List ys <=> xs = ys`,
+ (`!xs ys. cfFFIType_List xs = cfFFIType_List ys <=> xs = ys`,
   CHEAT_TAC);;
 add_simp list_11;;
 
@@ -148,7 +148,7 @@ let destNum_exists = prove
      (!n. destNum (cfFFIType_Num n) = SOME n) /\
      (!s. destNum (cfFFIType_Str s) = NONE) /\
      (!x y. destNum (cfFFIType_Cons x y) = NONE) /\
-     (!l. destNum (misc_List l) = NONE) /\
+     (!l. destNum (cfFFIType_List l) = NONE) /\
      (!ll. destNum (Stream ll) = NONE) /\
      (!f. destNum (cfFFIType_Fun f) = NONE) /\
      (!i. destNum (Inner i) = NONE)`,
@@ -161,7 +161,7 @@ let destStr_exists = prove
      (!n. destStr (cfFFIType_Num n) = NONE) /\
      (!s. destStr (cfFFIType_Str s) = SOME s) /\
      (!x y. destStr (cfFFIType_Cons x y) = NONE) /\
-     (!l. destStr (misc_List l) = NONE) /\
+     (!l. destStr (cfFFIType_List l) = NONE) /\
      (!ll. destStr (Stream ll) = NONE) /\
      (!f. destStr (cfFFIType_Fun f) = NONE) /\
      (!i. destStr (Inner i) = NONE)`,
@@ -179,7 +179,7 @@ let destCons_exists = prove
      (!n. destCons (cfFFIType_Num n) = NONE) /\
      (!s. destCons (cfFFIType_Str s) = NONE) /\
      (!x y. destCons (cfFFIType_Cons x y) = SOME (x,y)) /\
-     (!l. destCons (misc_List l) = NONE) /\
+     (!l. destCons (cfFFIType_List l) = NONE) /\
      (!ll. destCons (Stream ll) = NONE) /\
      (!f. destCons (cfFFIType_Fun f) = NONE) /\
      (!i. destCons (Inner i) = NONE)`,
@@ -192,7 +192,7 @@ let destList_exists = prove
      (!n. destList (cfFFIType_Num n) = NONE) /\
      (!s. destList (cfFFIType_Str s) = NONE) /\
      (!x y. destList (cfFFIType_Cons x y) = NONE) /\
-     (!l. destList (misc_List l) = SOME l) /\
+     (!l. destList (cfFFIType_List l) = SOME l) /\
      (!ll. destList (Stream ll) = NONE) /\
      (!f. destList (cfFFIType_Fun f) = NONE) /\
      (!i. destList (Inner i) = NONE)`,
@@ -205,7 +205,7 @@ let destStream_exists = prove
      (!n. destStream (cfFFIType_Num n) = NONE) /\
      (!s. destStream (cfFFIType_Str s) = NONE) /\
      (!x y. destStream (cfFFIType_Cons x y) = NONE) /\
-     (!l. destStream (misc_List l) = NONE) /\
+     (!l. destStream (cfFFIType_List l) = NONE) /\
      (!ll. destStream (Stream ll) = SOME ll) /\
      (!f. destStream (cfFFIType_Fun f) = NONE) /\
      (!i. destStream (Inner i) = NONE)`,
@@ -218,7 +218,7 @@ let destFun_exists = prove
      (!n. destFun (cfFFIType_Num n) = NONE) /\
      (!s. destFun (cfFFIType_Str s) = NONE) /\
      (!x y. destFun (cfFFIType_Cons x y) = NONE) /\
-     (!l. destFun (misc_List l) = NONE) /\
+     (!l. destFun (cfFFIType_List l) = NONE) /\
      (!ll. destFun (Stream ll) = NONE) /\
      (!f. destFun (cfFFIType_Fun f) = SOME f) /\
      (!i. destFun (Inner i) = NONE)`,
@@ -231,7 +231,7 @@ let destInner_exists = prove
      (!n. destInner (cfFFIType_Num n) = NONE) /\
      (!s. destInner (cfFFIType_Str s) = NONE) /\
      (!x y. destInner (cfFFIType_Cons x y) = NONE) /\
-     (!l. destInner (misc_List l) = NONE) /\
+     (!l. destInner (cfFFIType_List l) = NONE) /\
      (!ll. destInner (Stream ll) = NONE) /\
      (!f. destInner (cfFFIType_Fun f) = NONE) /\
      (!i. destInner (Inner i) = SOME i)`,

@@ -399,7 +399,7 @@ let pan_globals_compile_decs_ind = prove
 let conv_const_thm = prove
  (`conv_const t =
    match conv_int t with NONE -> (NONE:('a pan_exp) option)
-          | SOME x -> SOME (asm_Const (i2w x))`,
+          | SOME x -> SOME (pan_Const (i2w x))`,
   CHEAT_TAC);;
 
 (* HOL4 from_pancake32ProgScript.sml:430: ML code, not ported *)

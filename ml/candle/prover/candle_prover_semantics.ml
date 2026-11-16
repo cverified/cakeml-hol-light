@@ -52,7 +52,7 @@ let LPREFIX_LNTH = prove
      LPREFIX xs l /\
      LNTH n xs = NONE /\
      LTAKE n l = SOME ll ==>
-       LPREFIX xs (sptree_fromList ll)`,
+       LPREFIX xs (fromList ll)`,
   CHEAT_TAC);;
 
 (* -------------------------------------------------------------------------

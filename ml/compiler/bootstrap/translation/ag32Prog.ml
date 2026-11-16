@@ -10,7 +10,6 @@
 *)
 
 needs "compiler/bootstrap/translation/arm7Prog.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/bitstring.ml";;
 needs "semantics/evaluate.ml";;
 needs "translator/ml_translator.ml";;
@@ -26,7 +25,8 @@ let _ = cake_theory "ag32Prog"
 
 (* [local] *)
 let ri2bits_eq = prove
- (`ri2bits ri = match ri with Imm v -> ((n2w 64):word7) | Reg i -> w2w i`,
+ (`ri2bits ri = match ri with ag32_Imm v -> ((n2w 64):word7) | ag32_Reg i ->
+  w2w i`,
   CHEAT_TAC);;
 
 (* HOL4 ag32ProgScript.sml:27-29: ML code, not ported *)
@@ -97,7 +97,7 @@ let ag32Prog_word_neg = prove
 (* HOL4 ag32ProgScript.sml:113-123: ML code, not ported *)
 
 let ag32_enc_Const_def = new_definition
-  `ag32_enc_Const n c = ag32_enc (asm_Inst (asm_Const n c))`;;
+  `ag32_enc_Const n c = ag32_enc (word_Inst (asm_Const n c))`;;
 
 (* HOL4 ag32ProgScript.sml:164: ML code, not ported *)
 

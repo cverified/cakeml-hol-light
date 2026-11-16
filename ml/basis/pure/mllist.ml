@@ -29,58 +29,58 @@ let intersperse_def,intersperse_ind = define_guess
 
 (* ===== TODO: TO BE PORTED TO HOL (better theorems for mergesort_tail) ===== *)
 let merge_tail_MEM = prove
- (`!negate' R xs ys acc. MEM x (merge_tail negate' R xs ys acc) = ((MEM x xs)
-  \/ (MEM x ys) \/ (MEM x acc))`,
+ (`!negate' R' xs ys acc. MEM x (merge_tail negate' R' xs ys acc) = ((MEM x
+  xs) \/ (MEM x ys) \/ (MEM x acc))`,
   CHEAT_TAC);;
 
 let mergesortN_tail_MEM = prove
- (`!negate' R length' lst. (MEM x (mergesortN_tail negate' R length' lst) <=>
-  MEM x (TAKE length' lst))`,
+ (`!negate' R' length' lst. (MEM x (mergesortN_tail negate' R' length' lst)
+  <=> MEM x (TAKE length' lst))`,
   CHEAT_TAC);;
 
 let sort3_tail_sort3 = prove
- (`!negate' R x y z. sort3_tail negate' R x y z =
-     (if negate' then REVERSE (sort3 R x y z) else sort3 R x y z)`,
+ (`!negate' R' x y z. sort3_tail negate' R' x y z =
+     (if negate' then REVERSE (sort3 R' x y z) else sort3 R' x y z)`,
   CHEAT_TAC);;
 
 let sort2_tail_sort2 = prove
- (`!negate' R x y. sort2_tail negate' R x y =
-     (if negate' then REVERSE (sort2 R x y) else sort2 R x y)`,
+ (`!negate' R' x y. sort2_tail negate' R' x y =
+     (if negate' then REVERSE (sort2 R' x y) else sort2 R' x y)`,
   CHEAT_TAC);;
 
 let mergetail_merge = prove
- (`!negate' R xs ys acc.
-      merge_tail negate' R xs ys acc =
-      (if negate' then APPEND (REVERSE (mergesort_merge (\x y. ~(R x y)) xs
+ (`!negate' R' xs ys acc.
+      merge_tail negate' R' xs ys acc =
+      (if negate' then APPEND (REVERSE (mergesort_merge (\x y. ~(R' x y)) xs
         ys)) acc
-       else APPEND (REVERSE (mergesort_merge R xs ys)) acc)`,
+       else APPEND (REVERSE (mergesort_merge R' xs ys)) acc)`,
   CHEAT_TAC);;
 
 let merge_tail_acc = prove
- (`!negate' R xs ys acc acc'.
-     merge_tail negate' R xs ys (APPEND acc acc') = APPEND (merge_tail
-       negate' R xs ys acc) acc'`,
+ (`!negate' R' xs ys acc acc'.
+     merge_tail negate' R' xs ys (APPEND acc acc') = APPEND (merge_tail
+       negate' R' xs ys acc) acc'`,
   CHEAT_TAC);;
 
 let mergesort_tail_MEM = prove
- (`!R l. MEM x (mergesort_tail R l) <=> MEM x l`,
+ (`!R' l. MEM x (mergesort_tail R' l) <=> MEM x l`,
   CHEAT_TAC);;
 
 let merge_tail_PERM = prove
- (`!negate' R xs ys acc. PERM (APPEND (APPEND xs ys) acc) (merge_tail negate'
-  R xs ys acc)`,
+ (`!negate' R' xs ys acc. PERM (APPEND (APPEND xs ys) acc) (merge_tail
+  negate' R' xs ys acc)`,
   CHEAT_TAC);;
 
 let sort2_tail_PERM = prove
- (`!neg R x y. PERM [x; y] (sort2_tail neg R x y)`,
+ (`!neg R' x y. PERM [x; y] (sort2_tail neg R' x y)`,
   CHEAT_TAC);;
 
 let sort3_tail_PERM = prove
- (`!neg R x y z. PERM [x; y; z] (sort3_tail neg R x y z)`,
+ (`!neg R' x y z. PERM [x; y; z] (sort3_tail neg R' x y z)`,
   CHEAT_TAC);;
 
 let mergesortN_tail_PERM = prove
- (`!neg R len l. PERM (TAKE len l) (mergesortN_tail neg R len l)`,
+ (`!neg R' len l. PERM (TAKE len l) (mergesortN_tail neg R' len l)`,
   CHEAT_TAC);;
 (* ^^^^^ TO BE PORTED TO HOL ^^^^^ *)
 
@@ -88,29 +88,29 @@ let sort_def = new_definition
   `sort = mergesort_tail`;;
 
 let sort_thm = prove
- (`!R l. sort R l = mergesort_tail R l`,
+ (`!R' l. sort R' l = mergesort_tail R' l`,
   CHEAT_TAC);;
 
 let sort_SORTED = prove
- (`!R L. transitive R /\ total R ==> SORTED R (sort R L)`,
+ (`!R' L. transitive R' /\ total R' ==> SORTED R' (sort R' L)`,
   CHEAT_TAC);;
 
 let sort_MEM = prove
- (`!R L. MEM x (sort R L) <=> MEM x L`,
+ (`!R' L. MEM x (sort R' L) <=> MEM x L`,
   CHEAT_TAC);;
 add_simp sort_MEM;;
 
 let sort_PERM = prove
- (`!R L. PERM L (sort R L)`,
+ (`!R' L. PERM L (sort R' L)`,
   CHEAT_TAC);;
 
 let sort_LENGTH = prove
- (`!R l. LENGTH (sort R l) = LENGTH l`,
+ (`!R' l. LENGTH (sort R' l) = LENGTH l`,
   CHEAT_TAC);;
 add_simp sort_LENGTH;;
 
 let sort_SORTS = prove
- (`!R. (transitive R /\ total R) ==> SORTS sort R`,
+ (`!R'. (transitive R' /\ total R') ==> SORTS sort R'`,
   CHEAT_TAC);;
 
 let sort_set = prove

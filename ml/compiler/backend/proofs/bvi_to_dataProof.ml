@@ -386,8 +386,7 @@ let data_to_bvi_do_app = prove
      (!b. ~(op = clos_MemOp (clos_CopyByte b))) /\ ~(op = clos_ThunkOp
        ForceThunk) /\
      bvi_to_dataProof_state_rel r t /\
-     bviSem_do_app op (MAP data_to_bvi_v z) r = Rval (res,s1) ==> (?s2
-       pres.
+     bviSem_do_app op (MAP data_to_bvi_v z) r = Rval (res,s1) ==> (?s2 pres.
         dataSem_do_app_aux op z t = Rval (pres,s2) /\
         res = data_to_bvi_v pres /\
         bvi_to_dataProof_state_rel s1 s2)`,

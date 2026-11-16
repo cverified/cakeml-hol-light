@@ -162,10 +162,10 @@ let flat_exp_conventions_def,flat_exp_conventions_ind = define_wf
 let inst_ok_less_def = new_definition
   `inst_ok_less c x2 =
      match (c,x2) with
-       ((c:'a asm_config),asm_Arith (asm_Binop b r1 r2 (Imm w))) ->
+       ((c:'a asm_config),asm_Arith (asm_Binop b r1 r2 (asm_Imm w))) ->
          asm_config_valid_imm
        c (INL b) w
-     | (c,asm_Arith (asm_Shift l r1 r2 (Imm i))) ->
+     | (c,asm_Arith (asm_Shift l r1 r2 (asm_Imm i))) ->
        (((i = (n2w 0)) ==> (l = Lsl)) /\ w2n i < dimindex (:'a))
      | (c,asm_Arith (asm_Div r1 r2 r3)) ->
        (asm_config_ISA c IN {ARMv8,MIPS,RISC_V})
@@ -230,8 +230,8 @@ let inst_ok_less_def = new_definition
 let distinct_tar_reg_def = new_definition
   `distinct_tar_reg x1' =
      match x1' with
-       asm_Arith (asm_Binop bop r1 r2 ri) -> ~(ri = Reg r1)
-     | asm_Arith (asm_Shift l r1 r2 ri) -> ~(ri = Reg r1)
+       asm_Arith (asm_Binop bop r1 r2 ri) -> ~(ri = asm_Reg r1)
+     | asm_Arith (asm_Shift l r1 r2 ri) -> ~(ri = asm_Reg r1)
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> ~(r1 = r3) /\ ~(r1 = r4)
      | asm_Arith (asm_AddOverflow r1 r2 r3 r4) -> ~(r1 = r3)
      | asm_Arith (asm_SubOverflow r1 r2 r3 r4) -> ~(r1 = r3)
@@ -262,8 +262,8 @@ let every_inst_def,every_inst_ind = define_wf
      | word_Loop names c exit_names ->
        every_inst P c
      | word_If cmp r1 ri c1 c2 -> every_inst P c1 /\ every_inst P c2
-     | word_OpCurrHeap bop r1 r2 -> P (asm_Arith (asm_Binop bop r1 r2 (Reg
-       r2)))
+     | word_OpCurrHeap bop r1 r2 -> P (asm_Arith (asm_Binop bop r1 r2
+       (asm_Reg r2)))
      | word_MustTerminate p -> every_inst P p
      | word_Call ret dest args handler -> (match ret with
            NONE -> T
@@ -344,7 +344,7 @@ let inst_arg_convention_def = new_definition
   `inst_arg_convention x1'''' =
      match x1'''' with
        asm_Arith (asm_AddCarry r1 r2 r3 r4) -> r4 = 0
-     | asm_Arith (asm_Shift _ _ _ (Reg r)) -> r = 8
+     | asm_Arith (asm_Shift _ _ _ (asm_Reg r)) -> r = 8
      // Note: these are not necessary
      | asm_Arith (asm_AddOverflow r1 r2 r3 r4) -> r4 = 0
      | asm_Arith (asm_SubOverflow r1 r2 r3 r4) -> r4 = 0

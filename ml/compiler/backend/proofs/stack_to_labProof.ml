@@ -1004,7 +1004,7 @@ let full_make_init_semantics = prove
      labSem_state_link_reg t /\
    BIJ (tlookup (stack_to_lab_config_reg_names stack_conf)) UNIV UNIV ==>
    Abbrev (~(opt = NONE) /\ (~(stackSem_semantics InitGlobals_location s =
-     reg_alloc_Fail) ==>
+     ffi_Fail) ==>
    labSem_semantics t = stackSem_semantics InitGlobals_location s))`,
   CHEAT_TAC);;
 
@@ -1048,14 +1048,14 @@ let stack_to_lab_compile_all_enc_ok = prove
      /\
    asm_offset_ok 0 (asm_config_byte_offset c) (n2w 0) /\
    (!n. n <= max_stack_alloc ==> asm_config_valid_imm
-   c (sum_INL word_bignum_Sub) (n2w (n * (dimindex (:'a) DIV 8)))
+   c (sum_INL asm_Sub) (n2w (n * (dimindex (:'a) DIV 8)))
      /\ asm_config_valid_imm
-   c (sum_INL word_bignum_Add) (n2w (n * (dimindex (:'a) DIV 8))))
+   c (sum_INL asm_Add) (n2w (n * (dimindex (:'a) DIV 8))))
      /\ asm_config_valid_imm
-   c (sum_INL word_bignum_Add) (n2w 1) /\ asm_config_valid_imm c (sum_INL
-     word_bignum_Sub) (n2w 1) /\ asm_config_valid_imm
-   c (sum_INL word_bignum_Add) (n2w 4) /\ asm_config_valid_imm c (sum_INL
-     word_bignum_Add) (n2w 8) /\
+   c (sum_INL asm_Add) (n2w 1) /\ asm_config_valid_imm c (sum_INL asm_Sub)
+     (n2w 1) /\ asm_config_valid_imm
+   c (sum_INL asm_Add) (n2w 4) /\ asm_config_valid_imm c (sum_INL asm_Add)
+     (n2w 8) /\
    (!s. asm_offset_ok 0 (asm_config_addr_offset c) (store_offset s))
      /\ reg_name 10 c /\
    reg_name (sp + 2) c /\ reg_name (sp + 1) c /\ reg_name sp c /\
@@ -1142,7 +1142,7 @@ let complex_flatten_labels = prove
      in
    UNIONS (IMAGE line_get_labels pp) SUBSET
    (n,0) INSERT
-   (n,(if t /\ (?p1 p2. p = reg_alloc_Seq p1 p2) then 1 else 0)) INSERT (
+   (n,(if t /\ (?p1 p2. p = stack_Seq p1 p2) then 1 else 0)) INSERT (
    set_of_list (MAP (\l. (n,l)) (APPEND cs bs)) UNION
    IMAGE (\n2. (n,n2)) (UNIONS (IMAGE line_get_code_labels pp)) UNION
    complex_get_code_labels p)`,
@@ -1170,7 +1170,7 @@ let get_labels_MAP_prog_to_section_SUBSET_code_labels_lemma = prove
 let prog_to_section_preserves_MAP_FST = prove
  (`!p.
      IMAGE (\n. n,0) (set_of_list (MAP FST p)) SUBSET
-     stackProps_get_code_labels (MAP prog_to_section p)`,
+     labProps_get_code_labels (MAP prog_to_section p)`,
   CHEAT_TAC);;
 
 let prog_to_section_labels = prove
@@ -1190,12 +1190,12 @@ let MAP_prog_to_section_preserves_handler_labels = prove
  (`!p.
     UNIONS (set_of_list (MAP (\(n,pp). stack_get_handler_labels n pp) p))
       SUBSET
-    stackProps_get_code_labels (MAP prog_to_section p)`,
+    labProps_get_code_labels (MAP prog_to_section p)`,
   CHEAT_TAC);;
 
 let one_prog_section = prove
  (`IMAGE (\n. (n,1)) (set_of_list (MAP FST p)) SUBSET
-   stackProps_get_code_labels (MAP prog_to_section p)`,
+   labProps_get_code_labels (MAP prog_to_section p)`,
   CHEAT_TAC);;
 
 let get_labels_MAP_prog_to_section_SUBSET_code_labels = prove
@@ -1203,7 +1203,7 @@ let get_labels_MAP_prog_to_section_SUBSET_code_labels = prove
      ALL sec_labels_ok (MAP prog_to_section p) /\
       stack_good_code_labels p elabs ==>
       labProps_get_labels (MAP prog_to_section p) SUBSET
-      stackProps_get_code_labels (MAP prog_to_section p) UNION
+      labProps_get_code_labels (MAP prog_to_section p) UNION
       IMAGE (\n. n,0) elabs UNION
       IMAGE (\n. n,1) elabs`,
   CHEAT_TAC);;
@@ -1303,7 +1303,7 @@ let stack_remove_stack_good_code_labels_incr = prove
  (`!prog.
    stack_err_lab IN elabs /\
    stack_good_code_labels prog elabs ==>
-   stack_good_code_labels (MAP (stack_alloc_prog_comp jump offset sp)
+   stack_good_code_labels (MAP (stack_remove_prog_comp jump offset sp)
      prog) elabs`,
   CHEAT_TAC);;
 
@@ -1379,7 +1379,7 @@ let stack_to_lab_stack_good_code_labels = prove
    stack_good_code_labels prog elabs /\
    ALL sec_labels_ok prog' ==>
    // TODO: pretty sure this is only ever used with elabs = {}
-   labProps_get_labels prog' SUBSET stackProps_get_code_labels prog' UNION
+   labProps_get_labels prog' SUBSET labProps_get_code_labels prog' UNION
      IMAGE (\n. n,0) elabs UNION IMAGE (\n. n,1) elabs`,
   CHEAT_TAC);;
 
@@ -1389,7 +1389,7 @@ let stack_to_lab_stack_good_code_labels_incr = prove
    compile_no_stubs f jump offset sp prog = prog' /\
    stack_good_code_labels prog elabs /\
    ALL sec_labels_ok prog' ==>
-   labProps_get_labels prog' SUBSET stackProps_get_code_labels prog' UNION
+   labProps_get_labels prog' SUBSET labProps_get_code_labels prog' UNION
      IMAGE (\n. n,0) elabs UNION IMAGE (\n. n,1) elabs`,
   CHEAT_TAC);;
 
@@ -1399,7 +1399,7 @@ let nonzero_get_labels_MAP_prog_to_section_SUBSET_code_labels = prove
       ALL sec_labels_ok (MAP prog_to_section p) /\
       stack_good_handler_labels p ==>
       restrict_nonzero (labProps_get_labels (MAP prog_to_section p)) SUBSET
-      stackProps_get_code_labels (MAP prog_to_section p)`,
+      labProps_get_code_labels (MAP prog_to_section p)`,
   CHEAT_TAC);;
 
 let stack_names_stack_good_handler_labels = prove
@@ -1424,7 +1424,7 @@ let stack_good_handler_labels_append = prove
 let stack_remove_stack_good_handler_labels_incr = prove
  (`!prog.
    stack_good_handler_labels prog ==>
-   stack_good_handler_labels (MAP (stack_alloc_prog_comp jump offset sp)
+   stack_good_handler_labels (MAP (stack_remove_prog_comp jump offset sp)
      prog)`,
   CHEAT_TAC);;
 
@@ -1457,7 +1457,7 @@ let stack_to_lab_stack_good_handler_labels = prove
    stack_good_handler_labels prog /\
    ALL sec_labels_ok prog' ==>
    restrict_nonzero (labProps_get_labels prog') SUBSET
-     stackProps_get_code_labels prog'`,
+     labProps_get_code_labels prog'`,
   CHEAT_TAC);;
 
 let stack_to_lab_stack_good_handler_labels_incr = prove
@@ -1465,7 +1465,7 @@ let stack_to_lab_stack_good_handler_labels_incr = prove
    stack_good_handler_labels prog /\
    ALL sec_labels_ok prog' ==>
    restrict_nonzero (labProps_get_labels prog') SUBSET
-     stackProps_get_code_labels prog'`,
+     labProps_get_code_labels prog'`,
   CHEAT_TAC);;
 
 (*** no_shmemop ***)
@@ -1541,7 +1541,7 @@ let stack_names_comp_no_shmemop = prove
 let stack_names_prog_comp_no_shmemop = prove
  (`!prog.
    ALL (\(a,p). no_shmemop p) prog ==>
-   ALL (\(a,p). no_shmemop p) (MAP (stack_alloc_prog_comp f) prog)`,
+   ALL (\(a,p). no_shmemop p) (MAP (stack_names_prog_comp f) prog)`,
   CHEAT_TAC);;
 
 let stack_names_compile_no_shmemop = prove
@@ -1580,7 +1580,7 @@ let compile_no_share_mem_inst = prove
 
 let stack_remove_prog_comp_no_shmemop_MAP = prove
  (`ALL (\(a,p). no_shmemop p) prog ==>
-   ALL (\(a,p). no_shmemop p) (MAP (stack_alloc_prog_comp jump offset sp)
+   ALL (\(a,p). no_shmemop p) (MAP (stack_remove_prog_comp jump offset sp)
      prog)`,
   CHEAT_TAC);;
 
@@ -1666,7 +1666,7 @@ let stack_names_comp_no_install = prove
 let stack_names_prog_comp_no_install = prove
  (`!prog.
    ALL (\(a,p). stackProps_no_install p) prog ==>
-   ALL (\(a,p). stackProps_no_install p) (MAP (stack_alloc_prog_comp f)
+   ALL (\(a,p). stackProps_no_install p) (MAP (stack_names_prog_comp f)
      prog)`,
   CHEAT_TAC);;
 
@@ -1685,8 +1685,8 @@ let flatten_no_install = prove
 let asm_fetch_aux_no_install_CONS = prove
  (`!xs.
    ALL (\ln. !w bytes l. ~(ln = lab_LabAsm lab_Install w bytes l)) xs /\
-   stackProps_no_install ls ==>
-   stackProps_no_install (CONS (Section k xs) ls)`,
+   labProps_no_install ls ==>
+   labProps_no_install (CONS (Section k xs) ls)`,
   CHEAT_TAC);;
 
 let prog_to_section_no_install = prove

@@ -462,7 +462,7 @@ let types_match_list_REPLICATE = prove
 
 (* nearly all types with equality will be fully representable within v *)
 let IsTypeRep_def = new_definition
-  `IsTypeRep f R <=> (!x. R x (f x:semanticPrimitives_v))`;;
+  `IsTypeRep f R' <=> (!x. R' x (f x:semanticPrimitives_v))`;;
 
 let IsTypeRep_EqualityType_Unique = prove
  (`EqualityType R ==> IsTypeRep f R ==> IsTypeRep g R ==>
@@ -1543,7 +1543,7 @@ let eval_concat = prove
  (`!env x ls.
      ml_translator_Eval env x (LIST_TYPE STRING_TYPE ls) ==>
      ml_translator_Eval env (ast_App ast_Strcat [x]) (STRING_TYPE
-       (mlvector_concat ls))`,
+       (mlstring_concat ls))`,
   CHEAT_TAC);;
 
 (* Eval_substring *)

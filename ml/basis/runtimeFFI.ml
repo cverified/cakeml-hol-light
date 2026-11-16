@@ -29,7 +29,7 @@ let ffi_exit_length = prove
 (* FFI part for the runtime *)
 
 let runtimeFFI_encode_def = new_definition
-  `runtimeFFI_encode = (K (misc_List []):1->ffi)`;;
+  `runtimeFFI_encode = (K (cfFFIType_List []):1->ffi)`;;
 
 let decode_def = new_definition
   `decode = ((K (SOME one)):ffi->1 option)`;;

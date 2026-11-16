@@ -711,11 +711,11 @@ let word_to_stackProof_state_rel_def = new_definition
          ALL (post_alloc_conventions k o SND o SND) progs /\
          ALL (flat_exp_conventions o SND o SND) progs /\
          ALL ((\x y. ~(x = y)) raise_stub_location o FST) progs /\
-         ALL ((\x y. ~(x = y)) stack_store_consts_stub_location o FST) progs
+         ALL ((\x y. ~(x = y)) word_store_consts_stub_location o FST) progs
            /\
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t))) /\
      sptree_domain (stackSem_state_code t) = raise_stub_location INSERT
-                       stack_store_consts_stub_location INSERT sptree_domain
+                       word_store_consts_stub_location INSERT sptree_domain
                          (wordSem_state_code s) /\
      (!n word_prog arg_count.
         (sptree_lookup n (wordSem_state_code s) = SOME
@@ -733,7 +733,7 @@ let word_to_stackProof_state_rel_def = new_definition
           the f (sptree_lookup n (wordSem_state_stack_size s)) = f)) /\
      (sptree_lookup raise_stub_location (stackSem_state_code t) = SOME
        (raise_stub F k)) /\
-     (sptree_lookup stack_store_consts_stub_location (stackSem_state_code t)
+     (sptree_lookup word_store_consts_stub_location (stackSem_state_code t)
        = SOME (store_consts_stub k)) /\
      good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
      LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
@@ -1245,8 +1245,8 @@ let alloc_IMP_alloc = prove
          (wordSem_state_locals_size_fupd (K (SOME 0))
          (wordSem_state_locals_fupd (K LN) (wordSem_push_env envs
          ((NONE:(num#'a word_prog#num#num) option)) s))) t5 (CONS f' lens) 0 /\
-       (cut_envs names (wordSem_state_locals s) = SOME envs) /\ ~(res = SOME
-         wordSem_Error) ==>
+       (cut_envs names (wordSem_state_locals s) = SOME envs) /\ ~(res =
+         SOME wordSem_Error) ==>
        (?(t1:('a,'c,'ffi)stackSem_state) res1.
          (stackSem_alloc c t5 = ((res1:('a stackSem_result) option),t1))
            /\
@@ -3067,7 +3067,7 @@ let init_state_ok_def = new_definition
          ALL (post_alloc_conventions k o SND o SND) progs /\
          ALL (flat_exp_conventions o SND o SND) progs /\
          ALL ((\x y. ~(x = y)) raise_stub_location o FST) progs /\
-         ALL ((\x y. ~(x = y)) stack_store_consts_stub_location o FST) progs
+         ALL ((\x y. ~(x = y)) word_store_consts_stub_location o FST) progs
            /\
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t)))`;;
 
@@ -3094,7 +3094,7 @@ let word_to_stackProof_make_init_def = new_definition
 let init_state_ok_IMP_state_rel = prove
  (`sptree_lookup raise_stub_location (stackSem_state_code t) = SOME (raise_stub
   F k) /\
-   sptree_lookup stack_store_consts_stub_location (stackSem_state_code t) =
+   sptree_lookup word_store_consts_stub_location (stackSem_state_code t) =
      SOME (store_consts_stub k) /\
     (!n word_prog arg_count.
        (sptree_lookup n code = SOME (arg_count,word_prog)) ==>
@@ -3109,7 +3109,7 @@ let init_state_ok_IMP_state_rel = prove
            (stackSem_state_bitmaps t)) /\
          (sptree_lookup n (stackSem_state_code t) = SOME stack_prog))) /\
     sptree_domain (stackSem_state_code t) =
-      raise_stub_location INSERT stack_store_consts_stub_location INSERT
+      raise_stub_location INSERT word_store_consts_stub_location INSERT
         sptree_domain code /\
     init_state_ok ac k t coracle ==>
     word_to_stackProof_state_rel ac k 0 0 (word_to_stackProof_make_init ac
@@ -3140,7 +3140,7 @@ let word_to_stackProof_compile_semantics = prove
            (asm_config_avoid_regs asm_conf))) /\
          init_state_ok asm_conf k t coracle /\
          (ALOOKUP code raise_stub_location = NONE) /\
-         (ALOOKUP code stack_store_consts_stub_location = NONE) /\
+         (ALOOKUP code word_store_consts_stub_location = NONE) /\
          FST (word_to_stack_compile asm_conf F code) <<=
            stackSem_state_bitmaps t /\
          ALL (\(n,m,prog). flat_exp_conventions prog /\
@@ -3204,7 +3204,7 @@ let word_to_stack_compile_lab_pres = prove
    ALL_DISTINCT labs) prog ==>
    (let (bytes,c,f,p) = word_to_stack_compile asm_conf F prog in
      MAP FST p = (CONS raise_stub_location (CONS
-       stack_store_consts_stub_location (MAP FST prog))) /\
+       word_store_consts_stub_location (MAP FST prog))) /\
      ALL (\(n,p).
        let labs = stackProps_extract_labels p in
        ALL (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1)) labs /\
@@ -3500,7 +3500,7 @@ let word_to_stack_comp_code_labels = prove
      stackProps_get_code_labels (FST (word_to_stack_comp c perf prog bs kf))
        SUBSET
      (raise_stub_location,0) INSERT
-       (stack_store_consts_stub_location,0) INSERT
+       (word_store_consts_stub_location,0) INSERT
          ((IMAGE (\n. (n,0)) (wordConvs_get_code_labels prog)) UNION
           stack_get_handler_labels n (FST (word_to_stack_comp c perf prog
             bs kf)))`,
@@ -3515,7 +3515,7 @@ let compile_word_to_stack_code_labels = prove
    UNIONS (IMAGE stackProps_get_code_labels (set_of_list (MAP SND p')))
      SUBSET
    (raise_stub_location,0) INSERT
-   (stack_store_consts_stub_location,0) INSERT (
+   (word_store_consts_stub_location,0) INSERT (
    // either came from wordLang
    IMAGE (\n. (n,0)) (UNIONS (set_of_list (MAP (\(n,m,pp).
      (wordConvs_get_code_labels pp)) p))) UNION
@@ -3532,7 +3532,7 @@ let word_to_stack_good_code_labels = prove
 
 let word_to_stack_good_code_labels_incr = prove
  (`raise_stub_location IN elabs /\
-   stack_store_consts_stub_location IN elabs /\
+   word_store_consts_stub_location IN elabs /\
    compile_word_to_stack ac F k prog bs = (prog',fs',bs') ==>
    wordConvs_good_code_labels prog elabs ==>
    stack_good_code_labels prog' elabs`,

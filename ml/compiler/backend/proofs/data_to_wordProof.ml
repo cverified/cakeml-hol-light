@@ -329,7 +329,7 @@ let data_to_wordProof_compile_correct = prove
            w))
          | SOME (Rerr (Rabort (Rffi_error f))) -> (res1 = SOME
            (wordSem_FinalFFI f))
-         | SOME (Rerr (Rabort e)) -> (res1 = SOME targetSem_TimeOut))))`,
+         | SOME (Rerr (Rabort e)) -> (res1 = SOME wordSem_TimeOut))))`,
   CHEAT_TAC);;
 
 (* [local] *)

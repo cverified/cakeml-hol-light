@@ -244,22 +244,22 @@ let inst_select_exp_def,inst_select_exp_ind = define_wf
        match e2 with word_Const w ->
          // t = r op const
          if asm_config_valid_imm c (INL op) w then
-           word_Seq p1 (word_Inst (asm_Arith (asm_Binop op tar temp (Imm
+           word_Seq p1 (word_Inst (asm_Arith (asm_Binop op tar temp (asm_Imm
              w))))
          else
           // t = r + const --> t = r - const
           if op = asm_Add /\ asm_config_valid_imm c (INL asm_Sub) (--w) then
            word_Seq p1 (word_Inst (asm_Arith (asm_Binop asm_Sub tar temp
-             (Imm (--w)))))
+             (asm_Imm (--w)))))
          else
            // no immediates
            let p2 = word_Inst (asm_Const (temp + 1) w) in
            word_Seq p1 (word_Seq p2 (word_Inst (asm_Arith (asm_Binop op tar
-             temp (Reg (temp + 1))))))
+             temp (asm_Reg (temp + 1))))))
        | _ ->
          let p2 = inst_select_exp c (temp + 1) (temp + 1) e2 in
          word_Seq p1 (word_Seq p2 (word_Inst (asm_Arith (asm_Binop op tar
-           temp (Reg (temp + 1)))))))
+           temp (asm_Reg (temp + 1)))))))
      | (c,tar,temp,word_Shift sh exp e1) ->
        (match e1 with word_Const shift_len ->
            let n = w2n shift_len in
@@ -268,13 +268,13 @@ let inst_select_exp_def,inst_select_exp_ind = define_wf
                  if n = 0 then
                    word_Seq prog (word_Move 0 [tar,temp])
                  else word_Seq prog (word_Inst (asm_Arith (asm_Shift sh tar
-                   temp (Imm (n2w n))))))
+                   temp (asm_Imm (n2w n))))))
              else word_Inst (asm_Const tar (n2w 0))
        | _ ->
          let p = inst_select_exp c temp temp exp in
          let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
          word_Seq p (word_Seq p1 (word_Inst (asm_Arith (asm_Shift sh tar
-           temp (Reg (temp + 1)))))))
+           temp (asm_Reg (temp + 1)))))))
      // Make it total
      | (_,_,_,_) -> word_Skip`;;
 
@@ -313,21 +313,21 @@ let inst_select_exp_pmatch = prove
        // t = r op const
        if asm_config_valid_imm c (INL op) w then
          word_Seq (inst_select_exp c temp temp e1) (word_Inst (asm_Arith
-           (asm_Binop op tar temp (Imm w))))
+           (asm_Binop op tar temp (asm_Imm w))))
        else
         // t = r + const --> t = r - const
         if op = asm_Add /\ asm_config_valid_imm c (INL asm_Sub) (--w) then
          word_Seq (inst_select_exp c temp temp e1) (word_Inst (asm_Arith
-           (asm_Binop asm_Sub tar temp (Imm (--w)))))
+           (asm_Binop asm_Sub tar temp (asm_Imm (--w)))))
        else
          // no immediates
          let p2 = word_Inst (asm_Const (temp + 1) w) in
          word_Seq (inst_select_exp c temp temp e1) (word_Seq p2 (word_Inst
-           (asm_Arith (asm_Binop op tar temp (Reg (temp + 1))))))
+           (asm_Arith (asm_Binop op tar temp (asm_Reg (temp + 1))))))
      | _ ->
        let p2 = inst_select_exp c (temp + 1) (temp + 1) e2 in
        word_Seq (inst_select_exp c temp temp e1) (word_Seq p2 (word_Inst
-         (asm_Arith (asm_Binop op tar temp (Reg (temp + 1)))))))
+         (asm_Arith (asm_Binop op tar temp (asm_Reg (temp + 1)))))))
    | word_Shift sh exp e1 ->
     (match e1 with word_Const shift_len ->
          let n = w2n shift_len in
@@ -336,13 +336,13 @@ let inst_select_exp_pmatch = prove
                if n = 0 then
                  word_Seq prog (word_Move 0 [tar,temp])
                else word_Seq prog (word_Inst (asm_Arith (asm_Shift sh tar
-                 temp (Imm (n2w n))))))
+                 temp (asm_Imm (n2w n))))))
            else word_Inst (asm_Const tar (n2w 0))
      | _ ->
        let p = inst_select_exp c temp temp exp in
        let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
        word_Seq p (word_Seq p1 (word_Inst (asm_Arith (asm_Shift sh tar temp
-         (Reg (temp + 1)))))))
+         (asm_Reg (temp + 1)))))))
    |
      // Make it total
      _ -> word_Skip`,

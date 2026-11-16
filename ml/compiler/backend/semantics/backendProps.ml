@@ -86,11 +86,11 @@ let pure_cc_I = prove
 (* identifiers that appear in the initial state and in oracle steps
    increase monotonically in some sense. *)
 let oracle_monotonic_def = new_definition
-  `oracle_monotonic (f:'a->'b->bool) (R:'b->'b->bool) (S:'b->bool)
+  `oracle_monotonic (f:'a->'b->bool) (R':'b->'b->bool) (S:'b->bool)
   (orac:num->'a) =
      (
-         (!i j x y. i < j /\ x IN f (orac i) /\ y IN f (orac j) ==> R x
-           y) /\ (!i x y. x IN S /\ y IN f (orac i) ==> R x y))`;;
+         (!i j x y. i < j /\ x IN f (orac i) /\ y IN f (orac j) ==> R' x
+           y) /\ (!i x y. x IN S /\ y IN f (orac i) ==> R' x y))`;;
 
 (* HOL4 backendPropsScript.sml:108-109: ML code, not ported *)
 

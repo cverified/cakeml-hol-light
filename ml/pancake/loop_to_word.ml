@@ -28,8 +28,8 @@ let loop_to_word_find_var_def = new_definition
      | SOME n -> (n:num)`;;
 
 let find_reg_imm_def = define_cases
-  `(find_reg_imm ctxt (Imm w) = Imm w) /\
-   (find_reg_imm ctxt (Reg n) = Reg (loop_to_word_find_var ctxt n))`;;
+  `(find_reg_imm ctxt (asm_Imm w) = asm_Imm w) /\
+   (find_reg_imm ctxt (asm_Reg n) = asm_Reg (loop_to_word_find_var ctxt n))`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (loop_exp_size (K 0) o SND)
@@ -80,32 +80,32 @@ let loop_to_word_comp_def,loop_to_word_comp_ind = define_guess_clauses
                ci = EL 2 rhss in let
                scratch_ci = 1 in let
                scratch_res = 3 in
-               (loop_Seq (loop_Assign scratch_ci (loop_Var
+               (loop_Seq (loop_Assign scratch_ci (word_Var
                    (loop_to_word_find_var ctxt ci)))
-               (loop_Seq (asm_Inst (asm_Arith (asm_AddCarry scratch_res
+               (loop_Seq (word_Inst (asm_Arith (asm_AddCarry scratch_res
                               (loop_to_word_find_var ctxt li)
                               (loop_to_word_find_var ctxt ri)
                               scratch_ci)))
                (loop_Seq (loop_Assign (loop_to_word_find_var ctxt co)
-                   (loop_Var scratch_ci))
-                    (loop_Assign (loop_to_word_find_var ctxt res) (loop_Var
+                   (word_Var scratch_ci))
+                    (loop_Assign (loop_to_word_find_var ctxt res) (word_Var
                         scratch_res)))),l)
            else (loop_Skip,l)) /\
     (loop_to_word_comp ctxt (loop_Arith arith) l =
          (match arith with
             LLongMul r1 r2 r3 r4 ->
-            (asm_Inst (asm_Arith (asm_LongMul (loop_to_word_find_var ctxt
+            (word_Inst (asm_Arith (asm_LongMul (loop_to_word_find_var ctxt
                 r1) (loop_to_word_find_var ctxt r2)
                         (loop_to_word_find_var ctxt r3)
                             (loop_to_word_find_var ctxt r4))),l)
           | LLongDiv r1 r2 r3 r4 r5 ->
-            (asm_Inst (asm_Arith (asm_LongDiv (loop_to_word_find_var ctxt
+            (word_Inst (asm_Arith (asm_LongDiv (loop_to_word_find_var ctxt
                 r1) (loop_to_word_find_var ctxt r2)
                         (loop_to_word_find_var ctxt r3)
                             (loop_to_word_find_var ctxt r4)
                             (loop_to_word_find_var ctxt r5))),l)
           | LDiv r1 r2 r3 ->
-            (asm_Inst (asm_Arith (asm_Div (loop_to_word_find_var ctxt
+            (word_Inst (asm_Arith (asm_Div (loop_to_word_find_var ctxt
                 r1) (loop_to_word_find_var ctxt r2) (loop_to_word_find_var
                 ctxt r3))),l))) /\
     (loop_to_word_comp ctxt (loop_Store e v) l =
@@ -168,16 +168,16 @@ let loop_to_word_comp_def,loop_to_word_comp_ind = define_guess_clauses
           (word_ShareInst memop (loop_to_word_find_var ctxt n)
               (comp_exp ctxt e),l))`;
    `(loop_to_word_comp ctxt (loop_Load32 a v) l =
-         (asm_Inst (asm_Mem asm_Load32 (loop_to_word_find_var ctxt v)
+         (word_Inst (asm_Mem asm_Load32 (loop_to_word_find_var ctxt v)
                 (Addr (loop_to_word_find_var ctxt a) (n2w 0))),l)) /\
     (loop_to_word_comp ctxt (loop_LoadByte a v) l =
-         (asm_Inst (asm_Mem asm_Load8 (loop_to_word_find_var ctxt v)
+         (word_Inst (asm_Mem asm_Load8 (loop_to_word_find_var ctxt v)
                 (Addr (loop_to_word_find_var ctxt a) (n2w 0))),l)) /\
     (loop_to_word_comp ctxt (loop_Store32 a v) l =
-         (asm_Inst (asm_Mem asm_Store32 (loop_to_word_find_var ctxt v)
+         (word_Inst (asm_Mem asm_Store32 (loop_to_word_find_var ctxt v)
                 (Addr (loop_to_word_find_var ctxt a) (n2w 0))),l)) /\
     (loop_to_word_comp ctxt (loop_StoreByte a v) l =
-         (asm_Inst (asm_Mem asm_Store8 (loop_to_word_find_var ctxt v)
+         (word_Inst (asm_Mem asm_Store8 (loop_to_word_find_var ctxt v)
                 (Addr (loop_to_word_find_var ctxt a) (n2w 0))),l))`];;
 
 let make_ctxt_def,make_ctxt_ind = define_guess

@@ -2,7 +2,7 @@
 (*  asm: ported from HOL4's
     compiler/encoders/asm/asmScript.sml
     A definition theory, with 11 definitions, 11 datatypes and no
-    theorems.  Needed by 71 files of the port.  *)
+    theorems.  Needed by 63 files of the port.  *)
 (* ======================================================== *)
 
 (* -------------------------------------------------------------------------
@@ -85,8 +85,8 @@ new_type_abbrev("fp_reg",`:num`);;
 
 let asm_reg_imm_INDUCT,asm_reg_imm_RECURSION = define_datatype
   "asm_reg_imm =
-     Reg asm_reg
-   | Imm ('a word)";;
+     asm_Reg asm_reg
+   | asm_Imm ('a word)";;
 
 let asm_binop_INDUCT,asm_binop_RECURSION = define_datatype
   "asm_binop =
@@ -214,8 +214,8 @@ let fp_reg_ok_def = new_definition
   `fp_reg_ok d c <=> d < asm_config_fp_reg_count c`;;
 
 let reg_imm_ok_def = define_cases
-  `(reg_imm_ok b (Reg r) c = reg_ok r c) /\
-   (reg_imm_ok b (Imm w) c =
+  `(reg_imm_ok b (asm_Reg r) c = reg_ok r c) /\
+   (reg_imm_ok b (asm_Imm w) c =
          ((
            // Always permit Xor by -1 in order to provide 1's complement
            b = INL asm_Xor) /\ (w = --(n2w 1)) \/ asm_config_valid_imm
@@ -228,14 +228,14 @@ let arith_ok_def = define_cases
          (asm_config_two_reg_arith
           // note: register to register moves can be implmented with
           // "Or" on "two_reg_arith" architectures.
-          c ==> (r1 = r2) \/ (b = asm_Or) /\ (ri = Reg r2)) /\
+          c ==> (r1 = r2) \/ (b = asm_Or) /\ (ri = asm_Reg r2)) /\
          reg_ok r1 c /\ reg_ok r2 c /\ reg_imm_ok (INL b) ri c) /\
    (arith_ok (asm_Shift l r1 r2 ri) (c:'a asm_config) <=>
          (asm_config_two_reg_arith c ==> (r1 = r2)) /\
          reg_ok r1 c /\ reg_ok r2 c /\
-         (match ri with Imm i -> (((i = (n2w 0)) ==> (l = Lsl)) /\ w2n i <
-             dimindex (:'a))
-          | Reg r ->
+         (match ri with asm_Imm i -> (((i = (n2w 0)) ==> (l = Lsl)) /\ w2n
+             i < dimindex (:'a))
+          | asm_Reg r ->
             reg_ok r c /\
             (asm_config_ISA c = x86_64 ==> r = 1))) /\
    (arith_ok (asm_Div r1 r2 r3) (c:'a asm_config) <=>

@@ -99,13 +99,13 @@ let bool_sig_instances = prove
   CHEAT_TAC);;
 
 let boolrel_def = new_definition
-  `Boolrel0 (mem':'U->'U->bool) R =
+  `Boolrel0 (mem':'U->'U->bool) R' =
        ((abstract mem') ((two mem')) ((funspace mem') ((two mem')) ((two
          mem')))
             (\(holSyntax_Var (implode "p") (holSyntax_Tyapp (implode "bool")
               [])). ((abstract mem') ((two mem')) ((two mem'))
                (\(holSyntax_Var (implode "q") (holSyntax_Tyapp (implode
-                 "bool") [])). (boolean mem') (R ((holSyntax_Var (implode
+                 "bool") [])). (boolean mem') (R' ((holSyntax_Var (implode
                  "p") (holSyntax_Tyapp (implode "bool") [])) = (setSpec_true
                  mem')) ((holSyntax_Var (implode "q") (holSyntax_Tyapp
                  (implode "bool") [])) = (setSpec_true mem')))))))`;;

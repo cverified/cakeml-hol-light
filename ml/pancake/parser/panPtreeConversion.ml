@@ -126,7 +126,7 @@ let conv_ffi_ident_def = new_definition
      | _ -> NONE`;;
 
 let conv_var_def = new_definition
-  `conv_var t = OPTION_MAP (ast_Var pan_Global) (conv_ident t)`;;
+  `conv_var t = OPTION_MAP (pan_Var pan_Global) (conv_ident t)`;;
 
 (** Collection of binop expression nodes, n >= 2 *)
 let binaryExps_def = new_definition

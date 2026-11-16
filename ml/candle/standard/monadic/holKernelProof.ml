@@ -773,15 +773,15 @@ let holKernelProof_inst_lemma = prove
      TERM defs tm /\ STATE defs s /\
      (holKernel_inst theta tm s = (res,s')) ==>
      (s' = s) /\ (!t. (res = M_success t) ==>
-     (t = holKernel_INST theta (tm)))`,
+     (t = holSyntax_INST theta (tm)))`,
   CHEAT_TAC);;
 
 let inst_thm = prove
  (`ALL (\(t1,t2). TYPE defs t1 /\ TYPE defs t2) theta /\
     TERM defs tm /\ STATE defs s /\
     (holKernel_inst theta tm s = (res,s')) ==>
-    (s' = s) /\ (res = M_success (holKernel_INST theta tm)) /\ TERM defs
-      (holKernel_INST theta tm)`,
+    (s' = s) /\ (res = M_success (holSyntax_INST theta tm)) /\ TERM defs
+      (holSyntax_INST theta tm)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -799,7 +799,7 @@ let ALL_DISTINCT_union = prove
 
 (* [local] *)
 let ALL_DISTINCT_tyvars_ALT = prove
- (`!h. ALL_DISTINCT (holKernel_tyvars (h:type))`,
+ (`!h. ALL_DISTINCT (holSyntax_tyvars (h:type))`,
   CHEAT_TAC);;
 
 (* [local] *)

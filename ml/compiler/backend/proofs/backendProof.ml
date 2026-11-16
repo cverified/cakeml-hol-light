@@ -998,7 +998,7 @@ let oracle_monotonic_slice = prove
   CHEAT_TAC);;
 
 let oracle_monotonic_rel_mono = prove
- (`!R R'. (!x y. R x y ==> R' x y) /\ oracle_monotonic f R init_s orac ==>
+ (`!R' R'. (!x y. R' x y ==> R' x y) /\ oracle_monotonic f R' init_s orac ==>
    oracle_monotonic f R' init_s orac`,
   CHEAT_TAC);;
 

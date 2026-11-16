@@ -66,8 +66,8 @@ let stack_allocProof_bytes_in_word_word_shift = prove
 (* [local] *)
 let get_var_imm_case = prove
  (`stackSem_get_var_imm ri s =
-     match ri with Reg n -> stackSem_get_var n s
-     | Imm w -> SOME (word_Word w)`,
+     match ri with asm_Reg n -> stackSem_get_var n s
+     | asm_Imm w -> SOME (word_Word w)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -86,7 +86,7 @@ add_simp stack_allocProof_FST_prog_comp;;
 let lookup_IMP_lookup_compile = prove
  (`sptree_lookup dest (stackSem_state_code s) = SOME x /\ ~(dest =
   gc_stub_location) ==>
-    (?m1 n1. sptree_lookup dest (fromAList (stack_alloc_compile c (toAList
+    (?m1 n1. sptree_lookup dest (fromAList (stack_names_compile c (toAList
       (stackSem_state_code s)))) =
             SOME (FST (stack_alloc_comp m1 n1 x)))`,
   CHEAT_TAC);;
@@ -807,14 +807,14 @@ let alloc_correct_lemma_Simple = prove
     (?ck l2.
       stackSem_evaluate
         (word_gc_code conf,stackSem_state_code_fupd (K (fromAList
-          (stack_alloc_compile c (toAList (stackSem_state_code s)))))
+          (stack_names_compile c (toAList (stackSem_state_code s)))))
           (stackSem_state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd (K
           l) (stackSem_state_clock_fupd (K (stackSem_state_clock s + ck))
           (stackSem_state_use_alloc_fupd (K F) (stackSem_state_use_stack_fupd
           (K T) (stackSem_state_use_store_fupd (K T)
          s))))))) =
         (r,stackSem_state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd
-          (K l2) (stackSem_state_code_fupd (K (fromAList (stack_alloc_compile c
+          (K l2) (stackSem_state_code_fupd (K (fromAList (stack_names_compile c
           (toAList (stackSem_state_code s))))) (stackSem_state_use_alloc_fupd
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
@@ -2186,14 +2186,14 @@ let alloc_correct_lemma_Generational = prove
     (?ck l2.
       stackSem_evaluate
         (word_gc_code conf,stackSem_state_code_fupd (K (fromAList
-          (stack_alloc_compile c (toAList (stackSem_state_code s)))))
+          (stack_names_compile c (toAList (stackSem_state_code s)))))
           (stackSem_state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd (K
           l) (stackSem_state_clock_fupd (K (stackSem_state_clock s + ck))
           (stackSem_state_use_alloc_fupd (K F) (stackSem_state_use_stack_fupd
           (K T) (stackSem_state_use_store_fupd (K T)
          s))))))) =
         (r,stackSem_state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd
-          (K l2) (stackSem_state_code_fupd (K (fromAList (stack_alloc_compile c
+          (K l2) (stackSem_state_code_fupd (K (fromAList (stack_names_compile c
           (toAList (stackSem_state_code s))))) (stackSem_state_use_alloc_fupd
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
@@ -2235,14 +2235,14 @@ let alloc_correct_lemma_None = prove
     (?ck l2.
       stackSem_evaluate
         (word_gc_code conf,stackSem_state_code_fupd (K (fromAList
-          (stack_alloc_compile c (toAList (stackSem_state_code s)))))
+          (stack_names_compile c (toAList (stackSem_state_code s)))))
           (stackSem_state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd (K
           l) (stackSem_state_clock_fupd (K (stackSem_state_clock s + ck))
           (stackSem_state_use_alloc_fupd (K F) (stackSem_state_use_stack_fupd
           (K T) (stackSem_state_use_store_fupd (K T)
          s))))))) =
         (r,stackSem_state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd
-          (K l2) (stackSem_state_code_fupd (K (fromAList (stack_alloc_compile c
+          (K l2) (stackSem_state_code_fupd (K (fromAList (stack_names_compile c
           (toAList (stackSem_state_code s))))) (stackSem_state_use_alloc_fupd
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
@@ -2267,14 +2267,14 @@ let alloc_correct_lemma = prove
     (?ck l2.
       stackSem_evaluate
         (word_gc_code conf,stackSem_state_code_fupd (K (fromAList
-          (stack_alloc_compile c (toAList (stackSem_state_code s)))))
+          (stack_names_compile c (toAList (stackSem_state_code s)))))
           (stackSem_state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd (K
           l) (stackSem_state_clock_fupd (K (stackSem_state_clock s + ck))
           (stackSem_state_use_alloc_fupd (K F) (stackSem_state_use_stack_fupd
           (K T) (stackSem_state_use_store_fupd (K T)
          s))))))) =
         (r,stackSem_state_gc_fun_fupd (K anything) (stackSem_state_regs_fupd
-          (K l2) (stackSem_state_code_fupd (K (fromAList (stack_alloc_compile c
+          (K l2) (stackSem_state_code_fupd (K (fromAList (stack_names_compile c
           (toAList (stackSem_state_code s))))) (stackSem_state_use_alloc_fupd
           (K F) (stackSem_state_use_stack_fupd (K T)
           (stackSem_state_use_store_fupd (K T)
@@ -2348,7 +2348,7 @@ let loc_check_compile = prove
  (`loc_check (stackSem_state_code s) (l1,l2) /\
     (!k prog. sptree_lookup k (stackSem_state_code s) = SOME prog ==> ~(k =
       gc_stub_location)) ==>
-    loc_check (fromAList (stack_alloc_compile c (toAList
+    loc_check (fromAList (stack_names_compile c (toAList
       (stackSem_state_code s)))) (l1,l2)`,
   CHEAT_TAC);;
 
@@ -2380,14 +2380,14 @@ let inst_correct = prove
      s SUBMAP regs ==>
      (?regs1.
      stackSem_inst i (stackSem_state_code_fupd (K (fromAList
-       (stack_alloc_compile c (toAList (stackSem_state_code s)))))
+       (stack_names_compile c (toAList (stackSem_state_code s)))))
        (stackSem_state_use_alloc_fupd (K F) (stackSem_state_use_store_fupd (K
        T) (stackSem_state_use_stack_fupd (K T) (stackSem_state_gc_fun_fupd (K
        anything) (stackSem_state_compile_oracle_fupd (K ((I ## MAP
        stack_alloc_prog_comp ## I) o stackSem_state_compile_oracle s))
        (stackSem_state_compile_fupd (K compile_rest) (stackSem_state_regs_fupd
        (K regs) s)))))))) =
-       SOME (stackSem_state_code_fupd (K (fromAList (stack_alloc_compile c
+       SOME (stackSem_state_code_fupd (K (fromAList (stack_names_compile c
          (toAList (stackSem_state_code t))))) (stackSem_state_use_alloc_fupd (K
          F) (stackSem_state_use_store_fupd (K T) (stackSem_state_use_stack_fupd
          (K T) (stackSem_state_gc_fun_fupd (K anything)
@@ -2630,12 +2630,12 @@ let stack_alloc_reg_bound = prove
     ALL (\p. reg_bound p sp)
        (MAP SND prog1) ==>
     ALL (\p. reg_bound p sp)
-       (MAP SND (stack_alloc_compile dc prog1))`,
+       (MAP SND (stack_names_compile dc prog1))`,
   CHEAT_TAC);;
 
 let stack_alloc_call_args = prove
  (`ALL (\p. call_args p 1 2 3 4 0) (MAP SND prog1) ==>
-   ALL (\p. call_args p 1 2 3 4 0) (MAP SND (stack_alloc_compile dc
+   ALL (\p. call_args p 1 2 3 4 0) (MAP SND (stack_names_compile dc
      prog1))`,
   CHEAT_TAC);;
 
