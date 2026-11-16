@@ -330,6 +330,9 @@ def shorten(text, width=79):
 
 
 UNRESOLVED = {}   # theory -> name -> how often it stayed bare
+# the patches that a resolution round has made unnecessary: their
+# answer is in the block already, so the entry can go
+OVERTAKEN = []
 
 
 class Porter:
@@ -5459,6 +5462,15 @@ def patch_text(text, patches, what='DEF_PATCH'):
     m = pat.search(text)
     if m is None:
       if RESOLVE: continue
+      # a patch whose answer is already there has been overtaken:
+      # the resolution round settled the name it was written for,
+      # and the entry can go.  It is not an error, because the
+      # block says what the patch wanted it to say
+      ns = now.split()
+      if ns and re.search(r'\s+'.join(re.escape(w) for w in ns),
+                          text):
+        OVERTAKEN.append((what, ' '.join(ws)[:60]))
+        continue
       raise SyntaxError('%s does not apply: %s%s'
                         % (what, ' '.join(ws)[:40], near(text, ws)))
     text = text[:m.start()] + ' '.join(now.split()) + text[m.end():]

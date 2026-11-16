@@ -13714,12 +13714,6 @@ THM_PATCH = {
   ('stack_to_labProof', 'code_installed_get_labels_IMP'): [
     ('labProps_get_labels e', 'stackSem_get_labels e'),
   ],
-  # the Fail that a semantics gives back is the one of the
-  # semantics result, not the Fail of the register allocator
-  ('stack_to_labProof', 'flatten_semantics'): [
-    ('stackSem_semantics start s1 = reg_alloc_Fail',
-     'stackSem_semantics start s1 = ffi_Fail'),
-  ],
   # SmartCons builds a closLang expression, so the esgc_free over
   # it is closProps' and not flatProps'
   ('flat_to_closProof', 'esgc_free_SmartCons'): [
@@ -14331,19 +14325,19 @@ THM_PATCH = {
      'wordSem_inst i s = SOME s'),
   ],
   ('word_to_stackProof', 'state_rel_IMP_semantics'): [
-    ('~(stackSem_semantics s (start:num) = reg_alloc_Fail)',
+    ('~(stackSem_semantics s (start:num) = ffi_Fail)',
      '~(wordSem_semantics s (start:num) = ffi_Fail)'),
     ('{stackSem_semantics s start}',
      '{wordSem_semantics s start}'),
   ],
   ("word_to_stackProof", "state_rel_IMP_semantics'"): [
-    ('~(stackSem_semantics s (start:num) = reg_alloc_Fail)',
+    ('~(stackSem_semantics s (start:num) = ffi_Fail)',
      '~(wordSem_semantics s (start:num) = ffi_Fail)'),
     ('stackSem_semantics start t = stackSem_semantics s start',
      'stackSem_semantics start t = wordSem_semantics s start'),
   ],
   ('word_to_stackProof', 'compile_semantics'): [
-    ('~(stackSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start = reg_alloc_Fail)',
+    ('~(stackSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start = ffi_Fail)',
      '~(wordSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start = ffi_Fail)'),
     ('{stackSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start}',
      '{wordSem_semantics (word_to_stackProof_make_init asm_conf k t (fromAList code) coracle) start}'),
@@ -14796,8 +14790,13 @@ DEF_PATCH = {
   # the op of a ShareInst is a memop of asm, where every other
   # Load and Store of the definition is the one of a wordLang
   # expression or program
+  # the Load and the Store of `op = Load \/ op = Store' are asm's
+  # memory operations, and the Store of the Inst that the same
+  # block builds is wordLang's: one block, two meanings of Store,
+  # which is the shape a resolution round cannot answer.  It
+  # answers the Load, so only the Store is said here
   ('word_inst', 'inst_select_def'): [
-    ('op = word_Load \\/ op = word_Store',
+    ('op = asm_Load \\/ op = word_Store',
      'op = asm_Load \\/ op = asm_Store'),
   ],
   ('word_alloc', 'get_clash_tree_def'): [

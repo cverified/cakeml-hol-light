@@ -68,6 +68,11 @@ def main():
   with open(out + 'defbind.txt', 'w') as f:
     for thy, c, b in portmod.EMITTED_DEFS:
       f.write('%s %s %s\n' % (thy, c, b))
+  if portmod.OVERTAKEN:
+    print('%d patches that the block says already (they can go):'
+          % len(portmod.OVERTAKEN))
+    for what, was in portmod.OVERTAKEN[:40]:
+      print('   %s %s' % (what, was))
   diff = []
   for thy, path, kind in dbmod.load_order():
     try:
